@@ -229,8 +229,8 @@ describe('RateWise Component', () => {
       render(<RateWise />);
 
       const inputs = screen.getAllByPlaceholderText('0.00');
-      const fromInput = inputs[0];
-      const toInput = inputs[1];
+      const fromInput = inputs[0] as HTMLInputElement;
+      const toInput = inputs[1] as HTMLInputElement;
 
       // Start with some amount
       fireEvent.change(fromInput, { target: { value: '1000' } });
