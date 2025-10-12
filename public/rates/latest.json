@@ -1,15 +1,15 @@
 {
-  "timestamp": "2025-10-12T22:13:16.211Z",
-  "updateTime": "2025/10/13 06:13:16",
+  "timestamp": "2025-10-12T22:36:57.209Z",
+  "updateTime": "2025/10/13 06:36:57",
   "source": "Taiwan Bank (臺灣銀行牌告匯率)",
   "sourceUrl": "https://rate.bot.com.tw/xrt",
   "base": "TWD",
   "rates": {
     "USD": 30.8,
     "HKD": 3.972,
-    "GBP": 41.69,
+    "GBP": 41.66,
     "AUD": 20.25,
-    "CAD": 22.24,
+    "CAD": 22.23,
     "SGD": 23.87,
     "CHF": 38.39,
     "JPY": 0.2044,
@@ -49,12 +49,12 @@
     "GBP": {
       "name": "英鎊",
       "spot": {
-        "buy": 40.465,
-        "sell": 41.095
+        "buy": 40.435,
+        "sell": 41.065
       },
       "cash": {
-        "buy": 39.57,
-        "sell": 41.69
+        "buy": 39.54,
+        "sell": 41.66
       }
     },
     "AUD": {
@@ -71,12 +71,12 @@
     "CAD": {
       "name": "加拿大幣",
       "spot": {
-        "buy": 21.66,
-        "sell": 21.99
+        "buy": 21.65,
+        "sell": 21.98
       },
       "cash": {
-        "buy": 21.33,
-        "sell": 22.24
+        "buy": 21.32,
+        "sell": 22.23
       }
     },
     "SGD": {
