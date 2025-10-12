@@ -46,13 +46,11 @@ const CURRENCY_MAP = {
 /**
  * 解析台灣銀行 CSV 格式
  * CSV 結構：
- * - 第1欄: 幣別代碼 (USD, EUR, etc.)
- * - 第2欄: "本行買入"
- * - 第3欄: 現金買入
- * - 第4欄: 即期買入
- * - 第11欄: "本行賣出"
- * - 第12欄: 現金賣出
- * - 第13欄: 即期賣出
+ * - columns[0]: 幣別代碼 (USD, EUR, etc.)
+ * - columns[2]: 現金買入
+ * - columns[3]: 即期買入
+ * - columns[12]: 現金賣出
+ * - columns[13]: 即期賣出
  */
 function parseTaiwanBankCSV(csvText) {
   const lines = csvText.trim().split('\n');
@@ -68,31 +66,34 @@ function parseTaiwanBankCSV(csvText) {
     const cleanLine = line.replace(/^\uFEFF/, '');
     const columns = cleanLine.split(',');
 
-    if (columns.length < 13) continue;
+    if (columns.length < 14) continue;
 
     const currencyCode = columns[0].trim();
 
     // 只處理我們定義的貨幣
     if (!CURRENCY_MAP[currencyCode]) continue;
 
-    // 解析匯率（使用即期買入作為主要匯率）
-    const spotBuy = parseFloat(columns[3]);
-    const spotSell = parseFloat(columns[12]);
+    // 解析匯率
     const cashBuy = parseFloat(columns[2]);
-    const cashSell = parseFloat(columns[11]);
+    const spotBuy = parseFloat(columns[3]);
+    const cashSell = parseFloat(columns[12]);
+    const spotSell = parseFloat(columns[13]);
 
-    // 跳過無效資料
-    if (isNaN(spotBuy) || spotBuy === 0) continue;
+    // 使用現金賣出作為主要匯率
+    const mainRate = cashSell;
 
-    // 儲存主要匯率（即期買入）
-    rates[currencyCode] = spotBuy;
+    // 跳過無效資料 (有些貨幣沒有現金賣出價, e.g. ZAR, SEK)
+    if (isNaN(mainRate) || mainRate === 0) continue;
+
+    // 儲存主要匯率（現金賣出）
+    rates[currencyCode] = mainRate;
 
     // 儲存詳細資料
     details[currencyCode] = {
       name: CURRENCY_MAP[currencyCode].name,
       spot: {
-        buy: spotBuy,
-        sell: isNaN(spotSell) ? null : spotSell,
+        buy: isNaN(spotBuy) || spotBuy === 0 ? null : spotBuy,
+        sell: isNaN(spotSell) || spotSell === 0 ? null : spotSell,
       },
       cash: {
         buy: isNaN(cashBuy) || cashBuy === 0 ? null : cashBuy,
