@@ -1,64 +1,58 @@
 # 雲端與應用安全基線
 
-**原則**: 分層防禦，雲邊界優先，應用層最小化。
+> 分層防禦：Cloudflare 管邊界，前端保持最小攻擊面。
 
-## 責任界面
+## 1. 責任界面
 
-### Cloudflare 層 (邊緣)
+### Cloudflare（邊緣）
 
-✅ **應該做**:
+- WAF / DDoS / Bot Management
+- CSP、HSTS、Permissions-Policy、Rate Limiting
+- TLS 終結、憑證更新
 
-- CSP, HSTS, X-Frame-Options 等安全標頭
-- WAF & DDoS 防護
-- Rate Limiting
-- Bot Management
+### 應用層（Vite + React）
 
-### 應用層 (React)
+- Input validation 與 Sanitize（React 19 預設防 XSS）
+- Error Boundary、使用者友善 fallback
+- 觀測性（logger、request id）、非敏感資料存取
+- `.env`、Secrets 管理與掃描
 
-✅ **應該做**:
+> 原則：已於 Cloudflare 處理的標頭不在 Nginx / React 重複設定，僅保留最小 fallback。
 
-- Input validation
-- XSS 防護 (React 預設已處理)
-- Error Boundary
-- 敏感資料不存 localStorage
+## 2. 當前狀態（2025-10-12）
 
-❌ **不應該做**:
+| 項目           | 現況                                                                                    |
+| -------------- | --------------------------------------------------------------------------------------- |
+| Error Boundary | ✅ `apps/ratewise/src/components/ErrorBoundary.tsx` 已上線                              |
+| Logger         | ✅ `apps/ratewise/src/utils/logger.ts`，待串接遠端 sink                                 |
+| 安全標頭       | ✅ `nginx.conf` 僅保留 `X-Content-Type-Options`、`X-Frame-Options`，其餘交由 Cloudflare |
+| `.env` 管理    | ✅ `.env.example` 已提供                                                                |
+| Secrets 掃描   | ❌ 尚未導入（建議 git-secrets / TruffleHog）                                            |
+| 日誌外送       | ❌ 未上傳至遠端（Phase 0 計畫處理）                                                     |
+| `.env` 漏掃    | ⚠️ 無 CI 步驟自動檢查                                                                   |
 
-- 重複設定已由 Cloudflare 處理的安全標頭
+## 3. Cloudflare 推薦設定
 
-## 當前安全狀態
+可透過 Workers / Transform Rules 套用：
 
-### ✅ 做對的
-
-- 純前端，無後端漏洞面
-- localStorage 僅存非敏感資料 (幣別偏好)
-- React 19 自動防 XSS
-
-### ⚠️ 需改進
-
-- 缺 Error Boundary
-- 無安全標頭 (應由 Cloudflare 設定)
-- 無 .env 範本
-
-## Cloudflare 安全標頭設定
-
-```typescript
-// _headers (for Cloudflare Pages)
-/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: geolocation=(), microphone=(), camera=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'
+```
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
 ```
 
-## 檢查清單
+> 依 [OWASP 安全標頭指南][ref: #10] 與 [Cloudflare 官方範例][ref: #11]。
 
-- [ ] Cloudflare Pages 設定安全標頭
-- [ ] 補齊 Error Boundary
-- [ ] 補齊 .env.example
-- [ ] 測試 CSP 不影響功能
+## 4. 待辦檢查清單
+
+- [ ] Cloudflare Pages / Workers 套用上述安全標頭
+- [ ] 加入 Secrets 掃描（例如 `pnpm dlx git-secrets --install` 並在 CI 執行）
+- [ ] logger 串接遠端追蹤並附上 `requestId`
+- [ ] 補 `pnpm audit --prod` 並將結果附加到 CI 報告
+- [ ] 建立安全事件回報流程（Issue template + Slack 通報）
 
 ---
 
-_詳細風險分析參見 TECH_DEBT_AUDIT.md_
+完整風險評估請見 [TECH_DEBT_AUDIT.md](./dev/TECH_DEBT_AUDIT.md)。
