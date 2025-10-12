@@ -52,7 +52,7 @@ describe('RateWise Component', () => {
       render(<RateWise />);
 
       const inputs = screen.getAllByPlaceholderText('0.00');
-      const fromInput = inputs[0];
+      const fromInput = inputs[0]!;
 
       fireEvent.change(fromInput, { target: { value: '12345' } });
 
@@ -65,7 +65,7 @@ describe('RateWise Component', () => {
       render(<RateWise />);
 
       const inputs = screen.getAllByPlaceholderText('0.00');
-      const fromInput = inputs[0];
+      const fromInput = inputs[0]!;
 
       fireEvent.change(fromInput, { target: { value: '' } });
 
@@ -145,7 +145,7 @@ describe('RateWise Component', () => {
       render(<RateWise />);
 
       const selects = screen.getAllByRole('combobox');
-      const fromSelect = selects[0];
+      const fromSelect = selects[0]!;
 
       fireEvent.change(fromSelect, { target: { value: 'USD' } });
 
@@ -158,7 +158,7 @@ describe('RateWise Component', () => {
       render(<RateWise />);
 
       const selects = screen.getAllByRole('combobox');
-      const toSelect = selects[1];
+      const toSelect = selects[1]!;
 
       fireEvent.change(toSelect, { target: { value: 'JPY' } });
 
@@ -173,7 +173,7 @@ describe('RateWise Component', () => {
       render(<RateWise />);
 
       const selects = screen.getAllByRole('combobox');
-      const fromSelect = selects[0];
+      const fromSelect = selects[0]!;
 
       fireEvent.change(fromSelect, { target: { value: 'USD' } });
 
@@ -186,7 +186,7 @@ describe('RateWise Component', () => {
       render(<RateWise />);
 
       const selects = screen.getAllByRole('combobox');
-      const toSelect = selects[1];
+      const toSelect = selects[1]!;
 
       fireEvent.change(toSelect, { target: { value: 'EUR' } });
 
@@ -216,7 +216,7 @@ describe('RateWise Component', () => {
       render(<RateWise />);
 
       const inputs = screen.getAllByPlaceholderText('0.00');
-      fireEvent.change(inputs[0], { target: { value: '0' } });
+      fireEvent.change(inputs[0]!, { target: { value: '0' } });
 
       await waitFor(() => {
         expect(inputs[0]).toHaveValue(0);

@@ -34,8 +34,8 @@ describe('Logger', () => {
       expect(consoleSpy.debug).toHaveBeenCalled();
       const logs = logger.getRecentLogs();
       expect(logs).toHaveLength(1);
-      expect(logs[0].level).toBe('debug');
-      expect(logs[0].message).toBe('Test debug message');
+      expect(logs[0]!.level).toBe('debug');
+      expect(logs[0]!.message).toBe('Test debug message');
     });
 
     it('includes context in debug logs', () => {
@@ -43,7 +43,7 @@ describe('Logger', () => {
       logger.debug('User action', context);
 
       const logs = logger.getRecentLogs();
-      expect(logs[0].context).toEqual(context);
+      expect(logs[0]!.context).toEqual(context);
     });
   });
 
@@ -54,8 +54,8 @@ describe('Logger', () => {
       expect(consoleSpy.info).toHaveBeenCalled();
       const logs = logger.getRecentLogs();
       expect(logs).toHaveLength(1);
-      expect(logs[0].level).toBe('info');
-      expect(logs[0].message).toBe('Test info message');
+      expect(logs[0]!.level).toBe('info');
+      expect(logs[0]!.message).toBe('Test info message');
     });
   });
 
@@ -66,8 +66,8 @@ describe('Logger', () => {
       expect(consoleSpy.warn).toHaveBeenCalled();
       const logs = logger.getRecentLogs();
       expect(logs).toHaveLength(1);
-      expect(logs[0].level).toBe('warn');
-      expect(logs[0].message).toBe('Test warning message');
+      expect(logs[0]!.level).toBe('warn');
+      expect(logs[0]!.message).toBe('Test warning message');
     });
   });
 
@@ -79,9 +79,9 @@ describe('Logger', () => {
       expect(consoleSpy.error).toHaveBeenCalled();
       const logs = logger.getRecentLogs();
       expect(logs).toHaveLength(1);
-      expect(logs[0].level).toBe('error');
-      expect(logs[0].message).toBe('Test error message');
-      expect(logs[0].error).toBe(error);
+      expect(logs[0]!.level).toBe('error');
+      expect(logs[0]!.message).toBe('Test error message');
+      expect(logs[0]!.error).toBe(error);
     });
 
     it('includes context with error logs', () => {
@@ -90,7 +90,7 @@ describe('Logger', () => {
       logger.error('Component error', error, context);
 
       const logs = logger.getRecentLogs();
-      expect(logs[0].context).toEqual(context);
+      expect(logs[0]!.context).toEqual(context);
     });
   });
 
@@ -111,9 +111,9 @@ describe('Logger', () => {
       logger.info('Third');
 
       const logs = logger.getRecentLogs();
-      expect(logs[0].message).toBe('First');
-      expect(logs[1].message).toBe('Second');
-      expect(logs[2].message).toBe('Third');
+      expect(logs[0]!.message).toBe('First');
+      expect(logs[1]!.message).toBe('Second');
+      expect(logs[2]!.message).toBe('Third');
     });
   });
 
@@ -133,7 +133,7 @@ describe('Logger', () => {
       logger.info('Test message');
 
       const logs = logger.getRecentLogs();
-      expect(logs[0].timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      expect(logs[0]!.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     });
   });
 });
