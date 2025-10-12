@@ -10,4 +10,13 @@ export default {
     },
   },
   plugins: [],
+  // Optimize for production builds
+  corePlugins: {
+    // Disable unused core plugins to reduce CSS size
+    preflight: true, // Keep preflight for consistent styling
+  },
+  // Future-proof configuration
+  future: {
+    hoverOnlyWhenSupported: true, // Only apply hover on devices that support it
+  },
 } satisfies Config;
