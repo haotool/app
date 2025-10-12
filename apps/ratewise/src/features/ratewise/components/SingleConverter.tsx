@@ -91,6 +91,8 @@ export const SingleConverter = ({
         <button
           onClick={onSwapCurrencies}
           className="p-2.5 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-full shadow-lg transition transform hover:scale-110"
+          aria-label="交換幣別"
+          title="交換幣別"
         >
           <RefreshCw size={20} />
         </button>

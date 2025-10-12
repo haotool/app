@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for RateWise
 
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
@@ -27,8 +27,8 @@ FROM nginx:alpine
 # Copy built assets
 COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html
 
-# Copy nginx configuration (if needed)
-# COPY nginx.conf /etc/nginx/nginx.conf
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001

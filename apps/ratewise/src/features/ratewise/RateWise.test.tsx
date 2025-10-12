@@ -266,4 +266,92 @@ describe('RateWise Component', () => {
       });
     });
   });
+
+  describe('History Tracking', () => {
+    it('renders conversion history after adding an entry', async () => {
+      render(<RateWise />);
+
+      const addButton = screen.getByText('加入歷史記錄');
+      const inputs = screen.getAllByPlaceholderText('0.00') as HTMLInputElement[];
+      const toInput = inputs[1]!;
+
+      await waitFor(() => {
+        expect(toInput.value).not.toBe('');
+      });
+
+      fireEvent.click(addButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('轉換歷史')).toBeInTheDocument();
+      });
+
+      expect(screen.getAllByText(/TWD/).length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Multi Mode Interactions', () => {
+    it('updates multi-currency amounts when quick button is used', async () => {
+      render(<RateWise />);
+
+      fireEvent.click(screen.getByText('多幣別'));
+
+      await waitFor(() => {
+        expect(localStorage.getItem('currencyConverterMode')).toBe('multi');
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('即時多幣別換算')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('5,000'));
+
+      await waitFor(() => {
+        const inputs = screen.getAllByPlaceholderText('0.00');
+        expect(inputs[0]).toHaveValue(5000);
+      });
+
+      const allInputs = screen.getAllByPlaceholderText('0.00') as HTMLInputElement[];
+      fireEvent.change(allInputs[1]!, { target: { value: '123' } });
+
+      await waitFor(() => {
+        expect(allInputs[1]).toHaveValue(123);
+      });
+    });
+
+    it('allows toggling favorite currencies', async () => {
+      render(<RateWise />);
+
+      fireEvent.click(screen.getByText('多幣別'));
+
+      await waitFor(() => {
+        expect(screen.getByText('即時多幣別換算')).toBeInTheDocument();
+      });
+
+      const toggleButton = await screen.findByRole('button', { name: '加入常用貨幣 EUR' });
+      fireEvent.click(toggleButton);
+
+      await waitFor(() => {
+        expect(toggleButton).toHaveAttribute('aria-label', '移除常用貨幣 EUR');
+      });
+    });
+  });
+
+  describe('Swap Control', () => {
+    it('swaps selected currencies when swap button is clicked', async () => {
+      render(<RateWise />);
+
+      const [fromSelect, toSelect] = screen.getAllByRole('combobox') as HTMLSelectElement[];
+      expect(fromSelect).toHaveValue('TWD');
+      expect(toSelect).toHaveValue('USD');
+
+      const swapButton = screen.getByRole('button', { name: '交換幣別' });
+      fireEvent.click(swapButton);
+
+      await waitFor(() => {
+        const [updatedFrom, updatedTo] = screen.getAllByRole('combobox') as HTMLSelectElement[];
+        expect(updatedFrom).toHaveValue('USD');
+        expect(updatedTo).toHaveValue('TWD');
+      });
+    });
+  });
 });

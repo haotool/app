@@ -57,6 +57,8 @@ export const MultiConverter = ({
                   onClick={() => onToggleFavorite(code)}
                   className="hover:scale-110 transition"
                   type="button"
+                  aria-label={isFavorite ? `移除常用貨幣 ${code}` : `加入常用貨幣 ${code}`}
+                  title={isFavorite ? `移除常用貨幣 ${code}` : `加入常用貨幣 ${code}`}
                 >
                   <Star
                     className={isFavorite ? 'text-yellow-500' : 'text-gray-300'}
