@@ -1,0 +1,80 @@
+name: Update Exchange Rates
+
+on:
+  schedule:
+    # 每30分鐘執行一次（00分和30分）
+    - cron: '0,30 * * * *'
+
+  # 允許手動觸發
+  workflow_dispatch:
+
+  # 當腳本或workflow被修改時執行（用於測試）
+  push:
+    paths:
+      - 'scripts/fetch-taiwan-bank-rates.js'
+      - '.github/workflows/update-exchange-rates.yml'
+
+jobs:
+  update-rates:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # 需要寫入權限來 commit
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 獲取完整歷史
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Fetch Taiwan Bank exchange rates
+        run: |
+          echo "🔄 Fetching exchange rates from Taiwan Bank..."
+          node scripts/fetch-taiwan-bank-rates.js
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --quiet public/rates/latest.json || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push if changed
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add public/rates/latest.json
+
+          # 從 JSON 檔案讀取更新時間
+          UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).updateTime")
+          CURRENCY_COUNT=$(node -p "Object.keys(JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates).length")
+
+          git commit -m "chore(rates): update exchange rates - ${UPDATE_TIME}" \
+            -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
+            -m "🤖 Automated by GitHub Actions" \
+            -m "Source: https://rate.bot.com.tw/xrt"
+
+          git push
+
+      - name: Update summary
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          echo "✅ Exchange rates updated successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Currencies Updated:** $(node -p "Object.keys(JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates).length")" >> $GITHUB_STEP_SUMMARY
+          echo "**Update Time:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).updateTime")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Sample Rates (TWD):**" >> $GITHUB_STEP_SUMMARY
+          echo "- USD: $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.USD")" >> $GITHUB_STEP_SUMMARY
+          echo "- EUR: $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.EUR")" >> $GITHUB_STEP_SUMMARY
+          echo "- JPY: $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.JPY")" >> $GITHUB_STEP_SUMMARY
+          echo "- CNY: $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.CNY")" >> $GITHUB_STEP_SUMMARY
+
+      - name: No changes detected
+        if: steps.git-check.outputs.changed != 'true'
+        run: |
+          echo "ℹ️ No rate changes detected" >> $GITHUB_STEP_SUMMARY

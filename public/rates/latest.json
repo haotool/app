@@ -1,0 +1,179 @@
+{
+  "timestamp": "2025-10-12T18:42:53.868Z",
+  "updateTime": "2025/10/13 02:42:53",
+  "source": "Taiwan Bank (臺灣銀行牌告匯率)",
+  "sourceUrl": "https://rate.bot.com.tw/xrt",
+  "base": "TWD",
+  "rates": {
+    "USD": 30.455,
+    "HKD": 3.888,
+    "GBP": 40.425,
+    "AUD": 19.725,
+    "CAD": 21.67,
+    "SGD": 23.43,
+    "CHF": 37.83,
+    "JPY": 0.1984,
+    "ZAR": 1.7,
+    "SEK": 3.15,
+    "NZD": 17.41,
+    "THB": 0.9163,
+    "EUR": 35.125,
+    "CNY": 4.244
+  },
+  "details": {
+    "USD": {
+      "name": "美金",
+      "spot": {
+        "buy": 30.455,
+        "sell": 30.8
+      },
+      "cash": {
+        "buy": 30.13,
+        "sell": null
+      }
+    },
+    "HKD": {
+      "name": "港幣",
+      "spot": {
+        "buy": 3.888,
+        "sell": 3.971
+      },
+      "cash": {
+        "buy": 3.767,
+        "sell": null
+      }
+    },
+    "GBP": {
+      "name": "英鎊",
+      "spot": {
+        "buy": 40.425,
+        "sell": 41.65
+      },
+      "cash": {
+        "buy": 39.53,
+        "sell": null
+      }
+    },
+    "AUD": {
+      "name": "澳幣",
+      "spot": {
+        "buy": 19.725,
+        "sell": 20.29
+      },
+      "cash": {
+        "buy": 19.51,
+        "sell": null
+      }
+    },
+    "CAD": {
+      "name": "加拿大幣",
+      "spot": {
+        "buy": 21.67,
+        "sell": 22.25
+      },
+      "cash": {
+        "buy": 21.34,
+        "sell": null
+      }
+    },
+    "SGD": {
+      "name": "新加坡幣",
+      "spot": {
+        "buy": 23.43,
+        "sell": 23.87
+      },
+      "cash": {
+        "buy": 22.96,
+        "sell": null
+      }
+    },
+    "CHF": {
+      "name": "瑞士法郎",
+      "spot": {
+        "buy": 37.83,
+        "sell": 38.42
+      },
+      "cash": {
+        "buy": 37.22,
+        "sell": null
+      }
+    },
+    "JPY": {
+      "name": "日圓",
+      "spot": {
+        "buy": 0.1984,
+        "sell": 0.2044
+      },
+      "cash": {
+        "buy": 0.1916,
+        "sell": null
+      }
+    },
+    "ZAR": {
+      "name": "南非幣",
+      "spot": {
+        "buy": 1.7,
+        "sell": 0
+      },
+      "cash": {
+        "buy": null,
+        "sell": null
+      }
+    },
+    "SEK": {
+      "name": "瑞典幣",
+      "spot": {
+        "buy": 3.15,
+        "sell": 0
+      },
+      "cash": {
+        "buy": null,
+        "sell": null
+      }
+    },
+    "NZD": {
+      "name": "紐元",
+      "spot": {
+        "buy": 17.41,
+        "sell": 17.93
+      },
+      "cash": {
+        "buy": 17.08,
+        "sell": null
+      }
+    },
+    "THB": {
+      "name": "泰銖",
+      "spot": {
+        "buy": 0.9163,
+        "sell": 0.9959
+      },
+      "cash": {
+        "buy": 0.8059,
+        "sell": null
+      }
+    },
+    "EUR": {
+      "name": "歐元",
+      "spot": {
+        "buy": 35.125,
+        "sell": 35.95
+      },
+      "cash": {
+        "buy": 34.61,
+        "sell": null
+      }
+    },
+    "CNY": {
+      "name": "人民幣",
+      "spot": {
+        "buy": 4.244,
+        "sell": 4.339
+      },
+      "cash": {
+        "buy": 4.177,
+        "sell": null
+      }
+    }
+  }
+}

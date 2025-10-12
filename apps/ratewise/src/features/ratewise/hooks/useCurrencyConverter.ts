@@ -56,7 +56,12 @@ const sanitizeFavorites = (codes: CurrencyCode[]): CurrencyCode[] => {
 const sanitizeCurrency = (candidate: string, fallback: CurrencyCode): CurrencyCode =>
   isCurrencyCode(candidate) ? candidate : fallback;
 
-export const useCurrencyConverter = () => {
+interface UseCurrencyConverterOptions {
+  exchangeRates?: Record<string, number>;
+}
+
+export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
+  const { exchangeRates } = options;
   const [mode, setMode] = useState<ConverterMode>(() =>
     readString(STORAGE_KEYS.mode, 'single') === 'multi' ? 'multi' : 'single',
   );
@@ -102,6 +107,17 @@ export const useCurrencyConverter = () => {
     writeJSON(STORAGE_KEYS.favorites, favorites);
   }, [favorites]);
 
+  // Helper to get rate (use real rates if available, otherwise fallback)
+  const getRate = useCallback(
+    (code: CurrencyCode): number => {
+      if (exchangeRates && exchangeRates[code]) {
+        return exchangeRates[code];
+      }
+      return CURRENCY_DEFINITIONS[code].rate;
+    },
+    [exchangeRates],
+  );
+
   // Conversion calculations
   const recalcMultiAmounts = useCallback(
     (
@@ -111,7 +127,7 @@ export const useCurrencyConverter = () => {
     ): MultiAmountsState => {
       const amount = parseFloat(sourceAmount);
       const hasValue = !Number.isNaN(amount);
-      const sourceRate = CURRENCY_DEFINITIONS[sourceCode].rate;
+      const sourceRate = getRate(sourceCode);
 
       return CURRENCY_CODES.reduce<MultiAmountsState>(
         (acc, code) => {
@@ -125,7 +141,7 @@ export const useCurrencyConverter = () => {
             return acc;
           }
 
-          const targetRate = CURRENCY_DEFINITIONS[code].rate;
+          const targetRate = getRate(code);
           const converted = (amount * sourceRate) / targetRate;
           acc[code] = converted ? converted.toFixed(2) : '0.00';
           return acc;
@@ -133,7 +149,7 @@ export const useCurrencyConverter = () => {
         { ...prev },
       );
     },
-    [],
+    [getRate],
   );
 
   const calculateFromAmount = useCallback(() => {
@@ -142,11 +158,11 @@ export const useCurrencyConverter = () => {
       setToAmount('');
       return;
     }
-    const fromRate = CURRENCY_DEFINITIONS[fromCurrency].rate;
-    const toRate = CURRENCY_DEFINITIONS[toCurrency].rate;
+    const fromRate = getRate(fromCurrency);
+    const toRate = getRate(toCurrency);
     const converted = (amount * fromRate) / toRate;
     setToAmount(converted ? converted.toFixed(2) : '0.00');
-  }, [fromAmount, fromCurrency, toCurrency]);
+  }, [fromAmount, fromCurrency, toCurrency, getRate]);
 
   const calculateToAmount = useCallback(() => {
     const amount = parseFloat(toAmount);
@@ -154,11 +170,11 @@ export const useCurrencyConverter = () => {
       setFromAmount('');
       return;
     }
-    const fromRate = CURRENCY_DEFINITIONS[fromCurrency].rate;
-    const toRate = CURRENCY_DEFINITIONS[toCurrency].rate;
+    const fromRate = getRate(fromCurrency);
+    const toRate = getRate(toCurrency);
     const converted = (amount * toRate) / fromRate;
     setFromAmount(converted ? converted.toFixed(2) : '0.00');
-  }, [toAmount, fromCurrency, toCurrency]);
+  }, [toAmount, fromCurrency, toCurrency, getRate]);
 
   const generateTrends = useCallback(() => {
     setTrend(() =>

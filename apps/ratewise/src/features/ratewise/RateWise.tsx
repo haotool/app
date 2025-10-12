@@ -1,5 +1,6 @@
 import { Grid, Maximize2 } from 'lucide-react';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
+import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
 import { MultiConverter } from './components/MultiConverter';
 import { FavoritesList } from './components/FavoritesList';
@@ -7,6 +8,9 @@ import { CurrencyList } from './components/CurrencyList';
 import { ConversionHistory } from './components/ConversionHistory';
 
 const RateWise = () => {
+  // Load real-time exchange rates
+  const { rates: exchangeRates, isLoading: ratesLoading, lastUpdate, source } = useExchangeRates();
+
   const {
     mode,
     fromCurrency,
@@ -30,7 +34,7 @@ const RateWise = () => {
     toggleFavorite,
     addToHistory,
     generateTrends,
-  } = useCurrencyConverter();
+  } = useCurrencyConverter({ exchangeRates });
 
   const modeToggleButton = (
     <div className="inline-flex bg-gray-100 rounded-xl p-1">
@@ -66,7 +70,14 @@ const RateWise = () => {
           <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-1">
             好工具匯率
           </h1>
-          <p className="text-sm text-gray-600">即時匯率換算 · 精準可靠</p>
+          <p className="text-sm text-gray-600">
+            {ratesLoading ? '載入即時匯率中...' : '即時匯率換算 · 精準可靠'}
+          </p>
+          {!ratesLoading && lastUpdate && (
+            <p className="text-xs text-gray-500 mt-1">
+              {source} · 更新時間: {lastUpdate}
+            </p>
+          )}
         </div>
 
         <div className="grid md:grid-cols-3 gap-4 md:gap-6">
