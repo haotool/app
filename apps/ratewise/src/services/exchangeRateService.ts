@@ -26,8 +26,6 @@ const CDN_URLS = [
   'https://cdn.jsdelivr.net/gh/haotool/app@main/public/rates/latest.json',
   // GitHub raw (備援)
   'https://raw.githubusercontent.com/haotool/app/main/public/rates/latest.json',
-  // 本地開發
-  '/rates/latest.json',
 ];
 
 const CACHE_KEY = 'exchangeRates';
