@@ -23,9 +23,9 @@ interface ExchangeRateData {
 // CDN URLs (優先使用 jsdelivr，fallback 到 GitHub)
 const CDN_URLS = [
   // jsdelivr CDN (主要)
-  'https://cdn.jsdelivr.net/gh/azlife.eth/app@main/public/rates/latest.json',
+  'https://cdn.jsdelivr.net/gh/haotool/app@main/public/rates/latest.json',
   // GitHub raw (備援)
-  'https://raw.githubusercontent.com/azlife.eth/app/main/public/rates/latest.json',
+  'https://raw.githubusercontent.com/haotool/app/main/public/rates/latest.json',
   // 本地開發
   '/rates/latest.json',
 ];
