@@ -57,7 +57,7 @@ const sanitizeCurrency = (candidate: string, fallback: CurrencyCode): CurrencyCo
   isCurrencyCode(candidate) ? candidate : fallback;
 
 interface UseCurrencyConverterOptions {
-  exchangeRates?: Record<string, number>;
+  exchangeRates?: Record<string, number | null>;
 }
 
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
@@ -111,8 +111,10 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   // Returns null if the rate is not available or invalid.
   const getRate = useCallback(
     (code: CurrencyCode): number | null => {
-      if (exchangeRates && typeof exchangeRates[code] === 'number') {
-        return exchangeRates[code];
+      if (!exchangeRates) return null;
+      const rate = exchangeRates[code];
+      if (rate !== null && rate !== undefined && typeof rate === 'number') {
+        return rate;
       }
       return null;
     },
