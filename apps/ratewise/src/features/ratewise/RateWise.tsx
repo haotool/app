@@ -119,6 +119,7 @@ const RateWise = () => {
                   toCurrency={toCurrency}
                   fromAmount={fromAmount}
                   toAmount={toAmount}
+                  exchangeRates={exchangeRates}
                   onFromCurrencyChange={setFromCurrency}
                   onToCurrencyChange={setToCurrency}
                   onFromAmountChange={handleFromAmountChange}
@@ -144,10 +145,11 @@ const RateWise = () => {
           </div>
 
           <div className="space-y-4 md:space-y-6">
-            <FavoritesList favorites={favorites} trend={trend} />
+            <FavoritesList favorites={favorites} trend={trend} exchangeRates={exchangeRates} />
             <CurrencyList
               favorites={favorites}
               trend={trend}
+              exchangeRates={exchangeRates}
               onToggleFavorite={toggleFavorite}
               onRefreshTrends={generateTrends}
             />

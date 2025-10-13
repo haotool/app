@@ -5,9 +5,10 @@ import type { CurrencyCode, TrendState } from '../types';
 interface FavoritesListProps {
   favorites: CurrencyCode[];
   trend: TrendState;
+  exchangeRates: Record<CurrencyCode, number | null>;
 }
 
-export const FavoritesList = ({ favorites, trend }: FavoritesListProps) => {
+export const FavoritesList = ({ favorites, trend, exchangeRates }: FavoritesListProps) => {
   return (
     <div className="bg-white rounded-3xl shadow-xl p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -33,9 +34,7 @@ export const FavoritesList = ({ favorites, trend }: FavoritesListProps) => {
               ) : (
                 <TrendingDown className="text-red-500" size={16} />
               )}
-              <span className="text-sm font-medium">
-                {CURRENCY_DEFINITIONS[code].rate.toFixed(4)}
-              </span>
+              <span className="text-sm font-medium">{(exchangeRates[code] ?? 0).toFixed(4)}</span>
             </div>
           </div>
         ))}

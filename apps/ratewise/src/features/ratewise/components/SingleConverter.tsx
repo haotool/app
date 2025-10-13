@@ -9,6 +9,7 @@ interface SingleConverterProps {
   toCurrency: CurrencyCode;
   fromAmount: string;
   toAmount: string;
+  exchangeRates: Record<CurrencyCode, number | null>;
   onFromCurrencyChange: (currency: CurrencyCode) => void;
   onToCurrencyChange: (currency: CurrencyCode) => void;
   onFromAmountChange: (amount: string) => void;
@@ -23,6 +24,7 @@ export const SingleConverter = ({
   toCurrency,
   fromAmount,
   toAmount,
+  exchangeRates,
   onFromCurrencyChange,
   onToCurrencyChange,
   onFromAmountChange,
@@ -31,6 +33,10 @@ export const SingleConverter = ({
   onSwapCurrencies,
   onAddToHistory,
 }: SingleConverterProps) => {
+  const fromRate = exchangeRates[fromCurrency] ?? 1;
+  const toRate = exchangeRates[toCurrency] ?? 1;
+  const exchangeRate = fromRate / toRate;
+  const reverseRate = toRate / fromRate;
   return (
     <>
       <div className="mb-4">
@@ -73,18 +79,10 @@ export const SingleConverter = ({
           <div className="text-center">
             <div className="text-xs text-gray-600 mb-0.5">即時匯率</div>
             <div className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-              1 {fromCurrency} ={' '}
-              {(
-                CURRENCY_DEFINITIONS[fromCurrency].rate / CURRENCY_DEFINITIONS[toCurrency].rate
-              ).toFixed(4)}{' '}
-              {toCurrency}
+              1 {fromCurrency} = {exchangeRate.toFixed(4)} {toCurrency}
             </div>
             <div className="text-xs text-gray-500 mt-0.5">
-              1 {toCurrency} ={' '}
-              {(
-                CURRENCY_DEFINITIONS[toCurrency].rate / CURRENCY_DEFINITIONS[fromCurrency].rate
-              ).toFixed(4)}{' '}
-              {fromCurrency}
+              1 {toCurrency} = {reverseRate.toFixed(4)} {fromCurrency}
             </div>
           </div>
         </div>

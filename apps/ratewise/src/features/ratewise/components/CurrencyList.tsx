@@ -7,6 +7,7 @@ const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 interface CurrencyListProps {
   favorites: CurrencyCode[];
   trend: TrendState;
+  exchangeRates: Record<CurrencyCode, number | null>;
   onToggleFavorite: (code: CurrencyCode) => void;
   onRefreshTrends: () => void;
 }
@@ -14,6 +15,7 @@ interface CurrencyListProps {
 export const CurrencyList = ({
   favorites,
   trend,
+  exchangeRates,
   onToggleFavorite,
   onRefreshTrends,
 }: CurrencyListProps) => {
@@ -49,7 +51,7 @@ export const CurrencyList = ({
               ) : (
                 <TrendingDown className="text-red-500" size={14} />
               )}
-              <span className="text-sm">{CURRENCY_DEFINITIONS[code].rate.toFixed(4)}</span>
+              <span className="text-sm">{(exchangeRates[code] ?? 0).toFixed(4)}</span>
               {favorites.includes(code) && (
                 <Star className="text-yellow-500" size={14} fill="currentColor" />
               )}

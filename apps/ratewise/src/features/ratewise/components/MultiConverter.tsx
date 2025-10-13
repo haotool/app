@@ -85,7 +85,7 @@ export const MultiConverter = ({
                   placeholder="0.00"
                 />
                 <div className="text-xs text-right text-gray-500 mt-0.5">
-                  1 TWD = {(1 / CURRENCY_DEFINITIONS[code].rate).toFixed(6)} {code}
+                  匯率由台灣銀行即時資料計算
                 </div>
               </div>
             </div>
