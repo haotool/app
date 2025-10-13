@@ -91,6 +91,7 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
 
   for (let i = 0; i < CDN_URLS.length; i++) {
     const urlOrFn = CDN_URLS[i];
+    if (!urlOrFn) continue;
     const url = typeof urlOrFn === 'function' ? urlOrFn() : urlOrFn;
 
     try {
