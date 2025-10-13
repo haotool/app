@@ -53,12 +53,23 @@ jobs:
           UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).updateTime")
           CURRENCY_COUNT=$(node -p "Object.keys(JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates).length")
 
-          git commit -m "chore(rates): update exchange rates - ${UPDATE_TIME}" \
-            -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
-            -m "🤖 Automated by GitHub Actions" \
-            -m "Source: https://rate.bot.com.tw/xrt"
-
-          git push
+          # 檢查上一個 commit 是否也是匯率更新
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+          if [[ "$LAST_COMMIT_MSG" == *"chore(rates): update exchange rates"* ]]; then
+            echo "📝 Amending previous rate update commit..."
+            git commit --amend --no-edit -m "chore(rates): update exchange rates - ${UPDATE_TIME}" \
+              -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
+              -m "🤖 Automated by GitHub Actions" \
+              -m "Source: https://rate.bot.com.tw/xrt"
+            git push --force-with-lease
+          else
+            echo "📝 Creating new rate update commit..."
+            git commit -m "chore(rates): update exchange rates - ${UPDATE_TIME}" \
+              -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
+              -m "🤖 Automated by GitHub Actions" \
+              -m "Source: https://rate.bot.com.tw/xrt"
+            git push
+          fi
 
       - name: Update summary
         if: steps.git-check.outputs.changed == 'true'
