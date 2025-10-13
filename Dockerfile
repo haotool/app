@@ -34,15 +34,15 @@ COPY nginx.conf /etc/nginx/nginx.conf
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 RUN chown -R nodejs:nodejs /usr/share/nginx/html /var/cache/nginx /var/run /var/log/nginx
 
-# Use non-root user
-USER nodejs
-
 # Expose port
 EXPOSE 8080
 
-# Health check
+# Health check (must run before switching to non-root user)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:8080 || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
+
+# Use non-root user
+USER nodejs
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
