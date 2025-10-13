@@ -31,8 +31,14 @@ const CDN_URLS = [
   'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
 ];
 
+// localStorage key 分離策略：
+// - 'exchangeRates': 匯率數據快取（本檔案管理，5分鐘過期）
+// - 'currencyConverterMode': 用戶界面模式（RateWise.tsx）
+// - 'favorites': 用戶收藏的貨幣（RateWise.tsx）
+// - 'fromCurrency', 'toCurrency': 用戶選擇的貨幣（RateWise.tsx）
+// clearExchangeRateCache() 只清除 'exchangeRates'，不影響用戶數據
 const CACHE_KEY = 'exchangeRates';
-const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘（減少快取時間以確保資料新鮮度）
+const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘
 
 interface CachedData {
   data: ExchangeRateData;
