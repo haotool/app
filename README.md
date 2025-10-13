@@ -95,36 +95,36 @@ docker-compose down
 
 ```
 ratewise-monorepo/
+├── .github/                     # GitHub 配置
+│   ├── ISSUE_TEMPLATE/          # Issue 範本
+│   ├── workflows/               # GitHub Actions
+│   ├── pull_request_template.md # PR 範本
+│   └── PROJECT_STRUCTURE.md     # 完整架構說明
 ├── apps/
 │   └── ratewise/                # 主應用程式
 │       ├── src/
 │       │   ├── components/      # 共用元件 (ErrorBoundary)
 │       │   ├── features/        # 功能模組
 │       │   │   └── ratewise/    # 匯率換算功能
-│       │   │       ├── components/  # UI 元件
-│       │   │       ├── hooks/       # Custom hooks
-│       │   │       └── RateWise.tsx # 主元件
+│       │   ├── services/        # API 服務
 │       │   ├── utils/           # 工具函式 (logger)
-│       │   ├── App.tsx
 │       │   └── main.tsx
-│       ├── public/
-│       ├── package.json
 │       └── vite.config.ts
-├── docs/
+├── docs/                        # 文檔
 │   ├── dev/                     # 開發文檔
-│   │   ├── TECH_DEBT_AUDIT.md
-│   │   ├── REFACTOR_PLAN.md
-│   │   ├── ARCHITECTURE_BASELINE.md
-│   │   ├── CITATIONS.md
-│   │   └── CHECKLISTS.md
-│   ├── DEPLOYMENT.md            # 部署指南
+│   ├── SETUP.md                 # 快速開始
+│   ├── DEPLOYMENT.md            # Docker 部署
+│   ├── ZEABUR_DEPLOYMENT.md     # Zeabur 部署
 │   └── SECURITY_BASELINE.md     # 安全基線
-├── Dockerfile                   # Docker 多階段構建
-├── docker-compose.yml           # Docker Compose 配置
-├── nginx.conf                   # Nginx 配置
-├── package.json
-└── tsconfig.base.json           # TypeScript 基礎配置
+├── scripts/                     # 自動化腳本
+├── Dockerfile                   # Docker 建置
+├── CONTRIBUTING.md              # 貢獻指南
+├── CODE_OF_CONDUCT.md           # 行為準則
+├── SECURITY.md                  # 安全政策
+└── CHANGELOG.md                 # 變更日誌
 ```
+
+**詳細架構說明**: [PROJECT_STRUCTURE.md](./.github/PROJECT_STRUCTURE.md)
 
 ## 🧪 測試
 
