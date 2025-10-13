@@ -100,14 +100,14 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
   // 先檢查快取
   const cached = getFromCache<T>(cacheKey);
   if (cached) {
-    logger.debug('exchangeRateHistoryService', `Cache hit for ${cacheKey}`);
+    logger.debug(`Cache hit for ${cacheKey}`, { service: 'exchangeRateHistoryService' });
     return cached;
   }
 
   // 依序嘗試 URL
   for (const url of urls) {
     try {
-      logger.debug('exchangeRateHistoryService', `Fetching from ${url}`);
+      logger.debug(`Fetching from ${url}`, { service: 'exchangeRateHistoryService' });
       const response = await fetch(url, {
         method: 'GET',
         headers: { Accept: 'application/json' },
@@ -115,7 +115,10 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
       });
 
       if (!response.ok) {
-        logger.warn('exchangeRateHistoryService', `HTTP ${response.status} from ${url}`);
+        logger.warn(`HTTP ${response.status} from ${url}`, {
+          service: 'exchangeRateHistoryService',
+          statusCode: response.status,
+        });
         continue;
       }
 
@@ -124,13 +127,13 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
       // 存入快取
       saveToCache(cacheKey, data);
 
-      logger.info('exchangeRateHistoryService', `Successfully fetched from ${url}`);
+      logger.info(`Successfully fetched from ${url}`, { service: 'exchangeRateHistoryService' });
       return data as T;
     } catch (error) {
-      logger.warn(
-        'exchangeRateHistoryService',
-        `Failed to fetch from ${url}: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      logger.warn(`Failed to fetch from ${url}`, {
+        service: 'exchangeRateHistoryService',
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -147,12 +150,15 @@ export async function fetchLatestRates(): Promise<ExchangeRateData> {
       `${CACHE_KEY_PREFIX}-latest`,
     );
 
-    logger.info('exchangeRateHistoryService', `Latest rates fetched: ${data.updateTime}`);
+    logger.info(`Latest rates fetched: ${data.updateTime}`, {
+      service: 'exchangeRateHistoryService',
+    });
     return data;
   } catch (error) {
     logger.error(
-      'exchangeRateHistoryService',
-      `Failed to fetch latest rates: ${error instanceof Error ? error.message : String(error)}`,
+      'Failed to fetch latest rates',
+      error instanceof Error ? error : new Error(String(error)),
+      { service: 'exchangeRateHistoryService' },
     );
     throw error;
   }
@@ -170,12 +176,15 @@ export async function fetchHistoricalRates(date: Date): Promise<ExchangeRateData
       `${CACHE_KEY_PREFIX}-${dateStr}`,
     );
 
-    logger.info('exchangeRateHistoryService', `Historical rates fetched for ${dateStr}`);
+    logger.info(`Historical rates fetched for ${dateStr}`, {
+      service: 'exchangeRateHistoryService',
+    });
     return data;
   } catch (error) {
     logger.error(
-      'exchangeRateHistoryService',
-      `Failed to fetch historical rates for ${dateStr}: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to fetch historical rates for ${dateStr}`,
+      error instanceof Error ? error : new Error(String(error)),
+      { service: 'exchangeRateHistoryService' },
     );
     throw error;
   }
@@ -188,7 +197,9 @@ export async function fetchHistoricalRatesRange(days: number = 30): Promise<Hist
   const results: HistoricalRateData[] = [];
   const today = new Date();
 
-  logger.info('exchangeRateHistoryService', `Fetching ${days} days of historical rates`);
+  logger.info(`Fetching ${days} days of historical rates`, {
+    service: 'exchangeRateHistoryService',
+  });
 
   for (let i = 0; i < days; i++) {
     const date = new Date(today);
@@ -202,11 +213,17 @@ export async function fetchHistoricalRatesRange(days: number = 30): Promise<Hist
       });
     } catch (error) {
       // 歷史資料可能不存在，記錄但不中斷
-      logger.warn('exchangeRateHistoryService', `No historical data for ${formatDate(date)}`);
+      logger.warn(`No historical data for ${formatDate(date)}`, {
+        service: 'exchangeRateHistoryService',
+      });
     }
   }
 
-  logger.info('exchangeRateHistoryService', `Fetched ${results.length}/${days} historical records`);
+  logger.info(`Fetched ${results.length}/${days} historical records`, {
+    service: 'exchangeRateHistoryService',
+    fetched: results.length,
+    requested: days,
+  });
   return results;
 }
 
@@ -215,5 +232,5 @@ export async function fetchHistoricalRatesRange(days: number = 30): Promise<Hist
  */
 export function clearCache(): void {
   cache.clear();
-  logger.info('exchangeRateHistoryService', 'Cache cleared');
+  logger.info('Cache cleared', { service: 'exchangeRateHistoryService' });
 }
