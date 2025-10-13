@@ -1,0 +1,219 @@
+/**
+ * 匯率歷史資料服務
+ *
+ * 功能：
+ * - 讀取最新匯率（latest.json）
+ * - 讀取歷史匯率（history/YYYY-MM-DD.json）
+ * - 提供最多 30 天的歷史資料
+ * - 支援未來趨勢圖功能
+ *
+ * CDN 來源：
+ * - Latest: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
+ * - History: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/YYYY-MM-DD.json
+ *
+ * @author GitHub Actions Bot
+ * @created 2025-10-13T22:59:32+08:00
+ */
+
+import { logger } from '../utils/logger';
+import type { CurrencyCode } from '../features/ratewise/types';
+
+/**
+ * 匯率資料結構
+ */
+export interface ExchangeRateData {
+  updateTime: string;
+  source: string;
+  rates: Record<CurrencyCode, number | null>;
+}
+
+/**
+ * 歷史匯率資料結構
+ */
+export interface HistoricalRateData {
+  date: string;
+  data: ExchangeRateData;
+}
+
+/**
+ * CDN URLs（使用 data 分支）
+ */
+const CDN_URLS = {
+  latest: [
+    'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
+    'https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json',
+  ],
+  history: (date: string) => [
+    `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/${date}.json`,
+    `https://raw.githubusercontent.com/haotool/app/data/public/rates/history/${date}.json`,
+  ],
+};
+
+/**
+ * 快取配置
+ */
+const CACHE_KEY_PREFIX = 'exchange-rates';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘
+
+/**
+ * 記憶體快取
+ */
+const cache = new Map<string, { data: unknown; timestamp: number }>();
+
+/**
+ * 格式化日期為 YYYY-MM-DD
+ */
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * 從快取中取得資料
+ */
+function getFromCache<T>(key: string): T | null {
+  const cached = cache.get(key);
+  if (!cached) return null;
+
+  const now = Date.now();
+  if (now - cached.timestamp > CACHE_DURATION) {
+    cache.delete(key);
+    return null;
+  }
+
+  return cached.data as T;
+}
+
+/**
+ * 將資料存入快取
+ */
+function saveToCache<T>(key: string, data: T): void {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+/**
+ * 從 URL 列表依序嘗試獲取資料
+ */
+async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T> {
+  // 先檢查快取
+  const cached = getFromCache<T>(cacheKey);
+  if (cached) {
+    logger.debug('exchangeRateHistoryService', `Cache hit for ${cacheKey}`);
+    return cached;
+  }
+
+  // 依序嘗試 URL
+  for (const url of urls) {
+    try {
+      logger.debug('exchangeRateHistoryService', `Fetching from ${url}`);
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        cache: 'no-cache',
+      });
+
+      if (!response.ok) {
+        logger.warn('exchangeRateHistoryService', `HTTP ${response.status} from ${url}`);
+        continue;
+      }
+
+      const data = await response.json();
+
+      // 存入快取
+      saveToCache(cacheKey, data);
+
+      logger.info('exchangeRateHistoryService', `Successfully fetched from ${url}`);
+      return data as T;
+    } catch (error) {
+      logger.warn(
+        'exchangeRateHistoryService',
+        `Failed to fetch from ${url}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  throw new Error(`Failed to fetch data from all URLs: ${urls.join(', ')}`);
+}
+
+/**
+ * 獲取最新匯率
+ */
+export async function fetchLatestRates(): Promise<ExchangeRateData> {
+  try {
+    const data = await fetchWithFallback<ExchangeRateData>(
+      CDN_URLS.latest,
+      `${CACHE_KEY_PREFIX}-latest`,
+    );
+
+    logger.info('exchangeRateHistoryService', `Latest rates fetched: ${data.updateTime}`);
+    return data;
+  } catch (error) {
+    logger.error(
+      'exchangeRateHistoryService',
+      `Failed to fetch latest rates: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    throw error;
+  }
+}
+
+/**
+ * 獲取指定日期的歷史匯率
+ */
+export async function fetchHistoricalRates(date: Date): Promise<ExchangeRateData> {
+  const dateStr = formatDate(date);
+
+  try {
+    const data = await fetchWithFallback<ExchangeRateData>(
+      CDN_URLS.history(dateStr),
+      `${CACHE_KEY_PREFIX}-${dateStr}`,
+    );
+
+    logger.info('exchangeRateHistoryService', `Historical rates fetched for ${dateStr}`);
+    return data;
+  } catch (error) {
+    logger.error(
+      'exchangeRateHistoryService',
+      `Failed to fetch historical rates for ${dateStr}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    throw error;
+  }
+}
+
+/**
+ * 獲取過去 N 天的歷史匯率
+ */
+export async function fetchHistoricalRatesRange(days: number = 30): Promise<HistoricalRateData[]> {
+  const results: HistoricalRateData[] = [];
+  const today = new Date();
+
+  logger.info('exchangeRateHistoryService', `Fetching ${days} days of historical rates`);
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+
+    try {
+      const data = await fetchHistoricalRates(date);
+      results.push({
+        date: formatDate(date),
+        data,
+      });
+    } catch (error) {
+      // 歷史資料可能不存在，記錄但不中斷
+      logger.warn('exchangeRateHistoryService', `No historical data for ${formatDate(date)}`);
+    }
+  }
+
+  logger.info('exchangeRateHistoryService', `Fetched ${results.length}/${days} historical records`);
+  return results;
+}
+
+/**
+ * 清除快取
+ */
+export function clearCache(): void {
+  cache.clear();
+  logger.info('exchangeRateHistoryService', 'Cache cleared');
+}
