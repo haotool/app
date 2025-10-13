@@ -183,6 +183,40 @@ feat(converter): 新增多幣別即時換算功能
 Closes #123
 ```
 
+### 原子化提交原則
+
+每個 commit 必須遵循以下原則：
+
+1. **單一職責**: 一個 commit 只解決一個問題或實現一個功能
+2. **完整性**: 每個 commit 都應該是可編譯、可測試的完整狀態
+3. **可回溯性**: 每個 commit 都應該能獨立回滾而不影響其他功能
+4. **專業描述**: 使用清晰、專業的語言描述變更內容
+
+**好的範例**:
+
+```bash
+fix(types): 修正 useCurrencyConverter 的 TypeScript 類型定義
+
+- 更新 exchangeRates 類型為 Record<string, number | null>
+- 增強 getRate 函數的 null 檢查邏輯
+- 遵循 TypeScript 官方最佳實踐
+
+Fixes #12
+```
+
+**不好的範例**:
+
+```bash
+# ❌ 過於簡略
+fix: 修bug
+
+# ❌ 包含多個不相關的變更
+feat: 新增功能並修復bug還有更新文檔
+
+# ❌ 非專業描述
+update: 改了一些東西
+```
+
 ### PR 檢查清單
 
 - [ ] 需求連結 (Issue #)
