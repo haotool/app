@@ -162,9 +162,31 @@ function hasRateChanges(newData) {
     const oldRatesStr = JSON.stringify(oldData.rates);
     const newRatesStr = JSON.stringify(newData.rates);
 
-    return oldRatesStr !== newRatesStr;
+    const hasChanges = oldRatesStr !== newRatesStr;
+
+    if (hasChanges) {
+      console.log('🔄 Rate changes detected:');
+      // 找出變化的貨幣
+      const changedCurrencies = [];
+      for (const currency in newData.rates) {
+        if (oldData.rates[currency] !== newData.rates[currency]) {
+          changedCurrencies.push(
+            `  ${currency}: ${oldData.rates[currency]} → ${newData.rates[currency]}`,
+          );
+        }
+      }
+      if (changedCurrencies.length > 0) {
+        console.log(changedCurrencies.join('\n'));
+      }
+    } else {
+      console.log('📊 Rates unchanged since last update');
+      console.log(`   Last update: ${oldData.updateTime}`);
+    }
+
+    return hasChanges;
   } catch (error) {
     // 檔案不存在或無法讀取，視為有變化
+    console.log('📝 No previous data found, will create new file');
     return true;
   }
 }
@@ -175,18 +197,27 @@ function hasRateChanges(newData) {
 async function main() {
   console.log('🚀 Taiwan Bank Exchange Rate Updater');
   console.log('=====================================');
+  console.log(`⏰ Run Time: ${new Date().toISOString()}`);
+  console.log(`📍 Timezone: Asia/Taipei (UTC+8)`);
+  console.log('');
 
   try {
     // 抓取匯率
+    console.log('📡 Fetching data from Taiwan Bank...');
     const ratesData = await fetchTaiwanBankRates();
 
     // 檢查是否有變化
+    console.log('🔍 Checking for rate changes...');
     const hasChanges = hasRateChanges(ratesData);
 
     if (!hasChanges) {
       console.log('ℹ️  No rate changes detected, skipping update');
+      console.log('📊 Current rates are still valid');
       return;
     }
+
+    console.log('✨ Rate changes detected!');
+    console.log('');
 
     // 確保目錄存在
     mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -194,17 +225,43 @@ async function main() {
     // 寫入檔案
     writeFileSync(OUTPUT_FILE, JSON.stringify(ratesData, null, 2), 'utf8');
 
-    console.log('✅ Rate changes detected and saved');
+    console.log('✅ Successfully saved new rates');
+    console.log('=====================================');
     console.log(`📁 Output: ${OUTPUT_FILE}`);
     console.log(`📊 Currencies: ${Object.keys(ratesData.rates).length}`);
-    console.log(`⏰ Updated: ${ratesData.updateTime}`);
+    console.log(`⏰ Taiwan Bank Time: ${ratesData.updateTime}`);
+    console.log(`🌐 UTC Timestamp: ${ratesData.timestamp}`);
     console.log('');
-    console.log('Sample rates:');
-    console.log(`  USD: ${ratesData.rates.USD} TWD`);
-    console.log(`  EUR: ${ratesData.rates.EUR} TWD`);
-    console.log(`  JPY: ${ratesData.rates.JPY} TWD`);
+    console.log('💱 Sample Rates (1 TWD = X Foreign Currency):');
+    console.log(`  💵 USD: ${ratesData.rates.USD} (美金)`);
+    console.log(`  💶 EUR: ${ratesData.rates.EUR} (歐元)`);
+    console.log(`  💴 JPY: ${ratesData.rates.JPY} (日圓)`);
+    console.log(`  💴 CNY: ${ratesData.rates.CNY} (人民幣)`);
+    console.log('');
+    console.log('📝 Detailed Rate Info:');
+    console.log(
+      `  USD Cash: Buy ${ratesData.details.USD.cash.buy}, Sell ${ratesData.details.USD.cash.sell}`,
+    );
+    console.log(
+      `  USD Spot: Buy ${ratesData.details.USD.spot.buy}, Sell ${ratesData.details.USD.spot.sell}`,
+    );
+    console.log('');
+    console.log('🎯 Next Steps:');
+    console.log('  1. GitHub Actions will commit this file');
+    console.log('  2. Changes will be pushed to main branch');
+    console.log('  3. jsdelivr CDN will sync (may take 1-5 minutes)');
+    console.log('  4. Zeabur app will fetch updated rates');
   } catch (error) {
-    console.error('❌ Update failed:', error.message);
+    console.error('=====================================');
+    console.error('❌ Update Failed');
+    console.error('=====================================');
+    console.error(`Error: ${error.message}`);
+    console.error(`Stack: ${error.stack}`);
+    console.error('');
+    console.error('💡 Troubleshooting:');
+    console.error('  1. Check Taiwan Bank API status: https://rate.bot.com.tw/xrt/flcsv/0/day');
+    console.error('  2. Verify network connectivity');
+    console.error('  3. Check CSV format changes');
     process.exit(1);
   }
 }

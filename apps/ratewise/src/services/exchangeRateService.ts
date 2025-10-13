@@ -21,10 +21,19 @@ interface ExchangeRateData {
 }
 
 // CDN URLs (優先使用 jsdelivr，fallback 到 GitHub)
+// jsdelivr 快取說明：
+// - 預設快取 7 天
+// - 可用 ?timestamp 查詢參數破壞快取
+// - 或使用 /gh/user/repo@commit-hash/ 指定特定版本
 const CDN_URLS = [
-  // jsdelivr CDN (主要)
+  // jsdelivr CDN (主要) - 加入時間戳記破壞快取
+  () => {
+    const timestamp = Math.floor(Date.now() / (5 * 60 * 1000)); // 每 5 分鐘更新一次
+    return `https://cdn.jsdelivr.net/gh/haotool/app@main/public/rates/latest.json?t=${timestamp}`;
+  },
+  // jsdelivr CDN (無快取) - 作為第二選擇
   'https://cdn.jsdelivr.net/gh/haotool/app@main/public/rates/latest.json',
-  // GitHub raw (備援)
+  // GitHub raw (備援) - 永遠是最新的
   'https://raw.githubusercontent.com/haotool/app/main/public/rates/latest.json',
 ];
 
@@ -78,11 +87,21 @@ function saveToCache(data: ExchangeRateData): void {
  */
 async function fetchFromCDN(): Promise<ExchangeRateData> {
   const errors: Error[] = [];
+  const startTime = Date.now();
 
-  for (const url of CDN_URLS) {
+  for (let i = 0; i < CDN_URLS.length; i++) {
+    const urlOrFn = CDN_URLS[i];
+    const url = typeof urlOrFn === 'function' ? urlOrFn() : urlOrFn;
+
     try {
+      console.log(`🔄 [${i + 1}/${CDN_URLS.length}] Trying: ${url.substring(0, 80)}...`);
+
       const response = await fetch(url, {
         cache: 'no-cache', // 確保拿到最新資料
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
       });
 
       if (!response.ok) {
@@ -96,16 +115,23 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
         throw new Error('Invalid data format');
       }
 
-      console.log(`✅ Fetched rates from: ${url}`);
+      const elapsed = Date.now() - startTime;
+      console.log(`✅ Fetched rates from CDN #${i + 1} in ${elapsed}ms`);
+      console.log(`📊 Data timestamp: ${data.updateTime}`);
+      console.log(`💱 Currencies loaded: ${Object.keys(data.rates).length}`);
+
       return data;
     } catch (error) {
+      const elapsed = Date.now() - startTime;
       errors.push(error instanceof Error ? error : new Error(String(error)));
-      console.warn(`❌ Failed to fetch from ${url}:`, error);
+      console.warn(`❌ CDN #${i + 1} failed after ${elapsed}ms:`, error);
       continue;
     }
   }
 
-  throw new Error(`Failed to fetch from all sources:\n${errors.map((e) => e.message).join('\n')}`);
+  throw new Error(
+    `Failed to fetch from all ${CDN_URLS.length} sources:\n${errors.map((e, i) => `  ${i + 1}. ${e.message}`).join('\n')}`,
+  );
 }
 
 /**
