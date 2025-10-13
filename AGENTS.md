@@ -335,11 +335,13 @@ update: 改了一些東西
 
 - 修改 Docker → 更新 `DEPLOYMENT.md`、`Dockerfile` 註解
 - 修改 Nginx → 更新 `nginx.conf` 註解、`DEPLOYMENT.md`
+
 - 修改環境變數 → 更新 `.env.example`、`SETUP.md`
 
 **依賴變更**：
 
 - 升級 major 版本 → 更新 `DEPENDENCY_UPGRADE_PLAN.md`
+
 - 新增套件 → 更新 `CITATIONS.md`（如為核心技術）
 - 移除套件 → 清理所有相關文檔引用
 
