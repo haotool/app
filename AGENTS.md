@@ -149,7 +149,69 @@ browser_take_screenshot --filename "docker-health-check.png"
 
 ---
 
-## 3. 提交規範
+## 3. 開發哲學與設計原則
+
+### KISS 原則 - Keep It Simple, Stupid
+
+遵循 Linus Torvalds 的核心哲學，確保程式碼簡潔且易於維護：
+
+**核心準則**：
+
+1. **"好品味" (Good Taste)**
+   - 消除特殊情況永遠優於增加條件判斷
+   - 重新設計資料結構以移除 if/else 分支
+   - 10 行帶判斷的程式碼 → 4 行無條件分支
+
+2. **實用主義優先**
+   - 解決實際問題，而非假想的威脅
+   - 拒絕過度工程化與"理論完美"的方案
+   - 程式碼為現實服務，不是為論文服務
+
+3. **簡潔執念**
+   - 函數必須短小精悍，只做一件事
+   - 超過 3 層縮排就是警訊，需要重構
+   - 複雜性是萬惡之源
+
+**Linus 三問**（開始任何開發前）：
+
+```text
+1. "這是個真問題還是臆想出來的？" - 拒絕過度設計
+2. "有更簡單的方法嗎？" - 永遠尋找最簡方案
+3. "會破壞什麼嗎？" - 向後相容是鐵律
+```
+
+**實踐範例**：
+
+```typescript
+// ❌ 糟糕：特殊情況處理
+function deleteNode(list, node) {
+  if (node === list.head) {
+    list.head = node.next;
+  } else {
+    let prev = list.head;
+    while (prev.next !== node) {
+      prev = prev.next;
+    }
+    prev.next = node.next;
+  }
+}
+
+// ✅ 好品味：消除特殊情況
+function deleteNode(indirect, node) {
+  *indirect = node.next;
+}
+```
+
+### 最小可行方案 (MVP First)
+
+- ✅ 先實作核心功能，驗證可行性
+- ✅ 避免提前優化與複雜架構
+- ✅ 確保每個 commit 都是可編譯、可測試的完整狀態
+- ❌ 禁止在 MVP 階段引入微服務、複雜設計模式
+
+---
+
+## 4. 提交規範
 
 ### Commit Message Format
 
@@ -228,7 +290,7 @@ update: 改了一些東西
 
 ---
 
-## 4. 安全守則
+## 5. 安全守則
 
 ### 分層防禦原則
 
@@ -249,29 +311,37 @@ update: 改了一些東西
 
 ---
 
-## 5. 文檔結構
+## 6. 文檔結構
 
-### 產出文檔 (docs/dev/)
+### 核心指南 (專案根目錄)
 
-- ✅ `CITATIONS.md` - 權威來源清單 (17 筆)
-- ✅ `TECH_DEBT_AUDIT.md` - 技術債總報告
-- ✅ `REFACTOR_PLAN.md` - 重構路線圖
-- ✅ `DEPENDENCY_UPGRADE_PLAN.md` - 依賴升級策略
-- ✅ `ARCHITECTURE_BASELINE.md` - 架構藍圖
-- ✅ `CHECKLISTS.md` - 品質檢查清單
+- `AGENTS.md` (本文件) - Agent 操作守則與工具說明
+- `LINUS_GUIDE.md` - 開發哲學與程式碼品質準則
+- `README.md` - 專案說明與快速開始
 
-### 安全文檔 (docs/)
+### 部署與設定 (docs/)
 
-- ✅ `SECURITY_BASELINE.md` - 安全基線與責任界面
+- `SETUP.md` - MVP 快速流程與環境設定
+- `DEPLOYMENT.md` - Docker 部署指南
+- `ZEABUR_DEPLOYMENT.md` - Zeabur 平台部署指南
+- `SECURITY_BASELINE.md` - 安全基線與責任界面
 
-### 專案根文檔
+### 功能文檔 (docs/)
 
-- `AGENTS.md` (本文件) - Agent 操作指南
-- `LINUS_GUIDE.md` - 技術債掃描規範
+- `HISTORICAL_RATES_IMPLEMENTATION.md` - 歷史匯率功能實施指南
+- `QUICK_START_HISTORICAL_RATES.md` - 歷史匯率快速開始
+- `EXCHANGE_RATE_UPDATE_STRATEGIES.md` - 匯率更新策略比較
+
+### 開發參考 (docs/dev/)
+
+- `CITATIONS.md` - 權威來源清單與技術引用
+- `DEPENDENCY_UPGRADE_PLAN.md` - 依賴升級策略
+- `ARCHITECTURE_BASELINE.md` - 架構藍圖與分層準則
+- `CHECKLISTS.md` - 品質檢查清單
 
 ---
 
-## 6. 常用指令速查
+## 7. 常用指令速查
 
 ### 開發
 
@@ -309,37 +379,35 @@ docker logs <container-id>
 
 ---
 
-## 7. 待辦事項 (根據 TECH_DEBT_AUDIT.md)
+## 8. 當前任務狀態
 
-### P0 (阻擋上線)
+### ✅ 已完成 (Phase 0 - MVP)
 
-- [ ] 補齊測試 (目標覆蓋率 ≥80%)
-- [ ] 建立 CI/CD Pipeline
-- [ ] 補齊觀測性 (Logger + Error Boundary)
-- [ ] 建立 Dockerfile
+- ✅ 測試覆蓋率 ≥80% (目前 89.8%)
+- ✅ CI/CD Pipeline (GitHub Actions)
+- ✅ 觀測性 (Logger + Error Boundary)
+- ✅ Docker 化部署
+- ✅ 元件拆分 (RateWise.tsx 已模組化)
+- ✅ 工程工具鏈 (Husky + lint-staged)
+- ✅ TypeScript 嚴格化
+- ✅ 安全標頭配置
+- ✅ 歷史匯率功能 (30 天資料追蹤)
 
-### P1 (高優先級)
+### 🔄 進行中 (Phase 1 - 優化)
 
-- [ ] 拆分 RateWise.tsx (586行 → 5個元件)
-- [ ] 補齊工程工具鏈 (Husky + lint-staged)
-- [ ] 建立 E2E 測試 (Puppeteer)
+- [ ] E2E 測試自動化 (Puppeteer)
+- [ ] Vite Build 最佳化 (vendor chunk 分離)
+- [ ] 依賴升級 (Vite 7、Tailwind 4)
 
-### P2 (中優先級)
+### 📋 規劃中 (Phase 2 - 進階功能)
 
-- [ ] TypeScript 嚴格化
-- [ ] Vite Build 最佳化
-- [ ] 依賴鎖版策略
-- [ ] 安全標頭 (Cloudflare 設定)
-
-### P3 (低優先級)
-
-- [ ] 補齊文檔 (README, CONTRIBUTING)
-- [ ] PostCSS ESM 化
-- [ ] Tailwind 字型 fallback
+- [ ] 匯率趨勢圖 (使用歷史資料)
+- [ ] Service Worker 快取
+- [ ] PWA 支援
 
 ---
 
-## 8. 故障排除
+## 9. 故障排除
 
 ### 建置失敗
 
@@ -385,7 +453,7 @@ docker logs <container-id>
 
 ---
 
-## 9. 品質門檻
+## 10. 品質門檻
 
 每個 PR 必須通過:
 
@@ -397,7 +465,7 @@ docker logs <container-id>
 
 ---
 
-## 10. 聯絡與支援
+## 11. 聯絡與支援
 
 - **問題回報**: 建立 Issue 並標記適當 label
 - **安全問題**: 標記 `security` 並通知維運
