@@ -1,4 +1,4 @@
-import { Grid, Maximize2 } from 'lucide-react';
+import { Grid, Maximize2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
@@ -9,7 +9,13 @@ import { ConversionHistory } from './components/ConversionHistory';
 
 const RateWise = () => {
   // Load real-time exchange rates
-  const { rates: exchangeRates, isLoading: ratesLoading, lastUpdate, source } = useExchangeRates();
+  const {
+    rates: exchangeRates,
+    isLoading: ratesLoading,
+    error: ratesError,
+    lastUpdate,
+    source,
+  } = useExchangeRates();
 
   const {
     mode,
@@ -35,6 +41,28 @@ const RateWise = () => {
     addToHistory,
     generateTrends,
   } = useCurrencyConverter({ exchangeRates });
+
+  // Error state UI
+  if (ratesError) {
+    return (
+      <div className="min-h-screen bg-red-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <AlertCircle className="text-red-500 mx-auto" size={48} />
+          <h1 className="text-2xl font-bold text-gray-800 mt-4">匯率載入失敗</h1>
+          <p className="text-gray-600 mt-2 mb-6">
+            抱歉，我們無法從網路獲取最新的匯率資料。請檢查您的網路連線，然後再試一次。
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl shadow-lg transition"
+          >
+            <RefreshCw size={18} />
+            重新整理頁面
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const modeToggleButton = (
     <div className="inline-flex bg-gray-100 rounded-xl p-1">
