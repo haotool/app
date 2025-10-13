@@ -1,0 +1,220 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  quality-check:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint check
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format
+
+      - name: TypeScript check
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test --coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./apps/ratewise/coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Build
+        run: pnpm build:ratewise
+
+      - name: Check bundle size
+        run: |
+          BUILD_SIZE=$(du -sb apps/ratewise/dist | cut -f1)
+          echo "Build size: $(numfmt --to=iec-i --suffix=B $BUILD_SIZE)"
+
+          # 警告如果超過 500KB
+          MAX_SIZE=512000
+          if [ $BUILD_SIZE -gt $MAX_SIZE ]; then
+            echo "::warning::Build size ($BUILD_SIZE bytes) exceeds recommended limit ($MAX_SIZE bytes)"
+          fi
+
+      - name: Comment PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const buildSize = fs.statSync('apps/ratewise/dist').size;
+            const coverage = JSON.parse(fs.readFileSync('apps/ratewise/coverage/coverage-summary.json'));
+
+            const comment = `## 📊 PR 檢查結果
+
+            ### ✅ 品質檢查
+            - Lint: ${{ job.status == 'success' ? '✅ 通過' : '❌ 失敗' }}
+            - Format: ${{ job.status == 'success' ? '✅ 通過' : '❌ 失敗' }}
+            - TypeScript: ${{ job.status == 'success' ? '✅ 通過' : '❌ 失敗' }}
+            - Tests: ${{ job.status == 'success' ? '✅ 通過' : '❌ 失敗' }}
+            - Build: ${{ job.status == 'success' ? '✅ 成功' : '❌ 失敗' }}
+
+            ### 📦 建置資訊
+            - **Bundle Size**: ${(buildSize / 1024).toFixed(2)} KB
+            - **Test Coverage**: ${coverage.total.lines.pct}%
+
+            ---
+            🤖 _Automated by GitHub Actions_
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  security-check:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Security audit
+        run: |
+          pnpm audit --audit-level=high || true
+          echo "::notice::Security audit completed. Check results above."
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+
+  docker-check:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: ratewise:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          docker run -d --name ratewise-test -p 8080:8080 ratewise:test
+          sleep 5
+
+          # 檢查容器是否運行
+          docker ps | grep ratewise-test || exit 1
+
+          # 檢查健康狀態
+          docker inspect --format='{{.State.Health.Status}}' ratewise-test || echo "No health check"
+
+          # 清理
+          docker stop ratewise-test
+          docker rm ratewise-test
+
+  pr-title-check:
+    name: PR Title Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check PR title format
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            主題必須以小寫開頭，並使用繁體中文或英文描述。
+            範例：
+            - feat(converter): 新增多幣別轉換功能
+            - fix(logger): 修正 null 檢查邏輯

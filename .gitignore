@@ -1,26 +1,56 @@
-# dependencies
+# Dependencies
 node_modules/
+.pnpm-store/
 
-# build output
+# Build output
 dist/
 build/
+*.tsbuildinfo
 
-# logs
+# Test coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# editor
+# Editor directories and files
 .DS_Store
 *.swp
+*.swo
+*~
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.sublime-project
 
-# env
+# Environment variables
 .env
 .env.*
 !.env.example
+
+# Deployment
 .vercel
 .next
-coverage/
+
+# OS
+Thumbs.db
+
+# Temporary files
+*.tmp
+.cache/
+.temp/
+
+# Docker
+.dockerignore
+
+# CI/CD artifacts
+*.zip
+*.tar.gz

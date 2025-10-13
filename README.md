@@ -212,16 +212,23 @@ docs: update deployment guide with Docker instructions
 
 ### 使用者文檔
 
+- [快速開始](./docs/SETUP.md) - MVP 快速流程與環境設定
 - [部署指南](./docs/DEPLOYMENT.md) - Docker 部署、健康檢查、故障排除
+- [Zeabur 部署](./docs/ZEABUR_DEPLOYMENT.md) - Zeabur 平台部署完整指南
 - [安全基線](./docs/SECURITY_BASELINE.md) - 安全策略與最佳實踐
+
+### 功能文檔
+
+- [歷史匯率實作](./docs/HISTORICAL_RATES_IMPLEMENTATION.md) - 30 天歷史資料追蹤
+- [匯率更新策略](./docs/EXCHANGE_RATE_UPDATE_STRATEGIES.md) - 自動化更新方案比較
+- [歷史匯率快速開始](./docs/QUICK_START_HISTORICAL_RATES.md) - 快速部署指南
 
 ### 開發者文檔
 
-- [技術債審查報告](./docs/dev/TECH_DEBT_AUDIT.md) - 程式碼品質分析
-- [重構路線圖](./docs/dev/REFACTOR_PLAN.md) - 已完成的重構階段
 - [架構藍圖](./docs/dev/ARCHITECTURE_BASELINE.md) - 系統架構設計
 - [權威來源引用](./docs/dev/CITATIONS.md) - 17 個官方文檔引用
 - [檢查清單](./docs/dev/CHECKLISTS.md) - 品質門檻清單
+- [依賴升級計畫](./docs/dev/DEPENDENCY_UPGRADE_PLAN.md) - 技術棧升級策略
 
 ### Agent 指南
 
