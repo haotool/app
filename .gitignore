@@ -54,3 +54,6 @@ Thumbs.db
 # CI/CD artifacts
 *.zip
 *.tar.gz
+
+# Data files (managed in data branch only)
+public/rates/
