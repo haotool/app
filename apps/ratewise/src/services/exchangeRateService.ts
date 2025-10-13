@@ -52,15 +52,26 @@ interface CachedData {
 function getFromCache(): ExchangeRateData | null {
   try {
     const cached = localStorage.getItem(CACHE_KEY);
-    if (!cached) return null;
-
-    const { data, timestamp }: CachedData = JSON.parse(cached);
-
-    // 檢查快取是否過期
-    if (Date.now() - timestamp > CACHE_DURATION) {
+    if (!cached) {
+      console.log('📭 No cache found');
       return null;
     }
 
+    const { data, timestamp }: CachedData = JSON.parse(cached);
+    const ageMs = Date.now() - timestamp;
+    const ageMinutes = Math.floor(ageMs / (60 * 1000));
+
+    // 檢查快取是否過期
+    if (ageMs > CACHE_DURATION) {
+      console.log(
+        `⏰ Cache expired: ${ageMinutes} minutes old (limit: ${CACHE_DURATION / 60000} minutes)`,
+      );
+      // 清除過期快取
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+
+    console.log(`✅ Cache valid: ${ageMinutes} minutes old, updateTime: ${data.updateTime}`);
     return data;
   } catch (error) {
     console.warn('Failed to read from cache:', error);
@@ -134,30 +145,30 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
  * 獲取匯率資料（帶快取和 fallback）
  */
 export async function getExchangeRates(): Promise<ExchangeRateData> {
-  // 1. 嘗試從快取讀取
+  console.log('🔄 Getting exchange rates...');
+
+  // 1. 嘗試從快取讀取（getFromCache 會自動檢查並清除過期快取）
   const cached = getFromCache();
   if (cached) {
-    console.log('✅ Using cached exchange rates', {
-      cacheTime: cached.updateTime,
-      ageMinutes: Math.floor((Date.now() - new Date(cached.timestamp).getTime()) / (60 * 1000)),
-    });
     return cached;
   }
 
-  // 2. 從 CDN 獲取新資料
+  // 2. 快取無效或過期，從 CDN 獲取新資料
+  console.log('🌐 Fetching fresh data from CDN...');
   try {
     const data = await fetchFromCDN();
     saveToCache(data);
+    console.log('💾 Fresh data saved to cache');
     return data;
   } catch (error) {
-    console.error('Failed to fetch exchange rates:', error);
+    console.error('❌ Failed to fetch exchange rates:', error);
 
-    // 3. 如果完全失敗，嘗試使用過期的快取
+    // 3. 如果 CDN 完全失敗，嘗試使用任何可用的快取（即使過期）
     try {
       const staleCache = localStorage.getItem(CACHE_KEY);
       if (staleCache) {
         const { data } = JSON.parse(staleCache) as CachedData;
-        console.warn('⚠️ Using stale cache due to fetch error', {
+        console.warn('⚠️ Using stale cache as fallback due to fetch error', {
           cacheTime: data.updateTime,
         });
         return data;
