@@ -27,18 +27,19 @@ interface ExchangeRateData {
 // - 或使用 /gh/user/repo@commit-hash/ 指定特定版本
 const CDN_URLS = [
   // jsdelivr CDN (主要) - 加入時間戳記破壞快取
+  // 每 1 分鐘更新一次，確保資料新鮮度
   () => {
-    const timestamp = Math.floor(Date.now() / (5 * 60 * 1000)); // 每 5 分鐘更新一次
+    const timestamp = Math.floor(Date.now() / (1 * 60 * 1000)); // 每 1 分鐘更新一次
     return `https://cdn.jsdelivr.net/gh/haotool/app@main/public/rates/latest.json?t=${timestamp}`;
   },
-  // jsdelivr CDN (無快取) - 作為第二選擇
-  'https://cdn.jsdelivr.net/gh/haotool/app@main/public/rates/latest.json',
-  // GitHub raw (備援) - 永遠是最新的
+  // GitHub raw (備援) - 永遠是最新的，無快取
   'https://raw.githubusercontent.com/haotool/app/main/public/rates/latest.json',
+  // jsdelivr CDN (無快取參數) - 作為最後選擇
+  'https://cdn.jsdelivr.net/gh/haotool/app@main/public/rates/latest.json',
 ];
 
 const CACHE_KEY = 'exchangeRates';
-const CACHE_DURATION = 30 * 60 * 1000; // 30 分鐘
+const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘（減少快取時間以確保資料新鮮度）
 
 interface CachedData {
   data: ExchangeRateData;
@@ -136,7 +137,10 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
   // 1. 嘗試從快取讀取
   const cached = getFromCache();
   if (cached) {
-    console.log('✅ Using cached exchange rates');
+    console.log('✅ Using cached exchange rates', {
+      cacheTime: cached.updateTime,
+      ageMinutes: Math.floor((Date.now() - new Date(cached.timestamp).getTime()) / (60 * 1000)),
+    });
     return cached;
   }
 
@@ -153,7 +157,9 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
       const staleCache = localStorage.getItem(CACHE_KEY);
       if (staleCache) {
         const { data } = JSON.parse(staleCache) as CachedData;
-        console.warn('⚠️ Using stale cache due to fetch error');
+        console.warn('⚠️ Using stale cache due to fetch error', {
+          cacheTime: data.updateTime,
+        });
         return data;
       }
     } catch {
