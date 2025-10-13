@@ -107,13 +107,11 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     writeJSON(STORAGE_KEYS.favorites, favorites);
   }, [favorites]);
 
-  // Helper to get rate (use real rates if available, otherwise fallback)
+  // Helper to get rate. It relies on the exchangeRates prop.
+  // If a rate is missing, it defaults to 1 to avoid breaking calculations.
   const getRate = useCallback(
     (code: CurrencyCode): number => {
-      if (exchangeRates && exchangeRates[code]) {
-        return exchangeRates[code];
-      }
-      return CURRENCY_DEFINITIONS[code].rate;
+      return (exchangeRates && exchangeRates[code]) || 1;
     },
     [exchangeRates],
   );

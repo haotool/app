@@ -42,30 +42,12 @@ export function useExchangeRates() {
 
         if (!isMounted) return;
 
-        // 轉換匯率格式
-        const rates = Object.fromEntries(
-          Object.entries(CURRENCY_DEFINITIONS).map(([code, def]) => [code, def.rate]),
-        ) as Record<CurrencyCode, number>;
-
-        // TWD 基準
-        rates.TWD = 1;
-
-        // 合併真實匯率
-        Object.keys(CURRENCY_DEFINITIONS).forEach((code) => {
-          const currencyCode = code as CurrencyCode;
-          if (currencyCode === 'TWD') return;
-
-          if (data.rates[code]) {
-            // 使用真實匯率
-            rates[currencyCode] = data.rates[code];
-          } else {
-            // 使用預設值（fallback）
-            console.warn(`Using fallback rate for ${code}`);
-          }
-        });
+        // The fetched data is the source of truth.
+        // Add TWD as the base currency.
+        const newRates = { ...data.rates, TWD: 1 };
 
         setState({
-          rates,
+          rates: newRates as Record<CurrencyCode, number>,
           isLoading: false,
           error: null,
           lastUpdate: data.updateTime,
