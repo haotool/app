@@ -97,13 +97,7 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
     try {
       console.log(`🔄 [${i + 1}/${CDN_URLS.length}] Trying: ${url.substring(0, 80)}...`);
 
-      const response = await fetch(url, {
-        cache: 'no-cache', // 確保拿到最新資料
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          Pragma: 'no-cache',
-        },
-      });
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
