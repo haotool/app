@@ -21,20 +21,13 @@ interface ExchangeRateData {
 }
 
 // CDN URLs (優先使用 jsdelivr，fallback 到 GitHub)
-// jsdelivr 快取說明：
-// - 預設快取 7 天
-// - 可用 ?timestamp 查詢參數破壞快取
-// - 或使用 /gh/user/repo@commit-hash/ 指定特定版本
+// 策略：
+// 1. GitHub raw (主要) - 永遠是最新的，無快取延遲
+// 2. jsdelivr CDN (備援) - 有快取但速度快
 const CDN_URLS = [
-  // jsdelivr CDN (主要) - 使用 data 分支，加入時間戳記破壞快取
-  // 每 1 分鐘更新一次，確保資料新鮮度
-  () => {
-    const timestamp = Math.floor(Date.now() / (1 * 60 * 1000)); // 每 1 分鐘更新一次
-    return `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json?t=${timestamp}`;
-  },
-  // GitHub raw (備援) - 使用 data 分支，永遠是最新的，無快取
+  // GitHub raw (主要) - 使用 data 分支，無快取，永遠最新
   'https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json',
-  // jsdelivr CDN (無快取參數) - 作為最後選擇
+  // jsdelivr CDN (備援) - 使用 data 分支，有 CDN 加速但可能有快取延遲
   'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
 ];
 
@@ -102,9 +95,8 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
   const startTime = Date.now();
 
   for (let i = 0; i < CDN_URLS.length; i++) {
-    const urlOrFn = CDN_URLS[i];
-    if (!urlOrFn) continue;
-    const url = typeof urlOrFn === 'function' ? urlOrFn() : urlOrFn;
+    const url = CDN_URLS[i];
+    if (!url) continue;
 
     try {
       console.log(`🔄 [${i + 1}/${CDN_URLS.length}] Trying: ${url.substring(0, 80)}...`);

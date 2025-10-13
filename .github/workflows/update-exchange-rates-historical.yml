@@ -16,6 +16,9 @@
 
 name: Update Exchange Rates with History
 
+# 郵件通知策略：只在失敗時通知，成功不發郵件
+# GitHub Settings > Notifications > Actions > "Send notifications for failed workflows only"
+
 on:
   schedule:
     # 每 30 分鐘執行一次

@@ -1,5 +1,8 @@
 name: CI
 
+# 郵件通知策略：只在失敗時通知
+# GitHub Settings > Notifications > Actions > "Send notifications for failed workflows only"
+
 on:
   push:
     branches: [main]
