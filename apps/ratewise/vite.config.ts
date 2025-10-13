@@ -17,10 +17,10 @@ export default defineConfig({
     port: 4173,
   },
   build: {
-    // Target modern browsers for better optimization
-    target: 'es2022',
-    // Use esbuild for faster minification (default)
-    minify: 'esbuild',
+    // Vite 7 預設為 'baseline-widely-available'，更符合現代瀏覽器基準
+    target: 'baseline-widely-available',
+    // Vite 7 預設使用 Oxc minifier，效能更好
+    // minify: 'oxc', // 預設值，可省略
     // Enable CSS code splitting for better caching
     cssCodeSplit: true,
     // Increase chunk size warning limit
