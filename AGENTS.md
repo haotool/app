@@ -311,7 +311,47 @@ update: 改了一些東西
 
 ---
 
-## 6. 文檔結構
+## 6. 文檔結構與維護規範
+
+> **⚠️ 強制規則**：任何影響以下文檔的變更，必須同步更新對應文檔。違反此規則的 PR 不得合併。
+
+### 文檔維護檢查清單
+
+每次變更前，必須檢查是否影響以下文檔並同步更新：
+
+**流程變更**：
+
+- 修改 CI/CD → 更新 `AGENTS.md`、`DEPLOYMENT.md`
+- 新增 MCP 工具 → 更新 `AGENTS.md` § 1
+- 修改 Git workflow → 更新 `AGENTS.md` § 4、§ 3
+
+**架構變更**：
+
+- 新增/移除目錄 → 更新 `ARCHITECTURE_BASELINE.md`
+- 修改分層邏輯 → 更新 `ARCHITECTURE_BASELINE.md`、`LINUS_GUIDE.md`
+- 新增服務 → 更新本節文檔結構清單
+
+**部署變更**：
+
+- 修改 Docker → 更新 `DEPLOYMENT.md`、`Dockerfile` 註解
+- 修改 Nginx → 更新 `nginx.conf` 註解、`DEPLOYMENT.md`
+- 修改環境變數 → 更新 `.env.example`、`SETUP.md`
+
+**依賴變更**：
+
+- 升級 major 版本 → 更新 `DEPENDENCY_UPGRADE_PLAN.md`
+- 新增套件 → 更新 `CITATIONS.md`（如為核心技術）
+- 移除套件 → 清理所有相關文檔引用
+
+**安全變更**：
+
+- 修改安全標頭 → 更新 `SECURITY_BASELINE.md`、`nginx.conf`
+- 新增安全檢查 → 更新 `AGENTS.md` § 5
+
+**功能變更**：
+
+- 新增功能 → 建立對應文檔於 `docs/`
+- 完成 TODO → 更新 `AGENTS.md` § 8、`CHECKLISTS.md`
 
 ### 核心指南 (專案根目錄)
 
@@ -338,6 +378,24 @@ update: 改了一些東西
 - `DEPENDENCY_UPGRADE_PLAN.md` - 依賴升級策略
 - `ARCHITECTURE_BASELINE.md` - 架構藍圖與分層準則
 - `CHECKLISTS.md` - 品質檢查清單
+
+### 文檔品質要求
+
+**所有文檔必須符合**：
+
+1. **時間戳記**：建立與更新時間（使用 `time.now` 工具）
+2. **版本標記**：重大變更需更新版本號
+3. **狀態標記**：✅ 已完成、🔄 進行中、📋 規劃中、❌ 已廢棄
+4. **引用來源**：技術決策需標註 `[context7:source:timestamp]` 或 `[ref: #n]`
+5. **範例程式碼**：必須可執行或明確標註 `(未實作)` / `(範例)`
+6. **向後相容**：不得刪除仍在使用的指令或流程，僅能標註 `(已廢棄)`
+
+**文檔清理原則**：
+
+- ❌ 禁止保留臨時報告（`*_REPORT.md`、`*_SUMMARY.md`）
+- ❌ 禁止保留已完成的計畫文檔（`*_PLAN.md` 完成後應移除或歸檔）
+- ✅ 保留操作指南、技術決策、最佳實踐
+- ✅ 保留快速開始、故障排除、檢查清單
 
 ---
 
