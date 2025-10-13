@@ -26,16 +26,16 @@ interface ExchangeRateData {
 // - 可用 ?timestamp 查詢參數破壞快取
 // - 或使用 /gh/user/repo@commit-hash/ 指定特定版本
 const CDN_URLS = [
-  // jsdelivr CDN (主要) - 加入時間戳記破壞快取
+  // jsdelivr CDN (主要) - 使用 data 分支，加入時間戳記破壞快取
   // 每 1 分鐘更新一次，確保資料新鮮度
   () => {
     const timestamp = Math.floor(Date.now() / (1 * 60 * 1000)); // 每 1 分鐘更新一次
-    return `https://cdn.jsdelivr.net/gh/haotool/app@main/public/rates/latest.json?t=${timestamp}`;
+    return `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json?t=${timestamp}`;
   },
-  // GitHub raw (備援) - 永遠是最新的，無快取
-  'https://raw.githubusercontent.com/haotool/app/main/public/rates/latest.json',
+  // GitHub raw (備援) - 使用 data 分支，永遠是最新的，無快取
+  'https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json',
   // jsdelivr CDN (無快取參數) - 作為最後選擇
-  'https://cdn.jsdelivr.net/gh/haotool/app@main/public/rates/latest.json',
+  'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
 ];
 
 const CACHE_KEY = 'exchangeRates';
