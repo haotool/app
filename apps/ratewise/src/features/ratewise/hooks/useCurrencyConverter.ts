@@ -108,10 +108,13 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   }, [favorites]);
 
   // Helper to get rate. It relies on the exchangeRates prop.
-  // If a rate is missing, it defaults to 1 to avoid breaking calculations.
+  // Returns null if the rate is not available or invalid.
   const getRate = useCallback(
-    (code: CurrencyCode): number => {
-      return (exchangeRates && exchangeRates[code]) || 1;
+    (code: CurrencyCode): number | null => {
+      if (exchangeRates && typeof exchangeRates[code] === 'number') {
+        return exchangeRates[code];
+      }
+      return null;
     },
     [exchangeRates],
   );
@@ -134,14 +137,19 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
             return acc;
           }
 
-          if (!hasValue) {
+          if (!hasValue || sourceRate === null) {
             acc[code] = '';
             return acc;
           }
 
           const targetRate = getRate(code);
+          if (targetRate === null) {
+            acc[code] = 'N/A'; // Mark as Not Available
+            return acc;
+          }
+
           const converted = (amount * sourceRate) / targetRate;
-          acc[code] = converted ? converted.toFixed(2) : '0.00';
+          acc[code] = converted ? converted.toFixed(4) : '0.0000';
           return acc;
         },
         { ...prev },
@@ -152,26 +160,30 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
 
   const calculateFromAmount = useCallback(() => {
     const amount = parseFloat(fromAmount);
-    if (Number.isNaN(amount)) {
+    const fromRate = getRate(fromCurrency);
+    const toRate = getRate(toCurrency);
+
+    if (Number.isNaN(amount) || fromRate === null || toRate === null) {
       setToAmount('');
       return;
     }
-    const fromRate = getRate(fromCurrency);
-    const toRate = getRate(toCurrency);
+
     const converted = (amount * fromRate) / toRate;
-    setToAmount(converted ? converted.toFixed(2) : '0.00');
+    setToAmount(converted ? converted.toFixed(4) : '0.0000');
   }, [fromAmount, fromCurrency, toCurrency, getRate]);
 
   const calculateToAmount = useCallback(() => {
     const amount = parseFloat(toAmount);
-    if (Number.isNaN(amount)) {
+    const fromRate = getRate(fromCurrency);
+    const toRate = getRate(toCurrency);
+
+    if (Number.isNaN(amount) || fromRate === null || toRate === null) {
       setFromAmount('');
       return;
     }
-    const fromRate = getRate(fromCurrency);
-    const toRate = getRate(toCurrency);
+
     const converted = (amount * toRate) / fromRate;
-    setFromAmount(converted ? converted.toFixed(2) : '0.00');
+    setFromAmount(converted ? converted.toFixed(4) : '0.0000');
   }, [toAmount, fromCurrency, toCurrency, getRate]);
 
   const generateTrends = useCallback(() => {

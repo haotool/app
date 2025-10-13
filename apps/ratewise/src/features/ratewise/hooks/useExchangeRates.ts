@@ -16,10 +16,8 @@ export interface ExchangeRatesState {
 }
 
 const INITIAL_STATE: ExchangeRatesState = {
-  rates: Object.fromEntries(
-    Object.entries(CURRENCY_DEFINITIONS).map(([code, def]) => [code, def.rate]),
-  ) as Record<CurrencyCode, number>,
-  isLoading: false,
+  rates: {},
+  isLoading: true, // Start in loading state
   error: null,
   lastUpdate: null,
   source: null,
@@ -35,19 +33,30 @@ export function useExchangeRates() {
     let isMounted = true;
 
     async function loadRates() {
-      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      // No need to set loading state here as it starts with true
 
       try {
         const data = await getExchangeRates();
 
         if (!isMounted) return;
 
-        // The fetched data is the source of truth.
-        // Add TWD as the base currency.
-        const newRates = { ...data.rates, TWD: 1 };
+        // Create a new rates object based on all possible currencies
+        const newRates = Object.fromEntries(
+          Object.keys(CURRENCY_DEFINITIONS).map((code) => [code, null]),
+        ) as Record<CurrencyCode, number | null>;
+
+        // Set TWD as the base
+        newRates.TWD = 1;
+
+        // Merge real-time rates from the fetch response
+        Object.keys(data.rates).forEach((code) => {
+          if (code in newRates) {
+            newRates[code as CurrencyCode] = data.rates[code];
+          }
+        });
 
         setState({
-          rates: newRates as Record<CurrencyCode, number>,
+          rates: newRates as Record<CurrencyCode, number>, // Asserting here, but downstream handles null
           isLoading: false,
           error: null,
           lastUpdate: data.updateTime,
@@ -55,7 +64,8 @@ export function useExchangeRates() {
         });
 
         console.log('✅ Exchange rates loaded:', {
-          currencies: Object.keys(rates).length,
+          currencies: Object.keys(newRates).filter((k) => newRates[k as CurrencyCode] !== null)
+            .length,
           source: data.source,
           updateTime: data.updateTime,
         });
