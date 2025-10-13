@@ -56,7 +56,7 @@ function getFromCache(): ExchangeRateData | null {
       return null;
     }
 
-    const { data, timestamp }: CachedData = JSON.parse(cached);
+    const { data, timestamp } = JSON.parse(cached) as CachedData;
     const ageMs = Date.now() - timestamp;
     const ageMinutes = Math.floor(ageMs / (60 * 1000));
 
@@ -113,7 +113,7 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data: ExchangeRateData = await response.json();
+      const data = (await response.json()) as ExchangeRateData;
 
       // 驗證資料格式
       if (!data.rates || typeof data.rates !== 'object') {

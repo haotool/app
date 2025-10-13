@@ -1,4 +1,4 @@
-import { CURRENCY_DEFINITIONS } from './constants';
+import { type CURRENCY_DEFINITIONS } from './constants';
 
 export type CurrencyCode = keyof typeof CURRENCY_DEFINITIONS;
 export type CurrencyMeta = (typeof CURRENCY_DEFINITIONS)[CurrencyCode];
