@@ -11,7 +11,7 @@ logger.info('Application starting', {
   timestamp: new Date().toISOString(),
 });
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,

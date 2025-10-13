@@ -122,7 +122,7 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
         continue;
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as ExchangeRateData;
 
       // 存入快取
       saveToCache(cacheKey, data);
@@ -193,7 +193,7 @@ export async function fetchHistoricalRates(date: Date): Promise<ExchangeRateData
 /**
  * 獲取過去 N 天的歷史匯率
  */
-export async function fetchHistoricalRatesRange(days: number = 30): Promise<HistoricalRateData[]> {
+export async function fetchHistoricalRatesRange(days = 30): Promise<HistoricalRateData[]> {
   const results: HistoricalRateData[] = [];
   const today = new Date();
 
@@ -211,7 +211,7 @@ export async function fetchHistoricalRatesRange(days: number = 30): Promise<Hist
         date: formatDate(date),
         data,
       });
-    } catch (error) {
+    } catch {
       // 歷史資料可能不存在，記錄但不中斷
       logger.warn(`No historical data for ${formatDate(date)}`, {
         service: 'exchangeRateHistoryService',

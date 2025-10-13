@@ -67,7 +67,7 @@ export function useExchangeRates() {
       }
     }
 
-    loadRates();
+    void loadRates();
 
     return () => {
       isMounted = false;
