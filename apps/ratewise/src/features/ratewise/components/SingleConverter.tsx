@@ -1,6 +1,9 @@
+import { useState, useEffect } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode } from '../types';
+import { MiniTrendChart, type MiniTrendDataPoint } from './MiniTrendChart';
+import { fetchHistoricalRatesRange } from '../../../services/exchangeRateHistoryService';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -33,10 +36,45 @@ export const SingleConverter = ({
   onSwapCurrencies,
   onAddToHistory,
 }: SingleConverterProps) => {
+  const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
+  const [_loadingTrend, setLoadingTrend] = useState(false);
+
   const fromRate = exchangeRates[fromCurrency] ?? 1;
   const toRate = exchangeRates[toCurrency] ?? 1;
   const exchangeRate = fromRate / toRate;
   const reverseRate = toRate / fromRate;
+
+  // Load historical data for trend chart
+  useEffect(() => {
+    async function loadTrend() {
+      try {
+        setLoadingTrend(true);
+        const historicalData = await fetchHistoricalRatesRange(7);
+
+        const data: MiniTrendDataPoint[] = historicalData
+          .map((item) => {
+            const rate = item.data.rates[toCurrency];
+            if (!rate) return null;
+
+            return {
+              date: item.date.slice(5), // MM-DD
+              rate,
+            };
+          })
+          .filter((item): item is MiniTrendDataPoint => item !== null)
+          .reverse();
+
+        setTrendData(data);
+      } catch {
+        setTrendData([]);
+      } finally {
+        setLoadingTrend(false);
+      }
+    }
+
+    void loadTrend();
+  }, [toCurrency]);
+
   return (
     <>
       <div className="mb-4">
@@ -75,24 +113,30 @@ export const SingleConverter = ({
       </div>
 
       <div className="flex flex-col items-center mb-4">
-        <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-3 mb-3 w-full">
-          <div className="text-center">
-            <div className="text-xs text-gray-600 mb-0.5">即時匯率</div>
-            <div className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="relative bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl overflow-hidden mb-3 w-full">
+          {/* 匯率資訊 - 上半部 1:1 */}
+          <div className="text-center p-4 flex flex-col justify-center h-24">
+            <div className="text-xs text-gray-600 mb-1">即時匯率</div>
+            <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-1">
               1 {fromCurrency} = {exchangeRate.toFixed(4)} {toCurrency}
             </div>
-            <div className="text-xs text-gray-500 mt-0.5">
+            <div className="text-xs text-gray-700 font-medium">
               1 {toCurrency} = {reverseRate.toFixed(4)} {fromCurrency}
             </div>
+          </div>
+
+          {/* 滿版趨勢圖 - 下半部 1:1 */}
+          <div className="w-full h-24">
+            <MiniTrendChart data={trendData} />
           </div>
         </div>
         <button
           onClick={onSwapCurrencies}
-          className="p-2.5 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-full shadow-lg transition transform hover:scale-110"
+          className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 hover:rotate-180 active:scale-95"
           aria-label="交換幣別"
           title="交換幣別"
         >
-          <RefreshCw size={20} />
+          <RefreshCw size={20} className="transition-transform duration-300" />
         </button>
       </div>
 
