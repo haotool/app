@@ -151,8 +151,8 @@ const RateWise = () => {
           </div>
         </div>
 
-        <footer className="mt-12 -mx-3 md:-mx-8 bg-gradient-to-br from-blue-500/90 via-indigo-500/90 to-purple-500/90">
-          <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-10">
+        <footer className="mt-12 -mx-3 md:-mx-8 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+          <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
             {/* 數據來源區塊 */}
             {!ratesLoading && lastUpdate && (
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 mb-6">
