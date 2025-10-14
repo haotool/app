@@ -110,7 +110,7 @@ const RateWise = () => {
 
         <div className="grid md:grid-cols-3 gap-4 md:gap-6">
           <div className="md:col-span-2">
-            <div className="bg-white rounded-3xl shadow-xl p-6 md:h-auto h-[calc(100vh-180px)] flex flex-col">
+            <div className="bg-white rounded-3xl shadow-xl p-6">
               <div className="flex justify-center mb-4">{modeToggleButton}</div>
 
               {mode === 'single' ? (
