@@ -44,10 +44,10 @@ export function MiniTrendChart({ data: _data, className = '' }: MiniTrendChartPr
     const maxIndex = rates.indexOf(max);
 
     // 計算24小時變化
-    const currentRate = rates[rates.length - 1];
-    const rate24hAgo = rates[0];
+    const currentRate = rates[rates.length - 1] ?? 0;
+    const rate24hAgo = rates[0] ?? 0;
     const change24h = currentRate - rate24hAgo;
-    const changePercent = (change24h / rate24hAgo) * 100;
+    const changePercent = rate24hAgo !== 0 ? (change24h / rate24hAgo) * 100 : 0;
 
     return { min, max, minIndex, maxIndex, change24h, changePercent };
   }, [displayData]);

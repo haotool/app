@@ -162,6 +162,21 @@ export const SingleConverter = ({
             placeholder="0.00"
           />
         </div>
+        <div className="flex gap-2 mt-2 flex-wrap">
+          {QUICK_AMOUNTS.map((amount) => (
+            <button
+              key={amount}
+              onClick={() => {
+                const convertedValue = (amount * fromRate) / toRate;
+                const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
+                onToAmountChange(convertedValue.toFixed(decimals));
+              }}
+              className="px-3 py-1 bg-purple-100 hover:bg-purple-200 rounded-lg text-sm font-medium transition"
+            >
+              {amount.toLocaleString()}
+            </button>
+          ))}
+        </div>
       </div>
 
       <button
