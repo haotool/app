@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { CURRENCY_DEFINITIONS, QUICK_AMOUNTS } from '../constants';
+import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode } from '../types';
 import { MiniTrendChart, type MiniTrendDataPoint } from './MiniTrendChart';
 import { fetchHistoricalRatesRange } from '../../../services/exchangeRateHistoryService';
@@ -43,6 +43,9 @@ export const SingleConverter = ({
   const toRate = exchangeRates[toCurrency] ?? 1;
   const exchangeRate = fromRate / toRate;
   const reverseRate = toRate / fromRate;
+
+  // 獲取當前目標貨幣的快速金額選項
+  const quickAmounts = CURRENCY_QUICK_AMOUNTS[toCurrency] || CURRENCY_QUICK_AMOUNTS.TWD;
 
   // Load historical data for trend chart
   useEffect(() => {
@@ -99,8 +102,8 @@ export const SingleConverter = ({
             placeholder="0.00"
           />
         </div>
-        <div className="flex gap-2 mt-2">
-          {QUICK_AMOUNTS.map((amount) => (
+        <div className="flex gap-2 mt-2 flex-wrap">
+          {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
             <button
               key={amount}
               onClick={() => onQuickAmount(amount)}
@@ -163,13 +166,13 @@ export const SingleConverter = ({
           />
         </div>
         <div className="flex gap-2 mt-2 flex-wrap">
-          {QUICK_AMOUNTS.map((amount) => (
+          {quickAmounts.map((amount) => (
             <button
               key={amount}
               onClick={() => {
-                const convertedValue = (amount * fromRate) / toRate;
+                // 直接設定目標貨幣金額，不需要轉換
                 const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
-                onToAmountChange(convertedValue.toFixed(decimals));
+                onToAmountChange(amount.toFixed(decimals));
               }}
               className="px-3 py-1 bg-purple-100 hover:bg-purple-200 rounded-lg text-sm font-medium transition"
             >

@@ -1,5 +1,5 @@
 import { Star } from 'lucide-react';
-import { CURRENCY_DEFINITIONS, QUICK_AMOUNTS } from '../constants';
+import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, MultiAmountsState } from '../types';
 
 interface MultiConverterProps {
@@ -27,16 +27,18 @@ export const MultiConverter = ({
         <label className="block text-sm font-medium text-gray-700 mb-2">
           即時多幣別換算 <span className="text-xs text-gray-500">（點擊 ⭐ 可加入常用）</span>
         </label>
-        <div className="flex gap-2 mb-3">
-          {QUICK_AMOUNTS.map((amount) => (
-            <button
-              key={amount}
-              onClick={() => onQuickAmount(amount)}
-              className="px-3 py-1 bg-gray-100 hover:bg-blue-100 rounded-lg text-sm font-medium transition"
-            >
-              {amount.toLocaleString()}
-            </button>
-          ))}
+        <div className="flex gap-2 mb-3 flex-wrap">
+          {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
+            (amount: number) => (
+              <button
+                key={amount}
+                onClick={() => onQuickAmount(amount)}
+                className="px-3 py-1 bg-gray-100 hover:bg-blue-100 rounded-lg text-sm font-medium transition"
+              >
+                {amount.toLocaleString()}
+              </button>
+            ),
+          )}
         </div>
       </div>
 
