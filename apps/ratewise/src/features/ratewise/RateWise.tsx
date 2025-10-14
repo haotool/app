@@ -96,16 +96,11 @@ const RateWise = () => {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-6">
           <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-1">
-            好工具匯率
+            匯率好工具
           </h1>
           <p className="text-sm text-gray-600">
             {ratesLoading ? '載入即時匯率中...' : '即時匯率換算 · 精準可靠'}
           </p>
-          {!ratesLoading && lastUpdate && (
-            <p className="text-xs text-gray-500 mt-1">
-              {source} · 更新時間: {lastUpdate}
-            </p>
-          )}
         </div>
 
         <div className="grid md:grid-cols-3 gap-4 md:gap-6">
@@ -156,9 +151,106 @@ const RateWise = () => {
           </div>
         </div>
 
-        <div className="mt-4 md:mt-8 text-center text-xs md:text-sm text-gray-500">
-          <p>匯率資料參考台灣銀行牌告匯率（本行賣出現金），實際交易請以銀行公告為準</p>
-        </div>
+        <footer className="mt-12 -mx-3 md:-mx-8 bg-gradient-to-br from-blue-500/90 via-indigo-500/90 to-purple-500/90">
+          <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-10">
+            {/* 數據來源區塊 */}
+            {!ratesLoading && lastUpdate && (
+              <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 mb-6">
+                <a
+                  href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
+                >
+                  <svg
+                    className="w-4 h-4 text-white group-hover:scale-110 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-sm font-medium text-white">{source}</span>
+                  <svg
+                    className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                </a>
+                <div className="flex items-center gap-2 text-xs text-white/80">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span>更新時間 {lastUpdate.split(' ')[1]}</span>
+                </div>
+              </div>
+            )}
+
+            {/* 免責聲明 */}
+            <div className="text-center mb-6">
+              <p className="text-xs md:text-sm text-white/90 leading-relaxed max-w-2xl mx-auto">
+                本服務匯率資料參考
+                <span className="font-semibold text-white mx-1">臺灣銀行牌告匯率</span>
+                （本行賣出現金）
+                <br className="block md:hidden" />
+                <span className="hidden md:inline"> · </span>
+                實際交易匯率以各銀行公告為準
+              </p>
+            </div>
+
+            {/* 分隔線 */}
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-white/30 to-transparent mb-6" />
+
+            {/* 版權與品牌 */}
+            <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 text-xs text-white/80">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
+                  <svg
+                    className="w-3 h-3 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                    />
+                  </svg>
+                </div>
+                <span className="font-semibold text-white">匯率好工具</span>
+              </div>
+              <span className="hidden md:block text-white/50">•</span>
+              <span>© {new Date().getFullYear()} All rights reserved</span>
+              <span className="hidden md:block text-white/50">•</span>
+              <span>僅供參考</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

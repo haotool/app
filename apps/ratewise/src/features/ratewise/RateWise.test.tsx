@@ -10,7 +10,7 @@ describe('RateWise Component', () => {
   describe('Basic Rendering', () => {
     it('renders main headline', () => {
       render(<RateWise />);
-      expect(screen.getByText('好工具匯率')).toBeInTheDocument();
+      expect(screen.getByText('匯率好工具')).toBeInTheDocument();
     });
 
     it('renders in single mode by default', () => {

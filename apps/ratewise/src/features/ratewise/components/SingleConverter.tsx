@@ -116,31 +116,69 @@ export const SingleConverter = ({
       </div>
 
       <div className="flex flex-col items-center mb-4">
-        <div className="relative bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl overflow-hidden mb-3 w-full">
-          {/* 匯率資訊 - 上半部 1:1 */}
-          <div className="text-center p-4 flex flex-col justify-center h-24">
-            <div className="text-xs text-gray-600 mb-1">即時匯率</div>
-            <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-1">
+        {/* 匯率卡片 - 懸停效果 */}
+        <div className="relative bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl overflow-hidden mb-3 w-full group cursor-pointer hover:shadow-xl transition-all duration-500">
+          {/* 光澤效果 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+          {/* 匯率資訊 - 上半部 */}
+          <div className="relative text-center py-5 px-4 flex flex-col justify-center transition-all duration-300 group-hover:scale-[1.02]">
+            <div className="text-xs text-gray-600 mb-1 flex items-center justify-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <span className="font-medium">即時匯率</span>
+            </div>
+            <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-1 transition-all duration-300 group-hover:scale-105">
               1 {fromCurrency} = {exchangeRate.toFixed(4)} {toCurrency}
             </div>
-            <div className="text-xs text-gray-700 font-medium">
+            <div className="text-xs text-gray-700 font-medium opacity-80 group-hover:opacity-100 transition-opacity">
               1 {toCurrency} = {reverseRate.toFixed(4)} {fromCurrency}
             </div>
           </div>
 
-          {/* 滿版趨勢圖 - 下半部 1:1 */}
-          <div className="w-full h-24">
-            <MiniTrendChart data={trendData} />
+          {/* 滿版趨勢圖 - 下半部 - 懸停放大 */}
+          <div className="relative w-full h-20 transition-all duration-500 group-hover:h-24 overflow-hidden">
+            <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
+              <MiniTrendChart data={trendData} />
+            </div>
+            {/* 互動提示 */}
+            <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-1 pointer-events-none">
+              <span className="text-[10px] font-medium text-gray-600">查看趨勢圖</span>
+            </div>
           </div>
         </div>
-        <button
-          onClick={onSwapCurrencies}
-          className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 hover:rotate-180 active:scale-95"
-          aria-label="交換幣別"
-          title="交換幣別"
-        >
-          <RefreshCw size={20} className="transition-transform duration-300" />
-        </button>
+
+        {/* 轉換按鈕 - 高級微互動 */}
+        <div className="relative group/swap">
+          {/* 外圍光環 */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 rounded-full opacity-0 group-hover/swap:opacity-30 blur-md transition-all duration-500 animate-pulse" />
+
+          {/* 按鈕本體 */}
+          <button
+            onClick={onSwapCurrencies}
+            className="relative p-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-full shadow-lg transition-all duration-500 transform hover:scale-110 active:scale-95 group-hover/swap:shadow-2xl"
+            aria-label="交換幣別"
+            title="交換幣別"
+          >
+            {/* 背景脈動效果 */}
+            <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover/swap:opacity-20 animate-ping" />
+
+            {/* 圖示 - 懸停旋轉 */}
+            <RefreshCw
+              size={20}
+              className="relative z-10 transition-all duration-500 group-hover/swap:rotate-180 group-active/swap:rotate-360"
+            />
+
+            {/* 點擊漣漪效果 */}
+            <span className="absolute inset-0 rounded-full bg-white opacity-0 group-active/swap:opacity-30 group-active/swap:animate-ping" />
+          </button>
+
+          {/* 懸停提示 */}
+          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
+            <span className="text-xs font-medium text-gray-600 whitespace-nowrap bg-white px-2 py-1 rounded-full shadow-md">
+              點擊交換
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="mb-4">
