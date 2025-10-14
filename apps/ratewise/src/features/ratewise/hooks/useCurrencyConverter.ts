@@ -151,7 +151,8 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
           }
 
           const converted = (amount * sourceRate) / targetRate;
-          acc[code] = converted ? converted.toFixed(4) : '0.0000';
+          const decimals = CURRENCY_DEFINITIONS[code].decimals;
+          acc[code] = converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0');
           return acc;
         },
         { ...prev },
@@ -171,7 +172,8 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     }
 
     const converted = (amount * fromRate) / toRate;
-    setToAmount(converted ? converted.toFixed(4) : '0.0000');
+    const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
+    setToAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
   }, [fromAmount, fromCurrency, toCurrency, getRate]);
 
   const calculateToAmount = useCallback(() => {
@@ -185,7 +187,8 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     }
 
     const converted = (amount * toRate) / fromRate;
-    setFromAmount(converted ? converted.toFixed(4) : '0.0000');
+    const decimals = CURRENCY_DEFINITIONS[fromCurrency].decimals;
+    setFromAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
   }, [toAmount, fromCurrency, toCurrency, getRate]);
 
   const generateTrends = useCallback(() => {
