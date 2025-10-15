@@ -37,13 +37,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
     CAD: 22.33,
     SGD: 23.99,
     CHF: 38.74,
-    NZD: 17.89,
-    THB: 1.0015,
-    PHP: 0.5944,
-    IDR: 0.00218,
     KRW: 0.02366,
-    VND: 0.00133,
-    MYR: 7.769,
     CNY: 4.372,
     HKD: 4.004,
   };
@@ -81,7 +75,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/14 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 31.025, EUR: 36.07 },
+            rates: { ...mockExchangeRates, USD: 31.025, EUR: 36.07 },
           },
         },
         {
@@ -89,7 +83,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/15 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 31.125, EUR: 36.15 },
+            rates: { ...mockExchangeRates, USD: 31.125, EUR: 36.15 },
           },
         },
         {
@@ -97,7 +91,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/16 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 31.245, EUR: 36.22 },
+            rates: { ...mockExchangeRates, USD: 31.245, EUR: 36.22 },
           },
         },
       ];
@@ -135,7 +129,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/14 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 31.025, EUR: 36.07 },
+            rates: { ...mockExchangeRates, USD: 31.025, EUR: 36.07 },
           },
         },
         {
@@ -143,7 +137,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/15 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 31.125, EUR: 36.15 },
+            rates: { ...mockExchangeRates, USD: 31.125, EUR: 36.15 },
           },
         },
       ];
@@ -191,7 +185,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/14 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 31.025, EUR: 36.07 },
+            rates: { ...mockExchangeRates, USD: 31.025, EUR: 36.07 },
           },
         },
         {
@@ -199,7 +193,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/15 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 31.125, EUR: 36.15 },
+            rates: { ...mockExchangeRates, USD: 31.125, EUR: 36.15 },
           },
         },
       ];
@@ -238,7 +232,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/14 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 31.025 },
+            rates: { ...mockExchangeRates, USD: 31.025 },
           },
         },
         {
@@ -246,7 +240,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/15 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 31.125 },
+            rates: { ...mockExchangeRates, USD: 31.125 },
           },
         },
       ];
@@ -286,7 +280,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/14 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 30.0, EUR: 36.0 },
+            rates: { ...mockExchangeRates, USD: 30.0, EUR: 36.0 },
           },
         },
         {
@@ -294,7 +288,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           data: {
             updateTime: '2025/10/15 23:39:59',
             source: 'Taiwan Bank',
-            rates: { TWD: 1, USD: 32.0, EUR: 38.0 },
+            rates: { ...mockExchangeRates, USD: 32.0, EUR: 38.0 },
           },
         },
       ];

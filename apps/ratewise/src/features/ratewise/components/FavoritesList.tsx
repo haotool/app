@@ -29,11 +29,9 @@ export const FavoritesList = ({ favorites, trend, exchangeRates }: FavoritesList
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {trend[code] === 'up' ? (
-                <TrendingUp className="text-green-500" size={16} />
-              ) : (
-                <TrendingDown className="text-red-500" size={16} />
-              )}
+              {trend[code] === 'up' && <TrendingUp className="text-green-500" size={16} />}
+              {trend[code] === 'down' && <TrendingDown className="text-red-500" size={16} />}
+              {/* 當 trend[code] 為 null 時，不顯示任何趨勢圖標 */}
               <span className="text-sm font-medium">{(exchangeRates[code] ?? 0).toFixed(4)}</span>
             </div>
           </div>
