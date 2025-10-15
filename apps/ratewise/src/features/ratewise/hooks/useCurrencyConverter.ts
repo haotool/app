@@ -12,7 +12,6 @@ import type {
   ConverterMode,
   CurrencyCode,
   MultiAmountsState,
-  TrendDirection,
   TrendState,
 } from '../types';
 import { readJSON, readString, writeJSON, writeString } from '../storage';
@@ -39,9 +38,10 @@ const createInitialMultiAmounts = (
   }, {} as MultiAmountsState);
 };
 
+// 初始化趨勢狀態為 null（等待真實數據）
 const seedTrends = (): TrendState =>
   CURRENCY_CODES.reduce<TrendState>((acc, code) => {
-    acc[code] = Math.random() > 0.5 ? 'up' : 'down';
+    acc[code] = null; // 使用 null 表示無數據，而非假數據
     return acc;
   }, {} as TrendState);
 
@@ -87,7 +87,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>(DEFAULT_BASE_CURRENCY);
 
   const [history, setHistory] = useState<ConversionHistoryEntry[]>([]);
-  const [trend, setTrend] = useState<TrendState>(() => seedTrends());
+  const [trend] = useState<TrendState>(() => seedTrends()); // 暫時不更新趨勢，等待歷史數據整合
   const [lastEdited, setLastEdited] = useState<AmountField>('from');
 
   // Persist to localStorage
@@ -191,14 +191,11 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     setFromAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
   }, [toAmount, fromCurrency, toCurrency, getRate]);
 
+  // 暫時停用假趨勢生成，等待歷史匯率數據整合
+  // TODO: 整合 exchangeRateHistoryService 提供真實趨勢數據
   const generateTrends = useCallback(() => {
-    setTrend(() =>
-      CURRENCY_CODES.reduce<TrendState>((acc, code) => {
-        const direction: TrendDirection = Math.random() > 0.5 ? 'up' : 'down';
-        acc[code] = direction;
-        return acc;
-      }, {} as TrendState),
-    );
+    // 不再生成假數據，保持 null 狀態
+    // 當歷史數據可用時，這裡應該從 exchangeRates 計算真實趨勢
   }, []);
 
   // Effects for calculations
