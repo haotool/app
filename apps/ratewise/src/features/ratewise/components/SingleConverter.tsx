@@ -160,10 +160,10 @@ export const SingleConverter = ({
               <span className="font-medium">即時匯率</span>
             </div>
             <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-2 transition-all duration-300 group-hover:scale-105">
-              1 {toCurrency} = {reverseRate.toFixed(4)} {fromCurrency}
+              1 {fromCurrency} = {exchangeRate.toFixed(4)} {toCurrency}
             </div>
             <div className="text-sm text-gray-600 font-medium opacity-75 group-hover:opacity-90 transition-opacity">
-              1 {fromCurrency} = {exchangeRate.toFixed(4)} {toCurrency}
+              1 {toCurrency} = {reverseRate.toFixed(4)} {fromCurrency}
             </div>
           </div>
 

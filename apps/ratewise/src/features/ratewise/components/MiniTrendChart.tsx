@@ -184,34 +184,39 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       {/* Lightweight Charts 趨勢圖 */}
       <div ref={chartContainerRef} className="w-full h-full" />
 
-      {/* Hover Tooltip */}
+      {/* Hover Tooltip - 現代化小巧設計 */}
       <AnimatePresence>
         {tooltipData && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute pointer-events-none z-10"
+            initial={{ opacity: 0, scale: 0.8, y: 5 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 5 }}
+            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+            className="fixed pointer-events-none"
             style={{
               left: `${tooltipData.x}px`,
-              top: `${tooltipData.y - 60}px`,
+              top: `${tooltipData.y - 50}px`,
+              zIndex: 9999, // 確保不被遮蔽
+              transform: 'translateX(-50%)', // 居中對齊
             }}
           >
-            <div className="bg-gradient-to-br from-purple-600 to-blue-500 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-medium">
-              <div className="flex flex-col gap-1">
-                <div className="text-purple-100">{tooltipData.date}</div>
-                <div className="text-white font-bold">{tooltipData.rate.toFixed(4)}</div>
+            {/* 現代化小巧 Tooltip */}
+            <div className="relative">
+              <div className="bg-slate-900/95 backdrop-blur-sm text-white px-2.5 py-1.5 rounded-md shadow-xl border border-slate-700/50">
+                <div className="flex items-center gap-2 text-[10px] leading-tight">
+                  <span className="text-slate-400 font-medium">{tooltipData.date}</span>
+                  <span className="text-white font-bold">{tooltipData.rate.toFixed(2)}</span>
+                </div>
               </div>
-              {/* 小三角形指示器 */}
+              {/* 小三角形指示器 - 更小巧 */}
               <div
-                className="absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-full"
+                className="absolute left-1/2 -bottom-1 transform -translate-x-1/2"
                 style={{
                   width: 0,
                   height: 0,
-                  borderLeft: '6px solid transparent',
-                  borderRight: '6px solid transparent',
-                  borderTop: '6px solid rgb(59, 130, 246)',
+                  borderLeft: '4px solid transparent',
+                  borderRight: '4px solid transparent',
+                  borderTop: '4px solid rgba(15, 23, 42, 0.95)',
                 }}
               />
             </div>
