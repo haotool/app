@@ -16,21 +16,10 @@ export interface MiniTrendChartProps {
  * 使用 lightweight-charts 專業金融圖表庫
  * 標注最高和最低點
  */
-export function MiniTrendChart({ data: _data, className = '' }: MiniTrendChartProps) {
+export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
-  // 🎭 DEMO MODE: 使用假數據展示完整趨勢圖效果
-  const mockData: MiniTrendDataPoint[] = [
-    { date: '2025-10-08', rate: 31.025 },
-    { date: '2025-10-09', rate: 31.125 },
-    { date: '2025-10-10', rate: 31.245 },
-    { date: '2025-10-11', rate: 31.185 },
-    { date: '2025-10-12', rate: 31.345 },
-    { date: '2025-10-13', rate: 31.425 },
-    { date: '2025-10-14', rate: 31.745 },
-  ];
-
-  const displayData = mockData; // 🎭 DEMO: 使用假數據
+  const displayData = data;
 
   const stats = useMemo(() => {
     if (displayData.length === 0) {
@@ -118,10 +107,10 @@ export function MiniTrendChart({ data: _data, className = '' }: MiniTrendChartPr
     };
   }, [displayData, stats.maxIndex, stats.minIndex]);
 
-  // 🎭 DEMO MODE: 強制顯示假數據趨勢圖
-  // if (displayData.length < 2) {
-  //   return null;
-  // }
+  // 數據不足時不顯示圖表
+  if (displayData.length < 2) {
+    return null;
+  }
 
   return (
     <div className={`w-full h-full ${className}`}>
