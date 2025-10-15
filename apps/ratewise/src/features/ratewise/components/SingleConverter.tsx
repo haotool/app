@@ -148,37 +148,37 @@ export const SingleConverter = ({
       </div>
 
       <div className="flex flex-col items-center mb-4">
-        {/* 匯率卡片 - 懸停效果 */}
-        <div className="relative bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl overflow-hidden mb-3 w-full group cursor-pointer hover:shadow-xl transition-all duration-500">
+        {/* 匯率卡片 - 懸停效果 - 移除 overflow-hidden 避免遮蔽 tooltip */}
+        <div className="relative bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl mb-3 w-full group cursor-pointer hover:shadow-xl transition-all duration-500">
           {/* 光澤效果 */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl" />
 
           {/* 匯率資訊 - 上半部 */}
-          <div className="relative text-center py-5 px-4 flex flex-col justify-center transition-all duration-300 group-hover:scale-[1.02]">
-            <div className="text-xs text-gray-600 mb-1 flex items-center justify-center gap-1.5">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <span className="font-medium">即時匯率</span>
+          <div className="relative text-center py-5 px-4 flex flex-col justify-center transition-all duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden">
+            <div className="text-xs text-slate-600 mb-1 flex items-center justify-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-semibold">即時匯率</span>
             </div>
             <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-2 transition-all duration-300 group-hover:scale-105">
-              1 {toCurrency} = {reverseRate.toFixed(4)} {fromCurrency}
-            </div>
-            <div className="text-sm text-gray-600 font-medium opacity-75 group-hover:opacity-90 transition-opacity">
               1 {fromCurrency} = {exchangeRate.toFixed(4)} {toCurrency}
+            </div>
+            <div className="text-sm text-slate-600 font-semibold opacity-80 group-hover:opacity-95 transition-opacity">
+              1 {toCurrency} = {reverseRate.toFixed(4)} {fromCurrency}
             </div>
           </div>
 
           {/* 滿版趨勢圖 - 下半部 - 懸停放大 + 進場動畫 */}
           <div
-            className={`relative w-full h-20 transition-all duration-500 group-hover:h-24 overflow-hidden ${
+            className={`relative w-full h-20 transition-all duration-500 group-hover:h-24 overflow-hidden rounded-b-xl ${
               showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
             <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
-              <MiniTrendChart data={trendData} />
+              <MiniTrendChart data={trendData} currencyCode={toCurrency} />
             </div>
             {/* 互動提示 */}
             <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-1 pointer-events-none">
-              <span className="text-[10px] font-medium text-gray-600">查看趨勢圖</span>
+              <span className="text-[10px] font-semibold text-slate-600">查看趨勢圖</span>
             </div>
           </div>
         </div>
