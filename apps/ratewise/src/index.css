@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 字體優化：使用 font-display: swap 避免 FOIT (Flash of Invisible Text) */
+@layer base {
+  @font-face {
+    font-family: 'Noto Sans TC';
+    font-display: swap;
+    /* 實際字體檔案由 Tailwind 或 CDN 提供 */
+  }
+}
+
 body {
   @apply bg-slate-50 antialiased text-slate-800;
 }

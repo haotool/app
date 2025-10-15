@@ -57,3 +57,12 @@ Thumbs.db
 
 # Data files (managed in data branch only)
 public/rates/
+
+# Playwright test results
+test-results/
+playwright-report/
+.playwright/
+
+# Lighthouse CI
+.lighthouseci/
+lighthouse-results/

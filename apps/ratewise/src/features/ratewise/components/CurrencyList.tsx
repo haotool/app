@@ -27,6 +27,8 @@ export const CurrencyList = ({
           onClick={onRefreshTrends}
           className="p-2 hover:bg-gray-100 rounded-lg transition"
           type="button"
+          aria-label="刷新趨勢數據"
+          title="刷新趨勢數據"
         >
           <RefreshCw size={16} className="text-gray-600" />
         </button>

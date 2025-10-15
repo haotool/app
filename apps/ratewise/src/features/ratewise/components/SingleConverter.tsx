@@ -110,6 +110,7 @@ export const SingleConverter = ({
             value={fromCurrency}
             onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
             className="absolute left-3 top-1/2 -translate-y-1/2 bg-gray-100 rounded-lg px-2 py-1.5 text-base font-semibold border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="選擇來源貨幣"
           >
             {CURRENCY_CODES.map((code) => (
               <option key={code} value={code}>
@@ -123,6 +124,7 @@ export const SingleConverter = ({
             onChange={(e) => onFromAmountChange(e.target.value)}
             className="w-full pl-32 pr-4 py-3 text-2xl font-bold border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
             placeholder="0.00"
+            aria-label={`轉換金額 (${fromCurrency})`}
           />
         </div>
         <div className="flex gap-2 mt-2 flex-wrap">
@@ -242,6 +244,7 @@ export const SingleConverter = ({
             value={toCurrency}
             onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
             className="absolute left-3 top-1/2 -translate-y-1/2 bg-gray-100 rounded-lg px-2 py-1.5 text-base font-semibold border-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+            aria-label="選擇目標貨幣"
           >
             {CURRENCY_CODES.map((code) => (
               <option key={code} value={code}>
@@ -255,6 +258,7 @@ export const SingleConverter = ({
             onChange={(e) => onToAmountChange(e.target.value)}
             className="w-full pl-32 pr-4 py-3 text-2xl font-bold border-2 border-purple-200 rounded-2xl bg-purple-50 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all duration-300"
             placeholder="0.00"
+            aria-label={`轉換結果 (${toCurrency})`}
           />
         </div>
         <div className="flex gap-2 mt-2 flex-wrap">

@@ -42,7 +42,12 @@ export const MultiConverter = ({
         </div>
       </div>
 
-      <div className="flex-grow overflow-y-auto space-y-2 pr-2">
+      <div
+        className="flex-grow overflow-y-auto space-y-2 pr-2"
+        tabIndex={0}
+        role="region"
+        aria-label="貨幣列表"
+      >
         {sortedCurrencies.map((code) => {
           const isFavorite = favorites.includes(code);
           return (
@@ -85,6 +90,7 @@ export const MultiConverter = ({
                       : 'border-transparent bg-white/50 focus:border-blue-400'
                   }`}
                   placeholder="0.00"
+                  aria-label={`${CURRENCY_DEFINITIONS[code].name} (${code}) 金額`}
                 />
                 <div className="text-xs text-right text-gray-500 mt-0.5">
                   匯率由台灣銀行即時資料計算
