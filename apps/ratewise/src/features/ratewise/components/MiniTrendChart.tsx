@@ -8,6 +8,8 @@ import {
   type ISeriesApi,
 } from 'lightweight-charts';
 import { motion, AnimatePresence } from 'motion/react';
+import { CURRENCY_DEFINITIONS } from '../constants';
+import type { CurrencyCode } from '../types';
 
 export interface MiniTrendDataPoint {
   date: string;
@@ -16,6 +18,7 @@ export interface MiniTrendDataPoint {
 
 export interface MiniTrendChartProps {
   data: MiniTrendDataPoint[];
+  currencyCode: CurrencyCode;
   className?: string;
 }
 
@@ -35,11 +38,14 @@ interface TooltipData {
  * - 數據 ≥ 2 天時統一延伸到最寬
  * - 現代化配色與微互動
  */
-export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
+export function MiniTrendChart({ data, currencyCode, className = '' }: MiniTrendChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
+
+  // 根據貨幣類型決定小數位數
+  const decimals = CURRENCY_DEFINITIONS[currencyCode].decimals;
 
   const displayData = data;
 
@@ -184,39 +190,43 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       {/* Lightweight Charts 趨勢圖 */}
       <div ref={chartContainerRef} className="w-full h-full" />
 
-      {/* Hover Tooltip - 現代化小巧設計 */}
+      {/* Hover Tooltip - 白底紫字現代化設計 */}
       <AnimatePresence>
         {tooltipData && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 5 }}
+            initial={{ opacity: 0, scale: 0.85, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 5 }}
-            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-            className="fixed pointer-events-none"
+            exit={{ opacity: 0, scale: 0.85, y: 8 }}
+            transition={{ duration: 0.18, ease: [0.34, 1.56, 0.64, 1] }}
+            className="pointer-events-none"
             style={{
+              position: 'fixed',
               left: `${tooltipData.x}px`,
-              top: `${tooltipData.y - 50}px`,
-              zIndex: 9999, // 確保不被遮蔽
-              transform: 'translateX(-50%)', // 居中對齊
+              top: `${tooltipData.y - 55}px`,
+              zIndex: 99999,
+              transform: 'translateX(-50%)',
             }}
           >
-            {/* 現代化小巧 Tooltip */}
+            {/* 白底紫字 Tooltip */}
             <div className="relative">
-              <div className="bg-slate-900/95 backdrop-blur-sm text-white px-2.5 py-1.5 rounded-md shadow-xl border border-slate-700/50">
-                <div className="flex items-center gap-2 text-[10px] leading-tight">
-                  <span className="text-slate-400 font-medium">{tooltipData.date}</span>
-                  <span className="text-white font-bold">{tooltipData.rate.toFixed(2)}</span>
+              <div className="bg-white/98 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-2xl border-2 border-purple-200">
+                <div className="flex items-center gap-2.5 text-[11px] leading-tight whitespace-nowrap">
+                  <span className="text-purple-600 font-semibold">{tooltipData.date}</span>
+                  <span className="text-purple-800 font-bold">
+                    {tooltipData.rate.toFixed(decimals)}
+                  </span>
                 </div>
               </div>
-              {/* 小三角形指示器 - 更小巧 */}
+              {/* 小三角形指示器 - 白色 */}
               <div
-                className="absolute left-1/2 -bottom-1 transform -translate-x-1/2"
+                className="absolute left-1/2 -bottom-[5px] transform -translate-x-1/2"
                 style={{
                   width: 0,
                   height: 0,
-                  borderLeft: '4px solid transparent',
-                  borderRight: '4px solid transparent',
-                  borderTop: '4px solid rgba(15, 23, 42, 0.95)',
+                  borderLeft: '5px solid transparent',
+                  borderRight: '5px solid transparent',
+                  borderTop: '5px solid rgba(255, 255, 255, 0.98)',
+                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
                 }}
               />
             </div>
