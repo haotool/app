@@ -44,7 +44,7 @@ describe('MiniTrendChart', () => {
         { date: '2025-10-16', rate: 31.245 },
       ];
 
-      const { container } = render(<MiniTrendChart data={realData} />);
+      const { container } = render(<MiniTrendChart data={realData} currencyCode="USD" />);
       const chartContainer = container.querySelector('div');
 
       // 驗證圖表容器存在（數據 >= 2 筆時應顯示）
@@ -57,7 +57,7 @@ describe('MiniTrendChart', () => {
         { date: '2025-10-09', rate: 31.125 },
       ];
 
-      const { container } = render(<MiniTrendChart data={mockData} />);
+      const { container } = render(<MiniTrendChart data={mockData} currencyCode="USD" />);
 
       // 即使是假數據格式，只要符合介面也應該顯示（測試組件不依賴特定數據）
       expect(container.querySelector('div')).toBeTruthy();
@@ -66,14 +66,14 @@ describe('MiniTrendChart', () => {
     it('數據不足時不應顯示圖表（< 2 筆）', () => {
       const insufficientData: MiniTrendDataPoint[] = [{ date: '2025-10-14', rate: 31.025 }];
 
-      const { container } = render(<MiniTrendChart data={insufficientData} />);
+      const { container } = render(<MiniTrendChart data={insufficientData} currencyCode="USD" />);
 
       // 數據不足時應返回 null
       expect(container.firstChild).toBeNull();
     });
 
     it('空數據時不應顯示圖表', () => {
-      const { container } = render(<MiniTrendChart data={[]} />);
+      const { container } = render(<MiniTrendChart data={[]} currencyCode="USD" />);
 
       // 空數據時應返回 null
       expect(container.firstChild).toBeNull();
@@ -86,7 +86,7 @@ describe('MiniTrendChart', () => {
         { date: '2025-10-16', rate: 32.0 },
       ];
 
-      const { container } = render(<MiniTrendChart data={testData} />);
+      const { container } = render(<MiniTrendChart data={testData} currencyCode="USD" />);
 
       // 驗證圖表渲染
       expect(container.querySelector('div')).toBeTruthy();
@@ -101,16 +101,16 @@ describe('MiniTrendChart', () => {
         { date: '2025-10-15', rate: 31.125 },
       ];
 
-      expect(() => render(<MiniTrendChart data={validData} />)).not.toThrow();
+      expect(() => render(<MiniTrendChart data={validData} currencyCode="USD" />)).not.toThrow();
     });
 
     it('應該處理小數點匯率', () => {
       const decimalData: MiniTrendDataPoint[] = [
         { date: '2025-10-14', rate: 31.12345 },
-        { date: '2025-10-15', rate: 31.67890 },
+        { date: '2025-10-15', rate: 31.6789 },
       ];
 
-      expect(() => render(<MiniTrendChart data={decimalData} />)).not.toThrow();
+      expect(() => render(<MiniTrendChart data={decimalData} currencyCode="USD" />)).not.toThrow();
     });
   });
 
@@ -121,7 +121,7 @@ describe('MiniTrendChart', () => {
         rate: 30 + Math.random() * 2,
       }));
 
-      const { container } = render(<MiniTrendChart data={largeData} />);
+      const { container } = render(<MiniTrendChart data={largeData} currencyCode="USD" />);
       expect(container.querySelector('div')).toBeTruthy();
     });
 
@@ -131,7 +131,7 @@ describe('MiniTrendChart', () => {
         { date: '2025-10-15', rate: 0 },
       ];
 
-      const { container } = render(<MiniTrendChart data={zeroData} />);
+      const { container } = render(<MiniTrendChart data={zeroData} currencyCode="USD" />);
       expect(container.querySelector('div')).toBeTruthy();
     });
 
@@ -141,7 +141,7 @@ describe('MiniTrendChart', () => {
         { date: '2025-10-15', rate: 1000000.0 },
       ];
 
-      const { container } = render(<MiniTrendChart data={extremeData} />);
+      const { container } = render(<MiniTrendChart data={extremeData} currencyCode="USD" />);
       expect(container.querySelector('div')).toBeTruthy();
     });
   });

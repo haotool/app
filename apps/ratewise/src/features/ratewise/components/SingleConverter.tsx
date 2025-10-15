@@ -174,7 +174,7 @@ export const SingleConverter = ({
             }`}
           >
             <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
-              <MiniTrendChart data={trendData} />
+              <MiniTrendChart data={trendData} currencyCode={toCurrency} />
             </div>
             {/* 互動提示 */}
             <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-1 pointer-events-none">
