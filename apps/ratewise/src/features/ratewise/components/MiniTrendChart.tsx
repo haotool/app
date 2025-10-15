@@ -1,5 +1,13 @@
-import { useEffect, useRef, useMemo } from 'react';
-import { createChart, ColorType, LineStyle, AreaSeries } from 'lightweight-charts';
+import { useEffect, useRef, useMemo, useState } from 'react';
+import {
+  createChart,
+  ColorType,
+  LineStyle,
+  AreaSeries,
+  type IChartApi,
+  type ISeriesApi,
+} from 'lightweight-charts';
+import { motion, AnimatePresence } from 'motion/react';
 
 export interface MiniTrendDataPoint {
   date: string;
@@ -11,13 +19,27 @@ export interface MiniTrendChartProps {
   className?: string;
 }
 
+interface TooltipData {
+  date: string;
+  rate: number;
+  x: number;
+  y: number;
+}
+
 /**
- * 迷你趨勢圖組件 - 藍紫色配色，背景顯示
+ * 迷你趨勢圖組件 - 現代化高級 APP 風格
  * 使用 lightweight-charts 專業金融圖表庫
- * 標注最高和最低點
+ * 特色：
+ * - 左到右酷炫動畫
+ * - Hover 互動顯示日期和價格
+ * - 數據 ≥ 2 天時統一延伸到最寬
+ * - 現代化配色與微互動
  */
 export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
+  const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
 
   const displayData = data;
 
@@ -60,14 +82,24 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
         visible: false,
       },
       crosshair: {
-        horzLine: { visible: false },
-        vertLine: { visible: false },
+        mode: 0, // CrosshairMode.Normal - 自由移動不吸附
+        vertLine: {
+          width: 1,
+          color: 'rgba(139, 92, 246, 0.5)',
+          style: LineStyle.Solid,
+          labelVisible: false,
+        },
+        horzLine: {
+          visible: false,
+        },
       },
       handleScroll: false,
       handleScale: false,
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
     });
+
+    chartRef.current = chart;
 
     const series = chart.addSeries(AreaSeries, {
       lineColor: '#8b5cf6',
@@ -79,6 +111,8 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       lastValueVisible: false,
     });
 
+    seriesRef.current = series;
+
     // 轉換數據格式為 lightweight-charts 格式
     const chartData = displayData.map((point) => ({
       time: point.date,
@@ -87,6 +121,23 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
 
     series.setData(chartData);
     chart.timeScale().fitContent();
+
+    // Crosshair 移動事件 - 顯示 tooltip
+    chart.subscribeCrosshairMove((param) => {
+      if (param.point === undefined || !param.time || param.point.x < 0 || param.point.y < 0) {
+        setTooltipData(null);
+      } else {
+        const dataPoint = param.seriesData.get(series);
+        if (dataPoint && 'value' in dataPoint) {
+          setTooltipData({
+            date: param.time as string,
+            rate: dataPoint.value,
+            x: param.point.x,
+            y: param.point.y,
+          });
+        }
+      }
+    });
 
     // 處理視窗大小變化
     const handleResize = () => {
@@ -104,6 +155,8 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     return () => {
       window.removeEventListener('resize', handleResize);
       chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
     };
   }, [displayData, stats.maxIndex, stats.minIndex]);
 
@@ -113,9 +166,58 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   }
 
   return (
-    <div className={`w-full h-full ${className}`}>
+    <motion.div
+      className={`w-full h-full relative ${className}`}
+      initial={{ opacity: 0, scaleX: 0 }}
+      animate={{ opacity: 1, scaleX: 1 }}
+      transition={{
+        duration: 0.6,
+        ease: [0.25, 0.1, 0.25, 1], // 自定義緩動曲線
+        scaleX: {
+          duration: 0.8,
+          ease: [0.4, 0, 0.2, 1], // Material Design 標準緩動
+        },
+      }}
+      style={{ transformOrigin: 'left center' }}
+      whileHover={{ scale: 1.02 }}
+    >
       {/* Lightweight Charts 趨勢圖 */}
       <div ref={chartContainerRef} className="w-full h-full" />
-    </div>
+
+      {/* Hover Tooltip */}
+      <AnimatePresence>
+        {tooltipData && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute pointer-events-none z-10"
+            style={{
+              left: `${tooltipData.x}px`,
+              top: `${tooltipData.y - 60}px`,
+            }}
+          >
+            <div className="bg-gradient-to-br from-purple-600 to-blue-500 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-medium">
+              <div className="flex flex-col gap-1">
+                <div className="text-purple-100">{tooltipData.date}</div>
+                <div className="text-white font-bold">{tooltipData.rate.toFixed(4)}</div>
+              </div>
+              {/* 小三角形指示器 */}
+              <div
+                className="absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-full"
+                style={{
+                  width: 0,
+                  height: 0,
+                  borderLeft: '6px solid transparent',
+                  borderRight: '6px solid transparent',
+                  borderTop: '6px solid rgb(59, 130, 246)',
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

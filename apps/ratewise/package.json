@@ -18,6 +18,7 @@
   "dependencies": {
     "lightweight-charts": "^5.0.9",
     "lucide-react": "^0.441.0",
+    "motion": "^12.23.24",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.9.4"
