@@ -151,11 +151,11 @@ const RateWise = () => {
           </div>
         </div>
 
-        <footer className="mt-12 -mx-3 md:-mx-8 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-          <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
+        <footer className="mt-12 -mx-3 md:-mx-8 -mb-3 md:-mb-8 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+          <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
             {/* 數據來源區塊 */}
             {!ratesLoading && lastUpdate && (
-              <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 mb-6">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 mb-4">
                 <a
                   href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
                   target="_blank"
@@ -210,7 +210,7 @@ const RateWise = () => {
             )}
 
             {/* 免責聲明 */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-4">
               <p className="text-xs md:text-sm text-white/90 leading-relaxed max-w-2xl mx-auto">
                 本服務匯率資料參考
                 <span className="font-semibold text-white mx-1">臺灣銀行牌告匯率</span>
@@ -222,7 +222,7 @@ const RateWise = () => {
             </div>
 
             {/* 分隔線 */}
-            <div className="w-full h-px bg-gradient-to-r from-transparent via-white/30 to-transparent mb-6" />
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-white/30 to-transparent mb-4" />
 
             {/* 版權與品牌 */}
             <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 text-xs text-white/80">
