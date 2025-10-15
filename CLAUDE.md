@@ -61,15 +61,45 @@ pnpm audit
 
 ### 3. 提交規範
 
-**Commit Message 格式**:
+**Commit Message 格式**（簡潔有力）:
 
 ```
-type(scope): subject
+type(scope): 簡短描述改了什麼（50字內）
 
-body
-
-footer
+- 修改點1：具體改動
+- 修改點2：具體改動
+- 修改點3：具體改動
 ```
+
+**正確範例**:
+
+```
+fix(ui): 交換匯率顯示順序，主顯示目標貨幣匯率
+
+- 調整匯率卡片：主要顯示 1 {toCurrency} = X {fromCurrency}
+- 次要顯示：1 {fromCurrency} = X {toCurrency}
+- 修正趨勢圖計算：fromRate/toRate 替代單一 rates[toCurrency]
+- 修正 useEffect 依賴：[fromCurrency, toCurrency] 確保交換時更新
+```
+
+**錯誤範例** ❌:
+
+```
+fix(ui): 修正匯率顯示順序，符合用戶換匯心理預期
+
+問題分析:
+- 用戶要兌換美元時，關心的是「1 USD = 30.9 TWD」...
+業界標準驗證:
+✅ Wise.com: 主要顯示...
+修正內容:
+- 主要匯率(大、紫): 1 {toCurrency}...
+範例場景:
+...
+測試:
+✅ TypeScript 編譯通過...
+```
+
+（太冗長！commit 不是寫報告）
 
 **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
@@ -78,6 +108,7 @@ footer
 - 一個 commit 只解決一個問題
 - 每個 commit 都是可編譯、可測試的完整狀態
 - 每個 commit 都可以獨立回滾
+- **簡潔有力**：只寫改了什麼，不寫為什麼（why 放在 PR/issue）
 
 ---
 
