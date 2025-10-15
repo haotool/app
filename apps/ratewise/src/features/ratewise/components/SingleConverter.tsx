@@ -79,8 +79,9 @@ export const SingleConverter = ({
 
         const data: MiniTrendDataPoint[] = historicalData
           .map((item) => {
-            const rate = item.data.rates[toCurrency];
-            if (!rate) return null;
+            const fromRate = item.data.rates[fromCurrency] ?? 1;
+            const toRate = item.data.rates[toCurrency] ?? 1;
+            const rate = fromRate / toRate;
 
             return {
               date: item.date.slice(5), // MM-DD
@@ -99,7 +100,7 @@ export const SingleConverter = ({
     }
 
     void loadTrend();
-  }, [toCurrency]);
+  }, [fromCurrency, toCurrency]);
 
   return (
     <>
@@ -158,11 +159,11 @@ export const SingleConverter = ({
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
               <span className="font-medium">即時匯率</span>
             </div>
-            <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-1 transition-all duration-300 group-hover:scale-105">
-              1 {fromCurrency} = {exchangeRate.toFixed(4)} {toCurrency}
-            </div>
-            <div className="text-xs text-gray-700 font-medium opacity-80 group-hover:opacity-100 transition-opacity">
+            <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-2 transition-all duration-300 group-hover:scale-105">
               1 {toCurrency} = {reverseRate.toFixed(4)} {fromCurrency}
+            </div>
+            <div className="text-sm text-gray-600 font-medium opacity-75 group-hover:opacity-90 transition-opacity">
+              1 {fromCurrency} = {exchangeRate.toFixed(4)} {toCurrency}
             </div>
           </div>
 
