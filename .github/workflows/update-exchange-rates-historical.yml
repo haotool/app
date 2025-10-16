@@ -60,7 +60,7 @@ jobs:
           # 確保有最新的腳本
           git fetch origin main
           git checkout origin/main -- scripts/fetch-taiwan-bank-rates.js
-          git checkout origin/main -- public/rates/ || mkdir -p public/rates/history
+          git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates/history
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -78,7 +78,7 @@ jobs:
           git diff --quiet public/rates/latest.json || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Save historical data and cleanup old files
-        if: steps.git-check.outputs.changed == 'true'
+        id: save-history
         run: |
           # 建立 history 目錄
           mkdir -p public/rates/history
@@ -90,13 +90,21 @@ jobs:
           # 複製最新資料到歷史檔案（每天一個檔案）
           HISTORY_FILE="public/rates/history/${CURRENT_DATE}.json"
 
-          # 只在每天首次更新時建立歷史檔案
+          # 檢查今天的歷史檔案是否存在
           if [ ! -f "$HISTORY_FILE" ]; then
             echo "📅 Creating daily history file: ${HISTORY_FILE}"
             cp public/rates/latest.json "$HISTORY_FILE"
+            echo "history_created=true" >> $GITHUB_OUTPUT
           else
-            echo "♻️ Updating existing daily file: ${HISTORY_FILE}"
-            cp public/rates/latest.json "$HISTORY_FILE"
+            echo "✅ Today's history file already exists: ${HISTORY_FILE}"
+            # 如果 latest.json 有變動，更新今天的歷史檔案
+            if [ "${{ steps.git-check.outputs.changed }}" == "true" ]; then
+              echo "♻️ Updating existing daily file with new rates"
+              cp public/rates/latest.json "$HISTORY_FILE"
+              echo "history_created=true" >> $GITHUB_OUTPUT
+            else
+              echo "history_created=false" >> $GITHUB_OUTPUT
+            fi
           fi
 
           # 清理超過 30 天的歷史資料
@@ -109,7 +117,7 @@ jobs:
           echo "current_date=${CURRENT_DATE}" >> $GITHUB_OUTPUT
 
       - name: Commit and push changes
-        if: steps.git-check.outputs.changed == 'true'
+        if: steps.git-check.outputs.changed == 'true' || steps.save-history.outputs.history_created == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -125,7 +133,7 @@ jobs:
 
           if [[ "$LAST_COMMIT_MSG" == *"chore(rates): update exchange rates"* ]]; then
             echo "📝 Amending previous commit on data branch..."
-            git commit --amend -m "chore(rates): update exchange rates - ${UPDATE_TIME}" \
+            git commit --amend --reset-author -m "chore(rates): update exchange rates - ${UPDATE_TIME}" \
               -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
               -m "📊 History: ${HISTORY_COUNT} days preserved (max 30 days)" \
               -m "🤖 Auto-updated on data branch" \
@@ -142,7 +150,7 @@ jobs:
           fi
 
       - name: Update workflow summary
-        if: steps.git-check.outputs.changed == 'true'
+        if: steps.git-check.outputs.changed == 'true' || steps.save-history.outputs.history_created == 'true'
         run: |
           echo "# ✅ Exchange rates updated successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

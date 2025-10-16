@@ -115,10 +115,18 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
       });
 
       if (!response.ok) {
-        logger.warn(`HTTP ${response.status} from ${url}`, {
-          service: 'exchangeRateHistoryService',
-          statusCode: response.status,
-        });
+        // 404 是預期的錯誤（歷史資料可能尚未生成），降級為 debug level
+        if (response.status === 404) {
+          logger.debug(`Historical data not found: ${url}`, {
+            service: 'exchangeRateHistoryService',
+            statusCode: 404,
+          });
+        } else {
+          logger.warn(`HTTP ${response.status} from ${url}`, {
+            service: 'exchangeRateHistoryService',
+            statusCode: response.status,
+          });
+        }
         continue;
       }
 
@@ -130,7 +138,7 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
       logger.info(`Successfully fetched from ${url}`, { service: 'exchangeRateHistoryService' });
       return data as T;
     } catch (error) {
-      logger.warn(`Failed to fetch from ${url}`, {
+      logger.debug(`Failed to fetch from ${url}`, {
         service: 'exchangeRateHistoryService',
         error: error instanceof Error ? error.message : String(error),
       });
@@ -212,9 +220,11 @@ export async function fetchHistoricalRatesRange(days = 30): Promise<HistoricalRa
         data,
       });
     } catch {
-      // 歷史資料可能不存在，記錄但不中斷
-      logger.warn(`No historical data for ${formatDate(date)}`, {
+      // 歷史資料可能尚未生成（GitHub Actions 每天首次執行才建立），
+      // 這是正常現象，使用 debug level 避免 console 噪音
+      logger.debug(`Historical data not yet available for ${formatDate(date)}`, {
         service: 'exchangeRateHistoryService',
+        reason: 'File may not be created yet by scheduled workflow',
       });
     }
   }
