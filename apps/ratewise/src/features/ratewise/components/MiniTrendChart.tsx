@@ -22,6 +22,55 @@ export interface MiniTrendChartProps {
   className?: string;
 }
 
+/**
+ * 生成硬編碼假數據 - 臨時方案
+ * TODO: Safari 手機端 404 問題修復後，恢復使用真實歷史數據
+ * 問題: Safari 手機介面訪問 https://ratewise.zeabur.app/ 時，
+ *       歷史匯率 API 返回 404 錯誤，導致頁面無法正常顯示
+ * 臨時方案: 使用隨機假數據確保 UI 完整顯示
+ * 追蹤: GitHub Issue #TBD
+ */
+function generateMockTrendData(currencyCode: CurrencyCode): MiniTrendDataPoint[] {
+  const today = new Date();
+
+  // 各貨幣的參考匯率（基於 2025 年初的大致匯率）
+  const baseRates: Record<CurrencyCode, number> = {
+    TWD: 1.0, // 新台幣對新台幣
+    USD: 30.9, // 美元
+    HKD: 3.95, // 港幣
+    GBP: 39.5, // 英鎊
+    AUD: 20.8, // 澳幣
+    CAD: 22.5, // 加幣
+    SGD: 23.2, // 新加坡幣
+    CHF: 35.8, // 瑞士法郎
+    JPY: 0.21, // 日圓
+    EUR: 33.5, // 歐元
+    KRW: 0.024, // 韓元
+    CNY: 4.28, // 人民幣
+  };
+
+  const baseRate = baseRates[currencyCode];
+  const mockData: MiniTrendDataPoint[] = [];
+
+  // 生成過去 7 天的模擬數據
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0] || '2025-01-01';
+
+    // 隨機波動 ±2%
+    const variance = (Math.random() - 0.5) * 0.04;
+    const rate = baseRate * (1 + variance);
+
+    mockData.push({
+      date: dateStr,
+      rate: Number(rate.toFixed(4)),
+    });
+  }
+
+  return mockData;
+}
+
 interface TooltipData {
   date: string;
   rate: number;
@@ -37,8 +86,23 @@ interface TooltipData {
  * - Hover 互動顯示日期和價格
  * - 數據 ≥ 2 天時統一延伸到最寬
  * - 現代化配色與微互動
+ *
+ * 【臨時修改】使用硬編碼假數據
+ * 原因: Safari 手機端歷史匯率 API 404 錯誤
+ * TODO: 修復後恢復使用真實的 props.data
  */
-export function MiniTrendChart({ data, currencyCode, className = '' }: MiniTrendChartProps) {
+export function MiniTrendChart({
+  data: _data, // 暫時不使用真實數據，前綴 _ 避免 lint 警告
+  currencyCode,
+  className = '',
+}: MiniTrendChartProps) {
+  // ===== 臨時修改開始 =====
+  // TODO: Safari 404 問題修復後，移除此行，恢復使用 props.data
+  const displayData = generateMockTrendData(currencyCode);
+
+  // ===== 原本邏輯（已註解） =====
+  // const displayData = data;
+  // ===== 臨時修改結束 =====
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
@@ -64,7 +128,9 @@ export function MiniTrendChart({ data, currencyCode, className = '' }: MiniTrend
     return Math.max(baseDecimals, leadingZeros + 2);
   };
 
-  const displayData = data;
+  // ===== 原本邏輯（已註解）：使用真實數據 =====
+  // const displayData = data;
+  // ===== 已被上方的硬編碼假數據取代 =====
 
   const stats = useMemo(() => {
     if (displayData.length === 0) {
@@ -152,12 +218,16 @@ export function MiniTrendChart({ data, currencyCode, className = '' }: MiniTrend
       } else {
         const dataPoint = param.seriesData.get(series);
         if (dataPoint && 'value' in dataPoint) {
-          setTooltipData({
-            date: param.time as string,
-            rate: dataPoint.value,
-            x: param.point.x,
-            y: param.point.y,
-          });
+          const container = chartContainerRef.current;
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            setTooltipData({
+              date: param.time as string,
+              rate: dataPoint.value,
+              x: rect.left + param.point.x,
+              y: rect.top + param.point.y,
+            });
+          }
         }
       }
     });
@@ -205,7 +275,11 @@ export function MiniTrendChart({ data, currencyCode, className = '' }: MiniTrend
       whileHover={{ scale: 1.02 }}
     >
       {/* Lightweight Charts 趨勢圖 */}
-      <div ref={chartContainerRef} className="w-full h-full" />
+      <div
+        ref={chartContainerRef}
+        data-testid="mini-trend-chart-surface"
+        className="w-full h-full"
+      />
 
       {/* Hover Tooltip - 白底紫字現代化設計 */}
       <AnimatePresence>
