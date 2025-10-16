@@ -56,7 +56,7 @@ function generateMockTrendData(currencyCode: CurrencyCode): MiniTrendDataPoint[]
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0] || '2025-01-01';
+    const dateStr = date.toISOString().split('T')[0] ?? '2025-01-01';
 
     // 隨機波動 ±2%
     const variance = (Math.random() - 0.5) * 0.04;
