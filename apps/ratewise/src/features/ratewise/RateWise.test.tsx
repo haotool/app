@@ -136,7 +136,7 @@ describe('RateWise Component', () => {
       await waitFor(() => {
         const favorites = localStorage.getItem('favorites');
         expect(favorites).toBeTruthy();
-        const parsed = JSON.parse(favorites || '[]');
+        const parsed = JSON.parse(favorites ?? '[]');
         expect(Array.isArray(parsed)).toBe(true);
       });
     });

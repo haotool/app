@@ -39,7 +39,7 @@ export function useExchangeRates() {
         Object.keys(data.rates).forEach((code) => {
           if (code in newRates) {
             const rate = data.rates[code];
-            newRates[code as CurrencyCode] = rate || null;
+            newRates[code as CurrencyCode] = rate ?? null;
           }
         });
 

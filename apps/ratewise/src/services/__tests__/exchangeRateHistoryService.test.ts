@@ -58,7 +58,7 @@ describe('exchangeRateHistoryService', () => {
         // 第二次請求成功
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => mockResponse,
+          json: () => Promise.resolve(mockResponse),
         } as Response);
 
       const result = await fetchLatestRates();
@@ -136,11 +136,11 @@ describe('exchangeRateHistoryService', () => {
       vi.mocked(fetch)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => mockResponse1,
+          json: () => Promise.resolve(mockResponse1),
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => mockResponse2,
+          json: () => Promise.resolve(mockResponse2),
         } as Response);
 
       const result = await fetchHistoricalRatesRange(2);
@@ -162,13 +162,13 @@ describe('exchangeRateHistoryService', () => {
       vi.mocked(fetch)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => mockResponse,
+          json: () => Promise.resolve(mockResponse),
         } as Response)
         .mockRejectedValueOnce(new Error('Not found')) // 第二天第一個 URL 失敗
         .mockRejectedValueOnce(new Error('Not found')) // 第二天第二個 URL 失敗
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => mockResponse,
+          json: () => Promise.resolve(mockResponse),
         } as Response);
 
       const result = await fetchHistoricalRatesRange(3);
@@ -182,11 +182,12 @@ describe('exchangeRateHistoryService', () => {
     it('應該使用預設天數 30 天', async () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({
-          updateTime: '2025/10/16 23:39:59',
-          source: 'Taiwan Bank',
-          rates: { USD: 31.025 },
-        }),
+        json: () =>
+          Promise.resolve({
+            updateTime: '2025/10/16 23:39:59',
+            source: 'Taiwan Bank',
+            rates: { USD: 31.025 },
+          }),
       } as Response);
 
       const result = await fetchHistoricalRatesRange();
@@ -259,11 +260,11 @@ describe('exchangeRateHistoryService', () => {
       vi.mocked(fetch)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => mockResponse1,
+          json: () => Promise.resolve(mockResponse1),
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => mockResponse2,
+          json: () => Promise.resolve(mockResponse2),
         } as Response);
 
       // 獲取兩個不同日期

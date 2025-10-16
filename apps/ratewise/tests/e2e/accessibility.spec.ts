@@ -116,8 +116,9 @@ test.describe('無障礙性掃描', () => {
       const ariaLabel = await button.getAttribute('aria-label');
       const ariaLabelledBy = await button.getAttribute('aria-labelledby');
 
-      const hasAccessibleName =
-        (textContent && textContent.trim().length > 0) || ariaLabel || ariaLabelledBy;
+      const hasAccessibleName = Boolean(
+        (textContent && textContent.trim().length > 0) ?? ariaLabel ?? ariaLabelledBy,
+      );
 
       if (!hasAccessibleName) {
         console.warn(`按鈕 ${i} 缺少可識別的文字或 aria-label`);

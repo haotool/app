@@ -95,16 +95,16 @@ class Logger {
 
     switch (entry.level) {
       case 'debug':
-        console.debug(message, entry.context || '');
+        console.debug(message, entry.context ?? '');
         break;
       case 'info':
-        console.info(message, entry.context || '');
+        console.info(message, entry.context ?? '');
         break;
       case 'warn':
-        console.warn(message, entry.context || '');
+        console.warn(message, entry.context ?? '');
         break;
       case 'error':
-        console.error(message, entry.context || '', entry.error || '');
+        console.error(message, entry.context ?? '', entry.error ?? '');
         break;
     }
   }
