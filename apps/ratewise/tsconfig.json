@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["vite/client", "node", "vitest/globals"],
+    "types": ["vite/client", "vite-plugin-pwa/client", "node", "vitest/globals"],
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
@@ -9,7 +9,14 @@
       "@shared/*": ["../shared/*"]
     }
   },
-  "include": ["src", "vite-env.d.ts", "env.d.ts", "tests", "playwright.config.ts"],
+  "include": [
+    "src",
+    "vite-env.d.ts",
+    "env.d.ts",
+    "tests",
+    "playwright.config.ts",
+    "../../node_modules/vite-plugin-pwa/client.d.ts"
+  ],
   "references": [
     {
       "path": "./tsconfig.node.json"
