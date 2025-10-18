@@ -38,6 +38,16 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // 只處理 GET 請求，忽略 HEAD/POST/PUT/DELETE
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // 忽略 chrome-extension 和其他非 http(s) 協議
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
   // CDN 歷史匯率數據 - CacheFirst with NetworkFallback
   if (
     (url.hostname === 'cdn.jsdelivr.net' || url.hostname === 'raw.githubusercontent.com') &&
