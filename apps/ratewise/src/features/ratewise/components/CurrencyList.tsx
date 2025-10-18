@@ -33,7 +33,12 @@ export const CurrencyList = ({
           <RefreshCw size={16} className="text-gray-600" />
         </button>
       </div>
-      <div className="space-y-2 max-h-96 overflow-y-auto">
+      <div
+        className="space-y-2 max-h-96 overflow-y-auto"
+        tabIndex={0}
+        role="region"
+        aria-label="貨幣列表"
+      >
         {CURRENCY_CODES.map((code) => (
           <div
             key={`list-${code}`}
