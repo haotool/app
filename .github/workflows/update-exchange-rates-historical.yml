@@ -1,18 +1,18 @@
-# 匯率更新策略 - 保留 30 天歷史資料
+# 匯率更新策略 - 永久保存歷史資料
 #
 # 特點：
 # ✅ 開源專案 GitHub Actions 完全免費（無限分鐘數）
 # ✅ main 分支完全乾淨（使用獨立 data 分支）
-# ✅ 累積 30 天歷史資料（支援未來趨勢圖）
+# ✅ 永久保存所有歷史資料（支援完整趨勢分析）
 # ✅ 完全自動化（無需人工介入）
 #
 # 資料結構：
 # public/rates/
 #   ├── latest.json          # 最新匯率（供 CDN 使用）
 #   └── history/
-#       ├── 2025-10-13.json  # 每日歷史資料
-#       ├── 2025-10-12.json
-#       └── ...              # 最多保留 30 天
+#       ├── 2025-10-18.json  # 每日歷史資料
+#       ├── 2025-10-17.json
+#       └── ...              # 永久保存
 
 name: Update Exchange Rates with History
 
@@ -77,7 +77,7 @@ jobs:
         run: |
           git diff --quiet public/rates/latest.json || echo "changed=true" >> $GITHUB_OUTPUT
 
-      - name: Save historical data and cleanup old files
+      - name: Save historical data (permanent storage)
         id: save-history
         run: |
           # 建立 history 目錄
@@ -107,9 +107,8 @@ jobs:
             fi
           fi
 
-          # 清理超過 30 天的歷史資料
-          echo "🗑️ Cleaning up files older than 30 days..."
-          find public/rates/history/ -name "*.json" -type f -mtime +30 -delete
+          # 永久保存所有歷史資料（不清理）
+          echo "💾 Permanent storage: All historical data preserved"
 
           # 統計保留的歷史檔案數量
           HISTORY_COUNT=$(ls -1 public/rates/history/*.json 2>/dev/null | wc -l)
@@ -135,7 +134,7 @@ jobs:
             echo "📝 Amending previous commit on data branch..."
             git commit --amend --reset-author -m "chore(rates): update exchange rates - ${UPDATE_TIME}" \
               -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
-              -m "📊 History: ${HISTORY_COUNT} days preserved (max 30 days)" \
+              -m "📊 History: ${HISTORY_COUNT} days preserved (permanent storage)" \
               -m "🤖 Auto-updated on data branch" \
               -m "Source: https://rate.bot.com.tw/xrt"
             git push --force-with-lease origin data
@@ -143,7 +142,7 @@ jobs:
             echo "📝 Creating new commit on data branch..."
             git commit -m "chore(rates): update exchange rates - ${UPDATE_TIME}" \
               -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
-              -m "📊 History: ${HISTORY_COUNT} days preserved (max 30 days)" \
+              -m "📊 History: ${HISTORY_COUNT} days preserved (permanent storage)" \
               -m "🤖 Auto-updated on data branch" \
               -m "Source: https://rate.bot.com.tw/xrt"
             git push origin data
