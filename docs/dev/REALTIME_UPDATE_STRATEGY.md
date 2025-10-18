@@ -82,12 +82,26 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘
 
 ### 2.1 GitHub Actions 自動化
 
-**檔案**: `.github/workflows/update-exchange-rates-historical.yml`
+**職責分離設計**（2025-10-18 優化）:
+
+#### 工作流 1: 即時匯率更新
+
+**檔案**: `.github/workflows/update-latest-rates.yml`
 
 **執行頻率**: 每 30 分鐘
 
+**職責**: 更新 `latest.json`（即時匯率）
+
 **資料來源**: 台灣銀行 CSV API  
 `https://rate.bot.com.tw/xrt/flcsv/0/day`
+
+#### 工作流 2: 歷史匯率快照
+
+**檔案**: `.github/workflows/update-historical-rates.yml`
+
+**執行頻率**: 每日 0:00 UTC (台北時間 8:00)
+
+**職責**: 複製 `latest.json` 到 `history/YYYY-MM-DD.json`
 
 **資料結構**:
 
@@ -100,12 +114,16 @@ public/rates/
     └── ...              # 永久保存
 ```
 
-**特點**:
+**優點**（職責分離設計）:
 
-- ✅ 完全自動化（無需人工介入）
-- ✅ 使用獨立 `data` 分支（main 分支保持乾淨）
-- ✅ jsDelivr CDN 全球快取
-- ✅ 永久保存所有歷史數據（不清理）
+- ✅ **單一職責**: 每個工作流只做一件事
+- ✅ **減少浪費**: 歷史快照不需要每 30 分鐘檢查
+- ✅ **清晰日誌**: 即時更新和歷史快照分開記錄
+- ✅ **易於 debug**: 問題定位更快速
+- ✅ **完全自動化**: 無需人工介入
+- ✅ **獨立 data 分支**: main 分支保持乾淨
+- ✅ **jsDelivr CDN**: 全球快取加速
+- ✅ **永久保存**: 所有歷史數據不清理
 
 ---
 

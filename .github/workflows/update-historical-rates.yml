@@ -1,0 +1,143 @@
+# 歷史匯率快照策略
+#
+# 職責：每日 0:00 將 latest.json 複製到 history/YYYY-MM-DD.json
+#
+# 特點：
+# ✅ 低頻更新（每日一次）
+# ✅ 單一職責（只保存歷史快照）
+# ✅ 永久保存（不清理舊數據）
+# ✅ 開源專案 GitHub Actions 完全免費
+
+name: Update Historical Exchange Rates
+
+# 郵件通知策略：只在失敗時通知
+# GitHub Settings > Notifications > Actions > "Send notifications for failed workflows only"
+
+on:
+  schedule:
+    # 每日 0:00 UTC (台北時間 8:00)
+    - cron: '0 0 * * *'
+
+  # 允許手動觸發
+  workflow_dispatch:
+
+  # 測試用：當工作流被修改時執行
+  push:
+    paths:
+      - '.github/workflows/update-historical-rates.yml'
+
+jobs:
+  update-history:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout data branch
+        uses: actions/checkout@v4
+        with:
+          ref: data
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Save historical snapshot
+        id: save-snapshot
+        run: |
+          # 建立 history 目錄
+          mkdir -p public/rates/history
+
+          # 取得當前日期（台北時區）
+          CURRENT_DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)
+          HISTORY_FILE="public/rates/history/${CURRENT_DATE}.json"
+
+          # 檢查 latest.json 是否存在
+          if [ ! -f "public/rates/latest.json" ]; then
+            echo "❌ Error: latest.json not found"
+            exit 1
+          fi
+
+          # 檢查今天的歷史檔案是否存在
+          if [ -f "$HISTORY_FILE" ]; then
+            echo "✅ Today's snapshot already exists: ${HISTORY_FILE}"
+            echo "📊 Checking if update is needed..."
+            
+            # 比較檔案內容
+            if cmp -s "public/rates/latest.json" "$HISTORY_FILE"; then
+              echo "✅ Snapshot is up to date"
+              echo "snapshot_created=false" >> $GITHUB_OUTPUT
+            else
+              echo "♻️ Updating existing snapshot with latest rates"
+              cp public/rates/latest.json "$HISTORY_FILE"
+              echo "snapshot_created=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "📅 Creating daily snapshot: ${HISTORY_FILE}"
+            cp public/rates/latest.json "$HISTORY_FILE"
+            echo "snapshot_created=true" >> $GITHUB_OUTPUT
+          fi
+
+          # 統計歷史檔案數量
+          HISTORY_COUNT=$(ls -1 public/rates/history/*.json 2>/dev/null | wc -l)
+          echo "history_count=${HISTORY_COUNT}" >> $GITHUB_OUTPUT
+          echo "current_date=${CURRENT_DATE}" >> $GITHUB_OUTPUT
+
+          echo "💾 Permanent storage: ${HISTORY_COUNT} days preserved"
+
+      - name: Commit and push snapshot
+        if: steps.save-snapshot.outputs.snapshot_created == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add public/rates/history/
+
+          # 取得快照資訊
+          CURRENT_DATE="${{ steps.save-snapshot.outputs.current_date }}"
+          HISTORY_COUNT="${{ steps.save-snapshot.outputs.history_count }}"
+          UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).updateTime")
+
+          echo "📝 Creating snapshot commit..."
+          git commit -m "chore(rates): daily snapshot - ${CURRENT_DATE}" \
+            -m "Saved exchange rates snapshot for ${CURRENT_DATE}" \
+            -m "📊 Total history: ${HISTORY_COUNT} days (permanent storage)" \
+            -m "⏰ Source data timestamp: ${UPDATE_TIME}" \
+            -m "🤖 Auto-updated daily at 00:00 UTC"
+          git push origin data
+
+      - name: Update workflow summary
+        if: steps.save-snapshot.outputs.snapshot_created == 'true'
+        run: |
+          CURRENT_DATE="${{ steps.save-snapshot.outputs.current_date }}"
+          HISTORY_COUNT="${{ steps.save-snapshot.outputs.history_count }}"
+
+          echo "# ✅ Historical snapshot saved" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Snapshot Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date:** ${CURRENT_DATE}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total History:** ${HISTORY_COUNT} days" >> $GITHUB_STEP_SUMMARY
+          echo "- **Storage:** Permanent (no cleanup)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔗 CDN URL" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/${CURRENT_DATE}.json" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📈 Sample Rates (TWD)" >> $GITHUB_STEP_SUMMARY
+          echo "- **USD:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.USD")" >> $GITHUB_STEP_SUMMARY
+          echo "- **EUR:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.EUR")" >> $GITHUB_STEP_SUMMARY
+          echo "- **JPY:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.JPY")" >> $GITHUB_STEP_SUMMARY
+          echo "- **CNY:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.CNY")" >> $GITHUB_STEP_SUMMARY
+
+      - name: No snapshot needed
+        if: steps.save-snapshot.outputs.snapshot_created != 'true'
+        run: |
+          CURRENT_DATE="${{ steps.save-snapshot.outputs.current_date }}"
+
+          echo "# ℹ️ Snapshot already up to date" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Today's snapshot (${CURRENT_DATE}) is already saved and up to date." >> $GITHUB_STEP_SUMMARY
+          echo "Next snapshot: Tomorrow at 00:00 UTC" >> $GITHUB_STEP_SUMMARY
