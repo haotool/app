@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import useSWR from 'swr';
 import { RefreshCw } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode } from '../types';
@@ -36,8 +37,6 @@ export const SingleConverter = ({
   onSwapCurrencies,
   onAddToHistory,
 }: SingleConverterProps) => {
-  const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
-  const [_loadingTrend, setLoadingTrend] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
   const swapButtonRef = useRef<HTMLButtonElement>(null);
@@ -70,37 +69,35 @@ export const SingleConverter = ({
   // 獲取當前目標貨幣的快速金額選項
   const quickAmounts = CURRENCY_QUICK_AMOUNTS[toCurrency] || CURRENCY_QUICK_AMOUNTS.TWD;
 
-  // Load historical data for trend chart
-  useEffect(() => {
-    async function loadTrend() {
-      try {
-        setLoadingTrend(true);
-        const historicalData = await fetchHistoricalRatesRange(7);
+  // 使用 SWR 載入歷史匯率數據（自動快取、重新驗證）
+  const { data: historicalData } = useSWR(
+    `historical-rates-${fromCurrency}-${toCurrency}`,
+    () => fetchHistoricalRatesRange(7),
+    {
+      dedupingInterval: 300000, // 5 分鐘內不重複請求
+      revalidateOnFocus: true, // 視窗 focus 時重新驗證
+      revalidateOnReconnect: true, // 重新連線時重新驗證
+    },
+  );
 
-        const data: MiniTrendDataPoint[] = historicalData
-          .map((item) => {
-            const fromRate = item.data.rates[fromCurrency] ?? 1;
-            const toRate = item.data.rates[toCurrency] ?? 1;
-            const rate = fromRate / toRate;
+  // 計算趨勢圖數據（memoized）
+  const trendData = useMemo<MiniTrendDataPoint[]>(() => {
+    if (!historicalData) return [];
 
-            return {
-              date: item.date.slice(5), // MM-DD
-              rate,
-            };
-          })
-          .filter((item): item is MiniTrendDataPoint => item !== null)
-          .reverse();
+    return historicalData
+      .map((item) => {
+        const fromRate = item.data.rates[fromCurrency] ?? 1;
+        const toRate = item.data.rates[toCurrency] ?? 1;
+        const rate = fromRate / toRate;
 
-        setTrendData(data);
-      } catch {
-        setTrendData([]);
-      } finally {
-        setLoadingTrend(false);
-      }
-    }
-
-    void loadTrend();
-  }, [fromCurrency, toCurrency]);
+        return {
+          date: item.date.slice(5), // MM-DD
+          rate,
+        };
+      })
+      .filter((item): item is MiniTrendDataPoint => item !== null)
+      .reverse();
+  }, [historicalData, fromCurrency, toCurrency]);
 
   return (
     <>
