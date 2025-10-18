@@ -72,6 +72,11 @@ export const SingleConverter = ({
 
   // Load historical data for trend chart (並行獲取優化)
   useEffect(() => {
+    // Skip in test environment (avoid window is not defined error)
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     async function loadTrend() {
       try {
         setLoadingTrend(true);
