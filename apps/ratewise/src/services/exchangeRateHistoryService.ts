@@ -94,25 +94,7 @@ function saveToCache<T>(key: string, data: T): void {
 }
 
 /**
- * 檢查 URL 是否存在（使用 HEAD 請求避免下載內容，防止 404 出現在 console）
- * @param url - 要檢查的 URL
- * @returns 檔案是否存在
- */
-async function checkUrlExists(url: string): Promise<boolean> {
-  try {
-    const response = await fetch(url, {
-      method: 'HEAD',
-      cache: 'no-cache',
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * 從 URL 列表依序嘗試獲取資料
- * 使用 HEAD 請求先檢查檔案存在性，避免 404 錯誤出現在瀏覽器 console
  */
 async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T> {
   // 先檢查快取
@@ -125,17 +107,6 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
   // 依序嘗試 URL
   for (const url of urls) {
     try {
-      // 先用 HEAD 請求檢查檔案是否存在（避免 404 出現在 console）
-      const exists = await checkUrlExists(url);
-      if (!exists) {
-        logger.debug(`Historical data not found (HEAD check): ${url}`, {
-          service: 'exchangeRateHistoryService',
-          statusCode: 404,
-        });
-        continue;
-      }
-
-      // 檔案存在，執行實際的 GET 請求
       logger.debug(`Fetching from ${url}`, { service: 'exchangeRateHistoryService' });
       const response = await fetch(url, {
         method: 'GET',
@@ -144,10 +115,18 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
       });
 
       if (!response.ok) {
-        logger.warn(`HTTP ${response.status} from ${url}`, {
-          service: 'exchangeRateHistoryService',
-          statusCode: response.status,
-        });
+        // 404 是預期的錯誤（歷史資料可能尚未生成），降級為 debug level
+        if (response.status === 404) {
+          logger.debug(`Historical data not found: ${url}`, {
+            service: 'exchangeRateHistoryService',
+            statusCode: 404,
+          });
+        } else {
+          logger.warn(`HTTP ${response.status} from ${url}`, {
+            service: 'exchangeRateHistoryService',
+            statusCode: response.status,
+          });
+        }
         continue;
       }
 
