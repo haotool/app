@@ -48,7 +48,7 @@ jobs:
         continue-on-error: true
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium
 
       - name: Run E2E tests
         run: pnpm --filter @app/ratewise test:e2e
