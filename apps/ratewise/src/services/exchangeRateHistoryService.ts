@@ -94,6 +94,16 @@ function saveToCache<T>(key: string, data: T): void {
 }
 
 /**
+ * 404 Not Found 錯誤類別（用於標記預期的錯誤）
+ */
+class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NotFoundError';
+  }
+}
+
+/**
  * 從 URL 列表依序嘗試獲取資料
  */
 async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T> {
@@ -103,6 +113,8 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
     logger.debug(`Cache hit for ${cacheKey}`, { service: 'exchangeRateHistoryService' });
     return cached;
   }
+
+  let allNotFound = true;
 
   // 依序嘗試 URL
   for (const url of urls) {
@@ -122,6 +134,7 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
             statusCode: 404,
           });
         } else {
+          allNotFound = false;
           logger.warn(`HTTP ${response.status} from ${url}`, {
             service: 'exchangeRateHistoryService',
             statusCode: response.status,
@@ -138,6 +151,7 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
       logger.info(`Successfully fetched from ${url}`, { service: 'exchangeRateHistoryService' });
       return data as T;
     } catch (error) {
+      allNotFound = false;
       logger.debug(`Failed to fetch from ${url}`, {
         service: 'exchangeRateHistoryService',
         error: error instanceof Error ? error.message : String(error),
@@ -145,6 +159,11 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
     }
   }
 
+  // 如果所有 URL 都是 404，拋出 NotFoundError（靜默處理）
+  // 否則拋出一般錯誤（需要記錄）
+  if (allNotFound) {
+    throw new NotFoundError(`Historical data not found: ${urls.join(', ')}`);
+  }
   throw new Error(`Failed to fetch data from all URLs: ${urls.join(', ')}`);
 }
 
@@ -189,11 +208,15 @@ export async function fetchHistoricalRates(date: Date): Promise<ExchangeRateData
     });
     return data;
   } catch (error) {
-    logger.error(
-      `Failed to fetch historical rates for ${dateStr}`,
-      error instanceof Error ? error : new Error(String(error)),
-      { service: 'exchangeRateHistoryService' },
-    );
+    // NotFoundError 是預期行為（歷史資料尚未生成），完全靜默處理
+    // 其他錯誤才需要記錄
+    if (!(error instanceof NotFoundError)) {
+      logger.error(
+        `Failed to fetch historical rates for ${dateStr}`,
+        error instanceof Error ? error : new Error(String(error)),
+        { service: 'exchangeRateHistoryService' },
+      );
+    }
     throw error;
   }
 }
