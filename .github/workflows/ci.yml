@@ -50,10 +50,25 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium
 
+      - name: Start preview server in background
+        run: |
+          pnpm --filter @app/ratewise preview &
+          echo $! > .preview-server.pid
+          sleep 10
+          curl -f http://localhost:4173 || exit 1
+
       - name: Run E2E tests
         run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile
         env:
           CI: true
+
+      - name: Stop preview server
+        if: always()
+        run: |
+          if [ -f .preview-server.pid ]; then
+            kill $(cat .preview-server.pid) || true
+            rm .preview-server.pid
+          fi
 
       - name: Upload E2E test results
         if: failure()
