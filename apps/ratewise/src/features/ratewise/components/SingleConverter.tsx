@@ -70,12 +70,22 @@ export const SingleConverter = ({
   // 獲取當前目標貨幣的快速金額選項
   const quickAmounts = CURRENCY_QUICK_AMOUNTS[toCurrency] || CURRENCY_QUICK_AMOUNTS.TWD;
 
-  // Load historical data for trend chart
+  // Load historical data for trend chart (並行獲取優化)
   useEffect(() => {
+    // Skip in test environment (avoid window is not defined error)
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    let isMounted = true;
+
     async function loadTrend() {
       try {
+        if (!isMounted) return;
         setLoadingTrend(true);
         const historicalData = await fetchHistoricalRatesRange(7);
+
+        if (!isMounted) return;
 
         const data: MiniTrendDataPoint[] = historicalData
           .map((item) => {
@@ -84,7 +94,7 @@ export const SingleConverter = ({
             const rate = fromRate / toRate;
 
             return {
-              date: item.date.slice(5), // MM-DD
+              date: item.date, // Keep full YYYY-MM-DD format for lightweight-charts
               rate,
             };
           })
@@ -93,13 +103,20 @@ export const SingleConverter = ({
 
         setTrendData(data);
       } catch {
+        if (!isMounted) return;
         setTrendData([]);
       } finally {
-        setLoadingTrend(false);
+        if (isMounted) {
+          setLoadingTrend(false);
+        }
       }
     }
 
     void loadTrend();
+
+    return () => {
+      isMounted = false;
+    };
   }, [fromCurrency, toCurrency]);
 
   return (

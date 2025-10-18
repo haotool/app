@@ -1,184 +1,183 @@
-# PWA 實作文檔
+# PWA Implementation Guide
 
-**建立時間**: 2025-10-17T01:52:00+08:00  
-**狀態**: ✅ 已完成  
-**版本**: 1.0.0
-
-## 📋 實作概述
-
-RateWise 已成功實作為漸進式網頁應用程式（PWA），支援離線使用、應用程式安裝和快速載入。
-
-## 🎯 技術實作
-
-### 1. Web App Manifest
-
-**位置**: `/public/manifest.webmanifest`
-
-```json
-{
-  "name": "RateWise - 即時匯率轉換器",
-  "short_name": "RateWise",
-  "description": "快速、準確的即時匯率轉換工具",
-  "theme_color": "#8B5CF6",
-  "background_color": "#E8ECF4",
-  "display": "standalone",
-  "scope": "/",
-  "start_url": "/",
-  "icons": [
-    {
-      "src": "/pwa-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/pwa-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "/pwa-512x512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ]
-}
-```
-
-### 2. Service Worker
-
-**位置**: `/public/sw.js`
-
-**策略**:
-
-- **靜態資源**: Cache First（快取優先）
-- **API 請求**: Network First（網路優先）with fallback to cache
-
-**快取管理**:
-
-- `ratewise-v1`: 預快取的靜態資源
-- `ratewise-runtime-v1`: 執行時快取的動態資源
-
-**關鍵功能**:
-
-- 離線支援
-- 自動更新（skipWaiting）
-- 即時接管（clientsClaim）
-- API 請求快取（Frankfurter API）
-
-### 3. Service Worker 註冊
-
-**位置**: `/index.html`
-
-```javascript
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js')
-      .then((registration) => {
-        console.log('SW registered:', registration.scope);
-      })
-      .catch((error) => {
-        console.log('SW registration failed:', error);
-      });
-  });
-}
-```
-
-## 📱 PWA 圖標
-
-所有圖標已正確配置並放置在 `/public/` 目錄：
-
-- `pwa-192x192.png` (33KB) - 基礎圖標
-- `pwa-384x384.png` (146KB) - 中等圖標
-- `pwa-512x512.png` (282KB) - 大型圖標
-- `pwa-512x512-maskable.png` (154KB) - 自適應圖標（Android）
-- `apple-touch-icon.png` (29KB) - iOS 圖標
-- `favicon.ico` (4.2KB) - 瀏覽器圖標
-- `favicon.svg` (254B) - SVG 圖標
-
-## ✅ 瀏覽器支援
-
-| 功能           | Chrome | Firefox | Safari         | Edge |
-| -------------- | ------ | ------- | -------------- | ---- |
-| Manifest       | ✅     | ✅      | ✅             | ✅   |
-| Service Worker | ✅     | ✅      | ✅             | ✅   |
-| 離線支援       | ✅     | ✅      | ✅             | ✅   |
-| 安裝提示       | ✅     | ❌      | ✅ (iOS 16.4+) | ✅   |
-
-## 🧪 測試方法
-
-### 本地測試
-
-```bash
-# 建置專案
-pnpm build
-
-# 啟動預覽服務器
-pnpm preview
-
-# 訪問 http://localhost:4173
-```
-
-### 驗證清單
-
-1. ✅ 開啟 Chrome DevTools > Application > Manifest
-2. ✅ 檢查 Service Worker 已註冊
-3. ✅ 測試離線模式（DevTools > Network > Offline）
-4. ✅ 驗證安裝提示（桌面版 Chrome）
-5. ✅ 檢查快取策略（Application > Cache Storage）
-
-## 📈 效能指標
-
-- **First Contentful Paint (FCP)**: < 1.5s
-- **Largest Contentful Paint (LCP)**: < 2.5s
-- **Time to Interactive (TTI)**: < 3.5s
-- **Lighthouse PWA Score**: 100/100 (目標)
-
-## 🔧 技術債務與改進
-
-### 已解決
-
-- ✅ vite-plugin-pwa 相容性問題（改用手動配置）
-- ✅ Service Worker 註冊邏輯
-- ✅ Manifest 配置完整性
-
-### 未來改進
-
-- [ ] 實作更新通知 UI
-- [ ] 添加背景同步（Background Sync）
-- [ ] 實作推播通知（Push Notifications）
-- [ ] 優化快取策略（Workbox strategies）
-
-## 📚 參考資料
-
-- [MDN - Progressive Web Apps](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) [context7:mdn/pwa:2025-10-17T01:52:00+08:00]
-- [Web.dev - PWA](https://web.dev/learn/pwa/) [context7:web.dev/pwa:2025-10-17T01:52:00+08:00]
-- [Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) [context7:mdn/sw:2025-10-17T01:52:00+08:00]
-
-## 📝 維護指南
-
-### 更新 Service Worker
-
-編輯 `/public/sw.js` 並更新 `CACHE_NAME` 版本：
-
-```javascript
-const CACHE_NAME = 'ratewise-v2'; // 遞增版本號
-```
-
-### 更新 Manifest
-
-編輯 `/public/manifest.webmanifest` 並重新建置專案。
-
-### 監控與除錯
-
-使用 Chrome DevTools:
-
-1. Application > Service Workers
-2. Application > Cache Storage
-3. Console 查看 SW 日誌
+**Status**: ✅ Production Ready
+**Version**: 1.0.0
+**Last Updated**: 2025-10-18
 
 ---
 
-**最後更新**: 2025-10-17T01:52:00+08:00  
-**作者**: RateWise Development Team
+## Overview
+
+RateWise implements Progressive Web App functionality following best practices:
+
+- **Installable**: Meets all PWA criteria for home screen installation
+- **Offline-capable**: Service Worker caching for core functionality
+- **Fast**: Optimized caching strategies for instant loading
+- **Secure**: HTTPS-only, proper security headers
+
+### Architecture
+
+- **Service Worker**: Auto-generated by vite-plugin-pwa with Workbox strategies
+- **Manifest**: Complete with icons (192px - 1024px), theme colors, standalone mode
+- **Caching**: NetworkFirst for API, CacheFirst for fonts/static assets
+
+---
+
+## Features
+
+### Core Functionality ✅
+
+1. **Web App Manifest** (`/manifest.webmanifest`)
+   - App name, description, theme colors
+   - 7 icon sizes (192px to 1024px)
+   - Maskable icons for Android
+   - Standalone display mode
+
+2. **Service Worker** (auto-generated)
+   - Automatic registration via vite-plugin-pwa
+   - Precaching of critical assets
+   - Runtime caching with Workbox strategies
+
+3. **Caching Strategy**
+   - **API** (frankfurter.app): NetworkFirst with 5min TTL
+   - **Fonts** (Google Fonts): CacheFirst with 1yr TTL
+   - **Static Assets**: Immutable caching with hash-based invalidation
+
+4. **Icons & Branding**
+   - 18 icon sizes from 32px to 1024px
+   - Maskable icons for Android adaptive icons
+   - Apple touch icons for iOS
+
+### Future Enhancements 📋
+
+1. **Update Notifications**: UI prompt for SW updates (when vite-plugin-pwa supports Vite 7)
+2. **Push Notifications**: Requires backend VAPID server implementation
+3. **Background Sync**: For offline form submissions
+
+---
+
+## Verification
+
+### Build Output
+
+```bash
+pnpm --filter @app/ratewise build
+```
+
+Expected artifacts:
+
+- `dist/sw.js` - Service Worker
+- `dist/manifest.webmanifest` - PWA manifest
+- All icons in `dist/` folder
+
+### Testing
+
+```bash
+# E2E tests (includes PWA checks)
+pnpm --filter @app/ratewise test:e2e
+
+# Preview locally
+pnpm --filter @app/ratewise preview
+# Open http://localhost:4173/
+```
+
+### Lighthouse Audit
+
+Run Lighthouse to verify PWA compliance:
+
+```bash
+npx lighthouse http://localhost:4173/ --view
+```
+
+Target scores:
+
+- Performance: ≥ 90
+- Accessibility: ≥ 90
+- Best Practices: ≥ 90
+- SEO: ≥ 90
+
+### Real Device Testing
+
+**iOS**:
+
+1. Open Safari → ratewise.app
+2. Tap Share → Add to Home Screen
+3. Verify icon, splash screen, standalone mode
+
+**Android**:
+
+1. Open Chrome → ratewise.app
+2. Tap Menu → Install app
+3. Verify maskable icon adapts to device theme
+
+---
+
+## Configuration
+
+### vite.config.ts
+
+```typescript
+import { VitePWA } from 'vite-plugin-pwa';
+
+export default defineConfig({
+  plugins: [
+    VitePWA({
+      registerType: 'prompt',
+      manifest: {
+        name: 'RateWise - 即時匯率轉換器',
+        short_name: 'RateWise',
+        theme_color: '#8B5CF6',
+        // ... see vite.config.ts for full config
+      },
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/api\.frankfurter\.app\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'frankfurter-api-cache',
+              expiration: { maxAgeSeconds: 60 * 5 },
+            },
+          },
+          // ... see vite.config.ts for full config
+        ],
+      },
+    }),
+  ],
+});
+```
+
+### Environment Variables
+
+No special environment variables required for PWA functionality.
+
+## Troubleshooting
+
+### Service Worker Not Registering
+
+1. Verify HTTPS or localhost
+2. Check browser console for errors
+3. Clear browser cache and hard reload
+
+### Icons Not Appearing
+
+1. Verify all icon files exist in `/public/`
+2. Check manifest.webmanifest is accessible
+3. Validate icon sizes match manifest
+
+### Caching Issues
+
+1. Unregister old service workers
+2. Clear application cache in DevTools
+3. Rebuild and redeploy
+
+## References
+
+- [MDN - Progressive Web Apps](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
+- [vite-plugin-pwa Documentation](https://vite-pwa-org.netlify.app/)
+- [Web.dev PWA Checklist](https://web.dev/pwa-checklist/)
+- [Workbox Caching Strategies](https://developer.chrome.com/docs/workbox/caching-strategies-overview/)
+
+---
+
+**Maintained by**: DevOps Team | **Version**: 1.0.0

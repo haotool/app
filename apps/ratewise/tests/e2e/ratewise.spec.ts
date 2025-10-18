@@ -31,8 +31,8 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(page.getByRole('button', { name: /單幣別/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /多幣別/i })).toBeVisible();
 
-    // 檢查頁尾資料來源
-    await expect(page.getByText(/臺灣銀行牌告匯率/i)).toBeVisible();
+    // 檢查頁尾資料來源 (使用 first() 避免 strict mode violation)
+    await expect(page.getByText(/臺灣銀行牌告匯率/i).first()).toBeVisible();
   });
 
   test('單幣別模式：應該能夠輸入金額並看到換算結果', async ({ page }) => {
@@ -40,14 +40,15 @@ test.describe('RateWise 核心功能測試', () => {
     const singleModeButton = page.getByRole('button', { name: /單幣別/i });
     await expect(singleModeButton).toHaveClass(/bg-white/);
 
-    // 找到第一個金額輸入框（來源貨幣）
-    const fromAmountInput = page.locator('input[type="text"]').first();
-    await fromAmountInput.clear();
+    // 使用 getByLabel 定位特定輸入框 - Playwright 最佳實踐
+    const fromAmountInput = page.getByLabel(/轉換金額/i);
+    const toAmountInput = page.getByLabel(/轉換結果/i);
+
+    // Playwright auto-waiting - 不需要額外 waitFor
     await fromAmountInput.fill('1000');
 
-    // 等待換算完成（檢查第二個輸入框有值）
-    const toAmountInput = page.locator('input[type="text"]').nth(1);
-    await expect(toAmountInput).not.toHaveValue('');
+    // 等待換算完成
+    await expect(toAmountInput).not.toHaveValue('', { timeout: 5000 });
     await expect(toAmountInput).not.toHaveValue('0');
 
     // 驗證換算結果是數字
@@ -56,25 +57,13 @@ test.describe('RateWise 核心功能測試', () => {
   });
 
   test('單幣別模式：應該能夠交換貨幣', async ({ page }) => {
-    // 找到交換按鈕（通常是雙箭頭圖示）
-    const swapButton = page
-      .locator('button')
-      .filter({ hasText: /⇄|swap|交換/i })
-      .or(
-        page
-          .locator('button svg')
-          .filter({ has: page.locator('[d*="M7"]') })
-          .locator('..'),
-      )
-      .first();
+    // 使用更穩定的 getByRole - Context7 最佳實踐
+    const swapButton = page.getByRole('button', { name: /交換幣別/i });
 
-    // 點擊交換
+    // Playwright auto-waiting 會自動等待元素可操作
     await swapButton.click();
 
-    // 等待 UI 更新
-    await page.waitForTimeout(500);
-
-    // 至少確認頁面沒有崩潰且交換功能正常執行
+    // 驗證頁面狀態正常
     await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
   });
 
@@ -97,19 +86,30 @@ test.describe('RateWise 核心功能測試', () => {
   test('多幣別模式：應該能夠輸入基準金額並看到所有貨幣換算', async ({ page }) => {
     // 切換到多幣別模式
     await page.getByRole('button', { name: /多幣別/i }).click();
+
+    // 等待 UI 完全切換
     await page.waitForTimeout(500);
 
-    // 找到基準金額輸入框（通常在頂部）
-    const baseAmountInput = page.locator('input[type="text"]').first();
-    await baseAmountInput.clear();
-    await baseAmountInput.fill('5000');
+    // 使用更具體的 locator - 直接定位新台幣輸入框
+    // MultiConverter 中每個幣別都有獨立的輸入框，使用 aria-label 定位
+    const twdInput = page.getByLabel(/新台幣.*TWD.*金額/i);
 
-    // 等待計算完成
-    await page.waitForTimeout(1000);
+    // 等待新台幣輸入框可見且可操作
+    await expect(twdInput).toBeVisible({ timeout: 5000 });
+    await expect(twdInput).toBeEnabled();
 
-    // 驗證至少有一個貨幣顯示換算結果
-    const currencyValues = page.locator('text=/[0-9,]+\\.[0-9]{2}/');
-    await expect(currencyValues.first()).toBeVisible();
+    // 填入金額
+    await twdInput.fill('5000');
+
+    // 驗證其他貨幣的輸入框有換算結果（不為空且不為0）
+    const usdInput = page.getByLabel(/美元.*USD.*金額/i);
+    await expect(usdInput).toBeVisible({ timeout: 5000 });
+    await expect(usdInput).not.toHaveValue('');
+    await expect(usdInput).not.toHaveValue('0');
+
+    // 驗證換算結果是數字且大於0
+    const usdValue = await usdInput.inputValue();
+    expect(parseFloat(usdValue.replace(/,/g, ''))).toBeGreaterThan(0);
   });
 
   test('我的最愛：應該能夠新增和移除最愛貨幣', async ({ page }) => {

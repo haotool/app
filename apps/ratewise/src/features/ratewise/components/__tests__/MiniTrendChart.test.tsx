@@ -3,19 +3,42 @@ import { render } from '@testing-library/react';
 import { MiniTrendChart, type MiniTrendDataPoint } from '../MiniTrendChart';
 
 // Mock lightweight-charts
+// Based on TradingView's official testing strategy: E2E tests for canvas rendering
+// Unit tests only verify component logic without actual chart rendering
 vi.mock('lightweight-charts', () => ({
   createChart: vi.fn(() => ({
     addSeries: vi.fn(() => ({
       setData: vi.fn(),
+      applyOptions: vi.fn(),
     })),
     timeScale: vi.fn(() => ({
       fitContent: vi.fn(),
+      applyOptions: vi.fn(),
+    })),
+    priceScale: vi.fn(() => ({
+      applyOptions: vi.fn(),
     })),
     applyOptions: vi.fn(),
+    subscribeCrosshairMove: vi.fn(),
+    unsubscribeCrosshairMove: vi.fn(),
     remove: vi.fn(),
+    resize: vi.fn(),
   })),
-  ColorType: { Solid: 'solid' },
-  LineStyle: { Solid: 0 },
+  ColorType: {
+    Solid: 'solid',
+    VerticalGradient: 'gradient',
+  },
+  CrosshairMode: {
+    Normal: 0,
+    Magnet: 1,
+  },
+  LineStyle: {
+    Solid: 0,
+    Dotted: 1,
+    Dashed: 2,
+    LargeDashed: 3,
+    SparseDotted: 4,
+  },
   AreaSeries: 'AreaSeries',
 }));
 

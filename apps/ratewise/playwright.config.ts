@@ -74,9 +74,12 @@ export default defineConfig({
     {
       name: 'firefox-mobile',
       use: {
-        ...devices['Pixel 5'],
         browserName: 'firefox',
         viewport: { width: 375, height: 667 },
+        // Firefox doesn't support isMobile, so we only set viewport
+        hasTouch: true,
+        userAgent:
+          'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36',
       },
     },
   ],
