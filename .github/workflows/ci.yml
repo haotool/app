@@ -51,7 +51,7 @@ jobs:
         run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium
 
       - name: Run E2E tests
-        run: pnpm --filter @app/ratewise test:e2e
+        run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile
         env:
           CI: true
 
