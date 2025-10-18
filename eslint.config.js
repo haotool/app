@@ -17,6 +17,7 @@ export default tseslint.config(
       '**/.next/**',
       '**/.turbo/**',
       '**/public/**',
+      '**/playwright-report/**',
       '**/*.config.js',
       '**/*.config.ts',
       '**/*.config.cjs',
@@ -90,9 +91,9 @@ export default tseslint.config(
         },
       ],
 
-      // 放寬某些規則以符合專案需求
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
+      // TypeScript 嚴格規則（提升程式碼品質）
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'error',
       '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-inferrable-types': 'error',

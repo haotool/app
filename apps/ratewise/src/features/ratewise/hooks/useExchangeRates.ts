@@ -9,6 +9,7 @@ export interface ExchangeRatesState {
   error: Error | null;
   lastUpdate: string | null;
   source: string | null;
+  isRefreshing: boolean;
 }
 
 const INITIAL_STATE: ExchangeRatesState = {
@@ -19,6 +20,7 @@ const INITIAL_STATE: ExchangeRatesState = {
   error: null,
   lastUpdate: null,
   source: null,
+  isRefreshing: false,
 };
 
 export function useExchangeRates() {
@@ -27,7 +29,18 @@ export function useExchangeRates() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadRates() {
+    async function loadRates(isAutoRefresh = false) {
+      // 不在背景刷新（Page Visibility API 優化）
+      if (isAutoRefresh && document.hidden) {
+        console.log('⏸️ Skipping refresh: page is hidden');
+        return;
+      }
+
+      // 如果是自動刷新，設定刷新狀態
+      if (isAutoRefresh && isMounted) {
+        setState((prev) => ({ ...prev, isRefreshing: true }));
+      }
+
       try {
         const data = await getExchangeRates();
         if (!isMounted) return;
@@ -49,13 +62,17 @@ export function useExchangeRates() {
           error: null,
           lastUpdate: data.updateTime,
           source: data.source,
+          isRefreshing: false,
         });
 
-        console.log('✅ Exchange rates loaded:', {
-          currencies: Object.values(newRates).filter((r) => r !== null).length,
-          source: data.source,
-          updateTime: data.updateTime,
-        });
+        console.log(
+          `${isAutoRefresh ? '🔄' : '✅'} Exchange rates ${isAutoRefresh ? 'refreshed' : 'loaded'}:`,
+          {
+            currencies: Object.values(newRates).filter((r) => r !== null).length,
+            source: data.source,
+            updateTime: data.updateTime,
+          },
+        );
       } catch (error) {
         if (!isMounted) return;
         console.error('Failed to load exchange rates:', error);
@@ -63,14 +80,38 @@ export function useExchangeRates() {
           ...prev,
           isLoading: false,
           error: error instanceof Error ? error : new Error(String(error)),
+          isRefreshing: false,
         }));
       }
     }
 
-    void loadRates();
+    // 初始載入
+    void loadRates(false);
 
+    // 設定 5 分鐘自動輪詢（與快取策略一致）
+    const intervalId = setInterval(
+      () => {
+        void loadRates(true);
+      },
+      5 * 60 * 1000,
+    );
+
+    // Page Visibility API: 用戶返回時立即刷新
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isMounted) {
+        console.log('👁️ Page visible: refreshing rates');
+        void loadRates(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // 清理函數
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      console.log('🧹 Exchange rates polling cleaned up');
     };
   }, []);
 
