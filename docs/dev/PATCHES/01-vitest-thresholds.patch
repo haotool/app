@@ -1,0 +1,77 @@
+# Patch 1: 提升 Vitest 測試覆蓋率門檻至 80%
+
+## 檔案: apps/ratewise/vitest.config.ts
+
+### Before
+
+```typescript
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/setupTests.ts'],
+    globals: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.spec.{ts,tsx}',
+        'src/setupTests.ts',
+        'src/main.tsx',
+        'src/vite-env.d.ts',
+      ],
+      thresholds: {
+        lines: 60,      // ❌ 過低
+        functions: 60,  // ❌ 過低
+        branches: 60,   // ❌ 過低
+        statements: 60, // ❌ 過低
+      },
+    },
+  },
+```
+
+### After
+
+```typescript
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/setupTests.ts'],
+    globals: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.spec.{ts,tsx}',
+        'src/setupTests.ts',
+        'src/main.tsx',
+        'src/vite-env.d.ts',
+      ],
+      thresholds: {
+        lines: 80,      // ✅ 提升至 80%
+        functions: 80,  // ✅ 提升至 80%
+        branches: 75,   // ✅ branches 通常較難達到 80%
+        statements: 80, // ✅ 提升至 80%
+      },
+    },
+  },
+```
+
+### 驗證指令
+
+```bash
+cd apps/ratewise
+pnpm test:coverage
+
+# 確認所有指標 >= 門檻
+# 若失敗，需補充測試
+```
+
+### 相關 Issue
+
+- TECH_DEBT_AUDIT.md § 風險 #4
+- REFACTOR_PLAN.md § M0.3
+
