@@ -80,15 +80,33 @@ self.addEventListener('fetch', (event) => {
   // API 請求 - NetworkFirst
   if (url.hostname === 'api.frankfurter.app') {
     event.respondWith(
-      fetch(request, { timeout: 10000 })
-        .then((response) => {
+      (async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        try {
+          const response = await fetch(request, { signal: controller.signal });
           const responseClone = response.clone();
           caches.open(RUNTIME_CACHE).then((cache) => {
             cache.put(request, responseClone);
           });
           return response;
-        })
-        .catch(() => caches.match(request)),
+        } catch (error) {
+          if (!(error instanceof DOMException && error.name === 'AbortError')) {
+            console.warn('[SW] Falling back to cached API response', error);
+          }
+          const cached = await caches.match(request);
+          return (
+            cached ||
+            new Response('Offline', {
+              status: 503,
+              statusText: 'Service Unavailable',
+            })
+          );
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      })(),
     );
     return;
   }
