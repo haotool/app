@@ -10,7 +10,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  quality:
+    name: Quality Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -18,9 +19,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 9.10.0
+          run_install: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -28,45 +30,109 @@ jobs:
           node-version: '24'
           cache: 'pnpm'
 
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "dir=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.dir }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Run linter
         run: pnpm lint
 
+      - name: Format check
+        run: pnpm format
+
       - name: Type check
         run: pnpm typecheck
 
       - name: Run tests
-        run: pnpm test
+        run: pnpm test --coverage
 
       - name: Build
         run: pnpm build
 
       - name: Security audit
         run: pnpm audit --prod --audit-level=high
-        continue-on-error: true
+
+      - name: Upload coverage
+        if: success()
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./apps/ratewise/coverage/coverage-final.json
+          flags: unittests
+          fail_ci_if_error: false
+
+  e2e:
+    name: End-to-End
+    needs: quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "dir=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.dir }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium
+        run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium firefox
 
-      - name: Start preview server in background
+      - name: Start preview server
         run: |
-          pnpm --filter @app/ratewise preview &
+          pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 &
           echo $! > .preview-server.pid
-          sleep 10
-          curl -f http://localhost:4173 || exit 1
+          for i in {1..10}; do
+            if curl --silent --fail http://127.0.0.1:4173 > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Preview server failed to start"
+          exit 1
 
       - name: Run E2E tests
-        run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile
         env:
           CI: true
+        run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile
 
       - name: Stop preview server
         if: always()
         run: |
           if [ -f .preview-server.pid ]; then
-            kill $(cat .preview-server.pid) || true
+            kill "$(cat .preview-server.pid)" || true
             rm .preview-server.pid
           fi
 
@@ -77,11 +143,3 @@ jobs:
           name: playwright-report
           path: apps/ratewise/playwright-report
           retention-days: 7
-
-      - name: Upload coverage
-        if: success()
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./apps/ratewise/coverage/coverage-final.json
-          flags: unittests
-          fail_ci_if_error: false
