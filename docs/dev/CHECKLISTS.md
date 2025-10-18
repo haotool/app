@@ -1,6 +1,6 @@
 # 品質檢查清單
 
-> **最後更新**: 2025-10-18T03:13:53+08:00  
+> **最後更新**: 2025-10-19T02:54:31+08:00  
 > **狀態**: 持續更新  
 > **參考**: TECH_DEBT_AUDIT.md, REFACTOR_PLAN.md
 
@@ -18,6 +18,7 @@
 
 ### 本週完成（M0 - 清理與基礎強化）
 
+- [x] 建立 `apps/ratewise/public/robots.txt`、`sitemap.xml`
 - [ ] 刪除臨時報告文檔（E2E_FIXES_SUMMARY.md 等）
 - [ ] 刪除 ReloadPrompt.tsx（未使用，測試覆蓋率 0%）
 - [ ] 提升測試覆蓋率門檻至 80%
