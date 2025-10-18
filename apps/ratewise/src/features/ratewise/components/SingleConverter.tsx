@@ -77,10 +77,15 @@ export const SingleConverter = ({
       return;
     }
 
+    let isMounted = true;
+
     async function loadTrend() {
       try {
+        if (!isMounted) return;
         setLoadingTrend(true);
         const historicalData = await fetchHistoricalRatesRange(7);
+
+        if (!isMounted) return;
 
         const data: MiniTrendDataPoint[] = historicalData
           .map((item) => {
@@ -98,13 +103,20 @@ export const SingleConverter = ({
 
         setTrendData(data);
       } catch {
+        if (!isMounted) return;
         setTrendData([]);
       } finally {
-        setLoadingTrend(false);
+        if (isMounted) {
+          setLoadingTrend(false);
+        }
       }
     }
 
     void loadTrend();
+
+    return () => {
+      isMounted = false;
+    };
   }, [fromCurrency, toCurrency]);
 
   return (
