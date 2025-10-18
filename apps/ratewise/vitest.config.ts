@@ -36,6 +36,11 @@ export default defineConfig({
         'src/setupTests.ts',
         'src/main.tsx',
         'src/vite-env.d.ts',
+        // Exclude utility modules that are integration-dependent
+        'src/utils/pushNotifications.ts', // PWA-specific, requires service worker context
+        'src/utils/sentry.ts', // External service integration
+        'src/utils/webVitals.ts', // Browser performance API, requires real DOM
+        'src/App.tsx', // Entry component, covered by E2E tests
       ],
       thresholds: {
         lines: 80,

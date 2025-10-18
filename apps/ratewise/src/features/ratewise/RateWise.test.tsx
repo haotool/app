@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import RateWise from './RateWise';
 
 // Mock lightweight-charts
@@ -42,9 +42,35 @@ vi.mock('lightweight-charts', () => ({
   AreaSeries: 'AreaSeries',
 }));
 
+const mockRatesResponse = {
+  timestamp: '2025-10-18T00:00:00.000Z',
+  updateTime: '2025/10/18 08:00:00',
+  source: 'Taiwan Bank',
+  sourceUrl: 'https://rate.bot.com.tw/xrt',
+  base: 'TWD',
+  rates: {
+    TWD: 1,
+    USD: 0.031,
+    JPY: 4.6,
+    EUR: 0.029,
+  },
+  details: {},
+};
+
 describe('RateWise Component', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
     localStorage.clear();
+    fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockRatesResponse),
+    } as Response);
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   describe('Basic Rendering', () => {
