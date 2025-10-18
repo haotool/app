@@ -38,6 +38,35 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // CDN 歷史匯率數據 - CacheFirst with NetworkFallback
+  if (
+    (url.hostname === 'cdn.jsdelivr.net' || url.hostname === 'raw.githubusercontent.com') &&
+    url.pathname.includes('/rates/')
+  ) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        return (
+          cached ||
+          fetch(request)
+            .then((response) => {
+              if (response.ok) {
+                const responseClone = response.clone();
+                caches.open(RUNTIME_CACHE).then((cache) => {
+                  cache.put(request, responseClone);
+                });
+              }
+              return response;
+            })
+            .catch(() => {
+              // 如果 CDN 失敗，返回快取（即使過期）
+              return cached || new Response('Network error', { status: 408 });
+            })
+        );
+      }),
+    );
+    return;
+  }
+
   // API 請求 - NetworkFirst
   if (url.hostname === 'api.frankfurter.app') {
     event.respondWith(

@@ -84,7 +84,7 @@ export const SingleConverter = ({
             const rate = fromRate / toRate;
 
             return {
-              date: item.date.slice(5), // MM-DD
+              date: item.date, // Keep full YYYY-MM-DD format for lightweight-charts
               rate,
             };
           })
