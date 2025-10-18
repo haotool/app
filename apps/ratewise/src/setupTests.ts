@@ -40,12 +40,13 @@ const mockCanvasRenderingContext2D = {
 };
 
 // Mock HTMLCanvasElement.prototype methods
+// Type assertion needed because getContext is an overloaded function
 HTMLCanvasElement.prototype.getContext = vi.fn((contextType: string) => {
   if (contextType === '2d') {
     return mockCanvasRenderingContext2D as unknown as CanvasRenderingContext2D;
   }
   return null;
-});
+}) as typeof HTMLCanvasElement.prototype.getContext;
 
 HTMLCanvasElement.prototype.toDataURL = vi.fn(() => 'data:image/png;base64,');
 HTMLCanvasElement.prototype.toBlob = vi.fn();

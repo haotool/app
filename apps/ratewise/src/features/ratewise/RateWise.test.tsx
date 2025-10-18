@@ -280,27 +280,32 @@ describe('RateWise Component', () => {
     it('allows switching between quick amounts multiple times', async () => {
       render(<RateWise />);
 
-      // Wait for buttons to appear after async loading
-      const button1000 = (await screen.findAllByRole('button', { name: '1,000' }))[0];
-      const button5000 = (await screen.findAllByRole('button', { name: '5,000' }))[0];
-      const button100 = (await screen.findAllByRole('button', { name: '100' }))[0];
+      // Wait for buttons to appear - findAllByRole throws if not found
+      const buttons1000 = await screen.findAllByRole('button', { name: '1,000' });
+      const buttons5000 = await screen.findAllByRole('button', { name: '5,000' });
+      const buttons100 = await screen.findAllByRole('button', { name: '100' });
+
+      // Verify buttons exist before clicking
+      expect(buttons1000.length).toBeGreaterThan(0);
+      expect(buttons5000.length).toBeGreaterThan(0);
+      expect(buttons100.length).toBeGreaterThan(0);
 
       // Click 1,000
-      fireEvent.click(button1000);
+      fireEvent.click(buttons1000[0]!);
       await waitFor(() => {
         const inputs = screen.getAllByPlaceholderText('0.00');
         expect(inputs[0]).toHaveValue(1000);
       });
 
       // Click 5,000
-      fireEvent.click(button5000);
+      fireEvent.click(buttons5000[0]!);
       await waitFor(() => {
         const inputs = screen.getAllByPlaceholderText('0.00');
         expect(inputs[0]).toHaveValue(5000);
       });
 
       // Click 100
-      fireEvent.click(button100);
+      fireEvent.click(buttons100[0]!);
       await waitFor(() => {
         const inputs = screen.getAllByPlaceholderText('0.00');
         expect(inputs[0]).toHaveValue(100);
