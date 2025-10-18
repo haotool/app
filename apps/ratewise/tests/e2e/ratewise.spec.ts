@@ -40,16 +40,15 @@ test.describe('RateWise 核心功能測試', () => {
     const singleModeButton = page.getByRole('button', { name: /單幣別/i });
     await expect(singleModeButton).toHaveClass(/bg-white/);
 
-    // 使用更穩定的 getByRole - Context7 最佳實踐
-    const inputs = page.getByRole('textbox');
-    const fromAmountInput = inputs.first();
+    // 使用 getByLabel 定位特定輸入框 - Playwright 最佳實踐
+    const fromAmountInput = page.getByLabel(/轉換金額/i);
+    const toAmountInput = page.getByLabel(/轉換結果/i);
 
     // Playwright auto-waiting - 不需要額外 waitFor
     await fromAmountInput.fill('1000');
 
-    // 等待換算完成（檢查第二個輸入框有值）
-    const toAmountInput = inputs.nth(1);
-    await expect(toAmountInput).not.toHaveValue('');
+    // 等待換算完成
+    await expect(toAmountInput).not.toHaveValue('', { timeout: 5000 });
     await expect(toAmountInput).not.toHaveValue('0');
 
     // 驗證換算結果是數字
@@ -88,19 +87,29 @@ test.describe('RateWise 核心功能測試', () => {
     // 切換到多幣別模式
     await page.getByRole('button', { name: /多幣別/i }).click();
 
-    // 使用 getByRole 取代脆弱的 CSS 選擇器 - Context7 最佳實踐
-    const inputs = page.getByRole('textbox');
-    const baseAmountInput = inputs.first();
+    // 等待 UI 完全切換
+    await page.waitForTimeout(500);
 
-    // Playwright auto-waiting 會自動等待元素可見和可操作
-    await baseAmountInput.fill('5000');
+    // 使用更具體的 locator - 直接定位新台幣輸入框
+    // MultiConverter 中每個幣別都有獨立的輸入框，使用 aria-label 定位
+    const twdInput = page.getByLabel(/新台幣.*TWD.*金額/i);
 
-    // 等待任一輸入框有值（表示計算完成）
-    await expect(inputs.nth(1)).not.toHaveValue('', { timeout: 3000 });
+    // 等待新台幣輸入框可見且可操作
+    await expect(twdInput).toBeVisible({ timeout: 5000 });
+    await expect(twdInput).toBeEnabled();
 
-    // 驗證至少有換算結果
-    const secondValue = await inputs.nth(1).inputValue();
-    expect(parseFloat(secondValue.replace(/,/g, ''))).toBeGreaterThan(0);
+    // 填入金額
+    await twdInput.fill('5000');
+
+    // 驗證其他貨幣的輸入框有換算結果（不為空且不為0）
+    const usdInput = page.getByLabel(/美元.*USD.*金額/i);
+    await expect(usdInput).toBeVisible({ timeout: 5000 });
+    await expect(usdInput).not.toHaveValue('');
+    await expect(usdInput).not.toHaveValue('0');
+
+    // 驗證換算結果是數字且大於0
+    const usdValue = await usdInput.inputValue();
+    expect(parseFloat(usdValue.replace(/,/g, ''))).toBeGreaterThan(0);
   });
 
   test('我的最愛：應該能夠新增和移除最愛貨幣', async ({ page }) => {
