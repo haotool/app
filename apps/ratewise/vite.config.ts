@@ -50,6 +50,6 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: process.env.NODE_ENV === 'production' ? 'hidden' : true,
+    sourcemap: true, // 生成 source maps 以通過 Lighthouse 檢查和便於除錯
   },
 });
