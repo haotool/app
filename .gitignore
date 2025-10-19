@@ -71,3 +71,6 @@ playwright-report/
 # Lighthouse CI
 .lighthouseci/
 lighthouse-results/
+
+# Reports
+lighthouse-report.report.*

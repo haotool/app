@@ -1,0 +1,19 @@
+Contact: mailto:haotool.org@gmail.com
+Expires: 2026-10-19T00:00:00.000Z
+Preferred-Languages: zh-TW, en
+Canonical: https://ratewise.app/.well-known/security.txt
+
+# RateWise Security Contact Information
+#
+# If you discover a security vulnerability in RateWise,
+# please report it responsibly to the email address above.
+#
+# We appreciate your efforts to improve the security of our service.
+#
+# Expected response time: 48 hours
+#
+# Please include in your report:
+# - Description of the vulnerability
+# - Steps to reproduce
+# - Potential impact
+# - Suggested fix (if any)

@@ -25,5 +25,6 @@
     "paths": {
       "@shared/*": ["apps/shared/*"]
     }
-  }
+  },
+  "include": ["apps/**/*.ts", "apps/**/*.tsx", "scripts/**/*.ts", "*.config.ts"]
 }
