@@ -50,11 +50,12 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: true, // 生成 source maps 以通過 Lighthouse 檢查和便於除錯
+    // 生成 hidden source maps - 不在生產環境暴露，但可用於錯誤追蹤服務
+    // [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]
+    sourcemap: 'hidden',
     rollupOptions: {
       output: {
         // 動態 chunk splitting 以減少未使用的 JavaScript
-        // [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]
         manualChunks(id) {
           // 將 node_modules 中的套件分離成 vendor chunks
           if (id.includes('node_modules')) {
@@ -74,6 +75,8 @@ export default defineConfig({
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
+        // Source map 檔名
+        sourcemapFileNames: 'assets/[name]-[hash].js.map',
       },
     },
     // 最小化 chunk 大小以符合 Lighthouse 建議
@@ -88,6 +91,7 @@ export default defineConfig({
         drop_debugger: true,
         pure_funcs: ['console.log', 'console.debug', 'console.info', 'console.warn'],
       },
+      sourceMap: true, // Terser 保留 source map
     },
   },
 });
