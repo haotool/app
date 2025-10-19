@@ -1,4 +1,38 @@
+# RateWise - 匯率好工具 Robots.txt
+# 允許所有搜尋引擎和 AI 爬蟲
+
 User-agent: *
 Allow: /
 
+# AI 爬蟲明確允許（2025 AI SEO）
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+# 禁止爬取資源檔案
+Disallow: /assets/
+Disallow: /node_modules/
+Disallow: /*.map$
+
+# Sitemap
 Sitemap: https://ratewise.app/sitemap.xml

@@ -1,13 +1,15 @@
 {
   "name": "RateWise - 即時匯率轉換器",
   "short_name": "RateWise",
-  "description": "快速、準確的即時匯率轉換工具，支援多種貨幣與歷史匯率查詢",
+  "description": "RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。",
   "theme_color": "#8B5CF6",
   "background_color": "#E8ECF4",
   "display": "standalone",
   "scope": "/",
-  "start_url": "/",
+  "start_url": "/?utm_source=pwa",
   "id": "/",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "utilities", "productivity"],
   "icons": [
     {
       "src": "/icons/ratewise-icon-192x192.png",
@@ -50,6 +52,43 @@
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-home.png",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "RateWise 首頁 - 即時匯率換算與趨勢圖"
+    },
+    {
+      "src": "/screenshots/mobile-converter-active.png",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "貨幣轉換 - 輸入金額即時顯示匯率結果"
+    },
+    {
+      "src": "/screenshots/mobile-features.png",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "常見問題與功能介紹"
+    },
+    {
+      "src": "/screenshots/desktop-converter.png",
+      "sizes": "1920x1080",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "桌面版 - 完整匯率轉換介面與趨勢圖表"
+    },
+    {
+      "src": "/screenshots/desktop-features.png",
+      "sizes": "1920x1080",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "桌面版 - 關於 RateWise 與功能說明"
     }
   ]
 }
