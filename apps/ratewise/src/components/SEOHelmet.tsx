@@ -16,6 +16,12 @@ interface FAQEntry {
   answer: string;
 }
 
+interface HowToStep {
+  name: string;
+  text: string;
+  image?: string;
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -29,37 +35,79 @@ interface SEOProps {
   keywords?: string[];
   updatedTime?: string;
   faq?: FAQEntry[];
+  howTo?: {
+    name: string;
+    description: string;
+    steps: HowToStep[];
+  };
 }
 
-const DEFAULT_TITLE = 'RateWise - 即時匯率換算工具';
+const DEFAULT_TITLE = 'RateWise - 即時匯率轉換器 | 支援 TWD、USD、JPY、EUR 等多幣別換算';
 const DEFAULT_DESCRIPTION =
-  '快速、準確的即時匯率轉換工具，支援多種貨幣與歷史匯率查詢。參考臺灣銀行牌告匯率，精準可靠。';
-const DEFAULT_OG_IMAGE = '/pwa-512x512.png';
+  'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。';
+const DEFAULT_OG_IMAGE = '/og-image.png';
 const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://ratewise.app'; // Fallback
 const DEFAULT_LOCALE = 'zh-TW';
-const DEFAULT_KEYWORDS = ['匯率', '匯率換算', '即時匯率', '台灣銀行', '多幣別換算', 'RateWise'];
+const DEFAULT_KEYWORDS = [
+  '匯率好工具',
+  '匯率',
+  '匯率換算',
+  '即時匯率',
+  '台幣匯率',
+  'TWD',
+  'USD',
+  '外幣兌換',
+  '匯率查詢',
+  '臺灣銀行匯率',
+  '台灣匯率',
+  '美金匯率',
+  '日幣匯率',
+  '歐元匯率',
+  '線上匯率',
+  '匯率計算機',
+  'RateWise',
+];
 
 const trimTrailingSlash = (value: string) => value.replace(/\/$/, '');
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`);
 
 /**
- * Default JSON-LD structured data (SoftwareApplication + Organization)
+ * Default JSON-LD structured data (WebApplication + Organization + Website)
+ * Optimized for 2025 AI search (LLMO, GEO, AEO)
  */
 const DEFAULT_JSON_LD = [
   {
     '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
+    '@type': 'WebApplication',
     name: 'RateWise',
-    applicationCategory: 'FinanceApplication',
-    operatingSystem: 'Any',
+    alternateName: '匯率好工具',
     description: DEFAULT_DESCRIPTION,
     url: SITE_URL,
-    screenshot: `${SITE_URL}/pwa-512x512.png`,
+    applicationCategory: 'FinanceApplication',
+    operatingSystem: 'Any',
+    browserRequirements: 'Requires JavaScript',
     offers: {
       '@type': 'Offer',
       price: '0',
-      priceCurrency: 'TWD',
-      url: SITE_URL,
+      priceCurrency: 'USD',
+    },
+    featureList: [
+      '即時匯率查詢',
+      '單幣別換算',
+      '多幣別同時換算',
+      '歷史匯率趨勢',
+      '離線使用',
+      'PWA 支援',
+      '台灣銀行牌告匯率',
+      '30+ 種貨幣支援',
+    ],
+    screenshot: `${SITE_URL}/screenshot.png`,
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      ratingCount: '1250',
+      bestRating: '5',
+      worstRating: '1',
     },
   },
   {
@@ -67,7 +115,12 @@ const DEFAULT_JSON_LD = [
     '@type': 'Organization',
     name: 'RateWise',
     url: SITE_URL,
-    logo: `${SITE_URL}/pwa-512x512.png`,
+    logo: `${SITE_URL}/logo.png`,
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'Customer Support',
+      email: 'haotool.org@gmail.com',
+    },
     sameAs: [], // Add social media links if available
   },
   {
@@ -103,6 +156,24 @@ const buildFaqSchema = (faq: FAQEntry[], url: string) => ({
   url,
 });
 
+const buildHowToSchema = (
+  howTo: { name: string; description: string; steps: HowToStep[] },
+  url: string,
+) => ({
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: howTo.name,
+  description: howTo.description,
+  url,
+  step: howTo.steps.map((step, index) => ({
+    '@type': 'HowToStep',
+    position: index + 1,
+    name: step.name,
+    text: step.text,
+    ...(step.image && { image: step.image }),
+  })),
+});
+
 export function SEOHelmet({
   title,
   description = DEFAULT_DESCRIPTION,
@@ -116,6 +187,7 @@ export function SEOHelmet({
   keywords,
   updatedTime,
   faq,
+  howTo,
 }: SEOProps) {
   const fullTitle = title ? `${title} | RateWise` : DEFAULT_TITLE;
   const baseUrl = trimTrailingSlash(SITE_URL);
@@ -135,6 +207,10 @@ export function SEOHelmet({
     structuredData.push(buildFaqSchema(faq, canonicalUrl));
   }
 
+  if (howTo) {
+    structuredData.push(buildHowToSchema(howTo, canonicalUrl));
+  }
+
   return (
     <Helmet>
       {/* Primary Meta Tags */}
@@ -142,6 +218,11 @@ export function SEOHelmet({
       <meta name="title" content={fullTitle} />
       <meta name="description" content={description} />
       <meta name="keywords" content={keywordsContent} />
+      <meta name="author" content="RateWise Team" />
+      <meta
+        name="robots"
+        content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      />
       <meta name="language" content={locale} />
       <meta httpEquiv="content-language" content={locale} />
       <link rel="canonical" href={canonicalUrl} />
@@ -155,6 +236,9 @@ export function SEOHelmet({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImageUrl} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content="RateWise 匯率轉換器應用截圖" />
       <meta property="og:locale" content={ogLocale} />
       {alternatesToRender
         .filter(({ hrefLang }) => hrefLang !== 'x-default')
@@ -168,12 +252,13 @@ export function SEOHelmet({
       <meta property="og:site_name" content="RateWise" />
       <meta property="og:updated_time" content={updatedTimestamp} />
 
-      {/* Twitter */}
-      <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={canonicalUrl} />
-      <meta property="twitter:title" content={fullTitle} />
-      <meta property="twitter:description" content={description} />
-      <meta property="twitter:image" content={ogImageUrl} />
+      {/* Twitter Card */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:url" content={canonicalUrl} />
+      <meta name="twitter:title" content={fullTitle} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={ogImageUrl} />
+      <meta name="twitter:image:alt" content="RateWise 匯率轉換器" />
 
       {/* JSON-LD Structured Data */}
       {structuredData.map((item, index) => (

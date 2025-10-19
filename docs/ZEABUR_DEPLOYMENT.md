@@ -5,7 +5,7 @@
 ## 📋 前置需求
 
 - ✅ GitHub Repository: `https://github.com/your-github-username/your-repo-name`
-- ✅ GitHub 帳號: `your-github-account`
+- ✅ GitHub 帳號
 - ✅ Zeabur 帳號（建議使用 GitHub 登入）
 
 ## 🚀 部署步驟
@@ -219,7 +219,7 @@ location / {
 
 ### Q4: 自訂網域 SSL 證書問題？
 
-Zeabur 會自動處理 Let's Encrypt 的 SSL 證書申請與續期。如果失敗，請檢查：
+Zeabur 會自動處理 Let\'s Encrypt 的 SSL 證書申請與續期。如果失敗，請檢查：
 
 1. DNS 的 CNAME 記錄是否正確指向 Zeabur。
 2. DNS 記錄的 Proxy 功能是否已關閉（灰色雲）。

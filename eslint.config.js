@@ -111,6 +111,17 @@ export default tseslint.config(
     },
   },
 
+  // 開發腳本特殊規則
+  {
+    files: ['scripts/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+
   // Prettier 配置（必須放在最後）
   prettierConfig,
 );
