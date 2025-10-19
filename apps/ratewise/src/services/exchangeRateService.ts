@@ -1,7 +1,10 @@
 /**
  * 匯率資料服務
  * 從台灣銀行 API 獲取即時匯率
+ * [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]
  */
+
+import { logger } from '../utils/logger';
 
 interface ExchangeRateData {
   timestamp: string;
@@ -52,7 +55,7 @@ function getFromCache(): ExchangeRateData | null {
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (!cached) {
-      console.log('📭 No cache found');
+      logger.debug('No cache found');
       return null;
     }
 
@@ -62,18 +65,18 @@ function getFromCache(): ExchangeRateData | null {
 
     // 檢查快取是否過期
     if (ageMs > CACHE_DURATION) {
-      console.log(
-        `⏰ Cache expired: ${ageMinutes} minutes old (limit: ${CACHE_DURATION / 60000} minutes)`,
+      logger.debug(
+        `Cache expired: ${ageMinutes} minutes old (limit: ${CACHE_DURATION / 60000} minutes)`,
       );
       // 清除過期快取
       localStorage.removeItem(CACHE_KEY);
       return null;
     }
 
-    console.log(`✅ Cache valid: ${ageMinutes} minutes old, updateTime: ${data.updateTime}`);
+    logger.debug(`Cache valid: ${ageMinutes} minutes old, updateTime: ${data.updateTime}`);
     return data;
   } catch (error) {
-    console.warn('Failed to read from cache:', error);
+    logger.warn('Failed to read from cache', { error });
     return null;
   }
 }
@@ -89,7 +92,7 @@ function saveToCache(data: ExchangeRateData): void {
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
   } catch (error) {
-    console.warn('Failed to save to cache:', error);
+    logger.warn('Failed to save to cache', { error });
   }
 }
 
@@ -105,7 +108,7 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
     if (!url) continue;
 
     try {
-      console.log(`🔄 [${i + 1}/${CDN_URLS.length}] Trying: ${url.substring(0, 80)}...`);
+      logger.debug(`Trying CDN #${i + 1}/${CDN_URLS.length}`, { url: url.substring(0, 80) });
 
       const response = await fetch(url);
 
@@ -121,15 +124,17 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
       }
 
       const elapsed = Date.now() - startTime;
-      console.log(`✅ Fetched rates from CDN #${i + 1} in ${elapsed}ms`);
-      console.log(`📊 Data timestamp: ${data.updateTime}`);
-      console.log(`💱 Currencies loaded: ${Object.keys(data.rates).length}`);
+      logger.info(`Fetched rates from CDN #${i + 1}`, {
+        elapsedMs: elapsed,
+        updateTime: data.updateTime,
+        currencyCount: Object.keys(data.rates).length,
+      });
 
       return data;
     } catch (error) {
       const elapsed = Date.now() - startTime;
       errors.push(error instanceof Error ? error : new Error(String(error)));
-      console.warn(`❌ CDN #${i + 1} failed after ${elapsed}ms:`, error);
+      logger.warn(`CDN #${i + 1} failed`, { elapsedMs: elapsed, error });
       continue;
     }
   }
@@ -143,7 +148,7 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
  * 獲取匯率資料（帶快取和 fallback）
  */
 export async function getExchangeRates(): Promise<ExchangeRateData> {
-  console.log('🔄 Getting exchange rates...');
+  logger.debug('Getting exchange rates');
 
   // 1. 嘗試從快取讀取（getFromCache 會自動檢查並清除過期快取）
   const cached = getFromCache();
@@ -152,21 +157,21 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
   }
 
   // 2. 快取無效或過期，從 CDN 獲取新資料
-  console.log('🌐 Fetching fresh data from CDN...');
+  logger.debug('Fetching fresh data from CDN');
   try {
     const data = await fetchFromCDN();
     saveToCache(data);
-    console.log('💾 Fresh data saved to cache');
+    logger.debug('Fresh data saved to cache');
     return data;
   } catch (error) {
-    console.error('❌ Failed to fetch exchange rates:', error);
+    logger.error('Failed to fetch exchange rates', error instanceof Error ? error : undefined);
 
     // 3. 如果 CDN 完全失敗，嘗試使用任何可用的快取（即使過期）
     try {
       const staleCache = localStorage.getItem(CACHE_KEY);
       if (staleCache) {
         const { data } = JSON.parse(staleCache) as CachedData;
-        console.warn('⚠️ Using stale cache as fallback due to fetch error', {
+        logger.warn('Using stale cache as fallback due to fetch error', {
           cacheTime: data.updateTime,
         });
         return data;
@@ -184,7 +189,7 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
  */
 export function clearExchangeRateCache(): void {
   localStorage.removeItem(CACHE_KEY);
-  console.log('✅ Exchange rate cache cleared');
+  logger.debug('Exchange rate cache cleared');
 }
 
 /**
