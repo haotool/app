@@ -107,6 +107,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build
+        run: pnpm build:ratewise
+
       - name: Install Playwright browsers
         run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium firefox
 
