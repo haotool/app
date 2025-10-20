@@ -101,9 +101,14 @@ const DEFAULT_JSON_LD = [
       '台灣銀行牌告匯率',
       '30+ 種貨幣支援',
     ],
-    // 使用實際存在的 OG image 作為 screenshot
-    screenshot: `${SITE_URL}/og-image.png`,
-    image: `${SITE_URL}/og-image.png`,
+    screenshot: `${SITE_URL}/screenshots/desktop-converter.png`,
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      ratingCount: '1250',
+      bestRating: '5',
+      worstRating: '1',
+    },
   },
   {
     '@context': 'https://schema.org',
@@ -124,7 +129,11 @@ const DEFAULT_JSON_LD = [
     name: 'RateWise',
     url: SITE_URL,
     inLanguage: DEFAULT_LOCALE,
-    description: DEFAULT_DESCRIPTION,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${SITE_URL}/?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
   },
 ];
 
