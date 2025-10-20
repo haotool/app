@@ -7,6 +7,7 @@ import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
 import { ConversionHistory } from './components/ConversionHistory';
 import { SEOHelmet } from '../../components/SEOHelmet';
+import { VersionDisplay } from '../../components/VersionDisplay';
 
 const RateWise = () => {
   // Load real-time exchange rates
@@ -270,6 +271,11 @@ const RateWise = () => {
                 <span>© {new Date().getFullYear()} All rights reserved</span>
                 <span className="hidden md:block text-white/50">•</span>
                 <span>僅供參考</span>
+              </div>
+
+              {/* 版本資訊顯示 - 根據 UX 最佳實踐放置於 footer 右下角 */}
+              <div className="mt-3 md:mt-4">
+                <VersionDisplay />
               </div>
             </div>
           </footer>
