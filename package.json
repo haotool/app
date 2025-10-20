@@ -19,7 +19,7 @@
     "format:fix": "prettier --write .",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "test:coverage": "pnpm -r test --coverage",
+    "test:coverage": "pnpm -r run test:coverage",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "prepare": "husky install"
   },

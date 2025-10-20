@@ -1,6 +1,12 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { HelmetProvider } from 'react-helmet-async';
 import RateWise from './RateWise';
+
+// Test helper: wrap component with required providers
+const renderWithProviders = (component: React.ReactElement) => {
+  return render(<HelmetProvider>{component}</HelmetProvider>);
+};
 
 // Mock lightweight-charts
 // Based on TradingView's official testing strategy: E2E tests for canvas rendering
@@ -75,13 +81,13 @@ describe('RateWise Component', () => {
 
   describe('Basic Rendering', () => {
     it('renders main headline', () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
       // Use getByRole for heading to avoid duplicate text matches
       expect(screen.getByRole('heading', { name: '匯率好工具' })).toBeInTheDocument();
     });
 
     it('renders in single mode by default', () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
       expect(screen.getByText('單幣別')).toBeInTheDocument();
       expect(screen.getByText('多幣別')).toBeInTheDocument();
     });
@@ -93,13 +99,13 @@ describe('RateWise Component', () => {
 
   describe('Currency Conversion', () => {
     it('displays default amount in input field', () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
       const inputs = screen.getAllByPlaceholderText('0.00');
       expect(inputs[0]).toHaveValue(1000);
     });
 
     it('updates amount when quick button is clicked', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const quickButton = screen.getByText('5,000');
       fireEvent.click(quickButton);
@@ -111,7 +117,7 @@ describe('RateWise Component', () => {
     });
 
     it('handles manual amount input', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const inputs = screen.getAllByPlaceholderText('0.00');
       const fromInput = inputs[0]!;
@@ -124,7 +130,7 @@ describe('RateWise Component', () => {
     });
 
     it('handles empty input gracefully', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const inputs = screen.getAllByPlaceholderText('0.00');
       const fromInput = inputs[0]!;
@@ -139,7 +145,7 @@ describe('RateWise Component', () => {
 
   describe('Mode Switching', () => {
     it('switches from single to multi mode', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const multiButton = screen.getByText('多幣別');
       fireEvent.click(multiButton);
@@ -151,7 +157,7 @@ describe('RateWise Component', () => {
     });
 
     it('switches from multi to single mode', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       // Switch to multi first
       const multiButton = screen.getByText('多幣別');
@@ -173,7 +179,7 @@ describe('RateWise Component', () => {
 
   describe('LocalStorage Persistence', () => {
     it('persists mode preference to localStorage', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const multiButton = screen.getByText('多幣別');
       fireEvent.click(multiButton);
@@ -185,14 +191,14 @@ describe('RateWise Component', () => {
 
     it('loads mode from localStorage on mount', () => {
       localStorage.setItem('currencyConverterMode', 'multi');
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       // Component should initialize with multi mode
       expect(screen.getByText('多幣別')).toBeInTheDocument();
     });
 
     it('persists favorite currencies to localStorage', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       // Initial favorites should be saved
       await waitFor(() => {
@@ -204,7 +210,7 @@ describe('RateWise Component', () => {
     });
 
     it('persists from currency selection', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const selects = screen.getAllByRole('combobox');
       const fromSelect = selects[0]!;
@@ -217,7 +223,7 @@ describe('RateWise Component', () => {
     });
 
     it('persists to currency selection', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const selects = screen.getAllByRole('combobox');
       const toSelect = selects[1]!;
@@ -232,7 +238,7 @@ describe('RateWise Component', () => {
 
   describe('Currency Selection', () => {
     it('allows changing from currency', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const selects = screen.getAllByRole('combobox');
       const fromSelect = selects[0]!;
@@ -245,7 +251,7 @@ describe('RateWise Component', () => {
     });
 
     it('allows changing to currency', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const selects = screen.getAllByRole('combobox');
       const toSelect = selects[1]!;
@@ -264,18 +270,18 @@ describe('RateWise Component', () => {
       localStorage.setItem('toCurrency', 'NOTREAL');
 
       // Should not crash and should fallback to defaults
-      expect(() => render(<RateWise />)).not.toThrow();
+      expect(() => renderWithProviders(<RateWise />)).not.toThrow();
     });
 
     it('handles corrupted localStorage data', () => {
       localStorage.setItem('favorites', 'invalid json data');
 
       // Should not crash and should use default favorites
-      expect(() => render(<RateWise />)).not.toThrow();
+      expect(() => renderWithProviders(<RateWise />)).not.toThrow();
     });
 
     it('handles zero amount input', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const inputs = screen.getAllByPlaceholderText('0.00');
       fireEvent.change(inputs[0]!, { target: { value: '0' } });
@@ -288,7 +294,7 @@ describe('RateWise Component', () => {
 
   describe('User Interactions', () => {
     it('updates conversion result when amount changes', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const inputs = screen.getAllByPlaceholderText('0.00');
       const fromInput = inputs[0] as HTMLInputElement;
@@ -304,7 +310,7 @@ describe('RateWise Component', () => {
     });
 
     it('allows switching between quick amounts multiple times', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       // Wait for buttons to appear - findAllByRole throws if not found
       const buttons1000 = await screen.findAllByRole('button', { name: '1,000' });
@@ -341,7 +347,7 @@ describe('RateWise Component', () => {
 
   describe('History Tracking', () => {
     it('renders conversion history after adding an entry', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const addButton = screen.getByText('加入歷史記錄');
       const inputs = screen.getAllByPlaceholderText('0.00') as HTMLInputElement[];
@@ -363,7 +369,7 @@ describe('RateWise Component', () => {
 
   describe('Multi Mode Interactions', () => {
     it('updates multi-currency amounts when quick button is used', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       fireEvent.click(screen.getByText('多幣別'));
 
@@ -391,7 +397,7 @@ describe('RateWise Component', () => {
     });
 
     it('allows toggling favorite currencies', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       fireEvent.click(screen.getByText('多幣別'));
 
@@ -410,7 +416,7 @@ describe('RateWise Component', () => {
 
   describe('Swap Control', () => {
     it('swaps selected currencies when swap button is clicked', async () => {
-      render(<RateWise />);
+      renderWithProviders(<RateWise />);
 
       const [fromSelect, toSelect] = screen.getAllByRole('combobox') as HTMLSelectElement[];
       expect(fromSelect).toHaveValue('TWD');
