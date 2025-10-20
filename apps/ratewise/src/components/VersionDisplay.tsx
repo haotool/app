@@ -8,8 +8,18 @@
  */
 
 export function VersionDisplay() {
-  const version: string = __APP_VERSION__;
-  const buildTime = new Date(__BUILD_TIME__);
+  // 使用雙重後備機制：優先使用全域常量，fallback 到 import.meta.env
+  const version: string =
+    typeof __APP_VERSION__ !== 'undefined'
+      ? __APP_VERSION__
+      : ((import.meta.env.VITE_APP_VERSION as string | undefined) ?? '0.0.0');
+
+  const buildTimeString =
+    typeof __BUILD_TIME__ !== 'undefined'
+      ? __BUILD_TIME__
+      : ((import.meta.env.VITE_BUILD_TIME as string | undefined) ?? new Date().toISOString());
+
+  const buildTime = new Date(buildTimeString);
 
   const formattedDate = buildTime.toLocaleDateString('zh-TW', {
     year: 'numeric',

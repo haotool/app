@@ -18,6 +18,8 @@ export default defineConfig(() => {
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __BUILD_TIME__: JSON.stringify(buildTime),
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
+      'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
     },
     plugins: [react()],
     resolve: {
