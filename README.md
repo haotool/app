@@ -68,10 +68,11 @@ docker-compose down
 ### 核心框架
 
 - **Framework**: React 19.0.0
-- **Build Tool**: Vite 5.4.6
+- **Build Tool**: Vite 7.0.0
 - **Language**: TypeScript 5.6.2
 - **Styling**: Tailwind CSS 3.4.14
 - **Package Manager**: pnpm 9.10.0
+- **Router**: React Router 7.9.4
 
 ### 開發工具
 
@@ -278,13 +279,14 @@ docs: update deployment guide with Docker instructions
 
 ### 建置產物
 
-| 檔案       | 大小      | Gzip 大小 |
-| ---------- | --------- | --------- |
-| index.html | 0.48 KB   | 0.31 KB   |
-| CSS        | 17.76 KB  | 3.81 KB   |
-| JavaScript | 214.82 KB | 67.02 KB  |
+| 類型       | 大小    | Gzip 大小 |
+| ---------- | ------- | --------- |
+| index.html | ~0.5 KB | ~0.3 KB   |
+| CSS        | ~18 KB  | ~4 KB     |
+| JavaScript | ~580 KB | ~190 KB   |
 
 **建置時間**: ~1 秒
+**Lighthouse 分數**: Performance 89/100, Accessibility 100/100, Best Practices 100/100, SEO 100/100
 
 ## 📄 授權
 
