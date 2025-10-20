@@ -74,7 +74,7 @@ logger.info('Application mounted successfully');
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/sw.js')
+      .register('/ratewise/sw.js')
       .then((registration) => {
         logger.info('SW registered', { scope: registration.scope });
       })
