@@ -22,7 +22,7 @@ export const CurrencyList = ({
   return (
     <div className="bg-white rounded-3xl shadow-xl p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-bold text-gray-800">全部幣種</h3>
+        <h2 className="text-xl font-bold text-gray-800">全部幣種</h2>
         <button
           onClick={onRefreshTrends}
           className="p-2 hover:bg-gray-100 rounded-lg transition"

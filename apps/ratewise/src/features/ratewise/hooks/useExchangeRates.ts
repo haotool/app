@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getExchangeRates } from '../../../services/exchangeRateService';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode } from '../types';
+import { logger } from '../../../utils/logger';
 
 export interface ExchangeRatesState {
   rates: Record<CurrencyCode, number | null>;
@@ -32,7 +33,7 @@ export function useExchangeRates() {
     async function loadRates(isAutoRefresh = false) {
       // 不在背景刷新（Page Visibility API 優化）
       if (isAutoRefresh && document.hidden) {
-        console.log('⏸️ Skipping refresh: page is hidden');
+        logger.debug('Skipping refresh: page is hidden');
         return;
       }
 
@@ -65,17 +66,14 @@ export function useExchangeRates() {
           isRefreshing: false,
         });
 
-        console.log(
-          `${isAutoRefresh ? '🔄' : '✅'} Exchange rates ${isAutoRefresh ? 'refreshed' : 'loaded'}:`,
-          {
-            currencies: Object.values(newRates).filter((r) => r !== null).length,
-            source: data.source,
-            updateTime: data.updateTime,
-          },
-        );
+        logger.info(`Exchange rates ${isAutoRefresh ? 'refreshed' : 'loaded'}`, {
+          currencies: Object.values(newRates).filter((r) => r !== null).length,
+          source: data.source,
+          updateTime: data.updateTime,
+        });
       } catch (error) {
         if (!isMounted) return;
-        console.error('Failed to load exchange rates:', error);
+        logger.error('Failed to load exchange rates', error instanceof Error ? error : undefined);
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -99,7 +97,7 @@ export function useExchangeRates() {
     // Page Visibility API: 用戶返回時立即刷新
     const handleVisibilityChange = () => {
       if (!document.hidden && isMounted) {
-        console.log('👁️ Page visible: refreshing rates');
+        logger.debug('Page visible: refreshing rates');
         void loadRates(true);
       }
     };
@@ -111,7 +109,7 @@ export function useExchangeRates() {
       isMounted = false;
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      console.log('🧹 Exchange rates polling cleaned up');
+      logger.debug('Exchange rates polling cleaned up');
     };
   }, []);
 

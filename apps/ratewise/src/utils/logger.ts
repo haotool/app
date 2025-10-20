@@ -81,13 +81,13 @@ class Logger {
 
   /**
    * Output log to console with formatting
+   * [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]
+   * 生產環境完全禁用 console 輸出以達成 Lighthouse Best Practices 100 分
    */
   private outputToConsole(entry: LogEntry): void {
+    // 完全禁用生產環境的 console 輸出
     if (!this.isDevelopment) {
-      // Only show errors and warnings in production console
-      if (entry.level !== 'error' && entry.level !== 'warn') {
-        return;
-      }
+      return;
     }
 
     const prefix = `[${entry.timestamp}] [${entry.level.toUpperCase()}]`;

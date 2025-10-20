@@ -9,7 +9,10 @@
  * Reference:
  * - https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/
  * - https://developer.mozilla.org/en-US/docs/Web/API/Push_API
+ * [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]
  */
+
+import { logger } from './logger';
 
 export interface PushSubscriptionResult {
   success: boolean;
@@ -60,11 +63,11 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 
   // iOS requires standalone PWA mode
   if (!isStandalonePWA()) {
-    console.warn('[Push] App must be added to Home Screen for push notifications');
+    logger.warn('App must be added to Home Screen for push notifications');
   }
 
   const permission = await Notification.requestPermission();
-  console.log('[Push] Permission result:', permission);
+  logger.debug('Push permission result', { permission });
 
   return permission;
 }
@@ -107,9 +110,9 @@ export async function subscribeToPush(vapidPublicKey: string): Promise<PushSubsc
         applicationServerKey: appServerKey.buffer as ArrayBuffer,
       });
 
-      console.log('[Push] New subscription created');
+      logger.debug('New push subscription created');
     } else {
-      console.log('[Push] Using existing subscription');
+      logger.debug('Using existing push subscription');
     }
 
     return {
@@ -117,7 +120,7 @@ export async function subscribeToPush(vapidPublicKey: string): Promise<PushSubsc
       subscription,
     };
   } catch (error) {
-    console.error('[Push] Subscribe error:', error);
+    logger.error('Push subscribe error', error instanceof Error ? error : undefined);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -135,13 +138,13 @@ export async function unsubscribeFromPush(): Promise<boolean> {
 
     if (subscription) {
       await subscription.unsubscribe();
-      console.log('[Push] Unsubscribed successfully');
+      logger.debug('Unsubscribed from push successfully');
       return true;
     }
 
     return false;
   } catch (error) {
-    console.error('[Push] Unsubscribe error:', error);
+    logger.error('Push unsubscribe error', error instanceof Error ? error : undefined);
     return false;
   }
 }
@@ -154,7 +157,7 @@ export async function getPushSubscription(): Promise<PushSubscription | null> {
     const registration = await navigator.serviceWorker.ready;
     return await registration.pushManager.getSubscription();
   } catch (error) {
-    console.error('[Push] Get subscription error:', error);
+    logger.error('Get push subscription error', error instanceof Error ? error : undefined);
     return null;
   }
 }

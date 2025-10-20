@@ -13,7 +13,7 @@ export const FavoritesList = ({ favorites, trend, exchangeRates }: FavoritesList
     <div className="bg-white rounded-3xl shadow-xl p-6">
       <div className="flex items-center gap-2 mb-4">
         <Star className="text-yellow-500" size={20} fill="currentColor" />
-        <h3 className="text-xl font-bold text-gray-800">常用貨幣</h3>
+        <h2 className="text-xl font-bold text-gray-800">常用貨幣</h2>
       </div>
       <div className="space-y-2">
         {favorites.map((code) => (
