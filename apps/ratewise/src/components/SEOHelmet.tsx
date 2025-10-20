@@ -101,7 +101,7 @@ const DEFAULT_JSON_LD = [
       '台灣銀行牌告匯率',
       '30+ 種貨幣支援',
     ],
-    screenshot: `${SITE_URL}/screenshot.png`,
+    screenshot: `${SITE_URL}/screenshots/desktop-converter.png`,
     aggregateRating: {
       '@type': 'AggregateRating',
       ratingValue: '4.8',
