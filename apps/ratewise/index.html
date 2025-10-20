@@ -25,8 +25,10 @@
     <meta name="apple-mobile-web-app-title" content="RateWise" />
 
     <!-- Preconnect to external domains for faster resource loading -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- [context7:googlechrome/lighthouse-ci:2025-10-20T21:15:40+08:00] -->
+    <!-- 僅 preconnect 實際使用的來源，避免浪費瀏覽器資源 -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
 
     <title>RateWise - 匯率好工具 | 即時匯率換算</title>
   </head>
@@ -47,8 +49,8 @@
           RateWise 匯率好工具 - 即時匯率轉換器
         </h1>
         <p style="font-size: 1rem; line-height: 1.8; color: #475569; margin-bottom: 1rem">
-          RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。
-          快速、準確、離線可用的 PWA 匯率工具。
+          RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+
+          種貨幣。 快速、準確、離線可用的 PWA 匯率工具。
         </p>
         <h2 style="font-size: 1.125rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: #334155">
           主要功能
@@ -61,7 +63,16 @@
           <li>離線使用 - PWA 支援離線存取</li>
           <li>支援 30+ 種主要貨幣</li>
         </ul>
-        <p style="font-size: 0.95rem; line-height: 1.6; color: #64748b; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0">
+        <p
+          style="
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #64748b;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+          "
+        >
           ⚠️ 本服務需要瀏覽器啟用 JavaScript 才能顯示即時匯率換算結果。若無法啟用，請改用
           <a
             href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
