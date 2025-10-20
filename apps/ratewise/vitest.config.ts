@@ -41,6 +41,7 @@ export default defineConfig({
         'src/utils/sentry.ts', // External service integration
         'src/utils/webVitals.ts', // Browser performance API, requires real DOM
         'src/App.tsx', // Entry component, covered by E2E tests
+        'src/pages/**/*.tsx', // Static pages, covered by E2E tests
       ],
       thresholds: {
         lines: 80,

@@ -33,7 +33,7 @@ describe('SEOHelmet', () => {
       document.head.querySelectorAll('script[type="application/ld+json"]'),
     ).map((node) => JSON.parse(node.textContent ?? '{}') as Record<string, unknown>);
 
-    expect(jsonLdScripts.some((schema) => schema['@type'] === 'SoftwareApplication')).toBe(true);
+    expect(jsonLdScripts.some((schema) => schema['@type'] === 'WebApplication')).toBe(true);
     expect(jsonLdScripts.some((schema) => schema['@type'] === 'Organization')).toBe(true);
     expect(jsonLdScripts.some((schema) => schema['@type'] === 'WebSite')).toBe(true);
   });
