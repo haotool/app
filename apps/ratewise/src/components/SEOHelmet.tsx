@@ -46,7 +46,7 @@ const DEFAULT_TITLE = 'RateWise - 即時匯率轉換器 | 支援 TWD、USD、JPY
 const DEFAULT_DESCRIPTION =
   'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。';
 const DEFAULT_OG_IMAGE = '/og-image.png';
-const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://ratewise.app'; // Fallback
+const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratewise'; // Fallback
 const DEFAULT_LOCALE = 'zh-TW';
 const DEFAULT_KEYWORDS = [
   '匯率好工具',
