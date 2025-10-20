@@ -11,7 +11,7 @@ export const ConversionHistory = ({ history }: ConversionHistoryProps) => {
 
   return (
     <div className="bg-white rounded-3xl shadow-xl p-6 mt-4 md:mt-6">
-      <h3 className="text-xl font-bold text-gray-800 mb-4">轉換歷史</h3>
+      <h2 className="text-xl font-bold text-gray-800 mb-4">轉換歷史</h2>
       <div className="space-y-3">
         {history.map((item) => (
           <div
