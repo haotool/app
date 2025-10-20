@@ -91,20 +91,25 @@ jobs:
       - name: Comment PR
         if: always()
         uses: actions/github-script@v7
+        env:
+          JOB_STATUS: ${{ job.status }}
         with:
           script: |
             const fs = require('fs');
             const buildSize = fs.statSync('apps/ratewise/dist').size;
             const coverage = JSON.parse(fs.readFileSync('apps/ratewise/coverage/coverage-summary.json'));
+            const jobStatus = process.env.JOB_STATUS;
+            const statusEmoji = jobStatus === 'success' ? '✅ 通過' : '❌ 失敗';
+            const buildEmoji = jobStatus === 'success' ? '✅ 成功' : '❌ 失敗';
 
             const comment = `## 📊 PR 檢查結果
 
             ### ✅ 品質檢查
-            - Lint: ${{ job.status == 'success' ? '✅ 通過' : '❌ 失敗' }}
-            - Format: ${{ job.status == 'success' ? '✅ 通過' : '❌ 失敗' }}
-            - TypeScript: ${{ job.status == 'success' ? '✅ 通過' : '❌ 失敗' }}
-            - Tests: ${{ job.status == 'success' ? '✅ 通過' : '❌ 失敗' }}
-            - Build: ${{ job.status == 'success' ? '✅ 成功' : '❌ 失敗' }}
+            - Lint: ${statusEmoji}
+            - Format: ${statusEmoji}
+            - TypeScript: ${statusEmoji}
+            - Tests: ${statusEmoji}
+            - Build: ${buildEmoji}
 
             ### 📦 建置資訊
             - **Bundle Size**: ${(buildSize / 1024).toFixed(2)} KB
