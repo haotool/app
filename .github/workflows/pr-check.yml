@@ -61,7 +61,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Run tests
-        run: pnpm test --coverage
+        run: pnpm test:coverage
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
