@@ -19,23 +19,24 @@
 
 ## 🟡 P1 - 重要驗證與優化
 
-1.  **技術驗證**
+1.  **Performance 優化 (LCP 改善)**
+    - **任務**: 優化 Largest Contentful Paint (LCP) 從 3.5s 降至 <2.5s
+    - **問題**:
+      - 未使用的 JavaScript 浪費 450ms
+      - 渲染阻塞資源浪費 150ms
+    - **解決方案**: Code splitting, dynamic import, lazy loading
+    - **影響**: 將 Performance 從 89/100 提升至 95+/100
+    - **狀態**: ❌ **待處理**
+
+2.  **技術驗證**
     - **任務**: 使用 Google Rich Results Test 和 Schema.org Validator 驗證所有頁面（`/, /about, /faq`）的結構化資料正確無誤。
     - **影響**: 確保您的網站在搜索結果中能以豐富摘要（Rich Results）的形式展現。
 
-2.  **AI 搜索測試**
+3.  **AI 搜索測試**
     - **任務**: 使用 ChatGPT, Claude, Perplexity, Gemini 測試關鍵問題，驗證 `llms.txt` 和優化內容的成效。
     - **影響**: 確保您的品牌和資訊在 AI 問答中被準確引用。
 
-3.  **啟用 `prioritizeSeoTags`**
-    - **任務**: 在 `HelmetProvider` 啟用 `prioritizeSeoTags` 屬性，這可以讓關鍵的 SEO 標籤更早被加載。
-    - **影響**: 可能改善 FCP (First Contentful Paint) 效能，提升 1-3 分的 Lighthouse 分數。
-
-4.  **修復外部資源 404 錯誤**
-    - **任務**: 調查並修復 Lighthouse 報告中提到的 TradingView 和 GitHub raw 資源的 404 錯誤。
-    - **影響**: 將 Best Practices 分數從 96 分提升至 100 分。
-
-5.  **品牌提及建立**
+4.  **品牌提及建立**
     - **任務**: 開始在 Product Hunt, PTT, GitHub 等平台建立品牌提及。
     - **影響**: 提升您網站在 AI 模型中的權威性（LLMO）。
 
@@ -45,24 +46,46 @@
 
 1.  **擴展 FAQ 內容**: 將問答從 14 個擴展至 20 個以上，覆蓋更多長尾關鍵字。
 2.  **Information Gain 內容優化**: 參考研究報告，進一步增加首頁內容的資訊密度。
-3.  **Performance 優化至 100 分**: 研究並解決目前 97 分的瓶頸，可能需要 Code splitting 或 dynamic import。
+
+## ⚠️ P2 - 已棄用項目
+
+1.  **~~啟用 `prioritizeSeoTags`~~** (不適用)
+    - **原因**: 此功能僅在 `@dr.pogodin/react-helmet` 中可用，本專案使用 `react-helmet-async@2.0.5`，不支援此屬性。
+    - **替代方案**: 透過 Code splitting 和 lazy loading 優化 Performance。
+
+2.  **~~修復外部資源 404 錯誤~~** (已解決)
+    - **狀態**: Lighthouse Best Practices 已達 100/100，無外部資源錯誤。
 
 ---
 
 ## ✅ 已完成 (截至 2025-10-20)
 
-**Lighthouse 最終審查結果**：
+**Lighthouse 審查結果** (2025-10-20):
 
 ```
-Performance:    97/100 ⭐
-Accessibility:  98/100 ✅
-Best Practices: 96/100 ✅
-SEO:           100/100 🎉
+Performance:    89/100 ⚠️  (LCP 3.5s，需優化)
+Accessibility: 100/100 🎉  (+2 from 98/100)
+Best Practices: 100/100 🎉  (+4 from 96/100)
+SEO:           100/100 🎉  (維持滿分)
 ```
+
+**核心 Web Vitals**:
+
+- FCP: 1.8s ✓
+- LCP: 3.5s ⚠️ (目標 <2.5s)
+- TBT: 0ms ✓
+- CLS: 0.001 ✓
 
 **AI Search Readiness**: 95/100 ✅
 
-**核心完成項目**：
+**2025-10-20 完成項目**：
+
+- ✅ **Sitemap 更新**: 更新所有 lastmod 日期為 2025-10-20，新增 hreflang="en" 支援
+- ✅ **2025 AI SEO 研究**: 調查 10+ 權威網站 (Google Search Central, Moz, Search Engine Land 等)
+- ✅ **瀏覽器驗證**: 確認所有頁面 (/, /about, /faq) 無 console 錯誤
+- ✅ **Lighthouse CLI 全面掃描**: 識別 Performance 優化機會
+
+**核心完成項目** (歷史):
 
 - ✅ **AI 指導文件 (`llms.txt`)**: 已建立，指導 AI 如何引用您的內容。
 - ✅ **安全聲明 (`security.txt`)**: 已建立，符合 RFC 9116 標準。
