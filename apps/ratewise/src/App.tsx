@@ -11,7 +11,7 @@ function App() {
   return (
     <ErrorBoundary>
       <SEOHelmet />
-      <Router>
+      <Router basename="/ratewise">
         <Routes>
           <Route path="/" element={<CurrencyConverter />} />
           <Route path="/faq" element={<FAQ />} />

@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
   const buildTime = new Date().toISOString();
 
   return {
+    base: '/ratewise/',
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __BUILD_TIME__: JSON.stringify(buildTime),
