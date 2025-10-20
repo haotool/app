@@ -3,12 +3,22 @@ import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// 讀取 package.json 版本號
+const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
+const appVersion = packageJson.version;
+const buildTime = new Date().toISOString();
 
 // 最簡配置 - 參考 Context7 官方範例
 // 參考 Context7 官方範例: vite-pwa/vite-plugin-pwa/docs/guide/service-worker-precache.md
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+    __BUILD_TIME__: JSON.stringify(buildTime),
+  },
   plugins: [
     react(),
     VitePWA({
