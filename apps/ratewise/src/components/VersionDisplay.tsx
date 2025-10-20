@@ -12,12 +12,12 @@ export function VersionDisplay() {
   const version: string =
     typeof __APP_VERSION__ !== 'undefined'
       ? __APP_VERSION__
-      : ((import.meta.env.VITE_APP_VERSION as string | undefined) ?? '0.0.0');
+      : ((import.meta.env['VITE_APP_VERSION'] as string | undefined) ?? '0.0.0');
 
   const buildTimeString =
     typeof __BUILD_TIME__ !== 'undefined'
       ? __BUILD_TIME__
-      : ((import.meta.env.VITE_BUILD_TIME as string | undefined) ?? new Date().toISOString());
+      : ((import.meta.env['VITE_BUILD_TIME'] as string | undefined) ?? new Date().toISOString());
 
   const buildTime = new Date(buildTimeString);
 
