@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getExchangeRates } from '../../../services/exchangeRateService';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode } from '../types';
@@ -26,6 +26,7 @@ const INITIAL_STATE: ExchangeRatesState = {
 
 export function useExchangeRates() {
   const [state, setState] = useState<ExchangeRatesState>(INITIAL_STATE);
+  const loadRatesRef = useRef<((isAutoRefresh?: boolean) => Promise<void>) | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -83,6 +84,9 @@ export function useExchangeRates() {
       }
     }
 
+    // Store loadRates in ref for manual refresh
+    loadRatesRef.current = loadRates;
+
     // 初始載入
     void loadRates(false);
 
@@ -113,5 +117,12 @@ export function useExchangeRates() {
     };
   }, []);
 
-  return state;
+  // Manual refresh function for pull-to-refresh
+  const refresh = useCallback(async () => {
+    if (loadRatesRef.current) {
+      await loadRatesRef.current(true);
+    }
+  }, []);
+
+  return { ...state, refresh };
 }

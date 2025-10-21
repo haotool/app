@@ -1,23 +1,16 @@
 /**
  * VersionDisplay - 版本資訊顯示組件
  *
- * 根據 UX 最佳實踐研究 (UX Stack Exchange)：
- * - 位置：Footer 右下角
- * - 樣式：小字體、低對比度（不干擾主要內容）
- * - 格式：v1.0.0 • Built on YYYY-MM-DD HH:MM
+ * 2025 UX 最佳實踐:
+ * - 簡約設計，不使用下底線
+ * - Hover 顯示建置時間 tooltip
+ * - 支援桌面 hover 和行動裝置 tap
  */
 
 export function VersionDisplay() {
-  // 使用雙重後備機制：優先使用全域常量，fallback 到 import.meta.env
-  const version: string =
-    typeof __APP_VERSION__ !== 'undefined'
-      ? __APP_VERSION__
-      : ((import.meta.env['VITE_APP_VERSION'] as string | undefined) ?? '0.0.0');
-
-  const buildTimeString =
-    typeof __BUILD_TIME__ !== 'undefined'
-      ? __BUILD_TIME__
-      : ((import.meta.env['VITE_BUILD_TIME'] as string | undefined) ?? new Date().toISOString());
+  // 使用 import.meta.env 讀取 Vite 注入的環境變數
+  const version = import.meta.env.VITE_APP_VERSION ?? '1.0.0';
+  const buildTimeString = import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString();
 
   const buildTime = new Date(buildTimeString);
 
@@ -34,12 +27,16 @@ export function VersionDisplay() {
   });
 
   return (
-    <div className="text-xs text-gray-400 text-right select-none">
-      <span className="font-mono">v{version}</span>
-      <span className="mx-1">•</span>
-      <span className="opacity-75">
+    <span
+      className="relative inline-block cursor-help text-xs text-gray-400 font-mono group"
+      title={`Built on ${formattedDate} ${formattedTime}`}
+    >
+      v{version}
+      {/* Tooltip - 桌面版 hover 顯示 */}
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
         Built on {formattedDate} {formattedTime}
+        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
       </span>
-    </div>
+    </span>
   );
 }

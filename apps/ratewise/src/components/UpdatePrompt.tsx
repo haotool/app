@@ -26,7 +26,19 @@ export function UpdatePrompt() {
       return;
     }
 
-    const workbox = new Workbox('/ratewise/sw.js');
+    const swUrl = import.meta.env.DEV
+      ? `${import.meta.env.BASE_URL}dev-sw.js?dev-sw`
+      : `${import.meta.env.BASE_URL}sw.js`;
+    const swScope = import.meta.env.BASE_URL || '/';
+
+    // 根據環境設定 Service Worker 類型
+    // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
+    const swType = import.meta.env.DEV ? 'module' : 'classic';
+
+    const workbox = new Workbox(swUrl, {
+      scope: swScope,
+      type: swType,
+    });
 
     workbox.addEventListener('installed', (event) => {
       if (event.isUpdate) {
@@ -62,6 +74,8 @@ export function UpdatePrompt() {
 
   const handleUpdate = () => {
     if (wb) {
+      // 發送消息給 Service Worker 並重新載入
+      // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
       wb.messageSkipWaiting();
       window.location.reload();
     }
