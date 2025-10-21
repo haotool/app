@@ -4,3 +4,12 @@
 // 版本管理全局變數
 declare const __APP_VERSION__: string;
 declare const __BUILD_TIME__: string;
+
+interface ImportMetaEnv {
+  readonly VITE_APP_VERSION?: string;
+  readonly VITE_BUILD_TIME?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
