@@ -70,16 +70,4 @@ ReactDOM.createRoot(rootElement).render(
 // Log successful mount
 logger.info('Application mounted successfully');
 
-// Register Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/ratewise/sw.js')
-      .then((registration) => {
-        logger.info('SW registered', { scope: registration.scope });
-      })
-      .catch((error: unknown) => {
-        logger.error('SW registration failed', error as Error);
-      });
-  });
-}
+// Service Worker 註冊由 UpdatePrompt 組件處理
