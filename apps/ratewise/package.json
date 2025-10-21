@@ -21,7 +21,7 @@
     "motion": "^12.23.24",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.9.4",
+    "react-router-dom": "^6.26.2",
     "react-schemaorg": "^2.0.0",
     "schema-dts": "^1.1.5"
   },
