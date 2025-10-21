@@ -27,14 +27,34 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        registerType: 'autoUpdate',
+        // 使用 prompt 模式以支援自定義更新 UI
+        registerType: 'prompt',
+        injectRegister: null, // 手動註冊
         devOptions: {
           enabled: true,
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-          clientsClaim: true,
-          skipWaiting: true,
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          // 使用 prompt 模式時，不自動 skipWaiting
+          clientsClaim: false,
+          skipWaiting: false,
+          // 添加運行時緩存策略
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'jsdelivr-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 30 * 24 * 60 * 60, // 30 天
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+          ],
         },
         manifest: {
           name: 'RateWise - 即時匯率轉換器',
@@ -43,16 +63,27 @@ export default defineConfig(({ mode }) => {
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',
+          // 修正 scope 和 start_url 以適配部署路徑
+          scope: '/ratewise/',
+          start_url: '/ratewise/',
           icons: [
             {
               src: 'pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png',
+              purpose: 'any',
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
             },
           ],
         },
