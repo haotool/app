@@ -74,3 +74,11 @@ lighthouse-results/
 
 # Reports
 lighthouse-report.report.*
+lighthouse-report*.json
+
+# Screenshots and browser automation artifacts
+.playwright-mcp/
+*.png
+!public/**/*.png
+!**/screenshots/*.png
+!**/icons/*.png

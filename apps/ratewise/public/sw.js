@@ -7,13 +7,27 @@ const RUNTIME_CACHE = 'ratewise-runtime-v1';
 // 預快取資源
 const PRECACHE_URLS = ['/', '/index.html', '/manifest.webmanifest'];
 
+// 處理 Workbox messageSkipWaiting() 與其他訊息
+self.addEventListener('message', (event) => {
+  const data = event.data;
+  if (!data) {
+    return;
+  }
+
+  if (data === 'SKIP_WAITING' || data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage({ type: 'SKIP_WAITING_APPLIED' });
+    }
+  }
+});
+
 // 安裝事件 - 預快取核心資源
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting()),
+      .then((cache) => cache.addAll(PRECACHE_URLS)),
   );
 });
 

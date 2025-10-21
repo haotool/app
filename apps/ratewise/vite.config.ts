@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // 最簡配置 - 參考 Context7 官方範例
 // [context7:vitejs/vite:2025-10-21T03:15:00+08:00]
 // 使用函數形式確保 define 在所有模式下都能正確工作
-export default defineConfig(({ mode }) => {
+export default defineConfig(() => {
   // 讀取 package.json 版本號
   const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
   const appVersion = packageJson.version;
@@ -30,8 +30,11 @@ export default defineConfig(({ mode }) => {
         // 使用 prompt 模式以支援自定義更新 UI
         registerType: 'prompt',
         injectRegister: null, // 手動註冊
+        // 開發環境配置 - 修復 MIME type 錯誤
+        // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
         devOptions: {
           enabled: true,
+          type: 'module', // 開發環境使用 module 類型
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
@@ -116,6 +119,7 @@ export default defineConfig(({ mode }) => {
               // 其他第三方庫
               return 'vendor-libs';
             }
+            return undefined;
           },
           // 優化 chunk 檔名
           chunkFileNames: 'assets/[name]-[hash].js',
