@@ -23,7 +23,6 @@ const RateWise = () => {
     isLoading: ratesLoading,
     error: ratesError,
     lastUpdate,
-    source,
     refresh,
   } = useExchangeRates();
 
@@ -260,7 +259,7 @@ const RateWise = () => {
                             return `${month}/${day} ${timePart}`;
                           }
                         }
-                        return lastUpdate.split(' ')[1] || lastUpdate;
+                        return lastUpdate.split(' ')[1] ?? lastUpdate;
                       })()}
                     </span>
                   </div>

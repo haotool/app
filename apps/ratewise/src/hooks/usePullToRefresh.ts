@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 
 /**
  * usePullToRefresh - Professional pull-to-refresh hook with micro-animations
@@ -103,7 +103,7 @@ export function usePullToRefresh(
     /**
      * Touch end handler - Trigger refresh if threshold met
      */
-    const handleTouchEnd = async () => {
+    const handleTouchEnd = () => {
       if (!isDragging.current || isRefreshing) return;
       isDragging.current = false;
 
@@ -113,20 +113,20 @@ export function usePullToRefresh(
       if (canTrigger && pullDistance >= TRIGGER_THRESHOLD) {
         // Trigger refresh
         setIsRefreshing(true);
-
-        try {
-          await onRefresh();
-        } catch (error) {
-          console.error('Pull-to-refresh error:', error);
-        } finally {
-          // Reset after refresh
+        const finalize = () => {
           setTimeout(() => {
             container.style.transform = 'translateY(0)';
             setPullDistance(0);
             setCanTrigger(false);
             setIsRefreshing(false);
           }, 300);
-        }
+        };
+
+        void Promise.resolve(onRefresh())
+          .catch((error) => {
+            console.error('Pull-to-refresh error:', error);
+          })
+          .finally(finalize);
       } else {
         // Cancel - return to initial position
         container.style.transform = 'translateY(0)';

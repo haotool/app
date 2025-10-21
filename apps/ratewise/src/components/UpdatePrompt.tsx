@@ -31,6 +31,31 @@ export function UpdatePrompt() {
       : `${import.meta.env.BASE_URL}sw.js`;
     const swScope = import.meta.env.BASE_URL || '/';
 
+    const validateServiceWorkerScript = async () => {
+      try {
+        const response = await fetch(swUrl, {
+          cache: 'no-store',
+          headers: {
+            'cache-control': 'no-cache',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Unexpected response (${response.status}) while fetching ${swUrl}`);
+        }
+
+        const contentType = response.headers.get('content-type') ?? '';
+        if (!contentType.includes('javascript')) {
+          throw new Error(`Unsupported MIME type "${contentType}" for ${swUrl}`);
+        }
+
+        return true;
+      } catch (error) {
+        console.warn('[PWA] Skip service worker registration:', error);
+        return false;
+      }
+    };
+
     // 根據環境設定 Service Worker 類型
     // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
     const swType = import.meta.env.DEV ? 'module' : 'classic';
@@ -48,11 +73,19 @@ export function UpdatePrompt() {
       }
     });
 
-    workbox.register().catch((error) => {
-      console.error('SW registration error:', error);
+    void validateServiceWorkerScript().then((isValid) => {
+      if (!isValid) {
+        return;
+      }
+
+      workbox
+        .register()
+        .then(() => setWb(workbox))
+        .catch((error) => {
+          console.error('SW registration error:', error);
+        });
     });
 
-    setWb(workbox);
   }, []);
 
   // 動畫效果：延遲顯示以實現入場動畫

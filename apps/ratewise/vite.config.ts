@@ -27,14 +27,14 @@ export default defineConfig(() => {
     plugins: [
       react(),
       VitePWA({
+        base: '/ratewise/',
         // 使用 prompt 模式以支援自定義更新 UI
         registerType: 'prompt',
         injectRegister: null, // 手動註冊
         // 開發環境配置 - 修復 MIME type 錯誤
         // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
         devOptions: {
-          enabled: true,
-          type: 'module', // 開發環境使用 module 類型
+          enabled: true, // 開發模式下啟用 mock SW
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
