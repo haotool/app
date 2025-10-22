@@ -10,14 +10,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // 最簡配置 - 參考 Context7 官方範例
 // [context7:vitejs/vite:2025-10-21T03:15:00+08:00]
 // 使用函數形式確保 define 在所有模式下都能正確工作
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
   // 讀取 package.json 版本號
   const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
   const appVersion = packageJson.version;
   const buildTime = new Date().toISOString();
 
+  // 開發模式下使用根路徑，生產環境使用 /ratewise/
+  const base = mode === 'development' ? '/' : '/ratewise/';
+
   return {
-    base: '/ratewise/',
+    base,
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __BUILD_TIME__: JSON.stringify(buildTime),
@@ -27,7 +30,7 @@ export default defineConfig(() => {
     plugins: [
       react(),
       VitePWA({
-        base: '/ratewise/',
+        base,
         // 使用 prompt 模式以支援自定義更新 UI
         registerType: 'prompt',
         injectRegister: null, // 手動註冊

@@ -8,12 +8,16 @@ import CurrencyConverter from './features/ratewise/RateWise';
 // Lazy load FAQ and About pages to reduce initial bundle
 const FAQ = lazy(() => import('./pages/FAQ'));
 const About = lazy(() => import('./pages/About'));
+const ColorSchemeComparison = lazy(() => import('./pages/ColorSchemeComparison'));
 
 function App() {
+  // 開發模式使用根路徑，生產環境使用 /ratewise/
+  const basename = import.meta.env.DEV ? '/' : '/ratewise';
+
   return (
     <ErrorBoundary>
       <SEOHelmet />
-      <Router basename="/ratewise">
+      <Router basename={basename}>
         <Suspense
           fallback={
             <div className="flex h-screen items-center justify-center">
@@ -25,10 +29,11 @@ function App() {
             <Route path="/" element={<CurrencyConverter />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/about" element={<About />} />
+            <Route path="/color-scheme" element={<ColorSchemeComparison />} />
           </Routes>
         </Suspense>
       </Router>
-      {/* PWA 更新通知 - 液態玻璃效果 + 微動畫 */}
+      {/* PWA 更新通知 - 品牌對齊風格 */}
       <UpdatePrompt />
     </ErrorBoundary>
   );
