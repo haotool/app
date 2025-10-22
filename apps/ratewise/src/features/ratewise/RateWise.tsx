@@ -42,7 +42,7 @@ const RateWise = () => {
       const [, , month = '', day = ''] = match;
       const formattedMonth = month.padStart(2, '0');
       const formattedDay = day.padStart(2, '0');
-      const timeCandidate = timePart || /(\d{1,2}:\d{2}(?::\d{2})?)/.exec(raw)?.[0] || '';
+      const timeCandidate = timePart ?? /(\d{1,2}:\d{2}(?::\d{2})?)/.exec(raw)?.[0] ?? '';
       return timeCandidate
         ? `${formattedMonth}/${formattedDay} ${timeCandidate}`
         : `${formattedMonth}/${formattedDay}`;
