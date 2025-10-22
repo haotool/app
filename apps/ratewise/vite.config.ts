@@ -66,9 +66,10 @@ export default defineConfig(() => {
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',
-          // 修正 scope 和 start_url 以適配部署路徑
-          scope: '/ratewise/',
-          start_url: '/ratewise/',
+          // PWA 最佳實踐：使用相對路徑以支援任意子目錄部署
+          // Reference: https://stackoverflow.com/questions/75683989/setting-start-url-and-scope-in-manifest-json-for-a-react-pwa
+          scope: './',
+          start_url: './',
           icons: [
             {
               src: 'pwa-192x192.png',
