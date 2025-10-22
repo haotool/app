@@ -8,6 +8,7 @@ import CurrencyConverter from './features/ratewise/RateWise';
 // Lazy load FAQ and About pages to reduce initial bundle
 const FAQ = lazy(() => import('./pages/FAQ'));
 const About = lazy(() => import('./pages/About'));
+const ColorSchemeComparison = lazy(() => import('./pages/ColorSchemeComparison'));
 
 function App() {
   // 開發模式使用根路徑，生產環境使用 /ratewise/
@@ -28,6 +29,7 @@ function App() {
             <Route path="/" element={<CurrencyConverter />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/about" element={<About />} />
+            <Route path="/color-scheme" element={<ColorSchemeComparison />} />
           </Routes>
         </Suspense>
       </Router>
