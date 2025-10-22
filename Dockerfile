@@ -1,4 +1,5 @@
 # Multi-stage Dockerfile for RateWise
+# syntax=docker/dockerfile:1
 
 # Build stage
 FROM node:24-alpine AS builder
@@ -8,12 +9,17 @@ RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Set pnpm store directory for cache mount
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+# Copy package files and pnpm config
+COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ratewise/package.json ./apps/ratewise/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies with BuildKit cache mount (pnpm official best practice)
+# Reference: https://pnpm.io/docker
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
