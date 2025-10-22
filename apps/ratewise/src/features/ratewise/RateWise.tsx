@@ -1,5 +1,5 @@
 import { Grid, Maximize2, AlertCircle, RefreshCw } from 'lucide-react';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
@@ -28,6 +28,28 @@ const RateWise = () => {
 
   // Pull-to-refresh functionality
   const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(mainRef, refresh);
+
+  const formattedLastUpdate = useMemo(() => {
+    const raw = lastUpdate?.trim();
+    if (!raw) {
+      return '';
+    }
+
+    const [datePart = '', timePart = ''] = raw.split(/\s+/);
+
+    const match = /(\d{4})\D+(\d{1,2})\D+(\d{1,2})/.exec(datePart);
+    if (match) {
+      const [, , month = '', day = ''] = match;
+      const formattedMonth = month.padStart(2, '0');
+      const formattedDay = day.padStart(2, '0');
+      const timeCandidate = timePart || /(\d{1,2}:\d{2}(?::\d{2})?)/.exec(raw)?.[0] || '';
+      return timeCandidate
+        ? `${formattedMonth}/${formattedDay} ${timeCandidate}`
+        : `${formattedMonth}/${formattedDay}`;
+    }
+
+    return raw;
+  }, [lastUpdate]);
 
   const {
     mode,
@@ -245,23 +267,7 @@ const RateWise = () => {
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <span>
-                      更新時間{' '}
-                      {(() => {
-                        const parts = lastUpdate.split(' ');
-                        if (parts.length === 2 && parts[0] && parts[1]) {
-                          const datePart = parts[0];
-                          const timePart = parts[1];
-                          const dateComponents = datePart.split('-');
-                          if (dateComponents.length === 3) {
-                            const month = dateComponents[1];
-                            const day = dateComponents[2];
-                            return `${month}/${day} ${timePart}`;
-                          }
-                        }
-                        return lastUpdate.split(' ')[1] ?? lastUpdate;
-                      })()}
-                    </span>
+                    <span>更新時間 {formattedLastUpdate}</span>
                   </div>
                 </div>
               )}
