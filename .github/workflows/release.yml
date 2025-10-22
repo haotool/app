@@ -68,6 +68,7 @@ jobs:
         with:
           # 這會執行 `changeset version` 並建立 PR
           version: pnpm changeset:version
+          commit: 'chore: Version Packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
