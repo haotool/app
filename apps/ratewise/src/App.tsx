@@ -8,9 +8,6 @@ import CurrencyConverter from './features/ratewise/RateWise';
 // Lazy load FAQ and About pages to reduce initial bundle
 const FAQ = lazy(() => import('./pages/FAQ'));
 const About = lazy(() => import('./pages/About'));
-const ShowcaseIndex = lazy(() => import('./pages/ShowcaseIndex'));
-const ShowcaseNotification = lazy(() => import('./pages/ShowcaseNotification'));
-const ShowcaseNotificationLight = lazy(() => import('./pages/ShowcaseNotificationLight'));
 
 function App() {
   // 開發模式使用根路徑，生產環境使用 /ratewise/
@@ -31,13 +28,10 @@ function App() {
             <Route path="/" element={<CurrencyConverter />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/about" element={<About />} />
-            <Route path="/showcase" element={<ShowcaseIndex />} />
-            <Route path="/showcase/notification" element={<ShowcaseNotification />} />
-            <Route path="/showcase/notification-light" element={<ShowcaseNotificationLight />} />
           </Routes>
         </Suspense>
       </Router>
-      {/* PWA 更新通知 - 液態玻璃效果 + 微動畫 */}
+      {/* PWA 更新通知 - 棉花糖甜心風格 */}
       <UpdatePrompt />
     </ErrorBoundary>
   );
