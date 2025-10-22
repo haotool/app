@@ -52,8 +52,18 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check for Changeset Files
+        id: check_changesets
+        run: |
+          if [ -n "$(find .changeset -maxdepth 1 -type f -name "*.md" ! -name "README.md")" ]; then
+            echo "has_changesets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create Release Pull Request
         id: changesets
+        if: steps.check_changesets.outputs.has_changesets == 'true'
         uses: changesets/action@v1
         with:
           # 這會執行 `changeset version` 並建立 PR
