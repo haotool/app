@@ -33,7 +33,7 @@ function App() {
           </Routes>
         </Suspense>
       </Router>
-      {/* PWA 更新通知 - 棉花糖甜心風格 */}
+      {/* PWA 更新通知 - 品牌對齊風格 */}
       <UpdatePrompt />
     </ErrorBoundary>
   );
