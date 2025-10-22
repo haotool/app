@@ -9,6 +9,9 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
  * - Trigger refresh at 100px threshold
  * - Smooth CSS transitions
  * - Prevents native pull-to-refresh with overscroll-behavior
+ * - 只在頁面頂部觸發 (window.scrollY === 0)
+ *
+ * Fixed: 2025-10-22 - 修正 scrollTop 檢查邏輯，改用 window.scrollY
  *
  * Research sources:
  * - https://www.strictmode.io/articles/react-pull-to-refresh
@@ -56,8 +59,9 @@ export function usePullToRefresh(
      * Touch start handler - Capture initial Y position
      */
     const handleTouchStart = (e: TouchEvent) => {
-      // Only trigger when scrolled to top
-      if (container.scrollTop !== 0) return;
+      // Only trigger when scrolled to top of the page
+      // Use window.scrollY for global scroll position (not container.scrollTop)
+      if (window.scrollY !== 0) return;
       if (isRefreshing) return;
 
       startY.current = e.touches[0]?.clientY ?? 0;

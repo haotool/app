@@ -3,16 +3,19 @@ import { RefreshCw } from 'lucide-react';
 /**
  * PullToRefreshIndicator - Visual feedback component for pull-to-refresh
  *
- * 2025 UX Design:
+ * 品牌對齊風格 (Brand Aligned):
  * - Glassmorphism effect (backdrop blur + translucent background)
+ * - Indigo 色系 (與主應用一致)
  * - Smooth rotation animation based on pull distance
  * - Progressive text states (pull → release → refreshing)
  * - Micro-animations with spring physics
  *
  * States:
- * - Pulling: "下拉重新整理"
- * - Ready: "放開以重新整理"
- * - Refreshing: "重新整理中..."
+ * - Pulling: "下拉重新整理" (indigo-400)
+ * - Ready: "放開以重新整理" (indigo-600)
+ * - Refreshing: "重新整理中..." (indigo-500)
+ *
+ * Updated: 2025-10-22 - 修正配色為品牌對齊風格
  */
 
 interface PullToRefreshIndicatorProps {
@@ -39,12 +42,12 @@ export function PullToRefreshIndicator({
       ? '放開以重新整理'
       : '下拉重新整理';
 
-  // Color scheme based on state
+  // Color scheme based on state - Brand aligned (indigo系)
   const iconColor = isRefreshing
-    ? 'text-purple-500'
+    ? 'text-indigo-500'
     : canTrigger
-      ? 'text-green-500'
-      : 'text-blue-500';
+      ? 'text-indigo-600'
+      : 'text-indigo-400';
 
   return (
     <div
@@ -55,18 +58,18 @@ export function PullToRefreshIndicator({
         transition: isRefreshing ? 'none' : 'opacity 0.2s ease-out, transform 0.2s ease-out',
       }}
     >
-      {/* Glassmorphism Container */}
+      {/* Glassmorphism Container - Brand aligned colors */}
       <div
         className="
           mt-4 px-6 py-3 rounded-2xl
           backdrop-blur-xl backdrop-saturate-150
           bg-white/80 dark:bg-slate-900/80
-          border border-white/30 dark:border-slate-700/30
-          shadow-xl shadow-purple-500/10
+          border border-indigo-100/50 dark:border-indigo-700/30
+          shadow-xl shadow-indigo-500/10
         "
         style={{
           boxShadow: `
-            0 10px 30px -10px rgba(139, 92, 246, 0.2),
+            0 10px 30px -10px rgba(99, 102, 241, 0.2),
             0 0 0 1px rgba(255, 255, 255, 0.1) inset,
             0 1px 0 0 rgba(255, 255, 255, 0.3) inset
           `,
@@ -100,9 +103,9 @@ export function PullToRefreshIndicator({
         </div>
       </div>
 
-      {/* Background Shimmer Effect (subtle) */}
+      {/* Background Shimmer Effect (subtle) - Brand aligned */}
       <div
-        className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-transparent to-transparent pointer-events-none"
+        className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 via-transparent to-transparent pointer-events-none"
         aria-hidden="true"
       />
     </div>
