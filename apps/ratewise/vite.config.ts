@@ -66,10 +66,11 @@ export default defineConfig(() => {
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',
-          // PWA 最佳實踐：使用相對路徑以支援任意子目錄部署
-          // Reference: https://stackoverflow.com/questions/75683989/setting-start-url-and-scope-in-manifest-json-for-a-react-pwa
-          scope: './',
-          start_url: './',
+          // PWA 子目錄部署必須使用絕對路徑 + trailing slash
+          // scope 若無 trailing slash 瀏覽器會回退至根域名
+          // Reference: https://stackoverflow.com/questions/62478640/angular-9-pwa-service-worker-manifest-scope-issues
+          scope: '/ratewise/',
+          start_url: '/ratewise/',
           icons: [
             {
               src: 'pwa-192x192.png',
