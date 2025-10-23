@@ -8,6 +8,7 @@ import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { join } from 'path';
+import pRetry, { AbortError } from 'p-retry';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -106,47 +107,119 @@ function parseTaiwanBankCSV(csvText) {
 }
 
 /**
- * 從台灣銀行抓取匯率
+ * 判斷錯誤是否可重試
+ * @param {Error} error - 錯誤物件
+ * @returns {boolean} - 是否應該重試
+ */
+function isRetryableError(error) {
+  // 網路錯誤 (TypeError from fetch)
+  if (error instanceof TypeError) {
+    return true;
+  }
+
+  // HTTP 錯誤碼分類
+  const retryableStatusCodes = [
+    408, // Request Timeout
+    429, // Too Many Requests
+    500, // Internal Server Error
+    502, // Bad Gateway
+    503, // Service Unavailable
+    504, // Gateway Timeout
+  ];
+
+  // 檢查錯誤訊息中的狀態碼
+  const statusMatch = error.message.match(/HTTP (\d+):/);
+  if (statusMatch) {
+    const status = parseInt(statusMatch[1], 10);
+    return retryableStatusCodes.includes(status);
+  }
+
+  return false;
+}
+
+/**
+ * 從台灣銀行抓取匯率 (帶重試機制)
  */
 async function fetchTaiwanBankRates() {
+  console.log('🔄 Fetching exchange rates from Taiwan Bank...');
+
+  const fetchFn = async (attemptNumber) => {
+    try {
+      if (attemptNumber > 1) {
+        console.log(`   Attempt ${attemptNumber}...`);
+      }
+
+      const response = await fetch(TAIWAN_BANK_CSV_URL);
+
+      // 非 2xx 狀態碼
+      if (!response.ok) {
+        const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        error.status = response.status;
+
+        // 4xx 客戶端錯誤不重試 (除了 408, 429)
+        if (response.status >= 400 && response.status < 500) {
+          if (response.status !== 408 && response.status !== 429) {
+            throw new AbortError(error.message);
+          }
+        }
+
+        throw error;
+      }
+
+      const csvText = await response.text();
+      const { rates, details } = parseTaiwanBankCSV(csvText);
+
+      if (Object.keys(rates).length === 0) {
+        throw new AbortError('No valid rates found in CSV');
+      }
+
+      console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies`);
+
+      return {
+        timestamp: new Date().toISOString(),
+        updateTime: new Date().toLocaleString('zh-TW', {
+          timeZone: 'Asia/Taipei',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        }),
+        source: 'Taiwan Bank (臺灣銀行牌告匯率)',
+        sourceUrl: 'https://rate.bot.com.tw/xrt',
+        base: 'TWD',
+        rates,
+        details,
+      };
+    } catch (error) {
+      if (error instanceof AbortError) {
+        throw error;
+      }
+      throw error;
+    }
+  };
+
   try {
-    console.log('🔄 Fetching exchange rates from Taiwan Bank...');
-
-    const response = await fetch(TAIWAN_BANK_CSV_URL);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const csvText = await response.text();
-    const { rates, details } = parseTaiwanBankCSV(csvText);
-
-    if (Object.keys(rates).length === 0) {
-      throw new Error('No valid rates found in CSV');
-    }
-
-    console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies`);
-
-    return {
-      timestamp: new Date().toISOString(),
-      updateTime: new Date().toLocaleString('zh-TW', {
-        timeZone: 'Asia/Taipei',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      }),
-      source: 'Taiwan Bank (臺灣銀行牌告匯率)',
-      sourceUrl: 'https://rate.bot.com.tw/xrt',
-      base: 'TWD',
-      rates,
-      details,
-    };
+    return await pRetry(fetchFn, {
+      retries: 3,
+      factor: 2,
+      minTimeout: 1000,
+      maxTimeout: 5000,
+      randomize: true,
+      onFailedAttempt: ({ error, attemptNumber, retriesLeft }) => {
+        if (isRetryableError(error)) {
+          console.warn(
+            `⚠️  Attempt ${attemptNumber} failed: ${error.message}. Retrying... (${retriesLeft} retries left)`,
+          );
+        } else {
+          console.error(`❌ Non-retryable error: ${error.message}`);
+        }
+      },
+    });
   } catch (error) {
-    console.error('❌ Failed to fetch Taiwan Bank rates:', error.message);
+    console.error('❌ Failed to fetch Taiwan Bank rates after all retries:', error.message);
     throw error;
   }
 }

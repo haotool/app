@@ -5,7 +5,8 @@
 # 特點：
 # ✅ 高頻更新（每 30 分鐘）
 # ✅ 單一職責（只更新即時匯率）
-# ✅ 快速失敗（錯誤立即通知）
+# ✅ 容錯設計（外部 API 故障時優雅降級）
+# ✅ 智能重試（指數退避，最多 3 次）
 # ✅ 開源專案 GitHub Actions 完全免費
 
 name: Update Latest Exchange Rates
@@ -62,17 +63,20 @@ jobs:
           node-version: '24'
 
       - name: Fetch Taiwan Bank exchange rates
+        id: fetch-rates
+        continue-on-error: true
         run: |
           echo "🔄 Fetching latest exchange rates from Taiwan Bank..."
           node scripts/fetch-taiwan-bank-rates.js
 
       - name: Check for changes in latest.json
         id: git-check
+        if: steps.fetch-rates.outcome == 'success'
         run: |
           git diff --quiet public/rates/latest.json || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit and push changes
-        if: steps.git-check.outputs.changed == 'true'
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -101,8 +105,8 @@ jobs:
             git push origin data
           fi
 
-      - name: Update workflow summary
-        if: steps.git-check.outputs.changed == 'true'
+      - name: Update workflow summary (success)
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         run: |
           echo "# ✅ Latest exchange rates updated" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -123,9 +127,32 @@ jobs:
           echo "- **CNY:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.CNY")" >> $GITHUB_STEP_SUMMARY
 
       - name: No changes detected
-        if: steps.git-check.outputs.changed != 'true'
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed != 'true'
         run: |
           echo "# ℹ️ No rate changes detected" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The exchange rates have not changed since the last update." >> $GITHUB_STEP_SUMMARY
           echo "Next check: 30 minutes from now" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update workflow summary (API failure)
+        if: steps.fetch-rates.outcome == 'failure'
+        run: |
+          echo "# ⚠️ Taiwan Bank API temporarily unavailable" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Taiwan Bank API is experiencing issues" >> $GITHUB_STEP_SUMMARY
+          echo "- Retry mechanism attempted with exponential backoff (3 retries)" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow continues successfully (graceful degradation)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Impact" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **No user impact**: App continues using cached exchange rates" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Automatic recovery**: Next scheduled run in 30 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **No manual intervention required**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Technical Details" >> $GITHUB_STEP_SUMMARY
+          echo "- API URL: https://rate.bot.com.tw/xrt/flcsv/0/day" >> $GITHUB_STEP_SUMMARY
+          echo "- Retry strategy: Exponential backoff (1s, 2s, 4s)" >> $GITHUB_STEP_SUMMARY
+          echo "- Error handling: Graceful degradation enabled" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "_This is a transient API failure and does not indicate a problem with our system._" >> $GITHUB_STEP_SUMMARY

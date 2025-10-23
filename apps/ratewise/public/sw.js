@@ -24,11 +24,7 @@ self.addEventListener('message', (event) => {
 
 // 安裝事件 - 預快取核心資源
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS)),
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)));
 });
 
 // 啟用事件 - 清除舊快取
