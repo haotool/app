@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-push checks..."
+
+# TypeScript type checking
+echo "⚙️  TypeScript check..."
+pnpm typecheck || {
+  echo "❌ TypeScript errors found. Please fix before pushing."
+  exit 1
+}
+
+# Run tests with coverage
+echo "🧪 Running tests..."
+pnpm test:coverage || {
+  echo "❌ Tests failed or coverage below threshold. Please fix before pushing."
+  exit 1
+}
+
+# Build check
+echo "📦 Build check..."
+pnpm build:ratewise || {
+  echo "❌ Build failed. Please fix before pushing."
+  exit 1
+}
+
+echo "✅ All pre-push checks passed!"
