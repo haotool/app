@@ -93,7 +93,7 @@
 **範例**:
 
 ```html
-<link rel="canonical" href="https://ratewise.app/" />
+<link rel="canonical" href="https://app.haotool.org/ratewise/" />
 ```
 
 ### 3. Language Tags (語言標籤)
@@ -139,12 +139,12 @@
 ```html
 <!-- 基礎標籤 -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://ratewise.app/" />
+<meta property="og:url" content="https://app.haotool.org/ratewise/" />
 <meta property="og:title" content="RateWise - 即時匯率轉換器" />
 <meta property="og:description" content="快速、準確的匯率換算工具，支援 30+ 種貨幣" />
 
 <!-- 圖片標籤 -->
-<meta property="og:image" content="https://ratewise.app/og-image.png" />
+<meta property="og:image" content="https://app.haotool.org/ratewise/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:image:alt" content="RateWise 匯率轉換器應用截圖" />
@@ -162,10 +162,10 @@
 
 ```html
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:url" content="https://ratewise.app/" />
+<meta name="twitter:url" content="https://app.haotool.org/ratewise/" />
 <meta name="twitter:title" content="RateWise - 即時匯率轉換器" />
 <meta name="twitter:description" content="快速、準確的匯率換算工具，支援 30+ 種貨幣" />
-<meta name="twitter:image" content="https://ratewise.app/og-image.png" />
+<meta name="twitter:image" content="https://app.haotool.org/ratewise/og-image.png" />
 <meta name="twitter:image:alt" content="RateWise 匯率轉換器" />
 ```
 
@@ -200,7 +200,7 @@
   "name": "RateWise",
   "alternateName": "匯率好工具",
   "description": "即時匯率轉換器，支援 30+ 種貨幣",
-  "url": "https://ratewise.app",
+  "url": "https://app.haotool.org/ratewise",
   "applicationCategory": "FinanceApplication",
   "operatingSystem": "Any",
   "browserRequirements": "Requires JavaScript",
@@ -217,7 +217,7 @@
     "離線使用",
     "PWA 支援"
   ],
-  "screenshot": "https://ratewise.app/screenshots/desktop-converter.png",
+  "screenshot": "https://app.haotool.org/ratewise/screenshots/desktop-converter.png",
   "aggregateRating": {
     "@type": "AggregateRating",
     "ratingValue": "4.8",
@@ -233,8 +233,8 @@
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "RateWise",
-  "url": "https://ratewise.app",
-  "logo": "https://ratewise.app/logo.png",
+  "url": "https://app.haotool.org/ratewise",
+  "logo": "https://app.haotool.org/ratewise/logo.png",
   "contactPoint": {
     "@type": "ContactPoint",
     "contactType": "Customer Support",
@@ -278,12 +278,12 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://ratewise.app/</loc>
+    <loc>https://app.haotool.org/ratewise/</loc>
     <lastmod>2025-10-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://ratewise.app/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratewise.app/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/" />
   </url>
 </urlset>
 ```
@@ -330,7 +330,7 @@ Disallow: /node_modules/
 Disallow: /*.map$
 
 # Sitemap
-Sitemap: https://ratewise.app/sitemap.xml
+Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 ```
 
 ### 3. PWA Meta Tags
@@ -408,7 +408,7 @@ sips -z 630 1200 og-image.png --out og-image-optimized.png
    - 前往 [Google Search Console](https://search.google.com/search-console)
    - 點擊「新增資源」
    - 選擇「網址前置字元」
-   - 輸入 `https://ratewise.app`
+   - 輸入 `https://app.haotool.org/ratewise`
 
 2. **驗證方式**
    - **HTML 檔案上傳** (推薦)
@@ -418,7 +418,7 @@ sips -z 630 1200 og-image.png --out og-image-optimized.png
 
 3. **提交 Sitemap**
    - 左側選單 → Sitemap
-   - 輸入 `https://ratewise.app/sitemap.xml`
+   - 輸入 `https://app.haotool.org/ratewise/sitemap.xml`
    - 點擊「提交」
 
 4. **監控指標**
@@ -433,12 +433,12 @@ sips -z 630 1200 og-image.png --out og-image-optimized.png
 
 1. **註冊並驗證**
    - 前往 [Bing Webmaster Tools](https://www.bing.com/webmasters)
-   - 新增網站 `https://ratewise.app`
+   - 新增網站 `https://app.haotool.org/ratewise`
    - 驗證方式：XML 檔案、Meta Tag、CNAME
 
 2. **提交 Sitemap**
    - 左側選單 → Sitemap
-   - 輸入 `https://ratewise.app/sitemap.xml`
+   - 輸入 `https://app.haotool.org/ratewise/sitemap.xml`
 
 3. **使用 URL 檢查工具**
    - 手動提交重要頁面進行即時索引
@@ -655,7 +655,7 @@ sips -z 630 1200 og-image.png --out og-image-optimized.png
 - [ ] Bing Webmaster Tools 已驗證
 - [ ] Sitemap 已提交 (Google)
 - [ ] Sitemap 已提交 (Bing)
-- [ ] 首頁已被索引 (site:ratewise.app)
+- [ ] 首頁已被索引 (site:app.haotool.org/ratewise)
 - [ ] Open Graph 預覽正常 (Facebook Debugger)
 - [ ] Twitter Card 預覽正常 (Twitter Card Validator)
 - [ ] Schema.org 驗證通過 (Rich Results Test)

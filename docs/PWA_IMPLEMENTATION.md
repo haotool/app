@@ -100,13 +100,13 @@ Target scores:
 
 **iOS**:
 
-1. Open Safari → ratewise.app
+1. Open Safari → app.haotool.org/ratewise
 2. Tap Share → Add to Home Screen
 3. Verify icon, splash screen, standalone mode
 
 **Android**:
 
-1. Open Chrome → ratewise.app
+1. Open Chrome → app.haotool.org/ratewise
 2. Tap Menu → Install app
 3. Verify maskable icon adapts to device theme
 

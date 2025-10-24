@@ -215,7 +215,7 @@ export default defineConfig({
   />
   <meta name="author" content="RateWise Team" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://ratewise.app/" />
+  <link rel="canonical" href="https://app.haotool.org/ratewise/" />
 
   <!-- Language & Locale -->
   <meta http-equiv="content-language" content="zh-TW" />
@@ -228,13 +228,13 @@ export default defineConfig({
 ```html
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://ratewise.app/" />
+<meta property="og:url" content="https://app.haotool.org/ratewise/" />
 <meta property="og:title" content="RateWise - 即時匯率轉換器" />
 <meta
   property="og:description"
   content="快速、準確的匯率換算工具，支援 30+ 種貨幣，參考臺灣銀行牌告匯率。"
 />
-<meta property="og:image" content="https://ratewise.app/og-image.png" />
+<meta property="og:image" content="https://app.haotool.org/ratewise/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:image:alt" content="RateWise 匯率轉換器應用截圖" />
@@ -254,10 +254,10 @@ export default defineConfig({
 ```html
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:url" content="https://ratewise.app/" />
+<meta name="twitter:url" content="https://app.haotool.org/ratewise/" />
 <meta name="twitter:title" content="RateWise - 即時匯率轉換器" />
 <meta name="twitter:description" content="快速、準確的匯率換算工具，支援 30+ 種貨幣" />
-<meta name="twitter:image" content="https://ratewise.app/twitter-image.png" />
+<meta name="twitter:image" content="https://app.haotool.org/ratewise/twitter-image.png" />
 <meta name="twitter:image:alt" content="RateWise 匯率轉換器" />
 <meta name="twitter:creator" content="@ratewise" />
 ```
@@ -325,7 +325,7 @@ function App() {
           '@type': 'WebApplication',
           name: 'RateWise',
           description: '即時匯率轉換器，支援多種貨幣換算',
-          url: 'https://ratewise.app',
+          url: 'https://app.haotool.org/ratewise',
           applicationCategory: 'FinanceApplication',
           operatingSystem: 'All',
           offers: {
@@ -371,7 +371,7 @@ function StructuredData({ data }: { data: Record<string, any> }) {
   "name": "RateWise",
   "alternateName": "匯率好工具",
   "description": "即時匯率轉換器，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR 等 30+ 種貨幣換算",
-  "url": "https://ratewise.app",
+  "url": "https://app.haotool.org/ratewise",
   "applicationCategory": "FinanceApplication",
   "operatingSystem": "Any",
   "browserRequirements": "Requires JavaScript",
@@ -388,7 +388,7 @@ function StructuredData({ data }: { data: Record<string, any> }) {
     "離線使用",
     "PWA 支援"
   ],
-  "screenshot": "https://ratewise.app/screenshot.png",
+  "screenshot": "https://app.haotool.org/ratewise/screenshot.png",
   "aggregateRating": {
     "@type": "AggregateRating",
     "ratingValue": "4.8",
@@ -481,8 +481,8 @@ function StructuredData({ data }: { data: Record<string, any> }) {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "RateWise",
-  "url": "https://ratewise.app",
-  "logo": "https://ratewise.app/logo.png",
+  "url": "https://app.haotool.org/ratewise",
+  "logo": "https://app.haotool.org/ratewise/logo.png",
   "contactPoint": {
     "@type": "ContactPoint",
     "contactType": "Customer Support",
@@ -503,13 +503,13 @@ function StructuredData({ data }: { data: Record<string, any> }) {
       "@type": "ListItem",
       "position": 1,
       "name": "首頁",
-      "item": "https://ratewise.app/"
+      "item": "https://app.haotool.org/ratewise/"
     },
     {
       "@type": "ListItem",
       "position": 2,
       "name": "匯率換算",
-      "item": "https://ratewise.app/converter"
+      "item": "https://app.haotool.org/ratewise/converter"
     }
   ]
 }
@@ -700,7 +700,7 @@ Disallow: /assets/
 Disallow: /node_modules/
 
 # Sitemap
-Sitemap: https://ratewise.app/sitemap.xml
+Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 ```
 
 **sitemap.xml**:
@@ -709,19 +709,19 @@ Sitemap: https://ratewise.app/sitemap.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://ratewise.app/</loc>
+    <loc>https://app.haotool.org/ratewise/</loc>
     <lastmod>2025-10-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ratewise.app/about</loc>
+    <loc>https://app.haotool.org/ratewise/about</loc>
     <lastmod>2025-10-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ratewise.app/faq</loc>
+    <loc>https://app.haotool.org/ratewise/faq</loc>
     <lastmod>2025-10-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -1218,8 +1218,8 @@ export function SEOHead({
   title = 'RateWise - 即時匯率轉換器 | 支援 TWD、USD、JPY、EUR 等多幣別換算',
   description = 'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。',
   keywords = '匯率, 匯率換算, 即時匯率, 台幣匯率, TWD, USD, 外幣兌換, 匯率查詢, 臺灣銀行匯率',
-  canonical = 'https://ratewise.app/',
-  ogImage = 'https://ratewise.app/og-image.png',
+  canonical = 'https://app.haotool.org/ratewise/',
+  ogImage = 'https://app.haotool.org/ratewise/og-image.png',
   structuredData = 'webapp',
 }: SEOHeadProps) {
   return (
@@ -1269,7 +1269,7 @@ export function SEOHead({
             alternateName: '匯率好工具',
             description:
               '即時匯率轉換器，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR 等 30+ 種貨幣換算',
-            url: 'https://ratewise.app',
+            url: 'https://app.haotool.org/ratewise',
             applicationCategory: 'FinanceApplication',
             operatingSystem: 'Any',
             browserRequirements: 'Requires JavaScript',
@@ -1286,7 +1286,7 @@ export function SEOHead({
               '離線使用',
               'PWA 支援',
             ],
-            screenshot: 'https://ratewise.app/screenshot.png',
+            screenshot: 'https://app.haotool.org/ratewise/screenshot.png',
             aggregateRating: {
               '@type': 'AggregateRating',
               ratingValue: '4.8',
@@ -1304,8 +1304,8 @@ export function SEOHead({
           '@context': 'https://schema.org',
           '@type': 'Organization',
           name: 'RateWise',
-          url: 'https://ratewise.app',
-          logo: 'https://ratewise.app/logo.png',
+          url: 'https://app.haotool.org/ratewise',
+          logo: 'https://app.haotool.org/ratewise/logo.png',
           contactPoint: {
             '@type': 'ContactPoint',
             contactType: 'Customer Support',
@@ -1370,7 +1370,7 @@ export function FAQPage() {
       <SEOHead
         title="常見問題 (FAQ) - RateWise 匯率轉換器"
         description="RateWise 常見問題解答，包括匯率資料來源、換算方式、買賣價差等問題。"
-        canonical="https://ratewise.app/faq"
+        canonical="https://app.haotool.org/ratewise/faq"
       />
 
       {/* FAQ Schema */}

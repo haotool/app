@@ -4,35 +4,35 @@
   
   <!-- 首頁 -->
   <url>
-    <loc>https://ratewise.app/</loc>
-    <lastmod>2025-10-20</lastmod>
+    <loc>https://app.haotool.org/ratewise/</loc>
+    <lastmod>2025-10-25</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://ratewise.app/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://ratewise.app/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratewise.app/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://app.haotool.org/ratewise/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/" />
   </url>
 
   <!-- FAQ 頁面 -->
   <url>
-    <loc>https://ratewise.app/faq</loc>
-    <lastmod>2025-10-20</lastmod>
+    <loc>https://app.haotool.org/ratewise/faq</loc>
+    <lastmod>2025-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://ratewise.app/faq" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://ratewise.app/faq" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratewise.app/faq" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/faq" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://app.haotool.org/ratewise/faq" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/faq" />
   </url>
 
   <!-- 關於頁面 -->
   <url>
-    <loc>https://ratewise.app/about</loc>
-    <lastmod>2025-10-20</lastmod>
+    <loc>https://app.haotool.org/ratewise/about</loc>
+    <lastmod>2025-10-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://ratewise.app/about" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://ratewise.app/about" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratewise.app/about" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/about" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://app.haotool.org/ratewise/about" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/about" />
   </url>
 
 </urlset>
