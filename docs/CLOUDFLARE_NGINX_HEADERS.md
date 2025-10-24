@@ -118,7 +118,7 @@ curl -I http://localhost:4173/ | grep -E "(X-Content-Type|X-Frame)"
 ### Cloudflare 測試（生產環境）
 
 ```bash
-curl -I https://ratewise.app/ | grep -E "(Content-Security|Strict-Transport|X-Frame|X-Content-Type|Referrer|Permissions)"
+curl -I https://app.haotool.org/ratewise/ | grep -E "(Content-Security|Strict-Transport|X-Frame|X-Content-Type|Referrer|Permissions)"
 ```
 
 ### 自動化檢查（Lighthouse CI）

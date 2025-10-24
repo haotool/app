@@ -35,4 +35,4 @@ Disallow: /node_modules/
 Disallow: /*.map$
 
 # Sitemap
-Sitemap: https://ratewise.app/sitemap.xml
+Sitemap: https://app.haotool.org/ratewise/sitemap.xml

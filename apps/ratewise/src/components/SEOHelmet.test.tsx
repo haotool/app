@@ -20,7 +20,7 @@ describe('SEOHelmet', () => {
 
     await waitFor(() => {
       const canonical = document.head.querySelector('link[rel="canonical"]');
-      expect(canonical?.getAttribute('href')).toBe('https://ratewise.app/');
+      expect(canonical?.getAttribute('href')).toBe('https://app.haotool.org/ratewise/');
     });
 
     const keywordMeta = document.head.querySelector('meta[name="keywords"]');
@@ -44,8 +44,8 @@ describe('SEOHelmet', () => {
       locale: 'en-US',
       keywords: ['exchange rates', 'currency', 'calculator'],
       alternates: [
-        { hrefLang: 'x-default', href: 'https://ratewise.app/' },
-        { hrefLang: 'en-US', href: 'https://ratewise.app/en-us' },
+        { hrefLang: 'x-default', href: 'https://app.haotool.org/ratewise/' },
+        { hrefLang: 'en-US', href: 'https://app.haotool.org/ratewise/en-us' },
       ],
       updatedTime: '2025-10-18T03:00:00.000Z',
       faq: [
@@ -58,18 +58,23 @@ describe('SEOHelmet', () => {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ratewise.app/' },
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://app.haotool.org/ratewise/',
+          },
         ],
       },
     });
 
     await waitFor(() => {
       const canonical = document.head.querySelector('link[rel="canonical"]');
-      expect(canonical?.getAttribute('href')).toBe('https://ratewise.app/faq');
+      expect(canonical?.getAttribute('href')).toBe('https://app.haotool.org/ratewise/faq');
     });
 
     const alternate = document.head.querySelector('link[rel="alternate"][hreflang="en-US"]');
-    expect(alternate?.getAttribute('href')).toBe('https://ratewise.app/en-us');
+    expect(alternate?.getAttribute('href')).toBe('https://app.haotool.org/ratewise/en-us');
 
     const updated = document.head.querySelector('meta[property="og:updated_time"]');
     expect(updated?.getAttribute('content')).toBe('2025-10-18T03:00:00.000Z');

@@ -39,7 +39,7 @@ const FAQ_DATA = [
   {
     question: '如何安裝 RateWise 到手機桌面？',
     answer:
-      '<strong>RateWise 支援安裝至手機桌面，像原生 App 一樣使用。</strong> iOS 安裝方式：在 Safari 瀏覽器開啟 ratewise.app，點擊底部「分享」按鈕，選擇「加入主畫面」。Android 安裝方式：在 Chrome 瀏覽器開啟 ratewise.app，點選右上角選單，選擇「安裝應用程式」或「加到主畫面」。安裝後，您可以在桌面直接點擊圖示開啟，無需透過瀏覽器，並享受全螢幕體驗與更快的啟動速度。',
+      '<strong>RateWise 支援安裝至手機桌面，像原生 App 一樣使用。</strong> iOS 安裝方式：在 Safari 瀏覽器開啟 app.haotool.org/ratewise，點擊底部「分享」按鈕，選擇「加入主畫面」。Android 安裝方式：在 Chrome 瀏覽器開啟 app.haotool.org/ratewise，點選右上角選單，選擇「安裝應用程式」或「加到主畫面」。安裝後，您可以在桌面直接點擊圖示開啟，無需透過瀏覽器，並享受全螢幕體驗與更快的啟動速度。',
   },
   {
     question: 'RateWise 免費嗎？',
