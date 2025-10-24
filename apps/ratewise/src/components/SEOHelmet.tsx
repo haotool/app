@@ -22,6 +22,11 @@ interface HowToStep {
   image?: string;
 }
 
+interface BreadcrumbItem {
+  name: string;
+  url?: string;
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -40,6 +45,7 @@ interface SEOProps {
     description: string;
     steps: HowToStep[];
   };
+  breadcrumbs?: BreadcrumbItem[];
 }
 
 const DEFAULT_TITLE = 'RateWise - 即時匯率轉換器 | 支援 TWD、USD、JPY、EUR 等多幣別換算';
@@ -102,13 +108,6 @@ const DEFAULT_JSON_LD = [
       '30+ 種貨幣支援',
     ],
     screenshot: `${SITE_URL}/screenshots/desktop-converter.png`,
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '1250',
-      bestRating: '5',
-      worstRating: '1',
-    },
   },
   {
     '@context': 'https://schema.org',
@@ -133,6 +132,21 @@ const DEFAULT_JSON_LD = [
       '@type': 'SearchAction',
       target: `${SITE_URL}/?q={search_term_string}`,
       'query-input': 'required name=search_term_string',
+    },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ImageObject',
+    contentUrl: `${SITE_URL}/og-image.png`,
+    url: `${SITE_URL}/og-image.png`,
+    name: 'RateWise 匯率轉換器應用截圖',
+    description: 'RateWise 即時匯率換算工具的主要介面，展示匯率查詢、換算功能與歷史趨勢圖',
+    width: '1536',
+    height: '1024',
+    encodingFormat: 'image/png',
+    author: {
+      '@type': 'Organization',
+      name: 'RateWise',
     },
   },
 ];
@@ -174,6 +188,17 @@ const buildHowToSchema = (
   })),
 });
 
+const buildBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[], baseUrl: string) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbs.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    ...(item.url && { item: item.url.startsWith('http') ? item.url : `${baseUrl}${item.url}` }),
+  })),
+});
+
 export function SEOHelmet({
   title,
   description = DEFAULT_DESCRIPTION,
@@ -188,6 +213,7 @@ export function SEOHelmet({
   updatedTime,
   faq,
   howTo,
+  breadcrumbs,
 }: SEOProps) {
   const fullTitle = title ? `${title} | RateWise` : DEFAULT_TITLE;
   const baseUrl = trimTrailingSlash(SITE_URL);
@@ -209,6 +235,10 @@ export function SEOHelmet({
 
   if (howTo) {
     structuredData.push(buildHowToSchema(howTo, canonicalUrl));
+  }
+
+  if (breadcrumbs?.length) {
+    structuredData.push(buildBreadcrumbSchema(breadcrumbs, baseUrl));
   }
 
   return (

@@ -5,9 +5,10 @@ import { SEOHelmet } from './components/SEOHelmet';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import CurrencyConverter from './features/ratewise/RateWise';
 
-// Lazy load FAQ and About pages to reduce initial bundle
+// Lazy load FAQ, About, and HowToUse pages to reduce initial bundle
 const FAQ = lazy(() => import('./pages/FAQ'));
 const About = lazy(() => import('./pages/About'));
+const HowToUse = lazy(() => import('./pages/HowToUse'));
 const ColorSchemeComparison = lazy(() => import('./pages/ColorSchemeComparison'));
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             <Route path="/" element={<CurrencyConverter />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/about" element={<About />} />
+            <Route path="/how-to-use" element={<HowToUse />} />
             <Route path="/color-scheme" element={<ColorSchemeComparison />} />
           </Routes>
         </Suspense>
