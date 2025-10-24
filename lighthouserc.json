@@ -5,7 +5,8 @@
       "numberOfRuns": 3,
       "settings": {
         "preset": "desktop",
-        "chromeFlags": "--headless --no-sandbox --disable-gpu",
+        "chromeFlags": "--headless --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-setuid-sandbox",
+        "maxWaitForLoad": 60000,
         "throttling": {
           "rttMs": 40,
           "throughputKbps": 10240,
