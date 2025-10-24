@@ -67,7 +67,7 @@ describe('usePullToRefresh', () => {
     });
 
     it('應該在 container 為 null 時安全返回', () => {
-      const nullRef: React.RefObject<HTMLDivElement> = { current: null };
+      const nullRef: React.RefObject<HTMLDivElement | null> = { current: null };
 
       const { result } = renderHook(() => usePullToRefresh(nullRef, onRefresh));
 
