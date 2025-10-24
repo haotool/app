@@ -2,6 +2,7 @@
   "ci": {
     "collect": {
       "staticDistDir": "./apps/ratewise/dist",
+      "isSinglePageApplication": true,
       "numberOfRuns": 3,
       "settings": {
         "preset": "desktop",
