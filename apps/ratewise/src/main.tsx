@@ -7,6 +7,9 @@ import { logger } from './utils/logger';
 import { initSentry } from './utils/sentry';
 import { initWebVitals } from './utils/webVitals';
 
+const appVersion = import.meta.env.VITE_APP_VERSION ?? __APP_VERSION__;
+const buildTime = import.meta.env.VITE_BUILD_TIME ?? __BUILD_TIME__;
+
 // 全域錯誤處理器 - 捕捉網路請求錯誤
 // [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]
 // 主要用於處理歷史匯率 404 錯誤（正常現象，資料可能尚未生成）
@@ -52,8 +55,8 @@ initWebVitals();
 // Log application startup
 logger.info('Application starting', {
   environment: import.meta.env.MODE,
-  version: '0.0.0',
-  timestamp: new Date().toISOString(),
+  version: appVersion,
+  buildTime,
 });
 
 const rootElement = document.getElementById('root');
@@ -68,6 +71,9 @@ ReactDOM.createRoot(rootElement).render(
 );
 
 // Log successful mount
-logger.info('Application mounted successfully');
+logger.info('Application mounted successfully', {
+  version: appVersion,
+  buildTime,
+});
 
 // Service Worker 註冊由 UpdatePrompt 組件處理
