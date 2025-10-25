@@ -1,6 +1,17 @@
 # AGENT 操作守則與工具說明
 
+> **最後更新**: 2025-10-26T03:43:36+08:00  
+> **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
+> **版本**: v2.0 (完整超級技術債掃描產出)  
 > **角色**: 自動化代理 (Agents) 負責重複性檢查、端到端驗證與部署流程觸發。本文檔說明所有可用工具與工作流程。
+
+---
+
+## Linus 三問（開始任何操作前）
+
+1. **"這是個真問題還是臆想出來的？"** - 拒絕過度設計
+2. **"有更簡單的方法嗎？"** - 永遠尋找最簡方案
+3. **"會破壞什麼嗎？"** - 向後相容是鐵律
 
 ---
 
@@ -439,7 +450,7 @@ docker logs <container-id>
 
 ---
 
-## 8. 當前任務狀態
+## 8. 當前任務狀態（2025-10-26）
 
 ### ✅ 已完成 (Phase 0 - MVP)
 
@@ -453,17 +464,36 @@ docker logs <container-id>
 - ✅ 安全標頭配置
 - ✅ 歷史匯率功能 (30 天資料追蹤)
 
-### 🔄 進行中 (Phase 1 - 優化)
+### 📋 待開始 (M0 - 清理與基礎強化，1週)
 
-- [ ] E2E 測試自動化 (Puppeteer)
-- [ ] Vite Build 最佳化 (vendor chunk 分離)
-- [ ] 依賴升級 (Vite 7、Tailwind 4)
+- [ ] 刪除 ReloadPrompt.tsx (未使用，測試覆蓋率 0%)
+- [ ] 刪除臨時報告文檔 (_\_REPORT.md, _\_SUMMARY.md)
+- [ ] ESLint `any` 規則改為 error
+- [ ] 測試覆蓋率門檻提升至 80%
 
-### 📋 規劃中 (Phase 2 - 進階功能)
+### 📋 規劃中 (M1 - 觀測性建立，1週)
 
-- [ ] 匯率趨勢圖 (使用歷史資料)
-- [ ] Service Worker 快取
-- [ ] PWA 支援
+- [ ] Sentry 整合 (logger.ts Line 78)
+- [ ] Secrets 掃描 (gitleaks)
+- [ ] Web Vitals 串接監控平台
+
+### 📋 規劃中 (M2 - 依賴升級，2週)
+
+- [ ] Vite 7.1.9 → 7.1.12 (patch 安全升級)
+- [ ] Vitest 3.2.4 → 4.0.3 (major，需分支驗證)
+- [ ] (可選) Tailwind 3 → 4 (需視覺回歸測試)
+
+### 📋 規劃中 (M3 - 測試強化與 TODO 清理，2週)
+
+- [ ] 清理 5 個 TODO 標記
+- [ ] 降低 E2E retry 至 0
+- [ ] CI 通過率提升至 ≥95%
+
+### 📋 可選 (M4 - 架構演進，4週)
+
+- [ ] useCurrencyConverter 拆分 (317 行 → 多個小 hook)
+- [ ] 歷史匯率功能整合
+- [ ] 匯率趨勢圖 (使用 lightweight-charts)
 
 ---
 
@@ -534,7 +564,45 @@ docker logs <container-id>
 
 ---
 
+## 12. 技術債掃描報告（2025-10-26）
+
+### 總評分數卡
+
+| 項目           | 分數   | 狀態      |
+| -------------- | ------ | --------- |
+| **可維護性**   | 82/100 | 🟢 優秀   |
+| **測試品質**   | 90/100 | 🟢 優秀   |
+| **資安成熟度** | 75/100 | 🟡 良好   |
+| **效能**       | 80/100 | 🟢 優秀   |
+| **觀測性**     | 65/100 | 🟡 可接受 |
+| **工程流程化** | 85/100 | 🟢 優秀   |
+
+**總評**: 78/100 🟢 **優秀** - 符合 Linus 標準的實用主義專案
+
+### 風險矩陣 Top 3
+
+1. **Logger 未串接遠端服務** (Impact: High, Likelihood: High) → M1 修復
+2. **5 個 TODO 未完成** (Impact: Medium, Likelihood: High) → M3 清理
+3. **Vite 6.4 → 7.1.12 可升級** (Impact: Medium, Likelihood: Medium) → M2 升級
+
+### 完整報告
+
+詳見以下文檔：
+
+- `docs/dev/TECH_DEBT_AUDIT.md` - 完整技術債報告與分數卡
+- `docs/dev/REFACTOR_PLAN.md` - 分階段重構路線圖（6-10 週）
+- `docs/dev/DEPENDENCY_UPGRADE_PLAN.md` - pnpm 依賴升級策略
+- `docs/dev/ARCHITECTURE_BASELINE.md` - 架構藍圖與分層準則
+- `docs/dev/CHECKLISTS.md` - 品質檢查清單
+- `docs/dev/CITATIONS.md` - 權威來源清單 (17 個來源)
+- `docs/SECURITY_BASELINE.md` - 安全基線與責任界面
+
+---
+
 > **總結**: Agent 的任務是保持流程可靠並回報結果，不參與需求判斷、不做超出授權範圍的操作。所有操作依照本文檔與 `docs/dev/` 文檔執行。
 
-**最後更新**: 2025-10-10
-**版本**: v1.1 (整合 MCP 工具與完整工作流)
+**最後更新**: 2025-10-26T03:43:36+08:00  
+**版本**: v2.0 (完整超級技術債掃描產出)  
+**執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
+
+_本文檔依照 Linus Torvalds 開發哲學產生，所有建議經過實用性驗證。_
