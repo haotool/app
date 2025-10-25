@@ -23,9 +23,6 @@ test.describe('無障礙性掃描', () => {
     await page.goto('/');
     // 等待匯率載入完成
     await page.waitForLoadState('networkidle');
-    // [lighthouse-ci-fix:E2E_TIMEOUT:2025-10-25T19:00:00+08:00]
-    // 明確等待 React 應用渲染完成（等待靜態載入指示器被 React 替換）
-    await page.waitForSelector('button', { state: 'visible', timeout: 30000 });
   });
 
   test('首頁應該通過無障礙性掃描（單幣別模式）', async ({ page }) => {

@@ -44,9 +44,7 @@ export default defineConfig({
     video: 'retain-on-failure',
 
     // 合理的超時設定
-    // [lighthouse-ci-fix:E2E_TIMEOUT:2025-10-25T19:00:00+08:00]
-    // 增加 actionTimeout 從 10s 到 30s 以適應 CI 環境 React 渲染時間
-    actionTimeout: 30000,
+    actionTimeout: 10000,
     navigationTimeout: 30000,
   },
 
