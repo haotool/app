@@ -18,10 +18,13 @@ test.describe('PWA Features', () => {
   test('should have valid manifest', async ({ page }) => {
     // Check manifest link in HTML
     const manifestLink = await page.locator('link[rel="manifest"]').getAttribute('href');
-    expect(manifestLink).toBe('/manifest.webmanifest');
+    expect(manifestLink).toBeTruthy();
+
+    const manifestUrl = new URL(manifestLink!, page.url());
+    expect(manifestUrl.pathname.endsWith('/manifest.webmanifest')).toBeTruthy();
 
     // Fetch and validate manifest
-    const manifestResponse = await page.request.get('/manifest.webmanifest');
+    const manifestResponse = await page.request.get(manifestUrl.toString());
     expect(manifestResponse.ok()).toBeTruthy();
 
     const manifest = (await manifestResponse.json()) as {

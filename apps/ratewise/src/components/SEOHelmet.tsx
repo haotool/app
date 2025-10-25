@@ -102,13 +102,6 @@ const DEFAULT_JSON_LD = [
       '30+ 種貨幣支援',
     ],
     screenshot: `${SITE_URL}/screenshots/desktop-converter.png`,
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '1250',
-      bestRating: '5',
-      worstRating: '1',
-    },
   },
   {
     '@context': 'https://schema.org',
