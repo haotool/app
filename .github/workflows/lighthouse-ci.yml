@@ -40,8 +40,11 @@ jobs:
       - name: Install Lighthouse CI
         run: npm install -g @lhci/cli@0.14.x
 
+      - name: Install xvfb (virtual framebuffer for headless Chrome)
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
       - name: Run Lighthouse CI
-        run: lhci autorun
+        run: xvfb-run --auto-servernum --server-args='-screen 0 1920x1080x24' lhci autorun
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
