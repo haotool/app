@@ -351,8 +351,128 @@ SHA: fbbd4d9 (包含 xvfb 修復)
 
 1. ✅ 應用修復（commit 9d6eb7d）
 2. ✅ 更新工作記錄
-3. ⏳ 推送到遠端分支
-4. ⏳ 監控 PR #15 最新 CI run
+3. ✅ 推送到遠端分支
+4. ✅ 監控 PR #15 最新 CI run（Run ID: 18799103861）
+5. ❌ 錯誤 #11 修復失敗，發現錯誤 #12
+
+---
+
+**錯誤 #12: index.html #root div 為空，無法觸發 FCP**
+
+**發生時間**: 2025-10-25T06:02:00.007Z
+**Run ID**: 18799103861
+**SHA**: a2d100c3 (包含錯誤 #11 修復)
+
+**問題描述**:
+
+```
+Runtime error encountered: The page did not paint any content.
+Please ensure you keep the browser window in the foreground during the load and try again. (NO_FCP)
+```
+
+✅ Chrome 成功啟動（6秒）
+✅ xvfb 正常運作
+✅ 所有 Chrome flags 正確應用
+✅ 成功導航到 http://localhost:44917/
+✅ **沒有 JavaScript 錯誤**
+❌ **30秒超時，頁面完全沒有渲染內容**
+
+**時間線分析**:
+
+```
+06:01:19.750Z → 開始執行 Lighthouse
+06:01:20.324Z → Chrome 啟動等待
+06:01:26.345Z → Chrome 成功連接 ✓（6秒後）
+06:01:28.335Z → 導航到 about:blank
+06:01:29.666Z → 導航到 http://localhost:44917/
+06:02:00.007Z → ❌ NO_FCP 錯誤（30.3秒超時）
+06:02:00.316Z → 殺掉 Chrome instance 2735
+```
+
+**執行時間比較**:
+
+- 錯誤 #11: 30 秒就失敗
+- 錯誤 #12: **2m47s 才失敗**（執行時間延長，表示部分修復有效）
+
+**根本原因分析**:
+
+1. **index.html 分析**:
+
+```html
+<div id="root"></div>
+<!-- ← 完全空的！無法觸發 FCP -->
+```
+
+2. **Lighthouse 載入順序**:
+
+```
+HTML 載入 ✅
+ ↓
+<div id="root"> 是空的 ❌ 沒有內容可繪製
+ ↓
+等待 573.91 KB bundle 下載 ⏳
+ ↓
+等待 React 執行 ⏳
+ ↓
+等待 React 渲染 ⏳
+ ↓
+30秒超時 ❌ NO_FCP
+```
+
+3. **關鍵發現**:
+   - ❌ `maxWaitForLoad: 60000` 設置未生效（已知 Lighthouse CI bug）
+   - ❌ React App.tsx 有 Suspense fallback「載入中...」但 React 未執行就超時
+   - ❌ 所有審計項目都因 NO_FCP 而失敗
+   - ✅ 日誌顯示「No browser errors logged to the console」
+
+**參考資料**:
+
+- [GoogleChrome/lighthouse-ci#196](https://github.com/GoogleChrome/lighthouse-ci/issues/196) - React SPA opacity: 0 問題
+- [GoogleChrome/lighthouse#11615](https://github.com/GoogleChrome/lighthouse/issues/11615) - max-wait-for-load 不生效
+- [Stack Overflow - NO_FCP fix](https://stackoverflow.com/questions/55826735/)
+
+**解決方案**:
+
+在 `index.html` 添加**靜態載入指示器**，確保 HTML 載入後立即有可見內容觸發 FCP：
+
+```html
+<div id="root">
+  <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+    <div style="text-align: center">
+      <!-- 紫色 spinner (#8b5cf6) -->
+      <div
+        style="width: 48px; height: 48px; border: 4px solid #e2e8f0; border-top-color: #8b5cf6; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;"
+      ></div>
+      <!-- 載入文字 -->
+      <div style="color: #8b5cf6; font-size: 16px; font-weight: 600">RateWise 載入中...</div>
+    </div>
+  </div>
+  <style>
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</div>
+```
+
+**修復原理**:
+
+1. ✅ **立即可見** - 純 HTML/CSS，無需 JavaScript
+2. ✅ **觸發 FCP** - Lighthouse 偵測到文字和 spinner 即可觸發 FCP
+3. ✅ **品牌一致** - 紫色 #8b5cf6 配合 RateWise 品牌色
+4. ✅ **自動替換** - React 掛載時會自動替換整個內容
+
+**修復 commit**: [待提交]
+
+**下一步**:
+
+1. ✅ 應用修復（編輯 apps/ratewise/index.html）
+2. ✅ 測試建置（pnpm build 成功，index.html 5.33 kB）
+3. ⏳ 提交修復和文檔更新
+4. ⏳ 推送到遠端分支
+5. ⏳ 監控 PR #15 新 CI run
 
 ---
 
