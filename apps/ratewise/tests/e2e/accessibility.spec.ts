@@ -21,6 +21,26 @@ import AxeBuilder from '@axe-core/playwright';
 test.describe('無障礙性掃描', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+
+    // [E2E-fix:2025-10-25] 等待 React 應用完全載入
+    // 等待載入指示器消失
+    await page
+      .waitForSelector('text=RateWise 載入中...', { state: 'hidden', timeout: 15000 })
+      .catch(() => {
+        // 如果載入指示器已經消失，忽略錯誤
+      });
+
+    // 等待應用標記為已載入
+    await page.waitForFunction(
+      () => {
+        return document.body.dataset['appReady'] === 'true';
+      },
+      { timeout: 15000 },
+    );
+
+    // 等待關鍵元素出現（雙重確認）
+    await page.waitForSelector('button:has-text("多幣別")', { state: 'visible', timeout: 10000 });
+
     // 等待匯率載入完成
     await page.waitForLoadState('networkidle');
   });
