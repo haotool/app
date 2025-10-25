@@ -7,8 +7,13 @@ import { logger } from './utils/logger';
 import { initSentry } from './utils/sentry';
 import { initWebVitals } from './utils/webVitals';
 
-const appVersion = import.meta.env.VITE_APP_VERSION ?? __APP_VERSION__;
-const buildTime = import.meta.env.VITE_BUILD_TIME ?? __BUILD_TIME__;
+// 使用 import.meta.env 優先，如果不存在則使用全域變數，最後使用預設值
+const appVersion =
+  import.meta.env.VITE_APP_VERSION ||
+  (typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0');
+const buildTime =
+  import.meta.env.VITE_BUILD_TIME ||
+  (typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString());
 
 // 全域錯誤處理器 - 捕捉網路請求錯誤
 // [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]

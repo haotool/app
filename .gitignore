@@ -81,4 +81,5 @@ lighthouse-report*.json
 *.png
 !public/**/*.png
 !**/screenshots/*.png
-!**/icons/*.png
+!**/icons/*.pngapps/ratewise/dev-server.pid
+apps/ratewise/dev-server.log
