@@ -181,16 +181,17 @@ test.describe('視覺穩定性測試', () => {
   test('頁面載入過程中不應該有明顯的佈局偏移', async ({ rateWisePage: page }) => {
     await page.goto('/');
 
-    // 記錄初始位置
-    await page.waitForSelector('h1');
-    const initialBox = await page.locator('h1').boundingBox();
+    // [E2E-fix:2025-10-25] 使用更具體的選擇器，避免與 sr-only h1 衝突
+    // 選擇視覺標題 h2（「匯率好工具」）
+    await page.waitForSelector('h2:has-text("匯率好工具")');
+    const initialBox = await page.locator('h2:has-text("匯率好工具")').boundingBox();
 
     // 等待匯率載入完成
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
     // 檢查標題位置沒有大幅移動
-    const finalBox = await page.locator('h1').boundingBox();
+    const finalBox = await page.locator('h2:has-text("匯率好工具")').boundingBox();
 
     if (initialBox && finalBox) {
       const yShift = Math.abs(finalBox.y - initialBox.y);
