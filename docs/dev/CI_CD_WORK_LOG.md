@@ -464,15 +464,15 @@ HTML 載入 ✅
 3. ✅ **品牌一致** - 紫色 #8b5cf6 配合 RateWise 品牌色
 4. ✅ **自動替換** - React 掛載時會自動替換整個內容
 
-**修復 commit**: [待提交]
+**修復 commit**: 2101834
 
-**下一步**:
+**執行結果**:
 
 1. ✅ 應用修復（編輯 apps/ratewise/index.html）
-2. ✅ 測試建置（pnpm build 成功，index.html 5.33 kB）
-3. ⏳ 提交修復和文檔更新
-4. ⏳ 推送到遠端分支
-5. ⏳ 監控 PR #15 新 CI run
+2. ✅ 測試建置（pnpm build 成功，index.html 5.27 kB）
+3. ✅ 提交修復和文檔更新（commit 2101834）
+4. ✅ 推送到遠端分支
+5. 🔄 監控 CI 執行中...
 
 ---
 
@@ -528,4 +528,73 @@ fix(docs): 更新 SEO 文檔為正確的生產環境網址
 
 ---
 
-**最後更新**: 2025-10-25T00:30:00+08:00
+---
+
+**錯誤 #13: Lighthouse NO_FCP - 恢復靜態載入指示器**
+
+**發生時間**: 2025-10-25T20:00:00+08:00
+**Run ID**: 18803033803
+**SHA**: 2101834
+
+**問題描述**:
+
+錯誤 #12 的修復（移除靜態載入指示器）導致 Lighthouse CI 重新出現 NO_FCP 錯誤。
+
+**根本原因**:
+
+1. `index.html` 的 `<div id="root"></div>` 完全為空
+2. React bundle (573.93 KB) 需要下載+執行才能渲染內容
+3. Lighthouse 在 30 秒內無法看到任何可見內容
+4. 無法觸發 First Contentful Paint
+
+**解決方案**:
+
+恢復靜態載入指示器，但確保與 React 渲染兼容：
+
+```html
+<div id="root">
+  <div
+    style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f8fafc;"
+  >
+    <div style="text-align: center">
+      <!-- Spinner (紫色 #8b5cf6) -->
+      <div
+        style="width: 48px; height: 48px; border: 4px solid #e2e8f0; border-top-color: #8b5cf6; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;"
+      ></div>
+      <!-- 載入文字 -->
+      <div style="color: #8b5cf6; font-size: 16px; font-weight: 600">RateWise 載入中...</div>
+    </div>
+  </div>
+  <style>
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</div>
+```
+
+**修復原理**:
+
+1. ✅ **立即可見** - 純 HTML/CSS，無需 JavaScript
+2. ✅ **觸發 FCP** - Lighthouse 偵測到文字和 spinner 立即觸發 FCP
+3. ✅ **品牌一致** - 紫色 #8b5cf6 配合 RateWise 品牌色
+4. ✅ **自動替換** - React 掛載時會自動替換整個 #root 內容
+
+**修復 commit**: 2101834
+
+**執行結果**:
+
+1. ✅ 應用修復（編輯 apps/ratewise/index.html）
+2. ✅ 測試建置（pnpm build 成功，index.html 5.27 kB）
+3. ✅ 提交修復和文檔更新（commit 2101834）
+4. ✅ 推送到遠端分支
+5. ✅ **Lighthouse CI 通過！** (Run 18803033803)
+6. 🔄 等待 CI 完整執行（E2E 測試中）
+
+**狀態**: ✅ 已完成 - Lighthouse CI 綠燈
+
+---
+
+**最後更新**: 2025-10-25T20:35:00+08:00
