@@ -118,18 +118,68 @@ grep -r "ratewise.app" docs/ apps/ --exclude-dir=node_modules
 
 **錯誤 #8: Lighthouse CI 持續失敗**
 
-**最新狀態** (2025-10-25):
+**最新狀態** (2025-10-25T03:30:00+08:00):
 
-- PR #14 狀態: 5/7 檢查通過
-- 失敗項目: Lighthouse CI (2m25s)
-- 待處理: E2E 測試
+- ✅ PR #14 已合併到 main
+- ✅ 網址更新（commit e22eaa2）已推送到 main
+- 🔄 錯誤 #8 修復（commit 4d72ffa）已實施
+- 🆕 PR #15 已創建用於測試錯誤 #8 修復
+
+**錯誤 #8 詳細分析**:
+
+**問題描述**:
+
+```
+2025-10-24T15:08:43.905Z LH:ChromeLauncher:error connect ECONNREFUSED 127.0.0.1:37937
+2025-10-24T15:08:43.905Z LH:ChromeLauncher:error [2352:2378:1024/150835.952510:ERROR:dbus/bus.cc:408] Failed to connect to the bus
+Unable to connect to Chrome
+```
+
+**根本原因分析**:
+
+1. 前次修復（錯誤 #7）的 `url` 參數工作正常 ✅
+2. 新錯誤類型：Chrome 啟動後無法建立遠程調試連接
+3. `ECONNREFUSED 127.0.0.1:37937` 表示 Chrome 啟動了但連接失敗
+4. D-Bus 錯誤是 CI 環境正常現象（可忽略）
+5. **根本原因**：Chrome flags 過於複雜導致連接衝突
+   - 舊配置：`--headless --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-setuid-sandbox`
+   - 問題：複雜 flags 組合在 CI 環境中產生衝突
+
+**解決方案**（基於 2025 最佳實踐）:
+
+修改 `lighthouserc.json`:
+
+```json
+// 修改前：
+"chromeFlags": "--headless --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-setuid-sandbox",
+
+// 修改後（2025 官方推薦）：
+"chromeFlags": "--no-sandbox",
+```
+
+**理由**:
+
+- GitHub Actions ubuntu-latest 已預裝最新 Chrome（140.0.0.0）
+- 最小 flags 配置是 2024-2025 官方推薦
+- `--no-sandbox` 是 CI 環境必需的最小權限 flag
+- 移除 `--headless`: 現代 Chrome 默認支持
+- 移除 `--disable-gpu`: 可能導致連接問題
+- 移除 `--disable-dev-shm-usage`, `--disable-setuid-sandbox`: 非必需
+
+**參考資料**:
+
+- [Lighthouse CI 官方文檔 2024-2025](https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/configuration.md)
+- [GitHub Actions Chrome 最佳實踐](https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md)
+- [ChromeLauncher 連接問題排查指南](https://github.com/GoogleChrome/chrome-launcher)
 
 **下一步**:
 
-1. 提取最新的 Lighthouse CI 失敗日誌
-2. 分析根本原因
-3. 查找 2025 年最佳實踐解決方案
-4. 應用修復並驗證
+1. ✅ 應用修復（commit 4d72ffa）
+2. ✅ 推送到 feat/100-percent-coverage-implementation 分支
+3. ✅ 發現 PR #14 已合併
+4. ✅ 創建新 PR #15 測試修復
+5. ⏳ 監控 PR #15 的 Lighthouse CI 結果
+6. ⏳ 如果仍失敗，記錄為錯誤 #9 並繼續調查
 
 ---
 
