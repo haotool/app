@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/test';
 
 /**
  * RateWise 核心流程 E2E 測試
@@ -10,37 +10,17 @@ import { test, expect } from '@playwright/test';
  * 4. 我的最愛功能
  * 5. 貨幣清單互動
  *
+ * [E2E-fix:2025-10-25] 使用 custom fixtures 自動 mock API
+ * - 不再依賴外部 CDN/API 可用性
+ * - 測試更穩定、可重複
+ * - 符合 Playwright 2025 最佳實踐
+ *
  * 建立時間：2025-10-15T23:44:01+08:00
+ * 更新時間：2025-10-25T16:25:00+08:00
  */
 
 test.describe('RateWise 核心功能測試', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-
-    // [E2E-fix:2025-10-25] 等待 React 應用完全載入
-    // 等待載入指示器消失
-    await page
-      .waitForSelector('text=RateWise 載入中...', { state: 'hidden', timeout: 15000 })
-      .catch(() => {
-        // 如果載入指示器已經消失，忽略錯誤
-      });
-
-    // 等待應用標記為已載入
-    await page.waitForFunction(
-      () => {
-        return document.body.dataset['appReady'] === 'true';
-      },
-      { timeout: 15000 },
-    );
-
-    // 等待關鍵元素出現（雙重確認）
-    await page.waitForSelector('button:has-text("多幣別")', { state: 'visible', timeout: 10000 });
-
-    // 等待匯率載入完成
-    await page.waitForLoadState('networkidle');
-  });
-
-  test('應該正確載入首頁並顯示關鍵元素', async ({ page }) => {
+  test('應該正確載入首頁並顯示關鍵元素', async ({ rateWisePage: page }) => {
     // 檢查標題
     await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
 
@@ -55,7 +35,7 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(page.getByText(/臺灣銀行牌告匯率/i).first()).toBeVisible();
   });
 
-  test('單幣別模式：應該能夠輸入金額並看到換算結果', async ({ page }) => {
+  test('單幣別模式：應該能夠輸入金額並看到換算結果', async ({ rateWisePage: page }) => {
     // 確認在單幣別模式
     const singleModeButton = page.getByRole('button', { name: /單幣別/i });
     await expect(singleModeButton).toHaveClass(/bg-white/);
@@ -76,7 +56,7 @@ test.describe('RateWise 核心功能測試', () => {
     expect(parseFloat(toAmount.replace(/,/g, ''))).toBeGreaterThan(0);
   });
 
-  test('單幣別模式：應該能夠交換貨幣', async ({ page }) => {
+  test('單幣別模式：應該能夠交換貨幣', async ({ rateWisePage: page }) => {
     // 使用更穩定的 getByRole - Context7 最佳實踐
     const swapButton = page.getByRole('button', { name: /交換幣別/i });
 
@@ -87,7 +67,7 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
   });
 
-  test('多幣別模式：應該能夠切換並顯示多幣別換算', async ({ page }) => {
+  test('多幣別模式：應該能夠切換並顯示多幣別換算', async ({ rateWisePage: page }) => {
     // 切換到多幣別模式
     const multiModeButton = page.getByRole('button', { name: /多幣別/i });
     await multiModeButton.click();
@@ -103,7 +83,7 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(currencyItems.first()).toBeVisible();
   });
 
-  test('多幣別模式：應該能夠輸入基準金額並看到所有貨幣換算', async ({ page }) => {
+  test('多幣別模式：應該能夠輸入基準金額並看到所有貨幣換算', async ({ rateWisePage: page }) => {
     // 切換到多幣別模式
     await page.getByRole('button', { name: /多幣別/i }).click();
 
@@ -132,7 +112,7 @@ test.describe('RateWise 核心功能測試', () => {
     expect(parseFloat(usdValue.replace(/,/g, ''))).toBeGreaterThan(0);
   });
 
-  test('我的最愛：應該能夠新增和移除最愛貨幣', async ({ page }) => {
+  test('我的最愛：應該能夠新增和移除最愛貨幣', async ({ rateWisePage: page }) => {
     // 找到星號按鈕（我的最愛切換）
     const favoriteButtons = page.locator('button').filter({ has: page.locator('svg') });
     const firstFavoriteButton = favoriteButtons.first();
@@ -165,7 +145,7 @@ test.describe('RateWise 核心功能測試', () => {
     }
   });
 
-  test('效能：首頁應該在合理時間內完成載入', async ({ page }) => {
+  test('效能：首頁應該在合理時間內完成載入', async ({ rateWisePage: page }) => {
     const startTime = Date.now();
 
     await page.goto('/');
@@ -198,7 +178,7 @@ test.describe('RateWise 核心功能測試', () => {
 });
 
 test.describe('視覺穩定性測試', () => {
-  test('頁面載入過程中不應該有明顯的佈局偏移', async ({ page }) => {
+  test('頁面載入過程中不應該有明顯的佈局偏移', async ({ rateWisePage: page }) => {
     await page.goto('/');
 
     // 記錄初始位置
