@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  
-  <!-- 首頁 -->
   <url>
     <loc>https://app.haotool.org/ratewise/</loc>
     <lastmod>2025-10-25</lastmod>
@@ -12,8 +10,6 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://app.haotool.org/ratewise/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/" />
   </url>
-
-  <!-- FAQ 頁面 -->
   <url>
     <loc>https://app.haotool.org/ratewise/faq</loc>
     <lastmod>2025-10-25</lastmod>
@@ -23,8 +19,6 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://app.haotool.org/ratewise/faq" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/faq" />
   </url>
-
-  <!-- 關於頁面 -->
   <url>
     <loc>https://app.haotool.org/ratewise/about</loc>
     <lastmod>2025-10-25</lastmod>
@@ -34,5 +28,4 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://app.haotool.org/ratewise/about" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/about" />
   </url>
-
 </urlset>
