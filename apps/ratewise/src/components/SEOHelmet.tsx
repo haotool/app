@@ -13,7 +13,7 @@ interface AlternateLink {
 
 interface FAQEntry {
   question: string;
-  answer: string;
+  answer: string | React.ReactNode;
 }
 
 interface HowToStep {
