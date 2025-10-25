@@ -281,6 +281,81 @@ Chrome flags: "--headless=new --no-sandbox --disable-gpu"
 
 ---
 
+**錯誤 #11: NO_FCP 持續 - CI 環境共享內存問題**
+
+**最新狀態** (2025-10-25T06:00:00+08:00):
+
+- ✅ 錯誤 #10 修復（commit b009964, fbbd4d9）已推送
+- ✅ Run 18798989277 (SHA: fbbd4d9) 執行確認 xvfb-run 正確
+- 🔄 Lighthouse CI 仍失敗 NO_FCP
+- 🆕 錯誤 #11 修復（commit 9d6eb7d）已實施
+
+**問題描述**:
+
+```
+Run ID: 18798989277
+SHA: fbbd4d9 (包含 xvfb 修復)
+✅ xvfb-run 正確執行
+✅ Chrome 成功啟動和連接
+❌ 頁面在 30 秒內未渲染 NO_FCP
+"code": "NO_FCP",
+"message": "The page did not paint any content..."
+```
+
+**根本原因分析**:
+
+1. ✅ xvfb 修復已正確應用（xvfb-run --auto-servernum）
+2. ✅ Chrome 成功啟動（15 秒後連接成功）
+3. ✅ Chrome 成功連接和基準測試
+4. ❌ 頁面導航後 30 秒仍無內容渲染
+5. **時間軸**：
+   - 05:48:20.235Z: 開始導航到 http://localhost:45325/
+   - 05:48:50.487Z: 30 秒後 NO_FCP 錯誤
+6. **Build 分析**：
+   - ✅ Build 成功（4.23s, 2270 modules）
+   - ⚠️ 主 bundle 過大：index-DVZAL5LY.js 573.91 kB (gzip: 186.65 kB)
+   - ⚠️ Vite 警告：chunk 超過 500 KB
+7. **根本原因**：
+   - CI 環境共享內存（/dev/shm）配置不足
+   - React SPA 可能有 opacity: 0 淡入動畫導致 Lighthouse 檢測失敗
+   - 缺少 `--disable-dev-shm-usage` flag
+
+**解決方案**（基於 Lighthouse CI GitHub 官方 issues）:
+
+修改 `lighthouserc.json`:
+
+```json
+// 修改前：
+"chromeFlags": "--headless=new --no-sandbox --disable-gpu",
+
+// 修改後（官方推薦完整配置）：
+"chromeFlags": "--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage",
+```
+
+**理由**:
+
+- `--disable-dev-shm-usage`: 解決 CI 環境 /dev/shm 共享內存不足問題
+- 官方推薦用於 Docker、CI/CD 環境
+- 避免 Chrome 使用共享內存導致渲染失敗
+- 2025 年 Lighthouse CI + React SPA 常見解決方案
+
+**參考資料**:
+
+- [GoogleChrome/lighthouse-ci#196](https://github.com/GoogleChrome/lighthouse-ci/issues/196) - NO_FCP with React SPA
+- [GoogleChrome/lighthouse-ci#766](https://github.com/GoogleChrome/lighthouse-ci/issues/766) - Headless Chrome issues
+- [Stack Overflow - NO_FCP fix](https://stackoverflow.com/questions/55826735/)
+
+**修復 commit**: 9d6eb7d
+
+**下一步**:
+
+1. ✅ 應用修復（commit 9d6eb7d）
+2. ✅ 更新工作記錄
+3. ⏳ 推送到遠端分支
+4. ⏳ 監控 PR #15 最新 CI run
+
+---
+
 ## 📊 最佳實踐查詢記錄
 
 ### 已查詢的主題
