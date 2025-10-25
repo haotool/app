@@ -8,10 +8,11 @@
 
 ## 📊 當前狀態總覽
 
-**最新 CI Run**: 18803033809
-**執行時間**: 2025-10-25T12:29:00Z
-**測試結果**: 58 個測試，30+ 失敗（52% 失敗率）
-**主要問題**: 載入指示器導致元素查找失敗、PWA Service Worker 測試不穩定
+**最新測試執行**: 本地 E2E 測試
+**執行時間**: 2025-10-25T21:15:00+08:00
+**測試結果**: 116 個測試，96 通過，4 失敗，16 跳過（**83% 通過率** ✅）
+**主要問題**: 視覺穩定性測試中 `<h1>` 標籤重複導致 strict mode violation
+**進展**: 🎉 核心功能測試全部通過！無障礙性測試全部通過！
 
 ---
 
@@ -649,13 +650,97 @@ export const test = base.extend<RateWiseFixtures>({
 - ✅ 符合 Playwright 官方最佳實踐
 - ✅ 簡化測試代碼（移除所有 beforeEach）
 
-**下一步**:
+**執行狀態**:
 
-1. 提交修復到 Git
-2. 推送到 GitHub 觸發 CI
-3. 監控 CI E2E 測試結果
+1. ✅ 提交修復到 Git (Commit: a4f8288)
+2. ✅ 推送到 GitHub
+3. ✅ 創建 PR #17: https://github.com/haotool/app/pull/17
+4. 🔄 監控 CI E2E 測試執行中...
 
 ---
 
-**最後更新**: 2025-10-26T00:30:00+08:00 (UTC+8)
-**下一步**: 提交並驗證 CI 通過
+### 執行 #4: CI 驗證（PR #17）
+
+**時間**: 2025-10-26T00:50:00+08:00
+**PR**: #17 - fix(e2e): implement Playwright mock API strategy for CI stability
+**Commit**: a4f8288
+**狀態**: 🔄 CI 執行中
+
+**PR 描述**:
+
+- 根本原因: CI 環境無法訪問外部 CDN/GitHub APIs
+- 解決方案: Playwright Mock API Strategy (2025 最佳實踐)
+- 預期改善: 從 77.5% 失敗率降至 0%
+
+**監控中**:
+
+- Quality Checks (TypeScript + Tests)
+- End-to-End Tests (chromium-desktop + chromium-mobile)
+- Lighthouse CI
+
+**下一步**:
+
+1. 等待 CI 完成（預計 8-10 分鐘）
+2. 驗證 E2E 測試通過率
+3. 如果成功，合併到 main
+4. 更新此文檔記錄最終結果
+
+---
+
+### 修復 #3: 解決視覺穩定性測試中的 `<h1>` 重複問題
+
+**狀態**: 🔄 進行中
+**發生時間**: 2025-10-25T21:15:00+08:00
+**影響測試**: 視覺穩定性測試（4 個失敗）
+**問題描述**:
+
+- 測試 `頁面載入過程中不應該有明顯的佈局偏移` 在所有瀏覽器/設備組合中失敗
+- 錯誤訊息：`Error: strict mode violation: locator('h1') resolved to 2 elements`
+- 兩個 `<h1>` 標籤：
+  1. `<h1 class="sr-only">RateWise 匯率轉換器</h1>` (無障礙性標籤)
+  2. `<h1 class="text-3xl ...">匯率好工具</h1>` (視覺標題)
+
+**根本原因**:
+
+1. 修復 #1 添加了 `<h1 class="sr-only">` 以提升無障礙性
+2. 原有的 `<h1>匯率好工具</h1>` 仍然存在
+3. HTML 語義規範建議每個頁面只有一個 `<h1>` 標籤
+4. Playwright 的 strict mode 要求 locator 只能匹配單一元素
+
+**解決方案**:
+根據 [MDN Web Docs: The HTML Section Heading elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements) 和 [W3C HTML5 Spec](https://www.w3.org/TR/html5/sections.html#the-h1-h2-h3-h4-h5-and-h6-elements)：
+
+**選項 A（推薦）**: 保留 `sr-only` 的 `<h1>`，將視覺標題降級為 `<h2>`
+
+- ✅ 符合無障礙性最佳實踐（螢幕閱讀器優先）
+- ✅ 保持語義化 HTML 結構
+- ✅ 不影響視覺呈現
+
+**選項 B**: 移除 `sr-only` 的 `<h1>`，只保留視覺標題
+
+- ❌ 降低無障礙性評分
+- ❌ 螢幕閱讀器無法獲得頁面主要標題
+
+**選項 C**: 合併兩個標題，使用 CSS 控制顯示
+
+- ⚠️ 複雜度較高
+- ⚠️ 可能影響 SEO
+
+**實施計畫**:
+
+1. 採用選項 A
+2. 修改 `apps/ratewise/src/features/ratewise/RateWise.tsx`
+3. 將 `<h1>匯率好工具</h1>` 改為 `<h2>匯率好工具</h2>`
+4. 調整 CSS 樣式以保持視覺一致性
+5. 更新視覺穩定性測試，使用更具體的選擇器
+
+**驗證方法**:
+
+- 本地運行 `pnpm test:e2e` 確認視覺穩定性測試通過
+- 檢查無障礙性測試仍然通過
+- 瀏覽器手動測試確認視覺無變化
+
+---
+
+**最後更新**: 2025-10-25T21:20:00+08:00 (UTC+8)
+**下一步**: 修復 `<h1>` 重複問題並重新運行 E2E 測試
