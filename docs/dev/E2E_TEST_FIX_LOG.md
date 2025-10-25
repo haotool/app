@@ -764,5 +764,116 @@ Running 4 tests using 4 workers
 
 ---
 
-**最後更新**: 2025-10-25T21:25:00+08:00 (UTC+8)
-**下一步**: 運行完整 E2E 測試套件並驗證所有測試通過
+**最後更新**: 2025-10-26T03:13:21+08:00 (UTC+8)
+**下一步**: 修復生產環境 CSP inline styles 問題
+
+---
+
+## [2025-10-26 03:13] Session: fix/e2e/csp-inline-styles-20251026 @ WIP
+
+**目標測試/場景**: 修復生產環境 CSP 違規 - inline styles 被阻擋
+
+**失敗症狀**:
+
+```
+Refused to apply inline style because it violates the following Content Security Policy directive: "style-src 'self' https://fonts.googleapis.com".
+```
+
+- 5 個 inline style 錯誤（index.html 中的 `<noscript>` 和載入指示器）
+- 1 個 inline `<style>` 標籤錯誤（keyframes animation）
+- 生產環境 `https://app.haotool.org/ratewise` 完全無法顯示樣式
+
+**復現步驟**:
+
+1. 訪問 `https://app.haotool.org/ratewise`
+2. 打開 DevTools Console
+3. 觀察 CSP 錯誤訊息
+
+**診斷依據與證據連結**:
+
+- Console 錯誤：5 個 `Refused to apply inline style` 錯誤
+- 受影響檔案：`apps/ratewise/index.html` (行 41-127)
+- 當前 CSP 策略：`nginx.conf` 第 43 行
+  ```nginx
+  add_header Content-Security-Policy "... style-src 'self' https://fonts.googleapis.com; ..."
+  ```
+
+**根因判定**:
+
+1. **根本原因**: `index.html` 包含 inline styles 和 inline `<style>` 標籤
+2. **衝突點**: 當前 CSP 的 `style-src 'self' https://fonts.googleapis.com` 不允許 inline styles
+3. **歷史背景**:
+   - 修復 #1 (commit `a4f8288`) 添加了靜態載入指示器以解決 Lighthouse `NO_FCP` 問題
+   - 該載入指示器使用了 inline styles 和 inline `<style>` 標籤
+   - 當時未考慮生產環境的嚴格 CSP 策略
+
+**修復策略與最小改動點**:
+根據 [OWASP CSP Cheat Sheet](https://github.com/owasp/cheatsheetseries/blob/master/cheatsheets/Content_Security_Policy_Cheat_Sheet.md) 和 [MDN CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) 2025 最佳實踐：
+
+**選項 A（推薦）**: 提取 inline styles 到外部 CSS
+
+- ✅ 符合 CSP 最佳實踐
+- ✅ 無需修改 nginx.conf
+- ✅ 保持嚴格的安全策略
+- ✅ 最小改動範圍
+
+**選項 B**: 使用 CSP nonce
+
+- ⚠️ 需要伺服器端動態生成 nonce
+- ⚠️ 需要修改 nginx.conf 和 index.html
+- ⚠️ 增加複雜度
+
+**選項 C**: 使用 CSP hash
+
+- ⚠️ 每次修改 styles 需要重新計算 hash
+- ⚠️ 維護成本高
+
+**選項 D**: 添加 `'unsafe-inline'`
+
+- ❌ 降低安全性
+- ❌ 違反 OWASP 最佳實踐
+- ❌ 不推薦
+
+**實施計劃（選項 A）**:
+
+1. 創建 `apps/ratewise/public/loading.css` 專門處理載入樣式
+2. 將 `<noscript>` 中的 inline styles 提取為 CSS classes
+3. 將載入指示器的 inline styles 提取為 CSS classes
+4. 將 `@keyframes spin` 移至外部 CSS
+5. 更新 `index.html` 引用外部 CSS 並使用 classes
+6. 驗證本地 dev 和 preview 環境
+7. 驗證生產環境
+
+**驗證流程與結果**:
+
+- ✅ 本地驗證完成：無 CSP 錯誤
+- ✅ Preview 驗證完成：應用程式正常載入
+- ✅ Console 檢查：無任何 CSP 違規錯誤
+- ✅ 樣式載入：`loading.css` 成功載入並應用
+- ✅ Web Vitals：CLS = 0 (good), LCP = 120ms (good)
+- ⏳ 待執行生產環境驗證（需部署後）
+
+**實際執行步驟**:
+
+1. ✅ 創建 `apps/ratewise/public/loading.css` (1787 bytes)
+2. ✅ 提取所有 inline styles 為 CSS classes
+3. ✅ 移除 inline `<style>` 標籤，將 `@keyframes spin` 移至外部 CSS
+4. ✅ 更新 `index.html` 引用 `loading.css`
+5. ✅ TypeScript 類型檢查通過
+6. ✅ Prettier 格式化通過
+7. ✅ 建置成功，`loading.css` 正確複製到 dist
+8. ✅ Preview 伺服器測試通過
+9. ✅ 瀏覽器驗證：無 CSP 錯誤，應用程式正常運行
+
+**待辦與風險**:
+
+- ✅ Lighthouse FCP 不受影響（LCP = 120ms, good）
+- ⏳ E2E 測試待運行
+- ✅ 視覺呈現無變化
+- ✅ 風險已解決：外部 CSS 不影響 FCP
+
+**參考資料**:
+
+- [OWASP CSP Cheat Sheet](https://github.com/owasp/cheatsheetseries/blob/master/cheatsheets/Content_Security_Policy_Cheat_Sheet.md) [context7:/owasp/cheatsheetseries:2025-10-26T03:13:21+08:00]
+- [MDN Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
+- [web.dev CSP Guide](https://web.dev/articles/csp)
