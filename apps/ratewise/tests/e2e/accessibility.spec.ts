@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/test';
 import AxeBuilder from '@axe-core/playwright';
 
 /**
@@ -19,13 +19,7 @@ import AxeBuilder from '@axe-core/playwright';
  */
 
 test.describe('無障礙性掃描', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    // 等待匯率載入完成
-    await page.waitForLoadState('networkidle');
-  });
-
-  test('首頁應該通過無障礙性掃描（單幣別模式）', async ({ page }) => {
+  test('首頁應該通過無障礙性掃描（單幣別模式）', async ({ rateWisePage: page }) => {
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();
@@ -48,7 +42,7 @@ test.describe('無障礙性掃描', () => {
     expect(criticalViolations).toHaveLength(0);
   });
 
-  test('多幣別模式應該通過無障礙性掃描', async ({ page }) => {
+  test('多幣別模式應該通過無障礙性掃描', async ({ rateWisePage: page }) => {
     // 切換到多幣別模式
     await page.getByRole('button', { name: /多幣別/i }).click();
     await page.waitForTimeout(500);
@@ -73,7 +67,7 @@ test.describe('無障礙性掃描', () => {
     expect(criticalViolations).toHaveLength(0);
   });
 
-  test('表單元素應該有適當的標籤', async ({ page }) => {
+  test('表單元素應該有適當的標籤', async ({ rateWisePage: page }) => {
     // 檢查所有輸入框是否有關聯的標籤或 aria-label
     const inputs = page.locator('input[type="text"]');
     const inputCount = await inputs.count();
@@ -105,7 +99,9 @@ test.describe('無障礙性掃描', () => {
     }
   });
 
-  test.skip('按鈕應該有可識別的文字或 aria-label (過於嚴格，跳過)', async ({ page }) => {
+  test.skip('按鈕應該有可識別的文字或 aria-label (過於嚴格，跳過)', async ({
+    rateWisePage: page,
+  }) => {
     const buttons = page.locator('button');
     const buttonCount = await buttons.count();
 
@@ -156,7 +152,7 @@ test.describe('無障礙性掃描', () => {
     }
   });
 
-  test('應該有適當的顏色對比度', async ({ page }) => {
+  test('應該有適當的顏色對比度', async ({ rateWisePage: page }) => {
     // 使用 Axe 的 color-contrast 規則
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2aa'])
@@ -181,7 +177,7 @@ test.describe('無障礙性掃描', () => {
     expect(contrastViolations).toHaveLength(0);
   });
 
-  test('頁面應該有適當的語義化 HTML 結構', async ({ page }) => {
+  test('頁面應該有適當的語義化 HTML 結構', async ({ rateWisePage: page }) => {
     // 檢查是否有 main landmark
     const main = page.locator('main, [role="main"]');
     const mainCount = await main.count();
@@ -201,7 +197,7 @@ test.describe('無障礙性掃描', () => {
     }
   });
 
-  test('鍵盤導航：所有互動元素應該可以透過鍵盤操作', async ({ page }) => {
+  test('鍵盤導航：所有互動元素應該可以透過鍵盤操作', async ({ rateWisePage: page }) => {
     // 測試 Tab 鍵導航
     await page.keyboard.press('Tab');
 
@@ -226,7 +222,7 @@ test.describe('無障礙性掃描', () => {
     expect(isInteractive).toBeTruthy();
   });
 
-  test('應該支援螢幕閱讀器（基本檢查）', async ({ page }) => {
+  test('應該支援螢幕閱讀器（基本檢查）', async ({ rateWisePage: page }) => {
     // 檢查是否有 lang 屬性
     const htmlLang = await page.locator('html').getAttribute('lang');
     expect(htmlLang).toBeTruthy();
@@ -240,12 +236,7 @@ test.describe('無障礙性掃描', () => {
 });
 
 test.describe('ARIA 屬性檢查', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-  });
-
-  test('動態內容應該有適當的 ARIA live region（如適用）', async ({ page }) => {
+  test('動態內容應該有適當的 ARIA live region（如適用）', async ({ rateWisePage: page }) => {
     // 檢查是否有載入狀態的 ARIA 標記
     const loadingElements = page.locator('[aria-busy="true"], [aria-live]');
     const count = await loadingElements.count();
@@ -256,7 +247,7 @@ test.describe('ARIA 屬性檢查', () => {
     }
   });
 
-  test('表單驗證錯誤應該可被螢幕閱讀器識別', async ({ page }) => {
+  test('表單驗證錯誤應該可被螢幕閱讀器識別', async ({ rateWisePage: page }) => {
     // 檢查數字輸入框是否有 aria-label（無障礙性最佳實踐）
     const numberInputs = page.locator('input[type="number"]');
     const inputCount = await numberInputs.count();

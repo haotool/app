@@ -161,9 +161,9 @@ const RateWise = () => {
       >
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-6">
-            <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-1">
+            <h2 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-1">
               匯率好工具
-            </h1>
+            </h2>
             <p className="text-sm text-gray-600">
               {ratesLoading ? '載入即時匯率中...' : '即時匯率換算 · 精準可靠'}
             </p>
