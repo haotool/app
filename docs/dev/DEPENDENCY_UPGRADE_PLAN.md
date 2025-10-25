@@ -1,28 +1,78 @@
 # pnpm 依賴升級與鎖版策略
 
-> 依據 `pnpm -r outdated`（2025-10-12）與 [TECH_DEBT_AUDIT.md](./TECH_DEBT_AUDIT.md)。
+> **最後更新**: 2025-10-26T03:43:36+08:00  
+> **依據**: `pnpm -w outdated`（2025-10-26）、TECH_DEBT_AUDIT.md、Context7 官方文檔  
+> **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
+> **版本**: v2.0 (完整超級技術債掃描產出)
 
-## 1. 現況快照
+---
 
-| 套件                                         | 目前版本 | 最新版本   | 類別 | 備註                                         |
-| -------------------------------------------- | -------- | ---------- | ---- | -------------------------------------------- |
-| `vite`                                       | 5.4.20   | **7.1.9**  | dev  | major，需同步升級 `@vitejs/plugin-react-swc` |
-| `@vitejs/plugin-react-swc`                   | 3.11.0   | **4.1.0**  | dev  | 與 Vite 7 綁定                               |
-| `tailwindcss`                                | 3.4.18   | **4.1.14** | dev  | major，需採用新 token 系統 [ref: #6]         |
-| `vitest`                                     | 2.1.9    | 3.2.4      | dev  | major，與 Vite 7 一併處理 [ref: #7]          |
-| `eslint`                                     | 8.57.1   | 9.37.0     | dev  | major，需搭配 `@typescript-eslint` 8         |
-| `@typescript-eslint/*`                       | 6.21.0   | 8.46.0     | dev  | major                                        |
-| `husky`                                      | 8.0.3    | 9.1.7      | dev  | minor，需 Node ≥18                           |
-| `lint-staged`                                | 15.5.2   | 16.2.4     | dev  | major（Node 18+）                            |
-| `@types/node`                                | 22.18.9  | 24.7.2     | dev  | minor，可先升級                              |
-| 其他（lucide-react、@vitest/coverage-v8 等） | -        | -          | -    | patch/minor                                  |
+## Linus 三問
 
-## 2. 總體策略
+在升級任何依賴前，先問自己：
 
-1. **Patch / Minor 優先**：每週安排一次 `pnpm -w up --interactive`，只選 patch/minor，確保 CI 維持綠燈。
-2. **Major 分支驗證**：Vite 7、Tailwind 4、ESLint 9 均需建立專屬分支，搭配 `pnpm store prune` 清理快取後測試。
-3. **鎖版**：保持 `packageManager: "pnpm@9.10.0"` 與 `engines`（Node ≥20）。Major 升級通過後記得更新此欄位。
-4. **記錄與回滾**：每次升級完成後，更新本文件與 `CHANGELOG.md`，並寫下回滾腳本。
+1. **"這是個真問題還是臆想出來的？"**  
+   → Patch 版本有安全修復嗎？Major 版本有破壞性變更嗎？
+
+2. **"有更簡單的方法嗎？"**  
+   → 能用 `pnpm up --latest` 一次升級嗎？還是需要分批測試？
+
+3. **"會破壞什麼嗎？"**  
+   → 升級後 localStorage、API、測試會受影響嗎？
+
+---
+
+## 1. 現況快照（2025-10-26）
+
+### 1.1 Patch 安全升級 (P0 - 立即執行)
+
+| 套件                          | 目前版本 | 最新版本   | 類別 | 優先級 | 破壞性 | 備註            |
+| ----------------------------- | -------- | ---------- | ---- | ------ | ------ | --------------- |
+| `vite`                        | 7.1.9    | **7.1.12** | dev  | P0     | ✅ 否  | patch，安全升級 |
+| `@playwright/test`            | 1.56.0   | **1.56.1** | dev  | P0     | ✅ 否  | patch，安全升級 |
+| `typescript-eslint`           | 8.46.1   | **8.46.2** | dev  | P0     | ✅ 否  | patch，安全升級 |
+| `eslint-plugin-react-refresh` | 0.4.23   | **0.4.24** | dev  | P0     | ✅ 否  | patch，安全升級 |
+
+**Context7 參考**：
+
+- [Vite 7 Release Notes](https://vitejs.dev/) [ref: #3]
+- [Playwright Best Practices](https://playwright.dev/docs/best-practices) [官方]
+
+### 1.2 Minor 版本升級 (P1 - 低風險)
+
+| 套件                       | 目前版本 | 最新版本   | 類別 | 優先級 | 破壞性 | 備註            |
+| -------------------------- | -------- | ---------- | ---- | ------ | ------ | --------------- |
+| `@eslint/js`               | 9.37.0   | **9.38.0** | dev  | P1     | ✅ 否  | minor，安全升級 |
+| `@vitejs/plugin-react-swc` | 4.1.0    | **4.2.0**  | dev  | P1     | ✅ 否  | minor，安全升級 |
+| `eslint`                   | 9.37.0   | **9.38.0** | dev  | P1     | ✅ 否  | minor，安全升級 |
+
+### 1.3 Major 版本升級 (P1/P2 - 需驗證)
+
+| 套件                              | 目前版本 | 最新版本   | 類別 | 優先級 | 破壞性 | 備註                    |
+| --------------------------------- | -------- | ---------- | ---- | ------ | ------ | ----------------------- |
+| `@commitlint/cli`                 | 18.6.1   | **20.1.0** | dev  | P1     | ⚠️ 是  | major，需驗證           |
+| `@commitlint/config-conventional` | 18.6.3   | **20.0.0** | dev  | P1     | ⚠️ 是  | major，需驗證           |
+| `@vitest/coverage-v8`             | 3.2.4    | **4.0.3**  | dev  | P1     | ⚠️ 是  | major，需分支驗證       |
+| `vitest`                          | 3.2.4    | **4.0.3**  | dev  | P1     | ⚠️ 是  | major，同步升級         |
+| `eslint-plugin-react-hooks`       | 5.2.0    | **7.0.1**  | dev  | P1     | ⚠️ 是  | major，需驗證           |
+| `husky`                           | 8.0.3    | **9.1.7**  | dev  | P1     | ⚠️ 是  | major，需驗證           |
+| `lint-staged`                     | 15.5.2   | **16.2.6** | dev  | P1     | ⚠️ 是  | major，需驗證           |
+| `eslint-config-prettier`          | 9.1.2    | **10.1.8** | dev  | P2     | ⚠️ 是  | major，低優先級         |
+| `tailwindcss`                     | 3.4.14   | **4.1.14** | dep  | P2     | ⚠️ 是  | major，可選，需視覺測試 |
+
+**Context7 參考**：
+
+- [Vitest 4.0 Breaking Changes](https://vitest.dev/) [ref: #7]
+- [React 19 Hooks Rules](https://react.dev/reference/rules/rules-of-hooks) [ref: #1]
+- [Tailwind CSS 4.0](https://tailwindcss.com/blog/tailwindcss-v4) [ref: #6]
+
+## 2. 總體策略（Linus 風格）
+
+1. **Patch 優先，Never Break**：patch 版本立即升級，minor 版本經驗證後升級，major 版本建立分支驗證。
+2. **原子化升級**：每個 major 版本獨立 PR，附完整驗收腳本與回滾策略。
+3. **鎖版嚴格**：保持 `packageManager: "pnpm@9.10.0"` 與 `engines.node: ">=24.0.0"`。
+4. **記錄與回滾**：每次升級完成後，更新本文件、`CHANGELOG.md` 與 `TECH_DEBT_AUDIT.md`。
+5. **自動化**：使用 Renovate 或 Dependabot 自動監控，patch 版本自動合併。
 
 ## 3. 升級順序
 
