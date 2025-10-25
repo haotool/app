@@ -29,10 +29,9 @@ Allow: /
 User-agent: Googlebot
 Allow: /
 
-# 禁止爬取資源檔案
-Disallow: /assets/
-Disallow: /node_modules/
-Disallow: /*.map$
+# 允許搜尋引擎擷取 CSS / JS 等關鍵資源以完整渲染頁面
+# [google: How to write and submit a robots.txt file, 2024-12-12]
+Allow: /assets/
 
 # Sitemap
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
