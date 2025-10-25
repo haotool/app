@@ -88,9 +88,9 @@
         </p>
       </div>
     </noscript>
-    <!-- Static loading indicator for immediate FCP (First Contentful Paint) -->
-    <!-- This ensures Lighthouse detects painted content before React loads -->
-    <!-- [lighthouse-ci-fix:NO_FCP:2025-10-25T14:04:00+08:00] -->
+    <!-- [Lighthouse-fix:NO_FCP:2025-10-25T20:00:00+08:00] -->
+    <!-- 靜態載入指示器：確保 HTML 載入後立即有可見內容觸發 FCP -->
+    <!-- React 掛載時會自動替換整個 #root 內容 -->
     <div id="root">
       <div
         style="
@@ -98,11 +98,11 @@
           align-items: center;
           justify-content: center;
           min-height: 100vh;
-          font-family: system-ui, -apple-system, sans-serif;
+          background: #f8fafc;
         "
       >
         <div style="text-align: center">
-          <!-- Spinner -->
+          <!-- Spinner (紫色 #8b5cf6) -->
           <div
             style="
               width: 48px;
@@ -114,11 +114,10 @@
               margin: 0 auto 16px;
             "
           ></div>
-          <!-- Loading text -->
+          <!-- 載入文字 -->
           <div style="color: #8b5cf6; font-size: 16px; font-weight: 600">RateWise 載入中...</div>
         </div>
       </div>
-      <!-- CSS animation for spinner -->
       <style>
         @keyframes spin {
           to {
