@@ -28,14 +28,14 @@ function generateVersion(): string {
 // 最簡配置 - 參考 Context7 官方範例
 // [context7:vitejs/vite:2025-10-21T03:15:00+08:00]
 // 使用函數形式確保 define 在所有模式下都能正確工作
-export default defineConfig(({ mode }) => {
+export default defineConfig(() => {
   // 自動生成版本號（基於 git commit count）
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
 
-  // 開發模式使用根路徑，生產環境使用 /ratewise/
-  // 移除 CI 環境判斷，避免 CI 構建生產版本時路徑錯誤
-  const base = mode === 'development' ? '/' : '/ratewise/';
+  // 統一使用根路徑，簡化部署配置
+  // [fix:2025-10-27] 移除 /ratewise/ base 以解決生產環境資源 404 問題
+  const base = '/';
 
   return {
     base,
