@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "staticDistDir": "./apps/ratewise/dist",
-      "url": ["http://localhost/"],
+      "url": ["http://localhost/ratewise/"],
       "isSinglePageApplication": true,
       "numberOfRuns": 3,
       "settings": {
