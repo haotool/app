@@ -33,9 +33,9 @@ export default defineConfig(({ mode }) => {
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
 
-  // CI 測試使用根路徑，生產部署使用 /ratewise/
-  // CI=true 時使用根路徑確保 E2E 測試和 Lighthouse CI 正常運行
-  const base = process.env['CI'] ? '/' : mode === 'production' ? '/ratewise/' : '/';
+  // 開發模式使用根路徑，生產環境使用 /ratewise/
+  // 移除 CI 環境判斷，避免 CI 構建生產版本時路徑錯誤
+  const base = mode === 'development' ? '/' : '/ratewise/';
 
   return {
     base,
