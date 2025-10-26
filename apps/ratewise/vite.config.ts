@@ -33,9 +33,11 @@ export default defineConfig(() => {
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
 
-  // 統一使用根路徑，簡化部署配置
-  // [fix:2025-10-27] 移除 /ratewise/ base 以解決生產環境資源 404 問題
-  const base = '/';
+  // 最簡配置：使用環境變數，消除所有特殊情況
+  // [fix:2025-10-27] 遵循 Linus 原則 - "好品味"：消除條件判斷
+  // CI 環境: VITE_BASE_PATH='/' (Lighthouse/E2E)
+  // 生產環境: VITE_BASE_PATH='/ratewise/' (Zeabur)
+  const base = process.env['VITE_BASE_PATH'] || '/';
 
   return {
     base,
