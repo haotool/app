@@ -28,14 +28,23 @@ function generateVersion(): string {
 // 最簡配置 - 參考 Context7 官方範例
 // [context7:vitejs/vite:2025-10-21T03:15:00+08:00]
 // 使用函數形式確保 define 在所有模式下都能正確工作
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   // 自動生成版本號（基於 git commit count）
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
 
-  // CI 測試使用根路徑，生產部署使用 /ratewise/
-  // CI=true 時使用根路徑確保 E2E 測試和 Lighthouse CI 正常運行
-  const base = process.env['CI'] ? '/' : mode === 'production' ? '/ratewise/' : '/';
+  /**
+   * Base Path 邏輯:
+   * 1. 環境變數 VITE_BASE_PATH 優先（明確指定）
+   * 2. command === 'build' && mode === 'production' → 生產構建 → /ratewise/
+   * 3. command === 'serve' (preview) → E2E 測試 → /
+   * 4. mode === 'development' → 本地開發 → /
+   *
+   * 修復: dbec300 的 CI 環境檢查導致生產構建錯誤使用根路徑
+   */
+  const base =
+    process.env['VITE_BASE_PATH'] ||
+    (command === 'build' && mode === 'production' ? '/ratewise/' : '/');
 
   return {
     base,
