@@ -4,38 +4,20 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-/**
- * 自動生成版本號
- * 策略: 使用 git commit count 確保每次提交後版本自動遞增
- * 格式: 1.0.{commit_count}
- */
-function generateVersion(): string {
-  try {
-    // 獲取 git commit 總數
-    const commitCount = execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
-    return `1.0.${commitCount}`;
-  } catch {
-    // Git 不可用時，使用 package.json 的版本號
-    const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
-    return packageJson.version;
-  }
-}
 
 // 最簡配置 - 參考 Context7 官方範例
 // [context7:vitejs/vite:2025-10-21T03:15:00+08:00]
 // 使用函數形式確保 define 在所有模式下都能正確工作
 export default defineConfig(({ mode }) => {
-  // 自動生成版本號（基於 git commit count）
-  const appVersion = generateVersion();
+  // 讀取 package.json 版本號
+  const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
+  const appVersion = packageJson.version;
   const buildTime = new Date().toISOString();
 
-  // CI 測試使用根路徑，生產部署使用 /ratewise/
-  // CI=true 時使用根路徑確保 E2E 測試和 Lighthouse CI 正常運行
-  const base = process.env['CI'] ? '/' : mode === 'production' ? '/ratewise/' : '/';
+  // Base path 可被 VITE_BASE_PATH 覆蓋；預設：dev='/', prod='/ratewise/'
+  const base = process.env['VITE_BASE_PATH'] ?? (mode === 'development' ? '/' : '/ratewise/');
 
   return {
     base,
@@ -62,108 +44,52 @@ export default defineConfig(({ mode }) => {
           // 使用 prompt 模式時，不自動 skipWaiting
           clientsClaim: false,
           skipWaiting: false,
-          // 運行時緩存策略
-          // 注意：匯率數據改用 GitHub raw (無 CDN 快取)，確保數據即時性
-          // jsdelivr CDN 快取可達 12-24 小時，不適合即時匯率數據
-          runtimeCaching: [],
+          // 添加運行時緩存策略
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'jsdelivr-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 30 * 24 * 60 * 60, // 30 天
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+          ],
         },
-        // Manifest 配置（此處配置會覆蓋 public/manifest.webmanifest）
-        // 使用動態配置以支援 development/production 不同的 base path
         manifest: {
           name: 'RateWise - 即時匯率轉換器',
           short_name: 'RateWise',
-          description:
-            'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。',
+          description: '快速、準確的即時匯率轉換工具',
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',
-          // scope 和 start_url 根據 mode 動態設定
-          scope: base,
-          start_url: base,
-          id: base,
-          orientation: 'portrait-primary',
-          categories: ['finance', 'utilities', 'productivity'],
-          // 完整的圖標配置（包含所有尺寸）
+          // 依 base 動態設定 scope/start_url（base './' 時使用根路徑）
+          scope: base === './' ? '/' : base,
+          start_url: base === './' ? '/' : base,
           icons: [
             {
-              src: 'icons/ratewise-icon-192x192.png',
+              src: 'pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: 'icons/ratewise-icon-256x256.png',
-              sizes: '256x256',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-384x384.png',
-              sizes: '384x384',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-512x512.png',
+              src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: 'icons/ratewise-icon-1024x1024.png',
-              sizes: '1024x1024',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-maskable-512x512.png',
+              src: 'pwa-512x512-maskable.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable',
-            },
-            {
-              src: 'icons/ratewise-icon-maskable-1024x1024.png',
-              sizes: '1024x1024',
-              type: 'image/png',
-              purpose: 'any maskable',
-            },
-          ],
-          // 應用程式截圖（用於安裝提示）
-          screenshots: [
-            {
-              src: 'screenshots/mobile-home.png',
-              sizes: '1080x1920',
-              type: 'image/jpeg',
-              form_factor: 'narrow',
-              label: 'RateWise 首頁 - 即時匯率換算與趨勢圖',
-            },
-            {
-              src: 'screenshots/mobile-converter-active.png',
-              sizes: '1080x1920',
-              type: 'image/jpeg',
-              form_factor: 'narrow',
-              label: '貨幣轉換 - 輸入金額即時顯示匯率結果',
-            },
-            {
-              src: 'screenshots/mobile-features.png',
-              sizes: '1080x1920',
-              type: 'image/jpeg',
-              form_factor: 'narrow',
-              label: '常見問題與功能介紹',
-            },
-            {
-              src: 'screenshots/desktop-converter.png',
-              sizes: '1920x1080',
-              type: 'image/jpeg',
-              form_factor: 'wide',
-              label: '桌面版 - 完整匯率轉換介面與趨勢圖表',
-            },
-            {
-              src: 'screenshots/desktop-features.png',
-              sizes: '1920x1080',
-              type: 'image/jpeg',
-              form_factor: 'wide',
-              label: '桌面版 - 關於 RateWise 與功能說明',
+              purpose: 'maskable',
             },
           ],
         },
