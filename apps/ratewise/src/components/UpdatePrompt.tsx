@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Workbox } from 'workbox-window';
+import { getCurrentVersion, getPreviousVersion } from '../utils/versionManager';
 
 /**
  * PWA 更新通知組件 - 品牌對齊風格
@@ -205,10 +206,20 @@ export function UpdatePrompt() {
           {/* 描述 */}
           <p
             id="update-prompt-description"
-            className="text-sm text-indigo-500 mb-5 leading-relaxed text-center px-2"
+            className="text-sm text-indigo-500 mb-2 leading-relaxed text-center px-2"
           >
             {offlineReady ? '應用已準備好，隨時隨地都能使用！' : '新版本帶來更棒的體驗哦！'}
           </p>
+
+          {/* 版本資訊 */}
+          {needRefresh && (
+            <div className="text-xs text-indigo-400 mb-4 text-center space-y-1">
+              <p className="font-mono">
+                v{getPreviousVersion() ?? '1.0.0'} → v{getCurrentVersion()}
+              </p>
+              <p className="text-[10px] text-indigo-300">更新後將清除快取數據，保留您的設定</p>
+            </div>
+          )}
 
           {/* 按鈕 */}
           <div className="flex flex-col space-y-2">

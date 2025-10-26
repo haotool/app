@@ -37,13 +37,18 @@ export interface HistoricalRateData {
 
 /**
  * CDN URLs（使用 data 分支）
+ *
+ * 策略:
+ * - latest.json: 只使用 GitHub raw，確保匯率即時性（避免 CDN 快取延遲）
+ * - history/*.json: CDN 優先，歷史數據不變，可安全快取
  */
 const CDN_URLS = {
   latest: [
-    'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
+    // 只使用 GitHub raw，確保最新匯率即時性
     'https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json',
   ],
   history: (date: string) => [
+    // 歷史數據使用 CDN 優先（快取合理，因為數據不變）
     `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/${date}.json`,
     `https://raw.githubusercontent.com/haotool/app/data/public/rates/history/${date}.json`,
   ],
