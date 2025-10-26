@@ -36,6 +36,8 @@ jobs:
 
       - name: Build application
         run: pnpm build
+        env:
+          VITE_BASE_PATH: '/' # Lighthouse CI serves dist directly, use root path
 
       - name: Install Lighthouse CI
         run: npm install -g @lhci/cli@0.14.x
