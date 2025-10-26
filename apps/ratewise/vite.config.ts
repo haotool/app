@@ -4,16 +4,33 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * 自動生成版本號
+ * 策略: 使用 git commit count 確保每次提交後版本自動遞增
+ * 格式: 1.0.{commit_count}
+ */
+function generateVersion(): string {
+  try {
+    // 獲取 git commit 總數
+    const commitCount = execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
+    return `1.0.${commitCount}`;
+  } catch {
+    // Git 不可用時，使用 package.json 的版本號
+    const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
+    return packageJson.version;
+  }
+}
 
 // 最簡配置 - 參考 Context7 官方範例
 // [context7:vitejs/vite:2025-10-21T03:15:00+08:00]
 // 使用函數形式確保 define 在所有模式下都能正確工作
 export default defineConfig(({ mode }) => {
-  // 讀取 package.json 版本號
-  const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
-  const appVersion = packageJson.version;
+  // 自動生成版本號（基於 git commit count）
+  const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
 
   // 開發模式下使用根路徑，生產環境使用 /ratewise/
