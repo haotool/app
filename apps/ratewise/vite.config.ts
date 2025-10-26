@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => {
   const appVersion = packageJson.version;
   const buildTime = new Date().toISOString();
 
-  // 開發模式下使用根路徑，生產環境使用 /ratewise/
-  const base = mode === 'development' ? '/' : '/ratewise/';
+  // Base path 可被 VITE_BASE_PATH 覆蓋；預設：dev='/', prod='/ratewise/'
+  const base = process.env['VITE_BASE_PATH'] ?? (mode === 'development' ? '/' : '/ratewise/');
 
   return {
     base,
@@ -69,11 +69,9 @@ export default defineConfig(({ mode }) => {
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',
-          // PWA 子目錄部署必須使用絕對路徑 + trailing slash
-          // scope 若無 trailing slash 瀏覽器會回退至根域名
-          // Reference: https://stackoverflow.com/questions/62478640/angular-9-pwa-service-worker-manifest-scope-issues
-          scope: '/ratewise/',
-          start_url: '/ratewise/',
+          // 依 base 動態設定 scope/start_url（base './' 時使用根路徑）
+          scope: base === './' ? '/' : base,
+          start_url: base === './' ? '/' : base,
           icons: [
             {
               src: 'pwa-192x192.png',

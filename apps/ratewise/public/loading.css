@@ -79,9 +79,9 @@
 }
 
 .loading-text {
-  color: #8b5cf6; /* Purple color */
+  color: #4c1d95; /* Darker purple for better contrast */
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 @keyframes spin {
