@@ -45,33 +45,11 @@ describe('exchangeRateHistoryService', () => {
       );
     });
 
-    it('應該在主 CDN 失敗時使用備援 URL', async () => {
-      const mockResponse = {
-        updateTime: '2025/10/16 23:39:59',
-        source: 'Taiwan Bank',
-        rates: { USD: 31.025 },
-      };
-
-      // 第一次請求失敗
-      vi.mocked(fetch)
-        .mockRejectedValueOnce(new Error('CDN timeout'))
-        // 第二次請求成功
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockResponse),
-        } as Response);
-
-      const result = await fetchLatestRates();
-
-      expect(result).toEqual(mockResponse);
-      expect(fetch).toHaveBeenCalledTimes(2);
-    });
-
-    it('應該在所有 URL 失敗時拋出錯誤', async () => {
+    it('應該在 URL 失敗時拋出錯誤', async () => {
       vi.mocked(fetch).mockRejectedValue(new Error('Network error'));
 
       await expect(fetchLatestRates()).rejects.toThrow();
-      expect(fetch).toHaveBeenCalledTimes(2); // 兩個 URL 都嘗試
+      expect(fetch).toHaveBeenCalledTimes(1); // 只有一個 URL (GitHub raw)
     });
   });
 
