@@ -9,14 +9,8 @@
       "@shared/*": ["../shared/*"]
     }
   },
-  "include": [
-    "src",
-    "vite-env.d.ts",
-    "env.d.ts",
-    "tests",
-    "playwright.config.ts",
-    "../../node_modules/vite-plugin-pwa/client.d.ts"
-  ],
+  "include": ["src", "vite-env.d.ts", "env.d.ts", "../../node_modules/vite-plugin-pwa/client.d.ts"],
+  "exclude": ["tests/e2e", "playwright.config.ts"],
   "references": [
     {
       "path": "./tsconfig.node.json"

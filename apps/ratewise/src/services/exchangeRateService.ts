@@ -5,6 +5,7 @@
  */
 
 import { logger } from '../utils/logger';
+import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 interface ExchangeRateData {
   timestamp: string;
@@ -23,24 +24,25 @@ interface ExchangeRateData {
   >;
 }
 
-// CDN URLs (優先使用 jsdelivr，fallback 到 GitHub)
-// 策略：
-// 1. GitHub raw (主要) - 永遠是最新的，無快取延遲
-// 2. jsdelivr CDN (備援) - 有快取但速度快
+// CDN URLs
+// 策略：只使用 GitHub raw，避免 CDN 快取延遲
+// jsdelivr CDN 快取時間可達 12-24 小時，不適合即時匯率數據
+// GitHub raw 直接從 data 分支讀取，無快取，永遠最新
 const CDN_URLS = [
   // GitHub raw (主要) - 使用 data 分支，無快取，永遠最新
   'https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json',
-  // jsdelivr CDN (備援) - 使用 data 分支，有 CDN 加速但可能有快取延遲
-  'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
+  // 備援策略：如需添加，建議使用支援 cache-busting 的 CDN
+  // 或考慮自建 Cloudflare Workers/Pages Functions 作為中間層
 ];
 
 // localStorage key 分離策略：
-// - 'exchangeRates': 匯率數據快取（本檔案管理，5分鐘過期）
-// - 'currencyConverterMode': 用戶界面模式（RateWise.tsx）
-// - 'favorites': 用戶收藏的貨幣（RateWise.tsx）
-// - 'fromCurrency', 'toCurrency': 用戶選擇的貨幣（RateWise.tsx）
-// clearExchangeRateCache() 只清除 'exchangeRates'，不影響用戶數據
-const CACHE_KEY = 'exchangeRates';
+// 使用 storage-keys.ts 集中管理所有 localStorage keys
+// - STORAGE_KEYS.EXCHANGE_RATES: 匯率數據快取（本檔案管理，5分鐘過期）
+// - STORAGE_KEYS.CURRENCY_CONVERTER_MODE: 用戶界面模式（RateWise.tsx）
+// - STORAGE_KEYS.FAVORITES: 用戶收藏的貨幣（RateWise.tsx）
+// - STORAGE_KEYS.FROM_CURRENCY, TO_CURRENCY: 用戶選擇的貨幣（RateWise.tsx）
+// clearExchangeRateCache() 只清除快取，不影響用戶數據
+const CACHE_KEY = STORAGE_KEYS.EXCHANGE_RATES;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘
 
 interface CachedData {

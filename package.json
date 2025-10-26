@@ -22,6 +22,7 @@
     "test:coverage": "pnpm -r run test:coverage",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "prepare": "husky install",
+    "generate:sitemap": "node scripts/generate-sitemap.js",
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "changeset:publish": "pnpm build && changeset publish",

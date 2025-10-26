@@ -15,13 +15,7 @@ import type {
   TrendState,
 } from '../types';
 import { readJSON, readString, writeJSON, writeString } from '../storage';
-
-const STORAGE_KEYS = {
-  mode: 'currencyConverterMode',
-  from: 'fromCurrency',
-  to: 'toCurrency',
-  favorites: 'favorites',
-} as const;
+import { STORAGE_KEYS } from '../storage-keys';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -63,22 +57,28 @@ interface UseCurrencyConverterOptions {
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
   const { exchangeRates } = options;
   const [mode, setMode] = useState<ConverterMode>(() =>
-    readString(STORAGE_KEYS.mode, 'single') === 'multi' ? 'multi' : 'single',
+    readString(STORAGE_KEYS.CURRENCY_CONVERTER_MODE, 'single') === 'multi' ? 'multi' : 'single',
   );
 
   const [fromCurrency, setFromCurrency] = useState<CurrencyCode>(() =>
-    sanitizeCurrency(readString(STORAGE_KEYS.from, DEFAULT_FROM_CURRENCY), DEFAULT_FROM_CURRENCY),
+    sanitizeCurrency(
+      readString(STORAGE_KEYS.FROM_CURRENCY, DEFAULT_FROM_CURRENCY),
+      DEFAULT_FROM_CURRENCY,
+    ),
   );
 
   const [toCurrency, setToCurrency] = useState<CurrencyCode>(() =>
-    sanitizeCurrency(readString(STORAGE_KEYS.to, DEFAULT_TO_CURRENCY), DEFAULT_TO_CURRENCY),
+    sanitizeCurrency(
+      readString(STORAGE_KEYS.TO_CURRENCY, DEFAULT_TO_CURRENCY),
+      DEFAULT_TO_CURRENCY,
+    ),
   );
 
   const [fromAmount, setFromAmount] = useState<string>('1000');
   const [toAmount, setToAmount] = useState<string>('');
 
   const [favorites, setFavorites] = useState<CurrencyCode[]>(() =>
-    sanitizeFavorites(readJSON<CurrencyCode[]>(STORAGE_KEYS.favorites, [...DEFAULT_FAVORITES])),
+    sanitizeFavorites(readJSON<CurrencyCode[]>(STORAGE_KEYS.FAVORITES, [...DEFAULT_FAVORITES])),
   );
 
   const [multiAmounts, setMultiAmounts] = useState<MultiAmountsState>(() =>
@@ -92,19 +92,19 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
 
   // Persist to localStorage
   useEffect(() => {
-    writeString(STORAGE_KEYS.mode, mode);
+    writeString(STORAGE_KEYS.CURRENCY_CONVERTER_MODE, mode);
   }, [mode]);
 
   useEffect(() => {
-    writeString(STORAGE_KEYS.from, fromCurrency);
+    writeString(STORAGE_KEYS.FROM_CURRENCY, fromCurrency);
   }, [fromCurrency]);
 
   useEffect(() => {
-    writeString(STORAGE_KEYS.to, toCurrency);
+    writeString(STORAGE_KEYS.TO_CURRENCY, toCurrency);
   }, [toCurrency]);
 
   useEffect(() => {
-    writeJSON(STORAGE_KEYS.favorites, favorites);
+    writeJSON(STORAGE_KEYS.FAVORITES, favorites);
   }, [favorites]);
 
   // Helper to get rate. It relies on the exchangeRates prop.
