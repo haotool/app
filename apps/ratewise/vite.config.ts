@@ -4,46 +4,20 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-/**
- * 自動生成版本號
- * 策略: 使用 git commit count 確保每次提交後版本自動遞增
- * 格式: 1.0.{commit_count}
- */
-function generateVersion(): string {
-  try {
-    // 獲取 git commit 總數
-    const commitCount = execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
-    return `1.0.${commitCount}`;
-  } catch {
-    // Git 不可用時，使用 package.json 的版本號
-    const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
-    return packageJson.version;
-  }
-}
 
 // 最簡配置 - 參考 Context7 官方範例
 // [context7:vitejs/vite:2025-10-21T03:15:00+08:00]
 // 使用函數形式確保 define 在所有模式下都能正確工作
 export default defineConfig(({ mode }) => {
-  // 自動生成版本號（基於 git commit count）
-  const appVersion = generateVersion();
+  // 讀取 package.json 版本號
+  const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
+  const appVersion = packageJson.version;
   const buildTime = new Date().toISOString();
 
-  /**
-   * Base Path 邏輯:
-   * 1. LIGHTHOUSE_CI=true → Lighthouse CI 測試 → /
-   * 2. mode === 'production' → 生產構建 → /ratewise/
-   * 3. mode === 'development' → 本地開發 → /
-   *
-   * 修復: dbec300 使用 CI 環境變數導致生產構建錯誤
-   * Lighthouse CI 需要 base = / 因為它使用 staticDistDir 直接服務 dist
-   */
-  const base =
-    process.env['LIGHTHOUSE_CI'] === 'true' ? '/' : mode === 'production' ? '/ratewise/' : '/';
+  // 開發模式下使用根路徑，生產環境使用 /ratewise/
+  const base = mode === 'development' ? '/' : '/ratewise/';
 
   return {
     base,
@@ -70,108 +44,54 @@ export default defineConfig(({ mode }) => {
           // 使用 prompt 模式時，不自動 skipWaiting
           clientsClaim: false,
           skipWaiting: false,
-          // 運行時緩存策略
-          // 注意：匯率數據改用 GitHub raw (無 CDN 快取)，確保數據即時性
-          // jsdelivr CDN 快取可達 12-24 小時，不適合即時匯率數據
-          runtimeCaching: [],
+          // 添加運行時緩存策略
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'jsdelivr-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 30 * 24 * 60 * 60, // 30 天
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+          ],
         },
-        // Manifest 配置（此處配置會覆蓋 public/manifest.webmanifest）
-        // 使用動態配置以支援 development/production 不同的 base path
         manifest: {
           name: 'RateWise - 即時匯率轉換器',
           short_name: 'RateWise',
-          description:
-            'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。',
+          description: '快速、準確的即時匯率轉換工具',
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',
-          // scope 和 start_url 根據 mode 動態設定
-          scope: base,
-          start_url: base,
-          id: base,
-          orientation: 'portrait-primary',
-          categories: ['finance', 'utilities', 'productivity'],
-          // 完整的圖標配置（包含所有尺寸）
+          // PWA 子目錄部署必須使用絕對路徑 + trailing slash
+          // scope 若無 trailing slash 瀏覽器會回退至根域名
+          // Reference: https://stackoverflow.com/questions/62478640/angular-9-pwa-service-worker-manifest-scope-issues
+          scope: '/ratewise/',
+          start_url: '/ratewise/',
           icons: [
             {
-              src: 'icons/ratewise-icon-192x192.png',
+              src: 'pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: 'icons/ratewise-icon-256x256.png',
-              sizes: '256x256',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-384x384.png',
-              sizes: '384x384',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-512x512.png',
+              src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: 'icons/ratewise-icon-1024x1024.png',
-              sizes: '1024x1024',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-maskable-512x512.png',
+              src: 'pwa-512x512-maskable.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable',
-            },
-            {
-              src: 'icons/ratewise-icon-maskable-1024x1024.png',
-              sizes: '1024x1024',
-              type: 'image/png',
-              purpose: 'any maskable',
-            },
-          ],
-          // 應用程式截圖（用於安裝提示）
-          screenshots: [
-            {
-              src: 'screenshots/mobile-home.png',
-              sizes: '1080x1920',
-              type: 'image/jpeg',
-              form_factor: 'narrow',
-              label: 'RateWise 首頁 - 即時匯率換算與趨勢圖',
-            },
-            {
-              src: 'screenshots/mobile-converter-active.png',
-              sizes: '1080x1920',
-              type: 'image/jpeg',
-              form_factor: 'narrow',
-              label: '貨幣轉換 - 輸入金額即時顯示匯率結果',
-            },
-            {
-              src: 'screenshots/mobile-features.png',
-              sizes: '1080x1920',
-              type: 'image/jpeg',
-              form_factor: 'narrow',
-              label: '常見問題與功能介紹',
-            },
-            {
-              src: 'screenshots/desktop-converter.png',
-              sizes: '1920x1080',
-              type: 'image/jpeg',
-              form_factor: 'wide',
-              label: '桌面版 - 完整匯率轉換介面與趨勢圖表',
-            },
-            {
-              src: 'screenshots/desktop-features.png',
-              sizes: '1920x1080',
-              type: 'image/jpeg',
-              form_factor: 'wide',
-              label: '桌面版 - 關於 RateWise 與功能說明',
+              purpose: 'maskable',
             },
           ],
         },

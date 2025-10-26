@@ -36,8 +36,6 @@ jobs:
 
       - name: Build application
         run: pnpm build
-        env:
-          LIGHTHOUSE_CI: 'true'
 
       - name: Install Lighthouse CI
         run: npm install -g @lhci/cli@0.14.x
