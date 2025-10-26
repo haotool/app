@@ -1,6 +1,20 @@
 /* apps/ratewise/public/loading.css */
 /* [Linus-fix:2025-10-26] 恢復外部 CSS 以符合 CSP 最佳實踐 */
 /* [context7:/owasp/cheatsheetseries:2025-10-26] */
+/* [fix:2025-10-27] 確保 body 基礎樣式立即生效,不依賴 Tailwind */
+
+/* Body baseline styles - 確保頁面有背景色和最小高度 */
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: #f8fafc; /* slate-50 等價色 */
+  font-family:
+    'Noto Sans TC',
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
 
 /* Styles for noscript content */
 .noscript-container {
