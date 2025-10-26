@@ -18,7 +18,7 @@
     <meta name="google-site-verification" content="NBCorB6Jq_872WFLMgbSieWf_Wvt0EGse1QWXnM4AOo" />
 
     <!-- PWA Configuration -->
-    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -34,7 +34,8 @@
     <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
 
     <!-- 載入靜態 CSS 以符合 CSP 策略 -->
-    <link rel="stylesheet" href="./loading.css" />
+    <!-- [fix:2025-10-27] 使用絕對路徑讓 Vite 自動處理 base prefix -->
+    <link rel="stylesheet" href="/loading.css" />
 
     <title>RateWise - 匯率好工具 | 即時匯率換算</title>
   </head>
