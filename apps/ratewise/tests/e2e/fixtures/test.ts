@@ -64,8 +64,9 @@ export const test = base.extend<RateWiseFixtures>({
 
     // Wait for app to be fully loaded using multiple strategies
     // Strategy 1: Wait for loading indicator to disappear
+    // [CSP-fix:2025-10-26] 更新載入文字以匹配 loading.css
     await page
-      .waitForSelector('text=載入即時匯率中...', {
+      .waitForSelector('text=RateWise 載入中...', {
         state: 'hidden',
         timeout: 15000,
       })
