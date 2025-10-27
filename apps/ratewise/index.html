@@ -104,6 +104,10 @@
       }
     </style>
 
+    <!-- [Lighthouse-optimization:2025-10-28] 非阻塞 CSS 載入 -->
+    <!-- 參考: https://web.dev/articles/defer-non-critical-css -->
+    <!-- Vite 會在 build 時注入 CSS link，我們使用 media="print" 技巧非阻塞載入 -->
+
     <!-- [Lighthouse-optimization:2025-10-27] 延遲載入 noscript CSS -->
     <noscript>
       <link rel="stylesheet" href="/loading.css" />
