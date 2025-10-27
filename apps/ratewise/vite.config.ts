@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { nonBlockingCssPlugin } from './vite-plugins/non-blocking-css';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -51,6 +52,8 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
+      // [Lighthouse-optimization:2025-10-28] 非阻塞 CSS 載入
+      nonBlockingCssPlugin(),
       // [Lighthouse-optimization:2025-10-27] Brotli compression (saves 4,024 KiB)
       // 參考: https://web.dev/articles/reduce-network-payloads-using-text-compression
       viteCompression({
@@ -67,7 +70,7 @@ export default defineConfig(() => {
         deleteOriginFile: false,
       }),
       // Bundle analyzer (只在需要時啟用)
-      process.env.ANALYZE
+      process.env['ANALYZE']
         ? visualizer({
             open: true,
             gzipSize: true,
