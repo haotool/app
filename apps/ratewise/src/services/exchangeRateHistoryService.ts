@@ -207,21 +207,24 @@ export async function fetchHistoricalRates(date: Date): Promise<ExchangeRateData
 /**
  * 獲取過去 N 天的歷史匯率（並行執行）
  *
+ * [Lighthouse-fix:2025-10-28] 只請求今天及過去的日期，避免 404 錯誤
+ *
  * 使用 Promise.all 並行獲取，效能提升 ~78%：
  * - 舊版: 7 days × 200ms = 1.4s (sequential)
  * - 新版: max(7 parallel) ≈ 200-300ms
  */
 export async function fetchHistoricalRatesRange(days = 30): Promise<HistoricalRateData[]> {
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // 重置到今日 00:00
 
   logger.info(`Fetching ${days} days of historical rates (parallel)`, {
     service: 'exchangeRateHistoryService',
   });
 
-  // 建立日期列表
+  // 建立日期列表 - 從昨天開始往前推（今天的數據可能還沒生成）
   const dates = Array.from({ length: days }, (_, i) => {
     const date = new Date(today);
-    date.setDate(date.getDate() - i);
+    date.setDate(date.getDate() - (i + 1)); // -1 從昨天開始，避免請求今天/未來
     return date;
   });
 
