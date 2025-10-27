@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "pnpm --filter @app/ratewise dev",
     "build": "pnpm -r build",
+    "prebuild:ratewise": "node scripts/generate-sitemap.js",
     "build:ratewise": "pnpm --filter @app/ratewise build",
     "preview": "pnpm --filter @app/ratewise preview",
     "lint": "eslint . --ext .ts,.tsx",

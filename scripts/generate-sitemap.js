@@ -45,7 +45,8 @@ const languages = ['zh-TW', 'en'];
  * 生成單個 URL 項目
  */
 function generateUrlEntry(route) {
-  const fullUrl = `${SITE_URL}${route.path}`;
+  const normalizedPath = route.path === '/' ? '' : route.path;
+  const fullUrl = `${SITE_URL}${normalizedPath}`;
 
   // hreflang 替代連結
   const alternates = languages

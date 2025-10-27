@@ -152,7 +152,7 @@ pnpm build
 ```
 工具 → 提交 URL
 輸入重要頁面網址：
-- https://app.haotool.org/ratewise/
+- https://app.haotool.org/ratewise
 - https://app.haotool.org/ratewise/faq
 - https://app.haotool.org/ratewise/about
 ```
