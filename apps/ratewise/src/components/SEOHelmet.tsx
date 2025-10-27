@@ -68,7 +68,20 @@ const DEFAULT_KEYWORDS = [
   'RateWise',
 ];
 
-const trimTrailingSlash = (value: string) => value.replace(/\/$/, '');
+/**
+ * Normalize URL by removing trailing slashes (except for root path)
+ * [fix:2025-10-27T21:31:25+08:00] Fix Google Search Console duplicate page issue
+ * [context7:/garmeeh/next-seo:2025-10-27] Canonical URL must match actual URL format
+ */
+function normalizeUrl(value: string): string {
+  // Root path or empty string should return '/'
+  if (value === '/' || value === '') return '/';
+  // Remove all trailing slashes for consistency
+  return value.replace(/\/+$/, '');
+}
+
+const SITE_BASE_URL = normalizeUrl(SITE_URL);
+
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`);
 
 /**
@@ -82,7 +95,7 @@ const DEFAULT_JSON_LD = [
     name: 'RateWise',
     alternateName: '匯率好工具',
     description: DEFAULT_DESCRIPTION,
-    url: SITE_URL,
+    url: SITE_BASE_URL,
     applicationCategory: 'FinanceApplication',
     operatingSystem: 'Any',
     browserRequirements: 'Requires JavaScript',
@@ -101,14 +114,14 @@ const DEFAULT_JSON_LD = [
       '台灣銀行牌告匯率',
       '30+ 種貨幣支援',
     ],
-    screenshot: `${SITE_URL}/screenshots/desktop-converter.png`,
+    screenshot: `${SITE_BASE_URL}/screenshots/desktop-converter.png`,
   },
   {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'RateWise',
-    url: SITE_URL,
-    logo: `${SITE_URL}/logo.png`,
+    url: SITE_BASE_URL,
+    logo: `${SITE_BASE_URL}/logo.png`,
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Customer Support',
@@ -120,19 +133,19 @@ const DEFAULT_JSON_LD = [
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'RateWise',
-    url: SITE_URL,
+    url: SITE_BASE_URL,
     inLanguage: DEFAULT_LOCALE,
     potentialAction: {
       '@type': 'SearchAction',
-      target: `${SITE_URL}/?q={search_term_string}`,
+      target: `${SITE_BASE_URL}/?q={search_term_string}`,
       'query-input': 'required name=search_term_string',
     },
   },
 ];
 
 const DEFAULT_ALTERNATES: AlternateLink[] = [
-  { hrefLang: 'x-default', href: SITE_URL },
-  { hrefLang: DEFAULT_LOCALE, href: SITE_URL },
+  { hrefLang: 'x-default', href: SITE_BASE_URL },
+  { hrefLang: DEFAULT_LOCALE, href: SITE_BASE_URL },
 ];
 
 const buildFaqSchema = (faq: FAQEntry[], url: string) => ({
@@ -183,12 +196,20 @@ export function SEOHelmet({
   howTo,
 }: SEOProps) {
   const fullTitle = title ? `${title} | RateWise` : DEFAULT_TITLE;
-  const baseUrl = trimTrailingSlash(SITE_URL);
-  const path = pathname ? ensureLeadingSlash(pathname) : '/';
-  const canonicalUrl = canonical ?? `${baseUrl}${path === '//' ? '/' : path}`;
-  const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${SITE_URL}${ogImage}`;
+
+  // [fix:2025-10-27T21:31:25+08:00] Ensure canonical URL consistency
+  // Remove trailing slashes from all URLs to match browser behavior
+  const baseUrl = SITE_BASE_URL;
+  const path = pathname ? normalizeUrl(ensureLeadingSlash(pathname)) : '';
+  const canonicalUrl = canonical ? normalizeUrl(canonical) : normalizeUrl(`${baseUrl}${path}`);
+
+  const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${SITE_BASE_URL}${ogImage}`;
   const keywordsContent = (keywords?.length ? keywords : DEFAULT_KEYWORDS).join(', ');
   const alternatesToRender = alternates?.length ? alternates : DEFAULT_ALTERNATES;
+  const normalizedAlternates = alternatesToRender.map(({ href, hrefLang }) => ({
+    hrefLang,
+    href: normalizeUrl(href),
+  }));
   const updatedTimestamp = updatedTime ?? new Date().toISOString();
   const ogLocale = locale.replace('-', '_');
 
@@ -219,7 +240,7 @@ export function SEOHelmet({
       <meta name="language" content={locale} />
       <meta httpEquiv="content-language" content={locale} />
       <link rel="canonical" href={canonicalUrl} />
-      {alternatesToRender.map(({ href, hrefLang }) => (
+      {normalizedAlternates.map(({ href, hrefLang }) => (
         <link key={hrefLang} rel="alternate" hrefLang={hrefLang} href={href} />
       ))}
 
@@ -233,7 +254,7 @@ export function SEOHelmet({
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content="RateWise 匯率轉換器應用截圖" />
       <meta property="og:locale" content={ogLocale} />
-      {alternatesToRender
+      {normalizedAlternates
         .filter(({ hrefLang }) => hrefLang !== 'x-default')
         .map(({ hrefLang }) => (
           <meta

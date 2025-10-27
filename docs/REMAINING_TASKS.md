@@ -229,13 +229,13 @@ curl -I https://app.haotool.org
 
 ```bash
 # 1. 訪問網站
-curl https://app.haotool.org/ratewise/ | grep -i "app.haotool.org"
+curl https://app.haotool.org/ratewise | grep -i "app.haotool.org"
 
 # 2. 檢查 meta tags
-curl -s https://app.haotool.org/ratewise/ | grep -i "canonical"
+curl -s https://app.haotool.org/ratewise | grep -i "canonical"
 
 # 預期輸出包含:
-# <link rel="canonical" href="https://app.haotool.org/ratewise/" />
+# <link rel="canonical" href="https://app.haotool.org/ratewise" />
 ```
 
 ---
@@ -250,7 +250,7 @@ curl -s https://app.haotool.org/ratewise/ | grep -i "canonical"
 
 #### 4.1 基本功能測試
 
-**在瀏覽器中訪問**: https://app.haotool.org/ratewise/
+**在瀏覽器中訪問**: https://app.haotool.org/ratewise
 
 ✅ **檢查項目**:
 
@@ -268,8 +268,8 @@ curl -s https://app.haotool.org/ratewise/ | grep -i "canonical"
 
    ```html
    <!-- 應該包含 -->
-   <link rel="canonical" href="https://app.haotool.org/ratewise/" />
-   <meta property="og:url" content="https://app.haotool.org/ratewise/" />
+   <link rel="canonical" href="https://app.haotool.org/ratewise" />
+   <meta property="og:url" content="https://app.haotool.org/ratewise" />
    ```
 
 2. **檢查 Sitemap**:
@@ -283,7 +283,7 @@ curl -s https://app.haotool.org/ratewise/ | grep -i "canonical"
 #### 4.3 PWA 功能測試
 
 1. **在 Chrome 中**:
-   - 訪問 https://app.haotool.org/ratewise/
+   - 訪問 https://app.haotool.org/ratewise
    - 查看網址列是否出現安裝圖示 ➕
    - 嘗試安裝 PWA
 
@@ -299,11 +299,11 @@ curl -s https://app.haotool.org/ratewise/ | grep -i "canonical"
 
 ```bash
 # 在本地執行
-npx lighthouse https://app.haotool.org/ratewise/ --view
+npx lighthouse https://app.haotool.org/ratewise --view
 
 # 或使用線上工具
 # 訪問: https://pagespeed.web.dev/
-# 輸入: https://app.haotool.org/ratewise/
+# 輸入: https://app.haotool.org/ratewise
 ```
 
 **目標分數**:
@@ -452,7 +452,7 @@ npx lighthouse https://app.haotool.org/ratewise/ --view
 
 3. **依序提交以下頁面**:
    ```
-   https://app.haotool.org/ratewise/          # 首頁 - 最高優先
+   https://app.haotool.org/ratewise          # 首頁 - 最高優先
    https://app.haotool.org/ratewise/faq       # FAQ 頁面
    https://app.haotool.org/ratewise/about     # 關於頁面
    ```
@@ -561,7 +561,7 @@ npx lighthouse https://app.haotool.org/ratewise/ --view
 
 **全部完成後，確認以下項目**:
 
-- [ ] 網站可透過 `https://app.haotool.org/ratewise/` 訪問
+- [ ] 網站可透過 `https://app.haotool.org/ratewise` 訪問
 - [ ] 所有功能正常運作
 - [ ] SEO meta tags 包含新網域
 - [ ] Google Search Console 驗證成功

@@ -38,7 +38,7 @@
 
 - 文件: `docs/SEO_SUBMISSION_GUIDE.md`
 - 當前網址: `https://ratewise.app`
-- 正確網址: `https://app.haotool.org/ratewise/`
+- 正確網址: `https://app.haotool.org/ratewise`
 - 影響範圍: SEO 提交指南中的所有網址引用
 
 **根本原因**:
@@ -52,7 +52,7 @@
 grep -r "ratewise.app" docs/ apps/ --exclude-dir=node_modules
 
 # 步驟 2: 修改 SEO_SUBMISSION_GUIDE.md
-# 替換所有 https://ratewise.app 為 https://app.haotool.org/ratewise/
+# 替換所有 https://ratewise.app 為 https://app.haotool.org/ratewise
 
 # 步驟 3: 檢查其他文件是否需要更新
 # 步驟 4: 本地驗證
@@ -91,7 +91,7 @@ grep -r "ratewise.app" docs/ apps/ --exclude-dir=node_modules
 
 **參考資料**:
 
-- 生產環境網址確認: https://app.haotool.org/ratewise/
+- 生產環境網址確認: https://app.haotool.org/ratewise
 - 更新總數: 12 個文件，60+ 處網址引用
 
 ---
@@ -522,7 +522,7 @@ HTML 載入 ✅
 fix(docs): 更新 SEO 文檔為正確的生產環境網址
 
 - 修改 SEO_SUBMISSION_GUIDE.md 中的所有網址
-- 從 https://ratewise.app 更新為 https://app.haotool.org/ratewise/
+- 從 https://ratewise.app 更新為 https://app.haotool.org/ratewise
 - 確保 SEO 提交指南的準確性
 ```
 

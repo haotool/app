@@ -93,7 +93,7 @@
 **範例**:
 
 ```html
-<link rel="canonical" href="https://app.haotool.org/ratewise/" />
+<link rel="canonical" href="https://app.haotool.org/ratewise" />
 ```
 
 ### 3. Language Tags (語言標籤)
@@ -139,7 +139,7 @@
 ```html
 <!-- 基礎標籤 -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://app.haotool.org/ratewise/" />
+<meta property="og:url" content="https://app.haotool.org/ratewise" />
 <meta property="og:title" content="RateWise - 即時匯率轉換器" />
 <meta property="og:description" content="快速、準確的匯率換算工具，支援 30+ 種貨幣" />
 
@@ -162,7 +162,7 @@
 
 ```html
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:url" content="https://app.haotool.org/ratewise/" />
+<meta name="twitter:url" content="https://app.haotool.org/ratewise" />
 <meta name="twitter:title" content="RateWise - 即時匯率轉換器" />
 <meta name="twitter:description" content="快速、準確的匯率換算工具，支援 30+ 種貨幣" />
 <meta name="twitter:image" content="https://app.haotool.org/ratewise/og-image.png" />
@@ -278,12 +278,12 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://app.haotool.org/ratewise/</loc>
+    <loc>https://app.haotool.org/ratewise</loc>
     <lastmod>2025-10-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise" />
   </url>
 </urlset>
 ```
