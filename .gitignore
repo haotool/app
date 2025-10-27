@@ -73,8 +73,10 @@ playwright-report/
 lighthouse-results/
 
 # Reports
-lighthouse-report.report.*
-lighthouse-report*.json
+lighthouse-reports/
+lighthouse-report*.*
+*-report.html
+*-report.json
 
 # Screenshots and browser automation artifacts
 .playwright-mcp/

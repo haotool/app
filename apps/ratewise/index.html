@@ -27,15 +27,62 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="RateWise" />
 
+    <!-- [Lighthouse-optimization:2025-10-27] Resource hints -->
+    <!-- 參考: https://web.dev/articles/optimize-lcp -->
+
     <!-- Preconnect to external domains for faster resource loading -->
-    <!-- [context7:googlechrome/lighthouse-ci:2025-10-20T21:15:40+08:00] -->
-    <!-- 僅 preconnect 實際使用的來源，避免浪費瀏覽器資源 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
 
-    <!-- 載入靜態 CSS 以符合 CSP 策略 -->
-    <!-- [fix:2025-10-27] 使用絕對路徑讓 Vite 自動處理 base prefix -->
-    <link rel="stylesheet" href="/loading.css" />
+    <!-- Modulepreload for critical scripts (Vite generates these automatically) -->
+    <!-- Vite will inject modulepreload links for vendor chunks during build -->
+
+    <!-- [Lighthouse-optimization:2025-10-27] 內聯 critical CSS 消除 render-blocking -->
+    <!-- 參考: https://web.dev/articles/optimize-lcp -->
+    <style>
+      /* Critical CSS - 內聯以確保立即渲染 */
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: #f8fafc;
+        font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      }
+      .loading-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #f8fafc;
+      }
+      .loading-content {
+        text-align: center;
+      }
+      .loading-spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #e2e8f0;
+        border-top-color: #8b5cf6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 16px;
+      }
+      .loading-text {
+        color: #5a2d9e;
+        font-size: 16px;
+        font-weight: 700;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+
+    <!-- [Lighthouse-optimization:2025-10-27] 延遲載入 noscript CSS -->
+    <noscript>
+      <link rel="stylesheet" href="/loading.css" />
+    </noscript>
 
     <title>RateWise - 匯率好工具 | 即時匯率換算</title>
   </head>

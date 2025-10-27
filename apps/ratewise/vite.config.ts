@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
+import viteCompression from 'vite-plugin-compression';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -49,6 +51,30 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
+      // [Lighthouse-optimization:2025-10-27] Brotli compression (saves 4,024 KiB)
+      // 參考: https://web.dev/articles/reduce-network-payloads-using-text-compression
+      viteCompression({
+        algorithm: 'brotliCompress',
+        ext: '.br',
+        threshold: 1024, // 只壓縮 >1KB 的檔案
+        deleteOriginFile: false,
+      }),
+      // Gzip fallback for older browsers
+      viteCompression({
+        algorithm: 'gzip',
+        ext: '.gz',
+        threshold: 1024,
+        deleteOriginFile: false,
+      }),
+      // Bundle analyzer (只在需要時啟用)
+      process.env.ANALYZE
+        ? visualizer({
+            open: true,
+            gzipSize: true,
+            brotliSize: true,
+            filename: 'lighthouse-reports/bundle-stats.html',
+          })
+        : null,
       VitePWA({
         base,
         // 使用 prompt 模式以支援自定義更新 UI
@@ -178,24 +204,51 @@ export default defineConfig(() => {
       },
     },
     build: {
+      // [Lighthouse-optimization:2025-10-27] Modern build target (saves 33 KiB)
+      // 參考: https://philipwalton.com/articles/the-state-of-es5-on-the-web/
+      target: 'es2020', // 支援 ES2020+ 瀏覽器 (>95% 市場)
       // 生成 hidden source maps - 不在生產環境暴露，但可用於錯誤追蹤服務
       // [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]
       sourcemap: 'hidden',
       rollupOptions: {
         output: {
-          // 動態 chunk splitting 以減少未使用的 JavaScript
+          // [Lighthouse-optimization:2025-10-27] 精細化 chunk splitting
+          // 參考: https://vite.dev/guide/build.html#chunking-strategy
+          // 目標: 減少未使用的 JavaScript，提升快取效率
           manualChunks(id) {
             // 將 node_modules 中的套件分離成 vendor chunks
             if (id.includes('node_modules')) {
-              // React 核心庫單獨打包
+              // React 核心庫單獨打包 (高頻使用，獨立快取)
               if (id.includes('react') || id.includes('react-dom')) {
                 return 'vendor-react';
               }
-              // React Helmet 單獨打包（SEO相關，可延遲載入）
-              if (id.includes('react-helmet-async')) {
-                return 'vendor-helmet';
+
+              // Sentry 獨立打包 (已 lazy load，罕用時不載入)
+              if (id.includes('@sentry')) {
+                return 'vendor-sentry';
               }
-              // 其他第三方庫
+
+              // Charts library 獨立打包 (583KB, 57% unused)
+              if (id.includes('lightweight-charts')) {
+                return 'vendor-charts';
+              }
+
+              // Motion library 獨立打包 (420KB, 54% unused)
+              if (id.includes('motion') || id.includes('framer-motion')) {
+                return 'vendor-motion';
+              }
+
+              // React Router 獨立打包 (209KB, 81% unused，route-based splitting 用)
+              if (id.includes('react-router')) {
+                return 'vendor-router';
+              }
+
+              // Icons 獨立打包 (954KB，但只有 2.5% unused，表現良好)
+              if (id.includes('lucide-react')) {
+                return 'vendor-icons';
+              }
+
+              // 其他小型庫統一打包
               return 'vendor-libs';
             }
             return undefined;

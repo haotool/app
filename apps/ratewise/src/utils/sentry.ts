@@ -1,16 +1,17 @@
 /**
- * Sentry initialization
+ * Sentry initialization with lazy loading
  * [context7:@sentry/react:2025-10-18T02:00:00+08:00]
+ * [Lighthouse-optimization:2025-10-27] Lazy load Sentry (969KB, 86% unused in initial load)
+ * 參考: https://web.dev/articles/optimize-lcp
  *
  * Initialize only in production or when VITE_SENTRY_DSN is explicitly set
  */
-import * as Sentry from '@sentry/react';
 import { logger } from './logger';
 
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 const IS_PROD = import.meta.env.MODE === 'production';
 
-export function initSentry() {
+export async function initSentry() {
   // Only initialize if DSN is provided (production or explicit dev testing)
   if (!SENTRY_DSN) {
     logger.info('Sentry: No DSN configured, skipping initialization');
@@ -18,6 +19,9 @@ export function initSentry() {
   }
 
   try {
+    // [Lighthouse-optimization] Lazy load Sentry SDK (-969KB from initial bundle)
+    const Sentry = await import('@sentry/react');
+
     Sentry.init({
       dsn: SENTRY_DSN,
       environment: import.meta.env.MODE,
@@ -70,8 +74,12 @@ export function initSentry() {
 
 /**
  * Capture exception manually (use sparingly, ErrorBoundary handles most)
+ * [Lighthouse-optimization] Lazy load Sentry only when needed
  */
-export function captureException(error: Error, context?: Record<string, unknown>) {
+export async function captureException(error: Error, context?: Record<string, unknown>) {
+  if (!SENTRY_DSN) return;
+
+  const Sentry = await import('@sentry/react');
   if (context) {
     Sentry.setContext('additional', context);
   }
@@ -80,8 +88,12 @@ export function captureException(error: Error, context?: Record<string, unknown>
 
 /**
  * Add breadcrumb for debugging
+ * [Lighthouse-optimization] Lazy load Sentry only when needed
  */
-export function addBreadcrumb(message: string, data?: Record<string, unknown>) {
+export async function addBreadcrumb(message: string, data?: Record<string, unknown>) {
+  if (!SENTRY_DSN) return;
+
+  const Sentry = await import('@sentry/react');
   Sentry.addBreadcrumb({
     message,
     level: 'info',
