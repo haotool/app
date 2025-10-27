@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SEOHelmet } from './components/SEOHelmet';
 import { UpdatePrompt } from './components/UpdatePrompt';
+import { SkeletonLoader } from './components/SkeletonLoader';
 import CurrencyConverter from './features/ratewise/RateWise';
 
 // Lazy load FAQ and About pages to reduce initial bundle
@@ -26,13 +27,7 @@ function App() {
       <Router basename={basename}>
         <main role="main" className="min-h-screen">
           <h1 className="sr-only">RateWise 匯率轉換器</h1>
-          <Suspense
-            fallback={
-              <div className="flex h-screen items-center justify-center">
-                <div className="text-purple-600">載入中...</div>
-              </div>
-            }
-          >
+          <Suspense fallback={<SkeletonLoader />}>
             <Routes>
               <Route path="/" element={<CurrencyConverter />} />
               <Route path="/faq" element={<FAQ />} />
