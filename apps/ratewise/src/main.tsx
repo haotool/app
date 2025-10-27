@@ -57,8 +57,9 @@ window.addEventListener('unhandledrejection', (event) => {
   }
 });
 
-// Initialize observability
-initSentry();
+// Initialize observability (non-blocking)
+// [Lighthouse-optimization:2025-10-27] 延遲初始化以避免阻塞首次渲染
+void initSentry(); // async, 不等待完成
 initWebVitals();
 
 // Log application startup
