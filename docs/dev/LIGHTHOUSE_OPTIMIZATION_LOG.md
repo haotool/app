@@ -70,18 +70,41 @@
 
 ## 🔄 待驗證優化 (Testing)
 
-### robots.txt 標準化 (第二次嘗試，進行中)
+### robots.txt 標準化 (第二次嘗試，本地測試完成)
 
 - **日期**: 2025-10-29
-- **技術**: 移除 line 29-31 非標準 `Content-signal` 指令，加入 Google 規範註解
+- **Commit**: `7bec3e3` - fix(seo): 移除 robots.txt 非標準 Content-signal 指令
+- **技術**: 移除 line 29 非標準 `Content-signal` 指令，加入 Google 規範註解
 - **預期效果**: SEO 89 → 100 (+11 分)
 - **權威來源**: [Google - robots.txt specification](https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt)
-- **測試方法**:
-  1. 修改 `public/robots.txt`
-  2. 建置並部署到生產環境
-  3. 使用 [Google PageSpeed Insights](https://pagespeed.web.dev/) 測試
-  4. 驗證 SEO 分數是否提升
-- **狀態**: 🔄 等待執行
+- **測試結果 (本地)**:
+  1. ✅ 修改 `public/robots.txt`
+  2. ✅ 建置成功，robots.txt 正確複製到 dist/
+  3. ✅ 驗證: Content-signal 指令已移除（僅存於註解）
+  4. ✅ pa11y WCAG 2.1 AA 測試: No issues found!
+  5. ⏳ **待生產環境驗證**: 需部署後使用 PageSpeed Insights 測試
+- **狀態**: 🔄 本地測試通過，待生產環境驗證 SEO 分數
+
+### CSP Strict 模式 (決定不實施)
+
+- **日期**: 2025-10-29
+- **決策**: ❌ **不實施** Strict CSP
+- **理由**:
+  1. **分層防禦原則**: CSP 在 Cloudflare 層級已設定，符合 SECURITY_BASELINE.md 架構
+  2. **責任界面清晰**: 應用層不重複設定 Cloudflare 已處理的安全標頭
+  3. **投資報酬率低**: Best Practices 92→100 (+8 分) vs 實施複雜度極高
+  4. **技術風險**: 需要動態 nonce 生成，可能破壞現有功能（Vite、PWA、Cloudflare Rocket Loader）
+  5. **維護成本**: 每次新增 inline script 都需要加入 nonce 屬性
+- **當前 CSP 配置**:
+  ```
+  Content-Security-Policy: default-src 'self';
+    script-src 'self' https://static.cloudflareinsights.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    connect-src 'self' https://raw.githubusercontent.com https://cdn.jsdelivr.net;
+  ```
+- **替代方案**: 維持 Cloudflare WAF + 應用層 Input Validation 雙層防護
+- **權威來源**: [web.dev - Strict CSP](https://web.dev/articles/strict-csp)
+- **狀態**: ✅ 決策完成，記錄於 LOG
 
 ---
 
