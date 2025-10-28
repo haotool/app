@@ -1,0 +1,25 @@
+{
+  "ci": {
+    "collect": {
+      "url": ["http://localhost:4174/", "http://localhost:4174/faq", "http://localhost:4174/about"],
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop",
+        "onlyCategories": ["performance", "seo", "accessibility", "best-practices"],
+        "chromeFlags": "--headless"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["error", { "minScore": 0.9 }],
+        "categories:seo": ["error", { "minScore": 1.0 }],
+        "categories:accessibility": ["error", { "minScore": 1.0 }],
+        "categories:best-practices": ["error", { "minScore": 1.0 }]
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": "./lighthouse-reports/lhci"
+    }
+  }
+}
