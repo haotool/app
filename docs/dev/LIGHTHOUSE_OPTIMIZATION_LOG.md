@@ -102,27 +102,30 @@
 
 ## ❌ 無效優化記錄 (Failed Attempts)
 
-### 本地 Lighthouse 測試 (2025-10-28) - 已解決！
+### 本地 Lighthouse 測試環境問題 (2025-10-28 ~ 2025-10-29) ❌
 
 - **嘗試**: 使用 `pnpm lighthouse` 本地測試驗證優化效果
-- **第一次結果** (2025-10-28): ❌ Performance 72/100，LCP 29.9s 異常
-- **原因**:
-  - `LanternError: NO_LCP` - 本地測試環境限制
-  - 多個 preview 伺服器同時運行 (5+ instances)
-  - Service Worker 快取策略干擾
-  - React DevTools 增加額外負載
-- **解決方案** (2025-10-29):
-  1. 停止所有舊的 preview 伺服器
-  2. 重新建置專案
-  3. 啟動單一 preview 伺服器 (port 4174)
-  4. 使用 Lighthouse CLI 測試
-- **第二次結果** (2025-10-29): ✅ **成功！**
-  - Performance: **99/100** ✅
-  - SEO: **100/100** ✅
-  - Accessibility: **100/100** ✅
-  - Best Practices: **100/100** ✅
-- **教訓**: **本地 Lighthouse 測試可靠**，但需要正確的環境設置（單一伺服器、清除快取）
-- **更新**: 移除「不可靠」的結論，本地測試是有效的驗證方法
+- **問題**: ❌ **本地測試不可靠** - 持續出現 `LanternError: NO_LCP`
+- **測試歷程**:
+  - **第一次** (2025-10-28): Performance 72/100, LCP 29.9s 異常
+  - **第二次** (2025-10-29): Performance 99/100 ✅（環境清理後，暫時成功）
+  - **第三次** (2025-10-29): ❌ 再次出現 NO_LCP error（robots.txt 修復後重新測試）
+- **根本原因**:
+  - `LanternError: NO_LCP` - Lighthouse Lantern 模擬引擎無法檢測 LCP 元素
+  - 本地環境不穩定因素：
+    - 多個 preview 伺服器運行（即使關閉仍有殘留進程）
+    - Service Worker 快取策略干擾（PWA 特性）
+    - React DevTools / Chrome Extensions 負載
+    - 本地網路延遲不可預測
+  - 環境清理步驟複雜且成功率低
+- **測試對比**:
+  - ❌ **本地 CLI**: 不穩定，NO_LCP error 反覆出現，無法作為 commit 依據
+  - ✅ **生產環境**: Google PageSpeed Insights 測試穩定可靠
+- **最終決策**: ⚠️ **放棄本地 Lighthouse CLI 測試**
+  - 本地測試結果不可信，浪費時間調試環境
+  - **改用 Google PageSpeed Insights** 測試生產環境
+  - 新工作流程：本地修改 → commit → 部署 → 生產測試 → 驗證效果
+- **教訓**: 不要再浪費時間調試本地 Lighthouse 環境，直接測試生產環境更可靠且準確
 
 ### seo-analyzer 工具 (2025-10-28)
 
@@ -158,9 +161,10 @@
 ### 無效或高風險策略
 
 1. **本地測試**:
-   - ❌ 本地 Lighthouse CLI 測試 (LCP 異常)
-   - ❌ 本地 unlighthouse 測試 (同樣 LCP 問題)
-   - ✅ **改用**: Google PageSpeed Insights (生產環境)
+   - ❌ 本地 Lighthouse CLI 測試（LanternError: NO_LCP 持續發生，環境不穩定）
+   - ❌ 本地 unlighthouse 測試（同樣 LCP 問題，PWA + Service Worker 干擾）
+   - ✅ **改用**: Google PageSpeed Insights（生產環境，穩定可靠）
+   - ⚠️ **教訓**: 不要浪費時間調試本地測試環境
 
 2. **CSP Strict 模式**:
    - ⚠️ **高複雜度**: 需要動態 nonce 生成
