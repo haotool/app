@@ -7,11 +7,12 @@
 
 ## 📊 目標分數追蹤
 
-| 日期       | Performance | Accessibility | Best Practices | SEO        | 來源                                           | 備註                        |
-| ---------- | ----------- | ------------- | -------------- | ---------- | ---------------------------------------------- | --------------------------- |
-| 2025-10-29 | **99** ✅   | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復後                | robots.txt 修復成功！       |
-| 2025-10-29 | **100** ✅  | **100** ✅    | 92 ⚠️          | 89 ⚠️      | Production (https://app.haotool.org/ratewise/) | 初始基準                    |
-| 2025-10-28 | 72 ⚠️       | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復前                | 本地測試 LCP 異常（已解決） |
+| 日期       | Performance | Accessibility | Best Practices | SEO        | 來源                                           | 備註                           |
+| ---------- | ----------- | ------------- | -------------- | ---------- | ---------------------------------------------- | ------------------------------ |
+| 2025-10-29 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                            | 移除 non-blocking CSS 修復白屏 |
+| 2025-10-29 | **99** ✅   | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復後                | robots.txt 修復成功！          |
+| 2025-10-29 | **100** ✅  | **100** ✅    | 92 ⚠️          | 89 ⚠️      | Production (https://app.haotool.org/ratewise/) | 初始基準                       |
+| 2025-10-28 | 72 ⚠️       | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復前                | 本地測試 LCP 異常（已解決）    |
 
 **目標**: Performance 100 + Accessibility 100 + Best Practices 100 + SEO 100
 
@@ -19,13 +20,19 @@
 
 ## ✅ 已實施優化 (Committed)
 
-### 1. 非阻塞 CSS 載入 (2025-10-28)
+### 1. ~~非阻塞 CSS 載入~~ (2025-10-28) ❌ **已回退**
 
 - **Commit**: `70f28b6` - feat(lighthouse): Performance 100 優化 - 非阻塞 CSS + 快取策略
+- **回退 Commit**: `a4379ec` - fix(lighthouse): 移除 non-blocking-css 插件修復白屏問題
 - **技術**: Vite plugin 轉換 `<link rel="stylesheet">` → `<link rel="preload" ... onload>`
 - **檔案**: `vite-plugins/non-blocking-css.ts`, `vite.config.ts`
 - **理論效果**: 消除 CSS 阻塞渲染 (410ms)
-- **實際效果**: ✅ 生產環境 Performance 100 達成
+- **實際效果**: ❌ **導致白屏問題** - CSS 延遲到 onload 才套用，用戶體驗極差
+- **問題分析**:
+  - non-blocking CSS 建議只適用於**非關鍵** CSS
+  - 我們的主 CSS 是**關鍵樣式**，延遲載入會導致白屏
+  - 即使有內聯骨架屏，React 應用仍需主 CSS 才能正確渲染
+- **教訓**: Lighthouse 建議需根據實際情況調整，用戶體驗優先於分數
 - **權威來源**: [web.dev - Defer non-critical CSS](https://web.dev/articles/defer-non-critical-css)
 
 ### 2. 內聯關鍵 CSS (骨架屏) (2025-10-28)
