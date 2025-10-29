@@ -67,7 +67,7 @@ export default defineConfig(() => {
         deleteOriginFile: false,
       }),
       // Bundle analyzer (只在需要時啟用)
-      process.env.ANALYZE
+      process.env['ANALYZE']
         ? visualizer({
             open: true,
             gzipSize: true,

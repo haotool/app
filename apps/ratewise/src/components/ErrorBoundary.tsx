@@ -50,6 +50,20 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       errorInfo,
     });
 
+    // 🚀 [Lighthouse-optimization:2025-10-30] On-demand Sentry 初始化
+    // 只在真正發生錯誤時才載入 Sentry（首次錯誤時會初始化，後續直接使用）
+    if (import.meta.env.PROD || import.meta.env.VITE_SENTRY_DSN) {
+      void (async () => {
+        try {
+          const { initSentry, captureException } = await import('../utils/sentry');
+          await initSentry(); // 首次初始化（如已初始化會跳過）
+          await captureException(error, { react: errorInfo });
+        } catch (sentryError) {
+          console.error('Failed to send error to Sentry:', sentryError);
+        }
+      })();
+    }
+
     // Call optional error handler
     this.props.onError?.(error, errorInfo);
   }

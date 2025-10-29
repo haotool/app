@@ -1,0 +1,41 @@
+# [Lighthouse-optimization:2025-10-28] HTTP 快取策略
+# 參考: https://web.dev/articles/http-cache/
+# 參考: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+
+# HTML - 短期快取（1小時），必須重新驗證
+/
+  Cache-Control: public, max-age=3600, must-revalidate
+/*.html
+  Cache-Control: public, max-age=3600, must-revalidate
+
+# 資產檔案 - 長期快取（1年），使用 hash 檔名確保版本控制
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Service Worker - 不快取，確保立即更新
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+/workbox-*.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Manifest 與 Icons - 中期快取（1天）
+/manifest.webmanifest
+  Cache-Control: public, max-age=86400, must-revalidate
+/icons/*
+  Cache-Control: public, max-age=86400, must-revalidate
+/*.ico
+  Cache-Control: public, max-age=86400, must-revalidate
+/*.svg
+  Cache-Control: public, max-age=86400, must-revalidate
+/*.png
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# 其他靜態資源 - 中期快取（1天）
+/robots.txt
+  Cache-Control: public, max-age=86400
+/sitemap.xml
+  Cache-Control: public, max-age=86400
+/*.css
+  Cache-Control: public, max-age=86400
+/*.js
+  Cache-Control: public, max-age=86400
