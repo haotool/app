@@ -29,10 +29,8 @@ User-agent: PerplexityBot
 Allow: /
 Crawl-delay: 10
 
-# [Lighthouse-SEO:2025-10-29] 移除非標準指令確保 Google robots.txt 合規
-# Google 2025 規範只支援標準指令: User-agent, Allow, Disallow, Sitemap, Crawl-delay
+# 保持 robots.txt 只使用標準指令: User-agent, Allow, Disallow, Sitemap, Crawl-delay
 # 參考: https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt
-# 先前 "Content-signal: search=yes,ai-train=no" 為非標準指令已移除
 
 User-agent: Google-Extended
 Allow: /
