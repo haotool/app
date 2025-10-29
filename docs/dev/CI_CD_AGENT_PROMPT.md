@@ -139,8 +139,8 @@ git diff <SUCCESS_COMMIT> <FAILED_COMMIT>
 
 ```bash
 # 示例：查找 retry 機制最佳實踐
-resolve-library-id --libraryName "p-retry"
-get-library-docs --context7CompatibleLibraryID "/sindresorhus/p-retry" --topic "error handling"
+resolve-library-id --libraryName "google-cloud"
+get-library-docs --context7CompatibleLibraryID "/googleapis/google-cloud-node" --topic "exponential backoff"
 
 # 查找 GitHub Actions 最佳實踐
 resolve-library-id --libraryName "github-actions"
@@ -199,66 +199,78 @@ git checkout -b fix/<descriptive-name>
 **解決方案**: 指數退避重試機制
 
 ```bash
-# 1. 安裝 retry 函式庫
-pnpm add -D p-retry
-
-# 2. 修改 API 呼叫程式碼
+# 1. 使用原生指數退避（無需額外依賴）
 ```
 
 ```javascript
 // scripts/fetch-api.js
-import pRetry, { AbortError } from 'p-retry';
+class AbortError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = 'AbortError';
+    this.status = status;
+  }
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function isRetryableError(error) {
   // 可重試: 5xx, 408, 429
   const retryableStatusCodes = [408, 429, 500, 502, 503, 504];
-  const statusMatch = error.message.match(/HTTP (\d+):/);
-  if (statusMatch) {
-    const status = parseInt(statusMatch[1], 10);
+  const status = Number(error.status ?? error.code);
+  if (Number.isFinite(status)) {
     return retryableStatusCodes.includes(status);
   }
   return error instanceof TypeError; // Network errors
 }
 
 async function fetchWithRetry() {
-  return await pRetry(
-    async (attemptNumber) => {
-      if (attemptNumber > 1) {
-        console.log(`   Retry attempt ${attemptNumber}...`);
+  const MAX_RETRIES = 3;
+  const BASE_DELAY_MS = 1000;
+  const MAX_DELAY_MS = 5000;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
+    try {
+      if (attempt > 1) {
+        console.log(`   Retry attempt ${attempt}...`);
       }
 
-      const response = await fetch(API_URL);
+      const response = await fetch(API_URL, {
+        headers: { 'cache-control': 'no-cache' },
+      });
 
       if (!response.ok) {
-        const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const status = response.status;
+        const error = new Error(`HTTP ${status}: ${response.statusText}`);
+        error.status = status;
 
-        // 4xx errors (除了 408, 429) 不重試
-        if (response.status >= 400 && response.status < 500) {
-          if (response.status !== 408 && response.status !== 429) {
-            throw new AbortError(error.message);
-          }
+        const isClientError = status >= 400 && status < 500;
+        const retryableClientError = status === 408 || status === 429;
+        if (isClientError && !retryableClientError) {
+          throw new AbortError(error.message, status);
         }
+
         throw error;
       }
 
       return response;
-    },
-    {
-      retries: 3,
-      factor: 2,
-      minTimeout: 1000,
-      maxTimeout: 5000,
-      randomize: true, // 防止 thundering herd
-      onFailedAttempt: ({ error, attemptNumber, retriesLeft }) => {
-        if (isRetryableError(error)) {
-          console.warn(
-            `⚠️  Attempt ${attemptNumber} failed: ${error.message}. ` +
-              `Retrying... (${retriesLeft} retries left)`,
-          );
-        }
-      },
-    },
-  );
+    } catch (error) {
+      if (error instanceof AbortError) {
+        throw error;
+      }
+
+      const retryable = isRetryableError(error);
+      const isLastAttempt = attempt === MAX_RETRIES + 1;
+
+      if (!retryable || isLastAttempt) {
+        throw error;
+      }
+
+      const backoff = Math.min(BASE_DELAY_MS * 2 ** (attempt - 1), MAX_DELAY_MS);
+      const jitter = Math.random() * BASE_DELAY_MS;
+      await sleep(backoff + jitter);
+    }
+  }
 }
 ```
 
@@ -507,17 +519,17 @@ gh issue create \
 ```typescript
 // 1. 解析函式庫 ID
 {
-  "libraryName": "p-retry"
+  "libraryName": "google-cloud-node"
 }
-// 回傳: "/sindresorhus/p-retry"
+// 回傳: "/googleapis/google-cloud-node"
 
 // 2. 取得文件
 {
-  "context7CompatibleLibraryID": "/sindresorhus/p-retry",
-  "topic": "error handling",
+  "context7CompatibleLibraryID": "/googleapis/google-cloud-node",
+  "topic": "exponential backoff",
   "tokens": 5000
 }
-// 回傳: 包含錯誤處理最佳實踐的文件
+// 回傳: 包含重試與錯誤處理最佳實踐的文件
 
 // 3. 實施
 基於官方文件的範例修改程式碼
@@ -593,19 +605,12 @@ gh run list --branch main --workflow="Update Latest Exchange Rates" --limit 20
 
 ### 解決方案設計
 
-```bash
-# 使用 Context7 查找最佳實踐
-resolve-library-id --libraryName "p-retry"
-get-library-docs --context7CompatibleLibraryID "/sindresorhus/p-retry" --topic "exponential backoff"
-```
-
 **設計決策**:
 
-1. ✅ 使用 `p-retry` 函式庫（成熟、維護良好）
-2. ✅ 指數退避策略（1s → 2s → 4s）
-3. ✅ 錯誤分類（僅重試 5xx, 408, 429）
-4. ✅ 隨機化延遲（防止 thundering herd）
-5. ✅ Workflow 優雅降級（continue-on-error）
+1. ✅ 使用原生 `fetch` + 指數退避（1s → 2s → 4s）
+2. ✅ 錯誤分類（僅重試 5xx, 408, 429）
+3. ✅ 隨機化延遲（防止 thundering herd）
+4. ✅ Workflow 優雅降級（continue-on-error）
 
 ### 實施步驟
 
@@ -613,29 +618,25 @@ get-library-docs --context7CompatibleLibraryID "/sindresorhus/p-retry" --topic "
 # 1. 建立修復分支
 git checkout -b fix/ci-resilience-enhancement
 
-# 2. 安裝依賴
-pnpm add -D p-retry
-
-# 3. 修改程式碼
+# 2. 修改程式碼
 # - scripts/fetch-taiwan-bank-rates.js (重試邏輯)
 # - .github/workflows/update-latest-rates.yml (優雅降級)
 
-# 4. 本地驗證
+# 3. 本地驗證
 pnpm typecheck
 pnpm test
 pnpm build
 
-# 5. 提交
-git add package.json pnpm-lock.yaml scripts/ .github/
+# 4. 提交
+git add scripts/ .github/
 git commit -m "fix(ci): add retry mechanism for Taiwan Bank API
 
-- Add p-retry library for exponential backoff
-- Implement error classification (retryable vs non-retryable)
-- Add graceful degradation in workflow with continue-on-error
-- Add comprehensive logging for retry attempts
+- Implement exponential backoff with native fetch
+- Add error classification (retryable vs non-retryable)
+- Enhance workflow summary for monitoring
 "
 
-# 6. 推送並建立 PR
+# 5. 推送並建立 PR
 git push origin fix/ci-resilience-enhancement
 gh pr create --title "fix(ci): enhance CI resilience with retry mechanism" \
   --body "Resolves #<issue-number>"

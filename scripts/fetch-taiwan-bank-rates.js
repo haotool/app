@@ -5,10 +5,8 @@
  */
 
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { join } from 'path';
-import pRetry, { AbortError } from 'p-retry';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,6 +15,20 @@ const __dirname = dirname(__filename);
 const REPO_ROOT = join(__dirname, '..');
 const OUTPUT_DIR = join(REPO_ROOT, 'public', 'rates');
 const OUTPUT_FILE = join(OUTPUT_DIR, 'latest.json');
+
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000;
+const MAX_DELAY_MS = 5000;
+
+class AbortError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = 'AbortError';
+    this.status = status;
+  }
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // 台灣銀行 CSV API
 const TAIWAN_BANK_CSV_URL = 'https://rate.bot.com.tw/xrt/flcsv/0/day';
@@ -143,24 +155,30 @@ function isRetryableError(error) {
 async function fetchTaiwanBankRates() {
   console.log('🔄 Fetching exchange rates from Taiwan Bank...');
 
-  const fetchFn = async (attemptNumber) => {
+  const attempts = MAX_RETRIES + 1;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      if (attemptNumber > 1) {
-        console.log(`   Attempt ${attemptNumber}...`);
+      if (attempt > 1) {
+        console.log(`   Attempt ${attempt}...`);
       }
 
-      const response = await fetch(TAIWAN_BANK_CSV_URL);
+      const response = await fetch(TAIWAN_BANK_CSV_URL, {
+        headers: {
+          'cache-control': 'no-cache',
+          pragma: 'no-cache',
+        },
+      });
 
-      // 非 2xx 狀態碼
       if (!response.ok) {
         const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
         error.status = response.status;
 
-        // 4xx 客戶端錯誤不重試 (除了 408, 429)
-        if (response.status >= 400 && response.status < 500) {
-          if (response.status !== 408 && response.status !== 429) {
-            throw new AbortError(error.message);
-          }
+        const isClientError = response.status >= 400 && response.status < 500;
+        const retryableClientError = response.status === 408 || response.status === 429;
+
+        if (isClientError && !retryableClientError) {
+          throw new AbortError(error.message, response.status);
         }
 
         throw error;
@@ -197,31 +215,26 @@ async function fetchTaiwanBankRates() {
       if (error instanceof AbortError) {
         throw error;
       }
-      throw error;
-    }
-  };
 
-  try {
-    return await pRetry(fetchFn, {
-      retries: 3,
-      factor: 2,
-      minTimeout: 1000,
-      maxTimeout: 5000,
-      randomize: true,
-      onFailedAttempt: ({ error, attemptNumber, retriesLeft }) => {
-        if (isRetryableError(error)) {
-          console.warn(
-            `⚠️  Attempt ${attemptNumber} failed: ${error.message}. Retrying... (${retriesLeft} retries left)`,
-          );
-        } else {
-          console.error(`❌ Non-retryable error: ${error.message}`);
-        }
-      },
-    });
-  } catch (error) {
-    console.error('❌ Failed to fetch Taiwan Bank rates after all retries:', error.message);
-    throw error;
+      const retryable = isRetryableError(error);
+      const isLastAttempt = attempt === attempts;
+
+      if (!retryable || isLastAttempt) {
+        console.error('❌ Failed to fetch Taiwan Bank rates:', error.message);
+        throw error;
+      }
+
+      const exponentialDelay = Math.min(BASE_DELAY_MS * 2 ** (attempt - 1), MAX_DELAY_MS);
+      const jitter = Math.random() * BASE_DELAY_MS;
+      const waitTime = Math.round(exponentialDelay + jitter);
+      console.warn(
+        `⚠️  Attempt ${attempt} failed: ${error.message}. Retrying in ${waitTime}ms... (${attempts - attempt} retries left)`,
+      );
+      await sleep(waitTime);
+    }
   }
+
+  throw new Error('Failed to fetch Taiwan Bank rates after maximum retries');
 }
 
 /**

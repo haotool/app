@@ -12,18 +12,30 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * 自動生成版本號
- * 策略: 使用 git commit count 確保每次提交後版本自動遞增
- * 格式: 1.0.{commit_count}
+ * 策略: 發佈時使用 package.json 語義化版本，開發時附加 git metadata
+ * 格式: {semver}[+sha.{hash}[-dirty]]
  */
+function readPackageVersion(): string {
+  const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
+  return packageJson.version;
+}
+
 function generateVersion(): string {
+  const baseVersion = readPackageVersion();
+
+  // CI / production build 使用語義化版本，確保快取失效與追蹤一致
+  if (process.env.CI || process.env.NODE_ENV === 'production') {
+    return baseVersion;
+  }
+
   try {
-    // 獲取 git commit 總數
-    const commitCount = execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
-    return `1.0.${commitCount}`;
+    const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
+    const isDirty =
+      execSync('git status --porcelain', { encoding: 'utf-8' }).trim().length > 0 ? '-dirty' : '';
+    return `${baseVersion}+sha.${commitHash}${isDirty}`;
   } catch {
-    // Git 不可用時，使用 package.json 的版本號
-    const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
-    return packageJson.version;
+    // Git 不可用時 fallback 至 package.json 版本號
+    return baseVersion;
   }
 }
 
@@ -31,7 +43,7 @@ function generateVersion(): string {
 // [context7:vitejs/vite:2025-10-21T03:15:00+08:00]
 // 使用函數形式確保 define 在所有模式下都能正確工作
 export default defineConfig(() => {
-  // 自動生成版本號（基於 git commit count）
+  // 自動生成版本號（語義化版本 + git metadata）
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
 
