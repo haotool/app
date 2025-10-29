@@ -29,8 +29,9 @@
     "clean": "pnpm -r clean && rm -rf node_modules",
     "prepare": "husky install",
     "generate:sitemap": "node scripts/generate-sitemap.js",
+    "update:release-metadata": "node scripts/update-release-metadata.js",
     "changeset": "changeset",
-    "changeset:version": "changeset version",
+    "changeset:version": "changeset version && pnpm run update:release-metadata",
     "changeset:publish": "pnpm build && changeset publish",
     "changeset:status": "changeset status"
   },
@@ -51,7 +52,6 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
-    "p-retry": "^7.1.0",
     "pa11y": "^9.0.1",
     "prettier": "^3.1.1",
     "seo-analyzer": "^3.2.0",
