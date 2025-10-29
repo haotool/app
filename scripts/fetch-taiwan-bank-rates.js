@@ -5,9 +5,8 @@
  */
 
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,6 +15,20 @@ const __dirname = dirname(__filename);
 const REPO_ROOT = join(__dirname, '..');
 const OUTPUT_DIR = join(REPO_ROOT, 'public', 'rates');
 const OUTPUT_FILE = join(OUTPUT_DIR, 'latest.json');
+
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000;
+const MAX_DELAY_MS = 5000;
+
+class AbortError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = 'AbortError';
+    this.status = status;
+  }
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // 台灣銀行 CSV API
 const TAIWAN_BANK_CSV_URL = 'https://rate.bot.com.tw/xrt/flcsv/0/day';
@@ -106,49 +119,122 @@ function parseTaiwanBankCSV(csvText) {
 }
 
 /**
- * 從台灣銀行抓取匯率
+ * 判斷錯誤是否可重試
+ * @param {Error} error - 錯誤物件
+ * @returns {boolean} - 是否應該重試
+ */
+function isRetryableError(error) {
+  // 網路錯誤 (TypeError from fetch)
+  if (error instanceof TypeError) {
+    return true;
+  }
+
+  // HTTP 錯誤碼分類
+  const retryableStatusCodes = [
+    408, // Request Timeout
+    429, // Too Many Requests
+    500, // Internal Server Error
+    502, // Bad Gateway
+    503, // Service Unavailable
+    504, // Gateway Timeout
+  ];
+
+  // 檢查錯誤訊息中的狀態碼
+  const statusMatch = error.message.match(/HTTP (\d+):/);
+  if (statusMatch) {
+    const status = parseInt(statusMatch[1], 10);
+    return retryableStatusCodes.includes(status);
+  }
+
+  return false;
+}
+
+/**
+ * 從台灣銀行抓取匯率 (帶重試機制)
  */
 async function fetchTaiwanBankRates() {
-  try {
-    console.log('🔄 Fetching exchange rates from Taiwan Bank...');
+  console.log('🔄 Fetching exchange rates from Taiwan Bank...');
 
-    const response = await fetch(TAIWAN_BANK_CSV_URL);
+  const attempts = MAX_RETRIES + 1;
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      if (attempt > 1) {
+        console.log(`   Attempt ${attempt}...`);
+      }
+
+      const response = await fetch(TAIWAN_BANK_CSV_URL, {
+        headers: {
+          'cache-control': 'no-cache',
+          pragma: 'no-cache',
+        },
+      });
+
+      if (!response.ok) {
+        const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        error.status = response.status;
+
+        const isClientError = response.status >= 400 && response.status < 500;
+        const retryableClientError = response.status === 408 || response.status === 429;
+
+        if (isClientError && !retryableClientError) {
+          throw new AbortError(error.message, response.status);
+        }
+
+        throw error;
+      }
+
+      const csvText = await response.text();
+      const { rates, details } = parseTaiwanBankCSV(csvText);
+
+      if (Object.keys(rates).length === 0) {
+        throw new AbortError('No valid rates found in CSV');
+      }
+
+      console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies`);
+
+      return {
+        timestamp: new Date().toISOString(),
+        updateTime: new Date().toLocaleString('zh-TW', {
+          timeZone: 'Asia/Taipei',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        }),
+        source: 'Taiwan Bank (臺灣銀行牌告匯率)',
+        sourceUrl: 'https://rate.bot.com.tw/xrt',
+        base: 'TWD',
+        rates,
+        details,
+      };
+    } catch (error) {
+      if (error instanceof AbortError) {
+        throw error;
+      }
+
+      const retryable = isRetryableError(error);
+      const isLastAttempt = attempt === attempts;
+
+      if (!retryable || isLastAttempt) {
+        console.error('❌ Failed to fetch Taiwan Bank rates:', error.message);
+        throw error;
+      }
+
+      const exponentialDelay = Math.min(BASE_DELAY_MS * 2 ** (attempt - 1), MAX_DELAY_MS);
+      const jitter = Math.random() * BASE_DELAY_MS;
+      const waitTime = Math.round(exponentialDelay + jitter);
+      console.warn(
+        `⚠️  Attempt ${attempt} failed: ${error.message}. Retrying in ${waitTime}ms... (${attempts - attempt} retries left)`,
+      );
+      await sleep(waitTime);
     }
-
-    const csvText = await response.text();
-    const { rates, details } = parseTaiwanBankCSV(csvText);
-
-    if (Object.keys(rates).length === 0) {
-      throw new Error('No valid rates found in CSV');
-    }
-
-    console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies`);
-
-    return {
-      timestamp: new Date().toISOString(),
-      updateTime: new Date().toLocaleString('zh-TW', {
-        timeZone: 'Asia/Taipei',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      }),
-      source: 'Taiwan Bank (臺灣銀行牌告匯率)',
-      sourceUrl: 'https://rate.bot.com.tw/xrt',
-      base: 'TWD',
-      rates,
-      details,
-    };
-  } catch (error) {
-    console.error('❌ Failed to fetch Taiwan Bank rates:', error.message);
-    throw error;
   }
+
+  throw new Error('Failed to fetch Taiwan Bank rates after maximum retries');
 }
 
 /**
