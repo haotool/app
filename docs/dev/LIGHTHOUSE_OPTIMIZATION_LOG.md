@@ -9,6 +9,8 @@
 
 | 日期       | Performance | Accessibility | Best Practices | SEO        | 來源                                           | 備註                           |
 | ---------- | ----------- | ------------- | -------------- | ---------- | ---------------------------------------------- | ------------------------------ |
+| 2025-10-30 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                            | 激進 Code Splitting 優化       |
+| 2025-10-30 | **優秀** ✅ | **100** ✅    | **100** ✅     | **100** ✅ | Local Preview (localhost:4176)                 | LCP 216ms, 節省 182KB 初始載入 |
 | 2025-10-29 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                            | 移除 non-blocking CSS 修復白屏 |
 | 2025-10-29 | **99** ✅   | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復後                | robots.txt 修復成功！          |
 | 2025-10-29 | **100** ✅  | **100** ✅    | 92 ⚠️          | 89 ⚠️      | Production (https://app.haotool.org/ratewise/) | 初始基準                       |
@@ -105,9 +107,82 @@
 - **權威來源**: [web.dev - Strict CSP](https://web.dev/articles/strict-csp)
 - **狀態**: ✅ 決策完成，記錄於 LOG
 
+### 9. 激進 Code Splitting - 按需載入圖表庫 (2025-10-30) ✅
+
+- **Commit**: (待提交)
+- **技術**: React.lazy() + Suspense 懶載入 MiniTrendChart 組件
+- **優化範圍**:
+  1. **MiniTrendChart 懶載入**: 節省 141KB (lightweight-charts) + 37KB (framer-motion)
+  2. **Sentry on-demand 初始化**: 只在真正發生錯誤時載入 (節省 969KB 初始包體)
+  3. **ErrorBoundary 整合**: 首次錯誤時自動初始化 Sentry
+- **檔案修改**:
+  - `SingleConverter.tsx`:
+
+    ```typescript
+    // 🚀 激進優化：MiniTrendChart 懶載入 (節省 141KB + 36KB)
+    const MiniTrendChart = lazy(() => import('./MiniTrendChart').then(m => ({default: m.MiniTrendChart})));
+
+    <Suspense fallback={<div className="..."><div className="...animate-spin" /></div>}>
+      <MiniTrendChart data={trendData} currencyCode={toCurrency} />
+    </Suspense>
+    ```
+
+  - `main.tsx`: 移除啟動時的 `initSentry()` 調用
+  - `ErrorBoundary.tsx`: 添加 on-demand Sentry 初始化
+
+- **Bundle 大小變化**:
+  - ✅ **MiniTrendChart chunk**: 3.65 KB (gzip: 1.70 KB) - 獨立懶載入
+  - ✅ **vendor-charts**: 144.56 KB (gzip: 46.68 KB) - 只在查看趨勢圖時載入
+  - ✅ **vendor-motion**: 37.63 KB (gzip: 13.57 KB) - 只在查看趨勢圖時載入
+  - ✅ **vendor-sentry**: 0.00 KB - 完全不載入（除非錯誤）
+  - ✅ **主 bundle**: 55.98 KB (gzip: 18.14 KB) - 精簡高效
+  - **總節省**: ~182 KB 初始載入（144 + 37 + Sentry 避免載入）
+- **測試結果 (Preview localhost:4176)**:
+  - ✅ 頁面成功渲染，PWA 安裝成功
+  - ✅ LCP: 216ms (excellent)
+  - ✅ 所有資源載入成功（200 OK）
+  - ✅ Charts chunk **未在初始載入時請求** - 懶載入成功！
+  - ✅ 用戶體驗無影響，載入動畫平滑過渡
+- **權威來源**:
+  - [React Docs - Code-Splitting](https://react.dev/reference/react/lazy)
+  - [web.dev - Reduce JavaScript execution time](https://web.dev/articles/bootup-time)
+- **效果預期**: Performance 分數提升（減少初始 JavaScript 執行時間）
+
 ---
 
 ## ❌ 無效優化記錄 (Failed Attempts)
+
+### 假性白屏問題 - 端口衝突導致測試失敗 (2025-10-30) ❌
+
+- **嘗試**: 啟動開發伺服器測試頁面顯示
+- **現象**: ❌ **Playwright 訪問頁面完全白屏** - #root 空白，無內容渲染
+- **調試歷程**:
+  - **第一階段**: 懷疑 React 渲染失敗 → 檢查 ErrorBoundary、main.tsx、App.tsx
+  - **第二階段**: 發現 React Fiber 掛載成功，appReadyMarker="true"，但 #root 空白
+  - **第三階段**: 清除 Vite 快取、重啟開發伺服器，問題依舊
+  - **第四階段**: 發現端口衝突 - 多個殭屍進程佔用 4174 和 4175
+- **根本原因**:
+  - **端口衝突**: 多個背景開發伺服器進程（bb8643、3a980b、7f7f59、5f47cd）同時運行
+  - **錯誤訪問**: Playwright 訪問 4174，但伺服器實際在 4175 或已停止
+  - **殭屍進程**: 未正確清理的背景進程佔用端口，導致新伺服器無法啟動
+- **解決方案**:
+  - 清理所有佔用端口的進程：`lsof -ti:4174 | xargs kill -9`
+  - 使用全新端口啟動開發伺服器：`pnpm dev --port 5173`
+  - 訪問正確端口後，頁面完美顯示 ✅
+- **測試結果 (Port 5173)**:
+  - ✅ React 應用成功掛載和渲染
+  - ✅ 所有 UI 組件正常顯示
+  - ✅ 控制台無錯誤，Web Vitals 正常
+  - ✅ FCP: 148ms (good), TTFB: 113ms (good)
+- **教訓**: ⚠️ **開發環境測試前必須確認端口狀態**
+  - 使用 `lsof -ti:PORT` 檢查端口佔用
+  - 清理殭屍進程再啟動新伺服器
+  - 確認 Playwright 訪問的端口與實際伺服器端口一致
+  - 不要同時運行多個開發伺服器實例
+- **結論**: ✅ **代碼沒有問題，Lighthouse 優化沒有導致白屏**
+  - 之前的 non-blocking CSS 回退決策是正確的
+  - 頁面在正確環境下完美運行
+  - 問題根源是測試環境配置錯誤，非代碼邏輯問題
 
 ### 本地 Lighthouse 測試環境問題 (2025-10-28 ~ 2025-10-29) ❌
 

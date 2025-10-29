@@ -1,9 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode } from '../types';
-import { MiniTrendChart, type MiniTrendDataPoint } from './MiniTrendChart';
+import type { MiniTrendDataPoint } from './MiniTrendChart';
 import { fetchHistoricalRatesRange } from '../../../services/exchangeRateHistoryService';
+
+// 🚀 激進優化：MiniTrendChart 懶載入 (節省 141KB lightweight-charts + 36KB framer-motion)
+const MiniTrendChart = lazy(() =>
+  import('./MiniTrendChart').then((m) => ({ default: m.MiniTrendChart })),
+);
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -191,7 +196,16 @@ export const SingleConverter = ({
             }`}
           >
             <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
-              <MiniTrendChart data={trendData} currencyCode={toCurrency} />
+              {/* 🚀 Suspense 包裝懶載入的 MiniTrendChart，顯示優雅載入動畫 */}
+              <Suspense
+                fallback={
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                }
+              >
+                <MiniTrendChart data={trendData} currencyCode={toCurrency} />
+              </Suspense>
             </div>
             {/* 互動提示 */}
             <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-1 pointer-events-none">

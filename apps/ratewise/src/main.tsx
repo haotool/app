@@ -4,7 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App';
 import './index.css';
 import { logger } from './utils/logger';
-import { initSentry } from './utils/sentry';
+// import { initSentry } from './utils/sentry'; // 🚀 已移除，改為 on-demand 載入
 import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
 
@@ -58,8 +58,9 @@ window.addEventListener('unhandledrejection', (event) => {
 });
 
 // Initialize observability (non-blocking)
-// [Lighthouse-optimization:2025-10-27] 延遲初始化以避免阻塞首次渲染
-void initSentry(); // async, 不等待完成
+// [Lighthouse-optimization:2025-10-30] 🚀 激進優化：Sentry 只在真正發生錯誤時才載入
+// 移除啟動時的 initSentry()，改由 ErrorBoundary 首次錯誤時觸發（節省 969KB 初始載入）
+// void initSentry(); // 已移除，改為 on-demand 載入
 initWebVitals();
 
 // Log application startup
