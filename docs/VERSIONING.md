@@ -150,8 +150,15 @@ pnpm changeset:publish
 
 1. 檢查 changeset 狀態
 2. 建立 Version PR（如有 changeset）
-3. 自動更新版本號和 CHANGELOG
-4. 提交變更到 Version PR
+3. 自動更新版本號、`apps/ratewise/public/sitemap.xml`（更新 `lastmod`）與 CHANGELOG
+4. 提交變更到 Version PR（Commit: `chore: Version Packages`）
+
+### 自動標記（Git tags）
+
+- Workflow: `.github/workflows/auto-tag.yml`
+- 觸發：當 `main` 推送包含版本號變更 (`apps/ratewise/package.json`) 時
+- 行為：建立 `ratewise-vX.Y.Z` 標籤並推送到遠端（避免重複 tag）
+- 目的：提供 PWA 更新版本資訊與部署追蹤依據
 
 ---
 

@@ -29,8 +29,9 @@
     "clean": "pnpm -r clean && rm -rf node_modules",
     "prepare": "husky install",
     "generate:sitemap": "node scripts/generate-sitemap.js",
+    "update:release-metadata": "node scripts/update-release-metadata.js",
     "changeset": "changeset",
-    "changeset:version": "changeset version",
+    "changeset:version": "changeset version && pnpm run update:release-metadata",
     "changeset:publish": "pnpm build && changeset publish",
     "changeset:status": "changeset status"
   },
