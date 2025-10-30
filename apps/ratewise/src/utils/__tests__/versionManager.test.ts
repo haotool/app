@@ -254,7 +254,7 @@ describe('versionManager', () => {
 
       recordVersionUpdate();
 
-      const historyJson = mockLocalStorage.store['version_history'];
+      const historyJson = mockLocalStorage.store['version_history']!;
       const history = JSON.parse(historyJson);
 
       expect(history).toHaveLength(1);
@@ -275,7 +275,7 @@ describe('versionManager', () => {
 
       recordVersionUpdate();
 
-      const historyJson = mockLocalStorage.store['version_history'];
+      const historyJson = mockLocalStorage.store['version_history']!;
       const history = JSON.parse(historyJson);
 
       expect(history).toHaveLength(10); // 最多 10 筆
