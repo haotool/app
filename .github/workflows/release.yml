@@ -61,6 +61,25 @@ jobs:
             echo "has_changesets=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Detect Version Change
+        id: detect_version
+        run: |
+          set -euo pipefail
+          CURRENT_VERSION=$(node -p "JSON.parse(require('fs').readFileSync('apps/ratewise/package.json','utf8')).version")
+          echo "current_version=${CURRENT_VERSION}" >> "$GITHUB_OUTPUT"
+
+          if git show HEAD^:apps/ratewise/package.json >/tmp/prev-package.json 2>/dev/null; then
+            PREVIOUS_VERSION=$(node -p "JSON.parse(require('fs').readFileSync('/tmp/prev-package.json','utf8')).version")
+          else
+            PREVIOUS_VERSION=""
+          fi
+
+          if [ -n "$PREVIOUS_VERSION" ] && [ "$PREVIOUS_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create Release Pull Request
         id: changesets
         if: steps.check_changesets.outputs.has_changesets == 'true'
@@ -71,6 +90,35 @@ jobs:
           commit: 'chore: Version Packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git for tagging
+        if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create release tags
+        if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'
+        env:
+          VERSION: ${{ steps.detect_version.outputs.current_version }}
+        run: |
+          set -euo pipefail
+          pnpm changeset tag
+          if ! git rev-parse "ratewise-v${VERSION}" >/dev/null 2>&1; then
+            git tag "ratewise-v${VERSION}"
+          fi
+          git push origin "@app/ratewise@${VERSION}"
+          git push origin "ratewise-v${VERSION}"
+
+      - name: Create GitHub release
+        if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: '@app/ratewise@${{ steps.detect_version.outputs.current_version }}'
+          release_name: 'RateWise v${{ steps.detect_version.outputs.current_version }}'
+          body: 'Automated release created by Changesets workflow.'
 
       # 註: 由於這是 private monorepo，我們不發布到 npm
       # 如果未來需要發布，可以新增以下步驟：

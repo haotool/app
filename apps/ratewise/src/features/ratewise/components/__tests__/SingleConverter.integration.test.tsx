@@ -7,6 +7,7 @@ import * as exchangeRateHistoryService from '../../../../services/exchangeRateHi
 // Mock exchangeRateHistoryService
 vi.mock('../../../../services/exchangeRateHistoryService', () => ({
   fetchHistoricalRatesRange: vi.fn(),
+  fetchLatestRates: vi.fn(),
 }));
 
 // Mock lightweight-charts
@@ -88,6 +89,12 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
       unobserve: vi.fn(),
       disconnect: vi.fn(),
     })) as unknown as typeof ResizeObserver;
+
+    vi.mocked(exchangeRateHistoryService.fetchLatestRates).mockResolvedValue({
+      updateTime: '2025/10/17 08:00:00',
+      source: 'Taiwan Bank',
+      rates: { ...mockExchangeRates, USD: 31.5, EUR: 36.5 },
+    });
   });
 
   describe('真實歷史數據自動載入', () => {
@@ -127,7 +134,8 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       // 驗證自動呼叫歷史匯率服務（7天）
       await waitFor(() => {
-        expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledWith(7);
+        expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledWith(30);
+        expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalledTimes(1);
       });
     });
 
@@ -135,11 +143,15 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
       vi.mocked(exchangeRateHistoryService.fetchHistoricalRatesRange).mockRejectedValue(
         new Error('Network error'),
       );
+      vi.mocked(exchangeRateHistoryService.fetchLatestRates).mockRejectedValue(
+        new Error('Latest failed'),
+      );
 
       expect(() => render(<SingleConverter {...mockProps} />)).not.toThrow();
 
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalled();
+        expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalled();
       });
     });
   });
@@ -177,6 +189,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
       // 初始載入
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledTimes(1);
+        expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalledTimes(1);
       });
 
       // 點擊交換按鈕
@@ -198,6 +211,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
       // 驗證因為 fromCurrency 和 toCurrency 改變，useEffect 重新執行
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledTimes(2);
+        expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalledTimes(2);
       });
     });
 
@@ -229,6 +243,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledTimes(1);
+        expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalledTimes(1);
       });
 
       // 驗證初始匯率顯示 (TWD → USD)
@@ -244,6 +259,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       // 驗證重新載入趨勢圖（因為 toCurrency 改變）
       expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledTimes(2);
+      expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -277,6 +293,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
       // 初始載入
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledTimes(1);
+        expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalledTimes(1);
       });
 
       // 模擬外部匯率數據更新（無需刷新頁面）
@@ -292,6 +309,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       // 歷史數據不需重新載入（exchangeRates 不在 useEffect 依賴中）
       expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledTimes(1);
+      expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -324,6 +342,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalled();
+        expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalled();
       });
 
       // 驗證計算邏輯：

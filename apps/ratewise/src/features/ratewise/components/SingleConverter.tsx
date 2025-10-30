@@ -3,7 +3,10 @@ import { RefreshCw } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode } from '../types';
 import type { MiniTrendDataPoint } from './MiniTrendChart';
-import { fetchHistoricalRatesRange } from '../../../services/exchangeRateHistoryService';
+import {
+  fetchHistoricalRatesRange,
+  fetchLatestRates,
+} from '../../../services/exchangeRateHistoryService';
 
 // 🚀 激進優化：MiniTrendChart 懶載入 (節省 141KB lightweight-charts + 36KB framer-motion)
 const MiniTrendChart = lazy(() =>
@@ -11,6 +14,7 @@ const MiniTrendChart = lazy(() =>
 );
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
+const MAX_TREND_DAYS = 30;
 
 interface SingleConverterProps {
   fromCurrency: CurrencyCode;
@@ -88,11 +92,14 @@ export const SingleConverter = ({
       try {
         if (!isMounted) return;
         setLoadingTrend(true);
-        const historicalData = await fetchHistoricalRatesRange(7);
+        const [historicalData, latestRates] = await Promise.all([
+          fetchHistoricalRatesRange(MAX_TREND_DAYS),
+          fetchLatestRates().catch(() => null),
+        ]);
 
         if (!isMounted) return;
 
-        const data: MiniTrendDataPoint[] = historicalData
+        const historyPoints: MiniTrendDataPoint[] = historicalData
           .map((item) => {
             const fromRate = item.data.rates[fromCurrency] ?? 1;
             const toRate = item.data.rates[toCurrency] ?? 1;
@@ -106,7 +113,29 @@ export const SingleConverter = ({
           .filter((item): item is MiniTrendDataPoint => item !== null)
           .reverse();
 
-        setTrendData(data);
+        let mergedPoints = historyPoints;
+
+        if (latestRates) {
+          const latestFromRate = latestRates.rates[fromCurrency] ?? 1;
+          const latestToRate = latestRates.rates[toCurrency] ?? 1;
+          const latestRate = latestFromRate / latestToRate;
+
+          if (Number.isFinite(latestRate) && latestRate > 0) {
+            const latestDateRaw = latestRates.updateTime?.split(/\s+/)[0] ?? '';
+            const latestDate =
+              latestDateRaw.replace(/\//g, '-') || new Date().toISOString().slice(0, 10);
+
+            mergedPoints = [
+              ...historyPoints.filter((point) => point.date !== latestDate),
+              {
+                date: latestDate,
+                rate: latestRate,
+              },
+            ];
+          }
+        }
+
+        setTrendData(mergedPoints.slice(-MAX_TREND_DAYS));
       } catch {
         if (!isMounted) return;
         setTrendData([]);
