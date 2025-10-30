@@ -242,9 +242,9 @@ describe('exchangeRateService', () => {
       const transformed = transformRates(mockRateData);
 
       // ✅ 1 TWD = 1/30.5 USD
-      expect(transformed.USD).toBeCloseTo(1 / 30.5, 5);
-      expect(transformed.EUR).toBeCloseTo(1 / 33.2, 5);
-      expect(transformed.JPY).toBeCloseTo(1 / 0.21, 5);
+      expect(transformed['USD']).toBeCloseTo(1 / 30.5, 5);
+      expect(transformed['EUR']).toBeCloseTo(1 / 33.2, 5);
+      expect(transformed['JPY']).toBeCloseTo(1 / 0.21, 5);
     });
 
     it('處理空的 rates 物件', () => {
@@ -264,7 +264,7 @@ describe('exchangeRateService', () => {
       const transformed = transformRates(singleRateData);
 
       expect(Object.keys(transformed)).toHaveLength(1);
-      expect(transformed.USD).toBeCloseTo(1 / 30.5, 5);
+      expect(transformed['USD']).toBeCloseTo(1 / 30.5, 5);
     });
 
     it('處理極小匯率值', () => {
@@ -275,7 +275,7 @@ describe('exchangeRateService', () => {
 
       const transformed = transformRates(smallRateData);
 
-      expect(transformed.JPY).toBe(1000); // 1 / 0.001 = 1000
+      expect(transformed['JPY']).toBe(1000); // 1 / 0.001 = 1000
     });
 
     it('處理極大匯率值', () => {
@@ -286,7 +286,7 @@ describe('exchangeRateService', () => {
 
       const transformed = transformRates(largeRateData);
 
-      expect(transformed.ZAR).toBe(0.001); // 1 / 1000 = 0.001
+      expect(transformed['ZAR']).toBe(0.001); // 1 / 1000 = 0.001
     });
   });
 
