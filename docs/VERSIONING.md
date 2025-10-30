@@ -1,7 +1,7 @@
 # 版本管理指南
 
-**最後更新**: 2025-10-21
-**版本**: v1.0
+**最後更新**: 2025-10-30T03:53:43+08:00
+**版本**: v1.1
 **狀態**: ✅ 已完成
 
 ---
@@ -150,7 +150,7 @@ pnpm changeset:publish
 
 1. 檢查 changeset 狀態
 2. 建立 Version PR（如有 changeset）
-3. 自動更新版本號、`apps/ratewise/public/sitemap.xml`（更新 `lastmod`）與 CHANGELOG
+3. 自動更新版本號、同步根目錄 `package.json` 版本、`apps/ratewise/public/sitemap.xml`（更新 `lastmod`）與 CHANGELOG
 4. 提交變更到 Version PR（Commit: `chore: Version Packages`）
 
 ### 自動標記（Git tags）
@@ -159,6 +159,7 @@ pnpm changeset:publish
 - 觸發：當 `main` 推送包含版本號變更 (`apps/ratewise/package.json`) 時
 - 行為：建立 `ratewise-vX.Y.Z` 標籤並推送到遠端（避免重複 tag）
 - 目的：提供 PWA 更新版本資訊與部署追蹤依據
+- 重點：在建立標籤前透過 `git config user.name/user.email` 設定身分，避免 GitHub Actions 建立註解標籤時失敗
 
 ---
 

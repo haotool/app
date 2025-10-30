@@ -67,6 +67,7 @@ const DEFAULT_KEYWORDS = [
   '匯率計算機',
   'RateWise',
 ];
+const SOCIAL_LINKS = ['https://www.threads.net/@azlife_1224', 'https://github.com/haotool/app'];
 
 /**
  * Normalize URL by removing trailing slashes (except for root path)
@@ -127,7 +128,7 @@ const DEFAULT_JSON_LD = [
       contactType: 'Customer Support',
       email: 'haotool.org@gmail.com',
     },
-    sameAs: [], // Add social media links if available
+    sameAs: SOCIAL_LINKS,
   },
   {
     '@context': 'https://schema.org',

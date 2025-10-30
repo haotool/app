@@ -1,8 +1,8 @@
 # SEO 實作指南 (SEO Implementation Guide)
 
-> **版本**: 1.0.0  
+> **版本**: 1.1.0  
 > **建立時間**: 2025-10-24T23:23:09+08:00  
-> **最後更新**: 2025-10-24T23:23:09+08:00  
+> **最後更新**: 2025-10-30T04:03:03+08:00  
 > **維護者**: Development Team  
 > **狀態**: ✅ 已完成
 
@@ -324,11 +324,6 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-# 禁止爬取資源檔案
-Disallow: /assets/
-Disallow: /node_modules/
-Disallow: /*.map$
-
 # Sitemap
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 ```
@@ -341,9 +336,31 @@ Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="RateWise" />
-<link rel="manifest" href="/manifest.webmanifest" />
-<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="%VITE_BASE_PATH%manifest.webmanifest" />
+<link rel="apple-touch-icon" href="%VITE_BASE_PATH%apple-touch-icon.png" />
 ```
+
+### 4. Zeabur Subpath Deployment（`/ratewise`）
+
+- 使用 `VITE_BASE_PATH` 控制部署子路徑：本機維持 `/`，Zeabur 設為 `/ratewise/`
+- `scripts/update-release-metadata.js` 會自動鏡像靜態資產到 `public/ratewise/*`，確保
+  - `https://app.haotool.org/ratewise/robots.txt`
+  - `https://app.haotool.org/ratewise/sitemap.xml`
+  - `https://app.haotool.org/ratewise/llms.txt`
+  - `https://app.haotool.org/ratewise/manifest.webmanifest`
+  - `https://app.haotool.org/ratewise/favicon.ico`
+  - `favicon / manifest / screenshots` 等皆回傳 200
+- 驗證指令：
+
+  ```bash
+  curl -I https://app.haotool.org/ratewise/robots.txt
+  curl -I https://app.haotool.org/ratewise/llms.txt
+  curl -I https://app.haotool.org/ratewise/manifest.webmanifest
+  curl -I https://app.haotool.org/ratewise/favicon.ico
+  ```
+
+- 伺服器層（`nginx.conf`）需額外加入 `/ratewise/sitemap.xml`、`/ratewise/manifest.webmanifest`、`/ratewise/robots.txt`、`/ratewise/llms.txt` 的 `location` 規則，以避免被 SPA fallback 導向 `index.html` 並確保 `Content-Type` 正確
+- `location = /ratewise/ { return 301 /ratewise; }` 用來將尾斜線正規化，避免 `/ratewise/` 與 `/ratewise` 被 Google 視為重複頁面
 
 ---
 
@@ -508,6 +525,13 @@ sips -z 630 1200 og-image.png --out og-image-optimized.png
 - 更新頻率：每日
 ```
 
+**維護準則**:
+
+- 每次正式釋出後同步更新 `最後更新` 與 `版本`
+- 聯絡資訊需與網站 footer、`SEOHelmet` 的 `Organization.sameAs` 完全一致
+- 修改完成後執行 `node scripts/update-release-metadata.js` 鏡像至 `public/ratewise/llms.txt`
+- CLI 驗證：`curl -I https://app.haotool.org/ratewise/llms.txt`
+
 ### AEO (Answer Engine Optimization)
 
 **策略**:
@@ -524,6 +548,7 @@ sips -z 630 1200 og-image.png --out og-image-optimized.png
    - 使用有序列表 `<ol>` 表示步驟
    - 使用無序列表 `<ul>` 表示選項
    - 使用表格 `<table>` 呈現對比資料
+   - 主要頁面透過 `<SEOHelmet howTo={...}>` 與 `<SEOHelmet faq={...}>` 產生 HowTo / FAQ Schema
 
 ---
 
@@ -630,9 +655,15 @@ sips -z 630 1200 og-image.png --out og-image-optimized.png
 - [ ] robots.txt 已建立並正確配置
 - [ ] AI 爬蟲已允許 (robots.txt)
 - [ ] llms.txt 已建立
+- [ ] `VITE_BASE_PATH` 已設定（prod: `/ratewise/`）
 - [ ] HTTPS 已啟用
 - [ ] PWA manifest.json 已配置
 - [ ] Service Worker 已實作
+- [ ] `https://app.haotool.org/ratewise/robots.txt` 回傳 200
+- [ ] `https://app.haotool.org/ratewise/sitemap.xml` 回傳 200
+- [ ] `https://app.haotool.org/ratewise/llms.txt` 回傳 200
+- [ ] `https://app.haotool.org/ratewise/manifest.webmanifest` 回傳 200
+- [ ] `https://app.haotool.org/ratewise/favicon.ico` 回傳 200
 
 #### 圖片優化
 

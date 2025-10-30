@@ -253,7 +253,7 @@ lighthouse http://localhost:4174 --view
 git push origin perf/lighthouse-100-optimization
 
 # 線上 Lighthouse 測試
-lighthouse https://app.haotool.org/ratewise/ --view
+lighthouse https://app.haotool.org/ratewise --view
 ```
 
 ---

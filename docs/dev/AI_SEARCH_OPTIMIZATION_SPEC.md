@@ -1,8 +1,8 @@
 # AI 搜尋優化完整規格 (AI Search Optimization Spec)
 
-> **Version**: 1.0.0
+> **Version**: 1.1.0
 > **Created**: 2025-10-17
-> **Status**: 📋 規劃中
+> **Status**: 🔄 進行中 (Phase 1 shipped 2025-10-30)
 > **維護者**: Development Team
 
 ---
@@ -276,9 +276,12 @@ export default defineConfig({
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="RateWise" />
-<link rel="manifest" href="/manifest.webmanifest" />
-<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="%VITE_BASE_PATH%manifest.webmanifest" />
+<link rel="apple-touch-icon" href="%VITE_BASE_PATH%apple-touch-icon.png" />
 ```
+
+> **Zeabur Subpath 注意事項**  
+> 生產環境部署於 `https://app.haotool.org/ratewise`，必須設定 `VITE_BASE_PATH=/ratewise/` 並在釋出流程執行 `node scripts/update-release-metadata.js` 鏡像靜態資產 (`robots.txt`、`sitemap.xml`、`llms.txt`、`manifest.webmanifest`、favicon、screenshots)。部署後使用 `curl -I https://app.haotool.org/ratewise/{robots.txt,sitemap.xml,manifest.webmanifest,favicon.ico,llms.txt}` 確認 200，並在 `nginx.conf` 為上述 `/ratewise/*` 靜態檔加上對應 `location` 以避免 SPA fallback。
 
 ---
 
@@ -388,7 +391,7 @@ function StructuredData({ data }: { data: Record<string, any> }) {
     "離線使用",
     "PWA 支援"
   ],
-  "screenshot": "https://app.haotool.org/ratewise/screenshot.png",
+  "screenshot": "https://app.haotool.org/ratewise/screenshots/desktop-converter.png",
   "aggregateRating": {
     "@type": "AggregateRating",
     "ratingValue": "4.8",
@@ -486,9 +489,9 @@ function StructuredData({ data }: { data: Record<string, any> }) {
   "contactPoint": {
     "@type": "ContactPoint",
     "contactType": "Customer Support",
-    "email": "support@ratewise.app"
+    "email": "haotool.org@gmail.com"
   },
-  "sameAs": ["https://twitter.com/ratewise", "https://github.com/ratewise"]
+  "sameAs": ["https://www.threads.net/@azlife_1224", "https://github.com/haotool/app"]
 }
 ```
 
@@ -1163,7 +1166,18 @@ pnpm lhci autorun
 
 ---
 
-### 4. 持續監控
+### 4. 子路徑靜態資產驗證
+
+| 檢查項目    | 指令                                                                         | 預期       |
+| ----------- | ---------------------------------------------------------------------------- | ---------- |
+| robots.txt  | `curl -I https://app.haotool.org/ratewise/robots.txt`                        | HTTP/2 200 |
+| sitemap.xml | `curl -I https://app.haotool.org/ratewise/sitemap.xml`                       | HTTP/2 200 |
+| llms.txt    | `curl -I https://app.haotool.org/ratewise/llms.txt`                          | HTTP/2 200 |
+| manifest    | `curl -I https://app.haotool.org/ratewise/manifest.webmanifest`              | HTTP/2 200 |
+| favicon     | `curl -I https://app.haotool.org/ratewise/favicon.ico`                       | HTTP/2 200 |
+| screenshots | `curl -I https://app.haotool.org/ratewise/screenshots/desktop-converter.png` | HTTP/2 200 |
+
+### 5. 持續監控
 
 #### A. Google Search Console 設定
 
@@ -1309,11 +1323,11 @@ export function SEOHead({
           contactPoint: {
             '@type': 'ContactPoint',
             contactType: 'Customer Support',
-            email: 'support@ratewise.app',
+            email: 'haotool.org@gmail.com',
           },
           sameAs: [
-            'https://twitter.com/ratewise',
-            'https://github.com/ratewise',
+            'https://www.threads.net/@azlife_1224',
+            'https://github.com/haotool/app',
           ],
         }}
       />

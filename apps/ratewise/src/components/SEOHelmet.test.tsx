@@ -39,6 +39,11 @@ describe('SEOHelmet', () => {
     expect(jsonLdScripts.some((schema) => schema['@type'] === 'WebApplication')).toBe(true);
     expect(jsonLdScripts.some((schema) => schema['@type'] === 'Organization')).toBe(true);
     expect(jsonLdScripts.some((schema) => schema['@type'] === 'WebSite')).toBe(true);
+
+    const organizationSchema = jsonLdScripts.find(
+      (schema) => schema['@type'] === 'Organization',
+    ) as { sameAs?: string[] } | undefined;
+    expect(organizationSchema?.sameAs).toContain('https://www.threads.net/@azlife_1224');
   });
 
   it('supports custom pathname, alternates, FAQ and JSON-LD data', async () => {
