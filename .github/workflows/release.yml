@@ -103,7 +103,11 @@ jobs:
           VERSION: ${{ steps.detect_version.outputs.current_version }}
         run: |
           set -euo pipefail
-          pnpm changeset tag
+          if ! git rev-parse "@app/ratewise@${VERSION}" >/dev/null 2>&1; then
+            pnpm changeset tag
+          else
+            echo "changeset tag already exists for @app/ratewise@${VERSION}, skipping generation"
+          fi
           if ! git rev-parse "ratewise-v${VERSION}" >/dev/null 2>&1; then
             git tag "ratewise-v${VERSION}"
           fi
