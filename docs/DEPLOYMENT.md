@@ -97,6 +97,7 @@ docker stop ratewise && docker rm ratewise
 - ✅ 靜態資源快取 (1 year immutable)
 - ✅ Health check endpoint (/health)
 - ✅ 最小安全標頭 (X-Content-Type-Options, X-Frame-Options)
+- ✅ 子路徑靜態檔（`/ratewise/manifest.webmanifest`、`/ratewise/robots.txt`、`/ratewise/llms.txt`、`/ratewise/sitemap.xml`）具專屬 `location` 規則，避免被 SPA fallback 攔截
 
 ### 安全標頭策略
 

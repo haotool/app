@@ -171,7 +171,7 @@ $ npx pa11y http://localhost:4174 --standard WCAG2AA
 git push origin perf/lighthouse-100-optimization
 
 # 使用 Google PageSpeed Insights 測試
-https://pagespeed.web.dev/analysis?url=https://app.haotool.org/ratewise/
+https://pagespeed.web.dev/analysis?url=https://app.haotool.org/ratewise
 ```
 
 ### 2. 持續監控設置

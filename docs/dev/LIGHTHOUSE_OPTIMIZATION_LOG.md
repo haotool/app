@@ -7,14 +7,14 @@
 
 ## 📊 目標分數追蹤
 
-| 日期       | Performance | Accessibility | Best Practices | SEO        | 來源                                           | 備註                           |
-| ---------- | ----------- | ------------- | -------------- | ---------- | ---------------------------------------------- | ------------------------------ |
-| 2025-10-30 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                            | 激進 Code Splitting 優化       |
-| 2025-10-30 | **優秀** ✅ | **100** ✅    | **100** ✅     | **100** ✅ | Local Preview (localhost:4176)                 | LCP 216ms, 節省 182KB 初始載入 |
-| 2025-10-29 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                            | 移除 non-blocking CSS 修復白屏 |
-| 2025-10-29 | **99** ✅   | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復後                | robots.txt 修復成功！          |
-| 2025-10-29 | **100** ✅  | **100** ✅    | 92 ⚠️          | 89 ⚠️      | Production (https://app.haotool.org/ratewise/) | 初始基準                       |
-| 2025-10-28 | 72 ⚠️       | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復前                | 本地測試 LCP 異常（已解決）    |
+| 日期       | Performance | Accessibility | Best Practices | SEO        | 來源                                          | 備註                           |
+| ---------- | ----------- | ------------- | -------------- | ---------- | --------------------------------------------- | ------------------------------ |
+| 2025-10-30 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                           | 激進 Code Splitting 優化       |
+| 2025-10-30 | **優秀** ✅ | **100** ✅    | **100** ✅     | **100** ✅ | Local Preview (localhost:4176)                | LCP 216ms, 節省 182KB 初始載入 |
+| 2025-10-29 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                           | 移除 non-blocking CSS 修復白屏 |
+| 2025-10-29 | **99** ✅   | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復後               | robots.txt 修復成功！          |
+| 2025-10-29 | **100** ✅  | **100** ✅    | 92 ⚠️          | 89 ⚠️      | Production (https://app.haotool.org/ratewise) | 初始基準                       |
+| 2025-10-28 | 72 ⚠️       | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復前               | 本地測試 LCP 異常（已解決）    |
 
 **目標**: Performance 100 + Accessibility 100 + Best Practices 100 + SEO 100
 
@@ -262,7 +262,7 @@
 
 ```bash
 # 1. 記錄優化前分數
-echo "Baseline: https://pagespeed.web.dev/analysis?url=https://app.haotool.org/ratewise/"
+echo "Baseline: https://pagespeed.web.dev/analysis?url=https://app.haotool.org/ratewise"
 
 # 2. 執行優化修改
 # ... (修改檔案)
@@ -296,7 +296,7 @@ fi
 curl https://app.haotool.org/ratewise/robots.txt
 
 # 檢查 CSP headers
-curl -I https://app.haotool.org/ratewise/ | grep -i content-security-policy
+curl -I https://app.haotool.org/ratewise | grep -i content-security-policy
 
 # 檢查快取策略
 curl -I https://app.haotool.org/ratewise/assets/index-xxx.css | grep -i cache-control

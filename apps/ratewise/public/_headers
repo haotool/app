@@ -21,7 +21,11 @@
 # Manifest 與 Icons - 中期快取（1天）
 /manifest.webmanifest
   Cache-Control: public, max-age=86400, must-revalidate
+/ratewise/manifest.webmanifest
+  Cache-Control: public, max-age=86400, must-revalidate
 /icons/*
+  Cache-Control: public, max-age=86400, must-revalidate
+/ratewise/icons/*
   Cache-Control: public, max-age=86400, must-revalidate
 /*.ico
   Cache-Control: public, max-age=86400, must-revalidate
@@ -29,11 +33,23 @@
   Cache-Control: public, max-age=86400, must-revalidate
 /*.png
   Cache-Control: public, max-age=86400, must-revalidate
+/ratewise/*.ico
+  Cache-Control: public, max-age=86400, must-revalidate
+/ratewise/*.svg
+  Cache-Control: public, max-age=86400, must-revalidate
+/ratewise/*.png
+  Cache-Control: public, max-age=86400, must-revalidate
 
 # 其他靜態資源 - 中期快取（1天）
 /robots.txt
   Cache-Control: public, max-age=86400
 /sitemap.xml
+  Cache-Control: public, max-age=86400
+/ratewise/robots.txt
+  Cache-Control: public, max-age=86400
+/ratewise/sitemap.xml
+  Cache-Control: public, max-age=86400
+/ratewise/llms.txt
   Cache-Control: public, max-age=86400
 /*.css
   Cache-Control: public, max-age=86400
