@@ -60,13 +60,13 @@ export default defineConfig(() => {
           'src/components/UpdatePrompt.tsx', // PWA-specific, requires service worker context
         ],
         thresholds: {
-          lines: 80,
-          functions: 80,
-          // TODO: Increase back to 80% once test coverage improves
-          // Current branch coverage: ~79% (main: 78.86%, PR: 79.1%)
-          // Focus areas: CurrencyRateService (30%), usePullToRefresh (60%)
-          branches: 78,
-          statements: 80,
+          // 基於 Linus Torvalds 哲學設置實用且可維護的門檻
+          // 當前覆蓋率：94.59% statements, 83.6% branches, 91.26% functions
+          // 設置略低於當前值以避免過度工程化，同時防止退化
+          statements: 90, // 當前: 94.59%
+          branches: 80, // 當前: 83.6%
+          functions: 88, // 當前: 91.26%
+          lines: 90, // 當前: 94.59%
         },
       },
     },
