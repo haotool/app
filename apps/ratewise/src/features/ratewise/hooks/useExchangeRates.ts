@@ -9,6 +9,7 @@ export interface ExchangeRatesState {
   isLoading: boolean;
   error: Error | null;
   lastUpdate: string | null;
+  lastFetchedAt: string | null;
   source: string | null;
   isRefreshing: boolean;
 }
@@ -20,6 +21,7 @@ const INITIAL_STATE: ExchangeRatesState = {
   isLoading: true,
   error: null,
   lastUpdate: null,
+  lastFetchedAt: null,
   source: null,
   isRefreshing: false,
 };
@@ -58,13 +60,22 @@ export function useExchangeRates() {
           }
         });
 
-        setState({
-          rates: newRates,
-          isLoading: false,
-          error: null,
-          lastUpdate: data.updateTime,
-          source: data.source,
-          isRefreshing: false,
+        const fetchedAt = new Date().toISOString();
+
+        setState((prev) => {
+          const sourceUpdate = data.updateTime?.trim() ?? null;
+          const normalizedUpdate =
+            sourceUpdate && sourceUpdate !== prev.lastUpdate ? sourceUpdate : fetchedAt;
+
+          return {
+            rates: newRates,
+            isLoading: false,
+            error: null,
+            lastUpdate: normalizedUpdate,
+            lastFetchedAt: fetchedAt,
+            source: data.source,
+            isRefreshing: false,
+          };
         });
 
         logger.info(`Exchange rates ${isAutoRefresh ? 'refreshed' : 'loaded'}`, {
@@ -79,6 +90,7 @@ export function useExchangeRates() {
           ...prev,
           isLoading: false,
           error: error instanceof Error ? error : new Error(String(error)),
+          lastFetchedAt: new Date().toISOString(),
           isRefreshing: false,
         }));
       }

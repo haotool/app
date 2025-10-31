@@ -13,30 +13,89 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 /**
  * 自動生成版本號
  * 策略: 發佈時使用 package.json 語義化版本，開發時附加 git metadata
- * 格式: {semver}[+sha.{hash}[-dirty]]
+ * 格式: {semver}[+sha.{hash}[-dirty]] or {semver}[+build.{distance}]
  */
 function readPackageVersion(): string {
   const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
   return packageJson.version;
 }
 
-function generateVersion(): string {
-  const baseVersion = readPackageVersion();
+/**
+ * 嘗試從 Git 標籤獲取版本號
+ * @returns 版本號（如: "1.1.0" 或 "1.1.0+build.5"）或 null（如果無標籤）
+ */
+function getVersionFromGitTag(): string | null {
+  try {
+    const matchingTags = execSync('git tag --list "@app/ratewise@*"', { encoding: 'utf-8' })
+      .trim()
+      .split('\n')
+      .filter(Boolean);
 
-  // CI / production build 使用語義化版本，確保快取失效與追蹤一致
-  if (process.env.CI || process.env.NODE_ENV === 'production') {
-    return baseVersion;
+    if (matchingTags.length === 0) {
+      return null;
+    }
+
+    const described = execSync('git describe --tags --long --match "@app/ratewise@*"', {
+      encoding: 'utf-8',
+    }).trim();
+
+    const tagMatch = /@app\/ratewise@(\d+\.\d+\.\d+)-(\d+)-g[0-9a-f]+/.exec(described);
+    if (!tagMatch) {
+      return null;
+    }
+
+    const [, tagVersion, distance] = tagMatch;
+    return Number(distance) === 0 ? tagVersion : `${tagVersion}+build.${distance}`;
+  } catch {
+    return null;
   }
+}
 
+/**
+ * 使用 Git commit 數生成版本號
+ * @param baseVersion - package.json 中的基礎版本
+ * @returns 版本號（如: "1.0.123"）或 null（如果 Git 不可用）
+ */
+function getVersionFromCommitCount(baseVersion: string): string | null {
+  try {
+    const commitCount = execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
+    const [major = '1', minor = '0'] = baseVersion.split('.').slice(0, 2);
+    return `${major}.${minor}.${commitCount}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 開發環境版本號（附加 Git SHA 和 dirty 標記）
+ * @param baseVersion - package.json 中的基礎版本
+ * @returns 開發版本號（如: "1.0.0+sha.abc123f-dirty"）
+ */
+function getDevelopmentVersion(baseVersion: string): string {
   try {
     const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
     const isDirty =
       execSync('git status --porcelain', { encoding: 'utf-8' }).trim().length > 0 ? '-dirty' : '';
     return `${baseVersion}+sha.${commitHash}${isDirty}`;
   } catch {
-    // Git 不可用時 fallback 至 package.json 版本號
     return baseVersion;
   }
+}
+
+/**
+ * 生成版本號（主函數）
+ * 使用 nullish coalescing 串接多個策略，清晰簡潔
+ */
+function generateVersion(): string {
+  const baseVersion = readPackageVersion();
+
+  // 開發環境：附加 Git metadata
+  if (!process.env.CI && process.env.NODE_ENV !== 'production') {
+    return getDevelopmentVersion(baseVersion);
+  }
+
+  // 生產環境：優先使用 Git 標籤，次之 commit 數，最後 fallback 到 package.json
+  return getVersionFromGitTag() ?? getVersionFromCommitCount(baseVersion) ?? baseVersion;
 }
 
 // 最簡配置 - 參考 Context7 官方範例

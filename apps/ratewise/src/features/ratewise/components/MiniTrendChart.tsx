@@ -195,18 +195,13 @@ export function MiniTrendChart({ data, currencyCode, className = '' }: MiniTrend
   return (
     <motion.div
       className={`w-full h-full relative ${className}`}
-      initial={{ opacity: 0, scaleX: 0 }}
-      animate={{ opacity: 1, scaleX: 1 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.6,
-        ease: [0.25, 0.1, 0.25, 1], // 自定義緩動曲線
-        scaleX: {
-          duration: 0.8,
-          ease: [0.4, 0, 0.2, 1], // Material Design 標準緩動
-        },
+        duration: 0.5,
+        ease: [0.25, 0.1, 0.25, 1],
       }}
-      style={{ transformOrigin: 'left center' }}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ y: -2 }}
     >
       {/* Lightweight Charts 趨勢圖 */}
       <div
