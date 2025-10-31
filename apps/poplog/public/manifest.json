@@ -1,0 +1,21 @@
+{
+  "name": "Q版便便記錄器",
+  "short_name": "便便記錄",
+  "description": "可愛的便便追蹤應用程式",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFBF6",
+  "theme_color": "#6D4C41",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
