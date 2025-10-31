@@ -21,6 +21,110 @@
 
 ---
 
+## 強制規範（2025-10-31 新增）
+
+**所有 Agent 必須遵守這些規範，違反將導致 PR 被拒絕**
+
+### 1. 開發文檔編號規則
+
+所有開發相關文檔必須使用編號格式 `00X_主題名稱.md` 放在 `docs/dev/` 目錄：
+
+- `001_exchange_rate_data_strategy.md` - 匯率數據策略
+- `002_development_reward_penalty_log.md` - 開發獎懲記錄
+- `003_ui_transparency_improvements.md` - UI 透明度改進
+- 未來新增文檔依序遞增 `004_`, `005_` ...
+
+**Agent 責任**:
+
+- 建立新開發文檔時，必須檢查現有最大編號並遞增
+- 使用 `ls docs/dev/ | grep -E '^[0-9]{3}_'` 確認現有編號
+
+### 2. 獎懲記錄強制流程
+
+**每個 Agent 每次操作後，必須更新 `docs/dev/002_development_reward_penalty_log.md`**
+
+**強制步驟**:
+
+1. 遇到錯誤或不確定的決策時，先透過 Context7 查閱官方文件
+2. 在 `002_development_reward_penalty_log.md` 中新增條目：
+   ```markdown
+   | 類型    | 摘要           | 採取行動     | 依據              | 分數 |
+   | ------- | -------------- | ------------ | ----------------- | ---- |
+   | ✅ 成功 | 簡短描述成功點 | 具體解決方案 | [context7:source] | +1   |
+   ```
+3. 更新「當前總分」
+4. 若總分為負，必須在待追蹤事項中說明改進計畫
+
+**Agent 責任**:
+
+- 每次操作完成後，自動檢查是否需更新 002 記錄
+- 引用 Context7 來源時，使用完整格式 `[context7:org/repo:timestamp]`
+
+### 3. Context7 優先原則
+
+**Agent 遇到以下情況，必須先查閱 Context7 官方文件**:
+
+**強制查詢時機**:
+
+- ❌ Build/test/lint 錯誤
+- ❓ 不確定最佳實踐或設計模式
+- 🆕 使用新的 library、framework、工具
+- 🔧 修改 CI/CD、部署配置
+- 📦 升級 major 版本依賴
+
+**Agent 操作流程**:
+
+```bash
+# 1. 自動觸發 Context7 查詢
+resolve-library-id --libraryName "目標套件"
+
+# 2. 獲取相關文件
+get-library-docs --context7CompatibleLibraryID "/org/repo" --topic "相關主題"
+
+# 3. 根據官方建議實作
+
+# 4. 在 002 記錄中引用來源
+```
+
+**禁止行為**:
+
+- ❌ Agent 不得憑記憶或假設實作
+- ❌ 不得跳過官方文件，直接試錯
+- ❌ 不得使用未經驗證的第三方教學
+
+**目的**: 確保 Agent 所有決策基於權威來源，減少人工介入
+
+### 4. Linus 三問檢查點
+
+**每個 Agent 在執行任何操作前，必須先執行 Linus 三問檢查**
+
+**Agent 自我檢查流程**:
+
+**操作前（Planning Phase）**:
+
+1. **"這是個真問題還是臆想出來的？"**
+   - 檢查是否有明確的 issue、bug report、或用戶需求
+   - 若無，拒絕執行並向用戶確認
+
+2. **"有更簡單的方法嗎？"**
+   - 搜尋現有工具函數是否可復用
+   - 評估是否有 library 內建解決方案
+   - 若有更簡方案，自動採用並記錄於 002
+
+3. **"會破壞什麼嗎？"**
+   - 自動執行 `pnpm typecheck` 與 `pnpm test`
+   - 檢查是否影響現有 API 或功能
+   - 若有風險，先警告用戶並等待確認
+
+**操作後（Validation Phase）**:
+
+- Agent 必須在操作日誌中記錄三問的驗證結果
+- 若建立開發文檔，必須包含 "Linus 三問驗證" 章節
+
+**目的**: 培養 Agent 工程品味，避免過度設計，確保程式碼簡潔實用
+
+---
+
 ## 1. 可用 MCP 工具
 
 ### Context7 MCP (官方文件檢索)
