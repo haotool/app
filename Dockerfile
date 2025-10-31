@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for RateWise
+# Multi-stage Dockerfile for Multi-App Deployment (Poplog + RateWise)
 # syntax=docker/dockerfile:1
 
 # Build stage
@@ -15,6 +15,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 
 # Copy package files and pnpm config
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/poplog/package.json ./apps/poplog/
 COPY apps/ratewise/package.json ./apps/ratewise/
 
 # Install dependencies with BuildKit cache mount (pnpm official best practice)
@@ -24,8 +25,9 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build application
-RUN pnpm build:ratewise
+# Build both applications
+RUN pnpm --filter @app/poplog build
+RUN pnpm --filter @app/ratewise build
 
 # Production stage
 FROM nginx:alpine
@@ -33,11 +35,12 @@ FROM nginx:alpine
 # Install wget for healthcheck
 RUN apk add --no-cache wget
 
-# Copy built assets
-COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html
+# Copy built assets for both applications
+COPY --from=builder /app/apps/poplog/dist /usr/share/nginx/html/poplog
+COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html/ratewise
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copy nginx configuration for multi-app setup
+COPY nginx-multi-app.conf /etc/nginx/nginx.conf
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
