@@ -12,6 +12,7 @@ import { VersionDisplay } from '../../components/VersionDisplay';
 import { ThreadsIcon } from '../../components/ThreadsIcon';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator';
+import { formatDisplayTime } from '../../utils/timeFormatter';
 
 const RateWise = () => {
   // Main container ref for pull-to-refresh
@@ -23,33 +24,18 @@ const RateWise = () => {
     isLoading: ratesLoading,
     error: ratesError,
     lastUpdate,
+    lastFetchedAt,
     refresh,
   } = useExchangeRates();
 
   // Pull-to-refresh functionality
   const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(mainRef, refresh);
 
-  const formattedLastUpdate = useMemo(() => {
-    const raw = lastUpdate?.trim();
-    if (!raw) {
-      return '';
-    }
-
-    const [datePart = '', timePart = ''] = raw.split(/\s+/);
-
-    const match = /(\d{4})\D+(\d{1,2})\D+(\d{1,2})/.exec(datePart);
-    if (match) {
-      const [, , month = '', day = ''] = match;
-      const formattedMonth = month.padStart(2, '0');
-      const formattedDay = day.padStart(2, '0');
-      const timeCandidate = timePart ?? /(\d{1,2}:\d{2}(?::\d{2})?)/.exec(raw)?.[0] ?? '';
-      return timeCandidate
-        ? `${formattedMonth}/${formattedDay} ${timeCandidate}`
-        : `${formattedMonth}/${formattedDay}`;
-    }
-
-    return raw;
-  }, [lastUpdate]);
+  // 格式化顯示時間（來源時間 · 刷新時間）
+  const formattedLastUpdate = useMemo(
+    () => formatDisplayTime(lastUpdate, lastFetchedAt),
+    [lastUpdate, lastFetchedAt],
+  );
 
   const {
     mode,

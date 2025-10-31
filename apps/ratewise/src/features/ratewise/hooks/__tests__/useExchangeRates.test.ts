@@ -66,6 +66,7 @@ describe('useExchangeRates', () => {
       expect(result.current.rates.USD).toBe(30.5);
       expect(result.current.rates.TWD).toBe(1);
       expect(result.current.lastUpdate).toBe('2025-10-31 01:00');
+      expect(result.current.lastFetchedAt).not.toBeNull();
     });
 
     it('載入失敗時設置錯誤狀態', async () => {
@@ -171,6 +172,7 @@ describe('useExchangeRates', () => {
       });
 
       const initialCallCount = vi.mocked(exchangeRateService.getExchangeRates).mock.calls.length;
+      const initialLastUpdate = result.current.lastUpdate;
 
       // ✅ 手動刷新
       await act(async () => {
@@ -178,6 +180,8 @@ describe('useExchangeRates', () => {
       });
 
       expect(exchangeRateService.getExchangeRates).toHaveBeenCalledTimes(initialCallCount + 1);
+      expect(result.current.lastUpdate).not.toBe(initialLastUpdate);
+      expect(result.current.lastFetchedAt).not.toBeNull();
     });
   });
 
