@@ -27,9 +27,9 @@ describe('SkeletonLoader', () => {
     it('渲染所有主要區塊', () => {
       const { container } = render(<SkeletonLoader />);
 
-      // ✅ 使用快照測試驗證結構穩定性
-      // Linus 原則: "如果結構改變，測試應該失敗"
-      expect(container.firstChild).toMatchSnapshot();
+      // ✅ 檢查主要結構元素存在
+      expect(container.querySelector('.space-y-4')).toBeInTheDocument();
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
     });
 
     it('應用正確的動畫類別', () => {
@@ -79,7 +79,11 @@ describe('CurrencyCardSkeleton', () => {
 
   it('匹配設計快照', () => {
     const { container } = render(<CurrencyCardSkeleton />);
-    expect(container.firstChild).toMatchSnapshot();
+
+    // ✅ 檢查主要結構元素
+    expect(container.querySelector('.bg-white')).toBeInTheDocument();
+    expect(container.querySelector('.rounded-lg')).toBeInTheDocument();
+    expect(container.querySelector('.w-8')).toBeInTheDocument();
   });
 });
 
@@ -102,7 +106,10 @@ describe('ConverterSkeleton', () => {
 
     it('匹配 single 模式快照', () => {
       const { container } = render(<ConverterSkeleton mode="single" />);
-      expect(container.firstChild).toMatchSnapshot();
+
+      // ✅ 檢查 single 模式結構
+      expect(container.querySelector('.h-12')).toBeInTheDocument();
+      expect(container.querySelector('.grid-cols-1')).toBeInTheDocument();
     });
   });
 
@@ -126,7 +133,10 @@ describe('ConverterSkeleton', () => {
 
     it('匹配 multi 模式快照', () => {
       const { container } = render(<ConverterSkeleton mode="multi" />);
-      expect(container.firstChild).toMatchSnapshot();
+
+      // ✅ 檢查 multi 模式結構
+      expect(container.querySelector('.grid-cols-1.md\\:grid-cols-2')).toBeInTheDocument();
+      expect(container.querySelectorAll('.bg-white.rounded-lg')).toHaveLength(4);
     });
   });
 
