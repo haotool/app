@@ -460,67 +460,84 @@ const AnimatedHint: React.FC<{ active: boolean; samples: string[]; color: string
 };
 
 export default function Page() {
-  // theme (預設淺色，記憶切換)
-  const [dark, setDark] = useState<boolean>(() => {
-    try {
-      const v = localStorage.getItem(KEY_THEME);
-      return v ? v === 'dark' : false;
-    } catch {
-      return false;
-    }
-  });
+  // SSR 安全：mounted 狀態追蹤
+  const [mounted, setMounted] = useState(false);
+
+  // theme (預設淺色，記憶切換) - SSR 安全初始化
+  const [dark, setDark] = useState<boolean>(false);
+
+  // main states - SSR 安全初始化
+  const [mode, setMode] = useState<'log' | 'analysis'>('log');
+  const [records, setRecords] = useState<PoopRecord[]>([]);
+
+  // quick mode & last type - SSR 安全初始化
+  const [quick, setQuick] = useState<'on' | 'off'>('off');
+  const [lastType, setLastType] = useState<1 | 2 | 3 | 4 | 5>(2);
+
+  // 客戶端 mount 後從 localStorage 讀取數據
   useEffect(() => {
+    setMounted(true);
+    try {
+      // 讀取 theme
+      const themeValue = localStorage.getItem(KEY_THEME);
+      if (themeValue === 'dark') setDark(true);
+
+      // 讀取 records
+      const recordsRaw = localStorage.getItem(KEY_RECORDS);
+      if (recordsRaw) {
+        const parsed = JSON.parse(recordsRaw);
+        setRecords(parsed);
+      }
+
+      // 讀取 quick mode
+      const quickValue = localStorage.getItem(KEY_QUICK);
+      if (quickValue === 'on') setQuick('on');
+
+      // 讀取 lastType
+      const lastTypeValue = localStorage.getItem(KEY_LAST_TYPE);
+      if (lastTypeValue) {
+        const num = Number(lastTypeValue);
+        if (num >= 1 && num <= 5) setLastType(num as 1 | 2 | 3 | 4 | 5);
+      }
+    } catch (err) {
+      console.error('Failed to load from localStorage:', err);
+    }
+  }, []);
+
+  // 保存 theme 變更
+  useEffect(() => {
+    if (!mounted) return;
     try {
       localStorage.setItem(KEY_THEME, dark ? 'dark' : 'light');
     } catch {}
-  }, [dark]);
-  const theme = dark ? THEME.dark : THEME.light;
+  }, [dark, mounted]);
 
-  // main states
-  const [mode, setMode] = useState<'log' | 'analysis'>('log');
-  const [records, setRecords] = useState<PoopRecord[]>(() => {
-    try {
-      const raw = localStorage.getItem(KEY_RECORDS);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
   // 僅保存非臨時資料
   useEffect(() => {
+    if (!mounted) return;
     try {
       const keep = records.filter((r) => !r.ephemeral);
       localStorage.setItem(KEY_RECORDS, JSON.stringify(keep));
     } catch {}
-  }, [records]);
+  }, [records, mounted]);
 
-  // quick mode & last type
-  const [quick, setQuick] = useState<'on' | 'off'>(() => {
-    try {
-      return (localStorage.getItem(KEY_QUICK) as any) || 'off';
-    } catch {
-      return 'off';
-    }
-  });
+  // 保存 quick mode 變更
   useEffect(() => {
+    if (!mounted) return;
     try {
       localStorage.setItem(KEY_QUICK, quick);
     } catch {}
-  }, [quick]);
-  const [lastType, setLastType] = useState<1 | 2 | 3 | 4 | 5>(() => {
-    try {
-      return ((localStorage.getItem(KEY_LAST_TYPE) &&
-        Number(localStorage.getItem(KEY_LAST_TYPE))) ||
-        2) as any;
-    } catch {
-      return 2;
-    }
-  });
+  }, [quick, mounted]);
+
+  // 保存 lastType 變更
   useEffect(() => {
+    if (!mounted) return;
     try {
       localStorage.setItem(KEY_LAST_TYPE, String(lastType));
     } catch {}
-  }, [lastType]);
+  }, [lastType, mounted]);
+
+  const theme = dark ? THEME.dark : THEME.light;
 
   // sample banner
   const [showSampleBanner, setShowSampleBanner] = useState(false);
