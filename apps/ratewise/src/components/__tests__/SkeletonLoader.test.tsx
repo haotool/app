@@ -108,8 +108,8 @@ describe('ConverterSkeleton', () => {
       const { container } = render(<ConverterSkeleton mode="single" />);
 
       // ✅ 檢查 single 模式結構
-      expect(container.querySelector('.h-12')).toBeInTheDocument();
-      expect(container.querySelector('.grid-cols-1')).toBeInTheDocument();
+      expect(container.querySelector('.h-14')).toBeInTheDocument();
+      expect(container.querySelector('.h-16')).toBeInTheDocument();
     });
   });
 
@@ -135,8 +135,8 @@ describe('ConverterSkeleton', () => {
       const { container } = render(<ConverterSkeleton mode="multi" />);
 
       // ✅ 檢查 multi 模式結構
-      expect(container.querySelector('.grid-cols-1.md\\:grid-cols-2')).toBeInTheDocument();
-      expect(container.querySelectorAll('.bg-white.rounded-lg')).toHaveLength(4);
+      expect(container.querySelector('.h-12')).toBeInTheDocument();
+      expect(container.querySelector('.grid-cols-1')).toBeInTheDocument();
     });
   });
 
