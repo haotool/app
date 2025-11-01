@@ -1,3 +1,4 @@
+import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -11,17 +12,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-TW">
+    <html lang="zh-TW" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('poop.v4.theme') || 'light';
+                  document.documentElement.classList.toggle('dark', theme === 'dark');
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
-      <body style={{ margin: 0, padding: 0 }}>{children}</body>
+      <body className="m-0 p-0 bg-surface text-on-surface">{children}</body>
     </html>
   );
 }

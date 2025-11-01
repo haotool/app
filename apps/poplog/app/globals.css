@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light mode Design Tokens (default) */
+    --color-primary: 109 76 65;
+    --color-on-primary: 255 255 255;
+    --color-primary-container: 243 233 227;
+    --color-on-primary-container: 78 52 46;
+    --color-surface: 255 251 246;
+    --color-surface-alt: 255 246 236;
+    --color-on-surface: 44 44 44;
+    --color-on-surface-variant: 107 107 107;
+    --color-outline: 229 218 210;
+    --color-error: 179 38 30;
+    --color-on-error: 255 255 255;
+
+    /* Elevation shadows */
+    --elevation-1: 0 1px 3px rgb(0 0 0 / 0.08), 0 1px 2px rgb(0 0 0 / 0.06);
+    --elevation-2: 0 4px 12px rgb(0 0 0 / 0.12);
+    --elevation-3: 0 10px 30px rgb(0 0 0 / 0.18);
+  }
+
+  .dark {
+    /* Dark mode Design Tokens */
+    --color-primary: 215 204 200;
+    --color-on-primary: 62 39 35;
+    --color-primary-container: 62 47 42;
+    --color-on-primary-container: 243 233 227;
+    --color-surface: 26 21 19;
+    --color-surface-alt: 34 26 24;
+    --color-on-surface: 236 223 219;
+    --color-on-surface-variant: 185 175 170;
+    --color-outline: 62 51 47;
+    --color-error: 255 180 171;
+    --color-on-error: 105 0 5;
+  }
+}
+
+@layer utilities {
+  .shadow-1 {
+    box-shadow: var(--elevation-1);
+  }
+  .shadow-2 {
+    box-shadow: var(--elevation-2);
+  }
+  .shadow-3 {
+    box-shadow: var(--elevation-3);
+  }
+}

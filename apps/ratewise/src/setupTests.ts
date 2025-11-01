@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { vi } from 'vitest';
+import { vi, beforeAll } from 'vitest';
 
 // Mock HTMLCanvasElement for lightweight-charts tests
 // Based on Vitest best practices: https://vitest.dev/guide/mocking.html#globals
@@ -73,6 +73,13 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
+
+// Initialize snapshot state for Vitest
+beforeAll(() => {
+  // Ensure snapshot state is properly initialized
+  // This helps with snapshot tests in CI environments
+  process.env['VITEST_SNAPSHOT_UPDATE'] = 'false';
+});
 
 beforeEach(() => {
   window.localStorage.clear();

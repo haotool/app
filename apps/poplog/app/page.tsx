@@ -891,14 +891,14 @@ export default function Page() {
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={addByLine}
-              className="h-11 px-3 rounded-full text-sm font-medium m-1 focus-visible:outline focus-visible:outline-2"
+              className="h-11 px-3 rounded-full text-sm font-medium mx-1 focus-visible:outline focus-visible:outline-2"
               style={{ background: theme.primary, color: theme.onPrimary }}
             >
               新增
             </motion.button>
             <button
               onClick={() => setQuick('on')}
-              className="h-11 px-3 rounded-full text-sm m-1 focus-visible:outline focus-visible:outline-2"
+              className="h-11 px-3 rounded-full text-sm mx-1 focus-visible:outline focus-visible:outline-2"
               style={{ background: theme.surfaceAlt, border: `1px solid ${theme.outline}` }}
             >
               快速
@@ -906,10 +906,7 @@ export default function Page() {
           </div>
 
           {/* 型態選項：等間距自動換行，Icon 上 / Label 下 */}
-          <div
-            className="grid"
-            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(76px, 1fr))', gap: 8 }}
-          >
+          <div className="grid grid-cols-5 gap-2">
             {TYPES.map((t) => (
               <motion.button
                 key={t.id}
@@ -933,10 +930,7 @@ export default function Page() {
         </div>
       ) : (
         <div className="space-y-2">
-          <div
-            className="grid"
-            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(76px, 1fr))', gap: 8 }}
-          >
+          <div className="grid grid-cols-6 gap-2">
             {TYPES.map((t) => (
               <motion.button
                 key={t.id}
@@ -1075,7 +1069,7 @@ export default function Page() {
             animate={{ y: 0 }}
             exit={{ y: 400 }}
             transition={{ type: 'spring', stiffness: 220, damping: 28 }}
-            className="w-full max-w-md mx-auto mb-4 rounded-2xl p-4"
+            className="w-[calc(100%-2rem)] max-w-md mx-auto mb-4 rounded-2xl p-4"
             style={{ background: theme.surfaceAlt, boxShadow: THEME.elevation[3] }}
             onClick={(e) => e.stopPropagation()}
           >
