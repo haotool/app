@@ -29,6 +29,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next-env.d.ts", "dist/types/**/*.ts"],
+  "include": ["**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next-env.d.ts", "dist/types/**/*.ts", "custom.d.ts"],
   "exclude": ["node_modules"]
 }
