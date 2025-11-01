@@ -65,6 +65,8 @@
     "vite": "^7.1.12"
   },
   "browserslist": [
-    "baseline widely available"
+    "> 0.5%",
+    "last 2 versions",
+    "not dead"
   ]
 }
