@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-10-31T22:41:54.476Z",
-  "updateTime": "2025/11/01 06:41:54",
+  "timestamp": "2025-11-01T01:50:50.194Z",
+  "updateTime": "2025/11/01 09:50:50",
   "source": "Taiwan Bank (臺灣銀行牌告匯率)",
   "sourceUrl": "https://rate.bot.com.tw/xrt",
   "base": "TWD",
@@ -21,7 +21,7 @@
     "KRW": 0.02362,
     "VND": 0.00133,
     "MYR": 7.837,
-    "CNY": 4.381
+    "CNY": 4.382
   },
   "details": {
     "USD": {
@@ -203,12 +203,12 @@
     "CNY": {
       "name": "人民幣",
       "spot": {
-        "buy": 4.286,
-        "sell": 4.346
+        "buy": 4.287,
+        "sell": 4.347
       },
       "cash": {
-        "buy": 4.219,
-        "sell": 4.381
+        "buy": 4.22,
+        "sell": 4.382
       }
     }
   }
