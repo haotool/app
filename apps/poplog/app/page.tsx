@@ -357,6 +357,220 @@ const parseNotebook = (text: string, base = new Date()) => {
   return out;
 };
 
+/** Smart date parser with year inference */
+interface SmartParseResult {
+  records: { iso: string }[];
+  metadata: {
+    order: 'ascending' | 'descending';
+    yearRange: string;
+    confidence: number;
+    warnings: string[];
+  };
+}
+
+interface ParsedEntry {
+  raw: string;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+}
+
+function parseNotebookSmart(text: string): SmartParseResult {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  const currentDay = today.getDate();
+
+  // Step 1: Parse all entries (MM/DD HH:MM format)
+  const lines = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  const entries: ParsedEntry[] = [];
+
+  for (const raw of lines) {
+    // Parse date (MM/DD)
+    const dateMatch = raw.match(/\b(\d{1,2})[\/-](\d{1,2})\b/);
+    if (!dateMatch) continue;
+
+    const month = +dateMatch[1];
+    const day = +dateMatch[2];
+
+    // Parse time
+    const tt = parseTimeToken(raw);
+    if (!tt) continue;
+
+    entries.push({
+      raw,
+      month,
+      day,
+      hour: tt.h,
+      minute: tt.m,
+    });
+  }
+
+  if (entries.length === 0) {
+    return {
+      records: [],
+      metadata: {
+        order: 'ascending',
+        yearRange: '',
+        confidence: 0,
+        warnings: ['無法解析任何日期'],
+      },
+    };
+  }
+
+  // Step 2: Detect order (ascending/descending)
+  let ascendingScore = 0;
+  let descendingScore = 0;
+
+  for (let i = 1; i < Math.min(entries.length, 5); i++) {
+    const curr = entries[i];
+    const prev = entries[i - 1];
+
+    if (curr.month > prev.month || (curr.month === prev.month && curr.day > prev.day)) {
+      ascendingScore++;
+    } else if (curr.month < prev.month || (curr.month === prev.month && curr.day < prev.day)) {
+      descendingScore++;
+    }
+  }
+
+  const isAscending = ascendingScore >= descendingScore;
+  const order: 'ascending' | 'descending' = isAscending ? 'ascending' : 'descending';
+
+  // Step 3: Assign years intelligently
+  const warnings: string[] = [];
+  let startYear = currentYear;
+  let endYear = currentYear;
+
+  if (isAscending) {
+    // Ascending: Most recent date should be closest to today
+    // Work backwards from the last entry
+    const lastEntry = entries[entries.length - 1];
+
+    // If last entry is in the future, it's probably last year
+    if (
+      lastEntry.month > currentMonth ||
+      (lastEntry.month === currentMonth && lastEntry.day > currentDay)
+    ) {
+      startYear = currentYear - 1;
+      endYear = currentYear - 1;
+      warnings.push('最後日期在未來，推測為去年資料');
+    }
+
+    // Check for year boundaries
+    for (let i = 1; i < entries.length; i++) {
+      const curr = entries[i];
+      const prev = entries[i - 1];
+
+      // If month decreases significantly (e.g., 12 → 1), year changed
+      if (prev.month >= 11 && curr.month <= 2) {
+        startYear--;
+        break;
+      }
+    }
+  } else {
+    // Descending: First entry should be closest to today
+    const firstEntry = entries[0];
+
+    // If first entry is in the future, it's probably last year
+    if (
+      firstEntry.month > currentMonth ||
+      (firstEntry.month === currentMonth && firstEntry.day > currentDay)
+    ) {
+      startYear = currentYear - 1;
+      endYear = currentYear - 1;
+      warnings.push('第一個日期在未來，推測為去年資料');
+    }
+
+    // Check for year boundaries
+    for (let i = 1; i < entries.length; i++) {
+      const curr = entries[i];
+      const prev = entries[i - 1];
+
+      // If month increases significantly (e.g., 1 → 12), year changed
+      if (prev.month <= 2 && curr.month >= 11) {
+        endYear--;
+        break;
+      }
+    }
+  }
+
+  // Step 4: Generate ISO strings with assigned years
+  const records: { iso: string }[] = [];
+  let currentYearAssignment = isAscending ? startYear : startYear;
+
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    const prevEntry = i > 0 ? entries[i - 1] : null;
+
+    // Detect year boundary crossing
+    if (prevEntry) {
+      if (isAscending) {
+        // Ascending: 12/31 → 01/01 means year++
+        if (prevEntry.month >= 11 && entry.month <= 2) {
+          currentYearAssignment++;
+        }
+      } else {
+        // Descending: 01/01 → 12/31 means year--
+        if (prevEntry.month <= 2 && entry.month >= 11) {
+          currentYearAssignment--;
+        }
+      }
+    }
+
+    const date = new Date(
+      currentYearAssignment,
+      entry.month - 1,
+      entry.day,
+      entry.hour,
+      entry.minute,
+      0,
+      0,
+    );
+    records.push({ iso: date.toISOString() });
+  }
+
+  // Step 5: Calculate confidence and year range
+  const yearSet = new Set(records.map((r) => new Date(r.iso).getFullYear()));
+  const years = Array.from(yearSet).sort((a, b) => a - b);
+  const yearRange =
+    years.length === 1
+      ? `${years[0]}`
+      : `${years[0]}/${String(entries[0].month).padStart(2, '0')} - ${years[years.length - 1]}/${String(entries[entries.length - 1].month).padStart(2, '0')}`;
+
+  // Confidence calculation
+  let confidence = 0.8; // Base confidence
+
+  // Reduce confidence if order detection is ambiguous
+  if (Math.abs(ascendingScore - descendingScore) <= 1) {
+    confidence -= 0.2;
+    warnings.push('日期順序不明確，請確認年份推測是否正確');
+  }
+
+  // Reduce confidence if data spans more than 1 year
+  if (years.length > 2) {
+    confidence -= 0.15;
+    warnings.push('資料跨越多年，請仔細檢查年份分配');
+  }
+
+  // Reduce confidence if any date is in the far future
+  const futureEntries = records.filter((r) => new Date(r.iso) > new Date(currentYear + 1, 11, 31));
+  if (futureEntries.length > 0) {
+    confidence -= 0.3;
+    warnings.push(`有 ${futureEntries.length} 筆日期在遙遠的未來`);
+  }
+
+  return {
+    records,
+    metadata: {
+      order,
+      yearRange,
+      confidence: Math.max(0, Math.min(1, confidence)),
+      warnings,
+    },
+  };
+}
+
 /** Sample generator（100~150 天） */
 function genSample(kind: 'normal' | 'abnormal' | 'over'): PoopRecord[] {
   const days = 100 + Math.floor(Math.random() * 51); // 100~150
@@ -1509,6 +1723,8 @@ export default function Page() {
   const [openImport, setOpenImport] = useState(false);
   const [importTab, setImportTab] = useState<'paste' | 'sample'>('paste');
   const [note, setNote] = useState('');
+  const [smartParseResult, setSmartParseResult] = useState<SmartParseResult | null>(null);
+  const [showConfirmImport, setShowConfirmImport] = useState(false);
 
   const importSample = (kind: 'normal' | 'abnormal' | 'over') => {
     const demo = genSample(kind);
@@ -1517,6 +1733,105 @@ export default function Page() {
     setShowSampleBanner(true);
     setMode('analysis');
   };
+
+  // 智能解析確認對話框
+  const ConfirmImportModal = (
+    <AnimatePresence>
+      {showConfirmImport && smartParseResult && (
+        <motion.div
+          className="fixed inset-0 z-50 grid place-items-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{ background: 'rgba(0,0,0,.55)' }}
+          onClick={() => setShowConfirmImport(false)}
+          role="dialog"
+          aria-modal
+        >
+          <motion.div
+            layout
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl overflow-hidden"
+            style={{ background: theme.surfaceAlt, boxShadow: THEME.elevation[3] }}
+          >
+            <div
+              className="px-4 py-3 flex items-center justify-between"
+              style={{ background: theme.surface }}
+            >
+              <div className="text-sm font-semibold">確認匯入</div>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">解析筆數：</span>
+                  <span className="font-semibold">{smartParseResult.records.length} 筆</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">日期順序：</span>
+                  <span className="font-semibold">
+                    {smartParseResult.metadata.order === 'ascending' ? '正序 (舊→新)' : '倒序 (新→舊)'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">年份區間：</span>
+                  <span className="font-semibold">{smartParseResult.metadata.yearRange}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">推測信心：</span>
+                  <span className="font-semibold">
+                    {(smartParseResult.metadata.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+
+              {smartParseResult.metadata.warnings.length > 0 && (
+                <div
+                  className="p-3 rounded-xl text-sm space-y-1 bg-orange-50 dark:bg-orange-950 text-orange-900 dark:text-orange-100"
+                >
+                  <div className="font-semibold">⚠️ 注意事項：</div>
+                  {smartParseResult.metadata.warnings.map((warning, i) => (
+                    <div key={i} className="ml-4">
+                      • {warning}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowConfirmImport(false)}
+                  className="flex-1 h-10 px-3 rounded-full text-sm focus-visible:outline focus-visible:outline-2"
+                  style={{ background: theme.surface, border: `1px solid ${theme.outline}` }}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    // 確認匯入
+                    const add = smartParseResult.records.map((r, i) => ({
+                      id: `imp-${Date.now()}-${i}`,
+                      iso: r.iso,
+                      type: null,
+                      source: 'import' as const,
+                    }));
+                    setRecords((prev) => [...prev, ...add]);
+                    setShowConfirmImport(false);
+                    setOpenImport(false);
+                    setNote('');
+                    setSmartParseResult(null);
+                  }}
+                  className="flex-1 h-10 px-3 rounded-full text-sm font-medium focus-visible:outline focus-visible:outline-2"
+                  style={{ background: theme.primary, color: theme.onPrimary }}
+                >
+                  確認匯入
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
   const ImportModal = (
     <AnimatePresence>
@@ -1595,18 +1910,16 @@ export default function Page() {
                     </button>
                     <button
                       onClick={() => {
-                        const list = parseNotebook(note, new Date());
-                        const add = list.map((iso, i) => ({
-                          id: `imp-${Date.now()}-${i}`,
-                          iso,
-                          type: null,
-                          source: 'import' as const,
-                        }));
-                        if (add.length) {
-                          setRecords((prev) => [...prev, ...add]);
+                        // 使用智能解析
+                        const result = parseNotebookSmart(note);
+                        if (result.records.length === 0) {
+                          // 如果沒有解析到任何記錄，顯示警告
+                          alert(result.metadata.warnings.join('\n') || '無法解析日期');
+                          return;
                         }
-                        setOpenImport(false);
-                        setNote('');
+                        // 儲存解析結果並顯示確認對話框
+                        setSmartParseResult(result);
+                        setShowConfirmImport(true);
                       }}
                       className="h-9 px-3 rounded-full text-sm font-medium focus-visible:outline focus-visible:outline-2"
                       style={{ background: theme.primary, color: theme.onPrimary }}
@@ -1834,6 +2147,7 @@ export default function Page() {
         </footer>
       </div>
 
+      {ConfirmImportModal}
       {ImportModal}
       {EditSheet}
       {ClearModal}
