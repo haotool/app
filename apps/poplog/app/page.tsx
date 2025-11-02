@@ -251,39 +251,40 @@ const N = (s: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 function parseTimeToken(raw: string) {
-  let s = N(raw);
+  const s = N(raw);
   const hint = /上午|下午|晚上|早上|清晨|凌晨|am|pm/i.exec(s)?.[0]?.toLowerCase();
   const isPM = !!hint && /(下午|晚上|pm)/.test(hint);
   const isAM = !!hint && /(上午|早上|清晨|凌晨|am)/.test(hint);
-  let m = s.match(/(\d{1,2})\s*:\s*(\d{1,2})/);
+  let m = /(\d{1,2})\s*:\s*(\d{1,2})/.exec(s);
   if (m) {
     let h = +m[1],
       mm = +m[2];
-    if (/半/.test(s)) mm = 30;
+    if (s.includes('半')) mm = 30;
     if (isPM && h < 12) h += 12;
     if (isAM && h === 12) h = 0;
     return { h, m: Math.min(Math.max(mm, 0), 59) };
   }
-  m = s.match(/(\d{1,2})\s*(?:[.:：])?\s*半/);
+  m = /(\d{1,2})\s*(?:[.:：])?\s*半/.exec(s);
   if (m) {
     let h = +m[1];
     if (isPM && h < 12) h += 12;
     if (isAM && h === 12) h = 0;
     return { h, m: 30 };
   }
-  m = s.match(/\b(\d{1,2})\.(\d{1,2})\b/);
+  m = /\b(\d{1,2})\.(\d{1,2})\b/.exec(s);
   if (m) {
     let h = +m[1],
       frac = m[2],
       mm = frac.length >= 2 ? +frac.slice(0, 2) : Math.round(parseFloat('0.' + frac) * 60);
-    if (/半/.test(s)) mm = 30;
+    if (s.includes('半')) mm = 30;
     if (isPM && h < 12) h += 12;
     if (isAM && h === 12) h = 0;
     return { h, m: Math.min(Math.max(mm, 0), 59) };
   }
-  const cm = s.match(
-    /(上午|下午|晚上|早上|清晨|凌晨)?\s*([零〇○一二兩三四五六七八九十]{1,3})點(?:(半)|([零〇○一二兩三四五六七八九十]{1,3})分?)?/,
-  );
+  const cm =
+    /(上午|下午|晚上|早上|清晨|凌晨)?\s*([零〇○一二兩三四五六七八九十]{1,3})點(?:(半)|([零〇○一二兩三四五六七八九十]{1,3})分?)?/.exec(
+      s,
+    );
   if (cm) {
     const h0 = zhNumToInt(cm[2] || '') ?? 0;
     let h = h0,
@@ -294,7 +295,7 @@ function parseTimeToken(raw: string) {
     if (am && h === 12) h = 0;
     return { h, m: Math.min(Math.max(mm, 0), 59) };
   }
-  m = s.match(/\b(\d{1,2})\s*(am|pm)?\b/i);
+  m = /\b(\d{1,2})\s*(am|pm)?\b/i.exec(s);
   if (m) {
     let h = +m[1],
       mm = 0;
@@ -310,11 +311,11 @@ function parseTimeToken(raw: string) {
 }
 function parseDateToken(raw: string, base: Date) {
   const s = N(raw).replace(/[年]/g, '/').replace(/月/g, '/').replace(/日/g, '');
-  let m = s.match(/\b(\d{4})\/(\d{1,2})\/(\d{1,2})\b/);
+  let m = /\b(\d{4})\/(\d{1,2})\/(\d{1,2})\b/.exec(s);
   if (m) return { y: +m[1], mo: +m[2], d: +m[3] };
-  m = s.match(/\b(\d{1,2})[\/-](\d{1,2})\b/);
+  m = /\b(\d{1,2})[\/-](\d{1,2})\b/.exec(s);
   if (m) return { y: base.getFullYear(), mo: +m[1], d: +m[2] };
-  m = s.match(/\b(\d{1,2})\s*月\s*(\d{1,2})\b/);
+  m = /\b(\d{1,2})\s*月\s*(\d{1,2})\b/.exec(s);
   if (m) return { y: base.getFullYear(), mo: +m[1], d: +m[2] };
   return null;
 }
@@ -356,6 +357,223 @@ const parseNotebook = (text: string, base = new Date()) => {
   }
   return out;
 };
+
+/** Smart date parser with year inference */
+interface SmartParseResult {
+  records: { iso: string }[];
+  metadata: {
+    order: 'ascending' | 'descending';
+    yearRange: string;
+    confidence: number;
+    warnings: string[];
+  };
+}
+
+interface ParsedEntry {
+  raw: string;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+}
+
+function parseNotebookSmart(text: string): SmartParseResult {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  const currentDay = today.getDate();
+
+  // Step 1: Parse all entries (MM/DD HH:MM format)
+  const lines = text
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const entries: ParsedEntry[] = [];
+
+  for (const raw of lines) {
+    // Parse date (MM/DD)
+    const dateMatch = /\b(\d{1,2})[\/-](\d{1,2})\b/.exec(raw);
+    if (!dateMatch) continue;
+
+    const month = +dateMatch[1];
+    const day = +dateMatch[2];
+
+    // Parse time
+    const tt = parseTimeToken(raw);
+    if (!tt) continue;
+
+    entries.push({
+      raw,
+      month,
+      day,
+      hour: tt.h,
+      minute: tt.m,
+    });
+  }
+
+  if (entries.length === 0) {
+    return {
+      records: [],
+      metadata: {
+        order: 'ascending',
+        yearRange: '',
+        confidence: 0,
+        warnings: ['無法解析任何日期'],
+      },
+    };
+  }
+
+  // Step 2: Detect order (ascending/descending)
+  let ascendingScore = 0;
+  let descendingScore = 0;
+
+  for (let i = 1; i < Math.min(entries.length, 5); i++) {
+    const curr = entries[i];
+    const prev = entries[i - 1];
+
+    if (curr.month > prev.month || (curr.month === prev.month && curr.day > prev.day)) {
+      ascendingScore++;
+    } else if (curr.month < prev.month || (curr.month === prev.month && curr.day < prev.day)) {
+      descendingScore++;
+    }
+  }
+
+  const isAscending = ascendingScore >= descendingScore;
+  const order: 'ascending' | 'descending' = isAscending ? 'ascending' : 'descending';
+
+  // Step 3: Assign years intelligently
+  const warnings: string[] = [];
+  let startYear = currentYear;
+  let _endYear = currentYear;
+
+  if (isAscending) {
+    // Ascending: Most recent date should be closest to today
+    // Work backwards from the last entry
+    const lastEntry = entries[entries.length - 1];
+
+    // If last entry is in the future, it's probably last year
+    if (
+      lastEntry.month > currentMonth ||
+      (lastEntry.month === currentMonth && lastEntry.day > currentDay)
+    ) {
+      startYear = currentYear - 1;
+      _endYear = currentYear - 1;
+      warnings.push('最後日期在未來，推測為去年資料');
+    }
+
+    // Check for year boundaries
+    for (let i = 1; i < entries.length; i++) {
+      const curr = entries[i];
+      const prev = entries[i - 1];
+
+      // If month decreases significantly (e.g., 12 → 1), year changed
+      if (prev.month >= 11 && curr.month <= 2) {
+        startYear--;
+        break;
+      }
+    }
+  } else {
+    // Descending: First entry should be closest to today
+    const firstEntry = entries[0];
+
+    // If first entry is in the future, it's probably last year
+    if (
+      firstEntry.month > currentMonth ||
+      (firstEntry.month === currentMonth && firstEntry.day > currentDay)
+    ) {
+      startYear = currentYear - 1;
+      _endYear = currentYear - 1;
+      warnings.push('第一個日期在未來，推測為去年資料');
+    }
+
+    // Check for year boundaries
+    for (let i = 1; i < entries.length; i++) {
+      const curr = entries[i];
+      const prev = entries[i - 1];
+
+      // If month increases significantly (e.g., 1 → 12), year changed
+      if (prev.month <= 2 && curr.month >= 11) {
+        _endYear--;
+        break;
+      }
+    }
+  }
+
+  // Step 4: Generate ISO strings with assigned years
+  const records: { iso: string }[] = [];
+  let currentYearAssignment = isAscending ? startYear : startYear;
+
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    const prevEntry = i > 0 ? entries[i - 1] : null;
+
+    // Detect year boundary crossing
+    if (prevEntry) {
+      if (isAscending) {
+        // Ascending: 12/31 → 01/01 means year++
+        if (prevEntry.month >= 11 && entry.month <= 2) {
+          currentYearAssignment++;
+        }
+      } else {
+        // Descending: 01/01 → 12/31 means year--
+        if (prevEntry.month <= 2 && entry.month >= 11) {
+          currentYearAssignment--;
+        }
+      }
+    }
+
+    const date = new Date(
+      currentYearAssignment,
+      entry.month - 1,
+      entry.day,
+      entry.hour,
+      entry.minute,
+      0,
+      0,
+    );
+    records.push({ iso: date.toISOString() });
+  }
+
+  // Step 5: Calculate confidence and year range
+  const yearSet = new Set(records.map((r) => new Date(r.iso).getFullYear()));
+  const years = Array.from(yearSet).sort((a, b) => a - b);
+  const yearRange =
+    years.length === 1
+      ? `${years[0]}`
+      : `${years[0]}/${String(entries[0].month).padStart(2, '0')} - ${years[years.length - 1]}/${String(entries[entries.length - 1].month).padStart(2, '0')}`;
+
+  // Confidence calculation
+  let confidence = 0.8; // Base confidence
+
+  // Reduce confidence if order detection is ambiguous
+  if (Math.abs(ascendingScore - descendingScore) <= 1) {
+    confidence -= 0.2;
+    warnings.push('日期順序不明確，請確認年份推測是否正確');
+  }
+
+  // Reduce confidence if data spans more than 1 year
+  if (years.length > 2) {
+    confidence -= 0.15;
+    warnings.push('資料跨越多年，請仔細檢查年份分配');
+  }
+
+  // Reduce confidence if any date is in the far future
+  const futureEntries = records.filter((r) => new Date(r.iso) > new Date(currentYear + 1, 11, 31));
+  if (futureEntries.length > 0) {
+    confidence -= 0.3;
+    warnings.push(`有 ${futureEntries.length} 筆日期在遙遠的未來`);
+  }
+
+  return {
+    records,
+    metadata: {
+      order,
+      yearRange,
+      confidence: Math.max(0, Math.min(1, confidence)),
+      warnings,
+    },
+  };
+}
 
 /** Sample generator（100~150 天） */
 function genSample(kind: 'normal' | 'abnormal' | 'over'): PoopRecord[] {
@@ -445,11 +663,11 @@ const AnimatedHint: React.FC<{ active: boolean; samples: string[]; color: string
       {active && (
         <motion.span
           key={idx}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 0.8, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
+          initial={{ opacity: 0, y: '-46%' }}
+          animate={{ opacity: 0.8, y: '-50%' }}
+          exit={{ opacity: 0, y: '-54%' }}
           transition={{ duration: 0.25 }}
-          className="pointer-events-none absolute left-10 right-28 top-1/2 -translate-y-1/2 text-sm"
+          className="pointer-events-none absolute left-10 right-28 top-1/2 text-sm"
           style={{ color }}
         >
           {samples[idx]}
@@ -615,16 +833,16 @@ export default function Page() {
   };
 
   // 月份分組（支援無資料時顯示當月）
-  const grouped = useMemo(() => {
+  const grouped = useMemo((): [string, PoopRecord[]][] => {
     const g: Record<string, PoopRecord[]> = {};
     for (const r of records) {
       (g[toDateKey(r.iso)] ||= []).push(r);
     }
     const arr = Object.entries(g).sort((a, b) => a[0].localeCompare(b[0]));
-    return arr.map(([k, rs]) => [
+    return arr.map(([k, rs]): [string, PoopRecord[]] => [
       k,
       rs.sort((a, b) => new Date(a.iso).getTime() - new Date(b.iso).getTime()),
-    ]) as [string, PoopRecord[]][];
+    ]);
   }, [records]);
   const monthsAll = useMemo(() => {
     const set = new Set<string>();
@@ -758,8 +976,18 @@ export default function Page() {
     const g: Record<string, number> = {};
     const days = grouped.slice(-7);
     days.forEach(([k, rs]) => (g[k] = rs.length));
+
+    // 計算型態統計
+    const typeStats: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const last7DaysRecords = days.flatMap(([, rs]) => rs);
+    last7DaysRecords.forEach((r) => {
+      if (r.type) {
+        typeStats[r.type] = (typeStats[r.type] || 0) + 1;
+      }
+    });
+
     const W = 900,
-      H = 1200;
+      H = 1300; // 增加高度以容納型態統計
     const canvas = document.createElement('canvas');
     canvas.width = W;
     canvas.height = H;
@@ -769,11 +997,15 @@ export default function Page() {
     grd.addColorStop(1, dark ? '#1a1412' : '#FFF7ED');
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
+
+    // 標題
     ctx.fillStyle = dark ? '#F5E9E4' : '#4E342E';
     ctx.font = 'bold 48px ui-sans-serif,system-ui,-apple-system';
     ctx.fillText('可愛週報', 60, 90);
     ctx.font = '28px ui-sans-serif,system-ui';
     ctx.fillText(new Date().toLocaleDateString(), 60, 140);
+
+    // 每日記錄
     const keys = Object.keys(g).sort();
     let i = 0;
     for (const k of keys) {
@@ -793,9 +1025,42 @@ export default function Page() {
       }
       i++;
     }
+
+    // 型態統計標題
+    const statsY = 920;
+    ctx.fillStyle = dark ? '#F5E9E4' : '#4E342E';
+    ctx.font = 'bold 32px ui-sans-serif,system-ui,-apple-system';
+    ctx.fillText('型態統計', 60, statsY);
+
+    // 繪製型態統計（左右兩欄布局）
+    ctx.font = '24px ui-sans-serif,system-ui';
+    ctx.fillStyle = dark ? '#E7DBD6' : '#6D4C41';
+
+    TYPES.forEach((type, idx) => {
+      const count = typeStats[type.id] || 0;
+      const column = idx < 3 ? 0 : 1;
+      const row = idx % 3;
+      const x = 80 + column * 400;
+      const y = statsY + 60 + row * 50;
+
+      // 顯示型態名稱和數量
+      ctx.fillText(`${type.name}：${count} 筆`, x, y);
+
+      // 如果有記錄，顯示提示
+      if (count > 0 && type.hint) {
+        ctx.font = '20px ui-sans-serif,system-ui';
+        ctx.fillStyle = dark ? '#C4B5A8' : '#8D7A6C';
+        ctx.fillText(`(${type.hint})`, x + 150, y);
+        ctx.font = '24px ui-sans-serif,system-ui';
+        ctx.fillStyle = dark ? '#E7DBD6' : '#6D4C41';
+      }
+    });
+
+    // 健康小叮嚀
     ctx.fillStyle = dark ? '#E7DBD6' : '#6D4C41';
     ctx.font = '24px ui-sans-serif';
     ctx.fillText('小叮嚀：規律、補水、高纖', 60, H - 80);
+
     const url = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
@@ -885,20 +1150,20 @@ export default function Page() {
               onBlur={() => setInputFocus(false)}
               onChange={(e) => setLine(e.target.value)}
               placeholder=""
-              className="flex-1 bg-transparent outline-none text-sm h-11 px-1 focus-visible:outline-0"
+              className="flex-1 bg-transparent outline-none text-sm h-11 leading-11 px-1 focus-visible:outline-0"
               style={{ color: theme.onSurface }}
             />
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={addByLine}
-              className="h-11 px-3 rounded-full text-sm font-medium mx-1 focus-visible:outline focus-visible:outline-2"
+              className="h-9 px-3 rounded-full text-sm font-medium mr-1 focus-visible:outline focus-visible:outline-2"
               style={{ background: theme.primary, color: theme.onPrimary }}
             >
               新增
             </motion.button>
             <button
               onClick={() => setQuick('on')}
-              className="h-11 px-3 rounded-full text-sm mx-1 focus-visible:outline focus-visible:outline-2"
+              className="h-9 px-3 rounded-full text-sm mr-2 focus-visible:outline focus-visible:outline-2"
               style={{ background: theme.surfaceAlt, border: `1px solid ${theme.outline}` }}
             >
               快速
@@ -912,7 +1177,7 @@ export default function Page() {
                 key={t.id}
                 whileTap={{ scale: 0.94 }}
                 onClick={() => addQuick(t.id, 'manual')}
-                className="rounded-xl flex flex-col items-center justify-center focus-visible:outline focus-visible:outline-2"
+                className="rounded-2xl flex flex-col items-center justify-center focus-visible:outline focus-visible:outline-2"
                 style={{
                   background: theme.surface,
                   border: `1px solid ${theme.outline}`,
@@ -936,20 +1201,19 @@ export default function Page() {
                 key={t.id}
                 whileTap={{ scale: 0.94 }}
                 onClick={() => addQuick(t.id, 'quick')}
-                className="rounded-xl flex flex-col items-center justify-center focus-visible:outline focus-visible:outline-2"
+                className="h-16 rounded-2xl flex flex-col items-center justify-center gap-0.5 focus-visible:outline focus-visible:outline-2"
                 style={{
                   background: t.id === lastType ? theme.primaryContainer : theme.surface,
                   border: `1px solid ${theme.outline}`,
-                  padding: 'clamp(8px, 1.4vw, 12px) 0',
                 }}
               >
                 <CuteIcon t={t.id} />
-                <div className="text-[11px] mt-0.5">{t.name}</div>
+                <div className="text-[11px]">{t.name}</div>
               </motion.button>
             ))}
             <button
               onClick={() => setQuick('off')}
-              className="h-11 px-3 rounded-full text-sm focus-visible:outline focus-visible:outline-2"
+              className="h-16 px-3 rounded-full text-sm focus-visible:outline focus-visible:outline-2"
               style={{ background: theme.surfaceAlt, border: `1px solid ${theme.outline}` }}
             >
               一般
@@ -1026,7 +1290,7 @@ export default function Page() {
                   aria-label={`編輯 ${fmtHM(r.iso)} 的紀錄`}
                 >
                   <div className="shrink-0 mt-0.5">
-                    <CuteIcon t={(r.type || 2) as 1 | 2 | 3 | 4 | 5} />
+                    <CuteIcon t={r.type || 2} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold tracking-wide">{fmtHM(r.iso)}</div>
@@ -1073,23 +1337,23 @@ export default function Page() {
             style={{ background: theme.surfaceAlt, boxShadow: THEME.elevation[3] }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-sm font-semibold mb-2">編輯記錄</div>
-            <div className="flex items-center gap-2 mb-3">
+            <div className="text-sm font-semibold mb-3">編輯記錄</div>
+            <div className="space-y-3 mb-4">
               <input
                 aria-label="調整時間"
                 type="time"
                 value={editing.time}
-                onChange={(e) => setEditing({ ...editing!, time: e.target.value })}
-                className="h-11 px-3 rounded-xl flex-1 focus-visible:outline focus-visible:outline-2"
+                onChange={(e) => setEditing({ ...editing, time: e.target.value })}
+                className="h-11 px-3 rounded-xl w-full focus-visible:outline focus-visible:outline-2"
                 style={{ background: theme.surface, border: `1px solid ${theme.outline}` }}
               />
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center gap-1.5 flex-wrap">
                 {TYPES.map((t) => (
                   <button
                     key={t.id}
                     aria-label={`選擇型態 ${t.name}`}
-                    onClick={() => setEditing({ ...editing!, type: t.id })}
-                    className="h-11 w-11 rounded-xl grid place-items-center focus-visible:outline focus-visible:outline-2"
+                    onClick={() => setEditing({ ...editing, type: t.id })}
+                    className="h-11 w-11 rounded-2xl grid place-items-center focus-visible:outline focus-visible:outline-2 transition-transform active:scale-95"
                     style={{
                       background:
                         (editing.type || 2) === t.id ? theme.primaryContainer : theme.surface,
@@ -1331,7 +1595,7 @@ export default function Page() {
       {/* 趨勢統一區塊 */}
       {TrendBlock}
 
-      {/* 分析月份：兩欄緊湊列表 */}
+      {/* 分析月份：蔓章式網格布局 */}
       <div className="flex items-center justify-between">
         <div className="inline-flex items-center gap-2 text-sm font-semibold">
           <Calendar size={16} /> {anaMonthKey}
@@ -1340,76 +1604,85 @@ export default function Page() {
           僅列出有紀錄日
         </div>
       </div>
-      <div className="space-y-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {anaDays.length === 0 && (
           <div
-            className="p-6 rounded-2xl text-sm text-center"
+            className="col-span-full p-6 rounded-2xl text-sm text-center"
             style={{ background: theme.surfaceAlt, border: `1px solid ${theme.outline}` }}
           >
             此範圍尚無資料
           </div>
         )}
         {anaDays.map(([k, rs]) => {
-          const cnt: Record<number, number> = {} as any;
+          const cnt: Record<number, number> = {};
           rs.forEach((r) => {
-            const t = (r.type || 2) as number;
-            cnt[t] = (cnt[t] || 0) + 1;
+            const t = (r.type ?? 2) as number;
+            cnt[t] = (cnt[t] ?? 0) + 1;
           });
           const total = rs.length;
           const typesSorted = Object.entries(cnt)
             .sort((a, b) => Number(b[1]) - Number(a[1]))
-            .slice(0, 4);
-          const extra = Math.max(0, Object.keys(cnt).length - typesSorted.length);
+            .slice(0, 3);
           return (
-            <div
+            <motion.div
               key={k}
-              className="rounded-2xl px-3 py-2 grid grid-cols-2 gap-2 items-center"
-              style={{ background: theme.surfaceAlt, border: `1px solid ${theme.outline}` }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="rounded-2xl p-3 flex flex-col gap-2 cursor-pointer"
+              style={{
+                background: theme.surfaceAlt,
+                border: `1px solid ${theme.outline}`,
+                boxShadow: THEME.elevation[1],
+              }}
             >
-              {/* 左：堆疊圖示 */}
-              <div className="flex items-center gap-2 overflow-hidden">
-                <div className="flex -space-x-2">
-                  {typesSorted.map(([t]) => (
-                    <div
-                      key={t}
-                      className="w-8 h-8 rounded-full grid place-items-center ring-1"
-                      style={{ background: theme.surface, border: `1px solid ${theme.outline}` }}
-                    >
-                      <CuteIcon t={Number(t) as 1 | 2 | 3 | 4 | 5} stacked />
-                    </div>
-                  ))}
-                  {extra > 0 && (
-                    <div
-                      className="w-8 h-8 rounded-full grid place-items-center text-[11px]"
-                      style={{
-                        background: theme.surface,
-                        border: `1px solid ${theme.outline}`,
-                        color: theme.onSurfaceVariant,
-                      }}
-                    >
-                      +{extra}
-                    </div>
-                  )}
+              {/* 上：日期（大字體）*/}
+              <div className="text-center">
+                <div className="text-lg font-bold" style={{ color: theme.primary }}>
+                  {k.slice(5).replace('-', '/')}
                 </div>
-                <div className="text-sm font-medium">{k.slice(5).replace('-', '/')}</div>
               </div>
-              {/* 右：合計 + 型態分佈 */}
-              <div className="flex items-center justify-end gap-2 flex-wrap">
-                <div className="text-sm font-semibold">共 {total}</div>
-                {Object.entries(cnt)
-                  .sort((a, b) => Number(b[1]) - Number(a[1]))
-                  .map(([t, c]) => (
-                    <div
-                      key={t}
-                      className="px-2 py-0.5 rounded-full text-[11px] inline-flex items-center gap-1"
-                      style={{ background: theme.surface, border: `1px solid ${theme.outline}` }}
-                    >
-                      <CuteIcon t={Number(t) as 1 | 2 | 3 | 4 | 5} />
-                      <span>×{c}</span>
-                    </div>
-                  ))}
+
+              {/* 中：便便圖示堆疊 */}
+              <div className="flex justify-center items-center -space-x-1 min-h-[2.5rem]">
+                {typesSorted.map(([t]) => (
+                  <div
+                    key={t}
+                    className="w-9 h-9 rounded-full grid place-items-center"
+                    style={{
+                      background: theme.surface,
+                      border: `2px solid ${theme.surfaceAlt}`,
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    <CuteIcon t={Number(t) as 1 | 2 | 3 | 4 | 5} />
+                  </div>
+                ))}
               </div>
-            </div>
+
+              {/* 下：總數 + 型態統計 */}
+              <div className="space-y-1.5">
+                <div className="text-center">
+                  <span className="text-sm font-semibold">共 {total} 筆</span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-1">
+                  {Object.entries(cnt)
+                    .sort((a, b) => Number(b[1]) - Number(a[1]))
+                    .map(([t, c]) => (
+                      <div
+                        key={t}
+                        className="px-1.5 py-0.5 rounded-full text-[10px] inline-flex items-center gap-0.5"
+                        style={{
+                          background: theme.surface,
+                          border: `1px solid ${theme.outline}`,
+                        }}
+                      >
+                        <CuteIcon t={Number(t) as 1 | 2 | 3 | 4 | 5} stacked />
+                        <span>×{c}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </motion.div>
           );
         })}
       </div>
@@ -1510,6 +1783,8 @@ export default function Page() {
   const [openImport, setOpenImport] = useState(false);
   const [importTab, setImportTab] = useState<'paste' | 'sample'>('paste');
   const [note, setNote] = useState('');
+  const [smartParseResult, setSmartParseResult] = useState<SmartParseResult | null>(null);
+  const [showConfirmImport, setShowConfirmImport] = useState(false);
 
   const importSample = (kind: 'normal' | 'abnormal' | 'over') => {
     const demo = genSample(kind);
@@ -1518,6 +1793,105 @@ export default function Page() {
     setShowSampleBanner(true);
     setMode('analysis');
   };
+
+  // 智能解析確認對話框
+  const ConfirmImportModal = (
+    <AnimatePresence>
+      {showConfirmImport && smartParseResult && (
+        <motion.div
+          className="fixed inset-0 z-50 grid place-items-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{ background: 'rgba(0,0,0,.55)' }}
+          onClick={() => setShowConfirmImport(false)}
+          role="dialog"
+          aria-modal
+        >
+          <motion.div
+            layout
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl overflow-hidden"
+            style={{ background: theme.surfaceAlt, boxShadow: THEME.elevation[3] }}
+          >
+            <div
+              className="px-4 py-3 flex items-center justify-between"
+              style={{ background: theme.surface }}
+            >
+              <div className="text-sm font-semibold">確認匯入</div>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">解析筆數：</span>
+                  <span className="font-semibold">{smartParseResult.records.length} 筆</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">日期順序：</span>
+                  <span className="font-semibold">
+                    {smartParseResult.metadata.order === 'ascending'
+                      ? '正序 (舊→新)'
+                      : '倒序 (新→舊)'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">年份區間：</span>
+                  <span className="font-semibold">{smartParseResult.metadata.yearRange}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">推測信心：</span>
+                  <span className="font-semibold">
+                    {(smartParseResult.metadata.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+
+              {smartParseResult.metadata.warnings.length > 0 && (
+                <div className="p-3 rounded-xl text-sm space-y-1 bg-orange-50 dark:bg-orange-950 text-orange-900 dark:text-orange-100">
+                  <div className="font-semibold">⚠️ 注意事項：</div>
+                  {smartParseResult.metadata.warnings.map((warning, i) => (
+                    <div key={i} className="ml-4">
+                      • {warning}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowConfirmImport(false)}
+                  className="flex-1 h-10 px-3 rounded-full text-sm focus-visible:outline focus-visible:outline-2"
+                  style={{ background: theme.surface, border: `1px solid ${theme.outline}` }}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    // 確認匯入
+                    const add = smartParseResult.records.map((r, i) => ({
+                      id: `imp-${Date.now()}-${i}`,
+                      iso: r.iso,
+                      type: null,
+                      source: 'import' as const,
+                    }));
+                    setRecords((prev) => [...prev, ...add]);
+                    setShowConfirmImport(false);
+                    setOpenImport(false);
+                    setNote('');
+                    setSmartParseResult(null);
+                  }}
+                  className="flex-1 h-10 px-3 rounded-full text-sm font-medium focus-visible:outline focus-visible:outline-2"
+                  style={{ background: theme.primary, color: theme.onPrimary }}
+                >
+                  確認匯入
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
   const ImportModal = (
     <AnimatePresence>
@@ -1596,18 +1970,16 @@ export default function Page() {
                     </button>
                     <button
                       onClick={() => {
-                        const list = parseNotebook(note, new Date());
-                        const add = list.map((iso, i) => ({
-                          id: `imp-${Date.now()}-${i}`,
-                          iso,
-                          type: null,
-                          source: 'import' as const,
-                        }));
-                        if (add.length) {
-                          setRecords((prev) => [...prev, ...add]);
+                        // 使用智能解析
+                        const result = parseNotebookSmart(note);
+                        if (result.records.length === 0) {
+                          // 如果沒有解析到任何記錄，顯示警告
+                          alert(result.metadata.warnings.join('\n') || '無法解析日期');
+                          return;
                         }
-                        setOpenImport(false);
-                        setNote('');
+                        // 儲存解析結果並顯示確認對話框
+                        setSmartParseResult(result);
+                        setShowConfirmImport(true);
                       }}
                       className="h-9 px-3 rounded-full text-sm font-medium focus-visible:outline focus-visible:outline-2"
                       style={{ background: theme.primary, color: theme.onPrimary }}
@@ -1719,7 +2091,7 @@ export default function Page() {
     <main className="min-h-screen" style={{ background: theme.surface, color: theme.onSurface }}>
       <Bg dark={dark} />
       {Header}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-4 pb-28">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-4 pb-[max(7rem,env(safe-area-inset-bottom))]">
         {/* toolbar */}
         <div className="flex items-center gap-2">
           <motion.button
@@ -1835,6 +2207,7 @@ export default function Page() {
         </footer>
       </div>
 
+      {ConfirmImportModal}
       {ImportModal}
       {EditSheet}
       {ClearModal}
