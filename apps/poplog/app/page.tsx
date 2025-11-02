@@ -923,9 +923,14 @@ export default function Page() {
     return records.filter((r) => toDateKey(r.iso).startsWith(monthSel));
   }, [records, rangeMode, yearSel, monthSel]);
 
+  interface WeeklyDatum {
+    週: string;
+    次數: number;
+  }
+
   // charts data (from scope)
-  const weeklyData = useMemo(() => {
-    if (scopeRecords.length === 0) return [] as any[];
+  const weeklyData = useMemo<WeeklyDatum[]>(() => {
+    if (scopeRecords.length === 0) return [];
     const byWeek: Record<string, number> = {};
     for (const r of scopeRecords) {
       const d = new Date(r.iso);
@@ -977,9 +982,14 @@ export default function Page() {
 
   // sample one-shot 行為：離開分析或切頁即清除
   useEffect(() => {
-    if (mode !== 'analysis' && records.some((r) => r.ephemeral)) {
-      setRecords((prev) => prev.filter((r) => !r.ephemeral));
-      setShowSampleBanner(false);
+    if (mode !== 'analysis') {
+      let cleared = false;
+      setRecords((prev) => {
+        if (!prev.some((r) => r.ephemeral)) return prev;
+        cleared = true;
+        return prev.filter((r) => !r.ephemeral);
+      });
+      if (cleared) setShowSampleBanner(false);
     }
   }, [mode]);
   useEffect(() => {
@@ -1031,7 +1041,11 @@ export default function Page() {
     const canvas = document.createElement('canvas');
     canvas.width = W;
     canvas.height = H;
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.warn('[poplog:share-weekly] 無法取得 canvas 2D context');
+      return;
+    }
     const grd = ctx.createLinearGradient(0, 0, 0, H);
     grd.addColorStop(0, dark ? '#2a1f1c' : '#FFEADB');
     grd.addColorStop(1, dark ? '#1a1412' : '#FFF7ED');
@@ -1330,7 +1344,7 @@ export default function Page() {
                   aria-label={`編輯 ${fmtHM(r.iso)} 的紀錄`}
                 >
                   <div className="shrink-0 mt-0.5">
-                    <CuteIcon t={r.type || 2} />
+                    <CuteIcon t={r.type ?? 2} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold tracking-wide">{fmtHM(r.iso)}</div>
@@ -1339,7 +1353,7 @@ export default function Page() {
                       className="text-[12px] mt-0.5 leading-[1.45]"
                       style={{ color: theme.onSurfaceVariant }}
                     >
-                      {TYPES.find((t) => t.id === (r.type || 2))?.hint}
+                      {TYPES.find((t) => t.id === (r.type ?? 2))?.hint}
                     </div>
                   </div>
                   <div className="opacity-60" aria-hidden>
@@ -1396,7 +1410,7 @@ export default function Page() {
                     className="h-11 w-11 rounded-2xl grid place-items-center focus-visible:outline focus-visible:outline-2 transition-transform active:scale-95"
                     style={{
                       background:
-                        (editing.type || 2) === t.id ? theme.primaryContainer : theme.surface,
+                        (editing.type ?? 2) === t.id ? theme.primaryContainer : theme.surface,
                       border: `1px solid ${theme.outline}`,
                     }}
                   >
@@ -1746,11 +1760,11 @@ export default function Page() {
           const noneStreak = (() => {
             const days = [...Object.keys(byDay)].sort();
             let maxS = 0;
-            let prev: '' | string = '';
+            let prev: string | null = null;
             for (const d of days) {
-              if (prev) {
-                const pd = new Date(prev),
-                  nd = new Date(d);
+              if (prev !== null) {
+                const pd = new Date(prev);
+                const nd = new Date(d);
                 const diff = (+nd - +pd) / 86400000;
                 if (diff > 1) {
                   const gap = Math.floor(diff - 1);
