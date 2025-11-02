@@ -37,5 +37,5 @@
     "dist/types/**/*.ts",
     "custom.d.ts"
   ],
-  "exclude": ["node_modules", "vitest.config.ts", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": ["node_modules", "vitest.config.ts"]
 }
