@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 
+// eslint-disable-next-line react-refresh/only-export-components -- Next.js 需要在 layout 匯出 metadata
 export const metadata: Metadata = {
   title: 'Q版便便記錄器 v4.1.0',
   description: 'PWA 便便追蹤應用程式',
@@ -24,7 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 try {
                   const theme = localStorage.getItem('poop.v4.theme') || 'light';
                   document.documentElement.classList.toggle('dark', theme === 'dark');
-                } catch (e) {}
+                } catch (e) {
+                  console.warn('[poplog:theme] 無法套用使用者主題偏好', e);
+                }
               })();
             `,
           }}

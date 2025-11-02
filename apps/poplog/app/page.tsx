@@ -273,9 +273,9 @@ function parseTimeToken(raw: string) {
   }
   m = /\b(\d{1,2})\.(\d{1,2})\b/.exec(s);
   if (m) {
-    let h = +m[1],
-      frac = m[2],
-      mm = frac.length >= 2 ? +frac.slice(0, 2) : Math.round(parseFloat('0.' + frac) * 60);
+    let h = +m[1];
+    const frac = m[2];
+    let mm = frac.length >= 2 ? +frac.slice(0, 2) : Math.round(parseFloat('0.' + frac) * 60);
     if (s.includes('半')) mm = 30;
     if (isPM && h < 12) h += 12;
     if (isAM && h === 12) h = 0;
@@ -287,8 +287,8 @@ function parseTimeToken(raw: string) {
     );
   if (cm) {
     const h0 = zhNumToInt(cm[2] || '') ?? 0;
-    let h = h0,
-      mm = cm[3] ? 30 : cm[4] ? (zhNumToInt(cm[4] || '') ?? 0) : 0;
+    let h = h0;
+    const mm = cm[3] ? 30 : cm[4] ? (zhNumToInt(cm[4] || '') ?? 0) : 0;
     const pm = /(下午|晚上)/.test(cm[1] || '') || isPM,
       am = /(上午|早上|清晨|凌晨)/.test(cm[1] || '') || isAM;
     if (pm && h < 12) h += 12;
@@ -297,15 +297,14 @@ function parseTimeToken(raw: string) {
   }
   m = /\b(\d{1,2})\s*(am|pm)?\b/i.exec(s);
   if (m) {
-    let h = +m[1],
-      mm = 0;
+    let h = +m[1];
     const suf = m[2]?.toLowerCase();
     if (suf === 'pm' || isPM) {
       if (h < 12) h += 12;
     } else if (suf === 'am' || isAM) {
       if (h === 12) h = 0;
     }
-    return { h, m: mm };
+    return { h, m: 0 };
   }
   return null;
 }
@@ -313,7 +312,7 @@ function parseDateToken(raw: string, base: Date) {
   const s = N(raw).replace(/[年]/g, '/').replace(/月/g, '/').replace(/日/g, '');
   let m = /\b(\d{4})\/(\d{1,2})\/(\d{1,2})\b/.exec(s);
   if (m) return { y: +m[1], mo: +m[2], d: +m[3] };
-  m = /\b(\d{1,2})[\/-](\d{1,2})\b/.exec(s);
+  m = /\b(\d{1,2})(?:\/|-)(\d{1,2})\b/.exec(s);
   if (m) return { y: base.getFullYear(), mo: +m[1], d: +m[2] };
   m = /\b(\d{1,2})\s*月\s*(\d{1,2})\b/.exec(s);
   if (m) return { y: base.getFullYear(), mo: +m[1], d: +m[2] };
@@ -328,6 +327,39 @@ interface PoopRecord {
   source?: 'import' | 'manual' | 'quick' | 'sample';
   ephemeral?: boolean;
 }
+
+const ALLOWED_SOURCES = new Set<NonNullable<PoopRecord['source']>>([
+  'import',
+  'manual',
+  'quick',
+  'sample',
+]);
+const isValidType = (value: unknown): value is NonNullable<PoopRecord['type']> =>
+  typeof value === 'number' && value >= 1 && value <= 5;
+const sanitizeStoredRecords = (value: unknown): PoopRecord[] => {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const candidate = item as Partial<PoopRecord>;
+    if (typeof candidate.id !== 'string' || typeof candidate.iso !== 'string') return [];
+    if (Number.isNaN(Date.parse(candidate.iso))) return [];
+    const normalizedType = isValidType(candidate.type) ? candidate.type : null;
+    const source =
+      candidate.source && ALLOWED_SOURCES.has(candidate.source) ? candidate.source : undefined;
+    return [
+      {
+        id: candidate.id,
+        iso: candidate.iso,
+        type: normalizedType,
+        source,
+        ephemeral: typeof candidate.ephemeral === 'boolean' ? candidate.ephemeral : undefined,
+      },
+    ];
+  });
+};
+const logStorageWarning = (context: string, error: unknown) => {
+  console.warn(`[poplog:${context}] 無法存取 localStorage`, error);
+};
 
 /** Helpers */
 const toDateKey = (iso: string) => new Date(iso).toISOString().slice(0, 10);
@@ -392,7 +424,7 @@ function parseNotebookSmart(text: string): SmartParseResult {
 
   for (const raw of lines) {
     // Parse date (MM/DD)
-    const dateMatch = /\b(\d{1,2})[\/-](\d{1,2})\b/.exec(raw);
+    const dateMatch = /\b(\d{1,2})(?:\/|-)(\d{1,2})\b/.exec(raw);
     if (!dateMatch) continue;
 
     const month = +dateMatch[1];
@@ -703,7 +735,7 @@ export default function Page() {
       // 讀取 records
       const recordsRaw = localStorage.getItem(KEY_RECORDS);
       if (recordsRaw) {
-        const parsed = JSON.parse(recordsRaw);
+        const parsed = sanitizeStoredRecords(JSON.parse(recordsRaw) as unknown);
         setRecords(parsed);
       }
 
@@ -717,8 +749,8 @@ export default function Page() {
         const num = Number(lastTypeValue);
         if (num >= 1 && num <= 5) setLastType(num as 1 | 2 | 3 | 4 | 5);
       }
-    } catch (err) {
-      console.error('Failed to load from localStorage:', err);
+    } catch (error) {
+      logStorageWarning('bootstrap', error);
     }
   }, []);
 
@@ -727,7 +759,9 @@ export default function Page() {
     if (!mounted) return;
     try {
       localStorage.setItem(KEY_THEME, dark ? 'dark' : 'light');
-    } catch {}
+    } catch (error) {
+      logStorageWarning('save-theme', error);
+    }
   }, [dark, mounted]);
 
   // 僅保存非臨時資料
@@ -736,7 +770,9 @@ export default function Page() {
     try {
       const keep = records.filter((r) => !r.ephemeral);
       localStorage.setItem(KEY_RECORDS, JSON.stringify(keep));
-    } catch {}
+    } catch (error) {
+      logStorageWarning('persist-records', error);
+    }
   }, [records, mounted]);
 
   // 保存 quick mode 變更
@@ -744,7 +780,9 @@ export default function Page() {
     if (!mounted) return;
     try {
       localStorage.setItem(KEY_QUICK, quick);
-    } catch {}
+    } catch (error) {
+      logStorageWarning('save-quick-mode', error);
+    }
   }, [quick, mounted]);
 
   // 保存 lastType 變更
@@ -752,7 +790,9 @@ export default function Page() {
     if (!mounted) return;
     try {
       localStorage.setItem(KEY_LAST_TYPE, String(lastType));
-    } catch {}
+    } catch (error) {
+      logStorageWarning('save-last-type', error);
+    }
   }, [lastType, mounted]);
 
   const theme = dark ? THEME.dark : THEME.light;
