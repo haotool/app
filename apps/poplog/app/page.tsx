@@ -659,11 +659,11 @@ const AnimatedHint: React.FC<{ active: boolean; samples: string[]; color: string
       {active && (
         <motion.span
           key={idx}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 0.8, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
+          initial={{ opacity: 0, y: '-46%' }}
+          animate={{ opacity: 0.8, y: '-50%' }}
+          exit={{ opacity: 0, y: '-54%' }}
           transition={{ duration: 0.25 }}
-          className="pointer-events-none absolute left-10 right-28 top-1/2 -translate-y-1/2 text-sm"
+          className="pointer-events-none absolute left-10 right-28 top-1/2 text-sm"
           style={{ color }}
         >
           {samples[idx]}
@@ -1591,7 +1591,7 @@ export default function Page() {
       {/* 趨勢統一區塊 */}
       {TrendBlock}
 
-      {/* 分析月份：兩欄緊湊列表 */}
+      {/* 分析月份：蔓章式網格布局 */}
       <div className="flex items-center justify-between">
         <div className="inline-flex items-center gap-2 text-sm font-semibold">
           <Calendar size={16} /> {anaMonthKey}
@@ -1600,76 +1600,88 @@ export default function Page() {
           僅列出有紀錄日
         </div>
       </div>
-      <div className="space-y-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {anaDays.length === 0 && (
           <div
-            className="p-6 rounded-2xl text-sm text-center"
+            className="col-span-full p-6 rounded-2xl text-sm text-center"
             style={{ background: theme.surfaceAlt, border: `1px solid ${theme.outline}` }}
           >
             此範圍尚無資料
           </div>
         )}
         {anaDays.map(([k, rs]) => {
-          const cnt: Record<number, number> = {} as any;
+          const cnt: Record<number, number> = {};
           rs.forEach((r) => {
-            const t = (r.type || 2) as number;
-            cnt[t] = (cnt[t] || 0) + 1;
+            const t = (r.type ?? 2) as number;
+            cnt[t] = (cnt[t] ?? 0) + 1;
           });
           const total = rs.length;
           const typesSorted = Object.entries(cnt)
             .sort((a, b) => Number(b[1]) - Number(a[1]))
-            .slice(0, 4);
-          const extra = Math.max(0, Object.keys(cnt).length - typesSorted.length);
+            .slice(0, 3);
           return (
-            <div
+            <motion.div
               key={k}
-              className="rounded-2xl px-3 py-2 grid grid-cols-2 gap-2 items-center"
-              style={{ background: theme.surfaceAlt, border: `1px solid ${theme.outline}` }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="rounded-2xl p-3 flex flex-col gap-2 cursor-pointer"
+              style={{
+                background: theme.surfaceAlt,
+                border: `1px solid ${theme.outline}`,
+                boxShadow: THEME.elevation[1],
+              }}
             >
-              {/* 左：堆疊圖示 */}
-              <div className="flex items-center gap-2 overflow-hidden">
-                <div className="flex -space-x-2">
-                  {typesSorted.map(([t]) => (
-                    <div
-                      key={t}
-                      className="w-8 h-8 rounded-full grid place-items-center ring-1"
-                      style={{ background: theme.surface, border: `1px solid ${theme.outline}` }}
-                    >
-                      <CuteIcon t={Number(t) as 1 | 2 | 3 | 4 | 5} stacked />
-                    </div>
-                  ))}
-                  {extra > 0 && (
-                    <div
-                      className="w-8 h-8 rounded-full grid place-items-center text-[11px]"
-                      style={{
-                        background: theme.surface,
-                        border: `1px solid ${theme.outline}`,
-                        color: theme.onSurfaceVariant,
-                      }}
-                    >
-                      +{extra}
-                    </div>
-                  )}
+              {/* 上：日期（大字體）*/}
+              <div className="text-center">
+                <div
+                  className="text-lg font-bold"
+                  style={{ color: theme.primary }}
+                >
+                  {k.slice(5).replace('-', '/')}
                 </div>
-                <div className="text-sm font-medium">{k.slice(5).replace('-', '/')}</div>
               </div>
-              {/* 右：合計 + 型態分佈 */}
-              <div className="flex items-center justify-end gap-2 flex-wrap">
-                <div className="text-sm font-semibold">共 {total}</div>
-                {Object.entries(cnt)
-                  .sort((a, b) => Number(b[1]) - Number(a[1]))
-                  .map(([t, c]) => (
-                    <div
-                      key={t}
-                      className="px-2 py-0.5 rounded-full text-[11px] inline-flex items-center gap-1"
-                      style={{ background: theme.surface, border: `1px solid ${theme.outline}` }}
-                    >
-                      <CuteIcon t={Number(t) as 1 | 2 | 3 | 4 | 5} />
-                      <span>×{c}</span>
-                    </div>
-                  ))}
+
+              {/* 中：便便圖示堆疊 */}
+              <div className="flex justify-center items-center -space-x-1 min-h-[2.5rem]">
+                {typesSorted.map(([t]) => (
+                  <div
+                    key={t}
+                    className="w-9 h-9 rounded-full grid place-items-center"
+                    style={{
+                      background: theme.surface,
+                      border: `2px solid ${theme.surfaceAlt}`,
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    <CuteIcon t={Number(t) as 1 | 2 | 3 | 4 | 5} />
+                  </div>
+                ))}
               </div>
-            </div>
+
+              {/* 下：總數 + 型態統計 */}
+              <div className="space-y-1.5">
+                <div className="text-center">
+                  <span className="text-sm font-semibold">共 {total} 筆</span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-1">
+                  {Object.entries(cnt)
+                    .sort((a, b) => Number(b[1]) - Number(a[1]))
+                    .map(([t, c]) => (
+                      <div
+                        key={t}
+                        className="px-1.5 py-0.5 rounded-full text-[10px] inline-flex items-center gap-0.5"
+                        style={{
+                          background: theme.surface,
+                          border: `1px solid ${theme.outline}`,
+                        }}
+                      >
+                        <CuteIcon t={Number(t) as 1 | 2 | 3 | 4 | 5} stacked />
+                        <span>×{c}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </motion.div>
           );
         })}
       </div>
