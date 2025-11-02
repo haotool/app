@@ -891,14 +891,14 @@ export default function Page() {
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={addByLine}
-              className="h-11 px-3 rounded-full text-sm font-medium mx-1 focus-visible:outline focus-visible:outline-2"
+              className="h-9 px-3 rounded-full text-sm font-medium mr-1 focus-visible:outline focus-visible:outline-2"
               style={{ background: theme.primary, color: theme.onPrimary }}
             >
               新增
             </motion.button>
             <button
               onClick={() => setQuick('on')}
-              className="h-11 px-3 rounded-full text-sm mx-1 focus-visible:outline focus-visible:outline-2"
+              className="h-9 px-3 rounded-full text-sm mr-2 focus-visible:outline focus-visible:outline-2"
               style={{ background: theme.surfaceAlt, border: `1px solid ${theme.outline}` }}
             >
               快速
@@ -912,7 +912,7 @@ export default function Page() {
                 key={t.id}
                 whileTap={{ scale: 0.94 }}
                 onClick={() => addQuick(t.id, 'manual')}
-                className="rounded-xl flex flex-col items-center justify-center focus-visible:outline focus-visible:outline-2"
+                className="rounded-2xl flex flex-col items-center justify-center focus-visible:outline focus-visible:outline-2"
                 style={{
                   background: theme.surface,
                   border: `1px solid ${theme.outline}`,
@@ -936,20 +936,19 @@ export default function Page() {
                 key={t.id}
                 whileTap={{ scale: 0.94 }}
                 onClick={() => addQuick(t.id, 'quick')}
-                className="rounded-xl flex flex-col items-center justify-center focus-visible:outline focus-visible:outline-2"
+                className="h-16 rounded-2xl flex flex-col items-center justify-center gap-0.5 focus-visible:outline focus-visible:outline-2"
                 style={{
                   background: t.id === lastType ? theme.primaryContainer : theme.surface,
                   border: `1px solid ${theme.outline}`,
-                  padding: 'clamp(8px, 1.4vw, 12px) 0',
                 }}
               >
                 <CuteIcon t={t.id} />
-                <div className="text-[11px] mt-0.5">{t.name}</div>
+                <div className="text-[11px]">{t.name}</div>
               </motion.button>
             ))}
             <button
               onClick={() => setQuick('off')}
-              className="h-11 px-3 rounded-full text-sm focus-visible:outline focus-visible:outline-2"
+              className="h-16 px-3 rounded-full text-sm focus-visible:outline focus-visible:outline-2"
               style={{ background: theme.surfaceAlt, border: `1px solid ${theme.outline}` }}
             >
               一般
