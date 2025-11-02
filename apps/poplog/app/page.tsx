@@ -251,39 +251,40 @@ const N = (s: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 function parseTimeToken(raw: string) {
-  let s = N(raw);
+  const s = N(raw);
   const hint = /上午|下午|晚上|早上|清晨|凌晨|am|pm/i.exec(s)?.[0]?.toLowerCase();
   const isPM = !!hint && /(下午|晚上|pm)/.test(hint);
   const isAM = !!hint && /(上午|早上|清晨|凌晨|am)/.test(hint);
-  let m = s.match(/(\d{1,2})\s*:\s*(\d{1,2})/);
+  let m = /(\d{1,2})\s*:\s*(\d{1,2})/.exec(s);
   if (m) {
     let h = +m[1],
       mm = +m[2];
-    if (/半/.test(s)) mm = 30;
+    if (s.includes('半')) mm = 30;
     if (isPM && h < 12) h += 12;
     if (isAM && h === 12) h = 0;
     return { h, m: Math.min(Math.max(mm, 0), 59) };
   }
-  m = s.match(/(\d{1,2})\s*(?:[.:：])?\s*半/);
+  m = /(\d{1,2})\s*(?:[.:：])?\s*半/.exec(s);
   if (m) {
     let h = +m[1];
     if (isPM && h < 12) h += 12;
     if (isAM && h === 12) h = 0;
     return { h, m: 30 };
   }
-  m = s.match(/\b(\d{1,2})\.(\d{1,2})\b/);
+  m = /\b(\d{1,2})\.(\d{1,2})\b/.exec(s);
   if (m) {
     let h = +m[1],
       frac = m[2],
       mm = frac.length >= 2 ? +frac.slice(0, 2) : Math.round(parseFloat('0.' + frac) * 60);
-    if (/半/.test(s)) mm = 30;
+    if (s.includes('半')) mm = 30;
     if (isPM && h < 12) h += 12;
     if (isAM && h === 12) h = 0;
     return { h, m: Math.min(Math.max(mm, 0), 59) };
   }
-  const cm = s.match(
-    /(上午|下午|晚上|早上|清晨|凌晨)?\s*([零〇○一二兩三四五六七八九十]{1,3})點(?:(半)|([零〇○一二兩三四五六七八九十]{1,3})分?)?/,
-  );
+  const cm =
+    /(上午|下午|晚上|早上|清晨|凌晨)?\s*([零〇○一二兩三四五六七八九十]{1,3})點(?:(半)|([零〇○一二兩三四五六七八九十]{1,3})分?)?/.exec(
+      s,
+    );
   if (cm) {
     const h0 = zhNumToInt(cm[2] || '') ?? 0;
     let h = h0,
@@ -294,7 +295,7 @@ function parseTimeToken(raw: string) {
     if (am && h === 12) h = 0;
     return { h, m: Math.min(Math.max(mm, 0), 59) };
   }
-  m = s.match(/\b(\d{1,2})\s*(am|pm)?\b/i);
+  m = /\b(\d{1,2})\s*(am|pm)?\b/i.exec(s);
   if (m) {
     let h = +m[1],
       mm = 0;
@@ -310,11 +311,11 @@ function parseTimeToken(raw: string) {
 }
 function parseDateToken(raw: string, base: Date) {
   const s = N(raw).replace(/[年]/g, '/').replace(/月/g, '/').replace(/日/g, '');
-  let m = s.match(/\b(\d{4})\/(\d{1,2})\/(\d{1,2})\b/);
+  let m = /\b(\d{4})\/(\d{1,2})\/(\d{1,2})\b/.exec(s);
   if (m) return { y: +m[1], mo: +m[2], d: +m[3] };
-  m = s.match(/\b(\d{1,2})[\/-](\d{1,2})\b/);
+  m = /\b(\d{1,2})[\/-](\d{1,2})\b/.exec(s);
   if (m) return { y: base.getFullYear(), mo: +m[1], d: +m[2] };
-  m = s.match(/\b(\d{1,2})\s*月\s*(\d{1,2})\b/);
+  m = /\b(\d{1,2})\s*月\s*(\d{1,2})\b/.exec(s);
   if (m) return { y: base.getFullYear(), mo: +m[1], d: +m[2] };
   return null;
 }
@@ -383,12 +384,15 @@ function parseNotebookSmart(text: string): SmartParseResult {
   const currentDay = today.getDate();
 
   // Step 1: Parse all entries (MM/DD HH:MM format)
-  const lines = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  const lines = text
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
   const entries: ParsedEntry[] = [];
 
   for (const raw of lines) {
     // Parse date (MM/DD)
-    const dateMatch = raw.match(/\b(\d{1,2})[\/-](\d{1,2})\b/);
+    const dateMatch = /\b(\d{1,2})[\/-](\d{1,2})\b/.exec(raw);
     if (!dateMatch) continue;
 
     const month = +dateMatch[1];
@@ -440,7 +444,7 @@ function parseNotebookSmart(text: string): SmartParseResult {
   // Step 3: Assign years intelligently
   const warnings: string[] = [];
   let startYear = currentYear;
-  let endYear = currentYear;
+  let _endYear = currentYear;
 
   if (isAscending) {
     // Ascending: Most recent date should be closest to today
@@ -478,7 +482,7 @@ function parseNotebookSmart(text: string): SmartParseResult {
       (firstEntry.month === currentMonth && firstEntry.day > currentDay)
     ) {
       startYear = currentYear - 1;
-      endYear = currentYear - 1;
+      _endYear = currentYear - 1;
       warnings.push('第一個日期在未來，推測為去年資料');
     }
 
@@ -489,7 +493,7 @@ function parseNotebookSmart(text: string): SmartParseResult {
 
       // If month increases significantly (e.g., 1 → 12), year changed
       if (prev.month <= 2 && curr.month >= 11) {
-        endYear--;
+        _endYear--;
         break;
       }
     }
@@ -838,7 +842,7 @@ export default function Page() {
     return arr.map(([k, rs]) => [
       k,
       rs.sort((a, b) => new Date(a.iso).getTime() - new Date(b.iso).getTime()),
-    ]) as [string, PoopRecord[]][];
+    ]);
   }, [records]);
   const monthsAll = useMemo(() => {
     const set = new Set<string>();
@@ -1286,7 +1290,7 @@ export default function Page() {
                   aria-label={`編輯 ${fmtHM(r.iso)} 的紀錄`}
                 >
                   <div className="shrink-0 mt-0.5">
-                    <CuteIcon t={(r.type || 2) as 1 | 2 | 3 | 4 | 5} />
+                    <CuteIcon t={r.type || 2} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold tracking-wide">{fmtHM(r.iso)}</div>
@@ -1339,7 +1343,7 @@ export default function Page() {
                 aria-label="調整時間"
                 type="time"
                 value={editing.time}
-                onChange={(e) => setEditing({ ...editing!, time: e.target.value })}
+                onChange={(e) => setEditing({ ...editing, time: e.target.value })}
                 className="h-11 px-3 rounded-xl w-full focus-visible:outline focus-visible:outline-2"
                 style={{ background: theme.surface, border: `1px solid ${theme.outline}` }}
               />
@@ -1348,7 +1352,7 @@ export default function Page() {
                   <button
                     key={t.id}
                     aria-label={`選擇型態 ${t.name}`}
-                    onClick={() => setEditing({ ...editing!, type: t.id })}
+                    onClick={() => setEditing({ ...editing, type: t.id })}
                     className="h-11 w-11 rounded-2xl grid place-items-center focus-visible:outline focus-visible:outline-2 transition-transform active:scale-95"
                     style={{
                       background:
@@ -1633,10 +1637,7 @@ export default function Page() {
             >
               {/* 上：日期（大字體）*/}
               <div className="text-center">
-                <div
-                  className="text-lg font-bold"
-                  style={{ color: theme.primary }}
-                >
+                <div className="text-lg font-bold" style={{ color: theme.primary }}>
                   {k.slice(5).replace('-', '/')}
                 </div>
               </div>
@@ -1828,7 +1829,9 @@ export default function Page() {
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 dark:text-gray-400">日期順序：</span>
                   <span className="font-semibold">
-                    {smartParseResult.metadata.order === 'ascending' ? '正序 (舊→新)' : '倒序 (新→舊)'}
+                    {smartParseResult.metadata.order === 'ascending'
+                      ? '正序 (舊→新)'
+                      : '倒序 (新→舊)'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -1844,9 +1847,7 @@ export default function Page() {
               </div>
 
               {smartParseResult.metadata.warnings.length > 0 && (
-                <div
-                  className="p-3 rounded-xl text-sm space-y-1 bg-orange-50 dark:bg-orange-950 text-orange-900 dark:text-orange-100"
-                >
+                <div className="p-3 rounded-xl text-sm space-y-1 bg-orange-50 dark:bg-orange-950 text-orange-900 dark:text-orange-100">
                   <div className="font-semibold">⚠️ 注意事項：</div>
                   {smartParseResult.metadata.warnings.map((warning, i) => (
                     <div key={i} className="ml-4">

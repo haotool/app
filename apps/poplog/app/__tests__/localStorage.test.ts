@@ -32,11 +32,12 @@ describe('localStorage 工具函數', () => {
     it('應該在 localStorage 有值時正確讀取 JSON', () => {
       const testData = { id: '1', type: 2, time: '2025-11-01T10:00:00.000Z' };
       (global.localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue(
-        JSON.stringify([testData])
+        JSON.stringify([testData]),
       );
 
       const result = readJSON('test-key', []);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(global.localStorage.getItem).toHaveBeenCalledWith('test-key');
       expect(result).toEqual([testData]);
     });
@@ -64,15 +65,16 @@ describe('localStorage 工具函數', () => {
 
       writeJSON('test-key', testData);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(global.localStorage.setItem).toHaveBeenCalledWith(
         'test-key',
-        JSON.stringify(testData)
+        JSON.stringify(testData),
       );
     });
 
     it('應該在序列化失敗時靜默失敗', () => {
       const circularData = {} as Record<string, unknown>;
-      circularData['self'] = circularData;
+      circularData.self = circularData;
 
       expect(() => writeJSON('circular-key', circularData)).not.toThrow();
     });
