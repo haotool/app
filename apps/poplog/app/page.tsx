@@ -833,13 +833,13 @@ export default function Page() {
   };
 
   // 月份分組（支援無資料時顯示當月）
-  const grouped = useMemo(() => {
+  const grouped = useMemo((): [string, PoopRecord[]][] => {
     const g: Record<string, PoopRecord[]> = {};
     for (const r of records) {
       (g[toDateKey(r.iso)] ||= []).push(r);
     }
     const arr = Object.entries(g).sort((a, b) => a[0].localeCompare(b[0]));
-    return arr.map(([k, rs]) => [
+    return arr.map(([k, rs]): [string, PoopRecord[]] => [
       k,
       rs.sort((a, b) => new Date(a.iso).getTime() - new Date(b.iso).getTime()),
     ]);
