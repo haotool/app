@@ -972,8 +972,18 @@ export default function Page() {
     const g: Record<string, number> = {};
     const days = grouped.slice(-7);
     days.forEach(([k, rs]) => (g[k] = rs.length));
+
+    // 計算型態統計
+    const typeStats: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const last7DaysRecords = days.flatMap(([, rs]) => rs);
+    last7DaysRecords.forEach((r) => {
+      if (r.type) {
+        typeStats[r.type] = (typeStats[r.type] || 0) + 1;
+      }
+    });
+
     const W = 900,
-      H = 1200;
+      H = 1300; // 增加高度以容納型態統計
     const canvas = document.createElement('canvas');
     canvas.width = W;
     canvas.height = H;
@@ -983,11 +993,15 @@ export default function Page() {
     grd.addColorStop(1, dark ? '#1a1412' : '#FFF7ED');
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
+
+    // 標題
     ctx.fillStyle = dark ? '#F5E9E4' : '#4E342E';
     ctx.font = 'bold 48px ui-sans-serif,system-ui,-apple-system';
     ctx.fillText('可愛週報', 60, 90);
     ctx.font = '28px ui-sans-serif,system-ui';
     ctx.fillText(new Date().toLocaleDateString(), 60, 140);
+
+    // 每日記錄
     const keys = Object.keys(g).sort();
     let i = 0;
     for (const k of keys) {
@@ -1007,9 +1021,42 @@ export default function Page() {
       }
       i++;
     }
+
+    // 型態統計標題
+    const statsY = 920;
+    ctx.fillStyle = dark ? '#F5E9E4' : '#4E342E';
+    ctx.font = 'bold 32px ui-sans-serif,system-ui,-apple-system';
+    ctx.fillText('型態統計', 60, statsY);
+
+    // 繪製型態統計（左右兩欄布局）
+    ctx.font = '24px ui-sans-serif,system-ui';
+    ctx.fillStyle = dark ? '#E7DBD6' : '#6D4C41';
+
+    TYPES.forEach((type, idx) => {
+      const count = typeStats[type.id] || 0;
+      const column = idx < 3 ? 0 : 1;
+      const row = idx % 3;
+      const x = 80 + column * 400;
+      const y = statsY + 60 + row * 50;
+
+      // 顯示型態名稱和數量
+      ctx.fillText(`${type.name}：${count} 筆`, x, y);
+
+      // 如果有記錄，顯示提示
+      if (count > 0 && type.hint) {
+        ctx.font = '20px ui-sans-serif,system-ui';
+        ctx.fillStyle = dark ? '#C4B5A8' : '#8D7A6C';
+        ctx.fillText(`(${type.hint})`, x + 150, y);
+        ctx.font = '24px ui-sans-serif,system-ui';
+        ctx.fillStyle = dark ? '#E7DBD6' : '#6D4C41';
+      }
+    });
+
+    // 健康小叮嚀
     ctx.fillStyle = dark ? '#E7DBD6' : '#6D4C41';
     ctx.font = '24px ui-sans-serif';
     ctx.fillText('小叮嚀：規律、補水、高纖', 60, H - 80);
+
     const url = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
