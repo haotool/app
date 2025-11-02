@@ -7,7 +7,7 @@
 
 export const designTokens = {
   light: {
-    primary: '109 76 65',        // #6D4C41
+    primary: '109 76 65', // #6D4C41
     onPrimary: '255 255 255',
     primaryContainer: '243 233 227',
     onPrimaryContainer: '78 52 46',
@@ -47,10 +47,7 @@ export function rgbToCSS(rgb: string, alpha?: number): string {
 /**
  * 獲取指定主題的顏色值
  */
-export function getColorValue(
-  theme: ThemeMode,
-  color: keyof typeof designTokens.light
-): string {
+export function getColorValue(theme: ThemeMode, color: keyof typeof designTokens.light): string {
   return designTokens[theme][color];
 }
 

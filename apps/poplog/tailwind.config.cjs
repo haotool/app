@@ -22,9 +22,9 @@ module.exports = {
         'on-error': 'rgb(var(--color-on-error) / <alpha-value>)',
       },
       boxShadow: {
-        '1': 'var(--elevation-1)',
-        '2': 'var(--elevation-2)',
-        '3': 'var(--elevation-3)',
+        1: 'var(--elevation-1)',
+        2: 'var(--elevation-2)',
+        3: 'var(--elevation-3)',
       },
     },
   },
