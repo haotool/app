@@ -885,7 +885,7 @@ export default function Page() {
               onBlur={() => setInputFocus(false)}
               onChange={(e) => setLine(e.target.value)}
               placeholder=""
-              className="flex-1 bg-transparent outline-none text-sm h-11 px-1 focus-visible:outline-0"
+              className="flex-1 bg-transparent outline-none text-sm h-11 leading-11 px-1 focus-visible:outline-0"
               style={{ color: theme.onSurface }}
             />
             <motion.button
