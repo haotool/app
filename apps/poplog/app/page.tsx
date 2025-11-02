@@ -1072,23 +1072,23 @@ export default function Page() {
             style={{ background: theme.surfaceAlt, boxShadow: THEME.elevation[3] }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-sm font-semibold mb-2">編輯記錄</div>
-            <div className="flex items-center gap-2 mb-3">
+            <div className="text-sm font-semibold mb-3">編輯記錄</div>
+            <div className="space-y-3 mb-4">
               <input
                 aria-label="調整時間"
                 type="time"
                 value={editing.time}
                 onChange={(e) => setEditing({ ...editing!, time: e.target.value })}
-                className="h-11 px-3 rounded-xl flex-1 focus-visible:outline focus-visible:outline-2"
+                className="h-11 px-3 rounded-xl w-full focus-visible:outline focus-visible:outline-2"
                 style={{ background: theme.surface, border: `1px solid ${theme.outline}` }}
               />
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center gap-1.5 flex-wrap">
                 {TYPES.map((t) => (
                   <button
                     key={t.id}
                     aria-label={`選擇型態 ${t.name}`}
                     onClick={() => setEditing({ ...editing!, type: t.id })}
-                    className="h-11 w-11 rounded-xl grid place-items-center focus-visible:outline focus-visible:outline-2"
+                    className="h-11 w-11 rounded-2xl grid place-items-center focus-visible:outline focus-visible:outline-2 transition-transform active:scale-95"
                     style={{
                       background:
                         (editing.type || 2) === t.id ? theme.primaryContainer : theme.surface,
@@ -1718,7 +1718,7 @@ export default function Page() {
     <main className="min-h-screen" style={{ background: theme.surface, color: theme.onSurface }}>
       <Bg dark={dark} />
       {Header}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-4 pb-28">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-4 pb-[max(7rem,env(safe-area-inset-bottom))]">
         {/* toolbar */}
         <div className="flex items-center gap-2">
           <motion.button
