@@ -1,10 +1,10 @@
-import type { PluginOption } from 'vite';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
 
 export default defineConfig({
-  plugins: [react() as PluginOption],
+  // @ts-expect-error - Vite plugin type compatibility issue between versions
+  plugins: [react()],
   test: {
     environment: 'happy-dom',
     globals: true,
