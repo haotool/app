@@ -457,7 +457,7 @@ function parseNotebookSmart(text: string): SmartParseResult {
       (lastEntry.month === currentMonth && lastEntry.day > currentDay)
     ) {
       startYear = currentYear - 1;
-      endYear = currentYear - 1;
+      _endYear = currentYear - 1;
       warnings.push('最後日期在未來，推測為去年資料');
     }
 
