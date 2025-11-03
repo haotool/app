@@ -1,8 +1,7 @@
-# RateWise - 匯率好工具 Robots.txt
-# 最後更新：2025-10-28
-# 目的：允許搜尋引擎和 AI 爬蟲訪問網站，確保關鍵資源可被索引，同時保護敏感路徑
+# RateWise - robots.txt
+# Updated: 2025-11-02 (Asia/Taipei)
 
-# 通用規則：允許所有爬蟲訪問主要內容
+# === Default rules ===
 User-agent: *
 Allow: /
 Disallow: /admin/
@@ -10,7 +9,7 @@ Disallow: /api/
 Disallow: /login/
 Disallow: /tmp/
 
-# 明確允許特定 AI 爬蟲（2025 AI SEO 最佳實踐）
+# === OpenAI ===
 User-agent: GPTBot
 Allow: /
 Disallow: /realtime-rates/
@@ -18,32 +17,31 @@ Disallow: /realtime-rates/
 User-agent: ChatGPT-User
 Allow: /
 
-User-agent: Claude-Web
+User-agent: OAI-SearchBot
 Allow: /
 
+# === Anthropic ===
 User-agent: ClaudeBot
 Allow: /
 Disallow: /realtime-rates/
 
+User-agent: Claude-Web
+Allow: /
+
+# === Perplexity ===
 User-agent: PerplexityBot
 Allow: /
-Crawl-delay: 10
 
-# 保持 robots.txt 只使用標準指令: User-agent, Allow, Disallow, Sitemap, Crawl-delay
-# 參考: https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt
-
-User-agent: Google-Extended
-Allow: /
-
+# === Search engines ===
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
-# 允許搜尋引擎訪問關鍵資源以完整渲染頁面
-# 參考：Google, "How to write and submit a robots.txt file", 2024-12-12
-Allow: /assets/
+# === Google AI training scope (separate from Search) ===
+User-agent: Google-Extended
+Allow: /
 
-# Sitemap 位置
+# === Sitemap ===
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
