@@ -106,11 +106,11 @@ export default defineConfig(() => {
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
 
-  // 最簡配置：使用環境變數，消除所有特殊情況
-  // [fix:2025-10-27] 遵循 Linus 原則 - "好品味"：消除條件判斷
-  // CI 環境: VITE_BASE_PATH='/' (Lighthouse/E2E)
-  // 生產環境: VITE_BASE_PATH='/ratewise/' (Zeabur)
-  const base = process.env['VITE_BASE_PATH'] || '/';
+  // [fix:2025-11-03] 方案 B：固定 base path 為 /ratewise/
+  // 參考：[context7:/vitejs/vite:2025-11-03] - Vite Base Path Best Practices
+  // 原因：消除動態配置，防止路徑衝突，確保 Service Worker scope 正確
+  // 影響：RateWise 只能在 /ratewise 路徑訪問，不再支援根路徑
+  const base = '/ratewise/';
 
   return {
     base,
@@ -161,13 +161,19 @@ export default defineConfig(() => {
           // 使用 prompt 模式時，不自動 skipWaiting
           clientsClaim: false,
           skipWaiting: false,
+          // [fix:2025-11-03] 方案 B：限制 Service Worker scope 到 /ratewise/
+          // 參考：[MDN:Service Workers:2025-11-03] - SW Scope Best Practices
+          // 原因：防止攔截 /poplog 路徑，避免跨應用衝突
+          navigateFallback: '/ratewise/index.html',
+          navigateFallbackAllowlist: [/^\/ratewise\//], // 只攔截 /ratewise 開頭的路徑
           // 運行時緩存策略
           // 注意：匯率數據改用 GitHub raw (無 CDN 快取)，確保數據即時性
           // jsdelivr CDN 快取可達 12-24 小時，不適合即時匯率數據
           runtimeCaching: [],
         },
         // Manifest 配置（此處配置會覆蓋 public/manifest.webmanifest）
-        // 使用動態配置以支援 development/production 不同的 base path
+        // [fix:2025-11-03] 方案 B：固定 scope 和 start_url 為 /ratewise/
+        // 參考：[MDN:Web App Manifest:2025-11-03] - Manifest Scope Best Practices
         manifest: {
           name: 'RateWise - 即時匯率轉換器',
           short_name: 'RateWise',

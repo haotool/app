@@ -26,6 +26,9 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY . .
 
 # Build both applications
+# [fix:2025-11-03] 方案 B：設定 RateWise 固定 base path
+# 參考：[context7:/vitejs/vite:2025-11-03] - Vite Base Path Configuration
+ENV VITE_BASE_PATH=/ratewise/
 RUN pnpm --filter @app/poplog build
 RUN pnpm --filter @app/ratewise build
 
