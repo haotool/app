@@ -72,6 +72,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
     fromAmount: '1000',
     toAmount: '32.23',
     exchangeRates: mockExchangeRates,
+    rateType: 'spot' as const,
     onFromCurrencyChange: vi.fn(),
     onToCurrencyChange: vi.fn(),
     onFromAmountChange: vi.fn(),
@@ -79,6 +80,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
     onQuickAmount: vi.fn(),
     onSwapCurrencies: vi.fn(),
     onAddToHistory: vi.fn(),
+    onRateTypeChange: vi.fn(),
   };
 
   beforeEach(() => {

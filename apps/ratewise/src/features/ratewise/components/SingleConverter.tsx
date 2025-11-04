@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
-import type { CurrencyCode } from '../types';
+import type { CurrencyCode, RateType } from '../types';
 import type { MiniTrendDataPoint } from './MiniTrendChart';
+import type { RateDetails } from '../hooks/useExchangeRates';
 import {
   fetchHistoricalRatesRange,
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
+import { formatExchangeRate } from '../../../utils/currencyFormatter';
 
 // 🚀 激進優化：MiniTrendChart 懶載入 (節省 141KB lightweight-charts + 36KB framer-motion)
 const MiniTrendChart = lazy(() =>
@@ -22,6 +24,8 @@ interface SingleConverterProps {
   fromAmount: string;
   toAmount: string;
   exchangeRates: Record<CurrencyCode, number | null>;
+  details?: Record<string, RateDetails>;
+  rateType: RateType;
   onFromCurrencyChange: (currency: CurrencyCode) => void;
   onToCurrencyChange: (currency: CurrencyCode) => void;
   onFromAmountChange: (amount: string) => void;
@@ -29,6 +33,7 @@ interface SingleConverterProps {
   onQuickAmount: (amount: number) => void;
   onSwapCurrencies: () => void;
   onAddToHistory: () => void;
+  onRateTypeChange: (type: RateType) => void;
 }
 
 export const SingleConverter = ({
@@ -37,6 +42,8 @@ export const SingleConverter = ({
   fromAmount,
   toAmount,
   exchangeRates,
+  details,
+  rateType,
   onFromCurrencyChange,
   onToCurrencyChange,
   onFromAmountChange,
@@ -44,6 +51,7 @@ export const SingleConverter = ({
   onQuickAmount,
   onSwapCurrencies,
   onAddToHistory,
+  onRateTypeChange,
 }: SingleConverterProps) => {
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
   const [_loadingTrend, setLoadingTrend] = useState(false);
@@ -51,8 +59,17 @@ export const SingleConverter = ({
   const [showTrend, setShowTrend] = useState(false);
   const swapButtonRef = useRef<HTMLButtonElement>(null);
 
-  const fromRate = exchangeRates[fromCurrency] ?? 1;
-  const toRate = exchangeRates[toCurrency] ?? 1;
+  // 獲取指定貨幣的匯率（優先使用 details，fallback 到 exchangeRates）
+  const getRate = (currency: CurrencyCode): number => {
+    const detail = details?.[currency];
+    if (detail?.[rateType]?.sell != null) {
+      return detail[rateType].sell;
+    }
+    return exchangeRates[currency] ?? 1;
+  };
+
+  const fromRate = getRate(fromCurrency);
+  const toRate = getRate(toCurrency);
   const exchangeRate = fromRate / toRate;
   const reverseRate = toRate / fromRate;
 
@@ -113,6 +130,7 @@ export const SingleConverter = ({
           .filter((item): item is MiniTrendDataPoint => item !== null)
           .reverse();
 
+        // 整合即時匯率到歷史數據
         let mergedPoints = historyPoints;
 
         if (latestRates) {
@@ -121,21 +139,22 @@ export const SingleConverter = ({
           const latestRate = latestFromRate / latestToRate;
 
           if (Number.isFinite(latestRate) && latestRate > 0) {
-            const latestDateRaw = latestRates.updateTime?.split(/\s+/)[0] ?? '';
+            // 提取日期並轉換為 YYYY-MM-DD 格式
             const latestDate =
-              latestDateRaw.replace(/\//g, '-') || new Date().toISOString().slice(0, 10);
+              latestRates.updateTime?.split(/\s+/)[0]?.replace(/\//g, '-') ??
+              new Date().toISOString().slice(0, 10);
 
+            // 去重：過濾掉相同日期的歷史數據，添加最新數據點
             mergedPoints = [
               ...historyPoints.filter((point) => point.date !== latestDate),
-              {
-                date: latestDate,
-                rate: latestRate,
-              },
+              { date: latestDate, rate: latestRate },
             ];
           }
         }
 
-        setTrendData(mergedPoints.slice(-MAX_TREND_DAYS));
+        // 按日期排序並限制最多30天
+        const sortedPoints = mergedPoints.sort((a, b) => a.date.localeCompare(b.date));
+        setTrendData(sortedPoints.slice(-MAX_TREND_DAYS));
       } catch {
         if (!isMounted) return;
         setTrendData([]);
@@ -204,17 +223,58 @@ export const SingleConverter = ({
           {/* 光澤效果 */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl" />
 
-          {/* 匯率資訊 - 上半部 */}
-          <div className="relative text-center py-5 px-4 flex flex-col justify-center transition-all duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden">
-            <div className="text-xs text-slate-600 mb-1 flex items-center justify-center gap-1.5">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-semibold">即時匯率</span>
+          {/* 匯率資訊區塊 - 包含切換按鈕和匯率顯示 */}
+          <div className="relative text-center pt-12 pb-6 px-4 flex flex-col items-center justify-center transition-all duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden">
+            {/* 匯率類型切換按鈕 - 融合背景漸層的玻璃擬態設計 */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 inline-flex bg-gradient-to-r from-blue-50/95 to-purple-50/95 backdrop-blur-md rounded-full p-0.5 shadow-lg border border-white/40">
+              <button
+                onClick={() => onRateTypeChange('spot')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
+                  rateType === 'spot'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md scale-105'
+                    : 'text-blue-700/80 hover:text-blue-800 hover:bg-blue-100/50'
+                }`}
+                aria-label="切換到即期匯率"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                  />
+                </svg>
+                <span>即期</span>
+              </button>
+              <button
+                onClick={() => onRateTypeChange('cash')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
+                  rateType === 'cash'
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md scale-105'
+                    : 'text-purple-700/80 hover:text-purple-800 hover:bg-purple-100/50'
+                }`}
+                aria-label="切換到現金匯率"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                <span>現金</span>
+              </button>
             </div>
-            <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-2 transition-all duration-300 group-hover:scale-105">
-              1 {fromCurrency} = {exchangeRate.toFixed(4)} {toCurrency}
-            </div>
-            <div className="text-sm text-slate-600 font-semibold opacity-80 group-hover:opacity-95 transition-opacity">
-              1 {toCurrency} = {reverseRate.toFixed(4)} {fromCurrency}
+
+            {/* 匯率顯示 */}
+            <div className="w-full">
+              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2 transition-all duration-300 group-hover:scale-105">
+                1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
+              </div>
+              <div className="text-sm text-slate-600 font-semibold opacity-80 group-hover:opacity-95 transition-opacity">
+                1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
+              </div>
             </div>
           </div>
 

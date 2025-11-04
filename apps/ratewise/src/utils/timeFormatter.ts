@@ -68,7 +68,7 @@ export function formatGenericTimeString(timeString: string): string {
     const formattedDay = day.padStart(2, '0');
 
     // 如果有時間部分，附加上去
-    const timeCandidate = timePart || /(\d{1,2}:\d{2}(?::\d{2})?)/.exec(trimmed)?.[0] || '';
+    const timeCandidate = timePart ?? /(\d{1,2}:\d{2}(?::\d{2})?)/.exec(trimmed)?.[0] ?? '';
 
     return timeCandidate
       ? `${formattedMonth}/${formattedDay} ${timeCandidate}`

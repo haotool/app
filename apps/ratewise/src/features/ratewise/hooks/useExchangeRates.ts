@@ -4,8 +4,15 @@ import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode } from '../types';
 import { logger } from '../../../utils/logger';
 
+export interface RateDetails {
+  name: string;
+  spot: { buy: number; sell: number | null };
+  cash: { buy: number | null; sell: number | null };
+}
+
 export interface ExchangeRatesState {
   rates: Record<CurrencyCode, number | null>;
+  details: Record<string, RateDetails>;
   isLoading: boolean;
   error: Error | null;
   lastUpdate: string | null;
@@ -18,6 +25,7 @@ const INITIAL_STATE: ExchangeRatesState = {
   rates: Object.fromEntries(
     Object.keys(CURRENCY_DEFINITIONS).map((code) => [code, null]),
   ) as Record<CurrencyCode, number | null>,
+  details: {},
   isLoading: true,
   error: null,
   lastUpdate: null,
@@ -69,6 +77,7 @@ export function useExchangeRates() {
 
           return {
             rates: newRates,
+            details: data.details || {},
             isLoading: false,
             error: null,
             lastUpdate: normalizedUpdate,
