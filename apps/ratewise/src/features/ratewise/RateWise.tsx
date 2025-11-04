@@ -180,7 +180,11 @@ const RateWise = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center mb-2">
-              <img src="/logo.png" alt="RateWise Logo" className="w-16 h-16 md:w-20 md:h-20" />
+              <img
+                src={`/logo.png?v=${import.meta.env.VITE_BUILD_TIME ?? Date.now()}`}
+                alt="RateWise Logo"
+                className="w-16 h-16 md:w-20 md:h-20"
+              />
               <h2 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
                 匯率好工具
               </h2>

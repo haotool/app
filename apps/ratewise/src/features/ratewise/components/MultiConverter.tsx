@@ -39,6 +39,11 @@ export const MultiConverter = ({
 
   // 取得匯率顯示資訊（自動 fallback 到可用的匯率類型）
   const getRateDisplay = (currency: CurrencyCode): string => {
+    // 基準貨幣直接顯示「基準貨幣」
+    if (currency === baseCurrency) {
+      return '基準貨幣';
+    }
+
     const detail = details?.[currency];
     if (!detail) return '計算中...';
 
@@ -54,6 +59,15 @@ export const MultiConverter = ({
       }
     }
 
+    // 匯率應該是：1 基準貨幣 = rate 目標貨幣
+    // 但 API 提供的是：1 外幣 = rate TWD
+    // 所以當 TWD 是基準貨幣時，需要反向計算：1 TWD = 1/rate 外幣
+    if (baseCurrency === 'TWD') {
+      const reverseRate = 1 / rate;
+      return `1 ${baseCurrency} = ${formatExchangeRate(reverseRate)} ${currency}`;
+    }
+
+    // 當外幣是基準貨幣時，rate 已經正確
     return `1 ${baseCurrency} = ${formatExchangeRate(rate)} ${currency}`;
   };
 
