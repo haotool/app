@@ -1,6 +1,7 @@
 import { Star, TrendingDown, TrendingUp } from 'lucide-react';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode, TrendState } from '../types';
+import { formatExchangeRate } from '../../../utils/currencyFormatter';
 
 interface FavoritesListProps {
   favorites: CurrencyCode[];
@@ -32,7 +33,9 @@ export const FavoritesList = ({ favorites, trend, exchangeRates }: FavoritesList
               {trend[code] === 'up' && <TrendingUp className="text-green-500" size={16} />}
               {trend[code] === 'down' && <TrendingDown className="text-red-500" size={16} />}
               {/* 當 trend[code] 為 null 時，不顯示任何趨勢圖標 */}
-              <span className="text-sm font-medium">{(exchangeRates[code] ?? 0).toFixed(4)}</span>
+              <span className="text-sm font-medium">
+                {formatExchangeRate(exchangeRates[code] ?? 0)}
+              </span>
             </div>
           </div>
         ))}
