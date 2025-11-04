@@ -46,7 +46,11 @@
         padding: 0;
         min-height: 100vh;
         background: #f8fafc;
-        font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+        font-family:
+          'Noto Sans TC',
+          system-ui,
+          -apple-system,
+          sans-serif;
       }
       /* Skeleton Screen - 立即顯示內容結構，提升 perceived performance */
       .skeleton-container {
@@ -93,14 +97,24 @@
       }
       /* 平滑的脈動動畫 */
       @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
       }
-      .skeleton-header, .skeleton-subtitle, .skeleton-input, .skeleton-result {
+      .skeleton-header,
+      .skeleton-subtitle,
+      .skeleton-input,
+      .skeleton-result {
         animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
       }
       @media (max-width: 768px) {
-        .skeleton-row { grid-template-columns: 1fr; }
+        .skeleton-row {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
 
@@ -157,11 +171,11 @@
             <div class="skeleton-input"></div>
             <div class="skeleton-input"></div>
           </div>
-          <div class="skeleton-input" style="width: 100%; margin-bottom: 1rem;"></div>
+          <div class="skeleton-input" style="width: 100%; margin-bottom: 1rem"></div>
           <div class="skeleton-result"></div>
         </div>
         <div class="skeleton-card">
-          <div class="skeleton-input" style="height: 12rem;"></div>
+          <div class="skeleton-input" style="height: 12rem"></div>
         </div>
         <span class="sr-only">載入匯率資料中...</span>
       </div>
