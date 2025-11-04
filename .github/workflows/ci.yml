@@ -13,6 +13,8 @@ jobs:
   quality:
     name: Quality Checks
     runs-on: ubuntu-latest
+    env:
+      TZ: 'Asia/Taipei' # 設置時區為台北，確保時間相關測試正確
 
     steps:
       - name: Checkout code
