@@ -200,11 +200,7 @@ export const MultiConverter = ({
                   >
                     {rateType === 'spot' ? '即期' : '現金'}
                   </button>
-                  {code === baseCurrency ? (
-                    <span className="text-gray-500"> · 基準貨幣</span>
-                  ) : (
-                    <span className="text-gray-500"> · {getRateDisplay(code)}</span>
-                  )}
+                  <span className="text-gray-500"> · {getRateDisplay(code)}</span>
                 </div>
               </div>
             </div>
