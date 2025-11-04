@@ -30,6 +30,9 @@ export const STORAGE_KEYS = {
 
   /** 目標貨幣選擇 - 用戶最後選擇的目標貨幣 */
   TO_CURRENCY: 'toCurrency',
+
+  /** 匯率類型選擇 (spot/cash) - 用戶偏好的匯率類型，預設為 spot */
+  RATE_TYPE: 'rateType',
 } as const;
 
 /**
@@ -50,6 +53,7 @@ export const USER_DATA_KEYS = [
   STORAGE_KEYS.FAVORITES,
   STORAGE_KEYS.FROM_CURRENCY,
   STORAGE_KEYS.TO_CURRENCY,
+  STORAGE_KEYS.RATE_TYPE,
 ] as const;
 
 /**
