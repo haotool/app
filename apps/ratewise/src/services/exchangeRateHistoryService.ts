@@ -61,6 +61,26 @@ const CACHE_KEY_PREFIX = 'exchange-rates';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘
 
 /**
+ * 動態探測配置
+ */
+const CONFIG = {
+  MAX_HISTORY_DAYS: 30, // 最多探測30天
+  FALLBACK_RETRIES: 7, // Fallback最多回溯7天
+  RANGE_CACHE_KEY: `${CACHE_KEY_PREFIX}-date-range`,
+  RANGE_CACHE_DURATION: 60 * 60 * 1000, // 1小時
+} as const;
+
+/**
+ * 可用日期範圍
+ */
+export interface DateRange {
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  availableDays: number;
+  timestamp: number;
+}
+
+/**
  * 記憶體快取
  */
 const cache = new Map<string, { data: unknown; timestamp: number }>();
@@ -205,55 +225,67 @@ export async function fetchHistoricalRates(date: Date): Promise<ExchangeRateData
 }
 
 /**
- * 獲取過去 N 天的歷史匯率（並行執行）
+ * 獲取過去 N 天的歷史匯率（動態範圍，並行執行）
  *
- * [Lighthouse-fix:2025-10-28] 只請求今天及過去的日期，避免 404 錯誤
+ * [2025-11-04] 改為動態探測數據範圍，避免404錯誤
+ * - 先探測實際可用的數據天數
+ * - 只請求存在的日期，避免無效請求
+ * - 使用Fallback機制處理缺失數據
  *
  * 使用 Promise.all 並行獲取，效能提升 ~78%：
  * - 舊版: 7 days × 200ms = 1.4s (sequential)
  * - 新版: max(7 parallel) ≈ 200-300ms
+ *
+ * @param maxDays 最多獲取天數（預設30，實際天數以探測結果為準）
  */
-export async function fetchHistoricalRatesRange(days = 30): Promise<HistoricalRateData[]> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // 重置到今日 00:00
+export async function fetchHistoricalRatesRange(
+  maxDays: number = CONFIG.MAX_HISTORY_DAYS,
+): Promise<HistoricalRateData[]> {
+  // 動態探測可用範圍
+  const range = await detectAvailableDateRange();
+  const actualDays = Math.min(maxDays, range.availableDays);
 
-  logger.info(`Fetching ${days} days of historical rates (parallel)`, {
+  if (actualDays === 0) {
+    logger.warn('No historical data available', { service: 'exchangeRateHistoryService' });
+    return [];
+  }
+
+  logger.info(`Fetching ${actualDays} days of historical rates (dynamic range, parallel)`, {
     service: 'exchangeRateHistoryService',
+    availableDays: range.availableDays,
+    requestedDays: maxDays,
   });
 
-  // 建立日期列表 - 從昨天開始往前推（今天的數據可能還沒生成）
-  const dates = Array.from({ length: days }, (_, i) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // 建立日期列表 - 從昨天開始往前推
+  const dates = Array.from({ length: actualDays }, (_, i) => {
     const date = new Date(today);
-    date.setDate(date.getDate() - (i + 1)); // -1 從昨天開始，避免請求今天/未來
+    date.setDate(date.getDate() - (i + 1));
     return date;
   });
 
-  // 並行獲取所有歷史匯率
+  // 並行獲取所有歷史匯率（使用Fallback機制）
   const promises = dates.map(async (date) => {
-    try {
-      const data = await fetchHistoricalRates(date);
+    const data = await fetchHistoricalRatesWithFallback(date);
+    if (data) {
       return { date: formatDate(date), data };
-    } catch {
-      // 歷史資料可能尚未生成（GitHub Actions 每天首次執行才建立），
-      // 這是正常現象，使用 debug level 避免 console 噪音
-      logger.debug(`Historical data not yet available for ${formatDate(date)}`, {
-        service: 'exchangeRateHistoryService',
-        reason: 'File may not be created yet by scheduled workflow',
-      });
-      return null;
     }
+    return null;
   });
 
-  // 等待所有請求完成，過濾掉失敗的結果
+  // 等待所有請求完成，過濾掉null結果
   const results = (await Promise.all(promises)).filter(
     (item): item is HistoricalRateData => item !== null,
   );
 
-  logger.info(`Fetched ${results.length}/${days} historical records`, {
+  logger.info(`Fetched ${results.length}/${actualDays} historical records`, {
     service: 'exchangeRateHistoryService',
     fetched: results.length,
-    requested: days,
+    requested: actualDays,
   });
+
   return results;
 }
 
@@ -263,4 +295,106 @@ export async function fetchHistoricalRatesRange(days = 30): Promise<HistoricalRa
 export function clearCache(): void {
   cache.clear();
   logger.info('Cache cleared', { service: 'exchangeRateHistoryService' });
+}
+
+/**
+ * 動態探測可用的歷史數據範圍
+ *
+ * 從今天往前探測，找出最舊的可用日期
+ * 結果會快取1小時，減少不必要的探測請求
+ */
+export async function detectAvailableDateRange(): Promise<DateRange> {
+  // 檢查快取
+  const cached = getFromCache<DateRange>(CONFIG.RANGE_CACHE_KEY);
+  if (cached) {
+    logger.debug('Using cached date range', { service: 'exchangeRateHistoryService' });
+    return cached;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let oldestAvailableDate = today;
+  let availableDays = 0;
+
+  logger.info(`Detecting available date range (max ${CONFIG.MAX_HISTORY_DAYS} days)`, {
+    service: 'exchangeRateHistoryService',
+  });
+
+  // 從昨天開始往前探測（今天的數據可能尚未生成）
+  for (let i = 1; i <= CONFIG.MAX_HISTORY_DAYS; i++) {
+    const testDate = new Date(today);
+    testDate.setDate(today.getDate() - i);
+
+    try {
+      await fetchHistoricalRates(testDate);
+      oldestAvailableDate = testDate;
+      availableDays = i;
+    } catch {
+      // 遇到404表示沒有更早的數據了
+      break;
+    }
+  }
+
+  const range: DateRange = {
+    startDate: formatDate(oldestAvailableDate),
+    endDate: formatDate(today),
+    availableDays,
+    timestamp: Date.now(),
+  };
+
+  // 快取結果
+  saveToCache(CONFIG.RANGE_CACHE_KEY, range);
+
+  logger.info(`Detected ${availableDays} days of historical data`, {
+    service: 'exchangeRateHistoryService',
+    startDate: range.startDate,
+    endDate: range.endDate,
+  });
+
+  return range;
+}
+
+/**
+ * 獲取指定日期的歷史匯率（帶Fallback機制）
+ *
+ * 如果指定日期的數據不存在，會自動往前找最近的可用日期
+ * 最多回溯 CONFIG.FALLBACK_RETRIES 天
+ *
+ * @param date 目標日期
+ * @returns 匯率數據，或null（回溯範圍內無可用數據）
+ */
+export async function fetchHistoricalRatesWithFallback(
+  date: Date,
+): Promise<ExchangeRateData | null> {
+  for (let i = 0; i < CONFIG.FALLBACK_RETRIES; i++) {
+    const retryDate = new Date(date);
+    retryDate.setDate(date.getDate() - i);
+
+    try {
+      const data = await fetchHistoricalRates(retryDate);
+      if (i > 0) {
+        logger.info(
+          `Fallback succeeded: used ${formatDate(retryDate)} instead of ${formatDate(date)}`,
+          {
+            service: 'exchangeRateHistoryService',
+            fallbackDays: i,
+          },
+        );
+      }
+      return data;
+    } catch {
+      // 繼續嘗試前一天
+      continue;
+    }
+  }
+
+  logger.warn(
+    `No historical data available within ${CONFIG.FALLBACK_RETRIES} days from ${formatDate(date)}`,
+    {
+      service: 'exchangeRateHistoryService',
+    },
+  );
+
+  return null;
 }

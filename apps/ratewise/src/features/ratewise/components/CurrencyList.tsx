@@ -1,6 +1,7 @@
 import { RefreshCw, Star, TrendingDown, TrendingUp } from 'lucide-react';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode, TrendState } from '../types';
+import { formatExchangeRate } from '../../../utils/currencyFormatter';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -42,7 +43,7 @@ export const CurrencyList = ({
         {CURRENCY_CODES.map((code) => (
           <div
             key={`list-${code}`}
-            className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition cursor-pointer"
+            className="group flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition cursor-pointer"
             onClick={() => onToggleFavorite(code)}
           >
             <div className="flex items-center gap-2">
@@ -56,10 +57,13 @@ export const CurrencyList = ({
               {trend[code] === 'up' && <TrendingUp className="text-green-500" size={14} />}
               {trend[code] === 'down' && <TrendingDown className="text-red-500" size={14} />}
               {/* 當 trend[code] 為 null 時，不顯示任何趨勢圖標 */}
-              <span className="text-sm">{(exchangeRates[code] ?? 0).toFixed(4)}</span>
-              {favorites.includes(code) && (
-                <Star className="text-yellow-500" size={14} fill="currentColor" />
-              )}
+              <span className="text-sm">{formatExchangeRate(exchangeRates[code] ?? 0)}</span>
+              {/* 始終保留星星位置，防止佈局跳動 */}
+              <Star
+                className={`${favorites.includes(code) ? 'text-yellow-500' : 'text-gray-300 opacity-0 group-hover:opacity-100'}`}
+                size={14}
+                fill={favorites.includes(code) ? 'currentColor' : 'none'}
+              />
             </div>
           </div>
         ))}
