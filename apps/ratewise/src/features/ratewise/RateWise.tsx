@@ -21,6 +21,7 @@ const RateWise = () => {
   // Load real-time exchange rates
   const {
     rates: exchangeRates,
+    details,
     isLoading: ratesLoading,
     error: ratesError,
     lastUpdate,
@@ -167,6 +168,7 @@ const RateWise = () => {
                     fromAmount={fromAmount}
                     toAmount={toAmount}
                     exchangeRates={exchangeRates}
+                    details={details}
                     onFromCurrencyChange={setFromCurrency}
                     onToCurrencyChange={setToCurrency}
                     onFromAmountChange={handleFromAmountChange}

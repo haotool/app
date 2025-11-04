@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
-import type { CurrencyCode } from '../types';
+import type { CurrencyCode, RateType } from '../types';
 import type { MiniTrendDataPoint } from './MiniTrendChart';
+import type { RateDetails } from '../hooks/useExchangeRates';
+import { STORAGE_KEYS } from '../storage-keys';
 import {
   fetchHistoricalRatesRange,
   fetchLatestRates,
@@ -22,6 +24,7 @@ interface SingleConverterProps {
   fromAmount: string;
   toAmount: string;
   exchangeRates: Record<CurrencyCode, number | null>;
+  details?: Record<string, RateDetails>;
   onFromCurrencyChange: (currency: CurrencyCode) => void;
   onToCurrencyChange: (currency: CurrencyCode) => void;
   onFromAmountChange: (amount: string) => void;
@@ -37,6 +40,7 @@ export const SingleConverter = ({
   fromAmount,
   toAmount,
   exchangeRates,
+  details,
   onFromCurrencyChange,
   onToCurrencyChange,
   onFromAmountChange,
@@ -51,8 +55,31 @@ export const SingleConverter = ({
   const [showTrend, setShowTrend] = useState(false);
   const swapButtonRef = useRef<HTMLButtonElement>(null);
 
-  const fromRate = exchangeRates[fromCurrency] ?? 1;
-  const toRate = exchangeRates[toCurrency] ?? 1;
+  // 匯率類型狀態（spot/cash），默認 spot，從 localStorage 讀取
+  const [rateType, setRateType] = useState<RateType>(() => {
+    if (typeof window === 'undefined') return 'spot';
+    const stored = localStorage.getItem(STORAGE_KEYS.RATE_TYPE);
+    return stored === 'cash' ? 'cash' : 'spot';
+  });
+
+  // 持久化 rateType 選擇
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.RATE_TYPE, rateType);
+    }
+  }, [rateType]);
+
+  // 獲取指定貨幣的匯率（優先使用 details，fallback 到 exchangeRates）
+  const getRate = (currency: CurrencyCode): number => {
+    const detail = details?.[currency];
+    if (detail?.[rateType]?.sell != null) {
+      return detail[rateType].sell;
+    }
+    return exchangeRates[currency] ?? 1;
+  };
+
+  const fromRate = getRate(fromCurrency);
+  const toRate = getRate(toCurrency);
   const exchangeRate = fromRate / toRate;
   const reverseRate = toRate / fromRate;
 
@@ -113,6 +140,7 @@ export const SingleConverter = ({
           .filter((item): item is MiniTrendDataPoint => item !== null)
           .reverse();
 
+        // 整合即時匯率到歷史數據
         let mergedPoints = historyPoints;
 
         if (latestRates) {
@@ -121,21 +149,22 @@ export const SingleConverter = ({
           const latestRate = latestFromRate / latestToRate;
 
           if (Number.isFinite(latestRate) && latestRate > 0) {
-            const latestDateRaw = latestRates.updateTime?.split(/\s+/)[0] ?? '';
+            // 提取日期並轉換為 YYYY-MM-DD 格式
             const latestDate =
-              latestDateRaw.replace(/\//g, '-') || new Date().toISOString().slice(0, 10);
+              latestRates.updateTime?.split(/\s+/)[0]?.replace(/\//g, '-') ??
+              new Date().toISOString().slice(0, 10);
 
+            // 去重：過濾掉相同日期的歷史數據，添加最新數據點
             mergedPoints = [
               ...historyPoints.filter((point) => point.date !== latestDate),
-              {
-                date: latestDate,
-                rate: latestRate,
-              },
+              { date: latestDate, rate: latestRate },
             ];
           }
         }
 
-        setTrendData(mergedPoints.slice(-MAX_TREND_DAYS));
+        // 按日期排序並限制最多30天
+        const sortedPoints = mergedPoints.sort((a, b) => a.date.localeCompare(b.date));
+        setTrendData(sortedPoints.slice(-MAX_TREND_DAYS));
       } catch {
         if (!isMounted) return;
         setTrendData([]);
@@ -199,6 +228,30 @@ export const SingleConverter = ({
       </div>
 
       <div className="flex flex-col items-center mb-4">
+        {/* 匯率類型切換按鈕 */}
+        <div className="inline-flex bg-gray-100 rounded-lg p-1 mb-3">
+          <button
+            onClick={() => setRateType('spot')}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+              rateType === 'spot'
+                ? 'bg-white text-blue-600 shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            即期匯率
+          </button>
+          <button
+            onClick={() => setRateType('cash')}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+              rateType === 'cash'
+                ? 'bg-white text-purple-600 shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            現金匯率
+          </button>
+        </div>
+
         {/* 匯率卡片 - 懸停效果 - 移除 overflow-hidden 避免遮蔽 tooltip */}
         <div className="relative bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl mb-3 w-full group cursor-pointer hover:shadow-xl transition-all duration-500">
           {/* 光澤效果 */}
