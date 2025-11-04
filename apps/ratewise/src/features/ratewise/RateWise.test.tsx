@@ -385,14 +385,20 @@ describe('RateWise Component', () => {
 
       await waitFor(() => {
         const inputs = screen.getAllByPlaceholderText('0.00');
-        expect(inputs[0]).toHaveValue(5000);
+        // After formatting is applied, the value will be "5,000.00"
+        expect(inputs[0]).toHaveValue('5,000.00');
       });
 
       const allInputs = screen.getAllByPlaceholderText('0.00') as HTMLInputElement[];
+
+      // Focus, change, and blur to trigger formatting
+      fireEvent.focus(allInputs[1]!);
       fireEvent.change(allInputs[1]!, { target: { value: '123' } });
+      fireEvent.blur(allInputs[1]!);
 
       await waitFor(() => {
-        expect(allInputs[1]).toHaveValue(123);
+        // After formatting is applied, the value will be "123.00"
+        expect(allInputs[1]).toHaveValue('123.00');
       });
     });
 
@@ -427,11 +433,19 @@ describe('RateWise Component', () => {
 
       // Change to a non-base currency input to switch base currency
       // This simulates editing a currency amount, which changes it to the new base currency
+
+      // First focus on the input to enter editing mode
+      fireEvent.focus(inputs[1]!);
+
+      // Then change the value
       fireEvent.change(inputs[1]!, { target: { value: '100' } });
 
+      // Blur to apply formatting
+      fireEvent.blur(inputs[1]!);
+
       await waitFor(() => {
-        // The second input should now have the value 100
-        expect(inputs[1]).toHaveValue(100);
+        // After formatting is applied, the value will be "100.00"
+        expect(inputs[1]).toHaveValue('100.00');
       });
     });
   });

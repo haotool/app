@@ -150,6 +150,7 @@ export const MultiConverter = ({
                       parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
 
                     setEditingValue(validValue);
+                    onAmountChange(code, validValue);
                   }}
                   onBlur={() => {
                     // 離開編輯模式：更新狀態並清除編輯值

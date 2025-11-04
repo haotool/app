@@ -132,10 +132,20 @@ export function formatAmountInput(value: string, currencyCode: CurrencyCode): st
  * @returns 格式化後的字串（包含千位分隔符）
  */
 export function formatAmountDisplay(value: string | number, currencyCode: CurrencyCode): string {
-  if (!value || value === '') return '';
+  if (value === null || value === undefined) return '';
 
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  if (!Number.isFinite(numValue) || Number.isNaN(numValue)) return '';
+  if (typeof value === 'string') {
+    if (value.trim() === '') return '';
 
-  return formatCurrency(numValue, currencyCode);
+    const numValue = parseFloat(value);
+    if (!Number.isFinite(numValue) || Number.isNaN(numValue)) {
+      return value;
+    }
+
+    return formatCurrency(numValue, currencyCode);
+  }
+
+  if (!Number.isFinite(value) || Number.isNaN(value)) return '';
+
+  return formatCurrency(value, currencyCode);
 }
