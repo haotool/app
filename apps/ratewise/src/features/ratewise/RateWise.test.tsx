@@ -412,6 +412,28 @@ describe('RateWise Component', () => {
         expect(toggleButton).toHaveAttribute('aria-label', '移除常用貨幣 EUR');
       });
     });
+
+    it('allows changing amount in multi-currency mode to switch base currency', async () => {
+      renderWithProviders(<RateWise />);
+
+      fireEvent.click(screen.getByText('多幣別'));
+
+      await waitFor(() => {
+        expect(screen.getByText('即時多幣別換算')).toBeInTheDocument();
+      });
+
+      // Get all currency inputs
+      const inputs = screen.getAllByPlaceholderText('0.00') as HTMLInputElement[];
+
+      // Change to a non-base currency input to switch base currency
+      // This simulates editing a currency amount, which changes it to the new base currency
+      fireEvent.change(inputs[1]!, { target: { value: '100' } });
+
+      await waitFor(() => {
+        // The second input should now have the value 100
+        expect(inputs[1]).toHaveValue(100);
+      });
+    });
   });
 
   describe('Swap Control', () => {

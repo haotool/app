@@ -1,5 +1,5 @@
-import { Grid, Maximize2, AlertCircle, RefreshCw } from 'lucide-react';
-import { useMemo, useRef } from 'react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
@@ -13,10 +13,26 @@ import { ThreadsIcon } from '../../components/ThreadsIcon';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator';
 import { formatDisplayTime } from '../../utils/timeFormatter';
+import type { RateType } from './types';
+import { STORAGE_KEYS } from './storage-keys';
 
 const RateWise = () => {
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLElement>(null);
+
+  // 匯率類型狀態（spot/cash），默認 spot，從 localStorage 讀取
+  const [rateType, setRateType] = useState<RateType>(() => {
+    if (typeof window === 'undefined') return 'spot';
+    const stored = localStorage.getItem(STORAGE_KEYS.RATE_TYPE);
+    return stored === 'cash' ? 'cash' : 'spot';
+  });
+
+  // 持久化 rateType 選擇
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.RATE_TYPE, rateType);
+    }
+  }, [rateType]);
 
   // Load real-time exchange rates
   const {
@@ -53,6 +69,7 @@ const RateWise = () => {
     setMode,
     setFromCurrency,
     setToCurrency,
+    setBaseCurrency,
     handleFromAmountChange,
     handleToAmountChange,
     handleMultiAmountChange,
@@ -86,28 +103,42 @@ const RateWise = () => {
   }
 
   const modeToggleButton = (
-    <div className="inline-flex bg-gray-100 rounded-xl p-1">
+    <div className="inline-flex bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-0.5 shadow-sm border border-blue-100/50">
       <button
         onClick={() => setMode('single')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
           mode === 'single'
-            ? 'bg-white text-blue-600 shadow-md'
-            : 'text-gray-600 hover:text-gray-800'
+            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md scale-105'
+            : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
         }`}
       >
-        <Maximize2 size={18} />
-        <span className="text-sm font-medium">單幣別</span>
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <span className="text-xs font-semibold">單幣別</span>
       </button>
       <button
         onClick={() => setMode('multi')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
           mode === 'multi'
-            ? 'bg-white text-purple-600 shadow-md'
-            : 'text-gray-600 hover:text-gray-800'
+            ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md scale-105'
+            : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
         }`}
       >
-        <Grid size={18} />
-        <span className="text-sm font-medium">多幣別</span>
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+        <span className="text-xs font-semibold">多幣別</span>
       </button>
     </div>
   );
@@ -148,9 +179,12 @@ const RateWise = () => {
       >
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-6">
-            <h2 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-1">
-              匯率好工具
-            </h2>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <img src="/logo.png" alt="RateWise Logo" className="w-12 h-12 md:w-16 md:h-16" />
+              <h2 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                匯率好工具
+              </h2>
+            </div>
             <p className="text-sm text-gray-600">
               {ratesLoading ? '載入即時匯率中...' : '即時匯率換算 · 精準可靠'}
             </p>
@@ -169,6 +203,7 @@ const RateWise = () => {
                     toAmount={toAmount}
                     exchangeRates={exchangeRates}
                     details={details}
+                    rateType={rateType}
                     onFromCurrencyChange={setFromCurrency}
                     onToCurrencyChange={setToCurrency}
                     onFromAmountChange={handleFromAmountChange}
@@ -176,6 +211,7 @@ const RateWise = () => {
                     onQuickAmount={quickAmount}
                     onSwapCurrencies={swapCurrencies}
                     onAddToHistory={addToHistory}
+                    onRateTypeChange={setRateType}
                   />
                 ) : (
                   <MultiConverter
@@ -183,9 +219,13 @@ const RateWise = () => {
                     multiAmounts={multiAmounts}
                     baseCurrency={baseCurrency}
                     favorites={favorites}
+                    rateType={rateType}
+                    details={details}
                     onAmountChange={handleMultiAmountChange}
                     onQuickAmount={quickAmount}
                     onToggleFavorite={toggleFavorite}
+                    onRateTypeChange={setRateType}
+                    onBaseCurrencyChange={setBaseCurrency}
                   />
                 )}
               </div>

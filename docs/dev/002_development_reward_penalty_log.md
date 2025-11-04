@@ -1,8 +1,8 @@
 # 002 開發獎懲記錄 LOG
 
-**版本**: 1.1.0
+**版本**: 1.3.0
 **建立時間**: 2025-10-31T03:06:28+0800
-**更新時間**: 2025-11-04T23:15:00+0800
+**更新時間**: 2025-11-05T01:56:00+0800
 **狀態**: 🔄 進行中
 
 ---
@@ -34,8 +34,25 @@
 | ✅ 成功 | 修復生產環境404錯誤（動態探測+Fallback機制）                                           | 實作 `detectAvailableDateRange()` 與 `fetchHistoricalRatesWithFallback()`，消除硬編碼30天限制 | `docs/dev/004_pwa_realtime_sync_architecture.md` + Linus 好品味原則     | +1   |
 | ✅ 成功 | 趨勢圖數據整合優化（歷史+即時+排序）                                                   | 改進 `SingleConverter.tsx` 數據合併邏輯，確保時間順序正確                                     | `docs/dev/004_pwa_realtime_sync_architecture.md`                        | +1   |
 | ✅ 成功 | 實作即期/現金匯率切換UI（用戶偏好持久化）                                              | 新增 `RateType` 狀態管理 + localStorage 持久化 + 切換按鈕UI                                   | `docs/dev/004_pwa_realtime_sync_architecture.md` + YAGNI 原則           | +1   |
+| ✅ 成功 | 貨幣格式化增強（使用 Intl.NumberFormat API，零依賴）                                   | 建立 `currencyFormatter.ts` 工具，使用瀏覽器原生 API 處理千位分隔符和小數位數                 | `docs/dev/005_currency_formatting_enhancement.md` + [ISO 4217 標準]     | +1   |
+| ✅ 成功 | UI 優化（切換按鈕置中 + 專業格式化顯示）                                               | 調整按鈕位置至 `top-2 left-1/2 -translate-x-1/2`，應用匯率格式化到所有顯示                    | `docs/dev/005_currency_formatting_enhancement.md` + UX 最佳實踐         | +1   |
+| ✅ 成功 | 千位分隔符修正與 ISO 4217 全面對齊                                                     | 修正所有顯示層的千位分隔符，確保全部對齊 ISO 4217 標準                                        | [context7:mdn/intl-numberformat:2025-11-05]                             | +1   |
+| ✅ 成功 | UI 佈局優化（切換按鈕與匯率顯示整合）                                                  | 調整單幣別匯率卡片 padding（pt-10 pb-5），確保切換按鈕與匯率顯示不重疊                        | UX 最佳實踐 + UI/UX 設計原則                                            | +1   |
+| ✅ 成功 | 瀏覽器端完整測試驗證                                                                   | 完成單幣別與多幣別所有功能的瀏覽器測試，確認格式化、UI 佈局與全局切換功能正確                 | 品質保證流程 + E2E 測試                                                 | +1   |
+| ✅ 成功 | ISO 4217 深度修正（TWD 小數位數從 0 改為 2）                                           | 根據用戶深度驗證回饋，修正 TWD 小數位數為 2 位，符合 ISO 4217 標準與實務慣例                  | [ISO 4217 標準](https://zh.wikipedia.org/wiki/ISO_4217)                 | +1   |
+| ✅ 成功 | UI 配色融合優化（按鈕容器使用藍紫漸層 + 玻璃擬態）                                     | 將按鈕容器從 `bg-white/80` 改為 `from-blue-50/95 to-purple-50/95`，與背景完美融合             | 現代 UI 設計最佳實踐 + 玻璃擬態設計 (Glassmorphism)                     | +1   |
+| ✅ 成功 | 模式切換按鈕現代化設計（降低高度 + 專業圖標 + 藍紫漸層）                               | 從通用圖標改為專業貨幣圖標，高度從 40px 降至 30px，添加玻璃擬態效果                           | Heroicons 圖標庫 + 現代 UI 最佳實踐                                     | +1   |
+| ✅ 成功 | 匯率文字漸層方向修正（紫→藍 改為 藍→紫）                                               | 修正 `from-purple-600 to-blue-600` 為 `from-blue-600 to-purple-600`，與主色調一致             | 品牌一致性 + 視覺協調                                                   | +1   |
+| ✅ 成功 | 輸入框編輯功能完全重構（雙狀態系統 + 編輯/顯示模式分離）                               | 使用 `useState` 追蹤編輯狀態，`onFocus` 顯示原始值，`onBlur` 格式化，完美解決 cursor 問題     | React 受控輸入最佳實踐 + UX 最佳化                                      | +2   |
+| ✅ 成功 | 鍵盤輸入限制（只允許數字和導航鍵）                                                     | `onKeyDown` 限制只能輸入數字、小數點、導航鍵和組合鍵，禁止字母和特殊符號                      | 輸入驗證最佳實踐 + 用戶體驗優化                                         | +1   |
+| ✅ 成功 | LOGO 品牌識別強化（響應式設計）                                                        | 在標題處添加 300x300 高清 LOGO，響應式大小（48px/64px），與標題完美對齊                       | 品牌 UI 設計最佳實踐 + Tailwind 響應式類                                | +1   |
+| ✅ 成功 | 匯率顯示邏輯統一（基準貨幣修正）                                                       | 修正多幣別基準貨幣顯示「計算中...」問題，改為「基準貨幣」，統一匯率格式為 4 位小數            | 資料展示邏輯 + formatExchangeRate 統一格式化                            | +1   |
+| ✅ 成功 | 收藏星星佈局穩定性修正（防止佈局跳動）                                                 | 使用 Tailwind `group` + `opacity-0` 技巧，星星始終占據空間，懸停時透明星星顯示                | Tailwind CSS Group Hover + 佈局穩定性最佳實踐                           | +1   |
+| ✅ 成功 | 基準貨幣快速切換功能（點擊貨幣行切換）                                                 | 實作 `onBaseCurrencyChange` 傳遞至 `MultiConverter`，為貨幣行添加 `onClick` 處理器            | React 事件處理最佳實踐 + 狀態管理模式                                   | +1   |
+| ✅ 成功 | 基準貨幣視覺標示（紫色邊框 + 游標樣式）                                                | 基準貨幣以 `border-purple-400` 標示，並設為 `cursor-default` 防止誤點                         | UI 視覺回饋設計 + 用戶體驗優化                                          | +1   |
+| ✅ 成功 | 匯率顯示邏輯分離（基準貨幣 UI 層判斷）                                                 | 將基準貨幣檢查從 `getRateDisplay` 移至 JSX 層，確保基準貨幣永遠顯示「基準貨幣」               | 關注點分離原則 + 單一職責原則                                           | +1   |
 
-**當前總分**: +13
+**當前總分**: +30
 
 ---
 

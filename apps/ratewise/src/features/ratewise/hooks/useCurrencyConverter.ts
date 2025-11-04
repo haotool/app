@@ -302,6 +302,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     setMode,
     setFromCurrency,
     setToCurrency,
+    setBaseCurrency,
 
     // Handlers
     handleFromAmountChange,

@@ -8,7 +8,7 @@ import {
   type ISeriesApi,
 } from 'lightweight-charts';
 import { motion, AnimatePresence } from 'motion/react';
-import { CURRENCY_DEFINITIONS } from '../constants';
+import { formatExchangeRate } from '../../../utils/currencyFormatter';
 import type { CurrencyCode } from '../types';
 
 export interface MiniTrendDataPoint {
@@ -38,33 +38,13 @@ interface TooltipData {
  * - 數據 ≥ 2 天時統一延伸到最寬
  * - 現代化配色與微互動
  */
-export function MiniTrendChart({ data, currencyCode, className = '' }: MiniTrendChartProps) {
+export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   // 使用真實數據（Safari 404 問題已透過 logger.debug 降級處理修復）
   const displayData = data;
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
-
-  // 智能計算小數位數：根據數值大小動態調整
-  const getSmartDecimals = (value: number): number => {
-    const baseDecimals = CURRENCY_DEFINITIONS[currencyCode].decimals;
-
-    // 如果是整數貨幣（JPY, KRW），直接返回 0
-    if (baseDecimals === 0) return 0;
-
-    // 如果值 >= 1，使用基礎小數位數（通常是 2）
-    if (value >= 1) return baseDecimals;
-
-    // 如果值 < 1，需要更多小數位數來顯示有意義的數字
-    // 例如：0.0324 需要 4 位，0.00123 需要 5 位
-    const absValue = Math.abs(value);
-    if (absValue === 0) return baseDecimals;
-
-    // 計算需要多少位小數才能顯示至少 2 位有效數字
-    const leadingZeros = Math.floor(-Math.log10(absValue));
-    return Math.max(baseDecimals, leadingZeros + 2);
-  };
 
   const stats = useMemo(() => {
     if (displayData.length === 0) {
@@ -233,7 +213,7 @@ export function MiniTrendChart({ data, currencyCode, className = '' }: MiniTrend
                 <div className="flex items-center gap-2.5 text-[11px] leading-tight whitespace-nowrap">
                   <span className="text-purple-600 font-semibold">{tooltipData.date}</span>
                   <span className="text-purple-800 font-bold">
-                    {tooltipData.rate.toFixed(getSmartDecimals(tooltipData.rate))}
+                    {formatExchangeRate(tooltipData.rate)}
                   </span>
                 </div>
               </div>
