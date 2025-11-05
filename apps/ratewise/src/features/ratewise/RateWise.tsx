@@ -1,5 +1,5 @@
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { useMemo, useRef, useState, useEffect } from 'react';
+import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
@@ -13,6 +13,8 @@ import { ThreadsIcon } from '../../components/ThreadsIcon';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator';
 import { formatDisplayTime } from '../../utils/timeFormatter';
+import { clearAllServiceWorkerCaches, forceServiceWorkerUpdate } from '../../utils/swUtils';
+import { logger } from '../../utils/logger';
 import type { RateType } from './types';
 import { STORAGE_KEYS } from './storage-keys';
 
@@ -45,8 +47,32 @@ const RateWise = () => {
     refresh,
   } = useExchangeRates();
 
+  // [fix:2025-11-05] 增強下拉刷新：清除快取 + 刷新數據 + 檢查 SW 更新
+  // 參考: https://web.dev/learn/pwa/update
+  const handlePullToRefresh = useCallback(async () => {
+    try {
+      logger.info('Pull-to-refresh: starting full refresh');
+
+      // 1. 清除 Service Worker 快取
+      const clearedCount = await clearAllServiceWorkerCaches();
+      logger.debug('Pull-to-refresh: caches cleared', { count: clearedCount });
+
+      // 2. 檢查並嘗試更新 Service Worker
+      await forceServiceWorkerUpdate();
+
+      // 3. 刷新匯率數據
+      await refresh();
+
+      logger.info('Pull-to-refresh: completed successfully');
+    } catch (error) {
+      logger.error('Pull-to-refresh: failed', error as Error);
+      // 即使出錯，仍然刷新數據
+      await refresh();
+    }
+  }, [refresh]);
+
   // Pull-to-refresh functionality
-  const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(mainRef, refresh);
+  const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(mainRef, handlePullToRefresh);
 
   // 格式化顯示時間（來源時間 · 刷新時間）
   const formattedLastUpdate = useMemo(
