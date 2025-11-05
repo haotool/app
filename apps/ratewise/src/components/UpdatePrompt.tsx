@@ -90,16 +90,27 @@ export function UpdatePrompt() {
         return;
       }
 
-      workbox
-        .register()
-        .then(() => {
+      // [fix:2025-11-05] 手動註冊 Service Worker 並設定 updateViaCache: 'none'
+      // 防止 Service Worker 本身被瀏覽器快取
+      // 參考: https://learn.microsoft.com/answers/questions/1163448/blazor-wasm-pwa-not-updating
+      navigator.serviceWorker
+        .register(swUrl, {
+          scope: swScope,
+          type: swType,
+          updateViaCache: 'none', // 關鍵設定：不快取 SW 檔案
+        })
+        .then((registration) => {
+          // 將 registration 傳給 workbox，讓它能接管生命週期事件
+          workbox.register({ immediate: true }).catch(() => {
+            // 忽略錯誤，因為我們已經手動註冊了
+          });
+
           setWb(workbox);
 
           // [fix:2025-11-05] 週期性檢查更新（每 60 秒）
           // 參考: https://vite-pwa-org.netlify.app/guide/periodic-sw-updates
-          // 避免 workbox-window 的 1 分鐘時間啟發式限制
           const updateCheckInterval = setInterval(() => {
-            void workbox.update();
+            void registration.update(); // 使用原生 API 檢查更新
           }, 60000); // 60 秒
 
           // 清理定時器

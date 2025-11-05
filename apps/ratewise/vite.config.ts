@@ -129,6 +129,13 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
+      // [fix:2025-11-05] 自定義 plugin：將版本號注入到 HTML meta 標籤
+      {
+        name: 'inject-version-meta',
+        transformIndexHtml(html) {
+          return html.replace(/__APP_VERSION__/g, appVersion).replace(/__BUILD_TIME__/g, buildTime);
+        },
+      },
       // [Lighthouse-optimization:2025-10-27] Brotli compression (saves 4,024 KiB)
       // 參考: https://web.dev/articles/reduce-network-payloads-using-text-compression
       viteCompression({
@@ -155,23 +162,74 @@ export default defineConfig(() => {
         : null,
       VitePWA({
         base,
-        // 使用 prompt 模式以支援自定義更新 UI
+        // [fix:2025-11-05] 使用 prompt 模式，給用戶控制權
         registerType: 'prompt',
         injectRegister: null, // 手動註冊
-        // 開發環境配置 - 修復 MIME type 錯誤
-        // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
-        devOptions: {
-          enabled: true, // 開發模式下啟用 mock SW
-        },
+
+        // [fix:2025-11-05] 防止 Service Worker 本身被快取
+        // 參考: https://learn.microsoft.com/answers/questions/1163448/blazor-wasm-pwa-not-updating
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-          // 使用 prompt 模式時，不自動 skipWaiting
+
+          // [fix:2025-11-05] 使用 prompt 模式時，讓用戶控制更新時機
           clientsClaim: false,
           skipWaiting: false,
-          // 運行時緩存策略
-          // 注意：匯率數據改用 GitHub raw (無 CDN 快取)，確保數據即時性
-          // jsdelivr CDN 快取可達 12-24 小時，不適合即時匯率數據
-          runtimeCaching: [],
+
+          // [fix:2025-11-05] 強制清理舊快取（預防快取衝突）
+          // 參考: https://vite-pwa-org.netlify.app/guide/auto-update
+          cleanupOutdatedCaches: true,
+
+          // [fix:2025-11-05] 導航預載入快取（提升性能）
+          navigationPreload: true,
+
+          // [fix:2025-11-05] 運行時快取策略
+          // 關鍵: index.html 使用 NetworkFirst，確保優先從網路獲取最新版本
+          // 參考: https://stackoverflow.com/questions/54322336
+          runtimeCaching: [
+            {
+              // HTML 文件：Network First 策略（優先網路，失敗才用快取）
+              urlPattern: /\.html$/,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'html-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
+                },
+                networkTimeoutSeconds: 5, // 5 秒超時後使用快取
+              },
+            },
+            {
+              // API 請求：Network First（確保數據即時性）
+              urlPattern: /^https:\/\/raw\.githubusercontent\.com\/.*/,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'api-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 5, // 5 分鐘
+                },
+                networkTimeoutSeconds: 10,
+              },
+            },
+            {
+              // 靜態資源：Cache First（快速載入）
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'image-cache',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
+                },
+              },
+            },
+          ],
+        },
+
+        // 開發環境配置
+        devOptions: {
+          enabled: true,
         },
         // Manifest 配置（此處配置會覆蓋 public/manifest.webmanifest）
         // 使用動態配置以支援 development/production 不同的 base path
