@@ -280,8 +280,12 @@ export default defineConfig({
 <link rel="apple-touch-icon" href="%VITE_BASE_PATH%apple-touch-icon.png" />
 ```
 
-> **Zeabur Subpath 注意事項**  
-> 生產環境部署於 `https://app.haotool.org/ratewise`，必須設定 `VITE_BASE_PATH=/ratewise/` 並在釋出流程執行 `node scripts/update-release-metadata.js` 鏡像靜態資產 (`robots.txt`、`sitemap.xml`、`llms.txt`、`manifest.webmanifest`、favicon、screenshots)。部署後使用 `curl -I https://app.haotool.org/ratewise/{robots.txt,sitemap.xml,manifest.webmanifest,favicon.ico,llms.txt}` 確認 200，並在 `nginx.conf` 為上述 `/ratewise/*` 靜態檔加上對應 `location` 以避免 SPA fallback。
+> **Zeabur Subpath 注意事項**
+> 生產環境部署於 `https://app.haotool.org/ratewise`，必須設定 `VITE_BASE_PATH=/ratewise/` 並在釋出流程執行 `node scripts/update-release-metadata.js` 鏡像靜態資產 (`robots.txt`、`sitemap.xml`、`llms.txt`、`manifest.webmanifest`、favicon、screenshots)。
+>
+> **PWA Manifest 路徑處理**：`vite.config.ts` 會自動將 manifest 的 `scope`/`start_url`/`id` 移除尾斜線（`/ratewise`），以避免與 nginx 的 301 重定向（`/ratewise/` → `/ratewise`）衝突。
+>
+> 部署後使用 `curl -I https://app.haotool.org/ratewise/{robots.txt,sitemap.xml,manifest.webmanifest,favicon.ico,llms.txt}` 確認 200，並在 `nginx.conf` 為上述 `/ratewise/*` 靜態檔加上對應 `location` 以避免 SPA fallback。
 
 ---
 
