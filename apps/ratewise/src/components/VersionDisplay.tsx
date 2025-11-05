@@ -5,10 +5,16 @@
  * - 簡約設計，不使用下底線
  * - Hover 顯示建置時間 tooltip
  * - 支援桌面 hover 和行動裝置 tap
+ *
+ * [fix:2025-11-05] 使用 Vite define 全域變數讀取版本號
+ * 參考: [context7:vitejs/vite:2025-11-05] - Environment Variables and Modes
  */
 
 export function VersionDisplay() {
-  // 使用 import.meta.env 讀取 Vite 注入的環境變數
+  // [fix:2025-11-05] 使用 Vite 環境變數讀取版本號
+  // 參考: https://vitejs.dev/guide/env-and-mode.html
+  // VITE_ 前綴的環境變數會自動暴露到 import.meta.env
+  // 由 scripts/generate-version.js 在啟動時自動生成到 .env.local
   const version = import.meta.env.VITE_APP_VERSION ?? '1.0.0';
   const buildTimeString = import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString();
 

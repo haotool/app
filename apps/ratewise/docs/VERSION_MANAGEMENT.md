@@ -57,11 +57,16 @@ return (
    ```
 
 3. **vite.config.ts 使用環境變數**：
-   ```typescript
-   const commitCount = process.env.GIT_COMMIT_COUNT ?? execSync('git rev-list --count HEAD').trim();
-   ```
-   > 參考: [MDN start_url](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Manifest/Reference/start_url)、[W3C App Manifest §1.6/§1.10](https://www.w3.org/TR/appmanifest/) - start_url 與 scope 必須落在 `/ratewise` 子目錄，故建置時預設 `VITE_BASE_PATH=/ratewise/`。
 
+```typescript
+const commitCount = process.env.GIT_COMMIT_COUNT ?? execSync('git rev-list --count HEAD').trim();
+```
+
+> 參考: [MDN start_url](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Manifest/Reference/start_url)、[W3C App Manifest §1.6/§1.10](https://www.w3.org/TR/appmanifest/) - start_url 與 scope 必須落在 `/ratewise` 子目錄，故建置時預設 `VITE_BASE_PATH=/ratewise/`。
+
+4. **Docker 部署後鏡像資產**
+
+   Dockerfile 會把 `/usr/share/nginx/html/assets`、`sw.js`、`workbox-*.js` 同步複製到 `/usr/share/nginx/html/ratewise/`，確保 `/ratewise/assets/*` 與 `/ratewise/sw.js` 在子路徑部署時可取得最新檔案（避免 Service Worker 預快取 404）。
 
 ---
 

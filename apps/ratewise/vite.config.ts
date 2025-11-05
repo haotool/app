@@ -97,16 +97,26 @@ function getDevelopmentVersion(baseVersion: string): string {
 /**
  * 生成版本號（主函數）
  * 使用 nullish coalescing 串接多個策略，清晰簡潔
+ *
+ * [fix:2025-11-05] 統一開發和生產環境的版本號格式
+ * 優先使用 .env.local 中的版本號（由 scripts/generate-version.js 生成）
+ * 參考: https://vitejs.dev/guide/env-and-mode.html
  */
 function generateVersion(): string {
+  // [fix:2025-11-05] 優先使用 .env.local 中的版本號
+  // 確保開發和生產環境使用相同的版本號格式
+  if (process.env.VITE_APP_VERSION) {
+    return process.env.VITE_APP_VERSION;
+  }
+
   const baseVersion = readPackageVersion();
 
-  // 開發環境：附加 Git metadata
+  // Fallback: 開發環境附加 Git metadata
   if (!process.env.CI && process.env.NODE_ENV !== 'production') {
     return getDevelopmentVersion(baseVersion);
   }
 
-  // 生產環境：優先使用 Git 標籤，次之 commit 數，最後 fallback 到 package.json
+  // Fallback: 生產環境使用 commit 數
   return getVersionFromGitTag() ?? getVersionFromCommitCount(baseVersion) ?? baseVersion;
 }
 
@@ -130,21 +140,36 @@ export default defineConfig(() => {
   const manifestScope = base.endsWith('/') ? base : `${base}/`;
   const manifestStartUrl = manifestScope;
 
+  // [fix:2025-11-05] 在 console 輸出版本資訊，方便除錯
+  console.log(`Building RateWise v${appVersion} (${buildTime})`);
+
+  // [fix:2025-11-05] 版本號透過 .env.local 自動注入
+  // 由 scripts/generate-version.js 在 predev/prebuild 時自動生成
+  // 參考: https://vitejs.dev/guide/env-and-mode.html
+  // Vite 會自動讀取 VITE_APP_VERSION 和 VITE_BUILD_TIME
+
   return {
     base,
     define: {
+      // 保留 define 作為 fallback，但主要使用環境變數
       __APP_VERSION__: JSON.stringify(appVersion),
       __BUILD_TIME__: JSON.stringify(buildTime),
-      'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
-      'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
     },
     plugins: [
       react(),
       // [fix:2025-11-05] 自定義 plugin：將版本號注入到 HTML meta 標籤
+      // 參考: [context7:vitejs/vite:2025-11-05] - transformIndexHtml
       {
         name: 'inject-version-meta',
-        transformIndexHtml(html) {
-          return html.replace(/__APP_VERSION__/g, appVersion).replace(/__BUILD_TIME__/g, buildTime);
+        // [fix:2025-11-05] 使用 transformIndexHtml 同時處理開發和生產環境
+        // 參考: [context7:vitejs/vite:2025-11-05] - Plugin API transformIndexHtml
+        transformIndexHtml: {
+          order: 'pre', // 在其他 plugin 之前執行
+          handler(html) {
+            return html
+              .replace(/__APP_VERSION__/g, appVersion)
+              .replace(/__BUILD_TIME__/g, buildTime);
+          },
         },
       },
       // [Lighthouse-optimization:2025-10-27] Brotli compression (saves 4,024 KiB)
@@ -173,18 +198,27 @@ export default defineConfig(() => {
         : null,
       VitePWA({
         base,
-        // [fix:2025-11-05] 使用 prompt 模式，給用戶控制權
-        registerType: 'prompt',
-        injectRegister: null, // 手動註冊
+        // [fix:2025-11-05] 使用 autoUpdate 模式，確保用戶立即獲取最新版本
+        // 參考: https://vite-pwa-org.netlify.app/guide/auto-update
+        registerType: 'autoUpdate',
+        injectRegister: 'auto',
 
         // [fix:2025-11-05] 防止 Service Worker 本身被快取
         // 參考: https://learn.microsoft.com/answers/questions/1163448/blazor-wasm-pwa-not-updating
         workbox: {
+          // [fix:2025-11-05] 排除不需要預快取的檔案，避免 404 錯誤
+          // 不預快取 index.html（由 navigateFallback 處理）和 apple-touch-icon.png（可選）
           globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2}'],
+          globIgnores: ['**/apple-touch-icon.png'],
 
-          // [fix:2025-11-05] 使用 prompt 模式時，讓用戶控制更新時機
-          clientsClaim: false,
-          skipWaiting: false,
+          // [fix:2025-11-05] 導航回退到 index.html，自動處理 SPA 路由
+          // 參考: https://vite-pwa-org.netlify.app/guide/inject-manifest.html#navigation-fallback
+          navigateFallback: 'index.html',
+          navigateFallbackDenylist: [/^\/api/, /\.(json|txt|xml)$/],
+
+          // [fix:2025-11-05] autoUpdate 模式：立即激活新 Service Worker
+          clientsClaim: true,
+          skipWaiting: true,
 
           // [fix:2025-11-05] 強制清理舊快取（預防快取衝突）
           // 參考: https://vite-pwa-org.netlify.app/guide/auto-update
@@ -205,14 +239,14 @@ export default defineConfig(() => {
                 cacheName: 'html-cache',
                 expiration: {
                   maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
+                  maxAgeSeconds: 60 * 60 * 24, // 1 天（更短的快取時間）
                 },
-                networkTimeoutSeconds: 5, // 5 秒超時後使用快取
+                networkTimeoutSeconds: 3, // 3 秒超時（更快的回退）
               },
             },
             {
               // API 請求：Network First（確保數據即時性）
-              urlPattern: /^https:\/\/raw\.githubusercontent\.com\/.*/,
+              urlPattern: /^https:\/\/(raw\.githubusercontent\.com|cdn\.jsdelivr\.net)\/.*/,
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'api-cache',
