@@ -13,6 +13,11 @@
  *
  * @example
  * formatIsoTimestamp('2025-10-31T03:30:00+08:00') // '10/31 03:30'
+ *
+ * @note
+ * 使用 Asia/Taipei 時區確保在任何環境（本地、CI、生產）顯示一致
+ * 參考最佳實踐: MDN toLocaleString with timeZone option
+ * https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleString
  */
 export function formatIsoTimestamp(iso: string): string {
   const date = new Date(iso);
@@ -22,15 +27,25 @@ export function formatIsoTimestamp(iso: string): string {
     return '';
   }
 
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  const time = date.toLocaleTimeString('zh-TW', {
+  // [fix:2025-11-05] 使用 Asia/Taipei 時區確保時區一致性
+  // 不使用 date.getMonth() / date.getDate()，因為它們使用本地時區
+  // 在 CI (UTC) 環境會導致測試失敗
+  const formatter = new Intl.DateTimeFormat('zh-TW', {
+    timeZone: 'Asia/Taipei',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false, // 強制使用24小時制，避免「上午」「下午」前綴
+    hour12: false,
   });
 
-  return `${month}/${day} ${time}`;
+  const parts = formatter.formatToParts(date);
+  const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  const hour = parts.find((p) => p.type === 'hour')?.value ?? '';
+  const minute = parts.find((p) => p.type === 'minute')?.value ?? '';
+
+  return `${month}/${day} ${hour}:${minute}`;
 }
 
 /**

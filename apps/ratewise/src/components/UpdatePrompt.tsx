@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Workbox } from 'workbox-window';
 import { getCurrentVersion, getPreviousVersion } from '../utils/versionManager';
+import { startVersionCheckInterval } from '../utils/versionChecker';
 
 /**
  * PWA 更新通知組件 - 品牌對齊風格
@@ -90,13 +91,36 @@ export function UpdatePrompt() {
         return;
       }
 
-      workbox
-        .register()
-        .then(() => setWb(workbox))
+      // [fix:2025-11-05] 手動註冊 Service Worker 並設定 updateViaCache: 'none'
+      // 防止 Service Worker 本身被瀏覽器快取
+      // 參考: https://learn.microsoft.com/answers/questions/1163448/blazor-wasm-pwa-not-updating
+      navigator.serviceWorker
+        .register(swUrl, {
+          scope: swScope,
+          type: swType,
+          updateViaCache: 'none', // 關鍵設定：不快取 SW 檔案
+        })
+        .then((registration) => {
+          // [fix:2025-11-05] 只使用原生 API 註冊，不重複調用 workbox.register()
+          // 避免雙重註冊問題
+          setWb(workbox);
+
+          // [fix:2025-11-05] 週期性檢查更新（每 60 秒）
+          // 參考: https://vite-pwa-org.netlify.app/guide/periodic-sw-updates
+          const updateCheckInterval = setInterval(() => {
+            void registration.update(); // 使用原生 API 檢查更新
+          }, 60000); // 60 秒
+
+          // 清理定時器
+          return () => clearInterval(updateCheckInterval);
+        })
         .catch((error) => {
           console.error('SW registration error:', error);
         });
     });
+
+    // 清理函數（雖然這個 effect 不會被清理，但保持良好習慣）
+    return undefined;
   }, []);
 
   // 動畫效果：延遲顯示以實現入場動畫
@@ -110,18 +134,51 @@ export function UpdatePrompt() {
     return undefined;
   }, [offlineReady, needRefresh]);
 
+  // [fix:2025-11-05] 版本檢查機制：每 5 分鐘檢查一次 HTML meta 標籤的版本號
+  // 參考: PWA_UPDATE_FINAL_REPORT.md - 問題 3 的修復
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    // 每 5 分鐘檢查一次（300000 ms）
+    const cleanup = startVersionCheckInterval(300000, () => {
+      console.log('[PWA] Version mismatch detected via meta tag check');
+      setNeedRefresh(true);
+    });
+
+    return cleanup;
+  }, []);
+
   const close = () => {
     setOfflineReady(false);
     setNeedRefresh(false);
     setShow(false);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (wb) {
-      // 發送消息給 Service Worker 並重新載入
-      // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
-      wb.messageSkipWaiting();
-      window.location.reload();
+      // [fix:2025-11-05] 更新流程：清除快取 → skipWaiting → 重新載入
+      // 參考: https://web.dev/learn/pwa/update
+      try {
+        // 1. 清除所有 Service Worker 快取
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map((name) => caches.delete(name)));
+          console.log('[PWA] All caches cleared before update');
+        }
+
+        // 2. 發送 skipWaiting 訊息給新的 Service Worker
+        wb.messageSkipWaiting();
+
+        // 3. 重新載入頁面以啟用新版本
+        window.location.reload();
+      } catch (error) {
+        console.error('[PWA] Update error:', error);
+        // 即使清除快取失敗，仍然執行更新
+        wb.messageSkipWaiting();
+        window.location.reload();
+      }
     }
   };
 
@@ -225,7 +282,9 @@ export function UpdatePrompt() {
           <div className="flex flex-col space-y-2">
             {needRefresh && (
               <button
-                onClick={handleUpdate}
+                onClick={() => {
+                  void handleUpdate();
+                }}
                 className="
                   w-full px-5 py-3 rounded-[20px]
                   bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500
