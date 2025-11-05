@@ -59,8 +59,9 @@
 | ✅ 成功 | 透過 gh api 將最新 PWA 分支合併至 main                                                 | 使用 GitHub REST merges API 將 `claude/pwa-cache-update-fix-011CUpBYj7U4dCEoX6VpttQE` 合併至 main | [context7:github_en_rest:2025-11-05T16:30:21+08:00]                     | +1   |
 | ✅ 成功 | Docker 建置自動注入 Git 資訊並修正 PWA start_url 指向 `/ratewise`                       | 增加 `VITE_BASE_PATH=/ratewise/` 預設並於 builder 安裝 `git`，確保版本號與 PWA 安裝入口正確     | [ref:mdn-start_url:2025-11-05]; [ref:w3c-appmanifest:2025-11-05]; [ref:web.dev-pwa-update:2025-11-05] | +1   |
 | ✅ 成功 | Husky pre-commit UTF-8 支援                                                             | 將 pre-commit 改用 `pnpm lint-staged` 並設定 `LANG/LC_ALL=zh_TW.UTF-8`，解決繁體中文訊息亂碼問題 | Husky 官方文件 + lint-staged CLI 行為（2025-11-05 實測）                | +1   |
+| ✅ 成功 | Nginx ratewise 符號連結避免 404                                                         | Dockerfile 建立 `ratewise -> /usr/share/nginx/html` 符號連結，確保 `/ratewise/assets/*` 可正常提供 | Nginx 官方子路徑部署指引 + 實測（2025-11-05）                          | +1   |
 
-**當前總分**: +43
+**當前總分**: +44
 
 ---
 

@@ -182,6 +182,7 @@ healthy
 - 執行 `pnpm install` 重新生成 lock file
 - 若版本號仍顯示 `1.1.0`，請確保 builder 映像已安裝 `git` 並保留 `.git` 目錄，供 `git rev-list --count` 取得 Commit 數（參考 MDN start_url、W3C App Manifest、web.dev Learn PWA Update — 擷取於 2025-11-05）
 - 建置時請傳入或使用預設 `VITE_BASE_PATH=/ratewise/`，避免 PWA `start_url` 回退至根目錄導致安裝後連結錯誤
+- Dockerfile 會在複製編譯結果後建立符號連結 `ratewise -> /usr/share/nginx/html`，確保 `/ratewise/assets/*` 與 `/assets/*` 指向同一份靜態檔案，避免子目錄部署時出現 404
 
 **Q: 容器無法啟動**
 
