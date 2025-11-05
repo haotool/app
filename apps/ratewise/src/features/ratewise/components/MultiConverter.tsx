@@ -37,38 +37,58 @@ export const MultiConverter = ({
   const [editingValue, setEditingValue] = useState<string>('');
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  // 取得匯率顯示資訊（自動 fallback 到可用的匯率類型）
+  // 取得匯率顯示資訊（支援任意基準貨幣的交叉匯率計算）
   const getRateDisplay = (currency: CurrencyCode): string => {
     // 基準貨幣直接顯示「基準貨幣」
     if (currency === baseCurrency) {
       return '基準貨幣';
     }
 
-    const detail = details?.[currency];
-    if (!detail) return '計算中...';
-
-    // 優先使用用戶選擇的匯率類型
-    let rate = detail[rateType]?.sell;
-
-    // Fallback: 如果當前類型沒有資料，嘗試另一種類型（例如 KRW 只有現金匯率）
-    if (rate == null) {
-      const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
-      rate = detail[fallbackType]?.sell;
-      if (rate == null) {
-        return '無資料';
-      }
-    }
-
-    // 匯率應該是：1 基準貨幣 = rate 目標貨幣
-    // 但 API 提供的是：1 外幣 = rate TWD
-    // 所以當 TWD 是基準貨幣時，需要反向計算：1 TWD = 1/rate 外幣
+    // 特殊處理：TWD 作為基準貨幣（API 原生支援）
     if (baseCurrency === 'TWD') {
+      const detail = details?.[currency];
+      if (!detail) return '計算中...';
+
+      let rate = detail[rateType]?.sell;
+      if (rate == null) {
+        const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
+        rate = detail[fallbackType]?.sell;
+        if (rate == null) return '無資料';
+      }
+
+      // API 提供：1 外幣 = rate TWD，需反向計算：1 TWD = 1/rate 外幣
       const reverseRate = 1 / rate;
-      return `1 ${baseCurrency} = ${formatExchangeRate(reverseRate)} ${currency}`;
+      return `1 TWD = ${formatExchangeRate(reverseRate)} ${currency}`;
     }
 
-    // 當外幣是基準貨幣時，rate 已經正確
-    return `1 ${baseCurrency} = ${formatExchangeRate(rate)} ${currency}`;
+    // 一般情況：基準貨幣是外幣（需計算交叉匯率）
+    // 例如：基準貨幣是 USD，要顯示 JPY 的匯率
+    // 已知：1 USD = 30.97 TWD, 1 JPY = 0.204 TWD
+    // 計算：1 USD = (30.97 / 0.204) JPY = 151.8 JPY
+    const baseDetail = details?.[baseCurrency];
+    const targetDetail = details?.[currency];
+
+    if (!baseDetail || !targetDetail) return '計算中...';
+
+    // 獲取基準貨幣和目標貨幣對 TWD 的匯率
+    let baseRate = baseDetail[rateType]?.sell;
+    let targetRate = targetDetail[rateType]?.sell;
+
+    // Fallback 機制（例如 KRW 只有現金匯率）
+    if (baseRate == null) {
+      const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
+      baseRate = baseDetail[fallbackType]?.sell;
+    }
+    if (targetRate == null) {
+      const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
+      targetRate = targetDetail[fallbackType]?.sell;
+    }
+
+    if (baseRate == null || targetRate == null) return '無資料';
+
+    // 計算交叉匯率：1 基準貨幣 = (baseRate / targetRate) 目標貨幣
+    const crossRate = baseRate / targetRate;
+    return `1 ${baseCurrency} = ${formatExchangeRate(crossRate)} ${currency}`;
   };
 
   return (

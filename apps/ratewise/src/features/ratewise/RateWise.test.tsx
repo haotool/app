@@ -101,7 +101,7 @@ describe('RateWise Component', () => {
     it('displays default amount in input field', () => {
       renderWithProviders(<RateWise />);
       const inputs = screen.getAllByPlaceholderText('0.00');
-      expect(inputs[0]).toHaveValue(1000);
+      expect(inputs[0]).toHaveValue('1,000.00');
     });
 
     it('updates amount when quick button is clicked', async () => {
@@ -112,7 +112,7 @@ describe('RateWise Component', () => {
 
       await waitFor(() => {
         const inputs = screen.getAllByPlaceholderText('0.00');
-        expect(inputs[0]).toHaveValue(5000);
+        expect(inputs[0]).toHaveValue('5,000.00');
       });
     });
 
@@ -122,10 +122,13 @@ describe('RateWise Component', () => {
       const inputs = screen.getAllByPlaceholderText('0.00');
       const fromInput = inputs[0]!;
 
+      // 需先 focus 進入編輯模式才能正確輸入
+      fireEvent.focus(fromInput);
       fireEvent.change(fromInput, { target: { value: '12345' } });
+      fireEvent.blur(fromInput);
 
       await waitFor(() => {
-        expect(fromInput).toHaveValue(12345);
+        expect(fromInput).toHaveValue('12,345.00');
       });
     });
 
@@ -135,10 +138,14 @@ describe('RateWise Component', () => {
       const inputs = screen.getAllByPlaceholderText('0.00');
       const fromInput = inputs[0]!;
 
+      // 需先 focus 進入編輯模式才能正確輸入
+      fireEvent.focus(fromInput);
       fireEvent.change(fromInput, { target: { value: '' } });
+      fireEvent.blur(fromInput);
 
       await waitFor(() => {
-        expect(fromInput).toHaveValue(null);
+        // 空輸入會被格式化為空字串（不顯示任何內容）
+        expect(fromInput).toHaveValue('');
       });
     });
   });
@@ -287,7 +294,7 @@ describe('RateWise Component', () => {
       fireEvent.change(inputs[0]!, { target: { value: '0' } });
 
       await waitFor(() => {
-        expect(inputs[0]).toHaveValue(0);
+        expect(inputs[0]).toHaveValue('0.00');
       });
     });
   });
@@ -326,21 +333,21 @@ describe('RateWise Component', () => {
       fireEvent.click(buttons1000[0]!);
       await waitFor(() => {
         const inputs = screen.getAllByPlaceholderText('0.00');
-        expect(inputs[0]).toHaveValue(1000);
+        expect(inputs[0]).toHaveValue('1,000.00');
       });
 
       // Click 5,000
       fireEvent.click(buttons5000[0]!);
       await waitFor(() => {
         const inputs = screen.getAllByPlaceholderText('0.00');
-        expect(inputs[0]).toHaveValue(5000);
+        expect(inputs[0]).toHaveValue('5,000.00');
       });
 
       // Click 100
       fireEvent.click(buttons100[0]!);
       await waitFor(() => {
         const inputs = screen.getAllByPlaceholderText('0.00');
-        expect(inputs[0]).toHaveValue(100);
+        expect(inputs[0]).toHaveValue('100.00');
       });
     });
   });

@@ -8,7 +8,7 @@ import {
   fetchHistoricalRatesRange,
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
-import { formatExchangeRate } from '../../../utils/currencyFormatter';
+import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 
 // 🚀 激進優化：MiniTrendChart 懶載入 (節省 141KB lightweight-charts + 36KB framer-motion)
 const MiniTrendChart = lazy(() =>
@@ -58,6 +58,12 @@ export const SingleConverter = ({
   const [isSwapping, setIsSwapping] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
   const swapButtonRef = useRef<HTMLButtonElement>(null);
+
+  // 追蹤正在編輯的輸入框（使用未格式化的值）
+  const [editingField, setEditingField] = useState<'from' | 'to' | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
+  const fromInputRef = useRef<HTMLInputElement>(null);
+  const toInputRef = useRef<HTMLInputElement>(null);
 
   // 獲取指定貨幣的匯率（優先使用 details，fallback 到 exchangeRates）
   const getRate = (currency: CurrencyCode): number => {
@@ -190,9 +196,48 @@ export const SingleConverter = ({
             ))}
           </select>
           <input
-            type="number"
-            value={fromAmount}
-            onChange={(e) => onFromAmountChange(e.target.value)}
+            ref={fromInputRef}
+            type="text"
+            inputMode="decimal"
+            value={
+              editingField === 'from' ? editingValue : formatAmountDisplay(fromAmount, fromCurrency)
+            }
+            onFocus={() => {
+              setEditingField('from');
+              setEditingValue(fromAmount);
+            }}
+            onChange={(e) => {
+              const cleaned = e.target.value.replace(/[^\d.]/g, '');
+              const parts = cleaned.split('.');
+              const validValue =
+                parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
+              setEditingValue(validValue);
+              onFromAmountChange(validValue);
+            }}
+            onBlur={() => {
+              onFromAmountChange(editingValue);
+              setEditingField(null);
+              setEditingValue('');
+            }}
+            onKeyDown={(e) => {
+              const allowedKeys = [
+                'Backspace',
+                'Delete',
+                'ArrowLeft',
+                'ArrowRight',
+                'ArrowUp',
+                'ArrowDown',
+                'Home',
+                'End',
+                'Tab',
+                '.',
+              ];
+              const isNumber = /^[0-9]$/.test(e.key);
+              const isModifierKey = e.ctrlKey || e.metaKey;
+              if (!isNumber && !allowedKeys.includes(e.key) && !isModifierKey) {
+                e.preventDefault();
+              }
+            }}
             className="w-full pl-32 pr-4 py-3 text-2xl font-bold border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
             placeholder="0.00"
             aria-label={`轉換金額 (${fromCurrency})`}
@@ -374,9 +419,46 @@ export const SingleConverter = ({
             ))}
           </select>
           <input
-            type="number"
-            value={toAmount}
-            onChange={(e) => onToAmountChange(e.target.value)}
+            ref={toInputRef}
+            type="text"
+            inputMode="decimal"
+            value={editingField === 'to' ? editingValue : formatAmountDisplay(toAmount, toCurrency)}
+            onFocus={() => {
+              setEditingField('to');
+              setEditingValue(toAmount);
+            }}
+            onChange={(e) => {
+              const cleaned = e.target.value.replace(/[^\d.]/g, '');
+              const parts = cleaned.split('.');
+              const validValue =
+                parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
+              setEditingValue(validValue);
+              onToAmountChange(validValue);
+            }}
+            onBlur={() => {
+              onToAmountChange(editingValue);
+              setEditingField(null);
+              setEditingValue('');
+            }}
+            onKeyDown={(e) => {
+              const allowedKeys = [
+                'Backspace',
+                'Delete',
+                'ArrowLeft',
+                'ArrowRight',
+                'ArrowUp',
+                'ArrowDown',
+                'Home',
+                'End',
+                'Tab',
+                '.',
+              ];
+              const isNumber = /^[0-9]$/.test(e.key);
+              const isModifierKey = e.ctrlKey || e.metaKey;
+              if (!isNumber && !allowedKeys.includes(e.key) && !isModifierKey) {
+                e.preventDefault();
+              }
+            }}
             className="w-full pl-32 pr-4 py-3 text-2xl font-bold border-2 border-purple-200 rounded-2xl bg-purple-50 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all duration-300"
             placeholder="0.00"
             aria-label={`轉換結果 (${toCurrency})`}
