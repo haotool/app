@@ -343,6 +343,8 @@ Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 ### 4. Zeabur Subpath Deployment（`/ratewise`）
 
 - 使用 `VITE_BASE_PATH` 控制部署子路徑：本機維持 `/`，Zeabur 設為 `/ratewise/`
+  - **注意**：PWA manifest 的 `scope`/`start_url`/`id` 會自動移除尾斜線（`/ratewise`），以避免與 nginx 的 301 重定向衝突
+  - Vite 構建路徑保持 `/ratewise/`（有尾斜線），確保資源路徑正確
 - `scripts/update-release-metadata.js` 會自動鏡像靜態資產到 `public/ratewise/*`，確保
   - `https://app.haotool.org/ratewise/robots.txt`
   - `https://app.haotool.org/ratewise/sitemap.xml`

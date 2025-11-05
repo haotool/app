@@ -112,6 +112,11 @@ export default defineConfig(() => {
   // 生產環境: VITE_BASE_PATH='/ratewise/' (Zeabur)
   const base = process.env['VITE_BASE_PATH'] || '/';
 
+  // [fix:2025-11-05] PWA manifest 使用無尾斜線，避免與 nginx 301 重定向衝突
+  // nginx.conf: location = /ratewise/ { return 301 /ratewise; }
+  // 參考: https://web.dev/articles/add-manifest#start_url
+  const manifestBase = base.replace(/\/$/, '') || '/';
+
   return {
     base,
     define: {
@@ -176,10 +181,11 @@ export default defineConfig(() => {
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',
-          // scope 和 start_url 根據 mode 動態設定
-          scope: base,
-          start_url: base,
-          id: base,
+          // scope 和 start_url 使用無尾斜線，與 nginx 配置一致
+          // [fix:2025-11-05] 避免 PWA 啟動時觸發 301 重定向
+          scope: manifestBase,
+          start_url: manifestBase,
+          id: manifestBase,
           orientation: 'portrait-primary',
           categories: ['finance', 'utilities', 'productivity'],
           // 完整的圖標配置（包含所有尺寸）
