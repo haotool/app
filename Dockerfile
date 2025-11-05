@@ -4,6 +4,12 @@
 # Build stage
 FROM node:24-alpine AS builder
 
+# [fix:2025-11-05] Build arguments for version generation
+# 這些參數在建置時從 Git 取得，傳遞到容器內
+ARG GIT_COMMIT_COUNT
+ARG GIT_COMMIT_HASH
+ARG BUILD_TIME
+
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
 
@@ -12,6 +18,12 @@ WORKDIR /app
 # Set pnpm store directory for cache mount
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+
+# [fix:2025-11-05] 設定環境變數供 vite.config.ts 使用
+ENV GIT_COMMIT_COUNT=${GIT_COMMIT_COUNT}
+ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
+ENV BUILD_TIME=${BUILD_TIME}
+ENV CI=true
 
 # Copy package files and pnpm config
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
