@@ -125,11 +125,10 @@ export default defineConfig(() => {
   const base = process.env['VITE_BASE_PATH'] || '/';
 
   // [fix:2025-11-05] PWA manifest 路徑策略
-  // - scope: 必須有尾斜線 (MDN: 沒有尾斜線會退回到根域名)
-  // - start_url: 無尾斜線 (避免 nginx 301 重定向)
+  // - scope/start_url: 皆需有尾斜線，確保符合 PWA 規範並避免瀏覽器忽略 scope
   // 參考: https://developer.mozilla.org/en-US/docs/Web/Manifest/start_url
   const manifestScope = base.endsWith('/') ? base : `${base}/`;
-  const manifestStartUrl = base.replace(/\/$/, '') || '/';
+  const manifestStartUrl = manifestScope;
 
   return {
     base,
