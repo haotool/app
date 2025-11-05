@@ -27,7 +27,10 @@ Manifest: property 'scope' ignored. Start url should be within scope of scope UR
 ### 根本原因
 
 1. **靜態檔案覆蓋動態生成**
-   `apps/ratewise/public/manifest.webmanifest` 靜態檔案在 build 時覆蓋了 Vite PWA 插件動態生成的正確版本。
+
+   兩個靜態 manifest 檔案在 build 時干擾 Vite PWA 插件動態生成：
+   - `apps/ratewise/public/manifest.webmanifest` (已於 commit 369d5c3 刪除)
+   - `apps/ratewise/public/ratewise/manifest.webmanifest` (commit 32a254a 錯誤新增，已於 commit 59bf117 刪除)
 
 2. **Scope/Start URL 缺少尾斜線**
 
@@ -41,6 +44,9 @@ Manifest: property 'scope' ignored. Start url should be within scope of scope UR
 
 3. **瀏覽器行為**
    根據 PWA 規範，scope 無尾斜線會導致瀏覽器將 scope 退回到根域名 `/`，導致 start_url (`/ratewise`) 不在 scope 範圍內。
+
+4. **錯誤的先前修復**
+   Commit 32a254a 錯誤假設「移除尾斜線可避免 301 重定向」，實際上違反 MDN/W3C PWA 規範。
 
 ---
 
@@ -102,8 +108,9 @@ Manifest: property 'scope' ignored. Start url should be within scope of scope UR
 **修改清單**:
 
 ```bash
-# 刪除靜態檔案
-rm apps/ratewise/public/manifest.webmanifest
+# 刪除兩個靜態檔案（Vite 會動態生成正確版本）
+rm apps/ratewise/public/manifest.webmanifest  # Commit 369d5c3
+rm apps/ratewise/public/ratewise/manifest.webmanifest  # Commit 59bf117
 
 # Vite 配置無需修改（已正確）
 # vite.config.ts line 130-131:
@@ -226,7 +233,37 @@ Start URL: /ratewise/
 ID: /ratewise/
 ```
 
-### 生產環境驗證（待部署後執行）
+### 生產環境驗證與後續發現
+
+**初次部署 (Commit 369d5c3)**:
+
+- ⚠️ 警告仍存在：scope 正確但 start_url/id 缺少尾斜線
+- 🔍 根本原因：發現第二個靜態 manifest 檔案
+
+**第二個靜態檔案發現**:
+
+```bash
+# 位置
+apps/ratewise/public/ratewise/manifest.webmanifest
+
+# 內容
+{
+  "scope": "/ratewise",      # ❌ 缺少尾斜線
+  "start_url": "/ratewise",  # ❌ 缺少尾斜線
+  "id": "/ratewise"          # ❌ 缺少尾斜線
+}
+
+# 來源
+- Commit 32a254a 錯誤新增
+- 錯誤假設：移除尾斜線可避免 301 重定向
+- 實際違反：MDN/W3C PWA 規範
+```
+
+**第二次修復 (Commit 59bf117)**:
+
+- 刪除 `public/ratewise/manifest.webmanifest`
+- 確保 Vite 只生成一個正確的 manifest
+- 重新 build 後只有 `dist/manifest.webmanifest`（正確版本）
 
 **檢查清單**:
 
