@@ -55,10 +55,17 @@ function getVersionFromGitTag(): string | null {
  * 使用 Git commit 數生成版本號
  * @param baseVersion - package.json 中的基礎版本
  * @returns 版本號（如: "1.0.123"）或 null（如果 Git 不可用）
+ *
+ * [fix:2025-11-05] 優先使用環境變數 GIT_COMMIT_COUNT（Docker 建置時提供）
+ * 參考: Dockerfile ARG/ENV 最佳實踐
  */
 function getVersionFromCommitCount(baseVersion: string): string | null {
   try {
-    const commitCount = execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
+    // 優先使用 Docker build args 傳入的環境變數
+    const commitCount =
+      process.env.GIT_COMMIT_COUNT ??
+      execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
+
     const [major = '1', minor = '0'] = baseVersion.split('.').slice(0, 2);
     return `${major}.${minor}.${commitCount}`;
   } catch {
@@ -70,10 +77,15 @@ function getVersionFromCommitCount(baseVersion: string): string | null {
  * 開發環境版本號（附加 Git SHA 和 dirty 標記）
  * @param baseVersion - package.json 中的基礎版本
  * @returns 開發版本號（如: "1.0.0+sha.abc123f-dirty"）
+ *
+ * [fix:2025-11-05] 優先使用環境變數 GIT_COMMIT_HASH（Docker 建置時提供）
  */
 function getDevelopmentVersion(baseVersion: string): string {
   try {
-    const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
+    const commitHash =
+      process.env.GIT_COMMIT_HASH ??
+      execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
+
     const isDirty =
       execSync('git status --porcelain', { encoding: 'utf-8' }).trim().length > 0 ? '-dirty' : '';
     return `${baseVersion}+sha.${commitHash}${isDirty}`;
