@@ -56,8 +56,10 @@
 | ✅ 成功 | 版本號自動更新機制修復（1.0.0 → 1.1.0）                                                | 執行 `pnpm changeset version` 生成 CHANGELOG 並更新 package.json                               | [context7:changesets/changesets:2025-11-05]                             | +1   |
 | ✅ 成功 | 測試修復（格式化值斷言更新）                                                           | 更新測試期望值以匹配千分位格式化後的字串（如 "5,000.00"）                                      | [CLAUDE.md] 測試最佳實踐                                                | +1   |
 | ✅ 成功 | Skeleton 測試簡化（移除 snapshot）                                                     | 根據 Linus 哲學移除過度複雜的 snapshot 測試，改用直接驗證                                      | [LINUS_GUIDE.md] 簡單優於複雜                                           | +1   |
+| ✅ 成功 | 透過 gh api 將最新 PWA 分支合併至 main                                                 | 使用 GitHub REST merges API 將 `claude/pwa-cache-update-fix-011CUpBYj7U4dCEoX6VpttQE` 合併至 main | [context7:github_en_rest:2025-11-05T16:30:21+08:00]                     | +1   |
+| ✅ 成功 | Docker 建置自動注入 Git 資訊並修正 PWA start_url 指向 `/ratewise`                       | 增加 `VITE_BASE_PATH=/ratewise/` 預設並於 builder 安裝 `git`，確保版本號與 PWA 安裝入口正確     | [ref:mdn-start_url:2025-11-05]; [ref:w3c-appmanifest:2025-11-05]; [ref:web.dev-pwa-update:2025-11-05] | +1   |
 
-**當前總分**: +40
+**當前總分**: +42
 
 ---
 

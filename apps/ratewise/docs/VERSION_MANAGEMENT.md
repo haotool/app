@@ -52,12 +52,15 @@ return (
    ```dockerfile
    ARG GIT_COMMIT_COUNT
    ENV GIT_COMMIT_COUNT=${GIT_COMMIT_COUNT}
+   ARG VITE_BASE_PATH=/ratewise/
+   ENV VITE_BASE_PATH=${VITE_BASE_PATH}
    ```
 
 3. **vite.config.ts 使用環境變數**：
    ```typescript
    const commitCount = process.env.GIT_COMMIT_COUNT ?? execSync('git rev-list --count HEAD').trim();
    ```
+   > 參考: [MDN start_url](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Manifest/Reference/start_url)、[W3C App Manifest §1.6/§1.10](https://www.w3.org/TR/appmanifest/) - start_url 與 scope 必須落在 `/ratewise` 子目錄，故建置時預設 `VITE_BASE_PATH=/ratewise/`。
 
 ---
 
