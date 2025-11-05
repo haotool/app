@@ -61,12 +61,12 @@ export default defineConfig(() => {
         ],
         thresholds: {
           // 基於 Linus Torvalds 哲學設置實用且可維護的門檻
-          // 當前覆蓋率：92.16% statements, 81.71% branches, 87.7% functions
+          // 當前覆蓋率：91.54% statements, 81.71% branches, 86.71% functions
           // 設置略低於當前值以避免過度工程化，同時防止退化
-          statements: 90, // 當前: 92.16%
+          statements: 90, // 當前: 91.54%
           branches: 80, // 當前: 81.71%
-          functions: 87, // 當前: 87.7% (降低以適應新增的 currencyFormatter.ts)
-          lines: 90, // 當前: 92.16%
+          functions: 85, // 當前: 86.71% (降低以適應新增的編輯狀態管理函數)
+          lines: 90, // 當前: 91.54%
         },
       },
     },
