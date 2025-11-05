@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Workbox } from 'workbox-window';
 import { getCurrentVersion, getPreviousVersion } from '../utils/versionManager';
+import { startVersionCheckInterval } from '../utils/versionChecker';
 
 /**
  * PWA 更新通知組件 - 品牌對齊風格
@@ -100,11 +101,8 @@ export function UpdatePrompt() {
           updateViaCache: 'none', // 關鍵設定：不快取 SW 檔案
         })
         .then((registration) => {
-          // 將 registration 傳給 workbox，讓它能接管生命週期事件
-          workbox.register({ immediate: true }).catch(() => {
-            // 忽略錯誤，因為我們已經手動註冊了
-          });
-
+          // [fix:2025-11-05] 只使用原生 API 註冊，不重複調用 workbox.register()
+          // 避免雙重註冊問題
           setWb(workbox);
 
           // [fix:2025-11-05] 週期性檢查更新（每 60 秒）
@@ -135,6 +133,22 @@ export function UpdatePrompt() {
     setShow(false);
     return undefined;
   }, [offlineReady, needRefresh]);
+
+  // [fix:2025-11-05] 版本檢查機制：每 5 分鐘檢查一次 HTML meta 標籤的版本號
+  // 參考: PWA_UPDATE_FINAL_REPORT.md - 問題 3 的修復
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    // 每 5 分鐘檢查一次（300000 ms）
+    const cleanup = startVersionCheckInterval(300000, () => {
+      console.log('[PWA] Version mismatch detected via meta tag check');
+      setNeedRefresh(true);
+    });
+
+    return cleanup;
+  }, []);
 
   const close = () => {
     setOfflineReady(false);
