@@ -9,9 +9,13 @@ FROM node:24-alpine AS builder
 ARG GIT_COMMIT_COUNT
 ARG GIT_COMMIT_HASH
 ARG BUILD_TIME
+ARG VITE_BASE_PATH=/ratewise/
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
+
+# 安裝 git 供版本計算使用（node:alpine 預設未內建）
+RUN apk add --no-cache git
 
 WORKDIR /app
 
@@ -23,6 +27,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 ENV GIT_COMMIT_COUNT=${GIT_COMMIT_COUNT}
 ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
 ENV BUILD_TIME=${BUILD_TIME}
+ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 ENV CI=true
 
 # Copy package files and pnpm config
@@ -36,8 +41,18 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build application
-RUN pnpm build:ratewise
+# Build application（若外部未提供 build args，於此自動回退計算）
+RUN set -eux; \
+  if [ -z "${GIT_COMMIT_COUNT:-}" ]; then \
+    export GIT_COMMIT_COUNT="$(git rev-list --count HEAD)"; \
+  fi; \
+  if [ -z "${GIT_COMMIT_HASH:-}" ]; then \
+    export GIT_COMMIT_HASH="$(git rev-parse --short HEAD)"; \
+  fi; \
+  if [ -z "${BUILD_TIME:-}" ]; then \
+    export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
+  fi; \
+  pnpm build:ratewise
 
 # Production stage
 FROM nginx:alpine

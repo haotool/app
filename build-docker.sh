@@ -29,10 +29,12 @@ echo "   Version: $VERSION"
 echo ""
 
 # 建置 Docker 映像，傳入 build args
+VITE_BASE_PATH="/ratewise/"
 docker build \
   --build-arg GIT_COMMIT_COUNT="$GIT_COMMIT_COUNT" \
   --build-arg GIT_COMMIT_HASH="$GIT_COMMIT_HASH" \
   --build-arg BUILD_TIME="$BUILD_TIME" \
+  --build-arg VITE_BASE_PATH="$VITE_BASE_PATH" \
   -t ratewise:latest \
   -t "ratewise:${VERSION}" \
   .

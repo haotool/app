@@ -180,6 +180,8 @@ healthy
 - 確認 Node 版本 >= 24.0.0
 - 確認 pnpm-lock.yaml 存在
 - 執行 `pnpm install` 重新生成 lock file
+- 若版本號仍顯示 `1.1.0`，請確保 builder 映像已安裝 `git` 並保留 `.git` 目錄，供 `git rev-list --count` 取得 Commit 數（參考 MDN start_url、W3C App Manifest、web.dev Learn PWA Update — 擷取於 2025-11-05）
+- 建置時請傳入或使用預設 `VITE_BASE_PATH=/ratewise/`，避免 PWA `start_url` 回退至根目錄導致安裝後連結錯誤
 
 **Q: 容器無法啟動**
 
