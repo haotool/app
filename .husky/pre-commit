@@ -1,4 +1,8 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npx lint-staged
+# 確保繁體中文訊息以 UTF-8 顯示，避免出現亂碼
+export LANG=zh_TW.UTF-8
+export LC_ALL=zh_TW.UTF-8
+
+pnpm lint-staged
