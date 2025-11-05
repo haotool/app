@@ -62,9 +62,6 @@ return (
    ```
    > 參考: [MDN start_url](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Manifest/Reference/start_url)、[W3C App Manifest §1.6/§1.10](https://www.w3.org/TR/appmanifest/) - start_url 與 scope 必須落在 `/ratewise` 子目錄，故建置時預設 `VITE_BASE_PATH=/ratewise/`。
 
-4. **Nginx 服務路徑對應**
-
-   Docker image 在複製 `dist` 後，會建立 `/usr/share/nginx/html/ratewise -> /usr/share/nginx/html` 的符號連結，讓 `/ratewise/*` 請求與根目錄共用同一份靜態資源。此作法符合 Nginx 官方文件對子路徑部署的建議，避免雜湊資產因子目錄缺失造成 404。
 
 ---
 
