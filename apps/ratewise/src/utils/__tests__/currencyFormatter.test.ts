@@ -202,7 +202,7 @@ describe('currencyFormatter', () => {
         'CNY',
         'HKD',
         'AUD',
-        'NZD',
+        'SGD',
         'CAD',
       ];
 
