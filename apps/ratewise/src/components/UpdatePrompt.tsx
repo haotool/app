@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Workbox } from 'workbox-window';
 import { getCurrentVersion, getPreviousVersion } from '../utils/versionManager';
-import { startVersionCheckInterval } from '../utils/versionChecker';
 
 /**
  * PWA 更新通知組件 - 品牌對齊風格
@@ -39,9 +38,15 @@ export function UpdatePrompt() {
       return;
     }
 
-    const swUrl = import.meta.env.DEV
-      ? `${import.meta.env.BASE_URL}dev-sw.js?dev-sw`
-      : `${import.meta.env.BASE_URL}sw.js`;
+    // [fix:2025-11-05] 開發環境下完全跳過 Service Worker 註冊
+    // 參考: [context7:vite-pwa/vite-plugin-pwa:2025-11-05]
+    // Vite PWA plugin 的 devOptions.enabled 已經處理開發環境下的 SW
+    if (import.meta.env.DEV) {
+      console.log('[PWA] Development mode: Service Worker handled by Vite PWA plugin');
+      return;
+    }
+
+    const swUrl = `${import.meta.env.BASE_URL}sw.js`;
     const swScope = import.meta.env.BASE_URL || '/';
 
     const validateServiceWorkerScript = async () => {
@@ -69,13 +74,9 @@ export function UpdatePrompt() {
       }
     };
 
-    // 根據環境設定 Service Worker 類型
-    // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
-    const swType = import.meta.env.DEV ? 'module' : 'classic';
-
     const workbox = new Workbox(swUrl, {
       scope: swScope,
-      type: swType,
+      type: 'classic',
     });
 
     workbox.addEventListener('installed', (event) => {
@@ -97,7 +98,7 @@ export function UpdatePrompt() {
       navigator.serviceWorker
         .register(swUrl, {
           scope: swScope,
-          type: swType,
+          type: 'classic',
           updateViaCache: 'none', // 關鍵設定：不快取 SW 檔案
         })
         .then((registration) => {
@@ -136,19 +137,10 @@ export function UpdatePrompt() {
 
   // [fix:2025-11-05] 版本檢查機制：每 5 分鐘檢查一次 HTML meta 標籤的版本號
   // 參考: PWA_UPDATE_FINAL_REPORT.md - 問題 3 的修復
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    // 每 5 分鐘檢查一次（300000 ms）
-    const cleanup = startVersionCheckInterval(300000, () => {
-      console.log('[PWA] Version mismatch detected via meta tag check');
-      setNeedRefresh(true);
-    });
-
-    return cleanup;
-  }, []);
+  // [fix:2025-11-05] 移除基於 HTML meta 標籤的版本檢查
+  // 改為完全依賴 Service Worker 的 'installed' 事件來檢測更新
+  // 參考: [context7:vite-pwa/vite-plugin-pwa:2025-11-05] - Automatic Reload
+  // Service Worker 的 workbox.addEventListener('installed') 已經處理更新檢測
 
   const close = () => {
     setOfflineReady(false);

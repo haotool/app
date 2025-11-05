@@ -4,8 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/generate-version.js",
     "dev": "vite",
-    "build": "tsc --noEmit && vite build --config vite.config.ts",
+    "prebuild": "node scripts/generate-version.js",
+    "build": "tsc --noEmit && VITE_BASE_PATH=/ratewise/ vite build --config vite.config.ts",
+    "build:root": "tsc --noEmit && VITE_BASE_PATH=/ vite build --config vite.config.ts",
     "preview": "vite preview",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",

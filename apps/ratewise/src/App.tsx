@@ -24,7 +24,13 @@ function App() {
   return (
     <ErrorBoundary>
       <SEOHelmet />
-      <Router basename={basename}>
+      <Router
+        basename={basename}
+        future={{
+          v7_startTransition: true, // 啟用 React.startTransition 包裝狀態更新
+          v7_relativeSplatPath: true, // 啟用相對路徑解析 (Splat routes)
+        }}
+      >
         <main role="main" className="min-h-screen">
           <h1 className="sr-only">RateWise 匯率轉換器</h1>
           <Suspense fallback={<SkeletonLoader />}>

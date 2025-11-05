@@ -63,8 +63,14 @@ RUN apk add --no-cache wget
 # Copy built assets
 COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html
 
-# Ensure /ratewise/* 路徑指向同一份資源（避免 404）
-RUN rm -rf /usr/share/nginx/html/ratewise && ln -s /usr/share/nginx/html /usr/share/nginx/html/ratewise
+# Mirror hashed assets與 PWA 檔案至 /ratewise 子路徑（避免 404）
+RUN mkdir -p /usr/share/nginx/html/ratewise/assets \
+    && cp -r /usr/share/nginx/html/assets/. /usr/share/nginx/html/ratewise/assets/ \
+    && cp /usr/share/nginx/html/sw.js /usr/share/nginx/html/ratewise/sw.js \
+    && cp /usr/share/nginx/html/sw.js.map /usr/share/nginx/html/ratewise/sw.js.map \
+    && cp /usr/share/nginx/html/workbox-*.js /usr/share/nginx/html/ratewise/ \
+    && cp /usr/share/nginx/html/workbox-*.js.map /usr/share/nginx/html/ratewise/ \
+    && cp /usr/share/nginx/html/manifest.webmanifest /usr/share/nginx/html/ratewise/manifest.webmanifest
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
