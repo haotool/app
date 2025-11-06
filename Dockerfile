@@ -4,11 +4,13 @@
 # Build stage
 FROM node:24-alpine AS builder
 
-# [fix:2025-11-05] Build arguments for version generation
+# [fix:2025-11-06] Build arguments for version generation
 # 這些參數在建置時從 Git 取得，傳遞到容器內
 ARG GIT_COMMIT_COUNT
 ARG GIT_COMMIT_HASH
 ARG BUILD_TIME
+# [fix:2025-11-06] VITE_BASE_PATH 改為可配置，預設為 /ratewise/
+# 測試環境可以覆蓋為 / 以簡化測試
 ARG VITE_BASE_PATH=/ratewise/
 
 # Enable corepack for pnpm
