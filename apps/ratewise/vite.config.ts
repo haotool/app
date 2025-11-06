@@ -218,7 +218,14 @@ export default defineConfig(() => {
         // [fix:2025-11-05] 防止 Service Worker 本身被快取
         // 參考: https://learn.microsoft.com/answers/questions/1163448/blazor-wasm-pwa-not-updating
         workbox: {
+          // [fix:2025-11-06] 移除 html 避免與 runtimeCaching 衝突
+          // 參考: PWA_UPDATE_FINAL_REPORT.md - 問題 1 修復
           globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2}'],
+
+          // [fix:2025-11-06] 禁用 navigateFallback 避免 non-precached-url 錯誤
+          // 改用 runtimeCaching 的 HTML NetworkFirst 策略處理導航請求
+          navigateFallback: null,
+          navigateFallbackDenylist: [],
 
           // [fix:2025-11-05] 使用 prompt 模式時，讓用戶控制更新時機
           clientsClaim: false,
