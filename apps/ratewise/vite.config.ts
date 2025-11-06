@@ -181,7 +181,12 @@ export default defineConfig(() => {
         // [fix:2025-11-05] 防止 Service Worker 本身被快取
         // 參考: https://learn.microsoft.com/answers/questions/1163448/blazor-wasm-pwa-not-updating
         workbox: {
-          globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2}'],
+          // [fix:2025-11-06] 包含 HTML 文件到預快取清單
+          // Service Worker 需要知道 index.html 的位置才能處理 SPA 路由
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+
+          // [fix:2025-11-06] 排除不存在或臨時文件
+          globIgnores: ['**/og-image-old.png'],
 
           // [fix:2025-11-05] 使用 prompt 模式時，讓用戶控制更新時機
           clientsClaim: false,
