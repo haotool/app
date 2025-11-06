@@ -92,5 +92,8 @@
 | ✅ 成功 | 確認當前 PWA 配置已達業界最高標準（97%+ 更新成功率） | 驗證 prompt 模式、多層防護機制、版本檢查等配置符合所有權威來源建議 | [Google web.dev] + [MDN Mozilla] + [vite-plugin-pwa 官方] + [W3C Spec] | +2 |
 | ✅ 成功 | 建立 PWA 最佳實踐分析報告（PWA_BEST_PRACTICES_ANALYSIS_2025-11-06.md） | 完整記錄 commit diff、配置分析、網路最佳實踐比較與改進建議 | 文檔化最佳實踐 + 知識管理 + 技術決策記錄 | +2 |
 | ✅ 成功 | 解答核心問題：100% 更新成功率不可能但 97%+ 已是最高標準 | 基於 10 個權威來源證明當前配置無需修改，用戶數據 100% 安全 | 多方權威來源驗證 + 技術權衡分析 | +2 |
+| ✅ 成功 | 識別並修復 PWA 路徑重複問題 (/ratewise/ratewise/) | 透過瀏覽器 Network 面板分析，發現 VitePWA base 參數與 Vite base 重複 | [網路搜尋:vite-plugin-pwa base path] + [vite-pwa-org.netlify.app] | +3 |
+| ✅ 成功 | 修復 Service Worker non-precached-url 錯誤 | 禁用 navigateFallback，改用 runtimeCaching 的 HTML NetworkFirst 策略 | [vite-plugin-pwa 官方文檔] + 網路最佳實踐 | +2 |
+| ✅ 成功 | 建立 PWA 路徑重複修復報告（PWA_PATH_DUPLICATE_FIX_2025-11-06.md） | 完整記錄問題識別、技術調查、修復方案與測試計劃 | 文檔化最佳實踐 + 問題追蹤 | +2 |
 
-**當前總分**: +90
+**當前總分**: +97
