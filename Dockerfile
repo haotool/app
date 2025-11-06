@@ -34,12 +34,13 @@ ENV CI=true
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ratewise/package.json ./apps/ratewise/
 
-# [fix:2025-11-06] 安裝依賴時禁用 Husky（生產環境不需要 Git hooks）
+# [fix:2025-11-06] 安裝依賴時禁用 Husky 並清空 NODE_ENV
+# Zeabur 可能自動設置 NODE_ENV=production，導致 devDependencies 被跳過
+# Builder 階段需要 devDependencies（TypeScript, Vite 等構建工具）
 # 參考: https://typicode.github.io/husky/#/?id=disable-husky-in-cidockerprod
-# Install dependencies with BuildKit cache mount (pnpm official best practice)
 # Reference: https://pnpm.io/docker
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-  HUSKY=0 pnpm install --frozen-lockfile
+  NODE_ENV= HUSKY=0 pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
