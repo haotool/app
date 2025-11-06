@@ -135,12 +135,13 @@ export default defineConfig(() => {
   // 生產環境: VITE_BASE_PATH='/ratewise/' (Zeabur)
   const base = process.env['VITE_BASE_PATH'] || '/';
 
-  // [fix:2025-11-05] PWA manifest 路徑策略
-  // - scope: 必須有尾斜線 (MDN: 沒有尾斜線會退回到根域名)
-  // - start_url: 無尾斜線 (避免 nginx 301 重定向)
-  // 參考: https://developer.mozilla.org/en-US/docs/Web/Manifest/start_url
+  // [fix:2025-11-06] PWA manifest 路徑策略（符合 PWA 最佳實踐）
+  // - scope: 必須有尾斜線 (MDN 規範：定義應用範圍)
+  // - start_url: 必須有尾斜線（必須在 scope 範圍內）
+  // - id: 與 start_url 一致（PWA 唯一識別符）
+  // 參考: https://web.dev/add-manifest/#start_url
   const manifestScope = base.endsWith('/') ? base : `${base}/`;
-  const manifestStartUrl = base.replace(/\/$/, '') || '/';
+  const manifestStartUrl = manifestScope; // 與 scope 一致
 
   return {
     base,
@@ -271,13 +272,12 @@ export default defineConfig(() => {
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',
-          // [fix:2025-11-05] PWA manifest 路徑最佳實踐
-          // - scope: 帶尾斜線 (MDN 規範要求，否則退回到根域名)
-          // - start_url: 無尾斜線 (避免 nginx 301 重定向)
-          // - id: 無尾斜線 (唯一識別符，與 start_url 一致)
-          scope: manifestScope,
-          start_url: manifestStartUrl,
-          id: manifestStartUrl,
+          // [fix:2025-11-06] PWA manifest 路徑最佳實踐
+          // scope, start_url, id 都使用 trailing slash（符合 PWA 規範）
+          // 參考: https://web.dev/add-manifest/
+          scope: manifestScope,        // /ratewise/
+          start_url: manifestStartUrl, // /ratewise/
+          id: manifestStartUrl,        // /ratewise/
           orientation: 'portrait-primary',
           categories: ['finance', 'utilities', 'productivity'],
           // 完整的圖標配置（包含所有尺寸）
