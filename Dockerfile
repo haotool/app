@@ -42,7 +42,9 @@ COPY apps/ratewise/package.json ./apps/ratewise/
 
 # Install dependencies with BuildKit cache mount (pnpm official best practice)
 # Reference: https://pnpm.io/docker
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+# [fix:2025-11-06] 使用 --ignore-scripts 跳過 prepare 腳本（避免 Husky 安裝失敗）
+# 參考: https://pnpm.io/cli/install#--ignore-scripts
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source code
 COPY . .
