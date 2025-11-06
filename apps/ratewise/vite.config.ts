@@ -210,7 +210,9 @@ export default defineConfig(() => {
           })
         : null,
       VitePWA({
-        base,
+        // [fix:2025-11-06] 移除 base 參數，避免路徑重複
+        // VitePWA 會自動從 Vite 的 base 配置中讀取
+        // 參考: https://vite-pwa-org.netlify.app/guide/
         // [fix:2025-11-05] 使用 prompt 模式，給用戶控制權
         registerType: 'prompt',
         injectRegister: null, // 手動註冊
