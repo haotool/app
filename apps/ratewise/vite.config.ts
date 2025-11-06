@@ -208,8 +208,10 @@ export default defineConfig(() => {
           // 參考: https://vite-pwa-org.netlify.app/guide/auto-update
           cleanupOutdatedCaches: true,
 
-          // [fix:2025-11-05] 導航預載入快取（提升性能）
-          navigationPreload: true,
+          // [fix:2025-11-06] 禁用導航預載入（避免 preloadResponse 警告）
+          // generateSW 模式無法正確處理 navigationPreload，會產生警告
+          // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-navigation-preload/
+          navigationPreload: false,
 
           // [fix:2025-11-05] 運行時快取策略
           // 關鍵: index.html 使用 NetworkFirst，確保優先從網路獲取最新版本
