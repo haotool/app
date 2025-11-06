@@ -3,15 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary Meta Tags -->
+    <meta
+      name="description"
+      content="RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。"
+    />
     <meta
       name="keywords"
       content="匯率好工具, 匯率, 匯率換算, 即時匯率, 多幣別換算, 台灣銀行匯率, 台幣匯率, 美金匯率, 日幣匯率, 歐元匯率, 線上匯率, 匯率計算機, RateWise"
     />
     <meta name="author" content="RateWise Team" />
-    <meta
-      name="description"
-      content="RateWise 匯率好工具 - 即時匯率換算，支援單幣別與多幣別換算，參考臺灣銀行牌告匯率，精準可靠。"
-    />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://app.haotool.org/ratewise" />
+    <meta http-equiv="content-language" content="zh-TW" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://app.haotool.org/ratewise" />
+    <meta property="og:title" content="RateWise - 匯率好工具 | 即時匯率換算" />
+    <meta property="og:description" content="RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。" />
+    <meta property="og:image" content="https://app.haotool.org/ratewise/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="RateWise 匯率轉換器應用截圖" />
+    <meta property="og:locale" content="zh_TW" />
+    <meta property="og:site_name" content="RateWise" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="RateWise - 匯率好工具 | 即時匯率換算" />
+    <meta name="twitter:description" content="快速、準確的匯率換算工具，支援 30+ 種貨幣" />
+    <meta name="twitter:image" content="https://app.haotool.org/ratewise/twitter-image.png" />
+    <meta name="twitter:image:alt" content="RateWise 匯率轉換器" />
+
     <meta name="theme-color" content="#8B5CF6" />
 
     <!-- [fix:2025-11-05] 版本資訊 meta 標籤（用於 runtime 版本檢查） -->
@@ -130,6 +155,55 @@
     <noscript>
       <link rel="stylesheet" href="./loading.css" />
     </noscript>
+
+    <!-- [SEO:2025-11-07] JSON-LD Structured Data for AI Search Optimization -->
+    <!-- WebApplication Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "RateWise",
+      "alternateName": "匯率好工具",
+      "description": "即時匯率轉換器，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR 等 30+ 種貨幣換算",
+      "url": "https://app.haotool.org/ratewise",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "即時匯率查詢",
+        "單幣別換算",
+        "多幣別同時換算",
+        "歷史匯率趨勢",
+        "離線使用",
+        "PWA 支援"
+      ]
+    }
+    </script>
+
+    <!-- Organization Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "RateWise",
+      "url": "https://app.haotool.org/ratewise",
+      "logo": "https://app.haotool.org/ratewise/logo-192.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Support",
+        "email": "haotool.org@gmail.com"
+      },
+      "sameAs": [
+        "https://www.threads.net/@azlife_1224",
+        "https://github.com/haotool/app"
+      ]
+    }
+    </script>
 
     <title>RateWise - 匯率好工具 | 即時匯率換算</title>
   </head>
