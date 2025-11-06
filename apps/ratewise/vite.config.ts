@@ -186,9 +186,11 @@ export default defineConfig(() => {
         : null,
       VitePWA({
         base,
-        // [fix:2025-11-05] 使用 prompt 模式，給用戶控制權
-        registerType: 'prompt',
-        injectRegister: null, // 手動註冊
+        // [fix:2025-11-06] 臨時使用 autoUpdate 強制清理舊 SW（含 navigationPreload 的版本）
+        // 修復完成後可改回 'prompt' 模式
+        // 參考: https://vite-pwa-org.netlify.app/guide/auto-update
+        registerType: 'autoUpdate',
+        injectRegister: 'auto',
 
         // [fix:2025-11-05] 防止 Service Worker 本身被快取
         // 參考: https://learn.microsoft.com/answers/questions/1163448/blazor-wasm-pwa-not-updating
@@ -200,9 +202,9 @@ export default defineConfig(() => {
           // [fix:2025-11-06] 排除不存在或臨時文件
           globIgnores: ['**/og-image-old.png'],
 
-          // [fix:2025-11-05] 使用 prompt 模式時，讓用戶控制更新時機
-          clientsClaim: false,
-          skipWaiting: false,
+          // [fix:2025-11-06] 強制自動更新（清理舊 SW）
+          clientsClaim: true,
+          skipWaiting: true,
 
           // [fix:2025-11-05] 強制清理舊快取（預防快取衝突）
           // 參考: https://vite-pwa-org.netlify.app/guide/auto-update
