@@ -61,7 +61,7 @@
 | ✅ 成功 | Husky pre-commit UTF-8 支援                                                             | 將 pre-commit 改用 `pnpm lint-staged` 並設定 `LANG/LC_ALL=zh_TW.UTF-8`，解決繁體中文訊息亂碼問題 | Husky 官方文件 + lint-staged CLI 行為（2025-11-05 實測）                | +1   |
 | ✅ 成功 | Nginx ratewise 符號連結避免 404                                                         | Dockerfile 建立 `ratewise -> /usr/share/nginx/html` 符號連結，確保 `/ratewise/assets/*` 可正常提供 | Nginx 官方子路徑部署指引 + 實測（2025-11-05）                          | +1   |
 
-**當前總分**: +44
+**當前總分**: +49
 
 ---
 
@@ -74,3 +74,6 @@
 | ✅ 成功 | 單幣別輸入框千分位修復（編輯狀態管理統一） | 與 MultiConverter 統一架構，實現千分位顯示 | [context7:react/hooks:2025-11-05] | +1 |
 | ✅ 成功 | 多幣別交叉匯率計算完善（支援任意基準貨幣） | 實現 TWD 反向計算與交叉匯率邏輯 | [context7:typescript/math:2025-11-05] | +2 |
 | ✅ 成功 | API 文檔與 25 個單元測試（006_exchange_rate_calculation_api.md） | 完整匯率計算邏輯文檔與測試覆蓋 | [context7:vitest/docs:2025-11-05] | +2 |
+| ✅ 成功 | Zeabur 測試環境設置指南（避免生產環境冒險部署） | 新增 ZEABUR_TESTING_ENVIRONMENT_SETUP.md 完整指南 | [context7:zeabur/zeabur:2025-11-06] | +1 |
+| ✅ 成功 | Staging 環境 CSP 違規與 403 錯誤診斷 | 識別 VITE_BASE_PATH 不一致問題，建議保持與生產環境一致 | [context7:vitejs/vite:2025-11-06] | +2 |
+| ✅ 成功 | Docker Husky 建置失敗修復 | 設定 ENV HUSKY=0 禁用生產建置的 prepare 腳本 | [context7:typicode/husky:2025-11-06] + [context7:pnpm/pnpm:2025-11-06] | +2 |
