@@ -4,6 +4,7 @@ import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
+import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 
 interface MultiConverterProps {
   sortedCurrencies: CurrencyCode[];
@@ -78,6 +79,25 @@ export const MultiConverter = ({
       // API 提供：1 外幣 = rate TWD，需反向計算：1 TWD = 1/rate 外幣
       const reverseRate = 1 / rate;
       return `1 TWD = ${formatExchangeRate(reverseRate)} ${currency}`;
+    }
+
+    // 特殊處理：目標貨幣是 TWD（反向匯率）
+    // 例如：基準貨幣是 CNY，目標貨幣是 TWD
+    // 已知：1 CNY = 4.41 TWD
+    // 顯示：1 CNY = 4.41 TWD
+    if (currency === 'TWD') {
+      const baseDetail = details?.[baseCurrency];
+      if (!baseDetail) return '計算中...';
+
+      let rate = baseDetail[rateType]?.sell;
+      if (rate == null) {
+        const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
+        rate = baseDetail[fallbackType]?.sell;
+        if (rate == null) return '無資料';
+      }
+
+      // API 提供：1 外幣 = rate TWD，直接顯示
+      return `1 ${baseCurrency} = ${formatExchangeRate(rate)} TWD`;
     }
 
     // 一般情況：基準貨幣是外幣（需計算交叉匯率）
@@ -250,17 +270,14 @@ export const MultiConverter = ({
                     const displayType = rateTypeInfo.availableType || rateType;
                     
                     return isDisabled ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          alert(rateTypeInfo.reason);
-                        }}
-                        className="font-medium text-gray-500 cursor-help"
-                        title={rateTypeInfo.reason}
-                        aria-label={rateTypeInfo.reason}
-                      >
-                        {displayType === 'spot' ? '即期' : '現金'}
-                      </button>
+                      <RateTypeTooltip message={rateTypeInfo.reason} isDisabled={true}>
+                        <button
+                          className="font-medium text-gray-500 cursor-help hover:text-gray-700 transition-colors"
+                          aria-label={rateTypeInfo.reason}
+                        >
+                          {displayType === 'spot' ? '即期' : '現金'}
+                        </button>
+                      </RateTypeTooltip>
                     ) : (
                       <button
                         onClick={(e) => {
