@@ -97,6 +97,8 @@ function getDevelopmentVersion(baseVersion: string): string {
 /**
  * 生成版本號（主函數）
  * 使用 nullish coalescing 串接多個策略，清晰簡潔
+ * 
+ * [fix:2025-11-06] 加強健壯性：確保生產環境總能生成有效版本
  */
 function generateVersion(): string {
   const baseVersion = readPackageVersion();
@@ -107,7 +109,16 @@ function generateVersion(): string {
   }
 
   // 生產環境：優先使用 Git 標籤，次之 commit 數，最後 fallback 到 package.json
-  return getVersionFromGitTag() ?? getVersionFromCommitCount(baseVersion) ?? baseVersion;
+  const version = getVersionFromGitTag() ?? getVersionFromCommitCount(baseVersion) ?? baseVersion;
+  
+  // [fix:2025-11-06] 確保版本號完整且有效
+  if (!version || version.length < 5) {
+    console.warn(`⚠️ Generated version is invalid: "${version}", using baseVersion: ${baseVersion}`);
+    return baseVersion;
+  }
+  
+  console.log(`✅ Generated version: ${version}`);
+  return version;
 }
 
 // 最簡配置 - 參考 Context7 官方範例
@@ -244,9 +255,11 @@ export default defineConfig(() => {
           ],
         },
 
-        // 開發環境配置
+        // [fix:2025-11-06] 開發環境配置
+        // 生產環境必須禁用，否則會觸發 CSP 錯誤（HMR 嘗試連接 :8080）
         devOptions: {
-          enabled: true,
+          enabled: false, // 生產環境必須為 false
+          type: 'module',
         },
         // Manifest 配置（此處配置會覆蓋 public/manifest.webmanifest）
         // 使用動態配置以支援 development/production 不同的 base path
