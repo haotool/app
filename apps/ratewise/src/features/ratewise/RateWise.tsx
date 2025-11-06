@@ -204,8 +204,8 @@ const RateWise = () => {
         style={{ overscrollBehaviorY: 'contain' }}
       >
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-3">
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center gap-3 mb-2">
               <img
                 src={`/logo.png?v=${import.meta.env.VITE_BUILD_TIME ?? Date.now()}`}
                 alt="RateWise Logo"
