@@ -29,15 +29,17 @@ ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
 ENV BUILD_TIME=${BUILD_TIME}
 ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 ENV CI=true
-ENV NODE_ENV=production
 
 # Copy package files and pnpm config
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ratewise/package.json ./apps/ratewise/
 
+# [fix:2025-11-06] 安裝依賴時禁用 Husky（生產環境不需要 Git hooks）
+# 參考: https://typicode.github.io/husky/#/?id=disable-husky-in-cidockerprod
 # Install dependencies with BuildKit cache mount (pnpm official best practice)
 # Reference: https://pnpm.io/docker
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+  HUSKY=0 pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
