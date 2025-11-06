@@ -29,6 +29,7 @@ ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
 ENV BUILD_TIME=${BUILD_TIME}
 ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 ENV CI=true
+ENV NODE_ENV=production
 
 # Copy package files and pnpm config
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
