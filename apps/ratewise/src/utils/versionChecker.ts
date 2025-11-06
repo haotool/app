@@ -24,13 +24,58 @@ export interface VersionInfo {
 /**
  * 從遠端獲取最新版本資訊
  *
- * 透過獲取 index.html 的 meta 標籤來檢查最新版本
+ * [fix:2025-11-06] 優先從 version.json 讀取版本號，fallback 到 HTML meta 標籤
+ * version.json 不會被 Service Worker 快取，確保版本檢查的即時性
+ * 參考最佳實踐:
+ * - https://stackoverflow.com/questions/54322336
+ * - https://blog.pixelfreestudio.com/best-practices-for-handling-updates-in-progressive-web-apps/
  *
  * @returns Promise<VersionInfo | null> 遠端版本資訊，失敗時返回 null
  */
 export async function fetchLatestVersion(): Promise<VersionInfo | null> {
   try {
-    // 使用 cache-busting 參數確保獲取最新版本
+    // 策略 1: 優先嘗試從 version.json 獲取（最可靠，不會被 SW 快取）
+    try {
+      const baseUrl = import.meta.env.BASE_URL || '/';
+      const timestamp = Date.now();
+      const versionUrl = `${window.location.origin}${baseUrl}version.json?v=${timestamp}`;
+
+      logger.debug('Fetching version from version.json', { url: versionUrl });
+
+      const versionResponse = await fetch(versionUrl, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      });
+
+      if (versionResponse.ok) {
+        const versionData = (await versionResponse.json()) as {
+          version: string;
+          buildTime?: string;
+          packageVersion?: string;
+        };
+        logger.info('✅ Version fetched from version.json', {
+          version: versionData.version,
+          buildTime: versionData.buildTime,
+          packageVersion: versionData.packageVersion,
+        });
+        return {
+          version: versionData.version,
+          buildTime: versionData.buildTime ?? new Date().toISOString(),
+        };
+      }
+
+      logger.warn('version.json not found or not OK, falling back to HTML meta', {
+        status: versionResponse.status,
+      });
+    } catch (error) {
+      logger.warn('Failed to fetch version.json, falling back to HTML meta', error as Error);
+    }
+
+    // 策略 2: Fallback 到 HTML meta 標籤
     const timestamp = Date.now();
     const response = await fetch(
       `${window.location.origin}${import.meta.env.BASE_URL || '/'}?v=${timestamp}`,
@@ -59,6 +104,7 @@ export async function fetchLatestVersion(): Promise<VersionInfo | null> {
       return null;
     }
 
+    logger.info('✅ Version fetched from HTML meta', { version: versionMatch[1] });
     return {
       version: versionMatch[1] ?? 'unknown',
       buildTime: buildTimeMatch?.[1] ?? new Date().toISOString(),

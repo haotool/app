@@ -171,8 +171,9 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
-      // [fix:2025-11-06] 自定義 plugin：將版本號注入到 HTML meta 標籤
+      // [fix:2025-11-06] 自定義 plugin：將版本號注入到 HTML meta 標籤和生成 version.json
       // 使用 enforce: 'post' 確保在其他 plugins 之後執行
+      // 參考: https://cn.vite.dev/guide/api-plugin.html#transformindexhtml
       {
         name: 'inject-version-meta',
         enforce: 'post',
@@ -183,6 +184,38 @@ export default defineConfig(() => {
               .replace(/__APP_VERSION__/g, appVersion)
               .replace(/__BUILD_TIME__/g, buildTime);
           },
+        },
+        // [fix:2025-11-06] 在建置完成後生成 version.json
+        // 這個檔案不會被 Service Worker 快取，確保版本檢查的即時性
+        // 參考: https://stackoverflow.com/questions/54322336
+        closeBundle() {
+          const { writeFileSync, mkdirSync } = require('node:fs');
+          const { resolve } = require('node:path');
+
+          try {
+            const distPath = resolve(__dirname, 'dist');
+            const versionData = {
+              version: appVersion,
+              buildTime: buildTime,
+              packageVersion: readPackageVersion(),
+            };
+
+            // 確保 dist 目錄存在
+            mkdirSync(distPath, { recursive: true });
+
+            // 寫入 version.json（不帶快取標頭）
+            writeFileSync(
+              resolve(distPath, 'version.json'),
+              JSON.stringify(versionData, null, 2),
+              'utf-8',
+            );
+
+            console.log(`✅ version.json 生成成功: ${appVersion}`);
+            console.log(`   Build Time: ${buildTime}`);
+            console.log(`   Package Version: ${versionData.packageVersion}`);
+          } catch (error) {
+            console.error('❌ 生成 version.json 失敗:', error);
+          }
         },
       },
       // [Lighthouse-optimization:2025-10-27] Brotli compression (saves 4,024 KiB)
@@ -223,6 +256,11 @@ export default defineConfig(() => {
           // [fix:2025-11-06] 移除 html 避免與 runtimeCaching 衝突
           // 參考: PWA_UPDATE_FINAL_REPORT.md - 問題 1 修復
           globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2}'],
+
+          // [fix:2025-11-06] 排除 version.json 不被 Service Worker 快取
+          // 確保版本檢查的即時性
+          // 參考: https://stackoverflow.com/questions/54322336
+          globIgnores: ['**/version.json'],
 
           // [fix:2025-11-06] 禁用 navigateFallback 避免 non-precached-url 錯誤
           // 改用 runtimeCaching 的 HTML NetworkFirst 策略處理導航請求

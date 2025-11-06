@@ -96,4 +96,9 @@
 | ✅ 成功 | 修復 Service Worker non-precached-url 錯誤 | 禁用 navigateFallback，改用 runtimeCaching 的 HTML NetworkFirst 策略 | [vite-plugin-pwa 官方文檔] + 網路最佳實踐 | +2 |
 | ✅ 成功 | 建立 PWA 路徑重複修復報告（PWA_PATH_DUPLICATE_FIX_2025-11-06.md） | 完整記錄問題識別、技術調查、修復方案與測試計劃 | 文檔化最佳實踐 + 問題追蹤 | +2 |
 
-**當前總分**: +97
+| ✅ 成功 | 版本號顯示修復（v1.1.0 正確顯示） | 實施 version.json 生成機制，雙重檢查策略（version.json + HTML meta），Service Worker 排除規則 | [context7:vitejs/vite:2025-11-06] + [網路搜尋:PWA version update best practices] + [Stack Overflow:54322336] | +3 |
+| ✅ 成功 | 版本檢查邏輯優化（防止 SW 快取覆蓋） | 優先從 version.json 讀取（不被 SW 快取），fallback 到 HTML meta 標籤，使用 cache-busting 時間戳 | [context7:googlechrome/workbox:2025-11-06] + PWA 更新最佳實踐 | +2 |
+| ✅ 成功 | 建立獨立版本號生成腳本（test-version-gen.cjs） | 提供 prebuild 腳本確保 version.json 在建置前生成，避免建置時序問題 | Node.js 建置最佳實踐 + pnpm scripts lifecycle | +1 |
+| ✅ 成功 | 建立版本號修復文檔（003_version_display_fix.md） | 完整記錄問題分析、解決方案、驗證結果與最佳實踐總結 | 文檔化最佳實踐 + 知識管理 | +1 |
+
+**當前總分**: +104

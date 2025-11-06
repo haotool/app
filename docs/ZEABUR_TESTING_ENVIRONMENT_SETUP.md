@@ -69,7 +69,7 @@
    測試環境: ratewise-staging
    開發環境: ratewise-dev
    ```
-4. 選擇部署區域（建議與生產環境相同）：
+4. 選擇部署區域（建議與生產環境相同）
    - **Asia Pacific (Hong Kong)** - 適合台灣用戶
    - **Asia Pacific (Tokyo)** - 備選方案
 
