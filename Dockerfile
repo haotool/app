@@ -25,16 +25,21 @@ WORKDIR /app
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
-# [fix:2025-11-05] 設定環境變數供 vite.config.ts 使用
+# [fix:2025-11-06] 禁用 Husky（生產建置不需要 Git hooks）
+# 參考: https://typicode.github.io/husky/how-to.html#ci-server-and-docker
+ENV HUSKY=0
+
+# [fix:2025-11-06] 設定環境變數供 vite.config.ts 使用
 ENV GIT_COMMIT_COUNT=${GIT_COMMIT_COUNT}
 ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
 ENV BUILD_TIME=${BUILD_TIME}
 ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 ENV CI=true
 
-# [fix:2025-11-06] 禁用 prepare 腳本（Husky 僅用於開發環境）
-# 參考: https://pnpm.io/cli/install#--ignore-scripts
-ENV HUSKY=0
+# [fix:2025-11-06] 注意：不設定 NODE_ENV=production
+# 原因：建置階段需要 devDependencies (TypeScript, Vite 等)
+# pnpm 會在 NODE_ENV=production 時跳過 devDependencies
+# 使用 --ignore-scripts 已足夠防止 Husky 執行
 
 # Copy package files and pnpm config
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
