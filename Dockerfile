@@ -32,6 +32,10 @@ ENV BUILD_TIME=${BUILD_TIME}
 ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 ENV CI=true
 
+# [fix:2025-11-06] 禁用 prepare 腳本（Husky 僅用於開發環境）
+# 參考: https://pnpm.io/cli/install#--ignore-scripts
+ENV HUSKY=0
+
 # Copy package files and pnpm config
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ratewise/package.json ./apps/ratewise/
