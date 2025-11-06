@@ -5,7 +5,7 @@ import viteCompression from 'vite-plugin-compression';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -189,9 +189,6 @@ export default defineConfig(() => {
         // 這個檔案不會被 Service Worker 快取，確保版本檢查的即時性
         // 參考: https://stackoverflow.com/questions/54322336
         closeBundle() {
-          const { writeFileSync, mkdirSync } = require('node:fs');
-          const { resolve } = require('node:path');
-
           try {
             const distPath = resolve(__dirname, 'dist');
             const versionData = {
