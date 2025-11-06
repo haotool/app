@@ -104,7 +104,7 @@ const RateWise = () => {
     toggleFavorite,
     addToHistory,
     generateTrends,
-  } = useCurrencyConverter({ exchangeRates });
+  } = useCurrencyConverter({ exchangeRates, details, rateType });
 
   // Error state UI
   if (ratesError) {
@@ -333,7 +333,7 @@ const RateWise = () => {
               {/* 免責聲明 - 簡化設計 */}
               <div className="text-center mb-6">
                 <p className="text-xs text-white/70 leading-relaxed">
-                  本服務匯率資料參考臺灣銀行牌告匯率（本行賣出現金）· 實際交易匯率以各銀行公告為準
+                  本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）· 實際交易匯率以各銀行公告為準
                 </p>
               </div>
 

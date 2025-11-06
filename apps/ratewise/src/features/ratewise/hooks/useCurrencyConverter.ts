@@ -13,9 +13,11 @@ import type {
   CurrencyCode,
   MultiAmountsState,
   TrendState,
+  RateType,
 } from '../types';
 import { readJSON, readString, writeJSON, writeString } from '../storage';
 import { STORAGE_KEYS } from '../storage-keys';
+import type { RateDetails } from './useExchangeRates';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -52,10 +54,12 @@ const sanitizeCurrency = (candidate: string, fallback: CurrencyCode): CurrencyCo
 
 interface UseCurrencyConverterOptions {
   exchangeRates?: Record<string, number | null>;
+  details?: Record<string, RateDetails>;
+  rateType?: RateType;
 }
 
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
-  const { exchangeRates } = options;
+  const { exchangeRates, details, rateType = 'spot' } = options;
   const [mode, setMode] = useState<ConverterMode>(() =>
     readString(STORAGE_KEYS.CURRENCY_CONVERTER_MODE, 'single') === 'multi' ? 'multi' : 'single',
   );
@@ -107,18 +111,45 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     writeJSON(STORAGE_KEYS.FAVORITES, favorites);
   }, [favorites]);
 
-  // Helper to get rate. It relies on the exchangeRates prop.
+  // Helper to get rate based on rateType (spot/cash)
   // Returns null if the rate is not available or invalid.
+  // 開發模式：添加調試訊息
   const getRate = useCallback(
     (code: CurrencyCode): number | null => {
+      // TWD 固定為 1
+      if (code === 'TWD') return 1;
+
+      // 優先使用 details + rateType（精確匯率）
+      if (details && details[code]) {
+        const detail = details[code];
+        let rate = detail[rateType]?.sell;
+
+        // Fallback 機制：如果當前類型沒有匯率，嘗試另一種類型
+        if (rate == null) {
+          const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
+          rate = detail[fallbackType]?.sell;
+          
+          // 開發模式：記錄 fallback
+          if (import.meta.env.DEV && rate != null) {
+            console.log(`[RateCalc] ${code}: fallback from ${rateType} to ${fallbackType}`);
+          }
+        }
+
+        if (rate != null) {
+          return rate;
+        }
+      }
+
+      // 最終 fallback：使用簡化的 exchangeRates
       if (!exchangeRates) return null;
       const rate = exchangeRates[code];
       if (rate !== null && rate !== undefined && typeof rate === 'number') {
         return rate;
       }
+
       return null;
     },
-    [exchangeRates],
+    [exchangeRates, details, rateType],
   );
 
   // Conversion calculations
@@ -131,6 +162,11 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       const amount = parseFloat(sourceAmount);
       const hasValue = !Number.isNaN(amount);
       const sourceRate = getRate(sourceCode);
+
+      // 開發模式：記錄基準貨幣匯率
+      if (import.meta.env.DEV) {
+        console.log(`[MultiCalc] Base: ${sourceCode}, Rate: ${sourceRate}, Amount: ${amount}`);
+      }
 
       return CURRENCY_CODES.reduce<MultiAmountsState>(
         (acc, code) => {
@@ -147,12 +183,22 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
           const targetRate = getRate(code);
           if (targetRate === null) {
             acc[code] = 'N/A'; // Mark as Not Available
+            // 開發模式：記錄無匯率的貨幣
+            if (import.meta.env.DEV) {
+              console.warn(`[MultiCalc] ${code}: No rate available`);
+            }
             return acc;
           }
 
           const converted = (amount * sourceRate) / targetRate;
           const decimals = CURRENCY_DEFINITIONS[code].decimals;
           acc[code] = converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0');
+
+          // 開發模式：記錄計算過程（僅 TWD）
+          if (import.meta.env.DEV && code === 'TWD') {
+            console.log(`[MultiCalc] ${sourceCode} → TWD: ${amount} * ${sourceRate} / ${targetRate} = ${converted}`);
+          }
+
           return acc;
         },
         { ...prev },

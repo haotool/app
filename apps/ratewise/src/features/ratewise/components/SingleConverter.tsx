@@ -65,12 +65,32 @@ export const SingleConverter = ({
   const fromInputRef = useRef<HTMLInputElement>(null);
   const toInputRef = useRef<HTMLInputElement>(null);
 
-  // 獲取指定貨幣的匯率（優先使用 details，fallback 到 exchangeRates）
+  // 獲取指定貨幣的匯率（優先使用 details + rateType，有 fallback 機制）
   const getRate = (currency: CurrencyCode): number => {
+    // TWD 固定為 1
+    if (currency === 'TWD') return 1;
+
     const detail = details?.[currency];
-    if (detail?.[rateType]?.sell != null) {
-      return detail[rateType].sell;
+    if (detail) {
+      let rate = detail[rateType]?.sell;
+      
+      // Fallback 機制：如果當前類型沒有匯率，嘗試另一種類型
+      if (rate == null) {
+        const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
+        rate = detail[fallbackType]?.sell;
+        
+        // 開發模式：記錄 fallback
+        if (import.meta.env.DEV && rate != null) {
+          console.log(`[SingleCalc] ${currency}: fallback from ${rateType} to ${fallbackType}`);
+        }
+      }
+
+      if (rate != null) {
+        return rate;
+      }
     }
+
+    // 最終 fallback：使用簡化的 exchangeRates
     return exchangeRates[currency] ?? 1;
   };
 

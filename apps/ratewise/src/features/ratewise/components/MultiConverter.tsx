@@ -37,6 +37,25 @@ export const MultiConverter = ({
   const [editingValue, setEditingValue] = useState<string>('');
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
+  // 檢測某個貨幣是否只有單一匯率類型（只有現金或只有即期）
+  const hasOnlyOneRateType = (currency: CurrencyCode): { hasOnlyOne: boolean; availableType: RateType | null; reason: string } => {
+    const detail = details?.[currency];
+    if (!detail) {
+      return { hasOnlyOne: false, availableType: null, reason: '' };
+    }
+
+    const hasSpot = detail.spot?.sell != null;
+    const hasCash = detail.cash?.sell != null;
+
+    if (hasSpot && !hasCash) {
+      return { hasOnlyOne: true, availableType: 'spot', reason: `${currency} 僅提供即期匯率` };
+    }
+    if (hasCash && !hasSpot) {
+      return { hasOnlyOne: true, availableType: 'cash', reason: `${currency} 僅提供現金匯率` };
+    }
+    return { hasOnlyOne: false, availableType: null, reason: '' };
+  };
+
   // 取得匯率顯示資訊（支援任意基準貨幣的交叉匯率計算）
   const getRateDisplay = (currency: CurrencyCode): string => {
     // 基準貨幣直接顯示「基準貨幣」
@@ -225,15 +244,38 @@ export const MultiConverter = ({
                   aria-label={`${CURRENCY_DEFINITIONS[code].name} (${code}) 金額`}
                 />
                 <div className="text-xs text-right mt-0.5">
-                  <button
-                    onClick={() => onRateTypeChange(rateType === 'spot' ? 'cash' : 'spot')}
-                    className={`font-medium transition-colors hover:opacity-80 ${
-                      rateType === 'spot' ? 'text-blue-600' : 'text-purple-600'
-                    }`}
-                    aria-label={`切換到${rateType === 'spot' ? '現金' : '即期'}匯率`}
-                  >
-                    {rateType === 'spot' ? '即期' : '現金'}
-                  </button>
+                  {(() => {
+                    const rateTypeInfo = hasOnlyOneRateType(code);
+                    const isDisabled = rateTypeInfo.hasOnlyOne;
+                    const displayType = rateTypeInfo.availableType || rateType;
+                    
+                    return isDisabled ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          alert(rateTypeInfo.reason);
+                        }}
+                        className="font-medium text-gray-500 cursor-help"
+                        title={rateTypeInfo.reason}
+                        aria-label={rateTypeInfo.reason}
+                      >
+                        {displayType === 'spot' ? '即期' : '現金'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRateTypeChange(rateType === 'spot' ? 'cash' : 'spot');
+                        }}
+                        className={`font-medium transition-colors hover:opacity-80 ${
+                          rateType === 'spot' ? 'text-blue-600' : 'text-purple-600'
+                        }`}
+                        aria-label={`切換到${rateType === 'spot' ? '現金' : '即期'}匯率`}
+                      >
+                        {rateType === 'spot' ? '即期' : '現金'}
+                      </button>
+                    );
+                  })()}
                   <span className="text-gray-500"> · {getRateDisplay(code)}</span>
                 </div>
               </div>
