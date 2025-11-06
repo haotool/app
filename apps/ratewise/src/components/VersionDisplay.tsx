@@ -22,15 +22,17 @@ export function VersionDisplay() {
 
   useEffect(() => {
     // 開發模式下每秒更新一次時間，確保顯示最新狀態
-    if (isDev) {
-      setBuildTimeString(new Date().toISOString());
-      
-      const interval = setInterval(() => {
-        setBuildTimeString(new Date().toISOString());
-      }, 1000);
-
-      return () => clearInterval(interval);
+    if (!isDev) {
+      return; // 生產模式不需要清理
     }
+
+    setBuildTimeString(new Date().toISOString());
+    
+    const interval = setInterval(() => {
+      setBuildTimeString(new Date().toISOString());
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [isDev]);
 
   const buildTime = new Date(buildTimeString);
