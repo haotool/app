@@ -12,8 +12,11 @@ const About = lazy(() => import('./pages/About'));
 const ColorSchemeComparison = lazy(() => import('./pages/ColorSchemeComparison'));
 
 function App() {
-  // 開發模式使用根路徑，生產環境使用 /ratewise/
-  const basename = import.meta.env.DEV ? '/' : '/ratewise';
+  // [fix:2025-11-06] 使用 Vite 的 base 配置，確保與 vite.config.ts 一致
+  // 開發模式: '/' | 生產環境: '/ratewise/' (帶尾斜線)
+  // 注意: React Router basename 需要移除尾斜線
+  const base = import.meta.env.BASE_URL || '/';
+  const basename = base.replace(/\/$/, '') || '/';
 
   // 標記應用已完全載入，供 E2E 測試使用
   // [E2E-fix:2025-10-25] 添加明確的載入完成信號

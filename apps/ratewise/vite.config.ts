@@ -32,6 +32,7 @@ function getVersionFromGitTag(): string | null {
       .filter(Boolean);
 
     if (matchingTags.length === 0) {
+      console.log('[vite.config] No Git tags found, will use commit count');
       return null;
     }
 
@@ -41,12 +42,16 @@ function getVersionFromGitTag(): string | null {
 
     const tagMatch = /@app\/ratewise@(\d+\.\d+\.\d+)-(\d+)-g[0-9a-f]+/.exec(described);
     if (!tagMatch) {
+      console.log('[vite.config] Git tag format not matched');
       return null;
     }
 
     const [, tagVersion, distance] = tagMatch;
-    return Number(distance) === 0 ? tagVersion : `${tagVersion}+build.${distance}`;
-  } catch {
+    const version = Number(distance) === 0 ? tagVersion : `${tagVersion}+build.${distance}`;
+    console.log(`[vite.config] Version from Git tag: ${version}`);
+    return version;
+  } catch (error) {
+    console.log('[vite.config] Failed to get version from Git tag:', error);
     return null;
   }
 }
@@ -54,22 +59,37 @@ function getVersionFromGitTag(): string | null {
 /**
  * 使用 Git commit 數生成版本號
  * @param baseVersion - package.json 中的基礎版本
- * @returns 版本號（如: "1.0.123"）或 null（如果 Git 不可用）
+ * @returns 版本號（如: "1.0.123"）或 baseVersion（如果 Git 不可用）
  *
- * [fix:2025-11-05] 優先使用環境變數 GIT_COMMIT_COUNT（Docker 建置時提供）
+ * [fix:2025-11-06] 優先使用環境變數 GIT_COMMIT_COUNT（Docker 建置時提供）
  * 參考: Dockerfile ARG/ENV 最佳實踐
+ * [fix:2025-11-06] 改為返回 baseVersion 而非 null，確保永遠有版本號
  */
-function getVersionFromCommitCount(baseVersion: string): string | null {
+function getVersionFromCommitCount(baseVersion: string): string {
   try {
     // 優先使用 Docker build args 傳入的環境變數
-    const commitCount =
+    const commitCountStr =
       process.env.GIT_COMMIT_COUNT ??
       execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
 
+    console.log(`[vite.config] Commit count string: "${commitCountStr}"`);
+
+    // 驗證 commitCount 是否為有效數字
+    const commitCount = parseInt(commitCountStr, 10);
+    if (isNaN(commitCount) || commitCount < 0) {
+      console.warn(
+        `[vite.config] Invalid commit count: ${commitCountStr}, falling back to baseVersion`,
+      );
+      return baseVersion;
+    }
+
     const [major = '1', minor = '0'] = baseVersion.split('.').slice(0, 2);
-    return `${major}.${minor}.${commitCount}`;
-  } catch {
-    return null;
+    const version = `${major}.${minor}.${commitCount}`;
+    console.log(`[vite.config] Version from commit count: ${version}`);
+    return version;
+  } catch (error) {
+    console.warn(`[vite.config] Failed to get commit count:`, error);
+    return baseVersion;
   }
 }
 
@@ -97,6 +117,8 @@ function getDevelopmentVersion(baseVersion: string): string {
 /**
  * 生成版本號（主函數）
  * 使用 nullish coalescing 串接多個策略，清晰簡潔
+ *
+ * [fix:2025-11-06] 確保永遠返回完整版本號，不會出現 "1.1." 的情況
  */
 function generateVersion(): string {
   const baseVersion = readPackageVersion();
@@ -106,8 +128,9 @@ function generateVersion(): string {
     return getDevelopmentVersion(baseVersion);
   }
 
-  // 生產環境：優先使用 Git 標籤，次之 commit 數，最後 fallback 到 package.json
-  return getVersionFromGitTag() ?? getVersionFromCommitCount(baseVersion) ?? baseVersion;
+  // 生產環境：優先使用 Git 標籤，次之 commit 數
+  // getVersionFromCommitCount 現在永遠返回有效版本號（不會是 null）
+  return getVersionFromGitTag() ?? getVersionFromCommitCount(baseVersion);
 }
 
 // 最簡配置 - 參考 Context7 官方範例
@@ -117,6 +140,13 @@ export default defineConfig(() => {
   // 自動生成版本號（語義化版本 + git metadata）
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
+
+  // [debug:2025-11-06] 輸出版本資訊以便調試
+  console.log(`[vite.config] App Version: ${appVersion}`);
+  console.log(`[vite.config] Build Time: ${buildTime}`);
+  console.log(`[vite.config] CI: ${process.env.CI}`);
+  console.log(`[vite.config] NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`[vite.config] GIT_COMMIT_COUNT: ${process.env.GIT_COMMIT_COUNT}`);
 
   // 最簡配置：使用環境變數，消除所有特殊情況
   // [fix:2025-10-27] 遵循 Linus 原則 - "好品味"：消除條件判斷
@@ -141,11 +171,18 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
-      // [fix:2025-11-05] 自定義 plugin：將版本號注入到 HTML meta 標籤
+      // [fix:2025-11-06] 自定義 plugin：將版本號注入到 HTML meta 標籤
+      // 使用 enforce: 'post' 確保在其他 plugins 之後執行
       {
         name: 'inject-version-meta',
-        transformIndexHtml(html) {
-          return html.replace(/__APP_VERSION__/g, appVersion).replace(/__BUILD_TIME__/g, buildTime);
+        enforce: 'post',
+        transformIndexHtml: {
+          order: 'post',
+          handler(html) {
+            return html
+              .replace(/__APP_VERSION__/g, appVersion)
+              .replace(/__BUILD_TIME__/g, buildTime);
+          },
         },
       },
       // [Lighthouse-optimization:2025-10-27] Brotli compression (saves 4,024 KiB)

@@ -2,7 +2,7 @@
 
 **版本**: 1.6.0 (單幣別千分位與交叉匯率完善)
 **建立時間**: 2025-10-31T03:06:28+0800
-**更新時間**: 2025-11-05T09:06:00+0800
+**更新時間**: 2025-11-06T15:00:00+0800
 **狀態**: 🔄 進行中
 
 ---
@@ -61,7 +61,7 @@
 | ✅ 成功 | Husky pre-commit UTF-8 支援                                                            | 將 pre-commit 改用 `pnpm lint-staged` 並設定 `LANG/LC_ALL=zh_TW.UTF-8`，解決繁體中文訊息亂碼問題   | Husky 官方文件 + lint-staged CLI 行為（2025-11-05 實測）                                              | +1   |
 | ✅ 成功 | Nginx ratewise 符號連結避免 404                                                        | Dockerfile 建立 `ratewise -> /usr/share/nginx/html` 符號連結，確保 `/ratewise/assets/*` 可正常提供 | Nginx 官方子路徑部署指引 + 實測（2025-11-05）                                                         | +1   |
 
-**當前總分**: +50
+**當前總分**: +65
 
 ---
 
@@ -78,3 +78,13 @@
 | ✅ 成功 | Staging 環境 CSP 違規與 403 錯誤診斷 | 識別 VITE_BASE_PATH 不一致問題，建議保持與生產環境一致 | [context7:vitejs/vite:2025-11-06] | +2 |
 | ✅ 成功 | Docker Husky 建置失敗修復（第一次嘗試） | 設定 ENV HUSKY=0 禁用生產建置的 prepare 腳本 | [context7:typicode/husky:2025-11-06] + [context7:pnpm/pnpm:2025-11-06] | +1 |
 | ✅ 成功 | Docker Husky 建置失敗修復（最終方案） | 使用 pnpm install --ignore-scripts 跳過所有 scripts | [context7:pnpm/pnpm:2025-11-06] - Docker 生產建置標準做法 | +2 |
+| ✅ 成功 | 版本號注入 plugin 優化（enforce: 'post' + order: 'post'） | 確保版本號替換在所有其他 plugins 之後執行，避免被覆蓋 | [context7:vitejs/vite:2025-11-06] + Vite Plugin API 最佳實踐 | +2 |
+| ✅ 成功 | Manifest 配置驗證（scope 尾斜線符合規範） | 確認 public/manifest.webmanifest 的 scope: "/ratewise/" 配置正確 | [context7:vite-pwa/vite-plugin-pwa:2025-11-06] + [MDN: Web App Manifest] | +1 |
+| ✅ 成功 | CSP 違規問題診斷（8080 端口為平台層級行為） | 確認應用程式碼中無 8080 端口引用，為 Zeabur 平台內部健康檢查 | [context7:zeabur/zeabur:2025-11-06] + 程式碼審查 | +1 |
+| ✅ 成功 | og-image-old.png 404 錯誤診斷（舊快取問題） | 確認 HTML 中無此引用，為 Service Worker 或瀏覽器快取殘留 | 程式碼審查 + 網路請求分析 | +1 |
+| ✅ 成功 | 建立 Docker 測試腳本（Bash + PowerShell） | 提供自動化測試腳本驗證版本號注入、PWA 配置與 HTTP 連接 | Docker 最佳實踐 + 自動化測試 | +2 |
+| ✅ 成功 | 查閱 Context7 官方文檔驗證 PWA 最佳實踐 | 確認 Manifest scope/start_url 配置、MIME type 與快取策略符合標準 | [context7:vite-pwa-org_netlify_app:2025-11-06] + [context7:vite-pwa/vite-plugin-pwa:2025-11-06] | +2 |
+| ✅ 成功 | Staging 環境部署分析報告（STAGING_DEPLOYMENT_ANALYSIS.md） | 建立完整部署檢查報告，記錄所有問題、修復方案與驗證步驟 | 文檔化最佳實踐 + 知識管理 | +1 |
+| ✅ 成功 | 全局路徑配置審計（/ratewise/ 與 /ratewise） | 檢查所有配置一致性，發現並修復 React Router basename 硬編碼問題 | 程式碼審查 + 最佳實踐 | +2 |
+| ✅ 成功 | React Router basename 動態配置修復 | 改用 import.meta.env.BASE_URL 確保與 Vite base 配置一致 | [context7:reactrouter/react-router:2025-11-06] + Vite 環境變數 | +2 |
+| ✅ 成功 | 路徑配置審計報告（PATH_CONFIGURATION_AUDIT_2025-11-06.md） | 建立完整路徑配置文檔，說明尾斜線使用規則與最佳實踐 | 文檔化最佳實踐 + 知識傳承 | +1 |
