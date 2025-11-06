@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 
 interface RateTypeTooltipProps {
   children: React.ReactNode;
@@ -12,16 +12,39 @@ export const RateTypeTooltip = ({ children, message, isDisabled }: RateTypeToolt
   const triggerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // 使用 useLayoutEffect 確保在 DOM 繪製前計算位置
+  useLayoutEffect(() => {
     if (show && triggerRef.current && tooltipRef.current) {
-      const triggerRect = triggerRef.current.getBoundingClientRect();
-      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+      const updatePosition = () => {
+        const triggerRect = triggerRef.current!.getBoundingClientRect();
+        const tooltipRect = tooltipRef.current!.getBoundingClientRect();
+        
+        // 計算位置（置於觸發元素下方並居中）
+        let left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2;
+        const top = triggerRect.bottom + 8;
+        
+        // 防止 tooltip 超出視窗左右邊界
+        const padding = 8;
+        if (left < padding) {
+          left = padding;
+        } else if (left + tooltipRect.width > window.innerWidth - padding) {
+          left = window.innerWidth - tooltipRect.width - padding;
+        }
+        
+        setPosition({ top, left });
+      };
+
+      // 立即計算位置
+      updatePosition();
       
-      // 計算位置（置於觸發元素下方並居中）
-      const left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2;
-      const top = triggerRect.bottom + 8;
+      // 監聽滾動和視窗大小變化
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
       
-      setPosition({ top, left });
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+      };
     }
   }, [show]);
 
