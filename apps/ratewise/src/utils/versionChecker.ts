@@ -72,7 +72,9 @@ export async function fetchLatestVersion(): Promise<VersionInfo | null> {
         status: versionResponse.status,
       });
     } catch (error) {
-      logger.warn('Failed to fetch version.json, falling back to HTML meta', error as Error);
+      logger.warn('Failed to fetch version.json, falling back to HTML meta', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     // 策略 2: Fallback 到 HTML meta 標籤
@@ -110,7 +112,9 @@ export async function fetchLatestVersion(): Promise<VersionInfo | null> {
       buildTime: buildTimeMatch?.[1] ?? new Date().toISOString(),
     };
   } catch (error) {
-    logger.error('Failed to fetch latest version', error as Error);
+    logger.error('Failed to fetch latest version', error instanceof Error ? error : undefined, {
+      errorMessage: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
