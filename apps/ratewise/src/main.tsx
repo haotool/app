@@ -7,6 +7,7 @@ import { logger } from './utils/logger';
 // import { initSentry } from './utils/sentry'; // 🚀 已移除，改為 on-demand 載入
 import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
+import { clearDateRangeCache } from './services/exchangeRateHistoryService';
 
 // 使用 import.meta.env 優先，如果不存在則使用全域變數，最後使用預設值
 const appVersion =
@@ -18,6 +19,10 @@ const buildTime =
 
 // 處理版本更新（檢測版本變更並清除快取）
 void handleVersionUpdate();
+
+// [Phase1-optimization:2025-11-07] 清除可能過期的日期範圍快取
+// 修復場景：避免請求錯誤日期（如未來日期）導致 404 錯誤
+clearDateRangeCache();
 
 // 全域錯誤處理器 - 捕捉網路請求錯誤
 // [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]

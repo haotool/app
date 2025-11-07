@@ -214,10 +214,17 @@ export default defineConfig(() => {
         workbox: {
           // [fix:2025-11-06] 包含 HTML 文件到預快取清單
           // Service Worker 需要知道 index.html 的位置才能處理 SPA 路由
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          // [Phase3-optimization:2025-11-07] 包含 AVIF/WebP 優化圖片
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp}'],
 
           // [fix:2025-11-07] 排除不存在或臨時文件，避免 404 錯誤
-          globIgnores: ['**/og-image-old.png', '**/node_modules/**', '**/lighthouse-reports/**'],
+          // 排除匯率數據（由 runtimeCaching 處理）
+          globIgnores: [
+            '**/og-image-old.png',
+            '**/node_modules/**',
+            '**/lighthouse-reports/**',
+            '**/rates/**/*.json', // 匯率數據不預快取，使用 runtime caching
+          ],
 
           // [fix:2025-11-07] 忽略 URL 參數，提升快取命中率
           // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-routing/#how-to-register-a-navigation-route
@@ -248,7 +255,7 @@ export default defineConfig(() => {
                 cacheName: 'html-cache',
                 expiration: {
                   maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
+                  maxAgeSeconds: 60 * 60 * 24, // 1 天（確保更新即時推送）
                 },
                 networkTimeoutSeconds: 5, // 5 秒超時後使用快取
               },
@@ -263,7 +270,7 @@ export default defineConfig(() => {
                   maxEntries: 50,
                   maxAgeSeconds: 60 * 5, // 5 分鐘
                 },
-                networkTimeoutSeconds: 10,
+                networkTimeoutSeconds: 3, // 業界標準：3秒超時（避免用戶長時間等待）
               },
             },
             {

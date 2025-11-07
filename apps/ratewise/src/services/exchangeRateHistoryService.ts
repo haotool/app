@@ -412,3 +412,20 @@ export async function fetchHistoricalRatesWithFallback(
 
   return null;
 }
+
+/**
+ * 清除日期範圍快取
+ *
+ * [Phase1-optimization:2025-11-07]
+ * 用途：在應用啟動時清除可能過期或錯誤的日期範圍快取
+ * 場景：修復 404 錯誤（請求未來日期）的殘留快取問題
+ */
+export function clearDateRangeCache(): void {
+  const deleted = cache.delete(CONFIG.RANGE_CACHE_KEY);
+  if (deleted) {
+    logger.info('Date range cache cleared on app startup', {
+      service: 'exchangeRateHistoryService',
+      cacheKey: CONFIG.RANGE_CACHE_KEY,
+    });
+  }
+}

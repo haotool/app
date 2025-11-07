@@ -63,6 +63,10 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
 
+    <!-- [Phase1-optimization:2025-11-07] Preload LCP 圖片 - 只載入 AVIF -->
+    <!-- 參考: https://web.dev/articles/preload-critical-assets -->
+    <link rel="preload" as="image" href="./optimized/logo-112w.avif" type="image/avif" fetchpriority="high" />
+
     <!-- Modulepreload for critical scripts (Vite generates these automatically) -->
     <!-- Vite will inject modulepreload links for vendor chunks during build -->
 
