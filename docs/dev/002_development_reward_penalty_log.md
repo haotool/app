@@ -1,8 +1,8 @@
 # 002 開發獎懲記錄 LOG
 
-**版本**: 1.6.1 (AI 搜尋優化 Phase 1)
+**版本**: 1.8.0 (Lighthouse Pro 工作流與程式碼品質)
 **建立時間**: 2025-10-31T03:06:28+0800
-**更新時間**: 2025-11-07T19:15:00+0800
+**更新時間**: 2025-11-07T14:20:00+0800
 **狀態**: 🔄 進行中
 
 ---
@@ -61,7 +61,7 @@
 | ✅ 成功 | Husky pre-commit UTF-8 支援                                                            | 將 pre-commit 改用 `pnpm lint-staged` 並設定 `LANG/LC_ALL=zh_TW.UTF-8`，解決繁體中文訊息亂碼問題   | Husky 官方文件 + lint-staged CLI 行為（2025-11-05 實測）                                              | +1   |
 | ✅ 成功 | Nginx ratewise 符號連結避免 404                                                        | Dockerfile 建立 `ratewise -> /usr/share/nginx/html` 符號連結，確保 `/ratewise/assets/*` 可正常提供 | Nginx 官方子路徑部署指引 + 實測（2025-11-05）                                                         | +1   |
 
-**當前總分**: +46
+**當前總分**: +51
 
 ---
 
@@ -75,3 +75,5 @@
 | ✅ 成功 | 多幣別交叉匯率計算完善（支援任意基準貨幣） | 實現 TWD 反向計算與交叉匯率邏輯 | [context7:typescript/math:2025-11-05] | +2 |
 | ✅ 成功 | API 文檔與 25 個單元測試（006_exchange_rate_calculation_api.md） | 完整匯率計算邏輯文檔與測試覆蓋 | [context7:vitest/docs:2025-11-05] | +2 |
 | ✅ 成功 | AI 搜尋優化 Phase 1 實施（Open Graph + Twitter Card + JSON-LD） | 靜態 HTML 添加完整 SEO meta tags（11 個 OG tags + 5 個 Twitter tags + 2 個 JSON-LD schemas），避免 React Helmet 過度設計，遵循 Linus 三問與 AI_SEARCH_OPTIMIZATION_SPEC.md 靜態優先原則 | [AI_SEARCH_OPTIMIZATION_SPEC.md:149][context7:@dr.pogodin/react-helmet:2025-11-07][Google Search Central 2025][Open Graph Protocol][Schema.org] | +2 |
+| ✅ 成功 | 圖片優化與 LCP 大幅提升（1.4MB → 3.6KB，壓縮率 99.7%） | 使用 sharp 建立自動化腳本生成多尺寸響應式圖片（AVIF/WebP/PNG），更新組件使用 `<picture>` 標籤，添加 width/height 屬性防止 CLS，logo 使用 fetchPriority="high" 優先載入 | [web.dev:optimize-lcp:2025-11-07][MDN:lazy-loading:2025-11-07][sharp:docs:2025-11-07][web.dev:browser-level-image-lazy-loading:2025-11-07][chrome.dev:uses-optimized-images:2025-11-07] | +3 |
+| ✅ 成功 | Lighthouse Pro 工作流執行與程式碼品質修復 | 修復 4 個 lint 問題（React Hooks 依賴、Promise 返回類型、nullish coalescing、optional chain），通過 TypeScript 和 ESLint 檢查，建置成功，產出完整優化報告（LIGHTHOUSE_OPTIMIZATION_REPORT_20251107.md） | [LINUS_GUIDE.md][context7:react/hooks:2025-11-07][TC39:nullish-coalescing][TC39:optional-chaining] | +2 |

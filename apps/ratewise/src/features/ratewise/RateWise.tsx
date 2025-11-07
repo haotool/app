@@ -206,11 +206,28 @@ const RateWise = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-5">
             <div className="flex items-center justify-center gap-1.5 mb-1">
-              <img
-                src={`/logo.png?v=${import.meta.env.VITE_BUILD_TIME ?? Date.now()}`}
-                alt="RateWise Logo"
-                className="w-16 h-16 md:w-20 md:h-20"
-              />
+              <picture>
+                <source
+                  type="image/avif"
+                  srcSet="/optimized/logo-112w.avif 112w, /optimized/logo-192w.avif 192w"
+                  sizes="(max-width: 768px) 64px, 80px"
+                />
+                <source
+                  type="image/webp"
+                  srcSet="/optimized/logo-112w.webp 112w, /optimized/logo-192w.webp 192w"
+                  sizes="(max-width: 768px) 64px, 80px"
+                />
+                <img
+                  src="/optimized/logo-112w.png"
+                  alt="RateWise Logo"
+                  className="w-16 h-16 md:w-20 md:h-20"
+                  width="112"
+                  height="112"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                />
+              </picture>
               <h2 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
                 匯率好工具
               </h2>
@@ -333,7 +350,8 @@ const RateWise = () => {
               {/* 免責聲明 - 簡化設計 */}
               <div className="text-center mb-6">
                 <p className="text-xs text-white/70 leading-relaxed">
-                  本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）· 實際交易匯率以各銀行公告為準
+                  本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）·
+                  實際交易匯率以各銀行公告為準
                 </p>
               </div>
 

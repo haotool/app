@@ -120,7 +120,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       if (code === 'TWD') return 1;
 
       // 優先使用 details + rateType（精確匯率）
-      if (details && details[code]) {
+      if (details?.[code]) {
         const detail = details[code];
         let rate = detail[rateType]?.sell;
 
@@ -128,7 +128,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
         if (rate == null) {
           const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
           rate = detail[fallbackType]?.sell;
-          
+
           // 開發模式：記錄 fallback
           if (import.meta.env.DEV && rate != null) {
             console.log(`[RateCalc] ${code}: fallback from ${rateType} to ${fallbackType}`);
@@ -196,7 +196,9 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
 
           // 開發模式：記錄計算過程（僅 TWD）
           if (import.meta.env.DEV && code === 'TWD') {
-            console.log(`[MultiCalc] ${sourceCode} → TWD: ${amount} * ${sourceRate} / ${targetRate} = ${converted}`);
+            console.log(
+              `[MultiCalc] ${sourceCode} → TWD: ${amount} * ${sourceRate} / ${targetRate} = ${converted}`,
+            );
           }
 
           return acc;

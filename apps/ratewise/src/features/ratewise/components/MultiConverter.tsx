@@ -39,7 +39,9 @@ export const MultiConverter = ({
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // 檢測某個貨幣是否只有單一匯率類型（只有現金或只有即期）
-  const hasOnlyOneRateType = (currency: CurrencyCode): { hasOnlyOne: boolean; availableType: RateType | null; reason: string } => {
+  const hasOnlyOneRateType = (
+    currency: CurrencyCode,
+  ): { hasOnlyOne: boolean; availableType: RateType | null; reason: string } => {
     const detail = details?.[currency];
     if (!detail) {
       return { hasOnlyOne: false, availableType: null, reason: '' };
@@ -267,8 +269,8 @@ export const MultiConverter = ({
                   {(() => {
                     const rateTypeInfo = hasOnlyOneRateType(code);
                     const isDisabled = rateTypeInfo.hasOnlyOne;
-                    const displayType = rateTypeInfo.availableType || rateType;
-                    
+                    const displayType = rateTypeInfo.availableType ?? rateType;
+
                     return isDisabled ? (
                       <RateTypeTooltip message={rateTypeInfo.reason} isDisabled={true}>
                         <button

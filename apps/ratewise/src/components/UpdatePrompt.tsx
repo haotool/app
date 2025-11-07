@@ -8,7 +8,7 @@ import { AutoUpdateToast } from './AutoUpdateToast';
  *
  * [fix:2025-11-06] 改為自動更新模式
  * 更新時間: 2025-11-06T00:30:00+08:00
- * 
+ *
  * 業界最佳實踐 (2025):
  * - ✅ 自動倒數 10 秒後更新
  * - ✅ 可手動點擊立即更新
@@ -142,7 +142,7 @@ export function UpdatePrompt() {
     if (!wb) return;
 
     console.log('[PWA] User triggered update');
-    
+
     try {
       // 1. 清除所有 Service Worker 快取
       if ('caches' in window) {
@@ -167,7 +167,7 @@ export function UpdatePrompt() {
     <AutoUpdateToast
       show={needRefresh}
       onClose={handleClose}
-      onUpdate={handleUpdate}
+      onUpdate={() => void handleUpdate()}
     />
   );
 }
