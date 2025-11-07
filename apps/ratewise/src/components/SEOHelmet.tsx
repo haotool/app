@@ -122,7 +122,7 @@ const DEFAULT_JSON_LD = [
     '@type': 'Organization',
     name: 'RateWise',
     url: SITE_BASE_URL,
-    logo: `${SITE_BASE_URL}/logo.png`,
+    logo: `${SITE_BASE_URL}/optimized/logo-512w.png`,
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Customer Support',

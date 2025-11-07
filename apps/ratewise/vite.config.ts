@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
 import { visualizer } from 'rollup-plugin-visualizer';
+import { imagetools } from 'vite-imagetools';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -97,7 +98,7 @@ function getDevelopmentVersion(baseVersion: string): string {
 /**
  * 生成版本號（主函數）
  * 使用 nullish coalescing 串接多個策略，清晰簡潔
- * 
+ *
  * [fix:2025-11-06] 加強健壯性：確保生產環境總能生成有效版本
  */
 function generateVersion(): string {
@@ -110,13 +111,15 @@ function generateVersion(): string {
 
   // 生產環境：優先使用 Git 標籤，次之 commit 數，最後 fallback 到 package.json
   const version = getVersionFromGitTag() ?? getVersionFromCommitCount(baseVersion) ?? baseVersion;
-  
+
   // [fix:2025-11-06] 確保版本號完整且有效
   if (!version || version.length < 5) {
-    console.warn(`⚠️ Generated version is invalid: "${version}", using baseVersion: ${baseVersion}`);
+    console.warn(
+      `⚠️ Generated version is invalid: "${version}", using baseVersion: ${baseVersion}`,
+    );
     return baseVersion;
   }
-  
+
   console.log(`✅ Generated version: ${version}`);
   return version;
 }
@@ -153,6 +156,20 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
+      // [fix:2025-11-07] 圖片優化 plugin - 自動生成多尺寸和現代格式
+      // 參考: https://github.com/JonasKruckenberg/imagetools
+      imagetools({
+        defaultDirectives: (url) => {
+          // 只處理 public/optimized 目錄的圖片
+          if (url.searchParams.has('imagetools')) {
+            return new URLSearchParams({
+              format: 'avif;webp;png',
+              quality: '80',
+            });
+          }
+          return new URLSearchParams();
+        },
+      }),
       // [fix:2025-11-05] 自定義 plugin：將版本號注入到 HTML meta 標籤
       {
         name: 'inject-version-meta',
@@ -279,9 +296,9 @@ export default defineConfig(() => {
           // [fix:2025-11-06] PWA manifest 路徑最佳實踐
           // scope, start_url, id 都使用 trailing slash（符合 PWA 規範）
           // 參考: https://web.dev/add-manifest/
-          scope: manifestScope,        // /ratewise/
+          scope: manifestScope, // /ratewise/
           start_url: manifestStartUrl, // /ratewise/
-          id: manifestStartUrl,        // /ratewise/
+          id: manifestStartUrl, // /ratewise/
           orientation: 'portrait-primary',
           categories: ['finance', 'utilities', 'productivity'],
           // 完整的圖標配置（包含所有尺寸）

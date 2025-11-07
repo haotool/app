@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 /**
  * AutoUpdateToast - PWA 自動更新通知組件
- * 
+ *
  * 業界最佳實踐設計 (2025)
- * 
+ *
  * 參考:
  * - Google Web.dev PWA Updates: https://web.dev/learn/pwa/update/
  * - Vercel Design System: https://vercel.com/design
  * - Sonner Toast: https://sonner.emilkowal.ski/
- * 
+ *
  * UX 特點:
  * - ✅ 自動倒數 10 秒後更新
  * - ✅ 可手動點擊立即更新
@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react';
  * - ✅ 不干擾用戶操作（右下角）
  * - ✅ 完整無障礙支援
  * - ✅ 響應式設計
- * 
+ *
  * 技術細節:
  * - 使用 autoUpdate 模式
  * - 10 秒倒數計時
@@ -39,6 +39,12 @@ export function AutoUpdateToast({ show, onClose, onUpdate }: AutoUpdateToastProp
   const [countdown, setCountdown] = useState(10);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const handleUpdate = useCallback(() => {
+    if (isUpdating) return;
+    setIsUpdating(true);
+    onUpdate();
+  }, [isUpdating, onUpdate]);
+
   // 倒數計時邏輯
   useEffect(() => {
     if (!show || isUpdating) return;
@@ -58,13 +64,7 @@ export function AutoUpdateToast({ show, onClose, onUpdate }: AutoUpdateToastProp
       clearInterval(timer);
       setCountdown(10); // 重置倒數
     };
-  }, [show, isUpdating]);
-
-  const handleUpdate = () => {
-    if (isUpdating) return;
-    setIsUpdating(true);
-    onUpdate();
-  };
+  }, [show, isUpdating, handleUpdate]);
 
   const handleSkip = () => {
     onClose();
@@ -77,11 +77,8 @@ export function AutoUpdateToast({ show, onClose, onUpdate }: AutoUpdateToastProp
   return (
     <>
       {/* 背景遮罩（可選，點擊不關閉） */}
-      <div 
-        className="fixed inset-0 z-[9998] pointer-events-none"
-        aria-hidden="true"
-      />
-      
+      <div className="fixed inset-0 z-[9998] pointer-events-none" aria-hidden="true" />
+
       {/* Toast 容器 */}
       <div
         className={`
@@ -94,12 +91,14 @@ export function AutoUpdateToast({ show, onClose, onUpdate }: AutoUpdateToastProp
         aria-atomic="true"
       >
         {/* Toast 卡片 */}
-        <div className="
+        <div
+          className="
           relative w-80 max-w-[calc(100vw-2rem)]
           bg-white border border-gray-200
           rounded-2xl shadow-2xl
           overflow-hidden
-        ">
+        "
+        >
           {/* 進度條 */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100">
             <div
@@ -163,10 +162,7 @@ export function AutoUpdateToast({ show, onClose, onUpdate }: AutoUpdateToastProp
                   {isUpdating ? '正在更新...' : '新版本可用'}
                 </h3>
                 <p className="text-xs text-gray-600">
-                  {isUpdating 
-                    ? '請稍候，即將重新載入' 
-                    : `${countdown} 秒後自動更新`
-                  }
+                  {isUpdating ? '請稍候，即將重新載入' : `${countdown} 秒後自動更新`}
                 </p>
               </div>
 
@@ -177,12 +173,7 @@ export function AutoUpdateToast({ show, onClose, onUpdate }: AutoUpdateToastProp
                   className="flex-shrink-0 p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                   aria-label="稍後更新"
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -219,4 +210,3 @@ export function AutoUpdateToast({ show, onClose, onUpdate }: AutoUpdateToastProp
     </>
   );
 }
-
