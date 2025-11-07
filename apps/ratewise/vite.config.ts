@@ -216,8 +216,12 @@ export default defineConfig(() => {
           // Service Worker 需要知道 index.html 的位置才能處理 SPA 路由
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
 
-          // [fix:2025-11-06] 排除不存在或臨時文件
-          globIgnores: ['**/og-image-old.png'],
+          // [fix:2025-11-07] 排除不存在或臨時文件，避免 404 錯誤
+          globIgnores: ['**/og-image-old.png', '**/node_modules/**', '**/lighthouse-reports/**'],
+
+          // [fix:2025-11-07] 忽略 URL 參數，提升快取命中率
+          // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-routing/#how-to-register-a-navigation-route
+          ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
 
           // [fix:2025-11-06] 強制自動更新（清理舊 SW）
           clientsClaim: true,
@@ -263,13 +267,46 @@ export default defineConfig(() => {
               },
             },
             {
-              // 靜態資源：Cache First（快速載入）
-              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
+              // [fix:2025-11-07] 圖片資源：Cache First + AVIF/WebP 支援
+              // 參考: https://developer.chrome.com/docs/workbox/caching-strategies-overview
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif|ico)$/,
               handler: 'CacheFirst',
               options: {
                 cacheName: 'image-cache',
                 expiration: {
-                  maxEntries: 100,
+                  maxEntries: 150, // 增加快取容量以支援優化後的多格式圖片
+                  maxAgeSeconds: 60 * 60 * 24 * 90, // 90 天（圖片很少變動）
+                },
+                cacheableResponse: {
+                  statuses: [0, 200], // 快取成功的響應
+                },
+              },
+            },
+            {
+              // [fix:2025-11-07] 字型資源：Cache First（字型永久快取）
+              // 參考: https://web.dev/articles/font-best-practices
+              urlPattern: /\.(?:woff|woff2|ttf|eot|otf)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'font-cache',
+                expiration: {
+                  maxEntries: 30,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 年
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              // [fix:2025-11-07] JS/CSS 資源：Stale While Revalidate（平衡即時性與速度）
+              // 參考: https://developer.chrome.com/docs/workbox/caching-strategies-overview
+              urlPattern: /\.(?:js|css)$/,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'static-resources',
+                expiration: {
+                  maxEntries: 60,
                   maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
                 },
               },
@@ -455,13 +492,21 @@ export default defineConfig(() => {
       chunkSizeWarningLimit: 500,
       // 啟用 CSS code splitting
       cssCodeSplit: true,
-      // 最小化選項
+      // [fix:2025-11-07] 優化最小化選項 - 移除更多未使用程式碼
+      // 參考: https://web.dev/articles/reduce-javascript-payloads-with-code-splitting
       minify: 'terser',
       terserOptions: {
         compress: {
           drop_console: true, // 生產環境移除 console
           drop_debugger: true,
           pure_funcs: ['console.log', 'console.debug', 'console.info', 'console.warn'],
+          // [fix:2025-11-07] 激進優化選項
+          passes: 2, // 多次壓縮以獲得更好效果
+          dead_code: true, // 移除死程式碼
+          unused: true, // 移除未使用的變數和函數
+        },
+        mangle: {
+          safari10: true, // Safari 10 相容性
         },
         sourceMap: true, // Terser 保留 source map
       },

@@ -133,14 +133,28 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
   for (const url of urls) {
     try {
       logger.debug(`Fetching from ${url}`, { service: 'exchangeRateHistoryService' });
+
+      // [fix:2025-11-07] 靜默處理 404，避免在 PageSpeed Insights 中顯示錯誤
+      // 參考: https://web.dev/articles/fetch-api-error-handling
       const response = await fetch(url, {
         method: 'GET',
         headers: { Accept: 'application/json' },
         cache: 'no-cache',
+      }).catch((error) => {
+        // 網路錯誤（如 CORS、連線失敗）靜默處理
+        logger.debug(`Network error for ${url}`, {
+          service: 'exchangeRateHistoryService',
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
       });
 
+      if (!response) {
+        continue;
+      }
+
       if (!response.ok) {
-        // 404 是預期的錯誤（歷史資料可能尚未生成），降級為 debug level
+        // 404 是預期的錯誤（歷史資料可能尚未生成），完全靜默
         if (response.status === 404) {
           logger.debug(`Historical data not found: ${url}`, {
             service: 'exchangeRateHistoryService',
