@@ -73,12 +73,12 @@ export const SingleConverter = ({
     const detail = details?.[currency];
     if (detail) {
       let rate = detail[rateType]?.sell;
-      
+
       // Fallback 機制：如果當前類型沒有匯率，嘗試另一種類型
       if (rate == null) {
         const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
         rate = detail[fallbackType]?.sell;
-        
+
         // 開發模式：記錄 fallback
         if (import.meta.env.DEV && rate != null) {
           console.log(`[SingleCalc] ${currency}: fallback from ${rateType} to ${fallbackType}`);
@@ -114,10 +114,15 @@ export const SingleConverter = ({
     if ('vibrate' in navigator) {
       navigator.vibrate(50);
     }
-
-    // 重置動畫
-    setTimeout(() => setIsSwapping(false), 600);
   };
+
+  // 重置動畫狀態
+  useEffect(() => {
+    if (!isSwapping) return;
+
+    const timer = setTimeout(() => setIsSwapping(false), 600);
+    return () => clearTimeout(timer);
+  }, [isSwapping]);
 
   // 獲取當前目標貨幣的快速金額選項
   const quickAmounts = CURRENCY_QUICK_AMOUNTS[toCurrency] || CURRENCY_QUICK_AMOUNTS.TWD;
