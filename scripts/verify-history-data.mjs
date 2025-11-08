@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+/* eslint-env node */
+/* eslint-disable no-undef */
+/* global fetch */
 /**
  * 驗證最近 N 天歷史匯率資料是否可讀取且具備實際波動
  * 需求來源：確保 25 天資料完整，可提供趨勢圖

@@ -175,6 +175,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   return (
     <motion.div
       className={`w-full h-full relative ${className}`}
+      data-testid="mini-trend-chart"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{

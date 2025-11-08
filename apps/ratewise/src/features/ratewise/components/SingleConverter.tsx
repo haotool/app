@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { RefreshCw } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateType } from '../types';
-import type { MiniTrendDataPoint } from './MiniTrendChart';
+import { MiniTrendChart, type MiniTrendDataPoint } from './MiniTrendChart';
 import { TrendChartSkeleton } from './TrendChartSkeleton';
 import type { RateDetails } from '../hooks/useExchangeRates';
 import {
@@ -11,11 +11,6 @@ import {
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
-
-// 🚀 激進優化：MiniTrendChart 懶載入 (節省 141KB lightweight-charts + 36KB framer-motion)
-const MiniTrendChart = lazy(() =>
-  import('./MiniTrendChart').then((m) => ({ default: m.MiniTrendChart })),
-);
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 25;
@@ -357,7 +352,7 @@ export const SingleConverter = ({
             }`}
           >
             <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
-              {/* 🚀 ErrorBoundary + Suspense 符合 React 官方最佳實踐 */}
+              {/* 取消 lazy 後仍保留 ErrorBoundary，確保 Chart 錯誤不會影響主 UI */}
               <ErrorBoundary
                 fallback={
                   <div className="flex items-center justify-center h-full text-xs text-red-500">
@@ -368,13 +363,11 @@ export const SingleConverter = ({
                   console.error('MiniTrendChart loading failed:', error);
                 }}
               >
-                <Suspense fallback={<TrendChartSkeleton />}>
-                  {trendData.length === 0 ? (
-                    <TrendChartSkeleton />
-                  ) : (
-                    <MiniTrendChart data={trendData} currencyCode={toCurrency} />
-                  )}
-                </Suspense>
+                {trendData.length === 0 ? (
+                  <TrendChartSkeleton />
+                ) : (
+                  <MiniTrendChart data={trendData} currencyCode={toCurrency} />
+                )}
               </ErrorBoundary>
             </div>
             {/* 互動提示 */}
