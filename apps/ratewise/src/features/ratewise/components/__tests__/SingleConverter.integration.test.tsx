@@ -158,6 +158,51 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
     });
   });
 
+  describe('趨勢圖呈現狀態', () => {
+    it('在取得歷史數據後會渲染迷你趨勢圖', async () => {
+      const mockHistoricalData = [
+        {
+          date: '2025-10-14',
+          data: {
+            updateTime: '2025/10/14 23:39:59',
+            source: 'Taiwan Bank',
+            rates: { ...mockExchangeRates, USD: 31.025 },
+          },
+        },
+        {
+          date: '2025-10-15',
+          data: {
+            updateTime: '2025/10/15 23:39:59',
+            source: 'Taiwan Bank',
+            rates: { ...mockExchangeRates, USD: 31.125 },
+          },
+        },
+      ];
+
+      vi.mocked(exchangeRateHistoryService.fetchHistoricalRatesRange).mockResolvedValue(
+        mockHistoricalData,
+      );
+
+      render(<SingleConverter {...mockProps} />);
+
+      await waitFor(() => expect(screen.getByTestId('mini-trend-chart')).toBeInTheDocument());
+    });
+
+    it('歷史資料為空時顯示骨架且不渲染迷你趨勢圖', async () => {
+      vi.mocked(exchangeRateHistoryService.fetchHistoricalRatesRange).mockResolvedValue([]);
+      vi.mocked(exchangeRateHistoryService.fetchLatestRates).mockResolvedValue({
+        updateTime: '2025/10/17 08:00:00',
+        source: 'Taiwan Bank',
+        rates: { ...mockExchangeRates },
+      });
+
+      render(<SingleConverter {...mockProps} />);
+
+      await waitFor(() => expect(screen.getByTestId('trend-chart-skeleton')).toBeInTheDocument());
+      expect(screen.queryByTestId('mini-trend-chart')).not.toBeInTheDocument();
+    });
+  });
+
   describe('貨幣交換時趨勢圖自動更新', () => {
     it('應該在點擊交換按鈕時重新載入趨勢圖數據', async () => {
       const mockHistoricalData = [

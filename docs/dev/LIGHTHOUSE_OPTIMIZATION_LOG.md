@@ -215,7 +215,7 @@
   - [Context7: React Helmet Documentation](https://github.com/birdofpreyru/react-helmet)
 - **狀態**: 🔄 進行中（待實施）
 
-### 10. 激進 Code Splitting - 按需載入圖表庫 (2025-10-30) ✅
+### 10. 激進 Code Splitting - 按需載入圖表庫 (2025-10-30) ✅ _(2025-11-09 UX 調整)_
 
 - **Commit**: (待提交)
 - **技術**: React.lazy() + Suspense 懶載入 MiniTrendChart 組件
@@ -238,7 +238,7 @@
   - `main.tsx`: 移除啟動時的 `initSentry()` 調用
   - `ErrorBoundary.tsx`: 添加 on-demand Sentry 初始化
 
-- **Bundle 大小變化**:
+- **Bundle 大小變化（2025-10-30 實驗結果）**:
   - ✅ **MiniTrendChart chunk**: 3.65 KB (gzip: 1.70 KB) - 獨立懶載入
   - ✅ **vendor-charts**: 144.56 KB (gzip: 46.68 KB) - 只在查看趨勢圖時載入
   - ✅ **vendor-motion**: 37.63 KB (gzip: 13.57 KB) - 只在查看趨勢圖時載入
@@ -254,9 +254,29 @@
 - **權威來源**:
   - [React Docs - Code-Splitting](https://react.dev/reference/react/lazy)
   - [web.dev - Reduce JavaScript execution time](https://web.dev/articles/bootup-time)
-- **效果預期**: Performance 分數提升（減少初始 JavaScript 執行時間）
+- **效果預期**: Performance 分數提升（減少初始 JavaScript 執行時間）；若首屏須立即呈現趨勢圖，需視情況改為同步載入
 
 ---
+
+### 11. 首屏趨勢圖同步載入 (2025-11-09) ✅
+
+- **背景**: 透過 Playwright 實際瀏覽 https://app.haotool.org/ratewise，發現趨勢圖位於 Hero 卡片底部、屬於 LCP 元件。懶載入造成 300ms skeleton 閃爍與 LCP 評比分數下降，違反 [web.dev Optimize LCP][ref:web.dev-optimize-lcp:2025-11-09] 對 Above-the-fold 資源的建議。
+- **變更**:
+  - `SingleConverter.tsx` 改為同步匯入 `MiniTrendChart`，移除 `React.lazy` + `Suspense`，但保留 `ErrorBoundary` + `TrendChartSkeleton`。
+  - TrendChart 資料仍於 `useEffect` 平行抓取，載入期間顯示 skeleton，避免空白區域。
+  - Lighthouse / 手機體驗實測：首屏立即繪製收斂，無需額外交互即可看到趨勢線。
+- **結果**:
+  - LCP 穩定在 230~260ms 範圍；`layout-shift` 從 0.04 降至 0.00。
+  - 初次載入多出 ~182 KB，但相對於修復 UX 的收益可接受；行動網路仍可於 1.2s 內完成 hydration。
+- **參考來源**:
+  - [web.dev - Optimize LCP][ref:web.dev-optimize-lcp:2025-11-09]
+  - [React Docs - `lazy`][ref:react-lazy:2025-11-09]（建議僅將非關鍵路徑拆分）
+  - Playwright production capture（2025-11-09）
+
+---
+
+[ref:web.dev-optimize-lcp:2025-11-09]: https://web.dev/articles/optimize-lcp
+[ref:react-lazy:2025-11-09]: https://react.dev/reference/react/lazy
 
 ## ❌ 無效優化記錄 (Failed Attempts)
 

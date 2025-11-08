@@ -2,7 +2,7 @@
 
 **版本**: 1.12.0 (趨勢圖優化驗證與 ErrorBoundary + WCAG 合規)
 **建立時間**: 2025-10-31T03:06:28+0800
-**更新時間**: 2025-11-09T03:48:49+0800
+**更新時間**: 2025-11-09T04:55:00+0800
 **狀態**: 🔄 進行中
 
 ---
@@ -65,7 +65,7 @@
 | ✅ 成功 | **[critical] 修復 Service Worker 被 nginx 快取導致無法更新**                           | 在 nginx.conf 加入 `location ~* /(sw\|workbox-.*\|registerSW)\.js$` 規則，設定 `Cache-Control: no-cache`，確保用戶立即獲取新版 SW；同時將 manifest.webmanifest 改為 `no-cache` 策略                                                     | [context7:web.dev/service-worker-lifecycle:2025-11-08]                                                | +2   |
 | ✅ 成功 | **[verification] 查詢 10+ 權威來源並進行完整本地 + Docker 測試**                       | 透過 mcp_fetch 查詢 web.dev, MDN, vite-pwa-org.netlify.app, developer.chrome.com, nginx.org 等 10+ 個權威來源；修正 nginx location 正則表達式（workbox-[^/]\* 改善匹配）；加入 index.html no-cache 規則；建立完整測試腳本並通過所有測試 | [ref:10+ 權威來源驗證:2025-11-08]; 測試腳本: scripts/test-sw-update.sh                                | +3   |
 
-**當前總分**: +79
+**當前總分**: +80
 
 ---
 
@@ -92,4 +92,5 @@
 | ✅ 成功 | 趨勢圖優化深度驗證（ErrorBoundary + WCAG 3:1 + 效能測量 + 25+ 權威來源 + 23 步 Sequential Thinking） | 完整驗證 Phase 1-3 實作並修復 CRITICAL 缺漏：1) 加入 ErrorBoundary 符合 React 官方最佳實踐 2) Skeleton 對比度從 purple-200/blue-200 改為 purple-400/blue-400 符合 WCAG 1.4.11 Non-text Contrast 3:1 標準 3) 加入 performance.now() 效能測量（實測 4-13ms，遠超預期） 4) 修復所有 TypeScript 和 ESLint 錯誤。驗證結果：總體評分 5/5（原 4.8），最佳實踐符合度 100%（原 98.3%），測試通過 240/241（99.6%）。引用 25+ WebSearch 權威來源（React.dev, MDN, W3C, Chrome Developers, web.dev 等）+ 3 個 Context7 官方文檔（React Suspense, Workbox, Vite PWA）。 | [25+ WebSearch 權威來源][context7:reactjs/react.dev:Suspense][context7:googlechrome/workbox][context7:vite-pwa/vite-plugin-pwa][WCAG 1.4.11 Non-text Contrast][W3C Understanding Non-text Contrast][LINUS_GUIDE.md:三問驗證] | +3 |
 | ✅ 成功 | 趨勢圖上限改為 25 天以確保資料完整 | 因歷史資料實際僅有 2025-10-14 以後共 26 天，將 MAX_HISTORY_DAYS 與相關測試/FAQ/doc 改為 25，避免前端出現缺值造成誤解 | apps/ratewise/src/services/exchangeRateHistoryService.ts 等 | +1 |
 | ✅ 成功 | 未送出變更稽核 + 測試覆盤 | 依用戶請求審查所有未提交變更、記錄 25 天策略文件不一致與文檔命名缺陷，並執行 `pnpm typecheck` / `pnpm test` 回報 Linus 第三問結果 | [context7:reactjs/react.dev:act:2025-11-08T19:48:00Z]; [tests:pnpm typecheck+test:2025-11-08T19:48:49Z] | +1 |
-| ✅ 成功 | **[critical] SW 快取修復用戶深度改進（正則精確化 + CDN purge 假陰性修復 + 歷史資料驗證）** | 1) nginx 正則從 `/(sw\|workbox-[^/]*\|registerSW)\.js$` 改為 `^/(?:ratewise/)?(?:assets/)?(sw\|workbox-[^/]*\|registerSW)\.js$` 精確匹配所有路徑 2) purge-cdn-cache.sh 改為三段式流程（Zeabur CLI → Cloudflare API → 失敗退出），消除假陰性 3) 新增 verify:history 腳本驗證 25 天資料完整性（15 個不同 USD 匯率）4) 所有文檔統一為 25 天（消除 30 天不一致）5) 文檔重新命名符合編號規則（008*）6) React 測試修復（IS_REACT_ACT_ENVIRONMENT）7) Docker 完整驗證通過 | [ref:10+ 權威來源:2025-11-09]; Docker 驗證: curl -I 所有 headers 正確; verify:history: 25 天完整 | +4 |
+| ✅ 成功 | 首屏趨勢圖改為同步載入 | 基於 web.dev LCP 建議與實際生產巡檢，移除 MiniTrendChart 懶載入並改為同步匯入，保留 skeleton 以避免首屏閃爍；同步更新 Lighthouse log | [web.dev:optimize-lcp:2025-11-09][react.dev/lazy:2025-11-09][Playwright:app.haotool.org:2025-11-09] | +1 |
+| ✅ 成功 | **[critical] SW 快取修復用戶深度改進（正則精確化 + CDN purge 假陰性修復 + 歷史資料驗證）** | 1) nginx 正則從 `/(sw\|workbox-[^/]*\|registerSW)\.js$` 改為 `^/(?:ratewise/)?(?:assets/)?(sw\|workbox-[^/]*\|registerSW)\.js$` 精確匹配所有路徑 2) purge-cdn-cache.sh 改為三段式流程（Zeabur CLI → Cloudflare API → 失敗退出），消除假陰性 3) 新增 verify:history 腳本驗證 25 天資料完整性（15 個不同 USD 匯率）4) 所有文檔統一為 25 天（消除 30 天不一致）5) 文檔重新命名符合編號規則（008\*）6) React 測試修復（IS_REACT_ACT_ENVIRONMENT）7) Docker 完整驗證通過 | [ref:10+ 權威來源:2025-11-09]; Docker 驗證: curl -I 所有 headers 正確; verify:history: 25 天完整 | +4 |
