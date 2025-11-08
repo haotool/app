@@ -95,10 +95,44 @@ docker stop ratewise && docker rm ratewise
 - ✅ SPA 路由支援 (fallback to index.html)
 - ✅ Gzip 壓縮啟用
 - ✅ 靜態資源快取 (1 year immutable)
+- ✅ **[critical] Service Worker 零快取** (sw.js, workbox-\*.js 永遠不快取)
+- ✅ **[critical] PWA Manifest 動態更新** (manifest.webmanifest 不快取)
 - ✅ Health check endpoint (/health)
 - ✅ 最小安全標頭 (X-Content-Type-Options, X-Frame-Options)
 - ✅ 子路徑靜態檔（`/ratewise/manifest.webmanifest`、`/ratewise/robots.txt`、`/ratewise/llms.txt`、`/ratewise/sitemap.xml`）具專屬 `location` 規則，避免被 SPA fallback 攔截
 - ✅ `/ratewise`（無尾斜線）直返 SPA 入口，避免 Nginx 自動 301 導至 `:8080`
+
+### Cache 驗證流程
+
+依照 [web.dev Service Worker Lifecycle][ref:web.dev-service-worker:2025-11-09] 與 [nginx add_header 指南][ref:nginx-headers:2025-11-09]，所有 Service Worker 腳本與 `index.html` 必須以 `Cache-Control: no-cache` 送出。部署前請在 Docker 容器內實際驗證：
+
+```bash
+docker build -t ratewise:test .
+docker run -d --rm -p 8080:80 --name ratewise-test ratewise:test
+
+# Service Worker / registerSW / manifest
+curl -I http://localhost:8080/ratewise/sw.js | grep -i cache-control
+curl -I http://localhost:8080/ratewise/registerSW.js | grep -i cache-control
+curl -I http://localhost:8080/ratewise/manifest.webmanifest | grep -i cache-control
+
+# 入口文件
+curl -I http://localhost:8080/ratewise/index.html | grep -i cache-control
+```
+
+預期輸出：
+
+- `sw.js` / `registerSW.js`: `Cache-Control: no-cache, no-store, must-revalidate`
+- `manifest.webmanifest` 與 `index.html`: `Cache-Control: no-cache, must-revalidate`
+
+若未符合，請確認 `nginx.conf` 正則是否包含 `/ratewise/*` 路徑，再行建置。
+
+### CDN Purge 需求
+
+`pnpm purge:cdn` 會根據 `zeabur` CLI 或 Cloudflare API 清除 `/ratewise/sw.js`、`registerSW.js`、`manifest.webmanifest`、`index.html` 與 `workbox-*` 前綴。未設定認證時指令會以非 0 結束並列出需手動清除的 URL，避免錯誤的成功訊息。
+
+- Zeabur：請先安裝 CLI 並登入。
+- Cloudflare：設定 `CLOUDFLARE_ZONE_ID` 與 `CLOUDFLARE_API_TOKEN`。
+- 無 API 時：依腳本輸出清單於 CDN 後台手動操作。
 
 ### 安全標頭策略
 
@@ -224,8 +258,18 @@ healthy
 - **Vite**: 5.4.6
 - **部署日期**: 2025-10-13
 
+## 參考資料
+
+- [web.dev Service Worker Lifecycle][ref:web.dev-service-worker:2025-11-09]
+- [nginx add_header 模組][ref:nginx-headers:2025-11-09]
+- [web.dev HTTP Cache](https://web.dev/articles/http-cache)
+- [Vite PWA Auto Update](https://vite-pwa-org.netlify.app/guide/auto-update.html)
+
 ---
 
 **🤖 Generated with Claude Code**
 
 _最後更新: 2025-10-13 01:58 UTC+8_
+
+[ref:web.dev-service-worker:2025-11-09]: https://web.dev/articles/service-worker-lifecycle
+[ref:nginx-headers:2025-11-09]: https://nginx.org/en/docs/http/ngx_http_headers_module.html

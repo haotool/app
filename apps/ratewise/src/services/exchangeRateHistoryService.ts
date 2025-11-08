@@ -4,7 +4,7 @@
  * 功能：
  * - 讀取最新匯率（latest.json）
  * - 讀取歷史匯率（history/YYYY-MM-DD.json）
- * - 提供最多 30 天的歷史資料
+ * - 提供最多 25 天的歷史資料
  * - 支援未來趨勢圖功能
  *
  * CDN 來源：
@@ -61,7 +61,7 @@ const CACHE_KEY_PREFIX = 'exchange-rates';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘
 
 const CONFIG = {
-  MAX_HISTORY_DAYS: 30,
+  MAX_HISTORY_DAYS: 25,
   BATCH_SIZE: 5,
   MAX_CONSECUTIVE_MISSING: 5,
 } as const;

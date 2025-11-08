@@ -341,7 +341,7 @@ const generateTrends = useCallback(() => {
   if (!exchangeRates) return;
 
   CURRENCY_CODES.forEach((code) => {
-    const historicalData = getHistoricalRates(code, 30); // 30 天數據
+    const historicalData = getHistoricalRates(code, 25); // 25 天數據
     const trend = calculateTrend(historicalData);
     setTrend((prev) => ({ ...prev, [code]: trend }));
   });

@@ -235,7 +235,7 @@ curl https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 2. **等待歷史資料累積**
    - 7 天後可嘗試實作簡單趨勢圖
-   - 30 天後資料完整，可實作完整功能
+   - 25 天後資料完整，可實作完整功能
 
 3. **實作趨勢圖功能**（未來）
    - 參考 `apps/ratewise/src/services/exchangeRateHistoryService.ts`

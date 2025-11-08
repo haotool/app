@@ -3,7 +3,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-const DAYS_TO_CHECK = Number(process.env.HISTORY_DAYS ?? '30');
+const DAYS_TO_CHECK = Number(process.env.HISTORY_DAYS ?? '25');
 const START_OFFSET = Number(process.env.HISTORY_START_OFFSET ?? '1'); // 從昨天開始
 const OUTPUT_PATH = path.resolve(process.cwd(), 'tmp/history-manifest.json');
 

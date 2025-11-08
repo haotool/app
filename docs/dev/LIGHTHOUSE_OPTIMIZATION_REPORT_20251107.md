@@ -406,7 +406,7 @@ workbox: {
         cacheName: 'image-cache',
         expiration: {
           maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
+          maxAgeSeconds: 60 * 60 * 24 * 25, // 25 天
         },
       },
     },
@@ -455,7 +455,7 @@ workbox: {
 **快取效率**:
 
 - Service Worker 預快取 107 個資源
-- 圖片快取 30 天，減少重複請求
+- 圖片快取 25 天，減少重複請求
 
 ---
 

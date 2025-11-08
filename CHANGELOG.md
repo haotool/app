@@ -104,7 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cloudflare/Nginx 安全標頭策略
   - Next.js 遷移決策文檔
   - 文檔索引與維護規範（docs/README.md）
-- 歷史匯率功能（30 天資料追蹤）
+- 歷史匯率功能（25 天資料追蹤）
 - 歷史匯率自動化更新 GitHub Actions workflow
 - 歷史匯率服務 (`exchangeRateHistoryService.ts`)
 - 完整的文檔維護規範（AGENTS.md § 6）

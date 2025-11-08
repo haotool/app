@@ -134,9 +134,9 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       render(<SingleConverter {...mockProps} />);
 
-      // 驗證自動呼叫歷史匯率服務（7天）
+      // 驗證自動呼叫歷史匯率服務（25 天上限）
       await waitFor(() => {
-        expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledWith(30);
+        expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledWith(25);
         expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalledTimes(1);
       });
     });
