@@ -1,6 +1,15 @@
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
+declare global {
+  // React 18 測試環境必須開啟 act() 支援旗標
+  // 參考: https://react.dev/reference/react/act
+
+  var IS_REACT_ACT_ENVIRONMENT: boolean;
+}
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
 // Mock HTMLCanvasElement for lightweight-charts tests
 // Based on Vitest best practices: https://vitest.dev/guide/mocking.html#globals
 const mockCanvasRenderingContext2D = {

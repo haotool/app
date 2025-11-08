@@ -177,6 +177,8 @@ pnpm --filter ratewise test
 - ✅ **ESLint**: 程式碼品質檢查
 - ✅ **Prettier**: 程式碼格式化
 - ✅ **GitHub Actions**: CI/CD 自動化
+- ✅ `pnpm monitor:history`: HEAD 探測最近 25 天歷史檔案是否存在
+- ✅ `pnpm verify:history`: 下載並驗證最近 25 天匯率數據是否有實際變化
 
 ### TypeScript 嚴格模式
 
@@ -223,7 +225,7 @@ docs: update deployment guide with Docker instructions
 
 ### 功能文檔
 
-- [歷史匯率實作](./docs/HISTORICAL_RATES_IMPLEMENTATION.md) - 30 天歷史資料追蹤
+- [歷史匯率實作](./docs/HISTORICAL_RATES_IMPLEMENTATION.md) - 25 天歷史資料追蹤
 - [匯率更新策略](./docs/EXCHANGE_RATE_UPDATE_STRATEGIES.md) - 自動化更新方案比較
 - [歷史匯率快速開始](./docs/QUICK_START_HISTORICAL_RATES.md) - 快速部署指南
 

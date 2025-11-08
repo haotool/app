@@ -112,7 +112,7 @@ setup_data_branch() {
         git commit -m "chore(data): initialize data branch for exchange rates
 
 - Create isolated branch for rate updates
-- Preserve 30-day historical data
+- Preserve 25-day historical data
 - Keep main branch clean"
         
         # 推送
@@ -154,7 +154,7 @@ setup_workflow() {
 
 - Replace old workflow with historical version
 - Backup old workflow for reference
-- Enable 30-day data retention" || log_warning "沒有需要提交的變更"
+- Enable 25-day data retention" || log_warning "沒有需要提交的變更"
     
     # 推送
     log_info "推送 workflow 變更到遠端..."
@@ -246,4 +246,3 @@ main() {
 
 # 執行主流程
 main
-

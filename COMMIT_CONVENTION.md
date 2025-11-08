@@ -23,7 +23,7 @@
 ```bash
 feat(converter): 新增歷史匯率趨勢圖
 
-實作 30 天歷史匯率趨勢圖表功能：
+實作 25 天歷史匯率趨勢圖表功能：
 - 使用 Chart.js 繪製趨勢線
 - 整合 exchangeRateHistoryService API
 - 新增響應式設計支援行動裝置
@@ -239,7 +239,7 @@ Co-authored-by: Name <email@example.com>
 ```
 feat(converter): 新增歷史匯率趨勢圖
 
-實作 30 天歷史匯率趨勢圖表功能：
+實作 25 天歷史匯率趨勢圖表功能：
 - 使用 lightweight-charts 繪製趨勢線
 - 整合 exchangeRateHistoryService API
 - 新增 loading skeleton 提升感知效能

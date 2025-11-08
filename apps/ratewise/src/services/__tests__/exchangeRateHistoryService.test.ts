@@ -180,7 +180,7 @@ describe('exchangeRateHistoryService', () => {
       }
     });
 
-    it('應該使用預設天數 30 天並遵守 MAX 限制', async () => {
+    it('應該使用預設天數 25 天並遵守 MAX 限制', async () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: () =>
@@ -193,10 +193,12 @@ describe('exchangeRateHistoryService', () => {
 
       const result = await fetchHistoricalRatesRange();
 
-      expect(result).toHaveLength(30);
+      expect(result).toHaveLength(25);
     });
 
     it('遇到連續缺失達閾值時應提前停止', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-10-17T00:00:00Z'));
       const successDates = new Set(['2025-10-16', '2025-10-15']);
 
       vi.mocked(fetch).mockImplementation((url: string | URL | Request) => {
@@ -234,13 +236,17 @@ describe('exchangeRateHistoryService', () => {
         } as Response);
       });
 
-      const result = await fetchHistoricalRatesRange(30);
+      try {
+        const result = await fetchHistoricalRatesRange(7);
 
-      expect(result).toHaveLength(2);
-      const calls = vi
-        .mocked(fetch)
-        .mock.calls.map(([req]) => (typeof req === 'string' ? req : ''));
-      expect(calls.some((url) => url.includes('2025-10-08'))).toBe(false);
+        expect(result).toHaveLength(2);
+        const calls = vi
+          .mocked(fetch)
+          .mock.calls.map(([req]) => (typeof req === 'string' ? req : ''));
+        expect(calls.some((url) => url.includes('2025-10-08'))).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

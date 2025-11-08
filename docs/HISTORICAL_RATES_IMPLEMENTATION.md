@@ -23,7 +23,7 @@
 ### 目標
 
 1. ✅ **保持 main 分支乾淨** - 所有匯率 commits 隔離到 `data` 分支
-2. ✅ **累積 30 天歷史資料** - 為未來趨勢圖功能做準備
+2. ✅ **累積 25 天歷史資料** - 為未來趨勢圖功能做準備
 3. ✅ **完全自動化** - 無需人工介入
 4. ✅ **零成本運行** - 開源專案免費使用 GitHub Actions
 
@@ -33,7 +33,7 @@
 
 - 使用獨立 `data` 分支存放匯率資料
 - 每天保存一個歷史檔案（`YYYY-MM-DD.json`）
-- 自動清理超過 30 天的舊資料
+- 自動清理超過 25 天的舊資料
 - 使用 `--amend` 避免 commit 歷史膨脹
 
 ---
@@ -92,7 +92,7 @@ data (資料分支) ← 完全隔離
       └─ history/
           ├─ 2025-10-13.json  # 每日歷史
           ├─ 2025-10-12.json
-          └─ ...              # 最多 30 天
+          └─ ...              # 最多 25 天
 ```
 
 ### CDN URLs
@@ -167,7 +167,7 @@ git add public/rates/
 git commit -m "chore(data): initialize data branch for exchange rates
 
 - Create isolated branch for rate updates
-- Preserve 30-day historical data
+- Preserve 25-day historical data
 - Keep main branch clean"
 
 # 推送到遠端
@@ -191,7 +191,7 @@ git add .github/workflows/
 git commit -m "feat(ci): implement historical exchange rate tracking
 
 - Use isolated data branch for rate updates
-- Preserve 30-day historical data
+- Preserve 25-day historical data
 - Auto-cleanup old files
 - Keep main branch clean
 
@@ -258,15 +258,15 @@ const historicalRates = await fetchHistoricalRates(yesterday);
 console.log(historicalRates.rates.USD);
 ```
 
-#### 讀取 30 天歷史資料
+#### 讀取 25 天歷史資料
 
 ```typescript
 import { fetchHistoricalRatesRange } from '@/services/exchangeRateHistoryService';
 
-const last30Days = await fetchHistoricalRatesRange(30);
-console.log(`Fetched ${last30Days.length} days of data`);
+const last25Days = await fetchHistoricalRatesRange(25);
+console.log(`Fetched ${last25Days.length} days of data`);
 
-last30Days.forEach(({ date, data }) => {
+last25Days.forEach(({ date, data }) => {
   console.log(`${date}: USD ${data.rates.USD}`);
 });
 ```
@@ -328,7 +328,7 @@ git push --force-with-lease origin data
  * 趨勢圖元件（未實作）
  *
  * 功能：
- * - 顯示過去 7/30 天匯率趨勢
+ * - 顯示過去 7/25 天匯率趨勢
  * - 支援多幣別對比
  * - 互動式圖表
  */
@@ -407,7 +407,7 @@ const CDN_URLS = {
 **A**: 估算：
 
 - 每個檔案 ~2 KB
-- 30 天 × 2 KB = 60 KB
+- 25 天 × 2 KB = 60 KB
 - 完全在免費額度內（500 MB）
 
 ### Q5: 可以保留更多天數嗎？
@@ -415,7 +415,7 @@ const CDN_URLS = {
 **A**: 可以，修改 workflow 中的清理邏輯：
 
 ```yaml
-# 從 30 天改為 90 天
+# 從 25 天改為 90 天
 find public/rates/history/ -name "*.json" -type f -mtime +90 -delete
 ```
 

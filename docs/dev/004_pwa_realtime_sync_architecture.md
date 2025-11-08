@@ -264,7 +264,7 @@ VitePWA({
 
 ### 移除的硬編碼
 
-- ❌ ~~`const DAYS_TO_FETCH = 30;`~~
+- ❌ ~~`const DAYS_TO_FETCH = 25;`~~
 - ❌ ~~固定日期範圍循環~~
 - ❌ ~~hardcoded CDN URLs~~
 
@@ -277,7 +277,7 @@ VitePWA({
 ```typescript
 // config/constants.ts
 export const RATE_CONFIG = {
-  MAX_HISTORY_DAYS: 30,
+  MAX_HISTORY_DAYS: 25,
   FALLBACK_RETRIES: 7,
   CACHE_DURATION: 5 * 60 * 1000,
   RANGE_CACHE_DURATION: 60 * 60 * 1000,

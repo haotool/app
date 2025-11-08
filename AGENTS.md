@@ -579,7 +579,7 @@ docker logs <container-id>
 - ✅ 工程工具鏈 (Husky + lint-staged)
 - ✅ TypeScript 嚴格化
 - ✅ 安全標頭配置
-- ✅ 歷史匯率功能 (30 天資料追蹤)
+- ✅ 歷史匯率功能 (25 天資料追蹤)
 
 ### 📋 待開始 (M0 - 清理與基礎強化，1週)
 

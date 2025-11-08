@@ -18,7 +18,7 @@ const MiniTrendChart = lazy(() =>
 );
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
-const MAX_TREND_DAYS = 30;
+const MAX_TREND_DAYS = 25;
 
 interface SingleConverterProps {
   fromCurrency: CurrencyCode;
