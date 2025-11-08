@@ -99,65 +99,88 @@ describe('exchangeRateHistoryService', () => {
   });
 
   describe('fetchHistoricalRatesRange - 多天歷史匯率', () => {
-    it('應該正確獲取過去 N 天的歷史匯率', async () => {
-      const mockResponse1 = {
-        updateTime: '2025/10/14 23:39:59',
-        source: 'Taiwan Bank',
-        rates: { USD: 31.025 },
-      };
-      const mockResponse2 = {
-        updateTime: '2025/10/15 23:39:59',
-        source: 'Taiwan Bank',
-        rates: { USD: 31.125 },
-      };
+    it('應該批次並行抓取，成功日期維持順序', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-10-17T00:00:00Z'));
 
-      // Mock 需要涵蓋 detectAvailableDateRange 的探測過程
-      // 第1天探測成功、第2天探測成功、第3天探測失敗（停止）
-      // 然後快取會被使用，不再有額外的 fetch
-      vi.mocked(fetch)
-        .mockResolvedValueOnce({
+      vi.mocked(fetch).mockImplementation((url: string | URL | Request) => {
+        const urlString = typeof url === 'string' ? url : url instanceof URL ? url.href : url.url;
+        const match = /history\/(\d{4}-\d{2}-\d{2})/.exec(urlString);
+        const date = match?.[1] ?? 'unknown';
+        return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(mockResponse1),
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockResponse2),
-        } as Response)
-        .mockRejectedValueOnce(new Error('Not found')); // 第3天失敗，停止探測
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              updateTime: `${date} 23:39:59`,
+              source: 'Taiwan Bank',
+              rates: { USD: 31.025 },
+            }),
+        } as Response);
+      });
 
-      const result = await fetchHistoricalRatesRange(2);
+      try {
+        const result = await fetchHistoricalRatesRange(2);
 
-      expect(result).toHaveLength(2);
-      expect(result[0]?.data).toEqual(mockResponse1);
-      expect(result[1]?.data).toEqual(mockResponse2);
-      // 不檢查調用次數（實作細節可能因快取而變化）
+        expect(result).toEqual([
+          {
+            date: '2025-10-16',
+            data: {
+              updateTime: '2025-10-16 23:39:59',
+              source: 'Taiwan Bank',
+              rates: { USD: 31.025 },
+            },
+          },
+          {
+            date: '2025-10-15',
+            data: {
+              updateTime: '2025-10-15 23:39:59',
+              source: 'Taiwan Bank',
+              rates: { USD: 31.025 },
+            },
+          },
+        ]);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
-    it('應該在部分資料不存在時繼續處理', async () => {
-      const mockResponse = {
-        updateTime: '2025/10/14 23:39:59',
-        source: 'Taiwan Bank',
-        rates: { USD: 31.025 },
-      };
+    it('應該在部分日期 404 時跳過並持續抓取', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-10-17T00:00:00Z'));
 
-      // detectAvailableDateRange 會在第一次失敗時停止探測
-      // 所以第一天成功後，第二天兩個 URL 都失敗，探測就會停止
-      vi.mocked(fetch)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockResponse),
-        } as Response)
-        .mockRejectedValueOnce(new Error('Not found')) // 第二天第一個 URL 失敗
-        .mockRejectedValueOnce(new Error('Not found')); // 第二天第二個 URL 失敗，停止探測
+      vi.mocked(fetch).mockImplementation((url: string | URL | Request) => {
+        const urlStr = typeof url === 'string' ? url : url instanceof URL ? url.href : url.url;
+        if (urlStr.includes('2025-10-16')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () =>
+              Promise.resolve({
+                updateTime: '2025-10-16 23:39:59',
+                source: 'Taiwan Bank',
+                rates: { USD: 31.025 },
+              }),
+          } as Response);
+        }
+        return Promise.resolve({
+          ok: false,
+          status: 404,
+          json: () => Promise.resolve({}),
+        } as Response);
+      });
 
-      const result = await fetchHistoricalRatesRange(3);
+      try {
+        const result = await fetchHistoricalRatesRange(3);
 
-      // 實際行為：只返回1筆（第一天成功，第二天失敗後停止探測）
-      expect(result).toHaveLength(1);
-      expect(fetch).toHaveBeenCalled();
+        expect(result).toHaveLength(1);
+        expect(result[0]?.date).toBe('2025-10-16');
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
-    it('應該使用預設天數 30 天', async () => {
+    it('應該使用預設天數 30 天並遵守 MAX 限制', async () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: () =>
@@ -171,7 +194,53 @@ describe('exchangeRateHistoryService', () => {
       const result = await fetchHistoricalRatesRange();
 
       expect(result).toHaveLength(30);
-      expect(fetch).toHaveBeenCalledTimes(30);
+    });
+
+    it('遇到連續缺失達閾值時應提前停止', async () => {
+      const successDates = new Set(['2025-10-16', '2025-10-15']);
+
+      vi.mocked(fetch).mockImplementation((url: string | URL | Request) => {
+        const urlStr = typeof url === 'string' ? url : url instanceof URL ? url.href : url.url;
+        if (urlStr.includes('latest')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({}),
+          } as Response);
+        }
+
+        const match = /history\/(\d{4}-\d{2}-\d{2})/.exec(urlStr);
+        if (!match?.[1]) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
+        }
+
+        const date = match[1];
+        if (successDates.has(date)) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () =>
+              Promise.resolve({
+                updateTime: `${date} 23:39:59`,
+                source: 'Taiwan Bank',
+                rates: { USD: 31.025 },
+              }),
+          } as Response);
+        }
+
+        return Promise.resolve({
+          ok: false,
+          status: 404,
+          json: () => Promise.resolve({}),
+        } as Response);
+      });
+
+      const result = await fetchHistoricalRatesRange(30);
+
+      expect(result).toHaveLength(2);
+      const calls = vi
+        .mocked(fetch)
+        .mock.calls.map(([req]) => (typeof req === 'string' ? req : ''));
+      expect(calls.some((url) => url.includes('2025-10-08'))).toBe(false);
     });
   });
 

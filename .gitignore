@@ -52,6 +52,7 @@ Thumbs.db
 *.tmp
 .cache/
 .temp/
+tmp/
 
 # Docker
 .dockerignore
