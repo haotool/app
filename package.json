@@ -26,6 +26,7 @@
     "unlighthouse": "unlighthouse --site http://localhost:4174",
     "pa11y": "pa11y http://localhost:4174 --standard WCAG2AA",
     "seo:test": "pnpm lighthouse && pnpm pa11y",
+    "monitor:history": "node scripts/check-history-manifest.mjs",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "prepare": "husky install",
     "generate:sitemap": "node scripts/generate-sitemap.js",

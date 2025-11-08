@@ -261,16 +261,53 @@ export default defineConfig(() => {
               },
             },
             {
-              // API 請求：Network First（確保數據即時性）
-              urlPattern: /^https:\/\/raw\.githubusercontent\.com\/.*/,
-              handler: 'NetworkFirst',
+              // 歷史匯率：CDN 來源採用 CacheFirst，數據 immutable
+              // 參考: context7:googlechrome/workbox:2025-11-08
+              urlPattern:
+                /^https:\/\/cdn\.jsdelivr\.net\/gh\/haotool\/app@data\/public\/rates\/history\/.*\.json$/,
+              handler: 'CacheFirst',
               options: {
-                cacheName: 'api-cache',
+                cacheName: 'history-rates-cdn',
                 expiration: {
-                  maxEntries: 50,
+                  maxEntries: 180,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 年
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              // 歷史匯率 Raw fallback：同樣 CacheFirst，避免重複請求
+              urlPattern:
+                /^https:\/\/raw\.githubusercontent\.com\/haotool\/app\/data\/public\/rates\/history\/.*\.json$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'history-rates-raw',
+                expiration: {
+                  maxEntries: 180,
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              // 最新匯率：Stale-While-Revalidate，確保快速顯示並背景更新
+              // 參考: web.dev/stale-while-revalidate & context7:googlechrome/workbox
+              urlPattern:
+                /^https:\/\/raw\.githubusercontent\.com\/haotool\/app\/data\/public\/rates\/latest\.json$/,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'latest-rate-cache',
+                expiration: {
+                  maxEntries: 1,
                   maxAgeSeconds: 60 * 5, // 5 分鐘
                 },
-                networkTimeoutSeconds: 3, // 業界標準：3秒超時（避免用戶長時間等待）
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
               },
             },
             {
