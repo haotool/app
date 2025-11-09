@@ -9,6 +9,7 @@
 ## 🔍 10 個權威來源總結
 
 ### 1. **Google Chrome Developers (web.dev)**
+
 - 來源: https://web.dev/learn/pwa/update
 - 核心發現:
   - ✅ Service Worker 更新使用 byte-by-byte 比較
@@ -17,6 +18,7 @@
   - ⚠️ 更新不是立即的，需等所有 tab 關閉
 
 ### 2. **MDN Mozilla**
+
 - 來源: https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
 - 核心發現:
   - ✅ Service Worker 在 worker context 執行，無 DOM 存取
@@ -24,6 +26,7 @@
   - ⚠️ 沒有專門的表單數據保護機制文檔
 
 ### 3. **Google Workbox**
+
 - 來源: https://developers.google.com/web/tools/workbox
 - 核心發現:
   - ⚠️ **skipWaiting() 的風險**: lazy-loading 應用不應使用
@@ -32,6 +35,7 @@
   - ✅ 推薦使用 `cleanupOutdatedCaches: true`
 
 ### 4. **Jake Archibald - Service Worker Lifecycle**
+
 - 來源: https://web.dev/articles/service-worker-lifecycle
 - 核心發現:
   - ✅ Service Worker 生命週期的設計目的是讓更新無縫
@@ -40,6 +44,7 @@
   - ⚠️ skipWaiting 跳過等待可能導致版本衝突
 
 ### 5. **vite-plugin-pwa 官方文件**
+
 - 來源: https://vite-pwa-org.netlify.app/guide/auto-update
 - 核心發現:
   - ⚠️ **重大警告**: 從 prompt 切換到 autoUpdate 會導致用戶卡在 waiting 狀態
@@ -48,6 +53,7 @@
   - ⚠️ 生產環境不要改變 registerType
 
 ### 6. **Microsoft PWA Documentation**
+
 - 來源: https://learn.microsoft.com/en-us/microsoft-edge/progressive-web-apps/
 - 核心發現:
   - ✅ Background Sync API 可在離線時保存表單數據
@@ -55,6 +61,7 @@
   - ✅ Service Worker 更新現在不被 HTTP 快取阻擋（Blazor 改進）
 
 ### 7. **Apple WebKit/Safari**
+
 - 來源: https://webkit.org/ (via bugs.webkit.org)
 - 核心發現:
   - ⚠️ Safari 的 Cache Storage 在 PWA 和瀏覽器間不共享
@@ -62,6 +69,7 @@
   - ✅ Safari 13+ 支援 Service Worker
 
 ### 8. **W3C Service Worker Specification**
+
 - 來源: https://w3c.github.io/ServiceWorker/
 - 核心發現:
   - ✅ `updateViaCache` 設定可控制 SW 自身的快取
@@ -69,6 +77,7 @@
   - ✅ SW 更新請求的 service-workers mode 設為 "none"（避免被攔截）
 
 ### 9. **Smashing Magazine**
+
 - 來源: https://www.smashingmagazine.com/category/pwa/
 - 核心發現:
   - ✅ PWA 應該 "always up-to-date"
@@ -76,6 +85,7 @@
   - ✅ 離線優先是核心原則
 
 ### 10. **CSS-Tricks / web.dev PWA Course**
+
 - 來源: https://web.dev/learn/pwa
 - 核心發現:
   - ✅ 使用 Web Notifications API 或 Badging API 通知更新
@@ -89,9 +99,11 @@
 ### 權威來源證據
 
 **vite-plugin-pwa 官方警告**:
+
 > "autoUpdate 會在偵測到新內容後，更新快取並**自動重新載入所有瀏覽器視窗/標籤頁**。缺點是用戶可能會在填寫表單的其他瀏覽器視窗/標籤頁中失去數據。"
 
 **Workbox 官方文件**:
+
 > "skipWaiting 的風險：如果你的 web app 使用 lazy-loading 資源，且這些資源的 URL 包含唯一的 hash，建議避免使用 skip waiting，因為可能導致先前預快取的 URL 在 lazy-loading 時失敗。"
 
 ### 結論
@@ -106,37 +118,47 @@
 ### ✅ 正確的配置
 
 1. **使用 prompt 模式** (`vite.config.ts:166`)
+
    ```typescript
-   registerType: 'prompt'
+   registerType: 'prompt';
    ```
+
    - ✅ 不會自動重新載入頁面
    - ✅ 用戶填寫表單時數據安全
    - ✅ 給用戶控制更新時機
 
 2. **skipWaiting: false** (`vite.config.ts:176`)
+
    ```typescript
-   skipWaiting: false
+   skipWaiting: false;
    ```
+
    - ✅ 避免 lazy-loading 衝突
    - ✅ 確保同時只有一個版本運行
 
 3. **cleanupOutdatedCaches: true** (`vite.config.ts:180`)
+
    ```typescript
-   cleanupOutdatedCaches: true
+   cleanupOutdatedCaches: true;
    ```
+
    - ✅ 自動清理舊快取（Workbox 推薦）
 
 4. **HTML NetworkFirst 策略** (`vite.config.ts:191-200`)
+
    ```typescript
    urlPattern: /\.html$/,
    handler: 'NetworkFirst'
    ```
+
    - ✅ 優先從網路獲取最新版本
 
 5. **updateViaCache: 'none'** (`UpdatePrompt.tsx:100`)
+
    ```typescript
-   updateViaCache: 'none'
+   updateViaCache: 'none';
    ```
+
    - ✅ 防止 SW 本身被快取（W3C 規範）
 
 ### ⚠️ 潛在問題
@@ -183,6 +205,7 @@
 ### 可達成的最高保證率
 
 **95%+** 的更新成功率，透過：
+
 - ✅ prompt 模式（保護用戶數據）
 - ✅ updateViaCache: 'none'
 - ✅ cleanupOutdatedCaches: true
@@ -228,19 +251,20 @@
 
 ### 當前配置的評分
 
-| 項目 | 評分 | 說明 |
-|------|------|------|
-| 表單數據安全 | ✅ 100% | 使用 prompt 模式，不會自動刷新 |
-| SW 快取避免 | ✅ 100% | updateViaCache: 'none' |
-| 舊快取清理 | ✅ 100% | cleanupOutdatedCaches: true |
-| HTML 更新策略 | ⚠️ 80% | NetworkFirst 正確，但有預快取衝突 |
-| 版本檢查機制 | ⚠️ 50% | 已實作但未整合 |
-| 更新通知 | ✅ 90% | 有 UpdatePrompt，但可改進 |
-| **總體更新保證率** | **90%** | 修復後可達 95%+ |
+| 項目               | 評分    | 說明                              |
+| ------------------ | ------- | --------------------------------- |
+| 表單數據安全       | ✅ 100% | 使用 prompt 模式，不會自動刷新    |
+| SW 快取避免        | ✅ 100% | updateViaCache: 'none'            |
+| 舊快取清理         | ✅ 100% | cleanupOutdatedCaches: true       |
+| HTML 更新策略      | ⚠️ 80%  | NetworkFirst 正確，但有預快取衝突 |
+| 版本檢查機制       | ⚠️ 50%  | 已實作但未整合                    |
+| 更新通知           | ✅ 90%  | 有 UpdatePrompt，但可改進         |
+| **總體更新保證率** | **90%** | 修復後可達 95%+                   |
 
 ### 是否需要修復？
 
 **是的**，建議進行以下修復以達到 95%+ 保證率：
+
 1. 移除 HTML 預快取衝突
 2. 修正雙重註冊問題
 3. 整合版本檢查機制
