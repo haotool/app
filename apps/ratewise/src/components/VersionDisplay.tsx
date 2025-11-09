@@ -14,10 +14,10 @@ export function VersionDisplay() {
   // 使用 import.meta.env 讀取 Vite 注入的環境變數
   const version = import.meta.env.VITE_APP_VERSION ?? '1.0.0';
   const isDev = import.meta.env.DEV;
-  
+
   // 開發模式：使用實時時間；生產模式：使用構建時間
   const [buildTimeString, setBuildTimeString] = useState(
-    import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString()
+    import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString(),
   );
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function VersionDisplay() {
     }
 
     setBuildTimeString(new Date().toISOString());
-    
+
     const interval = setInterval(() => {
       setBuildTimeString(new Date().toISOString());
     }, 1000);

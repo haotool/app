@@ -22,7 +22,10 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://app.haotool.org/ratewise" />
     <meta property="og:title" content="RateWise - 匯率好工具 | 即時匯率換算" />
-    <meta property="og:description" content="RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。" />
+    <meta
+      property="og:description"
+      content="RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。"
+    />
     <meta property="og:image" content="https://app.haotool.org/ratewise/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -65,7 +68,13 @@
 
     <!-- [Phase1-optimization:2025-11-07] Preload LCP 圖片 - 只載入 AVIF -->
     <!-- 參考: https://web.dev/articles/preload-critical-assets -->
-    <link rel="preload" as="image" href="./optimized/logo-112w.avif" type="image/avif" fetchpriority="high" />
+    <link
+      rel="preload"
+      as="image"
+      href="./optimized/logo-112w.avif"
+      type="image/avif"
+      fetchpriority="high"
+    />
 
     <!-- Modulepreload for critical scripts (Vite generates these automatically) -->
     <!-- Vite will inject modulepreload links for vendor chunks during build -->
@@ -163,50 +172,47 @@
     <!-- [SEO:2025-11-07] JSON-LD Structured Data for AI Search Optimization -->
     <!-- WebApplication Schema -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "RateWise",
-      "alternateName": "匯率好工具",
-      "description": "即時匯率轉換器，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR 等 30+ 種貨幣換算",
-      "url": "https://app.haotool.org/ratewise",
-      "applicationCategory": "FinanceApplication",
-      "operatingSystem": "Any",
-      "browserRequirements": "Requires JavaScript",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "featureList": [
-        "即時匯率查詢",
-        "單幣別換算",
-        "多幣別同時換算",
-        "歷史匯率趨勢",
-        "離線使用",
-        "PWA 支援"
-      ]
-    }
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "RateWise",
+        "alternateName": "匯率好工具",
+        "description": "即時匯率轉換器，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR 等 30+ 種貨幣換算",
+        "url": "https://app.haotool.org/ratewise",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "即時匯率查詢",
+          "單幣別換算",
+          "多幣別同時換算",
+          "歷史匯率趨勢",
+          "離線使用",
+          "PWA 支援"
+        ]
+      }
     </script>
 
     <!-- Organization Schema -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "RateWise",
-      "url": "https://app.haotool.org/ratewise",
-      "logo": "https://app.haotool.org/ratewise/logo-192.png",
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "contactType": "Customer Support",
-        "email": "haotool.org@gmail.com"
-      },
-      "sameAs": [
-        "https://www.threads.net/@azlife_1224",
-        "https://github.com/haotool/app"
-      ]
-    }
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "RateWise",
+        "url": "https://app.haotool.org/ratewise",
+        "logo": "https://app.haotool.org/ratewise/logo-192.png",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "Customer Support",
+          "email": "haotool.org@gmail.com"
+        },
+        "sameAs": ["https://www.threads.net/@azlife_1224", "https://github.com/haotool/app"]
+      }
     </script>
 
     <title>RateWise - 匯率好工具 | 即時匯率換算</title>
