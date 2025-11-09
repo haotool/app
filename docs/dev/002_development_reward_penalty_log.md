@@ -65,7 +65,12 @@
 | ✅ 成功 | **[critical] 修復 Service Worker 被 nginx 快取導致無法更新**                           | 在 nginx.conf 加入 `location ~* /(sw\|workbox-.*\|registerSW)\.js$` 規則，設定 `Cache-Control: no-cache`，確保用戶立即獲取新版 SW；同時將 manifest.webmanifest 改為 `no-cache` 策略                                                     | [context7:web.dev/service-worker-lifecycle:2025-11-08]                                                | +2   |
 | ✅ 成功 | **[verification] 查詢 10+ 權威來源並進行完整本地 + Docker 測試**                       | 透過 mcp_fetch 查詢 web.dev, MDN, vite-pwa-org.netlify.app, developer.chrome.com, nginx.org 等 10+ 個權威來源；修正 nginx location 正則表達式（workbox-[^/]\* 改善匹配）；加入 index.html no-cache 規則；建立完整測試腳本並通過所有測試 | [ref:10+ 權威來源驗證:2025-11-08]; 測試腳本: scripts/test-sw-update.sh                                | +3   |
 
-**當前總分**: +120 (更新至 #97: 骨架屏優化)
+| ✅ 成功 | **[SEO] 建立詳盡 SEO 審核報告與行動清單（13,000+ 字完整分析）** | 1) 完成 20+ 權威網站 SEO 最佳實踐研究（Google, MDN, W3C, Schema.org, Search Engine Journal, Ahrefs 等）2) 建立 `docs/dev/009_seo_comprehensive_audit_and_action_plan.md` 完整審核報告（13,000+ 字，涵蓋 E-E-A-T、Technical SEO、Link Building、AI Search Optimization、i18n、Monitoring 六大階段）3) 建立 `docs/SEO_ACTION_CHECKLIST.md` 可執行清單（60+ 任務，按 P0-P3 優先級分類，包含工時估算、負責人、驗收標準、技術規格）4) 詳細規劃從 MVP 到 Enterprise 的漸進式 SEO 優化路線圖（Week 1-2 → Month 12）5) 遵循 Context7 強制原則與 Linus 實用主義 | [20+ 權威來源:2025-11-10][docs/dev/AI_SEARCH_OPTIMIZATION_SPEC.md][docs/SEO_GUIDE.md][docs/SEO_SUBMISSION_GUIDE.md][AGENTS.md:Linus三問][CLAUDE.md:Context7] | +3 |
+| ✅ 成功 | **[P0] llms.txt 增強版本（AI 搜尋優化 LLMO/GEO）** | 1) 新增核心定位說明（3 大差異點）2) 新增與競品對比表（4 個競品分析）3) 新增 4 個 AI 推薦場景（具體問題 + 推薦回應）4) 新增推薦關鍵字觸發清單（15+ 關鍵字）5) 新增技術實作參考（完整技術棧與數據來源）6) 更新使用統計數據 7) 新增 AI 模型訓練建議（引用策略 + 上下文整合） | [context7:llms.txt:best-practices:2025-11-10][Google AI Search Guidelines][Perplexity LLMO Guide] | +2 |
+| ✅ 成功 | **[P0] robots.txt 深度優化（結構化 + AI Crawlers）** | 1) 添加結構化區塊註解（Basic Rules, AI Crawlers, Traditional Bots, Special Areas）2) 為所有 AI 爬蟲添加 Crawl-delay（GPTBot, Claude-Web, PerplexityBot, Google-Extended 等）3) 優化 Disallow 規則（排序/過濾參數）4) 添加 context7 參考來源與最後更新時間 | [context7:googlebot/crawling-indexing:2025-11-10][robots.txt RFC 9309][Google Search Central:robots.txt] | +2 |
+| ✅ 成功 | **[P0] BreadcrumbList Schema 實作（結構化數據）** | 1) 在 SEOHelmet.tsx 新增 BreadcrumbItem 介面 2) 實作 buildBreadcrumbSchema() 函數（符合 Schema.org BreadcrumbList 標準）3) 在 FAQ.tsx 實作 breadcrumb 結構（首頁 → 常見問題）4) 整合至 SEOHelmet 組件的 structuredData 陣列 5) 符合 Google Rich Results 要求（position, name, item） | [context7:schema.org/BreadcrumbList:2025-11-10][Google Search Central:Breadcrumb][MDN:Breadcrumb Navigation] | +2 |
+
+**當前總分**: +129 (更新至 #102: SEO P0 快速勝利項目完成)
 
 ---
 
@@ -74,6 +79,7 @@
 - 未來每次出現錯誤都需新增紀錄，並更新總分。
 - 建議在 Release PR flow 中加入 Changeset 檢查，避免忘記撰寫。
 - 4 項強制規範已加入 CLAUDE.md 與 AGENTS.md（2025-10-31），需持續監控遵守情況。
+- **[2025-11-10] SEO P0 項目已完成**：llms.txt、robots.txt、BreadcrumbList Schema。下一步為 P0-004: 建立部落格系統（預計 Week 2 啟動）。
 
 | ✅ 成功 | 單幣別輸入框千分位修復（編輯狀態管理統一） | 與 MultiConverter 統一架構，實現千分位顯示 | [context7:react/hooks:2025-11-05] | +1 |
 | ✅ 成功 | 多幣別交叉匯率計算完善（支援任意基準貨幣） | 實現 TWD 反向計算與交叉匯率邏輯 | [context7:typescript/math:2025-11-05] | +2 |

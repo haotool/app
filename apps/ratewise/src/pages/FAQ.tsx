@@ -129,6 +129,10 @@ export default function FAQ() {
         description="RateWise 匯率好工具常見問題：匯率來源、支援貨幣、離線使用、更新頻率等問題解答。"
         pathname="/faq"
         faq={FAQ_DATA}
+        breadcrumb={[
+          { name: '首頁', url: 'https://app.haotool.org/ratewise' },
+          { name: '常見問題', url: 'https://app.haotool.org/ratewise/faq' },
+        ]}
       />
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-slate-50">
         <div className="container mx-auto px-4 py-8 max-w-4xl">

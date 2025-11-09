@@ -1,45 +1,69 @@
-# RateWise - 匯率好工具 Robots.txt
-# 最後更新：2025-10-28
-# 目的：允許搜尋引擎和 AI 爬蟲訪問網站，確保關鍵資源可被索引，同時保護敏感路徑
+# RateWise - 匯率好工具 Robots.txt - Advanced Configuration
+# 最後更新：2025-11-10
+# 目的：優化搜尋引擎和 AI 爬蟲訪問，確保關鍵資源可被索引，同時保護敏感路徑
+# [context7:/websites/developers_google_search:2025-11-10]
 
+# ============================================================
 # 通用規則：允許所有爬蟲訪問主要內容
+# ============================================================
 User-agent: *
 Allow: /
 Disallow: /admin/
-Disallow: /api/
+Disallow: /api/private/
 Disallow: /login/
 Disallow: /tmp/
+Disallow: /*?*sort=        # 排序參數不索引
+Disallow: /*?*filter=      # 過濾參數不索引
 
-# 明確允許特定 AI 爬蟲（2025 AI SEO 最佳實踐）
+# ============================================================
+# AI 爬蟲優化設定（2025 最佳實踐）
+# ============================================================
+
+# OpenAI GPTBot - 允許訪問，但限制即時數據
 User-agent: GPTBot
 Allow: /
 Disallow: /realtime-rates/
+Crawl-delay: 5
 
+# ChatGPT Browse - 完全允許
 User-agent: ChatGPT-User
 Allow: /
+Crawl-delay: 2
 
+# Anthropic Claude - 允許訪問，限制即時數據
 User-agent: Claude-Web
 Allow: /
+Disallow: /realtime-rates/
+Crawl-delay: 5
 
 User-agent: ClaudeBot
 Allow: /
 Disallow: /realtime-rates/
+Crawl-delay: 5
 
+# Perplexity - 允許但降速
 User-agent: PerplexityBot
 Allow: /
 Crawl-delay: 10
 
-# 保持 robots.txt 只使用標準指令: User-agent, Allow, Disallow, Sitemap, Crawl-delay
-# 參考: https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt
-
+# Google AI (Bard/Gemini)
 User-agent: Google-Extended
 Allow: /
+Crawl-delay: 3
 
+# ============================================================
+# 傳統搜尋引擎優化
+# ============================================================
+
+# Google Bot
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
+# Bing Bot
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 2
 
 # 允許搜尋引擎訪問關鍵資源以完整渲染頁面
 # 參考：Google, "How to write and submit a robots.txt file", 2024-12-12

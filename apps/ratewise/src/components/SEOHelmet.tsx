@@ -22,6 +22,11 @@ interface HowToStep {
   image?: string;
 }
 
+interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -40,6 +45,7 @@ interface SEOProps {
     description: string;
     steps: HowToStep[];
   };
+  breadcrumb?: BreadcrumbItem[];
 }
 
 const DEFAULT_TITLE = 'RateWise - 即時匯率轉換器 | 支援 TWD、USD、JPY、EUR 等多幣別換算';
@@ -181,6 +187,17 @@ const buildHowToSchema = (
   })),
 });
 
+const buildBreadcrumbSchema = (breadcrumb: BreadcrumbItem[]) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumb.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    item: item.url,
+  })),
+});
+
 export function SEOHelmet({
   title,
   description = DEFAULT_DESCRIPTION,
@@ -195,6 +212,7 @@ export function SEOHelmet({
   updatedTime,
   faq,
   howTo,
+  breadcrumb,
 }: SEOProps) {
   const fullTitle = title ? `${title} | RateWise` : DEFAULT_TITLE;
 
@@ -217,6 +235,10 @@ export function SEOHelmet({
   // Merge default JSON-LD with custom blocks
   const baseJsonLd = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
   const structuredData = [...DEFAULT_JSON_LD, ...baseJsonLd];
+
+  if (breadcrumb?.length) {
+    structuredData.push(buildBreadcrumbSchema(breadcrumb));
+  }
 
   if (faq?.length) {
     structuredData.push(buildFaqSchema(faq, canonicalUrl));
