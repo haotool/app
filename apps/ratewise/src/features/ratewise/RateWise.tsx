@@ -370,7 +370,7 @@ const RateWise = () => {
                   className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
                 >
                   <span aria-hidden="true" className="text-white/50">
-                    ℹ
+                    i
                   </span>
                   關於我們
                 </Link>
