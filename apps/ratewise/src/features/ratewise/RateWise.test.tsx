@@ -1,11 +1,17 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { HelmetProvider } from 'react-helmet-async';
+import { MemoryRouter } from 'react-router-dom';
 import RateWise from './RateWise';
 
 // Test helper: wrap component with required providers
+// [fix:2025-11-10] 添加 MemoryRouter 支援 Link 組件
 const renderWithProviders = (component: React.ReactElement) => {
-  return render(<HelmetProvider>{component}</HelmetProvider>);
+  return render(
+    <MemoryRouter>
+      <HelmetProvider>{component}</HelmetProvider>
+    </MemoryRouter>,
+  );
 };
 
 // Mock lightweight-charts
