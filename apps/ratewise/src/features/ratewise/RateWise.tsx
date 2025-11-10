@@ -1,4 +1,5 @@
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
@@ -353,6 +354,26 @@ const RateWise = () => {
                   本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）·
                   實際交易匯率以各銀行公告為準
                 </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
+                <Link
+                  to="/faq"
+                  className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+                >
+                  <span aria-hidden="true" className="text-white/50">
+                    ?
+                  </span>
+                  常見問題
+                </Link>
+                <Link
+                  to="/about"
+                  className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+                >
+                  <span aria-hidden="true" className="text-white/50">
+                    ℹ
+                  </span>
+                  關於我們
+                </Link>
               </div>
 
               {/* 分隔線 */}

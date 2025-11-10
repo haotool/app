@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
@@ -127,7 +127,8 @@ function generateVersion(): string {
 // 最簡配置 - 參考 Context7 官方範例
 // [context7:vitejs/vite:2025-10-21T03:15:00+08:00]
 // 使用函數形式確保 define 在所有模式下都能正確工作
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
   // 自動生成版本號（語義化版本 + git metadata）
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
@@ -136,7 +137,8 @@ export default defineConfig(() => {
   // [fix:2025-10-27] 遵循 Linus 原則 - "好品味"：消除條件判斷
   // CI 環境: VITE_BASE_PATH='/' (Lighthouse/E2E)
   // 生產環境: VITE_BASE_PATH='/ratewise/' (Zeabur)
-  const base = process.env['VITE_BASE_PATH'] || '/';
+  const baseFromEnv = env.VITE_BASE_PATH || process.env['VITE_BASE_PATH'];
+  const base = baseFromEnv ?? (mode === 'production' ? '/ratewise/' : '/');
 
   // [fix:2025-11-06] PWA manifest 路徑策略（符合 PWA 最佳實踐）
   // - scope: 必須有尾斜線 (MDN 規範：定義應用範圍)
