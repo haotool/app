@@ -134,6 +134,12 @@ curl -I http://localhost:8080/ratewise/index.html | grep -i cache-control
 - Cloudflare：設定 `CLOUDFLARE_ZONE_ID` 與 `CLOUDFLARE_API_TOKEN`。
 - 無 API 時：依腳本輸出清單於 CDN 後台手動操作。
 
+### Precache 資產驗證
+
+- 依 [Workbox Precaching 文檔][ref:workbox-precaching:2025-11-09]，Service Worker 安裝前必須確保清單內所有資產皆可 200 回應，否則會出現 `bad-precaching-response`。
+- 部署完成後執行 `VERIFY_BASE_URL=https://app.haotool.org/ratewise pnpm verify:precache`，逐一以 HEAD/GET 檢查 `dist/sw.js` 中列出的 `assets/*` 是否已同步至 CDN。
+- 若任何檔案 404，代表部署不完整或 CDN 仍保留舊版本，請重新上傳整個 `apps/ratewise/dist` 並再次清除 CDN 快取。
+
 ### 安全標頭策略
 
 **應用層** (nginx.conf):
@@ -273,3 +279,4 @@ _最後更新: 2025-10-13 01:58 UTC+8_
 
 [ref:web.dev-service-worker:2025-11-09]: https://web.dev/articles/service-worker-lifecycle
 [ref:nginx-headers:2025-11-09]: https://nginx.org/en/docs/http/ngx_http_headers_module.html
+[ref:workbox-precaching:2025-11-09]: https://developer.chrome.com/docs/workbox/modules/workbox-precaching/

@@ -67,15 +67,35 @@ class Logger {
    * Send log to external service in production
    * Replace this with your actual logging service (e.g., Sentry, LogRocket, DataDog)
    */
-  private sendToExternalService(_entry: LogEntry): void {
-    // In production, send to logging service
-    // Example: await fetch('/api/logs', { method: 'POST', body: JSON.stringify(_entry) });
+  /**
+   * Send log entry to external logging service
+   * [context7:getsentry/sentry-javascript:2025-11-10T03:05:00+08:00]
+   * 遵循 Sentry React 最佳實踐：生產環境自動上傳錯誤與訊息
+   */
+  private sendToExternalService(entry: LogEntry): void {
+    // 僅在生產環境且 Sentry 已初始化時上傳
+    if (!this.isDevelopment && typeof window !== 'undefined' && window.Sentry) {
+      // 上傳訊息至 Sentry
+      window.Sentry.captureMessage(entry.message, {
+        level: entry.level as import('@sentry/react').SeverityLevel,
+        extra: entry.context,
+        tags: {
+          environment: import.meta.env.MODE,
+          version: import.meta.env.VITE_APP_VERSION || 'unknown',
+          buildTime: import.meta.env.VITE_BUILD_TIME || 'unknown',
+        },
+      });
 
-    // For now, we'll just silently fail in production
-    // This prevents console pollution in prod while keeping dev experience good
-    if (!this.isDevelopment) {
-      // TODO: Integrate with logging service
-      // Example: Sentry.captureMessage(_entry.message, { level: _entry.level, extra: _entry.context });
+      // 若有錯誤物件，額外捕捉 Exception
+      if (entry.error) {
+        window.Sentry.captureException(entry.error, {
+          extra: entry.context,
+          tags: {
+            environment: import.meta.env.MODE,
+            version: import.meta.env.VITE_APP_VERSION || 'unknown',
+          },
+        });
+      }
     }
   }
 

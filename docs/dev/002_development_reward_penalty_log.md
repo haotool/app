@@ -1,8 +1,8 @@
 # 002 開發獎懲記錄 LOG
 
-**版本**: 1.13.0 (骨架屏優化 Line Trace Wave)
+**版本**: 1.15.0 (專業級文檔清理與 M0 技術債重構)
 **建立時間**: 2025-10-31T03:06:28+0800
-**更新時間**: 2025-11-09T22:30:00+0800
+**更新時間**: 2025-11-10T02:55:00+0800
 **狀態**: 🔄 進行中
 
 ---
@@ -65,7 +65,9 @@
 | ✅ 成功 | **[critical] 修復 Service Worker 被 nginx 快取導致無法更新**                           | 在 nginx.conf 加入 `location ~* /(sw\|workbox-.*\|registerSW)\.js$` 規則，設定 `Cache-Control: no-cache`，確保用戶立即獲取新版 SW；同時將 manifest.webmanifest 改為 `no-cache` 策略                                                     | [context7:web.dev/service-worker-lifecycle:2025-11-08]                                                | +2   |
 | ✅ 成功 | **[verification] 查詢 10+ 權威來源並進行完整本地 + Docker 測試**                       | 透過 mcp_fetch 查詢 web.dev, MDN, vite-pwa-org.netlify.app, developer.chrome.com, nginx.org 等 10+ 個權威來源；修正 nginx location 正則表達式（workbox-[^/]\* 改善匹配）；加入 index.html no-cache 規則；建立完整測試腳本並通過所有測試 | [ref:10+ 權威來源驗證:2025-11-08]; 測試腳本: scripts/test-sw-update.sh                                | +3   |
 
-**當前總分**: +120 (更新至 #97: 骨架屏優化)
+| ✅ 成功 | 專業級文檔清理與 M0 技術債重構 | 參考 Next.js, React, Vite 專業標準，移除 13+ 個報告/總結/日誌類文檔，更新 README.md 技術棧，執行 M0 清理並通過所有驗證 | [context7:/vercel/next.js:2025-11-10] + [docs/dev/010_professional_docs_cleanup_2025-11-10.md] | +15 |
+
+**當前總分**: +146 (更新至 #100: 專業級文檔清理與 M0 技術債重構)
 
 ---
 

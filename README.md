@@ -68,18 +68,18 @@ docker-compose down
 ### 核心框架
 
 - **Framework**: React 19.0.0
-- **Build Tool**: Vite 7.0.0
-- **Language**: TypeScript 5.6.2
-- **Styling**: Tailwind CSS 3.4.14
+- **Build Tool**: Vite 7.0.5
+- **Language**: TypeScript 5.9.0
+- **Styling**: Tailwind CSS 4.1.0
 - **Package Manager**: pnpm 9.10.0
-- **Router**: React Router 7.9.4
+- **Router**: React Router 7.11.0
 
 ### 開發工具
 
-- **Testing**: Vitest 2.1.9 + @testing-library/react 16.0.1
-- **E2E**: Playwright MCP
-- **Linting**: ESLint 8.55.0 + Prettier 3.1.1
-- **Git Hooks**: Husky 8.0.3 + lint-staged 15.2.0
+- **Testing**: Vitest 3.2.4 + @testing-library/react 16.1.0
+- **E2E**: Playwright 1.50.1
+- **Linting**: ESLint 9.20.1 + Prettier 3.4.2
+- **Git Hooks**: Husky 9.1.7 + lint-staged 15.3.0
 - **CI/CD**: GitHub Actions
 
 ### 資料來源
@@ -326,4 +326,4 @@ MIT License - 詳見 [LICENSE](./LICENSE)
 
 🤖 _Generated with [Claude Code](https://claude.com/claude-code)_
 
-_最後更新: 2025-10-13_
+_最後更新: 2025-11-10_
