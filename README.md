@@ -2,12 +2,12 @@
 
 > 🚀 現代化的即時匯率換算工具，支援單幣別與多幣別轉換
 
-![Version](https://img.shields.io/badge/version-0.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D24.0.0-green)
 ![pnpm](https://img.shields.io/badge/pnpm-9.10.0-yellow)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Tests](https://img.shields.io/badge/tests-37%20passed-success)
-![Coverage](https://img.shields.io/badge/coverage-89.8%25-brightgreen)
+![Tests](https://img.shields.io/badge/tests-240%20passed-success)
+![Coverage](https://img.shields.io/badge/coverage-88.91%25-brightgreen)
 
 ## ✨ 特色功能
 
@@ -68,19 +68,20 @@ docker-compose down
 ### 核心框架
 
 - **Framework**: React 19.0.0
-- **Build Tool**: Vite 7.0.0
+- **Build Tool**: Vite 7.1.12
 - **Language**: TypeScript 5.6.2
 - **Styling**: Tailwind CSS 3.4.14
 - **Package Manager**: pnpm 9.10.0
-- **Router**: React Router 7.9.4
+- **Router**: React Router 6.26.2
+- **Charts**: Lightweight Charts 5.0.9
 
 ### 開發工具
 
-- **Testing**: Vitest 2.1.9 + @testing-library/react 16.0.1
-- **E2E**: Playwright MCP
-- **Linting**: ESLint 8.55.0 + Prettier 3.1.1
+- **Testing**: Vitest 3.2.4 + @testing-library/react 16.0.1
+- **E2E**: Playwright 1.56.1
+- **Linting**: ESLint 9.37.0 + Prettier 3.1.1
 - **Git Hooks**: Husky 8.0.3 + lint-staged 15.2.0
-- **CI/CD**: GitHub Actions
+- **CI/CD**: GitHub Actions + Lighthouse CI
 
 ### 資料來源
 
@@ -145,9 +146,10 @@ pnpm --filter ratewise test
 
 **測試統計**:
 
-- 總測試數: 41 tests
-- 測試覆蓋率: 89.8%
-- 測試檔案: 3 (RateWise, ErrorBoundary, Logger)
+- 總測試數: 240 tests
+- 測試覆蓋率: 88.91% (statements), 80.3% (branches)
+- 測試檔案: 15+ (單元測試 + E2E 測試)
+- E2E 測試: Playwright (核心流程覆蓋)
 
 ## 📝 開發指令
 
@@ -227,14 +229,16 @@ docs: update deployment guide with Docker instructions
 
 - [歷史匯率實作](./docs/HISTORICAL_RATES_IMPLEMENTATION.md) - 25 天歷史資料追蹤
 - [匯率更新策略](./docs/EXCHANGE_RATE_UPDATE_STRATEGIES.md) - 自動化更新方案比較
-- [歷史匯率快速開始](./docs/QUICK_START_HISTORICAL_RATES.md) - 快速部署指南
+- [PWA 實作指南](./docs/PWA_IMPLEMENTATION.md) - Service Worker + Workbox 配置
+- [SEO 優化指南](./docs/SEO_GUIDE.md) - 搜尋引擎優化最佳實踐
 
 ### 開發者文檔
 
 - [架構藍圖](./docs/dev/ARCHITECTURE_BASELINE.md) - 系統架構設計
-- [權威來源引用](./docs/dev/CITATIONS.md) - 17 個官方文檔引用
+- [權威來源引用](./docs/dev/CITATIONS.md) - 15+ 個官方文檔引用
 - [檢查清單](./docs/dev/CHECKLISTS.md) - 品質門檻清單
 - [依賴升級計畫](./docs/dev/DEPENDENCY_UPGRADE_PLAN.md) - 技術棧升級策略
+- [技術債掃描報告](./docs/dev/009_ultra_tech_debt_scan_2025-11-10.md) - 最新技術債掃描
 
 ### Agent 指南
 
@@ -261,16 +265,18 @@ docs: update deployment guide with Docker instructions
 
 ## 📊 專案狀態
 
-### 品質分數: 90.8/100 ⭐
+### 品質分數: 82/100 🟢 優秀
 
-| 維度       | 分數 | 狀態 |
-| ---------- | ---- | ---- |
-| 可維護性   | 95   | ✅   |
-| 測試品質   | 92   | ✅   |
-| 資安成熟度 | 88   | ✅   |
-| 效能       | 90   | ✅   |
-| 觀測性     | 85   | ✅   |
-| 工程流程化 | 95   | ✅   |
+| 維度       | 分數 | 狀態      |
+| ---------- | ---- | --------- |
+| 可維護性   | 80   | 🟢 優秀   |
+| 測試品質   | 92   | 🟢 優秀   |
+| 資安成熟度 | 78   | 🟡 良好   |
+| 效能       | 85   | 🟢 優秀   |
+| 觀測性     | 68   | 🟡 可接受 |
+| 工程流程化 | 88   | 🟢 優秀   |
+
+**最新技術債掃描**: 2025-11-10 ([查看報告](./docs/dev/009_ultra_tech_debt_scan_2025-11-10.md))
 
 ### 已完成階段
 
@@ -322,8 +328,8 @@ MIT License - 詳見 [LICENSE](./LICENSE)
 
 ---
 
-**Built with ❤️ using React 19 & Vite 5**
+**Built with ❤️ using React 19 & Vite 7**
 
-🤖 _Generated with [Claude Code](https://claude.com/claude-code)_
+🤖 _Powered by [Claude Code](https://claude.com/claude-code) with Linus Torvalds Development Philosophy_
 
-_最後更新: 2025-10-13_
+_最後更新: 2025-11-10_

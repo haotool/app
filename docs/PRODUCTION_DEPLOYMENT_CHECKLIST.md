@@ -51,6 +51,9 @@ curl -I https://app.haotool.org/ratewise/index.html | grep -i cache-control
 
 # 驗證 25 天歷史資料完整性
 pnpm verify:history
+
+# 驗證 precache 資產在 CDN 上是否存在
+VERIFY_BASE_URL=https://app.haotool.org/ratewise pnpm verify:precache
 ```
 
 ### 5. 清除 CDN 快取（可選但推薦）

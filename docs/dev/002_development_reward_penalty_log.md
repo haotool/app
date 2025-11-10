@@ -1,8 +1,8 @@
 # 002 開發獎懲記錄 LOG
 
-**版本**: 1.13.0 (骨架屏優化 Line Trace Wave)
+**版本**: 1.14.0 (超級技術債清理與 Linus 風格重構)
 **建立時間**: 2025-10-31T03:06:28+0800
-**更新時間**: 2025-11-09T22:30:00+0800
+**更新時間**: 2025-11-10T02:50:10+0800
 **狀態**: 🔄 進行中
 
 ---
@@ -65,7 +65,7 @@
 | ✅ 成功 | **[critical] 修復 Service Worker 被 nginx 快取導致無法更新**                           | 在 nginx.conf 加入 `location ~* /(sw\|workbox-.*\|registerSW)\.js$` 規則，設定 `Cache-Control: no-cache`，確保用戶立即獲取新版 SW；同時將 manifest.webmanifest 改為 `no-cache` 策略                                                     | [context7:web.dev/service-worker-lifecycle:2025-11-08]                                                | +2   |
 | ✅ 成功 | **[verification] 查詢 10+ 權威來源並進行完整本地 + Docker 測試**                       | 透過 mcp_fetch 查詢 web.dev, MDN, vite-pwa-org.netlify.app, developer.chrome.com, nginx.org 等 10+ 個權威來源；修正 nginx location 正則表達式（workbox-[^/]\* 改善匹配）；加入 index.html no-cache 規則；建立完整測試腳本並通過所有測試 | [ref:10+ 權威來源驗證:2025-11-08]; 測試腳本: scripts/test-sw-update.sh                                | +3   |
 
-**當前總分**: +120 (更新至 #97: 骨架屏優化)
+**當前總分**: +126 (更新至 #98: 超級技術債清理)
 
 ---
 
@@ -95,3 +95,4 @@
 | ✅ 成功 | 首屏趨勢圖改為同步載入 | 基於 web.dev LCP 建議與實際生產巡檢，移除 MiniTrendChart 懶載入並改為同步匯入，保留 skeleton 以避免首屏閃爍；同步更新 Lighthouse log | [web.dev:optimize-lcp:2025-11-09][react.dev/lazy:2025-11-09][Playwright:app.haotool.org:2025-11-09] | +1 |
 | ✅ 成功 | **[critical] SW 快取修復用戶深度改進（正則精確化 + CDN purge 假陰性修復 + 歷史資料驗證）** | 1) nginx 正則從 `/(sw\|workbox-[^/]*\|registerSW)\.js$` 改為 `^/(?:ratewise/)?(?:assets/)?(sw\|workbox-[^/]*\|registerSW)\.js$` 精確匹配所有路徑 2) purge-cdn-cache.sh 改為三段式流程（Zeabur CLI → Cloudflare API → 失敗退出），消除假陰性 3) 新增 verify:history 腳本驗證 25 天資料完整性（15 個不同 USD 匯率）4) 所有文檔統一為 25 天（消除 30 天不一致）5) 文檔重新命名符合編號規則（008\*）6) React 測試修復（IS_REACT_ACT_ENVIRONMENT）7) Docker 完整驗證通過 | [ref:10+ 權威來源:2025-11-09]; Docker 驗證: curl -I 所有 headers 正確; verify:history: 25 天完整 | +4 |
 | ✅ 成功 | 趨勢圖骨架屏優化（Line Trace Wave 替換 + 設計簡化） | 1) 創建 6 個新 Line Trace 骨架屏變體（Wave, Dash, Multi, Glow, Pulse, Smooth）保持藍紫漸層原配色 2) TrendChartSkeleton 完全替換為 Line Trace Wave 版本（波浪式繪製動畫 + 雙波紋環跟隨 + 區域漸層填充）3) 刪除所有其他骨架屏文件（15+ 變體、skeletons/ 目錄、SkeletonShowcase.tsx、/skeleton-showcase 路由）4) 遵循 Linus 簡化原則，消除過度設計，保留唯一骨架屏組件 5) TypeScript 編譯通過，無載入完成提示 | [MDN:SVG SMIL Animation:2025-11-09][web.dev:skeleton-screens:2025-11-09][LINUS_GUIDE.md:簡單優於複雜] | +2 |
+| ✅ 成功 | **[ultrathink] 超級技術債清理與 Linus 風格重構（26 文檔清理 + 559→25 行重構 + 3 報告產出）** | 1) 刪除 26 個臨時報告文檔（根目錄 10→7 個核心文檔）2) vite.config.ts 模組化拆分（559行→25行主配置+5模組）3) README.md 同步更新（版本、測試、技術棧）4) 產出 009 技術債掃描報告（533 行）5) 產出 010 重構執行報告（383 行）6) 產出 011 完整流程執行報告（743 行）遵循 Linus 三問驗證，所有決策基於 Context7 官方文檔 | [Linus 好品味原則][context7:vitejs/vite:2025-10-21][context7:googlechrome/workbox:2025-11-08][React/Vue 專案結構標準][6 步驟自動化最佳實踐落地流程] | +6 |
