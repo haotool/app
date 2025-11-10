@@ -1,0 +1,33 @@
+# .gitleaksignore - Gitleaks 掃描排除檔案
+# [context7:gitleaks/gitleaks:2025-11-10]
+
+# 測試用假 key 和範例程式碼
+test/**/*
+tests/**/*
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# 範例與文檔中的假 key
+docs/**/*
+README.md
+SETUP.md
+
+# Node modules 和套件管理
+node_modules/**/*
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# 建置輸出
+dist/**/*
+build/**/*
+coverage/**/*
+.next/**/*
+
+# 開發工具設定
+.vscode/**/*
+.idea/**/*
+*.iml
+

@@ -1,8 +1,10 @@
 /**
  * Core Web Vitals reporting
- * [context7:web-vitals:2025-10-18T02:00:00+08:00]
+ * [context7:googlechrome/web-vitals:2025-11-10T03:15:00+08:00]
+ * [context7:getsentry/sentry-javascript:2025-11-10T03:15:00+08:00]
  *
  * Reports LCP, INP, CLS to console and optionally to analytics endpoint
+ * 整合 Sentry Performance Monitoring 和 Google Analytics
  */
 import { onCLS, onINP, onLCP, onFCP, onTTFB, type Metric } from 'web-vitals';
 import { logger } from './logger';
@@ -55,6 +57,50 @@ function sendToAnalytics(report: VitalsReport) {
 }
 
 /**
+ * Send Web Vitals to Google Analytics
+ * [context7:googlechrome/web-vitals:2025-11-10T03:15:00+08:00]
+ */
+function sendToGoogleAnalytics(metric: Metric) {
+  // 僅在生產環境且 gtag 已初始化時上傳
+  if (import.meta.env.PROD && typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', metric.name, {
+      event_category: 'Web Vitals',
+      value: Math.round(metric.delta), // 使用 delta 進行聚合
+      event_label: metric.id,
+      non_interaction: true,
+      // 額外參數
+      metric_value: Math.round(metric.value),
+      metric_rating: metric.rating,
+    });
+  }
+}
+
+/**
+ * Send Web Vitals to Sentry Performance Monitoring
+ * [context7:getsentry/sentry-javascript:2025-11-10T03:15:00+08:00]
+ */
+function sendToSentry(metric: Metric) {
+  // 僅在生產環境且 Sentry 已初始化時上傳
+  if (import.meta.env.PROD && typeof window !== 'undefined' && window.Sentry) {
+    window.Sentry.setMeasurement(metric.name, metric.value, 'millisecond');
+
+    // 若效能不佳，額外記錄為 breadcrumb
+    if (metric.rating === 'poor') {
+      window.Sentry.addBreadcrumb({
+        category: 'web-vitals',
+        message: `Poor ${metric.name} detected`,
+        level: 'warning',
+        data: {
+          value: metric.value,
+          rating: metric.rating,
+          delta: metric.delta,
+        },
+      });
+    }
+  }
+}
+
+/**
  * Log and optionally send vitals
  */
 function reportVital(metric: Metric) {
@@ -70,9 +116,11 @@ function reportVital(metric: Metric) {
     });
   }
 
-  // Send to analytics in production
+  // 生產環境多管道上傳
   if (import.meta.env.MODE === 'production') {
-    sendToAnalytics(report);
+    sendToAnalytics(report); // 自訂 analytics endpoint
+    sendToGoogleAnalytics(metric); // Google Analytics
+    sendToSentry(metric); // Sentry Performance
   }
 }
 
