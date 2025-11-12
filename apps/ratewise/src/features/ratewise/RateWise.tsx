@@ -205,8 +205,8 @@ const RateWise = () => {
         style={{ overscrollBehaviorY: 'contain' }}
       >
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-5">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
+          <div className="text-center mb-2">
+            <div className="flex items-center justify-center gap-0 mb-0.5">
               <picture>
                 <source
                   type="image/avif"
@@ -229,11 +229,17 @@ const RateWise = () => {
                   fetchPriority="high"
                 />
               </picture>
-              <h2 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                匯率好工具
+              <h2
+                className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 700 }}
+              >
+                RateWise 匯率好工具
               </h2>
             </div>
-            <p className="text-sm md:text-base text-gray-600 font-medium">
+            <p
+              className="text-sm text-gray-600"
+              style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+            >
               {ratesLoading ? '載入即時匯率中...' : '即時匯率換算 · 精準可靠'}
             </p>
           </div>
