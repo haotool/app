@@ -71,7 +71,9 @@
     <link
       rel="preload"
       as="image"
-      href="./optimized/logo-112w.avif"
+      href="/optimized/logo-192w.avif"
+      imagesrcset="/optimized/logo-112w.avif 112w, /optimized/logo-192w.avif 192w"
+      imagesizes="(max-width: 640px) 112px, 192px"
       type="image/avif"
       fetchpriority="high"
     />
@@ -268,6 +270,7 @@
         <span class="sr-only">載入匯率資料中...</span>
       </div>
     </div>
-    <script type="module" src="./src/main.tsx"></script>
+    <script type="module" data-cfasync="false" src="./src/trusted-types-bootstrap.ts"></script>
+    <script type="module" data-cfasync="false" src="./src/main.tsx"></script>
   </body>
 </html>
