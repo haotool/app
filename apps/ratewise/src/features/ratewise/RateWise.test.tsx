@@ -89,7 +89,7 @@ describe('RateWise Component', () => {
     it('renders main headline', () => {
       renderWithProviders(<RateWise />);
       // Use getByRole for heading to avoid duplicate text matches
-      expect(screen.getByRole('heading', { name: '匯率好工具' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'RateWise 匯率好工具' })).toBeInTheDocument();
     });
 
     it('renders in single mode by default', () => {

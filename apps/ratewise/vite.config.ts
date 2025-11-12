@@ -150,6 +150,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
+    server: {
+      port: 3001,
+      strictPort: true,
+      open: true,
+    },
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __BUILD_TIME__: JSON.stringify(buildTime),
