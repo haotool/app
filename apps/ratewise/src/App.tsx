@@ -10,6 +10,7 @@ import CurrencyConverter from './features/ratewise/RateWise';
 const FAQ = lazy(() => import('./pages/FAQ'));
 const About = lazy(() => import('./pages/About'));
 const ColorSchemeComparison = lazy(() => import('./pages/ColorSchemeComparison'));
+const UIShowcase = lazy(() => import('./pages/UIShowcase'));
 
 function App() {
   // 與 Vite base 設定同步，避免 FAQ / About 在不同部署路徑出現空白頁
@@ -25,7 +26,7 @@ function App() {
   return (
     <ErrorBoundary>
       <SEOHelmet />
-      <Router basename={basename}>
+      <Router basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <main role="main" className="min-h-screen">
           <h1 className="sr-only">RateWise 匯率轉換器</h1>
           <Suspense fallback={<SkeletonLoader />}>
@@ -34,6 +35,7 @@ function App() {
               <Route path="/faq" element={<FAQ />} />
               <Route path="/about" element={<About />} />
               <Route path="/color-scheme" element={<ColorSchemeComparison />} />
+              <Route path="/ui-showcase" element={<UIShowcase />} />
             </Routes>
           </Suspense>
         </main>
