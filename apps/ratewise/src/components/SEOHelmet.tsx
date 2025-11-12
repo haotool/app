@@ -42,7 +42,7 @@ interface SEOProps {
   };
 }
 
-const DEFAULT_TITLE = 'RateWise - 即時匯率轉換器 | 支援 TWD、USD、JPY、EUR 等多幣別換算';
+const DEFAULT_TITLE = 'RateWise 匯率好工具 - 即時匯率轉換器 | 支援 TWD、USD、JPY、EUR 等多幣別換算';
 const DEFAULT_DESCRIPTION =
   'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。';
 const DEFAULT_OG_IMAGE = '/og-image.png';

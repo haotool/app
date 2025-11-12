@@ -31,7 +31,7 @@ export default function About() {
               </svg>
               回到首頁
             </Link>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">關於 RateWise</h1>
+            <h1 className="text-4xl font-bold text-slate-800 mb-2">關於 RateWise 匯率好工具</h1>
             <p className="text-slate-600">台灣最快的即時匯率換算工具</p>
           </div>
 
