@@ -31,7 +31,7 @@ export default function About() {
               </svg>
               回到首頁
             </Link>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">關於 RateWise 匯率好工具</h1>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">關於 RateWise 匯率好工具</h1>
             <p className="text-slate-600">台灣最快的即時匯率換算工具</p>
           </div>
 
@@ -121,18 +121,9 @@ export default function About() {
               <li className="flex items-start">
                 <span className="text-violet-600 mr-3 mt-1">✓</span>
                 <div>
-                  <strong className="text-slate-800">即時匯率換算</strong>
+                  <strong className="text-slate-800">單幣別換算</strong>
                   <p className="text-slate-600 text-sm">
-                    支援 30+ 種主要貨幣，包括美元、日圓、歐元、英鎊、港幣、人民幣等
-                  </p>
-                </div>
-              </li>
-              <li className="flex items-start">
-                <span className="text-violet-600 mr-3 mt-1">✓</span>
-                <div>
-                  <strong className="text-slate-800">歷史匯率趨勢</strong>
-                  <p className="text-slate-600 text-sm">
-                    查看過去一段時間的匯率變化，幫助您了解匯率走勢
+                    雙向即時換算，支援快速金額選擇、貨幣交換、歷史趨勢圖
                   </p>
                 </div>
               </li>
@@ -141,7 +132,30 @@ export default function About() {
                 <div>
                   <strong className="text-slate-800">多幣別換算</strong>
                   <p className="text-slate-600 text-sm">
-                    同時查看一個基準貨幣對多種目標貨幣的換算結果
+                    一個基準貨幣同時對 30+ 種目標貨幣換算，一次查看所有結果
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <span className="text-violet-600 mr-3 mt-1">✓</span>
+                <div>
+                  <strong className="text-slate-800">收藏與歷史</strong>
+                  <p className="text-slate-600 text-sm">收藏常用貨幣、查看轉換歷史、追蹤匯率趨勢</p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <span className="text-violet-600 mr-3 mt-1">✓</span>
+                <div>
+                  <strong className="text-slate-800">匯率類型切換</strong>
+                  <p className="text-slate-600 text-sm">支援現金匯率與即期匯率，滿足不同換匯需求</p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <span className="text-violet-600 mr-3 mt-1">✓</span>
+                <div>
+                  <strong className="text-slate-800">下拉刷新</strong>
+                  <p className="text-slate-600 text-sm">
+                    手勢下拉即可刷新匯率，清除快取並更新到最新數據
                   </p>
                 </div>
               </li>
@@ -149,7 +163,9 @@ export default function About() {
                 <span className="text-violet-600 mr-3 mt-1">✓</span>
                 <div>
                   <strong className="text-slate-800">離線可用</strong>
-                  <p className="text-slate-600 text-sm">無網路環境下也能使用最近更新的匯率資料</p>
+                  <p className="text-slate-600 text-sm">
+                    PWA 技術，無網路環境下也能使用最近更新的匯率資料
+                  </p>
                 </div>
               </li>
             </ul>
@@ -221,7 +237,7 @@ export default function About() {
                 <p className="text-slate-600">
                   RateWise 是開放原始碼專案，歡迎在{' '}
                   <a
-                    href="https://github.com/cnych/ratewise"
+                    href="https://github.com/haotool/app"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-violet-600 hover:text-violet-700 underline"
@@ -237,7 +253,7 @@ export default function About() {
           {/* Footer */}
           <div className="text-center text-slate-500 text-sm">
             <p>© 2025 RateWise. 保留所有權利。</p>
-            <p className="mt-2">最後更新：2025-10-19 | 版本：v1.0</p>
+            <p className="mt-2">最後更新：2025-11-12 | 版本：v1.1</p>
           </div>
         </div>
       </main>
