@@ -200,6 +200,33 @@ export const SingleConverter = ({
     };
   }, [fromCurrency, toCurrency]);
 
+  // 開發工具：強制觸發骨架屏效果（僅開發模式）
+  /* v8 ignore next 22 */
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof window === 'undefined') return;
+
+    let originalData: MiniTrendDataPoint[] = [];
+
+    interface WindowWithDevTools extends Window {
+      triggerSkeleton?: (duration?: number) => void;
+    }
+
+    (window as WindowWithDevTools).triggerSkeleton = (duration = 3000) => {
+      console.log('🎨 Triggering skeleton screen for', duration, 'ms');
+      originalData = trendData;
+      setTrendData([]);
+
+      setTimeout(() => {
+        console.log('✅ Restoring trend data');
+        setTrendData(originalData);
+      }, duration);
+    };
+
+    return () => {
+      delete (window as WindowWithDevTools).triggerSkeleton;
+    };
+  }, [trendData]);
+
   return (
     <>
       <div className="mb-4">

@@ -27,7 +27,9 @@ async function loadPrecacheEntries() {
     const manifest = JSON.parse(match[1]);
     return manifest;
   } catch (error) {
-    throw new Error(`解析 precache 清單失敗: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `解析 precache 清單失敗: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -38,7 +40,11 @@ async function probe(url) {
     const fallback = await fetch(url, { method: 'GET' });
     return { ok: fallback.ok, status: fallback.status };
   } catch (error) {
-    return { ok: false, status: 0, message: error instanceof Error ? error.message : String(error) };
+    return {
+      ok: false,
+      status: 0,
+      message: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 

@@ -40,7 +40,9 @@ async function fetchHistory(date) {
       };
     } catch (error) {
       // 換下一個端點
-      console.warn(`⚠️  ${url} 取得失敗：${error instanceof Error ? error.message : String(error)}`);
+      console.warn(
+        `⚠️  ${url} 取得失敗：${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
   return null;
@@ -88,7 +90,10 @@ async function main() {
   }
 
   await mkdir(path.dirname(OUTPUT_FILE), { recursive: true });
-  await writeFile(OUTPUT_FILE, JSON.stringify({ generatedAt: new Date().toISOString(), entries }, null, 2));
+  await writeFile(
+    OUTPUT_FILE,
+    JSON.stringify({ generatedAt: new Date().toISOString(), entries }, null, 2),
+  );
 
   console.log(`📊 歷史數據驗證完成：已輸出詳細資料至 ${OUTPUT_FILE}`);
   console.table(

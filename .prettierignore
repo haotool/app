@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Test results
+test-results/
+playwright-report/
+.playwright/
+.playwright-mcp/
+
+# Logs
+*.log
+
+# Cache and temporary files
+.cache/
+.temp/
+tmp/
+*.tmp
+
+# Editor directories
+.idea/
+.vscode/
+
+# Environment files
+.env
+.env.*
+
+# CI/CD artifacts
+.lighthouseci/
+lighthouse-results/
+lighthouse-reports/
+lighthouse-report*.*
+*-report.html
+*-report.json
+
+# Data files (managed in data branch)
+public/rates/
+
+# Package manager files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Generated files
+apps/ratewise/dev-server.pid
+apps/ratewise/dev-server.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Archives
+*.zip
+*.tar.gz

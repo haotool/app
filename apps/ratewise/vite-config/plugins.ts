@@ -103,7 +103,6 @@ export function generatePlugins(
     injectVersionMeta(appVersion, buildTime),
     ...getCompressionPlugins(),
     getVisualizerPlugin(),
-    // @ts-expect-error - VitePWA plugin type incompatibility with Vite 7
     VitePWA(generatePWAConfig(base, appVersion)),
   ].filter((plugin): plugin is PluginOption => plugin !== null);
 }

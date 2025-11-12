@@ -12,8 +12,9 @@ const About = lazy(() => import('./pages/About'));
 const ColorSchemeComparison = lazy(() => import('./pages/ColorSchemeComparison'));
 
 function App() {
-  // 開發模式使用根路徑，生產環境使用 /ratewise/
-  const basename = import.meta.env.DEV ? '/' : '/ratewise';
+  // 與 Vite base 設定同步，避免 FAQ / About 在不同部署路徑出現空白頁
+  const rawBaseUrl = import.meta.env.BASE_URL || '/';
+  const basename = rawBaseUrl === '/' ? '/' : rawBaseUrl.replace(/\/+$/, '');
 
   // 標記應用已完全載入，供 E2E 測試使用
   // [E2E-fix:2025-10-25] 添加明確的載入完成信號
@@ -24,7 +25,7 @@ function App() {
   return (
     <ErrorBoundary>
       <SEOHelmet />
-      <Router basename={basename}>
+      <Router basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <main role="main" className="min-h-screen">
           <h1 className="sr-only">RateWise 匯率轉換器</h1>
           <Suspense fallback={<SkeletonLoader />}>
