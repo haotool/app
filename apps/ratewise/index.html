@@ -66,17 +66,10 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
 
-    <!-- [Phase1-optimization:2025-11-07] Preload LCP 圖片 - 只載入 AVIF -->
-    <!-- 參考: https://web.dev/articles/preload-critical-assets -->
-    <link
-      rel="preload"
-      as="image"
-      href="/optimized/logo-192w.avif"
-      imagesrcset="/optimized/logo-112w.avif 112w, /optimized/logo-192w.avif 192w"
-      imagesizes="(max-width: 640px) 112px, 192px"
-      type="image/avif"
-      fetchpriority="high"
-    />
+    <!-- [fix:2025-11-14] 移除 Logo preload - Logo 不是 LCP 元素 -->
+    <!-- 根據 Lighthouse 分析，LCP 元素是匯率顯示文字區域，不是 Logo 圖片 -->
+    <!-- Preload 非 LCP 資源會浪費頻寬並導致 Chrome DevTools 警告 -->
+    <!-- 參考: tmp/lighthouse/PERFORMANCE_BOTTLENECK_ANALYSIS_20251114.md:39-50 -->
 
     <!-- Modulepreload for critical scripts (Vite generates these automatically) -->
     <!-- Vite will inject modulepreload links for vendor chunks during build -->
