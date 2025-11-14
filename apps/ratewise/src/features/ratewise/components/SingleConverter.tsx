@@ -3,7 +3,8 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { RefreshCw } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateType } from '../types';
-import { MiniTrendChart, type MiniTrendDataPoint } from './MiniTrendChart';
+import { MiniTrendChart } from './MiniTrendChart';
+import type { MiniTrendDataPoint } from './MiniTrendChart';
 import { TrendChartSkeleton } from './TrendChartSkeleton';
 import type { RateDetails } from '../hooks/useExchangeRates';
 import {
@@ -379,7 +380,6 @@ export const SingleConverter = ({
             }`}
           >
             <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
-              {/* 取消 lazy 後仍保留 ErrorBoundary，確保 Chart 錯誤不會影響主 UI */}
               <ErrorBoundary
                 fallback={
                   <div className="flex items-center justify-center h-full text-xs text-red-500">
