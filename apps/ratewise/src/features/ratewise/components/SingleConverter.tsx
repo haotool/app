@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Calculator } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateType } from '../types';
 import { MiniTrendChart } from './MiniTrendChart';
@@ -12,6 +12,7 @@ import {
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
+import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 25;
@@ -62,6 +63,10 @@ export const SingleConverter = ({
   const [editingValue, setEditingValue] = useState<string>('');
   const fromInputRef = useRef<HTMLInputElement>(null);
   const toInputRef = useRef<HTMLInputElement>(null);
+
+  // 計算機鍵盤狀態
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calculatorField, setCalculatorField] = useState<'from' | 'to'>('from');
 
   // 獲取指定貨幣的匯率（優先使用 details + rateType，有 fallback 機制）
   const getRate = (currency: CurrencyCode): number => {
@@ -288,10 +293,22 @@ export const SingleConverter = ({
                 e.preventDefault();
               }
             }}
-            className="w-full pl-32 pr-4 py-3 text-2xl font-bold border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
+            className="w-full pl-32 pr-14 py-3 text-2xl font-bold border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
             placeholder="0.00"
             aria-label={`轉換金額 (${fromCurrency})`}
           />
+          {/* 計算機按鈕 */}
+          <button
+            type="button"
+            onClick={() => {
+              setCalculatorField('from');
+              setShowCalculator(true);
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all duration-200"
+            aria-label="開啟計算機"
+          >
+            <Calculator className="w-5 h-5" />
+          </button>
         </div>
         <div className="flex gap-2 mt-2 flex-wrap">
           {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
@@ -547,6 +564,24 @@ export const SingleConverter = ({
       >
         加入歷史記錄
       </button>
+
+      {/* 計算機鍵盤 Bottom Sheet */}
+      <CalculatorKeyboard
+        isOpen={showCalculator}
+        onClose={() => setShowCalculator(false)}
+        onConfirm={(result) => {
+          // 將計算結果設置到對應的輸入框
+          if (calculatorField === 'from') {
+            onFromAmountChange(result.toString());
+          } else {
+            onToAmountChange(result.toString());
+          }
+          setShowCalculator(false);
+        }}
+        initialValue={
+          calculatorField === 'from' ? parseFloat(fromAmount) || 0 : parseFloat(toAmount) || 0
+        }
+      />
     </>
   );
 };
