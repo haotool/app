@@ -242,6 +242,22 @@ const RateWise = () => {
             >
               {ratesLoading ? '載入即時匯率中...' : '即時匯率換算 · 精準可靠'}
             </p>
+            <div className="mt-2">
+              <Link
+                to="/ui-showcase"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-white/70 border border-blue-100 rounded-full px-3 py-1 shadow-sm hover:text-blue-900 hover:border-blue-300"
+              >
+                查看鍵盤 UI Showcase
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </Link>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-4 md:gap-6">
