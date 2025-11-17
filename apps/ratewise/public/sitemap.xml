@@ -3,7 +3,7 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://app.haotool.org/ratewise</loc>
-    <lastmod>2025-11-14</lastmod>
+    <lastmod>2025-11-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>1</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise" />
@@ -12,7 +12,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/faq</loc>
-    <lastmod>2025-11-14</lastmod>
+    <lastmod>2025-11-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/faq" />
@@ -21,7 +21,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/about</loc>
-    <lastmod>2025-11-14</lastmod>
+    <lastmod>2025-11-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/about" />
