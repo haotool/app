@@ -91,6 +91,13 @@ export function getCurrencyDecimalPlaces(currencyCode: CurrencyCode): number {
     CHF: 2, // 瑞郎：ISO 4217 標準為 2 位小數
     HKD: 2, // 港幣：ISO 4217 標準為 2 位小數
     CNY: 2, // 人民幣：ISO 4217 標準為 2 位小數
+    // 新增幣別小數位數
+    NZD: 2, // 紐元：ISO 4217 標準為 2 位小數
+    THB: 2, // 泰銖：ISO 4217 標準為 2 位小數
+    PHP: 2, // 菲律賓披索：ISO 4217 標準為 2 位小數
+    IDR: 0, // 印尼盾：ISO 4217 標準為 0 位小數
+    VND: 0, // 越南盾：ISO 4217 標準為 0 位小數
+    MYR: 2, // 馬來幣：ISO 4217 標準為 2 位小數
   };
 
   return decimalPlaces[currencyCode] ?? 2;

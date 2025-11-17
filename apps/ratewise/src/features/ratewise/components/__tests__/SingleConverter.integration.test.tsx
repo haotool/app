@@ -64,6 +64,13 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
     KRW: 0.02366,
     CNY: 4.372,
     HKD: 4.004,
+    // 新增幣別 mock 資料
+    NZD: 17.83,
+    THB: 1.0194,
+    PHP: 0.5924,
+    IDR: 0.00218,
+    VND: 0.00134,
+    MYR: 7.93,
   };
 
   const mockProps = {
