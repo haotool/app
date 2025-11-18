@@ -9,7 +9,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { CalculatorState, UseCalculatorReturn } from '../types';
 import { calculateExpression } from '../utils/evaluator';
-import { validateExpression, canAddOperator, canAddDecimal } from '../utils/validator';
+import { validateExpression, canAddOperator, canAddDecimal, canAddDigit } from '../utils/validator';
 import { useDebounce } from './useDebounce';
 
 /**
@@ -46,9 +46,9 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
   // 即時預覽狀態（獨立於主要結果）
   const [preview, setPreview] = useState<number | null>(null);
 
-  // 防抖表達式（100ms 延遲，優化響應性 - 50% 更快！）
-  // @updated 2025-11-18 - 優化延遲時間（200ms → 100ms）
-  const debouncedExpression = useDebounce(state.expression, 100);
+  // 防抖表達式（50ms 延遲，極速響應 - iOS 標準！）
+  // @updated 2025-11-19 - 極速優化（100ms → 50ms，< 60fps 一幀時間）
+  const debouncedExpression = useDebounce(state.expression, 50);
 
   /**
    * 輸入數字或運算符
@@ -85,8 +85,12 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
           newExpression = `${newExpression}.`;
         }
       }
-      // 數字輸入
+      // 數字輸入（新增：iOS 標準數字長度驗證）
       else {
+        // iOS 標準：檢查數字長度（9 位整數 + 8 位小數）
+        if (!canAddDigit(newExpression, value)) {
+          return prev; // 超出範圍，拒絕輸入
+        }
         newExpression = `${newExpression}${value}`;
       }
 
