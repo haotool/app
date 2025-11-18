@@ -87,7 +87,7 @@ export function CalculatorKeyboard({
   onConfirm,
   initialValue,
 }: CalculatorKeyboardProps) {
-  const { expression, result, error, input, backspace, clear, calculate } =
+  const { expression, result, error, preview, input, backspace, clear, calculate } =
     useCalculator(initialValue);
 
   /**
@@ -193,7 +193,12 @@ export function CalculatorKeyboard({
               </div>
 
               {/* 表達式顯示區 */}
-              <ExpressionDisplay expression={expression} result={result} error={error} />
+              <ExpressionDisplay
+                expression={expression}
+                result={result}
+                error={error}
+                preview={preview}
+              />
 
               {/* 鍵盤佈局 */}
               <div className="space-y-3">

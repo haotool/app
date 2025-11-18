@@ -3,30 +3,32 @@
  * @file ExpressionDisplay.tsx
  * @description 表達式和結果顯示區域
  * @see docs/dev/010_calculator_keyboard_feature_spec.md Section 7.4
+ * @see docs/dev/011_calculator_apple_ux_enhancements.md - 即時預覽顯示
  */
 
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import type { ExpressionDisplayProps } from '../types';
 import { formatResult } from '../utils/evaluator';
 
 /**
  * 表達式顯示元件
- * @description 顯示當前輸入的表達式、計算結果和錯誤訊息
+ * @description 顯示當前輸入的表達式、即時預覽、計算結果和錯誤訊息
  *
  * @example
  * ```tsx
  * <ExpressionDisplay
  *   expression="100 + 50 × 2"
- *   result={200}
+ *   preview={200}
+ *   result={null}
  *   error={null}
  * />
  * ```
  */
-export function ExpressionDisplay({ expression, result, error }: ExpressionDisplayProps) {
+export function ExpressionDisplay({ expression, result, error, preview }: ExpressionDisplayProps) {
   return (
     <div className="mb-6 space-y-2">
       {/* 表達式顯示區 */}
-      <div className="min-h-[3rem] rounded-xl bg-slate-50 px-4 py-3">
+      <div className="min-h-[3rem] rounded-xl bg-slate-50 px-4 py-3 relative">
         <div
           className="text-right text-2xl text-slate-700 font-mono tabular-nums overflow-x-auto scrollbar-hide"
           role="status"
@@ -36,6 +38,24 @@ export function ExpressionDisplay({ expression, result, error }: ExpressionDispl
             <span className="text-slate-400 text-base font-sans">輸入數字或表達式</span>
           )}
         </div>
+
+        {/* 即時預覽（Apple 風格：淡化文字，顯示於表達式下方） */}
+        <AnimatePresence>
+          {preview !== null && preview !== undefined && !result && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.2 }}
+              className="text-right text-lg text-slate-400 font-mono tabular-nums mt-1"
+              role="status"
+              aria-label={`預覽結果 ${formatResult(preview)}`}
+              aria-live="polite"
+            >
+              = {formatResult(preview)}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 結果顯示區 */}

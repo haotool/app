@@ -70,6 +70,8 @@ export interface UseCalculatorReturn {
   result: number | null;
   /** 錯誤訊息 */
   error: string | null;
+  /** 即時預覽結果（防抖計算，Apple 風格） */
+  preview: number | null;
   /** 輸入數字或運算符 */
   input: (value: string) => void;
   /** 刪除最後一個字元 */
@@ -106,6 +108,8 @@ export interface ExpressionDisplayProps {
   result: number | null;
   /** 錯誤訊息 */
   error: string | null;
+  /** 即時預覽結果（Apple 風格，顯示於表達式下方） */
+  preview?: number | null;
 }
 
 /**
