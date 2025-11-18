@@ -3,12 +3,14 @@
  * @file useCalculator.ts
  * @description 計算機核心邏輯的 React Hook
  * @see docs/dev/010_calculator_keyboard_feature_spec.md Section 7.3
+ * @see docs/dev/011_calculator_apple_ux_enhancements.md - 即時預覽功能
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { CalculatorState, UseCalculatorReturn } from '../types';
 import { calculateExpression } from '../utils/evaluator';
 import { validateExpression, canAddOperator, canAddDecimal } from '../utils/validator';
+import { useDebounce } from './useDebounce';
 
 /**
  * 計算機 Hook
@@ -40,6 +42,12 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
     result: null,
     error: null,
   });
+
+  // 即時預覽狀態（獨立於主要結果）
+  const [preview, setPreview] = useState<number | null>(null);
+
+  // 防抖表達式（200ms 延遲，平衡響應性與效能）
+  const debouncedExpression = useDebounce(state.expression, 200);
 
   /**
    * 輸入數字或運算符
@@ -151,6 +159,9 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
         error: null,
       }));
 
+      // 清除預覽（已顯示最終結果）
+      setPreview(null);
+
       return result;
     } catch (error) {
       // 錯誤處理
@@ -166,10 +177,48 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
     }
   }, [state.expression]);
 
+  /**
+   * 即時預覽計算（防抖後自動觸發）
+   * 使用 useMemo 快取計算結果，避免不必要的重新計算
+   */
+  const calculatedPreview = useMemo(() => {
+    // 不預覽空表達式
+    if (!debouncedExpression || debouncedExpression.trim() === '') {
+      return null;
+    }
+
+    // 不預覽已有最終結果的表達式
+    if (state.result !== null) {
+      return null;
+    }
+
+    // 驗證表達式（靜默失敗，不顯示錯誤）
+    const validation = validateExpression(debouncedExpression);
+    if (!validation.isValid) {
+      return null;
+    }
+
+    try {
+      // 計算預覽結果
+      return calculateExpression(debouncedExpression);
+    } catch {
+      // 計算失敗時返回 null（不顯示預覽）
+      return null;
+    }
+  }, [debouncedExpression, state.result]);
+
+  /**
+   * 更新預覽狀態（當計算結果變化時）
+   */
+  useEffect(() => {
+    setPreview(calculatedPreview);
+  }, [calculatedPreview]);
+
   return {
     expression: state.expression,
     result: state.result,
     error: state.error,
+    preview, // 新增：即時預覽結果
     input,
     backspace,
     clear,
