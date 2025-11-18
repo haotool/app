@@ -1,14 +1,20 @@
 /**
  * Calculator Feature - Expression Display Component
  * @file ExpressionDisplay.tsx
- * @description 表達式和結果顯示區域
+ * @description 表達式和結果顯示區域（結果含千位分隔符格式化）
  * @see docs/dev/010_calculator_keyboard_feature_spec.md Section 7.4
- * @see docs/dev/011_calculator_apple_ux_enhancements.md - 即時預覽顯示
+ * @see docs/dev/011_calculator_apple_ux_enhancements.md - Feature 7, 8（即時預覽、格式化）
+ * @updated 2025-11-18 - 新增千位分隔符格式化（僅套用於結果，保持輸入向後相容）
+ *
+ * Linus 哲學：
+ * - ✅ 重用現有工具：使用 formatCalculatorNumber（與 currencyFormatter 一致）
+ * - ✅ 向後相容：表達式原樣顯示，避免破壞現有測試
+ * - ✅ 簡潔執念：formatCalculatorNumber 格式化結果，保持單一職責
  */
 
 import { motion, AnimatePresence } from 'motion/react';
 import type { ExpressionDisplayProps } from '../types';
-import { formatResult } from '../utils/evaluator';
+import { formatCalculatorNumber } from '../utils/formatCalculatorNumber';
 
 /**
  * 表達式顯示元件
@@ -27,7 +33,7 @@ import { formatResult } from '../utils/evaluator';
 export function ExpressionDisplay({ expression, result, error, preview }: ExpressionDisplayProps) {
   return (
     <div className="mb-6 space-y-2">
-      {/* 表達式顯示區 */}
+      {/* 表達式顯示區（顯示原始輸入，保持向後相容） */}
       <div className="min-h-[3rem] rounded-xl bg-slate-50 px-4 py-3 relative">
         <div
           className="text-right text-2xl text-slate-700 font-mono tabular-nums overflow-x-auto scrollbar-hide"
@@ -39,7 +45,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
           )}
         </div>
 
-        {/* 即時預覽（Apple 風格：淡化文字，顯示於表達式下方） */}
+        {/* 即時預覽（Apple 風格：淡化文字，顯示於表達式下方，含千位分隔符） */}
         <AnimatePresence>
           {preview !== null && preview !== undefined && !result && (
             <motion.div
@@ -49,16 +55,16 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
               transition={{ duration: 0.2 }}
               className="text-right text-lg text-slate-400 font-mono tabular-nums mt-1"
               role="status"
-              aria-label={`預覽結果 ${formatResult(preview)}`}
+              aria-label={`預覽結果 ${formatCalculatorNumber(preview)}`}
               aria-live="polite"
             >
-              = {formatResult(preview)}
+              = {formatCalculatorNumber(preview)}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* 結果顯示區 */}
+      {/* 結果顯示區（含千位分隔符格式化） */}
       {result !== null && !error && (
         <motion.div
           className="rounded-xl bg-violet-50 px-4 py-3"
@@ -70,10 +76,10 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
           <div
             className="text-right text-3xl font-bold text-violet-700 font-mono tabular-nums"
             role="status"
-            aria-label={`計算結果為 ${formatResult(result)}`}
+            aria-label={`計算結果為 ${formatCalculatorNumber(result)}`}
             aria-live="polite"
           >
-            = {formatResult(result)}
+            = {formatCalculatorNumber(result)}
           </div>
         </motion.div>
       )}

@@ -45,7 +45,7 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
       return `${baseStyles} calculator-key--operator bg-violet-100 text-violet-700 hover:bg-violet-200 active:bg-violet-300 text-2xl`;
     }
 
-    // 操作鍵樣式（AC, ⌫）
+    // 操作鍵樣式（AC, ⌫, %, +/-）
     if (value === 'clear') {
       return `${baseStyles} bg-red-100 text-red-700 hover:bg-red-200 active:bg-red-300 text-lg`;
     }
@@ -54,9 +54,14 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
       return `${baseStyles} bg-amber-100 text-amber-700 hover:bg-amber-200 active:bg-amber-300 text-lg`;
     }
 
-    // 計算鍵樣式（=）- 添加 calculator-key--equals 以支援客製化漣漪
+    // 功能鍵樣式（%, +/-）- iOS 標準淺灰色
+    if (value === 'percent' || value === 'negate') {
+      return `${baseStyles} bg-slate-200 text-slate-700 hover:bg-slate-300 active:bg-slate-400 text-lg`;
+    }
+
+    // 計算鍵樣式（=）- 移除 col-span-3，單一格大小
     if (value === 'calculate') {
-      return `${baseStyles} calculator-key--equals bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800 text-2xl col-span-3`;
+      return `${baseStyles} calculator-key--equals bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800 text-2xl`;
     }
 
     return baseStyles;

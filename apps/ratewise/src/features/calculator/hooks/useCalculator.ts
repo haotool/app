@@ -46,8 +46,9 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
   // 即時預覽狀態（獨立於主要結果）
   const [preview, setPreview] = useState<number | null>(null);
 
-  // 防抖表達式（200ms 延遲，平衡響應性與效能）
-  const debouncedExpression = useDebounce(state.expression, 200);
+  // 防抖表達式（100ms 延遲，優化響應性 - 50% 更快！）
+  // @updated 2025-11-18 - 優化延遲時間（200ms → 100ms）
+  const debouncedExpression = useDebounce(state.expression, 100);
 
   /**
    * 輸入數字或運算符
@@ -130,6 +131,86 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
       expression: '',
       result: null,
       error: null,
+    });
+  }, []);
+
+  /**
+   * 正負號切換（+/-）
+   * @description iOS 標準功能：切換當前數字的正負號
+   * @see docs/dev/011_calculator_apple_ux_enhancements.md - Feature 5
+   *
+   * Linus 哲學：
+   * - ✅ 簡潔執念：正則匹配最後一個數字，直接操作
+   * - ✅ 消除特殊情況：統一處理正數和負數
+   */
+  const negate = useCallback(() => {
+    setState((prev) => {
+      const { expression } = prev;
+
+      // 空表達式：無操作
+      if (expression === '') return prev;
+
+      // 正則：匹配最後一個數字（含負號）
+      // 例如："5 + 3" → 匹配 "3"
+      // 例如："5 + -3" → 匹配 "-3"
+      const lastNumberRegex = /-?\d+\.?\d*$/;
+      const match = lastNumberRegex.exec(expression);
+
+      if (!match) return prev; // 沒有數字可切換
+
+      const lastNumber = match[0];
+      const startIndex = match.index;
+
+      // 切換正負號：如果有負號則移除，沒有則加上
+      const toggledNumber = lastNumber.startsWith('-') ? lastNumber.slice(1) : `-${lastNumber}`;
+
+      // 替換最後一個數字
+      const newExpression = expression.slice(0, startIndex) + toggledNumber;
+
+      return {
+        expression: newExpression,
+        result: null,
+        error: null,
+      };
+    });
+  }, []);
+
+  /**
+   * 百分比轉換（%）
+   * @description iOS 標準功能：當前值 ÷ 100
+   * @see docs/dev/011_calculator_apple_ux_enhancements.md - Feature 6
+   *
+   * Linus 哲學：
+   * - ✅ 實用主義：簡單的數學運算，不引入複雜邏輯
+   * - ✅ 簡潔執念：找到最後數字 → 除以 100 → 替換
+   */
+  const percent = useCallback(() => {
+    setState((prev) => {
+      const { expression } = prev;
+
+      // 空表達式：無操作
+      if (expression === '') return prev;
+
+      // 正則：匹配最後一個數字
+      const lastNumberRegex = /-?\d+\.?\d*$/;
+      const match = lastNumberRegex.exec(expression);
+
+      if (!match) return prev; // 沒有數字可轉換
+
+      const lastNumber = parseFloat(match[0]);
+      const startIndex = match.index;
+
+      // 計算百分比：除以 100
+      const percentValue = lastNumber / 100;
+
+      // 替換最後一個數字
+      const newExpression = expression.slice(0, startIndex) + percentValue;
+
+      return {
+        expression: newExpression,
+        result: null,
+        error: null,
+      };
     });
   }, []);
 
@@ -223,5 +304,7 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
     backspace,
     clear,
     calculate,
+    negate, // 新增：正負號切換（+/-）
+    percent, // 新增：百分比轉換（%）
   };
 }
