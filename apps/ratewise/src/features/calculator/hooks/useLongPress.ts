@@ -1,11 +1,11 @@
 import { useRef, useCallback, useEffect } from 'react';
 
 /**
- * Long Press Hook - iOS-style accelerated deletion
+ * Long Press Hook - iOS-style accelerated deletion (極速版)
  *
  * Features:
- * - Initial delay: 500ms (prevents accidental triggers)
- * - Acceleration: 100ms → 50ms → 25ms
+ * - Initial delay: 400ms (更快觸發，保持防誤觸)
+ * - Acceleration: 80ms → 40ms → 20ms → 10ms (極速四段加速)
  * - Memory safe: cleans up timers on unmount
  *
  * @example
@@ -22,11 +22,11 @@ interface UseLongPressOptions {
   onLongPress: () => void;
   /** Callback for single click (optional) */
   onClick?: () => void;
-  /** Initial delay before long press activates (default: 500ms) */
+  /** Initial delay before long press activates (default: 400ms) */
   threshold?: number;
 }
 
-export function useLongPress({ onLongPress, onClick, threshold = 500 }: UseLongPressOptions) {
+export function useLongPress({ onLongPress, onClick, threshold = 400 }: UseLongPressOptions) {
   const isLongPress = useRef(false);
   const initialTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const deleteIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -36,19 +36,20 @@ export function useLongPress({ onLongPress, onClick, threshold = 500 }: UseLongP
     isLongPress.current = false;
     deleteCountRef.current = 0;
 
-    // Initial delay (500ms) prevents accidental long press
+    // Initial delay (400ms) prevents accidental long press
     initialTimerRef.current = setTimeout(() => {
       isLongPress.current = true;
       onLongPress();
       deleteCountRef.current++;
 
-      // Start accelerated deletion
+      // Start accelerated deletion (極速四段加速)
       const acceleratedDelete = () => {
         // Calculate interval based on delete count
-        // 0-5: 100ms, 6-10: 50ms, 11+: 25ms (iOS-style)
-        let interval = 100;
-        if (deleteCountRef.current > 10) interval = 25;
-        else if (deleteCountRef.current > 5) interval = 50;
+        // 1-3: 80ms, 4-6: 40ms, 7-10: 20ms, 11+: 10ms (極速版)
+        let interval = 80;
+        if (deleteCountRef.current > 10) interval = 10;
+        else if (deleteCountRef.current > 6) interval = 20;
+        else if (deleteCountRef.current > 3) interval = 40;
 
         deleteIntervalRef.current = setTimeout(() => {
           onLongPress();

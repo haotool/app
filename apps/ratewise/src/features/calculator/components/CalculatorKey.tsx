@@ -85,7 +85,7 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
 
   /**
    * 長按處理（僅用於 backspace）
-   * iOS 風格加速刪除：500ms 觸發 → 100ms → 50ms → 25ms
+   * iOS 極速加速刪除：400ms 觸發 → 80ms → 40ms → 20ms → 10ms
    */
   const longPressProps = useLongPress({
     onLongPress: () => {
@@ -100,7 +100,7 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
             handleClick();
           }
         : undefined,
-    threshold: 500, // iOS 標準初始延遲
+    threshold: 400, // iOS 極速初始延遲（平衡速度與防誤觸）
   });
 
   // Backspace 鍵使用長按；其他鍵使用一般點擊
@@ -115,10 +115,10 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
       whileTap={{ scale: 0.95 }}
       whileHover={{ scale: 1.05 }}
       transition={{
-        duration: 0.3, // Apple 風格：300ms（原 100ms 太快）
+        duration: 0.1, // iOS 極速回饋：100ms（< 16ms 視覺回饋 + 動畫流暢）
         type: 'spring',
-        stiffness: 300,
-        damping: 20,
+        stiffness: 400, // 提高剛性：更快反應
+        damping: 25, // 提高阻尼：減少彈跳
       }}
       {...(isBackspace ? longPressProps : {})}
     >

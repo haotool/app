@@ -52,7 +52,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
               className="text-right text-lg text-slate-400 font-mono tabular-nums mt-1"
               role="status"
               aria-label={`預覽結果 ${formatCalculatorNumber(preview)}`}
@@ -70,7 +70,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
           className="rounded-xl bg-violet-50 px-4 py-3"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
         >
           <div className="text-sm text-violet-600 font-medium mb-1">計算結果</div>
           <div
@@ -90,7 +90,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
           className="rounded-xl bg-red-50 px-4 py-3"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
           role="alert"
           aria-live="assertive"
         >

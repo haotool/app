@@ -19,6 +19,18 @@ const ALLOWED_CHARS = /^[0-9+\-×÷.()\s]+$/;
 const OPERATORS = ['+', '-', '×', '÷'];
 
 /**
+ * JavaScript 安全整數範圍（國際標準，支援高面額貨幣）
+ * @description Number.MAX_SAFE_INTEGER = 9,007,199,254,740,991 (16 位數字)
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+ *
+ * 為什麼不限制 9 位？
+ * - 印尼盾 (IDR)：1,000,000 IDR ≈ $60 USD，房地產可達 10 億盾 (10 位)
+ * - 韓元 (KRW)、日元 (JPY) 等高面額貨幣也需要更多位數
+ * - JavaScript Number 可安全處理 15-16 位數字
+ */
+const MAX_DECIMAL_DIGITS = 8; // iOS 標準：最多 8 位小數
+
+/**
  * 驗證表達式格式
  * @description 完整驗證表達式的合法性（字元、格式、語法）
  * @param expression - 待驗證的表達式
@@ -236,4 +248,73 @@ export function hasDivisionByZero(expression: string): boolean {
 export function getLastNumber(expression: string): string {
   const match = /[\d.]+$/.exec(expression.trim());
   return match ? match[0] : '';
+}
+
+/**
+ * 驗證數字是否超出安全範圍
+ * @description 使用 JavaScript 原生安全整數檢查，支援國際貨幣
+ * @param numberStr - 數字字串（例如 "123.45" 或 "9007199254740991"）
+ * @returns 是否超出範圍
+ *
+ * @example
+ * ```ts
+ * isNumberOutOfRange('9007199254740991'); // false（MAX_SAFE_INTEGER，OK）
+ * isNumberOutOfRange('9007199254740992'); // true（超出安全範圍）
+ * isNumberOutOfRange('123.12345678'); // false（8 位小數，OK）
+ * isNumberOutOfRange('123.123456789'); // true（9 位小數，超出）
+ * isNumberOutOfRange('1000000000'); // false（10 億，印尼盾房地產價格，OK）
+ * ```
+ */
+export function isNumberOutOfRange(numberStr: string): boolean {
+  // 處理空字串或非數字字串（如括號、運算符等）
+  if (!numberStr || numberStr.trim() === '') {
+    return false; // 空字串不算超出範圍
+  }
+
+  const parts = numberStr.split('.');
+  const decimalPart = parts[1] ?? '';
+
+  // 1. 檢查小數部分長度（iOS 標準：最多 8 位）
+  if (decimalPart.length > MAX_DECIMAL_DIGITS) {
+    return true;
+  }
+
+  // 2. 檢查整數部分是否在安全範圍內
+  const num = parseFloat(numberStr);
+
+  // 如果不是有效數字（NaN），不算超出範圍（可能是括號等非數字字元）
+  if (Number.isNaN(num)) {
+    return false;
+  }
+
+  // 如果是整數，使用 Number.isSafeInteger() 檢查
+  if (Number.isInteger(num)) {
+    return !Number.isSafeInteger(num);
+  }
+
+  // 如果是小數，檢查整數部分是否在安全範圍內
+  const integerPart = Math.floor(Math.abs(num));
+  return !Number.isSafeInteger(integerPart);
+}
+
+/**
+ * 檢查是否可以添加數字
+ * @description 驗證添加新數字後是否會超出安全範圍（支援國際貨幣）
+ * @param expression - 當前表達式
+ * @param digit - 要添加的數字字元
+ * @returns 是否可以添加
+ *
+ * @example
+ * ```ts
+ * canAddDigit('9007199254740991', '0'); // false（超出 MAX_SAFE_INTEGER）
+ * canAddDigit('1000000000', '0'); // true（10 億，印尼盾房地產，OK）
+ * canAddDigit('123.12345678', '9'); // false（小數已達 8 位）
+ * canAddDigit('100', '5'); // true
+ * ```
+ */
+export function canAddDigit(expression: string, digit: string): boolean {
+  const lastNumber = getLastNumber(expression);
+  const newNumber = lastNumber + digit;
+
+  return !isNumberOutOfRange(newNumber);
 }
