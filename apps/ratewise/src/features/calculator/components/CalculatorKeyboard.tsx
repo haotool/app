@@ -14,46 +14,52 @@ import { CalculatorKey } from './CalculatorKey';
 import { ExpressionDisplay } from './ExpressionDisplay';
 
 /**
- * 鍵盤佈局定義
- * @description 4×5 網格佈局（計算機樣式：7-8-9 在上）
+ * 鍵盤佈局定義（iOS 標準 4×5 網格，20 按鈕）
+ * @description 符合 iOS 計算機標準佈局
+ * @updated 2025-11-18 - 修正為 iOS 標準佈局（消除跨欄特殊情況）
+ * @see docs/dev/011_calculator_apple_ux_enhancements.md - Feature 4
+ *
+ * Linus 哲學：
+ * - ✅ 消除特殊情況：所有按鈕等寬等高，無跨欄
+ * - ✅ 簡潔執念：5 行 × 4 列，均勻分佈
+ * - ✅ 實用主義：符合真實 iOS 佈局
  */
 const KEYBOARD_LAYOUT: KeyDefinition[][] = [
-  // 第1行：7, 8, 9, ÷
+  // 第 1 行：⌫, AC, %, ÷（功能鍵 + 除法）
+  [
+    { label: '⌫', value: 'backspace', type: 'action', ariaLabel: '刪除' },
+    { label: 'AC', value: 'clear', type: 'action', ariaLabel: '清除全部' },
+    { label: '%', value: 'percent', type: 'action', ariaLabel: '百分比' },
+    { label: '÷', value: '÷', type: 'operator', ariaLabel: '除法' },
+  ],
+  // 第 2 行：7, 8, 9, ×（數字 + 乘法）
   [
     { label: '7', value: '7', type: 'number', ariaLabel: '數字 7' },
     { label: '8', value: '8', type: 'number', ariaLabel: '數字 8' },
     { label: '9', value: '9', type: 'number', ariaLabel: '數字 9' },
-    { label: '÷', value: '÷', type: 'operator', ariaLabel: '除法' },
+    { label: '×', value: '×', type: 'operator', ariaLabel: '乘法' },
   ],
-  // 第2行：4, 5, 6, ×
+  // 第 3 行：4, 5, 6, -（數字 + 減法）
   [
     { label: '4', value: '4', type: 'number', ariaLabel: '數字 4' },
     { label: '5', value: '5', type: 'number', ariaLabel: '數字 5' },
     { label: '6', value: '6', type: 'number', ariaLabel: '數字 6' },
-    { label: '×', value: '×', type: 'operator', ariaLabel: '乘法' },
+    { label: '-', value: '-', type: 'operator', ariaLabel: '減法' },
   ],
-  // 第3行：1, 2, 3, -
+  // 第 4 行：1, 2, 3, +（數字 + 加法）
   [
     { label: '1', value: '1', type: 'number', ariaLabel: '數字 1' },
     { label: '2', value: '2', type: 'number', ariaLabel: '數字 2' },
     { label: '3', value: '3', type: 'number', ariaLabel: '數字 3' },
-    { label: '-', value: '-', type: 'operator', ariaLabel: '減法' },
-  ],
-  // 第4行：., 0, ⌫, +
-  [
-    { label: '.', value: '.', type: 'decimal', ariaLabel: '小數點' },
-    { label: '0', value: '0', type: 'number', ariaLabel: '數字 0' },
-    { label: '⌫', value: 'backspace', type: 'action', ariaLabel: '刪除' },
     { label: '+', value: '+', type: 'operator', ariaLabel: '加法' },
   ],
-];
-
-/**
- * 操作鍵定義（獨立一行）
- */
-const ACTION_KEYS: KeyDefinition[] = [
-  { label: 'AC', value: 'clear', type: 'action', ariaLabel: '清除全部' },
-  { label: '=', value: 'calculate', type: 'action', ariaLabel: '計算結果' },
+  // 第 5 行：+/-, 0, ., =（正負號、0、小數點、計算）
+  [
+    { label: '+/-', value: 'negate', type: 'action', ariaLabel: '正負號切換' },
+    { label: '0', value: '0', type: 'number', ariaLabel: '數字 0' },
+    { label: '.', value: '.', type: 'decimal', ariaLabel: '小數點' },
+    { label: '=', value: 'calculate', type: 'action', ariaLabel: '計算結果' },
+  ],
 ];
 
 /**
@@ -87,11 +93,23 @@ export function CalculatorKeyboard({
   onConfirm,
   initialValue,
 }: CalculatorKeyboardProps) {
-  const { expression, result, error, preview, input, backspace, clear, calculate } =
-    useCalculator(initialValue);
+  const {
+    expression,
+    result,
+    error,
+    preview,
+    input,
+    backspace,
+    clear,
+    calculate,
+    negate,
+    percent,
+  } = useCalculator(initialValue);
 
   /**
-   * 處理按鍵點擊
+   * 處理按鍵點擊（iOS 標準功能）
+   * @description 處理所有按鍵類型：數字、運算符、操作鍵
+   * @updated 2025-11-18 - Added negate and percent handlers
    */
   const handleKeyClick = (value: string) => {
     switch (value) {
@@ -109,7 +127,16 @@ export function CalculatorKeyboard({
         }
         break;
       }
+      case 'negate':
+        // iOS 標準：正負號切換
+        negate();
+        break;
+      case 'percent':
+        // iOS 標準：百分比轉換
+        percent();
+        break;
       default:
+        // 數字、運算符、小數點
         input(value);
     }
   };
@@ -200,9 +227,8 @@ export function CalculatorKeyboard({
                 preview={preview}
               />
 
-              {/* 鍵盤佈局 */}
+              {/* 鍵盤佈局（iOS 標準 5×4 網格，20 按鈕均勻分佈） */}
               <div className="space-y-3">
-                {/* 數字和運算符區域（4×4 網格） */}
                 {KEYBOARD_LAYOUT.map((row, rowIndex) => (
                   <div key={rowIndex} className="grid grid-cols-4 gap-3">
                     {row.map((keyDef) => (
@@ -210,13 +236,6 @@ export function CalculatorKeyboard({
                     ))}
                   </div>
                 ))}
-
-                {/* 操作鍵區域（AC + = 佔3格） */}
-                <div className="grid grid-cols-4 gap-3">
-                  {ACTION_KEYS.map((keyDef) => (
-                    <CalculatorKey key={keyDef.value} keyDef={keyDef} onClick={handleKeyClick} />
-                  ))}
-                </div>
               </div>
             </div>
           </motion.div>
