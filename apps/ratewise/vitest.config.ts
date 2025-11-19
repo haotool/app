@@ -54,6 +54,7 @@ export default defineConfig(() => {
         '**/cypress/**',
         '**/.{idea,git,cache,output,temp}/**',
         '**/tests/e2e/**', // Playwright E2E tests
+        '**/e2e/**', // 🔧 修復 2025-11-20：排除 e2e/ 目錄下的 Playwright 測試
       ],
       coverage: {
         provider: 'v8',

@@ -1,58 +1,38 @@
 /**
- * Calculator Animations - Apple-style micro-interactions
+ * Calculator Animations - Motion.js Only (Linus KISS 原則)
  *
  * Features:
- * - Ripple effect on button press
- * - Smooth transitions (300ms, not 100ms)
- * - GPU-accelerated animations (transform, opacity)
+ * - GPU acceleration for smooth Motion.js animations
+ * - Focus visible for accessibility (keyboard navigation)
+ * - NO CSS animations (避免與 Motion.js 衝突）
+ *
+ * 🔧 修復 2025-11-20：
+ * - 移除所有 CSS :active 動畫（與 Motion whileTap 衝突）
+ * - 移除 ripple 效果（在移動設備上行為不一致）
+ * - 只保留 GPU 加速和無障礙功能
+ * - 所有互動動畫由 Motion.js 統一處理
+ *
+ * Linus 的評語："選一個！不要混用兩種動畫系統！"
  *
  * Usage:
- * <button className="calculator-key">5</button>
+ * <motion.button className="calculator-key" whileTap={{ scale: 1.1 }}>5</motion.button>
  */
-
-/* Ripple animation keyframes */
-@keyframes ripple {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0.5;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(4);
-    opacity: 0;
-  }
-}
 
 /* Base calculator key styles */
 .calculator-key {
   position: relative;
   overflow: hidden;
 
-  /* Enable GPU acceleration for smooth animations */
+  /* Enable GPU acceleration for smooth Motion.js animations */
   will-change: transform;
   transform: translateZ(0);
-}
 
-/* Ripple effect (pseudo-element) */
-.calculator-key::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-
-  /* Radial gradient for soft ripple effect */
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 70%);
-
-  /* Initial state */
-  transform: translate(-50%, -50%) scale(0);
-  pointer-events: none;
-}
-
-/* Trigger ripple on active state */
-.calculator-key:active::after {
-  animation: ripple 600ms ease-out;
+  /* 🔧 修復 2025-11-20：允許 Motion.js tap 手勢在移動裝置上正常工作
+   * touch-action: manipulation 禁用瀏覽器的觸控手勢（雙擊縮放、長按選擇）
+   * 讓 Motion.js whileTap 動畫在觸控設備上正確觸發
+   * @see https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action
+   */
+  touch-action: manipulation;
 }
 
 /* Focus visible for keyboard navigation (accessibility) */
@@ -61,12 +41,5 @@
   outline-offset: 2px;
 }
 
-/* Operator keys with brand color ripple */
-.calculator-key--operator::after {
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.6) 0%, rgba(37, 99, 235, 0) 70%);
-}
-
-/* Equals key with primary color ripple */
-.calculator-key--equals::after {
-  background: radial-gradient(circle, rgba(76, 29, 149, 0.7) 0%, rgba(76, 29, 149, 0) 70%);
-}
+/* 🔧 所有 :active, ::after, @keyframes 已移除（避免與 Motion.js 衝突）*/
+/* Motion.js 的 whileTap 將完全控制按鈕互動動畫 */

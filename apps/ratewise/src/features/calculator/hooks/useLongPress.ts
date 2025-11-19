@@ -1,41 +1,43 @@
 import { useRef, useCallback, useEffect } from 'react';
 
 /**
- * Long Press Hook - iOS Calculator Standard
+ * Long Press Hook - iOS Calculator Standard (Optimized)
  *
  * Features:
  * - Initial delay: 500ms (iOS 標準，防誤觸)
- * - Fixed interval: 100ms (iOS Calculator 固定間隔)
+ * - Optimized interval: 150ms (人體工學優化，避免過快刪除)
  * - Memory safe: cleans up timers on unmount
+ * - Simplified: 移除 onClick 處理，讓組件自己決定（Linus KISS 原則）
  *
- * @see Web Research 2025-11-19 - iOS backspace: 0.5s initial, 0.1s interval
+ * @see Web Research 2025-11-19 - iOS backspace: 0.5s initial
+ * @see Bug Fix 2025-11-20 - 150ms interval 避免點一下刪兩個
  *
  * @example
  * const longPressProps = useLongPress({
  *   onLongPress: handleDelete,
- *   onClick: handleSingleDelete,
- *   threshold: 500
+ *   threshold: 500,
+ *   interval: 150
  * });
  *
- * <button {...longPressProps}>Delete</button>
+ * <button
+ *   {...longPressProps}
+ *   onClick={handleSingleClick} // 組件自己處理短按
+ * >Delete</button>
  */
 
 interface UseLongPressOptions {
   /** Callback triggered repeatedly during long press */
   onLongPress: () => void;
-  /** Callback for single click (optional) */
-  onClick?: () => void;
   /** Initial delay before long press activates (default: 500ms) */
   threshold?: number;
-  /** Repeat interval after threshold (default: 100ms) */
+  /** Repeat interval after threshold (default: 150ms，人體工學優化） */
   interval?: number;
 }
 
 export function useLongPress({
   onLongPress,
-  onClick,
   threshold = 500,
-  interval = 100,
+  interval = 150, // 🔧 修復：100ms → 150ms（避免過快）
 }: UseLongPressOptions) {
   const isLongPress = useRef(false);
   const initialTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -49,7 +51,7 @@ export function useLongPress({
       isLongPress.current = true;
       onLongPress();
 
-      // Start fixed interval deletion (iOS 標準：100ms 固定間隔)
+      // Start optimized interval deletion (150ms 人體工學優化)
       const repeatDelete = () => {
         deleteIntervalRef.current = setTimeout(() => {
           onLongPress();
@@ -70,11 +72,9 @@ export function useLongPress({
       clearTimeout(deleteIntervalRef.current);
     }
 
-    // If short press, execute onClick
-    if (!isLongPress.current && onClick) {
-      onClick();
-    }
-  }, [onClick]);
+    // 🔧 修復：移除 onClick 處理，讓組件自己決定（消除特殊情況）
+    // 理由：hook 只專注長按功能，短按由組件的 onClick 處理
+  }, []);
 
   // Clean up on unmount (prevent memory leaks)
   useEffect(() => {
