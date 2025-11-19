@@ -30,10 +30,14 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
   /**
    * 按鍵樣式映射
    * @description 根據按鍵類型返回對應的 Tailwind CSS 類別
+   *
+   * 🐛 修復：移除 transition-all，避免與 Motion 動畫衝突
+   * @see Bug Report 2025-11-19 - 按鈕放大動畫未顯現
    */
   const getKeyStyles = (): string => {
+    // ✅ 移除 transition-all，讓 Motion 完全控制動畫（修復 whileTap 失效）
     const baseStyles =
-      'calculator-key relative h-16 rounded-xl font-semibold transition-all duration-200 select-none overflow-hidden';
+      'calculator-key relative h-16 rounded-xl font-semibold select-none overflow-hidden';
 
     // 數字鍵樣式
     if (type === 'number' || type === 'decimal') {
@@ -87,6 +91,9 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
    * 長按處理（僅用於 backspace）
    * iOS 優化加速刪除：500ms 觸發 → 100ms 間隔（參考 iOS Calculator 標準）
    * @see Web Research 2025-11-19 - iOS backspace 初始延遲 0.5s，後續 0.1s 間隔
+   *
+   * 🐛 修復：移除 handleClick() 呼叫，避免雙重觸發（點一下刪兩個）
+   * @see Bug Report 2025-11-19 - 用戶反饋刪除速度過快
    */
   const longPressProps = useLongPress({
     onLongPress: () => {
@@ -98,7 +105,8 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
       value === 'backspace'
         ? () => {
             if (disabled) return;
-            handleClick();
+            lightHaptic(); // 單擊觸覺回饋
+            onClick(value); // ✅ 直接呼叫，避免雙重觸發（修復前：handleClick() 導致雙重呼叫）
           }
         : undefined,
     threshold: 500, // iOS 標準初始延遲：500ms（防止誤觸）

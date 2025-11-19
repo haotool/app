@@ -1,10 +1,10 @@
 # 計算機 UX 增強功能 BDD 測試規格
 
-**版本**: 1.0.0  
+**版本**: 1.1.0 (CRITICAL FIX)  
 **建立時間**: 2025-11-19T23:18:00+08:00  
-**更新時間**: 2025-11-19T23:18:00+08:00  
-**狀態**: ✅ 已完成  
-**參考**: Web Research 2025-11-19, Apple HIG, iOS Calculator
+**更新時間**: 2025-11-19T23:36:54+08:00  
+**狀態**: ✅ 已完成（含緊急修復）  
+**參考**: Web Research 2025-11-19, Apple HIG, iOS Calculator, Bug Report 2025-11-19
 
 ---
 
@@ -212,13 +212,78 @@ pnpm test
 
 ---
 
-## 版本歷史
+## CRITICAL BUG 修復（v1.1.0）
 
-| 版本  | 日期       | 變更內容                             |
-| ----- | ---------- | ------------------------------------ |
-| 1.0.0 | 2025-11-19 | 初版：千位分隔符、按鈕動畫、長按優化 |
+### 🐛 用戶回報嚴重問題（2025-11-19T23:36:54+08:00）
+
+**問題 1：Backspace 雙重觸發（點一下刪兩個數字）**
+
+**根因**：
+
+- `useLongPress` 的 `onClick` 呼叫 `handleClick()`
+- `handleClick()` 內部又呼叫 `onClick(value)`
+- 結果：**雙重觸發刪除**
+
+**修復方案**（apps/ratewise/src/features/calculator/components/CalculatorKey.tsx）：
+
+```typescript
+// ❌ 修復前（Line 97-103）
+onClick: value === 'backspace'
+  ? () => {
+      if (disabled) return;
+      handleClick(); // ← BUG：導致雙重觸發
+    }
+  : undefined,
+
+// ✅ 修復後
+onClick: value === 'backspace'
+  ? () => {
+      if (disabled) return;
+      lightHaptic(); // 單擊觸覺回饋
+      onClick(value); // 直接呼叫，避免雙重觸發
+    }
+  : undefined,
+```
 
 ---
 
-**最後更新**: 2025-11-19T23:18:00+08:00  
+**問題 2：按鈕放大效果未顯現**
+
+**根因**：
+
+- CSS `transition-all duration-200` 覆蓋 Motion 動畫
+- `whileTap={{ scale: 1.1 }}` 被 CSS 覆蓋失效
+
+**修復方案**（apps/ratewise/src/features/calculator/components/CalculatorKey.tsx）：
+
+```typescript
+// ❌ 修復前（Line 36）
+const baseStyles =
+  'calculator-key relative h-16 rounded-xl font-semibold transition-all duration-200 select-none overflow-hidden';
+
+// ✅ 修復後（移除 transition-all）
+const baseStyles =
+  'calculator-key relative h-16 rounded-xl font-semibold select-none overflow-hidden';
+```
+
+---
+
+### 驗證結果
+
+- ✅ TypeScript 檢查：零錯誤
+- ✅ 測試套件：357/357 通過
+- ✅ 修復確認：Backspace 單擊只刪一個字元，按鈕放大動畫正常顯示
+
+---
+
+## 版本歷史
+
+| 版本  | 日期       | 變更內容                                                     |
+| ----- | ---------- | ------------------------------------------------------------ |
+| 1.0.0 | 2025-11-19 | 初版：千位分隔符、按鈕動畫、長按優化                         |
+| 1.1.0 | 2025-11-19 | **CRITICAL FIX**：修復 Backspace 雙重觸發 + 按鈕動畫失效問題 |
+
+---
+
+**最後更新**: 2025-11-19T23:36:54+08:00  
 **維護者**: Linus Guide Agent
