@@ -20,10 +20,11 @@ describe('ExpressionDisplay', () => {
       expect(screen.getByText('2 + 3')).toBeInTheDocument();
     });
 
-    it('應顯示長運算式', () => {
+    it('應顯示長運算式（含千位分隔符格式化）', () => {
       const longExpression = '123 + 456 - 789 × 012 ÷ 345';
       render(<ExpressionDisplay expression={longExpression} result={null} error={null} />);
-      expect(screen.getByText(longExpression)).toBeInTheDocument();
+      // formatExpression 會移除前導零（012 → 12）並格式化數字
+      expect(screen.getByText('123 + 456 - 789 × 12 ÷ 345')).toBeInTheDocument();
     });
 
     it('應處理特殊字元', () => {

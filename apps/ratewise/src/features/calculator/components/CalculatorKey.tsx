@@ -85,7 +85,8 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
 
   /**
    * 長按處理（僅用於 backspace）
-   * iOS 極速加速刪除：400ms 觸發 → 80ms → 40ms → 20ms → 10ms
+   * iOS 優化加速刪除：500ms 觸發 → 100ms 間隔（參考 iOS Calculator 標準）
+   * @see Web Research 2025-11-19 - iOS backspace 初始延遲 0.5s，後續 0.1s 間隔
    */
   const longPressProps = useLongPress({
     onLongPress: () => {
@@ -100,7 +101,7 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
             handleClick();
           }
         : undefined,
-    threshold: 400, // iOS 極速初始延遲（平衡速度與防誤觸）
+    threshold: 500, // iOS 標準初始延遲：500ms（防止誤觸）
   });
 
   // Backspace 鍵使用長按；其他鍵使用一般點擊
@@ -112,13 +113,13 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
       onClick={isBackspace ? undefined : handleClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      whileTap={{ scale: 0.95 }}
-      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 1.1 }} // 放大到 110%：更明顯的視覺反饋
+      whileHover={{ scale: 1.02 }} // 輕微放大：避免過度動畫
       transition={{
         duration: 0.1, // iOS 極速回饋：100ms（< 16ms 視覺回饋 + 動畫流暢）
         type: 'spring',
-        stiffness: 400, // 提高剛性：更快反應
-        damping: 25, // 提高阻尼：減少彈跳
+        stiffness: 500, // 提高剛性：更快反應
+        damping: 30, // 提高阻尼：減少彈跳
       }}
       {...(isBackspace ? longPressProps : {})}
     >
