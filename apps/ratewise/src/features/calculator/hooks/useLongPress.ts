@@ -1,17 +1,20 @@
 import { useRef, useCallback, useEffect } from 'react';
 
 /**
- * Long Press Hook - iOS-style accelerated deletion (極速版)
+ * Long Press Hook - iOS Calculator Standard
  *
  * Features:
- * - Initial delay: 400ms (更快觸發，保持防誤觸)
- * - Acceleration: 80ms → 40ms → 20ms → 10ms (極速四段加速)
+ * - Initial delay: 500ms (iOS 標準，防誤觸)
+ * - Fixed interval: 100ms (iOS Calculator 固定間隔)
  * - Memory safe: cleans up timers on unmount
+ *
+ * @see Web Research 2025-11-19 - iOS backspace: 0.5s initial, 0.1s interval
  *
  * @example
  * const longPressProps = useLongPress({
  *   onLongPress: handleDelete,
  *   onClick: handleSingleDelete,
+ *   threshold: 500
  * });
  *
  * <button {...longPressProps}>Delete</button>
@@ -22,45 +25,41 @@ interface UseLongPressOptions {
   onLongPress: () => void;
   /** Callback for single click (optional) */
   onClick?: () => void;
-  /** Initial delay before long press activates (default: 400ms) */
+  /** Initial delay before long press activates (default: 500ms) */
   threshold?: number;
+  /** Repeat interval after threshold (default: 100ms) */
+  interval?: number;
 }
 
-export function useLongPress({ onLongPress, onClick, threshold = 400 }: UseLongPressOptions) {
+export function useLongPress({
+  onLongPress,
+  onClick,
+  threshold = 500,
+  interval = 100,
+}: UseLongPressOptions) {
   const isLongPress = useRef(false);
   const initialTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const deleteIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const deleteCountRef = useRef(0);
 
   const start = useCallback(() => {
     isLongPress.current = false;
-    deleteCountRef.current = 0;
 
-    // Initial delay (400ms) prevents accidental long press
+    // Initial delay (iOS 標準：500ms) prevents accidental long press
     initialTimerRef.current = setTimeout(() => {
       isLongPress.current = true;
       onLongPress();
-      deleteCountRef.current++;
 
-      // Start accelerated deletion (極速四段加速)
-      const acceleratedDelete = () => {
-        // Calculate interval based on delete count
-        // 1-3: 80ms, 4-6: 40ms, 7-10: 20ms, 11+: 10ms (極速版)
-        let interval = 80;
-        if (deleteCountRef.current > 10) interval = 10;
-        else if (deleteCountRef.current > 6) interval = 20;
-        else if (deleteCountRef.current > 3) interval = 40;
-
+      // Start fixed interval deletion (iOS 標準：100ms 固定間隔)
+      const repeatDelete = () => {
         deleteIntervalRef.current = setTimeout(() => {
           onLongPress();
-          deleteCountRef.current++;
-          acceleratedDelete(); // Recursive call for continuous deletion
+          repeatDelete(); // Recursive call for continuous deletion
         }, interval);
       };
 
-      acceleratedDelete();
+      repeatDelete();
     }, threshold);
-  }, [onLongPress, threshold]);
+  }, [onLongPress, threshold, interval]);
 
   const stop = useCallback(() => {
     // Clean up all timers

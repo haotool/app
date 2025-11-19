@@ -1,20 +1,20 @@
 /**
  * Calculator Feature - Expression Display Component
  * @file ExpressionDisplay.tsx
- * @description 表達式和結果顯示區域（結果含千位分隔符格式化）
+ * @description 表達式和結果顯示區域（全面套用千位分隔符格式化）
  * @see docs/dev/010_calculator_keyboard_feature_spec.md Section 7.4
  * @see docs/dev/011_calculator_apple_ux_enhancements.md - Feature 7, 8（即時預覽、格式化）
- * @updated 2025-11-18 - 新增千位分隔符格式化（僅套用於結果，保持輸入向後相容）
+ * @updated 2025-11-19 - 算式區套用千位分隔符（提升 UX 可讀性，優於 iOS Calculator）
  *
  * Linus 哲學：
- * - ✅ 重用現有工具：使用 formatCalculatorNumber（與 currencyFormatter 一致）
- * - ✅ 向後相容：表達式原樣顯示，避免破壞現有測試
- * - ✅ 簡潔執念：formatCalculatorNumber 格式化結果，保持單一職責
+ * - ✅ 重用現有工具：使用 formatExpression 格式化算式
+ * - ✅ 實用主義：改善可讀性，優於嚴格複製 iOS
+ * - ✅ 簡潔執念：單一職責，formatExpression 處理算式格式化
  */
 
 import { motion, AnimatePresence } from 'motion/react';
 import type { ExpressionDisplayProps } from '../types';
-import { formatCalculatorNumber } from '../utils/formatCalculatorNumber';
+import { formatCalculatorNumber, formatExpression } from '../utils/formatCalculatorNumber';
 
 /**
  * 表達式顯示元件
@@ -33,14 +33,16 @@ import { formatCalculatorNumber } from '../utils/formatCalculatorNumber';
 export function ExpressionDisplay({ expression, result, error, preview }: ExpressionDisplayProps) {
   return (
     <div className="mb-6 space-y-2">
-      {/* 表達式顯示區（顯示原始輸入，保持向後相容） */}
+      {/* 表達式顯示區（套用千位分隔符，提升 UX 可讀性） */}
       <div className="min-h-[3rem] rounded-xl bg-slate-50 px-4 py-3 relative">
         <div
           className="text-right text-2xl text-slate-700 font-mono tabular-nums overflow-x-auto scrollbar-hide"
           role="status"
           aria-label="當前表達式"
         >
-          {expression || (
+          {expression ? (
+            formatExpression(expression)
+          ) : (
             <span className="text-slate-400 text-base font-sans">輸入數字或表達式</span>
           )}
         </div>
