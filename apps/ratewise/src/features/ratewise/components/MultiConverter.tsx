@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
-import { Star } from 'lucide-react';
+import { Star, Calculator } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
+import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 
 interface MultiConverterProps {
   sortedCurrencies: CurrencyCode[];
@@ -37,6 +38,24 @@ export const MultiConverter = ({
   const [editingField, setEditingField] = useState<CurrencyCode | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // 🔧 計算機 Modal 狀態
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [activeCalculatorCurrency, setActiveCalculatorCurrency] = useState<CurrencyCode | null>(
+    null,
+  );
+
+  /**
+   * 處理計算機確認結果
+   * @description 計算完成後更新對應貨幣的金額
+   */
+  const handleCalculatorConfirm = (result: number) => {
+    if (activeCalculatorCurrency) {
+      onAmountChange(activeCalculatorCurrency, result.toString());
+      setShowCalculator(false);
+      setActiveCalculatorCurrency(null);
+    }
+  };
 
   // 檢測某個貨幣是否只有單一匯率類型（只有現金或只有即期）
   const hasOnlyOneRateType = (
@@ -198,7 +217,7 @@ export const MultiConverter = ({
                   <div className="text-xs text-gray-600">{CURRENCY_DEFINITIONS[code].name}</div>
                 </div>
               </div>
-              <div className="flex-grow ml-3">
+              <div className="flex-grow ml-3 relative">
                 <input
                   ref={(el) => {
                     inputRefs.current[code] = el;
@@ -257,7 +276,7 @@ export const MultiConverter = ({
                       e.preventDefault();
                     }
                   }}
-                  className={`w-full text-right px-3 py-2 text-lg font-bold rounded-lg border-2 transition focus:outline-none ${
+                  className={`w-full text-right pr-12 pl-3 py-2 text-lg font-bold rounded-lg border-2 transition focus:outline-none ${
                     baseCurrency === code
                       ? 'border-purple-400 bg-white focus:border-purple-600'
                       : 'border-transparent bg-white/50 focus:border-blue-400'
@@ -265,6 +284,23 @@ export const MultiConverter = ({
                   placeholder="0.00"
                   aria-label={`${CURRENCY_DEFINITIONS[code].name} (${code}) 金額`}
                 />
+                {/* 🔧 計算機按鈕 */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation(); // 防止觸發行 onClick（切換基準貨幣）
+                    setActiveCalculatorCurrency(code);
+                    setShowCalculator(true);
+                  }}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all duration-200 ${
+                    code === baseCurrency
+                      ? 'text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50'
+                      : 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                  }`}
+                  aria-label={`開啟計算機 (${code})`}
+                >
+                  <Calculator className="w-5 h-5" />
+                </button>
                 <div className="text-xs text-right mt-0.5">
                   {(() => {
                     const rateTypeInfo = hasOnlyOneRateType(code);
@@ -302,6 +338,19 @@ export const MultiConverter = ({
           );
         })}
       </div>
+
+      {/* 🔧 計算機 Modal */}
+      {showCalculator && activeCalculatorCurrency && (
+        <CalculatorKeyboard
+          isOpen={showCalculator}
+          onClose={() => {
+            setShowCalculator(false);
+            setActiveCalculatorCurrency(null);
+          }}
+          onConfirm={handleCalculatorConfirm}
+          initialValue={parseFloat(multiAmounts[activeCalculatorCurrency] ?? '0')}
+        />
+      )}
     </>
   );
 };
