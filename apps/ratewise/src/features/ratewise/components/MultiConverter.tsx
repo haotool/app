@@ -187,7 +187,7 @@ export const MultiConverter = ({
               }}
               className={`flex items-center justify-between p-3 rounded-xl transition ${
                 code === baseCurrency
-                  ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 cursor-default'
+                  ? 'bg-gradient-to-r from-yellow-50 to-amber-50 cursor-default'
                   : 'bg-gradient-to-r from-blue-50 to-purple-50 cursor-pointer hover:shadow-md'
               }`}
             >
@@ -233,11 +233,7 @@ export const MultiConverter = ({
                       setShowCalculator(true);
                     }
                   }}
-                  className={`w-full text-right pr-3 pl-3 py-2 text-lg font-bold rounded-lg border-2 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 ${
-                    baseCurrency === code
-                      ? 'border-purple-400 bg-white focus:ring-purple-500'
-                      : 'border-transparent bg-white/50 focus:ring-blue-400'
-                  }`}
+                  className="w-full text-right pr-3 pl-3 py-2 text-lg font-bold rounded-lg bg-transparent transition cursor-pointer focus:outline-none"
                   aria-label={`${CURRENCY_DEFINITIONS[code].name} (${code}) 金額，點擊開啟計算機`}
                 >
                   {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
