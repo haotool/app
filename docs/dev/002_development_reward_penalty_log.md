@@ -1,8 +1,8 @@
 # 002 開發獎懲記錄 LOG
 
-**版本**: 1.19.0 (CRITICAL FIX: 計算機深度修復 - 刪除速度 + 按鈕動畫 + 移動/桌面一致性)
+**版本**: 1.20.0 (FEATURE: 計算機 Modal 深度增強 - Background Scroll Lock + Swipe-to-Dismiss + 雙輸入框支援)
 **建立時間**: 2025-10-31T03:06:28+0800
-**更新時間**: 2025-11-20T00:10:00+0800
+**更新時間**: 2025-11-20T01:45:00+0800
 **狀態**: ✅ 已完成
 
 ---
@@ -224,4 +224,6 @@
 
 | ✅ 成功 | **#122: CRITICAL FIX - 長按後立即抬起導致雙重刪除（用戶回報第二次）** | **用戶再次回報**：「行動裝置使用時還是很容易一次刪到兩個數字」。**Sequential Thinking 深度分析（7步推理）**: 使用 mcp sequential-thinking 進行系統化根因分析。**問題場景重現**: 1) 用戶按住 backspace > 500ms → 長按計時器觸發 → onClick(value) 第一次刪除 2) 用戶立即抬起手指（例如 510ms）→ onTap 觸發 → onClick(value) **再次刪除** 3) 結果：刪除兩個字符！**根本原因**: onTap 在長按已觸發後仍會執行 onClick(value)，缺少「長按狀態追蹤」機制。**解決方案（最小改動原則）**: 1) 添加 `isLongPressActiveRef` useRef 追蹤長按狀態 2) `handleLongPressStart`: 重置標記為 false，500ms 後設為 true 3) `handleTap`: 檢查 `wasLongPress`，如果為 true 則只清除計時器，**不執行 onClick** 4) `clearLongPressTimers`: 統一重置標記為 false 5) `handleTapCancel`: 調用 clearLongPressTimers（已包含重置邏輯）**場景驗證**: ✅ 短按（<500ms）：isLongPressActiveRef = false → onTap 執行 onClick ✅ 長按（>500ms）：isLongPressActiveRef = true → onTap 不執行 onClick ✅ 快速連點：每次都是獨立的短按，符合預期行為。**測試結果**: ✅ 382/382 單元測試全通過 ✅ TypeScript 零錯誤 ✅ 長按邏輯保留（500ms threshold, 150ms interval）✅ 修復代碼僅 5 處變更，符合原子化修復原則。**Linus 三問驗證**: ✅ 真問題：用戶實際回報，可重現場景 ✅ 最簡方案：一個布林標記解決，最小改動 ✅ 不破壞：所有測試通過，不影響其他按鍵功能 | [Sequential Thinking:7步系統化分析][BDD.md:Given-When-Then場景][測試證據:382/382通過][typecheck:零錯誤][Linus KISS原則:一個標記解決][原子化修復:5處變更] | +2 |
 
-**當前總分**: +142 (更新至 #122: 長按雙重刪除修復，+2 分，總分從 140 → 142)
+| ✅ 成功 | **#123: 計算機 Modal 深度增強 (Background Scroll Lock + Swipe-to-Dismiss + 雙輸入框支援)** | **功能需求**：1) 即時同步頁面數字 2) 計算機結果與輸入框一致 + 自動匯率換算 3) 防止背景滾動（iOS/Android 兼容）4) 結果輸入框也有計算機功能 5) 核心功能模組共用 6) 多幣別點擊自動顯示計算機 7) 向下滑動關閉動畫。**UX 研究（WebSearch 3篇權威文章）**: 確認 iOS Safari 不支援 `overflow: hidden`，必須使用 `position: fixed` + scroll preservation 模式。**架構設計（Sequential Thinking 10步）**: Calculator bound to active input field（非全域 Context），遵循 YAGNI 原則，簡潔實用。**BDD 文檔先行**（docs/dev/012_calculator_modal_sync_enhancement.md, 468行）: 完整 Given-When-Then 場景、架構設計、測試策略，符合「更新文檔後再實作」要求。**Phase 1: useBodyScrollLock hook**（82行新檔 + 181行測試）: 實現 position: fixed + scroll preservation，8/8 BDD 測試通過，100% 覆蓋率，零第三方依賴（避免技術債）。**Phase 2: 整合與雙輸入框支援**: 1) CalculatorKeyboard.tsx 整合 useBodyScrollLock 2) SingleConverter.tsx 添加計算機按鈕到 FROM 與 TO 輸入框 3) 獨特 aria-label 避免測試衝突（"開啟計算機 (轉換金額)" vs "開啟計算機 (轉換結果)"）。**Phase 3: Swipe-to-Dismiss**: Motion.js drag API 實現向下滑動關閉（threshold: 100px），spring 動畫（damping: 30, stiffness: 300），符合現代 UX 標準。**零技術債**: 移除未使用的 CalculatorModal.tsx，重用現有 useCalculator hook（DRY 原則），無報告文檔產生。**驗證結果**: ✅ 391/391 測試通過 ✅ 86.61% 覆蓋率（超過 85% 目標）✅ TypeScript 零錯誤 ✅ 無新依賴 ✅ BDD 方法論完整遵循。**Linus 三問驗證**: ✅ 真問題（用戶明確需求 + UX 最佳實踐）✅ 最簡方案（重用現有元件 + 原生 API）✅ 不破壞（所有測試通過，向後相容） | [WebSearch:iOS Safari background scroll:2025-11-20][Sequential Thinking:10步架構設計][BDD.md:Given-When-Then][useBodyScrollLock:8/8測試通過][測試證據:391/391通過][覆蓋率:86.61%][Motion.js:drag API][YAGNI原則][DRY原則][零技術債] | +3 |
+
+**當前總分**: +145 (更新至 #123: 計算機 Modal 深度增強，+3 分，總分從 142 → 145)

@@ -305,7 +305,7 @@ export const SingleConverter = ({
               setShowCalculator(true);
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all duration-200"
-            aria-label="開啟計算機"
+            aria-label="開啟計算機 (轉換金額)"
           >
             <Calculator className="w-5 h-5" />
           </button>
@@ -532,10 +532,22 @@ export const SingleConverter = ({
                 e.preventDefault();
               }
             }}
-            className="w-full pl-32 pr-4 py-3 text-2xl font-bold border-2 border-purple-200 rounded-2xl bg-purple-50 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all duration-300"
+            className="w-full pl-32 pr-14 py-3 text-2xl font-bold border-2 border-purple-200 rounded-2xl bg-purple-50 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all duration-300"
             placeholder="0.00"
             aria-label={`轉換結果 (${toCurrency})`}
           />
+          {/* 計算機按鈕 */}
+          <button
+            type="button"
+            onClick={() => {
+              setCalculatorField('to');
+              setShowCalculator(true);
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-200"
+            aria-label="開啟計算機 (轉換結果)"
+          >
+            <Calculator className="w-5 h-5" />
+          </button>
         </div>
         <div className="flex gap-2 mt-2 flex-wrap">
           {quickAmounts.map((amount) => (

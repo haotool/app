@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import type { CalculatorKeyboardProps, KeyDefinition } from '../types';
 import { useCalculator } from '../hooks/useCalculator';
 import { useCalculatorKeyboard } from '../hooks/useCalculatorKeyboard';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { CalculatorKey } from './CalculatorKey';
 import { ExpressionDisplay } from './ExpressionDisplay';
 
@@ -93,6 +94,10 @@ export function CalculatorKeyboard({
   onConfirm,
   initialValue,
 }: CalculatorKeyboardProps) {
+  // 🔧 Phase 2: 背景滾動鎖定（iOS/Android 兼容）
+  // @see docs/dev/012_calculator_modal_sync_enhancement.md Feature 2
+  useBodyScrollLock(isOpen);
+
   const {
     expression,
     result,
@@ -167,6 +172,21 @@ export function CalculatorKeyboard({
     }
   };
 
+  /**
+   * 處理向下滑動關閉
+   * 🔧 Phase 3: 向下滑動關閉動畫 (>100px threshold)
+   * @see docs/dev/012_calculator_modal_sync_enhancement.md Feature 3
+   */
+  const handleDragEnd = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: { offset: { y: number } },
+  ) => {
+    // 向下滑動超過 100px 則關閉
+    if (info.offset.y > 100) {
+      onClose();
+    }
+  };
+
   // 使用 Portal 渲染到 document.body，避免父元素 transform 影響定位
   return createPortal(
     <AnimatePresence>
@@ -189,6 +209,10 @@ export function CalculatorKeyboard({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.2}
+            onDragEnd={handleDragEnd}
             role="dialog"
             aria-modal="true"
             aria-label="計算機"
