@@ -74,11 +74,15 @@ playwright-report/
 .lighthouseci/
 lighthouse-results/
 
-# Reports
+# Reports and temporary documentation
 lighthouse-reports/
 lighthouse-report*.*
 *-report.html
 *-report.json
+*_REPORT.md
+*_SUMMARY.md
+*_FINAL_REPORT.md
+*_OPTIMIZATION_SUMMARY.md
 
 # Screenshots and browser automation artifacts
 .playwright-mcp/
