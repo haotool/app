@@ -32,9 +32,17 @@ const mockProps = {
 };
 
 describe('SingleConverter calculator button', () => {
-  it('opens calculator keyboard dialog when button clicked', async () => {
+  it('opens calculator keyboard dialog when FROM amount button clicked', async () => {
     render(<SingleConverter {...mockProps} />);
-    fireEvent.click(screen.getByLabelText('開啟計算機'));
+    fireEvent.click(screen.getByLabelText('開啟計算機 (轉換金額)'));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: '計算機' })).toBeInTheDocument();
+    });
+  });
+
+  it('opens calculator keyboard dialog when TO amount button clicked', async () => {
+    render(<SingleConverter {...mockProps} />);
+    fireEvent.click(screen.getByLabelText('開啟計算機 (轉換結果)'));
     await waitFor(() => {
       expect(screen.getByRole('dialog', { name: '計算機' })).toBeInTheDocument();
     });
