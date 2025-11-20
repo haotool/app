@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Star, Calculator } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
@@ -34,9 +34,6 @@ export const MultiConverter = ({
   onRateTypeChange,
   onBaseCurrencyChange,
 }: MultiConverterProps) => {
-  // 追蹤正在編輯的輸入框（使用未格式化的值）
-  const [editingField, setEditingField] = useState<CurrencyCode | null>(null);
-  const [editingValue, setEditingValue] = useState<string>('');
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // 🔧 計算機 Modal 狀態
@@ -223,84 +220,22 @@ export const MultiConverter = ({
                     inputRefs.current[code] = el;
                   }}
                   type="text"
-                  inputMode="decimal"
-                  value={
-                    editingField === code
-                      ? editingValue
-                      : formatAmountDisplay(multiAmounts[code] ?? '', code)
-                  }
-                  onFocus={() => {
-                    // 進入編輯模式：顯示未格式化的值
-                    setEditingField(code);
-                    setEditingValue(multiAmounts[code] ?? '');
-                  }}
-                  onChange={(e) => {
-                    // 只允許數字、小數點和退格鍵
-                    const cleaned = e.target.value.replace(/[^\d.]/g, '');
-
-                    // 防止多個小數點
-                    const parts = cleaned.split('.');
-                    const validValue =
-                      parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
-
-                    setEditingValue(validValue);
-                    onAmountChange(code, validValue);
-                  }}
-                  onBlur={() => {
-                    // 離開編輯模式：更新狀態並清除編輯值
-                    onAmountChange(code, editingValue);
-                    setEditingField(null);
-                    setEditingValue('');
-                  }}
-                  onKeyDown={(e) => {
-                    // 只允許數字鍵、退格、刪除、方向鍵、Tab、小數點
-                    const allowedKeys = [
-                      'Backspace',
-                      'Delete',
-                      'ArrowLeft',
-                      'ArrowRight',
-                      'ArrowUp',
-                      'ArrowDown',
-                      'Home',
-                      'End',
-                      'Tab',
-                      '.',
-                    ];
-
-                    // 數字鍵（0-9）
-                    const isNumber = /^[0-9]$/.test(e.key);
-                    // Ctrl/Cmd 組合鍵（復制、粘貼、全選等）
-                    const isModifierKey = e.ctrlKey || e.metaKey;
-
-                    if (!isNumber && !allowedKeys.includes(e.key) && !isModifierKey) {
-                      e.preventDefault();
-                    }
-                  }}
-                  className={`w-full text-right pr-12 pl-3 py-2 text-lg font-bold rounded-lg border-2 transition focus:outline-none ${
-                    baseCurrency === code
-                      ? 'border-purple-400 bg-white focus:border-purple-600'
-                      : 'border-transparent bg-white/50 focus:border-blue-400'
-                  }`}
-                  placeholder="0.00"
-                  aria-label={`${CURRENCY_DEFINITIONS[code].name} (${code}) 金額`}
-                />
-                {/* 🔧 計算機按鈕 */}
-                <button
-                  type="button"
+                  inputMode="none"
+                  readOnly
+                  value={formatAmountDisplay(multiAmounts[code] ?? '', code)}
                   onClick={(e) => {
                     e.stopPropagation(); // 防止觸發行 onClick（切換基準貨幣）
                     setActiveCalculatorCurrency(code);
                     setShowCalculator(true);
                   }}
-                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all duration-200 ${
-                    code === baseCurrency
-                      ? 'text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50'
-                      : 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                  className={`w-full text-right pr-3 pl-3 py-2 text-lg font-bold rounded-lg border-2 transition cursor-pointer focus:outline-none ${
+                    baseCurrency === code
+                      ? 'border-purple-400 bg-white focus:border-purple-600'
+                      : 'border-transparent bg-white/50 focus:border-blue-400'
                   }`}
-                  aria-label={`開啟計算機 (${code})`}
-                >
-                  <Calculator className="w-5 h-5" />
-                </button>
+                  placeholder="0.00"
+                  aria-label={`${CURRENCY_DEFINITIONS[code].name} (${code}) 金額，點擊開啟計算機`}
+                />
                 <div className="text-xs text-right mt-0.5">
                   {(() => {
                     const rateTypeInfo = hasOnlyOneRateType(code);
