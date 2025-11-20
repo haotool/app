@@ -34,7 +34,7 @@ export const MultiConverter = ({
   onRateTypeChange,
   onBaseCurrencyChange,
 }: MultiConverterProps) => {
-  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const inputRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // 🔧 計算機 Modal 狀態
   const [showCalculator, setShowCalculator] = useState(false);
@@ -215,27 +215,33 @@ export const MultiConverter = ({
                 </div>
               </div>
               <div className="flex-grow ml-3 relative">
-                <input
+                <div
                   ref={(el) => {
                     inputRefs.current[code] = el;
                   }}
-                  type="text"
-                  inputMode="none"
-                  readOnly
-                  value={formatAmountDisplay(multiAmounts[code] ?? '', code)}
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation(); // 防止觸發行 onClick（切換基準貨幣）
                     setActiveCalculatorCurrency(code);
                     setShowCalculator(true);
                   }}
-                  className={`w-full text-right pr-3 pl-3 py-2 text-lg font-bold rounded-lg border-2 transition cursor-pointer focus:outline-none ${
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setActiveCalculatorCurrency(code);
+                      setShowCalculator(true);
+                    }
+                  }}
+                  className={`w-full text-right pr-3 pl-3 py-2 text-lg font-bold rounded-lg border-2 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 ${
                     baseCurrency === code
-                      ? 'border-purple-400 bg-white focus:border-purple-600'
-                      : 'border-transparent bg-white/50 focus:border-blue-400'
+                      ? 'border-purple-400 bg-white focus:ring-purple-500'
+                      : 'border-transparent bg-white/50 focus:ring-blue-400'
                   }`}
-                  placeholder="0.00"
                   aria-label={`${CURRENCY_DEFINITIONS[code].name} (${code}) 金額，點擊開啟計算機`}
-                />
+                >
+                  {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
+                </div>
                 <div className="text-xs text-right mt-0.5">
                   {(() => {
                     const rateTypeInfo = hasOnlyOneRateType(code);
