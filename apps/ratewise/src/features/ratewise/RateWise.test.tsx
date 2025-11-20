@@ -397,13 +397,15 @@ describe('RateWise Component', () => {
       fireEvent.click(screen.getByText('5,000'));
 
       await waitFor(() => {
-        const inputs = screen.getAllByPlaceholderText('0.00');
-        // After formatting is applied, the value will be "5,000.00"
-        expect(inputs[0]).toHaveValue('5,000.00');
+        // 多幣別使用 div role="button"，不再有 placeholder
+        // 改用 aria-label 查找 TWD 金額按鈕
+        const twdButton = screen.getByRole('button', { name: /新台幣.*TWD.*金額/i });
+        // div 的內容顯示為文字內容
+        expect(twdButton).toHaveTextContent('5,000.00');
       });
 
-      // Note: Direct input editing is no longer supported - inputs are read-only
-      // and trigger calculator modal on click. Calculator functionality is tested
+      // Note: Multi-currency inputs are now div elements with role="button"
+      // that trigger calculator modal on click. Calculator functionality is tested
       // separately in calculator test suites.
     });
 
