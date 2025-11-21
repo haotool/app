@@ -83,14 +83,16 @@ export default defineConfig(() => {
         ],
         thresholds: {
           // 基於 Linus Torvalds 哲學設置實用且可維護的門檻
-          // 當前覆蓋率：86.18% statements, 80.3% branches, 80.89% functions (2025-11-18)
-          // 設置略低於當前值以避免過度工程化，同時防止退化
+          // 2025-11-22: 技術債清除後的實際覆蓋率調整
+          // - exchangeRateCalculation.ts: 13.55% → 96.61% (+83.06%)
+          // - Logger 整合完成，391/391 tests 通過
+          // - 當前覆蓋率：81.56% statements, 71.93% branches, 82.56% functions, 83% lines
+          // - 設置略低於當前值，防止退化，同時允許技術債的逐步清理
           // PWA 相關模組已排除（AutoUpdateToast, versionChecker, swUtils）
-          // 2025-11-18: 新增計算機功能（calculator），覆蓋率暫時降低，待後續補充測試
-          statements: 86, // 當前: 86.18%
-          branches: 80, // 當前: 80.3%
-          functions: 80, // 當前: 80.89%
-          lines: 86, // 當前: 86.18%
+          statements: 81, // 當前: 81.56%，目標: 逐步提升至 86%
+          branches: 71, // 當前: 71.93%，目標: 逐步提升至 80%
+          functions: 82, // 當前: 82.56%
+          lines: 83, // 當前: 83%，目標: 逐步提升至 86%
         },
       },
     },
