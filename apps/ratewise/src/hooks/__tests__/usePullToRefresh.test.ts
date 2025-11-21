@@ -25,7 +25,7 @@ Object.defineProperty(window, 'scrollY', {
 describe('usePullToRefresh', () => {
   let container: HTMLDivElement;
   let containerRef: React.RefObject<HTMLDivElement>;
-  let onRefresh: ReturnType<typeof vi.fn>;
+  let onRefresh: () => Promise<void>;
 
   beforeEach(() => {
     // 創建測試容器
@@ -36,7 +36,7 @@ describe('usePullToRefresh', () => {
     containerRef = { current: container };
 
     // 創建 mock callback
-    onRefresh = vi.fn().mockResolvedValue(undefined);
+    onRefresh = vi.fn(() => Promise.resolve());
 
     // 重置 window.scrollY
     window.scrollY = 0;
@@ -369,7 +369,9 @@ describe('usePullToRefresh', () => {
 
     it('應該優雅處理刷新錯誤', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const errorCallback = vi.fn().mockRejectedValue(new Error('Refresh failed'));
+      const errorCallback: () => Promise<void> = vi.fn(() =>
+        Promise.reject(new Error('Refresh failed')),
+      );
 
       window.scrollY = 0;
 
@@ -401,8 +403,11 @@ describe('usePullToRefresh', () => {
         await vi.runAllTimersAsync();
       });
 
-      // 應該記錄錯誤
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Pull-to-refresh error:', expect.any(Error));
+      // 應該記錄錯誤（logger 格式：timestamp + message + context + error）
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const errorCall = consoleErrorSpy.mock.calls[0];
+      expect(errorCall?.[0]).toMatch(/\[ERROR\] Pull-to-refresh error/);
+      expect(errorCall?.[2]).toBeInstanceOf(Error);
 
       // 應該重置狀態
       expect(result.current.isRefreshing).toBe(false);

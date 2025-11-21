@@ -315,11 +315,11 @@ export async function fetchHistoricalRatesRange(
   });
 
   // 🚀 DEV 模式額外輸出效能數據（驗證 71-78% 提升）
-  if (import.meta.env.DEV) {
-    console.log(
-      `✅ Historical rates fetched in ${duration}ms (${results.length}/${totalDays} records)`,
-    );
-  }
+  logger.debug('Historical rates fetch performance', {
+    duration,
+    fetched: results.length,
+    total: totalDays,
+  });
 
   return results;
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Workbox } from 'workbox-window';
 import { startVersionCheckInterval } from '../utils/versionChecker';
 import { AutoUpdateToast } from './AutoUpdateToast';
+import { logger } from '../utils/logger';
 
 /**
  * PWA 更新通知組件 - 自動更新模式
@@ -56,7 +57,9 @@ export function UpdatePrompt() {
 
         return true;
       } catch (error) {
-        console.warn('[PWA] Skip service worker registration:', error);
+        logger.warn('Skip service worker registration', {
+          reason: error instanceof Error ? error.message : String(error),
+        });
         return false;
       }
     };
@@ -73,7 +76,7 @@ export function UpdatePrompt() {
     // [fix:2025-11-06] autoUpdate 模式：檢測到更新立即顯示通知
     workbox.addEventListener('installed', (event) => {
       if (event.isUpdate) {
-        console.log('[PWA] New version detected, showing update toast');
+        logger.info('New version detected, showing update toast');
         setNeedRefresh(true);
       }
       // 移除 offlineReady 狀態（autoUpdate 模式不需要）
@@ -108,7 +111,10 @@ export function UpdatePrompt() {
           return () => clearInterval(updateCheckInterval);
         })
         .catch((error) => {
-          console.error('SW registration error:', error);
+          logger.error(
+            'SW registration error',
+            error instanceof Error ? error : new Error(String(error)),
+          );
         });
     });
 
@@ -125,7 +131,7 @@ export function UpdatePrompt() {
 
     // 每 5 分鐘檢查一次（300000 ms）
     const cleanup = startVersionCheckInterval(300000, () => {
-      console.log('[PWA] Version mismatch detected via meta tag check');
+      logger.info('Version mismatch detected via meta tag check');
       setNeedRefresh(true);
     });
 
@@ -141,14 +147,14 @@ export function UpdatePrompt() {
   const handleUpdate = async () => {
     if (!wb) return;
 
-    console.log('[PWA] User triggered update');
+    logger.info('User triggered update');
 
     try {
       // 1. 清除所有 Service Worker 快取
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map((name) => caches.delete(name)));
-        console.log('[PWA] All caches cleared');
+        logger.info('All caches cleared');
       }
 
       // 2. skipWaiting（自動更新模式下 Service Worker 會自動處理）
@@ -157,7 +163,7 @@ export function UpdatePrompt() {
       // 3. 重新載入頁面
       window.location.reload();
     } catch (error) {
-      console.error('[PWA] Update error:', error);
+      logger.error('PWA update error', error instanceof Error ? error : new Error(String(error)));
       // 即使出錯也嘗試重新載入
       window.location.reload();
     }

@@ -59,7 +59,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           await initSentry(); // 首次初始化（如已初始化會跳過）
           await captureException(error, { react: errorInfo });
         } catch (sentryError) {
-          console.error('Failed to send error to Sentry:', sentryError);
+          logger.error(
+            'Failed to send error to Sentry',
+            sentryError instanceof Error ? sentryError : new Error(String(sentryError)),
+          );
         }
       })();
     }

@@ -13,6 +13,8 @@ import {
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
+import { logger } from '../../../utils/logger';
+import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 25;
@@ -70,31 +72,7 @@ export const SingleConverter = ({
 
   // 獲取指定貨幣的匯率（優先使用 details + rateType，有 fallback 機制）
   const getRate = (currency: CurrencyCode): number => {
-    // TWD 固定為 1
-    if (currency === 'TWD') return 1;
-
-    const detail = details?.[currency];
-    if (detail) {
-      let rate = detail[rateType]?.sell;
-
-      // Fallback 機制：如果當前類型沒有匯率，嘗試另一種類型
-      if (rate == null) {
-        const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
-        rate = detail[fallbackType]?.sell;
-
-        // 開發模式：記錄 fallback
-        if (import.meta.env.DEV && rate != null) {
-          console.log(`[SingleCalc] ${currency}: fallback from ${rateType} to ${fallbackType}`);
-        }
-      }
-
-      if (rate != null) {
-        return rate;
-      }
-    }
-
-    // 最終 fallback：使用簡化的 exchangeRates
-    return exchangeRates[currency] ?? 1;
+    return getExchangeRate(currency, details, rateType, exchangeRates) ?? 1;
   };
 
   const fromRate = getRate(fromCurrency);
@@ -218,12 +196,12 @@ export const SingleConverter = ({
     }
 
     (window as WindowWithDevTools).triggerSkeleton = (duration = 3000) => {
-      console.log('🎨 Triggering skeleton screen for', duration, 'ms');
+      logger.debug('Triggering skeleton screen', { duration });
       originalData = trendData;
       setTrendData([]);
 
       setTimeout(() => {
-        console.log('✅ Restoring trend data');
+        logger.debug('Restoring trend data');
         setTrendData(originalData);
       }, duration);
     };
@@ -404,7 +382,7 @@ export const SingleConverter = ({
                   </div>
                 }
                 onError={(error) => {
-                  console.error('MiniTrendChart loading failed:', error);
+                  logger.error('MiniTrendChart loading failed', error);
                 }}
               >
                 {trendData.length === 0 ? (
