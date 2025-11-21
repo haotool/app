@@ -6,6 +6,8 @@
  * 目前僅做 pass-through，未來可替換成 DOMPurify 之類的 sanitizer。
  */
 
+import { logger } from './utils/logger';
+
 const passThrough = (value: string): string => value;
 
 interface RatewiseTrustedTypePolicy {
@@ -56,7 +58,7 @@ const initTrustedTypes = (): void => {
     try {
       return factory.createPolicy(name, POLICY_CONFIG);
     } catch (error) {
-      console.warn('[TrustedTypes] 建立 policy 失敗:', error);
+      logger.warn('TrustedTypes policy creation failed', { error });
       return null;
     }
   };

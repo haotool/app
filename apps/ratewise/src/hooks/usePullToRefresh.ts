@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
+import { logger } from '../utils/logger';
 
 /**
  * usePullToRefresh - Professional pull-to-refresh hook with micro-animations
@@ -128,7 +129,10 @@ export function usePullToRefresh(
 
         void Promise.resolve(onRefresh())
           .catch((error) => {
-            console.error('Pull-to-refresh error:', error);
+            logger.error(
+              'Pull-to-refresh error',
+              error instanceof Error ? error : new Error(String(error)),
+            );
           })
           .finally(finalize);
       } else {
