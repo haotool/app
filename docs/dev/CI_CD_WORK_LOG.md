@@ -902,3 +902,35 @@ await page.goto('/'); // ✅ 自動使用配置的 baseURL
 **狀態**: ✅ 已修復測試代碼，等待 CI 驗證
 
 **最後更新**: 2025-11-23T01:55:00+08:00
+
+---
+
+### 階段 9: Lighthouse CHROME_INTERSTITIAL_ERROR 修復（2025-11-23）
+
+#### 錯誤 #16: Lighthouse 轉向 chrome-error://chromewebdata/（連線被拒絕）
+
+**發生時間**: 2025-11-23T02:00:00+08:00  
+**Run ID**: 19599162757  
+**SHA**: 0357ce2（硬編碼 BASE_URL 修復後的推送）
+
+**問題描述**:
+
+- Lighthouse autorun 第一輪即失敗，訊息 `Provided URL (http://localhost:4174/) did not match initial navigation URL (chrome-error://chromewebdata/)`
+- 可能是 `localhost` 解析為 IPv6 `::1`，但 Preview 僅綁定 IPv4，導致瀏覽器導向錯誤頁
+- Preview 指令未顯式傳遞 `VITE_BASE_PATH='/'`，存在資產路徑偏差風險
+
+**採取行動**:
+
+1. `.lighthouserc.json` URL 全改用 `http://127.0.0.1:4174`（強制 IPv4，與 E2E 一致）
+2. `startServerCommand` 加入 `VITE_BASE_PATH='/'` 並指定 `--host 127.0.0.1 --port 4174 --strictPort --clearScreen false`
+3. `startServerReadyPattern` 調整為 `127.0.0.1:4174`，提升就緒偵測穩定性
+4. 待推送 commit f8790e6 以帶入 workflow/base fallback 與此修復共同驗證
+
+**預期效果**:
+
+- 消除 CHROME_INTERSTITIAL_ERROR（連線拒絕 / IPv6 解析問題）
+- 保持 base path 一致性，避免 `/ratewise/` 404 或資產載入失敗
+
+**狀態**: 🔄 待推送後重新觸發 CI 驗證
+
+**最後更新**: 2025-11-23T02:02:45+08:00
