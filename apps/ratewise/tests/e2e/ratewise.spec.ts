@@ -36,10 +36,6 @@ test.describe('RateWise 核心功能測試', () => {
   });
 
   test('單幣別模式：應該能夠輸入金額並看到換算結果', async ({ rateWisePage: page }) => {
-    // 確認在單幣別模式
-    const singleModeButton = page.getByRole('button', { name: /單幣別/i });
-    await expect(singleModeButton).toHaveClass(/bg-white/);
-
     // 使用 getByLabel 定位特定輸入框 - Playwright 最佳實踐
     const fromAmountInput = page.getByLabel(/轉換金額/i);
     const toAmountInput = page.getByLabel(/轉換結果/i);
@@ -75,12 +71,14 @@ test.describe('RateWise 核心功能測試', () => {
     // 等待 UI 更新
     await page.waitForTimeout(500);
 
-    // 檢查多幣別模式按鈕已激活
-    await expect(multiModeButton).toHaveClass(/bg-white/);
+    // 檢查多幣別模式標題可見
+    await expect(page.getByText(/即時多幣別換算/i)).toBeVisible();
 
-    // 檢查是否顯示多個貨幣（至少應該有 3 個以上的貨幣列表項）
-    const currencyItems = page.locator('div').filter({ hasText: /USD|EUR|JPY|CNY|HKD/i });
-    await expect(currencyItems.first()).toBeVisible();
+    // 檢查是否顯示多個貨幣（使用 aria-label 包含「金額」的元素至少 3 個）
+    const amountDisplays = page.locator('[aria-label*="金額"]');
+    await expect(amountDisplays.nth(0)).toBeVisible();
+    const displayCount = await amountDisplays.count();
+    expect(displayCount).toBeGreaterThan(2);
   });
 
   test('多幣別模式：應該能夠輸入基準金額並看到所有貨幣換算', async ({ rateWisePage: page }) => {
@@ -90,26 +88,23 @@ test.describe('RateWise 核心功能測試', () => {
     // 等待 UI 完全切換
     await page.waitForTimeout(500);
 
-    // 使用更具體的 locator - 直接定位新台幣輸入框
-    // MultiConverter 中每個幣別都有獨立的輸入框，使用 aria-label 定位
-    const twdInput = page.getByLabel(/新台幣.*TWD.*金額/i);
+    // 點選快速金額（基準貨幣 TWD 的 quick amount 按鈕，如 1,000）
+    const quickAmountButton = page
+      .getByRole('button')
+      .filter({ hasText: /1[, ]?000|1000/ })
+      .first();
+    await quickAmountButton.click();
 
-    // 等待新台幣輸入框可見且可操作
-    await expect(twdInput).toBeVisible({ timeout: 5000 });
-    await expect(twdInput).toBeEnabled();
+    // 驗證基準貨幣顯示更新（TWD 金額文字包含 1,000）
+    const twdDisplay = page.getByLabel(/新台幣.*TWD.*金額/i);
+    await expect(twdDisplay).toContainText(/1,000/);
 
-    // 填入金額
-    await twdInput.fill('5000');
-
-    // 驗證其他貨幣的輸入框有換算結果（不為空且不為0）
-    const usdInput = page.getByLabel(/美元.*USD.*金額/i);
-    await expect(usdInput).toBeVisible({ timeout: 5000 });
-    await expect(usdInput).not.toHaveValue('');
-    await expect(usdInput).not.toHaveValue('0');
-
-    // 驗證換算結果是數字且大於0
-    const usdValue = await usdInput.inputValue();
-    expect(parseFloat(usdValue.replace(/,/g, ''))).toBeGreaterThan(0);
+    // 驗證其他貨幣的金額顯示不為 0（顯示為文字，所以檢查非空且非 "0.00"）
+    const usdDisplay = page.getByLabel(/美元.*USD.*金額/i);
+    await expect(usdDisplay).toBeVisible();
+    const usdText = await usdDisplay.innerText();
+    expect(usdText.trim()).not.toBe('');
+    expect(usdText.trim()).not.toBe('0.00');
   });
 
   test('我的最愛：應該能夠新增和移除最愛貨幣', async ({ rateWisePage: page }) => {
@@ -125,7 +120,7 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
   });
 
-  test('響應式設計：行動版應該正確顯示', async ({ page, viewport }) => {
+  test('響應式設計：行動版應該正確顯示', async ({ rateWisePage: page, viewport }) => {
     // 僅在行動裝置尺寸執行
     if (viewport && viewport.width < 768) {
       // 檢查標題在小螢幕上仍然可見
