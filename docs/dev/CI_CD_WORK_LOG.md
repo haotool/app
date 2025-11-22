@@ -789,46 +789,13 @@ run: |
 
 ---
 
-### 階段 7: E2E 持續白屏 - 追加 CI base fallback 與 Smoke 檢查（2025-11-22）
-
-#### 問題描述
-
-- CI Run 19598523356、19598785501 皆於 E2E 等待「多幣別」按鈕 10s 超時，截圖空白頁
-- 新增 smoke step 未出現在遠端日誌，顯示 workflow 尚未推送；仍沿用舊流程
-
-#### 採取行動
-
-1. Workflow 本地強化（待推送）：preview/Build 仍設 `VITE_BASE_PATH=/`，新增 Smoke check (curl HEAD + 首 20 行)；Playwright 設 `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173`
-2. 原始碼防禦：`apps/ratewise/vite.config.ts` 在 CI 環境自動 fallback base=/，避免 /ratewise 404
-3. 觸發 run 19598785501 驗證（但遠端未含新 workflow，仍白屏）
-
-#### 狀態
-
-- ❌ 仍失敗（需推送 workflow 變更後重跑）
-
-#### 依據
-
-- CI_WORKFLOW_SEPARATION.md（單一職責 + 煙囪檢查）
-- CI_CD_AGENT_PROMPT.md（Phase 1/2/3）
-- visionary-coder.md（無情簡化：以 env + smoke 驗證）
-- [context7:vitejs/vite:2025-11-22]（base/BASE_URL 配置）
-
-#### 下一步
-
-1. 推送 workflow/vite.config.ts 更新後重觸發 CI
-2. 如仍白屏，使用 smoke 輸出檢查 index/assets 是否 404，再加 console/network 診斷
-
-**最後更新**: 2025-11-22T17:40:00+08:00
-
----
-
 ### 階段 8: E2E 測試硬編碼 BASE_URL 修復（2025-11-23）
 
 #### 錯誤 #15: 測試文件硬編碼端口 4174 導致連線失敗
 
-**發生時間**: 2025-11-23T01:55:00+08:00  
-**Run ID**: 19599046780（--strictPort 修復後）  
-**SHA**: 6a82152  
+**發生時間**: 2025-11-23T01:55:00+08:00
+**Run ID**: 19599046780（--strictPort 修復後）
+**SHA**: 6a82152
 **Commit**: fix(ci): 添加 --strictPort 確保端口確定性
 
 **問題描述**:
@@ -905,32 +872,52 @@ await page.goto('/'); // ✅ 自動使用配置的 baseURL
 
 ---
 
-### 階段 9: Lighthouse CHROME_INTERSTITIAL_ERROR 修復（2025-11-23）
+### 階段 9: Lighthouse CHROME_INTERSTITIAL_ERROR 與端口統一修復（2025-11-23）
 
-#### 錯誤 #16: Lighthouse 轉向 chrome-error://chromewebdata/（連線被拒絕）
+#### 錯誤 #16: 端口不一致 (4173 vs 4174) 導致 Lighthouse CI 失敗
 
-**發生時間**: 2025-11-23T02:00:00+08:00  
-**Run ID**: 19599162757  
-**SHA**: 0357ce2（硬編碼 BASE_URL 修復後的推送）
+**發生時間**: 2025-11-23T02:06:49+08:00
 
 **問題描述**:
 
-- Lighthouse autorun 第一輪即失敗，訊息 `Provided URL (http://localhost:4174/) did not match initial navigation URL (chrome-error://chromewebdata/)`
-- 可能是 `localhost` 解析為 IPv6 `::1`，但 Preview 僅綁定 IPv4，導致瀏覽器導向錯誤頁
-- Preview 指令未顯式傳遞 `VITE_BASE_PATH='/'`，存在資產路徑偏差風險
+- 發現 `ci.yml` (E2E) 和 `playwright.config.ts` 使用 **4173** 端口。
+- 但 `.lighthouserc.json` 仍使用 **4174** 端口。
+- CI 環境中啟動的 preview server 使用 4173，導致 Lighthouse CI (配置為 4174) 連接失敗。
+- Lighthouse CI 報錯 `CHROME_INTERSTITIAL_ERROR`，這是因為 Chrome 無法連接到指定端口，或 DNS 解析失敗。
+- `startServerReadyPattern` 為 `127.0.0.1:4174`，與 Vite 預設輸出 `Local: http://localhost:...` 不匹配。
+
+**根本原因**:
+
+- **配置漂移 (Configuration Drift)**: 不同工具 (Playwright vs Lighthouse) 使用了不同的預設端口。
+- **Ready Pattern 脆弱**: 依賴特定的 IP/Port 字符串，而不是通用的 "Local:" 標記。
 
 **採取行動**:
 
-1. `.lighthouserc.json` URL 全改用 `http://127.0.0.1:4174`（強制 IPv4，與 E2E 一致）
-2. `startServerCommand` 加入 `VITE_BASE_PATH='/'` 並指定 `--host 127.0.0.1 --port 4174 --strictPort --clearScreen false`
-3. `startServerReadyPattern` 調整為 `127.0.0.1:4174`，提升就緒偵測穩定性
-4. 待推送 commit f8790e6 以帶入 workflow/base fallback 與此修復共同驗證
+1. **統一端口**: 修改 `.lighthouserc.json`，將所有 4174 改為 **4173**，與 E2E 測試一致。
+2. **優化 Ready Pattern**: 將 `startServerReadyPattern` 改為 `"Local:"`，更具通用性和穩健性。
+3. **配置一致性**: 確保 `startServerCommand` 也使用 `4173` 和 `--strictPort`。
 
-**預期效果**:
+**修復內容 (.lighthouserc.json)**:
 
-- 消除 CHROME_INTERSTITIAL_ERROR（連線拒絕 / IPv6 解析問題）
-- 保持 base path 一致性，避免 `/ratewise/` 404 或資產載入失敗
+```json
+{
+  "ci": {
+    "collect": {
+      "url": ["http://127.0.0.1:4173/", ...],
+      "startServerCommand": "... --port 4173 --strictPort ...",
+      "startServerReadyPattern": "Local:",
+      ...
+    }
+  }
+}
+```
 
-**狀態**: 🔄 待推送後重新觸發 CI 驗證
+**依據**:
 
-**最後更新**: 2025-11-23T02:02:45+08:00
+- [context7:vitejs/vite:2025-11-23] - Vite preview 配置最佳實踐
+- [Lighthouse CI](https://github.com/GoogleChrome/lighthouse-ci) - Server ready pattern 建議
+- CI_WORKFLOW_SEPARATION.md - 單一職責與配置一致性原則
+
+**狀態**: ✅ 已更新配置，待提交並驗證。
+
+**最後更新**: 2025-11-23T02:06:49+08:00
