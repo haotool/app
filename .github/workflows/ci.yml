@@ -89,14 +89,18 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
+        env:
+          VITE_BASE_PATH: '/'
         run: pnpm build:ratewise
 
       - name: Install Playwright browsers
         run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium firefox
 
       - name: Start preview server
+        env:
+          VITE_BASE_PATH: '/'
         run: |
-          pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 &
+          pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 --strictPort &
           echo $! > .preview-server.pid
           for i in {1..10}; do
             if curl --silent --fail http://127.0.0.1:4173 > /dev/null; then
@@ -107,9 +111,18 @@ jobs:
           echo "Preview server failed to start"
           exit 1
 
+      - name: Smoke check preview
+        run: |
+          echo "=== HEAD ==="
+          curl -I http://127.0.0.1:4173 || exit 1
+          echo "=== FIRST 20 LINES ==="
+          curl -s http://127.0.0.1:4173 | head -n 20 || exit 1
+          echo "=== DONE ==="
+
       - name: Run E2E tests
         env:
           CI: true
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
         run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile
 
       - name: Stop preview server

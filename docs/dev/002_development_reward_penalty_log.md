@@ -19,19 +19,23 @@
 
 ## 開發記錄
 
-| 日期       | 類型    | 摘要                                                         | 採取行動                                                                                                                                                                                                                                                    | 依據                                                                                                | 分數 |
-| ---------- | ------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---- |
-| 2025-11-20 | ✅ 成功 | 多幣別計算機整合：BDD流程、15測試通過、88.08%覆蓋率          | 1) BDD文檔先行 2) 重用CalculatorKeyboard組件 3) stopPropagation防止事件冒泡 4) 類型安全（MultiAmountsState + RateDetails.name）                                                                                                                             | [BDD.md], [CLAUDE.md], [Linus DRY principle]                                                        | +1   |
-| 2025-11-21 | ✅ 成功 | 多幣別輸入框語義優化：input→div+role="button"                | 1) 改用div+role="button"+tabIndex={0} 2) 新增鍵盤支援(Enter/Space) 3) 增強focus視覺(ring-2) 4) 保留點擊觸發計算機功能                                                                                                                                       | [context7:react_dev:2025-11-21], [WCAG 2.1]                                                         | +1   |
-| 2025-11-22 | ✅ 成功 | 技術債深度清除：CVE修復、DRY原則、Logger整合、測試覆蓋率提升 | 1) 移除expr-eval (CVE-2024-64746) 2) 建立exchangeRateCalculation.ts (93%代碼減少) 3) Logger系統整合 4) exchangeRateCalculation測試39個100%                                                                                                                  | [Linus KISS], [visionary-coder.md], [OWASP Top 10]                                                  | +1   |
-| 2025-11-22 | ✅ 成功 | 測試覆蓋率策略：實用主義與持續改進平衡                       | 1) 設定防退化門檻（81/71/82/83%）符合業界標準（Google 75%+）2) 明確改進目標（86/80/86/86%）3) 建議下階段啟用 Vitest 4.0 thresholdAutoUpdate 自動提升                                                                                                        | [業界標準調研 2025-11-22], [Vitest 4.0], [Linus 實用主義]                                           | +1   |
-| 2025-11-22 | ✅ 成功 | CI/CD 分析：expr-eval 漏洞追蹤與解決驗證                     | 1) gh 指令分析 CI 失敗（CVE-2025-12735, Prototype Pollution）2) 研究 2025 最佳實踐（expr-eval-fork, math.js, Shunting Yard）3) 驗證 Shunting Yard 解決方案（commit 2172ba8）4) Context7 查閱 Vitest 4.0（thresholdAutoUpdate）5) 創建 016_ci_cd_work_log.md | [context7:vitest-dev/vitest:v4.0.7], [GitHub Security Advisory], [visionary-coder.md], [Linus KISS] | +1   |
+| 日期       | 類型    | 摘要                                                          | 採取行動                                                                                                                                                                                                                                                    | 依據                                                                                                    | 分數 |
+| ---------- | ------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---- |
+| 2025-11-20 | ✅ 成功 | 多幣別計算機整合：BDD流程、15測試通過、88.08%覆蓋率           | 1) BDD文檔先行 2) 重用CalculatorKeyboard組件 3) stopPropagation防止事件冒泡 4) 類型安全（MultiAmountsState + RateDetails.name）                                                                                                                             | [BDD.md], [CLAUDE.md], [Linus DRY principle]                                                            | +1   |
+| 2025-11-21 | ✅ 成功 | 多幣別輸入框語義優化：input→div+role="button"                 | 1) 改用div+role="button"+tabIndex={0} 2) 新增鍵盤支援(Enter/Space) 3) 增強focus視覺(ring-2) 4) 保留點擊觸發計算機功能                                                                                                                                       | [context7:react_dev:2025-11-21], [WCAG 2.1]                                                             | +1   |
+| 2025-11-22 | ✅ 成功 | 技術債深度清除：CVE修復、DRY原則、Logger整合、測試覆蓋率提升  | 1) 移除expr-eval (CVE-2024-64746) 2) 建立exchangeRateCalculation.ts (93%代碼減少) 3) Logger系統整合 4) exchangeRateCalculation測試39個100%                                                                                                                  | [Linus KISS], [visionary-coder.md], [OWASP Top 10]                                                      | +1   |
+| 2025-11-22 | ✅ 成功 | 測試覆蓋率策略：實用主義與持續改進平衡                        | 1) 設定防退化門檻（81/71/82/83%）符合業界標準（Google 75%+）2) 明確改進目標（86/80/86/86%）3) 建議下階段啟用 Vitest 4.0 thresholdAutoUpdate 自動提升                                                                                                        | [業界標準調研 2025-11-22], [Vitest 4.0], [Linus 實用主義]                                               | +1   |
+| 2025-11-22 | ✅ 成功 | CI/CD 分析：expr-eval 漏洞追蹤與解決驗證                      | 1) gh 指令分析 CI 失敗（CVE-2025-12735, Prototype Pollution）2) 研究 2025 最佳實踐（expr-eval-fork, math.js, Shunting Yard）3) 驗證 Shunting Yard 解決方案（commit 2172ba8）4) Context7 查閱 Vitest 4.0（thresholdAutoUpdate）5) 創建 016_ci_cd_work_log.md | [context7:vitest-dev/vitest:v4.0.7], [GitHub Security Advisory], [visionary-coder.md], [Linus KISS]     | +1   |
+| 2025-11-22 | ✅ 成功 | Lighthouse CI interstitial 修復（啟動 preview + pinned LHCI） | 1) `.lighthouserc.json` 新增 startServerCommand + ReadyPattern/Timeout 2) workflow 改用 `pnpm dlx @lhci/cli@0.15.1 autorun --config` 3) chromeFlags 簡化為 `--no-sandbox --headless=new` 4) 本地 `lhci collect` 驗證通過（無 interstitial）                 | [context7:googlechrome/lighthouse-ci:2025-11-22], CI_CD_WORK_LOG.md, CI_WORKFLOW_SEPARATION.md          | +1   |
+| 2025-11-22 | ✅ 成功 | Vitest localStorage TypeError 修復，405/405 測試恢復通過      | 1) setupTests 增加 ensureStorage in-memory WebStorage fallback 2) beforeEach 改為防禦式清空 local/session storage 3) `pnpm test` 全數通過（26 files / 405 tests）                                                                                           | CI_CD_WORK_LOG.md（階段5記錄）                                                                          | +1   |
+| 2025-11-22 | ✅ 成功 | E2E base 路徑修復：CI preview 對齊根路徑                      | 1) `ci.yml` Build 步驟設 `VITE_BASE_PATH='/'` 避免 /ratewise/ 404 2) 確保 preview 4173 服務與 Playwright baseURL 一致 3) 依據 Vite base 官方建議與 CI 工作流分離策略記錄於 CI_CD_WORK_LOG.md                                                                | [context7:vitejs/vite:2025-11-22], CI_WORKFLOW_SEPARATION.md, CI_CD_AGENT_PROMPT.md, visionary-coder.md | +1   |
+| 2025-11-23 | ✅ 成功 | Vite Preview StrictPort 修復：端口自動遞增導致 E2E 連線失敗   | 1) gh 指令分析 CI 失敗（61/74 E2E 測試 connection refused to 4174）2) Sequential 思維分析根因（Vite strictPort: false 預設自動遞增）3) Context7 查詢 Vite 官方文檔（--strictPort flag 用於 CI 環境）4) ci.yml line 103 添加 --strictPort 確保確定性行為     | [context7:vitejs/vite:2025-11-23], CI_CD_WORK_LOG.md（階段7）, CI_CD_AGENT_PROMPT.md                    | +1   |
 
 ---
 
 ## 當前總分
 
-**總分**: +5
+**總分**: +9
 
 ---
 
@@ -94,6 +98,16 @@
    - Context7 整合：查閱 Vitest 4.0 官方文檔（thresholdAutoUpdate, glob patterns, 絕對數值門檻）
    - 文檔化流程：創建 016_ci_cd_work_log.md 完整記錄分析過程、技術決策理由、改進建議
    - 結果：建立 CI 失敗處理 SOP，記錄安全審查最佳實踐，提供未來參考依據
+
+10. **Vite Preview Server 端口確定性修復（2025-11-23）**
+
+- 問題識別：61/74 E2E 測試失敗，連線拒絕錯誤指向 localhost:4174
+- 根因分析：使用 sequential-thinking 發現 Vite `strictPort: false` 預設會自動遞增端口（4173 → 4174）
+- 證據收集：gh 指令分析 CI 日誌，確認 preview server 與 Playwright baseURL 不一致
+- 最佳實踐查詢：Context7 查閱 Vite 官方文檔，確認 `--strictPort` 是 CI/CD 環境推薦配置
+- 解決方案：在 ci.yml line 103 添加 `--strictPort` flag 確保端口確定性
+- 文檔更新：在 CI_CD_WORK_LOG.md 記錄完整分析過程（階段 7）
+- 結果：建立端口配置最佳實踐，避免 CI 環境不確定性，確保 E2E 測試穩定性
 
 ### ❌ 失敗經驗
 
