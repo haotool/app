@@ -23,6 +23,7 @@
      - 缺少頁面載入等待機制（Strategy 1-4）
      - 直接執行 `page.goto('/')` 後立即點擊元素
    - **Fixture 本身在本地環境失敗**：
+
      ```
      TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
      waiting for locator('button:has-text("多幣別")') to be visible
