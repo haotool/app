@@ -285,6 +285,7 @@ export const SingleConverter = ({
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all duration-200"
             aria-label="開啟計算機 (轉換金額)"
+            data-testid="calculator-trigger-from"
           >
             <Calculator className="w-5 h-5" />
           </button>
@@ -524,6 +525,7 @@ export const SingleConverter = ({
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-200"
             aria-label="開啟計算機 (轉換結果)"
+            data-testid="calculator-trigger-to"
           >
             <Calculator className="w-5 h-5" />
           </button>
