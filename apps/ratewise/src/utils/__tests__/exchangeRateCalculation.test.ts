@@ -280,7 +280,26 @@ describe('匯率計算邏輯', () => {
     });
 
     it('應使用 exchangeRates fallback', () => {
-      const simpleRates = { USD: 31.0, EUR: 34.5 };
+      const simpleRates: Record<CurrencyCode, number | null> = {
+        TWD: 1,
+        USD: 31.0,
+        EUR: 34.5,
+        CHF: null,
+        JPY: null,
+        KRW: null,
+        HKD: null,
+        GBP: null,
+        AUD: null,
+        CAD: null,
+        SGD: null,
+        CNY: null,
+        NZD: null,
+        THB: null,
+        PHP: null,
+        IDR: null,
+        VND: null,
+        MYR: null,
+      };
       expect(getExchangeRate('USD', undefined, 'spot', simpleRates)).toBe(31.0);
     });
   });
