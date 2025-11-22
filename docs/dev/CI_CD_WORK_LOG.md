@@ -786,3 +786,36 @@ run: |
 **狀態**: ✅ 已修復配置，等待 CI 驗證
 
 **最後更新**: 2025-11-23T00:00:00+08:00
+
+---
+
+### 階段 7: E2E 持續白屏 - 追加 CI base fallback 與 Smoke 檢查（2025-11-22）
+
+#### 問題描述
+
+- CI Run 19598523356、19598785501 皆於 E2E 等待「多幣別」按鈕 10s 超時，截圖空白頁
+- 新增 smoke step 未出現在遠端日誌，顯示 workflow 尚未推送；仍沿用舊流程
+
+#### 採取行動
+
+1. Workflow 本地強化（待推送）：preview/Build 仍設 `VITE_BASE_PATH=/`，新增 Smoke check (curl HEAD + 首 20 行)；Playwright 設 `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173`
+2. 原始碼防禦：`apps/ratewise/vite.config.ts` 在 CI 環境自動 fallback base=/，避免 /ratewise 404
+3. 觸發 run 19598785501 驗證（但遠端未含新 workflow，仍白屏）
+
+#### 狀態
+
+- ❌ 仍失敗（需推送 workflow 變更後重跑）
+
+#### 依據
+
+- CI_WORKFLOW_SEPARATION.md（單一職責 + 煙囪檢查）
+- CI_CD_AGENT_PROMPT.md（Phase 1/2/3）
+- visionary-coder.md（無情簡化：以 env + smoke 驗證）
+- [context7:vitejs/vite:2025-11-22]（base/BASE_URL 配置）
+
+#### 下一步
+
+1. 推送 workflow/vite.config.ts 更新後重觸發 CI
+2. 如仍白屏，使用 smoke 輸出檢查 index/assets 是否 404，再加 console/network 診斷
+
+**最後更新**: 2025-11-22T17:40:00+08:00

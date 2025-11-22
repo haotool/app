@@ -83,6 +83,51 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
+// Provide a resilient in-memory storage fallback to avoid TypeError in CI
+type StorageTarget = 'localStorage' | 'sessionStorage';
+
+interface MemoryStorage extends Storage {
+  _store: Record<string, string>;
+}
+
+const ensureStorage = (target: StorageTarget): Storage => {
+  const existing = (window as unknown as Record<string, unknown>)[target];
+  if (existing && typeof (existing as Storage).clear === 'function') {
+    return existing as Storage;
+  }
+
+  // Minimal in-memory implementation compatible with Web Storage API
+  let store: Record<string, string> = {};
+  const memoryStorage: MemoryStorage = {
+    _store: store,
+    getItem: (key: string) => (key in store ? store[key] : null),
+    setItem: (key: string, value: string) => {
+      store[key] = String(value);
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+      memoryStorage._store = store;
+    },
+    key: (index: number) => Object.keys(store)[index] ?? null,
+    get length() {
+      return Object.keys(store).length;
+    },
+  } as MemoryStorage;
+
+  Object.defineProperty(window, target, {
+    value: memoryStorage,
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
+
+  return memoryStorage;
+};
+
 beforeEach(() => {
-  window.localStorage.clear();
+  ensureStorage('localStorage').clear();
+  ensureStorage('sessionStorage').clear();
 });
