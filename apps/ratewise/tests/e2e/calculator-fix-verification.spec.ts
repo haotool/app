@@ -41,7 +41,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
     await page.goto('/');
 
     // 打開計算機（點擊金額輸入框）
-    await page.click('input[placeholder*="金額"]');
+    await page.getByTestId('amount-input').click();
 
     // 驗證計算機已打開
     await expect(page.getByRole('dialog', { name: '計算機' })).toBeVisible();
@@ -74,7 +74,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
     await page.goto('/');
 
     // 打開計算機
-    await page.click('input[placeholder*="金額"]');
+    await page.getByTestId('amount-input').click();
     await expect(page.getByRole('dialog', { name: '計算機' })).toBeVisible();
 
     // 輸入三個數字：1, 2, 3
@@ -110,7 +110,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
     await page.goto('/');
 
     // 打開計算機並輸入表達式
-    await page.click('input[placeholder*="金額"]');
+    await page.getByTestId('amount-input').click();
     await page.getByRole('button', { name: '數字 7' }).click();
     await page.getByRole('button', { name: '加法' }).click();
     await page.getByRole('button', { name: '數字 5' }).click();
@@ -137,7 +137,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
     await page.goto('/');
 
     // 打開計算機
-    await page.click('input[placeholder*="金額"]');
+    await page.getByTestId('amount-input').click();
 
     // 驗證計算機已打開
     await expect(page.getByRole('dialog', { name: '計算機' })).toBeVisible();
@@ -169,7 +169,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
     await page.goto('/');
 
     // 打開計算機
-    await page.click('input[placeholder*="金額"]');
+    await page.getByTestId('amount-input').click();
     await expect(page.getByRole('dialog', { name: '計算機' })).toBeVisible();
 
     // 輸入數字：9, 8, 7
@@ -201,7 +201,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
     await page.goto('/');
 
     // 打開計算機
-    await page.click('input[placeholder*="金額"]');
+    await page.getByTestId('amount-input').click();
 
     // When: 測試所有數字鍵可點擊
     const numberButtons = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];

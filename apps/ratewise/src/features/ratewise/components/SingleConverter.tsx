@@ -232,6 +232,7 @@ export const SingleConverter = ({
             ref={fromInputRef}
             type="text"
             inputMode="decimal"
+            data-testid="amount-input"
             value={
               editingField === 'from' ? editingValue : formatAmountDisplay(fromAmount, fromCurrency)
             }
