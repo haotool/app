@@ -6,6 +6,23 @@
 
 ---
 
+### 階段 10: 計算機觸發定位修復 & Apple Touch Icon（2025-11-23）
+
+- **Run**: 19600573467 (CI) 失敗
+- **症狀**:
+  - `getByRole('dialog', { name: '計算機' })` 超時（計算機未開啟）
+  - PWA: `apple-touch-icon` 404
+- **根因**:
+  - UI 需點擊計算機按鈕才開啟，舊測試仍點擊輸入框
+  - `link[rel="apple-touch-icon"]` 使用相對路徑，測試期望 `/apple-touch-icon.png`
+- **修復**:
+  1. 計算機按鈕新增 `data-testid="calculator-trigger-from|to"`，測試改點按鈕後再等待 dialog
+  2. `apple-touch-icon` 改為絕對路徑 `/apple-touch-icon.png`
+- **狀態**: 🔄 已推送等待下一輪 CI
+- **依據**: [context7:microsoft/playwright:2025-11-22]（推薦 data-testid 作為穩定定位）
+
+---
+
 ### 階段 9: Calculator E2E 測試暫時禁用（2025-11-23）
 
 #### 問題識別：深度根因分析
