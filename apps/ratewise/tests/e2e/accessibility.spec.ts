@@ -248,19 +248,19 @@ test.describe('ARIA 屬性檢查', () => {
   });
 
   test('表單驗證錯誤應該可被螢幕閱讀器識別', async ({ rateWisePage: page }) => {
-    // 檢查數字輸入框是否有 aria-label（無障礙性最佳實踐）
-    const numberInputs = page.locator('input[type="number"]');
-    const inputCount = await numberInputs.count();
+    // 檢查金額輸入框是否有 aria-label（使用 data-testid 以避免 DOM 變動）
+    const amountInputs = page.locator('[data-testid="amount-input"]');
+    const inputCount = await amountInputs.count();
 
     // 確保至少有一個輸入框
     expect(inputCount).toBeGreaterThan(0);
 
-    // 檢查所有數字輸入框是否有 aria-label
+    // 檢查所有輸入框是否有 aria-label
     for (let i = 0; i < inputCount; i++) {
-      const input = numberInputs.nth(i);
+      const input = amountInputs.nth(i);
       const ariaLabel = await input.getAttribute('aria-label');
 
-      // 數字輸入框應該有 aria-label 以提供無障礙標籤
+      // 輸入框應該有 aria-label 以提供無障礙標籤
       expect(ariaLabel).toBeTruthy();
 
       if (ariaLabel) {

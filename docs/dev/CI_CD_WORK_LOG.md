@@ -24,7 +24,19 @@
 - **原因**: `index.html` 中手動包含了 `<link rel="manifest" ...>`，而 `vite-plugin-pwa` 也自動注入了一個。
 - **解決**: 移除 `index.html` 中的手動標籤，完全交由插件管理。
 
-### 待觀察：E2E Timeout Error
+### 5. 問題：金額輸入框 locator 失配導致 E2E Timeout（2025-11-23）
+
+- **Run ID**: 19599307173 (End-to-End)
+- **症狀**: `TimeoutError: page.click: Timeout 10000ms exceeded`，locator `input[placeholder*="金額"]` 找不到元素；ARIA 測試 `input[type="number"]` 計數為 0。
+- **原因**: UI 已改為 text input（無 placeholder「金額」），且非 number type；測試仍依賴舊 selector。
+- **解決**:
+  1. 在金額輸入框新增 `data-testid="amount-input"` 並保留 aria-label
+  2. Playwright 測試改用 `getByTestId('amount-input')`，避免 placeholder/型別耦合
+  3. ARIA 檢查改用同一 test id，確保有可計數的輸入框
+- **狀態**: 🔄 已修正代碼，待下一輪 CI 驗證
+- **依據**: [context7:microsoft/playwright:2025-11-22]（使用 data-testid 做穩定定位）
+
+### 待觀察：E2E Timeout Error（舊）
 
 - **症狀**: `TimeoutError: page.click: Timeout 10000ms exceeded` (waiting for input)。
 - **分析**: 可能是頁面加載緩慢或 React Hydration 失敗。

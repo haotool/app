@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-23T02:18:00+08:00
-> **當前總分**: 99 (初始分: 100)
+> **最後更新**: 2025-11-23T04:04:22+08:00
+> **當前總分**: 100 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                       | 採取行動                                                                                                                             | 依據                                                                                  | 分數 | 時間       |
 | ------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | 金額輸入框補 data-testid，穩定 E2E 定位    | 在 SingleConverter 金額輸入加 `data-testid=\"amount-input\"`，E2E/ARIA 測試改用 getByTestId 取代 placeholder 依賴                    | [context7:microsoft/playwright:2025-11-22]                                            | +1   | 2025-11-23 |
 | ✅ 成功 | 修復 PWA Manifest 重複注入                 | 移除 `index.html` 中手動注入的 link，解決 E2E 測試 Strict Mode Violation                                                             | [Vite PWA Plugin Docs]                                                                | +2   | 2025-11-23 |
 | ✅ 成功 | 修復 CI/CD 端口不一致與 Lighthouse CI 錯誤 | 1. 統一 Playwright/Lighthouse 端口為 4173<br>2. 使用 `--strictPort` 確保環境確定性<br>3. 優化 Lighthouse ready pattern 為 `"Local:"` | [context7:vitejs/vite:2025-11-23]<br>[context7:googlechrome/lighthouse-ci:2025-11-22] | +5   | 2025-11-23 |
 | ❌ 失敗 | E2E 測試端口衝突導致 CI 失敗               | 發現 `tests/e2e/calculator-fix-verification.spec.ts` 硬編碼錯誤端口 4174，與系統配置 4173 不符                                       | [Log Analysis: Run 19599046780]                                                       | -2   | 2025-11-23 |
