@@ -598,3 +598,191 @@ fix(docs): 更新 SEO 文檔為正確的生產環境網址
 ---
 
 **最後更新**: 2025-10-25T20:35:00+08:00
+
+---
+
+### 階段 4: Lighthouse CI Interstitial 修復（2025-11-22）
+
+#### 錯誤 #11: Lighthouse CI `CHROME_INTERSTITIAL_ERROR`
+
+**問題描述**:
+
+- 失敗工作流: `.github/workflows/lighthouse-ci.yml`（Run ID 19592106567，job: lighthouse）
+- 錯誤訊息: `Runtime error encountered: Chrome prevented page load with an interstitial. Make sure you are testing the correct URL and that the server is properly responding to all requests.`
+- 日誌症狀: 多個 audit 項目 `Caught exception: CHROME_INTERSTITIAL_ERROR`，無 `.lighthouseci` 報告被上傳
+
+**根本原因**:
+
+- Workflow 只執行 `pnpm build` 後直接 `lhci autorun`，未啟動任何伺服器；`collect.url` 指向 `http://localhost:4174/*`，Chrome 連線被導向 interstitial
+
+**採取行動**:
+
+1. **啟動預覽伺服器**：在 `.lighthouserc.json` 增加 `startServerCommand: "pnpm --filter @app/ratewise preview -- --host --port 4174 --strictPort --clearScreen false"`，並設定 `startServerReadyPattern: "Local:"`、`startServerReadyTimeout: 120000` 確保 LHCI 等待服務啟動
+2. **鎖定 LHCI 版本**：workflow 改用 `pnpm dlx @lhci/cli@0.15.1 autorun --config=.lighthouserc.json`（與專案 devDependency 一致，避免 0.14.x 行為差異）
+3. **Chrome 最小旗標**：`chromeFlags` 調整為 `--no-sandbox --headless=new`（GitHub Actions Ubuntu 24.04 官方建議）
+4. **本地驗證**：
+   - `pnpm typecheck` ✅
+   - `pnpm test` ❌（Vitest localStorage mock: `window.localStorage.clear is not a function`，既有問題，未在本次範圍修復）
+   - `pnpm -r build` ✅
+   - `pnpm dlx @lhci/cli@0.15.1 collect --config=.lighthouserc.json --numberOfRuns=1` ✅（第二次執行後無 ReadyPattern 警告）
+5. **CI 工作流對齊**：持續使用 xvfb，但改為 pinned LHCI 版本與新配置檔，保留 `VITE_BASE_PATH='/'`
+
+**依據**:
+
+- `docs/dev/CI_WORKFLOW_SEPARATION.md`（單一職責：預覽啟動 + LHCI）
+- `docs/dev/CI_CD_AGENT_PROMPT.md`（Phase 1/2/3 分析流程）
+- `docs/prompt/visionary-coder.md`（無情簡化：移除舊版全域安裝，改用 pinned dlx）
+- [context7:googlechrome/lighthouse-ci:2025-11-22]（startServerCommand / startServerReadyPattern / chromeFlags 最新建議）
+
+**狀態**: 🔄 已修復配置，待下一次 CI 觸發驗證（若後續是分數門檻問題，將再調整 assertions）
+
+**最後更新**: 2025-11-22T15:45:00+08:00
+
+---
+
+### 階段 5: Vitest localStorage TypeError 修復（2025-11-22）
+
+#### 錯誤 #12: `window.localStorage.clear is not a function` 導致 405 測試全數失敗
+
+**問題描述**:
+
+- `pnpm test` 全數 405/405 失敗，堆疊指向 `src/setupTests.ts:87` (`window.localStorage.clear is not a function`)
+- 連帶造成各測試檔 beforeEach 未執行，導致容器為 undefined（例如 `usePullToRefresh` afterEach `parentNode` undefined）
+- Node 執行時還出現 `--localstorage-file was provided without a valid path` 警告，顯示環境內建 localStorage 可能被替換
+
+**根本原因**:
+
+- CI/Node 環境中的 `window.localStorage` 被外部旗標或 stub 覆寫成不含 `clear` 的物件，setupTests 的全域 `beforeEach` 無保護直接呼叫 `clear`
+- beforeEach throw → 所有測試的本地 beforeEach/afterEach 未執行，造成大規模連鎖失敗
+
+**採取行動**:
+
+1. 在 `apps/ratewise/src/setupTests.ts` 實作 `ensureStorage`：
+   - 檢查目標 storage 是否具有 `clear`，否則注入符合 Web Storage API 的 in-memory 實作（getItem/setItem/removeItem/clear/key/length）
+   - 於全域 `beforeEach` 使用 `ensureStorage('localStorage')` / `ensureStorage('sessionStorage')` 並呼叫 `clear()`，避免再度拋錯
+2. 重跑測試：
+   - `pnpm test` ✅ 26 files / 405 tests 全數通過
+   - 耗時 3.30s（環境 11.04s，tests 3.97s）
+
+**狀態**: ✅ 已完成
+
+**最後更新**: 2025-11-22T16:00:00+08:00
+
+---
+
+### 階段 6: E2E 頁面載入失敗（base 路徑錯誤）修復（2025-11-22）
+
+#### 錯誤 #13: Playwright 等待「多幣別」按鈕超時，61/?? E2E 用例失敗
+
+**問題描述**:
+
+- 失敗工作流: `ci.yml` Job `End-to-End` (Run ID 19592106572)
+- 主要錯誤: `page.waitForSelector('button:has-text("多幣別")', timeout 10000ms exceeded)`，桌機/行動兩個專案大量超時
+- 觀察: 頁面未渲染關鍵按鈕，疑似資源 404 或 base path 配置錯誤
+
+**根本原因**:
+
+- Vite 生產構建預設 `base=/ratewise/`（生產用）
+- CI E2E 在 localhost:4173 提供 preview，未設定 `VITE_BASE_PATH='/'`，導致頁面請求 `/ratewise/assets/*` 404，DOM 未載入完成，關鍵按鈕缺失
+
+**採取行動**:
+
+1. 更新 `.github/workflows/ci.yml`：
+   - Build 步驟設置 `VITE_BASE_PATH='/'`，讓 preview 構建使用根路徑
+   - preview 啟動維持 4173 端口，資源路徑對齊
+2. 參考文檔：
+   - `docs/dev/CI_WORKFLOW_SEPARATION.md`（不同工作流單一職責）
+   - `docs/dev/CI_CD_AGENT_PROMPT.md`（Phase 1/2/3 證據→根因→解法）
+   - `docs/prompt/visionary-coder.md`（無情簡化：以環境變數控制 base）
+   - [context7:vitejs/vite:2025-11-22]（BASE_URL / base 設定與部署根徑）
+3. 待驗證：等待下一次 CI 重新跑 E2E；如仍有 flake，再調整 `PLAYWRIGHT_BASE_URL` 或增加 ready 檢查
+
+**狀態**: 🔄 已調整工作流，等待 CI 再次執行驗證
+
+**最後更新**: 2025-11-23T00:00:00+08:00
+
+---
+
+### 階段 7: Vite Preview StrictPort 修復（2025-11-23）
+
+#### 錯誤 #14: E2E 測試連線拒絕 - Preview Server 端口自動遞增問題
+
+**發生時間**: 2025-11-23T00:00:00+08:00
+**Run ID**: 19598523356
+**SHA**: (待查詢)
+
+**問題描述**:
+
+- 失敗工作流: `ci.yml` Job `End-to-End`
+- 主要錯誤: 61/74 E2E 測試失敗，錯誤訊息 `net::ERR_CONNECTION_REFUSED at http://localhost:4174/`
+- 觀察: Playwright 配置為連接 `http://localhost:4173`，但實際 preview server 運行在 4174 端口
+
+**時間線分析**:
+
+```
+1. CI 啟動 preview server: pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173
+2. 端口 4173 被佔用 → Vite 自動遞增為 4174
+3. Playwright 嘗試連接 http://localhost:4173 → ❌ 連線拒絕
+4. 61/74 E2E 測試超時失敗
+```
+
+**根本原因分析**:
+
+1. **Vite Preview Server 預設行為**:
+   - `strictPort: false` (預設值)
+   - 當指定端口被佔用時，自動嘗試下一個端口 (4173 → 4174 → 4175...)
+   - CI 環境中，端口 4173 可能被其他進程佔用
+
+2. **配置不一致**:
+   - CI workflow: 指定 `--port 4173` 但無 `--strictPort`
+   - Playwright config: `baseURL: 'http://localhost:4173'` (固定)
+   - 結果: Preview server 在 4174，Playwright 連接 4173 → 連線失敗
+
+3. **證據**:
+   - 錯誤日誌顯示嘗試連接 `http://localhost:4174/`
+   - 沒有 JavaScript 錯誤，純粹是連線問題
+
+**解決方案**（基於 Vite 2025 官方建議）:
+
+修改 `.github/workflows/ci.yml` line 103:
+
+```yaml
+# 修改前：
+run: |
+  pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 &
+  echo $! > .preview-server.pid
+  ...
+
+# 修改後（添加 --strictPort）：
+run: |
+  pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 --strictPort &
+  echo $! > .preview-server.pid
+  ...
+```
+
+**修復原理**:
+
+1. ✅ **確定性行為** - `--strictPort` 確保 CI 環境的可預測性
+2. ✅ **快速失敗** - 如果端口被佔用，立即報錯，不會靜默遞增
+3. ✅ **配置一致** - Preview server 與 Playwright baseURL 保持同步
+4. ✅ **CI 最佳實踐** - 2025 年 Vite 官方推薦用於 CI/CD 環境
+
+**參考資料**:
+
+- [context7:vitejs/vite:2025-11-23] - Vite preview server `strictPort` 配置說明
+- [Vite CLI Options](https://vitejs.dev/guide/cli.html#vite-preview) - `--strictPort` 旗標用途
+- CI_WORKFLOW_SEPARATION.md - 單一職責：確保 preview server 啟動在預期端口
+- CI_CD_AGENT_PROMPT.md - Phase 1/2/3: 證據收集 → 根因分析 → 解決方案實施
+
+**採取行動**:
+
+1. ✅ 使用 `gh run list` 和 `gh run view --log-failed` 分析 CI 失敗
+2. ✅ 使用 sequential-thinking MCP 進行系統性根因分析
+3. ✅ 透過 Context7 查詢 Vite 官方文檔確認最佳實踐
+4. ✅ 在 ci.yml line 103 preview 命令添加 `--strictPort` flag
+5. ✅ 更新 CI_CD_WORK_LOG.md 記錄完整分析過程
+6. 🔄 等待下一次 CI 執行驗證修復效果
+
+**狀態**: ✅ 已修復配置，等待 CI 驗證
+
+**最後更新**: 2025-11-23T00:00:00+08:00
