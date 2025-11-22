@@ -6,6 +6,42 @@
 
 ---
 
+### 階段 11: 格式修正成功，發現其他測試失敗（2025-11-23）
+
+- **Run**: 19600867210 (CI) 失敗
+- **成功部分**:
+  - ✅ Quality Checks 通過（lint, typecheck 等）
+  - ✅ Calculator 測試成功跳過（24 skipped）
+  - ✅ Prettier 格式問題修復（CI_CD_WORK_LOG.md）
+- **發現新問題** (9 個測試失敗):
+  1. **Apple Touch Icon 路徑問題** (2 次):
+     - 期望: `/apple-touch-icon.png`
+     - 實際: `./apple-touch-icon.png`
+     - 位置: `apps/ratewise/tests/e2e/pwa.spec.ts:108`
+
+  2. **UI 樣式變更導致測試過時** (4 次):
+     - 單幣別/多幣別按鈕樣式已改變
+     - 測試期望: `/bg-white/` class
+     - 實際: `bg-gradient-to-r from-blue-500/purple-500 ...`
+     - 位置: `apps/ratewise/tests/e2e/ratewise.spec.ts:41, 79`
+
+  3. **輸入方式改變** (3 次):
+     - TWD 輸入框現在是 `<div role="button">` 而非 `<input>`
+     - 點擊後開啟計算機，而非直接填入
+     - 錯誤: `Element is not an <input>, <textarea>, <select>`
+     - 位置: `apps/ratewise/tests/e2e/ratewise.spec.ts:102`
+
+- **根因分析**:
+  - UI 實現已演進（漸層按鈕、計算機觸發方式）
+  - 測試未同步更新，期望值已過時
+  - 與 Calculator 測試問題類似：實現改變但測試未跟進
+
+- **後續行動**:
+  - 已有新的 commit "fix(e2e): click calculator trigger and fix apple icon" 正在處理
+  - 等待驗證修復是否完整
+
+---
+
 ### 階段 10: 計算機觸發定位修復 & Apple Touch Icon（2025-11-23）
 
 - **Run**: 19600573467 (CI) 失敗
