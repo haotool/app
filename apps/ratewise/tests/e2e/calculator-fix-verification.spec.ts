@@ -15,7 +15,6 @@
 import { test, expect } from '@playwright/test';
 
 // 測試配置
-const BASE_URL = 'http://localhost:4174';
 const MOBILE_VIEWPORT = { width: 375, height: 667 }; // iPhone SE
 const DESKTOP_VIEWPORT = { width: 1280, height: 720 };
 
@@ -39,7 +38,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
     await page.setViewportSize(DESKTOP_VIEWPORT);
 
     // When: 導航到首頁
-    await page.goto(BASE_URL);
+    await page.goto('/');
 
     // 打開計算機（點擊金額輸入框）
     await page.click('input[placeholder*="金額"]');
@@ -72,7 +71,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
   test('桌面版：刪除按鈕短按（修復驗證）', async ({ page }) => {
     // Given: 設定桌面視窗大小
     await page.setViewportSize(DESKTOP_VIEWPORT);
-    await page.goto(BASE_URL);
+    await page.goto('/');
 
     // 打開計算機
     await page.click('input[placeholder*="金額"]');
@@ -108,7 +107,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
   test('桌面版：清除按鈕功能', async ({ page }) => {
     // Given: 設定桌面視窗大小
     await page.setViewportSize(DESKTOP_VIEWPORT);
-    await page.goto(BASE_URL);
+    await page.goto('/');
 
     // 打開計算機並輸入表達式
     await page.click('input[placeholder*="金額"]');
@@ -135,7 +134,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
     await page.setViewportSize(MOBILE_VIEWPORT);
 
     // When: 導航到首頁
-    await page.goto(BASE_URL);
+    await page.goto('/');
 
     // 打開計算機
     await page.click('input[placeholder*="金額"]');
@@ -167,7 +166,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
   test('移動版：刪除按鈕短按（一致性驗證）', async ({ page }) => {
     // Given: 設定移動視窗大小
     await page.setViewportSize(MOBILE_VIEWPORT);
-    await page.goto(BASE_URL);
+    await page.goto('/');
 
     // 打開計算機
     await page.click('input[placeholder*="金額"]');
@@ -199,7 +198,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
   test('移動版：按鈕可點擊性和反饋', async ({ page }) => {
     // Given: 設定移動視窗大小
     await page.setViewportSize(MOBILE_VIEWPORT);
-    await page.goto(BASE_URL);
+    await page.goto('/');
 
     // 打開計算機
     await page.click('input[placeholder*="金額"]');
@@ -230,7 +229,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
   test('計算機關閉功能', async ({ page }) => {
     // Given: 打開計算機
     await page.setViewportSize(DESKTOP_VIEWPORT);
-    await page.goto(BASE_URL);
+    await page.goto('/');
     await page.click('input[placeholder*="金額"]');
     await expect(page.getByRole('dialog', { name: '計算機' })).toBeVisible();
 
@@ -250,7 +249,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
   test('無障礙功能：ARIA 標籤', async ({ page }) => {
     // Given: 打開計算機
     await page.setViewportSize(DESKTOP_VIEWPORT);
-    await page.goto(BASE_URL);
+    await page.goto('/');
     await page.click('input[placeholder*="金額"]');
 
     // Then: 驗證關鍵按鈕的 ARIA 標籤
