@@ -40,13 +40,13 @@ jobs:
           VITE_BASE_PATH: '/' # Lighthouse CI serves dist directly, use root path
 
       - name: Install Lighthouse CI
-        run: npm install -g @lhci/cli@0.14.x
+        run: pnpm dlx @lhci/cli@0.15.1 --help
 
       - name: Install xvfb (virtual framebuffer for headless Chrome)
         run: sudo apt-get update && sudo apt-get install -y xvfb
 
       - name: Run Lighthouse CI
-        run: xvfb-run --auto-servernum --server-args='-screen 0 1920x1080x24' lhci autorun
+        run: xvfb-run --auto-servernum --server-args='-screen 0 1920x1080x24' pnpm dlx @lhci/cli@0.15.1 autorun --config=.lighthouserc.json
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 

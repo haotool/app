@@ -126,3 +126,13 @@
 - `docs/prompt/BDD.md` - BDD 測試流程
 - `CLAUDE.md` - 開發指南與強制規範
 - `LINUS_GUIDE.md` - Linus 開發哲學（DRY, KISS）
+
+11. **E2E 持續白屏待驗證（2025-11-22）**
+
+- 問題：CI Run 19598523356、19598785501 仍在等待「多幣別」按鈕 10s 超時，截圖空白頁
+- 措施：本地更新 workflow（Smoke check + PLAYWRIGHT_BASE_URL=127.0.0.1:4173），vite.config.ts 在 CI 自動 base='/' 防止 /ratewise 404，已觸發新 CI 待推送驗證
+- 狀態：⚠️ 注意（尚未推送/驗證）
+- 依據：CI_CD_WORK_LOG.md（階段7）、[context7:vitejs/vite:2025-11-22]
+- 分數：0
+
+**總分**: +8

@@ -138,7 +138,9 @@ export default defineConfig(({ mode }) => {
   // CI 環境: VITE_BASE_PATH='/' (Lighthouse/E2E)
   // 生產環境: VITE_BASE_PATH='/ratewise/' (Zeabur)
   const baseFromEnv = env.VITE_BASE_PATH || process.env['VITE_BASE_PATH'];
-  const base = baseFromEnv ?? (mode === 'production' ? '/ratewise/' : '/');
+  // CI 預設使用根路徑避免 /ratewise/ 404
+  const base =
+    baseFromEnv ?? (process.env['CI'] ? '/' : mode === 'production' ? '/ratewise/' : '/');
 
   // [fix:2025-11-06] PWA manifest 路徑策略（符合 PWA 最佳實踐）
   // - scope: 必須有尾斜線 (MDN 規範：定義應用範圍)

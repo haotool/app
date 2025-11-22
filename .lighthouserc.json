@@ -2,11 +2,14 @@
   "ci": {
     "collect": {
       "url": ["http://localhost:4174/", "http://localhost:4174/faq", "http://localhost:4174/about"],
+      "startServerCommand": "pnpm --filter @app/ratewise preview -- --host --port 4174 --strictPort --clearScreen false",
+      "startServerReadyPattern": "Local:",
+      "startServerReadyTimeout": 120000,
       "numberOfRuns": 3,
       "settings": {
         "preset": "desktop",
         "onlyCategories": ["performance", "seo", "accessibility", "best-practices"],
-        "chromeFlags": "--headless"
+        "chromeFlags": "--no-sandbox --headless=new"
       }
     },
     "assert": {
