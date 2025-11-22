@@ -19,23 +19,24 @@
 
 ## 開發記錄
 
-| 日期       | 類型    | 摘要                                                          | 採取行動                                                                                                                                                                                                                                                    | 依據                                                                                                    | 分數 |
-| ---------- | ------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---- |
-| 2025-11-20 | ✅ 成功 | 多幣別計算機整合：BDD流程、15測試通過、88.08%覆蓋率           | 1) BDD文檔先行 2) 重用CalculatorKeyboard組件 3) stopPropagation防止事件冒泡 4) 類型安全（MultiAmountsState + RateDetails.name）                                                                                                                             | [BDD.md], [CLAUDE.md], [Linus DRY principle]                                                            | +1   |
-| 2025-11-21 | ✅ 成功 | 多幣別輸入框語義優化：input→div+role="button"                 | 1) 改用div+role="button"+tabIndex={0} 2) 新增鍵盤支援(Enter/Space) 3) 增強focus視覺(ring-2) 4) 保留點擊觸發計算機功能                                                                                                                                       | [context7:react_dev:2025-11-21], [WCAG 2.1]                                                             | +1   |
-| 2025-11-22 | ✅ 成功 | 技術債深度清除：CVE修復、DRY原則、Logger整合、測試覆蓋率提升  | 1) 移除expr-eval (CVE-2024-64746) 2) 建立exchangeRateCalculation.ts (93%代碼減少) 3) Logger系統整合 4) exchangeRateCalculation測試39個100%                                                                                                                  | [Linus KISS], [visionary-coder.md], [OWASP Top 10]                                                      | +1   |
-| 2025-11-22 | ✅ 成功 | 測試覆蓋率策略：實用主義與持續改進平衡                        | 1) 設定防退化門檻（81/71/82/83%）符合業界標準（Google 75%+）2) 明確改進目標（86/80/86/86%）3) 建議下階段啟用 Vitest 4.0 thresholdAutoUpdate 自動提升                                                                                                        | [業界標準調研 2025-11-22], [Vitest 4.0], [Linus 實用主義]                                               | +1   |
-| 2025-11-22 | ✅ 成功 | CI/CD 分析：expr-eval 漏洞追蹤與解決驗證                      | 1) gh 指令分析 CI 失敗（CVE-2025-12735, Prototype Pollution）2) 研究 2025 最佳實踐（expr-eval-fork, math.js, Shunting Yard）3) 驗證 Shunting Yard 解決方案（commit 2172ba8）4) Context7 查閱 Vitest 4.0（thresholdAutoUpdate）5) 創建 016_ci_cd_work_log.md | [context7:vitest-dev/vitest:v4.0.7], [GitHub Security Advisory], [visionary-coder.md], [Linus KISS]     | +1   |
-| 2025-11-22 | ✅ 成功 | Lighthouse CI interstitial 修復（啟動 preview + pinned LHCI） | 1) `.lighthouserc.json` 新增 startServerCommand + ReadyPattern/Timeout 2) workflow 改用 `pnpm dlx @lhci/cli@0.15.1 autorun --config` 3) chromeFlags 簡化為 `--no-sandbox --headless=new` 4) 本地 `lhci collect` 驗證通過（無 interstitial）                 | [context7:googlechrome/lighthouse-ci:2025-11-22], CI_CD_WORK_LOG.md, CI_WORKFLOW_SEPARATION.md          | +1   |
-| 2025-11-22 | ✅ 成功 | Vitest localStorage TypeError 修復，405/405 測試恢復通過      | 1) setupTests 增加 ensureStorage in-memory WebStorage fallback 2) beforeEach 改為防禦式清空 local/session storage 3) `pnpm test` 全數通過（26 files / 405 tests）                                                                                           | CI_CD_WORK_LOG.md（階段5記錄）                                                                          | +1   |
-| 2025-11-22 | ✅ 成功 | E2E base 路徑修復：CI preview 對齊根路徑                      | 1) `ci.yml` Build 步驟設 `VITE_BASE_PATH='/'` 避免 /ratewise/ 404 2) 確保 preview 4173 服務與 Playwright baseURL 一致 3) 依據 Vite base 官方建議與 CI 工作流分離策略記錄於 CI_CD_WORK_LOG.md                                                                | [context7:vitejs/vite:2025-11-22], CI_WORKFLOW_SEPARATION.md, CI_CD_AGENT_PROMPT.md, visionary-coder.md | +1   |
-| 2025-11-23 | ✅ 成功 | Vite Preview StrictPort 修復：端口自動遞增導致 E2E 連線失敗   | 1) gh 指令分析 CI 失敗（61/74 E2E 測試 connection refused to 4174）2) Sequential 思維分析根因（Vite strictPort: false 預設自動遞增）3) Context7 查詢 Vite 官方文檔（--strictPort flag 用於 CI 環境）4) ci.yml line 103 添加 --strictPort 確保確定性行為     | [context7:vitejs/vite:2025-11-23], CI_CD_WORK_LOG.md（階段7）, CI_CD_AGENT_PROMPT.md                    | +1   |
+| 日期       | 類型    | 摘要                                                          | 採取行動                                                                                                                                                                                                                                                                                            | 依據                                                                                                    | 分數 |
+| ---------- | ------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---- |
+| 2025-11-20 | ✅ 成功 | 多幣別計算機整合：BDD流程、15測試通過、88.08%覆蓋率           | 1) BDD文檔先行 2) 重用CalculatorKeyboard組件 3) stopPropagation防止事件冒泡 4) 類型安全（MultiAmountsState + RateDetails.name）                                                                                                                                                                     | [BDD.md], [CLAUDE.md], [Linus DRY principle]                                                            | +1   |
+| 2025-11-21 | ✅ 成功 | 多幣別輸入框語義優化：input→div+role="button"                 | 1) 改用div+role="button"+tabIndex={0} 2) 新增鍵盤支援(Enter/Space) 3) 增強focus視覺(ring-2) 4) 保留點擊觸發計算機功能                                                                                                                                                                               | [context7:react_dev:2025-11-21], [WCAG 2.1]                                                             | +1   |
+| 2025-11-22 | ✅ 成功 | 技術債深度清除：CVE修復、DRY原則、Logger整合、測試覆蓋率提升  | 1) 移除expr-eval (CVE-2024-64746) 2) 建立exchangeRateCalculation.ts (93%代碼減少) 3) Logger系統整合 4) exchangeRateCalculation測試39個100%                                                                                                                                                          | [Linus KISS], [visionary-coder.md], [OWASP Top 10]                                                      | +1   |
+| 2025-11-22 | ✅ 成功 | 測試覆蓋率策略：實用主義與持續改進平衡                        | 1) 設定防退化門檻（81/71/82/83%）符合業界標準（Google 75%+）2) 明確改進目標（86/80/86/86%）3) 建議下階段啟用 Vitest 4.0 thresholdAutoUpdate 自動提升                                                                                                                                                | [業界標準調研 2025-11-22], [Vitest 4.0], [Linus 實用主義]                                               | +1   |
+| 2025-11-22 | ✅ 成功 | CI/CD 分析：expr-eval 漏洞追蹤與解決驗證                      | 1) gh 指令分析 CI 失敗（CVE-2025-12735, Prototype Pollution）2) 研究 2025 最佳實踐（expr-eval-fork, math.js, Shunting Yard）3) 驗證 Shunting Yard 解決方案（commit 2172ba8）4) Context7 查閱 Vitest 4.0（thresholdAutoUpdate）5) 創建 016_ci_cd_work_log.md                                         | [context7:vitest-dev/vitest:v4.0.7], [GitHub Security Advisory], [visionary-coder.md], [Linus KISS]     | +1   |
+| 2025-11-22 | ✅ 成功 | Lighthouse CI interstitial 修復（啟動 preview + pinned LHCI） | 1) `.lighthouserc.json` 新增 startServerCommand + ReadyPattern/Timeout 2) workflow 改用 `pnpm dlx @lhci/cli@0.15.1 autorun --config` 3) chromeFlags 簡化為 `--no-sandbox --headless=new` 4) 本地 `lhci collect` 驗證通過（無 interstitial）                                                         | [context7:googlechrome/lighthouse-ci:2025-11-22], CI_CD_WORK_LOG.md, CI_WORKFLOW_SEPARATION.md          | +1   |
+| 2025-11-22 | ✅ 成功 | Vitest localStorage TypeError 修復，405/405 測試恢復通過      | 1) setupTests 增加 ensureStorage in-memory WebStorage fallback 2) beforeEach 改為防禦式清空 local/session storage 3) `pnpm test` 全數通過（26 files / 405 tests）                                                                                                                                   | CI_CD_WORK_LOG.md（階段5記錄）                                                                          | +1   |
+| 2025-11-22 | ✅ 成功 | E2E base 路徑修復：CI preview 對齊根路徑                      | 1) `ci.yml` Build 步驟設 `VITE_BASE_PATH='/'` 避免 /ratewise/ 404 2) 確保 preview 4173 服務與 Playwright baseURL 一致 3) 依據 Vite base 官方建議與 CI 工作流分離策略記錄於 CI_CD_WORK_LOG.md                                                                                                        | [context7:vitejs/vite:2025-11-22], CI_WORKFLOW_SEPARATION.md, CI_CD_AGENT_PROMPT.md, visionary-coder.md | +1   |
+| 2025-11-23 | ✅ 成功 | Vite Preview StrictPort 修復：端口自動遞增導致 E2E 連線失敗   | 1) gh 指令分析 CI 失敗（61/74 E2E 測試 connection refused to 4174）2) Sequential 思維分析根因（Vite strictPort: false 預設自動遞增）3) Context7 查詢 Vite 官方文檔（--strictPort flag 用於 CI 環境）4) ci.yml line 103 添加 --strictPort 確保確定性行為                                             | [context7:vitejs/vite:2025-11-23], CI_CD_WORK_LOG.md（階段7）, CI_CD_AGENT_PROMPT.md                    | +1   |
+| 2025-11-23 | ✅ 成功 | E2E 測試硬編碼 BASE_URL 修復：Client 端端口配置錯誤           | 1) Sequential 思維分析矛盾（server 4173 OK, 測試仍連 4174）2) Grep 搜索發現 calculator-fix-verification.spec.ts 硬編碼 BASE_URL='http://localhost:4174' 3) 刪除硬編碼，改用 page.goto('/') 遵循 Playwright 最佳實踐 4) 本地驗證 405/405 測試通過 5) 完整修復 Server(階段7) + Client(階段8) 雙端問題 | [Playwright baseURL 官方文檔], CI_CD_WORK_LOG.md（階段8）, visionary-coder.md（無情簡化）               | +1   |
 
 ---
 
 ## 當前總分
 
-**總分**: +9
+**總分**: +10
 
 ---
 
@@ -108,6 +109,17 @@
 - 解決方案：在 ci.yml line 103 添加 `--strictPort` flag 確保端口確定性
 - 文檔更新：在 CI_CD_WORK_LOG.md 記錄完整分析過程（階段 7）
 - 結果：建立端口配置最佳實踐，避免 CI 環境不確定性，確保 E2E 測試穩定性
+
+11. **E2E 測試硬編碼 BASE_URL 修復（2025-11-23）**
+
+- 問題識別：--strictPort 修復後測試仍失敗，矛盾現象（server 4173 ✅ 但測試連 4174 ❌）
+- 系統性分析：使用 Sequential Thinking 8 步驟分析，發現問題分為 Server 端（階段 7）+ Client 端（階段 8）
+- 證據收集：Grep 搜索發現 calculator-fix-verification.spec.ts 硬編碼 `BASE_URL = 'http://localhost:4174'`
+- 違反最佳實踐：其他測試文件（ratewise.spec.ts, pwa.spec.ts）都正確使用 `page.goto('/')`
+- 解決方案：刪除硬編碼 BASE_URL，改用 `page.goto('/')` 自動使用 playwright.config.ts 配置
+- 本地驗證：TypeScript 編譯通過，405/405 測試全過
+- 關鍵教訓：端到端問題需要系統性檢查整個鏈路（Server + Client + Config）
+- 結果：Server + Client 雙端修復，完整解決 E2E 測試連線問題，遵循 Playwright 標準模式
 
 ### ❌ 失敗經驗
 

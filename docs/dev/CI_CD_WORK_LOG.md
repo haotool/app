@@ -819,3 +819,86 @@ run: |
 2. 如仍白屏，使用 smoke 輸出檢查 index/assets 是否 404，再加 console/network 診斷
 
 **最後更新**: 2025-11-22T17:40:00+08:00
+
+---
+
+### 階段 8: E2E 測試硬編碼 BASE_URL 修復（2025-11-23）
+
+#### 錯誤 #15: 測試文件硬編碼端口 4174 導致連線失敗
+
+**發生時間**: 2025-11-23T01:55:00+08:00  
+**Run ID**: 19599046780（--strictPort 修復後）  
+**SHA**: 6a82152  
+**Commit**: fix(ci): 添加 --strictPort 確保端口確定性
+
+**問題描述**:
+
+- 失敗工作流: `ci.yml` Job `End-to-End`
+- 主要錯誤: 61/74 E2E 測試失敗，錯誤訊息 `net::ERR_CONNECTION_REFUSED at http://localhost:4174/`
+- **矛盾現象**:
+  - Preview server 成功啟動在 4173 ✅ (`Local: http://localhost:4173/`)
+  - Smoke check 成功連接 4173 ✅ (`curl -I http://127.0.0.1:4173`)
+  - `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173` 正確設置 ✅
+  - 但測試仍嘗試連接 4174 ❌
+
+**根本原因分析**（使用 Sequential Thinking MCP）:
+
+1. **測試文件硬編碼問題**:
+   - `apps/ratewise/tests/e2e/calculator-fix-verification.spec.ts:18` 定義了 `const BASE_URL = 'http://localhost:4174'`
+   - 8 處使用 `await page.goto(BASE_URL)` 覆蓋了 Playwright 配置的 baseURL
+   - 這是測試創建時使用了錯誤端口號
+
+2. **為什麼階段 7 的 --strictPort 沒有完全解決**:
+   - 階段 7 修復: Preview server 端（--strictPort 確保穩定在 4173） ✅
+   - 階段 8 發現: Test client 端（硬編碼 4174） ❌
+   - 這是兩個獨立的問題，需要 Server + Client 雙端修復
+
+3. **違反 Playwright 最佳實踐**:
+   - 正確做法: `page.goto('/')` 自動使用 playwright.config.ts 的 baseURL
+   - 錯誤做法: 測試文件硬編碼完整 URL
+   - 其他測試文件（ratewise.spec.ts, pwa.spec.ts）都遵循正確模式
+
+**解決方案**（基於 Playwright 2025 最佳實踐）:
+
+```typescript
+// 修改前：
+const BASE_URL = 'http://localhost:4174';
+await page.goto(BASE_URL); // ❌
+
+// 修改後：
+await page.goto('/'); // ✅ 自動使用配置的 baseURL
+```
+
+**修復原理**:
+
+1. ✅ **自動適應環境** - CI/本地環境自動使用正確 baseURL
+2. ✅ **DRY 原則** - 避免重複配置
+3. ✅ **配置一致性** - 所有測試使用統一來源
+4. ✅ **Playwright 標準** - 符合官方推薦模式
+
+**參考資料**:
+
+- [Playwright baseURL](https://playwright.dev/docs/test-webserver#adding-a-baseurl) - 官方最佳實踐
+- playwright.config.ts:35 - baseURL 配置
+- visionary-coder.md - "無情簡化：消除重複配置"
+
+**採取行動**:
+
+1. ✅ Sequential Thinking MCP 根因分析（8 步驟）
+2. ✅ Grep 搜索所有 BASE_URL 引用
+3. ✅ 刪除 BASE_URL 常量，改用 `page.goto('/')`
+4. ✅ 本地驗證: TypeScript 通過，405/405 測試全過
+5. ✅ 提交 commit 0357ce2
+6. ✅ 更新 CI_CD_WORK_LOG.md（本記錄）
+7. 🔄 等待 CI Run 19599162756 驗證
+
+**與階段 7 的關係**:
+
+- **階段 7**: 修復 Server 端（Preview server 端口問題）
+- **階段 8**: 修復 Client 端（測試代碼端口問題）
+- **互補修復**: 完整解決端到端測試連線問題
+- **根本教訓**: 需要系統性檢查整個鏈路（Server + Client + Config）
+
+**狀態**: ✅ 已修復測試代碼，等待 CI 驗證
+
+**最後更新**: 2025-11-23T01:55:00+08:00
