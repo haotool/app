@@ -1,8 +1,8 @@
 {
   "ci": {
     "collect": {
-      "url": ["http://127.0.0.1:4173/", "http://127.0.0.1:4173/faq", "http://127.0.0.1:4173/about"],
-      "startServerCommand": "VITE_BASE_PATH='/' pnpm --filter @app/ratewise preview -- --host 127.0.0.1 --port 4173 --strictPort --clearScreen false",
+      "url": ["http://localhost:4173/", "http://localhost:4173/faq", "http://localhost:4173/about"],
+      "startServerCommand": "VITE_BASE_PATH='/' pnpm --filter @app/ratewise preview -- --port 4173 --strictPort --clearScreen false",
       "startServerReadyPattern": "Local:",
       "startServerReadyTimeout": 120000,
       "numberOfRuns": 3,
