@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-23T04:40:00+08:00
-> **當前總分**: 101 (初始分: 100)
+> **最後更新**: 2025-11-23T06:30:00+08:00
+> **當前總分**: 111 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                       | 採取行動                                                                                                                             | 依據                                                                                  | 分數 | 時間       |
 | ------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | Base Path 白屏與嚴格模式雙元素衝突修復     | 1) `navigateHome`/fixture 支援 `/ratewise/` base，避免空白頁；2) 單幣別輸入/結果改用 testid+role，排除計算機按鈕的 aria label 競爭   | [context7:microsoft/playwright:2025-11-22]                                            | +3   | 2025-11-23 |
 | ✅ 成功 | 金額輸入框補 data-testid，穩定 E2E 定位    | 在 SingleConverter 金額輸入加 `data-testid="amount-input"`，E2E/ARIA 測試改用 getByTestId 取代 placeholder 依賴                      | [context7:microsoft/playwright:2025-11-22]                                            | +1   | 2025-11-23 |
 | ✅ 成功 | 多幣別/單幣別測試對齊現況 UI               | ratewise.spec 移除舊 class 斷言，改檢查標題/aria；多幣別使用快速金額按鈕與 aria-label 驗證，避免對 div 填值                          | [context7:microsoft/playwright:2025-11-22]                                            | +1   | 2025-11-23 |
 | ✅ 成功 | 修復 PWA Manifest 重複注入                 | 移除 `index.html` 中手動注入的 link，解決 E2E 測試 Strict Mode Violation                                                             | [Vite PWA Plugin Docs]                                                                | +2   | 2025-11-23 |
@@ -191,3 +192,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 - 測試應隨著實現演進而更新
   | ✅ 成功 | 修復 CI 格式檢查失敗 | 使用 Prettier 修復 CI_CD_WORK_LOG.md 格式問題，確保 CI Quality Checks 通過 | [Prettier] | +1 | 2025-11-23 |
   | ⚠️ 注意 | 發現 UI 測試與實現不同步問題 | 1) 單幣別/多幣別按鈕樣式已改變（漸層設計）2) TWD 輸入框改為點擊觸發計算機 3) Apple Touch Icon 使用相對路徑 4) 測試期望值未更新 5) 已有新 commit 正在處理這些問題 | [CI Run 19600867210], CI_CD_WORK_LOG.md（階段 11） | 0 | 2025-11-23 |
+  | ✅ 成功 | Playwright 2025 根本性簡化 - 移除冗餘策略 | 1) **Fixtures 簡化** (fixtures/test.ts): 從 4 等待策略簡化為 1 語意檢查，移除 networkidle，使用 `getByRole` 而非 `waitForSelector`，超時從 10s → 3s，移除 60+ 行冗餘代碼 2) **RateWise Spec 簡化** (ratewise.spec.ts): 移除冗餘 `navigateHome` helper (30行)，修復嚴格模式衝突 (data-testid)，簡化效能/佈局測試 3) **根本性修復**: 違反 Playwright auto-waiting 原則、使用過時 API、networkidle 不可靠導致超時 | [context7:microsoft/playwright:2025-11-23]<br>[playwright.dev/docs/best-practices]<br>[semantive.com 2025 Fixtures]<br>[deviqa.com 2025 Testing Guide] | +7 | 2025-11-23 |
