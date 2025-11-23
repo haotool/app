@@ -46,9 +46,25 @@ const copyFile = (name) => {
   console.log(`✅ mirrored ${name} -> /${normalizedSubpath}/${name}`);
 };
 
-copyDirectory('assets');
+['assets', 'icons', 'screenshots', 'optimized'].forEach(copyDirectory);
 
-const staticFiles = ['sw.js', 'sw.js.map', 'registerSW.js'];
+const staticFiles = [
+  'sw.js',
+  'sw.js.map',
+  'registerSW.js',
+  'manifest.webmanifest',
+  'apple-touch-icon.png',
+  'favicon.ico',
+  'favicon.svg',
+  'pwa-192x192.png',
+  'pwa-384x384.png',
+  'pwa-512x512.png',
+  'pwa-512x512-maskable.png',
+  'logo.png',
+  'og-image.png',
+  'twitter-image.png',
+  'loading.css',
+];
 staticFiles.forEach(copyFile);
 
 const workboxFiles = readdirSync(distDir).filter(

@@ -8,7 +8,14 @@
  * - Installability criteria
  * - Offline capability (basic)
  */
+import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures/test';
+
+const getManifestBasePath = async (page: Page) => {
+  const manifestLink = await page.locator('link[rel="manifest"]').getAttribute('href');
+  const manifestUrl = manifestLink ? new URL(manifestLink, page.url()) : new URL(page.url());
+  return manifestUrl.pathname.replace(/manifest\.webmanifest$/, '');
+};
 
 test.describe('PWA Features', () => {
   test('should have valid manifest', async ({ rateWisePage: page }) => {
@@ -44,52 +51,60 @@ test.describe('PWA Features', () => {
     expect(hasMaskable).toBeTruthy();
   });
 
-  // [E2E-fix:2025-10-25] Skip PWA Service Worker 測試 - 時序問題待修復
-  // TODO: 修復 Service Worker 註冊時序問題
-  // 問題：首次載入時 Service Worker 可能未完成註冊
-  // 解決方案：需要添加更智能的等待邏輯或調整測試期望
-  test.skip('should register service worker', async ({ rateWisePage: page }) => {
-    // Wait for SW registration
-    await page.waitForTimeout(2000); // Give SW time to register
+  test('should register service worker', async ({ rateWisePage: page }) => {
+    const basePath = await getManifestBasePath(page);
 
-    // Check SW status via JS
-    const swRegistered = await page.evaluate(async () => {
-      if (!('serviceWorker' in navigator)) {
-        return false;
-      }
+    // 等待 Service Worker ready 並取得 scope
+    const swInfoHandle = await page.waitForFunction(
+      async (expectedScope) => {
+        if (!('serviceWorker' in navigator)) return null;
+        const registration = await navigator.serviceWorker.ready;
+        return registration
+          ? {
+              scope: registration.scope,
+              scriptURL: registration.active?.scriptURL ?? registration.installing?.scriptURL ?? '',
+            }
+          : null;
+      },
+      basePath,
+      { timeout: 8000 },
+    );
 
-      const registration = await navigator.serviceWorker.getRegistration();
-      return !!registration;
+    const value = await swInfoHandle.jsonValue();
+    expect(value?.scope).toContain(basePath);
+    expect(value?.scriptURL).toContain('sw.js');
+
+    // 確保當前頁面已受 SW 控制
+    await page.reload();
+    await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, {
+      timeout: 8000,
     });
-
-    expect(swRegistered).toBeTruthy();
   });
 
-  // [E2E-fix:2025-10-25] Skip PWA Service Worker scope 測試 - 依賴註冊完成
-  test.skip('should have single service worker scope', async ({ rateWisePage: page }) => {
-    await page.waitForTimeout(2000);
+  test('should have single service worker scope', async ({ rateWisePage: page }) => {
+    const basePath = await getManifestBasePath(page);
 
-    const swInfo = await page.evaluate(async () => {
-      if (!('serviceWorker' in navigator)) {
-        return null;
-      }
+    const swInfoHandle = await page.waitForFunction(
+      async (expectedScope) => {
+        if (!('serviceWorker' in navigator)) return null;
+        const registration = await navigator.serviceWorker.ready;
+        if (!registration) return null;
+        return {
+          scope: registration.scope,
+          active: !!registration.active,
+          installing: !!registration.installing,
+          waiting: !!registration.waiting,
+          controller: !!navigator.serviceWorker.controller,
+        };
+      },
+      basePath,
+      { timeout: 8000 },
+    );
 
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (!registration) {
-        return null;
-      }
-
-      return {
-        scope: registration.scope,
-        active: !!registration.active,
-        installing: !!registration.installing,
-        waiting: !!registration.waiting,
-      };
-    });
-
-    expect(swInfo).not.toBeNull();
-    expect(swInfo?.scope).toMatch(/\/$/); // Root scope
-    expect(swInfo?.active ?? swInfo?.installing).toBeTruthy();
+    const value = await swInfoHandle.jsonValue();
+    expect(value).not.toBeNull();
+    expect(value?.scope).toContain(basePath);
+    expect(value?.active ?? value?.installing).toBeTruthy();
   });
 
   test('should have theme color meta tag', async ({ rateWisePage: page }) => {
@@ -104,11 +119,14 @@ test.describe('PWA Features', () => {
   });
 
   test('should have apple touch icon', async ({ rateWisePage: page }) => {
+    const basePath = await getManifestBasePath(page);
+    const expectedIconPath = `${basePath}apple-touch-icon.png`;
+
     const appleTouchIcon = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
-    expect(appleTouchIcon).toBe('/apple-touch-icon.png');
+    expect(appleTouchIcon).toBe(expectedIconPath);
 
     // Verify icon exists
-    const iconResponse = await page.request.get('/apple-touch-icon.png');
+    const iconResponse = await page.request.get(expectedIconPath);
     expect(iconResponse.ok()).toBeTruthy();
   });
 
@@ -134,17 +152,22 @@ test.describe('PWA Features', () => {
     expect(pwaErrors.length).toBe(0);
   });
 
-  // [E2E-fix:2025-10-25] Skip PWA 快取測試 - 依賴 Service Worker 啟動
-  test.skip('should cache static assets', async ({ rateWisePage: page }) => {
-    await page.waitForTimeout(2000);
-
-    const cacheNames = await page.evaluate(async () => {
-      if (!('caches' in window)) {
-        return [];
-      }
-      return await caches.keys();
+  test('should cache static assets', async ({ rateWisePage: page }) => {
+    // 確保 SW 已控制頁面後再檢查 caches
+    await page.waitForFunction(() => navigator.serviceWorker?.controller !== null, null, {
+      timeout: 8000,
     });
 
-    expect(cacheNames.length).toBeGreaterThan(0);
+    const hasPrecacheHandle = await page.waitForFunction(
+      async () => {
+        if (!('caches' in window)) return false;
+        const keys = await caches.keys();
+        return keys.some((key) => key.includes('workbox-precache'));
+      },
+      null,
+      { timeout: 8000 },
+    );
+
+    expect(await hasPrecacheHandle.jsonValue()).toBeTruthy();
   });
 });
