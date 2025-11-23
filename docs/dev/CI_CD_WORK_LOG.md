@@ -96,8 +96,24 @@
        host: '127.0.0.1', // 與 Lighthouse CI 保持一致
      }
      ```
-- **狀態**: 🔄 已修復等待 CI 驗證
+- **狀態**: ❌ 第一次修復失敗（Run 19607645730），Chrome 仍無法連接
 - **依據**: [context7:vitejs/vite:2025-11-23] Preview configuration & DNS Result Order
+
+**第二次修復嘗試（基於 WebSearch 2025 最佳實踐）**:
+
+- **新根因發現**: IPv4/IPv6 不匹配
+  - Server 綁定 `localhost`（可能是 IPv6 `::1`）
+  - Lighthouse 訪問 `127.0.0.1`（IPv4）
+  - 導致連接失敗
+- **修正策略**:
+  1. 移除 `preview.host` 強制設定，讓 Vite 自然綁定
+  2. 依賴 `dns.setDefaultResultOrder('verbatim')` 確保 localhost 解析一致性
+  3. `.lighthouserc.json` 改用 `http://localhost:4173/` 而非 `http://127.0.0.1:4173/`
+  4. 移除 `startServerCommand` 中的 `--host 127.0.0.1` 參數
+- **狀態**: 🔄 第二次修復已推送，等待 CI 驗證
+- **依據**:
+  - [Stack Overflow: Vite Server is running on 127.0.0.1 by default](https://stackoverflow.com/questions/76074040/)
+  - [Medium: Taming Vite localhost issues](https://medium.com/@lokeahnming/taming-vite-why-localhost-doesn-t-work-when-running-a-node-js-server-44cc3054acc2)
 
 ---
 

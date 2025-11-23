@@ -162,12 +162,12 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       open: true,
     },
-    // [fix:2025-11-23] Preview server 配置（與 Lighthouse CI 保持一致）
+    // [fix:2025-11-23] Preview server 配置
     // 參考: [context7:vitejs/vite:2025-11-23] Configure Vite Preview
+    // 依賴 dns.setDefaultResultOrder('verbatim') 確保 localhost 解析一致性
     preview: {
       port: 4173,
       strictPort: true,
-      host: '127.0.0.1', // 確保與 Lighthouse CI 的 --host 127.0.0.1 一致
     },
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
