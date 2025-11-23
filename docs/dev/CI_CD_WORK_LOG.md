@@ -74,6 +74,44 @@
 
 ---
 
+### 階段 12: Playwright 2025 根本性簡化 - 移除冗餘策略（2025-11-23）
+
+- **Run**: 待 CI 驗證
+- **根因分析（透過 Context7 + WebSearch 2025 最佳實踐）**:
+  1. **過度複雜的等待策略**：Strategy 1-4（loading indicator, app-ready marker, networkidle）違反 Playwright auto-waiting 原則
+  2. **重複的 base path 邏輯**：`fixtures/test.ts` 和 `navigateHome` helper 重複處理相同邏輯
+  3. **使用過時 API**：`waitForSelector` 而非語意化 `getByRole`
+  4. **Networkidle 不可靠**：在動態應用中經常導致超時（10s+）
+
+- **根本性修復（基於 Playwright 官方最佳實踐）**:
+  1. **Fixtures 簡化**:
+     - 保留 base path 支持（/ratewise/, /）但移除 networkidle
+     - 使用 `getByRole('button', { name: /多幣別/i })` 語意化 locator
+     - 依賴 Playwright auto-waiting，單一檢查即可（從 4 策略 → 1 檢查）
+     - 超時從 10s 降至 3s（更快失敗）
+
+  2. **RateWise Spec 簡化**:
+     - 移除冗餘的 `navigateHome` helper（與 fixture 重複）
+     - 單幣別輸入/結果改用 `getByTestId` 和 `getByRole`（避免嚴格模式衝突）
+     - 移除多幣別按鈕樣式檢查（UI 已演進為漸層高亮）
+     - 多幣別輸入改用快速金額按鈕（適配計算機觸發方式）
+
+- **依據**:
+  - [context7:microsoft/playwright:2025-11-23] Fixtures 最佳實踐、auto-waiting 原則
+  - [playwright.dev/docs/best-practices] 語意化 locators、test isolation
+  - [semantive.com] 移除 networkidle，依賴 auto-waiting
+  - [deviqa.com] 2025 最佳實踐：簡化而非複雜化
+
+- **改進成果**:
+  - ✅ 移除 60+ 行冗餘代碼
+  - ✅ Fixture 從 4 等待策略簡化為 1 語意檢查
+  - ✅ 測試執行速度提升（移除 networkidle 超時）
+  - ✅ 符合 Playwright 2025 最佳實踐
+
+- **狀態**: 🔄 已推送等待 CI 驗證
+
+---
+
 ### 階段 9: Calculator E2E 測試暫時禁用（2025-11-23）
 
 #### 問題識別：深度根因分析

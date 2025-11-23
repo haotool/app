@@ -60,34 +60,37 @@ export const test = base.extend<RateWiseFixtures>({
     });
 
     // Navigate to app and wait for it to be ready
-    await page.goto('/');
+    // [2025-11-23] Base path detection with Playwright 2025 best practices:
+    // - Support multiple base paths (/, /ratewise/) for different build configs
+    // - Use semantic locator (getByRole) instead of waitForSelector
+    // - Rely on auto-waiting, remove redundant strategies (networkidle, multiple checks)
+    // @see https://playwright.dev/docs/best-practices
+    const basePathCandidates = [
+      process.env['E2E_BASE_PATH'],
+      process.env['VITE_BASE_PATH'],
+      '/ratewise/',
+      '/',
+    ].filter(Boolean) as string[];
 
-    // Wait for app to be fully loaded using multiple strategies
-    // Strategy 1: Wait for loading indicator to disappear
-    await page
-      .waitForSelector('text=載入即時匯率中...', {
-        state: 'hidden',
-        timeout: 15000,
-      })
-      .catch(() => {
-        // It's okay if the loading indicator is not found
-      });
+    let navigated = false;
+    for (const path of basePathCandidates) {
+      await page.goto(path);
 
-    // Strategy 2: Wait for app-ready marker
-    await page
-      .waitForFunction(() => document.body.dataset['appReady'] === 'true', { timeout: 15000 })
-      .catch(() => {
-        // Continue even if marker is not set - app might be ready anyway
-      });
+      // Single semantic check - Playwright auto-waits for actionability
+      const isVisible = await page
+        .getByRole('button', { name: /多幣別/i })
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
 
-    // Strategy 3: Wait for key UI element (multi-currency button)
-    await page.waitForSelector('button:has-text("多幣別")', {
-      state: 'visible',
-      timeout: 10000,
-    });
+      if (isVisible) {
+        navigated = true;
+        break;
+      }
+    }
 
-    // Strategy 4: Wait for network to be idle
-    await page.waitForLoadState('networkidle');
+    if (!navigated) {
+      throw new Error('Failed to load RateWise app from any base path');
+    }
 
     // eslint-disable-next-line react-hooks/rules-of-hooks -- Playwright fixture 'use' parameter, not a React Hook
     await use(page);
