@@ -8,6 +8,11 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import dns from 'node:dns';
+
+// [fix:2025-11-23] 確保 localhost 解析一致性（Node.js v17+ DNS 變更）
+// 參考: [context7:vitejs/vite:2025-11-23] Configure DNS Result Order
+dns.setDefaultResultOrder('verbatim');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -156,6 +161,13 @@ export default defineConfig(({ mode }) => {
       port: 3001,
       strictPort: true,
       open: true,
+    },
+    // [fix:2025-11-23] Preview server 配置（與 Lighthouse CI 保持一致）
+    // 參考: [context7:vitejs/vite:2025-11-23] Configure Vite Preview
+    preview: {
+      port: 4173,
+      strictPort: true,
+      host: '127.0.0.1', // 確保與 Lighthouse CI 的 --host 127.0.0.1 一致
     },
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),

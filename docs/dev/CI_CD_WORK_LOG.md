@@ -74,9 +74,36 @@
 
 ---
 
+### 階段 13: Lighthouse CI CHROME_INTERSTITIAL_ERROR 根本修復（2025-11-23）
+
+- **Run**: 19607484384 (Lighthouse CI) 失敗
+- **症狀**:
+  - Chrome 顯示 `chrome-error://chromewebdata/`
+  - 錯誤: `CHROME_INTERSTITIAL_ERROR` - Chrome 阻止頁面載入
+  - Server 輸出: `Local: http://localhost:4173/` 但測試 URL `http://127.0.0.1:4173/`
+  - 伺服器成功啟動但 Chrome 無法連接
+- **根因**:
+  1. **vite.config.ts 缺少 `preview` 配置**: 只有 `server` (dev) 配置，沒有 `preview` (production) 配置
+  2. **DNS 解析不一致**: Node.js v17+ 改變了 DNS result order，`localhost` 可能解析為 IPv6 而非 127.0.0.1
+  3. **Host 綁定問題**: Vite preview 預設綁定 `localhost`，但 Lighthouse CI 嘗試訪問 `127.0.0.1`
+- **修復**:
+  1. 添加 `dns.setDefaultResultOrder('verbatim')` 確保 localhost 解析一致性
+  2. 添加 `preview` 配置段:
+     ```typescript
+     preview: {
+       port: 4173,
+       strictPort: true,
+       host: '127.0.0.1', // 與 Lighthouse CI 保持一致
+     }
+     ```
+- **狀態**: 🔄 已修復等待 CI 驗證
+- **依據**: [context7:vitejs/vite:2025-11-23] Preview configuration & DNS Result Order
+
+---
+
 ### 階段 12: Playwright 2025 根本性簡化 - 移除冗餘策略（2025-11-23）
 
-- **Run**: 待 CI 驗證
+- **Run**: 19607484387 (CI) 成功 ✅
 - **根因分析（透過 Context7 + WebSearch 2025 最佳實踐）**:
   1. **過度複雜的等待策略**：Strategy 1-4（loading indicator, app-ready marker, networkidle）違反 Playwright auto-waiting 原則
   2. **重複的 base path 邏輯**：`fixtures/test.ts` 和 `navigateHome` helper 重複處理相同邏輯
