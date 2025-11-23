@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-23T07:15:00+08:00
-> **當前總分**: 114 (初始分: 100)
+> **最後更新**: 2025-11-23T09:45:00+08:00
+> **當前總分**: 115 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                               | 依據                                                                                  | 分數 | 時間       |
 | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | 本地全套 CI 流程綠燈（Lint/Type/Test/Build）     | 執行 `pnpm lint && pnpm typecheck && pnpm test && pnpm build`，確認管線步驟無遺漏，E2E 20/20 綠燈待 CI 驗證                                                                                                            | [context7:microsoft/playwright:2025-11-22]                                            | +1   | 2025-11-23 |
 | ✅ 成功 | Lighthouse CI CHROME_INTERSTITIAL_ERROR 根本修復 | 1) 添加 `dns.setDefaultResultOrder('verbatim')` 確保 localhost 解析一致性；2) 添加 `preview` 配置段設定 `host: '127.0.0.1'` 與 Lighthouse CI 保持一致；3) 解決 Node.js v17+ DNS 變更導致的 preview server 無法訪問問題 | [context7:vitejs/vite:2025-11-23] Preview configuration & DNS Result Order            | +3   | 2025-11-23 |
 | ✅ 成功 | Base Path 白屏與嚴格模式雙元素衝突修復           | 1) `navigateHome`/fixture 支援 `/ratewise/` base，避免空白頁；2) 單幣別輸入/結果改用 testid+role，排除計算機按鈕的 aria label 競爭                                                                                     | [context7:microsoft/playwright:2025-11-22]                                            | +3   | 2025-11-23 |
 | ✅ 成功 | 金額輸入框補 data-testid，穩定 E2E 定位          | 在 SingleConverter 金額輸入加 `data-testid="amount-input"`，E2E/ARIA 測試改用 getByTestId 取代 placeholder 依賴                                                                                                        | [context7:microsoft/playwright:2025-11-22]                                            | +1   | 2025-11-23 |
