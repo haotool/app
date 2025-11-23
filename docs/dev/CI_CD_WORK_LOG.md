@@ -110,7 +110,14 @@
   2. 依賴 `dns.setDefaultResultOrder('verbatim')` 確保 localhost 解析一致性
   3. `.lighthouserc.json` 改用 `http://localhost:4173/` 而非 `http://127.0.0.1:4173/`
   4. 移除 `startServerCommand` 中的 `--host 127.0.0.1` 參數
-- **狀態**: 🔄 第二次修復已推送，等待 CI 驗證
+- **狀態**: ✅ 第二次修復成功（Run 19607732244）！Chrome 成功連接並完成所有測試
+- **成功證據**:
+  - ✅ Server 快速啟動（不再 2 分鐘超時）
+  - ✅ 成功測試 http://localhost:4173/ (3 runs)
+  - ✅ 成功測試 http://localhost:4173/faq (3 runs)
+  - ✅ 成功測試 http://localhost:4173/about (3 runs)
+  - ✅ 不再出現 CHROME_INTERSTITIAL_ERROR
+- **剩餘問題**: SEO 分數 0.92 < 1.0（與 Lighthouse CI 連接無關，後續處理）
 - **依據**:
   - [Stack Overflow: Vite Server is running on 127.0.0.1 by default](https://stackoverflow.com/questions/76074040/)
   - [Medium: Taming Vite localhost issues](https://medium.com/@lokeahnming/taming-vite-why-localhost-doesn-t-work-when-running-a-node-js-server-44cc3054acc2)
@@ -152,6 +159,18 @@
   - ✅ 符合 Playwright 2025 最佳實踐
 
 - **狀態**: 🔄 已推送等待 CI 驗證
+
+---
+
+### 階段 13: 本地 CI 全套驗證綠燈（2025-11-23）
+
+- **Run**: 本地 (lint/typecheck/test/build + E2E) 全數通過
+- **涵蓋**:
+  - Lint / Typecheck / Unit-Vitest
+  - Build (Vite) + PWA 產物鏡像
+  - Playwright E2E (chromium desktop/mobile) 20/20 綠燈
+- **狀態**: 🔄 等待推送後 CI 驗證
+- **依據**: [context7:microsoft/playwright:2025-11-22]（穩定 locator 實踐）
 
 ---
 
