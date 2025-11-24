@@ -14,7 +14,6 @@
     <changefreq>daily</changefreq>
     <priority>1</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://app.haotool.org/ratewise" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise" />
   </url>
   <!-- FAQ 和 About 頁面將在 Phase 2 (prerendering) 完成後重新加入 -->
