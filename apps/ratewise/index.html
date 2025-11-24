@@ -5,27 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!--
-      [SEO Fix 2025-11-24]
-      移除重複的 SEO meta tags，避免與 SEOHelmet 產生衝突
+      [SEO Fix 2025-11-25 Phase 2A - BDD Approach]
+      **恢復**靜態 SEO meta tags - Phase 1 的決策錯誤已修正
 
-      原因：React Helmet 會在 JS 執行後覆蓋 <head> 中的同名 meta tag
-            Google 爬蟲可能在 JS 執行前後看到不同內容，導致索引混淆
+      Phase 1 錯誤假設：React Helmet 可以完全取代靜態 meta tags
+      Phase 2A 正確理解：
+      1. Google 爬蟲兩階段索引：
+         - 階段 1 (Crawl Queue): 立即讀取靜態 HTML ✅
+         - 階段 2 (Render Queue): 延遲數小時至數天執行 JavaScript ⚠️
+      2. AI 搜尋引擎（GPTBot, ClaudeBot, PerplexityBot）：
+         - 完全不執行 JavaScript ❌
+         - 只能讀取靜態 HTML ✅
+      3. 社交媒體爬蟲（Facebook, Twitter）：
+         - 讀取靜態 HTML 優先 ✅
 
-      解決方案：SEOHelmet 為唯一 metadata 來源，確保一致性
+      正確策略：靜態 + 動態分離
+      - index.html (靜態): 首頁的 meta tags (給 Google 第一階段 + AI 爬蟲)
+      - SEOHelmet (動態): 只用於子頁面 (FAQ, About, 404)
 
-      已移除：
-      - description, keywords, author (由 SEOHelmet 管理)
-      - robots, canonical, content-language (由 SEOHelmet 管理)
-      - Open Graph tags (og:*) (由 SEOHelmet 管理)
-      - Twitter Card tags (twitter:*) (由 SEOHelmet 管理)
+      依據：
+      - [SEO 審查報告 2025-11-25] 68% → 90% 符合度提升計劃
+      - [Google Search Central: JavaScript SEO Basics]
+      - [Stack Overflow: React Helmet meta tags 爬蟲問題]
+      - [Evergreen Googlebot Two-Stage Indexing]
 
-      保留：
-      - PWA 必需標籤 (viewport, theme-color)
-      - 版本管理標籤 (app-version, build-time)
-      - Google Search Console 驗證
-      - JSON-LD structured data (爬蟲可立即讀取，不會被 React Helmet 覆蓋)
-
-      參考：fix/seo-indexing-phase1
+      參考：fix/seo-phase2a-bdd-approach
     -->
 
     <meta name="theme-color" content="#8B5CF6" />
@@ -36,6 +40,48 @@
 
     <!-- Google Search Console Verification -->
     <meta name="google-site-verification" content="NBCorB6Jq_872WFLMgbSieWf_Wvt0EGse1QWXnM4AOo" />
+
+    <!-- [SEO Fix 2025-11-25 Phase 2A] 基礎 SEO Meta Tags -->
+    <meta
+      name="description"
+      content="RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。"
+    />
+    <meta
+      name="keywords"
+      content="匯率好工具,匯率,匯率換算,即時匯率,台幣匯率,TWD,USD,外幣兌換,匯率查詢,臺灣銀行匯率,台灣匯率,美金匯率,日幣匯率,歐元匯率,線上匯率,匯率計算機,RateWise"
+    />
+    <meta name="author" content="RateWise Team" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <link rel="canonical" href="https://app.haotool.org/ratewise" />
+    <meta http-equiv="content-language" content="zh-TW" />
+
+    <!-- [SEO Fix 2025-11-25 Phase 2A] Open Graph Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://app.haotool.org/ratewise" />
+    <meta property="og:title" content="RateWise - 匯率好工具 | 即時匯率換算" />
+    <meta
+      property="og:description"
+      content="RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。"
+    />
+    <meta property="og:image" content="https://app.haotool.org/ratewise/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="RateWise 匯率轉換器應用截圖" />
+    <meta property="og:locale" content="zh_TW" />
+    <meta property="og:site_name" content="RateWise" />
+
+    <!-- [SEO Fix 2025-11-25 Phase 2A] Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="RateWise - 匯率好工具 | 即時匯率換算" />
+    <meta
+      name="twitter:description"
+      content="快速、準確的匯率換算工具，支援 30+ 種貨幣，參考臺灣銀行牌告匯率。"
+    />
+    <meta name="twitter:image" content="https://app.haotool.org/ratewise/twitter-image.png" />
+    <meta name="twitter:image:alt" content="RateWise 匯率轉換器" />
 
     <!-- PWA Configuration -->
     <link rel="icon" href="./favicon.ico" sizes="48x48" />

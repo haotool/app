@@ -40,6 +40,8 @@ interface SEOProps {
     description: string;
     steps: HowToStep[];
   };
+  /** Custom robots directive (default: index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1) */
+  robots?: string;
 }
 
 const DEFAULT_TITLE = 'RateWise 匯率好工具 - 即時匯率轉換器 | 支援 TWD、USD、JPY、EUR 等多幣別換算';
@@ -195,6 +197,7 @@ export function SEOHelmet({
   updatedTime,
   faq,
   howTo,
+  robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 }: SEOProps) {
   const fullTitle = title ? `${title} | RateWise` : DEFAULT_TITLE;
 
@@ -234,10 +237,7 @@ export function SEOHelmet({
       <meta name="description" content={description} />
       <meta name="keywords" content={keywordsContent} />
       <meta name="author" content="RateWise Team" />
-      <meta
-        name="robots"
-        content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-      />
+      <meta name="robots" content={robots} />
       <meta name="language" content={locale} />
       <meta httpEquiv="content-language" content={locale} />
       <link rel="canonical" href={canonicalUrl} />
