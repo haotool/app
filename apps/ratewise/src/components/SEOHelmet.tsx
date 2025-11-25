@@ -48,7 +48,7 @@ const DEFAULT_TITLE = 'RateWise 匯率好工具 - 即時匯率轉換器 | 支援
 const DEFAULT_DESCRIPTION =
   'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。';
 const DEFAULT_OG_IMAGE = '/og-image.png';
-const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratewise'; // Fallback
+const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratewise/'; // Fallback 尾斜線
 const DEFAULT_LOCALE = 'zh-TW';
 const DEFAULT_KEYWORDS = [
   '匯率好工具',
@@ -71,21 +71,20 @@ const DEFAULT_KEYWORDS = [
 ];
 const SOCIAL_LINKS = ['https://www.threads.net/@azlife_1224', 'https://github.com/haotool/app'];
 
-/**
- * Normalize URL by removing trailing slashes (except for root path)
- * [fix:2025-10-27T21:31:25+08:00] Fix Google Search Console duplicate page issue
- * [context7:/garmeeh/next-seo:2025-10-27] Canonical URL must match actual URL format
- */
-function normalizeUrl(value: string): string {
-  // Root path or empty string should return '/'
-  if (value === '/' || value === '') return '/';
-  // Remove all trailing slashes for consistency
-  return value.replace(/\/+$/, '');
-}
-
-const SITE_BASE_URL = normalizeUrl(SITE_URL);
-
+const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`);
+const ensureTrailingSlash = (value: string) => (value.endsWith('/') ? value : `${value}/`);
+const SITE_BASE_URL = ensureTrailingSlash(sanitizeBaseUrl(SITE_URL));
+
+const buildCanonical = (path?: string) => {
+  if (!path || path === '/') return SITE_BASE_URL;
+  // Absolute URL passthrough (normalize trailing slash only)
+  if (/^https?:\/\//i.test(path)) {
+    return ensureTrailingSlash(sanitizeBaseUrl(path));
+  }
+  const normalizedPath = `${ensureLeadingSlash(path).replace(/\/+$/, '')}/`;
+  return `${SITE_BASE_URL}${normalizedPath.replace(/^\//, '')}`;
+};
 
 /**
  * Default JSON-LD structured data (WebApplication + Organization + Website)
@@ -117,14 +116,14 @@ const DEFAULT_JSON_LD = [
       '台灣銀行牌告匯率',
       '30+ 種貨幣支援',
     ],
-    screenshot: `${SITE_BASE_URL}/screenshots/desktop-converter.png`,
+    screenshot: `${SITE_BASE_URL}screenshots/desktop-converter.png`,
   },
   {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'RateWise',
     url: SITE_BASE_URL,
-    logo: `${SITE_BASE_URL}/optimized/logo-512w.png`,
+    logo: `${SITE_BASE_URL}optimized/logo-512w.png`,
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Customer Support',
@@ -140,7 +139,7 @@ const DEFAULT_JSON_LD = [
     inLanguage: DEFAULT_LOCALE,
     potentialAction: {
       '@type': 'SearchAction',
-      target: `${SITE_BASE_URL}/?q={search_term_string}`,
+      target: `${SITE_BASE_URL}?q={search_term_string}`,
       'query-input': 'required name=search_term_string',
     },
   },
@@ -201,18 +200,15 @@ export function SEOHelmet({
 }: SEOProps) {
   const fullTitle = title ? `${title} | RateWise` : DEFAULT_TITLE;
 
-  // [fix:2025-10-27T21:31:25+08:00] Ensure canonical URL consistency
-  // Remove trailing slashes from all URLs to match browser behavior
-  const baseUrl = SITE_BASE_URL;
-  const path = pathname ? normalizeUrl(ensureLeadingSlash(pathname)) : '';
-  const canonicalUrl = canonical ? normalizeUrl(canonical) : normalizeUrl(`${baseUrl}${path}`);
-
-  const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${SITE_BASE_URL}${ogImage}`;
+  const canonicalUrl = canonical ? buildCanonical(canonical) : buildCanonical(pathname);
+  const ogImageUrl = ogImage.startsWith('http')
+    ? ogImage
+    : `${SITE_BASE_URL}${ogImage.replace(/^\//, '')}`;
   const keywordsContent = (keywords?.length ? keywords : DEFAULT_KEYWORDS).join(', ');
   const alternatesToRender = alternates?.length ? alternates : DEFAULT_ALTERNATES;
   const normalizedAlternates = alternatesToRender.map(({ href, hrefLang }) => ({
     hrefLang,
-    href: normalizeUrl(href),
+    href: buildCanonical(href),
   }));
   const updatedTimestamp = updatedTime ?? new Date().toISOString();
   const ogLocale = locale.replace('-', '_');

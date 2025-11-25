@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // 網站設定
-const SITE_URL = 'https://app.haotool.org/ratewise';
+const SITE_URL = 'https://app.haotool.org/ratewise/'; // SSOT: 與 canonical/hreflang 尾斜線一致
 const SITE_NAME = 'RateWise - 匯率好工具';
 
 // 路由配置
@@ -44,9 +44,14 @@ const languages = ['zh-TW'];
 /**
  * 生成單個 URL 項目
  */
+function buildFullUrl(path) {
+  const base = SITE_URL.replace(/\/+$/, '');
+  const normalizedPath = path === '/' ? '/' : `${path.replace(/\/+$/, '')}/`;
+  return `${base}${normalizedPath}`;
+}
+
 function generateUrlEntry(route) {
-  const normalizedPath = route.path === '/' ? '' : route.path;
-  const fullUrl = `${SITE_URL}${normalizedPath}`;
+  const fullUrl = buildFullUrl(route.path);
 
   // hreflang 替代連結
   const alternates = languages

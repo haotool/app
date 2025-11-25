@@ -137,7 +137,7 @@ export default defineConfig(({ mode }) => {
   // 自動生成版本號（語義化版本 + git metadata）
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
-  const siteUrl = env.VITE_SITE_URL || 'https://app.haotool.org/ratewise';
+  const siteUrl = env.VITE_SITE_URL || 'https://app.haotool.org/ratewise/';
 
   // 最簡配置：使用環境變數，消除所有特殊情況
   // [fix:2025-10-27] 遵循 Linus 原則 - "好品味"：消除條件判斷
@@ -602,72 +602,6 @@ export default defineConfig(({ mode }) => {
       async onBeforePageRender(route, indexHTML) {
         console.log(`🔄 Pre-rendering: ${route}`);
         return indexHTML;
-      },
-      // 預渲染後處理 HTML
-      async onPageRendered(route, renderedHTML) {
-        console.log(`✅ Rendered: ${route}`);
-
-        const pageMetaMap: Record<
-          string,
-          { title: string; description: string; keywords?: string[] }
-        > = {
-          '/faq': {
-            title: '常見問題',
-            description:
-              'RateWise 常見問題：匯率來源、支援貨幣、離線使用、更新頻率與安裝方式完整解答。',
-            keywords: ['匯率常見問題', '匯率來源', '離線匯率', '匯率更新頻率', 'RateWise FAQ'],
-          },
-          '/about': {
-            title: '關於我們',
-            description: '認識 RateWise 匯率好工具：產品使命、核心功能、資料來源與團隊背景介紹。',
-            keywords: ['匯率工具', 'RateWise 團隊', '產品使命', '匯率資料來源'],
-          },
-        };
-
-        const meta = pageMetaMap[route];
-        if (!meta) return renderedHTML;
-
-        const canonicalUrl = `${siteUrl}${route === '/' ? '' : route}`;
-        const keywordsContent = meta.keywords?.length
-          ? meta.keywords.join(',')
-          : '匯率好工具,RateWise';
-
-        let html = renderedHTML;
-        html = html.replace(/<title>.*?<\/title>/, `<title>${meta.title} | RateWise</title>`);
-        html = html.replace(
-          /<meta name="description" content="[^"]*"\/?>/,
-          `<meta name="description" content="${meta.description}" />`,
-        );
-        html = html.replace(
-          /<meta name="keywords" content="[^"]*"\/?>/,
-          `<meta name="keywords" content="${keywordsContent}" />`,
-        );
-        html = html.replace(
-          /<link rel="canonical" href="[^"]*"\/?>/,
-          `<link rel="canonical" href="${canonicalUrl}" />`,
-        );
-        html = html.replace(
-          /<meta property="og:url" content="[^"]*"\/?>/,
-          `<meta property="og:url" content="${canonicalUrl}" />`,
-        );
-        html = html.replace(
-          /<meta property="og:title" content="[^"]*"\/?>/,
-          `<meta property="og:title" content="${meta.title} | RateWise" />`,
-        );
-        html = html.replace(
-          /<meta property="og:description" content="[^"]*"\/?>/,
-          `<meta property="og:description" content="${meta.description}" />`,
-        );
-        html = html.replace(
-          /<meta name="twitter:title" content="[^"]*"\/?>/,
-          `<meta name="twitter:title" content="${meta.title} | RateWise" />`,
-        );
-        html = html.replace(
-          /<meta name="twitter:description" content="[^"]*"\/?>/,
-          `<meta name="twitter:description" content="${meta.description}" />`,
-        );
-
-        return html;
       },
       // 預渲染完成後處理
       async onFinished(dir) {

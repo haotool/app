@@ -55,12 +55,14 @@
       name="robots"
       content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     />
-    <link rel="canonical" href="https://app.haotool.org/ratewise" />
+    <link rel="canonical" href="https://app.haotool.org/ratewise/" />
+    <link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/" />
+    <link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/" />
     <meta http-equiv="content-language" content="zh-TW" />
 
     <!-- [SEO Fix 2025-11-25 Phase 2A] Open Graph Tags -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://app.haotool.org/ratewise" />
+    <meta property="og:url" content="https://app.haotool.org/ratewise/" />
     <meta property="og:title" content="RateWise - 匯率好工具 | 即時匯率換算" />
     <meta
       property="og:description"
@@ -290,6 +292,48 @@
             "text": "換算結果會立即顯示在畫面上。您還可以查看歷史匯率趨勢圖，了解過去一段時間的匯率變化走勢。"
           }
         ]
+      }
+    </script>
+    <!-- FAQ Snippet for Homepage (summary) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "url": "https://app.haotool.org/ratewise/",
+        "inLanguage": "zh-TW",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "RateWise 可以離線使用嗎？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "RateWise 是 PWA，首次開啟會快取核心資產與最近匯率，即使離線也能用最近的匯率進行換算。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "計算機操作是否貼近 iOS 原生？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "介面排版參考 iOS 原生計算機，搭配快速金額鍵與單/多幣別切換，肌肉記憶即可上手並快速完成匯率換算。"
+            }
+          }
+        ]
+      }
+    </script>
+    <!-- Article Snippet for Homepage -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "RateWise 2025 預渲染與 PWA 強化",
+        "description": "RateWise 採用 vite-react-ssg 預渲染與 PWA 快取，提供離線匯率、iOS 風格計算機體驗及多幣別快速換算。",
+        "author": "RateWise",
+        "url": "https://app.haotool.org/ratewise/",
+        "inLanguage": "zh-TW",
+        "image": "https://app.haotool.org/ratewise/og-image.png",
+        "datePublished": "2025-11-26",
+        "dateModified": "2025-11-26"
       }
     </script>
 
