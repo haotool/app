@@ -592,8 +592,8 @@ export default defineConfig(({ mode }) => {
       concurrency: 10, // 最大並行渲染數
       // 指定預渲染路徑
       includedRoutes(paths) {
-        // 只預渲染首頁、FAQ、About
-        const includedPaths = ['/', '/faq', '/about'];
+        // 預渲染首頁、FAQ、About、Guide
+        const includedPaths = ['/', '/faq', '/about', '/guide'];
         console.log('🔍 Available paths:', paths);
         console.log('✅ Including paths:', includedPaths);
         return paths.filter((path) => includedPaths.includes(path));

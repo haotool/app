@@ -89,6 +89,21 @@ export const routes: RouteRecord[] = [
     },
     entry: 'src/pages/About.tsx',
   },
+  {
+    path: '/guide',
+    lazy: async () => {
+      const module = await import('./pages/Guide');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/Guide.tsx',
+  },
   // ❌ 不預渲染內部工具頁面
   {
     path: '/color-scheme',

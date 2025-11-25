@@ -22,7 +22,7 @@ describe('SEOHelmet', () => {
 
     await waitFor(() => {
       const canonical = document.head.querySelector('link[rel="canonical"]');
-      expect(canonical?.getAttribute('href')).toBe(`${BASE_URL}/`);
+      expect(canonical?.getAttribute('href')).toBe(BASE_URL);
     });
 
     const keywordMeta = document.head.querySelector('meta[name="keywords"]');
@@ -51,8 +51,8 @@ describe('SEOHelmet', () => {
       locale: 'en-US',
       keywords: ['exchange rates', 'currency', 'calculator'],
       alternates: [
-        { hrefLang: 'x-default', href: `${BASE_URL}/` },
-        { hrefLang: 'en-US', href: `${BASE_URL}/en-us` },
+        { hrefLang: 'x-default', href: BASE_URL },
+        { hrefLang: 'en-US', href: `${BASE_URL}en-us` },
       ],
       updatedTime: '2025-10-18T03:00:00.000Z',
       faq: [
@@ -69,7 +69,7 @@ describe('SEOHelmet', () => {
             '@type': 'ListItem',
             position: 1,
             name: 'Home',
-            item: `${BASE_URL}/`,
+            item: BASE_URL,
           },
         ],
       },
@@ -77,11 +77,11 @@ describe('SEOHelmet', () => {
 
     await waitFor(() => {
       const canonical = document.head.querySelector('link[rel="canonical"]');
-      expect(canonical?.getAttribute('href')).toBe(`${BASE_URL}/faq/`);
+      expect(canonical?.getAttribute('href')).toBe(`${BASE_URL}faq/`);
     });
 
     const alternate = document.head.querySelector('link[rel="alternate"][hreflang="en-US"]');
-    expect(alternate?.getAttribute('href')).toBe(`${BASE_URL}/en-us/`);
+    expect(alternate?.getAttribute('href')).toBe(`${BASE_URL}en-us/`);
 
     const updated = document.head.querySelector('meta[property="og:updated_time"]');
     expect(updated?.getAttribute('content')).toBe('2025-10-18T03:00:00.000Z');
