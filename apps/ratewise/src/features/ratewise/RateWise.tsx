@@ -22,7 +22,7 @@ import { STORAGE_KEYS } from './storage-keys';
 const RateWise = () => {
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLElement>(null);
-  const isTestEnv = import.meta.env.MODE === 'test' || process.env.NODE_ENV === 'test';
+  const isTestEnv = import.meta.env.MODE === 'test' || process.env['NODE_ENV'] === 'test';
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
 
   // 確保伺服端與客戶端初始渲染內容一致，避免 hydration 警告
