@@ -192,6 +192,9 @@ importers:
       vite-plugin-pwa:
         specifier: ^0.21.1
         version: 0.21.2(vite@7.1.12(@types/node@22.18.9)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(yaml@2.8.1))(workbox-build@7.3.0)(workbox-window@7.3.0)
+      vite-react-ssg:
+        specifier: ^0.8.9
+        version: 0.8.9(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react-router-dom@6.30.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(vite@7.1.12(@types/node@22.18.9)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(yaml@2.8.1))
       vitest:
         specifier: ^4.0.13
         version: 4.0.13(@opentelemetry/api@1.9.0)(@types/node@22.18.9)(jiti@1.21.7)(jsdom@24.1.3)(lightningcss@1.30.2)(terser@5.44.0)(yaml@2.8.1)
@@ -4573,6 +4576,9 @@ packages:
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
 
+  html5parser@2.0.2:
+    resolution: {integrity: sha512-L0y+IdTVxHsovmye8MBtFgBvWZnq1C9WnI/SmJszxoQjmUH1psX2uzDk21O5k5et6udxdGjwxkbmT9eVRoG05w==}
+
   html_codesniffer@2.5.1:
     resolution: {integrity: sha512-vcz0yAaX/OaV6sdNHuT9alBOKkSxYb8h5Yq26dUqgi7XmCgGUSa7U9PiY1PBXQFMjKv1wVPs5/QzHlGuxPDUGg==}
     engines: {node: '>=6'}
@@ -5876,6 +5882,14 @@ packages:
     resolution: {integrity: sha512-y3b8Kpd8OAN444hxfBbFfj1FY/RjtTd8tzYwhUqNYXx0fXx2iX4maP4Qr6qhIKbQXI02wTLAda4fYUbDagTUFw==}
     engines: {node: '>=6'}
 
+  p-queue@8.1.1:
+    resolution: {integrity: sha512-aNZ+VfjobsWryoiPnEApGGmf5WmNsCo9xu8dfaYamG5qaLP7ClhLN6NgsFe6SwJ2UbLEBK5dv9x8Mn5+RVhMWQ==}
+    engines: {node: '>=18'}
+
+  p-timeout@6.1.4:
+    resolution: {integrity: sha512-MyIV3ZA/PmyBN/ud8vV9XzwTrNtR4jFrObymZYnZqMmW0zA8Z17vnT0rBgFE/TlohB+YCHqXMgZzb3Csp49vqg==}
+    engines: {node: '>=14.16'}
+
   p-try@2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
@@ -6260,6 +6274,12 @@ packages:
 
   react-fast-compare@3.2.2:
     resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
+
+  react-helmet-async@1.3.0:
+    resolution: {integrity: sha512-9jZ57/dAn9t3q6hneQS0wukqC2ENOBgMNVEhb/ZG9ZSxUetzVIw4iAmEU38IaVg3QGYauQPhSeUTuIUtFglWpg==}
+    peerDependencies:
+      react: ^16.6.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.6.0 || ^17.0.0 || ^18.0.0
 
   react-helmet-async@2.0.5:
     resolution: {integrity: sha512-rYUYHeus+i27MvFE+Jaa4WsyBKGkL6qVgbJvSBoX8mbsWoABJXdEO0bZyi0F6i+4f0NuIb8AvqPMj3iXFHkMwg==}
@@ -7476,6 +7496,36 @@ packages:
       workbox-window: ^7.3.0
     peerDependenciesMeta:
       '@vite-pwa/assets-generator':
+        optional: true
+
+  vite-react-ssg@0.8.9:
+    resolution: {integrity: sha512-IzmIHLvPBYo2BQZe0hvGgm716BzzKm0bQkRcpXGGQ2RvdfwLbNAhrNIGgjVd4CAubPWXgYHzP5BAaI8sUmFrag==}
+    hasBin: true
+    peerDependencies:
+      '@tanstack/react-router': '*'
+      '@tanstack/start': '*'
+      beasties: ^0.1.0
+      critters: ^0.0.24
+      prettier: '*'
+      react: ^17.0.2 || ^18.0.0 || ^19.0.0
+      react-dom: ^17.0.2 || ^18.0.0 || ^19.0.0
+      react-router-dom: ^6.14.1
+      styled-components: ^6.0.0
+      vite: ^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
+    peerDependenciesMeta:
+      '@tanstack/react-router':
+        optional: true
+      '@tanstack/start':
+        optional: true
+      beasties:
+        optional: true
+      critters:
+        optional: true
+      prettier:
+        optional: true
+      react-router-dom:
+        optional: true
+      styled-components:
         optional: true
 
   vite@7.1.12:
@@ -13202,6 +13252,10 @@ snapshots:
 
   html-escaper@2.0.2: {}
 
+  html5parser@2.0.2:
+    dependencies:
+      tslib: 2.8.1
+
   html_codesniffer@2.5.1: {}
 
   htmlparser2@10.0.0:
@@ -14583,6 +14637,13 @@ snapshots:
 
   p-map@2.1.0: {}
 
+  p-queue@8.1.1:
+    dependencies:
+      eventemitter3: 5.0.1
+      p-timeout: 6.1.4
+
+  p-timeout@6.1.4: {}
+
   p-try@2.2.0: {}
 
   pa11y@9.0.1(typescript@5.9.3):
@@ -14968,6 +15029,16 @@ snapshots:
       react: 19.2.0
 
   react-fast-compare@3.2.2: {}
+
+  react-helmet-async@1.3.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      '@babel/runtime': 7.28.4
+      invariant: 2.2.4
+      prop-types: 15.8.1
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
+      react-fast-compare: 3.2.2
+      shallowequal: 1.1.0
 
   react-helmet-async@2.0.5(react@19.2.0):
     dependencies:
@@ -16421,6 +16492,27 @@ snapshots:
       workbox-window: 7.3.0
     transitivePeerDependencies:
       - supports-color
+
+  vite-react-ssg@0.8.9(prettier@3.6.2)(react-dom@19.2.0(react@19.2.0))(react-router-dom@6.30.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(vite@7.1.12(@types/node@22.18.9)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(yaml@2.8.1)):
+    dependencies:
+      fs-extra: 11.3.2
+      html5parser: 2.0.2
+      jsdom: 24.1.3
+      kolorist: 1.8.0
+      p-queue: 8.1.1
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
+      react-helmet-async: 1.3.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      vite: 7.1.12(@types/node@22.18.9)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(yaml@2.8.1)
+      yargs: 17.7.2
+    optionalDependencies:
+      prettier: 3.6.2
+      react-router-dom: 6.30.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - supports-color
+      - utf-8-validate
 
   vite@7.1.12(@types/node@22.18.9)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(yaml@2.8.1):
     dependencies:

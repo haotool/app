@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build --config vite.config.ts",
+    "dev": "vite-react-ssg dev",
+    "build": "tsc --noEmit && vite-react-ssg build --config vite.config.ts",
     "postbuild": "node scripts/postbuild-mirror-dist.js",
     "preview": "vite preview",
     "test": "vitest",
@@ -56,6 +56,7 @@
     "vite-imagetools": "^9.0.0",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-pwa": "^0.21.1",
+    "vite-react-ssg": "^0.8.9",
     "vitest": "^4.0.13",
     "web-vitals": "^5.1.0",
     "workbox-cli": "^7.3.0",

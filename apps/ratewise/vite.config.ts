@@ -576,5 +576,41 @@ export default defineConfig(({ mode }) => {
         sourceMap: true, // Terser 保留 source map
       },
     },
+    // [SEO Phase 2B-2: 2025-11-25] SSR Configuration for vite-react-ssg
+    // Force bundling of CommonJS modules for ESM compatibility
+    ssr: {
+      noExternal: ['react-helmet-async'], // Bundle CommonJS modules
+    },
+    // [SEO Phase 2B-2: 2025-11-25] Vite React SSG Configuration
+    // 參考: [Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
+    // 預渲染策略：只渲染爬蟲需要的頁面（首頁、FAQ、About）
+    ssgOptions: {
+      script: 'async', // 非阻塞腳本載入
+      formatting: 'beautify', // 美化 HTML 便於 debug
+      dirStyle: 'nested', // 巢狀目錄結構（/faq/index.html）
+      concurrency: 10, // 最大並行渲染數
+      // 指定預渲染路徑
+      includedRoutes(paths) {
+        // 只預渲染首頁、FAQ、About
+        const includedPaths = ['/', '/faq', '/about'];
+        console.log('🔍 Available paths:', paths);
+        console.log('✅ Including paths:', includedPaths);
+        return paths.filter((path) => includedPaths.includes(path));
+      },
+      // 預渲染前處理 HTML
+      async onBeforePageRender(route, indexHTML) {
+        console.log(`🔄 Pre-rendering: ${route}`);
+        return indexHTML;
+      },
+      // 預渲染後處理 HTML
+      async onPageRendered(route, renderedHTML) {
+        console.log(`✅ Rendered: ${route}`);
+        return renderedHTML;
+      },
+      // 預渲染完成後處理
+      async onFinished(dir) {
+        console.log(`🎉 SSG build completed in: ${dir}`);
+      },
+    },
   };
 });
