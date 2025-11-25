@@ -54,7 +54,7 @@ describe('index.html - Static SEO Meta Tags (BDD Refactor)', () => {
 
     it('should have canonical URL', () => {
       expect(indexHtmlContent).toContain('<link rel="canonical"');
-      expect(indexHtmlContent).toContain('https://app.haotool.org/ratewise');
+      expect(indexHtmlContent).toContain('https://app.haotool.org/ratewise/');
     });
   });
 
@@ -65,7 +65,7 @@ describe('index.html - Static SEO Meta Tags (BDD Refactor)', () => {
 
     it('should have og:url tag', () => {
       expect(indexHtmlContent).toContain('<meta property="og:url"');
-      expect(indexHtmlContent).toContain('https://app.haotool.org/ratewise');
+      expect(indexHtmlContent).toContain('https://app.haotool.org/ratewise/');
     });
 
     it('should have og:title tag', () => {

@@ -81,7 +81,7 @@ React SPA (無 SSR)
 ```html
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://app.haotool.org/ratewise" />
+<meta property="og:url" content="https://app.haotool.org/ratewise/" />
 <meta property="og:title" content="RateWise - 匯率好工具 | 即時匯率換算" />
 <meta
   property="og:description"
@@ -125,7 +125,7 @@ React SPA (無 SSR)
 
 ```html
 <meta name="robots" content="index, follow" />
-<link rel="canonical" href="https://app.haotool.org/ratewise" />
+<link rel="canonical" href="https://app.haotool.org/ratewise/" />
 <meta http-equiv="content-language" content="zh-TW" />
 ```
 
@@ -143,7 +143,7 @@ React SPA (無 SSR)
     "name": "RateWise",
     "alternateName": "匯率好工具",
     "description": "即時匯率轉換器，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR 等 30+ 種貨幣換算",
-    "url": "https://app.haotool.org/ratewise",
+    "url": "https://app.haotool.org/ratewise/",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Any",
     "browserRequirements": "Requires JavaScript",
@@ -172,7 +172,7 @@ React SPA (無 SSR)
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "RateWise",
-    "url": "https://app.haotool.org/ratewise",
+    "url": "https://app.haotool.org/ratewise/",
     "logo": "https://app.haotool.org/ratewise/logo-192.png",
     "contactPoint": {
       "@type": "ContactPoint",
@@ -210,10 +210,10 @@ React SPA (無 SSR)
 
 ```bash
 # 檢查 HTML 結構
-curl -I https://app.haotool.org/ratewise
+curl -I https://app.haotool.org/ratewise/
 
 # 提取 meta tags
-curl -s https://app.haotool.org/ratewise | grep -E "property=|name=.twitter:|type=.application/ld"
+curl -s https://app.haotool.org/ratewise/ | grep -E "property=|name=.twitter:|type=.application/ld"
 ```
 
 ---
