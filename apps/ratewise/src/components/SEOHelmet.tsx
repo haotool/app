@@ -22,6 +22,13 @@ interface HowToStep {
   image?: string;
 }
 
+interface HowToData {
+  name: string;
+  description: string;
+  steps: HowToStep[];
+  totalTime?: string; // ISO 8601 duration format (e.g., 'PT30S', 'PT2M')
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -35,11 +42,7 @@ interface SEOProps {
   keywords?: string[];
   updatedTime?: string;
   faq?: FAQEntry[];
-  howTo?: {
-    name: string;
-    description: string;
-    steps: HowToStep[];
-  };
+  howTo?: HowToData;
   /** Custom robots directive (default: index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1) */
   robots?: string;
 }
@@ -165,7 +168,7 @@ const buildFaqSchema = (faq: FAQEntry[], url: string) => ({
 });
 
 const buildHowToSchema = (
-  howTo: { name: string; description: string; steps: HowToStep[] },
+  howTo: { name: string; description: string; steps: HowToStep[]; totalTime?: string },
   url: string,
 ) => ({
   '@context': 'https://schema.org',
@@ -173,6 +176,7 @@ const buildHowToSchema = (
   name: howTo.name,
   description: howTo.description,
   url,
+  totalTime: howTo.totalTime ?? 'PT30S', // ISO 8601 duration format (default: 30 seconds)
   step: howTo.steps.map((step, index) => ({
     '@type': 'HowToStep',
     position: index + 1,
