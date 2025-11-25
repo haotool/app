@@ -222,12 +222,12 @@ const RateWise = () => {
                   fetchPriority="high"
                 />
               </picture>
-              <h2
+              <h1
                 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"
                 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 700 }}
               >
                 RateWise 匯率好工具
-              </h2>
+              </h1>
             </div>
             <p
               className="text-sm text-gray-600"

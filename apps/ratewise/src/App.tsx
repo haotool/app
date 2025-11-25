@@ -39,7 +39,9 @@ function App() {
       */}
       <Router basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <main role="main" className="min-h-screen">
-          <h1 className="sr-only">RateWise 匯率轉換器</h1>
+          {/* [SEO Fix 2025-11-26] 移除 sr-only H1，讓各頁面自定義語義 H1
+              依據：[Google SEO Guidelines] 每頁應有唯一的語義 H1
+              參考：[Context7:vite-react-ssg] Head component best practices */}
           <Suspense fallback={<SkeletonLoader />}>
             <Routes>
               <Route path="/" element={<CurrencyConverter />} />
