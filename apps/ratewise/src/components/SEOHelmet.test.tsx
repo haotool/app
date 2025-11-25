@@ -3,7 +3,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { afterEach, describe, expect, it } from 'vitest';
 import { SEOHelmet } from './SEOHelmet';
 
-const BASE_URL = 'https://app.haotool.org/ratewise';
+const BASE_URL = 'https://app.haotool.org/ratewise/';
 
 const renderWithHelmet = (props: Partial<Parameters<typeof SEOHelmet>[0]> = {}) =>
   render(
