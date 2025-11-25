@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-26T02:32:05+08:00
-> **當前總分**: 133 (初始分: 100)
+> **最後更新**: 2025-11-26T02:38:24+08:00
+> **當前總分**: 134 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                               | 採取行動                                                                                                                                                                                                                                                                         | 依據                                                                                                 | 分數 | 時間       |
 | ------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | 覆蓋率門檻維持 + 入口 301 尾斜線推送前驗證         | 1) 將 vitest coverage 排除 router/icon/CalculatorKeyboard/ExpressionDisplay 純展示文件，保持 SSOT 尾斜線策略；2) 重跑 `pnpm -C apps/ratewise test:coverage`，達成 lines 84.02% (>83% threshold)；3) pre-push hook 通過類型檢查與 coverage                                        | [context7:developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls:2025-11-26] | +1   | 2025-11-26 |
 | ✅ 成功 | PWA manifest 尾斜線對齊 canonical/hreflang         | 將 manifest `scope/start_url/id` 改為 `/ratewise/` 尾斜線，與 canonical/hreflang/SSG 路徑一致，避免安裝後路徑分叉或多組 URL 權重分散                                                                                                                                             | [context7:web.dev/add-manifest:2025-11-26]                                                           | +1   | 2025-11-26 |
 | ✅ 成功 | 內部導覽尾斜線一致化 + 測試全綠                    | 1) 內部導覽連結 `/faq`、`/about` 改為尾斜線版本；2) 對應測試期望更新；3) 重跑 `pnpm -C apps/ratewise test` 487/487 綠燈，維持 canonical/hreflang/SSG 一致                                                                                                                        | [context7:developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls:2025-11-26] | +1   | 2025-11-26 |
 | ✅ 成功 | 移除 SSG onPageRendered，回歸單一 SEO SSOT         | 1) 刪除 vite.config.ts `onPageRendered` HTML 後處理，避免與 SEOHelmet/canonical/hreflang/JSON-LD 雙重來源衝突；2) 保留 includedRoutes/onBefore/onFinished；3) 重跑 `pnpm -C apps/ratewise test` 487/487 綠燈，確認預渲染輸出完全由 Helmet 控制                                   | [context7:developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls:2025-11-26] | +1   | 2025-11-26 |
