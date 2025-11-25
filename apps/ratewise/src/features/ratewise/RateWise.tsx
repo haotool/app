@@ -8,7 +8,6 @@ import { MultiConverter } from './components/MultiConverter';
 import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
 import { ConversionHistory } from './components/ConversionHistory';
-import { SEOHelmet } from '../../components/SEOHelmet';
 import { VersionDisplay } from '../../components/VersionDisplay';
 import { ThreadsIcon } from '../../components/ThreadsIcon';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
@@ -179,26 +178,6 @@ const RateWise = () => {
         canTrigger={canTrigger}
       />
 
-      <SEOHelmet
-        howTo={{
-          name: '如何使用 RateWise 進行匯率換算',
-          description: '三步驟輕鬆完成即時匯率換算，支援 30+ 種貨幣快速轉換',
-          steps: [
-            {
-              name: '選擇貨幣',
-              text: '從下拉選單中選擇您要換算的來源貨幣和目標貨幣。RateWise 支援超過 30 種主要貨幣，包括 TWD、USD、JPY、EUR、GBP 等。',
-            },
-            {
-              name: '輸入金額',
-              text: '在輸入框中輸入您想要換算的金額。系統會即時計算並顯示換算結果，數據來源為臺灣銀行牌告匯率。',
-            },
-            {
-              name: '查看結果',
-              text: '換算結果會立即顯示在畫面上。您還可以查看歷史匯率趨勢圖，了解過去一段時間的匯率變化走勢。',
-            },
-          ],
-        }}
-      />
       <main
         ref={mainRef}
         className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-3 md:p-8"
