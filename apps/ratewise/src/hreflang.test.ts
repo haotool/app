@@ -39,11 +39,12 @@ describe('Hreflang Configuration (BDD)', () => {
       expect(sitemapContent).not.toContain('hreflang="zh-CN"');
     });
 
-    it('should have exactly 2 xhtml:link elements (zh-TW and x-default)', () => {
+    it('should have exactly 2 xhtml:link elements per URL (zh-TW and x-default)', () => {
       // 🔴 紅燈：計算 xhtml:link 數量，應該只有 2 個
       const xlinkMatches = sitemapContent.match(/<xhtml:link/g);
       expect(xlinkMatches).toBeTruthy();
-      expect(xlinkMatches?.length).toBe(2);
+      // 3 條 URL * 2 語言 = 6
+      expect(xlinkMatches?.length).toBe(6);
     });
   });
 
