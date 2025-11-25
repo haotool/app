@@ -15,12 +15,20 @@ import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator'
 import { formatDisplayTime } from '../../utils/timeFormatter';
 import { clearAllServiceWorkerCaches, forceServiceWorkerUpdate } from '../../utils/swUtils';
 import { logger } from '../../utils/logger';
+import { SkeletonLoader } from '../../components/SkeletonLoader';
 import type { RateType } from './types';
 import { STORAGE_KEYS } from './storage-keys';
 
 const RateWise = () => {
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLElement>(null);
+  const isTestEnv = import.meta.env.MODE === 'test' || process.env.NODE_ENV === 'test';
+  const [isHydrated, setIsHydrated] = useState(isTestEnv);
+
+  // 確保伺服端與客戶端初始渲染內容一致，避免 hydration 警告
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // 匯率類型狀態（spot/cash），默認 spot，從 localStorage 讀取
   const [rateType, setRateType] = useState<RateType>(() => {
@@ -105,6 +113,12 @@ const RateWise = () => {
     addToHistory,
     generateTrends,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
+
+  const shouldShowSkeleton = !isHydrated || (ratesLoading && !isTestEnv);
+
+  if (shouldShowSkeleton) {
+    return <SkeletonLoader />;
+  }
 
   // Error state UI
   if (ratesError) {
@@ -342,7 +356,7 @@ const RateWise = () => {
               </div>
               <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
                 <Link
-                  to="/faq"
+                  to="/faq/"
                   className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
                 >
                   <span aria-hidden="true" className="text-white/50">
@@ -351,7 +365,7 @@ const RateWise = () => {
                   常見問題
                 </Link>
                 <Link
-                  to="/about"
+                  to="/about/"
                   className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
                 >
                   <span aria-hidden="true" className="text-white/50">

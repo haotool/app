@@ -22,8 +22,7 @@ describe('SEOHelmet', () => {
 
     await waitFor(() => {
       const canonical = document.head.querySelector('link[rel="canonical"]');
-      // [fix:2025-10-27T21:31:25+08:00] Updated to match new URL normalization (no trailing slash)
-      expect(canonical?.getAttribute('href')).toBe(BASE_URL);
+      expect(canonical?.getAttribute('href')).toBe(`${BASE_URL}/`);
     });
 
     const keywordMeta = document.head.querySelector('meta[name="keywords"]');
@@ -78,12 +77,11 @@ describe('SEOHelmet', () => {
 
     await waitFor(() => {
       const canonical = document.head.querySelector('link[rel="canonical"]');
-      // [fix:2025-10-27T21:31:25+08:00] Updated to match new URL normalization (no trailing slash)
-      expect(canonical?.getAttribute('href')).toBe(`${BASE_URL}/faq`);
+      expect(canonical?.getAttribute('href')).toBe(`${BASE_URL}/faq/`);
     });
 
     const alternate = document.head.querySelector('link[rel="alternate"][hreflang="en-US"]');
-    expect(alternate?.getAttribute('href')).toBe(`${BASE_URL}/en-us`);
+    expect(alternate?.getAttribute('href')).toBe(`${BASE_URL}/en-us/`);
 
     const updated = document.head.querySelector('meta[property="og:updated_time"]');
     expect(updated?.getAttribute('content')).toBe('2025-10-18T03:00:00.000Z');

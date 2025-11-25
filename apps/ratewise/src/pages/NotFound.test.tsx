@@ -71,7 +71,7 @@ describe('NotFound Component - 404 Page (BDD)', () => {
       // 🔴 紅燈：應該有 FAQ 頁面連結
       const faqLink = screen.getByRole('link', { name: /常見問題|FAQ/i });
       expect(faqLink).toBeInTheDocument();
-      expect(faqLink).toHaveAttribute('href', '/faq');
+      expect(faqLink).toHaveAttribute('href', '/faq/');
     });
 
     it('should suggest About page link', () => {
@@ -80,7 +80,7 @@ describe('NotFound Component - 404 Page (BDD)', () => {
       // 🔴 紅燈：應該有 About 頁面連結
       const aboutLink = screen.getByRole('link', { name: /關於|About/i });
       expect(aboutLink).toBeInTheDocument();
-      expect(aboutLink).toHaveAttribute('href', '/about');
+      expect(aboutLink).toHaveAttribute('href', '/about/');
     });
   });
 

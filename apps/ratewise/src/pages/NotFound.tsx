@@ -56,13 +56,13 @@ export default function NotFound() {
           <p className="text-sm text-slate-500 mb-3">或許您想前往：</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              to="/faq"
+              to="/faq/"
               className="px-4 py-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors font-medium"
             >
               常見問題
             </Link>
             <Link
-              to="/about"
+              to="/about/"
               className="px-4 py-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors font-medium"
             >
               關於我們
