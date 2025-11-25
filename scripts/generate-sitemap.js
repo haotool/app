@@ -38,8 +38,8 @@ const routes = [
   },
 ];
 
-// 語言配置
-const languages = ['zh-TW', 'en'];
+// 語言配置（單一語言策略：僅 zh-TW + x-default）
+const languages = ['zh-TW'];
 
 /**
  * 生成單個 URL 項目
