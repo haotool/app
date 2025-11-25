@@ -61,11 +61,12 @@
 - [x] **FAQPage schema** ✅ (`SEOHelmet.tsx` Line 151-283, 動態生成)
 - [x] **BreadcrumbList schema** ⚠️ (未實施，但首頁不需要)
 
-### ❌ 待實施
+### ✅ 已完成
 
-- [ ] **HowTo schema** ❌ (規格 Line 452-482)
-  - 需要建立操作指南頁面
-  - 或在 About 頁面加入 HowTo
+- [x] **HowTo schema** ✅ (規格 Line 452-482, commit 2960cc0)
+  - 建立 Guide 頁面 `/guide`
+  - 完整 HowTo schema (totalTime + 3 steps)
+  - SSG 預渲染 ✅
 
 ---
 
@@ -314,7 +315,7 @@
 | **AEO 優化**        | 80%    | ⚠️ 缺 HowTo        |
 | **GEO 優化**        | 80%    | ⚠️ 可增強          |
 
-**總體完成度**: **85%** ⚠️ (優秀，但仍有改進空間)
+**總體完成度**: **90%** ✅ (優秀)
 
 ---
 
@@ -326,10 +327,10 @@
 
 ### 🟡 P1 (High Priority - 1-2 週內)
 
-1. **HowTo Schema 實施** ⚠️
-   - 建立操作指南頁面 `/guide`
-   - 或在 About 頁面加入 HowTo schema
-   - 參考規格 Line 452-482
+1. ~~**HowTo Schema 實施**~~ ✅ (已完成, commit 2960cc0)
+   - ~~建立操作指南頁面 `/guide`~~ ✅
+   - ~~HowTo schema 實施~~ ✅
+   - ~~SSG 預渲染~~ ✅
 
 2. **INP 測試與優化** ⚠️
    - 使用 Lighthouse 測試 INP
