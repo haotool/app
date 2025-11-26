@@ -14,7 +14,9 @@
 
 import type { RouteRecord } from 'vite-react-ssg';
 import React from 'react';
-import { HelmetProvider } from 'react-helmet-async';
+// @ts-expect-error - react-helmet-async is a CommonJS module
+import pkg from 'react-helmet-async';
+const { HelmetProvider } = pkg;
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SkeletonLoader } from './components/SkeletonLoader';
 import { UpdatePrompt } from './components/UpdatePrompt';
