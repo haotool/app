@@ -95,7 +95,7 @@ export function initCSPReporter(): void {
       violation.blockedURI.includes('rocket-loader') ||
       violation.sourceFile.includes('rocket-loader')
     ) {
-      logger.error('Rocket Loader CSP Violation (Should Not Happen)', {
+      logger.error('Rocket Loader CSP Violation (Should Not Happen)', undefined, {
         blockedURI: violation.blockedURI,
         sourceFile: violation.sourceFile,
         violatedDirective: violation.violatedDirective,
