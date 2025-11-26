@@ -161,9 +161,9 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
       const cspMetaMatch =
         /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/i.exec(content);
 
-      if (cspMetaMatch) {
+      if (cspMetaMatch?.[1]) {
         const cspContent = cspMetaMatch[1];
-        const scriptSrcMatch = cspContent.match(/script-src[^;]+/);
+        const scriptSrcMatch = /script-src[^;]+/.exec(cspContent);
 
         if (scriptSrcMatch) {
           expect(scriptSrcMatch[0]).not.toContain('unsafe-inline');

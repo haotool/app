@@ -63,10 +63,10 @@ export function initCSPReporter(): void {
     // 根據 disposition 決定日誌級別
     if (violation.disposition === 'enforce') {
       // 阻止性違規 - 警告級別
-      logger.warn('CSP Violation (Blocked)', violation);
+      logger.warn('CSP Violation (Blocked)', violation as unknown as Record<string, unknown>);
     } else {
       // Report-only 違規 - 資訊級別
-      logger.info('CSP Violation (Report-Only)', violation);
+      logger.info('CSP Violation (Report-Only)', violation as unknown as Record<string, unknown>);
     }
 
     // 特別關注 Trusted Types 違規
@@ -83,7 +83,10 @@ export function initCSPReporter(): void {
       violation.blockedURI.includes('rocket-loader') ||
       violation.sourceFile.includes('rocket-loader')
     ) {
-      logger.error('Rocket Loader CSP Violation (Should Not Happen)', violation);
+      logger.error(
+        'Rocket Loader CSP Violation (Should Not Happen)',
+        violation as unknown as Record<string, unknown>,
+      );
     }
   });
 
