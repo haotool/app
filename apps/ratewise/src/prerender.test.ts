@@ -140,6 +140,38 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
     });
   });
 
+  describe('🔴 RED: CSP & Security', () => {
+    const indexHtml = resolve(distPath, 'index.html');
+
+    it('should have Rocket Loader disabled meta tag', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      expect(content).toContain('<meta name="cloudflare-rocket-loader" content="off"');
+    });
+
+    it('should not have unsafe-inline in script-src CSP', () => {
+      // 注意：這個測試檢查的是 HTML 中的 CSP meta tag（如果有）
+      // 實際的 CSP 由 nginx.conf 或 Cloudflare Worker 設定
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+
+      // 如果 HTML 中有 CSP meta tag，確保 script-src 不包含 unsafe-inline
+      const cspMetaMatch =
+        /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/i.exec(content);
+
+      if (cspMetaMatch) {
+        const cspContent = cspMetaMatch[1];
+        const scriptSrcMatch = cspContent.match(/script-src[^;]+/);
+
+        if (scriptSrcMatch) {
+          expect(scriptSrcMatch[0]).not.toContain('unsafe-inline');
+        }
+      }
+    });
+  });
+
   describe('🔴 RED: JSON-LD 正確性', () => {
     const faqHtml = resolve(distPath, 'faq/index.html');
     const aboutHtml = resolve(distPath, 'about/index.html');

@@ -19,6 +19,7 @@ import './index.css';
 import { logger } from './utils/logger';
 import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
+import { initCSPReporter } from './utils/csp-reporter';
 
 // 使用 import.meta.env 優先，如果不存在則使用全域變數，最後使用預設值
 const appVersion =
@@ -41,6 +42,9 @@ export const createRoot = ViteReactSSG(
   ({ isClient }) => {
     // Client-side initialization
     if (isClient) {
+      // [fix:2025-11-26] 初始化 CSP 違規監控
+      initCSPReporter();
+
       // Log application startup
       logger.info('Application starting', {
         environment: import.meta.env.MODE,

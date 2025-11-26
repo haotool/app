@@ -103,6 +103,47 @@ connect-src 'self' https://api.frankfurter.app;
 
 ---
 
+## Cloudflare Rocket Loader
+
+**狀態**: ❌ 已停用（2025-11-26）
+
+**原因**: 與嚴格的 CSP 和 Trusted Types 衝突
+
+Rocket Loader 會攔截並修改 inline scripts，需要 `script-src 'unsafe-inline'` 才能運作。
+為了維持嚴格的 CSP 策略，我們選擇停用 Rocket Loader。
+
+**停用方式**:
+
+1. **HTML Meta Tag** - 在 `index.html` 的 `<head>` 中添加：
+
+   ```html
+   <meta name="cloudflare-rocket-loader" content="off" />
+   ```
+
+2. **Script Attribute** - 在 script tags 添加 `data-cfasync="false"`（開發時）：
+
+   ```html
+   <script type="module" data-cfasync="false" src="./src/main.tsx"></script>
+   ```
+
+3. **Cloudflare Dashboard** - 手動停用（推薦）：
+   - 登入 Cloudflare Dashboard
+   - 選擇網域 > Speed > Optimization
+   - Rocket Loader = Off
+
+**效能影響**:
+
+- ✅ 無顯著影響：Vite 已優化 bundle splitting 和 lazy loading
+- ✅ 避免 CSP 違規：減少瀏覽器 console 錯誤
+- ✅ 提升安全性：維持嚴格的 `script-src 'self'` 策略
+
+**參考資料**:
+
+- [Cloudflare: Disable Rocket Loader](https://developers.cloudflare.com/speed/optimization/content/rocket-loader/)
+- [CSP: script-src Directive](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
+
+---
+
 ## 驗證方式
 
 ### 本地測試（Nginx）
