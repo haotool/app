@@ -67,6 +67,19 @@ const staticFiles = [
 ];
 staticFiles.forEach(copyFile);
 
+// 追加需要鏡像的靜態資產，避免 manifest/icon 404
+const mirroredFiles = [
+  'manifest.webmanifest',
+  'favicon.ico',
+  'favicon.svg',
+  'apple-touch-icon.png',
+  'loading.css',
+];
+mirroredFiles.forEach(copyFile);
+
+const mirroredDirs = ['icons', 'optimized', 'screenshots'];
+mirroredDirs.forEach(copyDirectory);
+
 const workboxFiles = readdirSync(distDir).filter(
   (filename) =>
     filename.startsWith('workbox-') && (filename.endsWith('.js') || filename.endsWith('.js.map')),

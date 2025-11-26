@@ -3,7 +3,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { afterEach, describe, expect, it } from 'vitest';
 import { SEOHelmet } from './SEOHelmet';
 
-const BASE_URL = 'https://app.haotool.org/ratewise';
+const BASE_URL = 'https://app.haotool.org/ratewise/';
 
 const renderWithHelmet = (props: Partial<Parameters<typeof SEOHelmet>[0]> = {}) =>
   render(
@@ -22,7 +22,6 @@ describe('SEOHelmet', () => {
 
     await waitFor(() => {
       const canonical = document.head.querySelector('link[rel="canonical"]');
-      // [fix:2025-10-27T21:31:25+08:00] Updated to match new URL normalization (no trailing slash)
       expect(canonical?.getAttribute('href')).toBe(BASE_URL);
     });
 
@@ -52,8 +51,8 @@ describe('SEOHelmet', () => {
       locale: 'en-US',
       keywords: ['exchange rates', 'currency', 'calculator'],
       alternates: [
-        { hrefLang: 'x-default', href: `${BASE_URL}/` },
-        { hrefLang: 'en-US', href: `${BASE_URL}/en-us` },
+        { hrefLang: 'x-default', href: BASE_URL },
+        { hrefLang: 'en-US', href: `${BASE_URL}en-us` },
       ],
       updatedTime: '2025-10-18T03:00:00.000Z',
       faq: [
@@ -70,7 +69,7 @@ describe('SEOHelmet', () => {
             '@type': 'ListItem',
             position: 1,
             name: 'Home',
-            item: `${BASE_URL}/`,
+            item: BASE_URL,
           },
         ],
       },
@@ -78,12 +77,11 @@ describe('SEOHelmet', () => {
 
     await waitFor(() => {
       const canonical = document.head.querySelector('link[rel="canonical"]');
-      // [fix:2025-10-27T21:31:25+08:00] Updated to match new URL normalization (no trailing slash)
-      expect(canonical?.getAttribute('href')).toBe(`${BASE_URL}/faq`);
+      expect(canonical?.getAttribute('href')).toBe(`${BASE_URL}faq/`);
     });
 
     const alternate = document.head.querySelector('link[rel="alternate"][hreflang="en-US"]');
-    expect(alternate?.getAttribute('href')).toBe(`${BASE_URL}/en-us`);
+    expect(alternate?.getAttribute('href')).toBe(`${BASE_URL}en-us/`);
 
     const updated = document.head.querySelector('meta[property="og:updated_time"]');
     expect(updated?.getAttribute('content')).toBe('2025-10-18T03:00:00.000Z');

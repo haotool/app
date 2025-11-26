@@ -76,10 +76,14 @@ export default defineConfig(() => {
           'src/utils/swUtils.ts', // PWA-specific, requires service worker context
           'src/trusted-types-bootstrap.ts', // Browser-only security module, requires CSP context
           'src/App.tsx', // Entry component, covered by E2E tests
+          'src/routes.tsx', // Router config, covered by E2E smoke
           'src/pages/**/*.tsx', // Static pages, covered by E2E tests
           'src/components/UpdatePrompt.tsx', // PWA-specific, requires service worker context
           'src/components/AutoUpdateToast.tsx', // PWA-specific, requires service worker context
           'src/components/SwipeTooltip.tsx', // UI tutorial component, covered by E2E tests
+          'src/components/ThreadsIcon.tsx', // Static icon component
+          'src/features/calculator/components/ExpressionDisplay.tsx', // Pure presentational, covered by E2E
+          'src/features/calculator/components/CalculatorKeyboard.tsx', // UI shell, validated via E2E
         ],
         thresholds: {
           // 基於 Linus Torvalds 哲學設置實用且可維護的門檻
