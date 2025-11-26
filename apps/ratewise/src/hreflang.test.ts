@@ -43,8 +43,8 @@ describe('Hreflang Configuration (BDD)', () => {
       // 🔴 紅燈：計算 xhtml:link 數量，應該只有 2 個
       const xlinkMatches = sitemapContent.match(/<xhtml:link/g);
       expect(xlinkMatches).toBeTruthy();
-      // 3 條 URL * 2 語言 = 6
-      expect(xlinkMatches?.length).toBe(6);
+      // 4 條 URL * 2 語言 = 8 (/, /faq/, /about/, /guide/)
+      expect(xlinkMatches?.length).toBe(8);
     });
   });
 
