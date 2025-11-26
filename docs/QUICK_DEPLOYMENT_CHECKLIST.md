@@ -64,7 +64,7 @@ dig app.haotool.org CNAME
 2. Add Variable
    ```
    Key: VITE_SITE_URL
-   Value: https://app.haotool.org/ratewise
+   Value: https://app.haotool.org/ratewise/
    ```
 3. Save
 4. 等待自動重新部署 (3-5 分鐘)
@@ -75,7 +75,7 @@ dig app.haotool.org CNAME
 
 #### 瀏覽器測試
 
-訪問: https://app.haotool.org/ratewise
+訪問: https://app.haotool.org/ratewise/
 
 **檢查清單**:
 
@@ -88,7 +88,7 @@ dig app.haotool.org CNAME
 
 ```bash
 # 檢查 canonical URL
-curl -s https://app.haotool.org/ratewise | grep canonical
+curl -s https://app.haotool.org/ratewise/ | grep canonical
 
 # 檢查 sitemap
 curl https://app.haotool.org/ratewise/sitemap.xml
@@ -105,7 +105,7 @@ curl https://app.haotool.org/ratewise/robots.txt
 
 1. 訪問: https://search.google.com/search-console
 2. 新增資源 → 網址前置字元
-3. 輸入: `https://app.haotool.org/ratewise`
+3. 輸入: `https://app.haotool.org/ratewise/`
 4. 選擇 HTML 檔案驗證
 5. 下載 `googleXXXXXX.html`
 
@@ -139,7 +139,7 @@ git push origin main
 
 依序提交以下頁面:
 
-1. `https://app.haotool.org/ratewise`
+1. `https://app.haotool.org/ratewise/`
 2. `https://app.haotool.org/ratewise/faq`
 3. `https://app.haotool.org/ratewise/about`
 
@@ -153,7 +153,7 @@ git push origin main
 
 ### 網域與部署
 
-- [ ] `https://app.haotool.org/ratewise` 可訪問
+- [ ] `https://app.haotool.org/ratewise/` 可訪問
 - [ ] SSL 證書有效（顯示 🔒）
 - [ ] 無 404 錯誤
 - [ ] 無 console 錯誤

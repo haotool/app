@@ -137,6 +137,7 @@ export default defineConfig(({ mode }) => {
   // 自動生成版本號（語義化版本 + git metadata）
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
+  const siteUrl = env.VITE_SITE_URL || 'https://app.haotool.org/ratewise/';
 
   // 最簡配置：使用環境變數，消除所有特殊情況
   // [fix:2025-10-27] 遵循 Linus 原則 - "好品味"：消除條件判斷
@@ -574,6 +575,37 @@ export default defineConfig(({ mode }) => {
           safari10: true, // Safari 10 相容性
         },
         sourceMap: true, // Terser 保留 source map
+      },
+    },
+    // [SEO Phase 2B-2: 2025-11-25] SSR Configuration for vite-react-ssg
+    // Force bundling of CommonJS modules for ESM compatibility
+    ssr: {
+      noExternal: ['react-helmet-async'], // Bundle CommonJS modules
+    },
+    // [SEO Phase 2B-2: 2025-11-25] Vite React SSG Configuration
+    // 參考: [Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
+    // 預渲染策略：只渲染爬蟲需要的頁面（首頁、FAQ、About）
+    ssgOptions: {
+      script: 'async', // 非阻塞腳本載入
+      formatting: 'beautify', // 美化 HTML 便於 debug
+      dirStyle: 'nested', // 巢狀目錄結構（/faq/index.html）
+      concurrency: 10, // 最大並行渲染數
+      // 指定預渲染路徑
+      includedRoutes(paths) {
+        // 預渲染首頁、FAQ、About、Guide
+        const includedPaths = ['/', '/faq', '/about', '/guide'];
+        console.log('🔍 Available paths:', paths);
+        console.log('✅ Including paths:', includedPaths);
+        return paths.filter((path) => includedPaths.includes(path));
+      },
+      // 預渲染前處理 HTML
+      async onBeforePageRender(route, indexHTML) {
+        console.log(`🔄 Pre-rendering: ${route}`);
+        return indexHTML;
+      },
+      // 預渲染完成後處理
+      async onFinished(dir) {
+        console.log(`🎉 SSG build completed in: ${dir}`);
       },
     },
   };

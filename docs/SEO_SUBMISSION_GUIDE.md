@@ -57,7 +57,7 @@ curl -I https://app.haotool.org/ratewise/favicon.ico
 2. 使用 Google 帳號登入
 3. 點擊左上角「新增資源」
 4. 選擇「**網址前置字元**」（推薦，較簡單）
-5. 輸入完整網址：`https://app.haotool.org/ratewise`
+5. 輸入完整網址：`https://app.haotool.org/ratewise/`
 
 #### 步驟 2: 驗證網站擁有權
 
@@ -131,7 +131,7 @@ pnpm build
 1. 前往 [Bing Webmaster Tools](https://www.bing.com/webmasters)
 2. 使用 Microsoft 帳號登入
 3. 點擊「新增網站」
-4. 輸入：`https://app.haotool.org/ratewise`
+4. 輸入：`https://app.haotool.org/ratewise/`
 
 #### 步驟 2: 匯入 Google Search Console 資料（快速）
 
@@ -174,7 +174,7 @@ pnpm build
 ```
 工具 → 提交 URL
 輸入重要頁面網址：
-- https://app.haotool.org/ratewise
+- https://app.haotool.org/ratewise/
 - https://app.haotool.org/ratewise/faq
 - https://app.haotool.org/ratewise/about
 ```
@@ -189,7 +189,7 @@ pnpm build
 
 ```
 1. 前往 https://developers.facebook.com/tools/debug/
-2. 輸入：https://app.haotool.org/ratewise
+2. 輸入：https://app.haotool.org/ratewise/
 3. 點擊「除錯」
 4. 查看預覽圖片、標題、描述
 5. 如果有錯誤，修正後點擊「重新抓取」
@@ -206,7 +206,7 @@ pnpm build
 
 ```
 1. 前往 https://cards-dev.twitter.com/validator
-2. 輸入：https://app.haotool.org/ratewise
+2. 輸入：https://app.haotool.org/ratewise/
 3. 點擊「Preview card」
 4. 查看卡片顯示效果
 ```
@@ -217,7 +217,7 @@ pnpm build
 
 ```
 1. 前往 https://www.linkedin.com/post-inspector/
-2. 輸入：https://app.haotool.org/ratewise
+2. 輸入：https://app.haotool.org/ratewise/
 3. 查看預覽效果
 ```
 
@@ -231,7 +231,7 @@ pnpm build
 網址：https://webmaster.yandex.com/
 步驟：
 1. 註冊 Yandex 帳號
-2. 新增網站：https://app.haotool.org/ratewise
+2. 新增網站：https://app.haotool.org/ratewise/
 3. 驗證方式：HTML 檔案或 Meta 標籤
 4. 提交 Sitemap
 ```
@@ -291,7 +291,7 @@ pnpm build
 
 ```
 1. 左上角「網址檢查」
-2. 輸入：https://app.haotool.org/ratewise
+2. 輸入：https://app.haotool.org/ratewise/
 3. 點擊「要求建立索引」
 4. 等待處理（通常幾小時到 1 天）
 ```
@@ -312,7 +312,7 @@ pnpm build
 
 ```
 1. 前往 https://search.google.com/test/rich-results
-2. 輸入：https://app.haotool.org/ratewise
+2. 輸入：https://app.haotool.org/ratewise/
 3. 點擊「測試網址」
 4. 確認結構化資料無錯誤
 ```

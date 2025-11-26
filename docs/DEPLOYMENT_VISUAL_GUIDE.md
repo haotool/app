@@ -56,7 +56,7 @@
 │ ─────────────────────────────────────────────────────────   │
 │ Zeabur Variables 頁籤                                       │
 │     ├─ Key: VITE_SITE_URL                                   │
-│     ├─ Value: https://app.haotool.org/ratewise              │
+│     ├─ Value: https://app.haotool.org/ratewise/              │
 │     └─ Save → 自動觸發重新部署                               │
 │                                                             │
 │ 等待部署完成 (3-5 分鐘)                                      │
@@ -71,7 +71,7 @@
 │ 步驟 4：測試部署                                             │
 │ ─────────────────────────────────────────────────────────   │
 │ 4A. 瀏覽器測試                                               │
-│     └─ https://app.haotool.org/ratewise                    │
+│     └─ https://app.haotool.org/ratewise/                    │
 │                                                             │
 │ 4B. 功能檢查                                                │
 │     ├─ ✅ 頁面載入正常                                       │
@@ -97,7 +97,7 @@
 │ ─────────────────────────────────────────────────────────   │
 │ 5A. 驗證網域                                                │
 │     ├─ 新增資源：網址前置字元                                │
-│     ├─ URL: https://app.haotool.org/ratewise                │
+│     ├─ URL: https://app.haotool.org/ratewise/                │
 │     ├─ 選擇：HTML 檔案驗證                                   │
 │     └─ 上傳 googleXXXXXX.html 到 public/                    │
 │                                                             │
@@ -105,7 +105,7 @@
 │     └─ https://app.haotool.org/ratewise/sitemap.xml         │
 │                                                             │
 │ 5C. 請求索引（依序）                                         │
-│     ├─ https://app.haotool.org/ratewise                    │
+│     ├─ https://app.haotool.org/ratewise/                    │
 │     ├─ https://app.haotool.org/ratewise/faq                 │
 │     └─ https://app.haotool.org/ratewise/about               │
 │                                                             │
@@ -196,7 +196,7 @@
 | **Zeabur Dashboard**      | https://zeabur.com/dashboard             |
 | **Google Search Console** | https://search.google.com/search-console |
 | **Cloudflare Dashboard**  | https://dash.cloudflare.com/             |
-| **部署後網址**            | https://app.haotool.org/ratewise         |
+| **部署後網址**            | https://app.haotool.org/ratewise/        |
 
 ---
 

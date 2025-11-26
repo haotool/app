@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { SEOHelmet } from './components/SEOHelmet';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { SkeletonLoader } from './components/SkeletonLoader';
 import CurrencyConverter from './features/ratewise/RateWise';
@@ -10,6 +9,8 @@ import CurrencyConverter from './features/ratewise/RateWise';
 const FAQ = lazy(() => import('./pages/FAQ'));
 const About = lazy(() => import('./pages/About'));
 const ColorSchemeComparison = lazy(() => import('./pages/ColorSchemeComparison'));
+// [SEO Fix 2025-11-25 Phase 2A-2] Lazy load 404 page with noindex SEO
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
   // 與 Vite base 設定同步，避免 FAQ / About 在不同部署路徑出現空白頁
@@ -24,16 +25,31 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <SEOHelmet />
+      {/* [SEO Fix 2025-11-25 Phase 2A]
+          移除全域 SEOHelmet，避免與子頁面 meta tags 衝突
+
+          SEO 策略：
+          - 首頁 (/): 使用 index.html 靜態 meta tags（Google/AI 爬蟲立即讀取）
+          - FAQ (/faq): 使用 FAQ.tsx 的 SEOHelmet（頁面專用 meta tags）
+          - About (/about): 使用 About.tsx 的 SEOHelmet（頁面專用 meta tags）
+          - 404 (*): 使用 NotFound.tsx 的 SEOHelmet（noindex）
+
+          參考：fix/seo-phase2a-bdd-approach
+          依據：[SEO 審查報告 2025-11-25] Meta Tags 重複衝突 Critical 問題
+      */}
       <Router basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <main role="main" className="min-h-screen">
-          <h1 className="sr-only">RateWise 匯率轉換器</h1>
+          {/* [SEO Fix 2025-11-26] 移除 sr-only H1，讓各頁面自定義語義 H1
+              依據：[Google SEO Guidelines] 每頁應有唯一的語義 H1
+              參考：[Context7:vite-react-ssg] Head component best practices */}
           <Suspense fallback={<SkeletonLoader />}>
             <Routes>
               <Route path="/" element={<CurrencyConverter />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/about" element={<About />} />
               <Route path="/color-scheme" element={<ColorSchemeComparison />} />
+              {/* [SEO Fix 2025-11-25 Phase 2A-2] Catch-all 404 route with noindex */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </main>

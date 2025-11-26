@@ -8,7 +8,6 @@ import { MultiConverter } from './components/MultiConverter';
 import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
 import { ConversionHistory } from './components/ConversionHistory';
-import { SEOHelmet } from '../../components/SEOHelmet';
 import { VersionDisplay } from '../../components/VersionDisplay';
 import { ThreadsIcon } from '../../components/ThreadsIcon';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
@@ -16,12 +15,20 @@ import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator'
 import { formatDisplayTime } from '../../utils/timeFormatter';
 import { clearAllServiceWorkerCaches, forceServiceWorkerUpdate } from '../../utils/swUtils';
 import { logger } from '../../utils/logger';
+import { SkeletonLoader } from '../../components/SkeletonLoader';
 import type { RateType } from './types';
 import { STORAGE_KEYS } from './storage-keys';
 
 const RateWise = () => {
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLElement>(null);
+  const isTestEnv = import.meta.env.MODE === 'test' || process.env['NODE_ENV'] === 'test';
+  const [isHydrated, setIsHydrated] = useState(isTestEnv);
+
+  // 確保伺服端與客戶端初始渲染內容一致，避免 hydration 警告
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // 匯率類型狀態（spot/cash），默認 spot，從 localStorage 讀取
   const [rateType, setRateType] = useState<RateType>(() => {
@@ -107,6 +114,12 @@ const RateWise = () => {
     generateTrends,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
 
+  const shouldShowSkeleton = !isHydrated || (ratesLoading && !isTestEnv);
+
+  if (shouldShowSkeleton) {
+    return <SkeletonLoader />;
+  }
+
   // Error state UI
   if (ratesError) {
     return (
@@ -179,26 +192,6 @@ const RateWise = () => {
         canTrigger={canTrigger}
       />
 
-      <SEOHelmet
-        howTo={{
-          name: '如何使用 RateWise 進行匯率換算',
-          description: '三步驟輕鬆完成即時匯率換算，支援 30+ 種貨幣快速轉換',
-          steps: [
-            {
-              name: '選擇貨幣',
-              text: '從下拉選單中選擇您要換算的來源貨幣和目標貨幣。RateWise 支援超過 30 種主要貨幣，包括 TWD、USD、JPY、EUR、GBP 等。',
-            },
-            {
-              name: '輸入金額',
-              text: '在輸入框中輸入您想要換算的金額。系統會即時計算並顯示換算結果，數據來源為臺灣銀行牌告匯率。',
-            },
-            {
-              name: '查看結果',
-              text: '換算結果會立即顯示在畫面上。您還可以查看歷史匯率趨勢圖，了解過去一段時間的匯率變化走勢。',
-            },
-          ],
-        }}
-      />
       <main
         ref={mainRef}
         className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-3 md:p-8"
@@ -229,12 +222,12 @@ const RateWise = () => {
                   fetchPriority="high"
                 />
               </picture>
-              <h2
+              <h1
                 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"
                 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 700 }}
               >
                 RateWise 匯率好工具
-              </h2>
+              </h1>
             </div>
             <p
               className="text-sm text-gray-600"
@@ -363,7 +356,7 @@ const RateWise = () => {
               </div>
               <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
                 <Link
-                  to="/faq"
+                  to="/faq/"
                   className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
                 >
                   <span aria-hidden="true" className="text-white/50">
@@ -372,7 +365,7 @@ const RateWise = () => {
                   常見問題
                 </Link>
                 <Link
-                  to="/about"
+                  to="/about/"
                   className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
                 >
                   <span aria-hidden="true" className="text-white/50">

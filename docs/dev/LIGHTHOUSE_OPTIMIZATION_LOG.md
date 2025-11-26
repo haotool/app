@@ -7,15 +7,15 @@
 
 ## 📊 目標分數追蹤
 
-| 日期       | Performance | Accessibility | Best Practices | SEO        | 來源                                          | 備註                           |
-| ---------- | ----------- | ------------- | -------------- | ---------- | --------------------------------------------- | ------------------------------ |
-| 2025-11-07 | 54 ❌       | **100** ✅    | 96 ⚠️          | **100** ✅ | Local (localhost:4174) - ultrathink 測試      | LCP 41.1s - 本地測試不可靠     |
-| 2025-10-30 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                           | 激進 Code Splitting 優化       |
-| 2025-10-30 | **優秀** ✅ | **100** ✅    | **100** ✅     | **100** ✅ | Local Preview (localhost:4176)                | LCP 216ms, 節省 182KB 初始載入 |
-| 2025-10-29 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                           | 移除 non-blocking CSS 修復白屏 |
-| 2025-10-29 | **99** ✅   | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復後               | robots.txt 修復成功！          |
-| 2025-10-29 | **100** ✅  | **100** ✅    | 92 ⚠️          | 89 ⚠️      | Production (https://app.haotool.org/ratewise) | 初始基準                       |
-| 2025-10-28 | 72 ⚠️       | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復前               | 本地測試 LCP 異常（已解決）    |
+| 日期       | Performance | Accessibility | Best Practices | SEO        | 來源                                           | 備註                           |
+| ---------- | ----------- | ------------- | -------------- | ---------- | ---------------------------------------------- | ------------------------------ |
+| 2025-11-07 | 54 ❌       | **100** ✅    | 96 ⚠️          | **100** ✅ | Local (localhost:4174) - ultrathink 測試       | LCP 41.1s - 本地測試不可靠     |
+| 2025-10-30 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                            | 激進 Code Splitting 優化       |
+| 2025-10-30 | **優秀** ✅ | **100** ✅    | **100** ✅     | **100** ✅ | Local Preview (localhost:4176)                 | LCP 216ms, 節省 182KB 初始載入 |
+| 2025-10-29 | **?** 🔄    | **100** ✅    | **100** ✅     | **100** ✅ | Production - 待測試                            | 移除 non-blocking CSS 修復白屏 |
+| 2025-10-29 | **99** ✅   | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復後                | robots.txt 修復成功！          |
+| 2025-10-29 | **100** ✅  | **100** ✅    | 92 ⚠️          | 89 ⚠️      | Production (https://app.haotool.org/ratewise/) | 初始基準                       |
+| 2025-10-28 | 72 ⚠️       | **100** ✅    | **100** ✅     | **100** ✅ | Local (localhost:4174) - 修復前                | 本地測試 LCP 異常（已解決）    |
 
 **目標**: Performance 100 + Accessibility 100 + Best Practices 100 + SEO 100 + AI Search Optimization
 
@@ -130,7 +130,7 @@
   1. **Open Graph** (Facebook, LinkedIn 分享):
      ```html
      <meta property="og:type" content="website" />
-     <meta property="og:url" content="https://app.haotool.org/ratewise" />
+     <meta property="og:url" content="https://app.haotool.org/ratewise/" />
      <meta property="og:title" content="RateWise - 匯率好工具 | 即時匯率換算" />
      <meta
        property="og:description"
@@ -158,7 +158,7 @@
          "name": "RateWise",
          "alternateName": "匯率好工具",
          "description": "即時匯率轉換器，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR 等 30+ 種貨幣換算",
-         "url": "https://app.haotool.org/ratewise",
+         "url": "https://app.haotool.org/ratewise/",
          "applicationCategory": "FinanceApplication",
          "operatingSystem": "Any",
          "offers": {
@@ -181,7 +181,7 @@
          "@context": "https://schema.org",
          "@type": "Organization",
          "name": "RateWise",
-         "url": "https://app.haotool.org/ratewise",
+         "url": "https://app.haotool.org/ratewise/",
          "logo": "https://app.haotool.org/ratewise/logo-192.png",
          "contactPoint": {
            "@type": "ContactPoint",
@@ -195,7 +195,7 @@
   4. **基礎 SEO 補強**:
      ```html
      <meta name="robots" content="index, follow" />
-     <link rel="canonical" href="https://app.haotool.org/ratewise" />
+     <link rel="canonical" href="https://app.haotool.org/ratewise/" />
      <meta http-equiv="content-language" content="zh-TW" />
      ```
 - **驗證工具**:
@@ -260,7 +260,7 @@
 
 ### 11. 首屏趨勢圖同步載入 (2025-11-09) ✅
 
-- **背景**: 透過 Playwright 實際瀏覽 https://app.haotool.org/ratewise，發現趨勢圖位於 Hero 卡片底部、屬於 LCP 元件。懶載入造成 300ms skeleton 閃爍與 LCP 評比分數下降，違反 [web.dev Optimize LCP][ref:web.dev-optimize-lcp:2025-11-09] 對 Above-the-fold 資源的建議。
+- **背景**: 透過 Playwright 實際瀏覽 https://app.haotool.org/ratewise/，發現趨勢圖位於 Hero 卡片底部、屬於 LCP 元件。懶載入造成 300ms skeleton 閃爍與 LCP 評比分數下降，違反 [web.dev Optimize LCP][ref:web.dev-optimize-lcp:2025-11-09] 對 Above-the-fold 資源的建議。
 - **變更**:
   - `SingleConverter.tsx` 改為同步匯入 `MiniTrendChart`，移除 `React.lazy` + `Suspense`，但保留 `ErrorBoundary` + `TrendChartSkeleton`。
   - TrendChart 資料仍於 `useEffect` 平行抓取，載入期間顯示 skeleton，避免空白區域。
@@ -390,7 +390,7 @@
 
 ```bash
 # 1. 記錄優化前分數
-echo "Baseline: https://pagespeed.web.dev/analysis?url=https://app.haotool.org/ratewise"
+echo "Baseline: https://pagespeed.web.dev/analysis?url=https://app.haotool.org/ratewise/"
 
 # 2. 執行優化修改
 # ... (修改檔案)
@@ -424,7 +424,7 @@ fi
 curl https://app.haotool.org/ratewise/robots.txt
 
 # 檢查 CSP headers
-curl -I https://app.haotool.org/ratewise | grep -i content-security-policy
+curl -I https://app.haotool.org/ratewise/ | grep -i content-security-policy
 
 # 檢查快取策略
 curl -I https://app.haotool.org/ratewise/assets/index-xxx.css | grep -i cache-control

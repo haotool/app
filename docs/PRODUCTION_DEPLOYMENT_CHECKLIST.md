@@ -53,7 +53,7 @@ curl -I https://app.haotool.org/ratewise/index.html | grep -i cache-control
 pnpm verify:history
 
 # 驗證 precache 資產在 CDN 上是否存在
-VERIFY_BASE_URL=https://app.haotool.org/ratewise pnpm verify:precache
+VERIFY_BASE_URL=https://app.haotool.org/ratewise/ pnpm verify:precache
 ```
 
 ### 5. 清除 CDN 快取（可選但推薦）
@@ -191,7 +191,7 @@ pnpm purge:cdn
 
 ### 部署後檢查清單
 
-- [ ] 訪問 https://app.haotool.org/ratewise 確認頁面正常
+- [ ] 訪問 https://app.haotool.org/ratewise/ 確認頁面正常
 - [ ] 檢查 Console 無錯誤訊息
 - [ ] 驗證 Service Worker 已更新（DevTools → Application）
 - [ ] 測試匯率轉換功能正常

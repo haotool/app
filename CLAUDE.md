@@ -142,6 +142,145 @@ get-library-docs --context7CompatibleLibraryID "/reactjs/react.dev" --topic "hoo
 
 **目的**: 培養工程品味，避免過度設計，確保程式碼簡潔實用
 
+#### 5. BDD 開發流程（強制）
+
+**所有功能新增、修改、刪除、重構必須遵循 BDD 三步驟**
+
+**🔴 RED → 🟢 GREEN → 🔵 REFACTOR**
+
+這是**強制性**的開發流程，違反將導致 PR 被拒絕。
+
+**強制步驟**:
+
+**Step 1: 🔴 RED（紅燈）- 先寫失敗測試**
+
+```bash
+# 1. 建立測試檔案 *.test.ts(x)
+# 2. 描述預期行為（Given-When-Then）
+# 3. 執行測試，確認失敗（紅燈）
+pnpm test <test-file>  # 必須看到紅燈
+```
+
+**範例**:
+
+```typescript
+// prerender.test.ts
+describe('🔴 RED: 靜態 HTML 檔案結構', () => {
+  it('should generate dist/index.html for homepage', () => {
+    const indexHtml = resolve(distPath, 'index.html');
+    expect(existsSync(indexHtml)).toBe(true); // ❌ 紅燈（檔案不存在）
+  });
+});
+```
+
+**Step 2: 🟢 GREEN（綠燈）- 最小實作讓測試通過**
+
+```bash
+# 1. 實作最小可行代碼
+# 2. 執行測試，確認通過（綠燈）
+pnpm test <test-file>  # 必須看到綠燈
+```
+
+**範例**:
+
+```typescript
+// vite.config.ts - 添加 vite-react-ssg 配置
+export default defineConfig({
+  plugins: [
+    react(),
+    ViteReactSSG(), // 最小實作：啟用 SSG
+  ],
+});
+
+// pnpm test prerender.test.ts
+// ✅ 綠燈（dist/index.html 已生成）
+```
+
+**Step 3: 🔵 REFACTOR（重構）- 優化代碼品質**
+
+```bash
+# 1. 重構代碼（消除重複、改善可讀性）
+# 2. 執行測試，確認仍然通過
+# 3. 執行完整測試套件
+pnpm test              # 所有測試必須通過
+pnpm lint              # 無 lint 錯誤
+pnpm typecheck         # 無 type 錯誤
+```
+
+**範例**:
+
+```typescript
+// 重構前：硬編碼路由
+const routes = [
+  { path: '/', element: <Home /> },
+  { path: '/faq', element: <FAQ /> },
+];
+
+// 重構後：集中管理 + Layout 包裝
+export const routes: RouteRecord[] = [
+  {
+    path: '/',
+    element: <Layout><Home /></Layout>,
+    entry: 'src/features/ratewise/RateWise',
+  },
+  // ... 統一結構，易維護
+];
+```
+
+**禁止行為**:
+
+- ❌ 直接寫實作代碼，沒有測試
+- ❌ 測試和實作同時完成（無法驗證 BDD 循環）
+- ❌ 跳過紅燈階段（無法確認測試有效性）
+- ❌ 綠燈後不重構（累積技術債）
+
+**強制驗證清單**:
+
+每次提交前必須確認：
+
+- [ ] 紅燈截圖或日誌（證明測試失敗）
+- [ ] 綠燈截圖或日誌（證明測試通過）
+- [ ] 重構後測試仍通過
+- [ ] `pnpm lint` 通過
+- [ ] `pnpm typecheck` 通過
+- [ ] `pnpm test` 全過（≥80% 覆蓋率）
+
+**文檔清理規則**:
+
+BDD 完成後，**禁止保留**以下臨時文檔：
+
+- ❌ `*_REPORT.md`（測試報告）
+- ❌ `*_SUMMARY.md`（總結報告）
+- ❌ `*_PLAN.md`（已完成的計畫）
+- ❌ 任何一次性分析或調查文檔
+
+**只保留**:
+
+- ✅ 長期有效的技術決策記錄（`docs/dev/00X_*.md`）
+- ✅ 操作指南與故障排除
+- ✅ 架構藍圖與最佳實踐
+
+**CHANGELOG 更新規則**:
+
+每次 BDD 完成後，**必須**更新 `CHANGELOG.md`：
+
+```bash
+# 自動生成變更日誌草稿
+git log --oneline --since="1 day ago"
+
+# 手動整理到 CHANGELOG.md
+# 格式：## [版本] - YYYY-MM-DD
+#       ### Added/Changed/Fixed/Removed
+```
+
+**目的**:
+
+- 確保代碼有測試保護
+- 建立快速反饋循環
+- 持續保持 clean code
+- 避免技術債累積
+- 維護高品質文檔
+
 ---
 
 ## 開發工作流程
