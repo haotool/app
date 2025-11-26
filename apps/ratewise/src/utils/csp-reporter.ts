@@ -99,5 +99,5 @@ export function initCSPReporter(): void {
  * @param violation - 違規詳情
  */
 export function reportCSPViolation(violation: Partial<CSPViolation>): void {
-  logger.warn('Manual CSP Violation Report', violation);
+  logger.warn('Manual CSP Violation Report', violation as unknown as Record<string, unknown>);
 }
