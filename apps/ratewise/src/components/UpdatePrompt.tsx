@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
-// @ts-expect-error - workbox-window is a CommonJS module
-import pkg from 'workbox-window';
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-const { Workbox } = pkg as any;
+import { Workbox } from 'workbox-window';
 import { startVersionCheckInterval } from '../utils/versionChecker';
 import { AutoUpdateToast } from './AutoUpdateToast';
 import { logger } from '../utils/logger';
@@ -72,15 +69,14 @@ export function UpdatePrompt() {
     // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
     const swType = import.meta.env.DEV ? 'module' : 'classic';
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const workbox = new Workbox(swUrl, {
       scope: swScope,
       type: swType,
     });
 
     // [fix:2025-11-06] autoUpdate 模式：檢測到更新立即顯示通知
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    workbox.addEventListener('installed', (event) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    workbox.addEventListener('installed', (event: any) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (event.isUpdate) {
         logger.info('New version detected, showing update toast');
