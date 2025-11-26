@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Workbox } from 'workbox-window';
+// @ts-expect-error - workbox-window is a CommonJS module
+import pkg from 'workbox-window';
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+const { Workbox } = pkg as any;
 import { startVersionCheckInterval } from '../utils/versionChecker';
 import { AutoUpdateToast } from './AutoUpdateToast';
 import { logger } from '../utils/logger';
@@ -25,7 +28,8 @@ import { logger } from '../utils/logger';
  */
 export function UpdatePrompt() {
   const [needRefresh, setNeedRefresh] = useState(false);
-  const [wb, setWb] = useState<Workbox | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+  const [wb, setWb] = useState<any>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
@@ -68,13 +72,16 @@ export function UpdatePrompt() {
     // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
     const swType = import.meta.env.DEV ? 'module' : 'classic';
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const workbox = new Workbox(swUrl, {
       scope: swScope,
       type: swType,
     });
 
     // [fix:2025-11-06] autoUpdate 模式：檢測到更新立即顯示通知
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     workbox.addEventListener('installed', (event) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (event.isUpdate) {
         logger.info('New version detected, showing update toast');
         setNeedRefresh(true);
@@ -158,6 +165,7 @@ export function UpdatePrompt() {
       }
 
       // 2. skipWaiting（自動更新模式下 Service Worker 會自動處理）
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       wb.messageSkipWaiting();
 
       // 3. 重新載入頁面
