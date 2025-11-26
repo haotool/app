@@ -150,7 +150,8 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
 
       const content = readFileSync(faqHtml, 'utf-8');
       expect(content).toContain('<script type="application/ld+json">');
-      expect(content).toContain('"@type":"FAQPage"');
+      // 支持美化和壓縮兩種格式
+      expect(content).toMatch(/"@type":\s*"FAQPage"/);
       expect(content).toContain('"mainEntity"');
     });
 

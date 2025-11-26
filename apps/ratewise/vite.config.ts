@@ -603,6 +603,41 @@ export default defineConfig(({ mode }) => {
         console.log(`🔄 Pre-rendering: ${route}`);
         return indexHTML;
       },
+      // 預渲染後處理 HTML - 修復 canonical URL 和 JSON-LD
+      async onPageRendered(route, renderedHTML) {
+        console.log(`✅ Post-processing: ${route}`);
+
+        // 修復 canonical URL (除了根路徑，其他路徑都需要添加路徑部分)
+        if (route !== '/') {
+          const canonicalPath = route.replace(/\/+$/, '') + '/'; // 確保尾斜線
+          const fullCanonicalUrl = `${siteUrl}${canonicalPath.replace(/^\//, '')}`;
+
+          // 替換 canonical URL
+          renderedHTML = renderedHTML.replace(
+            /<link rel="canonical" href="[^"]*">/,
+            `<link rel="canonical" href="${fullCanonicalUrl}">`,
+          );
+
+          // 替換 alternate hreflang URLs
+          renderedHTML = renderedHTML.replace(
+            /<link rel="alternate" hreflang="([^"]*)" href="[^"]*">/g,
+            `<link rel="alternate" hreflang="$1" href="${fullCanonicalUrl}">`,
+          );
+
+          // 修復 JSON-LD 中的 URL (如果有)
+          renderedHTML = renderedHTML.replace(
+            /"url":"https:\/\/app\.haotool\.org\/ratewise\/"/g,
+            `"url":"${fullCanonicalUrl}"`,
+          );
+        }
+
+        // 為 FAQ 頁面添加 FAQPage JSON-LD (如果缺失)
+        if (route === '/faq' && !renderedHTML.includes('"@type":"FAQPage"')) {
+          console.warn('⚠️ FAQ page missing FAQPage JSON-LD, this should not happen!');
+        }
+
+        return renderedHTML;
+      },
       // 預渲染完成後處理
       async onFinished(dir) {
         console.log(`🎉 SSG build completed in: ${dir}`);
