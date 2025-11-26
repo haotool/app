@@ -125,7 +125,7 @@ test.describe('Cloudflare Cache Strategy (BDD)', () => {
       expect(csp).toContain('https://static.cloudflareinsights.com');
 
       // 確認 script-src 沒有 unsafe-inline
-      const scriptSrcMatch = csp.match(/script-src[^;]+/);
+      const scriptSrcMatch = csp?.match(/script-src[^;]+/);
       expect(scriptSrcMatch).not.toBeNull();
       expect(scriptSrcMatch![0]).not.toContain('unsafe-inline');
     });
