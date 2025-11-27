@@ -41,16 +41,16 @@ function typeOf(object?: ReactLike | null): symbol | number | undefined {
 
   switch ($$typeof) {
     case REACT_ELEMENT_TYPE: {
-      const type = object.type as ReactLike;
+      const type = object.type as symbol | number | ReactLike | undefined;
       switch (type) {
         case REACT_FRAGMENT_TYPE:
         case REACT_STRICT_MODE_TYPE:
         case REACT_PROFILER_TYPE:
         case REACT_SUSPENSE_TYPE:
         case REACT_SUSPENSE_LIST_TYPE:
-          return type;
+          return type as symbol | number;
         default: {
-          const innerType = type?.$$typeof;
+          const innerType = (type as ReactLike)?.$$typeof;
           switch (innerType) {
             case REACT_CONTEXT_TYPE:
             case REACT_PROVIDER_TYPE:
