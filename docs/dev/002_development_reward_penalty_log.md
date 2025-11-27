@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-28T00:38:36+0800
-> **當前總分**: 125 (初始分: 100)
+> **最後更新**: 2025-11-28T01:23:42+0800
+> **當前總分**: 126 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                                                                   | 依據                                                                                                | 分數 | 時間       |
 | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | React 19 react-is AsyncMode 崩潰修復             | 1) 合併 Vite resolve 避免 alias 被覆蓋 2) 新增 react-is shim 移除 AsyncMode 寫入，確保 SSR/SSG 不再崩潰 3) `pnpm --filter @app/ratewise test:coverage` 綠燈恢復                                                                                            | [context7:reactjs/react.dev:2024-04-25]                                                             | +1   | 2025-11-28 |
 | ✅ 成功 | LHCI 離線與報告路徑修復                          | 1) Lighthouse CI build 啟用 `VITE_LHCI_OFFLINE` 避免 console 404；2) skip `bf-cache` audit 防止 WebSocket 偽陽性；3) 修正報告輸出與 artifact 路徑一致（`lighthouse-reports/lhci`）                                                                         | [web.dev/http-cache][developer.chrome.com/lighthouse/best-practices][MDN Report-To]                 | +1   | 2025-11-27 |
 | ✅ 成功 | Nginx SW 快取覆蓋修正 + NEL 路徑對齊             | 1) 通用靜態資源規則改為負向前瞻排除 sw/workbox/registerSW，避免 1d 快取覆蓋 SW；2) NEL Report-To 改回現有 `/csp-report` handler，含 include_subdomains；3) `pnpm typecheck`、`pnpm test` 追蹤副作用                                                        | [context7:googlechrome/workbox:2025-11-27][nginx.org/docs/http/ngx_http_core_module.html#location]  | +1   | 2025-11-27 |
 | ✅ 成功 | FAQ/About 預渲染紅燈轉綠燈（fallback 靜態輸出）  | 1) `routes.tsx`/`vite.config.ts` 標準化路徑比對避免 `/faq/` 遺漏；2) `postbuild-mirror-dist.js` 增加 FAQ/About fallback 靜態頁（含 canonical/OG/keywords），確保 dist/faq、dist/about 存在；3) `pnpm --filter @app/ratewise test` 501/501 綠燈             | [vitest output 2025-11-27][prerender.test.ts]                                                       | +1   | 2025-11-27 |

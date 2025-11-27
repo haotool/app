@@ -176,6 +176,14 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
     },
+    resolve: {
+      alias: {
+        // [React 19 shim] react-is 對 AsyncMode 的存取在 React 19 移除，提供本地 shim 以避免 SSR/SSG 崩潰
+        'react-is': resolve(__dirname, './src/utils/react-is-shim.ts'),
+        '@app/ratewise': resolve(__dirname, './src'),
+        '@shared': resolve(__dirname, '../shared'),
+      },
+    },
     plugins: [
       react(),
       // [fix:2025-11-07] 圖片優化 plugin - 自動生成多尺寸和現代格式
@@ -490,12 +498,6 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
-    resolve: {
-      alias: {
-        '@app/ratewise': resolve(__dirname, './src'),
-        '@shared': resolve(__dirname, '../shared'),
-      },
-    },
     build: {
       // [Lighthouse-optimization:2025-10-27] Modern build target (saves 33 KiB)
       // 參考: https://philipwalton.com/articles/the-state-of-es5-on-the-web/
