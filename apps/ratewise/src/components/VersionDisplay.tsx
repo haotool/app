@@ -8,30 +8,38 @@ import { useState, useEffect } from 'react';
  * - Hover 顯示建置時間 tooltip
  * - 支援桌面 hover 和行動裝置 tap
  * - 開發模式下顯示實時時間，生產模式顯示構建時間
+ *
+ * [fix:2025-11-28] Hydration Mismatch 修復
+ * - SSG 時使用固定的 BUILD_TIME 避免 React Error #418
+ * - 客戶端 hydration 後才更新為實時時間（僅開發模式）
+ * - 參考: https://react.dev/errors/418
  */
+
+// [fix:2025-11-28] 使用固定的 build time 作為 SSG 初始值
+// 避免 SSG 和 hydration 產生不同的 HTML 導致 React Error #418
+const INITIAL_BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? '2025-01-01T00:00:00.000Z';
 
 export function VersionDisplay() {
   // 使用 import.meta.env 讀取 Vite 注入的環境變數
   const version = import.meta.env.VITE_APP_VERSION ?? '1.0.0';
   const isDev = import.meta.env.DEV;
 
-  // 開發模式：使用實時時間；生產模式：使用構建時間
-  const [buildTimeString, setBuildTimeString] = useState(
-    import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString(),
-  );
+  // [fix:2025-11-28] 使用固定的初始值避免 hydration mismatch
+  // 開發模式：hydration 後更新為實時時間
+  // 生產模式：始終使用構建時間
+  const [buildTimeString, setBuildTimeString] = useState(INITIAL_BUILD_TIME);
 
   useEffect(() => {
     // 開發模式下每秒更新一次時間，確保顯示最新狀態
     if (!isDev) {
-      return; // 生產模式不需要清理
+      return; // 生產模式不需要更新
     }
 
-    setBuildTimeString(new Date().toISOString());
+    // hydration 完成後才開始更新時間
+    const updateTime = () => setBuildTimeString(new Date().toISOString());
+    updateTime();
 
-    const interval = setInterval(() => {
-      setBuildTimeString(new Date().toISOString());
-    }, 1000);
-
+    const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, [isDev]);
 
