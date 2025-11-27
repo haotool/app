@@ -10,24 +10,38 @@
  * 4. 安全標頭配置
  *
  * 執行方式：
- * pnpm test cloudflare-cache.spec.ts
+ * RUN_PRODUCTION_TESTS=true pnpm test cloudflare-cache.spec.ts
  *
  * 注意：這些測試需要在生產環境執行，因為需要檢查 Cloudflare 的 Response Headers
+ * [fix:2025-11-27] 在 CI 環境跳過這些測試，因為 CI 使用本地 preview server
+ * 參考: https://playwright.dev/docs/test-annotations#conditionally-skip-a-test
  */
 
 import { test, expect } from '@playwright/test';
 
 const PRODUCTION_URL = 'https://app.haotool.org/ratewise';
 
+// [fix:2025-11-27] 只在生產環境測試時運行，CI 中跳過
+// 原因：CI 使用本地 preview server，沒有 Cloudflare headers
+const isProductionTest = process.env['RUN_PRODUCTION_TESTS'] === 'true';
+
 test.describe('Cloudflare Cache Strategy (BDD)', () => {
+  // [fix:2025-11-27] 跳過生產環境測試，除非明確啟用
+  // CI 使用本地 preview server，沒有 Cloudflare headers
+  test.skip(
+    !isProductionTest,
+    'Skipping production tests in CI (set RUN_PRODUCTION_TESTS=true to run)',
+  );
+
   test.describe('🔴 RED: 靜態資產快取策略', () => {
     test('should have correct Cache-Control for JS assets (1 day)', async ({ request }) => {
       // 獲取任意 JS 資產（從首頁 HTML 中提取）
       const indexResponse = await request.get(`${PRODUCTION_URL}/`);
       const indexHtml = await indexResponse.text();
 
-      // 提取 JS 資產 URL
-      const jsMatch = /\/assets\/app-[a-zA-Z0-9]+\.js/.exec(indexHtml);
+      // [fix:2025-11-27] 使用更通用的正則表達式匹配 JS 檔案
+      // Vite 可能產生 app-xxx.js 或 index-xxx.js 格式
+      const jsMatch = /\/assets\/(?:app|index)-[a-zA-Z0-9]+\.js/.exec(indexHtml);
       expect(jsMatch).not.toBeNull();
 
       const jsAssetUrl = `${PRODUCTION_URL}${jsMatch![0]}`;
@@ -46,7 +60,8 @@ test.describe('Cloudflare Cache Strategy (BDD)', () => {
       const indexResponse = await request.get(`${PRODUCTION_URL}/`);
       const indexHtml = await indexResponse.text();
 
-      const cssMatch = /\/assets\/app-[a-zA-Z0-9]+\.css/.exec(indexHtml);
+      // [fix:2025-11-27] 使用更通用的正則表達式匹配 CSS 檔案
+      const cssMatch = /\/assets\/(?:app|index)-[a-zA-Z0-9]+\.css/.exec(indexHtml);
       expect(cssMatch).not.toBeNull();
 
       const cssAssetUrl = `${PRODUCTION_URL}${cssMatch![0]}`;
@@ -61,7 +76,8 @@ test.describe('Cloudflare Cache Strategy (BDD)', () => {
       const indexResponse = await request.get(`${PRODUCTION_URL}/`);
       const indexHtml = await indexResponse.text();
 
-      const jsMatch = /\/assets\/app-[a-zA-Z0-9]+\.js/.exec(indexHtml);
+      // [fix:2025-11-27] 使用更通用的正則表達式匹配 JS 檔案
+      const jsMatch = /\/assets\/(?:app|index)-[a-zA-Z0-9]+\.js/.exec(indexHtml);
       expect(jsMatch).not.toBeNull();
 
       const jsAssetUrl = `${PRODUCTION_URL}${jsMatch![0]}`;
