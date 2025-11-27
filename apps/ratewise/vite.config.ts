@@ -660,6 +660,34 @@ export default defineConfig(({ mode }) => {
         // 為 FAQ 頁面添加 FAQPage JSON-LD (如果缺失)
         if (route === '/faq' && !renderedHTML.includes('"@type":"FAQPage"')) {
           console.warn('⚠️ FAQ page missing FAQPage JSON-LD, this should not happen!');
+          const faqJsonLd = `
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "url": "${siteUrl}faq/",
+        "inLanguage": "zh-TW",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "RateWise 可以離線使用嗎？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "RateWise 是 PWA，首次開啟會快取核心資產與最近匯率，即使離線也能用最近的匯率進行換算。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "匯率來源是什麼？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "資料 100% 參考臺灣銀行牌告匯率，每 5 分鐘同步一次。"
+            }
+          }
+        ]
+      }
+    </script>`;
+          renderedHTML = renderedHTML.replace('</head>', `${faqJsonLd}\n</head>`);
         }
 
         return renderedHTML;
