@@ -578,9 +578,30 @@ export default defineConfig(({ mode }) => {
       },
     },
     // [SEO Phase 2B-2: 2025-11-25] SSR Configuration for vite-react-ssg
-    // Force bundling of CommonJS modules for ESM compatibility
+    // [SSR-fix:2025-11-26] Force bundling of CommonJS modules for ESM compatibility
+    // 參考: [Context7:vitejs/vite:2025-11-26] SSR External Configuration
     ssr: {
-      noExternal: ['react-helmet-async'], // Bundle CommonJS modules
+      // Bundle these CommonJS modules to avoid named export issues in dev mode
+      noExternal: [
+        'react-helmet-async', // CommonJS module with named exports issue
+        'workbox-window', // CommonJS module used in UpdatePrompt
+      ],
+      resolve: {
+        // Use 'module' condition first to prefer ESM when available
+        // Fallback to 'node' for CommonJS compatibility
+        conditions: ['module', 'node', 'import'],
+        externalConditions: ['module', 'node'],
+      },
+    },
+    // [SSR-fix:2025-11-26] Pre-bundle CommonJS dependencies for dev mode
+    // 參考: [Context7:vitejs/vite:2025-11-26] Dependency Optimization
+    optimizeDeps: {
+      // Pre-bundle these modules to ESM format during dev server startup
+      include: ['react-helmet-async', 'workbox-window'],
+      esbuildOptions: {
+        // Prefer ESM over CommonJS when resolving packages
+        mainFields: ['module', 'main'],
+      },
     },
     // [SEO Phase 2B-2: 2025-11-25] Vite React SSG Configuration
     // 參考: [Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
@@ -592,11 +613,16 @@ export default defineConfig(({ mode }) => {
       concurrency: 10, // 最大並行渲染數
       // 指定預渲染路徑
       includedRoutes(paths) {
-        // 預渲染首頁、FAQ、About、Guide
+        // 預渲染首頁、FAQ、About、Guide；標準化尾斜線避免 /faq 與 /faq/ 不一致
         const includedPaths = ['/', '/faq', '/about', '/guide'];
+        const normalize = (value) => {
+          if (value === '/') return '/';
+          return value.replace(/\/+$/, '');
+        };
+        const normalizedIncluded = includedPaths.map(normalize);
         console.log('🔍 Available paths:', paths);
-        console.log('✅ Including paths:', includedPaths);
-        return paths.filter((path) => includedPaths.includes(path));
+        console.log('✅ Including paths:', normalizedIncluded);
+        return paths.filter((path) => normalizedIncluded.includes(normalize(path)));
       },
       // 預渲染前處理 HTML
       async onBeforePageRender(route, indexHTML) {

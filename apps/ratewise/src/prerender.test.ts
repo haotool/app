@@ -14,13 +14,30 @@
  * 依據：[SEO 審查報告 2025-11-25] React SPA 爬蟲索引問題
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const distPath = resolve(__dirname, '../dist');
+const projectRoot = resolve(__dirname, '..');
+
+beforeAll(() => {
+  const indexHtml = resolve(distPath, 'index.html');
+  if (existsSync(indexHtml)) return;
+
+  const result = spawnSync('pnpm', ['build'], {
+    cwd: projectRoot,
+    stdio: 'inherit',
+    shell: true,
+  });
+
+  if (result.status !== 0) {
+    throw new Error(`pnpm build failed with exit code ${result.status ?? 'unknown'}`);
+  }
+}, 120000);
 
 describe('Prerendering Static HTML Generation (BDD)', () => {
-  const distPath = resolve(__dirname, '../dist');
-
   describe('🔴 RED: 靜態 HTML 檔案結構', () => {
     it('should generate dist/index.html for homepage', () => {
       // 🔴 紅燈：首頁應該生成 dist/index.html

@@ -14,21 +14,38 @@
 
 import type { RouteRecord } from 'vite-react-ssg';
 import React from 'react';
-import { HelmetProvider } from 'react-helmet-async';
+// [SSR-fix:2025-11-26] Use ESM wrapper to bridge CommonJS/ESM compatibility
+// Direct imports from 'react-helmet-async' fail in Vite 7 dev mode SSR
+import { HelmetProvider } from './utils/react-helmet-async';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SkeletonLoader } from './components/SkeletonLoader';
-import { UpdatePrompt } from './components/UpdatePrompt';
+// [SSR-fix:2025-11-26] Dynamic import for UpdatePrompt to avoid workbox-window SSR errors
+// UpdatePrompt contains client-only PWA functionality (workbox-window)
 import CurrencyConverter from './features/ratewise/RateWise';
 
 // Layout Component with ErrorBoundary + HelmetProvider + UpdatePrompt
 function Layout({ children }: { children: React.ReactNode }) {
-  // 標記應用已完全載入，供 E2E 測試使用
+  // [SSR-fix:2025-11-26] Check if running in browser (client-side)
+  const isBrowser = typeof window !== 'undefined';
+  const [UpdatePrompt, setUpdatePrompt] = React.useState<React.ComponentType | null>(null);
+
+  // [SSR-fix:2025-11-26] Dynamically import UpdatePrompt only on client-side
+  // This prevents workbox-window from being loaded during SSR
+  React.useEffect(() => {
+    if (isBrowser) {
+      import('./components/UpdatePrompt')
+        .then((module) => setUpdatePrompt(() => module.UpdatePrompt))
+        .catch((err) => console.error('Failed to load UpdatePrompt:', err));
+    }
+  }, [isBrowser]);
+
+  // 標記應用已完全載入,供 E2E 測試使用
   // [E2E-fix:2025-10-25] 添加明確的載入完成信號
   React.useEffect(() => {
-    if (typeof document !== 'undefined') {
+    if (isBrowser) {
       document.body.dataset['appReady'] = 'true';
     }
-  }, []);
+  }, [isBrowser]);
 
   return (
     <React.StrictMode>
@@ -41,8 +58,8 @@ function Layout({ children }: { children: React.ReactNode }) {
             <React.Suspense fallback={<SkeletonLoader />}>{children}</React.Suspense>
           </main>
         </ErrorBoundary>
-        {/* PWA 更新通知 - 品牌對齊風格 */}
-        <UpdatePrompt />
+        {/* PWA 更新通知 - 只在客戶端動態載入（避免 SSR 時 workbox-window 錯誤） */}
+        {UpdatePrompt && <UpdatePrompt />}
       </HelmetProvider>
     </React.StrictMode>
   );
@@ -146,8 +163,13 @@ export const routes: RouteRecord[] = [
  * - ❌ 不預渲染：404、color-scheme（動態處理或內部工具）
  */
 export function getIncludedRoutes(paths: string[]): string[] {
-  // 只預渲染以下路徑
+  // 只預渲染以下路徑（標準化尾斜線避免 /faq 與 /faq/ 不一致）
   const includedPaths = ['/', '/faq', '/about'];
+  const normalize = (value: string) => {
+    if (value === '/') return '/';
+    return value.replace(/\/+$/, '');
+  };
 
-  return paths.filter((path) => includedPaths.includes(path));
+  const normalizedIncluded = includedPaths.map(normalize);
+  return paths.filter((path) => normalizedIncluded.includes(normalize(path)));
 }

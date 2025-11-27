@@ -4,7 +4,9 @@
  *
  * Centralized SEO metadata management with JSON-LD structured data
  */
-import { Helmet } from 'react-helmet-async';
+// [SSR-fix:2025-11-26] Use ESM wrapper to bridge CommonJS/ESM compatibility
+// Direct imports from 'react-helmet-async' fail in Vite 7 dev mode SSR
+import { Helmet } from '../utils/react-helmet-async';
 
 interface AlternateLink {
   hrefLang: string;

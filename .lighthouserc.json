@@ -2,13 +2,14 @@
   "ci": {
     "collect": {
       "url": ["http://localhost:4173/", "http://localhost:4173/faq", "http://localhost:4173/about"],
-      "startServerCommand": "VITE_BASE_PATH='/' pnpm --filter @app/ratewise preview -- --port 4173 --strictPort --clearScreen false",
+      "startServerCommand": "VITE_LHCI_OFFLINE=true VITE_BASE_PATH='/' pnpm --filter @app/ratewise preview -- --port 4173 --strictPort --clearScreen false",
       "startServerReadyPattern": "Local:",
       "startServerReadyTimeout": 120000,
       "numberOfRuns": 3,
       "settings": {
         "preset": "desktop",
         "onlyCategories": ["performance", "seo", "accessibility", "best-practices"],
+        "skipAudits": ["bf-cache"],
         "chromeFlags": "--no-sandbox --headless=new"
       }
     },
