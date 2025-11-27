@@ -93,6 +93,16 @@ workboxFiles.forEach(copyFile);
  * - 覆寫 title/description/canonical/OG 欄位
  */
 const ensureStaticPage = (routePath, meta) => {
+  const normalizedRoute = routePath.replace(/\/+$/, '');
+  const outputDir = join(distDir, normalizedRoute.replace(/^\//, ''), '/');
+  const outputPath = join(outputDir, 'index.html');
+
+  // 如果 SSG 已經產出對應檔案，尊重現有內容（避免覆寫造成 Hydration mismatch）
+  if (existsSync(outputPath)) {
+    console.log(`ℹ️ 已存在 SSG 預渲染檔案，跳過 fallback 生成：${routePath}`);
+    return;
+  }
+
   const templatePath = join(distDir, 'index.html');
   if (!existsSync(templatePath)) {
     console.warn('⚠️ 無法生成靜態頁面：缺少 dist/index.html');
@@ -100,8 +110,6 @@ const ensureStaticPage = (routePath, meta) => {
   }
 
   const html = fs.readFileSync(templatePath, 'utf-8');
-  const normalizedRoute = routePath.replace(/\/+$/, '');
-  const outputDir = join(distDir, normalizedRoute.replace(/^\//, ''), '/');
   mkdirSync(outputDir, { recursive: true });
 
   const replaceTag = (source, regex, replacement, label) => {
