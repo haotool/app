@@ -14,13 +14,30 @@
  * 依據：[SEO 審查報告 2025-11-25] React SPA 爬蟲索引問題
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const distPath = resolve(__dirname, '../dist');
+const projectRoot = resolve(__dirname, '..');
+
+beforeAll(() => {
+  const indexHtml = resolve(distPath, 'index.html');
+  if (existsSync(indexHtml)) return;
+
+  const result = spawnSync('pnpm', ['build'], {
+    cwd: projectRoot,
+    stdio: 'inherit',
+    shell: true,
+  });
+
+  if (result.status !== 0) {
+    throw new Error(`pnpm build failed with exit code ${result.status ?? 'unknown'}`);
+  }
+}, 120000);
 
 describe('Prerendering Static HTML Generation (BDD)', () => {
-  const distPath = resolve(__dirname, '../dist');
-
   describe('🔴 RED: 靜態 HTML 檔案結構', () => {
     it('should generate dist/index.html for homepage', () => {
       // 🔴 紅燈：首頁應該生成 dist/index.html
@@ -137,6 +154,38 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
       expect(content).toContain('<meta property="og:title"');
       expect(content).toContain('<meta property="og:description"');
       expect(content).toContain('<meta property="og:url"');
+    });
+  });
+
+  describe('🔴 RED: CSP & Security', () => {
+    const indexHtml = resolve(distPath, 'index.html');
+
+    it('should have Rocket Loader disabled meta tag', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      expect(content).toContain('<meta name="cloudflare-rocket-loader" content="off"');
+    });
+
+    it('should not have unsafe-inline in script-src CSP', () => {
+      // 注意：這個測試檢查的是 HTML 中的 CSP meta tag（如果有）
+      // 實際的 CSP 由 nginx.conf 或 Cloudflare Worker 設定
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+
+      // 如果 HTML 中有 CSP meta tag，確保 script-src 不包含 unsafe-inline
+      const cspMetaMatch =
+        /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/i.exec(content);
+
+      if (cspMetaMatch?.[1]) {
+        const cspContent = cspMetaMatch[1];
+        const scriptSrcMatch = /script-src[^;]+/.exec(cspContent);
+
+        if (scriptSrcMatch) {
+          expect(scriptSrcMatch[0]).not.toContain('unsafe-inline');
+        }
+      }
     });
   });
 

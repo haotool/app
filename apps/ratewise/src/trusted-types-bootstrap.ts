@@ -27,10 +27,41 @@ interface RatewiseTrustedTypesFactory {
   getPolicy?: (name: string) => RatewiseTrustedTypePolicy | null;
 }
 
+/**
+ * Trusted Types Policy Configuration
+ *
+ * [fix:2025-11-26] 增強 policy 以支援 Cloudflare Insights
+ * 允許來自信任來源的 scripts，阻止其他來源
+ */
 const POLICY_CONFIG: RatewiseTrustedTypePolicyOptions = {
   createHTML: passThrough,
-  createScript: passThrough,
-  createScriptURL: passThrough,
+  createScript: (input: string, sink?: string) => {
+    // 允許 Cloudflare Insights 和 SSG 生成的 inline scripts
+    if (
+      sink === 'script' &&
+      (input.includes('cloudflareinsights.com') ||
+        input.includes('__staticRouterHydrationData') ||
+        input.includes('$RC') || // React SSG hydration
+        input.includes('$RV') || // React SSG hydration
+        input.includes('__VITE_REACT_SSG_HASH__'))
+    ) {
+      return input;
+    }
+    return passThrough(input);
+  },
+  createScriptURL: (input: string) => {
+    // 允許 self 和 Cloudflare Insights
+    if (
+      input.startsWith('/') ||
+      input.startsWith('./') ||
+      input.includes('cloudflareinsights.com') ||
+      input.includes('static.cloudflareinsights.com')
+    ) {
+      return input;
+    }
+    logger.warn('Blocked untrusted script URL', { url: input });
+    return '';
+  },
 };
 
 declare global {

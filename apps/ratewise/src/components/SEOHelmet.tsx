@@ -4,16 +4,23 @@
  *
  * Centralized SEO metadata management with JSON-LD structured data
  */
-import { Helmet } from 'react-helmet-async';
+// [SSR-fix:2025-11-26] Use ESM wrapper to bridge CommonJS/ESM compatibility
+// Direct imports from 'react-helmet-async' fail in Vite 7 dev mode SSR
+import { Helmet } from '../utils/react-helmet-async';
 
 interface AlternateLink {
   hrefLang: string;
   href: string;
 }
 
+/**
+ * FAQ Entry for JSON-LD schema
+ * [fix:2025-11-28] answer 必須是純文字，不能包含 JSX
+ * JSX 無法正確序列化為 JSON，會導致 SSG 輸出警告
+ */
 interface FAQEntry {
   question: string;
-  answer: string | React.ReactNode;
+  answer: string;
 }
 
 interface HowToStep {
@@ -73,6 +80,10 @@ const DEFAULT_KEYWORDS = [
   'RateWise',
 ];
 const SOCIAL_LINKS = ['https://www.threads.net/@azlife_1224', 'https://github.com/haotool/app'];
+
+// [fix:2025-11-27] 使用 build time 避免 SSG/hydration mismatch
+// 不使用 new Date().toISOString() 因為 SSG 和客戶端會產生不同時間戳導致 React Error #418
+const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? '2025-01-01T00:00:00.000Z';
 
 const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`);
@@ -214,7 +225,9 @@ export function SEOHelmet({
     hrefLang,
     href: buildCanonical(href),
   }));
-  const updatedTimestamp = updatedTime ?? new Date().toISOString();
+  // [fix:2025-11-27] 使用 build time 避免 hydration mismatch (React Error #418)
+  // 參考: https://react.dev/link/hydration-mismatch
+  const updatedTimestamp = updatedTime ?? BUILD_TIME;
   const ogLocale = locale.replace('-', '_');
 
   // Merge default JSON-LD with custom blocks

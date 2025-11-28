@@ -12,12 +12,12 @@
 Cloudflare 在邊緣處理以下安全標頭，提供全域保護：
 
 ```http
-Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.frankfurter.app
+Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://raw.githubusercontent.com https://cdn.jsdelivr.net https://cloudflareinsights.com https://*.ingest.sentry.io; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests;
 Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 X-Frame-Options: SAMEORIGIN
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin
-Permissions-Policy: geolocation=(), microphone=(), camera=()
+Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=()
 ```
 
 **配置方式**：
@@ -82,24 +82,87 @@ export default {
 
 ```
 default-src 'self';
-script-src 'self' 'unsafe-inline';
-style-src 'self' 'unsafe-inline' fonts.googleapis.com;
-font-src 'self' fonts.gstatic.com;
+script-src 'self' https://static.cloudflareinsights.com;
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+font-src 'self' https://fonts.gstatic.com;
 img-src 'self' data: https:;
-connect-src 'self' https://api.frankfurter.app;
+connect-src 'self' https://raw.githubusercontent.com https://cdn.jsdelivr.net https://cloudflareinsights.com https://*.ingest.sentry.io;
+frame-ancestors 'self';
+base-uri 'self';
+form-action 'self';
+object-src 'none';
+upgrade-insecure-requests;
 ```
 
-### 為何允許 'unsafe-inline'
+### 為何允許 'unsafe-inline'（僅限 style-src）
 
 1. **Vite 內聯樣式**：Vite 在開發模式使用內聯樣式，strict CSP 會破壞 HMR
 2. **漸進增強**：現階段優先功能穩定，後續可採用 nonce-based CSP
 3. **實際威脅評估**：匯率工具無 UGC，XSS 風險相對較低
+4. **script-src 已移除 unsafe-inline**：腳本層面已達到嚴格 CSP 標準
+
+### CSP 指令說明
+
+| 指令                        | 值                                                    | 說明                                   |
+| --------------------------- | ----------------------------------------------------- | -------------------------------------- |
+| `default-src`               | `'self'`                                              | 預設只允許同源資源                     |
+| `script-src`                | `'self' https://static.cloudflareinsights.com`        | ✅ 已移除 unsafe-inline                |
+| `style-src`                 | `'self' 'unsafe-inline' https://fonts.googleapis.com` | ⚠️ 保留 unsafe-inline（Vite 需要）     |
+| `font-src`                  | `'self' https://fonts.gstatic.com`                    | 允許 Google Fonts 字體                 |
+| `img-src`                   | `'self' data: https:`                                 | 允許所有 HTTPS 圖片                    |
+| `connect-src`               | `'self' https://...`                                  | 允許 API 連接                          |
+| `frame-ancestors`           | `'self'`                                              | 防止 Clickjacking                      |
+| `base-uri`                  | `'self'`                                              | 限制 `<base>` 標籤                     |
+| `form-action`               | `'self'`                                              | 限制表單提交目標                       |
+| `object-src`                | `'none'`                                              | 禁止 `<object>`, `<embed>`, `<applet>` |
+| `upgrade-insecure-requests` | -                                                     | 自動升級 HTTP 到 HTTPS                 |
 
 ### 未來改進（Phase 2）
 
-- 使用 `nonce-{random}` 替代 `unsafe-inline`
-- Vite plugin 自動注入 nonce 到 script/style tags
+- 使用 `nonce-{random}` 替代 `style-src 'unsafe-inline'`
+- Vite plugin 自動注入 nonce 到 style tags
 - 參考：https://vite-pwa-org.netlify.app/guide/inject-manifest.html#content-security-policy
+
+---
+
+## Cloudflare Rocket Loader
+
+**狀態**: ❌ 已停用（2025-11-26）
+
+**原因**: 與嚴格的 CSP 和 Trusted Types 衝突
+
+Rocket Loader 會攔截並修改 inline scripts，需要 `script-src 'unsafe-inline'` 才能運作。
+為了維持嚴格的 CSP 策略，我們選擇停用 Rocket Loader。
+
+**停用方式**:
+
+1. **HTML Meta Tag** - 在 `index.html` 的 `<head>` 中添加：
+
+   ```html
+   <meta name="cloudflare-rocket-loader" content="off" />
+   ```
+
+2. **Script Attribute** - 在 script tags 添加 `data-cfasync="false"`（開發時）：
+
+   ```html
+   <script type="module" data-cfasync="false" src="./src/main.tsx"></script>
+   ```
+
+3. **Cloudflare Dashboard** - 手動停用（推薦）：
+   - 登入 Cloudflare Dashboard
+   - 選擇網域 > Speed > Optimization
+   - Rocket Loader = Off
+
+**效能影響**:
+
+- ✅ 無顯著影響：Vite 已優化 bundle splitting 和 lazy loading
+- ✅ 避免 CSP 違規：減少瀏覽器 console 錯誤
+- ✅ 提升安全性：維持嚴格的 `script-src 'self'` 策略
+
+**參考資料**:
+
+- [Cloudflare: Disable Rocket Loader](https://developers.cloudflare.com/speed/optimization/content/rocket-loader/)
+- [CSP: script-src Directive](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
 
 ---
 
@@ -159,4 +222,12 @@ Lighthouse 會自動檢測以下項目：
 ---
 
 **維護者**: DevOps Team  
-**下次審查**: 2025-11-18
+**最後更新**: 2025-11-26  
+**下次審查**: 2026-02-26
+
+---
+
+## 相關文檔
+
+- [Cloudflare 配置最佳實踐指南](./CLOUDFLARE_CONFIGURATION_GUIDE.md) - 完整的 Cloudflare 配置步驟與最佳實踐
+- [安全基線](./SECURITY_BASELINE.md) - 整體安全策略與責任分界

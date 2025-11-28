@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Workbox } from 'workbox-window';
+// [SSR-fix:2025-11-26] Use ESM wrapper to bridge CommonJS/ESM compatibility
+// This component is dynamically imported in routes.tsx to avoid SSR
+import { Workbox } from '../utils/workbox-window';
 import { startVersionCheckInterval } from '../utils/versionChecker';
 import { AutoUpdateToast } from './AutoUpdateToast';
 import { logger } from '../utils/logger';
@@ -25,7 +27,8 @@ import { logger } from '../utils/logger';
  */
 export function UpdatePrompt() {
   const [needRefresh, setNeedRefresh] = useState(false);
-  const [wb, setWb] = useState<Workbox | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+  const [wb, setWb] = useState<any>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
@@ -74,8 +77,11 @@ export function UpdatePrompt() {
     });
 
     // [fix:2025-11-06] autoUpdate 模式：檢測到更新立即顯示通知
-    workbox.addEventListener('installed', (event) => {
-      if (event.isUpdate) {
+    // [fix:2025-11-27] 開發環境禁用更新通知
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    workbox.addEventListener('installed', (event: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (event.isUpdate && !import.meta.env.DEV) {
         logger.info('New version detected, showing update toast');
         setNeedRefresh(true);
       }
@@ -124,8 +130,9 @@ export function UpdatePrompt() {
 
   // [fix:2025-11-05] 版本檢查機制：每 5 分鐘檢查一次 HTML meta 標籤的版本號
   // 參考: PWA_UPDATE_FINAL_REPORT.md - 問題 3 的修復
+  // [fix:2025-11-27] 開發環境禁用版本檢查，避免干擾開發體驗
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || import.meta.env.DEV) {
       return;
     }
 
@@ -158,6 +165,7 @@ export function UpdatePrompt() {
       }
 
       // 2. skipWaiting（自動更新模式下 Service Worker 會自動處理）
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       wb.messageSkipWaiting();
 
       // 3. 重新載入頁面

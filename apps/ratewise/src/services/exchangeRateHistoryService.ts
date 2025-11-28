@@ -54,6 +54,44 @@ const CDN_URLS = {
   ],
 };
 
+const IS_LHCI_OFFLINE = import.meta.env['VITE_LHCI_OFFLINE'] === 'true';
+
+/**
+ * 為 Lighthouse / CI 提供離線固定匯率，避免 404 造成 console error
+ */
+const LHCI_BASE_RATES: ExchangeRateData = {
+  updateTime: '2025-01-01T00:00:00Z',
+  source: 'LHCI-MOCK',
+  rates: {
+    TWD: 1,
+    USD: 31.07,
+    HKD: 4.01,
+    GBP: 41.96,
+    AUD: 20.47,
+    CAD: 22.43,
+    SGD: 24.05,
+    CHF: 39.13,
+    JPY: 0.2055,
+    EUR: 36.31,
+    KRW: 0.0236,
+    CNY: 4.39,
+    NZD: 19.5,
+    THB: 0.87,
+    PHP: 0.55,
+    IDR: 0.0021,
+    VND: 0.0013,
+    MYR: 6.6,
+  },
+};
+
+function buildLhciMockRates(date: Date): ExchangeRateData {
+  const dateStr = formatDate(date);
+  return {
+    ...LHCI_BASE_RATES,
+    updateTime: `${dateStr}T00:00:00Z`,
+  };
+}
+
 /**
  * 快取配置
  */
@@ -177,6 +215,11 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
  * 獲取最新匯率
  */
 export async function fetchLatestRates(): Promise<ExchangeRateData> {
+  if (IS_LHCI_OFFLINE) {
+    // CI / Lighthouse 模式使用固定匯率，避免外部 404 造成 console error
+    return buildLhciMockRates(new Date());
+  }
+
   try {
     const data = await fetchWithFallback<ExchangeRateData>(
       CDN_URLS.latest,
@@ -201,6 +244,10 @@ export async function fetchLatestRates(): Promise<ExchangeRateData> {
  * 獲取指定日期的歷史匯率
  */
 export async function fetchHistoricalRates(date: Date): Promise<ExchangeRateData> {
+  if (IS_LHCI_OFFLINE) {
+    return buildLhciMockRates(date);
+  }
+
   const dateStr = formatDate(date);
 
   try {

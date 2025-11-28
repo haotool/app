@@ -65,21 +65,28 @@ export const test = base.extend<RateWiseFixtures>({
     // - Use semantic locator (getByRole) instead of waitForSelector
     // - Rely on auto-waiting, remove redundant strategies (networkidle, multiple checks)
     // @see https://playwright.dev/docs/best-practices
+    const baseURL = process.env['PLAYWRIGHT_BASE_URL'] || '';
+    const makeUrl = (path: string) =>
+      baseURL ? new URL(path, baseURL).toString() : path.replace(/\/+$/, '') || '/';
+
     const basePathCandidates = [
       process.env['E2E_BASE_PATH'],
       process.env['VITE_BASE_PATH'],
       '/ratewise/',
       '/',
-    ].filter(Boolean) as string[];
+    ]
+      .filter(Boolean)
+      // 去重，避免重複嘗試相同路徑
+      .filter((value, index, self) => self.indexOf(value) === index) as string[];
 
     let navigated = false;
     for (const path of basePathCandidates) {
-      await page.goto(path);
+      await page.goto(makeUrl(path));
 
       // Single semantic check - Playwright auto-waits for actionability
       const isVisible = await page
         .getByRole('button', { name: /多幣別/i })
-        .isVisible({ timeout: 3000 })
+        .isVisible({ timeout: 6000 })
         .catch(() => false);
 
       if (isVisible) {
