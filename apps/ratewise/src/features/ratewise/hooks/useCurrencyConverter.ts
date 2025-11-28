@@ -213,11 +213,11 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     setFromAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
   }, [toAmount, fromCurrency, toCurrency, getRate]);
 
-  // 暫時停用假趨勢生成，等待歷史匯率數據整合
-  // TODO: 整合 exchangeRateHistoryService 提供真實趨勢數據
+  // [2025-11-28] 趨勢圖數據已在 SingleConverter 組件中直接整合
+  // 使用 exchangeRateHistoryService.fetchHistoricalRatesRange() 獲取真實數據
+  // 此處保留空函數以維持 API 相容性
   const generateTrends = useCallback(() => {
-    // 不再生成假數據，保持 null 狀態
-    // 當歷史數據可用時，這裡應該從 exchangeRates 計算真實趨勢
+    // No-op: 趨勢數據由 SingleConverter 直接管理
   }, []);
 
   // Effects for calculations

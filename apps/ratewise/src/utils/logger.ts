@@ -74,8 +74,14 @@ class Logger {
     // For now, we'll just silently fail in production
     // This prevents console pollution in prod while keeping dev experience good
     if (!this.isDevelopment) {
-      // TODO: Integrate with logging service
-      // Example: Sentry.captureMessage(_entry.message, { level: _entry.level, extra: _entry.context });
+      // [M1 階段] 計畫整合 Sentry 日誌服務
+      // 參考: docs/dev/AGENTS.md § 8 "📋 規劃中 (M1 - 觀測性建立，1週)"
+      // 實作時需要:
+      // 1. 安裝 @sentry/react
+      // 2. 配置 VITE_SENTRY_DSN 環境變數
+      // 3. 在 main.tsx 初始化 Sentry.init()
+      // 4. 取消下方註解:
+      // Sentry.captureMessage(_entry.message, { level: _entry.level, extra: _entry.context });
     }
   }
 
