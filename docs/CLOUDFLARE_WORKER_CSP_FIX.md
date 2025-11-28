@@ -132,7 +132,18 @@ export default {
 1. 點擊 **Save and deploy**
 2. 等待部署完成（通常 1-2 分鐘）
 
-#### 步驟 5：驗證修復
+#### 步驟 5：清除 CDN 快取（重要！）
+
+部署 Worker 後，**必須清除 Cloudflare CDN 快取**以確保新的 CSP 標頭立即生效：
+
+1. 在 Cloudflare Dashboard 中選擇您的網域
+2. 前往 **Caching** > **Configuration**
+3. 點擊 **Purge Everything**（或使用 Custom Purge 只清除 `/ratewise/*`）
+4. 等待 1-2 分鐘讓快取失效傳播到所有邊緣節點
+
+> ⚠️ **注意**：如果不清除快取，舊的 HTML 頁面可能仍被 CDN 提供服務，導致瀏覽器看到舊的 CSP 標頭。
+
+#### 步驟 6：驗證修復
 
 在終端機執行：
 
@@ -146,7 +157,7 @@ curl -sI https://app.haotool.org/ratewise/ | grep -i "content-security-policy"
 content-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'strict-dynamic' https://static.cloudflareinsights.com; ...
 ```
 
-在瀏覽器開啟 https://app.haotool.org/ratewise/，Console 應該不再顯示 CSP 錯誤。
+在瀏覽器開啟 https://app.haotool.org/ratewise/（建議使用無痕/隱私模式），Console 應該不再顯示 CSP 錯誤。
 
 ---
 
