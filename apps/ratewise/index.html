@@ -34,6 +34,11 @@
 
     <meta name="theme-color" content="#8B5CF6" />
 
+    <!-- [fix:2025-11-26] 停用 Cloudflare Rocket Loader -->
+    <!-- 原因：與嚴格的 CSP 和 Trusted Types 衝突 -->
+    <!-- 參考：https://developers.cloudflare.com/speed/optimization/content/rocket-loader/ -->
+    <meta name="cloudflare-rocket-loader" content="off" />
+
     <!-- [fix:2025-11-05] 版本資訊 meta 標籤（用於 runtime 版本檢查） -->
     <meta name="app-version" content="__APP_VERSION__" />
     <meta name="build-time" content="__BUILD_TIME__" />
@@ -100,6 +105,11 @@
     <!-- Preconnect to external domains for faster resource loading -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
+
+    <!-- [Optimization 2025-11-26] Preconnect to critical origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin />
 
     <!-- [fix:2025-11-14] 移除 Logo preload - Logo 不是 LCP 元素 -->
     <!-- 根據 Lighthouse 分析，LCP 元素是匯率顯示文字區域，不是 Logo 圖片 -->

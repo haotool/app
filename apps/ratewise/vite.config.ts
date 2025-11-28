@@ -176,6 +176,14 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
     },
+    resolve: {
+      alias: {
+        // [React 19 shim] react-is 對 AsyncMode 的存取在 React 19 移除，提供本地 shim 以避免 SSR/SSG 崩潰
+        'react-is': resolve(__dirname, './src/utils/react-is-shim.ts'),
+        '@app/ratewise': resolve(__dirname, './src'),
+        '@shared': resolve(__dirname, '../shared'),
+      },
+    },
     plugins: [
       react(),
       // [fix:2025-11-07] 圖片優化 plugin - 自動生成多尺寸和現代格式
@@ -490,12 +498,6 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
-    resolve: {
-      alias: {
-        '@app/ratewise': resolve(__dirname, './src'),
-        '@shared': resolve(__dirname, '../shared'),
-      },
-    },
     build: {
       // [Lighthouse-optimization:2025-10-27] Modern build target (saves 33 KiB)
       // 參考: https://philipwalton.com/articles/the-state-of-es5-on-the-web/
@@ -578,9 +580,30 @@ export default defineConfig(({ mode }) => {
       },
     },
     // [SEO Phase 2B-2: 2025-11-25] SSR Configuration for vite-react-ssg
-    // Force bundling of CommonJS modules for ESM compatibility
+    // [SSR-fix:2025-11-26] Force bundling of CommonJS modules for ESM compatibility
+    // 參考: [Context7:vitejs/vite:2025-11-26] SSR External Configuration
     ssr: {
-      noExternal: ['react-helmet-async'], // Bundle CommonJS modules
+      // Bundle these CommonJS modules to avoid named export issues in dev mode
+      noExternal: [
+        'react-helmet-async', // CommonJS module with named exports issue
+        'workbox-window', // CommonJS module used in UpdatePrompt
+      ],
+      resolve: {
+        // Use 'module' condition first to prefer ESM when available
+        // Fallback to 'node' for CommonJS compatibility
+        conditions: ['module', 'node', 'import'],
+        externalConditions: ['module', 'node'],
+      },
+    },
+    // [SSR-fix:2025-11-26] Pre-bundle CommonJS dependencies for dev mode
+    // 參考: [Context7:vitejs/vite:2025-11-26] Dependency Optimization
+    optimizeDeps: {
+      // Pre-bundle these modules to ESM format during dev server startup
+      include: ['react-helmet-async', 'workbox-window'],
+      esbuildOptions: {
+        // Prefer ESM over CommonJS when resolving packages
+        mainFields: ['module', 'main'],
+      },
     },
     // [SEO Phase 2B-2: 2025-11-25] Vite React SSG Configuration
     // 參考: [Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
@@ -592,11 +615,16 @@ export default defineConfig(({ mode }) => {
       concurrency: 10, // 最大並行渲染數
       // 指定預渲染路徑
       includedRoutes(paths) {
-        // 預渲染首頁、FAQ、About、Guide
+        // 預渲染首頁、FAQ、About、Guide；標準化尾斜線避免 /faq 與 /faq/ 不一致
         const includedPaths = ['/', '/faq', '/about', '/guide'];
+        const normalize = (value) => {
+          if (value === '/') return '/';
+          return value.replace(/\/+$/, '');
+        };
+        const normalizedIncluded = includedPaths.map(normalize);
         console.log('🔍 Available paths:', paths);
-        console.log('✅ Including paths:', includedPaths);
-        return paths.filter((path) => includedPaths.includes(path));
+        console.log('✅ Including paths:', normalizedIncluded);
+        return paths.filter((path) => normalizedIncluded.includes(normalize(path)));
       },
       // 預渲染前處理 HTML
       async onBeforePageRender(route, indexHTML) {
@@ -632,8 +660,38 @@ export default defineConfig(({ mode }) => {
         }
 
         // 為 FAQ 頁面添加 FAQPage JSON-LD (如果缺失)
-        if (route === '/faq' && !renderedHTML.includes('"@type":"FAQPage"')) {
+        // [fix:2025-11-28] 使用正則匹配因為 JSON.stringify 可能添加空格
+        const hasFaqJsonLd = /@type["']?\s*:\s*["']?FAQPage/i.test(renderedHTML);
+        if (route === '/faq' && !hasFaqJsonLd) {
           console.warn('⚠️ FAQ page missing FAQPage JSON-LD, this should not happen!');
+          const faqJsonLd = `
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "url": "${siteUrl}faq/",
+        "inLanguage": "zh-TW",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "RateWise 可以離線使用嗎？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "RateWise 是 PWA，首次開啟會快取核心資產與最近匯率，即使離線也能用最近的匯率進行換算。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "匯率來源是什麼？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "資料 100% 參考臺灣銀行牌告匯率，每 5 分鐘同步一次。"
+            }
+          }
+        ]
+      }
+    </script>`;
+          renderedHTML = renderedHTML.replace('</head>', `${faqJsonLd}\n</head>`);
         }
 
         return renderedHTML;

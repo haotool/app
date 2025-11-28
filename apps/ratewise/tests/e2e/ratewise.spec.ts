@@ -165,20 +165,28 @@ test.describe('RateWise 核心功能測試', () => {
 });
 
 test.describe('視覺穩定性測試', () => {
+  // [fix:2025-11-27] 修復測試超時問題
+  // 參考 Playwright 最佳實踐: https://playwright.dev/docs/best-practices
   test('頁面載入過程中不應該有明顯的佈局偏移', async ({ rateWisePage: page }) => {
-    // Fixture already navigates, just verify layout stability
+    // Fixture already navigates and confirms app is loaded (multi-currency button visible)
+    // Now verify layout stability
 
-    // [E2E-fix:2025-10-25] 使用更具體的選擇器，避免與 sr-only h1 衝突
-    // 選擇視覺標題 h2（「匯率好工具」）
-    await page.waitForSelector('h2:has-text("匯率好工具")');
-    const initialBox = await page.locator('h2:has-text("匯率好工具")').boundingBox();
+    // [fix:2025-11-27] 使用正確的選擇器：頁面上是 h1 元素，不是 h2
+    // 選擇視覺標題 h1（「RateWise 匯率好工具」）
+    const titleLocator = page.getByRole('heading', { name: /RateWise 匯率好工具/i, level: 1 });
 
-    // 等待匯率載入完成
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    // [fix:2025-11-27] 使用 web-first assertion 取代 waitForSelector
+    await expect(titleLocator).toBeVisible({ timeout: 10000 });
+    const initialBox = await titleLocator.boundingBox();
+
+    // [fix:2025-11-27] 等待幣別選擇器出現，表示主要內容已載入
+    await expect(page.getByRole('combobox').first()).toBeVisible({ timeout: 10000 });
+
+    // 給予短暫穩定時間
+    await page.waitForTimeout(500);
 
     // 檢查標題位置沒有大幅移動
-    const finalBox = await page.locator('h2:has-text("匯率好工具")').boundingBox();
+    const finalBox = await titleLocator.boundingBox();
 
     if (initialBox && finalBox) {
       const yShift = Math.abs(finalBox.y - initialBox.y);

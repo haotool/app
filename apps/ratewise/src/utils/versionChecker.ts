@@ -103,6 +103,13 @@ export function isNewerVersion(current: string, latest: string): boolean {
  * @returns Promise<boolean> 如果有新版本返回 true
  */
 export async function checkForNewVersion(): Promise<boolean> {
+  // [fix:2025-11-27] 開發環境禁用版本檢查
+  // 避免 __APP_VERSION__ 佔位符導致持續觸發更新提示
+  if (import.meta.env.DEV) {
+    logger.debug('Version check disabled in development mode');
+    return false;
+  }
+
   const currentVersion = getCurrentVersionInfo();
   const latestVersion = await fetchLatestVersion();
 

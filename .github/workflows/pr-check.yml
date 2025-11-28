@@ -47,6 +47,9 @@ jobs:
       - name: TypeScript check
         run: pnpm typecheck
 
+      - name: Build ratewise (prerender assets for tests)
+        run: pnpm build:ratewise
+
       - name: Run tests
         run: pnpm test:coverage
 
@@ -60,9 +63,6 @@ jobs:
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Build
-        run: pnpm build:ratewise
 
       - name: Check bundle size
         run: |
