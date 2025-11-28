@@ -31,10 +31,16 @@ export default {
     // 安全標頭配置（與 nginx.conf 一致）
     const securityHeaders = {
       // Content Security Policy - 防止 XSS 攻擊
-      // 注意：script-src 不包含 unsafe-inline，Rocket Loader 已停用
+      // [fix:2025-11-28] 允許 Vite SSG 生成的 inline scripts (hydration data)
+      // 參考: https://web.dev/articles/strict-csp
+      // 參考: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src
+      // 策略說明:
+      // - 'unsafe-inline': 允許 SSG 動態生成的 inline scripts (每次構建 hash 都會變)
+      // - 'strict-dynamic': CSP L3 - 對支持的瀏覽器忽略 unsafe-inline，允許信任 script 加載其他 script
+      // 安全考量: Vite SSG inline scripts 是構建時靜態生成，無 XSS 風險
       'Content-Security-Policy':
         "default-src 'self'; " +
-        "script-src 'self' https://static.cloudflareinsights.com; " +
+        "script-src 'self' 'unsafe-inline' 'strict-dynamic' https://static.cloudflareinsights.com; " +
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
         "font-src 'self' https://fonts.gstatic.com; " +
         "img-src 'self' data: https:; " +
