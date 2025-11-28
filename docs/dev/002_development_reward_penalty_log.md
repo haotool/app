@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-28T21:22:52+0800
-> **當前總分**: 130 (初始分: 100)
+> **最後更新**: 2025-11-28T21:34:00+0800
+> **當前總分**: 131 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                                                                   | 依據                                                                                                | 分數 | 時間       |
 | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | Lighthouse CI Workflow 權限修復                  | 1) 發現 `lighthouse-ci.yml` 缺少 `permissions` 導致 403 錯誤 2) 新增 `permissions: { contents: read, pull-requests: write }` 3) CI 測試本身已通過，僅 PR 評論失敗                                                                                          | [GitHub Docs: Automatic Token Auth][context7:github/actions:2025-11-28]                             | +1   | 2025-11-28 |
 | ✅ 成功 | Lighthouse CI 根本修復 + FAQ JSON-LD 完整性      | 1) 發現 `.lighthouserc.json` 與 `lighthouserc.json` 兩個配置衝突（best-practices 期望 1.0 實得 0.96）2) 調整閾值為 0.95 warn 3) 分離 FAQ UI/JSON-LD 資料解決 JSX 序列化問題 4) 修正 vite.config.ts 中 FAQPage 正則匹配 5) 501/501 測試通過                 | [context7:googlechrome/lighthouse-ci:2025-11-28][schema.org/FAQPage]                                | +3   | 2025-11-28 |
 | ✅ 成功 | FAQ/About Hydration #418 與 E2E BasePath 修復    | 1) postbuild fallback 若已有 SSG 產出則跳過，避免覆寫造成 Hydration mismatch (#418) 2) E2E fixture 新增 PLAYWRIGHT_BASE_URL 解析與 6s 等待，杜絕 base path 誤判 3) 重新推送觸發 CI                                                                         | [react.dev/errors/418](https://react.dev/errors/418)                                                | +1   | 2025-11-28 |
 | ✅ 成功 | React 19 react-is AsyncMode 崩潰修復             | 1) 合併 Vite resolve 避免 alias 被覆蓋 2) 新增 react-is shim 移除 AsyncMode 寫入，確保 SSR/SSG 不再崩潰 3) `pnpm --filter @app/ratewise test:coverage` 綠燈恢復                                                                                            | [context7:reactjs/react.dev:2024-04-25]                                                             | +1   | 2025-11-28 |
