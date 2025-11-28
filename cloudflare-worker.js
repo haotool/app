@@ -13,8 +13,14 @@
  * 參考：
  * - [Cloudflare Workers: Security Headers](https://developers.cloudflare.com/workers/examples/security-headers/)
  * - [OWASP: Secure Headers](https://owasp.org/www-project-secure-headers/)
+ * - [MDN: CSP script-src](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
  *
- * 最後更新：2025-11-26
+ * 最後更新：2025-11-29
+ *
+ * ⚠️ 重要：不要使用 'strict-dynamic'！
+ * - strict-dynamic 會忽略 'self' 和域名白名單
+ * - SSG 無法使用 nonce-based CSP（沒有 server runtime）
+ * - 結果：所有 scripts 被阻擋，頁面完全失效
  */
 
 export default {
@@ -31,16 +37,23 @@ export default {
     // 安全標頭配置（與 nginx.conf 一致）
     const securityHeaders = {
       // Content Security Policy - 防止 XSS 攻擊
-      // [fix:2025-11-28] 允許 Vite SSG 生成的 inline scripts (hydration data)
-      // 參考: https://web.dev/articles/strict-csp
+      // [fix:2025-11-29] 移除 strict-dynamic（SSG 無 server runtime 無法生成 nonce）
       // 參考: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src
+      //
+      // ⚠️ 為什麼不使用 strict-dynamic:
+      // 1. strict-dynamic 會忽略 'self' 和域名白名單（CSP L3 設計行為）
+      // 2. strict-dynamic 需要 nonce 或 hash，但 SSG 無法生成動態 nonce
+      // 3. Vite 的動態 chunk splitting 無法使用靜態 hash
+      //
       // 策略說明:
-      // - 'unsafe-inline': 允許 SSG 動態生成的 inline scripts (每次構建 hash 都會變)
-      // - 'strict-dynamic': CSP L3 - 對支持的瀏覽器忽略 unsafe-inline，允許信任 script 加載其他 script
+      // - 'self': 只允許同源 scripts
+      // - 'unsafe-inline': 允許 Vite SSG 生成的 inline scripts (__staticRouterHydrationData)
+      // - https://static.cloudflareinsights.com: Cloudflare Analytics
+      //
       // 安全考量: Vite SSG inline scripts 是構建時靜態生成，無 XSS 風險
       'Content-Security-Policy':
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'strict-dynamic' https://static.cloudflareinsights.com; " +
+        "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; " +
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
         "font-src 'self' https://fonts.gstatic.com; " +
         "img-src 'self' data: https:; " +
