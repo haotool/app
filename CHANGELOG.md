@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- 🚨 **Critical P0: CSP strict-dynamic 導致生產環境完全失效 (2025-11-29)**
+  - **問題**：Cloudflare Worker CSP 配置包含 `'strict-dynamic'`，導致所有 scripts 被阻擋
+  - **根因**：`strict-dynamic` 會忽略 `'self'` 和 domain whitelist（CSP Level 3 行為）
+  - **影響**：生產環境頁面完全無法載入（app-z_BtAXh2.js, registerSW.js, inline scripts 全阻擋）
+  - **修復**：從 Cloudflare Worker 移除 `'strict-dynamic'`，改用 `'self' 'unsafe-inline'`（適合 SSG）
+  - **原因**：SSG 沒有 server runtime 無法生成動態 nonce，Vite chunk splitting 無法預先計算 hash
+  - **文檔**：更新 `docs/CLOUDFLARE_WORKER_CSP_FIX.md` 添加詳細技術背景說明
+  - **獎懲**：-3 分（未查閱 web.dev/MDN 官方文檔就部署，造成生產環境停機）
+
+- 🔧 **Code Review Fixes (2025-11-29)**
+  - Added lint-staged configuration to package.json for pre-commit hooks
+  - Updated sitemap.xml to include /guide/ page (SEO improvement)
+  - Fixed Node.js version range from `>=24.0.0` to `^24.0.0` (prevent v25+ incompatibility)
+  - Fixed Security audit non-blocking issue in pr-check.yml (now blocks PRs with high vulnerabilities)
+  - Verified Service Worker dual output is intentional (deployment strategy for /ratewise/ base path)
+  - Verified Canonical URL trailing slash consistency (SSG auto-handles)
+  - Verified JSON-LD schemas no duplication (homepage uses index.html only)
+  - Verified Manifest configuration (VitePWA dynamic config overrides public/manifest.webmanifest)
+
+- 📚 **Deployment Documentation Enhancement (2025-11-29)**
+  - Added environment variables reference to CLOUDFLARE_WORKER_CSP_FIX.md
+  - Added DNS & SSL configuration requirements
+  - Created automated deployment verification script (scripts/verify-cloudflare-deployment.sh)
+  - Comprehensive CSP headers, security headers, and PWA functionality checks
+
 ### Added
 
 - 🔍 **2025 AI Search Optimization (2025-10-20)**
