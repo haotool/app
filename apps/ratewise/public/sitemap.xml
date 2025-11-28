@@ -25,12 +25,4 @@
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/about/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/about/" />
   </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/guide/</loc>
-    <lastmod>2025-11-29</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/guide/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/guide/" />
-  </url>
 </urlset>

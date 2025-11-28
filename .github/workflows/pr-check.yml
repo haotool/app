@@ -138,8 +138,8 @@ jobs:
 
       - name: Security audit
         run: |
-          pnpm audit --audit-level=high || true
-          echo "::notice::Security audit completed. Check results above."
+          pnpm audit --audit-level=high
+          echo "::notice::Security audit passed. No high/critical vulnerabilities found."
 
       - name: Check for secrets
         uses: trufflesecurity/trufflehog@main
