@@ -13,9 +13,14 @@ interface AlternateLink {
   href: string;
 }
 
+/**
+ * FAQ Entry for JSON-LD schema
+ * [fix:2025-11-28] answer 必須是純文字，不能包含 JSX
+ * JSX 無法正確序列化為 JSON，會導致 SSG 輸出警告
+ */
 interface FAQEntry {
   question: string;
-  answer: string | React.ReactNode;
+  answer: string;
 }
 
 interface HowToStep {

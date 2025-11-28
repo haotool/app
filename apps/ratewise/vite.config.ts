@@ -660,7 +660,9 @@ export default defineConfig(({ mode }) => {
         }
 
         // 為 FAQ 頁面添加 FAQPage JSON-LD (如果缺失)
-        if (route === '/faq' && !renderedHTML.includes('"@type":"FAQPage"')) {
+        // [fix:2025-11-28] 使用正則匹配因為 JSON.stringify 可能添加空格
+        const hasFaqJsonLd = /@type["']?\s*:\s*["']?FAQPage/i.test(renderedHTML);
+        if (route === '/faq' && !hasFaqJsonLd) {
           console.warn('⚠️ FAQ page missing FAQPage JSON-LD, this should not happen!');
           const faqJsonLd = `
     <script type="application/ld+json">
