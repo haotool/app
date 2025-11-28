@@ -330,9 +330,9 @@ require-trusted-types-for 'script'; trusted-types default ratewise#default 'allo
 
 **模式說明**:
 
-| 模式          | 說明                                                              | 建議            |
-| ------------- | ----------------------------------------------------------------- | --------------- |
-| Off           | 不加密                                                            | ❌ 絕不使用     |
+| 模式          | 說明                                                            | 建議            |
+| ------------- | --------------------------------------------------------------- | --------------- |
+| Off           | 不加密                                                          | ❌ 絕不使用     |
 | Flexible      | Cloudflare ↔ 使用者加密，Cloudflare ↔ Origin 不加密             | ❌ 不安全       |
 | Full          | Cloudflare ↔ 使用者加密，Cloudflare ↔ Origin 加密（自簽證書可） | ⚠️ 可用但不推薦 |
 | Full (strict) | Cloudflare ↔ 使用者加密，Cloudflare ↔ Origin 加密（需有效證書） | ✅ 推薦         |
