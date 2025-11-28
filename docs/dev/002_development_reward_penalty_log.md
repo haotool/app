@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-29T01:20:00+0800
-> **當前總分**: 135 (初始分: 100)
+> **最後更新**: 2025-11-29T02:00:00+0800
+> **當前總分**: 132 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                                                                   | 依據                                                                                                | 分數 | 時間       |
 | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ❌ 失敗 | CSP strict-dynamic 導致生產環境完全失效          | 1) 發現 'strict-dynamic' 忽略 'self' 和 domain whitelist (CSP L3 行為) 2) SSG 無 server runtime 無法生成 nonce 3) 所有 scripts 被阻擋：app-z_BtAXh2.js, registerSW.js, inline scripts 4) 生產環境頁面完全無法載入 5) 未查閱 web.dev/MDN 官方文檔就部署     | [web.dev:strict-csp][MDN:CSP/script-src][Production Console Errors]                                 | -3   | 2025-11-29 |
 | ✅ 成功 | Cloudflare Worker CSP 修復部署成功               | 1) 手動部署 security-headers Worker (版本 3b24ee23) 2) curl 驗證 CSP 標頭包含 'unsafe-inline' 'strict-dynamic' 3) 所有安全標頭正確返回 (HSTS, X-Frame-Options, Permissions-Policy 等) 4) 建立 CLOUDFLARE_WORKER_CSP_FIX.md 部署指南                        | [Cloudflare Dashboard][curl verify][docs/CLOUDFLARE_WORKER_CSP_FIX.md]                              | +1   | 2025-11-29 |
 | ✅ 成功 | vite + playwright Minor 更新                     | 1) vite 7.1.12→7.2.4 2) @playwright/test 1.56.1→1.57.0 3) 無破壞性變更，510/510 測試全通過                                                                                                                                                                 | [context7:vitejs/vite:2025-11-28][context7:microsoft/playwright:2025-11-28]                         | +1   | 2025-11-28 |
 | ✅ 成功 | Minor/Patch 依賴安全更新 (6 套件)                | 1) @vitejs/plugin-react-swc 4.2.0→4.2.2 2) @eslint/js 9.38.0→9.39.1 3) eslint 9.38.0→9.39.1 4) prettier 3.6.2→3.7.1 5) typescript-eslint 8.46.2→8.48.0 6) @changesets/changelog-github 0.5.1→0.5.2 7) 510/510 測試全通過                                   | [context7:vitejs/vite:2025-11-28]                                                                   | +1   | 2025-11-28 |
