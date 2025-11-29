@@ -58,7 +58,7 @@
     "lighthouse": "^13.0.1",
     "lint-staged": "^15.2.0",
     "pa11y": "^9.0.1",
-    "prettier": "^3.7.1",
+    "prettier": "^3.7.2",
     "seo-analyzer": "^3.2.0",
     "typescript": "^5.6.2",
     "typescript-eslint": "^8.48.0",
