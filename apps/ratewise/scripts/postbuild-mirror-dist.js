@@ -65,6 +65,9 @@ const staticFiles = [
   'og-image.png',
   'twitter-image.png',
   'loading.css',
+  'sitemap.xml',
+  'robots.txt',
+  'llms.txt',
 ];
 staticFiles.forEach(copyFile);
 
