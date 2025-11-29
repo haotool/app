@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-29T14:30:00+0800
-> **當前總分**: 136 (初始分: 100)
+> **最後更新**: 2025-11-29T15:25:00+0800
+> **當前總分**: 137 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                                                                   | 依據                                                                                                | 分數 | 時間       |
 | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | 死代碼清理: isCacheKey/isUserDataKey 移除        | 1) 移除 storage-keys.ts 未使用的 isCacheKey/isUserDataKey 函數 2) storage-keys.ts 測試覆蓋率 60%→100% 3) 整體覆蓋率 87.82%→87.93% 4) PR #36 合併成功                                                                                                       | [LINUS_GUIDE.md:簡潔執念]                                                                           | +1   | 2025-11-29 |
 | ✅ 成功 | Prettier Patch 升級 + Issue #22 關閉             | 1) prettier 3.7.1→3.7.2 Patch 升級 2) 關閉過時 Issue #22 (E2E 測試基礎設施) 3) 所有 lint/typecheck/format 檢查通過 4) PR #35 合併成功                                                                                                                      | [context7:prettier/prettier:2025-11-29]                                                             | +1   | 2025-11-29 |
 | ✅ 成功 | 安全標頭優化 + MultiConverter 測試覆蓋率提升     | 1) 添加 Cross-Origin 隔離標頭 (COOP/COEP/CORP) 2) MultiConverter.tsx 測試覆蓋率 37%→84% (+47%) 3) 整體覆蓋率 85%→87% 4) 新增 21 個測試案例 5) Worker 部署版本 eb707ce9                                                                                     | [context7:developers.cloudflare.com/workers:2025-11-29][context7:vitest-dev/vitest:2025-11-29]      | +3   | 2025-11-29 |
 | ❌ 失敗 | CSP strict-dynamic 導致生產環境完全失效          | 1) 發現 'strict-dynamic' 忽略 'self' 和 domain whitelist (CSP L3 行為) 2) SSG 無 server runtime 無法生成 nonce 3) 所有 scripts 被阻擋：app-z_BtAXh2.js, registerSW.js, inline scripts 4) 生產環境頁面完全無法載入 5) 未查閱 web.dev/MDN 官方文檔就部署     | [web.dev:strict-csp][MDN:CSP/script-src][Production Console Errors]                                 | -3   | 2025-11-29 |
