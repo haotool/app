@@ -41,24 +41,28 @@ function request(url, options = {}) {
     const parsedUrl = new URL(url);
     const protocol = parsedUrl.protocol === 'https:' ? https : http;
 
-    const req = protocol.request(url, {
-      method: options.method || 'GET',
-      timeout: TIMEOUT,
-      headers: {
-        'User-Agent': 'RateWise-HealthCheck/1.0',
-        ...options.headers,
+    const req = protocol.request(
+      url,
+      {
+        method: options.method || 'GET',
+        timeout: TIMEOUT,
+        headers: {
+          'User-Agent': 'RateWise-HealthCheck/1.0',
+          ...options.headers,
+        },
       },
-    }, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        resolve({
-          statusCode: res.statusCode,
-          headers: res.headers,
-          body: data,
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          resolve({
+            statusCode: res.statusCode,
+            headers: res.headers,
+            body: data,
+          });
         });
-      });
-    });
+      },
+    );
 
     req.on('error', reject);
     req.on('timeout', () => {
@@ -121,7 +125,9 @@ async function deepCheck(url, validators = [], maxRedirects = 5) {
         }
 
         // 處理相對 URL
-        currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).toString();
+        currentUrl = location.startsWith('http')
+          ? location
+          : new URL(location, currentUrl).toString();
         redirectCount++;
         continue;
       }
@@ -143,7 +149,8 @@ async function deepCheck(url, validators = [], maxRedirects = 5) {
         }
       }
 
-      const suffix = redirectCount > 0 ? ` (${redirectCount} redirect${redirectCount > 1 ? 's' : ''})` : '';
+      const suffix =
+        redirectCount > 0 ? ` (${redirectCount} redirect${redirectCount > 1 ? 's' : ''})` : '';
       log(colors.green, '✓', `${url} - Content valid${suffix} (${responseTime}ms)`);
       return { success: true, responseTime, redirectCount };
     }
@@ -166,7 +173,8 @@ const validators = {
   }),
 
   hasMetaTag: (name, content) => (body) => ({
-    valid: body.includes(`<meta name="${name}"`) && (!content || body.includes(`content="${content}"`)),
+    valid:
+      body.includes(`<meta name="${name}"`) && (!content || body.includes(`content="${content}"`)),
     message: `Missing meta tag: ${name}`,
   }),
 
@@ -238,12 +246,7 @@ async function runHealthChecks(baseUrl) {
   // 4. 靜態資源檢查
   console.log(`\n${colors.gray}[淺層檢查] 靜態資源${colors.reset}`);
 
-  const staticFiles = [
-    '/manifest.webmanifest',
-    '/favicon.ico',
-    '/robots.txt',
-    '/llms.txt',
-  ];
+  const staticFiles = ['/manifest.webmanifest', '/favicon.ico', '/robots.txt', '/llms.txt'];
 
   for (const file of staticFiles) {
     const result = await shallowCheck(`${baseUrl}${file}`);
@@ -252,7 +255,7 @@ async function runHealthChecks(baseUrl) {
 
   // 總結
   console.log(`\n${colors.blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}`);
-  const passed = results.filter(r => r.success).length;
+  const passed = results.filter((r) => r.success).length;
   const total = results.length;
   const allPassed = passed === total;
 
@@ -284,7 +287,7 @@ async function main() {
     prodPassed = await runHealthChecks('https://app.haotool.org/ratewise');
   }
 
-  const exitCode = (devPassed && prodPassed) ? 0 : 1;
+  const exitCode = devPassed && prodPassed ? 0 : 1;
   process.exit(exitCode);
 }
 
