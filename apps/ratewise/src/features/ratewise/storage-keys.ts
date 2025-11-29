@@ -47,6 +47,7 @@ export const CACHE_KEYS = [STORAGE_KEYS.EXCHANGE_RATES] as const;
 
 /**
  * 用戶數據類型的 Keys (不可清除)
+ * 註: 這些 keys 由 versionManager.ts 在清除快取時保留
  */
 export const USER_DATA_KEYS = [
   STORAGE_KEYS.CURRENCY_CONVERTER_MODE,
@@ -55,17 +56,3 @@ export const USER_DATA_KEYS = [
   STORAGE_KEYS.TO_CURRENCY,
   STORAGE_KEYS.RATE_TYPE,
 ] as const;
-
-/**
- * 檢查 key 是否為快取類型
- */
-export function isCacheKey(key: string): boolean {
-  return CACHE_KEYS.includes(key as (typeof CACHE_KEYS)[number]);
-}
-
-/**
- * 檢查 key 是否為用戶數據類型
- */
-export function isUserDataKey(key: string): boolean {
-  return USER_DATA_KEYS.includes(key as (typeof USER_DATA_KEYS)[number]);
-}
