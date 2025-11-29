@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* globals console:readonly, process:readonly, URL:readonly */
 /**
  * RateWise 端點健康檢查腳本
  *
