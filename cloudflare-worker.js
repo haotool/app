@@ -80,6 +80,12 @@ export default {
 
       // Permissions Policy - 限制瀏覽器功能
       'Permissions-Policy': 'geolocation=(), microphone=(), camera=(), payment=()',
+
+      // Cross-Origin 隔離標頭 - 增強安全性
+      // 參考: https://web.dev/cross-origin-isolation-guide/
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Resource-Policy': 'same-origin',
     };
 
     // 應用安全標頭
