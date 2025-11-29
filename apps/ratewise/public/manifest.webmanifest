@@ -58,35 +58,35 @@
     {
       "src": "screenshots/mobile-home.png",
       "sizes": "1080x1920",
-      "type": "image/jpeg",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "RateWise 首頁 - 即時匯率換算與趨勢圖"
     },
     {
       "src": "screenshots/mobile-converter-active.png",
       "sizes": "1080x1920",
-      "type": "image/jpeg",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "貨幣轉換 - 輸入金額即時顯示匯率結果"
     },
     {
       "src": "screenshots/mobile-features.png",
       "sizes": "1080x1920",
-      "type": "image/jpeg",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "常見問題與功能介紹"
     },
     {
       "src": "screenshots/desktop-converter.png",
       "sizes": "1920x1080",
-      "type": "image/jpeg",
+      "type": "image/png",
       "form_factor": "wide",
       "label": "桌面版 - 完整匯率轉換介面與趨勢圖表"
     },
     {
       "src": "screenshots/desktop-features.png",
       "sizes": "1920x1080",
-      "type": "image/jpeg",
+      "type": "image/png",
       "form_factor": "wide",
       "label": "桌面版 - 關於 RateWise 與功能說明"
     }
