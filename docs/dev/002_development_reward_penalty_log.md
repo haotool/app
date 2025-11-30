@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-30T00:55:00+0800
-> **當前總分**: 157 (初始分: 100)
+> **最後更新**: 2025-12-01T03:25:00+0800
+> **當前總分**: 162 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                                                                      | 依據                                                                                                | 分數 | 時間       |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | v1.2.0 完整發布: CI 修復 + 生產環境驗證          | 1) PR #40 合併成功 (7/7 CI 通過) 2) Security Audit 修復 (--prod flag) 3) E2E flaky test 重試通過 4) 生產環境 robots.txt HTTP 200 驗證 5) JSON-LD Schema 驗證通過 (WebApplication, Organization, WebSite)                                                      | [Context7:developers_google_search:sitemap][gh pr merge][curl verify]                               | +5   | 2025-12-01 |
 | ✅ 成功 | v1.2.0 重大更新: GPL-3.0 授權 + SEO 優化         | 1) MIT → GPL-3.0 授權變更 (強制 fork 開源) 2) 全局作者信息更新 (haotool, @azlife_1224) 3) robots.txt 404 修復 (nginx alias 指令) 4) SEO 關鍵字優化 (匯率好工具、RateWise) 5) AI_SEARCH_OPTIMIZATION_SPEC v2.0 (INP 取代 FID) 6) 604/604 測試通過              | [Context7:web-vitals:2025-11-30][GNU GPL-3.0][LINUS_GUIDE.md:Linus 三問驗證]                        | +5   | 2025-11-30 |
 | ✅ 成功 | 根本修復: generate-sitemap.js 缺少 /guide        | 1) 發現 sitemap 反覆缺少 /guide 的根本原因 2) scripts/generate-sitemap.js routes 陣列缺少 /guide 3) prebuild 覆蓋手動修改 4) 修復 routes 新增 /guide 5) 8 xhtml:link 驗證通過                                                                                 | [002_development_reward_penalty_log.md:避免重複錯誤][Linus 三問: 根本原因分析]                      | +3   | 2025-11-30 |
 | ✅ 成功 | 生產環境 SEO 健康檢查 CI 整合                    | 1) 建立 verify-production-seo.mjs 腳本 2) 建立 seo-health-check.yml GitHub Action 3) 驗證所有頁面 200 + sitemap/robots/llms 內容 4) Release 後自動執行 + 每日定時檢查 5) sitemap.xml 包含 /guide/ 路由 (4 URLs × 2 hreflang = 8)                              | [moss.sh/deployment/health-checks][SEO Best Practices 2025]                                         | +3   | 2025-11-30 |
