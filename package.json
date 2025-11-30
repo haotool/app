@@ -30,6 +30,7 @@
     "verify:history": "node scripts/verify-history-data.mjs",
     "verify:precache": "node scripts/verify-precache-assets.mjs",
     "verify:sitemap": "node scripts/verify-sitemap-ssg.mjs",
+    "verify:production-seo": "node scripts/verify-production-seo.mjs",
     "purge:cdn": "bash scripts/purge-cdn-cache.sh",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "prepare": "husky || true",
