@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /* eslint-env node */
+/* global AbortController, fetch, setTimeout, clearTimeout, console, process */
 /**
  * 生產環境 SEO 健康檢查腳本
  *
@@ -91,9 +92,7 @@ async function verifySitemapContent(baseUrl) {
     const hreflangMatches = content.match(/<xhtml:link/g) || [];
     const expectedCount = SEO_PATHS.length * 2;
     if (hreflangMatches.length !== expectedCount) {
-      errors.push(
-        `hreflang 數量錯誤: 期望 ${expectedCount}, 實際 ${hreflangMatches.length}`,
-      );
+      errors.push(`hreflang 數量錯誤: 期望 ${expectedCount}, 實際 ${hreflangMatches.length}`);
     }
 
     return { ok: errors.length === 0, errors };
@@ -166,11 +165,7 @@ async function main() {
     if (result.ok) {
       log(colors.green, '✓', `${path} → ${result.status}`);
     } else {
-      log(
-        colors.red,
-        '✗',
-        `${path} → ${result.status || 'ERROR'} (${result.error || 'Non-200'})`,
-      );
+      log(colors.red, '✗', `${path} → ${result.status || 'ERROR'} (${result.error || 'Non-200'})`);
       hasErrors = true;
     }
   }
@@ -184,11 +179,7 @@ async function main() {
     if (result.ok) {
       log(colors.green, '✓', `${file} → ${result.status}`);
     } else {
-      log(
-        colors.red,
-        '✗',
-        `${file} → ${result.status || 'ERROR'} (${result.error || 'Non-200'})`,
-      );
+      log(colors.red, '✗', `${file} → ${result.status || 'ERROR'} (${result.error || 'Non-200'})`);
       hasErrors = true;
     }
   }
@@ -244,4 +235,3 @@ main().catch((error) => {
   console.error('健康檢查腳本錯誤:', error);
   process.exit(1);
 });
-
