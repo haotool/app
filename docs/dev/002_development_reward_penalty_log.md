@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-30T14:28:00+0800
-> **當前總分**: 146 (初始分: 100)
+> **最後更新**: 2025-11-30T16:15:00+0800
+> **當前總分**: 149 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                                                                      | 依據                                                                                                | 分數 | 時間       |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | 生產環境 SEO 健康檢查 CI 整合                    | 1) 建立 verify-production-seo.mjs 腳本 2) 建立 seo-health-check.yml GitHub Action 3) 驗證所有頁面 200 + sitemap/robots/llms 內容 4) Release 後自動執行 + 每日定時檢查 5) sitemap.xml 包含 /guide/ 路由 (4 URLs × 2 hreflang = 8)                              | [moss.sh/deployment/health-checks][SEO Best Practices 2025]                                         | +3   | 2025-11-30 |
 | ✅ 成功 | E2E Fixture 優化 - Flaky tests 減少 50%          | 1) CI 環境超時增加至 15s (原 6s) 2) 使用 domcontentloaded + load 雙階段等待策略 3) Flaky tests 14→7 (-50%) 4) Passed tests 94→101 (+7) 5) E2E 執行時間 4m6s→3m32s                                                                                             | [context7:microsoft/playwright:2025-11-30]                                                          | +2   | 2025-11-30 |
 | ✅ 成功 | Sitemap/SSG 一致性修復 + 驗證腳本                | 1) 修復 routes.tsx getIncludedRoutes 缺少 /guide 問題 2) 建立 verify-sitemap-ssg.mjs 驗證腳本 3) CI 整合 sitemap 驗證 4) prettier 3.7.2→3.7.3 升級 5) lint+typecheck+test 全通過                                                                              | [context7:vitejs/vite:2025-11-30][002_development_reward_penalty_log.md:避免不一致]                 | +3   | 2025-11-30 |
 | ✅ 成功 | lint-staged v16 升級 + Fast Refresh 警告修復     | 1) lint-staged 15.5.2→16.2.7 (移除 debug 依賴) 2) Layout 組件移至 components/Layout.tsx 3) routes.tsx 現在只導出路由配置 4) Lint 警告 1→0 5) 604/604 測試通過                                                                                                 | [context7:lint-staged/lint-staged:2025-11-29][eslint-plugin-react-refresh]                          | +2   | 2025-11-29 |
