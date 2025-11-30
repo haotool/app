@@ -24,8 +24,8 @@
    - 填寫詳細資訊
 
 2. **私下聯繫**
-   - 透過 GitHub Issues 私下回報（標記為 `security`）
-   - 或透過專案維護者的聯絡方式
+   - 透過 Email: haotool.org@gmail.com
+   - 或透過 Threads: [@azlife_1224](https://threads.net/@azlife_1224)
 
 ### 回報應包含
 
@@ -184,5 +184,8 @@ pnpm audit --fix
 
 **感謝您協助保護 RateWise 及其使用者！** 🛡️
 
-**最後更新**: 2025-10-13
-**版本**: 1.0.0
+---
+
+**Copyright (C) 2025 haotool. Licensed under GPL-3.0.**
+
+**聯絡方式**: haotool.org@gmail.com | [Threads @azlife_1224](https://threads.net/@azlife_1224)

@@ -62,12 +62,13 @@ const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratew
 const DEFAULT_LOCALE = 'zh-TW';
 const DEFAULT_KEYWORDS = [
   '匯率好工具',
-  '匯率',
+  'RateWise',
+  '匯率工具',
   '匯率換算',
   '即時匯率',
   '台幣匯率',
-  'TWD',
-  'USD',
+  'TWD匯率',
+  'USD匯率',
   '外幣兌換',
   '匯率查詢',
   '臺灣銀行匯率',
@@ -77,7 +78,11 @@ const DEFAULT_KEYWORDS = [
   '歐元匯率',
   '線上匯率',
   '匯率計算機',
-  'RateWise',
+  '匯率轉換器',
+  '貨幣換算',
+  '台幣換算',
+  'exchange rate',
+  'currency converter',
 ];
 const SOCIAL_LINKS = ['https://www.threads.net/@azlife_1224', 'https://github.com/haotool/app'];
 
@@ -249,7 +254,7 @@ export function SEOHelmet({
       <meta name="title" content={fullTitle} />
       <meta name="description" content={description} />
       <meta name="keywords" content={keywordsContent} />
-      <meta name="author" content="RateWise Team" />
+      <meta name="author" content="haotool" />
       <meta name="robots" content={robots} />
       <meta name="language" content={locale} />
       <meta httpEquiv="content-language" content={locale} />
