@@ -1,0 +1,92 @@
+name: SEO Health Check
+
+# 生產環境 SEO 健康檢查
+# 功能:
+# 1. 驗證所有頁面返回 200
+# 2. 驗證 sitemap.xml, robots.txt, llms.txt 配置正確
+# 3. 驗證 hreflang 配置一致性
+#
+# 觸發條件:
+# - Release 工作流程成功後自動執行
+# - 手動觸發 (workflow_dispatch)
+# - 每日定時檢查 (UTC 00:00 = 台北 08:00)
+#
+# 建立時間: 2025-11-30T15:50:00+08:00
+# 依據: [moss.sh/deployment/health-checks][SEO Best Practices 2025]
+
+on:
+  # Release 成功後自動執行
+  workflow_run:
+    workflows: ['Release']
+    types:
+      - completed
+
+  # 手動觸發
+  workflow_dispatch:
+
+  # 每日定時檢查 (UTC 00:00 = 台北 08:00)
+  schedule:
+    - cron: '0 0 * * *'
+
+env:
+  PRODUCTION_BASE_URL: 'https://app.haotool.org/ratewise'
+
+jobs:
+  seo-health-check:
+    name: SEO Health Check
+    runs-on: ubuntu-latest
+
+    # 只在 Release 成功時執行 (或手動/定時觸發)
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # 等待 Zeabur 部署完成 (約 2-3 分鐘)
+      - name: Wait for deployment
+        if: github.event_name == 'workflow_run'
+        run: |
+          echo "⏳ 等待 Zeabur 部署完成..."
+          sleep 180
+
+      - name: Run SEO health check
+        id: health_check
+        run: |
+          node scripts/verify-production-seo.mjs --base-url=${{ env.PRODUCTION_BASE_URL }}
+        continue-on-error: true
+
+      - name: Check result
+        if: steps.health_check.outcome == 'failure'
+        run: |
+          echo "❌ SEO 健康檢查失敗！"
+          echo ""
+          echo "可能的原因:"
+          echo "1. Zeabur 部署尚未完成"
+          echo "2. 某個頁面返回非 200 狀態"
+          echo "3. sitemap.xml/robots.txt/llms.txt 配置不正確"
+          echo ""
+          echo "請檢查:"
+          echo "- ${{ env.PRODUCTION_BASE_URL }}/sitemap.xml"
+          echo "- ${{ env.PRODUCTION_BASE_URL }}/robots.txt"
+          echo "- ${{ env.PRODUCTION_BASE_URL }}/llms.txt"
+          exit 1
+
+      - name: Success notification
+        if: steps.health_check.outcome == 'success'
+        run: |
+          echo "✅ SEO 健康檢查通過！"
+          echo ""
+          echo "已驗證:"
+          echo "- 所有頁面返回 200"
+          echo "- sitemap.xml 包含所有路徑"
+          echo "- robots.txt 配置正確"
+          echo "- llms.txt 配置正確"
