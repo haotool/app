@@ -37,6 +37,7 @@ RateWise 是一個專為台灣用戶設計的即時匯率換算工具，提供�
 
 ### 核心內容連結
 - 首頁：https://app.haotool.org/ratewise/
+- 使用指南：https://app.haotool.org/ratewise/guide
 - 常見問題：https://app.haotool.org/ratewise/faq
 - 關於我們：https://app.haotool.org/ratewise/about
 
@@ -71,6 +72,6 @@ RateWise 是一個專為台灣用戶設計的即時匯率換算工具，提供�
   - Core Web Vitals: LCP 489ms, CLS 0.00046
 
 
-**最後更新**：2025-10-30T04:03:03+08:00
-**版本**：v1.1
+**最後更新**：2025-11-30T15:10:00+08:00
+**版本**：v1.2
 **適用於**：ChatGPT, Claude, Gemini, Perplexity 及其他 LLM
