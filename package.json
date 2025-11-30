@@ -1,7 +1,13 @@
 {
   "name": "ratewise-monorepo",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "private": true,
+  "license": "GPL-3.0",
+  "author": {
+    "name": "haotool",
+    "email": "haotool.org@gmail.com",
+    "url": "https://haotool.org"
+  },
   "type": "module",
   "packageManager": "pnpm@9.10.0",
   "engines": {

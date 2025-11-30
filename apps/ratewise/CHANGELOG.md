@@ -1,5 +1,28 @@
 # @app/ratewise
 
+## 1.2.0 (2025-11-30)
+
+### 🚀 Major Update - License & SEO Enhancement
+
+### Changed
+
+- **License**: MIT → GPL-3.0 (強制 fork 開源並標註作者)
+- **Author Attribution**: haotool (haotool.org@gmail.com, Threads @azlife_1224)
+- **SEO Keywords**: 優化 "匯率好工具", "匯率工具", "RateWise", "台幣匯率"
+- **llms.txt**: 更新至 v1.2.0，添加關鍵字區段
+- **SEOHelmet**: 更新 author meta tag
+
+### Fixed
+
+- **robots.txt 404**: 修復 nginx 配置，使用 alias 指令確保 /ratewise/robots.txt 正確返回
+
+### Technical
+
+- **Core Web Vitals 2025**: INP 監控已確認運作 (web-vitals 5.x)
+- **AI_SEARCH_OPTIMIZATION_SPEC**: 更新至 v2.0 (INP 取代 FID)
+
+---
+
 ## 1.1.0
 
 ### Minor Changes

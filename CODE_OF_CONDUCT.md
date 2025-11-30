@@ -34,7 +34,13 @@
 
 ## 執行
 
-可以透過 GitHub Issues 或直接聯繫專案團隊來回報辱罵、騷擾或其他不被接受的行為。所有投訴都會被審查和調查，並將根據情況做出必要且適當的回應。專案團隊有義務對事件回報者保密。具體執行政策的更多細節可能會單獨發布。
+可以透過以下方式回報辱罵、騷擾或其他不被接受的行為：
+
+- **Email**: haotool.org@gmail.com
+- **GitHub Issues**: [建立 Issue](https://github.com/haotool/app/issues)
+- **Threads**: [@azlife_1224](https://threads.net/@azlife_1224)
+
+所有投訴都會被審查和調查，並將根據情況做出必要且適當的回應。專案團隊有義務對事件回報者保密。具體執行政策的更多細節可能會單獨發布。
 
 未能真誠遵循或執行行為準則的專案維護者，可能會面臨由專案領導層其他成員決定的暫時或永久性後果。
 
@@ -45,4 +51,6 @@ https://www.contributor-covenant.org/version/2/1/code_of_conduct.html
 
 ---
 
-**最後更新**: 2025-10-13
+**Copyright (C) 2025 haotool. Licensed under GPL-3.0.**
+
+**專案維護者**: haotool | haotool.org@gmail.com | [Threads @azlife_1224](https://threads.net/@azlife_1224)

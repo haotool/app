@@ -1,13 +1,15 @@
-# RateWise - 匯率換算器
+# RateWise - 匯率換算器 | 匯率好工具
 
 > 🚀 現代化的即時匯率換算工具，支援單幣別與多幣別轉換
 
-![Version](https://img.shields.io/badge/version-0.0.0-blue)
-![Node](https://img.shields.io/badge/node-%3E%3D24.0.0-green)
-![pnpm](https://img.shields.io/badge/pnpm-9.10.0-yellow)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Tests](https://img.shields.io/badge/tests-37%20passed-success)
-![Coverage](https://img.shields.io/badge/coverage-89.8%25-brightgreen)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue)](https://github.com/haotool/ratewise/releases)
+[![Node](https://img.shields.io/badge/node-%3E%3D24.0.0-green)](https://nodejs.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-9.10.0-yellow)](https://pnpm.io/)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Tests](https://img.shields.io/badge/tests-41%20passed-success)](./apps/ratewise/coverage/)
+[![Coverage](https://img.shields.io/badge/coverage-89.8%25-brightgreen)](./apps/ratewise/coverage/)
+
+**Author**: [haotool](https://haotool.org) | **Threads**: [@azlife_1224](https://threads.net/@azlife_1224) | **Email**: haotool.org@gmail.com
 
 ## ✨ 特色功能
 
@@ -292,7 +294,17 @@ docs: update deployment guide with Docker instructions
 
 ## 📄 授權
 
-MIT License - 詳見 [LICENSE](./LICENSE)
+本專案採用 **GNU General Public License v3.0 (GPL-3.0)** 授權。
+
+這意味著：
+
+- ✅ 您可以自由使用、修改和分發本軟體
+- ✅ 任何基於本專案的衍生作品**必須**同樣採用 GPL-3.0 授權
+- ✅ 衍生作品**必須**開源並標註原作者
+
+**原作者**: haotool | **Threads**: @azlife_1224 | **Email**: haotool.org@gmail.com
+
+詳見 [LICENSE](./LICENSE)
 
 ## 🤝 貢獻
 
@@ -322,8 +334,8 @@ MIT License - 詳見 [LICENSE](./LICENSE)
 
 ---
 
-**Built with ❤️ using React 19 & Vite 5**
+**Built with ❤️ by [haotool](https://haotool.org) using React 19 & Vite 7**
 
-🤖 _Generated with [Claude Code](https://claude.com/claude-code)_
+**Contact**: [Threads @azlife_1224](https://threads.net/@azlife_1224) | haotool.org@gmail.com
 
-_最後更新: 2025-10-13_
+_Copyright (C) 2025 haotool. Licensed under GPL-3.0._

@@ -2,6 +2,11 @@
 
 感謝您有興趣為 RateWise 做出貢獻！本文檔提供貢獻流程與規範。
 
+> **授權提醒**: 本專案採用 **GPL-3.0** 授權。您的貢獻將自動適用相同授權。
+> 任何基於本專案的衍生作品**必須開源**並標註原作者。
+>
+> **原作者**: haotool | **Threads**: @azlife_1224 | **Email**: haotool.org@gmail.com
+
 ---
 
 ## 🚀 快速開始
@@ -401,6 +406,7 @@ pnpm test --verbose
 - **Bug 回報**: [GitHub Issues](https://github.com/haotool/app/issues)
 - **文檔參考**: `docs/` 目錄
 - **開發指南**: `AGENTS.md`, `LINUS_GUIDE.md`
+- **聯絡作者**: haotool.org@gmail.com | [Threads @azlife_1224](https://threads.net/@azlife_1224)
 
 ---
 
@@ -410,5 +416,6 @@ pnpm test --verbose
 
 ---
 
-**最後更新**: 2025-10-13
-**版本**: 1.0.0
+**Copyright (C) 2025 haotool. Licensed under GPL-3.0.**
+
+**聯絡方式**: haotool.org@gmail.com | [Threads @azlife_1224](https://threads.net/@azlife_1224)
