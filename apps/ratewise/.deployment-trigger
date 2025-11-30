@@ -1,3 +1,4 @@
 # Deployment trigger
 # This file is used to force Zeabur redeployment
-Deployment timestamp: 2025-11-30T04:43:00+08:00
+Deployment timestamp: 2025-11-30T13:13:55+0800
+# Reason: Fixed stale build cache issue, sitemap.xml now includes /guide route
