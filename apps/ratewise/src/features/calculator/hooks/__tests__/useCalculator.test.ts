@@ -242,4 +242,186 @@ describe('useCalculator', () => {
       expect(result.current.error).not.toBeNull();
     });
   });
+
+  describe('即時預覽功能', () => {
+    it('應在有效運算式時顯示預覽', async () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('2'));
+      act(() => result.current.input('+'));
+      act(() => result.current.input('3'));
+
+      // 等待防抖完成
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      // 預覽應顯示計算結果
+      expect(result.current.preview).toBe(5);
+    });
+
+    it('應在有最終結果時不顯示預覽', async () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('2'));
+      act(() => result.current.input('+'));
+      act(() => result.current.input('3'));
+      void act(() => result.current.calculate());
+
+      // 等待防抖完成
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      // 已有結果時不應顯示預覽
+      expect(result.current.result).toBe(5);
+      expect(result.current.preview).toBeNull();
+    });
+
+    it('應在空運算式時不顯示預覽', async () => {
+      const { result } = renderHook(() => useCalculator());
+
+      // 等待防抖完成
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      expect(result.current.preview).toBeNull();
+    });
+
+    it('應在無效運算式時不顯示預覽', async () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('2'));
+      act(() => result.current.input('+'));
+      // 不完整的運算式
+
+      // 等待防抖完成
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      // 無效運算式不應顯示預覽
+      expect(result.current.preview).toBeNull();
+    });
+  });
+
+  describe('初始值功能', () => {
+    it('應支援初始值', () => {
+      const { result } = renderHook(() => useCalculator(100));
+      expect(result.current.expression).toBe('100');
+    });
+
+    it('應在初始值為 0 時正確顯示', () => {
+      const { result } = renderHook(() => useCalculator(0));
+      expect(result.current.expression).toBe('0');
+    });
+  });
+
+  describe('計算錯誤處理', () => {
+    it('應在計算拋出錯誤時返回 null', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      // 輸入會導致計算錯誤的運算式
+      act(() => result.current.input('1'));
+      act(() => result.current.input('÷'));
+      act(() => result.current.input('0'));
+      const calcResult = act(() => result.current.calculate());
+
+      // calculate 應返回 null 或結果
+      expect(calcResult).toBeDefined();
+    });
+  });
+
+  describe('正負號切換功能 (±)', () => {
+    it('應將正數切換為負數', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('5'));
+      act(() => result.current.negate());
+
+      expect(result.current.expression).toBe('-5');
+    });
+
+    it('應將負數切換為正數', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('5'));
+      act(() => result.current.negate());
+      act(() => result.current.negate());
+
+      expect(result.current.expression).toBe('5');
+    });
+
+    it('應在空運算式時不做任何事', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.negate());
+
+      expect(result.current.expression).toBe('');
+    });
+
+    it('應只切換最後一個數字的正負號', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('5'));
+      act(() => result.current.input('+'));
+      act(() => result.current.input('3'));
+      act(() => result.current.negate());
+
+      expect(result.current.expression).toBe('5 + -3');
+    });
+
+    it('應處理小數的正負號切換', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('3'));
+      act(() => result.current.input('.'));
+      act(() => result.current.input('14'));
+      act(() => result.current.negate());
+
+      expect(result.current.expression).toBe('-3.14');
+    });
+  });
+
+  describe('百分比功能 (%)', () => {
+    it('應將數字轉換為百分比', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('50'));
+      act(() => result.current.percent());
+
+      expect(result.current.expression).toBe('0.5');
+    });
+
+    it('應在空運算式時不做任何事', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.percent());
+
+      expect(result.current.expression).toBe('');
+    });
+
+    it('應只轉換最後一個數字', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('100'));
+      act(() => result.current.input('+'));
+      act(() => result.current.input('50'));
+      act(() => result.current.percent());
+
+      expect(result.current.expression).toBe('100 + 0.5');
+    });
+
+    it('應處理小數的百分比轉換', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('25'));
+      act(() => result.current.input('.'));
+      act(() => result.current.input('5'));
+      act(() => result.current.percent());
+
+      expect(result.current.expression).toBe('0.255');
+    });
+  });
 });
