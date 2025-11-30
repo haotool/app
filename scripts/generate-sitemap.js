@@ -16,7 +16,9 @@ const __dirname = dirname(__filename);
 const SITE_URL = 'https://app.haotool.org/ratewise/'; // SSOT: 與 canonical/hreflang 尾斜線一致
 const SITE_NAME = 'RateWise - 匯率好工具';
 
-// 路由配置
+// 路由配置 (必須與 routes.tsx getIncludedRoutes 保持一致)
+// @see apps/ratewise/src/routes.tsx
+// @see scripts/verify-sitemap-ssg.mjs
 const routes = [
   {
     path: '/',
@@ -34,6 +36,12 @@ const routes = [
     path: '/about',
     changefreq: 'monthly',
     priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/guide',
+    changefreq: 'monthly',
+    priority: 0.7,
     lastmod: new Date().toISOString().split('T')[0],
   },
 ];
