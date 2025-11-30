@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-11-30
+
+### 🚀 Major Update - License & SEO Enhancement
+
+**Breaking Changes**:
+
+- **License Change**: MIT → GPL-3.0 (Copyleft)
+  - All forks must remain open source
+  - Must attribute original author: haotool (haotool.org@gmail.com, Threads @azlife_1224)
+
+### Added
+
+- **GPL-3.0 License**: Full GNU General Public License v3.0 text with author attribution
+- **SEO Keywords Enhancement**: Optimized for "匯率好工具", "匯率工具", "RateWise", "台幣匯率"
+- **llms.txt v1.2**: Enhanced AI search optimization with new keywords section
+- **AI_SEARCH_OPTIMIZATION_SPEC v2.0**: Updated for 2025 standards (INP replaces FID)
+
+### Changed
+
+- **Author Information**: Global update across 62+ files
+  - Author: haotool
+  - Email: haotool.org@gmail.com
+  - Threads: @azlife_1224
+  - Website: https://haotool.org
+- **README.md**: Added GPL-3.0 license badge and author credits
+- **CONTRIBUTING.md**: Added GPL-3.0 license reminder for contributors
+- **SECURITY.md**: Updated contact information
+- **CODE_OF_CONDUCT.md**: Added author contact methods
+- **SEOHelmet.tsx**: Updated author meta tag to "haotool"
+- **index.html**: Enhanced keywords and author attribution
+
+### Fixed
+
+- **robots.txt 404**: Fixed nginx configuration using `alias` directive
+  - `/ratewise/robots.txt` now correctly serves root-level robots.txt
+  - Same fix applied to sitemap.xml, llms.txt, manifest.webmanifest
+
+### Technical
+
+- **Core Web Vitals 2025**: INP monitoring confirmed (web-vitals 5.x)
+- **nginx.conf**: Improved static file routing with `alias` directives
+
+---
+
 ## [Unreleased]
 
 ### Fixed

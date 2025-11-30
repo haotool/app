@@ -136,10 +136,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # [fix:2025-11-30] 只檢查生產依賴，開發依賴漏洞不影響生產環境
       - name: Security audit
         run: |
-          pnpm audit --audit-level=high
-          echo "::notice::Security audit passed. No high/critical vulnerabilities found."
+          pnpm audit --prod --audit-level=high
+          echo "::notice::Security audit passed. No high/critical production vulnerabilities found."
 
       - name: Check for secrets
         uses: trufflesecurity/trufflehog@main

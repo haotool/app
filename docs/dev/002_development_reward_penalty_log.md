@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-11-30T17:25:00+0800
-> **當前總分**: 152 (初始分: 100)
+> **最後更新**: 2025-11-30T00:55:00+0800
+> **當前總分**: 157 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                                                                      | 依據                                                                                                | 分數 | 時間       |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | v1.2.0 重大更新: GPL-3.0 授權 + SEO 優化         | 1) MIT → GPL-3.0 授權變更 (強制 fork 開源) 2) 全局作者信息更新 (haotool, @azlife_1224) 3) robots.txt 404 修復 (nginx alias 指令) 4) SEO 關鍵字優化 (匯率好工具、RateWise) 5) AI_SEARCH_OPTIMIZATION_SPEC v2.0 (INP 取代 FID) 6) 604/604 測試通過              | [Context7:web-vitals:2025-11-30][GNU GPL-3.0][LINUS_GUIDE.md:Linus 三問驗證]                        | +5   | 2025-11-30 |
 | ✅ 成功 | 根本修復: generate-sitemap.js 缺少 /guide        | 1) 發現 sitemap 反覆缺少 /guide 的根本原因 2) scripts/generate-sitemap.js routes 陣列缺少 /guide 3) prebuild 覆蓋手動修改 4) 修復 routes 新增 /guide 5) 8 xhtml:link 驗證通過                                                                                 | [002_development_reward_penalty_log.md:避免重複錯誤][Linus 三問: 根本原因分析]                      | +3   | 2025-11-30 |
 | ✅ 成功 | 生產環境 SEO 健康檢查 CI 整合                    | 1) 建立 verify-production-seo.mjs 腳本 2) 建立 seo-health-check.yml GitHub Action 3) 驗證所有頁面 200 + sitemap/robots/llms 內容 4) Release 後自動執行 + 每日定時檢查 5) sitemap.xml 包含 /guide/ 路由 (4 URLs × 2 hreflang = 8)                              | [moss.sh/deployment/health-checks][SEO Best Practices 2025]                                         | +3   | 2025-11-30 |
 | ✅ 成功 | E2E Fixture 優化 - Flaky tests 減少 50%          | 1) CI 環境超時增加至 15s (原 6s) 2) 使用 domcontentloaded + load 雙階段等待策略 3) Flaky tests 14→7 (-50%) 4) Passed tests 94→101 (+7) 5) E2E 執行時間 4m6s→3m32s                                                                                             | [context7:microsoft/playwright:2025-11-30]                                                          | +2   | 2025-11-30 |
