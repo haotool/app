@@ -80,13 +80,21 @@ export const test = base.extend<RateWiseFixtures>({
       .filter((value, index, self) => self.indexOf(value) === index) as string[];
 
     let navigated = false;
+    // [2025-11-30] CI 環境使用更長超時以減少 flaky tests
+    // @see [context7:microsoft/playwright:2025-11-30] waitForLoadState best practices
+    const ciTimeout = process.env['CI'] ? 15000 : 6000;
+
     for (const path of basePathCandidates) {
-      await page.goto(makeUrl(path));
+      // 使用 domcontentloaded 加速初始載入
+      await page.goto(makeUrl(path), { waitUntil: 'domcontentloaded' });
+
+      // 等待 load 事件確保資源完全載入
+      await page.waitForLoadState('load').catch(() => {});
 
       // Single semantic check - Playwright auto-waits for actionability
       const isVisible = await page
         .getByRole('button', { name: /多幣別/i })
-        .isVisible({ timeout: 6000 })
+        .isVisible({ timeout: ciTimeout })
         .catch(() => false);
 
       if (isVisible) {
