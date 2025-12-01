@@ -43,7 +43,10 @@ export const MultiConverter = ({
       onAmountChange(currency, result.toString());
     },
     getInitialValue: (currency) => {
-      return parseFloat(multiAmounts[currency]) || 0;
+      // 使用當前貨幣的實際金額，如果為空或無效則使用 0
+      const value = multiAmounts[currency];
+      const parsed = parseFloat(value);
+      return Number.isNaN(parsed) ? 0 : parsed;
     },
   });
 
