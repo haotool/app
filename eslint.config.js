@@ -23,6 +23,7 @@ export default tseslint.config(
       '**/*.config.cjs',
       '**/*.d.ts',
       '**/scripts/**/*.js',
+      '**/scripts/**/*.mjs',
       '**/*.cjs',
       '**/tests/e2e/**', // E2E 測試使用獨立的 Playwright TypeScript 配置
       '**/playwright.config.ts', // Playwright 配置文件
