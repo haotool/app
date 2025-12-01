@@ -53,6 +53,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- 🐛 **PWA 更新提示倒數不會重置 (2025-12-01)**
+  - **問題**：AutoUpdateToast 關閉後再次顯示時，倒數計時不會重置為 10 秒
+  - **根因**：useEffect cleanup 函數中的 `setCountdown(10)` 在組件 unmount 時執行無效
+  - **修復**：將 `setCountdown(10)` 移至 useEffect 開頭，當 `show` 變為 `true` 時立即重置
+  - **影響**：用戶體驗改善，更新提示每次顯示都正確倒數 10 秒
+  - **Commit**: 890d691
+
 - 🚨 **Critical P0: CSP strict-dynamic 導致生產環境完全失效 (2025-11-29)**
   - **問題**：Cloudflare Worker CSP 配置包含 `'strict-dynamic'`，導致所有 scripts 被阻擋
   - **根因**：`strict-dynamic` 會忽略 `'self'` 和 domain whitelist（CSP Level 3 行為）
