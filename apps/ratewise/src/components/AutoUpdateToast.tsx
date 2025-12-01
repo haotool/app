@@ -49,6 +49,9 @@ export function AutoUpdateToast({ show, onClose, onUpdate }: AutoUpdateToastProp
   useEffect(() => {
     if (!show || isUpdating) return;
 
+    // [fix:2025-12-01] 當 show 變成 true 時，立即重置倒數
+    setCountdown(10);
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -62,7 +65,7 @@ export function AutoUpdateToast({ show, onClose, onUpdate }: AutoUpdateToastProp
 
     return () => {
       clearInterval(timer);
-      setCountdown(10); // 重置倒數
+      // 移除 setCountdown(10)：cleanup 時設置狀態無效
     };
   }, [show, isUpdating, handleUpdate]);
 
