@@ -77,7 +77,10 @@ export const SingleConverter = ({
       }
     },
     getInitialValue: (field) => {
-      return field === 'from' ? parseFloat(fromAmount) || 0 : parseFloat(toAmount) || 0;
+      // 使用當前輸入框的實際值，如果為空或無效則使用 0
+      const value = field === 'from' ? fromAmount : toAmount;
+      const parsed = parseFloat(value);
+      return Number.isNaN(parsed) ? 0 : parsed;
     },
   });
 

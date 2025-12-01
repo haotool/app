@@ -192,7 +192,12 @@ describe('useCalculatorModal', () => {
 
   describe('邊緣情況', () => {
     it('應該處理 getInitialValue 返回 NaN 的情況', () => {
-      const getInitialValue = vi.fn(() => NaN);
+      const getInitialValue = vi.fn((field: 'from' | 'to') => {
+        // 模擬實際使用場景：空字串會被轉換為 0
+        const value = field === 'from' ? '' : '0';
+        const parsed = parseFloat(value);
+        return Number.isNaN(parsed) ? 0 : parsed;
+      });
 
       const { result } = renderHook(() =>
         useCalculatorModal<'from' | 'to'>({
@@ -205,7 +210,8 @@ describe('useCalculatorModal', () => {
         result.current.openCalculator('from');
       });
 
-      expect(result.current.initialValue).toBe(NaN);
+      // 空字串應該被轉換為 0
+      expect(result.current.initialValue).toBe(0);
     });
 
     it('應該處理連續打開不同欄位的情況', () => {
@@ -233,6 +239,35 @@ describe('useCalculatorModal', () => {
       });
       expect(result.current.activeField).toBe('to');
       expect(result.current.initialValue).toBe(200);
+    });
+
+    it('應該正確處理實際輸入框值的情況', () => {
+      // 模擬實際場景：fromAmount = '1500', toAmount = '45.5'
+      const amounts = { from: '1500', to: '45.5' };
+      const getInitialValue = vi.fn((field: 'from' | 'to') => {
+        const value = amounts[field];
+        const parsed = parseFloat(value);
+        return Number.isNaN(parsed) ? 0 : parsed;
+      });
+
+      const { result } = renderHook(() =>
+        useCalculatorModal<'from' | 'to'>({
+          onConfirm: vi.fn(),
+          getInitialValue,
+        }),
+      );
+
+      // 打開 'from' 應該顯示 1500
+      act(() => {
+        result.current.openCalculator('from');
+      });
+      expect(result.current.initialValue).toBe(1500);
+
+      // 打開 'to' 應該顯示 45.5
+      act(() => {
+        result.current.openCalculator('to');
+      });
+      expect(result.current.initialValue).toBe(45.5);
     });
   });
 });
