@@ -3,7 +3,7 @@
  * [BDD Implementation: Green Light]
  *
  * Feature: HowTo Schema for AI Search Optimization
- * 依據: docs/dev/AI_SEARCH_OPTIMIZATION_SPEC.md Line 452-482
+ * 依據: docs/dev/013_ai_search_optimization_spec.md
  */
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
