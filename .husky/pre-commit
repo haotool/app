@@ -1,10 +1,33 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+#!/bin/sh
 
 # RateWise Pre-commit Hook
+# [BDD:2025-12-01] 整合完整品質檢查到 Git workflow
+# [CI:2025-12-01] 防止 CI 失敗的根本原因
+
 echo "🔍 執行 Pre-commit 檢查..."
 
 # 1. Lint-staged (程式碼格式化與 Lint)
+echo "\n📋 Step 1/3: Lint-staged..."
 pnpm lint-staged
+if [ $? -ne 0 ]; then
+  echo "\n❌ Lint-staged 失敗，請修復後再提交"
+  exit 1
+fi
+
+# 2. TypeScript 檢查 (快速驗證類型錯誤)
+echo "\n📋 Step 2/3: TypeScript 檢查..."
+pnpm typecheck
+if [ $? -ne 0 ]; then
+  echo "\n❌ TypeScript 檢查失敗，請修復類型錯誤後再提交"
+  exit 1
+fi
+
+# 3. 格式檢查 (確保所有文件已格式化)
+echo "\n📋 Step 3/3: Prettier 格式檢查..."
+pnpm format
+if [ $? -ne 0 ]; then
+  echo "\n❌ 格式檢查失敗，請執行 'pnpm format:fix' 後再提交"
+  exit 1
+fi
 
 echo "\n✅ 所有 Pre-commit 檢查通過"

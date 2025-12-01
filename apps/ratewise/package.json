@@ -11,6 +11,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node ../../scripts/generate-sitemap.js",
     "build": "tsc --noEmit && vite-react-ssg build --config vite.config.ts",
     "postbuild": "node scripts/postbuild-mirror-dist.js",
     "preview": "vite preview",
