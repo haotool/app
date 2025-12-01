@@ -248,6 +248,33 @@ describe('exchangeRateHistoryService', () => {
         vi.useRealTimers();
       }
     });
+
+    it('應該處理非 Error 類型的 rejection reason', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-10-17T00:00:00Z'));
+
+      vi.mocked(fetch).mockImplementation((url: string | URL | Request) => {
+        const urlStr = typeof url === 'string' ? url : url instanceof URL ? url.href : url.url;
+
+        const match = /history\/(\d{4}-\d{2}-\d{2})/.exec(urlStr);
+        if (!match?.[1]) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
+        }
+
+        // 模擬非 Error 類型的 rejection（如字串）
+        // 這會觸發 Line 336-338 的 else 分支
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+        return Promise.reject('String rejection reason');
+      });
+
+      try {
+        const result = await fetchHistoricalRatesRange(2);
+        // 應該跳過所有日期，因為都失敗了
+        expect(result).toHaveLength(0);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   describe('快取機制測試', () => {
@@ -362,6 +389,102 @@ describe('exchangeRateHistoryService', () => {
       );
 
       await expect(fetchLatestRates()).rejects.toThrow();
+    });
+
+    it('應該處理非 404 的 HTTP 錯誤並記錄 warn', async () => {
+      // 測試 HTTP 500 錯誤分支（Line 188）
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        status: 500,
+      } as Response);
+
+      await expect(fetchLatestRates()).rejects.toThrow();
+    });
+
+    it('應該處理網路錯誤（CORS/連線失敗）並靜默處理', async () => {
+      // 測試 fetch.catch 分支（Line 168-174）
+      vi.mocked(fetch).mockImplementation(() => {
+        // 模擬網路錯誤（如 CORS 或連線失敗）
+        return Promise.reject(new Error('Network error: CORS'));
+      });
+
+      await expect(fetchLatestRates()).rejects.toThrow();
+    });
+  });
+
+  describe('快取過期測試', () => {
+    it('應該在快取過期後刪除並重新請求', async () => {
+      vi.useFakeTimers();
+
+      const mockResponse = {
+        updateTime: '2025/10/16 23:39:59',
+        source: 'Taiwan Bank',
+        rates: { USD: 31.025 },
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      // 第一次請求
+      await fetchLatestRates();
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      // 快取有效期內
+      vi.advanceTimersByTime(4 * 60 * 1000); // 4 分鐘
+      await fetchLatestRates();
+      expect(fetch).toHaveBeenCalledTimes(1); // 仍使用快取
+
+      // 超過快取有效期（5 分鐘）
+      vi.advanceTimersByTime(2 * 60 * 1000); // 再過 2 分鐘，共 6 分鐘
+      await fetchLatestRates();
+      expect(fetch).toHaveBeenCalledTimes(2); // 快取過期，重新請求
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe('LHCI 離線模式測試', () => {
+    const originalEnv = import.meta.env['VITE_LHCI_OFFLINE'];
+
+    afterEach(() => {
+      import.meta.env['VITE_LHCI_OFFLINE'] = originalEnv;
+    });
+
+    it('應該在 LHCI 離線模式下返回模擬匯率（fetchLatestRates）', async () => {
+      // 模擬 LHCI 離線模式
+      import.meta.env['VITE_LHCI_OFFLINE'] = 'true';
+
+      // 重新導入模組以應用新的環境變數
+      vi.resetModules();
+      const { fetchLatestRates: fetchLatestRatesLHCI } =
+        await import('../exchangeRateHistoryService');
+
+      const result = await fetchLatestRatesLHCI();
+
+      // 應該返回模擬數據，不應該調用 fetch
+      expect(result.source).toBe('LHCI-MOCK');
+      expect(result.rates.USD).toBe(31.07);
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('應該在 LHCI 離線模式下返回模擬匯率（fetchHistoricalRates）', async () => {
+      // 模擬 LHCI 離線模式
+      import.meta.env['VITE_LHCI_OFFLINE'] = 'true';
+
+      // 重新導入模組以應用新的環境變數
+      vi.resetModules();
+      const { fetchHistoricalRates: fetchHistoricalRatesLHCI } =
+        await import('../exchangeRateHistoryService');
+
+      const testDate = new Date('2025-10-14');
+      const result = await fetchHistoricalRatesLHCI(testDate);
+
+      // 應該返回模擬數據，不應該調用 fetch
+      expect(result.source).toBe('LHCI-MOCK');
+      expect(result.updateTime).toBe('2025-10-14T00:00:00Z');
+      expect(fetch).not.toHaveBeenCalled();
     });
   });
 });

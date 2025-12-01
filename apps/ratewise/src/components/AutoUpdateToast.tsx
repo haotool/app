@@ -50,6 +50,7 @@ export function AutoUpdateToast({ show, onClose, onUpdate }: AutoUpdateToastProp
     if (!show || isUpdating) return;
 
     // [fix:2025-12-01] 當 show 變成 true 時，立即重置倒數
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 初始化倒數計時器，必須在 effect 中同步設置
     setCountdown(10);
 
     const timer = setInterval(() => {

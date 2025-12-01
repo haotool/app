@@ -12,6 +12,8 @@ import {
   isNumberOutOfRange,
   canAddDigit,
   getLastNumber,
+  sanitizeExpression,
+  hasDivisionByZero,
 } from '../validator';
 
 describe('validateExpression', () => {
@@ -42,6 +44,35 @@ describe('validateExpression', () => {
     const result = validateExpression('100 +');
     expect(result.isValid).toBe(false);
     expect(result.error).toBe('運算符後缺少數字');
+  });
+
+  it('應拒絕連續運算符', () => {
+    const result = validateExpression('100 ++ 50');
+    expect(result.isValid).toBe(false);
+    expect(result.error).toBe('運算符不可連續出現');
+  });
+
+  it('應拒絕連續小數點', () => {
+    const result = validateExpression('100..5');
+    expect(result.isValid).toBe(false);
+    expect(result.error).toBe('小數點格式錯誤');
+  });
+
+  it('應拒絕括號不匹配', () => {
+    const result = validateExpression('(100 + 50');
+    expect(result.isValid).toBe(false);
+    expect(result.error).toBe('括號不匹配');
+  });
+
+  it('應拒絕空括號', () => {
+    const result = validateExpression('100 + ()');
+    expect(result.isValid).toBe(false);
+    expect(result.error).toBe('括號內不可為空');
+  });
+
+  it('應接受有效的括號表達式', () => {
+    expect(validateExpression('(100 + 50) × 2').isValid).toBe(true);
+    expect(validateExpression('((100 + 50) × 2)').isValid).toBe(true);
   });
 });
 
@@ -168,5 +199,66 @@ describe('getLastNumber', () => {
 
   it('應處理負數', () => {
     expect(getLastNumber('100 + -50')).toBe('50'); // 不包含負號
+  });
+});
+
+describe('sanitizeExpression', () => {
+  it('應移除多餘空格', () => {
+    expect(sanitizeExpression('  100  +  50  ')).toBe('100 + 50');
+  });
+
+  it('應在運算符前後添加空格', () => {
+    expect(sanitizeExpression('100+50')).toBe('100 + 50');
+    expect(sanitizeExpression('100×50')).toBe('100 × 50');
+  });
+
+  it('應處理括號', () => {
+    expect(sanitizeExpression('(100+50)')).toBe('( 100 + 50 )');
+  });
+
+  it('應處理複雜表達式', () => {
+    expect(sanitizeExpression('100+50×2-30÷3')).toBe('100 + 50 × 2 - 30 ÷ 3');
+  });
+});
+
+describe('hasDivisionByZero', () => {
+  it('應檢測除以零', () => {
+    expect(hasDivisionByZero('100 ÷ 0')).toBe(true);
+    expect(hasDivisionByZero('100 / 0')).toBe(true);
+  });
+
+  it('應不誤判正常除法', () => {
+    expect(hasDivisionByZero('100 ÷ 5')).toBe(false);
+    expect(hasDivisionByZero('100 / 10')).toBe(false);
+  });
+
+  it('應不誤判加減零', () => {
+    expect(hasDivisionByZero('100 + 0')).toBe(false);
+    expect(hasDivisionByZero('100 - 0')).toBe(false);
+  });
+
+  it('應檢測表達式末尾的除以零', () => {
+    expect(hasDivisionByZero('(100 + 50) ÷ 0')).toBe(true);
+  });
+
+  it('應處理零後有空格的情況', () => {
+    expect(hasDivisionByZero('100 ÷ 0 ')).toBe(true);
+  });
+});
+
+describe('isNumberOutOfRange - 邊界情況', () => {
+  it('應處理空字串', () => {
+    expect(isNumberOutOfRange('')).toBe(false);
+    expect(isNumberOutOfRange('   ')).toBe(false);
+  });
+
+  it('應處理非數字字串', () => {
+    expect(isNumberOutOfRange('(')).toBe(false);
+    expect(isNumberOutOfRange('+')).toBe(false);
+    expect(isNumberOutOfRange('abc')).toBe(false);
+  });
+
+  it('應處理只有小數點的字串', () => {
+    expect(isNumberOutOfRange('.')).toBe(false);
   });
 });

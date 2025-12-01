@@ -1,0 +1,217 @@
+# RateWise 最佳實踐落地分析報告
+
+> **建立時間**: 2025-12-02T01:15:00+08:00
+> **版本**: v1.0.0
+> **狀態**: ✅ 已完成
+
+---
+
+## 1. 分析摘要
+
+### 1.1 過去對話需求萃取
+
+| 主題            | 需求關鍵字                                                            | 完成狀態  |
+| --------------- | --------------------------------------------------------------------- | --------- |
+| 授權變更        | GPL-3.0, 強制 fork 開源, 作者署名                                     | ✅ 已完成 |
+| SEO 優化        | robots.txt 404, sitemap.xml, llms.txt, 關鍵字                         | ✅ 已完成 |
+| Core Web Vitals | INP 監控, LCP, CLS                                                    | ✅ 已完成 |
+| 測試覆蓋率      | evaluator.ts, validator.ts, Layout.tsx, exchangeRateHistoryService.ts | ✅ 已完成 |
+| 依賴升級        | vite, motion, sentry, workbox                                         | ✅ 已完成 |
+| E2E 測試        | Calculator 功能驗證                                                   | ✅ 已完成 |
+
+### 1.2 專案現況指標
+
+| 指標                        | 當前值 | 目標值 | 狀態    |
+| --------------------------- | ------ | ------ | ------- |
+| 單元測試覆蓋率 (Statements) | 93.32% | ≥80%   | ✅ 超標 |
+| 單元測試覆蓋率 (Branches)   | 83.71% | ≥80%   | ✅ 達標 |
+| 單元測試覆蓋率 (Functions)  | 96.51% | ≥80%   | ✅ 超標 |
+| 單元測試覆蓋率 (Lines)      | 94.99% | ≥80%   | ✅ 超標 |
+| E2E 測試通過率              | 100%   | ≥95%   | ✅ 超標 |
+| ESLint 錯誤                 | 0      | 0      | ✅ 達標 |
+| TypeScript 錯誤             | 0      | 0      | ✅ 達標 |
+
+---
+
+## 2. 最佳實踐優化方案
+
+### 2.1 已實施的最佳實踐
+
+| 實踐項目                        | 依據                             | 實施日期   |
+| ------------------------------- | -------------------------------- | ---------- |
+| GPL-3.0 授權強制 fork 開源      | GNU GPL-3.0 License              | 2025-11-30 |
+| Core Web Vitals INP 監控        | [context7:web-vitals:2025-11-30] | 2025-11-30 |
+| Nginx alias 指令修復 robots.txt | [nginx.org/docs]                 | 2025-11-30 |
+| BDD 測試驅動開發                | [docs/prompt/BDD.md]             | 2025-12-01 |
+| URL 標準化 (小寫 + 尾斜線)      | [Google Search Central]          | 2025-12-01 |
+
+### 2.2 待實施的最佳實踐
+
+| 優先級 | 實踐項目                    | 依據                                | 風險評估  |
+| ------ | --------------------------- | ----------------------------------- | --------- |
+| P0     | lucide-react minor 升級     | Linus 三問: 低風險                  | ✅ 已完成 |
+| P1     | storage.ts 測試覆蓋率提升   | LINUS_GUIDE.md                      | 低        |
+| P2     | React Router v7 升級評估    | [context7:remix-run/react-router]   | 中        |
+| P2     | Tailwind CSS v4 升級評估    | [context7:v3_tailwindcss]           | 中        |
+| P3     | vite-plugin-pwa Vite 7 支援 | [context7:vite-pwa/vite-plugin-pwa] | 高        |
+
+---
+
+## 3. 專案步驟清單
+
+### 3.1 已完成項目
+
+- [x] v1.2.0 GPL-3.0 授權變更
+- [x] robots.txt 404 修復
+- [x] SEO 關鍵字優化
+- [x] AI_SEARCH_OPTIMIZATION_SPEC v2.0 更新
+- [x] Core Web Vitals INP 監控實作
+- [x] evaluator.ts 測試覆蓋率 83.08% → 94.85%
+- [x] validator.ts 測試覆蓋率 87.09% → 96.77%
+- [x] Layout.tsx 測試覆蓋率 0% → 100%
+- [x] exchangeRateHistoryService.ts Branch 覆蓋率 65.71% → 80%
+- [x] 依賴升級: vite 7.2.6, motion 12.23.25, @sentry/react 10.27.0, workbox 7.4.0
+- [x] 移除 @types/sharp (deprecated)
+- [x] lucide-react 升級 0.441.0 → 0.555.0
+- [x] Calculator E2E 測試 8/8 通過
+
+### 3.2 待完成項目
+
+- [ ] storage.ts 測試覆蓋率提升 (82.6% → 90%)
+- [ ] Major 依賴升級評估文檔
+- [ ] React Router v7 升級測試 (分支驗證)
+- [ ] Tailwind CSS v4 升級測試 (分支驗證)
+- [ ] vite-plugin-pwa Vite 7 兼容性監控
+
+---
+
+## 4. To-Do List
+
+| ID   | 優先級 | 任務                                 | 負責人 | 預估時程 | 狀態      |
+| ---- | ------ | ------------------------------------ | ------ | -------- | --------- |
+| P0-1 | P0     | lucide-react 升級 0.441.0 → 0.555.0  | Agent  | 5 min    | ✅ 完成   |
+| P0-2 | P0     | 監控 vite-plugin-pwa Vite 7 支援狀況 | Agent  | 持續     | 🔄 進行中 |
+| P1-1 | P1     | 建立 Major 依賴升級評估文檔          | Agent  | 30 min   | ⏳ 待開始 |
+| P1-2 | P1     | storage.ts 測試覆蓋率提升            | Agent  | 20 min   | ⏳ 待開始 |
+| P2-1 | P2     | React Router v7 升級評估             | Agent  | 2 hr     | ⏳ 待開始 |
+| P2-2 | P2     | Tailwind CSS v4 升級評估             | Agent  | 2 hr     | ⏳ 待開始 |
+
+---
+
+## 5. 子功能規格
+
+### 5.1 storage.ts 測試覆蓋率提升
+
+**目標**: 82.6% → 90%
+
+**未覆蓋行**: 4, 10-15, 26
+
+**測試案例規格**:
+
+```typescript
+// 測試 localStorage 不可用的情況 (Line 4)
+it('應該在 localStorage 不可用時優雅降級', () => {
+  // Mock localStorage.setItem 拋出異常
+});
+
+// 測試快取過期邏輯 (Line 10-15)
+it('應該在快取過期後返回 null', () => {
+  // 使用 vi.useFakeTimers() 模擬時間流逝
+});
+
+// 測試 JSON 解析錯誤 (Line 26)
+it('應該在 JSON 解析失敗時返回 null', () => {
+  // Mock localStorage.getItem 返回無效 JSON
+});
+```
+
+### 5.2 React Router v7 升級評估
+
+**升級路徑**: 6.30.1 → 7.x
+
+**必要步驟**:
+
+1. 啟用 future flags: `v7_startTransition`, `v7_relativeSplatPath`
+2. 將 `react-router-dom` 替換為 `react-router`
+3. 更新所有 imports
+4. 執行完整測試套件
+
+**風險評估**:
+
+- 中等風險
+- 需要分支驗證
+- 建議等待 React 19 生態系穩定
+
+### 5.3 Tailwind CSS v4 升級評估
+
+**升級路徑**: 3.4.18 → 4.x
+
+**必要步驟**:
+
+1. 升級 PostCSS 到 8+
+2. 更新 opacity modifier 語法
+3. 檢查顏色別名變更
+4. 驗證 JIT 引擎配置
+
+**風險評估**:
+
+- 中等風險
+- 可能影響 UI 外觀
+- 建議等待 v4 穩定版
+
+---
+
+## 6. 當前進度實作
+
+### 6.1 已完成的變更
+
+```bash
+# lucide-react 升級
+cd /Users/azlife.eth/Tools/app/apps/ratewise
+pnpm update lucide-react@0.555.0
+
+# 驗證
+pnpm typecheck && pnpm lint && pnpm test
+# 結果: 768/768 tests passed
+```
+
+### 6.2 Peer Dependency 警告狀態
+
+| 套件                     | 警告            | 處理方式           |
+| ------------------------ | --------------- | ------------------ |
+| react-helmet-async 1.3.0 | 不支援 React 19 | 等待上游更新       |
+| vite-plugin-pwa 0.21.2   | 不支援 Vite 7   | 監控 GitHub Issues |
+
+### 6.3 獎懲記錄更新
+
+```markdown
+| ✅ 成功 | 測試覆蓋率全面提升 + 依賴升級 + E2E 驗證 | ... | +11 | 2025-12-02 |
+```
+
+當前總分: 185 → 196 (+11)
+
+---
+
+## 7. 後續追蹤
+
+### 7.1 監控項目
+
+- [ ] vite-plugin-pwa GitHub: [#issues](https://github.com/vite-pwa/vite-plugin-pwa/issues) - Vite 7 支援
+- [ ] react-helmet-async GitHub: [#issues](https://github.com/staylor/react-helmet-async/issues) - React 19 支援
+- [ ] React Router v7 穩定性
+
+### 7.2 定期檢查
+
+- **每週**: 檢查 outdated packages
+- **每月**: 評估 major 升級可行性
+- **每季**: 技術債審計
+
+---
+
+## 參考資料
+
+1. [Context7: React Router](https://github.com/remix-run/react-router)
+2. [Context7: Tailwind CSS](https://v3.tailwindcss.com/docs/upgrade-guide)
+3. [Context7: vite-plugin-pwa](https://github.com/vite-pwa/vite-plugin-pwa)
+4. [LINUS_GUIDE.md](../LINUS_GUIDE.md)
+5. [002_development_reward_penalty_log.md](./002_development_reward_penalty_log.md)

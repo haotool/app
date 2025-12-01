@@ -27,6 +27,7 @@ const RateWise = () => {
 
   // 確保伺服端與客戶端初始渲染內容一致，避免 hydration 警告
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration 標記，必須在 effect 中設置
     setIsHydrated(true);
   }, []);
 
