@@ -1,5 +1,10 @@
-# 確保繁體中文訊息以 UTF-8 顯示，避免出現亂碼
-export LANG=zh_TW.UTF-8
-export LC_ALL=zh_TW.UTF-8
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
+# RateWise Pre-commit Hook
+echo "🔍 執行 Pre-commit 檢查..."
+
+# 1. Lint-staged (程式碼格式化與 Lint)
 pnpm lint-staged
+
+echo "\n✅ 所有 Pre-commit 檢查通過"
