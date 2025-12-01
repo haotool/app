@@ -19,7 +19,7 @@
 ### Technical
 
 - **Core Web Vitals 2025**: INP 監控已確認運作 (web-vitals 5.x)
-- **AI_SEARCH_OPTIMIZATION_SPEC**: 更新至 v2.0 (INP 取代 FID)
+- **AI 搜尋規格**: 重置為 docs/dev/013_ai_search_optimization_spec.md v1.0.0（聚焦 FAQ/HowTo 擴充與長尾落地頁模板）
 
 ---
 

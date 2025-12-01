@@ -19,6 +19,27 @@ import { SkeletonLoader } from '../../components/SkeletonLoader';
 import type { RateType } from './types';
 import { STORAGE_KEYS } from './storage-keys';
 
+const HOMEPAGE_FAQ = [
+  {
+    question: '匯率來源與更新頻率？',
+    answer: '匯率 100% 參考臺灣銀行牌告，包含現金/即期買入賣出價，每 5 分鐘自動同步一次。',
+  },
+  {
+    question: '支援哪些貨幣？',
+    answer:
+      '支援 30+ 種主要貨幣（TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等），可收藏常用貨幣。',
+  },
+  {
+    question: '可以離線使用嗎？',
+    answer: '可。PWA 首次開啟會快取資源與最近匯率，離線時仍可用上次更新的數據進行換算。',
+  },
+  {
+    question: '如何查看多幣別與歷史趨勢？',
+    answer:
+      '切換「多幣別」模式可同時查看所有支援貨幣；單幣別卡片可展開 7~25 天歷史趨勢線圖，輔助判斷換匯時機。',
+  },
+];
+
 const RateWise = () => {
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLElement>(null);
@@ -292,6 +313,52 @@ const RateWise = () => {
               />
             </div>
           </div>
+
+          {/* FAQ 精選摘要（對齊首頁 JSON-LD，提升 Rich Result 一致性） */}
+          <section className="mt-10">
+            <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                  ?
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800">常見問題精選</h2>
+                  <p className="text-sm text-slate-500">首頁摘要，完整內容請見 FAQ 頁面</p>
+                </div>
+              </div>
+              <dl className="space-y-4">
+                {HOMEPAGE_FAQ.map((item) => (
+                  <div
+                    key={item.question}
+                    className="border border-slate-100 rounded-2xl p-4 md:p-5 hover:shadow-sm transition-shadow bg-gradient-to-r from-slate-50 to-white"
+                  >
+                    <dt className="text-base md:text-lg font-semibold text-slate-800 mb-1">
+                      {item.question}
+                    </dt>
+                    <dd className="text-sm md:text-base text-slate-600 leading-relaxed">
+                      {item.answer}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="mt-4">
+                <Link
+                  to="/faq/"
+                  className="inline-flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-700 transition-colors"
+                >
+                  查看完整 FAQ
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </section>
 
           <footer className="mt-12 -mx-3 md:-mx-8 -mb-3 md:-mb-8 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
             <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">

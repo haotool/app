@@ -10,6 +10,7 @@ import CurrencyConverter from './features/ratewise/RateWise';
 const FAQ = lazy(() => import('./pages/FAQ'));
 const About = lazy(() => import('./pages/About'));
 const ColorSchemeComparison = lazy(() => import('./pages/ColorSchemeComparison'));
+const USDToTWD = lazy(() => import('./pages/USDToTWD'));
 // [SEO Fix 2025-11-25 Phase 2A-2] Lazy load 404 page with noindex SEO
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -62,6 +63,7 @@ function App() {
                 <Route path="/" element={<CurrencyConverter />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/usd-twd" element={<USDToTWD />} />
                 <Route path="/color-scheme" element={<ColorSchemeComparison />} />
                 {/* [SEO Fix 2025-11-25 Phase 2A-2] Catch-all 404 route with noindex */}
                 <Route path="*" element={<NotFound />} />

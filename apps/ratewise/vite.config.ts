@@ -607,7 +607,8 @@ export default defineConfig(({ mode }) => {
     },
     // [SEO Phase 2B-2: 2025-11-25] Vite React SSG Configuration
     // 參考: [Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
-    // 預渲染策略：只渲染爬蟲需要的頁面（首頁、FAQ、About）
+    // 預渲染策略：渲染首頁、FAQ、About、Guide + 13 個幣別落地頁
+    // [SEO Update: 2025-12-02] 同步 routes.tsx 的 getIncludedRoutes 配置
     ssgOptions: {
       script: 'async', // 非阻塞腳本載入
       formatting: 'beautify', // 美化 HTML 便於 debug
@@ -615,8 +616,26 @@ export default defineConfig(({ mode }) => {
       concurrency: 10, // 最大並行渲染數
       // 指定預渲染路徑
       includedRoutes(paths) {
-        // 預渲染首頁、FAQ、About、Guide；標準化尾斜線避免 /faq 與 /faq/ 不一致
-        const includedPaths = ['/', '/faq', '/about', '/guide'];
+        // 預渲染 17 條路徑：首頁、FAQ、About、Guide + 13 幣別落地頁
+        const includedPaths = [
+          '/',
+          '/faq',
+          '/about',
+          '/guide',
+          '/usd-twd',
+          '/jpy-twd',
+          '/eur-twd',
+          '/gbp-twd',
+          '/cny-twd',
+          '/krw-twd',
+          '/hkd-twd',
+          '/aud-twd',
+          '/cad-twd',
+          '/sgd-twd',
+          '/thb-twd',
+          '/nzd-twd',
+          '/chf-twd',
+        ];
         const normalize = (value) => {
           if (value === '/') return '/';
           return value.replace(/\/+$/, '');

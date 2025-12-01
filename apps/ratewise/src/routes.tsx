@@ -76,6 +76,201 @@ export const routes: RouteRecord[] = [
     },
     entry: 'src/pages/Guide.tsx',
   },
+  {
+    path: '/usd-twd',
+    lazy: async () => {
+      const module = await import('./pages/USDToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/USDToTWD.tsx',
+  },
+  {
+    path: '/jpy-twd',
+    lazy: async () => {
+      const module = await import('./pages/JPYToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/JPYToTWD.tsx',
+  },
+  {
+    path: '/eur-twd',
+    lazy: async () => {
+      const module = await import('./pages/EURToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/EURToTWD.tsx',
+  },
+  {
+    path: '/gbp-twd',
+    lazy: async () => {
+      const module = await import('./pages/GBPToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/GBPToTWD.tsx',
+  },
+  {
+    path: '/cny-twd',
+    lazy: async () => {
+      const module = await import('./pages/CNYToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/CNYToTWD.tsx',
+  },
+  {
+    path: '/krw-twd',
+    lazy: async () => {
+      const module = await import('./pages/KRWToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/KRWToTWD.tsx',
+  },
+  {
+    path: '/hkd-twd',
+    lazy: async () => {
+      const module = await import('./pages/HKDToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/HKDToTWD.tsx',
+  },
+  {
+    path: '/aud-twd',
+    lazy: async () => {
+      const module = await import('./pages/AUDToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/AUDToTWD.tsx',
+  },
+  {
+    path: '/cad-twd',
+    lazy: async () => {
+      const module = await import('./pages/CADToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/CADToTWD.tsx',
+  },
+  {
+    path: '/sgd-twd',
+    lazy: async () => {
+      const module = await import('./pages/SGDToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/SGDToTWD.tsx',
+  },
+  {
+    path: '/thb-twd',
+    lazy: async () => {
+      const module = await import('./pages/THBToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/THBToTWD.tsx',
+  },
+  {
+    path: '/nzd-twd',
+    lazy: async () => {
+      const module = await import('./pages/NZDToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/NZDToTWD.tsx',
+  },
+  {
+    path: '/chf-twd',
+    lazy: async () => {
+      const module = await import('./pages/CHFToTWD');
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry: 'src/pages/CHFToTWD.tsx',
+  },
   // ❌ 不預渲染內部工具頁面
   {
     path: '/color-scheme',
@@ -122,7 +317,25 @@ export const routes: RouteRecord[] = [
  */
 export function getIncludedRoutes(paths: string[]): string[] {
   // 只預渲染以下路徑（標準化尾斜線避免 /faq 與 /faq/ 不一致）
-  const includedPaths = ['/', '/faq', '/about', '/guide'];
+  const includedPaths = [
+    '/',
+    '/faq',
+    '/about',
+    '/guide',
+    '/usd-twd',
+    '/jpy-twd',
+    '/eur-twd',
+    '/gbp-twd',
+    '/cny-twd',
+    '/krw-twd',
+    '/hkd-twd',
+    '/aud-twd',
+    '/cad-twd',
+    '/sgd-twd',
+    '/thb-twd',
+    '/nzd-twd',
+    '/chf-twd',
+  ];
   const normalize = (value: string) => {
     if (value === '/') return '/';
     return value.replace(/\/+$/, '');

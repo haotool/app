@@ -19,6 +19,7 @@ const SITE_NAME = 'RateWise - 匯率好工具';
 // 路由配置 (必須與 routes.tsx getIncludedRoutes 保持一致)
 // @see apps/ratewise/src/routes.tsx
 // @see scripts/verify-sitemap-ssg.mjs
+// [SEO Update: 2025-12-02] 新增 13 個長尾幣別落地頁
 const routes = [
   {
     path: '/',
@@ -42,6 +43,85 @@ const routes = [
     path: '/guide',
     changefreq: 'monthly',
     priority: 0.7,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  // 長尾落地頁：幣別換算 (USD/JPY/EUR/GBP/CNY/KRW/HKD/AUD/CAD/SGD/THB/NZD/CHF)
+  {
+    path: '/usd-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/jpy-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/eur-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/gbp-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/cny-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/krw-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/hkd-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/aud-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/cad-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/sgd-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/thb-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/nzd-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
+    lastmod: new Date().toISOString().split('T')[0],
+  },
+  {
+    path: '/chf-twd',
+    changefreq: 'monthly',
+    priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
 ];

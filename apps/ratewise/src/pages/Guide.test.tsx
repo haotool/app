@@ -3,7 +3,7 @@
  * [BDD Approach: Red → Green → Refactor]
  *
  * Feature: 操作指南頁面 (HowTo Schema)
- * 依據: docs/dev/AI_SEARCH_OPTIMIZATION_SPEC.md Line 452-482
+ * 依據: docs/dev/013_ai_search_optimization_spec.md
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
