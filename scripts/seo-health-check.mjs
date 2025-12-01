@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * SEO Health Check Script
- * 
+ *
  * [BDD:2025-12-01] 自動化 SEO 健康檢查
  * [SEO:2025-12-01] 全局驗證 URL 一致性、尾斜線、大小寫
  */
@@ -35,23 +35,23 @@ let successCount = 0;
 
 function checkSitemap() {
   log.section('檢查 Sitemap.xml');
-  
+
   const sitemapPath = join(RATEWISE_DIR, 'public/sitemap.xml');
-  
+
   if (!existsSync(sitemapPath)) {
     log.error('sitemap.xml 不存在');
     errorCount++;
     return;
   }
-  
+
   const content = readFileSync(sitemapPath, 'utf-8');
   const urlRegex = /<loc>(.*?)<\/loc>/g;
-  const urls = [...content.matchAll(urlRegex)].map(match => match[1]);
-  
-  urls.forEach(url => {
+  const urls = [...content.matchAll(urlRegex)].map((match) => match[1]);
+
+  urls.forEach((url) => {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;
-    
+
     if (/[A-Z]/.test(pathname)) {
       log.error(`URL 包含大寫字母: ${url}`);
       errorCount++;
@@ -62,19 +62,19 @@ function checkSitemap() {
       successCount++;
     }
   });
-  
+
   log.success(`Sitemap 檢查完成：${urls.length} 個 URL`);
 }
 
 async function main() {
   console.log(`\n${colors.cyan}🔍 RateWise SEO Health Check${colors.reset}\n`);
-  
+
   checkSitemap();
-  
+
   console.log(`\n${colors.cyan}檢查結果：${colors.reset}`);
   log.success(`通過: ${successCount} 項`);
   log.error(`錯誤: ${errorCount} 項`);
-  
+
   if (errorCount > 0) {
     log.error(`發現 ${errorCount} 個錯誤`);
     process.exit(1);
@@ -84,7 +84,7 @@ async function main() {
   }
 }
 
-main().catch(error => {
+main().catch((error) => {
   log.error(`執行失敗: ${error.message}`);
   process.exit(1);
 });
