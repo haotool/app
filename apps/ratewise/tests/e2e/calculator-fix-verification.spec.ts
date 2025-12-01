@@ -25,9 +25,18 @@ const openCalculator = async (page: Page, trigger: 'from' | 'to' = 'from') => {
 };
 
 const openCalculatorClean = async (page: Page, trigger: 'from' | 'to' = 'from') => {
-  await page.getByTestId('amount-input').fill('0');
+  // 先填入 0 到金額輸入框
+  const amountInput = page.getByTestId('amount-input');
+  await amountInput.click();
+  await amountInput.fill('0');
+
+  // 打開計算機
   await openCalculator(page, trigger);
+
+  // 重置計算機狀態
   await resetCalculator(page);
+
+  // 驗證表達式已清空
   await expectExpression(page, /0|輸入數字或表達式/);
 };
 

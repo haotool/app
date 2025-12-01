@@ -224,6 +224,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   useEffect(() => {
     if (mode === 'single') {
       if (lastEdited === 'from') {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 響應式計算，必須在依賴變更時同步更新
         calculateFromAmount();
       } else {
         calculateToAmount();
@@ -244,6 +245,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
 
   useEffect(() => {
     if (mode !== 'multi') return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 多幣別模式下響應式重新計算所有金額
     setMultiAmounts((prev) => recalcMultiAmounts(baseCurrency, prev[baseCurrency] ?? '0', prev));
   }, [mode, baseCurrency, recalcMultiAmounts]);
 

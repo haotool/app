@@ -50,7 +50,8 @@ function App() {
           參考：fix/seo-phase2a-bdd-approach
           依據：[SEO 審查報告 2025-11-25] Meta Tags 重複衝突 Critical 問題
       */}
-      <Router basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      {/* [React Router v7] future flags 已成為默認行為，無需再指定 */}
+      <Router basename={basename}>
         <UrlNormalizer>
           <main role="main" className="min-h-screen">
             {/* [SEO Fix 2025-11-26] 移除 sr-only H1，讓各頁面自定義語義 H1
