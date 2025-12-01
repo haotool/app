@@ -47,9 +47,9 @@ RateWise 是一個專為台灣用戶設計的即時匯率換算工具（匯率�
 
 ### 核心內容連結
 - 首頁：https://app.haotool.org/ratewise/
-- 使用指南：https://app.haotool.org/ratewise/guide
-- 常見問題：https://app.haotool.org/ratewise/faq
-- 關於我們：https://app.haotool.org/ratewise/about
+- 使用指南：https://app.haotool.org/ratewise/guide/
+- 常見問題：https://app.haotool.org/ratewise/faq/
+- 關於我們：https://app.haotool.org/ratewise/about/
 
 ### 品牌語氣
 - **專業但友善**：提供準確資訊，同時保持易於理解的語言
