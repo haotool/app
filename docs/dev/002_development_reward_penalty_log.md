@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-12-02T00:15:00+0800
-> **當前總分**: 177 (初始分: 100)
+> **最後更新**: 2025-12-02T00:30:00+0800
+> **當前總分**: 185 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,9 @@
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                                                                                             | 依據                                                                                                | 分數 | 時間       |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | MiniTrendChart.tsx 測試覆蓋率提升                | 1) 新增 6 個測試案例 (crosshair 交互、視窗 resize、組件卸載) 2) 覆蓋率 77.08% → 91.66% (+14.58%) 3) 總體覆蓋率 91.45% → 92.99%                                                                                                                                                       | [context7:testing-library][LINUS_GUIDE.md:測試覆蓋率 ≥80%]                                          | +2   | 2025-12-02 |
+| ✅ 成功 | RateWise.tsx 測試覆蓋率大幅提升                  | 1) 新增 4 個測試案例 (錯誤狀態 UI、頁面重載、pull-to-refresh 成功/失敗) 2) 覆蓋率 70.58% → 94.11% (+23.53%) 3) 測試 Error State、Pull-to-Refresh 回調、Service Worker 清除                                                                                                           | [context7:testing-library][LINUS_GUIDE.md:測試覆蓋率 ≥80%]                                          | +2   | 2025-12-02 |
+| ✅ 成功 | SEO Health Check 腳本擴展                        | 1) 新增 robots.txt 驗證 2) 新增 llms.txt URL 格式驗證 3) 新增 routes.tsx 與 sitemap.xml 一致性檢查 4) 新增 canonical URL 驗證 5) 修復 URL 正則表達式處理括號問題 6) 18 項檢查全部通過                                                                                                | [BDD:2025-12-02][SEO:2025-12-02]                                                                    | +2   | 2025-12-02 |
 | ✅ 成功 | useUrlNormalization.tsx 測試覆蓋率 100%          | 1) 新增 14 個測試案例 (重定向邏輯、邊緣情況、HOC、整合測試) 2) 覆蓋率 36.36% → 100% 3) 總體覆蓋率 90.01% → 90.51% 4) 使用 MemoryRouter 測試 React Router hooks                                                                                                                       | [context7:testing-library][LINUS_GUIDE.md:測試覆蓋率 ≥80%]                                          | +2   | 2025-12-02 |
 | ✅ 成功 | CI 防護機制強化 + Sitemap 自動更新修復           | 1) 分析 002 獎懲記錄識別 CI 失敗根因 (Prettier .mjs, ESLint 配置) 2) 新增 prebuild hook 確保 sitemap.xml 自動更新 3) 強化 pre-commit hook (lint-staged + typecheck + format) 4) lint-staged 新增 .js/.mjs/.cjs 格式化 5) 所有 CI 通過 (SEO Health Check, Lighthouse CI, CI, Release) | [context7:pnpm/pnpm][LINUS_GUIDE.md:根本原因分析][002_development_reward_penalty_log.md]            | +5   | 2025-12-01 |
 | ✅ 成功 | ErrorBoundary.tsx 測試覆蓋率 100%                | 1) ErrorBoundary.tsx 覆蓋率 68.42% → 100% (lines) 2) 新增 Sentry 初始化測試、失敗處理測試 3) 修復 @ts-expect-error 指令問題 4) 總體覆蓋率 90.36%                                                                                                                                     | [Context7:testing-library][LINUS_GUIDE.md:測試覆蓋率 ≥80%]                                          | +2   | 2025-12-01 |

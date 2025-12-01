@@ -1,8 +1,9 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import RateWise from './RateWise';
+import * as pullToRefreshModule from '../../hooks/usePullToRefresh';
 
 // Test helper: wrap component with required providers
 // [fix:2025-11-10] 添加 MemoryRouter 支援 Link 組件
@@ -462,6 +463,166 @@ describe('RateWise Component', () => {
         expect(updatedFrom).toHaveValue('USD');
         expect(updatedTo).toHaveValue('TWD');
       });
+    });
+  });
+
+  describe('Error State', () => {
+    it('renders error UI when rates fail to load', async () => {
+      // Mock fetch to fail
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 500,
+          json: () => Promise.reject(new Error('Network error')),
+        } as Response),
+      );
+
+      renderWithProviders(<RateWise />);
+
+      // Wait for error state to appear
+      await waitFor(
+        () => {
+          expect(screen.getByText('匯率載入失敗')).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      // Verify error UI elements
+      expect(screen.getByText(/抱歉，我們無法從網路獲取最新的匯率資料/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /重新整理頁面/i })).toBeInTheDocument();
+    });
+
+    it('reloads page when refresh button is clicked in error state', async () => {
+      // Mock window.location.reload
+      const reloadMock = vi.fn();
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...window.location, reload: reloadMock },
+      });
+
+      // Mock fetch to fail
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 500,
+          json: () => Promise.reject(new Error('Network error')),
+        } as Response),
+      );
+
+      renderWithProviders(<RateWise />);
+
+      // Wait for error state
+      await waitFor(
+        () => {
+          expect(screen.getByText('匯率載入失敗')).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      // Click refresh button
+      const refreshButton = screen.getByRole('button', { name: /重新整理頁面/i });
+      fireEvent.click(refreshButton);
+
+      // Verify reload was called
+      expect(reloadMock).toHaveBeenCalled();
+    });
+  });
+
+  describe('Pull-to-Refresh', () => {
+    it('triggers refresh when pull-to-refresh is activated', async () => {
+      // Mock caches API
+      const mockCaches = {
+        keys: vi.fn().mockResolvedValue(['cache-1', 'cache-2']),
+        delete: vi.fn().mockResolvedValue(true),
+      };
+      Object.defineProperty(window, 'caches', {
+        configurable: true,
+        value: mockCaches,
+      });
+
+      // Mock navigator.serviceWorker
+      const mockServiceWorker = {
+        ready: Promise.resolve({
+          update: vi.fn().mockResolvedValue(undefined),
+        }),
+      };
+      Object.defineProperty(navigator, 'serviceWorker', {
+        configurable: true,
+        value: mockServiceWorker,
+      });
+
+      // Spy on usePullToRefresh to capture the callback
+      let capturedRefreshCallback: (() => void | Promise<void>) | null = null;
+      const usePullToRefreshSpy = vi.spyOn(pullToRefreshModule, 'usePullToRefresh');
+      usePullToRefreshSpy.mockImplementation((_ref, onRefresh) => {
+        capturedRefreshCallback = onRefresh;
+        return {
+          pullDistance: 0,
+          isRefreshing: false,
+          canTrigger: false,
+        };
+      });
+
+      renderWithProviders(<RateWise />);
+
+      // Wait for component to be ready
+      await waitFor(() => {
+        expect(capturedRefreshCallback).not.toBeNull();
+      });
+
+      // Trigger the pull-to-refresh callback
+      await act(async () => {
+        await capturedRefreshCallback?.();
+      });
+
+      // Verify caches were cleared
+      expect(mockCaches.keys).toHaveBeenCalled();
+      expect(mockCaches.delete).toHaveBeenCalledWith('cache-1');
+      expect(mockCaches.delete).toHaveBeenCalledWith('cache-2');
+
+      // Restore spy
+      usePullToRefreshSpy.mockRestore();
+    });
+
+    it('handles pull-to-refresh error gracefully', async () => {
+      // Mock caches API to throw error
+      const mockCaches = {
+        keys: vi.fn().mockRejectedValue(new Error('Cache error')),
+        delete: vi.fn(),
+      };
+      Object.defineProperty(window, 'caches', {
+        configurable: true,
+        value: mockCaches,
+      });
+
+      // Spy on usePullToRefresh to capture the callback
+      let capturedRefreshCallback: (() => void | Promise<void>) | null = null;
+      const usePullToRefreshSpy = vi.spyOn(pullToRefreshModule, 'usePullToRefresh');
+      usePullToRefreshSpy.mockImplementation((_ref, onRefresh) => {
+        capturedRefreshCallback = onRefresh;
+        return {
+          pullDistance: 0,
+          isRefreshing: false,
+          canTrigger: false,
+        };
+      });
+
+      renderWithProviders(<RateWise />);
+
+      // Wait for component to be ready
+      await waitFor(() => {
+        expect(capturedRefreshCallback).not.toBeNull();
+      });
+
+      // Trigger the pull-to-refresh callback - should not throw
+      await act(async () => {
+        await expect(capturedRefreshCallback?.()).resolves.not.toThrow();
+      });
+
+      // Restore spy
+      usePullToRefreshSpy.mockRestore();
     });
   });
 });
