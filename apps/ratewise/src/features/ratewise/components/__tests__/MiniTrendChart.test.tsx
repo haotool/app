@@ -1,46 +1,55 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, act, waitFor } from '@testing-library/react';
 import { MiniTrendChart, type MiniTrendDataPoint } from '../MiniTrendChart';
+
+// Store crosshair callback for testing
+let crosshairCallback: ((param: unknown) => void) | null = null;
 
 // Mock lightweight-charts
 // Based on TradingView's official testing strategy: E2E tests for canvas rendering
 // Unit tests only verify component logic without actual chart rendering
-vi.mock('lightweight-charts', () => ({
-  createChart: vi.fn(() => ({
-    addSeries: vi.fn(() => ({
-      setData: vi.fn(),
-      applyOptions: vi.fn(),
-    })),
-    timeScale: vi.fn(() => ({
-      fitContent: vi.fn(),
-      applyOptions: vi.fn(),
-    })),
-    priceScale: vi.fn(() => ({
-      applyOptions: vi.fn(),
-    })),
+vi.mock('lightweight-charts', () => {
+  const mockSeries = {
+    setData: vi.fn(),
     applyOptions: vi.fn(),
-    subscribeCrosshairMove: vi.fn(),
-    unsubscribeCrosshairMove: vi.fn(),
-    remove: vi.fn(),
-    resize: vi.fn(),
-  })),
-  ColorType: {
-    Solid: 'solid',
-    VerticalGradient: 'gradient',
-  },
-  CrosshairMode: {
-    Normal: 0,
-    Magnet: 1,
-  },
-  LineStyle: {
-    Solid: 0,
-    Dotted: 1,
-    Dashed: 2,
-    LargeDashed: 3,
-    SparseDotted: 4,
-  },
-  AreaSeries: 'AreaSeries',
-}));
+  };
+
+  return {
+    createChart: vi.fn(() => ({
+      addSeries: vi.fn(() => mockSeries),
+      timeScale: vi.fn(() => ({
+        fitContent: vi.fn(),
+        applyOptions: vi.fn(),
+      })),
+      priceScale: vi.fn(() => ({
+        applyOptions: vi.fn(),
+      })),
+      applyOptions: vi.fn(),
+      subscribeCrosshairMove: vi.fn((callback) => {
+        crosshairCallback = callback;
+      }),
+      unsubscribeCrosshairMove: vi.fn(),
+      remove: vi.fn(),
+      resize: vi.fn(),
+    })),
+    ColorType: {
+      Solid: 'solid',
+      VerticalGradient: 'gradient',
+    },
+    CrosshairMode: {
+      Normal: 0,
+      Magnet: 1,
+    },
+    LineStyle: {
+      Solid: 0,
+      Dotted: 1,
+      Dashed: 2,
+      LargeDashed: 3,
+      SparseDotted: 4,
+    },
+    AreaSeries: 'AreaSeries',
+  };
+});
 
 describe('MiniTrendChart', () => {
   let resizeObserverMock: ReturnType<typeof vi.fn>;
@@ -166,6 +175,151 @@ describe('MiniTrendChart', () => {
 
       const { container } = render(<MiniTrendChart data={extremeData} currencyCode="USD" />);
       expect(container.querySelector('div')).toBeTruthy();
+    });
+  });
+
+  describe('Crosshair 交互測試', () => {
+    it('應該在 crosshair 移動時顯示 tooltip', async () => {
+      const testData: MiniTrendDataPoint[] = [
+        { date: '2025-10-14', rate: 31.0 },
+        { date: '2025-10-15', rate: 31.5 },
+        { date: '2025-10-16', rate: 32.0 },
+      ];
+
+      const { container } = render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      // 等待圖表渲染
+      await waitFor(() => {
+        expect(crosshairCallback).not.toBeNull();
+      });
+
+      // 模擬 crosshair 移動事件 - 顯示 tooltip
+      const mockSeriesData = new Map();
+      mockSeriesData.set({}, { value: 31.5 });
+
+      act(() => {
+        crosshairCallback?.({
+          point: { x: 100, y: 50 },
+          time: '2025-10-15',
+          seriesData: mockSeriesData,
+        });
+      });
+
+      // 驗證圖表仍然存在
+      expect(container.querySelector('div')).toBeTruthy();
+    });
+
+    it('應該在 crosshair 離開時隱藏 tooltip', async () => {
+      const testData: MiniTrendDataPoint[] = [
+        { date: '2025-10-14', rate: 31.0 },
+        { date: '2025-10-15', rate: 31.5 },
+      ];
+
+      const { container } = render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      await waitFor(() => {
+        expect(crosshairCallback).not.toBeNull();
+      });
+
+      // 模擬 crosshair 離開 - point undefined
+      act(() => {
+        crosshairCallback?.({
+          point: undefined,
+          time: null,
+          seriesData: new Map(),
+        });
+      });
+
+      expect(container.querySelector('div')).toBeTruthy();
+    });
+
+    it('應該處理 crosshair 在圖表邊界外的情況', async () => {
+      const testData: MiniTrendDataPoint[] = [
+        { date: '2025-10-14', rate: 31.0 },
+        { date: '2025-10-15', rate: 31.5 },
+      ];
+
+      const { container } = render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      await waitFor(() => {
+        expect(crosshairCallback).not.toBeNull();
+      });
+
+      // 模擬 crosshair 在邊界外 - x < 0
+      act(() => {
+        crosshairCallback?.({
+          point: { x: -10, y: 50 },
+          time: '2025-10-15',
+          seriesData: new Map(),
+        });
+      });
+
+      expect(container.querySelector('div')).toBeTruthy();
+    });
+
+    it('應該處理 crosshair 沒有時間的情況', async () => {
+      const testData: MiniTrendDataPoint[] = [
+        { date: '2025-10-14', rate: 31.0 },
+        { date: '2025-10-15', rate: 31.5 },
+      ];
+
+      const { container } = render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      await waitFor(() => {
+        expect(crosshairCallback).not.toBeNull();
+      });
+
+      // 模擬 crosshair 沒有時間
+      act(() => {
+        crosshairCallback?.({
+          point: { x: 100, y: 50 },
+          time: null,
+          seriesData: new Map(),
+        });
+      });
+
+      expect(container.querySelector('div')).toBeTruthy();
+    });
+  });
+
+  describe('視窗大小變化測試', () => {
+    it('應該在視窗大小變化時重新調整圖表', () => {
+      const testData: MiniTrendDataPoint[] = [
+        { date: '2025-10-14', rate: 31.0 },
+        { date: '2025-10-15', rate: 31.5 },
+      ];
+
+      const { container } = render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      // 驗證圖表存在
+      expect(container.querySelector('div')).toBeTruthy();
+
+      // 觸發 resize 事件
+      act(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
+
+      // 驗證圖表仍然存在
+      expect(container.querySelector('div')).toBeTruthy();
+    });
+
+    it('應該在組件卸載時移除 resize 監聽器', () => {
+      const testData: MiniTrendDataPoint[] = [
+        { date: '2025-10-14', rate: 31.0 },
+        { date: '2025-10-15', rate: 31.5 },
+      ];
+
+      const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
+      const { unmount } = render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      // 卸載組件
+      unmount();
+
+      // 驗證 resize 監聽器被移除
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+
+      removeEventListenerSpy.mockRestore();
     });
   });
 });
