@@ -15,6 +15,7 @@ import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currency
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
 import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
+import { useCalculatorModal } from '../hooks/useCalculatorModal';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 25;
@@ -66,9 +67,19 @@ export const SingleConverter = ({
   const fromInputRef = useRef<HTMLInputElement>(null);
   const toInputRef = useRef<HTMLInputElement>(null);
 
-  // 計算機鍵盤狀態
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [calculatorField, setCalculatorField] = useState<'from' | 'to'>('from');
+  // 計算機鍵盤狀態（使用統一的 Hook）
+  const calculator = useCalculatorModal<'from' | 'to'>({
+    onConfirm: (field, result) => {
+      if (field === 'from') {
+        onFromAmountChange(result.toString());
+      } else {
+        onToAmountChange(result.toString());
+      }
+    },
+    getInitialValue: (field) => {
+      return field === 'from' ? parseFloat(fromAmount) || 0 : parseFloat(toAmount) || 0;
+    },
+  });
 
   // 獲取指定貨幣的匯率（優先使用 details + rateType，有 fallback 機制）
   const getRate = (currency: CurrencyCode): number => {
@@ -280,8 +291,7 @@ export const SingleConverter = ({
           <button
             type="button"
             onClick={() => {
-              setCalculatorField('from');
-              setShowCalculator(true);
+              calculator.openCalculator('from');
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all duration-200"
             aria-label="開啟計算機 (轉換金額)"
@@ -520,8 +530,7 @@ export const SingleConverter = ({
           <button
             type="button"
             onClick={() => {
-              setCalculatorField('to');
-              setShowCalculator(true);
+              calculator.openCalculator('to');
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-200"
             aria-label="開啟計算機 (轉換結果)"
@@ -560,20 +569,10 @@ export const SingleConverter = ({
 
       {/* 計算機鍵盤 Bottom Sheet */}
       <CalculatorKeyboard
-        isOpen={showCalculator}
-        onClose={() => setShowCalculator(false)}
-        onConfirm={(result) => {
-          // 將計算結果設置到對應的輸入框
-          if (calculatorField === 'from') {
-            onFromAmountChange(result.toString());
-          } else {
-            onToAmountChange(result.toString());
-          }
-          setShowCalculator(false);
-        }}
-        initialValue={
-          calculatorField === 'from' ? parseFloat(fromAmount) || 0 : parseFloat(toAmount) || 0
-        }
+        isOpen={calculator.isOpen}
+        onClose={calculator.closeCalculator}
+        onConfirm={calculator.handleConfirm}
+        initialValue={calculator.initialValue}
       />
     </>
   );

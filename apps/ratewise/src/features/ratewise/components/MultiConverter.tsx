@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { Star } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
@@ -6,6 +6,7 @@ import type { RateDetails } from '../hooks/useExchangeRates';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
+import { useCalculatorModal } from '../hooks/useCalculatorModal';
 
 interface MultiConverterProps {
   sortedCurrencies: CurrencyCode[];
@@ -36,23 +37,15 @@ export const MultiConverter = ({
 }: MultiConverterProps) => {
   const inputRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // 🔧 計算機 Modal 狀態
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [activeCalculatorCurrency, setActiveCalculatorCurrency] = useState<CurrencyCode | null>(
-    null,
-  );
-
-  /**
-   * 處理計算機確認結果
-   * @description 計算完成後更新對應貨幣的金額
-   */
-  const handleCalculatorConfirm = (result: number) => {
-    if (activeCalculatorCurrency) {
-      onAmountChange(activeCalculatorCurrency, result.toString());
-      setShowCalculator(false);
-      setActiveCalculatorCurrency(null);
-    }
-  };
+  // 🔧 計算機 Modal 狀態（使用統一的 Hook）
+  const calculator = useCalculatorModal<CurrencyCode>({
+    onConfirm: (currency, result) => {
+      onAmountChange(currency, result.toString());
+    },
+    getInitialValue: (currency) => {
+      return parseFloat(multiAmounts[currency]) || 0;
+    },
+  });
 
   // 檢測某個貨幣是否只有單一匯率類型（只有現金或只有即期）
   const hasOnlyOneRateType = (
@@ -223,14 +216,12 @@ export const MultiConverter = ({
                   tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation(); // 防止觸發行 onClick（切換基準貨幣）
-                    setActiveCalculatorCurrency(code);
-                    setShowCalculator(true);
+                    calculator.openCalculator(code);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      setActiveCalculatorCurrency(code);
-                      setShowCalculator(true);
+                      calculator.openCalculator(code);
                     }
                   }}
                   className="w-full text-right pr-3 pl-3 py-2 text-lg font-bold rounded-lg bg-transparent transition cursor-pointer focus:outline-none"
@@ -277,15 +268,12 @@ export const MultiConverter = ({
       </div>
 
       {/* 🔧 計算機 Modal */}
-      {showCalculator && activeCalculatorCurrency && (
+      {calculator.isOpen && calculator.activeField && (
         <CalculatorKeyboard
-          isOpen={showCalculator}
-          onClose={() => {
-            setShowCalculator(false);
-            setActiveCalculatorCurrency(null);
-          }}
-          onConfirm={handleCalculatorConfirm}
-          initialValue={parseFloat(multiAmounts[activeCalculatorCurrency] ?? '0')}
+          isOpen={calculator.isOpen}
+          onClose={calculator.closeCalculator}
+          onConfirm={calculator.handleConfirm}
+          initialValue={calculator.initialValue}
         />
       )}
     </>
