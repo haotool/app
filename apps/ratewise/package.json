@@ -48,7 +48,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.2.2",
-    "@vitest/coverage-v8": "^4.0.14",
+    "@vitest/coverage-v8": "^4.0.15",
     "autoprefixer": "^10.4.22",
     "jsdom": "^27.2.0",
     "lighthouse": "^13.0.1",
@@ -63,7 +63,7 @@
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-pwa": "^1.2.0",
     "vite-react-ssg": "^0.8.9",
-    "vitest": "^4.0.14",
+    "vitest": "^4.0.15",
     "web-vitals": "^5.1.0",
     "workbox-cli": "^7.4.0",
     "workbox-window": "^7.4.0"

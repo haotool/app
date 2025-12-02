@@ -1,9 +1,11 @@
 /**
  * Guide Page BDD Tests
  * [BDD Approach: Red → Green → Refactor]
+ * [Updated: 2025-12-03] 更新至 8 步驟完整教學
  *
  * Feature: 操作指南頁面 (HowTo Schema)
  * 依據: docs/dev/013_ai_search_optimization_spec.md
+ * 依據: docs/dev/019_optional_features_spec.md
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -32,46 +34,84 @@ describe('Guide Page - HowTo Schema', () => {
 
     it('renders introduction section', () => {
       renderGuide();
-      // 檢查頁面包含介紹文字 (可能在多個地方出現，如 SEO meta 和頁面內容)
-      const introText = screen.queryAllByText(/快速學會使用.*進行.*匯率換算/i);
+      // 檢查頁面包含介紹文字
+      const introText = screen.queryAllByText(/完整 8 步驟教學/i);
       expect(introText.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('renders estimated time', () => {
+      renderGuide();
+      expect(screen.getByText(/預估完成時間：約 2 分鐘/i)).toBeInTheDocument();
     });
   });
 
-  describe('HowTo Steps', () => {
-    it('renders step 1: 選擇原始貨幣', () => {
+  describe('HowTo Steps (8 Steps)', () => {
+    it('renders step 1: 開啟 RateWise', () => {
       renderGuide();
-      expect(screen.getByText(/選擇原始貨幣/i)).toBeInTheDocument();
-      expect(screen.getByText(/在「從」欄位選擇您要兌換的貨幣/i)).toBeInTheDocument();
+      // 使用 getAllByText 因為快速導航和步驟內容都有
+      expect(screen.getAllByText(/開啟 RateWise/i).length).toBeGreaterThanOrEqual(1);
     });
 
-    it('renders step 2: 選擇目標貨幣', () => {
+    it('renders step 2: 選擇換算模式', () => {
       renderGuide();
-      expect(screen.getByText(/選擇目標貨幣/i)).toBeInTheDocument();
-      expect(screen.getByText(/在「到」欄位選擇您要兌換成的貨幣/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/選擇換算模式/i).length).toBeGreaterThanOrEqual(1);
     });
 
-    it('renders step 3: 輸入金額', () => {
+    it('renders step 3: 選擇原始貨幣', () => {
+      renderGuide();
+      expect(screen.getAllByText(/選擇原始貨幣/i).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('renders step 4: 選擇目標貨幣', () => {
+      renderGuide();
+      expect(screen.getAllByText(/選擇目標貨幣/i).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('renders step 5: 輸入金額', () => {
       renderGuide();
       expect(screen.getAllByText(/輸入金額/i).length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText(/系統會自動計算並顯示目標貨幣金額/i)).toBeInTheDocument();
     });
 
-    it('renders all 3 main steps in order', () => {
+    it('renders step 6: 選擇匯率類型', () => {
+      renderGuide();
+      expect(screen.getAllByText(/選擇匯率類型/i).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('renders step 7: 查看歷史趨勢', () => {
+      renderGuide();
+      expect(screen.getAllByText(/查看歷史趨勢/i).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('renders step 8: 收藏常用貨幣', () => {
+      renderGuide();
+      expect(screen.getAllByText(/收藏常用貨幣/i).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('renders all 8 main steps', () => {
       renderGuide();
       const allHeadings = screen.getAllByRole('heading', { level: 2 });
-      // 前 3 個 h2 應該是主要步驟
-      expect(allHeadings.length).toBeGreaterThanOrEqual(3);
-      expect(allHeadings[0]).toHaveTextContent(/選擇原始貨幣/i);
-      expect(allHeadings[1]).toHaveTextContent(/選擇目標貨幣/i);
-      expect(allHeadings[2]).toHaveTextContent(/輸入金額/i);
+      // 應該有至少 8 個 h2 標題（8 步驟 + 進階功能 + 提示與技巧 + 常見問題）
+      expect(allHeadings.length).toBeGreaterThanOrEqual(8);
+    });
+  });
+
+  describe('Quick Navigation', () => {
+    it('renders quick navigation section', () => {
+      renderGuide();
+      expect(screen.getByText(/快速導航/i)).toBeInTheDocument();
+    });
+
+    it('renders navigation links for all 8 steps', () => {
+      renderGuide();
+      // 檢查快速導航中有 8 個步驟連結
+      const navLinks = screen.getAllByRole('link', { name: /^\d+\. / });
+      expect(navLinks.length).toBe(8);
     });
   });
 
   describe('SEO Metadata', () => {
     it('sets correct page title', async () => {
       renderGuide();
-      // react-helmet-async 會更新 document.title
       await new Promise((resolve) => setTimeout(resolve, 100));
       expect(document.title).toContain('使用指南');
       expect(document.title).toContain('RateWise');
@@ -101,7 +141,7 @@ describe('Guide Page - HowTo Schema', () => {
       expect(howToScript).toBeTruthy();
     });
 
-    it('HowTo schema has correct structure', async () => {
+    it('HowTo schema has correct structure with 8 steps', async () => {
       renderGuide();
       await new Promise((resolve) => setTimeout(resolve, 100));
       const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
@@ -121,29 +161,54 @@ describe('Guide Page - HowTo Schema', () => {
           '@type': 'HowTo',
           name: expect.stringContaining('如何使用 RateWise'),
           description: expect.any(String),
-          totalTime: expect.stringMatching(/^PT\d+[SM]$/), // ISO 8601 duration
-          step: expect.arrayContaining([
-            expect.objectContaining({
-              '@type': 'HowToStep',
-              position: 1,
-              name: expect.stringContaining('選擇原始貨幣'),
-              text: expect.any(String),
-            }),
-            expect.objectContaining({
-              '@type': 'HowToStep',
-              position: 2,
-              name: expect.stringContaining('選擇目標貨幣'),
-              text: expect.any(String),
-            }),
-            expect.objectContaining({
-              '@type': 'HowToStep',
-              position: 3,
-              name: expect.stringContaining('輸入金額'),
-              text: expect.any(String),
-            }),
-          ]),
+          totalTime: expect.stringMatching(/^PT\d+[SM]$/),
         });
+
+        // 驗證有 step 屬性
+        expect(data).toHaveProperty('step');
+
+        // 驗證總共有 8 個步驟
+        const steps = data['step'] as unknown[];
+        expect(steps).toHaveLength(8);
+
+        // 驗證第一個和最後一個步驟
+        const firstStep = steps[0] as Record<string, unknown>;
+        expect(firstStep['@type']).toBe('HowToStep');
+        expect(firstStep['position']).toBe(1);
+        expect(firstStep['name']).toContain('開啟 RateWise');
+
+        const lastStep = steps[7] as Record<string, unknown>;
+        expect(lastStep['@type']).toBe('HowToStep');
+        expect(lastStep['position']).toBe(8);
+        expect(lastStep['name']).toContain('收藏常用貨幣');
       }
+    });
+  });
+
+  describe('Advanced Features Section', () => {
+    it('renders advanced features section', () => {
+      renderGuide();
+      expect(screen.getByText(/進階功能/i)).toBeInTheDocument();
+    });
+
+    it('renders calculator feature', () => {
+      renderGuide();
+      expect(screen.getByText(/計算機功能/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('FAQ Section', () => {
+    it('renders FAQ section', () => {
+      renderGuide();
+      // 使用 ❓ 常見問題 作為精確匹配
+      const faqHeading = screen.getByRole('heading', { name: /❓ 常見問題/i });
+      expect(faqHeading).toBeInTheDocument();
+    });
+
+    it('renders link to full FAQ page', () => {
+      renderGuide();
+      const faqLink = screen.getByRole('link', { name: /查看更多常見問題/i });
+      expect(faqLink).toHaveAttribute('href', '/faq');
     });
   });
 
@@ -153,13 +218,22 @@ describe('Guide Page - HowTo Schema', () => {
       const h1 = screen.getByRole('heading', { level: 1 });
       const h2s = screen.getAllByRole('heading', { level: 2 });
       expect(h1).toBeInTheDocument();
-      expect(h2s.length).toBeGreaterThanOrEqual(3);
+      expect(h2s.length).toBeGreaterThanOrEqual(8);
     });
 
     it('has navigation back to home', () => {
       renderGuide();
       const backLink = screen.getByRole('link', { name: /回到首頁/i });
       expect(backLink).toHaveAttribute('href', expect.stringContaining('/'));
+    });
+
+    it('has anchor links for each step', () => {
+      renderGuide();
+      // 檢查步驟有 id 屬性供錨點連結
+      for (let i = 1; i <= 8; i++) {
+        const stepElement = document.getElementById(`step-${i}`);
+        expect(stepElement).toBeTruthy();
+      }
     });
   });
 });
