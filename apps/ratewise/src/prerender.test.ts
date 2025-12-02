@@ -99,12 +99,13 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
       expect(content).toContain('<meta name="keywords"');
     });
 
-    it('should have FAQ canonical URL with trailing slash', () => {
+    it('should NOT have hardcoded canonical (managed by SEOHelmet)', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
-      expect(content).toContain('<link rel="canonical"');
-      expect(content).toContain('/faq/');
+      // 架構決策 [2025-12-03]: canonical 由 SEOHelmet 動態插入，避免多頁面衝突
+      // 預渲染的 HTML 不包含 canonical，僅在客戶端渲染時由 React 插入
+      expect(content).not.toContain('<link rel="canonical"');
     });
 
     it('should have Open Graph tags for FAQ page', () => {
@@ -138,12 +139,13 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
       expect(content).toContain('<meta name="description"');
     });
 
-    it('should have About canonical URL with trailing slash', () => {
+    it('should NOT have hardcoded canonical (managed by SEOHelmet)', () => {
       if (!existsSync(aboutHtml)) return;
 
       const content = readFileSync(aboutHtml, 'utf-8');
-      expect(content).toContain('<link rel="canonical"');
-      expect(content).toContain('/about/');
+      // 架構決策 [2025-12-03]: canonical 由 SEOHelmet 動態插入，避免多頁面衝突
+      // 預渲染的 HTML 不包含 canonical，僅在客戶端渲染時由 React 插入
+      expect(content).not.toContain('<link rel="canonical"');
     });
 
     it('should have Open Graph tags for About page', () => {
@@ -249,24 +251,22 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
     const faqHtml = resolve(distPath, 'faq/index.html');
     const aboutHtml = resolve(distPath, 'about/index.html');
 
-    it('FAQ page should have proper hreflang tags', () => {
+    it('FAQ page should NOT have hardcoded hreflang (managed by SEOHelmet)', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
-      expect(content).toContain('hreflang="zh-TW"');
-      expect(content).toContain('hreflang="x-default"');
-      expect(content).not.toContain('hreflang="en"');
-      expect(content).not.toContain('hreflang="ja"');
+      // 架構決策 [2025-12-03]: hreflang 由 SEOHelmet 動態插入
+      // 預渲染的 HTML 不包含 hreflang，僅在客戶端渲染時由 React 插入
+      expect(content).not.toContain('hreflang=');
     });
 
-    it('About page should have proper hreflang tags', () => {
+    it('About page should NOT have hardcoded hreflang (managed by SEOHelmet)', () => {
       if (!existsSync(aboutHtml)) return;
 
       const content = readFileSync(aboutHtml, 'utf-8');
-      expect(content).toContain('hreflang="zh-TW"');
-      expect(content).toContain('hreflang="x-default"');
-      expect(content).not.toContain('hreflang="en"');
-      expect(content).not.toContain('hreflang="ja"');
+      // 架構決策 [2025-12-03]: hreflang 由 SEOHelmet 動態插入
+      // 預渲染的 HTML 不包含 hreflang，僅在客戶端渲染時由 React 插入
+      expect(content).not.toContain('hreflang=');
     });
 
     it('All pages should have proper charset and viewport', () => {
