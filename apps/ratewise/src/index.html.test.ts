@@ -7,10 +7,15 @@
  * - ✅ 首頁應該包含靜態 meta tags（description, keywords, robots）
  * - ✅ 首頁應該包含 Open Graph tags（og:*）
  * - ✅ 首頁應該包含 Twitter Card tags（twitter:*）
- * - ✅ 首頁應該包含 canonical URL
+ * - ⚠️ canonical URL 由 SEOHelmet 動態生成（避免多頁面衝突）
  * - ✅ 首頁應該包含 JSON-LD structured data
  *
- * 參考：fix/seo-phase2a-bdd-approach
+ * 架構決策 [2025-12-03]:
+ * - index.html 僅包含靜態內容（title、description、OG tags）
+ * - canonical 和 hreflang 完全由 SEOHelmet 動態管理（Single Source of Truth）
+ * - 避免硬編碼 canonical 導致多頁面衝突（React Error #418、Lighthouse SEO 失敗）
+ *
+ * 參考：fix/seo-phase2a-bdd-approach, fix/canonical-conflict
  * 依據：[SEO 審查報告 2025-11-25] Google 爬蟲讀取靜態 HTML
  */
 
@@ -52,9 +57,12 @@ describe('index.html - Static SEO Meta Tags (BDD Refactor)', () => {
       expect(indexHtmlContent).toContain('max-image-preview:large');
     });
 
-    it('should have canonical URL', () => {
-      expect(indexHtmlContent).toContain('<link rel="canonical"');
-      expect(indexHtmlContent).toContain('https://app.haotool.org/ratewise/');
+    it('should NOT have hardcoded canonical URL (managed by SEOHelmet)', () => {
+      // 架構改進 [2025-12-03]: canonical 由 SEOHelmet 動態生成，避免多頁面衝突
+      // 根因：index.html 硬編碼 canonical 與 FAQ/About 頁面動態 canonical 衝突
+      // 結果：Lighthouse SEO 失敗、React Error #418 (Hydration mismatch)
+      // 解決：移除 index.html 硬編碼，完全由 SEOHelmet 管理
+      expect(indexHtmlContent).not.toContain('<link rel="canonical"');
     });
   });
 
