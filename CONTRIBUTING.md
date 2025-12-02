@@ -148,7 +148,7 @@ footer (可選)
 # 好的 commit
 feat(converter): 新增歷史匯率趨勢圖
 
-實作 25 天歷史匯率趨勢圖表，使用 Chart.js
+實作 30 天歷史匯率趨勢圖表，使用 lightweight-charts (TradingView)
 - 新增 TrendChart 元件
 - 整合 exchangeRateHistoryService
 - 補充單元測試與 E2E 測試

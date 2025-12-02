@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-12-02T01:15:00+0800
-> **當前總分**: 200 (初始分: 100)
+> **最後更新**: 2025-12-02T23:20:00+0800
+> **當前總分**: 213 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                                                                                             | 依據                                                                                                | 分數 | 時間       |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | 計算機同步問題 BDD 修復 + 25→30 天全域更新       | 1) useCalculator.ts 新增 useEffect 同步 initialValue 2) 新增 3 個 BDD 測試案例驗證修復 3) 25 天→30 天歷史資料全域更新 (40+ 檔案) 4) FAQ/About 版本資訊更正 (Vite 7, Tailwind 3, lightweight-charts) 5) 移除「自訂期間」不實功能描述 6) 813/813 測試全通過                            | [BDD:紅燈→綠燈→重構][LINUS_GUIDE.md:Linus 三問][context7:react/docs]                                | +8   | 2025-12-02 |
 | ✅ 成功 | 測試覆蓋率全面提升 + 依賴升級 + E2E 驗證         | 1) evaluator.ts 83.08%→94.85% 2) validator.ts 87.09%→96.77% 3) exchangeRateHistoryService.ts Branch 65.71%→80% 4) 依賴升級: vite 7.2.6, motion 12.23.25, @sentry/react 10.27.0, workbox 7.4.0 5) 移除 @types/sharp (deprecated) 6) Calculator E2E 8/8 tests 通過                     | [context7:testing-library][LINUS_GUIDE.md:測試覆蓋率 ≥80%][Linus 三問:Patch 升級低風險]             | +11  | 2025-12-02 |
 | ✅ 成功 | MiniTrendChart.tsx 測試覆蓋率提升                | 1) 新增 6 個測試案例 (crosshair 交互、視窗 resize、組件卸載) 2) 覆蓋率 77.08% → 91.66% (+14.58%) 3) 總體覆蓋率 91.45% → 92.99%                                                                                                                                                       | [context7:testing-library][LINUS_GUIDE.md:測試覆蓋率 ≥80%]                                          | +2   | 2025-12-02 |
 | ✅ 成功 | RateWise.tsx 測試覆蓋率大幅提升                  | 1) 新增 4 個測試案例 (錯誤狀態 UI、頁面重載、pull-to-refresh 成功/失敗) 2) 覆蓋率 70.58% → 94.11% (+23.53%) 3) 測試 Error State、Pull-to-Refresh 回調、Service Worker 清除                                                                                                           | [context7:testing-library][LINUS_GUIDE.md:測試覆蓋率 ≥80%]                                          | +2   | 2025-12-02 |
@@ -240,3 +241,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
   | ✅ 成功 | Playwright 2025 根本性簡化 - 移除冗餘策略 | 1) **Fixtures 簡化** (fixtures/test.ts): 從 4 等待策略簡化為 1 語意檢查，移除 networkidle，使用 `getByRole` 而非 `waitForSelector`，超時從 10s → 3s，移除 60+ 行冗餘代碼 2) **RateWise Spec 簡化** (ratewise.spec.ts): 移除冗餘 `navigateHome` helper (30行)，修復嚴格模式衝突 (data-testid)，簡化效能/佈局測試 3) **根本性修復**: 違反 Playwright auto-waiting 原則、使用過時 API、networkidle 不可靠導致超時 | [context7:microsoft/playwright:2025-11-23]<br>[playwright.dev/docs/best-practices]<br>[semantive.com 2025 Fixtures]<br>[deviqa.com 2025 Testing Guide] | +7 | 2025-11-23 |
 
 | ✅ 成功 | 依賴升級: Vite 7.2.6, vite-plugin-pwa 1.2.0, @types/node 24.10.1, jsdom 27.2.0 | 安全升級 4 個套件，所有測試通過 (799 tests)，build 成功，解決 peer dependency 警告 | [context7:/vitejs/vite:2025-12-02] | +4 | 2025-12-02 |
+| ✅ 成功 | SEO 規格文檔 v3.0.0 完全重寫 + SEO TODO 系統建立 | 1) 發現 AI_SEARCH_OPTIMIZATION_SPEC.md v2.0.0 gap analysis (lines 771-886) 與實際程式碼嚴重不符 2) 逐一驗證 index.html, robots.txt, sitemap.xml, llms.txt 實際實作狀態 3) 完全重寫規格文檔為 v3.0.0 (922 lines)，新增當前實作狀態、優勢分析、劣勢分析、效能基準 4) 建立 SEO_TODO.md 包含 50+ 詳細任務（5 個 Phase）5) 建立幣別關鍵字策略（Top 10 currencies）6) 建立 Lighthouse CI 監測策略與回滾流程 | [Ultrathink Philosophy][BDD.md][002_development_reward_penalty_log.md:避免重複錯誤][Evidence-based] | +5 | 2025-12-02 |

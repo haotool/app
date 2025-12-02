@@ -147,7 +147,7 @@ describe('MiniTrendChart', () => {
   });
 
   describe('邊界條件測試', () => {
-    it('應該處理大量數據點（25天）', () => {
+    it('應該處理大量數據點（30天）', () => {
       const largeData: MiniTrendDataPoint[] = Array.from({ length: 25 }, (_, i) => ({
         date: `2025-10-${String(i + 1).padStart(2, '0')}`,
         rate: 30 + Math.random() * 2,

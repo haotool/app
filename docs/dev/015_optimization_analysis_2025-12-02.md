@@ -1,7 +1,8 @@
 # RateWise 最佳實踐落地分析報告
 
 > **建立時間**: 2025-12-02T01:15:00+08:00
-> **版本**: v1.0.0
+> **最後更新**: 2025-12-02T23:20:00+08:00
+> **版本**: v1.1.0
 > **狀態**: ✅ 已完成
 
 ---
@@ -18,6 +19,9 @@
 | 測試覆蓋率      | evaluator.ts, validator.ts, Layout.tsx, exchangeRateHistoryService.ts | ✅ 已完成 |
 | 依賴升級        | vite, motion, sentry, workbox                                         | ✅ 已完成 |
 | E2E 測試        | Calculator 功能驗證                                                   | ✅ 已完成 |
+| 計算機同步修復  | useCalculator.ts initialValue useEffect 同步                          | ✅ 已完成 |
+| 歷史資料擴展    | 25 天→30 天全域更新 (40+ 檔案)                                        | ✅ 已完成 |
+| 文檔 SSOT 同步  | FAQ/About/Guide 真實性驗證, 移除不實功能描述                          | ✅ 已完成 |
 
 ### 1.2 專案現況指標
 
@@ -74,6 +78,10 @@
 - [x] 移除 @types/sharp (deprecated)
 - [x] lucide-react 升級 0.441.0 → 0.555.0
 - [x] Calculator E2E 測試 8/8 通過
+- [x] **計算機同步 BDD 修復**: useCalculator.ts 新增 useEffect 同步 initialValue (3 個測試案例)
+- [x] **25→30 天全域更新**: 40+ 檔案同步變更 (源碼、測試、文檔)
+- [x] **FAQ/About 真實性修正**: Vite 7 / Tailwind 3 / lightweight-charts 版本資訊更正
+- [x] **移除不實功能描述**: 「自訂期間」匯率查詢功能從 FAQ 移除
 
 ### 3.2 待完成項目
 

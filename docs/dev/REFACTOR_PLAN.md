@@ -600,7 +600,7 @@ export const useCurrencyConverter = (options) => {
 
 ### Task 2: 歷史匯率功能 (2週)
 
-**目標**: 整合 25 天歷史數據
+**目標**: 整合 30 天歷史數據
 
 **實作步驟**：
 

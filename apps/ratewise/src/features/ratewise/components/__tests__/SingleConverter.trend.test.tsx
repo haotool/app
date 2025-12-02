@@ -147,7 +147,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
         await vi.runAllTimersAsync();
       });
 
-      expect(historyService.fetchHistoricalRatesRange).toHaveBeenCalledWith(25);
+      expect(historyService.fetchHistoricalRatesRange).toHaveBeenCalledWith(30);
       expect(historyService.fetchLatestRates).toHaveBeenCalled();
     });
 

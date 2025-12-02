@@ -49,7 +49,7 @@ curl -I https://app.haotool.org/ratewise/registerSW.js | grep -i cache-control
 curl -I https://app.haotool.org/ratewise/manifest.webmanifest | grep -i cache-control
 curl -I https://app.haotool.org/ratewise/index.html | grep -i cache-control
 
-# 驗證 25 天歷史資料完整性
+# 驗證 30 天歷史資料完整性
 pnpm verify:history
 
 # 驗證 precache 資產在 CDN 上是否存在
@@ -132,7 +132,7 @@ navigator.serviceWorker.register(swUrl, {
 
 ### 歷史資料完整性驗證
 
-- 透過 `pnpm verify:history` 自動抓取最近 25 天的 `history/YYYY-MM-DD.json`，確定
+- 透過 `pnpm verify:history` 自動抓取最近 30 天的 `history/YYYY-MM-DD.json`，確定
   - 兩個端點（jsDelivr + raw.githubusercontent.com）至少有一個可回應
   - 每天都包含指定貨幣（預設 USD）的匯率
   - 匯率有真實變化（至少 2 個不同數值），避免趨勢圖出現平線

@@ -180,7 +180,7 @@ describe('exchangeRateHistoryService', () => {
       }
     });
 
-    it('應該使用預設天數 25 天並遵守 MAX 限制', async () => {
+    it('應該使用預設天數 30 天並遵守 MAX 限制', async () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: () =>
@@ -193,7 +193,7 @@ describe('exchangeRateHistoryService', () => {
 
       const result = await fetchHistoricalRatesRange();
 
-      expect(result).toHaveLength(25);
+      expect(result).toHaveLength(30);
     });
 
     it('遇到連續缺失達閾值時應提前停止', async () => {

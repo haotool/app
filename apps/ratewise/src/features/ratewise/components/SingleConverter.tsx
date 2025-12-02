@@ -18,7 +18,7 @@ import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
-const MAX_TREND_DAYS = 25;
+const MAX_TREND_DAYS = 30;
 
 interface SingleConverterProps {
   fromCurrency: CurrencyCode;
