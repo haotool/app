@@ -4,7 +4,7 @@
 /* global fetch */
 /**
  * 驗證最近 N 天歷史匯率資料是否可讀取且具備實際波動
- * 需求來源：確保 25 天資料完整，可提供趨勢圖
+ * 需求來源：確保 30 天資料完整，可提供趨勢圖
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -116,7 +116,7 @@ async function main() {
   }
 
   if (distinctValues.size <= 1) {
-    console.error('❌ 近 25 天匯率無變化，請確認資料產線是否正常更新。');
+    console.error('❌ 近 30 天匯率無變化，請確認資料產線是否正常更新。');
     process.exitCode = 1;
   }
 

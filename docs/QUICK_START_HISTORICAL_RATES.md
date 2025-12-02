@@ -235,11 +235,11 @@ curl https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 2. **等待歷史資料累積**
    - 7 天後可嘗試實作簡單趨勢圖
-   - 25 天後資料完整，可實作完整功能
+   - 30 天後資料完整，可實作完整功能
 
 3. **實作趨勢圖功能**（未來）
    - 參考 `apps/ratewise/src/services/exchangeRateHistoryService.ts`
-   - 使用 Recharts/Chart.js/ECharts 繪製圖表
+   - 使用 lightweight-charts (TradingView) 繪製圖表
 
 ---
 

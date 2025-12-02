@@ -181,7 +181,7 @@ export default function About() {
               </div>
               <div className="flex items-center">
                 <span className="text-slate-600 font-semibold w-32">建置工具</span>
-                <span className="text-slate-700">Vite 6</span>
+                <span className="text-slate-700">Vite 7</span>
               </div>
               <div className="flex items-center">
                 <span className="text-slate-600 font-semibold w-32">PWA</span>
@@ -189,11 +189,11 @@ export default function About() {
               </div>
               <div className="flex items-center">
                 <span className="text-slate-600 font-semibold w-32">樣式</span>
-                <span className="text-slate-700">Tailwind CSS 4</span>
+                <span className="text-slate-700">Tailwind CSS 3</span>
               </div>
               <div className="flex items-center">
                 <span className="text-slate-600 font-semibold w-32">圖表</span>
-                <span className="text-slate-700">Recharts</span>
+                <span className="text-slate-700">lightweight-charts (TradingView)</span>
               </div>
               <div className="flex items-center">
                 <span className="text-slate-600 font-semibold w-32">SEO</span>

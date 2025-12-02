@@ -23,7 +23,7 @@
 ### 目標
 
 1. ✅ **保持 main 分支乾淨** - 所有匯率 commits 隔離到 `data` 分支
-2. ✅ **累積 25 天歷史資料** - 為未來趨勢圖功能做準備
+2. ✅ **累積 30 天歷史資料** - 為未來趨勢圖功能做準備
 3. ✅ **完全自動化** - 無需人工介入
 4. ✅ **零成本運行** - 開源專案免費使用 GitHub Actions
 
@@ -33,7 +33,7 @@
 
 - 使用獨立 `data` 分支存放匯率資料
 - 每天保存一個歷史檔案（`YYYY-MM-DD.json`）
-- 自動清理超過 25 天的舊資料
+- 自動清理超過 30 天的舊資料
 - 使用 `--amend` 避免 commit 歷史膨脹
 
 ---
@@ -92,7 +92,7 @@ data (資料分支) ← 完全隔離
       └─ history/
           ├─ 2025-10-13.json  # 每日歷史
           ├─ 2025-10-12.json
-          └─ ...              # 最多 25 天
+          └─ ...              # 最多 30 天
 ```
 
 ### CDN URLs
@@ -258,7 +258,7 @@ const historicalRates = await fetchHistoricalRates(yesterday);
 console.log(historicalRates.rates.USD);
 ```
 
-#### 讀取 25 天歷史資料
+#### 讀取 30 天歷史資料
 
 ```typescript
 import { fetchHistoricalRatesRange } from '@/services/exchangeRateHistoryService';
@@ -328,7 +328,7 @@ git push --force-with-lease origin data
  * 趨勢圖元件（未實作）
  *
  * 功能：
- * - 顯示過去 7/25 天匯率趨勢
+ * - 顯示過去 7/30 天匯率趨勢
  * - 支援多幣別對比
  * - 互動式圖表
  */
@@ -352,7 +352,7 @@ export const RateTrendChart = ({ currencyCode, days = 7 }) => {
 
 ### 建議圖表庫
 
-1. **Recharts** - React 原生圖表庫
+1. **lightweight-charts** - TradingView 金融圖表庫
 
    ```bash
    pnpm add recharts
@@ -407,7 +407,7 @@ const CDN_URLS = {
 **A**: 估算：
 
 - 每個檔案 ~2 KB
-- 25 天 × 2 KB = 60 KB
+- 30 天 × 2 KB = 60 KB
 - 完全在免費額度內（500 MB）
 
 ### Q5: 可以保留更多天數嗎？
@@ -415,7 +415,7 @@ const CDN_URLS = {
 **A**: 可以，修改 workflow 中的清理邏輯：
 
 ```yaml
-# 從 25 天改為 90 天
+# 從 30 天改為 90 天
 find public/rates/history/ -name "*.json" -type f -mtime +90 -delete
 ```
 

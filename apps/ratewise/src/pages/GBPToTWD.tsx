@@ -19,7 +19,7 @@ const FAQ_ENTRIES = [
   },
   {
     question: '英鎊匯率走勢如何查看？',
-    answer: '首頁點擊英鎊卡片可展開 7~25 天歷史趨勢圖，視覺化呈現匯率走勢，幫助判斷換匯時機。',
+    answer: '首頁點擊英鎊卡片可展開 7~30 天歷史趨勢圖，視覺化呈現匯率走勢，幫助判斷換匯時機。',
   },
 ];
 
@@ -37,7 +37,7 @@ const HOW_TO_STEPS = [
   {
     position: 3,
     name: '查看歷史趨勢',
-    text: '展開卡片可查看 7~25 天歷史趨勢圖，判斷換匯時機，也可切換現金/即期匯率。',
+    text: '展開卡片可查看 7~30 天歷史趨勢圖，判斷換匯時機，也可切換現金/即期匯率。',
   },
 ];
 
@@ -113,7 +113,7 @@ export default function GBPToTWD() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-600 mt-0.5">•</span>
-                  <span>趨勢圖：7~25 天歷史匯率走勢，判斷換匯時機。</span>
+                  <span>趨勢圖：7~30 天歷史匯率走勢，判斷換匯時機。</span>
                 </li>
               </ul>
             </div>

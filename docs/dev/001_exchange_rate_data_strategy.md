@@ -22,8 +22,8 @@
 - **data 分支管道驗證**  
   `update-latest-rates.yml` 與 `update-historical-rates.yml` 皆以 data 分支為唯一來源，確保 GitHub Actions 每 30 分鐘/每日產生最新與歷史檔案。實測 `raw.githubusercontent.com/haotool/app/data/...` 端點可即時取得資料。
 
-- **趨勢圖 25 天 + 即時合併**
-  - `SingleConverter.tsx` 透過 `fetchHistoricalRatesRange(25)` 取回前 25 天資料，再追加 `fetchLatestRates()` 當日最新數據，並限制圖表最多保留 25 筆。
+- **趨勢圖 30 天 + 即時合併**
+  - `SingleConverter.tsx` 透過 `fetchHistoricalRatesRange(30)` 取回前 30 天資料，再追加 `fetchLatestRates()` 當日最新數據，並限制圖表最多保留 30 筆。
   - 目的：保留完整歷史資料，同時確保今日即時值由 CI 最新 `latest.json` 提供。
 
 - **版本標籤流程修復**
@@ -41,7 +41,7 @@
   - 允許缺失資料時優雅降級（回傳空陣列）。
 
 - `apps/ratewise/src/features/ratewise/components/__tests__/SingleConverter.integration.test.tsx`
-  - 增補 `fetchLatestRates` 模擬與相關斷言，確保趨勢圖邏輯覆蓋 25 天與今日合併情境。
+  - 增補 `fetchLatestRates` 模擬與相關斷言，確保趨勢圖邏輯覆蓋 30 天與今日合併情境。
 
 - `.changeset/config.json`
   - `privatePackages.tag: true`，確保 `changeset tag` 會產生 `@app/ratewise@x.y.z`。

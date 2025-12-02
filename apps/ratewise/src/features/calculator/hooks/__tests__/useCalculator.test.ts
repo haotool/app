@@ -316,6 +316,40 @@ describe('useCalculator', () => {
       const { result } = renderHook(() => useCalculator(0));
       expect(result.current.expression).toBe('0');
     });
+
+    it('應在 initialValue 變更時重置表達式（BDD: 計算機同步問題修復）', () => {
+      // Given: 計算機已開啟並使用初始值 100
+      const { result, rerender } = renderHook(({ initialValue }) => useCalculator(initialValue), {
+        initialProps: { initialValue: 100 },
+      });
+      expect(result.current.expression).toBe('100');
+
+      // When: 使用者在輸入框輸入新值 500 後重新打開計算機
+      rerender({ initialValue: 500 });
+
+      // Then: 計算機應顯示新的初始值 500
+      expect(result.current.expression).toBe('500');
+    });
+
+    it('應在 initialValue 從有值變為 0 時正確重置', () => {
+      const { result, rerender } = renderHook(({ initialValue }) => useCalculator(initialValue), {
+        initialProps: { initialValue: 1000 },
+      });
+      expect(result.current.expression).toBe('1000');
+
+      rerender({ initialValue: 0 });
+      expect(result.current.expression).toBe('0');
+    });
+
+    it('應在 initialValue 從 undefined 變為有值時初始化', () => {
+      const { result, rerender } = renderHook(({ initialValue }) => useCalculator(initialValue), {
+        initialProps: { initialValue: undefined as number | undefined },
+      });
+      expect(result.current.expression).toBe('');
+
+      rerender({ initialValue: 250 });
+      expect(result.current.expression).toBe('250');
+    });
   });
 
   describe('計算錯誤處理', () => {

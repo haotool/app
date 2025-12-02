@@ -46,6 +46,25 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
   // 即時預覽狀態（獨立於主要結果）
   const [preview, setPreview] = useState<number | null>(null);
 
+  /**
+   * 同步 initialValue 變更
+   * @description 修復計算機與輸入框數值不同步問題
+   * @see BDD Test: 應在 initialValue 變更時重置表達式
+   *
+   * Linus 哲學：
+   * - ✅ 解決實際問題：輸入框與計算機數值不同步
+   * - ✅ 簡潔執念：只有 initialValue 變更時才重置
+   * - ✅ 實用主義：不影響使用者正在輸入的運算式
+   */
+  useEffect(() => {
+    setState({
+      expression: initialValue?.toString() ?? '',
+      result: null,
+      error: null,
+    });
+    setPreview(null);
+  }, [initialValue]);
+
   // 防抖表達式（50ms 延遲，極速響應 - iOS 標準！）
   // @updated 2025-11-19 - 極速優化（100ms → 50ms，< 60fps 一幀時間）
   const debouncedExpression = useDebounce(state.expression, 50);
