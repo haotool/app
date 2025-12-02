@@ -24,7 +24,26 @@ const PRODUCTION_BASE_URL =
   'https://app.haotool.org/ratewise';
 
 // SEO 關鍵路徑 (必須與 sitemap.xml 一致)
-const SEO_PATHS = ['/', '/faq/', '/about/', '/guide/'];
+// 包含 4 個核心頁面 + 13 個幣別頁面 = 17 頁面
+const SEO_PATHS = [
+  '/',
+  '/faq/',
+  '/about/',
+  '/guide/',
+  '/usd-twd/',
+  '/jpy-twd/',
+  '/eur-twd/',
+  '/gbp-twd/',
+  '/cny-twd/',
+  '/krw-twd/',
+  '/hkd-twd/',
+  '/aud-twd/',
+  '/cad-twd/',
+  '/sgd-twd/',
+  '/thb-twd/',
+  '/nzd-twd/',
+  '/chf-twd/',
+];
 
 // SEO 配置文件
 const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
