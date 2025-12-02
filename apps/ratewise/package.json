@@ -31,9 +31,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-error-boundary": "^6.0.0",
-    "react-router-dom": "^6.28.0",
-    "react-schemaorg": "^2.0.0",
-    "schema-dts": "^1.1.5"
+    "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",
