@@ -236,4 +236,80 @@ describe('Storage Utilities', () => {
       expect(() => readString('security-key', 'fallback')).toThrow('SecurityError');
     });
   });
+
+  describe('SSR 環境模擬 (動態重新載入模組)', () => {
+    /**
+     * [BDD:2025-12-03] SSR 環境測試
+     * [Context7:vitest-dev/vitest] 使用 vi.resetModules() + vi.stubGlobal()
+     *
+     * 目標：覆蓋 storage.ts 的 isBrowser 分支
+     * - Line 4: if (!isBrowser) return fallback; (readString)
+     * - Line 10: if (!isBrowser) return; (writeString)
+     * - Line 15: if (!isBrowser) return fallback; (readJSON)
+     * - Line 26: if (!isBrowser) return; (writeJSON)
+     */
+
+    it('readString 應在 SSR 環境返回 fallback', async () => {
+      // Given: 模擬 SSR 環境 (window undefined)
+      vi.resetModules();
+      vi.stubGlobal('window', undefined);
+
+      // When: 動態載入模組並呼叫 readString
+      const { readString: ssrReadString } = await import('../storage');
+      const result = ssrReadString('test-key', 'ssr-fallback');
+
+      // Then: 應返回 fallback
+      expect(result).toBe('ssr-fallback');
+
+      // Cleanup
+      vi.unstubAllGlobals();
+    });
+
+    it('writeString 應在 SSR 環境靜默返回', async () => {
+      // Given: 模擬 SSR 環境 (window undefined)
+      vi.resetModules();
+      vi.stubGlobal('window', undefined);
+
+      // When: 動態載入模組並呼叫 writeString
+      const { writeString: ssrWriteString } = await import('../storage');
+
+      // Then: 不應拋出錯誤
+      expect(() => ssrWriteString('test-key', 'test-value')).not.toThrow();
+
+      // Cleanup
+      vi.unstubAllGlobals();
+    });
+
+    it('readJSON 應在 SSR 環境返回 fallback', async () => {
+      // Given: 模擬 SSR 環境 (window undefined)
+      vi.resetModules();
+      vi.stubGlobal('window', undefined);
+
+      // When: 動態載入模組並呼叫 readJSON
+      const { readJSON: ssrReadJSON } = await import('../storage');
+      const fallback = { ssr: true };
+      const result = ssrReadJSON('test-key', fallback);
+
+      // Then: 應返回 fallback
+      expect(result).toEqual(fallback);
+
+      // Cleanup
+      vi.unstubAllGlobals();
+    });
+
+    it('writeJSON 應在 SSR 環境靜默返回', async () => {
+      // Given: 模擬 SSR 環境 (window undefined)
+      vi.resetModules();
+      vi.stubGlobal('window', undefined);
+
+      // When: 動態載入模組並呼叫 writeJSON
+      const { writeJSON: ssrWriteJSON } = await import('../storage');
+
+      // Then: 不應拋出錯誤
+      expect(() => ssrWriteJSON('test-key', { data: 'test' })).not.toThrow();
+
+      // Cleanup
+      vi.unstubAllGlobals();
+    });
+  });
 });
