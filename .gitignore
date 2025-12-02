@@ -83,6 +83,7 @@ lighthouse-report*.*
 *_SUMMARY.md
 *_FINAL_REPORT.md
 *_OPTIMIZATION_SUMMARY.md
+reports/lighthouse/
 
 # Screenshots and browser automation artifacts
 .playwright-mcp/
