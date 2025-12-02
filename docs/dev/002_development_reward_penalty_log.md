@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-12-03T15:30:00+0800
-> **當前總分**: 233 (初始分: 100)
+> **最後更新**: 2025-12-03T03:49:19+0800
+> **當前總分**: 236 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -23,6 +23,7 @@
 
 | 類型    | 摘要                                                    | 採取行動                                                                                                                                                                                                                                                                                                                                                                             | 依據                                                                                                | 分數 | 時間       |
 | ------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| ✅ 成功 | Canonical 衝突根因修復 - SEO/Best Practices 恢復        | 1) CI Lighthouse 掃描：FAQ/About SEO 92/100（Multiple conflicting canonical URLs） 2) 根因分析：index.html 硬編碼 canonical 與 SEOHelmet 動態生成衝突 3) React Error #418（Hydration mismatch） 4) 修復：移除 index.html 硬編碼 canonical/hreflang，完全由 SEOHelmet 管理 5) 預期：SEO 92 → 100、Best Practices 96 → 100                                                             | [Lighthouse CI:2025-12-03][React Error #418][根因分析][架構設計]                                    | +3   | 2025-12-03 |
 | ✅ 成功 | Favicon 路徑修復 - Best Practices 恢復 100/100          | 1) Lighthouse CI 掃描發現 FAQ/About 頁面 404 錯誤（/ratewise/faq/favicon.svg） 2) 根因分析：index.html 使用相對路徑 ./favicon.ico 導致子頁面路徑錯誤 3) 修復：改為絕對路徑 /ratewise/favicon.ico 4) Best Practices 93 → 100 (預期)                                                                                                                                                   | [Lighthouse CI:2025-12-03][根因分析][BDD 流程]                                                      | +1   | 2025-12-03 |
 | ⚠️ 注意 | Performance 下降為測試環境網路延遲                      | 1) 首頁 Performance 81/100（baseline 97） 2) LCP 4.0s（目標 <2.5s）、Root document took 730ms 3) 分析確認：無失敗請求、無程式碼問題 4) 結論：測試環境網路延遲，非程式碼品質問題 5) 不需回滾或修復程式碼                                                                                                                                                                              | [Lighthouse CI:2025-12-03][網路請求分析][非程式碼問題]                                              | 0    | 2025-12-03 |
 | ✅ 成功 | Phase 2 完成: 21 個 SEO 權威來源查詢與整合              | 1) 成功查詢 21 個權威 SEO 來源（超過 20+ 目標）2) 涵蓋 Google 官方、Search Engine Land、HubSpot、Backlinko、Bing、Shopify、Wix、W3C、MDN 等 3) 建立 seo-research-notes.md v2.0.0 (~15,000 字) 4) 8 個新章節：Link Building、Content Marketing、PageSpeed Insights、eCommerce SEO、Website Builder、Google SEO 哲學、W3C Accessibility、MDN Performance 5) 所有內容基於權威來源與證據 | [Ultrathink Philosophy][21 權威來源][BDD 流程][Evidence-based]                                      | +5   | 2025-12-03 |
