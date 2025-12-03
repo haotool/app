@@ -42,10 +42,9 @@ export default defineConfig(({ mode }) => {
   const buildTime = new Date().toISOString();
   const siteUrl = env.VITE_SITE_URL || 'https://app.haotool.org/nihonname/';
 
-  // [fix:2025-12-03] 修正 base path 邏輯
-  // CI 環境和生產環境都應該使用 /nihonname/
-  // 只有本地開發時才使用 /
-  const baseFromEnv = env.VITE_BASE_PATH || process.env['VITE_BASE_PATH'];
+  // [fix:2025-12-07] 與 ratewise 解耦，僅接受 app 專屬變數
+  // 生產/CI 預設 /nihonname/，本地開發使用 /
+  const baseFromEnv = env.VITE_NIHONNAME_BASE_PATH ?? process.env['VITE_NIHONNAME_BASE_PATH'];
   const base = baseFromEnv ?? (mode === 'production' || process.env['CI'] ? '/nihonname/' : '/');
 
   const manifestScope = base.endsWith('/') ? base : `${base}/`;
@@ -162,39 +161,10 @@ export default defineConfig(({ mode }) => {
           lang: 'zh-TW',
           icons: [
             {
-              src: 'icons/icon-72x72.png',
-              sizes: '72x72',
-              type: 'image/png',
-            },
-            {
-              src: 'icons/icon-96x96.png',
-              sizes: '96x96',
-              type: 'image/png',
-            },
-            {
-              src: 'icons/icon-128x128.png',
-              sizes: '128x128',
-              type: 'image/png',
-            },
-            {
-              src: 'icons/icon-144x144.png',
-              sizes: '144x144',
-              type: 'image/png',
-            },
-            {
-              src: 'icons/icon-152x152.png',
-              sizes: '152x152',
-              type: 'image/png',
-            },
-            {
               src: 'icons/icon-192x192.png',
               sizes: '192x192',
               type: 'image/png',
-            },
-            {
-              src: 'icons/icon-384x384.png',
-              sizes: '384x384',
-              type: 'image/png',
+              purpose: 'any',
             },
             {
               src: 'icons/icon-512x512.png',
@@ -203,7 +173,7 @@ export default defineConfig(({ mode }) => {
               purpose: 'any',
             },
             {
-              src: 'icons/icon-512x512-maskable.png',
+              src: 'icons/maskable-icon-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
