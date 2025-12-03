@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-12-04T00:30:00+0800
-> **當前總分**: 276 (初始分: 100)
+> **最後更新**: 2025-12-04T01:25:00+0800
+> **當前總分**: 286 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -266,3 +266,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 | ✅ 成功 | nihonname 諧音梗日文名資料驗證與修正 | 1) 對比巴哈姆特原始資料驗證 SURNAME_MAP 正確性 2) 重構 FUNNY_NAMES 陣列：移除不準確諧音、修正羅馬字拼音、清楚標示諧音來源語言 3) 新增分類：經典諧音、台語諧音、拆字梗、地名相關、歷史人物、文學風格、常見日本名、自然風格、優雅女性名 4) 添加完整 JSDoc 說明 5) 36/36 測試通過 | [巴哈姆特:sn=5844723][Wikipedia:皇民化運動][BDD 流程] | +3 | 2025-12-04 |
 | ✅ 成功 | nihonname BreadcrumbList JSON-LD schema 添加 | 1) SEOHelmet 新增 BreadcrumbItem 介面和 buildBreadcrumbSchema 函數 2) 支援 breadcrumbs prop 生成 BreadcrumbList JSON-LD 3) About 頁面添加麵包屑導航結構 4) 符合 Google Search Console 結構化資料要求 5) 36/36 測試通過 | [Schema.org:BreadcrumbList][Google Search Central:Breadcrumb][BDD 流程] | +3 | 2025-12-04 |
 | ✅ 成功 | nihonname 諧音梗資料庫擴充至 500 個 + 用戶自訂功能 | 1) 擴充諧音梗從 237 個到 500 個 (去重後) 2) 新增分類：職業相關、動物相關、感情相關、更多歷史人物、更多文學家、更多動漫角色 3) 整合周若珍老師分享的諧音梗 (ftnn.com.tw) 4) 添加用戶自訂諧音梗功能 (useCustomPunNames hook + localStorage) 5) 新增 CustomPunNameForm 組件 6) 添加 occupation 類型到 PunNameCategory 7) 39/39 測試通過 | [ftnn.com.tw/news/504566][BDD 流程][localStorage 持久化] | +5 | 2025-12-04 |
+| ✅ 成功 | nihonname 和紙（Washi）質感組件實現 + BDD 測試 | 1) 建立 WashiPaper 和 WashiCard 可重用組件 2) 實作 rice-paper 紋理疊加 (#fcfaf7 底色 + transparenttextures.com) 3) 整合 SVG Pattern (Seigaiha 青海波、Asanoha 麻葉) 4) 添加角落裝飾、浮水印、雙線邊框等高級效果 5) 完整 BDD 流程：🔴 RED (16 測試案例) → 🟢 GREEN (55/55 測試通過) → 🔵 REFACTOR 6) 整合到 Home.tsx Result Card 7) 建立 E2E 視覺回歸測試 (Playwright) 8) 遵循 Linus 簡潔原則：消除重複裝飾元素 | [BDD 流程][Linus KISS][transparenttextures.com][Context7:react/docs] | +10 | 2025-12-04 |

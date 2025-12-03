@@ -1,7 +1,8 @@
 /**
  * Home page for NihonName
  * Main name generator functionality
- * [UI/UX 2025-12-04] 點擊文字直接編輯諧音梗
+ * [UI/UX 2025-12-04] 高級和紙質感 + RollingText 動畫 + JapaneseDiceButton
+ * [Ref] 參考 nihonname---imperial-surname-generator 的設計
  */
 import { useState, useRef } from 'react';
 import {
@@ -19,6 +20,8 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { RollingText } from '../components/RollingText';
+import { JapaneseDiceButton } from '../components/JapaneseDiceButton';
 import {
   SURNAME_MAP,
   FUNNY_NAMES,
@@ -202,38 +205,6 @@ const convertToRomaji = (kanji: string): string => {
     .join(' ');
 };
 
-// --- 精緻骰子 SVG 組件 ---
-const FancyDiceIcon = ({
-  className,
-  isRolling = false,
-}: {
-  className?: string;
-  isRolling?: boolean;
-}) => (
-  <svg
-    viewBox="0 0 24 24"
-    className={`${className} ${isRolling ? 'animate-dice-roll' : ''}`}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    {/* 骰子本體 - 3D 效果 */}
-    <path d="M4 8l8-4 8 4v8l-8 4-8-4V8z" fill="currentColor" fillOpacity="0.1" />
-    <path d="M4 8l8-4 8 4v8l-8 4-8-4V8z" />
-    <path d="M12 4v8" opacity="0.5" />
-    <path d="M4 8l8 4 8-4" opacity="0.5" />
-    <path d="M12 12v8" opacity="0.3" />
-    {/* 骰子點數 */}
-    <circle cx="8" cy="10" r="1" fill="currentColor" />
-    <circle cx="12" cy="8" r="1" fill="currentColor" />
-    <circle cx="16" cy="10" r="1" fill="currentColor" />
-    <circle cx="10" cy="15" r="0.8" fill="currentColor" opacity="0.7" />
-    <circle cx="14" cy="15" r="0.8" fill="currentColor" opacity="0.7" />
-  </svg>
-);
-
 // --- SVG Components for High-End Aesthetics ---
 
 const SeigaihaPattern = ({
@@ -342,64 +313,48 @@ const SakuraPetal = ({ style }: { style: React.CSSProperties }) => (
   </svg>
 );
 
-// --- Enhanced Components ---
-
-// Pre-generate static petal data outside component to avoid re-computation and purity rules
+// Pre-generate static petal data
 const SAKURA_PETALS = Array.from({ length: 30 }, (_, i) => ({
   id: i,
-  left: (i * 3.33) % 100, // Deterministic distribution
-  animationDuration: 8 + (i % 5) * 2.4, // 8-20s range
-  animationDelay: (i % 8) * 1, // 0-7s range
-  size: 10 + (i % 6) * 2.5, // 10-25px range
-  rotation: (i * 36) % 360, // Deterministic rotation
-  color: i % 4 === 0 ? '#fda4af' : '#fecdd3', // 25% darker pink
+  left: (i * 3.33) % 100,
+  animationDuration: 8 + (i % 5) * 2.4,
+  animationDelay: (i % 8) * 1,
+  size: 10 + (i % 6) * 2.5,
+  rotation: (i * 36) % 360,
+  color: i % 4 === 0 ? '#fda4af' : '#fecdd3',
 }));
 
-const SakuraBackground = () => {
-  const petals = SAKURA_PETALS;
-
-  return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      {petals.map((petal) => (
-        <SakuraPetal
-          key={petal.id}
-          style={{
-            left: `${petal.left}%`,
-            width: `${petal.size}px`,
-            height: `${petal.size}px`,
-            color: petal.color,
-            top: '-50px',
-            animation: `fall ${petal.animationDuration}s linear infinite, sway ${petal.animationDuration / 2}s ease-in-out infinite alternate`,
-            animationDelay: `${petal.animationDelay}s`,
-            opacity: 0.6,
-          }}
-        />
-      ))}
-      <style>{`
-        @keyframes fall {
-          0% { top: -10%; transform: rotate(0deg); opacity: 0; }
-          10% { opacity: 0.8; }
-          90% { opacity: 0.8; }
-          100% { top: 110%; transform: rotate(360deg); opacity: 0; }
-        }
-        @keyframes sway {
-          from { margin-left: -15px; }
-          to { margin-left: 15px; }
-        }
-        @keyframes dice-roll {
-          0% { transform: rotate(0deg) scale(1); }
-          25% { transform: rotate(90deg) scale(1.1); }
-          50% { transform: rotate(180deg) scale(1); }
-          75% { transform: rotate(270deg) scale(1.1); }
-          100% { transform: rotate(360deg) scale(1); }
-        }
-        .animate-dice-roll {
-          animation: dice-roll 0.3s ease-in-out;
-        }
-      `}</style>
-    </div>
-  );
-};
+const SakuraBackground = () => (
+  <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    {SAKURA_PETALS.map((petal) => (
+      <SakuraPetal
+        key={petal.id}
+        style={{
+          left: `${petal.left}%`,
+          width: `${petal.size}px`,
+          height: `${petal.size}px`,
+          color: petal.color,
+          top: '-50px',
+          animation: `fall ${petal.animationDuration}s linear infinite, sway ${petal.animationDuration / 2}s ease-in-out infinite alternate`,
+          animationDelay: `${petal.animationDelay}s`,
+          opacity: 0.6,
+        }}
+      />
+    ))}
+    <style>{`
+      @keyframes fall {
+        0% { top: -10%; transform: rotate(0deg); opacity: 0; }
+        10% { opacity: 0.8; }
+        90% { opacity: 0.8; }
+        100% { top: 110%; transform: rotate(360deg); opacity: 0; }
+      }
+      @keyframes sway {
+        from { margin-left: -15px; }
+        to { margin-left: 15px; }
+      }
+    `}</style>
+  </div>
+);
 
 // Modal for Surname Lookup
 const LookupModal = ({
@@ -450,7 +405,7 @@ const LookupModal = ({
         </div>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto min-h-0 relative">
+        <div className="flex-1 overflow-y-auto min-h-0 relative bg-[url('https://www.transparenttextures.com/patterns/rice-paper-2.png')]">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
             <AsanohaPattern />
           </div>
@@ -594,11 +549,6 @@ export default function Home() {
   const romajiInputRef = useRef<HTMLInputElement>(null);
   const meaningInputRef = useRef<HTMLInputElement>(null);
 
-  // 骰子動畫狀態
-  const [isRollingPun, setIsRollingPun] = useState(false);
-  const [isRollingSurname, setIsRollingSurname] = useState(false);
-  const [isRollingGivenName, setIsRollingGivenName] = useState(false);
-
   // Custom pun names hook
   const { customPunNames, count: customCount, addCustomPunName } = useCustomPunNames();
 
@@ -719,15 +669,10 @@ export default function Home() {
 
   const rerollSurname = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (isRollingSurname) return;
-    setIsRollingSurname(true);
     const key = state.originalSurname;
     const possibleSurnames = SURNAME_MAP[key] ??
       SURNAME_MAP[key.substring(0, 1)] ?? [`${key}山`, `${key}田`, '田中', '佐藤', '鈴木'];
-    setTimeout(() => {
-      setState((prev) => ({ ...prev, japaneseSurname: getRandom(possibleSurnames) }));
-      setIsRollingSurname(false);
-    }, 300);
+    setState((prev) => ({ ...prev, japaneseSurname: getRandom(possibleSurnames) }));
   };
 
   const handleSelectName = (name: string) => {
@@ -737,22 +682,13 @@ export default function Home() {
 
   const rerollGivenName = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (isRollingGivenName) return;
-    setIsRollingGivenName(true);
-    setTimeout(() => {
-      setDisplayGivenName(getRandom(JAPANESE_GIVEN_NAMES));
-      setIsRollingGivenName(false);
-    }, 300);
+    setDisplayGivenName(getRandom(JAPANESE_GIVEN_NAMES));
   };
 
   const rerollPun = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (isRollingPun || editingField) return; // 編輯中不能隨機
-    setIsRollingPun(true);
-    setTimeout(() => {
-      setState((prev) => ({ ...prev, punName: getRandom(allPunNames) }));
-      setIsRollingPun(false);
-    }, 300);
+    if (editingField) return; // 編輯中不能隨機
+    setState((prev) => ({ ...prev, punName: getRandom(allPunNames) }));
   };
 
   const toggleUI = () => {
@@ -806,7 +742,7 @@ export default function Home() {
       />
 
       <div
-        className={`min-h-[100dvh] w-full bg-[#f5f5f4] text-stone-900 font-sans relative flex flex-col items-center overflow-hidden selection:bg-red-900 selection:text-white ${safeAreaTop} ${safeAreaBottom}`}
+        className={`h-[100dvh] w-full bg-[#f5f5f4] text-stone-900 font-sans relative flex flex-col overflow-hidden selection:bg-red-900 selection:text-white ${safeAreaTop}`}
         onClick={handleBackgroundClick}
       >
         <SakuraBackground />
@@ -819,23 +755,18 @@ export default function Home() {
         />
 
         {/* Background Decoration Pattern */}
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-[0.04] z-0">
-          <AsanohaPattern />
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-[0.03] z-0">
+          <SeigaihaPattern />
         </div>
 
-        {/* Loading Overlay */}
-        {loading && (
-          <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-500">
-            <div className="bg-stone-50/50 backdrop-blur-sm p-4 rounded-full border border-stone-100 shadow-xl">
-              <KamonIcon className="w-12 h-12 text-red-800 animate-spin opacity-80" />
-            </div>
-          </div>
-        )}
-
-        {/* Main Container - 垂直置中 + 上下留白 */}
-        <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center max-w-lg mx-auto transition-all duration-1000 px-5 md:px-0 gap-8 py-8 md:py-12">
+        {/* Main Container */}
+        <div
+          className={`relative z-10 w-full h-full flex flex-col items-center max-w-lg mx-auto transition-all duration-500 px-5 md:px-0 ${state.step === 'result' ? 'justify-center' : 'justify-start'}`}
+        >
           {/* Header */}
-          <header className="w-full text-center transition-all duration-700 ease-in-out z-20 shrink-0 mt-0 mb-4">
+          <header
+            className={`w-full text-center transition-all duration-700 ease-in-out z-20 shrink-0 ${state.step === 'result' ? (showUI ? 'mt-0 mb-6' : 'mt-0 mb-8') : 'mt-[12vh] md:mt-[15vh]'}`}
+          >
             <div className="flex flex-col items-center">
               <div
                 className={`transition-all duration-700 ${state.step === 'result' && !showUI ? 'opacity-100 scale-110 mb-4' : 'opacity-100 border-y border-red-900/30 py-1 mb-3'}`}
@@ -863,9 +794,7 @@ export default function Home() {
 
           {/* Input Step */}
           {state.step === 'input' && (
-            <div
-              className={`w-full flex flex-col items-center justify-center gap-8 transition-all duration-1000 ease-in-out ${loading ? 'opacity-0 translate-y-[-2rem] scale-95 blur-sm' : 'animate-in slide-in-from-bottom-10 fade-in duration-700'}`}
-            >
+            <div className="w-full flex-1 flex flex-col justify-start pt-10 animate-in slide-in-from-bottom-10 fade-in duration-700">
               <div className="bg-white/90 backdrop-blur-md shadow-2xl shadow-stone-300/50 border border-stone-100 rounded-2xl p-8 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10 pointer-events-none">
                   <SeigaihaPattern />
@@ -910,9 +839,7 @@ export default function Home() {
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
 
                     {loading ? (
-                      <span className="flex items-center space-x-2">
-                        <span className="tracking-widest">生成中...</span>
-                      </span>
+                      <KamonIcon className="w-6 h-6 animate-spin text-stone-400" />
                     ) : (
                       <>
                         <Flower size={18} className="text-red-500" />
@@ -935,19 +862,14 @@ export default function Home() {
           {/* Result Step */}
           {state.step === 'result' && (
             <div
-              className={`w-full flex flex-col justify-center items-center relative shrink-0 transition-all duration-500 ${showUI ? 'pb-8 md:pb-12' : 'pb-0'} animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-1000 ease-out fill-mode-forwards`}
+              className={`w-full flex flex-col justify-center items-center relative shrink-0 transition-all duration-500 ${showUI ? 'pb-8 md:pb-12' : 'pb-0'}`}
             >
-              {/* Main Result Card */}
+              {/* Main Result Card - 和紙質感 */}
               <div
-                className={`relative w-full transition-all duration-500 ${showUI ? 'scale-100' : 'scale-[1.02]'}`}
+                className={`relative w-full transition-all duration-500 ease-out ${showUI ? 'scale-100' : 'scale-[1.02]'}`}
               >
-                <div className="bg-[#fcfaf7] w-full shadow-2xl relative border-8 border-double border-stone-200 p-6 md:p-10 text-center flex flex-col items-center justify-center rounded-sm ring-1 ring-black/5 overflow-hidden">
-                  {/* Card Background Texture */}
-                  <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
-                    <SeigaihaPattern />
-                  </div>
-
-                  {/* Decorative Elements */}
+                <div className="bg-[#fcfaf7] w-full shadow-2xl relative border-8 border-double border-stone-200 p-6 md:p-10 text-center flex flex-col items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/rice-paper-2.png')] rounded-sm animate-in zoom-in-95 duration-700 ring-1 ring-black/5">
+                  {/* Corner Decorations */}
                   <div className="absolute top-4 left-4 w-16 h-16 border-t border-l border-red-900/20"></div>
                   <div className="absolute bottom-4 right-4 w-16 h-16 border-b border-r border-red-900/20"></div>
                   <div className="absolute top-4 right-4 text-red-900/10">
@@ -955,7 +877,7 @@ export default function Home() {
                   </div>
 
                   {/* Generated Name Block */}
-                  <div className="relative py-12 w-full border-b border-stone-800/10 mb-8 z-10">
+                  <div className="relative py-12 w-full border-b border-stone-800/10 mb-8">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#fcfaf7] px-4 text-red-800">
                       <Flower size={24} fill="currentColor" className="opacity-80" />
                     </div>
@@ -968,55 +890,45 @@ export default function Home() {
                     </div>
 
                     <div className="flex flex-col items-center justify-center space-y-4">
-                      <div className="flex flex-wrap justify-center items-end gap-3 md:gap-4">
-                        {/* Surname */}
-                        <button
-                          onClick={showUI ? rerollSurname : undefined}
-                          className="group relative text-center px-2"
-                        >
+                      <div className="flex flex-wrap justify-center items-end gap-2 md:gap-4 relative">
+                        {/* Surname - 點擊文字改姓，hover 顯示骰子 */}
+                        <div className="group relative text-center px-1 flex flex-col items-center">
                           <span
-                            className={`block font-jp font-bold text-red-900 leading-none group-hover:scale-105 transition-all drop-shadow-sm ${getFontSizeClass(state.japaneseSurname)} ${isRollingSurname ? 'animate-pulse opacity-50' : ''}`}
+                            className={`block font-jp font-bold text-red-900 leading-none drop-shadow-sm ${getFontSizeClass(state.japaneseSurname)}`}
                           >
-                            {state.japaneseSurname}
+                            <RollingText text={state.japaneseSurname} />
                           </span>
                           {showUI && (
-                            <span className="absolute -bottom-6 left-0 right-0 text-[10px] text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center items-center">
-                              <FancyDiceIcon
-                                className="w-3 h-3 mr-1"
-                                isRolling={isRollingSurname}
-                              />
-                              重骰
-                            </span>
+                            <div className="absolute -left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <JapaneseDiceButton onClick={rerollSurname} label="改姓" size="md" />
+                            </div>
                           )}
-                        </button>
+                        </div>
 
-                        {/* Given Name */}
-                        <button
-                          onClick={showUI ? rerollGivenName : undefined}
-                          className="group relative text-center px-2"
-                        >
+                        {/* Given Name - 點擊文字改名，hover 顯示骰子 */}
+                        <div className="group relative text-center px-1 flex flex-col items-center">
                           <span
-                            className={`block font-jp font-bold text-stone-800 leading-none group-hover:scale-105 transition-all drop-shadow-sm ${getFontSizeClass(displayGivenName)} ${isRollingGivenName ? 'animate-pulse opacity-50' : ''}`}
+                            className={`block font-jp font-bold text-stone-800 leading-none drop-shadow-sm ${getFontSizeClass(displayGivenName)}`}
                           >
-                            {displayGivenName}
+                            <RollingText text={displayGivenName} />
                           </span>
                           {showUI && (
-                            <span className="absolute -bottom-6 left-0 right-0 text-[10px] text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center items-center">
-                              <FancyDiceIcon
-                                className="w-3 h-3 mr-1"
-                                isRolling={isRollingGivenName}
+                            <div className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <JapaneseDiceButton
+                                onClick={rerollGivenName}
+                                label="改名"
+                                size="md"
                               />
-                              重骰
-                            </span>
+                            </div>
                           )}
-                        </button>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Pun Name Section - 點擊文字編輯，點擊骰子隨機 */}
                   <div
-                    className={`w-full bg-stone-100/80 p-5 rounded border-l-4 border-l-amber-500 border-stone-200 relative transition-all text-left flex items-center justify-between shadow-inner z-10 ${!showUI ? 'opacity-90 grayscale-[0.5]' : ''}`}
+                    className={`w-full bg-stone-100/80 p-5 rounded border-l-4 border-l-amber-500 border-stone-200 relative group transition-all text-left flex items-center justify-between shadow-inner ${!showUI ? 'opacity-90 grayscale-[0.5]' : ''}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex-1">
@@ -1042,7 +954,7 @@ export default function Home() {
                             className="text-sm text-amber-700 font-bold font-serif tracking-wide hover:bg-amber-100 px-2 py-0.5 rounded transition-colors cursor-text"
                             title="點擊編輯羅馬拼音"
                           >
-                            {state.punName.romaji}
+                            <RollingText text={state.punName.romaji} />
                           </button>
                         )}
                       </div>
@@ -1090,10 +1002,10 @@ export default function Home() {
                       ) : (
                         <button
                           onClick={(e) => startEditing('kanji', e)}
-                          className={`text-4xl font-bold text-stone-800 font-jp mb-2 tracking-wide hover:bg-amber-100/50 px-2 py-1 -mx-2 rounded transition-colors cursor-text block ${isRollingPun ? 'animate-pulse opacity-50' : ''}`}
+                          className="text-4xl font-bold text-stone-800 font-jp mb-2 tracking-wide hover:bg-amber-100/50 px-2 py-1 -mx-2 rounded transition-colors cursor-text block"
                           title="點擊自訂諧音名"
                         >
-                          {state.punName.kanji}
+                          <RollingText text={state.punName.kanji} />
                         </button>
                       )}
 
@@ -1120,7 +1032,7 @@ export default function Home() {
                               title="點擊編輯解釋"
                             >
                               <Sparkles size={12} className="mr-1.5 text-amber-500" />
-                              {state.punName.meaning}
+                              <RollingText text={state.punName.meaning} />
                             </button>
                           )}
                         </div>
@@ -1129,18 +1041,14 @@ export default function Home() {
 
                     {/* 骰子按鈕 - 點擊隨機換名 */}
                     {showUI && !editingField && (
-                      <button
-                        onClick={rerollPun}
-                        className="text-stone-300 hover:text-amber-500 transition-all pl-4 border-l border-stone-200 ml-4 hover:scale-110 active:scale-95"
-                        title="隨機換一個"
-                      >
-                        <FancyDiceIcon className="w-8 h-8" isRolling={isRollingPun} />
-                      </button>
+                      <div className="pl-4 border-l border-stone-200 ml-4 flex flex-col items-center">
+                        <JapaneseDiceButton onClick={rerollPun} label="諧音" size="md" />
+                      </div>
                     )}
                   </div>
 
                   {/* Footer Stamp */}
-                  <div className="mt-8 opacity-60 z-10">
+                  <div className="mt-8 opacity-60">
                     <div className="border border-red-900 px-4 py-1.5 inline-block">
                       <span className="text-red-900 text-[10px] tracking-[0.3em] font-serif font-bold">
                         令和七年・改名局
@@ -1165,17 +1073,17 @@ export default function Home() {
           {/* Footer Actions */}
           {state.step === 'result' && (
             <div
-              className={`w-full max-w-sm mx-auto shrink-0 transition-all duration-500 ease-out transform ${showUI ? 'opacity-100 translate-y-0 pb-6' : 'opacity-0 translate-y-10 pointer-events-none h-0 pb-0 overflow-hidden'}`}
+              className={`w-full max-w-sm mx-auto shrink-0 transition-all duration-500 ease-out transform ${showUI ? 'opacity-100 translate-y-0 pb-6' : 'opacity-0 translate-y-10 pointer-events-none h-0 pb-0 overflow-hidden'} ${safeAreaBottom}`}
             >
-              <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowLookup(true);
                   }}
-                  className="bg-white border border-stone-200 text-stone-700 py-3 rounded-xl font-bold shadow-sm flex items-center justify-center space-x-1.5 hover:bg-stone-50 hover:border-red-200 hover:text-red-800 transition-all active:scale-[0.97] text-xs group"
+                  className="bg-white border border-stone-200 text-stone-700 py-3.5 rounded-xl font-bold shadow-sm flex items-center justify-center space-x-2 hover:bg-stone-50 hover:border-red-200 hover:text-red-800 transition-all active:scale-[0.97] text-sm group"
                 >
-                  <BookOpen size={16} className="group-hover:text-red-600 transition-colors" />
+                  <BookOpen size={18} className="group-hover:text-red-600 transition-colors" />
                   <span>族譜查證</span>
                 </button>
 
@@ -1184,10 +1092,10 @@ export default function Home() {
                     e.stopPropagation();
                     toggleUI();
                   }}
-                  className="bg-stone-800 text-stone-100 py-3 rounded-xl font-bold shadow-lg shadow-stone-400/50 flex items-center justify-center space-x-1.5 hover:bg-stone-700 transition-all active:scale-[0.97] text-xs"
+                  className="bg-stone-800 text-stone-100 py-3.5 rounded-xl font-bold shadow-lg shadow-stone-400/50 flex items-center justify-center space-x-2 hover:bg-stone-700 transition-all active:scale-[0.97] text-sm"
                 >
-                  <Camera size={16} />
-                  <span>截圖模式</span>
+                  <Camera size={18} />
+                  <span>純淨模式</span>
                 </button>
               </div>
 
@@ -1230,7 +1138,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Minimal Footer - 日式簡約風格，固定在底部 */}
+        {/* Minimal Footer - 日式簡約風格 */}
         <footer className="w-full shrink-0 py-3 text-center relative z-20">
           <div className="flex items-center justify-center gap-2 text-[10px] text-stone-400">
             <a
