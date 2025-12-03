@@ -207,11 +207,6 @@ export default defineConfig(({ mode }) => {
       },
       chunkSizeWarningLimit: 600,
     },
-    css: {
-      postcss: {
-        plugins: [],
-      },
-    },
     ssgOptions: {
       script: 'async',
       formatting: 'minify',
