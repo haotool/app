@@ -89,7 +89,9 @@ describe('Home Page', () => {
       const button = screen.getByRole('button', { name: /改名実行/i });
       fireEvent.click(button);
 
-      expect(screen.getByText('生成中...')).toBeInTheDocument();
+      // 載入狀態使用 KamonIcon 動畫（animate-spin 類別）
+      const loadingIcon = document.querySelector('.animate-spin');
+      expect(loadingIcon).toBeInTheDocument();
     });
   });
 
