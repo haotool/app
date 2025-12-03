@@ -1,0 +1,43 @@
+{
+  "name": "NihonName 皇民化改姓生成器",
+  "short_name": "NihonName",
+  "description": "探索1940年代台灣皇民化運動的歷史改姓對照",
+  "start_url": "/nihonname/",
+  "scope": "/nihonname/",
+  "display": "standalone",
+  "background_color": "#f5f5f4",
+  "theme_color": "#7c2d12",
+  "orientation": "portrait-primary",
+  "lang": "zh-TW",
+  "dir": "ltr",
+  "categories": ["education", "entertainment", "utilities"],
+  "icons": [
+    {
+      "src": "/nihonname/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/nihonname/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/nihonname/icons/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/nihonname/screenshots/home.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "NihonName Home Screen"
+    }
+  ]
+}

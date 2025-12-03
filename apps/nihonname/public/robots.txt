@@ -1,0 +1,21 @@
+# NihonName - Robots.txt
+# https://app.haotool.org/nihonname/
+
+User-agent: *
+Allow: /
+
+# AI Crawlers
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: PerplexityBot
+User-agent: anthropic-ai
+Allow: /
+
+# Sitemaps
+Sitemap: https://app.haotool.org/nihonname/sitemap.xml
+Sitemap: https://app.haotool.org/nihonname/sitemap-index.xml
+
+# LLMs.txt reference
+# See: https://app.haotool.org/nihonname/llms.txt
+
