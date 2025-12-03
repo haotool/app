@@ -7,6 +7,12 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
   /* Japanese style fonts */
   @font-face {
     font-family: 'Noto Serif JP';
@@ -26,6 +32,12 @@
 
   body {
     @apply bg-stone-100 text-stone-900;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  #root {
+    min-height: 100dvh;
   }
 
   /* Japanese font family */

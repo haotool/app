@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-12-04T00:46:00+0800
-> **當前總分**: 269 (初始分: 100)
+> **最後更新**: 2025-12-04T00:10:00+0800
+> **當前總分**: 272 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -261,3 +261,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 | ✅ 成功 | nihonname 生產環境部署獨立性修復 | 1) 根因分析: Dockerfile 未建置 nihonname 專案 2) 更新 root package.json 添加 build:nihonname script 3) 修改 Dockerfile 執行雙專案建置 (ratewise + nihonname) 4) 配置 Nginx location /nihonname/ 使用 root + try_files SPA 路由 5) 更新 SEO 檔案 alias 路徑 (sitemap, robots, llms, manifest) 6) 修正 vite.config.ts base 路徑邏輯確保生產環境正確 | [context7:nginx.org/docs:2025-12-03][Monorepo 部署最佳實踐] | +5 | 2025-12-04 |
 | ✅ 成功 | nihonname base path 根因修復 | 1) 根因分析: Dockerfile 全局設置 VITE_BASE_PATH=/ratewise/ 導致 nihonname 也使用錯誤路徑 2) 修復: 移除全局 VITE_BASE_PATH 環境變數 3) 分別在建置時設置: VITE_BASE_PATH=/ratewise/ pnpm build:ratewise 和 VITE_BASE_PATH=/nihonname/ pnpm build:nihonname 4) 本地 Docker 建置驗證通過 | [context7:/vitejs/vite:2025-12-04][根因分析] | +3 | 2025-12-04 |
 | ✅ 成功 | nihonname 生產環境部署完成 | 1) Zeabur 自動偵測並重建 2) 生產環境資源路徑正確 /nihonname/assets/... 3) 功能測試通過: 林→淡水夕照子 4) SEO 檔案全部 200 (sitemap, robots, manifest) 5) About 頁面正常 | [context7:/vitejs/vite:2025-12-04][生產驗證] | +5 | 2025-12-04 |
+| ✅ 成功 | nihonname 諧音梗日文名資料驗證與修正 | 1) 對比巴哈姆特原始資料驗證 SURNAME_MAP 正確性 2) 重構 FUNNY_NAMES 陣列：移除不準確諧音、修正羅馬字拼音、清楚標示諧音來源語言 3) 新增分類：經典諧音、台語諧音、拆字梗、地名相關、歷史人物、文學風格、常見日本名、自然風格、優雅女性名 4) 添加完整 JSDoc 說明 5) 36/36 測試通過 | [巴哈姆特:sn=5844723][Wikipedia:皇民化運動][BDD 流程] | +3 | 2025-12-04 |
