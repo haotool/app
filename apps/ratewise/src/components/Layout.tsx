@@ -17,6 +17,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const isBrowser = typeof window !== 'undefined';
   const [UpdatePrompt, setUpdatePrompt] = React.useState<React.ComponentType | null>(null);
 
+  // [SSR-fix:2025-12-03] react-helmet-async 需要在 SSR 時提供 context
+  // 參考: [react-helmet-async README](https://github.com/staylor/react-helmet-async#readme)
+  // - Server: 為每個請求創建空的 context 對象 {}，避免狀態洩漏
+  // - Client: 使用默認 context (undefined)，HelmetProvider 會自動管理
+  // 這修復了 React Error #418 Hydration mismatch (FAQ/About 頁面)
+  const helmetContext = isBrowser ? undefined : {};
+
   // [SSR-fix:2025-11-26] Dynamically import UpdatePrompt only on client-side
   // This prevents workbox-window from being loaded during SSR
   React.useEffect(() => {
@@ -37,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <React.StrictMode>
-      <HelmetProvider>
+      <HelmetProvider context={helmetContext}>
         <ErrorBoundary>
           <main role="main" className="min-h-screen">
             {/* [SEO Fix 2025-11-26] 移除 Layout 的 sr-only H1，讓各頁面自定義語義 H1
