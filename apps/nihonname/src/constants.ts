@@ -1,7 +1,7 @@
 /**
  * Constants for NihonName - migrated from root constants.ts
  */
-import type { SurnameData, PunName } from './types';
+import type { SurnameData } from './types';
 
 export const PRIMARY_SOURCE = {
   title: '日治時期台灣人更改姓名活動及辦法',
@@ -1727,76 +1727,13 @@ export const SURNAME_MAP: SurnameData = {
  * 注意：這些是網路流傳的趣味諧音名，非歷史資料。
  * 諧音來源主要為台語或中文。
  *
+ * 完整資料庫請參考 src/data/funnyNames.ts (300+ 諧音梗)
+ *
  * 格式說明：
  * - kanji: 日文漢字寫法
  * - romaji: 日文羅馬字拼音
  * - meaning: 諧音解釋 (標示來源語言)
+ * - category: 分類標籤 (可選)
  */
-export const FUNNY_NAMES: PunName[] = [
-  // === 經典諧音 ===
-  { kanji: '梅川伊芙', romaji: 'Umekawa Ifu', meaning: '中文諧音：沒穿衣服' },
-  { kanji: '梅川庫子', romaji: 'Umekawa Kuko', meaning: '中文諧音：沒穿褲子' },
-  { kanji: '梅川內衣', romaji: 'Umekawa Naii', meaning: '中文諧音：沒穿內衣' },
-
-  // === 台語諧音 ===
-  { kanji: '林北舞吉', romaji: 'Rinpoku Bukichi', meaning: '台語諧音：林北無吉' },
-  { kanji: '攏好哩講', romaji: 'Rōkō Rikō', meaning: '台語諧音：攏好你講' },
-  { kanji: '高希囝仔', romaji: 'Kōki Ganna', meaning: '台語諧音：猴死囝仔' },
-
-  // === 生活諧音 ===
-  { kanji: '全聯福利', romaji: 'Zenren Fukuri', meaning: '中文諧音：全聯福利' },
-  { kanji: '黑糖珍奶', romaji: 'Kokutō Chinnai', meaning: '中文諧音：黑糖珍奶' },
-  { kanji: '五十嵐貴', romaji: 'Igarashi Takai', meaning: '中文諧音：50嵐太貴' },
-  { kanji: '星野源', romaji: 'Hoshino Gen', meaning: '中文諧音：省能源 (實為日本藝人)' },
-
-  // === 財富相關 ===
-  { kanji: '財富自由', romaji: 'Zaifu Jiyū', meaning: '中文諧音：財富自由' },
-  { kanji: '身上沒錢', romaji: 'Shinjō Musen', meaning: '中文諧音：身上沒錢' },
-  { kanji: '窮到睡公園', romaji: 'Kyūdō Suikōen', meaning: '中文諧音：窮到睡公園' },
-
-  // === 拆字梗 ===
-  {
-    kanji: '竹本口木子',
-    romaji: 'Takemoto Kuchikiko',
-    meaning: '拆字梗：笨呆子 (竹+本=笨, 口+木=呆)',
-  },
-  { kanji: '米田共子', romaji: 'Yoneda Tomoko', meaning: '拆字梗：糞 (米+田+共=糞)' },
-  { kanji: '二木太郎', romaji: 'Futaki Tarō', meaning: '拆字梗：林 (二+木=林)' },
-  { kanji: '共田花子', romaji: 'Kyōda Hanako', meaning: '拆字梗：黃 (共+田=黃)' },
-
-  // === 地名相關 ===
-  { kanji: '淡水夕照子', romaji: 'Tansui Yūshōko', meaning: '地名：淡水夕照 (台灣八景)' },
-  { kanji: '高雄港子', romaji: 'Takao Minako', meaning: '地名：高雄港 (日治時期稱高雄為打狗)' },
-  { kanji: '台北城子', romaji: 'Taihoku Jōko', meaning: '地名：台北城' },
-
-  // === 歷史人物風格 ===
-  { kanji: '德川家康', romaji: 'Tokugawa Ieyasu', meaning: '歷史：江戶幕府創始人' },
-  { kanji: '織田信長', romaji: 'Oda Nobunaga', meaning: '歷史：戰國大名' },
-  { kanji: '豐臣秀吉', romaji: 'Toyotomi Hideyoshi', meaning: '歷史：天下人' },
-
-  // === 文學風格 ===
-  { kanji: '夏目漱石', romaji: 'Natsume Sōseki', meaning: '文學：明治時代文豪' },
-  { kanji: '芥川龍之介', romaji: 'Akutagawa Ryūnosuke', meaning: '文學：大正時代作家' },
-  { kanji: '太宰治', romaji: 'Dazai Osamu', meaning: '文學：昭和時代作家' },
-
-  // === 常見日本名 ===
-  { kanji: '山田太郎', romaji: 'Yamada Tarō', meaning: '常見：日本最通用的範例名' },
-  { kanji: '鈴木一郎', romaji: 'Suzuki Ichirō', meaning: '常見：知名棒球選手同名' },
-  { kanji: '佐藤花子', romaji: 'Satō Hanako', meaning: '常見：日本最常見女性名' },
-  { kanji: '田中實', romaji: 'Tanaka Minoru', meaning: '常見：田中是日本第四大姓' },
-  { kanji: '高橋健太', romaji: 'Takahashi Kenta', meaning: '常見：高橋是日本第三大姓' },
-
-  // === 自然風格 ===
-  { kanji: '櫻井翔', romaji: 'Sakurai Shō', meaning: '自然：櫻花+井' },
-  { kanji: '松本潤', romaji: 'Matsumoto Jun', meaning: '自然：松樹+本' },
-  { kanji: '森田剛', romaji: 'Morita Gō', meaning: '自然：森林+田' },
-  { kanji: '川村瑞希', romaji: 'Kawamura Mizuki', meaning: '自然：川+村' },
-  { kanji: '山本彩', romaji: 'Yamamoto Aya', meaning: '自然：山+本' },
-
-  // === 優雅女性名 ===
-  { kanji: '小林美咲', romaji: 'Kobayashi Misaki', meaning: '優雅：小林+美咲' },
-  { kanji: '渡邊結衣', romaji: 'Watanabe Yui', meaning: '優雅：渡邊+結衣' },
-  { kanji: '伊藤陽菜', romaji: 'Itō Haruna', meaning: '優雅：伊藤+陽菜' },
-  { kanji: '中村七海', romaji: 'Nakamura Nanami', meaning: '優雅：中村+七海' },
-  { kanji: '加藤凜', romaji: 'Katō Rin', meaning: '優雅：加藤+凜' },
-];
+export { UNIQUE_FUNNY_NAMES as FUNNY_NAMES } from './data/funnyNames';
+export { getFunnyNamesByCategory, getRandomFunnyName, getFunnyNamesCount } from './data/funnyNames';

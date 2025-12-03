@@ -1,13 +1,12 @@
 /**
  * Home page for NihonName
  * Main name generator functionality
+ * [UI/UX 2025-12-04] 點擊文字直接編輯諧音梗
  */
 import { useState, useRef } from 'react';
 import {
-  RefreshCw,
   Camera,
   ChevronRight,
-  Dices,
   Sparkles,
   BookOpen,
   ExternalLink,
@@ -16,11 +15,224 @@ import {
   Flower,
   Scroll,
   CheckCircle2,
+  RotateCcw,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { SURNAME_MAP, FUNNY_NAMES, JAPANESE_GIVEN_NAMES, PRIMARY_SOURCE } from '../constants';
-import type { GeneratorState } from '../types';
+import {
+  SURNAME_MAP,
+  FUNNY_NAMES,
+  JAPANESE_GIVEN_NAMES,
+  PRIMARY_SOURCE,
+  getFunnyNamesCount,
+} from '../constants';
+import { useCustomPunNames } from '../hooks/useCustomPunNames';
+import type { GeneratorState, PunName, CustomPunName } from '../types';
+
+// 簡易漢字轉羅馬拼音（常見日文漢字）
+const KANJI_TO_ROMAJI: Record<string, string> = {
+  田: 'Ta',
+  中: 'Naka',
+  山: 'Yama',
+  川: 'Kawa',
+  本: 'Moto',
+  木: 'Ki',
+  林: 'Hayashi',
+  森: 'Mori',
+  村: 'Mura',
+  井: 'I',
+  石: 'Ishi',
+  野: 'No',
+  原: 'Hara',
+  藤: 'Fuji',
+  佐: 'Sa',
+  伊: 'I',
+  加: 'Ka',
+  松: 'Matsu',
+  竹: 'Take',
+  梅: 'Ume',
+  花: 'Hana',
+  月: 'Tsuki',
+  日: 'Hi',
+  星: 'Hoshi',
+  空: 'Sora',
+  海: 'Umi',
+  島: 'Shima',
+  高: 'Taka',
+  小: 'Ko',
+  大: 'Ō',
+  長: 'Naga',
+  上: 'Ue',
+  下: 'Shita',
+  東: 'Higashi',
+  西: 'Nishi',
+  南: 'Minami',
+  北: 'Kita',
+  内: 'Uchi',
+  外: 'Soto',
+  前: 'Mae',
+  後: 'Ato',
+  新: 'Shin',
+  古: 'Furu',
+  白: 'Shiro',
+  黒: 'Kuro',
+  赤: 'Aka',
+  青: 'Ao',
+  金: 'Kin',
+  銀: 'Gin',
+  鉄: 'Tetsu',
+  水: 'Mizu',
+  火: 'Hi',
+  風: 'Kaze',
+  雷: 'Rai',
+  雪: 'Yuki',
+  桜: 'Sakura',
+  菊: 'Kiku',
+  蓮: 'Ren',
+  葉: 'Ha',
+  草: 'Kusa',
+  根: 'Ne',
+  枝: 'Eda',
+  一: 'Ichi',
+  二: 'Ni',
+  三: 'San',
+  四: 'Shi',
+  五: 'Go',
+  六: 'Roku',
+  七: 'Nana',
+  八: 'Hachi',
+  九: 'Kyū',
+  十: 'Jū',
+  百: 'Hyaku',
+  千: 'Sen',
+  万: 'Man',
+  子: 'Ko',
+  男: 'Otoko',
+  女: 'Onna',
+  人: 'Hito',
+  王: 'Ō',
+  国: 'Kuni',
+  城: 'Shiro',
+  寺: 'Tera',
+  神: 'Kami',
+  仏: 'Hotoke',
+  天: 'Ten',
+  地: 'Chi',
+  心: 'Kokoro',
+  愛: 'Ai',
+  美: 'Mi',
+  幸: 'Sachi',
+  福: 'Fuku',
+  吉: 'Kichi',
+  正: 'Masa',
+  真: 'Ma',
+  太: 'Ta',
+  郎: 'Rō',
+  助: 'Suke',
+  介: 'Suke',
+  平: 'Hei',
+  治: 'Ji',
+  明: 'Aki',
+  光: 'Hikari',
+  輝: 'Teru',
+  和: 'Kazu',
+  安: 'Yasu',
+  康: 'Yasu',
+  健: 'Ken',
+  勇: 'Yū',
+  智: 'Tomo',
+  賢: 'Ken',
+  徳: 'Toku',
+  義: 'Yoshi',
+  信: 'Nobu',
+  忠: 'Tada',
+  孝: 'Taka',
+  夏: 'Natsu',
+  冬: 'Fuyu',
+  春: 'Haru',
+  秋: 'Aki',
+  朝: 'Asa',
+  夜: 'Yoru',
+  昼: 'Hiru',
+  芙: 'Fu',
+  蓉: 'Yō',
+  澪: 'Mio',
+  凛: 'Rin',
+  翔: 'Shō',
+  颯: 'Sō',
+  蒼: 'Sō',
+  僑: 'Kyō',
+  仔: 'Shi',
+  目: 'Me',
+  漱: 'Sō',
+  叉: 'Sa',
+  鬼: 'Oni',
+  滅: 'Metsu',
+  刃: 'Jin',
+  進: 'Shin',
+  撃: 'Geki',
+  巨: 'Kyo',
+  呪: 'Ju',
+  術: 'Jutsu',
+  廻: 'Kai',
+  戦: 'Sen',
+  鳴: 'Naru',
+  門: 'Mon',
+  炎: 'En',
+  柱: 'Hashira',
+  禰: 'Ne',
+  豆: 'Mame',
+  善: 'Zen',
+  逸: 'Itsu',
+  嘴: 'Kuchi',
+  我: 'Ga',
+  妻: 'Tsuma',
+};
+
+// 自動轉換漢字為羅馬拼音
+const convertToRomaji = (kanji: string): string => {
+  let result = '';
+  for (const char of kanji) {
+    result += KANJI_TO_ROMAJI[char] ?? char;
+  }
+  // 首字母大寫，其餘小寫
+  return result
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+// --- 精緻骰子 SVG 組件 ---
+const FancyDiceIcon = ({
+  className,
+  isRolling = false,
+}: {
+  className?: string;
+  isRolling?: boolean;
+}) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={`${className} ${isRolling ? 'animate-dice-roll' : ''}`}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* 骰子本體 - 3D 效果 */}
+    <path d="M4 8l8-4 8 4v8l-8 4-8-4V8z" fill="currentColor" fillOpacity="0.1" />
+    <path d="M4 8l8-4 8 4v8l-8 4-8-4V8z" />
+    <path d="M12 4v8" opacity="0.5" />
+    <path d="M4 8l8 4 8-4" opacity="0.5" />
+    <path d="M12 12v8" opacity="0.3" />
+    {/* 骰子點數 */}
+    <circle cx="8" cy="10" r="1" fill="currentColor" />
+    <circle cx="12" cy="8" r="1" fill="currentColor" />
+    <circle cx="16" cy="10" r="1" fill="currentColor" />
+    <circle cx="10" cy="15" r="0.8" fill="currentColor" opacity="0.7" />
+    <circle cx="14" cy="15" r="0.8" fill="currentColor" opacity="0.7" />
+  </svg>
+);
 
 // --- SVG Components for High-End Aesthetics ---
 
@@ -116,35 +328,6 @@ const ToriiIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const DarumaIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="currentColor">
-    <path
-      d="M50 5 C25 5 10 25 10 50 C10 80 25 95 50 95 C75 95 90 80 90 50 C90 25 75 5 50 5 Z"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="4"
-    />
-    <path
-      d="M30 40 Q50 30 70 40"
-      stroke="currentColor"
-      strokeWidth="3"
-      fill="none"
-      strokeLinecap="round"
-    />
-    <circle cx="35" cy="50" r="5" fill="currentColor" />
-    <circle cx="65" cy="50" r="5" fill="currentColor" />
-    <path
-      d="M40 65 Q50 75 60 65"
-      stroke="currentColor"
-      strokeWidth="3"
-      fill="none"
-      strokeLinecap="round"
-    />
-    <path d="M20 60 Q15 75 25 85" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.6" />
-    <path d="M80 60 Q85 75 75 85" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.6" />
-  </svg>
-);
-
 const SakuraPetal = ({ style }: { style: React.CSSProperties }) => (
   <svg
     viewBox="0 0 30 30"
@@ -202,6 +385,16 @@ const SakuraBackground = () => {
         @keyframes sway {
           from { margin-left: -15px; }
           to { margin-left: 15px; }
+        }
+        @keyframes dice-roll {
+          0% { transform: rotate(0deg) scale(1); }
+          25% { transform: rotate(90deg) scale(1.1); }
+          50% { transform: rotate(180deg) scale(1); }
+          75% { transform: rotate(270deg) scale(1.1); }
+          100% { transform: rotate(360deg) scale(1); }
+        }
+        .animate-dice-roll {
+          animation: dice-roll 0.3s ease-in-out;
         }
       `}</style>
     </div>
@@ -392,6 +585,104 @@ export default function Home() {
   const uiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hintTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 內聯編輯模式狀態
+  const [editingField, setEditingField] = useState<'kanji' | 'romaji' | 'meaning' | null>(null);
+  const [editKanji, setEditKanji] = useState('');
+  const [editRomaji, setEditRomaji] = useState('');
+  const [editMeaning, setEditMeaning] = useState('');
+  const kanjiInputRef = useRef<HTMLInputElement>(null);
+  const romajiInputRef = useRef<HTMLInputElement>(null);
+  const meaningInputRef = useRef<HTMLInputElement>(null);
+
+  // 骰子動畫狀態
+  const [isRollingPun, setIsRollingPun] = useState(false);
+  const [isRollingSurname, setIsRollingSurname] = useState(false);
+  const [isRollingGivenName, setIsRollingGivenName] = useState(false);
+
+  // Custom pun names hook
+  const { customPunNames, count: customCount, addCustomPunName } = useCustomPunNames();
+
+  // Combined pun names (built-in + custom)
+  const allPunNames: PunName[] = [...FUNNY_NAMES, ...customPunNames];
+  const totalPunNamesCount = getFunnyNamesCount() + customCount;
+
+  // 處理漢字輸入變更 - 同時自動更新羅馬拼音
+  const handleKanjiChange = (value: string) => {
+    setEditKanji(value);
+    if (value) {
+      const autoRomaji = convertToRomaji(value);
+      setEditRomaji(autoRomaji);
+    }
+  };
+
+  // 開始編輯某個欄位
+  const startEditing = (field: 'kanji' | 'romaji' | 'meaning', e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!showUI) return;
+    setEditingField(field);
+    if (field === 'kanji') {
+      setEditKanji(state.punName.kanji);
+      setEditRomaji(state.punName.romaji);
+      setEditMeaning(''); // 解釋預設空白讓用戶填寫
+      setTimeout(() => kanjiInputRef.current?.focus(), 50);
+    } else if (field === 'romaji') {
+      setEditRomaji(state.punName.romaji);
+      setTimeout(() => romajiInputRef.current?.focus(), 50);
+    } else if (field === 'meaning') {
+      setEditMeaning(''); // 預設空白
+      setTimeout(() => meaningInputRef.current?.focus(), 50);
+    }
+  };
+
+  // 確認編輯
+  const confirmEdit = () => {
+    if (editingField === 'kanji' && editKanji.trim()) {
+      const newPunName: CustomPunName = {
+        kanji: editKanji.trim(),
+        romaji: editRomaji.trim() || convertToRomaji(editKanji.trim()),
+        meaning: editMeaning.trim() || '自訂諧音',
+        category: 'custom',
+        isCustom: true,
+        createdAt: new Date().toISOString(),
+      };
+      setState((prev) => ({ ...prev, punName: newPunName }));
+      // 儲存到 localStorage
+      addCustomPunName({
+        kanji: newPunName.kanji,
+        romaji: newPunName.romaji,
+        meaning: newPunName.meaning,
+      });
+    } else if (editingField === 'romaji' && editRomaji.trim()) {
+      setState((prev) => ({
+        ...prev,
+        punName: { ...prev.punName, romaji: editRomaji.trim() },
+      }));
+    } else if (editingField === 'meaning') {
+      setState((prev) => ({
+        ...prev,
+        punName: { ...prev.punName, meaning: editMeaning.trim() || '自訂諧音' },
+      }));
+    }
+    setEditingField(null);
+  };
+
+  // 取消編輯
+  const cancelEdit = () => {
+    setEditingField(null);
+    setEditKanji('');
+    setEditRomaji('');
+    setEditMeaning('');
+  };
+
+  // 處理按鍵事件
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      confirmEdit();
+    } else if (e.key === 'Escape') {
+      cancelEdit();
+    }
+  };
+
   const handleSurnameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setState((prev) => ({ ...prev, originalSurname: e.target.value.trim() }));
   };
@@ -418,7 +709,7 @@ export default function Home() {
       const finalGivenName = state.originalGivenName
         ? state.originalGivenName
         : getRandom(JAPANESE_GIVEN_NAMES);
-      const pun = getRandom(FUNNY_NAMES);
+      const pun = getRandom(allPunNames);
 
       setState((prev) => ({ ...prev, japaneseSurname: jpSurname, punName: pun, step: 'result' }));
       setDisplayGivenName(finalGivenName);
@@ -428,10 +719,15 @@ export default function Home() {
 
   const rerollSurname = (e?: React.MouseEvent) => {
     e?.stopPropagation();
+    if (isRollingSurname) return;
+    setIsRollingSurname(true);
     const key = state.originalSurname;
     const possibleSurnames = SURNAME_MAP[key] ??
       SURNAME_MAP[key.substring(0, 1)] ?? [`${key}山`, `${key}田`, '田中', '佐藤', '鈴木'];
-    setState((prev) => ({ ...prev, japaneseSurname: getRandom(possibleSurnames) }));
+    setTimeout(() => {
+      setState((prev) => ({ ...prev, japaneseSurname: getRandom(possibleSurnames) }));
+      setIsRollingSurname(false);
+    }, 300);
   };
 
   const handleSelectName = (name: string) => {
@@ -441,12 +737,22 @@ export default function Home() {
 
   const rerollGivenName = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setDisplayGivenName(getRandom(JAPANESE_GIVEN_NAMES));
+    if (isRollingGivenName) return;
+    setIsRollingGivenName(true);
+    setTimeout(() => {
+      setDisplayGivenName(getRandom(JAPANESE_GIVEN_NAMES));
+      setIsRollingGivenName(false);
+    }, 300);
   };
 
   const rerollPun = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setState((prev) => ({ ...prev, punName: getRandom(FUNNY_NAMES) }));
+    if (isRollingPun || editingField) return; // 編輯中不能隨機
+    setIsRollingPun(true);
+    setTimeout(() => {
+      setState((prev) => ({ ...prev, punName: getRandom(allPunNames) }));
+      setIsRollingPun(false);
+    }, 300);
   };
 
   const toggleUI = () => {
@@ -500,7 +806,7 @@ export default function Home() {
       />
 
       <div
-        className={`min-h-[100dvh] w-full bg-[#f5f5f4] text-stone-900 font-sans relative flex flex-col items-center justify-center overflow-hidden selection:bg-red-900 selection:text-white ${safeAreaTop} ${safeAreaBottom}`}
+        className={`min-h-[100dvh] w-full bg-[#f5f5f4] text-stone-900 font-sans relative flex flex-col items-center overflow-hidden selection:bg-red-900 selection:text-white ${safeAreaTop} ${safeAreaBottom}`}
         onClick={handleBackgroundClick}
       >
         <SakuraBackground />
@@ -526,8 +832,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Main Container */}
-        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center max-w-lg mx-auto transition-all duration-1000 px-5 md:px-0 gap-8">
+        {/* Main Container - 垂直置中 + 上下留白 */}
+        <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center max-w-lg mx-auto transition-all duration-1000 px-5 md:px-0 gap-8 py-8 md:py-12">
           {/* Header */}
           <header className="w-full text-center transition-all duration-700 ease-in-out z-20 shrink-0 mt-0 mb-4">
             <div className="flex flex-col items-center">
@@ -609,7 +915,7 @@ export default function Home() {
                       </span>
                     ) : (
                       <>
-                        <DarumaIcon className="w-5 h-5 text-red-500" />
+                        <Flower size={18} className="text-red-500" />
                         <span className="tracking-[0.2em]">改名実行</span>
                         <ChevronRight
                           size={18}
@@ -669,13 +975,16 @@ export default function Home() {
                           className="group relative text-center px-2"
                         >
                           <span
-                            className={`block font-jp font-bold text-red-900 leading-none group-hover:scale-105 transition-transform drop-shadow-sm ${getFontSizeClass(state.japaneseSurname)}`}
+                            className={`block font-jp font-bold text-red-900 leading-none group-hover:scale-105 transition-all drop-shadow-sm ${getFontSizeClass(state.japaneseSurname)} ${isRollingSurname ? 'animate-pulse opacity-50' : ''}`}
                           >
                             {state.japaneseSurname}
                           </span>
                           {showUI && (
                             <span className="absolute -bottom-6 left-0 right-0 text-[10px] text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center items-center">
-                              <RefreshCw size={8} className="mr-1" />
+                              <FancyDiceIcon
+                                className="w-3 h-3 mr-1"
+                                isRolling={isRollingSurname}
+                              />
                               重骰
                             </span>
                           )}
@@ -687,13 +996,16 @@ export default function Home() {
                           className="group relative text-center px-2"
                         >
                           <span
-                            className={`block font-jp font-bold text-stone-800 leading-none group-hover:scale-105 transition-transform drop-shadow-sm ${getFontSizeClass(displayGivenName)}`}
+                            className={`block font-jp font-bold text-stone-800 leading-none group-hover:scale-105 transition-all drop-shadow-sm ${getFontSizeClass(displayGivenName)} ${isRollingGivenName ? 'animate-pulse opacity-50' : ''}`}
                           >
                             {displayGivenName}
                           </span>
                           {showUI && (
                             <span className="absolute -bottom-6 left-0 right-0 text-[10px] text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center items-center">
-                              <Dices size={8} className="mr-1" />
+                              <FancyDiceIcon
+                                className="w-3 h-3 mr-1"
+                                isRolling={isRollingGivenName}
+                              />
                               重骰
                             </span>
                           )}
@@ -702,35 +1014,128 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Pun Name Section */}
+                  {/* Pun Name Section - 點擊文字編輯，點擊骰子隨機 */}
                   <div
-                    className={`w-full bg-stone-100/80 p-5 rounded border-l-4 border-l-amber-500 border-stone-200 relative group cursor-pointer hover:bg-amber-50 transition-all text-left flex items-center justify-between shadow-inner z-10 ${!showUI ? 'opacity-90 grayscale-[0.5]' : ''}`}
-                    onClick={showUI ? rerollPun : undefined}
+                    className={`w-full bg-stone-100/80 p-5 rounded border-l-4 border-l-amber-500 border-stone-200 relative transition-all text-left flex items-center justify-between shadow-inner z-10 ${!showUI ? 'opacity-90 grayscale-[0.5]' : ''}`}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <span className="bg-amber-500 text-white px-2 py-0.5 text-[10px] font-bold rounded-sm uppercase tracking-wider">
                           Alias
                         </span>
-                        <span className="text-sm text-amber-700 font-bold font-serif tracking-wide">
-                          {state.punName.romaji}
-                        </span>
-                      </div>
-                      <div className="text-4xl font-bold text-stone-800 font-jp mb-2 tracking-wide">
-                        {state.punName.kanji}
+                        {/* 羅馬拼音 - 可點擊編輯 */}
+                        {editingField === 'romaji' ? (
+                          <input
+                            ref={romajiInputRef}
+                            type="text"
+                            value={editRomaji}
+                            onChange={(e) => setEditRomaji(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            onBlur={confirmEdit}
+                            className="text-sm text-amber-700 font-bold font-serif tracking-wide bg-white border border-amber-300 rounded px-2 py-0.5 outline-none focus:ring-2 focus:ring-amber-200"
+                            placeholder="羅馬拼音"
+                          />
+                        ) : (
+                          <button
+                            onClick={(e) => startEditing('romaji', e)}
+                            className="text-sm text-amber-700 font-bold font-serif tracking-wide hover:bg-amber-100 px-2 py-0.5 rounded transition-colors cursor-text"
+                            title="點擊編輯羅馬拼音"
+                          >
+                            {state.punName.romaji}
+                          </button>
+                        )}
                       </div>
 
-                      <div
-                        className={`text-xs text-stone-500 flex items-center font-bold transition-opacity duration-500 ${!showUI ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}
-                      >
-                        <Sparkles size={12} className="mr-1.5 text-amber-500" />
-                        {state.punName.meaning}
-                      </div>
+                      {/* 漢字名 - 可點擊編輯 */}
+                      {editingField === 'kanji' ? (
+                        <div className="space-y-2 mb-2">
+                          <input
+                            ref={kanjiInputRef}
+                            type="text"
+                            value={editKanji}
+                            onChange={(e) => handleKanjiChange(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="text-3xl font-bold text-stone-800 font-jp tracking-wide bg-white border border-amber-300 rounded px-3 py-1 outline-none focus:ring-2 focus:ring-amber-200 w-full"
+                            placeholder="輸入日文漢字"
+                          />
+                          <div className="text-xs text-stone-400">
+                            羅馬拼音：
+                            <span className="text-amber-600">{editRomaji || '自動轉換中...'}</span>
+                          </div>
+                          <input
+                            ref={meaningInputRef}
+                            type="text"
+                            value={editMeaning}
+                            onChange={(e) => setEditMeaning(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="text-sm text-stone-600 bg-white border border-stone-200 rounded px-3 py-1.5 outline-none focus:ring-2 focus:ring-amber-200 w-full"
+                            placeholder="輸入諧音解釋（選填）"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={confirmEdit}
+                              className="flex-1 bg-amber-500 text-white text-xs py-1.5 rounded hover:bg-amber-600 transition-colors"
+                            >
+                              確認
+                            </button>
+                            <button
+                              onClick={cancelEdit}
+                              className="flex-1 bg-stone-200 text-stone-600 text-xs py-1.5 rounded hover:bg-stone-300 transition-colors"
+                            >
+                              取消
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => startEditing('kanji', e)}
+                          className={`text-4xl font-bold text-stone-800 font-jp mb-2 tracking-wide hover:bg-amber-100/50 px-2 py-1 -mx-2 rounded transition-colors cursor-text block ${isRollingPun ? 'animate-pulse opacity-50' : ''}`}
+                          title="點擊自訂諧音名"
+                        >
+                          {state.punName.kanji}
+                        </button>
+                      )}
+
+                      {/* 解釋 - 可點擊編輯 */}
+                      {editingField !== 'kanji' && (
+                        <div
+                          className={`text-xs text-stone-500 flex items-center font-bold transition-opacity duration-500 ${!showUI ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}
+                        >
+                          {editingField === 'meaning' ? (
+                            <input
+                              ref={meaningInputRef}
+                              type="text"
+                              value={editMeaning}
+                              onChange={(e) => setEditMeaning(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              onBlur={confirmEdit}
+                              className="text-xs text-stone-600 bg-white border border-stone-200 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-amber-200 w-full"
+                              placeholder="輸入諧音解釋"
+                            />
+                          ) : (
+                            <button
+                              onClick={(e) => startEditing('meaning', e)}
+                              className="flex items-center hover:bg-amber-100/50 px-2 py-1 -mx-2 rounded transition-colors cursor-text"
+                              title="點擊編輯解釋"
+                            >
+                              <Sparkles size={12} className="mr-1.5 text-amber-500" />
+                              {state.punName.meaning}
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {showUI && (
-                      <div className="text-stone-300 group-hover:text-amber-500 transition-colors pl-4 border-l border-stone-200 ml-4">
-                        <RefreshCw size={24} />
-                      </div>
+
+                    {/* 骰子按鈕 - 點擊隨機換名 */}
+                    {showUI && !editingField && (
+                      <button
+                        onClick={rerollPun}
+                        className="text-stone-300 hover:text-amber-500 transition-all pl-4 border-l border-stone-200 ml-4 hover:scale-110 active:scale-95"
+                        title="隨機換一個"
+                      >
+                        <FancyDiceIcon className="w-8 h-8" isRolling={isRollingPun} />
+                      </button>
                     )}
                   </div>
 
@@ -762,15 +1167,15 @@ export default function Home() {
             <div
               className={`w-full max-w-sm mx-auto shrink-0 transition-all duration-500 ease-out transform ${showUI ? 'opacity-100 translate-y-0 pb-6' : 'opacity-0 translate-y-10 pointer-events-none h-0 pb-0 overflow-hidden'}`}
             >
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowLookup(true);
                   }}
-                  className="bg-white border border-stone-200 text-stone-700 py-3.5 rounded-xl font-bold shadow-sm flex items-center justify-center space-x-2 hover:bg-stone-50 hover:border-red-200 hover:text-red-800 transition-all active:scale-[0.97] text-sm group"
+                  className="bg-white border border-stone-200 text-stone-700 py-3 rounded-xl font-bold shadow-sm flex items-center justify-center space-x-1.5 hover:bg-stone-50 hover:border-red-200 hover:text-red-800 transition-all active:scale-[0.97] text-xs group"
                 >
-                  <BookOpen size={18} className="group-hover:text-red-600 transition-colors" />
+                  <BookOpen size={16} className="group-hover:text-red-600 transition-colors" />
                   <span>族譜查證</span>
                 </button>
 
@@ -779,11 +1184,21 @@ export default function Home() {
                     e.stopPropagation();
                     toggleUI();
                   }}
-                  className="bg-stone-800 text-stone-100 py-3.5 rounded-xl font-bold shadow-lg shadow-stone-400/50 flex items-center justify-center space-x-2 hover:bg-stone-700 transition-all active:scale-[0.97] text-sm"
+                  className="bg-stone-800 text-stone-100 py-3 rounded-xl font-bold shadow-lg shadow-stone-400/50 flex items-center justify-center space-x-1.5 hover:bg-stone-700 transition-all active:scale-[0.97] text-xs"
                 >
-                  <Camera size={18} />
-                  <span>純淨模式</span>
+                  <Camera size={16} />
+                  <span>截圖模式</span>
                 </button>
+              </div>
+
+              {/* Stats */}
+              <div className="text-center mb-4">
+                <span className="text-[10px] text-stone-400">
+                  資料庫共 {totalPunNamesCount} 個諧音梗
+                  {customCount > 0 && (
+                    <span className="text-amber-600 ml-1">(含 {customCount} 個自訂)</span>
+                  )}
+                </span>
               </div>
 
               <div className="flex justify-between items-center">
@@ -799,7 +1214,7 @@ export default function Home() {
                   }}
                   className="text-stone-400 text-xs py-2 hover:text-stone-600 transition-colors flex items-center"
                 >
-                  <RefreshCw size={12} className="mr-1.5" />
+                  <RotateCcw size={12} className="mr-1.5" />
                   重新測試
                 </button>
 
@@ -814,6 +1229,31 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Minimal Footer - 日式簡約風格，固定在底部 */}
+        <footer className="w-full shrink-0 py-3 text-center relative z-20">
+          <div className="flex items-center justify-center gap-2 text-[10px] text-stone-400">
+            <a
+              href="https://haotool.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-red-700 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              好工具
+            </a>
+            <span className="text-stone-300">·</span>
+            <a
+              href="https://www.threads.net/@azlife_1224"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-red-700 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              @azlife_1224
+            </a>
+          </div>
+        </footer>
       </div>
     </>
   );

@@ -1,0 +1,246 @@
+/**
+ * 用戶自訂諧音梗表單組件
+ *
+ * 提供用戶新增、查看、刪除自訂諧音梗的介面
+ */
+import { useState } from 'react';
+import { Plus, Trash2, X, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useCustomPunNames } from '../hooks/useCustomPunNames';
+import type { CustomPunName } from '../types';
+
+interface CustomPunNameFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectCustomName?: (name: CustomPunName) => void;
+}
+
+/**
+ * 自訂諧音梗表單組件
+ */
+export function CustomPunNameForm({ isOpen, onClose, onSelectCustomName }: CustomPunNameFormProps) {
+  const { customPunNames, addCustomPunName, removeCustomPunName, isDuplicate, count } =
+    useCustomPunNames();
+
+  const [kanji, setKanji] = useState('');
+  const [romaji, setRomaji] = useState('');
+  const [meaning, setMeaning] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    // 驗證
+    if (!kanji.trim()) {
+      setError('請輸入日文漢字');
+      return;
+    }
+    if (!romaji.trim()) {
+      setError('請輸入羅馬字拼音');
+      return;
+    }
+    if (!meaning.trim()) {
+      setError('請輸入諧音解釋');
+      return;
+    }
+
+    // 檢查重複
+    if (isDuplicate(kanji.trim())) {
+      setError('此名字已存在');
+      return;
+    }
+
+    // 新增
+    const added = addCustomPunName({
+      kanji: kanji.trim(),
+      romaji: romaji.trim(),
+      meaning: meaning.trim(),
+    });
+
+    if (added) {
+      setSuccess('新增成功！');
+      setKanji('');
+      setRomaji('');
+      setMeaning('');
+      setTimeout(() => setSuccess(null), 2000);
+    } else {
+      setError('新增失敗，請稍後再試');
+    }
+  };
+
+  const handleDelete = (name: CustomPunName) => {
+    if (window.confirm(`確定要刪除「${name.kanji}」嗎？`)) {
+      removeCustomPunName(name.kanji);
+    }
+  };
+
+  const handleSelect = (name: CustomPunName) => {
+    if (onSelectCustomName) {
+      onSelectCustomName(name);
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-md animate-in fade-in duration-300"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#fcfaf7] w-full max-w-lg rounded-xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh] border border-stone-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="relative bg-amber-600 text-white p-6 text-center shrink-0">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 text-amber-200 hover:text-white transition-colors rounded-full hover:bg-amber-700"
+          >
+            <X size={20} />
+          </button>
+          <div className="inline-flex items-center justify-center space-x-2 opacity-80 mb-2">
+            <div className="h-px w-8 bg-amber-300"></div>
+            <span className="text-xs tracking-widest uppercase">Custom Names</span>
+            <div className="h-px w-8 bg-amber-300"></div>
+          </div>
+          <h3 className="text-2xl font-bold font-jp flex items-center justify-center gap-2">
+            <Sparkles className="w-6 h-6 opacity-70" />
+            自訂諧音梗
+            <Sparkles className="w-6 h-6 opacity-70" />
+          </h3>
+          <p className="text-amber-100 text-sm mt-2">創建你自己的趣味日本名</p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 border-b border-stone-200 shrink-0">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-stone-600 font-bold mb-2 text-xs tracking-widest uppercase">
+                日文漢字 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={kanji}
+                onChange={(e) => setKanji(e.target.value)}
+                placeholder="例：梅川伊芙"
+                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-3 text-lg font-jp focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none transition-all"
+                maxLength={20}
+              />
+            </div>
+
+            <div>
+              <label className="block text-stone-600 font-bold mb-2 text-xs tracking-widest uppercase">
+                羅馬字拼音 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={romaji}
+                onChange={(e) => setRomaji(e.target.value)}
+                placeholder="例：Umekawa Ifu"
+                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-3 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none transition-all"
+                maxLength={50}
+              />
+            </div>
+
+            <div>
+              <label className="block text-stone-600 font-bold mb-2 text-xs tracking-widest uppercase">
+                諧音解釋 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={meaning}
+                onChange={(e) => setMeaning(e.target.value)}
+                placeholder="例：中文諧音：沒穿衣服"
+                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-3 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none transition-all"
+                maxLength={100}
+              />
+            </div>
+
+            {/* Error/Success Messages */}
+            {error && (
+              <div className="flex items-center gap-2 text-red-600 bg-red-50 px-4 py-2 rounded-lg text-sm">
+                <AlertCircle size={16} />
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg text-sm">
+                <CheckCircle2 size={16} />
+                {success}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+            >
+              <Plus size={18} />
+              新增諧音梗
+            </button>
+          </div>
+        </form>
+
+        {/* Custom Names List */}
+        <div className="flex-1 overflow-y-auto min-h-0 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-bold text-stone-700">我的諧音梗 ({count})</h4>
+          </div>
+
+          {customPunNames.length === 0 ? (
+            <div className="text-center py-12 text-stone-400">
+              <Sparkles size={32} className="mx-auto mb-3 opacity-30" />
+              <p className="text-sm">還沒有自訂的諧音梗</p>
+              <p className="text-xs mt-1">在上方表單新增你的創意！</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {customPunNames.map((name) => (
+                <div
+                  key={name.kanji}
+                  className="bg-white border border-stone-200 rounded-lg p-4 hover:shadow-md transition-all group cursor-pointer"
+                  onClick={() => handleSelect(name)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg font-bold font-jp text-stone-800">
+                          {name.kanji}
+                        </span>
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
+                          自訂
+                        </span>
+                      </div>
+                      <p className="text-sm text-amber-600 font-medium">{name.romaji}</p>
+                      <p className="text-xs text-stone-500 mt-1">{name.meaning}</p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(name);
+                      }}
+                      className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                      title="刪除"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 bg-stone-50 border-t border-stone-200 shrink-0">
+          <p className="text-xs text-stone-400 text-center">自訂的諧音梗會儲存在您的瀏覽器中</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default CustomPunNameForm;
