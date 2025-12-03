@@ -43,8 +43,8 @@ export default function About() {
         ]}
       />
 
-      <div className="min-h-screen bg-stone-100 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="min-h-[100dvh] bg-stone-100 py-8 md:py-12 px-4 overflow-y-auto">
+        <div className="max-w-2xl mx-auto pb-8">
           {/* Back button */}
           <Link
             to="/"
@@ -156,10 +156,30 @@ export default function About() {
             </section>
           </div>
 
-          {/* Footer */}
-          <footer className="text-center text-stone-400 text-xs mt-12">
-            <p>NihonName © 2024-{new Date().getFullYear()} haotool</p>
-            <p className="mt-1">本系統僅供歷史教育與娛樂用途</p>
+          {/* Footer - 日式簡約風格 */}
+          <footer className="text-center mt-12 pt-6 border-t border-stone-200">
+            <p className="text-stone-500 text-xs mb-3">本系統僅供歷史教育與娛樂用途</p>
+            <div className="flex items-center justify-center gap-2 text-[10px] text-stone-400">
+              <a
+                href="https://haotool.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-red-700 transition-colors"
+              >
+                好工具
+              </a>
+              <span className="text-stone-300">·</span>
+              <a
+                href="https://www.threads.net/@azlife_1224"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-red-700 transition-colors"
+              >
+                @azlife_1224
+              </a>
+              <span className="text-stone-300">·</span>
+              <span>© {new Date().getFullYear()}</span>
+            </div>
           </footer>
         </div>
       </div>
