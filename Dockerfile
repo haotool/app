@@ -25,10 +25,10 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
 # [fix:2025-11-05] 設定環境變數供 vite.config.ts 使用
+# [fix:2025-12-04] 移除全局 VITE_BASE_PATH，改在建置時分別設置
 ENV GIT_COMMIT_COUNT=${GIT_COMMIT_COUNT}
 ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
 ENV BUILD_TIME=${BUILD_TIME}
-ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 ENV CI=true
 
 # Copy package files and pnpm config
@@ -48,7 +48,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 COPY . .
 
 # Build applications（若外部未提供 build args，於此自動回退計算）
-# [fix:2025-12-03] 同時建置 ratewise 和 nihonname
+# [fix:2025-12-04] 分別為每個專案設置對應的 base 變數，避免相互污染
 RUN set -eux; \
   if [ -z "${GIT_COMMIT_COUNT:-}" ]; then \
     export GIT_COMMIT_COUNT="$(git rev-list --count HEAD)"; \
@@ -59,7 +59,8 @@ RUN set -eux; \
   if [ -z "${BUILD_TIME:-}" ]; then \
     export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
   fi; \
-  pnpm build:ratewise && pnpm build:nihonname
+  VITE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
+  VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname
 
 # Production stage
 FROM nginx:alpine
