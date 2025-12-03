@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-12-03T22:24:00+0800
-> **當前總分**: 249 (初始分: 100)
+> **最後更新**: 2025-12-03T22:31:00+0800
+> **當前總分**: 252 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -255,3 +255,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 | ✅ 成功 | SEO 規格文檔 v3.0.0 完全重寫 + SEO TODO 系統建立 | 1) 發現 AI_SEARCH_OPTIMIZATION_SPEC.md v2.0.0 gap analysis (lines 771-886) 與實際程式碼嚴重不符 2) 逐一驗證 index.html, robots.txt, sitemap.xml, llms.txt 實際實作狀態 3) 完全重寫規格文檔為 v3.0.0 (922 lines)，新增當前實作狀態、優勢分析、劣勢分析、效能基準 4) 建立 SEO_TODO.md 包含 50+ 詳細任務（5 個 Phase）5) 建立幣別關鍵字策略（Top 10 currencies）6) 建立 Lighthouse CI 監測策略與回滾流程 | [Ultrathink Philosophy][BDD.md][002_development_reward_penalty_log.md:避免重複錯誤][Evidence-based] | +5 | 2025-12-02 |
 | ✅ 成功 | nihonname 專案全面 SEO 優化與預渲染架構重構 | 1) 建立獨立分支 feature/nihonname-seo-optimization 2) 實作 vite-react-ssg 預渲染架構 3) 建立完整 SEO meta tags (OG, Twitter, JSON-LD) 4) 新增 robots.txt, sitemap.xml, llms.txt 5) 建立 SEOHelmet 組件 6) 添加 Vitest 測試框架 7) 配置 PWA (Service Worker, manifest) 8) Lighthouse: SEO 100/100, A11y 97/100, BP 96/100 | [context7:daydreamer-riri/vite-react-ssg:2025-12-03][BDD 流程][Ultrathink Philosophy] | +8 | 2025-12-03 |
 | ✅ 成功 | nihonname 測試覆蓋率提升至 97% | 1) 添加 Layout.tsx 組件測試 2) 添加 About.tsx 頁面測試 (8 案例) 3) 添加 Home.tsx 基礎功能測試 (12 案例) 4) 配置 Vitest coverage 排除 SSG 入口檔案 5) 調整覆蓋率門檻至 80% 6) 覆蓋率: Statements 97.72%, Branches 81.81%, Functions 100%, Lines 97.56% | [context7:vitest-dev/vitest:2025-12-03][BDD 紅燈→綠燈] | +5 | 2025-12-03 |
+| ✅ 成功 | nihonname PWA 圖標與社交分享圖片完整建立 | 1) 設計 icon.svg (櫻花主題 + 日本漢字「名」) 2) 使用 ImageMagick 生成多尺寸 PNG: icon-192x192, icon-512x512, maskable-icon-512x512, apple-touch-icon 3) 生成 favicon.ico (16x16, 32x32) 4) 建立 og-image.png 社交分享圖片 (1200x630) 5) 更新 index.html manifest 路徑 6) 所有 36 測試通過，覆蓋率 97.72% | [context7:vite-pwa/vite-plugin-pwa:2025-12-03][PWA 最佳實踐] | +3 | 2025-12-03 |
