@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c2d12"/>
+      <stop offset="100%" style="stop-color:#9a3412"/>
+    </linearGradient>
+    <linearGradient id="sakura" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fecaca"/>
+      <stop offset="100%" style="stop-color:#fda4af"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bg)"/>
+  
+  <!-- Inner decorative ring -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#fef2f2" stroke-width="4" stroke-dasharray="20 10"/>
+  
+  <!-- Sakura petals (stylized cherry blossoms) -->
+  <g transform="translate(256, 256)">
+    <!-- Top petal -->
+    <ellipse cx="0" cy="-80" rx="35" ry="55" fill="url(#sakura)" transform="rotate(0)"/>
+    <!-- Right-top petal -->
+    <ellipse cx="0" cy="-80" rx="35" ry="55" fill="url(#sakura)" transform="rotate(72)"/>
+    <!-- Right-bottom petal -->
+    <ellipse cx="0" cy="-80" rx="35" ry="55" fill="url(#sakura)" transform="rotate(144)"/>
+    <!-- Left-bottom petal -->
+    <ellipse cx="0" cy="-80" rx="35" ry="55" fill="url(#sakura)" transform="rotate(216)"/>
+    <!-- Left-top petal -->
+    <ellipse cx="0" cy="-80" rx="35" ry="55" fill="url(#sakura)" transform="rotate(288)"/>
+    <!-- Center -->
+    <circle cx="0" cy="0" r="25" fill="#fef2f2"/>
+  </g>
+  
+  <!-- Japanese character 名 (name) -->
+  <text x="256" y="290" font-family="serif" font-size="100" font-weight="bold" fill="#fef2f2" text-anchor="middle">名</text>
+  
+  <!-- Small decorative elements -->
+  <circle cx="120" cy="120" r="8" fill="url(#sakura)" opacity="0.7"/>
+  <circle cx="392" cy="120" r="6" fill="url(#sakura)" opacity="0.6"/>
+  <circle cx="100" cy="392" r="5" fill="url(#sakura)" opacity="0.5"/>
+  <circle cx="412" cy="380" r="7" fill="url(#sakura)" opacity="0.6"/>
+</svg>
+
