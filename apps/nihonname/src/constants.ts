@@ -1721,55 +1721,82 @@ export const SURNAME_MAP: SurnameData = {
   鍊: ['竹內'],
 };
 
+/**
+ * 趣味諧音日本名 (網路迷因)
+ *
+ * 注意：這些是網路流傳的趣味諧音名，非歷史資料。
+ * 諧音來源主要為台語或中文。
+ *
+ * 格式說明：
+ * - kanji: 日文漢字寫法
+ * - romaji: 日文羅馬字拼音
+ * - meaning: 諧音解釋 (標示來源語言)
+ */
 export const FUNNY_NAMES: PunName[] = [
-  { kanji: '梅川伊芙', romaji: 'Umekawa Ifu', meaning: '諧音：沒穿衣服' },
-  { kanji: '櫻京塚杖', romaji: 'Sakurazuka Jo', meaning: '諧音：男性部位腫脹' },
-  { kanji: '夏夕夏井', romaji: 'Natsuyu Natsui', meaning: '諧音：丟人現眼' },
-  { kanji: '玖菜河子', romaji: 'Kuna Kako', meaning: '諧音：韭菜盒子' },
-  { kanji: '宮美春掐', romaji: 'Miyami Haruka', meaning: '諧音：形容人講不聽' },
-  { kanji: '渦曜犬步', romaji: 'Kayo Kenpo', meaning: '諧音：我要全部' },
-  { kanji: '大佑池久', romaji: 'Daisuke Ikehisa', meaning: '諧音：大又持久' },
-  { kanji: '穗道宗舞', romaji: 'Suido Somai', meaning: '諧音：睡到中午' },
-  { kanji: '粉穂杏谷澤', romaji: 'Konaho Anizawa', meaning: '諧音：粉碎性骨折' },
-  { kanji: '高希櫻娜', romaji: 'Takaki Sakurana', meaning: '諧音：死小孩' },
-  { kanji: '泉蓮芙莉卡', romaji: 'Izumi Renfurika', meaning: '諧音：全聯福利卡' },
-  { kanji: '由宰具麻', romaji: 'Yuzai Guma', meaning: '諧音：有在顧嗎' },
-  { kanji: '岡門友矢', romaji: 'Okakado Tomoya', meaning: '諧音：肛門有牙' },
-  { kanji: '梅川依芙', romaji: 'Umekawa Ifu', meaning: '諧音：沒穿衣服' },
-  { kanji: '久武加滿', romaji: 'Hisatake Kaman', meaning: '諧音：酒不夠滿' },
-  { kanji: '壠后莉宮', romaji: 'Longo Rikyu', meaning: '諧音：攏好哩講' },
-  { kanji: '鈴北舞吉', romaji: 'Suzukita Maikichi', meaning: '諧音：林北舞吉' },
-  { kanji: '森上梅友前', romaji: 'Morigami Baiyuzen', meaning: '諧音：身上沒有錢' },
-  { kanji: '穹道穗宮源', romaji: 'Kyudo Suigugen', meaning: '諧音：窮到睡公園' },
-  { kanji: '裁傅志由', romaji: 'Saifu Shiyu', meaning: '諧音：財富自由' },
-  { kanji: '田中僑仔', romaji: 'Tanaka Kyoshi', meaning: '諧音：田中喬仔 (有錢人)' },
-  { kanji: '梅川庫子', romaji: 'Umekawa Kuko', meaning: '諧音：沒穿褲子' },
-  { kanji: '梅川內伊庫', romaji: 'Umekawa Naiku', meaning: '諧音：沒穿內衣褲' },
-  { kanji: '高熊梅政甫', romaji: 'Takakuma Baiseifu', meaning: '諧音：高雄沒政府' },
-  { kanji: '森上梅戴前', romaji: 'Morigami Maitaisen', meaning: '諧音：身上沒帶錢' },
-  { kanji: '戶投野梅前', romaji: 'Koto Yobaimae', meaning: '諧音：戶頭有沒錢' },
-  { kanji: '粉穗幸谷澤', romaji: 'Konaho Yukizawa', meaning: '諧音：粉碎性骨折' },
-  { kanji: '耀川布拉甲', romaji: 'Yokawa Buraka', meaning: '諧音：要穿布拉甲' },
-  { kanji: '耿本白池', romaji: 'Komoto Hakuchi', meaning: '諧音：根本白痴' },
-  { kanji: '窮稻穗宮圓', romaji: 'Kyudo Suiguen', meaning: '諧音：窮到睡公園' },
-  { kanji: '黑堂真乃', romaji: 'Kurodo Mano', meaning: '諧音：黑糖珍奶' },
-  { kanji: '五十嵐太貴', romaji: 'Igarashi Taiki', meaning: '諧音：50嵐太貴' },
-  { kanji: '久菜和子', romaji: 'Kuna Kazuko', meaning: '諧音：韭菜盒子' },
-  { kanji: '高希音娜', romaji: 'Takaki Otona', meaning: '諧音：猴屎囝仔' },
-  { kanji: '梅川羽依', romaji: 'Umekawa Ui', meaning: '諧音：沒穿雨衣' },
-  { kanji: '梅川協子', romaji: 'Umekawa Kyoko', meaning: '諧音：沒穿鞋子' },
-  { kanji: '肛門強', romaji: 'Komon Tsuyoshi', meaning: '諧音：肛門強' },
-  { kanji: '扁壽五郎', romaji: 'Henju Goro', meaning: '諧音：騙肖五郎' },
-  { kanji: '三石宮分', romaji: 'Mitsuishi Gubun', meaning: '諧音：三十公分' },
-  { kanji: '四幸九點', romaji: 'Shiko Kyuten', meaning: '諧音：四點九點' },
-  { kanji: '梅川酷子', romaji: 'Umekawa Kuko', meaning: '諧音：沒穿褲子' },
-  { kanji: '大道韓步助', romaji: 'Daido Kanposuke', meaning: '諧音：大家都幫助' },
-  { kanji: '彎刀武西郎', romaji: 'Wanto Bushiro', meaning: '諧音：冤大頭' },
-  { kanji: '一次淘汰郎', romaji: 'Ichiji Totaro', meaning: '諧音：一次淘汰郎' },
-  { kanji: '淡水夕照子', romaji: 'Tansui Sekishoshi', meaning: '諧音：淡水夕照' },
-  { kanji: '竹本口木子', romaji: 'Takemoto Kumiko', meaning: '拆字梗：笨呆子' },
-  { kanji: '八格雅魯', romaji: 'Hakka Yaru', meaning: '諧音：八嘎呀路' },
-  { kanji: '米田共菜菜子', romaji: 'Yoneda Tomonanako', meaning: '諧音：糞便菜菜子' },
-  { kanji: '稉稻穗宮圖', romaji: 'Kyodo Suiguzu', meaning: '諧音：窮到睡公園' },
-  { kanji: '星野源', romaji: 'Hoshino Gen', meaning: '諧音：省能源' },
+  // === 經典諧音 ===
+  { kanji: '梅川伊芙', romaji: 'Umekawa Ifu', meaning: '中文諧音：沒穿衣服' },
+  { kanji: '梅川庫子', romaji: 'Umekawa Kuko', meaning: '中文諧音：沒穿褲子' },
+  { kanji: '梅川內衣', romaji: 'Umekawa Naii', meaning: '中文諧音：沒穿內衣' },
+
+  // === 台語諧音 ===
+  { kanji: '林北舞吉', romaji: 'Rinpoku Bukichi', meaning: '台語諧音：林北無吉' },
+  { kanji: '攏好哩講', romaji: 'Rōkō Rikō', meaning: '台語諧音：攏好你講' },
+  { kanji: '高希囝仔', romaji: 'Kōki Ganna', meaning: '台語諧音：猴死囝仔' },
+
+  // === 生活諧音 ===
+  { kanji: '全聯福利', romaji: 'Zenren Fukuri', meaning: '中文諧音：全聯福利' },
+  { kanji: '黑糖珍奶', romaji: 'Kokutō Chinnai', meaning: '中文諧音：黑糖珍奶' },
+  { kanji: '五十嵐貴', romaji: 'Igarashi Takai', meaning: '中文諧音：50嵐太貴' },
+  { kanji: '星野源', romaji: 'Hoshino Gen', meaning: '中文諧音：省能源 (實為日本藝人)' },
+
+  // === 財富相關 ===
+  { kanji: '財富自由', romaji: 'Zaifu Jiyū', meaning: '中文諧音：財富自由' },
+  { kanji: '身上沒錢', romaji: 'Shinjō Musen', meaning: '中文諧音：身上沒錢' },
+  { kanji: '窮到睡公園', romaji: 'Kyūdō Suikōen', meaning: '中文諧音：窮到睡公園' },
+
+  // === 拆字梗 ===
+  {
+    kanji: '竹本口木子',
+    romaji: 'Takemoto Kuchikiko',
+    meaning: '拆字梗：笨呆子 (竹+本=笨, 口+木=呆)',
+  },
+  { kanji: '米田共子', romaji: 'Yoneda Tomoko', meaning: '拆字梗：糞 (米+田+共=糞)' },
+  { kanji: '二木太郎', romaji: 'Futaki Tarō', meaning: '拆字梗：林 (二+木=林)' },
+  { kanji: '共田花子', romaji: 'Kyōda Hanako', meaning: '拆字梗：黃 (共+田=黃)' },
+
+  // === 地名相關 ===
+  { kanji: '淡水夕照子', romaji: 'Tansui Yūshōko', meaning: '地名：淡水夕照 (台灣八景)' },
+  { kanji: '高雄港子', romaji: 'Takao Minako', meaning: '地名：高雄港 (日治時期稱高雄為打狗)' },
+  { kanji: '台北城子', romaji: 'Taihoku Jōko', meaning: '地名：台北城' },
+
+  // === 歷史人物風格 ===
+  { kanji: '德川家康', romaji: 'Tokugawa Ieyasu', meaning: '歷史：江戶幕府創始人' },
+  { kanji: '織田信長', romaji: 'Oda Nobunaga', meaning: '歷史：戰國大名' },
+  { kanji: '豐臣秀吉', romaji: 'Toyotomi Hideyoshi', meaning: '歷史：天下人' },
+
+  // === 文學風格 ===
+  { kanji: '夏目漱石', romaji: 'Natsume Sōseki', meaning: '文學：明治時代文豪' },
+  { kanji: '芥川龍之介', romaji: 'Akutagawa Ryūnosuke', meaning: '文學：大正時代作家' },
+  { kanji: '太宰治', romaji: 'Dazai Osamu', meaning: '文學：昭和時代作家' },
+
+  // === 常見日本名 ===
+  { kanji: '山田太郎', romaji: 'Yamada Tarō', meaning: '常見：日本最通用的範例名' },
+  { kanji: '鈴木一郎', romaji: 'Suzuki Ichirō', meaning: '常見：知名棒球選手同名' },
+  { kanji: '佐藤花子', romaji: 'Satō Hanako', meaning: '常見：日本最常見女性名' },
+  { kanji: '田中實', romaji: 'Tanaka Minoru', meaning: '常見：田中是日本第四大姓' },
+  { kanji: '高橋健太', romaji: 'Takahashi Kenta', meaning: '常見：高橋是日本第三大姓' },
+
+  // === 自然風格 ===
+  { kanji: '櫻井翔', romaji: 'Sakurai Shō', meaning: '自然：櫻花+井' },
+  { kanji: '松本潤', romaji: 'Matsumoto Jun', meaning: '自然：松樹+本' },
+  { kanji: '森田剛', romaji: 'Morita Gō', meaning: '自然：森林+田' },
+  { kanji: '川村瑞希', romaji: 'Kawamura Mizuki', meaning: '自然：川+村' },
+  { kanji: '山本彩', romaji: 'Yamamoto Aya', meaning: '自然：山+本' },
+
+  // === 優雅女性名 ===
+  { kanji: '小林美咲', romaji: 'Kobayashi Misaki', meaning: '優雅：小林+美咲' },
+  { kanji: '渡邊結衣', romaji: 'Watanabe Yui', meaning: '優雅：渡邊+結衣' },
+  { kanji: '伊藤陽菜', romaji: 'Itō Haruna', meaning: '優雅：伊藤+陽菜' },
+  { kanji: '中村七海', romaji: 'Nakamura Nanami', meaning: '優雅：中村+七海' },
+  { kanji: '加藤凜', romaji: 'Katō Rin', meaning: '優雅：加藤+凜' },
 ];
