@@ -16,6 +16,11 @@ interface FAQEntry {
   answer: string;
 }
 
+interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -30,10 +35,14 @@ interface SEOProps {
   updatedTime?: string;
   faq?: FAQEntry[];
   robots?: string;
+  breadcrumbs?: BreadcrumbItem[];
 }
 
 // Site configuration
 const SITE_BASE_URL = 'https://app.haotool.org/nihonname/';
+
+// Default breadcrumbs for home page
+const DEFAULT_BREADCRUMBS: BreadcrumbItem[] = [{ name: '首頁', url: SITE_BASE_URL }];
 const DEFAULT_TITLE = 'NihonName 皇民化改姓生成器 | 1940年代台灣日式姓名產生器';
 const DEFAULT_DESCRIPTION =
   '探索1940年代台灣皇民化運動的歷史改姓對照。輸入你的姓氏，發現日治時期的日式姓名與趣味諧音名。基於歷史文獻《内地式改姓名の仕方》。';
@@ -162,6 +171,22 @@ const buildFaqSchema = (faq: FAQEntry[], url: string) => ({
   url,
 });
 
+/**
+ * Build BreadcrumbList JSON-LD schema
+ * @see https://schema.org/BreadcrumbList
+ * @see https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
+ */
+const buildBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[]) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbs.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    item: item.url.startsWith('http') ? item.url : `${SITE_BASE_URL}${item.url.replace(/^\//, '')}`,
+  })),
+});
+
 export function SEOHelmet({
   title,
   description = DEFAULT_DESCRIPTION,
@@ -176,6 +201,7 @@ export function SEOHelmet({
   updatedTime,
   faq,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+  breadcrumbs,
 }: SEOProps) {
   const fullTitle = title ? `${title} | NihonName` : DEFAULT_TITLE;
 
@@ -199,6 +225,10 @@ export function SEOHelmet({
   if (faq?.length) {
     structuredData.push(buildFaqSchema(faq, canonicalUrl));
   }
+
+  // Add BreadcrumbList schema
+  const breadcrumbsToRender = breadcrumbs?.length ? breadcrumbs : DEFAULT_BREADCRUMBS;
+  structuredData.push(buildBreadcrumbSchema(breadcrumbsToRender));
 
   return (
     <Helmet>
