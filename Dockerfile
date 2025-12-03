@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for RateWise
+# Multi-stage Dockerfile for RateWise & NihonName
 # syntax=docker/dockerfile:1
 
 # Build stage
@@ -10,6 +10,7 @@ ARG GIT_COMMIT_COUNT
 ARG GIT_COMMIT_HASH
 ARG BUILD_TIME
 ARG VITE_BASE_PATH=/ratewise/
+ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
@@ -33,6 +34,7 @@ ENV CI=true
 # Copy package files and pnpm config
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ratewise/package.json ./apps/ratewise/
+COPY apps/nihonname/package.json ./apps/nihonname/
 
 # [fix:2025-11-06] 安裝依賴時禁用 Husky 並清空 NODE_ENV
 # Zeabur 可能自動設置 NODE_ENV=production，導致 devDependencies 被跳過
@@ -45,7 +47,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # Copy source code
 COPY . .
 
-# Build application（若外部未提供 build args，於此自動回退計算）
+# Build applications（若外部未提供 build args，於此自動回退計算）
+# [fix:2025-12-03] 同時建置 ratewise 和 nihonname
 RUN set -eux; \
   if [ -z "${GIT_COMMIT_COUNT:-}" ]; then \
     export GIT_COMMIT_COUNT="$(git rev-list --count HEAD)"; \
@@ -56,7 +59,7 @@ RUN set -eux; \
   if [ -z "${BUILD_TIME:-}" ]; then \
     export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
   fi; \
-  pnpm build:ratewise
+  pnpm build:ratewise && pnpm build:nihonname
 
 # Production stage
 FROM nginx:alpine
@@ -64,11 +67,19 @@ FROM nginx:alpine
 # Install wget for healthcheck
 RUN apk add --no-cache wget
 
-# Copy built assets
+# Copy built assets for ratewise
 COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html
+
+# Copy built assets for nihonname
+# [fix:2025-12-03] 將 nihonname 的 dist 複製到 /nihonname 子目錄
+COPY --from=builder /app/apps/nihonname/dist /usr/share/nginx/html/nihonname-app
 
 # Ensure /ratewise/* 路徑指向同一份資源（避免 404）
 RUN rm -rf /usr/share/nginx/html/ratewise && ln -s /usr/share/nginx/html /usr/share/nginx/html/ratewise
+
+# [fix:2025-12-03] 設置 nihonname 路徑
+# nihonname 的資源已經在 /nihonname-app 目錄，需要創建符號連結
+RUN ln -s /usr/share/nginx/html/nihonname-app /usr/share/nginx/html/nihonname
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
