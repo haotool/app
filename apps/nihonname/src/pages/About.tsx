@@ -37,6 +37,10 @@ export default function About() {
         pathname="/about"
         keywords={['皇民化運動', '日治時期歷史', '台灣歷史', '改姓運動', '內地式改姓名']}
         faq={faqData}
+        breadcrumbs={[
+          { name: '首頁', url: '/' },
+          { name: '關於', url: '/about' },
+        ]}
       />
 
       <div className="min-h-screen bg-stone-100 py-12 px-4">
