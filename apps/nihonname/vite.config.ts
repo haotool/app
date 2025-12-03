@@ -42,10 +42,11 @@ export default defineConfig(({ mode }) => {
   const buildTime = new Date().toISOString();
   const siteUrl = env.VITE_SITE_URL || 'https://app.haotool.org/nihonname/';
 
-  // CI 預設使用根路徑，生產環境使用 /nihonname/
+  // [fix:2025-12-03] 修正 base path 邏輯
+  // CI 環境和生產環境都應該使用 /nihonname/
+  // 只有本地開發時才使用 /
   const baseFromEnv = env.VITE_BASE_PATH || process.env['VITE_BASE_PATH'];
-  const base =
-    baseFromEnv ?? (process.env['CI'] ? '/' : mode === 'production' ? '/nihonname/' : '/');
+  const base = baseFromEnv ?? (mode === 'production' || process.env['CI'] ? '/nihonname/' : '/');
 
   const manifestScope = base.endsWith('/') ? base : `${base}/`;
   const manifestStartUrl = manifestScope;

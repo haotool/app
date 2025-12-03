@@ -19,6 +19,8 @@
     "build": "pnpm -r build",
     "prebuild:ratewise": "node scripts/generate-sitemap.js",
     "build:ratewise": "pnpm --filter @app/ratewise build",
+    "build:nihonname": "pnpm --filter @app/nihonname build",
+    "build:all": "pnpm build:ratewise && pnpm build:nihonname",
     "preview": "pnpm --filter @app/ratewise preview",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
