@@ -22,13 +22,7 @@ import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { RollingText } from '../components/RollingText';
 import { JapaneseDiceButton } from '../components/JapaneseDiceButton';
-import {
-  SURNAME_MAP,
-  FUNNY_NAMES,
-  JAPANESE_GIVEN_NAMES,
-  PRIMARY_SOURCE,
-  getFunnyNamesCount,
-} from '../constants';
+import { SURNAME_MAP, FUNNY_NAMES, JAPANESE_GIVEN_NAMES, PRIMARY_SOURCE } from '../constants';
 import { useCustomPunNames } from '../hooks/useCustomPunNames';
 import type { GeneratorState, PunName, CustomPunName } from '../types';
 
@@ -550,11 +544,10 @@ export default function Home() {
   const meaningInputRef = useRef<HTMLInputElement>(null);
 
   // Custom pun names hook
-  const { customPunNames, count: customCount, addCustomPunName } = useCustomPunNames();
+  const { customPunNames, addCustomPunName } = useCustomPunNames();
 
   // Combined pun names (built-in + custom)
   const allPunNames: PunName[] = [...FUNNY_NAMES, ...customPunNames];
-  const totalPunNamesCount = getFunnyNamesCount() + customCount;
 
   // 處理漢字輸入變更 - 同時自動更新羅馬拼音
   const handleKanjiChange = (value: string) => {
@@ -716,8 +709,14 @@ export default function Home() {
     }
   };
 
-  const getFontSizeClass = (text: string) => {
+  // 姓氏和名字字體大小（姓氏始終 >= 名字）
+  const getFontSizeClass = (text: string, isSurname = false) => {
     const len = text.length;
+    // 姓氏：統一使用最大字體
+    if (isSurname) {
+      return 'text-6xl md:text-7xl';
+    }
+    // 名字：根據長度調整
     if (len >= 4) return 'text-4xl md:text-5xl';
     if (len === 3) return 'text-5xl md:text-6xl';
     return 'text-6xl md:text-7xl';
@@ -889,38 +888,33 @@ export default function Home() {
                       </span>
                     </div>
 
-                    <div className="flex flex-col items-center justify-center space-y-4">
-                      <div className="flex flex-wrap justify-center items-end gap-2 md:gap-4 relative">
-                        {/* Surname - 點擊文字改姓，hover 顯示骰子 */}
-                        <div className="group relative text-center px-1 flex flex-col items-center">
-                          <span
-                            className={`block font-jp font-bold text-red-900 leading-none drop-shadow-sm ${getFontSizeClass(state.japaneseSurname)}`}
+                    <div className="flex flex-col items-center justify-center">
+                      {/* 日文姓名 - 不換行 */}
+                      <div className="flex justify-center items-end gap-2 md:gap-3 relative whitespace-nowrap">
+                        {/* Surname - 點擊文字直接改姓 */}
+                        <div className="group relative text-center flex flex-col items-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (showUI) rerollSurname();
+                            }}
+                            className={`block font-jp font-bold text-red-900 leading-none drop-shadow-sm transition-all hover:scale-105 cursor-pointer ${getFontSizeClass(state.japaneseSurname, true)}`}
                           >
                             <RollingText text={state.japaneseSurname} />
-                          </span>
-                          {showUI && (
-                            <div className="absolute -left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              <JapaneseDiceButton onClick={rerollSurname} label="改姓" size="md" />
-                            </div>
-                          )}
+                          </button>
                         </div>
 
-                        {/* Given Name - 點擊文字改名，hover 顯示骰子 */}
-                        <div className="group relative text-center px-1 flex flex-col items-center">
-                          <span
-                            className={`block font-jp font-bold text-stone-800 leading-none drop-shadow-sm ${getFontSizeClass(displayGivenName)}`}
+                        {/* Given Name - 點擊文字直接改名 */}
+                        <div className="group relative text-center flex flex-col items-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (showUI) rerollGivenName();
+                            }}
+                            className={`block font-jp font-bold text-stone-800 leading-none drop-shadow-sm transition-all hover:scale-105 cursor-pointer ${getFontSizeClass(displayGivenName, false)}`}
                           >
                             <RollingText text={displayGivenName} />
-                          </span>
-                          {showUI && (
-                            <div className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              <JapaneseDiceButton
-                                onClick={rerollGivenName}
-                                label="改名"
-                                size="md"
-                              />
-                            </div>
-                          )}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -932,6 +926,7 @@ export default function Home() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex-1">
+                      {/* 羅馬拼音區 - 置左對齊 */}
                       <div className="flex items-center space-x-2 mb-2">
                         <span className="bg-amber-500 text-white px-2 py-0.5 text-[10px] font-bold rounded-sm uppercase tracking-wider">
                           Alias
@@ -945,13 +940,13 @@ export default function Home() {
                             onChange={(e) => setEditRomaji(e.target.value)}
                             onKeyDown={handleKeyDown}
                             onBlur={confirmEdit}
-                            className="text-sm text-amber-700 font-bold font-serif tracking-wide bg-white border border-amber-300 rounded px-2 py-0.5 outline-none focus:ring-2 focus:ring-amber-200"
+                            className="text-sm text-amber-700 font-bold font-serif tracking-wide bg-white border border-amber-300 rounded px-2 py-0.5 outline-none focus:ring-2 focus:ring-amber-200 text-left"
                             placeholder="羅馬拼音"
                           />
                         ) : (
                           <button
                             onClick={(e) => startEditing('romaji', e)}
-                            className="text-sm text-amber-700 font-bold font-serif tracking-wide hover:bg-amber-100 px-2 py-0.5 rounded transition-colors cursor-text"
+                            className="text-sm text-amber-700 font-bold font-serif tracking-wide hover:bg-amber-100 px-2 py-0.5 rounded transition-colors cursor-text text-left"
                             title="點擊編輯羅馬拼音"
                           >
                             <RollingText text={state.punName.romaji} />
@@ -1092,21 +1087,21 @@ export default function Home() {
                     e.stopPropagation();
                     toggleUI();
                   }}
-                  className="bg-stone-800 text-stone-100 py-3.5 rounded-xl font-bold shadow-lg shadow-stone-400/50 flex items-center justify-center space-x-2 hover:bg-stone-700 transition-all active:scale-[0.97] text-sm"
+                  className="bg-red-900 text-red-50 py-3.5 rounded-xl font-bold shadow-lg shadow-red-400/30 flex items-center justify-center space-x-2 hover:bg-red-800 transition-all active:scale-[0.97] text-sm animate-pulse-subtle relative overflow-hidden group"
                 >
-                  <Camera size={18} />
-                  <span>純淨模式</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-700/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                  <Camera size={18} className="relative z-10" />
+                  <span className="relative z-10">截圖模式</span>
+                  <style>{`
+                    @keyframes pulse-subtle {
+                      0%, 100% { opacity: 1; transform: scale(1); }
+                      50% { opacity: 0.95; transform: scale(1.02); }
+                    }
+                    .animate-pulse-subtle {
+                      animation: pulse-subtle 2.5s ease-in-out infinite;
+                    }
+                  `}</style>
                 </button>
-              </div>
-
-              {/* Stats */}
-              <div className="text-center mb-4">
-                <span className="text-[10px] text-stone-400">
-                  資料庫共 {totalPunNamesCount} 個諧音梗
-                  {customCount > 0 && (
-                    <span className="text-amber-600 ml-1">(含 {customCount} 個自訂)</span>
-                  )}
-                </span>
               </div>
 
               <div className="flex justify-between items-center">
