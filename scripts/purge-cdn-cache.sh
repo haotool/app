@@ -20,15 +20,22 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}[CDN Purge] Starting CDN cache purge...${NC}"
 
 # 需要清除的關鍵檔案與前綴
+# [fix:2025-12-04] 新增 nihonname 路徑支援
 CRITICAL_FILES=(
   "/ratewise/sw.js"
   "/ratewise/registerSW.js"
   "/ratewise/manifest.webmanifest"
   "/ratewise/index.html"
+  "/nihonname/sw.js"
+  "/nihonname/registerSW.js"
+  "/nihonname/manifest.webmanifest"
+  "/nihonname/index.html"
 )
 CRITICAL_PREFIXES=(
   "/ratewise/workbox-"
   "/ratewise/assets/"
+  "/nihonname/workbox-"
+  "/nihonname/assets/"
 )
 
 success=false
@@ -63,11 +70,17 @@ if ! $success && [[ -n "${CLOUDFLARE_ZONE_ID:-}" && -n "${CLOUDFLARE_API_TOKEN:-
     "https://app.haotool.org/ratewise/sw.js",
     "https://app.haotool.org/ratewise/registerSW.js",
     "https://app.haotool.org/ratewise/manifest.webmanifest",
-    "https://app.haotool.org/ratewise/index.html"
+    "https://app.haotool.org/ratewise/index.html",
+    "https://app.haotool.org/nihonname/sw.js",
+    "https://app.haotool.org/nihonname/registerSW.js",
+    "https://app.haotool.org/nihonname/manifest.webmanifest",
+    "https://app.haotool.org/nihonname/index.html"
   ],
   "prefixes": [
     "https://app.haotool.org/ratewise/workbox-",
-    "https://app.haotool.org/ratewise/assets/"
+    "https://app.haotool.org/ratewise/assets/",
+    "https://app.haotool.org/nihonname/workbox-",
+    "https://app.haotool.org/nihonname/assets/"
   ]
 }
 JSON
