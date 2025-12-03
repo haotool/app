@@ -1,0 +1,173 @@
+/**
+ * NihonName Global Styles
+ * Tailwind CSS configuration with Japanese aesthetic
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Japanese style fonts */
+  @font-face {
+    font-family: 'Noto Serif JP';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://fonts.gstatic.com/s/notoserifjp/v26/xn7mYHs72GKoTvKNlt9cPn8I7pI.woff2')
+      format('woff2');
+    unicode-range: U+4E00-9FFF;
+  }
+
+  html {
+    font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-stone-100 text-stone-900;
+  }
+
+  /* Japanese font family */
+  .font-jp {
+    font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  }
+
+  /* Selection style */
+  ::selection {
+    @apply bg-red-900 text-white;
+  }
+}
+
+@layer components {
+  /* Button styles */
+  .btn-primary {
+    @apply bg-red-900 text-white px-6 py-3 rounded-lg font-bold
+           hover:bg-red-800 active:scale-95 transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-stone-200 text-stone-700 px-6 py-3 rounded-lg
+           hover:bg-stone-50 hover:border-red-200 hover:text-red-800
+           active:scale-95 transition-all duration-200;
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-white rounded-xl shadow-lg border border-stone-100 p-6;
+  }
+
+  /* Input styles */
+  .input {
+    @apply w-full bg-stone-50 border-b-2 border-stone-200 
+           focus:border-red-800 outline-none py-3 text-center
+           transition-all placeholder:text-stone-300;
+  }
+}
+
+@layer utilities {
+  /* Japanese vertical writing mode */
+  .writing-vertical-rl {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  /* Animation utilities */
+  .animate-in {
+    animation: animate-in 0.5s ease-out forwards;
+  }
+
+  @keyframes animate-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Fade in animation */
+  .fade-in {
+    animation: fade-in 0.3s ease-out forwards;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Zoom in animation */
+  .zoom-in-95 {
+    animation: zoom-in 0.3s ease-out forwards;
+  }
+
+  @keyframes zoom-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Slide in animations */
+  .slide-in-from-bottom-10 {
+    animation: slide-in-from-bottom 0.5s ease-out forwards;
+  }
+
+  @keyframes slide-in-from-bottom {
+    from {
+      opacity: 0;
+      transform: translateY(2.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .slide-in-from-bottom-8 {
+    animation: slide-in-from-bottom-8 0.5s ease-out forwards;
+  }
+
+  @keyframes slide-in-from-bottom-8 {
+    from {
+      opacity: 0;
+      transform: translateY(2rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Fill mode */
+  .fill-mode-forwards {
+    animation-fill-mode: forwards;
+  }
+
+  /* Safe area for mobile */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

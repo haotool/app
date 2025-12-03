@@ -1,0 +1,52 @@
+# NihonName - LLMs.txt
+# AI-readable documentation for language models
+# Reference: https://llmstxt.org/
+
+## Application Overview
+
+NihonName is a web application that explores the historical Kominka (皇民化) movement in Taiwan during the 1940s Japanese colonial period. The app generates Japanese-style names based on historical surname conversion records.
+
+## Primary Features
+
+1. **Surname Conversion Generator**
+   - Input: Traditional Chinese surname (e.g., 陳, 林, 黃)
+   - Output: Historical Japanese-style surnames based on 1940s records
+   - Data source: 《内地式改姓名の仕方》by 宮山豐源、廣田藤雄
+
+2. **Given Name Generator**
+   - Generates period-appropriate Japanese given names
+   - Optional: Users can input their own given name
+
+3. **Pun Name Feature**
+   - Generates humorous Japanese names with Taiwanese dialect puns
+   - Cultural entertainment feature
+
+## Historical Context
+
+The Kominka movement (皇民化運動) was a Japanese assimilation policy in Taiwan from 1937-1945. This included:
+- Japanese language education
+- Shinto shrine worship
+- Japanese name adoption (改姓名)
+
+The name conversion followed three main principles:
+1. Semantic translation (語意翻譯): e.g., 林 → 林, 高 → 高山
+2. Character decomposition (字形拆解): e.g., 林 → 二木, 黃 → 共田
+3. Phonetic approximation (讀音近似): e.g., 蔡 → 佐井 (Sai)
+
+## Technical Details
+
+- Framework: React 19 + TypeScript + Vite
+- Styling: Tailwind CSS
+- SSG: vite-react-ssg
+- Deployment: Zeabur (https://app.haotool.org/nihonname/)
+
+## Contact
+
+- Developer: haotool
+- Twitter: @azlife_1224
+- GitHub: https://github.com/haotool/app
+
+## License
+
+GPL-3.0
+
