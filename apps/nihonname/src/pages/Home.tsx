@@ -482,6 +482,7 @@ export default function Home() {
   };
 
   const safeAreaTop = 'pt-[env(safe-area-inset-top,20px)]';
+  const safeAreaBottom = 'pb-[env(safe-area-inset-bottom,12px)]';
 
   return (
     <>
@@ -499,7 +500,7 @@ export default function Home() {
       />
 
       <div
-        className={`h-[100dvh] w-full bg-[#f5f5f4] text-stone-900 font-sans relative flex flex-col overflow-hidden selection:bg-red-900 selection:text-white ${safeAreaTop}`}
+        className={`min-h-[100dvh] w-full bg-[#f5f5f4] text-stone-900 font-sans relative flex flex-col items-center justify-center overflow-hidden selection:bg-red-900 selection:text-white ${safeAreaTop} ${safeAreaBottom}`}
         onClick={handleBackgroundClick}
       >
         <SakuraBackground />
@@ -526,13 +527,9 @@ export default function Home() {
         )}
 
         {/* Main Container */}
-        <div
-          className={`relative z-10 w-full h-full flex flex-col items-center max-w-lg mx-auto transition-all duration-1000 px-5 md:px-0 ${state.step === 'result' ? 'justify-center' : 'justify-start'}`}
-        >
+        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center max-w-lg mx-auto transition-all duration-1000 px-5 md:px-0 gap-8">
           {/* Header */}
-          <header
-            className={`w-full text-center transition-all duration-700 ease-in-out z-20 shrink-0 ${state.step === 'result' ? (showUI ? 'mt-0 mb-6' : 'mt-0 mb-8') : 'mt-[12vh] md:mt-[15vh]'}`}
-          >
+          <header className="w-full text-center transition-all duration-700 ease-in-out z-20 shrink-0 mt-0 mb-4">
             <div className="flex flex-col items-center">
               <div
                 className={`transition-all duration-700 ${state.step === 'result' && !showUI ? 'opacity-100 scale-110 mb-4' : 'opacity-100 border-y border-red-900/30 py-1 mb-3'}`}
@@ -561,7 +558,7 @@ export default function Home() {
           {/* Input Step */}
           {state.step === 'input' && (
             <div
-              className={`w-full flex-1 flex flex-col justify-start pt-10 transition-all duration-1000 ease-in-out ${loading ? 'opacity-0 translate-y-[-2rem] scale-95 blur-sm' : 'animate-in slide-in-from-bottom-10 fade-in duration-700'}`}
+              className={`w-full flex flex-col items-center justify-center gap-8 transition-all duration-1000 ease-in-out ${loading ? 'opacity-0 translate-y-[-2rem] scale-95 blur-sm' : 'animate-in slide-in-from-bottom-10 fade-in duration-700'}`}
             >
               <div className="bg-white/90 backdrop-blur-md shadow-2xl shadow-stone-300/50 border border-stone-100 rounded-2xl p-8 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10 pointer-events-none">
