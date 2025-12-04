@@ -65,7 +65,9 @@ describe('ShimonosekiTreaty Page - SEO FAQ', () => {
 
     it('renders myth buster content about 馬關續約', () => {
       renderWithProviders(<ShimonosekiTreaty />);
-      expect(screen.getByText(/馬關條約強制續約/)).toBeInTheDocument();
+      // Use getAllByText since the text appears in both myth buster section and FAQ
+      const elements = screen.getAllByText(/馬關條約強制續約/);
+      expect(elements.length).toBeGreaterThan(0);
     });
   });
 
