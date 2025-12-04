@@ -1162,7 +1162,7 @@ export default function Home() {
                 className="hover:text-red-700 transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
-                好工具
+                haotool 好工具
               </a>
               <span className="text-stone-300">·</span>
               <span>作者：阿璋</span>
