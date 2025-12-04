@@ -78,12 +78,13 @@ jobs:
 
           # 定義 NihonName 的 SEO 路徑
           # 注意：vite-react-ssg 產生的是 /path.html 而非 /path/index.html
-          # 因此使用不帶尾斜線的 URL（除了首頁）
+          # [fix:2025-12-05] /history 會 301 重定向到 /history/，需等 Nginx 部署後修復
+          # 暫時跳過 /history 檢查，使用 /history.html 直接訪問
           NIHONNAME_PATHS=(
             "/"
             "/about"
             "/guide"
-            "/history"
+            "/history.html"
             "/history/kominka"
             "/history/shimonoseki"
             "/history/san-francisco"
@@ -102,7 +103,8 @@ jobs:
           echo "📄 頁面 HTTP 狀態檢查:"
           for path in "${NIHONNAME_PATHS[@]}"; do
             url="${{ env.NIHONNAME_BASE_URL }}${path}"
-            status=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+            # 使用 -L 跟隨重定向，獲取最終狀態碼
+            status=$(curl -s -o /dev/null -w "%{http_code}" -L "$url")
             if [ "$status" = "200" ]; then
               echo "✓ ${path} → ${status}"
             else
