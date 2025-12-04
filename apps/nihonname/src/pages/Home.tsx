@@ -22,7 +22,9 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { RollingText } from '../components/RollingText';
 import { JapaneseDiceButton } from '../components/JapaneseDiceButton';
 import { SURNAME_MAP, FUNNY_NAMES, JAPANESE_GIVEN_NAMES, PRIMARY_SOURCE } from '../constants';
+import { getSurnameDetail } from '../data/surnameData';
 import { useCustomPunNames } from '../hooks/useCustomPunNames';
+import { SourceAccordion } from '../components/SourceAccordion';
 import type { GeneratorState, PunName, CustomPunName } from '../types';
 
 // 簡易漢字轉羅馬拼音（常見日文漢字）
@@ -366,7 +368,10 @@ const LookupModal = ({
   if (!isOpen) return null;
 
   const key = surname.trim();
-  const mappedNames = key ? (SURNAME_MAP[key] ?? SURNAME_MAP[key.substring(0, 1)] ?? []) : [];
+  // 優先使用完整資料，fallback 到簡易對照表
+  const surnameDetail = getSurnameDetail(key) ?? getSurnameDetail(key.substring(0, 1));
+  const mappedNames: string[] =
+    surnameDetail?.names ?? SURNAME_MAP[key] ?? SURNAME_MAP[key.substring(0, 1)] ?? [];
   const isVerified = mappedNames.length > 2;
 
   return (
@@ -395,6 +400,11 @@ const LookupModal = ({
             <ToriiIcon className="w-8 h-8 opacity-50" />「{key || '?'}」姓氏族譜
             <ToriiIcon className="w-8 h-8 opacity-50" />
           </h3>
+          {surnameDetail && (
+            <p className="text-xs text-red-200 mt-2 opacity-80">
+              共 {surnameDetail.count} 筆歷史記錄
+            </p>
+          )}
         </div>
 
         {/* Scrollable Content Area */}
@@ -460,6 +470,15 @@ const LookupModal = ({
                   <p className="text-xs">系統將使用通用日本姓氏</p>
                 </div>
               </div>
+            )}
+
+            {/* 展開式來源清單 */}
+            {surnameDetail && surnameDetail.sources.length > 0 && (
+              <SourceAccordion
+                sources={surnameDetail.sources}
+                description={surnameDetail.description}
+                count={surnameDetail.count}
+              />
             )}
 
             <div className="mt-8 pt-6 border-t border-stone-200 text-[10px] text-stone-400 space-y-2">
@@ -728,6 +747,8 @@ export default function Home() {
     <>
       <SEOHelmet
         pathname="/"
+        title="皇民化改姓生成器 - 日治時期台灣姓名對照"
+        description="探索1940年代台灣皇民化運動的歷史。根據國史館檔案、學術論文等多方歷史文獻，收錄90+漢姓、1,700+筆日本姓氏對照記錄，每筆皆標註變異法說明與來源。"
         keywords={[
           '皇民化運動',
           '日式姓名產生器',
@@ -736,6 +757,9 @@ export default function Home() {
           '台灣歷史',
           '1940年代',
           '日本名字',
+          '姓氏對照',
+          '內地式改姓名',
+          '臺灣總督府',
         ]}
       />
 
@@ -1144,7 +1168,7 @@ export default function Home() {
               <span>作者：阿璋</span>
               <span className="text-stone-300">·</span>
               <a
-                href="https://www.threads.net/@azlife_1224"
+                href="https://www.threads.com/@azlife_1224/post/DR2NCeEj6Fo?xmt=AQF0K8pg5PLpzoBz7nnYMEI2CdxVzs2pUyIJHabwZWeYCw"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-red-700 transition-colors"

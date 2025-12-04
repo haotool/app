@@ -19,12 +19,18 @@ const faqData = [
   },
   {
     question: '改姓的原則是什麼？',
-    answer: '主要有三種：語意翻譯（如林→林）、字形拆解（如林→二木）、讀音近似（如蔡→佐井 Sai）。',
+    answer:
+      '主要有五種變異法：明示法（如林→小林）、拆字法（如林→二木）、同音法（如蔡→佐井）、郡望法（如陳→穎川）、暗示法（如柯→青山）。',
   },
   {
     question: '資料來源是什麼？',
     answer:
-      '本系統主要參考《内地式改姓名の仕方》（宮山豐源、廣田藤雄著）及臺灣總督府檔案中的戶籍資料。',
+      '本系統整合多方歷史文獻：國史館臺灣文獻館檔案、吳秀環論文、劉正元論文、《內地式改姓名の仕方》及田野調查，涵蓋超過 90 個漢姓、1,700+ 筆對照記錄。',
+  },
+  {
+    question: '資料庫有多少筆記錄？',
+    answer:
+      '目前資料庫收錄 90+ 個台灣常見漢姓，共計 1,700+ 筆日本姓氏對照記錄，每筆記錄皆標註變異法說明與歷史來源。',
   },
 ];
 
@@ -99,20 +105,56 @@ export default function About() {
             {/* Attribution */}
             <section className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="text-xl font-bold text-stone-800 mb-4">資料來源</h2>
+              <p className="text-stone-600 text-sm mb-4">
+                本系統整合多方歷史文獻，每筆姓氏對照皆可展開查看詳細來源與變異法說明。
+              </p>
               <ul className="space-y-3 text-sm">
                 <li>
                   <a
-                    href="https://m.gamer.com.tw/home/creationDetail.php?sn=5844723"
+                    href="https://home.gamer.com.tw/creationDetail.php?sn=5844723"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center text-red-700 hover:text-red-900 transition-colors"
                   >
                     <ExternalLink size={14} className="mr-2" />
-                    巴哈姆特：日治時期台灣人更改姓名活動及辦法
+                    【歷史說書】日治時期台灣人更改姓名活動及辦法
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://home.gamer.com.tw/creationDetail.php?sn=2850704"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-red-700 hover:text-red-900 transition-colors"
+                  >
+                    <ExternalLink size={14} className="mr-2" />
+                    日治時代改姓資料整理──取日文姓氏的參考
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.th.gov.tw/CP-218-218-1d8a9-1.htm"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-red-700 hover:text-red-900 transition-colors"
+                  >
+                    <ExternalLink size={14} className="mr-2" />
+                    臺灣總督府檔案事典 - 國史館臺灣文獻館
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.airitilibrary.com/Publication/alDetailedMesh?DocID=1018327X-200912-200912300004-200912300004-1-18"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-red-700 hover:text-red-900 transition-colors"
+                  >
+                    <ExternalLink size={14} className="mr-2" />
+                    性別與改姓名：日治時期的改姓名實例分析
                   </a>
                 </li>
                 <li className="text-stone-600">《内地式改姓名の仕方》- 宮山豐源、廣田藤雄 著</li>
-                <li className="text-stone-600">臺灣總督府檔案</li>
+                <li className="text-stone-600">田野調查與口述歷史</li>
               </ul>
             </section>
 
@@ -134,7 +176,7 @@ export default function About() {
                 <p>
                   <span className="text-stone-400">作者：</span>
                   <a
-                    href="https://www.threads.net/@azlife_1224"
+                    href="https://www.threads.com/@azlife_1224/post/DR2NCeEj6Fo?xmt=AQF0K8pg5PLpzoBz7nnYMEI2CdxVzs2pUyIJHabwZWeYCw"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-red-400 hover:text-red-300 ml-2"
@@ -171,7 +213,7 @@ export default function About() {
               </a>
               <span className="text-stone-300">·</span>
               <a
-                href="https://www.threads.net/@azlife_1224"
+                href="https://www.threads.com/@azlife_1224/post/DR2NCeEj6Fo?xmt=AQF0K8pg5PLpzoBz7nnYMEI2CdxVzs2pUyIJHabwZWeYCw"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-red-700 transition-colors"
