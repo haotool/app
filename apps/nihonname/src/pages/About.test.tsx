@@ -49,7 +49,10 @@ describe('About Page', () => {
   it('should render attribution section with source links', () => {
     renderAbout();
     expect(screen.getByText('資料來源')).toBeInTheDocument();
-    expect(screen.getByText('巴哈姆特：日治時期台灣人更改姓名活動及辦法')).toBeInTheDocument();
+    // 更新後的來源連結標題
+    expect(screen.getByText('【歷史說書】日治時期台灣人更改姓名活動及辦法')).toBeInTheDocument();
+    expect(screen.getByText('日治時代改姓資料整理──取日文姓氏的參考')).toBeInTheDocument();
+    expect(screen.getByText('臺灣總督府檔案事典 - 國史館臺灣文獻館')).toBeInTheDocument();
   });
 
   it('should render developer section', () => {

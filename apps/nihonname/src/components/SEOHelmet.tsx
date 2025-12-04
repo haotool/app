@@ -68,7 +68,7 @@ const DEFAULT_KEYWORDS = [
 
 const SOCIAL_LINKS = [
   'https://github.com/haotool/app',
-  'https://www.threads.net/@azlife_1224',
+  'https://www.threads.com/@azlife_1224/post/DR2NCeEj6Fo?xmt=AQF0K8pg5PLpzoBz7nnYMEI2CdxVzs2pUyIJHabwZWeYCw',
   'https://twitter.com/azlife_1224',
 ];
 

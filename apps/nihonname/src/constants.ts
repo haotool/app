@@ -2,13 +2,18 @@
  * Constants for NihonName - migrated from root constants.ts
  */
 import type { SurnameData } from './types';
+import { getSurnameMap, SURNAME_DATA_FULL, SURNAME_STATS } from './data/surnameData';
 
 export const PRIMARY_SOURCE = {
   title: '日治時期台灣人更改姓名活動及辦法',
   author: '瀨川今雄 / 宮山豐源',
-  url: 'https://m.gamer.com.tw/home/creationDetail.php?sn=5844723',
+  url: 'https://home.gamer.com.tw/creationDetail.php?sn=5844723',
   docName: '内地式改姓名の仕方 (修訂版)',
 };
+
+/** 完整姓氏資料庫 (含來源、變異法說明) */
+export { SURNAME_DATA_FULL, SURNAME_STATS };
+export { getSurnameDetail, getSupportedSurnames } from './data/surnameData';
 
 // Random Japanese Given Names
 export const JAPANESE_GIVEN_NAMES = [
@@ -85,18 +90,29 @@ export const JAPANESE_GIVEN_NAMES = [
 /**
  * Data Sources for Surname Mapping (Kominka Movement 1940s)
  *
- * 資料來源：《内地式改姓名の仕方(修訂版)》
- * 作者：宮山豐源、廣田藤雄
- * 整理者：瀨川今雄
+ * 資料來源：
+ * - 國史館臺灣文獻館檔案
+ * - 吳秀環論文
+ * - 劉正元論文
+ * - 《內地式改姓名の仕方》
+ * - 田野調查
  *
  * 參考文獻：
  * - 「改姓名取締ニ關スル規則制定ノ件」（1904年05月11日）
  * - 「本島人ノ姓名變更ニ關スル件」（1940年01月01日）
  * - 陳文添，《臺灣總督府檔案事典》，南投：國史館臺灣文獻館，2015
  *
- * [update:2025-12-04] 根據瀨川今雄整理的歷史文獻更新
+ * [update:2025-12-04] 根據多方歷史文獻整合更新
+ *
+ * @deprecated 請使用 SURNAME_DATA_FULL 取得完整資料（含來源、變異法說明）
  */
-export const SURNAME_MAP: SurnameData = {
+export const SURNAME_MAP: SurnameData = getSurnameMap();
+
+/**
+ * 向後相容的姓氏對照表
+ * @deprecated 請使用 SURNAME_DATA_FULL 取得完整資料
+ */
+export const SURNAME_MAP_LEGACY: SurnameData = {
   // === 常見姓氏 (依使用頻率排序) ===
   陳: [
     '桑坪',
@@ -1389,6 +1405,8 @@ export const SURNAME_MAP: SurnameData = {
   點: ['廣田'],
   鍊: ['竹內'],
 };
+
+// 移除 SURNAME_MAP_LEGACY，因為 SURNAME_MAP 現在由 getSurnameMap() 生成
 
 /**
  * 趣味諧音日本名 (網路迷因)
