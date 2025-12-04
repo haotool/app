@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { HelmetProvider } from '../utils/react-helmet-async';
+import { HelmetProvider } from '../utils/helmet';
 import About from './About';
 
 // Helper to render About with required providers

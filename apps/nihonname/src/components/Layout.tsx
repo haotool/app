@@ -4,7 +4,7 @@
  * [UI/UX 2025-12-03] 垂直置中 + 上下留白設計
  */
 import { Outlet, useLocation } from 'react-router-dom';
-import { HelmetProvider } from '../utils/react-helmet-async';
+import { HelmetProvider } from '../utils/helmet';
 
 export function Layout() {
   const location = useLocation();
