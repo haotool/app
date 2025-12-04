@@ -134,12 +134,12 @@ export default function About() {
                 <p>
                   <span className="text-stone-400">作者：</span>
                   <a
-                    href="https://twitter.com/azlife_1224"
+                    href="https://www.threads.net/@azlife_1224"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-red-400 hover:text-red-300 ml-2"
                   >
-                    @azlife_1224
+                    Threads：azlife_1224
                   </a>
                 </p>
                 <p className="pt-2">

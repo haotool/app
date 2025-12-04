@@ -1051,9 +1051,9 @@ export default function Home() {
               {/* Pure Mode Hint Overlay */}
               {showHint && (
                 <div className="absolute bottom-[-120px] md:bottom-[-130px] left-0 right-0 flex justify-center pointer-events-none animate-in fade-in zoom-in duration-300">
-                  <div className="bg-stone-900/90 backdrop-blur-md text-white px-5 py-2 rounded-full text-xs shadow-xl flex items-center border border-white/10">
-                    <ScanEye size={14} className="mr-2 animate-pulse text-red-400" />
-                    準備截圖 (介面隱藏10秒)
+                  <div className="bg-red-900/90 backdrop-blur-md text-amber-50 px-5 py-2 rounded-full text-xs shadow-[0_8px_20px_-6px_rgba(127,29,29,0.45)] flex items-center border border-red-200/50 ring-1 ring-red-200/40">
+                    <ScanEye size={14} className="mr-2 animate-pulse text-amber-200 drop-shadow" />
+                    純淨截圖啟動 · 介面隱藏 10 秒
                   </div>
                 </div>
               )}

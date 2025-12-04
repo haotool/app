@@ -214,8 +214,17 @@ export default defineConfig(({ mode }) => {
         preload: 'swap',
         pruneSource: true,
       },
-      includedRoutes: (paths) => {
-        return ['/', '/about'];
+      includedRoutes: () => {
+        // [SEO:2025-12-04] 新增歷史專區頁面
+        return [
+          '/',
+          '/about',
+          '/guide',
+          '/history',
+          '/history/kominka',
+          '/history/shimonoseki',
+          '/history/san-francisco',
+        ];
       },
     },
   };
