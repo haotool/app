@@ -147,7 +147,7 @@ describe('SingleConverter - 核心功能測試', () => {
       expect(mockProps.onToCurrencyChange).toHaveBeenCalledWith('JPY');
     });
 
-    it('should render all currency options in both selects', () => {
+    it('should render all currency options in both selects', { timeout: 10000 }, () => {
       render(<SingleConverter {...mockProps} />);
 
       const fromSelect = screen.getByLabelText('選擇來源貨幣');

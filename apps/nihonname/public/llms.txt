@@ -1,63 +1,123 @@
 # NihonName - LLMs.txt
 # AI-readable documentation for language models
 # Reference: https://llmstxt.org/
+# Updated: 2025-12-04
 
 ## Application Overview
 
-NihonName is a web application that explores the historical Kominka (皇民化) movement in Taiwan during the 1940s Japanese colonial period. The app generates Japanese-style names based on historical surname conversion records.
+NihonName (姓名變換所) is a web application that explores the historical Kominka (皇民化) movement in Taiwan during the 1940s Japanese colonial period. The app generates Japanese-style names based on historical surname conversion records and provides comprehensive historical education about Taiwan's colonial history.
 
 ## Primary Features
 
-1. **Surname Conversion Generator**
+1. **Surname Conversion Generator (姓名變換所)**
    - Input: Traditional Chinese surname (e.g., 陳, 林, 黃)
    - Output: Historical Japanese-style surnames based on 1940s records
    - Data source: 《内地式改姓名の仕方》by 宮山豐源、廣田藤雄
+   - Database: 300+ Taiwanese surnames with historical Japanese equivalents
 
 2. **Given Name Generator**
    - Generates period-appropriate Japanese given names
    - Optional: Users can input their own given name
+   - Includes romaji (羅馬拼音) pronunciation
 
-3. **Pun Name Feature**
+3. **Pun Name Feature (諧音梗)**
    - Generates humorous Japanese names with Taiwanese dialect puns
    - Cultural entertainment feature
    - Over 500 pun names in database
+   - Custom pun name creation and local storage
 
-4. **Custom Pun Name Feature**
-   - Users can create and save their own pun names
-   - Stored locally in browser localStorage
+## Pages Structure
 
-## Pages
-
-- `/` - Home: Main name generator interface
+### Main Pages
+- `/` - Home: Main name generator interface (姓名變換所)
 - `/about` - About: Information about the app and historical context
 - `/guide` - Guide: 8-step tutorial on how to use the app
 
+### History Section (歷史專區) - SEO FAQ Pages
+- `/history` - History Index: Overview of Taiwan's Japanese colonial period
+- `/history/kominka` - Kominka Movement (皇民化運動): 1937-1945 assimilation policy
+- `/history/shimonoseki` - Treaty of Shimonoseki (馬關條約): 1895 Taiwan cession
+- `/history/san-francisco` - Treaty of San Francisco (舊金山和約): 1951 Japan's renunciation
+
 ## Historical Context
 
-The Kominka movement (皇民化運動) was a Japanese assimilation policy in Taiwan from 1937-1945. This included:
-- Japanese language education
-- Shinto shrine worship
+### Kominka Movement (皇民化運動) 1937-1945
+The Kominka movement was a Japanese assimilation policy in Taiwan that aimed to transform Taiwanese people into loyal subjects of the Japanese Emperor. Key aspects included:
+- Japanese language education (國語運動)
+- Shinto shrine worship (神社參拜)
 - Japanese name adoption (改姓名)
+- Abolition of traditional customs
 
+### Name Conversion Principles (改姓原則)
 The name conversion followed three main principles:
-1. Semantic translation (語意翻譯): e.g., 林 → 林, 高 → 高山
-2. Character decomposition (字形拆解): e.g., 林 → 二木, 黃 → 共田
-3. Phonetic approximation (讀音近似): e.g., 蔡 → 佐井 (Sai)
+1. **Semantic translation (語意翻譯)**: e.g., 林 → 林 (Hayashi), 高 → 高山 (Takayama)
+2. **Character decomposition (字形拆解)**: e.g., 林 → 二木 (Futaki), 黃 → 共田 (Tomoda)
+3. **Phonetic approximation (讀音近似)**: e.g., 蔡 → 佐井 (Sai), 許 → 許田 (Kyoda)
+
+### Historical Statistics
+- Duration: 8 years (1937-1945)
+- Adoption rate: ~7.6% of Taiwanese families
+- Households: ~170,000 families changed names
+- Total affected: ~2-3% of population by 1945
+
+### Treaty of Shimonoseki (馬關條約) 1895
+- Signed: April 17, 1895
+- Location: Shimonoseki (下關), Japan
+- Result: China ceded Taiwan to Japan
+- Duration: 50 years of Japanese colonial rule
+- Note: "馬關條約強制續約" or "馬關續約" is a MYTH - the treaty was permanent cession, not a lease
+
+### Treaty of San Francisco (舊金山和約) 1951
+- Signed: September 8, 1951
+- Effective: April 28, 1952
+- Article 2: "Japan renounces all right, title and claim to Formosa and the Pescadores"
+- Significance: Legal end of Japanese sovereignty over Taiwan
+
+## SEO Target Keywords
+
+Primary Keywords (目標關鍵字):
+- 皇民化改姓運動
+- 姓名變換所
+- 台灣人改姓名單
+- 舊金山和約
+- 日治時代改姓名單
+- 馬關條約強制續約 (myth debunking)
+- 馬關續約 (myth debunking)
+- 馬關條約改名
+- 日治時期改名
+- 改日本姓
+
+Secondary Keywords:
+- 日式姓名產生器
+- 皇民化運動
+- 日治時期
+- 台灣歷史
+- 內地式改姓名
 
 ## Technical Details
 
 - Framework: React 19 + TypeScript + Vite
-- Styling: Tailwind CSS
-- SSG: vite-react-ssg
+- Styling: Tailwind CSS with Japanese aesthetic (和紙質感)
+- SSG: vite-react-ssg for pre-rendering
+- PWA: Installable progressive web app
+- SEO: JSON-LD structured data (FAQPage, Article, BreadcrumbList, HowTo)
 - Deployment: Zeabur (https://app.haotool.org/nihonname/)
+
+## Data Sources & Citations
+
+1. 《内地式改姓名の仕方》- 宮山豐源、廣田藤雄 著
+2. 臺灣總督府檔案 (Taiwan Governor-General's Office Archives)
+3. 國史館台灣文獻館 (National Archives Administration)
+4. 巴哈姆特：日治時期台灣人更改姓名活動及辦法
 
 ## Contact
 
-- Developer: haotool
+- Developer: haotool (好工具)
+- Website: https://haotool.org
 - Twitter: @azlife_1224
+- Threads: @azlife_1224
 - GitHub: https://github.com/haotool/app
 
 ## License
 
 GPL-3.0
-
