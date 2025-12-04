@@ -1,24 +1,34 @@
 echo "🔍 Running pre-push checks..."
 
-# TypeScript type checking
+# [fix:2025-12-04] 優化 pre-push hook
+# 根據最佳實踐：本地僅執行快速檢查，E2E/完整測試交由 CI 處理
+# 參考：https://playwright.dev/docs/ci#running-tests-on-ci
+
+# TypeScript type checking (快速，必要)
 echo "⚙️  TypeScript check..."
 pnpm typecheck || {
   echo "❌ TypeScript errors found. Please fix before pushing."
   exit 1
 }
 
-# Run tests with coverage
-echo "🧪 Running tests..."
-pnpm test:coverage || {
-  echo "❌ Tests failed or coverage below threshold. Please fix before pushing."
+# Unit tests only (快速，必要)
+# 跳過 coverage 檢查以加速，CI 會執行完整 coverage
+echo "🧪 Running unit tests..."
+pnpm test || {
+  echo "❌ Unit tests failed. Please fix before pushing."
   exit 1
 }
 
-# Build check
+# Build check (必要，確保可部署)
 echo "📦 Build check..."
 pnpm build:ratewise || {
   echo "❌ Build failed. Please fix before pushing."
   exit 1
 }
 
+# [note] E2E tests 移至 CI 執行
+# 原因：E2E 測試耗時較長（3-5分鐘），不適合本地 pre-push
+# CI 會執行完整 E2E + coverage + Lighthouse 檢查
+
 echo "✅ All pre-push checks passed!"
+echo "💡 Note: E2E tests will run on CI after push."
