@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider } from '../utils/helmet';
 import { BrowserRouter } from 'react-router-dom';
 import Guide from './Guide';
 

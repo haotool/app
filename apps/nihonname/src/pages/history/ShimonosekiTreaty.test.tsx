@@ -6,7 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider } from '../../utils/helmet';
 import ShimonosekiTreaty from './ShimonosekiTreaty';
 
 const renderWithProviders = (component: React.ReactElement) => {

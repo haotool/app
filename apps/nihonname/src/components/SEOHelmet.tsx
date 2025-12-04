@@ -1,10 +1,10 @@
 /**
  * SEO Helmet Component for NihonName
- * [context7:react-helmet-async:2025-12-03]
+ * [context7:@dr.pogodin/react-helmet:2025-12-04]
  *
  * Centralized SEO metadata management with JSON-LD structured data
  */
-import { Helmet } from '../utils/react-helmet-async';
+import { Helmet } from '../utils/helmet';
 
 interface AlternateLink {
   hrefLang: string;
