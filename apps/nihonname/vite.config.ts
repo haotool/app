@@ -216,10 +216,12 @@ export default defineConfig(({ mode }) => {
       },
       includedRoutes: () => {
         // [SEO:2025-12-04] 新增歷史專區頁面
+        // [SEO:2025-12-05] 新增 FAQ 頁面
         return [
           '/',
           '/about',
           '/guide',
+          '/faq',
           '/history',
           '/history/kominka',
           '/history/shimonoseki',

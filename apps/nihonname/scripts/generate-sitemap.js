@@ -15,6 +15,7 @@ const pages = [
   { path: '/', priority: '1.0', changefreq: 'monthly' },
   { path: '/about', priority: '0.8', changefreq: 'monthly' },
   { path: '/guide', priority: '0.8', changefreq: 'monthly' },
+  { path: '/faq', priority: '0.9', changefreq: 'monthly' },
   // History pages - SEO FAQ pages
   { path: '/history', priority: '0.9', changefreq: 'monthly' },
   { path: '/history/kominka', priority: '0.85', changefreq: 'monthly' },
