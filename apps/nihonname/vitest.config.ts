@@ -31,6 +31,9 @@ export default defineConfig({
         'src/data/**/*.backup.ts',
         // Data files (primarily static content with minimal logic)
         'src/data/funnyNames.ts',
+        // Runtime utility that requires browser APIs (Service Worker, sessionStorage, location.reload)
+        // [fix:2025-12-04] Chunk load retry mechanism
+        'src/utils/lazyWithRetry.ts',
       ],
       thresholds: {
         statements: 80,

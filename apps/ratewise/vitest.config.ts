@@ -84,6 +84,9 @@ export default defineConfig(() => {
           'src/components/ThreadsIcon.tsx', // Static icon component
           'src/features/calculator/components/ExpressionDisplay.tsx', // Pure presentational, covered by E2E
           'src/features/calculator/components/CalculatorKeyboard.tsx', // UI shell, validated via E2E
+          // Runtime utility that requires browser APIs (Service Worker, sessionStorage, location.reload)
+          // [fix:2025-12-04] Chunk load retry mechanism
+          'src/utils/lazyWithRetry.ts',
         ],
         thresholds: {
           // 基於 Linus Torvalds 哲學設置實用且可維護的門檻
