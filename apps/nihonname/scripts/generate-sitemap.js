@@ -14,6 +14,7 @@ const TODAY = new Date().toISOString().split('T')[0];
 const pages = [
   { path: '/', priority: '1.0', changefreq: 'monthly' },
   { path: '/about', priority: '0.8', changefreq: 'monthly' },
+  { path: '/guide', priority: '0.8', changefreq: 'monthly' },
 ];
 
 function generateSitemap() {
