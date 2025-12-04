@@ -1,18 +1,20 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { SkeletonLoader } from './components/SkeletonLoader';
 import { useUrlNormalization } from './hooks/useUrlNormalization';
 import CurrencyConverter from './features/ratewise/RateWise';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 
-// Lazy load FAQ and About pages to reduce initial bundle
-const FAQ = lazy(() => import('./pages/FAQ'));
-const About = lazy(() => import('./pages/About'));
-const ColorSchemeComparison = lazy(() => import('./pages/ColorSchemeComparison'));
-const USDToTWD = lazy(() => import('./pages/USDToTWD'));
+// Lazy load pages with retry mechanism
+// [fix:2025-12-04] 修復 SSG 部署後 "Unexpected token '<'" 錯誤
+const FAQ = lazyWithRetry(() => import('./pages/FAQ'));
+const About = lazyWithRetry(() => import('./pages/About'));
+const ColorSchemeComparison = lazyWithRetry(() => import('./pages/ColorSchemeComparison'));
+const USDToTWD = lazyWithRetry(() => import('./pages/USDToTWD'));
 // [SEO Fix 2025-11-25 Phase 2A-2] Lazy load 404 page with noindex SEO
-const NotFound = lazy(() => import('./pages/NotFound'));
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 
 /**
  * URL 標準化組件

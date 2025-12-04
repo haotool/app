@@ -14,13 +14,117 @@
  *
  * [Refactor:2025-11-29] Layout 組件移至 components/Layout.tsx
  * 依據：eslint-plugin-react-refresh (只導出組件的文件才能 Fast Refresh)
+ *
+ * [fix:2025-12-04] 新增 importWithRetry 處理 chunk 載入失敗
+ * 修復 "Unexpected token '<'" 錯誤
  */
 
 import type { RouteRecord } from 'vite-react-ssg';
+import type { ComponentType } from 'react';
 import CurrencyConverter from './features/ratewise/RateWise';
 import { Layout } from './components/Layout';
+import { logger } from './utils/logger';
+
+/**
+ * 帶重試機制的動態 import
+ * [fix:2025-12-04] 修復 SSG 部署後 chunk 載入失敗導致的 JSON 解析錯誤
+ */
+async function importWithRetry<T>(
+  importFn: () => Promise<T>,
+  retries = 3,
+  retryDelay = 1000,
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await importFn();
+    } catch (error) {
+      lastError = error;
+
+      // 檢查是否為 chunk 載入錯誤
+      const isChunkError =
+        error instanceof Error &&
+        (error.message.toLowerCase().includes('unexpected token') ||
+          error.message.toLowerCase().includes('<!doctype') ||
+          error.message.toLowerCase().includes('loading chunk') ||
+          error.message.toLowerCase().includes('failed to fetch'));
+
+      if (!isChunkError) {
+        throw error;
+      }
+
+      logger.warn(`Chunk load failed (attempt ${attempt + 1}/${retries + 1})`, {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay * (attempt + 1)));
+      }
+    }
+  }
+
+  // 所有重試都失敗後，嘗試刷新頁面
+  if (typeof window !== 'undefined') {
+    const REFRESH_KEY = 'chunk_load_refresh_timestamp';
+    const REFRESH_COOLDOWN_MS = 30000;
+
+    try {
+      const lastRefresh = sessionStorage.getItem(REFRESH_KEY);
+      const canRefresh =
+        !lastRefresh || Date.now() - parseInt(lastRefresh, 10) > REFRESH_COOLDOWN_MS;
+
+      if (canRefresh) {
+        logger.warn('All chunk load retries failed, forcing page refresh');
+        sessionStorage.setItem(REFRESH_KEY, Date.now().toString());
+
+        // 清除 Service Worker 和快取
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((r) => r.unregister()));
+        }
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map((name) => caches.delete(name)));
+        }
+
+        window.location.reload();
+      }
+    } catch {
+      // 忽略 sessionStorage 錯誤
+    }
+  }
+
+  throw lastError;
+}
+
+/**
+ * 建立帶重試機制的 lazy 路由配置
+ */
+function createLazyRoute(
+  path: string,
+  importFn: () => Promise<{ default: ComponentType }>,
+  entry: string,
+): RouteRecord {
+  return {
+    path,
+    lazy: async () => {
+      const module = await importWithRetry(importFn);
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
+    },
+    entry,
+  };
+}
 
 // Route Configuration for vite-react-ssg
+// [fix:2025-12-04] 使用 createLazyRoute 處理 chunk 載入失敗
 export const routes: RouteRecord[] = [
   {
     path: '/',
@@ -31,278 +135,30 @@ export const routes: RouteRecord[] = [
     ),
     entry: 'src/features/ratewise/RateWise',
   },
-  {
-    path: '/faq',
-    lazy: async () => {
-      const module = await import('./pages/FAQ');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/FAQ.tsx',
-  },
-  {
-    path: '/about',
-    lazy: async () => {
-      const module = await import('./pages/About');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/About.tsx',
-  },
-  {
-    path: '/guide',
-    lazy: async () => {
-      const module = await import('./pages/Guide');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/Guide.tsx',
-  },
-  {
-    path: '/usd-twd',
-    lazy: async () => {
-      const module = await import('./pages/USDToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/USDToTWD.tsx',
-  },
-  {
-    path: '/jpy-twd',
-    lazy: async () => {
-      const module = await import('./pages/JPYToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/JPYToTWD.tsx',
-  },
-  {
-    path: '/eur-twd',
-    lazy: async () => {
-      const module = await import('./pages/EURToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/EURToTWD.tsx',
-  },
-  {
-    path: '/gbp-twd',
-    lazy: async () => {
-      const module = await import('./pages/GBPToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/GBPToTWD.tsx',
-  },
-  {
-    path: '/cny-twd',
-    lazy: async () => {
-      const module = await import('./pages/CNYToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/CNYToTWD.tsx',
-  },
-  {
-    path: '/krw-twd',
-    lazy: async () => {
-      const module = await import('./pages/KRWToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/KRWToTWD.tsx',
-  },
-  {
-    path: '/hkd-twd',
-    lazy: async () => {
-      const module = await import('./pages/HKDToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/HKDToTWD.tsx',
-  },
-  {
-    path: '/aud-twd',
-    lazy: async () => {
-      const module = await import('./pages/AUDToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/AUDToTWD.tsx',
-  },
-  {
-    path: '/cad-twd',
-    lazy: async () => {
-      const module = await import('./pages/CADToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/CADToTWD.tsx',
-  },
-  {
-    path: '/sgd-twd',
-    lazy: async () => {
-      const module = await import('./pages/SGDToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/SGDToTWD.tsx',
-  },
-  {
-    path: '/thb-twd',
-    lazy: async () => {
-      const module = await import('./pages/THBToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/THBToTWD.tsx',
-  },
-  {
-    path: '/nzd-twd',
-    lazy: async () => {
-      const module = await import('./pages/NZDToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/NZDToTWD.tsx',
-  },
-  {
-    path: '/chf-twd',
-    lazy: async () => {
-      const module = await import('./pages/CHFToTWD');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/CHFToTWD.tsx',
-  },
+  createLazyRoute('/faq', () => import('./pages/FAQ'), 'src/pages/FAQ.tsx'),
+  createLazyRoute('/about', () => import('./pages/About'), 'src/pages/About.tsx'),
+  createLazyRoute('/guide', () => import('./pages/Guide'), 'src/pages/Guide.tsx'),
+  createLazyRoute('/usd-twd', () => import('./pages/USDToTWD'), 'src/pages/USDToTWD.tsx'),
+  createLazyRoute('/jpy-twd', () => import('./pages/JPYToTWD'), 'src/pages/JPYToTWD.tsx'),
+  createLazyRoute('/eur-twd', () => import('./pages/EURToTWD'), 'src/pages/EURToTWD.tsx'),
+  createLazyRoute('/gbp-twd', () => import('./pages/GBPToTWD'), 'src/pages/GBPToTWD.tsx'),
+  createLazyRoute('/cny-twd', () => import('./pages/CNYToTWD'), 'src/pages/CNYToTWD.tsx'),
+  createLazyRoute('/krw-twd', () => import('./pages/KRWToTWD'), 'src/pages/KRWToTWD.tsx'),
+  createLazyRoute('/hkd-twd', () => import('./pages/HKDToTWD'), 'src/pages/HKDToTWD.tsx'),
+  createLazyRoute('/aud-twd', () => import('./pages/AUDToTWD'), 'src/pages/AUDToTWD.tsx'),
+  createLazyRoute('/cad-twd', () => import('./pages/CADToTWD'), 'src/pages/CADToTWD.tsx'),
+  createLazyRoute('/sgd-twd', () => import('./pages/SGDToTWD'), 'src/pages/SGDToTWD.tsx'),
+  createLazyRoute('/thb-twd', () => import('./pages/THBToTWD'), 'src/pages/THBToTWD.tsx'),
+  createLazyRoute('/nzd-twd', () => import('./pages/NZDToTWD'), 'src/pages/NZDToTWD.tsx'),
+  createLazyRoute('/chf-twd', () => import('./pages/CHFToTWD'), 'src/pages/CHFToTWD.tsx'),
   // ❌ 不預渲染內部工具頁面
-  {
-    path: '/color-scheme',
-    lazy: async () => {
-      const module = await import('./pages/ColorSchemeComparison');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/ColorSchemeComparison.tsx',
-  },
+  createLazyRoute(
+    '/color-scheme',
+    () => import('./pages/ColorSchemeComparison'),
+    'src/pages/ColorSchemeComparison.tsx',
+  ),
   // ❌ 不預渲染 404 頁面（動態處理）
-  {
-    path: '*',
-    lazy: async () => {
-      const module = await import('./pages/NotFound');
-      const PageComponent = module.default;
-      return {
-        Component: () => (
-          <Layout>
-            <PageComponent />
-          </Layout>
-        ),
-      };
-    },
-    entry: 'src/pages/NotFound.tsx',
-  },
+  createLazyRoute('*', () => import('./pages/NotFound'), 'src/pages/NotFound.tsx'),
 ];
 
 /**

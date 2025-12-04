@@ -2,21 +2,24 @@
  * Route configuration for NihonName
  * [context7:react-router-dom:2025-12-03]
  * [SEO:2025-12-04] 新增歷史專區頁面路由
+ * [fix:2025-12-04] 使用 lazyWithRetry 處理 chunk 載入失敗
  */
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import type { RouteObject } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 
-// Lazy load pages
-const Home = lazy(() => import('./pages/Home'));
-const About = lazy(() => import('./pages/About'));
-const Guide = lazy(() => import('./pages/Guide'));
+// Lazy load pages with retry mechanism
+// [fix:2025-12-04] 修復 SSG 部署後 "Unexpected token '<'" 錯誤
+const Home = lazyWithRetry(() => import('./pages/Home'));
+const About = lazyWithRetry(() => import('./pages/About'));
+const Guide = lazyWithRetry(() => import('./pages/Guide'));
 
 // History pages - SEO FAQ pages
-const HistoryIndex = lazy(() => import('./pages/history/index'));
-const KominkaMovement = lazy(() => import('./pages/history/KominkaMovement'));
-const ShimonosekiTreaty = lazy(() => import('./pages/history/ShimonosekiTreaty'));
-const SanFranciscoTreaty = lazy(() => import('./pages/history/SanFranciscoTreaty'));
+const HistoryIndex = lazyWithRetry(() => import('./pages/history/index'));
+const KominkaMovement = lazyWithRetry(() => import('./pages/history/KominkaMovement'));
+const ShimonosekiTreaty = lazyWithRetry(() => import('./pages/history/ShimonosekiTreaty'));
+const SanFranciscoTreaty = lazyWithRetry(() => import('./pages/history/SanFranciscoTreaty'));
 
 // Loading fallback
 const PageLoader = () => (
