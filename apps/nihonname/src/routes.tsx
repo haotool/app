@@ -3,6 +3,7 @@
  * [context7:react-router-dom:2025-12-03]
  * [SEO:2025-12-04] 新增歷史專區頁面路由
  * [fix:2025-12-04] 使用 lazyWithRetry 處理 chunk 載入失敗
+ * [SEO:2025-12-05] 新增 FAQ 頁面，整合常見問題
  */
 import { Suspense } from 'react';
 import type { RouteObject } from 'react-router-dom';
@@ -14,6 +15,7 @@ import { lazyWithRetry } from './utils/lazyWithRetry';
 const Home = lazyWithRetry(() => import('./pages/Home'));
 const About = lazyWithRetry(() => import('./pages/About'));
 const Guide = lazyWithRetry(() => import('./pages/Guide'));
+const FAQ = lazyWithRetry(() => import('./pages/FAQ'));
 
 // History pages - SEO FAQ pages
 const HistoryIndex = lazyWithRetry(() => import('./pages/history/index'));
@@ -52,6 +54,10 @@ export const routes: RouteObject[] = [
         path: 'guide',
         element: withSuspense(Guide),
       },
+      {
+        path: 'faq',
+        element: withSuspense(FAQ),
+      },
       // History pages - SEO FAQ pages
       {
         path: 'history',
@@ -76,12 +82,14 @@ export const routes: RouteObject[] = [
 /**
  * Get includedRoutes for SSG
  * [SEO:2025-12-04] 新增歷史專區頁面
+ * [SEO:2025-12-05] 新增 FAQ 頁面
  */
 export function getIncludedRoutes(): string[] {
   return [
     '/',
     '/about',
     '/guide',
+    '/faq',
     '/history',
     '/history/kominka',
     '/history/shimonoseki',

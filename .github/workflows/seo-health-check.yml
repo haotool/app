@@ -80,10 +80,12 @@ jobs:
           # 注意：vite-react-ssg 產生的是 /path.html 而非 /path/index.html
           # [fix:2025-12-05] /history 會 301 重定向到 /history/，需等 Nginx 部署後修復
           # 暫時跳過 /history 檢查，使用 /history.html 直接訪問
+          # [SEO:2025-12-05] 新增 /faq 頁面
           NIHONNAME_PATHS=(
             "/"
             "/about"
             "/guide"
+            "/faq"
             "/history.html"
             "/history/kominka"
             "/history/shimonoseki"
