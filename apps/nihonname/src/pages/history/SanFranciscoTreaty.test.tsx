@@ -65,7 +65,9 @@ describe('SanFranciscoTreaty Page - SEO FAQ', () => {
 
     it('renders Chinese translation', () => {
       renderWithProviders(<SanFranciscoTreaty />);
-      expect(screen.getByText(/日本放棄對台灣及澎湖列島的一切權利/)).toBeInTheDocument();
+      // Use getAllByText since the text appears in both key point section and FAQ
+      const elements = screen.getAllByText(/日本放棄對台灣及澎湖列島的一切權利/);
+      expect(elements.length).toBeGreaterThan(0);
     });
   });
 
