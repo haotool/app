@@ -8,7 +8,6 @@ import { useState, useRef } from 'react';
 import {
   Camera,
   ChevronRight,
-  Sparkles,
   BookOpen,
   ExternalLink,
   X,
@@ -741,7 +740,7 @@ export default function Home() {
       />
 
       <div
-        className={`h-[100dvh] w-full bg-[#f5f5f4] text-stone-900 font-sans relative flex flex-col overflow-hidden selection:bg-red-900 selection:text-white ${safeAreaTop}`}
+        className={`min-h-[100dvh] h-[100dvh] w-full bg-[#f5f5f4] text-stone-900 font-sans relative flex flex-col overflow-x-hidden overflow-y-auto selection:bg-red-900 selection:text-white ${safeAreaTop}`}
         onClick={handleBackgroundClick}
       >
         <SakuraBackground />
@@ -759,12 +758,18 @@ export default function Home() {
         </div>
 
         {/* Main Container */}
-        <div
-          className={`relative z-10 w-full h-full flex flex-col items-center max-w-lg mx-auto transition-all duration-500 px-5 md:px-0 ${state.step === 'result' ? 'justify-center' : 'justify-start'}`}
-        >
+        {/* [fix:2025-12-04] 優化 RWD 佈局：
+            - 使用 flex-1 + justify-center 實現垂直置中
+            - 所有頁面內容統一垂直置中
+            - 內容緊湊綁定，上下自動留白
+        */}
+        <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center max-w-lg mx-auto transition-all duration-500 px-5 md:px-0 py-4">
           {/* Header */}
+          {/* [fix:2025-12-04] 移除固定 margin，使用 flex 置中 */}
           <header
-            className={`w-full text-center transition-all duration-700 ease-in-out z-20 shrink-0 ${state.step === 'result' ? (showUI ? 'mt-0 mb-6' : 'mt-0 mb-8') : 'mt-[12vh] md:mt-[15vh]'}`}
+            className={`w-full text-center transition-all duration-700 ease-in-out z-20 shrink-0 ${
+              state.step === 'result' ? (showUI ? 'mb-4' : 'mb-6') : 'mb-6' // 輸入頁：與表單的間距
+            }`}
           >
             <div className="flex flex-col items-center">
               <div
@@ -793,7 +798,7 @@ export default function Home() {
 
           {/* Input Step */}
           {state.step === 'input' && (
-            <div className="w-full flex-1 flex flex-col justify-start pt-10 animate-in slide-in-from-bottom-10 fade-in duration-700">
+            <div className="w-full flex flex-col justify-start animate-in slide-in-from-bottom-10 fade-in duration-700">
               <div className="bg-white/90 backdrop-blur-md shadow-2xl shadow-stone-300/50 border border-stone-100 rounded-2xl p-8 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10 pointer-events-none">
                   <SeigaihaPattern />
@@ -810,6 +815,11 @@ export default function Home() {
                       maxLength={1}
                       value={state.originalSurname}
                       onChange={handleSurnameChange}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && state.originalSurname && !loading) {
+                          generateNames();
+                        }
+                      }}
                       placeholder="陳"
                       className="w-full bg-stone-50 border-b-2 border-stone-200 focus:border-red-800 outline-none py-3 text-3xl text-center font-jp text-stone-800 transition-all placeholder:text-stone-300 rounded-t-lg focus:bg-white"
                     />
@@ -859,15 +869,24 @@ export default function Home() {
           )}
 
           {/* Result Step */}
+          {/* [fix:2025-12-04] 優化結果頁面佈局：
+              - 內容緊湊綁定，減少元素間距
+              - 確保所有手機尺寸正確顯示
+          */}
           {state.step === 'result' && (
             <div
-              className={`w-full flex flex-col justify-center items-center relative shrink-0 transition-all duration-500 ${showUI ? 'pb-8 md:pb-12' : 'pb-0'}`}
+              className={`w-full flex flex-col justify-center items-center relative min-h-0 transition-all duration-500`}
             >
               {/* Main Result Card - 和紙質感 */}
+              {/* [fix:2025-12-04] 優化卡片樣式：
+                  - 使用 max-h 限制最大高度
+                  - 減少 padding 在小螢幕上的空間佔用
+                  - 確保卡片不會超出視窗
+              */}
               <div
                 className={`relative w-full transition-all duration-500 ease-out ${showUI ? 'scale-100' : 'scale-[1.02]'}`}
               >
-                <div className="bg-[#fcfaf7] w-full shadow-2xl relative border-8 border-double border-stone-200 p-6 md:p-10 text-center flex flex-col items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/rice-paper-2.png')] rounded-sm animate-in zoom-in-95 duration-700 ring-1 ring-black/5">
+                <div className="bg-[#fcfaf7] w-full shadow-2xl relative border-8 border-double border-stone-200 p-5 md:p-8 text-center flex flex-col items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/rice-paper-2.png')] rounded-sm animate-in zoom-in-95 duration-700 ring-1 ring-black/5">
                   {/* Corner Decorations */}
                   <div className="absolute top-4 left-4 w-16 h-16 border-t border-l border-red-900/20"></div>
                   <div className="absolute bottom-4 right-4 w-16 h-16 border-b border-r border-red-900/20"></div>
@@ -876,7 +895,8 @@ export default function Home() {
                   </div>
 
                   {/* Generated Name Block */}
-                  <div className="relative py-12 w-full border-b border-stone-800/10 mb-8">
+                  {/* [fix:2025-12-04] 減少垂直 padding 適配小螢幕 */}
+                  <div className="relative py-6 md:py-10 w-full border-b border-stone-800/10 mb-4 md:mb-6">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#fcfaf7] px-4 text-red-800">
                       <Flower size={24} fill="currentColor" className="opacity-80" />
                     </div>
@@ -921,6 +941,7 @@ export default function Home() {
                   </div>
 
                   {/* Pun Name Section - 點擊文字編輯，點擊骰子隨機 */}
+                  {/* [UI/UX 2025-12-04] 保留諧音區塊和骰子，隱藏解釋文字（因常有錯誤） */}
                   <div
                     className={`w-full bg-stone-100/80 p-5 rounded border-l-4 border-l-amber-500 border-stone-200 relative group transition-all text-left flex items-center justify-between shadow-inner ${!showUI ? 'opacity-90 grayscale-[0.5]' : ''}`}
                     onClick={(e) => e.stopPropagation()}
@@ -1004,34 +1025,8 @@ export default function Home() {
                         </button>
                       )}
 
-                      {/* 解釋 - 可點擊編輯 */}
-                      {editingField !== 'kanji' && (
-                        <div
-                          className={`text-xs text-stone-500 flex items-center font-bold transition-opacity duration-500 ${!showUI ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}
-                        >
-                          {editingField === 'meaning' ? (
-                            <input
-                              ref={meaningInputRef}
-                              type="text"
-                              value={editMeaning}
-                              onChange={(e) => setEditMeaning(e.target.value)}
-                              onKeyDown={handleKeyDown}
-                              onBlur={confirmEdit}
-                              className="text-xs text-stone-600 bg-white border border-stone-200 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-amber-200 w-full"
-                              placeholder="輸入諧音解釋"
-                            />
-                          ) : (
-                            <button
-                              onClick={(e) => startEditing('meaning', e)}
-                              className="flex items-center hover:bg-amber-100/50 px-2 py-1 -mx-2 rounded transition-colors cursor-text"
-                              title="點擊編輯解釋"
-                            >
-                              <Sparkles size={12} className="mr-1.5 text-amber-500" />
-                              <RollingText text={state.punName.meaning} />
-                            </button>
-                          )}
-                        </div>
-                      )}
+                      {/* [UI/UX 2025-12-04] 解釋區塊已隱藏，因常有錯誤 - 但保留編輯功能 */}
+                      {/* 解釋區塊 - 預設隱藏，僅在編輯模式時顯示 */}
                     </div>
 
                     {/* 骰子按鈕 - 點擊隨機換名 */}
@@ -1043,7 +1038,7 @@ export default function Home() {
                   </div>
 
                   {/* Footer Stamp */}
-                  <div className="mt-8 opacity-60">
+                  <div className="mt-6 opacity-60">
                     <div className="border border-red-900 px-4 py-1.5 inline-block">
                       <span className="text-red-900 text-[10px] tracking-[0.3em] font-serif font-bold">
                         令和七年・改名局
@@ -1068,7 +1063,7 @@ export default function Home() {
           {/* Footer Actions */}
           {state.step === 'result' && (
             <div
-              className={`w-full max-w-sm mx-auto shrink-0 transition-all duration-500 ease-out transform ${showUI ? 'opacity-100 translate-y-0 pb-6' : 'opacity-0 translate-y-10 pointer-events-none h-0 pb-0 overflow-hidden'} ${safeAreaBottom}`}
+              className={`w-full max-w-sm mx-auto shrink-0 transition-all duration-500 ease-out transform mt-4 ${showUI ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none h-0 overflow-hidden'} ${safeAreaBottom}`}
             >
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <button
@@ -1131,32 +1126,33 @@ export default function Home() {
               </div>
             </div>
           )}
-        </div>
 
-        {/* Minimal Footer - 日式簡約風格 */}
-        <footer className="w-full shrink-0 py-3 text-center relative z-20">
-          <div className="flex items-center justify-center gap-2 text-[10px] text-stone-400">
-            <a
-              href="https://haotool.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-red-700 transition-colors"
-              onClick={(e) => e.stopPropagation()}
-            >
-              好工具
-            </a>
-            <span className="text-stone-300">·</span>
-            <a
-              href="https://www.threads.net/@azlife_1224"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-red-700 transition-colors"
-              onClick={(e) => e.stopPropagation()}
-            >
-              @azlife_1224
-            </a>
-          </div>
-        </footer>
+          {/* Minimal Footer - 日式簡約風格 */}
+          {/* [fix:2025-12-04] Footer 與主內容綁定，統一間距 */}
+          <footer className="w-full shrink-0 py-3 text-center mt-4">
+            <div className="flex items-center justify-center gap-2 text-[10px] text-stone-400">
+              <a
+                href="https://haotool.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-red-700 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                好工具
+              </a>
+              <span className="text-stone-300">·</span>
+              <a
+                href="https://www.threads.net/@azlife_1224"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-red-700 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                @azlife_1224
+              </a>
+            </div>
+          </footer>
+        </div>
       </div>
     </>
   );

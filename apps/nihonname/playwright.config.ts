@@ -32,8 +32,8 @@ export default defineConfig({
   ],
 
   use: {
-    // 基礎 URL - nihonname 使用 /nihonname/ base path
-    baseURL: process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:3002/nihonname/',
+    // 基礎 URL - 開發環境使用根路徑，生產環境使用 /nihonname/
+    baseURL: process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:3002/',
 
     // 僅在首次重試時記錄 trace（控制工件大小）
     trace: 'on-first-retry',
@@ -89,7 +89,7 @@ export default defineConfig({
     ? undefined
     : {
         command: 'pnpm dev',
-        url: 'http://localhost:3002/nihonname/',
+        url: 'http://localhost:3002/',
         reuseExistingServer: !process.env['CI'],
         timeout: 120000,
       },

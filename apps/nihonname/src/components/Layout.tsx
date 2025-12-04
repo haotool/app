@@ -13,11 +13,16 @@ export function Layout() {
 
   return (
     <HelmetProvider>
+      {/* [fix:2025-12-04] 修正 RWD 問題：
+          - 首頁：使用 flex 置中，overflow-hidden 防止意外捲動
+          - 其他頁面：允許捲動，確保內容可見
+          - 使用 dvh 單位適配 iOS Safari 動態視窗高度
+      */}
       <div
         className={`min-h-[100dvh] bg-stone-100 ${
           isHomePage
-            ? 'flex flex-col' // 首頁使用 flex 置中
-            : 'overflow-y-auto' // 其他頁面可捲動
+            ? 'flex flex-col h-[100dvh] overflow-hidden' // 首頁固定高度，禁止捲動
+            : 'h-auto overflow-y-auto overflow-x-hidden' // 其他頁面可捲動
         }`}
       >
         <Outlet />
