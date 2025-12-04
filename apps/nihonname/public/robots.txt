@@ -14,7 +14,6 @@ Allow: /
 
 # Sitemaps
 Sitemap: https://app.haotool.org/nihonname/sitemap.xml
-Sitemap: https://app.haotool.org/nihonname/sitemap-index.xml
 
 # LLMs.txt reference
 # See: https://app.haotool.org/nihonname/llms.txt
