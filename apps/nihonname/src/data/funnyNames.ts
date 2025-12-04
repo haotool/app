@@ -1,13 +1,17 @@
 /**
- * 趣味諧音日本名資料庫 (擴充版 - 300+)
+ * 趣味諧音日本名資料庫 (擴充版 - 500+)
  *
  * 資料來源：
  * - 巴哈姆特：日治時期台灣人更改姓名活動及辦法
  * - 網路迷因與社群創作
  * - 日文老師周若珍臉書分享
  * - PTT/Dcard 網友創作
+ * - Threads: @cvtspolo, @hajl_taiwan, @riven.rar, @dreamstreet2023, @mason_chung1450
+ * - UDN: game.udn.com
+ * - Wakin: wakin.com
+ * - Homeboylife 網路暱稱文章
  *
- * 最後更新：2025-12-04
+ * 最後更新：2025-12-05
  */
 import type { PunName } from '../types';
 
@@ -2290,6 +2294,356 @@ export const MORE_TAIWANESE_CLASSIC: PunName[] = [
 ];
 
 /**
+ * 2025年12月 CSV 整合諧音梗
+ * 來源: taiwanese_japanese_name_puns_final.csv, japanese_name_puns.csv, taiwan_jp_pun_names_50.csv
+ */
+export const CSV_INTEGRATED_PUNS_2025: PunName[] = [
+  // 台語講話系列
+  { kanji: '宮衣曉', romaji: 'Miyai Akira', meaning: '台語諧音：共什小', category: 'taiwanese' },
+  { kanji: '宮衫曉', romaji: 'Miyasan Akira', meaning: '台語諧音：講啥小', category: 'taiwanese' },
+  {
+    kanji: '里宮夏絵',
+    romaji: 'Rikyū Natsue',
+    meaning: '台語諧音：你講什麼',
+    category: 'taiwanese',
+  },
+  {
+    kanji: '里宮淺會',
+    romaji: 'Rikyū Asae',
+    meaning: '台語諧音：你講什麼',
+    category: 'taiwanese',
+  },
+
+  // 政治人物諧音
+  {
+    kanji: '青山文哲',
+    romaji: 'Aoyama Buntetsu',
+    meaning: '政治諧音：台北市長柯文哲',
+    category: 'internet',
+  },
+  {
+    kanji: '木可文哲',
+    romaji: 'Moka Buntetsu',
+    meaning: '拆字諧音：柯文哲',
+    category: 'internet',
+  },
+  {
+    kanji: '馬英九郎',
+    romaji: 'Baeikyūrō',
+    meaning: '政治諧音：馬英九',
+    category: 'internet',
+  },
+  {
+    kanji: '陳時中太郎',
+    romaji: 'Chinjichū Tarō',
+    meaning: '政治諧音：陳時中',
+    category: 'internet',
+  },
+
+  // 宗教地名諧音
+  {
+    kanji: '龍山寺妙禪',
+    romaji: 'Ryūzanji Myōzen',
+    meaning: '地名諧音：龍山寺妙禪',
+    category: 'place',
+  },
+  {
+    kanji: '善導寺星雲',
+    romaji: 'Zendōji Seiun',
+    meaning: '地名諧音：善導寺星雲',
+    category: 'place',
+  },
+  {
+    kanji: '龍崎文衡殿',
+    romaji: 'Ryūzaki Buneiden',
+    meaning: '地名諧音：龍崎文衡殿',
+    category: 'place',
+  },
+
+  // 台灣美食諧音
+  {
+    kanji: '小瀧湯包',
+    romaji: 'Kotaki Tōhō',
+    meaning: '食物諧音：小籠湯包',
+    category: 'food',
+  },
+  { kanji: '池上便當', romaji: 'Ikegami Bentō', meaning: '品牌諧音：池上便當', category: 'food' },
+  { kanji: '排骨便當', romaji: 'Haikotsu Bentō', meaning: '食物諧音：排骨便當', category: 'food' },
+  {
+    kanji: '鳳梨苦瓜雞',
+    romaji: 'Hōri Nigauri Tori',
+    meaning: '食物諧音：鳳梨苦瓜雞',
+    category: 'food',
+  },
+  { kanji: '龍膽石班', romaji: 'Ryūtan Sekihan', meaning: '食物諧音：龍膽石斑', category: 'food' },
+  { kanji: '清心福全', romaji: 'Seishin Fukuzen', meaning: '品牌諧音：清心福全', category: 'food' },
+  { kanji: '八寶粥', romaji: 'Happōgayu', meaning: '食物諧音：八寶粥', category: 'food' },
+  { kanji: '明太子', romaji: 'Mentaiko', meaning: '食物諧音：明太子', category: 'food' },
+  {
+    kanji: '牛肉麵珍珠',
+    romaji: 'Gyūnikumen Shinju',
+    meaning: '食物諧音：牛肉麵珍珠',
+    category: 'food',
+  },
+
+  // 高端疫苗系列
+  {
+    kanji: '田中高端',
+    romaji: 'Tanaka Kōtan',
+    meaning: '政治諧音：台灣疫苗高端',
+    category: 'internet',
+  },
+  { kanji: '高端一生', romaji: 'Kōtan Isshō', meaning: '政治諧音：高端一生', category: 'internet' },
+  {
+    kanji: '鬼塚高端',
+    romaji: 'Onizuka Kōtan',
+    meaning: '政治諧音：鬼塚高端',
+    category: 'internet',
+  },
+  {
+    kanji: '高端爽約仔',
+    romaji: 'Kōtan Sōyakushi',
+    meaning: '政治諧音：高端爽約仔',
+    category: 'internet',
+  },
+  {
+    kanji: '高端占市',
+    romaji: 'Kōtan Senshi',
+    meaning: '政治諧音：高端占市',
+    category: 'internet',
+  },
+
+  // 生活諧音
+  {
+    kanji: '大岢步壁',
+    romaji: 'Ōka Fuheki',
+    meaning: '中文諧音：大可不必',
+    category: 'life',
+  },
+  {
+    kanji: '大岢不壁',
+    romaji: 'Ōka Fuheki',
+    meaning: '中文諧音：大可不必',
+    category: 'life',
+  },
+  {
+    kanji: '穗稻忠武',
+    romaji: 'Suidō Tadamu',
+    meaning: '中文諧音：睡到中午',
+    category: 'life',
+  },
+  {
+    kanji: '你涼卡好',
+    romaji: 'Niryō Kahō',
+    meaning: '台語諧音：你涼卡好',
+    category: 'taiwanese',
+  },
+  {
+    kanji: '下汐夏井',
+    romaji: 'Shitashio Natsui',
+    meaning: '台語諧音：下去洗洗',
+    category: 'taiwanese',
+  },
+  {
+    kanji: '小三建仁',
+    romaji: 'Kosan Kenjin',
+    meaning: '中文諧音：小三兼任',
+    category: 'life',
+  },
+  {
+    kanji: '不好吃免錢',
+    romaji: 'Fukōchi Mensen',
+    meaning: '中文諧音：不好吃免錢',
+    category: 'life',
+  },
+  {
+    kanji: '一例一休',
+    romaji: 'Ichirei Ichikyū',
+    meaning: '政策諧音：一例一休',
+    category: 'internet',
+  },
+  {
+    kanji: '誠心發問',
+    romaji: 'Seishin Hatsumon',
+    meaning: '中文諧音：誠心發問',
+    category: 'life',
+  },
+  { kanji: '晚了不要', romaji: 'Banryō Fuyō', meaning: '中文諧音：晚了不要', category: 'life' },
+  { kanji: '齁齁齁', romaji: 'Hōhōhō', meaning: '中文諧音：呵呵呵', category: 'life' },
+  { kanji: '咩羞幹哞', romaji: 'Meshū Kanbō', meaning: '台語諧音：別亂摸', category: 'taiwanese' },
+  { kanji: '武柔倍剛', romaji: 'Bujū Baigō', meaning: '中文諧音：不用備綱', category: 'life' },
+
+  // 台灣地名諧音
+  {
+    kanji: '田中勝詰',
+    romaji: 'Tanaka Shōkitsu',
+    meaning: '地名諧音：台中選舉',
+    category: 'place',
+  },
+  {
+    kanji: '田中高雄',
+    romaji: 'Tanaka Takao',
+    meaning: '地名諧音：台中高雄',
+    category: 'place',
+  },
+  {
+    kanji: '苗栗小五郎',
+    romaji: 'Byōritsu Kogorō',
+    meaning: '地名諧音：苗栗小五郎',
+    category: 'place',
+  },
+  {
+    kanji: '三重劉德華',
+    romaji: 'Sanjū Ryū Tokka',
+    meaning: '地名諧音：三重的劉德華',
+    category: 'place',
+  },
+
+  // 演員名人諧音
+  { kanji: '金城武', romaji: 'Kaneshiro Takeshi', meaning: '演員諧音：金城武', category: 'common' },
+  { kanji: '楊三郎', romaji: 'Yō Saburō', meaning: '人名諧音：楊三郎', category: 'common' },
+  {
+    kanji: '松山介石',
+    romaji: 'Matsuyama Kaiseki',
+    meaning: '人名諧音：蔣介石',
+    category: 'history',
+  },
+
+  // 日語諧音
+  {
+    kanji: '夜露死苦',
+    romaji: 'Yoroshiku',
+    meaning: '日文諧音：よろしく（請多指教）',
+    category: 'classic',
+  },
+  {
+    kanji: '吉幸巴時',
+    romaji: 'Yoshikō Baji',
+    meaning: '中文諧音：即興巴士',
+    category: 'life',
+  },
+
+  // 品牌諧音
+  { kanji: '小栗店長', romaji: 'Oguri Tenchō', meaning: '品牌諧音：小綠店長', category: 'life' },
+  { kanji: '小農契作', romaji: 'Shōnō Keisaku', meaning: '農業諧音：小農契作', category: 'life' },
+  { kanji: '房屋仲介', romaji: 'Bōoku Chūkai', meaning: '職業諧音：房屋仲介', category: 'life' },
+  {
+    kanji: '日式威廉',
+    romaji: 'Nisshiki Uiriamu',
+    meaning: '品牌諧音：日式威廉',
+    category: 'life',
+  },
+  {
+    kanji: '日式威夏',
+    romaji: 'Nisshiki Uika',
+    meaning: '品牌諧音：日式威夏',
+    category: 'life',
+  },
+
+  // 動漫諧音
+  {
+    kanji: '彎刀炭佳郎',
+    romaji: 'Wantō Tankajirō',
+    meaning: '動漫諧音：彎刀炭治郎',
+    category: 'internet',
+  },
+  {
+    kanji: '八加九郎',
+    romaji: 'Hachika Kyūrō',
+    meaning: '數字諧音：八家九郎',
+    category: 'classic',
+  },
+  {
+    kanji: '木村鬥頭栽',
+    romaji: 'Kimura Tōtōsai',
+    meaning: '動漫諧音：木村鬥頭栽',
+    category: 'internet',
+  },
+
+  // 台語罵人系列
+  {
+    kanji: '林北久宅',
+    romaji: 'Rinpoku Kyūtaku',
+    meaning: '台語諧音：林北久宅',
+    category: 'taiwanese',
+  },
+  { kanji: '林佳豪', romaji: 'Hayashi Kahō', meaning: '人名諧音：林佳豪', category: 'common' },
+  { kanji: '小佑細', romaji: 'Koyū Sai', meaning: '台語諧音：小有錢', category: 'taiwanese' },
+
+  // 其他諧音
+  { kanji: '愛顏社長', romaji: 'Aigan Shachō', meaning: '中文諧音：哀怨社長', category: 'life' },
+  {
+    kanji: '大道韓不助',
+    romaji: 'Daidō Kanfujo',
+    meaning: '中文諧音：大喊不助',
+    category: 'classic',
+  },
+  { kanji: '中山樵', romaji: 'Nakayama Kikori', meaning: '人名諧音：忠孝', category: 'history' },
+  {
+    kanji: '保中馬林',
+    romaji: 'Hochū Marin',
+    meaning: '中文諧音：保中馬林',
+    category: 'classic',
+  },
+  { kanji: '金玉滿堂', romaji: 'Kingyoku Mandō', meaning: '中文諧音：金玉滿堂', category: 'life' },
+  { kanji: '石田雄介', romaji: 'Ishida Yūsuke', meaning: '常見日本名', category: 'common' },
+  { kanji: '倭蘑菇', romaji: 'Wamogu', meaning: '中文諧音：我蘑菇', category: 'life' },
+  {
+    kanji: '塔綠班堵藍',
+    romaji: 'Taryūban Toran',
+    meaning: '政治諧音：塔綠班堵藍',
+    category: 'internet',
+  },
+  { kanji: '龍巖武', romaji: 'Ryūgan Take', meaning: '品牌諧音：龍巖', category: 'life' },
+  {
+    kanji: '田中聖傑',
+    romaji: 'Tanaka Seiketsu',
+    meaning: '人名諧音：田中聖傑',
+    category: 'common',
+  },
+  {
+    kanji: '塔綠八年十七班',
+    romaji: 'Taryū Hachinen Jūnanaban',
+    meaning: '政治諧音：塔綠班十七班',
+    category: 'internet',
+  },
+  {
+    kanji: '德州家康',
+    romaji: 'Tokushū Ieyasu',
+    meaning: '品牌諧音：德州家康',
+    category: 'food',
+  },
+  { kanji: '塌律阪', romaji: 'Taritsuhan', meaning: '政治諧音：塔綠班', category: 'internet' },
+  {
+    kanji: '粉穗幸古澤',
+    romaji: 'Konaho Yukikozawa',
+    meaning: '中文諧音：粉碎性骨折',
+    category: 'classic',
+  },
+  {
+    kanji: '羅北德剛',
+    romaji: 'Rahoku Tokugō',
+    meaning: '食物諧音：蘿蔔蛋糕',
+    category: 'food',
+  },
+  {
+    kanji: '眉川伊福',
+    romaji: 'Maekawa Ifuku',
+    meaning: '中文諧音：沒穿衣服',
+    category: 'classic',
+  },
+  { kanji: '田農炳夏', romaji: 'Dennō Heika', meaning: '諧音梗：田農炳夏', category: 'classic' },
+
+  // 小籠包系列
+  {
+    kanji: '小籠包好吃',
+    romaji: 'Shōronpō Oishii',
+    meaning: '食物諧音：小籠包好吃',
+    category: 'food',
+  },
+];
+
+/**
  * 合併所有諧音梗為一個陣列
  */
 export const ALL_FUNNY_NAMES: PunName[] = [
@@ -2298,6 +2652,7 @@ export const ALL_FUNNY_NAMES: PunName[] = [
   ...THREADS_PUNS_2025,
   ...DCARD_PUNS,
   ...MORE_TAIWANESE_CLASSIC,
+  ...CSV_INTEGRATED_PUNS_2025, // 2025-12-05 CSV 整合
   // 原有經典諧音梗
   ...CLASSIC_PUNS,
   ...TAIWANESE_PUNS,
