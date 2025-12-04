@@ -31,11 +31,6 @@ export default defineConfig({
         'src/data/**/*.backup.ts',
         // Data files (primarily static content with minimal logic)
         'src/data/funnyNames.ts',
-        // TODO: Add tests for these components (BDD cycle incomplete)
-        'src/components/CustomPunNameForm.tsx',
-        'src/components/JapaneseDiceButton.tsx',
-        'src/components/RollingText.tsx',
-        'src/hooks/useCustomPunNames.ts',
       ],
       thresholds: {
         statements: 80,

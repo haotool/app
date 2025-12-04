@@ -20,6 +20,17 @@ NihonName is a web application that explores the historical Kominka (皇民化) 
 3. **Pun Name Feature**
    - Generates humorous Japanese names with Taiwanese dialect puns
    - Cultural entertainment feature
+   - Over 500 pun names in database
+
+4. **Custom Pun Name Feature**
+   - Users can create and save their own pun names
+   - Stored locally in browser localStorage
+
+## Pages
+
+- `/` - Home: Main name generator interface
+- `/about` - About: Information about the app and historical context
+- `/guide` - Guide: 8-step tutorial on how to use the app
 
 ## Historical Context
 
