@@ -71,6 +71,75 @@ export default function About() {
 
           {/* Content sections */}
           <div className="space-y-8">
+            {/* Project Origin */}
+            <section className="bg-red-50 rounded-xl p-6 shadow-sm border-2 border-red-200">
+              <div className="flex items-center mb-4">
+                <BookOpen className="w-6 h-6 text-red-800 mr-3" />
+                <h2 className="text-xl font-bold text-red-900">專案由來</h2>
+              </div>
+              <div className="prose prose-stone">
+                <p className="text-stone-700 mb-3">
+                  <strong className="text-red-900">創作者：</strong>阿璋（
+                  <a
+                    href="https://www.threads.com/@azlife_1224"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-700 hover:text-red-900 underline"
+                  >
+                    @azlife_1224
+                  </a>
+                  ）
+                </p>
+                <p className="text-stone-700 mb-3">
+                  <strong className="text-red-900">創作時間：</strong>2024年12月
+                </p>
+                <div className="bg-white p-4 rounded-lg border border-red-200">
+                  <h3 className="font-bold text-red-900 mb-2 text-sm">創作緣由</h3>
+                  <p className="text-sm text-stone-700 mb-2">
+                    2024年11月底，日本首相高市早苗引用《舊金山和約》，表示日本已放棄台灣主權。隨後，中國外交部發言人毛寧於11月28日聲稱「中國從未接受《舊金山和約》」，引發台灣網友熱議。
+                  </p>
+                  <p className="text-sm text-stone-700 mb-2">
+                    網友諷刺性指出：若中國不承認《舊金山和約》，那麼1895年簽訂的《馬關條約》就「被強制續約」，台灣仍是日本領土。
+                    YouTuber蔡阿嘎甚至前往日本機場「實測」能否走日本人通道，引發廣泛討論。
+                  </p>
+                  <p className="text-sm text-stone-700">
+                    在這波社群討論中，許多人開始關注日治時期改姓的歷史。阿璋因此創作本系統，
+                    整合歷史文獻，讓大家能查詢自己的姓氏在皇民化運動時期可能改為哪些日本姓氏，
+                    以歷史教育的方式回應這場時事討論。
+                  </p>
+                </div>
+                <p className="text-xs text-stone-500 mt-3">
+                  參考新聞：
+                  <a
+                    href="https://www.cna.com.tw/news/aipl/202512020115.aspx"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-600 hover:text-red-800 ml-1"
+                  >
+                    中央社
+                  </a>
+                  、
+                  <a
+                    href="https://news.ltn.com.tw/news/world/breakingnews/5265588"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-600 hover:text-red-800 ml-1"
+                  >
+                    自由時報
+                  </a>
+                  、
+                  <a
+                    href="https://www.nownews.com/news/6760701"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-600 hover:text-red-800 ml-1"
+                  >
+                    NOWnews
+                  </a>
+                </p>
+              </div>
+            </section>
+
             {/* Historical Background */}
             <section className="bg-white rounded-xl p-6 shadow-sm">
               <div className="flex items-center mb-4">

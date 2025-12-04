@@ -84,8 +84,8 @@ describe('FAQ Page', () => {
 
   it('should have correct number of FAQ items', () => {
     renderFAQ();
-    // 歷史背景: 4, 使用方法: 5, 資料來源: 3 = 12 total
+    // 歷史背景: 4, 使用方法: 5, 資料來源: 5, 隱私與技術: 3 = 17 total
     const details = screen.getAllByRole('group');
-    expect(details.length).toBe(12);
+    expect(details.length).toBe(17);
   });
 });
