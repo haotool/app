@@ -1141,6 +1141,8 @@ export default function Home() {
                 好工具
               </a>
               <span className="text-stone-300">·</span>
+              <span>作者：阿璋</span>
+              <span className="text-stone-300">·</span>
               <a
                 href="https://www.threads.net/@azlife_1224"
                 target="_blank"

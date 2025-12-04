@@ -13,16 +13,9 @@
     min-height: 100%;
   }
 
-  /* Japanese style fonts */
-  @font-face {
-    font-family: 'Noto Serif JP';
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-    src: url('https://fonts.gstatic.com/s/notoserifjp/v26/xn7mYHs72GKoTvKNlt9cPn8I7pI.woff2')
-      format('woff2');
-    unicode-range: U+4E00-9FFF;
-  }
+  /* [fix:2025-12-04] 移除硬編碼 @font-face，改用 Google Fonts CSS API
+     根因：v26 版本 woff2 URL 已失效（404），Google Fonts 現在提供 v32
+     解法：完全依賴 index.html 中的 Google Fonts stylesheet 載入 */
 
   html {
     font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
