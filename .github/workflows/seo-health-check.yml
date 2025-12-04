@@ -77,14 +77,16 @@ jobs:
           echo "─────────────────────────────────────────────────"
 
           # 定義 NihonName 的 SEO 路徑
+          # 注意：vite-react-ssg 產生的是 /path.html 而非 /path/index.html
+          # 因此使用不帶尾斜線的 URL（除了首頁）
           NIHONNAME_PATHS=(
             "/"
-            "/about/"
-            "/guide/"
-            "/history/"
-            "/history/kominka/"
-            "/history/shimonoseki/"
-            "/history/san-francisco/"
+            "/about"
+            "/guide"
+            "/history"
+            "/history/kominka"
+            "/history/shimonoseki"
+            "/history/san-francisco"
           )
 
           SEO_FILES=(
