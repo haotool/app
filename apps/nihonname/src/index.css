@@ -32,8 +32,19 @@
 
   body {
     @apply bg-stone-100 text-stone-900;
-    overflow: hidden;
+    /* [fix:2025-12-04] 移除全域 overflow:hidden，改由各頁面自行控制 */
+    /* 這樣 About 等需要捲動的頁面可以正常運作 */
     overscroll-behavior: none;
+  }
+
+  /* iOS Safari safe area 支援 */
+  @supports (padding: env(safe-area-inset-top)) {
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
   }
 
   #root {

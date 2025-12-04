@@ -43,7 +43,8 @@ export default function About() {
         ]}
       />
 
-      <div className="min-h-[100dvh] bg-stone-100 py-8 md:py-12 px-4 overflow-y-auto">
+      {/* [fix:2025-12-04] 確保 About 頁面可以正常捲動 */}
+      <div className="min-h-[100dvh] h-auto bg-stone-100 py-8 md:py-12 px-4 overflow-y-auto overflow-x-hidden">
         <div className="max-w-2xl mx-auto pb-8">
           {/* Back button */}
           <Link
