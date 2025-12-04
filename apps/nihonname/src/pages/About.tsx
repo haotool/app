@@ -91,12 +91,12 @@ export default function About() {
                   ）
                 </p>
                 <p className="text-stone-700 mb-3">
-                  <strong className="text-red-900">創作時間：</strong>2024年12月
+                  <strong className="text-red-900">創作時間：</strong>2025年12月
                 </p>
                 <div className="bg-white p-4 rounded-lg border border-red-200">
                   <h3 className="font-bold text-red-900 mb-2 text-sm">創作緣由</h3>
                   <p className="text-sm text-stone-700 mb-2">
-                    2024年11月底，日本首相高市早苗引用《舊金山和約》，表示日本已放棄台灣主權。隨後，中國外交部發言人毛寧於11月28日聲稱「中國從未接受《舊金山和約》」，引發台灣網友熱議。
+                    2025年11月底，日本首相高市早苗引用《舊金山和約》，表示日本已放棄台灣主權。隨後，中國外交部發言人毛寧於11月28日聲稱「中國從未接受《舊金山和約》」，引發台灣網友熱議。
                   </p>
                   <p className="text-sm text-stone-700 mb-2">
                     網友諷刺性指出：若中國不承認《舊金山和約》，那麼1895年簽訂的《馬關條約》就「被強制續約」，台灣仍是日本領土。
