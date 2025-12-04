@@ -713,12 +713,12 @@ export default function Home() {
     const len = text.length;
     // 姓氏：統一使用最大字體
     if (isSurname) {
-      return 'text-5xl md:text-6xl';
+      return 'text-6xl md:text-7xl';
     }
     // 名字：根據長度調整
     if (len >= 4) return 'text-4xl md:text-5xl';
     if (len === 3) return 'text-5xl md:text-6xl';
-    return 'text-5xl md:text-6xl';
+    return 'text-6xl md:text-7xl';
   };
 
   const safeAreaTop = 'pt-[env(safe-area-inset-top,20px)]';
@@ -784,7 +784,7 @@ export default function Home() {
                 </span>
               </div>
 
-              <h1 className="relative inline-block text-3xl md:text-4xl font-bold font-jp text-red-900 drop-shadow-sm leading-tight transition-all duration-500 opacity-100">
+              <h1 className="relative inline-block text-4xl md:text-5xl font-bold font-jp text-red-900 drop-shadow-sm leading-tight transition-all duration-500 opacity-100">
                 <span className="block text-lg md:text-xl text-stone-500 tracking-[0.5em] mb-1 font-serif">
                   皇民化改姓運動
                 </span>
@@ -875,7 +875,7 @@ export default function Home() {
           */}
           {state.step === 'result' && (
             <div
-              className={`w-full flex flex-col justify-center items-center relative min-h-[90dvh] transition-all duration-500 gap-4 py-4 md:py-6`}
+              className={`w-full flex flex-col justify-center items-center relative min-h-0 transition-all duration-500`}
             >
               {/* Main Result Card - 和紙質感 */}
               {/* [fix:2025-12-04] 優化卡片樣式：
@@ -886,7 +886,7 @@ export default function Home() {
               <div
                 className={`relative w-full transition-all duration-500 ease-out ${showUI ? 'scale-100' : 'scale-[1.02]'}`}
               >
-                <div className="bg-[#fcfaf7] w-full shadow-2xl relative border-8 border-double border-stone-200 p-5 md:p-7 text-center flex flex-col items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/rice-paper-2.png')] rounded-sm animate-in zoom-in-95 duration-700 ring-1 ring-black/5 max-h-[90dvh] min-h-[78dvh] overflow-y-auto">
+                <div className="bg-[#fcfaf7] w-full shadow-2xl relative border-8 border-double border-stone-200 p-5 md:p-8 text-center flex flex-col items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/rice-paper-2.png')] rounded-sm animate-in zoom-in-95 duration-700 ring-1 ring-black/5">
                   {/* Corner Decorations */}
                   <div className="absolute top-4 left-4 w-16 h-16 border-t border-l border-red-900/20"></div>
                   <div className="absolute bottom-4 right-4 w-16 h-16 border-b border-r border-red-900/20"></div>
@@ -896,7 +896,7 @@ export default function Home() {
 
                   {/* Generated Name Block */}
                   {/* [fix:2025-12-04] 減少垂直 padding 適配小螢幕 */}
-                  <div className="relative py-6 md:py-8 w-full border-b border-stone-800/10 mb-4 md:mb-5">
+                  <div className="relative py-6 md:py-10 w-full border-b border-stone-800/10 mb-4 md:mb-6">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#fcfaf7] px-4 text-red-800">
                       <Flower size={24} fill="currentColor" className="opacity-80" />
                     </div>
@@ -1018,7 +1018,7 @@ export default function Home() {
                       ) : (
                         <button
                           onClick={(e) => startEditing('kanji', e)}
-                          className="text-3xl md:text-4xl font-bold text-stone-800 font-jp mb-2 tracking-wide hover:bg-amber-100/50 px-2 py-1 -mx-2 rounded transition-colors cursor-text block"
+                          className="text-4xl font-bold text-stone-800 font-jp mb-2 tracking-wide hover:bg-amber-100/50 px-2 py-1 -mx-2 rounded transition-colors cursor-text block"
                           title="點擊自訂諧音名"
                         >
                           <RollingText text={state.punName.kanji} />
@@ -1038,7 +1038,7 @@ export default function Home() {
                   </div>
 
                   {/* Footer Stamp */}
-                  <div className="mt-4 opacity-60">
+                  <div className="mt-6 opacity-60">
                     <div className="border border-red-900 px-4 py-1.5 inline-block">
                       <span className="text-red-900 text-[10px] tracking-[0.3em] font-serif font-bold">
                         令和七年・改名局
