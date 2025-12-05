@@ -114,7 +114,7 @@ describe('Home Page', () => {
       fireEvent.click(button);
 
       // 應該顯示吐司訊息
-      expect(screen.getByText(/未填姓氏，已隨機抽選/i)).toBeInTheDocument();
+      expect(screen.getByText(/未填姓氏，隨機抽選/i)).toBeInTheDocument();
     });
   });
 
