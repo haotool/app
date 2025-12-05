@@ -1,20 +1,37 @@
 # NihonName - Robots.txt
 # https://app.haotool.org/nihonname/
+# Updated: 2025-12-06
 
 User-agent: *
 Allow: /
 
-# AI Crawlers
+# AI Crawlers - Allow all major AI search engines
 User-agent: GPTBot
 User-agent: ChatGPT-User
 User-agent: ClaudeBot
 User-agent: PerplexityBot
 User-agent: anthropic-ai
+User-agent: Google-Extended
+User-agent: Bingbot
 Allow: /
+
+# Social Media Crawlers - For rich previews
+User-agent: facebookexternalbot
+User-agent: Twitterbot
+User-agent: LinkedInBot
+User-agent: Slackbot
+User-agent: Discordbot
+User-agent: TelegramBot
+Allow: /
+
+# Security - Disallow sensitive files
+Disallow: /sw.js
+Disallow: /service-worker.js
+Disallow: /*.json$
 
 # Sitemaps
 Sitemap: https://app.haotool.org/nihonname/sitemap.xml
 
-# LLMs.txt reference
+# LLMs.txt reference for AI language models
 # See: https://app.haotool.org/nihonname/llms.txt
 

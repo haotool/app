@@ -1,5 +1,5 @@
 import { X, Twitter, Facebook, Copy, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 
 // 真實台灣人分享風格文案 - 20 種（含日本姓名佔位符）
 const TAIWAN_SHARE_COPIES = [
@@ -53,7 +53,13 @@ interface ShareModalProps {
   url?: string;
 }
 
-export function ShareModal({
+/**
+ * ShareModal - 分享模態窗元件
+ *
+ * 使用 React.memo 優化，避免父元件重新渲染時不必要的更新
+ * [Context7: react.dev/reference/react/memo - 2025-12-06]
+ */
+export const ShareModal = memo(function ShareModal({
   isOpen,
   onClose,
   surname,
@@ -264,4 +270,4 @@ export function ShareModal({
       </div>
     </div>
   );
-}
+});

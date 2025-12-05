@@ -126,6 +126,9 @@ importers:
       autoprefixer:
         specifier: ^10.4.22
         version: 10.4.22(postcss@8.5.6)
+      beasties:
+        specifier: 0.1.0
+        version: 0.1.0
       jsdom:
         specifier: ^27.2.0
         version: 27.2.0
@@ -149,7 +152,7 @@ importers:
         version: 1.2.0(vite@7.2.6(@types/node@24.10.1)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))(workbox-build@7.4.0)(workbox-window@7.4.0)
       vite-react-ssg:
         specifier: ^0.8.9
-        version: 0.8.9(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react-router-dom@6.30.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(vite@7.2.6(@types/node@24.10.1)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))
+        version: 0.8.9(beasties@0.1.0)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react-router-dom@6.30.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(vite@7.2.6(@types/node@24.10.1)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))
       vitest:
         specifier: ^4.0.15
         version: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(jiti@1.21.7)(jsdom@27.2.0)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)
@@ -261,7 +264,7 @@ importers:
         version: 1.2.0(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))(workbox-build@7.4.0)(workbox-window@7.4.0)
       vite-react-ssg:
         specifier: ^0.8.9
-        version: 0.8.9(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react-router-dom@6.30.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))
+        version: 0.8.9(beasties@0.1.0)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react-router-dom@6.30.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))
       vitest:
         specifier: ^4.0.15
         version: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)
@@ -3016,6 +3019,9 @@ packages:
     resolution: {integrity: sha512-4Bcg1P8xhUuqcii/S0Z9wiHIrQVPMermM1any+MX5GeGD7faD3/msQUDGLol9wOcz4/jbg/WJnGqoJF6LiBdtg==}
     engines: {node: '>=10.0.0'}
 
+  beasties@0.1.0:
+    resolution: {integrity: sha512-+Ssscd2gVG24qRNC+E2g88D+xsQW4xwakWtKAiGEQ3Pw54/FGdyo9RrfxhGhEv6ilFVbB7r3Lgx+QnAxnSpECw==}
+
   better-opn@3.0.2:
     resolution: {integrity: sha512-aVNobHnJqLiUelTaHat9DZ1qM2w0C0Eym4LPI/3JxOnSokGVdsl1T1kN7TFvsEAD8G47A6VKQ0TVHqbBnYMJlQ==}
     engines: {node: '>=12.0.0'}
@@ -4361,6 +4367,9 @@ packages:
 
   htmlparser2@10.0.0:
     resolution: {integrity: sha512-TwAZM+zE5Tq3lrEHvOlvwgj1XLWQCtaaibSN11Q+gGBAS7Y1uZSWwXXRe4iF6OXnaq1riyQAPFOBtYc77Mxq0g==}
+
+  htmlparser2@9.1.0:
+    resolution: {integrity: sha512-5zfg6mHUoaer/97TxnGpxmbR7zJtPwIYFMZ/H5ucTlPZhKvtum05yiPK3Mgai3a0DyVxv7qYqoweaEd2nrYQzQ==}
 
   http-cache-semantics@4.2.0:
     resolution: {integrity: sha512-dTxcvPXqPvXBQpq5dUr6mEMJX4oIEFv6bwom3FDwKRDsuIjjJGANqhBuoAn9c1RQJIdAKav33ED65E2ys+87QQ==}
@@ -5812,6 +5821,9 @@ packages:
         optional: true
       yaml:
         optional: true
+
+  postcss-media-query-parser@0.2.3:
+    resolution: {integrity: sha512-3sOlxmbKcSHMjlUXQZKQ06jOswE7oVkXPxmZdoB1r5l0q6gTFTQSHxNxOrCccElbW7dxNytifNEo8qidX2Vsig==}
 
   postcss-nested@6.2.0:
     resolution: {integrity: sha512-HQbt28KulC5AJzG+cZtj9kvKB93CFCdLvog1WFLf1D+xmMvPGlBstkpTEZfK5+AN9hfJocyBFCNiqyS48bpgzQ==}
@@ -11074,6 +11086,17 @@ snapshots:
 
   basic-ftp@5.0.5: {}
 
+  beasties@0.1.0:
+    dependencies:
+      css-select: 5.2.2
+      css-what: 6.2.2
+      dom-serializer: 2.0.0
+      domhandler: 5.0.3
+      htmlparser2: 9.1.0
+      picocolors: 1.1.1
+      postcss: 8.5.6
+      postcss-media-query-parser: 0.2.3
+
   better-opn@3.0.2:
     dependencies:
       open: 8.4.2
@@ -12683,6 +12706,13 @@ snapshots:
       domutils: 3.2.2
       entities: 6.0.1
 
+  htmlparser2@9.1.0:
+    dependencies:
+      domelementtype: 2.3.0
+      domhandler: 5.0.3
+      domutils: 3.2.2
+      entities: 4.5.0
+
   http-cache-semantics@4.2.0: {}
 
   http-errors@2.0.0:
@@ -14199,6 +14229,8 @@ snapshots:
       jiti: 1.21.7
       postcss: 8.5.6
       yaml: 2.8.2
+
+  postcss-media-query-parser@0.2.3: {}
 
   postcss-nested@6.2.0(postcss@8.5.6):
     dependencies:
@@ -15775,7 +15807,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vite-react-ssg@0.8.9(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react-router-dom@6.30.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(vite@7.2.6(@types/node@24.10.1)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)):
+  vite-react-ssg@0.8.9(beasties@0.1.0)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react-router-dom@6.30.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(vite@7.2.6(@types/node@24.10.1)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)):
     dependencies:
       fs-extra: 11.3.2
       html5parser: 2.0.2
@@ -15788,6 +15820,7 @@ snapshots:
       vite: 7.2.6(@types/node@24.10.1)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)
       yargs: 17.7.2
     optionalDependencies:
+      beasties: 0.1.0
       prettier: 3.7.4
       react-router-dom: 6.30.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
     transitivePeerDependencies:
@@ -15796,7 +15829,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  vite-react-ssg@0.8.9(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react-router-dom@6.30.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)):
+  vite-react-ssg@0.8.9(beasties@0.1.0)(prettier@3.7.4)(react-dom@19.2.1(react@19.2.1))(react-router-dom@6.30.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)):
     dependencies:
       fs-extra: 11.3.2
       html5parser: 2.0.2
@@ -15809,6 +15842,7 @@ snapshots:
       vite: 7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)
       yargs: 17.7.2
     optionalDependencies:
+      beasties: 0.1.0
       prettier: 3.7.4
       react-router-dom: 6.30.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
     transitivePeerDependencies:
