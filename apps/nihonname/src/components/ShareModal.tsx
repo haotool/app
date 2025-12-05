@@ -141,7 +141,7 @@ export const ShareModal = memo(function ShareModal({
 
   return (
     <div
-      className="fixed inset-0 z-[150] flex items-end md:items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-in fade-in duration-300"
+      className="fixed inset-0 z-[150] flex items-center justify-center p-4 md:p-6 bg-stone-900/70 backdrop-blur-sm animate-in fade-in duration-300"
       onClick={onClose}
     >
       <div

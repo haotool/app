@@ -14,7 +14,7 @@ const appVersion: string =
 const buildTime: string =
   typeof import.meta.env['VITE_BUILD_TIME'] === 'string'
     ? import.meta.env['VITE_BUILD_TIME']
-    : new Date().toISOString();
+    : '1970-01-01T00:00:00.000Z';
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(

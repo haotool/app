@@ -684,7 +684,16 @@ export default function Home() {
   // Custom pun names hook
   const { customPunNames, addCustomPunName } = useCustomPunNames();
   // Easter Eggs hook
-  const { activeEgg, handleLogoClick, handleDoubleTextClick, handleToriiClick } = useEasterEggs();
+  const {
+    activeEgg,
+    handleLogoClick,
+    handleDoubleTextClick,
+    handleToriiClick,
+    requestMotionPermission,
+  } = useEasterEggs();
+  // iOS DeviceMotion 權限狀態
+  const [hasMotionPermission, setHasMotionPermission] = useState(false);
+  const [showMotionPrompt, setShowMotionPrompt] = useState(false);
 
   // Combined pun names (built-in + custom)
   const allPunNames: PunName[] = [...FUNNY_NAMES, ...customPunNames];
@@ -830,7 +839,7 @@ export default function Home() {
 
     // 如果沒有輸入姓氏，顯示吐司並使用隨機姓氏
     if (!state.originalSurname) {
-      showToastMessage('未填姓氏，已隨機抽選');
+      showToastMessage('未填姓氏，隨機抽選');
     }
 
     setTimeout(() => {
@@ -870,6 +879,20 @@ export default function Home() {
       screenshotGuideTimeoutRef.current = setTimeout(() => {
         setShowScreenshotGuide(true);
       }, 10000);
+
+      // iOS 設備：首次進入結果頁時提示請求 DeviceMotion 權限（用於搖晃彩蛋）
+      if (typeof window !== 'undefined' && 'DeviceMotionEvent' in window && !hasMotionPermission) {
+        const requestPermission = (
+          DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }
+        ).requestPermission;
+        if (typeof requestPermission === 'function') {
+          // iOS 設備需要用戶授權
+          setShowMotionPrompt(true);
+        } else {
+          // 非 iOS 設備已自動啟用
+          setHasMotionPermission(true);
+        }
+      }
     }, 1000);
   };
 
@@ -953,6 +976,8 @@ export default function Home() {
   const safeAreaBottom = 'pb-[env(safe-area-inset-bottom,12px)]';
 
   // 截圖模式引導文案 - 10 種隨機有趣的方式提示用戶點擊
+  // 截圖模式引導文案 - 使用 useState lazy initializer 避免 SSG Hydration mismatch
+  // [context7:react.dev/reference/react/useState:2025-12-06] useState initializer 只在初始化時執行一次
   const [randomGuideMsg] = useState(() => {
     const GUIDE_MESSAGES = [
       '📸 點我截圖更好看！',
@@ -966,17 +991,17 @@ export default function Home() {
       '👉 點擊後截圖，效果超讚！',
       '✨ 讓你的日本名字更上相！',
     ];
-    return GUIDE_MESSAGES[Math.floor(Math.random() * GUIDE_MESSAGES.length)];
+    const index = Math.floor(Math.random() * GUIDE_MESSAGES.length);
+    return GUIDE_MESSAGES[index] ?? GUIDE_MESSAGES[0] ?? '';
   });
-
-  // 截圖模式後顯示的提示（點擊後恢復 UI）
   const [randomHintMsg] = useState(() => {
     const HINT_MESSAGES = [
       '點擊任意處恢復介面 👆',
       '截圖完成？點一下恢復 ✨',
       '10 秒後自動恢復，或點擊任意處',
     ];
-    return HINT_MESSAGES[Math.floor(Math.random() * HINT_MESSAGES.length)];
+    const index = Math.floor(Math.random() * HINT_MESSAGES.length);
+    return HINT_MESSAGES[index] ?? HINT_MESSAGES[0] ?? '';
   });
 
   return (
@@ -1000,6 +1025,50 @@ export default function Home() {
       />
 
       <EasterEggs activeEgg={activeEgg} />
+
+      {/* iOS DeviceMotion 權限請求提示 */}
+      {showMotionPrompt && (
+        <div
+          className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-in fade-in duration-300"
+          onClick={() => setShowMotionPrompt(false)}
+        >
+          <div
+            className="bg-[#fcfaf7] w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-br from-red-900 to-red-950 p-6 text-center">
+              <div className="text-5xl mb-3">📱</div>
+              <h3 className="text-xl font-bold text-white font-jp">啟用搖晃彩蛋</h3>
+              <p className="text-sm text-red-200 mt-1">搖晃手機觸發花火大會！</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-stone-600 text-center">
+                允許動態感測器權限，即可透過搖晃手機觸發隱藏彩蛋 🎆
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowMotionPrompt(false)}
+                  className="flex-1 py-3 rounded-xl bg-stone-100 text-stone-600 font-bold hover:bg-stone-200 transition-colors"
+                >
+                  稍後
+                </button>
+                <button
+                  onClick={() => {
+                    void requestMotionPermission().then((granted) => {
+                      setHasMotionPermission(granted);
+                      setShowMotionPrompt(false);
+                    });
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-red-900 text-white font-bold hover:bg-red-800 transition-colors"
+                >
+                  允許
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
@@ -1427,11 +1496,6 @@ export default function Home() {
                   `}</style>
                 </div>
               </div>
-
-              {/* 提示：截圖模式後會自動顯示分享模態窗 */}
-              <p className="text-center text-xs text-stone-400 mb-4">
-                💡 點擊「截圖模式」後，會自動彈出分享選項
-              </p>
 
               <div className="flex justify-between items-center">
                 <button

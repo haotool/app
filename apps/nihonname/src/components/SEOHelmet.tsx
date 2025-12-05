@@ -76,9 +76,9 @@ const SOCIAL_LINKS = [
 const BUILD_TIME = (() => {
   try {
     const envBuildTime: unknown = import.meta.env['VITE_BUILD_TIME'];
-    return typeof envBuildTime === 'string' ? envBuildTime : new Date().toISOString();
+    return typeof envBuildTime === 'string' ? envBuildTime : '1970-01-01T00:00:00.000Z';
   } catch {
-    return new Date().toISOString();
+    return '1970-01-01T00:00:00.000Z';
   }
 })();
 
