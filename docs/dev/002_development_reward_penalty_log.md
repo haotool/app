@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2025-12-05T00:39:03+08:00
-> **當前總分**: 328 (初始分: 100)
+> **最後更新**: 2025-12-06T02:25:00+08:00
+> **當前總分**: 333 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -282,3 +282,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 || ✅ 成功 | 補齊 nihonname surnameData.ts 測試覆蓋率 80%→100% | 1) 新增 20 個測試案例 2) 測試 getSurnameMap, getSurnameDetail, getSupportedSurnames 函數 3) 測試 SURNAME_DATA_FULL 結構與 SURNAME_STATS 統計 4) 使用非空斷言處理陣列索引型別安全 5) 整體覆蓋率提升至 97.59% 6) 247/247 測試通過 7) CI 全部通過 | [context7:vitest-dev/vitest:2025-12-05][BDD 流程][TypeScript 型別安全] | +3 | 2025-12-05 |
 || ✅ 成功 | nihonname 新增 FAQ 頁面並優化 SEO | 1) 建立獨立 /faq 頁面，整合 About 和 Guide 的常見問題 2) FAQ 分為三大分類：歷史背景、使用方法、資料來源 3) 新增 FAQ.test.tsx 測試（9 個案例）4) 更新 routes.tsx、vite.config.ts SSG 配置 5) 更新 sitemap.xml 和 CI SEO Health Check 6) Lighthouse 分數：Performance 97、Accessibility 97、Best Practices 100、SEO 100 7) 256/256 測試通過 8) CI 全部通過 | [ratewise FAQ 最佳實踐][Schema.org FAQPage][vite-react-ssg] | +5 | 2025-12-05 |
 || ✅ 成功 | nihonname 社群分享優化 + 專案由來更新 | 1) 新增 ShareButton 組件支援 Web Share API 2) 支援 Twitter/X、Facebook、LINE 分享 3) 個人化分享文案（包含生成的日本名字）4) About 頁面新增專案由來（舊金山和約、馬關條約時事）5) FAQ 新增「隱私與技術」分類（3 個 FAQ）6) ShareButton.test.tsx 17 個測試案例 7) 273/273 測試通過 8) SEO Health Check、Lighthouse CI 通過 | [Web Share API][病毒式傳播][台灣歷史時事] | +4 | 2025-12-05 |
+|| ✅ 成功 | nihonname 圖標重設計 + OG Image 優化 + 複姓支援 | 1) 重新設計日本風格 favicon（鳥居+「改」字）2) 新增 generate-icons.sh 自動生成所有尺寸 3) og-image 升級為 1200x631 標準尺寸 4) 實作 60+ 複姓對照表（歐陽→歐 等）5) 移除按鈕禁用狀態，空輸入時隨機抽選 6) 新增日式吐司訊息提示 7) 275/275 測試通過 8) 所有 SEO 檔案生產環境驗證 200 | [PWA 最佳實踐][OG Image 標準][複姓處理邏輯] | +5 | 2025-12-06 |
