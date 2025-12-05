@@ -1,7 +1,13 @@
 import { type useEasterEggs } from '../hooks/useEasterEggs';
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 
-export function EasterEggs({
+/**
+ * EasterEggs - 彩蛋效果渲染元件
+ *
+ * 使用 React.memo 優化，僅在 activeEgg 變更時重新渲染
+ * [Context7: react.dev/reference/react/memo - 2025-12-06]
+ */
+export const EasterEggs = memo(function EasterEggs({
   activeEgg,
 }: {
   activeEgg: ReturnType<typeof useEasterEggs>['activeEgg'];
@@ -51,7 +57,7 @@ export function EasterEggs({
       `}</style>
     </div>
   );
-}
+});
 
 // Pre-generate random values to avoid calling Math.random() during render
 const generateParticles = (

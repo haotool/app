@@ -210,9 +210,14 @@ export default defineConfig(({ mode }) => {
     ssgOptions: {
       script: 'async',
       formatting: 'minify',
-      crittersOptions: {
-        preload: 'swap',
-        pruneSource: true,
+      // [SEO:2025-12-06] 優化 Critical CSS 配置以改善渲染阻塞
+      // 參考: context7:/daydreamer-riri/vite-react-ssg
+      beastiesOptions: {
+        preload: 'media', // 使用 media 策略避免阻塞
+        pruneSource: true, // 移除已內聯的 CSS
+        inlineThreshold: 0, // 內聯所有 Critical CSS
+        fonts: true, // 內聯字體
+        preloadFonts: true, // 預載字體
       },
       includedRoutes: () => {
         // [SEO:2025-12-04] 新增歷史專區頁面
