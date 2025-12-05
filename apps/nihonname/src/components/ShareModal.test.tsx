@@ -7,7 +7,9 @@ describe('ShareModal', () => {
     isOpen: true,
     onClose: vi.fn(),
     surname: '陳',
-    japaneseName: '田中',
+    japaneseSurname: '田中',
+    japaneseGivenName: '太郎',
+    punName: '竜后莉宮',
     url: 'https://example.com',
   };
 
@@ -29,9 +31,19 @@ describe('ShareModal', () => {
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
+  it('displays the full Japanese name', () => {
+    render(<ShareModal {...defaultProps} />);
+    expect(screen.getByText('田中')).toBeInTheDocument();
+    expect(screen.getByText('太郎')).toBeInTheDocument();
+  });
+
+  it('displays the pun name (Kuso)', () => {
+    render(<ShareModal {...defaultProps} />);
+    expect(screen.getByText('竜后莉宮')).toBeInTheDocument();
+  });
+
   it('generates random Taiwanese copy for Threads', () => {
     render(<ShareModal {...defaultProps} />);
-    // We can't predict the exact random text, but we can check if the link contains the base URL
     const threadsButton = screen.getByText(/Threads/i).closest('button');
     expect(threadsButton).toBeInTheDocument();
   });

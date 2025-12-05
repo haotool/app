@@ -16,7 +16,6 @@ import {
   Scroll,
   CheckCircle2,
   RotateCcw,
-  Share2,
   ArrowDown,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -661,10 +660,13 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState('');
   const [compoundHint, setCompoundHint] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  // 新增：截圖模式按鈕發光引導（進入結果頁 10 秒後顯示）
+  const [showScreenshotGuide, setShowScreenshotGuide] = useState(false);
 
   const uiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hintTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const screenshotGuideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 內聯編輯模式狀態
   const [editingField, setEditingField] = useState<'kanji' | 'romaji' | 'meaning' | null>(null);
@@ -829,6 +831,12 @@ export default function Home() {
       setState((prev) => ({ ...prev, japaneseSurname: jpSurname, punName: pun, step: 'result' }));
       setDisplayGivenName(finalGivenName);
       setLoading(false);
+
+      // 進入結果頁 10 秒後顯示截圖模式引導
+      if (screenshotGuideTimeoutRef.current) clearTimeout(screenshotGuideTimeoutRef.current);
+      screenshotGuideTimeoutRef.current = setTimeout(() => {
+        setShowScreenshotGuide(true);
+      }, 10000);
     }, 1000);
   };
 
@@ -868,11 +876,14 @@ export default function Home() {
   const toggleUI = () => {
     setShowUI(false);
     setShowHint(true);
+    setShowScreenshotGuide(false); // 關閉引導
 
     if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
     hintTimeoutRef.current = setTimeout(() => {
       setShowHint(false);
-    }, 10000); // Show hint for 10 seconds (matching requirements)
+      // 截圖模式結束後 10 秒，自動顯示分享模態窗
+      setIsShareModalOpen(true);
+    }, 10000); // Show hint for 10 seconds, then open share modal
 
     if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
     uiTimeoutRef.current = setTimeout(() => {
@@ -887,6 +898,8 @@ export default function Home() {
       if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
       setShowUI(true);
       setShowHint(false);
+      // 點擊恢復 UI 後也顯示分享模態窗
+      setIsShareModalOpen(true);
     }
   };
 
@@ -906,17 +919,31 @@ export default function Home() {
   const safeAreaTop = 'pt-[env(safe-area-inset-top,20px)]';
   const safeAreaBottom = 'pb-[env(safe-area-inset-bottom,12px)]';
 
-  // Random begging message - pre-generated outside render to avoid impure function calls
-  const [randomBeggingMsg] = useState(() => {
-    const BEGGING_MESSAGES = [
-      '求求你點一下嘛 🥺',
-      '點一下又不會少塊肉 👉👈',
-      '不要只看，按下去嘛 ❤️',
-      '讓我閃亮亮登場 ✨',
-      '準備好被帥到了嗎？😎',
-      '快點！我撐不了多久了！🥵',
+  // 截圖模式引導文案 - 10 種隨機有趣的方式提示用戶點擊
+  const [randomGuideMsg] = useState(() => {
+    const GUIDE_MESSAGES = [
+      '📸 點我截圖更好看！',
+      '✨ 按下去畫面會更純淨喔～',
+      '🎯 截圖模式讓你的名字更閃亮！',
+      '👆 點這裡！UI 會暫時隱藏',
+      '📷 想分享？先點我讓畫面更乾淨',
+      '🌸 截圖模式讓你的名字像藝術品',
+      '💫 按我！10 秒後自動恢復',
+      '🎨 截圖模式 = 純淨背景 + 美美名字',
+      '👉 點擊後截圖，效果超讚！',
+      '✨ 讓你的日本名字更上相！',
     ];
-    return BEGGING_MESSAGES[Math.floor(Math.random() * BEGGING_MESSAGES.length)];
+    return GUIDE_MESSAGES[Math.floor(Math.random() * GUIDE_MESSAGES.length)];
+  });
+
+  // 截圖模式後顯示的提示（點擊後恢復 UI）
+  const [randomHintMsg] = useState(() => {
+    const HINT_MESSAGES = [
+      '點擊任意處恢復介面 👆',
+      '截圖完成？點一下恢復 ✨',
+      '10 秒後自動恢復，或點擊任意處',
+    ];
+    return HINT_MESSAGES[Math.floor(Math.random() * HINT_MESSAGES.length)];
   });
 
   return (
@@ -944,7 +971,9 @@ export default function Home() {
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         surname={state.originalSurname}
-        japaneseName={state.japaneseSurname}
+        japaneseSurname={state.japaneseSurname}
+        japaneseGivenName={displayGivenName}
+        punName={state.punName.kanji}
       />
 
       <div
@@ -1275,23 +1304,16 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Pure Mode Hint Overlay */}
+              {/* Pure Mode Hint Overlay - 截圖模式啟動後的提示 */}
               {showHint && (
-                <div className="absolute bottom-[-180px] left-0 right-0 flex flex-col items-center justify-center pointer-events-none z-50">
-                  {/* Glowing Arrow */}
-                  <div className="animate-bounce mb-2 text-amber-400 filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">
-                    <ArrowDown size={48} strokeWidth={3} />
-                  </div>
-
-                  {/* Begging Message */}
-                  <div className="mb-3 bg-white/90 backdrop-blur text-red-600 font-bold px-4 py-2 rounded-full shadow-lg transform -rotate-2 animate-pulse">
-                    {randomBeggingMsg}
-                  </div>
-
+                <div className="absolute bottom-[-120px] left-0 right-0 flex flex-col items-center justify-center pointer-events-none z-50 animate-in fade-in zoom-in duration-500">
                   {/* Main Badge */}
-                  <div className="bg-red-900/90 backdrop-blur-md text-amber-50 px-5 py-2 rounded-full text-xs shadow-[0_8px_20px_-6px_rgba(127,29,29,0.45)] flex items-center border border-red-200/50 ring-1 ring-red-200/40 animate-in fade-in zoom-in duration-300">
-                    <ScanEye size={14} className="mr-2 animate-pulse text-amber-200 drop-shadow" />
-                    純淨截圖啟動 · 介面隱藏 10 秒
+                  <div className="bg-red-900/95 backdrop-blur-md text-amber-50 px-6 py-3 rounded-2xl text-sm shadow-2xl flex items-center gap-3 border border-red-200/30">
+                    <ScanEye size={18} className="animate-pulse text-amber-200" />
+                    <div className="flex flex-col">
+                      <span className="font-bold">純淨截圖模式</span>
+                      <span className="text-xs text-red-200">{randomHintMsg}</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1315,38 +1337,47 @@ export default function Home() {
                   <span>族譜查證</span>
                 </button>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleUI();
-                  }}
-                  className="bg-red-900 text-red-50 py-3.5 rounded-xl font-bold shadow-lg shadow-red-400/30 flex items-center justify-center space-x-2 hover:bg-red-800 transition-all active:scale-[0.97] text-sm animate-pulse-subtle relative overflow-hidden group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-700/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                  <Camera size={18} className="relative z-10" />
-                  <span className="relative z-10">截圖模式</span>
+                <div className="relative">
+                  {/* 截圖模式引導箭頭和文案 */}
+                  {showScreenshotGuide && (
+                    <div className="absolute -top-20 left-1/2 -translate-x-1/2 flex flex-col items-center animate-in fade-in zoom-in duration-500 z-50">
+                      <div className="bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg whitespace-nowrap mb-2">
+                        {randomGuideMsg}
+                      </div>
+                      <ArrowDown
+                        size={28}
+                        className="text-amber-500 animate-bounce drop-shadow-lg"
+                      />
+                    </div>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowScreenshotGuide(false);
+                      toggleUI();
+                    }}
+                    className={`w-full bg-red-900 text-red-50 py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center space-x-2 hover:bg-red-800 transition-all active:scale-[0.97] text-sm relative overflow-hidden group ${showScreenshotGuide ? 'ring-4 ring-amber-400 ring-offset-2 animate-glow' : 'shadow-red-400/30'}`}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-700/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    <Camera size={18} className="relative z-10" />
+                    <span className="relative z-10">截圖模式</span>
+                  </button>
                   <style>{`
-                    @keyframes pulse-subtle {
-                      0%, 100% { opacity: 1; transform: scale(1); }
-                      50% { opacity: 0.95; transform: scale(1.02); }
+                    @keyframes glow {
+                      0%, 100% { box-shadow: 0 0 5px rgba(251, 191, 36, 0.5), 0 0 20px rgba(251, 191, 36, 0.3); }
+                      50% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.8), 0 0 40px rgba(251, 191, 36, 0.5); }
                     }
-                    .animate-pulse-subtle {
-                      animation: pulse-subtle 2.5s ease-in-out infinite;
+                    .animate-glow {
+                      animation: glow 1.5s ease-in-out infinite;
                     }
                   `}</style>
-                </button>
+                </div>
               </div>
 
-              {/* Social Share Button (Opens Modal) */}
-              <div className="mb-4">
-                <button
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="w-full bg-stone-800 hover:bg-stone-900 text-stone-50 py-3.5 rounded-xl font-bold shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.97] group"
-                >
-                  <Share2 size={18} className="group-hover:rotate-12 transition-transform" />
-                  分享你的日本姓氏
-                </button>
-              </div>
+              {/* 提示：截圖模式後會自動顯示分享模態窗 */}
+              <p className="text-center text-xs text-stone-400 mb-4">
+                💡 點擊「截圖模式」後，會自動彈出分享選項
+              </p>
 
               <div className="flex justify-between items-center">
                 <button
