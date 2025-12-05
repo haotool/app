@@ -4,7 +4,7 @@
  * [UI/UX 2025-12-04] 高級和紙質感 + RollingText 動畫 + JapaneseDiceButton
  * [Ref] 參考 nihonname---imperial-surname-generator 的設計
  */
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Camera,
   ChevronRight,
@@ -668,6 +668,12 @@ export default function Home() {
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const screenshotGuideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 動態 placeholder 狀態
+  const [surnamePlaceholder, setSurnamePlaceholder] = useState('陳');
+  const [placeholderActive, setPlaceholderActive] = useState(true);
+  const placeholderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const placeholderSwapRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // 內聯編輯模式狀態
   const [editingField, setEditingField] = useState<'kanji' | 'romaji' | 'meaning' | null>(null);
   const [editKanji, setEditKanji] = useState('');
@@ -684,6 +690,9 @@ export default function Home() {
 
   // Combined pun names (built-in + custom)
   const allPunNames: PunName[] = [...FUNNY_NAMES, ...customPunNames];
+
+  // 所有支持的姓氏（用於動態 placeholder）
+  const allSurnames = useMemo(() => Object.keys(SURNAME_MAP), []);
 
   // 處理漢字輸入變更 - 同時自動更新羅馬拼音
   const handleKanjiChange = (value: string) => {
@@ -791,6 +800,28 @@ export default function Home() {
   const handleGivenNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setState((prev) => ({ ...prev, originalGivenName: e.target.value.trim() }));
   };
+
+  // 動態 placeholder：循環展示收錄的姓氏，僅在輸入框為空時顯示
+  useEffect(() => {
+    if (!allSurnames.length) return;
+
+    if (placeholderIntervalRef.current) clearInterval(placeholderIntervalRef.current);
+    if (placeholderSwapRef.current) clearTimeout(placeholderSwapRef.current);
+
+    placeholderIntervalRef.current = setInterval(() => {
+      if (state.originalSurname) return;
+      setPlaceholderActive(false);
+      placeholderSwapRef.current = setTimeout(() => {
+        setSurnamePlaceholder(getRandom(allSurnames));
+        setPlaceholderActive(true);
+      }, 150);
+    }, 2600);
+
+    return () => {
+      if (placeholderIntervalRef.current) clearInterval(placeholderIntervalRef.current);
+      if (placeholderSwapRef.current) clearTimeout(placeholderSwapRef.current);
+    };
+  }, [allSurnames, state.originalSurname]);
 
   const generateNames = () => {
     setLoading(true);
@@ -1056,24 +1087,41 @@ export default function Home() {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-900 via-red-600 to-red-900"></div>
 
                 <div className="space-y-8 relative z-10">
-                  <div className="group">
-                    <label className="block text-stone-500 font-bold mb-3 text-xs tracking-widest uppercase flex justify-between">
+                  <div className="group relative">
+                    <label
+                      htmlFor="surname-input"
+                      className="block text-stone-500 font-bold mb-3 text-xs tracking-widest uppercase flex justify-between"
+                    >
                       <span>Surname (Traditional Chinese)</span>
-                      <span className="text-stone-300 font-normal normal-case">支援複姓</span>
                     </label>
-                    <input
-                      type="text"
-                      maxLength={2}
-                      value={state.originalSurname}
-                      onChange={handleSurnameChange}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !loading) {
-                          generateNames();
-                        }
-                      }}
-                      placeholder="陳 / 歐陽"
-                      className="w-full bg-stone-50 border-b-2 border-stone-200 focus:border-red-800 outline-none py-3 text-3xl text-center font-jp text-stone-800 transition-all placeholder:text-stone-300 rounded-t-lg focus:bg-white"
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-0 rounded-t-lg bg-stone-50 border-b-2 border-stone-200 transition-colors duration-300 group-focus-within:border-red-800"></div>
+                      {!state.originalSurname && (
+                        <div
+                          className={`absolute inset-0 flex items-center justify-center text-3xl font-jp text-stone-300 pointer-events-none select-none transition-all duration-500 ease-out ${
+                            placeholderActive
+                              ? 'opacity-80 translate-y-0'
+                              : 'opacity-0 translate-y-1'
+                          }`}
+                        >
+                          {surnamePlaceholder}
+                        </div>
+                      )}
+                      <input
+                        id="surname-input"
+                        type="text"
+                        maxLength={2}
+                        value={state.originalSurname}
+                        onChange={handleSurnameChange}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !loading) {
+                            generateNames();
+                          }
+                        }}
+                        placeholder={surnamePlaceholder}
+                        className="relative z-10 w-full bg-transparent border-none outline-none py-3 text-3xl text-center font-jp text-stone-800 transition-all rounded-t-lg focus:bg-white/60"
+                      />
+                    </div>
                     {/* 複姓提示 */}
                     {compoundHint && (
                       <p className="text-xs text-amber-600 mt-2 text-center animate-in fade-in duration-300">
@@ -1083,12 +1131,16 @@ export default function Home() {
                   </div>
 
                   <div className="group">
-                    <label className="block text-stone-500 font-bold mb-3 text-xs tracking-widest uppercase flex justify-between">
+                    <label
+                      htmlFor="given-name-input"
+                      className="block text-stone-500 font-bold mb-3 text-xs tracking-widest uppercase flex justify-between"
+                    >
                       <span>Given Name</span>
                       {/* [Modified: Optional -> 選填] */}
                       <span className="text-stone-300 font-normal normal-case">選填</span>
                     </label>
                     <input
+                      id="given-name-input"
                       type="text"
                       maxLength={2}
                       value={state.originalGivenName}

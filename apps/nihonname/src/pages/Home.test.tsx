@@ -33,13 +33,13 @@ describe('Home Page', () => {
 
     it('should render surname input field', () => {
       renderHome();
-      const surnameInput = screen.getByPlaceholderText('陳 / 歐陽');
+      const surnameInput = screen.getByLabelText(/Surname \(Traditional Chinese\)/i);
       expect(surnameInput).toBeInTheDocument();
     });
 
     it('should render given name input field', () => {
       renderHome();
-      const givenNameInput = screen.getByPlaceholderText('隨機');
+      const givenNameInput = screen.getByLabelText(/Given Name/i);
       expect(givenNameInput).toBeInTheDocument();
     });
 
@@ -59,7 +59,7 @@ describe('Home Page', () => {
   describe('User Interaction - Input Step', () => {
     it('should keep submit button enabled when surname is entered', () => {
       renderHome();
-      const surnameInput = screen.getByPlaceholderText('陳 / 歐陽');
+      const surnameInput = screen.getByLabelText(/Surname \(Traditional Chinese\)/i);
       fireEvent.change(surnameInput, { target: { value: '林' } });
 
       const button = screen.getByRole('button', { name: /改名実行/i });
@@ -68,14 +68,18 @@ describe('Home Page', () => {
 
     it('should allow entering surname', () => {
       renderHome();
-      const surnameInput = screen.getByPlaceholderText('陳 / 歐陽') as HTMLInputElement;
+      const surnameInput = screen.getByLabelText(
+        /Surname \(Traditional Chinese\)/i,
+      ) as HTMLInputElement;
       fireEvent.change(surnameInput, { target: { value: '王' } });
       expect(surnameInput.value).toBe('王');
     });
 
     it('should allow entering compound surname (複姓)', () => {
       renderHome();
-      const surnameInput = screen.getByPlaceholderText('陳 / 歐陽') as HTMLInputElement;
+      const surnameInput = screen.getByLabelText(
+        /Surname \(Traditional Chinese\)/i,
+      ) as HTMLInputElement;
       fireEvent.change(surnameInput, { target: { value: '歐陽' } });
       expect(surnameInput.value).toBe('歐陽');
       // 複姓提示應該顯示
@@ -84,7 +88,7 @@ describe('Home Page', () => {
 
     it('should allow entering given name', () => {
       renderHome();
-      const givenNameInput = screen.getByPlaceholderText('隨機') as HTMLInputElement;
+      const givenNameInput = screen.getByLabelText(/Given Name/i) as HTMLInputElement;
       fireEvent.change(givenNameInput, { target: { value: '小明' } });
       expect(givenNameInput.value).toBe('小明');
     });
@@ -93,7 +97,7 @@ describe('Home Page', () => {
   describe('Name Generation', () => {
     it('should show loading state when generating names', () => {
       renderHome();
-      const surnameInput = screen.getByPlaceholderText('陳 / 歐陽');
+      const surnameInput = screen.getByLabelText(/Surname \(Traditional Chinese\)/i);
       fireEvent.change(surnameInput, { target: { value: '林' } });
 
       const button = screen.getByRole('button', { name: /改名実行/i });

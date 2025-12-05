@@ -8,7 +8,8 @@
  * - 預設分享文案優化
  */
 import { useState, useCallback } from 'react';
-import { Share2, Copy, Check, MessageCircle, Twitter, Facebook } from 'lucide-react';
+import { Share2, Copy, Check, MessageCircle, Facebook } from 'lucide-react';
+import { XIcon } from './icons';
 
 interface ShareButtonProps {
   /** 分享標題 */
@@ -214,7 +215,7 @@ export function ShareButton({
               }}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
             >
-              <Twitter size={16} />
+              <XIcon className="w-4 h-4" />
               分享到 X
             </button>
             <button
@@ -281,7 +282,7 @@ export function ShareButton({
               }}
               className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
             >
-              <Twitter size={18} className="text-[#1DA1F2]" />
+              <XIcon className="w-5 h-5 text-black" />
               分享到 X (Twitter)
             </button>
             <button
