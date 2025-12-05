@@ -41,6 +41,8 @@ export default defineConfig({
         // [fix:2025-12-06] ShareModal requires browser APIs (window.open, navigator.clipboard)
         // Social sharing functionality is better tested with E2E tests
         'src/components/ShareModal.tsx',
+        // [fix:2025-12-06] Pure SVG icon components - no logic to test
+        'src/components/icons.tsx',
       ],
       thresholds: {
         statements: 80,
