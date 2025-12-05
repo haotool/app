@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { TestMemoryRouter } from '../test/RouterWrapper';
 import { HelmetProvider } from '../utils/helmet';
 import { SEOHelmet } from './SEOHelmet';
 
@@ -12,7 +12,7 @@ import { SEOHelmet } from './SEOHelmet';
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
     <HelmetProvider>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <TestMemoryRouter>{ui}</TestMemoryRouter>
     </HelmetProvider>,
   );
 };

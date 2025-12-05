@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route, MemoryRouter } from 'react-router-dom';
 import { Layout } from './Layout';
 
 // Test child component
@@ -14,9 +14,16 @@ const TestChild = ({ testId = 'test-child' }: { testId?: string }) => (
 );
 
 // Helper to render Layout with router context
+// [fix:2025-12-06] 使用 future flags 消除 React Router 警告
 const renderWithRouter = (initialRoute = '/') => {
   return render(
-    <MemoryRouter initialEntries={[initialRoute]}>
+    <MemoryRouter
+      initialEntries={[initialRoute]}
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<TestChild testId="home-child" />} />
