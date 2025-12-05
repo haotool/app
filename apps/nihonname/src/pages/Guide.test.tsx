@@ -9,17 +9,17 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { HelmetProvider } from '../utils/helmet';
-import { BrowserRouter } from 'react-router-dom';
+import { TestBrowserRouter } from '../test/RouterWrapper';
 import Guide from './Guide';
 
 describe('Guide Page - HowTo Schema', () => {
   const renderGuide = () => {
     return render(
-      <BrowserRouter>
+      <TestBrowserRouter>
         <HelmetProvider>
           <Guide />
         </HelmetProvider>
-      </BrowserRouter>,
+      </TestBrowserRouter>,
     );
   };
 

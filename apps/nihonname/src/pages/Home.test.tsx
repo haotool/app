@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { TestMemoryRouter } from '../test/RouterWrapper';
 import { HelmetProvider } from '../utils/helmet';
 import Home from './Home';
 
@@ -12,9 +12,9 @@ import Home from './Home';
 const renderHome = () => {
   return render(
     <HelmetProvider>
-      <MemoryRouter>
+      <TestMemoryRouter>
         <Home />
-      </MemoryRouter>
+      </TestMemoryRouter>
     </HelmetProvider>,
   );
 };

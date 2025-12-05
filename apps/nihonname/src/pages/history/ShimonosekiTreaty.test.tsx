@@ -5,14 +5,14 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { TestMemoryRouter } from '../../test/RouterWrapper';
 import { HelmetProvider } from '../../utils/helmet';
 import ShimonosekiTreaty from './ShimonosekiTreaty';
 
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <HelmetProvider>
-      <MemoryRouter>{component}</MemoryRouter>
+      <TestMemoryRouter>{component}</TestMemoryRouter>
     </HelmetProvider>,
   );
 };

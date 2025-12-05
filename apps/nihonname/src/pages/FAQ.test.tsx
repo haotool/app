@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { TestMemoryRouter } from '../test/RouterWrapper';
 import { HelmetProvider } from '../utils/helmet';
 import FAQ from './FAQ';
 
@@ -16,9 +16,9 @@ vi.mock('../components/SEOHelmet', () => ({
 const renderFAQ = () => {
   return render(
     <HelmetProvider>
-      <MemoryRouter>
+      <TestMemoryRouter>
         <FAQ />
-      </MemoryRouter>
+      </TestMemoryRouter>
     </HelmetProvider>,
   );
 };
