@@ -2,28 +2,28 @@ import { X, Facebook, Copy, Check } from 'lucide-react';
 import { useState, memo } from 'react';
 import { ThreadsIcon, XIcon } from './icons';
 
-// 真實台灣人分享風格文案 - 20 種（含日本姓名佔位符）
+// 真實台灣人分享風格文案 - 20 種（含日本姓名佔位符），去除不雅字眼
 const TAIWAN_SHARE_COPIES = [
-  '乾...我上輩子居然叫「{fullName}」？😂 別名還是「{punName}」也太中二！',
-  '笑死，我的日本名字是「{fullName}」聽起來好強！Kuso 名還叫「{punName}」www',
-  '欸不是，「{fullName}」這名字是不是有點太帥？還有諧音「{punName}」🤣',
-  '原來我在日治時期會叫「{fullName}」...好像有點猛，別名「{punName}」更猛',
-  '測出來了！我的皇民化名字是「{fullName}」，諧音名「{punName}」笑翻 😳',
-  '這產生器有毒，我測出「{fullName}」，Kuso「{punName}」太好笑了 www',
-  '快笑死，我的日本名字「{fullName}」超奇怪，別名「{punName}」更怪 XD',
-  '「{fullName}」這是什麼動漫角色的名字啦！諧音「{punName}」更像反派！',
-  '我覺得「{fullName}」比本名好聽耶（小聲），「{punName}」也很讚',
-  '這網站做得太精緻了，推個！我是「{fullName}」aka「{punName}」👍',
-  '這是什麼羞恥 play 啦 www 我的名字「{fullName}」諧音「{punName}」',
-  '居然還有族譜考據，我測出「{fullName}」，別名「{punName}」有點東西...',
-  '「{fullName}」這名字聽起來很有錢（？諧音「{punName}」更有錢',
-  '「{fullName}」感覺是反派角色吧？👿 「{punName}」更像最終 Boss',
-  '好想真的叫「{fullName}」喔...「{punName}」也很可以',
-  '大家快幫我看看「{fullName}」這個名字適合我嗎？Kuso「{punName}」呢？',
-  '測完覺得自己變日本人了（誤）🇯🇵 我是「{fullName}」',
-  '「{fullName}」這名字...感覺會呼吸之呼吸？⚔️「{punName}」是水之呼吸',
-  '靠北，「{fullName}」聽起來像武士，「{punName}」像忍者 🥷',
-  '剛測完日治時期改名，我是「{fullName}」，諧音「{punName}」，你們也來測！',
+  '剛測到我的日式名字是「{fullName}」，諧音「{punName}」，意外有質感！',
+  '原來在日治時期可能叫「{fullName}」，別名「{punName}」，分享給你。',
+  '今天抽到日本名字「{fullName}」，諧音梗「{punName}」，一起來玩吧。',
+  '「{fullName}」聽起來像動畫角色，諧音「{punName}」也很有記憶點。',
+  '這生成器很精緻，我的是「{fullName}」，Kuso 名「{punName}」。',
+  '我的改名結果：「{fullName}」＋「{punName}」，輪到你試試看。',
+  '測出皇民化名字「{fullName}」，諧音「{punName}」，小科普也有趣味。',
+  '「{fullName}」感覺像武士，諧音「{punName}」則像忍者。',
+  '覺得「{fullName}」比本名還順口，諧音「{punName}」也不錯。',
+  '名字生成完畢：「{fullName}」，諧音「{punName}」，換你抽卡。',
+  '「{fullName}」像小說角色，諧音「{punName}」很有梗。',
+  '族譜查詢後，得到「{fullName}」，Kuso 名「{punName}」。',
+  '「{fullName}」這組合好聽，諧音「{punName}」也蠻可愛。',
+  '結果出爐：日治時期我可能叫「{fullName}」，另名「{punName}」。',
+  '「{fullName}」氣質滿滿，諧音「{punName}」畫風大轉彎。',
+  '今日趣味抽卡：「{fullName}」＋「{punName}」，收藏一下。',
+  '測完覺得很有趣：「{fullName}」帶時代感，諧音「{punName}」當彩蛋。',
+  '「{fullName}」聽起來像主角，諧音「{punName}」是旁白亮點。',
+  '我抽到「{fullName}」，諧音「{punName}」，你也來試試。',
+  '日本姓氏測試：本次結果「{fullName}」，諧音「{punName}」。',
 ];
 
 // 指定的 Threads 貼文連結
