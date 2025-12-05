@@ -16,15 +16,19 @@ import {
   Scroll,
   CheckCircle2,
   RotateCcw,
+  Share2,
+  ArrowDown,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { RollingText } from '../components/RollingText';
 import { JapaneseDiceButton } from '../components/JapaneseDiceButton';
-import { ShareButtons } from '../components/ShareButtons';
+import { ShareModal } from '../components/ShareModal';
 import { SURNAME_MAP, FUNNY_NAMES, JAPANESE_GIVEN_NAMES, PRIMARY_SOURCE } from '../constants';
 import { getSurnameDetail } from '../data/surnameData';
 import { useCustomPunNames } from '../hooks/useCustomPunNames';
+import { useEasterEggs } from '../hooks/useEasterEggs';
+import { EasterEggs } from '../components/EasterEggs';
 import { SourceAccordion } from '../components/SourceAccordion';
 import type { GeneratorState, PunName, CustomPunName } from '../types';
 
@@ -656,6 +660,8 @@ export default function Home() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [compoundHint, setCompoundHint] = useState<string | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
   const uiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hintTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -671,6 +677,8 @@ export default function Home() {
 
   // Custom pun names hook
   const { customPunNames, addCustomPunName } = useCustomPunNames();
+  // Easter Eggs hook
+  const { activeEgg, handleLogoClick, handleDoubleTextClick, handleToriiClick } = useEasterEggs();
 
   // Combined pun names (built-in + custom)
   const allPunNames: PunName[] = [...FUNNY_NAMES, ...customPunNames];
@@ -864,13 +872,13 @@ export default function Home() {
     if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
     hintTimeoutRef.current = setTimeout(() => {
       setShowHint(false);
-    }, 1000);
+    }, 10000); // Show hint for 10 seconds (matching requirements)
 
     if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
     uiTimeoutRef.current = setTimeout(() => {
       setShowUI(true);
       setShowHint(false);
-    }, 10000);
+    }, 10000); // Restore UI after 10 seconds
   };
 
   const handleBackgroundClick = () => {
@@ -898,6 +906,19 @@ export default function Home() {
   const safeAreaTop = 'pt-[env(safe-area-inset-top,20px)]';
   const safeAreaBottom = 'pb-[env(safe-area-inset-bottom,12px)]';
 
+  // Random begging message - pre-generated outside render to avoid impure function calls
+  const [randomBeggingMsg] = useState(() => {
+    const BEGGING_MESSAGES = [
+      '求求你點一下嘛 🥺',
+      '點一下又不會少塊肉 👉👈',
+      '不要只看，按下去嘛 ❤️',
+      '讓我閃亮亮登場 ✨',
+      '準備好被帥到了嗎？😎',
+      '快點！我撐不了多久了！🥵',
+    ];
+    return BEGGING_MESSAGES[Math.floor(Math.random() * BEGGING_MESSAGES.length)];
+  });
+
   return (
     <>
       <SEOHelmet
@@ -916,6 +937,14 @@ export default function Home() {
           '內地式改姓名',
           '臺灣總督府',
         ]}
+      />
+
+      <EasterEggs activeEgg={activeEgg} />
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        surname={state.originalSurname}
+        japaneseName={state.japaneseSurname}
       />
 
       <div
@@ -965,6 +994,7 @@ export default function Home() {
               >
                 <span
                   className={`text-red-900 tracking-[0.3em] font-bold uppercase mx-4 font-serif transition-all flex items-center gap-2 ${state.step === 'result' && !showUI ? 'text-sm md:text-base' : 'text-xs md:text-sm'}`}
+                  onClick={handleDoubleTextClick}
                 >
                   <ToriiIcon className="w-4 h-4 opacity-70" />
                   Taiwan 1940
@@ -972,7 +1002,10 @@ export default function Home() {
                 </span>
               </div>
 
-              <h1 className="relative inline-block text-4xl md:text-5xl font-bold font-jp text-red-900 drop-shadow-sm leading-tight transition-all duration-500 opacity-100">
+              <h1
+                className="relative inline-block text-4xl md:text-5xl font-bold font-jp text-red-900 drop-shadow-sm leading-tight transition-all duration-500 opacity-100 cursor-pointer"
+                onClick={handleLogoClick}
+              >
                 <span className="block text-lg md:text-xl text-stone-500 tracking-[0.5em] mb-1 font-serif">
                   皇民化改姓運動
                 </span>
@@ -1023,7 +1056,8 @@ export default function Home() {
                   <div className="group">
                     <label className="block text-stone-500 font-bold mb-3 text-xs tracking-widest uppercase flex justify-between">
                       <span>Given Name</span>
-                      <span className="text-stone-300 font-normal normal-case">Optional</span>
+                      {/* [Modified: Optional -> 選填] */}
+                      <span className="text-stone-300 font-normal normal-case">選填</span>
                     </label>
                     <input
                       type="text"
@@ -1144,8 +1178,9 @@ export default function Home() {
                     <div className="flex-1">
                       {/* 羅馬拼音區 - 置左對齊 */}
                       <div className="flex items-center space-x-2 mb-2">
+                        {/* [Modified: Alias -> Kuso] */}
                         <span className="bg-amber-500 text-white px-2 py-0.5 text-[10px] font-bold rounded-sm uppercase tracking-wider">
-                          Alias
+                          Kuso
                         </span>
                         {/* 羅馬拼音 - 可點擊編輯 */}
                         {editingField === 'romaji' ? (
@@ -1219,9 +1254,6 @@ export default function Home() {
                           <RollingText text={state.punName.kanji} />
                         </button>
                       )}
-
-                      {/* [UI/UX 2025-12-04] 解釋區塊已隱藏，因常有錯誤 - 但保留編輯功能 */}
-                      {/* 解釋區塊 - 預設隱藏，僅在編輯模式時顯示 */}
                     </div>
 
                     {/* 骰子按鈕 - 點擊隨機換名 */}
@@ -1233,7 +1265,7 @@ export default function Home() {
                   </div>
 
                   {/* Footer Stamp */}
-                  <div className="mt-6 opacity-60">
+                  <div className="mt-6 opacity-60 cursor-pointer" onClick={handleToriiClick}>
                     <div className="border border-red-900 px-4 py-1.5 inline-block">
                       <span className="text-red-900 text-[10px] tracking-[0.3em] font-serif font-bold">
                         令和七年・改名局
@@ -1245,8 +1277,19 @@ export default function Home() {
 
               {/* Pure Mode Hint Overlay */}
               {showHint && (
-                <div className="absolute bottom-[-120px] md:bottom-[-130px] left-0 right-0 flex justify-center pointer-events-none animate-in fade-in zoom-in duration-300">
-                  <div className="bg-red-900/90 backdrop-blur-md text-amber-50 px-5 py-2 rounded-full text-xs shadow-[0_8px_20px_-6px_rgba(127,29,29,0.45)] flex items-center border border-red-200/50 ring-1 ring-red-200/40">
+                <div className="absolute bottom-[-180px] left-0 right-0 flex flex-col items-center justify-center pointer-events-none z-50">
+                  {/* Glowing Arrow */}
+                  <div className="animate-bounce mb-2 text-amber-400 filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">
+                    <ArrowDown size={48} strokeWidth={3} />
+                  </div>
+
+                  {/* Begging Message */}
+                  <div className="mb-3 bg-white/90 backdrop-blur text-red-600 font-bold px-4 py-2 rounded-full shadow-lg transform -rotate-2 animate-pulse">
+                    {randomBeggingMsg}
+                  </div>
+
+                  {/* Main Badge */}
+                  <div className="bg-red-900/90 backdrop-blur-md text-amber-50 px-5 py-2 rounded-full text-xs shadow-[0_8px_20px_-6px_rgba(127,29,29,0.45)] flex items-center border border-red-200/50 ring-1 ring-red-200/40 animate-in fade-in zoom-in duration-300">
                     <ScanEye size={14} className="mr-2 animate-pulse text-amber-200 drop-shadow" />
                     純淨截圖啟動 · 介面隱藏 10 秒
                   </div>
@@ -1294,13 +1337,15 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Social Share Buttons */}
+              {/* Social Share Button (Opens Modal) */}
               <div className="mb-4">
-                <ShareButtons
-                  url={window.location.href}
-                  surname={state.originalSurname}
-                  japaneseName={state.japaneseSurname}
-                />
+                <button
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="w-full bg-stone-800 hover:bg-stone-900 text-stone-50 py-3.5 rounded-xl font-bold shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.97] group"
+                >
+                  <Share2 size={18} className="group-hover:rotate-12 transition-transform" />
+                  分享你的日本姓氏
+                </button>
               </div>
 
               <div className="flex justify-between items-center">
