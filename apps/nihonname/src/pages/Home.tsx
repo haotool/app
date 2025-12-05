@@ -21,6 +21,7 @@ import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { RollingText } from '../components/RollingText';
 import { JapaneseDiceButton } from '../components/JapaneseDiceButton';
+import { ShareButtons } from '../components/ShareButtons';
 import { SURNAME_MAP, FUNNY_NAMES, JAPANESE_GIVEN_NAMES, PRIMARY_SOURCE } from '../constants';
 import { getSurnameDetail } from '../data/surnameData';
 import { useCustomPunNames } from '../hooks/useCustomPunNames';
@@ -185,6 +186,109 @@ const KANJI_TO_ROMAJI: Record<string, string> = {
   嘴: 'Kuchi',
   我: 'Ga',
   妻: 'Tsuma',
+};
+
+// 複姓對照表（複姓 → 對應單姓）
+// [context7:taiwan-surnames:2025-12-06] 台灣常見複姓
+const COMPOUND_SURNAMES: Record<string, string> = {
+  歐陽: '歐',
+  司馬: '司',
+  司徒: '司',
+  上官: '上',
+  諸葛: '諸',
+  皇甫: '皇',
+  東方: '東',
+  西門: '西',
+  南宮: '南',
+  北堂: '北',
+  令狐: '令',
+  公孫: '公',
+  尉遲: '尉',
+  長孫: '長',
+  慕容: '慕',
+  獨孤: '獨',
+  宇文: '宇',
+  軒轅: '軒',
+  鮮于: '鮮',
+  呼延: '呼',
+  端木: '端',
+  百里: '百',
+  東郭: '東',
+  南門: '南',
+  羊舌: '羊',
+  微生: '微',
+  公冶: '公',
+  梁丘: '梁',
+  左丘: '左',
+  公羊: '公',
+  穀梁: '穀',
+  公西: '公',
+  顓孫: '顓',
+  壤駟: '壤',
+  公良: '公',
+  漆雕: '漆',
+  樂正: '樂',
+  宰父: '宰',
+  夾谷: '夾',
+  巫馬: '巫',
+  公伯: '公',
+  南榮: '南',
+  申屠: '申',
+  夏侯: '夏',
+  鍾離: '鍾',
+  段干: '段',
+  仲孫: '仲',
+  叔孫: '叔',
+  閭丘: '閭',
+  濮陽: '濮',
+  淳于: '淳',
+  單于: '單',
+  太叔: '太',
+  公戶: '公',
+  公玉: '公',
+  公儀: '公',
+  公賓: '公',
+  公仲: '公',
+  公上: '公',
+  公門: '公',
+  公山: '公',
+  公堅: '公',
+  公乘: '公',
+  公肩: '公',
+  公石: '公',
+  公祖: '公',
+  第五: '第',
+  第一: '第',
+  第二: '第',
+  第三: '第',
+  第四: '第',
+};
+
+/**
+ * 處理複姓輸入，返回對應的單姓
+ * @param input 用戶輸入的姓氏
+ * @returns { surname: 用於查詢的姓氏, isCompound: 是否為複姓, originalCompound: 原始複姓 }
+ */
+const processCompoundSurname = (
+  input: string,
+): { surname: string; isCompound: boolean; originalCompound: string | null } => {
+  const trimmed = input.trim();
+
+  // 檢查是否為複姓
+  if (trimmed.length === 2 && COMPOUND_SURNAMES[trimmed]) {
+    return {
+      surname: COMPOUND_SURNAMES[trimmed],
+      isCompound: true,
+      originalCompound: trimmed,
+    };
+  }
+
+  // 非複姓，取第一個字
+  return {
+    surname: trimmed.substring(0, 1),
+    isCompound: false,
+    originalCompound: null,
+  };
 };
 
 // 自動轉換漢字為羅馬拼音
@@ -549,8 +653,12 @@ export default function Home() {
   const [showUI, setShowUI] = useState(true);
   const [showHint, setShowHint] = useState(false);
   const [showLookup, setShowLookup] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [compoundHint, setCompoundHint] = useState<string | null>(null);
   const uiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hintTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 內聯編輯模式狀態
   const [editingField, setEditingField] = useState<'kanji' | 'romaji' | 'meaning' | null>(null);
@@ -644,8 +752,30 @@ export default function Home() {
     }
   };
 
+  // 顯示吐司訊息
+  const showToastMessage = (message: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToastMessage(message);
+    setShowToast(true);
+    toastTimeoutRef.current = setTimeout(() => {
+      setShowToast(false);
+    }, 3000);
+  };
+
   const handleSurnameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setState((prev) => ({ ...prev, originalSurname: e.target.value.trim() }));
+    const value = e.target.value.trim();
+    setState((prev) => ({ ...prev, originalSurname: value }));
+
+    // 檢查是否為複姓並顯示提示
+    if (value.length === 2) {
+      if (COMPOUND_SURNAMES[value]) {
+        setCompoundHint(`複姓「${value}」將以「${COMPOUND_SURNAMES[value]}」進行改姓查詢`);
+      } else {
+        setCompoundHint(`輸入兩字時，系統將取第一字「${value.substring(0, 1)}」作為姓氏查詢`);
+      }
+    } else {
+      setCompoundHint(null);
+    }
   };
 
   const handleGivenNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -653,19 +783,35 @@ export default function Home() {
   };
 
   const generateNames = () => {
-    if (!state.originalSurname) return;
     setLoading(true);
+
+    // 如果沒有輸入姓氏，顯示吐司並使用隨機姓氏
+    if (!state.originalSurname) {
+      showToastMessage('未輸入姓氏，將隨機抽選日本姓氏！');
+    }
+
     setTimeout(() => {
-      const key = state.originalSurname;
-      const possibleSurnames = SURNAME_MAP[key] ??
-        SURNAME_MAP[key.substring(0, 1)] ?? [
-          `${key}山`,
-          `${key}田`,
-          `${key}本`,
-          '田中',
-          '佐藤',
-          '鈴木',
-        ];
+      let key = state.originalSurname;
+
+      // 處理複姓
+      if (key) {
+        const { surname } = processCompoundSurname(key);
+        key = surname;
+      }
+
+      // 如果沒有輸入姓氏，使用隨機日本姓氏
+      const possibleSurnames = key
+        ? (SURNAME_MAP[key] ??
+          SURNAME_MAP[key.substring(0, 1)] ?? [
+            `${key}山`,
+            `${key}田`,
+            `${key}本`,
+            '田中',
+            '佐藤',
+            '鈴木',
+          ])
+        : ['田中', '佐藤', '鈴木', '高橋', '渡辺', '伊藤', '山本', '中村', '小林', '加藤'];
+
       const jpSurname = getRandom(possibleSurnames);
       const finalGivenName = state.originalGivenName
         ? state.originalGivenName
@@ -680,9 +826,18 @@ export default function Home() {
 
   const rerollSurname = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const key = state.originalSurname;
-    const possibleSurnames = SURNAME_MAP[key] ??
-      SURNAME_MAP[key.substring(0, 1)] ?? [`${key}山`, `${key}田`, '田中', '佐藤', '鈴木'];
+    let key = state.originalSurname;
+
+    // 處理複姓
+    if (key) {
+      const { surname } = processCompoundSurname(key);
+      key = surname;
+    }
+
+    const possibleSurnames = key
+      ? (SURNAME_MAP[key] ??
+        SURNAME_MAP[key.substring(0, 1)] ?? [`${key}山`, `${key}田`, '田中', '佐藤', '鈴木'])
+      : ['田中', '佐藤', '鈴木', '高橋', '渡辺', '伊藤', '山本', '中村', '小林', '加藤'];
     setState((prev) => ({ ...prev, japaneseSurname: getRandom(possibleSurnames) }));
   };
 
@@ -767,6 +922,15 @@ export default function Home() {
         className={`min-h-[100dvh] h-[100dvh] w-full bg-[#f5f5f4] text-stone-900 font-sans relative flex flex-col overflow-x-hidden overflow-y-auto selection:bg-red-900 selection:text-white ${safeAreaTop}`}
         onClick={handleBackgroundClick}
       >
+        {/* 日式吐司訊息 */}
+        {showToast && (
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="bg-red-900/90 backdrop-blur-md text-amber-50 px-6 py-3 rounded-full text-sm shadow-[0_8px_20px_-6px_rgba(127,29,29,0.45)] flex items-center border border-red-200/50 ring-1 ring-red-200/40">
+              <Flower size={16} className="mr-2 text-amber-200" />
+              {toastMessage}
+            </div>
+          </div>
+        )}
         <SakuraBackground />
         <LookupModal
           surname={state.originalSurname}
@@ -831,22 +995,29 @@ export default function Home() {
 
                 <div className="space-y-8 relative z-10">
                   <div className="group">
-                    <label className="block text-stone-500 font-bold mb-3 text-xs tracking-widest uppercase">
-                      Surname (Traditional Chinese)
+                    <label className="block text-stone-500 font-bold mb-3 text-xs tracking-widest uppercase flex justify-between">
+                      <span>Surname (Traditional Chinese)</span>
+                      <span className="text-stone-300 font-normal normal-case">支援複姓</span>
                     </label>
                     <input
                       type="text"
-                      maxLength={1}
+                      maxLength={2}
                       value={state.originalSurname}
                       onChange={handleSurnameChange}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && state.originalSurname && !loading) {
+                        if (e.key === 'Enter' && !loading) {
                           generateNames();
                         }
                       }}
-                      placeholder="陳"
+                      placeholder="陳 / 歐陽"
                       className="w-full bg-stone-50 border-b-2 border-stone-200 focus:border-red-800 outline-none py-3 text-3xl text-center font-jp text-stone-800 transition-all placeholder:text-stone-300 rounded-t-lg focus:bg-white"
                     />
+                    {/* 複姓提示 */}
+                    {compoundHint && (
+                      <p className="text-xs text-amber-600 mt-2 text-center animate-in fade-in duration-300">
+                        💡 {compoundHint}
+                      </p>
+                    )}
                   </div>
 
                   <div className="group">
@@ -866,7 +1037,7 @@ export default function Home() {
 
                   <button
                     onClick={generateNames}
-                    disabled={!state.originalSurname || loading}
+                    disabled={loading}
                     className="w-full bg-stone-900 hover:bg-red-900 active:scale-[0.98] text-stone-50 font-bold py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
@@ -1121,6 +1292,15 @@ export default function Home() {
                     }
                   `}</style>
                 </button>
+              </div>
+
+              {/* Social Share Buttons */}
+              <div className="mb-4">
+                <ShareButtons
+                  url={window.location.href}
+                  surname={state.originalSurname}
+                  japaneseName={state.japaneseSurname}
+                />
               </div>
 
               <div className="flex justify-between items-center">
