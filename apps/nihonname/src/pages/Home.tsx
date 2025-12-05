@@ -664,6 +664,9 @@ export default function Home() {
   const [showScreenshotGuide, setShowScreenshotGuide] = useState(false);
   const [surnamePlaceholder, setSurnamePlaceholder] = useState('陳 / 歐陽');
   const [placeholderActive, setPlaceholderActive] = useState(true);
+  // 搖晃彩蛋授權：進站滿 60 秒後才允許顯示 DeviceMotion 提示
+  const [canShowMotionPrompt, setCanShowMotionPrompt] = useState(false);
+  const [motionPromptPending, setMotionPromptPending] = useState(false);
 
   const uiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hintTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -671,6 +674,7 @@ export default function Home() {
   const screenshotGuideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const placeholderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const placeholderSwapRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const motionPromptTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 內聯編輯模式狀態
   const [editingField, setEditingField] = useState<'kanji' | 'romaji' | 'meaning' | null>(null);
@@ -834,6 +838,23 @@ export default function Home() {
     };
   }, [allSurnames, state.originalSurname]);
 
+  // 進站 60 秒後才允許顯示 DeviceMotion 授權提示，避免一入站即打擾
+  useEffect(() => {
+    motionPromptTimeoutRef.current = setTimeout(() => setCanShowMotionPrompt(true), 60000);
+    return () => {
+      if (motionPromptTimeoutRef.current) clearTimeout(motionPromptTimeoutRef.current);
+    };
+  }, []);
+
+  // 若已進入結果頁但尚未達 60 秒，倒數結束後再顯示提示
+  useEffect(() => {
+    if (canShowMotionPrompt && motionPromptPending && !hasMotionPermission) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 需在計時完成後觸發一次提示
+      setShowMotionPrompt(true);
+      setMotionPromptPending(false);
+    }
+  }, [canShowMotionPrompt, motionPromptPending, hasMotionPermission]);
+
   const generateNames = () => {
     setLoading(true);
 
@@ -886,8 +907,12 @@ export default function Home() {
           DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }
         ).requestPermission;
         if (typeof requestPermission === 'function') {
-          // iOS 設備需要用戶授權
-          setShowMotionPrompt(true);
+          // iOS 設備需要用戶授權；僅在進站滿 60 秒後提示
+          if (canShowMotionPrompt) {
+            setShowMotionPrompt(true);
+          } else {
+            setMotionPromptPending(true);
+          }
         } else {
           // 非 iOS 設備已自動啟用
           setHasMotionPermission(true);
