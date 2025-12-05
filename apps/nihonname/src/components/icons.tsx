@@ -2,7 +2,7 @@ interface IconProps {
   className?: string;
 }
 
-export function ThreadsIcon({ className = 'w-5 h-5' }: IconProps) {
+export function ThreadsIcon({ className = 'w-4 h-4' }: IconProps) {
   return (
     <svg
       viewBox="0 0 192 192"
@@ -16,16 +16,16 @@ export function ThreadsIcon({ className = 'w-5 h-5' }: IconProps) {
   );
 }
 
-export function XIcon({ className = 'w-5 h-5' }: IconProps) {
+export function XIcon({ className = 'w-4 h-4' }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg"
       fill="currentColor"
       className={className}
-      aria-label="X (Twitter)"
+      aria-label="X"
     >
-      <path d="M18.244 3H21l-6.563 7.5L21.818 21H17.1l-4.157-5.41L8.174 21H3L9.804 12.857 3.53 3H8.35l3.71 5.09L15.455 3h2.789z" />
+      <path d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z" />
     </svg>
   );
 }
