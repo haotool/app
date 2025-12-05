@@ -110,7 +110,7 @@ describe('Home Page', () => {
       fireEvent.click(button);
 
       // 應該顯示吐司訊息
-      expect(screen.getByText(/未輸入姓氏，將隨機抽選日本姓氏/i)).toBeInTheDocument();
+      expect(screen.getByText(/未填姓氏，已隨機抽選/i)).toBeInTheDocument();
     });
   });
 

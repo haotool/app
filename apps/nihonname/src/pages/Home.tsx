@@ -797,7 +797,7 @@ export default function Home() {
 
     // 如果沒有輸入姓氏，顯示吐司並使用隨機姓氏
     if (!state.originalSurname) {
-      showToastMessage('未輸入姓氏，將隨機抽選日本姓氏！');
+      showToastMessage('未填姓氏，已隨機抽選');
     }
 
     setTimeout(() => {
@@ -881,14 +881,14 @@ export default function Home() {
     if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
     hintTimeoutRef.current = setTimeout(() => {
       setShowHint(false);
-      // 截圖模式結束後 10 秒，自動顯示分享模態窗
-      setIsShareModalOpen(true);
-    }, 10000); // Show hint for 10 seconds, then open share modal
+    }, 1000); // 截圖模式提示縮短為 1 秒
 
     if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
     uiTimeoutRef.current = setTimeout(() => {
       setShowUI(true);
       setShowHint(false);
+      // 截圖模式結束後自動顯示分享模態窗
+      setIsShareModalOpen(true);
     }, 10000); // Restore UI after 10 seconds
   };
 
@@ -982,7 +982,7 @@ export default function Home() {
       >
         {/* 日式吐司訊息 */}
         {showToast && (
-          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="fixed left-1/2 -translate-x-1/2 z-[200] bottom-[calc(1.5rem+env(safe-area-inset-bottom,12px))] animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
             <div className="bg-red-900/90 backdrop-blur-md text-amber-50 px-6 py-3 rounded-full text-sm shadow-[0_8px_20px_-6px_rgba(127,29,29,0.45)] flex items-center border border-red-200/50 ring-1 ring-red-200/40">
               <Flower size={16} className="mr-2 text-amber-200" />
               {toastMessage}
@@ -1356,7 +1356,7 @@ export default function Home() {
                       setShowScreenshotGuide(false);
                       toggleUI();
                     }}
-                    className={`w-full bg-red-900 text-red-50 py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center space-x-2 hover:bg-red-800 transition-all active:scale-[0.97] text-sm relative overflow-hidden group ${showScreenshotGuide ? 'ring-4 ring-amber-400 ring-offset-2 animate-glow' : 'shadow-red-400/30'}`}
+                    className={`w-full bg-red-900 text-red-50 py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center space-x-2 hover:bg-red-800 transition-all active:scale-[0.97] text-sm relative overflow-hidden group ${showScreenshotGuide ? 'ring-4 ring-red-500 ring-offset-2 animate-glow' : 'shadow-red-400/30'}`}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-700/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                     <Camera size={18} className="relative z-10" />
@@ -1364,8 +1364,8 @@ export default function Home() {
                   </button>
                   <style>{`
                     @keyframes glow {
-                      0%, 100% { box-shadow: 0 0 5px rgba(251, 191, 36, 0.5), 0 0 20px rgba(251, 191, 36, 0.3); }
-                      50% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.8), 0 0 40px rgba(251, 191, 36, 0.5); }
+                      0%, 100% { box-shadow: 0 0 6px rgba(185, 28, 28, 0.55), 0 0 18px rgba(220, 38, 38, 0.35); }
+                      50% { box-shadow: 0 0 18px rgba(185, 28, 28, 0.75), 0 0 36px rgba(220, 38, 38, 0.45); }
                     }
                     .animate-glow {
                       animation: glow 1.5s ease-in-out infinite;
