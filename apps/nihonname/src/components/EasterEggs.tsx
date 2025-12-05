@@ -69,7 +69,6 @@ const generateParticles = (
   }));
 
 const sakuraParticles = generateParticles(50, [10, 30], [2, 5]);
-const fireworkParticles = generateParticles(20, [4, 8], [0.5, 1.5]);
 
 // ==================== 彩蛋組件 ====================
 
@@ -112,51 +111,109 @@ const SakuraStorm = () => {
 };
 
 /**
- * 花火大會 - 手機搖晃觸發
- * 使用專案主色 red-900, red-600 和輔色 amber-500
+ * 花火大會 - 連續搖晃 10 下觸發
+ * 高階煙火：多層漸層核心 + 12 向量火花 + 尾焰
+ * 使用專案主色 red-900/red-600、輔色 amber-400/rose-300
  */
 const Fireworks = () => {
-  const particles = useMemo(() => fireworkParticles, []);
-  // 使用專案色系
-  const colors = ['#7f1d1d', '#dc2626', '#f59e0b', '#fbbf24', '#b91c1c', '#ef4444', '#fcd34d'];
+  const BURSTS = useMemo(
+    () => [
+      { top: '28%', left: '32%', delay: 0 },
+      { top: '42%', left: '68%', delay: 0.12 },
+      { top: '60%', left: '50%', delay: 0.24 },
+      { top: '72%', left: '30%', delay: 0.36 },
+      { top: '20%', left: '70%', delay: 0.48 },
+    ],
+    [],
+  );
+
+  const SPARK_COLORS = ['#7f1d1d', '#dc2626', '#fb923c', '#fbbf24', '#fecdd3'];
 
   return (
-    <div className="absolute inset-0">
-      {[0, 1, 2, 3, 4].map((burst) => (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {BURSTS.map((burst, idx) => (
         <div
-          key={burst}
-          className="absolute animate-firework"
+          key={`${burst.left}-${burst.top}`}
+          className="absolute"
           style={{
-            left: `${15 + burst * 18}%`,
-            top: `${20 + (burst % 2) * 20}%`,
-            animationDelay: `${burst * 0.8}s`,
+            top: burst.top,
+            left: burst.left,
+            animation: `burst-rise 0.6s ease-out ${burst.delay}s forwards, burst-fade 1s ease-out ${
+              burst.delay + 0.6
+            }s forwards`,
           }}
         >
-          {particles.map((p, i) => (
-            <div
-              key={i}
-              className="absolute w-2 h-2 rounded-full animate-spark"
+          <div
+            className="relative w-3 h-3 rounded-full"
+            style={{
+              background:
+                'radial-gradient(circle at 30% 30%, #fff 0%, #fef2f2 25%, #fecdd3 50%, transparent 70%)',
+              boxShadow: '0 0 18px 8px rgba(252, 165, 165, 0.25)',
+              animation: `core-pulse 1.4s ease-out ${burst.delay + 0.2}s forwards`,
+            }}
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <span
+                key={i}
+                className="absolute block rounded-full"
+                style={{
+                  width: '6px',
+                  height: '2px',
+                  top: '50%',
+                  left: '50%',
+                  transformOrigin: '0% 50%',
+                  transform: `rotate(${i * 30}deg) translateX(12px)`,
+                  background: SPARK_COLORS[i % SPARK_COLORS.length],
+                  boxShadow: `0 0 8px ${SPARK_COLORS[i % SPARK_COLORS.length]}66`,
+                  animation: `spark ${1.4 + idx * 0.05}s cubic-bezier(0.2, 0.8, 0.4, 1) ${
+                    burst.delay + 0.2 + i * 0.02
+                  }s forwards`,
+                  filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.4))',
+                }}
+              />
+            ))}
+            {/* 尾焰 */}
+            <span
+              className="absolute block rounded-full blur-sm"
               style={{
-                backgroundColor: colors[(burst + i) % colors.length],
-                transform: `rotate(${i * 18}deg) translateY(-${30 + p.size * 5}px)`,
-                animationDelay: `${burst * 0.8 + p.delay * 0.2}s`,
+                width: '16px',
+                height: '16px',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                background:
+                  'radial-gradient(circle, rgba(252,165,165,0.35) 0%, rgba(220,38,38,0.15) 50%, transparent 75%)',
+                animation: `trail 1.2s ease-out ${burst.delay + 0.15}s forwards`,
               }}
             />
-          ))}
+          </div>
         </div>
       ))}
+
       <style>{`
-        @keyframes firework {
-          0% { opacity: 0; transform: scale(0); }
-          10% { opacity: 1; transform: scale(1); }
-          100% { opacity: 0; transform: scale(2); }
+        @keyframes burst-rise {
+          0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+          80% { opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        @keyframes burst-fade {
+          0% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        @keyframes core-pulse {
+          0% { transform: scale(0.8); opacity: 1; }
+          60% { transform: scale(1.6); opacity: 0.9; }
+          100% { transform: scale(2); opacity: 0; }
         }
         @keyframes spark {
-          0% { opacity: 1; transform: rotate(var(--rotation)) translateY(0); }
-          100% { opacity: 0; transform: rotate(var(--rotation)) translateY(-100px); }
+          0% { opacity: 0; transform: translate(-50%, -50%) scaleX(0.4); }
+          20% { opacity: 1; }
+          100% { opacity: 0; transform: translate(-50%, -50%) scaleX(1.6); }
         }
-        .animate-firework { animation: firework 2s ease-out infinite; }
-        .animate-spark { animation: spark 1.5s ease-out forwards; }
+        @keyframes trail {
+          0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.9); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+        }
       `}</style>
     </div>
   );

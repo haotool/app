@@ -37,6 +37,8 @@ export function useEasterEggs() {
   // 手機搖晃偵測
   const shakeThreshold = 15;
   const lastShakeTimeRef = useRef(0);
+  const shakeCountRef = useRef(0);
+  const shakeWindowMs = 1200;
 
   // 長按追蹤
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -115,13 +117,19 @@ export function useEasterEggs() {
 
       // 計算總加速度
       const totalAcceleration = Math.sqrt(x * x + y * y + z * z);
-
-      // 超過閾值且距離上次搖晃超過 1 秒
       const now = Date.now();
-      if (totalAcceleration > shakeThreshold && now - lastShakeTimeRef.current > 1000) {
+
+      if (totalAcceleration > shakeThreshold) {
+        // 若間隔過長，重新計數
+        if (now - lastShakeTimeRef.current > shakeWindowMs) {
+          shakeCountRef.current = 0;
+        }
+        shakeCountRef.current += 1;
         lastShakeTimeRef.current = now;
-        if (!activeEgg) {
-          triggerEgg('fireworks', 5000);
+
+        if (shakeCountRef.current >= 10 && !activeEgg) {
+          shakeCountRef.current = 0;
+          triggerEgg('fireworks', 7000);
         }
       }
     };
@@ -265,10 +273,16 @@ export function useEasterEggs() {
             if (x === null || y === null || z === null) return;
             const totalAcceleration = Math.sqrt(x * x + y * y + z * z);
             const now = Date.now();
-            if (totalAcceleration > shakeThreshold && now - lastShakeTimeRef.current > 1000) {
+            if (totalAcceleration > shakeThreshold) {
+              if (now - lastShakeTimeRef.current > shakeWindowMs) {
+                shakeCountRef.current = 0;
+              }
+              shakeCountRef.current += 1;
               lastShakeTimeRef.current = now;
-              if (!activeEgg) {
-                triggerEgg('fireworks', 5000);
+
+              if (shakeCountRef.current >= 10 && !activeEgg) {
+                shakeCountRef.current = 0;
+                triggerEgg('fireworks', 7000);
               }
             }
           };
