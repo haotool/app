@@ -194,10 +194,15 @@ export default defineConfig(({ mode }) => {
               return undefined;
             }
             if (id.includes('node_modules')) {
-              if (id.includes('react-router-dom') || id.includes('@remix-run')) {
-                return 'router';
-              }
-              if (id.includes('react') || id.includes('scheduler')) {
+              // [fix:2025-12-06] 將 react-router-dom 與 react 合併到同一 chunk
+              // 避免 createContext 在模組載入時未定義的問題
+              // [context7:remix-run/react-router:2025-12-06]
+              if (
+                id.includes('react') ||
+                id.includes('scheduler') ||
+                id.includes('react-router-dom') ||
+                id.includes('@remix-run')
+              ) {
                 return 'vendor';
               }
             }

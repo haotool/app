@@ -662,15 +662,13 @@ export default function Home() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   // 新增：截圖模式按鈕發光引導（進入結果頁 10 秒後顯示）
   const [showScreenshotGuide, setShowScreenshotGuide] = useState(false);
+  const [surnamePlaceholder, setSurnamePlaceholder] = useState('陳 / 歐陽');
+  const [placeholderActive, setPlaceholderActive] = useState(true);
 
   const uiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hintTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const screenshotGuideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // 動態 placeholder 狀態
-  const [surnamePlaceholder, setSurnamePlaceholder] = useState('陳');
-  const [placeholderActive, setPlaceholderActive] = useState(true);
   const placeholderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const placeholderSwapRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -690,9 +688,13 @@ export default function Home() {
 
   // Combined pun names (built-in + custom)
   const allPunNames: PunName[] = [...FUNNY_NAMES, ...customPunNames];
-
-  // 所有支持的姓氏（用於動態 placeholder）
-  const allSurnames = useMemo(() => Object.keys(SURNAME_MAP), []);
+  // 用於 placeholder 的姓氏集合（含單姓與複姓）
+  const allSurnames = useMemo(() => {
+    const unique = new Set<string>();
+    Object.keys(SURNAME_MAP).forEach((key) => unique.add(key));
+    Object.keys(COMPOUND_SURNAMES).forEach((key) => unique.add(key));
+    return Array.from(unique);
+  }, []);
 
   // 處理漢字輸入變更 - 同時自動更新羅馬拼音
   const handleKanjiChange = (value: string) => {
