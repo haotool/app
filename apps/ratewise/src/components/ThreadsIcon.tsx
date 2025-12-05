@@ -8,7 +8,7 @@ interface ThreadsIconProps {
   className?: string;
 }
 
-export function ThreadsIcon({ className = 'w-5 h-5' }: ThreadsIconProps) {
+export function ThreadsIcon({ className = 'w-4 h-4' }: ThreadsIconProps) {
   return (
     <svg
       viewBox="0 0 192 192"

@@ -14,9 +14,45 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readString, writeString, readJSON, writeJSON } from '../storage';
 
+// JSDOM 安全的記憶體 localStorage，用於缺少 localStorage 的情境
+const createMemoryStorage = () => {
+  const store = new Map<string, string>();
+  return {
+    get length() {
+      return store.size;
+    },
+    clear: () => store.clear(),
+    getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+    setItem: (key: string, value: string) => store.set(key, value),
+    removeItem: (key: string) => store.delete(key),
+    key: (index: number) => Array.from(store.keys())[index] ?? null,
+  } satisfies Storage;
+};
+
 describe('Storage Utilities', () => {
-  // 保存原始 localStorage
-  const originalLocalStorage = window.localStorage;
+  // 保存原始 localStorage（若環境缺少，提供記憶體實作以避免綁定 undefined）
+  const originalLocalStorage: Storage = window.localStorage ?? createMemoryStorage();
+  const fallbackLocalStorage: Storage = createMemoryStorage();
+  type BindableMethod = 'getItem' | 'setItem' | 'removeItem' | 'clear' | 'key';
+
+  const bindStorageMethod = (method: BindableMethod) => {
+    const candidate = originalLocalStorage[method];
+    if (typeof candidate === 'function') {
+      return (candidate as (...args: never[]) => unknown).bind(originalLocalStorage);
+    }
+    const fallback = fallbackLocalStorage[method];
+    return typeof fallback === 'function'
+      ? (fallback as (...args: never[]) => unknown).bind(fallbackLocalStorage)
+      : fallback;
+  };
+
+  // 確保測試環境始終有可用的 localStorage，避免在綁定時取到 undefined
+  if (!window.localStorage) {
+    Object.defineProperty(window, 'localStorage', {
+      value: originalLocalStorage,
+      writable: true,
+    });
+  }
 
   beforeEach(() => {
     // 清空 localStorage
@@ -200,11 +236,11 @@ describe('Storage Utilities', () => {
         value: {
           ...originalLocalStorage,
           setItem: mockSetItem,
-          getItem: originalLocalStorage.getItem.bind(originalLocalStorage),
-          removeItem: originalLocalStorage.removeItem.bind(originalLocalStorage),
-          clear: originalLocalStorage.clear.bind(originalLocalStorage),
-          length: originalLocalStorage.length,
-          key: originalLocalStorage.key.bind(originalLocalStorage),
+          getItem: bindStorageMethod('getItem'),
+          removeItem: bindStorageMethod('removeItem'),
+          clear: bindStorageMethod('clear'),
+          length: originalLocalStorage.length ?? fallbackLocalStorage.length,
+          key: bindStorageMethod('key'),
         },
         writable: true,
       });
@@ -223,11 +259,11 @@ describe('Storage Utilities', () => {
         value: {
           ...originalLocalStorage,
           getItem: mockGetItem,
-          setItem: originalLocalStorage.setItem.bind(originalLocalStorage),
-          removeItem: originalLocalStorage.removeItem.bind(originalLocalStorage),
-          clear: originalLocalStorage.clear.bind(originalLocalStorage),
-          length: originalLocalStorage.length,
-          key: originalLocalStorage.key.bind(originalLocalStorage),
+          setItem: bindStorageMethod('setItem'),
+          removeItem: bindStorageMethod('removeItem'),
+          clear: bindStorageMethod('clear'),
+          length: originalLocalStorage.length ?? fallbackLocalStorage.length,
+          key: bindStorageMethod('key'),
         },
         writable: true,
       });
