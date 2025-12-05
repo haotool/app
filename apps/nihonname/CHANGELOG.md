@@ -21,6 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 發現尺寸問題：當前 408x216 → 建議 1200x630
   - 檔案大小 29KB 已達最優（<300KB 建議值）
 
+### Added
+
+- **功能**: 社群分享優化 ([#VIRAL-001](src/components/ShareButtons.tsx))
+  - 新增 ShareButtons 組件支援 4 個平台（Twitter, Facebook, Line, 複製連結）
+  - 動態生成分享文案：包含姓氏和日本姓氏資訊
+  - 整合 Google Analytics 事件追蹤
+  - 提升病毒式傳播潛力，邀請朋友一起探索歷史
+
+- **內容**: 專案由來與創作緣由 ([#CONTENT-001](src/pages/About.tsx))
+  - 新增「專案由來」章節於 About 頁面
+  - 記錄創作者：阿璋 (@azlife_1224)
+  - 創作時間：2024年12月（2025年11月底時事觸發）
+  - 詳述創作緣由：中國拒認《舊金山和約》引發的社群討論與歷史教育需求
+  - 引用新聞來源：中央社、自由時報、NOWnews
+
 ### Improved
 
 - **SEO**: Sitemap 動態 lastmod 實作 ([#SEO-002](scripts/generate-sitemap.js))

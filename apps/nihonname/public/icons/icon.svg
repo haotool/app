@@ -1,44 +1,71 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#7c2d12"/>
-      <stop offset="100%" style="stop-color:#9a3412"/>
+    <!-- 日本傳統紅色漸層 -->
+    <linearGradient id="vermilion" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#b91c1c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c2d12;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="sakura" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#fecaca"/>
-      <stop offset="100%" style="stop-color:#fda4af"/>
+    <!-- 和紙質感背景 -->
+    <linearGradient id="washi" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#faf5f0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5ebe0;stop-opacity:1" />
     </linearGradient>
+    <!-- 金色漸層 -->
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4a574;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b8956e;stop-opacity:1" />
+    </linearGradient>
+    <!-- 陰影 -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#44403c" flood-opacity="0.15"/>
+    </filter>
   </defs>
   
-  <!-- Background circle -->
-  <circle cx="256" cy="256" r="240" fill="url(#bg)"/>
+  <!-- 背景圓形 - 和紙質感 -->
+  <circle cx="256" cy="256" r="248" fill="url(#washi)" filter="url(#shadow)"/>
   
-  <!-- Inner decorative ring -->
-  <circle cx="256" cy="256" r="200" fill="none" stroke="#fef2f2" stroke-width="4" stroke-dasharray="20 10"/>
+  <!-- 外圈裝飾 - 金色邊框 -->
+  <circle cx="256" cy="256" r="240" fill="none" stroke="url(#gold)" stroke-width="6"/>
+  <circle cx="256" cy="256" r="230" fill="none" stroke="#7c2d12" stroke-width="2" opacity="0.3"/>
   
-  <!-- Sakura petals (stylized cherry blossoms) -->
-  <g transform="translate(256, 256)">
-    <!-- Top petal -->
-    <ellipse cx="0" cy="-80" rx="35" ry="55" fill="url(#sakura)" transform="rotate(0)"/>
-    <!-- Right-top petal -->
-    <ellipse cx="0" cy="-80" rx="35" ry="55" fill="url(#sakura)" transform="rotate(72)"/>
-    <!-- Right-bottom petal -->
-    <ellipse cx="0" cy="-80" rx="35" ry="55" fill="url(#sakura)" transform="rotate(144)"/>
-    <!-- Left-bottom petal -->
-    <ellipse cx="0" cy="-80" rx="35" ry="55" fill="url(#sakura)" transform="rotate(216)"/>
-    <!-- Left-top petal -->
-    <ellipse cx="0" cy="-80" rx="35" ry="55" fill="url(#sakura)" transform="rotate(288)"/>
-    <!-- Center -->
-    <circle cx="0" cy="0" r="25" fill="#fef2f2"/>
+  <!-- 簡化鳥居 - 日本神社象徵 -->
+  <g fill="url(#vermilion)">
+    <!-- 上橫樑（笠木）- 帶弧度 -->
+    <path d="M96 140 Q256 120 416 140 L416 160 Q256 145 96 160 Z"/>
+    <!-- 第二橫樑（島木）-->
+    <rect x="120" y="175" width="272" height="18" rx="3"/>
+    <!-- 左柱 -->
+    <rect x="145" y="168" width="28" height="200" rx="4"/>
+    <!-- 右柱 -->
+    <rect x="339" y="168" width="28" height="200" rx="4"/>
+    <!-- 柱腳裝飾 -->
+    <rect x="140" y="358" width="38" height="10" rx="2"/>
+    <rect x="334" y="358" width="38" height="10" rx="2"/>
   </g>
   
-  <!-- Japanese character 名 (name) -->
-  <text x="256" y="290" font-family="serif" font-size="100" font-weight="bold" fill="#fef2f2" text-anchor="middle">名</text>
+  <!-- 漢字「改」- 改姓的象徵 -->
+  <text 
+    x="256" 
+    y="330" 
+    font-family="'Noto Serif JP', 'Hiragino Mincho ProN', serif" 
+    font-size="100" 
+    font-weight="700"
+    fill="#7c2d12" 
+    text-anchor="middle"
+    dominant-baseline="middle"
+  >改</text>
   
-  <!-- Small decorative elements -->
-  <circle cx="120" cy="120" r="8" fill="url(#sakura)" opacity="0.7"/>
-  <circle cx="392" cy="120" r="6" fill="url(#sakura)" opacity="0.6"/>
-  <circle cx="100" cy="392" r="5" fill="url(#sakura)" opacity="0.5"/>
-  <circle cx="412" cy="380" r="7" fill="url(#sakura)" opacity="0.6"/>
+  <!-- 底部裝飾 - 青海波紋樣 -->
+  <g opacity="0.15" stroke="#7c2d12" fill="none" stroke-width="1.5">
+    <path d="M80 420 Q128 400 176 420 Q224 440 272 420 Q320 400 368 420 Q416 440 464 420"/>
+    <path d="M80 440 Q128 420 176 440 Q224 460 272 440 Q320 420 368 440 Q416 460 464 440"/>
+  </g>
+  
+  <!-- 角落裝飾 - 櫻花瓣 -->
+  <g fill="#fda4af" opacity="0.6">
+    <circle cx="80" cy="80" r="12"/>
+    <circle cx="432" cy="80" r="10"/>
+    <circle cx="80" cy="432" r="10"/>
+    <circle cx="432" cy="432" r="12"/>
+  </g>
 </svg>
-

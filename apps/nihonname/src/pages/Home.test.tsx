@@ -33,7 +33,7 @@ describe('Home Page', () => {
 
     it('should render surname input field', () => {
       renderHome();
-      const surnameInput = screen.getByPlaceholderText('陳');
+      const surnameInput = screen.getByPlaceholderText('陳 / 歐陽');
       expect(surnameInput).toBeInTheDocument();
     });
 
@@ -48,17 +48,18 @@ describe('Home Page', () => {
       expect(screen.getByText('改名実行')).toBeInTheDocument();
     });
 
-    it('should have disabled submit button when surname is empty', () => {
+    it('should have enabled submit button even when surname is empty (random mode)', () => {
       renderHome();
       const button = screen.getByRole('button', { name: /改名実行/i });
-      expect(button).toBeDisabled();
+      // [fix:2025-12-06] 按鈕不再禁用，空輸入時會隨機抽選
+      expect(button).not.toBeDisabled();
     });
   });
 
   describe('User Interaction - Input Step', () => {
-    it('should enable submit button when surname is entered', () => {
+    it('should keep submit button enabled when surname is entered', () => {
       renderHome();
-      const surnameInput = screen.getByPlaceholderText('陳');
+      const surnameInput = screen.getByPlaceholderText('陳 / 歐陽');
       fireEvent.change(surnameInput, { target: { value: '林' } });
 
       const button = screen.getByRole('button', { name: /改名実行/i });
@@ -67,9 +68,18 @@ describe('Home Page', () => {
 
     it('should allow entering surname', () => {
       renderHome();
-      const surnameInput = screen.getByPlaceholderText('陳') as HTMLInputElement;
+      const surnameInput = screen.getByPlaceholderText('陳 / 歐陽') as HTMLInputElement;
       fireEvent.change(surnameInput, { target: { value: '王' } });
       expect(surnameInput.value).toBe('王');
+    });
+
+    it('should allow entering compound surname (複姓)', () => {
+      renderHome();
+      const surnameInput = screen.getByPlaceholderText('陳 / 歐陽') as HTMLInputElement;
+      fireEvent.change(surnameInput, { target: { value: '歐陽' } });
+      expect(surnameInput.value).toBe('歐陽');
+      // 複姓提示應該顯示
+      expect(screen.getByText(/複姓「歐陽」將以「歐」進行改姓查詢/i)).toBeInTheDocument();
     });
 
     it('should allow entering given name', () => {
@@ -83,7 +93,7 @@ describe('Home Page', () => {
   describe('Name Generation', () => {
     it('should show loading state when generating names', () => {
       renderHome();
-      const surnameInput = screen.getByPlaceholderText('陳');
+      const surnameInput = screen.getByPlaceholderText('陳 / 歐陽');
       fireEvent.change(surnameInput, { target: { value: '林' } });
 
       const button = screen.getByRole('button', { name: /改名実行/i });
@@ -92,6 +102,15 @@ describe('Home Page', () => {
       // 載入狀態使用 KamonIcon 動畫（animate-spin 類別）
       const loadingIcon = document.querySelector('.animate-spin');
       expect(loadingIcon).toBeInTheDocument();
+    });
+
+    it('should show toast when generating without surname input', () => {
+      renderHome();
+      const button = screen.getByRole('button', { name: /改名実行/i });
+      fireEvent.click(button);
+
+      // 應該顯示吐司訊息
+      expect(screen.getByText(/未輸入姓氏，將隨機抽選日本姓氏/i)).toBeInTheDocument();
     });
   });
 
