@@ -54,6 +54,10 @@ export function useEasterEggs() {
   const mouseMoveCountRef = useRef(0);
   const mouseMoveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 新增：手機搖晃偵測
+  const shakeThreshold = 15; // 搖晃加速度閾值
+  const lastShakeTimeRef = useRef(0);
+
   // 觸發彩蛋的通用函數
   const triggerEgg = useCallback(
     (egg: EasterEggType, duration = 5000) => {
@@ -180,6 +184,54 @@ export function useEasterEggs() {
     return () => window.removeEventListener('dblclick', handleDoubleClick);
   }, [activeEgg, triggerEgg]);
 
+  // 手機搖晃 → 花火大會 (DeviceMotion API)
+  // [最佳實踐] iOS 13+ 需要用戶授權，需要 HTTPS 環境
+  useEffect(() => {
+    // SSR 安全檢查
+    if (typeof window === 'undefined') return;
+
+    const handleShake = (event: DeviceMotionEvent) => {
+      lastActivityRef.current = Date.now();
+
+      const acceleration = event.accelerationIncludingGravity;
+      if (!acceleration) return;
+
+      const { x, y, z } = acceleration;
+      if (x === null || y === null || z === null) return;
+
+      // 計算總加速度
+      const totalAcceleration = Math.sqrt(x * x + y * y + z * z);
+
+      // 超過閾值且距離上次搖晃超過 1 秒
+      const now = Date.now();
+      if (totalAcceleration > shakeThreshold && now - lastShakeTimeRef.current > 1000) {
+        lastShakeTimeRef.current = now;
+        if (!activeEgg) {
+          triggerEgg('fireworks', 5000);
+        }
+      }
+    };
+
+    // 檢查是否支援 DeviceMotion API
+    if ('DeviceMotionEvent' in window) {
+      // iOS 13+ 需要請求權限
+      const requestPermission = (
+        DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }
+      ).requestPermission;
+      if (typeof requestPermission === 'function') {
+        // iOS 設備 - 需要用戶互動後才能請求權限
+        // 這裡不主動請求，等用戶點擊某個按鈕時再請求
+      } else {
+        // 非 iOS 設備 - 直接添加監聽
+        window.addEventListener('devicemotion', handleShake);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('devicemotion', handleShake);
+    };
+  }, [activeEgg, triggerEgg, shakeThreshold]);
+
   // Logo 點擊 5 次 → 百鬼夜行
   const handleLogoClick = useCallback(() => {
     lastActivityRef.current = Date.now();
@@ -241,11 +293,49 @@ export function useEasterEggs() {
     setLastRapidClickTime(now);
   }, [rapidClicks, lastRapidClickTime, activeEgg, triggerEgg]);
 
+  // iOS 設備請求 DeviceMotion 權限
+  const requestMotionPermission = useCallback(async () => {
+    if (typeof window === 'undefined') return false;
+
+    const requestPermission = (
+      DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }
+    ).requestPermission;
+    if (typeof requestPermission === 'function') {
+      try {
+        const permission = await requestPermission();
+        if (permission === 'granted') {
+          // 權限已授予，添加監聽
+          const handleShake = (event: DeviceMotionEvent) => {
+            lastActivityRef.current = Date.now();
+            const acceleration = event.accelerationIncludingGravity;
+            if (!acceleration) return;
+            const { x, y, z } = acceleration;
+            if (x === null || y === null || z === null) return;
+            const totalAcceleration = Math.sqrt(x * x + y * y + z * z);
+            const now = Date.now();
+            if (totalAcceleration > shakeThreshold && now - lastShakeTimeRef.current > 1000) {
+              lastShakeTimeRef.current = now;
+              if (!activeEgg) {
+                triggerEgg('fireworks', 5000);
+              }
+            }
+          };
+          window.addEventListener('devicemotion', handleShake);
+          return true;
+        }
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  }, [activeEgg, triggerEgg, shakeThreshold]);
+
   return {
     activeEgg,
     handleLogoClick,
     handleDoubleTextClick,
     handleToriiClick,
     handleRapidClick,
+    requestMotionPermission,
   };
 }
