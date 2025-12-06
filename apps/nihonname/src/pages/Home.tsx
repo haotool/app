@@ -678,7 +678,6 @@ export default function Home() {
   // 若已進入結果頁但尚未達 60 秒，倒數結束後再顯示提示
   useEffect(() => {
     if (canShowMotionPrompt && motionPromptPending && !hasMotionPermission) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 需在計時完成後觸發一次提示
       setShowMotionPrompt(true);
       setMotionPromptPending(false);
     }
@@ -832,31 +831,37 @@ export default function Home() {
   // 截圖模式引導文案 - 10 種隨機有趣的方式提示用戶點擊
   // 截圖模式引導文案 - 使用 useState lazy initializer 避免 SSG Hydration mismatch
   // [context7:react.dev/reference/react/useState:2025-12-06] useState initializer 只在初始化時執行一次
-  const [randomGuideMsg] = useState(() => {
-    const GUIDE_MESSAGES = [
-      '📸 點我截圖更好看！',
-      '✨ 按下去畫面會更純淨喔～',
-      '🎯 截圖模式讓你的名字更閃亮！',
-      '👆 點這裡！UI 會暫時隱藏',
-      '📷 想分享？先點我讓畫面更乾淨',
-      '🌸 截圖模式讓你的名字像藝術品',
-      '💫 按我！10 秒後自動恢復',
-      '🎨 截圖模式 = 純淨背景 + 美美名字',
-      '👉 點擊後截圖，效果超讚！',
-      '✨ 讓你的日本名字更上相！',
-    ];
-    const index = Math.floor(Math.random() * GUIDE_MESSAGES.length);
-    return GUIDE_MESSAGES[index] ?? GUIDE_MESSAGES[0] ?? '';
-  });
-  const [randomHintMsg] = useState(() => {
-    const HINT_MESSAGES = [
-      '點擊任意處恢復介面 👆',
-      '截圖完成？點一下恢復 ✨',
-      '10 秒後自動恢復，或點擊任意處',
-    ];
-    const index = Math.floor(Math.random() * HINT_MESSAGES.length);
-    return HINT_MESSAGES[index] ?? HINT_MESSAGES[0] ?? '';
-  });
+  // [fix:2025-12-07] 修復 Hydration #418：將隨機文字改為 useEffect 客戶端初始化
+  // 避免 SSG 與 CSR 初始值不匹配導致 hydration error
+  // [context7:/reactjs/react.dev:hydration-mismatch:2025-12-07]
+  const GUIDE_MESSAGES = [
+    '📸 點我截圖更好看！',
+    '✨ 按下去畫面會更純淨喔～',
+    '🎯 截圖模式讓你的名字更閃亮！',
+    '👆 點這裡！UI 會暫時隱藏',
+    '📷 想分享？先點我讓畫面更乾淨',
+    '🌸 截圖模式讓你的名字像藝術品',
+    '💫 按我！10 秒後自動恢復',
+    '🎨 截圖模式 = 純淨背景 + 美美名字',
+    '👉 點擊後截圖，效果超讚！',
+    '✨ 讓你的日本名字更上相！',
+  ];
+  const HINT_MESSAGES = [
+    '點擊任意處恢復介面 👆',
+    '截圖完成？點一下恢復 ✨',
+    '10 秒後自動恢復，或點擊任意處',
+  ];
+
+  // 使用固定初始值，客戶端 hydration 後再隨機
+  const [randomGuideMsg, setRandomGuideMsg] = useState(GUIDE_MESSAGES[0] ?? '');
+  const [randomHintMsg, setRandomHintMsg] = useState(HINT_MESSAGES[0] ?? '');
+
+  // 客戶端 hydration 完成後再設定隨機值
+  useEffect(() => {
+    setRandomGuideMsg(GUIDE_MESSAGES[Math.floor(Math.random() * GUIDE_MESSAGES.length)] ?? '');
+    setRandomHintMsg(HINT_MESSAGES[Math.floor(Math.random() * HINT_MESSAGES.length)] ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 僅在 mount 時執行一次
+  }, []);
 
   return (
     <>
