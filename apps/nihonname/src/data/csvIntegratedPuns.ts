@@ -10,6 +10,7 @@
  * 總筆數：709
  */
 import type { PunName } from '../types';
+import { pinyin } from 'pinyin-pro';
 
 /**
  * 經典諧音 (644 筆)
@@ -1925,6 +1926,39 @@ CSV_CANTONESE_PUNS.splice(
   ...withoutBannedCsvPuns(CSV_CANTONESE_PUNS),
 );
 CSV_COMMON_PUNS.splice(0, CSV_COMMON_PUNS.length, ...withoutBannedCsvPuns(CSV_COMMON_PUNS));
+
+const CJK_REGEX = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\uFF00-\uFFEF]/u;
+
+const titleCase = (value: string): string =>
+  value
+    .split(/\s+/g)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+const fallbackRomajiFromKanji = (kanji: string): string => {
+  const syllables = pinyin(kanji, { toneType: 'none', type: 'array' }).filter(Boolean);
+  const joined = syllables.join(' ').trim();
+  return joined ? titleCase(joined) : kanji;
+};
+
+const normalizeRomaji = (pun: PunName): PunName => {
+  const base = pun.romaji?.trim() ?? '';
+  const cleaned = base.replace(CJK_REGEX, '').trim();
+
+  if (cleaned && !CJK_REGEX.test(cleaned)) {
+    return { ...pun, romaji: cleaned };
+  }
+
+  return { ...pun, romaji: fallbackRomajiFromKanji(pun.kanji) };
+};
+
+const normalizePuns = (list: PunName[]): PunName[] => list.map((pun) => normalizeRomaji(pun));
+
+CSV_CLASSIC_PUNS.splice(0, CSV_CLASSIC_PUNS.length, ...normalizePuns(CSV_CLASSIC_PUNS));
+CSV_TAIWANESE_PUNS.splice(0, CSV_TAIWANESE_PUNS.length, ...normalizePuns(CSV_TAIWANESE_PUNS));
+CSV_CANTONESE_PUNS.splice(0, CSV_CANTONESE_PUNS.length, ...normalizePuns(CSV_CANTONESE_PUNS));
+CSV_COMMON_PUNS.splice(0, CSV_COMMON_PUNS.length, ...normalizePuns(CSV_COMMON_PUNS));
 
 /**
  * 所有 CSV 整合諧音梗

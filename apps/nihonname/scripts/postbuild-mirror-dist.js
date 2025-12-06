@@ -28,6 +28,17 @@ if (existsSync(distPath)) {
     }
   }
 
+  // [fix:2025-12-06] 複製 history.html 到 history/index.html
+  // 修復 Cloudflare Pages 目錄自動尾斜線導致的 403 問題
+  const historyDir = resolve(distPath, 'history');
+  const historySrc = resolve(distPath, 'history.html');
+  const historyIndex = resolve(historyDir, 'index.html');
+
+  if (existsSync(historySrc) && existsSync(historyDir)) {
+    cpSync(historySrc, historyIndex);
+    console.log('✅ Copied: history.html → history/index.html');
+  }
+
   console.log('✅ Post-build mirror complete');
 } else {
   console.log('⚠️ No dist directory found');
