@@ -237,10 +237,13 @@ const Fireworks = () => {
       }
     })();
 
+    // 複製 ref 到局部變數避免 cleanup 執行時 ref 已改變
+    // [context7:/reactjs/react.dev:useEffect-cleanup:2025-12-07]
+    const cleanup = cleanupRef.current;
     return () => {
-      cleanupRef.current.stopParticles?.();
-      cleanupRef.current.stopSound?.();
-      cleanupRef.current.stopConfetti?.();
+      cleanup.stopParticles?.();
+      cleanup.stopSound?.();
+      cleanup.stopConfetti?.();
     };
   }, []);
 
