@@ -1724,5 +1724,6 @@ export function getSupportedSurnames(): string[] {
 export const SURNAME_STATS = {
   totalSurnames: Object.keys(SURNAME_DATA_FULL).length,
   totalMappings: Object.values(SURNAME_DATA_FULL).reduce((sum, v) => sum + v.names.length, 0),
-  lastUpdated: '2025-12-04',
+  totalRecords: Object.values(SURNAME_DATA_FULL).reduce((sum, v) => sum + v.count, 0),
+  lastUpdated: '2025-12-06',
 };
