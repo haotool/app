@@ -4,7 +4,9 @@
 # SPA fallback - 所有未匹配的路徑都回到 index.html
 # 但對於靜態生成的頁面，Cloudflare Pages 會優先使用 .html 檔案
 
-# 修正 /history/ 路徑 (目錄存在但沒有 index.html)
+# 修正 /history 路徑 (目錄存在但沒有 index.html)
+# [fix:2025-12-06] 同時處理有尾斜線和無尾斜線的情況
+/history /history.html 200
 /history/ /history.html 200
 
 # 其他子路徑保持原樣
