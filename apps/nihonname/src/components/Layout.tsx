@@ -9,7 +9,14 @@ import { HelmetProvider } from '../utils/helmet';
 export function Layout() {
   const location = useLocation();
   // 首頁（生成器）不需要捲軸，其他頁面需要
-  const isHomePage = location.pathname === '/' || location.pathname === '';
+  // [fix:2025-12-06] 修復 hydration 問題：SSG 路徑與客戶端路徑可能不同
+  // SSG: '/' 或 ''
+  // Client: '/nihonname/' 或 '/nihonname'
+  const isHomePage =
+    location.pathname === '/' ||
+    location.pathname === '' ||
+    location.pathname === '/nihonname' ||
+    location.pathname === '/nihonname/';
 
   return (
     <HelmetProvider>
