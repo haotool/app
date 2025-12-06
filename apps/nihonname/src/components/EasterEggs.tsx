@@ -112,17 +112,22 @@ const SakuraStorm = () => {
 
 /**
  * 花火大會 - 使用 tsParticles Fireworks 全屏煙火 + 簡易音效
- * 持續 10 秒，使用主題紅/琥珀/玫瑰色彩
+ * 持續 12 秒，使用主題紅/琥珀/玫瑰色彩
+ *
+ * [fix:2025-12-07] 根據 Context7 tsParticles 官方文檔修復
+ * - 移除自定義 canvas ref，讓 tsparticles 自動管理
+ * - 使用官方推薦的 async fireworks() 模式
+ * - 簡化 confetti API 調用
+ * [context7:/tsparticles/tsparticles:fireworks:2025-12-07]
  */
 const Fireworks = () => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const confettiCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const cleanupRef = useRef<{
+    stopParticles?: () => void;
+    stopSound?: () => void;
+    stopConfetti?: () => void;
+  }>({});
 
   useEffect(() => {
-    let cleanupParticles: (() => void) | undefined;
-    let stopSound: (() => void) | undefined;
-    let stopConfetti: (() => void) | undefined;
-
     const primaryPalette: string[] = [
       '#7f1d1d',
       '#dc2626',
@@ -133,141 +138,99 @@ const Fireworks = () => {
     ];
     const neonPalette: string[] = ['#c026d3', '#22d3ee', '#e11d48', '#f59e0b', '#84cc16'];
 
-    void (async () => {
-      const { fireworks } = await import('@tsparticles/fireworks');
-      const options = {
-        colors: primaryPalette,
-        brightness: { min: 50, max: 80 },
-        saturation: { min: 80, max: 100 },
-      };
-
-      if (canvasRef.current) {
-        // 在自訂容器啟動煙火
-        const instance = await fireworks.create(canvasRef.current, options);
-        if (instance) {
-          cleanupParticles = () => {
-            instance.stop();
-          };
-        }
-      } else {
-        const instance = await fireworks(options);
-        if (instance) {
-          cleanupParticles = () => {
-            instance.stop();
-          };
-        }
-      }
-    })().catch(() => {
-      // 忽略煙火載入失敗的錯誤，不影響主功能
-    });
-
-    // 簡易音效：每 900ms 觸發一次短促爆裂聲，總長度控制在 10 秒
-    const audioCtx =
-      typeof window !== 'undefined'
-        ? new (
-            window.AudioContext ||
-            (window as unknown as { webkitAudioContext: AudioContext }).webkitAudioContext
-          )()
-        : null;
-    if (audioCtx) {
-      const playBang = () => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(220 + Math.random() * 420, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.25);
-        osc.connect(gain).connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.3);
-      };
-      playBang();
-      const interval = setInterval(playBang, 900);
-      const timer = setTimeout(() => {
-        clearInterval(interval);
-        audioCtx.close().catch(() => undefined);
-      }, 10000);
-      stopSound = () => {
-        clearInterval(interval);
-        clearTimeout(timer);
-        audioCtx.close().catch(() => undefined);
-      };
-    }
-
+    // 1. 啟動 tsParticles Fireworks (官方推薦 async 模式)
     void (async () => {
       try {
-        interface ConfettiBurstOptions {
-          angle: number;
-          count: number;
-          spread: number;
-          startVelocity: number;
-          gravity: number;
-          drift: number;
-          ticks: number;
-          colors: string[];
-          shapes: string[];
-          scalar: number;
-          position: { x: number; y: number };
-          zIndex: number;
+        const { fireworks } = await import('@tsparticles/fireworks');
+        // [context7:/tsparticles/tsparticles:fireworks] 使用官方推薦的簡化調用
+        const instance = await fireworks({
+          colors: primaryPalette,
+        });
+        if (instance) {
+          cleanupRef.current.stopParticles = () => {
+            instance.stop();
+          };
         }
+      } catch {
+        // 忽略煙火載入失敗的錯誤，不影響主功能
+      }
+    })();
 
-        const confettiModule = await import('@tsparticles/confetti');
-        const confetti = confettiModule.confetti as unknown as {
-          (options: ConfettiBurstOptions): Promise<unknown>;
-          create?: (
-            canvas: HTMLCanvasElement,
-            options?: Record<string, unknown>,
-          ) => Promise<{ (options: ConfettiBurstOptions): Promise<unknown>; reset?: () => void }>;
-        };
+    // 2. 簡易音效：每 900ms 觸發一次短促爆裂聲
+    if (typeof window !== 'undefined') {
+      try {
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (AudioContextClass) {
+          const audioCtx = new AudioContextClass();
+          const playBang = () => {
+            try {
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(220 + Math.random() * 420, audioCtx.currentTime);
+              gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.25);
+              osc.connect(gain).connect(audioCtx.destination);
+              osc.start();
+              osc.stop(audioCtx.currentTime + 0.3);
+            } catch {
+              // 忽略音效播放錯誤
+            }
+          };
+          playBang();
+          const interval = setInterval(playBang, 900);
+          const timer = setTimeout(() => {
+            clearInterval(interval);
+            audioCtx.close().catch(() => undefined);
+          }, 12000);
+          cleanupRef.current.stopSound = () => {
+            clearInterval(interval);
+            clearTimeout(timer);
+            audioCtx.close().catch(() => undefined);
+          };
+        }
+      } catch {
+        // 忽略 AudioContext 初始化錯誤
+      }
+    }
 
-        const confettiInstance =
-          confettiCanvasRef.current && confetti.create
-            ? await confetti.create(confettiCanvasRef.current, {
-                useWorker: true,
-                disableForReducedMotion: true,
-              })
-            : null;
-
-        const runConfetti = async (opts: ConfettiBurstOptions) => {
-          if (confettiInstance) {
-            await confettiInstance(opts);
-            return;
-          }
-          await confetti(opts);
-        };
+    // 3. Confetti 疊加效果
+    void (async () => {
+      try {
+        const { confetti } = await import('@tsparticles/confetti');
+        let isRunning = true;
 
         const burst = async (palette: string[]) => {
-          const shapes = ['circle', 'square', 'star'];
-          const count = 120 + Math.floor(Math.random() * 60);
-          const spread = 55 + Math.random() * 25;
+          if (!isRunning) return;
           const originX = Math.random();
-          const originY = 0.55 + Math.random() * 0.25;
-          const angle = 45 + Math.random() * 90;
-          const opts = {
-            angle,
-            count,
-            spread,
+          const originY = 0.5 + Math.random() * 0.3;
+          // [context7:/tsparticles/tsparticles:confetti] 使用官方推薦的參數格式
+          await confetti({
+            angle: 45 + Math.random() * 90,
+            count: 80 + Math.floor(Math.random() * 40),
+            spread: 55 + Math.random() * 25,
             startVelocity: 35 + Math.random() * 20,
             gravity: 0.9,
             drift: Math.random() * 0.5,
-            ticks: 220 + Math.random() * 80,
+            ticks: 200 + Math.random() * 80,
             colors: palette,
-            shapes,
-            scalar: 0.9 + Math.random() * 0.4,
+            shapes: ['circle', 'square', 'star'],
+            scalar: 0.9 + Math.random() * 0.3,
             position: { x: originX * 100, y: originY * 100 },
             zIndex: 90,
-          };
-          await runConfetti(opts);
+          });
         };
 
         const timer = setInterval(() => {
           void burst(primaryPalette);
           void burst(neonPalette);
-        }, 650);
+        }, 700);
 
-        stopConfetti = () => {
+        cleanupRef.current.stopConfetti = () => {
+          isRunning = false;
           clearInterval(timer);
-          if (confettiInstance) confettiInstance.reset?.();
         };
       } catch {
         // confetti 載入失敗忽略
@@ -275,17 +238,16 @@ const Fireworks = () => {
     })();
 
     return () => {
-      if (cleanupParticles) cleanupParticles();
-      if (stopSound) stopSound();
-      if (stopConfetti) stopConfetti();
+      cleanupRef.current.stopParticles?.();
+      cleanupRef.current.stopSound?.();
+      cleanupRef.current.stopConfetti?.();
     };
   }, []);
 
   return (
     <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-stone-900/60 to-black/80" />
-      <canvas ref={canvasRef} className="w-full h-full absolute inset-0" />
-      <canvas ref={confettiCanvasRef} className="w-full h-full absolute inset-0" />
+      {/* tsParticles 會自動創建並管理 canvas */}
     </div>
   );
 };
