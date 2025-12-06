@@ -1,5 +1,5 @@
 import { type useEasterEggs } from '../hooks/useEasterEggs';
-import { useMemo, memo } from 'react';
+import { useMemo, memo, useEffect, useRef } from 'react';
 
 /**
  * EasterEggs - 彩蛋效果渲染元件
@@ -111,110 +111,90 @@ const SakuraStorm = () => {
 };
 
 /**
- * 花火大會 - 連續搖晃 10 下觸發
- * 高階煙火：多層漸層核心 + 12 向量火花 + 尾焰
- * 使用專案主色 red-900/red-600、輔色 amber-400/rose-300
+ * 花火大會 - 使用 tsParticles Fireworks 全屏煙火 + 簡易音效
+ * 持續 10 秒，使用主題紅/琥珀/玫瑰色彩
  */
 const Fireworks = () => {
-  const BURSTS = useMemo(
-    () => [
-      { top: '28%', left: '32%', delay: 0 },
-      { top: '42%', left: '68%', delay: 0.12 },
-      { top: '60%', left: '50%', delay: 0.24 },
-      { top: '72%', left: '30%', delay: 0.36 },
-      { top: '20%', left: '70%', delay: 0.48 },
-    ],
-    [],
-  );
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const SPARK_COLORS = ['#7f1d1d', '#dc2626', '#fb923c', '#fbbf24', '#fecdd3'];
+  useEffect(() => {
+    let cleanupParticles: (() => void) | undefined;
+    let stopSound: (() => void) | undefined;
+
+    (async () => {
+      const { fireworks } = await import('@tsparticles/fireworks');
+      const colors = ['#7f1d1d', '#dc2626', '#fb923c', '#fbbf24', '#fecdd3', '#ffffff'];
+      const options = {
+        colors,
+        brightness: { min: 50, max: 80 },
+        saturation: { min: 80, max: 100 },
+      };
+
+      if (canvasRef.current) {
+        // 在自訂容器啟動煙火
+        const instance = await fireworks.create(canvasRef.current, options);
+        if (instance) {
+          cleanupParticles = () => {
+            instance.stop();
+          };
+        }
+      } else {
+        const instance = await fireworks(options);
+        if (instance) {
+          cleanupParticles = () => {
+            instance.stop();
+          };
+        }
+      }
+    })().catch(() => {
+      // 忽略煙火載入失敗的錯誤，不影響主功能
+    });
+
+    // 簡易音效：每 900ms 觸發一次短促爆裂聲，總長度控制在 10 秒
+    const audioCtx =
+      typeof window !== 'undefined'
+        ? new (
+            window.AudioContext ||
+            (window as unknown as { webkitAudioContext: AudioContext }).webkitAudioContext
+          )()
+        : null;
+    if (audioCtx) {
+      const playBang = () => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(220 + Math.random() * 420, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.25);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      };
+      playBang();
+      const interval = setInterval(playBang, 900);
+      const timer = setTimeout(() => {
+        clearInterval(interval);
+        audioCtx.close().catch(() => undefined);
+      }, 10000);
+      stopSound = () => {
+        clearInterval(interval);
+        clearTimeout(timer);
+        audioCtx.close().catch(() => undefined);
+      };
+    }
+
+    return () => {
+      if (cleanupParticles) cleanupParticles();
+      if (stopSound) stopSound();
+    };
+  }, []);
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {BURSTS.map((burst, idx) => (
-        <div
-          key={`${burst.left}-${burst.top}`}
-          className="absolute"
-          style={{
-            top: burst.top,
-            left: burst.left,
-            animation: `burst-rise 0.6s ease-out ${burst.delay}s forwards, burst-fade 1s ease-out ${
-              burst.delay + 0.6
-            }s forwards`,
-          }}
-        >
-          <div
-            className="relative w-3 h-3 rounded-full"
-            style={{
-              background:
-                'radial-gradient(circle at 30% 30%, #fff 0%, #fef2f2 25%, #fecdd3 50%, transparent 70%)',
-              boxShadow: '0 0 18px 8px rgba(252, 165, 165, 0.25)',
-              animation: `core-pulse 1.4s ease-out ${burst.delay + 0.2}s forwards`,
-            }}
-          >
-            {Array.from({ length: 12 }, (_, i) => (
-              <span
-                key={i}
-                className="absolute block rounded-full"
-                style={{
-                  width: '6px',
-                  height: '2px',
-                  top: '50%',
-                  left: '50%',
-                  transformOrigin: '0% 50%',
-                  transform: `rotate(${i * 30}deg) translateX(12px)`,
-                  background: SPARK_COLORS[i % SPARK_COLORS.length],
-                  boxShadow: `0 0 8px ${SPARK_COLORS[i % SPARK_COLORS.length]}66`,
-                  animation: `spark ${1.4 + idx * 0.05}s cubic-bezier(0.2, 0.8, 0.4, 1) ${
-                    burst.delay + 0.2 + i * 0.02
-                  }s forwards`,
-                  filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.4))',
-                }}
-              />
-            ))}
-            {/* 尾焰 */}
-            <span
-              className="absolute block rounded-full blur-sm"
-              style={{
-                width: '16px',
-                height: '16px',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                background:
-                  'radial-gradient(circle, rgba(252,165,165,0.35) 0%, rgba(220,38,38,0.15) 50%, transparent 75%)',
-                animation: `trail 1.2s ease-out ${burst.delay + 0.15}s forwards`,
-              }}
-            />
-          </div>
-        </div>
-      ))}
-
-      <style>{`
-        @keyframes burst-rise {
-          0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
-          80% { opacity: 1; }
-          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-        @keyframes burst-fade {
-          0% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-        @keyframes core-pulse {
-          0% { transform: scale(0.8); opacity: 1; }
-          60% { transform: scale(1.6); opacity: 0.9; }
-          100% { transform: scale(2); opacity: 0; }
-        }
-        @keyframes spark {
-          0% { opacity: 0; transform: translate(-50%, -50%) scaleX(0.4); }
-          20% { opacity: 1; }
-          100% { opacity: 0; transform: translate(-50%, -50%) scaleX(1.6); }
-        }
-        @keyframes trail {
-          0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.9); }
-          100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
-        }
-      `}</style>
+    <div
+      className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/50 via-stone-900/40 to-black/70"
+      aria-hidden="true"
+    >
+      <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );
 };
@@ -224,21 +204,21 @@ const Fireworks = () => {
  * 使用專案輔色 stone-800
  */
 const ZenInk = () => (
-  <div className="absolute inset-0 bg-stone-100/95 flex items-center justify-center animate-in fade-in duration-2000 pointer-events-auto">
+  <div className="absolute inset-0 bg-gradient-to-br from-red-950/95 via-red-900/90 to-stone-900/80 flex items-center justify-center animate-in fade-in duration-2000 pointer-events-auto">
     <div className="relative">
-      <svg width="300" height="300" viewBox="0 0 300 300" className="opacity-80">
+      <svg width="300" height="300" viewBox="0 0 300 300" className="opacity-90 drop-shadow-2xl">
         <defs>
           <filter id="ink-blur">
             <feGaussianBlur stdDeviation="2" />
           </filter>
         </defs>
-        {/* 圓相 (Enso) - 使用 stone-800 */}
+        {/* 圓相 (Enso) - 使用主題紅 */}
         <circle
           cx="150"
           cy="150"
           r="100"
           fill="none"
-          stroke="#292524"
+          stroke="#fecdd3"
           strokeWidth="15"
           strokeLinecap="round"
           strokeDasharray="550"
@@ -247,10 +227,10 @@ const ZenInk = () => (
           className="animate-enso"
         />
       </svg>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl font-jp text-stone-800 opacity-60">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl font-jp text-red-100 opacity-80">
         禪
       </div>
-      <p className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 text-xs text-stone-400 whitespace-nowrap">
+      <p className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 text-xs text-red-100/80 whitespace-nowrap">
         點擊任意處繼續
       </p>
     </div>
