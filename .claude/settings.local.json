@@ -1,6 +1,15 @@
 {
   "permissions": {
-    "allow": ["Bash(chmod:*)", "Bash(find:*)"],
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "WebSearch",
+      "Bash(pnpm build:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(vite-react-ssg build --config vite.config.ts)"
+    ],
     "deny": [],
     "ask": []
   }
