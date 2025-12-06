@@ -1,10 +1,15 @@
 /**
  * SEO Helmet Component for NihonName
- * [fix:2025-12-06] 使用 vite-react-ssg 原生 Head 組件
+ * [fix:2025-12-06] 移除 JSON-LD script tags，改用 onPageRendered hook 注入
  * [context7:/daydreamer-riri/vite-react-ssg:2025-12-06]
  *
- * Centralized SEO metadata management with JSON-LD structured data
- * 使用 vite-react-ssg 的 Head 組件確保 JSON-LD 在 SSG build 時正確注入
+ * 根據 vite-react-ssg 官方最佳實踐：
+ * - <Head> 組件中的 <script> 標籤不會在 SSG build 時渲染
+ * - JSON-LD 必須使用 vite.config.ts 的 onPageRendered hook 注入
+ * - 此組件僅負責 meta tags（title, description, OG tags 等）
+ *
+ * @see src/seo/jsonld.ts - JSON-LD 結構化數據配置
+ * @see vite.config.ts - onPageRendered hook 實作
  */
 import { Helmet } from '../utils/helmet';
 
@@ -13,38 +18,27 @@ interface AlternateLink {
   href: string;
 }
 
-interface FAQEntry {
-  question: string;
-  answer: string;
-}
-
-interface BreadcrumbItem {
-  name: string;
-  url: string;
-}
-
 interface SEOProps {
   title?: string;
   description?: string;
   canonical?: string;
   ogImage?: string;
   ogType?: string;
-  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   pathname?: string;
   locale?: string;
   alternates?: AlternateLink[];
   keywords?: string[];
   updatedTime?: string;
-  faq?: FAQEntry[];
   robots?: string;
-  breadcrumbs?: BreadcrumbItem[];
+  // 兼容舊版頁面傳入的附加資訊（目前僅由 vite.config.ts 注入）
+  faq?: { question: string; answer: string }[];
+  breadcrumbs?: { name: string; url: string }[];
+  jsonLd?: Record<string, unknown>;
 }
 
 // Site configuration
 const SITE_BASE_URL = 'https://app.haotool.org/nihonname/';
 
-// Default breadcrumbs for home page
-const DEFAULT_BREADCRUMBS: BreadcrumbItem[] = [{ name: '首頁', url: SITE_BASE_URL }];
 const DEFAULT_TITLE = 'NihonName 皇民化改姓生成器 | 1940年代台灣日式姓名產生器';
 const DEFAULT_DESCRIPTION =
   '探索1940年代台灣皇民化運動的歷史改姓對照。輸入你的姓氏，發現日治時期的日式姓名與趣味諧音名。基於歷史文獻《内地式改姓名の仕方》。';
@@ -66,12 +60,6 @@ const DEFAULT_KEYWORDS = [
   '諧音日本名',
   '日治時期戶籍',
   '台灣姓氏',
-];
-
-const SOCIAL_LINKS = [
-  'https://github.com/haotool/app',
-  'https://www.threads.com/@azlife_1224/post/DR2NCeEj6Fo?xmt=AQF0K8pg5PLpzoBz7nnYMEI2CdxVzs2pUyIJHabwZWeYCw',
-  'https://twitter.com/azlife_1224',
 ];
 
 // Build time injected by Vite
@@ -99,111 +87,37 @@ const buildCanonical = (path?: string): string => {
   return `${SITE_BASE_URL}${normalizedPath.replace(/^\//, '')}`;
 };
 
-/**
- * Default JSON-LD structured data (WebApplication + Organization + Website)
- */
-const DEFAULT_JSON_LD = [
-  {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: 'NihonName 皇民化改姓生成器',
-    alternateName: '日式姓名生成器',
-    description: DEFAULT_DESCRIPTION,
-    url: SITE_BASE_URL,
-    applicationCategory: 'EntertainmentApplication',
-    operatingSystem: 'Any',
-    browserRequirements: 'Requires JavaScript',
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'USD',
-    },
-    featureList: [
-      '皇民化改姓查詢',
-      '歷史姓氏對照',
-      '趣味諧音日本名',
-      '族譜來源查證',
-      'PWA 離線支援',
-      '300+ 姓氏資料庫',
-    ],
-  },
-  {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'haotool',
-    url: 'https://haotool.org',
-    logo: `${SITE_BASE_URL}icons/icon-512x512.png`,
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'Customer Support',
-      email: 'haotool.org@gmail.com',
-    },
-    sameAs: SOCIAL_LINKS,
-  },
-  {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'NihonName',
-    url: SITE_BASE_URL,
-    inLanguage: DEFAULT_LOCALE,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${SITE_BASE_URL}?surname={search_term_string}`,
-      'query-input': 'required name=search_term_string',
-    },
-  },
-];
-
 const DEFAULT_ALTERNATES: AlternateLink[] = [
   { hrefLang: 'x-default', href: SITE_BASE_URL },
   { hrefLang: DEFAULT_LOCALE, href: SITE_BASE_URL },
 ];
 
-const buildFaqSchema = (faq: FAQEntry[], url: string) => ({
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: faq.map((item) => ({
-    '@type': 'Question',
-    name: item.question,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: item.answer,
-    },
-  })),
-  url,
-});
-
 /**
- * Build BreadcrumbList JSON-LD schema
- * @see https://schema.org/BreadcrumbList
- * @see https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
+ * SEOHelmet - 僅處理 meta tags，JSON-LD 由 onPageRendered hook 注入
+ *
+ * [fix:2025-12-06] 修復 React Hydration Error #418
+ * 根因：vite-react-ssg 的 <Head> 組件中的 <script> 標籤不會在 SSG build 時渲染，
+ * 導致 server/client HTML 不匹配，觸發 hydration 錯誤。
+ *
+ * 解決方案：
+ * - 移除此組件中的 JSON-LD script tags
+ * - 改用 vite.config.ts 的 onPageRendered hook 在 build 時注入
+ *
+ * @see https://react.dev/errors/418
+ * @see https://context7.com/daydreamer-riri/vite-react-ssg/llms.txt
  */
-const buildBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[]) => ({
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: breadcrumbs.map((item, index) => ({
-    '@type': 'ListItem',
-    position: index + 1,
-    name: item.name,
-    item: item.url.startsWith('http') ? item.url : `${SITE_BASE_URL}${item.url.replace(/^\//, '')}`,
-  })),
-});
-
 export function SEOHelmet({
   title,
   description = DEFAULT_DESCRIPTION,
   canonical,
   ogImage = DEFAULT_OG_IMAGE,
   ogType = 'website',
-  jsonLd,
   pathname,
   locale = DEFAULT_LOCALE,
   alternates,
   keywords,
   updatedTime,
-  faq,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
-  breadcrumbs,
 }: SEOProps) {
   const fullTitle = title ? `${title} | NihonName` : DEFAULT_TITLE;
 
@@ -219,18 +133,6 @@ export function SEOHelmet({
   }));
   const updatedTimestamp = updatedTime ?? BUILD_TIME;
   const ogLocale = locale.replace('-', '_');
-
-  // Merge default JSON-LD with custom blocks
-  const baseJsonLd = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
-  const structuredData = [...DEFAULT_JSON_LD, ...baseJsonLd];
-
-  if (faq?.length) {
-    structuredData.push(buildFaqSchema(faq, canonicalUrl));
-  }
-
-  // Add BreadcrumbList schema
-  const breadcrumbsToRender = breadcrumbs?.length ? breadcrumbs : DEFAULT_BREADCRUMBS;
-  structuredData.push(buildBreadcrumbSchema(breadcrumbsToRender));
 
   return (
     <Helmet>
@@ -272,14 +174,11 @@ export function SEOHelmet({
       <meta name="twitter:image" content={ogImageUrl} />
       <meta name="twitter:image:alt" content="NihonName 皇民化改姓生成器" />
 
-      {/* JSON-LD Structured Data */}
-      {structuredData.map((item, index) => (
-        <script
-          key={index}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
-        />
-      ))}
+      {/* 
+        JSON-LD Structured Data 已移至 vite.config.ts onPageRendered hook
+        @see src/seo/jsonld.ts
+        @see vite.config.ts ssgOptions.onPageRendered
+      */}
     </Helmet>
   );
 }

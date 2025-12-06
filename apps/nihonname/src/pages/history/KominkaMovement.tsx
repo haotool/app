@@ -68,43 +68,6 @@ const faqData = [
   },
 ];
 
-// Article Schema JSON-LD
-const articleSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: '皇民化運動歷史 - 1937-1945年台灣改姓名運動完整解析',
-  description:
-    '深入了解1937-1945年日本殖民時期台灣皇民化運動的歷史背景、改姓原則、社會影響，以及如何查詢祖先的日本姓名。',
-  author: {
-    '@type': 'Organization',
-    name: 'haotool',
-    url: 'https://haotool.org',
-  },
-  publisher: {
-    '@type': 'Organization',
-    name: 'haotool',
-    logo: {
-      '@type': 'ImageObject',
-      url: 'https://app.haotool.org/nihonname/icons/icon-512x512.png',
-    },
-  },
-  datePublished: '2025-12-04',
-  dateModified: '2025-12-04',
-  mainEntityOfPage: {
-    '@type': 'WebPage',
-    '@id': 'https://app.haotool.org/nihonname/history/kominka',
-  },
-  image: 'https://app.haotool.org/nihonname/og-image.png',
-  keywords: [
-    '皇民化運動',
-    '皇民化改姓運動',
-    '日治時期改名',
-    '改日本姓',
-    '台灣人改姓名單',
-    '日治時代改姓名單',
-  ],
-};
-
 export default function KominkaMovement() {
   return (
     <>
@@ -125,14 +88,8 @@ export default function KominkaMovement() {
           '改姓運動',
           '內地式改姓名',
         ]}
-        faq={faqData}
-        jsonLd={articleSchema}
-        breadcrumbs={[
-          { name: '首頁', url: '/' },
-          { name: '歷史專區', url: '/history' },
-          { name: '皇民化運動', url: '/history/kominka' },
-        ]}
       />
+      {/* [fix:2025-12-06] JSON-LD (faq, articleSchema, breadcrumbs) 已移至 vite.config.ts onPageRendered hook */}
 
       <div className="min-h-[100dvh] h-auto bg-stone-100 py-8 md:py-12 px-4 overflow-y-auto overflow-x-hidden">
         <div className="max-w-3xl mx-auto pb-8">

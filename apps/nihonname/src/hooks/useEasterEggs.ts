@@ -129,7 +129,7 @@ export function useEasterEggs() {
 
         if (shakeCountRef.current >= 10 && !activeEgg) {
           shakeCountRef.current = 0;
-          triggerEgg('fireworks', 10000);
+          triggerEgg('fireworks', 12000);
         }
       }
     };
@@ -282,7 +282,7 @@ export function useEasterEggs() {
 
               if (shakeCountRef.current >= 10 && !activeEgg) {
                 shakeCountRef.current = 0;
-                triggerEgg('fireworks', 10000);
+                triggerEgg('fireworks', 12000);
               }
             }
           };

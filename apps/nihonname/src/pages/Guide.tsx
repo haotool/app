@@ -53,22 +53,6 @@ const Guide = () => {
     },
   ];
 
-  // HowTo Schema JSON-LD
-  const howToSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'HowTo',
-    name: '如何使用日本名字產生器',
-    description:
-      '完整 8 步驟教學，快速學會使用日本名字產生器，根據你的中文姓氏產生有趣的諧音梗日本名字。',
-    totalTime: 'PT2M',
-    step: howToSteps.map((step) => ({
-      '@type': 'HowToStep',
-      position: step.position,
-      name: step.name,
-      text: step.text,
-    })),
-  };
-
   return (
     <>
       <SEOHelmet
@@ -82,12 +66,8 @@ const Guide = () => {
           '皇民化改姓教學',
         ]}
         pathname="/guide"
-        jsonLd={howToSchema}
-        breadcrumbs={[
-          { name: '首頁', url: '/' },
-          { name: '使用指南', url: '/guide' },
-        ]}
       />
+      {/* [fix:2025-12-06] JSON-LD (howToSchema, breadcrumbs) 已移至 vite.config.ts onPageRendered hook */}
 
       <main className="min-h-screen bg-gradient-to-br from-stone-50 via-red-50/30 to-stone-50">
         <div className="container mx-auto px-4 py-8 max-w-4xl">

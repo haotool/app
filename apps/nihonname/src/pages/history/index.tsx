@@ -51,26 +51,6 @@ const historyArticles = [
   },
 ];
 
-// Collection Page Schema JSON-LD
-const collectionSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'CollectionPage',
-  name: '台灣日治時期歷史專區',
-  description:
-    '探索台灣日治時期的重要歷史事件：皇民化運動、馬關條約、舊金山和約。深入了解改姓名政策的歷史背景與社會影響。',
-  url: 'https://app.haotool.org/nihonname/history/',
-  mainEntity: {
-    '@type': 'ItemList',
-    itemListElement: historyArticles.map((article, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      url: `https://app.haotool.org/nihonname${article.path}`,
-      name: article.title,
-      description: article.description,
-    })),
-  },
-};
-
 export default function HistoryIndex() {
   return (
     <>
@@ -90,12 +70,8 @@ export default function HistoryIndex() {
           '日治時代',
           '皇民化改姓',
         ]}
-        jsonLd={collectionSchema}
-        breadcrumbs={[
-          { name: '首頁', url: '/' },
-          { name: '歷史專區', url: '/history' },
-        ]}
       />
+      {/* [fix:2025-12-06] JSON-LD (collectionSchema, breadcrumbs) 已移至 vite.config.ts onPageRendered hook */}
 
       <div className="min-h-[100dvh] h-auto bg-stone-100 py-8 md:py-12 px-4 overflow-y-auto overflow-x-hidden">
         <div className="max-w-4xl mx-auto pb-8">

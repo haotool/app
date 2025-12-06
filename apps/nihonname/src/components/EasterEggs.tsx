@@ -116,16 +116,27 @@ const SakuraStorm = () => {
  */
 const Fireworks = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const confettiCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     let cleanupParticles: (() => void) | undefined;
     let stopSound: (() => void) | undefined;
+    let stopConfetti: (() => void) | undefined;
 
-    (async () => {
+    const primaryPalette: string[] = [
+      '#7f1d1d',
+      '#dc2626',
+      '#fb923c',
+      '#fbbf24',
+      '#fecdd3',
+      '#ffffff',
+    ];
+    const neonPalette: string[] = ['#c026d3', '#22d3ee', '#e11d48', '#f59e0b', '#84cc16'];
+
+    void (async () => {
       const { fireworks } = await import('@tsparticles/fireworks');
-      const colors = ['#7f1d1d', '#dc2626', '#fb923c', '#fbbf24', '#fecdd3', '#ffffff'];
       const options = {
-        colors,
+        colors: primaryPalette,
         brightness: { min: 50, max: 80 },
         saturation: { min: 80, max: 100 },
       };
@@ -183,18 +194,98 @@ const Fireworks = () => {
       };
     }
 
+    void (async () => {
+      try {
+        interface ConfettiBurstOptions {
+          angle: number;
+          count: number;
+          spread: number;
+          startVelocity: number;
+          gravity: number;
+          drift: number;
+          ticks: number;
+          colors: string[];
+          shapes: string[];
+          scalar: number;
+          position: { x: number; y: number };
+          zIndex: number;
+        }
+
+        const confettiModule = await import('@tsparticles/confetti');
+        const confetti = confettiModule.confetti as unknown as {
+          (options: ConfettiBurstOptions): Promise<unknown>;
+          create?: (
+            canvas: HTMLCanvasElement,
+            options?: Record<string, unknown>,
+          ) => Promise<{ (options: ConfettiBurstOptions): Promise<unknown>; reset?: () => void }>;
+        };
+
+        const confettiInstance =
+          confettiCanvasRef.current && confetti.create
+            ? await confetti.create(confettiCanvasRef.current, {
+                useWorker: true,
+                disableForReducedMotion: true,
+              })
+            : null;
+
+        const runConfetti = async (opts: ConfettiBurstOptions) => {
+          if (confettiInstance) {
+            await confettiInstance(opts);
+            return;
+          }
+          await confetti(opts);
+        };
+
+        const burst = async (palette: string[]) => {
+          const shapes = ['circle', 'square', 'star'];
+          const count = 120 + Math.floor(Math.random() * 60);
+          const spread = 55 + Math.random() * 25;
+          const originX = Math.random();
+          const originY = 0.55 + Math.random() * 0.25;
+          const angle = 45 + Math.random() * 90;
+          const opts = {
+            angle,
+            count,
+            spread,
+            startVelocity: 35 + Math.random() * 20,
+            gravity: 0.9,
+            drift: Math.random() * 0.5,
+            ticks: 220 + Math.random() * 80,
+            colors: palette,
+            shapes,
+            scalar: 0.9 + Math.random() * 0.4,
+            position: { x: originX * 100, y: originY * 100 },
+            zIndex: 90,
+          };
+          await runConfetti(opts);
+        };
+
+        const timer = setInterval(() => {
+          void burst(primaryPalette);
+          void burst(neonPalette);
+        }, 650);
+
+        stopConfetti = () => {
+          clearInterval(timer);
+          if (confettiInstance) confettiInstance.reset?.();
+        };
+      } catch {
+        // confetti 載入失敗忽略
+      }
+    })();
+
     return () => {
       if (cleanupParticles) cleanupParticles();
       if (stopSound) stopSound();
+      if (stopConfetti) stopConfetti();
     };
   }, []);
 
   return (
-    <div
-      className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/50 via-stone-900/40 to-black/70"
-      aria-hidden="true"
-    >
-      <canvas ref={canvasRef} className="w-full h-full" />
+    <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-stone-900/60 to-black/80" />
+      <canvas ref={canvasRef} className="w-full h-full absolute inset-0" />
+      <canvas ref={confettiCanvasRef} className="w-full h-full absolute inset-0" />
     </div>
   );
 };

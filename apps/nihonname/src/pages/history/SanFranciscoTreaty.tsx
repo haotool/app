@@ -67,43 +67,6 @@ const faqData = [
   },
 ];
 
-// Article Schema JSON-LD
-const articleSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: '舊金山和約歷史 - 1951年台灣地位與日本放棄主權的法律依據',
-  description:
-    '深入了解1951年舊金山和約的歷史背景、條約內容、對台灣地位的影響，以及與皇民化改姓運動的關係。',
-  author: {
-    '@type': 'Organization',
-    name: 'haotool',
-    url: 'https://haotool.org',
-  },
-  publisher: {
-    '@type': 'Organization',
-    name: 'haotool',
-    logo: {
-      '@type': 'ImageObject',
-      url: 'https://app.haotool.org/nihonname/icons/icon-512x512.png',
-    },
-  },
-  datePublished: '2025-12-04',
-  dateModified: '2025-12-04',
-  mainEntityOfPage: {
-    '@type': 'WebPage',
-    '@id': 'https://app.haotool.org/nihonname/history/san-francisco',
-  },
-  image: 'https://app.haotool.org/nihonname/og-image.png',
-  keywords: [
-    '舊金山和約',
-    '對日和平條約',
-    '台灣地位',
-    '日本放棄台灣',
-    '台灣地位未定論',
-    '中日和約',
-  ],
-};
-
 export default function SanFranciscoTreaty() {
   return (
     <>
@@ -123,14 +86,8 @@ export default function SanFranciscoTreaty() {
           '台灣歷史',
           '皇民化運動',
         ]}
-        faq={faqData}
-        jsonLd={articleSchema}
-        breadcrumbs={[
-          { name: '首頁', url: '/' },
-          { name: '歷史專區', url: '/history' },
-          { name: '舊金山和約', url: '/history/san-francisco' },
-        ]}
       />
+      {/* [fix:2025-12-06] JSON-LD (faq, articleSchema, breadcrumbs) 已移至 vite.config.ts onPageRendered hook */}
 
       <div className="min-h-[100dvh] h-auto bg-stone-100 py-8 md:py-12 px-4 overflow-y-auto overflow-x-hidden">
         <div className="max-w-3xl mx-auto pb-8">

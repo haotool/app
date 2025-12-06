@@ -238,6 +238,19 @@ export default defineConfig(({ mode }) => {
           '/history/san-francisco',
         ];
       },
+      // [fix:2025-12-06] 使用 onPageRendered hook 注入 JSON-LD
+      // 根據 vite-react-ssg 官方最佳實踐，<Head> 組件中的 <script> 標籤
+      // 不會在 SSG build 時渲染，必須使用此 hook 手動注入
+      // [context7:/daydreamer-riri/vite-react-ssg:2025-12-06]
+      async onPageRendered(route, renderedHTML) {
+        // 動態導入 JSON-LD 配置（避免 ESM/CJS 問題）
+        const { getJsonLdForRoute, jsonLdToScriptTags } = await import('./src/seo/jsonld');
+        const jsonLd = getJsonLdForRoute(route, buildTime);
+        const scriptTags = jsonLdToScriptTags(jsonLd);
+
+        // 將 JSON-LD script 標籤注入到 </head> 前
+        return renderedHTML.replace('</head>', `${scriptTags}</head>`);
+      },
     },
   };
 });
