@@ -12,11 +12,12 @@ describe('csvIntegratedPuns dataset', () => {
   });
 
   it('should have romaji free of CJK characters with fallback applied', () => {
-    expect(ALL_CSV_PUNS.length).toBe(CSV_PUNS_COUNT);
-    ALL_CSV_PUNS.forEach((pun) => {
+    const offenders = ALL_CSV_PUNS.filter((pun) => {
       const romaji = pun.romaji ?? '';
-      expect(romaji.trim().length).toBeGreaterThan(0);
-      expect(CJK_REGEX.test(romaji)).toBe(false);
+      return romaji.trim().length === 0 || CJK_REGEX.test(romaji);
     });
+
+    expect(ALL_CSV_PUNS.length).toBe(CSV_PUNS_COUNT);
+    expect(offenders).toEqual([]);
   });
 });
