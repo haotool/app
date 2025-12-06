@@ -1626,7 +1626,7 @@ export const CSV_CANTONESE_PUNS: PunName[] = [
  * 常見日本名 (2 筆)
  */
 export const CSV_COMMON_PUNS: PunName[] = [
-  { kanji: '一ノ瀬京', romaji: 'Ichiノ瀬kyō', meaning: '中文諧音：一ノ瀨京', category: 'common' },
+  { kanji: '一ノ瀬京', romaji: 'Ichinose Kyo', meaning: '中文諧音：一ノ瀨京', category: 'common' },
   { kanji: '稻村亞美', romaji: 'Inamuraami', meaning: '中文諧音：稻村亞美', category: 'common' },
 ];
 
