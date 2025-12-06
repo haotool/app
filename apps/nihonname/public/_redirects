@@ -1,0 +1,17 @@
+# Cloudflare Pages redirects
+# https://developers.cloudflare.com/pages/configuration/redirects/
+
+# SPA fallback - 所有未匹配的路徑都回到 index.html
+# 但對於靜態生成的頁面，Cloudflare Pages 會優先使用 .html 檔案
+
+# 修正 /history/ 路徑 (目錄存在但沒有 index.html)
+/history/ /history.html 200
+
+# 其他子路徑保持原樣
+/history/kominka /history/kominka.html 200
+/history/shimonoseki /history/shimonoseki.html 200
+/history/san-francisco /history/san-francisco.html 200
+
+# SPA fallback for client-side routing
+/* /index.html 200
+
