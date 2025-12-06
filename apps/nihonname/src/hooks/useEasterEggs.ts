@@ -30,9 +30,10 @@ export function useEasterEggs() {
   const [rapidClicks, setRapidClicks] = useState(0);
   const [lastRapidClickTime, setLastRapidClickTime] = useState(0);
 
-  // 靜止時間追蹤 - 使用 lazy initializer 避免在渲染時呼叫不純函數
-  const [initialTime] = useState(() => Date.now());
-  const lastActivityRef = useRef<number>(initialTime);
+  // 靜止時間追蹤
+  // [fix:2025-12-07] 使用 0 作為固定初始值避免 Hydration #418
+  // Date.now() 會導致 SSG/CSR 不匹配
+  const lastActivityRef = useRef<number>(0);
 
   // 手機搖晃偵測
   const shakeThreshold = 15;
