@@ -4,6 +4,7 @@
  * [SEO:2025-12-04] 新增歷史專區頁面路由
  * [fix:2025-12-04] 使用 lazyWithRetry 處理 chunk 載入失敗
  * [SEO:2025-12-05] 新增 FAQ 頁面，整合常見問題
+ * [fix:2025-12-06] 內聯 loading fallback 以符合 React Fast Refresh
  */
 import { Suspense } from 'react';
 import type { RouteObject } from 'react-router-dom';
@@ -23,16 +24,15 @@ const KominkaMovement = lazyWithRetry(() => import('./pages/history/KominkaMovem
 const ShimonosekiTreaty = lazyWithRetry(() => import('./pages/history/ShimonosekiTreaty'));
 const SanFranciscoTreaty = lazyWithRetry(() => import('./pages/history/SanFranciscoTreaty'));
 
-// Loading fallback
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-stone-100">
-    <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-800 border-t-transparent" />
-  </div>
-);
-
-// Wrap component with Suspense
+// Wrap component with Suspense and loading fallback
 const withSuspense = (Component: React.ComponentType) => (
-  <Suspense fallback={<PageLoader />}>
+  <Suspense
+    fallback={
+      <div className="min-h-screen flex items-center justify-center bg-stone-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-800 border-t-transparent" />
+      </div>
+    }
+  >
     <Component />
   </Suspense>
 );

@@ -1,5 +1,5 @@
 /**
- * 趣味諧音日本名資料庫 (擴充版 - 500+)
+ * 趣味諧音日本名資料庫 (擴充版 - 1000+)
  *
  * 資料來源：
  * - 巴哈姆特：日治時期台灣人更改姓名活動及辦法
@@ -10,10 +10,12 @@
  * - UDN: game.udn.com
  * - Wakin: wakin.com
  * - Homeboylife 網路暱稱文章
+ * - CSV 整合：taiwan_jp_pun_names_320.csv, taiwan_japanese_puns.csv, taiwan_japanese_name_puns.csv
  *
- * 最後更新：2025-12-05
+ * 最後更新：2025-12-06
  */
 import type { PunName } from '../types';
+import { ALL_CSV_PUNS } from './csvIntegratedPuns';
 
 /**
  * 經典諧音 - 最廣為流傳的諧音梗
@@ -2653,6 +2655,8 @@ export const ALL_FUNNY_NAMES: PunName[] = [
   ...DCARD_PUNS,
   ...MORE_TAIWANESE_CLASSIC,
   ...CSV_INTEGRATED_PUNS_2025, // 2025-12-05 CSV 整合
+  // 2025-12-06 新增 CSV 整合資料
+  ...ALL_CSV_PUNS,
   // 原有經典諧音梗
   ...CLASSIC_PUNS,
   ...TAIWANESE_PUNS,

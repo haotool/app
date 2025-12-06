@@ -29,167 +29,8 @@ import { useCustomPunNames } from '../hooks/useCustomPunNames';
 import { useEasterEggs } from '../hooks/useEasterEggs';
 import { EasterEggs } from '../components/EasterEggs';
 import { SourceAccordion } from '../components/SourceAccordion';
+import { convertToRomaji } from '../utils/romajiConverter';
 import type { GeneratorState, PunName, CustomPunName } from '../types';
-
-// 簡易漢字轉羅馬拼音（常見日文漢字）
-const KANJI_TO_ROMAJI: Record<string, string> = {
-  田: 'Ta',
-  中: 'Naka',
-  山: 'Yama',
-  川: 'Kawa',
-  本: 'Moto',
-  木: 'Ki',
-  林: 'Hayashi',
-  森: 'Mori',
-  村: 'Mura',
-  井: 'I',
-  石: 'Ishi',
-  野: 'No',
-  原: 'Hara',
-  藤: 'Fuji',
-  佐: 'Sa',
-  伊: 'I',
-  加: 'Ka',
-  松: 'Matsu',
-  竹: 'Take',
-  梅: 'Ume',
-  花: 'Hana',
-  月: 'Tsuki',
-  日: 'Hi',
-  星: 'Hoshi',
-  空: 'Sora',
-  海: 'Umi',
-  島: 'Shima',
-  高: 'Taka',
-  小: 'Ko',
-  大: 'Ō',
-  長: 'Naga',
-  上: 'Ue',
-  下: 'Shita',
-  東: 'Higashi',
-  西: 'Nishi',
-  南: 'Minami',
-  北: 'Kita',
-  内: 'Uchi',
-  外: 'Soto',
-  前: 'Mae',
-  後: 'Ato',
-  新: 'Shin',
-  古: 'Furu',
-  白: 'Shiro',
-  黒: 'Kuro',
-  赤: 'Aka',
-  青: 'Ao',
-  金: 'Kin',
-  銀: 'Gin',
-  鉄: 'Tetsu',
-  水: 'Mizu',
-  火: 'Hi',
-  風: 'Kaze',
-  雷: 'Rai',
-  雪: 'Yuki',
-  桜: 'Sakura',
-  菊: 'Kiku',
-  蓮: 'Ren',
-  葉: 'Ha',
-  草: 'Kusa',
-  根: 'Ne',
-  枝: 'Eda',
-  一: 'Ichi',
-  二: 'Ni',
-  三: 'San',
-  四: 'Shi',
-  五: 'Go',
-  六: 'Roku',
-  七: 'Nana',
-  八: 'Hachi',
-  九: 'Kyū',
-  十: 'Jū',
-  百: 'Hyaku',
-  千: 'Sen',
-  万: 'Man',
-  子: 'Ko',
-  男: 'Otoko',
-  女: 'Onna',
-  人: 'Hito',
-  王: 'Ō',
-  国: 'Kuni',
-  城: 'Shiro',
-  寺: 'Tera',
-  神: 'Kami',
-  仏: 'Hotoke',
-  天: 'Ten',
-  地: 'Chi',
-  心: 'Kokoro',
-  愛: 'Ai',
-  美: 'Mi',
-  幸: 'Sachi',
-  福: 'Fuku',
-  吉: 'Kichi',
-  正: 'Masa',
-  真: 'Ma',
-  太: 'Ta',
-  郎: 'Rō',
-  助: 'Suke',
-  介: 'Suke',
-  平: 'Hei',
-  治: 'Ji',
-  明: 'Aki',
-  光: 'Hikari',
-  輝: 'Teru',
-  和: 'Kazu',
-  安: 'Yasu',
-  康: 'Yasu',
-  健: 'Ken',
-  勇: 'Yū',
-  智: 'Tomo',
-  賢: 'Ken',
-  徳: 'Toku',
-  義: 'Yoshi',
-  信: 'Nobu',
-  忠: 'Tada',
-  孝: 'Taka',
-  夏: 'Natsu',
-  冬: 'Fuyu',
-  春: 'Haru',
-  秋: 'Aki',
-  朝: 'Asa',
-  夜: 'Yoru',
-  昼: 'Hiru',
-  芙: 'Fu',
-  蓉: 'Yō',
-  澪: 'Mio',
-  凛: 'Rin',
-  翔: 'Shō',
-  颯: 'Sō',
-  蒼: 'Sō',
-  僑: 'Kyō',
-  仔: 'Shi',
-  目: 'Me',
-  漱: 'Sō',
-  叉: 'Sa',
-  鬼: 'Oni',
-  滅: 'Metsu',
-  刃: 'Jin',
-  進: 'Shin',
-  撃: 'Geki',
-  巨: 'Kyo',
-  呪: 'Ju',
-  術: 'Jutsu',
-  廻: 'Kai',
-  戦: 'Sen',
-  鳴: 'Naru',
-  門: 'Mon',
-  炎: 'En',
-  柱: 'Hashira',
-  禰: 'Ne',
-  豆: 'Mame',
-  善: 'Zen',
-  逸: 'Itsu',
-  嘴: 'Kuchi',
-  我: 'Ga',
-  妻: 'Tsuma',
-};
 
 // 複姓對照表（複姓 → 對應單姓）
 // [context7:taiwan-surnames:2025-12-06] 台灣常見複姓
@@ -292,19 +133,6 @@ const processCompoundSurname = (
     isCompound: false,
     originalCompound: null,
   };
-};
-
-// 自動轉換漢字為羅馬拼音
-const convertToRomaji = (kanji: string): string => {
-  let result = '';
-  for (const char of kanji) {
-    result += KANJI_TO_ROMAJI[char] ?? char;
-  }
-  // 首字母大寫，其餘小寫
-  return result
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
 };
 
 // --- SVG Components for High-End Aesthetics ---
@@ -1029,6 +857,38 @@ export default function Home() {
     return HINT_MESSAGES[index] ?? HINT_MESSAGES[0] ?? '';
   });
 
+  // [fix:2025-12-06] 新增 JSON-LD 結構化數據以解決 React Error #418
+  // JSON-LD structured data for SEO
+  const homeJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'NihonName 皇民化改姓生成器',
+    applicationCategory: 'EducationalApplication',
+    operatingSystem: 'Web Browser, iOS, Android',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'TWD',
+    },
+    description:
+      '探索1940年代台灣皇民化運動的歷史。根據國史館檔案、學術論文等多方歷史文獻，收錄90+漢姓、1,700+筆日本姓氏對照記錄，每筆皆標註變異法說明與來源。',
+    url: 'https://app.haotool.org/nihonname/',
+    screenshot: 'https://app.haotool.org/nihonname/og-image.png',
+    author: {
+      '@type': 'Person',
+      name: '阿璋',
+      url: 'https://www.threads.com/@azlife_1224/post/DR2NCeEj6Fo',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'haotool 好工具',
+      url: 'https://haotool.org',
+    },
+    inLanguage: 'zh-TW',
+    keywords:
+      '皇民化運動, 日式姓名產生器, 改姓運動, 日治時期, 台灣歷史, 1940年代, 日本名字, 姓氏對照, 內地式改姓名, 臺灣總督府',
+  };
+
   return (
     <>
       <SEOHelmet
@@ -1047,6 +907,7 @@ export default function Home() {
           '內地式改姓名',
           '臺灣總督府',
         ]}
+        jsonLd={homeJsonLd}
       />
 
       <EasterEggs activeEgg={activeEgg} />
