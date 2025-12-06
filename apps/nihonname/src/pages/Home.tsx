@@ -1009,14 +1009,21 @@ export default function Home() {
               <div
                 className={`transition-all duration-700 ${state.step === 'result' && !showUI ? 'opacity-100 scale-110 mb-4' : 'opacity-100 border-y border-red-900/30 py-1 mb-3'}`}
               >
-                <span
-                  className={`text-red-900 tracking-[0.3em] font-bold uppercase mx-4 font-serif transition-all flex items-center gap-2 ${state.step === 'result' && !showUI ? 'text-sm md:text-base' : 'text-xs md:text-sm'}`}
+                <button
+                  type="button"
+                  className={`text-red-900 tracking-[0.3em] font-bold uppercase mx-4 font-serif transition-all flex items-center gap-2 ${state.step === 'result' && !showUI ? 'text-sm md:text-base' : 'text-xs md:text-sm'} select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700 rounded-md px-2 active:scale-[0.98]`}
                   onClick={handleDoubleTextClick}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleDoubleTextClick();
+                    }
+                  }}
                 >
                   <ToriiIcon className="w-4 h-4 opacity-70" />
                   Taiwan 1940
                   <ToriiIcon className="w-4 h-4 opacity-70" />
-                </span>
+                </button>
               </div>
 
               <h1

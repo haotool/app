@@ -27,12 +27,14 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@tsparticles/fireworks": "^3.9.1",
     "kuroshiro": "^1.2.0",
     "kuroshiro-analyzer-kuromoji": "^1.1.0",
     "lucide-react": "^0.555.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-error-boundary": "^6.0.0",
+    "react-helmet-async": "1.3.0",
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
