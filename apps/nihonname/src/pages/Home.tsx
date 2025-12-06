@@ -19,18 +19,11 @@ import {
   ArrowDown,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ClientOnly } from 'vite-react-ssg';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { RollingText } from '../components/RollingText';
 import { JapaneseDiceButton } from '../components/JapaneseDiceButton';
 import { ShareModal } from '../components/ShareModal';
-import {
-  SURNAME_MAP,
-  FUNNY_NAMES,
-  JAPANESE_GIVEN_NAMES,
-  PRIMARY_SOURCE,
-  getSupportedSurnames,
-} from '../constants';
+import { SURNAME_MAP, FUNNY_NAMES, JAPANESE_GIVEN_NAMES, PRIMARY_SOURCE } from '../constants';
 import { getSurnameDetail } from '../data/surnameData';
 import { useCustomPunNames } from '../hooks/useCustomPunNames';
 import { useEasterEggs } from '../hooks/useEasterEggs';
@@ -40,14 +33,79 @@ import { convertToRomaji } from '../utils/romajiConverter';
 import type { GeneratorState, PunName, CustomPunName } from '../types';
 
 // 複姓對照表（複姓 → 對應單姓）
-// 資料來源：維基百科「複姓」條目 — 台灣五大複姓（2025-12-06 擷取）
-// https://zh.wikipedia.org/wiki/%E8%A4%87%E5%A7%93
+// [context7:taiwan-surnames:2025-12-06] 台灣常見複姓
 const COMPOUND_SURNAMES: Record<string, string> = {
   歐陽: '歐',
+  司馬: '司',
   司徒: '司',
   上官: '上',
-  端木: '端',
   諸葛: '諸',
+  皇甫: '皇',
+  東方: '東',
+  西門: '西',
+  南宮: '南',
+  北堂: '北',
+  令狐: '令',
+  公孫: '公',
+  尉遲: '尉',
+  長孫: '長',
+  慕容: '慕',
+  獨孤: '獨',
+  宇文: '宇',
+  軒轅: '軒',
+  鮮于: '鮮',
+  呼延: '呼',
+  端木: '端',
+  百里: '百',
+  東郭: '東',
+  南門: '南',
+  羊舌: '羊',
+  微生: '微',
+  公冶: '公',
+  梁丘: '梁',
+  左丘: '左',
+  公羊: '公',
+  穀梁: '穀',
+  公西: '公',
+  顓孫: '顓',
+  壤駟: '壤',
+  公良: '公',
+  漆雕: '漆',
+  樂正: '樂',
+  宰父: '宰',
+  夾谷: '夾',
+  巫馬: '巫',
+  公伯: '公',
+  南榮: '南',
+  申屠: '申',
+  夏侯: '夏',
+  鍾離: '鍾',
+  段干: '段',
+  仲孫: '仲',
+  叔孫: '叔',
+  閭丘: '閭',
+  濮陽: '濮',
+  淳于: '淳',
+  單于: '單',
+  太叔: '太',
+  公戶: '公',
+  公玉: '公',
+  公儀: '公',
+  公賓: '公',
+  公仲: '公',
+  公上: '公',
+  公門: '公',
+  公山: '公',
+  公堅: '公',
+  公乘: '公',
+  公肩: '公',
+  公石: '公',
+  公祖: '公',
+  第五: '第',
+  第一: '第',
+  第二: '第',
+  第三: '第',
+  第四: '第',
 };
 
 /**
@@ -471,9 +529,10 @@ export default function Home() {
 
   // Combined pun names (built-in + custom)
   const allPunNames: PunName[] = [...FUNNY_NAMES, ...customPunNames];
-  // 用於 placeholder 的姓氏集合（已收錄姓氏 + 台灣常見複姓）
+  // 用於 placeholder 的姓氏集合（含單姓與複姓）
   const allSurnames = useMemo(() => {
-    const unique = new Set<string>(getSupportedSurnames());
+    const unique = new Set<string>();
+    Object.keys(SURNAME_MAP).forEach((key) => unique.add(key));
     Object.keys(COMPOUND_SURNAMES).forEach((key) => unique.add(key));
     return Array.from(unique);
   }, []);
@@ -819,9 +878,7 @@ export default function Home() {
       />
       {/* [fix:2025-12-06] JSON-LD (homeJsonLd) 已移至 vite.config.ts onPageRendered hook */}
 
-      {/* [fix:2025-12-06] ClientOnly 包裝 EasterEggs 避免 SSG Hydration 問題 */}
-      {/* [context7:vite-react-ssg/docs/Components:2025-12-06] ClientOnly 僅在客戶端渲染 */}
-      <ClientOnly>{() => <EasterEggs activeEgg={activeEgg} />}</ClientOnly>
+      <EasterEggs activeEgg={activeEgg} />
 
       {/* iOS DeviceMotion 權限請求提示 */}
       {showMotionPrompt && (
