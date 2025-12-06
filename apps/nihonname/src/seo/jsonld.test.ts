@@ -72,16 +72,16 @@ describe('jsonld.ts', () => {
       const breadcrumbs = [{ name: '測試', url: '/test' }];
       const schema = buildBreadcrumbSchema(breadcrumbs);
 
-      const items = schema.itemListElement as { item: string }[];
-      expect(items[0]?.item).toBe('https://app.haotool.org/nihonname/test');
+      const items = (schema.itemListElement ?? []) as { item?: string }[];
+      expect(items[0]?.item ?? '').toBe('https://app.haotool.org/nihonname/test');
     });
 
     it('應該正確處理絕對 URL', () => {
       const breadcrumbs = [{ name: '測試', url: 'https://example.com/page' }];
       const schema = buildBreadcrumbSchema(breadcrumbs);
 
-      const items = schema.itemListElement as { item: string }[];
-      expect(items[0]?.item).toBe('https://example.com/page');
+      const items = (schema.itemListElement ?? []) as { item?: string }[];
+      expect(items[0]?.item ?? '').toBe('https://example.com/page');
     });
 
     it('應該設定正確的 position', () => {
@@ -92,10 +92,10 @@ describe('jsonld.ts', () => {
       ];
       const schema = buildBreadcrumbSchema(breadcrumbs);
 
-      const items = schema.itemListElement as { position: number }[];
-      expect(items[0]?.position).toBe(1);
-      expect(items[1]?.position).toBe(2);
-      expect(items[2]?.position).toBe(3);
+      const items = (schema.itemListElement ?? []) as { position?: number }[];
+      expect(items[0]?.position ?? 0).toBe(1);
+      expect(items[1]?.position ?? 0).toBe(2);
+      expect(items[2]?.position ?? 0).toBe(3);
     });
   });
 
@@ -117,9 +117,9 @@ describe('jsonld.ts', () => {
       const faq = [{ question: '什麼是皇民化？', answer: '皇民化是日本殖民政策' }];
       const schema = buildFaqSchema(faq, 'https://example.com/faq');
 
-      const questions = schema.mainEntity as { '@type': string; name: string }[];
-      expect(questions[0]?.['@type']).toBe('Question');
-      expect(questions[0]?.name).toBe('什麼是皇民化？');
+      const questions = (schema.mainEntity ?? []) as { '@type'?: string; name?: string }[];
+      expect(questions[0]?.['@type'] ?? '').toBe('Question');
+      expect(questions[0]?.name ?? '').toBe('什麼是皇民化？');
     });
 
     it('應該處理空的 FAQ 陣列', () => {
@@ -196,12 +196,12 @@ describe('jsonld.ts', () => {
 
     it('步驟應該有正確的 position', () => {
       const schema = buildHowToSchema();
-      const steps = schema.step as { position: number }[];
+      const steps = (schema.step ?? []) as { position?: number }[];
 
-      expect(steps[0]?.position).toBe(1);
-      expect(steps[1]?.position).toBe(2);
-      expect(steps[2]?.position).toBe(3);
-      expect(steps[3]?.position).toBe(4);
+      expect(steps[0]?.position ?? 0).toBe(1);
+      expect(steps[1]?.position ?? 0).toBe(2);
+      expect(steps[2]?.position ?? 0).toBe(3);
+      expect(steps[3]?.position ?? 0).toBe(4);
     });
 
     it('應該設定 totalTime', () => {
