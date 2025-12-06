@@ -13,6 +13,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { pinyin } from 'pinyin-pro';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -594,19 +595,33 @@ const KANJI_TO_ROMAJI = {
   整: 'Sei',
 };
 
+const CJK_REGEX = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\uFF00-\uFFEF]/u;
+
+const titleCase = (value) =>
+  value
+    .split(/\s+/g)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+const convertToPinyin = (kanji) =>
+  pinyin(kanji, { toneType: 'none', type: 'array', nonZh: 'consecutive' })
+    .filter(Boolean)
+    .join(' ');
+
 /**
  * 將漢字轉換為羅馬拼音
  */
 function convertToRomaji(kanji) {
-  let result = '';
-  for (const char of kanji) {
-    result += KANJI_TO_ROMAJI[char] || char;
-  }
-  // 首字母大寫
-  return result
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
+  const mapped = [...kanji].map((char) => KANJI_TO_ROMAJI[char]).filter(Boolean);
+  const mappedJoined = mapped.join(' ').trim();
+  const pinyinJoined = convertToPinyin(kanji);
+
+  const candidate = mappedJoined || pinyinJoined || kanji;
+  const cleaned = candidate.replace(CJK_REGEX, ' ').replace(/\s+/g, ' ').trim();
+
+  const romaji = cleaned ? titleCase(cleaned) : kanji;
+  return romaji || kanji;
 }
 
 /**
