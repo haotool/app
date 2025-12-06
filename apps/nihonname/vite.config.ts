@@ -214,7 +214,9 @@ export default defineConfig(({ mode }) => {
     },
     ssgOptions: {
       script: 'async',
-      formatting: 'minify',
+      // [fix:2025-12-06] formatting 設為 'none' 以避免 Hydration Failed errors
+      // [context7:/daydreamer-riri/vite-react-ssg:2025-12-06]
+      formatting: 'none',
       // [SEO:2025-12-06] 優化 Critical CSS 配置以改善渲染阻塞
       // 參考: context7:/daydreamer-riri/vite-react-ssg
       beastiesOptions: {
