@@ -19,6 +19,7 @@ import {
   ArrowDown,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ClientOnly } from 'vite-react-ssg';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { RollingText } from '../components/RollingText';
 import { JapaneseDiceButton } from '../components/JapaneseDiceButton';
@@ -878,7 +879,9 @@ export default function Home() {
       />
       {/* [fix:2025-12-06] JSON-LD (homeJsonLd) 已移至 vite.config.ts onPageRendered hook */}
 
-      <EasterEggs activeEgg={activeEgg} />
+      {/* [fix:2025-12-07] 使用 ClientOnly 包裝 EasterEggs 避免 Hydration #418 錯誤 */}
+      {/* [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-07] */}
+      <ClientOnly>{() => <EasterEggs activeEgg={activeEgg} />}</ClientOnly>
 
       {/* iOS DeviceMotion 權限請求提示 */}
       {showMotionPrompt && (
