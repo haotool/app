@@ -139,7 +139,7 @@ function buildMetaTags(config: MetaTagsConfig): string {
     updatedTime,
   } = config;
 
-  const fullTitle = title || DEFAULT_TITLE;
+  const fullTitle = title ?? DEFAULT_TITLE;
   const canonicalUrl = buildCanonical(config.route);
   const ogImageUrl = ogImage.startsWith('http')
     ? ogImage
@@ -238,5 +238,5 @@ function escapeHtml(text: string): string {
     '"': '&quot;',
     "'": '&#039;',
   };
-  return text.replace(/[&<>"']/g, (m) => map[m] || m);
+  return text.replace(/[&<>"']/g, (m) => map[m] ?? m);
 }
