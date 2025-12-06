@@ -1,5 +1,5 @@
 import { type useEasterEggs } from '../hooks/useEasterEggs';
-import { useMemo, memo, useEffect, useRef } from 'react';
+import { useMemo, memo, useEffect } from 'react';
 
 /**
  * EasterEggs - 彩蛋效果渲染元件
@@ -114,20 +114,22 @@ const SakuraStorm = () => {
  * 花火大會 - 使用 tsParticles Fireworks 全屏煙火 + 簡易音效
  * 持續 12 秒，使用主題紅/琥珀/玫瑰色彩
  *
- * [fix:2025-12-07] 根據 Context7 tsParticles 官方文檔修復
- * - 移除自定義 canvas ref，讓 tsparticles 自動管理
- * - 使用官方推薦的 async fireworks() 模式
- * - 簡化 confetti API 調用
+ * [fix:2025-12-07] 根據 Context7 React + tsParticles 官方文檔完整修復
+ * - 使用同步 cleanup flag 防止異步競態條件
+ * - 正確調用 instance.stop() 釋放 tsParticles 資源
+ * - 改進 AudioContext 生命週期管理
+ * - 防止組件卸載後的異步操作繼續執行
  * [context7:/tsparticles/tsparticles:fireworks:2025-12-07]
+ * [context7:/reactjs/react.dev:useEffect-cleanup:2025-12-07]
+ * [ref:https://react.dev/learn/synchronizing-with-effects]
+ * [ref:https://refine.dev/blog/useeffect-cleanup/]
  */
 const Fireworks = () => {
-  const cleanupRef = useRef<{
-    stopParticles?: () => void;
-    stopSound?: () => void;
-    stopConfetti?: () => void;
-  }>({});
-
   useEffect(() => {
+    // 使用 isMounted flag 防止組件卸載後的操作
+    // [ref:https://react.dev/learn/synchronizing-with-effects]
+    let isMounted = true;
+
     const primaryPalette: string[] = [
       '#7f1d1d',
       '#dc2626',
@@ -138,19 +140,32 @@ const Fireworks = () => {
     ];
     const neonPalette: string[] = ['#c026d3', '#22d3ee', '#e11d48', '#f59e0b', '#84cc16'];
 
-    // 1. 啟動 tsParticles Fireworks (官方推薦 async 模式)
+    // 儲存清理函數的局部變數（避免 ref 問題）
+    let particlesInstance: { stop: () => void } | null | undefined = null;
+    let audioInterval: ReturnType<typeof setInterval> | null = null;
+    let audioTimeout: ReturnType<typeof setTimeout> | null = null;
+    let audioCtx: AudioContext | null = null;
+    let confettiInterval: ReturnType<typeof setInterval> | null = null;
+
+    // 1. 啟動 tsParticles Fireworks
     void (async () => {
+      if (!isMounted) return;
       try {
         const { fireworks } = await import('@tsparticles/fireworks');
-        // [context7:/tsparticles/tsparticles:fireworks] 使用官方推薦的簡化調用
+        if (!isMounted) return; // 檢查組件是否已卸載
+
+        // [context7:/tsparticles/tsparticles:fireworks] 使用官方推薦模式
         const instance = await fireworks({
           colors: primaryPalette,
         });
-        if (instance) {
-          cleanupRef.current.stopParticles = () => {
-            instance.stop();
-          };
+
+        if (!isMounted) {
+          // 組件已卸載，立即清理
+          instance?.stop();
+          return;
         }
+
+        particlesInstance = instance;
       } catch {
         // 忽略煙火載入失敗的錯誤，不影響主功能
       }
@@ -162,9 +177,11 @@ const Fireworks = () => {
         const AudioContextClass =
           window.AudioContext ||
           (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+
         if (AudioContextClass) {
-          const audioCtx = new AudioContextClass();
+          audioCtx = new AudioContextClass();
           const playBang = () => {
+            if (!isMounted || !audioCtx) return;
             try {
               const osc = audioCtx.createOscillator();
               const gain = audioCtx.createGain();
@@ -179,17 +196,13 @@ const Fireworks = () => {
               // 忽略音效播放錯誤
             }
           };
+
           playBang();
-          const interval = setInterval(playBang, 900);
-          const timer = setTimeout(() => {
-            clearInterval(interval);
-            audioCtx.close().catch(() => undefined);
+          audioInterval = setInterval(playBang, 900);
+          audioTimeout = setTimeout(() => {
+            if (audioInterval) clearInterval(audioInterval);
+            audioCtx?.close().catch(() => undefined);
           }, 12000);
-          cleanupRef.current.stopSound = () => {
-            clearInterval(interval);
-            clearTimeout(timer);
-            audioCtx.close().catch(() => undefined);
-          };
         }
       } catch {
         // 忽略 AudioContext 初始化錯誤
@@ -198,12 +211,13 @@ const Fireworks = () => {
 
     // 3. Confetti 疊加效果
     void (async () => {
+      if (!isMounted) return;
       try {
         const { confetti } = await import('@tsparticles/confetti');
-        let isRunning = true;
+        if (!isMounted) return;
 
         const burst = async (palette: string[]) => {
-          if (!isRunning) return;
+          if (!isMounted) return;
           const originX = Math.random();
           const originY = 0.5 + Math.random() * 0.3;
           // [context7:/tsparticles/tsparticles:confetti] 使用官方推薦的參數格式
@@ -223,27 +237,40 @@ const Fireworks = () => {
           });
         };
 
-        const timer = setInterval(() => {
+        confettiInterval = setInterval(() => {
           void burst(primaryPalette);
           void burst(neonPalette);
         }, 700);
-
-        cleanupRef.current.stopConfetti = () => {
-          isRunning = false;
-          clearInterval(timer);
-        };
       } catch {
         // confetti 載入失敗忽略
       }
     })();
 
-    // 複製 ref 到局部變數避免 cleanup 執行時 ref 已改變
-    // [context7:/reactjs/react.dev:useEffect-cleanup:2025-12-07]
-    const cleanup = cleanupRef.current;
+    // Cleanup function: 對稱地撤銷所有 setup 操作
+    // [ref:https://react.dev/reference/react/useEffect]
     return () => {
-      cleanup.stopParticles?.();
-      cleanup.stopSound?.();
-      cleanup.stopConfetti?.();
+      // 1. 設置 unmount flag，防止異步操作繼續執行
+      isMounted = false;
+
+      // 2. 清理 tsParticles 實例（使用 stop 釋放資源）
+      // [context7:/tsparticles/tsparticles] stop() 會停止動畫並釋放資源
+      if (particlesInstance) {
+        try {
+          particlesInstance.stop();
+        } catch {
+          // 忽略清理錯誤
+        }
+      }
+
+      // 3. 清理音效相關資源
+      if (audioInterval) clearInterval(audioInterval);
+      if (audioTimeout) clearTimeout(audioTimeout);
+      if (audioCtx) {
+        audioCtx.close().catch(() => undefined);
+      }
+
+      // 4. 清理 confetti interval
+      if (confettiInterval) clearInterval(confettiInterval);
     };
   }, []);
 
