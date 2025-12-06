@@ -857,38 +857,6 @@ export default function Home() {
     return HINT_MESSAGES[index] ?? HINT_MESSAGES[0] ?? '';
   });
 
-  // [fix:2025-12-06] 新增 JSON-LD 結構化數據以解決 React Error #418
-  // JSON-LD structured data for SEO
-  const homeJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: 'NihonName 皇民化改姓生成器',
-    applicationCategory: 'EducationalApplication',
-    operatingSystem: 'Web Browser, iOS, Android',
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'TWD',
-    },
-    description:
-      '探索1940年代台灣皇民化運動的歷史。根據國史館檔案、學術論文等多方歷史文獻，收錄90+漢姓、1,700+筆日本姓氏對照記錄，每筆皆標註變異法說明與來源。',
-    url: 'https://app.haotool.org/nihonname/',
-    screenshot: 'https://app.haotool.org/nihonname/og-image.png',
-    author: {
-      '@type': 'Person',
-      name: '阿璋',
-      url: 'https://www.threads.com/@azlife_1224/post/DR2NCeEj6Fo',
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'haotool 好工具',
-      url: 'https://haotool.org',
-    },
-    inLanguage: 'zh-TW',
-    keywords:
-      '皇民化運動, 日式姓名產生器, 改姓運動, 日治時期, 台灣歷史, 1940年代, 日本名字, 姓氏對照, 內地式改姓名, 臺灣總督府',
-  };
-
   return (
     <>
       <SEOHelmet
@@ -907,8 +875,8 @@ export default function Home() {
           '內地式改姓名',
           '臺灣總督府',
         ]}
-        jsonLd={homeJsonLd}
       />
+      {/* [fix:2025-12-06] JSON-LD (homeJsonLd) 已移至 vite.config.ts onPageRendered hook */}
 
       <EasterEggs activeEgg={activeEgg} />
 

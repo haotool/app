@@ -68,44 +68,6 @@ const faqData = [
   },
 ];
 
-// Article Schema JSON-LD
-const articleSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: '馬關條約歷史 - 1895年台灣割讓與日本殖民統治的開端',
-  description:
-    '深入了解1895年馬關條約的歷史背景、條約內容、台灣人的反應，以及對台灣50年殖民統治的深遠影響。破解「馬關續約」的錯誤迷思。',
-  author: {
-    '@type': 'Organization',
-    name: 'haotool',
-    url: 'https://haotool.org',
-  },
-  publisher: {
-    '@type': 'Organization',
-    name: 'haotool',
-    logo: {
-      '@type': 'ImageObject',
-      url: 'https://app.haotool.org/nihonname/icons/icon-512x512.png',
-    },
-  },
-  datePublished: '2025-12-04',
-  dateModified: '2025-12-04',
-  mainEntityOfPage: {
-    '@type': 'WebPage',
-    '@id': 'https://app.haotool.org/nihonname/history/shimonoseki',
-  },
-  image: 'https://app.haotool.org/nihonname/og-image.png',
-  keywords: [
-    '馬關條約',
-    '馬關條約強制續約',
-    '馬關續約',
-    '馬關條約改名',
-    '台灣割讓',
-    '甲午戰爭',
-    '下關條約',
-  ],
-};
-
 export default function ShimonosekiTreaty() {
   return (
     <>
@@ -126,14 +88,8 @@ export default function ShimonosekiTreaty() {
           '李鴻章',
           '台灣民主國',
         ]}
-        faq={faqData}
-        jsonLd={articleSchema}
-        breadcrumbs={[
-          { name: '首頁', url: '/' },
-          { name: '歷史專區', url: '/history' },
-          { name: '馬關條約', url: '/history/shimonoseki' },
-        ]}
       />
+      {/* [fix:2025-12-06] JSON-LD (faq, articleSchema, breadcrumbs) 已移至 vite.config.ts onPageRendered hook */}
 
       <div className="min-h-[100dvh] h-auto bg-stone-100 py-8 md:py-12 px-4 overflow-y-auto overflow-x-hidden">
         <div className="max-w-3xl mx-auto pb-8">
