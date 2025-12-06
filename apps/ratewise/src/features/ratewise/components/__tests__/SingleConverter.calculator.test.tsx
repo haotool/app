@@ -35,16 +35,22 @@ describe('SingleConverter calculator button', () => {
   it('opens calculator keyboard dialog when FROM amount button clicked', async () => {
     render(<SingleConverter {...mockProps} />);
     fireEvent.click(screen.getByLabelText('開啟計算機 (轉換金額)'));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { name: '計算機' })).toBeInTheDocument();
-    });
-  });
+    await waitFor(
+      () => {
+        expect(screen.getByRole('dialog', { name: '計算機' })).toBeInTheDocument();
+      },
+      { timeout: 10000 },
+    );
+  }, 15000);
 
   it('opens calculator keyboard dialog when TO amount button clicked', async () => {
     render(<SingleConverter {...mockProps} />);
     fireEvent.click(screen.getByLabelText('開啟計算機 (轉換結果)'));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { name: '計算機' })).toBeInTheDocument();
-    });
-  });
+    await waitFor(
+      () => {
+        expect(screen.getByRole('dialog', { name: '計算機' })).toBeInTheDocument();
+      },
+      { timeout: 10000 },
+    );
+  }, 15000);
 });

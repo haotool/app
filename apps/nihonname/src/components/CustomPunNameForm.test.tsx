@@ -178,8 +178,9 @@ describe('CustomPunNameForm', () => {
     it('應該在 romaji 為空時顯示錯誤', () => {
       render(<CustomPunNameForm {...defaultProps} />);
 
+      // 輸入非日文字元（不會觸發自動產生）
       fireEvent.change(screen.getByPlaceholderText('例：梅川伊芙'), {
-        target: { value: '測試' },
+        target: { value: 'ABC' },
       });
       fireEvent.change(screen.getByPlaceholderText('例：中文諧音：沒穿衣服'), {
         target: { value: 'Test' },
@@ -436,6 +437,95 @@ describe('CustomPunNameForm', () => {
       // 檢查必填標記 (*)
       const requiredMarks = screen.getAllByText('*');
       expect(requiredMarks.length).toBe(3);
+    });
+  });
+
+  describe('自動羅馬拼音功能', () => {
+    it('應該在輸入日文漢字時自動產生羅馬拼音', () => {
+      render(<CustomPunNameForm {...defaultProps} />);
+
+      const kanjiInput = screen.getByPlaceholderText('例：梅川伊芙') as HTMLInputElement;
+      const romajiInput = screen.getByPlaceholderText('例：Umekawa Ifu') as HTMLInputElement;
+
+      // 輸入日文漢字
+      fireEvent.change(kanjiInput, { target: { value: '田中' } });
+
+      // 羅馬拼音應該自動產生
+      expect(romajiInput.value).toBe('Tanaka');
+    });
+
+    it('應該在輸入日文漢字時顯示偵測提示', () => {
+      render(<CustomPunNameForm {...defaultProps} />);
+
+      const kanjiInput = screen.getByPlaceholderText('例：梅川伊芙');
+
+      fireEvent.change(kanjiInput, { target: { value: '山本' } });
+
+      expect(screen.getByText(/偵測到日文字元/)).toBeInTheDocument();
+    });
+
+    it('應該在用戶手動編輯後保留用戶的羅馬拼音', () => {
+      render(<CustomPunNameForm {...defaultProps} />);
+
+      const kanjiInput = screen.getByPlaceholderText('例：梅川伊芙') as HTMLInputElement;
+      const romajiInput = screen.getByPlaceholderText('例：Umekawa Ifu') as HTMLInputElement;
+
+      // 先輸入漢字
+      fireEvent.change(kanjiInput, { target: { value: '田中' } });
+      expect(romajiInput.value).toBe('Tanaka');
+
+      // 手動修改羅馬拼音
+      fireEvent.change(romajiInput, { target: { value: 'Custom Romaji' } });
+      expect(romajiInput.value).toBe('Custom Romaji');
+
+      // 再次修改漢字，羅馬拼音不應該被覆蓋
+      fireEvent.change(kanjiInput, { target: { value: '山本' } });
+      expect(romajiInput.value).toBe('Custom Romaji');
+    });
+
+    it('應該顯示自動產生標記', () => {
+      render(<CustomPunNameForm {...defaultProps} />);
+
+      const kanjiInput = screen.getByPlaceholderText('例：梅川伊芙');
+
+      fireEvent.change(kanjiInput, { target: { value: '田中' } });
+
+      // 檢查 label 中的自動產生標記
+      expect(screen.getByText('（自動產生）')).toBeInTheDocument();
+    });
+
+    it('應該在點擊魔杖按鈕時重新產生羅馬拼音', () => {
+      render(<CustomPunNameForm {...defaultProps} />);
+
+      const kanjiInput = screen.getByPlaceholderText('例：梅川伊芙') as HTMLInputElement;
+      const romajiInput = screen.getByPlaceholderText('例：Umekawa Ifu') as HTMLInputElement;
+
+      // 輸入漢字
+      fireEvent.change(kanjiInput, { target: { value: '田中' } });
+
+      // 手動修改羅馬拼音
+      fireEvent.change(romajiInput, { target: { value: 'Manual' } });
+      expect(romajiInput.value).toBe('Manual');
+
+      // 點擊重新產生按鈕
+      const regenerateButton = screen.getByTitle('重新產生羅馬拼音');
+      fireEvent.click(regenerateButton);
+
+      // 應該恢復為自動產生的值
+      expect(romajiInput.value).toBe('Tanaka');
+    });
+
+    it('應該在輸入非日文字元時不自動產生', () => {
+      render(<CustomPunNameForm {...defaultProps} />);
+
+      const kanjiInput = screen.getByPlaceholderText('例：梅川伊芙') as HTMLInputElement;
+      const romajiInput = screen.getByPlaceholderText('例：Umekawa Ifu') as HTMLInputElement;
+
+      // 輸入純英文
+      fireEvent.change(kanjiInput, { target: { value: 'Hello' } });
+
+      // 羅馬拼音應該保持空白
+      expect(romajiInput.value).toBe('');
     });
   });
 });

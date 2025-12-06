@@ -44,6 +44,7 @@ export type SurnameDataFull = Record<string, SurnameDetail>;
 export type PunNameCategory =
   | 'classic' // 經典諧音
   | 'taiwanese' // 台語諧音
+  | 'cantonese' // 粵語諧音
   | 'life' // 生活諧音
   | 'wealth' // 財富相關
   | 'character' // 拆字梗

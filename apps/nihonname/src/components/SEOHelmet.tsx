@@ -272,9 +272,11 @@ export function SEOHelmet({
 
       {/* JSON-LD Structured Data */}
       {structuredData.map((item, index) => (
-        <script key={index} type="application/ld+json">
-          {JSON.stringify(item)}
-        </script>
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
+        />
       ))}
     </Helmet>
   );
