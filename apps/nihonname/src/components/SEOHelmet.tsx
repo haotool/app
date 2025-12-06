@@ -1,8 +1,10 @@
 /**
  * SEO Helmet Component for NihonName
- * [context7:@dr.pogodin/react-helmet:2025-12-04]
+ * [fix:2025-12-06] 使用 vite-react-ssg 原生 Head 組件
+ * [context7:/daydreamer-riri/vite-react-ssg:2025-12-06]
  *
  * Centralized SEO metadata management with JSON-LD structured data
+ * 使用 vite-react-ssg 的 Head 組件確保 JSON-LD 在 SSG build 時正確注入
  */
 import { Helmet } from '../utils/helmet';
 
