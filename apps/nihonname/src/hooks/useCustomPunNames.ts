@@ -3,7 +3,7 @@
  *
  * 提供 localStorage 持久化的用戶自訂諧音梗管理功能
  */
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import type { CustomPunName, PunName } from '../types';
 
 const STORAGE_KEY = 'nihonname_custom_puns';
@@ -67,6 +67,9 @@ interface UseCustomPunNamesReturn {
 /**
  * 用戶自訂諧音梗 Hook
  *
+ * [fix:2025-12-06] 修復 React Hydration Error #418
+ * SSG 時 localStorage 不可用，必須在客戶端 useEffect 中載入
+ *
  * @example
  * ```tsx
  * const { customPunNames, addCustomPunName, removeCustomPunName } = useCustomPunNames();
@@ -83,8 +86,19 @@ interface UseCustomPunNamesReturn {
  * ```
  */
 export const useCustomPunNames = (): UseCustomPunNamesReturn => {
-  // 使用 lazy initialization 避免 useEffect 中的 setState
-  const [customPunNames, setCustomPunNames] = useState<CustomPunName[]>(() => loadCustomPunNames());
+  // [fix:2025-12-06] 初始值必須為空，在 useEffect 中載入 localStorage
+  // 避免 SSG/CSR 初始 state 不匹配導致 hydration error
+  const [customPunNames, setCustomPunNames] = useState<CustomPunName[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // 客戶端載入 localStorage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && !isLoaded) {
+      const stored = loadCustomPunNames();
+      setCustomPunNames(stored);
+      setIsLoaded(true);
+    }
+  }, [isLoaded]);
 
   // 檢查是否重複
   const isDuplicate = useCallback(
