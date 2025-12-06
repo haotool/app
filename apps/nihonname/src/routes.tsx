@@ -1,79 +1,86 @@
 /**
  * Route configuration for NihonName
- * [context7:react-router-dom:2025-12-03]
+ * [context7:vite-react-ssg:2025-12-06] 使用 lazy 屬性取代 React.lazy + Suspense
  * [SEO:2025-12-04] 新增歷史專區頁面路由
- * [fix:2025-12-04] 使用 lazyWithRetry 處理 chunk 載入失敗
  * [SEO:2025-12-05] 新增 FAQ 頁面，整合常見問題
- * [fix:2025-12-06] 內聯 loading fallback 以符合 React Fast Refresh
+ * [fix:2025-12-06] 修復 React Hydration Error #418 - 移除 Suspense boundary
+ *
+ * 重要：vite-react-ssg 使用 lazy 屬性會在 SSG 時預渲染完整 HTML，
+ * 避免 Suspense streaming 標記導致的 hydration mismatch
  */
-import { Suspense } from 'react';
-import type { RouteObject } from 'react-router-dom';
+import type { RouteRecord } from 'vite-react-ssg';
 import { Layout } from './components/Layout';
-import { lazyWithRetry } from './utils/lazyWithRetry';
 
-// Lazy load pages with retry mechanism
-// [fix:2025-12-04] 修復 SSG 部署後 "Unexpected token '<'" 錯誤
-const Home = lazyWithRetry(() => import('./pages/Home'));
-const About = lazyWithRetry(() => import('./pages/About'));
-const Guide = lazyWithRetry(() => import('./pages/Guide'));
-const FAQ = lazyWithRetry(() => import('./pages/FAQ'));
-
-// History pages - SEO FAQ pages
-const HistoryIndex = lazyWithRetry(() => import('./pages/history/index'));
-const KominkaMovement = lazyWithRetry(() => import('./pages/history/KominkaMovement'));
-const ShimonosekiTreaty = lazyWithRetry(() => import('./pages/history/ShimonosekiTreaty'));
-const SanFranciscoTreaty = lazyWithRetry(() => import('./pages/history/SanFranciscoTreaty'));
-
-// Wrap component with Suspense and loading fallback
-const withSuspense = (Component: React.ComponentType) => (
-  <Suspense
-    fallback={
-      <div className="min-h-screen flex items-center justify-center bg-stone-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-800 border-t-transparent" />
-      </div>
-    }
-  >
-    <Component />
-  </Suspense>
-);
-
-export const routes: RouteObject[] = [
+export const routes: RouteRecord[] = [
   {
     path: '/',
     element: <Layout />,
+    entry: 'src/components/Layout.tsx',
     children: [
       {
         index: true,
-        element: withSuspense(Home),
+        lazy: async () => {
+          const mod = await import('./pages/Home');
+          return { Component: mod.default };
+        },
+        entry: 'src/pages/Home.tsx',
       },
       {
         path: 'about',
-        element: withSuspense(About),
+        lazy: async () => {
+          const mod = await import('./pages/About');
+          return { Component: mod.default };
+        },
+        entry: 'src/pages/About.tsx',
       },
       {
         path: 'guide',
-        element: withSuspense(Guide),
+        lazy: async () => {
+          const mod = await import('./pages/Guide');
+          return { Component: mod.default };
+        },
+        entry: 'src/pages/Guide.tsx',
       },
       {
         path: 'faq',
-        element: withSuspense(FAQ),
+        lazy: async () => {
+          const mod = await import('./pages/FAQ');
+          return { Component: mod.default };
+        },
+        entry: 'src/pages/FAQ.tsx',
       },
       // History pages - SEO FAQ pages
       {
         path: 'history',
-        element: withSuspense(HistoryIndex),
+        lazy: async () => {
+          const mod = await import('./pages/history/index');
+          return { Component: mod.default };
+        },
+        entry: 'src/pages/history/index.tsx',
       },
       {
         path: 'history/kominka',
-        element: withSuspense(KominkaMovement),
+        lazy: async () => {
+          const mod = await import('./pages/history/KominkaMovement');
+          return { Component: mod.default };
+        },
+        entry: 'src/pages/history/KominkaMovement.tsx',
       },
       {
         path: 'history/shimonoseki',
-        element: withSuspense(ShimonosekiTreaty),
+        lazy: async () => {
+          const mod = await import('./pages/history/ShimonosekiTreaty');
+          return { Component: mod.default };
+        },
+        entry: 'src/pages/history/ShimonosekiTreaty.tsx',
       },
       {
         path: 'history/san-francisco',
-        element: withSuspense(SanFranciscoTreaty),
+        lazy: async () => {
+          const mod = await import('./pages/history/SanFranciscoTreaty');
+          return { Component: mod.default };
+        },
+        entry: 'src/pages/history/SanFranciscoTreaty.tsx',
       },
     ],
   },
