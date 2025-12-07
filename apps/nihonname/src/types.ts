@@ -67,6 +67,8 @@ export interface PunName {
   category?: PunNameCategory;
   /** 是否為用戶自訂 */
   isCustom?: boolean;
+  /** 搞笑程度評分 1-10，8分以上觸發彩帶效果 */
+  funnyScore?: number;
 }
 
 /** 用戶自訂諧音梗 */

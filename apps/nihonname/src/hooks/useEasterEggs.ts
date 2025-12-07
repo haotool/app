@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 /**
  * 彩蛋類型 - 僅保留手機版觸發方式
  * [fix:2025-12-06] 移除所有電腦版彩蛋（鍵盤、滑鼠觸發）
+ * [fix:2025-12-07] 新增 confetti 彩帶效果（高分諧音梗觸發）
  * [context7:motion.dev:2025-12-06] 參考 Framer Motion 最佳實踐
  *
  * 專案主色：red-900 (#7f1d1d)、red-600 (#dc2626)
@@ -17,6 +18,7 @@ export type EasterEggType =
   | 'torii' // 鳥居之門 (印章 3 次點擊)
   | 'glow' // 金光效果 (標題雙擊)
   | 'rumble' // 地震效果 (長按 2 秒)
+  | 'confetti' // 彩帶慶祝 (高分諧音梗，背景不變暗)
   | null;
 
 export function useEasterEggs() {
@@ -297,6 +299,11 @@ export function useEasterEggs() {
     return false;
   }, [activeEgg, triggerEgg, shakeThreshold]);
 
+  // 外部觸發彩帶效果（高分諧音梗用）
+  const triggerConfetti = useCallback(() => {
+    triggerEgg('confetti', 3000);
+  }, [triggerEgg]);
+
   return {
     activeEgg,
     handleLogoClick,
@@ -306,5 +313,6 @@ export function useEasterEggs() {
     handleLongPressStart,
     handleLongPressEnd,
     requestMotionPermission,
+    triggerConfetti,
   };
 }

@@ -30,6 +30,7 @@ export const EasterEggs = memo(function EasterEggs({
       {activeEgg === 'samurai' && <SamuraiSlash />}
       {activeEgg === 'torii' && <ToriiGate />}
       {activeEgg === 'glow' && <GoldenGlow />}
+      {activeEgg === 'confetti' && <ConfettiCelebration />}
 
       <style>{`
         @keyframes shake {
@@ -111,67 +112,74 @@ const SakuraStorm = () => {
 };
 
 /**
- * 花火大會 - 使用 tsParticles Fireworks 全屏煙火 + 簡易音效
- * 持續 12 秒，使用主題紅/琥珀/玫瑰色彩
+ * 花火大會 - 精緻全屏煙火效果
+ * 持續 12 秒，使用主題紅/琥珀/玫瑰色彩，佔滿全屏絢爛綻放
  *
- * [fix:2025-12-07] 根據 Context7 React + tsParticles 官方文檔完整修復
- * - 使用同步 cleanup flag 防止異步競態條件
- * - 正確調用 instance.stop() 釋放 tsParticles 資源
- * - 改進 AudioContext 生命週期管理
- * - 防止組件卸載後的異步操作繼續執行
+ * [fix:2025-12-07] 優化為更精緻的全屏煙火庫
+ * - 多層次煙火從畫面各處發射
+ * - 增加煙火密度和粒子數量
+ * - 更絢爛的色彩組合和尾跡效果
  * [context7:/tsparticles/tsparticles:fireworks:2025-12-07]
- * [context7:/reactjs/react.dev:useEffect-cleanup:2025-12-07]
- * [ref:https://react.dev/learn/synchronizing-with-effects]
- * [ref:https://refine.dev/blog/useeffect-cleanup/]
  */
 const Fireworks = () => {
   useEffect(() => {
-    // 使用 isMounted flag 防止組件卸載後的操作
-    // [ref:https://react.dev/learn/synchronizing-with-effects]
     let isMounted = true;
 
-    const primaryPalette: string[] = [
-      '#7f1d1d',
-      '#dc2626',
-      '#fb923c',
-      '#fbbf24',
-      '#fecdd3',
-      '#ffffff',
+    // 絢爛色彩組合 - 日本花火大會風格
+    const hanabiFestivalPalette: string[] = [
+      '#ff1744', // 鮮紅
+      '#ff4081', // 桃紅
+      '#f50057', // 洋紅
+      '#d500f9', // 紫
+      '#651fff', // 深紫
+      '#00e5ff', // 青
+      '#1de9b6', // 翠綠
+      '#76ff03', // 螢光綠
+      '#ffea00', // 金黃
+      '#ff9100', // 橙
+      '#ffffff', // 白
+      '#ffd54f', // 淺金
     ];
-    const neonPalette: string[] = ['#c026d3', '#22d3ee', '#e11d48', '#f59e0b', '#84cc16'];
+    const traditionalPalette: string[] = [
+      '#7f1d1d', // 深紅
+      '#dc2626', // 紅
+      '#fb923c', // 橙
+      '#fbbf24', // 琥珀
+      '#fecdd3', // 粉
+      '#c026d3', // 洋紫
+      '#22d3ee', // 青
+    ];
 
-    // 儲存清理函數的局部變數（避免 ref 問題）
     let particlesInstance: { stop: () => void } | null | undefined = null;
     let audioInterval: ReturnType<typeof setInterval> | null = null;
     let audioTimeout: ReturnType<typeof setTimeout> | null = null;
     let audioCtx: AudioContext | null = null;
-    let confettiInterval: ReturnType<typeof setInterval> | null = null;
+    let confettiIntervals: ReturnType<typeof setInterval>[] = [];
 
-    // 1. 啟動 tsParticles Fireworks
+    // 1. 啟動 tsParticles Fireworks - 全屏高密度煙火
     void (async () => {
       if (!isMounted) return;
       try {
         const { fireworks } = await import('@tsparticles/fireworks');
-        if (!isMounted) return; // 檢查組件是否已卸載
+        if (!isMounted) return;
 
-        // [context7:/tsparticles/tsparticles:fireworks] 使用官方推薦模式
+        // 使用完整色彩組合創建壯觀的煙火效果
         const instance = await fireworks({
-          colors: primaryPalette,
+          colors: [...hanabiFestivalPalette, ...traditionalPalette],
         });
 
         if (!isMounted) {
-          // 組件已卸載，立即清理
           instance?.stop();
           return;
         }
 
         particlesInstance = instance;
       } catch {
-        // 忽略煙火載入失敗的錯誤，不影響主功能
+        // 忽略煙火載入失敗的錯誤
       }
     })();
 
-    // 2. 簡易音效：每 900ms 觸發一次短促爆裂聲
+    // 2. 豐富的音效：模擬真實花火大會音效
     if (typeof window !== 'undefined') {
       try {
         const AudioContextClass =
@@ -182,23 +190,29 @@ const Fireworks = () => {
           audioCtx = new AudioContextClass();
           const playBang = () => {
             if (!isMounted || !audioCtx) return;
+            // 保存到局部變數以避免 closure 中的類型問題
+            const ctx = audioCtx;
             try {
-              const osc = audioCtx.createOscillator();
-              const gain = audioCtx.createGain();
-              osc.type = 'triangle';
-              osc.frequency.setValueAtTime(220 + Math.random() * 420, audioCtx.currentTime);
-              gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-              gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.25);
-              osc.connect(gain).connect(audioCtx.destination);
-              osc.start();
-              osc.stop(audioCtx.currentTime + 0.3);
+              // 創建多層次爆破音效
+              const frequencies = [180, 320, 480, 640];
+              frequencies.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = i % 2 === 0 ? 'triangle' : 'sine';
+                osc.frequency.setValueAtTime(freq + Math.random() * 100, ctx.currentTime);
+                gain.gain.setValueAtTime(0.04 / (i + 1), ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(ctx.currentTime + i * 0.02);
+                osc.stop(ctx.currentTime + 0.35);
+              });
             } catch {
               // 忽略音效播放錯誤
             }
           };
 
           playBang();
-          audioInterval = setInterval(playBang, 900);
+          audioInterval = setInterval(playBang, 600 + Math.random() * 400);
           audioTimeout = setTimeout(() => {
             if (audioInterval) clearInterval(audioInterval);
             audioCtx?.close().catch(() => undefined);
@@ -209,51 +223,90 @@ const Fireworks = () => {
       }
     }
 
-    // 3. Confetti 疊加效果
+    // 3. 多層次 Confetti 疊加 - 從畫面各處發射
     void (async () => {
       if (!isMounted) return;
       try {
         const { confetti } = await import('@tsparticles/confetti');
         if (!isMounted) return;
 
-        const burst = async (palette: string[]) => {
+        // 隨機位置大型爆發
+        const burstFromPosition = async (x: number, y: number, palette: string[]) => {
           if (!isMounted) return;
-          const originX = Math.random();
-          const originY = 0.5 + Math.random() * 0.3;
-          // [context7:/tsparticles/tsparticles:confetti] 使用官方推薦的參數格式
           await confetti({
-            angle: 45 + Math.random() * 90,
-            count: 80 + Math.floor(Math.random() * 40),
-            spread: 55 + Math.random() * 25,
-            startVelocity: 35 + Math.random() * 20,
-            gravity: 0.9,
-            drift: Math.random() * 0.5,
-            ticks: 200 + Math.random() * 80,
+            angle: 60 + Math.random() * 60,
+            count: 100 + Math.floor(Math.random() * 60),
+            spread: 70 + Math.random() * 40,
+            startVelocity: 45 + Math.random() * 25,
+            gravity: 0.8,
+            drift: (Math.random() - 0.5) * 0.8,
+            ticks: 250 + Math.random() * 100,
             colors: palette,
-            shapes: ['circle', 'square', 'star'],
-            scalar: 0.9 + Math.random() * 0.3,
-            position: { x: originX * 100, y: originY * 100 },
+            shapes: ['circle', 'star'],
+            scalar: 1.0 + Math.random() * 0.4,
+            position: { x: x * 100, y: y * 100 },
             zIndex: 90,
           });
         };
 
-        confettiInterval = setInterval(() => {
-          void burst(primaryPalette);
-          void burst(neonPalette);
-        }, 700);
+        // 從底部向上發射的煙火軌跡
+        const launchFirework = async () => {
+          if (!isMounted) return;
+          const x = 0.1 + Math.random() * 0.8; // 橫向隨機位置
+          const launchY = 0.9; // 從底部發射
+          const burstY = 0.2 + Math.random() * 0.3; // 在上方爆炸
+
+          // 先發射軌跡
+          await confetti({
+            count: 3,
+            angle: 90,
+            spread: 5,
+            startVelocity: 60,
+            gravity: 1.5,
+            colors: ['#ffea00', '#ff9100'],
+            shapes: ['circle'],
+            scalar: 0.6,
+            position: { x: x * 100, y: launchY * 100 },
+            zIndex: 85,
+          });
+
+          // 延遲後爆炸
+          setTimeout(() => {
+            if (!isMounted) return;
+            const palette = Math.random() > 0.5 ? hanabiFestivalPalette : traditionalPalette;
+            void burstFromPosition(x, burstY, palette.slice(0, 6));
+          }, 300);
+        };
+
+        // 密集發射間隔
+        const interval1 = setInterval(() => {
+          void launchFirework();
+        }, 500);
+
+        const interval2 = setInterval(() => {
+          // 隨機位置大爆發
+          const x = 0.15 + Math.random() * 0.7;
+          const y = 0.25 + Math.random() * 0.35;
+          void burstFromPosition(x, y, hanabiFestivalPalette);
+        }, 800);
+
+        const interval3 = setInterval(() => {
+          // 螢幕邊緣煙火
+          const side = Math.random() > 0.5;
+          const x = side ? 0.1 + Math.random() * 0.15 : 0.75 + Math.random() * 0.15;
+          const y = 0.3 + Math.random() * 0.3;
+          void burstFromPosition(x, y, traditionalPalette);
+        }, 1100);
+
+        confettiIntervals = [interval1, interval2, interval3];
       } catch {
         // confetti 載入失敗忽略
       }
     })();
 
-    // Cleanup function: 對稱地撤銷所有 setup 操作
-    // [ref:https://react.dev/reference/react/useEffect]
     return () => {
-      // 1. 設置 unmount flag，防止異步操作繼續執行
       isMounted = false;
 
-      // 2. 清理 tsParticles 實例（使用 stop 釋放資源）
-      // [context7:/tsparticles/tsparticles] stop() 會停止動畫並釋放資源
       if (particlesInstance) {
         try {
           particlesInstance.stop();
@@ -262,21 +315,20 @@ const Fireworks = () => {
         }
       }
 
-      // 3. 清理音效相關資源
       if (audioInterval) clearInterval(audioInterval);
       if (audioTimeout) clearTimeout(audioTimeout);
       if (audioCtx) {
         audioCtx.close().catch(() => undefined);
       }
 
-      // 4. 清理 confetti interval
-      if (confettiInterval) clearInterval(confettiInterval);
+      confettiIntervals.forEach((interval) => clearInterval(interval));
     };
   }, []);
 
   return (
     <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-stone-900/60 to-black/80" />
+      {/* 深色漸層背景突顯煙火效果 */}
+      <div className="absolute inset-0 bg-gradient-to-b from-stone-950/85 via-stone-900/80 to-black/90" />
       {/* tsParticles 會自動創建並管理 canvas */}
     </div>
   );
@@ -446,3 +498,102 @@ const ToriiGate = () => (
 const GoldenGlow = () => (
   <div className="absolute inset-0 bg-amber-500/20 mix-blend-overlay animate-pulse duration-300" />
 );
+
+/**
+ * 彩帶慶祝效果 - 高分諧音梗觸發 (8分以上)
+ * 持續 3 秒，背景不變暗，純粹的彩帶慶祝
+ * [fix:2025-12-07] 新增高分諧音梗獎勵效果
+ */
+const ConfettiCelebration = () => {
+  useEffect(() => {
+    let isMounted = true;
+    let confettiIntervals: ReturnType<typeof setInterval>[] = [];
+
+    // 慶祝色彩組合 - 金、紅、粉色系
+    const celebrationPalette: string[] = [
+      '#fbbf24', // 金黃
+      '#f59e0b', // 琥珀
+      '#ef4444', // 紅
+      '#f472b6', // 粉紅
+      '#a855f7', // 紫
+      '#22d3ee', // 青
+      '#ffffff', // 白
+      '#fcd34d', // 淺金
+    ];
+
+    void (async () => {
+      if (!isMounted) return;
+      try {
+        const { confetti } = await import('@tsparticles/confetti');
+        if (!isMounted) return;
+
+        // 從左右兩側同時發射彩帶
+        const burstFromSide = async (isLeft: boolean) => {
+          if (!isMounted) return;
+          await confetti({
+            angle: isLeft ? 60 : 120,
+            count: 60 + Math.floor(Math.random() * 30),
+            spread: 55 + Math.random() * 25,
+            startVelocity: 40 + Math.random() * 15,
+            gravity: 0.9,
+            drift: isLeft ? 0.3 : -0.3,
+            ticks: 200,
+            colors: celebrationPalette,
+            shapes: ['circle', 'square', 'star'],
+            scalar: 0.9 + Math.random() * 0.3,
+            position: { x: isLeft ? 10 : 90, y: 60 },
+            zIndex: 250,
+          });
+        };
+
+        // 中央向上爆發
+        const burstFromCenter = async () => {
+          if (!isMounted) return;
+          await confetti({
+            angle: 90,
+            count: 80 + Math.floor(Math.random() * 40),
+            spread: 100 + Math.random() * 30,
+            startVelocity: 50 + Math.random() * 20,
+            gravity: 0.85,
+            ticks: 220,
+            colors: celebrationPalette,
+            shapes: ['circle', 'star'],
+            scalar: 1.0 + Math.random() * 0.3,
+            position: { x: 50, y: 70 },
+            zIndex: 250,
+          });
+        };
+
+        // 立即發射初始彩帶
+        await Promise.all([burstFromSide(true), burstFromSide(false), burstFromCenter()]);
+
+        // 持續發射 3 秒
+        const interval1 = setInterval(() => {
+          void burstFromSide(true);
+          void burstFromSide(false);
+        }, 400);
+
+        const interval2 = setInterval(() => {
+          void burstFromCenter();
+        }, 600);
+
+        confettiIntervals = [interval1, interval2];
+
+        // 3 秒後停止
+        setTimeout(() => {
+          confettiIntervals.forEach((interval) => clearInterval(interval));
+        }, 3000);
+      } catch {
+        // confetti 載入失敗忽略
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+      confettiIntervals.forEach((interval) => clearInterval(interval));
+    };
+  }, []);
+
+  // 背景不變暗，只有彩帶效果
+  return <div className="absolute inset-0 pointer-events-none" aria-hidden="true" />;
+};

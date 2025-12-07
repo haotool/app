@@ -523,6 +523,7 @@ export default function Home() {
     handleDoubleTextClick,
     handleToriiClick,
     requestMotionPermission,
+    triggerConfetti,
   } = useEasterEggs();
   // iOS DeviceMotion 權限狀態
   const [hasMotionPermission, setHasMotionPermission] = useState(false);
@@ -723,6 +724,14 @@ export default function Home() {
       setDisplayGivenName(finalGivenName);
       setLoading(false);
 
+      // 高分諧音梗 (8分以上) 觸發彩帶慶祝效果
+      if (pun.funnyScore && pun.funnyScore >= 8) {
+        // 延遲一點觸發，讓結果頁動畫先完成
+        setTimeout(() => {
+          triggerConfetti();
+        }, 500);
+      }
+
       // 進入結果頁 10 秒後顯示截圖模式引導
       if (screenshotGuideTimeoutRef.current) clearTimeout(screenshotGuideTimeoutRef.current);
       screenshotGuideTimeoutRef.current = setTimeout(() => {
@@ -779,7 +788,12 @@ export default function Home() {
   const rerollPun = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (editingField) return; // 編輯中不能隨機
-    setState((prev) => ({ ...prev, punName: getRandom(allPunNames) }));
+    const newPun = getRandom(allPunNames);
+    setState((prev) => ({ ...prev, punName: newPun }));
+    // 高分諧音梗 (8分以上) 觸發彩帶慶祝效果
+    if (newPun.funnyScore && newPun.funnyScore >= 8) {
+      triggerConfetti();
+    }
   };
 
   const toggleUI = () => {
