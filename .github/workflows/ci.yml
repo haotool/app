@@ -145,3 +145,57 @@ jobs:
           name: playwright-report
           path: apps/ratewise/playwright-report
           retention-days: 7
+
+  trivy:
+    name: Security Scan (Trivy)
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for scan
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: ratewise:ci-scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy file-system scan (HIGH/CRITICAL, ignore unfixed)
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          scan-type: 'fs'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+          ignore-unfixed: true
+          format: 'table'
+          output: 'trivy-fs.txt'
+
+      - name: Trivy image scan (HIGH/CRITICAL, ignore unfixed)
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          scan-type: 'image'
+          image-ref: 'ratewise:ci-scan'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+          ignore-unfixed: true
+          format: 'table'
+          output: 'trivy-image.txt'
+
+      - name: Upload Trivy reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-reports
+          path: |
+            trivy-fs.txt
+            trivy-image.txt
