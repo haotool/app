@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+      time: '01:00'
+      timezone: 'Asia/Taipei'
+    commit-message:
+      prefix: 'chore(deps)'
+    allow:
+      - dependency-type: 'direct'
+    open-pull-requests-limit: 5
+    # 只自動升級安全/patch/minor，避免破壞性變更
+    versioning-strategy: increase-if-necessary
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '01:00'
+      timezone: 'Asia/Taipei'
+    commit-message:
+      prefix: 'chore(ci)'
