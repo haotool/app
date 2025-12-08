@@ -200,14 +200,14 @@ export function useEasterEggs() {
     [toriiClicks, lastToriiClickTime, activeEgg, triggerEgg, clearEgg],
   );
 
-  // 標題雙擊 → 金光效果
+  // 標題雙擊 → 1940 快閃檔案（原金光效果）
   const handleDoubleTextClick = useCallback(() => {
     lastActivityRef.current = Date.now();
     if (activeEgg === 'zen') {
       clearEgg();
       return;
     }
-    triggerEgg('glow', 2000);
+    triggerEgg('glow', 5000);
   }, [activeEgg, triggerEgg, clearEgg]);
 
   // 快速連點 7 次 → 武士斬擊

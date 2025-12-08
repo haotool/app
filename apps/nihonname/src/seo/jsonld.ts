@@ -8,6 +8,7 @@
  */
 
 const SITE_BASE_URL = 'https://app.haotool.org/nihonname/';
+const ASSET_VERSION = 'v=20251208';
 
 const DEFAULT_DESCRIPTION =
   '探索1940年代台灣皇民化運動的歷史改姓對照。輸入你的姓氏，發現日治時期的日式姓名與趣味諧音名。基於歷史文獻《内地式改姓名の仕方》。';
@@ -17,6 +18,13 @@ const SOCIAL_LINKS = [
   'https://www.threads.com/@azlife_1224/post/DR2NCeEj6Fo?xmt=AQF0K8pg5PLpzoBz7nnYMEI2CdxVzs2pUyIJHabwZWeYCw',
   'https://twitter.com/azlife_1224',
 ];
+
+const withAssetVersion = (url: string) =>
+  url.includes('?') ? `${url}&${ASSET_VERSION}` : `${url}?${ASSET_VERSION}`;
+const buildAssetUrl = (value: string) => {
+  const absolute = value.startsWith('http') ? value : `${SITE_BASE_URL}${value.replace(/^\//, '')}`;
+  return withAssetVersion(absolute);
+};
 
 /**
  * 基礎 JSON-LD 結構化數據 (適用於所有頁面)
@@ -51,7 +59,7 @@ export const BASE_JSON_LD = [
     '@type': 'Organization',
     name: 'haotool',
     url: 'https://haotool.org',
-    logo: `${SITE_BASE_URL}icons/icon-512x512.png`,
+    logo: buildAssetUrl('icons/icon-512x512.png'),
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Customer Support',
@@ -150,7 +158,7 @@ export function buildArticleSchema(article: ArticleData, url: string) {
       name: 'haotool',
       logo: {
         '@type': 'ImageObject',
-        url: `${SITE_BASE_URL}icons/icon-512x512.png`,
+        url: buildAssetUrl('icons/icon-512x512.png'),
       },
     },
     keywords: article.keywords,
@@ -204,7 +212,7 @@ export function buildImageObjectSchema(imagePath: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'ImageObject',
-    url: `${SITE_BASE_URL}${imagePath.replace(/^\//, '')}`,
+    url: buildAssetUrl(imagePath),
     width: 1200,
     height: 630,
     caption: 'NihonName 皇民化改姓生成器',

@@ -120,6 +120,7 @@ describe('getMetaTagsForRoute', () => {
     it('should include og:image', () => {
       const result = getMetaTagsForRoute('/', buildTime);
       expect(result).toContain('<meta property="og:image"');
+      expect(result).toContain('og-image.png?v=20251208');
     });
 
     it('should include og:image:width and og:image:height', () => {
@@ -141,6 +142,11 @@ describe('getMetaTagsForRoute', () => {
     it('should include og:updated_time with build time', () => {
       const result = getMetaTagsForRoute('/', buildTime);
       expect(result).toContain(`<meta property="og:updated_time" content="${buildTime}"`);
+    });
+
+    it('should include versioned absolute og:image url', () => {
+      const result = getMetaTagsForRoute('/', buildTime);
+      expect(result).toContain('https://app.haotool.org/nihonname/og-image.png?v=20251208');
     });
   });
 
@@ -173,6 +179,7 @@ describe('getMetaTagsForRoute', () => {
     it('should include twitter:image', () => {
       const result = getMetaTagsForRoute('/', buildTime);
       expect(result).toContain('<meta name="twitter:image"');
+      expect(result).toContain('og-image.png?v=20251208');
     });
   });
 
@@ -250,7 +257,7 @@ describe('getMetaTagsForRoute', () => {
   describe('OG Image URL', () => {
     it('should build correct OG image URL', () => {
       const result = getMetaTagsForRoute('/', buildTime);
-      expect(result).toContain('https://app.haotool.org/nihonname/og-image.png');
+      expect(result).toContain('https://app.haotool.org/nihonname/og-image.png?v=20251208');
     });
   });
 });

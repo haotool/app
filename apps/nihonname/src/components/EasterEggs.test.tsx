@@ -59,9 +59,9 @@ describe('EasterEggs', () => {
     });
 
     it('should render glow effect when activeEgg is "glow"', () => {
-      const { container } = render(<EasterEggs activeEgg="glow" />);
-      const glowElement = container.querySelector('.bg-amber-500\\/20');
-      expect(glowElement).toBeTruthy();
+      render(<EasterEggs activeEgg="glow" />);
+      expect(screen.getAllByText(/1940/).length).toBeGreaterThan(0);
+      expect(screen.getByText(/皇民化改姓快閃紀錄/)).toBeInTheDocument();
     });
 
     it('should apply shake animation when activeEgg is "rumble"', () => {

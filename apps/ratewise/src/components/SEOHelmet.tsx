@@ -59,6 +59,7 @@ const DEFAULT_DESCRIPTION =
   'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。';
 const DEFAULT_OG_IMAGE = '/og-image.png';
 const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratewise/'; // Fallback 尾斜線
+const ASSET_VERSION = 'v=20251208';
 const DEFAULT_LOCALE = 'zh-TW';
 const DEFAULT_KEYWORDS = [
   '匯率好工具',
@@ -94,6 +95,13 @@ const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`);
 const ensureTrailingSlash = (value: string) => (value.endsWith('/') ? value : `${value}/`);
 const SITE_BASE_URL = ensureTrailingSlash(sanitizeBaseUrl(SITE_URL));
+
+const withAssetVersion = (url: string) =>
+  url.includes('?') ? `${url}&${ASSET_VERSION}` : `${url}?${ASSET_VERSION}`;
+const buildAssetUrl = (value: string) => {
+  const absolute = value.startsWith('http') ? value : `${SITE_BASE_URL}${value.replace(/^\//, '')}`;
+  return withAssetVersion(absolute);
+};
 
 const buildCanonical = (path?: string) => {
   if (!path || path === '/') return SITE_BASE_URL;
@@ -135,14 +143,14 @@ const DEFAULT_JSON_LD = [
       '台灣銀行牌告匯率',
       '30+ 種貨幣支援',
     ],
-    screenshot: `${SITE_BASE_URL}screenshots/desktop-converter.png`,
+    screenshot: buildAssetUrl('screenshots/desktop-converter.png'),
   },
   {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'RateWise',
     url: SITE_BASE_URL,
-    logo: `${SITE_BASE_URL}optimized/logo-512w.png`,
+    logo: buildAssetUrl('optimized/logo-512w.png'),
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Customer Support',
@@ -221,9 +229,7 @@ export function SEOHelmet({
   const fullTitle = title ? `${title} | RateWise` : DEFAULT_TITLE;
 
   const canonicalUrl = canonical ? buildCanonical(canonical) : buildCanonical(pathname);
-  const ogImageUrl = ogImage.startsWith('http')
-    ? ogImage
-    : `${SITE_BASE_URL}${ogImage.replace(/^\//, '')}`;
+  const ogImageUrl = buildAssetUrl(ogImage);
   const keywordsContent = (keywords?.length ? keywords : DEFAULT_KEYWORDS).join(', ');
   const alternatesToRender = alternates?.length ? alternates : DEFAULT_ALTERNATES;
   const normalizedAlternates = alternatesToRender.map(({ href, hrefLang }) => ({
