@@ -216,7 +216,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check dependency graph availability
+        id: depgraph
+        run: |
+          status=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}" | jq -r '.security_and_analysis.dependency_graph.status // "disabled"')
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" != "enabled" ]; then
+            echo "Dependency graph is not enabled on this repo; skipping dependency review."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Dependency review
+        if: steps.depgraph.outputs.status == 'enabled'
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: 'high'
