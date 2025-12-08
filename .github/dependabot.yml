@@ -11,6 +11,7 @@ updates:
     allow:
       - dependency-type: 'direct'
     open-pull-requests-limit: 5
+    rebase-strategy: auto
     # 只自動升級安全/patch/minor，避免破壞性變更
     versioning-strategy: increase-if-necessary
 
