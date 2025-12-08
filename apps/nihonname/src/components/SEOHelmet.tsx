@@ -38,6 +38,7 @@ interface SEOProps {
 
 // Site configuration
 const SITE_BASE_URL = 'https://app.haotool.org/nihonname/';
+const ASSET_VERSION = 'v=20251208';
 
 const DEFAULT_TITLE = 'NihonName 皇民化改姓生成器 | 1940年代台灣日式姓名產生器';
 const DEFAULT_DESCRIPTION =
@@ -92,6 +93,13 @@ const DEFAULT_ALTERNATES: AlternateLink[] = [
   { hrefLang: DEFAULT_LOCALE, href: SITE_BASE_URL },
 ];
 
+const withAssetVersion = (url: string) =>
+  url.includes('?') ? `${url}&${ASSET_VERSION}` : `${url}?${ASSET_VERSION}`;
+const buildAssetUrl = (value: string) => {
+  const absolute = value.startsWith('http') ? value : `${SITE_BASE_URL}${value.replace(/^\//, '')}`;
+  return withAssetVersion(absolute);
+};
+
 /**
  * SEOHelmet - 僅處理 meta tags，JSON-LD 由 onPageRendered hook 注入
  *
@@ -122,9 +130,7 @@ export function SEOHelmet({
   const fullTitle = title ? `${title} | NihonName` : DEFAULT_TITLE;
 
   const canonicalUrl = canonical ? buildCanonical(canonical) : buildCanonical(pathname);
-  const ogImageUrl = ogImage.startsWith('http')
-    ? ogImage
-    : `${SITE_BASE_URL}${ogImage.replace(/^\//, '')}`;
+  const ogImageUrl = buildAssetUrl(ogImage);
   const keywordsContent = (keywords?.length ? keywords : DEFAULT_KEYWORDS).join(', ');
   const alternatesToRender = alternates?.length ? alternates : DEFAULT_ALTERNATES;
   const normalizedAlternates = alternatesToRender.map(({ href, hrefLang }) => ({

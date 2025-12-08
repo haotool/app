@@ -9,6 +9,7 @@
  */
 
 const SITE_BASE_URL = 'https://app.haotool.org/nihonname/';
+const ASSET_VERSION = 'v=20251208';
 const DEFAULT_TITLE = 'NihonName 皇民化改姓生成器 | 1940年代台灣日式姓名產生器';
 const DEFAULT_DESCRIPTION =
   '探索1940年代台灣皇民化運動的歷史改姓對照。輸入你的姓氏，發現日治時期的日式姓名與趣味諧音名。基於歷史文獻《内地式改姓名の仕方》。';
@@ -126,6 +127,13 @@ function getRouteConfig(route: string, buildTime: string): MetaTagsConfig {
   }
 }
 
+const withAssetVersion = (url: string) =>
+  url.includes('?') ? `${url}&${ASSET_VERSION}` : `${url}?${ASSET_VERSION}`;
+const buildAssetUrl = (value: string) => {
+  const absolute = value.startsWith('http') ? value : `${SITE_BASE_URL}${value.replace(/^\//, '')}`;
+  return withAssetVersion(absolute);
+};
+
 /**
  * 構建完整的 meta tags HTML
  */
@@ -141,9 +149,7 @@ function buildMetaTags(config: MetaTagsConfig): string {
 
   const fullTitle = title ?? DEFAULT_TITLE;
   const canonicalUrl = buildCanonical(config.route);
-  const ogImageUrl = ogImage.startsWith('http')
-    ? ogImage
-    : `${SITE_BASE_URL}${ogImage.replace(/^\//, '')}`;
+  const ogImageUrl = buildAssetUrl(ogImage);
 
   const defaultKeywords = [
     '皇民化改姓',

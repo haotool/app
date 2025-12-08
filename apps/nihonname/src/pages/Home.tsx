@@ -471,6 +471,25 @@ const getRandom = <T,>(arr: T[]): T => {
   return arr[index] as T;
 };
 
+const LOCAL_STORAGE_KEYS = {
+  screenshotUsed: 'nihonname_has_used_screenshot',
+  shareModalSeen: 'nihonname_share_modal_seen',
+};
+
+const getStorage = () => {
+  if (typeof window === 'undefined') return null;
+  const storage = window.localStorage;
+  if (!storage || typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function') {
+    return null;
+  }
+  return storage;
+};
+
+interface DiceTip {
+  icon: string;
+  message: string;
+}
+
 export default function Home() {
   const [state, setState] = useState<GeneratorState>({
     originalSurname: '',
@@ -487,10 +506,14 @@ export default function Home() {
   const [showLookup, setShowLookup] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastIcon, setToastIcon] = useState('🌸');
   const [compoundHint, setCompoundHint] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   // 新增：截圖模式按鈕發光引導（進入結果頁 10 秒後顯示）
   const [showScreenshotGuide, setShowScreenshotGuide] = useState(false);
+  const [hasUsedScreenshotMode, setHasUsedScreenshotMode] = useState(false);
+  const [hasSeenShareModal, setHasSeenShareModal] = useState(false);
+  const [showScreenshotPraise, setShowScreenshotPraise] = useState(false);
   const [surnamePlaceholder, setSurnamePlaceholder] = useState('陳 / 歐陽');
   const [placeholderActive, setPlaceholderActive] = useState(true);
   // 搖晃彩蛋授權：進站滿 60 秒後才允許顯示 DeviceMotion 提示
@@ -504,6 +527,8 @@ export default function Home() {
   const placeholderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const placeholderSwapRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const motionPromptTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const praiseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const diceClickRef = useRef(0);
 
   // 內聯編輯模式狀態
   const [editingField, setEditingField] = useState<'kanji' | 'romaji' | 'meaning' | null>(null);
@@ -616,13 +641,14 @@ export default function Home() {
   };
 
   // 顯示吐司訊息
-  const showToastMessage = (message: string) => {
+  const showToastMessage = (message: string, icon = '🌸', duration = 3000) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToastIcon(icon);
     setToastMessage(message);
     setShowToast(true);
     toastTimeoutRef.current = setTimeout(() => {
       setShowToast(false);
-    }, 3000);
+    }, duration);
   };
 
   const handleSurnameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -666,6 +692,27 @@ export default function Home() {
       if (placeholderSwapRef.current) clearTimeout(placeholderSwapRef.current);
     };
   }, [allSurnames, state.originalSurname]);
+
+  // 從 localStorage 還原使用者是否已經看過截圖提示/分享模態窗
+  useEffect(() => {
+    const storage = getStorage();
+    if (!storage) return;
+    setHasUsedScreenshotMode(storage.getItem(LOCAL_STORAGE_KEYS.screenshotUsed) === '1');
+    setHasSeenShareModal(storage.getItem(LOCAL_STORAGE_KEYS.shareModalSeen) === '1');
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (praiseTimeoutRef.current) clearTimeout(praiseTimeoutRef.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (hasUsedScreenshotMode) {
+      setShowScreenshotGuide(false);
+    }
+  }, [hasUsedScreenshotMode]);
 
   // 進站 60 秒後才允許顯示 DeviceMotion 授權提示，避免一入站即打擾
   useEffect(() => {
@@ -725,9 +772,11 @@ export default function Home() {
 
       // 進入結果頁 10 秒後顯示截圖模式引導
       if (screenshotGuideTimeoutRef.current) clearTimeout(screenshotGuideTimeoutRef.current);
-      screenshotGuideTimeoutRef.current = setTimeout(() => {
-        setShowScreenshotGuide(true);
-      }, 10000);
+      if (!hasUsedScreenshotMode) {
+        screenshotGuideTimeoutRef.current = setTimeout(() => {
+          setShowScreenshotGuide(true);
+        }, 10000);
+      }
 
       // iOS 設備：首次進入結果頁時提示請求 DeviceMotion 權限（用於搖晃彩蛋）
       if (typeof window !== 'undefined' && 'DeviceMotionEvent' in window && !hasMotionPermission) {
@@ -780,9 +829,15 @@ export default function Home() {
     e?.stopPropagation();
     if (editingField) return; // 編輯中不能隨機
     setState((prev) => ({ ...prev, punName: getRandom(allPunNames) }));
+    diceClickRef.current += 1;
+    if (diceClickRef.current >= 3) {
+      const tip = getRandom(diceTips);
+      showToastMessage(tip.message, tip.icon, 2000);
+    }
   };
 
   const toggleUI = () => {
+    markScreenshotUsed();
     setShowUI(false);
     setShowHint(true);
     setShowScreenshotGuide(false); // 關閉引導
@@ -797,7 +852,7 @@ export default function Home() {
       setShowUI(true);
       setShowHint(false);
       // 截圖模式結束後自動顯示分享模態窗
-      setIsShareModalOpen(true);
+      openShareModalOnce();
     }, 10000); // Restore UI after 10 seconds
   };
 
@@ -808,7 +863,7 @@ export default function Home() {
       setShowUI(true);
       setShowHint(false);
       // 點擊恢復 UI 後也顯示分享模態窗
-      setIsShareModalOpen(true);
+      openShareModalOnce();
     }
   };
 
@@ -862,6 +917,56 @@ export default function Home() {
     setRandomHintMsg(HINT_MESSAGES[Math.floor(Math.random() * HINT_MESSAGES.length)] ?? '');
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 僅在 mount 時執行一次
   }, []);
+
+  const diceTips = useMemo<DiceTip[]>(
+    () => [
+      {
+        icon: '🎲',
+        message: `骰子連點會掉出小知識，現在共有 ${allPunNames.length} 個趣味版日文名。`,
+      },
+      {
+        icon: '📜',
+        message: '1940/01/01 《本島人ノ姓名變更ニ關スル件》正式生效，才有了這些對照。',
+      },
+      { icon: '🧧', message: '上行是真實對照，下行是趣味版諧音提示，兩個都可以玩。' },
+      { icon: '⛩️', message: '鳥居印章點三次會打開朱紅色光影，試試看。' },
+      { icon: '🌸', message: 'Logo 連點五下會飄櫻花雨。' },
+      { icon: '⚔️', message: '標題連點七下會觸發武士斬擊動畫。' },
+      { icon: '📸', message: '截圖模式提示只會出現一次，後續不再打擾。' },
+      { icon: '🎆', message: '搖晃手機 10 次會放煙火，但背景不會再變黑了。' },
+      { icon: '🧭', message: '資料庫包含 90+ 漢姓、1,700+ 對照紀錄，族譜查證可以看到來源。' },
+      { icon: '📚', message: '想看完整脈絡，可以到 /about 與 /history 了解 1940 年代。' },
+      { icon: '🧩', message: '自訂諧音名保存在瀏覽器本地，不會上傳伺服器。' },
+      { icon: '🎯', message: '把姓氏留空會隨機抽台灣經典姓氏。' },
+      { icon: '🕰️', message: '靜置 45 秒會進入禪意墨色，點一下即可返回。' },
+      { icon: '📡', message: '允許動態感測器後，搖晃更容易觸發花火。' },
+      { icon: '🧱', message: '分享模態窗只會自動彈一次，之後尊重你的節奏。' },
+      { icon: '🎴', message: '趣味版諧音名下行的解釋，是幫你理解梗的小提示。' },
+      { icon: '🔍', message: '「族譜查證」可快速切換姓氏，再搭配骰子重抽諧音名。' },
+      { icon: '🗾', message: 'Taiwan 1940 標籤現在會投影 1940 檔案小卡。' },
+      { icon: '🧑‍🏫', message: '還有櫻花、鳥居、武士、禪意、水墨等多個彩蛋，慢慢挖。' },
+      { icon: '🎁', message: '骰子連點超過三次時都會掉落不同 Tips，收集看看。' },
+    ],
+    [allPunNames.length],
+  );
+
+  const markScreenshotUsed = () => {
+    setHasUsedScreenshotMode((prev) => {
+      if (!prev) {
+        const storage = getStorage();
+        storage?.setItem(LOCAL_STORAGE_KEYS.screenshotUsed, '1');
+      }
+      return true;
+    });
+  };
+
+  const openShareModalOnce = () => {
+    if (hasSeenShareModal) return;
+    setHasSeenShareModal(true);
+    const storage = getStorage();
+    storage?.setItem(LOCAL_STORAGE_KEYS.shareModalSeen, '1');
+    setIsShareModalOpen(true);
+  };
 
   return (
     <>
@@ -948,7 +1053,7 @@ export default function Home() {
         {showToast && (
           <div className="fixed left-1/2 -translate-x-1/2 z-[200] bottom-[calc(1.5rem+env(safe-area-inset-bottom,12px))] animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
             <div className="bg-red-900/90 backdrop-blur-md text-amber-50 px-6 py-3 rounded-full text-sm shadow-[0_8px_20px_-6px_rgba(127,29,29,0.45)] flex items-center border border-red-200/50 ring-1 ring-red-200/40">
-              <Flower size={16} className="mr-2 text-amber-200" />
+              <span className="mr-2 text-lg leading-none">{toastIcon}</span>
               {toastMessage}
             </div>
           </div>
@@ -1346,13 +1451,44 @@ export default function Home() {
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowScreenshotGuide(false);
+                      if (!hasUsedScreenshotMode) {
+                        markScreenshotUsed();
+                        setShowScreenshotPraise(true);
+                        if (praiseTimeoutRef.current) clearTimeout(praiseTimeoutRef.current);
+                        praiseTimeoutRef.current = setTimeout(
+                          () => setShowScreenshotPraise(false),
+                          1200,
+                        );
+                      }
                       toggleUI();
                     }}
-                    className={`w-full bg-red-900 text-red-50 py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center space-x-2 hover:bg-red-800 transition-all active:scale-[0.97] text-sm relative overflow-hidden group ${showScreenshotGuide ? 'ring-4 ring-red-500 ring-offset-2 animate-glow' : 'shadow-red-400/30'}`}
+                    className={`w-full ${
+                      showScreenshotPraise
+                        ? 'bg-amber-500 text-red-50 shadow-amber-300/60'
+                        : 'bg-red-900 text-red-50'
+                    } py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center space-x-2 hover:bg-red-800 transition-all active:scale-[0.97] text-sm relative overflow-hidden group ${
+                      showScreenshotGuide
+                        ? 'ring-4 ring-red-500 ring-offset-2 animate-glow'
+                        : 'shadow-red-400/30'
+                    }`}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-700/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                    <Camera size={18} className="relative z-10" />
-                    <span className="relative z-10">截圖模式</span>
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-r from-transparent ${
+                        showScreenshotPraise ? 'via-amber-300/60' : 'via-red-700/30'
+                      } to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}
+                    ></div>
+                    {showScreenshotPraise && (
+                      <div className="absolute inset-0 flex items-center justify-center text-amber-50 font-extrabold tracking-wide text-base animate-praise z-20">
+                        你超棒！！
+                      </div>
+                    )}
+                    <Camera
+                      size={18}
+                      className={`relative z-10 ${showScreenshotPraise ? 'text-amber-50' : ''}`}
+                    />
+                    <span className="relative z-10">
+                      {showScreenshotPraise ? '截圖就緒' : '截圖模式'}
+                    </span>
                   </button>
                   <style>{`
                     @keyframes glow {
@@ -1361,6 +1497,14 @@ export default function Home() {
                     }
                     .animate-glow {
                       animation: glow 1.5s ease-in-out infinite;
+                    }
+                    @keyframes praise-pop {
+                      0% { transform: scale(0.8); opacity: 0; }
+                      30% { transform: scale(1.08); opacity: 1; }
+                      100% { transform: scale(1); opacity: 0; }
+                    }
+                    .animate-praise {
+                      animation: praise-pop 1s ease-out forwards;
                     }
                   `}</style>
                 </div>

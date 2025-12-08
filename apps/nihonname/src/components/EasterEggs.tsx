@@ -276,7 +276,7 @@ const Fireworks = () => {
 
   return (
     <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-stone-900/60 to-black/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-amber-50/20 via-rose-50/10 to-transparent" />
       {/* tsParticles 會自動創建並管理 canvas */}
     </div>
   );
@@ -444,5 +444,26 @@ const ToriiGate = () => (
  * 使用專案輔色 amber-500
  */
 const GoldenGlow = () => (
-  <div className="absolute inset-0 bg-amber-500/20 mix-blend-overlay animate-pulse duration-300" />
+  <div className="absolute inset-0 flex items-center justify-center px-6">
+    <div className="relative max-w-md w-full bg-gradient-to-br from-amber-100/90 via-white/85 to-rose-50/85 border border-amber-200 shadow-2xl rounded-3xl p-5 animate-in fade-in duration-500">
+      <div className="absolute -top-3 -left-3 w-12 h-12 rounded-full bg-amber-400/60 blur-xl" />
+      <div className="flex items-center gap-3 text-amber-900 font-bold text-sm">
+        <span className="text-2xl">⛩️</span>
+        <div className="flex flex-col leading-tight">
+          <span>1940 一瞬映像</span>
+          <span className="text-[11px] text-amber-700 font-normal">皇民化改姓快閃紀錄</span>
+        </div>
+      </div>
+      <div className="mt-3 text-[13px] text-stone-700 leading-relaxed space-y-1.5">
+        <p>1940 年 1 月 1 日，〈本島人ノ姓名變更ニ關スル件〉正式生效，開啟台灣大規模改姓。</p>
+        <p>我們蒐集了 90+ 漢姓、1,700+ 日本姓氏對照，還藏了幾顆小彩蛋等你觸發。</p>
+        <p className="text-amber-800 font-semibold">
+          提示：試試鳥居印章、快速連點或搖晃手機，會有不同祝福。
+        </p>
+      </div>
+      <div className="absolute -bottom-5 right-4 text-xs text-amber-700 font-semibold">
+        Taiwan 1940
+      </div>
+    </div>
+  </div>
 );

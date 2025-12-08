@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
 > **最後更新**: 2025-12-09T01:18:24+08:00
-> **當前總分**: 389 (初始分: 100)
+> **當前總分**: 394 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -313,3 +313,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 | ✅ 成功 | nihonname 高級社群分享與截圖模式優化 | 1) 實作 ShareModal 支援 Threads、Twitter、Facebook、Line 與複製連結 2) 新增 20 組台灣風格隨機分享文案 3) 實作截圖模式：10 秒倒數、發光箭頭指引、隨機求關注文案 4) 實作 5 組高級彩蛋：Konami Code 櫻花雨、輸入 sushi 壽司雨、點擊 Logo 5 次百鬼夜行、點擊標題 2 次金光、點擊印章 3 次地震 5) 標籤更新：Optional→選填、Alias→Kuso 6) 清理 ShareButtons 舊組件 7) BDD 測試通過 (ShareModal, useEasterEggs) | [context7:lucide-react][BDD 流程][High-end UI] | +5 | 2025-12-06 |
 | ✅ 成功 | 修復 Hydration #418 根因 (Date.now/Math.random 在 useState) | 1) **根因分析**: useEasterEggs 使用 Date.now() 作為 useState 初始值，SSG 與 CSR 產生不匹配 2) **深度分析**: Home.tsx useState + Math.random() 已修復（上版本），ShareModal 因 !isOpen early return 所以安全 3) **修復**: useEasterEggs lastActivityRef 改用 0 作為初始值而非 Date.now() 4) **遵守 ESLint**: react-hooks/set-state-in-effect 禁止在 useEffect 同步 setState，ShareModal 保持原狀 5) 371/371 測試通過 6) CI 通過並部署 | [context7:/reactjs/react.dev:hydration-mismatch:2025-12-07][vite-react-ssg:ClientOnly] | +4 | 2025-12-07 |
 | ✅ 成功 | 修復 nihonname 煙火動畫卡住當掉根本問題 | 1) **根因分析**: 五大問題：異步清理不完整、tsParticles 清理方法錯誤（應用 stop() 而非 destroy()）、AudioContext 狀態管理缺陷、Confetti 競態條件、Cleanup Ref 時機問題 2) **解決方案**: 使用 isMounted flag 防止組件卸載後的異步操作繼續執行、正確調用 instance.stop() 釋放 tsParticles 資源、改進 AudioContext 生命週期管理（清理 interval/timeout）、防止 confetti 競態條件、移除 useRef 改用局部變數 3) **最佳實踐**: 遵循 React 官方 useEffect cleanup 對稱原則、tsParticles FireworksInstance API 正確使用、防止記憶體洩漏 4) 371/371 測試通過 5) typecheck、lint 通過 | [context7:/tsparticles/tsparticles:fireworks:2025-12-07][context7:/reactjs/react.dev:useEffect-cleanup:2025-12-07][ref:https://react.dev/learn/synchronizing-with-effects][ref:https://refine.dev/blog/useeffect-cleanup/][ref:https://stackoverflow.com/questions/58038008/how-to-stop-memory-leak-in-useeffect-hook-react] | +5 | 2025-12-07 |
+| ✅ 成功 | SEO 圖片版號 + NihonName 彩蛋體驗升級 | 1) RateWise/NihonName 全部 OG/PWA 圖片加上 `?v=20251208` 並補齊 manifest screenshot，修正 Threads/Google 圖標快取 2) 花火彩蛋移除黑幕、Taiwan 1940 區塊改為歷史快閃、截圖提示與分享模態窗記憶用戶狀態、骰子新增 20 組科普吐司與金色鼓勵動畫 3) RateWise & NihonName vitest 全通過 | [context7:/reactjs/react.dev:upgrade-guide:2025-12-09] | +5 | 2025-12-09T01:45:51+08:00 |

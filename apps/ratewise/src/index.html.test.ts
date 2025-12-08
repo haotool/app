@@ -86,9 +86,9 @@ describe('index.html - Static SEO Meta Tags (BDD Refactor)', () => {
       expect(indexHtmlContent).toMatch(/property="og:description"/);
     });
 
-    it('should have og:image tag with correct dimensions', () => {
-      expect(indexHtmlContent).toContain('<meta property="og:image"');
-      expect(indexHtmlContent).toContain('og-image.png');
+    it('should have og:image tag with correct dimensions and versioned cache busting', () => {
+      expect(indexHtmlContent).toContain('property="og:image"');
+      expect(indexHtmlContent).toContain('og-image.png?v=20251208');
       expect(indexHtmlContent).toContain('<meta property="og:image:width" content="1200"');
       expect(indexHtmlContent).toContain('<meta property="og:image:height" content="630"');
     });
@@ -114,8 +114,8 @@ describe('index.html - Static SEO Meta Tags (BDD Refactor)', () => {
     });
 
     it('should have twitter:image tag', () => {
-      expect(indexHtmlContent).toContain('<meta name="twitter:image"');
-      expect(indexHtmlContent).toContain('twitter-image.png');
+      expect(indexHtmlContent).toContain('name="twitter:image"');
+      expect(indexHtmlContent).toContain('twitter-image.png?v=20251208');
     });
   });
 
