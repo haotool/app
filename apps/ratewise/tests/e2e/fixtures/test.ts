@@ -109,10 +109,6 @@ export const test = base.extend<RateWiseFixtures>({
     // - Use semantic locator (getByRole) instead of waitForSelector
     // - Rely on auto-waiting, remove redundant strategies (networkidle, multiple checks)
     // @see https://playwright.dev/docs/best-practices
-    const baseURL = process.env['PLAYWRIGHT_BASE_URL'] || '';
-    const makeUrl = (path: string) =>
-      baseURL ? new URL(path, baseURL).toString() : path.replace(/\/+$/, '') || '/';
-
     const basePathCandidates = [
       process.env['E2E_BASE_PATH'],
       process.env['VITE_BASE_PATH'],
