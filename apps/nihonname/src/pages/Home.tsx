@@ -17,6 +17,21 @@ import {
   CheckCircle2,
   RotateCcw,
   ArrowDown,
+  Info,
+  Gavel,
+  Sword,
+  Sparkles,
+  Database,
+  ShieldCheck,
+  Target as TargetIcon,
+  Wind,
+  Activity,
+  Bell,
+  Lightbulb,
+  Navigation,
+  IdCard,
+  BadgeCheck,
+  Dice5,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ClientOnly } from 'vite-react-ssg';
@@ -485,10 +500,65 @@ const getStorage = () => {
   return storage;
 };
 
+type IconKey =
+  | 'TIP'
+  | 'LAW'
+  | 'INFO'
+  | 'TORII'
+  | 'SAKURA'
+  | 'SAMURAI'
+  | 'SNAP'
+  | 'FIREWORK'
+  | 'DATA'
+  | 'DOC'
+  | 'LOCAL'
+  | 'TARGET'
+  | 'ZEN'
+  | 'SENSOR'
+  | 'MODAL'
+  | 'GUIDE'
+  | 'BREAD'
+  | 'CARD'
+  | 'CRED'
+  | 'EASTER'
+  | 'DICE';
+
 interface DiceTip {
-  icon: string;
+  icon: IconKey;
   message: string;
 }
+
+type IconRenderer = () => React.ReactNode;
+
+const ICON_LIBRARY: Record<IconKey, IconRenderer> = {
+  TIP: () => <Info size={16} className="text-red-800" />,
+  LAW: () => <Gavel size={16} className="text-red-800" />,
+  INFO: () => <Info size={16} className="text-red-800" />,
+  TORII: () => <ToriiIcon className="w-4 h-4 text-red-800" />,
+  SAKURA: () => <Flower size={16} className="text-red-800" />,
+  SAMURAI: () => <Sword size={16} className="text-red-800" />,
+  SNAP: () => <Camera size={16} className="text-red-800" />,
+  FIREWORK: () => <Sparkles size={16} className="text-red-800" />,
+  DATA: () => <Database size={16} className="text-red-800" />,
+  DOC: () => <BookOpen size={16} className="text-red-800" />,
+  LOCAL: () => <ShieldCheck size={16} className="text-red-800" />,
+  TARGET: () => <TargetIcon size={16} className="text-red-800" />,
+  ZEN: () => <Wind size={16} className="text-red-800" />,
+  SENSOR: () => <Activity size={16} className="text-red-800" />,
+  MODAL: () => <Bell size={16} className="text-red-800" />,
+  GUIDE: () => <Lightbulb size={16} className="text-red-800" />,
+  BREAD: () => <Navigation size={16} className="text-red-800" />,
+  CARD: () => <IdCard size={16} className="text-red-800" />,
+  CRED: () => <BadgeCheck size={16} className="text-red-800" />,
+  EASTER: () => <Sparkles size={16} className="text-red-800" />,
+  DICE: () => <Dice5 size={16} className="text-red-800" />,
+};
+
+const renderIcon = (icon?: IconKey) => {
+  if (!icon) return null;
+  const renderer = ICON_LIBRARY[icon] ?? ICON_LIBRARY.TIP;
+  return renderer();
+};
 
 export default function Home() {
   const [state, setState] = useState<GeneratorState>({
@@ -506,7 +576,7 @@ export default function Home() {
   const [showLookup, setShowLookup] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastIcon, setToastIcon] = useState('🌸');
+  const [toastIcon, setToastIcon] = useState<React.ReactNode | null>(() => renderIcon('SAKURA'));
   const [compoundHint, setCompoundHint] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   // 新增：截圖模式按鈕發光引導（進入結果頁 10 秒後顯示）
@@ -641,9 +711,9 @@ export default function Home() {
   };
 
   // 顯示吐司訊息
-  const showToastMessage = (message: string, icon = '🌸', duration = 3000) => {
+  const showToastMessage = (message: string, icon: IconKey = 'SAKURA', duration = 3000) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    setToastIcon(icon);
+    setToastIcon(renderIcon(icon));
     setToastMessage(message);
     setShowToast(true);
     toastTimeoutRef.current = setTimeout(() => {
@@ -735,7 +805,7 @@ export default function Home() {
 
     // 如果沒有輸入姓氏，顯示吐司並使用隨機姓氏
     if (!state.originalSurname) {
-      showToastMessage('未填姓氏，隨機抽選');
+      showToastMessage('未填姓氏，隨機抽選', 'TARGET');
     }
 
     setTimeout(() => {
@@ -1054,7 +1124,7 @@ export default function Home() {
         {showToast && (
           <div className="fixed left-1/2 -translate-x-1/2 z-[200] bottom-[calc(1.5rem+env(safe-area-inset-bottom,12px))] animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
             <div className="bg-red-900/90 backdrop-blur-md text-amber-50 px-6 py-3 rounded-full text-sm shadow-[0_8px_20px_-6px_rgba(127,29,29,0.45)] flex items-center border border-red-200/50 ring-1 ring-red-200/40">
-              <span className="mr-2 text-lg leading-none">{toastIcon}</span>
+              <span className="mr-2 leading-none">{toastIcon}</span>
               {toastMessage}
             </div>
           </div>
