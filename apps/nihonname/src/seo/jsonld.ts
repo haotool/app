@@ -34,16 +34,18 @@ export const BASE_JSON_LD = [
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
     name: 'NihonName 皇民化改姓生成器',
-    alternateName: '日式姓名生成器',
+    alternateName: ['日式姓名生成器', '姓名變換所', '日本名字產生器'],
     description: DEFAULT_DESCRIPTION,
     url: SITE_BASE_URL,
     applicationCategory: 'EntertainmentApplication',
     operatingSystem: 'Any',
     browserRequirements: 'Requires JavaScript',
+    inLanguage: 'zh-TW',
     offers: {
       '@type': 'Offer',
       price: '0',
-      priceCurrency: 'USD',
+      priceCurrency: 'TWD',
+      availability: 'https://schema.org/InStock',
     },
     featureList: [
       '皇民化改姓查詢',
@@ -51,8 +53,12 @@ export const BASE_JSON_LD = [
       '趣味諧音日本名',
       '族譜來源查證',
       'PWA 離線支援',
-      '300+ 姓氏資料庫',
+      '90+ 漢姓資料庫',
+      '1700+ 筆對照記錄',
     ],
+    screenshot: buildAssetUrl('og-image.png'),
+    softwareVersion: '1.0.0',
+    datePublished: '2025-12-04',
   },
   {
     '@context': 'https://schema.org',
@@ -137,6 +143,8 @@ export interface ArticleData {
   datePublished: string;
   dateModified: string;
   keywords: string[];
+  wordCount?: number;
+  articleSection?: string;
 }
 
 export function buildArticleSchema(article: ArticleData, url: string) {
@@ -163,6 +171,13 @@ export function buildArticleSchema(article: ArticleData, url: string) {
     },
     keywords: article.keywords,
     inLanguage: 'zh-TW',
+    ...(article.wordCount && { wordCount: article.wordCount }),
+    ...(article.articleSection && { articleSection: article.articleSection }),
+    image: buildAssetUrl('og-image.png'),
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
   };
 }
 
@@ -382,6 +397,8 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
             datePublished: '2025-12-04',
             dateModified: buildTime.split('T')[0] ?? '2025-12-04',
             keywords: ['皇民化運動', '馬關條約', '舊金山和約', '台灣歷史', '日治時期'],
+            articleSection: '台灣歷史',
+            wordCount: 800,
           },
           fullUrl,
         ),
@@ -402,7 +419,16 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
             description: '詳細介紹日本殖民時期對台灣實施的皇民化運動，包括改姓名、國語運動等政策',
             datePublished: '2025-12-04',
             dateModified: buildTime.split('T')[0] ?? '2025-12-04',
-            keywords: ['皇民化運動', '改姓名運動', '國語運動', '台灣日治時期', '1940年代'],
+            keywords: [
+              '皇民化運動',
+              '改姓名運動',
+              '國語運動',
+              '台灣日治時期',
+              '1940年代',
+              '皇民化改姓運動',
+            ],
+            articleSection: '台灣歷史',
+            wordCount: 2500,
           },
           fullUrl,
         ),
@@ -423,7 +449,17 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
             description: '介紹甲午戰爭後簽訂的馬關條約，以及台灣被割讓給日本的歷史背景',
             datePublished: '2025-12-04',
             dateModified: buildTime.split('T')[0] ?? '2025-12-04',
-            keywords: ['馬關條約', '甲午戰爭', '台灣割讓', '1895年', '清日戰爭'],
+            keywords: [
+              '馬關條約',
+              '甲午戰爭',
+              '台灣割讓',
+              '1895年',
+              '清日戰爭',
+              '馬關條約強制續約',
+              '馬關續約',
+            ],
+            articleSection: '台灣歷史',
+            wordCount: 1800,
           },
           fullUrl,
         ),
@@ -444,7 +480,17 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
             description: '介紹二戰後簽訂的舊金山和約，以及台灣主權歸屬的國際法爭議',
             datePublished: '2025-12-04',
             dateModified: buildTime.split('T')[0] ?? '2025-12-04',
-            keywords: ['舊金山和約', '台灣主權', '二戰後', '1951年', '國際法'],
+            keywords: [
+              '舊金山和約',
+              '台灣主權',
+              '二戰後',
+              '1951年',
+              '國際法',
+              '對日和平條約',
+              '日本放棄台灣',
+            ],
+            articleSection: '台灣歷史',
+            wordCount: 1500,
           },
           fullUrl,
         ),

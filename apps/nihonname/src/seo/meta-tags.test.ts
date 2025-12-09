@@ -18,7 +18,7 @@ describe('getMetaTagsForRoute', () => {
 
     it('should include default description', () => {
       const result = getMetaTagsForRoute('/', buildTime);
-      expect(result).toContain('探索1940年代台灣皇民化運動');
+      expect(result).toContain('輸入姓氏，秒查日治時期改姓對照');
     });
 
     it('should include canonical URL', () => {
@@ -30,12 +30,12 @@ describe('getMetaTagsForRoute', () => {
   describe('About Page (/about)', () => {
     it('should return correct title', () => {
       const result = getMetaTagsForRoute('/about', buildTime);
-      expect(result).toContain('<title>關於本站</title>');
+      expect(result).toContain('<title>關於本站 - NihonName 開發故事與資料來源</title>');
     });
 
     it('should include about page specific description', () => {
       const result = getMetaTagsForRoute('/about', buildTime);
-      expect(result).toContain('探索 NihonName 的開發故事');
+      expect(result).toContain('了解 NihonName 的開發背景');
     });
 
     it('should include about page specific keywords', () => {
@@ -47,19 +47,19 @@ describe('getMetaTagsForRoute', () => {
   describe('Guide Page (/guide)', () => {
     it('should return correct title', () => {
       const result = getMetaTagsForRoute('/guide', buildTime);
-      expect(result).toContain('<title>使用說明</title>');
+      expect(result).toContain('<title>使用說明 - 4步驟查詢日式姓名</title>');
     });
 
     it('should include guide page specific description', () => {
       const result = getMetaTagsForRoute('/guide', buildTime);
-      expect(result).toContain('學習如何使用 NihonName');
+      expect(result).toContain('4步驟教你查詢日治時期改姓對照');
     });
   });
 
   describe('FAQ Page (/faq)', () => {
     it('should return correct title', () => {
       const result = getMetaTagsForRoute('/faq', buildTime);
-      expect(result).toContain('<title>常見問題</title>');
+      expect(result).toContain('<title>常見問題 FAQ - 皇民化改姓問答</title>');
     });
 
     it('should include FAQ specific keywords', () => {
@@ -72,7 +72,7 @@ describe('getMetaTagsForRoute', () => {
   describe('History Pages', () => {
     it('should return correct title for /history', () => {
       const result = getMetaTagsForRoute('/history', buildTime);
-      expect(result).toContain('<title>歷史專區</title>');
+      expect(result).toContain('<title>歷史專區 - 皇民化運動、馬關條約、舊金山和約</title>');
     });
 
     it('should use article og:type for history pages', () => {
@@ -82,17 +82,17 @@ describe('getMetaTagsForRoute', () => {
 
     it('should return correct title for /history/kominka', () => {
       const result = getMetaTagsForRoute('/history/kominka', buildTime);
-      expect(result).toContain('皇民化運動 (1937-1945)');
+      expect(result).toContain('皇民化運動 1937-1945');
     });
 
     it('should return correct title for /history/shimonoseki', () => {
       const result = getMetaTagsForRoute('/history/shimonoseki', buildTime);
-      expect(result).toContain('馬關條約 (1895)');
+      expect(result).toContain('馬關條約 1895');
     });
 
     it('should return correct title for /history/san-francisco', () => {
       const result = getMetaTagsForRoute('/history/san-francisco', buildTime);
-      expect(result).toContain('舊金山和約 (1951)');
+      expect(result).toContain('舊金山和約 1951');
     });
   });
 
@@ -250,7 +250,7 @@ describe('getMetaTagsForRoute', () => {
 
     it('should return default description for unknown routes', () => {
       const result = getMetaTagsForRoute('/unknown-page', buildTime);
-      expect(result).toContain('探索1940年代台灣皇民化運動');
+      expect(result).toContain('輸入姓氏，秒查日治時期改姓對照');
     });
   });
 

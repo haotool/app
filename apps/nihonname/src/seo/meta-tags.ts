@@ -12,7 +12,7 @@ const SITE_BASE_URL = 'https://app.haotool.org/nihonname/';
 const ASSET_VERSION = 'v=20251208';
 const DEFAULT_TITLE = 'NihonName 皇民化改姓生成器 | 1940年代台灣日式姓名產生器';
 const DEFAULT_DESCRIPTION =
-  '探索1940年代台灣皇民化運動的歷史改姓對照。輸入你的姓氏，發現日治時期的日式姓名與趣味諧音名。基於歷史文獻《内地式改姓名の仕方》。';
+  '輸入姓氏，秒查日治時期改姓對照！收錄90+漢姓、1700+筆歷史記錄，基於《内地式改姓名の仕方》。免費查詢你的日式姓名。';
 const DEFAULT_OG_IMAGE = 'og-image.png';
 
 interface MetaTagsConfig {
@@ -55,67 +55,130 @@ function getRouteConfig(route: string, buildTime: string): MetaTagsConfig {
     case '/about':
       return {
         ...baseConfig,
-        title: '關於本站',
+        title: '關於本站 - NihonName 開發故事與資料來源',
         description:
-          '探索 NihonName 的開發故事、歷史資料來源與技術架構。了解台灣皇民化運動改姓政策的歷史脈絡，以及我們如何透過現代科技重現這段歷史記憶。',
-        keywords: ['關於 NihonName', '台灣歷史', '皇民化運動', '歷史資料', '開放資料'],
+          '了解 NihonName 的開發背景、歷史文獻來源與技術架構。資料來自國史館、學術論文、《内地式改姓名の仕方》等權威來源。',
+        keywords: [
+          '關於 NihonName',
+          '台灣歷史',
+          '皇民化運動',
+          '歷史資料',
+          '開放資料',
+          '國史館',
+          '日治時期文獻',
+        ],
       };
 
     case '/guide':
       return {
         ...baseConfig,
-        title: '使用說明',
+        title: '使用說明 - 4步驟查詢日式姓名',
         description:
-          '學習如何使用 NihonName 生成日式姓名，了解皇民化改姓規則，以及如何驗證歷史資料來源。完整的操作指南與常見問題解答。',
-        keywords: ['使用說明', '操作指南', '日式改名規則', '皇民化改姓', '歷史文獻'],
+          '4步驟教你查詢日治時期改姓對照：輸入姓氏→點擊查詢→查看結果→分享截圖。支援90+漢姓，含來源說明與變異法解析。',
+        keywords: [
+          '使用說明',
+          '操作指南',
+          '日式改名規則',
+          '皇民化改姓',
+          '歷史文獻',
+          '姓氏查詢教學',
+        ],
       };
 
     case '/faq':
       return {
         ...baseConfig,
-        title: '常見問題',
+        title: '常見問題 FAQ - 皇民化改姓問答',
         description:
-          '關於 NihonName 的常見問題解答。了解皇民化運動歷史、改姓規則、資料來源與隱私政策。快速找到您需要的答案。',
-        keywords: ['常見問題', 'FAQ', '皇民化改姓', '日治時期', '台灣歷史', '姓氏對照'],
+          '18題常見問答：什麼是皇民化運動？改姓是強制的嗎？資料來源是什麼？一次解答所有疑惑，了解1940年代台灣改姓歷史。',
+        keywords: [
+          '常見問題',
+          'FAQ',
+          '皇民化改姓',
+          '日治時期',
+          '台灣歷史',
+          '姓氏對照',
+          '改姓問答',
+          '歷史問答',
+        ],
       };
 
     case '/history':
       return {
         ...baseConfig,
-        title: '歷史專區',
+        title: '歷史專區 - 皇民化運動、馬關條約、舊金山和約',
         description:
-          '深入了解 1940 年代台灣皇民化運動的歷史脈絡，探索馬關條約、舊金山和約對台灣地位的影響，以及日治時期改姓政策的演變。',
-        keywords: ['台灣歷史', '皇民化運動', '馬關條約', '舊金山和約', '日治時期', '改姓政策'],
+          '完整解析台灣日治時期三大歷史：1895馬關條約、1937-1945皇民化運動、1951舊金山和約。附時間軸與專題文章。',
+        keywords: [
+          '台灣歷史',
+          '皇民化運動',
+          '馬關條約',
+          '舊金山和約',
+          '日治時期',
+          '改姓政策',
+          '台灣日治時期',
+          '歷史專區',
+        ],
         ogType: 'article',
       };
 
     case '/history/kominka':
       return {
         ...baseConfig,
-        title: '皇民化運動 (1937-1945)',
+        title: '皇民化運動 1937-1945 - 台灣改姓名運動完整解析',
         description:
-          '1937-1945 年間的台灣皇民化運動：日本殖民政府推行的同化政策，包含改日本姓名、講日語、信奉神道教等措施。探索這段影響深遠的歷史。',
-        keywords: ['皇民化運動', '台灣日治時期', '改日本名', '同化政策', '1937-1945', '神社參拜'],
+          '1937-1945皇民化運動全解析：改日本姓名、國語運動、神社參拜。約7.6%家庭改姓，17萬戶受影響。含改姓五大原則說明。',
+        keywords: [
+          '皇民化運動',
+          '台灣日治時期',
+          '改日本名',
+          '同化政策',
+          '1937-1945',
+          '神社參拜',
+          '皇民化改姓運動',
+          '日治時期改名',
+          '台灣人改姓名單',
+        ],
         ogType: 'article',
       };
 
     case '/history/shimonoseki':
       return {
         ...baseConfig,
-        title: '馬關條約 (1895)',
+        title: '馬關條約 1895 - 台灣割讓日本的歷史真相',
         description:
-          '1895 年馬關條約：甲午戰爭後清廷割讓台灣給日本，開啟長達 50 年的日治時期。了解這份改變台灣命運的條約內容與歷史影響。',
-        keywords: ['馬關條約', '下關條約', '甲午戰爭', '台灣割讓', '1895', '日治時期開始'],
+          '1895年馬關條約完整解析：甲午戰爭後台灣割讓日本，開啟50年日治時期。破解「馬關續約」迷思，條約為永久割讓非租借。',
+        keywords: [
+          '馬關條約',
+          '下關條約',
+          '甲午戰爭',
+          '台灣割讓',
+          '1895',
+          '日治時期開始',
+          '馬關條約強制續約',
+          '馬關續約',
+          '台灣日治時期',
+        ],
         ogType: 'article',
       };
 
     case '/history/san-francisco':
       return {
         ...baseConfig,
-        title: '舊金山和約 (1951)',
+        title: '舊金山和約 1951 - 日本放棄台灣主權的法律依據',
         description:
-          '1951 年舊金山和約：二戰後日本放棄台灣主權，但未明確指定歸屬，形成「台灣地位未定論」。探索這份影響台灣國際地位至今的條約。',
-        keywords: ['舊金山和約', '對日和約', '台灣地位', '二戰後', '1951', '國際法'],
+          '1951年舊金山和約第二條：日本放棄台灣主權。1952年生效，結束日本對台50年統治。了解台灣地位的國際法依據。',
+        keywords: [
+          '舊金山和約',
+          '對日和約',
+          '台灣地位',
+          '二戰後',
+          '1951',
+          '國際法',
+          '日本放棄台灣',
+          '對日和平條約',
+          '台灣主權',
+        ],
         ogType: 'article',
       };
 
@@ -152,21 +215,27 @@ function buildMetaTags(config: MetaTagsConfig): string {
   const ogImageUrl = buildAssetUrl(ogImage);
 
   const defaultKeywords = [
+    // 核心關鍵字
     '皇民化改姓',
     '日式姓名生成器',
     '台灣日治時期',
     '改姓對照表',
-    '日本姓名',
-    '1940年代台灣',
-    '皇民化運動',
     'NihonName',
-    '日式改名',
-    '台灣歷史',
-    '內地式改姓',
-    '日式姓氏',
-    '諧音日本名',
+    // 長尾關鍵字（搜索熱詞）
+    '皇民化改姓運動',
+    '日治時期改名',
+    '台灣人改姓名單',
+    '改日本姓',
+    '日式改名查詢',
+    // 歷史相關
+    '皇民化運動',
+    '內地式改姓名',
+    '1940年代台灣',
     '日治時期戶籍',
-    '台灣姓氏',
+    // 功能相關
+    '日本名字產生器',
+    '姓氏對照查詢',
+    '諧音日本名',
   ];
 
   const keywordsContent = (keywords.length > 0 ? keywords : defaultKeywords).join(', ');
@@ -184,8 +253,8 @@ function buildMetaTags(config: MetaTagsConfig): string {
 
     // Canonical & Alternates
     `<link rel="canonical" href="${canonicalUrl}" />`,
-    `<link rel="alternate" hrefLang="x-default" href="${SITE_BASE_URL}" />`,
-    `<link rel="alternate" hrefLang="zh-TW" href="${SITE_BASE_URL}" />`,
+    `<link rel="alternate" hrefLang="x-default" href="${canonicalUrl}" />`,
+    `<link rel="alternate" hrefLang="zh-TW" href="${canonicalUrl}" />`,
 
     // Open Graph / Facebook
     `<meta property="og:type" content="${ogType}" />`,

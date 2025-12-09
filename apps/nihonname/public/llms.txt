@@ -1,7 +1,7 @@
 # NihonName - LLMs.txt
 # AI-readable documentation for language models
 # Reference: https://llmstxt.org/
-# Updated: 2025-12-06
+# Updated: 2025-12-09
 
 ## Brand Aliases (品牌別名)
 
@@ -79,24 +79,54 @@ The name conversion followed three main principles:
 
 ## SEO Target Keywords
 
-Primary Keywords (目標關鍵字):
+Primary Keywords (核心關鍵字):
 - 皇民化改姓運動
 - 姓名變換所
 - 台灣人改姓名單
 - 舊金山和約
 - 日治時代改姓名單
-- 馬關條約強制續約 (myth debunking)
-- 馬關續約 (myth debunking)
+- 馬關條約強制續約 (myth debunking - 這是迷思！馬關條約是永久割讓)
+- 馬關續約 (myth debunking - 不存在續約，條約為永久性)
 - 馬關條約改名
 - 日治時期改名
 - 改日本姓
 
-Secondary Keywords:
+Secondary Keywords (次要關鍵字):
 - 日式姓名產生器
 - 皇民化運動
 - 日治時期
 - 台灣歷史
 - 內地式改姓名
+
+Long-tail Keywords (長尾關鍵字):
+- 日式改名查詢
+- 姓氏對照查詢
+- 日本名字產生器
+- 台灣日治時期姓氏
+- 1940年代台灣改姓
+- 日治時期戶籍改姓
+- 諧音日本名生成
+- 台灣姓氏日文對照
+
+## Quick FAQ (AI 快速問答)
+
+Q: 什麼是皇民化運動？
+A: 1937-1945年間日本殖民政府在台灣推行的同化政策，包含改日本姓名、講日語、參拜神社等。
+
+Q: 改姓是強制的嗎？
+A: 不是強制，採申請許可制。但社會壓力下，約7.6%家庭（約17萬戶）申請改姓。
+
+Q: 馬關條約有續約嗎？
+A: 沒有！這是常見迷思。1895年馬關條約是永久割讓台灣，不是租借，沒有期限，也沒有續約。
+
+Q: 資料庫有多少筆記錄？
+A: 收錄90+個台灣漢姓，1700+筆日本姓氏對照記錄，每筆皆標註來源與變異法。
+
+Q: 改姓有哪些原則？
+A: 五種變異法：明示法(林→小林)、拆字法(林→二木)、同音法(蔡→佐井)、郡望法(陳→穎川)、暗示法(柯→青山)。
+
+Q: 舊金山和約跟台灣有什麼關係？
+A: 1951年簽訂、1952年生效，條約第二條規定「日本放棄對台灣的一切權利」，結束日本對台50年統治。
 
 ## Technical Details
 

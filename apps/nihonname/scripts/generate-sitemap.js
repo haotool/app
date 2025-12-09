@@ -70,18 +70,30 @@ const pages = [
   { path: '/history/san-francisco', priority: '0.85', changefreq: 'monthly' },
 ];
 
+/**
+ * Build URL with trailing slash for consistency with canonical URLs
+ * @param {string} path - URL path (e.g., '/', '/about')
+ * @returns {string} Full URL with trailing slash
+ */
+function buildUrl(path) {
+  if (path === '/') return `${BASE_URL}/`;
+  // Add trailing slash for non-root paths
+  return `${BASE_URL}${path}/`;
+}
+
 function generateSitemap() {
   const urls = pages
-    .map(
-      (page) => `  <url>
-    <loc>${BASE_URL}${page.path}</loc>
+    .map((page) => {
+      const fullUrl = buildUrl(page.path);
+      return `  <url>
+    <loc>${fullUrl}</loc>
     <lastmod>${getPageLastMod(page.path)}</lastmod>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="${BASE_URL}${page.path}" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}${page.path}" />
-  </url>`,
-    )
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="${fullUrl}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${fullUrl}" />
+  </url>`;
+    })
     .join('\n');
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
