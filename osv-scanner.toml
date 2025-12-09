@@ -1,0 +1,14 @@
+# OSV-Scanner Configuration
+# [ref:https://google.github.io/osv-scanner/configuration/]
+# 
+# 忽略低風險漏洞，與 pnpm audit --audit-level=high 保持一致
+# 
+# GHSA-52f5-9888-hmc6: tmp 套件的低風險漏洞 (CVSS 2.5)
+# - 這是一個已知的低風險漏洞，影響範圍有限
+# - tmp 是開發依賴，不會進入生產環境
+# - 符合 Linus 三問：真實但低風險問題，保持簡單處理
+
+[[IgnoredVulns]]
+id = "GHSA-52f5-9888-hmc6"
+reason = "Low severity (CVSS 2.5), tmp is a dev dependency, not used in production"
+
