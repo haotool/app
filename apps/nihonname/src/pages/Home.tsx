@@ -901,9 +901,9 @@ export default function Home() {
     if (editingField) return; // 編輯中不能隨機
     setState((prev) => ({ ...prev, punName: getRandom(allPunNames) }));
     diceClickRef.current += 1;
-    if (diceClickRef.current >= 3) {
+    if (diceClickRef.current >= 2) {
       const tip = getRandom(diceTips);
-      showToastMessage(tip.message, tip.icon, 2000);
+      showToastMessage(tip.message, tip.icon, 3000);
     }
   };
 
@@ -991,33 +991,27 @@ export default function Home() {
 
   const diceTips = useMemo<DiceTip[]>(
     () => [
-      {
-        icon: 'TIP',
-        message: `骰子連點會掉出小知識，目前收錄 ${allPunNames.length} 則趣味版日文名。`,
-      },
-      {
-        icon: 'LAW',
-        message: '1940/01/01 《本島人ノ姓名變更ニ關スル件》正式實施，改姓名才成為制度。',
-      },
-      { icon: 'INFO', message: '上行是真實對照，下行是趣味諧音提示，兩條都能玩。' },
-      { icon: 'TORII', message: '鳥居印章點三次會出現朱紅光影小彩蛋。' },
-      { icon: 'SAKURA', message: 'Logo 連點五下會觸發櫻花雨。' },
-      { icon: 'SAMURAI', message: '「皇民化改姓運動」快速連點 7 次觸發武士斬擊（300ms 內）。' },
-      { icon: 'SNAP', message: '截圖模式提示僅首訪顯示，日後不再干擾。' },
-      { icon: 'FIREWORK', message: '搖晃手機 10 次會放煙火（需 HTTPS 與動態感測器授權）。' },
-      { icon: 'DATA', message: '資料庫涵蓋 90+ 漢姓、1,700+ 對照紀錄，族譜查證可看來源。' },
-      { icon: 'DOC', message: '想看脈絡可開 /about 與 /history，補齊 1940 年代背景。' },
-      { icon: 'LOCAL', message: '自訂諧音名存於本機瀏覽器，不會上傳伺服器。' },
-      { icon: 'TARGET', message: '姓氏留空會隨機抽台灣常見姓氏，方便速玩。' },
-      { icon: 'ZEN', message: '靜置 45 秒會進入禪意墨色，點一下即可結束。' },
-      { icon: 'SENSOR', message: '允許動態感測器權限後，搖晃更容易觸發花火。' },
-      { icon: 'MODAL', message: '分享模態窗只會自動彈一次，之後尊重你的節奏。' },
-      { icon: 'GUIDE', message: '趣味諧音名下行的說明，能幫你理解梗點。' },
-      { icon: 'BREAD', message: '「族譜查證」可快速切換姓氏，再搭配骰子重抽諧音名。' },
-      { icon: 'CARD', message: 'Taiwan 1940 標籤會顯示檔案小卡，方便二次查看。' },
-      { icon: 'CRED', message: '每筆對照都標註來源與變異法，點擊即可展開。' },
-      { icon: 'EASTER', message: '頁面有櫻花、鳥居、武士、禪意等彩蛋，慢慢探索。' },
-      { icon: 'DICE', message: '骰子連點超過三次會輪播不同提示，持續收集。' },
+      { icon: 'TIP', message: `收錄 ${allPunNames.length} 則趣味日文名` },
+      { icon: 'LAW', message: '1940 改姓名制度正式實施' },
+      { icon: 'INFO', message: '上行真實對照，下行趣味諧音' },
+      { icon: 'TORII', message: '鳥居印章點 3 次有彩蛋' },
+      { icon: 'SAKURA', message: 'Logo 連點 5 次櫻花雨' },
+      { icon: 'SAMURAI', message: '皇民化改姓運動快點 7 次武士斬擊' },
+      { icon: 'SNAP', message: '截圖模式提示僅首訪顯示' },
+      { icon: 'FIREWORK', message: '搖晃手機 10 次放煙火' },
+      { icon: 'DATA', message: '90+ 漢姓、1,700+ 對照紀錄' },
+      { icon: 'DOC', message: '/about 與 /history 看背景' },
+      { icon: 'LOCAL', message: '自訂諧音名存本機不上傳' },
+      { icon: 'TARGET', message: '姓氏留空隨機抽選' },
+      { icon: 'ZEN', message: '靜置 45 秒禪意墨色' },
+      { icon: 'SENSOR', message: '允許感測器權限易觸發花火' },
+      { icon: 'MODAL', message: '分享窗僅自動彈一次' },
+      { icon: 'GUIDE', message: '趣味諧音名說明梗點' },
+      { icon: 'BREAD', message: '族譜查證快速切換姓氏' },
+      { icon: 'CARD', message: 'Taiwan 1940 標籤顯示檔案小卡' },
+      { icon: 'CRED', message: '對照標註來源與變異法' },
+      { icon: 'EASTER', message: '櫻花、鳥居、武士等彩蛋' },
+      { icon: 'DICE', message: '骰子連點輪播提示' },
     ],
     [allPunNames.length],
   );
