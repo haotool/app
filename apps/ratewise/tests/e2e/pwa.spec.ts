@@ -120,13 +120,14 @@ test.describe('PWA Features', () => {
 
   test('should have apple touch icon', async ({ rateWisePage: page }) => {
     const basePath = await getManifestBasePath(page);
-    const expectedIconPath = `${basePath}apple-touch-icon.png`;
+    const expectedIconBase = `${basePath}apple-touch-icon.png`;
 
     const appleTouchIcon = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
-    expect(appleTouchIcon).toBe(expectedIconPath);
+    // href 包含版本參數（例如 ?v=20251208），檢查基本路徑是否正確
+    expect(appleTouchIcon).toContain(expectedIconBase);
 
-    // Verify icon exists
-    const iconResponse = await page.request.get(expectedIconPath);
+    // Verify icon exists（使用實際的 href，包含版本參數以便快取更新）
+    const iconResponse = await page.request.get(appleTouchIcon || expectedIconBase);
     expect(iconResponse.ok()).toBeTruthy();
   });
 
