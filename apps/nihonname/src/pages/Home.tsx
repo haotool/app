@@ -1117,7 +1117,7 @@ export default function Home() {
       >
         {/* 日式吐司訊息 */}
         {showToast && (
-          <div className="fixed left-1/2 -translate-x-1/2 z-[200] bottom-[calc(1.5rem+env(safe-area-inset-bottom,12px))] animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
+          <div className="fixed left-1/2 -translate-x-1/2 z-[200] bottom-[calc(1.5rem+env(safe-area-inset-bottom,12px))] animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none max-w-md w-[calc(100%-2rem)]">
             <div className="bg-red-900/90 backdrop-blur-md text-amber-50 px-6 py-3 rounded-full text-sm shadow-[0_8px_20px_-6px_rgba(127,29,29,0.45)] flex items-center border border-red-200/50 ring-1 ring-red-200/40">
               <span className="mr-2 leading-none">{renderIcon(toastIconKey)}</span>
               {toastMessage}
@@ -1600,7 +1600,7 @@ export default function Home() {
                 </button>
 
                 <Link
-                  to="/about"
+                  to="/about/"
                   className="text-stone-400 text-xs py-2 hover:text-red-600 transition-colors flex items-center"
                 >
                   <BookOpen size={12} className="mr-1.5" />

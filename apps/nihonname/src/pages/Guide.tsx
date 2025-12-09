@@ -65,7 +65,7 @@ const Guide = () => {
           '日本名字產生器教學',
           '皇民化改姓教學',
         ]}
-        pathname="/guide"
+        pathname="/guide/"
       />
       {/* [fix:2025-12-06] JSON-LD (howToSchema, breadcrumbs) 已移至 vite.config.ts onPageRendered hook */}
 

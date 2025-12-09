@@ -18,7 +18,7 @@ import { SEOHelmet } from '../../components/SEOHelmet';
 const historyArticles = [
   {
     id: 'kominka',
-    path: '/history/kominka',
+    path: '/history/kominka/',
     title: '皇民化運動',
     subtitle: '1937-1945年台灣改姓名運動',
     description:
@@ -29,7 +29,7 @@ const historyArticles = [
   },
   {
     id: 'shimonoseki',
-    path: '/history/shimonoseki',
+    path: '/history/shimonoseki/',
     title: '馬關條約',
     subtitle: '1895年台灣割讓與日本殖民統治的開端',
     description:
@@ -40,7 +40,7 @@ const historyArticles = [
   },
   {
     id: 'san-francisco',
-    path: '/history/san-francisco',
+    path: '/history/san-francisco/',
     title: '舊金山和約',
     subtitle: '1951年台灣地位與日本放棄主權的法律依據',
     description:
@@ -57,7 +57,7 @@ export default function HistoryIndex() {
       <SEOHelmet
         title="台灣日治時期歷史專區 - 皇民化運動、馬關條約、舊金山和約"
         description="探索台灣日治時期的重要歷史事件：皇民化運動、馬關條約、舊金山和約。深入了解改姓名政策的歷史背景與社會影響。"
-        pathname="/history"
+        pathname="/history/"
         keywords={[
           '日治時期歷史',
           '台灣歷史',
@@ -248,7 +248,7 @@ export default function HistoryIndex() {
           <footer className="text-center mt-12 pt-6 border-t border-stone-200">
             <p className="text-stone-500 text-xs mb-3">本頁面僅供歷史教育用途</p>
             <div className="flex items-center justify-center gap-2 text-[10px] text-stone-400">
-              <Link to="/about" className="hover:text-red-700 transition-colors">
+              <Link to="/about/" className="hover:text-red-700 transition-colors">
                 關於本站
               </Link>
               <span className="text-stone-300">·</span>

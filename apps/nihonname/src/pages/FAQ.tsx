@@ -135,7 +135,7 @@ export default function FAQ() {
       <SEOHelmet
         title="常見問題 FAQ - 皇民化改姓生成器"
         description="皇民化改姓生成器常見問題解答：了解皇民化運動歷史背景、改姓原則、使用方法、資料來源等完整說明。"
-        pathname="/faq"
+        pathname="/faq/"
         keywords={[
           '皇民化運動 FAQ',
           '日本名字產生器常見問題',
@@ -146,7 +146,7 @@ export default function FAQ() {
         faq={allFaqItems}
         breadcrumbs={[
           { name: '首頁', url: '/' },
-          { name: '常見問題', url: '/faq' },
+          { name: '常見問題', url: '/faq/' },
         ]}
       />
 
@@ -245,7 +245,7 @@ export default function FAQ() {
             <h2 className="text-lg font-bold text-red-900 mb-4">相關頁面</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Link
-                to="/guide"
+                to="/guide/"
                 className="flex items-center p-3 bg-white rounded-lg hover:shadow-md transition-shadow"
               >
                 <Wrench size={20} className="text-red-700 mr-3" />
@@ -255,7 +255,7 @@ export default function FAQ() {
                 </div>
               </Link>
               <Link
-                to="/about"
+                to="/about/"
                 className="flex items-center p-3 bg-white rounded-lg hover:shadow-md transition-shadow"
               >
                 <BookOpen size={20} className="text-red-700 mr-3" />
@@ -265,7 +265,7 @@ export default function FAQ() {
                 </div>
               </Link>
               <Link
-                to="/history"
+                to="/history/"
                 className="flex items-center p-3 bg-white rounded-lg hover:shadow-md transition-shadow"
               >
                 <History size={20} className="text-red-700 mr-3" />
