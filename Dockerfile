@@ -63,10 +63,13 @@ RUN set -eux; \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname
 
 # Production stage
+# [fix:2025-12-09] 使用 nginx:alpine 並升級系統包以修復 libpng 漏洞
+# CVE-2025-64720, CVE-2025-65018, CVE-2025-66293
 FROM nginx:alpine
 
-# Install wget for healthcheck
-RUN apk add --no-cache wget
+# [fix:2025-12-09] 更新所有系統包並安裝 wget（用於 healthcheck）
+# 這確保獲取最新的安全修補，包括 libpng
+RUN apk upgrade --no-cache && apk add --no-cache wget
 
 # Copy built assets for ratewise
 COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html
