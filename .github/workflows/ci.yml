@@ -180,7 +180,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trivy file-system scan (HIGH/CRITICAL, ignore unfixed)
-        uses: aquasecurity/trivy-action@v0.20.0
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           scan-type: 'fs'
           scanners: 'vuln,secret,misconfig'
@@ -191,7 +191,7 @@ jobs:
           output: 'trivy-fs.txt'
 
       - name: Trivy image scan (HIGH/CRITICAL, ignore unfixed)
-        uses: aquasecurity/trivy-action@v0.20.0
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           scan-type: 'image'
           image-ref: 'ratewise:ci-scan'
