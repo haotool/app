@@ -60,12 +60,12 @@ jobs:
 
       - name: Install OSV scanner
         run: |
-          curl -L -o osv-scanner_linux_amd64 https://github.com/google/osv-scanner/releases/download/v2.0.3/osv-scanner_linux_amd64
-          chmod +x osv-scanner_linux_amd64
-          sudo mv osv-scanner_linux_amd64 /usr/local/bin/osv-scanner
+          curl -L -o osv-scanner https://github.com/google/osv-scanner/releases/download/v2.0.3/osv-scanner_linux_amd64
+          chmod +x osv-scanner
+          sudo mv osv-scanner /usr/local/bin/osv-scanner
 
       - name: Run OSV scanner
-        run: osv-scanner --recursive --lockfile=pnpm-lock.yaml --skip-git .
+        run: osv-scanner scan --recursive --lockfile pnpm-lock.yaml .
 
       - name: Upload coverage
         if: success()
