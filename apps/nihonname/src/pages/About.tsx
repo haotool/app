@@ -41,7 +41,7 @@ export default function About() {
       <SEOHelmet
         title="關於皇民化改姓生成器"
         description="了解1940年代台灣皇民化運動的歷史背景、改姓原則與本系統的資料來源。"
-        pathname="/about"
+        pathname="/about/"
         keywords={['皇民化運動', '日治時期歷史', '台灣歷史', '改姓運動', '內地式改姓名']}
       />
 

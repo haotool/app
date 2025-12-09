@@ -74,7 +74,7 @@ export default function ShimonosekiTreaty() {
       <SEOHelmet
         title="馬關條約歷史 - 1895年台灣割讓與日本殖民統治的開端"
         description="深入了解1895年馬關條約的歷史背景、條約內容、台灣人的反應，以及對台灣50年殖民統治的深遠影響。破解「馬關續約」的錯誤迷思。"
-        pathname="/history/shimonoseki"
+        pathname="/history/shimonoseki/"
         keywords={[
           '馬關條約',
           '馬關條約強制續約',
@@ -228,7 +228,7 @@ export default function ShimonosekiTreaty() {
             <ul className="space-y-3">
               <li>
                 <Link
-                  to="/history/kominka"
+                  to="/history/kominka/"
                   className="flex items-center text-red-700 hover:text-red-900 transition-colors"
                 >
                   <ExternalLink size={14} className="mr-2" />
@@ -237,7 +237,7 @@ export default function ShimonosekiTreaty() {
               </li>
               <li>
                 <Link
-                  to="/history/san-francisco"
+                  to="/history/san-francisco/"
                   className="flex items-center text-red-700 hover:text-red-900 transition-colors"
                 >
                   <ExternalLink size={14} className="mr-2" />
@@ -276,7 +276,7 @@ export default function ShimonosekiTreaty() {
               本頁面僅供歷史教育用途，資料來源詳見參考文獻
             </p>
             <div className="flex items-center justify-center gap-2 text-[10px] text-stone-400">
-              <Link to="/about" className="hover:text-red-700 transition-colors">
+              <Link to="/about/" className="hover:text-red-700 transition-colors">
                 關於本站
               </Link>
               <span className="text-stone-300">·</span>

@@ -74,7 +74,7 @@ export default function KominkaMovement() {
       <SEOHelmet
         title="皇民化運動歷史 - 1937-1945年台灣改姓名運動完整解析"
         description="深入了解1937-1945年日本殖民時期台灣皇民化運動的歷史背景、改姓原則、社會影響，以及如何查詢祖先的日本姓名。"
-        pathname="/history/kominka"
+        pathname="/history/kominka/"
         keywords={[
           '皇民化運動',
           '皇民化改姓運動',
@@ -194,7 +194,7 @@ export default function KominkaMovement() {
             <ul className="space-y-3">
               <li>
                 <Link
-                  to="/history/shimonoseki"
+                  to="/history/shimonoseki/"
                   className="flex items-center text-red-700 hover:text-red-900 transition-colors"
                 >
                   <ExternalLink size={14} className="mr-2" />
@@ -203,7 +203,7 @@ export default function KominkaMovement() {
               </li>
               <li>
                 <Link
-                  to="/history/san-francisco"
+                  to="/history/san-francisco/"
                   className="flex items-center text-red-700 hover:text-red-900 transition-colors"
                 >
                   <ExternalLink size={14} className="mr-2" />
@@ -253,7 +253,7 @@ export default function KominkaMovement() {
               本頁面僅供歷史教育用途，資料來源詳見參考文獻
             </p>
             <div className="flex items-center justify-center gap-2 text-[10px] text-stone-400">
-              <Link to="/about" className="hover:text-red-700 transition-colors">
+              <Link to="/about/" className="hover:text-red-700 transition-colors">
                 關於本站
               </Link>
               <span className="text-stone-300">·</span>

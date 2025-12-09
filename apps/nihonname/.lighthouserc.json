@@ -1,7 +1,16 @@
 {
   "ci": {
     "collect": {
-      "url": ["http://localhost:3002/nihonname/", "http://localhost:3002/nihonname/about"],
+      "url": [
+        "http://localhost:3002/nihonname/",
+        "http://localhost:3002/nihonname/about/",
+        "http://localhost:3002/nihonname/guide/",
+        "http://localhost:3002/nihonname/faq/",
+        "http://localhost:3002/nihonname/history/",
+        "http://localhost:3002/nihonname/history/kominka/",
+        "http://localhost:3002/nihonname/history/shimonoseki/",
+        "http://localhost:3002/nihonname/history/san-francisco/"
+      ],
       "startServerCommand": "pnpm --filter @app/nihonname preview -- --port 3002 --strictPort --clearScreen false",
       "startServerReadyPattern": "Local:",
       "startServerReadyTimeout": 120000,
@@ -18,7 +27,27 @@
         "categories:performance": ["error", { "minScore": 0.9 }],
         "categories:seo": ["error", { "minScore": 0.9 }],
         "categories:accessibility": ["error", { "minScore": 0.95 }],
-        "categories:best-practices": ["warn", { "minScore": 0.95 }]
+        "categories:best-practices": ["warn", { "minScore": 0.95 }],
+
+        "modern-image-formats": ["warn", { "maxLength": 0 }],
+        "uses-optimized-images": ["warn", { "maxLength": 0 }],
+        "uses-responsive-images": ["warn", { "maxLength": 0 }],
+        "image-size-responsive": ["warn", { "maxLength": 0 }],
+
+        "maskable-icon": "off",
+        "apple-touch-icon": ["warn", { "minScore": 1 }],
+
+        "canonical": ["error", { "minScore": 1 }],
+        "meta-description": ["error", { "minScore": 1 }],
+        "document-title": ["error", { "minScore": 1 }],
+        "http-status-code": ["error", { "minScore": 1 }],
+        "link-text": ["warn", { "minScore": 0.9 }],
+        "crawlable-anchors": ["warn", { "minScore": 1 }],
+        "is-crawlable": ["error", { "minScore": 1 }],
+        "robots-txt": "off",
+
+        "viewport": ["error", { "minScore": 1 }],
+        "structured-data": "off"
       }
     },
     "upload": {

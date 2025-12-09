@@ -94,13 +94,13 @@ export const routes: RouteRecord[] = [
 export function getIncludedRoutes(): string[] {
   return [
     '/',
-    '/about',
-    '/guide',
-    '/faq',
-    '/history',
-    '/history/kominka',
-    '/history/shimonoseki',
-    '/history/san-francisco',
+    '/about/',
+    '/guide/',
+    '/faq/',
+    '/history/',
+    '/history/kominka/',
+    '/history/shimonoseki/',
+    '/history/san-francisco/',
   ];
 }
 

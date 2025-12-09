@@ -340,7 +340,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
       jsonLd.push(
         buildBreadcrumbSchema([
           { name: '首頁', url: SITE_BASE_URL },
-          { name: '關於', url: `${SITE_BASE_URL}about` },
+          { name: '關於', url: `${SITE_BASE_URL}about/` },
         ]),
         buildImageObjectSchema('og-image.png'),
       );
@@ -350,7 +350,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
       jsonLd.push(
         buildBreadcrumbSchema([
           { name: '首頁', url: SITE_BASE_URL },
-          { name: '使用指南', url: `${SITE_BASE_URL}guide` },
+          { name: '使用指南', url: `${SITE_BASE_URL}guide/` },
         ]),
         buildHowToSchema(),
         buildImageObjectSchema('og-image.png'),
@@ -362,7 +362,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
       jsonLd.push(
         buildBreadcrumbSchema([
           { name: '首頁', url: SITE_BASE_URL },
-          { name: '常見問題', url: `${SITE_BASE_URL}faq` },
+          { name: '常見問題', url: `${SITE_BASE_URL}faq/` },
         ]),
         buildFaqSchema(FAQ_DATA, fullUrl),
         buildImageObjectSchema('og-image.png'),
@@ -373,7 +373,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
       jsonLd.push(
         buildBreadcrumbSchema([
           { name: '首頁', url: SITE_BASE_URL },
-          { name: '歷史專區', url: `${SITE_BASE_URL}history` },
+          { name: '歷史專區', url: `${SITE_BASE_URL}history/` },
         ]),
         buildArticleSchema(
           {
@@ -393,8 +393,8 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
       jsonLd.push(
         buildBreadcrumbSchema([
           { name: '首頁', url: SITE_BASE_URL },
-          { name: '歷史專區', url: `${SITE_BASE_URL}history` },
-          { name: '皇民化運動', url: `${SITE_BASE_URL}history/kominka` },
+          { name: '歷史專區', url: `${SITE_BASE_URL}history/` },
+          { name: '皇民化運動', url: `${SITE_BASE_URL}history/kominka/` },
         ]),
         buildArticleSchema(
           {
@@ -414,8 +414,8 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
       jsonLd.push(
         buildBreadcrumbSchema([
           { name: '首頁', url: SITE_BASE_URL },
-          { name: '歷史專區', url: `${SITE_BASE_URL}history` },
-          { name: '馬關條約', url: `${SITE_BASE_URL}history/shimonoseki` },
+          { name: '歷史專區', url: `${SITE_BASE_URL}history/` },
+          { name: '馬關條約', url: `${SITE_BASE_URL}history/shimonoseki/` },
         ]),
         buildArticleSchema(
           {
@@ -435,8 +435,8 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
       jsonLd.push(
         buildBreadcrumbSchema([
           { name: '首頁', url: SITE_BASE_URL },
-          { name: '歷史專區', url: `${SITE_BASE_URL}history` },
-          { name: '舊金山和約', url: `${SITE_BASE_URL}history/san-francisco` },
+          { name: '歷史專區', url: `${SITE_BASE_URL}history/` },
+          { name: '舊金山和約', url: `${SITE_BASE_URL}history/san-francisco/` },
         ]),
         buildArticleSchema(
           {

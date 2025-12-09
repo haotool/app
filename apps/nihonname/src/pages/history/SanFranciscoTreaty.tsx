@@ -73,7 +73,7 @@ export default function SanFranciscoTreaty() {
       <SEOHelmet
         title="舊金山和約歷史 - 1951年台灣地位與日本放棄主權的法律依據"
         description="深入了解1951年舊金山和約的歷史背景、條約內容、對台灣地位的影響，以及與皇民化改姓運動的關係。"
-        pathname="/history/san-francisco"
+        pathname="/history/san-francisco/"
         keywords={[
           '舊金山和約',
           '對日和平條約',
@@ -230,7 +230,7 @@ export default function SanFranciscoTreaty() {
             <ul className="space-y-3">
               <li>
                 <Link
-                  to="/history/kominka"
+                  to="/history/kominka/"
                   className="flex items-center text-red-700 hover:text-red-900 transition-colors"
                 >
                   <ExternalLink size={14} className="mr-2" />
@@ -239,7 +239,7 @@ export default function SanFranciscoTreaty() {
               </li>
               <li>
                 <Link
-                  to="/history/shimonoseki"
+                  to="/history/shimonoseki/"
                   className="flex items-center text-red-700 hover:text-red-900 transition-colors"
                 >
                   <ExternalLink size={14} className="mr-2" />
@@ -289,7 +289,7 @@ export default function SanFranciscoTreaty() {
               本頁面僅供歷史教育用途，資料來源詳見參考文獻
             </p>
             <div className="flex items-center justify-center gap-2 text-[10px] text-stone-400">
-              <Link to="/about" className="hover:text-red-700 transition-colors">
+              <Link to="/about/" className="hover:text-red-700 transition-colors">
                 關於本站
               </Link>
               <span className="text-stone-300">·</span>
