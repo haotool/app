@@ -59,9 +59,13 @@ jobs:
         run: pnpm audit --prod --audit-level=high
 
       - name: Run OSV scanner
-        run: |
-          curl -sSfL https://google.github.io/osv-scanner/install.sh | sh -s -- -b /usr/local/bin
-          osv-scanner -r . --lockfile=pnpm-lock.yaml --skip-git
+        uses: google/osv-scanner-action@v2
+        with:
+          scan-args: |-
+            --recursive
+            --lockfile=pnpm-lock.yaml
+            --skip-git
+            .
 
       - name: Upload coverage
         if: success()
