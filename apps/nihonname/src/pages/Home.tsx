@@ -617,6 +617,7 @@ export default function Home() {
     handleLogoClick,
     handleDoubleTextClick,
     handleToriiClick,
+    handleRapidClick,
     requestMotionPermission,
   } = useEasterEggs();
   // iOS DeviceMotion 權限狀態
@@ -1001,7 +1002,7 @@ export default function Home() {
       { icon: 'INFO', message: '上行是真實對照，下行是趣味諧音提示，兩條都能玩。' },
       { icon: 'TORII', message: '鳥居印章點三次會出現朱紅光影小彩蛋。' },
       { icon: 'SAKURA', message: 'Logo 連點五下會觸發櫻花雨。' },
-      { icon: 'SAMURAI', message: '標題連點七下會出現武士斬擊動畫。' },
+      { icon: 'SAMURAI', message: '「皇民化改姓運動」快速連點 7 次觸發武士斬擊（300ms 內）。' },
       { icon: 'SNAP', message: '截圖模式提示僅首訪顯示，日後不再干擾。' },
       { icon: 'FIREWORK', message: '搖晃手機 10 次會放煙火（需 HTTPS 與動態感測器授權）。' },
       { icon: 'DATA', message: '資料庫涵蓋 90+ 漢姓、1,700+ 對照紀錄，族譜查證可看來源。' },
@@ -1182,7 +1183,13 @@ export default function Home() {
                 className="relative inline-block text-4xl md:text-5xl font-bold font-jp text-red-900 drop-shadow-sm leading-tight transition-all duration-500 opacity-100 cursor-pointer"
                 onClick={handleLogoClick}
               >
-                <span className="block text-lg md:text-xl text-stone-500 tracking-[0.5em] mb-1 font-serif">
+                <span
+                  className="block text-lg md:text-xl text-stone-500 tracking-[0.5em] mb-1 font-serif cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRapidClick();
+                  }}
+                >
                   皇民化改姓運動
                 </span>
                 姓名<span className="text-red-600">変換</span>所
