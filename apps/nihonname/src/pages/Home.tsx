@@ -531,27 +531,27 @@ interface DiceTip {
 type IconRenderer = () => React.ReactNode;
 
 const ICON_LIBRARY: Record<IconKey, IconRenderer> = {
-  TIP: () => <Info size={16} className="text-red-800" />,
-  LAW: () => <Gavel size={16} className="text-red-800" />,
-  INFO: () => <Info size={16} className="text-red-800" />,
-  TORII: () => <ToriiIcon className="w-4 h-4 text-red-800" />,
-  SAKURA: () => <Flower size={16} className="text-red-800" />,
-  SAMURAI: () => <Sword size={16} className="text-red-800" />,
-  SNAP: () => <Camera size={16} className="text-red-800" />,
-  FIREWORK: () => <Sparkles size={16} className="text-red-800" />,
-  DATA: () => <Database size={16} className="text-red-800" />,
-  DOC: () => <BookOpen size={16} className="text-red-800" />,
-  LOCAL: () => <ShieldCheck size={16} className="text-red-800" />,
-  TARGET: () => <TargetIcon size={16} className="text-red-800" />,
-  ZEN: () => <Wind size={16} className="text-red-800" />,
-  SENSOR: () => <Activity size={16} className="text-red-800" />,
-  MODAL: () => <Bell size={16} className="text-red-800" />,
-  GUIDE: () => <Lightbulb size={16} className="text-red-800" />,
-  BREAD: () => <Navigation size={16} className="text-red-800" />,
-  CARD: () => <IdCard size={16} className="text-red-800" />,
-  CRED: () => <BadgeCheck size={16} className="text-red-800" />,
-  EASTER: () => <Sparkles size={16} className="text-red-800" />,
-  DICE: () => <Dice5 size={16} className="text-red-800" />,
+  TIP: () => <Info size={16} className="text-amber-200" />,
+  LAW: () => <Gavel size={16} className="text-amber-200" />,
+  INFO: () => <Info size={16} className="text-amber-200" />,
+  TORII: () => <ToriiIcon className="w-4 h-4 text-amber-200" />,
+  SAKURA: () => <Flower size={16} className="text-amber-200" />,
+  SAMURAI: () => <Sword size={16} className="text-amber-200" />,
+  SNAP: () => <Camera size={16} className="text-amber-200" />,
+  FIREWORK: () => <Sparkles size={16} className="text-amber-200" />,
+  DATA: () => <Database size={16} className="text-amber-200" />,
+  DOC: () => <BookOpen size={16} className="text-amber-200" />,
+  LOCAL: () => <ShieldCheck size={16} className="text-amber-200" />,
+  TARGET: () => <TargetIcon size={16} className="text-amber-200" />,
+  ZEN: () => <Wind size={16} className="text-amber-200" />,
+  SENSOR: () => <Activity size={16} className="text-amber-200" />,
+  MODAL: () => <Bell size={16} className="text-amber-200" />,
+  GUIDE: () => <Lightbulb size={16} className="text-amber-200" />,
+  BREAD: () => <Navigation size={16} className="text-amber-200" />,
+  CARD: () => <IdCard size={16} className="text-amber-200" />,
+  CRED: () => <BadgeCheck size={16} className="text-amber-200" />,
+  EASTER: () => <Sparkles size={16} className="text-amber-200" />,
+  DICE: () => <Dice5 size={16} className="text-amber-200" />,
 };
 
 const renderIcon = (icon?: IconKey) => {
@@ -805,7 +805,7 @@ export default function Home() {
 
     // 如果沒有輸入姓氏，顯示吐司並使用隨機姓氏
     if (!state.originalSurname) {
-      showToastMessage('未填姓氏，隨機抽選', 'TARGET');
+      showToastMessage('未填姓氏，隨機抽選', 'SAKURA');
     }
 
     setTimeout(() => {
