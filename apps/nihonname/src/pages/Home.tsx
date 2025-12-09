@@ -576,7 +576,7 @@ export default function Home() {
   const [showLookup, setShowLookup] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastIcon, setToastIcon] = useState<React.ReactNode | null>(() => renderIcon('SAKURA'));
+  const [toastIconKey, setToastIconKey] = useState<IconKey>('SAKURA');
   const [compoundHint, setCompoundHint] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   // 新增：截圖模式按鈕發光引導（進入結果頁 10 秒後顯示）
@@ -713,7 +713,7 @@ export default function Home() {
   // 顯示吐司訊息
   const showToastMessage = (message: string, icon: IconKey = 'SAKURA', duration = 3000) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    setToastIcon(renderIcon(icon));
+    setToastIconKey(icon);
     setToastMessage(message);
     setShowToast(true);
     toastTimeoutRef.current = setTimeout(() => {
@@ -1124,7 +1124,7 @@ export default function Home() {
         {showToast && (
           <div className="fixed left-1/2 -translate-x-1/2 z-[200] bottom-[calc(1.5rem+env(safe-area-inset-bottom,12px))] animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
             <div className="bg-red-900/90 backdrop-blur-md text-amber-50 px-6 py-3 rounded-full text-sm shadow-[0_8px_20px_-6px_rgba(127,29,29,0.45)] flex items-center border border-red-200/50 ring-1 ring-red-200/40">
-              <span className="mr-2 leading-none">{toastIcon}</span>
+              <span className="mr-2 leading-none">{renderIcon(toastIconKey)}</span>
               {toastMessage}
             </div>
           </div>
