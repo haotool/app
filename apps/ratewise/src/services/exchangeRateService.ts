@@ -2,9 +2,11 @@
  * 匯率資料服務
  * 從台灣銀行 API 獲取即時匯率
  * [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]
+ * [2025-12-10] 整合 Request ID 追蹤
  */
 
 import { logger } from '../utils/logger';
+import { fetchWithRequestId } from '../utils/requestId';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 interface ExchangeRateData {
@@ -112,7 +114,8 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
     try {
       logger.debug(`Trying CDN #${i + 1}/${CDN_URLS.length}`, { url: url.substring(0, 80) });
 
-      const response = await fetch(url);
+      // [2025-12-10] 使用 fetchWithRequestId 自動注入 X-Correlation-ID header
+      const response = await fetchWithRequestId(url);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

@@ -59,6 +59,7 @@
     "vite": "^7.2.6",
     "vite-imagetools": "^9.0.2",
     "vite-plugin-compression": "^0.5.1",
+    "vite-plugin-csp-guard": "^3.0.0",
     "vite-plugin-pwa": "^1.2.0",
     "vite-react-ssg": "^0.8.9",
     "vitest": "^4.0.15",

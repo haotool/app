@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { imagetools } from 'vite-imagetools';
+import csp from 'vite-plugin-csp-guard';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -186,6 +187,20 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
+      // [2025-12-10] Hash-based CSP 防護（Vite SSG 最佳實踐）
+      // 參考: https://vite-csp.tsotne.co.uk/
+      csp({
+        algorithm: 'sha256',
+        dev: { run: true }, // 開發模式也檢查 CSP 違規
+        policy: {
+          'script-src': ["'self'", 'https://static.cloudflareinsights.com'],
+          'style-src': [
+            "'self'",
+            // SHA-256 hash of empty string for CSS-in-JS libraries (MUI/Emotion)
+            "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
+          ],
+        },
+      }),
       // [fix:2025-11-07] 圖片優化 plugin - 自動生成多尺寸和現代格式
       // 參考: https://github.com/JonasKruckenberg/imagetools
       imagetools({
