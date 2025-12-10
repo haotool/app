@@ -13,9 +13,11 @@
  *
  * @author GitHub Actions Bot
  * @created 2025-10-13T22:59:32+08:00
+ * @updated 2025-12-10 整合 Request ID 追蹤
  */
 
 import { logger } from '../utils/logger';
+import { fetchWithRequestId } from '../utils/requestId';
 import type { CurrencyCode } from '../features/ratewise/types';
 
 /**
@@ -160,7 +162,8 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
 
       // [fix:2025-11-07] 靜默處理 404，避免在 PageSpeed Insights 中顯示錯誤
       // 參考: https://web.dev/articles/fetch-api-error-handling
-      const response = await fetch(url, {
+      // [2025-12-10] 使用 fetchWithRequestId 自動注入 X-Correlation-ID header
+      const response = await fetchWithRequestId(url, {
         method: 'GET',
         headers: { Accept: 'application/json' },
         cache: 'no-cache',
