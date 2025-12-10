@@ -49,16 +49,18 @@ test.describe('SEO Validation - Meta Tags', () => {
       expect(title.length).toBeGreaterThan(0);
       expect(title.length).toBeLessThanOrEqual(60); // SEO best practice
 
-      // Meta description
+      // Meta description (use React Helmet generated tags)
       const description = await browserPage
-        .locator('meta[name="description"]')
+        .locator('meta[data-rh="true"][name="description"]')
         .getAttribute('content');
       expect(description).toBeTruthy();
       expect(description!.length).toBeGreaterThan(0);
       expect(description!.length).toBeLessThanOrEqual(160); // SEO best practice
 
-      // Canonical URL
-      const canonical = await browserPage.locator('link[rel="canonical"]').getAttribute('href');
+      // Canonical URL (use React Helmet generated tags)
+      const canonical = await browserPage
+        .locator('link[data-rh="true"][rel="canonical"]')
+        .getAttribute('href');
       expect(canonical).toBeTruthy();
       expect(canonical).toContain(BASE_URL);
       expect(canonical).toContain(page.path);
@@ -71,34 +73,40 @@ test.describe('SEO Validation - Open Graph Tags', () => {
     test(`${page.name} should have valid Open Graph tags`, async ({ page: browserPage }) => {
       await browserPage.goto(`${BASE_URL}${page.path}`);
 
-      // og:title
+      // og:title (use React Helmet generated tags)
       const ogTitle = await browserPage
-        .locator('meta[property="og:title"]')
+        .locator('meta[data-rh="true"][property="og:title"]')
         .getAttribute('content');
       expect(ogTitle).toBeTruthy();
 
-      // og:description
+      // og:description (use React Helmet generated tags)
       const ogDescription = await browserPage
-        .locator('meta[property="og:description"]')
+        .locator('meta[data-rh="true"][property="og:description"]')
         .getAttribute('content');
       expect(ogDescription).toBeTruthy();
 
-      // og:url
-      const ogUrl = await browserPage.locator('meta[property="og:url"]').getAttribute('content');
+      // og:url (use React Helmet generated tags)
+      const ogUrl = await browserPage
+        .locator('meta[data-rh="true"][property="og:url"]')
+        .getAttribute('content');
       expect(ogUrl).toBeTruthy();
       expect(ogUrl).toContain(BASE_URL);
 
-      // og:image
+      // og:image (use React Helmet generated tags)
       const ogImage = await browserPage
-        .locator('meta[property="og:image"]')
+        .locator('meta[data-rh="true"][property="og:image"]')
         .getAttribute('content');
       expect(ogImage).toBeTruthy();
       // Allow query parameters in image URLs (e.g., ?v=20251208)
       expect(ogImage).toMatch(/\.(png|jpg|jpeg)(\?.*)?$/i);
 
-      // og:type
-      const ogType = await browserPage.locator('meta[property="og:type"]').getAttribute('content');
-      expect(ogType).toBe('website');
+      // og:type (use React Helmet generated tags)
+      const ogType = await browserPage
+        .locator('meta[data-rh="true"][property="og:type"]')
+        .getAttribute('content');
+      // History pages should use 'article', other pages use 'website'
+      const expectedType = page.path.startsWith('/history/') ? 'article' : 'website';
+      expect(ogType).toBe(expectedType);
     });
   }
 });
