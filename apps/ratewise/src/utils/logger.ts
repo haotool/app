@@ -12,7 +12,7 @@ interface LogEntry {
   level: LogLevel;
   message: string;
   timestamp: string;
-  requestId: string;  // [2025 Best Practice] 分散式追蹤
+  requestId: string; // [2025 Best Practice] 分散式追蹤
   context?: Record<string, unknown>;
   error?: Error;
 }
@@ -43,7 +43,7 @@ class Logger {
       level,
       message,
       timestamp: this.getTimestamp(),
-      requestId: getRequestId(),  // [2025 Best Practice] 自動追蹤
+      requestId: getRequestId(), // [2025 Best Practice] 自動追蹤
     };
 
     if (context && Object.keys(context).length > 0) {
@@ -93,11 +93,11 @@ class Logger {
         extra: {
           ...entry.context,
           timestamp: entry.timestamp,
-          requestId: entry.requestId,  // [2025 Best Practice] 追蹤 Request ID
+          requestId: entry.requestId, // [2025 Best Practice] 追蹤 Request ID
         },
         tags: {
           logLevel: entry.level,
-          requestId: entry.requestId,  // 作為 tag 方便過濾
+          requestId: entry.requestId, // 作為 tag 方便過濾
         },
       });
 

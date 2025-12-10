@@ -13,6 +13,7 @@
 本次資安深度審查涵蓋前端代碼、配置文件、CI/CD pipeline、依賴管理、數據處理等關鍵安全領域。專案整體安全狀況良好，已實施多層防護機制，無發現高風險或嚴重漏洞。
 
 **主要優點**:
+
 - ✅ 完善的安全標頭配置（CSP、HSTS、CORP 等）
 - ✅ Trusted Types 政策防禦 XSS 攻擊
 - ✅ CI/CD 整合多重安全掃描（Trivy、OSV Scanner、pnpm audit）
@@ -22,6 +23,7 @@
 - ✅ 依賴無已知高危漏洞
 
 **改進建議**:
+
 - ⚠️ 缺少 Secrets 掃描（Gitleaks/TruffleHog）
 - ⚠️ Logger 未串接遠端服務（Sentry）
 - ⚠️ 缺少 Request ID 追蹤機制
@@ -57,12 +59,12 @@ pnpm audit --prod --json
 
 專案已整合以下安全掃描工具：
 
-| 工具 | 版本 | 掃描範圍 | 執行頻率 | 狀態 |
-|------|------|----------|----------|------|
-| **pnpm audit** | Latest | 生產依賴 | 每次 CI | ✅ |
-| **OSV Scanner** | v2.0.3 | 跨生態系漏洞 | 每次 CI | ✅ |
-| **Trivy** | 0.33.1 | 檔案系統 + Docker image | 每次 CI | ✅ |
-| **Dependency Review** | Latest | PR 差異掃描 | PR only | ✅ |
+| 工具                  | 版本   | 掃描範圍                | 執行頻率 | 狀態 |
+| --------------------- | ------ | ----------------------- | -------- | ---- |
+| **pnpm audit**        | Latest | 生產依賴                | 每次 CI  | ✅   |
+| **OSV Scanner**       | v2.0.3 | 跨生態系漏洞            | 每次 CI  | ✅   |
+| **Trivy**             | 0.33.1 | 檔案系統 + Docker image | 每次 CI  | ✅   |
+| **Dependency Review** | Latest | PR 差異掃描             | PR only  | ✅   |
 
 **參考**: `.github/workflows/ci.yml:58-68`
 
@@ -89,10 +91,10 @@ const POLICY_CONFIG = {
   createHTML: passThrough,
   createScript: (input: string, sink?: string) => {
     // 允許 Cloudflare Insights 和 SSG inline scripts
-    if (sink === 'script' && (
-      input.includes('cloudflareinsights.com') ||
-      input.includes('__staticRouterHydrationData')
-    )) {
+    if (
+      sink === 'script' &&
+      (input.includes('cloudflareinsights.com') || input.includes('__staticRouterHydrationData'))
+    ) {
       return input;
     }
     return passThrough(input);
@@ -173,11 +175,11 @@ export function normalizeUrl(url: string): string {
 ```typescript
 // localStorage keys 分離策略
 const STORAGE_KEYS = {
-  EXCHANGE_RATES: 'exchangeRates',        // 快取數據（可清除）
+  EXCHANGE_RATES: 'exchangeRates', // 快取數據（可清除）
   CURRENCY_CONVERTER_MODE: 'currencyConverterMode', // 用戶數據
-  FAVORITES: 'favorites',                 // 用戶數據
-  FROM_CURRENCY: 'fromCurrency',          // 用戶數據
-  TO_CURRENCY: 'toCurrency',              // 用戶數據
+  FAVORITES: 'favorites', // 用戶數據
+  FROM_CURRENCY: 'fromCurrency', // 用戶數據
+  TO_CURRENCY: 'toCurrency', // 用戶數據
 };
 ```
 
@@ -198,12 +200,13 @@ export const readJSON = <T>(key: string, fallback: T): T => {
   try {
     return JSON.parse(raw) as T;
   } catch {
-    return fallback;  // 自動處理 JSON 解析錯誤
+    return fallback; // 自動處理 JSON 解析錯誤
   }
 };
 ```
 
 **安全特性**:
+
 - ✅ SSR 環境檢查
 - ✅ 錯誤處理與 fallback
 - ✅ 類型安全
@@ -223,7 +226,7 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
 
-  const data = await response.json() as ExchangeRateData;
+  const data = (await response.json()) as ExchangeRateData;
 
   // 驗證資料格式
   if (!data.rates || typeof data.rates !== 'object') {
@@ -235,6 +238,7 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
 ```
 
 **安全特性**:
+
 - ✅ HTTP 狀態碼驗證
 - ✅ 數據格式驗證
 - ✅ 錯誤處理與日誌記錄
@@ -251,6 +255,7 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
 #### ✅ 無敏感信息洩漏
 
 **.env.example 檢查結果**:
+
 - ✅ 無硬編碼密鑰或 Token
 - ✅ 僅包含範例值
 - ✅ 包含清晰的安全說明
@@ -300,6 +305,7 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 **安全特性**:
+
 - ✅ 使用非 root 用戶 (UID 1001)
 - ✅ 最小權限原則
 - ✅ Health check 機制
@@ -326,6 +332,7 @@ add_header Permissions-Policy "geolocation=(), microphone=(), camera=(), payment
 ```
 
 **CSP 政策**:
+
 - ✅ 預設 self-only
 - ✅ 允許 Cloudflare Analytics
 - ✅ Sentry 錯誤追蹤
@@ -358,6 +365,7 @@ permissions:
 ```
 
 **安全特性**:
+
 - ✅ 明確聲明所需權限
 - ✅ 不使用危險的 `pull_request_target` trigger
 - ✅ Secrets 使用正確 (`${{ secrets.GITHUB_TOKEN }}`)
@@ -375,6 +383,7 @@ env:
 ```
 
 **安全檢查**:
+
 - ✅ 無 secrets 洩漏到 logs
 - ✅ 使用 GitHub 內建 secrets 管理
 - ✅ 無硬編碼 tokens
@@ -410,6 +419,7 @@ env:
 **風險**: 可能意外提交 API keys、tokens 到版本控制
 
 **建議**:
+
 ```yaml
 # .github/workflows/ci.yml
 - name: Run Gitleaks
@@ -429,6 +439,7 @@ env:
 **風險**: 生產環境錯誤無法及時追蹤
 
 **建議**:
+
 ```typescript
 // apps/ratewise/src/utils/logger.ts
 private sendToExternalService(entry: LogEntry): void {
@@ -467,18 +478,18 @@ private sendToExternalService(entry: LogEntry): void {
 
 ### 7.1 OWASP Top 10 (2021)
 
-| OWASP 項目 | 遵循狀況 | 說明 |
-|-----------|---------|------|
-| A01: Broken Access Control | ✅ | 前端無敏感操作，所有數據來自公開 API |
-| A02: Cryptographic Failures | ✅ | HTTPS 強制（HSTS）、無敏感數據儲存 |
-| A03: Injection | ✅ | 完善的輸入驗證與 Trusted Types |
-| A04: Insecure Design | ✅ | 分層防禦、最小權限原則 |
-| A05: Security Misconfiguration | ✅ | 完整安全標頭、非 root 執行 |
-| A06: Vulnerable Components | ✅ | CI 自動掃描、無已知漏洞 |
-| A07: Authentication Failures | N/A | 無用戶認證功能 |
-| A08: Software and Data Integrity | ✅ | SRI、CSP、Trusted Types |
-| A09: Security Logging & Monitoring | ⚠️ | Logger 已實作但未串接遠端 |
-| A10: Server-Side Request Forgery | N/A | 前端應用無 SSRF 風險 |
+| OWASP 項目                         | 遵循狀況 | 說明                                 |
+| ---------------------------------- | -------- | ------------------------------------ |
+| A01: Broken Access Control         | ✅       | 前端無敏感操作，所有數據來自公開 API |
+| A02: Cryptographic Failures        | ✅       | HTTPS 強制（HSTS）、無敏感數據儲存   |
+| A03: Injection                     | ✅       | 完善的輸入驗證與 Trusted Types       |
+| A04: Insecure Design               | ✅       | 分層防禦、最小權限原則               |
+| A05: Security Misconfiguration     | ✅       | 完整安全標頭、非 root 執行           |
+| A06: Vulnerable Components         | ✅       | CI 自動掃描、無已知漏洞              |
+| A07: Authentication Failures       | N/A      | 無用戶認證功能                       |
+| A08: Software and Data Integrity   | ✅       | SRI、CSP、Trusted Types              |
+| A09: Security Logging & Monitoring | ⚠️       | Logger 已實作但未串接遠端            |
+| A10: Server-Side Request Forgery   | N/A      | 前端應用無 SSRF 風險                 |
 
 **總體遵循度**: 8/8 (100%)
 
@@ -494,6 +505,7 @@ Content-Security-Policy:
 ```
 
 **說明**:
+
 - ✅ 採用 default deny 策略
 - ✅ 明確白名單外部資源
 - ✅ CSP 違規報告機制
@@ -507,14 +519,14 @@ Content-Security-Policy:
 
 ## 八、安全評分細項
 
-| 類別 | 分數 | 說明 |
-|------|------|------|
-| **依賴安全** | 20/20 | 無已知漏洞、完整 CI 掃描 |
-| **代碼安全** | 18/20 | 無 XSS 風險、完善驗證，扣 2 分（使用 `unsafe-inline`） |
-| **數據安全** | 15/15 | localStorage 安全、API 驗證完整 |
-| **配置安全** | 18/20 | 安全標頭完整、Docker 安全，扣 2 分（缺少 Secrets 掃描） |
-| **CI/CD 安全** | 14/15 | 權限管理正確、多重掃描，扣 1 分（缺少 Gitleaks） |
-| **監控與日誌** | 0/10 | Logger 未串接遠端、無 Request ID 追蹤 |
+| 類別           | 分數  | 說明                                                    |
+| -------------- | ----- | ------------------------------------------------------- |
+| **依賴安全**   | 20/20 | 無已知漏洞、完整 CI 掃描                                |
+| **代碼安全**   | 18/20 | 無 XSS 風險、完善驗證，扣 2 分（使用 `unsafe-inline`）  |
+| **數據安全**   | 15/15 | localStorage 安全、API 驗證完整                         |
+| **配置安全**   | 18/20 | 安全標頭完整、Docker 安全，扣 2 分（缺少 Secrets 掃描） |
+| **CI/CD 安全** | 14/15 | 權限管理正確、多重掃描，扣 1 分（缺少 Gitleaks）        |
+| **監控與日誌** | 0/10  | Logger 未串接遠端、無 Request ID 追蹤                   |
 
 **總分**: 85/100 🟢 **優秀**
 
@@ -523,18 +535,23 @@ Content-Security-Policy:
 ## 九、行動計畫
 
 ### Phase 1: Critical（無）
+
 **時間**: N/A
 **內容**: N/A
 
 ### Phase 2: Medium（1 週內完成）
+
 **時間**: 2025-12-17 前
 **內容**:
+
 1. 新增 Gitleaks CI 掃描 (1 小時)
 2. Logger 串接 Sentry (2 小時)
 
 ### Phase 3: Low（可選）
+
 **時間**: 2026 Q1
 **內容**:
+
 1. 新增 Request ID 追蹤機制 (3 小時)
 2. 評估 nonce-based CSP 可行性 (研究任務)
 
@@ -574,6 +591,7 @@ Content-Security-Policy:
 **下次審查建議**: 2026-03-10（季度審查）
 
 **引用來源**:
+
 - [OWASP Top 10 (2021)](https://owasp.org/Top10/)
 - [OWASP Security Headers](https://owasp.org/www-project-secure-headers/)
 - [Context7: Cloudflare Workers Security](https://developers.cloudflare.com/workers/examples/security-headers/)

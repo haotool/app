@@ -20,7 +20,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Gitleaks 需要完整 Git 歷史以進行差異掃描
+          fetch-depth: 0 # Gitleaks 需要完整 Git 歷史以進行差異掃描
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4

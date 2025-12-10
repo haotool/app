@@ -91,7 +91,7 @@ export function addRequestIdHeader(options: RequestInit = {}): RequestInit {
     headers: {
       ...options.headers,
       'X-Correlation-ID': requestId,
-      'X-Request-ID': requestId,  // 兩個 header 都加入，相容不同後端
+      'X-Request-ID': requestId, // 兩個 header 都加入，相容不同後端
     },
   };
 }
