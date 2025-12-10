@@ -93,7 +93,8 @@ test.describe('SEO Validation - Open Graph Tags', () => {
         .locator('meta[property="og:image"]')
         .getAttribute('content');
       expect(ogImage).toBeTruthy();
-      expect(ogImage).toMatch(/\.(png|jpg|jpeg)$/i);
+      // Allow query parameters in image URLs (e.g., ?v=20251208)
+      expect(ogImage).toMatch(/\.(png|jpg|jpeg)(\?.*)?$/i);
 
       // og:type
       const ogType = await browserPage.locator('meta[property="og:type"]').getAttribute('content');
