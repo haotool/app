@@ -101,17 +101,22 @@ const buildAssetUrl = (value: string) => {
 };
 
 /**
- * SEOHelmet - 僅處理 meta tags，JSON-LD 由 onPageRendered hook 注入
+ * SEOHelmet - 僅在開發模式使用，SSG build 時所有 meta tags 由 meta-tags.ts 注入
  *
- * [fix:2025-12-06] 修復 React Hydration Error #418
- * 根因：vite-react-ssg 的 <Head> 組件中的 <script> 標籤不會在 SSG build 時渲染，
- * 導致 server/client HTML 不匹配，觸發 hydration 錯誤。
+ * [fix:2025-12-06] 修復 React Hydration Error #418 - 移除 JSON-LD script tags
+ * [fix:2025-12-11] 移除 SSG build 時的 meta tags 注入，避免與 meta-tags.ts 重複
+ *
+ * 根因：兩套 SEO 系統並存導致重複 meta tags 和 78 個 E2E 測試失敗
+ * - 系統 1: meta-tags.ts (SSG build 時注入，無 data-rh 屬性)
+ * - 系統 2: SEOHelmet.tsx (React Helmet 動態注入，有 data-rh="true")
  *
  * 解決方案：
- * - 移除此組件中的 JSON-LD script tags
- * - 改用 vite.config.ts 的 onPageRendered hook 在 build 時注入
+ * - SSG build 時返回 null，所有 meta tags 由 meta-tags.ts 透過 onPageRendered hook 注入
+ * - 開發模式保留 React Helmet，方便本地預覽 meta tags
+ * - 符合 Linus 原則："消除特殊情況，而非增加條件判斷"
  *
- * @see https://react.dev/errors/418
+ * @see src/seo/meta-tags.ts - SSG meta tags 生成
+ * @see vite.config.ts - onPageRendered hook 實作
  * @see https://context7.com/daydreamer-riri/vite-react-ssg/llms.txt
  */
 export function SEOHelmet({
@@ -127,6 +132,13 @@ export function SEOHelmet({
   updatedTime,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 }: SEOProps) {
+  // SSG build 時不渲染任何 meta tags（已由 meta-tags.ts 在 onPageRendered hook 注入）
+  // 避免與 SSG 系統重複，解決 78 個 E2E 測試失敗與 SEO 重複 tags 問題
+  if (import.meta.env['SSG']) {
+    return null;
+  }
+
+  // 僅在開發模式下使用 React Helmet（方便本地預覽 meta tags）
   const fullTitle = title ? `${title} | NihonName` : DEFAULT_TITLE;
 
   const canonicalUrl = canonical ? buildCanonical(canonical) : buildCanonical(pathname);
@@ -180,7 +192,7 @@ export function SEOHelmet({
       <meta name="twitter:image" content={ogImageUrl} />
       <meta name="twitter:image:alt" content="NihonName 皇民化改姓生成器" />
 
-      {/* 
+      {/*
         JSON-LD Structured Data 已移至 vite.config.ts onPageRendered hook
         @see src/seo/jsonld.ts
         @see vite.config.ts ssgOptions.onPageRendered
