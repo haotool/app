@@ -39,6 +39,11 @@ export default defineConfig({
     // 基礎 URL
     baseURL: process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:4173',
 
+    // [fix:2025-12-11] 阻止 Service Worker 註冊，避免 SW 快取導致測試不穩定
+    // 依據: [context7:microsoft/playwright:2025-12-11] Service Workers in E2E tests
+    // 根本原因: SW 會攔截請求並返回快取的舊 HTML，導致 "button not visible"
+    serviceWorkers: 'block',
+
     // 僅在首次重試時記錄 trace（控制工件大小）
     trace: 'on-first-retry',
 
@@ -50,7 +55,7 @@ export default defineConfig({
 
     // 合理的超時設定
     actionTimeout: 10000,
-    navigationTimeout: 30000,
+    navigationTimeout: process.env['CI'] ? 60_000 : 30_000, // CI 環境增加導航超時
   },
 
   // 測試專案：精簡矩陣（4 組合）

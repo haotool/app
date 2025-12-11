@@ -13,7 +13,7 @@
     "dev": "vite",
     "prebuild": "node ../../scripts/generate-sitemap.js",
     "build": "tsc --noEmit && vite-react-ssg build --config vite.config.ts",
-    "postbuild": "node scripts/postbuild-mirror-dist.js",
+    "postbuild": "node scripts/update-csp-meta.js && node scripts/postbuild-mirror-dist.js",
     "preview": "vite preview",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
