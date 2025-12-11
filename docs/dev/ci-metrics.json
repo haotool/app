@@ -1,0 +1,11 @@
+{
+  "runs": [
+    {
+      "timestamp": "2025-12-11T14:17:53Z",
+      "duration_seconds": 169,
+      "conclusion": "failure",
+      "branch": "dependabot/github_actions/actions/github-script-8",
+      "commit": "e9ca9a1218e39a07f3fb9f412f486280fa983199"
+    }
+  ]
+}
