@@ -107,6 +107,31 @@ export async function fetchWithRequestId(
   input: RequestInfo | URL,
   init?: RequestInit,
 ): Promise<Response> {
-  const enhancedInit = addRequestIdHeader(init);
+  const resolveUrl = () => {
+    try {
+      // 若為 Request 物件，直接取用 url
+      const target = typeof input === 'string' ? input : (input as Request).url;
+      const base =
+        typeof window !== 'undefined' && window.location?.origin
+          ? window.location.origin
+          : 'http://localhost';
+      return new URL(target, base);
+    } catch {
+      return null;
+    }
+  };
+
+  const url = resolveUrl();
+  const isSameOrigin = (() => {
+    if (!url) return false;
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      return url.origin === window.location.origin;
+    }
+    // Node 環境：視為同源（測試/SSR），保持原行為
+    return !url.hostname;
+  })();
+
+  // 只有同源請求才附加 X-Correlation-ID，避免跨域預檢觸發 CORS 失敗（例如 raw.githubusercontent.com）
+  const enhancedInit = isSameOrigin ? addRequestIdHeader(init) : init;
   return fetch(input, enhancedInit);
 }

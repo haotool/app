@@ -85,12 +85,7 @@ const buildCsp = ({ scriptHashes, styleHashes }) => {
     `style-src-elem ${[...styleSrcElem].join(' ')}`,
     "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self' https://raw.githubusercontent.com https://cdn.jsdelivr.net https://cloudflareinsights.com https://*.ingest.sentry.io",
-    "frame-ancestors 'self'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "object-src 'none'",
-    'report-uri /csp-report',
-    'report-to csp-endpoint',
+    // frame-ancestors / report-uri / report-to / object-src / form-action / base-uri 需由邊緣層 header 設定，meta 會被忽略
   ];
 
   return directives.join('; ') + ';';
