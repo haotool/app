@@ -135,7 +135,7 @@ jobs:
 
       - name: Create performance report
         if: steps.analyze.outputs.performance_warning == 'true' && github.event.workflow_run.event == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const duration = ${{ steps.workflow_details.outputs.duration }};
