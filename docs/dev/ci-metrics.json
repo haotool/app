@@ -1,0 +1,11 @@
+{
+  "runs": [
+    {
+      "timestamp": "2025-12-11T14:17:49Z",
+      "duration_seconds": 159,
+      "conclusion": "failure",
+      "branch": "dependabot/github_actions/actions/checkout-6",
+      "commit": "d46d1328182fa02e58a63567f71324b38443ac68"
+    }
+  ]
+}
