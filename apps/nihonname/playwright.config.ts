@@ -3,10 +3,14 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Playwright 配置 - NihonName E2E 測試
  *
- * 測試矩陣：Chromium + Firefox × Desktop + Mobile = 4 組合
- * 預估執行時間：3-5 分鐘
+ * 測試矩陣：Chromium × Desktop + Mobile = 2 組合
+ * 預估執行時間：2-3 分鐘
+ *
+ * Firefox 測試已移除：SEO E2E 測試主要驗證靜態 HTML 內容（meta tags, JSON-LD, canonical）
+ * Chromium 覆蓋率已足夠，移除 Firefox 可減少 CI 執行時間與資源消耗
  *
  * 建立時間：2025-12-04T00:00:00+08:00
+ * 更新時間：2025-12-12T00:00:00+08:00
  *
  * @see https://playwright.dev/docs/test-configuration
  * @see [context7:/microsoft/playwright:2025-12-04]
@@ -49,7 +53,8 @@ export default defineConfig({
     navigationTimeout: 30000,
   },
 
-  // 測試專案：精簡矩陣（4 組合）
+  // 測試專案：精簡矩陣（2 組合）
+  // Firefox 測試已移除（SEO 測試主要驗證靜態 HTML 內容，Chromium 覆蓋已足夠）
   projects: [
     {
       name: 'chromium-desktop',
@@ -63,23 +68,6 @@ export default defineConfig({
       use: {
         ...devices['Pixel 5'],
         viewport: { width: 375, height: 667 },
-      },
-    },
-    {
-      name: 'firefox-desktop',
-      use: {
-        ...devices['Desktop Firefox'],
-        viewport: { width: 1440, height: 900 },
-      },
-    },
-    {
-      name: 'firefox-mobile',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 375, height: 667 },
-        hasTouch: true,
-        userAgent:
-          'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36',
       },
     },
   ],
