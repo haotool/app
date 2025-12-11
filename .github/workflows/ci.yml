@@ -61,9 +61,14 @@ jobs:
         run: pnpm audit --prod --audit-level=high
 
       - name: Run Gitleaks
+        # [2025-12-11] 組織帳號需要 GITLEAKS_LICENSE secret
+        # 若無 license，設為 continue-on-error 避免阻塞 CI
+        # 依據: [gitleaks.io:License Requirements][002_development_reward_penalty_log.md]
         uses: gitleaks/gitleaks-action@v2
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
       - name: Install OSV scanner
         run: |
