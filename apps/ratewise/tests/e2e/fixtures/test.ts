@@ -22,33 +22,16 @@ interface RateWiseFixtures {
 
 export const test = base.extend<RateWiseFixtures>({
   rateWisePage: async ({ page, context }, use) => {
-    // [2025-12-07] Clear browser storage to prevent interference with route mocks
-    // Use Playwright's native API instead of evaluating in about:blank
+    // [fix:2025-12-11] 簡化清理邏輯 - SW 已在 playwright.config.ts 中全局阻止
+    // 依據: [context7:microsoft/playwright:2025-12-11] serviceWorkers: 'block' 配置
+    // 這消除了 SW 攔截導致 "button not visible" 的根本原因
     await context.clearCookies();
     await context.clearPermissions();
 
-    // Clear service workers by navigating to the app and unregistering
+    // 輔助函數：構建完整 URL
     const baseURL = process.env['PLAYWRIGHT_BASE_URL'] || '';
     const makeUrl = (path: string) =>
       baseURL ? new URL(path, baseURL).toString() : path.replace(/\/+$/, '') || '/';
-
-    await page.goto(makeUrl('/'));
-    await page.evaluate(async () => {
-      // Clear service workers
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map((r) => r.unregister()));
-      }
-
-      // Clear localStorage
-      localStorage.clear();
-
-      // Clear caches
-      if ('caches' in globalThis) {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map((name) => caches.delete(name)));
-      }
-    });
 
     // Mock latest exchange rates
     // [2025-12-07] 使用函數匹配以正確攔截 GitHub raw URL
@@ -104,71 +87,64 @@ export const test = base.extend<RateWiseFixtures>({
     );
 
     // Navigate to app and wait for it to be ready
-    // [2025-11-23] Base path detection with Playwright 2025 best practices:
-    // - Support multiple base paths (/, /ratewise/) for different build configs
-    // - Use semantic locator (getByRole) instead of waitForSelector
-    // - Rely on auto-waiting, remove redundant strategies (networkidle, multiple checks)
-    // @see https://playwright.dev/docs/best-practices
+    // [fix:2025-12-11] 簡化導航邏輯 - SW 已被阻止，頁面應該直接從 server 載入
+    // @see [context7:microsoft/playwright:2025-12-11] Web-first assertions
     const basePathCandidates = [
       process.env['E2E_BASE_PATH'],
       process.env['VITE_BASE_PATH'],
-      '/ratewise/',
       '/',
+      '/ratewise/', // 生產環境 fallback
     ]
       .filter(Boolean)
-      // 去重，避免重複嘗試相同路徑
       .filter((value, index, self) => self.indexOf(value) === index) as string[];
 
     let navigated = false;
-    // [2025-12-07] 增加 CI timeout 從 15s → 30s 以處理慢 CI workers 的 React hydration
-    // @see [context7:microsoft/playwright:2025-12-07] Flaky test fixes
-    const ciTimeout = process.env['CI'] ? 30000 : 6000;
+    const ciTimeout = process.env['CI'] ? 45_000 : 10_000;
     let lastError = '';
 
     for (const path of basePathCandidates) {
       try {
-        // 使用 domcontentloaded 加速初始載入
-        await page.goto(makeUrl(path), { waitUntil: 'domcontentloaded' });
-
-        // 等待 load 事件確保資源完全載入
-        await page.waitForLoadState('load').catch(() => {});
-
-        // [2025-12-11] 等待 React hydration 完成
-        // App.tsx 設置 document.body.dataset['appReady'] = 'true' 作為 hydration 完成信號
-        // 這比等待特定按鈕更穩定，因為它直接反映 React 應用狀態
-        // @see https://playwright.dev/docs/locators#locate-by-css-or-xpath
-        const appReadyLocator = page.locator('body[data-app-ready="true"]');
-        await appReadyLocator.waitFor({ timeout: ciTimeout }).catch(() => {
-          // eslint-disable-next-line no-console
-          console.log('[Fixture] data-app-ready not found, falling back to button check');
+        // [fix:2025-12-11] 使用 load 事件等待，確保 HTML 完全載入
+        // 依據: SW 被阻止後，頁面應該直接從 server 載入
+        await page.goto(makeUrl(path), {
+          waitUntil: 'load',
+          timeout: ciTimeout,
         });
 
-        // 等待 React root 元素確保 DOM 結構存在
-        await page
-          .locator('#root')
-          .waitFor({ timeout: 5000 })
-          .catch(() => {});
+        // 驗證頁面標題（非 "unknown" 表示 HTML 正確載入）
+        const title = await page.title();
+        // eslint-disable-next-line no-console
+        console.log(`[Fixture] Path ${path} - Page title: ${title}`);
 
-        // Single semantic check - Playwright auto-waits for actionability
-        const isVisible = await page
-          .getByRole('button', { name: /多幣別/i })
-          .isVisible({ timeout: ciTimeout })
-          .catch(() => false);
+        // [fix:2025-12-11] 等待 React hydration 完成
+        // App.tsx 設置 data-app-ready="true" 作為 hydration 完成信號
+        await page.waitForSelector('body[data-app-ready="true"]', {
+          timeout: ciTimeout,
+          state: 'attached',
+        });
 
-        if (isVisible) {
-          navigated = true;
-          break;
-        }
+        // 使用 web-first assertion 等待按鈕可見
+        // Playwright 會自動重試直到超時
+        await page.getByRole('button', { name: /多幣別/i }).waitFor({
+          state: 'visible',
+          timeout: ciTimeout,
+        });
 
-        lastError = `Path ${path}: button not visible`;
+        navigated = true;
+        break;
       } catch (error) {
         lastError = `Path ${path}: ${error instanceof Error ? error.message : String(error)}`;
+        // eslint-disable-next-line no-console
+        console.log(`[Fixture] ${lastError}`);
       }
     }
 
     if (!navigated) {
       const currentUrl = page.url();
       const pageTitle = await page.title().catch(() => 'unknown');
+      const pageContent = await page.content().catch(() => 'unable to get content');
+      // eslint-disable-next-line no-console
+      console.log(`[Fixture] Page content (first 500 chars): ${pageContent.slice(0, 500)}`);
       throw new Error(
         `Failed to load RateWise app from any base path.\n` +
           `Last error: ${lastError}\n` +
