@@ -13,6 +13,11 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
 
+  // [2025-12-11] 依據 Playwright 官方最佳實踐設定超時
+  // @see [context7:microsoft/playwright:2025-12-11]
+  timeout: process.env['CI'] ? 60_000 : 30_000, // 單測試超時：CI 60s, 本地 30s
+  globalTimeout: process.env['CI'] ? 30 * 60 * 1000 : undefined, // 整體超時：CI 30 分鐘
+
   // 完整並行執行
   fullyParallel: true,
 
