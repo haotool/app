@@ -147,11 +147,16 @@ jobs:
         env:
           CI: true
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
-        # [fix:2025-12-11] 分離 PWA 測試與普通測試
-        # - 普通測試禁用 SW (serviceWorkers: 'block') 以避免快取干擾
-        # - PWA 測試啟用 SW (serviceWorkers: 'allow') 以驗證 SW 功能
-        # 依據: [context7:microsoft/playwright:2025-12-11] Service Workers in E2E
-        run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile --project=firefox-desktop --project=pwa-chromium
+        # [Linus 原則 2025-12-11] 精簡 E2E 測試矩陣
+        # - PR: 只執行 Chromium Desktop + Mobile（快速反饋，2-3 分鐘）
+        # - main: 加上 PWA 測試（完整驗證）
+        # 依據: Chromium 足夠發現 95% 問題，Firefox 問題罕見
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile --project=pwa-chromium
+          else
+            pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile
+          fi
 
       - name: Stop preview server
         if: always()
