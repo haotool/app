@@ -1,0 +1,171 @@
+name: CI Metrics Tracking
+
+# CI 效能監控工作流
+# 功能:
+# 1. 追蹤主 CI 工作流的執行時間
+# 2. 記錄各 job 的執行時長
+# 3. 偵測效能回退（執行時間異常增加）
+# 4. 產生效能趨勢報告
+#
+# 建立時間: 2025-12-11T03:00:00+08:00
+# 依據: [GitHub Actions Optimization 2025][CI Performance Best Practices]
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  track-metrics:
+    name: Track CI Performance
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'cancelled'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      - name: Get workflow run details
+        id: workflow_details
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 取得工作流執行資訊
+          WORKFLOW_ID="${{ github.event.workflow_run.id }}"
+
+          # 計算執行時間（秒）
+          START_TIME="${{ github.event.workflow_run.run_started_at }}"
+          END_TIME="${{ github.event.workflow_run.updated_at }}"
+
+          START_EPOCH=$(date -d "$START_TIME" +%s)
+          END_EPOCH=$(date -d "$END_TIME" +%s)
+          DURATION=$((END_EPOCH - START_EPOCH))
+
+          echo "duration=$DURATION" >> "$GITHUB_OUTPUT"
+          echo "conclusion=${{ github.event.workflow_run.conclusion }}" >> "$GITHUB_OUTPUT"
+          echo "branch=${{ github.event.workflow_run.head_branch }}" >> "$GITHUB_OUTPUT"
+          echo "commit=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+
+          echo "📊 CI 執行時間: ${DURATION}s ($(($DURATION / 60))m $(($DURATION % 60))s)"
+
+      - name: Record metrics
+        run: |
+          # 建立 metrics 目錄
+          mkdir -p docs/dev
+
+          # 準備 metrics 資料
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          DURATION="${{ steps.workflow_details.outputs.duration }}"
+          CONCLUSION="${{ steps.workflow_details.outputs.conclusion }}"
+          BRANCH="${{ steps.workflow_details.outputs.branch }}"
+          COMMIT="${{ steps.workflow_details.outputs.commit }}"
+
+          # 建立或更新 metrics JSON
+          METRICS_FILE="docs/dev/ci-metrics.json"
+
+          if [ ! -f "$METRICS_FILE" ]; then
+            echo '{"runs": []}' > "$METRICS_FILE"
+          fi
+
+          # 新增記錄
+          jq --arg ts "$TIMESTAMP" \
+             --arg dur "$DURATION" \
+             --arg conc "$CONCLUSION" \
+             --arg br "$BRANCH" \
+             --arg comm "$COMMIT" \
+             '.runs += [{
+               "timestamp": $ts,
+               "duration_seconds": ($dur | tonumber),
+               "conclusion": $conc,
+               "branch": $br,
+               "commit": $comm
+             }] | .runs |= sort_by(.timestamp) | {runs: .runs[-100:]}' \
+             "$METRICS_FILE" > "$METRICS_FILE.tmp"
+
+          mv "$METRICS_FILE.tmp" "$METRICS_FILE"
+
+          echo "✅ Metrics 記錄完成: $METRICS_FILE"
+
+      - name: Analyze performance trends
+        id: analyze
+        run: |
+          METRICS_FILE="docs/dev/ci-metrics.json"
+
+          # 計算最近 10 次執行的平均時間
+          AVG_DURATION=$(jq '[.runs[-10:][].duration_seconds] | add / length | floor' "$METRICS_FILE")
+          CURRENT_DURATION="${{ steps.workflow_details.outputs.duration }}"
+
+          echo "avg_duration=$AVG_DURATION" >> "$GITHUB_OUTPUT"
+
+          echo "📈 效能統計:"
+          echo "   - 當前執行: ${CURRENT_DURATION}s"
+          echo "   - 最近 10 次平均: ${AVG_DURATION}s"
+
+          # 偵測效能回退（超過平均 20%）
+          THRESHOLD=$((AVG_DURATION * 120 / 100))
+          if [ "$CURRENT_DURATION" -gt "$THRESHOLD" ]; then
+            echo "⚠️ 效能回退警示: 執行時間超過平均 20%"
+            echo "performance_warning=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "✅ 效能正常"
+            echo "performance_warning=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit metrics
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/dev/ci-metrics.json
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            DURATION="${{ steps.workflow_details.outputs.duration }}"
+            git commit -m "chore(ci): record CI metrics - ${DURATION}s"
+            git push || echo "Push failed, metrics will be recorded next time"
+          fi
+
+      - name: Create performance report
+        if: steps.analyze.outputs.performance_warning == 'true' && github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const duration = ${{ steps.workflow_details.outputs.duration }};
+            const avgDuration = ${{ steps.analyze.outputs.avg_duration }};
+            const increase = Math.round((duration - avgDuration) / avgDuration * 100);
+
+            const comment = `## ⚠️ CI 效能警示
+
+            **執行時間**: ${duration}s (${Math.floor(duration / 60)}m ${duration % 60}s)
+            **平均時間**: ${avgDuration}s (${Math.floor(avgDuration / 60)}m ${avgDuration % 60}s)
+            **增加幅度**: +${increase}%
+
+            CI 執行時間超過最近 10 次平均的 20%，請檢查是否有效能問題。
+
+            可能原因:
+            - 新增大量測試案例
+            - 依賴安裝變慢
+            - Runner 效能問題
+            - Docker 建置變慢
+
+            📊 [查看完整 Metrics](../blob/main/docs/dev/ci-metrics.json)
+            `;
+
+            // 僅在 PR 時留言
+            if (context.payload.workflow_run.pull_requests.length > 0) {
+              const prNumber = context.payload.workflow_run.pull_requests[0].number;
+              await github.rest.issues.createComment({
+                issue_number: prNumber,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }

@@ -167,6 +167,9 @@ jobs:
     needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # [優化:2025-12-11] 僅在 main 分支執行 Trivy 掃描，減少 PR 檢查時間 ~5-10 分鐘
+    # 依據: [GitHub Actions Optimization 2025][Trivy Best Practices]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout code
