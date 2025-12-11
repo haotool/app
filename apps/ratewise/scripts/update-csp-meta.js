@@ -69,9 +69,11 @@ const buildCsp = ({ scriptHashes, styleHashes }) => {
   ]);
 
   const baseStyleHash = "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='"; // 空字串 hash，供 CSS-in-JS 使用
-  const styleSrc = ["'self'", baseStyleHash];
+  // 保留 'unsafe-inline' 以允許第三方庫（如 charts）在 runtime 動態注入 style 標籤
+  const styleSrc = ["'self'", "'unsafe-inline'", baseStyleHash];
   const styleSrcElem = new Set([
     "'self'",
+    "'unsafe-inline'",
     baseStyleHash,
     ...[...styleHashes].map((value) => `'sha256-${value}'`),
   ]);
