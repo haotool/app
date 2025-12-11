@@ -133,8 +133,17 @@ export const test = base.extend<RateWiseFixtures>({
         // 等待 load 事件確保資源完全載入
         await page.waitForLoadState('load').catch(() => {});
 
-        // [2025-12-07] 等待 React root 元素確保 hydration 完成
-        // 這避免在 React 應用初始化前就檢查按鈕
+        // [2025-12-11] 等待 React hydration 完成
+        // App.tsx 設置 document.body.dataset['appReady'] = 'true' 作為 hydration 完成信號
+        // 這比等待特定按鈕更穩定，因為它直接反映 React 應用狀態
+        // @see https://playwright.dev/docs/locators#locate-by-css-or-xpath
+        const appReadyLocator = page.locator('body[data-app-ready="true"]');
+        await appReadyLocator.waitFor({ timeout: ciTimeout }).catch(() => {
+          // eslint-disable-next-line no-console
+          console.log('[Fixture] data-app-ready not found, falling back to button check');
+        });
+
+        // 等待 React root 元素確保 DOM 結構存在
         await page
           .locator('#root')
           .waitFor({ timeout: 5000 })
