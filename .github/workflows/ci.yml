@@ -147,9 +147,11 @@ jobs:
         env:
           CI: true
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
-        # [fix:2025-11-30] 新增 firefox-desktop 確保跨瀏覽器相容性
-        # 依據: [context7:microsoft/playwright:2025-11-30] Cross-browser testing best practices
-        run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile --project=firefox-desktop
+        # [fix:2025-12-11] 分離 PWA 測試與普通測試
+        # - 普通測試禁用 SW (serviceWorkers: 'block') 以避免快取干擾
+        # - PWA 測試啟用 SW (serviceWorkers: 'allow') 以驗證 SW 功能
+        # 依據: [context7:microsoft/playwright:2025-12-11] Service Workers in E2E
+        run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile --project=firefox-desktop --project=pwa-chromium
 
       - name: Stop preview server
         if: always()
