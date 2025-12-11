@@ -58,7 +58,8 @@ export default defineConfig({
     navigationTimeout: process.env['CI'] ? 60_000 : 30_000, // CI 環境增加導航超時
   },
 
-  // 測試專案：精簡矩陣（4 組合）
+  // 測試專案：精簡矩陣（4 組合 + PWA 專用）
+  // [fix:2025-12-11] PWA 測試需要 SW，其他測試禁用 SW 以避免快取干擾
   projects: [
     {
       name: 'chromium-desktop',
@@ -66,6 +67,8 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
       },
+      // 排除 PWA 測試（由專用 project 處理）
+      testIgnore: /pwa\.spec\.ts/,
     },
     {
       name: 'chromium-mobile',
@@ -73,6 +76,7 @@ export default defineConfig({
         ...devices['Pixel 5'],
         viewport: { width: 375, height: 667 },
       },
+      testIgnore: /pwa\.spec\.ts/,
     },
     {
       name: 'firefox-desktop',
@@ -80,6 +84,7 @@ export default defineConfig({
         ...devices['Desktop Firefox'],
         viewport: { width: 1440, height: 900 },
       },
+      testIgnore: /pwa\.spec\.ts/,
     },
     {
       name: 'firefox-mobile',
@@ -91,6 +96,18 @@ export default defineConfig({
         userAgent:
           'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36',
       },
+      testIgnore: /pwa\.spec\.ts/,
+    },
+    // [fix:2025-12-11] PWA 專用 project - 允許 Service Worker
+    // PWA 測試需要 SW 才能驗證註冊、快取等功能
+    {
+      name: 'pwa-chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 900 },
+        serviceWorkers: 'allow', // 覆寫全局設定，允許 SW
+      },
+      testMatch: /pwa\.spec\.ts/, // 只執行 PWA 測試
     },
   ],
 
