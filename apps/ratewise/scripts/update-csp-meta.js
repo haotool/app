@@ -61,22 +61,16 @@ const extractHashes = (html) => {
   return { scriptHashes, styleHashes };
 };
 
-const buildCsp = ({ scriptHashes, styleHashes }) => {
+const buildCsp = ({ scriptHashes }) => {
   const scriptSrc = ["'self'", 'https://static.cloudflareinsights.com'];
   const scriptSrcElem = new Set([
     ...scriptSrc,
     ...[...scriptHashes].map((value) => `'sha256-${value}'`),
   ]);
 
-  const baseStyleHash = "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='"; // 空字串 hash，供 CSS-in-JS 使用
-  // 保留 'unsafe-inline' 以允許第三方庫（如 charts）在 runtime 動態注入 style 標籤
-  const styleSrc = ["'self'", "'unsafe-inline'", baseStyleHash];
-  const styleSrcElem = new Set([
-    "'self'",
-    "'unsafe-inline'",
-    baseStyleHash,
-    ...[...styleHashes].map((value) => `'sha256-${value}'`),
-  ]);
+  // 只允許 self + unsafe-inline，避免瀏覽器在存在 hash/nonces 時忽略 unsafe-inline（CSP 規範行為）
+  const styleSrc = ["'self'", "'unsafe-inline'"];
+  const styleSrcElem = new Set(["'self'", "'unsafe-inline'"]);
 
   const directives = [
     "default-src 'self'",
@@ -95,8 +89,8 @@ const buildCsp = ({ scriptHashes, styleHashes }) => {
 
 const updateCspMeta = (filePath) => {
   const html = readFileSync(filePath, 'utf-8');
-  const { scriptHashes, styleHashes } = extractHashes(html);
-  const cspValue = buildCsp({ scriptHashes, styleHashes });
+  const { scriptHashes } = extractHashes(html);
+  const cspValue = buildCsp({ scriptHashes });
 
   const metaRegex = /<meta[^>]*http-equiv=["']Content-Security-Policy["'][^>]*>/i;
   const newMeta = `<meta http-equiv="Content-Security-Policy" content="${cspValue}">`;
@@ -108,7 +102,7 @@ const updateCspMeta = (filePath) => {
   writeFileSync(filePath, nextHtml, 'utf-8');
 
   console.log(
-    `✅ 更新 CSP: ${filePath.replace(distDir, 'dist')} | script hashes=${scriptHashes.size}, style hashes=${styleHashes.size}`,
+    `✅ 更新 CSP: ${filePath.replace(distDir, 'dist')} | script hashes=${scriptHashes.size}`,
   );
 };
 
