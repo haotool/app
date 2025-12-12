@@ -25,13 +25,13 @@ function getPageLastMod(pagePath) {
   // Map URL paths to actual source files
   const pathToFile = {
     '/': 'src/pages/Home.tsx',
-    '/about': 'src/pages/About.tsx',
-    '/guide': 'src/pages/Guide.tsx',
-    '/faq': 'src/pages/FAQ.tsx',
-    '/history': 'src/pages/history/index.tsx',
-    '/history/kominka': 'src/pages/history/KominkaMovement.tsx',
-    '/history/shimonoseki': 'src/pages/history/ShimonosekiTreaty.tsx',
-    '/history/san-francisco': 'src/pages/history/SanFranciscoTreaty.tsx',
+    '/about/': 'src/pages/About.tsx',
+    '/guide/': 'src/pages/Guide.tsx',
+    '/faq/': 'src/pages/FAQ.tsx',
+    '/history/': 'src/pages/history/index.tsx',
+    '/history/kominka/': 'src/pages/history/KominkaMovement.tsx',
+    '/history/shimonoseki/': 'src/pages/history/ShimonosekiTreaty.tsx',
+    '/history/san-francisco/': 'src/pages/history/SanFranciscoTreaty.tsx',
   };
 
   const sourceFile = pathToFile[pagePath];
@@ -60,14 +60,14 @@ function getPageLastMod(pagePath) {
 
 const pages = [
   { path: '/', priority: '1.0', changefreq: 'monthly' },
-  { path: '/about', priority: '0.8', changefreq: 'monthly' },
-  { path: '/guide', priority: '0.8', changefreq: 'monthly' },
-  { path: '/faq', priority: '0.9', changefreq: 'monthly' },
+  { path: '/about/', priority: '0.8', changefreq: 'monthly' },
+  { path: '/guide/', priority: '0.8', changefreq: 'monthly' },
+  { path: '/faq/', priority: '0.9', changefreq: 'monthly' },
   // History pages - SEO FAQ pages
-  { path: '/history', priority: '0.9', changefreq: 'monthly' },
-  { path: '/history/kominka', priority: '0.85', changefreq: 'monthly' },
-  { path: '/history/shimonoseki', priority: '0.85', changefreq: 'monthly' },
-  { path: '/history/san-francisco', priority: '0.85', changefreq: 'monthly' },
+  { path: '/history/', priority: '0.9', changefreq: 'monthly' },
+  { path: '/history/kominka/', priority: '0.85', changefreq: 'monthly' },
+  { path: '/history/shimonoseki/', priority: '0.85', changefreq: 'monthly' },
+  { path: '/history/san-francisco/', priority: '0.85', changefreq: 'monthly' },
 ];
 
 function generateSitemap() {
