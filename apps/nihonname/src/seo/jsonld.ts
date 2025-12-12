@@ -168,40 +168,67 @@ export function buildArticleSchema(article: ArticleData, url: string) {
 
 /**
  * HowTo schema for Guide page
+ * [update:2025-12-12] 與 Guide.tsx 頁面內容同步，提供完整 8 步驟教學
+ * [SEO Impact] HowTo schema 提升 Google Rich Results 顯示率，增加點擊率
  */
 export function buildHowToSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
-    name: '如何使用皇民化改姓生成器',
-    description: '學習如何使用 NihonName 查詢日治時期的日式姓名對照',
+    name: '如何使用日本名字產生器',
+    description:
+      '完整 8 步驟教學，快速學會使用日本名字產生器，根據你的中文姓氏產生有趣的諧音梗日本名字',
+    totalTime: 'PT2M',
     step: [
       {
         '@type': 'HowToStep',
-        name: '輸入姓氏',
-        text: '在輸入框中輸入你的中文姓氏（支援單姓與複姓）',
         position: 1,
+        name: '開啟日本名字產生器',
+        text: '在瀏覽器中開啟日本名字產生器（app.haotool.org/nihonname），或將其加入手機主畫面作為 PWA 應用程式使用。',
       },
       {
         '@type': 'HowToStep',
-        name: '點擊查詢',
-        text: '點擊「改名実行」按鈕開始查詢',
         position: 2,
+        name: '輸入你的中文姓氏',
+        text: '在「你的姓」欄位輸入你的中文姓氏（例如：林、陳、王）。系統會自動根據發音匹配最適合的日文姓氏。',
       },
       {
         '@type': 'HowToStep',
-        name: '查看結果',
-        text: '系統會顯示對應的日式姓名、羅馬拼音和歷史來源',
         position: 3,
+        name: '查看日文姓氏結果',
+        text: '系統會顯示與你中文姓氏發音相近的日文姓氏（例如：林 → 林 Hayashi、陳 → 陳 Chin）。',
       },
       {
         '@type': 'HowToStep',
-        name: '分享結果',
-        text: '可以使用截圖模式分享你的日式姓名',
         position: 4,
+        name: '產生諧音梗名字',
+        text: '點擊「名字」區域或骰子按鈕，系統會隨機產生一個有趣的諧音梗日文名字，讓你的日本名字更有趣味。',
+      },
+      {
+        '@type': 'HowToStep',
+        position: 5,
+        name: '查看羅馬拼音',
+        text: '每個名字都會顯示對應的羅馬拼音（Romaji），方便你正確發音和拼寫你的日本名字。',
+      },
+      {
+        '@type': 'HowToStep',
+        position: 6,
+        name: '了解諧音含義',
+        text: '每個諧音梗名字都附有解釋，告訴你這個名字的有趣諧音含義，讓你更了解名字背後的笑點。',
+      },
+      {
+        '@type': 'HowToStep',
+        position: 7,
+        name: '使用截圖模式',
+        text: '點擊右上角的「截圖模式」按鈕，可以隱藏多餘元素，方便你截圖分享你的日本名字給朋友。',
+      },
+      {
+        '@type': 'HowToStep',
+        position: 8,
+        name: '自訂諧音梗名字',
+        text: '點擊「+」按鈕可以新增你自己創作的諧音梗名字，這些名字會儲存在你的瀏覽器中，下次使用時還能看到。',
       },
     ],
-    totalTime: 'PT1M',
   };
 }
 
