@@ -97,6 +97,13 @@
       "conclusion": "success",
       "branch": "main",
       "commit": "10bbd69f0b0ed7b737c26d7463d689675f603dbc"
+    },
+    {
+      "timestamp": "2025-12-12T19:01:15Z",
+      "duration_seconds": 319,
+      "conclusion": "success",
+      "branch": "dependabot/npm_and_yarn/sentry/react-10.29.0",
+      "commit": "2fb810e54ceee9e2fe69611f6c8dccd86bbdb7f6"
     }
   ]
 }
