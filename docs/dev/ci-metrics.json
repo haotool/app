@@ -97,6 +97,13 @@
       "conclusion": "success",
       "branch": "main",
       "commit": "10bbd69f0b0ed7b737c26d7463d689675f603dbc"
+    },
+    {
+      "timestamp": "2025-12-12T18:58:36Z",
+      "duration_seconds": 95,
+      "conclusion": "failure",
+      "branch": "dependabot/npm_and_yarn/react-helmet-async-2.0.5",
+      "commit": "2c0bb541005e7c590fc3e5e479b3edd5f747ebb3"
     }
   ]
 }
