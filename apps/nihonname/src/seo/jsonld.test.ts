@@ -186,12 +186,12 @@ describe('jsonld.ts', () => {
 
       expect(schema['@context']).toBe('https://schema.org');
       expect(schema['@type']).toBe('HowTo');
-      expect(schema.name).toBe('如何使用皇民化改姓生成器');
+      expect(schema.name).toBe('如何使用日本名字產生器');
     });
 
-    it('應該包含 4 個步驟', () => {
+    it('應該包含 8 個步驟', () => {
       const schema = buildHowToSchema();
-      expect(schema.step).toHaveLength(4);
+      expect(schema.step).toHaveLength(8);
     });
 
     it('步驟應該有正確的 position', () => {
@@ -202,11 +202,15 @@ describe('jsonld.ts', () => {
       expect(steps[1]?.position ?? 0).toBe(2);
       expect(steps[2]?.position ?? 0).toBe(3);
       expect(steps[3]?.position ?? 0).toBe(4);
+      expect(steps[4]?.position ?? 0).toBe(5);
+      expect(steps[5]?.position ?? 0).toBe(6);
+      expect(steps[6]?.position ?? 0).toBe(7);
+      expect(steps[7]?.position ?? 0).toBe(8);
     });
 
-    it('應該設定 totalTime', () => {
+    it('應該設定 totalTime 為 PT2M', () => {
       const schema = buildHowToSchema();
-      expect(schema.totalTime).toBe('PT1M');
+      expect(schema.totalTime).toBe('PT2M');
     });
   });
 
