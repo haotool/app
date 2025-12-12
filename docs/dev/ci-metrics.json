@@ -97,6 +97,13 @@
       "conclusion": "success",
       "branch": "main",
       "commit": "10bbd69f0b0ed7b737c26d7463d689675f603dbc"
+    },
+    {
+      "timestamp": "2025-12-12T18:59:37Z",
+      "duration_seconds": 215,
+      "conclusion": "failure",
+      "branch": "dependabot/npm_and_yarn/react-router-dom-7.10.1",
+      "commit": "6530fffb016bbdd29d2c1408eac1c6a84f40b677"
     }
   ]
 }
