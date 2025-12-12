@@ -36,13 +36,13 @@
 ```bash
 # 批次驗證所有頁面
 for url in "https://app.haotool.org/nihonname/" \
-           "https://app.haotool.org/nihonname/about" \
-           "https://app.haotool.org/nihonname/guide" \
-           "https://app.haotool.org/nihonname/faq" \
-           "https://app.haotool.org/nihonname/history" \
-           "https://app.haotool.org/nihonname/history/kominka" \
-           "https://app.haotool.org/nihonname/history/shimonoseki" \
-           "https://app.haotool.org/nihonname/history/san-francisco"; do
+           "https://app.haotool.org/nihonname/about/" \
+           "https://app.haotool.org/nihonname/guide/" \
+           "https://app.haotool.org/nihonname/faq/" \
+           "https://app.haotool.org/nihonname/history/" \
+           "https://app.haotool.org/nihonname/history/kominka/" \
+           "https://app.haotool.org/nihonname/history/shimonoseki/" \
+           "https://app.haotool.org/nihonname/history/san-francisco/"; do
   echo -n "$url: "
   curl -s -o /dev/null -w "%{http_code}" "$url"
   echo ""
@@ -107,7 +107,7 @@ done
 curl -s "https://app.haotool.org/nihonname/" | grep -c 'application/ld+json'
 # 預期結果: 5 (WebApplication, Organization, WebSite, BreadcrumbList, ImageObject)
 
-curl -s "https://app.haotool.org/nihonname/faq" | grep -c 'application/ld+json'
+curl -s "https://app.haotool.org/nihonname/faq/" | grep -c 'application/ld+json'
 # 預期結果: 6 (含 FAQPage)
 ```
 
