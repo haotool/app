@@ -132,6 +132,62 @@
       "conclusion": "failure",
       "branch": "main",
       "commit": "0aa746f6959c12e6f352fadbfccd601dc52edf74"
+    },
+    {
+      "timestamp": "2025-12-13T08:42:40Z",
+      "duration_seconds": 83,
+      "conclusion": "failure",
+      "branch": "feature/haotool-portfolio-refactor",
+      "commit": "3106d0502f419d45579b1540f5b37c2023d53bf5"
+    },
+    {
+      "timestamp": "2025-12-13T08:50:49Z",
+      "duration_seconds": 303,
+      "conclusion": "success",
+      "branch": "feature/haotool-portfolio-refactor",
+      "commit": "4bde019ef43d8a3e615a5dcbec8bf3d85a38dc9e"
+    },
+    {
+      "timestamp": "2025-12-13T09:13:44Z",
+      "duration_seconds": 143,
+      "conclusion": "failure",
+      "branch": "feature/haotool-portfolio-refactor",
+      "commit": "39c1a9b6a6fd58ec9b99f3f5ca00c5a8f28356f6"
+    },
+    {
+      "timestamp": "2025-12-13T09:21:54Z",
+      "duration_seconds": 323,
+      "conclusion": "success",
+      "branch": "feature/haotool-portfolio-refactor",
+      "commit": "16ac385fded71ceeb4e16744359aee92f3dff4d9"
+    },
+    {
+      "timestamp": "2025-12-13T18:11:13Z",
+      "duration_seconds": 94,
+      "conclusion": "failure",
+      "branch": "feature/haotool-portfolio-refactor",
+      "commit": "c96c03b8d90828ef89729877745575301a908117"
+    },
+    {
+      "timestamp": "2025-12-13T18:20:45Z",
+      "duration_seconds": 357,
+      "conclusion": "success",
+      "branch": "feature/haotool-portfolio-refactor",
+      "commit": "81898052fd43488f28680a2ef1d7676ca054b9c8"
+    },
+    {
+      "timestamp": "2025-12-13T18:25:47Z",
+      "duration_seconds": 90,
+      "conclusion": "failure",
+      "branch": "feature/haotool-portfolio-refactor",
+      "commit": "8c46777f8741bb62d4099b13fb3c5c89b7dcc91d"
+    },
+    {
+      "timestamp": "2025-12-13T18:37:28Z",
+      "duration_seconds": 334,
+      "conclusion": "success",
+      "branch": "feature/haotool-portfolio-refactor",
+      "commit": "0993ed689b43a15470fe60ec029b564f9ccede74"
     }
   ]
 }
