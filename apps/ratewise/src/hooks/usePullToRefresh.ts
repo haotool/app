@@ -60,11 +60,21 @@ export function usePullToRefresh(
      * Touch start handler - Capture initial Y position
      */
     const handleTouchStart = (e: TouchEvent) => {
-      // Only trigger when scrolled to top of the page
-      // Use window.scrollY for global scroll position (not container.scrollTop)
-      if (window.scrollY !== 0) return;
-      if (isRefreshing) return;
+      // [fix:2025-12-13] 放寬滾動檢查條件：允許 <=10px 誤差
+      // 原本嚴格要求 scrollY === 0，但某些設備可能有 1-2px 誤差
+      const currentScrollY = window.scrollY;
+      logger.debug('Pull-to-refresh: touchstart', { scrollY: currentScrollY });
 
+      if (currentScrollY > 10) {
+        logger.debug('Pull-to-refresh: not at top, ignoring', { scrollY: currentScrollY });
+        return;
+      }
+      if (isRefreshing) {
+        logger.debug('Pull-to-refresh: already refreshing, ignoring');
+        return;
+      }
+
+      logger.info('Pull-to-refresh: starting drag', { scrollY: currentScrollY });
       startY.current = e.touches[0]?.clientY ?? 0;
       currentY.current = startY.current;
       isDragging.current = true;
@@ -94,7 +104,16 @@ export function usePullToRefresh(
       setPullDistance(tensionDistance);
 
       // Update trigger state
-      setCanTrigger(tensionDistance >= TRIGGER_THRESHOLD);
+      const shouldTrigger = tensionDistance >= TRIGGER_THRESHOLD;
+      setCanTrigger(shouldTrigger);
+
+      if (tensionDistance > 0) {
+        logger.debug('Pull-to-refresh: dragging', {
+          rawDistance,
+          tensionDistance,
+          canTrigger: shouldTrigger,
+        });
+      }
 
       // Apply transform
       container.style.transform = `translateY(${tensionDistance / 2}px)`;
@@ -112,11 +131,18 @@ export function usePullToRefresh(
       if (!isDragging.current || isRefreshing) return;
       isDragging.current = false;
 
+      logger.info('Pull-to-refresh: touch end', {
+        canTrigger,
+        pullDistance,
+        threshold: TRIGGER_THRESHOLD,
+      });
+
       // Enable smooth transition back
       container.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
 
       if (canTrigger && pullDistance >= TRIGGER_THRESHOLD) {
         // Trigger refresh
+        logger.info('Pull-to-refresh: threshold met, triggering refresh');
         setIsRefreshing(true);
         const finalize = () => {
           setTimeout(() => {
@@ -137,6 +163,7 @@ export function usePullToRefresh(
           .finally(finalize);
       } else {
         // Cancel - return to initial position
+        logger.info('Pull-to-refresh: threshold not met, canceling');
         container.style.transform = 'translateY(0)';
         setPullDistance(0);
         setCanTrigger(false);
