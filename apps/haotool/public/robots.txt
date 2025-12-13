@@ -1,0 +1,16 @@
+# robots.txt for HAOTOOL.ORG
+# [context7:/google/robots-txt:2025-12-13]
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://app.haotool.org/sitemap.xml
+
+# Crawl-delay (optional, for polite crawling)
+Crawl-delay: 1
+
+# Disallow common non-content paths
+Disallow: /api/
+Disallow: /_next/
+Disallow: /assets/
