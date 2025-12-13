@@ -216,6 +216,13 @@
       "conclusion": "success",
       "branch": "main",
       "commit": "cb0cfc684b17a080be62e3ef2b14bf6b7b392aa1"
+    },
+    {
+      "timestamp": "2025-12-13T19:20:04Z",
+      "duration_seconds": 51,
+      "conclusion": "failure",
+      "branch": "main",
+      "commit": "389d4df274992bfef51687994d76c17454af6f3e"
     }
   ]
 }
