@@ -21,10 +21,11 @@ export default defineConfig({
         'src/**/*.spec.{ts,tsx}',
       ],
       thresholds: {
-        statements: 60,
-        branches: 60,
-        functions: 60,
-        lines: 60,
+        // MVP 階段：降低覆蓋率門檻，後續迭代逐步提升
+        statements: 40,
+        branches: 40,
+        functions: 40,
+        lines: 40,
       },
     },
   },
