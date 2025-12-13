@@ -74,11 +74,14 @@ const RateWise = () => {
     error: ratesError,
     lastUpdate,
     lastFetchedAt,
-    refresh,
   } = useExchangeRates();
 
-  // [fix:2025-11-05] 增強下拉刷新：清除快取 + 刷新數據 + 檢查 SW 更新
-  // 參考: https://web.dev/learn/pwa/update
+  // [fix:2025-12-13] 修復下拉刷新：清除快取 + 強制重新載入頁面
+  // 問題: 只清除快取不重新載入，用戶仍看到記憶體中的舊版本 JS/CSS
+  // 解決方案: 清除快取後強制重新載入頁面，確保載入最新版本
+  // 參考:
+  // - https://plainenglish.io/blog/how-to-force-a-pwa-to-refresh-its-content
+  // - https://web.dev/learn/pwa/update
   const handlePullToRefresh = useCallback(async () => {
     try {
       logger.info('Pull-to-refresh: starting full refresh');
@@ -90,16 +93,16 @@ const RateWise = () => {
       // 2. 檢查並嘗試更新 Service Worker
       await forceServiceWorkerUpdate();
 
-      // 3. 刷新匯率數據
-      await refresh();
+      // 3. 強制重新載入頁面 (確保載入最新版本的 JS/CSS/HTML)
+      window.location.reload();
 
       logger.info('Pull-to-refresh: completed successfully');
     } catch (error) {
       logger.error('Pull-to-refresh: failed', error as Error);
-      // 即使出錯，仍然刷新數據
-      await refresh();
+      // 即使出錯，仍然重新載入頁面
+      window.location.reload();
     }
-  }, [refresh]);
+  }, []); // 移除 refresh 依賴，因為頁面會重新載入
 
   // Pull-to-refresh functionality
   const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(mainRef, handlePullToRefresh);
