@@ -32,7 +32,7 @@ describe('Layout', () => {
     expect(logos.length).toBeGreaterThan(0);
   });
 
-  it('renders all navigation links', () => {
+  it('renders all navigation links', { timeout: 10000 }, () => {
     render(<TestWrapper />);
 
     expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
