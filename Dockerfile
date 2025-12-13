@@ -1,16 +1,18 @@
-# Multi-stage Dockerfile for RateWise & NihonName
+# Multi-stage Dockerfile for HAOTOOL.ORG Portfolio
+# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/)
 # syntax=docker/dockerfile:1
 
 # Build stage
 FROM node:24-alpine AS builder
 
-# [fix:2025-11-05] Build arguments for version generation
+# [fix:2025-12-13] Build arguments for version generation
 # 這些參數在建置時從 Git 取得，傳遞到容器內
 ARG GIT_COMMIT_COUNT
 ARG GIT_COMMIT_HASH
 ARG BUILD_TIME
 ARG VITE_BASE_PATH=/ratewise/
 ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
+ARG VITE_HAOTOOL_BASE_PATH=/
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
@@ -35,6 +37,7 @@ ENV CI=true
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ratewise/package.json ./apps/ratewise/
 COPY apps/nihonname/package.json ./apps/nihonname/
+COPY apps/haotool/package.json ./apps/haotool/
 
 # [fix:2025-11-06] 安裝依賴時禁用 Husky 並清空 NODE_ENV
 # Zeabur 可能自動設置 NODE_ENV=production，導致 devDependencies 被跳過
@@ -48,7 +51,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 COPY . .
 
 # Build applications（若外部未提供 build args，於此自動回退計算）
-# [fix:2025-12-04] 分別為每個專案設置對應的 base 變數，避免相互污染
+# [fix:2025-12-13] 分別為每個專案設置對應的 base 變數，避免相互污染
+# 新增 haotool 作為根路徑首頁
 RUN set -eux; \
   if [ -z "${GIT_COMMIT_COUNT:-}" ]; then \
     export GIT_COMMIT_COUNT="$(git rev-list --count HEAD)"; \
@@ -59,6 +63,7 @@ RUN set -eux; \
   if [ -z "${BUILD_TIME:-}" ]; then \
     export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
   fi; \
+  VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
   VITE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname
 
@@ -71,19 +76,19 @@ FROM nginx:alpine
 # 這確保獲取最新的安全修補，包括 libpng
 RUN apk upgrade --no-cache && apk add --no-cache wget
 
-# Copy built assets for ratewise
-COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html
+# [fix:2025-12-13] 新架構：haotool 作為根路徑首頁
+# 複製 haotool 作為根目錄（首頁）
+COPY --from=builder /app/apps/haotool/dist /usr/share/nginx/html
 
-# Copy built assets for nihonname
-# [fix:2025-12-03] 將 nihonname 的 dist 複製到 /nihonname 子目錄
+# Copy built assets for ratewise 到子目錄
+COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html/ratewise-app
+
+# Copy built assets for nihonname 到子目錄
 COPY --from=builder /app/apps/nihonname/dist /usr/share/nginx/html/nihonname-app
 
-# Ensure /ratewise/* 路徑指向同一份資源（避免 404）
-RUN rm -rf /usr/share/nginx/html/ratewise && ln -s /usr/share/nginx/html /usr/share/nginx/html/ratewise
-
-# [fix:2025-12-03] 設置 nihonname 路徑
-# nihonname 的資源已經在 /nihonname-app 目錄，需要創建符號連結
-RUN ln -s /usr/share/nginx/html/nihonname-app /usr/share/nginx/html/nihonname
+# 創建符號連結以支援路由
+RUN ln -s /usr/share/nginx/html/ratewise-app /usr/share/nginx/html/ratewise && \
+    ln -s /usr/share/nginx/html/nihonname-app /usr/share/nginx/html/nihonname
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
