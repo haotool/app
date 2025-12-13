@@ -2,7 +2,7 @@
  * Projects Page Component
  * Display all projects with category filtering
  */
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProjectCard, ProjectCardSkeleton } from '../components/ProjectCard';
 import { PROJECTS } from '../constants';
@@ -22,14 +22,31 @@ type CategoryId = (typeof CATEGORIES)[number]['id'];
 export default function Projects() {
   const [activeCategory, setActiveCategory] = useState<CategoryId>('all');
   const [isLoading, setIsLoading] = useState(false);
+  const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Simulate loading when category changes
-  const handleCategoryChange = (category: CategoryId) => {
-    if (category === activeCategory) return;
-    setIsLoading(true);
-    setActiveCategory(category);
-    setTimeout(() => setIsLoading(false), 300);
-  };
+  const handleCategoryChange = useCallback(
+    (category: CategoryId) => {
+      if (category === activeCategory) return;
+      setIsLoading(true);
+      setActiveCategory(category);
+      // Clear any existing timeout before setting a new one
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+      loadingTimeoutRef.current = setTimeout(() => setIsLoading(false), 300);
+    },
+    [activeCategory],
+  );
 
   const filteredProjects = PROJECTS.filter((project) =>
     activeCategory === 'all' ? true : project.category === activeCategory,
