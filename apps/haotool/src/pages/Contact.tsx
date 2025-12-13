@@ -1,42 +1,67 @@
 /**
  * Contact Page Component
+ * Contact information and social links
  */
-import { motion } from 'framer-motion';
-import { Github, Twitter, Linkedin, Mail, ArrowUpRight } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Github, AtSign, Check, Copy, ExternalLink } from 'lucide-react';
+import { SOCIAL_LINKS, APP_NAME } from '../constants';
 
 const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-const SOCIAL_LINKS = [
+interface ContactMethod {
+  icon: typeof Mail;
+  label: string;
+  value: string;
+  href: string;
+  isCopyable?: boolean;
+  isExternal?: boolean;
+  color: 'brand' | 'slate' | 'purple';
+}
+
+const CONTACT_METHODS: ContactMethod[] = [
   {
-    name: 'GitHub',
-    href: 'https://github.com/haotool',
-    icon: Github,
-    description: 'Check out my open source projects',
-  },
-  {
-    name: 'Twitter',
-    href: 'https://twitter.com/haotool',
-    icon: Twitter,
-    description: 'Follow for updates and tech insights',
-  },
-  {
-    name: 'LinkedIn',
-    href: 'https://linkedin.com/in/haotool',
-    icon: Linkedin,
-    description: 'Connect with me professionally',
-  },
-  {
-    name: 'Email',
-    href: 'mailto:hello@haotool.org',
     icon: Mail,
-    description: 'Direct contact for inquiries',
+    label: 'Email',
+    value: SOCIAL_LINKS.email,
+    href: `mailto:${SOCIAL_LINKS.email}`,
+    isCopyable: true,
+    color: 'brand',
+  },
+  {
+    icon: Github,
+    label: 'GitHub',
+    value: '@azlife',
+    href: SOCIAL_LINKS.github,
+    isExternal: true,
+    color: 'slate',
+  },
+  {
+    icon: AtSign,
+    label: 'Threads',
+    value: '@azlife_1224',
+    href: SOCIAL_LINKS.threads,
+    isExternal: true,
+    color: 'purple',
   },
 ];
 
 export default function Contact() {
+  const [copiedItem, setCopiedItem] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedItem(label);
+      setTimeout(() => setCopiedItem(null), 2000);
+    } catch {
+      console.error('Failed to copy to clipboard');
+    }
+  };
+
   return (
-    <main className="min-h-screen pt-24 pb-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+    <main className="min-h-screen pt-24 pb-20 flex items-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -48,71 +73,103 @@ export default function Contact() {
             Get in Touch
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
-            Let&apos;s Build Something{' '}
+            與我{' '}
             <span className="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">
-              Amazing
+              聯繫
             </span>
           </h1>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Whether you have a project in mind, want to collaborate, or just want to say hi,
-            I&apos;d love to hear from you. Let&apos;s create something extraordinary together.
+          <p className="text-slate-400 text-lg max-w-xl mx-auto">
+            有問題或想法想討論？歡迎透過以下方式與我聯繫，我會盡快回覆您。
           </p>
         </motion.div>
 
-        {/* Contact Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: EASING_NEBULA }}
-          className="grid sm:grid-cols-2 gap-4"
-        >
-          {SOCIAL_LINKS.map((link, index) => (
-            <motion.a
-              key={link.name}
-              href={link.href}
-              target={link.href.startsWith('mailto') ? undefined : '_blank'}
-              rel={link.href.startsWith('mailto') ? undefined : 'noopener noreferrer'}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 + index * 0.1, ease: EASING_NEBULA }}
-              whileHover={{ y: -3 }}
-              className="group p-6 rounded-2xl bg-[#0a0a0a] border border-white/5 ring-1 ring-white/5 hover:ring-brand-500/40 hover:border-brand-500/20 transition-all"
+        {/* Contact Methods */}
+        <div className="grid gap-4 max-w-lg mx-auto mb-16">
+          {CONTACT_METHODS.map((method, index) => (
+            <motion.div
+              key={method.label}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1, ease: EASING_NEBULA }}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="p-3 rounded-xl bg-brand-500/10 border border-brand-500/20 group-hover:bg-brand-500/20 transition-colors">
-                  <link.icon className="h-6 w-6 text-brand-400" />
+              <div className="group relative flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-brand-500/30 hover:bg-white/[0.04] transition-all">
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors
+                    ${method.color === 'brand' ? 'bg-brand-500/10 text-brand-400 group-hover:bg-brand-500/20' : ''}
+                    ${method.color === 'slate' ? 'bg-white/5 text-slate-400 group-hover:bg-white/10' : ''}
+                    ${method.color === 'purple' ? 'bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20' : ''}
+                  `}
+                >
+                  <method.icon className="h-5 w-5" />
                 </div>
-                <ArrowUpRight className="h-5 w-5 text-slate-500 group-hover:text-brand-400 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-brand-300 transition-colors">
-                {link.name}
-              </h3>
-              <p className="text-sm text-slate-400">{link.description}</p>
-            </motion.a>
-          ))}
-        </motion.div>
 
-        {/* Call to Action */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">
+                    {method.label}
+                  </p>
+                  <p className="text-white font-medium truncate">{method.value}</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {method.isCopyable && (
+                    <motion.button
+                      onClick={() => void copyToClipboard(method.value, method.label)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                      aria-label={`Copy ${method.label}`}
+                    >
+                      <AnimatePresence mode="wait" initial={false}>
+                        {copiedItem === method.label ? (
+                          <motion.div
+                            key="check"
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.5, opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            <Check className="h-4 w-4 text-green-400" />
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="copy"
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.5, opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.button>
+                  )}
+
+                  {method.isExternal && (
+                    <a
+                      href={method.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                      aria-label={`Open ${method.label}`}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Footer Note */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6, ease: EASING_NEBULA }}
-          className="mt-16 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="text-center"
         >
-          <div className="p-8 rounded-2xl bg-gradient-to-br from-brand-500/10 to-purple-500/10 border border-brand-500/20">
-            <h2 className="text-xl font-bold text-white mb-4">Ready to start a project?</h2>
-            <p className="text-slate-400 mb-6 max-w-lg mx-auto">
-              I&apos;m always interested in hearing about new opportunities and exciting projects.
-              Drop me a line and let&apos;s discuss how we can work together.
-            </p>
-            <a
-              href="mailto:hello@haotool.org"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 hover:bg-brand-400 text-white font-medium rounded-full transition-all hover:shadow-[0_0_30px_rgba(99,102,241,0.4)]"
-            >
-              <Mail className="h-4 w-4" />
-              Send me an email
-            </a>
-          </div>
+          <p className="text-slate-500 text-sm">通常會在 24 小時內回覆 · {APP_NAME}</p>
         </motion.div>
       </div>
     </main>

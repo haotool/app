@@ -13,8 +13,10 @@ const mockProject: Project = {
   description: 'A test project description',
   tags: ['React', 'TypeScript', 'Tailwind'],
   link: '/test/',
+  imageUrl: '/screenshots/test.webp',
   category: 'web',
   featured: false,
+  status: 'live',
 };
 
 const mockFeaturedProject: Project = {
@@ -48,27 +50,28 @@ describe('ProjectCard', () => {
 
   it('renders tags', () => {
     renderWithRouter(<ProjectCard project={mockProject} index={0} />);
-    expect(screen.getByText('React')).toBeInTheDocument();
-    expect(screen.getByText('TypeScript')).toBeInTheDocument();
-    expect(screen.getByText('Tailwind')).toBeInTheDocument();
+    // Tags are prefixed with #
+    expect(screen.getByText('#React')).toBeInTheDocument();
+    expect(screen.getByText('#TypeScript')).toBeInTheDocument();
+    expect(screen.getByText('#Tailwind')).toBeInTheDocument();
   });
 
-  it('renders featured badge for featured projects', () => {
+  it('renders status badge for projects', () => {
     renderWithRouter(<ProjectCard project={mockFeaturedProject} index={0} />);
-    expect(screen.getByText('Featured')).toBeInTheDocument();
+    expect(screen.getByText('live')).toBeInTheDocument();
   });
 
-  it('does not render featured badge for non-featured projects', () => {
+  it('renders category badge', () => {
     renderWithRouter(<ProjectCard project={mockProject} index={0} />);
-    expect(screen.queryByText('Featured')).not.toBeInTheDocument();
+    expect(screen.getByText('web')).toBeInTheDocument();
   });
 
   it('renders internal link correctly', () => {
     renderWithRouter(<ProjectCard project={mockProject} index={0} />);
     const link = screen.getByRole('link');
     expect(link).toHaveAttribute('href', '/test/');
-    expect(link).not.toHaveAttribute('target');
-    expect(link).not.toHaveAttribute('rel');
+    // Internal links use target="_self"
+    expect(link).toHaveAttribute('target', '_self');
   });
 
   it('renders external link correctly', () => {

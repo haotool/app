@@ -81,9 +81,25 @@ export function useSpring(value: number): MockMotionValue {
   };
 }
 
-export function useTransform(_: unknown, callback: (v: number) => unknown) {
+export function useTransform(
+  _source: unknown,
+  callbackOrRange?: unknown,
+  outputRange?: unknown[],
+): MockMotionValue {
+  // Handle both function and range-based transforms
+  let value = 0;
+  if (typeof callbackOrRange === 'function') {
+    value = (callbackOrRange as (v: number) => number)(0);
+  } else if (
+    Array.isArray(callbackOrRange) &&
+    Array.isArray(outputRange) &&
+    outputRange.length > 0
+  ) {
+    value = outputRange[0] as number;
+  }
   return {
-    get: () => callback(0),
+    get: () => value,
+    set: () => void 0,
     on: () => () => void 0,
   };
 }
