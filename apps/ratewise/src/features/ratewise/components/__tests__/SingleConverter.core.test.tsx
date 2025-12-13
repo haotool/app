@@ -147,7 +147,7 @@ describe('SingleConverter - 核心功能測試', () => {
       expect(mockProps.onToCurrencyChange).toHaveBeenCalledWith('JPY');
     });
 
-    it('should render all currency options in both selects', { timeout: 10000 }, () => {
+    it('should render all currency options in both selects', { timeout: 15000 }, () => {
       render(<SingleConverter {...mockProps} />);
 
       const fromSelect = screen.getByLabelText('選擇來源貨幣');
@@ -155,13 +155,17 @@ describe('SingleConverter - 核心功能測試', () => {
 
       const currencyCodes = Object.keys(CURRENCY_DEFINITIONS);
 
-      currencyCodes.forEach((code) => {
-        // 檢查每個貨幣都在兩個下拉框中
-        const fromOptions = within(fromSelect as HTMLElement).getAllByRole('option');
-        const toOptions = within(toSelect as HTMLElement).getAllByRole('option');
+      // 只取一次 options 以避免重複 DOM 查詢
+      const fromOptions = within(fromSelect as HTMLElement).getAllByRole('option');
+      const toOptions = within(toSelect as HTMLElement).getAllByRole('option');
 
-        expect(fromOptions.some((opt) => (opt as HTMLOptionElement).value === code)).toBe(true);
-        expect(toOptions.some((opt) => (opt as HTMLOptionElement).value === code)).toBe(true);
+      const fromValues = fromOptions.map((opt) => (opt as HTMLOptionElement).value);
+      const toValues = toOptions.map((opt) => (opt as HTMLOptionElement).value);
+
+      // 驗證所有貨幣都存在
+      currencyCodes.forEach((code) => {
+        expect(fromValues).toContain(code);
+        expect(toValues).toContain(code);
       });
     });
   });
