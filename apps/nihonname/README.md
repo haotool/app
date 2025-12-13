@@ -10,7 +10,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-green)](./LICENSE)
 
-[🌐 線上體驗](https://app.haotool.org/nihonname/) · [📖 歷史專區](https://app.haotool.org/nihonname/history) · [🐛 回報問題](https://github.com/haotool/app/issues)
+[🌐 線上體驗](https://app.haotool.org/nihonname/) · [📖 歷史專區](https://app.haotool.org/nihonname/history/) · [🐛 回報問題](https://github.com/haotool/app/issues)
 
 </div>
 
