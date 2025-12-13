@@ -3,6 +3,10 @@
  * Configures vitest for React testing
  */
 import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
+
+// Mock framer-motion globally using the mock file
+vi.mock('framer-motion');
 
 // Mock IntersectionObserver
 class MockIntersectionObserver {
