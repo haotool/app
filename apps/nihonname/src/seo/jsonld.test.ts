@@ -105,11 +105,11 @@ describe('jsonld.ts', () => {
         { question: '問題1', answer: '答案1' },
         { question: '問題2', answer: '答案2' },
       ];
-      const schema = buildFaqSchema(faq, 'https://app.haotool.org/nihonname/faq');
+      const schema = buildFaqSchema(faq, 'https://app.haotool.org/nihonname/faq/');
 
       expect(schema['@context']).toBe('https://schema.org');
       expect(schema['@type']).toBe('FAQPage');
-      expect(schema.url).toBe('https://app.haotool.org/nihonname/faq');
+      expect(schema.url).toBe('https://app.haotool.org/nihonname/faq/');
       expect(schema.mainEntity).toHaveLength(2);
     });
 
