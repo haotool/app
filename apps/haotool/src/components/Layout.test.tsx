@@ -64,14 +64,17 @@ describe('Layout', () => {
   it('renders footer', () => {
     render(<TestWrapper />);
 
-    expect(screen.getByText(/Building digital experiences/i)).toBeInTheDocument();
+    // Updated to match actual footer content
+    expect(screen.getByText(/ENGINEERED BY AH ZHANG/i)).toBeInTheDocument();
   });
 
   it('renders footer copyright', () => {
     render(<TestWrapper />);
 
     const year = new Date().getFullYear();
-    expect(screen.getByText(new RegExp(`© ${year}`))).toBeInTheDocument();
+    // Multiple elements match, so use getAllByText and check at least one exists
+    const copyrightElements = screen.getAllByText(new RegExp(`© ${year}`));
+    expect(copyrightElements.length).toBeGreaterThan(0);
   });
 
   it('renders social links in footer', () => {
@@ -80,8 +83,9 @@ describe('Layout', () => {
     const githubLinks = screen.getAllByLabelText('GitHub');
     expect(githubLinks.length).toBeGreaterThan(0);
 
-    const twitterLinks = screen.getAllByLabelText('Twitter');
-    expect(twitterLinks.length).toBeGreaterThan(0);
+    // Updated: Footer has Threads instead of Twitter
+    const threadsLinks = screen.getAllByLabelText('Threads');
+    expect(threadsLinks.length).toBeGreaterThan(0);
   });
 
   it('renders mobile menu toggle button', () => {

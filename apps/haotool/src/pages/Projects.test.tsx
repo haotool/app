@@ -19,34 +19,32 @@ describe('Projects', () => {
     render(<Projects />, { wrapper: RouterWrapper });
 
     expect(screen.getByText('Portfolio')).toBeInTheDocument();
-    // Use regex for heading that contains both Featured and Projects
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Featured.*Projects/);
+    // Updated to match Chinese content
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/所有.*作品/);
   });
 
   it('renders page description', () => {
     render(<Projects />, { wrapper: RouterWrapper });
 
-    expect(
-      screen.getByText(/A collection of projects I've crafted with passion/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/每個專案都傾注了對細節的執著/)).toBeInTheDocument();
   });
 
   it('renders category filter buttons', () => {
     render(<Projects />, { wrapper: RouterWrapper });
 
-    expect(screen.getByRole('button', { name: /All Projects/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /全部作品/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Web/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /AI\/ML/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Mobile/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /DevOps/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /工具/i })).toBeInTheDocument();
   });
 
   it('has All Projects selected by default', () => {
     render(<Projects />, { wrapper: RouterWrapper });
 
-    const allButton = screen.getByRole('button', { name: /All Projects/i });
-    // Check if the button has the active styles
-    expect(allButton.className).toContain('bg-brand-500');
+    const allButton = screen.getByRole('button', { name: /全部作品/i });
+    // Check if the button has the pressed attribute for accessibility
+    expect(allButton).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('changes active category on click', () => {
@@ -55,14 +53,14 @@ describe('Projects', () => {
     const webButton = screen.getByRole('button', { name: /^Web$/i });
     fireEvent.click(webButton);
 
-    // After click, web button should have active styles
-    expect(webButton.className).toContain('bg-brand-500');
+    // After click, web button should have pressed attribute
+    expect(webButton).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('renders coming soon badge', () => {
     render(<Projects />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText(/More projects coming soon/i)).toBeInTheDocument();
+    expect(screen.getByText(/更多專案持續開發中/i)).toBeInTheDocument();
   });
 
   it('filters projects when category is selected', () => {
@@ -72,8 +70,8 @@ describe('Projects', () => {
     const webButton = screen.getByRole('button', { name: /^Web$/i });
     fireEvent.click(webButton);
 
-    // The filter should be applied (implementation depends on PROJECTS data)
-    expect(webButton.className).toContain('bg-brand-500');
+    // The filter should be applied - check aria-pressed
+    expect(webButton).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('shows empty state when no projects match filter', () => {
@@ -83,8 +81,7 @@ describe('Projects', () => {
     const mobileButton = screen.getByRole('button', { name: /Mobile/i });
     fireEvent.click(mobileButton);
 
-    // Check if empty state is shown (depends on PROJECTS data)
-    // This verifies the filter mechanism works
-    expect(mobileButton.className).toContain('bg-brand-500');
+    // Check if filter is applied - check aria-pressed
+    expect(mobileButton).toHaveAttribute('aria-pressed', 'true');
   });
 });

@@ -1,11 +1,11 @@
 /**
  * JSON-LD Structured Data for SEO
- * [context7:/google/structured-data:2025-12-13]
+ * [context7:/google/structured-data:2025-12-14]
  */
 
 const SITE_URL = 'https://app.haotool.org';
 const SITE_NAME = 'HAOTOOL.ORG';
-const AUTHOR_NAME = 'HAOTOOL';
+const AUTHOR_NAME = '阿璋';
 
 interface JsonLdBase {
   '@context': 'https://schema.org';
@@ -17,15 +17,11 @@ interface WebSiteJsonLd extends JsonLdBase {
   name: string;
   url: string;
   description: string;
+  inLanguage: string;
   author: {
     '@type': 'Person';
     name: string;
     url: string;
-  };
-  potentialAction?: {
-    '@type': 'SearchAction';
-    target: string;
-    'query-input': string;
   };
 }
 
@@ -43,6 +39,7 @@ interface WebPageJsonLd extends JsonLdBase {
   name: string;
   description: string;
   url: string;
+  inLanguage: string;
   dateModified: string;
   isPartOf: {
     '@type': 'WebSite';
@@ -74,8 +71,17 @@ interface CollectionPageJsonLd extends JsonLdBase {
       position: number;
       name: string;
       url: string;
+      description?: string;
     }[];
   };
+}
+
+interface ProfilePageJsonLd extends JsonLdBase {
+  '@type': 'ProfilePage';
+  name: string;
+  description: string;
+  url: string;
+  mainEntity: PersonJsonLd;
 }
 
 type JsonLd =
@@ -83,7 +89,8 @@ type JsonLd =
   | PersonJsonLd
   | WebPageJsonLd
   | BreadcrumbListJsonLd
-  | CollectionPageJsonLd;
+  | CollectionPageJsonLd
+  | ProfilePageJsonLd;
 
 /**
  * Route-specific metadata
@@ -97,35 +104,33 @@ const ROUTE_METADATA: Record<
   }
 > = {
   '/': {
-    title: 'HAOTOOL.ORG - Full-Stack Developer Portfolio',
+    title: 'HAOTOOL.ORG | 阿璋的作品集',
     description:
-      'Full-stack developer crafting high-performance web applications with modern technologies. Open source enthusiast and continuous learner.',
+      '嗨，我是阿璋。我將程式碼雕琢為數位藝術。融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。',
   },
   '/projects/': {
-    title: 'Projects - HAOTOOL.ORG',
+    title: '作品集 | HAOTOOL.ORG',
     description:
-      'A collection of projects crafted with passion, showcasing skills in full-stack development, design, and problem-solving.',
+      '精選作品展示：日本名字產生器、RateWise 匯率計算機等。每個專案都傾注對細節的執著。',
     breadcrumbs: [
-      { name: 'Home', url: '/' },
-      { name: 'Projects', url: '/projects/' },
+      { name: '首頁', url: '/' },
+      { name: '作品集', url: '/projects/' },
     ],
   },
   '/about/': {
-    title: 'About - HAOTOOL.ORG',
-    description:
-      'Learn about my journey as a full-stack developer, my skills, expertise, and what drives me to build great software.',
+    title: '關於阿璋 | HAOTOOL.ORG',
+    description: '我是阿璋，「HAOTOOL」取自名字諧音，也代表我對產出的堅持：它必須是個好工具。',
     breadcrumbs: [
-      { name: 'Home', url: '/' },
-      { name: 'About', url: '/about/' },
+      { name: '首頁', url: '/' },
+      { name: '關於', url: '/about/' },
     ],
   },
   '/contact/': {
-    title: 'Contact - HAOTOOL.ORG',
-    description:
-      "Get in touch for collaborations, freelance opportunities, or just to say hi. Let's build something amazing together.",
+    title: '聯繫 | HAOTOOL.ORG',
+    description: '有問題或想法想討論？歡迎透過 Email、GitHub 或 Threads 與我聯繫。',
     breadcrumbs: [
-      { name: 'Home', url: '/' },
-      { name: 'Contact', url: '/contact/' },
+      { name: '首頁', url: '/' },
+      { name: '聯繫', url: '/contact/' },
     ],
   },
 };
@@ -149,6 +154,17 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
   }
   const jsonLdArray: JsonLd[] = [];
 
+  // Person schema (used on multiple pages)
+  const personSchema: PersonJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: AUTHOR_NAME,
+    url: SITE_URL,
+    sameAs: ['https://github.com/azlife', 'https://www.threads.net/@azlife_1224'],
+    jobTitle: '全端工程師',
+    description: '專注於 React, TypeScript, Tailwind CSS 開發，打造高效能 Web 應用。',
+  };
+
   // Always include WebSite schema on home page
   if (normalizedRoute === '/') {
     const websiteJsonLd: WebSiteJsonLd = {
@@ -157,6 +173,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
       name: SITE_NAME,
       url: SITE_URL,
       description: metadata.description,
+      inLanguage: 'zh-TW',
       author: {
         '@type': 'Person',
         name: AUTHOR_NAME,
@@ -166,20 +183,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
     jsonLdArray.push(websiteJsonLd);
 
     // Add Person schema on home page
-    const personJsonLd: PersonJsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'Person',
-      name: AUTHOR_NAME,
-      url: SITE_URL,
-      sameAs: [
-        'https://github.com/haotool',
-        'https://twitter.com/haotool',
-        'https://linkedin.com/in/haotool',
-      ],
-      jobTitle: 'Full-Stack Developer',
-      description: metadata.description,
-    };
-    jsonLdArray.push(personJsonLd);
+    jsonLdArray.push(personSchema);
   }
 
   // Add WebPage schema for all pages
@@ -189,6 +193,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
     name: metadata.title,
     description: metadata.description,
     url: `${SITE_URL}${normalizedRoute}`,
+    inLanguage: 'zh-TW',
     dateModified: buildTime,
     isPartOf: {
       '@type': 'WebSite',
@@ -219,7 +224,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
     const collectionJsonLd: CollectionPageJsonLd = {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Featured Projects',
+      name: '精選作品',
       description: metadata.description,
       url: `${SITE_URL}/projects/`,
       mainEntity: {
@@ -228,19 +233,34 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
           {
             '@type': 'ListItem',
             position: 1,
-            name: 'NihonName',
+            name: '日本名字產生器',
             url: `${SITE_URL}/nihonname/`,
+            description: '輸入中文姓氏，產生道地日文名字與諧音梗。',
           },
           {
             '@type': 'ListItem',
             position: 2,
-            name: 'RateWise',
+            name: 'RateWise 匯率計算機',
             url: `${SITE_URL}/ratewise/`,
+            description: '即時匯率換算工具，整合 30 天歷史數據視覺化。',
           },
         ],
       },
     };
     jsonLdArray.push(collectionJsonLd);
+  }
+
+  // Add ProfilePage schema for about page
+  if (normalizedRoute === '/about/') {
+    const profileJsonLd: ProfilePageJsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'ProfilePage',
+      name: metadata.title,
+      description: metadata.description,
+      url: `${SITE_URL}/about/`,
+      mainEntity: personSchema,
+    };
+    jsonLdArray.push(profileJsonLd);
   }
 
   return jsonLdArray;

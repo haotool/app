@@ -1,12 +1,12 @@
 /**
  * Meta Tags Generator for SEO
- * [context7:/google/seo-starter-guide:2025-12-13]
+ * [context7:/google/seo-starter-guide:2025-12-14]
  */
 
 const SITE_URL = 'https://app.haotool.org';
 const SITE_NAME = 'HAOTOOL.ORG';
 const DEFAULT_IMAGE = '/og-image.png';
-const TWITTER_HANDLE = '@haotool';
+const TWITTER_HANDLE = '@azlife_1224';
 
 /**
  * Route-specific metadata
@@ -22,39 +22,42 @@ const ROUTE_METADATA: Record<
   }
 > = {
   '/': {
-    title: 'HAOTOOL.ORG - Full-Stack Developer Portfolio',
+    title: 'HAOTOOL.ORG | 阿璋的作品集',
     description:
-      'Full-stack developer crafting high-performance web applications with modern technologies. Open source enthusiast and continuous learner.',
+      '嗨，我是阿璋。我將程式碼雕琢為數位藝術。融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。專注於 React, TypeScript, Tailwind CSS 開發。',
     type: 'website',
     keywords: [
-      'full-stack developer',
-      'web development',
+      '前端開發',
+      '全端工程師',
       'React',
       'TypeScript',
-      'portfolio',
-      'open source',
+      '作品集',
+      '開源專案',
+      '阿璋',
+      'HAOTOOL',
+      'Web 開發',
     ],
   },
   '/projects/': {
-    title: 'Projects - HAOTOOL.ORG',
+    title: '作品集 | HAOTOOL.ORG',
     description:
-      'A collection of projects crafted with passion, showcasing skills in full-stack development, design, and problem-solving.',
+      '精選作品展示：日本名字產生器、RateWise 匯率計算機等。每個專案都傾注對細節的執著，展現全端開發、設計與問題解決能力。',
     type: 'website',
-    keywords: ['projects', 'portfolio', 'web apps', 'development'],
+    keywords: ['作品集', '專案', 'React 專案', 'TypeScript', 'PWA', '開源'],
   },
   '/about/': {
-    title: 'About - HAOTOOL.ORG',
+    title: '關於阿璋 | HAOTOOL.ORG',
     description:
-      'Learn about my journey as a full-stack developer, my skills, expertise, and what drives me to build great software.',
+      '我是阿璋，「HAOTOOL」取自名字諧音，也代表我對產出的堅持：它必須是個好工具。了解我的技術專長、開發哲學與職涯歷程。',
     type: 'profile',
-    keywords: ['about', 'developer', 'skills', 'experience'],
+    keywords: ['阿璋', '關於', '全端工程師', '技術背景', '開發者'],
   },
   '/contact/': {
-    title: 'Contact - HAOTOOL.ORG',
+    title: '聯繫 | HAOTOOL.ORG',
     description:
-      "Get in touch for collaborations, freelance opportunities, or just to say hi. Let's build something amazing together.",
+      '有問題或想法想討論？歡迎透過 Email、GitHub 或 Threads 與我聯繫，我會盡快回覆您。讓我們一起打造令人驚艷的數位體驗。',
     type: 'website',
-    keywords: ['contact', 'hire', 'freelance', 'collaboration'],
+    keywords: ['聯繫', '合作', '委託', '諮詢'],
   },
 };
 
@@ -103,7 +106,7 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
     tags.push(`<meta name="keywords" content="${metadata.keywords?.join(', ') ?? ''}" />`);
   }
 
-  tags.push(`<meta name="author" content="${SITE_NAME}" />`);
+  tags.push(`<meta name="author" content="阿璋 | ${SITE_NAME}" />`);
   tags.push(`<meta name="robots" content="index, follow" />`);
   tags.push(`<meta name="googlebot" content="index, follow" />`);
 
@@ -119,7 +122,7 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
   tags.push(`<meta property="og:image" content="${imageUrl}" />`);
   tags.push(`<meta property="og:image:width" content="1200" />`);
   tags.push(`<meta property="og:image:height" content="630" />`);
-  tags.push(`<meta property="og:locale" content="en_US" />`);
+  tags.push(`<meta property="og:locale" content="zh_TW" />`);
 
   // Twitter Card Tags
   tags.push(`<meta name="twitter:card" content="summary_large_image" />`);
@@ -131,8 +134,6 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
 
   // Additional Meta Tags
   tags.push(`<meta name="theme-color" content="#6366f1" />`);
-  tags.push(`<meta name="apple-mobile-web-app-capable" content="yes" />`);
-  tags.push(`<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />`);
   tags.push(`<meta name="format-detection" content="telephone=no" />`);
 
   // Last Modified

@@ -25,59 +25,47 @@ describe('Contact', () => {
     render(<Contact />, { wrapper: RouterWrapper });
 
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
-    expect(screen.getByText('Amazing')).toBeInTheDocument();
+    expect(screen.getByText('聯繫')).toBeInTheDocument();
   });
 
   it('renders description text', () => {
     render(<Contact />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText(/Whether you have a project in mind/i)).toBeInTheDocument();
+    expect(screen.getByText(/有問題或想法想討論/i)).toBeInTheDocument();
   });
 
   it('renders social link cards', () => {
     render(<Contact />, { wrapper: RouterWrapper });
 
     expect(screen.getByText('GitHub')).toBeInTheDocument();
-    expect(screen.getByText('Twitter')).toBeInTheDocument();
-    expect(screen.getByText('LinkedIn')).toBeInTheDocument();
+    expect(screen.getByText('Threads')).toBeInTheDocument();
     expect(screen.getByText('Email')).toBeInTheDocument();
   });
 
   it('renders GitHub link with correct href', () => {
     render(<Contact />, { wrapper: RouterWrapper });
 
-    const githubLink = screen.getByRole('link', { name: /GitHub/i });
-    expect(githubLink).toHaveAttribute('href', 'https://github.com/haotool');
+    const githubLink = screen.getByRole('link', { name: /Open GitHub/i });
+    expect(githubLink).toHaveAttribute('href', 'https://github.com/azlife');
   });
 
-  it('renders Twitter link with correct href', () => {
+  it('renders Threads link with correct href', () => {
     render(<Contact />, { wrapper: RouterWrapper });
 
-    const twitterLink = screen.getByRole('link', { name: /Twitter/i });
-    expect(twitterLink).toHaveAttribute('href', 'https://twitter.com/haotool');
+    const threadsLink = screen.getByRole('link', { name: /Open Threads/i });
+    expect(threadsLink).toHaveAttribute('href', 'https://www.threads.net/@azlife_1224');
   });
 
-  it('renders LinkedIn link with correct href', () => {
+  it('renders Email with copy button', () => {
     render(<Contact />, { wrapper: RouterWrapper });
 
-    const linkedinLink = screen.getByRole('link', { name: /LinkedIn/i });
-    expect(linkedinLink).toHaveAttribute('href', 'https://linkedin.com/in/haotool');
+    const copyButton = screen.getByRole('button', { name: /Copy Email/i });
+    expect(copyButton).toBeInTheDocument();
   });
 
-  it('renders Email link with correct href', () => {
+  it('renders footer note', () => {
     render(<Contact />, { wrapper: RouterWrapper });
 
-    const emailLinks = screen.getAllByRole('link', {
-      name: /Email|hello@haotool.org|Send me an email/i,
-    });
-    const mailtoLink = emailLinks.find((link) => link.getAttribute('href')?.includes('mailto'));
-    expect(mailtoLink).toHaveAttribute('href', 'mailto:hello@haotool.org');
-  });
-
-  it('renders CTA section', () => {
-    render(<Contact />, { wrapper: RouterWrapper });
-
-    expect(screen.getByText('Ready to start a project?')).toBeInTheDocument();
-    expect(screen.getByText(/Send me an email/i)).toBeInTheDocument();
+    expect(screen.getByText(/通常會在 24 小時內回覆/i)).toBeInTheDocument();
   });
 });

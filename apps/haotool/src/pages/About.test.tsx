@@ -25,41 +25,28 @@ describe('About', () => {
     render(<About />, { wrapper: RouterWrapper });
 
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
-    expect(screen.getByText('Purpose')).toBeInTheDocument();
+    expect(screen.getByText('阿璋')).toBeInTheDocument();
   });
 
   it('renders introduction text', () => {
     render(<About />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText(/passionate full-stack developer/i)).toBeInTheDocument();
-  });
-
-  it('renders My Journey section', () => {
-    render(<About />, { wrapper: RouterWrapper });
-
-    expect(screen.getByText('My Journey')).toBeInTheDocument();
-    expect(screen.getByText(/started my coding journey/i)).toBeInTheDocument();
-  });
-
-  it('renders Skills & Expertise section', () => {
-    render(<About />, { wrapper: RouterWrapper });
-
-    expect(screen.getByText('Skills & Expertise')).toBeInTheDocument();
+    expect(screen.getByText(/一位熱愛打造「好工具」的全端開發者/i)).toBeInTheDocument();
   });
 
   it('renders skill cards', () => {
     render(<About />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText('Frontend Development')).toBeInTheDocument();
-    expect(screen.getByText('Backend Development')).toBeInTheDocument();
-    expect(screen.getByText('Cloud & DevOps')).toBeInTheDocument();
-    expect(screen.getByText('AI Integration')).toBeInTheDocument();
+    expect(screen.getByText('前端開發')).toBeInTheDocument();
+    expect(screen.getByText('UI/UX 設計')).toBeInTheDocument();
+    expect(screen.getByText('效能優化')).toBeInTheDocument();
+    expect(screen.getByText('開源貢獻')).toBeInTheDocument();
   });
 
   it('renders FAQ section', () => {
     render(<About />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText('Frequently Asked Questions')).toBeInTheDocument();
+    expect(screen.getByText('常見問題')).toBeInTheDocument();
   });
 
   it('renders FAQ items from constants', () => {
@@ -73,7 +60,7 @@ describe('About', () => {
   it('FAQ accordion expands on click', () => {
     render(<About />, { wrapper: RouterWrapper });
 
-    // Find FAQ buttons (exclude the CTA link)
+    // Find FAQ buttons
     const buttons = screen.getAllByRole('button');
     expect(buttons.length).toBeGreaterThan(0);
     const faqButton = buttons[0] as HTMLButtonElement;
@@ -82,10 +69,16 @@ describe('About', () => {
     expect(faqButton).toBeInTheDocument();
   });
 
+  it('renders CTA section', () => {
+    render(<About />, { wrapper: RouterWrapper });
+
+    expect(screen.getByText('有興趣合作？')).toBeInTheDocument();
+  });
+
   it('renders CTA link to contact page', () => {
     render(<About />, { wrapper: RouterWrapper });
 
-    const ctaLink = screen.getByRole('link', { name: /Let's Work Together/i });
+    const ctaLink = screen.getByRole('link', { name: /聯繫我/i });
     expect(ctaLink).toHaveAttribute('href', '/contact');
   });
 });

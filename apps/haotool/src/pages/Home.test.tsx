@@ -27,64 +27,68 @@ describe('Home', () => {
   it('renders hero section with main heading', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText('Building Digital')).toBeInTheDocument();
-    expect(screen.getByText('Experiences')).toBeInTheDocument();
+    // Updated to match actual content
+    expect(screen.getByText('D')).toBeInTheDocument(); // First letter of "Design"
+    expect(screen.getByText('E')).toBeInTheDocument(); // First letter of "Engineering."
   });
 
   it('renders availability badge', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText('Available for Projects')).toBeInTheDocument();
+    expect(screen.getByText('Open for Projects')).toBeInTheDocument();
   });
 
   it('renders subtitle description', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    expect(
-      screen.getByText(/Full-stack developer crafting high-performance web applications/),
-    ).toBeInTheDocument();
+    // Updated to match actual Chinese content - search for individual characters
+    expect(screen.getByText('嗨')).toBeInTheDocument();
+    expect(screen.getByText('阿')).toBeInTheDocument();
+    expect(screen.getByText('璋')).toBeInTheDocument();
   });
 
   it('renders CTA buttons', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    expect(screen.getByRole('link', { name: /View Projects/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Get in Touch/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /瀏覽作品/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /GitHub/i })).toBeInTheDocument();
   });
 
   it('renders CTA links with correct href', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    const projectsLink = screen.getByRole('link', { name: /View Projects/i });
-    const contactLink = screen.getByRole('link', { name: /Get in Touch/i });
-
+    const projectsLink = screen.getByRole('link', { name: /瀏覽作品/i });
     expect(projectsLink).toHaveAttribute('href', '/projects');
-    expect(contactLink).toHaveAttribute('href', '/contact');
+
+    // GitHub link should be external
+    const githubLinks = screen.getAllByRole('link', { name: /GitHub/i });
+    const externalGithub = githubLinks.find((link) =>
+      link.getAttribute('href')?.includes('github.com'),
+    );
+    expect(externalGithub).toBeInTheDocument();
   });
 
   it('renders stats section labels', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    // Check for stats labels
-    expect(screen.getByText('Years Experience')).toBeInTheDocument();
-    expect(screen.getByText('Projects Completed')).toBeInTheDocument();
+    // Updated to match actual Chinese labels
+    expect(screen.getByText('年開發經驗')).toBeInTheDocument();
+    expect(screen.getByText('上線專案')).toBeInTheDocument();
   });
 
   it('renders featured work section', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText('Featured Work')).toBeInTheDocument();
-    expect(screen.getByText(/A selection of projects I've built with passion/)).toBeInTheDocument();
+    expect(screen.getByText('Featured Works')).toBeInTheDocument();
+    expect(screen.getByText(/結合實用性與美學的數位作品/)).toBeInTheDocument();
   });
 
   it('renders View All Projects link in featured section', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    // Find all links that contain "Projects"
-    const allLinks = screen.getAllByRole('link');
-    const projectLinks = allLinks.filter((link) =>
-      link.textContent?.toLowerCase().includes('project'),
-    );
-    expect(projectLinks.length).toBeGreaterThanOrEqual(1);
+    // Find the Chinese link text
+    const viewAllLink = screen.getByRole('link', { name: /查看所有作品/i });
+    expect(viewAllLink).toBeInTheDocument();
+    expect(viewAllLink).toHaveAttribute('href', '/projects');
   });
 });
