@@ -132,6 +132,13 @@
       "conclusion": "failure",
       "branch": "main",
       "commit": "0aa746f6959c12e6f352fadbfccd601dc52edf74"
+    },
+    {
+      "timestamp": "2025-12-13T08:42:40Z",
+      "duration_seconds": 83,
+      "conclusion": "failure",
+      "branch": "feature/haotool-portfolio-refactor",
+      "commit": "3106d0502f419d45579b1540f5b37c2023d53bf5"
     }
   ]
 }
