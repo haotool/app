@@ -9,6 +9,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // [fix:2025-12-14] Root monorepo pre-push 同時跑多個專案時，部分測試需要更長時間初始化
+    testTimeout: 15000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
