@@ -1,9 +1,9 @@
 # Google Search Console 操作指南
 
 > **建立時間**: 2025-12-13T02:51:00+08:00
-> **最後更新**: 2025-12-13T02:51:00+08:00
+> **最後更新**: 2025-12-14T03:30:00+08:00
 > **狀態**: ✅ 已完成
-> **適用專案**: RateWise、NihonName
+> **適用專案**: HAOTOOL、RateWise、NihonName
 
 ---
 
@@ -16,6 +16,40 @@
 ---
 
 ## 1️⃣ 網站驗證 (首次設定)
+
+### HAOTOOL 作品集首頁 (新增 2025-12-14)
+
+**網站 URL**: `https://app.haotool.org/`
+
+**驗證方法 A: HTML 檔案上傳** ✅ 推薦
+
+```bash
+# 1. 從 Google Search Console 下載驗證檔案
+# 例如: google1234567890abcdef.html
+
+# 2. 放到 public/ 目錄
+cp google1234567890abcdef.html apps/haotool/public/
+
+# 3. 重新建置並部署
+pnpm --filter @app/haotool build
+
+# 4. 驗證檔案可訪問
+curl -I https://app.haotool.org/google1234567890abcdef.html
+# 預期: HTTP/2 200
+
+# 5. 回到 Google Search Console 點擊「驗證」
+```
+
+**HAOTOOL 頁面清單**:
+
+- `/` - 首頁
+- `/projects/` - 作品集
+- `/about/` - 關於
+- `/contact/` - 聯絡
+
+**Sitemap URL**: `https://app.haotool.org/sitemap.xml`
+
+---
 
 ### RateWise 專案
 

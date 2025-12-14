@@ -64,7 +64,7 @@ RUN set -eux; \
     export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
   fi; \
   VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
-  VITE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
+  VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname
 
 # Production stage

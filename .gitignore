@@ -90,7 +90,11 @@ reports/lighthouse/
 *.png
 !public/**/*.png
 !**/screenshots/*.png
-!**/icons/*.pngapps/ratewise/dev-server.pid
+!**/icons/*.png
+
+# PID files
+apps/ratewise/dev-server.pid
 apps/ratewise/dev-server.log
 
+# Example files (reference only)
 .example/

@@ -188,6 +188,111 @@
       "conclusion": "success",
       "branch": "feature/haotool-portfolio-refactor",
       "commit": "0993ed689b43a15470fe60ec029b564f9ccede74"
+    },
+    {
+      "timestamp": "2025-12-13T18:47:28Z",
+      "duration_seconds": 446,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "3b4dde149f365529493846ba1db7be54c3c4e559"
+    },
+    {
+      "timestamp": "2025-12-13T19:00:57Z",
+      "duration_seconds": 354,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "a28b7da3bf0bc863422cefff3f29a5268631c2a0"
+    },
+    {
+      "timestamp": "2025-12-13T19:12:54Z",
+      "duration_seconds": 338,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "0dd0d3499daf3b313dee3c40a36fdcb54013ae03"
+    },
+    {
+      "timestamp": "2025-12-13T19:19:42Z",
+      "duration_seconds": 345,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "cb0cfc684b17a080be62e3ef2b14bf6b7b392aa1"
+    },
+    {
+      "timestamp": "2025-12-13T19:20:04Z",
+      "duration_seconds": 51,
+      "conclusion": "failure",
+      "branch": "main",
+      "commit": "389d4df274992bfef51687994d76c17454af6f3e"
+    },
+    {
+      "timestamp": "2025-12-13T19:22:38Z",
+      "duration_seconds": 61,
+      "conclusion": "failure",
+      "branch": "main",
+      "commit": "22f15b3538bc471d2aab783eb2f32beafa606fa8"
+    },
+    {
+      "timestamp": "2025-12-13T19:30:34Z",
+      "duration_seconds": 365,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "685fe7b09e6318f74248b280e831807049b45df0"
+    },
+    {
+      "timestamp": "2025-12-13T19:35:12Z",
+      "duration_seconds": 337,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "5ed24740d9ab03061c31628821cc22f52e662700"
+    },
+    {
+      "timestamp": "2025-12-13T19:40:46Z",
+      "duration_seconds": 373,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "972d98bf491628d5be787333707c7e8d9b0eb502"
+    },
+    {
+      "timestamp": "2025-12-13T19:50:04Z",
+      "duration_seconds": 334,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "ac8d31edaa73819f114cd2ec95f9d9e4588d5ab4"
+    },
+    {
+      "timestamp": "2025-12-13T19:55:06Z",
+      "duration_seconds": 344,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "b970655b1be96ab213ca17b4dacb7970f8bee063"
+    },
+    {
+      "timestamp": "2025-12-13T20:04:14Z",
+      "duration_seconds": 322,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "0e8ff27359c1bfaa93a5aebece1175645d1f8434"
+    },
+    {
+      "timestamp": "2025-12-13T20:09:22Z",
+      "duration_seconds": 335,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "c91f16181312383d4f3190b32b51ca7855b5d687"
+    },
+    {
+      "timestamp": "2025-12-13T20:22:21Z",
+      "duration_seconds": 340,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "7fae025b12c27aca9b81d988c37accbaf8067acb"
+    },
+    {
+      "timestamp": "2025-12-14T02:51:51Z",
+      "duration_seconds": 469,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "48ab72ae45ad433e430a804c71b975b10a6a7a06"
     }
   ]
 }
