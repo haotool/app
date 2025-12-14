@@ -9,44 +9,29 @@
  * 2. 驗證 robots.txt 存在且正確
  * 3. 驗證 llms.txt 存在且正確
  * 4. 驗證 hreflang 配置一致性
+ * 5. 驗證圖片資源存在且可訪問
  *
  * 用法:
  *   node scripts/verify-production-seo.mjs
  *   node scripts/verify-production-seo.mjs --base-url=https://app.haotool.org/ratewise
  *
  * 建立時間: 2025-11-30T15:50:00+08:00
+ * 更新時間: 2025-12-14 - 從 SSOT 導入配置
  * 依據: [moss.sh/deployment/health-checks][SEO Best Practices 2025]
  */
+
+// 從 SSOT 導入配置
+import {
+  SEO_PATHS,
+  SEO_FILES,
+  IMAGE_RESOURCES,
+  SITE_CONFIG,
+} from '../apps/ratewise/seo-paths.config.mjs';
 
 const PRODUCTION_BASE_URL =
   process.env.PRODUCTION_BASE_URL ||
   process.argv.find((arg) => arg.startsWith('--base-url='))?.split('=')[1] ||
-  'https://app.haotool.org/ratewise';
-
-// SEO 關鍵路徑 (必須與 sitemap.xml 一致)
-// 包含 4 個核心頁面 + 13 個幣別頁面 = 17 頁面
-const SEO_PATHS = [
-  '/',
-  '/faq/',
-  '/about/',
-  '/guide/',
-  '/usd-twd/',
-  '/jpy-twd/',
-  '/eur-twd/',
-  '/gbp-twd/',
-  '/cny-twd/',
-  '/krw-twd/',
-  '/hkd-twd/',
-  '/aud-twd/',
-  '/cad-twd/',
-  '/sgd-twd/',
-  '/thb-twd/',
-  '/nzd-twd/',
-  '/chf-twd/',
-];
-
-// SEO 配置文件
-const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
+  SITE_CONFIG.url.replace(/\/$/, ''); // 移除尾斜線以便後續添加路徑
 
 // 顏色輸出
 const colors = {
@@ -237,6 +222,24 @@ async function main() {
       log(colors.red, '✗', error);
     }
     hasErrors = true;
+  }
+
+  // 6. 驗證圖片資源
+  console.log('\n🖼️  圖片資源檢查:');
+  for (const image of IMAGE_RESOURCES) {
+    const url = `${PRODUCTION_BASE_URL}${image}`;
+    const result = await checkUrl(url);
+
+    if (result.ok) {
+      log(colors.green, '✓', `${image} → ${result.status}`);
+    } else {
+      log(
+        colors.yellow,
+        '⚠',
+        `${image} → ${result.status || 'ERROR'} (${result.error || 'Non-200'})`,
+      );
+      // 圖片資源失敗不算致命錯誤，只是警告
+    }
   }
 
   // 最終結果

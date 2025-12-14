@@ -8,134 +8,51 @@
 import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+// 從 SSOT 導入配置
+import { SEO_PATHS, SITE_CONFIG } from '../apps/ratewise/seo-paths.config.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 網站設定
-const SITE_URL = 'https://app.haotool.org/ratewise/'; // SSOT: 與 canonical/hreflang 尾斜線一致
-const SITE_NAME = 'RateWise - 匯率好工具';
+// 從 SSOT 使用網站配置
+const { url: SITE_URL, name: SITE_NAME } = SITE_CONFIG;
 
-// 路由配置 (必須與 routes.tsx getIncludedRoutes 保持一致)
-// @see apps/ratewise/src/routes.tsx
-// @see scripts/verify-sitemap-ssg.mjs
-// [SEO Update: 2025-12-02] 新增 13 個長尾幣別落地頁
-const routes = [
-  {
-    path: '/',
-    changefreq: 'daily',
-    priority: 1.0,
-    lastmod: new Date().toISOString().split('T')[0], // 今天 (YYYY-MM-DD)
-  },
-  {
-    path: '/faq',
-    changefreq: 'weekly',
-    priority: 0.8,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/about',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/guide',
-    changefreq: 'monthly',
-    priority: 0.7,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  // 長尾落地頁：幣別換算 (USD/JPY/EUR/GBP/CNY/KRW/HKD/AUD/CAD/SGD/THB/NZD/CHF)
-  {
-    path: '/usd-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/jpy-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/eur-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/gbp-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/cny-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/krw-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/hkd-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/aud-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/cad-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/sgd-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/thb-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/nzd-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/chf-twd',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-];
+/**
+ * 路由配置 - 從 SSOT 構建
+ *
+ * [refactor:2025-12-14] 從 seo-paths.config.mjs 導入路徑，確保 SSOT
+ */
+const today = new Date().toISOString().split('T')[0];
+
+// 定義各路徑的 SEO 屬性
+const pathMetadata = {
+  '/': { changefreq: 'daily', priority: 1.0 },
+  '/faq/': { changefreq: 'weekly', priority: 0.8 },
+  '/about/': { changefreq: 'monthly', priority: 0.6 },
+  '/guide/': { changefreq: 'monthly', priority: 0.7 },
+  // 所有幣別頁面使用相同配置
+  default: { changefreq: 'monthly', priority: 0.6 },
+};
+
+// 從 SSOT 構建路由配置
+const routes = SEO_PATHS.map((path) => ({
+  path,
+  ...(pathMetadata[path] || pathMetadata.default),
+  lastmod: today,
+}));
 
 // 語言配置（單一語言策略：僅 zh-TW + x-default）
 const languages = ['zh-TW'];
 
 /**
  * 生成單個 URL 項目
+ *
+ * [refactor:2025-12-14] 路徑已統一使用尾斜線格式，無需額外處理
  */
 function buildFullUrl(path) {
   const base = SITE_URL.replace(/\/+$/, '');
-  const normalizedPath = path === '/' ? '/' : `${path.replace(/\/+$/, '')}/`;
-  return `${base}${normalizedPath}`;
+  // 路徑已經帶尾斜線，直接組合
+  return `${base}${path}`;
 }
 
 function generateUrlEntry(route) {
