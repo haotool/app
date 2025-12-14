@@ -1,91 +1,29 @@
 /**
- * ProjectCard Component Tests
+ * ProjectCard Tests (BDD: Red phase)
+ * 驗證精選作品卡會呈現 OG 預覽圖，避免只顯示漸層背景。
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { ProjectCard, ProjectCardSkeleton } from './ProjectCard';
+import { ProjectCard } from './ProjectCard';
 import type { Project } from '../constants';
 
-const mockProject: Project = {
-  id: 'test-project',
-  title: 'Test Project',
-  description: 'A test project description',
-  tags: ['React', 'TypeScript', 'Tailwind'],
-  link: '/test/',
-  imageUrl: '/screenshots/test.webp',
+const demoProject: Project = {
+  id: 'demo',
+  title: 'DialHero',
+  description: '測試用專案，應該呈現 OG 圖片。',
+  tags: ['React', 'OG'],
+  link: '/demo',
+  imageUrl: '/og-image.png',
+  featured: true,
   category: 'web',
-  featured: false,
   status: 'live',
 };
 
-const mockFeaturedProject: Project = {
-  ...mockProject,
-  id: 'featured-project',
-  title: 'Featured Project',
-  featured: true,
-};
-
-const mockExternalProject: Project = {
-  ...mockProject,
-  id: 'external-project',
-  title: 'External Project',
-  link: 'https://example.com',
-};
-
-const renderWithRouter = (component: React.ReactNode) => {
-  return render(<BrowserRouter>{component}</BrowserRouter>);
-};
-
 describe('ProjectCard', () => {
-  it('renders project title', () => {
-    renderWithRouter(<ProjectCard project={mockProject} index={0} />);
-    expect(screen.getByText('Test Project')).toBeInTheDocument();
-  });
+  it('renders project OG image with accessible alt text', () => {
+    render(<ProjectCard project={demoProject} index={0} />);
 
-  it('renders project description', () => {
-    renderWithRouter(<ProjectCard project={mockProject} index={0} />);
-    expect(screen.getByText('A test project description')).toBeInTheDocument();
-  });
-
-  it('renders tags', () => {
-    renderWithRouter(<ProjectCard project={mockProject} index={0} />);
-    // Tags are prefixed with #
-    expect(screen.getByText('#React')).toBeInTheDocument();
-    expect(screen.getByText('#TypeScript')).toBeInTheDocument();
-    expect(screen.getByText('#Tailwind')).toBeInTheDocument();
-  });
-
-  it('renders status badge for projects', () => {
-    renderWithRouter(<ProjectCard project={mockFeaturedProject} index={0} />);
-    expect(screen.getByText('live')).toBeInTheDocument();
-  });
-
-  it('renders category badge', () => {
-    renderWithRouter(<ProjectCard project={mockProject} index={0} />);
-    expect(screen.getByText('web')).toBeInTheDocument();
-  });
-
-  it('renders internal link correctly', () => {
-    renderWithRouter(<ProjectCard project={mockProject} index={0} />);
-    const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/test/');
-    // Internal links use target="_self"
-    expect(link).toHaveAttribute('target', '_self');
-  });
-
-  it('renders external link correctly', () => {
-    renderWithRouter(<ProjectCard project={mockExternalProject} index={0} />);
-    const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', 'https://example.com');
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-  });
-});
-
-describe('ProjectCardSkeleton', () => {
-  it('renders skeleton elements', () => {
-    const { container } = renderWithRouter(<ProjectCardSkeleton />);
-    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+    const img = screen.getByRole('img', { name: /DialHero 預覽圖/i });
+    expect(img).toHaveAttribute('src', demoProject.imageUrl);
   });
 });

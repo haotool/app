@@ -131,12 +131,22 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
 
       {/* Image Section */}
       <div className="relative h-48 w-full overflow-hidden bg-slate-800">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-500/20 to-purple-500/20" />
-
-        {/* Placeholder gradient if no image */}
+        {/* Base gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800" />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
+        {/* Project OG image */}
+        {project.imageUrl ? (
+          <img
+            src={project.imageUrl}
+            alt={`${project.title} 預覽圖`}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105"
+          />
+        ) : null}
+
+        {/* Stylized overlays */}
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-500/20 to-purple-500/20 mix-blend-screen" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-70" />
 
         {/* Status Badge */}
         <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full bg-slate-950/70 px-3 py-1 text-xs font-medium text-white backdrop-blur-md border border-white/10 z-20">

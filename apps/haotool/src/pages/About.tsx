@@ -60,7 +60,7 @@ export default function About() {
           <div className="prose prose-invert prose-lg text-slate-400 font-light">
             <p className="text-xl leading-relaxed mb-6">一位熱愛打造「好工具」的全端開發者。</p>
             <p className="mb-6">
-              「HAOTOOL」取自我的名字「璋」的諧音，也代表我對產出的堅持：
+              「HAOTOOL」取自「好工具」的諧音，也延伸自我的名字讀音 HAO，代表
               <span className="text-white font-medium">它必須是個好工具</span>。
             </p>
             <p>

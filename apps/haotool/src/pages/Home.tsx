@@ -93,89 +93,97 @@ export default function Home() {
   return (
     <main>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* 3D Interactive Background */}
-        <ThreeHero isCtaHovered={isCtaHovered} />
+      <section className="relative min-h-screen flex items-center overflow-hidden">
+        {/* Ambient backdrop to keep copy legible while showcasing 3D scene */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.14),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(45,212,191,0.12),transparent_25%),linear-gradient(120deg,#050505_0%,#050505_45%,transparent_70%)]" />
+        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:120px_120px] opacity-40" />
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
-          {/* Badge */}
-          <motion.div variants={containerVariants} initial="hidden" animate="show" className="mb-8">
-            <motion.span
-              variants={itemVariants}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium tracking-wider uppercase bg-white/5 text-slate-300 rounded-full border border-white/10 backdrop-blur-sm"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
-              </span>
-              Open for Projects
-            </motion.span>
-          </motion.div>
+        <div className="relative z-10 w-full">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 grid md:grid-cols-[1.05fr_0.95fr] items-center gap-10 lg:gap-14">
+            <div className="space-y-6 md:space-y-8 text-left">
+              {/* Badge */}
+              <motion.div variants={containerVariants} initial="hidden" animate="show">
+                <motion.span
+                  variants={itemVariants}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium tracking-wider uppercase bg-white/5 text-slate-200 rounded-full border border-white/10 backdrop-blur-sm shadow-[0_10px_40px_rgba(0,0,0,0.35)]"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+                  </span>
+                  Open for Projects
+                </motion.span>
+              </motion.div>
 
-          {/* Main Title */}
-          <motion.h1
-            variants={textContainerVariants}
-            initial="hidden"
-            animate="show"
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
-          >
-            <div className="overflow-hidden">
-              <TextReveal text="Design" className="text-white" />
+              {/* Main Title */}
+              <motion.h1
+                variants={textContainerVariants}
+                initial="hidden"
+                animate="show"
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_10px_35px_rgba(0,0,0,0.55)]"
+              >
+                <div className="overflow-hidden">
+                  <TextReveal text="Design" className="text-white" />
+                </div>
+                <div className="overflow-hidden">
+                  <TextReveal
+                    text="Engineering."
+                    className="bg-gradient-to-r from-brand-300 via-purple-300 to-sky-300 bg-clip-text text-transparent animate-gradient-x"
+                  />
+                </div>
+              </motion.h1>
+
+              {/* Subtitle */}
+              <motion.div
+                variants={textContainerVariants}
+                initial="hidden"
+                animate="show"
+                className="text-lg sm:text-xl text-slate-200 max-w-2xl leading-relaxed"
+              >
+                <TextReveal text="嗨，我是阿璋。「HAOTOOL」取自「好工具」的諧音，代表我寫的每一行程式都必須實用且優雅。" />
+                <br className="hidden sm:block" />
+                <TextReveal text="我將程式碼雕琢為數位藝術，融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。" />
+              </motion.div>
+
+              {/* CTAs */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5, ease: EASING_NEBULA }}
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-4"
+              >
+                <Link
+                  to="/projects"
+                  className="group inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-full transition-all hover:bg-slate-200 hover:shadow-[0_0_30px_rgba(255,255,255,0.35)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-300 focus-visible:outline-none"
+                  onMouseEnter={() => setIsCtaHovered(true)}
+                  onMouseLeave={() => setIsCtaHovered(false)}
+                >
+                  瀏覽作品
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white transition-transform group-hover:translate-x-1">
+                    <ArrowRight className="h-3 w-3" />
+                  </div>
+                </Link>
+                <a
+                  href={SOCIAL_LINKS.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-medium rounded-full border border-white/10 transition-all hover:border-brand-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.25)] backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-300 focus-visible:outline-none"
+                  onMouseEnter={() => setIsCtaHovered(true)}
+                  onMouseLeave={() => setIsCtaHovered(false)}
+                >
+                  <Github className="h-4 w-4" />
+                  GitHub
+                </a>
+              </motion.div>
             </div>
-            <div className="overflow-hidden">
-              <TextReveal
-                text="Engineering."
-                className="bg-gradient-to-r from-brand-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient-x"
+
+            <div className="relative h-[320px] sm:h-[420px] md:h-[540px] lg:h-[620px]">
+              <ThreeHero
+                isCtaHovered={isCtaHovered}
+                className="absolute inset-0 right-[-16%] md:right-[-20%] md:w-[120%] h-full"
               />
             </div>
-          </motion.h1>
-
-          {/* Subtitle */}
-          <motion.div
-            variants={textContainerVariants}
-            initial="hidden"
-            animate="show"
-            className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto mb-10"
-          >
-            <TextReveal text="嗨，我是阿璋。我將程式碼雕琢為" />
-            <span className="text-white font-medium">
-              <TextReveal text="數位藝術" />
-            </span>
-            <TextReveal text="。" />
-            <br className="hidden sm:block" />
-            <TextReveal text="融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。" />
-          </motion.div>
-
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5, ease: EASING_NEBULA }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            <Link
-              to="/projects"
-              className="group inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-medium rounded-full transition-all hover:bg-slate-200 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
-              onMouseEnter={() => setIsCtaHovered(true)}
-              onMouseLeave={() => setIsCtaHovered(false)}
-            >
-              瀏覽作品
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white transition-transform group-hover:translate-x-1">
-                <ArrowRight className="h-3 w-3" />
-              </div>
-            </Link>
-            <a
-              href={SOCIAL_LINKS.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-medium rounded-full border border-white/10 transition-all hover:border-brand-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)] backdrop-blur-sm"
-              onMouseEnter={() => setIsCtaHovered(true)}
-              onMouseLeave={() => setIsCtaHovered(false)}
-            >
-              <Github className="h-4 w-4" />
-              GitHub
-            </a>
-          </motion.div>
+          </div>
         </div>
 
         {/* Scroll Indicator */}
@@ -183,7 +191,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 0.8 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="absolute bottom-8 left-6 md:left-10"
         >
           <ChevronDown className="h-6 w-6 text-slate-500 animate-bounce" />
         </motion.div>
