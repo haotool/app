@@ -1,23 +1,12 @@
-/**
- * ThreeHero Component - 3D Interactive Hero Section
- * [update:2025-12-14] - Created based on .example/haotool.org-v1.0.5
- * [context7:@react-three/fiber:2025-12-14]
- * [context7:@react-three/drei:2025-12-14]
- *
- * Performance Optimizations:
- * - PerformanceMonitor for adaptive quality
- * - Optimized canvas configuration
- * - Smooth animations with proper cleanup
- */
 import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import {
-  Float,
-  Environment,
-  MeshTransmissionMaterial,
-  ContactShadows,
+import { 
+  Float, 
+  Environment, 
+  MeshTransmissionMaterial, 
+  ContactShadows, 
   PerformanceMonitor,
-  Lightformer,
+  Lightformer
 } from '@react-three/drei';
 import { EffectComposer, Bloom, Noise } from '@react-three/postprocessing';
 import * as THREE from 'three';
@@ -26,11 +15,7 @@ import * as THREE from 'three';
 // Types
 // -----------------------------------------------------------------------------
 interface ThreeHeroProps {
-  isCtaHovered?: boolean;
-  /**
-   * Optional className to control the container positioning.
-   * Defaults to absolute full-bleed background.
-   */
+  isCtaHovered: boolean;
   className?: string;
 }
 
@@ -48,13 +33,13 @@ interface PerformanceState {
 const LightRig = ({ isActive }: { isActive: boolean }) => {
   const lightRef = useRef<THREE.Group>(null);
   const { mouse, viewport } = useThree();
-
-  useFrame(() => {
+  
+  useFrame((state) => {
     if (!lightRef.current) return;
     // Map mouse to viewport, but damped
     const targetX = (mouse.x * viewport.width) / 2.5;
     const targetY = (mouse.y * viewport.height) / 2.5;
-
+    
     lightRef.current.position.x = THREE.MathUtils.lerp(lightRef.current.position.x, targetX, 0.1);
     lightRef.current.position.y = THREE.MathUtils.lerp(lightRef.current.position.y, targetY, 0.1);
     lightRef.current.lookAt(0, 0, 0);
@@ -63,13 +48,13 @@ const LightRig = ({ isActive }: { isActive: boolean }) => {
   return (
     <group ref={lightRef} position={[0, 0, 6]}>
       {/* Dynamic Key Light - Sharp and Intense */}
-      <spotLight
+      <spotLight 
         castShadow
-        position={[0, 0, 0]}
-        intensity={isActive ? 40 : 25}
-        angle={0.35}
-        penumbra={0.5}
-        color={isActive ? '#a5b4fc' : '#ffffff'}
+        position={[0, 0, 0]} 
+        intensity={isActive ? 40 : 25} 
+        angle={0.35} 
+        penumbra={0.5} 
+        color={isActive ? "#a5b4fc" : "#ffffff"}
         distance={25}
         decay={2}
       />
@@ -85,110 +70,99 @@ const PrismLogic = ({ perf, isActive }: { perf: PerformanceState; isActive: bool
   const outerRef = useRef<THREE.Mesh>(null);
   const innerRef = useRef<THREE.Mesh>(null);
   const coreMaterialRef = useRef<THREE.MeshStandardMaterial>(null);
-
+  
   const [isHovered, setIsHovered] = useState(false);
-
+  
   // Smooth values
   const outerSpeed = useRef(0.1);
   const innerSpeed = useRef(0.2);
   const currentScale = useRef(1);
-
+  
   // Scroll tracking
   const scrollYRef = useRef(0);
 
   // Connect to global scroll for parallax
   useEffect(() => {
-    // SSR guard
-    if (typeof window === 'undefined') return;
-
     const handleScroll = () => {
       scrollYRef.current = window.scrollY;
     };
     // Initialize
     scrollYRef.current = window.scrollY;
-
+    
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useFrame((state, delta) => {
     if (!outerRef.current || !innerRef.current || !groupRef.current) return;
-
+    
     // 1. Handle Scroll Parallax (Lerped for smoothness)
-    const targetY = -scrollYRef.current * 0.002;
+    // We move the whole group down (Y) and away (Z) as user scrolls
+    const targetY = -scrollYRef.current * 0.002; 
     const targetZ = -scrollYRef.current * 0.001; // Subtle push away
     const targetRotationY = scrollYRef.current * 0.0005;
 
     groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetY, 0.1);
     groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, targetZ, 0.1);
-    groupRef.current.rotation.y = THREE.MathUtils.lerp(
-      groupRef.current.rotation.y,
-      targetRotationY,
-      0.05,
-    );
+    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotationY, 0.05);
 
     // 2. Determine target states for interaction
     const isActiveState = isActive || isHovered;
-
+    
     // 3. Lerp rotation speeds
     const targetOuterSpeed = isActiveState ? 2.0 : 0.1;
     const targetInnerSpeed = isActiveState ? 3.0 : 0.2;
-
+    
     outerSpeed.current = THREE.MathUtils.lerp(outerSpeed.current, targetOuterSpeed, 0.05);
     innerSpeed.current = THREE.MathUtils.lerp(innerSpeed.current, targetInnerSpeed, 0.05);
 
     const t = state.clock.getElapsedTime();
-
+    
     // 4. Apply continuous rotation
     outerRef.current.rotation.x += outerSpeed.current * delta;
     outerRef.current.rotation.z = Math.cos(t * 0.15) * 0.1;
-
+    
     innerRef.current.rotation.y -= innerSpeed.current * delta;
     innerRef.current.rotation.x = Math.sin(t * 0.5) * 0.2;
 
     // 5. Lerp Scale (Scale up on hover)
+    // Slightly scale up to 1.1 when hovered
     const targetScale = isHovered ? 1.1 : 1.0;
     currentScale.current = THREE.MathUtils.lerp(currentScale.current, targetScale, 0.1);
-
+    
+    // Apply scale to the floating group content
     outerRef.current.scale.setScalar(currentScale.current);
     innerRef.current.scale.setScalar(0.7 * currentScale.current);
 
     // 6. Lerp Emissive Intensity (Glow brighter on hover)
     if (coreMaterialRef.current) {
-      const targetEmissiveIntensity = isActive ? 3.0 : isHovered ? 2.0 : 0.2;
-      coreMaterialRef.current.emissiveIntensity = THREE.MathUtils.lerp(
-        coreMaterialRef.current.emissiveIntensity,
-        targetEmissiveIntensity,
-        0.1,
-      );
+        // Normal: 0.2, Hover: 2.0, Active (CTA): 3.0
+        const targetEmissiveIntensity = isActive ? 3.0 : (isHovered ? 2.0 : 0.2);
+        coreMaterialRef.current.emissiveIntensity = THREE.MathUtils.lerp(
+            coreMaterialRef.current.emissiveIntensity, 
+            targetEmissiveIntensity, 
+            0.1
+        );
     }
   });
 
   return (
     <group ref={groupRef}>
-      <Float
-        speed={isActive || isHovered ? 3 : 2}
-        rotationIntensity={0.2}
-        floatIntensity={0.5}
-        floatingRange={[-0.1, 0.1]}
-      >
+      <Float speed={isActive || isHovered ? 3 : 2} rotationIntensity={0.2} floatIntensity={0.5} floatingRange={[-0.1, 0.1]}>
+        
         {/* Outer Shell: Optical Glass */}
-        <mesh
-          ref={outerRef}
-          castShadow
+        <mesh 
+          ref={outerRef} 
+          castShadow 
           receiveShadow
-          onPointerOver={(e) => {
+          onPointerOver={(e) => { 
             e.stopPropagation();
-            if (typeof document !== 'undefined') {
-              document.body.style.cursor = 'pointer';
-            }
-            setIsHovered(true);
+            document.body.style.cursor = 'pointer'; 
+            setIsHovered(true); 
           }}
-          onPointerOut={() => {
-            if (typeof document !== 'undefined') {
-              document.body.style.cursor = 'auto';
-            }
-            setIsHovered(false);
+          onPointerOut={(e) => { 
+            document.body.style.cursor = 'auto'; 
+            setIsHovered(false); 
           }}
         >
           <dodecahedronGeometry args={[1.6, 0]} />
@@ -208,7 +182,7 @@ const PrismLogic = ({ perf, isActive }: { perf: PerformanceState; isActive: bool
             clearcoat={1}
             attenuationDistance={0.5}
             attenuationColor="#ffffff"
-            color={isActive || isHovered ? '#c7d2fe' : '#eef2ff'}
+            color={isActive || isHovered ? "#c7d2fe" : "#eef2ff"} 
             background={new THREE.Color('#020617')}
           />
         </mesh>
@@ -217,22 +191,23 @@ const PrismLogic = ({ perf, isActive }: { perf: PerformanceState; isActive: bool
         <group ref={innerRef} scale={0.7}>
           <mesh castShadow receiveShadow>
             <octahedronGeometry args={[1, 0]} />
-            <meshStandardMaterial
+            <meshStandardMaterial 
               ref={coreMaterialRef}
               color="#334155"
               metalness={1.0}
               roughness={0.15}
-              emissive={isActive || isHovered ? '#4f46e5' : '#0f172a'}
+              emissive={isActive || isHovered ? "#4f46e5" : "#0f172a"}
               toneMapped={false}
             />
           </mesh>
-
+          
           {/* Decorative Wireframe Elements */}
           <mesh rotation={[Math.PI / 4, 0, Math.PI / 4]} scale={1.1} castShadow>
             <boxGeometry args={[1.2, 0.1, 1.2]} />
-            <meshStandardMaterial color="#94a3b8" metalness={1} roughness={0.2} />
+             <meshStandardMaterial color="#94a3b8" metalness={1} roughness={0.2} />
           </mesh>
         </group>
+
       </Float>
     </group>
   );
@@ -241,88 +216,66 @@ const PrismLogic = ({ perf, isActive }: { perf: PerformanceState; isActive: bool
 // -----------------------------------------------------------------------------
 // Main Scene Component
 // -----------------------------------------------------------------------------
-const ThreeHero: React.FC<ThreeHeroProps> = ({ isCtaHovered = false, className }) => {
+const ThreeHero: React.FC<ThreeHeroProps> = ({ isCtaHovered, className }) => {
   const [perf, setPerf] = useState<PerformanceState>({
     dpr: 1.5,
     samples: 10,
     resolution: 1024,
     enablePostProc: true,
-    highQuality: true,
+    highQuality: true
   });
 
   const handleDecline = () => {
     setPerf({
-      dpr: 1,
+      dpr: 1, 
       samples: 6,
       resolution: 512,
-      enablePostProc: false,
-      highQuality: false,
+      enablePostProc: false, 
+      highQuality: false
     });
   };
 
-  // SSR guard
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  const containerClass =
-    className ?? 'absolute inset-0 md:right-[-12%] md:w-[72%] md:left-auto';
+  const containerClass = className ?? "absolute inset-0 md:right-[-12%] md:w-[72%] md:left-auto";
 
   return (
     <div className={`${containerClass} z-0 w-full h-full pointer-events-none`}>
-      {/* Gradient mask to keep left-side copy readable */}
-      <div className="absolute inset-0 bg-gradient-to-l from-[#020617] via-[#020617]/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-l from-[#020617] via-[#020617]/45 to-transparent" />
 
       <Canvas
         dpr={perf.dpr}
-        eventSource={typeof document !== 'undefined' ? document.body : undefined}
+        eventSource={document.body}
         eventPrefix="client"
         style={{ pointerEvents: 'none' }}
         shadows
         gl={{
-          antialias: false,
+          antialias: false, 
           alpha: true,
-          powerPreference: 'high-performance',
+          powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.0,
+          toneMappingExposure: 1.0
         }}
         camera={{ position: [0, 0, 7], fov: 35 }}
       >
         <PerformanceMonitor onDecline={handleDecline} />
-
+        
         <color attach="background" args={['#020617']} />
-
+        
         <Environment preset="city">
-          <Lightformer
-            intensity={5}
-            rotation-x={Math.PI / 2}
-            position={[0, 5, -9]}
-            scale={[10, 10, 1]}
-          />
-          <Lightformer
-            intensity={3}
-            rotation-y={Math.PI / 2}
-            position={[-5, 1, -1]}
-            scale={[10, 2, 1]}
-          />
-          <Lightformer
-            intensity={3}
-            rotation-y={-Math.PI / 2}
-            position={[10, 1, 0]}
-            scale={[20, 2, 1]}
-          />
+          <Lightformer intensity={5} rotation-x={Math.PI / 2} position={[0, 5, -9]} scale={[10, 10, 1]} />
+          <Lightformer intensity={3} rotation-y={Math.PI / 2} position={[-5, 1, -1]} scale={[10, 2, 1]} />
+          <Lightformer intensity={3} rotation-y={-Math.PI / 2} position={[10, 1, 0]} scale={[20, 2, 1]} />
         </Environment>
 
         {/* Lighting Setup */}
         <ambientLight intensity={0.2} color="#1e1b4b" />
-
+        
         {/* Rim Light for Dramatic Edges */}
-        <spotLight
-          position={[5, 5, -5]}
-          intensity={15}
-          color="#818cf8"
-          angle={0.6}
-          penumbra={1}
+        <spotLight 
+          position={[5, 5, -5]} 
+          intensity={15} 
+          color="#818cf8" 
+          angle={0.6} 
+          penumbra={1} 
           castShadow={false}
         />
 
@@ -335,18 +288,16 @@ const ThreeHero: React.FC<ThreeHeroProps> = ({ isCtaHovered = false, className }
           <PrismLogic perf={perf} isActive={isCtaHovered} />
         </group>
 
-        <ContactShadows
-          position={[0, -2.5, 0]}
-          opacity={0.5}
-          scale={15}
-          blur={3}
-          far={4.5}
-          color="#000000"
-        />
+        <ContactShadows position={[0, -2.5, 0]} opacity={0.5} scale={15} blur={3} far={4.5} color="#000000" />
 
         {perf.enablePostProc && (
           <EffectComposer enableNormalPass={false}>
-            <Bloom luminanceThreshold={1.2} mipmapBlur intensity={0.6} radius={0.4} />
+            <Bloom 
+              luminanceThreshold={1.2} 
+              mipmapBlur 
+              intensity={0.6} 
+              radius={0.4}
+            />
             <Noise opacity={0.025} />
           </EffectComposer>
         )}

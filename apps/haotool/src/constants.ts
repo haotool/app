@@ -33,8 +33,8 @@ export const PROJECTS: Project[] = [
       '輸入你的中文姓氏，瞬間產生道地的日文名字與諧音梗。支援 100+ 漢姓對照，提供羅馬拼音、歷史來源說明，並可一鍵分享至社群。Built with React 19, TypeScript, Vite SSG，Lighthouse SEO 100/100。',
     tags: ['React 19', 'TypeScript', 'Vite SSG', 'PWA', 'Tailwind CSS'],
     link: '/nihonname/',
-    // [fix:2025-12-14] 使用 webp 格式截圖
-    imageUrl: '/screenshots/nihonname-preview.webp',
+    // [fix:2025-12-20] 使用專案 OG Image
+    imageUrl: '/projects/nihonname-og.svg',
     featured: true,
     category: 'ai',
     status: 'live',
@@ -46,8 +46,8 @@ export const PROJECTS: Project[] = [
       '即時匯率換算工具，整合 30 天歷史數據視覺化圖表。支援 13+ 幣別、離線使用 (PWA)、深色模式。技術棧：React 19, TypeScript, lightweight-charts, Service Worker。',
     tags: ['React 19', 'TypeScript', 'PWA', 'Charts', 'Tailwind CSS'],
     link: '/ratewise/',
-    // [fix:2025-12-14] 使用 webp 格式截圖
-    imageUrl: '/screenshots/ratewise-preview.webp',
+    // [fix:2025-12-20] 使用專案 OG Image
+    imageUrl: '/projects/ratewise-og.png',
     featured: true,
     category: 'web',
     status: 'live',
@@ -76,7 +76,7 @@ export const FAQS: FaqItem[] = [
   {
     question: 'HAOTOOL 的名字由來？',
     answer:
-      'HAO 取自我的名字「璋」的諧音，同時也代表「好（Good）」。我希望這裡產出的每一個工具，對使用者來說都是「好工具」。',
+      '「HAOTOOL」取自「好工具」的諧音，HAO 也取自我的名字「璋」的讀音，代表「好（Good）」。我希望這裡產出的每一個工具，對使用者來說都是「好工具」。',
   },
   {
     question: '你專精哪些技術？',

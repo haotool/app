@@ -82,5 +82,12 @@ describe('Constants', () => {
     it('should have at least 3 FAQs', () => {
       expect(FAQS.length).toBeGreaterThanOrEqual(3);
     });
+
+    it('should describe HAOTOOL as取自「好工具」的諧音', () => {
+      const origin = FAQS.find((faq) => faq.question.includes('名字由來'));
+      expect(origin?.answer).toContain('取自「好工具」的諧音');
+      expect(origin?.answer).toContain('好工具');
+      expect(origin?.answer).toContain('諧音');
+    });
   });
 });

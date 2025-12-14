@@ -106,7 +106,7 @@ const ROUTE_METADATA: Record<
   '/': {
     title: 'HAOTOOL.ORG | 阿璋的作品集',
     description:
-      '嗨，我是阿璋。我將程式碼雕琢為數位藝術。融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。',
+      '嗨，我是阿璋。「HAOTOOL」取自「好工具」的諧音，代表每個作品都必須實用又優雅。融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。',
   },
   '/projects/': {
     title: '作品集 | HAOTOOL.ORG',
@@ -119,7 +119,8 @@ const ROUTE_METADATA: Record<
   },
   '/about/': {
     title: '關於阿璋 | HAOTOOL.ORG',
-    description: '我是阿璋，「HAOTOOL」取自名字諧音，也代表我對產出的堅持：它必須是個好工具。',
+    description:
+      '我是阿璋，「HAOTOOL」取自「好工具」的諧音，也延伸自我名字的 HAO 音節，代表我對產出的堅持：它必須是個好工具。',
     breadcrumbs: [
       { name: '首頁', url: '/' },
       { name: '關於', url: '/about/' },
