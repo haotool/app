@@ -81,7 +81,7 @@ jobs:
 
       - name: Upload coverage
         if: success()
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./apps/ratewise/coverage/coverage-final.json
           flags: unittests
