@@ -342,6 +342,13 @@
       "conclusion": "failure",
       "branch": "main",
       "commit": "709f491d77aca081e128d517922337e61198647f"
+    },
+    {
+      "timestamp": "2025-12-14T17:11:17Z",
+      "duration_seconds": 189,
+      "conclusion": "failure",
+      "branch": "dependabot/github_actions/codecov/codecov-action-5",
+      "commit": "8b2a1afb0493548d21100c597876ea0e2e806184"
     }
   ]
 }
