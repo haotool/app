@@ -10,9 +10,9 @@ FROM node:24-alpine AS builder
 ARG GIT_COMMIT_COUNT
 ARG GIT_COMMIT_HASH
 ARG BUILD_TIME
-ARG VITE_BASE_PATH=/ratewise/
-ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 ARG VITE_HAOTOOL_BASE_PATH=/
+ARG VITE_RATEWISE_BASE_PATH=/ratewise/
+ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate

@@ -92,3 +92,5 @@ reports/lighthouse/
 !**/screenshots/*.png
 !**/icons/*.pngapps/ratewise/dev-server.pid
 apps/ratewise/dev-server.log
+
+.example/

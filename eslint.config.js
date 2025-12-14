@@ -72,6 +72,49 @@ export default tseslint.config(
       ...reactPlugin.configs.recommended.rules,
       ...reactPlugin.configs['jsx-runtime'].rules,
 
+      // [fix:2025-12-14] 忽略 React Three Fiber 專有屬性
+      // 參考: https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md
+      // @react-three/fiber 使用許多 Three.js 特有的 JSX 屬性
+      'react/no-unknown-property': [
+        'error',
+        {
+          ignore: [
+            // Three.js Object3D 屬性
+            'position',
+            'rotation',
+            'scale',
+            'castShadow',
+            'receiveShadow',
+            // Three.js Light 屬性
+            'intensity',
+            'angle',
+            'penumbra',
+            'distance',
+            'decay',
+            // Three.js Geometry 屬性
+            'args',
+            'attach',
+            // Three.js Material 屬性
+            'metalness',
+            'roughness',
+            'emissive',
+            'toneMapped',
+            'transparent',
+            'opacity',
+            'depthWrite',
+            'side',
+            // Three.js Camera 屬性
+            'fov',
+            'near',
+            'far',
+            'makeDefault',
+            // drei 屬性
+            'object',
+            'material',
+          ],
+        },
+      ],
+
       // React Hooks 規則
       ...reactHooksPlugin.configs.recommended.rules,
 
@@ -103,14 +146,22 @@ export default tseslint.config(
     },
   },
 
-  // 測試檔案特殊規則
+  // 測試檔案與 Mock 特殊規則
   {
-    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+    files: [
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+      '**/__mocks__/**/*.ts',
+      '**/__mocks__/**/*.tsx',
+    ],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+      'react-refresh/only-export-components': 'off',
     },
   },
 

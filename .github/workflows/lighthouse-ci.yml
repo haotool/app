@@ -43,7 +43,9 @@ jobs:
       - name: Build application
         run: pnpm build
         env:
-          VITE_BASE_PATH: '/' # Lighthouse CI serves dist directly, use root path
+          VITE_RATEWISE_BASE_PATH: '/' # Lighthouse CI serves dist directly, use root path
+          VITE_HAOTOOL_BASE_PATH: '/'
+          VITE_NIHONNAME_BASE_PATH: '/'
           VITE_LHCI_OFFLINE: 'true' # 使用離線匯率避免 console 404 影響 best-practices
 
       - name: Install Lighthouse CI
