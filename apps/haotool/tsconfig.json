@@ -20,6 +20,6 @@
     },
     "baseUrl": "."
   },
-  "include": ["src", "vite.config.ts", "env.d.ts", "scripts"],
+  "include": ["src", "vite.config.ts", "env.d.ts", "scripts", "app.config.mjs.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

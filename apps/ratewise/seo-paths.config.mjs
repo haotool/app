@@ -106,3 +106,47 @@ export const SITE_CONFIG = {
   description:
     'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。',
 };
+
+/**
+ * 統一應用配置 - 單一真實來源 (SSOT)
+ *
+ * 用於 workspace-utils.mjs 自動發現和 CI 批次檢測
+ *
+ * @type {{
+ *   name: string,
+ *   displayName: string,
+ *   basePath: {development: string, ci: string, production: string},
+ *   seoPaths: string[],
+ *   siteUrl: string,
+ *   build: {ssg: boolean, pwa: boolean},
+ *   resources: {seoFiles: string[], images: string[]}
+ * }}
+ */
+export const APP_CONFIG = {
+  // 應用識別
+  name: 'ratewise',
+  displayName: 'RateWise',
+
+  // 部署路徑配置
+  basePath: {
+    development: '/',
+    ci: '/',
+    production: '/ratewise/',
+  },
+
+  // SEO 路徑 (從現有 SEO_PATHS 導入)
+  seoPaths: SEO_PATHS,
+  siteUrl: SITE_CONFIG.url,
+
+  // 建置配置
+  build: {
+    ssg: true,
+    pwa: true,
+  },
+
+  // 資源配置
+  resources: {
+    seoFiles: SEO_FILES,
+    images: IMAGE_RESOURCES,
+  },
+};
