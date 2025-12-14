@@ -9,57 +9,29 @@
  * 2. 驗證 robots.txt 存在且正確
  * 3. 驗證 llms.txt 存在且正確
  * 4. 驗證 hreflang 配置一致性
+ * 5. 驗證圖片資源存在且可訪問
  *
  * 用法:
  *   node scripts/verify-production-seo.mjs
  *   node scripts/verify-production-seo.mjs --base-url=https://app.haotool.org/ratewise
  *
  * 建立時間: 2025-11-30T15:50:00+08:00
+ * 更新時間: 2025-12-14 - 從 SSOT 導入配置
  * 依據: [moss.sh/deployment/health-checks][SEO Best Practices 2025]
  */
+
+// 從 SSOT 導入配置
+import {
+  SEO_PATHS,
+  SEO_FILES,
+  IMAGE_RESOURCES,
+  SITE_CONFIG,
+} from '../apps/ratewise/seo-paths.config.mjs';
 
 const PRODUCTION_BASE_URL =
   process.env.PRODUCTION_BASE_URL ||
   process.argv.find((arg) => arg.startsWith('--base-url='))?.split('=')[1] ||
-  'https://app.haotool.org/ratewise';
-
-/**
- * SEO 關鍵路徑
- *
- * ⚠️ 此配置必須與以下文件保持同步：
- * - apps/ratewise/src/config/seo-paths.ts (集中式配置 - 主要來源)
- * - apps/ratewise/public/sitemap.xml (SEO 配置)
- *
- * 格式：統一使用尾斜線結尾（符合 SEO Best Practices 2025）
- * 總計：17 個路徑（4 個核心頁面 + 13 個幣別頁面）
- *
- * [refactor:2025-12-14] 與集中式配置同步，確保一致性
- */
-const SEO_PATHS = [
-  // 核心頁面 (4)
-  '/',
-  '/faq/',
-  '/about/',
-  '/guide/',
-
-  // 幣別落地頁 (13) - 依字母順序排列
-  '/aud-twd/', // 澳幣
-  '/cad-twd/', // 加幣
-  '/chf-twd/', // 瑞士法郎
-  '/cny-twd/', // 人民幣
-  '/eur-twd/', // 歐元
-  '/gbp-twd/', // 英鎊
-  '/hkd-twd/', // 港幣
-  '/jpy-twd/', // 日圓
-  '/krw-twd/', // 韓元
-  '/nzd-twd/', // 紐幣
-  '/sgd-twd/', // 新加坡幣
-  '/thb-twd/', // 泰銖
-  '/usd-twd/', // 美金
-];
-
-// SEO 配置文件
-const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
+  SITE_CONFIG.url.replace(/\/$/, ''); // 移除尾斜線以便後續添加路徑
 
 // 顏色輸出
 const colors = {
@@ -250,6 +222,20 @@ async function main() {
       log(colors.red, '✗', error);
     }
     hasErrors = true;
+  }
+
+  // 6. 驗證圖片資源
+  console.log('\n🖼️  圖片資源檢查:');
+  for (const image of IMAGE_RESOURCES) {
+    const url = `${PRODUCTION_BASE_URL}${image}`;
+    const result = await checkUrl(url);
+
+    if (result.ok) {
+      log(colors.green, '✓', `${image} → ${result.status}`);
+    } else {
+      log(colors.yellow, '⚠', `${image} → ${result.status || 'ERROR'} (${result.error || 'Non-200'})`);
+      // 圖片資源失敗不算致命錯誤，只是警告
+    }
   }
 
   // 最終結果

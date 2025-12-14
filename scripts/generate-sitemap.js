@@ -8,134 +8,38 @@
 import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+// 從 SSOT 導入配置
+import { SEO_PATHS, SITE_CONFIG } from '../apps/ratewise/seo-paths.config.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 網站設定
-const SITE_URL = 'https://app.haotool.org/ratewise/'; // SSOT: 與 canonical/hreflang 尾斜線一致
-const SITE_NAME = 'RateWise - 匯率好工具';
+// 從 SSOT 使用網站配置
+const { url: SITE_URL, name: SITE_NAME } = SITE_CONFIG;
 
 /**
- * 路由配置
+ * 路由配置 - 從 SSOT 構建
  *
- * ⚠️ 此配置必須與以下文件保持同步：
- * - apps/ratewise/src/config/seo-paths.ts (集中式配置 - 主要來源)
- * - scripts/verify-production-seo.mjs (生產環境檢測)
- * - apps/ratewise/vite.config.ts (SSG 預渲染)
- *
- * [SEO Update: 2025-12-02] 新增 13 個長尾幣別落地頁
- * [refactor:2025-12-14] 統一路徑格式為帶尾斜線，與集中式配置同步
- *
- * 總計：17 個路徑（4 個核心頁面 + 13 個幣別頁面）
+ * [refactor:2025-12-14] 從 seo-paths.config.mjs 導入路徑，確保 SSOT
  */
-const routes = [
-  // 核心頁面 (4)
-  {
-    path: '/',
-    changefreq: 'daily',
-    priority: 1.0,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/faq/',
-    changefreq: 'weekly',
-    priority: 0.8,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/about/',
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/guide/',
-    changefreq: 'monthly',
-    priority: 0.7,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
+const today = new Date().toISOString().split('T')[0];
 
-  // 幣別落地頁 (13) - 依字母順序排列
-  {
-    path: '/aud-twd/', // 澳幣
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/cad-twd/', // 加幣
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/chf-twd/', // 瑞士法郎
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/cny-twd/', // 人民幣
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/eur-twd/', // 歐元
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/gbp-twd/', // 英鎊
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/hkd-twd/', // 港幣
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/jpy-twd/', // 日圓
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/krw-twd/', // 韓元
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/nzd-twd/', // 紐幣
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/sgd-twd/', // 新加坡幣
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/thb-twd/', // 泰銖
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-  {
-    path: '/usd-twd/', // 美金
-    changefreq: 'monthly',
-    priority: 0.6,
-    lastmod: new Date().toISOString().split('T')[0],
-  },
-];
+// 定義各路徑的 SEO 屬性
+const pathMetadata = {
+  '/': { changefreq: 'daily', priority: 1.0 },
+  '/faq/': { changefreq: 'weekly', priority: 0.8 },
+  '/about/': { changefreq: 'monthly', priority: 0.6 },
+  '/guide/': { changefreq: 'monthly', priority: 0.7 },
+  // 所有幣別頁面使用相同配置
+  default: { changefreq: 'monthly', priority: 0.6 },
+};
+
+// 從 SSOT 構建路由配置
+const routes = SEO_PATHS.map((path) => ({
+  path,
+  ...(pathMetadata[path] || pathMetadata.default),
+  lastmod: today,
+}));
 
 // 語言配置（單一語言策略：僅 zh-TW + x-default）
 const languages = ['zh-TW'];

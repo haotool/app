@@ -631,9 +631,9 @@ export default defineConfig(({ mode }) => {
       formatting: 'beautify', // 美化 HTML 便於 debug
       dirStyle: 'nested', // 巢狀目錄結構（/faq/index.html）
       concurrency: 10, // 最大並行渲染數
-      // 指定預渲染路徑（使用集中式配置）
+      // 指定預渲染路徑（從 SSOT 導入）
       async includedRoutes(paths) {
-        // 動態引入 SEO 路徑配置
+        // 從 TypeScript SSOT 動態引入 SEO 路徑配置
         const { getIncludedRoutes } = await import('./src/config/seo-paths');
         const includedPaths = getIncludedRoutes(paths);
         console.log('🔍 Available paths:', paths);
