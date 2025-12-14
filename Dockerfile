@@ -10,9 +10,9 @@ FROM node:24-alpine AS builder
 ARG GIT_COMMIT_COUNT
 ARG GIT_COMMIT_HASH
 ARG BUILD_TIME
-ARG VITE_BASE_PATH=/ratewise/
-ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 ARG VITE_HAOTOOL_BASE_PATH=/
+ARG VITE_RATEWISE_BASE_PATH=/ratewise/
+ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
@@ -64,7 +64,7 @@ RUN set -eux; \
     export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
   fi; \
   VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
-  VITE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
+  VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname
 
 # Production stage
