@@ -33,6 +33,7 @@ on:
 env:
   RATEWISE_BASE_URL: 'https://app.haotool.org/ratewise'
   NIHONNAME_BASE_URL: 'https://app.haotool.org/nihonname'
+  HAOTOOL_BASE_URL: 'https://app.haotool.org'
 
 jobs:
   seo-health-check:
@@ -136,13 +137,77 @@ jobs:
           fi
         continue-on-error: true
 
+      # Haotool SEO 檢查 (新增)
+      - name: Run Haotool SEO health check
+        id: haotool_check
+        run: |
+          echo "🔍 Haotool 生產環境 SEO 健康檢查"
+          echo "📍 Base URL: ${{ env.HAOTOOL_BASE_URL }}"
+          echo "─────────────────────────────────────────────────"
+
+          # 定義 Haotool 的 SEO 路徑
+          HAOTOOL_PATHS=(
+            "/"
+          )
+
+          SEO_FILES=(
+            "/sitemap.xml"
+            "/robots.txt"
+          )
+
+          FAILED=0
+
+          echo ""
+          echo "📄 頁面 HTTP 狀態檢查:"
+          for path in "${HAOTOOL_PATHS[@]}"; do
+            url="${{ env.HAOTOOL_BASE_URL }}${path}"
+            # 使用 -L 跟隨重定向，獲取最終狀態碼
+            status=$(curl -s -o /dev/null -w "%{http_code}" -L "$url")
+            if [ "$status" = "200" ]; then
+              echo "✓ ${path} → ${status}"
+            else
+              echo "✗ ${path} → ${status}"
+              FAILED=1
+            fi
+          done
+
+          echo ""
+          echo "📁 SEO 配置文件檢查:"
+          for file in "${SEO_FILES[@]}"; do
+            url="${{ env.HAOTOOL_BASE_URL }}${file}"
+            status=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+            if [ "$status" = "200" ]; then
+              echo "✓ ${file} → ${status}"
+            else
+              echo "✗ ${file} → ${status}"
+              FAILED=1
+            fi
+          done
+
+          echo ""
+          echo "─────────────────────────────────────────────────"
+          if [ "$FAILED" = "1" ]; then
+            echo "❌ Haotool SEO 健康檢查失敗！"
+            exit 1
+          else
+            echo "✅ Haotool SEO 健康檢查通過！"
+          fi
+        continue-on-error: true
+
       - name: Check results
         run: |
+          HAOTOOL_OK="${{ steps.haotool_check.outcome }}"
           RATEWISE_OK="${{ steps.ratewise_check.outcome }}"
           NIHONNAME_OK="${{ steps.nihonname_check.outcome }}"
 
           echo "📊 SEO 健康檢查結果摘要"
           echo "─────────────────────────────────────────────────"
+
+          if [ "$HAOTOOL_OK" = "success" ]; then
+            echo "✅ Haotool: 通過"
+          else
+            echo "❌ Haotool: 失敗"
+          fi
 
           if [ "$RATEWISE_OK" = "success" ]; then
             echo "✅ RateWise: 通過"
@@ -158,7 +223,7 @@ jobs:
 
           echo "─────────────────────────────────────────────────"
 
-          if [ "$RATEWISE_OK" != "success" ] || [ "$NIHONNAME_OK" != "success" ]; then
+          if [ "$HAOTOOL_OK" != "success" ] || [ "$RATEWISE_OK" != "success" ] || [ "$NIHONNAME_OK" != "success" ]; then
             echo ""
             echo "❌ 部分 SEO 健康檢查失敗！"
             echo ""
@@ -168,6 +233,7 @@ jobs:
             echo "3. sitemap.xml/robots.txt/llms.txt 配置不正確"
             echo ""
             echo "請檢查:"
+            echo "- ${{ env.HAOTOOL_BASE_URL }}/sitemap.xml"
             echo "- ${{ env.RATEWISE_BASE_URL }}/sitemap.xml"
             echo "- ${{ env.NIHONNAME_BASE_URL }}/sitemap.xml"
             exit 1
