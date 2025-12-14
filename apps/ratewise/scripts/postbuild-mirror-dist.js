@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const distDir = join(__dirname, '../dist');
 
-const basePath = process.env.VITE_BASE_PATH ?? '/ratewise/';
+const basePath = process.env.VITE_RATEWISE_BASE_PATH ?? '/ratewise/';
 const normalizedSubpath = basePath.replace(/^\/+|\/+$/g, '');
 
 if (!normalizedSubpath) {
