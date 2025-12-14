@@ -265,8 +265,7 @@ const ThreeHero: React.FC<ThreeHeroProps> = ({ isCtaHovered = false, className }
     return null;
   }
 
-  const containerClass =
-    className ?? 'absolute inset-0 md:right-[-12%] md:w-[72%] md:left-auto';
+  const containerClass = className ?? 'absolute inset-0 md:right-[-12%] md:w-[72%] md:left-auto';
 
   return (
     <div className={`${containerClass} z-0 w-full h-full pointer-events-none`}>
