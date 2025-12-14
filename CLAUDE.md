@@ -283,6 +283,91 @@ git log --oneline --since="1 day ago"
 
 ---
 
+## 應用配置 (SSOT)
+
+每個應用必須包含 `app.config.mjs` 作為單一真實來源 (Single Source of Truth)。
+
+### 配置結構
+
+```javascript
+// apps/{app-name}/app.config.mjs
+export const APP_CONFIG = {
+  // 應用識別
+  name: 'appname', // 應用名稱（小寫，用於 CLI）
+  displayName: 'AppName', // 顯示名稱
+
+  // 部署路徑配置
+  basePath: {
+    development: '/', // 本地開發
+    ci: '/', // CI 環境
+    production: '/appname/', // 生產環境
+  },
+
+  // SEO 路徑（所有路徑必須以 / 結尾，根路徑除外）
+  seoPaths: [
+    '/',
+    '/about/',
+    '/faq/',
+    // ... 其他路徑
+  ],
+
+  // 網站 URL
+  siteUrl: 'https://app.haotool.org/appname/',
+
+  // 建置配置
+  build: {
+    ssg: true, // 啟用 SSG 預渲染
+    pwa: true, // 啟用 PWA
+  },
+
+  // 資源配置（用於 CI 驗證）
+  resources: {
+    seoFiles: ['/sitemap.xml', '/robots.txt', '/llms.txt'],
+    images: ['/og-image.png', '/favicon.ico' /* ... */],
+  },
+};
+
+// 輔助函數
+export function getIncludedRoutes(paths) {
+  return paths.filter((p) => SEO_PATHS.includes(normalizePath(p)));
+}
+```
+
+### 新增頁面流程
+
+**只需 1 步完成**：
+
+1. 在 `app.config.mjs` 的 `seoPaths` 陣列新增路徑
+2. 在 `routes.tsx` 新增對應的路由定義
+
+**無需手動更新**：
+
+- ❌ `sitemap.xml` (自動生成)
+- ❌ `vite.config.ts` (從 config 導入)
+- ❌ CI workflow (批次檢測自動發現)
+
+### 驗證指令
+
+```bash
+# 驗證單一 app
+node scripts/verify-production-seo.mjs ratewise
+node scripts/verify-production-seo.mjs nihonname
+node scripts/verify-production-seo.mjs haotool
+
+# 批次驗證所有 apps
+node scripts/verify-all-apps.mjs
+```
+
+### 配置檔案位置
+
+- `apps/ratewise/app.config.mjs` (17 routes)
+- `apps/nihonname/app.config.mjs` (8 routes)
+- `apps/haotool/app.config.mjs` (4 routes)
+
+**總計**: 29 條路由，100% CI 覆蓋
+
+---
+
 ## 開發工作流程
 
 ### 1. 初始建置

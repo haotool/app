@@ -90,18 +90,9 @@ export const routes: RouteRecord[] = [
  * Get includedRoutes for SSG
  * [SEO:2025-12-04] 新增歷史專區頁面
  * [SEO:2025-12-05] 新增 FAQ 頁面
+ * [重構:2025-12-15] 從 app.config.mjs (SSOT) 導入，消除硬編碼
  */
-export function getIncludedRoutes(): string[] {
-  return [
-    '/',
-    '/about/',
-    '/guide/',
-    '/faq/',
-    '/history/',
-    '/history/kominka/',
-    '/history/shimonoseki/',
-    '/history/san-francisco/',
-  ];
-}
+// @ts-expect-error - ESM module type definition not auto-detected by TypeScript
+export { getIncludedRoutes } from '../app.config.mjs';
 
 export default routes;

@@ -1,11 +1,12 @@
 name: SEO Health Check
 
-# 生產環境 SEO 健康檢查
+# 生產環境 SEO 健康檢查 - 自動化批次檢測
 # 功能:
-# 1. 驗證所有頁面返回 200
-# 2. 驗證 sitemap.xml, robots.txt, llms.txt 配置正確
-# 3. 驗證 hreflang 配置一致性
-# 4. 支援多專案：ratewise + nihonname
+# 1. 自動發現所有 apps (workspace-utils.mjs)
+# 2. 批次驗證所有頁面返回 200
+# 3. 驗證 sitemap.xml, robots.txt, llms.txt 配置正確
+# 4. 驗證 hreflang 配置一致性
+# 5. 支援所有專案：ratewise + nihonname + haotool
 #
 # 觸發條件:
 # - Release 工作流程成功後自動執行
@@ -13,8 +14,8 @@ name: SEO Health Check
 # - 每日定時檢查 (UTC 00:00 = 台北 08:00)
 #
 # 建立時間: 2025-11-30T15:50:00+08:00
-# 更新時間: 2025-12-05T00:30:00+08:00
-# 依據: [moss.sh/deployment/health-checks][SEO Best Practices 2025]
+# 更新時間: 2025-12-15 - 重構為自動化批次檢測，消除硬編碼
+# 依據: [moss.sh/deployment/health-checks][SEO Best Practices 2025][Linus: 消除特殊情況]
 
 on:
   # Release 成功後自動執行
@@ -29,10 +30,6 @@ on:
   # 每日定時檢查 (UTC 00:00 = 台北 08:00)
   schedule:
     - cron: '0 0 * * *'
-
-env:
-  RATEWISE_BASE_URL: 'https://app.haotool.org/ratewise'
-  NIHONNAME_BASE_URL: 'https://app.haotool.org/nihonname'
 
 jobs:
   seo-health-check:
@@ -61,117 +58,7 @@ jobs:
           echo "⏳ 等待 Zeabur 部署完成..."
           sleep 180
 
-      # RateWise SEO 檢查
-      - name: Run RateWise SEO health check
-        id: ratewise_check
+      # 批次檢測所有 apps
+      - name: Run All Apps SEO Health Check
         run: |
-          node scripts/verify-production-seo.mjs --base-url=${{ env.RATEWISE_BASE_URL }}
-        continue-on-error: true
-
-      # NihonName SEO 檢查
-      - name: Run NihonName SEO health check
-        id: nihonname_check
-        run: |
-          echo "🔍 NihonName 生產環境 SEO 健康檢查"
-          echo "📍 Base URL: ${{ env.NIHONNAME_BASE_URL }}"
-          echo "─────────────────────────────────────────────────"
-
-          # 定義 NihonName 的 SEO 路徑
-          # [SEO:2025-12-10] 所有路徑統一使用尾斜線格式
-          # 符合 2025 SEO 最佳實踐：一致性 > 選擇
-          NIHONNAME_PATHS=(
-            "/"
-            "/about/"
-            "/guide/"
-            "/faq/"
-            "/history/"
-            "/history/kominka/"
-            "/history/shimonoseki/"
-            "/history/san-francisco/"
-          )
-
-          SEO_FILES=(
-            "/sitemap.xml"
-            "/robots.txt"
-            "/llms.txt"
-            "/og-image.png"
-          )
-
-          FAILED=0
-
-          echo ""
-          echo "📄 頁面 HTTP 狀態檢查:"
-          for path in "${NIHONNAME_PATHS[@]}"; do
-            url="${{ env.NIHONNAME_BASE_URL }}${path}"
-            # 使用 -L 跟隨重定向，獲取最終狀態碼
-            status=$(curl -s -o /dev/null -w "%{http_code}" -L "$url")
-            if [ "$status" = "200" ]; then
-              echo "✓ ${path} → ${status}"
-            else
-              echo "✗ ${path} → ${status}"
-              FAILED=1
-            fi
-          done
-
-          echo ""
-          echo "📁 SEO 配置文件檢查:"
-          for file in "${SEO_FILES[@]}"; do
-            url="${{ env.NIHONNAME_BASE_URL }}${file}"
-            status=$(curl -s -o /dev/null -w "%{http_code}" "$url")
-            if [ "$status" = "200" ]; then
-              echo "✓ ${file} → ${status}"
-            else
-              echo "✗ ${file} → ${status}"
-              FAILED=1
-            fi
-          done
-
-          echo ""
-          echo "─────────────────────────────────────────────────"
-          if [ "$FAILED" = "1" ]; then
-            echo "❌ NihonName SEO 健康檢查失敗！"
-            exit 1
-          else
-            echo "✅ NihonName SEO 健康檢查通過！"
-          fi
-        continue-on-error: true
-
-      - name: Check results
-        run: |
-          RATEWISE_OK="${{ steps.ratewise_check.outcome }}"
-          NIHONNAME_OK="${{ steps.nihonname_check.outcome }}"
-
-          echo "📊 SEO 健康檢查結果摘要"
-          echo "─────────────────────────────────────────────────"
-
-          if [ "$RATEWISE_OK" = "success" ]; then
-            echo "✅ RateWise: 通過"
-          else
-            echo "❌ RateWise: 失敗"
-          fi
-
-          if [ "$NIHONNAME_OK" = "success" ]; then
-            echo "✅ NihonName: 通過"
-          else
-            echo "❌ NihonName: 失敗"
-          fi
-
-          echo "─────────────────────────────────────────────────"
-
-          if [ "$RATEWISE_OK" != "success" ] || [ "$NIHONNAME_OK" != "success" ]; then
-            echo ""
-            echo "❌ 部分 SEO 健康檢查失敗！"
-            echo ""
-            echo "可能的原因:"
-            echo "1. Zeabur 部署尚未完成"
-            echo "2. 某個頁面返回非 200 狀態"
-            echo "3. sitemap.xml/robots.txt/llms.txt 配置不正確"
-            echo ""
-            echo "請檢查:"
-            echo "- ${{ env.RATEWISE_BASE_URL }}/sitemap.xml"
-            echo "- ${{ env.NIHONNAME_BASE_URL }}/sitemap.xml"
-            exit 1
-          else
-            echo ""
-            echo "✅ 所有 SEO 健康檢查通過！"
-          fi
+          node scripts/verify-all-apps.mjs
