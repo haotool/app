@@ -4,7 +4,8 @@
  * [update:2025-12-14] - Replaced with real projects (nihonname, ratewise)
  */
 
-export const APP_NAME = 'HAOTOOL.ORG';
+// [fix:2025-12-14] 更新為「HAOTOOL」取自「好工具」的諧音
+export const APP_NAME = 'HAOTOOL';
 
 export const SOCIAL_LINKS = {
   github: 'https://github.com/azlife',
@@ -32,7 +33,8 @@ export const PROJECTS: Project[] = [
       '輸入你的中文姓氏，瞬間產生道地的日文名字與諧音梗。支援 100+ 漢姓對照，提供羅馬拼音、歷史來源說明，並可一鍵分享至社群。Built with React 19, TypeScript, Vite SSG，Lighthouse SEO 100/100。',
     tags: ['React 19', 'TypeScript', 'Vite SSG', 'PWA', 'Tailwind CSS'],
     link: '/nihonname/',
-    imageUrl: '/screenshots/nihonname.png',
+    // [fix:2025-12-14] 使用 webp 格式截圖
+    imageUrl: '/screenshots/nihonname-preview.webp',
     featured: true,
     category: 'ai',
     status: 'live',
@@ -44,7 +46,8 @@ export const PROJECTS: Project[] = [
       '即時匯率換算工具，整合 30 天歷史數據視覺化圖表。支援 13+ 幣別、離線使用 (PWA)、深色模式。技術棧：React 19, TypeScript, lightweight-charts, Service Worker。',
     tags: ['React 19', 'TypeScript', 'PWA', 'Charts', 'Tailwind CSS'],
     link: '/ratewise/',
-    imageUrl: '/screenshots/ratewise.png',
+    // [fix:2025-12-14] 使用 webp 格式截圖
+    imageUrl: '/screenshots/ratewise-preview.webp',
     featured: true,
     category: 'web',
     status: 'live',

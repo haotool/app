@@ -3,13 +3,16 @@
  * Portfolio homepage with hero section, stats, and featured projects
  * [context7:/darkroomengineering/lenis:2025-12-14] - Smooth scroll integration
  * [context7:/websites/motion-dev-docs:2025-12-14] - Framer Motion animations
+ * [context7:@react-three/fiber:2025-12-14] - 3D hero integration
  */
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronDown, Github, Sparkles } from 'lucide-react';
 import { Counter } from '../components/Counter';
 import { ProjectCard } from '../components/ProjectCard';
 import { AccordionItem } from '../components/Accordion';
+import ThreeHero from '../components/ThreeHero';
 import { STATS, PROJECTS, FAQS, SOCIAL_LINKS } from '../constants';
 
 const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -49,6 +52,8 @@ function TextReveal({ text, className = '' }: TextRevealProps) {
 }
 
 export default function Home() {
+  const [isCtaHovered, setIsCtaHovered] = useState(false);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -89,15 +94,8 @@ export default function Home() {
     <main>
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.15)_0%,transparent_70%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
-
-          {/* Floating Orbs */}
-          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-brand-500/20 rounded-full blur-[120px] animate-blob" />
-          <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-purple-500/15 rounded-full blur-[100px] animate-blob animation-delay-2000" />
-        </div>
+        {/* 3D Interactive Background */}
+        <ThreeHero isCtaHovered={isCtaHovered} />
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
           {/* Badge */}
@@ -158,6 +156,8 @@ export default function Home() {
             <Link
               to="/projects"
               className="group inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-medium rounded-full transition-all hover:bg-slate-200 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+              onMouseEnter={() => setIsCtaHovered(true)}
+              onMouseLeave={() => setIsCtaHovered(false)}
             >
               瀏覽作品
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white transition-transform group-hover:translate-x-1">
@@ -169,6 +169,8 @@ export default function Home() {
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-medium rounded-full border border-white/10 transition-all hover:border-brand-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)] backdrop-blur-sm"
+              onMouseEnter={() => setIsCtaHovered(true)}
+              onMouseLeave={() => setIsCtaHovered(false)}
             >
               <Github className="h-4 w-4" />
               GitHub

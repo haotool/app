@@ -101,6 +101,38 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
+// Mock @react-three/fiber
+vi.mock('@react-three/fiber', () => ({
+  Canvas: ({ children }: PropsWithChildren) =>
+    React.createElement('div', { 'data-testid': 'three-canvas' }, children),
+  useFrame: () => void 0,
+  useThree: () => ({
+    mouse: { x: 0, y: 0 },
+    viewport: { width: 1, height: 1 },
+    gl: {},
+    camera: {},
+    scene: {},
+    size: { width: 800, height: 600 },
+  }),
+}));
+
+// Mock @react-three/drei
+vi.mock('@react-three/drei', () => ({
+  Float: ({ children }: PropsWithChildren) => children,
+  Environment: () => null,
+  MeshTransmissionMaterial: () => null,
+  ContactShadows: () => null,
+  PerformanceMonitor: ({ children }: PropsWithChildren) => children,
+  Lightformer: () => null,
+}));
+
+// Mock @react-three/postprocessing
+vi.mock('@react-three/postprocessing', () => ({
+  EffectComposer: ({ children }: PropsWithChildren) => children,
+  Bloom: () => null,
+  Noise: () => null,
+}));
+
 // Mock lenis for smooth scroll
 vi.mock('lenis', () => ({
   default: class Lenis {
@@ -127,6 +159,24 @@ vi.mock('lenis', () => ({
     }
   },
 }));
+
+// Mock ResizeObserver (required for @react-three/fiber)
+class MockResizeObserver {
+  constructor(_callback: ResizeObserverCallback) {
+    // Mock implementation
+  }
+  disconnect(): void {
+    // Mock implementation
+  }
+  observe(): void {
+    // Mock implementation
+  }
+  unobserve(): void {
+    // Mock implementation
+  }
+}
+
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
 // Mock IntersectionObserver
 class MockIntersectionObserver {
