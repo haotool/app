@@ -27,7 +27,8 @@ function filterMotionProps(props: Record<string, unknown>): Record<string, unkno
 function createMotionComponent(Tag: keyof React.JSX.IntrinsicElements) {
   const Component = ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => {
     const filteredProps = filterMotionProps(props);
-    const Element = Tag as React.ElementType;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Element = Tag as any;
     return <Element {...filteredProps}>{children}</Element>;
   };
   Component.displayName = `motion.${String(Tag)}`;

@@ -27,8 +27,9 @@ describe('Layout', () => {
   it('renders navigation with logo', () => {
     render(<TestWrapper />);
 
+    // [fix:2025-12-14] 更新為新的 APP_NAME
     // Look for the logo text using getAllByText since it may appear multiple times
-    const logos = screen.getAllByText('HAOTOOL.ORG');
+    const logos = screen.getAllByText('HAOTOOL');
     expect(logos.length).toBeGreaterThan(0);
   });
 
@@ -44,8 +45,9 @@ describe('Layout', () => {
   it('renders logo as link to home', () => {
     render(<TestWrapper />);
 
-    // Find the first HAOTOOL.ORG link which should go to home
-    const logoLinks = screen.getAllByRole('link', { name: 'HAOTOOL.ORG' });
+    // [fix:2025-12-14] 更新為新的 APP_NAME
+    // Find the first HAOTOOL link which should go to home
+    const logoLinks = screen.getAllByRole('link', { name: 'HAOTOOL' });
     expect(logoLinks[0]).toHaveAttribute('href', '/');
   });
 
