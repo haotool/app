@@ -1,0 +1,39 @@
+{
+  "name": "HAOTOOL - Full-Stack Developer Portfolio",
+  "short_name": "HAOTOOL",
+  "description": "Full-Stack Developer Portfolio by Ah Zhang. Design Engineering.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#6366f1",
+  "lang": "zh-TW",
+  "orientation": "portrait-primary",
+  "categories": ["portfolio", "developer", "web"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
