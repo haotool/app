@@ -233,7 +233,11 @@ async function main() {
     if (result.ok) {
       log(colors.green, '✓', `${image} → ${result.status}`);
     } else {
-      log(colors.yellow, '⚠', `${image} → ${result.status || 'ERROR'} (${result.error || 'Non-200'})`);
+      log(
+        colors.yellow,
+        '⚠',
+        `${image} → ${result.status || 'ERROR'} (${result.error || 'Non-200'})`,
+      );
       // 圖片資源失敗不算致命錯誤，只是警告
     }
   }

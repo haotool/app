@@ -125,9 +125,7 @@ async function main() {
   }
 
   // 總大小
-  const totalSize = results
-    .filter((r) => r.exists && r.isFile)
-    .reduce((sum, r) => sum + r.size, 0);
+  const totalSize = results.filter((r) => r.exists && r.isFile).reduce((sum, r) => sum + r.size, 0);
   console.log(`  總大小: ${formatFileSize(totalSize)}`);
 
   console.log('\n' + '─'.repeat(50));

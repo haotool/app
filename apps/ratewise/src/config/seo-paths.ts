@@ -69,7 +69,12 @@ export const SITE_CONFIG = {
   title: 'RateWise - 即時匯率轉換器',
   description:
     'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。',
-} as const;
+} as const satisfies Readonly<{
+  url: string;
+  name: string;
+  title: string;
+  description: string;
+}>;
 
 /**
  * 路徑標準化函數
@@ -105,7 +110,84 @@ export function getIncludedRoutes(paths: string[]): string[] {
   return paths.filter((path) => shouldPrerender(path));
 }
 
+// ============================================================================
 // TypeScript 類型導出
+// ============================================================================
+
+/**
+ * SEO 路徑字面類型（從配置中提取）
+ * @example "/" | "/faq/" | "/about/" | ...
+ */
 export type SEOPath = (typeof SEO_PATHS)[number];
+
+/**
+ * SEO 檔案字面類型（從配置中提取）
+ * @example "/sitemap.xml" | "/robots.txt" | "/llms.txt"
+ */
 export type SEOFile = (typeof SEO_FILES)[number];
+
+/**
+ * 圖片資源字面類型（從配置中提取）
+ * @example "/og-image.png" | "/favicon.ico" | ...
+ */
 export type ImageResource = (typeof IMAGE_RESOURCES)[number];
+
+/**
+ * 網站配置類型
+ */
+export type SiteConfig = typeof SITE_CONFIG;
+
+/**
+ * 核心頁面路徑（前 4 個）
+ */
+export type CorePagePath = '/' | '/faq/' | '/about/' | '/guide/';
+
+/**
+ * 幣別頁面路徑（後 13 個）
+ */
+export type CurrencyPagePath =
+  | '/aud-twd/'
+  | '/cad-twd/'
+  | '/chf-twd/'
+  | '/cny-twd/'
+  | '/eur-twd/'
+  | '/gbp-twd/'
+  | '/hkd-twd/'
+  | '/jpy-twd/'
+  | '/krw-twd/'
+  | '/nzd-twd/'
+  | '/sgd-twd/'
+  | '/thb-twd/'
+  | '/usd-twd/';
+
+// ============================================================================
+// 類型守衛（Type Guards）
+// ============================================================================
+
+/**
+ * 檢查路徑是否為有效的 SEO 路徑
+ * @param path - 要檢查的路徑
+ * @returns 是否為有效的 SEO 路徑
+ */
+export function isSEOPath(path: string): path is SEOPath {
+  return SEO_PATHS.includes(path as SEOPath);
+}
+
+/**
+ * 檢查路徑是否為核心頁面
+ * @param path - 要檢查的路徑
+ * @returns 是否為核心頁面
+ */
+export function isCorePagePath(path: string): path is CorePagePath {
+  const corePaths: readonly CorePagePath[] = ['/', '/faq/', '/about/', '/guide/'];
+  return corePaths.includes(path as CorePagePath);
+}
+
+/**
+ * 檢查路徑是否為幣別頁面
+ * @param path - 要檢查的路徑
+ * @returns 是否為幣別頁面
+ */
+export function isCurrencyPagePath(path: string): path is CurrencyPagePath {
+  return isSEOPath(path) && !isCorePagePath(path);
+}
