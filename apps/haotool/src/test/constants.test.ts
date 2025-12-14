@@ -11,8 +11,9 @@ describe('Constants', () => {
       expect(typeof APP_NAME).toBe('string');
     });
 
-    it('should be HAOTOOL.ORG', () => {
-      expect(APP_NAME).toBe('HAOTOOL.ORG');
+    // [fix:2025-12-14] 更新為新的 APP_NAME
+    it('should be HAOTOOL', () => {
+      expect(APP_NAME).toBe('HAOTOOL');
     });
   });
 
