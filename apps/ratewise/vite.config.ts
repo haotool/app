@@ -625,41 +625,20 @@ export default defineConfig(({ mode }) => {
     // 參考: [Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
     // 預渲染策略：渲染首頁、FAQ、About、Guide + 13 個幣別落地頁
     // [SEO Update: 2025-12-02] 同步 routes.tsx 的 getIncludedRoutes 配置
+    // [refactor:2025-12-14] 使用集中式 SEO 路徑配置，避免多處維護
     ssgOptions: {
       script: 'async', // 非阻塞腳本載入
       formatting: 'beautify', // 美化 HTML 便於 debug
       dirStyle: 'nested', // 巢狀目錄結構（/faq/index.html）
       concurrency: 10, // 最大並行渲染數
-      // 指定預渲染路徑
-      includedRoutes(paths) {
-        // 預渲染 17 條路徑：首頁、FAQ、About、Guide + 13 幣別落地頁
-        const includedPaths = [
-          '/',
-          '/faq',
-          '/about',
-          '/guide',
-          '/usd-twd',
-          '/jpy-twd',
-          '/eur-twd',
-          '/gbp-twd',
-          '/cny-twd',
-          '/krw-twd',
-          '/hkd-twd',
-          '/aud-twd',
-          '/cad-twd',
-          '/sgd-twd',
-          '/thb-twd',
-          '/nzd-twd',
-          '/chf-twd',
-        ];
-        const normalize = (value) => {
-          if (value === '/') return '/';
-          return value.replace(/\/+$/, '');
-        };
-        const normalizedIncluded = includedPaths.map(normalize);
+      // 指定預渲染路徑（使用集中式配置）
+      async includedRoutes(paths) {
+        // 動態引入 SEO 路徑配置
+        const { getIncludedRoutes } = await import('./src/config/seo-paths');
+        const includedPaths = getIncludedRoutes(paths);
         console.log('🔍 Available paths:', paths);
-        console.log('✅ Including paths:', normalizedIncluded);
-        return paths.filter((path) => normalizedIncluded.includes(normalize(path)));
+        console.log('✅ Including paths:', includedPaths);
+        return includedPaths;
       },
       // 預渲染前處理 HTML
       async onBeforePageRender(route, indexHTML) {

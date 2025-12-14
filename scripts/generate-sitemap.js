@@ -16,110 +16,121 @@ const __dirname = dirname(__filename);
 const SITE_URL = 'https://app.haotool.org/ratewise/'; // SSOT: 與 canonical/hreflang 尾斜線一致
 const SITE_NAME = 'RateWise - 匯率好工具';
 
-// 路由配置 (必須與 routes.tsx getIncludedRoutes 保持一致)
-// @see apps/ratewise/src/routes.tsx
-// @see scripts/verify-sitemap-ssg.mjs
-// [SEO Update: 2025-12-02] 新增 13 個長尾幣別落地頁
+/**
+ * 路由配置
+ *
+ * ⚠️ 此配置必須與以下文件保持同步：
+ * - apps/ratewise/src/config/seo-paths.ts (集中式配置 - 主要來源)
+ * - scripts/verify-production-seo.mjs (生產環境檢測)
+ * - apps/ratewise/vite.config.ts (SSG 預渲染)
+ *
+ * [SEO Update: 2025-12-02] 新增 13 個長尾幣別落地頁
+ * [refactor:2025-12-14] 統一路徑格式為帶尾斜線，與集中式配置同步
+ *
+ * 總計：17 個路徑（4 個核心頁面 + 13 個幣別頁面）
+ */
 const routes = [
+  // 核心頁面 (4)
   {
     path: '/',
     changefreq: 'daily',
     priority: 1.0,
-    lastmod: new Date().toISOString().split('T')[0], // 今天 (YYYY-MM-DD)
+    lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/faq',
+    path: '/faq/',
     changefreq: 'weekly',
     priority: 0.8,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/about',
+    path: '/about/',
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/guide',
+    path: '/guide/',
     changefreq: 'monthly',
     priority: 0.7,
     lastmod: new Date().toISOString().split('T')[0],
   },
-  // 長尾落地頁：幣別換算 (USD/JPY/EUR/GBP/CNY/KRW/HKD/AUD/CAD/SGD/THB/NZD/CHF)
+
+  // 幣別落地頁 (13) - 依字母順序排列
   {
-    path: '/usd-twd',
+    path: '/aud-twd/', // 澳幣
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/jpy-twd',
+    path: '/cad-twd/', // 加幣
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/eur-twd',
+    path: '/chf-twd/', // 瑞士法郎
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/gbp-twd',
+    path: '/cny-twd/', // 人民幣
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/cny-twd',
+    path: '/eur-twd/', // 歐元
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/krw-twd',
+    path: '/gbp-twd/', // 英鎊
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/hkd-twd',
+    path: '/hkd-twd/', // 港幣
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/aud-twd',
+    path: '/jpy-twd/', // 日圓
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/cad-twd',
+    path: '/krw-twd/', // 韓元
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/sgd-twd',
+    path: '/nzd-twd/', // 紐幣
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/thb-twd',
+    path: '/sgd-twd/', // 新加坡幣
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/nzd-twd',
+    path: '/thb-twd/', // 泰銖
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
   },
   {
-    path: '/chf-twd',
+    path: '/usd-twd/', // 美金
     changefreq: 'monthly',
     priority: 0.6,
     lastmod: new Date().toISOString().split('T')[0],
@@ -131,11 +142,13 @@ const languages = ['zh-TW'];
 
 /**
  * 生成單個 URL 項目
+ *
+ * [refactor:2025-12-14] 路徑已統一使用尾斜線格式，無需額外處理
  */
 function buildFullUrl(path) {
   const base = SITE_URL.replace(/\/+$/, '');
-  const normalizedPath = path === '/' ? '/' : `${path.replace(/\/+$/, '')}/`;
-  return `${base}${normalizedPath}`;
+  // 路徑已經帶尾斜線，直接組合
+  return `${base}${path}`;
 }
 
 function generateUrlEntry(route) {

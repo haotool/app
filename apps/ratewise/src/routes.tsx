@@ -165,38 +165,11 @@ export const routes: RouteRecord[] = [
  * 指定哪些路徑應該被預渲染為靜態 HTML
  *
  * 策略：
- * - ✅ 預渲染：首頁、FAQ、About、Guide（爬蟲需要的 SEO 頁面）
+ * - ✅ 預渲染：首頁、FAQ、About、Guide + 13 個幣別落地頁（爬蟲需要的 SEO 頁面）
  * - ❌ 不預渲染：404、color-scheme（動態處理或內部工具）
  *
  * [fix:2025-11-30] 新增 /guide 到預渲染列表，與 vite.config.ts SSG 配置同步
- * 依據：sitemap.xml 與 SSG 預渲染路徑一致性
+ * [refactor:2025-12-14] 使用集中式 SEO 路徑配置，避免多處維護
+ * 依據：sitemap.xml 與 SSG 預渲染路徑一致性 + SEO Best Practices 2025
  */
-export function getIncludedRoutes(paths: string[]): string[] {
-  // 只預渲染以下路徑（標準化尾斜線避免 /faq 與 /faq/ 不一致）
-  const includedPaths = [
-    '/',
-    '/faq',
-    '/about',
-    '/guide',
-    '/usd-twd',
-    '/jpy-twd',
-    '/eur-twd',
-    '/gbp-twd',
-    '/cny-twd',
-    '/krw-twd',
-    '/hkd-twd',
-    '/aud-twd',
-    '/cad-twd',
-    '/sgd-twd',
-    '/thb-twd',
-    '/nzd-twd',
-    '/chf-twd',
-  ];
-  const normalize = (value: string) => {
-    if (value === '/') return '/';
-    return value.replace(/\/+$/, '');
-  };
-
-  const normalizedIncluded = includedPaths.map(normalize);
-  return paths.filter((path) => normalizedIncluded.includes(normalize(path)));
-}
+export { getIncludedRoutes } from './config/seo-paths';

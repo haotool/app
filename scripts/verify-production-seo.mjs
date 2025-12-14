@@ -23,26 +23,39 @@ const PRODUCTION_BASE_URL =
   process.argv.find((arg) => arg.startsWith('--base-url='))?.split('=')[1] ||
   'https://app.haotool.org/ratewise';
 
-// SEO 關鍵路徑 (必須與 sitemap.xml 一致)
-// 包含 4 個核心頁面 + 13 個幣別頁面 = 17 頁面
+/**
+ * SEO 關鍵路徑
+ *
+ * ⚠️ 此配置必須與以下文件保持同步：
+ * - apps/ratewise/src/config/seo-paths.ts (集中式配置 - 主要來源)
+ * - apps/ratewise/public/sitemap.xml (SEO 配置)
+ *
+ * 格式：統一使用尾斜線結尾（符合 SEO Best Practices 2025）
+ * 總計：17 個路徑（4 個核心頁面 + 13 個幣別頁面）
+ *
+ * [refactor:2025-12-14] 與集中式配置同步，確保一致性
+ */
 const SEO_PATHS = [
+  // 核心頁面 (4)
   '/',
   '/faq/',
   '/about/',
   '/guide/',
-  '/usd-twd/',
-  '/jpy-twd/',
-  '/eur-twd/',
-  '/gbp-twd/',
-  '/cny-twd/',
-  '/krw-twd/',
-  '/hkd-twd/',
-  '/aud-twd/',
-  '/cad-twd/',
-  '/sgd-twd/',
-  '/thb-twd/',
-  '/nzd-twd/',
-  '/chf-twd/',
+
+  // 幣別落地頁 (13) - 依字母順序排列
+  '/aud-twd/', // 澳幣
+  '/cad-twd/', // 加幣
+  '/chf-twd/', // 瑞士法郎
+  '/cny-twd/', // 人民幣
+  '/eur-twd/', // 歐元
+  '/gbp-twd/', // 英鎊
+  '/hkd-twd/', // 港幣
+  '/jpy-twd/', // 日圓
+  '/krw-twd/', // 韓元
+  '/nzd-twd/', // 紐幣
+  '/sgd-twd/', // 新加坡幣
+  '/thb-twd/', // 泰銖
+  '/usd-twd/', // 美金
 ];
 
 // SEO 配置文件
