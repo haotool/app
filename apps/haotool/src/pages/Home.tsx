@@ -96,7 +96,7 @@ export default function Home() {
   return (
     <main>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
+      <section className="relative flex min-h-screen items-center pt-24 pb-12 overflow-hidden">
         {/* Ambient backdrop to keep copy legible while showcasing 3D scene */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.14),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(45,212,191,0.12),transparent_25%),linear-gradient(120deg,#050505_0%,#050505_45%,transparent_70%)]" />
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:120px_120px] opacity-40" />
@@ -128,11 +128,8 @@ export default function Home() {
                 <div className="overflow-hidden">
                   <TextReveal text="Design" />
                 </div>
-                <div className="overflow-hidden">
-                  <TextReveal
-                    text="Engineering."
-                    className="bg-gradient-to-r from-brand-300 via-white to-purple-300 bg-clip-text text-transparent animate-gradient-x"
-                  />
+                <div className="overflow-hidden text-transparent bg-clip-text bg-gradient-to-r from-brand-300 via-white to-purple-300 animate-gradient-x">
+                  <TextReveal text="Engineering." />
                 </div>
               </motion.h1>
 
