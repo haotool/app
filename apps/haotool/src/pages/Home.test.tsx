@@ -1,6 +1,7 @@
 /**
  * Home Page Tests
  * @testing-library/react best practices [context7:/websites/testing-library:2025-12-13]
+ * [update:2025-12-16] - Updated to match new Home.tsx structure aligned with .example
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -21,6 +22,11 @@ vi.mock('../components/ThreeHero', () => ({
   default: () => <div data-testid="three-hero-mock">3D Hero Scene</div>,
 }));
 
+// Mock MobileMenu component
+vi.mock('../components/MobileMenu', () => ({
+  default: () => null,
+}));
+
 import Home from './Home';
 
 // Wrapper component for router context
@@ -32,11 +38,12 @@ describe('Home', () => {
   it('renders hero section with main heading', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    // Check for main heading text - using getAllByText since letters are split
+    // Check for main heading text - "Design" uses TextReveal (split letters)
     const dLetters = screen.getAllByText('D');
     expect(dLetters.length).toBeGreaterThan(0);
-    const eLetters = screen.getAllByText('E');
-    expect(eLetters.length).toBeGreaterThan(0);
+
+    // "Engineering." is rendered as a single motion.span
+    expect(screen.getByText('Engineering.')).toBeInTheDocument();
   });
 
   it('renders availability badge', () => {
@@ -62,15 +69,21 @@ describe('Home', () => {
   it('renders CTA buttons', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    expect(screen.getByRole('link', { name: /瀏覽作品/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /GitHub/i })).toBeInTheDocument();
+    // New structure uses anchor tags with href="#projects" instead of Link to="/projects"
+    expect(screen.getByText('瀏覽作品')).toBeInTheDocument();
+
+    // GitHub links - there are multiple (hero CTA + contact section + footer)
+    const githubLinks = screen.getAllByRole('link', { name: /GitHub/i });
+    expect(githubLinks.length).toBeGreaterThan(0);
   });
 
   it('renders CTA links with correct href', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    const projectsLink = screen.getByRole('link', { name: /瀏覽作品/i });
-    expect(projectsLink).toHaveAttribute('href', '/projects');
+    // The "瀏覽作品" button links to #projects section (not /projects page)
+    const projectsLinks = screen.getAllByRole('link', { name: /瀏覽作品/i });
+    expect(projectsLinks.length).toBeGreaterThan(0);
+    expect(projectsLinks[0]).toHaveAttribute('href', '#projects');
 
     // GitHub link should be external
     const githubLinks = screen.getAllByRole('link', { name: /GitHub/i });
@@ -101,9 +114,9 @@ describe('Home', () => {
   it('renders View All Projects link in featured section', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    // Find the Chinese link text
-    const viewAllLink = screen.getByRole('link', { name: /查看所有作品/i });
-    expect(viewAllLink).toBeInTheDocument();
-    expect(viewAllLink).toHaveAttribute('href', '/projects');
+    // Find the Chinese link text - now links to #projects section
+    const viewAllLinks = screen.getAllByRole('link', { name: /查看所有作品/i });
+    expect(viewAllLinks.length).toBeGreaterThan(0);
+    expect(viewAllLinks[0]).toHaveAttribute('href', '#projects');
   });
 });

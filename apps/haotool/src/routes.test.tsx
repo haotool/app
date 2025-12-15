@@ -1,56 +1,53 @@
 /**
  * Routes Configuration Tests
  * Testing route configuration and lazy loading
+ * [update:2025-12-16] - Updated to match new route structure (Home is standalone)
  */
 import { describe, it, expect } from 'vitest';
 import routes, { getIncludedRoutes } from './routes';
 
 describe('routes', () => {
-  const rootRoute = routes[0];
-
   it('should export routes as default', () => {
     expect(routes).toBeDefined();
     expect(Array.isArray(routes)).toBe(true);
   });
 
-  it('should have at least one route', () => {
-    expect(routes.length).toBeGreaterThan(0);
+  it('should have at least two route groups', () => {
+    // One for Home (standalone), one for Layout-wrapped pages
+    expect(routes.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('should have root route', () => {
-    expect(rootRoute).toBeDefined();
-    expect(rootRoute?.path).toBe('/');
+  it('should have home route as standalone', () => {
+    const homeRoute = routes[0];
+    expect(homeRoute).toBeDefined();
+    expect(homeRoute?.path).toBe('/');
+    // Home is standalone, no Component wrapper (uses lazy)
+    expect(homeRoute?.lazy).toBeDefined();
   });
 
-  it('should have Layout as Component', () => {
-    expect(rootRoute).toBeDefined();
-    expect(rootRoute?.Component).toBeDefined();
+  it('should have Layout-wrapped routes', () => {
+    const layoutRoute = routes[1];
+    expect(layoutRoute).toBeDefined();
+    expect(layoutRoute?.path).toBe('/');
+    expect(layoutRoute?.Component).toBeDefined();
+    expect(layoutRoute?.children).toBeDefined();
   });
 
-  it('should have children routes', () => {
-    expect(rootRoute).toBeDefined();
-    expect(rootRoute?.children).toBeDefined();
-    expect(Array.isArray(rootRoute?.children)).toBe(true);
-    expect(rootRoute?.children?.length).toBeGreaterThan(0);
-  });
-
-  it('should have index route', () => {
-    const indexRoute = rootRoute?.children?.find((r) => r.index === true);
-    expect(indexRoute).toBeDefined();
-  });
-
-  it('should have projects path', () => {
-    const projectsRoute = rootRoute?.children?.find((r) => r.path === 'projects');
+  it('should have projects path in Layout children', () => {
+    const layoutRoute = routes[1];
+    const projectsRoute = layoutRoute?.children?.find((r) => r.path === 'projects');
     expect(projectsRoute).toBeDefined();
   });
 
-  it('should have about path', () => {
-    const aboutRoute = rootRoute?.children?.find((r) => r.path === 'about');
+  it('should have about path in Layout children', () => {
+    const layoutRoute = routes[1];
+    const aboutRoute = layoutRoute?.children?.find((r) => r.path === 'about');
     expect(aboutRoute).toBeDefined();
   });
 
-  it('should have contact path', () => {
-    const contactRoute = rootRoute?.children?.find((r) => r.path === 'contact');
+  it('should have contact path in Layout children', () => {
+    const layoutRoute = routes[1];
+    const contactRoute = layoutRoute?.children?.find((r) => r.path === 'contact');
     expect(contactRoute).toBeDefined();
   });
 });

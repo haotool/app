@@ -79,6 +79,7 @@ vi.mock('framer-motion', () => ({
     main: createMotionComponent('main'),
   },
   AnimatePresence: ({ children }: PropsWithChildren) => children,
+  MotionConfig: ({ children }: PropsWithChildren) => children,
   useInView: () => true,
   useSpring: (value: number) => createMockMotionValue(value),
   useTransform: () => createMockMotionValue(0),

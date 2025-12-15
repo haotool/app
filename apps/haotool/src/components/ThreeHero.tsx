@@ -1,13 +1,14 @@
 /**
  * ThreeHero Component - 3D Interactive Hero Section
- * [update:2025-12-14] - Created based on .example/haotool.org-v1.0.5
- * [context7:@react-three/fiber:2025-12-14]
- * [context7:@react-three/drei:2025-12-14]
+ * [update:2025-12-16] - Fully aligned with .example/haotool.org-v1.0.6
+ * [context7:@react-three/fiber:2025-12-16]
+ * [context7:@react-three/drei:2025-12-16]
  *
- * Performance Optimizations:
- * - PerformanceMonitor for adaptive quality
- * - Optimized canvas configuration
- * - Smooth animations with proper cleanup
+ * Key differences from previous version:
+ * - Full-screen absolute positioning (no left/right split)
+ * - Background matches page background (#020617)
+ * - No gradient mask overlay
+ * - 3D object positioned to the right (position={[1.5, 0, 0]})
  */
 import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
@@ -26,12 +27,7 @@ import * as THREE from 'three';
 // Types
 // -----------------------------------------------------------------------------
 interface ThreeHeroProps {
-  isCtaHovered?: boolean;
-  /**
-   * Optional className to control the container positioning.
-   * Defaults to absolute full-bleed background.
-   */
-  className?: string;
+  isCtaHovered: boolean;
 }
 
 interface PerformanceState {
@@ -115,6 +111,7 @@ const PrismLogic = ({ perf, isActive }: { perf: PerformanceState; isActive: bool
     if (!outerRef.current || !innerRef.current || !groupRef.current) return;
 
     // 1. Handle Scroll Parallax (Lerped for smoothness)
+    // We move the whole group down (Y) and away (Z) as user scrolls
     const targetY = -scrollYRef.current * 0.002;
     const targetZ = -scrollYRef.current * 0.001; // Subtle push away
     const targetRotationY = scrollYRef.current * 0.0005;
@@ -147,14 +144,17 @@ const PrismLogic = ({ perf, isActive }: { perf: PerformanceState; isActive: bool
     innerRef.current.rotation.x = Math.sin(t * 0.5) * 0.2;
 
     // 5. Lerp Scale (Scale up on hover)
+    // Slightly scale up to 1.1 when hovered
     const targetScale = isHovered ? 1.1 : 1.0;
     currentScale.current = THREE.MathUtils.lerp(currentScale.current, targetScale, 0.1);
 
+    // Apply scale to the floating group content
     outerRef.current.scale.setScalar(currentScale.current);
     innerRef.current.scale.setScalar(0.7 * currentScale.current);
 
     // 6. Lerp Emissive Intensity (Glow brighter on hover)
     if (coreMaterialRef.current) {
+      // Normal: 0.2, Hover: 2.0, Active (CTA): 3.0
       const targetEmissiveIntensity = isActive ? 3.0 : isHovered ? 2.0 : 0.2;
       coreMaterialRef.current.emissiveIntensity = THREE.MathUtils.lerp(
         coreMaterialRef.current.emissiveIntensity,
@@ -241,7 +241,7 @@ const PrismLogic = ({ perf, isActive }: { perf: PerformanceState; isActive: bool
 // -----------------------------------------------------------------------------
 // Main Scene Component
 // -----------------------------------------------------------------------------
-const ThreeHero: React.FC<ThreeHeroProps> = ({ isCtaHovered = false, className }) => {
+const ThreeHero: React.FC<ThreeHeroProps> = ({ isCtaHovered = false }) => {
   const [perf, setPerf] = useState<PerformanceState>({
     dpr: 1.5,
     samples: 10,
@@ -265,13 +265,8 @@ const ThreeHero: React.FC<ThreeHeroProps> = ({ isCtaHovered = false, className }
     return null;
   }
 
-  const containerClass = className ?? 'absolute inset-0 md:right-[-12%] md:w-[72%] md:left-auto';
-
   return (
-    <div className={`${containerClass} z-0 w-full h-full pointer-events-none`}>
-      {/* Gradient mask to keep left-side copy readable */}
-      <div className="absolute inset-0 bg-gradient-to-l from-[#020617] via-[#020617]/40 to-transparent" />
-
+    <div className="absolute inset-0 z-0 w-full h-full pointer-events-none">
       <Canvas
         dpr={perf.dpr}
         eventSource={typeof document !== 'undefined' ? document.body : undefined}
