@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronDown, Github, Sparkles } from 'lucide-react';
+import { ArrowRight, Github, Sparkles } from 'lucide-react';
 import { Counter } from '../components/Counter';
 import { ProjectCard } from '../components/ProjectCard';
 import { AccordionItem } from '../components/Accordion';
@@ -98,8 +98,8 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.14),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(45,212,191,0.12),transparent_25%),linear-gradient(120deg,#050505_0%,#050505_45%,transparent_70%)]" />
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:120px_120px] opacity-40" />
 
-        <div className="relative z-10 w-full">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 grid md:grid-cols-[1.05fr_0.95fr] items-center gap-10 lg:gap-14">
+        <div className="relative z-10 mx-auto max-w-7xl px-6 w-full">
+          <div className="grid md:grid-cols-[1.05fr_0.95fr] items-center gap-10 lg:gap-14">
             <div className="space-y-6 md:space-y-8 text-left">
               {/* Badge */}
               <motion.div variants={containerVariants} initial="hidden" animate="show">
@@ -111,7 +111,7 @@ export default function Home() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
                   </span>
-                  Open for Projects
+                  Open for Commissions
                 </motion.span>
               </motion.div>
 
@@ -120,16 +120,13 @@ export default function Home() {
                 variants={textContainerVariants}
                 initial="hidden"
                 animate="show"
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_10px_35px_rgba(0,0,0,0.55)]"
+                className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-white leading-[1.05] mb-4 drop-shadow-[0_10px_35px_rgba(0,0,0,0.55)]"
               >
                 <div className="overflow-hidden">
-                  <TextReveal text="Design" className="text-white" />
+                  <TextReveal text="Design" />
                 </div>
-                <div className="overflow-hidden">
-                  <TextReveal
-                    text="Engineering."
-                    className="bg-gradient-to-r from-brand-300 via-purple-300 to-sky-300 bg-clip-text text-transparent animate-gradient-x"
-                  />
+                <div className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 via-white to-purple-300 animate-gradient-x">
+                  <TextReveal text="Engineering." />
                 </div>
               </motion.h1>
 
@@ -138,11 +135,11 @@ export default function Home() {
                 variants={textContainerVariants}
                 initial="hidden"
                 animate="show"
-                className="text-lg sm:text-xl text-slate-200 max-w-2xl leading-relaxed"
+                className="text-base sm:text-lg text-slate-200 max-w-2xl leading-relaxed font-light mb-6 md:mb-8"
               >
-                <TextReveal text="嗨，我是阿璋。「HAOTOOL」取自「好工具」的諧音，代表我寫的每一行程式都必須實用且優雅。" />
+                <TextReveal text="「HAOTOOL」取自「好工具」的諧音，代表這裡產出的每一個工具，都必須實用且優雅。" />
                 <br className="hidden sm:block" />
-                <TextReveal text="我將程式碼雕琢為數位藝術，融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。" />
+                <TextReveal text="融合 3D 互動、動態設計與 React 架構，打造令人過目不忘的網頁體驗。" />
               </motion.div>
 
               {/* CTAs */}
@@ -177,10 +174,10 @@ export default function Home() {
               </motion.div>
             </div>
 
-            <div className="relative h-[320px] sm:h-[420px] md:h-[540px] lg:h-[620px]">
+            <div className="relative h-[320px] sm:h-[440px] md:h-[620px]">
               <ThreeHero
                 isCtaHovered={isCtaHovered}
-                className="absolute inset-0 right-[-16%] md:right-[-20%] md:w-[120%] h-full"
+                className="absolute inset-0 right-[-18%] md:w-[125%]"
               />
             </div>
           </div>
@@ -190,61 +187,63 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 0.8 }}
-          className="absolute bottom-8 left-6 md:left-10"
+          transition={{ delay: 1.5, duration: 1 }}
+          className="absolute bottom-6 left-6 md:left-auto md:right-10 flex flex-col items-center gap-4 z-20 mix-blend-difference hidden md:flex"
         >
-          <ChevronDown className="h-6 w-6 text-slate-500 animate-bounce" />
+          <div className="h-16 w-[1px] bg-gradient-to-b from-transparent via-slate-400 to-transparent" />
         </motion.div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 md:py-20 bg-[#0a0a0a]/50 border-y border-white/[0.03]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {STATS.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{ duration: 0.5, delay: index * 0.1, ease: EASING_NEBULA }}
-                className="text-center md:text-left"
-              >
-                <div className="text-3xl sm:text-4xl font-bold text-white mb-2">
-                  <Counter value={stat.value} suffix={stat.suffix} />
-                </div>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">
+      <section className="relative z-10 border-y border-white/[0.03] bg-[#020617]/50 backdrop-blur-sm py-12 md:py-16">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid grid-cols-2 gap-y-10 gap-x-8 md:grid-cols-4">
+            {STATS.map((stat, idx) => (
+              <div key={idx} className="flex flex-col items-start space-y-1">
+                <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
                   {stat.label}
-                </div>
-              </motion.div>
+                </dt>
+                <dd className="text-3xl md:text-4xl font-light tracking-tight text-white font-sans">
+                  <Counter value={stat.value} suffix={stat.suffix} />
+                </dd>
+              </div>
             ))}
+            <div className="flex flex-col items-start space-y-1">
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+                Current Focus
+              </div>
+              <div className="flex items-center gap-2 text-brand-300 pt-1">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+                </span>
+                <span className="font-mono text-xs md:text-sm text-slate-300">
+                  Advanced Shaders
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Featured Projects Section */}
-      <section id="projects" className="py-20 md:py-32">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: EASING_NEBULA }}
-            className="text-center mb-12 md:mb-16"
-          >
-            <span className="inline-block px-3 py-1 mb-6 text-xs font-medium tracking-wider uppercase bg-brand-500/10 text-brand-400 rounded-full border border-brand-500/20">
-              Featured Works
-            </span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
-              精選{' '}
-              <span className="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">
-                作品
-              </span>
-            </h2>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-              結合實用性與美學的數位作品，每一個專案都追求極致的使用者體驗。
-            </p>
-          </motion.div>
+      <section id="projects" className="py-20 md:py-32 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="mb-12 md:mb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.8, ease: EASING_NEBULA }}
+            >
+              <h2 className="text-3xl font-bold text-white md:text-5xl tracking-tighter mb-4 md:mb-6">
+                Selected Works
+              </h2>
+              <p className="text-slate-400 max-w-md text-base md:text-lg font-light leading-relaxed">
+                結合實用性與娛樂性的數位實驗。
+              </p>
+            </motion.div>
+          </div>
 
           {/* Projects Grid */}
           <div className="grid sm:grid-cols-2 gap-6 mb-12">
@@ -274,9 +273,9 @@ export default function Home() {
       {/* About & FAQ Section */}
       <section
         id="about"
-        className="py-20 md:py-24 bg-gradient-to-b from-transparent via-brand-900/10 to-transparent border-y border-white/[0.02]"
+        className="py-20 md:py-24 bg-gradient-to-b from-transparent via-brand-900/10 to-transparent border-y border-white/[0.02] relative z-10"
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-6">
           {/* Intro Text */}
           <motion.div
             className="max-w-3xl mb-16 md:mb-20"
@@ -295,7 +294,7 @@ export default function Home() {
             </h2>
             <div className="prose prose-invert prose-lg text-slate-400 font-light text-base md:text-lg">
               <p className="mb-6">
-                我是阿璋，「HAOTOOL」取自名字諧音，也代表我對產出的堅持：它必須是個
+                「HAOTOOL」取自「好工具」的諧音，代表這裡產出的每一個專案，都必須是個
                 <span className="text-white font-medium">好工具</span>。
               </p>
               <p className="mb-6">

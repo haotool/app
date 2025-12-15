@@ -3,7 +3,7 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://app.haotool.org/ratewise/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>1</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/" />
@@ -11,7 +11,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/faq/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/faq/" />
@@ -19,7 +19,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/about/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/about/" />
@@ -27,7 +27,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/guide/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/guide/" />
@@ -35,7 +35,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/aud-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/aud-twd/" />
@@ -43,7 +43,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/cad-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/cad-twd/" />
@@ -51,7 +51,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/chf-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/chf-twd/" />
@@ -59,7 +59,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/cny-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/cny-twd/" />
@@ -67,7 +67,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/eur-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/eur-twd/" />
@@ -75,7 +75,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/gbp-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/gbp-twd/" />
@@ -83,7 +83,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/hkd-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/hkd-twd/" />
@@ -91,7 +91,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/jpy-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/jpy-twd/" />
@@ -99,7 +99,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/krw-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/krw-twd/" />
@@ -107,7 +107,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/nzd-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/nzd-twd/" />
@@ -115,7 +115,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/sgd-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/sgd-twd/" />
@@ -123,7 +123,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/thb-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/thb-twd/" />
@@ -131,7 +131,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/usd-twd/</loc>
-    <lastmod>2025-12-14</lastmod>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/usd-twd/" />
