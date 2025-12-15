@@ -128,8 +128,11 @@ export default function Home() {
                 <div className="overflow-hidden">
                   <TextReveal text="Design" />
                 </div>
-                <div className="overflow-hidden text-transparent bg-clip-text bg-gradient-to-r from-brand-300 via-white to-purple-300 animate-gradient-x">
-                  <TextReveal text="Engineering." />
+                <div className="overflow-hidden">
+                  <TextReveal
+                    text="Engineering."
+                    className="bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 bg-clip-text text-transparent animate-gradient-x drop-shadow-[0_0_30px_rgba(251,191,36,0.5)]"
+                  />
                 </div>
               </motion.h1>
 
