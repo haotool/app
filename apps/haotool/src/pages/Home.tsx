@@ -5,15 +5,18 @@
  * [context7:/websites/motion-dev-docs:2025-12-14] - Framer Motion animations
  * [context7:@react-three/fiber:2025-12-14] - 3D hero integration
  */
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Github, Sparkles } from 'lucide-react';
 import { Counter } from '../components/Counter';
 import { ProjectCard } from '../components/ProjectCard';
 import { AccordionItem } from '../components/Accordion';
-import ThreeHero from '../components/ThreeHero';
 import { STATS, PROJECTS, FAQS, SOCIAL_LINKS } from '../constants';
+
+// Lazy load ThreeHero for better initial load performance
+// This splits the 1.4MB Three.js bundle from the main bundle
+const ThreeHero = lazy(() => import('../components/ThreeHero'));
 
 const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -125,8 +128,11 @@ export default function Home() {
                 <div className="overflow-hidden">
                   <TextReveal text="Design" />
                 </div>
-                <div className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 via-white to-purple-300 animate-gradient-x">
-                  <TextReveal text="Engineering." />
+                <div className="overflow-hidden">
+                  <TextReveal
+                    text="Engineering."
+                    className="bg-gradient-to-r from-brand-300 via-white to-purple-300 bg-clip-text text-transparent animate-gradient-x"
+                  />
                 </div>
               </motion.h1>
 
@@ -175,10 +181,21 @@ export default function Home() {
             </div>
 
             <div className="relative h-[320px] sm:h-[440px] md:h-[620px]">
-              <ThreeHero
-                isCtaHovered={isCtaHovered}
-                className="absolute inset-0 right-[-18%] md:w-[125%]"
-              />
+              <Suspense
+                fallback={
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#020617] to-[#0f172a]">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-12 h-12 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
+                      <span className="text-sm text-slate-400 font-mono">Loading 3D Scene...</span>
+                    </div>
+                  </div>
+                }
+              >
+                <ThreeHero
+                  isCtaHovered={isCtaHovered}
+                  className="absolute inset-0 right-[-16%] md:right-[-20%] md:w-[125%]"
+                />
+              </Suspense>
             </div>
           </div>
         </div>
@@ -188,7 +205,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 1 }}
-          className="absolute bottom-6 left-6 md:left-auto md:right-10 flex flex-col items-center gap-4 z-20 mix-blend-difference hidden md:flex"
+          className="absolute bottom-6 left-6 md:left-auto md:right-10 hidden md:flex flex-col items-center gap-4 z-20 mix-blend-difference"
         >
           <div className="h-16 w-[1px] bg-gradient-to-b from-transparent via-slate-400 to-transparent" />
         </motion.div>
