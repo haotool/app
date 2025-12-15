@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { Menu, X, Github, AtSign, Mail, Check } from 'lucide-react';
+import { Menu, X, Github, AtSign, Mail, Check, ArrowRight } from 'lucide-react';
 import { APP_NAME, SOCIAL_LINKS } from '../constants';
 import { useLenis } from '../hooks/useLenis';
 
@@ -30,7 +30,12 @@ export default function Layout() {
 
   // Scroll animations for navbar
   const { scrollY } = useScroll();
-  const navBackground = useTransform(scrollY, [0, 100], ['rgba(5, 5, 5, 0)', 'rgba(5, 5, 5, 0.9)']);
+  const navHeight = useTransform(scrollY, [0, 100], [80, 64]);
+  const navBackground = useTransform(
+    scrollY,
+    [0, 100],
+    ['rgba(2, 6, 23, 0)', 'rgba(2, 6, 23, 0.9)'],
+  );
   const navBackdrop = useTransform(scrollY, [0, 100], ['blur(0px)', 'blur(12px)']);
   const navBorder = useTransform(
     scrollY,
@@ -81,7 +86,7 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden">
+    <div className="relative min-h-screen bg-[#020617] text-slate-200 selection:bg-brand-500/30 font-sans overflow-x-hidden">
       {/* Toast Notification */}
       <AnimatePresence>
         {toastMessage && (
@@ -106,14 +111,15 @@ export default function Layout() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: EASING_NEBULA }}
         style={{
+          height: navHeight,
           backgroundColor: navBackground,
           backdropFilter: navBackdrop,
           borderBottom: '1px solid',
           borderColor: navBorder,
         }}
-        className="fixed top-0 left-0 right-0 z-50"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center"
       >
-        <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <nav className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
           {/* Logo */}
           <Link
             to="/"
@@ -166,38 +172,55 @@ export default function Layout() {
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: EASING_NEBULA }}
-              className="md:hidden bg-[#050505]/98 backdrop-blur-2xl border-b border-white/5 overflow-hidden"
+              initial={{ y: '-100%', opacity: 0 }}
+              animate={{
+                y: 0,
+                opacity: 1,
+                transition: {
+                  duration: 0.6,
+                  ease: EASING_NEBULA,
+                },
+              }}
+              exit={{
+                y: '-100%',
+                opacity: 0,
+                transition: {
+                  duration: 0.4,
+                  ease: [0.33, 1, 0.68, 1],
+                },
+              }}
+              className="fixed inset-0 z-40 bg-[#020617]/98 backdrop-blur-2xl pt-32 px-8 flex flex-col md:hidden"
             >
-              <div className="px-4 py-4 space-y-1">
-                {NAV_ITEMS.map((item, index) => (
+              <motion.div
+                className="flex flex-col gap-10 text-3xl font-light text-white tracking-tight"
+                variants={{
+                  closed: { transition: { staggerChildren: 0.05, staggerDirection: -1 } },
+                  open: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
+                }}
+                initial="closed"
+                animate="open"
+              >
+                {NAV_ITEMS.map((item) => (
                   <motion.div
                     key={item.path}
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -20, opacity: 0 }}
-                    transition={{ delay: index * 0.1, duration: 0.4, ease: 'easeOut' }}
+                    variants={{
+                      closed: { y: 20, opacity: 0 },
+                      open: { y: 0, opacity: 1, transition: { duration: 0.4, ease: 'easeOut' } },
+                    }}
+                    className="border-b border-white/5 pb-6 flex justify-between items-center group cursor-pointer"
+                    whileTap={{ scale: 0.98, color: '#818cf8' }}
                   >
                     <Link
                       to={item.path}
                       onClick={(e) => handleNavClick(e, item.path)}
-                      className={`
-                        block px-4 py-3 rounded-lg text-sm font-medium transition-colors
-                        ${
-                          location.pathname === item.path
-                            ? 'bg-brand-500/10 text-brand-400'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                        }
-                      `}
+                      className="w-full flex justify-between items-center"
                     >
-                      {item.label}
+                      <span>{item.label}</span>
+                      <ArrowRight className="text-brand-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                     </Link>
                   </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -207,8 +230,8 @@ export default function Layout() {
       <Outlet />
 
       {/* Footer */}
-      <footer className="border-t border-white/5 bg-[#050505] py-12 md:py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <footer className="border-t border-white/5 bg-[#020617] py-12 md:py-20 relative z-10">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-10">
             <div className="flex flex-col items-center md:items-start">
               <h2 className="text-xl font-bold text-white tracking-tight mb-2">{APP_NAME}</h2>
