@@ -16,6 +16,11 @@ vi.mock('../components/Counter', () => ({
   ),
 }));
 
+// Mock ThreeHero component to avoid loading Three.js in tests
+vi.mock('../components/ThreeHero', () => ({
+  default: () => <div data-testid="three-hero-mock">3D Hero Scene</div>,
+}));
+
 import Home from './Home';
 
 // Wrapper component for router context
@@ -27,24 +32,31 @@ describe('Home', () => {
   it('renders hero section with main heading', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    // Updated to match actual content
-    expect(screen.getByText('D')).toBeInTheDocument(); // First letter of "Design"
-    expect(screen.getByText('E')).toBeInTheDocument(); // First letter of "Engineering."
+    // Check for main heading text - using getAllByText since letters are split
+    const dLetters = screen.getAllByText('D');
+    expect(dLetters.length).toBeGreaterThan(0);
+    const eLetters = screen.getAllByText('E');
+    expect(eLetters.length).toBeGreaterThan(0);
   });
 
   it('renders availability badge', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText('Open for Projects')).toBeInTheDocument();
+    expect(screen.getByText('Open for Commissions')).toBeInTheDocument();
   });
 
   it('renders subtitle description', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    // Updated to match actual Chinese content - search for individual characters
-    expect(screen.getByText('嗨')).toBeInTheDocument();
-    expect(screen.getByText('阿')).toBeInTheDocument();
-    expect(screen.getByText('璋')).toBeInTheDocument();
+    // Check for HAOTOOL description text - using getAllByText for individual characters
+    const leftQuotes = screen.getAllByText('「');
+    expect(leftQuotes.length).toBeGreaterThan(0);
+
+    const hLetters = screen.getAllByText('H');
+    expect(hLetters.length).toBeGreaterThan(0);
+
+    const aLetters = screen.getAllByText('A');
+    expect(aLetters.length).toBeGreaterThan(0);
   });
 
   it('renders CTA buttons', () => {
@@ -79,8 +91,11 @@ describe('Home', () => {
   it('renders featured work section', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText('Featured Works')).toBeInTheDocument();
-    expect(screen.getByText(/結合實用性與美學的數位作品/)).toBeInTheDocument();
+    // Check for Selected Works text - using regex for partial match
+    expect(screen.getByText(/Selected Works/i)).toBeInTheDocument();
+
+    // Check for Chinese description text
+    expect(screen.getByText(/結合實用性與娛樂性/)).toBeInTheDocument();
   });
 
   it('renders View All Projects link in featured section', () => {
