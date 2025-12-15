@@ -21,6 +21,8 @@ export default defineConfig({
         'src/main.tsx',
         'src/**/*.test.{ts,tsx}',
         'src/**/*.spec.{ts,tsx}',
+        'src/__mocks__/**',
+        'src/components/ThreeHero.tsx', // 3D component requires WebGL, difficult to test in jsdom
       ],
       thresholds: {
         // MVP 階段：降低覆蓋率門檻，後續迭代逐步提升
