@@ -143,9 +143,13 @@ export default defineConfig(({ mode }) => {
   // 最簡配置：使用環境變數，消除所有特殊情況
   // [fix:2025-10-27] 遵循 Linus 原則 - "好品味"：消除條件判斷
   // [fix:2025-12-14] 使用專屬環境變數名稱，與 haotool/nihonname 保持一致
+  // [fix:2025-12-15] 嚴格驗證環境變數，防止空格或無效值
   // CI 環境: VITE_RATEWISE_BASE_PATH='/' (Lighthouse/E2E)
   // 生產環境: VITE_RATEWISE_BASE_PATH='/ratewise/' (Zeabur)
-  const baseFromEnv = env.VITE_RATEWISE_BASE_PATH || process.env['VITE_RATEWISE_BASE_PATH'];
+  const rawEnvValue = env.VITE_RATEWISE_BASE_PATH || process.env['VITE_RATEWISE_BASE_PATH'] || '';
+  // 驗證：只接受以 '/' 開頭的有效路徑，否則使用默認值
+  const isValidPath = rawEnvValue.startsWith('/') && !rawEnvValue.includes(' ');
+  const baseFromEnv = isValidPath ? rawEnvValue : null;
   // CI 預設使用根路徑避免 /ratewise/ 404
   const base =
     baseFromEnv ?? (process.env['CI'] ? '/' : mode === 'production' ? '/ratewise/' : '/');
