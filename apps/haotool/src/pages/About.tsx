@@ -58,14 +58,21 @@ export default function About() {
             </span>
           </h1>
           <div className="prose prose-invert prose-lg text-slate-400 font-light">
-            <p className="text-xl leading-relaxed mb-6">一位熱愛打造「好工具」的全端開發者。</p>
+            <p className="text-xl leading-relaxed mb-6">
+              嗨，我是阿璋。一位將程式碼雕琢為數位藝術的全端開發者。
+            </p>
             <p className="mb-6">
-              「HAOTOOL」取自「好工具」的諧音，也延伸自我的名字讀音 HAO，代表
-              <span className="text-white font-medium">它必須是個好工具</span>。
+              我是阿璋。HAOTOOL 取自「好工具」的諧音，這代表我對產出的堅持：它必須是個
+              <span className="text-white font-medium">好工具</span>。
             </p>
             <p>
-              在程式碼的世界裡，我追求的不僅是功能實現，更是感官的延伸。
-              我相信好的使用者體驗來自於對細節的偏執——從 60fps 的流暢度到像素級的對齊。
+              在程式碼的世界裡，我追求的不僅是功能實現，更是感官的延伸。我相信好的使用者體驗來自於對細節的偏執——從
+              <span className="text-slate-200 mx-1 border-b border-brand-500/30">
+                60fps 的流暢度
+              </span>{' '}
+              到
+              <span className="text-slate-200 mx-1 border-b border-brand-500/30">像素級的對齊</span>
+              。
             </p>
           </div>
         </motion.div>
@@ -135,9 +142,9 @@ export default function About() {
         >
           <h2 className="text-2xl font-bold text-white mb-4">有興趣合作？</h2>
           <p className="text-slate-400 mb-8 max-w-lg mx-auto">
-            歡迎透過 Email 或社群平台與我聯繫，讓我們一起打造令人驚艷的數位體驗。
+            歡迎透過 Email、Threads 或 GitHub 與我聯繫，讓我們一起打造令人驚艷的數位體驗。
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               to="/contact"
               className="group inline-flex items-center gap-2 px-6 py-3 bg-brand-500 hover:bg-brand-400 text-white font-medium rounded-full transition-all hover:shadow-[0_0_30px_rgba(99,102,241,0.4)]"
@@ -145,6 +152,14 @@ export default function About() {
               聯繫我
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
+            <a
+              href={SOCIAL_LINKS.threads}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 font-medium rounded-full border border-purple-500/20 transition-all"
+            >
+              Threads (@阿璋)
+            </a>
             <a
               href={SOCIAL_LINKS.github}
               target="_blank"

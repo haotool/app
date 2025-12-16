@@ -13,6 +13,14 @@ export const SOCIAL_LINKS = {
   email: 'haotool.org@gmail.com',
 } as const;
 
+export enum ProjectCategory {
+  ALL = '全部',
+  TOOL = '工具類',
+  ENTERTAINMENT = '娛樂類',
+  DATA = '資料類',
+  CREATIVE = '創意類',
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -21,7 +29,7 @@ export interface Project {
   link: string;
   imageUrl: string;
   featured?: boolean;
-  category: 'web' | 'mobile' | 'ai' | 'devops' | 'tool';
+  category: ProjectCategory;
   status: 'live' | 'beta' | 'development';
 }
 
@@ -33,10 +41,9 @@ export const PROJECTS: Project[] = [
       '輸入你的中文姓氏，瞬間產生道地的日文名字與諧音梗。支援 100+ 漢姓對照，提供羅馬拼音、歷史來源說明，並可一鍵分享至社群。Built with React 19, TypeScript, Vite SSG，Lighthouse SEO 100/100。',
     tags: ['React 19', 'TypeScript', 'Vite SSG', 'PWA', 'Tailwind CSS'],
     link: '/nihonname/',
-    // [fix:2025-12-20] 使用專案 OG Image
     imageUrl: '/projects/nihonname-og.svg',
     featured: true,
-    category: 'ai',
+    category: ProjectCategory.CREATIVE,
     status: 'live',
   },
   {
@@ -46,10 +53,9 @@ export const PROJECTS: Project[] = [
       '即時匯率換算工具，整合 30 天歷史數據視覺化圖表。支援 13+ 幣別、離線使用 (PWA)、深色模式。技術棧：React 19, TypeScript, lightweight-charts, Service Worker。',
     tags: ['React 19', 'TypeScript', 'PWA', 'Charts', 'Tailwind CSS'],
     link: '/ratewise/',
-    // [fix:2025-12-20] 使用專案 OG Image
     imageUrl: '/projects/ratewise-og.png',
     featured: true,
-    category: 'web',
+    category: ProjectCategory.TOOL,
     status: 'live',
   },
 ];
@@ -76,26 +82,21 @@ export const FAQS: FaqItem[] = [
   {
     question: 'HAOTOOL 的名字由來？',
     answer:
-      '「HAOTOOL」取自「好工具」的諧音，HAO 也取自我的名字「璋」的讀音，代表「好（Good）」。我希望這裡產出的每一個工具，對使用者來說都是「好工具」。',
-  },
-  {
-    question: '你專精哪些技術？',
-    answer:
-      '我專精現代 Web 開發，主要使用 React、TypeScript 和 Node.js。同時也有雲端平台（Cloudflare, Zeabur）、DevOps 實踐、以及 AI/ML 整合的實作經驗。',
+      '「HAO」是中文「好」的拼音。HAOTOOL 的核心理念非常純粹——打造真正的「好工具」。我深信優秀的數位產品不應只是功能的堆砌，更要是能解決痛點、並在使用過程中帶來愉悅感的工藝品。',
   },
   {
     question: '這些專案有開源嗎？',
     answer:
-      '是的！這裡展示的所有專案都是開源的。我相信開源文化能促進技術交流與進步，歡迎去我的 GitHub 逛逛！',
+      '是的，我大部分的個人專案都託管在 GitHub 上。我相信開源文化能促進技術的交流與進步，歡迎去我的 GitHub 逛逛！',
   },
   {
     question: '接受合作委託嗎？',
     answer:
-      '目前我專注於個人產品開發，但如果你有非常有趣的創意或公益性質的專案，歡迎透過下方聯繫方式找我聊聊！',
+      '是的，我目前開放承接各類型的技術委託。無論是高互動性的形象網站、複雜的前端架構規劃，或是產品原型的快速開發。如果您有任何想法，歡迎透過頁面下方的聯繫方式與我討論。',
   },
   {
     question: '網站使用的技術堆疊是？',
     answer:
-      '本站使用 React 19, TypeScript, Tailwind CSS, Framer Motion 打造，並使用 Lenis 實現平滑滾動效果。部署於 Cloudflare Pages，追求極致的效能與互動體驗。',
+      '本站使用 React, TypeScript, Tailwind CSS, Framer Motion 以及 React Three Fiber 打造。追求極致的效能與互動體驗。',
   },
 ];

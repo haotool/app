@@ -32,17 +32,17 @@ describe('Projects', () => {
   it('renders category filter buttons', () => {
     render(<Projects />, { wrapper: RouterWrapper });
 
-    expect(screen.getByRole('button', { name: /全部作品/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Web/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /AI\/ML/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Mobile/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /工具/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /全部/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /工具類/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /娛樂類/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /資料類/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /創意類/i })).toBeInTheDocument();
   });
 
   it('has All Projects selected by default', () => {
     render(<Projects />, { wrapper: RouterWrapper });
 
-    const allButton = screen.getByRole('button', { name: /全部作品/i });
+    const allButton = screen.getByRole('button', { name: /全部/i });
     // Check if the button has the pressed attribute for accessibility
     expect(allButton).toHaveAttribute('aria-pressed', 'true');
   });
@@ -50,11 +50,11 @@ describe('Projects', () => {
   it('changes active category on click', () => {
     render(<Projects />, { wrapper: RouterWrapper });
 
-    const webButton = screen.getByRole('button', { name: /^Web$/i });
-    fireEvent.click(webButton);
+    const toolButton = screen.getByRole('button', { name: /工具類/i });
+    fireEvent.click(toolButton);
 
-    // After click, web button should have pressed attribute
-    expect(webButton).toHaveAttribute('aria-pressed', 'true');
+    // After click, tool button should have pressed attribute
+    expect(toolButton).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('renders coming soon badge', () => {
@@ -66,22 +66,22 @@ describe('Projects', () => {
   it('filters projects when category is selected', () => {
     render(<Projects />, { wrapper: RouterWrapper });
 
-    // Click Web category
-    const webButton = screen.getByRole('button', { name: /^Web$/i });
-    fireEvent.click(webButton);
+    // Click Tool category
+    const toolButton = screen.getByRole('button', { name: /工具類/i });
+    fireEvent.click(toolButton);
 
     // The filter should be applied - check aria-pressed
-    expect(webButton).toHaveAttribute('aria-pressed', 'true');
+    expect(toolButton).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('shows empty state when no projects match filter', () => {
     render(<Projects />, { wrapper: RouterWrapper });
 
-    // Click a category that may have no projects (Mobile)
-    const mobileButton = screen.getByRole('button', { name: /Mobile/i });
-    fireEvent.click(mobileButton);
+    // Click a category that may have no projects (Entertainment)
+    const entertainmentButton = screen.getByRole('button', { name: /娛樂類/i });
+    fireEvent.click(entertainmentButton);
 
     // Check if filter is applied - check aria-pressed
-    expect(mobileButton).toHaveAttribute('aria-pressed', 'true');
+    expect(entertainmentButton).toHaveAttribute('aria-pressed', 'true');
   });
 });

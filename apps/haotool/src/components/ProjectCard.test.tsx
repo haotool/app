@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ProjectCard } from './ProjectCard';
-import type { Project } from '../constants';
+import { ProjectCategory, type Project } from '../constants';
 
 const demoProject: Project = {
   id: 'demo',
@@ -15,7 +15,7 @@ const demoProject: Project = {
   link: '/demo',
   imageUrl: '/og-image.png',
   featured: true,
-  category: 'web',
+  category: ProjectCategory.TOOL,
   status: 'live',
 };
 
