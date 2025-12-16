@@ -5,22 +5,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProjectCard, ProjectCardSkeleton } from '../components/ProjectCard';
-import { PROJECTS } from '../constants';
+import { PROJECTS, ProjectCategory } from '../constants';
 
 const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-const CATEGORIES = [
-  { id: 'all', label: '全部作品' },
-  { id: 'web', label: 'Web' },
-  { id: 'ai', label: 'AI/ML' },
-  { id: 'tool', label: '工具' },
-  { id: 'mobile', label: 'Mobile' },
-] as const;
-
-type CategoryId = (typeof CATEGORIES)[number]['id'];
-
 export default function Projects() {
-  const [activeCategory, setActiveCategory] = useState<CategoryId>('all');
+  const [activeCategory, setActiveCategory] = useState<ProjectCategory>(ProjectCategory.ALL);
   const [isLoading, setIsLoading] = useState(false);
   const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -35,7 +25,7 @@ export default function Projects() {
 
   // Simulate loading when category changes
   const handleCategoryChange = useCallback(
-    (category: CategoryId) => {
+    (category: ProjectCategory) => {
       if (category === activeCategory) return;
       setIsLoading(true);
       setActiveCategory(category);
@@ -48,9 +38,10 @@ export default function Projects() {
     [activeCategory],
   );
 
-  const filteredProjects = PROJECTS.filter((project) =>
-    activeCategory === 'all' ? true : project.category === activeCategory,
-  );
+  const filteredProjects =
+    activeCategory === ProjectCategory.ALL
+      ? PROJECTS
+      : PROJECTS.filter((project) => project.category === activeCategory);
 
   return (
     <main className="min-h-screen pt-24 pb-20">
@@ -85,29 +76,29 @@ export default function Projects() {
           role="group"
           aria-label="Filter projects by category"
         >
-          {CATEGORIES.map((category) => (
+          {Object.values(ProjectCategory).map((category) => (
             <button
-              key={category.id}
-              onClick={() => handleCategoryChange(category.id)}
-              aria-pressed={activeCategory === category.id}
+              key={category}
+              onClick={() => handleCategoryChange(category)}
+              aria-pressed={activeCategory === category}
               className={`
                 relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-300
                 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50
                 ${
-                  activeCategory === category.id
+                  activeCategory === category
                     ? 'text-white'
                     : 'text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5'
                 }
               `}
             >
-              {activeCategory === category.id && (
+              {activeCategory === category && (
                 <motion.div
                   layoutId="activeCategory"
                   className="absolute inset-0 rounded-full bg-brand-500 shadow-[0_0_20px_rgba(99,102,241,0.3)]"
                   transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                 />
               )}
-              <span className="relative z-10">{category.label}</span>
+              <span className="relative z-10">{category}</span>
             </button>
           ))}
         </motion.div>

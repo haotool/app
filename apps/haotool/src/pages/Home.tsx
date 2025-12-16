@@ -9,79 +9,20 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, MotionConfig } from 'framer-motion';
 import Lenis from 'lenis';
-import { ArrowRight, Github, Sparkles, Menu, X, Check } from 'lucide-react';
+import { ArrowRight, Github, Sparkles, Menu, X, AtSign, Mail } from 'lucide-react';
 import { Counter } from '../components/Counter';
 import { ProjectCard } from '../components/ProjectCard';
 import { AccordionItem } from '../components/Accordion';
+import { TextReveal } from '../components/TextReveal';
+import Toast from '../components/Toast';
 import { STATS, PROJECTS, FAQS, SOCIAL_LINKS, APP_NAME } from '../constants';
 import MobileMenu from '../components/MobileMenu';
 
-// Lazy load ThreeHero for better initial load performance
+// Lazy load ThreeHero and SectionBackground for better initial load performance
 const ThreeHero = lazy(() => import('../components/ThreeHero'));
+const SectionBackground = lazy(() => import('../components/SectionBackground'));
 
 const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
-
-// Text reveal animation component
-interface TextRevealProps {
-  text: string;
-  className?: string;
-}
-
-function TextReveal({ text, className = '' }: TextRevealProps) {
-  const chars = text.split('');
-  return (
-    <span className={className}>
-      {chars.map((char, i) => (
-        <motion.span
-          key={i}
-          variants={{
-            hidden: { opacity: 0, y: 12, filter: 'blur(4px)' },
-            show: {
-              opacity: 1,
-              y: 0,
-              filter: 'blur(0px)',
-              transition: {
-                duration: 0.8,
-                ease: EASING_NEBULA,
-              },
-            },
-          }}
-          className="inline-block"
-        >
-          {char === ' ' ? '\u00A0' : char}
-        </motion.span>
-      ))}
-    </span>
-  );
-}
-
-// Toast notification component
-interface ToastProps {
-  message: string;
-  onClose: () => void;
-}
-
-function Toast({ message, onClose }: ToastProps) {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      transition={{ ease: EASING_NEBULA, duration: 0.4 }}
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-white/10 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-full shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] whitespace-nowrap"
-    >
-      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-500/20 text-green-400">
-        <Check className="w-3 h-3" />
-      </div>
-      <span className="text-sm font-medium text-white">{message}</span>
-    </motion.div>
-  );
-}
 
 export default function Home() {
   const [isCtaHovered, setIsCtaHovered] = useState(false);
@@ -448,6 +389,11 @@ export default function Home() {
 
         {/* Featured Projects Section */}
         <section id="projects" className="py-20 md:py-32 relative z-10">
+          {/* Auxiliary 3D Background for Projects */}
+          <Suspense fallback={null}>
+            <SectionBackground />
+          </Suspense>
+
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="mb-12 md:mb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
               <motion.div
@@ -664,13 +610,30 @@ export default function Home() {
 
               <div className="flex items-center gap-6">
                 <a
+                  href={SOCIAL_LINKS.threads}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-500 hover:text-white transition-colors"
+                  aria-label="Threads"
+                >
+                  <AtSign className="h-5 w-5" />
+                </a>
+                <a
                   href={SOCIAL_LINKS.github}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-slate-500 hover:text-white transition-colors"
+                  aria-label="GitHub"
                 >
                   <Github className="h-5 w-5" />
                 </a>
+                <button
+                  onClick={copyEmail}
+                  className="text-slate-500 hover:text-white transition-colors"
+                  aria-label="Copy email"
+                >
+                  <Mail className="h-5 w-5" />
+                </button>
               </div>
             </div>
           </div>

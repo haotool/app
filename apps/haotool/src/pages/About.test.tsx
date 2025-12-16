@@ -31,7 +31,7 @@ describe('About', () => {
   it('renders introduction text', () => {
     render(<About />, { wrapper: RouterWrapper });
 
-    expect(screen.getByText(/一位熱愛打造「好工具」的全端開發者/i)).toBeInTheDocument();
+    expect(screen.getByText(/一位將程式碼雕琢為數位藝術的全端開發者/i)).toBeInTheDocument();
   });
 
   it('renders skill cards', () => {
