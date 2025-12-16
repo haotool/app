@@ -27,6 +27,27 @@ vi.mock('../components/MobileMenu', () => ({
   default: () => null,
 }));
 
+// Mock TextReveal component to preserve character splitting for tests
+vi.mock('../components/TextReveal', () => ({
+  TextReveal: ({ text, className }: { text: string; className?: string }) => (
+    <span className={className}>
+      {text.split('').map((char, i) => (
+        <span key={i}>{char}</span>
+      ))}
+    </span>
+  ),
+}));
+
+// Mock SectionBackground component to avoid Three.js in tests
+vi.mock('../components/SectionBackground', () => ({
+  default: () => null,
+}));
+
+// Mock Toast component
+vi.mock('../components/Toast', () => ({
+  Toast: () => null,
+}));
+
 import Home from './Home';
 
 // Wrapper component for router context

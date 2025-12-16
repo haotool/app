@@ -46,7 +46,7 @@ describe('Contact', () => {
     render(<Contact />, { wrapper: RouterWrapper });
 
     const githubLink = screen.getByRole('link', { name: /Open GitHub/i });
-    expect(githubLink).toHaveAttribute('href', 'https://github.com/azlife');
+    expect(githubLink).toHaveAttribute('href', 'https://github.com/haotool/app');
   });
 
   it('renders Threads link with correct href', () => {
