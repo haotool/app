@@ -9,7 +9,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, MotionConfig } from 'framer-motion';
 import Lenis from 'lenis';
-import { ArrowRight, Github, Sparkles, Menu, X, AtSign, Mail } from 'lucide-react';
+import { ArrowRight, Github, Sparkles, Menu, X, AtSign, Mail, Send } from 'lucide-react';
 import { Counter } from '../components/Counter';
 import { ProjectCard } from '../components/ProjectCard';
 import { AccordionItem } from '../components/Accordion';
@@ -138,7 +138,7 @@ export default function Home() {
   const featuredProjects = PROJECTS.filter((p) => p.featured);
 
   const copyEmail = () => {
-    void navigator.clipboard.writeText('contact@haotool.org');
+    void navigator.clipboard.writeText(SOCIAL_LINKS.email);
     setToastMessage('Email copied to clipboard');
   };
 
@@ -552,7 +552,7 @@ export default function Home() {
         <section id="contact" className="py-20 md:py-32 relative z-10">
           <div className="max-w-7xl mx-auto px-6">
             <motion.div
-              className="text-center"
+              className="text-center mb-16"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -561,34 +561,104 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-white md:text-5xl tracking-tighter mb-6">
                 Let&apos;s Build Something
               </h2>
-              <p className="text-slate-400 max-w-md mx-auto text-base md:text-lg font-light leading-relaxed mb-10">
+              <p className="text-slate-400 max-w-md mx-auto text-base md:text-lg font-light leading-relaxed">
                 有專案想法？或只是想聊聊技術？隨時歡迎聯繫。
               </p>
+            </motion.div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={copyEmail}
-                  className="group relative flex items-center gap-2 rounded-full bg-white pl-8 pr-6 py-3.5 text-sm font-bold text-black transition-all hover:bg-slate-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] cursor-pointer"
-                >
-                  複製 Email
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white transition-transform group-hover:translate-x-1">
-                    <ArrowRight className="h-3 w-3" />
+            {/* Author Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2, ease: EASING_NEBULA }}
+              className="max-w-2xl mx-auto"
+            >
+              <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-900/20 via-[#0a0a0a]/95 to-purple-900/20 border border-white/10 p-8 md:p-10 backdrop-blur-xl shadow-[0_20px_70px_-15px_rgba(99,102,241,0.3)] hover:shadow-[0_20px_90px_-15px_rgba(99,102,241,0.5)] transition-all duration-500">
+                {/* Animated Background Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+                <div className="relative z-10 text-center">
+                  {/* Author Info */}
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-bold text-white mb-2">阿璋 (AZ)</h3>
+                    <div className="flex items-center justify-center gap-2 text-slate-400 text-sm">
+                      <span className="inline-block w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                      <span>Full-Stack Developer & Design Engineer</span>
+                    </div>
                   </div>
-                </motion.button>
 
-                <motion.a
-                  href={SOCIAL_LINKS.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.96 }}
-                  className="group flex items-center gap-2 rounded-full bg-white/5 px-6 py-3.5 text-sm font-medium text-white ring-1 ring-white/10 transition-all hover:bg-white/10 hover:ring-brand-500/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] backdrop-blur-md"
-                >
-                  <Github className="h-4 w-4" />
-                  GitHub
-                </motion.a>
+                  {/* Bio */}
+                  <p className="text-slate-300 leading-relaxed mb-8 max-w-lg mx-auto">
+                    專注於現代 Web 技術與 3D 互動體驗，致力於打造兼具實用性與美感的數位產品。
+                  </p>
+
+                  {/* Contact Methods */}
+                  <div className="grid sm:grid-cols-3 gap-3 mb-6">
+                    {/* Threads */}
+                    <motion.a
+                      href={SOCIAL_LINKS.threads}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="group/card flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-500/50 hover:bg-white/10 transition-all duration-300"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/10 text-brand-400 group-hover/card:bg-brand-500/20 transition-colors">
+                        <AtSign className="h-5 w-5" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs font-medium text-slate-400 mb-0.5">Threads</div>
+                        <div className="text-sm font-semibold text-white">@azlife_1224</div>
+                      </div>
+                    </motion.a>
+
+                    {/* GitHub */}
+                    <motion.a
+                      href={SOCIAL_LINKS.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="group/card flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-500/50 hover:bg-white/10 transition-all duration-300"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/10 text-brand-400 group-hover/card:bg-brand-500/20 transition-colors">
+                        <Github className="h-5 w-5" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs font-medium text-slate-400 mb-0.5">GitHub</div>
+                        <div className="text-sm font-semibold text-white">@azlife</div>
+                      </div>
+                    </motion.a>
+
+                    {/* Email */}
+                    <motion.button
+                      onClick={copyEmail}
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="group/card flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-500/50 hover:bg-white/10 transition-all duration-300"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/10 text-brand-400 group-hover/card:bg-brand-500/20 transition-colors">
+                        <Mail className="h-5 w-5" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs font-medium text-slate-400 mb-0.5">Email</div>
+                        <div className="text-sm font-semibold text-white">複製信箱</div>
+                      </div>
+                    </motion.button>
+                  </div>
+
+                  {/* Primary CTA */}
+                  <motion.button
+                    onClick={copyEmail}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.96 }}
+                    className="group/cta inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-brand-500 to-purple-500 text-white font-bold rounded-full hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300"
+                  >
+                    <Send className="h-4 w-4 group-hover/cta:translate-x-1 transition-transform" />
+                    立即聯繫
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           </div>

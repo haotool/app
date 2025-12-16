@@ -8,7 +8,7 @@
 export const APP_NAME = 'HAOTOOL';
 
 export const SOCIAL_LINKS = {
-  github: 'https://github.com/azlife',
+  github: 'https://github.com/haotool/app',
   threads: 'https://www.threads.net/@azlife_1224',
   email: 'haotool.org@gmail.com',
 } as const;
