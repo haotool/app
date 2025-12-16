@@ -9,7 +9,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, MotionConfig } from 'framer-motion';
 import Lenis from 'lenis';
-import { ArrowRight, Github, Sparkles, Menu, X, AtSign, Mail, Send } from 'lucide-react';
+import { ArrowRight, Github, Sparkles, Menu, X, AtSign, Mail } from 'lucide-react';
 import { Counter } from '../components/Counter';
 import { ProjectCard } from '../components/ProjectCard';
 import { AccordionItem } from '../components/Accordion';
@@ -553,119 +553,139 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6">
             {/* Header */}
             <motion.div
-              className="text-center mb-16"
+              className="mb-16"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: EASING_NEBULA }}
             >
+              <div className="inline-block mb-6">
+                <span className="text-brand-300 font-mono text-xs tracking-wider uppercase border border-brand-500/20 px-2 py-1 rounded bg-brand-500/5 shadow-[0_0_10px_rgba(99,102,241,0.1)]">
+                  Get in Touch
+                </span>
+              </div>
               <h2 className="text-3xl font-bold text-white md:text-5xl tracking-tighter mb-6">
                 Let&apos;s Build Something
               </h2>
-              <p className="text-slate-400 max-w-xl mx-auto text-base md:text-lg font-light leading-relaxed">
-                有專案想法？或只是想聊聊技術？隨時歡迎聯繫。
+              <p className="text-slate-400 max-w-2xl text-base md:text-lg font-light leading-relaxed">
+                有專案想法？或只是想聊聊技術？隨時歡迎透過以下方式聯繫。
               </p>
             </motion.div>
 
             {/* Contact Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Author Info Card */}
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
+              {/* Left: Author Info */}
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.1, ease: EASING_NEBULA }}
-                className="md:col-span-2 lg:col-span-2"
+                transition={{ duration: 0.8, ease: EASING_NEBULA, delay: 0.1 }}
               >
-                <div className="group relative overflow-hidden h-full rounded-3xl bg-gradient-to-br from-brand-900/20 via-[#0a0a0a]/95 to-purple-900/20 border border-white/10 p-8 backdrop-blur-xl hover:border-brand-500/30 transition-all duration-500">
-                  <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="group relative overflow-hidden rounded-2xl bg-[#0a0a0a] border border-white/5 ring-1 ring-white/5 p-1 transition-all hover:ring-brand-500/40 hover:shadow-[0_0_40px_rgba(99,102,241,0.1)] h-full">
+                  <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                  <div className="relative rounded-xl bg-[#050505] p-6 md:p-8 overflow-hidden h-full flex flex-col">
+                    {/* Grid Background */}
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,black,transparent)] pointer-events-none" />
 
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="inline-block w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
-                      <span className="text-sm font-medium text-slate-400">
-                        Full-Stack Developer & Design Engineer
-                      </span>
+                    <div className="relative z-10 flex-1">
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 border border-brand-500/20 text-brand-400">
+                          <Sparkles className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-base md:text-lg font-bold text-white">阿璋</h3>
+                          <p className="text-xs text-slate-500 font-mono mt-0.5">
+                            Full-Stack Developer
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="text-slate-400 mb-6 text-sm leading-relaxed">
+                        專注於現代 Web 技術與 3D
+                        互動體驗，致力於打造兼具實用性與美感的數位產品。從概念設計到程式實作，追求每個細節的完美呈現。
+                      </p>
+
+                      <div className="flex items-center gap-2 mt-auto">
+                        <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-xs text-slate-500">Open for commissions</span>
+                      </div>
                     </div>
-
-                    <h3 className="text-3xl font-bold text-white mb-4">阿璋</h3>
-
-                    <p className="text-slate-300 leading-relaxed text-base">
-                      專注於現代 Web 技術與 3D 互動體驗，致力於打造兼具實用性與美感的數位產品。
-                    </p>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Threads Card */}
-              <motion.a
-                href={SOCIAL_LINKS.threads}
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
+              {/* Right: Contact Methods */}
+              <motion.div
+                className="flex flex-col h-full"
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.2, ease: EASING_NEBULA }}
-                whileHover={{ scale: 1.02, y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                className="group relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 p-8 backdrop-blur-xl hover:border-brand-500/50 hover:bg-white/10 transition-all duration-300"
+                transition={{ duration: 0.8, ease: EASING_NEBULA, delay: 0.2 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-6 md:mb-8">
+                  Contact Methods
+                </h3>
+                <div className="space-y-4 flex-1">
+                  {/* Threads */}
+                  <motion.a
+                    href={SOCIAL_LINKS.threads}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ x: 4 }}
+                    className="group block relative overflow-hidden rounded-xl bg-[#0a0a0a] border border-white/5 p-4 transition-all hover:border-brand-500/40 hover:bg-white/5"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 border border-brand-500/20 text-brand-400 group-hover:bg-brand-500/20 transition-colors">
+                        <AtSign className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-xs font-mono text-slate-500 mb-0.5">Threads</div>
+                        <div className="text-sm font-semibold text-white">@azlife_1224</div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-brand-400 transition-colors" />
+                    </div>
+                  </motion.a>
 
-                <div className="relative z-10">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-400 group-hover:bg-brand-500/20 transition-colors mb-4">
-                    <AtSign className="h-6 w-6" />
-                  </div>
-                  <div className="text-xs font-medium text-slate-400 mb-1">Threads</div>
-                  <div className="text-base font-semibold text-white">@azlife_1224</div>
+                  {/* GitHub */}
+                  <motion.a
+                    href={SOCIAL_LINKS.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ x: 4 }}
+                    className="group block relative overflow-hidden rounded-xl bg-[#0a0a0a] border border-white/5 p-4 transition-all hover:border-brand-500/40 hover:bg-white/5"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 border border-brand-500/20 text-brand-400 group-hover:bg-brand-500/20 transition-colors">
+                        <Github className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-xs font-mono text-slate-500 mb-0.5">GitHub</div>
+                        <div className="text-sm font-semibold text-white">haotool/app</div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-brand-400 transition-colors" />
+                    </div>
+                  </motion.a>
+
+                  {/* Email */}
+                  <motion.button
+                    onClick={copyEmail}
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="group w-full block relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-500/10 to-purple-500/10 border border-brand-500/20 p-4 transition-all hover:border-brand-500/40 hover:from-brand-500/20 hover:to-purple-500/20"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/20 border border-brand-500/30 text-brand-400 group-hover:bg-brand-500/30 transition-colors">
+                        <Mail className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="text-xs font-mono text-brand-400 mb-0.5">Email</div>
+                        <div className="text-sm font-semibold text-white">複製信箱地址</div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-brand-400 transition-colors" />
+                    </div>
+                  </motion.button>
                 </div>
-              </motion.a>
-
-              {/* GitHub Card */}
-              <motion.a
-                href={SOCIAL_LINKS.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.3, ease: EASING_NEBULA }}
-                whileHover={{ scale: 1.02, y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                className="group relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 p-8 backdrop-blur-xl hover:border-brand-500/50 hover:bg-white/10 transition-all duration-300"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                <div className="relative z-10">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-400 group-hover:bg-brand-500/20 transition-colors mb-4">
-                    <Github className="h-6 w-6" />
-                  </div>
-                  <div className="text-xs font-medium text-slate-400 mb-1">GitHub</div>
-                  <div className="text-base font-semibold text-white">@azlife</div>
-                </div>
-              </motion.a>
-
-              {/* Email Card */}
-              <motion.button
-                onClick={copyEmail}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.4, ease: EASING_NEBULA }}
-                whileHover={{ scale: 1.02, y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                className="group relative overflow-hidden md:col-span-2 lg:col-span-1 rounded-3xl bg-gradient-to-br from-brand-500 to-purple-500 p-8 backdrop-blur-xl hover:shadow-[0_0_40px_rgba(99,102,241,0.4)] transition-all duration-300"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                <div className="relative z-10 text-left">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white mb-4">
-                    <Send className="h-6 w-6" />
-                  </div>
-                  <div className="text-sm font-medium text-white/80 mb-1">立即聯繫</div>
-                  <div className="text-base font-bold text-white">複製 Email</div>
-                </div>
-              </motion.button>
+              </motion.div>
             </div>
           </div>
         </section>
