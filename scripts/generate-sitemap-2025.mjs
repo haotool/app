@@ -240,11 +240,7 @@ async function main() {
   console.log(`  不同日期: ${uniqueDates.size} 個`);
 
   if (uniqueDates.size < 3) {
-    log(
-      colors.yellow,
-      '⚠️',
-      '警告：時間戳多樣性不足（<3個不同日期），可能影響 SEO 真實性判斷',
-    );
+    log(colors.yellow, '⚠️', '警告：時間戳多樣性不足（<3個不同日期），可能影響 SEO 真實性判斷');
   }
 
   // 2025 標準驗證

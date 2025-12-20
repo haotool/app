@@ -153,11 +153,7 @@ async function runTests() {
   const uniqueDates = new Set(lastmods.map((d) => d.split('T')[0]));
 
   if (uniqueDates.size < 3) {
-    log(
-      colors.yellow,
-      '⚠',
-      `WARNING: 只有 ${uniqueDates.size} 個不同日期（建議 ≥3 以展示真實性）`,
-    );
+    log(colors.yellow, '⚠', `WARNING: 只有 ${uniqueDates.size} 個不同日期（建議 ≥3 以展示真實性）`);
     console.log(`    提示: 這在開發環境中是正常的，生產環境會隨時間自然改善`);
   } else {
     log(colors.green, '✓', `PASSED: ${uniqueDates.size} 個不同的修改日期`);
@@ -216,8 +212,7 @@ async function runTests() {
   const missingPaths = [];
 
   SEO_PATHS.forEach((path) => {
-    const expectedUrl =
-      path === '/' ? siteUrl : `${siteUrl}${path.slice(1)}`; // 移除開頭的 /
+    const expectedUrl = path === '/' ? siteUrl : `${siteUrl}${path.slice(1)}`; // 移除開頭的 /
     if (!xml.includes(`<loc>${expectedUrl}</loc>`)) {
       missingPaths.push(path);
     }

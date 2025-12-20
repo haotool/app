@@ -124,10 +124,7 @@ async function main() {
 
   // 1. Sitemap 2025 驗證
   header('1. Sitemap 2025 標準驗證');
-  results.sitemap = runVerification(
-    resolve(__dirname, 'verify-sitemap-2025.mjs'),
-    'Sitemap 2025'
-  );
+  results.sitemap = runVerification(resolve(__dirname, 'verify-sitemap-2025.mjs'), 'Sitemap 2025');
   results.total++;
   if (results.sitemap) results.passed++;
   else results.failed++;
@@ -136,7 +133,7 @@ async function main() {
   header('2. Breadcrumb Schema 驗證');
   results.breadcrumb = runVerification(
     resolve(__dirname, 'verify-breadcrumb-schema.mjs'),
-    'Breadcrumb Schema'
+    'Breadcrumb Schema',
   );
   results.total++;
   if (results.breadcrumb) results.passed++;
@@ -146,7 +143,7 @@ async function main() {
   header('3. JSON-LD 結構化數據驗證');
   results.structuredData = runVerification(
     resolve(__dirname, 'verify-structured-data.mjs'),
-    'JSON-LD 結構化數據'
+    'JSON-LD 結構化數據',
   );
   results.total++;
   if (results.structuredData) results.passed++;

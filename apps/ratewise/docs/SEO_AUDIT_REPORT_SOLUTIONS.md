@@ -1,4 +1,5 @@
 # RateWise SEO 深度審計報告（第二部分）
+
 ## 修復計畫與實作指南
 
 **審計日期**: 2025-12-19
@@ -23,6 +24,7 @@
 ### 1. 圖片優化 - 減少 70% 檔案大小
 
 #### 問題現狀
+
 ```bash
 logo.png           1.4 MB  → 目標 <100 KB
 og-image.png       663 KB  → 目標 <200 KB
@@ -33,11 +35,13 @@ pwa-512x512.png    283 KB  → 目標 <150 KB
 #### 解決方案 - 自動化圖片優化腳本
 
 **Step 1: 安裝依賴**
+
 ```bash
 pnpm add -D sharp @squoosh/lib imagemin imagemin-webp imagemin-avif
 ```
 
 **Step 2: 創建優化腳本**
+
 ```javascript
 // scripts/optimize-images.mjs
 import sharp from 'sharp';
@@ -46,8 +50,8 @@ import { join, extname } from 'path';
 
 const IMAGE_DIRS = ['apps/ratewise/public', 'apps/ratewise/public/icons'];
 const MAX_SIZES = {
-  'logo.png': 100 * 1024,        // 100 KB
-  'og-image.png': 200 * 1024,    // 200 KB
+  'logo.png': 100 * 1024, // 100 KB
+  'og-image.png': 200 * 1024, // 200 KB
   'twitter-image.png': 200 * 1024,
   'pwa-*.png': 150 * 1024,
 };
@@ -57,9 +61,10 @@ async function optimizeImage(filePath) {
   if (!['.png', '.jpg', '.jpeg'].includes(ext)) return;
 
   const fileName = basename(filePath);
-  const maxSize = Object.entries(MAX_SIZES).find(([pattern]) =>
-    fileName.match(pattern.replace('*', '.*'))
-  )?.[1] || Infinity;
+  const maxSize =
+    Object.entries(MAX_SIZES).find(([pattern]) =>
+      fileName.match(pattern.replace('*', '.*')),
+    )?.[1] || Infinity;
 
   const stats = await stat(filePath);
   if (stats.size <= maxSize) {
@@ -72,14 +77,10 @@ async function optimizeImage(filePath) {
   const metadata = await image.metadata();
 
   // WebP (通常比 PNG 小 30-50%)
-  await image
-    .webp({ quality: 85, effort: 6 })
-    .toFile(filePath.replace(ext, '.webp'));
+  await image.webp({ quality: 85, effort: 6 }).toFile(filePath.replace(ext, '.webp'));
 
   // AVIF (比 WebP 再小 20-30%)
-  await image
-    .avif({ quality: 75, effort: 6 })
-    .toFile(filePath.replace(ext, '.avif'));
+  await image.avif({ quality: 75, effort: 6 }).toFile(filePath.replace(ext, '.avif'));
 
   // 優化原始 PNG (作為 fallback)
   await image
@@ -87,9 +88,11 @@ async function optimizeImage(filePath) {
     .toFile(filePath.replace(ext, '.optimized.png'));
 
   const newStats = await stat(filePath.replace(ext, '.optimized.png'));
-  const savings = ((stats.size - newStats.size) / stats.size * 100).toFixed(1);
+  const savings = (((stats.size - newStats.size) / stats.size) * 100).toFixed(1);
 
-  console.log(`✅ ${fileName}: ${(stats.size / 1024).toFixed(1)} KB → ${(newStats.size / 1024).toFixed(1)} KB (省 ${savings}%)`);
+  console.log(
+    `✅ ${fileName}: ${(stats.size / 1024).toFixed(1)} KB → ${(newStats.size / 1024).toFixed(1)} KB (省 ${savings}%)`,
+  );
 }
 
 async function main() {
@@ -105,6 +108,7 @@ main().catch(console.error);
 ```
 
 **Step 3: 更新 HTML 使用現代圖片格式**
+
 ```html
 <!-- apps/ratewise/index.html -->
 
@@ -120,10 +124,14 @@ main().catch(console.error);
 <link rel="preload" as="image" type="image/webp" href="/ratewise/og-image.webp?v=20251219" />
 
 <!-- Fallback to PNG -->
-<meta property="og:image:secure_url" content="https://app.haotool.org/ratewise/og-image.png?v=20251219" />
+<meta
+  property="og:image:secure_url"
+  content="https://app.haotool.org/ratewise/og-image.png?v=20251219"
+/>
 ```
 
 **Step 4: Logo 使用 SVG 向量圖**
+
 ```bash
 # 將 logo.png (1.4MB) 轉換為 SVG (<10KB)
 # 使用線上工具: https://www.pngtosvg.com/
@@ -134,6 +142,7 @@ main().catch(console.error);
 ```
 
 **Step 5: 添加到 package.json**
+
 ```json
 {
   "scripts": {
@@ -146,6 +155,7 @@ main().catch(console.error);
 #### BDD 測試
 
 **🔴 RED - 寫測試**
+
 ```typescript
 // scripts/__tests__/image-optimization.test.ts
 import { describe, it, expect } from 'vitest';
@@ -170,12 +180,14 @@ describe('Image Optimization', () => {
 ```
 
 **🟢 GREEN - 執行優化**
+
 ```bash
 pnpm optimize:images
 pnpm test scripts/__tests__/image-optimization.test.ts
 ```
 
 **🔵 REFACTOR - CI 自動化**
+
 ```yaml
 # .github/workflows/ci.yml
 - name: Check Image Sizes
@@ -188,6 +200,7 @@ pnpm test scripts/__tests__/image-optimization.test.ts
 ```
 
 #### 預期效果
+
 - ✅ logo.png: 1.4 MB → 80 KB (省 94%)
 - ✅ og-image.png: 663 KB → 180 KB (省 73%)
 - ✅ 總共節省: ~2.3 MB → ~500 KB (省 78%)
@@ -256,7 +269,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
 
 interface SEOProps {
   // ... 現有屬性
-  breadcrumb?: BreadcrumbItem[];  // 新增
+  breadcrumb?: BreadcrumbItem[]; // 新增
 }
 
 export function SEOHelmet({
@@ -266,16 +279,19 @@ export function SEOHelmet({
   // ... 現有代碼
 
   // 生成 BreadcrumbList schema
-  const breadcrumbSchema = breadcrumb && breadcrumb.length > 1 ? {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: breadcrumb.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.label,
-      item: item.href ? `${SITE_BASE_URL}${item.href.replace(/^\//, '')}` : undefined,
-    })),
-  } : null;
+  const breadcrumbSchema =
+    breadcrumb && breadcrumb.length > 1
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: breadcrumb.map((item, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: item.label,
+            item: item.href ? `${SITE_BASE_URL}${item.href.replace(/^\//, '')}` : undefined,
+          })),
+        }
+      : null;
 
   // 合併 structured data
   const structuredData = [...DEFAULT_JSON_LD, ...baseJsonLd];
@@ -330,27 +346,19 @@ export default function USDToTWD() {
 
 ```typescript
 // apps/ratewise/src/pages/FAQ.tsx
-const breadcrumbItems = [
-  { label: '首頁', href: '/' },
-  { label: '常見問題' },
-];
+const breadcrumbItems = [{ label: '首頁', href: '/' }, { label: '常見問題' }];
 
 // apps/ratewise/src/pages/Guide.tsx
-const breadcrumbItems = [
-  { label: '首頁', href: '/' },
-  { label: '使用指南' },
-];
+const breadcrumbItems = [{ label: '首頁', href: '/' }, { label: '使用指南' }];
 
 // apps/ratewise/src/pages/About.tsx
-const breadcrumbItems = [
-  { label: '首頁', href: '/' },
-  { label: '關於我們' },
-];
+const breadcrumbItems = [{ label: '首頁', href: '/' }, { label: '關於我們' }];
 ```
 
 #### BDD 測試
 
 **🔴 RED - 寫測試**
+
 ```typescript
 // apps/ratewise/src/components/__tests__/Breadcrumb.test.tsx
 import { render, screen } from '@testing-library/react';
@@ -407,6 +415,7 @@ describe('Breadcrumb', () => {
 ```
 
 **🔴 RED - Schema 測試**
+
 ```typescript
 // apps/ratewise/src/components/__tests__/SEOHelmet.test.tsx
 describe('SEOHelmet - Breadcrumb Schema', () => {
@@ -430,6 +439,7 @@ describe('SEOHelmet - Breadcrumb Schema', () => {
 ```
 
 **🟢 GREEN - 實作組件**
+
 ```bash
 # 執行測試確認通過
 pnpm test Breadcrumb.test.tsx
@@ -437,18 +447,13 @@ pnpm test SEOHelmet.test.tsx
 ```
 
 **🔵 REFACTOR - 提取常用麵包屑**
+
 ```typescript
 // apps/ratewise/src/config/breadcrumbs.ts
 export const BREADCRUMB_TEMPLATES = {
   home: [{ label: '首頁', href: '/' }],
-  faq: [
-    { label: '首頁', href: '/' },
-    { label: '常見問題' },
-  ],
-  about: [
-    { label: '首頁', href: '/' },
-    { label: '關於我們' },
-  ],
+  faq: [{ label: '首頁', href: '/' }, { label: '常見問題' }],
+  about: [{ label: '首頁', href: '/' }, { label: '關於我們' }],
   currencyPage: (from: string, to: string) => [
     { label: '首頁', href: '/' },
     { label: '幣別換算', href: '/exchange/' },
@@ -458,6 +463,7 @@ export const BREADCRUMB_TEMPLATES = {
 ```
 
 #### 預期效果
+
 - ✅ 所有頁面都有麵包屑導航
 - ✅ Google 搜尋結果顯示麵包屑（提升 CTR 5-10%）
 - ✅ 改善網站結構理解（有助於 SEO 排名）
@@ -468,6 +474,7 @@ export const BREADCRUMB_TEMPLATES = {
 ### 3. 修正 Sitemap.xml 時間戳邏輯
 
 #### 問題分析
+
 ```xml
 <!-- ❌ 當前：所有頁面都是同一天 -->
 <url>
@@ -479,6 +486,7 @@ export const BREADCRUMB_TEMPLATES = {
 #### 解決方案
 
 **Step 1: 更新 Sitemap 生成腳本**
+
 ```javascript
 // scripts/generate-sitemap.js
 import { statSync, writeFileSync } from 'fs';
@@ -490,7 +498,7 @@ const ROUTES = [
   { path: '/about/', priority: 0.6, changefreq: 'monthly' },
   { path: '/guide/', priority: 0.7, changefreq: 'monthly' },
   // ... 13 個幣別頁面
-  { path: '/usd-twd/', priority: 0.8, changefreq: 'daily' },  // ✅ 匯率頁面改為 daily
+  { path: '/usd-twd/', priority: 0.8, changefreq: 'daily' }, // ✅ 匯率頁面改為 daily
 ];
 
 /**
@@ -559,32 +567,38 @@ generateSitemap();
 ```
 
 **Step 2: 添加 Image Sitemap Extension**
+
 ```javascript
 // 為首頁和幣別頁面添加圖片信息
 function generateUrlWithImages(route) {
-  const images = route.path === '/'
-    ? [
-        {
-          loc: 'https://app.haotool.org/ratewise/og-image.avif',
-          caption: 'RateWise 匯率轉換器應用截圖',
-        },
-        {
-          loc: 'https://app.haotool.org/ratewise/screenshots/desktop-converter.png',
-          caption: 'RateWise 桌面版完整介面',
-        },
-      ]
-    : [
-        {
-          loc: 'https://app.haotool.org/ratewise/og-image.avif',
-          caption: `${route.path.replace(/\//g, '').toUpperCase()} 匯率換算截圖`,
-        },
-      ];
+  const images =
+    route.path === '/'
+      ? [
+          {
+            loc: 'https://app.haotool.org/ratewise/og-image.avif',
+            caption: 'RateWise 匯率轉換器應用截圖',
+          },
+          {
+            loc: 'https://app.haotool.org/ratewise/screenshots/desktop-converter.png',
+            caption: 'RateWise 桌面版完整介面',
+          },
+        ]
+      : [
+          {
+            loc: 'https://app.haotool.org/ratewise/og-image.avif',
+            caption: `${route.path.replace(/\//g, '').toUpperCase()} 匯率換算截圖`,
+          },
+        ];
 
-  const imageXml = images.map(img => `
+  const imageXml = images
+    .map(
+      (img) => `
     <image:image>
       <image:loc>${img.loc}</image:loc>
       <image:caption>${img.caption}</image:caption>
-    </image:image>`).join('');
+    </image:image>`,
+    )
+    .join('');
 
   return `  <url>
     <loc>${route.loc}</loc>
@@ -598,6 +612,7 @@ function generateUrlWithImages(route) {
 ```
 
 **Step 3: 更新 package.json**
+
 ```json
 {
   "scripts": {
@@ -610,6 +625,7 @@ function generateUrlWithImages(route) {
 #### BDD 測試
 
 **🔴 RED - 寫測試**
+
 ```typescript
 // scripts/__tests__/sitemap.test.ts
 import { describe, it, expect } from 'vitest';
@@ -640,7 +656,7 @@ describe('Sitemap.xml', () => {
     });
 
     const urls = parsed.urlset.url;
-    const lastmods = urls.map(u => u.lastmod[0]);
+    const lastmods = urls.map((u) => u.lastmod[0]);
     const uniqueLastmods = new Set(lastmods);
 
     // 至少應該有 5 個不同的時間戳（不太可能所有文件都同時修改）
@@ -657,12 +673,14 @@ describe('Sitemap.xml', () => {
 ```
 
 **🟢 GREEN - 執行生成**
+
 ```bash
 pnpm generate:sitemap
 pnpm test scripts/__tests__/sitemap.test.ts
 ```
 
 **🔵 REFACTOR - 自動化**
+
 ```yaml
 # .github/workflows/ci.yml
 - name: Validate Sitemap
@@ -672,6 +690,7 @@ pnpm test scripts/__tests__/sitemap.test.ts
 ```
 
 #### 預期效果
+
 - ✅ Sitemap lastmod 反映真實修改時間
 - ✅ Google 更有效率地爬取更新的頁面
 - ✅ 幣別頁面 changefreq 改為 daily（符合實際）
@@ -834,9 +853,7 @@ export function Footer() {
         {/* 版權與法律 */}
         <div className="border-t border-slate-800 mt-8 pt-6 text-sm text-slate-500">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>
-              © {currentYear} RateWise. 本站資料僅供參考，實際交易請以金融機構公告為準。
-            </p>
+            <p>© {currentYear} RateWise. 本站資料僅供參考，實際交易請以金融機構公告為準。</p>
             <div className="flex gap-6">
               <Link to="/privacy/" className="hover:text-slate-300 transition-colors">
                 隱私權政策
@@ -873,11 +890,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <HelmetProvider>
         <ErrorBoundary>
           <main role="main" className="min-h-screen">
-            <Suspense fallback={<SkeletonLoader />}>
-              {children}
-            </Suspense>
+            <Suspense fallback={<SkeletonLoader />}>{children}</Suspense>
           </main>
-          <Footer />  {/* 新增 */}
+          <Footer /> {/* 新增 */}
         </ErrorBoundary>
         <UpdatePrompt />
       </HelmetProvider>
@@ -889,6 +904,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 #### BDD 測試
 
 **🔴 RED - 寫測試**
+
 ```typescript
 // apps/ratewise/src/components/__tests__/Footer.test.tsx
 import { render, screen } from '@testing-library/react';
@@ -953,11 +969,13 @@ describe('Footer', () => {
 ```
 
 **🟢 GREEN - 實作組件**
+
 ```bash
 pnpm test Footer.test.tsx
 ```
 
 **🔵 REFACTOR - 提取配置**
+
 ```typescript
 // apps/ratewise/src/config/footer-links.ts
 export const FOOTER_LINKS = {
@@ -980,6 +998,7 @@ export const FOOTER_LINKS = {
 ```
 
 #### 預期效果
+
 - ✅ 每個頁面都有 17 個內部連結（首頁連結權重傳遞）
 - ✅ 幣別頁面相互連結（提升 PageRank 流動）
 - ✅ 添加權威外部連結（臺灣銀行）
@@ -1027,27 +1046,28 @@ export function RelatedPages({ pages }: RelatedPagesProps) {
 ```
 
 **在幣別頁面使用**:
+
 ```tsx
 // apps/ratewise/src/pages/USDToTWD.tsx
 const relatedPages = [
   {
     title: 'JPY → TWD 日圓換台幣',
     description: '日本旅遊換匯必備，即時日圓對台幣匯率',
-    href: '/jpy-twd/'
+    href: '/jpy-twd/',
   },
   {
     title: 'EUR → TWD 歐元換台幣',
     description: '歐洲旅遊換匯，歐元對台幣即時匯率',
-    href: '/eur-twd/'
+    href: '/eur-twd/',
   },
   {
     title: 'GBP → TWD 英鎊換台幣',
     description: '英國留學換匯，英鎊對台幣即時匯率',
-    href: '/gbp-twd/'
+    href: '/gbp-twd/',
   },
 ];
 
-<RelatedPages pages={relatedPages} />
+<RelatedPages pages={relatedPages} />;
 ```
 
 ---
@@ -1061,8 +1081,8 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { SEO_PATHS } from '../config/seo-paths';
 
 export default function Sitemap() {
-  const corePages = SEO_PATHS.filter(p => ['/', '/faq/', '/about/', '/guide/'].includes(p));
-  const currencyPages = SEO_PATHS.filter(p => p.includes('-twd/'));
+  const corePages = SEO_PATHS.filter((p) => ['/', '/faq/', '/about/', '/guide/'].includes(p));
+  const currencyPages = SEO_PATHS.filter((p) => p.includes('-twd/'));
 
   return (
     <>
@@ -1101,9 +1121,7 @@ export default function Sitemap() {
 
         {/* 幣別換算頁面 */}
         <section>
-          <h2 className="text-2xl font-semibold text-slate-800 mb-4">
-            幣別換算（依字母排序）
-          </h2>
+          <h2 className="text-2xl font-semibold text-slate-800 mb-4">幣別換算（依字母排序）</h2>
           <ul className="grid md:grid-cols-3 gap-3">
             {currencyPages.map((path) => {
               const [from, to] = path.replace(/\//g, '').split('-');
@@ -1129,6 +1147,7 @@ export default function Sitemap() {
 ```
 
 **添加到路由**:
+
 ```typescript
 // apps/ratewise/src/routes.tsx
 const routes = [
@@ -1199,6 +1218,7 @@ Allow: /
 ### 8. 補充圖片 Alt 屬性
 
 **Step 1: 創建檢查腳本**
+
 ```javascript
 // scripts/check-image-alt.mjs
 import { readFileSync, readdirSync } from 'fs';
@@ -1250,6 +1270,7 @@ if (errors.length > 0) {
 ```
 
 **Step 2: 手動修正**
+
 ```tsx
 // ❌ 錯誤
 <img src="/logo.png" />
@@ -1268,6 +1289,7 @@ if (errors.length > 0) {
 ```
 
 **Step 3: CI 自動檢查**
+
 ```json
 {
   "scripts": {
@@ -1284,12 +1306,14 @@ if (errors.length > 0) {
 ### 9. 實作英文版（en-US）
 
 **架構設計**:
+
 ```
 /ratewise/       → 繁體中文（預設）
 /ratewise/en/    → English version
 ```
 
 **Step 1: 國際化架構**
+
 ```typescript
 // apps/ratewise/src/i18n/locales.ts
 export const LOCALES = {
@@ -1335,6 +1359,7 @@ export const enUS = {
 ```
 
 **Step 2: 路由設計**
+
 ```typescript
 // apps/ratewise/src/routes.tsx
 const routes = [
@@ -1349,6 +1374,7 @@ const routes = [
 ```
 
 **Step 3: 更新 Sitemap**
+
 ```xml
 <url>
   <loc>https://app.haotool.org/ratewise/</loc>
@@ -1363,6 +1389,7 @@ const routes = [
 ### 10. 收集用戶評價並添加 Review Schema
 
 **Step 1: 評價收集機制**
+
 ```tsx
 // apps/ratewise/src/components/ReviewPrompt.tsx
 export function ReviewPrompt() {
@@ -1376,8 +1403,7 @@ export function ReviewPrompt() {
       return;
     }
 
-    const daysSinceInstall =
-      (Date.now() - new Date(installDate).getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceInstall = (Date.now() - new Date(installDate).getTime()) / (1000 * 60 * 60 * 24);
 
     if (daysSinceInstall >= 7 && !localStorage.getItem('reviewSubmitted')) {
       setIsVisible(true);
@@ -1389,9 +1415,7 @@ export function ReviewPrompt() {
   return (
     <div className="fixed bottom-4 right-4 bg-white rounded-xl shadow-xl p-6 max-w-md">
       <h3 className="font-bold text-lg mb-2">喜歡 RateWise 嗎？</h3>
-      <p className="text-slate-600 mb-4">
-        您的評價能幫助我們改進服務，也能讓更多人受惠！
-      </p>
+      <p className="text-slate-600 mb-4">您的評價能幫助我們改進服務，也能讓更多人受惠！</p>
       <div className="flex gap-3">
         <button
           onClick={() => {
@@ -1416,6 +1440,7 @@ export function ReviewPrompt() {
 ```
 
 **Step 2: 評價顯示與 Schema**
+
 ```tsx
 // apps/ratewise/src/pages/Reviews.tsx
 import { SEOHelmet } from '../components/SEOHelmet';
@@ -1447,7 +1472,7 @@ const reviewSchema = {
     bestRating: '5',
     worstRating: '1',
   },
-  review: REVIEWS.map(r => ({
+  review: REVIEWS.map((r) => ({
     '@type': 'Review',
     author: { '@type': 'Person', name: r.author },
     datePublished: r.date,
@@ -1548,7 +1573,7 @@ export function SocialShare({ url, title }: SocialShareProps) {
         aria-label="分享到 LINE"
       >
         <svg className="w-5 h-5 text-green-500" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
+          <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
         </svg>
       </a>
     </div>
@@ -1563,6 +1588,7 @@ export function SocialShare({ url, title }: SocialShareProps) {
 ### 12. URL 結構重構
 
 **Phase 1: 新增階層式 URL（保留舊 URL）**
+
 ```typescript
 // 新增路由
 '/exchange/' → 換算工具首頁
@@ -1574,6 +1600,7 @@ export function SocialShare({ url, title }: SocialShareProps) {
 ```
 
 **Phase 2: 設定 301 Redirect**
+
 ```typescript
 // apps/ratewise/src/routes.tsx
 import { Navigate } from 'react-router-dom';
@@ -1588,6 +1615,7 @@ const routes = [
 ```
 
 **Phase 3: 更新 Sitemap 與內部連結**
+
 ```xml
 <!-- sitemap.xml -->
 <url>
@@ -1604,6 +1632,7 @@ const routes = [
 ### 13. 建立內容行銷策略
 
 **部落格主題規劃**:
+
 ```
 /blog/
   → usd-twd-rate-forecast-2025/        2025 美金匯率預測
@@ -1614,6 +1643,7 @@ const routes = [
 ```
 
 **SEO 策略**:
+
 - 長尾關鍵字攻略
 - 內部連結到主要換算頁面
 - 定期更新內容（保持新鮮度）
@@ -1692,6 +1722,7 @@ jobs:
 ```
 
 **Lighthouse CI 配置**:
+
 ```json
 // .lighthouserc.json
 {
@@ -1727,28 +1758,33 @@ jobs:
 ### 驗收清單
 
 #### 圖片優化
+
 - [ ] logo.png < 100 KB
 - [ ] og-image.png < 200 KB
 - [ ] 所有圖片都有 WebP/AVIF 版本
 - [ ] Lighthouse Performance > 95
 
 #### 麵包屑導航
+
 - [ ] 所有頁面都有麵包屑 UI
 - [ ] 所有頁面都有 BreadcrumbList Schema
 - [ ] Google Rich Results Test 通過
 
 #### Sitemap
+
 - [ ] lastmod 反映真實修改時間
 - [ ] 至少 5 個不同的時間戳
 - [ ] 包含 Image Sitemap Extension
 - [ ] 提交到 Google Search Console 無錯誤
 
 #### 內部連結
+
 - [ ] Footer 包含所有 17 個頁面連結
 - [ ] 幣別頁面有「相關頁面」推薦
 - [ ] HTML Sitemap 頁面完整
 
 #### CI/CD
+
 - [ ] 圖片大小檢查自動化
 - [ ] Alt 屬性檢查自動化
 - [ ] Lighthouse CI 分數 > 90
@@ -1759,18 +1795,21 @@ jobs:
 ## 📊 成功指標（KPI）
 
 ### 技術指標
+
 - ✅ Lighthouse SEO: 100/100
 - ✅ Lighthouse Performance: > 95/100
 - ✅ Core Web Vitals: 全綠
 - ✅ Schema 驗證: 0 errors
 
 ### SEO 指標（3 個月後）
+
 - ✅ 自然搜尋流量: +30%
 - ✅ 平均排名: Top 5 (目標關鍵字)
 - ✅ Google 索引頁面: 17/17
 - ✅ Rich Results: 100% 顯示
 
 ### 用戶指標
+
 - ✅ 平均停留時間: +20%
 - ✅ 跳出率: -15%
 - ✅ 頁面深度: > 2 pages/session
@@ -1781,21 +1820,25 @@ jobs:
 ## 🎯 時程規劃
 
 ### 第 1 週（立即執行）
+
 - Day 1-2: 圖片優化 + 測試
 - Day 3-4: 麵包屑導航實作
 - Day 5: Sitemap 修正
 - Day 6-7: Footer 內部連結
 
 ### 第 2-4 週（短期執行）
+
 - Week 2: 相關頁面推薦 + HTML Sitemap
 - Week 3: robots.txt 修正 + Alt 屬性
 - Week 4: CI/CD 自動化設定
 
 ### 第 2-3 月（中期執行）
+
 - Month 2: 英文版規劃與實作
 - Month 3: 用戶評價收集 + Review Schema
 
 ### 第 4-12 月（長期執行）
+
 - Q2: URL 結構重構
 - Q3-Q4: 內容行銷與部落格建立
 

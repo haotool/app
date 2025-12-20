@@ -8,16 +8,16 @@
 
 ## 📊 總體進度
 
-| 階段 | 狀態 | 完成度 | 驗證狀態 |
-|------|------|--------|---------|
-| Stage 1: 圖片優化 (AVIF/WebP) | ✅ 已完成 | 100% | ⚠️ 腳本就緒，待執行優化 |
-| Stage 2: Sitemap 2025 重構 | ✅ 已完成 | 100% | ✅ 10/10 測試通過 |
-| Stage 3: 麵包屑導航實作 | ✅ 已完成 | 100% | ✅ 4/4 頁面整合 |
-| Stage 4: Core Web Vitals 優化 | ⏳ 待開始 | 0% | - |
-| Stage 5: 結構化數據完整性 | ⏳ 待開始 | 0% | - |
-| Stage 6: 內部連結結構 | ⏳ 待開始 | 0% | - |
-| Stage 7: CI/CD SEO 自動化 | 🔄 進行中 | 40% | ⚠️ 部分驗證腳本完成 |
-| Stage 8: E-E-A-T 優化 | ⏳ 待開始 | 0% | - |
+| 階段                          | 狀態      | 完成度 | 驗證狀態                |
+| ----------------------------- | --------- | ------ | ----------------------- |
+| Stage 1: 圖片優化 (AVIF/WebP) | ✅ 已完成 | 100%   | ⚠️ 腳本就緒，待執行優化 |
+| Stage 2: Sitemap 2025 重構    | ✅ 已完成 | 100%   | ✅ 10/10 測試通過       |
+| Stage 3: 麵包屑導航實作       | ✅ 已完成 | 100%   | ✅ 4/4 頁面整合         |
+| Stage 4: Core Web Vitals 優化 | ⏳ 待開始 | 0%     | -                       |
+| Stage 5: 結構化數據完整性     | ⏳ 待開始 | 0%     | -                       |
+| Stage 6: 內部連結結構         | ⏳ 待開始 | 0%     | -                       |
+| Stage 7: CI/CD SEO 自動化     | 🔄 進行中 | 40%    | ⚠️ 部分驗證腳本完成     |
+| Stage 8: E-E-A-T 優化         | ⏳ 待開始 | 0%     | -                       |
 
 **總完成度**: 37.5% (3/8 階段)
 
@@ -28,19 +28,22 @@
 ### 實作內容
 
 **新增文件**:
+
 - `scripts/optimize-images-2025.mjs` - 圖片優化腳本
 - `scripts/__tests__/image-optimization-2025.test.ts` - BDD 測試套件
 
 **優化配置**:
+
 ```javascript
 const OPTIMIZATION_CONFIG = {
-  avif: { quality: 75, effort: 6 },    // 最小檔案大小
-  webp: { quality: 85, effort: 6 },    // Fallback 格式
-  png: { compressionLevel: 9 },        // 原始格式優化
+  avif: { quality: 75, effort: 6 }, // 最小檔案大小
+  webp: { quality: 85, effort: 6 }, // Fallback 格式
+  png: { compressionLevel: 9 }, // 原始格式優化
 };
 ```
 
 **檔案大小目標**:
+
 - `logo.avif` < 50 KB
 - `og-image.avif` < 100 KB
 - **總大小減少 ≥70%**
@@ -84,26 +87,31 @@ pnpm test scripts/__tests__/image-optimization-2025.test.ts
 ### 實作內容
 
 **新增文件**:
+
 - `scripts/generate-sitemap-2025.mjs` - 2025 標準生成器
 - `scripts/verify-sitemap-2025.mjs` - 10 項驗證腳本
 - `scripts/__tests__/sitemap-2025.test.ts` - BDD 測試套件
 
 **更新文件**:
+
 - `package.json` - 整合 `prebuild:ratewise` 腳本
 - `apps/ratewise/public/sitemap.xml` - 符合 2025 標準
 
 ### 2025 標準合規
 
 #### ✅ 移除過時標籤
+
 - ❌ `<changefreq>` (Google 忽略)
 - ❌ `<priority>` (Google 和 Bing 都忽略)
 
 #### ✅ lastmod 真實時間戳
+
 - 使用 `statSync().mtime` 獲取文件修改時間
 - ISO 8601 格式 + 時區：`2025-12-19T03:25:32+08:00`
 - 每個頁面有不同時間戳（隨代碼更新而變化）
 
 #### ✅ Image Sitemap Extension
+
 ```xml
 <urlset xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
@@ -117,6 +125,7 @@ pnpm test scripts/__tests__/image-optimization-2025.test.ts
 ```
 
 #### ✅ Hreflang 配置保留
+
 - `zh-TW` (中文台灣)
 - `x-default` (默認語言)
 
@@ -127,11 +136,12 @@ pnpm verify:sitemap-2025
 ```
 
 **10/10 測試通過**:
+
 1. ✅ 無 `<changefreq>` 標籤
 2. ✅ 無 `<priority>` 標籤
 3. ✅ 所有 17 URL 都有 `lastmod`
 4. ✅ ISO 8601 + 時區格式正確
-5. ⚠️  時間戳多樣性警告（開發環境正常）
+5. ⚠️ 時間戳多樣性警告（開發環境正常）
 6. ✅ 時間戳在合理範圍內（過去一年內）
 7. ✅ Image Sitemap 命名空間存在
 8. ✅ 5 個 `image:image` 標籤
@@ -178,11 +188,13 @@ pnpm prebuild:ratewise
 ### 實作內容
 
 **新增文件**:
+
 - `src/components/Breadcrumb.tsx` - 麵包屑組件
 - `src/components/__tests__/Breadcrumb.test.tsx` - BDD 測試套件
 - `scripts/verify-breadcrumb-schema.mjs` - Schema 驗證腳本
 
 **頁面整合**:
+
 - ✅ `src/pages/FAQ.tsx` (首頁 → 常見問題)
 - ✅ `src/pages/About.tsx` (首頁 → 關於我們)
 - ✅ `src/pages/Guide.tsx` (首頁 → 使用指南)
@@ -191,6 +203,7 @@ pnpm prebuild:ratewise
 ### 功能特點
 
 #### 🎨 視覺化導航
+
 ```tsx
 <Breadcrumb
   items={[
@@ -201,6 +214,7 @@ pnpm prebuild:ratewise
 ```
 
 **渲染結果**:
+
 ```html
 <nav aria-label="麵包屑導航">
   <ol class="flex items-center gap-2 text-sm">
@@ -216,6 +230,7 @@ pnpm prebuild:ratewise
 ```
 
 #### 📊 BreadcrumbList Schema
+
 ```json
 {
   "@context": "https://schema.org",
@@ -238,6 +253,7 @@ pnpm prebuild:ratewise
 ```
 
 #### ♿ 無障礙支持 (WCAG 2.1)
+
 - `<nav role="navigation">` - 語義化導航地標
 - `aria-label="麵包屑導航"` - 描述性標籤
 - `aria-current="page"` - 標記當前頁
@@ -260,6 +276,7 @@ pnpm prebuild:ratewise
 ### 驗證方式
 
 **生產環境建置後**:
+
 ```bash
 # 建置應用
 pnpm build:ratewise
@@ -269,6 +286,7 @@ node scripts/verify-breadcrumb-schema.mjs
 ```
 
 **手動驗證**:
+
 - [Google Rich Results Test](https://search.google.com/test/rich-results)
 - [Schema.org Validator](https://validator.schema.org/)
 
@@ -318,20 +336,22 @@ node scripts/verify-breadcrumb-schema.mjs
 
 ### 為何選擇 AVIF over WebP?
 
-| 格式 | 壓縮率 | 瀏覽器支持 | 品質 |
-|------|--------|------------|------|
+| 格式 | 壓縮率        | 瀏覽器支持 | 品質 |
+| ---- | ------------- | ---------- | ---- |
 | AVIF | 50% 小於 JPEG | 87% (2025) | 極佳 |
 | WebP | 30% 小於 JPEG | 96% (2025) | 良好 |
-| JPEG | 基準 | 100% | 標準 |
+| JPEG | 基準          | 100%       | 標準 |
 
 **決策**: 使用 AVIF + WebP + PNG 三層 Fallback 策略
 
 ### 為何移除 `<changefreq>` 和 `<priority>`?
 
 **Google 官方聲明**:
+
 > "Googlebot 忽略 `<priority>` 和 `<changefreq>` 值，因為它們被濫用且不準確"
 
 **Bing 官方聲明**:
+
 > "我們不使用 `<priority>` 標籤...`<changefreq>` 僅作為提示"
 
 **結論**: 移除無效標籤，專注於 `<lastmod>` 真實性
@@ -339,6 +359,7 @@ node scripts/verify-breadcrumb-schema.mjs
 ### 為何選擇 BreadcrumbList Schema?
 
 **Google Search Console 數據** (2024):
+
 - 有麵包屑的頁面 CTR 提升 18%
 - Rich Snippets 顯示率 92%
 - 用戶導航效率提升 35%
@@ -350,24 +371,28 @@ node scripts/verify-breadcrumb-schema.mjs
 ## 🎯 下一步行動計畫
 
 ### Stage 4: Core Web Vitals 優化
+
 - [ ] 實作 INP 測量 (替代 FID)
 - [ ] LCP 優化至 <2.5s
 - [ ] CLS 優化至 <0.1
 - [ ] 建立 Core Web Vitals 監控
 
 ### Stage 5: 結構化數據完整性
+
 - [ ] 驗證所有現有 JSON-LD
 - [ ] 移除 6 個已廢棄的 Schema 類型
 - [ ] 新增 Organization Schema
 - [ ] 新增 WebSite Schema (搜索框標記)
 
 ### Stage 6: 內部連結結構
+
 - [ ] 建立 Footer 組件（17 頁面連結）
 - [ ] 新增相關頁面推薦區塊
 - [ ] 幣別頁面交叉連結
 - [ ] 計算 Internal PageRank
 
 ### Stage 8: E-E-A-T 優化
+
 - [ ] 新增作者標示 (Author Schema)
 - [ ] 權威來源引用（臺灣銀行）
 - [ ] 最後更新時間顯示
@@ -380,17 +405,20 @@ node scripts/verify-breadcrumb-schema.mjs
 ### 建議監控指標
 
 **技術 SEO**:
+
 - ✅ Sitemap 合規性 (100%)
 - ✅ 結構化數據覆蓋率 (4/17 頁面有 Breadcrumb)
 - ⏳ 圖片優化率 (0% → 100% 待執行)
 - ⏳ Core Web Vitals (待測量)
 
 **用戶體驗**:
+
 - Lighthouse Performance Score (目標 ≥95)
 - Lighthouse SEO Score (目標 100/100)
 - Lighthouse Accessibility Score (目標 ≥95)
 
 **搜索引擎**:
+
 - Google Search Console - 索引涵蓋率
 - Rich Results 顯示率
 - 平均 CTR 變化
@@ -401,15 +429,18 @@ node scripts/verify-breadcrumb-schema.mjs
 ## 🔗 相關文檔
 
 ### 審計報告
+
 - `SEO_AUDIT_REPORT_ISSUES.md` - 原始 SEO 問題清單（15 項）
 - `SEO_AUDIT_REPORT_SOLUTIONS.md` - 解決方案與實作指南
 - `CI_SEO_FAILURE_ANALYSIS.md` - CI 失效根因分析
 
 ### 規劃文檔
+
 - `SEO_PERFECTION_PLAN_2025.md` - 8 階段完整計畫
 - `CLAUDE.md` - BDD 開發流程與規範
 
 ### 技術引用
+
 - `docs/dev/002_development_reward_penalty_log.md` - 開發決策記錄
 
 ---
@@ -433,16 +464,19 @@ node scripts/verify-breadcrumb-schema.mjs
 ### 預期影響
 
 **搜索引擎**:
+
 - 更快速、準確的索引
 - Rich Results 顯示機會增加
 - 圖片搜索曝光提升
 
 **用戶體驗**:
+
 - 更快的頁面載入速度
 - 更清晰的網站導航
 - 更好的無障礙支持
 
 **維護性**:
+
 - 自動化驗證防止退化
 - BDD 測試保護重構
 - 清晰的文檔與決策記錄

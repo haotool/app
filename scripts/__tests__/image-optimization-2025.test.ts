@@ -19,12 +19,12 @@ const PUBLIC_DIR = resolve(__dirname, '../../apps/ratewise/public');
 
 // 2025 圖片大小標準
 const MAX_SIZES = {
-  'logo.avif': 50 * 1024,        // 50 KB
-  'logo.webp': 70 * 1024,        // 70 KB
-  'logo.png': 100 * 1024,        // 100 KB
-  'og-image.avif': 100 * 1024,   // 100 KB
-  'og-image.webp': 150 * 1024,   // 150 KB
-  'og-image.png': 200 * 1024,    // 200 KB
+  'logo.avif': 50 * 1024, // 50 KB
+  'logo.webp': 70 * 1024, // 70 KB
+  'logo.png': 100 * 1024, // 100 KB
+  'og-image.avif': 100 * 1024, // 100 KB
+  'og-image.webp': 150 * 1024, // 150 KB
+  'og-image.png': 200 * 1024, // 200 KB
 };
 
 function getFileSize(filename: string): number {
@@ -32,7 +32,7 @@ function getFileSize(filename: string): number {
   if (!existsSync(path)) {
     throw new Error(`File not found: ${filename}`);
   }
-  return statSync(path).size;
+  return Number(statSync(path).size);
 }
 
 function formatSize(bytes: number): string {
@@ -69,7 +69,7 @@ describe('Image Optimization 2025 Standards', () => {
 
       expect(
         size,
-        `logo.avif is ${formatSize(size)}, should be < ${formatSize(maxSize)}`
+        `logo.avif is ${formatSize(size)}, should be < ${formatSize(maxSize)}`,
       ).toBeLessThan(maxSize);
     });
 
@@ -79,7 +79,7 @@ describe('Image Optimization 2025 Standards', () => {
 
       expect(
         size,
-        `og-image.avif is ${formatSize(size)}, should be < ${formatSize(maxSize)}`
+        `og-image.avif is ${formatSize(size)}, should be < ${formatSize(maxSize)}`,
       ).toBeLessThan(maxSize);
     });
   });
@@ -91,7 +91,7 @@ describe('Image Optimization 2025 Standards', () => {
 
       expect(
         size,
-        `logo.webp is ${formatSize(size)}, should be < ${formatSize(maxSize)}`
+        `logo.webp is ${formatSize(size)}, should be < ${formatSize(maxSize)}`,
       ).toBeLessThan(maxSize);
     });
 
@@ -101,7 +101,7 @@ describe('Image Optimization 2025 Standards', () => {
 
       expect(
         size,
-        `og-image.webp is ${formatSize(size)}, should be < ${formatSize(maxSize)}`
+        `og-image.webp is ${formatSize(size)}, should be < ${formatSize(maxSize)}`,
       ).toBeLessThan(maxSize);
     });
   });
@@ -113,7 +113,7 @@ describe('Image Optimization 2025 Standards', () => {
 
       expect(
         size,
-        `logo.png is ${formatSize(size)}, should be < ${formatSize(maxSize)}`
+        `logo.png is ${formatSize(size)}, should be < ${formatSize(maxSize)}`,
       ).toBeLessThan(maxSize);
     });
 
@@ -123,7 +123,7 @@ describe('Image Optimization 2025 Standards', () => {
 
       expect(
         size,
-        `og-image.png is ${formatSize(size)}, should be < ${formatSize(maxSize)}`
+        `og-image.png is ${formatSize(size)}, should be < ${formatSize(maxSize)}`,
       ).toBeLessThan(maxSize);
     });
   });
@@ -148,7 +148,7 @@ describe('Image Optimization 2025 Standards', () => {
 
       expect(
         reduction,
-        `Total size reduction is ${reduction.toFixed(1)}%, should be >= 70%`
+        `Total size reduction is ${reduction.toFixed(1)}%, should be >= 70%`,
       ).toBeGreaterThanOrEqual(70);
     });
   });
