@@ -98,38 +98,29 @@ async function optimizeImage(filename) {
 
     // 1. 生成 AVIF（最小，優先使用）
     const avifPath = join(PUBLIC_DIR, `${baseName}.avif`);
-    await image
-      .clone()
-      .avif(OPTIMIZATION_CONFIG.avif)
-      .toFile(avifPath);
+    await image.clone().avif(OPTIMIZATION_CONFIG.avif).toFile(avifPath);
 
     const avifSize = await getFileSize(avifPath);
-    const avifSavings = ((originalSize - avifSize) / originalSize * 100).toFixed(1);
+    const avifSavings = (((originalSize - avifSize) / originalSize) * 100).toFixed(1);
     log(colors.green, '  ✓', `AVIF: ${formatSize(avifSize)} (省 ${avifSavings}%)`);
     results.push({ format: 'AVIF', size: avifSize, savings: avifSavings });
 
     // 2. 生成 WebP（fallback）
     const webpPath = join(PUBLIC_DIR, `${baseName}.webp`);
-    await image
-      .clone()
-      .webp(OPTIMIZATION_CONFIG.webp)
-      .toFile(webpPath);
+    await image.clone().webp(OPTIMIZATION_CONFIG.webp).toFile(webpPath);
 
     const webpSize = await getFileSize(webpPath);
-    const webpSavings = ((originalSize - webpSize) / originalSize * 100).toFixed(1);
+    const webpSavings = (((originalSize - webpSize) / originalSize) * 100).toFixed(1);
     log(colors.green, '  ✓', `WebP: ${formatSize(webpSize)} (省 ${webpSavings}%)`);
     results.push({ format: 'WebP', size: webpSize, savings: webpSavings });
 
     // 3. 優化原始 PNG（最終 fallback）
     if (ext === '.png') {
       const optimizedPngPath = join(PUBLIC_DIR, `${baseName}.optimized.png`);
-      await image
-        .clone()
-        .png(OPTIMIZATION_CONFIG.png)
-        .toFile(optimizedPngPath);
+      await image.clone().png(OPTIMIZATION_CONFIG.png).toFile(optimizedPngPath);
 
       const optimizedPngSize = await getFileSize(optimizedPngPath);
-      const pngSavings = ((originalSize - optimizedPngSize) / originalSize * 100).toFixed(1);
+      const pngSavings = (((originalSize - optimizedPngSize) / originalSize) * 100).toFixed(1);
       log(colors.green, '  ✓', `PNG (優化): ${formatSize(optimizedPngSize)} (省 ${pngSavings}%)`);
       results.push({ format: 'PNG', size: optimizedPngSize, savings: pngSavings });
 
@@ -198,7 +189,7 @@ async function main() {
     });
   });
 
-  const totalSavings = ((totalOriginal - totalOptimized) / totalOriginal * 100).toFixed(1);
+  const totalSavings = (((totalOriginal - totalOptimized) / totalOriginal) * 100).toFixed(1);
 
   console.log(`\n  總大小: ${formatSize(totalOriginal)} → ${formatSize(totalOptimized)}`);
   console.log(`  ${colors.green}總節省: ${totalSavings}%${colors.reset}`);

@@ -91,13 +91,8 @@ function validateSchema(schema, pagePath) {
     // 1. 檢查 @context
     if (!s['@context']) {
       errors.push(`${prefix}Missing @context`);
-    } else if (
-      s['@context'] !== 'https://schema.org' &&
-      s['@context'] !== 'http://schema.org'
-    ) {
-      warnings.push(
-        `${prefix}@context should be "https://schema.org", got "${s['@context']}"`
-      );
+    } else if (s['@context'] !== 'https://schema.org' && s['@context'] !== 'http://schema.org') {
+      warnings.push(`${prefix}@context should be "https://schema.org", got "${s['@context']}"`);
     }
 
     // 2. 檢查 @type
@@ -108,9 +103,7 @@ function validateSchema(schema, pagePath) {
 
     // 3. 檢查是否使用已廢棄的 Schema
     if (DEPRECATED_SCHEMAS.includes(schemaType)) {
-      errors.push(
-        `${prefix}Using deprecated schema type "${schemaType}" (not supported in 2025)`
-      );
+      errors.push(`${prefix}Using deprecated schema type "${schemaType}" (not supported in 2025)`);
     }
 
     // 4. 檢查必要屬性
@@ -129,16 +122,14 @@ function validateSchema(schema, pagePath) {
         s.mainEntity.forEach((question, qIndex) => {
           if (question['@type'] !== 'Question') {
             errors.push(
-              `${prefix}mainEntity[${qIndex}] @type should be "Question", got "${question['@type']}"`
+              `${prefix}mainEntity[${qIndex}] @type should be "Question", got "${question['@type']}"`,
             );
           }
 
           if (!question.acceptedAnswer) {
             errors.push(`${prefix}mainEntity[${qIndex}] missing acceptedAnswer`);
           } else if (question.acceptedAnswer['@type'] !== 'Answer') {
-            errors.push(
-              `${prefix}mainEntity[${qIndex}].acceptedAnswer @type should be "Answer"`
-            );
+            errors.push(`${prefix}mainEntity[${qIndex}].acceptedAnswer @type should be "Answer"`);
           }
         });
       }
@@ -152,7 +143,7 @@ function validateSchema(schema, pagePath) {
         s.step.forEach((step, sIndex) => {
           if (step['@type'] !== 'HowToStep') {
             errors.push(
-              `${prefix}step[${sIndex}] @type should be "HowToStep", got "${step['@type']}"`
+              `${prefix}step[${sIndex}] @type should be "HowToStep", got "${step['@type']}"`,
             );
           }
         });
@@ -161,7 +152,7 @@ function validateSchema(schema, pagePath) {
       // totalTime 格式檢查 (ISO 8601 duration)
       if (s.totalTime && !/^PT\d+(H|M|S)$/.test(s.totalTime)) {
         warnings.push(
-          `${prefix}totalTime should be ISO 8601 duration format (e.g., PT2M), got "${s.totalTime}"`
+          `${prefix}totalTime should be ISO 8601 duration format (e.g., PT2M), got "${s.totalTime}"`,
         );
       }
     }
@@ -173,14 +164,14 @@ function validateSchema(schema, pagePath) {
           // 檢查 URL 是否為絕對路徑
           if (item.item && !item.item.startsWith('http')) {
             errors.push(
-              `${prefix}itemListElement[${iIndex}].item should be absolute URL, got "${item.item}"`
+              `${prefix}itemListElement[${iIndex}].item should be absolute URL, got "${item.item}"`,
             );
           }
 
           // 檢查 position 連續性
           if (item.position !== iIndex + 1) {
             errors.push(
-              `${prefix}itemListElement[${iIndex}].position should be ${iIndex + 1}, got ${item.position}`
+              `${prefix}itemListElement[${iIndex}].position should be ${iIndex + 1}, got ${item.position}`,
             );
           }
         });
@@ -284,11 +275,7 @@ async function main() {
 
   // 檢查 dist 目錄是否存在
   if (!existsSync(distPath)) {
-    log(
-      colors.red,
-      '✗',
-      `Dist directory not found: ${distPath}`
-    );
+    log(colors.red, '✗', `Dist directory not found: ${distPath}`);
     console.log('\n提示: 請先建置應用程式 (pnpm build:ratewise)\n');
     process.exit(1);
   }

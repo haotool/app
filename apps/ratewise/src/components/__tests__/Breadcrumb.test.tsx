@@ -18,8 +18,19 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-// @ts-ignore - Component not yet implemented
 import { Breadcrumb } from '../Breadcrumb';
+
+// Type definitions for JSON-LD BreadcrumbList schema
+interface BreadcrumbListSchema {
+  '@context': string;
+  '@type': string;
+  itemListElement: {
+    '@type': string;
+    position: number;
+    name: string;
+    item: string;
+  }[];
+}
 
 describe('🔴 RED: Breadcrumb Component', () => {
   describe('Visual Breadcrumb Navigation', () => {
@@ -32,7 +43,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const nav = screen.getByRole('navigation', { name: /麵包屑/i });
@@ -49,7 +60,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       expect(screen.getByText('首頁')).toBeDefined();
@@ -66,7 +77,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const currentItem = screen.getByText('當前頁');
@@ -83,7 +94,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const homeLink = screen.getByRole('link', { name: '首頁' });
@@ -103,7 +114,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       const { container } = render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       // 檢查分隔符號存在（應該有 2 個，因為有 3 個項目）
@@ -122,7 +133,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       const { container } = render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const script = container.querySelector('script[type="application/ld+json"]');
@@ -139,11 +150,11 @@ describe('🔴 RED: Breadcrumb Component', () => {
       const { container } = render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const script = container.querySelector('script[type="application/ld+json"]');
-      const jsonLd = JSON.parse(script?.textContent || '{}');
+      const jsonLd = JSON.parse(script?.textContent ?? '{}') as BreadcrumbListSchema;
 
       expect(jsonLd['@context']).toBe('https://schema.org');
       expect(jsonLd['@type']).toBe('BreadcrumbList');
@@ -161,17 +172,18 @@ describe('🔴 RED: Breadcrumb Component', () => {
       const { container } = render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const script = container.querySelector('script[type="application/ld+json"]');
-      const jsonLd = JSON.parse(script?.textContent || '{}');
+      const jsonLd = JSON.parse(script?.textContent ?? '{}') as BreadcrumbListSchema;
 
       const firstItem = jsonLd.itemListElement[0];
-      expect(firstItem['@type']).toBe('ListItem');
-      expect(firstItem.position).toBe(1);
-      expect(firstItem.name).toBe('首頁');
-      expect(firstItem.item).toContain('/'); // 應包含完整 URL
+      expect(firstItem).toBeDefined();
+      expect(firstItem!['@type']).toBe('ListItem');
+      expect(firstItem!.position).toBe(1);
+      expect(firstItem!.name).toBe('首頁');
+      expect(firstItem!.item).toContain('/'); // 應包含完整 URL
     });
 
     it('should use absolute URLs in schema', () => {
@@ -183,15 +195,16 @@ describe('🔴 RED: Breadcrumb Component', () => {
       const { container } = render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const script = container.querySelector('script[type="application/ld+json"]');
-      const jsonLd = JSON.parse(script?.textContent || '{}');
+      const jsonLd = JSON.parse(script?.textContent ?? '{}') as BreadcrumbListSchema;
 
       const firstItem = jsonLd.itemListElement[0];
+      expect(firstItem).toBeDefined();
       // 應使用完整 URL (https://app.haotool.org/ratewise/)
-      expect(firstItem.item).toMatch(/^https?:\/\//);
+      expect(firstItem!.item).toMatch(/^https?:\/\//);
     });
   });
 
@@ -202,7 +215,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const nav = screen.getByRole('navigation');
@@ -215,7 +228,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const nav = screen.getByRole('navigation');
@@ -232,7 +245,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       const { container } = render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const ol = container.querySelector('ol');
@@ -248,7 +261,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       const { container } = render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const separators = container.querySelectorAll('[aria-hidden="true"]');
@@ -263,19 +276,19 @@ describe('🔴 RED: Breadcrumb Component', () => {
       render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       expect(screen.getByText('首頁')).toBeDefined();
     });
 
     it('should handle empty items array gracefully', () => {
-      const items: Array<{ label: string; href: string }> = [];
+      const items: { label: string; href: string }[] = [];
 
       const { container } = render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       // 不應渲染任何內容或渲染空的導航
@@ -298,7 +311,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       items.forEach((item) => {
@@ -317,7 +330,7 @@ describe('🔴 RED: Breadcrumb Component', () => {
       const { container } = render(
         <MemoryRouter>
           <Breadcrumb items={items} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const nav = container.querySelector('nav');

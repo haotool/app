@@ -1,4 +1,5 @@
 # RateWise SEO 完美化計畫 - 2025 最佳實踐
+
 ## 基於最新 Google 標準的 BDD 深度重構
 
 **建立日期**: 2025-12-20
@@ -15,18 +16,20 @@
 
 #### ✅ 2025 年強制要求：
 
-| 指標 | 2024 標準 | **2025 新標準** | RateWise 當前 | 狀態 |
-|------|-----------|----------------|---------------|------|
-| **LCP** (Largest Contentful Paint) | <2.5s | **<2.5s** | 0.489s | ✅ 優秀 |
-| **INP** (Interaction to Next Paint) | N/A (新指標) | **<200ms** | 未測量 | ⚠️ 需測試 |
-| **CLS** (Cumulative Layout Shift) | <0.1 | **<0.1** | 0.00046 | ✅ 優秀 |
+| 指標                                | 2024 標準    | **2025 新標準** | RateWise 當前 | 狀態      |
+| ----------------------------------- | ------------ | --------------- | ------------- | --------- |
+| **LCP** (Largest Contentful Paint)  | <2.5s        | **<2.5s**       | 0.489s        | ✅ 優秀   |
+| **INP** (Interaction to Next Paint) | N/A (新指標) | **<200ms**      | 未測量        | ⚠️ 需測試 |
+| **CLS** (Cumulative Layout Shift)   | <0.1         | **<0.1**        | 0.00046       | ✅ 優秀   |
 
 **重大變更**:
+
 - 🔄 **FID 已被 INP 取代**（2024 年 3 月正式棄用）
 - ⬆️ **技術性能門檻提高** - Core Web Vitals 和移動體驗標準提升
 - 📈 **用戶滿意度權重增加** - Pogosticking、停留時間、回訪率更重要
 
 #### ❌ RateWise 缺失檢查：
+
 ```typescript
 // ❌ 沒有 INP 測量
 // ✅ 需要添加
@@ -46,22 +49,22 @@ onINP((metric) => {
 
 #### 📊 2025 圖片格式對比：
 
-| 格式 | 壓縮率 | 瀏覽器支援 | 建議用途 |
-|------|--------|-----------|----------|
-| **AVIF** | JPEG 的 **50%**，WebP 的 **80%** | 80% | 主要格式 |
-| **WebP** | JPEG 的 **75%** | 96% | Fallback |
-| **PNG** | 基準 100% | 100% | 最終 Fallback |
+| 格式     | 壓縮率                           | 瀏覽器支援 | 建議用途      |
+| -------- | -------------------------------- | ---------- | ------------- |
+| **AVIF** | JPEG 的 **50%**，WebP 的 **80%** | 80%        | 主要格式      |
+| **WebP** | JPEG 的 **75%**                  | 96%        | Fallback      |
+| **PNG**  | 基準 100%                        | 100%       | 最終 Fallback |
 
 #### ✅ 正確實作範例（picture 元素）：
 
 ```html
 <picture>
   <!-- 優先使用 AVIF（最小） -->
-  <source srcset="/og-image.avif" type="image/avif">
+  <source srcset="/og-image.avif" type="image/avif" />
   <!-- Fallback 到 WebP -->
-  <source srcset="/og-image.webp" type="image/webp">
+  <source srcset="/og-image.webp" type="image/webp" />
   <!-- 最終 Fallback 到 PNG -->
-  <img src="/og-image.png" alt="RateWise 匯率轉換器">
+  <img src="/og-image.png" alt="RateWise 匯率轉換器" />
 </picture>
 ```
 
@@ -84,6 +87,7 @@ og-image.png       180 KB   ✅ 優化後
 ```
 
 #### 🔑 關鍵洞察：
+
 > **圖片佔網頁總大小的 60-80%**。載入時間從 1 秒增加到 3 秒，跳出率會提高 **32%**。
 
 ---
@@ -127,10 +131,12 @@ og-image.png       180 KB   ✅ 優化後
 #### 🚨 重大發現：
 
 **Google 完全忽略**：
+
 - ❌ `<changefreq>` - Google 文檔明確表示「只是提示」
 - ❌ `<priority>` - Google 和 Bing 都忽略
 
 **Bing 強制要求**：
+
 - ✅ `<lastmod>` - Bing 官方博客：「lastmod 是關鍵新鮮度信號」
 - ✅ 必須使用**真實的文件修改時間**，不是生成時間
 
@@ -169,10 +175,12 @@ const lastmod = getLastModified('src/pages/USDToTWD.tsx');
 #### 🔄 2025 年重大變更：
 
 **Google 已從 SERP 移除麵包屑顯示**：
+
 - 🗓️ 桌面版：2024 年 9 月移除
 - 🗓️ 移動版：2025 年 8 月移除
 
 **但麵包屑仍然重要**：
+
 - ✅ **站內 SEO 仍然有益** - 改善內部連結結構
 - ✅ **增強爬蟲效率** - 幫助搜尋引擎理解網站層級
 - ✅ **改善用戶體驗** - 提供清晰的導航路徑
@@ -226,6 +234,7 @@ const lastmod = getLastModified('src/pages/USDToTWD.tsx');
 #### ❌ 2025 年已棄用的結構化數據類型：
 
 Google 於 **2025 年 9 月 9 日**移除以下 6 種結構化數據：
+
 1. ❌ Course Info
 2. ❌ Claim Review
 3. ❌ Estimated Salary
@@ -296,6 +305,7 @@ Google 於 **2025 年 9 月 9 日**移除以下 6 種結構化數據：
 #### 🆕 2025 年 12 月核心更新：
 
 **E-E-A-T 要求擴展到幾乎所有查詢**：
+
 - ❌ 過去：只有 YMYL（Your Money Your Life）主題需要
 - ✅ 現在：**連娛樂和生活方式內容都需要展示專業知識**
 
@@ -306,10 +316,10 @@ Google 於 **2025 年 9 月 9 日**移除以下 6 種結構化數據：
 <article>
   <header>
     <h1>USD 對 TWD 匯率換算</h1>
-    <div itemScope itemType="https://schema.org/Person">
+    <div itemscope itemtype="https://schema.org/Person">
       <span itemProp="name">haotool 團隊</span>
-      <meta itemProp="jobTitle" content="金融科技開發者" />
-      <a itemProp="url" href="https://github.com/haotool">GitHub</a>
+      <meta itemprop="jobTitle" content="金融科技開發者" />
+      <a itemprop="url" href="https://github.com/haotool">GitHub</a>
     </div>
   </header>
 </article>
@@ -318,9 +328,7 @@ Google 於 **2025 年 9 月 9 日**移除以下 6 種結構化數據：
 <footer>
   <p>
     匯率數據來源：
-    <a href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
-       rel="noopener noreferrer"
-       target="_blank">
+    <a href="https://rate.bot.com.tw/xrt?Lang=zh-TW" rel="noopener noreferrer" target="_blank">
       臺灣銀行牌告匯率
     </a>
     （官方權威來源）
@@ -328,9 +336,7 @@ Google 於 **2025 年 9 月 9 日**移除以下 6 種結構化數據：
 </footer>
 
 <!-- 3. 更新時間標示 -->
-<time dateTime="2025-12-20T14:30:00+08:00">
-  最後更新：2025 年 12 月 20 日 14:30
-</time>
+<time datetime="2025-12-20T14:30:00+08:00"> 最後更新：2025 年 12 月 20 日 14:30 </time>
 ```
 
 #### 🔑 2025 E-E-A-T 檢查清單：
@@ -429,10 +435,14 @@ pnpm optimize:images
 ```html
 <!-- apps/ratewise/index.html -->
 <!-- 重構：使用 picture 元素 -->
-<link rel="preload" as="image" type="image/avif"
-      href="/ratewise/og-image.avif?v=20251220"
-      imagesrcset="/ratewise/og-image.avif?v=20251220 1200w"
-      imagesizes="1200px">
+<link
+  rel="preload"
+  as="image"
+  type="image/avif"
+  href="/ratewise/og-image.avif?v=20251220"
+  imagesrcset="/ratewise/og-image.avif?v=20251220 1200w"
+  imagesizes="1200px"
+/>
 
 <meta property="og:image" content="https://app.haotool.org/ratewise/og-image.avif?v=20251220" />
 <meta property="og:image:type" content="image/avif" />
@@ -440,8 +450,7 @@ pnpm optimize:images
 <meta property="og:image:height" content="630" />
 
 <!-- Fallback 層級 -->
-<link rel="preload" as="image" type="image/webp"
-      href="/ratewise/og-image.webp?v=20251220">
+<link rel="preload" as="image" type="image/webp" href="/ratewise/og-image.webp?v=20251220" />
 <meta property="og:image" content="https://app.haotool.org/ratewise/og-image.webp?v=20251220" />
 <meta property="og:image:type" content="image/webp" />
 ```
@@ -474,8 +483,8 @@ describe('Sitemap 2025 Standards', () => {
     const parsed = parseXML(xml);
 
     // 應該有至少 5 個不同的時間戳
-    const lastmods = parsed.urlset.url.map(u => u.lastmod[0]);
-    const uniqueDates = new Set(lastmods.map(d => d.split('T')[0]));
+    const lastmods = parsed.urlset.url.map((u) => u.lastmod[0]);
+    const uniqueDates = new Set(lastmods.map((d) => d.split('T')[0]));
 
     expect(uniqueDates.size).toBeGreaterThanOrEqual(5);
   });
@@ -490,7 +499,7 @@ describe('Sitemap 2025 Standards', () => {
     const xml = readFileSync('apps/ratewise/public/sitemap.xml', 'utf-8');
     const parsed = parseXML(xml);
 
-    parsed.urlset.url.forEach(url => {
+    parsed.urlset.url.forEach((url) => {
       const lastmod = url.lastmod[0];
       // 必須包含時區信息（+08:00 或 Z）
       expect(lastmod).toMatch(/T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}|Z$/);
@@ -895,40 +904,44 @@ jobs:
 
 ### 性能改善
 
-| 指標 | 當前 | 優化後 | 改善 |
-|------|------|--------|------|
-| **頁面總大小** | ~2.5 MB | ~600 KB | ⬇️ 76% |
-| **LCP** | 489ms | ~350ms | ⬇️ 28% |
-| **INP** | 未測量 | <200ms | ✅ 符合標準 |
-| **Lighthouse Performance** | 97 | 99 | ⬆️ 2 分 |
+| 指標                       | 當前    | 優化後  | 改善        |
+| -------------------------- | ------- | ------- | ----------- |
+| **頁面總大小**             | ~2.5 MB | ~600 KB | ⬇️ 76%      |
+| **LCP**                    | 489ms   | ~350ms  | ⬇️ 28%      |
+| **INP**                    | 未測量  | <200ms  | ✅ 符合標準 |
+| **Lighthouse Performance** | 97      | 99      | ⬆️ 2 分     |
 
 ### SEO 改善
 
-| 項目 | 當前 | 優化後 |
-|------|------|--------|
-| **結構化數據覆蓋** | 60% | 100% |
-| **麵包屑導航** | 0/17 頁 | 17/17 頁 |
-| **圖片 Alt 屬性** | 6% | 100% |
-| **E-E-A-T 信號** | 20% | 100% |
-| **CI 檢測覆蓋率** | 10% | 95% |
+| 項目               | 當前    | 優化後   |
+| ------------------ | ------- | -------- |
+| **結構化數據覆蓋** | 60%     | 100%     |
+| **麵包屑導航**     | 0/17 頁 | 17/17 頁 |
+| **圖片 Alt 屬性**  | 6%      | 100%     |
+| **E-E-A-T 信號**   | 20%     | 100%     |
+| **CI 檢測覆蓋率**  | 10%     | 95%      |
 
 ---
 
 ## 📅 實施時程
 
 ### 第 1 週（立即執行）
+
 - ✅ 階段 1: 圖片優化（AVIF/WebP）
 - ✅ 階段 2: Sitemap 2025 重構
 
 ### 第 2 週（短期）
+
 - ✅ 階段 3: 麵包屑導航實作
 - ✅ 階段 4: Core Web Vitals INP 測量
 
 ### 第 3 週（中期）
+
 - ✅ 階段 5: 結構化數據完整性
 - ✅ 階段 6: 內部連結結構
 
 ### 第 4 週（完成）
+
 - ✅ 階段 7: CI/CD 自動化
 - ✅ 階段 8: E-E-A-T 優化
 - ✅ 最終驗收與文檔更新
@@ -938,30 +951,36 @@ jobs:
 ## 📚 參考來源（權威）
 
 ### Core Web Vitals
+
 - [Google Search Central - Core Web Vitals](https://developers.google.com/search/docs/appearance/core-web-vitals)
 - [NitroPack - Core Web Vitals 2025 Guide](https://nitropack.io/blog/core-web-vitals/)
 - [Search Engine Land - Page Experience 2025](https://searchengineland.com/page-experience-seo-448564)
 
 ### 圖片優化
+
 - [AI Bud WP - Image Optimization 2025](https://aibudwp.com/image-optimization-in-2025-webp-avif-srcset-and-preload/)
 - [SearchX SEO - Image Resizing Guide](https://searchxpro.com/2025-guide-to-image-resizing-for-seo/)
 - [Wellows - Image SEO 2025](https://wellows.com/blog/image-seo/)
 
 ### Sitemap 最佳實踐
+
 - [Bing Webmaster Blog - lastmod Importance](https://blogs.bing.com/webmaster/february-2023/The-Importance-of-Setting-the-lastmod-Tag-in-Your-Sitemap)
 - [Spotibo - SEO Sitemap Best Practices 2025](https://spotibo.com/sitemap-guide/)
 - [Sitemaps.org - Protocol](https://www.sitemaps.org/protocol.html)
 
 ### 麵包屑導航
+
 - [ClickRank AI - Google Removes Breadcrumb](https://www.clickrank.ai/google-removes-breadcrumb/)
 - [SE Ranking - Breadcrumb Navigation](https://seranking.com/blog/breadcrumb-navigation/)
 - [Search Engine Journal - Breadcrumbs SEO](https://www.searchenginejournal.com/breadcrumbs-seo/255007/)
 
 ### 結構化數據
+
 - [Google Search Central - Structured Data](https://developers.google.com/search/docs/appearance/structured-data/sd-policies)
 - [WebProNews - Google Ends Support for 6 Types](https://www.webpronews.com/google-ends-search-console-reporting-for-six-structured-data-types-in-2025/)
 
 ### E-E-A-T
+
 - [AlmCorp - Google December 2025 Core Update](https://almcorp.com/blog/google-december-2025-core-update-complete-guide/)
 
 ---

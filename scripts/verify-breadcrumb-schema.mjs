@@ -85,7 +85,7 @@ function validateBreadcrumbSchema(schema, pagePath) {
     // 檢查 position
     if (item.position !== expectedPosition) {
       errors.push(
-        `Item ${expectedPosition}: position should be ${expectedPosition}, got ${item.position}`
+        `Item ${expectedPosition}: position should be ${expectedPosition}, got ${item.position}`,
       );
     }
 
@@ -106,7 +106,7 @@ function validateBreadcrumbSchema(schema, pagePath) {
       // 檢查是否使用正確的 base URL
       if (!item.item.startsWith(SITE_URL)) {
         errors.push(
-          `Item ${expectedPosition}: item should start with ${SITE_URL}, got "${item.item}"`
+          `Item ${expectedPosition}: item should start with ${SITE_URL}, got "${item.item}"`,
         );
       }
     }
@@ -115,9 +115,7 @@ function validateBreadcrumbSchema(schema, pagePath) {
   // 5. 檢查最後一項是否為當前頁面
   const lastItem = schema.itemListElement[schema.itemListElement.length - 1];
   const expectedUrl =
-    pagePath === '/'
-      ? SITE_URL
-      : `${SITE_URL}${pagePath.replace(/^\//, '').replace(/\/+$/, '')}/`;
+    pagePath === '/' ? SITE_URL : `${SITE_URL}${pagePath.replace(/^\//, '').replace(/\/+$/, '')}/`;
 
   if (lastItem.item !== expectedUrl) {
     errors.push(`Last item should point to current page (${expectedUrl}), got "${lastItem.item}"`);
@@ -221,7 +219,7 @@ async function main() {
     } else {
       log(colors.green, '✓', 'PASSED');
       console.log(
-        `  項目數量: ${result.schema.itemListElement.length}, 結構: ${result.schema.itemListElement.map((i) => i.name).join(' → ')}`
+        `  項目數量: ${result.schema.itemListElement.length}, 結構: ${result.schema.itemListElement.map((i) => i.name).join(' → ')}`,
       );
     }
   }

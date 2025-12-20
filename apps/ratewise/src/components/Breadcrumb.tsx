@@ -18,7 +18,6 @@
  * BDD 階段: Stage 3 GREEN
  */
 
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 
@@ -87,7 +86,10 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
   return (
     <>
       {/* JSON-LD Schema */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
 
       {/* Visual Breadcrumb Navigation */}
       <nav aria-label="麵包屑導航" className={`mb-4 ${className}`}>
@@ -99,7 +101,10 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
               <li key={`${item.href}-${index}`} className="flex items-center gap-2">
                 {/* Separator */}
                 {index > 0 && (
-                  <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" aria-hidden="true" />
+                  <ChevronRight
+                    className="w-4 h-4 text-slate-400 flex-shrink-0"
+                    aria-hidden="true"
+                  />
                 )}
 
                 {/* Breadcrumb Item */}

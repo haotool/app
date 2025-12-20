@@ -20,33 +20,47 @@ import { parseStringPromise } from 'xml2js';
 
 const SITEMAP_PATH = resolve(__dirname, '../../apps/ratewise/public/sitemap.xml');
 
+interface SitemapUrl {
+  loc: string[];
+  lastmod: string[];
+  'image:image'?: {
+    'image:loc': string[];
+    'image:caption'?: string[];
+  }[];
+  'xhtml:link'?: unknown[];
+}
+
+interface ParsedSitemap {
+  urlset: {
+    url: SitemapUrl[];
+  };
+}
+
 function readSitemap(): string {
   if (!existsSync(SITEMAP_PATH)) {
     throw new Error(`Sitemap not found: ${SITEMAP_PATH}`);
   }
-  return readFileSync(SITEMAP_PATH, 'utf-8');
+  return String(readFileSync(SITEMAP_PATH, 'utf-8'));
 }
 
-async function parseSitemap(xml: string) {
-  return await parseStringPromise(xml);
+async function parseSitemap(xml: string): Promise<ParsedSitemap> {
+  return (await parseStringPromise(xml)) as ParsedSitemap;
 }
 
 describe('Sitemap 2025 Standards', () => {
   describe('Deprecated Tags Removal', () => {
     it('should NOT contain <changefreq> tags', () => {
       const xml = readSitemap();
-      expect(
-        xml,
-        'changefreq is ignored by Google and should be removed'
-      ).not.toContain('<changefreq>');
+      expect(xml, 'changefreq is ignored by Google and should be removed').not.toContain(
+        '<changefreq>',
+      );
     });
 
     it('should NOT contain <priority> tags', () => {
       const xml = readSitemap();
-      expect(
-        xml,
-        'priority is ignored by Google and Bing, should be removed'
-      ).not.toContain('<priority>');
+      expect(xml, 'priority is ignored by Google and Bing, should be removed').not.toContain(
+        '<priority>',
+      );
     });
   });
 
@@ -58,7 +72,7 @@ describe('Sitemap 2025 Standards', () => {
       const urls = parsed.urlset.url;
       expect(urls.length).toBeGreaterThan(0);
 
-      urls.forEach((url: any) => {
+      urls.forEach((url) => {
         expect(url.lastmod).toBeDefined();
         expect(url.lastmod[0]).toBeTruthy();
       });
@@ -70,14 +84,13 @@ describe('Sitemap 2025 Standards', () => {
 
       const urls = parsed.urlset.url;
 
-      urls.forEach((url: any) => {
-        const lastmod = url.lastmod[0];
+      urls.forEach((url) => {
+        const lastmod = url.lastmod[0]!;
 
         // 必須包含時區信息（+08:00 或 Z）
-        expect(
-          lastmod,
-          `lastmod should use ISO 8601 with timezone: ${lastmod}`
-        ).toMatch(/T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/);
+        expect(lastmod, `lastmod should use ISO 8601 with timezone: ${lastmod}`).toMatch(
+          /T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/,
+        );
       });
     });
   });
@@ -88,15 +101,15 @@ describe('Sitemap 2025 Standards', () => {
       const parsed = await parseSitemap(xml);
 
       const urls = parsed.urlset.url;
-      const lastmods = urls.map((u: any) => u.lastmod[0]);
+      const lastmods = urls.map((u) => u.lastmod[0]!);
 
       // 提取日期部分（忽略時間）
-      const uniqueDates = new Set(lastmods.map(d => d.split('T')[0]));
+      const uniqueDates = new Set(lastmods.map((d) => String(d).split('T')[0]));
 
       // 至少應該有 3 個不同的日期（不太可能所有文件都同一天修改）
       expect(
         uniqueDates.size,
-        `Found ${uniqueDates.size} unique dates, should be >= 3 for authentic timestamps`
+        `Found ${uniqueDates.size} unique dates, should be >= 3 for authentic timestamps`,
       ).toBeGreaterThanOrEqual(3);
     });
 
@@ -105,23 +118,17 @@ describe('Sitemap 2025 Standards', () => {
       const parsed = await parseSitemap(xml);
 
       const now = Date.now();
-      const oneYearAgo = now - (365 * 24 * 60 * 60 * 1000);
+      const oneYearAgo = now - 365 * 24 * 60 * 60 * 1000;
 
       const urls = parsed.urlset.url;
 
-      urls.forEach((url: any) => {
-        const lastmod = new Date(url.lastmod[0]).getTime();
+      urls.forEach((url) => {
+        const lastmod = new Date(String(url.lastmod[0])).getTime();
 
         // 時間戳應該在過去一年內且不是未來
-        expect(
-          lastmod,
-          `lastmod should be between 1 year ago and now`
-        ).toBeGreaterThan(oneYearAgo);
+        expect(lastmod, `lastmod should be between 1 year ago and now`).toBeGreaterThan(oneYearAgo);
 
-        expect(
-          lastmod,
-          `lastmod should not be in the future`
-        ).toBeLessThanOrEqual(now);
+        expect(lastmod, `lastmod should not be in the future`).toBeLessThanOrEqual(now);
       });
     });
   });
@@ -129,10 +136,9 @@ describe('Sitemap 2025 Standards', () => {
   describe('Image Sitemap Extension', () => {
     it('should include image namespace', () => {
       const xml = readSitemap();
-      expect(
-        xml,
-        'Should include image sitemap namespace'
-      ).toContain('xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"');
+      expect(xml, 'Should include image sitemap namespace').toContain(
+        'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"',
+      );
     });
 
     it('should have image:image tags for main pages', async () => {
@@ -140,25 +146,23 @@ describe('Sitemap 2025 Standards', () => {
       const parsed = await parseSitemap(xml);
 
       // 至少首頁應該有圖片
-      const homeUrl = parsed.urlset.url.find((u: any) =>
-        u.loc[0].endsWith('/ratewise/')
-      );
+      const homeUrl = parsed.urlset.url.find((u) => String(u.loc[0]).endsWith('/ratewise/'));
 
       expect(homeUrl).toBeDefined();
-      expect(homeUrl['image:image']).toBeDefined();
-      expect(homeUrl['image:image'].length).toBeGreaterThan(0);
+      expect(homeUrl!['image:image']).toBeDefined();
+      expect(homeUrl!['image:image']!.length).toBeGreaterThan(0);
     });
 
     it('image tags should have required fields', async () => {
       const xml = readSitemap();
       const parsed = await parseSitemap(xml);
 
-      const urlsWithImages = parsed.urlset.url.filter((u: any) => u['image:image']);
+      const urlsWithImages = parsed.urlset.url.filter((u) => u['image:image']);
 
-      urlsWithImages.forEach((url: any) => {
-        const images = url['image:image'];
+      urlsWithImages.forEach((url) => {
+        const images = url['image:image']!;
 
-        images.forEach((img: any) => {
+        images.forEach((img) => {
           expect(img['image:loc']).toBeDefined();
           expect(img['image:loc'][0]).toBeTruthy();
 
@@ -178,10 +182,10 @@ describe('Sitemap 2025 Standards', () => {
 
       const urls = parsed.urlset.url;
 
-      urls.forEach((url: any) => {
+      urls.forEach((url) => {
         const alternates = url['xhtml:link'];
         expect(alternates).toBeDefined();
-        expect(alternates.length).toBeGreaterThanOrEqual(2); // 至少 zh-TW 和 x-default
+        expect(alternates!.length).toBeGreaterThanOrEqual(2); // 至少 zh-TW 和 x-default
       });
     });
   });
@@ -194,10 +198,7 @@ describe('Sitemap 2025 Standards', () => {
       const urls = parsed.urlset.url;
 
       // RateWise 應該有 17 個 SEO 路徑
-      expect(
-        urls.length,
-        'Should have 17 SEO paths (4 core + 13 currency pages)'
-      ).toBe(17);
+      expect(urls.length, 'Should have 17 SEO paths (4 core + 13 currency pages)').toBe(17);
     });
   });
 });
