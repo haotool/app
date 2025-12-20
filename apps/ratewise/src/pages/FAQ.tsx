@@ -9,6 +9,7 @@
  */
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 /**
  * FAQ 純文字資料 - 用於 JSON-LD schema
@@ -214,6 +215,15 @@ export default function FAQ() {
               </svg>
               回到首頁
             </Link>
+
+            {/* Breadcrumb Navigation */}
+            <Breadcrumb
+              items={[
+                { label: '首頁', href: '/' },
+                { label: '常見問題', href: '/faq/' },
+              ]}
+            />
+
             <h1 className="text-4xl font-bold text-slate-800 mb-2">常見問題</h1>
             <p className="text-slate-600">關於 RateWise 匯率好工具的常見問題解答</p>
           </div>
