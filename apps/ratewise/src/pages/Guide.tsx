@@ -9,6 +9,7 @@
  */
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 const Guide = () => {
   const howToSteps = [
@@ -95,6 +96,14 @@ const Guide = () => {
             </svg>
             回到首頁
           </Link>
+
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb
+            items={[
+              { label: '首頁', href: '/' },
+              { label: '使用指南', href: '/guide/' },
+            ]}
+          />
 
           {/* 標題 */}
           <div className="mb-8">

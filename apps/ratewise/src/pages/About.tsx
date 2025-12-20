@@ -4,6 +4,7 @@
  */
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 export default function About() {
   return (
@@ -31,6 +32,15 @@ export default function About() {
               </svg>
               回到首頁
             </Link>
+
+            {/* Breadcrumb Navigation */}
+            <Breadcrumb
+              items={[
+                { label: '首頁', href: '/' },
+                { label: '關於我們', href: '/about/' },
+              ]}
+            />
+
             <h1 className="text-3xl font-bold text-slate-800 mb-2">關於 RateWise 匯率好工具</h1>
             <p className="text-slate-600">台灣最快的即時匯率換算工具</p>
           </div>
