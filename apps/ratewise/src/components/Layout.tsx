@@ -11,6 +11,7 @@ import React from 'react';
 import { HelmetProvider } from '../utils/react-helmet-async';
 import { ErrorBoundary } from './ErrorBoundary';
 import { SkeletonLoader } from './SkeletonLoader';
+import { Footer } from './Footer';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   // [SSR-fix:2025-11-26] Check if running in browser (client-side)
@@ -46,12 +47,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <React.StrictMode>
       <HelmetProvider context={helmetContext}>
         <ErrorBoundary>
+          {/* Main Content */}
           <main role="main" className="min-h-screen">
             {/* [SEO Fix 2025-11-26] 移除 Layout 的 sr-only H1，讓各頁面自定義語義 H1
                 依據：[Google SEO Guidelines] 每頁應有唯一的語義 H1
                 參考：[Context7:vite-react-ssg] Head component best practices */}
             <React.Suspense fallback={<SkeletonLoader />}>{children}</React.Suspense>
           </main>
+
+          {/* Footer - Stage 6: 內部連結結構 */}
+          <Footer />
         </ErrorBoundary>
         {/* PWA 更新通知 - 只在客戶端動態載入（避免 SSR 時 workbox-window 錯誤） */}
         {UpdatePrompt && <UpdatePrompt />}
