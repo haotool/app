@@ -1,8 +1,8 @@
 # SEO 實作指南 (SEO Implementation Guide)
 
-> **版本**: 1.1.0  
+> **版本**: 1.2.0  
 > **建立時間**: 2025-10-24T23:23:09+08:00  
-> **最後更新**: 2025-10-30T04:03:03+08:00  
+> **最後更新**: 2025-12-21T03:11:35+08:00  
 > **維護者**: Development Team  
 > **狀態**: ✅ 已完成
 
@@ -267,6 +267,14 @@
 
 ## 技術 SEO
 
+### 0. 2025 預渲染 / SSG 最佳實踐
+
+- **站點 URL 標準化**：所有 SSG/SEO 腳本必須使用尾斜線的站點 URL（例如 `https://app.haotool.org/ratewise/`），避免 `.../ratewisefaq/` 類型的錯誤 canonical。
+  - 來源：`apps/ratewise/vite.config.ts`、`apps/ratewise/src/config/seo-paths.ts`、`scripts/generate-sitemap-2025.mjs`
+- **單一真實來源 (SSOT)**：`seo-paths.config.(ts|mjs)` 定義的 `SEO_PATHS`、`SITE_CONFIG` 為唯一路徑與站點設定來源，sitemap 生成、SSG includedRoutes、SEO 健康檢查皆應引用此配置。
+- **Canonical / hreflang 一致性**：`onPageRendered` 必須以標準化 URL 拼接 canonical/hreflang/JSON-LD，並與 sitemap `<loc>` 完全一致。
+- **驗證流程**：`pnpm generate:sitemap` + `pnpm verify:sitemap-2025` + `pnpm verify:production-seo`，確保 prerender HTML 與 sitemap、robots、llms.txt 同步。
+
 ### 1. Sitemap.xml
 
 **位置**: `/public/sitemap.xml`
@@ -279,20 +287,18 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://app.haotool.org/ratewise/</loc>
-    <lastmod>2025-10-24</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+    <lastmod>2025-12-21T03:11:35+08:00</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/" />
   </url>
 </urlset>
 ```
 
-**更新頻率**:
+**更新原則（2025 標準）**:
 
-- 首頁：`daily`
-- 功能頁：`weekly`
-- 關於頁：`monthly`
+- 保留 `<lastmod>` 並使用實際檔案修改時間（含時區）。
+- 移除 `<changefreq>` 與 `<priority>`（Google/Bing 已忽略）。
+- `<loc>` 必須與 SSG 預渲染輸出及 `SEO_PATHS` 完全一致（尾斜線）。
 
 ### 2. Robots.txt
 
@@ -342,9 +348,9 @@ Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 
 ### 4. Zeabur Subpath Deployment（`/ratewise`）
 
-- 使用 `VITE_BASE_PATH` 控制部署子路徑：本機維持 `/`，Zeabur 設為 `/ratewise/`
-  - **注意**：PWA manifest 的 `scope`/`start_url`/`id` 會自動移除尾斜線（`/ratewise`），以避免與 nginx 的 301 重定向衝突
-  - Vite 構建路徑保持 `/ratewise/`（有尾斜線），確保資源路徑正確
+- 使用 `VITE_RATEWISE_BASE_PATH` 控制部署子路徑：本機維持 `/`，Zeabur 設為 `/ratewise/`
+  - **注意**：PWA manifest 的 `scope`/`start_url`/`id` 需保留尾斜線（由 `normalizeSiteUrl` 統一處理），確保 Service Worker 範圍與 canonical/hreflang 一致，不再移除尾斜線。
+  - Vite 構建路徑保持 `/ratewise/`（有尾斜線），確保資源路徑與 sitemap `<loc>` 對齊
 - `scripts/update-release-metadata.js` 會自動鏡像靜態資產到 `public/ratewise/*`，確保
   - `https://app.haotool.org/ratewise/robots.txt`
   - `https://app.haotool.org/ratewise/sitemap.xml`
