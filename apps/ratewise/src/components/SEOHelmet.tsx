@@ -36,6 +36,15 @@ interface HowToData {
   totalTime?: string; // ISO 8601 duration format (e.g., 'PT30S', 'PT2M')
 }
 
+/**
+ * Breadcrumb item for navigation trail
+ * 依據 Google 2025 最佳實踐: https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
+ */
+interface BreadcrumbItem {
+  name: string;
+  item: string; // URL
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -50,6 +59,8 @@ interface SEOProps {
   updatedTime?: string;
   faq?: FAQEntry[];
   howTo?: HowToData;
+  /** Breadcrumb navigation trail (at least 2 items required) */
+  breadcrumb?: BreadcrumbItem[];
   /** Custom robots directive (default: index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1) */
   robots?: string;
 }
@@ -229,6 +240,32 @@ const buildHowToSchema = (
   })),
 });
 
+/**
+ * Build BreadcrumbList JSON-LD schema
+ * 依據 Google 2025 最佳實踐:
+ * - 至少 2 個 ListItems
+ * - 使用 position 屬性
+ * - 所有 URL 必須是絕對路徑
+ * 參考: https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
+ */
+const buildBreadcrumbSchema = (items: BreadcrumbItem[]) => {
+  if (!items || items.length < 2) {
+    console.warn('[SEOHelmet] BreadcrumbList requires at least 2 items');
+    return null;
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: buildCanonical(item.item),
+    })),
+  };
+};
+
 export function SEOHelmet({
   title,
   description = DEFAULT_DESCRIPTION,
@@ -243,6 +280,7 @@ export function SEOHelmet({
   updatedTime,
   faq,
   howTo,
+  breadcrumb,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 }: SEOProps) {
   const fullTitle = title ? `${title} | RateWise` : DEFAULT_TITLE;
@@ -270,6 +308,13 @@ export function SEOHelmet({
 
   if (howTo) {
     structuredData.push(buildHowToSchema(howTo, canonicalUrl));
+  }
+
+  if (breadcrumb && breadcrumb.length >= 2) {
+    const breadcrumbSchema = buildBreadcrumbSchema(breadcrumb);
+    if (breadcrumbSchema) {
+      structuredData.push(breadcrumbSchema);
+    }
   }
 
   // [2025 AI SEO] 添加 OG 圖片的 ImageObject Schema

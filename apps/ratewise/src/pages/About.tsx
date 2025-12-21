@@ -13,6 +13,10 @@ export default function About() {
         title="關於我們"
         description="RateWise 是一個專為台灣用戶設計的即時匯率工具，提供準確、快速且支援離線使用的匯率換算服務。了解我們的資料來源、技術優勢與聯繫方式。"
         pathname="/about"
+        breadcrumb={[
+          { name: 'RateWise 首頁', item: '/' },
+          { name: '關於我們', item: '/about/' },
+        ]}
       />
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-slate-50">
         <div className="container mx-auto px-4 py-8 max-w-4xl">

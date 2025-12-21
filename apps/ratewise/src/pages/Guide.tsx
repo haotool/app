@@ -77,6 +77,10 @@ const Guide = () => {
           steps: howToSteps,
           totalTime: 'PT2M', // 2 分鐘完成
         }}
+        breadcrumb={[
+          { name: 'RateWise 首頁', item: '/' },
+          { name: '使用指南', item: '/guide/' },
+        ]}
       />
 
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-slate-50">
