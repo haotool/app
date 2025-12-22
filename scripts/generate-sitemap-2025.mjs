@@ -27,7 +27,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // 從 SSOT 導入配置
-import { SEO_PATHS, SITE_CONFIG, IMAGE_RESOURCES } from '../apps/ratewise/seo-paths.config.mjs';
+import {
+  SEO_PATHS,
+  SITE_CONFIG,
+  IMAGE_RESOURCES,
+  normalizeSiteUrl,
+} from '../apps/ratewise/seo-paths.config.mjs';
+
+const SITE_URL = normalizeSiteUrl(SITE_CONFIG.url);
 
 // 顏色輸出
 const colors = {
@@ -73,30 +80,30 @@ const PATH_TO_SOURCE = {
 const PAGE_IMAGES = {
   '/': [
     {
-      loc: `${SITE_CONFIG.url}og-image.png`,
+      loc: `${SITE_URL}og-image.png`,
       caption: 'RateWise - 即時匯率轉換器 Open Graph 圖片',
     },
     {
-      loc: `${SITE_CONFIG.url}icons/ratewise-icon-512x512.png`,
+      loc: `${SITE_URL}icons/ratewise-icon-512x512.png`,
       caption: 'RateWise Logo',
     },
   ],
   // 其他核心頁面使用相同圖片
   '/faq/': [
     {
-      loc: `${SITE_CONFIG.url}og-image.png`,
+      loc: `${SITE_URL}og-image.png`,
       caption: 'RateWise FAQ - 常見問題',
     },
   ],
   '/about/': [
     {
-      loc: `${SITE_CONFIG.url}og-image.png`,
+      loc: `${SITE_URL}og-image.png`,
       caption: 'RateWise About - 關於我們',
     },
   ],
   '/guide/': [
     {
-      loc: `${SITE_CONFIG.url}og-image.png`,
+      loc: `${SITE_URL}og-image.png`,
       caption: 'RateWise Guide - 使用指南',
     },
   ],
@@ -163,7 +170,7 @@ function escapeXml(str) {
  * @returns {string} XML 條目
  */
 function generateUrlEntry(path) {
-  const url = path === '/' ? SITE_CONFIG.url : `${SITE_CONFIG.url}${path.slice(1)}`;
+  const url = path === '/' ? SITE_URL : `${SITE_URL}${path.slice(1)}`;
   const lastmod = formatDateISO8601(getLastModDate(path));
 
   let xml = '  <url>\n';

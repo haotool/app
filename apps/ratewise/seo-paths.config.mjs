@@ -15,6 +15,13 @@
  * 依據: [Linus: Single Source of Truth][SEO Best Practices 2025]
  */
 
+const withTrailingSlash = (value) => {
+  const trimmed = value.trim();
+  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+};
+
+export const normalizeSiteUrl = withTrailingSlash;
+
 /**
  * RateWise 所有需要預渲染的 SEO 路徑
  *
@@ -100,7 +107,7 @@ export function getIncludedRoutes(paths) {
  * 網站基本配置
  */
 export const SITE_CONFIG = {
-  url: 'https://app.haotool.org/ratewise/',
+  url: withTrailingSlash('https://app.haotool.org/ratewise/'),
   name: 'RateWise - 匯率好工具',
   title: 'RateWise - 即時匯率轉換器',
   description:
