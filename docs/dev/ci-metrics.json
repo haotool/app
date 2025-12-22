@@ -496,6 +496,13 @@
       "conclusion": "failure",
       "branch": "claude/seo-audit-ratewise-3vEjt",
       "commit": "c9b589a69c8d78c309d4fcaada30f70d8da55522"
+    },
+    {
+      "timestamp": "2025-12-22T18:00:08Z",
+      "duration_seconds": 352,
+      "conclusion": "failure",
+      "branch": "claude/seo-audit-ratewise-3vEjt",
+      "commit": "8440428ade69b61c840f9b632a132c6f86519225"
     }
   ]
 }
