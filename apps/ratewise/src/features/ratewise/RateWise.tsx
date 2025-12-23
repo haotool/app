@@ -225,16 +225,10 @@ const RateWise = () => {
           <div className="text-center mb-2">
             <div className="flex items-center justify-center gap-0 mb-0.5">
               <picture>
-                <source
-                  type="image/avif"
-                  srcSet="/optimized/logo-112w.avif 112w, /optimized/logo-192w.avif 192w"
-                  sizes="(max-width: 768px) 64px, 80px"
-                />
-                <source
-                  type="image/webp"
-                  srcSet="/optimized/logo-112w.webp 112w, /optimized/logo-192w.webp 192w"
-                  sizes="(max-width: 768px) 64px, 80px"
-                />
+                <source type="image/avif" srcSet="/logo.avif" media="(max-width: 768px)" />
+                <source type="image/webp" srcSet="/logo.webp" media="(max-width: 768px)" />
+                <source type="image/avif" srcSet="/logo.avif" />
+                <source type="image/webp" srcSet="/logo.webp" />
                 <img
                   src="/logo.png"
                   alt="RateWise Logo"
