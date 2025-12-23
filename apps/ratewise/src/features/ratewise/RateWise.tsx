@@ -224,22 +224,16 @@ const RateWise = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-2">
             <div className="flex items-center justify-center gap-0 mb-0.5">
-              <picture>
-                <source type="image/avif" srcSet="/logo.avif" media="(max-width: 768px)" />
-                <source type="image/webp" srcSet="/logo.webp" media="(max-width: 768px)" />
-                <source type="image/avif" srcSet="/logo.avif" />
-                <source type="image/webp" srcSet="/logo.webp" />
-                <img
-                  src="/logo.png"
-                  alt="RateWise Logo"
-                  className="w-16 h-16 md:w-20 md:h-20"
-                  width="112"
-                  height="112"
-                  loading="eager"
-                  decoding="async"
-                  fetchPriority="high"
-                />
-              </picture>
+              <img
+                alt="RateWise Logo"
+                className="w-16 h-16 md:w-20 md:h-20"
+                width="112"
+                height="112"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                src="/logo.png"
+              />
               <h1
                 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"
                 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 700 }}

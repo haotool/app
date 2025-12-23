@@ -257,10 +257,10 @@ export function Footer() {
         </div>
       </div>
 
-      {/* 電腦版完整 Footer - 單一整合版本 */}
+      {/* 電腦版完整 Footer - 整合簡潔風格 + SEO 連結 */}
       <div className="hidden md:block container mx-auto px-4 md:px-6 py-12 max-w-6xl">
         {/* 匯率來源與更新時間 */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+        <div className="flex flex-row items-center justify-center gap-4 mb-6">
           <a
             href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
             target="_blank"
@@ -342,8 +342,8 @@ export function Footer() {
         {/* 分隔線 */}
         <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-8" />
 
-        {/* Links Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        {/* Links Grid - SEO 內部連結 */}
+        <div className="grid grid-cols-3 gap-8 mb-8">
           {FOOTER_SECTIONS.map((section) => (
             <div key={section.title}>
               <h3 className="text-white font-semibold mb-4 text-lg">{section.title}</h3>
@@ -366,8 +366,8 @@ export function Footer() {
         {/* Divider */}
         <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-8" />
 
-        {/* Bottom Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        {/* Bottom Section - 整合版權與社群 */}
+        <div className="flex flex-row justify-between items-center gap-4">
           {/* Copyright */}
           <div className="text-sm text-slate-300">
             <p>
