@@ -257,7 +257,7 @@ export function Footer() {
         </div>
       </div>
 
-      {/* 電腦版完整 Footer */}
+      {/* 電腦版完整 Footer - 單一整合版本 */}
       <div className="hidden md:block container mx-auto px-4 md:px-6 py-12 max-w-6xl">
         {/* 匯率來源與更新時間 */}
         <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
