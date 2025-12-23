@@ -9,7 +9,6 @@ import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
 import { ConversionHistory } from './components/ConversionHistory';
 import { VersionDisplay } from '../../components/VersionDisplay';
-import { ThreadsIcon } from '../../components/ThreadsIcon';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator';
 import { formatDisplayTime } from '../../utils/timeFormatter';
@@ -237,7 +236,7 @@ const RateWise = () => {
                   sizes="(max-width: 768px) 64px, 80px"
                 />
                 <img
-                  src="/optimized/logo-112w.png"
+                  src="/logo.png"
                   alt="RateWise Logo"
                   className="w-16 h-16 md:w-20 md:h-20"
                   width="112"
@@ -363,19 +362,19 @@ const RateWise = () => {
             </div>
           </section>
 
-          <footer className="mt-12 -mx-3 md:-mx-8 -mb-3 md:-mb-8 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-            <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
-              {/* 數據來源與更新時間 - 現代化簡約設計 */}
-              {!ratesLoading && lastUpdate && (
-                <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+          {/* 數據來源與更新時間 - 簡潔卡片設計 */}
+          {!ratesLoading && lastUpdate && (
+            <section className="mt-6">
+              <div className="bg-gradient-to-r from-slate-800 to-indigo-900 rounded-2xl shadow-lg p-4 md:p-5">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
                   <a
                     href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
+                    className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors group"
                   >
                     <svg
-                      className="w-4 h-4 text-white group-hover:scale-110 transition-transform"
+                      className="w-4 h-4 group-hover:scale-110 transition-transform"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -387,11 +386,9 @@ const RateWise = () => {
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <span className="text-sm font-medium text-white">
-                      Taiwan Bank (臺灣銀行牌告匯率)
-                    </span>
+                    <span className="text-sm font-medium">臺灣銀行牌告匯率</span>
                     <svg
-                      className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform"
+                      className="w-3 h-3 text-white/60 group-hover:translate-x-0.5 transition-transform"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -404,6 +401,7 @@ const RateWise = () => {
                       />
                     </svg>
                   </a>
+                  <span className="hidden sm:block text-white/30">|</span>
                   <div className="flex items-center gap-2 text-sm text-white/80">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -413,86 +411,16 @@ const RateWise = () => {
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <span>更新時間 {formattedLastUpdate}</span>
+                    <span>更新 {formattedLastUpdate}</span>
+                  </div>
+                  <span className="hidden sm:block text-white/30">|</span>
+                  <div className="flex items-center gap-1.5 text-sm text-white/70">
+                    <VersionDisplay />
                   </div>
                 </div>
-              )}
-
-              {/* 免責聲明 - 簡化設計 */}
-              <div className="text-center mb-6">
-                <p className="text-xs text-white/70 leading-relaxed">
-                  本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）·
-                  實際交易匯率以各銀行公告為準
-                </p>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
-                <Link
-                  to="/faq/"
-                  className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-                >
-                  <span aria-hidden="true" className="text-white/50">
-                    ?
-                  </span>
-                  常見問題
-                </Link>
-                <Link
-                  to="/about/"
-                  className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-                >
-                  <span aria-hidden="true" className="text-white/50">
-                    i
-                  </span>
-                  關於我們
-                </Link>
-              </div>
-
-              {/* 分隔線 */}
-              <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-6" />
-
-              {/* 版權與品牌 - 極簡設計 */}
-              <div className="flex flex-col items-center justify-center gap-3 text-sm">
-                {/* 品牌名稱與版本 */}
-                <div className="flex items-center gap-2 text-white/90">
-                  {/* 匯率趨勢圖標 */}
-                  <div className="w-5 h-5 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.5}
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                      />
-                    </svg>
-                  </div>
-                  <span className="font-semibold">匯率好工具</span>
-                  <span className="text-white/50">•</span>
-                  <VersionDisplay />
-                  <span className="text-white/50">•</span>
-                  <span className="text-white/70">© {new Date().getFullYear()}</span>
-                </div>
-
-                {/* 作者資訊 */}
-                <div className="flex items-center gap-1.5 text-white/80">
-                  <span>By</span>
-                  <ThreadsIcon className="w-4 h-4" />
-                  <a
-                    href="https://www.threads.net/@azlife_1224"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/90 hover:text-white transition-colors duration-200 font-medium"
-                  >
-                    azlife_1224
-                  </a>
-                </div>
-              </div>
-            </div>
-          </footer>
+            </section>
+          )}
         </div>
       </main>
     </>

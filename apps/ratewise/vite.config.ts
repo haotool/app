@@ -130,6 +130,15 @@ function generateVersion(): string {
   return version;
 }
 
+/**
+ * 確保站點 URL 具備尾斜線，避免 prerender 時 canonical/hreflang 拼接錯誤
+ * 依據: Vite SSG 2025 預渲染最佳實踐（標準化 base URL）
+ */
+const normalizeSiteUrl = (value: string): string => {
+  const trimmed = value.trim();
+  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+};
+
 // 最簡配置 - 參考 Context7 官方範例
 // [context7:vitejs/vite:2025-10-21T03:15:00+08:00]
 // 使用函數形式確保 define 在所有模式下都能正確工作
@@ -138,7 +147,7 @@ export default defineConfig(({ mode }) => {
   // 自動生成版本號（語義化版本 + git metadata）
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
-  const siteUrl = env.VITE_SITE_URL || 'https://app.haotool.org/ratewise/';
+  const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL || 'https://app.haotool.org/ratewise/');
 
   // 最簡配置：使用環境變數，消除所有特殊情況
   // [fix:2025-10-27] 遵循 Linus 原則 - "好品味"：消除條件判斷
@@ -648,7 +657,7 @@ export default defineConfig(({ mode }) => {
         console.log(`🔄 Pre-rendering: ${route}`);
         return indexHTML;
       },
-      // 預渲染後處理 HTML - 修復 canonical URL 和 JSON-LD
+      // 預渲染後處理 HTML - 修復 canonical URL
       async onPageRendered(route, renderedHTML) {
         console.log(`✅ Post-processing: ${route}`);
 
@@ -667,12 +676,6 @@ export default defineConfig(({ mode }) => {
           renderedHTML = renderedHTML.replace(
             /<link rel="alternate" hreflang="([^"]*)" href="[^"]*">/g,
             `<link rel="alternate" hreflang="$1" href="${fullCanonicalUrl}">`,
-          );
-
-          // 修復 JSON-LD 中的 URL (如果有)
-          renderedHTML = renderedHTML.replace(
-            /"url":"https:\/\/app\.haotool\.org\/ratewise\/"/g,
-            `"url":"${fullCanonicalUrl}"`,
           );
         }
 

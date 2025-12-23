@@ -9,6 +9,7 @@
  */
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 const Guide = () => {
   const howToSteps = [
@@ -69,6 +70,10 @@ const Guide = () => {
         description="完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算。包含模式選擇、匯率類型切換、歷史趨勢查看、收藏功能等完整操作指南。"
         canonical="https://app.haotool.org/ratewise/guide/"
         pathname="/guide"
+        breadcrumb={[
+          { name: 'RateWise 首頁', item: '/' },
+          { name: '使用教學', item: '/guide/' },
+        ]}
         howTo={{
           name: '如何使用 RateWise 進行匯率換算',
           description:
@@ -95,6 +100,14 @@ const Guide = () => {
             </svg>
             回到首頁
           </Link>
+
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb
+            items={[
+              { label: '首頁', href: '/' },
+              { label: '使用指南', href: '/guide/' },
+            ]}
+          />
 
           {/* 標題 */}
           <div className="mb-8">

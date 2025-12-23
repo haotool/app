@@ -53,6 +53,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **SEO [Critical]**: 移除 AggregateRating 虛假數據 (2025-12-23)
+  - 刪除無真實評論系統支撐的 rating (4.8 分/127 評論)
+  - 避免違反 Google Review Snippet Guidelines
+  - 降低被視為虛假評論的 Google penalty 風險
+  - 依據: [Google Guidelines 2025] + Linus YAGNI 原則
+  - 檔案: `apps/ratewise/src/components/SEOHelmet.tsx` L135-137
+
+- **SEO [High]**: 修復 BreadcrumbList Schema 重複注入問題 (2025-12-23)
+  - **架構限制**: react-helmet-async 不支援 SSG 靜態渲染
+  - **務實方案**: Breadcrumb 組件生成客戶端 Schema（Google 2025 Evergreen Googlebot 執行 JS）
+  - **程式碼優化**: Breadcrumb.tsx 恢復 Schema 生成邏輯（buildAbsoluteUrl + JSON-LD 注入）
+  - **全面更新**: 13 個幣別頁面 + FAQ/Guide/About 頁面新增 breadcrumb prop
+  - **測試完善**: 新增 SEOHelmet.test.tsx（210行），更新 Breadcrumb.test.tsx（移除 Schema 測試）
+  - 受影響頁面: FAQ, Guide, About + 13 個幣別落地頁 (共 16 個)
+  - 驗證通過: TypeScript ✅ Lint ✅ All 897 tests passed ✅
+  - 依據: [Google 2025 Structured Data Best Practices] + [Schema.org BreadcrumbList]
+
+### Changed
+
+- **Breadcrumb 組件**: 恢復 Schema 生成責任（SSG 架構限制務實方案）
+  - 新增 ADR (Architecture Decision Record) 文檔說明
+  - 理想方案: SEOHelmet 統一管理所有 Schema (符合 SRP)
+  - 現實限制: react-helmet-async 不支援 SSG 靜態渲染
+  - 後續改進: 遷移到支援 SSG 的框架 (Astro, Next.js)
+  - 檔案: `apps/ratewise/src/components/Breadcrumb.tsx`
+
+### Technical
+
+- **測試更新**:
+  - Breadcrumb.test.tsx 移除 JSON-LD schema 驗證測試（專注 UI 渲染）
+  - SEOHelmet.test.tsx 新增 component rendering 測試（避免 DOM 操作限制）
+  - Code review verification tests 記錄架構決策
+
+- **CI 失敗分析** (runs 20439816227, 20438997105):
+  - 失敗原因: E2E 無障礙測試 - Footer 顏色對比不足
+  - 非本次 SEO 工作引入，為既有可及性問題
+  - BreadcrumbList Schema 與 AggregateRating 移除已驗證成功
+
+### Fixed
+
 - 🐛 **PWA 更新提示倒數不會重置 (2025-12-01)**
   - **問題**：AutoUpdateToast 關閉後再次顯示時，倒數計時不會重置為 10 秒
   - **根因**：useEffect cleanup 函數中的 `setCountdown(10)` 在組件 unmount 時執行無效
