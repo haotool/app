@@ -55,8 +55,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <React.Suspense fallback={<SkeletonLoader />}>{children}</React.Suspense>
           </main>
 
-          {/* Footer - Stage 6: 內部連結結構 */}
-          <Footer />
+          {/* Footer - Stage 6: 內部連結結構 (只在桌面版顯示) */}
+          <div className="hidden md:block">
+            <Footer />
+          </div>
         </ErrorBoundary>
         {/* PWA 更新通知 - 只在客戶端動態載入（避免 SSR 時 workbox-window 錯誤） */}
         {UpdatePrompt && <UpdatePrompt />}

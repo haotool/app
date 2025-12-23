@@ -1,169 +1,127 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
-  RateWise Sitemap - 符合 Google 2025 最佳實踐
-  - 已移除 image:caption (Google 2025 棄用)
-  - 已移除 image:title (Google 2025 棄用)
-  - 保留 image:loc (唯一支援的 image 標籤)
-  更新時間: 2025-12-23T22:37:43+08:00
-  參考: https://searchengineland.com/google-removing-support-for-some-video-and-image-sitemap-extension-tags-384980
--->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://app.haotool.org/ratewise/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:24:10Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/" />
     <image:image>
       <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>RateWise - 即時匯率轉換器 Open Graph 圖片</image:caption>
     </image:image>
     <image:image>
       <image:loc>https://app.haotool.org/ratewise/icons/ratewise-icon-512x512.png</image:loc>
+      <image:caption>RateWise Logo</image:caption>
     </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/faq/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/faq/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/faq/" />
     <image:image>
       <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>RateWise FAQ - 常見問題</image:caption>
     </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/about/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/about/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/about/" />
     <image:image>
       <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>RateWise About - 關於我們</image:caption>
     </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/guide/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/guide/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/guide/" />
     <image:image>
       <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>RateWise Guide - 使用指南</image:caption>
     </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/aud-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/aud-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/aud-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/cad-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/cad-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/cad-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/chf-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/chf-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/chf-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/cny-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/cny-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/cny-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/eur-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/eur-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/eur-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/gbp-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/gbp-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/gbp-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/hkd-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/hkd-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/hkd-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/jpy-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/jpy-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/jpy-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/krw-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/krw-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/krw-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/nzd-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/nzd-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/nzd-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/sgd-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/sgd-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/sgd-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/thb-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/thb-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/thb-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/usd-twd/</loc>
-    <lastmod>2025-12-23T14:37:43Z</lastmod>
+    <lastmod>2025-12-23T15:17:38Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/usd-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/usd-twd/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-    </image:image>
   </url>
 </urlset>
