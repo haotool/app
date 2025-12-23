@@ -22,6 +22,10 @@ vi.mock('../SkeletonLoader', () => ({
   SkeletonLoader: () => <div data-testid="skeleton-loader">Loading...</div>,
 }));
 
+vi.mock('../Footer', () => ({
+  Footer: () => <footer data-testid="footer">Footer</footer>,
+}));
+
 vi.mock('../../utils/react-helmet-async', () => ({
   HelmetProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));

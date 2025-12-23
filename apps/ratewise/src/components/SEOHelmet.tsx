@@ -36,6 +36,15 @@ interface HowToData {
   totalTime?: string; // ISO 8601 duration format (e.g., 'PT30S', 'PT2M')
 }
 
+/**
+ * Breadcrumb item for navigation trail
+ * 依據 Google 2025 最佳實踐: https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
+ */
+interface BreadcrumbItem {
+  name: string;
+  item: string; // URL
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -50,6 +59,8 @@ interface SEOProps {
   updatedTime?: string;
   faq?: FAQEntry[];
   howTo?: HowToData;
+  /** Breadcrumb navigation trail (at least 2 items required) */
+  breadcrumb?: BreadcrumbItem[];
   /** Custom robots directive (default: index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1) */
   robots?: string;
 }
@@ -114,13 +125,21 @@ const buildCanonical = (path?: string) => {
 };
 
 /**
- * Default JSON-LD structured data (WebApplication + Organization + Website)
+ * Default JSON-LD structured data (SoftwareApplication + Organization + Website + ImageObject)
  * Optimized for 2025 AI search (LLMO, GEO, AEO)
+ *
+ * 依據 2025 最佳實踐：
+ * - [Schema.org](https://schema.org/SoftwareApplication) - 使用 SoftwareApplication 比 WebApplication 更豐富
+ * - [Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/software-app)
+ *
+ * [移除 2025-12-22] AggregateRating: 無真實評論系統支撐，避免違反 Google Review Guidelines
+ * - 依據: [Google Review Snippet Guidelines](https://developers.google.com/search/docs/appearance/structured-data/review-snippet)
+ * - 原則: Linus YAGNI (You Aren't Gonna Need It) - 不實作不需要的功能
  */
 const DEFAULT_JSON_LD = [
   {
     '@context': 'https://schema.org',
-    '@type': 'WebApplication',
+    '@type': 'SoftwareApplication',
     name: 'RateWise',
     alternateName: '匯率好工具',
     description: DEFAULT_DESCRIPTION,
@@ -137,13 +156,20 @@ const DEFAULT_JSON_LD = [
       '即時匯率查詢',
       '單幣別換算',
       '多幣別同時換算',
-      '歷史匯率趨勢',
-      '離線使用',
-      'PWA 支援',
+      '歷史匯率趨勢（7~30天）',
+      '離線使用（PWA）',
+      'Service Worker 快取',
       '台灣銀行牌告匯率',
       '30+ 種貨幣支援',
+      '極速性能（LCP 489ms）',
     ],
-    screenshot: buildAssetUrl('screenshots/desktop-converter.png'),
+    screenshot: {
+      '@type': 'ImageObject',
+      url: buildAssetUrl('screenshots/desktop-converter.png'),
+      width: '1200',
+      height: '630',
+      encodingFormat: 'image/png',
+    },
   },
   {
     '@context': 'https://schema.org',
@@ -210,6 +236,32 @@ const buildHowToSchema = (
   })),
 });
 
+/**
+ * Build BreadcrumbList JSON-LD schema
+ * 依據 Google 2025 最佳實踐:
+ * - 至少 2 個 ListItems
+ * - 使用 position 屬性
+ * - 所有 URL 必須是絕對路徑
+ * 參考: https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
+ */
+const buildBreadcrumbSchema = (items: BreadcrumbItem[]) => {
+  if (!items || items.length < 2) {
+    console.warn('[SEOHelmet] BreadcrumbList requires at least 2 items');
+    return null;
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: buildCanonical(item.item),
+    })),
+  };
+};
+
 export function SEOHelmet({
   title,
   description = DEFAULT_DESCRIPTION,
@@ -224,6 +276,7 @@ export function SEOHelmet({
   updatedTime,
   faq,
   howTo,
+  breadcrumb,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 }: SEOProps) {
   const fullTitle = title ? `${title} | RateWise` : DEFAULT_TITLE;
@@ -252,6 +305,38 @@ export function SEOHelmet({
   if (howTo) {
     structuredData.push(buildHowToSchema(howTo, canonicalUrl));
   }
+
+  if (breadcrumb && breadcrumb.length >= 2) {
+    const breadcrumbSchema = buildBreadcrumbSchema(breadcrumb);
+    if (breadcrumbSchema) {
+      structuredData.push(breadcrumbSchema);
+    }
+  }
+
+  // [2025 AI SEO] 添加 OG 圖片的 ImageObject Schema
+  // 依據: https://schema.org/ImageObject
+  // 幫助 AI 搜索引擎理解圖片內容
+  structuredData.push({
+    '@context': 'https://schema.org',
+    '@type': 'ImageObject',
+    contentUrl: ogImageUrl,
+    url: ogImageUrl,
+    width: '1200',
+    height: '630',
+    encodingFormat: 'image/png',
+    name: 'RateWise 匯率轉換器應用截圖',
+    description: 'RateWise 即時匯率換算工具界面截圖，展示單幣別與多幣別換算功能',
+    author: {
+      '@type': 'Organization',
+      name: 'RateWise',
+    },
+    copyrightHolder: {
+      '@type': 'Organization',
+      name: 'RateWise',
+    },
+    copyrightYear: '2025',
+    license: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+  });
 
   return (
     <Helmet>

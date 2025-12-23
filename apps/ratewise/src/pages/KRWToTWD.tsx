@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 const FAQ_ENTRIES = [
   {
@@ -58,6 +59,10 @@ export default function KRWToTWD() {
           '匯率好工具',
           'RateWise',
         ]}
+        breadcrumb={[
+          { name: 'RateWise 首頁', item: '/' },
+          { name: 'KRW → TWD 匯率', item: '/krw-twd/' },
+        ]}
         faq={FAQ_ENTRIES}
         howTo={{
           name: '如何查看 KRW 對 TWD 匯率',
@@ -69,6 +74,14 @@ export default function KRWToTWD() {
 
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-white">
         <div className="container mx-auto px-4 py-10 max-w-5xl">
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb
+            items={[
+              { label: '首頁', href: '/' },
+              { label: 'KRW → TWD', href: '/krw-twd/' },
+            ]}
+          />
+
           <div className="flex items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-slate-900">

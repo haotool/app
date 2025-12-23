@@ -4,6 +4,7 @@
  */
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 export default function About() {
   return (
@@ -12,6 +13,10 @@ export default function About() {
         title="關於我們"
         description="RateWise 是一個專為台灣用戶設計的即時匯率工具，提供準確、快速且支援離線使用的匯率換算服務。了解我們的資料來源、技術優勢與聯繫方式。"
         pathname="/about"
+        breadcrumb={[
+          { name: 'RateWise 首頁', item: '/' },
+          { name: '關於我們', item: '/about/' },
+        ]}
       />
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-slate-50">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -31,6 +36,15 @@ export default function About() {
               </svg>
               回到首頁
             </Link>
+
+            {/* Breadcrumb Navigation */}
+            <Breadcrumb
+              items={[
+                { label: '首頁', href: '/' },
+                { label: '關於我們', href: '/about/' },
+              ]}
+            />
+
             <h1 className="text-3xl font-bold text-slate-800 mb-2">關於 RateWise 匯率好工具</h1>
             <p className="text-slate-600">台灣最快的即時匯率換算工具</p>
           </div>

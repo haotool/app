@@ -11,10 +11,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs && node ../../scripts/generate-sitemap.js",
+    "prebuild": "node ../../scripts/generate-sitemap-2025.mjs && node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs",
     "build": "tsc --noEmit && vite-react-ssg build --config vite.config.ts",
     "postbuild": "node scripts/update-csp-meta.js && node scripts/postbuild-mirror-dist.js",
     "preview": "vite preview",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",

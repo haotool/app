@@ -12,6 +12,17 @@
  */
 
 /**
+ * 確保 URL 具備尾斜線，避免 prerender/canonical 路徑拼接錯誤
+ *
+ * @param value - 原始 URL
+ * @returns 具尾斜線的 URL
+ */
+export function normalizeSiteUrl(value: string): string {
+  const trimmed = value.trim();
+  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+}
+
+/**
  * RateWise 所有需要預渲染的 SEO 路徑
  *
  * 總計：17 個路徑
@@ -64,7 +75,7 @@ export const IMAGE_RESOURCES = [
  * 網站基本配置
  */
 export const SITE_CONFIG = {
-  url: 'https://app.haotool.org/ratewise/',
+  url: normalizeSiteUrl('https://app.haotool.org/ratewise/'),
   name: 'RateWise - 匯率好工具',
   title: 'RateWise - 即時匯率轉換器',
   description:

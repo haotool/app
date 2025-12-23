@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 const FAQ_ENTRIES = [
   {
@@ -58,6 +59,10 @@ export default function JPYToTWD() {
           '匯率好工具',
           'RateWise',
         ]}
+        breadcrumb={[
+          { name: 'RateWise 首頁', item: '/' },
+          { name: 'JPY → TWD 匯率', item: '/jpy-twd/' },
+        ]}
         faq={FAQ_ENTRIES}
         howTo={{
           name: '如何查看 JPY 對 TWD 匯率',
@@ -69,6 +74,14 @@ export default function JPYToTWD() {
 
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-rose-50 to-white">
         <div className="container mx-auto px-4 py-10 max-w-5xl">
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb
+            items={[
+              { label: '首頁', href: '/' },
+              { label: 'JPY → TWD', href: '/jpy-twd/' },
+            ]}
+          />
+
           <div className="flex items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
