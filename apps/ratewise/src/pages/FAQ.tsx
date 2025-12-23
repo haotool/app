@@ -195,11 +195,11 @@ export default function FAQ() {
         title="常見問題"
         description="RateWise 匯率好工具常見問題：匯率來源、支援貨幣、離線使用、更新頻率等問題解答。"
         pathname="/faq"
-        faq={FAQ_JSONLD_DATA}
         breadcrumb={[
           { name: 'RateWise 首頁', item: '/' },
           { name: '常見問題', item: '/faq/' },
         ]}
+        faq={FAQ_JSONLD_DATA}
       />
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-slate-50">
         <div className="container mx-auto px-4 py-8 max-w-4xl">

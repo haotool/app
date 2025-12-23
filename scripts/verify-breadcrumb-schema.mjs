@@ -23,6 +23,7 @@ import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import { JSDOM } from 'jsdom';
+import { SITE_CONFIG, normalizeSiteUrl } from '../apps/ratewise/seo-paths.config.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -40,7 +41,7 @@ function log(color, symbol, message) {
   console.log(`${color}${symbol}${colors.reset} ${message}`);
 }
 
-const SITE_URL = 'https://app.haotool.org/ratewise/';
+const SITE_URL = normalizeSiteUrl(SITE_CONFIG.url);
 
 /**
  * 驗證 BreadcrumbList Schema

@@ -132,23 +132,14 @@ function getLastModDate(path) {
 }
 
 /**
- * 格式化日期為 ISO 8601 + 時區
- * 範例：2025-12-20T10:30:45+08:00
+ * 格式化日期為 ISO 8601 + 時區 (UTC)
+ * 範例：2025-12-20T02:30:45Z
  *
  * @param {Date} date - 日期對象
  * @returns {string} ISO 8601 格式字串（含時區）
  */
 function formatDateISO8601(date) {
-  // 使用台灣時區 +08:00
-  const tzOffset = '+08:00';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${tzOffset}`;
+  return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
 /**

@@ -657,7 +657,7 @@ export default defineConfig(({ mode }) => {
         console.log(`🔄 Pre-rendering: ${route}`);
         return indexHTML;
       },
-      // 預渲染後處理 HTML - 修復 canonical URL 和 JSON-LD
+      // 預渲染後處理 HTML - 修復 canonical URL
       async onPageRendered(route, renderedHTML) {
         console.log(`✅ Post-processing: ${route}`);
 
@@ -676,12 +676,6 @@ export default defineConfig(({ mode }) => {
           renderedHTML = renderedHTML.replace(
             /<link rel="alternate" hreflang="([^"]*)" href="[^"]*">/g,
             `<link rel="alternate" hreflang="$1" href="${fullCanonicalUrl}">`,
-          );
-
-          // 修復 JSON-LD 中的 URL (如果有)
-          renderedHTML = renderedHTML.replace(
-            /"url":"https:\/\/app\.haotool\.org\/ratewise\/"/g,
-            `"url":"${fullCanonicalUrl}"`,
           );
         }
 

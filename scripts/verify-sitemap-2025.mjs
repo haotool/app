@@ -28,7 +28,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // 從 SSOT 導入配置
-import { SEO_PATHS } from '../apps/ratewise/seo-paths.config.mjs';
+import { SEO_PATHS, SITE_CONFIG, normalizeSiteUrl } from '../apps/ratewise/seo-paths.config.mjs';
 
 // 顏色輸出
 const colors = {
@@ -208,7 +208,7 @@ async function runTests() {
 
   // Test 9: 所有 SEO 路徑都在 sitemap 中
   console.log('\n📋 測試 9: SEO 路徑完整性（17 個路徑）');
-  const siteUrl = 'https://app.haotool.org/ratewise/';
+  const siteUrl = normalizeSiteUrl(SITE_CONFIG.url);
   const missingPaths = [];
 
   SEO_PATHS.forEach((path) => {

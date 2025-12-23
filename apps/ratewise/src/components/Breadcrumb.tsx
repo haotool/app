@@ -1,28 +1,34 @@
 /**
- * Breadcrumb Component with BreadcrumbList Schema
+ * Breadcrumb Component (UI + Client-Side Schema)
  *
  * 依據：
- * - [Schema.org] BreadcrumbList 結構化數據規範
- *   https://schema.org/BreadcrumbList
- * - [Google Search Central] 麵包屑導航最佳實踐
- *   https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
  * - [WCAG 2.1] 無障礙導航要求
  *   https://www.w3.org/WAI/ARIA/apg/patterns/breadcrumb/
+ * - [Google 2025] Evergreen Googlebot 執行 JavaScript
+ *   https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics
  *
  * 功能：
  * - 視覺化麵包屑導航（響應式）
- * - BreadcrumbList JSON-LD 結構化數據
  * - 完整無障礙支持 (a11y)
+ * - **客戶端** BreadcrumbList Schema 生成
  *
  * 建立時間: 2025-12-20
+ * 最後更新: 2025-12-23 (恢復 Schema 生成 - SSG 架構限制)
  * BDD 階段: Stage 3 GREEN
+ *
+ * **架構決策記錄**:
+ * - **理想方案**: SEOHelmet 統一管理所有 Schema（符合 SRP）
+ * - **現實限制**: react-helmet-async 不支援 SSG 靜態渲染
+ * - **務實選擇**: Breadcrumb 組件生成客戶端 Schema
+ *   - ✅ Google 2025 Evergreen Googlebot 會執行 JS
+ *   - ✅ 確保 Schema 能被索引
+ *   - ⚠️  違反 SRP，但務實可行
+ * - **後續改進**: 遷移到支援 SSG 的框架（Astro, Next.js）
  */
 
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
-
-const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratewise/';
-const SITE_BASE_URL = SITE_URL.replace(/\/+$/, '') + '/'; // 確保尾斜線
+import { SITE_CONFIG, normalizePath } from '../config/seo-paths';
 
 export interface BreadcrumbItem {
   label: string;
@@ -35,31 +41,32 @@ export interface BreadcrumbProps {
 }
 
 /**
- * 生成 BreadcrumbList JSON-LD Schema
+ * Helper: 將相對路徑轉換為絕對 URL
  *
- * @param items - 麵包屑項目
- * @returns JSON-LD 物件
+ * 用途: BreadcrumbList Schema 要求所有 URL 必須是絕對路徑
+ * 依據: [Schema.org BreadcrumbList](https://schema.org/BreadcrumbList)
+ *
+ * @example
+ * buildAbsoluteUrl('/') → 'https://app.haotool.org/ratewise'
+ * buildAbsoluteUrl('/faq/') → 'https://app.haotool.org/ratewise/faq/'
  */
-function generateBreadcrumbSchema(items: BreadcrumbItem[]) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: items.map((item, index) => {
-      // 轉換相對路徑為絕對 URL
-      const absoluteUrl =
-        item.href === '/'
-          ? SITE_BASE_URL
-          : `${SITE_BASE_URL}${item.href.replace(/^\//, '').replace(/\/+$/, '')}/`;
+const buildAbsoluteUrl = (href: string): string => {
+  // 已經是絕對路徑，直接返回
+  if (/^https?:\/\//i.test(href)) {
+    return href;
+  }
 
-      return {
-        '@type': 'ListItem',
-        position: index + 1,
-        name: item.label,
-        item: absoluteUrl,
-      };
-    }),
-  };
-}
+  // 標準化路徑（確保以 / 開頭結尾）
+  const normalized = normalizePath(href.startsWith('/') ? href : `/${href}`);
+
+  // 根路徑特殊處理
+  if (normalized === '/') {
+    return SITE_CONFIG.url;
+  }
+
+  // 組合完整 URL
+  return `${SITE_CONFIG.url}${normalized.replace(/^\//, '')}`;
+};
 
 /**
  * Breadcrumb 導航組件
@@ -76,22 +83,29 @@ function generateBreadcrumbSchema(items: BreadcrumbItem[]) {
  * ```
  */
 export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
-  // 空陣列或單項目不渲染麵包屑
+  // 空陣列不渲染麵包屑
   if (items.length === 0) {
     return null;
   }
 
-  const schema = generateBreadcrumbSchema(items);
+  // 生成 BreadcrumbList Schema（客戶端注入）
+  // 只有 2+ 項目才生成 Schema（單項目無導航意義）
+  const shouldRenderSchema = items.length >= 2;
+  const breadcrumbSchema = shouldRenderSchema
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: items.map((item, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: item.label,
+          item: buildAbsoluteUrl(item.href),
+        })),
+      }
+    : null;
 
   return (
     <>
-      {/* JSON-LD Schema */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-      />
-
-      {/* Visual Breadcrumb Navigation */}
       <nav aria-label="麵包屑導航" className={`mb-4 ${className}`}>
         <ol className="flex items-center gap-2 text-sm text-slate-600 flex-wrap">
           {items.map((item, index) => {
@@ -127,6 +141,14 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
           })}
         </ol>
       </nav>
+
+      {/* BreadcrumbList JSON-LD Schema（客戶端注入）*/}
+      {breadcrumbSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
+      )}
     </>
   );
 }
