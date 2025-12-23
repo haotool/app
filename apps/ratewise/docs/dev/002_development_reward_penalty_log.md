@@ -1,10 +1,10 @@
 # 開發獎懲記錄
 
-**版本**: 1.7.0
+**版本**: 1.8.0
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-23T22:37:43+08:00
+**更新時間**: 2025-12-24T00:50:52+08:00
 **狀態**: ✅ 完成
-**當前總分**: +32
+**當前總分**: +36
 
 | 類型    | 摘要                                    | 採取行動                                                                                                                                                | 依據                                                                         | 分數 |
 | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
@@ -29,19 +29,22 @@
 | ✅ 成功 | SEO 全面代碼審查通過                    | 1) TypeScript ✅ 2) ESLint ✅ 3) 897 tests ✅ 4) Build 17 HTML ✅ 5) 權威來源驗證 (Google/Schema.org/web.dev)                                           | [context7:vitejs/vite][Google Search Central 2025]                           | +2   |
 | ✅ 成功 | llms.txt 虛假評價數據修正               | 移除 4.8/5.0 虛假評分和 127 評價，改為真實用戶使用場景，避免違反 AI SEO Guidelines                                                                      | [llmstxt.org][AI SEO Best Practices 2025]                                    | +1   |
 | ✅ 成功 | sitemap.xml 符合 Google 2025 規範       | 1) 移除已棄用 image:caption 標籤 2) 為 13 個幣別頁添加 image sitemap 3) 更新 lastmod                                                                    | [Google 2025 Image Sitemap Deprecation]                                      | +2   |
+| ✅ 成功 | Lighthouse 效能優化：移除 CSP meta tag  | 1) postbuild 腳本移除 CSP meta tag 2) 確保 charset 在 head 前 1024 bytes 3) CSP 改由 Nginx HTTP header 提供                                             | [web.dev/csp][Lighthouse Best Practices 2025]                                | +2   |
+| ✅ 成功 | 重型組件 Lazy Loading 優化              | 1) MiniTrendChart lazy load（減少 144KB lightweight-charts） 2) CalculatorKeyboard lazy load 3) Suspense fallback                                       | [React Lazy Loading][Code Splitting Best Practices]                          | +2   |
 
 ---
 
 ## 歷史錯誤模式警告（防止重蹈覆轍）
 
-| 類型    | 摘要                                     | 教訓                                                  |
-| ------- | ---------------------------------------- | ----------------------------------------------------- |
-| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效      | SSG 無法生成 nonce，避免使用 strict-dynamic           |
-| ❌ 歷史 | 文檔與程式碼實作狀態不符                 | 每次修改必須逐一驗證實際檔案                          |
-| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）  | 新增路由後必須同步更新相關測試                        |
-| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx | 新增路由後必須同步更新 ssgOptions.includedRoutes      |
-| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據    | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致 |
-| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用   | 2025 年起 Google 不再支援 image:caption/title/license |
+| 類型    | 摘要                                     | 教訓                                                                           |
+| ------- | ---------------------------------------- | ------------------------------------------------------------------------------ |
+| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效      | SSG 無法生成 nonce，避免使用 strict-dynamic                                    |
+| ❌ 歷史 | 文檔與程式碼實作狀態不符                 | 每次修改必須逐一驗證實際檔案                                                   |
+| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）  | 新增路由後必須同步更新相關測試                                                 |
+| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx | 新增路由後必須同步更新 ssgOptions.includedRoutes                               |
+| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據    | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                          |
+| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用   | 2025 年起 Google 不再支援 image:caption/title/license                          |
+| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限   | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除 |
 
 ---
 
