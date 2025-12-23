@@ -52,6 +52,10 @@ export default function USDToTWD() {
         pathname="/usd-twd"
         canonical="https://app.haotool.org/ratewise/usd-twd/"
         keywords={['USD TWD 匯率', '美金換台幣', '美金匯率', '匯率換算', '匯率好工具', 'RateWise']}
+        breadcrumb={[
+          { name: 'RateWise 首頁', item: '/' },
+          { name: 'USD → TWD 匯率', item: '/usd-twd/' },
+        ]}
         faq={FAQ_ENTRIES}
         howTo={{
           name: '如何查看 USD 對 TWD 匯率',
