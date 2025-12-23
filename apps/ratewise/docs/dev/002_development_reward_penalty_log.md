@@ -1,10 +1,10 @@
 # 開發獎懲記錄
 
-**版本**: 1.8.0
+**版本**: 1.8.1
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-24T00:50:52+08:00
+**更新時間**: 2025-12-24T01:08:00+08:00
 **狀態**: ✅ 完成
-**當前總分**: +36
+**當前總分**: +38
 
 | 類型    | 摘要                                    | 採取行動                                                                                                                                                | 依據                                                                         | 分數 |
 | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
@@ -31,6 +31,7 @@
 | ✅ 成功 | sitemap.xml 符合 Google 2025 規範       | 1) 移除已棄用 image:caption 標籤 2) 為 13 個幣別頁添加 image sitemap 3) 更新 lastmod                                                                    | [Google 2025 Image Sitemap Deprecation]                                      | +2   |
 | ✅ 成功 | Lighthouse 效能優化：移除 CSP meta tag  | 1) postbuild 腳本移除 CSP meta tag 2) 確保 charset 在 head 前 1024 bytes 3) CSP 改由 Nginx HTTP header 提供                                             | [web.dev/csp][Lighthouse Best Practices 2025]                                | +2   |
 | ✅ 成功 | 重型組件 Lazy Loading 優化              | 1) MiniTrendChart lazy load（減少 144KB lightweight-charts） 2) CalculatorKeyboard lazy load 3) Suspense fallback                                       | [React Lazy Loading][Code Splitting Best Practices]                          | +2   |
+| ✅ 成功 | Lighthouse CI 配置更新至 95+ 門檻       | 1) 所有類別門檻提升至 95 分 2) 使用 lighthouse:recommended preset 3) CI/CD 全數通過                                                                     | [context7:googlechrome/lighthouse-ci:2025-12-24]                             | +2   |
 
 ---
 
