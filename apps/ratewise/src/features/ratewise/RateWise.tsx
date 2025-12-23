@@ -350,8 +350,9 @@ const RateWise = () => {
             </div>
           </section>
 
-          <footer className="mt-12 -mx-3 md:-mx-8 -mb-3 md:-mb-8 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-            <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+          {/* 行動版簡潔 footer - 電腦版使用 Footer 組件 */}
+          <footer className="md:hidden mt-12 -mx-3 -mb-3 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+            <div className="max-w-6xl mx-auto px-4 py-8">
               {/* 數據來源與更新時間 - 現代化簡約設計 */}
               {!ratesLoading && lastUpdate && (
                 <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
