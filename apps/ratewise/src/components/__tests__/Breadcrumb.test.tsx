@@ -1,36 +1,29 @@
 /**
- * Breadcrumb Component BDD Tests - Stage 3 RED
+ * Breadcrumb Component BDD Tests - Stage 3 GREEN
  *
  * 依據：
- * - [Schema.org] BreadcrumbList 結構化數據規範
- * - [Google Search Central] 麵包屑導航最佳實踐
  * - [WCAG 2.1] 無障礙導航要求
+ *   https://www.w3.org/WAI/ARIA/apg/patterns/breadcrumb/
  *
- * BDD 流程：
- * 🔴 RED - 建立失敗測試（本檔案）
- * 🟢 GREEN - 實作 Breadcrumb 組件
- * 🔵 REFACTOR - 優化並整合到所有頁面
+ * 測試範圍：
+ * - UI 渲染測試（視覺麵包屑導航）
+ * - 無障礙測試（ARIA 屬性、語意標籤）
+ * - 邊界情況測試（空陣列、單項目、長路徑）
+ * - 響應式設計驗證
+ *
+ * **注意**: Schema 測試已移至 SEOHelmet.test.tsx
+ * - Breadcrumb 組件專注 UI 渲染（SRP 原則）
+ * - SEOHelmet 統一管理所有 JSON-LD Schema
  *
  * 建立時間: 2025-12-20
- * BDD 階段: Stage 3 RED
+ * 最後更新: 2025-12-22 (移除 Schema 測試)
+ * BDD 階段: Stage 3 GREEN
  */
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Breadcrumb } from '../Breadcrumb';
-
-// Type definitions for JSON-LD BreadcrumbList schema
-interface BreadcrumbListSchema {
-  '@context': string;
-  '@type': string;
-  itemListElement: {
-    '@type': string;
-    position: number;
-    name: string;
-    item: string;
-  }[];
-}
 
 describe('🔴 RED: Breadcrumb Component', () => {
   describe('Visual Breadcrumb Navigation', () => {
@@ -120,91 +113,6 @@ describe('🔴 RED: Breadcrumb Component', () => {
       // 檢查分隔符號存在（應該有 2 個，因為有 3 個項目）
       const separators = container.querySelectorAll('[aria-hidden="true"]');
       expect(separators.length).toBeGreaterThanOrEqual(2);
-    });
-  });
-
-  describe('BreadcrumbList JSON-LD Schema', () => {
-    it('should render JSON-LD script tag', () => {
-      const items = [
-        { label: '首頁', href: '/' },
-        { label: 'FAQ', href: '/faq/' },
-      ];
-
-      const { container } = render(
-        <MemoryRouter>
-          <Breadcrumb items={items} />
-        </MemoryRouter>,
-      );
-
-      const script = container.querySelector('script[type="application/ld+json"]');
-      expect(script).toBeDefined();
-    });
-
-    it('should generate valid BreadcrumbList schema', () => {
-      const items = [
-        { label: '首頁', href: '/' },
-        { label: 'FAQ', href: '/faq/' },
-        { label: '當前頁', href: '/current/' },
-      ];
-
-      const { container } = render(
-        <MemoryRouter>
-          <Breadcrumb items={items} />
-        </MemoryRouter>,
-      );
-
-      const script = container.querySelector('script[type="application/ld+json"]');
-      const jsonLd = JSON.parse(script?.textContent ?? '{}') as BreadcrumbListSchema;
-
-      expect(jsonLd['@context']).toBe('https://schema.org');
-      expect(jsonLd['@type']).toBe('BreadcrumbList');
-      expect(jsonLd.itemListElement).toBeDefined();
-      expect(Array.isArray(jsonLd.itemListElement)).toBe(true);
-      expect(jsonLd.itemListElement.length).toBe(3);
-    });
-
-    it('should have correct schema structure for each item', () => {
-      const items = [
-        { label: '首頁', href: '/' },
-        { label: 'FAQ', href: '/faq/' },
-      ];
-
-      const { container } = render(
-        <MemoryRouter>
-          <Breadcrumb items={items} />
-        </MemoryRouter>,
-      );
-
-      const script = container.querySelector('script[type="application/ld+json"]');
-      const jsonLd = JSON.parse(script?.textContent ?? '{}') as BreadcrumbListSchema;
-
-      const firstItem = jsonLd.itemListElement[0];
-      expect(firstItem).toBeDefined();
-      expect(firstItem!['@type']).toBe('ListItem');
-      expect(firstItem!.position).toBe(1);
-      expect(firstItem!.name).toBe('首頁');
-      expect(firstItem!.item).toContain('/'); // 應包含完整 URL
-    });
-
-    it('should use absolute URLs in schema', () => {
-      const items = [
-        { label: '首頁', href: '/' },
-        { label: 'FAQ', href: '/faq/' },
-      ];
-
-      const { container } = render(
-        <MemoryRouter>
-          <Breadcrumb items={items} />
-        </MemoryRouter>,
-      );
-
-      const script = container.querySelector('script[type="application/ld+json"]');
-      const jsonLd = JSON.parse(script?.textContent ?? '{}') as BreadcrumbListSchema;
-
-      const firstItem = jsonLd.itemListElement[0];
-      expect(firstItem).toBeDefined();
-      // 應使用完整 URL (https://app.haotool.org/ratewise/)
-      expect(firstItem!.item).toMatch(/^https?:\/\//);
     });
   });
 

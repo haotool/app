@@ -1,10 +1,10 @@
 # 開發獎懲記錄
 
-**版本**: 1.5.0
+**版本**: 1.6.0
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-13T14:39:00+08:00
+**更新時間**: 2025-12-23T22:24:07+08:00
 **狀態**: ✅ 完成
-**當前總分**: +27
+**當前總分**: +30
 
 | 類型    | 摘要                                    | 採取行動                                                                                                                                                | 依據                                                                         | 分數 |
 | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
@@ -26,17 +26,20 @@
 | ✅ 成功 | sitemap.xml 全面完成 (17 URLs)          | 更新 sitemap 含 17 條 URL × 2 hreflang = 34 links                                                                                                       | [Google Search Central:sitemap-best-practices]                               | +1   |
 | ✅ 成功 | 全面測試驗證：810 tests 全通過          | npx vitest run 完成，0 failures，hreflang 測試同步更新                                                                                                  | [Vitest:4.0.14][BDD.md:Green]                                                | +1   |
 | ✅ 成功 | 修復 vite.config.ts SSG 預渲染配置      | 同步 includedRoutes 至 17 條路徑，build 輸出 17 個 HTML                                                                                                 | [BDD.md:Red-Green][context7:vite-react-ssg]                                  | +2   |
+| ✅ 成功 | SEO 全面代碼審查通過                    | 1) TypeScript ✅ 2) ESLint ✅ 3) 897 tests ✅ 4) Build 17 HTML ✅ 5) 權威來源驗證 (Google/Schema.org/web.dev)                                           | [context7:vitejs/vite][Google Search Central 2025]                           | +2   |
+| ✅ 成功 | llms.txt 虛假評價數據修正               | 移除 4.8/5.0 虛假評分和 127 評價，改為真實用戶使用場景，避免違反 AI SEO Guidelines                                                                      | [llmstxt.org][AI SEO Best Practices 2025]                                    | +1   |
 
 ---
 
 ## 歷史錯誤模式警告（防止重蹈覆轍）
 
-| 類型    | 摘要                                     | 教訓                                             |
-| ------- | ---------------------------------------- | ------------------------------------------------ |
-| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效      | SSG 無法生成 nonce，避免使用 strict-dynamic      |
-| ❌ 歷史 | 文檔與程式碼實作狀態不符                 | 每次修改必須逐一驗證實際檔案                     |
-| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）  | 新增路由後必須同步更新相關測試                   |
-| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx | 新增路由後必須同步更新 ssgOptions.includedRoutes |
+| 類型    | 摘要                                     | 教訓                                                  |
+| ------- | ---------------------------------------- | ----------------------------------------------------- |
+| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效      | SSG 無法生成 nonce，避免使用 strict-dynamic           |
+| ❌ 歷史 | 文檔與程式碼實作狀態不符                 | 每次修改必須逐一驗證實際檔案                          |
+| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）  | 新增路由後必須同步更新相關測試                        |
+| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx | 新增路由後必須同步更新 ssgOptions.includedRoutes      |
+| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據    | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致 |
 
 ---
 

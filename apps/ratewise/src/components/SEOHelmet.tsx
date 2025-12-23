@@ -131,6 +131,10 @@ const buildCanonical = (path?: string) => {
  * 依據 2025 最佳實踐：
  * - [Schema.org](https://schema.org/SoftwareApplication) - 使用 SoftwareApplication 比 WebApplication 更豐富
  * - [Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/software-app)
+ *
+ * [移除 2025-12-22] AggregateRating: 無真實評論系統支撐，避免違反 Google Review Guidelines
+ * - 依據: [Google Review Snippet Guidelines](https://developers.google.com/search/docs/appearance/structured-data/review-snippet)
+ * - 原則: Linus YAGNI (You Aren't Gonna Need It) - 不實作不需要的功能
  */
 const DEFAULT_JSON_LD = [
   {
@@ -147,14 +151,6 @@ const DEFAULT_JSON_LD = [
       '@type': 'Offer',
       price: '0',
       priceCurrency: 'USD',
-    },
-    // [2025 AI SEO] AggregateRating 增加可信度
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '127',
-      bestRating: '5',
-      worstRating: '1',
     },
     featureList: [
       '即時匯率查詢',
