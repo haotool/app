@@ -192,7 +192,10 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       render(<SingleConverter {...mockProps} />);
 
-      await waitFor(() => expect(screen.getByTestId('mini-trend-chart')).toBeInTheDocument());
+      // [fix:2025-12-24] 增加等待時間以支援 lazy loaded MiniTrendChart
+      await waitFor(() => expect(screen.getByTestId('mini-trend-chart')).toBeInTheDocument(), {
+        timeout: 5000,
+      });
     });
 
     it('歷史資料為空時顯示骨架且不渲染迷你趨勢圖', async () => {

@@ -8,6 +8,50 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const distDir = join(__dirname, '../dist');
 
+/**
+ * [fix:2025-12-24] 移除 CSP meta tag，確保 charset 在 head 前 1024 bytes
+ * CSP 由 Nginx HTTP header 提供，meta tag 會導致 Lighthouse 警告
+ * 參考: https://web.dev/articles/csp (推薦使用 HTTP header)
+ */
+const fixHtmlCharsetAndRemoveCSP = (htmlPath) => {
+  if (!existsSync(htmlPath)) return;
+  let html = fs.readFileSync(htmlPath, 'utf-8');
+  const original = html;
+
+  // 1. 移除 CSP meta tag（vite-plugin-csp-guard 生成的）
+  html = html.replace(/<meta\s+http-equiv="Content-Security-Policy"[^>]*>/gi, '');
+
+  // 2. 確保 charset 是 head 的第一個元素
+  const charsetMeta = '<meta charset="UTF-8">';
+  // 移除現有的 charset
+  html = html.replace(/<meta\s+charset="[^"]*"\s*\/?>/gi, '');
+  // 在 <head> 標籤後立即插入 charset
+  html = html.replace(/<head([^>]*)>/i, `<head$1>${charsetMeta}`);
+
+  if (html !== original) {
+    fs.writeFileSync(htmlPath, html, 'utf-8');
+    console.log(`✅ fixed HTML (removed CSP meta, charset first): ${htmlPath}`);
+  }
+};
+
+// 修復所有 HTML 文件
+const fixAllHtmlFiles = (dir) => {
+  if (!existsSync(dir)) return;
+  const entries = readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      fixAllHtmlFiles(fullPath);
+    } else if (entry.name.endsWith('.html')) {
+      fixHtmlCharsetAndRemoveCSP(fullPath);
+    }
+  }
+};
+
+// 執行 HTML 修復
+console.log('🔧 Fixing HTML files (charset position, removing CSP meta tag)...');
+fixAllHtmlFiles(distDir);
+
 const basePath = process.env.VITE_RATEWISE_BASE_PATH ?? '/ratewise/';
 const normalizedSubpath = basePath.replace(/^\/+|\/+$/g, '');
 

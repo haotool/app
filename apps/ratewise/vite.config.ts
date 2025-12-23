@@ -201,10 +201,15 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       // [2025-12-10] Hash-based CSP 防護（Vite SSG 最佳實踐）
+      // [fix:2025-12-24] 禁用 meta tag，改用 HTTP header（Nginx 配置）
+      // 原因：CSP meta tag 太長會導致 charset 超出前 1024 bytes，Lighthouse 報錯
       // 參考: https://vite-csp.tsotne.co.uk/
       csp({
         algorithm: 'sha256',
         dev: { run: true }, // 開發模式也檢查 CSP 違規
+        build: {
+          sri: true, // 啟用 Subresource Integrity
+        },
         policy: {
           'script-src': ["'self'", 'https://static.cloudflareinsights.com'],
           'style-src': [
@@ -235,6 +240,10 @@ export default defineConfig(({ mode }) => {
           return html.replace(/__APP_VERSION__/g, appVersion).replace(/__BUILD_TIME__/g, buildTime);
         },
       },
+      // [fix:2025-12-24] CSP meta tag 由 postbuild 腳本移除
+      // 原因：vite-plugin-csp-guard 總是在最後注入 CSP meta tag
+      // 解決方案：postbuild-mirror-dist.js 會移除 CSP meta 並確保 charset 在前 1024 bytes
+      // CSP 由 Nginx HTTP header 提供，符合 2025 最佳實踐
       // [Lighthouse-optimization:2025-10-27] Brotli compression (saves 4,024 KiB)
       // 參考: https://web.dev/articles/reduce-network-payloads-using-text-compression
       viteCompression({
