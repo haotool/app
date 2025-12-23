@@ -70,6 +70,10 @@ const Guide = () => {
         description="完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算。包含模式選擇、匯率類型切換、歷史趨勢查看、收藏功能等完整操作指南。"
         canonical="https://app.haotool.org/ratewise/guide/"
         pathname="/guide"
+        breadcrumb={[
+          { name: 'RateWise 首頁', item: '/' },
+          { name: '使用教學', item: '/guide/' },
+        ]}
         howTo={{
           name: '如何使用 RateWise 進行匯率換算',
           description:
@@ -77,10 +81,6 @@ const Guide = () => {
           steps: howToSteps,
           totalTime: 'PT2M', // 2 分鐘完成
         }}
-        breadcrumb={[
-          { name: 'RateWise 首頁', item: '/' },
-          { name: '使用指南', item: '/guide/' },
-        ]}
       />
 
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-slate-50">

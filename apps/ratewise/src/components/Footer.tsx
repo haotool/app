@@ -98,7 +98,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-slate-900 text-slate-300 mt-16" role="contentinfo">
+    <footer className="bg-slate-900 text-slate-200 mt-16" role="contentinfo">
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Links Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
@@ -110,7 +110,7 @@ export function Footer() {
                   <li key={link.href}>
                     <Link
                       to={link.href}
-                      className="text-slate-400 hover:text-indigo-400 transition-colors duration-200 text-sm"
+                      className="text-slate-300 hover:text-white transition-colors duration-200 text-sm"
                     >
                       {link.label}
                     </Link>
@@ -127,20 +127,20 @@ export function Footer() {
         {/* Bottom Section */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           {/* Copyright */}
-          <div className="text-sm text-slate-400">
+          <div className="text-sm text-slate-300">
             <p>
               © {currentYear}{' '}
               <a
                 href="https://haotool.org"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-indigo-400 hover:text-indigo-300 transition-colors"
+                className="text-indigo-300 underline underline-offset-4 decoration-indigo-200 hover:text-indigo-200 transition-colors"
               >
                 HaoTool
               </a>
               . All rights reserved.
             </p>
-            <p className="mt-1 text-xs">
+            <p className="mt-1 text-xs text-slate-300">
               匯率數據參考臺灣銀行牌告匯率，每 5 分鐘更新。僅供參考，實際交易請以銀行公告為準。
             </p>
           </div>
@@ -153,7 +153,7 @@ export function Footer() {
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-400 hover:text-indigo-400 transition-colors duration-200"
+                className="text-slate-300 hover:text-white transition-colors duration-200"
                 aria-label={`Visit our ${social.name} page`}
               >
                 {social.icon}
@@ -163,7 +163,7 @@ export function Footer() {
         </div>
 
         {/* Additional Info */}
-        <div className="mt-6 text-xs text-slate-500 text-center md:text-left">
+        <div className="mt-6 text-xs text-slate-300 text-center md:text-left">
           <p>Built with React • Vite • Tailwind CSS • Progressive Web App (PWA)</p>
           <p className="mt-1">
             Open Source on{' '}
@@ -171,7 +171,7 @@ export function Footer() {
               href="https://github.com/haotool/app"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-indigo-400 hover:text-indigo-300"
+              className="text-indigo-300 underline underline-offset-4 decoration-indigo-200 hover:text-indigo-200"
             >
               GitHub
             </a>
