@@ -1,9 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { RefreshCw, Calculator } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateType } from '../types';
-import { MiniTrendChart } from './MiniTrendChart';
+// [fix:2025-12-24] Lazy load MiniTrendChart 減少初始 JS 載入量
+// lightweight-charts (144KB) 和 motion (40KB) 只在展開趨勢圖時載入
+const MiniTrendChart = lazy(() =>
+  import('./MiniTrendChart').then((m) => ({ default: m.MiniTrendChart })),
+);
 import type { MiniTrendDataPoint } from './MiniTrendChart';
 import { TrendChartSkeleton } from './TrendChartSkeleton';
 import type { RateDetails } from '../hooks/useExchangeRates';
@@ -12,7 +16,12 @@ import {
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
-import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
+// [fix:2025-12-24] Lazy load CalculatorKeyboard - 只在用戶點擊計算機按鈕時載入
+const CalculatorKeyboard = lazy(() =>
+  import('../../calculator/components/CalculatorKeyboard').then((m) => ({
+    default: m.CalculatorKeyboard,
+  })),
+);
 import { logger } from '../../../utils/logger';
 import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
@@ -403,7 +412,9 @@ export const SingleConverter = ({
                 {trendData.length === 0 ? (
                   <TrendChartSkeleton />
                 ) : (
-                  <MiniTrendChart data={trendData} currencyCode={toCurrency} />
+                  <Suspense fallback={<TrendChartSkeleton />}>
+                    <MiniTrendChart data={trendData} currencyCode={toCurrency} />
+                  </Suspense>
                 )}
               </ErrorBoundary>
             </div>
@@ -571,12 +582,16 @@ export const SingleConverter = ({
       </button>
 
       {/* 計算機鍵盤 Bottom Sheet */}
-      <CalculatorKeyboard
-        isOpen={calculator.isOpen}
-        onClose={calculator.closeCalculator}
-        onConfirm={calculator.handleConfirm}
-        initialValue={calculator.initialValue}
-      />
+      {calculator.isOpen && (
+        <Suspense fallback={null}>
+          <CalculatorKeyboard
+            isOpen={calculator.isOpen}
+            onClose={calculator.closeCalculator}
+            onConfirm={calculator.handleConfirm}
+            initialValue={calculator.initialValue}
+          />
+        </Suspense>
+      )}
     </>
   );
 };
