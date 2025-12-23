@@ -1,5 +1,5 @@
 /**
- * Footer Component - Stage 6: 內部連結結構
+ * Footer Component - Stage 6: 內部連結結構 + 響應式設計
  *
  * 依據：
  * - [Google SEO] 內部連結最佳實踐
@@ -7,8 +7,8 @@
  * - [WCAG 2.1] 無障礙導航要求
  *
  * 功能：
- * - 所有 17 個 SEO 路徑連結
- * - 分組顯示（核心頁面 + 幣別頁面）
+ * - 行動版：簡潔 footer（匯率來源 + 基本資訊）
+ * - 電腦版：完整 footer（17 個 SEO 路徑連結 + 詳細資訊）
  * - 響應式設計
  * - 無障礙標籤
  *
@@ -19,10 +19,12 @@
  * - 改善用戶導航體驗
  *
  * 建立時間: 2025-12-20
+ * 更新時間: 2025-12-24T01:25:19+08:00
  * BDD 階段: Stage 6 GREEN
  */
 
 import { Link } from 'react-router-dom';
+import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 
 interface FooterLink {
   label: string;
@@ -96,13 +98,250 @@ const SOCIAL_LINKS = [
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const { lastUpdate, lastFetchedAt } = useExchangeRates();
+
+  // 格式化時間為 MM/DD HH:mm
+  const formatTime = (dateString: string | null) => {
+    if (!dateString) return '--/-- --:--';
+    try {
+      const date = new Date(dateString);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${month}/${day} ${hours}:${minutes}`;
+    } catch {
+      return '--/-- --:--';
+    }
+  };
+
+  // 獲取版本號和建置時間
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.2.2';
+  const buildTime = import.meta.env.VITE_BUILD_TIME || '2025/12/24 01:14';
 
   return (
     <footer
       className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-slate-200 mt-16"
       role="contentinfo"
     >
-      <div className="container mx-auto px-4 md:px-6 py-12 max-w-6xl">
+      {/* 行動版簡潔 Footer */}
+      <div className="md:hidden max-w-6xl mx-auto px-4 py-8">
+        {/* 匯率來源與更新時間 */}
+        <div className="flex flex-col items-center justify-center gap-4 mb-6">
+          <a
+            href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
+          >
+            <svg
+              className="w-4 h-4 text-white group-hover:scale-110 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span className="text-sm font-medium text-white">Taiwan Bank (臺灣銀行牌告匯率)</span>
+            <svg
+              className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+          </a>
+          <div className="flex items-center gap-2 text-sm text-white/80">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>
+              更新時間 來源 {formatTime(lastUpdate)} · 刷新 {formatTime(lastFetchedAt)}
+            </span>
+          </div>
+        </div>
+
+        {/* 免責聲明 */}
+        <div className="text-center mb-6">
+          <p className="text-xs text-white/70 leading-relaxed">
+            本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）· 實際交易匯率以各銀行公告為準
+          </p>
+        </div>
+
+        {/* 快速連結 */}
+        <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
+          <Link
+            to="/faq/"
+            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+          >
+            <span aria-hidden="true" className="text-white/50">
+              ?
+            </span>
+            常見問題
+          </Link>
+          <Link
+            to="/about/"
+            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+          >
+            <span aria-hidden="true" className="text-white/50">
+              i
+            </span>
+            關於我們
+          </Link>
+        </div>
+
+        {/* 分隔線 */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-6" />
+
+        {/* 版權與版本資訊 */}
+        <div className="flex flex-col items-center justify-center gap-3 text-sm">
+          <div className="flex items-center gap-2 text-white/90">
+            <div className="w-5 h-5 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
+              <svg
+                className="w-3 h-3 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                />
+              </svg>
+            </div>
+            <span className="font-semibold">匯率好工具</span>
+            <span className="text-white/50">•</span>
+            <span
+              className="relative inline-block cursor-help text-xs text-gray-400 font-mono group"
+              title={`Built on ${buildTime}`}
+            >
+              {appVersion}
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+                Built on {buildTime}
+                <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+              </span>
+            </span>
+            <span className="text-white/50">•</span>
+            <span className="text-white/70">© {currentYear}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-white/80">
+            <span>By</span>
+            <a
+              href="https://www.threads.net/@azlife_1224"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/90 hover:text-white transition-colors duration-200 font-medium"
+            >
+              azlife_1224
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* 電腦版完整 Footer */}
+      <div className="hidden md:block container mx-auto px-4 md:px-6 py-12 max-w-6xl">
+        {/* 匯率來源與更新時間 */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+          <a
+            href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
+          >
+            <svg
+              className="w-4 h-4 text-white group-hover:scale-110 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span className="text-sm font-medium text-white">Taiwan Bank (臺灣銀行牌告匯率)</span>
+            <svg
+              className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+          </a>
+          <div className="flex items-center gap-2 text-sm text-white/80">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>
+              更新時間 來源 {formatTime(lastUpdate)} · 刷新 {formatTime(lastFetchedAt)}
+            </span>
+          </div>
+        </div>
+
+        {/* 免責聲明 */}
+        <div className="text-center mb-6">
+          <p className="text-xs text-white/70 leading-relaxed">
+            本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）· 實際交易匯率以各銀行公告為準
+          </p>
+        </div>
+
+        {/* 快速連結 */}
+        <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
+          <Link
+            to="/faq/"
+            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+          >
+            <span aria-hidden="true" className="text-white/50">
+              ?
+            </span>
+            常見問題
+          </Link>
+          <Link
+            to="/about/"
+            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+          >
+            <span aria-hidden="true" className="text-white/50">
+              i
+            </span>
+            關於我們
+          </Link>
+        </div>
+
+        {/* 分隔線 */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-8" />
+
         {/* Links Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {FOOTER_SECTIONS.map((section) => (
