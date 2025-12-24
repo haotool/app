@@ -1,341 +1,228 @@
-# RateWise - 匯率換算器 | 匯率好工具
+<div align="center">
 
-> 🚀 現代化的即時匯率換算工具，支援單幣別與多幣別轉換
+# 🛠️ HaoTool Apps
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue)](https://github.com/haotool/ratewise/releases)
-[![Node](https://img.shields.io/badge/node-%3E%3D24.0.0-green)](https://nodejs.org/)
-[![pnpm](https://img.shields.io/badge/pnpm-9.10.0-yellow)](https://pnpm.io/)
+**現代化 React 應用 Monorepo | Modern React Applications Monorepo**
+
+[![CI](https://github.com/haotool/app/actions/workflows/ci.yml/badge.svg)](https://github.com/haotool/app/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Tests](https://img.shields.io/badge/tests-41%20passed-success)](./apps/ratewise/coverage/)
-[![Coverage](https://img.shields.io/badge/coverage-89.8%25-brightgreen)](./apps/ratewise/coverage/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7.3-646cff?logo=vite)](https://vitejs.dev/)
+[![pnpm](https://img.shields.io/badge/pnpm-9.10-yellow?logo=pnpm)](https://pnpm.io/)
 
-**Author**: [haotool](https://haotool.org) | **Threads**: [@azlife_1224](https://threads.net/@azlife_1224) | **Email**: haotool.org@gmail.com
+[English](#english) · [繁體中文](#繁體中文)
 
-## ✨ 特色功能
-
-- 🔄 **雙模式轉換**: 支援單幣別與多幣別即時換算
-- 💹 **即時匯率**: 整合台灣銀行牌告匯率，每 30 分鐘自動更新
-- 📱 **PWA 支援**: 可安裝至手機桌面，支援離線使用
-- ⭐ **常用貨幣**: 自訂常用幣種快速存取
-- 📊 **趨勢指示**: 視覺化匯率漲跌趨勢
-- 💾 **智慧快取**: Service Worker 加速載入與離線可用
-- 🎨 **現代 UI**: Tailwind CSS 設計的直覺介面
-- ⚡ **極速體驗**: Vite 7 + React 19 + SWC 打造
-- 🔍 **SEO 優化**: 結構化資料與完整 Meta tags
-- 📈 **監控追蹤**: Sentry 錯誤追蹤 + Core Web Vitals
-- 🐳 **Docker 化**: 生產就緒的容器部署
-- 🛡️ **類型安全**: 嚴格的 TypeScript 配置
-- 🤖 **自動化更新**: GitHub Actions 定時抓取最新匯率
-
-## 🚀 快速開始
-
-### 前置需求
-
-- **Node.js**: >= 24.0.0
-- **pnpm**: 9.10.0
-- **Docker**: >= 20.10 (可選)
-
-### 本地開發
-
-```bash
-# 安裝依賴
-pnpm install
-
-# 啟動開發伺服器
-pnpm dev
-
-# 開啟瀏覽器訪問 http://localhost:4173
-```
-
-### Docker 部署
-
-```bash
-# 建置並啟動容器
-docker-compose up -d
-
-# 訪問應用
-open http://localhost:8080
-
-# 檢查健康狀態
-curl http://localhost:8080/health
-
-# 停止容器
-docker-compose down
-```
-
-詳見 [部署指南](./docs/DEPLOYMENT.md)
-
-## 🛠️ 技術棧
-
-### 核心框架
-
-- **Framework**: React 19.0.0
-- **Build Tool**: Vite 7.0.0
-- **Language**: TypeScript 5.6.2
-- **Styling**: Tailwind CSS 3.4.14
-- **Package Manager**: pnpm 9.10.0
-- **Router**: React Router 7.9.4
-
-### 開發工具
-
-- **Testing**: Vitest 2.1.9 + @testing-library/react 16.0.1
-- **E2E**: Playwright MCP
-- **Linting**: ESLint 8.55.0 + Prettier 3.1.1
-- **Git Hooks**: Husky 8.0.3 + lint-staged 15.2.0
-- **CI/CD**: GitHub Actions
-
-### 資料來源
-
-- **Exchange Rates**: Taiwan Bank (臺灣銀行牌告匯率)
-- **Update Frequency**: Every 30 minutes
-- **Supported Currencies**: 14 currencies (TWD, USD, EUR, JPY, CNY, etc.)
-- **Delivery**: jsdelivr CDN (global distribution)
-
-### 部署
-
-- **Container**: Docker (multi-stage build)
-- **Web Server**: Nginx Alpine
-- **Image Size**: ~50 MB
-
-## 📦 專案結構
-
-```
-ratewise-monorepo/
-├── .github/                     # GitHub 配置
-│   ├── ISSUE_TEMPLATE/          # Issue 範本
-│   ├── workflows/               # GitHub Actions
-│   ├── pull_request_template.md # PR 範本
-│   └── PROJECT_STRUCTURE.md     # 完整架構說明
-├── apps/
-│   └── ratewise/                # 主應用程式
-│       ├── src/
-│       │   ├── components/      # 共用元件 (ErrorBoundary)
-│       │   ├── features/        # 功能模組
-│       │   │   └── ratewise/    # 匯率換算功能
-│       │   ├── services/        # API 服務
-│       │   ├── utils/           # 工具函式 (logger)
-│       │   └── main.tsx
-│       └── vite.config.ts
-├── docs/                        # 文檔
-│   ├── dev/                     # 開發文檔
-│   ├── SETUP.md                 # 快速開始
-│   ├── DEPLOYMENT.md            # Docker 部署
-│   ├── ZEABUR_DEPLOYMENT.md     # Zeabur 部署
-│   └── SECURITY_BASELINE.md     # 安全基線
-├── scripts/                     # 自動化腳本
-├── Dockerfile                   # Docker 建置
-├── CONTRIBUTING.md              # 貢獻指南
-├── CODE_OF_CONDUCT.md           # 行為準則
-├── SECURITY.md                  # 安全政策
-└── CHANGELOG.md                 # 變更日誌
-```
-
-**詳細架構說明**: [PROJECT_STRUCTURE.md](./.github/PROJECT_STRUCTURE.md)
-
-## 🧪 測試
-
-```bash
-# 執行測試
-pnpm test
-
-# 測試覆蓋率報告
-pnpm test:coverage
-
-# 持續監聽模式
-pnpm --filter ratewise test
-```
-
-**測試統計**:
-
-- 總測試數: 41 tests
-- 測試覆蓋率: 89.8%
-- 測試檔案: 3 (RateWise, ErrorBoundary, Logger)
-
-## 📝 開發指令
-
-| 指令                   | 說明                |
-| ---------------------- | ------------------- |
-| `pnpm dev`             | 啟動開發伺服器      |
-| `pnpm build`           | 建置所有 workspace  |
-| `pnpm build:ratewise`  | 建置 RateWise 應用  |
-| `pnpm preview`         | 預覽建置結果        |
-| `pnpm test`            | 執行所有測試        |
-| `pnpm test:coverage`   | 測試覆蓋率報告      |
-| `pnpm lint`            | ESLint 檢查         |
-| `pnpm lint:fix`        | 自動修復 lint 問題  |
-| `pnpm format`          | Prettier 格式檢查   |
-| `pnpm format:fix`      | 自動格式化程式碼    |
-| `pnpm typecheck`       | TypeScript 類型檢查 |
-| `docker-compose up -d` | 啟動 Docker 容器    |
-| `docker-compose down`  | 停止並移除容器      |
-
-## 🔧 工程品質
-
-### 自動化工具
-
-- ✅ **Husky**: Git hooks 自動化
-- ✅ **lint-staged**: Pre-commit 自動檢查
-- ✅ **Commitlint**: Commit message 規範
-- ✅ **ESLint**: 程式碼品質檢查
-- ✅ **Prettier**: 程式碼格式化
-- ✅ **GitHub Actions**: CI/CD 自動化
-- ✅ `pnpm monitor:history`: HEAD 探測最近 30 天歷史檔案是否存在
-- ✅ `pnpm verify:history`: 下載並驗證最近 30 天匯率數據是否有實際變化
-
-### TypeScript 嚴格模式
-
-啟用的編譯器選項:
-
-- `strict: true`
-- `noUncheckedIndexedAccess: true`
-- `noImplicitOverride: true`
-- `noUnusedLocals: true`
-- `noUnusedParameters: true`
-- `noFallthroughCasesInSwitch: true`
-- `noImplicitReturns: true`
-
-### Commit 規範
-
-遵循 [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-type(scope): subject
-
-body
-
-footer
-```
-
-**Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
-
-**範例**:
-
-```bash
-feat(ratewise): add multi-currency conversion mode
-fix(logger): handle undefined context properly
-docs: update deployment guide with Docker instructions
-```
-
-## 📚 文檔
-
-### 使用者文檔
-
-- [快速開始](./docs/SETUP.md) - MVP 快速流程與環境設定
-- [部署指南](./docs/DEPLOYMENT.md) - Docker 部署、健康檢查、故障排除
-- [Zeabur 部署](./docs/ZEABUR_DEPLOYMENT.md) - Zeabur 平台部署完整指南
-- [安全基線](./docs/SECURITY_BASELINE.md) - 安全策略與最佳實踐
-
-### 功能文檔
-
-- [歷史匯率實作](./docs/HISTORICAL_RATES_IMPLEMENTATION.md) - 30 天歷史資料追蹤
-- [匯率更新策略](./docs/EXCHANGE_RATE_UPDATE_STRATEGIES.md) - 自動化更新方案比較
-- [歷史匯率快速開始](./docs/QUICK_START_HISTORICAL_RATES.md) - 快速部署指南
-
-### 開發者文檔
-
-- [架構藍圖](./docs/dev/ARCHITECTURE_BASELINE.md) - 系統架構設計
-- [權威來源引用](./docs/dev/CITATIONS.md) - 17 個官方文檔引用
-- [檢查清單](./docs/dev/CHECKLISTS.md) - 品質門檻清單
-- [依賴升級計畫](./docs/dev/DEPENDENCY_UPGRADE_PLAN.md) - 技術棧升級策略
-
-### Agent 指南
-
-- [AGENTS.md](./AGENTS.md) - Agent 工具與工作流說明
-- [LINUS_GUIDE.md](./LINUS_GUIDE.md) - Linus 風格開發指南
-
-## 🔒 安全性
-
-### 應用層
-
-- 使用 localStorage 僅儲存非敏感資料
-- React 19 自動防 XSS 攻擊
-- 非 root 使用者執行容器 (nodejs:1001)
-- 最小安全標頭 (X-Content-Type-Options, X-Frame-Options)
-
-### 邊緣層 (建議 Cloudflare 管理)
-
-- Content-Security-Policy
-- Strict-Transport-Security (HSTS)
-- Permissions-Policy
-- Referrer-Policy
-
-詳見 [SECURITY_BASELINE.md](./docs/SECURITY_BASELINE.md)
-
-## 📊 專案狀態
-
-### 品質分數: 90.8/100 ⭐
-
-| 維度       | 分數 | 狀態 |
-| ---------- | ---- | ---- |
-| 可維護性   | 95   | ✅   |
-| 測試品質   | 92   | ✅   |
-| 資安成熟度 | 88   | ✅   |
-| 效能       | 90   | ✅   |
-| 觀測性     | 85   | ✅   |
-| 工程流程化 | 95   | ✅   |
-
-### 已完成階段
-
-- ✅ Phase 0: 工程工具鏈建立
-- ✅ Phase 1: 元件重構與錯誤處理
-- ✅ Phase 2: 配置優化 (TypeScript, Vite, Tailwind)
-- ✅ Phase 3: Docker 化與 E2E 驗證
-
-### 建置產物
-
-| 類型       | 大小    | Gzip 大小 |
-| ---------- | ------- | --------- |
-| index.html | ~0.5 KB | ~0.3 KB   |
-| CSS        | ~18 KB  | ~4 KB     |
-| JavaScript | ~580 KB | ~190 KB   |
-
-**建置時間**: ~1 秒
-**Lighthouse 分數**: Performance 89/100, Accessibility 100/100, Best Practices 100/100, SEO 100/100
-
-## 📄 授權
-
-本專案採用 **GNU General Public License v3.0 (GPL-3.0)** 授權。
-
-這意味著：
-
-- ✅ 您可以自由使用、修改和分發本軟體
-- ✅ 任何基於本專案的衍生作品**必須**同樣採用 GPL-3.0 授權
-- ✅ 衍生作品**必須**開源並標註原作者
-
-**原作者**: haotool | **Threads**: @azlife_1224 | **Email**: haotool.org@gmail.com
-
-詳見 [LICENSE](./LICENSE)
-
-## 🤝 貢獻
-
-歡迎提交 Issue 和 Pull Request！
-
-### 貢獻流程
-
-1. Fork 專案
-2. 建立特性分支 (`git checkout -b feature/amazing-feature`)
-3. Commit 變更 (`git commit -m 'feat: add amazing feature'`)
-4. Push 到分支 (`git push origin feature/amazing-feature`)
-5. 開啟 Pull Request
-
-### 開發規範
-
-- 遵循 Conventional Commits
-- 確保所有測試通過
-- 保持測試覆蓋率 >= 85%
-- TypeScript 嚴格模式零錯誤
-- 元件 < 150 行 (Linus 原則)
-
-## 🙏 致謝
-
-- 匯率資料來源: [台灣銀行牌告匯率](https://rate.bot.com.tw/xrt?Lang=zh-TW)
-- 圖示: [Lucide Icons](https://lucide.dev/)
-- 字體: [Google Fonts - Noto Sans TC](https://fonts.google.com/noto/specimen/Noto+Sans+TC)
+</div>
 
 ---
 
-**Built with ❤️ by [haotool](https://haotool.org) using React 19 & Vite 7**
+## 繁體中文
 
-**Contact**: [Threads @azlife_1224](https://threads.net/@azlife_1224) | haotool.org@gmail.com
+### 📋 專案概述
 
-_Copyright (C) 2025 haotool. Licensed under GPL-3.0._
+**HaoTool Apps** 是一個專業的 pnpm Monorepo，包含多個高品質的 React 19 應用程式。所有應用程式共享統一的工程標準、CI/CD 管線和開發工具鏈。
+
+「HAO」取自中文「好」的拼音，我們的核心理念是打造真正的「**好工具**」。
+
+### 🚀 應用程式
+
+| 應用                               | 描述                              | 狀態    | 連結                                                            |
+| ---------------------------------- | --------------------------------- | ------- | --------------------------------------------------------------- |
+| **[RateWise](./apps/ratewise/)**   | 即時匯率換算工具，支援 30+ 種貨幣 | 🟢 Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)   |
+| **[NihonName](./apps/nihonname/)** | 日本名字產生器，探索皇民化歷史    | 🟢 Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/) |
+| **[HaoTool](./apps/haotool/)**     | 專案展示平台，3D 互動首頁         | 🟢 Live | [app.haotool.org](https://app.haotool.org/)                     |
+
+### ✨ RateWise 匯率好工具
+
+> 基於臺灣銀行牌告匯率的即時匯率 PWA 應用
+
+- 🔄 **雙模式換算**：單幣別與多幣別同時換算
+- 💹 **即時匯率**：每 5 分鐘同步臺灣銀行牌告匯率
+- 📊 **趨勢圖表**：30 天歷史匯率走勢視覺化
+- 📱 **PWA 支援**：可安裝至手機，支援離線使用
+- ⭐ **收藏管理**：自訂常用貨幣快速存取
+
+### 🏯 NihonName 皇民化改姓生成器
+
+> 探索 1940 年代台灣皇民化運動的歷史改姓對照
+
+- 🎌 **姓名變換所**：查詢歷史上的日式改姓對照
+- 📚 **歷史專區**：皇民化運動、馬關條約、舊金山和約
+- 🎲 **諧音梗名字**：500+ 趣味諧音日本名
+- 🎨 **和紙質感 UI**：日式傳統美學設計
+
+### 🌐 HaoTool 專案平台
+
+> 3D 互動展示平台，介紹所有專案
+
+- 🎨 **Three.js 3D 效果**：沉浸式視覺體驗
+- 📱 **響應式設計**：完美適配各種裝置
+- ⚡ **極致效能**：Lighthouse 95+ 全類別
+
+---
+
+### 🛠️ 技術棧
+
+| 類別         | 技術                         |
+| ------------ | ---------------------------- |
+| **框架**     | React 19 + TypeScript 5.9    |
+| **建置工具** | Vite 7.3 + vite-react-ssg    |
+| **樣式**     | Tailwind CSS 3.4 / 4.0       |
+| **測試**     | Vitest 4.0 + Playwright      |
+| **套件管理** | pnpm 9.10 (Monorepo)         |
+| **CI/CD**    | GitHub Actions (9 workflows) |
+| **部署**     | Docker + Zeabur / Vercel     |
+| **安全**     | Gitleaks + SARIF 報告        |
+
+### 📊 品質指標
+
+| 指標           | 數值        |
+| -------------- | ----------- |
+| **測試數量**   | 1000+       |
+| **測試覆蓋率** | 92%+        |
+| **TypeScript** | Strict Mode |
+| **ESLint**     | 0 警告      |
+| **Lighthouse** | 95+ 全類別  |
+| **CI 管線**    | 9 個全通過  |
+
+### 🚀 快速開始
+
+#### 環境需求
+
+- **Node.js**: >= 20.0.0
+- **pnpm**: >= 9.10.0
+
+#### 安裝與開發
+
+```bash
+# 複製儲存庫
+git clone https://github.com/haotool/app.git
+cd app
+
+# 安裝依賴
+pnpm install
+
+# 啟動所有應用開發模式
+pnpm dev
+
+# 或啟動特定應用
+pnpm --filter @app/ratewise dev    # RateWise (http://localhost:4173)
+pnpm --filter @app/nihonname dev   # NihonName (http://localhost:3002)
+pnpm --filter @app/haotool dev     # HaoTool (http://localhost:3000)
+```
+
+#### 建置與測試
+
+```bash
+# 建置所有應用
+pnpm build
+
+# 執行測試
+pnpm test
+
+# TypeScript 檢查
+pnpm typecheck
+
+# ESLint 檢查
+pnpm lint
+```
+
+### 📁 專案結構
+
+```
+haotool-app/
+├── apps/
+│   ├── ratewise/         # 匯率換算工具
+│   ├── nihonname/        # 日本名字產生器
+│   ├── haotool/          # 專案展示平台
+│   └── shared/           # 共用模組
+├── docs/                 # 文檔
+├── scripts/              # 自動化腳本
+├── .github/
+│   └── workflows/        # CI/CD 管線
+├── package.json          # Monorepo 根配置
+├── pnpm-workspace.yaml   # pnpm workspace 配置
+└── tsconfig.base.json    # 共用 TypeScript 配置
+```
+
+### 📚 文檔
+
+| 文檔                                           | 描述                 |
+| ---------------------------------------------- | -------------------- |
+| [AGENTS.md](./AGENTS.md)                       | Agent 工具與工作流程 |
+| [LINUS_GUIDE.md](./LINUS_GUIDE.md)             | Linus 風格開發指南   |
+| [CONTRIBUTING.md](./CONTRIBUTING.md)           | 貢獻指南             |
+| [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)     | 行為準則             |
+| [SECURITY.md](./SECURITY.md)                   | 安全政策             |
+| [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md) | 提交規範             |
+
+### 🤝 貢獻
+
+歡迎提交 Issue 和 Pull Request！請先閱讀 [貢獻指南](./CONTRIBUTING.md)。
+
+### 📄 授權
+
+本專案採用 [GPL-3.0](./LICENSE) 授權。
+
+### 👥 團隊
+
+- **作者**: [haotool](https://haotool.org)
+- **Threads**: [@azlife_1224](https://www.threads.net/@azlife_1224)
+- **Email**: haotool.org@gmail.com
+
+---
+
+## English
+
+### 📋 Overview
+
+**HaoTool Apps** is a professional pnpm Monorepo containing multiple high-quality React 19 applications. All applications share unified engineering standards, CI/CD pipelines, and development toolchains.
+
+"HAO" comes from the Chinese word "好" (good). Our core philosophy is to build truly **good tools**.
+
+### 🚀 Applications
+
+| App                                | Description                                     | Status  | Link                                                            |
+| ---------------------------------- | ----------------------------------------------- | ------- | --------------------------------------------------------------- |
+| **[RateWise](./apps/ratewise/)**   | Real-time currency converter, 30+ currencies    | 🟢 Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)   |
+| **[NihonName](./apps/nihonname/)** | Japanese name generator, historical exploration | 🟢 Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/) |
+| **[HaoTool](./apps/haotool/)**     | Project showcase with 3D interactive homepage   | 🟢 Live | [app.haotool.org](https://app.haotool.org/)                     |
+
+### 🛠️ Tech Stack
+
+- **Framework**: React 19 + TypeScript 5.9
+- **Build**: Vite 7.3 + vite-react-ssg
+- **Styling**: Tailwind CSS 3.4 / 4.0
+- **Testing**: Vitest 4.0 + Playwright
+- **Package Manager**: pnpm 9.10 (Monorepo)
+- **CI/CD**: GitHub Actions (9 workflows)
+- **Deployment**: Docker + Zeabur / Vercel
+
+### 🚀 Quick Start
+
+```bash
+# Clone repository
+git clone https://github.com/haotool/app.git
+cd app
+
+# Install dependencies
+pnpm install
+
+# Start development
+pnpm dev
+```
+
+### 📄 License
+
+This project is licensed under [GPL-3.0](./LICENSE).
+
+---
+
+<div align="center">
+
+**Built with ❤️ by [HaoTool](https://haotool.org)**
+
+[Website](https://haotool.org) · [GitHub](https://github.com/haotool/app) · [Threads](https://www.threads.net/@azlife_1224)
+
+</div>
