@@ -567,12 +567,12 @@ docker logs <container-id>
 
 ---
 
-## 8. 當前任務狀態（2025-10-26）
+## 8. 當前任務狀態（2025-12-24 更新）
 
 ### ✅ 已完成 (Phase 0 - MVP)
 
-- ✅ 測試覆蓋率 ≥80% (目前 89.8%)
-- ✅ CI/CD Pipeline (GitHub Actions)
+- ✅ 測試覆蓋率 ≥80% (目前 895 測試，92%+)
+- ✅ CI/CD Pipeline (GitHub Actions - 7 workflows)
 - ✅ 觀測性 (Logger + Error Boundary)
 - ✅ Docker 化部署
 - ✅ 元件拆分 (RateWise.tsx 已模組化)
@@ -580,37 +580,38 @@ docker logs <container-id>
 - ✅ TypeScript 嚴格化
 - ✅ 安全標頭配置
 - ✅ 歷史匯率功能 (30 天資料追蹤)
+- ✅ 17 個 SEO 長尾落地頁 (USD/JPY/EUR/GBP 等)
 
-### 📋 待開始 (M0 - 清理與基礎強化，1週)
+### ✅ 已完成 (M0 - 清理與基礎強化)
 
-- [ ] 刪除 ReloadPrompt.tsx (未使用，測試覆蓋率 0%)
-- [ ] 刪除臨時報告文檔 (_\_REPORT.md, _\_SUMMARY.md)
-- [ ] ESLint `any` 規則改為 error
-- [ ] 測試覆蓋率門檻提升至 80%
+- ✅ 刪除 ReloadPrompt.tsx (已移除)
+- ✅ 刪除臨時報告文檔 (已清理)
+- ✅ ESLint `any` 規則改為 error (已生效)
+- ✅ 測試覆蓋率門檻提升至 80%+ (目前 92%+)
 
 ### 📋 規劃中 (M1 - 觀測性建立，1週)
 
 - [ ] Sentry 整合 (logger.ts Line 78)
 - [ ] Secrets 掃描 (gitleaks)
-- [ ] Web Vitals 串接監控平台
+- ✅ Web Vitals 串接 (web-vitals 5.x 已整合)
 
 ### 📋 規劃中 (M2 - 依賴升級，2週)
 
-- [ ] Vite 7.1.9 → 7.1.12 (patch 安全升級)
-- [ ] Vitest 3.2.4 → 4.0.3 (major，需分支驗證)
-- [ ] (可選) Tailwind 3 → 4 (需視覺回歸測試)
+- ✅ Vite 已升級至 7.2.6
+- ✅ Vitest 已升級至 4.0.15
+- ✅ Tailwind 已升級至 4.x
 
 ### 📋 規劃中 (M3 - 測試強化與 TODO 清理，2週)
 
-- [ ] 清理 5 個 TODO 標記
-- [ ] 降低 E2E retry 至 0
-- [ ] CI 通過率提升至 ≥95%
+- [ ] 清理 TODO 標記 (目前 1 個，技術限制已說明)
+- ✅ E2E retry 優化 (toBeAttached 修正)
+- ✅ CI 通過率 100%
 
 ### 📋 可選 (M4 - 架構演進，4週)
 
 - [ ] useCurrencyConverter 拆分 (317 行 → 多個小 hook)
-- [ ] 歷史匯率功能整合
-- [ ] 匯率趨勢圖 (使用 lightweight-charts)
+- ✅ 歷史匯率功能整合 (30 天趨勢圖已實作)
+- ✅ 匯率趨勢圖 (使用 lightweight-charts)
 
 ---
 
@@ -718,8 +719,8 @@ docker logs <container-id>
 
 > **總結**: Agent 的任務是保持流程可靠並回報結果，不參與需求判斷、不做超出授權範圍的操作。所有操作依照本文檔與 `docs/dev/` 文檔執行。
 
-**最後更新**: 2025-10-26T03:43:36+08:00  
-**版本**: v2.0 (完整超級技術債掃描產出)  
+**最後更新**: 2025-12-24T22:12:00+08:00
+**版本**: v2.1 (任務狀態更新)
 **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
 
 _本文檔依照 Linus Torvalds 開發哲學產生，所有建議經過實用性驗證。_

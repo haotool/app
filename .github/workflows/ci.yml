@@ -48,6 +48,49 @@ jobs:
       - name: Run tests
         run: pnpm test:coverage
 
+      - name: Verify image assets
+        # [2025-12-24] 防止圖片路徑問題（基於 SEO 分支合併教訓）
+        # 檢查所有 apps 的必要圖片是否存在
+        # 依據: [002_development_reward_penalty_log.md:2025-12-24]
+        run: |
+          echo "🖼️ Verifying image assets..."
+
+          # 檢查 ratewise 必要圖片
+          test -f apps/ratewise/public/logo.png || { echo "❌ Missing: apps/ratewise/public/logo.png"; exit 1; }
+          test -f apps/ratewise/public/og-image.png || { echo "❌ Missing: apps/ratewise/public/og-image.png"; exit 1; }
+          test -f apps/ratewise/public/twitter-image.png || { echo "❌ Missing: apps/ratewise/public/twitter-image.png"; exit 1; }
+
+          # 檢查 nihonname 必要圖片
+          test -f apps/nihonname/public/logo.png || { echo "❌ Missing: apps/nihonname/public/logo.png"; exit 1; }
+          test -f apps/nihonname/public/og-image.png || { echo "❌ Missing: apps/nihonname/public/og-image.png"; exit 1; }
+
+          # 檢查 haotool 必要圖片
+          test -f apps/haotool/public/logo.png || { echo "❌ Missing: apps/haotool/public/logo.png"; exit 1; }
+          test -f apps/haotool/public/og-image.png || { echo "❌ Missing: apps/haotool/public/og-image.png"; exit 1; }
+
+          echo "✅ All required images exist"
+
+      - name: Verify image paths in code
+        # [2025-12-24] 檢查程式碼中的圖片路徑是否使用相對路徑（避免 SSG hydration 錯誤）
+        # 禁止使用：/logo.png (絕對路徑) 或 ${import.meta.env.BASE_URL}logo.png (動態路徑)
+        # 正確使用：logo.png (相對路徑)
+        run: |
+          echo "🔍 Checking for incorrect image paths..."
+
+          # 檢查絕對路徑 (e.g., src="/logo.png")
+          if grep -r 'src=["\x27]/.*\.\(png\|jpg\|jpeg\|avif\|webp\)' apps/*/src/ --include="*.tsx" --include="*.jsx"; then
+            echo "❌ Found absolute image paths (use relative paths instead)"
+            exit 1
+          fi
+
+          # 檢查動態 BASE_URL 路徑 (e.g., src={`${import.meta.env.BASE_URL}logo.png`})
+          if grep -r 'import\.meta\.env\.BASE_URL.*\.\(png\|jpg\|jpeg\|avif\|webp\)' apps/*/src/ --include="*.tsx" --include="*.jsx"; then
+            echo "❌ Found dynamic BASE_URL image paths (use relative paths instead)"
+            exit 1
+          fi
+
+          echo "✅ All image paths use relative paths"
+
       - name: Build
         run: pnpm build
 
