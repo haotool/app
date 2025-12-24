@@ -224,38 +224,19 @@ const RateWise = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-2">
             <div className="flex items-center justify-center gap-0 mb-0.5">
-              <picture>
-                {/* 行動版使用較小尺寸 */}
-                <source
-                  type="image/avif"
-                  srcSet={`${import.meta.env.BASE_URL}optimized/logo-112w.avif`}
-                  media="(max-width: 767px)"
-                />
-                <source
-                  type="image/webp"
-                  srcSet={`${import.meta.env.BASE_URL}optimized/logo-112w.webp`}
-                  media="(max-width: 767px)"
-                />
-                {/* 電腦版使用較大尺寸 */}
-                <source
-                  type="image/avif"
-                  srcSet={`${import.meta.env.BASE_URL}optimized/logo-192w.avif`}
-                />
-                <source
-                  type="image/webp"
-                  srcSet={`${import.meta.env.BASE_URL}optimized/logo-192w.webp`}
-                />
-                <img
-                  alt="RateWise Logo"
-                  className="w-16 h-16 md:w-20 md:h-20"
-                  width="112"
-                  height="112"
-                  loading="eager"
-                  decoding="async"
-                  fetchPriority="high"
-                  src={`${import.meta.env.BASE_URL}logo.png`}
-                />
-              </picture>
+              {/* [fix:2025-12-24] 使用簡單 img 標籤避免 SSG hydration 問題
+                  原因：<picture> 標籤的動態路徑在 SSG 預渲染時無法正確解析
+                  解決：使用相對路徑的 PNG，瀏覽器會自動處理 base path */}
+              <img
+                alt="RateWise Logo"
+                className="w-16 h-16 md:w-20 md:h-20"
+                width="112"
+                height="112"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                src="logo.png"
+              />
               <h1
                 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"
                 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 700 }}
