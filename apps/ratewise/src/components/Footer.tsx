@@ -242,7 +242,10 @@ export function Footer() {
               </span>
             </span>
             <span className="text-white/50">•</span>
-            <span className="text-white/70">© {currentYear}</span>
+            {/* [fix:2025-12-24] suppressHydrationWarning - currentYear 在 SSR/CSR 可能不同 */}
+            <span className="text-white/70" suppressHydrationWarning>
+              © {currentYear}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-white/80">
             <span>By</span>
@@ -372,7 +375,8 @@ export function Footer() {
         <div className="flex flex-row justify-between items-center gap-4">
           {/* Copyright */}
           <div className="text-sm text-slate-300">
-            <p>
+            {/* [fix:2025-12-24] suppressHydrationWarning - currentYear 在 SSR/CSR 可能不同 */}
+            <p suppressHydrationWarning>
               © {currentYear}{' '}
               <a
                 href="https://haotool.org"

@@ -463,7 +463,10 @@ const RateWise = () => {
                   <span className="text-white/50">•</span>
                   <VersionDisplay />
                   <span className="text-white/50">•</span>
-                  <span className="text-white/70">© {new Date().getFullYear()}</span>
+                  {/* [fix:2025-12-24] suppressHydrationWarning - new Date() 在 SSR/CSR 可能不同 */}
+                  <span className="text-white/70" suppressHydrationWarning>
+                    © {new Date().getFullYear()}
+                  </span>
                 </div>
 
                 {/* 作者資訊 */}
