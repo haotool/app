@@ -1,10 +1,10 @@
 # 開發獎懲記錄
 
-**版本**: 1.8.2
+**版本**: 1.8.3
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-24T01:28:00+08:00
+**更新時間**: 2025-12-24T21:44:00+08:00
 **狀態**: ✅ 完成
-**當前總分**: +39
+**當前總分**: +42
 
 | 類型    | 摘要                                    | 採取行動                                                                                                                                                | 依據                                                                         | 分數 |
 | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
@@ -33,6 +33,9 @@
 | ✅ 成功 | 重型組件 Lazy Loading 優化              | 1) MiniTrendChart lazy load（減少 144KB lightweight-charts） 2) CalculatorKeyboard lazy load 3) Suspense fallback                                       | [React Lazy Loading][Code Splitting Best Practices]                          | +2   |
 | ✅ 成功 | Lighthouse CI 配置更新至 95+ 門檻       | 1) 所有類別門檻提升至 95 分 2) 使用 lighthouse:recommended preset 3) CI/CD 全數通過                                                                     | [context7:googlechrome/lighthouse-ci:2025-12-24]                             | +2   |
 | ✅ 成功 | 整合響應式 Footer 設計                  | 1) 行動版簡潔 footer 2) 電腦版完整 footer（17 個 SEO 連結） 3) 即時更新時間顯示                                                                         | [WCAG 2.1][Google SEO 2025]                                                  | +1   |
+| ✅ 成功 | Logo 圖片 SSG 路徑修正                  | 1) 簡化 `<picture>` 為 `<img src="logo.png">` 避免 SSG hydration 問題 2) 移除動態 BASE_URL 路徑                                                         | [context7:vitejs/vite:2025-12-24][KISS 原則]                                 | +2   |
+| ✅ 成功 | E2E 測試頁尾檢查修正                    | 1) `toBeVisible` → `toBeAttached` 2) 頁尾元素不需在初始 viewport 可見 3) CI 全數通過                                                                    | [context7:microsoft/playwright:2025-12-24]                                   | +1   |
+| ⚠️ 注意 | React Hydration #418 為 SSG 預期行為    | SSG + Suspense 輸出骨架屏，客戶端 hydration 替換為完整內容觸發警告，不影響功能                                                                          | [context7:reactjs/react.dev:2025-12-24]                                      | 0    |
 
 ---
 
@@ -47,6 +50,8 @@
 | ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據    | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                          |
 | ⚠️ 注意 | sitemap image:caption 已被 Google 棄用   | 2025 年起 Google 不再支援 image:caption/title/license                          |
 | ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限   | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除 |
+| ⚠️ 注意 | `<picture>` 標籤 SSG 路徑解析問題        | `import.meta.env.BASE_URL` 在 SSG 時可能無法正確解析，導致 srcSet 為 null      |
+| ⚠️ 注意 | E2E 頁尾 toBeVisible 假設元素在 viewport | 使用 toBeAttached 檢查 DOM 存在性，不假設元素在初始 viewport                   |
 
 ---
 
