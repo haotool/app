@@ -232,7 +232,7 @@ const RateWise = () => {
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
-                src="/logo.png"
+                src={`${import.meta.env.BASE_URL}logo.png`}
               />
               <h1
                 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"
