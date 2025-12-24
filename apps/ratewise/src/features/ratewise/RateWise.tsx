@@ -228,17 +228,23 @@ const RateWise = () => {
                 {/* 行動版使用較小尺寸 */}
                 <source
                   type="image/avif"
-                  srcSet="/optimized/logo-112w.avif"
+                  srcSet={`${import.meta.env.BASE_URL}optimized/logo-112w.avif`}
                   media="(max-width: 767px)"
                 />
                 <source
                   type="image/webp"
-                  srcSet="/optimized/logo-112w.webp"
+                  srcSet={`${import.meta.env.BASE_URL}optimized/logo-112w.webp`}
                   media="(max-width: 767px)"
                 />
                 {/* 電腦版使用較大尺寸 */}
-                <source type="image/avif" srcSet="/optimized/logo-192w.avif" />
-                <source type="image/webp" srcSet="/optimized/logo-192w.webp" />
+                <source
+                  type="image/avif"
+                  srcSet={`${import.meta.env.BASE_URL}optimized/logo-192w.avif`}
+                />
+                <source
+                  type="image/webp"
+                  srcSet={`${import.meta.env.BASE_URL}optimized/logo-192w.webp`}
+                />
                 <img
                   alt="RateWise Logo"
                   className="w-16 h-16 md:w-20 md:h-20"
@@ -247,7 +253,7 @@ const RateWise = () => {
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
-                  src="/logo.png"
+                  src={`${import.meta.env.BASE_URL}logo.png`}
                 />
               </picture>
               <h1
