@@ -692,6 +692,13 @@
       "conclusion": "failure",
       "branch": "main",
       "commit": "2153c5ee59e95fd3caeb76acdfbe8eddf38f324b"
+    },
+    {
+      "timestamp": "2025-12-24T13:30:58Z",
+      "duration_seconds": 392,
+      "conclusion": "failure",
+      "branch": "main",
+      "commit": "98d3350f9955d78182da745cb4abed7718d47216"
     }
   ]
 }
