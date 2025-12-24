@@ -1,13 +1,16 @@
 # 開發獎懲記錄
 
-**版本**: 1.8.4
+**版本**: 1.9.0
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-24T22:00:00+08:00
+**更新時間**: 2025-12-24T22:30:00+08:00
 **狀態**: ✅ 完成
-**當前總分**: +44
+**當前總分**: +42
 
 | 類型    | 摘要                                    | 採取行動                                                                                                                                                | 依據                                                                         | 分數 |
 | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
+| ✅ 成功 | 建立圖片管理最佳實踐系統                | 1) 新增 PR 模板檢查清單（生產環境驗證+Linus 三問） 2) CI/CD 自動檢查圖片路徑正確性 3) 建立完整圖片管理文檔 [032] 4) 檢查所有 apps 路徑統一              | [docs/dev/032_image_management_best_practices.md][LINUS_GUIDE.md]            | +8   |
+| ❌ 失敗 | SEO 分支合併導致級聯錯誤（20h 修復）    | 1) 未驗證生產環境路徑 2) 引用不存在檔案 3) 過度優化導致複雜化 4) 6 次 commits 才修復（7b9e5c3→98d3350）                                                 | [002:2025-12-24][LINUS_GUIDE.md:Linus 三問]                                  | -8   |
+| ⚠️ 教訓 | 圖片路徑問題演進分析                    | 絕對路徑→動態 BASE_URL→複雜 picture→最終簡化為相對路徑，學習 KISS 原則和消除特殊情況                                                                    | [LINUS_GUIDE.md:Good Taste][Vite Asset Handling]                             | 0    |
 | ✅ 成功 | 修復下拉刷新功能 (PWA 快取更新)         | 改用 window.location.reload() 強制重新載入頁面，確保用戶獲得最新版本 JS/CSS/HTML，移除未使用的 refresh 依賴項，版本更新 1.2.0→1.2.1                     | [PWA更新最佳實踐][Linus 三問驗證]                                            | +1   |
 | ✅ 成功 | CSP inline style 違規排除               | style-src/style-src-elem 移除 hash 讓 'unsafe-inline' 生效，重跑 typecheck/test/build，確認 postbuild CSP 覆蓋 dist 與鏡像                              | [context7:tsotimus/vite-plugin-csp-guard:2025-12-11T17:14Z]                  | +2   |
 | ✅ 成功 | 重建 AI 搜尋規格並校對權威來源          | 以 curl 取樣 20 個 SEO/AI 權威來源，重置 013 規格與行動清單                                                                                             | [curl:seo-authorities:2025-12-02]                                            | +1   |
@@ -43,17 +46,20 @@
 
 ## 歷史錯誤模式警告（防止重蹈覆轍）
 
-| 類型    | 摘要                                     | 教訓                                                                           |
-| ------- | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效      | SSG 無法生成 nonce，避免使用 strict-dynamic                                    |
-| ❌ 歷史 | 文檔與程式碼實作狀態不符                 | 每次修改必須逐一驗證實際檔案                                                   |
-| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）  | 新增路由後必須同步更新相關測試                                                 |
-| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx | 新增路由後必須同步更新 ssgOptions.includedRoutes                               |
-| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據    | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                          |
-| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用   | 2025 年起 Google 不再支援 image:caption/title/license                          |
-| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限   | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除 |
-| ⚠️ 注意 | `<picture>` 標籤 SSG 路徑解析問題        | `import.meta.env.BASE_URL` 在 SSG 時可能無法正確解析，導致 srcSet 為 null      |
-| ⚠️ 注意 | E2E 頁尾 toBeVisible 假設元素在 viewport | 使用 toBeAttached 檢查 DOM 存在性，不假設元素在初始 viewport                   |
+| 類型    | 摘要                                     | 教訓                                                                                                                                               |
+| ------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ❌ 重大 | SEO 分支合併未驗證生產環境（2025-12-24） | **強制檢查**：1) 本地測試 `VITE_*_BASE_PATH='/xxx/' pnpm build && preview` 2) 檢查圖片檔案存在性 3) 禁止絕對路徑和動態 BASE_URL 4) 執行 Linus 三問 |
+| ❌ 重大 | 圖片路徑使用動態 BASE_URL 導致 hydration | **永遠使用相對路徑**：`<img src="logo.png">` 而非 `/logo.png` 或 `${BASE_URL}logo.png`，讓 Vite 自動處理 base path                                 |
+| ❌ 重大 | 過度優化導致複雜化（AVIF/WebP 未準備）   | **YAGNI 原則**：不要為未來需求預先優化，先確保基礎功能正常，再考慮進階優化                                                                         |
+| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效      | SSG 無法生成 nonce，避免使用 strict-dynamic                                                                                                        |
+| ❌ 歷史 | 文檔與程式碼實作狀態不符                 | 每次修改必須逐一驗證實際檔案                                                                                                                       |
+| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）  | 新增路由後必須同步更新相關測試                                                                                                                     |
+| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx | 新增路由後必須同步更新 ssgOptions.includedRoutes                                                                                                   |
+| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據    | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                                                                                              |
+| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用   | 2025 年起 Google 不再支援 image:caption/title/license                                                                                              |
+| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限   | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除                                                                     |
+| ⚠️ 注意 | `<picture>` 標籤 SSG 路徑解析問題        | `import.meta.env.BASE_URL` 在 SSG 時可能無法正確解析，導致 srcSet 為 null                                                                          |
+| ⚠️ 注意 | E2E 頁尾 toBeVisible 假設元素在 viewport | 使用 toBeAttached 檢查 DOM 存在性，不假設元素在初始 viewport                                                                                       |
 
 ---
 
