@@ -1,0 +1,76 @@
+# Gitleaks 配置檔案
+# 用於檢測程式碼中的密鑰、API 金鑰、密碼等敏感資訊
+#
+# 最後更新: 2025-12-24T23:58:00+08:00
+# 依據: [context7:gitleaks/gitleaks:2025-12-24]
+
+# 使用預設規則並禁用容易誤報的規則
+[extend]
+useDefault = true
+disabledRules = ["generic-api-key"]
+
+# 全域允許清單
+[[allowlists]]
+description = "忽略常見的假陽性路徑"
+paths = [
+    '''node_modules/.*''',
+    '''pnpm-lock\.yaml''',
+    '''package-lock\.json''',
+    '''\.git/.*''',
+    '''dist/.*''',
+    '''coverage/.*''',
+    '''\.next/.*''',
+    '''\.cache/.*''',
+    '''vendor/.*''',
+]
+
+# 忽略測試資料
+[[allowlists]]
+description = "忽略測試檔案中的假密鑰"
+paths = [
+    '''.*\.test\.(ts|tsx|js|jsx)$''',
+    '''.*\.spec\.(ts|tsx|js|jsx)$''',
+    '''tests?/.*''',
+    '''__tests__/.*''',
+    '''__mocks__/.*''',
+    '''fixtures/.*''',
+]
+
+# 忽略範例環境變數
+[[allowlists]]
+description = "忽略範例環境變數檔案"
+paths = [
+    '''\.env\.example''',
+    '''\.env\.sample''',
+    '''\.env\.template''',
+]
+
+# 忽略常見的佔位符
+[[allowlists]]
+description = "忽略佔位符和範例值"
+regexTarget = "match"
+regexes = [
+    '''(?i)your[_-]?(api[_-]?key|token|secret)''',
+    '''(?i)example|sample|placeholder|dummy|test''',
+    '''xxx+''',
+    '''___+''',
+    '''\.\.\.''',
+]
+stopwords = [
+    "example",
+    "sample",
+    "placeholder",
+    "dummy",
+    "test",
+    "your-api-key",
+    "your-token",
+    "xxx",
+]
+
+# 自訂規則：專案特定的 API 金鑰格式
+# [[rules]]
+# id = "custom-api-key"
+# description = "自訂 API 金鑰格式"
+# regex = '''CUSTOM_[A-Z0-9]{32}'''
+# keywords = ["CUSTOM_"]
+# tags = ["custom", "api"]
