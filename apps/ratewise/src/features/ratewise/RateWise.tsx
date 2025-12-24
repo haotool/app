@@ -401,7 +401,8 @@ const RateWise = () => {
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <span>更新時間 {formattedLastUpdate}</span>
+                    {/* [fix:2025-12-24] suppressHydrationWarning - 動態時間在 SSR/CSR 會不同 */}
+                    <span suppressHydrationWarning>更新時間 {formattedLastUpdate}</span>
                   </div>
                 </div>
               )}
