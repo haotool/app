@@ -27,7 +27,13 @@
 
 ### 架構與規劃
 
-- **[NEXT_JS_MIGRATION_PLAN.md](NEXT_JS_MIGRATION_PLAN.md)** - Next.js 遷移決策與共存策略
+- **[ARCHITECTURE_BASELINE.md](dev/ARCHITECTURE_BASELINE.md)** - 架構藍圖與分層準則
+
+### SEO 與優化
+
+- **[SEO_GUIDE.md](SEO_GUIDE.md)** - SEO 最佳實踐指南
+- **[SEARCH_CONSOLE_GUIDE.md](SEARCH_CONSOLE_GUIDE.md)** - Search Console 配置指南
+- **[SEO_SUBMISSION_GUIDE.md](SEO_SUBMISSION_GUIDE.md)** - SEO 提交指南
 
 ### 開發參考 (dev/)
 
@@ -36,7 +42,7 @@
 - **[CITATIONS.md](dev/CITATIONS.md)** - 權威來源清單與技術引用
 - **[DEPENDENCY_UPGRADE_PLAN.md](dev/DEPENDENCY_UPGRADE_PLAN.md)** - 依賴升級策略
 - **[AI_SEARCH_OPTIMIZATION_SPEC.md](dev/AI_SEARCH_OPTIMIZATION_SPEC.md)** - AI 搜尋優化規格
-- **[ATOMIC_FIX_BRANCHES.md](dev/ATOMIC_FIX_BRANCHES.md)** - 原子化修復分支策略
+- **[002_development_reward_penalty_log.md](dev/002_development_reward_penalty_log.md)** - 開發獎懲記錄
 
 ## 📋 文檔類型說明
 
@@ -60,7 +66,6 @@
 
 架構決策、技術債務、升級計劃等前瞻性文檔。
 
-- NEXT_JS_MIGRATION_PLAN.md
 - DEPENDENCY_UPGRADE_PLAN.md
 - ARCHITECTURE_BASELINE.md
 
@@ -97,5 +102,5 @@
 ---
 
 **維護者**: DevOps Team  
-**最後更新**: 2025-10-18  
-**版本**: 1.0.0
+**最後更新**: 2025-12-24T22:42:00+08:00  
+**版本**: 1.1.0
