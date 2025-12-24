@@ -224,16 +224,32 @@ const RateWise = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-2">
             <div className="flex items-center justify-center gap-0 mb-0.5">
-              <img
-                alt="RateWise Logo"
-                className="w-16 h-16 md:w-20 md:h-20"
-                width="112"
-                height="112"
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
-                src={`${import.meta.env.BASE_URL}logo.png`}
-              />
+              <picture>
+                {/* 行動版使用較小尺寸 */}
+                <source
+                  type="image/avif"
+                  srcSet="/optimized/logo-112w.avif"
+                  media="(max-width: 767px)"
+                />
+                <source
+                  type="image/webp"
+                  srcSet="/optimized/logo-112w.webp"
+                  media="(max-width: 767px)"
+                />
+                {/* 電腦版使用較大尺寸 */}
+                <source type="image/avif" srcSet="/optimized/logo-192w.avif" />
+                <source type="image/webp" srcSet="/optimized/logo-192w.webp" />
+                <img
+                  alt="RateWise Logo"
+                  className="w-16 h-16 md:w-20 md:h-20"
+                  width="112"
+                  height="112"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  src="/logo.png"
+                />
+              </picture>
               <h1
                 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"
                 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 700 }}
@@ -401,8 +417,7 @@ const RateWise = () => {
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    {/* [fix:2025-12-24] suppressHydrationWarning - 動態時間在 SSR/CSR 會不同 */}
-                    <span suppressHydrationWarning>更新時間 {formattedLastUpdate}</span>
+                    <span>更新時間 {formattedLastUpdate}</span>
                   </div>
                 </div>
               )}
@@ -463,10 +478,7 @@ const RateWise = () => {
                   <span className="text-white/50">•</span>
                   <VersionDisplay />
                   <span className="text-white/50">•</span>
-                  {/* [fix:2025-12-24] suppressHydrationWarning - new Date() 在 SSR/CSR 可能不同 */}
-                  <span className="text-white/70" suppressHydrationWarning>
-                    © {new Date().getFullYear()}
-                  </span>
+                  <span className="text-white/70">© {new Date().getFullYear()}</span>
                 </div>
 
                 {/* 作者資訊 */}

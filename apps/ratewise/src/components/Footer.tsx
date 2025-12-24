@@ -116,8 +116,8 @@ export function Footer() {
   };
 
   // 獲取版本號和建置時間
-  const appVersion = import.meta.env.VITE_APP_VERSION ?? 'v1.2.2';
-  const buildTime = import.meta.env.VITE_BUILD_TIME ?? '2025/12/24 01:14';
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.2.2';
+  const buildTime = import.meta.env.VITE_BUILD_TIME || '2025/12/24 01:14';
 
   return (
     <footer
@@ -171,8 +171,7 @@ export function Footer() {
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            {/* [fix:2025-12-24] suppressHydrationWarning - 動態時間在 SSR/CSR 會不同 */}
-            <span suppressHydrationWarning>
+            <span>
               更新時間 來源 {formatTime(lastUpdate)} · 刷新 {formatTime(lastFetchedAt)}
             </span>
           </div>
@@ -242,10 +241,7 @@ export function Footer() {
               </span>
             </span>
             <span className="text-white/50">•</span>
-            {/* [fix:2025-12-24] suppressHydrationWarning - currentYear 在 SSR/CSR 可能不同 */}
-            <span className="text-white/70" suppressHydrationWarning>
-              © {currentYear}
-            </span>
+            <span className="text-white/70">© {currentYear}</span>
           </div>
           <div className="flex items-center gap-1.5 text-white/80">
             <span>By</span>
@@ -308,8 +304,7 @@ export function Footer() {
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            {/* [fix:2025-12-24] suppressHydrationWarning - 動態時間在 SSR/CSR 會不同 */}
-            <span suppressHydrationWarning>
+            <span>
               更新時間 來源 {formatTime(lastUpdate)} · 刷新 {formatTime(lastFetchedAt)}
             </span>
           </div>
@@ -375,8 +370,7 @@ export function Footer() {
         <div className="flex flex-row justify-between items-center gap-4">
           {/* Copyright */}
           <div className="text-sm text-slate-300">
-            {/* [fix:2025-12-24] suppressHydrationWarning - currentYear 在 SSR/CSR 可能不同 */}
-            <p suppressHydrationWarning>
+            <p>
               © {currentYear}{' '}
               <a
                 href="https://haotool.org"

@@ -1,10 +1,10 @@
 # 開發獎懲記錄
 
-**版本**: 1.8.7
+**版本**: 1.8.2
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-24T10:07:39+08:00
+**更新時間**: 2025-12-24T01:28:00+08:00
 **狀態**: ✅ 完成
-**當前總分**: +46
+**當前總分**: +39
 
 | 類型    | 摘要                                    | 採取行動                                                                                                                                                | 依據                                                                         | 分數 |
 | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
@@ -33,27 +33,20 @@
 | ✅ 成功 | 重型組件 Lazy Loading 優化              | 1) MiniTrendChart lazy load（減少 144KB lightweight-charts） 2) CalculatorKeyboard lazy load 3) Suspense fallback                                       | [React Lazy Loading][Code Splitting Best Practices]                          | +2   |
 | ✅ 成功 | Lighthouse CI 配置更新至 95+ 門檻       | 1) 所有類別門檻提升至 95 分 2) 使用 lighthouse:recommended preset 3) CI/CD 全數通過                                                                     | [context7:googlechrome/lighthouse-ci:2025-12-24]                             | +2   |
 | ✅ 成功 | 整合響應式 Footer 設計                  | 1) 行動版簡潔 footer 2) 電腦版完整 footer（17 個 SEO 連結） 3) 即時更新時間顯示                                                                         | [WCAG 2.1][Google SEO 2025]                                                  | +1   |
-| ✅ 成功 | 修復 Logo 路徑使用 BASE_URL             | 1) 問題：`/logo.png` 絕對路徑在 `/ratewise/` 子路徑部署時指向錯誤位置 2) 修復：使用 `${import.meta.env.BASE_URL}logo.png` 3) CI/CD 全通過               | [context7:/vitejs/vite:2025-12-24T09:01:54+08:00]                            | +2   |
-| ✅ 成功 | E2E 測試修復：RWD 元素選擇              | 1) `.first()` 選到 `md:hidden` 元素導致失敗 2) 使用 `.filter({ visible: true })` 選擇可見元素                                                           | [context7:/microsoft/playwright:2025-12-24T09:14:26+08:00]                   | +1   |
-| ✅ 成功 | 修復 React Hydration #418 警告          | 在動態時間元素添加 `suppressHydrationWarning` 屬性，避免 SSR/CSR mismatch 警告                                                                          | [React SSR Best Practices 2025]                                              | +1   |
-| ✅ 成功 | 補充年份 suppressHydrationWarning       | 在 `© {currentYear}` 和 `© {new Date().getFullYear()}` 元素添加 `suppressHydrationWarning`，全面修復 Hydration 警告                                     | [React SSR Best Practices 2025]                                              | +1   |
-| ✅ 成功 | 測試覆蓋率提升：requestId.ts            | 新增 requestId.test.ts (19 tests)，覆蓋率從 58% 提升至 92%，涵蓋 UUID 生成、localStorage 持久化、請求頭注入等功能                                       | [AGENTS.md:品質門檻][Vitest Best Practices]                                  | +2   |
 
 ---
 
 ## 歷史錯誤模式警告（防止重蹈覆轍）
 
-| 類型    | 摘要                                     | 教訓                                                                               |
-| ------- | ---------------------------------------- | ---------------------------------------------------------------------------------- |
-| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效      | SSG 無法生成 nonce，避免使用 strict-dynamic                                        |
-| ❌ 歷史 | 文檔與程式碼實作狀態不符                 | 每次修改必須逐一驗證實際檔案                                                       |
-| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）  | 新增路由後必須同步更新相關測試                                                     |
-| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx | 新增路由後必須同步更新 ssgOptions.includedRoutes                                   |
-| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據    | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                              |
-| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用   | 2025 年起 Google 不再支援 image:caption/title/license                              |
-| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限   | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除     |
-| ⚠️ 注意 | 靜態資源使用絕對路徑導致子路徑部署失敗   | 使用 `import.meta.env.BASE_URL` 而非 `/` 前綴，確保在任何 base path 下都能正確載入 |
-| ⚠️ 注意 | Playwright `.first()` 選到 RWD 隱藏元素  | 使用 `.filter({ visible: true })` 過濾 `md:hidden` 等 CSS 隱藏元素                 |
+| 類型    | 摘要                                     | 教訓                                                                           |
+| ------- | ---------------------------------------- | ------------------------------------------------------------------------------ |
+| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效      | SSG 無法生成 nonce，避免使用 strict-dynamic                                    |
+| ❌ 歷史 | 文檔與程式碼實作狀態不符                 | 每次修改必須逐一驗證實際檔案                                                   |
+| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）  | 新增路由後必須同步更新相關測試                                                 |
+| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx | 新增路由後必須同步更新 ssgOptions.includedRoutes                               |
+| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據    | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                          |
+| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用   | 2025 年起 Google 不再支援 image:caption/title/license                          |
+| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限   | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除 |
 
 ---
 

@@ -31,14 +31,8 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(page.getByRole('button', { name: /單幣別/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /多幣別/i })).toBeVisible();
 
-    // 檢查頁尾資料來源 (使用 filter({ visible: true }) 選擇可見元素)
-    // [context7:microsoft/playwright:2025-12-24] 使用 visible filter 處理 RWD 隱藏元素
-    await expect(
-      page
-        .getByText(/臺灣銀行牌告匯率/i)
-        .filter({ visible: true })
-        .first(),
-    ).toBeVisible();
+    // 檢查頁尾資料來源 (使用 first() 避免 strict mode violation)
+    await expect(page.getByText(/臺灣銀行牌告匯率/i).first()).toBeVisible();
   });
 
   test('單幣別模式：應該能夠輸入金額並看到換算結果', async ({ rateWisePage: page }) => {
