@@ -1,13 +1,6 @@
 {
   "runs": [
     {
-      "timestamp": "2025-12-12T19:01:50Z",
-      "duration_seconds": 470,
-      "conclusion": "success",
-      "branch": "main",
-      "commit": "66a4449964924d728739f9e08aaea8af7280bca6"
-    },
-    {
       "timestamp": "2025-12-12T19:13:59Z",
       "duration_seconds": 322,
       "conclusion": "success",
@@ -699,6 +692,13 @@
       "conclusion": "success",
       "branch": "main",
       "commit": "6369610de8f404d27689a855f3d701fb1764574e"
+    },
+    {
+      "timestamp": "2025-12-24T15:14:25Z",
+      "duration_seconds": 383,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "61dffe4fb07a9fe95547da73abc7c41ce57a3b1d"
     }
   ]
 }
