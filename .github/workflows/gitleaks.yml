@@ -1,0 +1,39 @@
+# Gitleaks 密鑰掃描工作流程
+# 用於檢測程式碼中的密鑰、API 金鑰、密碼等敏感資訊
+#
+# 最後更新: 2025-12-24T23:58:00+08:00
+# 依據: [context7:gitleaks/gitleaks:2025-12-24]
+
+name: Gitleaks Secret Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  gitleaks:
+    name: 🔒 Secret Detection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 需要完整歷史記錄進行深度掃描
+
+      - name: 🔍 Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config-path: .gitleaks.toml
+
+      - name: 📊 Upload SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+        continue-on-error: true
