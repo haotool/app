@@ -1,10 +1,10 @@
 # 開發獎懲記錄
 
-**版本**: 1.8.2
+**版本**: 1.8.3
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-24T01:28:00+08:00
+**更新時間**: 2025-12-24T09:01:54+08:00
 **狀態**: ✅ 完成
-**當前總分**: +39
+**當前總分**: +41
 
 | 類型    | 摘要                                    | 採取行動                                                                                                                                                | 依據                                                                         | 分數 |
 | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
@@ -33,20 +33,22 @@
 | ✅ 成功 | 重型組件 Lazy Loading 優化              | 1) MiniTrendChart lazy load（減少 144KB lightweight-charts） 2) CalculatorKeyboard lazy load 3) Suspense fallback                                       | [React Lazy Loading][Code Splitting Best Practices]                          | +2   |
 | ✅ 成功 | Lighthouse CI 配置更新至 95+ 門檻       | 1) 所有類別門檻提升至 95 分 2) 使用 lighthouse:recommended preset 3) CI/CD 全數通過                                                                     | [context7:googlechrome/lighthouse-ci:2025-12-24]                             | +2   |
 | ✅ 成功 | 整合響應式 Footer 設計                  | 1) 行動版簡潔 footer 2) 電腦版完整 footer（17 個 SEO 連結） 3) 即時更新時間顯示                                                                         | [WCAG 2.1][Google SEO 2025]                                                  | +1   |
+| ✅ 成功 | 修復 Logo 路徑使用 BASE_URL             | 1) 問題：`/logo.png` 絕對路徑在 `/ratewise/` 子路徑部署時指向錯誤位置 2) 修復：使用 `${import.meta.env.BASE_URL}logo.png` 3) CI/CD 全通過               | [context7:/vitejs/vite:2025-12-24T09:01:54+08:00]                            | +2   |
 
 ---
 
 ## 歷史錯誤模式警告（防止重蹈覆轍）
 
-| 類型    | 摘要                                     | 教訓                                                                           |
-| ------- | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效      | SSG 無法生成 nonce，避免使用 strict-dynamic                                    |
-| ❌ 歷史 | 文檔與程式碼實作狀態不符                 | 每次修改必須逐一驗證實際檔案                                                   |
-| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）  | 新增路由後必須同步更新相關測試                                                 |
-| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx | 新增路由後必須同步更新 ssgOptions.includedRoutes                               |
-| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據    | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                          |
-| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用   | 2025 年起 Google 不再支援 image:caption/title/license                          |
-| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限   | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除 |
+| 類型    | 摘要                                     | 教訓                                                                               |
+| ------- | ---------------------------------------- | ---------------------------------------------------------------------------------- |
+| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效      | SSG 無法生成 nonce，避免使用 strict-dynamic                                        |
+| ❌ 歷史 | 文檔與程式碼實作狀態不符                 | 每次修改必須逐一驗證實際檔案                                                       |
+| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）  | 新增路由後必須同步更新相關測試                                                     |
+| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx | 新增路由後必須同步更新 ssgOptions.includedRoutes                                   |
+| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據    | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                              |
+| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用   | 2025 年起 Google 不再支援 image:caption/title/license                              |
+| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限   | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除     |
+| ⚠️ 注意 | 靜態資源使用絕對路徑導致子路徑部署失敗   | 使用 `import.meta.env.BASE_URL` 而非 `/` 前綴，確保在任何 base path 下都能正確載入 |
 
 ---
 
