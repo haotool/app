@@ -116,8 +116,8 @@ export function Footer() {
   };
 
   // 獲取版本號和建置時間
-  const appVersion = import.meta.env.VITE_APP_VERSION || 'v1.2.2';
-  const buildTime = import.meta.env.VITE_BUILD_TIME || '2025/12/24 01:14';
+  const appVersion = import.meta.env.VITE_APP_VERSION ?? 'v1.2.2';
+  const buildTime = import.meta.env.VITE_BUILD_TIME ?? '2025/12/24 01:14';
 
   return (
     <footer
