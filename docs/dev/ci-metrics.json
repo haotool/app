@@ -1,13 +1,6 @@
 {
   "runs": [
     {
-      "timestamp": "2025-12-13T08:42:40Z",
-      "duration_seconds": 83,
-      "conclusion": "failure",
-      "branch": "feature/haotool-portfolio-refactor",
-      "commit": "3106d0502f419d45579b1540f5b37c2023d53bf5"
-    },
-    {
       "timestamp": "2025-12-13T08:50:49Z",
       "duration_seconds": 303,
       "conclusion": "success",
@@ -699,6 +692,13 @@
       "conclusion": "success",
       "branch": "main",
       "commit": "635839d5a68f2ab44a165843884b9da03c672e9d"
+    },
+    {
+      "timestamp": "2025-12-24T16:06:37Z",
+      "duration_seconds": 358,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "64ed3279811e833cbf5f461ea6de466632e0ce13"
     }
   ]
 }
