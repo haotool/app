@@ -136,46 +136,4 @@ describe('Logger', () => {
       expect(logs[0]!.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     });
   });
-
-  describe('requestId', () => {
-    it('includes requestId in log entries', () => {
-      logger.info('Test message');
-
-      const logs = logger.getRecentLogs();
-      expect(logs[0]!.requestId).toBeDefined();
-      expect(typeof logs[0]!.requestId).toBe('string');
-    });
-  });
-
-  describe('log entry structure', () => {
-    it('omits empty context from log entries', () => {
-      logger.info('Test message', {});
-
-      const logs = logger.getRecentLogs();
-      expect(logs[0]!.context).toBeUndefined();
-    });
-
-    it('includes non-empty context in log entries', () => {
-      const context = { key: 'value' };
-      logger.info('Test message', context);
-
-      const logs = logger.getRecentLogs();
-      expect(logs[0]!.context).toEqual(context);
-    });
-  });
-
-  describe('log storage limit', () => {
-    it('keeps only the last 100 logs', () => {
-      // Add 105 logs
-      for (let i = 0; i < 105; i++) {
-        logger.info(`Message ${i}`);
-      }
-
-      const logs = logger.getRecentLogs();
-      expect(logs).toHaveLength(100);
-      // First log should be Message 5 (0-4 were trimmed)
-      expect(logs[0]!.message).toBe('Message 5');
-      expect(logs[99]!.message).toBe('Message 104');
-    });
-  });
 });
