@@ -31,8 +31,10 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(page.getByRole('button', { name: /單幣別/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /多幣別/i })).toBeVisible();
 
-    // 檢查頁尾資料來源 (使用 first() 避免 strict mode violation)
-    await expect(page.getByText(/臺灣銀行牌告匯率/i).first()).toBeVisible();
+    // 檢查頁尾資料來源 (使用 toBeAttached - 頁尾可能需要滾動才能進入 viewport)
+    // [fix:2025-12-24] 從 toBeVisible 改為 toBeAttached，因為頁尾在較小視窗下不在初始 viewport
+    // [context7:microsoft/playwright:2025-12-24] toBeAttached 確認元素在 DOM 中存在
+    await expect(page.getByText(/臺灣銀行牌告匯率/i).first()).toBeAttached();
   });
 
   test('單幣別模式：應該能夠輸入金額並看到換算結果', async ({ rateWisePage: page }) => {
