@@ -2,7 +2,11 @@
  * Vitest test setup
  */
 import '@testing-library/jest-dom/vitest';
-import { afterEach, vi } from 'vitest';
+import { afterEach, vi, expect } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+
+// [fix:2025-12-25] 顯式擴展 expect 以確保 jest-dom matchers 可用
+expect.extend(matchers);
 import { cleanup } from '@testing-library/react';
 
 // Cleanup after each test
