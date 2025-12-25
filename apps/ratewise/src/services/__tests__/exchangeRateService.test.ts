@@ -19,7 +19,6 @@ import * as logger from '../../utils/logger';
 // ===== Mock Setup =====
 
 // Mock fetchWithRequestId to use the mocked global.fetch
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 vi.mock('../../utils/requestId', () => ({
   fetchWithRequestId: vi.fn((input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     return global.fetch(input, init) as unknown as Promise<Response>;
@@ -29,7 +28,7 @@ vi.mock('../../utils/requestId', () => ({
   resetRequestId: vi.fn(() => 'test-request-id'),
   addRequestIdHeader: vi.fn((options) => options),
 }));
-/* eslint-enable @typescript-eslint/no-unsafe-return */
+
 const mockLocalStorage = (() => {
   let store: Record<string, string> = {};
 
