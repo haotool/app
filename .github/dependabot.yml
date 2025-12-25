@@ -3,16 +3,18 @@ updates:
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
-      interval: 'daily'
-      time: '01:00'
+      interval: 'weekly'
+      day: 'sunday'
+      time: '02:00'
       timezone: 'Asia/Taipei'
     commit-message:
       prefix: 'chore(deps)'
     allow:
       - dependency-type: 'direct'
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     rebase-strategy: auto
-    # 只自動升級安全/patch/minor，避免破壞性變更
+    # 2025-12-26: 改為每週，避免與 Renovate 衝突（Renovate 週一執行）
+    # Dependabot 作為備援，僅處理 Renovate 遺漏的更新
     versioning-strategy: increase-if-necessary
 
   - package-ecosystem: 'github-actions'

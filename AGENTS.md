@@ -213,6 +213,93 @@ browser_snapshot  // 取得 DOM 結構驗證
 
 ---
 
+### Renovate Bot (依賴自動化更新)
+
+**配置檔案**: `/renovate.json`
+
+**用途**:
+
+- 自動背景更新依賴（patch/minor 無破壞性變更）
+- Grouping 策略減少 PR 數量
+- 通過 CI 後自動合併
+
+**核心策略** (2025-12-26 優化):
+
+```json
+{
+  "packageRules": [
+    {
+      "description": "📦 Patch - 自動合併（排除 0.x）",
+      "matchUpdateTypes": ["patch"],
+      "matchCurrentVersion": "!/^0/",
+      "groupName": "patch dependencies",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "🔄 Minor - 自動合併（排除 0.x）",
+      "matchUpdateTypes": ["minor"],
+      "matchCurrentVersion": "!/^0/",
+      "groupName": "minor dependencies",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "⚠️ Major - 需要手動審查",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["major-update", "needs-review"]
+    }
+  ],
+  "prConcurrentLimit": 10,
+  "schedule": ["before 3am on Monday"]
+}
+```
+
+**執行時間**:
+
+- **Renovate**: 每週一 01:00-03:00 (主要)
+- **Dependabot**: 每週日 02:00 (備援)
+
+**自動合併條件**:
+
+1. ✅ 所有 CI 檢查通過 (Quality/E2E/Trivy)
+2. ✅ 版本非 0.x (避免不穩定版本)
+3. ✅ 類型為 patch/minor (Major 需手動審查)
+4. ✅ 穩定期 ≥3 天 (避免剛發布的版本)
+
+**手動操作**:
+
+```bash
+# 檢視 Renovate Dashboard
+gh pr list --label dependencies
+
+# 手動觸發 Renovate (需 renovate/github-action)
+gh workflow run renovate.yml
+
+# 關閉 Renovate PR
+gh pr close <pr-number> --comment "延後處理"
+```
+
+**最佳實踐** (來自 Context7 + WebSearch 2025):
+
+- ✅ Grouping 減少 PR 噪音（patch→1 PR, minor→1 PR）
+- ✅ platformAutomerge 使用 GitHub 原生合併
+- ✅ 排除 0.x 版本（避免破壞性變更）
+- ✅ 穩定期 3 天（等待社群驗證）
+- ✅ 保留 Dependabot 作為備援
+
+**與 Dependabot 比較**:
+
+| 功能      | Renovate    | Dependabot    |
+| --------- | ----------- | ------------- |
+| Grouping  | ✅ 強大     | ⚠️ 有限       |
+| Automerge | ✅ 彈性配置 | ❌ 需 Actions |
+| 排程      | ✅ 精確     | ⚠️ 粗略       |
+| Monorepo  | ✅ 優秀     | ⚠️ 普通       |
+
+---
+
 ## 2. 工作流程
 
 ### 初始建置流程
