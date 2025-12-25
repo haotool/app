@@ -1,23 +1,89 @@
+/**
+ * ConversionHistory Component - 轉換歷史記錄組件
+ *
+ * [feat:2025-12-26] 增強功能：
+ * - 持久化存儲 (localStorage，7 天過期)
+ * - 點擊快速重新轉換
+ * - 清除全部歷史
+ * - 複製轉換結果
+ * - 相對時間顯示（今天、昨天、日期）
+ * - 懸停視覺反饋
+ * - 鍵盤無障礙支援（Enter/Space）
+ *
+ * 參考: /Users/azlife.eth/.claude/plans/vivid-petting-wozniak.md
+ */
+
+import { Copy } from 'lucide-react';
 import type { ConversionHistoryEntry } from '../types';
+import { copyToClipboard, formatConversionForCopy } from '../../../utils/clipboard';
 
 interface ConversionHistoryProps {
   history: ConversionHistoryEntry[];
+  onReconvert?: (entry: ConversionHistoryEntry) => void;
+  onClearAll?: () => void;
 }
 
-export const ConversionHistory = ({ history }: ConversionHistoryProps) => {
+export const ConversionHistory = ({ history, onReconvert, onClearAll }: ConversionHistoryProps) => {
   if (history.length === 0) {
     return null;
   }
 
+  /**
+   * 複製轉換結果到剪貼簿
+   */
+  const handleCopy = async (entry: ConversionHistoryEntry) => {
+    const text = formatConversionForCopy(entry);
+    const success = await copyToClipboard(text);
+    // TODO: [future] 顯示 Toast 通知 "已複製" 或 "複製失敗"
+    if (!success) {
+      // 錯誤已在 copyToClipboard 中記錄
+    }
+  };
+
+  /**
+   * 處理鍵盤事件（Enter/Space 重新轉換）
+   */
+  const handleKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    entry: ConversionHistoryEntry,
+  ) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onReconvert?.(entry);
+    }
+  };
+
   return (
     <div className="bg-white rounded-3xl shadow-xl p-6 mt-4 md:mt-6">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">轉換歷史</h2>
-      <div className="space-y-3">
-        {history.map((item) => (
-          <div
-            key={`${item.time}-${item.amount}-${item.to}`}
-            className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
+      {/* 標題與清除按鈕 */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-gray-800">轉換歷史</h2>
+        {onClearAll && (
+          <button
+            onClick={onClearAll}
+            className="text-sm text-gray-500 hover:text-red-600 transition-colors"
+            aria-label="清除全部歷史記錄"
           >
+            清除全部
+          </button>
+        )}
+      </div>
+
+      {/* 歷史記錄列表 */}
+      <div className="space-y-3">
+        {history.map((item, index) => (
+          <div
+            key={`${index}-${item.timestamp}`}
+            onClick={() => onReconvert?.(item)}
+            onKeyDown={(e) => handleKeyDown(e, item)}
+            role="button"
+            tabIndex={0}
+            className="flex items-center justify-between p-3 bg-gray-50 rounded-xl
+                       hover:bg-blue-50 hover:shadow-md transition-all cursor-pointer
+                       group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label={`重新轉換 ${item.amount} ${item.from} 到 ${item.to}`}
+          >
+            {/* 轉換資訊 */}
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-500">{item.time}</span>
               <span className="font-semibold">
@@ -28,6 +94,20 @@ export const ConversionHistory = ({ history }: ConversionHistoryProps) => {
                 {item.result} {item.to}
               </span>
             </div>
+
+            {/* 複製按鈕（懸停時顯示） */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // 防止觸發外層 onClick
+                void handleCopy(item);
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity
+                         p-2 rounded-lg hover:bg-blue-100 focus:opacity-100"
+              aria-label="複製轉換結果"
+              tabIndex={0}
+            >
+              <Copy className="w-4 h-4 text-blue-600" />
+            </button>
           </div>
         ))}
       </div>

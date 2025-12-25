@@ -20,6 +20,7 @@ import { STORAGE_KEYS } from '../storage-keys';
 import type { RateDetails } from './useExchangeRates';
 import { logger } from '../../../utils/logger';
 import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
+import { getRelativeTimeString } from '../../../utils/timeFormatter';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -42,9 +43,6 @@ const seedTrends = (): TrendState =>
     acc[code] = null; // 使用 null 表示無數據，而非假數據
     return acc;
   }, {} as TrendState);
-
-const getTimeString = () =>
-  new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
 
 const sanitizeFavorites = (codes: CurrencyCode[]): CurrencyCode[] => {
   const unique = Array.from(new Set(codes));
@@ -120,6 +118,26 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>(DEFAULT_BASE_CURRENCY);
 
   const [history, setHistory] = useState<ConversionHistoryEntry[]>([]);
+
+  // [feat:2025-12-26] 從 localStorage 恢復歷史記錄並過濾過期記錄（7 天）
+  useEffect(() => {
+    const storedHistory = readJSON<ConversionHistoryEntry[]>(STORAGE_KEYS.CONVERSION_HISTORY, []);
+
+    // 過濾 7 天前的記錄
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const validHistory = storedHistory.filter((entry) => entry.timestamp > sevenDaysAgo);
+
+    // 如果有過期記錄被過濾，更新 localStorage
+    if (validHistory.length !== storedHistory.length) {
+      writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, validHistory);
+    }
+
+    // 只有當有歷史記錄時才更新 state
+    if (validHistory.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶歷史記錄
+      setHistory(validHistory);
+    }
+  }, []);
   const [trend] = useState<TrendState>(() => seedTrends()); // 暫時不更新趨勢，等待歷史數據整合
   const [lastEdited, setLastEdited] = useState<AmountField>('from');
 
@@ -319,14 +337,36 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   };
 
   const addToHistory = () => {
+    const timestamp = Date.now();
     const entry: ConversionHistoryEntry = {
       from: fromCurrency,
       to: toCurrency,
       amount: fromAmount,
       result: toAmount,
-      time: getTimeString(),
+      time: getRelativeTimeString(timestamp),
+      timestamp, // 完整時間戳記
     };
-    setHistory((prev) => [entry, ...prev].slice(0, 5));
+
+    setHistory((prev) => {
+      const updated = [entry, ...prev].slice(0, 10); // 增加至 10 條
+      // 持久化到 localStorage
+      writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, updated);
+      return updated;
+    });
+  };
+
+  // [feat:2025-12-26] 清除全部歷史記錄
+  const clearAllHistory = () => {
+    setHistory([]);
+    writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, []);
+  };
+
+  // [feat:2025-12-26] 從歷史記錄重新轉換
+  const reconvertFromHistory = (entry: ConversionHistoryEntry) => {
+    setFromCurrency(entry.from);
+    setToCurrency(entry.to);
+    setFromAmount(entry.amount);
+    setLastEdited('from');
   };
 
   const sortedCurrencies = useMemo(() => {
@@ -363,6 +403,8 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     swapCurrencies,
     toggleFavorite,
     addToHistory,
+    clearAllHistory,
+    reconvertFromHistory,
     generateTrends,
   };
 };

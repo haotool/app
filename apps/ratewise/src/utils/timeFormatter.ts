@@ -137,3 +137,39 @@ export function formatDisplayTime(lastUpdate: string | null, lastFetchedAt: stri
 
   return parts.join(' · ');
 }
+
+/**
+ * 生成相對時間字串
+ *
+ * @param timestamp - 時間戳記（毫秒）
+ * @returns 相對時間字串（如 "今天 14:30", "昨天 09:15", "12/24 16:20"）
+ *
+ * @example
+ * const now = Date.now();
+ * getRelativeTimeString(now) // "今天 14:30"
+ * getRelativeTimeString(now - 24 * 60 * 60 * 1000) // "昨天 09:15"
+ * getRelativeTimeString(now - 3 * 24 * 60 * 60 * 1000) // "12/24 16:20"
+ */
+export function getRelativeTimeString(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const oneDayMs = 24 * 60 * 60 * 1000;
+
+  const date = new Date(timestamp);
+  const timeStr = date.toLocaleTimeString('zh-TW', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  if (diff < oneDayMs) {
+    return `今天 ${timeStr}`;
+  } else if (diff < 2 * oneDayMs) {
+    return `昨天 ${timeStr}`;
+  } else {
+    const dateStr = date.toLocaleDateString('zh-TW', {
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return `${dateStr} ${timeStr}`;
+  }
+}
