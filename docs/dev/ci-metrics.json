@@ -1,13 +1,6 @@
 {
   "runs": [
     {
-      "timestamp": "2025-12-16T17:31:42Z",
-      "duration_seconds": 386,
-      "conclusion": "success",
-      "branch": "main",
-      "commit": "61bec333b36ca7385ebae01aeba368110571cfa2"
-    },
-    {
       "timestamp": "2025-12-16T18:21:53Z",
       "duration_seconds": 97,
       "conclusion": "failure",
@@ -699,6 +692,13 @@
       "conclusion": "success",
       "branch": "main",
       "commit": "60f35e25ff0aea497cc1be639f04c3a43a081a7d"
+    },
+    {
+      "timestamp": "2025-12-25T17:26:33Z",
+      "duration_seconds": 333,
+      "conclusion": "success",
+      "branch": "dependabot/npm_and_yarn/sentry/react-10.32.1",
+      "commit": "028a6d68fc4421f9d64a242574fa6b75d000ca39"
     }
   ]
 }
