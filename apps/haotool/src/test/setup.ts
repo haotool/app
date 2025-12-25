@@ -3,7 +3,11 @@
  * Configures vitest for React testing
  */
 import '@testing-library/jest-dom/vitest';
-import { vi } from 'vitest';
+import { vi, expect } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+
+// [fix:2025-12-25] 顯式擴展 expect 以確保 jest-dom matchers 可用
+expect.extend(matchers);
 import { type PropsWithChildren } from 'react';
 import * as React from 'react';
 
