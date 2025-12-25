@@ -17,12 +17,19 @@
  *
  * [fix:2025-12-04] 新增 importWithRetry 處理 chunk 載入失敗
  * 修復 "Unexpected token '<'" 錯誤
+ *
+ * [fix:2025-12-25] 使用 ClientOnly 解決 React Hydration #418 錯誤
+ * 原因：RateWise 組件依賴 localStorage、匯率數據等動態內容
+ * 解法：使用 vite-react-ssg 的 ClientOnly 組件，確保只在客戶端渲染
+ * 參考：[context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
  */
 
 import type { RouteRecord } from 'vite-react-ssg';
 import type { ComponentType } from 'react';
+import { ClientOnly } from 'vite-react-ssg';
 import CurrencyConverter from './features/ratewise/RateWise';
 import { Layout } from './components/Layout';
+import { SkeletonLoader } from './components/SkeletonLoader';
 import { logger } from './utils/logger';
 
 /**
@@ -125,12 +132,13 @@ function createLazyRoute(
 
 // Route Configuration for vite-react-ssg
 // [fix:2025-12-04] 使用 createLazyRoute 處理 chunk 載入失敗
+// [fix:2025-12-25] 首頁使用 ClientOnly 避免 React Hydration #418 錯誤
 export const routes: RouteRecord[] = [
   {
     path: '/',
     element: (
       <Layout>
-        <CurrencyConverter />
+        <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
       </Layout>
     ),
     entry: 'src/features/ratewise/RateWise',
