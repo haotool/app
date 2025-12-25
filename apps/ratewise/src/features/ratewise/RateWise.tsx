@@ -465,7 +465,9 @@ const RateWise = () => {
                   <span className="text-white/50">•</span>
                   <VersionDisplay />
                   <span className="text-white/50">•</span>
-                  <span className="text-white/70">© {new Date().getFullYear()}</span>
+                  <span className="text-white/70" suppressHydrationWarning>
+                    © 2025
+                  </span>
                 </div>
 
                 {/* 作者資訊 */}
