@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, act, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import { MiniTrendChart, type MiniTrendDataPoint } from '../MiniTrendChart';
 
 // Store crosshair callback for testing

@@ -10,6 +10,7 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { useUrlNormalization, withUrlNormalization } from '../useUrlNormalization';

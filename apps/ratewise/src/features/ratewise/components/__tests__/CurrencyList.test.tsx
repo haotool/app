@@ -13,6 +13,7 @@
  */
 
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CurrencyList } from '../CurrencyList';
 import type { CurrencyCode, TrendState } from '../../types';

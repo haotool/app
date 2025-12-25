@@ -14,6 +14,7 @@
  */
 
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import { vi, describe, it, expect } from 'vitest';
 import { CalculatorKey } from '../CalculatorKey';
 import type { KeyDefinition } from '../../types';
