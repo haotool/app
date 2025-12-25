@@ -1,10 +1,10 @@
 # 開發獎懲記錄
 
-**版本**: 2.0.3
+**版本**: 2.0.4
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-25T11:48:00+08:00
+**更新時間**: 2025-12-25T12:14:59+08:00
 **狀態**: ✅ 完成
-**當前總分**: +71
+**當前總分**: +72
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                 | 依據                                                                         | 分數 |
 | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
@@ -60,6 +60,7 @@
 | ✅ 成功 | 修復 RateWise.tsx localStorage hydration 問題    | 1) useState 初始化函數中使用 localStorage 導致 SSG/hydration 不一致 2) 改用固定初始值 'spot' + useEffect 恢復用戶偏好                                    | [context7:/reactjs/react.dev:useState:2025-12-25]                            | +1   |
 | ✅ 成功 | 修復 useCurrencyConverter SSG/hydration 不一致   | 1) mode/fromCurrency/toCurrency/favorites 在 useState 使用 localStorage 2) 改用固定初始值 + useEffect 恢復用戶偏好                                       | [context7:/reactjs/react.dev:useState:2025-12-25]                            | +1   |
 | ✅ 成功 | Footer.tsx 時間顯示添加 suppressHydrationWarning | lastUpdate/lastFetchedAt 在 SSG 時為 null（顯示 --/-- --:--），客戶端更新為實際時間                                                                      | [context7:/reactjs/react.dev:suppressHydrationWarning:2025-12-25]            | +1   |
+| ✅ 成功 | 更新 RateWise 開發依賴 (patch)                   | motion, @testing-library/react, @vitest/coverage-v8, autoprefixer, jsdom, vitest 等 6 個依賴更新，895 測試全通過                                         | [pnpm outdated:2025-12-25]                                                   | +1   |
 
 ---
 
