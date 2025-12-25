@@ -154,7 +154,25 @@ const RateWise = () => {
     generateTrends,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
 
-  const shouldShowSkeleton = !isHydrated || (ratesLoading && !isTestEnv);
+  /**
+   * [fix:2025-12-25] 修復 React Hydration Error #418
+   *
+   * 問題：SSG 時渲染 SkeletonLoader，但客戶端 hydration 時
+   * 如果 ratesLoading 快速變成 false（快取命中），會導致
+   * shouldShowSkeleton 變化，造成 hydration 不一致
+   *
+   * 解法：hydration 完成前，永遠返回 SkeletonLoader，
+   * 確保首次渲染與 SSG 生成的 HTML 完全一致
+   *
+   * 參考: [context7:/reactjs/react.dev:hydration:2025-12-25]
+   */
+  // 在 hydration 完成前，永遠返回 SkeletonLoader（與 SSG 一致）
+  if (!isHydrated) {
+    return <SkeletonLoader />;
+  }
+
+  // hydration 完成後，只有在載入中才顯示 skeleton
+  const shouldShowSkeleton = ratesLoading && !isTestEnv;
 
   if (shouldShowSkeleton) {
     return <SkeletonLoader />;
