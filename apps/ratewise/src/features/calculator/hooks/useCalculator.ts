@@ -7,10 +7,11 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import type { CalculatorState, UseCalculatorReturn } from '../types';
+import type { CalculatorState, UseCalculatorReturn, EasterEggType } from '../types';
 import { calculateExpression } from '../utils/evaluator';
 import { validateExpression, canAddOperator, canAddDecimal, canAddDigit } from '../utils/validator';
 import { useDebounce } from './useDebounce';
+import { isChristmasEasterEgg } from '../easter-eggs/utils';
 
 /**
  * 計算機 Hook
@@ -45,6 +46,9 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
 
   // 即時預覽狀態（獨立於主要結果）
   const [preview, setPreview] = useState<number | null>(null);
+
+  // 彩蛋狀態
+  const [easterEgg, setEasterEgg] = useState<EasterEggType>(null);
 
   /**
    * 同步 initialValue 變更
@@ -242,6 +246,12 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
    * @returns 計算結果或 null（發生錯誤時）
    */
   const calculate = useCallback(() => {
+    // 彩蛋檢測：在計算前檢查是否為聖誕彩蛋表達式
+    if (isChristmasEasterEgg(state.expression)) {
+      setEasterEgg('christmas');
+      // 仍然執行正常計算，但同時觸發彩蛋
+    }
+
     // 驗證表達式
     const validation = validateExpression(state.expression);
     if (!validation.isValid) {
@@ -280,6 +290,13 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
       return null;
     }
   }, [state.expression]);
+
+  /**
+   * 關閉彩蛋
+   */
+  const closeEasterEgg = useCallback(() => {
+    setEasterEgg(null);
+  }, []);
 
   /**
    * 即時預覽計算（防抖後自動觸發）
@@ -323,11 +340,13 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
     result: state.result,
     error: state.error,
     preview, // 新增：即時預覽結果
+    easterEgg, // 新增：彩蛋狀態
     input,
     backspace,
     clear,
     calculate,
     negate, // 新增：正負號切換（+/-）
     percent, // 新增：百分比轉換（%）
+    closeEasterEgg, // 新增：關閉彩蛋
   };
 }
