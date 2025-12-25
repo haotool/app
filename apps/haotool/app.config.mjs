@@ -1,5 +1,5 @@
 /**
- * HaoTool App Configuration - SSOT
+ * haotool App Configuration - SSOT
  *
  * ⚠️ 這是唯一的路徑配置來源，所有其他文件必須從這裡引用
  *
@@ -15,7 +15,7 @@
  */
 
 /**
- * HaoTool 所有需要預渲染的 SEO 路徑
+ * haotool 所有需要預渲染的 SEO 路徑
  *
  * 總計：4 個路徑
  * - 首頁、專案列表、關於、聯絡
@@ -67,7 +67,7 @@ export const SITE_CONFIG = {
 export const APP_CONFIG = {
   // 應用識別
   name: 'haotool',
-  displayName: 'HaoTool',
+  displayName: 'haotool',
 
   // 部署路徑配置
   basePath: {

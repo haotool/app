@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛠️ HaoTool
+# 🛠️ haotool
 
 **專案展示平台 | 3D 互動首頁**
 
@@ -18,7 +18,7 @@
 
 ## 📋 專案概述
 
-**HaoTool** 是一個現代化的專案展示平台，使用 Three.js 打造沉浸式 3D 互動首頁，展示 HaoTool 旗下所有應用程式。
+**haotool** 是一個現代化的專案展示平台，使用 Three.js 打造沉浸式 3D 互動首頁，展示 haotool 旗下所有應用程式。
 
 「HAO」取自中文「好」的拼音，核心理念是打造真正的「**好工具**」。
 
@@ -184,13 +184,13 @@ pnpm --filter @app/haotool test:e2e
 
 ## 👥 開發團隊
 
-- **開發者** - [haotool](https://haotool.org)
+- **開發者** - [haotool](https://app.haotool.org/)
 - **Threads** - [@azlife_1224](https://www.threads.net/@azlife_1224)
 
 ---
 
 <div align="center">
 
-Made with ❤️ by [HaoTool](https://haotool.org)
+Made with ❤️ by [haotool](https://app.haotool.org/)
 
 </div>
