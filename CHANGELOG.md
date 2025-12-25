@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2025-12-25
+
+### 🔒 Security Enhancement - Strict CSP Implementation
+
+**Security Score**: 96 → Target 98/100
+
+### Added
+
+- **Strict Content Security Policy (CSP)**: Implemented hash-based CSP with 'strict-dynamic'
+  - Removed `unsafe-eval` (XSS protection)
+  - Kept `unsafe-inline` as fallback for legacy browsers (ignored by modern browsers)
+  - Added security directives: `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`
+- **Additional Security Headers**:
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: SAMEORIGIN`
+  - `X-XSS-Protection: 1; mode=block`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: geolocation=(), microphone=(), camera=()`
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+- **Security Documentation**: Created `SECURITY_FIXES_2025.md` with implementation guide and CAA DNS setup
+
+### Changed
+
+- **Brand Update**: "HaoTool" → "haotool" (lowercase) across all files
+- **URL Update**: `https://haotool.org` → `https://app.haotool.org/`
+- **Footer Enhancement**: Upgraded Threads social link with improved UX design
+  - Added "Created by" label
+  - Full Threads SVG icon (192x192)
+  - Sophisticated hover states with transitions
+- **CSP Script**: Updated `update-csp-meta.js` to align with Strict CSP strategy
+
+### Security
+
+- **CSP 2025 Best Practices**: Following [web.dev Strict CSP](https://web.dev/articles/strict-csp) and [Google CSP Guide](https://csp.withgoogle.com/docs/strict-csp.html)
+- **Hash-based Approach**: Optimized for Static Site Generation (SSG)
+- **XSS Protection**: Enhanced protection with 'strict-dynamic' directive
+
+### Documentation
+
+- **Port 8080 Clarification**: Documented Zeabur deployment configuration
+  - Container Port 8080 required for internal operation
+  - External :8080 access should be restricted to prevent bypassing Cloudflare protection
+
+---
+
 ## [1.2.0] - 2025-11-30
 
 ### 🚀 Major Update - License & SEO Enhancement
