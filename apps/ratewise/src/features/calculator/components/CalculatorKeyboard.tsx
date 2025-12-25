@@ -206,78 +206,82 @@ export function CalculatorKeyboard({
           <>
             {/* 背景遮罩 */}
             <motion.div
-            className="fixed inset-0 bg-black/40 z-40"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={handleBackdropClick}
-            aria-hidden="true"
-          />
+              className="fixed inset-0 bg-black/40 z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleBackdropClick}
+              aria-hidden="true"
+            />
 
-          {/* Bottom Sheet 容器 */}
-          <motion.div
-            className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.2}
-            onDragEnd={handleDragEnd}
-            role="dialog"
-            aria-modal="true"
-            aria-label="計算機"
-          >
-            {/* 拖曳指示器 */}
-            <div className="flex justify-center py-3">
-              <div className="w-12 h-1 bg-slate-300 rounded-full" />
-            </div>
-
-            {/* 內容區域 */}
-            <div className="px-6 pb-8">
-              {/* 標題和關閉按鈕 */}
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-slate-900">計算機</h2>
-                <button
-                  onClick={onClose}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
-                  aria-label="關閉計算機"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+            {/* Bottom Sheet 容器 */}
+            <motion.div
+              className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.2}
+              onDragEnd={handleDragEnd}
+              role="dialog"
+              aria-modal="true"
+              aria-label="計算機"
+            >
+              {/* 拖曳指示器 */}
+              <div className="flex justify-center py-3">
+                <div className="w-12 h-1 bg-slate-300 rounded-full" />
               </div>
 
-              {/* 表達式顯示區 */}
-              <ExpressionDisplay
-                expression={expression}
-                result={result}
-                error={error}
-                preview={preview}
-              />
+              {/* 內容區域 */}
+              <div className="px-6 pb-8">
+                {/* 標題和關閉按鈕 */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-slate-900">計算機</h2>
+                  <button
+                    onClick={onClose}
+                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    aria-label="關閉計算機"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
 
-              {/* 鍵盤佈局（iOS 標準 5×4 網格，20 按鈕均勻分佈） */}
-              <div className="space-y-3">
-                {KEYBOARD_LAYOUT.map((row, rowIndex) => (
-                  <div key={rowIndex} className="grid grid-cols-4 gap-3">
-                    {row.map((keyDef) => (
-                      <CalculatorKey key={keyDef.value} keyDef={keyDef} onClick={handleKeyClick} />
-                    ))}
-                  </div>
-                ))}
+                {/* 表達式顯示區 */}
+                <ExpressionDisplay
+                  expression={expression}
+                  result={result}
+                  error={error}
+                  preview={preview}
+                />
+
+                {/* 鍵盤佈局（iOS 標準 5×4 網格，20 按鈕均勻分佈） */}
+                <div className="space-y-3">
+                  {KEYBOARD_LAYOUT.map((row, rowIndex) => (
+                    <div key={rowIndex} className="grid grid-cols-4 gap-3">
+                      {row.map((keyDef) => (
+                        <CalculatorKey
+                          key={keyDef.value}
+                          keyDef={keyDef}
+                          onClick={handleKeyClick}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>,
     document.body,
   );

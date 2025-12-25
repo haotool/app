@@ -57,7 +57,16 @@ export function ChristmasTree({ size = 200 }: ChristmasTreeProps) {
       <rect x="88" y="195" width="24" height="40" fill="#92400e" />
 
       {/* 樹幹底座 */}
-      <rect x="75" y="230" width="50" height="15" rx="3" fill="#dc2626" stroke="#b91c1c" strokeWidth="1" />
+      <rect
+        x="75"
+        y="230"
+        width="50"
+        height="15"
+        rx="3"
+        fill="#dc2626"
+        stroke="#b91c1c"
+        strokeWidth="1"
+      />
 
       {/* 裝飾球 - 紅色 */}
       <circle cx="85" cy="85" r="6" fill="#ef4444" stroke="#dc2626" strokeWidth="1" />
