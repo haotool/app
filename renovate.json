@@ -7,7 +7,47 @@
   "assignees": ["@s123104"],
   "packageRules": [
     {
-      "description": "Auto-merge patch and minor updates for dev dependencies",
+      "description": "📦 Patch 更新 - 自動合併（所有依賴，排除 0.x）",
+      "matchUpdateTypes": ["patch"],
+      "matchCurrentVersion": "!/^0/",
+      "groupName": "patch dependencies",
+      "groupSlug": "patch",
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "platformAutomerge": true
+    },
+    {
+      "description": "🔄 Minor 更新 - 自動合併（所有依賴，排除 0.x）",
+      "matchUpdateTypes": ["minor"],
+      "matchCurrentVersion": "!/^0/",
+      "groupName": "minor dependencies",
+      "groupSlug": "minor",
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "platformAutomerge": true
+    },
+    {
+      "description": "⚠️ Major 更新 - 需要手動審查",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "separateMajorMinor": true,
+      "separateMultipleMajor": true,
+      "labels": ["dependencies", "major-update"],
+      "reviewers": ["@s123104"]
+    },
+    {
+      "description": "🚨 安全更新 - 立即自動合併",
+      "matchDatasources": ["npm"],
+      "vulnerabilityAlerts": {
+        "labels": ["security", "dependencies"],
+        "automerge": true,
+        "automergeType": "pr"
+      }
+    },
+    {
+      "description": "🔧 DevDependencies - 額外優先級",
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["patch", "minor"],
       "automerge": true,
@@ -15,39 +55,23 @@
       "automergeStrategy": "squash"
     },
     {
-      "description": "Group all patch updates together",
-      "matchUpdateTypes": ["patch"],
-      "groupName": "patch dependencies",
-      "groupSlug": "patch"
+      "description": "📊 React Monorepo - 群組更新",
+      "matchPackagePatterns": ["^react", "^@types/react"],
+      "groupName": "React monorepo",
+      "automerge": true
     },
     {
-      "description": "Group all minor updates together",
-      "matchUpdateTypes": ["minor"],
-      "groupName": "minor dependencies",
-      "groupSlug": "minor"
-    },
-    {
-      "description": "Major updates require manual review",
-      "matchUpdateTypes": ["major"],
-      "automerge": false,
-      "labels": ["dependencies", "major-update"],
-      "reviewers": ["@s123104"]
-    },
-    {
-      "description": "Critical security updates",
-      "matchDatasources": ["npm"],
-      "matchUpdateTypes": ["patch"],
-      "vulnerabilityAlerts": {
-        "labels": ["security", "dependencies"],
-        "automerge": true
-      }
+      "description": "🧪 測試工具 - 群組更新",
+      "matchPackageNames": ["vitest", "@vitest/coverage-v8", "playwright", "@playwright/test"],
+      "groupName": "test tools",
+      "automerge": true
     }
   ],
   "vulnerabilityAlerts": {
     "enabled": true,
     "labels": ["security"]
   },
-  "prConcurrentLimit": 5,
+  "prConcurrentLimit": 10,
   "prHourlyLimit": 2,
   "stabilityDays": 3,
   "minimumReleaseAge": "3 days",
