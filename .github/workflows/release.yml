@@ -124,6 +124,34 @@ jobs:
           release_name: 'RateWise v${{ steps.detect_version.outputs.current_version }}'
           body: 'Automated release created by Changesets workflow.'
 
+      # Cloudflare CDN 快取清除
+      # 參考: Context7 /websites/developers_cloudflare - Cache Purge API
+      - name: Purge Cloudflare Cache
+        if: success()
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_ZONE_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "⚠️ Cloudflare secrets not configured, skipping cache purge"
+            echo "To enable: Add CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN to repository secrets"
+            exit 0
+          fi
+
+          echo "🔄 Purging Cloudflare CDN cache..."
+          RESPONSE=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}')
+
+          SUCCESS=$(echo "$RESPONSE" | jq -r '.success // false')
+          if [ "$SUCCESS" = "true" ]; then
+            echo "✅ Cloudflare CDN cache purged successfully"
+          else
+            echo "⚠️ Cache purge response: $RESPONSE"
+            echo "Note: This is non-blocking. Cache will auto-expire within 1-24 hours."
+          fi
+
       # 註: 由於這是 private monorepo，我們不發布到 npm
       # 如果未來需要發布，可以新增以下步驟：
       # - name: Publish to npm
