@@ -64,7 +64,7 @@ src/
 
 ## 📄 授權
 
-GPL-3.0 © [HaoTool](https://haotool.org)
+GPL-3.0 © [haotool](https://app.haotool.org/)
 
 ---
 

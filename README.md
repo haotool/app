@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛠️ HaoTool Apps
+# 🛠️ haotool Apps
 
 **現代化 React 應用 Monorepo | Modern React Applications Monorepo**
 
@@ -21,7 +21,7 @@
 
 ### 📋 專案概述
 
-**HaoTool Apps** 是一個專業的 pnpm Monorepo，包含多個高品質的 React 19 應用程式。所有應用程式共享統一的工程標準、CI/CD 管線和開發工具鏈。
+**haotool Apps** 是一個專業的 pnpm Monorepo，包含多個高品質的 React 19 應用程式。所有應用程式共享統一的工程標準、CI/CD 管線和開發工具鏈。
 
 「HAO」取自中文「好」的拼音，我們的核心理念是打造真正的「**好工具**」。
 
@@ -31,7 +31,7 @@
 | ---------------------------------- | --------------------------------- | ------- | --------------------------------------------------------------- |
 | **[RateWise](./apps/ratewise/)**   | 即時匯率換算工具，支援 30+ 種貨幣 | 🟢 Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)   |
 | **[NihonName](./apps/nihonname/)** | 日本名字產生器，探索皇民化歷史    | 🟢 Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/) |
-| **[HaoTool](./apps/haotool/)**     | 專案展示平台，3D 互動首頁         | 🟢 Live | [app.haotool.org](https://app.haotool.org/)                     |
+| **[haotool](./apps/haotool/)**     | 專案展示平台，3D 互動首頁         | 🟢 Live | [app.haotool.org](https://app.haotool.org/)                     |
 
 ### ✨ RateWise 匯率好工具
 
@@ -52,7 +52,7 @@
 - 🎲 **諧音梗名字**：500+ 趣味諧音日本名
 - 🎨 **和紙質感 UI**：日式傳統美學設計
 
-### 🌐 HaoTool 專案平台
+### 🌐 haotool 專案平台
 
 > 3D 互動展示平台，介紹所有專案
 
@@ -109,7 +109,7 @@ pnpm dev
 # 或啟動特定應用
 pnpm --filter @app/ratewise dev    # RateWise (http://localhost:4173)
 pnpm --filter @app/nihonname dev   # NihonName (http://localhost:3002)
-pnpm --filter @app/haotool dev     # HaoTool (http://localhost:3000)
+pnpm --filter @app/haotool dev     # haotool (http://localhost:3000)
 ```
 
 #### 建置與測試
@@ -177,7 +177,7 @@ haotool-app/
 
 ### 📋 Overview
 
-**HaoTool Apps** is a professional pnpm Monorepo containing multiple high-quality React 19 applications. All applications share unified engineering standards, CI/CD pipelines, and development toolchains.
+**haotool Apps** is a professional pnpm Monorepo containing multiple high-quality React 19 applications. All applications share unified engineering standards, CI/CD pipelines, and development toolchains.
 
 "HAO" comes from the Chinese word "好" (good). Our core philosophy is to build truly **good tools**.
 
@@ -187,7 +187,7 @@ haotool-app/
 | ---------------------------------- | ----------------------------------------------- | ------- | --------------------------------------------------------------- |
 | **[RateWise](./apps/ratewise/)**   | Real-time currency converter, 30+ currencies    | 🟢 Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)   |
 | **[NihonName](./apps/nihonname/)** | Japanese name generator, historical exploration | 🟢 Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/) |
-| **[HaoTool](./apps/haotool/)**     | Project showcase with 3D interactive homepage   | 🟢 Live | [app.haotool.org](https://app.haotool.org/)                     |
+| **[haotool](./apps/haotool/)**     | Project showcase with 3D interactive homepage   | 🟢 Live | [app.haotool.org](https://app.haotool.org/)                     |
 
 ### 🛠️ Tech Stack
 
@@ -221,7 +221,7 @@ This project is licensed under [GPL-3.0](./LICENSE).
 
 <div align="center">
 
-**Built with ❤️ by [HaoTool](https://haotool.org)**
+**Built with ❤️ by [haotool](https://app.haotool.org/)**
 
 [Website](https://haotool.org) · [GitHub](https://github.com/haotool/app) · [Threads](https://www.threads.net/@azlife_1224)
 

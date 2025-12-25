@@ -415,12 +415,12 @@ export function Footer() {
             <p>
               © {CURRENT_YEAR}{' '}
               <a
-                href="https://haotool.org"
+                href="https://app.haotool.org/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-indigo-300 underline underline-offset-4 decoration-indigo-200 hover:text-indigo-200 transition-colors"
               >
-                HaoTool
+                haotool
               </a>
               . All rights reserved.
             </p>
