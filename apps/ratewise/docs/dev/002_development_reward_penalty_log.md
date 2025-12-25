@@ -2,9 +2,9 @@
 
 **版本**: 2.0.5
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-25T14:30:00+08:00
+**更新時間**: 2025-12-25T14:57:22+08:00
 **狀態**: ✅ 完成
-**當前總分**: +81
+**當前總分**: +83
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                       | 依據                                                                         | 分數 |
 | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
@@ -65,6 +65,7 @@
 | ✅ 成功 | 抑制 React Hydration #418 預期錯誤               | main.tsx 添加 console.error 攔截器，過濾 SSG 環境下的預期錯誤，不影響功能，只是開發者警告                                                                      | [context7:/reactjs/react.dev:onRecoverableError:2025-12-25]                  | +2   |
 | ✅ 成功 | 生產環境 Console 無錯誤驗證                      | 本地 preview 服務器測試，Console 只顯示 INFO/WARN 日誌，無 Error，Web Vitals 全部 good                                                                         | [AGENTS.md:品質門檻]                                                         | +2   |
 | ✅ 成功 | CI jest-dom matchers 載入問題修復                | 1) setupTests.ts 添加 expect.extend(matchers) 2) 19 個測試文件顯式 import 3) eslint.config.js 禁用 unsafe 規則 4) tsconfig 添加 @testing-library/jest-dom 類型 | [context7:/@testing-library/jest-dom:vitest:2025-12-25]                      | +3   |
+| ✅ 成功 | 新增 Cloudflare CDN 快取自動清除工作流程         | 1) Release workflow 新增 Purge Cloudflare Cache 步驟 2) 使用 CLOUDFLARE_ZONE_ID/API_TOKEN secrets 3) 優雅降級：secrets 未配置時跳過 4) CI 8/8 全綠             | [context7:/websites/developers_cloudflare:Cache-Purge-API:2025-12-25]        | +2   |
 
 ---
 
