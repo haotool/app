@@ -271,14 +271,13 @@ export const MultiConverter = ({
       </div>
 
       {/* 🔧 計算機 Modal */}
-      {calculator.isOpen && calculator.activeField && (
-        <CalculatorKeyboard
-          isOpen={calculator.isOpen}
-          onClose={calculator.closeCalculator}
-          onConfirm={calculator.handleConfirm}
-          initialValue={calculator.initialValue}
-        />
-      )}
+      {/* [fix:2025-12-25] 始終渲染 CalculatorKeyboard，讓彩蛋在計算機關閉後仍可顯示 */}
+      <CalculatorKeyboard
+        isOpen={calculator.isOpen}
+        onClose={calculator.closeCalculator}
+        onConfirm={calculator.handleConfirm}
+        initialValue={calculator.initialValue}
+      />
     </>
   );
 };
