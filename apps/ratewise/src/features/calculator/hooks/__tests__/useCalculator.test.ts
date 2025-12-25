@@ -458,4 +458,60 @@ describe('useCalculator', () => {
       expect(result.current.expression).toBe('0.255');
     });
   });
+
+  describe('聖誕彩蛋功能', () => {
+    it('應在輸入 106575 ÷ 1225 並計算時觸發聖誕彩蛋', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      // 輸入 106575 ÷ 1225
+      act(() => result.current.input('1'));
+      act(() => result.current.input('0'));
+      act(() => result.current.input('6'));
+      act(() => result.current.input('5'));
+      act(() => result.current.input('7'));
+      act(() => result.current.input('5'));
+      act(() => result.current.input('÷'));
+      act(() => result.current.input('1'));
+      act(() => result.current.input('2'));
+      act(() => result.current.input('2'));
+      act(() => result.current.input('5'));
+
+      expect(result.current.easterEgg).toBeNull();
+
+      // 按下等號觸發彩蛋
+      void act(() => result.current.calculate());
+
+      expect(result.current.easterEgg).toBe('christmas');
+      expect(result.current.result).toBe(87);
+    });
+
+    it('應能關閉彩蛋', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      // 輸入彩蛋表達式並計算
+      act(() => result.current.input('106575'));
+      act(() => result.current.input('÷'));
+      act(() => result.current.input('1225'));
+      void act(() => result.current.calculate());
+
+      expect(result.current.easterEgg).toBe('christmas');
+
+      // 關閉彩蛋
+      act(() => result.current.closeEasterEgg());
+
+      expect(result.current.easterEgg).toBeNull();
+    });
+
+    it('應在其他表達式時不觸發彩蛋', () => {
+      const { result } = renderHook(() => useCalculator());
+
+      act(() => result.current.input('100'));
+      act(() => result.current.input('+'));
+      act(() => result.current.input('200'));
+      void act(() => result.current.calculate());
+
+      expect(result.current.easterEgg).toBeNull();
+      expect(result.current.result).toBe(300);
+    });
+  });
 });

@@ -61,9 +61,16 @@ export interface KeyDefinition {
 export type KeyboardLayout = KeyDefinition[][];
 
 /**
+ * 彩蛋類型
+ * @description 支援的彩蛋種類
+ */
+export type EasterEggType = 'christmas' | null;
+
+/**
  * 計算機 Hook 返回值
  * @description useCalculator hook 的返回介面
  * @updated 2025-11-18 - Added negate() and percent() for iOS standard features
+ * @updated 2025-12-25 - Added Easter egg support
  */
 export interface UseCalculatorReturn {
   /** 當前表達式 */
@@ -74,6 +81,8 @@ export interface UseCalculatorReturn {
   error: string | null;
   /** 即時預覽結果（防抖計算，Apple 風格） */
   preview: number | null;
+  /** 觸發的彩蛋類型 */
+  easterEgg: EasterEggType;
   /** 輸入數字或運算符 */
   input: (value: string) => void;
   /** 刪除最後一個字元 */
@@ -86,6 +95,8 @@ export interface UseCalculatorReturn {
   negate: () => void;
   /** 百分比轉換（%） - iOS 標準功能 */
   percent: () => void;
+  /** 關閉彩蛋 */
+  closeEasterEgg: () => void;
 }
 
 /**

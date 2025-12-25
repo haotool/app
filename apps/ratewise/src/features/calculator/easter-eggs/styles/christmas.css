@@ -1,0 +1,96 @@
+/**
+ * Christmas Easter Egg - Animation Styles
+ * @file christmas.css
+ * @description 聖誕彩蛋的動畫樣式（下雪效果）
+ *
+ * 特效：
+ * - CSS 純動畫下雪效果（GPU 加速）
+ * - 雪花隨機飄落
+ * - 星星閃爍效果
+ */
+
+/* 雪花容器 */
+.christmas-snow-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* 單一雪花 */
+.christmas-snowflake {
+  position: absolute;
+  top: -20px;
+  color: white;
+  font-size: 1rem;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+  animation: snowfall linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* 雪花飄落動畫 */
+@keyframes snowfall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+/* 星星閃爍動畫 */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+.christmas-star {
+  animation: twinkle 1.5s ease-in-out infinite;
+}
+
+/* 聖誕樹發光效果 */
+@keyframes tree-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.8));
+  }
+}
+
+.christmas-tree {
+  animation: tree-glow 2s ease-in-out infinite;
+}
+
+/* 祝福文字淡入動畫 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.christmas-greeting {
+  animation: fadeInUp 1s ease-out forwards;
+}
+
+/* 彩蛋背景漸層 */
+.christmas-background {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+}

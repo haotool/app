@@ -13,6 +13,7 @@ import { useCalculatorKeyboard } from '../hooks/useCalculatorKeyboard';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { CalculatorKey } from './CalculatorKey';
 import { ExpressionDisplay } from './ExpressionDisplay';
+import { ChristmasEasterEgg } from '../easter-eggs';
 
 /**
  * 鍵盤佈局定義（iOS 標準 4×5 網格，20 按鈕）
@@ -103,12 +104,14 @@ export function CalculatorKeyboard({
     result,
     error,
     preview,
+    easterEgg,
     input,
     backspace,
     clear,
     calculate,
     negate,
     percent,
+    closeEasterEgg,
   } = useCalculator(initialValue);
 
   /**
@@ -194,11 +197,15 @@ export function CalculatorKeyboard({
   }
 
   return createPortal(
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* 背景遮罩 */}
-          <motion.div
+    <>
+      {/* 聖誕彩蛋 */}
+      <ChristmasEasterEgg isVisible={easterEgg === 'christmas'} onClose={closeEasterEgg} />
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* 背景遮罩 */}
+            <motion.div
             className="fixed inset-0 bg-black/40 z-40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -270,7 +277,8 @@ export function CalculatorKeyboard({
           </motion.div>
         </>
       )}
-    </AnimatePresence>,
+    </AnimatePresence>
+    </>,
     document.body,
   );
 }
