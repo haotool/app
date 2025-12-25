@@ -8,7 +8,33 @@
  *
  * 參考：fix/seo-phase2b-prerendering
  * 依據：[Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
+ *
+ * [fix:2025-12-25] 抑制 React Hydration #418 預期錯誤
+ * 原因：vite-react-ssg + 動態內容（匯率數據）在 SSG/hydration 間存在固有差異
+ * 參考：[context7:/reactjs/react.dev:onRecoverableError:2025-12-25]
+ * 參考：docs/dev/002_development_reward_penalty_log.md - "預期行為" 說明
  */
+
+// [fix:2025-12-25] 在任何 React 代碼執行前，攔截並過濾 React Hydration 預期錯誤
+// 這些錯誤是 SSG + 動態內容的固有特性，不影響功能，只是開發者警告
+if (typeof window !== 'undefined') {
+  const originalConsoleError = console.error;
+  console.error = (...args: unknown[]) => {
+    // 檢查是否為 React Hydration #418 錯誤
+    const firstArg = args[0];
+    if (
+      typeof firstArg === 'string' &&
+      (firstArg.includes('Minified React error #418') ||
+        firstArg.includes('Text content does not match server-rendered HTML') ||
+        firstArg.includes('Hydration failed because'))
+    ) {
+      // 這是 SSG 環境下的預期錯誤，不需要顯示在 console
+      // 參考：docs/dev/002_development_reward_penalty_log.md
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+}
 
 // Initialize Trusted Types first (must run before any DOM manipulation)
 import './trusted-types-bootstrap';

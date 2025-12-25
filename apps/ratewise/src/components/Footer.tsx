@@ -18,12 +18,16 @@
  * - 提升爬蟲發現效率
  * - 改善用戶導航體驗
  *
+ * [fix:2025-12-25] 使用 ClientOnly 包裝動態時間顯示避免 React Hydration #418
+ * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
+ *
  * 建立時間: 2025-12-20
- * 更新時間: 2025-12-24T01:25:19+08:00
+ * 更新時間: 2025-12-25T14:00:00+08:00
  * BDD 階段: Stage 6 GREEN
  */
 
 import { Link } from 'react-router-dom';
+import { ClientOnly } from 'vite-react-ssg';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 
 interface FooterLink {
@@ -104,24 +108,42 @@ const SOCIAL_LINKS = [
  */
 const CURRENT_YEAR = 2025;
 
-export function Footer() {
+// 格式化時間為 MM/DD HH:mm
+const formatTime = (dateString: string | null) => {
+  if (!dateString) return '--/-- --:--';
+  try {
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${month}/${day} ${hours}:${minutes}`;
+  } catch {
+    return '--/-- --:--';
+  }
+};
+
+/**
+ * [fix:2025-12-25] 獨立的時間顯示組件，用於 ClientOnly 渲染
+ * 避免 SSG 時的 hydration mismatch (React Error #418)
+ * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
+ */
+function UpdateTimeDisplay() {
   const { lastUpdate, lastFetchedAt } = useExchangeRates();
 
-  // 格式化時間為 MM/DD HH:mm
-  const formatTime = (dateString: string | null) => {
-    if (!dateString) return '--/-- --:--';
-    try {
-      const date = new Date(dateString);
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${month}/${day} ${hours}:${minutes}`;
-    } catch {
-      return '--/-- --:--';
-    }
-  };
+  return (
+    <span>
+      更新時間 來源 {formatTime(lastUpdate)} · 刷新 {formatTime(lastFetchedAt)}
+    </span>
+  );
+}
 
+/** 時間顯示的 Fallback (SSG 時顯示的靜態內容) */
+function UpdateTimeFallback() {
+  return <span>更新時間 來源 --/-- --:-- · 刷新 --/-- --:--</span>;
+}
+
+export function Footer() {
   // 獲取版本號和建置時間
   // [fix:2025-12-24] 使用 nullish coalescing 替代邏輯或運算子
   const appVersion = import.meta.env.VITE_APP_VERSION ?? 'v1.2.2';
@@ -171,10 +193,11 @@ export function Footer() {
             </svg>
           </a>
           {/**
-           * [fix:2025-12-25] 使用 suppressHydrationWarning 避免 React Hydration Error #418
+           * [fix:2025-12-25] 使用 ClientOnly 避免 React Hydration Error #418
            * 問題：lastUpdate/lastFetchedAt 在 SSG 時為 null（顯示 --/-- --:--），
            * 客戶端 hydration 時為實際值（顯示時間），造成 text node 不一致
-           * 參考: [context7:/reactjs/react.dev:suppressHydrationWarning:2025-12-25]
+           * 解法：使用 vite-react-ssg 的 ClientOnly 組件確保只在客戶端渲染
+           * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
            */}
           <div className="flex items-center gap-2 text-sm text-white/80">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,9 +208,7 @@ export function Footer() {
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span suppressHydrationWarning>
-              更新時間 來源 {formatTime(lastUpdate)} · 刷新 {formatTime(lastFetchedAt)}
-            </span>
+            <ClientOnly fallback={<UpdateTimeFallback />}>{() => <UpdateTimeDisplay />}</ClientOnly>
           </div>
         </div>
 
@@ -312,10 +333,11 @@ export function Footer() {
             </svg>
           </a>
           {/**
-           * [fix:2025-12-25] 使用 suppressHydrationWarning 避免 React Hydration Error #418
+           * [fix:2025-12-25] 使用 ClientOnly 避免 React Hydration Error #418
            * 問題：lastUpdate/lastFetchedAt 在 SSG 時為 null（顯示 --/-- --:--），
            * 客戶端 hydration 時為實際值（顯示時間），造成 text node 不一致
-           * 參考: [context7:/reactjs/react.dev:suppressHydrationWarning:2025-12-25]
+           * 解法：使用 vite-react-ssg 的 ClientOnly 組件確保只在客戶端渲染
+           * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
            */}
           <div className="flex items-center gap-2 text-sm text-white/80">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -326,9 +348,7 @@ export function Footer() {
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span suppressHydrationWarning>
-              更新時間 來源 {formatTime(lastUpdate)} · 刷新 {formatTime(lastFetchedAt)}
-            </span>
+            <ClientOnly fallback={<UpdateTimeFallback />}>{() => <UpdateTimeDisplay />}</ClientOnly>
           </div>
         </div>
 

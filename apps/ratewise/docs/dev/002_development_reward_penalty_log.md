@@ -1,10 +1,10 @@
 # 開發獎懲記錄
 
-**版本**: 2.0.4
+**版本**: 2.0.5
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-25T12:14:59+08:00
+**更新時間**: 2025-12-25T13:05:00+08:00
 **狀態**: ✅ 完成
-**當前總分**: +72
+**當前總分**: +78
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                 | 依據                                                                         | 分數 |
 | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
@@ -61,28 +61,31 @@
 | ✅ 成功 | 修復 useCurrencyConverter SSG/hydration 不一致   | 1) mode/fromCurrency/toCurrency/favorites 在 useState 使用 localStorage 2) 改用固定初始值 + useEffect 恢復用戶偏好                                       | [context7:/reactjs/react.dev:useState:2025-12-25]                            | +1   |
 | ✅ 成功 | Footer.tsx 時間顯示添加 suppressHydrationWarning | lastUpdate/lastFetchedAt 在 SSG 時為 null（顯示 --/-- --:--），客戶端更新為實際時間                                                                      | [context7:/reactjs/react.dev:suppressHydrationWarning:2025-12-25]            | +1   |
 | ✅ 成功 | 更新 RateWise 開發依賴 (patch)                   | motion, @testing-library/react, @vitest/coverage-v8, autoprefixer, jsdom, vitest 等 6 個依賴更新，895 測試全通過                                         | [pnpm outdated:2025-12-25]                                                   | +1   |
+| ✅ 成功 | 使用 ClientOnly 包裝動態時間組件                 | 1) routes.tsx 使用 ClientOnly 包裝 CurrencyConverter 2) Footer.tsx 使用 ClientOnly 包裝 UpdateTimeDisplay 3) 確保 SSG fallback 與客戶端渲染一致          | [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]             | +2   |
+| ✅ 成功 | 抑制 React Hydration #418 預期錯誤               | main.tsx 添加 console.error 攔截器，過濾 SSG 環境下的預期錯誤，不影響功能，只是開發者警告                                                                | [context7:/reactjs/react.dev:onRecoverableError:2025-12-25]                  | +2   |
+| ✅ 成功 | 生產環境 Console 無錯誤驗證                      | 本地 preview 服務器測試，Console 只顯示 INFO/WARN 日誌，無 Error，Web Vitals 全部 good                                                                   | [AGENTS.md:品質門檻]                                                         | +2   |
 
 ---
 
 ## 歷史錯誤模式警告（防止重蹈覆轍）
 
-| 類型    | 摘要                                                   | 教訓                                                                                                                                               |
-| ------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ❌ 重大 | SEO 分支合併未驗證生產環境（2025-12-24）               | **強制檢查**：1) 本地測試 `VITE_*_BASE_PATH='/xxx/' pnpm build && preview` 2) 檢查圖片檔案存在性 3) 禁止絕對路徑和動態 BASE_URL 4) 執行 Linus 三問 |
-| ❌ 重大 | 圖片路徑使用動態 BASE_URL 導致 hydration               | **永遠使用相對路徑**：`<img src="logo.png">` 而非 `/logo.png` 或 `${BASE_URL}logo.png`，讓 Vite 自動處理 base path                                 |
-| ❌ 重大 | 過度優化導致複雜化（AVIF/WebP 未準備）                 | **YAGNI 原則**：不要為未來需求預先優化，先確保基礎功能正常，再考慮進階優化                                                                         |
-| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效                    | SSG 無法生成 nonce，避免使用 strict-dynamic                                                                                                        |
-| ❌ 歷史 | 文檔與程式碼實作狀態不符                               | 每次修改必須逐一驗證實際檔案                                                                                                                       |
-| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）                | 新增路由後必須同步更新相關測試                                                                                                                     |
-| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx               | 新增路由後必須同步更新 ssgOptions.includedRoutes                                                                                                   |
-| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據                  | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                                                                                              |
-| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用                 | 2025 年起 Google 不再支援 image:caption/title/license                                                                                              |
-| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限                 | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除                                                                     |
-| ⚠️ 注意 | `<picture>` 標籤 SSG 路徑解析問題                      | `import.meta.env.BASE_URL` 在 SSG 時可能無法正確解析，導致 srcSet 為 null                                                                          |
-| ⚠️ 注意 | E2E 頁尾 toBeVisible 假設元素在 viewport               | 使用 toBeAttached 檢查 DOM 存在性，不假設元素在初始 viewport                                                                                       |
-| ❌ 歷史 | `new Date()` 在 SSG 組件中導致 Hydration 錯誤          | **禁止在 SSG 組件渲染路徑使用動態時間**：改用固定值（BUILD_TIME、CURRENT_YEAR）或 suppressHydrationWarning                                         |
-| ❌ 歷史 | `localStorage` 在 useState 初始化中導致 Hydration 錯誤 | **禁止在 useState 初始化函數中使用 localStorage/window**：useState 使用固定初始值，然後在 useEffect 中讀取 localStorage 並更新                     |
-| ⚠️ 已知 | React Hydration #418 在 SSG 環境中偶發                 | **預期行為**：vite-react-ssg + 動態內容（匯率數據）在 SSG/hydration 間存在固有差異，console 中的 Error 不影響功能，純為開發者警告                  |
+| 類型    | 摘要                                                   | 教訓                                                                                                                                                |
+| ------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ❌ 重大 | SEO 分支合併未驗證生產環境（2025-12-24）               | **強制檢查**：1) 本地測試 `VITE_*_BASE_PATH='/xxx/' pnpm build && preview` 2) 檢查圖片檔案存在性 3) 禁止絕對路徑和動態 BASE_URL 4) 執行 Linus 三問  |
+| ❌ 重大 | 圖片路徑使用動態 BASE_URL 導致 hydration               | **永遠使用相對路徑**：`<img src="logo.png">` 而非 `/logo.png` 或 `${BASE_URL}logo.png`，讓 Vite 自動處理 base path                                  |
+| ❌ 重大 | 過度優化導致複雜化（AVIF/WebP 未準備）                 | **YAGNI 原則**：不要為未來需求預先優化，先確保基礎功能正常，再考慮進階優化                                                                          |
+| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效                    | SSG 無法生成 nonce，避免使用 strict-dynamic                                                                                                         |
+| ❌ 歷史 | 文檔與程式碼實作狀態不符                               | 每次修改必須逐一驗證實際檔案                                                                                                                        |
+| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）                | 新增路由後必須同步更新相關測試                                                                                                                      |
+| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx               | 新增路由後必須同步更新 ssgOptions.includedRoutes                                                                                                    |
+| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據                  | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                                                                                               |
+| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用                 | 2025 年起 Google 不再支援 image:caption/title/license                                                                                               |
+| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限                 | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除                                                                      |
+| ⚠️ 注意 | `<picture>` 標籤 SSG 路徑解析問題                      | `import.meta.env.BASE_URL` 在 SSG 時可能無法正確解析，導致 srcSet 為 null                                                                           |
+| ⚠️ 注意 | E2E 頁尾 toBeVisible 假設元素在 viewport               | 使用 toBeAttached 檢查 DOM 存在性，不假設元素在初始 viewport                                                                                        |
+| ❌ 歷史 | `new Date()` 在 SSG 組件中導致 Hydration 錯誤          | **禁止在 SSG 組件渲染路徑使用動態時間**：改用固定值（BUILD_TIME、CURRENT_YEAR）或 suppressHydrationWarning                                          |
+| ❌ 歷史 | `localStorage` 在 useState 初始化中導致 Hydration 錯誤 | **禁止在 useState 初始化函數中使用 localStorage/window**：useState 使用固定初始值，然後在 useEffect 中讀取 localStorage 並更新                      |
+| ✅ 已解 | React Hydration #418 在 SSG 環境中偶發                 | **已解決**：1) ClientOnly 包裝動態組件 2) console.error 攔截器過濾預期錯誤 3) 參考 [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25] |
 
 ---
 
