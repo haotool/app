@@ -589,13 +589,13 @@ docker logs <container-id>
 - ✅ ESLint `any` 規則改為 error (已生效)
 - ✅ 測試覆蓋率門檻提升至 80%+ (目前 92%+)
 
-### 📋 規劃中 (M1 - 觀測性建立，1週)
+### ✅ 已完成 (M1 - 觀測性建立)
 
 - ✅ Sentry 整合 (logger.ts Line 78 已實作，需設定 VITE_SENTRY_DSN)
 - ✅ Secrets 掃描 (gitleaks CLI v8.18.4 已整合 [2025-12-25])
 - ✅ Web Vitals 串接 (web-vitals 5.x 已整合)
 
-### 📋 規劃中 (M2 - 依賴升級，2週)
+### ✅ 已完成 (M2 - 依賴升級)
 
 - ✅ Vite 已升級至 7.2.6
 - ✅ Vitest 已升級至 4.0.15
