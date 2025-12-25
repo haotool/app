@@ -582,16 +582,15 @@ export const SingleConverter = ({
       </button>
 
       {/* 計算機鍵盤 Bottom Sheet */}
-      {calculator.isOpen && (
-        <Suspense fallback={null}>
-          <CalculatorKeyboard
-            isOpen={calculator.isOpen}
-            onClose={calculator.closeCalculator}
-            onConfirm={calculator.handleConfirm}
-            initialValue={calculator.initialValue}
-          />
-        </Suspense>
-      )}
+      {/* [fix:2025-12-25] 始終渲染 CalculatorKeyboard，讓彩蛋在計算機關閉後仍可顯示 */}
+      <Suspense fallback={null}>
+        <CalculatorKeyboard
+          isOpen={calculator.isOpen}
+          onClose={calculator.closeCalculator}
+          onConfirm={calculator.handleConfirm}
+          initialValue={calculator.initialValue}
+        />
+      </Suspense>
     </>
   );
 };

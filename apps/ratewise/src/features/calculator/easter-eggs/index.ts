@@ -7,5 +7,14 @@
 export { ChristmasEasterEgg } from './ChristmasEasterEgg';
 export { ChristmasTree } from './ChristmasTree';
 export { SnowAnimation } from './SnowAnimation';
-export { isChristmasEasterEgg, normalizeExpressionForEasterEgg, CHRISTMAS_EASTER_EGG_DURATION } from './utils';
-export type { EasterEggType, ChristmasEasterEggProps, ChristmasTreeProps, SnowAnimationProps } from './types';
+export {
+  isChristmasEasterEgg,
+  normalizeExpressionForEasterEgg,
+  CHRISTMAS_EASTER_EGG_DURATION,
+} from './utils';
+export type {
+  EasterEggType,
+  ChristmasEasterEggProps,
+  ChristmasTreeProps,
+  SnowAnimationProps,
+} from './types';
