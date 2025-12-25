@@ -85,6 +85,11 @@ export const FAQS: FaqItem[] = [
       '「HAO」是中文「好」的拼音。HAOTOOL 的核心理念非常純粹——打造真正的「好工具」。我深信優秀的數位產品不應只是功能的堆砌，更要是能解決痛點、並在使用過程中帶來愉悅感的工藝品。',
   },
   {
+    question: '你專精哪些技術？',
+    answer:
+      '我專精現代 Web 開發，主要使用 React、TypeScript 和 Node.js。同時也有雲端平台（Cloudflare, Zeabur）、DevOps 實踐、以及 AI/ML 整合的實作經驗。',
+  },
+  {
     question: '這些專案有開源嗎？',
     answer:
       '是的，我大部分的個人專案都託管在 GitHub 上。我相信開源文化能促進技術的交流與進步，歡迎去我的 GitHub 逛逛！',
