@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import { MultiConverter } from '../MultiConverter';
 import type { CurrencyCode, MultiAmountsState, RateType } from '../../types';
 import type { RateDetails } from '../../hooks/useExchangeRates';

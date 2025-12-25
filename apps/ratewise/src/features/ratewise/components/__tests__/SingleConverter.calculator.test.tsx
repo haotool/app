@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import { SingleConverter } from '../SingleConverter';
 import type { CurrencyCode } from '../../types';
 import { CURRENCY_DEFINITIONS } from '../../constants';
