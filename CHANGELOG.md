@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Security Score**: 96 → Target 98/100
 
+### Fixed
+
+- **GitHub Actions CI**: 修復 data 分支並發推送衝突 (2025-12-25)
+  - **問題**: `update-latest-rates.yml` 和 `update-historical-rates.yml` 同時推送到 data 分支造成 race condition
+  - **錯誤訊息**: `cannot lock ref 'refs/heads/data': is at a9f7c4dc but expected 0d4416ab`
+  - **根因分析**:
+    - 兩個 workflows 缺乏並發控制機制
+    - push 前未同步遠端變更
+    - 無重試容錯機制
+  - **修復方案**:
+    1. 新增 `concurrency` group: `data-branch-push` (cancel-in-progress: false)
+    2. 所有 push 前新增 `git pull --rebase origin data || true`
+    3. 實作 3 次重試機制（5 秒間隔，每次重試前 rebase）
+  - **影響範圍**:
+    - `.github/workflows/update-latest-rates.yml` (每 30 分鐘執行)
+    - `.github/workflows/update-historical-rates.yml` (每日 00:00 UTC 執行)
+  - **驗證結果**: ✅ CI workflows 全部成功執行
+  - **Commit**: 36c516a0
+
 ### Added
 
 - **Strict Content Security Policy (CSP)**: Implemented hash-based CSP with 'strict-dynamic'
