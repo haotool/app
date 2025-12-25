@@ -61,27 +61,46 @@ const extractHashes = (html) => {
   return { scriptHashes, styleHashes };
 };
 
+/**
+ * [Security:2025-12-25] Strict CSP - Hash-based Strategy
+ * 參考: https://web.dev/articles/strict-csp
+ * 參考: https://csp.withgoogle.com/docs/strict-csp.html
+ */
 const buildCsp = ({ scriptHashes }) => {
-  const scriptSrc = ["'self'", 'https://static.cloudflareinsights.com'];
+  // Strict CSP with 'strict-dynamic' and hash-based scripts
+  // 'unsafe-inline' and https: are kept for backward compatibility (ignored by modern browsers)
+  const scriptSrc = [
+    "'self'",
+    "'strict-dynamic'",
+    'https://static.cloudflareinsights.com',
+    'https:',
+    "'unsafe-inline'", // Fallback for old browsers (ignored when hashes present)
+  ];
+
   const scriptSrcElem = new Set([
-    ...scriptSrc,
+    "'self'",
+    'https://static.cloudflareinsights.com',
     ...[...scriptHashes].map((value) => `'sha256-${value}'`),
   ]);
 
-  // 只允許 self + unsafe-inline，避免瀏覽器在存在 hash/nonces 時忽略 unsafe-inline（CSP 規範行為）
+  // 'unsafe-inline' for styles is acceptable (Tailwind CSS 需要)
   const styleSrc = ["'self'", "'unsafe-inline'"];
   const styleSrcElem = new Set(["'self'", "'unsafe-inline'"]);
 
   const directives = [
     "default-src 'self'",
-    "img-src 'self' data: https:",
     `script-src ${scriptSrc.join(' ')}`,
     `script-src-elem ${[...scriptSrcElem].join(' ')}`,
     `style-src ${styleSrc.join(' ')}`,
     `style-src-elem ${[...styleSrcElem].join(' ')}`,
+    "img-src 'self' data: https:",
     "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self' https://raw.githubusercontent.com https://cdn.jsdelivr.net https://cloudflareinsights.com https://*.ingest.sentry.io",
-    // frame-ancestors / report-uri / report-to / object-src / form-action / base-uri 需由邊緣層 header 設定，meta 會被忽略
+    "frame-ancestors 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    // frame-ancestors / report-uri / report-to 由 HTTP headers 設定（meta tag 不支援）
   ];
 
   return directives.join('; ') + ';';

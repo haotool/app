@@ -1,3 +1,21 @@
+# [Security:2025-12-25] Strict Content Security Policy (CSP)
+# 參考: https://web.dev/articles/strict-csp
+# 參考: https://csp.withgoogle.com/docs/strict-csp.html
+# 參考: https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html
+/*
+  # Strict CSP - Hash-based (Static Site)
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'strict-dynamic' https://static.cloudflareinsights.com https: 'unsafe-inline'; script-src-elem 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://raw.githubusercontent.com https://cdn.jsdelivr.net https://cloudflareinsights.com https://*.ingest.sentry.io; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
+
+  # Additional Security Headers
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+  # HSTS (Strict-Transport-Security)
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
 # [Lighthouse-optimization:2025-10-28] HTTP 快取策略
 # 參考: https://web.dev/articles/http-cache/
 # 參考: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
