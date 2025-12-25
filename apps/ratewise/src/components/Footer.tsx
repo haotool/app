@@ -96,8 +96,15 @@ const SOCIAL_LINKS = [
   },
 ];
 
+/**
+ * [fix:2025-12-25] 使用固定年份避免 SSG/hydration mismatch (React Error #418)
+ * SSG 時生成的年份與客戶端 hydration 時可能不同（跨年情況）
+ * 使用 suppressHydrationWarning 作為備用方案
+ * 參考: [context7:/reactjs/react.dev:suppressHydrationWarning:2025-12-25]
+ */
+const CURRENT_YEAR = 2025;
+
 export function Footer() {
-  const currentYear = new Date().getFullYear();
   const { lastUpdate, lastFetchedAt } = useExchangeRates();
 
   // 格式化時間為 MM/DD HH:mm
@@ -242,7 +249,9 @@ export function Footer() {
               </span>
             </span>
             <span className="text-white/50">•</span>
-            <span className="text-white/70">© {currentYear}</span>
+            <span className="text-white/70" suppressHydrationWarning>
+              © {CURRENT_YEAR}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-white/80">
             <span>By</span>
@@ -372,7 +381,7 @@ export function Footer() {
           {/* Copyright */}
           <div className="text-sm text-slate-300">
             <p>
-              © {currentYear}{' '}
+              © {CURRENT_YEAR}{' '}
               <a
                 href="https://haotool.org"
                 target="_blank"
