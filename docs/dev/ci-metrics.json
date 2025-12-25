@@ -1,27 +1,6 @@
 {
   "runs": [
     {
-      "timestamp": "2025-12-15T16:35:16Z",
-      "duration_seconds": 98,
-      "conclusion": "failure",
-      "branch": "main",
-      "commit": "78da2e3fad50747e2fe47b5926e62252bfb1e37a"
-    },
-    {
-      "timestamp": "2025-12-15T16:42:51Z",
-      "duration_seconds": 90,
-      "conclusion": "failure",
-      "branch": "main",
-      "commit": "2220abd82d0f5898b7d04de86bf12fc02c139395"
-    },
-    {
-      "timestamp": "2025-12-15T17:10:35Z",
-      "duration_seconds": 363,
-      "conclusion": "success",
-      "branch": "main",
-      "commit": "0f9caa7edae33b222914963adca8f87dbe1e897d"
-    },
-    {
       "timestamp": "2025-12-15T17:11:25Z",
       "duration_seconds": 344,
       "conclusion": "success",
@@ -699,6 +678,27 @@
       "conclusion": "success",
       "branch": "main",
       "commit": "3852e541c5e260b0b97d1d13d6d176c20606f2d9"
+    },
+    {
+      "timestamp": "2025-12-25T09:14:55Z",
+      "duration_seconds": 341,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "36c516a032b65714e4d95c0a402979bfdc6811c9"
+    },
+    {
+      "timestamp": "2025-12-25T09:19:16Z",
+      "duration_seconds": 346,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "6b8872c9a3e4dc22ddd60e41e67867c6fbd635d7"
+    },
+    {
+      "timestamp": "2025-12-25T11:22:39Z",
+      "duration_seconds": 63,
+      "conclusion": "failure",
+      "branch": "claude/calculator-christmas-easter-egg-hpdaI",
+      "commit": "2b0fc041e417c602b7c7a5692ea1aed04bb07fd9"
     }
   ]
 }
