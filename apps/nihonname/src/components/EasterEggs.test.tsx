@@ -87,7 +87,7 @@ describe('EasterEggs', () => {
       }));
 
       // Mock AudioContext
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (globalThis as any).AudioContext = vi.fn().mockImplementation(() => ({
         createOscillator: vi.fn(() => ({
           type: 'triangle',
