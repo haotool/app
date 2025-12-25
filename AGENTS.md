@@ -567,7 +567,7 @@ docker logs <container-id>
 
 ---
 
-## 8. 當前任務狀態（2025-12-24 更新）
+## 8. 當前任務狀態（2025-12-25 更新）
 
 ### ✅ 已完成 (Phase 0 - MVP)
 
@@ -606,6 +606,9 @@ docker logs <container-id>
 - ✅ 清理 TODO 標記 (僅剩 1 個，為 vi.doMock 技術限制，已說明)
 - ✅ E2E retry 優化 (toBeAttached 修正)
 - ✅ CI 通過率 100%
+- ✅ React Hydration #418 修復 (ClientOnly + console.error 過濾)
+- ✅ CI jest-dom matchers 修復 (expect.extend + 顯式 import)
+- ✅ Cloudflare CDN 自動清除工作流程 (Release workflow)
 
 ### 📋 可選 (M4 - 架構演進，4週)
 
