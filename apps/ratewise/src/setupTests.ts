@@ -1,5 +1,10 @@
-import '@testing-library/jest-dom/vitest';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+
+// 明確擴展 expect 以包含 jest-dom matchers
+// 這確保 CI 環境中 matchers 正確載入
+// 參考: https://testing-library.com/docs/ecosystem-jest-dom/#with-vitest
+expect.extend(matchers);
 
 declare global {
   // React 18 測試環境必須開啟 act() 支援旗標
