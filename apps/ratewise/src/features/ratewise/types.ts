@@ -17,5 +17,6 @@ export interface ConversionHistoryEntry {
   to: CurrencyCode;
   amount: string;
   result: string;
-  time: string;
+  time: string; // 顯示用（相對時間，如 "今天 14:30"）
+  timestamp: number; // 完整時間戳記（用於排序、過期判斷、生成唯一 key）
 }

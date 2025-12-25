@@ -151,6 +151,8 @@ const RateWise = () => {
     swapCurrencies,
     toggleFavorite,
     addToHistory,
+    clearAllHistory,
+    reconvertFromHistory,
     generateTrends,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
 
@@ -326,7 +328,13 @@ const RateWise = () => {
                 )}
               </div>
 
-              {mode === 'single' && <ConversionHistory history={history} />}
+              {mode === 'single' && (
+                <ConversionHistory
+                  history={history}
+                  onReconvert={reconvertFromHistory}
+                  onClearAll={clearAllHistory}
+                />
+              )}
             </div>
 
             <div className="space-y-4 md:space-y-6">

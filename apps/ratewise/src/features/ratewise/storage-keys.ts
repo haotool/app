@@ -33,6 +33,9 @@ export const STORAGE_KEYS = {
 
   /** 匯率類型選擇 (spot/cash) - 用戶偏好的匯率類型，預設為 spot */
   RATE_TYPE: 'rateType',
+
+  /** 轉換歷史記錄 - 用戶的轉換記錄，7 天後自動過期 */
+  CONVERSION_HISTORY: 'conversionHistory',
 } as const;
 
 /**
@@ -55,4 +58,5 @@ export const USER_DATA_KEYS = [
   STORAGE_KEYS.FROM_CURRENCY,
   STORAGE_KEYS.TO_CURRENCY,
   STORAGE_KEYS.RATE_TYPE,
+  STORAGE_KEYS.CONVERSION_HISTORY,
 ] as const;

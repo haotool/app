@@ -1,0 +1,416 @@
+/**
+ * ConversionHistory Enhanced Features Test Suite
+ *
+ * 🔴 RED Phase: 定義新功能的測試案例
+ *
+ * 測試範圍：
+ * - 持久化存儲 (localStorage)
+ * - 點擊重新轉換
+ * - 清除全部歷史
+ * - 複製轉換結果
+ * - 時間格式化（相對時間）
+ * - 7 天過期自動清理
+ *
+ * 建立時間: 2025-12-26
+ * BDD 階段: 🔴 RED (預期所有測試失敗)
+ */
+
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { ConversionHistory } from '../ConversionHistory';
+import type { ConversionHistoryEntry } from '../../types';
+
+describe('🔴 RED: ConversionHistory 增強功能', () => {
+  // Mock localStorage
+  const localStorageMock = (() => {
+    let store: Record<string, string> = {};
+
+    return {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      clear: () => {
+        store = {};
+      },
+    };
+  })();
+
+  // Mock navigator.clipboard
+  const clipboardMock = {
+    writeText: vi.fn().mockResolvedValue(undefined),
+  };
+
+  beforeEach(() => {
+    // 設定 localStorage mock
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock,
+      writable: true,
+    });
+
+    // 設定 clipboard mock
+    Object.defineProperty(navigator, 'clipboard', {
+      value: clipboardMock,
+      writable: true,
+      configurable: true,
+    });
+
+    // 清空 localStorage
+    localStorageMock.clear();
+
+    // 清除所有 mocks
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    localStorageMock.clear();
+  });
+
+  // 測試用的 mock 歷史記錄
+  const createMockHistory = (): ConversionHistoryEntry[] => [
+    {
+      from: 'USD',
+      to: 'TWD',
+      amount: '1000',
+      result: '30900',
+      time: '今天 14:30',
+      timestamp: Date.now() - 60 * 60 * 1000, // 1 小時前
+    },
+    {
+      from: 'JPY',
+      to: 'TWD',
+      amount: '10000',
+      result: '2087',
+      time: '今天 12:15',
+      timestamp: Date.now() - 3 * 60 * 60 * 1000, // 3 小時前
+    },
+    {
+      from: 'EUR',
+      to: 'TWD',
+      amount: '500',
+      result: '18575',
+      time: '昨天 09:20',
+      timestamp: Date.now() - 24 * 60 * 60 * 1000 - 5 * 60 * 60 * 1000, // 昨天
+    },
+  ];
+
+  describe('基本渲染', () => {
+    it('應該在有歷史記錄時顯示組件', () => {
+      const mockHistory = createMockHistory();
+      render(<ConversionHistory history={mockHistory} />);
+
+      expect(screen.getByText('轉換歷史')).toBeInTheDocument();
+    });
+
+    it('應該在無歷史記錄時返回 null（不渲染）', () => {
+      const { container } = render(<ConversionHistory history={[]} />);
+
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('應該顯示清除全部按鈕', () => {
+      const mockHistory = createMockHistory();
+      const onClearAll = vi.fn();
+      render(<ConversionHistory history={mockHistory} onClearAll={onClearAll} />);
+
+      expect(screen.getByText('清除全部')).toBeInTheDocument();
+    });
+  });
+
+  // 註: 持久化存儲測試應該在 useCurrencyConverter.test.ts 中
+  // ConversionHistory 是純展示組件，不處理 localStorage
+
+  describe('點擊重新轉換', () => {
+    it('❌ 應該在點擊歷史記錄時呼叫 onReconvert', () => {
+      const mockHistory = createMockHistory();
+      const onReconvert = vi.fn();
+
+      render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
+
+      // 點擊第一條歷史記錄
+      const firstRecord = screen.getByText('1000 USD').closest('div[class*="cursor-pointer"]');
+      expect(firstRecord).toBeTruthy();
+      fireEvent.click(firstRecord!);
+
+      expect(onReconvert).toHaveBeenCalledWith(mockHistory[0]);
+    });
+
+    it('❌ 應該傳遞正確的轉換參數', () => {
+      const mockHistory = createMockHistory();
+      const onReconvert = vi.fn();
+
+      render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
+
+      const secondRecord = screen.getByText('10000 JPY').closest('div[class*="cursor-pointer"]');
+      fireEvent.click(secondRecord!);
+
+      expect(onReconvert).toHaveBeenCalledWith({
+        from: 'JPY',
+        to: 'TWD',
+        amount: '10000',
+        result: '2087',
+        time: '今天 12:15',
+        timestamp: expect.any(Number),
+      });
+    });
+
+    it('❌ 應該在懸停時顯示視覺反饋', () => {
+      const mockHistory = createMockHistory();
+      const onReconvert = vi.fn();
+
+      render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
+
+      const firstRecord = screen.getByText('1000 USD').closest('div[class*="cursor-pointer"]');
+      expect(firstRecord).toHaveClass('hover:bg-blue-50');
+    });
+  });
+
+  describe('清除歷史', () => {
+    it('❌ 應該在點擊清除按鈕時呼叫 onClearAll', () => {
+      const mockHistory = createMockHistory();
+      const onClearAll = vi.fn();
+
+      render(<ConversionHistory history={mockHistory} onClearAll={onClearAll} />);
+
+      fireEvent.click(screen.getByText('清除全部'));
+
+      expect(onClearAll).toHaveBeenCalledOnce();
+    });
+
+    it('❌ 應該在清除後清空 localStorage', () => {
+      const mockHistory = createMockHistory();
+      localStorageMock.setItem('conversionHistory', JSON.stringify(mockHistory));
+
+      const onClearAll = vi.fn(() => {
+        localStorageMock.setItem('conversionHistory', JSON.stringify([]));
+      });
+
+      render(<ConversionHistory history={mockHistory} onClearAll={onClearAll} />);
+
+      fireEvent.click(screen.getByText('清除全部'));
+
+      const stored = localStorageMock.getItem('conversionHistory');
+      expect(JSON.parse(stored!)).toHaveLength(0);
+    });
+  });
+
+  describe('複製功能', () => {
+    it('❌ 應該顯示複製按鈕（在懸停時可見）', () => {
+      const mockHistory = createMockHistory();
+      render(<ConversionHistory history={mockHistory} />);
+
+      const copyButtons = screen.getAllByLabelText('複製轉換結果');
+      expect(copyButtons.length).toBe(3); // 3 條歷史記錄
+    });
+
+    it('❌ 應該在點擊複製按鈕時複製正確的文字', () => {
+      const mockHistory = createMockHistory();
+      render(<ConversionHistory history={mockHistory} />);
+
+      const copyButtons = screen.getAllByLabelText('複製轉換結果');
+      fireEvent.click(copyButtons[0]!);
+
+      expect(clipboardMock.writeText).toHaveBeenCalledWith('1000 USD = 30900 TWD');
+    });
+
+    it('❌ 應該在點擊複製按鈕時停止事件冒泡（不觸發 onReconvert）', () => {
+      const mockHistory = createMockHistory();
+      const onReconvert = vi.fn();
+
+      render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
+
+      const copyButtons = screen.getAllByLabelText('複製轉換結果');
+      fireEvent.click(copyButtons[0]!);
+
+      // 不應該觸發 onReconvert（事件冒泡被阻止）
+      expect(onReconvert).not.toHaveBeenCalled();
+    });
+
+    it('❌ 應該處理剪貼簿 API 錯誤', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      clipboardMock.writeText.mockRejectedValueOnce(new Error('Clipboard API 不可用'));
+
+      const mockHistory = createMockHistory();
+      render(<ConversionHistory history={mockHistory} />);
+
+      const copyButtons = screen.getAllByLabelText('複製轉換結果');
+      fireEvent.click(copyButtons[0]!);
+
+      // 等待異步操作
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('時間格式化', () => {
+    it('❌ 應該正確顯示相對時間（今天）', () => {
+      const now = Date.now();
+      const todayRecord: ConversionHistoryEntry = {
+        from: 'USD',
+        to: 'TWD',
+        amount: '1000',
+        result: '30900',
+        time: '今天 14:30',
+        timestamp: now - 2 * 60 * 60 * 1000, // 2 小時前
+      };
+
+      render(<ConversionHistory history={[todayRecord]} />);
+
+      expect(screen.getByText(/今天 \d{2}:\d{2}/)).toBeInTheDocument();
+    });
+
+    it('❌ 應該正確顯示相對時間（昨天）', () => {
+      const now = Date.now();
+      const yesterdayRecord: ConversionHistoryEntry = {
+        from: 'JPY',
+        to: 'TWD',
+        amount: '10000',
+        result: '2087',
+        time: '昨天 09:15',
+        timestamp: now - 30 * 60 * 60 * 1000, // 30 小時前
+      };
+
+      render(<ConversionHistory history={[yesterdayRecord]} />);
+
+      expect(screen.getByText(/昨天 \d{2}:\d{2}/)).toBeInTheDocument();
+    });
+
+    it('❌ 應該正確顯示絕對時間（2 天以上）', () => {
+      const now = Date.now();
+      const oldRecord: ConversionHistoryEntry = {
+        from: 'EUR',
+        to: 'TWD',
+        amount: '500',
+        result: '18575',
+        time: '12/24 16:20',
+        timestamp: now - 3 * 24 * 60 * 60 * 1000, // 3 天前
+      };
+
+      render(<ConversionHistory history={[oldRecord]} />);
+
+      expect(screen.getByText(/\d{2}\/\d{2} \d{2}:\d{2}/)).toBeInTheDocument();
+    });
+  });
+
+  // 註: React Key 唯一性無法通過 DOM 測試驗證
+  // React 的 key prop 不會出現在 DOM 中，是 React 內部使用的
+  // 我們使用 `${index}-${item.timestamp}` 確保唯一性
+
+  describe('React Key 驗證（通過渲染數量確認）', () => {
+    it('✅ 應該正確渲染所有歷史記錄項目', () => {
+      const mockHistory = createMockHistory();
+      const { container } = render(<ConversionHistory history={mockHistory} />);
+
+      const historyItems = container.querySelectorAll('[class*="cursor-pointer"]');
+
+      // 應該有 3 個歷史記錄項目
+      expect(historyItems.length).toBe(3);
+    });
+
+    it('✅ 應該支援同分鐘內的多次轉換（不會有 key 衝突）', () => {
+      const now = Date.now();
+      const sameMinuteRecords: ConversionHistoryEntry[] = [
+        {
+          from: 'USD',
+          to: 'TWD',
+          amount: '1000',
+          result: '30900',
+          time: '今天 14:30',
+          timestamp: now - 60 * 1000, // 1 分鐘前
+        },
+        {
+          from: 'JPY',
+          to: 'TWD',
+          amount: '10000',
+          result: '2087',
+          time: '今天 14:30', // 同分鐘
+          timestamp: now - 30 * 1000, // 30 秒前
+        },
+      ];
+
+      const { container } = render(<ConversionHistory history={sameMinuteRecords} />);
+
+      const historyItems = container.querySelectorAll('[class*="cursor-pointer"]');
+
+      // 應該有 2 個歷史記錄項目（沒有因為 key 重複被合併）
+      expect(historyItems.length).toBe(2);
+    });
+  });
+
+  describe('UI/UX 設計一致性', () => {
+    it('❌ 應該使用專案標準的卡片樣式', () => {
+      const mockHistory = createMockHistory();
+      const { container } = render(<ConversionHistory history={mockHistory} />);
+
+      const card = container.querySelector('.bg-white.rounded-3xl.shadow-xl');
+      expect(card).toBeInTheDocument();
+    });
+
+    it('❌ 應該使用專案標準的間距系統', () => {
+      const mockHistory = createMockHistory();
+      const { container } = render(<ConversionHistory history={mockHistory} />);
+
+      const card = container.querySelector('.p-6');
+      expect(card).toBeInTheDocument();
+
+      const historyList = container.querySelector('.space-y-3');
+      expect(historyList).toBeInTheDocument();
+    });
+
+    it('❌ 應該使用專案標準的紫色主題（結果金額）', () => {
+      const mockHistory = createMockHistory();
+      render(<ConversionHistory history={mockHistory} />);
+
+      const resultAmount = screen.getByText('30900 TWD');
+      expect(resultAmount).toHaveClass('text-purple-600');
+    });
+
+    it('❌ 應該使用專案標準的動畫過渡', () => {
+      const mockHistory = createMockHistory();
+      const { container } = render(<ConversionHistory history={mockHistory} />);
+
+      const historyItem = container.querySelector('.transition-all');
+      expect(historyItem).toBeInTheDocument();
+    });
+  });
+
+  describe('無障礙性', () => {
+    it('❌ 應該有正確的 aria-label（複製按鈕）', () => {
+      const mockHistory = createMockHistory();
+      render(<ConversionHistory history={mockHistory} />);
+
+      const copyButtons = screen.getAllByLabelText('複製轉換結果');
+      expect(copyButtons.length).toBe(3);
+    });
+
+    it('❌ 應該支援鍵盤操作（Enter 鍵）', () => {
+      const mockHistory = createMockHistory();
+      const onReconvert = vi.fn();
+
+      render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
+
+      const firstRecord = screen.getByText('1000 USD').closest('div[class*="cursor-pointer"]');
+      fireEvent.keyDown(firstRecord!, { key: 'Enter' });
+
+      expect(onReconvert).toHaveBeenCalledWith(mockHistory[0]);
+    });
+
+    it('❌ 應該支援鍵盤操作（Space 鍵）', () => {
+      const mockHistory = createMockHistory();
+      const onReconvert = vi.fn();
+
+      render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
+
+      const firstRecord = screen.getByText('1000 USD').closest('div[class*="cursor-pointer"]');
+      fireEvent.keyDown(firstRecord!, { key: ' ' });
+
+      expect(onReconvert).toHaveBeenCalledWith(mockHistory[0]);
+    });
+  });
+});
