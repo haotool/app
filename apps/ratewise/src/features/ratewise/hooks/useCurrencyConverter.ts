@@ -62,30 +62,57 @@ interface UseCurrencyConverterOptions {
 
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
   const { exchangeRates, details, rateType = 'spot' } = options;
-  const [mode, setMode] = useState<ConverterMode>(() =>
-    readString(STORAGE_KEYS.CURRENCY_CONVERTER_MODE, 'single') === 'multi' ? 'multi' : 'single',
-  );
 
-  const [fromCurrency, setFromCurrency] = useState<CurrencyCode>(() =>
-    sanitizeCurrency(
-      readString(STORAGE_KEYS.FROM_CURRENCY, DEFAULT_FROM_CURRENCY),
-      DEFAULT_FROM_CURRENCY,
-    ),
-  );
+  /**
+   * [fix:2025-12-25] 修復 React Hydration Error #418
+   *
+   * 問題：useState 初始化函數中使用 readString/readJSON 從 localStorage 讀取
+   * - SSG 時：isBrowser = false，返回 fallback 值
+   * - 客戶端 hydration：isBrowser = true，返回 localStorage 實際值
+   * - 造成 SSG HTML 與客戶端初始渲染不一致 → React Error #418
+   *
+   * 解法：useState 永遠使用固定初始值（與 SSG fallback 相同），
+   * 然後在 useEffect（客戶端專用）中讀取 localStorage 並更新
+   *
+   * 參考: [context7:/reactjs/react.dev:useState:2025-12-25]
+   * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
+   */
+  const [mode, setMode] = useState<ConverterMode>('single');
+  const [fromCurrency, setFromCurrency] = useState<CurrencyCode>(DEFAULT_FROM_CURRENCY);
+  const [toCurrency, setToCurrency] = useState<CurrencyCode>(DEFAULT_TO_CURRENCY);
 
-  const [toCurrency, setToCurrency] = useState<CurrencyCode>(() =>
-    sanitizeCurrency(
-      readString(STORAGE_KEYS.TO_CURRENCY, DEFAULT_TO_CURRENCY),
-      DEFAULT_TO_CURRENCY,
-    ),
-  );
+  // [fix:2025-12-25] 客戶端 hydration 後從 localStorage 恢復用戶偏好
+  useEffect(() => {
+    const storedMode = readString(STORAGE_KEYS.CURRENCY_CONVERTER_MODE, 'single');
+    if (storedMode === 'multi') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶偏好
+      setMode('multi');
+    }
+
+    const storedFrom = readString(STORAGE_KEYS.FROM_CURRENCY, DEFAULT_FROM_CURRENCY);
+    const storedTo = readString(STORAGE_KEYS.TO_CURRENCY, DEFAULT_TO_CURRENCY);
+    setFromCurrency(sanitizeCurrency(storedFrom, DEFAULT_FROM_CURRENCY));
+    setToCurrency(sanitizeCurrency(storedTo, DEFAULT_TO_CURRENCY));
+  }, []);
 
   const [fromAmount, setFromAmount] = useState<string>('1000');
   const [toAmount, setToAmount] = useState<string>('');
 
-  const [favorites, setFavorites] = useState<CurrencyCode[]>(() =>
-    sanitizeFavorites(readJSON<CurrencyCode[]>(STORAGE_KEYS.FAVORITES, [...DEFAULT_FAVORITES])),
-  );
+  // [fix:2025-12-25] 使用固定初始值避免 hydration mismatch
+  const [favorites, setFavorites] = useState<CurrencyCode[]>([...DEFAULT_FAVORITES]);
+
+  // [fix:2025-12-25] 客戶端 hydration 後從 localStorage 恢復 favorites
+  useEffect(() => {
+    const storedFavorites = readJSON<CurrencyCode[]>(STORAGE_KEYS.FAVORITES, [
+      ...DEFAULT_FAVORITES,
+    ]);
+    const sanitized = sanitizeFavorites(storedFavorites);
+    // 只有當 localStorage 中的值與預設值不同時才更新
+    if (JSON.stringify(sanitized) !== JSON.stringify(DEFAULT_FAVORITES)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶偏好
+      setFavorites(sanitized);
+    }
+  }, []);
 
   const [multiAmounts, setMultiAmounts] = useState<MultiAmountsState>(() =>
     createInitialMultiAmounts(DEFAULT_BASE_CURRENCY),

@@ -170,6 +170,12 @@ export function Footer() {
               />
             </svg>
           </a>
+          {/**
+           * [fix:2025-12-25] 使用 suppressHydrationWarning 避免 React Hydration Error #418
+           * 問題：lastUpdate/lastFetchedAt 在 SSG 時為 null（顯示 --/-- --:--），
+           * 客戶端 hydration 時為實際值（顯示時間），造成 text node 不一致
+           * 參考: [context7:/reactjs/react.dev:suppressHydrationWarning:2025-12-25]
+           */}
           <div className="flex items-center gap-2 text-sm text-white/80">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -179,7 +185,7 @@ export function Footer() {
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span>
+            <span suppressHydrationWarning>
               更新時間 來源 {formatTime(lastUpdate)} · 刷新 {formatTime(lastFetchedAt)}
             </span>
           </div>
@@ -305,6 +311,12 @@ export function Footer() {
               />
             </svg>
           </a>
+          {/**
+           * [fix:2025-12-25] 使用 suppressHydrationWarning 避免 React Hydration Error #418
+           * 問題：lastUpdate/lastFetchedAt 在 SSG 時為 null（顯示 --/-- --:--），
+           * 客戶端 hydration 時為實際值（顯示時間），造成 text node 不一致
+           * 參考: [context7:/reactjs/react.dev:suppressHydrationWarning:2025-12-25]
+           */}
           <div className="flex items-center gap-2 text-sm text-white/80">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -314,7 +326,7 @@ export function Footer() {
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span>
+            <span suppressHydrationWarning>
               更新時間 來源 {formatTime(lastUpdate)} · 刷新 {formatTime(lastFetchedAt)}
             </span>
           </div>
