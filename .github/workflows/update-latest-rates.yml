@@ -14,6 +14,11 @@ name: Update Latest Exchange Rates
 # 郵件通知策略：只在失敗時通知
 # GitHub Settings > Notifications > Actions > "Send notifications for failed workflows only"
 
+# 並發控制：確保同時只有一個 workflow 能推送到 data 分支
+concurrency:
+  group: data-branch-push
+  cancel-in-progress: false
+
 on:
   schedule:
     # 每 30 分鐘執行一次
@@ -95,6 +100,9 @@ jobs:
               -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
               -m "🤖 Auto-updated every 30 minutes" \
               -m "Source: https://rate.bot.com.tw/xrt/flcsv/0/day"
+
+            # 推送前先拉取最新變更，避免並發衝突
+            git pull --rebase origin data || true
             git push --force-with-lease origin data
           else
             echo "📝 Creating new commit on data branch..."
@@ -102,7 +110,28 @@ jobs:
               -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
               -m "🤖 Auto-updated every 30 minutes" \
               -m "Source: https://rate.bot.com.tw/xrt/flcsv/0/day"
-            git push origin data
+
+            # 推送前先拉取最新變更，避免並發衝突
+            echo "🔄 Pulling latest changes before push..."
+            git pull --rebase origin data || true
+
+            # 重試機制：最多重試 3 次
+            for i in 1 2 3; do
+              echo "📤 Attempting to push (try $i/3)..."
+              if git push origin data; then
+                echo "✅ Push successful"
+                break
+              else
+                if [ $i -lt 3 ]; then
+                  echo "⚠️ Push failed, retrying in 5 seconds..."
+                  sleep 5
+                  git pull --rebase origin data || true
+                else
+                  echo "❌ Push failed after 3 attempts"
+                  exit 1
+                fi
+              fi
+            done
           fi
 
       - name: Update workflow summary (success)
