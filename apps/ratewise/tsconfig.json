@@ -1,7 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["vite/client", "vite-plugin-pwa/client", "node", "vitest/globals"],
+    "types": [
+      "vite/client",
+      "vite-plugin-pwa/client",
+      "node",
+      "vitest/globals",
+      "@testing-library/jest-dom"
+    ],
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
