@@ -51,18 +51,34 @@ const RateWise = () => {
     setIsHydrated(true);
   }, []);
 
-  // 匯率類型狀態（spot/cash），默認 spot，從 localStorage 讀取
-  const [rateType, setRateType] = useState<RateType>(() => {
-    if (typeof window === 'undefined') return 'spot';
+  /**
+   * [fix:2025-12-25] 修復 React Hydration Error #418 根本問題
+   *
+   * 問題：在 useState 初始化函數中使用 localStorage.getItem()
+   * - SSG 時：typeof window === 'undefined'，返回 'spot'
+   * - 客戶端：如果用戶有儲存 'cash'，返回 'cash'
+   * - 造成 SSG HTML 與客戶端初始渲染不一致 → React Error #418
+   *
+   * 解法：useState 永遠使用固定初始值 'spot'，
+   * 然後在 useEffect (客戶端專用) 中讀取 localStorage 並更新
+   *
+   * 參考: [context7:/reactjs/react.dev:useState:2025-12-25]
+   * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
+   */
+  const [rateType, setRateType] = useState<RateType>('spot');
+
+  // [fix:2025-12-25] 客戶端 hydration 後從 localStorage 恢復用戶偏好
+  useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEYS.RATE_TYPE);
-    return stored === 'cash' ? 'cash' : 'spot';
-  });
+    if (stored === 'cash') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶偏好，避免 hydration mismatch
+      setRateType('cash');
+    }
+  }, []);
 
   // 持久化 rateType 選擇
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.RATE_TYPE, rateType);
-    }
+    localStorage.setItem(STORAGE_KEYS.RATE_TYPE, rateType);
   }, [rateType]);
 
   // Load real-time exchange rates
