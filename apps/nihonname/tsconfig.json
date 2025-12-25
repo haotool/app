@@ -6,6 +6,7 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "types": ["vite/client", "node", "vitest/globals"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -28,7 +29,7 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "app.config.mjs.d.ts"],
+  "include": ["src", "src/test/vitest-dom.d.ts", "app.config.mjs.d.ts"],
   "exclude": ["node_modules", "dist", "coverage"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
