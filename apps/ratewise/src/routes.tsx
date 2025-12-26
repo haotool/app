@@ -8,6 +8,7 @@
  * - `/guide`: Guide 頁面 - 預渲染靜態 HTML，使用 SEOHelmet + HowTo Schema
  * - `/*`: 404 頁面 - 不預渲染，動態處理，使用 SEOHelmet noindex
  * - `/color-scheme`: 內部工具 - 不預渲染（測試用）
+ * - `/update-prompt-test`: UpdatePrompt 測試頁面 - 不預渲染（測試用）
  *
  * 參考：fix/seo-phase2b-prerendering
  * 依據：[Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
@@ -165,6 +166,12 @@ export const routes: RouteRecord[] = [
     () => import('./pages/ColorSchemeComparison'),
     'src/pages/ColorSchemeComparison.tsx',
   ),
+  createLazyRoute(
+    '/update-prompt-test',
+    () => import('./pages/UpdatePromptTest'),
+    'src/pages/UpdatePromptTest.tsx',
+  ),
+  createLazyRoute('/ui-showcase', () => import('./pages/UIShowcase'), 'src/pages/UIShowcase.tsx'),
   // ❌ 不預渲染 404 頁面（動態處理）
   createLazyRoute('*', () => import('./pages/NotFound'), 'src/pages/NotFound.tsx'),
 ];
