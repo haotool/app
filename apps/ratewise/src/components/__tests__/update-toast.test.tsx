@@ -31,7 +31,7 @@ describe('UpdateToast', () => {
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onUpdate and disable update button after click', () => {
+  it('should call onUpdate and show updating state after click', () => {
     const handleUpdate = vi.fn();
     render(<UpdateToast show onClose={vi.fn()} onUpdate={handleUpdate} />);
 
@@ -39,7 +39,8 @@ describe('UpdateToast', () => {
     fireEvent.click(updateButton);
 
     expect(handleUpdate).toHaveBeenCalledTimes(1);
-    expect(updateButton).toBeDisabled();
+    // 組件在 isUpdating 為 true 時不渲染按鈕，改為顯示更新狀態
+    expect(screen.queryByRole('button', { name: '立即更新' })).not.toBeInTheDocument();
     expect(screen.getByText('正在更新版本…')).toBeInTheDocument();
   });
 });
