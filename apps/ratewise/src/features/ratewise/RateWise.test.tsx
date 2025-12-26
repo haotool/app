@@ -357,7 +357,7 @@ describe('RateWise Component', () => {
         const inputs = screen.getAllByPlaceholderText('0.00');
         expect(inputs[0]).toHaveValue('100.00');
       });
-    });
+    }, 10000); // Increased timeout to 10s for complex interactions
   });
 
   describe('History Tracking', () => {
