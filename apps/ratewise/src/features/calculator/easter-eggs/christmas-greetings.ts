@@ -41,5 +41,5 @@ export const CHRISTMAS_GREETINGS = [
  */
 export function getRandomChristmasGreeting(): string {
   const randomIndex = Math.floor(Math.random() * CHRISTMAS_GREETINGS.length);
-  return CHRISTMAS_GREETINGS[randomIndex] || CHRISTMAS_GREETINGS[0];
+  return CHRISTMAS_GREETINGS[randomIndex] ?? CHRISTMAS_GREETINGS[0];
 }

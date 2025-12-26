@@ -4,11 +4,15 @@
  * @description 12 月聖誕主題的動畫樣式
  *
  * 特效：
- * - 常駐下雪動畫（GPU 加速）
+ * - 常駐下雪動畫（GPU 加速）- 純白色 SVG 雪花
+ * - 三種雪花尺寸：大雪、中雪、小雪
+ * - 精緻搖擺動畫，可變強度
  * - 積雪效果樣式
  * - 互動式聖誕樹樣式
  * - 響應式斷點適配
  * - 尊重 prefers-reduced-motion
+ *
+ * @author UIUX Designer Upgrade 2025-12-27
  */
 
 /* ============================================
@@ -23,37 +27,153 @@
   content-visibility: auto;
 }
 
-/* 單一雪花 */
+/* ============================================
+   基礎雪花樣式 - 純白色 SVG
+   ============================================ */
 .december-snowflake {
   position: absolute;
   top: -30px;
-  color: white;
-  text-shadow:
-    0 0 8px rgba(255, 255, 255, 0.8),
-    0 0 16px rgba(200, 220, 255, 0.4);
-  animation: december-snowfall linear infinite;
+  color: rgba(255, 255, 255, 0.95);
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6))
+    drop-shadow(0 0 12px rgba(255, 255, 255, 0.3));
   will-change: transform;
   transform: translateZ(0);
+  --sway-intensity: 1;
 }
 
-/* 雪花飄落動畫 - 更慢更浪漫 */
-@keyframes december-snowfall {
+/* ============================================
+   雪花類型 - 不同下落動畫
+   ============================================ */
+
+/* 小雪 - 快速下落，輕微搖擺 */
+.december-snowflake--small {
+  animation: snowfall-small linear infinite;
+}
+
+/* 中雪 - 中等速度，適中搖擺 */
+.december-snowflake--medium {
+  animation: snowfall-medium linear infinite;
+}
+
+/* 大雪 - 緩慢下落，大幅搖擺 */
+.december-snowflake--large {
+  animation: snowfall-large linear infinite;
+}
+
+/* ============================================
+   旋轉方向修飾符
+   ============================================ */
+.december-snowflake--cw {
+  --rotation-end: 360deg;
+}
+
+.december-snowflake--ccw {
+  --rotation-end: -360deg;
+}
+
+/* ============================================
+   小雪動畫 - 快速、輕盈
+   ============================================ */
+@keyframes snowfall-small {
   0% {
     transform: translateY(0) translateX(0) rotate(0deg);
-    opacity: 1;
   }
-  25% {
-    transform: translateY(25vh) translateX(10px) rotate(90deg);
+  20% {
+    transform: translateY(20vh) translateX(calc(5px * var(--sway-intensity))) rotate(72deg);
   }
-  50% {
-    transform: translateY(50vh) translateX(-5px) rotate(180deg);
+  40% {
+    transform: translateY(40vh) translateX(calc(-3px * var(--sway-intensity))) rotate(144deg);
   }
-  75% {
-    transform: translateY(75vh) translateX(8px) rotate(270deg);
+  60% {
+    transform: translateY(60vh) translateX(calc(4px * var(--sway-intensity))) rotate(216deg);
+  }
+  80% {
+    transform: translateY(80vh) translateX(calc(-2px * var(--sway-intensity))) rotate(288deg);
   }
   100% {
-    transform: translateY(100vh) translateX(0) rotate(360deg);
-    opacity: 0.2;
+    transform: translateY(calc(100vh + 30px)) translateX(0) rotate(var(--rotation-end, 360deg));
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   中雪動畫 - 平穩、優雅
+   ============================================ */
+@keyframes snowfall-medium {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  15% {
+    transform: translateY(15vh) translateX(calc(8px * var(--sway-intensity))) rotate(54deg);
+  }
+  30% {
+    transform: translateY(30vh) translateX(calc(-6px * var(--sway-intensity))) rotate(108deg);
+  }
+  45% {
+    transform: translateY(45vh) translateX(calc(10px * var(--sway-intensity))) rotate(162deg);
+  }
+  60% {
+    transform: translateY(60vh) translateX(calc(-4px * var(--sway-intensity))) rotate(216deg);
+  }
+  75% {
+    transform: translateY(75vh) translateX(calc(7px * var(--sway-intensity))) rotate(270deg);
+  }
+  90% {
+    transform: translateY(90vh) translateX(calc(-3px * var(--sway-intensity))) rotate(324deg);
+  }
+  100% {
+    transform: translateY(calc(100vh + 30px)) translateX(0) rotate(var(--rotation-end, 360deg));
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   大雪動畫 - 緩慢、飄逸
+   ============================================ */
+@keyframes snowfall-large {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+  }
+  10% {
+    transform: translateY(10vh) translateX(calc(12px * var(--sway-intensity))) rotate(36deg)
+      scale(1.02);
+  }
+  20% {
+    transform: translateY(20vh) translateX(calc(-8px * var(--sway-intensity))) rotate(72deg)
+      scale(1);
+  }
+  30% {
+    transform: translateY(30vh) translateX(calc(15px * var(--sway-intensity))) rotate(108deg)
+      scale(0.98);
+  }
+  40% {
+    transform: translateY(40vh) translateX(calc(-10px * var(--sway-intensity))) rotate(144deg)
+      scale(1);
+  }
+  50% {
+    transform: translateY(50vh) translateX(calc(12px * var(--sway-intensity))) rotate(180deg)
+      scale(1.03);
+  }
+  60% {
+    transform: translateY(60vh) translateX(calc(-6px * var(--sway-intensity))) rotate(216deg)
+      scale(1);
+  }
+  70% {
+    transform: translateY(70vh) translateX(calc(10px * var(--sway-intensity))) rotate(252deg)
+      scale(0.97);
+  }
+  80% {
+    transform: translateY(80vh) translateX(calc(-8px * var(--sway-intensity))) rotate(288deg)
+      scale(1);
+  }
+  90% {
+    transform: translateY(90vh) translateX(calc(5px * var(--sway-intensity))) rotate(324deg)
+      scale(1.01);
+  }
+  100% {
+    transform: translateY(calc(100vh + 30px)) translateX(0) rotate(var(--rotation-end, 360deg))
+      scale(1);
+    opacity: 0;
   }
 }
 
@@ -73,7 +193,7 @@
 .snow-accumulation__main {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 2px 4px rgba(200, 220, 255, 0.3));
+  filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.2));
 }
 
 .snow-accumulation__sparkles {
@@ -88,7 +208,7 @@
   font-size: 6px;
   color: rgba(255, 255, 255, 0.9);
   animation: sparkle-twinkle 2s ease-in-out infinite;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
 }
 
 @keyframes sparkle-twinkle {
@@ -105,11 +225,11 @@
 
 /* 積雪變體 */
 .snow-accumulation--thick .snow-accumulation__main {
-  filter: drop-shadow(0 3px 6px rgba(200, 220, 255, 0.4));
+  filter: drop-shadow(0 3px 6px rgba(255, 255, 255, 0.3));
 }
 
 .snow-accumulation--thin .snow-accumulation__main {
-  filter: drop-shadow(0 1px 2px rgba(200, 220, 255, 0.2));
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.15));
 }
 
 /* ============================================
@@ -264,8 +384,14 @@
    ============================================ */
 @media (prefers-reduced-motion: reduce) {
   .december-snowflake {
-    animation: none;
+    animation: none !important;
     opacity: 0.3;
+  }
+
+  .december-snowflake--small,
+  .december-snowflake--medium,
+  .december-snowflake--large {
+    animation: none !important;
   }
 
   .snow-sparkle {
