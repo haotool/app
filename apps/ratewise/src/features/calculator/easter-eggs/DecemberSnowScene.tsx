@@ -27,9 +27,11 @@ interface Snowflake {
 }
 
 /**
- * 雪花符號 - 使用多種形狀增加視覺豐富度
+ * 雪花類型 - 不同大小模擬大雪小雪
+ * - SMALL: 小雪 (0.4-0.8rem) - 50% 機率
+ * - MEDIUM: 中雪 (0.8-1.2rem) - 35% 機率
+ * - LARGE: 大雪 (1.2-1.8rem) - 15% 機率
  */
-const SNOWFLAKE_SYMBOLS = ['❄', '❅', '❆', '✦', '✧', '*'];
 
 /**
  * 獲取響應式雪花數量
@@ -44,6 +46,17 @@ function getResponsiveSnowflakeCount(): number {
 }
 
 /**
+ * 生成隨機雪花大小（根據雪花類型）
+ */
+function getSnowflakeSize(): number {
+  const rand = Math.random();
+  // 50% 小雪, 35% 中雪, 15% 大雪
+  if (rand < 0.5) return 0.4 + Math.random() * 0.4; // 0.4-0.8rem
+  if (rand < 0.85) return 0.8 + Math.random() * 0.4; // 0.8-1.2rem
+  return 1.2 + Math.random() * 0.6; // 1.2-1.8rem
+}
+
+/**
  * 生成隨機雪花配置
  */
 function generateSnowflakes(count: number): Snowflake[] {
@@ -52,9 +65,9 @@ function generateSnowflakes(count: number): Snowflake[] {
     left: Math.random() * 100,
     delay: Math.random() * 8,
     duration: 8 + Math.random() * 12, // 8-20 秒，更慢更浪漫
-    size: 0.6 + Math.random() * 1.0, // 0.6-1.6rem
-    opacity: 0.4 + Math.random() * 0.5, // 0.4-0.9 透明度
-    symbol: SNOWFLAKE_SYMBOLS[Math.floor(Math.random() * SNOWFLAKE_SYMBOLS.length)] ?? '❄',
+    size: getSnowflakeSize(), // 隨機大小模擬大雪小雪
+    opacity: 0.5 + Math.random() * 0.4, // 0.5-0.9 透明度（更明顯）
+    symbol: '❄', // 統一使用白色雪花符號
   }));
 }
 
