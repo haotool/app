@@ -3,21 +3,19 @@ import { useEffect, useState } from 'react';
 // This component is dynamically imported in routes.tsx to avoid SSR
 import { Workbox } from '../utils/workbox-window';
 import { startVersionCheckInterval } from '../utils/versionChecker';
-import { AutoUpdateToast } from './AutoUpdateToast';
+import { UpdateToast } from './update-toast';
 import { logger } from '../utils/logger';
 
 /**
- * PWA 更新通知組件 - 自動更新模式
+ * PWA 更新通知組件 - 右上角手動更新模式
  *
- * [fix:2025-11-06] 改為自動更新模式
- * 更新時間: 2025-11-06T00:30:00+08:00
+ * [fix:2025-12-26] 移除 10 秒自動更新吐司，保留右上角高級提示
+ * 更新時間: 2025-12-26T22:30:00+08:00
  *
  * 業界最佳實踐 (2025):
- * - ✅ 自動倒數 10 秒後更新
- * - ✅ 可手動點擊立即更新
- * - ✅ 進度條視覺化倒數
- * - ✅ 柔和的 Toast 通知（右下角）
- * - ✅ 不干擾用戶操作
+ * - ✅ 右上角提示吐司（不干擾操作）
+ * - ✅ 使用者主動更新（避免自動跳轉）
+ * - ✅ 清除快取後重新載入
  * - ✅ 完整無障礙支援
  *
  * 參考:
@@ -157,7 +155,7 @@ export function UpdatePrompt() {
     logger.info('User triggered update');
 
     try {
-      // 1. 清除所有 Service Worker 快取
+      // 1. 清除所有 Service Worker 快取（不清除 localStorage，保留收藏與歷史紀錄）
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map((name) => caches.delete(name)));
@@ -178,10 +176,6 @@ export function UpdatePrompt() {
   };
 
   return (
-    <AutoUpdateToast
-      show={needRefresh}
-      onClose={handleClose}
-      onUpdate={() => void handleUpdate()}
-    />
+    <UpdateToast show={needRefresh} onClose={handleClose} onUpdate={() => void handleUpdate()} />
   );
 }

@@ -119,8 +119,16 @@ const RateWise = () => {
     }
   }, []); // 移除 refresh 依賴，因為頁面會重新載入
 
+  const isPullToRefreshEnabled = isHydrated && !ratesLoading && !ratesError && !isTestEnv;
+
   // Pull-to-refresh functionality
-  const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(mainRef, handlePullToRefresh);
+  const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(
+    mainRef,
+    handlePullToRefresh,
+    {
+      enabled: isPullToRefreshEnabled,
+    },
+  );
 
   // 格式化顯示時間（來源時間 · 刷新時間）
   const formattedLastUpdate = useMemo(
@@ -244,11 +252,13 @@ const RateWise = () => {
   return (
     <>
       {/* Pull-to-Refresh Indicator */}
-      <PullToRefreshIndicator
-        pullDistance={pullDistance}
-        isRefreshing={isRefreshing}
-        canTrigger={canTrigger}
-      />
+      {isPullToRefreshEnabled && (
+        <PullToRefreshIndicator
+          pullDistance={pullDistance}
+          isRefreshing={isRefreshing}
+          canTrigger={canTrigger}
+        />
+      )}
 
       <main
         ref={mainRef}
