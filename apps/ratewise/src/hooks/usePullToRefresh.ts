@@ -43,16 +43,22 @@ function applyTension(distance: number): number {
 export function usePullToRefresh(
   containerRef: RefObject<HTMLElement | null>,
   onRefresh: () => Promise<void> | void,
+  options?: { enabled?: boolean },
 ): PullToRefreshState {
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [canTrigger, setCanTrigger] = useState(false);
+  const isEnabled = options?.enabled ?? true;
 
   const startY = useRef(0);
   const currentY = useRef(0);
   const isDragging = useRef(false);
 
   useEffect(() => {
+    if (!isEnabled) {
+      return;
+    }
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -181,7 +187,7 @@ export function usePullToRefresh(
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [containerRef, onRefresh, isRefreshing, canTrigger, pullDistance]);
+  }, [containerRef, onRefresh, isRefreshing, canTrigger, pullDistance, isEnabled]);
 
   return {
     pullDistance,
