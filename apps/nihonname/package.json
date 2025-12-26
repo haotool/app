@@ -15,6 +15,7 @@
     "build": "tsc --noEmit && vite-react-ssg build --config vite.config.ts",
     "postbuild": "node scripts/postbuild-mirror-dist.js",
     "preview": "vite preview",
+    "postinstall": "node scripts/postinstall.mjs",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
