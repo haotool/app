@@ -31,4 +31,3 @@ export type {
 } from './types';
 export type { SnowAccumulationProps } from './SnowAccumulation';
 export type { MiniChristmasTreeProps } from './MiniChristmasTree';
-export type { DecemberThemeProps } from './DecemberTheme';

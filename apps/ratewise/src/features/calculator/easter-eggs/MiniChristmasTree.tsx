@@ -4,13 +4,14 @@
  * @description 互動式迷你聖誕樹 - 12 月常駐裝飾
  *
  * 功能：
- * - 固定位置在右下角
- * - 點擊時顯示動態年份賀詞動畫
+ * - 固定位置在左下角
+ * - 點擊時提示「長按可以關閉動畫」
+ * - 長按 1 秒關閉動畫
  * - hover 時有微妙的發光效果
  * - 尺寸：48x64px
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import './styles/december-theme.css';
 
@@ -22,45 +23,70 @@ export interface MiniChristmasTreeProps {
   year: number;
   /** 自定義 className */
   className?: string;
+  /** 關閉動畫回調 */
+  onClose?: () => void;
 }
 
 /**
  * 互動式迷你聖誕樹組件
  */
-export function MiniChristmasTree({ year, className = '' }: MiniChristmasTreeProps) {
-  const [showGreeting, setShowGreeting] = useState(false);
+export function MiniChristmasTree({
+  year: _year,
+  className = '',
+  onClose,
+}: MiniChristmasTreeProps) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const longPressTimer = useRef<number | null>(null);
 
+  // 點擊：顯示提示
   const handleClick = useCallback(() => {
-    setShowGreeting(true);
-    // 3 秒後自動隱藏
-    setTimeout(() => setShowGreeting(false), 3000);
+    setShowTooltip(true);
+    setTimeout(() => setShowTooltip(false), 2000);
+  }, []);
+
+  // 長按開始：啟動計時器
+  const handlePressStart = useCallback(() => {
+    longPressTimer.current = window.setTimeout(() => {
+      onClose?.();
+    }, 1000); // 1 秒長按
+  }, [onClose]);
+
+  // 長按結束：清除計時器
+  const handlePressEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
   }, []);
 
   return (
     <div className={`mini-christmas-tree-container ${className}`}>
-      {/* 賀詞氣泡 */}
+      {/* 提示氣泡 */}
       <AnimatePresence>
-        {showGreeting && (
+        {showTooltip && (
           <motion.div
-            className="mini-tree-greeting"
+            className="mini-tree-tooltip"
             initial={{ opacity: 0, y: 10, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.8 }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
           >
-            <span className="greeting-text">🎄 {year} Merry Christmas! 🎅</span>
+            <span className="tooltip-text">長按可以關閉動畫 🎄</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* 迷你聖誕樹 */}
       <motion.button
-        className="mini-christmas-tree"
+        className="mini-christmas-tree no-focus-ring"
         onClick={handleClick}
+        onPointerDown={handlePressStart}
+        onPointerUp={handlePressEnd}
+        onPointerLeave={handlePressEnd}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        aria-label="點擊查看聖誕祝福"
-        title="點擊查看聖誕祝福"
+        aria-label="聖誕樹裝飾，點擊查看提示，長按關閉動畫"
+        title="點擊查看提示"
       >
         <svg
           width="48"

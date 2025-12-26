@@ -54,8 +54,9 @@ describe('DecemberTheme Components', () => {
       });
 
       // 不應該渲染任何內容
-      expect(screen.queryByLabelText('點擊查看聖誕祝福')).not.toBeInTheDocument();
-      expect(screen.queryByText(/啟用聖誕|關閉動畫/)).not.toBeInTheDocument();
+      expect(
+        screen.queryByLabelText('聖誕樹裝飾，點擊查看提示，長按關閉動畫'),
+      ).not.toBeInTheDocument();
     });
 
     it('should render snow scene and mini tree in December', () => {
@@ -66,29 +67,26 @@ describe('DecemberTheme Components', () => {
         render(<DecemberTheme />);
       });
 
-      // 等待 useEffect 執行
-      expect(screen.getByLabelText('點擊查看聖誕祝福')).toBeInTheDocument();
+      // 等待 useEffect 執行，聖誕樹提示應該顯示
+      expect(screen.getByLabelText('聖誕樹裝飾，點擊查看提示，長按關閉動畫')).toBeInTheDocument();
     });
 
-    it('should show toggle button in December', () => {
+    it('should show tooltip when clicking mini tree', () => {
       vi.setSystemTime(new Date(2025, 11, 25));
 
       act(() => {
-        render(<DecemberTheme showToggle={true} />);
+        render(<DecemberTheme />);
       });
 
-      expect(screen.getByText(/關閉動畫/)).toBeInTheDocument();
-    });
+      const treeButton = screen.getByLabelText('聖誕樹裝飾，點擊查看提示，長按關閉動畫');
 
-    it('should hide toggle button when showToggle is false', () => {
-      vi.setSystemTime(new Date(2025, 11, 25));
-
+      // 點擊聖誕樹應該顯示提示
       act(() => {
-        render(<DecemberTheme showToggle={false} />);
+        fireEvent.click(treeButton);
       });
 
-      // 不應該顯示開關按鈕
-      expect(screen.queryByText(/啟用聖誕|關閉動畫/)).not.toBeInTheDocument();
+      // 提示訊息應該顯示
+      expect(screen.getByText(/長按可以關閉動畫/)).toBeInTheDocument();
     });
   });
 
@@ -147,7 +145,7 @@ describe('DecemberTheme Components', () => {
         render(<MiniChristmasTree year={2025} />);
       });
 
-      expect(screen.getByLabelText('點擊查看聖誕祝福')).toBeInTheDocument();
+      expect(screen.getByLabelText('聖誕樹裝飾，點擊查看提示，長按關閉動畫')).toBeInTheDocument();
     });
 
     it('should show greeting on click', () => {
@@ -155,13 +153,13 @@ describe('DecemberTheme Components', () => {
         render(<MiniChristmasTree year={2025} />);
       });
 
-      const tree = screen.getByLabelText('點擊查看聖誕祝福');
+      const tree = screen.getByLabelText('聖誕樹裝飾，點擊查看提示，長按關閉動畫');
 
       act(() => {
         fireEvent.click(tree);
       });
 
-      expect(screen.getByText(/2025 Merry Christmas!/)).toBeInTheDocument();
+      expect(screen.getByText(/長按可以關閉動畫/)).toBeInTheDocument();
     });
 
     it('should trigger auto-hide timeout when greeting is shown', () => {
@@ -172,17 +170,17 @@ describe('DecemberTheme Components', () => {
         render(<MiniChristmasTree year={2025} />);
       });
 
-      const tree = screen.getByLabelText('點擊查看聖誕祝福');
+      const tree = screen.getByLabelText('聖誕樹裝飾，點擊查看提示，長按關閉動畫');
 
       act(() => {
         fireEvent.click(tree);
       });
 
-      // 賀詞應該出現
-      expect(screen.getByText(/2025 Merry Christmas!/)).toBeInTheDocument();
+      // 提示訊息應該出現
+      expect(screen.getByText(/長按可以關閉動畫/)).toBeInTheDocument();
 
-      // 確認 setTimeout 被調用（用於 3 秒後自動隱藏）
-      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
+      // 確認 setTimeout 被調用（用於 2 秒後自動隱藏）
+      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 2000);
 
       setTimeoutSpy.mockRestore();
     });
