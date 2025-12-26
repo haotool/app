@@ -1,13 +1,6 @@
 {
   "runs": [
     {
-      "timestamp": "2025-12-16T18:21:53Z",
-      "duration_seconds": 97,
-      "conclusion": "failure",
-      "branch": "main",
-      "commit": "c815ba705213ced3bc450e32a8a2f5a1a4093162"
-    },
-    {
       "timestamp": "2025-12-16T18:32:50Z",
       "duration_seconds": 383,
       "conclusion": "success",
@@ -699,6 +692,13 @@
       "conclusion": "success",
       "branch": "main",
       "commit": "5dd84be2114de0065836bba03720addf37fa5025"
+    },
+    {
+      "timestamp": "2025-12-26T14:51:09Z",
+      "duration_seconds": 153,
+      "conclusion": "failure",
+      "branch": "codex/improve-ratewise-update-notifications",
+      "commit": "844747e7cf25b41b1a47ebf57272f1fc7f84a0bc"
     }
   ]
 }
