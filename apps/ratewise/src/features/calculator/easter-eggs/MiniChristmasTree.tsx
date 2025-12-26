@@ -5,14 +5,19 @@
  *
  * 功能：
  * - 固定位置在左下角
- * - 點擊時提示「長按可以關閉動畫」
+ * - 點擊時顯示 20 種隨機聖誕祝福
  * - 長按 1 秒關閉動畫
  * - hover 時有微妙的發光效果
  * - 尺寸：48x64px
+ *
+ * [update:2025-12-27] 新增隨機聖誕祝福功能
+ * - 每次點擊隨機選擇 20 種祝福之一
+ * - 長按功能保持不變
  */
 
 import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { getRandomChristmasGreeting } from './christmas-greetings';
 import './styles/december-theme.css';
 
 /**
@@ -36,12 +41,15 @@ export function MiniChristmasTree({
   onClose,
 }: MiniChristmasTreeProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [greetingMessage, setGreetingMessage] = useState('');
   const longPressTimer = useRef<number | null>(null);
 
-  // 點擊：顯示提示
+  // 點擊：顯示隨機聖誕祝福
   const handleClick = useCallback(() => {
+    const randomGreeting = getRandomChristmasGreeting();
+    setGreetingMessage(randomGreeting);
     setShowTooltip(true);
-    setTimeout(() => setShowTooltip(false), 2000);
+    setTimeout(() => setShowTooltip(false), 3000); // 3 秒後自動隱藏
   }, []);
 
   // 長按開始：啟動計時器
@@ -61,7 +69,7 @@ export function MiniChristmasTree({
 
   return (
     <div className={`mini-christmas-tree-container ${className}`}>
-      {/* 提示氣泡 */}
+      {/* 祝福氣泡 */}
       <AnimatePresence>
         {showTooltip && (
           <motion.div
@@ -71,7 +79,7 @@ export function MiniChristmasTree({
             exit={{ opacity: 0, y: -10, scale: 0.8 }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
           >
-            <span className="tooltip-text">長按可以關閉動畫 🎄</span>
+            <span className="tooltip-text">{greetingMessage}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -85,8 +93,8 @@ export function MiniChristmasTree({
         onPointerLeave={handlePressEnd}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        aria-label="聖誕樹裝飾，點擊查看提示，長按關閉動畫"
-        title="點擊查看提示"
+        aria-label="聖誕樹裝飾，點擊查看聖誕祝福，長按關閉動畫"
+        title="點擊查看聖誕祝福"
       >
         <svg
           width="48"

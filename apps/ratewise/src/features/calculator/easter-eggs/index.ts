@@ -22,6 +22,9 @@ export {
   CHRISTMAS_EASTER_EGG_DURATION,
 } from './utils';
 
+// 聖誕祝福訊息
+export { CHRISTMAS_GREETINGS, getRandomChristmasGreeting } from './christmas-greetings';
+
 // 類型定義
 export type {
   EasterEggType,
