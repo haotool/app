@@ -79,7 +79,6 @@ export default defineConfig(() => {
           'src/routes.tsx', // Router config, covered by E2E smoke
           'src/pages/**/*.tsx', // Static pages, covered by E2E tests
           'src/components/UpdatePrompt.tsx', // PWA-specific, requires service worker context
-          'src/components/AutoUpdateToast.tsx', // PWA-specific, requires service worker context
           'src/components/SwipeTooltip.tsx', // UI tutorial component, covered by E2E tests
           'src/components/ThreadsIcon.tsx', // Static icon component
           'src/features/calculator/components/ExpressionDisplay.tsx', // Pure presentational, covered by E2E
@@ -95,7 +94,7 @@ export default defineConfig(() => {
           // - Logger 整合完成，391/391 tests 通過
           // - 當前覆蓋率：81.56% statements, 71.93% branches, 82.56% functions, 83% lines
           // - 設置略低於當前值，防止退化，同時允許技術債的逐步清理
-          // PWA 相關模組已排除（AutoUpdateToast, versionChecker, swUtils）
+          // PWA 相關模組已排除（UpdatePrompt, versionChecker, swUtils）
           statements: 81, // 當前: 81.56%，目標: 逐步提升至 86%
           branches: 71, // 當前: 71.93%，目標: 逐步提升至 80%
           functions: 82, // 當前: 82.56%
