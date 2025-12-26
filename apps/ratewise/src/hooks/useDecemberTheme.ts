@@ -39,12 +39,12 @@ const THEME_DISABLED_KEY = 'ratewise-december-theme-disabled';
 /**
  * 取得目前月份和年份（SSR 安全）
  * @returns { isDecember, currentYear }
+ *
+ * [fix:2025-12-27] 移除 SSR 硬編碼 isDecember: false
+ * - new Date() 在 Node.js (SSR) 和瀏覽器都能正確運作
+ * - SSR 時也應該正確偵測 12 月，避免 hydration mismatch
  */
 function getDateInfo(): { isDecember: boolean; currentYear: number } {
-  if (typeof window === 'undefined') {
-    // SSR: 返回預設值
-    return { isDecember: false, currentYear: new Date().getFullYear() };
-  }
   const now = new Date();
   return {
     isDecember: now.getMonth() === 11, // 0-indexed, 11 = December
