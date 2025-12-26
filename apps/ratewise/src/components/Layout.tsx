@@ -1,8 +1,12 @@
 /**
- * Layout Component with ErrorBoundary + HelmetProvider + UpdatePrompt
+ * Layout Component with ErrorBoundary + HelmetProvider + UpdatePrompt + DecemberTheme
  *
  * [SSR-fix:2025-11-26] 從 routes.tsx 分離以解決 Fast Refresh 警告
  * 依據：eslint-plugin-react-refresh (只導出組件的文件才能 Fast Refresh)
+ *
+ * [December-Theme:2025-12-26] 新增 12 月聖誕主題常駐效果
+ * - 自動偵測 12 月並顯示下雪動畫和聖誕裝飾
+ * - 使用 React.lazy 動態載入，不影響 SEO 和效能
  */
 
 import React from 'react';
@@ -13,10 +17,14 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { SkeletonLoader } from './SkeletonLoader';
 import { Footer } from './Footer';
 
+// [December-Theme:2025-12-26] 動態載入 12 月主題組件（Lazy Loading）
+const DecemberTheme = React.lazy(() => import('../features/calculator/easter-eggs/DecemberTheme'));
+
 export function Layout({ children }: { children: React.ReactNode }) {
   // [SSR-fix:2025-11-26] Check if running in browser (client-side)
   const isBrowser = typeof window !== 'undefined';
   const [UpdatePrompt, setUpdatePrompt] = React.useState<React.ComponentType | null>(null);
+  const [showDecemberTheme, setShowDecemberTheme] = React.useState(false);
 
   // [SSR-fix:2025-12-03] react-helmet-async 需要在 SSR 時提供 context
   // 參考: [react-helmet-async README](https://github.com/staylor/react-helmet-async#readme)
@@ -32,6 +40,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       import('./UpdatePrompt')
         .then((module) => setUpdatePrompt(() => module.UpdatePrompt))
         .catch((err) => console.error('Failed to load UpdatePrompt:', err));
+    }
+  }, [isBrowser]);
+
+  // [December-Theme:2025-12-26] 偵測 12 月並啟用聖誕主題
+  React.useEffect(() => {
+    if (isBrowser) {
+      const isDecember = new Date().getMonth() === 11; // 0-indexed, 11 = December
+      setShowDecemberTheme(isDecember);
     }
   }, [isBrowser]);
 
@@ -62,6 +78,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </ErrorBoundary>
         {/* PWA 更新通知 - 只在客戶端動態載入（避免 SSR 時 workbox-window 錯誤） */}
         {UpdatePrompt && <UpdatePrompt />}
+
+        {/* [December-Theme:2025-12-26] 12 月聖誕主題 - 動態載入 */}
+        {showDecemberTheme && (
+          <React.Suspense fallback={null}>
+            <DecemberTheme />
+          </React.Suspense>
+        )}
       </HelmetProvider>
     </React.StrictMode>
   );
