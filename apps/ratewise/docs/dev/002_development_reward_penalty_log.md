@@ -1,10 +1,10 @@
 # 開發獎懲記錄
 
-**版本**: 2.0.5
+**版本**: 2.0.6
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2025-12-25T14:57:22+08:00
+**更新時間**: 2025-12-27T03:04:24+08:00
 **狀態**: ✅ 完成
-**當前總分**: +83
+**當前總分**: +88
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                       | 依據                                                                         | 分數 |
 | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---- |
@@ -66,6 +66,10 @@
 | ✅ 成功 | 生產環境 Console 無錯誤驗證                      | 本地 preview 服務器測試，Console 只顯示 INFO/WARN 日誌，無 Error，Web Vitals 全部 good                                                                         | [AGENTS.md:品質門檻]                                                         | +2   |
 | ✅ 成功 | CI jest-dom matchers 載入問題修復                | 1) setupTests.ts 添加 expect.extend(matchers) 2) 19 個測試文件顯式 import 3) eslint.config.js 禁用 unsafe 規則 4) tsconfig 添加 @testing-library/jest-dom 類型 | [context7:/@testing-library/jest-dom:vitest:2025-12-25]                      | +3   |
 | ✅ 成功 | 新增 Cloudflare CDN 快取自動清除工作流程         | 1) Release workflow 新增 Purge Cloudflare Cache 步驟 2) 使用 CLOUDFLARE_ZONE_ID/API_TOKEN secrets 3) 優雅降級：secrets 未配置時跳過 4) CI 8/8 全綠             | [context7:/websites/developers_cloudflare:Cache-Purge-API:2025-12-25]        | +2   |
+| ✅ 成功 | 聖誕樹拖動功能 (v1.4.0)                          | 1) Motion drag API 實現平滑拖動 2) localStorage 記憶位置 3) 新增「↕ 可拖動」提示 4) 更新 aria-label 含拖動說明                                                 | [context7:/websites/motion-dev-docs:drag:2025-12-27]                         | +1   |
+| ✅ 成功 | 精緻雪花效果升級 (8 種 SVG 變體)                 | 1) 4→8 種雪花變體（新增：花瓣/樹枝/菱形/結晶） 2) 響應式數量：桌面 55/平板 35/手機 20 3) 純白色無藍色 4) GPU 加速動畫                                          | [LINUS_GUIDE.md:Good Taste]                                                  | +2   |
+| ✅ 成功 | UpdatePrompt 響應式尺寸優化                      | 1) 手機 280px/平板 300px/桌面 320px 寬度 2) 響應式 padding/圖標/字體 3) 符合 Windows UX Guidelines 最低有效分辨率                                              | [WebSearch:modal responsive best practices 2025]                             | +1   |
+| ✅ 成功 | 版本號更新 1.3.0→1.4.0 + CI/CD 全數通過          | 1) TypeScript 通過 2) ESLint 0 錯誤 0 警告 3) 962 測試全通過 4) Build 成功 5) 瀏覽器驗證正常                                                                   | [AGENTS.md:品質門檻]                                                         | +1   |
 
 ---
 

@@ -55,7 +55,7 @@ describe('DecemberTheme Components', () => {
 
       // 不應該渲染任何內容
       expect(
-        screen.queryByLabelText('聖誕樹裝飾，點擊查看聖誕祝福，長按關閉動畫'),
+        screen.queryByLabelText('聖誕樹裝飾，點擊查看聖誕祝福，可拖動移動位置，長按關閉動畫'),
       ).not.toBeInTheDocument();
     });
 
@@ -69,7 +69,7 @@ describe('DecemberTheme Components', () => {
 
       // 等待 useEffect 執行，聖誕樹應該顯示
       expect(
-        screen.getByLabelText('聖誕樹裝飾，點擊查看聖誕祝福，長按關閉動畫'),
+        screen.getByLabelText('聖誕樹裝飾，點擊查看聖誕祝福，可拖動移動位置，長按關閉動畫'),
       ).toBeInTheDocument();
     });
 
@@ -80,7 +80,9 @@ describe('DecemberTheme Components', () => {
         render(<DecemberTheme />);
       });
 
-      const treeButton = screen.getByLabelText('聖誕樹裝飾，點擊查看聖誕祝福，長按關閉動畫');
+      const treeButton = screen.getByLabelText(
+        '聖誕樹裝飾，點擊查看聖誕祝福，可拖動移動位置，長按關閉動畫',
+      );
 
       // 點擊聖誕樹應該顯示隨機祝福
       act(() => {
@@ -150,7 +152,7 @@ describe('DecemberTheme Components', () => {
       });
 
       expect(
-        screen.getByLabelText('聖誕樹裝飾，點擊查看聖誕祝福，長按關閉動畫'),
+        screen.getByLabelText('聖誕樹裝飾，點擊查看聖誕祝福，可拖動移動位置，長按關閉動畫'),
       ).toBeInTheDocument();
     });
 
@@ -159,7 +161,9 @@ describe('DecemberTheme Components', () => {
         render(<MiniChristmasTree year={2025} />);
       });
 
-      const tree = screen.getByLabelText('聖誕樹裝飾，點擊查看聖誕祝福，長按關閉動畫');
+      const tree = screen.getByLabelText(
+        '聖誕樹裝飾，點擊查看聖誕祝福，可拖動移動位置，長按關閉動畫',
+      );
 
       act(() => {
         fireEvent.click(tree);
@@ -179,7 +183,9 @@ describe('DecemberTheme Components', () => {
         render(<MiniChristmasTree year={2025} />);
       });
 
-      const tree = screen.getByLabelText('聖誕樹裝飾，點擊查看聖誕祝福，長按關閉動畫');
+      const tree = screen.getByLabelText(
+        '聖誕樹裝飾，點擊查看聖誕祝福，可拖動移動位置，長按關閉動畫',
+      );
 
       act(() => {
         fireEvent.click(tree);

@@ -16,18 +16,32 @@
  */
 
 // [fix:2025-12-25] 在任何 React 代碼執行前，攔截並過濾 React Hydration 預期錯誤
+// [fix:2025-12-27] 增強錯誤檢測，處理 Error 物件和字串兩種格式
 // 這些錯誤是 SSG + 動態內容的固有特性，不影響功能，只是開發者警告
 if (typeof window !== 'undefined') {
   const originalConsoleError = console.error;
   console.error = (...args: unknown[]) => {
     // 檢查是否為 React Hydration #418 錯誤
-    const firstArg = args[0];
-    if (
-      typeof firstArg === 'string' &&
-      (firstArg.includes('Minified React error #418') ||
-        firstArg.includes('Text content does not match server-rendered HTML') ||
-        firstArg.includes('Hydration failed because'))
-    ) {
+    // 錯誤可能是字串或 Error 物件
+    const isHydrationError = args.some((arg) => {
+      if (typeof arg === 'string') {
+        return (
+          arg.includes('Minified React error #418') ||
+          arg.includes('Text content does not match server-rendered HTML') ||
+          arg.includes('Hydration failed because')
+        );
+      }
+      if (arg instanceof Error) {
+        return (
+          arg.message.includes('#418') ||
+          arg.message.includes('Hydration') ||
+          arg.message.includes('Text content does not match')
+        );
+      }
+      return false;
+    });
+
+    if (isHydrationError) {
       // 這是 SSG 環境下的預期錯誤，不需要顯示在 console
       // 參考：docs/dev/002_development_reward_penalty_log.md
       return;
