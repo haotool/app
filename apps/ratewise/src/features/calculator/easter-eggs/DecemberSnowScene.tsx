@@ -44,23 +44,23 @@ interface Snowflake {
 }
 
 /**
- * 雪花類型配置
+ * 雪花類型配置（增大 50% 提升可見性）
  */
 const SNOWFLAKE_CONFIG = {
   small: {
-    sizeRange: [4, 8], // 4-8px
+    sizeRange: [6, 12], // 6-12px (+50%)
     durationRange: [6, 10], // 6-10 秒
     opacityRange: [0.4, 0.65],
     swayRange: [0.5, 0.8],
   },
   medium: {
-    sizeRange: [8, 14], // 8-14px
+    sizeRange: [12, 20], // 12-20px (+50%)
     durationRange: [10, 15], // 10-15 秒
     opacityRange: [0.55, 0.8],
     swayRange: [0.8, 1.2],
   },
   large: {
-    sizeRange: [14, 24], // 14-24px
+    sizeRange: [20, 32], // 20-32px (+50%)
     durationRange: [14, 22], // 14-22 秒
     opacityRange: [0.7, 0.95],
     swayRange: [1.0, 1.5],

@@ -28,14 +28,16 @@
 }
 
 /* ============================================
-   基礎雪花樣式 - 純白色 SVG
+   基礎雪花樣式 - 純白色 SVG（增強白色背景可見性）
    ============================================ */
 .december-snowflake {
   position: absolute;
   top: -30px;
   color: rgba(255, 255, 255, 0.95);
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6))
-    drop-shadow(0 0 12px rgba(255, 255, 255, 0.3));
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.3)) /* 黑色輪廓 */
+    drop-shadow(0 0 2px rgba(0, 0, 0, 0.2)) /* 加強輪廓 */
+    drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) /* 白色發光 */
+    drop-shadow(0 0 16px rgba(255, 255, 255, 0.4)); /* 柔和光暈 */
   will-change: transform;
   transform: translateZ(0);
   --sway-intensity: 1;
