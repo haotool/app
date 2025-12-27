@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2025-12-28
+
+### Fixed
+
+- 修復 Skeleton 切換後下拉刷新監聽失效問題（hydration 完成後才啟用）
+- 修復雙重 `<main>` 元素違反 W3C HTML5 語意標準
+- 改善 `overscrollBehaviorY` 設定位置（移至 Layout.tsx 外層）
+
+### Changed
+
+- `usePullToRefresh` 新增可選 `enabled` 參數（預設 true，向後相容）
+- `RateWise.tsx` 主容器改用 `<div>`（保留所有樣式與功能）
+- TypeScript 型別精確化：`useRef<HTMLDivElement>`
+
+### Technical Details
+
+- PR#76: Pull-to-Refresh 動態啟用/禁用機制
+- PR#77: HTML 語意結構符合 W3C 標準
+- 測試覆蓋率：維持 80%+
+- Bundle Size：維持 <500KB
+
+### Developer Notes
+
+- 所有變更向後相容，現有呼叫無需修改
+- PWA 更新流程保持不變（UpdatePrompt 維持 v1.4.1 優化版本）
+- 用戶數據保護機制不受影響
+
 ## [1.4.1] - 2025-12-27
 
 ### Fixed

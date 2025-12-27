@@ -64,7 +64,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <HelmetProvider context={helmetContext}>
         <ErrorBoundary>
           {/* Main Content */}
-          <main role="main" className="min-h-screen">
+          <main role="main" className="min-h-screen" style={{ overscrollBehaviorY: 'contain' }}>
             {/* [SEO Fix 2025-11-26] 移除 Layout 的 sr-only H1，讓各頁面自定義語義 H1
                 依據：[Google SEO Guidelines] 每頁應有唯一的語義 H1
                 參考：[Context7:vite-react-ssg] Head component best practices */}

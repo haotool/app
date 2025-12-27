@@ -41,7 +41,7 @@ const HOMEPAGE_FAQ = [
 
 const RateWise = () => {
   // Main container ref for pull-to-refresh
-  const mainRef = useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   const isTestEnv = import.meta.env.MODE === 'test';
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
 
@@ -120,7 +120,12 @@ const RateWise = () => {
   }, []); // 移除 refresh 依賴，因為頁面會重新載入
 
   // Pull-to-refresh functionality
-  const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(mainRef, handlePullToRefresh);
+  const isPullToRefreshEnabled = isHydrated && !ratesLoading && !ratesError && !isTestEnv;
+  const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(
+    mainRef,
+    handlePullToRefresh,
+    { enabled: isPullToRefreshEnabled },
+  );
 
   // 格式化顯示時間（來源時間 · 刷新時間）
   const formattedLastUpdate = useMemo(
@@ -246,16 +251,17 @@ const RateWise = () => {
   return (
     <>
       {/* Pull-to-Refresh Indicator */}
-      <PullToRefreshIndicator
-        pullDistance={pullDistance}
-        isRefreshing={isRefreshing}
-        canTrigger={canTrigger}
-      />
+      {isPullToRefreshEnabled && (
+        <PullToRefreshIndicator
+          pullDistance={pullDistance}
+          isRefreshing={isRefreshing}
+          canTrigger={canTrigger}
+        />
+      )}
 
-      <main
+      <div
         ref={mainRef}
         className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-3 md:p-8"
-        style={{ overscrollBehaviorY: 'contain' }}
       >
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-2">
@@ -528,7 +534,7 @@ const RateWise = () => {
             </div>
           </footer>
         </div>
-      </main>
+      </div>
     </>
   );
 };
