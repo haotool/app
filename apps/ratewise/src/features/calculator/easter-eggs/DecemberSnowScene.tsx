@@ -44,25 +44,25 @@ interface Snowflake {
 }
 
 /**
- * 雪花類型配置（增大 50% 提升可見性）
+ * 雪花類型配置（精緻尺寸 + 微灰調顏色提升可見性）
  */
 const SNOWFLAKE_CONFIG = {
   small: {
-    sizeRange: [6, 12], // 6-12px (+50%)
+    sizeRange: [8, 14], // 8-14px（適中尺寸，優雅不突兀）
     durationRange: [6, 10], // 6-10 秒
-    opacityRange: [0.4, 0.65],
+    opacityRange: [0.5, 0.75], // 提高 opacity 增強可見性
     swayRange: [0.5, 0.8],
   },
   medium: {
-    sizeRange: [12, 20], // 12-20px (+50%)
+    sizeRange: [14, 22], // 14-22px
     durationRange: [10, 15], // 10-15 秒
-    opacityRange: [0.55, 0.8],
+    opacityRange: [0.65, 0.9],
     swayRange: [0.8, 1.2],
   },
   large: {
-    sizeRange: [20, 32], // 20-32px (+50%)
+    sizeRange: [22, 30], // 22-30px（略小於之前但仍清晰可見）
     durationRange: [14, 22], // 14-22 秒
-    opacityRange: [0.7, 0.95],
+    opacityRange: [0.75, 0.95],
     swayRange: [1.0, 1.5],
   },
 } as const;
@@ -86,15 +86,15 @@ function randomInRange(min: number, max: number): number {
 }
 
 /**
- * 獲取響應式雪花數量
+ * 獲取響應式雪花數量（優化效能：CSS 動畫最佳實踐 20-35 個）
  */
 function getResponsiveSnowflakeCount(): number {
-  if (typeof window === 'undefined') return 35; // SSR 預設值
+  if (typeof window === 'undefined') return 25; // SSR 預設值
 
   const width = window.innerWidth;
-  if (width >= 1024) return 55; // 桌面
-  if (width >= 768) return 35; // 平板
-  return 20; // 手機
+  if (width >= 1024) return 35; // 桌面（從 55 降至 35）
+  if (width >= 768) return 25; // 平板（從 35 降至 25）
+  return 15; // 手機（從 20 降至 15）
 }
 
 /**
