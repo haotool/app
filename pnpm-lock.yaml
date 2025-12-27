@@ -294,7 +294,7 @@ importers:
     dependencies:
       lightweight-charts:
         specifier: ^5.0.9
-        version: 5.0.9
+        version: 5.1.0
       lucide-react:
         specifier: ^0.555.0
         version: 0.555.0(react@19.2.3)
@@ -5707,8 +5707,8 @@ packages:
     resolution: {integrity: sha512-utfs7Pr5uJyyvDETitgsaqSyjCb2qNRAtuqUeWIAKztsOYdcACf2KtARYXg2pSvhkt+9NfoaNY7fxjl6nuMjIQ==}
     engines: {node: '>= 12.0.0'}
 
-  lightweight-charts@5.0.9:
-    resolution: {integrity: sha512-8oQIis8jfZVfSwz8j9Z5x3O79dIRTkEYI9UY7DKtE4O3ZxlHjMK3L0+4nOVOOFq4FHI/oSIzz1RHeNImCk6/Jg==}
+  lightweight-charts@5.1.0:
+    resolution: {integrity: sha512-jEAYR4ODYeyNZcWUigsoLTl52rbPmgXnvd5FLIv/ZoA/2sSDw63YKnef8n4yhzum7W926yHeFwlm7ididKb7YQ==}
 
   lilconfig@3.1.3:
     resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
@@ -11643,7 +11643,7 @@ snapshots:
       dayjs: 1.11.19
       defu: 6.1.4
       fuse.js: 7.1.0
-      lightweight-charts: 5.0.9
+      lightweight-charts: 5.1.0
       lodash-es: 4.17.21
       ufo: 1.6.1
       vue: 3.5.25(typescript@5.9.3)
@@ -14957,7 +14957,7 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.30.2
       lightningcss-win32-x64-msvc: 1.30.2
 
-  lightweight-charts@5.0.9:
+  lightweight-charts@5.1.0:
     dependencies:
       fancy-canvas: 2.1.0
 
