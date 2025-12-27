@@ -41,7 +41,8 @@ const HOMEPAGE_FAQ = [
 
 const RateWise = () => {
   // Main container ref for pull-to-refresh
-  const mainRef = useRef<HTMLElement>(null);
+  // [fix:2025-12-27] 使用 HTMLDivElement 類型，因為現在使用 <div> 替代 <main>
+  const mainRef = useRef<HTMLDivElement>(null);
   const isTestEnv = import.meta.env.MODE === 'test';
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
 
@@ -252,7 +253,14 @@ const RateWise = () => {
         canTrigger={canTrigger}
       />
 
-      <main
+      {/* [fix:2025-12-27] 使用 <div> 替代 <main> 避免與 Layout.tsx 的 <main> 巢狀衝突
+          巢狀 <main> 會導致：
+          1. 語義 HTML 錯誤（W3C 規範禁止巢狀 main）
+          2. overscrollBehaviorY 被外層覆蓋，下拉刷新失效
+          3. Touch 事件在錯誤層級處理
+          參考：[context7:mdn/web/docs:main:2025-12-27]
+      */}
+      <div
         ref={mainRef}
         className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-3 md:p-8"
         style={{ overscrollBehaviorY: 'contain' }}
@@ -528,7 +536,7 @@ const RateWise = () => {
             </div>
           </footer>
         </div>
-      </main>
+      </div>
     </>
   );
 };

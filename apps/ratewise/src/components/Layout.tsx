@@ -63,8 +63,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <React.StrictMode>
       <HelmetProvider context={helmetContext}>
         <ErrorBoundary>
-          {/* Main Content */}
-          <main role="main" className="min-h-screen">
+          {/* Main Content
+              [fix:2025-12-27] 新增 overscrollBehaviorY: 'contain' 確保下拉刷新在 PWA 中正常工作
+              這個設置防止瀏覽器原生的 overscroll 行為（如 Safari 的彈性滾動）
+              參考：[context7:mdn/web/docs:overscroll-behavior:2025-12-27]
+          */}
+          <main role="main" className="min-h-screen" style={{ overscrollBehaviorY: 'contain' }}>
             {/* [SEO Fix 2025-11-26] 移除 Layout 的 sr-only H1，讓各頁面自定義語義 H1
                 依據：[Google SEO Guidelines] 每頁應有唯一的語義 H1
                 參考：[Context7:vite-react-ssg] Head component best practices */}
