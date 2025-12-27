@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **DecemberTheme 整合遺漏修復** - 12 月聖誕主題功能正式啟用
+  - **問題**: App.tsx 完全沒有導入和渲染 DecemberTheme 組件
+  - **修復**: 新增 lazy loading 整合
+    - 導入: `lazyWithRetry(() => import('./features/calculator/easter-eggs/DecemberTheme'))`
+    - 渲染: `<Suspense fallback={null}><DecemberTheme /></Suspense>`
+    - 位置: ErrorBoundary 內部第一個位置（在 Router 之前）
+  - **功能特性**:
+    - ✅ 雪花飄落動畫（8 種精緻 SVG 變體，GPU 加速）
+    - ✅ 互動式迷你聖誕樹（長按 1 秒可關閉動畫）
+    - ✅ 自動判斷月份（非 12 月不渲染任何內容）
+    - ✅ 尊重 prefers-reduced-motion（自動禁用動畫）
+    - ✅ SSR 安全（useSyncExternalStore + getServerSnapshot）
+  - **影響**: 12 月訪客可看到浪漫的雪花與聖誕樹裝飾
+  - **檔案**: `apps/ratewise/src/App.tsx`
+
 - **UpdatePrompt 通知視窗 RWD 優化** - 符合 Material Design Snackbar 規範
   - **問題**: 通知視窗在行動裝置上尺寸過大（280-320px 寬度，160px+ 高度）
   - **修復**: 改為水平緊湊布局（Material Design 規範）

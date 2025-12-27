@@ -16,6 +16,14 @@ const USDToTWD = lazyWithRetry(() => import('./pages/USDToTWD'));
 // [SEO Fix 2025-11-25 Phase 2A-2] Lazy load 404 page with noindex SEO
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 
+// [December Theme 2025-12-27] Lazy load December theme with snowflakes & Christmas tree
+// Only loads during December, automatically hidden other months
+const DecemberTheme = lazyWithRetry(() =>
+  import('./features/calculator/easter-eggs/DecemberTheme').then((m) => ({
+    default: m.DecemberTheme,
+  })),
+);
+
 /**
  * URL 標準化組件
  * 必須在 Router 內部使用，負責自動重定向大寫 URL 到小寫版本
@@ -41,6 +49,18 @@ function App() {
 
   return (
     <ErrorBoundary>
+      {/* [December Theme 2025-12-27] 12 月常駐的聖誕裝飾效果
+          - 雪花飄落動畫（8 種精緻 SVG 變體，GPU 加速）
+          - 互動式迷你聖誕樹（長按 1 秒可關閉動畫）
+          - 自動判斷月份（非 12 月不渲染任何內容）
+          - 尊重 prefers-reduced-motion（自動禁用動畫）
+          - SSR 安全（useSyncExternalStore + getServerSnapshot）
+          參考：/features/calculator/easter-eggs/DecemberTheme.tsx
+      */}
+      <Suspense fallback={null}>
+        <DecemberTheme />
+      </Suspense>
+
       {/* [SEO Fix 2025-11-25 Phase 2A]
           移除全域 SEOHelmet，避免與子頁面 meta tags 衝突
 
