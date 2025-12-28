@@ -53,7 +53,12 @@ interface CachedData {
 }
 
 /**
- * 從快取讀取匯率資料
+ * 從快取讀取匯率資料（檢查有效性）
+ *
+ * [fix:2025-12-28] 離線快取保護改進：
+ * - 不再刪除過期快取，保留給離線使用
+ * - 過期只表示需要更新，不代表數據無效
+ * - 只有成功獲取新數據時才覆蓋舊快取
  */
 function getFromCache(): ExchangeRateData | null {
   try {
@@ -72,8 +77,8 @@ function getFromCache(): ExchangeRateData | null {
       logger.debug(
         `Cache expired: ${ageMinutes} minutes old (limit: ${CACHE_DURATION / 60000} minutes)`,
       );
-      // 清除過期快取
-      localStorage.removeItem(CACHE_KEY);
+      // [fix:2025-12-28] 不刪除過期快取！保留給離線使用
+      // 返回 null 表示需要嘗試獲取新數據，但舊數據仍保留在 localStorage
       return null;
     }
 

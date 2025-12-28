@@ -145,7 +145,8 @@ describe('exchangeRateService', () => {
 
       expect(result).toEqual(mockRateData);
       expect(global.fetch).toHaveBeenCalled();
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('exchangeRates'); // ✅ 清除過期快取
+      // [fix:2025-12-28] 不再刪除過期快取，保留給離線使用
+      // 過期快取會被新數據覆蓋，而非刪除
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'exchangeRates',
         expect.stringContaining('2025-10-31 01:00'),
@@ -167,9 +168,8 @@ describe('exchangeRateService', () => {
       expect(global.fetch).toHaveBeenCalled();
     });
 
-    it('CDN 失敗但無可用快取時拋出錯誤', async () => {
-      // ✅ Note: getFromCache() 會自動清除過期快取
-      // 所以當快取過期後，fallback 無法使用
+    it('CDN 失敗時使用過期快取作為 fallback', async () => {
+      // [fix:2025-12-28] 過期快取不再被刪除，可作為離線備援
       const staleData = {
         data: { ...mockRateData, updateTime: '2025-10-31 00:40' },
         timestamp: Date.now() - 20 * 60 * 1000, // 20 minutes ago (expired)
@@ -178,9 +178,20 @@ describe('exchangeRateService', () => {
 
       (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
-      // ✅ 過期快取被清除，無可用 fallback
+      // ✅ 過期快取仍可用作 fallback
+      const result = await getExchangeRates();
+      expect(result.updateTime).toBe('2025-10-31 00:40');
+      expect(logger.logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Using stale cache as fallback'),
+        expect.any(Object),
+      );
+    });
+
+    it('CDN 失敗且完全無快取時拋出錯誤', async () => {
+      // ✅ 完全無快取
+      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+
       await expect(getExchangeRates()).rejects.toThrow('Network error');
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('exchangeRates');
     });
 
     it('CDN 返回 HTTP 錯誤時拋出異常', async () => {
