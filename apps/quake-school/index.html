@@ -2,34 +2,40 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#dc2626" />
-    <meta name="color-scheme" content="light" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="theme-color" content="#0ea5e9" />
+    <meta name="app-version" content="__APP_VERSION__" />
+    <meta name="build-time" content="__BUILD_TIME__" />
 
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.webmanifest" />
-
-    <!-- Default title (will be overridden by react-helmet-async) -->
-    <title>Quake-School 地震防災教室 | 台灣地震知識與防災準備</title>
-
-    <!-- Default description -->
+    <!-- Primary Meta Tags -->
+    <title>地震知識小學堂 | 互動式地震衛教</title>
+    <meta name="title" content="地震知識小學堂 | 互動式地震衛教" />
     <meta
       name="description"
-      content="Quake-School 提供台灣地震防災教育，包含地震知識、防災準備、避難指南等完整資訊。PWA 離線可用。"
+      content="透過互動式教學了解地震科學知識。規模看大小，震度看搖晃，掌握科學，守護安全！"
     />
+    <meta
+      name="keywords"
+      content="地震, 地震教育, 地震知識, 防災教育, 震度, 規模, 地震波, P波, S波"
+    />
+    <meta name="author" content="haotool.org" />
+    <meta name="robots" content="index, follow" />
 
-    <!-- Version meta (injected at build time) -->
-    <meta name="version" content="__APP_VERSION__" />
-    <meta name="build-time" content="__BUILD_TIME__" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>

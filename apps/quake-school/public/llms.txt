@@ -1,38 +1,38 @@
-# Quake-School 地震防災教室
+# 地震知識小學堂 (Quake School)
+# AI 爬蟲友好說明文件
+# https://app.haotool.org/quake-school/
 
-> 台灣地震防災教育平台，提供地震知識、防災準備、避難指南等完整資訊
+## 網站資訊
+名稱: 地震知識小學堂
+網址: https://app.haotool.org/quake-school/
+語言: 繁體中文 (zh-TW)
+類型: 教育類互動網頁應用程式
 
-## 關於本站
+## 網站描述
+這是一個專為行動裝置設計的互動式地震衛教網頁應用程式。
+透過分級教學、互動模擬和測驗，幫助使用者了解地震科學知識。
 
-Quake-School 是一個免費的地震防災教育平台，專為台灣民眾設計。我們整合了中央氣象署、內政部消防署等官方單位的防災資訊，以淺顯易懂的方式傳達地震防災知識。
+## 核心功能
+1. 分級教學：從基礎到進階的地震知識
+2. 互動模擬：即時視覺化地震規模與震度
+3. 知識測驗：5 題精選考題鞏固觀念
+4. 離線可用：PWA 技術支援離線瀏覽
 
-## 主要功能
+## 課程主題
+- 地震成因：板塊運動與斷層
+- 地震波：P 波與 S 波的差異
+- 規模（Magnitude）：能量釋放量測
+- 震度（Intensity）：各地搖晃程度
+- 深度：震源深度對影響範圍的關係
 
-- **地震知識**：了解地震的成因、類型和台灣的地震特性
-- **防災準備**：家庭防災包準備清單和緊急聯絡方式
-- **緊急應變**：地震發生時的正確反應和避難要點
-- **PWA 支援**：支援離線瀏覽，隨時查閱防災資訊
+## 技術棧
+- React 19
+- TypeScript
+- Tailwind CSS
+- Motion (Framer Motion)
+- Vite SSG (Static Site Generation)
+- PWA (Progressive Web App)
 
-## 頁面結構
-
-- `/` - 首頁：功能介紹和快速入口
-- `/guide/` - 防災指南：完整的地震防災教學
-- `/faq/` - 常見問題：地震防災相關問答
-- `/about/` - 關於：使命和聯絡方式
-
-## 技術資訊
-
-- 框架：React 19 + Vite 7
-- SSG：vite-react-ssg（靜態站點生成）
-- 樣式：Tailwind CSS
-- PWA：支援離線使用
-- SEO：完整的結構化數據和 Meta 標籤
-
-## 聯絡資訊
-
-- 網站：https://haotool.org
-- Email：haotool.org@gmail.com
-- GitHub：https://github.com/haotool/app
-
----
-最後更新：2025-12-29
+## 版權
+© 2025 haotool.org. All rights reserved.
+授權: GPL-3.0

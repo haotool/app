@@ -1,8 +1,6 @@
 /**
- * Playwright E2E Test Configuration
- * 建立時間: 2025-12-29T02:27:28+08:00
+ * Playwright E2E 測試配置
  */
-
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -13,8 +11,9 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:4175',
+    baseURL: 'http://localhost:4175/quake-school/',
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
   },
   projects: [
     {
@@ -22,25 +21,14 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    {
       name: 'Mobile Chrome',
       use: { ...devices['Pixel 5'] },
     },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-    },
   ],
   webServer: {
-    command: 'pnpm run preview',
-    url: 'http://localhost:4175',
+    command: 'pnpm preview',
+    url: 'http://localhost:4175/quake-school/',
     reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
   },
 });

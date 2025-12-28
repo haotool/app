@@ -1,12 +1,3 @@
-/**
- * Quake-School Vite Configuration
- * [context7:/daydreamer-riri/vite-react-ssg:2025-12-29] - Vite React SSG
- * [context7:/vitejs/vite:2025-12-29] - Vite 7.x
- *
- * SEO 最佳實踐配置，基於 ratewise/nihonname 專案
- * 建立時間: 2025-12-29T02:27:28+08:00
- */
-
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -17,13 +8,15 @@ import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import dns from 'node:dns';
 
-// [fix:2025-12-03] 確保 localhost 解析一致性（Node.js v17+ DNS 變更）
+// [fix:2025-12-29] 確保 localhost 解析一致性（Node.js v17+ DNS 變更）
+// 參考: [context7:vitejs/vite:2025-12-29]
 dns.setDefaultResultOrder('verbatim');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * 自動生成版本號
+ * [context7:/daydreamer-riri/vite-react-ssg:2025-12-29]
  */
 function readPackageVersion(): string {
   const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
@@ -47,20 +40,22 @@ function generateVersion(): string {
 
 /**
  * 確保站點 URL 具備尾斜線
+ * 依據: 2025 SEO 最佳實踐
  */
 const normalizeSiteUrl = (value: string): string => {
   const trimmed = value.trim();
   return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
 };
 
+// [context7:/daydreamer-riri/vite-react-ssg:2025-12-29]
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL || 'https://app.haotool.org/quake-school/');
 
-  // 與 ratewise/nihonname 解耦，僅接受 app 專屬變數
-  const baseFromEnv = env.VITE_QUAKE_SCHOOL_BASE_PATH ?? process.env['VITE_QUAKE_SCHOOL_BASE_PATH'];
+  // 環境變數控制 base path
+  const baseFromEnv = env.VITE_QUAKESCHOOL_BASE_PATH ?? process.env['VITE_QUAKESCHOOL_BASE_PATH'];
   const base = baseFromEnv ?? (mode === 'production' || process.env['CI'] ? '/quake-school/' : '/');
 
   const manifestScope = base.endsWith('/') ? base : `${base}/`;
@@ -117,7 +112,7 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         injectRegister: 'auto',
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp,txt,xml,webmanifest}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp}'],
           globIgnores: ['**/node_modules/**'],
           ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
           clientsClaim: true,
@@ -165,27 +160,16 @@ export default defineConfig(({ mode }) => {
                 },
               },
             },
-            {
-              urlPattern: /\.(?:js|css)$/,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'static-resources',
-                networkTimeoutSeconds: 3,
-                expiration: {
-                  maxEntries: 60,
-                  maxAgeSeconds: 60 * 60 * 24 * 7,
-                },
-              },
-            },
           ],
         },
         manifest: {
           id: manifestStartUrl,
-          name: 'Quake-School 地震防災教室',
-          short_name: 'Quake-School',
-          description: '台灣地震防災教育平台，提供地震知識、防災準備、避難指南等完整資訊。',
-          theme_color: '#dc2626',
-          background_color: '#fef2f2',
+          name: '地震知識小學堂',
+          short_name: 'QuakeSchool',
+          description:
+            '互動式地震衛教網頁應用程式。透過分級教學、互動模擬和測驗，幫助您了解地震科學知識。',
+          theme_color: '#0ea5e9',
+          background_color: '#f8fafc',
           display: 'standalone',
           orientation: 'portrait',
           scope: manifestScope,
@@ -194,22 +178,16 @@ export default defineConfig(({ mode }) => {
           lang: 'zh-TW',
           icons: [
             {
-              src: 'icons/icon-192x192.png',
+              src: 'icons/icon-192.svg',
               sizes: '192x192',
-              type: 'image/png',
+              type: 'image/svg+xml',
               purpose: 'any',
             },
             {
-              src: 'icons/icon-512x512.png',
+              src: 'icons/icon-512.svg',
               sizes: '512x512',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/maskable-icon-512x512.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'maskable',
+              type: 'image/svg+xml',
+              purpose: 'any maskable',
             },
           ],
         },
@@ -234,6 +212,9 @@ export default defineConfig(({ mode }) => {
               ) {
                 return 'vendor';
               }
+              if (id.includes('motion') || id.includes('framer-motion')) {
+                return 'vendor-motion';
+              }
             }
             return undefined;
           },
@@ -241,10 +222,12 @@ export default defineConfig(({ mode }) => {
       },
       chunkSizeWarningLimit: 600,
     },
-    // [context7:/daydreamer-riri/vite-react-ssg:2025-12-29] SSG 配置
+    // [context7:/daydreamer-riri/vite-react-ssg:2025-12-29]
     ssgOptions: {
       script: 'async',
       formatting: 'none',
+      dirStyle: 'nested',
+      concurrency: 10,
       beastiesOptions: {
         preload: 'media',
         pruneSource: true,
@@ -253,10 +236,10 @@ export default defineConfig(({ mode }) => {
         preloadFonts: true,
       },
       includedRoutes: () => {
-        // SEO 預渲染路徑
-        return ['/', '/about/', '/faq/', '/guide/'];
+        // 預渲染路徑
+        return ['/', '/lessons', '/quiz', '/about'];
       },
-      // JSON-LD 和 Meta Tags 在 onPageRendered 中注入
+      // 預渲染後處理 HTML - 注入 SEO
       async onPageRendered(route, renderedHTML) {
         const { getJsonLdForRoute, jsonLdToScriptTags } = await import('./src/seo/jsonld');
         const { getMetaTagsForRoute } = await import('./src/seo/meta-tags');
