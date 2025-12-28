@@ -1,11 +1,16 @@
-import { useEffect, useState } from 'react';
-import { Workbox } from 'workbox-window';
-
 /**
  * PWA 更新通知組件 - 粉彩雲朵配色（響應式優化版）
  *
- * 更新時間: 2025-12-27T02:56:00+08:00
- * 版本: 1.4.0
+ * 更新時間: 2025-12-29T00:35:00+08:00
+ * 版本: 2.0.0
+ *
+ * [fix:2025-12-29] 重構為使用 vite-plugin-pwa 官方 React Hook
+ * 參考: [context7:/vite-pwa/vite-plugin-pwa:useRegisterSW:2025-12-29]
+ *
+ * 重構原因：
+ * - 原本使用 Workbox 類手動註冊 SW，與 vite.config.ts 的 injectRegister: 'auto' 衝突
+ * - 改用 virtual:pwa-register/react 的 useRegisterSW hook（官方推薦）
+ * - 避免雙重註冊，確保更新機制一致
  *
  * 設計特點：
  * - 柔和天空色調漸變 (purple-50 → blue-50 → purple-100)
@@ -21,106 +26,67 @@ import { Workbox } from 'workbox-window';
  * - 總是保持距離邊緣 1rem (16px) 安全間距
  *
  * 技術實現：
+ * - 使用 useRegisterSW hook（vite-plugin-pwa 官方）
  * - 彈性入場動畫 (spring physics)
- * - 右上角定位，不影響用戶操作
+ * - 底部中央定位，不影響用戶操作
  * - 完整無障礙支援 (ARIA labels, keyboard navigation)
  * - 響應式設計 (手機/桌面適配)
  *
  * 研究來源：
- * - vite-pwa-org.netlify.app/frameworks/react
+ * - [context7:/vite-pwa/vite-plugin-pwa:useRegisterSW:2025-12-29]
  * - shadcn/ui, Smashing Magazine, CSS-Tricks, NN/g
  * - Windows UX Guidelines: min 800x600 support
  */
+import { useEffect, useState } from 'react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
+
 export function UpdatePrompt() {
   const [show, setShow] = useState(false);
-  const [offlineReady, setOfflineReady] = useState(false);
-  const [needRefresh, setNeedRefresh] = useState(false);
-  const [wb, setWb] = useState<Workbox | null>(null);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
-      return;
-    }
-
-    const swUrl = import.meta.env.DEV
-      ? `${import.meta.env.BASE_URL}dev-sw.js?dev-sw`
-      : `${import.meta.env.BASE_URL}sw.js`;
-    const swScope = import.meta.env.BASE_URL || '/';
-
-    const validateServiceWorkerScript = async () => {
-      try {
-        const response = await fetch(swUrl, {
-          cache: 'no-store',
-          headers: {
-            'cache-control': 'no-cache',
+  // 使用 vite-plugin-pwa 官方 React Hook
+  // [context7:/vite-pwa/vite-plugin-pwa:2025-12-29]
+  const {
+    offlineReady: [offlineReady, setOfflineReady],
+    needRefresh: [needRefresh, setNeedRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
+    onRegistered(r) {
+      // Service Worker 已註冊，設定定期更新檢查（每小時）
+      if (r) {
+        setInterval(
+          () => {
+            void r.update();
           },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Unexpected response (${response.status}) while fetching ${swUrl}`);
-        }
-
-        const contentType = response.headers.get('content-type') ?? '';
-        if (!contentType.includes('javascript')) {
-          throw new Error(`Unsupported MIME type "${contentType}" for ${swUrl}`);
-        }
-
-        return true;
-      } catch (error) {
-        console.warn('[PWA] Skip service worker registration:', error);
-        return false;
+          60 * 60 * 1000,
+        );
       }
-    };
-
-    // 根據環境設定 Service Worker 類型
-    // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
-    const swType = import.meta.env.DEV ? 'module' : 'classic';
-
-    const workbox = new Workbox(swUrl, {
-      scope: swScope,
-      type: swType,
-    });
-
-    workbox.addEventListener('installed', (event) => {
-      if (event.isUpdate) {
-        // 檢測到新版本，顯示更新提示
-        // 用戶需要手動點擊「更新」按鈕才會重載
-        setNeedRefresh(true);
-      } else {
-        setOfflineReady(true);
-      }
-    });
-
-    setWb(workbox);
-
-    void validateServiceWorkerScript().then((isValid) => {
-      if (!isValid) {
-        return;
-      }
-
-      workbox.register().catch((error) => {
-        console.error('SW registration error:', error);
-      });
-    });
-  }, []);
+    },
+    onRegisterError(error) {
+      console.error('SW registration error:', error);
+    },
+  });
 
   // 手動更新：用戶點擊「更新」按鈕時執行
   const handleUpdate = () => {
-    if (wb) {
-      wb.messageSkipWaiting();
-      window.location.reload();
-    }
+    void updateServiceWorker(true);
   };
 
   // 動畫效果：延遲顯示以實現入場動畫
+  // 修正：使用條件返回避免 effect 中直接呼叫 setState
+  // [context7:/react/react.dev:useEffect:2025-12-29]
   useEffect(() => {
-    if (offlineReady || needRefresh) {
-      // 微延遲讓瀏覽器準備好渲染動畫
-      const timer = setTimeout(() => setShow(true), 100);
-      return () => clearTimeout(timer);
+    // 只有當需要顯示時才設定計時器
+    if (!offlineReady && !needRefresh) {
+      // 不需要顯示時，直接返回（不在 effect 中設定 state）
+      return undefined;
     }
-    setShow(false);
-    return undefined;
+    // 微延遲讓瀏覽器準備好渲染動畫
+    const timer = setTimeout(() => setShow(true), 100);
+    return () => {
+      clearTimeout(timer);
+      // 清理時重置 show 狀態（在 cleanup 中調用是安全的）
+      setShow(false);
+    };
   }, [offlineReady, needRefresh]);
 
   const close = () => {

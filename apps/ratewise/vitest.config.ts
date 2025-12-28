@@ -26,6 +26,10 @@ export default defineConfig(() => {
       alias: {
         '@app/ratewise': resolve(__dirname, './src'),
         '@shared': resolve(__dirname, '../shared'),
+        // [fix:2025-12-29] Mock vite-plugin-pwa 虛擬模組
+        // 虛擬模組在測試環境無法解析，需要提供 mock 實作
+        // 參考: https://vite-pwa-org.netlify.app/frameworks/react.html
+        'virtual:pwa-register/react': resolve(__dirname, './src/__mocks__/pwa-register-react.ts'),
       },
     },
     test: {

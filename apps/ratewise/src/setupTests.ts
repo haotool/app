@@ -6,6 +6,11 @@ import * as matchers from '@testing-library/jest-dom/matchers';
 // 參考: https://testing-library.com/docs/ecosystem-jest-dom/#with-vitest
 expect.extend(matchers);
 
+// [fix:2025-12-29] Mock virtual:pwa-register/react
+// vite-plugin-pwa 提供的虛擬模組在測試環境無法解析
+// Mock 透過 vitest.config.ts alias 指向 src/__mocks__/pwa-register-react.ts
+// 此處不再需要 vi.mock()，由 alias 處理
+
 declare global {
   // React 18 測試環境必須開啟 act() 支援旗標
   // 參考: https://react.dev/reference/react/act
