@@ -44,8 +44,10 @@ export default defineConfig(({ mode }) => {
   void (env.VITE_SITE_URL || 'https://app.haotool.org/earthquake-simulator/');
 
   // 生產/CI 預設 /earthquake-simulator/，本地開發使用 /
-  const baseFromEnv = env.VITE_EARTHQUAKE_SIMULATOR_BASE_PATH ?? process.env['VITE_EARTHQUAKE_SIMULATOR_BASE_PATH'];
-  const base = baseFromEnv ?? (mode === 'production' || process.env['CI'] ? '/earthquake-simulator/' : '/');
+  const baseFromEnv =
+    env.VITE_EARTHQUAKE_SIMULATOR_BASE_PATH ?? process.env['VITE_EARTHQUAKE_SIMULATOR_BASE_PATH'];
+  const base =
+    baseFromEnv ?? (mode === 'production' || process.env['CI'] ? '/earthquake-simulator/' : '/');
 
   const manifestScope = base.endsWith('/') ? base : `${base}/`;
   const manifestStartUrl = manifestScope;
