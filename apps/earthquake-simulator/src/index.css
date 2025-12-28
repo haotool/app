@@ -1,0 +1,65 @@
+@import 'tailwindcss';
+
+/**
+ * [fix:2025-12-29] 修復 SSG 初始 opacity:0 導致的 NO_FCP 問題
+ * framer-motion 在 SSG 時會將初始狀態 opacity:0 內聯到 HTML
+ * 使用 CSS 覆蓋確保首次繪製時內容可見
+ * [context7:magicui.design/framer-motion-react:2025-12-29]
+ */
+#root > div > div {
+  opacity: 1 !important;
+}
+
+#root > div > div > div {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* 基礎樣式 */
+body {
+  font-family:
+    'Noto Sans TC',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 隱藏滾動條但保持功能 */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 動畫優化 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 焦點狀態優化 (a11y) */
+:focus-visible {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
+}
+
+/* 選取樣式 */
+::selection {
+  background-color: #bae6fd;
+  color: #0c4a6e;
+}
