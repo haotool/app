@@ -1,13 +1,6 @@
 {
   "runs": [
     {
-      "timestamp": "2025-12-23T15:25:54Z",
-      "duration_seconds": 442,
-      "conclusion": "success",
-      "branch": "main",
-      "commit": "e23413cfb2b17e00a66df6c58d3d1c3cbbd570d4"
-    },
-    {
       "timestamp": "2025-12-23T15:34:24Z",
       "duration_seconds": 383,
       "conclusion": "success",
@@ -699,6 +692,13 @@
       "conclusion": "success",
       "branch": "feature/quake-school-seo-integration",
       "commit": "798f4d7d278413e2127c5974482074a8ab23ca74"
+    },
+    {
+      "timestamp": "2025-12-28T19:11:21Z",
+      "duration_seconds": 455,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "a7f75df16fd718b59cd55f40569a3150f7c16f8e"
     }
   ]
 }
