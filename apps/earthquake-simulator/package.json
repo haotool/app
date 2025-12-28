@@ -1,0 +1,43 @@
+{
+  "name": "@app/earthquake-simulator",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite-react-ssg dev",
+    "build": "vite-react-ssg build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
+    "format": "prettier --write src/**/*.{ts,tsx,css}",
+    "prebuild": "node scripts/generate-sitemap.js"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^6.28.0",
+    "framer-motion": "^12.23.26"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.15.32",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react-swc": "^3.10.0",
+    "autoprefixer": "^10.4.21",
+    "jsdom": "^26.1.0",
+    "postcss": "^8.5.4",
+    "@tailwindcss/postcss": "^4.1.10",
+    "tailwindcss": "^4.1.10",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-compression": "^0.5.1",
+    "vite-plugin-pwa": "^1.0.0",
+    "vite-react-ssg": "^0.8.9",
+    "vitest": "^3.2.4"
+  }
+}
