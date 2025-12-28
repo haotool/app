@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9"/>
+      <stop offset="50%" style="stop-color:#0284c7"/>
+      <stop offset="100%" style="stop-color:#0369a1"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  <!-- 0‚ -->
+  <path d="M100 315 L250 215 L350 415 L450 115 L550 515 L650 215 L800 315" 
+        stroke="white" 
+        stroke-width="12" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+        fill="none"
+        opacity="0.3"/>
+  <path d="M200 315 L300 240 L380 390 L460 165 L540 465 L620 240 L700 315" 
+        stroke="white" 
+        stroke-width="8" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+        fill="none"
+        opacity="0.5"/>
+  <!-- L -->
+  <text x="600" y="280" text-anchor="middle" fill="white" font-size="72" font-weight="bold" font-family="system-ui, sans-serif">
+    0ÂXx
+  </text>
+  <text x="600" y="360" text-anchor="middle" fill="white" font-size="36" font-family="system-ui, sans-serif" opacity="0.9">
+    í’0[Y
+  </text>
+  <!-- ïËû -->
+  <text x="600" y="520" text-anchor="middle" fill="white" font-size="24" font-family="system-ui, sans-serif" opacity="0.7">
+    è!'¶C | haotool.org
+  </text>
+</svg>
