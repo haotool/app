@@ -56,6 +56,73 @@ const QuizWidget: React.FC<Props> = ({ onFinish, onReset: _onReset }) => {
     const commonProps = { viewBox: '0 0 120 120', className: 'w-32 h-32 sm:w-36 sm:h-36' };
 
     switch (id) {
+      case 10: // P 波 - 縱波上下頂
+        return (
+          <motion.svg {...commonProps}>
+            {/* 地面 */}
+            <rect x="10" y="80" width="100" height="30" rx="4" fill="#e2e8f0" />
+            {/* P 波壓縮條 */}
+            {Array.from({ length: 8 }, (_, i) => (
+              <motion.rect
+                key={i}
+                x={15 + i * 12}
+                y="45"
+                width="8"
+                height="30"
+                rx="2"
+                fill="#0ea5e9"
+                animate={{
+                  y: [45, 50, 45],
+                  height: [30, 25, 30],
+                }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 0.4,
+                  delay: i * 0.05,
+                }}
+              />
+            ))}
+            {/* 箭頭指示上下 */}
+            <motion.path
+              d="M60 20 L60 10 M55 15 L60 10 L65 15"
+              stroke="#0ea5e9"
+              strokeWidth="3"
+              strokeLinecap="round"
+              animate={{ y: [0, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 0.5 }}
+            />
+            <text x="60" y="115" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#64748b">
+              P波：上下推拉
+            </text>
+          </motion.svg>
+        );
+      case 11: // S 波 - 橫波左右晃
+        return (
+          <motion.svg {...commonProps}>
+            {/* 房屋 */}
+            <motion.g
+              animate={{ x: [-5, 5, -5] }}
+              transition={{ repeat: Infinity, duration: 0.3 }}
+            >
+              <path d="M40 50 L60 30 L80 50 Z" fill="#94a3b8" />
+              <rect x="45" y="50" width="30" height="35" fill="#cbd5e1" />
+              <rect x="55" y="60" width="10" height="15" fill="#64748b" />
+            </motion.g>
+            {/* S 波波形 */}
+            <motion.path
+              d="M10 100 Q25 85 40 100 T70 100 T100 100"
+              fill="none"
+              stroke="#f43f5e"
+              strokeWidth="4"
+              strokeLinecap="round"
+              animate={{ x: [0, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 0.5 }}
+            />
+            <text x="60" y="115" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#64748b">
+              S波：左右搖晃
+            </text>
+          </motion.svg>
+        );
       case 7: // 板塊卡住
         return (
           <motion.svg {...commonProps}>
@@ -150,7 +217,7 @@ const QuizWidget: React.FC<Props> = ({ onFinish, onReset: _onReset }) => {
       <div className="h-14 flex items-center justify-between px-2 shrink-0 border-b border-sky-50 bg-white">
         <div className="flex flex-col">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-            Assessment
+            題目進度
           </span>
           <span className="text-xl font-black text-slate-800 font-mono leading-none mt-1">
             {String(currentIdx + 1).padStart(2, '0')} <span className="text-slate-200">/</span>{' '}

@@ -33,7 +33,7 @@ const Quiz: React.FC = () => {
           className="flex flex-col items-center justify-center min-h-screen text-center px-10 bg-sky-500 text-white relative"
         >
           <div className="w-44 h-44 rounded-[3rem] bg-white flex flex-col items-center justify-center shadow-2xl mb-10 rotate-6 border-8 border-sky-400">
-            <span className="text-[10px] font-black text-sky-400 uppercase mb-1">Expert Score</span>
+            <span className="text-[10px] font-black text-sky-400 uppercase mb-1">專家評分</span>
             <span className="text-7xl font-black text-slate-800 font-mono tracking-tighter">
               {finalScore}
             </span>
@@ -74,7 +74,7 @@ const Quiz: React.FC = () => {
       <div className="fixed inset-0 bg-white flex flex-col p-6 z-[60]">
         <header className="flex items-center justify-between mb-6 shrink-0">
           <h1 className="text-lg font-black text-slate-800 tracking-widest uppercase italic">
-            Knowledge Check
+            知識檢定
           </h1>
           <button
             onClick={() => navigate('/lessons')}
