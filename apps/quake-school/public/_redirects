@@ -1,0 +1,10 @@
+# Netlify/Cloudflare redirects
+# 尾斜線規範（SEO Best Practices 2025）
+
+# 強制尾斜線
+/about     /about/     301
+/faq       /faq/       301
+/guide     /guide/     301
+
+# SPA fallback
+/*    /index.html   200
