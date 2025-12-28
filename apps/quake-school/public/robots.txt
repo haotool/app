@@ -1,0 +1,11 @@
+# 地震知識小學堂 - robots.txt
+# https://app.haotool.org/quake-school/
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://app.haotool.org/quake-school/sitemap.xml
+
+# Disallow
+Disallow: /api/

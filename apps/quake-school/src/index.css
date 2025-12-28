@@ -1,0 +1,66 @@
+/**
+ * 地震知識小學堂 - 全域樣式
+ * [context7:/websites/tailwindcss:2025-12-29]
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 基礎樣式重置 */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased bg-white text-slate-900;
+    font-family:
+      'Noto Sans TC',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+  }
+
+  /* 無障礙：focus 樣式 */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-sky-500;
+  }
+
+  /* 減少動畫偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* 隱藏捲軸 */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer utilities {
+  /* 文字截斷 */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}

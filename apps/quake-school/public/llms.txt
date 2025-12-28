@@ -1,0 +1,38 @@
+# 地震知識小學堂 (Quake School)
+# AI 爬蟲友好說明文件
+# https://app.haotool.org/quake-school/
+
+## 網站資訊
+名稱: 地震知識小學堂
+網址: https://app.haotool.org/quake-school/
+語言: 繁體中文 (zh-TW)
+類型: 教育類互動網頁應用程式
+
+## 網站描述
+這是一個專為行動裝置設計的互動式地震衛教網頁應用程式。
+透過分級教學、互動模擬和測驗，幫助使用者了解地震科學知識。
+
+## 核心功能
+1. 分級教學：從基礎到進階的地震知識
+2. 互動模擬：即時視覺化地震規模與震度
+3. 知識測驗：5 題精選考題鞏固觀念
+4. 離線可用：PWA 技術支援離線瀏覽
+
+## 課程主題
+- 地震成因：板塊運動與斷層
+- 地震波：P 波與 S 波的差異
+- 規模（Magnitude）：能量釋放量測
+- 震度（Intensity）：各地搖晃程度
+- 深度：震源深度對影響範圍的關係
+
+## 技術棧
+- React 19
+- TypeScript
+- Tailwind CSS
+- Motion (Framer Motion)
+- Vite SSG (Static Site Generation)
+- PWA (Progressive Web App)
+
+## 版權
+© 2025 haotool.org. All rights reserved.
+授權: GPL-3.0

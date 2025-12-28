@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "id": "/quake-school/",
+  "name": "地震知識小學堂",
+  "short_name": "QuakeSchool",
+  "description": "互動式地震衛教網頁應用程式。透過分級教學、互動模擬和測驗，幫助您了解地震科學知識。",
+  "start_url": "/quake-school/",
+  "scope": "/quake-school/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0ea5e9",
+  "background_color": "#f8fafc",
+  "lang": "zh-TW",
+  "categories": ["education", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
