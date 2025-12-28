@@ -96,9 +96,15 @@ function buildLhciMockRates(date: Date): ExchangeRateData {
 
 /**
  * 快取配置
+ *
+ * [fix:2025-12-28] 雙層快取策略：
+ * - 記憶體快取：5 分鐘過期，用於減少重複請求
+ * - localStorage 快取：30 天過期，用於離線使用
  */
 const CACHE_KEY_PREFIX = 'exchange-rates';
-const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘
+const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘（記憶體快取）
+const STORAGE_CACHE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 天（localStorage 快取）
+const STORAGE_HISTORY_KEY = 'ratewise-history-cache'; // localStorage key
 
 const CONFIG = {
   MAX_HISTORY_DAYS: 30,
@@ -110,6 +116,80 @@ const CONFIG = {
  * 記憶體快取
  */
 const cache = new Map<string, { data: unknown; timestamp: number }>();
+
+/**
+ * [fix:2025-12-28] localStorage 歷史數據快取結構
+ */
+interface StorageHistoryCache {
+  version: number;
+  lastUpdated: number;
+  rates: Record<string, { data: ExchangeRateData; timestamp: number }>;
+}
+
+/**
+ * [fix:2025-12-28] 從 localStorage 讀取歷史快取
+ */
+function getStorageCache(): StorageHistoryCache | null {
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    const stored = localStorage.getItem(STORAGE_HISTORY_KEY);
+    if (!stored) return null;
+    return JSON.parse(stored) as StorageHistoryCache;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * [fix:2025-12-28] 儲存歷史數據到 localStorage
+ */
+function saveToStorageCache(dateKey: string, data: ExchangeRateData): void {
+  try {
+    if (typeof localStorage === 'undefined') return;
+
+    const cache = getStorageCache() ?? { version: 1, lastUpdated: Date.now(), rates: {} };
+
+    // 更新快取
+    cache.rates[dateKey] = { data, timestamp: Date.now() };
+    cache.lastUpdated = Date.now();
+
+    // 清理過期數據（超過 30 天的歷史）
+    const now = Date.now();
+    const keys = Object.keys(cache.rates);
+    for (const key of keys) {
+      const entry = cache.rates[key];
+      if (entry && now - entry.timestamp > STORAGE_CACHE_DURATION) {
+        delete cache.rates[key];
+      }
+    }
+
+    localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify(cache));
+  } catch (error) {
+    // localStorage 可能已滿或不可用，靜默處理
+    logger.debug('Failed to save to localStorage', {
+      service: 'exchangeRateHistoryService',
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * [fix:2025-12-28] 從 localStorage 讀取指定日期的歷史數據
+ */
+function getFromStorageCache(dateKey: string): ExchangeRateData | null {
+  const cache = getStorageCache();
+  if (!cache) return null;
+
+  const entry = cache.rates[dateKey];
+  if (!entry) return null;
+
+  // 檢查是否過期（30 天）
+  if (Date.now() - entry.timestamp > STORAGE_CACHE_DURATION) {
+    return null;
+  }
+
+  return entry.data;
+}
 
 /**
  * 格式化日期為 YYYY-MM-DD
@@ -145,17 +225,46 @@ function saveToCache<T>(key: string, data: T): void {
 }
 
 /**
+ * [fix:2025-12-28] 檢測網路狀態
+ */
+function isOnline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine;
+}
+
+/**
  * 從 URL 列表依序嘗試獲取資料
+ *
+ * [fix:2025-12-28] 離線優先快取策略：
+ * 1. 記憶體快取（5 分鐘）- 減少網路請求
+ * 2. 網路請求（如果在線）
+ * 3. localStorage 快取（30 天）- 離線備援
  */
 async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T> {
-  // 先檢查快取
+  // 1. 先檢查記憶體快取
   const cached = getFromCache<T>(cacheKey);
   if (cached) {
     logger.debug(`Cache hit for ${cacheKey}`, { service: 'exchangeRateHistoryService' });
     return cached;
   }
 
-  // 依序嘗試 URL
+  // [fix:2025-12-28] 提取日期 key（用於 localStorage）
+  const dateKey = cacheKey.replace(`${CACHE_KEY_PREFIX}-`, '');
+
+  // 2. 離線時直接使用 localStorage 快取
+  if (!isOnline()) {
+    const storedData = getFromStorageCache(dateKey);
+    if (storedData) {
+      logger.debug(`Offline: using localStorage cache for ${cacheKey}`, {
+        service: 'exchangeRateHistoryService',
+      });
+      // 同時更新記憶體快取
+      saveToCache(cacheKey, storedData);
+      return storedData as T;
+    }
+    throw new Error(`Offline and no cached data for ${cacheKey}`);
+  }
+
+  // 3. 依序嘗試 URL
   for (const url of urls) {
     try {
       logger.debug(`Fetching from ${url}`, { service: 'exchangeRateHistoryService' });
@@ -198,8 +307,10 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
 
       const data = (await response.json()) as ExchangeRateData;
 
-      // 存入快取
+      // 存入記憶體快取
       saveToCache(cacheKey, data);
+      // [fix:2025-12-28] 同時存入 localStorage 快取（離線用）
+      saveToStorageCache(dateKey, data);
 
       logger.info(`Successfully fetched from ${url}`, { service: 'exchangeRateHistoryService' });
       return data as T;
@@ -209,6 +320,16 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
         error: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+
+  // 4. 所有 URL 都失敗，嘗試 localStorage 快取作為最後備援
+  const fallbackData = getFromStorageCache(dateKey);
+  if (fallbackData) {
+    logger.debug(`Network failed, using localStorage fallback for ${cacheKey}`, {
+      service: 'exchangeRateHistoryService',
+    });
+    saveToCache(cacheKey, fallbackData);
+    return fallbackData as T;
   }
 
   throw new Error(`Failed to fetch data from all URLs: ${urls.join(', ')}`);
@@ -376,8 +497,23 @@ export async function fetchHistoricalRatesRange(
 
 /**
  * 清除快取
+ *
+ * [fix:2025-12-28] 清除記憶體和 localStorage 快取
+ * @param includeStorage 是否同時清除 localStorage 快取（預設 false，保留離線數據）
  */
-export function clearCache(): void {
+export function clearCache(includeStorage = false): void {
   cache.clear();
-  logger.info('Cache cleared', { service: 'exchangeRateHistoryService' });
+  if (includeStorage) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(STORAGE_HISTORY_KEY);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+  logger.info('Cache cleared', {
+    service: 'exchangeRateHistoryService',
+    includeStorage,
+  });
 }

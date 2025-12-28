@@ -154,13 +154,57 @@ export function recordVersionUpdate(): void {
 }
 
 /**
+ * [fix:2025-12-29] 強制更新 Service Worker
+ * 確保舊用戶能接收新功能（如 12 月彩蛋）
+ *
+ * 問題根因：
+ * - 舊 Service Worker 使用 StaleWhileRevalidate 策略
+ * - 舊用戶開啟應用時，SW 會先返回舊版快取
+ * - 必須強制 SW 更新並重新註冊
+ *
+ * 參考: [context7:/vite-pwa/vite-plugin-pwa:2025-12-29]
+ */
+export async function forceServiceWorkerUpdate(): Promise<boolean> {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    return false;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) {
+      logger.debug('No Service Worker registration found');
+      return false;
+    }
+
+    // 強制檢查更新
+    await registration.update();
+
+    // 如果有等待中的 SW，發送 skipWaiting 訊息
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      logger.info('Service Worker skipWaiting message sent');
+      return true;
+    }
+
+    logger.info('Service Worker update check triggered');
+    return true;
+  } catch (error) {
+    logger.error('Failed to force Service Worker update', error as Error);
+    return false;
+  }
+}
+
+/**
  * 處理版本更新流程
+ *
+ * [fix:2025-12-29] 加入強制 SW 更新確保舊用戶接收新功能
  *
  * 流程:
  * 1. 檢測版本變更
  * 2. 清除過期快取
- * 3. 記錄更新歷史
- * 4. 儲存新版本號
+ * 3. 強制更新 Service Worker
+ * 4. 記錄更新歷史
+ * 5. 儲存新版本號
  */
 export async function handleVersionUpdate(): Promise<void> {
   if (!hasVersionChanged()) {
@@ -179,6 +223,9 @@ export async function handleVersionUpdate(): Promise<void> {
 
   // 清除快取
   await clearAppCache();
+
+  // [fix:2025-12-29] 強制更新 Service Worker
+  await forceServiceWorkerUpdate();
 
   // 記錄更新歷史
   recordVersionUpdate();

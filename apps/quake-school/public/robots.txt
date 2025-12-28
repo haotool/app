@@ -1,0 +1,15 @@
+# Quake-School robots.txt
+# 建立時間: 2025-12-29
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://app.haotool.org/quake-school/sitemap.xml
+
+# Disallow admin paths (if any)
+Disallow: /admin/
+Disallow: /api/
+
+# AI Indexing
+# llms.txt: https://app.haotool.org/quake-school/llms.txt
