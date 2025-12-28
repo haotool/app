@@ -35,6 +35,7 @@ export function UpdatePrompt() {
   const [show, setShow] = useState(false);
   const [offlineReady, setOfflineReady] = useState(false);
   const [needRefresh, setNeedRefresh] = useState(false);
+  const [wb, setWb] = useState<Workbox | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
@@ -82,20 +83,15 @@ export function UpdatePrompt() {
 
     workbox.addEventListener('installed', (event) => {
       if (event.isUpdate) {
-        // [fix:2025-12-28] 自動更新：檢測到新版本時自動重載
-        // 問題：舊用戶需要手動點擊「更新」才能看到新功能（如聖誕彩蛋）
-        // 解法：顯示提示後自動重載，確保所有用戶獲得最新版本
+        // 檢測到新版本，顯示更新提示
+        // 用戶需要手動點擊「更新」按鈕才會重載
         setNeedRefresh(true);
-
-        // 2 秒後自動執行更新（給用戶一個簡短的提示）
-        setTimeout(() => {
-          workbox.messageSkipWaiting();
-          window.location.reload();
-        }, 2000);
       } else {
         setOfflineReady(true);
       }
     });
+
+    setWb(workbox);
 
     void validateServiceWorkerScript().then((isValid) => {
       if (!isValid) {
@@ -107,6 +103,14 @@ export function UpdatePrompt() {
       });
     });
   }, []);
+
+  // 手動更新：用戶點擊「更新」按鈕時執行
+  const handleUpdate = () => {
+    if (wb) {
+      wb.messageSkipWaiting();
+      window.location.reload();
+    }
+  };
 
   // 動畫效果：延遲顯示以實現入場動畫
   useEffect(() => {
@@ -197,18 +201,31 @@ export function UpdatePrompt() {
                 id="update-prompt-title"
                 className="text-sm font-semibold text-purple-800 truncate"
               >
-                {offlineReady ? '✨ 離線模式已就緒' : '🔄 正在更新...'}
+                {offlineReady ? '✨ 離線模式已就緒' : '🎉 發現新版本'}
               </h2>
               <p id="update-prompt-description" className="text-xs text-purple-600 truncate">
-                {offlineReady ? '隨時隨地都能使用' : '即將自動重新載入'}
+                {offlineReady ? '隨時隨地都能使用' : '點擊更新獲取最新功能'}
               </p>
             </div>
 
             {/* 行動區 - 緊湊按鈕 */}
             <div className="flex items-center gap-2 flex-shrink-0">
               {needRefresh ? (
-                // [fix:2025-12-28] 更新中顯示 loading indicator
-                <div className="w-5 h-5 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+                // 發現新版本時顯示「更新」按鈕
+                <button
+                  onClick={handleUpdate}
+                  className="
+                    px-3 py-1.5 rounded-full text-xs font-medium
+                    bg-gradient-to-r from-purple-400 to-blue-400
+                    text-white shadow-sm
+                    hover:from-purple-500 hover:to-blue-500
+                    transition-all
+                    focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1
+                  "
+                  aria-label="更新應用程式"
+                >
+                  更新
+                </button>
               ) : (
                 // 離線就緒時顯示關閉按鈕
                 <button
