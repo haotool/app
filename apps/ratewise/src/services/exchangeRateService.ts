@@ -150,10 +150,58 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
 }
 
 /**
+ * [fix:2025-12-28] 檢測網路狀態
+ * 參考: https://developer.mozilla.org/en-US/docs/Web/API/Navigator/onLine
+ */
+function isOnline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine;
+}
+
+/**
+ * [fix:2025-12-28] 嘗試讀取任何可用的快取（包括過期的）
+ * 用於離線模式或網路請求失敗時的備援
+ */
+function getAnyCachedData(): ExchangeRateData | null {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached) as CachedData;
+      const ageMinutes = Math.floor((Date.now() - timestamp) / (60 * 1000));
+      logger.debug(`Found cached data (${ageMinutes} minutes old)`, {
+        updateTime: data.updateTime,
+      });
+      return data;
+    }
+  } catch {
+    // Ignore cache read errors
+  }
+  return null;
+}
+
+/**
  * 獲取匯率資料（帶快取和 fallback）
+ *
+ * [fix:2025-12-28] 離線優先策略改進：
+ * 1. 離線時直接使用快取，不嘗試網路請求（節省資源）
+ * 2. 在線時優先使用有效快取，過期才請求網路
+ * 3. 網路失敗時使用任何可用快取（即使過期）
  */
 export async function getExchangeRates(): Promise<ExchangeRateData> {
-  logger.debug('Getting exchange rates');
+  const online = isOnline();
+  logger.debug('Getting exchange rates', { online });
+
+  // [fix:2025-12-28] 離線時直接使用快取，不嘗試網路請求
+  if (!online) {
+    const cachedData = getAnyCachedData();
+    if (cachedData) {
+      logger.info('Offline mode: using cached data', {
+        updateTime: cachedData.updateTime,
+      });
+      return cachedData;
+    }
+    // 離線且無快取，拋出錯誤
+    throw new Error('No cached data available for offline use');
+  }
 
   // 1. 嘗試從快取讀取（getFromCache 會自動檢查並清除過期快取）
   const cached = getFromCache();
@@ -172,17 +220,12 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
     logger.error('Failed to fetch exchange rates', error instanceof Error ? error : undefined);
 
     // 3. 如果 CDN 完全失敗，嘗試使用任何可用的快取（即使過期）
-    try {
-      const staleCache = localStorage.getItem(CACHE_KEY);
-      if (staleCache) {
-        const { data } = JSON.parse(staleCache) as CachedData;
-        logger.warn('Using stale cache as fallback due to fetch error', {
-          cacheTime: data.updateTime,
-        });
-        return data;
-      }
-    } catch {
-      // Ignore cache read errors
+    const staleData = getAnyCachedData();
+    if (staleData) {
+      logger.warn('Using stale cache as fallback due to fetch error', {
+        updateTime: staleData.updateTime,
+      });
+      return staleData;
     }
 
     throw error;

@@ -282,7 +282,10 @@ export default defineConfig(({ mode }) => {
           // [fix:2025-11-06] 包含 HTML 文件到預快取清單
           // Service Worker 需要知道 index.html 的位置才能處理 SPA 路由
           // [Phase3-optimization:2025-11-07] 包含 AVIF/WebP 優化圖片
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp}'],
+          // [fix:2025-12-28] 擴展預快取資源類型，確保完整離線可用
+          // 新增：txt (llms.txt), xml (sitemap), webmanifest, json (manifest 備援)
+          // 參考: https://vite-pwa-org.netlify.app/guide/service-worker-precache
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp,txt,xml,webmanifest}'],
 
           // [fix:2025-11-07] 排除不存在或臨時文件，避免 404 錯誤
           // 排除匯率數據（由 runtimeCaching 處理）
@@ -296,6 +299,11 @@ export default defineConfig(({ mode }) => {
           // [fix:2025-11-07] 忽略 URL 參數，提升快取命中率
           // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-routing/#how-to-register-a-navigation-route
           ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
+
+          // [fix:2025-12-28] 確保離線備援頁面被預快取
+          // 當所有快取策略都失敗時，顯示友好的離線頁面
+          // 參考: https://developer.chrome.com/docs/workbox/managing-fallback-responses
+          additionalManifestEntries: [{ url: 'offline.html', revision: '2025122801' }],
 
           // [fix:2025-11-06] 強制自動更新（清理舊 SW）
           clientsClaim: true,
@@ -440,6 +448,31 @@ export default defineConfig(({ mode }) => {
                 expiration: {
                   maxEntries: 60,
                   maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天（縮短以避免過期快取）
+                },
+              },
+            },
+            {
+              // [fix:2025-12-28] Manifest 和 SEO 文件：StaleWhileRevalidate
+              // 這些文件變動頻率低，但需要離線可用
+              urlPattern: /\.(webmanifest|txt|xml)$/,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'seo-files-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
+                },
+              },
+            },
+            {
+              // [fix:2025-12-28] 離線備援頁面：CacheFirst（確保離線時立即可用）
+              urlPattern: /offline\.html$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'offline-fallback',
+                expiration: {
+                  maxEntries: 1,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
                 },
               },
             },
