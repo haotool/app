@@ -1,19 +1,13 @@
 /**
- * Vitest Configuration
- * [context7:/vitest-dev/vitest:2025-12-29]
+ * 地震知識小學堂 - Vitest 測試配置
+ * [BDD 測試策略]
  */
-
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
 import { resolve } from 'node:path';
 
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@app/quake-school': resolve(__dirname, './src'),
-    },
-  },
   test: {
     globals: true,
     environment: 'jsdom',
@@ -22,18 +16,20 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.config.*', '**/types.ts'],
+      exclude: ['node_modules/', 'src/test/', '**/*.d.ts', 'src/main.tsx', 'src/routes.tsx'],
       thresholds: {
-        lines: 75,
-        functions: 75,
-        branches: 75,
-        statements: 75,
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
       },
     },
-    css: {
-      modules: {
-        classNameStrategy: 'non-scoped',
-      },
+    testTimeout: 10000,
+    hookTimeout: 10000,
+  },
+  resolve: {
+    alias: {
+      '@app/quake-school': resolve(__dirname, './src'),
     },
   },
 });

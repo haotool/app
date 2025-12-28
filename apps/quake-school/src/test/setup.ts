@@ -1,10 +1,7 @@
 /**
- * Vitest Setup
- * 測試環境初始化
- *
- * 建立時間: 2025-12-29T02:27:28+08:00
+ * 測試設置
+ * [BDD 測試策略]
  */
-
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
@@ -14,7 +11,7 @@ afterEach(() => {
   cleanup();
 });
 
-// Mock matchMedia
+// Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({
@@ -29,10 +26,10 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock scrollTo
-Object.defineProperty(window, 'scrollTo', {
+// Mock navigator.vibrate
+Object.defineProperty(navigator, 'vibrate', {
   writable: true,
-  value: vi.fn(),
+  value: vi.fn().mockReturnValue(true),
 });
 
 // Mock ResizeObserver
@@ -43,3 +40,16 @@ class ResizeObserverMock {
 }
 
 window.ResizeObserver = ResizeObserverMock;
+
+// Mock IntersectionObserver
+class IntersectionObserverMock {
+  readonly root: Element | null = null;
+  readonly rootMargin: string = '';
+  readonly thresholds: readonly number[] = [];
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+  takeRecords = vi.fn().mockReturnValue([]);
+}
+
+window.IntersectionObserver = IntersectionObserverMock as unknown as typeof IntersectionObserver;

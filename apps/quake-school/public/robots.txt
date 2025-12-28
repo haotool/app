@@ -1,5 +1,5 @@
-# Quake-School robots.txt
-# 建立時間: 2025-12-29
+# 地震知識小學堂 - robots.txt
+# https://app.haotool.org/quake-school/
 
 User-agent: *
 Allow: /
@@ -7,9 +7,5 @@ Allow: /
 # Sitemap
 Sitemap: https://app.haotool.org/quake-school/sitemap.xml
 
-# Disallow admin paths (if any)
-Disallow: /admin/
+# Disallow
 Disallow: /api/
-
-# AI Indexing
-# llms.txt: https://app.haotool.org/quake-school/llms.txt

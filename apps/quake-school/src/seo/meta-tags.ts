@@ -1,115 +1,86 @@
 /**
- * Meta Tags Configuration for SSG
- * [context7:/daydreamer-riri/vite-react-ssg:2025-12-29]
- *
- * 建立時間: 2025-12-29T02:27:28+08:00
+ * 地震知識小學堂 - SEO Meta Tags 配置
+ * [2025 SEO 最佳實踐]
  */
-
-import { SITE_CONFIG, normalizePath } from '../config/seo-paths';
-
-const ASSET_VERSION = 'v=20251229';
 
 interface PageMeta {
   title: string;
   description: string;
-  keywords: string[];
-  ogType: 'website' | 'article';
+  keywords: string;
+  ogImage?: string;
 }
 
-/**
- * 頁面 Meta 數據配置
- */
+const SITE_URL = 'https://app.haotool.org/quake-school';
+const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
+
 const PAGE_META: Record<string, PageMeta> = {
   '/': {
-    title: SITE_CONFIG.title,
-    description: SITE_CONFIG.description,
-    keywords: ['地震', '防災', '台灣', '避難', '安全', 'PWA'],
-    ogType: 'website',
+    title: '地震知識小學堂 | 互動式地震衛教',
+    description: '透過互動式教學了解地震科學知識。規模看大小，震度看搖晃，掌握科學，守護安全！',
+    keywords: '地震, 地震教育, 地震知識, 防災教育, 震度, 規模, 地震波, P波, S波',
+    ogImage: DEFAULT_OG_IMAGE,
   },
-  '/about/': {
-    title: '關於 Quake-School | 地震防災教室',
-    description:
-      '了解 Quake-School 的使命：提供台灣民眾最完整的地震防災教育資源，從地震知識到避難準備，守護每個家庭的安全。',
-    keywords: ['關於', '地震防災', '教育', '台灣', 'haotool'],
-    ogType: 'website',
+  '/lessons': {
+    title: '課程學習 | 地震知識小學堂',
+    description: '學習地震成因、地震波、規模與震度等核心知識。透過互動模擬深入了解地震科學。',
+    keywords: '地震課程, 地震學習, 地震模擬, 地震成因, 板塊運動, 斷層',
   },
-  '/faq/': {
-    title: '常見問題 FAQ | Quake-School 地震防災教室',
-    description:
-      '地震防災常見問題解答：地震發生時該如何反應？家庭防災包要準備什麼？離線使用說明等。',
-    keywords: ['FAQ', '常見問題', '地震', '防災', '避難'],
-    ogType: 'website',
+  '/quiz': {
+    title: '知識測驗 | 地震知識小學堂',
+    description: '測試你的地震知識！5題精選考題，幫助鞏固正確觀念，成為地震防災小達人。',
+    keywords: '地震測驗, 地震問答, 防災測驗, 地震考試',
   },
-  '/guide/': {
-    title: '防災指南 | Quake-School 地震防災教室',
+  '/about': {
+    title: '關於 | 地震知識小學堂',
     description:
-      '完整的地震防災指南：事前準備、緊急應變、事後處理，一步步教你保護自己和家人的安全。',
-    keywords: ['防災指南', '地震', '避難', '準備', '安全'],
-    ogType: 'article',
+      '地震知識小學堂是一個專為行動裝置設計的互動式地震衛教應用程式，幫助大眾了解地震科學知識。',
+    keywords: '地震知識小學堂, 關於, 地震教育應用',
   },
 };
 
 /**
- * 獲取頁面 Meta 數據
+ * 取得特定路由的 Meta Tags HTML
  */
-function getPageMeta(route: string): PageMeta {
-  const normalized = normalizePath(route);
-  return (
-    PAGE_META[normalized] ?? {
-      title: SITE_CONFIG.title,
-      description: SITE_CONFIG.description,
-      keywords: ['地震', '防災', '台灣'],
-      ogType: 'website' as const,
-    }
-  );
+export function getMetaTagsForRoute(route: string, buildTime: string): string {
+  const normalizedRoute = route === '' ? '/' : route.replace(/\/$/, '') || '/';
+  const meta = PAGE_META[normalizedRoute] ?? PAGE_META['/'];
+  if (!meta) {
+    throw new Error(`No meta data found for route: ${normalizedRoute}`);
+  }
+  const canonicalUrl = `${SITE_URL}${normalizedRoute === '/' ? '/' : `${normalizedRoute}/`}`;
+
+  return `
+    <!-- Primary Meta Tags -->
+    <title>${meta.title}</title>
+    <meta name="title" content="${meta.title}" />
+    <meta name="description" content="${meta.description}" />
+    <meta name="keywords" content="${meta.keywords}" />
+    <meta name="author" content="haotool.org" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="${canonicalUrl}" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="${canonicalUrl}" />
+    <meta property="og:title" content="${meta.title}" />
+    <meta property="og:description" content="${meta.description}" />
+    <meta property="og:image" content="${meta.ogImage ?? DEFAULT_OG_IMAGE}" />
+    <meta property="og:locale" content="zh_TW" />
+    <meta property="og:site_name" content="地震知識小學堂" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="${canonicalUrl}" />
+    <meta name="twitter:title" content="${meta.title}" />
+    <meta name="twitter:description" content="${meta.description}" />
+    <meta name="twitter:image" content="${meta.ogImage ?? DEFAULT_OG_IMAGE}" />
+
+    <!-- Additional SEO -->
+    <meta name="generator" content="Vite React SSG" />
+    <meta name="build-time" content="${buildTime}" />
+    <link rel="alternate" hreflang="zh-TW" href="${canonicalUrl}" />
+    <link rel="alternate" hreflang="x-default" href="${canonicalUrl}" />
+  `;
 }
 
-/**
- * 生成頁面的 Meta Tags HTML
- */
-export function getMetaTagsForRoute(route: string, _buildTime: string): string {
-  const meta = getPageMeta(route);
-  const normalized = normalizePath(route);
-  const canonicalUrl =
-    normalized === '/' ? SITE_CONFIG.url : `${SITE_CONFIG.url}${normalized.replace(/^\//, '')}`;
-  const ogImageUrl = `${SITE_CONFIG.url}og-image.png?${ASSET_VERSION}`;
-
-  const tags = [
-    // Basic Meta
-    `<title>${meta.title}</title>`,
-    `<meta name="description" content="${meta.description}" />`,
-    `<meta name="keywords" content="${meta.keywords.join(', ')}" />`,
-
-    // Canonical
-    `<link rel="canonical" href="${canonicalUrl}" />`,
-
-    // Open Graph
-    `<meta property="og:type" content="${meta.ogType}" />`,
-    `<meta property="og:title" content="${meta.title}" />`,
-    `<meta property="og:description" content="${meta.description}" />`,
-    `<meta property="og:url" content="${canonicalUrl}" />`,
-    `<meta property="og:image" content="${ogImageUrl}" />`,
-    `<meta property="og:image:width" content="1200" />`,
-    `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:locale" content="zh_TW" />`,
-    `<meta property="og:site_name" content="${SITE_CONFIG.name}" />`,
-
-    // Twitter Card
-    `<meta name="twitter:card" content="summary_large_image" />`,
-    `<meta name="twitter:title" content="${meta.title}" />`,
-    `<meta name="twitter:description" content="${meta.description}" />`,
-    `<meta name="twitter:image" content="${ogImageUrl}" />`,
-
-    // Alternate languages (hreflang)
-    `<link rel="alternate" hreflang="zh-TW" href="${canonicalUrl}" />`,
-    `<link rel="alternate" hreflang="x-default" href="${canonicalUrl}" />`,
-
-    // Additional SEO
-    `<meta name="robots" content="index, follow" />`,
-    `<meta name="googlebot" content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />`,
-    `<meta name="author" content="haotool" />`,
-    `<meta name="generator" content="Vite React SSG" />`,
-  ];
-
-  return tags.join('\n    ');
-}
+export { PAGE_META, SITE_URL };

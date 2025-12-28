@@ -1,26 +1,31 @@
 /**
- * Postbuild Script - Mirror dist for deployment
- * 建立時間: 2025-12-29T02:27:28+08:00
+ * 建置後處理腳本
+ * - 確保 dist 目錄結構正確
+ * - 處理尾斜線重定向
  */
-
-import { existsSync, mkdirSync, cpSync } from 'node:fs';
+import { existsSync, copyFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const distDir = resolve(__dirname, '../dist');
 
-const distPath = resolve(__dirname, '../dist');
-const mirrorPath = resolve(__dirname, '../../../dist/quake-school');
+function ensureDistStructure() {
+  if (!existsSync(distDir)) {
+    console.log('⚠️ dist 目錄不存在，跳過 postbuild');
+    return;
+  }
 
-// 確保目標目錄存在
-if (!existsSync(resolve(__dirname, '../../../dist'))) {
-  mkdirSync(resolve(__dirname, '../../../dist'), { recursive: true });
+  // 確保 _redirects 存在（用於 Netlify/Cloudflare Pages）
+  const redirectsSource = resolve(__dirname, '../public/_redirects');
+  const redirectsDest = resolve(distDir, '_redirects');
+
+  if (existsSync(redirectsSource) && !existsSync(redirectsDest)) {
+    copyFileSync(redirectsSource, redirectsDest);
+    console.log('✅ 複製 _redirects');
+  }
+
+  console.log('✅ postbuild 處理完成');
 }
 
-// 複製 dist 到根目錄的 dist/quake-school
-if (existsSync(distPath)) {
-  cpSync(distPath, mirrorPath, { recursive: true });
-  console.log(`✅ Dist mirrored to: ${mirrorPath}`);
-} else {
-  console.warn(`⚠️ Dist folder not found: ${distPath}`);
-}
+ensureDistStructure();

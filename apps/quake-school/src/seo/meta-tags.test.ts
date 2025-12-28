@@ -1,75 +1,56 @@
 /**
- * Meta Tags Tests
- * BDD: Given-When-Then
- *
- * 建立時間: 2025-12-29T02:27:28+08:00
+ * Meta Tags 測試
+ * [BDD 測試策略]
  */
-
 import { describe, it, expect } from 'vitest';
-import { getMetaTagsForRoute } from './meta-tags';
+import { getMetaTagsForRoute, PAGE_META, SITE_URL } from './meta-tags';
 
-describe('Meta Tags Module', () => {
+describe('SEO Meta Tags', () => {
+  describe('PAGE_META', () => {
+    it('應該包含所有頁面的 meta 資料', () => {
+      // Given: PAGE_META
+      // Then: 應該包含所有頁面
+      expect(PAGE_META).toHaveProperty('/');
+      expect(PAGE_META).toHaveProperty('/lessons');
+      expect(PAGE_META).toHaveProperty('/quiz');
+      expect(PAGE_META).toHaveProperty('/about');
+    });
+
+    it('每個頁面應該有必要的 meta 屬性', () => {
+      // Given: 每個頁面
+      Object.values(PAGE_META).forEach((meta) => {
+        // Then: 應該有必要的屬性
+        expect(meta).toHaveProperty('title');
+        expect(meta).toHaveProperty('description');
+        expect(meta).toHaveProperty('keywords');
+      });
+    });
+  });
+
   describe('getMetaTagsForRoute', () => {
-    it('首頁應該包含正確的 title', () => {
-      const result = getMetaTagsForRoute('/', '2025-12-29');
+    it('應該為首頁生成正確的 meta tags', () => {
+      // Given: 首頁路由
+      const buildTime = new Date().toISOString();
 
-      expect(result).toContain('<title>');
-      expect(result).toContain('Quake-School');
+      // When: 生成 meta tags
+      const metaTags = getMetaTagsForRoute('/', buildTime);
+
+      // Then: 應該包含正確的內容
+      expect(metaTags).toContain('地震知識小學堂');
+      expect(metaTags).toContain('og:type');
+      expect(metaTags).toContain('twitter:card');
+      expect(metaTags).toContain(SITE_URL);
     });
 
-    it('首頁應該包含 canonical URL', () => {
-      const result = getMetaTagsForRoute('/', '2025-12-29');
+    it('應該為課程頁面生成正確的 canonical URL', () => {
+      // Given: 課程頁面路由
+      const buildTime = new Date().toISOString();
 
-      expect(result).toContain('rel="canonical"');
-      expect(result).toContain('https://app.haotool.org/quake-school/');
-    });
+      // When: 生成 meta tags
+      const metaTags = getMetaTagsForRoute('/lessons', buildTime);
 
-    it('應該包含 Open Graph 標籤', () => {
-      const result = getMetaTagsForRoute('/', '2025-12-29');
-
-      expect(result).toContain('property="og:type"');
-      expect(result).toContain('property="og:title"');
-      expect(result).toContain('property="og:description"');
-      expect(result).toContain('property="og:url"');
-      expect(result).toContain('property="og:image"');
-    });
-
-    it('應該包含 Twitter Card 標籤', () => {
-      const result = getMetaTagsForRoute('/', '2025-12-29');
-
-      expect(result).toContain('name="twitter:card"');
-      expect(result).toContain('summary_large_image');
-    });
-
-    it('應該包含 hreflang 標籤', () => {
-      const result = getMetaTagsForRoute('/', '2025-12-29');
-
-      expect(result).toContain('hreflang="zh-TW"');
-      expect(result).toContain('hreflang="x-default"');
-    });
-
-    it('關於頁面應該有不同的 title', () => {
-      const result = getMetaTagsForRoute('/about/', '2025-12-29');
-
-      expect(result).toContain('關於 Quake-School');
-    });
-
-    it('FAQ 頁面應該包含相關 keywords', () => {
-      const result = getMetaTagsForRoute('/faq/', '2025-12-29');
-
-      expect(result).toContain('FAQ');
-      expect(result).toContain('常見問題');
-    });
-
-    it('canonical URL 應該統一使用尾斜線', () => {
-      const homeResult = getMetaTagsForRoute('/', '2025-12-29');
-      const aboutResult = getMetaTagsForRoute('/about', '2025-12-29');
-
-      // 首頁
-      expect(homeResult).toContain('href="https://app.haotool.org/quake-school/"');
-
-      // 關於頁面也應該有尾斜線
-      expect(aboutResult).toContain('href="https://app.haotool.org/quake-school/about/"');
+      // Then: canonical URL 應該有尾斜線
+      expect(metaTags).toContain(`${SITE_URL}/lessons/`);
     });
   });
 });
