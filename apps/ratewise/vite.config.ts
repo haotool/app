@@ -310,6 +310,23 @@ export default defineConfig(({ mode }) => {
           // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-navigation-preload/
           navigationPreload: false,
 
+          // [fix:2025-12-28] 離線導航支援 - 修復 Safari PWA 離線啟動失敗
+          // 問題：滑掉 PWA 後離線重開，Safari 報錯 "FetchEvent.respondWith received an error: TypeError: Load failed"
+          // 根因：SPA 路由（如 /faq、/about）不匹配 .html$ 模式，離線時無 fallback
+          // 解法：所有導航請求 fallback 到快取的 index.html（App Shell 模式）
+          // 參考: https://vite-pwa-org.netlify.app/guide/service-worker-precache
+          // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-routing/#how-to-register-a-navigation-route
+          navigateFallback: 'index.html',
+
+          // [fix:2025-12-28] 排除 API 和靜態資源路徑不走 navigateFallback
+          // 這些路徑應該直接返回 404 或使用專屬快取策略
+          navigateFallbackDenylist: [
+            /^\/api/, // API 路徑
+            /^\/rates/, // 匯率數據路徑
+            /\.(?:png|jpg|jpeg|gif|svg|ico|webp|avif)$/, // 圖片資源
+            /\.(?:js|css|json|woff|woff2)$/, // 靜態資源
+          ],
+
           // [fix:2025-11-05] 運行時快取策略
           // 關鍵: index.html 使用 NetworkFirst，確保優先從網路獲取最新版本
           // 參考: https://stackoverflow.com/questions/54322336
@@ -410,15 +427,19 @@ export default defineConfig(({ mode }) => {
               },
             },
             {
-              // [fix:2025-11-07] JS/CSS 資源：Stale While Revalidate（平衡即時性與速度）
+              // [fix:2025-12-28] JS/CSS 資源：Network First（確保用戶獲得最新版本）
+              // 問題：StaleWhileRevalidate 會先返回舊快取，導致新功能（如聖誕彩蛋）不出現
+              // 解法：改用 NetworkFirst，線上時優先從網路獲取，僅離線時使用快取
               // 參考: https://developer.chrome.com/docs/workbox/caching-strategies-overview
+              // 注意：Vite 生成的 JS/CSS 檔名含 hash，所以快取不會造成版本衝突
               urlPattern: /\.(?:js|css)$/,
-              handler: 'StaleWhileRevalidate',
+              handler: 'NetworkFirst',
               options: {
                 cacheName: 'static-resources',
+                networkTimeoutSeconds: 3, // 3 秒超時後使用快取（確保離線可用）
                 expiration: {
                   maxEntries: 60,
-                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天（縮短以避免過期快取）
                 },
               },
             },

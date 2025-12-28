@@ -1,20 +1,6 @@
 {
   "runs": [
     {
-      "timestamp": "2025-12-22T17:24:16Z",
-      "duration_seconds": 351,
-      "conclusion": "failure",
-      "branch": "claude/seo-audit-ratewise-3vEjt",
-      "commit": "c9b589a69c8d78c309d4fcaada30f70d8da55522"
-    },
-    {
-      "timestamp": "2025-12-22T18:00:08Z",
-      "duration_seconds": 352,
-      "conclusion": "failure",
-      "branch": "claude/seo-audit-ratewise-3vEjt",
-      "commit": "8440428ade69b61c840f9b632a132c6f86519225"
-    },
-    {
       "timestamp": "2025-12-23T13:48:50Z",
       "duration_seconds": 429,
       "conclusion": "success",
@@ -699,6 +685,20 @@
       "conclusion": "success",
       "branch": "main",
       "commit": "461a5ed081e39286fceff1b4c23ae6afa1b82d56"
+    },
+    {
+      "timestamp": "2025-12-27T20:41:48Z",
+      "duration_seconds": 422,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "f7c4ab8565d969f9a1798af71eadea9e72c66577"
+    },
+    {
+      "timestamp": "2025-12-28T06:31:59Z",
+      "duration_seconds": 358,
+      "conclusion": "success",
+      "branch": "claude/fix-pwa-offline-cache-79LTf",
+      "commit": "5773650fcc40e0e3bfd5067151943c367fcfb911"
     }
   ]
 }

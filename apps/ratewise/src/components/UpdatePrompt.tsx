@@ -83,25 +83,34 @@ export function UpdatePrompt() {
 
     workbox.addEventListener('installed', (event) => {
       if (event.isUpdate) {
+        // 檢測到新版本，顯示更新提示
+        // 用戶需要手動點擊「更新」按鈕才會重載
         setNeedRefresh(true);
       } else {
         setOfflineReady(true);
       }
     });
 
+    setWb(workbox);
+
     void validateServiceWorkerScript().then((isValid) => {
       if (!isValid) {
         return;
       }
 
-      workbox
-        .register()
-        .then(() => setWb(workbox))
-        .catch((error) => {
-          console.error('SW registration error:', error);
-        });
+      workbox.register().catch((error) => {
+        console.error('SW registration error:', error);
+      });
     });
   }, []);
+
+  // 手動更新：用戶點擊「更新」按鈕時執行
+  const handleUpdate = () => {
+    if (wb) {
+      wb.messageSkipWaiting();
+      window.location.reload();
+    }
+  };
 
   // 動畫效果：延遲顯示以實現入場動畫
   useEffect(() => {
@@ -118,15 +127,6 @@ export function UpdatePrompt() {
     setOfflineReady(false);
     setNeedRefresh(false);
     setShow(false);
-  };
-
-  const handleUpdate = () => {
-    if (wb) {
-      // 發送消息給 Service Worker 並重新載入
-      // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
-      wb.messageSkipWaiting();
-      window.location.reload();
-    }
   };
 
   if (!offlineReady && !needRefresh) {
@@ -204,56 +204,57 @@ export function UpdatePrompt() {
                 {offlineReady ? '✨ 離線模式已就緒' : '🎉 發現新版本'}
               </h2>
               <p id="update-prompt-description" className="text-xs text-purple-600 truncate">
-                {offlineReady ? '隨時隨地都能使用' : '新版本帶來更棒體驗'}
+                {offlineReady ? '隨時隨地都能使用' : '點擊更新獲取最新功能'}
               </p>
             </div>
 
             {/* 行動區 - 緊湊按鈕 */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {needRefresh && (
+              {needRefresh ? (
+                // 發現新版本時顯示「更新」按鈕
                 <button
                   onClick={handleUpdate}
                   className="
-                    px-4 py-1.5 rounded-lg
+                    px-3 py-1.5 rounded-full text-xs font-medium
                     bg-gradient-to-r from-purple-400 to-blue-400
-                    text-white text-xs font-bold
-                    shadow shadow-purple-200/50
+                    text-white shadow-sm
                     hover:from-purple-500 hover:to-blue-500
-                    active:scale-[0.98]
-                    transition-all duration-200
-                    focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1
+                    transition-all
+                    focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1
                   "
+                  aria-label="更新應用程式"
                 >
                   更新
                 </button>
-              )}
-
-              <button
-                onClick={close}
-                className="
-                  p-1.5 rounded-full
-                  bg-white/80 text-purple-400
-                  hover:text-purple-600 hover:bg-white
-                  transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1
-                "
-                aria-label="關閉通知"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
+              ) : (
+                // 離線就緒時顯示關閉按鈕
+                <button
+                  onClick={close}
+                  className="
+                    p-1.5 rounded-full
+                    bg-white/80 text-purple-400
+                    hover:text-purple-600 hover:bg-white
+                    transition-colors
+                    focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1
+                  "
+                  aria-label="關閉通知"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </div>
