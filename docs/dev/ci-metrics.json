@@ -1,13 +1,6 @@
 {
   "runs": [
     {
-      "timestamp": "2025-12-23T17:02:54Z",
-      "duration_seconds": 354,
-      "conclusion": "success",
-      "branch": "main",
-      "commit": "09e0fe46877074ded9104b65774741c9eef6174c"
-    },
-    {
       "timestamp": "2025-12-23T17:12:19Z",
       "duration_seconds": 354,
       "conclusion": "success",
@@ -699,6 +692,13 @@
       "conclusion": "success",
       "branch": "feat/earthquake-simulator-v2",
       "commit": "6388f7e88bb2b52940814af9f8148ac449bed97e"
+    },
+    {
+      "timestamp": "2025-12-28T20:17:05Z",
+      "duration_seconds": 630,
+      "conclusion": "success",
+      "branch": "main",
+      "commit": "c514af2c980ccb618cb0fbaedc677dfbb69b1a9f"
     }
   ]
 }
