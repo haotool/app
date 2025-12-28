@@ -310,6 +310,23 @@ export default defineConfig(({ mode }) => {
           // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-navigation-preload/
           navigationPreload: false,
 
+          // [fix:2025-12-28] 離線導航支援 - 修復 Safari PWA 離線啟動失敗
+          // 問題：滑掉 PWA 後離線重開，Safari 報錯 "FetchEvent.respondWith received an error: TypeError: Load failed"
+          // 根因：SPA 路由（如 /faq、/about）不匹配 .html$ 模式，離線時無 fallback
+          // 解法：所有導航請求 fallback 到快取的 index.html（App Shell 模式）
+          // 參考: https://vite-pwa-org.netlify.app/guide/service-worker-precache
+          // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-routing/#how-to-register-a-navigation-route
+          navigateFallback: 'index.html',
+
+          // [fix:2025-12-28] 排除 API 和靜態資源路徑不走 navigateFallback
+          // 這些路徑應該直接返回 404 或使用專屬快取策略
+          navigateFallbackDenylist: [
+            /^\/api/, // API 路徑
+            /^\/rates/, // 匯率數據路徑
+            /\.(?:png|jpg|jpeg|gif|svg|ico|webp|avif)$/, // 圖片資源
+            /\.(?:js|css|json|woff|woff2)$/, // 靜態資源
+          ],
+
           // [fix:2025-11-05] 運行時快取策略
           // 關鍵: index.html 使用 NetworkFirst，確保優先從網路獲取最新版本
           // 參考: https://stackoverflow.com/questions/54322336
