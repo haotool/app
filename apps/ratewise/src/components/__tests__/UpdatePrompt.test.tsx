@@ -14,9 +14,12 @@
  * - 圖標：from-purple-200 to-blue-200
  * - 標題：text-purple-800
  * - 描述：text-purple-600
- * - 按鈕：from-purple-400 to-blue-400
+ * - Loading spinner：border-purple-300 border-t-purple-600
+ *
+ * [fix:2025-12-28] 更新按鈕已移除，改用自動更新機制
  *
  * 創建時間: 2025-12-27
+ * 更新時間: 2025-12-28
  */
 
 import { describe, it, expect } from 'vitest';
@@ -89,7 +92,7 @@ describe('UpdatePrompt Component - 粉彩雲朵配色 (BDD)', () => {
       expect(sourceCode).toContain('text-purple-600');
     });
 
-    it('should use pastel cloud button gradient (purple-400 to-blue-400)', async () => {
+    it('should use pastel cloud loading spinner (purple-300 border-t-purple-600)', async () => {
       // Given: 讀取源碼
       const fs = await import('node:fs/promises');
       const path = await import('node:path');
@@ -97,9 +100,10 @@ describe('UpdatePrompt Component - 粉彩雲朵配色 (BDD)', () => {
       const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
       const sourceCode = await fs.readFile(componentPath, 'utf-8');
 
-      // When: 檢查按鈕漸變
-      // Then: 🔴 應該使用粉彩雲朵的按鈕漸變
-      expect(sourceCode).toContain('from-purple-400 to-blue-400');
+      // When: 檢查更新中的 loading spinner 配色
+      // Then: 🔴 應該使用粉彩雲朵的 loading spinner
+      // [fix:2025-12-28] 更新按鈕已移除，改用自動更新 + loading spinner
+      expect(sourceCode).toContain('border-purple-300 border-t-purple-600');
     });
 
     it('should NOT use brand blue colors (blue-500, blue-600, indigo-600)', async () => {

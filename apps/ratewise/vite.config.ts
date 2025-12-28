@@ -427,15 +427,19 @@ export default defineConfig(({ mode }) => {
               },
             },
             {
-              // [fix:2025-11-07] JS/CSS 資源：Stale While Revalidate（平衡即時性與速度）
+              // [fix:2025-12-28] JS/CSS 資源：Network First（確保用戶獲得最新版本）
+              // 問題：StaleWhileRevalidate 會先返回舊快取，導致新功能（如聖誕彩蛋）不出現
+              // 解法：改用 NetworkFirst，線上時優先從網路獲取，僅離線時使用快取
               // 參考: https://developer.chrome.com/docs/workbox/caching-strategies-overview
+              // 注意：Vite 生成的 JS/CSS 檔名含 hash，所以快取不會造成版本衝突
               urlPattern: /\.(?:js|css)$/,
-              handler: 'StaleWhileRevalidate',
+              handler: 'NetworkFirst',
               options: {
                 cacheName: 'static-resources',
+                networkTimeoutSeconds: 3, // 3 秒超時後使用快取（確保離線可用）
                 expiration: {
                   maxEntries: 60,
-                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天（縮短以避免過期快取）
                 },
               },
             },

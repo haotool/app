@@ -35,7 +35,6 @@ export function UpdatePrompt() {
   const [show, setShow] = useState(false);
   const [offlineReady, setOfflineReady] = useState(false);
   const [needRefresh, setNeedRefresh] = useState(false);
-  const [wb, setWb] = useState<Workbox | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
@@ -83,7 +82,16 @@ export function UpdatePrompt() {
 
     workbox.addEventListener('installed', (event) => {
       if (event.isUpdate) {
+        // [fix:2025-12-28] 自動更新：檢測到新版本時自動重載
+        // 問題：舊用戶需要手動點擊「更新」才能看到新功能（如聖誕彩蛋）
+        // 解法：顯示提示後自動重載，確保所有用戶獲得最新版本
         setNeedRefresh(true);
+
+        // 2 秒後自動執行更新（給用戶一個簡短的提示）
+        setTimeout(() => {
+          workbox.messageSkipWaiting();
+          window.location.reload();
+        }, 2000);
       } else {
         setOfflineReady(true);
       }
@@ -94,12 +102,9 @@ export function UpdatePrompt() {
         return;
       }
 
-      workbox
-        .register()
-        .then(() => setWb(workbox))
-        .catch((error) => {
-          console.error('SW registration error:', error);
-        });
+      workbox.register().catch((error) => {
+        console.error('SW registration error:', error);
+      });
     });
   }, []);
 
@@ -118,15 +123,6 @@ export function UpdatePrompt() {
     setOfflineReady(false);
     setNeedRefresh(false);
     setShow(false);
-  };
-
-  const handleUpdate = () => {
-    if (wb) {
-      // 發送消息給 Service Worker 並重新載入
-      // [context7:vite-pwa-org.netlify.app:2025-10-21T18:00:00+08:00]
-      wb.messageSkipWaiting();
-      window.location.reload();
-    }
   };
 
   if (!offlineReady && !needRefresh) {
@@ -201,59 +197,47 @@ export function UpdatePrompt() {
                 id="update-prompt-title"
                 className="text-sm font-semibold text-purple-800 truncate"
               >
-                {offlineReady ? '✨ 離線模式已就緒' : '🎉 發現新版本'}
+                {offlineReady ? '✨ 離線模式已就緒' : '🔄 正在更新...'}
               </h2>
               <p id="update-prompt-description" className="text-xs text-purple-600 truncate">
-                {offlineReady ? '隨時隨地都能使用' : '新版本帶來更棒體驗'}
+                {offlineReady ? '隨時隨地都能使用' : '即將自動重新載入'}
               </p>
             </div>
 
             {/* 行動區 - 緊湊按鈕 */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {needRefresh && (
+              {needRefresh ? (
+                // [fix:2025-12-28] 更新中顯示 loading indicator
+                <div className="w-5 h-5 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+              ) : (
+                // 離線就緒時顯示關閉按鈕
                 <button
-                  onClick={handleUpdate}
+                  onClick={close}
                   className="
-                    px-4 py-1.5 rounded-lg
-                    bg-gradient-to-r from-purple-400 to-blue-400
-                    text-white text-xs font-bold
-                    shadow shadow-purple-200/50
-                    hover:from-purple-500 hover:to-blue-500
-                    active:scale-[0.98]
-                    transition-all duration-200
-                    focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1
+                    p-1.5 rounded-full
+                    bg-white/80 text-purple-400
+                    hover:text-purple-600 hover:bg-white
+                    transition-colors
+                    focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1
                   "
+                  aria-label="關閉通知"
                 >
-                  更新
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
                 </button>
               )}
-
-              <button
-                onClick={close}
-                className="
-                  p-1.5 rounded-full
-                  bg-white/80 text-purple-400
-                  hover:text-purple-600 hover:bg-white
-                  transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1
-                "
-                aria-label="關閉通知"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
             </div>
           </div>
         </div>
