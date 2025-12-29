@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
   <defs>
     <linearGradient id="quakeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -6,14 +7,12 @@
     </linearGradient>
   </defs>
   <rect width="256" height="256" rx="32" fill="url(#quakeGradient)"/>
-  <!-- ????? -->
   <path d="M48 128 L88 88 L108 148 L128 68 L148 188 L168 108 L208 128" 
         stroke="white" 
         stroke-width="8" 
         stroke-linecap="round" 
         stroke-linejoin="round" 
         fill="none"/>
-  <!-- ?????? -->
   <path d="M88 180 L128 150 L168 180 L168 210 L88 210 Z" 
         fill="white" 
         opacity="0.9"/>

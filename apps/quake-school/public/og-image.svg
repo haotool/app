@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
   <defs>
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -7,7 +8,6 @@
     </linearGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#bgGradient)"/>
-  <!-- ??? -->
   <path d="M100 315 L250 215 L350 415 L450 115 L550 515 L650 215 L800 315" 
         stroke="white" 
         stroke-width="12" 
@@ -22,15 +22,13 @@
         stroke-linejoin="round" 
         fill="none"
         opacity="0.5"/>
-  <!-- ?? -->
   <text x="600" y="280" text-anchor="middle" fill="white" font-size="72" font-weight="bold" font-family="system-ui, sans-serif">
-    ???????
+    Earthquake School
   </text>
   <text x="600" y="360" text-anchor="middle" fill="white" font-size="36" font-family="system-ui, sans-serif" opacity="0.9">
-    ???????
+    Interactive Earthquake Education
   </text>
-  <!-- ???? -->
   <text x="600" y="520" text-anchor="middle" fill="white" font-size="24" font-family="system-ui, sans-serif" opacity="0.7">
-    ??????????? | haotool.org
+    Learn | Explore | Prepare | haotool.org
   </text>
 </svg>

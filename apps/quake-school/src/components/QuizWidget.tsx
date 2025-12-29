@@ -1,6 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { QUIZ_QUESTIONS } from '../data/lessons';
+
+// 隨機洗牌函數 (Fisher-Yates)
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = shuffled[i];
+    shuffled[i] = shuffled[j] as T;
+    shuffled[j] = temp as T;
+  }
+  return shuffled;
+};
+
+// 每次測驗抽取的題目數量
+const QUESTIONS_PER_QUIZ = 5;
 
 interface Props {
   onFinish: (score: number) => void;
@@ -8,12 +23,17 @@ interface Props {
 }
 
 const QuizWidget: React.FC<Props> = ({ onFinish, onReset: _onReset }) => {
+  // 隨機抽取題目（只在初始化時執行一次）
+  const randomQuestions = useMemo(() => {
+    return shuffleArray(QUIZ_QUESTIONS).slice(0, QUESTIONS_PER_QUIZ);
+  }, []);
+
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [score, setScore] = useState(0);
 
-  const question = QUIZ_QUESTIONS[currentIdx];
+  const question = randomQuestions[currentIdx];
 
   if (!question) {
     return <div>Error: No question found</div>;
@@ -36,14 +56,14 @@ const QuizWidget: React.FC<Props> = ({ onFinish, onReset: _onReset }) => {
     }
 
     if (isCorrect) {
-      setScore((s) => s + 20);
+      setScore((s) => s + Math.floor(100 / QUESTIONS_PER_QUIZ));
     }
   };
 
   const handleNext = () => {
     if (navigator.vibrate) navigator.vibrate(10);
 
-    if (currentIdx < QUIZ_QUESTIONS.length - 1) {
+    if (currentIdx < randomQuestions.length - 1) {
       setCurrentIdx((i) => i + 1);
       setSelectedIdx(null);
       setIsAnswered(false);
@@ -186,26 +206,416 @@ const QuizWidget: React.FC<Props> = ({ onFinish, onReset: _onReset }) => {
             </text>
           </motion.svg>
         );
-      case 3: // 距離衰減
+      case 3: // 震度會因距離而不同
         return (
           <motion.svg {...commonProps}>
-            <motion.path d="M20 90 L15 70 L25 75 L30 60 L35 75 L45 70 L40 90 Z" fill="#ef4444" />
+            {/* 震央 */}
+            <motion.circle
+              cx="30"
+              cy="60"
+              r="10"
+              fill="#ef4444"
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ repeat: Infinity, duration: 1 }}
+            />
+            {/* 同心圓波紋 */}
             {[1, 2, 3].map((i) => (
-              <motion.path
+              <motion.circle
                 key={i}
-                d={`M${30 + i * 15} 60 Q${40 + i * 15} 70 ${30 + i * 15} 80`}
+                cx="30"
+                cy="60"
+                r={20 + i * 20}
                 fill="none"
                 stroke="#3b82f6"
-                strokeWidth="3"
-                strokeLinecap="round"
-                animate={{ opacity: [0, 1, 0], x: [0, 10] }}
-                transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.3 }}
+                strokeWidth="2"
+                opacity={1 - i * 0.25}
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.8 - i * 0.2, 0.4 - i * 0.1, 0.8 - i * 0.2],
+                }}
+                transition={{ repeat: Infinity, duration: 2, delay: i * 0.3 }}
               />
             ))}
+            <text x="90" y="100" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#64748b">
+              越遠越弱
+            </text>
+          </motion.svg>
+        );
+      case 4: // 淺層地震破壞力
+        return (
+          <motion.svg {...commonProps}>
+            {/* 地表 */}
+            <rect x="10" y="70" width="100" height="40" fill="#e2e8f0" rx="4" />
+            {/* 淺層震源 */}
+            <motion.circle
+              cx="60"
+              cy="55"
+              r="8"
+              fill="#ef4444"
+              animate={{ scale: [1, 1.5, 1] }}
+              transition={{ repeat: Infinity, duration: 0.5 }}
+            />
+            {/* 衝擊波 */}
+            <motion.path
+              d="M40 70 L50 55 L60 70 L70 55 L80 70"
+              fill="none"
+              stroke="#f97316"
+              strokeWidth="3"
+              animate={{ y: [0, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 0.3 }}
+            />
+            <text x="60" y="115" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#64748b">
+              淺層=近距離重擊
+            </text>
+          </motion.svg>
+        );
+      case 5: // DCH 趴下掩護
+        return (
+          <motion.svg {...commonProps}>
+            {/* 桌子 */}
+            <rect x="30" y="50" width="60" height="8" fill="#94a3b8" rx="2" />
+            <rect x="35" y="58" width="4" height="30" fill="#94a3b8" />
+            <rect x="81" y="58" width="4" height="30" fill="#94a3b8" />
+            {/* 人躲在桌下 */}
+            <motion.g animate={{ y: [0, -2, 0] }} transition={{ repeat: Infinity, duration: 0.5 }}>
+              <circle cx="60" cy="70" r="8" fill="#fbbf24" />
+              <ellipse cx="60" cy="85" rx="12" ry="8" fill="#fbbf24" />
+            </motion.g>
+            <text x="60" y="115" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#64748b">
+              趴下掩護穩住
+            </text>
+          </motion.svg>
+        );
+      case 6: // 地震後檢查瓦斯
+        return (
+          <motion.svg {...commonProps}>
+            {/* 瓦斯爐 */}
+            <rect x="35" y="50" width="50" height="35" fill="#64748b" rx="4" />
+            <circle cx="50" cy="65" r="8" fill="#374151" />
+            <circle cx="70" cy="65" r="8" fill="#374151" />
+            {/* 火焰（關閉狀態） */}
+            <motion.path
+              d="M50 55 L52 45 L50 50 L48 45 Z"
+              fill="#22c55e"
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ repeat: Infinity, duration: 1 }}
+            />
+            <text x="60" y="115" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#64748b">
+              檢查瓦斯
+            </text>
+          </motion.svg>
+        );
+      case 12: // S 波無法穿過液體
+        return (
+          <motion.svg {...commonProps}>
+            {/* 地球剖面 */}
+            <circle cx="60" cy="60" r="45" fill="#e2e8f0" />
+            <circle cx="60" cy="60" r="25" fill="#3b82f6" opacity="0.6" />
+            <circle cx="60" cy="60" r="10" fill="#f59e0b" />
+            {/* S 波被擋 */}
+            <motion.path
+              d="M20 60 L35 60"
+              stroke="#f43f5e"
+              strokeWidth="4"
+              strokeLinecap="round"
+              animate={{ x: [0, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 1 }}
+            />
+            <text x="25" y="50" fontSize="8" fill="#f43f5e" fontWeight="bold">
+              S波
+            </text>
+            <text x="60" y="115" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#64748b">
+              液態外核擋住S波
+            </text>
+          </motion.svg>
+        );
+      case 13: // 臺灣板塊
+        return (
+          <motion.svg {...commonProps}>
+            {/* 簡化臺灣形狀 */}
+            <motion.path
+              d="M55 30 Q70 35 65 60 Q70 80 60 90 Q50 85 55 60 Q45 40 55 30"
+              fill="#22c55e"
+              stroke="#16a34a"
+              strokeWidth="2"
+              animate={{ x: [-2, 2, -2] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            />
+            {/* 板塊箭頭 */}
+            <motion.path
+              d="M20 60 L40 60 M35 55 L40 60 L35 65"
+              stroke="#3b82f6"
+              strokeWidth="3"
+              strokeLinecap="round"
+              animate={{ x: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+            />
+            <motion.path
+              d="M100 60 L80 60 M85 55 L80 60 L85 65"
+              stroke="#f43f5e"
+              strokeWidth="3"
+              strokeLinecap="round"
+              animate={{ x: [0, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+            />
+            <text x="20" y="80" fontSize="7" fill="#3b82f6" fontWeight="bold">
+              歐亞
+            </text>
+            <text x="85" y="80" fontSize="7" fill="#f43f5e" fontWeight="bold">
+              菲律賓海
+            </text>
+          </motion.svg>
+        );
+      case 14: // 斷層
+        return (
+          <motion.svg {...commonProps}>
+            {/* 岩層 */}
+            <rect x="15" y="30" width="40" height="60" fill="#94a3b8" rx="2" />
+            <motion.rect
+              x="65"
+              y="40"
+              width="40"
+              height="60"
+              fill="#64748b"
+              rx="2"
+              animate={{ y: [40, 35, 40] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            />
+            {/* 斷層線 */}
+            <motion.path
+              d="M55 30 L65 100"
+              stroke="#ef4444"
+              strokeWidth="3"
+              strokeDasharray="5 3"
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ repeat: Infinity, duration: 1 }}
+            />
+            <text x="60" y="115" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#64748b">
+              斷層位移
+            </text>
+          </motion.svg>
+        );
+      case 15: // 32個 M6 = 1個 M7
+        return (
+          <motion.svg {...commonProps}>
+            {/* 小圓點群 */}
+            {Array.from({ length: 16 }, (_, i) => (
+              <motion.circle
+                key={i}
+                cx={20 + (i % 4) * 12}
+                cy={25 + Math.floor(i / 4) * 12}
+                r="4"
+                fill="#94a3b8"
+                animate={{ scale: [1, 0.8, 1] }}
+                transition={{ repeat: Infinity, duration: 1, delay: i * 0.05 }}
+              />
+            ))}
+            <text x="40" y="85" fontSize="8" fill="#64748b">
+              M6 x32
+            </text>
+            {/* 等號 */}
+            <text x="60" y="75" fontSize="16" fill="#64748b">
+              =
+            </text>
+            {/* 大圓 */}
+            <motion.circle
+              cx="90"
+              cy="55"
+              r="20"
+              fill="#f59e0b"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ repeat: Infinity, duration: 0.8 }}
+            />
+            <text x="90" y="90" textAnchor="middle" fontSize="8" fill="#64748b">
+              M7
+            </text>
+          </motion.svg>
+        );
+      case 16: // 臺灣震度7級
+        return (
+          <motion.svg {...commonProps}>
+            {/* 震度階梯 */}
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((level, i) => (
+              <motion.rect
+                key={level}
+                x={10 + i * 12}
+                y={90 - level * 10}
+                width="10"
+                height={level * 10 + 10}
+                fill={level >= 5 ? '#ef4444' : level >= 3 ? '#f59e0b' : '#22c55e'}
+                rx="2"
+                animate={level === 7 ? { opacity: [1, 0.7, 1] } : {}}
+                transition={{ repeat: Infinity, duration: 0.5 }}
+              />
+            ))}
+            <text x="60" y="115" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#64748b">
+              0-7級震度
+            </text>
+          </motion.svg>
+        );
+      case 17: // 震度5弱體感
+        return (
+          <motion.svg {...commonProps}>
+            {/* 人形 */}
+            <motion.g
+              animate={{ x: [-5, 5, -5], rotate: [-5, 5, -5] }}
+              transition={{ repeat: Infinity, duration: 0.4 }}
+            >
+              <circle cx="60" cy="35" r="12" fill="#fbbf24" />
+              <rect x="52" y="47" width="16" height="30" fill="#3b82f6" rx="4" />
+              <rect x="48" y="77" width="8" height="20" fill="#1e40af" rx="2" />
+              <rect x="64" y="77" width="8" height="20" fill="#1e40af" rx="2" />
+            </motion.g>
+            {/* 家具 */}
+            <motion.rect
+              x="20"
+              y="60"
+              width="15"
+              height="30"
+              fill="#94a3b8"
+              rx="2"
+              animate={{ x: [-3, 3, -3] }}
+              transition={{ repeat: Infinity, duration: 0.3 }}
+            />
+            <text x="60" y="115" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#64748b">
+              難以站穩
+            </text>
+          </motion.svg>
+        );
+      case 18: // 深層地震
+        return (
+          <motion.svg {...commonProps}>
+            {/* 地表 */}
+            <rect x="10" y="20" width="100" height="15" fill="#e2e8f0" rx="2" />
+            {/* 深層震源 */}
+            <motion.circle
+              cx="60"
+              cy="90"
+              r="10"
+              fill="#f59e0b"
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+            />
+            {/* 擴散波紋 */}
+            {[1, 2, 3].map((i) => (
+              <motion.circle
+                key={i}
+                cx="60"
+                cy="90"
+                r={15 + i * 15}
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth="1"
+                opacity={0.3}
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ repeat: Infinity, duration: 2, delay: i * 0.2 }}
+              />
+            ))}
+            <text x="60" y="115" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#64748b">
+              深層：廣但弱
+            </text>
+          </motion.svg>
+        );
+      case 19: // 躲桌下
+        return (
+          <motion.svg {...commonProps}>
+            {/* 房間 */}
+            <rect
+              x="10"
+              y="10"
+              width="100"
+              height="80"
+              fill="#f1f5f9"
+              stroke="#cbd5e1"
+              strokeWidth="2"
+              rx="4"
+            />
+            {/* 窗戶（危險） */}
+            <rect
+              x="75"
+              y="20"
+              width="25"
+              height="30"
+              fill="#bfdbfe"
+              stroke="#ef4444"
+              strokeWidth="2"
+            />
+            <text x="87" y="60" fontSize="6" fill="#ef4444">
+              ✕
+            </text>
+            {/* 桌子 */}
+            <rect x="25" y="55" width="40" height="6" fill="#78716c" rx="2" />
+            <rect x="28" y="61" width="4" height="20" fill="#78716c" />
+            <rect x="58" y="61" width="4" height="20" fill="#78716c" />
+            {/* 人躲在下面 */}
+            <motion.circle
+              cx="45"
+              cy="70"
+              r="6"
+              fill="#22c55e"
+              animate={{ scale: [1, 0.9, 1] }}
+              transition={{ repeat: Infinity, duration: 1 }}
+            />
+            <text x="45" y="95" textAnchor="middle" fontSize="6" fill="#22c55e">
+              ✓
+            </text>
+          </motion.svg>
+        );
+      case 20: // 地震預警
+        return (
+          <motion.svg {...commonProps}>
+            {/* 手機 */}
+            <rect x="40" y="20" width="40" height="70" fill="#1e293b" rx="8" />
+            <rect x="44" y="28" width="32" height="54" fill="#0ea5e9" rx="2" />
+            {/* 警報圖示 */}
+            <motion.g
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ repeat: Infinity, duration: 0.5 }}
+            >
+              <circle cx="60" cy="50" r="10" fill="#fbbf24" />
+              <text
+                x="60"
+                y="54"
+                textAnchor="middle"
+                fontSize="12"
+                fill="#78350f"
+                fontWeight="bold"
+              >
+                !
+              </text>
+            </motion.g>
+            {/* 秒數 */}
+            <text x="60" y="72" textAnchor="middle" fontSize="10" fill="white" fontWeight="bold">
+              10秒
+            </text>
+            <text x="60" y="115" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#64748b">
+              預警爭取時間
+            </text>
           </motion.svg>
         );
       default:
-        return null;
+        // 通用動畫：地震波
+        return (
+          <motion.svg {...commonProps}>
+            <motion.path
+              d="M20 60 L35 40 L50 80 L65 30 L80 70 L95 50 L100 60"
+              fill="none"
+              stroke="#0ea5e9"
+              strokeWidth="4"
+              strokeLinecap="round"
+              animate={{ pathLength: [0, 1] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            />
+            <motion.circle
+              cx="60"
+              cy="90"
+              r="8"
+              fill="#f43f5e"
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ repeat: Infinity, duration: 1 }}
+            />
+          </motion.svg>
+        );
     }
   };
 
@@ -218,13 +628,13 @@ const QuizWidget: React.FC<Props> = ({ onFinish, onReset: _onReset }) => {
           </span>
           <span className="text-xl font-black text-slate-800 font-mono leading-none mt-1">
             {String(currentIdx + 1).padStart(2, '0')} <span className="text-slate-200">/</span>{' '}
-            {String(QUIZ_QUESTIONS.length).padStart(2, '0')}
+            {String(randomQuestions.length).padStart(2, '0')}
           </span>
         </div>
         <div className="h-2 w-32 bg-slate-100 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${((currentIdx + 1) / QUIZ_QUESTIONS.length) * 100}%` }}
+            animate={{ width: `${((currentIdx + 1) / randomQuestions.length) * 100}%` }}
             className="h-full bg-sky-500 transition-all duration-500"
           />
         </div>
@@ -308,7 +718,7 @@ const QuizWidget: React.FC<Props> = ({ onFinish, onReset: _onReset }) => {
                   className="mt-6 w-full h-14 shrink-0 bg-sky-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-sky-100 flex items-center justify-center space-x-3"
                 >
                   <span>
-                    {currentIdx < QUIZ_QUESTIONS.length - 1 ? '前進下一題' : '完成檢定課程'}
+                    {currentIdx < randomQuestions.length - 1 ? '前進下一題' : '完成檢定課程'}
                   </span>
                   <svg
                     className="w-5 h-5"

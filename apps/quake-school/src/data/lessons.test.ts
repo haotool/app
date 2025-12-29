@@ -29,11 +29,11 @@ describe('課程資料', () => {
   });
 
   describe('QUIZ_QUESTIONS', () => {
-    it('應該包含 5 個問題', () => {
+    it('應該包含至少 10 個問題（題庫）', () => {
       // Given: QUIZ_QUESTIONS 資料
       // When: 檢查長度
-      // Then: 應該有 5 個問題
-      expect(QUIZ_QUESTIONS).toHaveLength(5);
+      // Then: 題庫應該有足夠的問題供隨機抽取
+      expect(QUIZ_QUESTIONS.length).toBeGreaterThanOrEqual(10);
     });
 
     it('每個問題應該有正確的結構', () => {
