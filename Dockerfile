@@ -54,6 +54,7 @@ COPY . .
 
 # Build applications（若外部未提供 build args，於此自動回退計算）
 # [fix:2025-12-13] 分別為每個專案設置對應的 base 變數，避免相互污染
+# [fix:2025-12-30] 在構建前生成所有 sitemaps
 # 新增 haotool 作為根路徑首頁
 RUN set -eux; \
   if [ -z "${GIT_COMMIT_COUNT:-}" ]; then \
@@ -65,10 +66,18 @@ RUN set -eux; \
   if [ -z "${BUILD_TIME:-}" ]; then \
     export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
   fi; \
+  pnpm generate:sitemaps && \
   VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
   VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname && \
   VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school
+
+# [fix:2025-12-30] 驗證 sitemaps 已生成並包含在構建中
+RUN test -f /app/apps/ratewise/public/sitemap.xml && \
+    test -f /app/apps/nihonname/public/sitemap.xml && \
+    test -f /app/apps/haotool/public/sitemap.xml && \
+    test -f /app/apps/quake-school/public/sitemap.xml || \
+    { echo "ERROR: Sitemaps not generated in Docker build"; exit 1; }
 
 # Production stage
 # [fix:2025-12-09] 使用 nginx:alpine 並升級系統包以修復 libpng 漏洞

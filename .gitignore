@@ -101,3 +101,6 @@ apps/ratewise/dev-server.log
 
 # Example files (reference only)
 .example/
+
+# Generated sitemap files (build artifacts, not source)
+apps/*/public/sitemap.xml

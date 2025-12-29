@@ -11,7 +11,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node ../../scripts/generate-sitemap-2025.mjs && node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs",
+    "prebuild": "node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs",
     "build": "tsc --noEmit && vite-react-ssg build --config vite.config.ts",
     "postbuild": "node scripts/update-csp-meta.js && node scripts/postbuild-mirror-dist.js",
     "preview": "vite preview",
@@ -24,6 +24,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
     "typecheck": "tsc --noEmit",
+    "generate:sitemap": "node ../../scripts/generate-sitemap-2025.mjs",
     "verify": "node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs",
     "verify:ssot": "node ../../scripts/verify-ssot-sync.mjs",
     "verify:images": "node ../../scripts/verify-image-resources.mjs",

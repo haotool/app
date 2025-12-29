@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2025-12-30
+
+### Changed
+
+- **CI/CD**: Sitemap 生成移至 CI/CD pipeline
+  - 不再在本地 build 時自動生成 sitemap.xml
+  - sitemap.xml 排除於版本控制（.gitignore）
+  - 本地測試可用 `pnpm generate:sitemaps` 手動生成
+  - Docker 建置包含 sitemap 生成步驟
+
+### Added
+
+- 統一 sitemap 生成器：`scripts/ci-generate-all-sitemaps.mjs`
+  - 自動發現所有應用（workspace-utils.mjs）
+  - RateWise 使用 2025 標準（Image Sitemap Extension）
+  - 其他應用使用傳統格式（changefreq/priority）
+  - CI 友好的錯誤處理與退出碼
+
+### Removed
+
+- 所有應用的 prebuild sitemap 生成鉤子
+- git 版本控制中已提交的 sitemap.xml 文件
+
+### Fixed
+
+- 消除 sitemap 變更產生的 git 噪音
+- sitemap 現在作為建置產物而非源碼
+- 所有環境使用一致的 sitemap 生成邏輯
+
+### Technical Details
+
+- GitHub Actions workflow 新增 sitemap 生成與驗證步驟
+- Dockerfile 在構建前生成並驗證 sitemaps
+- SSOT: 所有路徑來自 `app.config.mjs`
+- 自動發現: `workspace-utils.mjs`
+- 測試: 本地生成與 CI/CD 驗證
+
+### Developer Notes
+
+- 本地開發時 sitemap 不會自動生成
+- 需要測試時執行：`pnpm generate:sitemaps`
+- 或單一應用：`pnpm --filter @app/ratewise run generate:sitemap`
+- CI/CD 會自動生成並包含在部署中
+
 ## [1.4.2] - 2025-12-28
 
 ### Fixed

@@ -36,6 +36,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate sitemaps for all apps
+        # [2025-12-30] CI-time sitemap generation
+        # Replaces prebuild hooks, generates from app.config.mjs SSOT
+        # Depends: workspace-utils.mjs, app.config.mjs (each app)
+        run: pnpm generate:sitemaps
+
+      - name: Validate sitemaps exist
+        # [2025-12-30] Safety check: ensure all sitemaps generated
+        run: |
+          echo "🔍 Validating sitemap generation..."
+          test -f apps/ratewise/public/sitemap.xml || { echo "❌ RateWise sitemap missing"; exit 1; }
+          test -f apps/nihonname/public/sitemap.xml || { echo "❌ NihonName sitemap missing"; exit 1; }
+          test -f apps/haotool/public/sitemap.xml || { echo "❌ Haotool sitemap missing"; exit 1; }
+          test -f apps/quake-school/public/sitemap.xml || { echo "❌ Quake-School sitemap missing"; exit 1; }
+          echo "✅ All 4 sitemaps generated successfully"
+
       - name: Run linter
         run: pnpm lint
 
