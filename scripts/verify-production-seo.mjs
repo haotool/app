@@ -22,7 +22,7 @@
  */
 
 // 動態載入 app 配置
-import { loadAppConfig } from './lib/workspace-utils.mjs';
+import { discoverApps, loadAppConfig } from './lib/workspace-utils.mjs';
 
 // 解析命令行參數
 const appName = process.argv[2] || 'ratewise';
@@ -67,6 +67,45 @@ async function checkUrl(url, expectedStatus = 200) {
       url,
       status: null,
       ok: false,
+      error: error.message,
+    };
+  }
+}
+
+async function checkRedirect(url, expectedLocation) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(url, {
+      method: 'HEAD',
+      redirect: 'manual',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'RateWise-SEO-HealthCheck/1.0',
+      },
+    });
+
+    clearTimeout(timeout);
+
+    const location = response.headers.get('location');
+    const resolvedLocation = location ? new URL(location, url).toString() : null;
+
+    return {
+      url,
+      status: response.status,
+      ok:
+        (response.status === 301 || response.status === 308) &&
+        resolvedLocation === expectedLocation,
+      location: resolvedLocation,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      url,
+      status: null,
+      ok: false,
+      location: null,
       error: error.message,
     };
   }
@@ -153,8 +192,10 @@ async function main() {
   const app = await loadAppConfig(appName);
 
   if (!app) {
+    const apps = await discoverApps();
+    const appNames = apps.map((item) => item.name).join(', ');
     console.error(`❌ App not found: ${appName}`);
-    console.error(`\n可用的 apps: ratewise, nihonname, haotool`);
+    console.error(`\n可用的 apps: ${appNames || '無'}`);
     console.error(`用法: node scripts/verify-production-seo.mjs <app-name>`);
     process.exit(1);
   }
@@ -168,7 +209,25 @@ async function main() {
 
   let hasErrors = false;
 
-  // 1. 檢查所有頁面 HTTP 狀態
+  // 1. 檢查 base path 尾斜線重定向（非根路徑）
+  if (config.basePath?.production && config.basePath.production !== '/') {
+    console.log('\n↪️  尾斜線重定向檢查:');
+    const redirectUrl = `${baseUrl}/`;
+    const redirectResult = await checkRedirect(baseUrl, redirectUrl);
+
+    if (redirectResult.ok) {
+      log(colors.green, '✓', `${baseUrl} → ${redirectUrl} (${redirectResult.status})`);
+    } else {
+      log(
+        colors.red,
+        '✗',
+        `${baseUrl} → ${redirectResult.status || 'ERROR'} (${redirectResult.error || 'Invalid redirect'})`,
+      );
+      hasErrors = true;
+    }
+  }
+
+  // 2. 檢查所有頁面 HTTP 狀態
   console.log('\n📄 頁面 HTTP 狀態檢查:');
   for (const path of config.seoPaths) {
     const url = `${baseUrl}${path}`;
@@ -182,7 +241,7 @@ async function main() {
     }
   }
 
-  // 2. 檢查 SEO 配置文件
+  // 3. 檢查 SEO 配置文件
   console.log('\n📁 SEO 配置文件檢查:');
   for (const file of config.resources.seoFiles) {
     const url = `${baseUrl}${file}`;
@@ -196,7 +255,7 @@ async function main() {
     }
   }
 
-  // 3. 驗證 sitemap.xml 內容
+  // 4. 驗證 sitemap.xml 內容
   console.log('\n🗺️ Sitemap 內容驗證:');
   const sitemapResult = await verifySitemapContent(baseUrl, config.seoPaths);
   if (sitemapResult.ok) {
@@ -208,7 +267,7 @@ async function main() {
     hasErrors = true;
   }
 
-  // 4. 驗證 robots.txt 內容
+  // 5. 驗證 robots.txt 內容
   console.log('\n🤖 Robots.txt 內容驗證:');
   const robotsResult = await verifyRobotsContent(baseUrl);
   if (robotsResult.ok) {
@@ -220,7 +279,7 @@ async function main() {
     hasErrors = true;
   }
 
-  // 5. 驗證 llms.txt 內容（如果有的話）
+  // 6. 驗證 llms.txt 內容（如果有的話）
   if (config.resources.seoFiles.includes('/llms.txt')) {
     console.log('\n🤖 LLMs.txt 內容驗證:');
     const llmsResult = await verifyLlmsContent(baseUrl, config.displayName, config.siteUrl);
@@ -234,7 +293,7 @@ async function main() {
     }
   }
 
-  // 6. 驗證圖片資源
+  // 7. 驗證圖片資源
   console.log('\n🖼️  圖片資源檢查:');
   for (const image of config.resources.images) {
     const url = `${baseUrl}${image}`;

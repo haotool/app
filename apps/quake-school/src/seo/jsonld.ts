@@ -9,7 +9,7 @@ interface JsonLdData {
   [key: string]: unknown;
 }
 
-const SITE_URL = 'https://app.haotool.org/quake-school';
+const SITE_URL = 'https://app.haotool.org/quake-school/';
 
 /**
  * Organization Schema
@@ -19,7 +19,7 @@ const organizationSchema: JsonLdData = {
   '@type': 'Organization',
   name: 'haotool.org',
   url: 'https://haotool.org',
-  logo: `${SITE_URL}/icons/icon-512x512.png`,
+  logo: new URL('icons/icon-512.svg', SITE_URL).toString(),
   sameAs: ['https://github.com/haotool'],
 };
 

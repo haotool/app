@@ -50,7 +50,8 @@ describe('SEO Meta Tags', () => {
       const metaTags = getMetaTagsForRoute('/lessons', buildTime);
 
       // Then: canonical URL 應該有尾斜線
-      expect(metaTags).toContain(`${SITE_URL}/lessons/`);
+      const expectedCanonical = new URL('lessons/', SITE_URL).toString();
+      expect(metaTags).toContain(expectedCanonical);
     });
   });
 });
