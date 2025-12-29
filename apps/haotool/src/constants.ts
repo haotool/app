@@ -19,6 +19,7 @@ export enum ProjectCategory {
   ENTERTAINMENT = '娛樂類',
   DATA = '資料類',
   CREATIVE = '創意類',
+  EDUCATION = '教育類',
 }
 
 export interface Project {
@@ -58,6 +59,18 @@ export const PROJECTS: Project[] = [
     category: ProjectCategory.TOOL,
     status: 'live',
   },
+  {
+    id: 'quake-school',
+    title: '地震知識小學堂',
+    description:
+      '互動式地震衛教平台，透過 18 道精心設計的測驗題與 SVG 動畫，深入淺出講解地震科學知識。規模看大小，震度看搖晃！支援 PWA 離線使用，隨時隨地學習防災知識。',
+    tags: ['React 19', 'TypeScript', 'SVG Animation', 'PWA', 'Tailwind CSS'],
+    link: '/quake-school/',
+    imageUrl: '/projects/quake-school-og.svg',
+    featured: true,
+    category: ProjectCategory.EDUCATION,
+    status: 'live',
+  },
 ];
 
 export interface Stat {
@@ -68,7 +81,7 @@ export interface Stat {
 
 export const STATS: Stat[] = [
   { value: '3', suffix: '+', label: '年開發經驗' },
-  { value: '2', label: '上線專案' },
+  { value: '3', label: '上線專案' },
   { value: '100', suffix: '%', label: '開源貢獻' },
   { value: '24', suffix: '/7', label: '持續學習' },
 ];
