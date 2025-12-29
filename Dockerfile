@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for HAOTOOL.ORG Portfolio
-# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), earthquake-simulator (/earthquake-simulator/)
+# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), earthquake-simulator (/earthquake-simulator/)
 # syntax=docker/dockerfile:1
 
 # Build stage
@@ -13,6 +13,7 @@ ARG BUILD_TIME
 ARG VITE_HAOTOOL_BASE_PATH=/
 ARG VITE_RATEWISE_BASE_PATH=/ratewise/
 ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
+ARG VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/
 ARG VITE_EARTHQUAKE_SIMULATOR_BASE_PATH=/earthquake-simulator/
 
 # Enable corepack for pnpm
@@ -39,6 +40,7 @@ COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ratewise/package.json ./apps/ratewise/
 COPY apps/nihonname/package.json ./apps/nihonname/
 COPY apps/haotool/package.json ./apps/haotool/
+COPY apps/quake-school/package.json ./apps/quake-school/
 COPY apps/earthquake-simulator/package.json ./apps/earthquake-simulator/
 
 # [fix:2025-11-06] 安裝依賴時禁用 Husky 並清空 NODE_ENV
@@ -68,6 +70,7 @@ RUN set -eux; \
   VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
   VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname && \
+  VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school && \
   VITE_EARTHQUAKE_SIMULATOR_BASE_PATH=/earthquake-simulator/ pnpm build:earthquake-simulator
 
 # Production stage
@@ -89,12 +92,16 @@ COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html/ratewise-app
 # Copy built assets for nihonname 到子目錄
 COPY --from=builder /app/apps/nihonname/dist /usr/share/nginx/html/nihonname-app
 
+# [fix:2025-12-29] Copy built assets for quake-school 到子目錄
+COPY --from=builder /app/apps/quake-school/dist /usr/share/nginx/html/quake-school-app
+
 # [fix:2025-12-29] Copy built assets for earthquake-simulator 到子目錄
 COPY --from=builder /app/apps/earthquake-simulator/dist /usr/share/nginx/html/earthquake-simulator-app
 
 # 創建符號連結以支援路由
 RUN ln -s /usr/share/nginx/html/ratewise-app /usr/share/nginx/html/ratewise && \
     ln -s /usr/share/nginx/html/nihonname-app /usr/share/nginx/html/nihonname && \
+    ln -s /usr/share/nginx/html/quake-school-app /usr/share/nginx/html/quake-school && \
     ln -s /usr/share/nginx/html/earthquake-simulator-app /usr/share/nginx/html/earthquake-simulator
 
 # Copy nginx configuration
