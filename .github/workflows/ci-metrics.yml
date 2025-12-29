@@ -62,7 +62,9 @@ jobs:
           mkdir -p ci-metrics
 
           # 準備 metrics 資料
-          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          # [fix:2025-12-30] 使用 Unix timestamp 避免檔名冒號問題
+          # Windows 檔案系統不支援冒號，改用 Unix epoch
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
           DURATION="${{ steps.workflow_details.outputs.duration }}"
           CONCLUSION="${{ steps.workflow_details.outputs.conclusion }}"
           BRANCH="${{ steps.workflow_details.outputs.branch }}"

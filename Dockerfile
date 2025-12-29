@@ -73,10 +73,11 @@ RUN set -eux; \
   VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school
 
 # [fix:2025-12-30] 驗證 sitemaps 已生成並包含在構建中
-RUN test -f /app/apps/ratewise/public/sitemap.xml && \
-    test -f /app/apps/nihonname/public/sitemap.xml && \
-    test -f /app/apps/haotool/public/sitemap.xml && \
-    test -f /app/apps/quake-school/public/sitemap.xml || \
+# Sitemaps 應該在 dist/ 目錄（構建輸出）而非 public/
+RUN test -f /app/apps/ratewise/dist/sitemap.xml && \
+    test -f /app/apps/nihonname/dist/sitemap.xml && \
+    test -f /app/apps/haotool/dist/sitemap.xml && \
+    test -f /app/apps/quake-school/dist/sitemap.xml || \
     { echo "ERROR: Sitemaps not generated in Docker build"; exit 1; }
 
 # Production stage
