@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const SITE_URL = 'https://app.haotool.org/quake-school';
+const SITE_URL = 'https://app.haotool.org/quake-school/';
 const PAGES = [
   { path: '/', priority: 1.0, changefreq: 'weekly' },
   { path: '/lessons/', priority: 0.9, changefreq: 'monthly' },
@@ -22,7 +22,7 @@ function generateSitemap() {
   const urls = PAGES.map(
     (page) => `
   <url>
-    <loc>${SITE_URL}${page.path}</loc>
+    <loc>${new URL(page.path.replace(/^\//, ''), SITE_URL).toString()}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>

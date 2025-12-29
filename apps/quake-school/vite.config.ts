@@ -55,7 +55,11 @@ export default defineConfig(({ mode }) => {
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL || 'https://app.haotool.org/quake-school/');
 
   // 環境變數控制 base path
-  const baseFromEnv = env.VITE_QUAKESCHOOL_BASE_PATH ?? process.env['VITE_QUAKESCHOOL_BASE_PATH'];
+  const baseFromEnv =
+    env.VITE_QUAKE_SCHOOL_BASE_PATH ??
+    env.VITE_QUAKESCHOOL_BASE_PATH ??
+    process.env['VITE_QUAKE_SCHOOL_BASE_PATH'] ??
+    process.env['VITE_QUAKESCHOOL_BASE_PATH'];
   const base = baseFromEnv ?? (mode === 'production' || process.env['CI'] ? '/quake-school/' : '/');
 
   const manifestScope = base.endsWith('/') ? base : `${base}/`;

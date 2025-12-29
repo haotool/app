@@ -10,8 +10,8 @@ interface PageMeta {
   ogImage?: string;
 }
 
-const SITE_URL = 'https://app.haotool.org/quake-school';
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
+const SITE_URL = 'https://app.haotool.org/quake-school/';
+const DEFAULT_OG_IMAGE = new URL('og-image.svg', SITE_URL).toString();
 
 const PAGE_META: Record<string, PageMeta> = {
   '/': {
@@ -47,7 +47,8 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
   if (!meta) {
     throw new Error(`No meta data found for route: ${normalizedRoute}`);
   }
-  const canonicalUrl = `${SITE_URL}${normalizedRoute === '/' ? '/' : `${normalizedRoute}/`}`;
+  const canonicalPath = normalizedRoute === '/' ? '' : `${normalizedRoute.replace(/^\//, '')}/`;
+  const canonicalUrl = new URL(canonicalPath, SITE_URL).toString();
 
   return `
     <!-- Primary Meta Tags -->
