@@ -1,5 +1,5 @@
-# 地震知識小學堂 - robots.txt
-# https://app.haotool.org/quake-school/
+# Quake-School Robots Configuration
+# 最後更新：2025-12-31
 
 User-agent: *
 Allow: /
@@ -7,5 +7,36 @@ Allow: /
 # Sitemap
 Sitemap: https://app.haotool.org/quake-school/sitemap.xml
 
-# Disallow
-Disallow: /api/
+# Crawl-delay for polite bots
+Crawl-delay: 1
+
+# Disallow Service Worker and internal assets
+Disallow: /sw.js
+Disallow: /workbox-*.js
+Disallow: /*.json$
+
+# Allow AI search engines (AEO/LLMO)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# Allow social media crawlers
+User-agent: facebookexternalbot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
