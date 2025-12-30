@@ -1,0 +1,73 @@
+# RateWise - 即時匯率換算工具
+# LLM Optimization File
+# 最後更新：2025-12-31
+
+# Site
+- 名稱：RateWise
+- 網址：https://app.haotool.org/ratewise/
+- 類型：即時匯率換算與追蹤應用
+- 語言：繁體中文（zh-TW）
+
+# Purpose
+提供即時台幣匯率換算、趨勢圖表與智能提醒，幫助用戶掌握最佳換匯時機。
+
+# Content
+本專案提供以下核心功能：
+
+1. **即時匯率換算**
+   - 支援 13 種主要貨幣
+   - 雙向換算（TWD ↔ 外幣）
+   - 快速金額按鈕（100/500/1000/5000/10000）
+
+2. **趨勢圖表**
+   - 30 天歷史匯率走勢
+   - 迷你趨勢圖即時預覽
+   - 支援多幣種同時顯示
+
+3. **智能提醒**（規劃中）
+   - 匯率到達目標價通知
+   - 歷史高低點提示
+   - 換匯最佳時機建議
+
+4. **幣別落地頁**
+   - USD/JPY/EUR/HKD/CNY/KRW
+   - GBP/AUD/CAD/CHF/NZD/SGD/THB
+   - 各幣別專屬 SEO 優化
+
+# Supported Currencies
+USD (美金), JPY (日圓), EUR (歐元), HKD (港幣), CNY (人民幣), KRW (韓元), 
+GBP (英鎊), AUD (澳幣), CAD (加幣), CHF (瑞士法郎), NZD (紐幣), SGD (新加坡幣), THB (泰銖)
+
+# Data Source
+台灣銀行公告匯率（Taiwan Bank Official Exchange Rates）
+
+# Keywords
+匯率, 換算, 台幣, 外幣, 即時匯率, 歷史匯率, 趨勢圖, 匯率提醒, 美金, 日圓, 歐元
+
+# Target Audience
+- 海外旅遊規劃者
+- 跨境購物消費者
+- 外匯投資人
+- 留學生與家長
+- 國際貿易從業人員
+
+# Technical Stack
+- Framework: React 19.2.3
+- Routing: React Router v7
+- State: React Context API
+- Charts: Recharts
+- Styling: Tailwind CSS
+- Build: Vite 7.3.0
+
+# License
+MIT License
+
+# Contact
+- GitHub: https://github.com/hikazimi/app
+- Issues: https://github.com/hikazimi/app/issues
+
+# Sitemap
+https://app.haotool.org/ratewise/sitemap.xml
+
+# Last Updated
+2025-12-31
