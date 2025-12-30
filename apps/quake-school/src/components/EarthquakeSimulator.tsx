@@ -69,7 +69,7 @@ const EarthquakeSimulator: React.FC<Props> = ({ value, onValueChange }) => {
   return (
     <div className="w-full bg-white rounded-[2.5rem] border border-sky-100 shadow-xl shadow-sky-100/50 overflow-hidden">
       {/* 模式切換器 */}
-      <div className="p-4 bg-sky-50/30 flex flex-col items-center border-b border-sky-50">
+      <div className="bg-sky-50/30 flex flex-col items-center border-b border-sky-50">
         <div className="flex p-1 bg-white rounded-full border border-sky-100 w-full max-w-[260px] mb-3">
           <button
             onClick={() => handleModeToggle('magnitude')}
@@ -124,10 +124,7 @@ const EarthquakeSimulator: React.FC<Props> = ({ value, onValueChange }) => {
                 }}
               />
 
-              <svg
-                viewBox="0 0 200 200"
-                className="w-full h-full max-w-[340px] relative z-10 overflow-visible"
-              >
+              <svg viewBox="0 0 200 200" className="w-full h-full relative z-10 overflow-visible">
                 <defs>
                   <filter id="energyAura" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur stdDeviation={4 + stats.intensity * 12} result="blur" />

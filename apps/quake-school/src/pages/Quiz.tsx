@@ -30,7 +30,11 @@ const Quiz: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center min-h-screen text-center px-10 bg-sky-500 text-white relative"
+          className="flex flex-col items-center justify-center min-h-[100dvh] text-center px-10 bg-sky-500 text-white relative"
+          style={{
+            paddingTop: 'max(2.5rem, env(safe-area-inset-top))',
+            paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))',
+          }}
         >
           <div className="w-44 h-44 rounded-[3rem] bg-white flex flex-col items-center justify-center shadow-2xl mb-10 rotate-6 border-8 border-sky-400">
             <span className="text-[10px] font-black text-sky-400 uppercase mb-1">專家評分</span>
@@ -71,14 +75,22 @@ const Quiz: React.FC = () => {
         />
       </Helmet>
 
-      <div className="fixed inset-0 bg-white flex flex-col p-6 z-[60]">
+      <div
+        className="fixed inset-0 bg-white flex flex-col z-[60]"
+        style={{
+          paddingTop: 'max(1.5rem, env(safe-area-inset-top))',
+          paddingLeft: 'max(1.5rem, env(safe-area-inset-left))',
+          paddingRight: 'max(1.5rem, env(safe-area-inset-right))',
+          paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+        }}
+      >
         <header className="flex items-center justify-between mb-6 shrink-0">
           <h1 className="text-lg font-black text-slate-800 tracking-widest uppercase italic">
             知識檢定
           </h1>
           <button
             onClick={() => navigate('/lessons')}
-            className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400"
+            className="w-11 h-11 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 active:scale-95 transition-all"
             aria-label="返回課程"
           >
             <svg
@@ -93,7 +105,10 @@ const Quiz: React.FC = () => {
             </svg>
           </button>
         </header>
-        <div className="flex-grow overflow-y-auto no-scrollbar">
+        <div
+          className="flex-grow overflow-y-auto no-scrollbar"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           <QuizWidget onFinish={handleFinish} onReset={() => navigate('/lessons')} />
         </div>
       </div>

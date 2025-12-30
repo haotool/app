@@ -129,22 +129,20 @@ const MagnitudeVisualizer: React.FC = () => {
             <path d="M13 5l7 7-7 7M5 5l7 7-7 7" />
           </svg>
 
-          {/* 右側：32 個能量點矩陣 */}
-          <div className="bg-white/60 p-3 rounded-2xl border border-amber-100/50 shadow-inner">
-            <div className="grid grid-cols-8 gap-1.5">
-              {Array.from({ length: 32 }, (_, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1, opacity: [0.4, 1, 0.4] }}
-                  transition={{
-                    delay: i * 0.02,
-                    opacity: { repeat: Infinity, duration: 1.5, delay: i * 0.05 },
-                  }}
-                  className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
-                />
-              ))}
-            </div>
+          {/* 右側：32 個能量點矩陣（移除多餘容器，扁平化） */}
+          <div className="grid grid-cols-8 gap-2 p-3 rounded-2xl bg-white/60 border border-amber-100/50 shadow-inner">
+            {Array.from({ length: 32 }, (_, i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1, opacity: [0.4, 1, 0.4] }}
+                transition={{
+                  delay: i * 0.02,
+                  opacity: { repeat: Infinity, duration: 1.5, delay: i * 0.05 },
+                }}
+                className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+              />
+            ))}
           </div>
         </div>
       </div>

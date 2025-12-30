@@ -60,7 +60,7 @@ const Lessons: React.FC = () => {
             {LESSONS.map((lesson, idx) => (
               <section
                 key={lesson.id}
-                className="relative bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100/50"
+                className="relative bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 overflow-hidden"
               >
                 <div
                   className="absolute top-6 right-8 text-5xl font-black text-sky-100/40"
@@ -69,7 +69,7 @@ const Lessons: React.FC = () => {
                   0{idx + 1}
                 </div>
                 <div className="space-y-6">
-                  <div>
+                  <div className="px-8 pt-8">
                     <h3 className="text-2xl font-black text-slate-800 tracking-tight">
                       {lesson.title}
                     </h3>
@@ -84,14 +84,18 @@ const Lessons: React.FC = () => {
                   {lesson.id === 'l1' && <MagnitudeVisualizer />}
                   {lesson.id === 'l4' && <DepthComparison />}
 
-                  <div className="space-y-3">
+                  <div className="px-8 space-y-3">
                     {lesson.paragraphs.map((p, i) => (
                       <p key={i} className="text-slate-600 text-base font-bold leading-relaxed">
                         {p}
                       </p>
                     ))}
                   </div>
-                  {lesson.tips && <KeyNotesCard tips={lesson.tips} />}
+                  {lesson.tips && (
+                    <div className="px-8 pb-8">
+                      <KeyNotesCard tips={lesson.tips} />
+                    </div>
+                  )}
                 </div>
               </section>
             ))}

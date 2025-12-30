@@ -56,7 +56,7 @@ const TectonicMotion: React.FC = () => {
       </div>
 
       <div className="relative h-48 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200 flex items-center justify-center overflow-hidden">
-        <svg viewBox="0 0 240 160" className="w-full h-full max-w-[300px] overflow-visible">
+        <svg viewBox="0 0 240 160" className="w-full h-full overflow-visible">
           {/* 下方板塊 (固定) */}
           <rect
             x="40"
@@ -173,14 +173,82 @@ const TectonicMotion: React.FC = () => {
             <span>能量釋放中！</span>
           ) : (
             <>
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="3"
-              >
-                <path d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              <svg className="w-10 h-6" viewBox="0 0 40 24" fill="none">
+                {/* 左側板塊 - 持續推擠 */}
+                <motion.rect
+                  x="2"
+                  y="4"
+                  width="14"
+                  height="16"
+                  rx="2"
+                  fill="currentColor"
+                  opacity="0.8"
+                  animate={{
+                    x: [2, 6, 2],
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.2,
+                    ease: 'easeInOut',
+                  }}
+                />
+
+                {/* 右側板塊 - 被推擠變形 */}
+                <motion.rect
+                  x="24"
+                  y="4"
+                  width="14"
+                  height="16"
+                  rx="2"
+                  fill="currentColor"
+                  opacity="0.6"
+                  animate={{
+                    scaleX: [1, 0.85, 1],
+                    x: [24, 26, 24],
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.2,
+                    ease: 'easeInOut',
+                  }}
+                  style={{ transformOrigin: 'left center' }}
+                />
+
+                {/* 壓力波紋效果 */}
+                <motion.circle
+                  cx="20"
+                  cy="12"
+                  r="2"
+                  fill="currentColor"
+                  opacity="0.4"
+                  animate={{
+                    scale: [0, 2.5, 0],
+                    opacity: [0.6, 0, 0],
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.2,
+                    ease: 'easeOut',
+                  }}
+                />
+
+                {/* 推擠箭頭 */}
+                <motion.path
+                  d="M 10 12 L 14 12 M 12 10 L 14 12 L 12 14"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  animate={{
+                    x: [0, 4, 0],
+                    opacity: [1, 0.4, 1],
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.2,
+                    ease: 'easeInOut',
+                  }}
+                />
               </svg>
               <span>持續推擠（累積壓力）</span>
             </>

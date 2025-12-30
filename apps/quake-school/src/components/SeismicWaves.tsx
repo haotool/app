@@ -54,7 +54,7 @@ const SeismicWaves: React.FC = () => {
           }}
         />
 
-        <div className="relative w-full max-w-[400px] h-full flex items-center justify-center">
+        <div className="relative w-full h-full flex items-center justify-center">
           <svg viewBox="0 0 400 200" className="w-full h-full overflow-visible">
             <AnimatePresence mode="wait">
               {waveType === 'P' ? (
@@ -197,7 +197,7 @@ const SeismicWaves: React.FC = () => {
       </div>
 
       {/* Metaphor Section */}
-      <div className="mt-8 flex items-stretch space-x-4">
+      <div className="mt-8 flex flex-col sm:flex-row items-stretch space-y-4 sm:space-y-0 sm:space-x-4">
         <div
           className={`flex-1 p-5 rounded-3xl border ${waveType === 'P' ? 'bg-sky-50/50 border-sky-100' : 'bg-slate-50 border-slate-100'} transition-colors duration-500`}
         >

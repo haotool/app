@@ -39,7 +39,7 @@ const DepthComparison: React.FC = () => {
       </div>
 
       <div className="relative h-64 flex items-center justify-center bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-200">
-        <svg viewBox="0 0 240 180" className="w-full h-full max-w-[320px] overflow-visible">
+        <svg viewBox="0 0 240 180" className="w-full h-full overflow-visible">
           {/* 地面與地層結構 */}
           <rect x="0" y="60" width="240" height="120" fill="#f8fafc" opacity="0.5" />
           <line
@@ -203,28 +203,28 @@ const DepthComparison: React.FC = () => {
             )}
           </AnimatePresence>
         </svg>
+      </div>
 
-        {/* 動態描述文字 */}
-        <div className="absolute inset-x-0 bottom-4 text-center px-4">
-          <motion.p
-            key={activeMode}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`text-[10px] font-black uppercase tracking-widest ${
-              activeMode === 'shallow'
-                ? 'text-rose-500'
-                : activeMode === 'medium'
-                  ? 'text-amber-500'
-                  : 'text-sky-500'
-            }`}
-          >
-            {activeMode === 'shallow'
-              ? '● 近距離重擊：震動直接且猛烈'
+      {/* 動態描述文字（改為流式佈局） */}
+      <div className="mt-4 text-center">
+        <motion.p
+          key={activeMode}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`text-[10px] font-black uppercase tracking-widest ${
+            activeMode === 'shallow'
+              ? 'text-rose-500'
               : activeMode === 'medium'
-                ? '● 中距傳遞：搖晃感均勻且穩定'
-                : '● 遠距離傳震：影響廣但力道散'}
-          </motion.p>
-        </div>
+                ? 'text-amber-500'
+                : 'text-sky-500'
+          }`}
+        >
+          {activeMode === 'shallow'
+            ? '● 近距離重擊：震動直接且猛烈'
+            : activeMode === 'medium'
+              ? '● 中距傳遞：搖晃感均勻且穩定'
+              : '● 遠距離傳震：影響廣但力道散'}
+        </motion.p>
       </div>
 
       <div className="mt-6 flex items-center space-x-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
