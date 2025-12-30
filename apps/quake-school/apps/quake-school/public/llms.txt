@@ -1,0 +1,68 @@
+# Quake-School - 地震知識小學堂
+# LLM Optimization File
+# 最後更新：2025-12-31
+
+# Site
+- 名稱：地震知識小學堂
+- 網址：https://app.haotool.org/quake-school/
+- 類型：互動式地震科普教育應用
+- 語言：繁體中文（zh-TW）
+
+# Purpose
+透過互動式教學了解地震科學知識。規模看大小，震度看搖晃，掌握科學，守護安全！
+
+# Content
+本專案提供以下互動教學內容：
+
+1. **板塊運動模擬**
+   - 互動式板塊推擠動畫
+   - 能量累積與釋放視覺化
+   - 彈性形變原理說明
+
+2. **地震波傳播**
+   - P波與S波動畫演示
+   - 縱波與橫波差異說明
+   - 地震預警原理教學
+
+3. **震度與規模**
+   - 芮氏規模能量視覺化
+   - 震度分級互動體驗
+   - 深度對地表影響模擬
+
+4. **地震模擬器**
+   - 可調整規模、震度、深度
+   - 即時視覺化反饋
+   - 建築物耐震示範
+
+5. **知識測驗**
+   - 5題精選考題
+   - 互動式答題體驗
+   - 即時成績回饋
+
+# Keywords
+地震, 防災, 教育, 科普, 互動, 地震波, P波, S波, 震度, 規模, 板塊運動, 地震預警, 防震, 減災
+
+# Target Audience
+- 學生（國小至高中）
+- 教師（教學輔助工具）
+- 一般民眾（地震科普）
+- 防災教育工作者
+
+# Technical Stack
+- Framework: React 19.2.3
+- Animation: Framer Motion
+- Styling: Tailwind CSS
+- Build: Vite 7.3.0
+
+# License
+MIT License
+
+# Contact
+- GitHub: https://github.com/hikazimi/app
+- Issues: https://github.com/hikazimi/app/issues
+
+# Sitemap
+https://app.haotool.org/quake-school/sitemap.xml
+
+# Last Updated
+2025-12-31
