@@ -54,7 +54,7 @@ COPY . .
 
 # Build applications（若外部未提供 build args，於此自動回退計算）
 # [fix:2025-12-13] 分別為每個專案設置對應的 base 變數，避免相互污染
-# [fix:2025-12-30] 在構建前生成所有 sitemaps
+# [2025 Best Practice] Sitemaps 現在由 vite-ssg-sitemap 在 build 時自動生成
 # 新增 haotool 作為根路徑首頁
 RUN set -eux; \
   if [ -z "${GIT_COMMIT_COUNT:-}" ]; then \
@@ -66,7 +66,6 @@ RUN set -eux; \
   if [ -z "${BUILD_TIME:-}" ]; then \
     export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
   fi; \
-  pnpm generate:sitemaps && \
   VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
   VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname && \
