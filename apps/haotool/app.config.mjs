@@ -24,8 +24,10 @@ export const SEO_PATHS = ['/', '/projects/', '/about/', '/contact/'];
 
 /**
  * SEO 配置文件路徑
+ * [fix:2026-01-01] 新增 llms.txt 支援 AI 搜尋引擎
+ * 參考: https://llmstxt.org/
  */
-export const SEO_FILES = ['/sitemap.xml', '/robots.txt'];
+export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
 
 /**
  * 圖片資源路徑（用於生產環境驗證）
@@ -67,7 +69,7 @@ export const SITE_CONFIG = {
 export const APP_CONFIG = {
   // 應用識別
   name: 'haotool',
-  displayName: 'haotool',
+  displayName: 'HAOTOOL.ORG',
 
   // 部署路徑配置
   basePath: {

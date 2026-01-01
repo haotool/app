@@ -93,9 +93,10 @@ export const APP_CONFIG = {
   siteUrl: SITE_CONFIG.url,
 
   // 建置配置
+  // [fix:2026-01-01] PWA 已在 vite.config.ts 中啟用，配置應一致
   build: {
     ssg: true,
-    pwa: false,
+    pwa: true,
   },
 
   // 資源配置

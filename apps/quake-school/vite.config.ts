@@ -230,6 +230,9 @@ export default defineConfig(({ mode }) => {
     ssgOptions: {
       script: 'async',
       formatting: 'none',
+      // [fix:2026-01-01] 使用 nested dirStyle 確保產生目錄結構 (/path/index.html)
+      // 配合 nginx 尾斜線重定向，避免 SEO 重複內容問題
+      // 參考: https://www.clickrank.ai/seo-academy/urls-and-seo/trailing-slash/
       dirStyle: 'nested',
       concurrency: 10,
       beastiesOptions: {
@@ -239,8 +242,9 @@ export default defineConfig(({ mode }) => {
         fonts: true,
         preloadFonts: true,
       },
+      // [fix:2026-01-01] 路由與 app.config.mjs SEO_PATHS 保持同步
+      // vite-react-ssg 使用不帶尾斜線的路徑，dirStyle: 'nested' 會產生 /path/index.html
       includedRoutes: () => {
-        // 預渲染路徑
         return ['/', '/lessons', '/quiz', '/about'];
       },
       // 預渲染後處理 HTML - 注入 SEO
