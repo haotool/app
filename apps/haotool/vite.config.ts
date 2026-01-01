@@ -228,10 +228,14 @@ export default defineConfig(({ mode }) => {
         fonts: true,
         preloadFonts: true,
       },
-      // [fix:2026-01-01] 路由與 app.config.mjs SEO_PATHS 保持同步
-      // vite-react-ssg 使用帶尾斜線的路徑，dirStyle: 'nested' 會產生 /path/index.html
-      includedRoutes: () => {
-        return ['/', '/projects/', '/about/', '/contact/'];
+      // [fix:2026-01-01] 從 SSOT (app.config.mjs) 動態導入路由
+      // vite-react-ssg 使用不帶尾斜線的路徑，dirStyle: 'nested' 會產生 /path/index.html
+      // 參考: https://github.com/Daydreamer-riri/vite-react-ssg
+      async includedRoutes() {
+        const { SEO_PATHS } = await import('./app.config.mjs');
+        // 將帶尾斜線的 SEO_PATHS 轉換為不帶尾斜線（根路徑除外）
+        // 例如: '/about/' -> '/about', '/' -> '/'
+        return SEO_PATHS.map((path: string) => (path === '/' ? path : path.replace(/\/$/, '')));
       },
       // [fix:2025-12-13] 使用 onPageRendered hook 注入 JSON-LD 和 Meta Tags
       async onPageRendered(route, renderedHTML) {
