@@ -45,6 +45,15 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
       expect(existsSync(indexHtml)).toBe(true);
     });
 
+    it('should have correct canonical URL for homepage (SSG injected)', () => {
+      const indexHtml = resolve(distPath, 'index.html');
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      // 架構更新 [2026-01-02]: canonical 由 vite-react-ssg onPageRendered 注入
+      expect(content).toContain('<link rel="canonical" href="https://app.haotool.org/ratewise/"');
+    });
+
     it('should generate dist/faq/index.html for FAQ page', () => {
       // 🔴 紅燈：FAQ 頁面應該生成 dist/faq/index.html
       const faqHtml = resolve(distPath, 'faq/index.html');
@@ -99,13 +108,16 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
       expect(content).toContain('<meta name="keywords"');
     });
 
-    it('should NOT have hardcoded canonical (managed by SEOHelmet)', () => {
+    it('should have correct canonical URL for FAQ page (SSG injected)', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
-      // 架構決策 [2025-12-03]: canonical 由 SEOHelmet 動態插入，避免多頁面衝突
-      // 預渲染的 HTML 不包含 canonical，僅在客戶端渲染時由 React 插入
-      expect(content).not.toContain('<link rel="canonical"');
+      // 架構更新 [2026-01-02]: canonical 由 vite-react-ssg onPageRendered 注入
+      // 原因: react-helmet-async 無法在 SSG 中注入，Google 需要靜態 canonical 標籤
+      // 參考: https://developers.google.com/search/docs/crawling-indexing/canonicalization
+      expect(content).toContain(
+        '<link rel="canonical" href="https://app.haotool.org/ratewise/faq/"',
+      );
     });
 
     it('should have Open Graph tags for FAQ page', () => {
@@ -139,13 +151,15 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
       expect(content).toContain('<meta name="description"');
     });
 
-    it('should NOT have hardcoded canonical (managed by SEOHelmet)', () => {
+    it('should have correct canonical URL for About page (SSG injected)', () => {
       if (!existsSync(aboutHtml)) return;
 
       const content = readFileSync(aboutHtml, 'utf-8');
-      // 架構決策 [2025-12-03]: canonical 由 SEOHelmet 動態插入，避免多頁面衝突
-      // 預渲染的 HTML 不包含 canonical，僅在客戶端渲染時由 React 插入
-      expect(content).not.toContain('<link rel="canonical"');
+      // 架構更新 [2026-01-02]: canonical 由 vite-react-ssg onPageRendered 注入
+      // 原因: react-helmet-async 無法在 SSG 中注入，Google 需要靜態 canonical 標籤
+      expect(content).toContain(
+        '<link rel="canonical" href="https://app.haotool.org/ratewise/about/"',
+      );
     });
 
     it('should have Open Graph tags for About page', () => {
@@ -251,22 +265,23 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
     const faqHtml = resolve(distPath, 'faq/index.html');
     const aboutHtml = resolve(distPath, 'about/index.html');
 
-    it('FAQ page should NOT have hardcoded hreflang (managed by SEOHelmet)', () => {
+    it('FAQ page should have correct hreflang tags (SSG injected)', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
-      // 架構決策 [2025-12-03]: hreflang 由 SEOHelmet 動態插入
-      // 預渲染的 HTML 不包含 hreflang，僅在客戶端渲染時由 React 插入
-      expect(content).not.toContain('hreflang=');
+      // 架構更新 [2026-01-02]: hreflang 由 vite-react-ssg onPageRendered 注入
+      // 原因: react-helmet-async 無法在 SSG 中注入，Google 需要靜態 hreflang 標籤
+      expect(content).toContain('hreflang="zh-TW"');
+      expect(content).toContain('hreflang="x-default"');
     });
 
-    it('About page should NOT have hardcoded hreflang (managed by SEOHelmet)', () => {
+    it('About page should have correct hreflang tags (SSG injected)', () => {
       if (!existsSync(aboutHtml)) return;
 
       const content = readFileSync(aboutHtml, 'utf-8');
-      // 架構決策 [2025-12-03]: hreflang 由 SEOHelmet 動態插入
-      // 預渲染的 HTML 不包含 hreflang，僅在客戶端渲染時由 React 插入
-      expect(content).not.toContain('hreflang=');
+      // 架構更新 [2026-01-02]: hreflang 由 vite-react-ssg onPageRendered 注入
+      expect(content).toContain('hreflang="zh-TW"');
+      expect(content).toContain('hreflang="x-default"');
     });
 
     it('All pages should have proper charset and viewport', () => {

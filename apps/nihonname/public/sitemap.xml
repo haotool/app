@@ -3,65 +3,49 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://app.haotool.org/nihonname/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/nihonname/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/nihonname/" />
   </url>
   <url>
     <loc>https://app.haotool.org/nihonname/about/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/nihonname/about/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/nihonname/about/" />
   </url>
   <url>
     <loc>https://app.haotool.org/nihonname/guide/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/nihonname/guide/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/nihonname/guide/" />
   </url>
   <url>
     <loc>https://app.haotool.org/nihonname/faq/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/nihonname/faq/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/nihonname/faq/" />
   </url>
   <url>
     <loc>https://app.haotool.org/nihonname/history/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/nihonname/history/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/nihonname/history/" />
   </url>
   <url>
     <loc>https://app.haotool.org/nihonname/history/kominka/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/nihonname/history/kominka/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/nihonname/history/kominka/" />
   </url>
   <url>
     <loc>https://app.haotool.org/nihonname/history/shimonoseki/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/nihonname/history/shimonoseki/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/nihonname/history/shimonoseki/" />
   </url>
   <url>
     <loc>https://app.haotool.org/nihonname/history/san-francisco/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/nihonname/history/san-francisco/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/nihonname/history/san-francisco/" />
   </url>

@@ -3,33 +3,25 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://app.haotool.org/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/" />
   </url>
   <url>
     <loc>https://app.haotool.org/projects/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/projects/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/projects/" />
   </url>
   <url>
     <loc>https://app.haotool.org/about/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/about/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/about/" />
   </url>
   <url>
     <loc>https://app.haotool.org/contact/</loc>
-    <lastmod>2026-01-01T00:00:00Z</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <lastmod>2026-01-02T14:21:13Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/contact/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/contact/" />
   </url>

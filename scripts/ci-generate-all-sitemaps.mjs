@@ -60,22 +60,16 @@ async function generateRateWiseSitemap(appName, appPath, config) {
 
 /**
  * Generate sitemap for traditional apps (nihonname, haotool, quake-school)
+ *
+ * 2025 SEO Best Practices:
+ * - Google and Bing ignore <changefreq> and <priority>
+ * - Only <loc> and <lastmod> are meaningful
+ * - Reference: Google Search Central, Bing Webmaster Guidelines
  */
 function generateTraditionalSitemap(appName, appPath, config) {
   const { seoPaths, siteUrl } = config;
-  const today = new Date().toISOString().split('T')[0];
-
-  // Path metadata (can be customized per app if needed)
-  const pathMetadata = {
-    '/': { changefreq: 'daily', priority: 1.0 },
-    default: { changefreq: 'monthly', priority: 0.6 },
-  };
-
-  const routes = seoPaths.map((path) => ({
-    path,
-    ...(pathMetadata[path] || pathMetadata.default),
-    lastmod: today,
-  }));
+  // Use ISO 8601 format with timezone for lastmod
+  const lastmod = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 
   function buildFullUrl(path) {
     const base = siteUrl.replace(/\/+$/, '');
@@ -91,19 +85,17 @@ function generateTraditionalSitemap(appName, appPath, config) {
       .replace(/'/g, '&apos;');
   }
 
-  function generateUrlEntry(route) {
-    const fullUrl = buildFullUrl(route.path);
+  function generateUrlEntry(path) {
+    const fullUrl = buildFullUrl(path);
     return `  <url>
     <loc>${escapeXml(fullUrl)}</loc>
-    <lastmod>${route.lastmod}</lastmod>
-    <changefreq>${route.changefreq}</changefreq>
-    <priority>${route.priority}</priority>
+    <lastmod>${lastmod}</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="${escapeXml(fullUrl)}" />
     <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(fullUrl)}" />
   </url>`;
   }
 
-  const urlEntries = routes.map(generateUrlEntry).join('\n');
+  const urlEntries = seoPaths.map(generateUrlEntry).join('\n');
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
@@ -121,7 +113,7 @@ ${urlEntries}
   }
 
   writeFileSync(outputPath, sitemap, 'utf-8');
-  log(colors.green, '✓', `${appName}: sitemap.xml generated (${routes.length} URLs)`);
+  log(colors.green, '✓', `${appName}: sitemap.xml generated (${seoPaths.length} URLs)`);
 }
 
 /**
