@@ -720,26 +720,51 @@ export default defineConfig(({ mode }) => {
         console.log(`🔄 Pre-rendering: ${route}`);
         return indexHTML;
       },
-      // 預渲染後處理 HTML - 修復 canonical URL
+      // 預渲染後處理 HTML - 注入 canonical 與 hreflang 標籤
+      // [fix:2026-01-02] 修復 canonical 缺失問題
+      // 原因: react-helmet-async 在 vite-react-ssg 中無法正確將 Helmet 內容注入到靜態 HTML
+      // 影響: Google 需要 canonical 標籤來避免重複內容問題，缺少 canonical 會導致 "Discovered - currently not indexed"
+      // 參考: https://developers.google.com/search/docs/crawling-indexing/canonicalization
       async onPageRendered(route, renderedHTML) {
         console.log(`✅ Post-processing: ${route}`);
 
-        // 修復 canonical URL (除了根路徑，其他路徑都需要添加路徑部分)
-        if (route !== '/') {
-          const canonicalPath = route.replace(/\/+$/, '') + '/'; // 確保尾斜線
-          const fullCanonicalUrl = `${siteUrl}${canonicalPath.replace(/^\//, '')}`;
+        // 計算完整 canonical URL
+        const canonicalPath = route === '/' ? '' : route.replace(/\/+$/, '') + '/';
+        const fullCanonicalUrl = `${siteUrl}${canonicalPath.replace(/^\//, '')}`;
 
-          // 替換 canonical URL
+        // 檢查是否已有 canonical 標籤
+        const hasCanonical = /<link rel="canonical"/.test(renderedHTML);
+
+        if (hasCanonical) {
+          // 替換現有 canonical URL
           renderedHTML = renderedHTML.replace(
             /<link rel="canonical" href="[^"]*">/,
             `<link rel="canonical" href="${fullCanonicalUrl}">`,
           );
+        } else {
+          // 注入 canonical 標籤（在 </head> 前）
+          const canonicalTag = `<link rel="canonical" href="${fullCanonicalUrl}">`;
+          renderedHTML = renderedHTML.replace('</head>', `    ${canonicalTag}\n  </head>`);
+          console.log(`📝 Injected canonical: ${fullCanonicalUrl}`);
+        }
 
-          // 替換 alternate hreflang URLs
+        // 檢查是否已有 hreflang 標籤
+        const hasHreflang = /<link rel="alternate" hreflang=/.test(renderedHTML);
+
+        if (hasHreflang) {
+          // 替換現有 hreflang URLs
           renderedHTML = renderedHTML.replace(
             /<link rel="alternate" hreflang="([^"]*)" href="[^"]*">/g,
             `<link rel="alternate" hreflang="$1" href="${fullCanonicalUrl}">`,
           );
+        } else {
+          // 注入 hreflang 標籤（在 canonical 後）
+          const hreflangTags = `<link rel="alternate" hreflang="zh-TW" href="${fullCanonicalUrl}">\n    <link rel="alternate" hreflang="x-default" href="${fullCanonicalUrl}">`;
+          renderedHTML = renderedHTML.replace(
+            /<link rel="canonical" href="[^"]*">/,
+            `<link rel="canonical" href="${fullCanonicalUrl}">\n    ${hreflangTags}`,
+          );
+          console.log(`📝 Injected hreflang for: ${fullCanonicalUrl}`);
         }
 
         // [fix:2026-01-02] FAQ 頁面 JSON-LD 注入
