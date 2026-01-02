@@ -211,7 +211,7 @@ export default function About() {
               </div>
               <div className="flex items-center">
                 <span className="text-slate-600 font-semibold w-32">SEO</span>
-                <span className="text-slate-700">react-helmet-async (Lighthouse SEO 100/100)</span>
+                <span className="text-slate-700">vite-react-ssg Head (Lighthouse SEO 100/100)</span>
               </div>
             </div>
           </section>

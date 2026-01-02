@@ -1,12 +1,10 @@
 /**
  * SEO Helmet Component
- * [context7:react-helmet-async:2025-10-18T02:00:00+08:00]
+ * [context7:daydreamer-riri/vite-react-ssg:2026-01-03T02:20:55+08:00]
  *
  * Centralized SEO metadata management with JSON-LD structured data
  */
-// [SSR-fix:2025-11-26] Use ESM wrapper to bridge CommonJS/ESM compatibility
-// Direct imports from 'react-helmet-async' fail in Vite 7 dev mode SSR
-import { Helmet } from '../utils/react-helmet-async';
+import { Head } from 'vite-react-ssg';
 
 interface AlternateLink {
   hrefLang: string;
@@ -198,11 +196,6 @@ const DEFAULT_JSON_LD = [
   },
 ];
 
-const DEFAULT_ALTERNATES: AlternateLink[] = [
-  { hrefLang: 'x-default', href: SITE_BASE_URL },
-  { hrefLang: DEFAULT_LOCALE, href: SITE_BASE_URL },
-];
-
 const buildFaqSchema = (faq: FAQEntry[], url: string) => ({
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
@@ -284,7 +277,12 @@ export function SEOHelmet({
   const canonicalUrl = canonical ? buildCanonical(canonical) : buildCanonical(pathname);
   const ogImageUrl = buildAssetUrl(ogImage);
   const keywordsContent = (keywords?.length ? keywords : DEFAULT_KEYWORDS).join(', ');
-  const alternatesToRender = alternates?.length ? alternates : DEFAULT_ALTERNATES;
+  const alternatesToRender = alternates?.length
+    ? alternates
+    : [
+        { hrefLang: 'x-default', href: canonicalUrl },
+        { hrefLang: DEFAULT_LOCALE, href: canonicalUrl },
+      ];
   const normalizedAlternates = alternatesToRender.map(({ href, hrefLang }) => ({
     hrefLang,
     href: buildCanonical(href),
@@ -339,7 +337,7 @@ export function SEOHelmet({
   });
 
   return (
-    <Helmet>
+    <Head>
       {/* Primary Meta Tags */}
       <title>{fullTitle}</title>
       <meta name="title" content={fullTitle} />
@@ -390,6 +388,6 @@ export function SEOHelmet({
           {JSON.stringify(item)}
         </script>
       ))}
-    </Helmet>
+    </Head>
   );
 }

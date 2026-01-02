@@ -147,7 +147,6 @@ export default defineConfig(({ mode }) => {
   // 自動生成版本號（語義化版本 + git metadata）
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
-  const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL || 'https://app.haotool.org/ratewise/');
 
   // 最簡配置：使用環境變數，消除所有特殊情況
   // [fix:2025-10-27] 遵循 Linus 原則 - "好品味"：消除條件判斷
@@ -719,35 +718,6 @@ export default defineConfig(({ mode }) => {
       async onBeforePageRender(route, indexHTML) {
         console.log(`🔄 Pre-rendering: ${route}`);
         return indexHTML;
-      },
-      // 預渲染後處理 HTML - 修復 canonical URL
-      async onPageRendered(route, renderedHTML) {
-        console.log(`✅ Post-processing: ${route}`);
-
-        // 修復 canonical URL (除了根路徑，其他路徑都需要添加路徑部分)
-        if (route !== '/') {
-          const canonicalPath = route.replace(/\/+$/, '') + '/'; // 確保尾斜線
-          const fullCanonicalUrl = `${siteUrl}${canonicalPath.replace(/^\//, '')}`;
-
-          // 替換 canonical URL
-          renderedHTML = renderedHTML.replace(
-            /<link rel="canonical" href="[^"]*">/,
-            `<link rel="canonical" href="${fullCanonicalUrl}">`,
-          );
-
-          // 替換 alternate hreflang URLs
-          renderedHTML = renderedHTML.replace(
-            /<link rel="alternate" hreflang="([^"]*)" href="[^"]*">/g,
-            `<link rel="alternate" hreflang="$1" href="${fullCanonicalUrl}">`,
-          );
-        }
-
-        // [fix:2026-01-02] 移除 FAQPage 後備注入
-        // 原因: SEOHelmet 已正確生成 FAQPage JSON-LD，後備機制可能導致重複
-        // 問題: Google Search Console 報告「FAQPage 欄位重複」
-        // 解決: 移除冗餘的後備機制，依賴 SEOHelmet 單一來源
-
-        return renderedHTML;
       },
       // 預渲染完成後處理
       async onFinished(dir) {

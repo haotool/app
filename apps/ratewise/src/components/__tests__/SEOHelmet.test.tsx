@@ -12,7 +12,7 @@
  * - 程式碼審查驗證（AggregateRating 已移除）
  *
  * **注意**:
- * - react-helmet-async 在測試環境中不會實際渲染 <head> 內容到 DOM
+ * - vite-react-ssg Head 在測試環境中不會實際渲染 <head> 內容到 DOM
  * - Schema 完整輸出驗證透過 build + grep 驗證
  * - 本測試專注組件邏輯正確性
  *

@@ -99,13 +99,14 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
       expect(content).toContain('<meta name="keywords"');
     });
 
-    it('should NOT have hardcoded canonical (managed by SEOHelmet)', () => {
+    it('should have correct canonical URL for FAQ page (SSG Head)', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
-      // 架構決策 [2025-12-03]: canonical 由 SEOHelmet 動態插入，避免多頁面衝突
-      // 預渲染的 HTML 不包含 canonical，僅在客戶端渲染時由 React 插入
-      expect(content).not.toContain('<link rel="canonical"');
+      // 架構更新 [2026-01-03]: canonical 由 vite-react-ssg Head 靜態輸出
+      expect(content).toMatch(
+        /<link[^>]*rel="canonical"[^>]*href="https:\/\/app\.haotool\.org\/ratewise\/faq\/"/,
+      );
     });
 
     it('should have Open Graph tags for FAQ page', () => {
@@ -139,13 +140,14 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
       expect(content).toContain('<meta name="description"');
     });
 
-    it('should NOT have hardcoded canonical (managed by SEOHelmet)', () => {
+    it('should have correct canonical URL for About page (SSG Head)', () => {
       if (!existsSync(aboutHtml)) return;
 
       const content = readFileSync(aboutHtml, 'utf-8');
-      // 架構決策 [2025-12-03]: canonical 由 SEOHelmet 動態插入，避免多頁面衝突
-      // 預渲染的 HTML 不包含 canonical，僅在客戶端渲染時由 React 插入
-      expect(content).not.toContain('<link rel="canonical"');
+      // 架構更新 [2026-01-03]: canonical 由 vite-react-ssg Head 靜態輸出
+      expect(content).toMatch(
+        /<link[^>]*rel="canonical"[^>]*href="https:\/\/app\.haotool\.org\/ratewise\/about\/"/,
+      );
     });
 
     it('should have Open Graph tags for About page', () => {
@@ -251,22 +253,22 @@ describe('Prerendering Static HTML Generation (BDD)', () => {
     const faqHtml = resolve(distPath, 'faq/index.html');
     const aboutHtml = resolve(distPath, 'about/index.html');
 
-    it('FAQ page should NOT have hardcoded hreflang (managed by SEOHelmet)', () => {
+    it('FAQ page should have correct hreflang tags (SSG Head)', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
-      // 架構決策 [2025-12-03]: hreflang 由 SEOHelmet 動態插入
-      // 預渲染的 HTML 不包含 hreflang，僅在客戶端渲染時由 React 插入
-      expect(content).not.toContain('hreflang=');
+      // 架構更新 [2026-01-03]: hreflang 由 vite-react-ssg Head 靜態輸出
+      expect(content).toContain('hreflang="zh-TW"');
+      expect(content).toContain('hreflang="x-default"');
     });
 
-    it('About page should NOT have hardcoded hreflang (managed by SEOHelmet)', () => {
+    it('About page should have correct hreflang tags (SSG Head)', () => {
       if (!existsSync(aboutHtml)) return;
 
       const content = readFileSync(aboutHtml, 'utf-8');
-      // 架構決策 [2025-12-03]: hreflang 由 SEOHelmet 動態插入
-      // 預渲染的 HTML 不包含 hreflang，僅在客戶端渲染時由 React 插入
-      expect(content).not.toContain('hreflang=');
+      // 架構更新 [2026-01-03]: hreflang 由 vite-react-ssg Head 靜態輸出
+      expect(content).toContain('hreflang="zh-TW"');
+      expect(content).toContain('hreflang="x-default"');
     });
 
     it('All pages should have proper charset and viewport', () => {

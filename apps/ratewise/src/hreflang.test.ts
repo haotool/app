@@ -6,7 +6,7 @@
  * 測試策略：
  * - 🔴 sitemap.xml 不應該包含 hreflang="en"（應用沒有英文版本）
  * - 🔴 sitemap.xml 應該只有 zh-TW 和 x-default
- * - 🔴 SEOHelmet DEFAULT_ALTERNATES 不應該包含英文 locale
+ * - 🔴 SEOHelmet fallback alternates 不應該包含英文 locale
  * - 🔴 SEOHelmet 不應該為單一語言生成 og:locale:alternate
  *
  * [fix:2025-12-31] sitemap.xml 現在由 vite-ssg-sitemap 在 build 時自動生成到 dist/
@@ -92,10 +92,9 @@ describe('Hreflang Configuration (BDD)', () => {
     const seoHelmetPath = resolve(__dirname, 'components/SEOHelmet.tsx');
     const seoHelmetContent = readFileSync(seoHelmetPath, 'utf-8');
 
-    it('should NOT have English locale in DEFAULT_ALTERNATES', () => {
-      // 🔴 紅燈：DEFAULT_ALTERNATES 不應該包含英文
-      // 搜尋 DEFAULT_ALTERNATES 定義區塊
-      const alternatesMatch = /const DEFAULT_ALTERNATES[\s\S]*?\[[\s\S]*?\];/.exec(
+    it('should NOT have English locale in fallback alternates', () => {
+      // 🔴 紅燈：fallback alternates 不應該包含英文
+      const alternatesMatch = /const alternatesToRender[\s\S]*?\[[\s\S]*?\];/.exec(
         seoHelmetContent,
       );
       expect(alternatesMatch).toBeTruthy();
@@ -111,18 +110,18 @@ describe('Hreflang Configuration (BDD)', () => {
       expect(alternatesBlock).not.toContain('"en-GB"');
     });
 
-    it('should only have x-default and zh-TW in DEFAULT_ALTERNATES', () => {
-      // 🔴 紅燈：確認 DEFAULT_ALTERNATES 只有 x-default 和 zh-TW
-      const alternatesMatch = /const DEFAULT_ALTERNATES[\s\S]*?\[[\s\S]*?\];/.exec(
+    it('should only have x-default and DEFAULT_LOCALE in fallback alternates', () => {
+      // 🔴 紅燈：確認 fallback alternates 只有 x-default 和 DEFAULT_LOCALE
+      const alternatesMatch = /const alternatesToRender[\s\S]*?\[[\s\S]*?\];/.exec(
         seoHelmetContent,
       );
       expect(alternatesMatch).toBeTruthy();
 
       const alternatesBlock = alternatesMatch![0];
 
-      // 應該包含 x-default 和 zh-TW
+      // 應該包含 x-default 和 DEFAULT_LOCALE
       expect(alternatesBlock).toMatch(/'x-default'|"x-default"/);
-      expect(alternatesBlock).toMatch(/'zh-TW'|"zh-TW"|DEFAULT_LOCALE/);
+      expect(alternatesBlock).toMatch(/DEFAULT_LOCALE/);
 
       // 計算 hrefLang 的數量（應該只有 2 個）
       const hrefLangMatches = alternatesBlock.match(/hrefLang:/g);
@@ -162,21 +161,13 @@ describe('Hreflang Configuration (BDD)', () => {
       const seoHelmetPath = resolve(__dirname, 'components/SEOHelmet.tsx');
       const seoHelmetContent = readFileSync(seoHelmetPath, 'utf-8');
 
-      // 從 SEOHelmet.tsx 提取 DEFAULT_ALTERNATES 中的 hrefLang 值
-      const alternatesMatch = /const DEFAULT_ALTERNATES[\s\S]*?\[[\s\S]*?\];/.exec(
-        seoHelmetContent,
-      );
-      expect(alternatesMatch).toBeTruthy();
-
-      const alternatesBlock = alternatesMatch![0];
-
       // SEOHelmet 應該只有 x-default 和 zh-TW
-      expect(alternatesBlock).toMatch(/'zh-TW'|"zh-TW"|DEFAULT_LOCALE/);
-      expect(alternatesBlock).toMatch(/'x-default'|"x-default"/);
+      expect(seoHelmetContent).toMatch(/hrefLang:\s*DEFAULT_LOCALE/);
+      expect(seoHelmetContent).toMatch(/hrefLang:\s*['"]x-default['"]/);
 
       // SEOHelmet 不應該有 en
-      expect(alternatesBlock).not.toContain("'en'");
-      expect(alternatesBlock).not.toContain('"en"');
+      expect(seoHelmetContent).not.toContain("'en'");
+      expect(seoHelmetContent).not.toContain('"en"');
 
       // [fix:2025-12-31] sitemap.xml hreflang 驗證移至 CI pipeline
       // 因為 vite-ssg-sitemap 預設不生成 hreflang，hreflang 由 HTML 提供
