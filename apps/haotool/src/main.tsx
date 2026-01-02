@@ -9,7 +9,7 @@ export const createRoot = ViteReactSSG({ routes }, () => {
   // Client-side initialization
   if (typeof window !== 'undefined') {
     console.log(
-      `%c🚀 ${import.meta.env.VITE_APP_NAME || 'HAOTOOL.ORG'} v${import.meta.env.VITE_APP_VERSION || '1.0.0'}`,
+      `%c🚀 ${import.meta.env.VITE_APP_NAME || 'haotool.org'} v${import.meta.env.VITE_APP_VERSION || '1.0.0'}`,
       'color: #6366f1; font-weight: bold;',
     );
   }

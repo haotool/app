@@ -43,7 +43,11 @@ export default defineConfig(({ mode }) => {
 
   // [fix:2025-12-13] haotool 專案使用根路徑
   // 生產/CI 預設 /，本地開發也使用 /
-  const baseFromEnv = env['VITE_HAOTOOL_BASE_PATH'] ?? process.env['VITE_HAOTOOL_BASE_PATH'];
+  const baseFromEnv =
+    env['VITE_HAOTOOL_BASE_PATH'] ??
+    process.env['VITE_HAOTOOL_BASE_PATH'] ??
+    env['VITE_haotool_BASE_PATH'] ??
+    process.env['VITE_haotool_BASE_PATH'];
   const base = baseFromEnv ?? '/';
 
   const manifestScope = base.endsWith('/') ? base : `${base}/`;
@@ -146,8 +150,8 @@ export default defineConfig(({ mode }) => {
         },
         manifest: {
           id: manifestStartUrl,
-          name: 'HAOTOOL.ORG - Digital Portfolio',
-          short_name: 'HAOTOOL',
+          name: 'haotool.org - Digital Portfolio',
+          short_name: 'haotool',
           description:
             'Full-stack developer portfolio showcasing high-performance web applications built with modern technologies.',
           theme_color: '#6366f1',

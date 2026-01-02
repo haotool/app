@@ -4,7 +4,7 @@
  */
 
 const SITE_URL = 'https://app.haotool.org';
-const SITE_NAME = 'HAOTOOL.ORG';
+const SITE_NAME = 'haotool.org';
 const DEFAULT_IMAGE = '/og-image.png';
 const TWITTER_HANDLE = '@azlife_1224';
 
@@ -22,9 +22,9 @@ const ROUTE_METADATA: Record<
   }
 > = {
   '/': {
-    title: 'HAOTOOL.ORG | 阿璋的作品集',
+    title: 'haotool.org | 阿璋的作品集',
     description:
-      '嗨，我是阿璋。「HAOTOOL」取自「好工具」的諧音，代表每個作品都要兼具實用與優雅。我將程式碼雕琢為數位藝術，融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。',
+      '嗨，我是阿璋。「haotool」取自「好工具」的諧音，代表每個作品都要兼具實用與優雅。我將程式碼雕琢為數位藝術，融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。',
     type: 'website',
     keywords: [
       '前端開發',
@@ -34,26 +34,26 @@ const ROUTE_METADATA: Record<
       '作品集',
       '開源專案',
       '阿璋',
-      'HAOTOOL',
+      'haotool',
       'Web 開發',
     ],
   },
   '/projects/': {
-    title: '作品集 | HAOTOOL.ORG',
+    title: '作品集 | haotool.org',
     description:
       '精選作品展示：日本名字產生器、RateWise 匯率計算機等。每個專案都傾注對細節的執著，展現全端開發、設計與問題解決能力。',
     type: 'website',
     keywords: ['作品集', '專案', 'React 專案', 'TypeScript', 'PWA', '開源'],
   },
   '/about/': {
-    title: '關於阿璋 | HAOTOOL.ORG',
+    title: '關於阿璋 | haotool.org',
     description:
-      '我是阿璋，「HAOTOOL」取自「好工具」的諧音，也延伸自我名字的 HAO 音節，代表我對產出的堅持：它必須是個好工具。了解我的技術專長、開發哲學與職涯歷程。',
+      '我是阿璋，「haotool」取自「好工具」的諧音，也延伸自我名字的 HAO 音節，代表我對產出的堅持：它必須是個好工具。了解我的技術專長、開發哲學與職涯歷程。',
     type: 'profile',
     keywords: ['阿璋', '關於', '全端工程師', '技術背景', '開發者'],
   },
   '/contact/': {
-    title: '聯繫 | HAOTOOL.ORG',
+    title: '聯繫 | haotool.org',
     description:
       '有問題或想法想討論？歡迎透過 Email、GitHub 或 Threads 與我聯繫，我會盡快回覆您。讓我們一起打造令人驚艷的數位體驗。',
     type: 'website',

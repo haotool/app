@@ -12,8 +12,8 @@ describe('Constants', () => {
     });
 
     // [fix:2025-12-14] 更新為新的 APP_NAME
-    it('should be HAOTOOL', () => {
-      expect(APP_NAME).toBe('HAOTOOL');
+    it('should be haotool', () => {
+      expect(APP_NAME).toBe('haotool');
     });
   });
 
@@ -83,7 +83,7 @@ describe('Constants', () => {
       expect(FAQS.length).toBeGreaterThanOrEqual(3);
     });
 
-    it('should describe HAOTOOL philosophy', () => {
+    it('should describe haotool philosophy', () => {
       const origin = FAQS.find((faq) => faq.question.includes('名字由來'));
       expect(origin?.answer).toContain('HAO');
       expect(origin?.answer).toContain('好工具');

@@ -1,4 +1,4 @@
-# robots.txt for HAOTOOL.ORG
+# robots.txt for haotool.org
 # https://app.haotool.org/
 # Updated: 2025-12-26
 # [context7:/google/robots-txt:2025-12-15]

@@ -4,7 +4,7 @@
  */
 
 const SITE_URL = 'https://app.haotool.org';
-const SITE_NAME = 'HAOTOOL.ORG';
+const SITE_NAME = 'haotool.org';
 const AUTHOR_NAME = '阿璋';
 
 interface JsonLdBase {
@@ -104,12 +104,12 @@ const ROUTE_METADATA: Record<
   }
 > = {
   '/': {
-    title: 'HAOTOOL.ORG | 阿璋的作品集',
+    title: 'haotool.org | 阿璋的作品集',
     description:
-      '嗨，我是阿璋。「HAOTOOL」取自「好工具」的諧音，代表每個作品都必須實用又優雅。融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。',
+      '嗨，我是阿璋。「haotool」取自「好工具」的諧音，代表每個作品都必須實用又優雅。融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。',
   },
   '/projects/': {
-    title: '作品集 | HAOTOOL.ORG',
+    title: '作品集 | haotool.org',
     description:
       '精選作品展示：日本名字產生器、RateWise 匯率計算機等。每個專案都傾注對細節的執著。',
     breadcrumbs: [
@@ -118,16 +118,16 @@ const ROUTE_METADATA: Record<
     ],
   },
   '/about/': {
-    title: '關於阿璋 | HAOTOOL.ORG',
+    title: '關於阿璋 | haotool.org',
     description:
-      '我是阿璋，「HAOTOOL」取自「好工具」的諧音，也延伸自我名字的 HAO 音節，代表我對產出的堅持：它必須是個好工具。',
+      '我是阿璋，「haotool」取自「好工具」的諧音，也延伸自我名字的 HAO 音節，代表我對產出的堅持：它必須是個好工具。',
     breadcrumbs: [
       { name: '首頁', url: '/' },
       { name: '關於', url: '/about/' },
     ],
   },
   '/contact/': {
-    title: '聯繫 | HAOTOOL.ORG',
+    title: '聯繫 | haotool.org',
     description: '有問題或想法想討論？歡迎透過 Email、GitHub 或 Threads 與我聯繫。',
     breadcrumbs: [
       { name: '首頁', url: '/' },

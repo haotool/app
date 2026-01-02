@@ -304,7 +304,7 @@ export default function Home() {
                 variants={textContainerVariants}
                 className="text-base sm:text-lg text-slate-300 md:text-slate-400 max-w-lg leading-relaxed font-light mb-8 md:mb-10 shadow-black drop-shadow-md md:drop-shadow-none"
               >
-                <TextReveal text="「HAOTOOL」取自「好工具」的諧音，代表這裡產出的每一個工具，都必須實用且優雅。" />
+                <TextReveal text="「haotool」取自「好工具」的諧音，代表這裡產出的每一個工具，都必須實用且優雅。" />
                 <br className="hidden sm:block" />
                 <TextReveal text="融合 3D 互動、動態設計與 React 架構，打造令人過目不忘的網頁體驗。" />
               </motion.div>
@@ -461,7 +461,7 @@ export default function Home() {
               </h2>
               <div className="prose prose-invert prose-lg text-slate-400 font-light text-base md:text-lg">
                 <p className="mb-6">
-                  「HAOTOOL」取自「好工具」的諧音，代表這裡產出的每一個專案，都必須是個
+                  「haotool」取自「好工具」的諧音，代表這裡產出的每一個專案，都必須是個
                   <span className="text-white font-medium">好工具</span>。
                 </p>
                 <p className="mb-6">

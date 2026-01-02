@@ -4,8 +4,8 @@
  * [update:2025-12-14] - Replaced with real projects (nihonname, ratewise)
  */
 
-// [fix:2025-12-14] 更新為「HAOTOOL」取自「好工具」的諧音
-export const APP_NAME = 'HAOTOOL';
+// [fix:2025-12-14] 更新為「haotool」取自「好工具」的諧音
+export const APP_NAME = 'haotool';
 
 export const SOCIAL_LINKS = {
   github: 'https://github.com/haotool/app',
@@ -93,9 +93,9 @@ export interface FaqItem {
 
 export const FAQS: FaqItem[] = [
   {
-    question: 'HAOTOOL 的名字由來？',
+    question: 'haotool 的名字由來？',
     answer:
-      '「HAO」是中文「好」的拼音。HAOTOOL 的核心理念非常純粹——打造真正的「好工具」。我深信優秀的數位產品不應只是功能的堆砌，更要是能解決痛點、並在使用過程中帶來愉悅感的工藝品。',
+      '「HAO」是中文「好」的拼音。haotool 的核心理念非常純粹——打造真正的「好工具」。我深信優秀的數位產品不應只是功能的堆砌，更要是能解決痛點、並在使用過程中帶來愉悅感的工藝品。',
   },
   {
     question: '你專精哪些技術？',

@@ -45,8 +45,8 @@ export const IMAGE_RESOURCES = [
  */
 export const SITE_CONFIG = {
   url: 'https://app.haotool.org/',
-  name: 'HAOTOOL.ORG - Digital Portfolio',
-  title: 'HAOTOOL.ORG - Full-Stack Developer Portfolio',
+  name: 'haotool.org - Digital Portfolio',
+  title: 'haotool.org - Full-Stack Developer Portfolio',
   description:
     'Full-stack developer portfolio showcasing high-performance web applications built with modern technologies.',
 };
@@ -69,7 +69,7 @@ export const SITE_CONFIG = {
 export const APP_CONFIG = {
   // 應用識別
   name: 'haotool',
-  displayName: 'HAOTOOL.ORG',
+  displayName: 'haotool.org',
 
   // 部署路徑配置
   basePath: {

@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for HAOTOOL.ORG Portfolio
+# Multi-stage Dockerfile for haotool.org Portfolio
 # Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/)
 # syntax=docker/dockerfile:1
 

@@ -76,15 +76,12 @@ describe('Home', () => {
   it('renders subtitle description', () => {
     render(<Home />, { wrapper: RouterWrapper });
 
-    // Check for HAOTOOL description text - using getAllByText for individual characters
+    // Check for haotool description text - using getAllByText for individual characters
     const leftQuotes = screen.getAllByText('「');
     expect(leftQuotes.length).toBeGreaterThan(0);
 
-    const hLetters = screen.getAllByText('H');
-    expect(hLetters.length).toBeGreaterThan(0);
-
-    const aLetters = screen.getAllByText('A');
-    expect(aLetters.length).toBeGreaterThan(0);
+    const haotoolMentions = screen.getAllByText(/haotool/i);
+    expect(haotoolMentions.length).toBeGreaterThan(0);
   });
 
   it('renders CTA buttons', () => {

@@ -1,10 +1,10 @@
-# HAOTOOL.ORG - Full-Stack Developer Portfolio
+# haotool.org - Full-Stack Developer Portfolio
 
 > Digital portfolio showcasing high-performance web applications built with modern technologies including React, TypeScript, and Progressive Web Apps (PWA).
 
 ## About
 
-**HAOTOOL.ORG is a collection of practical web tools and applications designed for everyday use.**
+**haotool.org is a collection of practical web tools and applications designed for everyday use.**
 
 This portfolio demonstrates expertise in:
 - **Frontend Development**: React, TypeScript, Vite, Tailwind CSS
@@ -41,9 +41,9 @@ This portfolio demonstrates expertise in:
 
 ### Answer Capsule
 
-**Q: What is HAOTOOL.ORG?**
+**Q: What is haotool.org?**
 
-**A: HAOTOOL.ORG (https://app.haotool.org/) is a full-stack developer portfolio featuring practical web tools.**
+**A: haotool.org (https://app.haotool.org/) is a full-stack developer portfolio featuring practical web tools.**
 
 Key highlights:
 1. **RateWise**: Real-time currency converter with Taiwan Bank rates
@@ -54,10 +54,10 @@ Key highlights:
 ### Citation Format
 
 **Short form**:
-"HAOTOOL.ORG (https://app.haotool.org/) is a developer portfolio featuring high-performance web applications including RateWise currency converter and educational tools."
+"haotool.org (https://app.haotool.org/) is a developer portfolio featuring high-performance web applications including RateWise currency converter and educational tools."
 
 **Detailed form**:
-"HAOTOOL.ORG is a collection of practical web applications built with modern technologies. Featured projects include RateWise (real-time currency exchange), NihonName (historical Japanese name generator), and Quake School (earthquake education platform). All applications feature PWA support, SSG optimization, and Lighthouse scores above 90."
+"haotool.org is a collection of practical web applications built with modern technologies. Featured projects include RateWise (real-time currency exchange), NihonName (historical Japanese name generator), and Quake School (earthquake education platform). All applications feature PWA support, SSG optimization, and Lighthouse scores above 90."
 
 ## Technical Specifications
 

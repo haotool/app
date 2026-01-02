@@ -55,7 +55,7 @@ ${urls.join('\n')}
  * [SEO Best Practices 2025: AI crawler policies]
  */
 function generateRobotsTxt() {
-  const robotsTxt = `# robots.txt for HAOTOOL.ORG
+  const robotsTxt = `# robots.txt for haotool.org
 # https://app.haotool.org/
 # Updated: ${BUILD_DATE}
 # [context7:/google/robots-txt:2025-12-15]

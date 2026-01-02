@@ -3,7 +3,7 @@
 > **建立時間**: 2025-12-13T02:51:00+08:00
 > **最後更新**: 2025-12-14T03:30:00+08:00
 > **狀態**: ✅ 已完成
-> **適用專案**: HAOTOOL、RateWise、NihonName
+> **適用專案**: haotool、RateWise、NihonName
 
 ---
 
@@ -17,7 +17,7 @@
 
 ## 1️⃣ 網站驗證 (首次設定)
 
-### HAOTOOL 作品集首頁 (新增 2025-12-14)
+### haotool 作品集首頁 (新增 2025-12-14)
 
 **網站 URL**: `https://app.haotool.org/`
 
@@ -40,7 +40,7 @@ curl -I https://app.haotool.org/google1234567890abcdef.html
 # 5. 回到 Google Search Console 點擊「驗證」
 ```
 
-**HAOTOOL 頁面清單**:
+**haotool 頁面清單**:
 
 - `/` - 首頁
 - `/projects/` - 作品集

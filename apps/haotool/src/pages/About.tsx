@@ -62,7 +62,7 @@ export default function About() {
               嗨，我是阿璋。一位將程式碼雕琢為數位藝術的全端開發者。
             </p>
             <p className="mb-6">
-              我是阿璋。HAOTOOL 取自「好工具」的諧音，這代表我對產出的堅持：它必須是個
+              我是阿璋。haotool 取自「好工具」的諧音，這代表我對產出的堅持：它必須是個
               <span className="text-white font-medium">好工具</span>。
             </p>
             <p>
