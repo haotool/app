@@ -742,40 +742,10 @@ export default defineConfig(({ mode }) => {
           );
         }
 
-        // 為 FAQ 頁面添加 FAQPage JSON-LD (如果缺失)
-        // [fix:2025-11-28] 使用正則匹配因為 JSON.stringify 可能添加空格
-        const hasFaqJsonLd = /@type["']?\s*:\s*["']?FAQPage/i.test(renderedHTML);
-        if (route === '/faq' && !hasFaqJsonLd) {
-          console.warn('⚠️ FAQ page missing FAQPage JSON-LD, this should not happen!');
-          const faqJsonLd = `
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "url": "${siteUrl}faq/",
-        "inLanguage": "zh-TW",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "RateWise 可以離線使用嗎？",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "RateWise 是 PWA，首次開啟會快取核心資產與最近匯率，即使離線也能用最近的匯率進行換算。"
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "匯率來源是什麼？",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "資料 100% 參考臺灣銀行牌告匯率，每 5 分鐘同步一次。"
-            }
-          }
-        ]
-      }
-    </script>`;
-          renderedHTML = renderedHTML.replace('</head>', `${faqJsonLd}\n</head>`);
-        }
+        // [fix:2026-01-02] 移除 FAQPage 後備注入
+        // 原因: SEOHelmet 已正確生成 FAQPage JSON-LD，後備機制可能導致重複
+        // 問題: Google Search Console 報告「FAQPage 欄位重複」
+        // 解決: 移除冗餘的後備機制，依賴 SEOHelmet 單一來源
 
         return renderedHTML;
       },
