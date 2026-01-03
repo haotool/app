@@ -2,13 +2,54 @@
  * Post-build script for haotool
  * Ensures trailing slashes and validates build output
  * [context7:/google/seo-starter-guide:2025-12-13]
+ * [fix:2026-01-04] 新增 HTML 修復功能
  */
-import { existsSync, readdirSync, statSync, copyFileSync, mkdirSync } from 'node:fs';
+import {
+  existsSync,
+  readdirSync,
+  statSync,
+  copyFileSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distDir = resolve(__dirname, '../dist');
+
+/**
+ * [fix:2026-01-04] 修復 HTML 中的問題
+ * - 重複的 crossorigin 屬性（vite-plugin-csp-guard SRI 造成）
+ */
+function fixHtmlFile(htmlPath) {
+  if (!existsSync(htmlPath)) return;
+  let html = readFileSync(htmlPath, 'utf-8');
+  const original = html;
+
+  // 修復重複的 crossorigin 屬性
+  html = html.replace(/crossorigin\s+crossorigin/gi, 'crossorigin');
+
+  if (html !== original) {
+    writeFileSync(htmlPath, html, 'utf-8');
+    console.log(`  ✅ Fixed HTML (dedup crossorigin): ${htmlPath.replace(distDir, 'dist')}`);
+  }
+}
+
+// 遞迴修復所有 HTML 文件
+function fixAllHtmlFiles(dir) {
+  if (!existsSync(dir)) return;
+  const entries = readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      fixAllHtmlFiles(fullPath);
+    } else if (entry.name.endsWith('.html')) {
+      fixHtmlFile(fullPath);
+    }
+  }
+}
 
 /**
  * Validate that all expected files exist
@@ -97,6 +138,12 @@ function summarizeBuild() {
 
 // Main execution
 console.log('🔧 Running post-build tasks for haotool...');
+
+// 1. 修復 HTML 文件
+console.log('\n📝 Fixing HTML files...');
+fixAllHtmlFiles(distDir);
+
+// 2. 驗證 build
 validateBuild();
 summarizeBuild();
 console.log('\n✅ Post-build complete!\n');
