@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-01-04T00:18:00+08:00
-> **當前總分**: 600 (初始分: 100)
+> **最後更新**: 2026-01-04T00:30:00+08:00
+> **當前總分**: 604 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -365,3 +365,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 | ✅ 成功 | RateWise PWA 深度優化 + 棉花糖雲朵通知 + LCP 優化 | 1) PWA 離線快取策略：5 分鐘更新 + localStorage 30 天備援 + NetworkFirst JS/CSS 策略 2) 整合並優化 UpdatePrompt 為棉花糖雲朵風格（刪除重複 AutoUpdateToast）3) Pull-to-Refresh 強制更新：SW cache 清除 + forceServiceWorkerUpdate + reload 4) 開發環境 virtual:pwa-register/react mock 解析 5) LCP Performance 87%→95%：移除 loading.css render-blocking + preload 匯率 API 6) 驗證十二月彩蛋正常（聖誕樹+雪花+更新通知）7) UpdatePrompt 高級動畫：shimmer/float-slow/ping-slow/progress-fill 8) 963/963 測試通過 | [context7:/vite-pwa/vite-plugin-pwa:useRegisterSW:2025-12-29][context7:/reactjs/react.dev:ViewTransition:2025-12-29][Linus 三問驗證][BDD 流程] | +12 | 2025-12-29T01:57:59+08:00 |
 | ✅ 成功 | W3C HTML Validator 修復 (RateWise + NihonName) | 移除過時 meta、冗餘 role、重複 ID、div 嵌套問題 | [W3C HTML5 Spec] | +3 |
 | ✅ 成功 | Quake-School W3C HTML 修復 | 移除重複 title/description、修復 crossorigin | [W3C HTML5 Spec] | +2 |
+| ✅ 成功 | HaoTool postbuild HTML 修復 + OG/Twitter 驗證通過 | 新增 crossorigin 修復腳本 | [2026-01-04] | +2 |
