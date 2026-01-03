@@ -16,6 +16,7 @@
 import { Copy } from 'lucide-react';
 import type { ConversionHistoryEntry } from '../types';
 import { copyToClipboard, formatConversionForCopy } from '../../../utils/clipboard';
+import { useToast } from '../../../components/Toast';
 
 interface ConversionHistoryProps {
   history: ConversionHistoryEntry[];
@@ -24,19 +25,23 @@ interface ConversionHistoryProps {
 }
 
 export const ConversionHistory = ({ history, onReconvert, onClearAll }: ConversionHistoryProps) => {
+  const { showToast } = useToast();
+
   if (history.length === 0) {
     return null;
   }
 
   /**
    * 複製轉換結果到剪貼簿
+   * [fix:2026-01-04] 新增 Toast 通知，移除 TODO 標記
    */
   const handleCopy = async (entry: ConversionHistoryEntry) => {
     const text = formatConversionForCopy(entry);
     const success = await copyToClipboard(text);
-    // TODO: [future] 顯示 Toast 通知 "已複製" 或 "複製失敗"
-    if (!success) {
-      // 錯誤已在 copyToClipboard 中記錄
+    if (success) {
+      showToast('已複製到剪貼簿', 'success');
+    } else {
+      showToast('複製失敗', 'error');
     }
   };
 
