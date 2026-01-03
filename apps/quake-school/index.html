@@ -10,13 +10,9 @@
     <meta name="app-version" content="__APP_VERSION__" />
     <meta name="build-time" content="__BUILD_TIME__" />
 
-    <!-- Primary Meta Tags -->
-    <title>地震知識小學堂 | 互動式地震衛教</title>
-    <meta name="title" content="地震知識小學堂 | 互動式地震衛教" />
-    <meta
-      name="description"
-      content="透過互動式教學了解地震科學知識。規模看大小，震度看搖晃，掌握科學，守護安全！"
-    />
+    <!-- [fix:2026-01-04] 移除靜態 title/description，由 react-helmet-async 動態管理
+         避免 W3C Validator 報錯：重複的 meta description
+         SSG 預渲染時 Helmet 會注入正確的頁面專屬 meta tags -->
     <meta
       name="keywords"
       content="地震, 地震教育, 地震知識, 防災教育, 震度, 規模, 地震波, P波, S波"
