@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-01-04T00:38:00+08:00
-> **當前總分**: 607 (初始分: 100)
+> **最後更新**: 2026-01-04T01:15:00+08:00
+> **當前總分**: 608 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -367,3 +367,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 | ✅ 成功 | Quake-School W3C HTML 修復 | 移除重複 title/description、修復 crossorigin | [W3C HTML5 Spec] | +2 |
 | ✅ 成功 | HaoTool postbuild HTML 修復 + OG/Twitter 驗證通過 | 新增 crossorigin 修復腳本 | [2026-01-04] | +2 |
 | ✅ 成功 | AI 摘要引用結構規範文檔（005） | 創建完整的 AI 引用最佳實踐指南 | [context7:google-search:2026-01-04] | +3 |
+| ✅ 成功 | ConversionHistory Toast 通知功能 | 修復 TODO，使用 useToast 顯示複製成功/失敗通知 | [Linus:消除 TODO] | +1 |
