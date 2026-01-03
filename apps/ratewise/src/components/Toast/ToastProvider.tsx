@@ -1,7 +1,7 @@
 /**
- * Toast 通知組件 - 輕量級無依賴實作
+ * Toast Provider - 包裝應用程式以啟用 Toast 功能
  *
- * [2025-12-29] 建立
+ * [2026-01-04] 從 Toast.tsx 拆分以符合 react-refresh/only-export-components 規則
  * 參考: [context7:/reactjs/react.dev:toast-notification:2025-12-29]
  *
  * 設計特點：
@@ -13,24 +13,9 @@
  * - 符合棉花糖雲朵風格
  */
 
-import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { Check, X, Info } from 'lucide-react';
-
-// Toast 類型定義
-export type ToastType = 'success' | 'error' | 'info';
-
-export interface ToastMessage {
-  id: string;
-  message: string;
-  type: ToastType;
-}
-
-interface ToastContextValue {
-  showToast: (message: string, type?: ToastType) => void;
-}
-
-// 創建 Context
-const ToastContext = createContext<ToastContextValue | null>(null);
+import { ToastContext, type ToastMessage, type ToastType } from './ToastContext';
 
 /**
  * Toast Provider - 包裝應用程式以啟用 Toast 功能
@@ -143,24 +128,4 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
       </div>
     </div>
   );
-}
-
-/**
- * useToast Hook - 在組件中使用 Toast
- *
- * @example
- * const { showToast } = useToast();
- * showToast('已複製到剪貼簿', 'success');
- */
-export function useToast(): ToastContextValue {
-  const context = useContext(ToastContext);
-  if (!context) {
-    // 如果未在 ToastProvider 內使用，提供一個 no-op 實作
-    return {
-      showToast: () => {
-        console.warn('useToast: Toast context not found. Wrap your app in ToastProvider.');
-      },
-    };
-  }
-  return context;
 }
