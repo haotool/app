@@ -234,16 +234,40 @@ export function buildHowToSchema() {
 
 /**
  * ImageObject schema for OG images
+ * [2025-01-03] 新增 GSC 建議欄位: creator, copyrightNotice, creditText, acquireLicensePage
  */
 export function buildImageObjectSchema(imagePath: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'ImageObject',
     url: buildAssetUrl(imagePath),
+    contentUrl: buildAssetUrl(imagePath),
     width: 1200,
     height: 630,
+    name: 'NihonName 皇民化改姓生成器預覽圖',
     caption: 'NihonName 皇民化改姓生成器',
+    description: 'NihonName 提供日治時期台灣人改姓名的歷史模擬與教育工具',
     inLanguage: 'zh-TW',
+    encodingFormat: 'image/png',
+    creator: {
+      '@type': 'Organization',
+      name: 'haotool',
+      url: 'https://haotool.org',
+    },
+    author: {
+      '@type': 'Organization',
+      name: 'haotool',
+      url: 'https://haotool.org',
+    },
+    copyrightHolder: {
+      '@type': 'Organization',
+      name: 'haotool',
+    },
+    copyrightYear: '2025',
+    copyrightNotice: '© 2025 haotool. All rights reserved.',
+    creditText: 'Image by haotool',
+    license: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+    acquireLicensePage: 'https://haotool.org/contact/',
   };
 }
 
@@ -406,8 +430,8 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
           {
             headline: '台灣歷史專區 - 皇民化運動與改姓歷史',
             description: '深入了解台灣日治時期的皇民化運動、馬關條約、舊金山和約等重要歷史事件',
-            datePublished: '2025-12-04',
-            dateModified: buildTime.split('T')[0] ?? '2025-12-04',
+            datePublished: '2025-12-04T00:00:00+08:00',
+            dateModified: buildTime,
             keywords: ['皇民化運動', '馬關條約', '舊金山和約', '台灣歷史', '日治時期'],
           },
           fullUrl,
@@ -427,8 +451,8 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
           {
             headline: '皇民化運動 - 1937-1945 台灣同化政策',
             description: '詳細介紹日本殖民時期對台灣實施的皇民化運動，包括改姓名、國語運動等政策',
-            datePublished: '2025-12-04',
-            dateModified: buildTime.split('T')[0] ?? '2025-12-04',
+            datePublished: '2025-12-04T00:00:00+08:00',
+            dateModified: buildTime,
             keywords: ['皇民化運動', '改姓名運動', '國語運動', '台灣日治時期', '1940年代'],
           },
           fullUrl,
@@ -448,8 +472,8 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
           {
             headline: '馬關條約 - 1895 台灣割讓日本',
             description: '介紹甲午戰爭後簽訂的馬關條約，以及台灣被割讓給日本的歷史背景',
-            datePublished: '2025-12-04',
-            dateModified: buildTime.split('T')[0] ?? '2025-12-04',
+            datePublished: '2025-12-04T00:00:00+08:00',
+            dateModified: buildTime,
             keywords: ['馬關條約', '甲午戰爭', '台灣割讓', '1895年', '清日戰爭'],
           },
           fullUrl,
@@ -469,8 +493,8 @@ export function getJsonLdForRoute(route: string, buildTime: string): Record<stri
           {
             headline: '舊金山和約 - 1951 台灣主權歸屬',
             description: '介紹二戰後簽訂的舊金山和約，以及台灣主權歸屬的國際法爭議',
-            datePublished: '2025-12-04',
-            dateModified: buildTime.split('T')[0] ?? '2025-12-04',
+            datePublished: '2025-12-04T00:00:00+08:00',
+            dateModified: buildTime,
             keywords: ['舊金山和約', '台灣主權', '二戰後', '1951年', '國際法'],
           },
           fullUrl,

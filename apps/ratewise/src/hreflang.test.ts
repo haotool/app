@@ -184,16 +184,20 @@ describe('Hreflang Configuration (BDD)', () => {
       // - og:locale = zh_TW (主要語言)
       // - 不應該有 og:locale:alternate = zh_TW
 
-      // 查找 og:locale:alternate 的過濾邏輯
-      const filterPattern =
-        /normalizedAlternates[\s\S]*?\.filter\(\(\{ hrefLang \}\).*?hrefLang !== ['"]x-default['"]\)/;
-      const hasXDefaultFilter = filterPattern.test(seoHelmetContent);
+      // [fix:2026-01-03] 更新過濾邏輯：同時過濾 x-default 和與主要 locale 相同的項目
+      // 新的過濾邏輯會過濾掉：
+      // 1. hrefLang === 'x-default'
+      // 2. hrefLang.replace('-', '_') === ogLocale（主要語言）
 
-      // 應該過濾掉 x-default
-      expect(hasXDefaultFilter).toBe(true);
+      // 查找過濾掉與主要 locale 相同項目的邏輯
+      const filterPattern = /hrefLang\.replace\(['"]-['"],\s*['"]_['"]\)\s*!==\s*ogLocale/;
+      const hasOgLocaleFilter = filterPattern.test(seoHelmetContent);
 
-      // 理想情況：當只有一種語言時，應該完全不渲染 og:locale:alternate
-      // 或者至少應該過濾掉與主要 locale 相同的項目
+      // 應該過濾掉與主要 locale 相同的項目
+      expect(hasOgLocaleFilter).toBe(true);
+
+      // 確認也有過濾 x-default
+      expect(seoHelmetContent).toContain("hrefLang !== 'x-default'");
     });
   });
 });

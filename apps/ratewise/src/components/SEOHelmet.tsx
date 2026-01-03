@@ -167,6 +167,16 @@ const DEFAULT_JSON_LD = [
       width: '1200',
       height: '630',
       encodingFormat: 'image/png',
+      name: 'RateWise 桌面版匯率換算器截圖',
+      description: 'RateWise 匯率換算工具桌面版界面',
+      creator: {
+        '@type': 'Organization',
+        name: 'haotool',
+        url: 'https://haotool.org',
+      },
+      copyrightNotice: '© 2025 haotool',
+      creditText: 'haotool',
+      acquireLicensePage: 'https://haotool.org/contact/',
     },
   },
   {
@@ -312,7 +322,7 @@ export function SEOHelmet({
   }
 
   // [2025 AI SEO] 添加 OG 圖片的 ImageObject Schema
-  // 依據: https://schema.org/ImageObject
+  // 依據: https://schema.org/ImageObject + Google Search Central 2025 建議欄位
   // 幫助 AI 搜索引擎理解圖片內容
   structuredData.push({
     '@context': 'https://schema.org',
@@ -324,16 +334,26 @@ export function SEOHelmet({
     encodingFormat: 'image/png',
     name: 'RateWise 匯率轉換器應用截圖',
     description: 'RateWise 即時匯率換算工具界面截圖，展示單幣別與多幣別換算功能',
+    // [GSC 2025-12-31] 新增建議欄位
+    creator: {
+      '@type': 'Organization',
+      name: 'haotool',
+      url: 'https://haotool.org',
+    },
     author: {
       '@type': 'Organization',
-      name: 'RateWise',
+      name: 'haotool',
+      url: 'https://haotool.org',
     },
     copyrightHolder: {
       '@type': 'Organization',
-      name: 'RateWise',
+      name: 'haotool',
     },
     copyrightYear: '2025',
+    copyrightNotice: '© 2025 haotool. All rights reserved.',
+    creditText: 'Image by haotool',
     license: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+    acquireLicensePage: 'https://haotool.org/contact/',
   });
 
   return (
@@ -362,8 +382,12 @@ export function SEOHelmet({
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content="RateWise 匯率轉換器應用截圖" />
       <meta property="og:locale" content={ogLocale} />
+      {/* [fix:2026-01-03] og:locale:alternate 只應包含與主要 locale 不同的語言
+          對於單一語言網站，不應生成 og:locale:alternate */}
       {normalizedAlternates
-        .filter(({ hrefLang }) => hrefLang !== 'x-default')
+        .filter(
+          ({ hrefLang }) => hrefLang !== 'x-default' && hrefLang.replace('-', '_') !== ogLocale,
+        )
         .map(({ hrefLang }) => (
           <meta
             key={hrefLang}
