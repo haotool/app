@@ -1,23 +1,18 @@
 /**
  * 地震知識小學堂 - 路由配置
  * [context7:/daydreamer-riri/vite-react-ssg:2025-12-29]
+ * [fix:2026-01-04] 將 PageLoader 移至 components/ 以符合 react-refresh 規則
  */
 import type { RouteRecord } from 'vite-react-ssg';
 import { Suspense, lazy } from 'react';
 import Layout from './components/Layout';
+import { PageLoader } from './components/PageLoader';
 
 // Lazy load pages for code splitting
 const HomePage = lazy(() => import('./pages/Home'));
 const LessonsPage = lazy(() => import('./pages/Lessons'));
 const QuizPage = lazy(() => import('./pages/Quiz'));
 const AboutPage = lazy(() => import('./pages/About'));
-
-// Loading fallback
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen bg-sky-50">
-    <div className="animate-pulse text-sky-500 font-bold">載入中...</div>
-  </div>
-);
 
 export const routes: RouteRecord[] = [
   {
