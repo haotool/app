@@ -10,6 +10,7 @@ const distDir = join(__dirname, '../dist');
 
 /**
  * [fix:2025-12-24] 移除 CSP meta tag，確保 charset 在 head 前 1024 bytes
+ * [fix:2026-01-03] 修復 W3C Validator 錯誤：移除重複的 crossorigin 屬性
  * CSP 由 Nginx HTTP header 提供，meta tag 會導致 Lighthouse 警告
  * 參考: https://web.dev/articles/csp (推薦使用 HTTP header)
  */
@@ -28,9 +29,14 @@ const fixHtmlCharsetAndRemoveCSP = (htmlPath) => {
   // 在 <head> 標籤後立即插入 charset
   html = html.replace(/<head([^>]*)>/i, `<head$1>${charsetMeta}`);
 
+  // 3. [fix:2026-01-03] 修復 vite-plugin-csp-guard SRI 造成的重複 crossorigin 屬性
+  // W3C Validator 報錯: "Duplicate attribute crossorigin"
+  // 問題: SRI 功能會注入 crossorigin，但如果元素已有 crossorigin 就會重複
+  html = html.replace(/crossorigin\s+crossorigin/gi, 'crossorigin');
+
   if (html !== original) {
     fs.writeFileSync(htmlPath, html, 'utf-8');
-    console.log(`✅ fixed HTML (removed CSP meta, charset first): ${htmlPath}`);
+    console.log(`✅ fixed HTML (removed CSP meta, charset first, dedup crossorigin): ${htmlPath}`);
   }
 };
 

@@ -366,7 +366,9 @@ export function SEOHelmet({
       <meta name="author" content="haotool" />
       <meta name="robots" content={robots} />
       <meta name="language" content={locale} />
-      <meta httpEquiv="content-language" content={locale} />
+      {/* [fix:2026-01-03] 移除過時的 http-equiv="content-language"
+          W3C Validator: "Using the meta element to specify the document-wide default language is obsolete"
+          正確做法：使用 <html lang="zh-TW"> 指定語言 */}
       <link rel="canonical" href={canonicalUrl} />
       {normalizedAlternates.map(({ href, hrefLang }) => (
         <link key={hrefLang} rel="alternate" hrefLang={hrefLang} href={href} />

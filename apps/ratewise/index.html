@@ -63,7 +63,9 @@
       content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     />
     <!-- Canonical 和 hreflang 由 SEOHelmet 動態生成，避免與子頁面衝突 -->
-    <meta http-equiv="content-language" content="zh-TW" />
+    <!-- [fix:2026-01-03] 移除過時的 http-equiv="content-language"
+         W3C Validator: "Using the meta element to specify the document-wide default language is obsolete"
+         正確做法：使用 <html lang="zh-TW"> 指定語言（已設定於 <html> 標籤）-->
 
     <!-- [SEO Fix 2025-11-25 Phase 2A] Open Graph Tags -->
     <meta property="og:type" content="website" />
