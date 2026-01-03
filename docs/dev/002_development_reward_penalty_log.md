@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-01-04T01:38:00+08:00
-> **當前總分**: 611 (初始分: 100)
+> **最後更新**: 2026-01-04T01:52:00+08:00
+> **當前總分**: 612 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -370,3 +370,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 | ✅ 成功 | ConversionHistory Toast 通知功能 | 修復 TODO，使用 useToast 顯示複製成功/失敗通知 | [Linus:消除 TODO] | +1 |
 | ✅ 成功 | Toast 模組重構（react-refresh 規則） | 拆分為 Toast/目錄結構，消除 2 個 lint 警告 | [eslint:react-refresh/only-export-components] | +2 |
 | ✅ 成功 | Quake-School PageLoader 拆分 | 消除最後一個全域 lint 警告，全域歸零 | [eslint:react-refresh/only-export-components] | +1 |
+| ✅ 成功 | Quake-School README.md 新增 | 新增完整文檔（253 行），風格一致 | [Linus:文檔完整性] | +1 |
