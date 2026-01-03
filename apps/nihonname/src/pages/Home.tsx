@@ -153,6 +153,10 @@ const processCompoundSurname = (
 
 // --- SVG Components for High-End Aesthetics ---
 
+/**
+ * [fix:2026-01-03] 修改 pattern ID 為 seigaiha-home 避免與 WashiPaper 組件重複
+ * W3C Validator 報錯: "Duplicate ID seigaiha"
+ */
 const SeigaihaPattern = ({
   className,
   opacity = 0.1,
@@ -162,7 +166,7 @@ const SeigaihaPattern = ({
 }) => (
   <svg className={className} width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <pattern id="seigaiha" width="40" height="20" patternUnits="userSpaceOnUse">
+      <pattern id="seigaiha-home" width="40" height="20" patternUnits="userSpaceOnUse">
         <path
           d="M0,10 A10,10 0 0,1 20,10 A10,10 0 0,1 40,10 M20,10 A10,10 0 0,1 30,0"
           fill="none"
@@ -179,7 +183,7 @@ const SeigaihaPattern = ({
         />
       </pattern>
     </defs>
-    <rect width="100%" height="100%" fill="url(#seigaiha)" />
+    <rect width="100%" height="100%" fill="url(#seigaiha-home)" />
   </svg>
 );
 
@@ -1175,6 +1179,8 @@ export default function Home() {
                 </button>
               </div>
 
+              {/* [fix:2026-01-03] 修改 <div> 為 <span> 避免 W3C Validator 錯誤
+                  W3C: "Element div not allowed as child of element h1" */}
               <h1
                 className="relative inline-block text-4xl md:text-5xl font-bold font-jp text-red-900 drop-shadow-sm leading-tight transition-all duration-500 opacity-100 cursor-pointer"
                 onClick={handleLogoClick}
@@ -1189,9 +1195,9 @@ export default function Home() {
                   皇民化改姓運動
                 </span>
                 姓名<span className="text-red-600">変換</span>所
-                <div className="absolute -right-4 -top-2 text-red-800 opacity-20 rotate-12">
+                <span className="absolute -right-4 -top-2 text-red-800 opacity-20 rotate-12">
                   <KamonIcon className="w-12 h-12" />
-                </div>
+                </span>
               </h1>
             </div>
           </header>
@@ -1269,12 +1275,14 @@ export default function Home() {
                     />
                   </div>
 
+                  {/* [fix:2026-01-03] 修改 <div> 為 <span> 避免 W3C Validator 錯誤
+                      W3C: "Element div not allowed as child of element button" */}
                   <button
                     onClick={generateNames}
                     disabled={loading}
                     className="w-full bg-stone-900 hover:bg-red-900 active:scale-[0.98] text-stone-50 font-bold py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
 
                     {loading ? (
                       <KamonIcon className="w-6 h-6 animate-spin text-stone-400" />
