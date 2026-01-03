@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-01-04T00:05:00+08:00
-> **當前總分**: 595 (初始分: 100)
+> **最後更新**: 2026-01-04T00:18:00+08:00
+> **當前總分**: 600 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -364,3 +364,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 | ✅ 成功 | 消除 CI 硬編碼，建立 SSOT 架構 + 100% 路由覆蓋 | 1) 創建 workspace-utils.mjs 自動發現系統（discoverApps/loadAppConfig/getSSGApps）2) 為 RateWise/NihonName/HaoTool 建立統一 app.config.mjs (SSOT) 3) 重構 verify-production-seo.mjs 為通用版本（動態載入 config，修復 llms.txt 硬編碼 URL）4) 創建 verify-all-apps.mjs 批次檢測腳本（自動發現並驗證所有 apps）5) CI workflow 簡化 178→65 行 (-64%，移除所有硬編碼環境變數與路徑陣列）6) 驗證 29/29 路由全數返回 200（HaoTool 4/4, NihonName 8/8, RateWise 17/17）7) CI 覆蓋率 86%→100% (+14%)，新增頁面步驟 4→1 (-75%)，消除 8 處硬編碼 (-100%) | [Linus: 消除特殊情況][SSOT 架構][自動化優於手動][context7:/nodejs/node:esm-modules:2025-12-15] | +10 | 2025-12-15T14:30:00+08:00 |
 | ✅ 成功 | RateWise PWA 深度優化 + 棉花糖雲朵通知 + LCP 優化 | 1) PWA 離線快取策略：5 分鐘更新 + localStorage 30 天備援 + NetworkFirst JS/CSS 策略 2) 整合並優化 UpdatePrompt 為棉花糖雲朵風格（刪除重複 AutoUpdateToast）3) Pull-to-Refresh 強制更新：SW cache 清除 + forceServiceWorkerUpdate + reload 4) 開發環境 virtual:pwa-register/react mock 解析 5) LCP Performance 87%→95%：移除 loading.css render-blocking + preload 匯率 API 6) 驗證十二月彩蛋正常（聖誕樹+雪花+更新通知）7) UpdatePrompt 高級動畫：shimmer/float-slow/ping-slow/progress-fill 8) 963/963 測試通過 | [context7:/vite-pwa/vite-plugin-pwa:useRegisterSW:2025-12-29][context7:/reactjs/react.dev:ViewTransition:2025-12-29][Linus 三問驗證][BDD 流程] | +12 | 2025-12-29T01:57:59+08:00 |
 | ✅ 成功 | W3C HTML Validator 修復 (RateWise + NihonName) | 移除過時 meta、冗餘 role、重複 ID、div 嵌套問題 | [W3C HTML5 Spec] | +3 |
+| ✅ 成功 | Quake-School W3C HTML 修復 | 移除重複 title/description、修復 crossorigin | [W3C HTML5 Spec] | +2 |
