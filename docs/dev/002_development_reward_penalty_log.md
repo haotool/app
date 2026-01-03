@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-01-04T01:15:00+08:00
-> **當前總分**: 608 (初始分: 100)
+> **最後更新**: 2026-01-04T01:28:00+08:00
+> **當前總分**: 610 (初始分: 100)
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -368,3 +368,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 | ✅ 成功 | HaoTool postbuild HTML 修復 + OG/Twitter 驗證通過 | 新增 crossorigin 修復腳本 | [2026-01-04] | +2 |
 | ✅ 成功 | AI 摘要引用結構規範文檔（005） | 創建完整的 AI 引用最佳實踐指南 | [context7:google-search:2026-01-04] | +3 |
 | ✅ 成功 | ConversionHistory Toast 通知功能 | 修復 TODO，使用 useToast 顯示複製成功/失敗通知 | [Linus:消除 TODO] | +1 |
+| ✅ 成功 | Toast 模組重構（react-refresh 規則） | 拆分為 Toast/目錄結構，消除 2 個 lint 警告 | [eslint:react-refresh/only-export-components] | +2 |
