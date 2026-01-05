@@ -3,11 +3,12 @@
 # RateWise Pre-commit Hook
 # [BDD:2025-12-01] 整合完整品質檢查到 Git workflow
 # [CI:2025-12-01] 防止 CI 失敗的根本原因
+# [SSOT:2026-01-06] 新增 SSOT 同步驗證
 
 echo "🔍 執行 Pre-commit 檢查..."
 
 # 1. Lint-staged (程式碼格式化與 Lint)
-echo "\n📋 Step 1/3: Lint-staged..."
+echo "\n📋 Step 1/4: Lint-staged..."
 pnpm lint-staged
 if [ $? -ne 0 ]; then
   echo "\n❌ Lint-staged 失敗，請修復後再提交"
@@ -15,7 +16,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # 2. TypeScript 檢查 (快速驗證類型錯誤)
-echo "\n📋 Step 2/3: TypeScript 檢查..."
+echo "\n📋 Step 2/4: TypeScript 檢查..."
 pnpm typecheck
 if [ $? -ne 0 ]; then
   echo "\n❌ TypeScript 檢查失敗，請修復類型錯誤後再提交"
@@ -23,11 +24,24 @@ if [ $? -ne 0 ]; then
 fi
 
 # 3. 格式檢查 (確保所有文件已格式化)
-echo "\n📋 Step 3/3: Prettier 格式檢查..."
+echo "\n📋 Step 3/4: Prettier 格式檢查..."
 pnpm format
 if [ $? -ne 0 ]; then
   echo "\n❌ 格式檢查失敗，請執行 'pnpm format:fix' 後再提交"
   exit 1
+fi
+
+# 4. SSOT 同步驗證 (確保 SEO 配置一致性)
+# [可選] 僅在 ratewise 相關檔案有變更時執行
+if git diff --cached --name-only | grep -qE "(seo-paths|app\.config)"; then
+  echo "\n📋 Step 4/4: SSOT 同步驗證..."
+  node scripts/verify-ssot-sync.mjs 2>/dev/null
+  if [ $? -ne 0 ]; then
+    echo "\n❌ SSOT 同步驗證失敗，請確保 seo-paths.config.mjs 與 seo-paths.ts 一致"
+    exit 1
+  fi
+else
+  echo "\n📋 Step 4/4: SSOT 同步驗證 (跳過 - 無相關變更)"
 fi
 
 echo "\n✅ 所有 Pre-commit 檢查通過"
