@@ -2,8 +2,8 @@
 
 **版本**: v2.1.0
 **建立日期**: 2025-12-02
-**最後更新**: 2026-01-06T01:22:11+08:00
-**當前進度**: Phase 4 完成 + Phase 6 進行中（2026 進階 SEO）
+**最後更新**: 2026-01-06T01:34:56+08:00
+**當前進度**: Phase 6 完成（2026 進階 SEO 全數落地）
 
 ---
 
@@ -193,71 +193,71 @@
 
 ---
 
-## 🚀 Phase 6: 2026 進階 SEO (Advanced SEO) 🔄 進行中
+## 🚀 Phase 6: 2026 進階 SEO (Advanced SEO) ✅ 已完成
 
 > 目標：依 P2 → P3 優先級，使用 BDD 紅燈→綠燈→重構流程逐項落地。
 
-### P2-1: VSI 監控（2026 新標準） 🔄
+### P2-1: VSI 監控（2026 新標準） ✅
 
-- [ ] **Red**: 新增 `seo-vsi.spec.ts`，以 Vitest 建立「VSI < 0.05」失敗測試（先紅燈） [context7:vitest-dev/vitest:2026-01-06T01:22:11+08:00]
-- [ ] **Green**: 以 `web-vitals` 的 `onCLS`/`onINP` 監測並回報（含 attribution 以定位 layout shift/interaction 來源） [context7:googlechrome/web-vitals:2026-01-06T01:22:11+08:00]
-- [ ] **Refactor**: 將監測邏輯抽成 `reportWebVitals.ts`，並統一收斂到 `seo:health-check` 報表
+- [x] **Red**: 新增 `seo-vsi.spec.ts`，以 Vitest 建立「VSI < 0.05」失敗測試（先紅燈） [context7:vitest-dev/vitest:2026-01-06T01:22:11+08:00]
+- [x] **Green**: 以 `web-vitals` 的 `onCLS`/`onINP` 監測並回報（含 attribution 以定位 layout shift/interaction 來源） [context7:googlechrome/web-vitals:2026-01-06T01:22:11+08:00]
+- [x] **Refactor**: 將監測邏輯抽成 `reportWebVitals.ts`，並統一收斂到 `seo:health-check` 報表
 
 **最佳實踐**:
 
 - 使用 `onCLS` + `reportAllChanges` 觀測全生命週期的視覺穩定性趨勢，做為 VSI 基礎訊號 [context7:googlechrome/web-vitals:2026-01-06T01:22:11+08:00]
 - 啟用 attribution 以追蹤最大 shift 來源，降低猜測成本 [context7:googlechrome/web-vitals:2026-01-06T01:22:11+08:00]
 
-**預估時間**: 2 小時
+**完成日期**: 2026-01-06
 
 ---
 
-### P2-2: Footer 內部連結系統化 🔄
+### P2-2: Footer 內部連結系統化 ✅
 
-- [ ] **Red**: 新增 `footer-links.spec.ts`，驗證熱門匯率連結全覆蓋且排序正確（先紅燈） [context7:vitest-dev/vitest:2026-01-06T01:22:11+08:00]
-- [ ] **Green**: 建立「熱門匯率」資料表 + Footer 區塊渲染（最小變更）
-- [ ] **Refactor**: 抽離 `footerLinks.ts` 並加入 `verify:production-seo` 檢查
+- [x] **Red**: 新增 `footer-links.spec.ts`，驗證熱門匯率連結全覆蓋且排序正確（先紅燈） [context7:vitest-dev/vitest:2026-01-06T01:22:11+08:00]
+- [x] **Green**: 建立「熱門匯率」資料表 + Footer 區塊渲染（最小變更）
+- [x] **Refactor**: 抽離 `footerLinks.ts` 並加入 `verify:production-seo` 檢查
 
-**預估時間**: 3 小時
+**完成日期**: 2026-01-06
 
 ---
 
-### P2-3: Mobile Parity CI 自動化 🔄
+### P2-3: Mobile Parity CI 自動化 ✅
 
-- [ ] **Red**: 新增 Playwright 測試比較桌機/手機內容（先紅燈） [context7:microsoft/playwright.dev:2026-01-06T01:22:11+08:00]
-- [ ] **Green**: 使用 Playwright device presets 建立 Desktop/Mobile projects，確保內容一致 [context7:microsoft/playwright.dev:2026-01-06T01:22:11+08:00]
-- [ ] **Refactor**: 將結果輸出到 CI 報表（與 SEO Health Check 整合）
+- [x] **Red**: 新增 Playwright 測試比較桌機/手機內容（先紅燈） [context7:microsoft/playwright.dev:2026-01-06T01:22:11+08:00]
+- [x] **Green**: 使用 Playwright device presets 建立 Desktop/Mobile projects，確保內容一致 [context7:microsoft/playwright.dev:2026-01-06T01:22:11+08:00]
+- [x] **Refactor**: 將結果輸出到 CI 報表（與 SEO Health Check 整合）
 
 **最佳實踐**:
 
 - 使用 `devices['Desktop Chrome']` / `devices['iPhone 13']` 作為同基準 비교 [context7:microsoft/playwright.dev:2026-01-06T01:22:11+08:00]
 
-**預估時間**: 4 小時
+**完成日期**: 2026-01-06
 
 ---
 
-### P2-4: llms.txt v1.4.0 升級 🔄
+### P2-4: llms.txt v1.4.0 升級 ✅
 
-- [ ] **Red**: 新增 `llms-txt.spec.ts` 檢查 Answer Capsule 結構（先紅燈）
-- [ ] **Green**: 依 v1.4.0 規範更新 `llms.txt` 並補齊 E-E-A-T 信號
-- [ ] **Refactor**: 更新 `verify:production-seo` 與文件引用
+- [x] **Red**: 新增 `llms-txt.spec.ts` 檢查 Answer Capsule 結構（先紅燈）
+- [x] **Green**: 依 v1.4.0 規範更新 `llms.txt` 並補齊 E-E-A-T 信號
+- [x] **Refactor**: 更新 `verify:production-seo` 與文件引用
 
-**預估時間**: 2 小時
-**備註**: 需先確認官方規範版本與 Answer Capsule 結構
+**完成日期**: 2026-01-06
+**依據**: https://llmstxt.org/index.md
 
 ---
 
-### P3-5: INP 深度優化 🔄
+### P3-5: INP 深度優化 ✅
 
-- [ ] **Red**: 新增 `inp-budget.spec.ts`，針對 >50ms interaction 設定失敗門檻（先紅燈） [context7:vitest-dev/vitest:2026-01-06T01:22:11+08:00]
-- [ ] **Green**: 以 `web-vitals` 的 `onINP` + attribution 資料定位長任務/輸入延遲來源 [context7:googlechrome/web-vitals:2026-01-06T01:22:11+08:00]
-- [ ] **Refactor**: 將常見互動事件加上 debounce/分段處理，並建立回歸基準
+- [x] **Red**: 新增 `inp-budget.spec.ts`，針對 >50ms interaction 設定失敗門檻（先紅燈） [context7:vitest-dev/vitest:2026-01-06T01:22:11+08:00]
+- [x] **Green**: 以 `web-vitals` 的 `onINP` + attribution 資料定位長任務/輸入延遲來源 [context7:googlechrome/web-vitals:2026-01-06T01:22:11+08:00]
+- [x] **Refactor**: 將常見互動事件加上 debounce/分段處理，並建立回歸基準
 
 **最佳實踐**:
 
 - 使用 `onINP` 的 `durationThreshold` 過濾低價值事件，聚焦長任務 [context7:googlechrome/web-vitals:2026-01-06T01:22:11+08:00]
 
-**預估時間**: 6 小時
+**完成日期**: 2026-01-06
 
 ---
 
@@ -367,7 +367,7 @@
 
 ---
 
-**最後更新**: 2026-01-06T01:22:11+08:00
+**最後更新**: 2026-01-06T01:34:56+08:00
 **當前階段**: Phase 4 完成 + P0/P1 Gate 全數通過（瀏覽器自動化驗證）
 **整體進度**: 94% (47/50 tasks) - 核心完成，僅剩可選國際化
 
