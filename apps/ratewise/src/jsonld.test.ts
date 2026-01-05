@@ -115,6 +115,14 @@ describe('JSON-LD Structured Data (BDD)', () => {
       expect(homeStructuredData).toContain("'@type': 'FAQPage'");
       expect(homeStructuredData).toContain("'@type': 'Article'");
     });
+
+    it('should include image metadata for homepage Article', () => {
+      // 🔴 紅燈：首頁 Article 圖片需包含授權與作者資訊
+      expect(homeStructuredData).toContain('acquireLicensePage');
+      expect(homeStructuredData).toContain('creator');
+      expect(homeStructuredData).toContain('creditText');
+      expect(homeStructuredData).toContain('copyrightNotice');
+    });
   });
 
   describe('🔴 RED: SEOHelmet 應該只用於子頁面', () => {

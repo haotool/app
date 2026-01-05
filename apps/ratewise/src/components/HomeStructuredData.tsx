@@ -52,7 +52,22 @@ const ARTICLE_SCHEMA = {
   },
   url: SITE_BASE_URL,
   inLanguage: 'zh-TW',
-  image: OG_IMAGE_URL,
+  image: {
+    '@type': 'ImageObject',
+    contentUrl: OG_IMAGE_URL,
+    url: OG_IMAGE_URL,
+    name: 'RateWise 匯率轉換器首頁截圖',
+    description: 'RateWise 首頁匯率換算器與多幣別模式畫面',
+    creator: {
+      '@type': 'Organization',
+      name: 'haotool',
+      url: 'https://haotool.org',
+    },
+    creditText: 'haotool',
+    copyrightNotice: '© 2025 haotool. All rights reserved.',
+    acquireLicensePage: 'https://haotool.org/contact/',
+    license: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+  },
   datePublished: '2025-11-26T00:00:00+08:00',
   dateModified: '2026-01-03T23:24:00+08:00',
 };
