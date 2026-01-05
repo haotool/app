@@ -20,6 +20,14 @@ declare global {
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
+// [fix:2026-01-06] Stabilize requestAnimationFrame in tests to avoid CI flakiness
+// Vitest: use vi.stubGlobal to control global APIs.
+// [context7:vitest-dev/vitest:2026-01-06T02:25:30+08:00]
+vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
+  window.setTimeout(() => callback(performance.now()), 0),
+);
+vi.stubGlobal('cancelAnimationFrame', (handle: number) => window.clearTimeout(handle));
+
 // Mock HTMLCanvasElement for lightweight-charts tests
 // Based on Vitest best practices: https://vitest.dev/guide/mocking.html#globals
 const mockCanvasRenderingContext2D = {
