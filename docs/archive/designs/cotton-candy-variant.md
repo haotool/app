@@ -470,8 +470,6 @@ cp docs/archive/designs/cotton-candy-variant.md \
 
 - [通知設計系統](../design/NOTIFICATION_DESIGN_SYSTEM.md)
 - [配色方案選項](../design/COLOR_SCHEME_OPTIONS.md)
-- [測試報告](../../tests/notification-system-test-report.md)
-- [其他歸檔風格](./README.md)
 
 ---
 

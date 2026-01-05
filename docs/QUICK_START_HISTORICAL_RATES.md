@@ -219,7 +219,6 @@ curl https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 ## 📚 進階文檔
 
 - [完整實施指南](./HISTORICAL_RATES_IMPLEMENTATION.md) - 技術細節與架構說明
-- [部署計畫](./dev/HISTORICAL_RATES_DEPLOYMENT_PLAN.md) - 詳細檢查清單
 - [策略比較](./EXCHANGE_RATE_UPDATE_STRATEGIES.md) - 為什麼選擇這個方案
 
 ---

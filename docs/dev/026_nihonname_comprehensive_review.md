@@ -163,7 +163,7 @@ describe('getMetaTagsForRoute', () => {
 
 ## 📚 參考文檔
 
-- [004_seo_complete_audit_checklist.md](./004_seo_complete_audit_checklist.md)
+- [025_seo_complete_audit_checklist.md](./025_seo_complete_audit_checklist.md)
 - [002_development_reward_penalty_log.md](./002_development_reward_penalty_log.md)
 - [Context7: vite-react-ssg](https://context7.com/daydreamer-riri/vite-react-ssg)
 - [Context7: tsParticles](https://context7.com/tsparticles/tsparticles)
