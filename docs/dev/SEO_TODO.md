@@ -299,23 +299,24 @@
 
 ---
 
-**最後更新**: 2026-01-04T00:55:00+0800
-**當前階段**: Phase 4 完成 + P0/P1 Gate 全數通過
+**最後更新**: 2026-01-06T01:04:17+0800
+**當前階段**: Phase 4 完成 + P0/P1 Gate 全數通過（瀏覽器自動化驗證）
 **整體進度**: 94% (47/50 tasks) - 核心完成，僅剩可選國際化
 
 ---
 
-## 📋 2026-01-04 P0/P1 Gate 驗證報告
+## 📋 2026-01-06 P0/P1 Gate 驗證報告（瀏覽器自動化）
 
-| 驗證項目        | 工具                     | 狀態                |
-| --------------- | ------------------------ | ------------------- |
-| 結構化資料      | Google Rich Results Test | ✅ 通過             |
-| JSON-LD 正確性  | Schema Markup Validator  | ✅ 通過             |
-| HTML 標記有效性 | W3C HTML Validator       | ✅ 修復並通過       |
-| CSP 配置        | CSP Evaluator            | ✅ 通過             |
-| 安全標頭        | Security Headers         | ✅ Grade A          |
-| OG/Twitter Card | curl 驗證                | ✅ 完整             |
-| CI/CD           | GitHub Actions           | ✅ 8 workflows 全過 |
+| 驗證項目        | 工具                     | 狀態                | 詳細結果                                                                |
+| --------------- | ------------------------ | ------------------- | ----------------------------------------------------------------------- |
+| 結構化資料      | Google Rich Results Test | ✅ 通過             | RateWise:4 種、NihonName:4 項、Quake-School:1 項、HaoTool:N/A（作品集） |
+| JSON-LD 正確性  | Schema Markup Validator  | ✅ 通過             | 與 Rich Results Test 一致                                               |
+| HTML 標記有效性 | W3C HTML Validator       | ✅ 通過             | "No errors or warnings to show"                                         |
+| CSP 配置        | CSP Evaluator            | ✅ 通過             | unsafe-inline 為 SSG 已知權衡                                           |
+| 安全標頭        | Security Headers         | ✅ Grade A          | HSTS/CSP/Permissions-Policy 等 6 項全綠                                 |
+| OG/Twitter Card | opengraph.xyz + curl     | ✅ 完整             | 4 個應用皆正確顯示 title/description/image                              |
+| CI/CD           | GitHub Actions           | ✅ 8 workflows 全過 | SEO E2E Tests success、SEO Health Check success                         |
+| HTTP 狀態       | curl 驗證                | ✅ 全部 200         | 4 個應用首頁皆正常                                                      |
 
 **驗證者**: Agent
-**獎懲記錄總分**: 607 分
+**獎懲記錄總分**: 617 分 (+10)
