@@ -1,80 +1,15 @@
 /**
  * Core Web Vitals reporting
- * [context7:web-vitals:2025-10-18T02:00:00+08:00]
+ * [context7:googlechrome/web-vitals:2026-01-06T01:22:11+08:00]
  *
  * Reports LCP, INP, CLS to console and optionally to analytics endpoint
  */
-import { onCLS, onINP, onLCP, onFCP, onTTFB, type Metric } from 'web-vitals';
+import { onCLS, onINP, onLCP } from 'web-vitals/attribution';
+import { onFCP, onTTFB, type Metric } from 'web-vitals';
 import { logger } from './logger';
-
-interface VitalsReport {
-  name: string;
-  value: number;
-  rating: 'good' | 'needs-improvement' | 'poor';
-  delta: number;
-  id: string;
-}
-
-/**
- * Convert web-vitals Metric to our report format
- */
-function formatMetric(metric: Metric): VitalsReport {
-  return {
-    name: metric.name,
-    value: metric.value,
-    rating: metric.rating,
-    delta: metric.delta,
-    id: metric.id,
-  };
-}
-
-/**
- * Send vitals to analytics endpoint (if configured)
- */
-function sendToAnalytics(report: VitalsReport) {
-  const endpoint = import.meta.env.VITE_VITALS_ENDPOINT;
-
-  if (!endpoint) {
-    return; // No endpoint configured, skip
-  }
-
-  // Use sendBeacon for reliability (survives page unload)
-  if ('sendBeacon' in navigator) {
-    navigator.sendBeacon(endpoint, JSON.stringify(report));
-  } else {
-    // Fallback to fetch (non-blocking)
-    fetch(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(report),
-      headers: { 'Content-Type': 'application/json' },
-      keepalive: true,
-    }).catch((error) => {
-      logger.warn('Failed to send vitals', { error });
-    });
-  }
-}
-
-/**
- * Log and optionally send vitals
- */
-function reportVital(metric: Metric) {
-  const report = formatMetric(metric);
-
-  // Always log to console in dev
-  if (import.meta.env.DEV) {
-    const emoji =
-      report.rating === 'good' ? '✅' : report.rating === 'needs-improvement' ? '⚠️' : '❌';
-    logger.info(`${emoji} Web Vital: ${report.name}`, {
-      value: Math.round(report.value),
-      rating: report.rating,
-    });
-  }
-
-  // Send to analytics in production
-  if (import.meta.env.MODE === 'production') {
-    sendToAnalytics(report);
-  }
-}
+import { reportWebVitals, sendToAnalytics } from './reportWebVitals';
+import { getVsiRating, VSI_GOOD_THRESHOLD } from './vsi';
+import { INP_LONG_TASK_THRESHOLD_MS, isLongInteraction } from './interactionBudget';
 
 /**
  * Initialize Core Web Vitals monitoring
@@ -82,13 +17,47 @@ function reportVital(metric: Metric) {
 export function initWebVitals() {
   try {
     // Core Web Vitals (affect Google ranking)
-    onLCP(reportVital); // Largest Contentful Paint
-    onINP(reportVital); // Interaction to Next Paint (replaces FID)
-    onCLS(reportVital); // Cumulative Layout Shift
+    onLCP(reportWebVitals); // Largest Contentful Paint
 
     // Additional metrics (diagnostics)
-    onFCP(reportVital); // First Contentful Paint
-    onTTFB(reportVital); // Time to First Byte
+    onFCP(reportWebVitals); // First Contentful Paint
+    onTTFB(reportWebVitals); // Time to First Byte
+
+    onCLS(
+      (metric: Metric) => {
+        reportWebVitals(metric);
+
+        const rating = getVsiRating(metric.value);
+        if (import.meta.env.DEV && metric.value > VSI_GOOD_THRESHOLD) {
+          logger.warn('VSI exceeds target', { value: metric.value, rating });
+        }
+
+        if (import.meta.env.MODE === 'production') {
+          sendToAnalytics({
+            name: 'VSI',
+            value: metric.value,
+            rating,
+            delta: metric.delta,
+            id: metric.id,
+          });
+        }
+      },
+      { reportAllChanges: true },
+    ); // Cumulative Layout Shift + VSI
+
+    onINP(
+      (metric: Metric) => {
+        reportWebVitals(metric);
+
+        if (isLongInteraction(metric.value)) {
+          logger.warn('INP slow interaction detected', {
+            value: metric.value,
+            threshold: INP_LONG_TASK_THRESHOLD_MS,
+          });
+        }
+      },
+      { reportAllChanges: true, durationThreshold: INP_LONG_TASK_THRESHOLD_MS },
+    ); // Interaction to Next Paint (replaces FID) + budget
 
     logger.info('Web Vitals monitoring initialized');
   } catch (error) {
