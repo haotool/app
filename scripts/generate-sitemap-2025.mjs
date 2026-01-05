@@ -178,9 +178,7 @@ function generateUrlEntry(path) {
     images.forEach((image) => {
       xml += '    <image:image>\n';
       xml += `      <image:loc>${escapeXml(image.loc)}</image:loc>\n`;
-      if (image.caption) {
-        xml += `      <image:caption>${escapeXml(image.caption)}</image:caption>\n`;
-      }
+
       xml += '    </image:image>\n';
     });
   }
