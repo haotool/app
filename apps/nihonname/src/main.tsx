@@ -29,13 +29,17 @@ export const createRoot = ViteReactSSG(
   ({ isClient }) => {
     // Client-side initialization
     if (isClient) {
-      console.log('[NihonName] Application mounted', {
-        version: appVersion,
-        buildTime,
-        mode: import.meta.env.MODE,
-      });
+      // 開發模式下輸出版本資訊
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.info('[NihonName] Application mounted', {
+          version: appVersion,
+          buildTime,
+          mode: import.meta.env.MODE,
+        });
+      }
 
-      // Global error handler
+      // Global error handler - 使用 console.warn 是合法的
       window.addEventListener('unhandledrejection', (event) => {
         const reason: unknown = event.reason;
         let errorMessage = '';
@@ -51,12 +55,7 @@ export const createRoot = ViteReactSSG(
 
         console.warn('[NihonName] Unhandled rejection:', errorMessage);
       });
-    } else {
-      // Server-side rendering
-      console.log('[NihonName] Generating static HTML', {
-        version: appVersion,
-        buildTime,
-      });
     }
+    // SSR 階段移除日誌輸出（生產環境不需要）
   },
 );

@@ -144,6 +144,10 @@ export default tseslint.config(
       '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-inferrable-types': 'error',
+
+      // [2026-01-06] 禁止生產代碼使用 console.log [context7:/eslint/eslint:2026-01-06]
+      // 允許 console.warn 和 console.error（用於合法警告與錯誤）
+      'no-console': ['error', { allow: ['warn', 'error'] }],
     },
   },
 
@@ -166,6 +170,8 @@ export default tseslint.config(
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',
       'react-refresh/only-export-components': 'off',
+      // 測試檔案允許使用 console.log 進行除錯
+      'no-console': 'off',
     },
   },
 
@@ -177,6 +183,17 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      // 腳本允許使用 console.log 進行輸出
+      'no-console': 'off',
+    },
+  },
+
+  // Logger 與基礎設施允許使用 console
+  {
+    files: ['**/utils/logger.ts', '**/utils/logger.tsx'],
+    rules: {
+      // Logger 模組是 console 的合法包裝，允許使用
+      'no-console': 'off',
     },
   },
 
