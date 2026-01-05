@@ -287,6 +287,53 @@ function checkCanonicalUrl() {
 }
 
 /**
+ * 檢查 Web Vitals 監測配置（VSI/INP）
+ */
+function checkWebVitalsMonitoring() {
+  log.section('檢查 Web Vitals 監測配置');
+
+  const vitalsPath = join(RATEWISE_DIR, 'src/utils/webVitals.ts');
+  const reportPath = join(RATEWISE_DIR, 'src/utils/reportWebVitals.ts');
+
+  if (!existsSync(vitalsPath)) {
+    log.error('webVitals.ts 不存在');
+    errorCount++;
+    return;
+  }
+
+  if (!existsSync(reportPath)) {
+    log.error('reportWebVitals.ts 不存在');
+    errorCount++;
+    return;
+  }
+
+  const vitalsContent = readFileSync(vitalsPath, 'utf-8');
+
+  if (!vitalsContent.includes('reportAllChanges')) {
+    log.warning('webVitals.ts 未啟用 reportAllChanges（可能缺少 VSI/INP 全生命週期觀測）');
+    warningCount++;
+  } else {
+    successCount++;
+  }
+
+  if (!vitalsContent.includes('VSI')) {
+    log.warning('webVitals.ts 未包含 VSI 回報');
+    warningCount++;
+  } else {
+    successCount++;
+  }
+
+  if (!vitalsContent.includes('durationThreshold')) {
+    log.warning('webVitals.ts 未設定 INP durationThreshold');
+    warningCount++;
+  } else {
+    successCount++;
+  }
+
+  log.success('Web Vitals 監測配置檢查完成');
+}
+
+/**
  * 主函數
  */
 async function main() {
@@ -299,6 +346,7 @@ async function main() {
   checkLlmsTxt();
   checkRoutesConsistency(sitemapUrls);
   checkCanonicalUrl();
+  checkWebVitalsMonitoring();
 
   // 輸出結果
   console.log(`\n${colors.cyan}📊 檢查結果摘要${colors.reset}`);

@@ -169,6 +169,8 @@ async function verifyLlmsContent(baseUrl, appDisplayName, siteUrl) {
     const content = await response.text();
 
     const errors = [];
+    const hasAnswerCapsule = content.includes('Answer Capsule');
+    const hasVersion = content.includes('Version: v1.4.0');
 
     // 檢查品牌名稱（使用 displayName 的前幾個字符）
     const brandKeyword = appDisplayName.split(/[- ]/)[0]; // 取第一個單詞
@@ -179,6 +181,31 @@ async function verifyLlmsContent(baseUrl, appDisplayName, siteUrl) {
     // 檢查是否包含網站 URL
     if (!content.includes(siteUrl)) {
       errors.push(`llms.txt 缺少網站 URL: ${siteUrl}`);
+    }
+
+    if (!hasAnswerCapsule) {
+      errors.push('llms.txt 缺少 Answer Capsule 區塊');
+    }
+
+    if (!hasVersion) {
+      errors.push('llms.txt 缺少 v1.4.0 版本標記');
+    }
+
+    if (appDisplayName === 'RateWise') {
+      const popularRatePaths = [
+        'usd-twd/',
+        'jpy-twd/',
+        'eur-twd/',
+        'hkd-twd/',
+        'cny-twd/',
+        'krw-twd/',
+      ];
+      popularRatePaths.forEach((path) => {
+        const expectedUrl = `${siteUrl}${path}`;
+        if (!content.includes(expectedUrl)) {
+          errors.push(`llms.txt 缺少熱門匯率連結: ${expectedUrl}`);
+        }
+      });
     }
 
     return { ok: errors.length === 0, errors };

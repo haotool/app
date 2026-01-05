@@ -15,5 +15,9 @@ test('core content parity across desktop and mobile', async ({ page }) => {
     ).toBeVisible();
   }
 
-  await expect(page.getByText('Taiwan Bank (臺灣銀行牌告匯率)').first()).toBeVisible();
+  const visibleFooter = page.locator('footer:visible');
+  await visibleFooter.scrollIntoViewIfNeeded();
+  await expect(
+    visibleFooter.getByRole('link', { name: 'Taiwan Bank (臺灣銀行牌告匯率)' }),
+  ).toBeVisible();
 });

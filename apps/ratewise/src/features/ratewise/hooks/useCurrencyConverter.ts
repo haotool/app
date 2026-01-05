@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   CURRENCY_DEFINITIONS,
   DEFAULT_BASE_CURRENCY,
@@ -21,6 +21,7 @@ import type { RateDetails } from './useExchangeRates';
 import { logger } from '../../../utils/logger';
 import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
 import { getRelativeTimeString } from '../../../utils/timeFormatter';
+import { INP_LONG_TASK_THRESHOLD_MS } from '../../../utils/interactionBudget';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -118,6 +119,22 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>(DEFAULT_BASE_CURRENCY);
 
   const [history, setHistory] = useState<ConversionHistoryEntry[]>([]);
+
+  const pendingMultiRecalcRef = useRef<{ code: CurrencyCode; value: string } | null>(null);
+  const multiRecalcFrameRef = useRef<number | null>(null);
+
+  const cancelScheduledMultiRecalc = useCallback(() => {
+    if (multiRecalcFrameRef.current !== null) {
+      cancelAnimationFrame(multiRecalcFrameRef.current);
+      multiRecalcFrameRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      cancelScheduledMultiRecalc();
+    };
+  }, [cancelScheduledMultiRecalc]);
 
   // [feat:2025-12-26] 從 localStorage 恢復歷史記錄並過濾過期記錄（7 天）
   useEffect(() => {
@@ -305,12 +322,47 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     setLastEdited('to');
   };
 
+  const scheduleMultiRecalc = useCallback(
+    (code: CurrencyCode, value: string) => {
+      pendingMultiRecalcRef.current = { code, value };
+      cancelScheduledMultiRecalc();
+
+      const schedule = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null;
+      if (!schedule) {
+        const pending = pendingMultiRecalcRef.current;
+        if (!pending) return;
+        setMultiAmounts((prev) => recalcMultiAmounts(pending.code, pending.value, prev));
+        return;
+      }
+
+      multiRecalcFrameRef.current = schedule(() => {
+        const pending = pendingMultiRecalcRef.current;
+        if (!pending) return;
+
+        setMultiAmounts((prev) => {
+          const start = performance.now();
+          const next = recalcMultiAmounts(pending.code, pending.value, prev);
+          const duration = performance.now() - start;
+          if (duration > INP_LONG_TASK_THRESHOLD_MS) {
+            logger.warn('Multi-currency recalculation exceeds budget', {
+              duration,
+              threshold: INP_LONG_TASK_THRESHOLD_MS,
+              baseCurrency: pending.code,
+            });
+          }
+          return next;
+        });
+      });
+    },
+    [cancelScheduledMultiRecalc, recalcMultiAmounts],
+  );
+
   const handleMultiAmountChange = useCallback(
     (code: CurrencyCode, value: string) => {
       setBaseCurrency(code);
-      setMultiAmounts((prev) => recalcMultiAmounts(code, value, prev));
+      scheduleMultiRecalc(code, value);
     },
-    [recalcMultiAmounts],
+    [scheduleMultiRecalc],
   );
 
   const quickAmount = (value: number) => {
