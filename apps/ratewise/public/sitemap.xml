@@ -2,126 +2,249 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Homepage - Highest Priority -->
   <url>
     <loc>https://app.haotool.org/ratewise/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/" />
     <image:image>
       <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
       <image:caption>RateWise - 即時匯率轉換器 Open Graph 圖片</image:caption>
+      <image:title>RateWise 匯率好工具</image:title>
     </image:image>
     <image:image>
       <image:loc>https://app.haotool.org/ratewise/icons/ratewise-icon-512x512.png</image:loc>
       <image:caption>RateWise Logo</image:caption>
+      <image:title>RateWise 應用圖示</image:title>
     </image:image>
   </url>
+
+  <!-- Core Pages - High Priority -->
   <url>
     <loc>https://app.haotool.org/ratewise/faq/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/faq/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/faq/" />
     <image:image>
       <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-      <image:caption>RateWise FAQ - 常見問題</image:caption>
+      <image:caption>RateWise FAQ - 常見問題解答</image:caption>
+      <image:title>RateWise 常見問題</image:title>
     </image:image>
   </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/about/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/about/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/about/" />
-    <image:image>
-      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
-      <image:caption>RateWise About - 關於我們</image:caption>
-    </image:image>
-  </url>
+
   <url>
     <loc>https://app.haotool.org/ratewise/guide/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/guide/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/guide/" />
     <image:image>
       <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
       <image:caption>RateWise Guide - 使用指南</image:caption>
+      <image:title>RateWise 使用說明</image:title>
     </image:image>
   </url>
+
   <url>
-    <loc>https://app.haotool.org/ratewise/aud-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/aud-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/aud-twd/" />
+    <loc>https://app.haotool.org/ratewise/about/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/about/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/about/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>RateWise About - 關於我們</image:caption>
+      <image:title>關於 RateWise</image:title>
+    </image:image>
   </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/cad-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/cad-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/cad-twd/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/chf-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/chf-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/chf-twd/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/cny-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/cny-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/cny-twd/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/eur-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/eur-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/eur-twd/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/gbp-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/gbp-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/gbp-twd/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/hkd-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/hkd-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/hkd-twd/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/jpy-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/jpy-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/jpy-twd/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/krw-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/krw-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/krw-twd/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/nzd-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/nzd-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/nzd-twd/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/sgd-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/sgd-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/sgd-twd/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/thb-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/thb-twd/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/thb-twd/" />
-  </url>
+
+  <!-- Currency Landing Pages - High Priority (SEO Value) -->
   <url>
     <loc>https://app.haotool.org/ratewise/usd-twd/</loc>
-    <lastmod>2025-12-29T16:59:21Z</lastmod>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/usd-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/usd-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>USD 美金對 TWD 台幣匯率換算</image:caption>
+      <image:title>美金台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/jpy-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/jpy-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/jpy-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>JPY 日圓對 TWD 台幣匯率換算</image:caption>
+      <image:title>日圓台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/eur-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/eur-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/eur-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>EUR 歐元對 TWD 台幣匯率換算</image:caption>
+      <image:title>歐元台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/gbp-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/gbp-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/gbp-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>GBP 英鎊對 TWD 台幣匯率換算</image:caption>
+      <image:title>英鎊台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/cny-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/cny-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/cny-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>CNY 人民幣對 TWD 台幣匯率換算</image:caption>
+      <image:title>人民幣台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/krw-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/krw-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/krw-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>KRW 韓元對 TWD 台幣匯率換算</image:caption>
+      <image:title>韓元台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/hkd-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/hkd-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/hkd-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>HKD 港幣對 TWD 台幣匯率換算</image:caption>
+      <image:title>港幣台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/aud-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/aud-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/aud-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>AUD 澳幣對 TWD 台幣匯率換算</image:caption>
+      <image:title>澳幣台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/cad-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/cad-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/cad-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>CAD 加幣對 TWD 台幣匯率換算</image:caption>
+      <image:title>加幣台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/sgd-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/sgd-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/sgd-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>SGD 新加坡幣對 TWD 台幣匯率換算</image:caption>
+      <image:title>新加坡幣台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/thb-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/thb-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/thb-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>THB 泰銖對 TWD 台幣匯率換算</image:caption>
+      <image:title>泰銖台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/nzd-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/nzd-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/nzd-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>NZD 紐幣對 TWD 台幣匯率換算</image:caption>
+      <image:title>紐幣台幣匯率</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://app.haotool.org/ratewise/chf-twd/</loc>
+    <lastmod>2026-01-05T00:00:00Z</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/chf-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/chf-twd/" />
+    <image:image>
+      <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
+      <image:caption>CHF 瑞士法郎對 TWD 台幣匯率換算</image:caption>
+      <image:title>瑞士法郎台幣匯率</image:title>
+    </image:image>
   </url>
 </urlset>

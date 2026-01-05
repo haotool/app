@@ -1,37 +1,99 @@
 # RateWise Robots Configuration
-# 最後更新：2025-11-26
+# 最後更新：2026-01-05
+# 版本：v2.0.0
 
+# Default: Allow all crawlers
 User-agent: *
 Allow: /
+Crawl-delay: 1
 
-# Sitemap
+# Sitemap location
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 
-# Crawl-delay for polite bots
-Crawl-delay: 1
+# LLMs.txt for AI search engines (2025 GEO/LLMO standard)
+# Reference: https://llmstxt.org/
+# llms.txt: https://app.haotool.org/ratewise/llms.txt
+# llms-full.txt: https://app.haotool.org/ratewise/llms-full.txt
 
 # Disallow Service Worker and internal assets
 Disallow: /sw.js
 Disallow: /workbox-*.js
 Disallow: /*.json$
+Disallow: /assets/
 
-# Allow AI search engines (AEO/LLMO)
+# ============================================
+# AI Search Engines / LLM Crawlers (Allow All)
+# ============================================
+
+# OpenAI
 User-agent: GPTBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: PerplexityBot
 Allow: /
 
 User-agent: ChatGPT-User
 Allow: /
 
+User-agent: OAI-SearchBot
+Allow: /
+
+# Anthropic
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+# Google AI (Gemini)
 User-agent: Google-Extended
 Allow: /
 
-# Allow social media crawlers
+User-agent: Googlebot
+Allow: /
+
+# Microsoft Copilot / Bing
+User-agent: Bingbot
+Allow: /
+
+# Meta AI
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+# Apple (Siri)
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Other AI Crawlers
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: omgili
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+# ============================================
+# Social Media Crawlers (Allow All)
+# ============================================
+
 User-agent: facebookexternalbot
 Allow: /
 
@@ -40,3 +102,53 @@ Allow: /
 
 User-agent: LinkedInBot
 Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: Pinterest
+Allow: /
+
+# ============================================
+# Search Engine Crawlers (Allow All)
+# ============================================
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Yandex
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: Sogou
+Allow: /
+
+# ============================================
+# Known Bad Bots (Disallow)
+# ============================================
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /

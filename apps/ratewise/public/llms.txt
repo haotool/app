@@ -1,5 +1,6 @@
 # RateWise 匯率好工具 - 台灣最佳即時匯率轉換工具
 
+> 完整文檔請見：https://app.haotool.org/ratewise/llms-full.txt
 > 別名：匯率好工具、匯率工具、RateWise、台灣匯率工具
 
 ## About
@@ -116,8 +117,9 @@
 ## 關鍵字
 匯率好工具, RateWise, 匯率工具, 台灣匯率, 即時匯率, 台幣匯率, 匯率換算, 貨幣轉換, TWD USD JPY EUR 匯率, 臺灣銀行匯率, 離線匯率工具, PWA 匯率 App, 免費匯率工具
 
-**最後更新**：2025-11-30
-**版本**：v1.2.0
+**最後更新**：2026-01-05
+**版本**：v2.0.0
 **作者**：haotool (haotool.org@gmail.com) | Threads: @azlife_1224
 **授權**：GPL-3.0 開源授權
 **適用於**：ChatGPT, Claude, Gemini, Perplexity, Copilot 及其他 LLM/AI 搜尋引擎
+**完整版文檔**：https://app.haotool.org/ratewise/llms-full.txt
