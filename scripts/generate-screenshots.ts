@@ -1,4 +1,4 @@
-import { chromium } from '@playwright/test';
+import { chromium, type Page } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 
@@ -10,7 +10,7 @@ if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
-async function waitForContentLoaded(page: any, description: string) {
+async function waitForContentLoaded(page: Page, description: string) {
   console.log(`⏳ Waiting for ${description} to fully load...`);
 
   // Wait for network to be idle
@@ -52,7 +52,7 @@ async function waitForContentLoaded(page: any, description: string) {
 }
 
 async function takeScreenshot(
-  page: any,
+  page: Page,
   width: number,
   height: number,
   url: string,
