@@ -13,7 +13,7 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, extname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -155,7 +155,7 @@ function checkLlmsTxt() {
       if (/[A-Z]/.test(pathname)) {
         log.error(`llms.txt URL 包含大寫字母: ${url}`);
         errorCount++;
-      } else if (pathname !== '/' && !pathname.endsWith('/')) {
+      } else if (pathname !== '/' && !pathname.endsWith('/') && extname(pathname) === '') {
         log.error(`llms.txt URL 缺少尾斜線: ${url}`);
         errorCount++;
       } else {
