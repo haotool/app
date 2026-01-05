@@ -29,51 +29,7 @@
 import { Link } from 'react-router-dom';
 import { ClientOnly } from 'vite-react-ssg';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
-
-interface FooterLink {
-  label: string;
-  href: string;
-}
-
-interface FooterSection {
-  title: string;
-  links: FooterLink[];
-}
-
-const FOOTER_SECTIONS: FooterSection[] = [
-  {
-    title: '核心頁面',
-    links: [
-      { label: '首頁', href: '/' },
-      { label: '常見問題', href: '/faq/' },
-      { label: '關於我們', href: '/about/' },
-      { label: '使用指南', href: '/guide/' },
-    ],
-  },
-  {
-    title: '亞洲貨幣',
-    links: [
-      { label: 'USD 美元', href: '/usd-twd/' },
-      { label: 'JPY 日圓', href: '/jpy-twd/' },
-      { label: 'HKD 港幣', href: '/hkd-twd/' },
-      { label: 'CNY 人民幣', href: '/cny-twd/' },
-      { label: 'KRW 韓元', href: '/krw-twd/' },
-      { label: 'SGD 新加坡幣', href: '/sgd-twd/' },
-      { label: 'THB 泰銖', href: '/thb-twd/' },
-    ],
-  },
-  {
-    title: '歐美貨幣',
-    links: [
-      { label: 'EUR 歐元', href: '/eur-twd/' },
-      { label: 'GBP 英鎊', href: '/gbp-twd/' },
-      { label: 'AUD 澳幣', href: '/aud-twd/' },
-      { label: 'CAD 加幣', href: '/cad-twd/' },
-      { label: 'NZD 紐幣', href: '/nzd-twd/' },
-      { label: 'CHF 瑞士法郎', href: '/chf-twd/' },
-    ],
-  },
-];
+import { FOOTER_SECTIONS, POPULAR_RATE_LINKS } from '../config/footer-links';
 
 /**
  * [fix:2025-12-25] 使用固定年份避免 SSG/hydration mismatch (React Error #418)
@@ -211,6 +167,19 @@ export function Footer() {
             </span>
             關於我們
           </Link>
+        </div>
+
+        {/* 熱門匯率快速導航 */}
+        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-white/80 mb-6">
+          {POPULAR_RATE_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              to={link.href}
+              className="hover:text-white transition-colors duration-200"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
         {/* 分隔線 */}
@@ -357,7 +326,7 @@ export function Footer() {
         <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-8" />
 
         {/* Links Grid - SEO 內部連結 */}
-        <div className="grid grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {FOOTER_SECTIONS.map((section) => (
             <div key={section.title}>
               <h3 className="text-white font-semibold mb-4 text-lg">{section.title}</h3>
