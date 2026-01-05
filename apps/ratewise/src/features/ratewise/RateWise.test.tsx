@@ -81,10 +81,11 @@ describe('RateWise Component', () => {
       json: () => Promise.resolve(mockRatesResponse),
     } as Response);
     vi.stubGlobal('fetch', fetchMock);
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
-      window.setTimeout(() => callback(performance.now()), 0),
-    );
-    vi.stubGlobal('cancelAnimationFrame', (handle: number) => window.clearTimeout(handle));
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(performance.now());
+      return 0;
+    });
+    vi.stubGlobal('cancelAnimationFrame', () => {});
   });
 
   afterEach(() => {
