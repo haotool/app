@@ -15,6 +15,7 @@ import { formatDisplayTime } from '../../utils/timeFormatter';
 import { clearAllServiceWorkerCaches, forceServiceWorkerUpdate } from '../../utils/swUtils';
 import { logger } from '../../utils/logger';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
+import { HomeStructuredData } from '../../components/HomeStructuredData';
 import type { RateType } from './types';
 import { STORAGE_KEYS } from './storage-keys';
 
@@ -250,6 +251,8 @@ const RateWise = () => {
 
   return (
     <>
+      <HomeStructuredData faq={HOMEPAGE_FAQ} />
+
       {/* Pull-to-Refresh Indicator */}
       {isPullToRefreshEnabled && (
         <PullToRefreshIndicator

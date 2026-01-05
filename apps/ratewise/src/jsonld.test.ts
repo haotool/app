@@ -5,8 +5,9 @@
  *
  * 測試策略：
  * - 🔴 RateWise.tsx（首頁元件）不應該使用 SEOHelmet（避免動態 JSON-LD 重複）
- * - 🔴 index.html 應該包含完整的 JSON-LD（靜態優先策略）
- * - 🔴 確認沒有重複的 @type 定義（WebApplication, Organization, WebSite, HowTo）
+ * - 🔴 index.html 應該只保留站點層級 JSON-LD（WebApplication, Organization, WebSite）
+ * - 🔴 首頁專屬 JSON-LD (HowTo/FAQ/Article) 必須僅在首頁輸出
+ * - 🔴 確認沒有重複的 @type 定義（WebApplication, Organization, WebSite）
  *
  * 參考：fix/seo-phase2b-jsonld-cleanup
  * 依據：[SEO 審查報告 2025-11-25] JSON-LD 重複定義問題
@@ -32,7 +33,7 @@ describe('JSON-LD Structured Data (BDD)', () => {
     });
   });
 
-  describe('🔴 RED: index.html 應該包含完整的 JSON-LD', () => {
+  describe('🔴 RED: index.html 應該只保留站點層級 JSON-LD', () => {
     const indexHtmlPath = resolve(__dirname, '../index.html');
     const indexHtmlContent = readFileSync(indexHtmlPath, 'utf-8');
 
@@ -49,11 +50,6 @@ describe('JSON-LD Structured Data (BDD)', () => {
     it('should have WebSite schema', () => {
       // 🔴 紅燈：應該包含 WebSite
       expect(indexHtmlContent).toContain('"@type": "WebSite"');
-    });
-
-    it('should have HowTo schema for usage instructions', () => {
-      // 🔴 紅燈：應該包含 HowTo（使用教學）
-      expect(indexHtmlContent).toContain('"@type": "HowTo"');
     });
 
     it('should have complete WebApplication with all required fields', () => {
@@ -73,6 +69,13 @@ describe('JSON-LD Structured Data (BDD)', () => {
       // 🔴 紅燈：WebSite 應該包含 SearchAction
       expect(indexHtmlContent).toContain('"@type": "SearchAction"');
       expect(indexHtmlContent).toContain('"query-input"');
+    });
+
+    it('should NOT include homepage-only schemas', () => {
+      // 🔴 紅燈：非首頁不應包含 HowTo/FAQ/Article
+      expect(indexHtmlContent).not.toContain('"@type": "HowTo"');
+      expect(indexHtmlContent).not.toContain('"@type": "FAQPage"');
+      expect(indexHtmlContent).not.toContain('"@type": "Article"');
     });
   });
 
@@ -100,12 +103,17 @@ describe('JSON-LD Structured Data (BDD)', () => {
       expect(matches).toBeTruthy();
       expect(matches?.length).toBe(1);
     });
+  });
 
-    it('should have exactly ONE HowTo schema in index.html', () => {
-      // 🔴 紅燈：index.html 應該只有一個 HowTo
-      const matches = indexHtmlContent.match(/"@type":\s*"HowTo"/g);
-      expect(matches).toBeTruthy();
-      expect(matches?.length).toBe(1);
+  describe('🔴 RED: Homepage JSON-LD should live in HomeStructuredData', () => {
+    const homeStructuredDataPath = resolve(__dirname, 'components/HomeStructuredData.tsx');
+    const homeStructuredData = readFileSync(homeStructuredDataPath, 'utf-8');
+
+    it('should define HowTo, FAQPage, and Article schemas', () => {
+      // 🔴 紅燈：首頁專屬 schema 必須集中在 HomeStructuredData
+      expect(homeStructuredData).toContain("'@type': 'HowTo'");
+      expect(homeStructuredData).toContain("'@type': 'FAQPage'");
+      expect(homeStructuredData).toContain("'@type': 'Article'");
     });
   });
 
