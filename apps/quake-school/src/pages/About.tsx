@@ -75,7 +75,7 @@ const About: React.FC = () => {
             </div>
           </section>
 
-          <footer className="text-center text-sm text-slate-400 font-bold py-4">
+          <footer className="text-center text-sm text-slate-500 font-bold py-4">
             <p>© 2025 haotool.org. All rights reserved.</p>
             <p className="mt-1">版本: {import.meta.env.VITE_APP_VERSION || '1.0.0'}</p>
           </footer>

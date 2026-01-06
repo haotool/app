@@ -60,7 +60,7 @@ const Home: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-slate-500 text-lg font-bold"
+              className="text-slate-600 text-lg font-bold"
             >
               規模看大小，震度看搖晃
               <br />

@@ -15,9 +15,9 @@ const Layout: React.FC = () => {
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </Helmet>
-      <div className="min-h-screen bg-white">
+      <main className="min-h-screen bg-white">
         <Outlet />
-      </div>
+      </main>
     </HelmetProvider>
   );
 };
