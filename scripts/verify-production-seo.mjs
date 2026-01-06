@@ -169,8 +169,22 @@ async function verifyLlmsContent(baseUrl, appDisplayName, siteUrl) {
     const content = await response.text();
 
     const errors = [];
-    const hasAnswerCapsule = content.includes('Answer Capsule');
-    const hasVersion = content.includes('Version: v1.4.0');
+
+    // 官方規範驗證：只檢查必需的 H1 標題
+    // 參考：https://llmstxt.org/ - "An H1 with the name of the project or site. This is the only required section"
+    const hasH1Title = /^#\s+.+$/m.test(content);
+
+    if (!hasH1Title) {
+      errors.push('llms.txt 缺少必需的 H1 標題（# Title）- 官方規範唯一必需項目');
+    }
+
+    // Blockquote 是官方建議但非必需，添加資訊性提示
+    const hasBlockquote = /^>\s+.+$/m.test(content);
+    if (!hasBlockquote) {
+      console.log(
+        `ℹ️  ${appDisplayName} llms.txt 建議包含 blockquote 摘要（> Summary）以提升 AI 理解度`,
+      );
+    }
 
     // 檢查品牌名稱（使用 displayName 的前幾個字符）
     const brandKeyword = appDisplayName.split(/[- ]/)[0]; // 取第一個單詞
@@ -181,14 +195,6 @@ async function verifyLlmsContent(baseUrl, appDisplayName, siteUrl) {
     // 檢查是否包含網站 URL
     if (!content.includes(siteUrl)) {
       errors.push(`llms.txt 缺少網站 URL: ${siteUrl}`);
-    }
-
-    if (!hasAnswerCapsule) {
-      errors.push('llms.txt 缺少 Answer Capsule 區塊');
-    }
-
-    if (!hasVersion) {
-      errors.push('llms.txt 缺少 v1.4.0 版本標記');
     }
 
     if (appDisplayName === 'RateWise') {
