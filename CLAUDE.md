@@ -55,7 +55,7 @@ if (node === list.head) {
 
 #### 2. 獎懲記錄強制流程
 
-每次遇到錯誤或做出正確決策時，**必須**更新 `docs/dev/002_development_reward_penalty_log.md`：
+每次遇到錯誤或做出正確決策時，**必須在 `git commit` 前** 更新 `docs/dev/002_development_reward_penalty_log.md`：
 
 **強制步驟**:
 
@@ -496,8 +496,8 @@ specs-workflow --action complete_task --taskNumber "1"
 ### `docs/dev` 編號與獎懲流程
 
 - 新增開發文檔時必須採用三位數遞增前綴（`001_*.md`、`002_*.md` ...），不得跳號或重複。
-- `docs/dev/002_development_reward_penalty_log.md` 為強制維護檔案；每次開發遇到錯誤或完成修正後，須記錄事件、Context7 引用與分數變化。
-- 若未更新獎懲記錄或引用來源，視同流程缺失，後續 PR 必須補齊。
+- `docs/dev/002_development_reward_penalty_log.md` 為強制維護檔案；每次開發遇到錯誤或完成修正後，須在 **commit 前** 記錄事件、Context7 引用與分數變化。
+- 若未更新獎懲記錄或引用來源，**禁止 `git commit`**，視同流程缺失，後續 PR 必須補齊。
 - 建立新文檔時需同步填寫建立/更新時間、版本、狀態，以及引用來源。
 
 ### 文檔清理原則

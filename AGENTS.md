@@ -41,7 +41,7 @@
 
 ### 2. 獎懲記錄強制流程
 
-**每個 Agent 每次操作後，必須更新 `docs/dev/002_development_reward_penalty_log.md`**
+**每個 Agent 在 `git commit` 前，必須更新 `docs/dev/002_development_reward_penalty_log.md`**
 
 **強制步驟**:
 
@@ -57,7 +57,7 @@
 
 **Agent 責任**:
 
-- 每次操作完成後，自動檢查是否需更新 002 記錄
+- 每次準備提交前，自動檢查是否已更新 002 記錄
 - 引用 Context7 來源時，使用完整格式 `[context7:org/repo:timestamp]`
 
 ### 3. Context7 優先原則
@@ -603,8 +603,8 @@ update: 改了一些東西
 **docs/dev 規範**：
 
 - 新增開發文檔時必須以三位數遞增前綴命名（`001_*.md`、`002_*.md` ...），保持有序。
-- `docs/dev/002_development_reward_penalty_log.md` 為強制更新檔案：每次開發過程遇到錯誤或完成修正，必須追加紀錄、Context7 引用與分數調整。
-- 若流程中未同步更新獎懲記錄或缺乏引用來源，後續 Agent 需優先補齊後才可提交 PR。
+- `docs/dev/002_development_reward_penalty_log.md` 為強制更新檔案：每次開發過程遇到錯誤或完成修正，必須在 **commit 前** 追加紀錄、Context7 引用與分數調整。
+- 若流程中未同步更新獎懲記錄或缺乏引用來源，**禁止進行 `git commit`**，需先補齊後才可提交 PR。
 - 建立任何新文檔需同時填寫建立/更新時間、版本、狀態與資料來源。
 
 **文檔清理原則**：
