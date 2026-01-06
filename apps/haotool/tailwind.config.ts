@@ -51,11 +51,23 @@ const config: Config = {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-10px)' },
         },
+        // [SEO-fix:2026-01-07] ThreeHeroFallback 動畫
+        'spin-slow': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
+        },
+        'spin-reverse': {
+          from: { transform: 'rotate(360deg)' },
+          to: { transform: 'rotate(0deg)' },
+        },
       },
       animation: {
         blob: 'blob 7s infinite',
         'gradient-x': 'gradient-x 15s ease infinite',
         float: 'float 3s ease-in-out infinite',
+        // [SEO-fix:2026-01-07] ThreeHeroFallback 動畫
+        'spin-slow': 'spin-slow 30s linear infinite',
+        'spin-reverse': 'spin-reverse 25s linear infinite',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

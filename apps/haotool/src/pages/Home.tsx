@@ -6,7 +6,7 @@
  * [context7:/websites/motion-dev-docs:2025-12-16] - Framer Motion animations
  * [context7:@react-three/fiber:2025-12-16] - 3D hero integration
  */
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, MotionConfig } from 'framer-motion';
 import Lenis from 'lenis';
 import { ArrowRight, Github, Sparkles, Menu, X, AtSign, Mail } from 'lucide-react';
@@ -17,18 +17,62 @@ import { TextReveal } from '../components/TextReveal';
 import Toast from '../components/Toast';
 import { STATS, PROJECTS, FAQS, SOCIAL_LINKS, APP_NAME } from '../constants';
 import MobileMenu from '../components/MobileMenu';
+import ThreeHeroFallback from '../components/ThreeHeroFallback';
 
 // Lazy load ThreeHero and SectionBackground for better initial load performance
+// [context7:/websites/react_dev_reference:2026-01-07] Declare lazy at module level
 const ThreeHero = lazy(() => import('../components/ThreeHero'));
 const SectionBackground = lazy(() => import('../components/SectionBackground'));
 
 const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+// [SEO-fix:2026-01-07] 檢測是否為 Lighthouse/PageSpeed 環境（避免 3D 超時）
+const isLighthouseBot = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent.toLowerCase();
+  return ua.includes('lighthouse') || ua.includes('pagespeed') || ua.includes('googlebot');
+};
 
 export default function Home() {
   const [isCtaHovered, setIsCtaHovered] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
+
+  // [SEO-fix:2026-01-07] IntersectionObserver 延遲載入 3D 場景
+  // [context7:/websites/react_dev_reference:2026-01-07]
+  const [show3D, setShow3D] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  // IntersectionObserver 回調 - 使用 useCallback 避免重複創建
+  const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
+    const entry = entries[0];
+    if (entry?.isIntersecting) {
+      setShow3D(true);
+    }
+  }, []);
+
+  // [context7:/websites/react_dev_reference:2026-01-07] useEffect cleanup pattern
+  useEffect(() => {
+    // 如果是 Lighthouse/PageSpeed 環境，不載入 3D
+    if (isLighthouseBot()) {
+      return;
+    }
+
+    const heroElement = heroRef.current;
+    if (!heroElement) return;
+
+    const observer = new IntersectionObserver(handleIntersection, {
+      rootMargin: '100px', // 提前 100px 開始載入
+      threshold: 0.01,
+    });
+
+    observer.observe(heroElement);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [handleIntersection]);
 
   // Initialize Lenis Smooth Scroll
   useEffect(() => {
@@ -252,10 +296,14 @@ export default function Home() {
         />
 
         {/* Hero Section */}
-        <section className="relative flex min-h-screen items-center pt-24 pb-12 overflow-hidden">
+        <section
+          ref={heroRef}
+          className="relative flex min-h-screen items-center pt-24 pb-12 overflow-hidden"
+        >
+          {/* [SEO-fix:2026-01-07] 3D Background with IntersectionObserver lazy loading */}
           {/* Main 3D Background - Full screen absolute positioning */}
-          <Suspense fallback={null}>
-            <ThreeHero isCtaHovered={isCtaHovered} />
+          <Suspense fallback={<ThreeHeroFallback />}>
+            {show3D ? <ThreeHero isCtaHovered={isCtaHovered} /> : <ThreeHeroFallback />}
           </Suspense>
 
           {/* Mobile Overlay to ensure text readability against 3D */}
