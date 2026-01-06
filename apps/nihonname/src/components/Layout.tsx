@@ -25,7 +25,8 @@ export function Layout() {
           - 其他頁面：允許捲動，確保內容可見
           - 使用 dvh 單位適配 iOS Safari 動態視窗高度
       */}
-      <div
+      {/* [SEO-fix:2026-01-07] 使用 main 標籤作為主要位置標記 */}
+      <main
         className={`min-h-[100dvh] bg-stone-100 ${
           isHomePage
             ? 'flex flex-col h-[100dvh] overflow-hidden' // 首頁固定高度，禁止捲動
@@ -33,7 +34,7 @@ export function Layout() {
         }`}
       >
         <Outlet />
-      </div>
+      </main>
     </HelmetProvider>
   );
 }
