@@ -44,7 +44,7 @@ function log(color, symbol, message) {
 async function checkUrl(url, expectedStatus = 200) {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10s 超時
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s 超時（HaoTool 3D 載入需要較長時間）
 
     const response = await fetch(url, {
       method: 'HEAD',
@@ -75,7 +75,7 @@ async function checkUrl(url, expectedStatus = 200) {
 async function checkRedirect(url, expectedLocation) {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s 超時
 
     const response = await fetch(url, {
       method: 'HEAD',
