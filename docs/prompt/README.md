@@ -8,6 +8,36 @@
 
 ## 📚 Prompt 清單
 
+### 0. 🤖 超級 Agent 自動化工作流 (核心)
+
+**檔案**: `AUTONOMOUS_AGENT_WORKFLOW.md`
+
+**用途**: 完整的 Agent 自動化迭代工作流框架
+
+**核心功能**:
+
+- MCP 工具整合策略 (feedback, thinking, context7, fetch, zeabur)
+- 自動迭代觸發與控制邏輯
+- 多種任務類型工作流 (SEO, CI/CD, 代碼品質)
+- 錯誤處理與自動修復機制
+- 獎懲記錄自動化
+- 驗證標準與檢查清單
+
+**適用場景**:
+
+- 長期自動化迭代任務
+- 複雜多步驟專案優化
+- 持續整合與部署監控
+- 代碼品質改善計畫
+
+**啟動指令**:
+
+```
+請執行完整自動化工作流，持續迭代直到任務完成。
+```
+
+---
+
 ### 1. 🔒 Ultrathink Pro｜資安檢測工作流
 
 **檔案**: `ultrathink_pro_security_workflow.md`
@@ -182,14 +212,37 @@ Agent 會自動：
 
 ```
 docs/prompt/
-├── README.md                                    # 本文檔
-├── ultrathink_pro_security_workflow.md          # 資安檢測工作流
-└── lighthouse_optimization_workflow.md          # 效能優化工作流
+├── README.md                              # 本文檔（索引）
+├── AUTONOMOUS_AGENT_WORKFLOW.md           # 🤖 超級自動化工作流（核心）
+├── MCP_QUICK_REFERENCE.md                 # 🚀 MCP 工具快速參考卡
+├── ultrathink_pro_security_workflow.md    # 🔒 資安檢測工作流
+├── lighthouse_optimization_workflow.md    # 🚀 效能優化工作流
+├── BDD.md                                 # 📋 BDD 開發工作流
+├── UIUX.md                                # 🎨 UI/UX 設計工作流
+└── visionary-coder.md                     # 💡 創意編碼工作流
 ```
 
 ---
 
 ## 🔄 更新記錄
+
+### v2.0.0 (2026-01-07)
+
+**新增**:
+
+- ✅ 超級 Agent 自動化工作流（AUTONOMOUS_AGENT_WORKFLOW.md）
+- ✅ MCP 工具快速參考卡（MCP_QUICK_REFERENCE.md）
+- ✅ 完整 MCP 整合策略（feedback, thinking, context7, fetch, zeabur）
+- ✅ 自動迭代觸發與控制邏輯
+- ✅ 錯誤處理與自動修復機制
+- ✅ 獎懲記錄自動化流程
+
+**改進**:
+
+- ✅ 模組化 Prompt 架構設計
+- ✅ 工具調用決策樹
+- ✅ 多種任務類型工作流
+- ✅ 驗證標準與檢查清單
 
 ### v1.0.0 (2025-11-07)
 

@@ -199,23 +199,33 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       target: 'es2020',
-      minify: 'esbuild',
+      minify: 'terser', // [SEO-fix:2026-01-07] 使用 terser 進行更好的壓縮和 tree-shaking
       sourcemap: false,
+      terserOptions: {
+        compress: {
+          // [SEO-fix:2026-01-07] 移除生產環境的 console 語句
+          drop_console: true,
+          drop_debugger: true,
+          pure_funcs: ['console.log', 'console.debug', 'console.info', 'console.warn'],
+        },
+      },
       rollupOptions: {
         output: {
+          // [SEO-fix:2026-01-07] 優化 chunk 分割策略
           manualChunks(id) {
             if (typeof process !== 'undefined' && process.env.SSR === 'true') {
               return undefined;
             }
             if (id.includes('node_modules')) {
-              if (
-                id.includes('react') ||
-                id.includes('scheduler') ||
-                id.includes('react-router-dom') ||
-                id.includes('@remix-run')
-              ) {
-                return 'vendor';
+              // React 核心庫
+              if (id.includes('react') || id.includes('scheduler')) {
+                return 'vendor-react';
               }
+              // React Router
+              if (id.includes('react-router-dom') || id.includes('@remix-run')) {
+                return 'vendor-router';
+              }
+              // Motion 動畫庫（已經很小，合併到 vendor-react）
               if (id.includes('motion') || id.includes('framer-motion')) {
                 return 'vendor-motion';
               }
