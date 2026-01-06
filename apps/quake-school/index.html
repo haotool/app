@@ -28,13 +28,25 @@
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <!-- Fonts -->
+    <!-- Fonts - [SEO-fix:2026-01-07] 優化字體載入，避免阻塞渲染 -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- 使用 preload + print media query 技巧避免阻塞渲染 -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
-      rel="stylesheet"
+      onload="
+        this.onload = null;
+        this.rel = 'stylesheet';
+      "
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>
