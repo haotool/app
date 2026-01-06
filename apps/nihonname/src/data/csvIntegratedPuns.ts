@@ -8,9 +8,12 @@
  *
  * 自動產生時間：2025-12-06T06:10:18.896Z
  * 總筆數：709
+ *
+ * 效能優化 [2026-01-07]:
+ * - romaji 資料已在構建時預計算，移除運行時 pinyin-pro 依賴
+ * - 減少初始載入時間約 200KB+ (pinyin-pro 庫大小)
  */
 import type { PunName } from '../types';
-import { pinyin } from 'pinyin-pro';
 
 /**
  * 經典諧音 (644 筆)
@@ -1927,38 +1930,50 @@ CSV_CANTONESE_PUNS.splice(
 );
 CSV_COMMON_PUNS.splice(0, CSV_COMMON_PUNS.length, ...withoutBannedCsvPuns(CSV_COMMON_PUNS));
 
-const CJK_REGEX = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\uFF00-\uFFEF]/u;
+// [效能優化 2026-01-07] 輕量級 romaji 清理（不依賴 pinyin-pro）
+// 只清理 CJK 字元，不進行 pinyin 轉換，減少 200KB+ 運行時依賴
+const CJK_REGEX = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\uFF00-\uFFEF]/gu;
 
-const titleCase = (value: string): string =>
-  value
-    .split(/\s+/g)
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-
-const fallbackRomajiFromKanji = (kanji: string): string => {
-  const syllables = pinyin(kanji, { toneType: 'none', type: 'array' }).filter(Boolean);
-  const joined = syllables.join(' ').trim();
-  return joined ? titleCase(joined) : kanji;
+// 靜態 fallback 映射表：處理原始資料中缺少有效羅馬拼音的條目
+const ROMAJI_FALLBACK: Record<string, string> = {
+  塌律阪: 'Ta Ritsu Han',
+  鼎泰豪: 'Tei Tai Gō',
+  狄克幕府: 'Tekku Bakufu',
+  啊嘶喵喵: 'A Shi Myō Myō',
+  米分糸工: 'Bei Bun Shi Kō',
+  固得莫寧: 'Kotoku Monei',
+  低能綠畜: 'Teinō Ryoku Chiku',
+  臭作: 'Shūsaku',
+  腦殘似趴: 'Nōzan Shi Ha',
+  含都陸: 'Gan To Roku',
+  我校伲炊: 'Wagakō Nei Sui',
+  少年阿濱: 'Shōnen A Hin',
+  肖農契作: 'Shō Nō Kei Saku',
+  民雄: 'Tamio',
+  佩佩: 'Pei Pei',
+  居居: 'Kyo Kyo',
+  巨錘瑞斯: 'Kyotsui Zuisu',
 };
 
-const normalizeRomaji = (pun: PunName): PunName => {
+const cleanRomaji = (pun: PunName): PunName => {
   const base = pun.romaji?.trim() ?? '';
+  // 移除所有 CJK 字元
   const cleaned = base.replace(CJK_REGEX, '').trim();
-
-  if (cleaned && !CJK_REGEX.test(cleaned)) {
-    return { ...pun, romaji: cleaned };
+  // 如果清理後為空或無效，使用靜態 fallback 映射表
+  if (!cleaned) {
+    const fallback = ROMAJI_FALLBACK[pun.kanji];
+    return { ...pun, romaji: fallback ?? pun.kanji };
   }
-
-  return { ...pun, romaji: fallbackRomajiFromKanji(pun.kanji) };
+  return { ...pun, romaji: cleaned };
 };
 
-const normalizePuns = (list: PunName[]): PunName[] => list.map((pun) => normalizeRomaji(pun));
+const cleanPuns = (list: PunName[]): PunName[] => list.map((pun) => cleanRomaji(pun));
 
-CSV_CLASSIC_PUNS.splice(0, CSV_CLASSIC_PUNS.length, ...normalizePuns(CSV_CLASSIC_PUNS));
-CSV_TAIWANESE_PUNS.splice(0, CSV_TAIWANESE_PUNS.length, ...normalizePuns(CSV_TAIWANESE_PUNS));
-CSV_CANTONESE_PUNS.splice(0, CSV_CANTONESE_PUNS.length, ...normalizePuns(CSV_CANTONESE_PUNS));
-CSV_COMMON_PUNS.splice(0, CSV_COMMON_PUNS.length, ...normalizePuns(CSV_COMMON_PUNS));
+// 運行時清理 CJK 字元（輕量級，不依賴外部庫）
+CSV_CLASSIC_PUNS.splice(0, CSV_CLASSIC_PUNS.length, ...cleanPuns(CSV_CLASSIC_PUNS));
+CSV_TAIWANESE_PUNS.splice(0, CSV_TAIWANESE_PUNS.length, ...cleanPuns(CSV_TAIWANESE_PUNS));
+CSV_CANTONESE_PUNS.splice(0, CSV_CANTONESE_PUNS.length, ...cleanPuns(CSV_CANTONESE_PUNS));
+CSV_COMMON_PUNS.splice(0, CSV_COMMON_PUNS.length, ...cleanPuns(CSV_COMMON_PUNS));
 
 /**
  * 所有 CSV 整合諧音梗
