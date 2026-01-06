@@ -21,10 +21,13 @@
 # 參考: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 
 # HTML - 短期快取（1小時），必須重新驗證
+# [SEO-fix:2026-01-06] 添加 Content-Type charset=utf-8，修復 Seobility 報告中的 HTTP header charset 問題
 /
   Cache-Control: public, max-age=3600, must-revalidate
+  Content-Type: text/html; charset=utf-8
 /*.html
   Cache-Control: public, max-age=3600, must-revalidate
+  Content-Type: text/html; charset=utf-8
 
 # 資產檔案 - 長期快取（1年），使用 hash 檔名確保版本控制
 /assets/*
