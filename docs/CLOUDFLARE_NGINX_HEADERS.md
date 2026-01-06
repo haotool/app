@@ -1,6 +1,13 @@
 # Cloudflare & Nginx 安全標頭策略
 
+> ⚠️ **已過時**：本文檔已被取代
+>
+> 請參考：**[CLOUDFLARE_SECURITY_HEADERS_GUIDE.md](./CLOUDFLARE_SECURITY_HEADERS_GUIDE.md)**
+>
+> **重要變更**：安全標頭現在完全由 Cloudflare 處理，Nginx 不再設定安全標頭。
+
 **建立時間**: 2025-10-18  
+**更新時間**: 2026-01-07 (標記為已過時)
 **原則**: 分層防禦，避免重複配置
 
 ---

@@ -1,9 +1,15 @@
 # Cloudflare Worker CSP 修復部署指南
 
+> ⚠️ **已過時**：本文檔為歷史記錄
+>
+> 請參考：**[CLOUDFLARE_SECURITY_HEADERS_GUIDE.md](./CLOUDFLARE_SECURITY_HEADERS_GUIDE.md)**
+>
+> 本文檔記錄了 2025-11-29 的 CSP 修復過程，僅供歷史參考。
+
 **建立時間**: 2025-11-29T01:06:36+0800
-**最後更新**: 2025-11-29T02:00:00+0800
-**問題狀態**: 🚨 Critical P0 - strict-dynamic 導致生產環境完全失效
-**優先級**: P0 - 緊急修復
+**最後更新**: 2026-01-07 (標記為已過時)
+**問題狀態**: ✅ 已解決 - 安全標頭已遷移至 Cloudflare
+**優先級**: 已完成
 
 ---
 

@@ -1,6 +1,13 @@
 # Cloudflare 配置最佳實踐指南
 
+> ⚠️ **已過時**：安全標頭部分已遷移至新文檔
+>
+> 請參考：**[CLOUDFLARE_SECURITY_HEADERS_GUIDE.md](./CLOUDFLARE_SECURITY_HEADERS_GUIDE.md)**
+>
+> 本文檔保留快取和壓縮配置，安全標頭相關內容以新文檔為準。
+
 **建立時間**: 2025-11-26  
+**更新時間**: 2026-01-07 (安全標頭遷移)
 **適用方案**: Free Plan  
 **專案階段**: 活躍開發階段  
 **維護者**: DevOps Team

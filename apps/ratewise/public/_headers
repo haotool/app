@@ -1,27 +1,23 @@
-# [Security:2025-12-25] Strict Content Security Policy (CSP)
-# 參考: https://web.dev/articles/strict-csp
-# 參考: https://csp.withgoogle.com/docs/strict-csp.html
-# 參考: https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html
-/*
-  # Strict CSP - Hash-based (Static Site)
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'strict-dynamic' https://static.cloudflareinsights.com https: 'unsafe-inline'; script-src-elem 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://raw.githubusercontent.com https://cdn.jsdelivr.net https://cloudflareinsights.com https://*.ingest.sentry.io; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
+# [2026-01-07] HTTP Headers Configuration
+#
+# ⚠️ 安全標頭 (CSP, HSTS, X-Frame-Options 等) 已遷移至 Cloudflare
+# 請參考: docs/dev/006_cloudflare_security_headers_configuration.md
+#
+# 此文件僅保留:
+# 1. 快取策略 (Cache-Control)
+# 2. Content-Type charset
+# 3. OG 圖片 CORS 設定
+#
+# 參考:
+# - https://web.dev/articles/http-cache/
+# - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 
-  # Additional Security Headers
-  X-Content-Type-Options: nosniff
-  X-Frame-Options: SAMEORIGIN
-  X-XSS-Protection: 1; mode=block
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: geolocation=(), microphone=(), camera=()
-
-  # HSTS (Strict-Transport-Security)
-  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-
-# [Lighthouse-optimization:2025-10-28] HTTP 快取策略
-# 參考: https://web.dev/articles/http-cache/
-# 參考: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+# ============================================================
+# HTTP 快取策略
+# ============================================================
 
 # HTML - 短期快取（1小時），必須重新驗證
-# [SEO-fix:2026-01-06] 添加 Content-Type charset=utf-8，修復 Seobility 報告中的 HTTP header charset 問題
+# [SEO-fix:2026-01-06] 添加 Content-Type charset=utf-8
 /
   Cache-Control: public, max-age=3600, must-revalidate
   Content-Type: text/html; charset=utf-8
@@ -77,26 +73,21 @@
 /*.js
   Cache-Control: public, max-age=86400
 
-# [SEO-fix:2026-01-07] OG 圖片 CORS 設定
+# ============================================================
+# OG 圖片 CORS 設定
+# ============================================================
 # 允許社群媒體爬蟲讀取 OG 圖片
-# 注意：需要明確覆蓋全局的 same-origin 設定
+# 注意：Cloudflare Worker 會優先處理，此為備援
+
 /og-image.png
   Access-Control-Allow-Origin: *
   Cross-Origin-Resource-Policy: cross-origin
-  Cross-Origin-Embedder-Policy: unsafe-none
-  Cross-Origin-Opener-Policy: unsafe-none
 /ratewise/og-image.png
   Access-Control-Allow-Origin: *
   Cross-Origin-Resource-Policy: cross-origin
-  Cross-Origin-Embedder-Policy: unsafe-none
-  Cross-Origin-Opener-Policy: unsafe-none
 /twitter-image.png
   Access-Control-Allow-Origin: *
   Cross-Origin-Resource-Policy: cross-origin
-  Cross-Origin-Embedder-Policy: unsafe-none
-  Cross-Origin-Opener-Policy: unsafe-none
 /ratewise/twitter-image.png
   Access-Control-Allow-Origin: *
   Cross-Origin-Resource-Policy: cross-origin
-  Cross-Origin-Embedder-Policy: unsafe-none
-  Cross-Origin-Opener-Policy: unsafe-none
