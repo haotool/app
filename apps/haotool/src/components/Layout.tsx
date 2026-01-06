@@ -227,7 +227,9 @@ export default function Layout() {
       </motion.header>
 
       {/* Main Content */}
-      <Outlet />
+      <main id="main-content">
+        <Outlet />
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-white/5 bg-[#020617] py-12 md:py-20 relative z-10">
