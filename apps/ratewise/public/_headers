@@ -76,3 +76,18 @@
   Cache-Control: public, max-age=86400
 /*.js
   Cache-Control: public, max-age=86400
+
+# [SEO-fix:2026-01-07] OG 圖片 CORS 設定
+# 允許社群媒體爬蟲讀取 OG 圖片
+/og-image.png
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
+/ratewise/og-image.png
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
+/twitter-image.png
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
+/ratewise/twitter-image.png
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin

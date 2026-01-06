@@ -77,7 +77,8 @@ describe('index.html - Static SEO Meta Tags (BDD Refactor)', () => {
     });
 
     it('should have og:title tag', () => {
-      expect(indexHtmlContent).toContain('<meta property="og:title"');
+      // 考慮多行格式和空白字元
+      expect(indexHtmlContent).toMatch(/property="og:title"/);
       expect(indexHtmlContent).toContain('RateWise');
     });
 
@@ -104,7 +105,8 @@ describe('index.html - Static SEO Meta Tags (BDD Refactor)', () => {
     });
 
     it('should have twitter:title tag', () => {
-      expect(indexHtmlContent).toContain('<meta name="twitter:title"');
+      // 考慮多行格式和空白字元
+      expect(indexHtmlContent).toMatch(/name="twitter:title"/);
       expect(indexHtmlContent).toContain('RateWise');
     });
 
