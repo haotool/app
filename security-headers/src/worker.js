@@ -15,7 +15,7 @@
  * - [OWASP: Secure Headers](https://owasp.org/www-project-secure-headers/)
  * - [MDN: CSP script-src](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
  *
- * 最後更新：2025-11-29
+ * 最後更新：2026-01-07
  *
  * ⚠️ 重要：不要使用 'strict-dynamic'！
  * - strict-dynamic 會忽略 'self' 和域名白名單
@@ -34,9 +34,18 @@ export default {
 		// eslint-disable-next-line no-undef
 		const newResponse = new Response(response.body, response);
 
-		// 安全標頭配置（與 nginx.conf 一致）
-		// 邊緣僅保留無法由 <meta> 生效的 CSP 指令，避免靜態 header 阻擋 hash-based inline script/style。
+		// [SEO-fix:2026-01-07] 檢查是否為 OG 圖片請求
+		// OG 圖片需要跨域存取（社群媒體爬蟲）
+		// eslint-disable-next-line no-undef
+		const url = new URL(request.url);
+		const isOgImage = url.pathname.endsWith('/og-image.png') || url.pathname.endsWith('/twitter-image.png');
+
+		// 安全標頭配置
+		// 將 CSP 拆分：邊緣僅負責 frame-ancestors 等無法由 <meta> 設定的指令，
+		// script/style/hash 交由 HTML meta（vite-plugin-csp-guard + postbuild hash）處理，
+		// 避免雲端靜態 header 阻擋 SSG 產生的 hash inline。
 		const securityHeaders = {
+			// 僅保留無法在 meta 中生效的指令
 			'Content-Security-Policy':
 				"frame-ancestors 'self'; " +
 				"base-uri 'self'; " +
@@ -61,10 +70,16 @@ export default {
 
 			// Cross-Origin 隔離標頭 - 增強安全性
 			// 參考: https://web.dev/cross-origin-isolation-guide/
-			'Cross-Origin-Embedder-Policy': 'require-corp',
-			'Cross-Origin-Opener-Policy': 'same-origin',
-			'Cross-Origin-Resource-Policy': 'same-origin',
+			// [SEO-fix:2026-01-07] OG 圖片使用跨域設定，其他資源使用嚴格設定
+			'Cross-Origin-Embedder-Policy': isOgImage ? 'unsafe-none' : 'require-corp',
+			'Cross-Origin-Opener-Policy': isOgImage ? 'unsafe-none' : 'same-origin',
+			'Cross-Origin-Resource-Policy': isOgImage ? 'cross-origin' : 'same-origin',
 		};
+
+		// [SEO-fix:2026-01-07] OG 圖片額外添加 CORS header
+		if (isOgImage) {
+			newResponse.headers.set('Access-Control-Allow-Origin', '*');
+		}
 
 		// 應用安全標頭
 		Object.entries(securityHeaders).forEach(([key, value]) => {
