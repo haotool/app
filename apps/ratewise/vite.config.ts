@@ -269,15 +269,18 @@ export default defineConfig(({ mode }) => {
         : null,
       VitePWA({
         base,
-        // [fix:2025-11-06] 臨時使用 autoUpdate 強制清理舊 SW（含 navigationPreload 的版本）
-        // 修復完成後可改回 'prompt' 模式
-        // 參考: https://vite-pwa-org.netlify.app/guide/auto-update
+        // [fix:2026-01-09] Switch to injectManifest for full Service Worker control
+        // Reason: generateSW doesn't support setCatchHandler for proper offline fallback
+        // Reference: [context7:vite-pwa/vite-plugin-pwa:2026-01-09]
+        strategies: 'injectManifest',
+        srcDir: 'src',
+        filename: 'sw.ts',
         registerType: 'autoUpdate',
         injectRegister: 'auto',
 
-        // [fix:2025-11-05] 防止 Service Worker 本身被快取
-        // 參考: https://learn.microsoft.com/answers/questions/1163448/blazor-wasm-pwa-not-updating
-        workbox: {
+        // [fix:2026-01-09] Precache offline.html for instant offline availability
+        // This ensures offline.html is available when setCatchHandler needs it
+        injectManifest: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp,txt,xml,webmanifest}'],
           globIgnores: [
             '**/og-image-old.png',
@@ -285,124 +288,8 @@ export default defineConfig(({ mode }) => {
             '**/lighthouse-reports/**',
             '**/rates/**/*.json',
           ],
-          ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
-
-          // Precache offline fallback (Safari PWA support)
-          additionalManifestEntries: [{ url: 'offline.html', revision: '2026010801' }],
-
-          clientsClaim: true,
-          skipWaiting: true,
-          cleanupOutdatedCaches: true,
-          navigationPreload: false,
-
-          // Safari PWA offline: absolute path aligned with base
-          navigateFallback: base === '/' ? 'index.html' : `${base}index.html`.replace(/\/\//g, '/'),
-          navigateFallbackDenylist: [
-            /^\/api/,
-            /^\/rates/,
-            /\.[a-zA-Z0-9]+$/,
-            /\/sw\.js$/,
-            /\/workbox-.*\.js$/,
-          ],
-
-          // Runtime caching strategies
-          runtimeCaching: [
-            {
-              // HTML: NetworkFirst with 2s timeout (Safari-friendly)
-              // Ref: https://web.dev/articles/service-worker-caching-and-http-caching
-              urlPattern: /\.html$/,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'html-cache',
-                expiration: {
-                  maxEntries: 20,
-                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-                },
-                networkTimeoutSeconds: 2,
-              },
-            },
-            {
-              // Historical rates (CDN): CacheFirst for immutable data
-              urlPattern:
-                /^https:\/\/cdn\.jsdelivr\.net\/gh\/haotool\/app@data\/public\/rates\/history\/.*\.json$/,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'history-rates-cdn',
-                expiration: { maxEntries: 180, maxAgeSeconds: 60 * 60 * 24 * 365 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-            {
-              // Historical rates (Raw fallback): CacheFirst
-              urlPattern:
-                /^https:\/\/raw\.githubusercontent\.com\/haotool\/app\/data\/public\/rates\/history\/.*\.json$/,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'history-rates-raw',
-                expiration: { maxEntries: 180, maxAgeSeconds: 60 * 60 * 24 * 365 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-            {
-              // Latest rates: StaleWhileRevalidate for fast display + background update
-              urlPattern:
-                /^https:\/\/raw\.githubusercontent\.com\/haotool\/app\/data\/public\/rates\/latest\.json$/,
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'latest-rate-cache',
-                expiration: { maxEntries: 1, maxAgeSeconds: 60 * 5 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-            {
-              // Images: CacheFirst with AVIF/WebP support
-              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif|ico)$/,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'image-cache',
-                expiration: { maxEntries: 150, maxAgeSeconds: 60 * 60 * 24 * 90 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-            {
-              // Fonts: CacheFirst for long-term caching
-              urlPattern: /\.(?:woff|woff2|ttf|eot|otf)$/,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'font-cache',
-                expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-            {
-              // JS/CSS: NetworkFirst to ensure latest version (Vite generates hash-based filenames)
-              urlPattern: /\.(?:js|css)$/,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'static-resources',
-                networkTimeoutSeconds: 3,
-                expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 7 },
-              },
-            },
-            {
-              // Manifest/SEO files: StaleWhileRevalidate
-              urlPattern: /\.(webmanifest|txt|xml)$/,
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'seo-files-cache',
-                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 7 },
-              },
-            },
-            {
-              // Offline fallback: CacheFirst for instant offline availability
-              urlPattern: /offline\.html$/,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'offline-fallback',
-                expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              },
-            },
-          ],
+          // Precache offline.html (critical for offline navigation fallback)
+          additionalManifestEntries: [{ url: 'offline.html', revision: '2026010901' }],
         },
 
         // [fix:2025-11-06] 開發環境配置
