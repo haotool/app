@@ -47,7 +47,7 @@
     "@vitejs/plugin-react-swc": "^4.2.2",
     "@vitest/coverage-v8": "^4.0.16",
     "autoprefixer": "^10.4.23",
-    "beasties": "0.1.0",
+    "beasties": "0.3.5",
     "jsdom": "^27.4.0",
     "pinyin-pro": "^3.27.0",
     "postcss": "^8.5.6",
