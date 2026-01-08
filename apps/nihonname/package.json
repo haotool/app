@@ -29,7 +29,7 @@
   "dependencies": {
     "@tsparticles/confetti": "^3.9.1",
     "@tsparticles/fireworks": "^3.9.1",
-    "lucide-react": "^0.555.0",
+    "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-error-boundary": "^6.0.2",
