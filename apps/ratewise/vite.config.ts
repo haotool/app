@@ -276,7 +276,10 @@ export default defineConfig(({ mode }) => {
         srcDir: 'src',
         filename: 'sw.ts',
         registerType: 'autoUpdate',
-        injectRegister: 'auto',
+        // [fix:2026-01-09] Force inline registration for injectManifest mode
+        // Reason: injectRegister:'auto' doesn't inject code in injectManifest mode
+        // Reference: [context7:vite-pwa/vite-plugin-pwa:2026-01-09] Inline SW Registration
+        injectRegister: 'inline',
 
         // [fix:2026-01-09] Precache offline.html for instant offline availability
         // This ensures offline.html is available when setCatchHandler needs it

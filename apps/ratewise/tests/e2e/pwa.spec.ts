@@ -58,6 +58,10 @@ test.describe('PWA Features', () => {
   test('should register service worker', async ({ rateWisePage: page }) => {
     const basePath = await getManifestBasePath(page);
 
+    // [fix:2026-01-09] 增加超時時間：CI 環境中 SW 註冊需要更長時間
+    // 原因：CI 環境冷啟動、網路延遲、資源載入等因素
+    const SW_TIMEOUT = process.env.CI ? 30_000 : 15_000;
+
     // 等待 Service Worker ready 並取得 scope
     const swInfoHandle = await page.waitForFunction(
       async (expectedScope) => {
@@ -71,7 +75,7 @@ test.describe('PWA Features', () => {
           : null;
       },
       basePath,
-      { timeout: 8000 },
+      { timeout: SW_TIMEOUT },
     );
 
     const value = await swInfoHandle.jsonValue();
@@ -81,12 +85,15 @@ test.describe('PWA Features', () => {
     // 確保當前頁面已受 SW 控制
     await page.reload();
     await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, {
-      timeout: 8000,
+      timeout: SW_TIMEOUT,
     });
   });
 
   test('should have single service worker scope', async ({ rateWisePage: page }) => {
     const basePath = await getManifestBasePath(page);
+
+    // [fix:2026-01-09] 統一使用 SW_TIMEOUT
+    const SW_TIMEOUT = process.env.CI ? 30_000 : 15_000;
 
     const swInfoHandle = await page.waitForFunction(
       async (expectedScope) => {
@@ -102,7 +109,7 @@ test.describe('PWA Features', () => {
         };
       },
       basePath,
-      { timeout: 8000 },
+      { timeout: SW_TIMEOUT },
     );
 
     const value = await swInfoHandle.jsonValue();
@@ -159,9 +166,12 @@ test.describe('PWA Features', () => {
 
   test('should have caches API available', async ({ rateWisePage: page }) => {
     // [context7:/googlechrome/workbox:2025-12-29] 驗證瀏覽器支援 Cache API
+    // [fix:2026-01-09] 統一使用 SW_TIMEOUT
+    const SW_TIMEOUT = process.env.CI ? 30_000 : 15_000;
+
     // 確保 SW 已控制頁面
     await page.waitForFunction(() => navigator.serviceWorker?.controller !== null, null, {
-      timeout: 8000,
+      timeout: SW_TIMEOUT,
     });
 
     // 驗證 caches API 可用
@@ -193,9 +203,12 @@ test.describe('PWA Features', () => {
 
   test('should cache exchange rate data in localStorage', async ({ rateWisePage: page }) => {
     // [context7:/googlechrome/workbox:2025-12-29] 驗證匯率資料快取到 localStorage
+    // [fix:2026-01-09] 統一使用 SW_TIMEOUT
+    const SW_TIMEOUT = process.env.CI ? 30_000 : 15_000;
+
     // 等待頁面完全載入並處理資料
     await page.waitForFunction(() => navigator.serviceWorker?.controller !== null, null, {
-      timeout: 10000,
+      timeout: SW_TIMEOUT,
     });
 
     // 等待足夠時間讓應用程式儲存資料到 localStorage
@@ -221,11 +234,14 @@ test.describe('PWA Features', () => {
 
   test('should handle network request failures gracefully', async ({ rateWisePage: page }) => {
     // [context7:/microsoft/playwright:2025-12-29] 驗證網路錯誤處理
+    // [fix:2026-01-09] 統一使用 SW_TIMEOUT
+    const SW_TIMEOUT = process.env.CI ? 30_000 : 15_000;
+
     // 這個測試驗證當 API 失敗時，頁面不會崩潰
 
     // 確保頁面已載入
     await page.waitForFunction(() => navigator.serviceWorker?.controller !== null, null, {
-      timeout: 10000,
+      timeout: SW_TIMEOUT,
     });
 
     // 攔截 API 請求並返回錯誤
