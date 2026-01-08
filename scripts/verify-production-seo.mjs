@@ -113,7 +113,13 @@ async function checkRedirect(url, expectedLocation) {
 
 async function verifySitemapContent(baseUrl, seoPaths) {
   try {
-    const response = await fetch(`${baseUrl}/sitemap.xml`);
+    // [fix:2026-01-09] 繞過 CDN 快取，確保獲取最新內容
+    const response = await fetch(`${baseUrl}/sitemap.xml`, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+      },
+    });
     const content = await response.text();
 
     const errors = [];
