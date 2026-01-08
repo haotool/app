@@ -430,3 +430,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 ---
 
 備註：MCP fetch 工具現已可用，本次使用 context7 MCP + fetch MCP + WebSearch 取得權威來源。
+| ✅ 成功 | Safari PWA 離線修復 - navigateFallback 路徑問題 | 1) **根因分析**：navigateFallback 使用相對路徑 'index.html'，但 base 是 '/ratewise/'，導致 SW 嘗試從 '/index.html' 讀取而非 '/ratewise/index.html' 2) **修復方案**：使用動態路徑 `base === '/' ? 'index.html' : ${base}index.html` 3) 優化 HTML 快取策略：networkTimeoutSeconds 從 5s 縮短為 2s（Safari 友好）4) 簡化 navigateFallbackDenylist：使用 `/\.[a-zA-Z0-9]+$/` 排除所有帶副檔名請求 5) 修復 offline.html 使用相對路徑 6) 更新 additionalManifestEntries revision 7) 建置驗證：SW 正確生成 `/ratewise/index.html` 路徑 8) typecheck 通過 | [websearch:github.com/GoogleChrome/workbox/issues/1494][websearch:vinova.sg/navigating-safari-ios-pwa-limitations][websearch:vite-pwa-org.netlify.app/guide][context7:/vite-pwa/vite-plugin-pwa:navigateFallback:2026-01-08][Linus 三問驗證] | +5 | 2026-01-08T00:00:00+08:00 |

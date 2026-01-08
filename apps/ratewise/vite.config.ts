@@ -299,10 +299,14 @@ export default defineConfig(({ mode }) => {
           // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-routing/#how-to-register-a-navigation-route
           ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
 
-          // [fix:2025-12-28] 確保離線備援頁面被預快取
-          // 當所有快取策略都失敗時，顯示友好的離線頁面
+          // [fix:2026-01-08] Safari PWA 離線修復 - 預快取關鍵頁面
+          // 確保 index.html 和 offline.html 都被預快取
+          // 使用與 base 一致的路徑，避免 Safari 離線時找不到資源
           // 參考: https://developer.chrome.com/docs/workbox/managing-fallback-responses
-          additionalManifestEntries: [{ url: 'offline.html', revision: '2025122801' }],
+          additionalManifestEntries: [
+            // 離線備援頁面
+            { url: 'offline.html', revision: '2026010801' },
+          ],
 
           // [fix:2025-11-06] 強制自動更新（清理舊 SW）
           clientsClaim: true,
@@ -317,21 +321,24 @@ export default defineConfig(({ mode }) => {
           // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-navigation-preload/
           navigationPreload: false,
 
-          // [fix:2025-12-28] 離線導航支援 - 修復 Safari PWA 離線啟動失敗
-          // 問題：滑掉 PWA 後離線重開，Safari 報錯 "FetchEvent.respondWith received an error: TypeError: Load failed"
-          // 根因：SPA 路由（如 /faq、/about）不匹配 .html$ 模式，離線時無 fallback
-          // 解法：所有導航請求 fallback 到快取的 index.html（App Shell 模式）
+          // [fix:2026-01-08] Safari PWA 離線修復 - navigateFallback 路徑問題
+          // 問題：Safari PWA 離線重開顯示「無法打開網頁」
+          // 根因：navigateFallback 使用相對路徑 'index.html'，但 base 是 '/ratewise/'
+          //       Service Worker 嘗試從 '/index.html' 讀取，而非 '/ratewise/index.html'
+          // 解法：使用與 base 一致的絕對路徑
           // 參考: https://vite-pwa-org.netlify.app/guide/service-worker-precache
-          // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-routing/#how-to-register-a-navigation-route
-          navigateFallback: 'index.html',
+          // 參考: https://github.com/vite-pwa/vite-plugin-pwa/issues/653
+          navigateFallback: base === '/' ? 'index.html' : `${base}index.html`.replace(/\/\//g, '/'),
 
-          // [fix:2025-12-28] 排除 API 和靜態資源路徑不走 navigateFallback
-          // 這些路徑應該直接返回 404 或使用專屬快取策略
+          // [fix:2026-01-08] Safari PWA 離線修復 - navigateFallbackDenylist 優化
+          // 排除非導航請求，確保只有真正的頁面導航才 fallback 到 index.html
+          // 參考: https://vite-pwa-org.netlify.app/guide/service-worker-precache
           navigateFallbackDenylist: [
             /^\/api/, // API 路徑
             /^\/rates/, // 匯率數據路徑
-            /\.(?:png|jpg|jpeg|gif|svg|ico|webp|avif)$/, // 圖片資源
-            /\.(?:js|css|json|woff|woff2)$/, // 靜態資源
+            /\.[a-zA-Z0-9]+$/, // 所有帶副檔名的請求（資源文件）
+            /\/sw\.js$/, // Service Worker 本身
+            /\/workbox-.*\.js$/, // Workbox 腳本
           ],
 
           // [fix:2025-11-05] 運行時快取策略
@@ -339,16 +346,19 @@ export default defineConfig(({ mode }) => {
           // 參考: https://stackoverflow.com/questions/54322336
           runtimeCaching: [
             {
-              // HTML 文件：Network First 策略（優先網路，失敗才用快取）
+              // [fix:2026-01-08] Safari PWA 離線修復 - HTML 快取策略優化
+              // 問題：Safari 離線時網路請求會立即失敗，不等待 timeout
+              // 解法：縮短 networkTimeoutSeconds 為 2 秒，更快 fallback 到快取
+              // 參考: https://web.dev/articles/service-worker-caching-and-http-caching
               urlPattern: /\.html$/,
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'html-cache',
                 expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24, // 1 天（確保更新即時推送）
+                  maxEntries: 20, // 增加容量以支援多個預渲染頁面
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天（確保離線可用）
                 },
-                networkTimeoutSeconds: 5, // 5 秒超時後使用快取
+                networkTimeoutSeconds: 2, // 2 秒超時後立即使用快取（Safari 友好）
               },
             },
             {
