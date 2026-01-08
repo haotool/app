@@ -115,6 +115,7 @@ const staticFiles = [
   'og-image.png',
   'twitter-image.png',
   'loading.css',
+  'offline.html',
   'sitemap.xml',
   'robots.txt',
   'llms.txt',
