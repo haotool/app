@@ -99,6 +99,10 @@ const copyFile = (name) => {
 
 ['assets', 'icons', 'screenshots', 'optimized'].forEach(copyDirectory);
 
+// [fix:2026-01-08] SSOT: 所有需要鏡像到子路徑的靜態檔案
+// 關鍵：offline.html 必須存在於 /ratewise/offline.html
+// 否則 Service Worker 預快取會 404，導致 SW 安裝失敗
+// 參考: https://github.com/GoogleChrome/workbox/issues/2737
 const staticFiles = [
   'sw.js',
   'sw.js.map',
@@ -118,6 +122,7 @@ const staticFiles = [
   'sitemap.xml',
   'robots.txt',
   'llms.txt',
+  'offline.html', // [fix:2026-01-08] 離線備援頁面必須鏡像，否則 SW 預快取 404
 ];
 staticFiles.forEach(copyFile);
 
