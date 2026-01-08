@@ -246,7 +246,13 @@ async function runHealthChecks(baseUrl) {
   // 4. 靜態資源檢查
   console.log(`\n${colors.gray}[淺層檢查] 靜態資源${colors.reset}`);
 
-  const staticFiles = ['/manifest.webmanifest', '/favicon.ico', '/robots.txt', '/llms.txt'];
+  const staticFiles = [
+    '/manifest.webmanifest',
+    '/favicon.ico',
+    '/robots.txt',
+    '/llms.txt',
+    '/offline.html',
+  ];
 
   for (const file of staticFiles) {
     const result = await shallowCheck(`${baseUrl}${file}`);
