@@ -278,201 +278,128 @@ export default defineConfig(({ mode }) => {
         // [fix:2025-11-05] 防止 Service Worker 本身被快取
         // 參考: https://learn.microsoft.com/answers/questions/1163448/blazor-wasm-pwa-not-updating
         workbox: {
-          // [fix:2025-11-06] 包含 HTML 文件到預快取清單
-          // Service Worker 需要知道 index.html 的位置才能處理 SPA 路由
-          // [Phase3-optimization:2025-11-07] 包含 AVIF/WebP 優化圖片
-          // [fix:2025-12-28] 擴展預快取資源類型，確保完整離線可用
-          // 新增：txt (llms.txt), xml (sitemap), webmanifest, json (manifest 備援)
-          // 參考: https://vite-pwa-org.netlify.app/guide/service-worker-precache
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp,txt,xml,webmanifest}'],
-
-          // [fix:2025-11-07] 排除不存在或臨時文件，避免 404 錯誤
-          // 排除匯率數據（由 runtimeCaching 處理）
           globIgnores: [
             '**/og-image-old.png',
             '**/node_modules/**',
             '**/lighthouse-reports/**',
-            '**/rates/**/*.json', // 匯率數據不預快取，使用 runtime caching
+            '**/rates/**/*.json',
           ],
-
-          // [fix:2025-11-07] 忽略 URL 參數，提升快取命中率
-          // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-routing/#how-to-register-a-navigation-route
           ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
 
-          // [fix:2025-12-28] 確保離線備援頁面被預快取
-          // 當所有快取策略都失敗時，顯示友好的離線頁面
-          // 參考: https://developer.chrome.com/docs/workbox/managing-fallback-responses
-          additionalManifestEntries: [{ url: 'offline.html', revision: '2025122801' }],
+          // Precache offline fallback (Safari PWA support)
+          additionalManifestEntries: [{ url: 'offline.html', revision: '2026010801' }],
 
-          // [fix:2025-11-06] 強制自動更新（清理舊 SW）
           clientsClaim: true,
           skipWaiting: true,
-
-          // [fix:2025-11-05] 強制清理舊快取（預防快取衝突）
-          // 參考: https://vite-pwa-org.netlify.app/guide/auto-update
           cleanupOutdatedCaches: true,
-
-          // [fix:2025-11-06] 禁用導航預載入（避免 preloadResponse 警告）
-          // generateSW 模式無法正確處理 navigationPreload，會產生警告
-          // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-navigation-preload/
           navigationPreload: false,
 
-          // [fix:2025-12-28] 離線導航支援 - 修復 Safari PWA 離線啟動失敗
-          // 問題：滑掉 PWA 後離線重開，Safari 報錯 "FetchEvent.respondWith received an error: TypeError: Load failed"
-          // 根因：SPA 路由（如 /faq、/about）不匹配 .html$ 模式，離線時無 fallback
-          // 解法：所有導航請求 fallback 到快取的 index.html（App Shell 模式）
-          // 參考: https://vite-pwa-org.netlify.app/guide/service-worker-precache
-          // 參考: https://developer.chrome.com/docs/workbox/modules/workbox-routing/#how-to-register-a-navigation-route
-          navigateFallback: 'index.html',
-
-          // [fix:2025-12-28] 排除 API 和靜態資源路徑不走 navigateFallback
-          // 這些路徑應該直接返回 404 或使用專屬快取策略
+          // Safari PWA offline: absolute path aligned with base
+          navigateFallback: base === '/' ? 'index.html' : `${base}index.html`.replace(/\/\//g, '/'),
           navigateFallbackDenylist: [
-            /^\/api/, // API 路徑
-            /^\/rates/, // 匯率數據路徑
-            /\.(?:png|jpg|jpeg|gif|svg|ico|webp|avif)$/, // 圖片資源
-            /\.(?:js|css|json|woff|woff2)$/, // 靜態資源
+            /^\/api/,
+            /^\/rates/,
+            /\.[a-zA-Z0-9]+$/,
+            /\/sw\.js$/,
+            /\/workbox-.*\.js$/,
           ],
 
-          // [fix:2025-11-05] 運行時快取策略
-          // 關鍵: index.html 使用 NetworkFirst，確保優先從網路獲取最新版本
-          // 參考: https://stackoverflow.com/questions/54322336
+          // Runtime caching strategies
           runtimeCaching: [
             {
-              // HTML 文件：Network First 策略（優先網路，失敗才用快取）
+              // HTML: NetworkFirst with 2s timeout (Safari-friendly)
+              // Ref: https://web.dev/articles/service-worker-caching-and-http-caching
               urlPattern: /\.html$/,
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'html-cache',
                 expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24, // 1 天（確保更新即時推送）
+                  maxEntries: 20,
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
                 },
-                networkTimeoutSeconds: 5, // 5 秒超時後使用快取
+                networkTimeoutSeconds: 2,
               },
             },
             {
-              // 歷史匯率：CDN 來源採用 CacheFirst，數據 immutable
-              // 參考: context7:googlechrome/workbox:2025-11-08
+              // Historical rates (CDN): CacheFirst for immutable data
               urlPattern:
                 /^https:\/\/cdn\.jsdelivr\.net\/gh\/haotool\/app@data\/public\/rates\/history\/.*\.json$/,
               handler: 'CacheFirst',
               options: {
                 cacheName: 'history-rates-cdn',
-                expiration: {
-                  maxEntries: 180,
-                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 年
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
+                expiration: { maxEntries: 180, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
               },
             },
             {
-              // 歷史匯率 Raw fallback：同樣 CacheFirst，避免重複請求
+              // Historical rates (Raw fallback): CacheFirst
               urlPattern:
                 /^https:\/\/raw\.githubusercontent\.com\/haotool\/app\/data\/public\/rates\/history\/.*\.json$/,
               handler: 'CacheFirst',
               options: {
                 cacheName: 'history-rates-raw',
-                expiration: {
-                  maxEntries: 180,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
+                expiration: { maxEntries: 180, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
               },
             },
             {
-              // 最新匯率：Stale-While-Revalidate，確保快速顯示並背景更新
-              // 參考: web.dev/stale-while-revalidate & context7:googlechrome/workbox
+              // Latest rates: StaleWhileRevalidate for fast display + background update
               urlPattern:
                 /^https:\/\/raw\.githubusercontent\.com\/haotool\/app\/data\/public\/rates\/latest\.json$/,
               handler: 'StaleWhileRevalidate',
               options: {
                 cacheName: 'latest-rate-cache',
-                expiration: {
-                  maxEntries: 1,
-                  maxAgeSeconds: 60 * 5, // 5 分鐘
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
+                expiration: { maxEntries: 1, maxAgeSeconds: 60 * 5 },
+                cacheableResponse: { statuses: [0, 200] },
               },
             },
             {
-              // [fix:2025-11-07] 圖片資源：Cache First + AVIF/WebP 支援
-              // 參考: https://developer.chrome.com/docs/workbox/caching-strategies-overview
+              // Images: CacheFirst with AVIF/WebP support
               urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif|ico)$/,
               handler: 'CacheFirst',
               options: {
                 cacheName: 'image-cache',
-                expiration: {
-                  maxEntries: 150, // 增加快取容量以支援優化後的多格式圖片
-                  maxAgeSeconds: 60 * 60 * 24 * 90, // 90 天（圖片很少變動）
-                },
-                cacheableResponse: {
-                  statuses: [0, 200], // 快取成功的響應
-                },
+                expiration: { maxEntries: 150, maxAgeSeconds: 60 * 60 * 24 * 90 },
+                cacheableResponse: { statuses: [0, 200] },
               },
             },
             {
-              // [fix:2025-11-07] 字型資源：Cache First（字型永久快取）
-              // 參考: https://web.dev/articles/font-best-practices
+              // Fonts: CacheFirst for long-term caching
               urlPattern: /\.(?:woff|woff2|ttf|eot|otf)$/,
               handler: 'CacheFirst',
               options: {
                 cacheName: 'font-cache',
-                expiration: {
-                  maxEntries: 30,
-                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 年
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
+                expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
               },
             },
             {
-              // [fix:2025-12-28] JS/CSS 資源：Network First（確保用戶獲得最新版本）
-              // 問題：StaleWhileRevalidate 會先返回舊快取，導致新功能（如聖誕彩蛋）不出現
-              // 解法：改用 NetworkFirst，線上時優先從網路獲取，僅離線時使用快取
-              // 參考: https://developer.chrome.com/docs/workbox/caching-strategies-overview
-              // 注意：Vite 生成的 JS/CSS 檔名含 hash，所以快取不會造成版本衝突
+              // JS/CSS: NetworkFirst to ensure latest version (Vite generates hash-based filenames)
               urlPattern: /\.(?:js|css)$/,
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'static-resources',
-                networkTimeoutSeconds: 3, // 3 秒超時後使用快取（確保離線可用）
-                expiration: {
-                  maxEntries: 60,
-                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天（縮短以避免過期快取）
-                },
+                networkTimeoutSeconds: 3,
+                expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 7 },
               },
             },
             {
-              // [fix:2025-12-28] Manifest 和 SEO 文件：StaleWhileRevalidate
-              // 這些文件變動頻率低，但需要離線可用
+              // Manifest/SEO files: StaleWhileRevalidate
               urlPattern: /\.(webmanifest|txt|xml)$/,
               handler: 'StaleWhileRevalidate',
               options: {
                 cacheName: 'seo-files-cache',
-                expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
-                },
+                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 7 },
               },
             },
             {
-              // [fix:2025-12-28] 離線備援頁面：CacheFirst（確保離線時立即可用）
+              // Offline fallback: CacheFirst for instant offline availability
               urlPattern: /offline\.html$/,
               handler: 'CacheFirst',
               options: {
                 cacheName: 'offline-fallback',
-                expiration: {
-                  maxEntries: 1,
-                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
-                },
+                expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 * 30 },
               },
             },
           ],
