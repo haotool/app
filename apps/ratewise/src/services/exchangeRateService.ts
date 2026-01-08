@@ -9,6 +9,33 @@ import { logger } from '../utils/logger';
 import { fetchWithRequestId } from '../utils/requestId';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
+/**
+ * [fix:2026-01-08] 離線 fallback 預設匯率
+ * 當用戶首次離線訪問（無 localStorage 快取）時使用
+ * 數據來源: 2026-01 台灣銀行牌告匯率（近似值）
+ * 這確保 PWA 在任何情況下都能顯示 UI，而非 Safari 的「無法打開網頁」錯誤
+ */
+const FALLBACK_RATES: Record<string, number> = {
+  TWD: 1,
+  USD: 32.5,
+  HKD: 4.18,
+  GBP: 41.0,
+  AUD: 20.5,
+  CAD: 22.8,
+  SGD: 24.0,
+  CHF: 36.5,
+  JPY: 0.21,
+  EUR: 33.8,
+  KRW: 0.023,
+  CNY: 4.45,
+  NZD: 18.8,
+  THB: 0.95,
+  PHP: 0.56,
+  IDR: 0.002,
+  VND: 0.0013,
+  MYR: 7.3,
+};
+
 interface ExchangeRateData {
   timestamp: string;
   updateTime: string;
@@ -196,6 +223,7 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
   logger.debug('Getting exchange rates', { online });
 
   // [fix:2025-12-28] 離線時直接使用快取，不嘗試網路請求
+  // [fix:2026-01-08] 離線無快取時使用 fallback 數據，避免 Safari 顯示「無法打開網頁」
   if (!online) {
     const cachedData = getAnyCachedData();
     if (cachedData) {
@@ -204,8 +232,18 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
       });
       return cachedData;
     }
-    // 離線且無快取，拋出錯誤
-    throw new Error('No cached data available for offline use');
+    // 離線且無快取，返回 fallback 數據而非拋出錯誤
+    // 這確保 PWA 在任何情況下都能渲染 UI
+    logger.warn('Offline mode: no cache available, using fallback rates');
+    return {
+      timestamp: new Date().toISOString(),
+      updateTime: '離線模式 - 使用預設匯率',
+      source: 'fallback',
+      sourceUrl: '',
+      base: 'TWD',
+      rates: FALLBACK_RATES,
+      details: {},
+    };
   }
 
   // 1. 嘗試從快取讀取（getFromCache 會自動檢查並清除過期快取）

@@ -345,6 +345,60 @@ describe('exchangeRateService', () => {
     });
   });
 
+  describe('離線模式', () => {
+    it('[fix:2026-01-08] 離線無快取時返回 fallback 數據而非拋出錯誤', async () => {
+      // Mock navigator.onLine = false
+      Object.defineProperty(navigator, 'onLine', {
+        value: false,
+        configurable: true,
+      });
+
+      // 無任何快取
+      mockLocalStorage._resetStore();
+
+      const result = await getExchangeRates();
+
+      // 應返回 fallback 數據
+      expect(result.source).toBe('fallback');
+      expect(result.updateTime).toBe('離線模式 - 使用預設匯率');
+      expect(result.rates['TWD']).toBe(1);
+      expect(result.rates['USD']).toBeDefined();
+      expect(result.rates['JPY']).toBeDefined();
+
+      // 恢復 navigator.onLine
+      Object.defineProperty(navigator, 'onLine', {
+        value: true,
+        configurable: true,
+      });
+    });
+
+    it('離線有快取時優先使用快取', async () => {
+      Object.defineProperty(navigator, 'onLine', {
+        value: false,
+        configurable: true,
+      });
+
+      const cachedData = {
+        data: mockRateData,
+        timestamp: Date.now() - 10 * 60 * 1000, // 10 minutes ago (expired but available)
+      };
+      mockLocalStorage.setItem('exchangeRates', JSON.stringify(cachedData));
+
+      const result = await getExchangeRates();
+
+      expect(result).toEqual(mockRateData);
+      expect(logger.logger.info).toHaveBeenCalledWith(
+        'Offline mode: using cached data',
+        expect.any(Object),
+      );
+
+      Object.defineProperty(navigator, 'onLine', {
+        value: true,
+        configurable: true,
+      });
+    });
+  });
+
   describe('錯誤處理', () => {
     it('localStorage 寫入失敗不影響功能', async () => {
       mockLocalStorage.setItem.mockImplementationOnce(() => {
