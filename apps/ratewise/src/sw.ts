@@ -32,9 +32,16 @@ precacheAndRoute(self.__WB_MANIFEST);
 // Clean up outdated caches from previous versions
 cleanupOutdatedCaches();
 
-// Enable clients claim and skip waiting for immediate activation
-void self.skipWaiting();
-void self.clients.claim();
+// [fix:2026-01-09] Ensure immediate SW activation and control
+// Skip waiting during install event to activate immediately
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+// Claim clients during activate event to control immediately
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
 
 // =============================================================================
 // [fix:2026-01-09] Critical Fix: Offline Navigation Fallback
