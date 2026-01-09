@@ -4,19 +4,14 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { TestBrowserRouter } from '../test/RouterWrapper';
 import Projects from './Projects';
 
 // framer-motion is mocked globally in test/setup.ts
 
-// Wrapper component for router context
-const RouterWrapper = ({ children }: { children: React.ReactNode }) => (
-  <BrowserRouter>{children}</BrowserRouter>
-);
-
 describe('Projects', () => {
   it('renders page header', () => {
-    render(<Projects />, { wrapper: RouterWrapper });
+    render(<Projects />, { wrapper: TestBrowserRouter });
 
     expect(screen.getByText('Portfolio')).toBeInTheDocument();
     // Updated to match Chinese content
@@ -24,13 +19,13 @@ describe('Projects', () => {
   });
 
   it('renders page description', () => {
-    render(<Projects />, { wrapper: RouterWrapper });
+    render(<Projects />, { wrapper: TestBrowserRouter });
 
     expect(screen.getByText(/每個專案都傾注了對細節的執著/)).toBeInTheDocument();
   });
 
   it('renders category filter buttons', () => {
-    render(<Projects />, { wrapper: RouterWrapper });
+    render(<Projects />, { wrapper: TestBrowserRouter });
 
     expect(screen.getByRole('button', { name: /全部/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /工具類/i })).toBeInTheDocument();
@@ -40,7 +35,7 @@ describe('Projects', () => {
   });
 
   it('has All Projects selected by default', () => {
-    render(<Projects />, { wrapper: RouterWrapper });
+    render(<Projects />, { wrapper: TestBrowserRouter });
 
     const allButton = screen.getByRole('button', { name: /全部/i });
     // Check if the button has the pressed attribute for accessibility
@@ -48,7 +43,7 @@ describe('Projects', () => {
   });
 
   it('changes active category on click', () => {
-    render(<Projects />, { wrapper: RouterWrapper });
+    render(<Projects />, { wrapper: TestBrowserRouter });
 
     const toolButton = screen.getByRole('button', { name: /工具類/i });
     fireEvent.click(toolButton);
@@ -58,13 +53,13 @@ describe('Projects', () => {
   });
 
   it('renders coming soon badge', () => {
-    render(<Projects />, { wrapper: RouterWrapper });
+    render(<Projects />, { wrapper: TestBrowserRouter });
 
     expect(screen.getByText(/更多專案持續開發中/i)).toBeInTheDocument();
   });
 
   it('filters projects when category is selected', () => {
-    render(<Projects />, { wrapper: RouterWrapper });
+    render(<Projects />, { wrapper: TestBrowserRouter });
 
     // Click Tool category
     const toolButton = screen.getByRole('button', { name: /工具類/i });
@@ -75,7 +70,7 @@ describe('Projects', () => {
   });
 
   it('shows empty state when no projects match filter', () => {
-    render(<Projects />, { wrapper: RouterWrapper });
+    render(<Projects />, { wrapper: TestBrowserRouter });
 
     // Click a category that may have no projects (Entertainment)
     const entertainmentButton = screen.getByRole('button', { name: /娛樂類/i });

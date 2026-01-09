@@ -1,6 +1,7 @@
 /**
  * Layout Component Tests
  * @testing-library/react best practices [context7:/websites/testing-library:2025-12-13]
+ * [fix:2026-01-09] 使用 LayoutTestWrapper 消除 React Router Future Flag 警告
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -9,9 +10,15 @@ import Layout from './Layout';
 
 // framer-motion is mocked globally in test/setup.ts
 
-// Test wrapper with MemoryRouter for controlled navigation
+// [fix:2026-01-09] Test wrapper with MemoryRouter + v7 future flags
 const TestWrapper = ({ initialEntries = ['/'] }: { initialEntries?: string[] }) => (
-  <MemoryRouter initialEntries={initialEntries}>
+  <MemoryRouter
+    initialEntries={initialEntries}
+    future={{
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    }}
+  >
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<div>Home Content</div>} />

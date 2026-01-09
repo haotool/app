@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { TestBrowserRouter } from '../test/RouterWrapper';
 
 // Mock Counter component to avoid framer-motion hook issues
 vi.mock('../components/Counter', () => ({
@@ -50,14 +50,9 @@ vi.mock('../components/Toast', () => ({
 
 import Home from './Home';
 
-// Wrapper component for router context
-const RouterWrapper = ({ children }: { children: React.ReactNode }) => (
-  <BrowserRouter>{children}</BrowserRouter>
-);
-
 describe('Home', () => {
   it('renders hero section with main heading', () => {
-    render(<Home />, { wrapper: RouterWrapper });
+    render(<Home />, { wrapper: TestBrowserRouter });
 
     // Check for main heading text - "Design" uses TextReveal (split letters)
     const dLetters = screen.getAllByText('D');
@@ -68,13 +63,13 @@ describe('Home', () => {
   });
 
   it('renders availability badge', () => {
-    render(<Home />, { wrapper: RouterWrapper });
+    render(<Home />, { wrapper: TestBrowserRouter });
 
     expect(screen.getByText('Open for Commissions')).toBeInTheDocument();
   });
 
   it('renders subtitle description', () => {
-    render(<Home />, { wrapper: RouterWrapper });
+    render(<Home />, { wrapper: TestBrowserRouter });
 
     // Check for haotool description text - using getAllByText for individual characters
     const leftQuotes = screen.getAllByText('「');
@@ -85,7 +80,7 @@ describe('Home', () => {
   });
 
   it('renders CTA buttons', () => {
-    render(<Home />, { wrapper: RouterWrapper });
+    render(<Home />, { wrapper: TestBrowserRouter });
 
     // New structure uses anchor tags with href="#projects" instead of Link to="/projects"
     expect(screen.getByText('瀏覽作品')).toBeInTheDocument();
@@ -96,7 +91,7 @@ describe('Home', () => {
   });
 
   it('renders CTA links with correct href', () => {
-    render(<Home />, { wrapper: RouterWrapper });
+    render(<Home />, { wrapper: TestBrowserRouter });
 
     // The "瀏覽作品" button links to #projects section (not /projects page)
     const projectsLinks = screen.getAllByRole('link', { name: /瀏覽作品/i });
@@ -112,7 +107,7 @@ describe('Home', () => {
   });
 
   it('renders stats section labels', () => {
-    render(<Home />, { wrapper: RouterWrapper });
+    render(<Home />, { wrapper: TestBrowserRouter });
 
     // Updated to match actual Chinese labels
     expect(screen.getByText('年開發經驗')).toBeInTheDocument();
@@ -120,7 +115,7 @@ describe('Home', () => {
   });
 
   it('renders featured work section', () => {
-    render(<Home />, { wrapper: RouterWrapper });
+    render(<Home />, { wrapper: TestBrowserRouter });
 
     // Check for Selected Works text - using regex for partial match
     expect(screen.getByText(/Selected Works/i)).toBeInTheDocument();
@@ -130,7 +125,7 @@ describe('Home', () => {
   });
 
   it('renders View All Projects link in featured section', () => {
-    render(<Home />, { wrapper: RouterWrapper });
+    render(<Home />, { wrapper: TestBrowserRouter });
 
     // Find the Chinese link text - now links to #projects section
     const viewAllLinks = screen.getAllByRole('link', { name: /查看所有作品/i });

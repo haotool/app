@@ -1,14 +1,15 @@
 /**
  * Header 元件測試
  * [BDD 測試策略 - Given-When-Then]
+ * [fix:2026-01-09] 使用 TestMemoryRouter 消除 Future Flag 警告
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { TestMemoryRouter } from '../test/RouterWrapper';
 import Header from './Header';
 
 const renderWithRouter = (ui: React.ReactElement) => {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
+  return render(<TestMemoryRouter>{ui}</TestMemoryRouter>);
 };
 
 describe('Header 元件', () => {
