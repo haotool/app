@@ -32,16 +32,10 @@ precacheAndRoute(self.__WB_MANIFEST);
 // Clean up outdated caches from previous versions
 cleanupOutdatedCaches();
 
-// [fix:2026-01-10] Service Worker 立即激活
-// 根據 Workbox 官方文檔：使用 skipWaiting() + clientsClaim() 確保 SW 立即控制頁面
-// Reference: [context7:/googlechrome/workbox:2026-01-10]
-self.addEventListener('install', () => {
-  void self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
-});
+// [fix:2026-01-10] Service Worker 立即激活（vite-plugin-pwa 官方寫法）
+// 根據 vite-plugin-pwa 官方文檔：直接呼叫 skipWaiting() 而非在 event listener 中
+// Reference: [context7:/vite-pwa/vite-plugin-pwa:2026-01-10]
+void self.skipWaiting();
 
 // =============================================================================
 // [fix:2026-01-09] Critical Fix: Offline Navigation Fallback
