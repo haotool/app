@@ -293,6 +293,10 @@ export default defineConfig(({ mode }) => {
           ],
           // Precache offline.html (critical for offline navigation fallback)
           additionalManifestEntries: [{ url: 'offline.html', revision: '2026010901' }],
+          // [fix:2026-01-10] 使用 IIFE 格式修復 ServiceWorker script evaluation failed
+          // ES 模組格式在某些瀏覽器環境中會導致評估失敗
+          // Reference: [context7:/vite-pwa/vite-plugin-pwa:2026-01-10 FAQ rollupFormat]
+          rollupFormat: 'iife',
         },
 
         // [fix:2025-11-06] 開發環境配置
