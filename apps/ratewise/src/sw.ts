@@ -38,6 +38,41 @@ cleanupOutdatedCaches();
 void self.skipWaiting();
 
 // =============================================================================
+// [fix:2026-01-10] 動態獲取 base path，修復路徑硬編碼問題
+// =============================================================================
+// 問題：原先使用 '/index.html' 和 '/offline.html' 硬編碼路徑
+// 在生產環境 base 為 '/ratewise/' 時會導致路徑不匹配
+// 解決方案：使用 self.registration.scope 動態計算 base path
+// =============================================================================
+
+/**
+ * 從 Service Worker scope 提取 base path
+ * @example
+ *   scope: 'https://example.com/ratewise/' -> '/ratewise/'
+ *   scope: 'https://example.com/' -> '/'
+ */
+function getBasePath(): string {
+  try {
+    const scopeUrl = new URL(self.registration.scope);
+    return scopeUrl.pathname; // 例如 '/ratewise/' 或 '/'
+  } catch {
+    return '/'; // fallback
+  }
+}
+
+/**
+ * 將相對路徑轉換為基於 scope 的完整路徑
+ * @param relativePath - 相對路徑（如 'index.html'）
+ * @returns 完整路徑（如 '/ratewise/index.html'）
+ */
+function resolvePath(relativePath: string): string {
+  const basePath = getBasePath();
+  // 移除相對路徑開頭的斜線（如果有）
+  const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
+  return `${basePath}${cleanPath}`;
+}
+
+// =============================================================================
 // [fix:2026-01-09] Critical Fix: Offline Navigation Fallback
 // =============================================================================
 // Problem: navigateFallback to index.html doesn't work offline
@@ -45,8 +80,11 @@ void self.skipWaiting();
 // Solution: setCatchHandler to serve /offline.html on navigation errors
 // =============================================================================
 
+// [fix:2026-01-10] 使用動態路徑替代硬編碼
+const indexHtmlPath = resolvePath('index.html');
+
 // Navigation Route: Handle SPA navigation with proper denylist
-const navigationRoute = new NavigationRoute(createHandlerBoundToURL('/index.html'), {
+const navigationRoute = new NavigationRoute(createHandlerBoundToURL(indexHtmlPath), {
   denylist: [
     /^\/api/, // API endpoints
     /^\/rates/, // Historical rates JSON
@@ -239,8 +277,12 @@ registerRoute(
 );
 
 // Offline fallback: CacheFirst for instant offline availability
+// [fix:2026-01-10] 使用動態路徑匹配，支援不同 base path
 registerRoute(
-  ({ url }: { url: URL }) => url.pathname === '/offline.html',
+  ({ url }: { url: URL }) => {
+    const offlinePath = resolvePath('offline.html');
+    return url.pathname === offlinePath;
+  },
   new CacheFirst({
     cacheName: 'offline-fallback',
     plugins: [
