@@ -290,6 +290,7 @@ export default defineConfig(({ mode }) => {
             '**/node_modules/**',
             '**/lighthouse-reports/**',
             '**/rates/**/*.json',
+            '**/offline.html', // [fix:2026-01-11] Exclude offline.html to avoid duplicate (manually added in additionalManifestEntries)
           ],
           // Precache offline.html (critical for offline navigation fallback)
           additionalManifestEntries: [{ url: 'offline.html', revision: '2026010901' }],
@@ -297,6 +298,20 @@ export default defineConfig(({ mode }) => {
           // ES 模組格式在某些瀏覽器環境中會導致評估失敗
           // Reference: [context7:/vite-pwa/vite-plugin-pwa:2026-01-10 FAQ rollupFormat]
           rollupFormat: 'iife',
+          // [fix:2026-01-11] 修復 Workbox location.href undefined 問題
+          // Workbox 內部使用 location.href，但在 SW 中 location 是 undefined
+          // 使用 banner 在 SW 開頭注入 polyfill，確保在 Workbox 執行前定義 location
+          // Reference: [Vite Issue #12611] [MDN: WorkerGlobalScope.location]
+          rollupOptions: {
+            output: {
+              format: 'iife',
+              // 在 SW 檔案開頭注入 location polyfill
+              banner: `// [Workbox Polyfill] location 全域變數在 SW 中不存在，需使用 self.location
+if (typeof location === 'undefined') {
+  globalThis.location = self.location;
+}`,
+            },
+          },
         },
 
         // [fix:2025-11-06] 開發環境配置
