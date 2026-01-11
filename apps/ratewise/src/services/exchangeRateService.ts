@@ -11,7 +11,7 @@ import { fetchWithRequestId } from '../utils/requestId';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 import {
   saveExchangeRatesToIDB,
-  getExchangeRatesFromIDBAnytime,
+  getExchangeRatesFromIDBWithStaleness,
   type ExchangeRateData,
 } from '../utils/offlineStorage';
 
@@ -242,13 +242,27 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
     }
 
     // 第二層：嘗試 IndexedDB（Safari PWA 冷啟動關鍵備援）
+    // [fix:2026-01-11] 使用 staleness 檢查，超過 7 天的資料回落到 fallback
     try {
-      const idbData = await getExchangeRatesFromIDBAnytime();
+      const { data: idbData, staleness } = await getExchangeRatesFromIDBWithStaleness();
       if (idbData) {
-        logger.info('Offline mode: using IndexedDB cache (Safari PWA fallback)', {
-          updateTime: idbData.updateTime,
-        });
-        return idbData;
+        // 如果資料已過期（> 7 天），記錄警告但仍使用 fallback 更安全
+        if (staleness.isExpired) {
+          logger.warn('Offline mode: IndexedDB data expired, using fallback rates', {
+            updateTime: idbData.updateTime,
+            staleness: staleness.level,
+            ageDays: staleness.ageDays,
+            message: staleness.message,
+          });
+          // 超過 7 天，回落到 FALLBACK_RATES 避免誤導用戶
+        } else {
+          logger.info('Offline mode: using IndexedDB cache (Safari PWA fallback)', {
+            updateTime: idbData.updateTime,
+            staleness: staleness.level,
+            shouldWarn: staleness.shouldWarn,
+          });
+          return idbData;
+        }
       }
     } catch (idbError) {
       logger.warn('Offline mode: IndexedDB read failed', { error: idbError });
@@ -294,13 +308,27 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
     }
 
     // 3b. 嘗試 IndexedDB（Safari PWA 冷啟動關鍵備援）
+    // [fix:2026-01-11] 使用 staleness 檢查，超過 7 天的資料拋出錯誤讓上層處理
     try {
-      const idbData = await getExchangeRatesFromIDBAnytime();
+      const { data: idbData, staleness } = await getExchangeRatesFromIDBWithStaleness();
       if (idbData) {
-        logger.warn('Using IndexedDB cache as fallback due to fetch error', {
-          updateTime: idbData.updateTime,
-        });
-        return idbData;
+        // 如果資料已過期（> 7 天），不使用過時資料，拋出原始錯誤
+        if (staleness.isExpired) {
+          logger.warn('IndexedDB data expired, not using as fallback', {
+            updateTime: idbData.updateTime,
+            staleness: staleness.level,
+            ageDays: staleness.ageDays,
+          });
+          // 不返回過期資料，讓原始錯誤傳播
+        } else {
+          logger.warn('Using IndexedDB cache as fallback due to fetch error', {
+            updateTime: idbData.updateTime,
+            staleness: staleness.level,
+            shouldWarn: staleness.shouldWarn,
+            message: staleness.message,
+          });
+          return idbData;
+        }
       }
     } catch (idbError) {
       logger.warn('IndexedDB fallback read failed', { error: idbError });

@@ -21,14 +21,39 @@ import * as logger from '../../utils/logger';
 
 // [2026-01-11] Mock IndexedDB (offlineStorage)
 let mockIDBData: Record<string, unknown> = {};
+let mockIDBTimestamp: number | null = null;
+
 vi.mock('../../utils/offlineStorage', () => ({
   saveExchangeRatesToIDB: vi.fn(async (data: unknown) => {
     mockIDBData['exchange_rates'] = data;
+    mockIDBTimestamp = Date.now();
     return true;
   }),
-  getExchangeRatesFromIDBAnytime: vi.fn(async () => {
-    return mockIDBData['exchange_rates'] ?? null;
+  getExchangeRatesFromIDBWithStaleness: vi.fn(async () => {
+    const data = mockIDBData['exchange_rates'] ?? null;
+    const ageMs = mockIDBTimestamp ? Date.now() - mockIDBTimestamp : Infinity;
+    const isExpired = ageMs > 7 * 24 * 60 * 60 * 1000;
+    return {
+      data,
+      staleness: {
+        level: isExpired ? 'expired' : 'fresh',
+        ageMs,
+        ageMinutes: Math.floor(ageMs / 60000),
+        ageHours: Math.floor(ageMs / (60 * 60 * 1000)),
+        ageDays: Math.floor(ageMs / (24 * 60 * 60 * 1000)),
+        isExpired,
+        shouldWarn: isExpired,
+        message: isExpired ? '資料已過期' : '資料已是最新',
+      },
+    };
   }),
+  DataStaleness: {
+    FRESH: 'fresh',
+    RECENT: 'recent',
+    STALE: 'stale',
+    VERY_STALE: 'very_stale',
+    EXPIRED: 'expired',
+  },
 }));
 
 // Mock fetchWithRequestId to use the mocked global.fetch

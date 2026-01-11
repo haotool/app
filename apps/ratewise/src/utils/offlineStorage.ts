@@ -229,6 +229,107 @@ export const EXCHANGE_RATES_IDB_KEY = 'exchange_rates';
 // 匯率資料在 IndexedDB 中的有效期：7 天
 export const EXCHANGE_RATES_IDB_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
 
+// ============================================================
+// 資料陳舊度分級
+// ============================================================
+// 參考: https://www.droidcon.com/2025/12/16/the-complete-guide-to-offline-first-architecture-in-android/
+// - Fresh (< 5 分鐘): 無需警告
+// - Recent (5-30 分鐘): 顯示時間戳
+// - Stale (30 分鐘 - 24 小時): 顯示警告
+// - Very Stale (> 24 小時): 強烈警告
+// - Expired (> 7 天): 應該使用 fallback 資料
+// ============================================================
+
+export enum DataStaleness {
+  FRESH = 'fresh', // < 5 分鐘
+  RECENT = 'recent', // 5-30 分鐘
+  STALE = 'stale', // 30 分鐘 - 24 小時
+  VERY_STALE = 'very_stale', // 24 小時 - 7 天
+  EXPIRED = 'expired', // > 7 天
+}
+
+export interface StalenessInfo {
+  level: DataStaleness;
+  ageMs: number;
+  ageMinutes: number;
+  ageHours: number;
+  ageDays: number;
+  isExpired: boolean;
+  shouldWarn: boolean;
+  message: string;
+}
+
+// 陳舊度閾值（毫秒）
+const STALENESS_THRESHOLDS = {
+  FRESH: 5 * 60 * 1000, // 5 分鐘
+  RECENT: 30 * 60 * 1000, // 30 分鐘
+  STALE: 24 * 60 * 60 * 1000, // 24 小時
+  VERY_STALE: 7 * 24 * 60 * 60 * 1000, // 7 天
+};
+
+/**
+ * 計算資料陳舊度資訊
+ *
+ * @param timestamp 資料時間戳
+ * @returns StalenessInfo 陳舊度資訊
+ */
+export function calculateStaleness(timestamp: number | null): StalenessInfo {
+  if (!timestamp) {
+    return {
+      level: DataStaleness.EXPIRED,
+      ageMs: Infinity,
+      ageMinutes: Infinity,
+      ageHours: Infinity,
+      ageDays: Infinity,
+      isExpired: true,
+      shouldWarn: true,
+      message: '無法確定資料時間',
+    };
+  }
+
+  const ageMs = Date.now() - timestamp;
+  const ageMinutes = Math.floor(ageMs / 60000);
+  const ageHours = Math.floor(ageMs / (60 * 60 * 1000));
+  const ageDays = Math.floor(ageMs / (24 * 60 * 60 * 1000));
+
+  let level: DataStaleness;
+  let shouldWarn: boolean;
+  let message: string;
+
+  if (ageMs < STALENESS_THRESHOLDS.FRESH) {
+    level = DataStaleness.FRESH;
+    shouldWarn = false;
+    message = '資料已是最新';
+  } else if (ageMs < STALENESS_THRESHOLDS.RECENT) {
+    level = DataStaleness.RECENT;
+    shouldWarn = false;
+    message = `更新於 ${ageMinutes} 分鐘前`;
+  } else if (ageMs < STALENESS_THRESHOLDS.STALE) {
+    level = DataStaleness.STALE;
+    shouldWarn = true;
+    message = ageHours > 0 ? `更新於 ${ageHours} 小時前` : `更新於 ${ageMinutes} 分鐘前`;
+  } else if (ageMs < STALENESS_THRESHOLDS.VERY_STALE) {
+    level = DataStaleness.VERY_STALE;
+    shouldWarn = true;
+    message = ageDays > 0 ? `更新於 ${ageDays} 天前` : `更新於 ${ageHours} 小時前`;
+  } else {
+    level = DataStaleness.EXPIRED;
+    shouldWarn = true;
+    message = `資料已過期（${ageDays} 天前）`;
+  }
+
+  return {
+    level,
+    ageMs,
+    ageMinutes,
+    ageHours,
+    ageDays,
+    isExpired: level === DataStaleness.EXPIRED,
+    shouldWarn,
+    message,
+  };
+}
+
 /**
  * 匯率資料結構（與 exchangeRateService.ts 相同）
  */
@@ -272,9 +373,59 @@ export async function getExchangeRatesFromIDB(): Promise<ExchangeRateData | null
  * 從 IndexedDB 讀取匯率資料（忽略過期，緊急離線備援）
  *
  * @returns Promise<ExchangeRateData | null> 匯率資料或 null
+ * @deprecated 使用 getExchangeRatesFromIDBWithStaleness() 以獲取陳舊度資訊
  */
 export async function getExchangeRatesFromIDBAnytime(): Promise<ExchangeRateData | null> {
   return getOfflineDataAnyAge<ExchangeRateData>(EXCHANGE_RATES_IDB_KEY);
+}
+
+/**
+ * 從 IndexedDB 讀取匯率資料並返回陳舊度資訊
+ *
+ * [fix:2026-01-11] 修復離線備援忽略 7 天有效期問題
+ * - 返回陳舊度資訊讓調用方決定如何處理
+ * - 超過 7 天的資料會標記為 EXPIRED，建議使用 fallback
+ *
+ * @returns Promise<{ data: ExchangeRateData | null; staleness: StalenessInfo }> 資料與陳舊度資訊
+ */
+export async function getExchangeRatesFromIDBWithStaleness(): Promise<{
+  data: ExchangeRateData | null;
+  staleness: StalenessInfo;
+}> {
+  const store = getStore();
+  if (!store) {
+    return {
+      data: null,
+      staleness: calculateStaleness(null),
+    };
+  }
+
+  try {
+    const data = await get<ExchangeRateData>(EXCHANGE_RATES_IDB_KEY, store);
+    const timestamp = await get<number>(`${EXCHANGE_RATES_IDB_KEY}${TIMESTAMP_SUFFIX}`, store);
+    const staleness = calculateStaleness(timestamp ?? null);
+
+    if (data !== undefined) {
+      logger.debug('IndexedDB: data retrieved with staleness', {
+        key: EXCHANGE_RATES_IDB_KEY,
+        level: staleness.level,
+        ageMinutes: staleness.ageMinutes,
+        isExpired: staleness.isExpired,
+      });
+      return { data, staleness };
+    }
+
+    return { data: null, staleness };
+  } catch (error) {
+    logger.warn('IndexedDB: failed to retrieve data with staleness', {
+      key: EXCHANGE_RATES_IDB_KEY,
+      error,
+    });
+    return {
+      data: null,
+      staleness: calculateStaleness(null),
+    };
+  }
 }
 
 /**
