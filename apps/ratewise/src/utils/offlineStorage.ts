@@ -12,6 +12,10 @@
  * - 使用 IndexedDB 作為備援（限制 500MB，比 Cache API 更持久）
  * - 雙重儲存策略：localStorage (5 分鐘) + IndexedDB (7 天)
  *
+ * [fix:2026-01-11] SSR/SSG 相容性修復
+ * - 使用 lazy initialization 避免在模組載入時存取 indexedDB
+ * - 參考: [Vue.js SSR Guide](https://vuejs.org/guide/scaling-up/ssr.html)
+ *
  * 參考:
  * - [Apple Developer Forums: Safari iOS PWA Data Persistence](https://developer.apple.com/forums/thread/710157)
  * - [idb-keyval: Simple key-value store](https://github.com/jakearchibald/idb-keyval)
@@ -20,10 +24,41 @@
  */
 
 import { get, set, del, createStore } from 'idb-keyval';
+import type { UseStore } from 'idb-keyval';
 import { logger } from './logger';
 
-// 創建專用的 IndexedDB store（避免與其他應用衝突）
-const offlineStore = createStore('ratewise-offline-db', 'offline-store');
+// ============================================================
+// [fix:2026-01-11] Lazy initialization pattern for SSR/SSG
+// ============================================================
+// 問題：createStore() 在模組載入時存取 indexedDB，導致 SSR/SSG 失敗
+// 解決：延遲到第一次使用時才創建 store
+// ============================================================
+
+let offlineStore: UseStore | null = null;
+
+/**
+ * 獲取或創建 IndexedDB store（延遲初始化）
+ *
+ * @returns UseStore | null - IndexedDB store 或 null（SSR 環境）
+ */
+function getStore(): UseStore | null {
+  // SSR/SSG 環境檢查
+  if (typeof indexedDB === 'undefined') {
+    return null;
+  }
+
+  // Lazy initialization
+  if (!offlineStore) {
+    try {
+      offlineStore = createStore('ratewise-offline-db', 'offline-store');
+    } catch (error) {
+      logger.warn('IndexedDB: failed to create store', { error });
+      return null;
+    }
+  }
+
+  return offlineStore;
+}
 
 // 儲存時間戳的 key 後綴
 const TIMESTAMP_SUFFIX = '_timestamp';
@@ -39,16 +74,16 @@ const DEFAULT_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
  * @returns Promise<boolean> 是否儲存成功
  */
 export async function setOfflineData<T>(key: string, value: T): Promise<boolean> {
-  // SSR 檢查
-  if (typeof window === 'undefined' || !('indexedDB' in window)) {
+  const store = getStore();
+  if (!store) {
     return false;
   }
 
   try {
     // 儲存資料
-    await set(key, value, offlineStore);
+    await set(key, value, store);
     // 儲存時間戳
-    await set(`${key}${TIMESTAMP_SUFFIX}`, Date.now(), offlineStore);
+    await set(`${key}${TIMESTAMP_SUFFIX}`, Date.now(), store);
     logger.debug('IndexedDB: data saved', { key });
     return true;
   } catch (error) {
@@ -68,14 +103,14 @@ export async function getOfflineData<T>(
   key: string,
   maxAge: number = DEFAULT_EXPIRATION,
 ): Promise<T | null> {
-  // SSR 檢查
-  if (typeof window === 'undefined' || !('indexedDB' in window)) {
+  const store = getStore();
+  if (!store) {
     return null;
   }
 
   try {
     // 讀取時間戳
-    const timestamp = await get<number>(`${key}${TIMESTAMP_SUFFIX}`, offlineStore);
+    const timestamp = await get<number>(`${key}${TIMESTAMP_SUFFIX}`, store);
 
     // 檢查是否過期
     if (timestamp) {
@@ -93,7 +128,7 @@ export async function getOfflineData<T>(
     }
 
     // 讀取資料
-    const data = await get<T>(key, offlineStore);
+    const data = await get<T>(key, store);
 
     if (data !== undefined) {
       const ageMinutes = timestamp ? Math.floor((Date.now() - timestamp) / 60000) : 0;
@@ -115,14 +150,14 @@ export async function getOfflineData<T>(
  * @returns Promise<T | null> 資料或 null
  */
 export async function getOfflineDataAnyAge<T>(key: string): Promise<T | null> {
-  // SSR 檢查
-  if (typeof window === 'undefined' || !('indexedDB' in window)) {
+  const store = getStore();
+  if (!store) {
     return null;
   }
 
   try {
-    const data = await get<T>(key, offlineStore);
-    const timestamp = await get<number>(`${key}${TIMESTAMP_SUFFIX}`, offlineStore);
+    const data = await get<T>(key, store);
+    const timestamp = await get<number>(`${key}${TIMESTAMP_SUFFIX}`, store);
 
     if (data !== undefined) {
       const ageMinutes = timestamp ? Math.floor((Date.now() - timestamp) / 60000) : 0;
@@ -144,14 +179,14 @@ export async function getOfflineDataAnyAge<T>(key: string): Promise<T | null> {
  * @returns Promise<boolean> 是否刪除成功
  */
 export async function deleteOfflineData(key: string): Promise<boolean> {
-  // SSR 檢查
-  if (typeof window === 'undefined' || !('indexedDB' in window)) {
+  const store = getStore();
+  if (!store) {
     return false;
   }
 
   try {
-    await del(key, offlineStore);
-    await del(`${key}${TIMESTAMP_SUFFIX}`, offlineStore);
+    await del(key, store);
+    await del(`${key}${TIMESTAMP_SUFFIX}`, store);
     logger.debug('IndexedDB: data deleted', { key });
     return true;
   } catch (error) {
@@ -166,8 +201,8 @@ export async function deleteOfflineData(key: string): Promise<boolean> {
  * @returns Promise<boolean> 是否可用
  */
 export async function isIndexedDBAvailable(): Promise<boolean> {
-  // SSR 檢查
-  if (typeof window === 'undefined' || !('indexedDB' in window)) {
+  const store = getStore();
+  if (!store) {
     return false;
   }
 
@@ -175,9 +210,9 @@ export async function isIndexedDBAvailable(): Promise<boolean> {
     // 嘗試寫入和讀取測試資料
     const testKey = '__idb_test__';
     const testValue = Date.now();
-    await set(testKey, testValue, offlineStore);
-    const result = await get<number>(testKey, offlineStore);
-    await del(testKey, offlineStore);
+    await set(testKey, testValue, store);
+    const result = await get<number>(testKey, store);
+    await del(testKey, store);
     return result === testValue;
   } catch {
     return false;
