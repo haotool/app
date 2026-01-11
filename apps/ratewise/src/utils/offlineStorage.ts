@@ -24,7 +24,6 @@
  */
 
 import { get, set, del, createStore } from 'idb-keyval';
-import type { UseStore } from 'idb-keyval';
 import { logger } from './logger';
 
 // ============================================================
@@ -34,14 +33,18 @@ import { logger } from './logger';
 // 解決：延遲到第一次使用時才創建 store
 // ============================================================
 
-let offlineStore: UseStore | null = null;
+// [fix:2026-01-12] 使用 ReturnType 推斷類型避免 UseStore 類型錯誤
+// UseStore 是 idb-keyval 內部類型，直接導入會導致 ESLint 錯誤
+type IDBStore = ReturnType<typeof createStore>;
+
+let offlineStore: IDBStore | null = null;
 
 /**
  * 獲取或創建 IndexedDB store（延遲初始化）
  *
- * @returns UseStore | null - IndexedDB store 或 null（SSR 環境）
+ * @returns IDBStore | null - IndexedDB store 或 null（SSR 環境）
  */
-function getStore(): UseStore | null {
+function getStore(): IDBStore | null {
   // SSR/SSG 環境檢查
   if (typeof indexedDB === 'undefined') {
     return null;
