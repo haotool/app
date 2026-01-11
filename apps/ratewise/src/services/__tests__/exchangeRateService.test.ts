@@ -6,6 +6,7 @@
  * 2. 測試快取策略（fresh, expired, stale fallback）
  * 3. 測試錯誤處理（network errors, invalid data, API failures）
  * 4. 測試邊界情況（empty cache, corrupted cache, multiple CDN failures）
+ * 5. [2026-01-11] 測試 IndexedDB 備援策略（Safari PWA 離線優化）
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -17,6 +18,18 @@ import { getExchangeRates, clearExchangeRateCache, transformRates } from '../exc
 import * as logger from '../../utils/logger';
 
 // ===== Mock Setup =====
+
+// [2026-01-11] Mock IndexedDB (offlineStorage)
+let mockIDBData: Record<string, unknown> = {};
+vi.mock('../../utils/offlineStorage', () => ({
+  saveExchangeRatesToIDB: vi.fn(async (data: unknown) => {
+    mockIDBData['exchange_rates'] = data;
+    return true;
+  }),
+  getExchangeRatesFromIDBAnytime: vi.fn(async () => {
+    return mockIDBData['exchange_rates'] ?? null;
+  }),
+}));
 
 // Mock fetchWithRequestId to use the mocked global.fetch
 vi.mock('../../utils/requestId', () => ({
@@ -99,6 +112,8 @@ describe('exchangeRateService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLocalStorage._resetStore();
+    // [2026-01-11] 重置 IndexedDB mock
+    mockIDBData = {};
     vi.clearAllTimers();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2025-10-31T01:00:00+08:00'));
@@ -182,7 +197,7 @@ describe('exchangeRateService', () => {
       const result = await getExchangeRates();
       expect(result.updateTime).toBe('2025-10-31 00:40');
       expect(logger.logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Using stale cache as fallback'),
+        expect.stringContaining('Using stale localStorage cache as fallback'),
         expect.any(Object),
       );
     });
@@ -388,7 +403,7 @@ describe('exchangeRateService', () => {
 
       expect(result).toEqual(mockRateData);
       expect(logger.logger.info).toHaveBeenCalledWith(
-        'Offline mode: using cached data',
+        'Offline mode: using localStorage cache',
         expect.any(Object),
       );
 
@@ -414,7 +429,7 @@ describe('exchangeRateService', () => {
 
       expect(result).toEqual(mockRateData);
       expect(logger.logger.warn).toHaveBeenCalledWith(
-        'Failed to save to cache',
+        'Failed to save to localStorage cache',
         expect.any(Object),
       );
     });
@@ -447,6 +462,99 @@ describe('exchangeRateService', () => {
 
       expect(result.updateTime).toBe('2025-10-31 00:57');
       expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  // ===== [2026-01-11] IndexedDB 備援策略測試 =====
+  describe('IndexedDB 備援策略 (Safari PWA 離線優化)', () => {
+    it('離線時 localStorage 無快取，使用 IndexedDB 備援', async () => {
+      // Mock 離線狀態
+      Object.defineProperty(navigator, 'onLine', {
+        value: false,
+        configurable: true,
+      });
+
+      // localStorage 無快取
+      mockLocalStorage._resetStore();
+
+      // IndexedDB 有快取
+      mockIDBData['exchange_rates'] = {
+        ...mockRateData,
+        updateTime: '2025-10-30 23:00 (IndexedDB)',
+      };
+
+      const result = await getExchangeRates();
+
+      expect(result.updateTime).toBe('2025-10-30 23:00 (IndexedDB)');
+      expect(logger.logger.info).toHaveBeenCalledWith(
+        'Offline mode: using IndexedDB cache (Safari PWA fallback)',
+        expect.any(Object),
+      );
+
+      // 恢復
+      Object.defineProperty(navigator, 'onLine', {
+        value: true,
+        configurable: true,
+      });
+    });
+
+    it('CDN 失敗且 localStorage 無快取，使用 IndexedDB 備援', async () => {
+      // localStorage 無快取
+      mockLocalStorage._resetStore();
+
+      // IndexedDB 有快取
+      mockIDBData['exchange_rates'] = {
+        ...mockRateData,
+        updateTime: '2025-10-30 22:00 (IndexedDB fallback)',
+      };
+
+      // CDN 失敗
+      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+
+      const result = await getExchangeRates();
+
+      expect(result.updateTime).toBe('2025-10-30 22:00 (IndexedDB fallback)');
+      expect(logger.logger.warn).toHaveBeenCalledWith(
+        'Using IndexedDB cache as fallback due to fetch error',
+        expect.any(Object),
+      );
+    });
+
+    it('成功獲取數據後同時儲存到 IndexedDB', async () => {
+      const { saveExchangeRatesToIDB } = await import('../../utils/offlineStorage');
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockRateData,
+      });
+
+      await getExchangeRates();
+
+      // 驗證 IndexedDB 儲存被調用
+      expect(saveExchangeRatesToIDB).toHaveBeenCalledWith(mockRateData);
+    });
+
+    it('離線時 localStorage 和 IndexedDB 都無快取，使用 fallback', async () => {
+      Object.defineProperty(navigator, 'onLine', {
+        value: false,
+        configurable: true,
+      });
+
+      // 兩者都無快取
+      mockLocalStorage._resetStore();
+      mockIDBData = {};
+
+      const result = await getExchangeRates();
+
+      expect(result.source).toBe('fallback');
+      expect(result.updateTime).toBe('離線模式 - 使用預設匯率');
+      expect(result.rates['TWD']).toBe(1);
+      expect(result.rates['USD']).toBeDefined();
+
+      Object.defineProperty(navigator, 'onLine', {
+        value: true,
+        configurable: true,
+      });
     });
   });
 });

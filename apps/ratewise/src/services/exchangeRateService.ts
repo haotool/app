@@ -3,11 +3,17 @@
  * 從台灣銀行 API 獲取即時匯率
  * [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]
  * [2025-12-10] 整合 Request ID 追蹤
+ * [2026-01-11] Safari PWA 離線優化：雙重儲存策略 (localStorage + IndexedDB)
  */
 
 import { logger } from '../utils/logger';
 import { fetchWithRequestId } from '../utils/requestId';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
+import {
+  saveExchangeRatesToIDB,
+  getExchangeRatesFromIDBAnytime,
+  type ExchangeRateData,
+} from '../utils/offlineStorage';
 
 /**
  * [fix:2026-01-08] 離線 fallback 預設匯率
@@ -36,22 +42,7 @@ const FALLBACK_RATES: Record<string, number> = {
   MYR: 7.3,
 };
 
-interface ExchangeRateData {
-  timestamp: string;
-  updateTime: string;
-  source: string;
-  sourceUrl: string;
-  base: string;
-  rates: Record<string, number>;
-  details: Record<
-    string,
-    {
-      name: string;
-      spot: { buy: number; sell: number | null };
-      cash: { buy: number | null; sell: number | null };
-    }
-  >;
-}
+// ExchangeRateData 類型從 offlineStorage.ts 導入，確保類型一致性
 
 // CDN URLs
 // 策略：只使用 GitHub raw，避免 CDN 快取延遲
@@ -119,8 +110,13 @@ function getFromCache(): ExchangeRateData | null {
 
 /**
  * 儲存匯率資料到快取
+ *
+ * [fix:2026-01-11] 雙重儲存策略
+ * - localStorage: 5 分鐘有效期（控制數據新鮮度）
+ * - IndexedDB: 7 天有效期（Safari PWA 冷啟動離線備援）
  */
 function saveToCache(data: ExchangeRateData): void {
+  // 1. 儲存到 localStorage（5 分鐘有效期）
   try {
     const cached: CachedData = {
       data,
@@ -128,8 +124,14 @@ function saveToCache(data: ExchangeRateData): void {
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
   } catch (error) {
-    logger.warn('Failed to save to cache', { error });
+    logger.warn('Failed to save to localStorage cache', { error });
   }
+
+  // 2. 同時儲存到 IndexedDB（7 天有效期，作為離線備援）
+  // 使用 fire-and-forget 模式，不阻塞主流程
+  void saveExchangeRatesToIDB(data).catch((error) => {
+    logger.warn('Failed to save to IndexedDB cache', { error });
+  });
 }
 
 /**
@@ -217,6 +219,10 @@ function getAnyCachedData(): ExchangeRateData | null {
  * 1. 離線時直接使用快取，不嘗試網路請求（節省資源）
  * 2. 在線時優先使用有效快取，過期才請求網路
  * 3. 網路失敗時使用任何可用快取（即使過期）
+ *
+ * [fix:2026-01-11] Safari PWA 冷啟動離線優化：
+ * 4. 增加 IndexedDB 作為第二層備援（localStorage → IndexedDB → FALLBACK_RATES）
+ * 5. IndexedDB 有效期 7 天，比 localStorage (5 分鐘) 更持久
  */
 export async function getExchangeRates(): Promise<ExchangeRateData> {
   const online = isOnline();
@@ -224,16 +230,31 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
 
   // [fix:2025-12-28] 離線時直接使用快取，不嘗試網路請求
   // [fix:2026-01-08] 離線無快取時使用 fallback 數據，避免 Safari 顯示「無法打開網頁」
+  // [fix:2026-01-11] 增加 IndexedDB 備援層
   if (!online) {
+    // 第一層：嘗試 localStorage
     const cachedData = getAnyCachedData();
     if (cachedData) {
-      logger.info('Offline mode: using cached data', {
+      logger.info('Offline mode: using localStorage cache', {
         updateTime: cachedData.updateTime,
       });
       return cachedData;
     }
-    // 離線且無快取，返回 fallback 數據而非拋出錯誤
-    // 這確保 PWA 在任何情況下都能渲染 UI
+
+    // 第二層：嘗試 IndexedDB（Safari PWA 冷啟動關鍵備援）
+    try {
+      const idbData = await getExchangeRatesFromIDBAnytime();
+      if (idbData) {
+        logger.info('Offline mode: using IndexedDB cache (Safari PWA fallback)', {
+          updateTime: idbData.updateTime,
+        });
+        return idbData;
+      }
+    } catch (idbError) {
+      logger.warn('Offline mode: IndexedDB read failed', { error: idbError });
+    }
+
+    // 第三層：使用硬編碼 fallback 數據
     logger.warn('Offline mode: no cache available, using fallback rates');
     return {
       timestamp: new Date().toISOString(),
@@ -262,13 +283,27 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
   } catch (error) {
     logger.error('Failed to fetch exchange rates', error instanceof Error ? error : undefined);
 
-    // 3. 如果 CDN 完全失敗，嘗試使用任何可用的快取（即使過期）
+    // 3. 如果 CDN 完全失敗，嘗試多層備援
+    // 3a. 嘗試 localStorage（即使過期）
     const staleData = getAnyCachedData();
     if (staleData) {
-      logger.warn('Using stale cache as fallback due to fetch error', {
+      logger.warn('Using stale localStorage cache as fallback due to fetch error', {
         updateTime: staleData.updateTime,
       });
       return staleData;
+    }
+
+    // 3b. 嘗試 IndexedDB（Safari PWA 冷啟動關鍵備援）
+    try {
+      const idbData = await getExchangeRatesFromIDBAnytime();
+      if (idbData) {
+        logger.warn('Using IndexedDB cache as fallback due to fetch error', {
+          updateTime: idbData.updateTime,
+        });
+        return idbData;
+      }
+    } catch (idbError) {
+      logger.warn('IndexedDB fallback read failed', { error: idbError });
     }
 
     throw error;
