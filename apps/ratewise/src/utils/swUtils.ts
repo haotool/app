@@ -66,6 +66,11 @@ export async function hasServiceWorkerUpdate(): Promise<boolean> {
 /**
  * 強制更新 Service Worker（跳過等待）
  *
+ * [fix:2026-01-11] 移除冗餘的 SKIP_WAITING 消息發送
+ * 原因：sw.ts 直接調用 self.skipWaiting()，SW 安裝後立即激活
+ * 因此 registration.waiting 永遠為 null，postMessage 永遠不會執行
+ * 參考：[context7:vite-pwa/vite-plugin-pwa:2026-01-11] 官方建議使用直接 skipWaiting()
+ *
  * @returns Promise<boolean> 是否成功觸發更新
  */
 export async function forceServiceWorkerUpdate(): Promise<boolean> {
@@ -80,14 +85,9 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
       return false;
     }
 
-    // 如果有等待中的 Service Worker，發送 skipWaiting 訊息
-    if (registration.waiting) {
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      logger.info('Service Worker skipWaiting message sent');
-      return true;
-    }
-
     // 主動檢查更新
+    // 注意：由於 sw.ts 直接調用 skipWaiting()，新 SW 會立即激活
+    // 不需要發送 SKIP_WAITING 消息（registration.waiting 永遠為 null）
     await registration.update();
     logger.info('Service Worker update check triggered');
     return true;

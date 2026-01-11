@@ -162,7 +162,11 @@ export function recordVersionUpdate(): void {
  * - 舊用戶開啟應用時，SW 會先返回舊版快取
  * - 必須強制 SW 更新並重新註冊
  *
- * 參考: [context7:/vite-pwa/vite-plugin-pwa:2025-12-29]
+ * [fix:2026-01-11] 移除冗餘的 SKIP_WAITING 消息發送
+ * 原因：sw.ts 直接調用 self.skipWaiting()，SW 安裝後立即激活
+ * 因此 registration.waiting 永遠為 null，postMessage 永遠不會執行
+ *
+ * 參考: [context7:/vite-pwa/vite-plugin-pwa:2026-01-11]
  */
 export async function forceServiceWorkerUpdate(): Promise<boolean> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
@@ -177,15 +181,9 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
     }
 
     // 強制檢查更新
+    // 注意：由於 sw.ts 直接調用 skipWaiting()，新 SW 會立即激活
+    // 不需要發送 SKIP_WAITING 消息（registration.waiting 永遠為 null）
     await registration.update();
-
-    // 如果有等待中的 SW，發送 skipWaiting 訊息
-    if (registration.waiting) {
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      logger.info('Service Worker skipWaiting message sent');
-      return true;
-    }
-
     logger.info('Service Worker update check triggered');
     return true;
   } catch (error) {
