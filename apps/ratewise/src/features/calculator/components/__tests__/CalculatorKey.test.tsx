@@ -408,9 +408,13 @@ describe('CalculatorKey Component - BDD Tests', () => {
    * Given: 不同類型的按鍵需要不同樣式
    * When: 渲染不同類型的按鍵
    * Then: 應該套用正確的 CSS 類別
+   *
+   * 🔄 重構 2026-01-12: 遷移到 Design Token 系統
+   * @see src/config/design-tokens.ts - SSOT Design Token 定義
+   * @see src/utils/classnames.ts - 類別名稱工具函數
    */
   describe('場景 10: 樣式類別', () => {
-    it('應該為數字鍵套用正確樣式', () => {
+    it('應該為數字鍵套用正確樣式（使用語義化 token）', () => {
       // Given: 準備測試數據
       const keyDef: KeyDefinition = {
         label: '0',
@@ -423,12 +427,17 @@ describe('CalculatorKey Component - BDD Tests', () => {
       render(<CalculatorKey keyDef={keyDef} onClick={vi.fn()} />);
       const button = screen.getByRole('button', { name: '數字 0' });
 
-      // Then: 驗證樣式類別包含基礎樣式
+      // Then: 驗證樣式類別包含基礎樣式和語義化 token
       expect(button).toHaveClass('calculator-key');
-      expect(button.className).toContain('bg-slate-100'); // 數字鍵背景色
+      // 🟢 GREEN: 驗證使用語義化 token 而非硬編碼顏色
+      expect(button.className).toContain('bg-neutral-light'); // 數字鍵背景色（語義化）
+      expect(button.className).toContain('text-neutral-text'); // 數字鍵文字色（語義化）
+      // 確認不再使用硬編碼類別
+      expect(button.className).not.toContain('bg-slate-100');
+      expect(button.className).not.toContain('text-slate-900');
     });
 
-    it('應該為運算符鍵套用正確樣式', () => {
+    it('應該為運算符鍵套用正確樣式（使用語義化 token）', () => {
       // Given: 準備測試數據
       const keyDef: KeyDefinition = {
         label: '-',
@@ -441,9 +450,14 @@ describe('CalculatorKey Component - BDD Tests', () => {
       render(<CalculatorKey keyDef={keyDef} onClick={vi.fn()} />);
       const button = screen.getByRole('button', { name: '減法' });
 
-      // Then: 驗證樣式類別
+      // Then: 驗證樣式類別（語義化 token）
       expect(button).toHaveClass('calculator-key--operator');
-      expect(button.className).toContain('bg-violet-100'); // 運算符鍵背景色
+      // 🟢 GREEN: 驗證使用語義化 token 而非硬編碼顏色
+      expect(button.className).toContain('bg-primary-light'); // 運算符鍵背景色（語義化）
+      expect(button.className).toContain('text-primary-text'); // 運算符鍵文字色（語義化）
+      // 確認不再使用硬編碼類別
+      expect(button.className).not.toContain('bg-violet-100');
+      expect(button.className).not.toContain('text-violet-700');
     });
   });
 });
