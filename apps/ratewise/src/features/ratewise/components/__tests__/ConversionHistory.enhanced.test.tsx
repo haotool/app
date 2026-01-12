@@ -158,14 +158,16 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       });
     });
 
-    it('❌ 應該在懸停時顯示視覺反饋', () => {
+    it('✅ 應該在懸停時顯示視覺反饋（使用語義化 token）', () => {
       const mockHistory = createMockHistory();
       const onReconvert = vi.fn();
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
       const firstRecord = screen.getByText('1000 USD').closest('div[class*="cursor-pointer"]');
-      expect(firstRecord).toHaveClass('hover:bg-blue-50');
+      // 🟢 GREEN: 驗證使用語義化 token 而非硬編碼顏色
+      // @see src/config/design-tokens.ts - primary-bg = violet-50
+      expect(firstRecord).toHaveClass('hover:bg-primary-bg');
     });
   });
 
@@ -363,12 +365,14 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       expect(historyList).toBeInTheDocument();
     });
 
-    it('❌ 應該使用專案標準的紫色主題（結果金額）', () => {
+    it('✅ 應該使用專案標準的品牌主色（結果金額）', () => {
       const mockHistory = createMockHistory();
       render(<ConversionHistory history={mockHistory} />);
 
       const resultAmount = screen.getByText('30900 TWD');
-      expect(resultAmount).toHaveClass('text-purple-600');
+      // 🟢 GREEN: 驗證使用語義化 token 而非硬編碼顏色
+      // @see src/config/design-tokens.ts - primary = violet-600
+      expect(resultAmount).toHaveClass('text-primary');
     });
 
     it('❌ 應該使用專案標準的動畫過渡', () => {

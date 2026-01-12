@@ -34,16 +34,16 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
   return (
     <div className="mb-6 space-y-2">
       {/* 表達式顯示區（套用千位分隔符，提升 UX 可讀性） */}
-      <div className="min-h-[3rem] rounded-xl bg-slate-50 px-4 py-3 relative">
+      <div className="min-h-[3rem] rounded-xl bg-neutral-bg px-4 py-3 relative">
         <div
-          className="text-right text-2xl text-slate-700 font-mono tabular-nums overflow-x-auto scrollbar-hide"
+          className="text-right text-2xl text-neutral-text-secondary font-mono tabular-nums overflow-x-auto scrollbar-hide"
           role="status"
           aria-label="當前表達式"
         >
           {expression ? (
             formatExpression(expression)
           ) : (
-            <span className="text-slate-400 text-base font-sans">輸入數字或表達式</span>
+            <span className="text-neutral-text-muted text-base font-sans">輸入數字或表達式</span>
           )}
         </div>
 
@@ -55,7 +55,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
               transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
-              className="text-right text-lg text-slate-400 font-mono tabular-nums mt-1"
+              className="text-right text-lg text-neutral-text-muted font-mono tabular-nums mt-1"
               role="status"
               aria-label={`預覽結果 ${formatCalculatorNumber(preview)}`}
               aria-live="polite"
@@ -69,14 +69,14 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
       {/* 結果顯示區（含千位分隔符格式化） */}
       {result !== null && !error && (
         <motion.div
-          className="rounded-xl bg-violet-50 px-4 py-3"
+          className="rounded-xl bg-primary-bg px-4 py-3"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
         >
-          <div className="text-sm text-violet-600 font-medium mb-1">計算結果</div>
+          <div className="text-sm text-primary font-medium mb-1">計算結果</div>
           <div
-            className="text-right text-3xl font-bold text-violet-700 font-mono tabular-nums"
+            className="text-right text-3xl font-bold text-primary-dark font-mono tabular-nums"
             role="status"
             aria-label={`計算結果為 ${formatCalculatorNumber(result)}`}
             aria-live="polite"
@@ -89,7 +89,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
       {/* 錯誤訊息顯示區 */}
       {error && (
         <motion.div
-          className="rounded-xl bg-red-50 px-4 py-3"
+          className="rounded-xl bg-danger-bg px-4 py-3"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
@@ -98,7 +98,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
         >
           <div className="flex items-center gap-2">
             <svg
-              className="w-5 h-5 text-red-600 flex-shrink-0"
+              className="w-5 h-5 text-danger-text flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -111,7 +111,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
                 d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <div className="text-red-700 font-medium">{error}</div>
+            <div className="text-danger font-medium">{error}</div>
           </div>
         </motion.div>
       )}
