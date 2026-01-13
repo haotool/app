@@ -113,9 +113,9 @@ export function UpdatePrompt() {
         className="
           relative overflow-hidden rounded-lg
           w-[calc(100vw-2rem)] max-w-[344px]
-          bg-gradient-to-r from-purple-50 via-blue-50 to-purple-100
-          border border-purple-200/60
-          shadow-lg shadow-purple-100/50
+          bg-gradient-to-r from-brand-from via-brand-via to-brand-to
+          border border-brand-border/60
+          shadow-lg shadow-brand-shadow/50
           animate-slide-in-bounce
         "
       >
@@ -125,7 +125,7 @@ export function UpdatePrompt() {
           aria-hidden="true"
         />
         <div
-          className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-purple-100/40 blur-2xl"
+          className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-brand-decoration/40 blur-2xl"
           aria-hidden="true"
         />
 
@@ -134,9 +134,9 @@ export function UpdatePrompt() {
           <div className="flex items-center gap-3">
             {/* 圖標區 - 緊湊尺寸 */}
             <div className="flex-shrink-0">
-              <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-purple-200 to-blue-200 flex items-center justify-center shadow">
+              <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-brand-icon-from to-brand-icon-to flex items-center justify-center shadow">
                 <svg
-                  className="w-5 h-5 text-purple-600"
+                  className="w-5 h-5 text-brand-text"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -165,11 +165,11 @@ export function UpdatePrompt() {
             <div className="flex-1 min-w-0">
               <h2
                 id="update-prompt-title"
-                className="text-sm font-semibold text-purple-800 truncate"
+                className="text-sm font-semibold text-brand-text-dark truncate"
               >
                 {offlineReady ? '✨ 離線模式已就緒' : '🎉 發現新版本'}
               </h2>
-              <p id="update-prompt-description" className="text-xs text-purple-600 truncate">
+              <p id="update-prompt-description" className="text-xs text-brand-text truncate">
                 {offlineReady ? '隨時隨地都能使用' : '點擊更新獲取最新功能'}
               </p>
             </div>
@@ -182,11 +182,11 @@ export function UpdatePrompt() {
                   onClick={handleUpdate}
                   className="
                     px-3 py-1.5 rounded-full text-xs font-medium
-                    bg-gradient-to-r from-purple-400 to-blue-400
+                    bg-gradient-to-r from-brand-button-from to-brand-button-to
                     text-white shadow-sm
-                    hover:from-purple-500 hover:to-blue-500
+                    hover:from-brand-button-hover-from hover:to-brand-button-hover-to
                     transition-all
-                    focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1
+                    focus:outline-none focus:ring-2 focus:ring-primary-ring focus:ring-offset-1
                   "
                   aria-label="更新應用程式"
                 >
@@ -198,10 +198,10 @@ export function UpdatePrompt() {
                   onClick={close}
                   className="
                     p-1.5 rounded-full
-                    bg-white/80 text-purple-400
-                    hover:text-purple-600 hover:bg-white
+                    bg-white/80 text-primary-text-light
+                    hover:text-primary hover:bg-white
                     transition-colors
-                    focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1
+                    focus:outline-none focus:ring-2 focus:ring-primary-ring focus:ring-offset-1
                   "
                   aria-label="關閉通知"
                 >

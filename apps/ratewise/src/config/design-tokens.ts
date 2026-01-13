@@ -51,6 +51,7 @@ export const semanticColors = {
     light: colors.violet[100], // 運算符背景
     hover: colors.violet[200], // 運算符 hover 狀態
     active: colors.violet[300], // 運算符 active 狀態
+    'text-light': colors.violet[400], // 淺色文字（圖標、輔助文字）
     ring: colors.violet[500], // 焦點環
     DEFAULT: colors.violet[600], // 等號鍵、強調元素、文字強調
     dark: colors.violet[700], // 等號鍵 hover 狀態
@@ -91,9 +92,29 @@ export const semanticColors = {
    * @see docs/design/COLOR_SCHEME_OPTIONS.md - 方案 A
    */
   brand: {
-    from: colors.blue[50], // #eff6ff
-    via: colors.indigo[50], // #eef2ff
-    to: colors.purple[50], // #faf5ff
+    // 背景漸變（淺色）
+    from: colors.blue[50], // #eff6ff - 漸變起點
+    via: colors.indigo[50], // #eef2ff - 漸變中點
+    to: colors.purple[50], // #faf5ff - 漸變終點
+
+    // 邊框與裝飾
+    border: colors.purple[200], // 邊框顏色
+    decoration: colors.purple[100], // 裝飾元素
+
+    // 按鈕漸變（中等亮度）
+    'button-from': colors.purple[400], // 按鈕漸變起點
+    'button-to': colors.blue[400], // 按鈕漸變終點
+    'button-hover-from': colors.purple[500], // 按鈕 hover 起點
+    'button-hover-to': colors.blue[500], // 按鈕 hover 終點
+
+    // 圖標漸變
+    'icon-from': colors.purple[200], // 圖標漸變起點
+    'icon-to': colors.blue[200], // 圖標漸變終點
+
+    // 文字與陰影
+    text: colors.purple[600], // 主要文字
+    'text-dark': colors.purple[800], // 深色文字
+    shadow: colors.purple[100], // 陰影顏色
   },
 } as const;
 

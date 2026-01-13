@@ -34,8 +34,8 @@ describe('UpdatePrompt Component - 粉彩雲朵配色 (BDD)', () => {
       const sourceCode = await fs.readFile(componentPath, 'utf-8');
 
       // When: 檢查背景漸變配色
-      // Then: 🔴 應該包含粉彩雲朵的背景漸變
-      expect(sourceCode).toContain('from-purple-50 via-blue-50 to-purple-100');
+      // Then: ✅ 應該使用 design token: from-brand-from via-brand-via to-brand-to
+      expect(sourceCode).toContain('from-brand-from via-brand-via to-brand-to');
     });
 
     it('should use pastel cloud border color (purple-200/50)', async () => {
@@ -47,8 +47,8 @@ describe('UpdatePrompt Component - 粉彩雲朵配色 (BDD)', () => {
       const sourceCode = await fs.readFile(componentPath, 'utf-8');
 
       // When: 檢查邊框顏色
-      // Then: 🔴 應該使用半透明紫色邊框
-      expect(sourceCode).toContain('border-purple-200');
+      // Then: ✅ 應該使用 design token: border-brand-border
+      expect(sourceCode).toContain('border-brand-border');
     });
 
     it('should use pastel cloud icon gradient (purple-200 to-blue-200)', async () => {
@@ -60,8 +60,8 @@ describe('UpdatePrompt Component - 粉彩雲朵配色 (BDD)', () => {
       const sourceCode = await fs.readFile(componentPath, 'utf-8');
 
       // When: 檢查圖標漸變
-      // Then: 🔴 應該使用粉彩雲朵的圖標漸變
-      expect(sourceCode).toContain('from-purple-200 to-blue-200');
+      // Then: ✅ 應該使用 design token: from-brand-icon-from to-brand-icon-to
+      expect(sourceCode).toContain('from-brand-icon-from to-brand-icon-to');
     });
 
     it('should use pastel cloud title color (purple-800)', async () => {
@@ -73,8 +73,8 @@ describe('UpdatePrompt Component - 粉彩雲朵配色 (BDD)', () => {
       const sourceCode = await fs.readFile(componentPath, 'utf-8');
 
       // When: 檢查標題文字顏色
-      // Then: 🔴 應該使用深紫色標題
-      expect(sourceCode).toContain('text-purple-800');
+      // Then: ✅ 應該使用 design token: text-brand-text-dark
+      expect(sourceCode).toContain('text-brand-text-dark');
     });
 
     it('should use pastel cloud description color (purple-600)', async () => {
@@ -86,8 +86,8 @@ describe('UpdatePrompt Component - 粉彩雲朵配色 (BDD)', () => {
       const sourceCode = await fs.readFile(componentPath, 'utf-8');
 
       // When: 檢查描述文字顏色
-      // Then: 🔴 應該使用中等紫色描述
-      expect(sourceCode).toContain('text-purple-600');
+      // Then: ✅ 應該使用 design token: text-brand-text
+      expect(sourceCode).toContain('text-brand-text');
     });
 
     it('should use pastel cloud update button gradient (purple-400 to-blue-400)', async () => {
@@ -99,8 +99,8 @@ describe('UpdatePrompt Component - 粉彩雲朵配色 (BDD)', () => {
       const sourceCode = await fs.readFile(componentPath, 'utf-8');
 
       // When: 檢查更新按鈕配色
-      // Then: 🔴 應該使用粉彩雲朵的更新按鈕漸變
-      expect(sourceCode).toContain('from-purple-400 to-blue-400');
+      // Then: ✅ 應該使用 design token: from-brand-button-from to-brand-button-to
+      expect(sourceCode).toContain('from-brand-button-from to-brand-button-to');
     });
 
     it('should NOT use brand blue colors (blue-500, blue-600, indigo-600)', async () => {
