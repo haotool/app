@@ -214,7 +214,7 @@ const RateWise = () => {
         onClick={() => setMode('single')}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
           mode === 'single'
-            ? 'bg-gradient-to-r from-brand-button-from to-brand-button-to text-white shadow-md scale-105'
+            ? 'bg-brand-button-to hover:bg-brand-button-hover-to text-white shadow-md scale-105'
             : 'text-neutral-text-secondary hover:text-neutral-text hover:bg-white/50'
         }`}
       >
@@ -232,7 +232,7 @@ const RateWise = () => {
         onClick={() => setMode('multi')}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
           mode === 'multi'
-            ? 'bg-gradient-to-r from-brand-button-from to-brand-button-to text-white shadow-md scale-105'
+            ? 'bg-brand-button-from hover:bg-brand-button-hover-from text-white shadow-md scale-105'
             : 'text-neutral-text-secondary hover:text-neutral-text hover:bg-white/50'
         }`}
       >

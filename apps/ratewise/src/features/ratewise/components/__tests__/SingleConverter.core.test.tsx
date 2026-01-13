@@ -238,12 +238,12 @@ describe('SingleConverter - 核心功能測試', () => {
       const { rerender } = render(<SingleConverter {...mockProps} rateType="spot" />);
 
       const spotButton = screen.getByLabelText('切換到即期匯率');
-      expect(spotButton).toHaveClass('bg-gradient-to-r', 'from-primary');
+      expect(spotButton).toHaveClass('bg-brand-button-to');
 
       rerender(<SingleConverter {...mockProps} rateType="cash" />);
 
       const cashButton = screen.getByLabelText('切換到現金匯率');
-      expect(cashButton).toHaveClass('bg-gradient-to-r', 'from-primary');
+      expect(cashButton).toHaveClass('bg-brand-button-from');
     });
   });
 
