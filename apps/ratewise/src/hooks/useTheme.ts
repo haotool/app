@@ -9,25 +9,35 @@
  * - SSR 安全（檢查 window 是否存在）
  * - 自動更新 HTML data-theme attribute
  * - 支援系統偏好檢測（prefers-color-scheme）
+ * - 支援自動跟隨系統模式 ('auto')
  *
  * @usage
  * ```tsx
- * const { theme, setTheme } = useTheme();
+ * const { theme, mode, setTheme } = useTheme();
  *
+ * // 手動設定主題
  * <button onClick={() => setTheme('dark')}>切換深色</button>
+ *
+ * // 跟隨系統
+ * <button onClick={() => setTheme('auto')}>跟隨系統</button>
  * ```
  *
  * @see src/config/design-tokens.ts - Design Token 定義
  * @see src/index.css - CSS Variables 定義
  *
  * @created 2026-01-13
- * @version 1.0.0
+ * @version 2.0.0 - 新增 auto 模式支援
  */
 
 import { useEffect, useState } from 'react';
 
 /**
- * 支援的主題類型
+ * 主題模式類型（包含 auto 模式）
+ */
+export type ThemeMode = 'light' | 'dark' | 'auto';
+
+/**
+ * 實際應用的主題類型
  */
 export type Theme = 'light' | 'dark';
 
@@ -37,68 +47,66 @@ export type Theme = 'light' | 'dark';
 const STORAGE_KEY = 'ratewise-theme';
 
 /**
- * 取得初始主題
+ * 取得系統偏好主題
  *
- * 優先級：
- * 1. localStorage 中的使用者偏好
- * 2. 系統偏好（prefers-color-scheme）
- * 3. 預設為淺色主題
- *
- * @returns {Theme} 初始主題
+ * @returns {Theme} 系統偏好的主題
  */
-function getInitialTheme(): Theme {
-  // SSR 環境：返回預設值
-  if (typeof window === 'undefined') {
+function getSystemPreference(): Theme {
+  if (typeof window === 'undefined' || !window.matchMedia) {
     return 'light';
   }
 
-  try {
-    // 1. 檢查 localStorage
-    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    if (stored === 'light' || stored === 'dark') {
-      return stored;
-    }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
 
-    // 2. 檢查系統偏好
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
+/**
+ * 取得初始主題模式
+ *
+ * 優先級：
+ * 1. localStorage 中的使用者偏好 ('light' | 'dark' | 'auto')
+ * 2. 預設為 'auto' (跟隨系統)
+ *
+ * @returns {ThemeMode} 初始主題模式
+ */
+function getInitialMode(): ThemeMode {
+  if (typeof window === 'undefined') {
+    return 'auto';
+  }
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
+    if (stored === 'light' || stored === 'dark' || stored === 'auto') {
+      return stored;
     }
   } catch (error) {
     console.warn('[useTheme] Failed to read theme preference:', error);
   }
 
-  // 3. 預設淺色主題
-  return 'light';
+  return 'auto';
 }
 
 /**
- * 應用主題到 DOM
+ * 根據模式解析實際應用的主題
  *
- * @param {Theme} theme - 要應用的主題
+ * @param {ThemeMode} mode - 主題模式
+ * @returns {Theme} 實際應用的主題
  */
-function applyTheme(theme: Theme): void {
-  if (typeof document === 'undefined') return;
-
-  // 更新 HTML data-theme attribute
-  document.documentElement.setAttribute('data-theme', theme);
-
-  // 儲存到 localStorage
-  try {
-    localStorage.setItem(STORAGE_KEY, theme);
-  } catch (error) {
-    console.warn('[useTheme] Failed to save theme preference:', error);
+function resolveTheme(mode: ThemeMode): Theme {
+  if (mode === 'auto') {
+    return getSystemPreference();
   }
+  return mode;
 }
 
 /**
  * useTheme Hook
  *
- * @returns {{ theme: Theme, setTheme: (theme: Theme) => void }}
+ * @returns {{ theme: Theme, mode: ThemeMode, setTheme: (mode: ThemeMode) => void }}
  *
  * @example
  * ```tsx
  * function ThemeToggle() {
- *   const { theme, setTheme } = useTheme();
+ *   const { theme, mode, setTheme } = useTheme();
  *
  *   return (
  *     <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
@@ -109,45 +117,62 @@ function applyTheme(theme: Theme): void {
  * ```
  */
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  // 用戶選擇的模式 ('light' | 'dark' | 'auto')
+  const [mode, setMode] = useState<ThemeMode>(getInitialMode);
 
-  // 監聽系統偏好變更
+  // 實際應用的主題 ('light' | 'dark')
+  const [theme, setThemeState] = useState<Theme>(() => resolveTheme(getInitialMode()));
+
+  // 監聽系統偏好變更（只在 auto 模式下生效）
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    const handleChange = (e: MediaQueryListEvent) => {
-      // 只在使用者未手動設定主題時跟隨系統偏好
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) {
+    // 只在 auto 模式下設置監聽器
+    if (mode === 'auto') {
+      const handleChange = (e: MediaQueryListEvent) => {
         const newTheme = e.matches ? 'dark' : 'light';
         setThemeState(newTheme);
-        applyTheme(newTheme);
-      }
-    };
+      };
 
-    mediaQuery.addEventListener('change', handleChange);
+      // 監聽變更
+      mediaQuery.addEventListener('change', handleChange);
 
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
+      return () => {
+        mediaQuery.removeEventListener('change', handleChange);
+      };
+    }
 
-  // 初始化時應用主題
+    // 當 mode 不是 auto 時，不需要監聽器
+    return undefined;
+  }, [mode]);
+
+  // 應用主題到 DOM（不寫入 localStorage）
   useEffect(() => {
-    applyTheme(theme);
+    if (typeof document === 'undefined') return;
+    document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
   /**
-   * 切換主題
+   * 切換主題模式
    *
-   * @param {Theme} newTheme - 新主題
+   * @param {ThemeMode} newMode - 新的主題模式 ('light' | 'dark' | 'auto')
    */
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    applyTheme(newTheme);
+  const setTheme = (newMode: ThemeMode) => {
+    setMode(newMode);
+
+    // 解析實際應用的主題
+    const resolvedTheme = resolveTheme(newMode);
+    setThemeState(resolvedTheme);
+
+    // 儲存用戶選擇到 localStorage
+    try {
+      localStorage.setItem(STORAGE_KEY, newMode);
+    } catch (error) {
+      console.warn('[useTheme] Failed to save theme preference:', error);
+    }
   };
 
-  return { theme, setTheme };
+  return { theme, mode, setTheme };
 }

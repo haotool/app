@@ -18,6 +18,7 @@ describe('ThemeToggle Component', () => {
     mockSetTheme.mockClear();
     vi.spyOn(useThemeModule, 'useTheme').mockReturnValue({
       theme: 'light',
+      mode: 'auto',
       setTheme: mockSetTheme,
     });
   });
@@ -32,6 +33,7 @@ describe('ThemeToggle Component', () => {
     it('應該正確渲染深色主題狀態', () => {
       vi.spyOn(useThemeModule, 'useTheme').mockReturnValue({
         theme: 'dark',
+        mode: 'dark',
         setTheme: mockSetTheme,
       });
 
@@ -55,6 +57,7 @@ describe('ThemeToggle Component', () => {
     it('應該在點擊時切換為淺色主題', () => {
       vi.spyOn(useThemeModule, 'useTheme').mockReturnValue({
         theme: 'dark',
+        mode: 'dark',
         setTheme: mockSetTheme,
       });
 
@@ -108,6 +111,7 @@ describe('ThemeToggleCompact Component', () => {
     mockSetTheme.mockClear();
     vi.spyOn(useThemeModule, 'useTheme').mockReturnValue({
       theme: 'light',
+      mode: 'auto',
       setTheme: mockSetTheme,
     });
   });
