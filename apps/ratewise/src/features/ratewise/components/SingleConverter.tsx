@@ -347,8 +347,8 @@ export const SingleConverter = ({
                 onClick={() => onRateTypeChange('spot')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
                   rateType === 'spot'
-                    ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-md scale-105'
-                    : 'text-primary-text/80 hover:text-primary-text hover:bg-primary-light/50'
+                    ? 'bg-brand-button-to hover:bg-brand-button-hover-to text-white shadow-md scale-105'
+                    : 'text-brand-button-to/80 hover:text-brand-button-to hover:bg-brand-button-to/10'
                 }`}
                 aria-label="切換到即期匯率"
               >
@@ -366,8 +366,8 @@ export const SingleConverter = ({
                 onClick={() => onRateTypeChange('cash')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
                   rateType === 'cash'
-                    ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-md scale-105'
-                    : 'text-primary-text/80 hover:text-primary-text hover:bg-primary-light/50'
+                    ? 'bg-brand-button-from hover:bg-brand-button-hover-from text-white shadow-md scale-105'
+                    : 'text-brand-button-from/80 hover:text-brand-button-from hover:bg-brand-button-from/10'
                 }`}
                 aria-label="切換到現金匯率"
               >

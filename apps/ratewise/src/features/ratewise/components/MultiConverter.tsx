@@ -256,7 +256,9 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onRateTypeChange(rateType === 'spot' ? 'cash' : 'spot');
                         }}
-                        className="font-medium text-primary transition-colors hover:opacity-80"
+                        className={`font-medium transition-colors hover:opacity-80 ${
+                          rateType === 'spot' ? 'text-brand-button-to' : 'text-brand-button-from'
+                        }`}
                         aria-label={`切換到${rateType === 'spot' ? '現金' : '即期'}匯率`}
                       >
                         {rateType === 'spot' ? '即期' : '現金'}
