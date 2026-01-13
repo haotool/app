@@ -72,6 +72,7 @@
     "web-vitals": "^5.1.0",
     "workbox-cacheable-response": "^7.4.0",
     "workbox-cli": "^7.4.0",
+    "workbox-core": "^7.4.0",
     "workbox-expiration": "^7.4.0",
     "workbox-precaching": "^7.4.0",
     "workbox-routing": "^7.4.0",

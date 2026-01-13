@@ -19,6 +19,7 @@
 // 此方法確保 polyfill 在 IIFE 外部執行，才能被內部代碼訪問
 // Reference: [MDN: ServiceWorkerGlobalScope] [Vite Issue #12611]
 
+import { clientsClaim } from 'workbox-core';
 import {
   cleanupOutdatedCaches,
   createHandlerBoundToURL,
@@ -38,10 +39,23 @@ precacheAndRoute(self.__WB_MANIFEST);
 // Clean up outdated caches from previous versions
 cleanupOutdatedCaches();
 
-// [fix:2026-01-10] Service Worker 立即激活（vite-plugin-pwa 官方寫法）
-// 根據 vite-plugin-pwa 官方文檔：直接呼叫 skipWaiting() 而非在 event listener 中
-// Reference: [context7:/vite-pwa/vite-plugin-pwa:2026-01-10]
+// =============================================================================
+// [fix:2026-01-14] Service Worker 立即激活 + 立即控制所有 Client
+// =============================================================================
+// 問題：用戶滑掉 app 後，SW 不會自動重新控制頁面，導致離線功能失效
+// 原因：缺少 clientsClaim()，SW 只會控制「在 SW 激活後打開的頁面」
+// 解決：同時使用 skipWaiting() + clientsClaim()
+//
+// skipWaiting(): 跳過等待階段，新 SW 立即激活
+// clientsClaim(): 激活後立即控制所有已打開的 Client（包括 iOS Safari 重啟後的頁面）
+//
+// Reference:
+// - [context7:/googlechrome/workbox:2026-01-14] skipWaiting + clientsClaim
+// - [context7:/vite-pwa/vite-plugin-pwa:2026-01-14] autoUpdate behavior
+// - [Apple Developer Forums] iOS Safari PWA service worker killed after app close
+// =============================================================================
 void self.skipWaiting();
+clientsClaim();
 
 // =============================================================================
 // [fix:2026-01-10] 動態獲取 base path，修復路徑硬編碼問題
