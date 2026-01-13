@@ -149,7 +149,7 @@ export const MultiConverter = ({
       <div className="mb-3">
         <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
           即時多幣別換算{' '}
-          <span className="text-xs text-neutral-text-muted">（點擊 ⭐ 可加入常用）</span>
+          <span className="text-xs text-neutral-text-secondary">（點擊 ⭐ 可加入常用）</span>
         </label>
         <div className="flex gap-2 mb-3 flex-wrap">
           {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
