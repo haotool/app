@@ -19,8 +19,7 @@
     "baseUrl": ".",
     "paths": {
       "@app/quake-school/*": ["./src/*"]
-    },
-    "types": ["node", "vitest/globals"]
+    }
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
