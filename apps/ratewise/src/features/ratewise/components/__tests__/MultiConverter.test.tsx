@@ -150,9 +150,9 @@ describe('MultiConverter', () => {
     it('基準貨幣應該有特殊的樣式', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // TWD 是基準貨幣，應該有黃色背景
+      // TWD 是基準貨幣，應該有警告色背景
       const twdRow = screen.getByText('TWD').closest('div[class*="rounded-xl"]');
-      expect(twdRow).toHaveClass('from-yellow-50');
+      expect(twdRow).toHaveClass('from-warning-light');
     });
   });
 
