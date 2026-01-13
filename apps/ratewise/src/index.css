@@ -9,10 +9,131 @@
     font-display: swap;
     /* 實際字體檔案由 Tailwind 或 CDN 提供 */
   }
+
+  /**
+   * Design Token CSS Variables - 動態主題系統
+   *
+   * @description 使用 CSS Variables 實現運行時主題切換
+   * @format RGB format (e.g., "241 245 249") without rgb()
+   * @usage Tailwind 自動處理：bg-neutral-light → rgb(var(--color-neutral-light))
+   *
+   * @see src/config/design-tokens.ts - Token 定義
+   * @reference https://tailwindcss.com/docs/customizing-colors#using-css-variables
+   */
+
+  /* 預設淺色主題 (Light Theme) */
+  :root {
+    /* Neutral - 中性色系 */
+    --color-neutral-light: 241 245 249; /* slate-100 */
+    --color-neutral: 226 232 240; /* slate-200 */
+    --color-neutral-dark: 203 213 225; /* slate-300 */
+    --color-neutral-darker: 148 163 184; /* slate-400 */
+    --color-neutral-text: 15 23 42; /* slate-900 */
+    --color-neutral-text-secondary: 51 65 85; /* slate-700 */
+    --color-neutral-text-muted: 148 163 184; /* slate-400 */
+    --color-neutral-bg: 248 250 252; /* slate-50 */
+
+    /* Primary - 品牌主色 */
+    --color-primary-bg: 245 243 255; /* violet-50 */
+    --color-primary-light: 237 233 254; /* violet-100 */
+    --color-primary-hover: 221 214 254; /* violet-200 */
+    --color-primary-active: 196 181 253; /* violet-300 */
+    --color-primary-text-light: 167 139 250; /* violet-400 */
+    --color-primary-ring: 139 92 246; /* violet-500 */
+    --color-primary: 124 58 237; /* violet-600 */
+    --color-primary-dark: 109 40 217; /* violet-700 */
+    --color-primary-darker: 91 33 182; /* violet-800 */
+    --color-primary-text: 109 40 217; /* violet-700 */
+
+    /* Danger - 危險色系 */
+    --color-danger-bg: 254 242 242; /* red-50 */
+    --color-danger-light: 254 226 226; /* red-100 */
+    --color-danger-hover: 254 202 202; /* red-200 */
+    --color-danger-active: 252 165 165; /* red-300 */
+    --color-danger-text: 220 38 38; /* red-600 */
+    --color-danger: 185 28 28; /* red-700 */
+
+    /* Warning - 警告色系 */
+    --color-warning-light: 254 243 199; /* amber-100 */
+    --color-warning: 180 83 9; /* amber-700 */
+    --color-warning-hover: 253 230 138; /* amber-200 */
+    --color-warning-active: 252 211 77; /* amber-300 */
+
+    /* Brand - 品牌漸變 */
+    --color-brand-from: 239 246 255; /* blue-50 */
+    --color-brand-via: 238 242 255; /* indigo-50 */
+    --color-brand-to: 250 245 255; /* purple-50 */
+    --color-brand-border: 233 213 255; /* purple-200 */
+    --color-brand-decoration: 243 232 255; /* purple-100 */
+    --color-brand-button-from: 192 132 252; /* purple-400 */
+    --color-brand-button-to: 96 165 250; /* blue-400 */
+    --color-brand-button-hover-from: 168 85 247; /* purple-500 */
+    --color-brand-button-hover-to: 59 130 246; /* blue-500 */
+    --color-brand-icon-from: 233 213 255; /* purple-200 */
+    --color-brand-icon-to: 191 219 254; /* blue-200 */
+    --color-brand-text: 147 51 234; /* purple-600 */
+    --color-brand-text-dark: 107 33 168; /* purple-800 */
+    --color-brand-shadow: 243 232 255; /* purple-100 */
+  }
+
+  /* 深色主題 (Dark Theme) */
+  [data-theme='dark'] {
+    /* Neutral - 中性色系（反轉） */
+    --color-neutral-light: 30 41 59; /* slate-800 */
+    --color-neutral: 15 23 42; /* slate-900 */
+    --color-neutral-dark: 2 6 23; /* slate-950 */
+    --color-neutral-darker: 2 6 23; /* slate-950 */
+    --color-neutral-text: 248 250 252; /* slate-50 */
+    --color-neutral-text-secondary: 203 213 225; /* slate-300 */
+    --color-neutral-text-muted: 100 116 139; /* slate-500 */
+    --color-neutral-bg: 2 6 23; /* slate-950 */
+
+    /* Primary - 品牌主色（調整對比度） */
+    --color-primary-bg: 46 16 101; /* violet-950 */
+    --color-primary-light: 76 29 149; /* violet-900 */
+    --color-primary-hover: 91 33 182; /* violet-800 */
+    --color-primary-active: 109 40 217; /* violet-700 */
+    --color-primary-text-light: 196 181 253; /* violet-300 */
+    --color-primary-ring: 167 139 250; /* violet-400 */
+    --color-primary: 167 139 250; /* violet-400 */
+    --color-primary-dark: 196 181 253; /* violet-300 */
+    --color-primary-darker: 221 214 254; /* violet-200 */
+    --color-primary-text: 196 181 253; /* violet-300 */
+
+    /* Danger - 危險色系（增亮） */
+    --color-danger-bg: 69 10 10; /* red-950 */
+    --color-danger-light: 127 29 29; /* red-900 */
+    --color-danger-hover: 153 27 27; /* red-800 */
+    --color-danger-active: 185 28 28; /* red-700 */
+    --color-danger-text: 248 113 113; /* red-400 */
+    --color-danger: 239 68 68; /* red-500 */
+
+    /* Warning - 警告色系（增亮） */
+    --color-warning-light: 120 53 15; /* amber-900 */
+    --color-warning: 245 158 11; /* amber-500 */
+    --color-warning-hover: 146 64 14; /* amber-800 */
+    --color-warning-active: 180 83 9; /* amber-700 */
+
+    /* Brand - 品牌漸變（深色調整） */
+    --color-brand-from: 23 37 84; /* blue-950 */
+    --color-brand-via: 30 27 75; /* indigo-950 */
+    --color-brand-to: 59 7 100; /* purple-950 */
+    --color-brand-border: 126 34 206; /* purple-700 */
+    --color-brand-decoration: 107 33 168; /* purple-800 */
+    --color-brand-button-from: 168 85 247; /* purple-500 */
+    --color-brand-button-to: 59 130 246; /* blue-500 */
+    --color-brand-button-hover-from: 192 132 252; /* purple-400 */
+    --color-brand-button-hover-to: 96 165 250; /* blue-400 */
+    --color-brand-icon-from: 126 34 206; /* purple-700 */
+    --color-brand-icon-to: 29 78 216; /* blue-700 */
+    --color-brand-text: 192 132 252; /* purple-400 */
+    --color-brand-text-dark: 216 180 254; /* purple-300 */
+    --color-brand-shadow: 88 28 135; /* purple-900 */
+  }
 }
 
 body {
-  @apply bg-slate-50 antialiased text-slate-800;
+  @apply bg-neutral-bg antialiased text-neutral-text-secondary;
 }
 
 /* PWA 更新通知動畫 - 2025 最佳實踐 */
