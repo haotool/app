@@ -203,8 +203,17 @@ describe('useTheme Hook', () => {
 
     it('應該在 localStorage 寫入錯誤時正常運作', () => {
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+
+      // 使用 spyOn 來 mock localStorage.setItem
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      const originalSetItem = localStorage.setItem;
+      const mockSetItem = vi.fn().mockImplementation(() => {
         throw new Error('localStorage error');
+      });
+      Object.defineProperty(localStorage, 'setItem', {
+        value: mockSetItem,
+        writable: true,
+        configurable: true,
       });
 
       const { result } = renderHook(() => useTheme());
@@ -213,14 +222,26 @@ describe('useTheme Hook', () => {
         result.current.setTheme('dark');
       });
 
-      // 主題應該仍然更新
+      // 主題應該仍然更新（即使 localStorage 寫入失敗）
       expect(result.current.theme).toBe('dark');
+      expect(result.current.mode).toBe('dark');
+
+      // 驗證 setItem 被呼叫（確保 mock 生效）
+      expect(mockSetItem).toHaveBeenCalledWith('ratewise-theme', 'dark');
+
+      // 驗證錯誤被 console.warn 記錄
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         '[useTheme] Failed to save theme preference:',
         expect.any(Error),
       );
 
+      // 還原 mocks
       consoleWarnSpy.mockRestore();
+      Object.defineProperty(localStorage, 'setItem', {
+        value: originalSetItem,
+        writable: true,
+        configurable: true,
+      });
     });
   });
 });
