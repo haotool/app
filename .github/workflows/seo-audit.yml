@@ -11,6 +11,10 @@ on:
       - main
       - 'claude/**'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   seo-audit:
     name: SEO 2025 Standards Audit
