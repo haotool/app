@@ -153,7 +153,7 @@ export const defaultTheme = {
     darker: colors.slate[400], // #94a3b8 → 148 163 184
     text: colors.slate[900], // #0f172a → 15 23 42
     'text-secondary': colors.slate[700], // #334155 → 51 65 85
-    'text-muted': colors.slate[400], // #94a3b8 → 148 163 184
+    'text-muted': colors.slate[400], // #94a3b8 → 148 163 184 (對齊 main 分支)
     bg: colors.slate[50], // #f8fafc → 248 250 252
   },
   primary: {

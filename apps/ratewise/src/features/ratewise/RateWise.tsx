@@ -367,7 +367,9 @@ const RateWise = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-neutral-text">常見問題精選</h2>
-                  <p className="text-sm text-neutral-text-muted">首頁摘要，完整內容請見 FAQ 頁面</p>
+                  <p className="text-sm text-neutral-text-secondary">
+                    首頁摘要，完整內容請見 FAQ 頁面
+                  </p>
                 </div>
               </div>
               <dl className="space-y-4">
