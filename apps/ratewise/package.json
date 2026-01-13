@@ -13,7 +13,7 @@
     "dev": "vite",
     "prebuild": "node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs",
     "build": "tsc --noEmit && vite-react-ssg build --config vite.config.ts",
-    "postbuild": "node scripts/update-csp-meta.js && node scripts/postbuild-mirror-dist.js",
+    "postbuild": "node scripts/update-csp-meta.js && node scripts/postbuild-mirror-dist.js && node scripts/patch-sw.mjs",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
@@ -31,13 +31,16 @@
     "optimize:images": "node scripts/optimize-images.js"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
+    "idb-keyval": "^6.2.2",
     "lightweight-charts": "^5.1.0",
     "lucide-react": "^0.562.0",
     "motion": "^12.24.12",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-error-boundary": "^6.0.2",
-    "react-router-dom": "^6.30.3"
+    "react-router-dom": "^6.30.3",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",

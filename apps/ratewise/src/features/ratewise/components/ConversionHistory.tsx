@@ -62,11 +62,11 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
     <div className="bg-white rounded-3xl shadow-xl p-6 mt-4 md:mt-6">
       {/* 標題與清除按鈕 */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-800">轉換歷史</h2>
+        <h2 className="text-xl font-bold text-neutral-text">轉換歷史</h2>
         {onClearAll && (
           <button
             onClick={onClearAll}
-            className="text-sm text-gray-500 hover:text-red-600 transition-colors"
+            className="text-sm text-neutral-text-secondary hover:text-danger-text transition-colors"
             aria-label="清除全部歷史記錄"
           >
             清除全部
@@ -83,19 +83,19 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
             onKeyDown={(e) => handleKeyDown(e, item)}
             role="button"
             tabIndex={0}
-            className="flex items-center justify-between p-3 bg-gray-50 rounded-xl
-                       hover:bg-blue-50 hover:shadow-md transition-all cursor-pointer
-                       group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="flex items-center justify-between p-3 bg-neutral-bg rounded-xl
+                       hover:bg-primary-bg hover:shadow-md transition-all cursor-pointer
+                       group focus:outline-none focus:ring-2 focus:ring-primary-ring focus:ring-offset-2"
             aria-label={`重新轉換 ${item.amount} ${item.from} 到 ${item.to}`}
           >
             {/* 轉換資訊 */}
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500">{item.time}</span>
+              <span className="text-sm text-neutral-text-muted">{item.time}</span>
               <span className="font-semibold">
                 {item.amount} {item.from}
               </span>
-              <span className="text-gray-400">→</span>
-              <span className="font-semibold text-purple-600">
+              <span className="text-neutral-text-muted">→</span>
+              <span className="font-semibold text-primary">
                 {item.result} {item.to}
               </span>
             </div>
@@ -107,11 +107,11 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
                 void handleCopy(item);
               }}
               className="opacity-0 group-hover:opacity-100 transition-opacity
-                         p-2 rounded-lg hover:bg-blue-100 focus:opacity-100"
+                         p-2 rounded-lg hover:bg-primary-light focus:opacity-100"
               aria-label="複製轉換結果"
               tabIndex={0}
             >
-              <Copy className="w-4 h-4 text-blue-600" />
+              <Copy className="w-4 h-4 text-primary" />
             </button>
           </div>
         ))}

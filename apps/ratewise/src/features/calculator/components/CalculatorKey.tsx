@@ -10,6 +10,7 @@ import { motion } from 'motion/react';
 import { useRef } from 'react';
 import type { CalculatorKeyProps } from '../types';
 import { lightHaptic, mediumHaptic } from '../utils/haptics';
+import { getCalculatorKeyClasses } from '@app/ratewise/utils/classnames';
 import '../styles/calculator-animations.css';
 
 /**
@@ -40,44 +41,55 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
    * 按鍵樣式映射
    * @description 根據按鍵類型返回對應的 Tailwind CSS 類別
    *
+   * 🔄 重構 2026-01-12: 遷移到 Design Token 系統
+   * - Phase 1: 使用語義化色彩類別（neutral, primary, danger, warning）
+   * - Phase 2: 使用 classnames.ts 工具函數簡化邏輯（減少 20 行程式碼）
+   * @see src/config/design-tokens.ts - SSOT Design Token 定義
+   * @see src/utils/classnames.ts - 類別名稱工具函數
+   * @see docs/dev/005_design_token_refactoring.md - 技術決策記錄
+   *
    * 🐛 修復：移除 transition-all，避免與 Motion 動畫衝突
    * @see Bug Report 2025-11-19 - 按鈕放大動畫未顯現
    */
   const getKeyStyles = (): string => {
-    // ✅ 移除 transition-all，讓 Motion 完全控制動畫（修復 whileTap 失效）
-    const baseStyles =
-      'calculator-key relative h-16 rounded-xl font-semibold select-none overflow-hidden';
-
-    // 數字鍵樣式
+    // 數字鍵樣式（中性色系）
     if (type === 'number' || type === 'decimal') {
-      return `${baseStyles} bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300 text-2xl`;
+      return getCalculatorKeyClasses('neutral', { size: 'text-2xl' });
     }
 
-    // 運算符鍵樣式（添加 calculator-key--operator 以支援客製化漣漪）
+    // 運算符鍵樣式（品牌主色）- 添加 calculator-key--operator 以支援客製化漣漪
     if (type === 'operator') {
-      return `${baseStyles} calculator-key--operator bg-violet-100 text-violet-700 hover:bg-violet-200 active:bg-violet-300 text-2xl`;
+      return getCalculatorKeyClasses('primaryLight', {
+        size: 'text-2xl',
+        customClass: 'calculator-key--operator',
+      });
     }
 
-    // 操作鍵樣式（AC, ⌫, %, +/-）
+    // 清除鍵樣式（危險色系）
     if (value === 'clear') {
-      return `${baseStyles} bg-red-100 text-red-700 hover:bg-red-200 active:bg-red-300 text-lg`;
+      return getCalculatorKeyClasses('danger', { size: 'text-lg' });
     }
 
+    // 刪除鍵樣式（警告色系）
     if (value === 'backspace') {
-      return `${baseStyles} bg-amber-100 text-amber-700 hover:bg-amber-200 active:bg-amber-300 text-lg`;
+      return getCalculatorKeyClasses('warning', { size: 'text-lg' });
     }
 
-    // 功能鍵樣式（%, +/-）- iOS 標準淺灰色
+    // 功能鍵樣式（%, +/-）- 中性色系（iOS 標準淺灰色）
     if (value === 'percent' || value === 'negate') {
-      return `${baseStyles} bg-slate-200 text-slate-700 hover:bg-slate-300 active:bg-slate-400 text-lg`;
+      return getCalculatorKeyClasses('neutralFunction', { size: 'text-lg' });
     }
 
-    // 計算鍵樣式（=）- 移除 col-span-3，單一格大小
+    // 計算鍵樣式（=）- 品牌主色強調
     if (value === 'calculate') {
-      return `${baseStyles} calculator-key--equals bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800 text-2xl`;
+      return getCalculatorKeyClasses('primaryStrong', {
+        size: 'text-2xl',
+        customClass: 'calculator-key--equals',
+      });
     }
 
-    return baseStyles;
+    // 基礎樣式（應該不會到達這裡）
+    return 'calculator-key relative h-16 rounded-xl font-semibold select-none overflow-hidden';
   };
 
   /**

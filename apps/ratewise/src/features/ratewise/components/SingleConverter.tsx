@@ -237,12 +237,14 @@ export const SingleConverter = ({
   return (
     <>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">轉換金額</label>
+        <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
+          轉換金額
+        </label>
         <div className="relative">
           <select
             value={fromCurrency}
             onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-gray-100 rounded-lg px-2 py-1.5 text-base font-semibold border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 bg-neutral-light rounded-lg px-2 py-1.5 text-base font-semibold border-none focus:outline-none focus:ring-2 focus:ring-primary-ring"
             aria-label="選擇來源貨幣"
           >
             {CURRENCY_CODES.map((code) => (
@@ -295,7 +297,7 @@ export const SingleConverter = ({
                 e.preventDefault();
               }
             }}
-            className="w-full pl-32 pr-14 py-3 text-2xl font-bold border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
+            className="w-full pl-32 pr-14 py-3 text-2xl font-bold border-2 border-neutral rounded-2xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-all duration-300"
             placeholder="0.00"
             aria-label={`轉換金額 (${fromCurrency})`}
           />
@@ -305,7 +307,7 @@ export const SingleConverter = ({
             onClick={() => {
               calculator.openCalculator('from');
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-all duration-200"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-primary hover:text-primary-dark hover:bg-primary-bg rounded-lg transition-all duration-200"
             aria-label="開啟計算機 (轉換金額)"
             data-testid="calculator-trigger-from"
           >
@@ -323,7 +325,7 @@ export const SingleConverter = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="px-3 py-1 bg-gray-100 hover:bg-blue-100 active:bg-blue-200 rounded-lg text-sm font-medium transition-all duration-200 transform active:scale-95 hover:scale-105 hover:shadow-md"
+              className="px-3 py-1 bg-neutral-light hover:bg-primary-light active:bg-primary-hover rounded-lg text-sm font-medium transition-all duration-200 transform active:scale-95 hover:scale-105 hover:shadow-md"
             >
               {amount.toLocaleString()}
             </button>
@@ -333,20 +335,20 @@ export const SingleConverter = ({
 
       <div className="flex flex-col items-center mb-4">
         {/* 匯率卡片 - 懸停效果 - 移除 overflow-hidden 避免遮蔽 tooltip */}
-        <div className="relative bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl mb-3 w-full group cursor-pointer hover:shadow-xl transition-all duration-500">
+        <div className="relative bg-gradient-to-r from-primary-light to-primary-hover rounded-xl mb-3 w-full group cursor-pointer hover:shadow-xl transition-all duration-500">
           {/* 光澤效果 */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl" />
 
           {/* 匯率資訊區塊 - 包含切換按鈕和匯率顯示 */}
           <div className="relative text-center pt-12 pb-6 px-4 flex flex-col items-center justify-center transition-all duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden">
             {/* 匯率類型切換按鈕 - 融合背景漸層的玻璃擬態設計 */}
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 inline-flex bg-gradient-to-r from-blue-50/95 to-purple-50/95 backdrop-blur-md rounded-full p-0.5 shadow-lg border border-white/40">
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 inline-flex bg-gradient-to-r from-primary-bg/95 to-primary-bg/95 backdrop-blur-md rounded-full p-0.5 shadow-lg border border-white/40">
               <button
                 onClick={() => onRateTypeChange('spot')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
                   rateType === 'spot'
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md scale-105'
-                    : 'text-blue-700/80 hover:text-blue-800 hover:bg-blue-100/50'
+                    ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-md scale-105'
+                    : 'text-primary-text/80 hover:text-primary-text hover:bg-primary-light/50'
                 }`}
                 aria-label="切換到即期匯率"
               >
@@ -364,8 +366,8 @@ export const SingleConverter = ({
                 onClick={() => onRateTypeChange('cash')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
                   rateType === 'cash'
-                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md scale-105'
-                    : 'text-purple-700/80 hover:text-purple-800 hover:bg-purple-100/50'
+                    ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-md scale-105'
+                    : 'text-primary-text/80 hover:text-primary-text hover:bg-primary-light/50'
                 }`}
                 aria-label="切換到現金匯率"
               >
@@ -383,10 +385,10 @@ export const SingleConverter = ({
 
             {/* 匯率顯示 */}
             <div className="w-full">
-              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2 transition-all duration-300 group-hover:scale-105">
+              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-text to-brand-text-dark mb-2 transition-all duration-300 group-hover:scale-105">
                 1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
               </div>
-              <div className="text-sm text-slate-600 font-semibold opacity-80 group-hover:opacity-95 transition-opacity">
+              <div className="text-sm text-neutral-text-secondary font-semibold opacity-80 group-hover:opacity-95 transition-opacity">
                 1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
               </div>
             </div>
@@ -401,7 +403,7 @@ export const SingleConverter = ({
             <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
               <ErrorBoundary
                 fallback={
-                  <div className="flex items-center justify-center h-full text-xs text-red-500">
+                  <div className="flex items-center justify-center h-full text-xs text-danger">
                     趨勢圖載入失敗
                   </div>
                 }
@@ -420,7 +422,9 @@ export const SingleConverter = ({
             </div>
             {/* 互動提示 */}
             <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-1 pointer-events-none">
-              <span className="text-[10px] font-semibold text-slate-600">查看趨勢圖</span>
+              <span className="text-[10px] font-semibold text-neutral-text-secondary">
+                查看趨勢圖
+              </span>
             </div>
           </div>
         </div>
@@ -429,7 +433,7 @@ export const SingleConverter = ({
         <div className="relative group/swap">
           {/* 外圍光環 */}
           <div
-            className={`absolute -inset-1 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 rounded-full blur-md transition-all duration-500 ${
+            className={`absolute -inset-1 bg-gradient-to-r from-primary-light via-primary-hover to-primary-light rounded-full blur-md transition-all duration-500 ${
               isSwapping ? 'opacity-60 scale-125' : 'opacity-0 group-hover/swap:opacity-30'
             } animate-pulse`}
           />
@@ -438,7 +442,7 @@ export const SingleConverter = ({
           <button
             ref={swapButtonRef}
             onClick={handleSwap}
-            className={`relative p-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-full shadow-lg transition-all duration-500 transform hover:scale-110 active:scale-95 group-hover/swap:shadow-2xl ${
+            className={`relative p-3 bg-gradient-to-r from-brand-button-from to-brand-button-to hover:from-brand-button-hover-from hover:to-brand-button-hover-to text-white rounded-full shadow-lg transition-all duration-500 transform hover:scale-110 active:scale-95 group-hover/swap:shadow-2xl ${
               isSwapping ? 'scale-95' : ''
             }`}
             aria-label="交換幣別"
@@ -473,7 +477,7 @@ export const SingleConverter = ({
 
           {/* 懸停提示 */}
           <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
-            <span className="text-xs font-medium text-gray-600 whitespace-nowrap bg-white px-2 py-1 rounded-full shadow-md">
+            <span className="text-xs font-medium text-neutral-text-secondary whitespace-nowrap bg-white px-2 py-1 rounded-full shadow-md">
               點擊交換
             </span>
           </div>
@@ -481,12 +485,14 @@ export const SingleConverter = ({
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">轉換結果</label>
+        <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
+          轉換結果
+        </label>
         <div className="relative">
           <select
             value={toCurrency}
             onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-gray-100 rounded-lg px-2 py-1.5 text-base font-semibold border-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 bg-neutral-light rounded-lg px-2 py-1.5 text-base font-semibold border-none focus:outline-none focus:ring-2 focus:ring-primary-ring"
             aria-label="選擇目標貨幣"
           >
             {CURRENCY_CODES.map((code) => (
@@ -536,7 +542,7 @@ export const SingleConverter = ({
                 e.preventDefault();
               }
             }}
-            className="w-full pl-32 pr-14 py-3 text-2xl font-bold border-2 border-purple-200 rounded-2xl bg-purple-50 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all duration-300"
+            className="w-full pl-32 pr-14 py-3 text-2xl font-bold border-2 border-primary-hover rounded-2xl bg-primary-bg focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-all duration-300"
             placeholder="0.00"
             aria-label={`轉換結果 (${toCurrency})`}
           />
@@ -546,7 +552,7 @@ export const SingleConverter = ({
             onClick={() => {
               calculator.openCalculator('to');
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-200"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-primary hover:text-primary-dark hover:bg-primary-bg rounded-lg transition-all duration-200"
             aria-label="開啟計算機 (轉換結果)"
             data-testid="calculator-trigger-to"
           >
@@ -566,7 +572,7 @@ export const SingleConverter = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="px-3 py-1 bg-purple-100 hover:bg-purple-200 active:bg-purple-300 rounded-lg text-sm font-medium transition-all duration-200 transform active:scale-95 hover:scale-105 hover:shadow-md"
+              className="px-3 py-1 bg-primary-light hover:bg-primary-hover active:bg-primary-active rounded-lg text-sm font-medium transition-all duration-200 transform active:scale-95 hover:scale-105 hover:shadow-md"
             >
               {amount.toLocaleString()}
             </button>
@@ -576,7 +582,7 @@ export const SingleConverter = ({
 
       <button
         onClick={onAddToHistory}
-        className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
+        className="w-full py-3 bg-gradient-to-r from-brand-button-from to-brand-button-to hover:from-brand-button-hover-from hover:to-brand-button-hover-to text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
       >
         加入歷史記錄
       </button>

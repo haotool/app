@@ -13,6 +13,12 @@
 
 /// <reference lib="webworker" />
 
+// [fix:2026-01-11] Workbox location polyfill
+// Service Workers 沒有 location 全域變數，但 Workbox 需要 location.href
+// 解決方案：使用 post-build script (scripts/patch-sw.mjs) 在編譯後注入 polyfill
+// 此方法確保 polyfill 在 IIFE 外部執行，才能被內部代碼訪問
+// Reference: [MDN: ServiceWorkerGlobalScope] [Vite Issue #12611]
+
 import {
   cleanupOutdatedCaches,
   createHandlerBoundToURL,
@@ -194,6 +200,10 @@ registerRoute(
 );
 
 // Latest rates: StaleWhileRevalidate for fast display + background update
+// [fix:2026-01-11] 延長 SW Cache 過期時間至 7 天，作為離線 fallback
+// 注意：應用層 localStorage 仍使用 5 分鐘有效期控制新鮮度
+// SW Cache 僅作為離線時的最後防線，確保冷啟動後仍能顯示數據
+// Safari PWA 離線問題參考: [Apple Developer Forums: Safari iOS PWA Data Persistence]
 registerRoute(
   ({ url }: { url: URL }) =>
     url.origin === 'https://raw.githubusercontent.com' &&
@@ -206,7 +216,7 @@ registerRoute(
       }),
       new ExpirationPlugin({
         maxEntries: 1,
-        maxAgeSeconds: 60 * 5, // 5 minutes
+        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days (offline fallback)
       }),
     ],
   }),

@@ -78,6 +78,7 @@ export default defineConfig(() => {
           'src/utils/webVitals.ts', // Browser performance API, requires real DOM
           'src/utils/versionChecker.ts', // PWA-specific, requires service worker context
           'src/utils/swUtils.ts', // PWA-specific, requires service worker context
+          'src/utils/offlineStorage.ts', // PWA-specific IndexedDB, requires browser context, E2E tested
           'src/trusted-types-bootstrap.ts', // Browser-only security module, requires CSP context
           'src/App.tsx', // Entry component, covered by E2E tests
           'src/routes.tsx', // Router config, covered by E2E smoke
