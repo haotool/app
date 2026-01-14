@@ -147,8 +147,9 @@ export const MultiConverter = ({
   return (
     <>
       <div className="mb-3">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          即時多幣別換算 <span className="text-xs text-gray-500">（點擊 ⭐ 可加入常用）</span>
+        <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
+          即時多幣別換算{' '}
+          <span className="text-xs text-neutral-text-secondary">（點擊 ⭐ 可加入常用）</span>
         </label>
         <div className="flex gap-2 mb-3 flex-wrap">
           {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
@@ -156,7 +157,7 @@ export const MultiConverter = ({
               <button
                 key={amount}
                 onClick={() => onQuickAmount(amount)}
-                className="px-3 py-1 bg-gray-100 hover:bg-blue-100 rounded-lg text-sm font-medium transition"
+                className="px-3 py-1 bg-neutral-light hover:bg-primary-light rounded-lg text-sm font-medium transition"
               >
                 {amount.toLocaleString()}
               </button>
@@ -183,8 +184,8 @@ export const MultiConverter = ({
               }}
               className={`flex items-center justify-between p-3 rounded-xl transition ${
                 code === baseCurrency
-                  ? 'bg-gradient-to-r from-yellow-50 to-amber-50 cursor-default'
-                  : 'bg-gradient-to-r from-blue-50 to-purple-50 cursor-pointer hover:shadow-md'
+                  ? 'bg-gradient-to-r from-warning-light to-warning-light cursor-default'
+                  : 'bg-gradient-to-r from-brand-from to-brand-to cursor-pointer hover:shadow-md'
               }`}
             >
               <div className="flex items-center gap-3 flex-shrink-0">
@@ -199,15 +200,17 @@ export const MultiConverter = ({
                   title={isFavorite ? `移除常用貨幣 ${code}` : `加入常用貨幣 ${code}`}
                 >
                   <Star
-                    className={isFavorite ? 'text-yellow-500' : 'text-gray-300'}
+                    className={isFavorite ? 'text-warning' : 'text-neutral-dark'}
                     size={18}
                     fill={isFavorite ? 'currentColor' : 'none'}
                   />
                 </button>
                 <span className="text-2xl">{CURRENCY_DEFINITIONS[code].flag}</span>
                 <div>
-                  <div className="font-semibold text-gray-800">{code}</div>
-                  <div className="text-xs text-gray-600">{CURRENCY_DEFINITIONS[code].name}</div>
+                  <div className="font-semibold text-neutral-text">{code}</div>
+                  <div className="text-xs text-neutral-text-secondary">
+                    {CURRENCY_DEFINITIONS[code].name}
+                  </div>
                 </div>
               </div>
               <div className="flex-grow ml-3 relative">
@@ -241,7 +244,7 @@ export const MultiConverter = ({
                     return isDisabled ? (
                       <RateTypeTooltip message={rateTypeInfo.reason} isDisabled={true}>
                         <button
-                          className="font-medium text-gray-500 cursor-help hover:text-gray-700 transition-colors"
+                          className="font-medium text-neutral-text-muted cursor-help hover:text-neutral-text-secondary transition-colors"
                           aria-label={rateTypeInfo.reason}
                         >
                           {displayType === 'spot' ? '即期' : '現金'}
@@ -254,7 +257,7 @@ export const MultiConverter = ({
                           onRateTypeChange(rateType === 'spot' ? 'cash' : 'spot');
                         }}
                         className={`font-medium transition-colors hover:opacity-80 ${
-                          rateType === 'spot' ? 'text-blue-600' : 'text-purple-600'
+                          rateType === 'spot' ? 'text-brand-button-to' : 'text-brand-button-from'
                         }`}
                         aria-label={`切換到${rateType === 'spot' ? '現金' : '即期'}匯率`}
                       >
@@ -262,7 +265,7 @@ export const MultiConverter = ({
                       </button>
                     );
                   })()}
-                  <span className="text-gray-500"> · {getRateDisplay(code)}</span>
+                  <span className="text-neutral-text-muted"> · {getRateDisplay(code)}</span>
                 </div>
               </div>
             </div>

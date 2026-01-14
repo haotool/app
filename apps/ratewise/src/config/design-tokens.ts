@@ -147,34 +147,34 @@ export const semanticColors = {
  */
 export const defaultTheme = {
   neutral: {
-    light: colors.slate[100], // #f1f5f9 → 241 245 249
-    DEFAULT: colors.slate[200], // #e2e8f0 → 226 232 240
-    dark: colors.slate[300], // #cbd5e1 → 203 213 225
-    darker: colors.slate[400], // #94a3b8 → 148 163 184
-    text: colors.slate[900], // #0f172a → 15 23 42
-    'text-secondary': colors.slate[700], // #334155 → 51 65 85
-    'text-muted': colors.slate[400], // #94a3b8 → 148 163 184 (對齊 main 分支)
-    bg: colors.slate[50], // #f8fafc → 248 250 252
+    light: colors.gray[100], // 恢復舊版：#f3f4f6 → 243 244 246
+    DEFAULT: colors.gray[200], // 恢復舊版：#e5e7eb → 229 231 235
+    dark: colors.gray[300], // 恢復舊版：#d1d5db → 209 213 219
+    darker: colors.gray[400], // 恢復舊版：#9ca3af → 156 163 175
+    text: colors.gray[800], // 恢復舊版標題：#1f2937 → 31 41 55
+    'text-secondary': colors.gray[600], // 恢復舊版副標題：#4b5563 → 75 85 99
+    'text-muted': colors.gray[500], // 恢復舊版摘要：#6b7280 → 107 114 128
+    bg: colors.gray[50], // 恢復舊版：#f9fafb → 249 250 251
   },
   primary: {
-    bg: colors.violet[50], // #f5f3ff → 245 243 255
-    light: colors.violet[100], // #ede9fe → 237 233 254
-    hover: colors.violet[200], // #ddd6fe → 221 214 254
-    active: colors.violet[300], // #c4b5fd → 196 181 253
-    'text-light': colors.violet[400], // #a78bfa → 167 139 250
-    ring: colors.violet[500], // #8b5cf6 → 139 92 246
-    DEFAULT: colors.violet[600], // #7c3aed → 124 58 237
-    dark: colors.violet[700], // #6d28d9 → 109 40 217
-    darker: colors.violet[800], // #5b21b6 → 91 33 182
-    text: colors.violet[700], // #6d28d9 → 109 40 217
+    bg: colors.indigo[100], // 恢復舊版 FAQ 背景：#e0e7ff → 224 231 255
+    light: colors.indigo[100], // #e0e7ff
+    hover: colors.indigo[200], // #c7d2fe → 199 210 254
+    active: colors.indigo[300], // #a5b4fc → 165 180 252
+    'text-light': colors.indigo[400], // #818cf8 → 129 140 248
+    ring: colors.indigo[500], // #6366f1 → 99 102 241
+    DEFAULT: colors.indigo[600], // 恢復舊版 FAQ 連結：#4f46e5 → 79 70 229
+    dark: colors.indigo[700], // 恢復舊版 FAQ 連結 hover：#4338ca → 67 56 202
+    darker: colors.indigo[800], // #3730a3
+    text: colors.indigo[600], // #4f46e5
   },
   danger: {
-    bg: colors.red[50], // #fef2f2 → 254 242 242
+    bg: colors.red[50], // 恢復舊版：#fef2f2 → 254 242 242
     light: colors.red[100], // #fee2e2 → 254 226 226
     hover: colors.red[200], // #fecaca → 254 202 202
     active: colors.red[300], // #fca5a5 → 252 165 165
-    text: colors.red[600], // #dc2626 → 220 38 38
-    DEFAULT: colors.red[700], // #b91c1c → 185 28 28
+    text: colors.red[500], // 恢復舊版錯誤圖標：#ef4444 → 239 68 68
+    DEFAULT: colors.red[500], // 恢復舊版錯誤按鈕：#ef4444 → 239 68 68
   },
   warning: {
     light: colors.amber[100], // #fef3c7 → 254 243 199
@@ -183,20 +183,20 @@ export const defaultTheme = {
     active: colors.amber[300], // #fcd34d → 252 211 77
   },
   brand: {
-    from: colors.blue[50], // #eff6ff → 239 246 255
-    via: colors.indigo[50], // #eef2ff → 238 242 255
-    to: colors.purple[50], // #faf5ff → 250 245 255
-    border: colors.purple[200], // #e9d5ff → 233 213 255
-    decoration: colors.purple[100], // #f3e8ff → 243 232 255
-    'button-from': colors.purple[400], // #c084fc → 192 132 252
-    'button-to': colors.blue[400], // #60a5fa → 96 165 250
-    'button-hover-from': colors.purple[500], // #a855f7 → 168 85 247
-    'button-hover-to': colors.blue[500], // #3b82f6 → 59 130 246
-    'icon-from': colors.purple[200], // #e9d5ff → 233 213 255
-    'icon-to': colors.blue[200], // #bfdbfe → 191 219 254
-    text: colors.purple[600], // #9333ea → 147 51 234
-    'text-dark': colors.purple[800], // #6b21a8 → 107 33 168
-    shadow: colors.purple[100], // #f3e8ff → 243 232 255
+    from: colors.blue[50], // 恢復舊版：#eff6ff → 239 246 255
+    via: colors.indigo[50], // 恢復舊版：#eef2ff → 238 242 255
+    to: colors.purple[50], // 恢復舊版：#faf5ff → 250 245 255
+    border: colors.blue[100], // 恢復舊版邊框：#dbeafe → 219 234 254
+    decoration: colors.purple[100], // 恢復舊版：#f3e8ff → 243 232 255
+    'button-from': colors.purple[500], // 恢復舊版 Multi 按鈕（梯度起點）：#a855f7 → 168 85 247
+    'button-to': colors.blue[500], // 恢復舊版 Single 按鈕：#3b82f6 → 59 130 246
+    'button-hover-from': colors.purple[600], // 恢復舊版 Multi 按鈕 hover：#9333ea → 147 51 234
+    'button-hover-to': colors.blue[600], // 恢復舊版 Single 按鈕 hover：#2563eb → 37 99 235
+    'icon-from': colors.purple[200], // #e9d5ff
+    'icon-to': colors.blue[200], // #bfdbfe
+    text: colors.purple[600], // 恢復舊版品牌標題：#9333ea → 147 51 234
+    'text-dark': colors.purple[800], // #6b21a8
+    shadow: colors.purple[100], // #f3e8ff
   },
 } as const;
 
