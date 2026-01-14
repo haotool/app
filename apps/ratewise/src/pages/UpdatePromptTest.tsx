@@ -14,7 +14,7 @@ export default function UpdatePromptTest() {
   const [showNeedRefresh, setShowNeedRefresh] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-light via-blue-50 to-purple-50 p-8">
       <div className="max-w-4xl mx-auto">
         {/* 標題區 */}
         <div className="mb-8">
@@ -32,13 +32,13 @@ export default function UpdatePromptTest() {
             </svg>
             返回主頁
           </Link>
-          <h1 className="text-3xl font-bold text-slate-900 mt-4">UpdatePrompt 測試頁面</h1>
-          <p className="text-slate-600 mt-2">測試 RateWise 品牌配色的 PWA 更新提示組件</p>
+          <h1 className="text-3xl font-bold text-neutral-text mt-4">UpdatePrompt 測試頁面</h1>
+          <p className="text-neutral-text-secondary mt-2">測試 RateWise 品牌配色的 PWA 更新提示組件</p>
         </div>
 
         {/* 控制面板 */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-8">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">控制面板</h2>
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-neutral mb-8">
+          <h2 className="text-xl font-semibold text-neutral-text mb-4">控制面板</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={() => {
@@ -64,16 +64,16 @@ export default function UpdatePromptTest() {
               setShowOfflineReady(false);
               setShowNeedRefresh(false);
             }}
-            className="w-full mt-4 px-6 py-3 rounded-xl bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition-all"
+            className="w-full mt-4 px-6 py-3 rounded-xl bg-neutral text-neutral-text font-semibold hover:bg-neutral-dark transition-all"
           >
             關閉所有提示
           </button>
         </div>
 
         {/* 說明區 */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">設計特點</h2>
-          <ul className="space-y-3 text-slate-600">
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-neutral">
+          <h2 className="text-xl font-semibold text-neutral-text mb-4">設計特點</h2>
+          <ul className="space-y-3 text-neutral-text-secondary">
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
               <span>

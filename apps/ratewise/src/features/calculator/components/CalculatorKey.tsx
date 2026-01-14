@@ -205,7 +205,7 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
       <span className="relative z-10">{label}</span>
 
       {/* 禁用狀態遮罩 */}
-      {disabled && <div className="absolute inset-0 bg-slate-300/50 cursor-not-allowed" />}
+      {disabled && <div className="absolute inset-0 bg-neutral-darker/50 cursor-not-allowed" />}
     </motion.button>
   );
 }

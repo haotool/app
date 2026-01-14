@@ -231,17 +231,17 @@ export function CalculatorKeyboard({
             >
               {/* 拖曳指示器 */}
               <div className="flex justify-center py-3">
-                <div className="w-12 h-1 bg-slate-300 rounded-full" />
+                <div className="w-12 h-1 bg-neutral-darker rounded-full" />
               </div>
 
               {/* 內容區域 */}
               <div className="px-6 pb-8">
                 {/* 標題和關閉按鈕 */}
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-slate-900">計算機</h2>
+                  <h2 className="text-lg font-semibold text-neutral-text">計算機</h2>
                   <button
                     onClick={onClose}
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-neutral-text-muted hover:text-neutral-text-secondary transition-colors"
                     aria-label="關閉計算機"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

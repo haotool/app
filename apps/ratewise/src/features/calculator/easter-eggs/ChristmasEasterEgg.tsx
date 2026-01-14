@@ -97,7 +97,7 @@ export function ChristmasEasterEgg({ isVisible, onClose }: ChristmasEasterEggPro
             <p className="text-2xl md:text-3xl text-yellow-300 font-semibold drop-shadow-md">
               {new Date().getFullYear()} 聖誕快樂
             </p>
-            <p className="text-sm text-slate-300 mt-6 opacity-70">點擊任意處關閉</p>
+            <p className="text-sm text-neutral-text-muted mt-6 opacity-70">點擊任意處關閉</p>
           </motion.div>
 
           {/* 底部裝飾 */}
