@@ -2,7 +2,7 @@
 
 > **版本**: 1.2.1  
 > **建立時間**: 2025-10-24T23:23:09+08:00  
-> **最後更新**: 2026-01-15T00:21:49+08:00  
+> **最後更新**: 2026-01-15T01:28:29+08:00  
 > **維護者**: Development Team  
 > **狀態**: ✅ 已完成
 
@@ -342,8 +342,8 @@ Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="RateWise" />
-<link rel="manifest" href="%VITE_RATEWISE_BASE_PATH%manifest.webmanifest" />
-<link rel="apple-touch-icon" href="%VITE_RATEWISE_BASE_PATH%apple-touch-icon.png" />
+<link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+<link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
 ```
 
 ### 4. Zeabur Subpath Deployment（`/ratewise`）
