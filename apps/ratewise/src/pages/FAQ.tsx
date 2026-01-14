@@ -201,7 +201,7 @@ export default function FAQ() {
         ]}
         faq={FAQ_JSONLD_DATA}
       />
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-slate-50">
+      <main className="min-h-screen bg-gradient-to-br from-neutral-light via-violet-50 to-neutral-light">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="mb-8">
@@ -228,8 +228,8 @@ export default function FAQ() {
               ]}
             />
 
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">常見問題</h1>
-            <p className="text-slate-600">關於 RateWise 匯率好工具的常見問題解答</p>
+            <h1 className="text-4xl font-bold text-neutral-text mb-2">常見問題</h1>
+            <p className="text-neutral-text-secondary">關於 RateWise 匯率好工具的常見問題解答</p>
           </div>
 
           {/* FAQ List - 使用 UI 資料（包含 JSX） */}
@@ -240,11 +240,11 @@ export default function FAQ() {
                 className="group bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
               >
                 <summary className="flex items-center justify-between cursor-pointer p-6 hover:text-violet-600 transition-colors list-none">
-                  <h2 className="text-lg font-semibold text-slate-800 group-hover:text-violet-600 transition-colors">
+                  <h2 className="text-lg font-semibold text-neutral-text group-hover:text-violet-600 transition-colors">
                     {faq.question}
                   </h2>
                   <svg
-                    className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform flex-shrink-0 ml-4"
+                    className="w-5 h-5 text-neutral-text-muted group-open:rotate-180 transition-transform flex-shrink-0 ml-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -257,7 +257,7 @@ export default function FAQ() {
                     />
                   </svg>
                 </summary>
-                <div className="px-6 pb-6 text-slate-600 leading-relaxed border-t border-slate-100 pt-4">
+                <div className="px-6 pb-6 text-neutral-text-secondary leading-relaxed border-t border-neutral-dark pt-4">
                   {faq.answer}
                 </div>
               </details>
@@ -266,8 +266,8 @@ export default function FAQ() {
 
           {/* Contact Section */}
           <div className="mt-12 p-6 bg-violet-50 rounded-lg border border-violet-100">
-            <h2 className="text-xl font-semibold text-slate-800 mb-2">還有其他問題？</h2>
-            <p className="text-slate-600">
+            <h2 className="text-xl font-semibold text-neutral-text mb-2">還有其他問題？</h2>
+            <p className="text-neutral-text-secondary">
               如果您有其他問題或建議，歡迎透過
               <a
                 href="mailto:haotool.org@gmail.com"

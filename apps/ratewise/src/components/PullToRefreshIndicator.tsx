@@ -67,7 +67,7 @@ export function PullToRefreshIndicator({
           mt-4 px-6 py-3 rounded-[32px]
           backdrop-blur-xl backdrop-saturate-150
           bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
-          dark:bg-slate-900/80
+          dark:bg-neutral/80
           border-2 border-indigo-100
           shadow-xl
         "

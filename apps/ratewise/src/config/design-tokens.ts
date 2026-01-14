@@ -86,6 +86,40 @@ export const semanticColors = {
   },
 
   /**
+   * 成功色系（Success）
+   * 用途：上漲趨勢、成功狀態、確認操作
+   * 映射：green 色系
+   */
+  success: {
+    bg: 'rgb(var(--color-success-bg) / <alpha-value>)',
+    light: 'rgb(var(--color-success-light) / <alpha-value>)',
+    hover: 'rgb(var(--color-success-hover) / <alpha-value>)',
+    active: 'rgb(var(--color-success-active) / <alpha-value>)',
+    text: 'rgb(var(--color-success-text) / <alpha-value>)',
+    DEFAULT: 'rgb(var(--color-success) / <alpha-value>)',
+  },
+
+  /**
+   * 高亮色系（Highlight）
+   * 用途：基準貨幣背景高亮
+   * 映射：yellow/amber 色系
+   */
+  highlight: {
+    from: 'rgb(var(--color-highlight-from) / <alpha-value>)',
+    to: 'rgb(var(--color-highlight-to) / <alpha-value>)',
+  },
+
+  /**
+   * 收藏色系（Favorite）
+   * 用途：星號圖標顏色
+   * 映射：yellow 色系
+   */
+  favorite: {
+    DEFAULT: 'rgb(var(--color-favorite) / <alpha-value>)',
+    light: 'rgb(var(--color-favorite-light) / <alpha-value>)',
+  },
+
+  /**
    * 警告色系（Warning）
    * 用途：刪除操作、警告狀態
    * 映射：amber 色系
@@ -147,34 +181,50 @@ export const semanticColors = {
  */
 export const defaultTheme = {
   neutral: {
-    light: colors.slate[100], // #f1f5f9 → 241 245 249
-    DEFAULT: colors.slate[200], // #e2e8f0 → 226 232 240
-    dark: colors.slate[300], // #cbd5e1 → 203 213 225
-    darker: colors.slate[400], // #94a3b8 → 148 163 184
-    text: colors.slate[900], // #0f172a → 15 23 42
-    'text-secondary': colors.slate[700], // #334155 → 51 65 85
-    'text-muted': colors.slate[400], // #94a3b8 → 148 163 184 (對齊 main 分支)
-    bg: colors.slate[50], // #f8fafc → 248 250 252
+    light: colors.slate[100], // 恢復舊版：#f1f5f9 → 241 245 249
+    DEFAULT: colors.slate[200], // 恢復舊版：#e2e8f0 → 226 232 240
+    dark: colors.slate[300], // 恢復舊版：#cbd5e1 → 203 213 225
+    darker: colors.slate[400], // 恢復舊版：#94a3b8 → 148 163 184
+    text: colors.slate[900], // 恢復舊版標題：#0f172a → 15 23 42
+    'text-secondary': colors.slate[600], // 恢復舊版副標題：#475569 → 71 85 105
+    'text-muted': colors.slate[500], // 恢復舊版摘要：#64748b → 100 116 139
+    bg: colors.slate[50], // 恢復舊版：#f8fafc → 248 250 252
   },
   primary: {
-    bg: colors.violet[50], // #f5f3ff → 245 243 255
-    light: colors.violet[100], // #ede9fe → 237 233 254
+    bg: colors.violet[100], // 恢復舊版 FAQ 背景：#ede9fe → 237 233 254
+    light: colors.violet[100], // #ede9fe
     hover: colors.violet[200], // #ddd6fe → 221 214 254
     active: colors.violet[300], // #c4b5fd → 196 181 253
     'text-light': colors.violet[400], // #a78bfa → 167 139 250
-    ring: colors.violet[500], // #8b5cf6 → 139 92 246
-    DEFAULT: colors.violet[600], // #7c3aed → 124 58 237
-    dark: colors.violet[700], // #6d28d9 → 109 40 217
-    darker: colors.violet[800], // #5b21b6 → 91 33 182
-    text: colors.violet[700], // #6d28d9 → 109 40 217
+    ring: colors.violet[500], // #a855f7 → 168 85 247
+    DEFAULT: colors.violet[600], // 恢復舊版 FAQ 連結：#7c3aed → 124 58 237
+    dark: colors.violet[700], // 恢復舊版 FAQ 連結 hover：#6d28d9 → 109 40 217
+    darker: colors.violet[800], // #5b21b6
+    text: colors.violet[600], // #7c3aed
   },
   danger: {
-    bg: colors.red[50], // #fef2f2 → 254 242 242
+    bg: colors.red[50], // 恢復舊版：#fef2f2 → 254 242 242
     light: colors.red[100], // #fee2e2 → 254 226 226
     hover: colors.red[200], // #fecaca → 254 202 202
     active: colors.red[300], // #fca5a5 → 252 165 165
-    text: colors.red[600], // #dc2626 → 220 38 38
-    DEFAULT: colors.red[700], // #b91c1c → 185 28 28
+    text: colors.red[500], // 恢復舊版錯誤圖標：#ef4444 → 239 68 68
+    DEFAULT: colors.red[500], // 恢復舊版錯誤按鈕：#ef4444 → 239 68 68
+  },
+  success: {
+    bg: colors.green[50], // #f0fdf4 → 240 253 244
+    light: colors.green[100], // #dcfce7 → 220 252 231
+    hover: colors.green[200], // #bbf7d0 → 187 247 208
+    active: colors.green[300], // #86efac → 134 239 172
+    text: colors.green[600], // #16a34a → 22 163 74
+    DEFAULT: colors.green[500], // #22c55e → 34 197 94
+  },
+  highlight: {
+    from: colors.yellow[50], // #fefce8 → 254 252 232
+    to: colors.amber[50], // #fffbeb → 255 251 235
+  },
+  favorite: {
+    light: colors.yellow[100], // #fef3c7 → 254 243 199
+    DEFAULT: colors.yellow[500], // #eab308 → 234 179 8
   },
   warning: {
     light: colors.amber[100], // #fef3c7 → 254 243 199
@@ -183,20 +233,20 @@ export const defaultTheme = {
     active: colors.amber[300], // #fcd34d → 252 211 77
   },
   brand: {
-    from: colors.blue[50], // #eff6ff → 239 246 255
-    via: colors.indigo[50], // #eef2ff → 238 242 255
-    to: colors.purple[50], // #faf5ff → 250 245 255
-    border: colors.purple[200], // #e9d5ff → 233 213 255
-    decoration: colors.purple[100], // #f3e8ff → 243 232 255
-    'button-from': colors.purple[400], // #c084fc → 192 132 252
-    'button-to': colors.blue[400], // #60a5fa → 96 165 250
-    'button-hover-from': colors.purple[500], // #a855f7 → 168 85 247
-    'button-hover-to': colors.blue[500], // #3b82f6 → 59 130 246
-    'icon-from': colors.purple[200], // #e9d5ff → 233 213 255
-    'icon-to': colors.blue[200], // #bfdbfe → 191 219 254
-    text: colors.purple[600], // #9333ea → 147 51 234
-    'text-dark': colors.purple[800], // #6b21a8 → 107 33 168
-    shadow: colors.purple[100], // #f3e8ff → 243 232 255
+    from: colors.blue[50], // 恢復舊版：#eff6ff → 239 246 255
+    via: colors.indigo[50], // 恢復舊版：#eef2ff → 238 242 255
+    to: colors.purple[50], // 恢復舊版：#faf5ff → 250 245 255
+    border: colors.blue[100], // 恢復舊版邊框：#dbeafe → 219 234 254
+    decoration: colors.purple[100], // 恢復舊版：#f3e8ff → 243 232 255
+    'button-from': colors.purple[500], // 恢復舊版 Multi 按鈕（梯度起點）：#a855f7 → 168 85 247
+    'button-to': colors.blue[500], // 恢復舊版 Single 按鈕：#3b82f6 → 59 130 246
+    'button-hover-from': colors.purple[600], // 恢復舊版 Multi 按鈕 hover：#9333ea → 147 51 234
+    'button-hover-to': colors.blue[600], // 恢復舊版 Single 按鈕 hover：#2563eb → 37 99 235
+    'icon-from': colors.purple[200], // #e9d5ff
+    'icon-to': colors.blue[200], // #bfdbfe
+    text: colors.purple[600], // 恢復舊版品牌標題：#9333ea → 147 51 234
+    'text-dark': colors.purple[800], // #6b21a8
+    shadow: colors.purple[100], // #f3e8ff
   },
 } as const;
 
@@ -240,6 +290,22 @@ export const darkTheme = {
     active: colors.red[700], // #b91c1c → 185 28 28
     text: colors.red[400], // #f87171 → 248 113 113
     DEFAULT: colors.red[500], // #ef4444 → 239 68 68
+  },
+  success: {
+    bg: colors.green[950], // #0a2813 → 10 40 19
+    light: colors.green[900], // #14532d → 20 83 45
+    hover: colors.green[800], // #166534 → 22 101 52
+    active: colors.green[700], // #15803d → 21 128 61
+    text: colors.green[400], // #4ade80 → 74 222 128
+    DEFAULT: colors.green[500], // #22c55e → 34 197 94
+  },
+  highlight: {
+    from: colors.yellow[900], // #78350f → 120 53 15
+    to: colors.amber[900], // #78350f → 120 53 15
+  },
+  favorite: {
+    light: colors.yellow[700], // #ca8a04 → 202 138 4
+    DEFAULT: colors.yellow[400], // #facc15 → 250 204 21
   },
   warning: {
     light: colors.amber[900], // #78350f → 120 53 15
