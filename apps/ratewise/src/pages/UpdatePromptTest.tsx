@@ -33,7 +33,9 @@ export default function UpdatePromptTest() {
             返回主頁
           </Link>
           <h1 className="text-3xl font-bold text-neutral-text mt-4">UpdatePrompt 測試頁面</h1>
-          <p className="text-neutral-text-secondary mt-2">測試 RateWise 品牌配色的 PWA 更新提示組件</p>
+          <p className="text-neutral-text-secondary mt-2">
+            測試 RateWise 品牌配色的 PWA 更新提示組件
+          </p>
         </div>
 
         {/* 控制面板 */}

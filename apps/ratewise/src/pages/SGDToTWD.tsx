@@ -110,7 +110,9 @@ export default function SGDToTWD() {
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <div className="bg-white rounded-2xl shadow p-5 border border-neutral-dark">
-              <h2 className="text-xl font-semibold text-neutral-text mb-3">🇸🇬 新加坡幣匯率快速重點</h2>
+              <h2 className="text-xl font-semibold text-neutral-text mb-3">
+                🇸🇬 新加坡幣匯率快速重點
+              </h2>
               <ul className="space-y-3 text-neutral-text">
                 <li className="flex items-start gap-2">
                   <span className="text-violet-600 mt-0.5">•</span>

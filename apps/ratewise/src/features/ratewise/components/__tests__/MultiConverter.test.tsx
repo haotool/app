@@ -152,7 +152,7 @@ describe('MultiConverter', () => {
 
       // TWD 是基準貨幣，應該有警告色背景
       const twdRow = screen.getByText('TWD').closest('div[class*="rounded-xl"]');
-      expect(twdRow).toHaveClass('from-warning-light');
+      expect(twdRow).toHaveClass('from-highlight-from');
     });
   });
 

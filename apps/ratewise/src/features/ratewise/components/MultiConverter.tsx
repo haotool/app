@@ -184,7 +184,7 @@ export const MultiConverter = ({
               }}
               className={`flex items-center justify-between p-3 rounded-xl transition ${
                 code === baseCurrency
-                  ? 'bg-gradient-to-r from-warning-light to-warning-light cursor-default'
+                  ? 'bg-gradient-to-r from-highlight-from to-highlight-to cursor-default'
                   : 'bg-gradient-to-r from-brand-from to-brand-to cursor-pointer hover:shadow-md'
               }`}
             >
@@ -200,7 +200,7 @@ export const MultiConverter = ({
                   title={isFavorite ? `移除常用貨幣 ${code}` : `加入常用貨幣 ${code}`}
                 >
                   <Star
-                    className={isFavorite ? 'text-yellow-500' : 'text-gray-300'}
+                    className={isFavorite ? 'text-favorite' : 'text-gray-300'}
                     size={18}
                     fill={isFavorite ? 'currentColor' : 'none'}
                   />

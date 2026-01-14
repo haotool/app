@@ -154,14 +154,18 @@ export default function About() {
                 <span className="text-violet-600 mr-3 mt-1">✓</span>
                 <div>
                   <strong className="text-neutral-text">收藏與歷史</strong>
-                  <p className="text-neutral-text-secondary text-sm">收藏常用貨幣、查看轉換歷史、追蹤匯率趨勢</p>
+                  <p className="text-neutral-text-secondary text-sm">
+                    收藏常用貨幣、查看轉換歷史、追蹤匯率趨勢
+                  </p>
                 </div>
               </li>
               <li className="flex items-start">
                 <span className="text-violet-600 mr-3 mt-1">✓</span>
                 <div>
                   <strong className="text-neutral-text">匯率類型切換</strong>
-                  <p className="text-neutral-text-secondary text-sm">支援現金匯率與即期匯率，滿足不同換匯需求</p>
+                  <p className="text-neutral-text-secondary text-sm">
+                    支援現金匯率與即期匯率，滿足不同換匯需求
+                  </p>
                 </div>
               </li>
               <li className="flex items-start">
@@ -211,7 +215,9 @@ export default function About() {
               </div>
               <div className="flex items-center">
                 <span className="text-neutral-text-secondary font-semibold w-32">SEO</span>
-                <span className="text-neutral-text">vite-react-ssg Head (Lighthouse SEO 100/100)</span>
+                <span className="text-neutral-text">
+                  vite-react-ssg Head (Lighthouse SEO 100/100)
+                </span>
               </div>
             </div>
           </section>

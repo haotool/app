@@ -215,7 +215,9 @@ export default function UIShowcase() {
             返回主頁
           </Link>
           <h1 className="text-4xl font-bold text-neutral-text mt-4">UI Showcase</h1>
-          <p className="text-neutral-text-secondary mt-2">UpdatePrompt 組件的各個狀態和配色風格展示</p>
+          <p className="text-neutral-text-secondary mt-2">
+            UpdatePrompt 組件的各個狀態和配色風格展示
+          </p>
         </div>
 
         {/* 配色切換 */}
@@ -409,7 +411,9 @@ export default function UIShowcase() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-neutral-text mb-1">圓潤現代視覺</h3>
-                  <p className="text-sm text-neutral-text-secondary">24px 圓角設計，柔和親和的視覺語言</p>
+                  <p className="text-sm text-neutral-text-secondary">
+                    24px 圓角設計，柔和親和的視覺語言
+                  </p>
                 </div>
               </div>
 
@@ -419,7 +423,9 @@ export default function UIShowcase() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-neutral-text mb-1">柔和光暈效果</h3>
-                  <p className="text-sm text-neutral-text-secondary">藍靛色光暈裝飾，增添品牌質感</p>
+                  <p className="text-sm text-neutral-text-secondary">
+                    藍靛色光暈裝飾，增添品牌質感
+                  </p>
                 </div>
               </div>
             </div>
@@ -431,7 +437,9 @@ export default function UIShowcase() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-neutral-text mb-1">Emoji 點綴</h3>
-                  <p className="text-sm text-neutral-text-secondary">✨ 和 🎉 增加親和力和情感連結</p>
+                  <p className="text-sm text-neutral-text-secondary">
+                    ✨ 和 🎉 增加親和力和情感連結
+                  </p>
                 </div>
               </div>
 
@@ -441,7 +449,9 @@ export default function UIShowcase() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-neutral-text mb-1">彈性入場動畫</h3>
-                  <p className="text-sm text-neutral-text-secondary">Spring physics 動畫，流暢自然的視覺體驗</p>
+                  <p className="text-sm text-neutral-text-secondary">
+                    Spring physics 動畫，流暢自然的視覺體驗
+                  </p>
                 </div>
               </div>
 
