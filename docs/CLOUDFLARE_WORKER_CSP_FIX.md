@@ -7,7 +7,7 @@
 > 本文檔記錄了 2025-11-29 的 CSP 修復過程，僅供歷史參考。
 
 **建立時間**: 2025-11-29T01:06:36+0800
-**最後更新**: 2026-01-07 (標記為已過時)
+**最後更新**: 2026-01-15 (標記為已過時)
 **問題狀態**: ✅ 已解決 - 安全標頭已遷移至 Cloudflare
 **優先級**: 已完成
 
@@ -264,13 +264,13 @@ curl -sI https://app.haotool.org/ratewise/ | grep -i "content-security-policy"
 
 RateWise 部署時支援以下環境變數（**所有都是選填**）：
 
-| 變數名稱            | 用途                          | 預設值                              | 必要性    |
-| ------------------- | ----------------------------- | ----------------------------------- | --------- |
-| `VITE_SITE_URL`     | 網站基礎 URL                  | `https://app.haotool.org/ratewise/` | ❌ 選填   |
-| `VITE_BASE_PATH`    | 應用基礎路徑                  | `/ratewise/`                        | ❌ 選填   |
-| `VITE_LHCI_OFFLINE` | Lighthouse CI 離線模式        | `false`                             | ❌ CI專用 |
-| `GIT_COMMIT_COUNT`  | Git commit 數量（版本號生成） | 自動取得                            | ❌ 選填   |
-| `GIT_COMMIT_HASH`   | Git commit hash（版本號生成） | 自動取得                            | ❌ 選填   |
+| 變數名稱                  | 用途                          | 預設值                              | 必要性    |
+| ------------------------- | ----------------------------- | ----------------------------------- | --------- |
+| `VITE_SITE_URL`           | 網站基礎 URL                  | `https://app.haotool.org/ratewise/` | ❌ 選填   |
+| `VITE_RATEWISE_BASE_PATH` | 應用基礎路徑                  | `/ratewise/`                        | ❌ 選填   |
+| `VITE_LHCI_OFFLINE`       | Lighthouse CI 離線模式        | `false`                             | ❌ CI專用 |
+| `GIT_COMMIT_COUNT`        | Git commit 數量（版本號生成） | 自動取得                            | ❌ 選填   |
+| `GIT_COMMIT_HASH`         | Git commit hash（版本號生成） | 自動取得                            | ❌ 選填   |
 
 ### Cloudflare 環境變數
 

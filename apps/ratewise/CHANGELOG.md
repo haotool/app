@@ -1,5 +1,17 @@
 # @app/ratewise
 
+## 1.5.0 (2026-01-15)
+
+### Minor Changes
+
+- 離線與 PWA 可靠性更新：強化 Service Worker 生命週期控制（skipWaiting/clientsClaim），改善 SW 評估穩定性與註冊流程；修復 Safari PWA 離線啟動與 `/ratewise` 子路徑 fallback；離線無快取時提供 fallback 匯率資料，並補齊離線/PWA E2E 測試覆蓋。
+- 子路徑部署最佳實踐：統一使用 `VITE_RATEWISE_BASE_PATH` + PWA manifest scope/start_url 對齊 `/ratewise/`，移除 public/dist 子路徑鏡像流程，改由部署層 alias 對應 build 輸出。
+
+### Fixed
+
+- 修復 iOS Safari PWA 關閉後重開無法立即接管頁面的離線問題。
+- 修正 offline.html 子路徑鏡像，確保子路徑離線模式可正常回退。
+
 ## 1.2.4 (2025-12-25)
 
 ### 🎄 Christmas Update - Easter Egg Feature

@@ -3,10 +3,10 @@
  * 在 Changeset version 階段執行，確保 release PR 包含最新 metadata。
  */
 
-import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { generateSitemap } from './generate-sitemap.js';
+import { generateSitemap } from './generate-sitemap-2025.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -38,66 +38,10 @@ function syncRootVersion() {
   console.log(`✅ Synced root package version to ${appVersion}`);
 }
 
-function mirrorStaticAssets() {
-  const baseEnv = process.env.VITE_BASE_PATH ?? '/ratewise/';
-  const normalizedSubpath = baseEnv.replace(/^\/|\/$/g, '');
-
-  if (!normalizedSubpath) {
-    console.log('ℹ️ VITE_BASE_PATH resolved to root. Skipping static asset mirroring.');
-    return;
-  }
-
-  const publicDir = join(__dirname, '../apps/ratewise/public');
-  const targetDir = join(publicDir, normalizedSubpath);
-  mkdirSync(targetDir, { recursive: true });
-
-  const filesToMirror = [
-    'robots.txt',
-    'sitemap.xml',
-    'llms.txt',
-    'manifest.webmanifest',
-    'favicon.ico',
-    'favicon.svg',
-    'apple-touch-icon.png',
-    'loading.css',
-    'logo.png',
-    'og-image.png',
-    'og-image-old.png',
-    'pwa-192x192.png',
-    'pwa-384x384.png',
-    'pwa-512x512-maskable.png',
-    'pwa-512x512.png',
-  ];
-
-  filesToMirror.forEach((filename) => {
-    const source = join(publicDir, filename);
-    if (!existsSync(source)) {
-      console.warn(`⚠️  Skipping missing static asset: ${filename}`);
-      return;
-    }
-    const destination = join(targetDir, filename);
-    copyFileSync(source, destination);
-  });
-
-  const directoriesToMirror = ['icons', 'screenshots'];
-  directoriesToMirror.forEach((directory) => {
-    const sourceDir = join(publicDir, directory);
-    if (!existsSync(sourceDir)) {
-      console.warn(`⚠️  Skipping missing static directory: ${directory}`);
-      return;
-    }
-    const destinationDir = join(targetDir, directory);
-    cpSync(sourceDir, destinationDir, { recursive: true });
-  });
-
-  console.log(`✅ Mirrored static assets for subpath deployment: /${normalizedSubpath}`);
-}
-
 function main() {
   console.log('🛠  Updating release metadata');
   updateSitemap();
   syncRootVersion();
-  mirrorStaticAssets();
   console.log('🎉 Release metadata update completed');
 }
 

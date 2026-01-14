@@ -1,7 +1,7 @@
 # SEO 網站提交指南
 
 > **建立時間**: 2025-10-24T23:23:09+08:00  
-> **最後更新**: 2025-10-30T04:03:03+08:00  
+> **最後更新**: 2026-01-15T00:21:49+08:00  
 > **狀態**: ✅ 已更新 (Zeabur `/ratewise` 部署支援)  
 > **適用對象**: 所有需要將網站提交到搜尋引擎的開發者
 
@@ -27,7 +27,7 @@
 
 ```bash
 # 1. 確認環境變數
-echo $VITE_BASE_PATH  # 預期輸出 /ratewise/
+echo $VITE_RATEWISE_BASE_PATH  # 預期輸出 /ratewise/
 
 # 2. 靜態資產狀態碼
 curl -I https://app.haotool.org/ratewise/robots.txt
@@ -37,7 +37,10 @@ curl -I https://app.haotool.org/ratewise/manifest.webmanifest
 curl -I https://app.haotool.org/ratewise/favicon.ico
 ```
 
-若上述任何指令未回傳 `HTTP/2 200`，執行 `node scripts/update-release-metadata.js` 重新鏡像靜態資產並重新部署。
+若上述任何指令未回傳 `HTTP/2 200`，請確認：
+
+- `VITE_RATEWISE_BASE_PATH` 是否正確
+- 部署層是否將 `/ratewise/` 指向 RateWise build 輸出目錄（例如 Nginx `location /ratewise/` → `ratewise-app/`）
 
 ---
 

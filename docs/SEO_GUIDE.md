@@ -1,8 +1,8 @@
 # SEO 實作指南 (SEO Implementation Guide)
 
-> **版本**: 1.2.0  
+> **版本**: 1.2.1  
 > **建立時間**: 2025-10-24T23:23:09+08:00  
-> **最後更新**: 2025-12-21T03:11:35+08:00  
+> **最後更新**: 2026-01-15T01:28:29+08:00  
 > **維護者**: Development Team  
 > **狀態**: ✅ 已完成
 
@@ -342,22 +342,16 @@ Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="RateWise" />
-<link rel="manifest" href="%VITE_BASE_PATH%manifest.webmanifest" />
-<link rel="apple-touch-icon" href="%VITE_BASE_PATH%apple-touch-icon.png" />
+<link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+<link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
 ```
 
 ### 4. Zeabur Subpath Deployment（`/ratewise`）
 
-- 使用 `VITE_RATEWISE_BASE_PATH` 控制部署子路徑：本機維持 `/`，Zeabur 設為 `/ratewise/`
+- 使用 `VITE_RATEWISE_BASE_PATH` 控制部署子路徑：預設 `/ratewise/`，如需根目錄測試或部署請顯式設為 `/`
   - **注意**：PWA manifest 的 `scope`/`start_url`/`id` 需保留尾斜線（由 `normalizeSiteUrl` 統一處理），確保 Service Worker 範圍與 canonical/hreflang 一致，不再移除尾斜線。
-  - Vite 構建路徑保持 `/ratewise/`（有尾斜線），確保資源路徑與 sitemap `<loc>` 對齊
-- `scripts/update-release-metadata.js` 會自動鏡像靜態資產到 `public/ratewise/*`，確保
-  - `https://app.haotool.org/ratewise/robots.txt`
-  - `https://app.haotool.org/ratewise/sitemap.xml`
-  - `https://app.haotool.org/ratewise/llms.txt`
-  - `https://app.haotool.org/ratewise/manifest.webmanifest`
-  - `https://app.haotool.org/ratewise/favicon.ico`
-  - `favicon / manifest / screenshots` 等皆回傳 200
+  - Vite 構建 `base` 保持 `/ratewise/`（有尾斜線），確保資源路徑與 sitemap `<loc>` 對齊
+- 部署層需將 `/ratewise/` 直接對應到 RateWise build 輸出目錄（例如 Nginx `location /ratewise/` → `ratewise-app/`），避免使用 repo 內靜態資產鏡像
 - 驗證指令：
 
   ```bash
@@ -663,7 +657,7 @@ sips -z 630 1200 og-image.png --out og-image-optimized.png
 - [ ] robots.txt 已建立並正確配置
 - [ ] AI 爬蟲已允許 (robots.txt)
 - [ ] llms.txt 已建立
-- [ ] `VITE_BASE_PATH` 已設定（prod: `/ratewise/`）
+- [ ] `VITE_RATEWISE_BASE_PATH` 已設定（prod: `/ratewise/`）
 - [ ] HTTPS 已啟用
 - [ ] PWA manifest.json 已配置
 - [ ] Service Worker 已實作

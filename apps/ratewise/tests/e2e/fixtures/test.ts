@@ -91,7 +91,7 @@ export const test = base.extend<RateWiseFixtures>({
     // @see [context7:microsoft/playwright:2025-12-11] Web-first assertions
     const basePathCandidates = [
       process.env['E2E_BASE_PATH'],
-      process.env['VITE_BASE_PATH'],
+      process.env['VITE_RATEWISE_BASE_PATH'],
       '/',
       '/ratewise/', // 生產環境 fallback
     ]

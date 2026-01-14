@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
@@ -58,92 +58,10 @@ const fixAllHtmlFiles = (dir) => {
 console.log('🔧 Fixing HTML files (charset position, removing CSP meta tag)...');
 fixAllHtmlFiles(distDir);
 
-const basePath = process.env.VITE_RATEWISE_BASE_PATH ?? '/ratewise/';
-const normalizedSubpath = basePath.replace(/^\/+|\/+$/g, '');
-
-if (!normalizedSubpath) {
-  console.log('ℹ️ VITE_BASE_PATH 指向根目錄，略過 dist mirrored。');
-  process.exit(0);
-}
-
 if (!existsSync(distDir)) {
   console.warn('⚠️ 找不到 dist 目錄，請先執行 pnpm build:ratewise');
   process.exit(0);
 }
-
-const targetDir = join(distDir, normalizedSubpath);
-mkdirSync(targetDir, { recursive: true });
-
-const copyDirectory = (name) => {
-  const source = join(distDir, name);
-  if (!existsSync(source) || !statSync(source).isDirectory()) {
-    console.warn(`⚠️ 略過不存在的資料夾: ${name}`);
-    return;
-  }
-  const destination = join(targetDir, name);
-  rmSync(destination, { recursive: true, force: true });
-  cpSync(source, destination, { recursive: true });
-  console.log(`✅ mirrored /${name} -> /${normalizedSubpath}/${name}`);
-};
-
-const copyFile = (name) => {
-  const source = join(distDir, name);
-  if (!existsSync(source) || !statSync(source).isFile()) {
-    console.warn(`⚠️ 略過不存在的檔案: ${name}`);
-    return;
-  }
-  const destination = join(targetDir, name);
-  cpSync(source, destination, { recursive: false });
-  console.log(`✅ mirrored ${name} -> /${normalizedSubpath}/${name}`);
-};
-
-['assets', 'icons', 'screenshots', 'optimized'].forEach(copyDirectory);
-
-// [fix:2026-01-08] SSOT: 所有需要鏡像到子路徑的靜態檔案
-// 關鍵：offline.html 必須存在於 /ratewise/offline.html
-// 否則 Service Worker 預快取會 404，導致 SW 安裝失敗
-// 參考: https://github.com/GoogleChrome/workbox/issues/2737
-const staticFiles = [
-  'sw.js',
-  'sw.js.map',
-  'registerSW.js',
-  'manifest.webmanifest',
-  'apple-touch-icon.png',
-  'favicon.ico',
-  'favicon.svg',
-  'pwa-192x192.png',
-  'pwa-384x384.png',
-  'pwa-512x512.png',
-  'pwa-512x512-maskable.png',
-  'logo.png',
-  'og-image.png',
-  'twitter-image.png',
-  'loading.css',
-  'sitemap.xml',
-  'robots.txt',
-  'llms.txt',
-  'offline.html', // [fix:2026-01-08] 離線備援頁面必須鏡像，否則 SW 預快取 404
-];
-staticFiles.forEach(copyFile);
-
-// 追加需要鏡像的靜態資產，避免 manifest/icon 404
-const mirroredFiles = [
-  'manifest.webmanifest',
-  'favicon.ico',
-  'favicon.svg',
-  'apple-touch-icon.png',
-  'loading.css',
-];
-mirroredFiles.forEach(copyFile);
-
-const mirroredDirs = ['icons', 'optimized', 'screenshots'];
-mirroredDirs.forEach(copyDirectory);
-
-const workboxFiles = readdirSync(distDir).filter(
-  (filename) =>
-    filename.startsWith('workbox-') && (filename.endsWith('.js') || filename.endsWith('.js.map')),
-);
-workboxFiles.forEach(copyFile);
 
 /**
  * Fallback 靜態頁面生成（避免 SSG 未輸出時 FAQ/About 缺檔）
@@ -240,4 +158,4 @@ ensureStaticPage('/about', {
   keywords: 'RateWise 關於我們,匯率換算工具,即時匯率,PWA 匯率,臺灣銀行匯率,多幣別換算,離線匯率',
 });
 
-console.log(`🎯 完成 dist 子路徑鏡像輸出：/dist/${normalizedSubpath}`);
+console.log('🎯 完成 dist postbuild 處理（HTML 修復 + fallback 靜態頁）');

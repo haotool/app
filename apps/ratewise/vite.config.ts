@@ -157,9 +157,9 @@ export default defineConfig(({ mode }) => {
   const rawEnvValue = env.VITE_RATEWISE_BASE_PATH || process.env['VITE_RATEWISE_BASE_PATH'] || '';
   // 驗證：只接受以 '/' 開頭的有效路徑，否則使用默認值
   const isValidPath = rawEnvValue.startsWith('/') && !rawEnvValue.includes(' ');
-  // [fix:2025-12-15] 移除 CI 特殊處理，統一默認為 /ratewise/
-  // CI 環境需顯式設置 VITE_RATEWISE_BASE_PATH='/' 來覆蓋
-  const base = isValidPath ? rawEnvValue : mode === 'development' ? '/' : '/ratewise/';
+  // [fix:2025-12-15] 移除環境特殊處理，統一默認為 /ratewise/
+  // 如需根目錄（/）測試或部署，請顯式設置 VITE_RATEWISE_BASE_PATH='/'
+  const base = isValidPath ? rawEnvValue : '/ratewise/';
 
   // [fix:2025-11-06] PWA manifest 路徑策略（符合 PWA 最佳實踐）
   // - scope: 必須有尾斜線 (MDN 規範：定義應用範圍)
