@@ -407,7 +407,7 @@ const RateWise = () => {
           </section>
 
           {/* 行動版簡潔 footer - 電腦版使用 Footer 組件 */}
-          <footer className="md:hidden mt-12 -mx-3 -mb-3 bg-gradient-to-br from-neutral-text via-primary-dark to-primary-darker">
+          <footer className="md:hidden mt-12 -mx-3 -mb-3 bg-gradient-to-br from-footer-from via-footer-via to-footer-to text-neutral">
             <div className="max-w-6xl mx-auto px-4 py-8">
               {/* 數據來源與更新時間 - 現代化簡約設計 */}
               {!ratesLoading && lastUpdate && (
