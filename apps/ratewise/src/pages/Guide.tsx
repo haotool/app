@@ -83,7 +83,7 @@ const Guide = () => {
         }}
       />
 
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-slate-50">
+      <main className="min-h-screen bg-gradient-to-br from-neutral-light via-violet-50 to-neutral-light">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* 返回首頁 */}
           <Link
@@ -111,13 +111,13 @@ const Guide = () => {
 
           {/* 標題 */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">
+            <h1 className="text-4xl font-bold text-neutral-text mb-2">
               如何使用 RateWise 進行匯率換算
             </h1>
-            <p className="text-slate-600">
+            <p className="text-neutral-text-secondary">
               完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算
             </p>
-            <div className="mt-2 flex items-center text-sm text-slate-500">
+            <div className="mt-2 flex items-center text-sm text-neutral-text-muted">
               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -132,7 +132,7 @@ const Guide = () => {
 
           {/* 快速導航 */}
           <div className="mb-8 p-4 bg-white rounded-lg shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-800 mb-3">快速導航</h2>
+            <h2 className="text-lg font-semibold text-neutral-text mb-3">快速導航</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {howToSteps.map((step) => (
                 <a
@@ -159,8 +159,8 @@ const Guide = () => {
                     {step.position}
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-2xl font-semibold text-slate-800 mb-2">{step.name}</h2>
-                    <p className="text-slate-600 leading-relaxed">{step.text}</p>
+                    <h2 className="text-2xl font-semibold text-neutral-text mb-2">{step.name}</h2>
+                    <p className="text-neutral-text-secondary leading-relaxed">{step.text}</p>
                   </div>
                 </div>
               </div>
@@ -169,37 +169,37 @@ const Guide = () => {
 
           {/* 進階功能 */}
           <div className="mt-12 bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-2xl font-bold text-slate-800 mb-4">進階功能</h2>
+            <h2 className="text-2xl font-bold text-neutral-text mb-4">進階功能</h2>
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold text-violet-600 mb-2">多幣別換算</h3>
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-neutral-text-secondary leading-relaxed">
                   點選「多幣別換算」模式，可同時查看一個基準貨幣對所有支援貨幣的換算結果。適合出國旅遊比價、國際貿易報價比較。
                 </p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-violet-600 mb-2">歷史匯率趨勢</h3>
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-neutral-text-secondary leading-relaxed">
                   在單幣別換算模式下，匯率卡片會自動顯示該貨幣對過去 30
                   天的歷史趨勢線圖，包括最高點、最低點與平均值標記。幫助您選擇最佳換匯時機。
                 </p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-violet-600 mb-2">收藏常用貨幣</h3>
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-neutral-text-secondary leading-relaxed">
                   點擊貨幣卡片的星號圖示，將常用貨幣加入收藏。收藏的貨幣會顯示在「常用貨幣」區塊，方便快速存取。
                 </p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-violet-600 mb-2">離線使用</h3>
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-neutral-text-secondary leading-relaxed">
                   RateWise 採用 PWA
                   技術，支援離線使用。即使沒有網路連線，也能使用最後一次更新的匯率資料進行換算。
                 </p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-violet-600 mb-2">計算機功能</h3>
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-neutral-text-secondary leading-relaxed">
                   點擊金額輸入框旁的計算機圖示，可開啟內建計算機進行複雜運算。支援加減乘除、百分比等基本運算。
                 </p>
               </div>
@@ -208,8 +208,8 @@ const Guide = () => {
 
           {/* 提示與技巧 */}
           <div className="mt-8 p-6 bg-violet-50 rounded-lg border border-violet-100">
-            <h2 className="text-xl font-semibold text-slate-800 mb-2">💡 提示與技巧</h2>
-            <ul className="space-y-2 text-slate-600">
+            <h2 className="text-xl font-semibold text-neutral-text mb-2">💡 提示與技巧</h2>
+            <ul className="space-y-2 text-neutral-text-secondary">
               <li className="flex items-start">
                 <span className="text-violet-600 mr-2">•</span>
                 <span>下拉重新整理可手動更新匯率至最新數據（每 5 分鐘自動更新）</span>
@@ -239,23 +239,23 @@ const Guide = () => {
 
           {/* 常見問題 */}
           <div className="mt-8 p-6 bg-white rounded-lg shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-800 mb-4">❓ 常見問題</h2>
+            <h2 className="text-xl font-semibold text-neutral-text mb-4">❓ 常見問題</h2>
             <div className="space-y-4">
               <div>
-                <h3 className="font-medium text-slate-800">匯率多久更新一次？</h3>
-                <p className="text-slate-600 text-sm mt-1">
+                <h3 className="font-medium text-neutral-text">匯率多久更新一次？</h3>
+                <p className="text-neutral-text-secondary text-sm mt-1">
                   匯率資料每 5 分鐘自動同步臺灣銀行牌告匯率，您也可以下拉頁面手動更新。
                 </p>
               </div>
               <div>
-                <h3 className="font-medium text-slate-800">現金匯率和即期匯率有什麼差別？</h3>
-                <p className="text-slate-600 text-sm mt-1">
+                <h3 className="font-medium text-neutral-text">現金匯率和即期匯率有什麼差別？</h3>
+                <p className="text-neutral-text-secondary text-sm mt-1">
                   現金匯率適用於實體現金兌換（如銀行臨櫃換匯），即期匯率適用於銀行帳戶間轉帳。一般來說，即期匯率較優惠。
                 </p>
               </div>
               <div>
-                <h3 className="font-medium text-slate-800">離線時可以使用嗎？</h3>
-                <p className="text-slate-600 text-sm mt-1">
+                <h3 className="font-medium text-neutral-text">離線時可以使用嗎？</h3>
+                <p className="text-neutral-text-secondary text-sm mt-1">
                   可以！RateWise 採用 PWA
                   技術，會快取最近的匯率資料。離線時會使用最後一次更新的匯率進行換算。
                 </p>

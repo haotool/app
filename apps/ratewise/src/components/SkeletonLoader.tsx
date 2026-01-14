@@ -22,7 +22,7 @@
 
 export const SkeletonLoader = () => {
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6" role="status" aria-live="polite">
+    <div className="min-h-screen bg-neutral-light p-4 md:p-6" role="status" aria-live="polite">
       {/**
        * SEO 靜態內容區塊
        * - 使用 sr-only 對視覺用戶隱藏
@@ -71,14 +71,14 @@ export const SkeletonLoader = () => {
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header Skeleton */}
         <div className="animate-pulse">
-          <div className="h-8 w-48 bg-slate-200 rounded-lg mb-2"></div>
-          <div className="h-4 w-32 bg-slate-200 rounded"></div>
+          <div className="h-8 w-48 bg-neutral rounded-lg mb-2"></div>
+          <div className="h-4 w-32 bg-neutral rounded"></div>
         </div>
 
         {/* Mode Switcher Skeleton */}
         <div className="flex gap-2 mb-4 animate-pulse">
-          <div className="h-10 w-32 bg-slate-200 rounded-lg"></div>
-          <div className="h-10 w-32 bg-slate-200 rounded-lg"></div>
+          <div className="h-10 w-32 bg-neutral rounded-lg"></div>
+          <div className="h-10 w-32 bg-neutral rounded-lg"></div>
         </div>
 
         {/* Main Converter Card Skeleton */}
@@ -86,19 +86,19 @@ export const SkeletonLoader = () => {
           {/* Currency Selectors */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <div className="h-4 w-16 bg-slate-200 rounded"></div>
-              <div className="h-12 bg-slate-200 rounded-lg"></div>
+              <div className="h-4 w-16 bg-neutral rounded"></div>
+              <div className="h-12 bg-neutral rounded-lg"></div>
             </div>
             <div className="space-y-2">
-              <div className="h-4 w-16 bg-slate-200 rounded"></div>
-              <div className="h-12 bg-slate-200 rounded-lg"></div>
+              <div className="h-4 w-16 bg-neutral rounded"></div>
+              <div className="h-12 bg-neutral rounded-lg"></div>
             </div>
           </div>
 
           {/* Amount Input */}
           <div className="space-y-2">
-            <div className="h-4 w-20 bg-slate-200 rounded"></div>
-            <div className="h-14 bg-slate-200 rounded-lg"></div>
+            <div className="h-4 w-20 bg-neutral rounded"></div>
+            <div className="h-14 bg-neutral rounded-lg"></div>
           </div>
 
           {/* Result Display */}
@@ -110,23 +110,23 @@ export const SkeletonLoader = () => {
           {/* Quick Amounts */}
           <div className="flex gap-2 flex-wrap">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-10 w-20 bg-slate-200 rounded-lg"></div>
+              <div key={i} className="h-10 w-20 bg-neutral rounded-lg"></div>
             ))}
           </div>
         </div>
 
         {/* Trend Chart Skeleton */}
         <div className="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
-          <div className="h-4 w-32 bg-slate-200 rounded mb-4"></div>
-          <div className="h-64 bg-slate-200 rounded-lg"></div>
+          <div className="h-4 w-32 bg-neutral rounded mb-4"></div>
+          <div className="h-64 bg-neutral rounded-lg"></div>
         </div>
 
         {/* Favorites Skeleton */}
         <div className="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
-          <div className="h-4 w-24 bg-slate-200 rounded mb-4"></div>
+          <div className="h-4 w-24 bg-neutral rounded mb-4"></div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 bg-slate-200 rounded-lg"></div>
+              <div key={i} className="h-12 bg-neutral rounded-lg"></div>
             ))}
           </div>
         </div>
@@ -145,13 +145,13 @@ export const CurrencyCardSkeleton = () => {
     <div className="bg-white rounded-lg p-3 shadow-sm animate-pulse" role="status">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-slate-200 rounded-full"></div>
+          <div className="w-8 h-8 bg-neutral rounded-full"></div>
           <div className="space-y-1">
-            <div className="h-4 w-12 bg-slate-200 rounded"></div>
-            <div className="h-3 w-20 bg-slate-200 rounded"></div>
+            <div className="h-4 w-12 bg-neutral rounded"></div>
+            <div className="h-3 w-20 bg-neutral rounded"></div>
           </div>
         </div>
-        <div className="h-4 w-16 bg-slate-200 rounded"></div>
+        <div className="h-4 w-16 bg-neutral rounded"></div>
       </div>
     </div>
   );
@@ -165,7 +165,7 @@ export const ConverterSkeleton = ({ mode }: { mode: 'single' | 'multi' }) => {
   if (mode === 'multi') {
     return (
       <div className="space-y-4 animate-pulse" role="status">
-        <div className="h-12 bg-slate-200 rounded-lg"></div>
+        <div className="h-12 bg-neutral rounded-lg"></div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <CurrencyCardSkeleton key={i} />
@@ -178,8 +178,8 @@ export const ConverterSkeleton = ({ mode }: { mode: 'single' | 'multi' }) => {
   return (
     <div className="space-y-4 animate-pulse" role="status">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="h-14 bg-slate-200 rounded-lg"></div>
-        <div className="h-14 bg-slate-200 rounded-lg"></div>
+        <div className="h-14 bg-neutral rounded-lg"></div>
+        <div className="h-14 bg-neutral rounded-lg"></div>
       </div>
       <div className="h-16 bg-purple-200 rounded-xl"></div>
     </div>

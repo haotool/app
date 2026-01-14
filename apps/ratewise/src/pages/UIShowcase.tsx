@@ -179,11 +179,11 @@ interface ColorSwatchProps {
 
 function ColorSwatch({ color, name, value }: ColorSwatchProps) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
+    <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-neutral">
       <div className={`w-12 h-12 rounded-lg ${color} shadow-sm`} />
       <div>
-        <div className="font-semibold text-slate-900 text-sm">{name}</div>
-        <div className="text-xs text-slate-500 font-mono">{value}</div>
+        <div className="font-semibold text-neutral-text text-sm">{name}</div>
+        <div className="text-xs text-neutral-text-muted font-mono">{value}</div>
       </div>
     </div>
   );
@@ -196,7 +196,7 @@ export default function UIShowcase() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-light via-blue-50 to-purple-50 p-8">
       <div className="max-w-6xl mx-auto">
         {/* 標題區 */}
         <div className="mb-8">
@@ -214,20 +214,20 @@ export default function UIShowcase() {
             </svg>
             返回主頁
           </Link>
-          <h1 className="text-4xl font-bold text-slate-900 mt-4">UI Showcase</h1>
-          <p className="text-slate-600 mt-2">UpdatePrompt 組件的各個狀態和配色風格展示</p>
+          <h1 className="text-4xl font-bold text-neutral-text mt-4">UI Showcase</h1>
+          <p className="text-neutral-text-secondary mt-2">UpdatePrompt 組件的各個狀態和配色風格展示</p>
         </div>
 
         {/* 配色切換 */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-8">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-4">配色方案</h2>
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-neutral mb-8">
+          <h2 className="text-2xl font-semibold text-neutral-text mb-4">配色方案</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={() => setColorScheme('brand')}
               className={`px-6 py-4 rounded-xl font-semibold transition-all ${
                 colorScheme === 'brand'
                   ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  : 'bg-neutral-light text-neutral-text hover:bg-neutral'
               }`}
             >
               💙 RateWise 品牌配色
@@ -237,7 +237,7 @@ export default function UIShowcase() {
               className={`px-6 py-4 rounded-xl font-semibold transition-all ${
                 colorScheme === 'cotton-candy'
                   ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 text-white shadow-lg'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  : 'bg-neutral-light text-neutral-text hover:bg-neutral'
               }`}
             >
               🍬 棉花糖甜心配色
@@ -247,7 +247,7 @@ export default function UIShowcase() {
               className={`px-6 py-4 rounded-xl font-semibold transition-all ${
                 colorScheme === 'pastel-cloud'
                   ? 'bg-gradient-to-r from-purple-400 to-blue-400 text-white shadow-lg'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  : 'bg-neutral-light text-neutral-text hover:bg-neutral'
               }`}
             >
               ☁️ 粉彩雲朵配色
@@ -256,15 +256,15 @@ export default function UIShowcase() {
         </div>
 
         {/* 狀態展示區 */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-slate-200 mb-8">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-6">組件狀態</h2>
+        <div className="bg-white rounded-2xl p-8 shadow-lg border border-neutral mb-8">
+          <h2 className="text-2xl font-semibold text-neutral-text mb-6">組件狀態</h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* 離線模式已就緒 */}
             <div className="flex flex-col items-center">
               <div className="mb-4 text-center">
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">✨ 離線模式已就緒</h3>
-                <p className="text-sm text-slate-600">當 PWA 首次安裝完成後顯示</p>
+                <h3 className="text-lg font-semibold text-neutral-text mb-2">✨ 離線模式已就緒</h3>
+                <p className="text-sm text-neutral-text-secondary">當 PWA 首次安裝完成後顯示</p>
               </div>
               <UpdatePromptDemo
                 variant="offline"
@@ -277,8 +277,8 @@ export default function UIShowcase() {
             {/* 發現新版本 */}
             <div className="flex flex-col items-center">
               <div className="mb-4 text-center">
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">🎉 發現新版本</h3>
-                <p className="text-sm text-slate-600">當有新版本可用時顯示</p>
+                <h3 className="text-lg font-semibold text-neutral-text mb-2">🎉 發現新版本</h3>
+                <p className="text-sm text-neutral-text-secondary">當有新版本可用時顯示</p>
               </div>
               <UpdatePromptDemo
                 variant="update"
@@ -290,8 +290,8 @@ export default function UIShowcase() {
           </div>
 
           {/* 互動測試 */}
-          <div className="border-t border-slate-200 pt-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">互動測試</h3>
+          <div className="border-t border-neutral pt-6">
+            <h3 className="text-lg font-semibold text-neutral-text mb-4">互動測試</h3>
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setActiveDemo('offline')}
@@ -307,7 +307,7 @@ export default function UIShowcase() {
               </button>
               <button
                 onClick={() => setActiveDemo(null)}
-                className="px-6 py-3 rounded-xl bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition-all"
+                className="px-6 py-3 rounded-xl bg-neutral text-neutral-text font-semibold hover:bg-neutral-dark transition-all"
               >
                 關閉
               </button>
@@ -316,8 +316,8 @@ export default function UIShowcase() {
         </div>
 
         {/* 配色系統 */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-slate-200 mb-8">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-6">配色系統</h2>
+        <div className="bg-white rounded-2xl p-8 shadow-lg border border-neutral mb-8">
+          <h2 className="text-2xl font-semibold text-neutral-text mb-6">配色系統</h2>
 
           {colorScheme === 'brand' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -386,8 +386,8 @@ export default function UIShowcase() {
         </div>
 
         {/* 設計特點 */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-slate-200">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-6">設計特點</h2>
+        <div className="bg-white rounded-2xl p-8 shadow-lg border border-neutral">
+          <h2 className="text-2xl font-semibold text-neutral-text mb-6">設計特點</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
@@ -396,8 +396,8 @@ export default function UIShowcase() {
                   <span className="text-blue-600 font-bold">1</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">藍紫漸變品牌色</h3>
-                  <p className="text-sm text-slate-600">
+                  <h3 className="font-semibold text-neutral-text mb-1">藍紫漸變品牌色</h3>
+                  <p className="text-sm text-neutral-text-secondary">
                     使用 RateWise 品牌識別色，營造專業可信賴的形象
                   </p>
                 </div>
@@ -408,8 +408,8 @@ export default function UIShowcase() {
                   <span className="text-blue-600 font-bold">2</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">圓潤現代視覺</h3>
-                  <p className="text-sm text-slate-600">24px 圓角設計，柔和親和的視覺語言</p>
+                  <h3 className="font-semibold text-neutral-text mb-1">圓潤現代視覺</h3>
+                  <p className="text-sm text-neutral-text-secondary">24px 圓角設計，柔和親和的視覺語言</p>
                 </div>
               </div>
 
@@ -418,8 +418,8 @@ export default function UIShowcase() {
                   <span className="text-blue-600 font-bold">3</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">柔和光暈效果</h3>
-                  <p className="text-sm text-slate-600">藍靛色光暈裝飾，增添品牌質感</p>
+                  <h3 className="font-semibold text-neutral-text mb-1">柔和光暈效果</h3>
+                  <p className="text-sm text-neutral-text-secondary">藍靛色光暈裝飾，增添品牌質感</p>
                 </div>
               </div>
             </div>
@@ -430,8 +430,8 @@ export default function UIShowcase() {
                   <span className="text-blue-600 font-bold">4</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">Emoji 點綴</h3>
-                  <p className="text-sm text-slate-600">✨ 和 🎉 增加親和力和情感連結</p>
+                  <h3 className="font-semibold text-neutral-text mb-1">Emoji 點綴</h3>
+                  <p className="text-sm text-neutral-text-secondary">✨ 和 🎉 增加親和力和情感連結</p>
                 </div>
               </div>
 
@@ -440,8 +440,8 @@ export default function UIShowcase() {
                   <span className="text-blue-600 font-bold">5</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">彈性入場動畫</h3>
-                  <p className="text-sm text-slate-600">Spring physics 動畫，流暢自然的視覺體驗</p>
+                  <h3 className="font-semibold text-neutral-text mb-1">彈性入場動畫</h3>
+                  <p className="text-sm text-neutral-text-secondary">Spring physics 動畫，流暢自然的視覺體驗</p>
                 </div>
               </div>
 
@@ -450,8 +450,8 @@ export default function UIShowcase() {
                   <span className="text-blue-600 font-bold">6</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">完整無障礙支援</h3>
-                  <p className="text-sm text-slate-600">
+                  <h3 className="font-semibold text-neutral-text mb-1">完整無障礙支援</h3>
+                  <p className="text-sm text-neutral-text-secondary">
                     ARIA labels, keyboard navigation, 符合 WCAG 標準
                   </p>
                 </div>
