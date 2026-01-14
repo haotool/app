@@ -181,26 +181,26 @@ export const semanticColors = {
  */
 export const defaultTheme = {
   neutral: {
-    light: colors.gray[100], // 恢復舊版：#f3f4f6 → 243 244 246
-    DEFAULT: colors.gray[200], // 恢復舊版：#e5e7eb → 229 231 235
-    dark: colors.gray[300], // 恢復舊版：#d1d5db → 209 213 219
-    darker: colors.gray[400], // 恢復舊版：#9ca3af → 156 163 175
-    text: colors.gray[800], // 恢復舊版標題：#1f2937 → 31 41 55
-    'text-secondary': colors.gray[600], // 恢復舊版副標題：#4b5563 → 75 85 99
-    'text-muted': colors.gray[500], // 恢復舊版摘要：#6b7280 → 107 114 128
-    bg: colors.gray[50], // 恢復舊版：#f9fafb → 249 250 251
+    light: colors.slate[100], // 恢復舊版：#f1f5f9 → 241 245 249
+    DEFAULT: colors.slate[200], // 恢復舊版：#e2e8f0 → 226 232 240
+    dark: colors.slate[300], // 恢復舊版：#cbd5e1 → 203 213 225
+    darker: colors.slate[400], // 恢復舊版：#94a3b8 → 148 163 184
+    text: colors.slate[900], // 恢復舊版標題：#0f172a → 15 23 42
+    'text-secondary': colors.slate[600], // 恢復舊版副標題：#475569 → 71 85 105
+    'text-muted': colors.slate[500], // 恢復舊版摘要：#64748b → 100 116 139
+    bg: colors.slate[50], // 恢復舊版：#f8fafc → 248 250 252
   },
   primary: {
-    bg: colors.indigo[100], // 恢復舊版 FAQ 背景：#e0e7ff → 224 231 255
-    light: colors.indigo[100], // #e0e7ff
-    hover: colors.indigo[200], // #c7d2fe → 199 210 254
-    active: colors.indigo[300], // #a5b4fc → 165 180 252
-    'text-light': colors.indigo[400], // #818cf8 → 129 140 248
-    ring: colors.indigo[500], // #6366f1 → 99 102 241
-    DEFAULT: colors.indigo[600], // 恢復舊版 FAQ 連結：#4f46e5 → 79 70 229
-    dark: colors.indigo[700], // 恢復舊版 FAQ 連結 hover：#4338ca → 67 56 202
-    darker: colors.indigo[800], // #3730a3
-    text: colors.indigo[600], // #4f46e5
+    bg: colors.violet[100], // 恢復舊版 FAQ 背景：#ede9fe → 237 233 254
+    light: colors.violet[100], // #ede9fe
+    hover: colors.violet[200], // #ddd6fe → 221 214 254
+    active: colors.violet[300], // #c4b5fd → 196 181 253
+    'text-light': colors.violet[400], // #a78bfa → 167 139 250
+    ring: colors.violet[500], // #a855f7 → 168 85 247
+    DEFAULT: colors.violet[600], // 恢復舊版 FAQ 連結：#7c3aed → 124 58 237
+    dark: colors.violet[700], // 恢復舊版 FAQ 連結 hover：#6d28d9 → 109 40 217
+    darker: colors.violet[800], // #5b21b6
+    text: colors.violet[600], // #7c3aed
   },
   danger: {
     bg: colors.red[50], // 恢復舊版：#fef2f2 → 254 242 242

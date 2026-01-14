@@ -23,27 +23,27 @@
 
   /* 預設淺色主題 (Light Theme) - 恢復舊版顏色 */
   :root {
-    /* Neutral - 中性色系（恢復 gray-* 而非 slate-*）*/
-    --color-neutral-light: 243 244 246; /* gray-100 */
-    --color-neutral: 229 231 235; /* gray-200 */
-    --color-neutral-dark: 209 213 219; /* gray-300 */
-    --color-neutral-darker: 156 163 175; /* gray-400 */
-    --color-neutral-text: 31 41 55; /* gray-800 - 標題 */
-    --color-neutral-text-secondary: 75 85 99; /* gray-600 - 副標題 */
-    --color-neutral-text-muted: 107 114 128; /* gray-500 - 摘要 */
-    --color-neutral-bg: 249 250 251; /* gray-50 */
+    /* Neutral - 中性色系（恢復 slate-* 而非 gray-*）*/
+    --color-neutral-light: 241 245 249; /* slate-100 */
+    --color-neutral: 226 232 240; /* slate-200 */
+    --color-neutral-dark: 203 213 225; /* slate-300 */
+    --color-neutral-darker: 148 163 184; /* slate-400 */
+    --color-neutral-text: 15 23 42; /* slate-900 - 標題 */
+    --color-neutral-text-secondary: 71 85 105; /* slate-600 - 副標題 */
+    --color-neutral-text-muted: 100 116 139; /* slate-500 - 摘要 */
+    --color-neutral-bg: 248 250 252; /* slate-50 */
 
-    /* Primary - 品牌主色（恢復 indigo-* FAQ 連結色）*/
-    --color-primary-bg: 224 231 255; /* indigo-100 - FAQ 背景 */
-    --color-primary-light: 224 231 255; /* indigo-100 */
-    --color-primary-hover: 199 210 254; /* indigo-200 */
-    --color-primary-active: 165 180 252; /* indigo-300 */
-    --color-primary-text-light: 129 140 248; /* indigo-400 */
-    --color-primary-ring: 99 102 241; /* indigo-500 */
-    --color-primary: 79 70 229; /* indigo-600 - FAQ 連結 */
-    --color-primary-dark: 67 56 202; /* indigo-700 - FAQ 連結 hover */
-    --color-primary-darker: 55 48 163; /* indigo-800 */
-    --color-primary-text: 79 70 229; /* indigo-600 */
+    /* Primary - 品牌主色（恢復 violet-* FAQ 連結色）*/
+    --color-primary-bg: 237 233 254; /* violet-100 - FAQ 背景 */
+    --color-primary-light: 237 233 254; /* violet-100 */
+    --color-primary-hover: 221 214 254; /* violet-200 */
+    --color-primary-active: 196 181 253; /* violet-300 */
+    --color-primary-text-light: 167 139 250; /* violet-400 */
+    --color-primary-ring: 168 85 247; /* violet-500 */
+    --color-primary: 124 58 237; /* violet-600 - FAQ 連結 */
+    --color-primary-dark: 109 40 217; /* violet-700 - FAQ 連結 hover */
+    --color-primary-darker: 91 33 182; /* violet-800 */
+    --color-primary-text: 124 58 237; /* violet-600 */
 
     /* Danger - 危險色系（恢復 red-500 而非 red-700）*/
     --color-danger-bg: 254 242 242; /* red-50 */
