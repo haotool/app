@@ -207,6 +207,8 @@ function generateSitemap() {
   return xml;
 }
 
+export { generateSitemap };
+
 /**
  * 主函數
  */
