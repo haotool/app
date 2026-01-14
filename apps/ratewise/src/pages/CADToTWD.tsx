@@ -72,7 +72,7 @@ export default function CADToTWD() {
         }}
       />
 
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-white">
+      <main className="min-h-screen bg-gradient-to-br from-neutral-light via-orange-50 to-white">
         <div className="container mx-auto px-4 py-10 max-w-5xl">
           {/* Breadcrumb Navigation */}
           <Breadcrumb
@@ -84,10 +84,10 @@ export default function CADToTWD() {
 
           <div className="flex items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
+              <h1 className="text-3xl md:text-4xl font-bold text-neutral-text">
                 CAD 對 TWD 匯率換算器
               </h1>
-              <p className="text-slate-600 mt-2">
+              <p className="text-neutral-text-secondary mt-2">
                 即時加幣對台幣匯率，參考臺灣銀行牌告，每 5
                 分鐘更新。加拿大旅遊換匯必備工具，支援現金/即期匯率、離線 PWA、多幣別模式。
               </p>
@@ -109,9 +109,9 @@ export default function CADToTWD() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-white rounded-2xl shadow p-5 border border-slate-100">
-              <h2 className="text-xl font-semibold text-slate-800 mb-3">🇨🇦 加幣匯率快速重點</h2>
-              <ul className="space-y-3 text-slate-700">
+            <div className="bg-white rounded-2xl shadow p-5 border border-neutral-dark">
+              <h2 className="text-xl font-semibold text-neutral-text mb-3">🇨🇦 加幣匯率快速重點</h2>
+              <ul className="space-y-3 text-neutral-text">
                 <li className="flex items-start gap-2">
                   <span className="text-orange-600 mt-0.5">•</span>
                   <span>資料來源：臺灣銀行牌告匯率，現金/即期買入賣出價完整呈現。</span>
@@ -165,14 +165,14 @@ export default function CADToTWD() {
             </div>
           </div>
 
-          <section className="bg-white rounded-2xl shadow p-6 border border-slate-100">
+          <section className="bg-white rounded-2xl shadow p-6 border border-neutral-dark">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
                 ?
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-800">加幣換匯常見問題</h2>
-                <p className="text-sm text-slate-500">
+                <h2 className="text-2xl font-bold text-neutral-text">加幣換匯常見問題</h2>
+                <p className="text-sm text-neutral-text-muted">
                   對齊 FAQPage 結構化資料，涵蓋離線、來源、旅遊與價差提示。
                 </p>
               </div>
@@ -181,10 +181,10 @@ export default function CADToTWD() {
               {FAQ_ENTRIES.map((faq) => (
                 <div
                   key={faq.question}
-                  className="border border-slate-100 rounded-xl p-4 hover:shadow-sm transition-shadow"
+                  className="border border-neutral-dark rounded-xl p-4 hover:shadow-sm transition-shadow"
                 >
-                  <dt className="text-lg font-semibold text-slate-800 mb-1">{faq.question}</dt>
-                  <dd className="text-slate-600 leading-relaxed">{faq.answer}</dd>
+                  <dt className="text-lg font-semibold text-neutral-text mb-1">{faq.question}</dt>
+                  <dd className="text-neutral-text-secondary leading-relaxed">{faq.answer}</dd>
                 </div>
               ))}
             </dl>
