@@ -86,6 +86,40 @@ export const semanticColors = {
   },
 
   /**
+   * 成功色系（Success）
+   * 用途：上漲趨勢、成功狀態、確認操作
+   * 映射：green 色系
+   */
+  success: {
+    bg: 'rgb(var(--color-success-bg) / <alpha-value>)',
+    light: 'rgb(var(--color-success-light) / <alpha-value>)',
+    hover: 'rgb(var(--color-success-hover) / <alpha-value>)',
+    active: 'rgb(var(--color-success-active) / <alpha-value>)',
+    text: 'rgb(var(--color-success-text) / <alpha-value>)',
+    DEFAULT: 'rgb(var(--color-success) / <alpha-value>)',
+  },
+
+  /**
+   * 高亮色系（Highlight）
+   * 用途：基準貨幣背景高亮
+   * 映射：yellow/amber 色系
+   */
+  highlight: {
+    from: 'rgb(var(--color-highlight-from) / <alpha-value>)',
+    to: 'rgb(var(--color-highlight-to) / <alpha-value>)',
+  },
+
+  /**
+   * 收藏色系（Favorite）
+   * 用途：星號圖標顏色
+   * 映射：yellow 色系
+   */
+  favorite: {
+    DEFAULT: 'rgb(var(--color-favorite) / <alpha-value>)',
+    light: 'rgb(var(--color-favorite-light) / <alpha-value>)',
+  },
+
+  /**
    * 警告色系（Warning）
    * 用途：刪除操作、警告狀態
    * 映射：amber 色系
@@ -176,6 +210,22 @@ export const defaultTheme = {
     text: colors.red[500], // 恢復舊版錯誤圖標：#ef4444 → 239 68 68
     DEFAULT: colors.red[500], // 恢復舊版錯誤按鈕：#ef4444 → 239 68 68
   },
+  success: {
+    bg: colors.green[50], // #f0fdf4 → 240 253 244
+    light: colors.green[100], // #dcfce7 → 220 252 231
+    hover: colors.green[200], // #bbf7d0 → 187 247 208
+    active: colors.green[300], // #86efac → 134 239 172
+    text: colors.green[600], // #16a34a → 22 163 74
+    DEFAULT: colors.green[500], // #22c55e → 34 197 94
+  },
+  highlight: {
+    from: colors.yellow[50], // #fefce8 → 254 252 232
+    to: colors.amber[50], // #fffbeb → 255 251 235
+  },
+  favorite: {
+    light: colors.yellow[100], // #fef3c7 → 254 243 199
+    DEFAULT: colors.yellow[500], // #eab308 → 234 179 8
+  },
   warning: {
     light: colors.amber[100], // #fef3c7 → 254 243 199
     DEFAULT: colors.amber[700], // #b45309 → 180 83 9
@@ -240,6 +290,22 @@ export const darkTheme = {
     active: colors.red[700], // #b91c1c → 185 28 28
     text: colors.red[400], // #f87171 → 248 113 113
     DEFAULT: colors.red[500], // #ef4444 → 239 68 68
+  },
+  success: {
+    bg: colors.green[950], // #0a2813 → 10 40 19
+    light: colors.green[900], // #14532d → 20 83 45
+    hover: colors.green[800], // #166534 → 22 101 52
+    active: colors.green[700], // #15803d → 21 128 61
+    text: colors.green[400], // #4ade80 → 74 222 128
+    DEFAULT: colors.green[500], // #22c55e → 34 197 94
+  },
+  highlight: {
+    from: colors.yellow[900], // #78350f → 120 53 15
+    to: colors.amber[900], // #78350f → 120 53 15
+  },
+  favorite: {
+    light: colors.yellow[700], // #ca8a04 → 202 138 4
+    DEFAULT: colors.yellow[400], // #facc15 → 250 204 21
   },
   warning: {
     light: colors.amber[900], // #78350f → 120 53 15
