@@ -81,10 +81,10 @@
     --color-brand-to: 250 245 255; /* purple-50 */
     --color-brand-border: 219 234 254; /* blue-100 - 恢復舊版邊框色 */
     --color-brand-decoration: 243 232 255; /* purple-100 */
-    --color-brand-button-from: 168 85 247; /* purple-500 - Multi 按鈕梯度起點 */
-    --color-brand-button-to: 59 130 246; /* blue-500 - Single 按鈕（恢復舊版） */
-    --color-brand-button-hover-from: 147 51 234; /* purple-600 - Multi 按鈕 hover */
-    --color-brand-button-hover-to: 37 99 235; /* blue-600 - Single 按鈕 hover */
+    --color-brand-button-from: 126 34 206; /* purple-700 - Multi 按鈕起點（對比度提升） */
+    --color-brand-button-to: 29 78 216; /* blue-700 - Single 按鈕（對比度提升） */
+    --color-brand-button-hover-from: 107 33 168; /* purple-800 - Multi 按鈕 hover */
+    --color-brand-button-hover-to: 30 64 175; /* blue-800 - Single 按鈕 hover */
     --color-brand-icon-from: 233 213 255; /* purple-200 */
     --color-brand-icon-to: 191 219 254; /* blue-200 */
     --color-brand-text: 37 99 235; /* blue-600 */
@@ -157,10 +157,10 @@
     --color-brand-to: 59 7 100; /* purple-950 */
     --color-brand-border: 126 34 206; /* purple-700 */
     --color-brand-decoration: 107 33 168; /* purple-800 */
-    --color-brand-button-from: 168 85 247; /* purple-500 */
-    --color-brand-button-to: 59 130 246; /* blue-500 */
-    --color-brand-button-hover-from: 192 132 252; /* purple-400 */
-    --color-brand-button-hover-to: 96 165 250; /* blue-400 */
+    --color-brand-button-from: 126 34 206; /* purple-700 */
+    --color-brand-button-to: 29 78 216; /* blue-700 */
+    --color-brand-button-hover-from: 107 33 168; /* purple-800 */
+    --color-brand-button-hover-to: 30 64 175; /* blue-800 */
     --color-brand-icon-from: 126 34 206; /* purple-700 */
     --color-brand-icon-to: 29 78 216; /* blue-700 */
     --color-brand-text: 96 165 250; /* blue-400 */
