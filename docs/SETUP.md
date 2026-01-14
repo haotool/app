@@ -59,6 +59,7 @@ RateWise.tsx  # re-export，保留向後相容
 1. **建置階段**：使用 node:20-alpine 建置 Vite bundle。
 2. **執行階段**：用 nginx:alpine 或 node runtime 提供靜態檔案。
 3. **多應用共用**：使用 `ARG APP=ratewise`，同一份 Dockerfile 可傳入不同 APP 目錄。
+4. **RateWise 子路徑**：使用 `VITE_RATEWISE_BASE_PATH`（預設 `/ratewise/`），若需根目錄測試或部署則設為 `/`。
 
 對於需要 SSR 的應用，可改用 Next.js 官方 `with-docker` 範例流程，包括 `output: "standalone"` 與 multi-stage build[^next-docker]。
 
