@@ -175,7 +175,12 @@
 }
 
 body {
-  @apply bg-neutral-bg antialiased text-neutral-text-secondary;
+  background-color: rgb(var(--color-neutral-bg));
+  color: rgb(var(--color-neutral-text));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Noto Sans TC', system-ui, sans-serif;
+  line-height: 1.7;
 }
 
 /* PWA 更新通知動畫 - 2025 最佳實踐 */
