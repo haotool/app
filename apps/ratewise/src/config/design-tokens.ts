@@ -162,6 +162,17 @@ export const semanticColors = {
     'text-dark': 'rgb(var(--color-brand-text-dark) / <alpha-value>)',
     shadow: 'rgb(var(--color-brand-shadow) / <alpha-value>)',
   },
+
+  /**
+   * Footer 漸變
+   * 用途：行動版 Footer 背景
+   * 映射：slate/blue/indigo 深色系
+   */
+  footer: {
+    from: 'rgb(var(--color-footer-from) / <alpha-value>)',
+    via: 'rgb(var(--color-footer-via) / <alpha-value>)',
+    to: 'rgb(var(--color-footer-to) / <alpha-value>)',
+  },
 } as const;
 
 /**
@@ -244,9 +255,14 @@ export const defaultTheme = {
     'button-hover-to': colors.blue[600], // 恢復舊版 Single 按鈕 hover：#2563eb → 37 99 235
     'icon-from': colors.purple[200], // #e9d5ff
     'icon-to': colors.blue[200], // #bfdbfe
-    text: colors.purple[600], // 恢復舊版品牌標題：#9333ea → 147 51 234
-    'text-dark': colors.purple[800], // #6b21a8
+    text: colors.blue[600], // #2563eb → 37 99 235 (舊版 H1 起點)
+    'text-dark': colors.purple[600], // #9333ea → 147 51 234 (舊版 H1 終點)
     shadow: colors.purple[100], // #f3e8ff
+  },
+  footer: {
+    from: colors.slate[900], // #0f172a → 15 23 42
+    via: colors.blue[900], // #1e3a8a → 30 58 138
+    to: colors.indigo[900], // #312e81 → 49 46 129
   },
 } as const;
 
@@ -325,9 +341,14 @@ export const darkTheme = {
     'button-hover-to': colors.blue[400], // #60a5fa → 96 165 250
     'icon-from': colors.purple[700], // #7e22ce → 126 34 206
     'icon-to': colors.blue[700], // #1d4ed8 → 29 78 216
-    text: colors.purple[400], // #c084fc → 192 132 252
-    'text-dark': colors.purple[300], // #d8b4fe → 216 180 254
+    text: colors.blue[400], // #60a5fa → 96 165 250
+    'text-dark': colors.purple[400], // #c084fc → 192 132 252
     shadow: colors.purple[900], // #581c87 → 88 28 135
+  },
+  footer: {
+    from: colors.slate[900], // #0f172a → 15 23 42
+    via: colors.blue[900], // #1e3a8a → 30 58 138
+    to: colors.indigo[900], // #312e81 → 49 46 129
   },
 } as const;
 

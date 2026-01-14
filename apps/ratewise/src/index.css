@@ -87,9 +87,14 @@
     --color-brand-button-hover-to: 37 99 235; /* blue-600 - Single 按鈕 hover */
     --color-brand-icon-from: 233 213 255; /* purple-200 */
     --color-brand-icon-to: 191 219 254; /* blue-200 */
-    --color-brand-text: 147 51 234; /* purple-600 - 品牌標題 */
-    --color-brand-text-dark: 107 33 168; /* purple-800 */
+    --color-brand-text: 37 99 235; /* blue-600 */
+    --color-brand-text-dark: 147 51 234; /* purple-600 */
     --color-brand-shadow: 243 232 255; /* purple-100 */
+
+    /* Footer - 行動版背景漸變 */
+    --color-footer-from: 15 23 42; /* slate-900 */
+    --color-footer-via: 30 58 138; /* blue-900 */
+    --color-footer-to: 49 46 129; /* indigo-900 */
   }
 
   /* 深色主題 (Dark Theme) */
@@ -158,9 +163,14 @@
     --color-brand-button-hover-to: 96 165 250; /* blue-400 */
     --color-brand-icon-from: 126 34 206; /* purple-700 */
     --color-brand-icon-to: 29 78 216; /* blue-700 */
-    --color-brand-text: 192 132 252; /* purple-400 */
-    --color-brand-text-dark: 216 180 254; /* purple-300 */
+    --color-brand-text: 96 165 250; /* blue-400 */
+    --color-brand-text-dark: 192 132 252; /* purple-400 */
     --color-brand-shadow: 88 28 135; /* purple-900 */
+
+    /* Footer - 行動版背景漸變 */
+    --color-footer-from: 15 23 42; /* slate-900 */
+    --color-footer-via: 30 58 138; /* blue-900 */
+    --color-footer-to: 49 46 129; /* indigo-900 */
   }
 }
 

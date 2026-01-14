@@ -200,7 +200,7 @@ export const MultiConverter = ({
                   title={isFavorite ? `移除常用貨幣 ${code}` : `加入常用貨幣 ${code}`}
                 >
                   <Star
-                    className={isFavorite ? 'text-warning' : 'text-neutral-dark'}
+                    className={isFavorite ? 'text-yellow-500' : 'text-gray-300'}
                     size={18}
                     fill={isFavorite ? 'currentColor' : 'none'}
                   />
