@@ -3,149 +3,97 @@
 @tailwind utilities;
 
 /**
- * Modern Design System - Flat UI + Subtle Shadows
+ * Modern Design System - ParkKeeper Style
  *
- * @description 現代化設計系統，採用扁平設計 + 微妙陰影
- *              完全移除漸層色，使用語義化 CSS Variables
+ * @description 現代化設計系統，參考 ParkKeeper 設計風格
+ *              4 種風格（Nitro/Kawaii/Zen/Classic）+ 淺深模式
  *
- * @reference
- * - Stripe Design System
- * - Linear UI Redesign 2024
- * - Vercel Geist
- * - shadcn/ui Theming
- *
+ * @reference ParkKeeper UI Design
  * @created 2026-01-16
- * @updated 2026-01-16 - 大規模 UI/UX 重構，移除漸層
  * @version 3.0.0
  */
 
 @layer base {
-  /**
-   * 字體優化：使用 font-display: swap 避免 FOIT
-   */
-  @font-face {
-    font-family: 'Inter';
-    font-display: swap;
-  }
-
-  /**
-   * 現代化 CSS Variables - 語義化命名
-   *
-   * 命名規範（參考 shadcn/ui）：
-   * - background / foreground（背景/前景）
-   * - primary / secondary（主要/次要）
-   * - destructive / success / warning（狀態色）
-   * - card / input / sidebar（組件專用）
-   *
-   * 格式：R G B（用於 Tailwind 的 rgb(var(...) / alpha) 語法）
-   */
-
   /* ========================================
-     預設淺色主題 (Light Theme - Cool Style)
+     Zen 風格 - 淺色模式（預設）
      ======================================== */
-  :root {
-    /* 背景色系 */
-    --color-background: 248 250 252; /* slate-50 */
-    --color-background-secondary: 241 245 249; /* slate-100 */
-    --color-background-tertiary: 226 232 240; /* slate-200 */
+  :root,
+  [data-style='zen'][data-mode='light'] {
+    --color-background: 248 250 252;
+    --color-surface: 255 255 255;
+    --color-text: 15 23 42;
+    --color-text-muted: 100 116 139;
+    --color-primary: 30 41 59;
+    --color-accent: 59 130 246;
+    --color-border: 226 232 240;
 
-    /* 前景色系（文字） */
-    --color-foreground: 15 23 42; /* slate-900 */
-    --color-foreground-secondary: 71 85 105; /* slate-600 */
-    --color-foreground-muted: 100 116 139; /* slate-500 */
+    /* 向後相容映射 */
+    --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-accent);
 
-    /* 邊框與分隔線 */
-    --color-border: 226 232 240; /* slate-200 */
-    --color-border-secondary: 203 213 225; /* slate-300 */
-
-    /* 主色（品牌紫 - Violet） */
-    --color-primary: 124 58 237; /* violet-600 */
-    --color-primary-hover: 109 40 217; /* violet-700 */
-    --color-primary-foreground: 255 255 255;
-
-    /* 危險色 */
-    --color-destructive: 239 68 68; /* red-500 */
-    --color-destructive-hover: 220 38 38; /* red-600 */
-    --color-destructive-foreground: 255 255 255;
-
-    /* 成功色 */
-    --color-success: 34 197 94; /* green-500 */
-    --color-success-foreground: 255 255 255;
-
-    /* 警告色 */
-    --color-warning: 245 158 11; /* amber-500 */
-    --color-warning-foreground: 255 255 255;
-
-    /* 卡片 */
-    --color-card: 255 255 255;
-    --color-card-foreground: 15 23 42;
-
-    /* 輸入框 */
-    --color-input: 255 255 255;
-    --color-input-border: 203 213 225; /* slate-300 */
-
-    /* Focus ring */
-    --color-ring: 124 58 237;
-
-    /* 側邊欄 */
-    --color-sidebar: 241 245 249; /* slate-100 */
-    --color-sidebar-foreground: 71 85 105;
-    --color-sidebar-active: 226 232 240;
-
-    /* ===== 向後相容：保留舊版 token 映射 ===== */
-    /* Neutral 系列（映射到新版） */
-    --color-neutral-light: var(--color-background-secondary);
-    --color-neutral: var(--color-background-tertiary);
-    --color-neutral-dark: var(--color-border-secondary);
-    --color-neutral-darker: var(--color-foreground-muted);
-    --color-neutral-text: var(--color-foreground);
-    --color-neutral-text-secondary: var(--color-foreground-secondary);
-    --color-neutral-text-muted: var(--color-foreground-muted);
+    /* 舊版 neutral 系列 */
     --color-neutral-bg: var(--color-background);
+    --color-neutral-light: 241 245 249;
+    --color-neutral: 226 232 240;
+    --color-neutral-dark: 203 213 225;
+    --color-neutral-darker: 148 163 184;
+    --color-neutral-text: var(--color-text);
+    --color-neutral-text-secondary: var(--color-text-muted);
+    --color-neutral-text-muted: var(--color-text-muted);
     --color-neutral-border: var(--color-border);
 
-    /* Primary 系列（映射到新版） */
-    --color-primary-bg: 237 233 254; /* violet-100 */
+    /* 舊版 primary 系列 */
+    --color-primary-bg: 237 233 254;
     --color-primary-light: 237 233 254;
-    --color-primary-active: 196 181 253; /* violet-300 */
-    --color-primary-text-light: 167 139 250; /* violet-400 */
-    --color-primary-ring: var(--color-ring);
-    --color-primary-dark: var(--color-primary-hover);
-    --color-primary-darker: 91 33 182; /* violet-800 */
-    --color-primary-text: var(--color-primary);
+    --color-primary-hover: 109 40 217;
+    --color-primary-active: 196 181 253;
+    --color-primary-text-light: 167 139 250;
+    --color-primary-ring: var(--color-accent);
+    --color-primary-dark: 109 40 217;
+    --color-primary-darker: 91 33 182;
+    --color-primary-text: 124 58 237;
 
-    /* Danger 系列 */
-    --color-danger-bg: 254 242 242; /* red-50 */
-    --color-danger-light: 254 226 226; /* red-100 */
-    --color-danger-hover: var(--color-destructive-hover);
-    --color-danger-active: 252 165 165; /* red-300 */
-    --color-danger-text: var(--color-destructive);
-    --color-danger: var(--color-destructive);
+    /* 狀態色 */
+    --color-destructive: 239 68 68;
+    --color-destructive-hover: 220 38 38;
+    --color-destructive-foreground: 255 255 255;
+    --color-success: 34 197 94;
+    --color-success-foreground: 255 255 255;
+    --color-warning: 245 158 11;
+    --color-warning-foreground: 255 255 255;
 
-    /* Success 系列 */
-    --color-success-bg: 240 253 244; /* green-50 */
-    --color-success-light: 220 252 231; /* green-100 */
-    --color-success-hover: 187 247 208; /* green-200 */
-    --color-success-active: 134 239 172; /* green-300 */
-    --color-success-text: var(--color-success);
-
-    /* Warning 系列 */
-    --color-warning-light: 254 243 199; /* amber-100 */
-    --color-warning-hover: 253 230 138; /* amber-200 */
-    --color-warning-active: 252 211 77; /* amber-300 */
+    /* 舊版 danger/success/warning 系列 */
+    --color-danger-bg: 254 242 242;
+    --color-danger-light: 254 226 226;
+    --color-danger-hover: 220 38 38;
+    --color-danger-active: 252 165 165;
+    --color-danger-text: 239 68 68;
+    --color-danger: 239 68 68;
+    --color-success-bg: 240 253 244;
+    --color-success-light: 220 252 231;
+    --color-success-hover: 187 247 208;
+    --color-success-active: 134 239 172;
+    --color-success-text: 34 197 94;
+    --color-warning-light: 254 243 199;
+    --color-warning-hover: 253 230 138;
+    --color-warning-active: 252 211 77;
 
     /* Favorite 系列 */
-    --color-favorite-light: 254 243 199; /* yellow-100 */
-    --color-favorite: 234 179 8; /* yellow-500 */
+    --color-favorite-light: 254 243 199;
+    --color-favorite: 234 179 8;
 
-    /* Highlight 系列（用於高亮） */
-    --color-highlight-from: 254 252 232; /* yellow-50 */
-    --color-highlight-to: 255 251 235; /* amber-50 */
+    /* Highlight 系列 */
+    --color-highlight-from: 254 252 232;
+    --color-highlight-to: 255 251 235;
 
-    /* Brand 系列（扁平化，移除漸層） */
-    --color-brand-from: var(--color-background-secondary);
-    --color-brand-via: var(--color-background-secondary);
-    --color-brand-to: var(--color-background-secondary);
+    /* Brand 系列（扁平化） */
+    --color-brand-from: var(--color-background);
+    --color-brand-via: var(--color-background);
+    --color-brand-to: var(--color-background);
     --color-brand-border: var(--color-border);
     --color-brand-decoration: var(--color-primary-light);
     --color-brand-button-from: var(--color-primary);
@@ -154,120 +102,161 @@
     --color-brand-button-hover-to: var(--color-primary-hover);
     --color-brand-icon-from: var(--color-primary-light);
     --color-brand-icon-to: var(--color-primary-light);
-    --color-brand-text: var(--color-primary);
-    --color-brand-text-dark: var(--color-primary-hover);
+    --color-brand-text: var(--color-accent);
+    --color-brand-text-dark: var(--color-primary-dark);
     --color-brand-shadow: var(--color-primary-light);
 
-    /* Footer 系列（扁平化） */
-    --color-footer-from: var(--color-foreground);
-    --color-footer-via: var(--color-foreground);
-    --color-footer-to: var(--color-foreground);
+    /* Footer 系列 */
+    --color-footer-from: var(--color-text);
+    --color-footer-via: var(--color-text);
+    --color-footer-to: var(--color-text);
   }
 
-  /* ========================================
-     深色主題 (Dark Theme)
-     ======================================== */
-  [data-mode='dark'],
-  [data-theme='dark'],
-  .dark {
-    --color-background: 2 6 23; /* slate-950 */
-    --color-background-secondary: 15 23 42; /* slate-900 */
-    --color-background-tertiary: 30 41 59; /* slate-800 */
+  /* Zen 風格 - 深色模式 */
+  [data-style='zen'][data-mode='dark'],
+  .dark:not([data-style]),
+  [data-mode='dark']:not([data-style]) {
+    --color-background: 15 23 42;
+    --color-surface: 30 41 59;
+    --color-text: 248 250 252;
+    --color-text-muted: 148 163 184;
+    --color-primary: 203 213 225;
+    --color-accent: 96 165 250;
+    --color-border: 51 65 85;
 
-    --color-foreground: 248 250 252; /* slate-50 */
-    --color-foreground-secondary: 203 213 225; /* slate-300 */
-    --color-foreground-muted: 100 116 139; /* slate-500 */
+    --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
 
-    --color-border: 30 41 59; /* slate-800 */
-    --color-border-secondary: 51 65 85; /* slate-700 */
-
-    --color-primary: 167 139 250; /* violet-400 */
-    --color-primary-hover: 196 181 253; /* violet-300 */
-    --color-primary-foreground: 2 6 23;
-
-    --color-destructive: 248 113 113; /* red-400 */
-    --color-destructive-hover: 252 165 165; /* red-300 */
-    --color-destructive-foreground: 2 6 23;
-
-    --color-success: 74 222 128; /* green-400 */
-    --color-success-foreground: 2 6 23;
-
-    --color-warning: 251 191 36; /* amber-400 */
-    --color-warning-foreground: 2 6 23;
-
-    --color-card: 15 23 42;
-    --color-card-foreground: 248 250 252;
-
-    --color-input: 15 23 42;
-    --color-input-border: 51 65 85;
-
-    --color-ring: 167 139 250;
-
-    --color-sidebar: 2 6 23;
-    --color-sidebar-foreground: 203 213 225;
-    --color-sidebar-active: 15 23 42;
-
-    /* 向後相容 token 映射（深色） */
-    --color-neutral-light: var(--color-background-secondary);
-    --color-neutral: var(--color-background-tertiary);
+    --color-neutral-bg: var(--color-background);
+    --color-neutral-light: 30 41 59;
+    --color-neutral: 51 65 85;
     --color-neutral-dark: 2 6 23;
     --color-neutral-darker: 2 6 23;
-    --color-neutral-text: var(--color-foreground);
-    --color-neutral-text-secondary: var(--color-foreground-secondary);
-    --color-neutral-text-muted: var(--color-foreground-muted);
-    --color-neutral-bg: var(--color-background);
+    --color-neutral-text: var(--color-text);
+    --color-neutral-text-secondary: var(--color-text-muted);
+    --color-neutral-text-muted: var(--color-text-muted);
     --color-neutral-border: var(--color-border);
 
-    --color-primary-bg: 46 16 101; /* violet-950 */
-    --color-primary-light: 76 29 149; /* violet-900 */
-    --color-primary-active: 109 40 217; /* violet-700 */
+    --color-primary-bg: 46 16 101;
+    --color-primary-light: 76 29 149;
+    --color-primary-hover: 196 181 253;
+    --color-primary-active: 109 40 217;
     --color-primary-text-light: 196 181 253;
-    --color-primary-ring: var(--color-ring);
-    --color-primary-dark: var(--color-primary-hover);
+    --color-primary-dark: 196 181 253;
     --color-primary-darker: 221 214 254;
-    --color-primary-text: var(--color-primary);
+    --color-primary-text: 167 139 250;
+
+    --color-destructive: 248 113 113;
+    --color-destructive-hover: 252 165 165;
+    --color-destructive-foreground: 15 23 42;
+    --color-success: 74 222 128;
+    --color-success-foreground: 15 23 42;
+    --color-warning: 251 191 36;
+    --color-warning-foreground: 15 23 42;
 
     --color-danger-bg: 69 10 10;
     --color-danger-light: 127 29 29;
     --color-danger-hover: 252 165 165;
     --color-danger-active: 185 28 28;
-    --color-danger-text: var(--color-destructive);
-    --color-danger: var(--color-destructive);
-
+    --color-danger-text: 248 113 113;
+    --color-danger: 248 113 113;
     --color-success-bg: 10 40 19;
     --color-success-light: 20 83 45;
     --color-success-hover: 22 101 52;
     --color-success-active: 21 128 61;
-    --color-success-text: var(--color-success);
-
+    --color-success-text: 74 222 128;
     --color-warning-light: 120 53 15;
     --color-warning-hover: 146 64 14;
     --color-warning-active: 180 83 9;
 
     --color-favorite-light: 202 138 4;
     --color-favorite: 250 204 21;
-
     --color-highlight-from: 120 53 15;
     --color-highlight-to: 120 53 15;
+  }
 
-    --color-brand-from: var(--color-background-secondary);
-    --color-brand-via: var(--color-background-secondary);
-    --color-brand-to: var(--color-background-secondary);
-    --color-brand-border: var(--color-border);
-    --color-brand-decoration: var(--color-primary-light);
-    --color-brand-button-from: var(--color-primary);
-    --color-brand-button-to: var(--color-primary);
-    --color-brand-button-hover-from: var(--color-primary-hover);
-    --color-brand-button-hover-to: var(--color-primary-hover);
-    --color-brand-icon-from: var(--color-primary-light);
-    --color-brand-icon-to: var(--color-primary-light);
-    --color-brand-text: var(--color-primary);
-    --color-brand-text-dark: var(--color-primary-hover);
-    --color-brand-shadow: var(--color-primary-light);
+  /* ========================================
+     Nitro 風格 - 深色科技感
+     ======================================== */
+  [data-style='nitro'] {
+    --color-background: 15 23 42;
+    --color-surface: 30 41 59;
+    --color-text: 255 255 255;
+    --color-text-muted: 148 163 184;
+    --color-primary: 0 212 255;
+    --color-accent: 0 255 136;
+    --color-border: 51 65 85;
 
-    --color-footer-from: var(--color-foreground);
-    --color-footer-via: var(--color-foreground);
-    --color-footer-to: var(--color-foreground);
+    --color-foreground: var(--color-text);
+    --color-neutral-bg: var(--color-background);
+    --color-neutral-light: var(--color-surface);
+    --color-neutral-text: var(--color-text);
+    --color-neutral-text-muted: var(--color-text-muted);
+  }
+
+  [data-style='nitro'][data-mode='dark'] {
+    --color-background: 2 6 23;
+    --color-surface: 15 23 42;
+    --color-border: 30 41 59;
+  }
+
+  /* ========================================
+     Kawaii 風格 - 可愛粉嫩
+     ======================================== */
+  [data-style='kawaii'] {
+    --color-background: 255 250 244;
+    --color-surface: 255 255 255;
+    --color-text: 142 124 128;
+    --color-text-muted: 180 160 165;
+    --color-primary: 255 105 180;
+    --color-accent: 255 182 193;
+    --color-border: 255 228 225;
+
+    --color-foreground: var(--color-text);
+    --color-neutral-bg: var(--color-background);
+    --color-neutral-light: var(--color-surface);
+    --color-neutral-text: var(--color-text);
+    --color-neutral-text-muted: var(--color-text-muted);
+  }
+
+  [data-style='kawaii'][data-mode='dark'] {
+    --color-background: 45 35 40;
+    --color-surface: 60 48 55;
+    --color-text: 255 235 238;
+    --color-text-muted: 180 160 170;
+    --color-primary: 255 130 190;
+    --color-border: 80 65 75;
+  }
+
+  /* ========================================
+     Classic 風格 - 復古書卷
+     ======================================== */
+  [data-style='classic'] {
+    --color-background: 255 250 251;
+    --color-surface: 255 255 255;
+    --color-text: 67 20 7;
+    --color-text-muted: 120 80 60;
+    --color-primary: 139 69 19;
+    --color-accent: 180 120 80;
+    --color-border: 245 230 220;
+
+    --color-foreground: var(--color-text);
+    --color-neutral-bg: var(--color-background);
+    --color-neutral-light: var(--color-surface);
+    --color-neutral-text: var(--color-text);
+    --color-neutral-text-muted: var(--color-text-muted);
+  }
+
+  [data-style='classic'][data-mode='dark'] {
+    --color-background: 35 25 20;
+    --color-surface: 50 38 32;
+    --color-text: 255 245 240;
+    --color-text-muted: 180 160 150;
+    --color-primary: 210 160 120;
+    --color-border: 70 55 45;
   }
 }
 
@@ -276,7 +265,7 @@
  */
 body {
   background-color: rgb(var(--color-background));
-  color: rgb(var(--color-foreground));
+  color: rgb(var(--color-text));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-family:
@@ -287,15 +276,52 @@ body {
     sans-serif;
   line-height: 1.6;
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 /**
  * 現代化動畫與工具類
  */
 @layer utilities {
-  /* 入場動畫：slide + bounce */
+  /* 隱藏滾動條但保留滾動功能（ParkKeeper 風格） */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 安全區域適配 */
+  .pt-safe-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  .pb-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  /* 入場動畫 */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(0.5rem);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
   @keyframes slide-in-bounce {
     0% {
       transform: translateY(-1rem) scale(0.95);
@@ -310,23 +336,28 @@ body {
     }
   }
 
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+
   .animate-slide-in-bounce {
     animation: slide-in-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   /* 緩慢脈動 */
   @keyframes ping-slow {
-    0% {
+    0%,
+    100% {
       transform: scale(1);
       opacity: 1;
     }
     50% {
       transform: scale(1.05);
       opacity: 0.9;
-    }
-    100% {
-      transform: scale(1);
-      opacity: 1;
     }
   }
 
@@ -349,46 +380,13 @@ body {
     animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
-  /* 淡入 */
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out;
-  }
-
-  /* 滑入上方 */
-  @keyframes slide-up {
-    from {
-      transform: translateY(0.5rem);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.3s ease-out;
-  }
-
-  /**
-   * iOS Safe Area 支援
-   */
+  /* iOS Safe Area */
   @supports (padding: max(0px)) {
     .safe-area-inset-bottom {
       padding-bottom: max(1rem, env(safe-area-inset-bottom));
     }
   }
 
-  /* 桌面版移除額外 padding */
   @media (min-width: 768px) {
     main {
       padding-bottom: 1.5rem;
@@ -397,63 +395,73 @@ body {
 }
 
 /**
- * 現代化元件樣式
+ * 現代化元件樣式（ParkKeeper 風格）
  */
 @layer components {
+  /* 毛玻璃效果 */
+  .glass {
+    background-color: rgb(var(--color-background) / 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
   /* 現代化卡片 */
   .card {
-    background-color: rgb(var(--color-card));
-    color: rgb(var(--color-card-foreground));
-    border-radius: 0.75rem;
-    border: 1px solid rgb(var(--color-border));
+    background-color: rgb(var(--color-surface));
+    border-radius: 1.5rem;
+    border: 1px solid rgb(var(--color-border) / 0.5);
     box-shadow:
       0 1px 2px 0 rgb(0 0 0 / 0.03),
       0 1px 3px 0 rgb(0 0 0 / 0.05);
-    transition:
-      box-shadow 0.2s ease,
-      border-color 0.2s ease;
+    transition: all 0.2s ease;
   }
 
   .card:hover {
     box-shadow:
-      0 2px 4px 0 rgb(0 0 0 / 0.04),
-      0 4px 8px 0 rgb(0 0 0 / 0.06);
+      0 4px 6px -1px rgb(0 0 0 / 0.05),
+      0 2px 4px -2px rgb(0 0 0 / 0.05);
   }
 
   /* 現代化按鈕 */
   .btn-primary {
     background-color: rgb(var(--color-primary));
-    color: rgb(var(--color-primary-foreground));
-    border-radius: 0.5rem;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    transition: background-color 0.15s ease;
+    color: rgb(var(--color-background));
+    border-radius: 1rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
   }
 
   .btn-primary:hover {
-    background-color: rgb(var(--color-primary-hover));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgb(var(--color-primary) / 0.3);
   }
 
-  .btn-primary:focus-visible {
-    outline: 2px solid rgb(var(--color-ring));
-    outline-offset: 2px;
+  .btn-primary:active {
+    transform: translateY(0);
   }
 
-  /* 現代化輸入框 */
-  .input {
-    background-color: rgb(var(--color-input));
-    border: 1px solid rgb(var(--color-input-border));
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    color: rgb(var(--color-foreground));
-    transition:
-      border-color 0.15s ease,
-      box-shadow 0.15s ease;
+  /* 陰影層級（ParkKeeper 風格） */
+  .shadow-elevation-1 {
+    box-shadow:
+      0 1px 2px 0 rgb(0 0 0 / 0.03),
+      0 1px 3px 0 rgb(0 0 0 / 0.05);
   }
 
-  .input:focus {
-    border-color: rgb(var(--color-primary));
-    box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.1);
-    outline: none;
+  .shadow-elevation-2 {
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.05),
+      0 2px 4px -2px rgb(0 0 0 / 0.05);
+  }
+
+  .shadow-elevation-3 {
+    box-shadow: 0 8px 25px rgb(var(--color-primary) / 0.4);
+  }
+
+  /* 選中狀態的 ring */
+  .ring-selected {
+    ring-width: 2px;
+    ring-offset-width: 2px;
+    ring-color: rgb(var(--color-primary));
   }
 }

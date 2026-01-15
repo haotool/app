@@ -1,18 +1,18 @@
 /**
  * useAppTheme - 應用程式主題管理 Hook
  *
- * @description 管理風格、配色、模式的切換與持久化
+ * @description 管理風格（Nitro/Kawaii/Zen/Classic）與模式的切換與持久化
  *              支援 SSR 安全的初始化
  *
+ * @reference ParkKeeper Design System
  * @created 2026-01-16
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import {
   type ThemeConfig,
   type ThemeStyle,
-  type ColorScheme,
   type ThemeMode,
   DEFAULT_THEME_CONFIG,
   applyTheme,
@@ -35,7 +35,6 @@ function loadThemeConfig(): ThemeConfig {
       const parsed = JSON.parse(stored) as Partial<ThemeConfig>;
       return {
         style: parsed.style ?? DEFAULT_THEME_CONFIG.style,
-        colorScheme: parsed.colorScheme ?? DEFAULT_THEME_CONFIG.colorScheme,
         mode: parsed.mode ?? DEFAULT_THEME_CONFIG.mode,
       };
     }
@@ -78,9 +77,7 @@ export function useAppTheme() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   // 客戶端初始化 - 使用 requestAnimationFrame 避免同步 setState
-  // [fix:2026-01-16] 遵循 ESLint react-hooks/set-state-in-effect 規則
   useEffect(() => {
-    // 使用 requestAnimationFrame 延遲執行，避免同步 setState
     const initTheme = () => {
       const savedConfig = loadThemeConfig();
       setConfig(savedConfig);
@@ -88,7 +85,6 @@ export function useAppTheme() {
       setIsLoaded(true);
     };
 
-    // 延遲到下一幀執行，避免同步 setState 警告
     const frameId = requestAnimationFrame(initTheme);
     return () => cancelAnimationFrame(frameId);
   }, []);
@@ -110,16 +106,6 @@ export function useAppTheme() {
   const setStyle = useCallback((style: ThemeStyle) => {
     setConfig((prev) => {
       const newConfig = { ...prev, style };
-      saveThemeConfig(newConfig);
-      applyTheme(newConfig);
-      return newConfig;
-    });
-  }, []);
-
-  // 設定配色
-  const setColorScheme = useCallback((colorScheme: ColorScheme) => {
-    setConfig((prev) => {
-      const newConfig = { ...prev, colorScheme };
       saveThemeConfig(newConfig);
       applyTheme(newConfig);
       return newConfig;
@@ -164,7 +150,6 @@ export function useAppTheme() {
     // 配置
     config,
     style: config.style,
-    colorScheme: config.colorScheme,
     mode: config.mode,
     resolvedMode,
 
@@ -174,7 +159,6 @@ export function useAppTheme() {
 
     // 操作
     setStyle,
-    setColorScheme,
     setMode,
     toggleMode,
     resetTheme,

@@ -1,247 +1,228 @@
 /**
- * Settings Page - 現代化主題設定
+ * Settings Page - ParkKeeper 風格設定頁面
  *
- * @description 應用程式設定頁面，支援 4 種風格 × 4 種配色切換
- *              採用現代化扁平 UI 設計
+ * @description 應用程式設定頁面，支援 4 種風格切換
+ *              採用 ParkKeeper 設計風格（圓潤卡片、風格預覽）
  *
- * 功能：
- * - 主題模式切換（淺色/深色/自動）
- * - 4 種 UI 風格選擇（現代中性/溫暖舒適/冷靜專業/高對比）
- * - 4 種配色選擇（品牌紫/專業藍/自然綠/溫暖玫瑰）
- * - 關於與版本資訊
+ * 風格選項：
+ * - Nitro - 深色科技感
+ * - Kawaii - 可愛粉嫩
+ * - Zen - 極簡專業（預設）
+ * - Classic - 復古書卷
  *
+ * @reference ParkKeeper UI Design
  * @created 2026-01-15
- * @updated 2026-01-16 - 大規模 UI/UX 重構
+ * @updated 2026-01-16 - ParkKeeper 風格重構
  */
 
-import { Settings as SettingsIcon, Palette, Sun, Moon, Monitor, Check } from 'lucide-react';
+import { Palette, Globe, Database, ShieldAlert, Check, Sun, Moon, Monitor } from 'lucide-react';
 import { useAppTheme } from '../hooks/useAppTheme';
-import {
-  STYLE_OPTIONS,
-  COLOR_SCHEME_OPTIONS,
-  MODE_OPTIONS,
-  type ThemeMode,
-} from '../config/themes';
+import { STYLE_OPTIONS, MODE_OPTIONS, type ThemeMode } from '../config/themes';
 
 export default function Settings() {
-  const {
-    style,
-    colorScheme,
-    mode,
-    resolvedMode,
-    setStyle,
-    setColorScheme,
-    setMode,
-    resetTheme,
-    isLoaded,
-  } = useAppTheme();
+  const { style, mode, resolvedMode, setStyle, setMode, resetTheme, isLoaded } = useAppTheme();
 
   // 獲取模式圖標
   const getModeIcon = (modeValue: ThemeMode) => {
     switch (modeValue) {
       case 'light':
-        return <Sun className="w-4 h-4" />;
+        return <Sun className="w-5 h-5" />;
       case 'dark':
-        return <Moon className="w-4 h-4" />;
+        return <Moon className="w-5 h-5" />;
       case 'auto':
-        return <Monitor className="w-4 h-4" />;
+        return <Monitor className="w-5 h-5" />;
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto animate-fade-in">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <SettingsIcon className="w-6 h-6 text-primary" aria-hidden="true" />
-          <h1 className="text-2xl font-bold text-foreground">應用程式設定</h1>
-        </div>
-        <p className="text-foreground-muted">自訂您的 RateWise 使用體驗</p>
-      </div>
-
-      {/* 主題模式 */}
-      <section className="mb-6">
-        <div className="card p-5">
-          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Sun className="w-5 h-5 text-primary" aria-hidden="true" />
-            主題模式
-          </h2>
-
-          <div className="grid grid-cols-3 gap-3">
-            {MODE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setMode(option.value)}
-                disabled={!isLoaded}
-                className={`
-                  relative flex flex-col items-center gap-2 px-4 py-4 rounded-lg border-2 
-                  transition-all duration-200 disabled:opacity-50
-                  ${
-                    mode === option.value
-                      ? 'border-primary bg-primary/5 text-primary'
-                      : 'border-border bg-card text-foreground-secondary hover:border-primary/50 hover:bg-primary/5'
-                  }
-                `}
-                aria-pressed={mode === option.value}
-              >
-                {getModeIcon(option.value)}
-                <span className="text-sm font-medium">{option.label}</span>
-                {mode === option.value && (
-                  <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />
-                )}
-              </button>
-            ))}
+    <div className="h-full overflow-y-auto no-scrollbar pb-32">
+      <div className="px-5 py-6 max-w-md mx-auto">
+        {/* 介面風格區塊 */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <Palette className="w-3.5 h-3.5" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">介面風格</h3>
           </div>
 
-          <p className="mt-3 text-xs text-foreground-muted">
-            目前：{resolvedMode === 'dark' ? '深色模式' : '淺色模式'}
-          </p>
-        </div>
-      </section>
-
-      {/* UI 風格 */}
-      <section className="mb-6">
-        <div className="card p-5">
-          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Palette className="w-5 h-5 text-primary" aria-hidden="true" />
-            UI 風格
-          </h2>
-
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             {STYLE_OPTIONS.map((option) => (
               <button
                 key={option.value}
                 onClick={() => setStyle(option.value)}
                 disabled={!isLoaded}
                 className={`
-                  relative flex flex-col items-start gap-1 px-4 py-4 rounded-lg border-2
-                  text-left transition-all duration-200 disabled:opacity-50
-                  ${
-                    style === option.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border bg-card hover:border-primary/50 hover:bg-primary/5'
-                  }
+                  relative p-4 h-24 flex items-end overflow-hidden rounded-xl 
+                  transition-all shadow-sm disabled:opacity-50
+                  ${style === option.value ? 'ring-2 ring-offset-2' : ''}
                 `}
+                style={
+                  {
+                    backgroundColor: option.previewBg,
+                    color: option.previewText,
+                    '--tw-ring-color': option.previewText,
+                  } as React.CSSProperties
+                }
                 aria-pressed={style === option.value}
               >
-                <span
-                  className={`text-sm font-medium ${
-                    style === option.value ? 'text-primary' : 'text-foreground'
-                  }`}
-                >
-                  {option.label}
-                </span>
-                <span className="text-xs text-foreground-muted">{option.description}</span>
-                {style === option.value && (
-                  <Check className="absolute top-3 right-3 w-4 h-4 text-primary" />
-                )}
+                {/* 裝飾圓形 */}
+                <div
+                  className="absolute top-0 right-0 w-20 h-20 opacity-10 -mr-6 -mt-6 rounded-full"
+                  style={{ backgroundColor: option.previewAccent }}
+                />
+
+                {/* 內容 */}
+                <div className="flex justify-between items-center w-full relative z-10">
+                  <span className="font-bold">{option.label}</span>
+                  {style === option.value && (
+                    <div className="bg-green-500 rounded-full p-1">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                </div>
               </button>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* 配色方案 */}
-      <section className="mb-6">
-        <div className="card p-5">
-          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <span
-              className="w-5 h-5 rounded-full"
-              style={{
-                backgroundColor: COLOR_SCHEME_OPTIONS.find((o) => o.value === colorScheme)?.color,
-              }}
-              aria-hidden="true"
-            />
-            配色方案
-          </h2>
+        {/* 顯示模式區塊 */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <Sun className="w-3.5 h-3.5" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">顯示模式</h3>
+          </div>
 
-          <div className="grid grid-cols-4 gap-3">
-            {COLOR_SCHEME_OPTIONS.map((option) => (
+          <div className="bg-black/5 dark:bg-white/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
+            {MODE_OPTIONS.map((option) => (
               <button
                 key={option.value}
-                onClick={() => setColorScheme(option.value)}
+                onClick={() => setMode(option.value)}
                 disabled={!isLoaded}
                 className={`
-                  relative flex flex-col items-center gap-2 px-3 py-4 rounded-lg border-2
-                  transition-all duration-200 disabled:opacity-50
-                  ${
-                    colorScheme === option.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border bg-card hover:border-primary/50 hover:bg-primary/5'
-                  }
+                  flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 
+                  relative z-10 transition-colors disabled:opacity-50
+                  ${mode === option.value ? '' : 'opacity-60 hover:opacity-100'}
                 `}
-                aria-pressed={colorScheme === option.value}
               >
-                <span
-                  className="w-8 h-8 rounded-full shadow-soft"
-                  style={{ backgroundColor: option.color }}
-                  aria-hidden="true"
-                />
-                <span
-                  className={`text-xs font-medium ${
-                    colorScheme === option.value ? 'text-primary' : 'text-foreground-secondary'
-                  }`}
-                >
-                  {option.label}
-                </span>
-                {colorScheme === option.value && (
-                  <Check
-                    className="absolute top-2 right-2 w-4 h-4"
-                    style={{ color: option.color }}
+                {mode === option.value && (
+                  <div
+                    className="absolute inset-0 rounded-2xl shadow-sm z-[-1]"
+                    style={{
+                      backgroundColor: 'rgb(var(--color-surface))',
+                      opacity: 1,
+                    }}
                   />
                 )}
+                <span className="mb-1">{getModeIcon(option.value)}</span>
+                <span className="text-[10px] font-bold">{option.label}</span>
               </button>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* 重置按鈕 */}
-      <section className="mb-6">
-        <button
-          onClick={resetTheme}
-          disabled={!isLoaded}
-          className="w-full px-4 py-3 rounded-lg border-2 border-border bg-card
-                     text-foreground-secondary font-medium
-                     hover:border-destructive hover:text-destructive
-                     transition-all duration-200 disabled:opacity-50"
-        >
-          重置為預設設定
-        </button>
-      </section>
+          <p className="text-[10px] mt-3 opacity-40 font-medium text-center">
+            目前：{resolvedMode === 'dark' ? '深色模式' : '淺色模式'}
+          </p>
+        </section>
 
-      {/* 關於資訊 */}
-      <section className="mb-6">
-        <div className="card p-5">
-          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <span className="text-lg" aria-hidden="true">
-              ℹ️
-            </span>
-            關於
-          </h2>
-
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between items-center">
-              <span className="text-foreground-muted">應用程式版本</span>
-              <span className="text-foreground font-medium font-mono">v2.0.0</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-foreground-muted">資料來源</span>
-              <span className="text-foreground font-medium">台灣銀行牌告匯率</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-foreground-muted">UI 設計</span>
-              <span className="text-foreground font-medium">Modern Flat Design</span>
-            </div>
+        {/* 語言區塊（未來功能） */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <Globe className="w-3.5 h-3.5" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">語言</h3>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-border">
-            <p className="text-xs text-foreground-muted text-center">
-              © 2026 RateWise. Built with React + Tailwind CSS.
+          <div className="bg-black/5 dark:bg-white/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
+            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-colors opacity-60 hover:opacity-100">
+              <span className="text-xl mb-1 filter drop-shadow-sm">🇺🇸</span>
+              <span className="text-[10px] font-bold">English</span>
+            </button>
+            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-colors">
+              <div
+                className="absolute inset-0 rounded-2xl shadow-sm z-[-1]"
+                style={{ backgroundColor: 'rgb(var(--color-surface))' }}
+              />
+              <span className="text-xl mb-1 filter drop-shadow-sm">🇹🇼</span>
+              <span className="text-[10px] font-bold">繁體中文</span>
+            </button>
+            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-colors opacity-60 hover:opacity-100">
+              <span className="text-xl mb-1 filter drop-shadow-sm">🇯🇵</span>
+              <span className="text-[10px] font-bold">日本語</span>
+            </button>
+          </div>
+        </section>
+
+        {/* 儲存與快取區塊 */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <Database className="w-3.5 h-3.5" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">儲存與快取</h3>
+          </div>
+
+          <div className="card p-5">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
+                匯率資料來源
+              </span>
+              <span className="text-lg font-black">台灣銀行</span>
+            </div>
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
+                更新頻率
+              </span>
+              <span className="text-lg font-black">5 分鐘</span>
+            </div>
+            <p className="text-[10px] mt-2 opacity-40 font-medium text-center">
+              匯率資料每 5 分鐘自動更新。
             </p>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* 資料管理區塊 */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <ShieldAlert className="w-3.5 h-3.5" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">資料管理</h3>
+          </div>
+
+          <div className="card overflow-hidden">
+            <button
+              onClick={resetTheme}
+              disabled={!isLoaded}
+              className="w-full px-5 py-4 flex items-center justify-between active:bg-red-50 dark:active:bg-red-950 group transition-colors disabled:opacity-50"
+            >
+              <span className="text-xs font-black text-red-500 uppercase tracking-widest">
+                重置主題設定
+              </span>
+              <ShieldAlert className="w-4 h-4 text-red-500 opacity-40 group-active:opacity-100 transition-opacity" />
+            </button>
+          </div>
+        </section>
+
+        {/* 關於區塊 */}
+        <section className="mb-6">
+          <div className="card p-5">
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="opacity-60">應用程式版本</span>
+                <span className="font-bold font-mono">v2.0.0</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="opacity-60">UI 設計</span>
+                <span className="font-bold">ParkKeeper Style</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="opacity-60">技術棧</span>
+                <span className="font-bold">React + Tailwind</span>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
+              <p className="text-[10px] opacity-40 text-center font-medium">
+                © 2026 RateWise. Built with ❤️
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
