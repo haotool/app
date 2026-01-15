@@ -179,6 +179,14 @@ export const routes: RouteRecord[] = [
         element: <Settings />,
         entry: 'src/pages/Settings.tsx',
       },
+      // 主題展示頁面
+      {
+        path: 'theme-showcase',
+        lazy: async () => {
+          const module = await import('./pages/ThemeShowcase');
+          return { Component: module.default };
+        },
+      },
     ],
   },
 
