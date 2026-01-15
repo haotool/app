@@ -104,13 +104,7 @@ export default function Settings() {
                 `}
               >
                 {mode === option.value && (
-                  <div
-                    className="absolute inset-0 rounded-2xl shadow-sm z-[-1]"
-                    style={{
-                      backgroundColor: 'rgb(var(--color-surface))',
-                      opacity: 1,
-                    }}
-                  />
+                  <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
                 )}
                 <span className="mb-1">{getModeIcon(option.value)}</span>
                 <span className="text-[10px] font-bold">{option.label}</span>
@@ -136,10 +130,7 @@ export default function Settings() {
               <span className="text-[10px] font-bold">English</span>
             </button>
             <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-colors">
-              <div
-                className="absolute inset-0 rounded-2xl shadow-sm z-[-1]"
-                style={{ backgroundColor: 'rgb(var(--color-surface))' }}
-              />
+              <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
               <span className="text-xl mb-1 filter drop-shadow-sm">🇹🇼</span>
               <span className="text-[10px] font-bold">繁體中文</span>
             </button>
