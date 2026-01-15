@@ -5,7 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-01-12
+## [Unreleased] - 2026-01-16
+
+### Added
+
+- **ParkKeeper 風格 UI/UX 重構** - 4 種風格系統（PR #102）
+  - 新增 `themes.ts` - 定義 4 種風格（Nitro/Kawaii/Zen/Classic）+ 淺深模式
+  - 建立 `useAppTheme.ts` Hook - 主題管理與持久化
+  - 新增 `ThemeShowcase.tsx` - 設計系統展示頁（/theme-showcase）
+  - CSS Variables 自動切換 - 使用 `data-style` + `data-mode` 屬性控制
+
+- **ParkKeeper 風格導覽元件**
+  - 重構 `BottomNavigation.tsx` - 毛玻璃效果 + 選中指示條動畫
+  - 重構 `AppLayout.tsx` - 品牌 Logo SVG + 毛玻璃 Header
+  - 重構 `Settings.tsx` - 風格預覽卡片選擇器
+
+### Changed
+
+- **設計系統升級** - 參考 ParkKeeper 設計風格
+  - 圓角統一：卡片 `rounded-3xl`、按鈕 `rounded-2xl`
+  - 移除漸層色：採用扁平設計 + 微妙陰影
+  - 毛玻璃效果：`backdrop-blur-xl` + `bg-background/80`
+  - 標籤文字：`text-[9px] uppercase tracking-[0.2em]`
+
+- **測試更新** - 配合架構變更
+  - 移除過時的多幣別切換測試（功能已拆分到 /multi 路由）
+  - 修復 requestAnimationFrame mock 避免遞迴
+  - 測試結果：1062 passed, 1 skipped
+
+---
+
+## [1.5.0] - 2026-01-12
 
 ### Added
 
