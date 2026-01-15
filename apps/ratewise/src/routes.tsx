@@ -1,28 +1,31 @@
 /**
- * Vite React SSG Routes Configuration - SEO Phase 2B-2
+ * Vite React SSG Routes Configuration - Modern App Architecture
  *
  * 路由策略：
- * - `/`: 首頁（RateWise.tsx）- 使用 index.html 靜態 JSON-LD
- * - `/faq`: FAQ 頁面 - 預渲染靜態 HTML，使用 SEOHelmet
- * - `/about`: About 頁面 - 預渲染靜態 HTML，使用 SEOHelmet
- * - `/guide`: Guide 頁面 - 預渲染靜態 HTML，使用 SEOHelmet + HowTo Schema
- * - `/*`: 404 頁面 - 不預渲染，動態處理，使用 SEOHelmet noindex
- * - `/color-scheme`: 內部工具 - 不預渲染（測試用）
- * - `/update-prompt-test`: UpdatePrompt 測試頁面 - 不預渲染（測試用）
+ * - AppLayout 路由（底部導覽列 + 模組化架構）：
+ *   - `/`: 首頁（單幣別轉換器）- 使用 ClientOnly 避免 Hydration 錯誤
+ *   - `/multi`: 多幣別轉換器 - 佔位頁面
+ *   - `/favorites`: 收藏與歷史 - 佔位頁面
+ *   - `/settings`: 應用程式設定 - 佔位頁面
  *
- * 參考：fix/seo-phase2b-prerendering
- * 依據：[Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
+ * - Layout 路由（SEO 落地頁，保留原有結構）：
+ *   - `/faq`: FAQ 頁面 - 預渲染靜態 HTML
+ *   - `/about`: About 頁面 - 預渲染靜態 HTML
+ *   - `/guide`: Guide 頁面 - 預渲染靜態 HTML + HowTo Schema
+ *   - `/xxx-twd`: 13 個幣別落地頁 - 預渲染靜態 HTML
  *
- * [Refactor:2025-11-29] Layout 組件移至 components/Layout.tsx
- * 依據：eslint-plugin-react-refresh (只導出組件的文件才能 Fast Refresh)
+ * - 工具頁面（不預渲染）：
+ *   - `/color-scheme`: 內部工具
+ *   - `/update-prompt-test`: UpdatePrompt 測試
+ *   - `/*`: 404 頁面
  *
- * [fix:2025-12-04] 新增 importWithRetry 處理 chunk 載入失敗
- * 修復 "Unexpected token '<'" 錯誤
+ * [refactor:2026-01-15] 重構路由支援底部導覽列與模組化架構
+ * 依據：Phase 2 架構升級計畫 - 嵌套路由與 AppLayout 整合
  *
- * [fix:2025-12-25] 使用 ClientOnly 解決 React Hydration #418 錯誤
- * 原因：RateWise 組件依賴 localStorage、匯率數據等動態內容
- * 解法：使用 vite-react-ssg 的 ClientOnly 組件，確保只在客戶端渲染
- * 參考：[context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
+ * 參考：
+ * - [Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
+ * - [fix:2025-12-04] importWithRetry 處理 chunk 載入失敗
+ * - [fix:2025-12-25] ClientOnly 解決 React Hydration #418
  */
 
 import type { RouteRecord } from 'vite-react-ssg';
@@ -30,8 +33,12 @@ import type { ComponentType } from 'react';
 import { ClientOnly } from 'vite-react-ssg';
 import CurrencyConverter from './features/ratewise/RateWise';
 import { Layout } from './components/Layout';
+import { AppLayout } from './components/AppLayout';
 import { SkeletonLoader } from './components/SkeletonLoader';
 import { logger } from './utils/logger';
+import MultiConverter from './pages/MultiConverter';
+import Favorites from './pages/Favorites';
+import Settings from './pages/Settings';
 
 /**
  * 帶重試機制的動態 import
@@ -131,22 +138,56 @@ function createLazyRoute(
   };
 }
 
-// Route Configuration for vite-react-ssg
-// [fix:2025-12-04] 使用 createLazyRoute 處理 chunk 載入失敗
-// [fix:2025-12-25] 首頁使用 ClientOnly 避免 React Hydration #418 錯誤
+/**
+ * Route Configuration for vite-react-ssg
+ *
+ * [refactor:2026-01-15] 新增嵌套路由支援底部導覽列架構
+ * 架構：AppLayout（父路由）包含 4 個子路由（Single, Multi, Favorites, Settings）
+ *
+ * [fix:2025-12-04] 使用 createLazyRoute 處理 chunk 載入失敗
+ * [fix:2025-12-25] 首頁使用 ClientOnly 避免 React Hydration #418 錯誤
+ */
 export const routes: RouteRecord[] = [
+  // ✅ AppLayout 路由（底部導覽列 + 模組化架構）
   {
     path: '/',
-    element: (
-      <Layout>
-        <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
-      </Layout>
-    ),
-    entry: 'src/features/ratewise/RateWise',
+    element: <AppLayout />,
+    children: [
+      // 單幣別轉換器（首頁）
+      {
+        path: '',
+        element: (
+          <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
+        ),
+        entry: 'src/features/ratewise/RateWise',
+      },
+      // 多幣別轉換器
+      {
+        path: 'multi',
+        element: <MultiConverter />,
+        entry: 'src/pages/MultiConverter.tsx',
+      },
+      // 收藏與歷史
+      {
+        path: 'favorites',
+        element: <Favorites />,
+        entry: 'src/pages/Favorites.tsx',
+      },
+      // 應用程式設定
+      {
+        path: 'settings',
+        element: <Settings />,
+        entry: 'src/pages/Settings.tsx',
+      },
+    ],
   },
+
+  // ✅ Layout 路由（SEO 落地頁，保留原有結構）
   createLazyRoute('/faq', () => import('./pages/FAQ'), 'src/pages/FAQ.tsx'),
   createLazyRoute('/about', () => import('./pages/About'), 'src/pages/About.tsx'),
   createLazyRoute('/guide', () => import('./pages/Guide'), 'src/pages/Guide.tsx'),
+
+  // ✅ 13 個幣別落地頁（SEO 預渲染）
   createLazyRoute('/usd-twd', () => import('./pages/USDToTWD'), 'src/pages/USDToTWD.tsx'),
   createLazyRoute('/jpy-twd', () => import('./pages/JPYToTWD'), 'src/pages/JPYToTWD.tsx'),
   createLazyRoute('/eur-twd', () => import('./pages/EURToTWD'), 'src/pages/EURToTWD.tsx'),
@@ -160,6 +201,7 @@ export const routes: RouteRecord[] = [
   createLazyRoute('/thb-twd', () => import('./pages/THBToTWD'), 'src/pages/THBToTWD.tsx'),
   createLazyRoute('/nzd-twd', () => import('./pages/NZDToTWD'), 'src/pages/NZDToTWD.tsx'),
   createLazyRoute('/chf-twd', () => import('./pages/CHFToTWD'), 'src/pages/CHFToTWD.tsx'),
+
   // ❌ 不預渲染內部工具頁面
   createLazyRoute(
     '/color-scheme',
@@ -172,6 +214,7 @@ export const routes: RouteRecord[] = [
     'src/pages/UpdatePromptTest.tsx',
   ),
   createLazyRoute('/ui-showcase', () => import('./pages/UIShowcase'), 'src/pages/UIShowcase.tsx'),
+
   // ❌ 不預渲染 404 頁面（動態處理）
   createLazyRoute('*', () => import('./pages/NotFound'), 'src/pages/NotFound.tsx'),
 ];

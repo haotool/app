@@ -174,8 +174,19 @@
   }
 }
 
+/**
+ * [fix:2026-01-15] 移除 @apply 使用 CSS Variables 直接設定 body 樣式
+ * 原因：Tailwind JIT 無法解析 @apply 中使用的自定義 CSS Variable 類名
+ * 解法：直接使用 CSS Variables（rgb(var(--color-*)) 格式）
+ * 參考：commit 371af5fc
+ */
 body {
-  @apply bg-neutral-bg antialiased text-neutral-text-secondary;
+  background-color: rgb(var(--color-neutral-bg));
+  color: rgb(var(--color-neutral-text));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Noto Sans TC', system-ui, sans-serif;
+  line-height: 1.7;
 }
 
 /* PWA 更新通知動畫 - 2025 最佳實踐 */
@@ -232,5 +243,28 @@ body {
 
   .animate-pulse-soft {
     animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /**
+   * iOS Safe Area 支援
+   * [refactor:2026-01-15] 新增 iOS Safe Area 適配避開 Home Indicator
+   * 依據：Phase 2 架構升級計畫 - iOS Safe Area 適配
+   */
+  @supports (padding: max(0px)) {
+    .safe-area-inset-bottom {
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    /* 確保主內容區不被底部導覽列遮擋 */
+    main {
+      padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  /* 桌面版移除額外 padding */
+  @media (min-width: 768px) {
+    main {
+      padding-bottom: 1.5rem;
+    }
   }
 }
