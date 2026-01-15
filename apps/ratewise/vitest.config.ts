@@ -91,6 +91,9 @@ export default defineConfig(() => {
           // Runtime utility that requires browser APIs (Service Worker, sessionStorage, location.reload)
           // [fix:2025-12-04] Chunk load retry mechanism
           'src/utils/lazyWithRetry.ts',
+          // [fix:2026-01-16] Theme system modules - requires browser APIs (localStorage, matchMedia, DOM)
+          'src/hooks/useAppTheme.ts', // SSR-safe theme hook, requires browser APIs
+          'src/stores/converterStore.ts', // Zustand store, integration-tested via E2E
         ],
         thresholds: {
           // 基於 Linus Torvalds 哲學設置實用且可維護的門檻
