@@ -216,6 +216,10 @@ export default defineConfig(({ mode }) => {
             // SHA-256 hash of empty string for CSS-in-JS libraries (MUI/Emotion)
             "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
           ],
+          // [fix:2026-01-15] 允許外部 API 請求以載入匯率數據
+          // 參考: [context7:/mdn/content:2026-01-15] CSP connect-src directive
+          // connect-src 控制 fetch、XMLHttpRequest、WebSocket 等腳本介面的連接
+          'connect-src': ["'self'", 'https://raw.githubusercontent.com'],
         },
       }),
       // [fix:2025-11-07] 圖片優化 plugin - 自動生成多尺寸和現代格式

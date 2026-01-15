@@ -81,7 +81,7 @@ export function AppLayout() {
             flex-1
             px-4 py-6
             pb-20 md:pb-6
-            max-w-content mx-auto w-full
+            max-w-4xl mx-auto w-full
           "
         >
           <Outlet />

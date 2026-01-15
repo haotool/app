@@ -4,6 +4,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { SkeletonLoader } from './components/SkeletonLoader';
 import { useUrlNormalization } from './hooks/useUrlNormalization';
+import { AppLayout } from './components/AppLayout';
 import CurrencyConverter from './features/ratewise/RateWise';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
@@ -15,6 +16,10 @@ const ColorSchemeComparison = lazyWithRetry(() => import('./pages/ColorSchemeCom
 const USDToTWD = lazyWithRetry(() => import('./pages/USDToTWD'));
 // [SEO Fix 2025-11-25 Phase 2A-2] Lazy load 404 page with noindex SEO
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
+// [refactor:2026-01-15] 新增 App 架構頁面
+const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
+const Favorites = lazyWithRetry(() => import('./pages/Favorites'));
+const Settings = lazyWithRetry(() => import('./pages/Settings'));
 
 // [December Theme 2025-12-27] Lazy load December theme with snowflakes & Christmas tree
 // Only loads during December, automatically hidden other months
@@ -76,22 +81,30 @@ function App() {
       {/* [React Router v7] future flags 已成為默認行為，無需再指定 */}
       <Router basename={basename}>
         <UrlNormalizer>
-          <main className="min-h-screen">
-            {/* [SEO Fix 2025-11-26] 移除 sr-only H1，讓各頁面自定義語義 H1
-              依據：[Google SEO Guidelines] 每頁應有唯一的語義 H1
-              參考：[Context7:vite-react-ssg] Head component best practices */}
-            <Suspense fallback={<SkeletonLoader />}>
-              <Routes>
+          {/* [refactor:2026-01-15] 使用巢狀路由結構
+              - AppLayout 提供響應式導覽系統（桌面側邊欄 + 移動底部導覽）
+              - 核心功能（/、/multi、/favorites、/settings）使用 AppLayout
+              - SEO 落地頁（/faq、/about、/usd-twd 等）保持獨立佈局 */}
+          <Suspense fallback={<SkeletonLoader />}>
+            <Routes>
+              {/* 核心 App 路由 - 使用 AppLayout */}
+              <Route element={<AppLayout />}>
                 <Route path="/" element={<CurrencyConverter />} />
-                <Route path="/faq" element={<FAQ />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/usd-twd" element={<USDToTWD />} />
-                <Route path="/color-scheme" element={<ColorSchemeComparison />} />
-                {/* [SEO Fix 2025-11-25 Phase 2A-2] Catch-all 404 route with noindex */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </main>
+                <Route path="/multi" element={<MultiConverter />} />
+                <Route path="/favorites" element={<Favorites />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
+
+              {/* SEO 落地頁 - 獨立佈局 */}
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/usd-twd" element={<USDToTWD />} />
+              <Route path="/color-scheme" element={<ColorSchemeComparison />} />
+
+              {/* [SEO Fix 2025-11-25 Phase 2A-2] Catch-all 404 route with noindex */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </UrlNormalizer>
       </Router>
       {/* PWA 更新通知 - 品牌對齊風格 */}

@@ -1,14 +1,27 @@
+/**
+ * RateWise - 單幣別轉換器組件
+ *
+ * [refactor:2026-01-15] 重構為內容組件
+ * - 移除頁面級元素（背景、標題、Footer）
+ * - 專注於轉換器核心功能
+ * - 配合 AppLayout 使用
+ *
+ * 功能：
+ * - 單幣別/多幣別轉換
+ * - 即期/現金匯率切換
+ * - 轉換歷史記錄
+ * - 收藏貨幣列表
+ * - 幣種列表與趨勢
+ */
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
-import { MultiConverter } from './components/MultiConverter';
+// import { MultiConverter } from './components/MultiConverter'; // [refactor:2026-01-15] 移至獨立頁面
 import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
 import { ConversionHistory } from './components/ConversionHistory';
-import { VersionDisplay } from '../../components/VersionDisplay';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator';
 import { formatDisplayTime } from '../../utils/timeFormatter';
@@ -134,25 +147,20 @@ const RateWise = () => {
     [lastUpdate, lastFetchedAt],
   );
 
+  // [refactor:2026-01-15] 單幣別轉換器專用
+  // 移除多幣別相關變量：mode, multiAmounts, baseCurrency, sortedCurrencies, setMode, setBaseCurrency, handleMultiAmountChange
   const {
-    mode,
     fromCurrency,
     toCurrency,
     fromAmount,
     toAmount,
     favorites,
-    multiAmounts,
-    baseCurrency,
     history,
     trend,
-    sortedCurrencies,
-    setMode,
     setFromCurrency,
     setToCurrency,
-    setBaseCurrency,
     handleFromAmountChange,
     handleToAmountChange,
-    handleMultiAmountChange,
     quickAmount,
     swapCurrencies,
     toggleFavorite,
@@ -208,46 +216,8 @@ const RateWise = () => {
     );
   }
 
-  const modeToggleButton = (
-    <div className="inline-flex bg-gradient-to-r from-brand-from to-brand-to rounded-lg p-0.5 shadow-sm border border-brand-decoration/50">
-      <button
-        onClick={() => setMode('single')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
-          mode === 'single'
-            ? 'bg-brand-button-to hover:bg-brand-button-hover-to text-white shadow-md scale-105'
-            : 'text-neutral-text-secondary hover:text-neutral-text hover:bg-white/50'
-        }`}
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <span className="text-xs font-semibold">單幣別</span>
-      </button>
-      <button
-        onClick={() => setMode('multi')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
-          mode === 'multi'
-            ? 'bg-brand-button-from hover:bg-brand-button-hover-from text-white shadow-md scale-105'
-            : 'text-neutral-text-secondary hover:text-neutral-text hover:bg-white/50'
-        }`}
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-        <span className="text-xs font-semibold">多幣別</span>
-      </button>
-    </div>
-  );
+  // [refactor:2026-01-15] 移除 modeToggleButton
+  // 單幣別/多幣別切換改由底部導覽列處理
 
   return (
     <>
@@ -262,283 +232,101 @@ const RateWise = () => {
         />
       )}
 
-      <div
-        ref={mainRef}
-        className="min-h-screen bg-gradient-to-br from-brand-from via-brand-via to-brand-to p-3 md:p-8"
-      >
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-2">
-            <div className="flex items-center justify-center gap-0 mb-0.5">
-              {/* [fix:2025-12-24] 使用簡單 img 標籤避免 SSG hydration 問題
-                  原因：<picture> 標籤的動態路徑在 SSG 預渲染時無法正確解析
-                  解決：使用相對路徑的 PNG，瀏覽器會自動處理 base path */}
-              <img
-                alt="RateWise Logo"
-                className="w-16 h-16 md:w-20 md:h-20"
-                width="112"
-                height="112"
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
-                src="logo.png"
-              />
-              <h1
-                className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-text to-brand-text-dark"
-                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 700 }}
-              >
-                RateWise 匯率好工具
-              </h1>
-            </div>
-            <p
-              className="text-sm text-neutral-text-secondary"
-              style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-            >
-              {ratesLoading ? '載入即時匯率中...' : '即時匯率換算 · 精準可靠'}
-            </p>
+      {/* [refactor:2026-01-15] 移除 min-h-screen 和頁面級背景
+          改為由 AppLayout 處理整體頁面結構
+          此組件專注於內容區域的渲染 */}
+      <div ref={mainRef} className="space-y-4">
+        {/* 狀態提示區 */}
+        {ratesLoading && (
+          <div className="text-center text-sm text-neutral-text-secondary py-2">
+            載入即時匯率中...
           </div>
+        )}
 
-          <div className="grid md:grid-cols-3 gap-4 md:gap-6">
-            <div className="md:col-span-2">
-              <div className="bg-white rounded-3xl shadow-xl p-6">
-                <div className="flex justify-center mb-4">{modeToggleButton}</div>
-
-                {mode === 'single' ? (
-                  <SingleConverter
-                    fromCurrency={fromCurrency}
-                    toCurrency={toCurrency}
-                    fromAmount={fromAmount}
-                    toAmount={toAmount}
-                    exchangeRates={exchangeRates}
-                    details={details}
-                    rateType={rateType}
-                    onFromCurrencyChange={setFromCurrency}
-                    onToCurrencyChange={setToCurrency}
-                    onFromAmountChange={handleFromAmountChange}
-                    onToAmountChange={handleToAmountChange}
-                    onQuickAmount={quickAmount}
-                    onSwapCurrencies={swapCurrencies}
-                    onAddToHistory={addToHistory}
-                    onRateTypeChange={setRateType}
-                  />
-                ) : (
-                  <MultiConverter
-                    sortedCurrencies={sortedCurrencies}
-                    multiAmounts={multiAmounts}
-                    baseCurrency={baseCurrency}
-                    favorites={favorites}
-                    rateType={rateType}
-                    details={details}
-                    onAmountChange={handleMultiAmountChange}
-                    onQuickAmount={quickAmount}
-                    onToggleFavorite={toggleFavorite}
-                    onRateTypeChange={setRateType}
-                    onBaseCurrencyChange={setBaseCurrency}
-                  />
-                )}
-              </div>
-
-              {mode === 'single' && (
-                <ConversionHistory
-                  history={history}
-                  onReconvert={reconvertFromHistory}
-                  onClearAll={clearAllHistory}
-                />
-              )}
-            </div>
-
-            <div className="space-y-4 md:space-y-6">
-              <FavoritesList favorites={favorites} trend={trend} exchangeRates={exchangeRates} />
-              <CurrencyList
-                favorites={favorites}
-                trend={trend}
+        {/* 主要轉換區塊 */}
+        <div className="grid md:grid-cols-3 gap-4 md:gap-6">
+          <div className="md:col-span-2">
+            {/* [refactor:2026-01-15] 單幣別轉換器
+                多幣別功能已移至獨立頁面 (/multi) */}
+            <div className="bg-white dark:bg-neutral-dark rounded-2xl shadow-lg p-4 md:p-6">
+              <SingleConverter
+                fromCurrency={fromCurrency}
+                toCurrency={toCurrency}
+                fromAmount={fromAmount}
+                toAmount={toAmount}
                 exchangeRates={exchangeRates}
-                onToggleFavorite={toggleFavorite}
-                onRefreshTrends={generateTrends}
+                details={details}
+                rateType={rateType}
+                onFromCurrencyChange={setFromCurrency}
+                onToCurrencyChange={setToCurrency}
+                onFromAmountChange={handleFromAmountChange}
+                onToAmountChange={handleToAmountChange}
+                onQuickAmount={quickAmount}
+                onSwapCurrencies={swapCurrencies}
+                onAddToHistory={addToHistory}
+                onRateTypeChange={setRateType}
               />
             </div>
+
+            {/* 轉換歷史記錄 */}
+            <ConversionHistory
+              history={history}
+              onReconvert={reconvertFromHistory}
+              onClearAll={clearAllHistory}
+            />
           </div>
 
-          {/* FAQ 精選摘要（對齊首頁 JSON-LD，提升 Rich Result 一致性） */}
-          <section className="mt-10">
-            <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center font-bold">
-                  ?
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-neutral-text">常見問題精選</h2>
-                  <p className="text-sm text-neutral-text-secondary">
-                    首頁摘要，完整內容請見 FAQ 頁面
-                  </p>
-                </div>
-              </div>
-              <dl className="space-y-4">
-                {HOMEPAGE_FAQ.map((item) => (
-                  <div
-                    key={item.question}
-                    className="border border-neutral rounded-2xl p-4 md:p-5 hover:shadow-sm transition-shadow bg-gradient-to-r from-neutral-bg to-white"
-                  >
-                    <dt className="text-base md:text-lg font-semibold text-neutral-text mb-1">
-                      {item.question}
-                    </dt>
-                    <dd className="text-sm md:text-base text-neutral-text-secondary leading-relaxed">
-                      {item.answer}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="mt-4">
-                <Link
-                  to="/faq/"
-                  className="inline-flex items-center gap-2 text-primary font-semibold hover:text-primary-dark transition-colors"
-                >
-                  查看完整 FAQ
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </Link>
-              </div>
-            </div>
-          </section>
-
-          {/* 行動版簡潔 footer - 電腦版使用 Footer 組件 */}
-          <footer className="md:hidden mt-12 -mx-3 -mb-3 bg-gradient-to-br from-footer-from via-footer-via to-footer-to text-neutral">
-            <div className="max-w-6xl mx-auto px-4 py-8">
-              {/* 數據來源與更新時間 - 現代化簡約設計 */}
-              {!ratesLoading && lastUpdate && (
-                <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
-                  <a
-                    href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
-                  >
-                    <svg
-                      className="w-4 h-4 text-white group-hover:scale-110 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-white">
-                      Taiwan Bank (臺灣銀行牌告匯率)
-                    </span>
-                    <svg
-                      className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
-                  </a>
-                  <div className="flex items-center gap-2 text-sm text-white/80">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span>更新時間 {formattedLastUpdate}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* 免責聲明 - 簡化設計 */}
-              <div className="text-center mb-6">
-                <p className="text-xs text-white/70 leading-relaxed">
-                  本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）·
-                  實際交易匯率以各銀行公告為準
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
-                <Link
-                  to="/faq/"
-                  className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-                >
-                  <span aria-hidden="true" className="text-white/50">
-                    ?
-                  </span>
-                  常見問題
-                </Link>
-                <Link
-                  to="/about/"
-                  className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-                >
-                  <span aria-hidden="true" className="text-white/50">
-                    i
-                  </span>
-                  關於我們
-                </Link>
-              </div>
-
-              {/* 分隔線 */}
-              <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-6" />
-
-              {/* 版權與品牌 - 極簡設計 */}
-              <div className="flex flex-col items-center justify-center gap-3 text-sm">
-                {/* 品牌名稱與版本 */}
-                <div className="flex items-center gap-2 text-white/90">
-                  {/* 匯率趨勢圖標 */}
-                  <div className="w-5 h-5 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.5}
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                      />
-                    </svg>
-                  </div>
-                  <span className="font-semibold">匯率好工具</span>
-                  <span className="text-white/50">•</span>
-                  <VersionDisplay />
-                  <span className="text-white/50">•</span>
-                  <span className="text-white/70" suppressHydrationWarning>
-                    © 2025
-                  </span>
-                </div>
-
-                {/* 作者資訊 */}
-                <div className="flex items-center gap-1.5 text-white/80">
-                  <span>By</span>
-                  <a
-                    href="https://www.threads.net/@azlife_1224"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/90 hover:text-white transition-colors duration-200 font-medium"
-                  >
-                    azlife_1224
-                  </a>
-                </div>
-              </div>
-            </div>
-          </footer>
+          {/* 側欄區塊（桌面版顯示） */}
+          <div className="space-y-4">
+            <FavoritesList favorites={favorites} trend={trend} exchangeRates={exchangeRates} />
+            <CurrencyList
+              favorites={favorites}
+              trend={trend}
+              exchangeRates={exchangeRates}
+              onToggleFavorite={toggleFavorite}
+              onRefreshTrends={generateTrends}
+            />
+          </div>
         </div>
+
+        {/* [refactor:2026-01-15] 移除 FAQ 精選和行動版 Footer
+            - FAQ 精選移至獨立區塊或 FAQ 頁面連結
+            - Footer 由 AppLayout 統一處理
+            - 保留資料來源顯示，移至更新時間旁 */}
+
+        {/* 更新時間與資料來源 */}
+        {!ratesLoading && lastUpdate && (
+          <div className="mt-4 flex items-center justify-center gap-4 text-sm text-neutral-text-secondary">
+            <a
+              href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              臺灣銀行牌告
+            </a>
+            <span>•</span>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              {formattedLastUpdate}
+            </span>
+          </div>
+        )}
       </div>
     </>
   );

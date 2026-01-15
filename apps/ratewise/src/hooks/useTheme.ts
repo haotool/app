@@ -10,6 +10,7 @@
  * - 自動更新 HTML data-theme attribute
  * - 支援系統偏好檢測（prefers-color-scheme）
  * - 支援自動跟隨系統模式 ('auto')
+ * - 防止閃爍：使用 updater function 避免不必要的 re-render
  *
  * @usage
  * ```tsx
@@ -26,7 +27,9 @@
  * @see src/index.css - CSS Variables 定義
  *
  * @created 2026-01-13
- * @version 2.0.0 - 新增 auto 模式支援
+ * @updated 2026-01-15 - 修復閃爍問題（使用 updater function）
+ * @version 2.0.1 - 防閃爍優化
+ * @reference [context7:/websites/react_dev:useEffect:2026-01-15]
  */
 
 import { useEffect, useState } from 'react';
@@ -133,7 +136,13 @@ export function useTheme() {
     if (mode === 'auto') {
       const handleChange = (e: MediaQueryListEvent) => {
         const newTheme = e.matches ? 'dark' : 'light';
-        setThemeState(newTheme);
+        // 只在主題真的改變時才更新（防止閃爍）
+        setThemeState((currentTheme) => {
+          if (currentTheme !== newTheme) {
+            return newTheme;
+          }
+          return currentTheme;
+        });
       };
 
       // 監聽變更
@@ -148,7 +157,7 @@ export function useTheme() {
     return undefined;
   }, [mode]);
 
-  // 應用主題到 DOM（不寫入 localStorage）
+  // 應用主題到 DOM（使用 useEffect 而非 useLayoutEffect 避免 SSR 警告）
   useEffect(() => {
     if (typeof document === 'undefined') return;
     document.documentElement.setAttribute('data-theme', theme);
@@ -160,11 +169,19 @@ export function useTheme() {
    * @param {ThemeMode} newMode - 新的主題模式 ('light' | 'dark' | 'auto')
    */
   const setTheme = (newMode: ThemeMode) => {
-    setMode(newMode);
-
     // 解析實際應用的主題
     const resolvedTheme = resolveTheme(newMode);
-    setThemeState(resolvedTheme);
+
+    // 只在主題真的改變時才更新（防止不必要的 re-render）
+    setThemeState((currentTheme) => {
+      if (currentTheme !== resolvedTheme) {
+        return resolvedTheme;
+      }
+      return currentTheme;
+    });
+
+    // 更新模式（這應該在 theme 更新後）
+    setMode(newMode);
 
     // 儲存用戶選擇到 localStorage
     try {
