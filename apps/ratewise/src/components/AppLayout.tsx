@@ -1,31 +1,26 @@
 /**
- * App Layout Component
+ * App Layout Component - ParkKeeper Style
  *
  * 整合底部導覽列（移動端）與側邊欄導覽（桌面端）的主要佈局組件
- * 使用 React Router 的 Outlet 渲染子路由
+ * 參考 ParkKeeper 設計風格：
+ * - 毛玻璃 Header（backdrop-blur-xl + bg-background/80）
+ * - 極細邊框（border-black/[0.03]）
+ * - 品牌 Logo + 標題組合
  *
  * 佈局結構：
  * ```
- * <div> (flex container)
- *   <SideNavigation /> (hidden md:block - 桌面版)
- *   <div> (main area)
- *     <Header /> (簡化的標題列)
- *     <main> (內容區 + Outlet)
- *     <BottomNavigation /> (md:hidden - 移動版)
- *   </div>
+ * <div class="h-screen flex flex-col overflow-hidden">
+ *   <Header /> (sticky, glass effect)
+ *   <main class="flex-1 overflow-hidden">
+ *     <Outlet /> (內容區)
+ *   </main>
+ *   <BottomNavigation /> (fixed bottom)
  * </div>
  * ```
  *
- * 響應式策略：
- * - < 768px: 底部導覽列 + 全寬內容區
- * - ≥ 768px: 側邊欄導覽 + 內容區
- *
- * iOS Safe Area 適配：
- * - 移動端主內容區底部留出 4rem + safe-area-inset-bottom 空間
- * - 桌面端移除額外 padding
- *
- * [refactor:2026-01-15] 新增 AppLayout 整合導覽系統
- * 依據：Phase 2 架構升級計畫 - AppLayout 設計
+ * @reference ParkKeeper UI Design
+ * @created 2026-01-15
+ * @updated 2026-01-16 - ParkKeeper 風格重構
  */
 
 import { Outlet } from 'react-router-dom';
@@ -34,25 +29,73 @@ import { SideNavigation } from './SideNavigation';
 import { ThemeToggle } from './ThemeToggle';
 
 /**
- * Header 組件（簡化版）
+ * Logo 組件 - 參考 ParkKeeper 的 SVG Logo 風格
+ */
+function Logo() {
+  return (
+    <svg viewBox="0 0 40 40" className="w-8 h-8">
+      {/* 圓角矩形框 */}
+      <rect
+        x="6"
+        y="6"
+        width="28"
+        height="28"
+        rx="8"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        fill="none"
+      />
+      {/* R 字母 */}
+      <path
+        d="M 15 28 L 15 12 L 22 12 C 25 12 26 13 26 16 C 26 19 25 20 22 20 L 15 20"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        fill="none"
+      />
+      {/* 主題色裝飾圓點 */}
+      <circle cx="28" cy="28" r="4" fill="rgb(var(--color-accent))" />
+    </svg>
+  );
+}
+
+/**
+ * Header 組件 - ParkKeeper 風格
  *
- * 移動端顯示簡化的標題列
- * 桌面端可以顯示完整導航（未來擴展）
+ * 特點：
+ * - 毛玻璃背景
+ * - 品牌 Logo + 標題
+ * - 主題切換按鈕
  */
 function Header() {
   return (
     <header
       className="
-        sticky top-0 z-40
-        bg-white/95 dark:bg-neutral-dark/95
-        backdrop-blur-md
-        border-b border-neutral-light dark:border-neutral-border
-        px-4 py-3
-        md:hidden
+        px-6 pb-4 pt-safe-top z-30
+        bg-background/80 backdrop-blur-xl
+        border-b border-black/[0.03] dark:border-white/[0.03]
       "
     >
-      <div className="flex items-center justify-between max-w-content mx-auto">
-        <h1 className="text-lg font-bold text-neutral-text">RateWise</h1>
+      <div className="flex justify-between items-center max-w-md mx-auto w-full pt-4">
+        {/* 品牌 Logo + 標題 */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center">
+            <Logo />
+          </div>
+          <h1
+            className="
+              text-2xl font-black tracking-tight
+              bg-clip-text text-transparent
+              bg-gradient-to-r from-[rgb(var(--color-text))] to-[rgb(var(--color-primary))]
+            "
+            style={{
+              WebkitBackgroundClip: 'text',
+            }}
+          >
+            RateWise
+          </h1>
+        </div>
+
+        {/* 主題切換按鈕 */}
         <ThemeToggle />
       </div>
     </header>
@@ -62,33 +105,37 @@ function Header() {
 /**
  * AppLayout 組件
  *
- * 主要佈局組件，整合響應式導覽系統
+ * ParkKeeper 風格主佈局
  */
 export function AppLayout() {
   return (
-    <div className="flex min-h-screen">
-      {/* 桌面版側邊欄（≥ 768px 顯示） */}
-      <SideNavigation className="hidden md:block" />
+    <div
+      className="h-screen w-full flex flex-col overflow-hidden font-sans"
+      style={{
+        backgroundColor: 'rgb(var(--color-background))',
+        color: 'rgb(var(--color-text))',
+      }}
+    >
+      {/* 桌面版側邊欄（≥ 768px 顯示） - 移至內容區旁 */}
+      <div className="flex flex-1 overflow-hidden">
+        <SideNavigation className="hidden md:block" />
 
-      {/* 主要內容區 */}
-      <div className="flex-1 flex flex-col">
-        {/* 簡化的 Header（移動端） */}
-        <Header />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header（移動端） */}
+          <div className="md:hidden">
+            <Header />
+          </div>
 
-        {/* 內容區（Outlet 渲染子路由） */}
-        <main
-          className="
-            flex-1
-            px-4 py-6
-            pb-20 md:pb-6
-            max-w-4xl mx-auto w-full
-          "
-        >
-          <Outlet />
-        </main>
+          {/* 主內容區 */}
+          <main className="flex-1 relative overflow-hidden">
+            <div className="h-full">
+              <Outlet />
+            </div>
+          </main>
 
-        {/* 移動版底部導覽列（< 768px 顯示） */}
-        <BottomNavigation />
+          {/* 移動版底部導覽列（< 768px 顯示） */}
+          <BottomNavigation />
+        </div>
       </div>
     </div>
   );

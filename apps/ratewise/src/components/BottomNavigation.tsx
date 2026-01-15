@@ -1,21 +1,21 @@
 /**
- * Bottom Navigation Component
+ * Bottom Navigation Component - ParkKeeper Style
  *
- * 移動端底部導覽列，提供 4 大功能模組快速切換：
- * - 單幣別轉換 (Single Converter) - CreditCard 圖標
- * - 多幣別轉換 (Multi Converter) - Globe 圖標
- * - 收藏與歷史 (Favorites) - Star 圖標
- * - 設定 (Settings) - Settings 圖標
+ * 移動端底部導覽列，參考 ParkKeeper 設計風格：
+ * - 毛玻璃效果背景（backdrop-blur-xl + bg-background/80）
+ * - 極細邊框（border-black/[0.02]）
+ * - 上標籤風格（text-[9px] + uppercase + tracking-[0.2em]）
+ * - 選中指示條動畫
  *
- * 設計特性：
- * - 移動優先（< 768px 顯示，≥ 768px 隱藏）
- * - iOS Safe Area 適配（env(safe-area-inset-bottom)）
- * - 毛玻璃效果背景（backdrop-blur-md）
- * - ARIA 無障礙性支援
- * - lucide-react 輕量化圖標（1KB/icon）
+ * 導覽項目：
+ * - 單幣別轉換 (Single Converter)
+ * - 多幣別轉換 (Multi Converter)
+ * - 收藏與歷史 (Favorites)
+ * - 設定 (Settings)
  *
- * [refactor:2026-01-15] 新增底部導覽列組件支援模組化架構
- * 依據：Phase 2 架構升級計畫 - 底部導覽列設計
+ * @reference ParkKeeper UI Design
+ * @created 2026-01-15
+ * @updated 2026-01-16 - ParkKeeper 風格重構
  */
 
 import { Link, useLocation } from 'react-router-dom';
@@ -27,7 +27,7 @@ import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 interface NavItem {
   path: string;
   label: string;
-  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean; strokeWidth?: number }>;
   ariaLabel: string;
 }
 
@@ -64,9 +64,10 @@ const navItems: NavItem[] = [
 /**
  * BottomNavigation 組件
  *
- * 使用 React Router 的 Link 和 useLocation 實現導覽
- * 使用 lucide-react 的輕量化圖標
- * 使用 Tailwind CSS 的語義化 Design Token
+ * ParkKeeper 風格導覽列：
+ * - 毛玻璃效果
+ * - 選中狀態指示條
+ * - 極簡文字標籤
  */
 export function BottomNavigation() {
   const location = useLocation();
@@ -74,16 +75,14 @@ export function BottomNavigation() {
   return (
     <nav
       className="
-        fixed bottom-0 left-0 right-0 z-50
-        bg-white/95 dark:bg-neutral-dark/95
-        backdrop-blur-md
-        border-t border-neutral-light dark:border-neutral-border
-        safe-area-inset-bottom
+        fixed bottom-0 inset-x-0 h-20 pb-safe-bottom z-30
+        bg-background/80 backdrop-blur-xl
+        border-t border-black/[0.02] dark:border-white/[0.02]
         md:hidden
       "
       aria-label="主要導航"
     >
-      <div className="flex items-center justify-around h-16">
+      <div className="flex h-full max-w-md mx-auto relative px-6">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -92,20 +91,50 @@ export function BottomNavigation() {
             <Link
               key={item.path}
               to={item.path}
-              className={`
-                flex flex-col items-center justify-center
-                flex-1 h-full
-                transition-colors duration-200
-                ${isActive ? 'text-primary' : 'text-neutral-text-muted hover:text-neutral-text'}
-              `}
+              className="flex-1 h-full"
               aria-label={item.ariaLabel}
               aria-current={isActive ? 'page' : undefined}
             >
-              <Icon
-                className={`w-6 h-6 mb-1 ${isActive ? 'text-primary' : ''}`}
-                aria-hidden={true}
-              />
-              <span className="text-xs font-medium">{item.label}</span>
+              <button
+                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group"
+                tabIndex={-1}
+              >
+                {/* 圖標 */}
+                <div
+                  className={`
+                    transition-all duration-300
+                    ${isActive ? 'text-primary scale-105' : 'opacity-30 group-hover:opacity-50'}
+                  `}
+                >
+                  <Icon
+                    className="w-[22px] h-[22px]"
+                    strokeWidth={isActive ? 2.5 : 2}
+                    aria-hidden={true}
+                  />
+                </div>
+
+                {/* 標籤 - ParkKeeper 風格 */}
+                <span
+                  className={`
+                    text-[9px] font-black uppercase tracking-[0.2em]
+                    transition-all duration-300
+                    ${isActive ? 'text-primary' : 'opacity-30'}
+                  `}
+                >
+                  {item.label}
+                </span>
+
+                {/* 選中指示條 */}
+                {isActive && (
+                  <div
+                    className="absolute bottom-0 w-8 h-1 rounded-t-full"
+                    style={{
+                      backgroundColor: 'rgb(var(--color-primary))',
+                      transformOrigin: '50% 50% 0px',
+                    }}
+                  />
+                )}
+              </button>
             </Link>
           );
         })}
