@@ -126,13 +126,7 @@ export function BottomNavigation() {
 
                 {/* 選中指示條 */}
                 {isActive && (
-                  <div
-                    className="absolute bottom-0 w-8 h-1 rounded-t-full"
-                    style={{
-                      backgroundColor: 'rgb(var(--color-primary))',
-                      transformOrigin: '50% 50% 0px',
-                    }}
-                  />
+                  <div className="absolute bottom-0 w-8 h-1 rounded-t-full bg-[rgb(var(--color-primary))] origin-center" />
                 )}
               </button>
             </Link>

@@ -81,16 +81,16 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
       className={`
         ${className}
         w-64
-        bg-white dark:bg-neutral-dark
-        border-r border-neutral-light dark:border-neutral-border
+        bg-[rgb(var(--color-surface))]
+        border-r border-[rgb(var(--color-border))]
         flex flex-col
       `}
       aria-label="主要導航"
     >
       {/* Logo / Brand */}
-      <div className="px-6 py-4 border-b border-neutral-light dark:border-neutral-border">
-        <h1 className="text-xl font-bold text-neutral-text">RateWise</h1>
-        <p className="text-xs text-neutral-text-muted mt-1">匯率換算工具</p>
+      <div className="px-6 py-4 border-b border-[rgb(var(--color-border))]">
+        <h1 className="text-xl font-bold text-[rgb(var(--color-text))]">RateWise</h1>
+        <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">匯率換算工具</p>
       </div>
 
       {/* Navigation Items */}
@@ -110,14 +110,17 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
                 transition-colors duration-200
                 ${
                   isActive
-                    ? 'bg-primary-light text-primary-text font-medium'
-                    : 'text-neutral-text-muted hover:bg-neutral-light hover:text-neutral-text'
+                    ? 'bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-primary))] font-medium'
+                    : 'text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-border)/0.5)] hover:text-[rgb(var(--color-text))]'
                 }
               `}
               aria-label={item.ariaLabel}
               aria-current={isActive ? 'page' : undefined}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-primary' : ''}`} aria-hidden={true} />
+              <Icon
+                className={`w-5 h-5 ${isActive ? 'text-[rgb(var(--color-primary))]' : ''}`}
+                aria-hidden={true}
+              />
               <span className="text-sm">{item.label}</span>
             </Link>
           );
@@ -125,8 +128,8 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
       </nav>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-neutral-light dark:border-neutral-border">
-        <p className="text-xs text-neutral-text-muted">版本 v2.0.0</p>
+      <div className="px-6 py-4 border-t border-[rgb(var(--color-border))]">
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">版本 v2.0.0</p>
       </div>
     </aside>
   );

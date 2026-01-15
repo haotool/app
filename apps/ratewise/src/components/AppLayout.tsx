@@ -86,10 +86,8 @@ function Header() {
               text-2xl font-black tracking-tight
               bg-clip-text text-transparent
               bg-gradient-to-r from-[rgb(var(--color-text))] to-[rgb(var(--color-primary))]
+              [--webkit-background-clip:text]
             "
-            style={{
-              WebkitBackgroundClip: 'text',
-            }}
           >
             RateWise
           </h1>
@@ -109,13 +107,7 @@ function Header() {
  */
 export function AppLayout() {
   return (
-    <div
-      className="h-screen w-full flex flex-col overflow-hidden font-sans"
-      style={{
-        backgroundColor: 'rgb(var(--color-background))',
-        color: 'rgb(var(--color-text))',
-      }}
-    >
+    <div className="h-screen w-full flex flex-col overflow-hidden font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))]">
       {/* 桌面版側邊欄（≥ 768px 顯示） - 移至內容區旁 */}
       <div className="flex flex-1 overflow-hidden">
         <SideNavigation className="hidden md:block" />
