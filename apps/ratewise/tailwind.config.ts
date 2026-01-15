@@ -71,11 +71,15 @@ export default {
         // 保留舊版 token 向後相容
         ...generateTailwindThemeExtension().extend?.colors,
       },
-      // 現代化圓角
+      // 現代化圓角 - ParkKeeper 風格
       borderRadius: {
-        lg: '0.75rem',
-        md: '0.5rem',
-        sm: '0.375rem',
+        '4xl': '2rem', // 超大圓角
+        '3xl': '1.5rem', // 卡片預設
+        '2xl': '1rem', // 按鈕、輸入框
+        xl: '0.75rem',
+        lg: '0.5rem',
+        md: '0.375rem',
+        sm: '0.25rem',
       },
       // 現代化陰影（微妙、扁平）
       boxShadow: {

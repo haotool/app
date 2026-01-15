@@ -248,7 +248,7 @@ const RateWise = () => {
           <div className="md:col-span-2">
             {/* [refactor:2026-01-15] 單幣別轉換器
                 多幣別功能已移至獨立頁面 (/multi) */}
-            <div className="bg-white dark:bg-neutral-dark rounded-2xl shadow-lg p-4 md:p-6">
+            <div className="card p-4 md:p-6">
               <SingleConverter
                 fromCurrency={fromCurrency}
                 toCurrency={toCurrency}
