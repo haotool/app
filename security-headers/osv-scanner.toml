@@ -1,0 +1,14 @@
+# OSV-Scanner Configuration for security-headers
+# [ref:https://google.github.io/osv-scanner/configuration/]
+#
+# 這個設定檔僅適用於 security-headers 目錄下的 package-lock.json
+# 
+# GHSA-g9mf-h72j-4rw9: undici 低風險漏洞 (CVSS 3.7)
+# - 這是 wrangler -> miniflare -> undici 的間接依賴
+# - 低風險的 HTTP 解析問題，不影響生產環境
+# - wrangler 尚未更新 miniflare 版本，待上游修復
+# - [fix:2026-01-16]
+
+[[IgnoredVulns]]
+id = "GHSA-g9mf-h72j-4rw9"
+reason = "Low severity (CVSS 3.7), dev dependency via wrangler/miniflare, waiting for upstream fix"
