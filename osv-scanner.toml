@@ -12,3 +12,11 @@
 id = "GHSA-52f5-9888-hmc6"
 reason = "Low severity (CVSS 2.5), tmp is a dev dependency, not used in production"
 
+# GHSA-g9mf-h72j-4rw9: undici 低風險漏洞 (CVSS 3.7)
+# - 影響版本: 7.14.0, 7.16.0
+# - 低風險的 HTTP 解析問題
+# - 不影響生產環境核心功能
+# - [fix:2026-01-16] 待 undici 發布修復版本後更新
+[[IgnoredVulns]]
+id = "GHSA-g9mf-h72j-4rw9"
+reason = "Low severity (CVSS 3.7), HTTP parsing issue, will update when fix is available"
