@@ -81,11 +81,14 @@ describe('RateWise Component', () => {
       json: () => Promise.resolve(mockRatesResponse),
     } as Response);
     vi.stubGlobal('fetch', fetchMock);
+    // [fix:2026-01-16] 使用 setTimeout 延遲執行避免 motion-dom 無限遞迴
+    let rafId = 0;
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-      callback(performance.now());
-      return 0;
+      rafId++;
+      setTimeout(() => callback(performance.now()), 0);
+      return rafId;
     });
-    vi.stubGlobal('cancelAnimationFrame', () => {});
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
 
   afterEach(() => {
@@ -93,16 +96,26 @@ describe('RateWise Component', () => {
   });
 
   describe('Basic Rendering', () => {
-    it('renders main headline', () => {
+    /**
+     * [refactor:2026-01-16] 標題測試已移除
+     * 標題現由 AppLayout 組件（Header）渲染，RateWise 是純內容組件
+     */
+    it('renders currency converter UI', () => {
       renderWithProviders(<RateWise />);
-      // Use getByRole for heading to avoid duplicate text matches
-      expect(screen.getByRole('heading', { name: 'RateWise 匯率好工具' })).toBeInTheDocument();
+      // 應顯示金額輸入欄位
+      const inputs = screen.getAllByPlaceholderText('0.00');
+      expect(inputs.length).toBeGreaterThan(0);
     });
 
-    it('renders in single mode by default', () => {
+    /**
+     * [refactor:2026-01-16] 新架構：RateWise 現為純單幣別組件
+     * 「單幣別/多幣別」切換已移至底部導覽列路由
+     */
+    it('renders single currency converter card', () => {
       renderWithProviders(<RateWise />);
-      expect(screen.getByText('單幣別')).toBeInTheDocument();
-      expect(screen.getByText('多幣別')).toBeInTheDocument();
+      // 應顯示貨幣選擇器
+      const selects = screen.getAllByRole('combobox');
+      expect(selects.length).toBeGreaterThanOrEqual(2); // from + to
     });
 
     // Note: Quick amount buttons are tested in "Currency Conversion > updates amount when quick button is clicked"
@@ -163,59 +176,21 @@ describe('RateWise Component', () => {
     });
   });
 
-  describe('Mode Switching', () => {
-    it('switches from single to multi mode', async () => {
-      renderWithProviders(<RateWise />);
-
-      const multiButton = screen.getByText('多幣別');
-      fireEvent.click(multiButton);
-
-      await waitFor(() => {
-        // In multi mode, mode preference should be saved to localStorage
-        expect(localStorage.getItem('currencyConverterMode')).toBe('multi');
-      });
-    });
-
-    it('switches from multi to single mode', async () => {
-      renderWithProviders(<RateWise />);
-
-      // Switch to multi first
-      const multiButton = screen.getByText('多幣別');
-      fireEvent.click(multiButton);
-
-      await waitFor(() => {
-        expect(localStorage.getItem('currencyConverterMode')).toBe('multi');
-      });
-
-      // Switch back to single
-      const singleButton = screen.getByText('單幣別');
-      fireEvent.click(singleButton);
-
-      await waitFor(() => {
-        expect(localStorage.getItem('currencyConverterMode')).toBe('single');
-      });
-    });
-  });
+  /**
+   * [refactor:2026-01-16] 模式切換測試已移除
+   *
+   * 新架構：單幣別/多幣別功能已拆分為獨立路由
+   * - /single - 單幣別轉換（RateWise 組件）
+   * - /multi - 多幣別轉換（MultiCurrency 頁面）
+   *
+   * 模式切換現由底部導覽列處理，不再是 RateWise 組件的責任
+   */
 
   describe('LocalStorage Persistence', () => {
-    it('persists mode preference to localStorage', async () => {
-      renderWithProviders(<RateWise />);
-
-      const multiButton = screen.getByText('多幣別');
-      fireEvent.click(multiButton);
-
-      await waitFor(() => {
-        expect(localStorage.getItem('currencyConverterMode')).toBe('multi');
-      });
-    });
-
-    it('loads mode from localStorage on mount', () => {
-      localStorage.setItem('currencyConverterMode', 'multi');
-      renderWithProviders(<RateWise />);
-
-      // Component should initialize with multi mode
-      expect(screen.getByText('多幣別')).toBeInTheDocument();
-    });
+    /**
+     * [refactor:2026-01-16] 移除模式持久化測試
+     * 模式切換已移至底部導覽列路由，RateWise 只處理單幣別
+     */
 
     it('persists favorite currencies to localStorage', async () => {
       renderWithProviders(<RateWise />);
@@ -224,7 +199,7 @@ describe('RateWise Component', () => {
       await waitFor(() => {
         const favorites = localStorage.getItem('favorites');
         expect(favorites).toBeTruthy();
-        const parsed = JSON.parse(favorites ?? '[]');
+        const parsed = JSON.parse(favorites ?? '[]') as string[];
         expect(Array.isArray(parsed)).toBe(true);
       });
     });
@@ -387,71 +362,12 @@ describe('RateWise Component', () => {
     });
   });
 
-  describe('Multi Mode Interactions', () => {
-    it('updates multi-currency amounts when quick button is used', async () => {
-      renderWithProviders(<RateWise />);
-
-      fireEvent.click(screen.getByText('多幣別'));
-
-      await waitFor(() => {
-        expect(localStorage.getItem('currencyConverterMode')).toBe('multi');
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('即時多幣別換算')).toBeInTheDocument();
-      });
-
-      fireEvent.click(screen.getByText('5,000'));
-
-      await waitFor(() => {
-        // 多幣別使用 div role="button"，不再有 placeholder
-        // 改用 aria-label 查找 TWD 金額按鈕
-        const twdButton = screen.getByRole('button', { name: /新台幣.*TWD.*金額/i });
-        // div 的內容顯示為文字內容
-        expect(twdButton).toHaveTextContent('5,000.00');
-      });
-
-      // Note: Multi-currency inputs are now div elements with role="button"
-      // that trigger calculator modal on click. Calculator functionality is tested
-      // separately in calculator test suites.
-    });
-
-    it('allows toggling favorite currencies', async () => {
-      renderWithProviders(<RateWise />);
-
-      fireEvent.click(screen.getByText('多幣別'));
-
-      await waitFor(() => {
-        expect(screen.getByText('即時多幣別換算')).toBeInTheDocument();
-      });
-
-      const toggleButton = await screen.findByRole('button', { name: '加入常用貨幣 EUR' });
-      fireEvent.click(toggleButton);
-
-      await waitFor(() => {
-        expect(toggleButton).toHaveAttribute('aria-label', '移除常用貨幣 EUR');
-      });
-    });
-
-    it('allows switching base currency by clicking currency row in multi-currency mode', async () => {
-      renderWithProviders(<RateWise />);
-
-      fireEvent.click(screen.getByText('多幣別'));
-
-      await waitFor(() => {
-        expect(screen.getByText('即時多幣別換算')).toBeInTheDocument();
-      });
-
-      // Note: Input fields are now read-only and trigger calculator on click.
-      // Base currency switching is done by clicking on the currency row itself,
-      // not by editing the amount. The onClick handler is on the parent div
-      // (lines 186-190 in MultiConverter.tsx).
-
-      // This behavior is already tested in the currency selection tests above,
-      // so we don't need to duplicate that test here.
-      expect(screen.getByText('即時多幣別換算')).toBeInTheDocument();
-    });
-  });
+  /**
+   * [refactor:2026-01-16] 多幣別互動測試已移除
+   *
+   * 多幣別功能已拆分為獨立頁面 (/multi)
+   * 相關測試請參考 components/__tests__/MultiConverter.test.tsx
+   */
 
   describe('Swap Control', () => {
     it('swaps selected currencies when swap button is clicked', async () => {
