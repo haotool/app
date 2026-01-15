@@ -33,6 +33,18 @@ export interface ThemeConfig {
 
 /**
  * 風格定義
+ *
+ * @description 語義色彩系統（符合 Design Token 最佳實踐）
+ * - background: 頁面背景
+ * - surface: 卡片/面板背景
+ * - text: 主要文字
+ * - textMuted: 次要文字
+ * - primary: 主色（CTA、主要互動）
+ * - secondary: 輔色（次要互動、支援元素）
+ * - accent: 強調色（高亮、焦點）
+ * - border: 邊框/分隔線
+ *
+ * @reference Tailwind CSS Design Tokens [context7:tailwindlabs/tailwindcss.com:2026-01-16]
  */
 interface StyleDefinition {
   name: string;
@@ -46,6 +58,7 @@ interface StyleDefinition {
       text: string;
       textMuted: string;
       primary: string;
+      secondary: string;
       accent: string;
       border: string;
     };
@@ -55,6 +68,7 @@ interface StyleDefinition {
       text: string;
       textMuted: string;
       primary: string;
+      secondary: string;
       accent: string;
       border: string;
     };
@@ -81,6 +95,7 @@ const nitroStyle: StyleDefinition = {
       text: '255 255 255',
       textMuted: '148 163 184', // slate-400
       primary: '0 212 255', // cyan
+      secondary: '99 102 241', // indigo-500
       accent: '0 255 136', // neon green
       border: '51 65 85', // slate-700
     },
@@ -90,6 +105,7 @@ const nitroStyle: StyleDefinition = {
       text: '255 255 255',
       textMuted: '100 116 139', // slate-500
       primary: '0 212 255',
+      secondary: '129 140 248', // indigo-400
       accent: '0 255 136',
       border: '30 41 59', // slate-800
     },
@@ -112,6 +128,7 @@ const kawaiiStyle: StyleDefinition = {
       text: '142 124 128', // muted pink-brown
       textMuted: '180 160 165',
       primary: '255 105 180', // hot pink
+      secondary: '236 72 153', // pink-500
       accent: '255 182 193', // light pink
       border: '255 228 225', // misty rose
     },
@@ -121,6 +138,7 @@ const kawaiiStyle: StyleDefinition = {
       text: '255 235 238',
       textMuted: '180 160 170',
       primary: '255 130 190',
+      secondary: '244 114 182', // pink-400
       accent: '255 182 193',
       border: '80 65 75',
     },
@@ -144,6 +162,7 @@ const zenStyle: StyleDefinition = {
       text: '15 23 42', // slate-900
       textMuted: '100 116 139', // slate-500
       primary: '30 41 59', // slate-800
+      secondary: '71 85 105', // slate-600
       accent: '59 130 246', // blue-500
       border: '226 232 240', // slate-200
     },
@@ -153,6 +172,7 @@ const zenStyle: StyleDefinition = {
       text: '248 250 252', // slate-50
       textMuted: '148 163 184', // slate-400
       primary: '203 213 225', // slate-300
+      secondary: '148 163 184', // slate-400
       accent: '96 165 250', // blue-400
       border: '51 65 85', // slate-700
     },
@@ -175,6 +195,7 @@ const classicStyle: StyleDefinition = {
       text: '67 20 7', // dark brown
       textMuted: '120 80 60',
       primary: '139 69 19', // saddle brown
+      secondary: '161 98 7', // amber-700
       accent: '180 120 80', // tan
       border: '245 230 220', // linen
     },
@@ -184,6 +205,7 @@ const classicStyle: StyleDefinition = {
       text: '255 245 240',
       textMuted: '180 160 150',
       primary: '210 160 120',
+      secondary: '217 119 6', // amber-600
       accent: '180 120 80',
       border: '70 55 45',
     },
