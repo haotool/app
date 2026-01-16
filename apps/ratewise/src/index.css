@@ -184,93 +184,133 @@
 
   /* ========================================
      Nitro 風格 - 深色科技感
+     靈感：賽車儀表板、霓虹燈、科幻 UI
      ======================================== */
   [data-style='nitro'] {
+    /* 核心語義色彩 */
     --color-background: 15 23 42;
     --color-surface: 30 41 59;
     --color-text: 255 255 255;
     --color-text-muted: 148 163 184;
-    --color-primary: 0 212 255;
-    --color-secondary: 99 102 241;
-    --color-accent: 0 255 136;
+    --color-primary: 0 212 255; /* 霓虹藍 */
+    --color-secondary: 99 102 241; /* 電子紫 */
+    --color-accent: 0 255 136; /* 霓虹綠 */
     --color-border: 51 65 85;
-    --color-info: 56 189 248;
 
+    /* 狀態語義色彩 - 霓虹風格 */
+    --color-info: 56 189 248; /* sky-400 */
+    --color-success: 52 211 153; /* emerald-400 */
+    --color-warning: 251 191 36; /* amber-400 */
+    --color-error: 248 113 113; /* red-400 */
+
+    /* 向後相容映射 */
     --color-foreground: var(--color-text);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
     --color-neutral-text: var(--color-text);
     --color-neutral-text-muted: var(--color-text-muted);
+    --color-destructive: var(--color-error);
+    --color-success-text: var(--color-success);
+    --color-warning-text: var(--color-warning);
   }
 
   [data-style='nitro'][data-mode='dark'] {
     --color-background: 2 6 23;
     --color-surface: 15 23 42;
+    --color-secondary: 129 140 248; /* indigo-400 */
     --color-border: 30 41 59;
   }
 
   /* ========================================
      Kawaii 風格 - 可愛粉嫩
+     靈感：日系少女風、馬卡龍色系、甜點店
      ======================================== */
   [data-style='kawaii'] {
-    --color-background: 255 250 244;
+    /* 核心語義色彩 */
+    --color-background: 255 250 244; /* warm cream */
     --color-surface: 255 255 255;
-    --color-text: 142 124 128;
+    --color-text: 142 124 128; /* muted pink-brown */
     --color-text-muted: 180 160 165;
-    --color-primary: 255 105 180;
-    --color-secondary: 236 72 153;
-    --color-accent: 255 182 193;
-    --color-border: 255 228 225;
-    --color-info: 244 114 182;
+    --color-primary: 255 105 180; /* hot pink */
+    --color-secondary: 236 72 153; /* pink-500 */
+    --color-accent: 255 182 193; /* light pink */
+    --color-border: 255 228 225; /* misty rose */
 
+    /* 狀態語義色彩 - 柔和可愛風 */
+    --color-info: 147 197 253; /* blue-300 - 天空藍 */
+    --color-success: 134 239 172; /* green-300 - 薄荷綠 */
+    --color-warning: 253 224 71; /* yellow-300 - 檸檬黃 */
+    --color-error: 252 165 165; /* red-300 - 珊瑚紅 */
+
+    /* 向後相容映射 */
     --color-foreground: var(--color-text);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
     --color-neutral-text: var(--color-text);
     --color-neutral-text-muted: var(--color-text-muted);
+    --color-destructive: var(--color-error);
+    --color-success-text: var(--color-success);
+    --color-warning-text: var(--color-warning);
   }
 
   [data-style='kawaii'][data-mode='dark'] {
-    --color-background: 45 35 40;
+    --color-background: 45 35 40; /* dark mauve */
     --color-surface: 60 48 55;
     --color-text: 255 235 238;
     --color-text-muted: 180 160 170;
-    --color-primary: 255 130 190;
-    --color-secondary: 244 114 182;
+    --color-primary: 255 130 190; /* 亮粉 */
+    --color-secondary: 244 114 182; /* pink-400 */
     --color-border: 80 65 75;
-    --color-info: 249 168 212;
+    --color-info: 147 197 253;
+    --color-success: 134 239 172;
+    --color-warning: 253 224 71;
+    --color-error: 252 165 165;
   }
 
   /* ========================================
      Classic 風格 - 復古書卷
+     靈感：古典圖書館、皮革裝幀、老式打字機
      ======================================== */
   [data-style='classic'] {
-    --color-background: 255 250 251;
+    /* 核心語義色彩 */
+    --color-background: 255 250 251; /* warm white - 象牙白 */
     --color-surface: 255 255 255;
-    --color-text: 67 20 7;
-    --color-text-muted: 120 80 60;
-    --color-primary: 139 69 19;
-    --color-secondary: 161 98 7;
-    --color-accent: 180 120 80;
-    --color-border: 245 230 220;
-    --color-info: 180 83 9;
+    --color-text: 67 20 7; /* dark brown - 深棕 */
+    --color-text-muted: 120 80 60; /* 中棕 */
+    --color-primary: 139 69 19; /* saddle brown - 馬鞍棕 */
+    --color-secondary: 161 98 7; /* amber-700 - 琥珀 */
+    --color-accent: 180 120 80; /* tan - 棕褐 */
+    --color-border: 245 230 220; /* linen - 亞麻 */
 
+    /* 狀態語義色彩 - 復古調性 */
+    --color-info: 59 130 246; /* blue-500 - 墨水藍 */
+    --color-success: 22 163 74; /* green-600 - 橄欖綠 */
+    --color-warning: 180 83 9; /* amber-700 - 琥珀警告 */
+    --color-error: 185 28 28; /* red-700 - 磚紅 */
+
+    /* 向後相容映射 */
     --color-foreground: var(--color-text);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
     --color-neutral-text: var(--color-text);
     --color-neutral-text-muted: var(--color-text-muted);
+    --color-destructive: var(--color-error);
+    --color-success-text: var(--color-success);
+    --color-warning-text: var(--color-warning);
   }
 
   [data-style='classic'][data-mode='dark'] {
-    --color-background: 35 25 20;
-    --color-surface: 50 38 32;
-    --color-text: 255 245 240;
-    --color-text-muted: 180 160 150;
-    --color-primary: 210 160 120;
-    --color-secondary: 217 119 6;
-    --color-border: 70 55 45;
-    --color-info: 245 158 11;
+    --color-background: 35 25 20; /* dark brown */
+    --color-surface: 50 38 32; /* 咖啡色 */
+    --color-text: 255 245 240; /* 米白 */
+    --color-text-muted: 180 160 150; /* 淺棕 */
+    --color-primary: 210 160 120; /* 淺棕主色 */
+    --color-secondary: 217 119 6; /* amber-600 */
+    --color-border: 70 55 45; /* 深邊框 */
+    --color-info: 96 165 250; /* blue-400 */
+    --color-success: 74 222 128; /* green-400 */
+    --color-warning: 245 158 11; /* amber-500 */
+    --color-error: 248 113 113; /* red-400 */
   }
 }
 

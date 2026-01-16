@@ -30,10 +30,18 @@ import { ThemeToggle } from './ThemeToggle';
 
 /**
  * Logo 組件 - 參考 ParkKeeper 的 SVG Logo 風格
+ *
+ * @description 使用明確的 width/height 屬性確保 SVG 尺寸一致
  */
 function Logo() {
   return (
-    <svg viewBox="0 0 40 40" className="w-8 h-8">
+    <svg
+      viewBox="0 0 40 40"
+      width="32"
+      height="32"
+      className="w-8 h-8 shrink-0"
+      aria-hidden="true"
+    >
       {/* 圓角矩形框 */}
       <rect
         x="6"
