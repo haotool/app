@@ -112,13 +112,13 @@ export function PullToRefreshIndicator({
         </div>
       </div>
 
-      {/* 裝飾性泡泡 (棉花糖風格) */}
+      {/* 裝飾性泡泡 (棉花糖風格) - 使用 SSOT Design Token */}
       <div
-        className="absolute top-0 right-0 w-24 h-24 rounded-full bg-indigo-100/50 blur-3xl"
+        className="absolute top-0 right-0 w-24 h-24 rounded-full bg-[rgb(var(--color-accent))]/10 blur-3xl"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-blue-100/50 blur-3xl"
+        className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-[rgb(var(--color-primary))]/10 blur-3xl"
         aria-hidden="true"
       />
     </div>

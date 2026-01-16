@@ -45,9 +45,9 @@ export const RateTypeTooltip = ({ children, message, isDisabled }: RateTypeToolt
               {/* 訊息內容 */}
               <p className="text-sm font-medium">{message}</p>
 
-              {/* 小箭頭（指向下方） */}
+              {/* 小箭頭（指向下方）- 使用 SSOT Design Token */}
               <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-                <div className="w-3 h-3 bg-blue-600 rotate-45 border-r border-b border-white/20" />
+                <div className="w-3 h-3 bg-[rgb(var(--color-primary))] rotate-45 border-r border-b border-white/20" />
               </div>
             </div>
           </div>

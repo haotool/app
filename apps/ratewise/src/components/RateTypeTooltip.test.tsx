@@ -186,8 +186,8 @@ describe('RateTypeTooltip', () => {
 
       fireEvent.click(screen.getByText('Test Button'));
 
-      // 檢查箭頭元素存在（使用特定的 class 組合）
-      const arrow = document.querySelector('.w-3.h-3.bg-blue-600.rotate-45');
+      // 檢查箭頭元素存在（使用 SSOT Design Token class 組合）
+      const arrow = document.querySelector('.w-3.h-3.rotate-45');
       expect(arrow).toBeInTheDocument();
     });
   });
