@@ -118,12 +118,33 @@ export const test = base.extend<RateWiseFixtures>({
         // eslint-disable-next-line no-console
         console.log(`[Fixture] Path ${path} - Page title: ${title}`);
 
+        // [debug:2026-01-16] 檢查 body 的 data 屬性和 console 錯誤
+        const bodyDataset = await page.evaluate(() => {
+          return JSON.stringify(document.body.dataset);
+        });
+        // eslint-disable-next-line no-console
+        console.log(`[Fixture] Path ${path} - Body dataset: ${bodyDataset}`);
+
+        // 收集 console 錯誤
+        const consoleErrors: string[] = [];
+        page.on('console', (msg) => {
+          if (msg.type() === 'error') {
+            consoleErrors.push(msg.text());
+          }
+        });
+
         // [fix:2025-12-11] 等待 React hydration 完成
         // App.tsx 設置 data-app-ready="true" 作為 hydration 完成信號
         await page.waitForSelector('body[data-app-ready="true"]', {
           timeout: ciTimeout,
           state: 'attached',
         });
+
+        // 輸出 console 錯誤（如果有）
+        if (consoleErrors.length > 0) {
+          // eslint-disable-next-line no-console
+          console.log(`[Fixture] Console errors: ${consoleErrors.join(', ')}`);
+        }
 
         // 使用 web-first assertion 等待按鈕可見
         // Playwright 會自動重試直到超時
