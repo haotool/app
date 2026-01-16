@@ -35,13 +35,7 @@ import { ThemeToggle } from './ThemeToggle';
  */
 function Logo() {
   return (
-    <svg
-      viewBox="0 0 40 40"
-      width="32"
-      height="32"
-      className="w-8 h-8 shrink-0"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 40 40" width="32" height="32" className="w-8 h-8 shrink-0" aria-hidden="true">
       {/* 圓角矩形框 */}
       <rect
         x="6"
