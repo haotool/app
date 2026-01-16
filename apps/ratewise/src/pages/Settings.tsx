@@ -55,8 +55,9 @@ export default function Settings() {
                 disabled={!isLoaded}
                 className={`
                   relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-xl
-                  transition-all shadow-sm disabled:opacity-50
-                  ${style === option.value ? 'ring-2 ring-offset-2' : ''}
+                  transition-all duration-200 ease-out shadow-sm disabled:opacity-50
+                  hover:scale-[1.02] hover:shadow-md active:scale-[0.98]
+                  ${style === option.value ? 'ring-2 ring-offset-2 shadow-md' : ''}
                 `}
                 style={
                   {
@@ -110,7 +111,8 @@ export default function Settings() {
                 disabled={!isLoaded}
                 className={`
                   flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 
-                  relative z-10 transition-colors disabled:opacity-50
+                  relative z-10 transition-all duration-200 ease-out disabled:opacity-50
+                  hover:scale-[1.02] active:scale-[0.98]
                   ${mode === option.value ? '' : 'opacity-60 hover:opacity-100'}
                 `}
               >
@@ -136,16 +138,16 @@ export default function Settings() {
           </div>
 
           <div className="bg-black/5 dark:bg-white/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
-            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-colors opacity-60 hover:opacity-100">
+            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out opacity-60 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]">
               <span className="text-xl mb-1 filter drop-shadow-sm">🇺🇸</span>
               <span className="text-[10px] font-bold">English</span>
             </button>
-            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-colors">
+            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]">
               <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
               <span className="text-xl mb-1 filter drop-shadow-sm">🇹🇼</span>
               <span className="text-[10px] font-bold">繁體中文</span>
             </button>
-            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-colors opacity-60 hover:opacity-100">
+            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out opacity-60 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]">
               <span className="text-xl mb-1 filter drop-shadow-sm">🇯🇵</span>
               <span className="text-[10px] font-bold">日本語</span>
             </button>
@@ -189,7 +191,7 @@ export default function Settings() {
             <button
               onClick={resetTheme}
               disabled={!isLoaded}
-              className="w-full px-5 py-4 flex items-center justify-between active:bg-red-50 dark:active:bg-red-950 group transition-colors disabled:opacity-50"
+              className="w-full px-5 py-4 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-950/50 active:bg-red-100 dark:active:bg-red-950 group transition-all duration-200 ease-out disabled:opacity-50"
             >
               <span className="text-xs font-black text-red-500 uppercase tracking-widest">
                 重置主題設定

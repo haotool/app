@@ -96,7 +96,7 @@ export function BottomNavigation() {
               aria-current={isActive ? 'page' : undefined}
             >
               <button
-                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group"
+                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group transition-transform duration-200 ease-out active:scale-95"
                 tabIndex={-1}
               >
                 {/* 圖標 */}
