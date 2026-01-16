@@ -16,6 +16,13 @@ import { SnowAnimation } from './SnowAnimation';
 import { CHRISTMAS_EASTER_EGG_DURATION } from './utils';
 import './styles/christmas.css';
 
+// [fix:2026-01-16] 使用 build time 年份避免 SSG/hydration mismatch
+// 不使用 new Date().getFullYear() 因為 SSG 和客戶端可能產生不同年份導致 React Error #418
+const BUILD_YEAR =
+  import.meta.env.VITE_BUILD_TIME ?
+    new Date(import.meta.env.VITE_BUILD_TIME as string).getFullYear() :
+    2026;
+
 /**
  * 聖誕彩蛋主組件
  * @description 全屏顯示聖誕樹、下雪動畫和祝福語
@@ -95,7 +102,7 @@ export function ChristmasEasterEgg({ isVisible, onClose }: ChristmasEasterEggPro
               Merry Christmas!
             </h1>
             <p className="text-2xl md:text-3xl text-yellow-300 font-semibold drop-shadow-md">
-              {new Date().getFullYear()} 聖誕快樂
+              {BUILD_YEAR} 聖誕快樂
             </p>
             <p className="text-sm text-neutral-text-muted mt-6 opacity-70">點擊任意處關閉</p>
           </motion.div>

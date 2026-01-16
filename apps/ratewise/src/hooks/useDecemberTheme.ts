@@ -40,12 +40,15 @@ const THEME_DISABLED_KEY = 'ratewise-december-theme-disabled';
  * 取得目前月份和年份（SSR 安全）
  * @returns { isDecember, currentYear }
  *
- * [fix:2025-12-27] 移除 SSR 硬編碼 isDecember: false
- * - new Date() 在 Node.js (SSR) 和瀏覽器都能正確運作
- * - SSR 時也應該正確偵測 12 月，避免 hydration mismatch
+ * [fix:2026-01-16] 使用 build time 作為 SSR 的基準時間，避免 hydration mismatch
+ * - SSR/SSG 時使用 VITE_BUILD_TIME 環境變數
+ * - 客戶端 hydration 時也使用相同的 build time
+ * - 這確保 SSR 和客戶端的初始渲染一致
  */
 function getDateInfo(): { isDecember: boolean; currentYear: number } {
-  const now = new Date();
+  // 使用 build time 作為基準，避免 SSR/client hydration mismatch
+  const buildTime = import.meta.env.VITE_BUILD_TIME;
+  const now = buildTime ? new Date(buildTime as string) : new Date();
   return {
     isDecember: now.getMonth() === 11, // 0-indexed, 11 = December
     currentYear: now.getFullYear(),
