@@ -99,7 +99,9 @@ export const test = base.extend<RateWiseFixtures>({
       .filter((value, index, self) => self.indexOf(value) === index) as string[];
 
     let navigated = false;
-    const ciTimeout = process.env['CI'] ? 45_000 : 10_000;
+    // [fix:2026-01-16] 調整超時時間，確保在測試超時前完成
+    // CI 測試超時 30s，fixture 超時應該更短以便有時間報告錯誤
+    const ciTimeout = process.env['CI'] ? 20_000 : 10_000;
     let lastError = '';
 
     for (const path of basePathCandidates) {
