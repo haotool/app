@@ -208,9 +208,11 @@ export default defineConfig(({ mode }) => {
       // [fix:2025-12-24] 禁用 meta tag，改用 HTTP header（Nginx 配置）
       // 原因：CSP meta tag 太長會導致 charset 超出前 1024 bytes，Lighthouse 報錯
       // 參考: https://vite-csp.tsotne.co.uk/
+      // [fix:2026-01-17] 開發模式禁用 CSP，避免阻擋 Vite HMR 和 lightweight-charts inline styles
+      // 生產環境 CSP 由 Nginx HTTP header 提供
       csp({
         algorithm: 'sha256',
-        dev: { run: true }, // 開發模式也檢查 CSP 違規
+        dev: { run: false }, // 開發模式禁用 CSP（允許 HMR 和 CSS-in-JS）
         build: {
           sri: true, // 啟用 Subresource Integrity
         },

@@ -127,6 +127,58 @@
     <!-- Modulepreload for critical scripts (Vite generates these automatically) -->
     <!-- Vite will inject modulepreload links for vendor chunks during build -->
 
+    <!-- [fix:2026-01-17] 同步主題初始化腳本 - 防止 FOUC (Flash of Unstyled Content) -->
+    <!-- 此腳本必須在任何 CSS/JS 載入前執行，確保第一次繪製就使用正確的主題 -->
+    <!-- 參考: [context7:/websites/react_dev:useLayoutEffect:2026-01-17] -->
+    <!-- 參考: [WebSearch:React SSR hydration flickering theme switching FOUC fix 2025] -->
+    <script>
+      (function () {
+        var STORAGE_KEY = 'ratewise-theme';
+        var DEFAULT_STYLE = 'zen';
+        var DEFAULT_MODE = 'light';
+
+        try {
+          var stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            var config = JSON.parse(stored);
+            var style = config.style || DEFAULT_STYLE;
+            var mode = config.mode || DEFAULT_MODE;
+
+            // 如果是 auto 模式，檢測系統偏好
+            if (mode === 'auto') {
+              mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+
+            // 立即設置 data attributes（CSS 會根據這些值應用正確的變數）
+            document.documentElement.dataset.style = style;
+            document.documentElement.dataset.mode = mode;
+
+            // 設置 dark class（Tailwind darkMode 兼容）
+            if (mode === 'dark') {
+              document.documentElement.classList.add('dark');
+            }
+
+            // 設置字體（Classic 使用 serif）
+            if (style === 'classic') {
+              document.documentElement.classList.add('font-serif');
+            } else {
+              document.documentElement.classList.add('font-sans');
+            }
+          } else {
+            // 預設配置
+            document.documentElement.dataset.style = DEFAULT_STYLE;
+            document.documentElement.dataset.mode = DEFAULT_MODE;
+            document.documentElement.classList.add('font-sans');
+          }
+        } catch (e) {
+          // localStorage 不可用時使用預設值
+          document.documentElement.dataset.style = DEFAULT_STYLE;
+          document.documentElement.dataset.mode = DEFAULT_MODE;
+          document.documentElement.classList.add('font-sans');
+        }
+      })();
+    </script>
+
     <!-- [Lighthouse-optimization:2025-10-28] Skeleton Screen Critical CSS -->
     <!-- 參考: https://blog.logrocket.com/ux-design/skeleton-loading-screen-design/ -->
     <style>

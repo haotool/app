@@ -605,10 +605,24 @@ export function getStyleColors(style: ThemeStyle, mode: 'light' | 'dark'): Seman
 }
 
 /**
+ * 將空格分隔的 RGB 值轉換為逗號分隔格式
+ * CSS Variables 使用空格分隔（如 "99 102 241"）以支援 Tailwind 的 rgb(var(--color) / <alpha>) 語法
+ * 但 Canvas API (lightweight-charts) 需要標準 rgba(r, g, b, a) 格式（逗號分隔）
+ *
+ * @param spaceDelimited - 空格分隔的 RGB 值，如 "99 102 241"
+ * @returns 逗號分隔的 RGB 值，如 "99, 102, 241"
+ *
+ * @reference [fix:2026-01-17] lightweight-charts addColorStop SyntaxError 修復
+ */
+function toCommaSeparatedRgb(spaceDelimited: string): string {
+  return spaceDelimited.split(' ').join(', ');
+}
+
+/**
  * 獲取當前主題的圖表顏色（供 MiniTrendChart 使用）
  *
  * @description SSOT - 從 CSS Variables 獲取圖表配色
- * @returns 圖表顏色配置
+ * @returns 圖表顏色配置，格式為標準 rgba(r, g, b, a) 以相容 Canvas/lightweight-charts
  */
 export function getChartColors(): {
   lineColor: string;
@@ -627,13 +641,15 @@ export function getChartColors(): {
   const root = document.documentElement;
   const style = getComputedStyle(root);
 
+  // CSS Variables 儲存空格分隔格式（Tailwind 相容）
   const line = style.getPropertyValue('--color-chart-line').trim() || '99 102 241';
   const top = style.getPropertyValue('--color-chart-area-top').trim() || '99 102 241';
   const bottom = style.getPropertyValue('--color-chart-area-bottom').trim() || '59 130 246';
 
+  // 轉換為逗號分隔格式（Canvas/lightweight-charts 相容）
   return {
-    lineColor: `rgb(${line})`,
-    topColor: `rgba(${top}, 0.4)`,
-    bottomColor: `rgba(${bottom}, 0.1)`,
+    lineColor: `rgb(${toCommaSeparatedRgb(line)})`,
+    topColor: `rgba(${toCommaSeparatedRgb(top)}, 0.4)`,
+    bottomColor: `rgba(${toCommaSeparatedRgb(bottom)}, 0.1)`,
   };
 }
