@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import {
   createChart,
   ColorType,
@@ -9,6 +9,7 @@ import {
 } from 'lightweight-charts';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatExchangeRate } from '../../../utils/currencyFormatter';
+import { getChartColors } from '../../../config/themes';
 import type { CurrencyCode } from '../types';
 
 export interface MiniTrendDataPoint {
@@ -37,6 +38,7 @@ interface TooltipData {
  * - Hover 互動顯示日期和價格
  * - 數據 ≥ 2 天時統一延伸到最寬
  * - 現代化配色與微互動
+ * - **SSOT Design Token** - 圖表顏色從 CSS Variables 獲取
  */
 export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   // 使用真實數據（Safari 404 問題已透過 logger.debug 降級處理修復）
@@ -45,6 +47,9 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
+
+  // 獲取主題色彩（SSOT from CSS Variables）
+  const getThemeColors = useCallback(() => getChartColors(), []);
 
   const stats = useMemo(() => {
     if (displayData.length === 0) {
@@ -69,6 +74,9 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   useEffect(() => {
     if (!chartContainerRef.current || displayData.length < 2) return;
 
+    // 從 SSOT 獲取圖表顏色
+    const chartColors = getThemeColors();
+
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
@@ -88,7 +96,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
         mode: 0, // CrosshairMode.Normal - 自由移動不吸附
         vertLine: {
           width: 1,
-          color: 'rgba(139, 92, 246, 0.5)',
+          color: chartColors.topColor, // SSOT: 使用主題色 (40% opacity)
           style: LineStyle.Solid,
           labelVisible: false,
         },
@@ -104,11 +112,12 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
 
     chartRef.current = chart;
 
+    // SSOT: 從 CSS Variables 獲取圖表配色
     const series = chart.addSeries(AreaSeries, {
-      lineColor: '#8b5cf6',
+      lineColor: chartColors.lineColor, // SSOT: --color-chart-line
       lineWidth: 2,
-      topColor: 'rgba(139, 92, 246, 0.4)',
-      bottomColor: 'rgba(59, 130, 246, 0.1)',
+      topColor: chartColors.topColor, // SSOT: --color-chart-area-top (40% opacity)
+      bottomColor: chartColors.bottomColor, // SSOT: --color-chart-area-bottom (10% opacity)
       lineStyle: LineStyle.Solid,
       priceLineVisible: false,
       lastValueVisible: false,
@@ -165,7 +174,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, [displayData, stats.maxIndex, stats.minIndex]);
+  }, [displayData, stats.maxIndex, stats.minIndex, getThemeColors]);
 
   // 數據不足時不顯示圖表
   if (displayData.length < 2) {
@@ -191,7 +200,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
         className="w-full h-full"
       />
 
-      {/* Hover Tooltip - 白底紫字現代化設計 */}
+      {/* Hover Tooltip - SSOT 主題色設計 */}
       <AnimatePresence>
         {tooltipData && (
           <motion.div
@@ -208,17 +217,17 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
               transform: 'translateX(-50%)',
             }}
           >
-            {/* 白底紫字 Tooltip */}
+            {/* SSOT: 使用主題色 Tooltip (card/foreground/primary) */}
             <div className="relative">
-              <div className="bg-white/98 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-2xl border-2 border-purple-200">
+              <div className="bg-card/98 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-2xl border-2 border-border">
                 <div className="flex items-center gap-2.5 text-[11px] leading-tight whitespace-nowrap">
-                  <span className="text-purple-600 font-semibold">{tooltipData.date}</span>
-                  <span className="text-purple-800 font-bold">
+                  <span className="text-primary font-semibold">{tooltipData.date}</span>
+                  <span className="text-foreground font-bold">
                     {formatExchangeRate(tooltipData.rate)}
                   </span>
                 </div>
               </div>
-              {/* 小三角形指示器 - 白色 */}
+              {/* 小三角形指示器 - 使用 card 色 */}
               <div
                 className="absolute left-1/2 -bottom-[5px] transform -translate-x-1/2"
                 style={{
@@ -226,7 +235,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
                   height: 0,
                   borderLeft: '5px solid transparent',
                   borderRight: '5px solid transparent',
-                  borderTop: '5px solid rgba(255, 255, 255, 0.98)',
+                  borderTop: '5px solid rgb(var(--color-card) / 0.98)',
                   filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
                 }}
               />

@@ -3,19 +3,22 @@
 @tailwind utilities;
 
 /**
- * Modern Design System - ParkKeeper Style
+ * Modern Design System - ParkKeeper Style (SSOT)
  *
  * @description 現代化設計系統，參考 ParkKeeper 設計風格
- *              4 種風格（Nitro/Kawaii/Zen/Classic）+ 淺深模式
+ *              6 種風格（Zen/Nitro/Kawaii/Classic/Ocean/Forest）+ 淺深模式
+ *              包含圖表專用 Design Token (SSOT for MiniTrendChart)
  *
- * @reference ParkKeeper UI Design
+ * @reference ParkKeeper UI Design, themes.ts SSOT
  * @created 2026-01-16
- * @version 3.0.0
+ * @updated 2026-01-16
+ * @version 4.0.0
  */
 
 @layer base {
   /* ========================================
      Zen 風格 - 淺色模式（預設）
+     禪意極簡，以 violet/blue 為圖表色調
      ======================================== */
   :root,
   [data-style='zen'][data-mode='light'] {
@@ -28,6 +31,11 @@
     --color-accent: 59 130 246;
     --color-border: 226 232 240;
     --color-info: 14 165 233;
+
+    /* 圖表專用 Token (SSOT) */
+    --color-chart-line: 139 92 246; /* violet-500 */
+    --color-chart-area-top: 139 92 246; /* violet-500 */
+    --color-chart-area-bottom: 59 130 246; /* blue-500 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
@@ -128,6 +136,11 @@
     --color-border: 51 65 85;
     --color-info: 56 189 248;
 
+    /* 圖表專用 Token (SSOT) - 深色模式亮度提升 */
+    --color-chart-line: 167 139 250; /* violet-400 */
+    --color-chart-area-top: 167 139 250; /* violet-400 */
+    --color-chart-area-bottom: 96 165 250; /* blue-400 */
+
     --color-foreground: var(--color-text);
     --color-foreground-secondary: var(--color-text-muted);
     --color-foreground-muted: var(--color-text-muted);
@@ -185,6 +198,7 @@
   /* ========================================
      Nitro 風格 - 深色科技感
      靈感：賽車儀表板、霓虹燈、科幻 UI
+     圖表使用霓虹藍/綠漸變
      ======================================== */
   [data-style='nitro'] {
     /* 核心語義色彩 */
@@ -203,6 +217,11 @@
     --color-warning: 251 191 36; /* amber-400 */
     --color-error: 248 113 113; /* red-400 */
 
+    /* 圖表專用 Token (SSOT) - 霓虹風格 */
+    --color-chart-line: 34 211 238; /* cyan-400 */
+    --color-chart-area-top: 34 211 238; /* cyan-400 */
+    --color-chart-area-bottom: 0 255 136; /* 霓虹綠 */
+
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
     --color-neutral-bg: var(--color-background);
@@ -219,11 +238,17 @@
     --color-surface: 15 23 42;
     --color-secondary: 129 140 248; /* indigo-400 */
     --color-border: 30 41 59;
+
+    /* 圖表專用 Token (SSOT) - 深色模式更亮 */
+    --color-chart-line: 103 232 249; /* cyan-300 */
+    --color-chart-area-top: 103 232 249; /* cyan-300 */
+    --color-chart-area-bottom: 0 255 136; /* 霓虹綠 */
   }
 
   /* ========================================
      Kawaii 風格 - 可愛粉嫩
      靈感：日系少女風、馬卡龍色系、甜點店
+     圖表使用粉紅漸變
      ======================================== */
   [data-style='kawaii'] {
     /* 核心語義色彩 */
@@ -241,6 +266,11 @@
     --color-success: 134 239 172; /* green-300 - 薄荷綠 */
     --color-warning: 253 224 71; /* yellow-300 - 檸檬黃 */
     --color-error: 252 165 165; /* red-300 - 珊瑚紅 */
+
+    /* 圖表專用 Token (SSOT) - 粉紅漸變 */
+    --color-chart-line: 236 72 153; /* pink-500 */
+    --color-chart-area-top: 236 72 153; /* pink-500 */
+    --color-chart-area-bottom: 244 114 182; /* pink-400 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
@@ -265,11 +295,17 @@
     --color-success: 134 239 172;
     --color-warning: 253 224 71;
     --color-error: 252 165 165;
+
+    /* 圖表專用 Token (SSOT) - 深色模式更亮 */
+    --color-chart-line: 244 114 182; /* pink-400 */
+    --color-chart-area-top: 244 114 182; /* pink-400 */
+    --color-chart-area-bottom: 249 168 212; /* pink-300 */
   }
 
   /* ========================================
      Classic 風格 - 復古書卷
      靈感：古典圖書館、皮革裝幀、老式打字機
+     圖表使用琥珀漸變
      ======================================== */
   [data-style='classic'] {
     /* 核心語義色彩 */
@@ -287,6 +323,11 @@
     --color-success: 22 163 74; /* green-600 - 橄欖綠 */
     --color-warning: 180 83 9; /* amber-700 - 琥珀警告 */
     --color-error: 185 28 28; /* red-700 - 磚紅 */
+
+    /* 圖表專用 Token (SSOT) - 琥珀漸變 */
+    --color-chart-line: 180 83 9; /* amber-700 */
+    --color-chart-area-top: 180 83 9; /* amber-700 */
+    --color-chart-area-bottom: 217 119 6; /* amber-600 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
@@ -311,6 +352,127 @@
     --color-success: 74 222 128; /* green-400 */
     --color-warning: 245 158 11; /* amber-500 */
     --color-error: 248 113 113; /* red-400 */
+
+    /* 圖表專用 Token (SSOT) - 深色模式更亮 */
+    --color-chart-line: 245 158 11; /* amber-500 */
+    --color-chart-area-top: 245 158 11; /* amber-500 */
+    --color-chart-area-bottom: 251 191 36; /* amber-400 */
+  }
+
+  /* ========================================
+     Ocean 風格 - 海洋深邃 (NEW)
+     靈感：深海、海浪、海洋生態
+     圖表使用青藍漸變
+     ======================================== */
+  [data-style='ocean'] {
+    /* 核心語義色彩 */
+    --color-background: 240 249 255; /* sky-50 */
+    --color-surface: 255 255 255;
+    --color-text: 7 89 133; /* cyan-800 */
+    --color-text-muted: 22 78 99; /* cyan-900 lighter */
+    --color-primary: 6 182 212; /* cyan-500 */
+    --color-secondary: 14 165 233; /* sky-500 */
+    --color-accent: 20 184 166; /* teal-500 */
+    --color-border: 186 230 253; /* sky-200 */
+
+    /* 狀態語義色彩 - 海洋調性 */
+    --color-info: 56 189 248; /* sky-400 */
+    --color-success: 20 184 166; /* teal-500 */
+    --color-warning: 245 158 11; /* amber-500 */
+    --color-error: 239 68 68; /* red-500 */
+
+    /* 圖表專用 Token (SSOT) - 青藍漸變 */
+    --color-chart-line: 6 182 212; /* cyan-500 */
+    --color-chart-area-top: 6 182 212; /* cyan-500 */
+    --color-chart-area-bottom: 20 184 166; /* teal-500 */
+
+    /* 向後相容映射 */
+    --color-foreground: var(--color-text);
+    --color-neutral-bg: var(--color-background);
+    --color-neutral-light: var(--color-surface);
+    --color-neutral-text: var(--color-text);
+    --color-neutral-text-muted: var(--color-text-muted);
+    --color-destructive: var(--color-error);
+    --color-success-text: var(--color-success);
+    --color-warning-text: var(--color-warning);
+  }
+
+  [data-style='ocean'][data-mode='dark'] {
+    --color-background: 8 51 68; /* cyan-950 */
+    --color-surface: 22 78 99; /* cyan-900 */
+    --color-text: 236 254 255; /* cyan-50 */
+    --color-text-muted: 165 243 252; /* cyan-200 */
+    --color-primary: 34 211 238; /* cyan-400 */
+    --color-secondary: 56 189 248; /* sky-400 */
+    --color-accent: 45 212 191; /* teal-400 */
+    --color-border: 21 94 117; /* cyan-800 */
+    --color-info: 103 232 249; /* cyan-300 */
+    --color-success: 94 234 212; /* teal-300 */
+    --color-warning: 251 191 36; /* amber-400 */
+    --color-error: 248 113 113; /* red-400 */
+
+    /* 圖表專用 Token (SSOT) - 深色模式更亮 */
+    --color-chart-line: 34 211 238; /* cyan-400 */
+    --color-chart-area-top: 34 211 238; /* cyan-400 */
+    --color-chart-area-bottom: 45 212 191; /* teal-400 */
+  }
+
+  /* ========================================
+     Forest 風格 - 森林自然 (NEW)
+     靈感：原始森林、大自然、綠意盎然
+     圖表使用翠綠漸變
+     ======================================== */
+  [data-style='forest'] {
+    /* 核心語義色彩 */
+    --color-background: 240 253 244; /* green-50 */
+    --color-surface: 255 255 255;
+    --color-text: 20 83 45; /* green-800 */
+    --color-text-muted: 22 101 52; /* green-700 */
+    --color-primary: 5 150 105; /* emerald-600 */
+    --color-secondary: 22 163 74; /* green-600 */
+    --color-accent: 101 163 13; /* lime-600 */
+    --color-border: 187 247 208; /* green-200 */
+
+    /* 狀態語義色彩 - 自然調性 */
+    --color-info: 59 130 246; /* blue-500 */
+    --color-success: 34 197 94; /* green-500 */
+    --color-warning: 234 179 8; /* yellow-500 */
+    --color-error: 220 38 38; /* red-600 */
+
+    /* 圖表專用 Token (SSOT) - 翠綠漸變 */
+    --color-chart-line: 5 150 105; /* emerald-600 */
+    --color-chart-area-top: 5 150 105; /* emerald-600 */
+    --color-chart-area-bottom: 34 197 94; /* green-500 */
+
+    /* 向後相容映射 */
+    --color-foreground: var(--color-text);
+    --color-neutral-bg: var(--color-background);
+    --color-neutral-light: var(--color-surface);
+    --color-neutral-text: var(--color-text);
+    --color-neutral-text-muted: var(--color-text-muted);
+    --color-destructive: var(--color-error);
+    --color-success-text: var(--color-success);
+    --color-warning-text: var(--color-warning);
+  }
+
+  [data-style='forest'][data-mode='dark'] {
+    --color-background: 5 46 22; /* green-950 */
+    --color-surface: 20 83 45; /* green-800 */
+    --color-text: 240 253 244; /* green-50 */
+    --color-text-muted: 187 247 208; /* green-200 */
+    --color-primary: 52 211 153; /* emerald-400 */
+    --color-secondary: 74 222 128; /* green-400 */
+    --color-accent: 163 230 53; /* lime-400 */
+    --color-border: 22 101 52; /* green-700 */
+    --color-info: 96 165 250; /* blue-400 */
+    --color-success: 134 239 172; /* green-300 */
+    --color-warning: 253 224 71; /* yellow-300 */
+    --color-error: 248 113 113; /* red-400 */
+
+    /* 圖表專用 Token (SSOT) - 深色模式更亮 */
+    --color-chart-line: 52 211 153; /* emerald-400 */
+    --color-chart-area-top: 52 211 153; /* emerald-400 */
+    --color-chart-area-bottom: 74 222 128; /* green-400 */
   }
 }
 

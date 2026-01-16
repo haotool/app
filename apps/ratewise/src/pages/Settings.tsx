@@ -1,18 +1,21 @@
 /**
  * Settings Page - ParkKeeper 風格設定頁面
  *
- * @description 應用程式設定頁面，支援 4 種風格切換
+ * @description 應用程式設定頁面，支援 6 種風格切換
  *              採用 ParkKeeper 設計風格（圓潤卡片、風格預覽）
+ *              SSOT: 風格定義來自 themes.ts
  *
  * 風格選項：
+ * - Zen - 極簡專業（預設）
  * - Nitro - 深色科技感
  * - Kawaii - 可愛粉嫩
- * - Zen - 極簡專業（預設）
  * - Classic - 復古書卷
+ * - Ocean - 海洋深邃（新增）
+ * - Forest - 自然森林（新增）
  *
- * @reference ParkKeeper UI Design
+ * @reference ParkKeeper UI Design, themes.ts SSOT
  * @created 2026-01-15
- * @updated 2026-01-16 - ParkKeeper 風格重構
+ * @updated 2026-01-16 - 擴充至 6 種風格，使用 SSOT Design Token
  */
 
 import { Palette, Globe, Database, ShieldAlert, Check, Sun, Moon, Monitor } from 'lucide-react';
@@ -44,14 +47,14 @@ export default function Settings() {
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">介面風格</h3>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {STYLE_OPTIONS.map((option) => (
               <button
                 key={option.value}
                 onClick={() => setStyle(option.value)}
                 disabled={!isLoaded}
                 className={`
-                  relative p-4 h-24 flex items-end overflow-hidden rounded-xl 
+                  relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-xl
                   transition-all shadow-sm disabled:opacity-50
                   ${style === option.value ? 'ring-2 ring-offset-2' : ''}
                 `}
@@ -59,25 +62,33 @@ export default function Settings() {
                   {
                     backgroundColor: option.previewBg,
                     color: option.previewText,
-                    '--tw-ring-color': option.previewText,
+                    '--tw-ring-color': option.previewAccent,
+                    '--tw-ring-offset-color': 'rgb(var(--color-background))',
                   } as React.CSSProperties
                 }
                 aria-pressed={style === option.value}
+                aria-label={`${option.label} - ${option.description}`}
               >
                 {/* 裝飾圓形 */}
                 <div
-                  className="absolute top-0 right-0 w-20 h-20 opacity-10 -mr-6 -mt-6 rounded-full"
+                  className="absolute top-0 right-0 w-16 h-16 opacity-15 -mr-4 -mt-4 rounded-full"
                   style={{ backgroundColor: option.previewAccent }}
                 />
 
+                {/* 選中指示器 */}
+                {style === option.value && (
+                  <div
+                    className="absolute top-2 right-2 rounded-full p-0.5"
+                    style={{ backgroundColor: option.previewAccent }}
+                  >
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                )}
+
                 {/* 內容 */}
-                <div className="flex justify-between items-center w-full relative z-10">
-                  <span className="font-bold">{option.label}</span>
-                  {style === option.value && (
-                    <div className="bg-green-500 rounded-full p-1">
-                      <Check className="w-3 h-3 text-white" />
-                    </div>
-                  )}
+                <div className="flex flex-col items-start w-full relative z-10">
+                  <span className="font-bold text-sm leading-tight">{option.label}</span>
+                  <span className="text-[10px] opacity-60 leading-tight">{option.description}</span>
                 </div>
               </button>
             ))}
@@ -194,11 +205,11 @@ export default function Settings() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between items-center">
                 <span className="opacity-60">應用程式版本</span>
-                <span className="font-bold font-mono">v2.0.0</span>
+                <span className="font-bold font-mono">v3.0.0</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="opacity-60">UI 設計</span>
-                <span className="font-bold">ParkKeeper Style</span>
+                <span className="opacity-60">設計系統</span>
+                <span className="font-bold">6 Styles SSOT</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="opacity-60">技術棧</span>
@@ -208,7 +219,7 @@ export default function Settings() {
 
             <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
               <p className="text-[10px] opacity-40 text-center font-medium">
-                © 2026 RateWise. Built with ❤️
+                © 2026 RateWise. Built with Design Token SSOT
               </p>
             </div>
           </div>

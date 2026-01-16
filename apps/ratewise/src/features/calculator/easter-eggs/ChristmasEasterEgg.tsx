@@ -19,9 +19,9 @@ import './styles/christmas.css';
 // [fix:2026-01-16] 使用 build time 年份避免 SSG/hydration mismatch
 // 不使用 new Date().getFullYear() 因為 SSG 和客戶端可能產生不同年份導致 React Error #418
 const BUILD_YEAR =
-  import.meta.env.VITE_BUILD_TIME ?
-    new Date(import.meta.env.VITE_BUILD_TIME as string).getFullYear() :
-    2026;
+  typeof import.meta.env.VITE_BUILD_TIME === 'string'
+    ? new Date(import.meta.env.VITE_BUILD_TIME).getFullYear()
+    : 2026;
 
 /**
  * 聖誕彩蛋主組件

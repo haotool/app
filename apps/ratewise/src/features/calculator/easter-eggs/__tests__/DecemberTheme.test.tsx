@@ -11,6 +11,13 @@ import { DecemberSnowScene } from '../DecemberSnowScene';
 import { SnowAccumulation } from '../SnowAccumulation';
 import { MiniChristmasTree } from '../MiniChristmasTree';
 
+// Mock useDecemberTheme hook
+const mockUseDecemberTheme = vi.fn();
+
+vi.mock('../../../../hooks/useDecemberTheme', () => ({
+  useDecemberTheme: () => mockUseDecemberTheme(),
+}));
+
 // Mock localStorage
 const localStorageMock = {
   getItem: vi.fn(),
@@ -46,8 +53,14 @@ describe('DecemberTheme Components', () => {
 
   describe('DecemberTheme', () => {
     it('should not render when not December', () => {
-      // 設定為 1 月
-      vi.setSystemTime(new Date(2025, 0, 15)); // January 15, 2025
+      // Mock hook 返回非 12 月狀態
+      mockUseDecemberTheme.mockReturnValue({
+        isDecember: false,
+        showAnimations: false,
+        isDisabledByUser: false,
+        toggleTheme: vi.fn(),
+        currentYear: 2025,
+      });
 
       act(() => {
         render(<DecemberTheme />);
@@ -60,8 +73,14 @@ describe('DecemberTheme Components', () => {
     });
 
     it('should render snow scene and mini tree in December', () => {
-      // 設定為 12 月
-      vi.setSystemTime(new Date(2025, 11, 25)); // December 25, 2025
+      // Mock hook 返回 12 月狀態
+      mockUseDecemberTheme.mockReturnValue({
+        isDecember: true,
+        showAnimations: true,
+        isDisabledByUser: false,
+        toggleTheme: vi.fn(),
+        currentYear: 2025,
+      });
 
       act(() => {
         render(<DecemberTheme />);
@@ -74,7 +93,14 @@ describe('DecemberTheme Components', () => {
     });
 
     it('should show random greeting when clicking mini tree', () => {
-      vi.setSystemTime(new Date(2025, 11, 25));
+      // Mock hook 返回 12 月狀態
+      mockUseDecemberTheme.mockReturnValue({
+        isDecember: true,
+        showAnimations: true,
+        isDisabledByUser: false,
+        toggleTheme: vi.fn(),
+        currentYear: 2025,
+      });
 
       act(() => {
         render(<DecemberTheme />);

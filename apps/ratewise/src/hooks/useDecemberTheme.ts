@@ -48,7 +48,7 @@ const THEME_DISABLED_KEY = 'ratewise-december-theme-disabled';
 function getDateInfo(): { isDecember: boolean; currentYear: number } {
   // 使用 build time 作為基準，避免 SSR/client hydration mismatch
   const buildTime = import.meta.env.VITE_BUILD_TIME;
-  const now = buildTime ? new Date(buildTime as string) : new Date();
+  const now = typeof buildTime === 'string' ? new Date(buildTime) : new Date();
   return {
     isDecember: now.getMonth() === 11, // 0-indexed, 11 = December
     currentYear: now.getFullYear(),
