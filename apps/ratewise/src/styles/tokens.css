@@ -1,0 +1,586 @@
+/**
+ * Ratewise Design Tokens - CSS Variables Implementation
+ *
+ * @description 基於 W3C DTCG 2025.10 規範的 CSS Variables
+ * @see https://www.designtokens.org/tr/drafts/format/
+ * @see https://developer.apple.com/documentation/TechnologyOverviews/liquid-glass
+ * @see https://m3.material.io/
+ *
+ * @version 2.0.0
+ * @updated 2025-01-17
+ *
+ * 結構：
+ * 1. Primitive Tokens (原始值)
+ * 2. Semantic Tokens (語意值)
+ * 3. Glass Effect Tokens (玻璃效果)
+ * 4. Component Tokens (元件值)
+ * 5. Dark Theme Overrides
+ * 6. Accent Color Variants
+ * 7. Accessibility Fallbacks
+ */
+
+/* ============================================================
+   1. PRIMITIVE TOKENS - 原始值（不直接使用於元件）
+   ============================================================ */
+
+:root {
+  /* --------------------------------------------------
+     1.1 Color Primitives
+     -------------------------------------------------- */
+
+  /* Violet (Primary Brand) */
+  --primitive-violet-50: 245 243 255;
+  --primitive-violet-100: 237 233 254;
+  --primitive-violet-200: 221 214 254;
+  --primitive-violet-300: 196 181 253;
+  --primitive-violet-400: 167 139 250;
+  --primitive-violet-500: 139 92 246;
+  --primitive-violet-600: 124 58 237;
+  --primitive-violet-700: 109 40 217;
+  --primitive-violet-800: 91 33 182;
+  --primitive-violet-900: 76 29 149;
+  --primitive-violet-950: 46 16 101;
+
+  /* Slate (Neutral) */
+  --primitive-slate-50: 248 250 252;
+  --primitive-slate-100: 241 245 249;
+  --primitive-slate-200: 226 232 240;
+  --primitive-slate-300: 203 213 225;
+  --primitive-slate-400: 148 163 184;
+  --primitive-slate-500: 100 116 139;
+  --primitive-slate-600: 71 85 105;
+  --primitive-slate-700: 51 65 85;
+  --primitive-slate-800: 30 41 59;
+  --primitive-slate-900: 15 23 42;
+  --primitive-slate-950: 2 6 23;
+
+  /* Cyan (Secondary Accent) */
+  --primitive-cyan-400: 34 211 238;
+  --primitive-cyan-500: 6 182 212;
+  --primitive-cyan-600: 8 145 178;
+
+  /* Emerald (Success) */
+  --primitive-emerald-50: 236 253 245;
+  --primitive-emerald-400: 52 211 153;
+  --primitive-emerald-500: 16 185 129;
+  --primitive-emerald-600: 5 150 105;
+
+  /* Red (Error) */
+  --primitive-red-50: 254 242 242;
+  --primitive-red-400: 248 113 113;
+  --primitive-red-500: 239 68 68;
+  --primitive-red-600: 220 38 38;
+
+  /* Amber (Warning) */
+  --primitive-amber-50: 255 251 235;
+  --primitive-amber-400: 251 191 36;
+  --primitive-amber-500: 245 158 11;
+  --primitive-amber-600: 217 119 6;
+
+  /* --------------------------------------------------
+     1.2 Spacing Primitives (4px base unit)
+     -------------------------------------------------- */
+  --spacing-0: 0px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+
+  /* --------------------------------------------------
+     1.3 Typography Primitives
+     -------------------------------------------------- */
+
+  /* Font Families */
+  --font-sans: 'Noto Sans TC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+
+  /* Font Sizes */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 48px;
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+
+  /* Letter Spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.025em;
+
+  /* --------------------------------------------------
+     1.4 Border Radius Primitives
+     -------------------------------------------------- */
+  --radius-none: 0px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
+  --radius-full: 9999px;
+
+  /* --------------------------------------------------
+     1.5 Shadow Primitives
+     -------------------------------------------------- */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  /* --------------------------------------------------
+     1.6 Motion Primitives
+     -------------------------------------------------- */
+  --duration-instant: 0ms;
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  --easing-linear: linear;
+  --easing-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --easing-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --easing-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* --------------------------------------------------
+     1.7 Z-Index Scale
+     -------------------------------------------------- */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-drawer: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-toast: 1600;
+  --z-tooltip: 1700;
+}
+
+/* ============================================================
+   2. SEMANTIC TOKENS - 語意值（在元件中使用）
+   ============================================================ */
+
+:root {
+  /* --------------------------------------------------
+     2.1 Background Colors
+     -------------------------------------------------- */
+  --color-bg-primary: rgb(var(--primitive-slate-50));
+  --color-bg-secondary: rgb(var(--primitive-slate-100));
+  --color-bg-tertiary: rgb(var(--primitive-slate-200));
+  --color-bg-inverse: rgb(var(--primitive-slate-900));
+
+  /* --------------------------------------------------
+     2.2 Surface Colors
+     -------------------------------------------------- */
+  --color-surface-default: rgb(255 255 255);
+  --color-surface-elevated: rgb(255 255 255);
+  --color-surface-overlay: rgba(255, 255, 255, 0.95);
+
+  /* --------------------------------------------------
+     2.3 Text Colors
+     -------------------------------------------------- */
+  --color-text-primary: rgb(var(--primitive-slate-900));
+  --color-text-secondary: rgb(var(--primitive-slate-600));
+  --color-text-tertiary: rgb(var(--primitive-slate-500));
+  --color-text-disabled: rgb(var(--primitive-slate-400));
+  --color-text-inverse: rgb(255 255 255);
+  --color-text-link: rgb(var(--primitive-violet-600));
+  --color-text-link-hover: rgb(var(--primitive-violet-700));
+
+  /* --------------------------------------------------
+     2.4 Border Colors
+     -------------------------------------------------- */
+  --color-border-default: rgb(var(--primitive-slate-200));
+  --color-border-strong: rgb(var(--primitive-slate-300));
+  --color-border-focus: rgb(var(--primitive-violet-500));
+
+  /* --------------------------------------------------
+     2.5 Accent Colors
+     -------------------------------------------------- */
+  --color-accent-primary: rgb(var(--primitive-violet-600));
+  --color-accent-primary-hover: rgb(var(--primitive-violet-700));
+  --color-accent-primary-active: rgb(var(--primitive-violet-800));
+  --color-accent-primary-subtle: rgba(124, 58, 237, 0.12);
+  --color-accent-secondary: rgb(var(--primitive-cyan-500));
+
+  /* --------------------------------------------------
+     2.6 Status Colors
+     -------------------------------------------------- */
+  --color-status-success: rgb(var(--primitive-emerald-500));
+  --color-status-success-bg: rgb(var(--primitive-emerald-50));
+  --color-status-warning: rgb(var(--primitive-amber-500));
+  --color-status-warning-bg: rgb(var(--primitive-amber-50));
+  --color-status-error: rgb(var(--primitive-red-500));
+  --color-status-error-bg: rgb(var(--primitive-red-50));
+  --color-status-info: rgb(var(--primitive-cyan-500));
+  --color-status-info-bg: rgba(6, 182, 212, 0.1);
+}
+
+/* ============================================================
+   3. GLASS EFFECT TOKENS - 液態玻璃效果
+   ============================================================ */
+
+:root {
+  /* --------------------------------------------------
+     3.1 Blur Values
+     -------------------------------------------------- */
+  --glass-blur-none: 0px;
+  --glass-blur-sm: 8px;
+  --glass-blur-md: 16px;
+  --glass-blur-lg: 24px;
+  --glass-blur-xl: 32px;
+  --glass-blur-2xl: 40px;
+
+  /* --------------------------------------------------
+     3.2 Opacity Values
+     -------------------------------------------------- */
+  --glass-opacity-subtle: 0.05;
+  --glass-opacity-light: 0.08;
+  --glass-opacity-medium: 0.12;
+  --glass-opacity-heavy: 0.18;
+  --glass-opacity-solid: 0.85;
+
+  /* --------------------------------------------------
+     3.3 Border Colors (Highlight)
+     -------------------------------------------------- */
+  --glass-border-light: rgba(255, 255, 255, 0.18);
+  --glass-border-medium: rgba(255, 255, 255, 0.25);
+  --glass-border-strong: rgba(255, 255, 255, 0.35);
+
+  /* --------------------------------------------------
+     3.4 Pre-composed Glass Surfaces
+     -------------------------------------------------- */
+  --glass-surface-base: rgba(255, 255, 255, 0.08);
+  --glass-surface-elevated: rgba(255, 255, 255, 0.12);
+  --glass-surface-overlay: rgba(255, 255, 255, 0.18);
+
+  /* --------------------------------------------------
+     3.5 Glass Shadows
+     -------------------------------------------------- */
+  --glass-shadow-glow: 0 0 40px rgba(124, 58, 237, 0.15);
+  --glass-shadow-inner: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================================
+   4. COMPONENT TOKENS - 元件專用
+   ============================================================ */
+
+:root {
+  /* --------------------------------------------------
+     4.1 Navigation Sizes (Material Design 3)
+     -------------------------------------------------- */
+  --nav-tab-bar-height: 56px;
+  --nav-rail-width: 80px;
+  --nav-sidebar-width: 256px;
+  --nav-sidebar-collapsed: 72px;
+  --nav-top-bar-height: 64px;
+
+  /* --------------------------------------------------
+     4.2 Touch Targets (WCAG 2.2)
+     -------------------------------------------------- */
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+
+  /* --------------------------------------------------
+     4.3 Icon Sizes
+     -------------------------------------------------- */
+  --icon-xs: 12px;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-xl: 32px;
+
+  /* --------------------------------------------------
+     4.4 Button Heights
+     -------------------------------------------------- */
+  --button-height-sm: 32px;
+  --button-height-md: 40px;
+  --button-height-lg: 48px;
+
+  /* --------------------------------------------------
+     4.5 Input Heights
+     -------------------------------------------------- */
+  --input-height-sm: 36px;
+  --input-height-md: 44px;
+  --input-height-lg: 52px;
+}
+
+/* ============================================================
+   5. DARK THEME - 深色主題覆蓋
+   ============================================================ */
+
+[data-theme='dark'] {
+  /* Background */
+  --color-bg-primary: rgb(var(--primitive-slate-950));
+  --color-bg-secondary: rgb(var(--primitive-slate-900));
+  --color-bg-tertiary: rgb(var(--primitive-slate-800));
+  --color-bg-inverse: rgb(var(--primitive-slate-50));
+
+  /* Surface */
+  --color-surface-default: rgb(var(--primitive-slate-900));
+  --color-surface-elevated: rgb(var(--primitive-slate-800));
+  --color-surface-overlay: rgba(30, 41, 59, 0.95);
+
+  /* Text */
+  --color-text-primary: rgb(var(--primitive-slate-50));
+  --color-text-secondary: rgb(var(--primitive-slate-300));
+  --color-text-tertiary: rgb(var(--primitive-slate-400));
+  --color-text-disabled: rgb(var(--primitive-slate-500));
+  --color-text-inverse: rgb(var(--primitive-slate-900));
+  --color-text-link: rgb(var(--primitive-violet-400));
+  --color-text-link-hover: rgb(var(--primitive-violet-300));
+
+  /* Border */
+  --color-border-default: rgb(var(--primitive-slate-700));
+  --color-border-strong: rgb(var(--primitive-slate-600));
+  --color-border-focus: rgb(var(--primitive-violet-400));
+
+  /* Accent */
+  --color-accent-primary: rgb(var(--primitive-violet-400));
+  --color-accent-primary-hover: rgb(var(--primitive-violet-300));
+  --color-accent-primary-active: rgb(var(--primitive-violet-200));
+  --color-accent-primary-subtle: rgba(167, 139, 250, 0.15);
+
+  /* Status */
+  --color-status-success: rgb(var(--primitive-emerald-400));
+  --color-status-success-bg: rgba(52, 211, 153, 0.15);
+  --color-status-warning: rgb(var(--primitive-amber-400));
+  --color-status-warning-bg: rgba(251, 191, 36, 0.15);
+  --color-status-error: rgb(var(--primitive-red-400));
+  --color-status-error-bg: rgba(248, 113, 113, 0.15);
+  --color-status-info: rgb(var(--primitive-cyan-400));
+  --color-status-info-bg: rgba(34, 211, 238, 0.15);
+
+  /* Glass (Dark Mode) */
+  --glass-border-light: rgba(255, 255, 255, 0.1);
+  --glass-border-medium: rgba(255, 255, 255, 0.15);
+  --glass-border-strong: rgba(255, 255, 255, 0.2);
+  --glass-surface-base: rgba(255, 255, 255, 0.05);
+  --glass-surface-elevated: rgba(255, 255, 255, 0.08);
+  --glass-surface-overlay: rgba(255, 255, 255, 0.12);
+  --glass-shadow-glow: 0 0 40px rgba(167, 139, 250, 0.2);
+
+  /* Shadows (Dark) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================
+   6. ACCENT COLOR VARIANTS - 配色方案
+   ============================================================ */
+
+/* Ocean Blue */
+[data-accent='ocean'] {
+  --primitive-accent-400: 56 189 248;
+  --primitive-accent-500: 14 165 233;
+  --primitive-accent-600: 2 132 199;
+  --primitive-accent-700: 3 105 161;
+  --primitive-accent-800: 7 89 133;
+
+  --color-accent-primary: rgb(var(--primitive-accent-600));
+  --color-accent-primary-hover: rgb(var(--primitive-accent-700));
+  --color-accent-primary-active: rgb(var(--primitive-accent-800));
+  --color-accent-primary-subtle: rgba(14, 165, 233, 0.12);
+  --glass-shadow-glow: 0 0 40px rgba(14, 165, 233, 0.15);
+}
+
+[data-theme='dark'][data-accent='ocean'] {
+  --color-accent-primary: rgb(var(--primitive-accent-400));
+  --color-accent-primary-hover: rgb(56 189 248);
+  --color-accent-primary-active: rgb(125 211 252);
+  --color-accent-primary-subtle: rgba(56, 189, 248, 0.15);
+  --glass-shadow-glow: 0 0 40px rgba(56, 189, 248, 0.2);
+}
+
+/* Forest Green */
+[data-accent='forest'] {
+  --primitive-accent-400: 74 222 128;
+  --primitive-accent-500: 34 197 94;
+  --primitive-accent-600: 22 163 74;
+  --primitive-accent-700: 21 128 61;
+  --primitive-accent-800: 22 101 52;
+
+  --color-accent-primary: rgb(var(--primitive-accent-600));
+  --color-accent-primary-hover: rgb(var(--primitive-accent-700));
+  --color-accent-primary-active: rgb(var(--primitive-accent-800));
+  --color-accent-primary-subtle: rgba(34, 197, 94, 0.12);
+  --glass-shadow-glow: 0 0 40px rgba(34, 197, 94, 0.15);
+}
+
+[data-theme='dark'][data-accent='forest'] {
+  --color-accent-primary: rgb(var(--primitive-accent-400));
+  --color-accent-primary-hover: rgb(134 239 172);
+  --color-accent-primary-active: rgb(187 247 208);
+  --color-accent-primary-subtle: rgba(74, 222, 128, 0.15);
+  --glass-shadow-glow: 0 0 40px rgba(74, 222, 128, 0.2);
+}
+
+/* Sunset Orange */
+[data-accent='sunset'] {
+  --primitive-accent-400: 251 146 60;
+  --primitive-accent-500: 249 115 22;
+  --primitive-accent-600: 234 88 12;
+  --primitive-accent-700: 194 65 12;
+  --primitive-accent-800: 154 52 18;
+
+  --color-accent-primary: rgb(var(--primitive-accent-600));
+  --color-accent-primary-hover: rgb(var(--primitive-accent-700));
+  --color-accent-primary-active: rgb(var(--primitive-accent-800));
+  --color-accent-primary-subtle: rgba(249, 115, 22, 0.12);
+  --glass-shadow-glow: 0 0 40px rgba(249, 115, 22, 0.15);
+}
+
+[data-theme='dark'][data-accent='sunset'] {
+  --color-accent-primary: rgb(var(--primitive-accent-400));
+  --color-accent-primary-hover: rgb(253 186 116);
+  --color-accent-primary-active: rgb(254 215 170);
+  --color-accent-primary-subtle: rgba(251, 146, 60, 0.15);
+  --glass-shadow-glow: 0 0 40px rgba(251, 146, 60, 0.2);
+}
+
+/* ============================================================
+   7. ACCESSIBILITY FALLBACKS - 無障礙降級
+   ============================================================ */
+
+/* Reduced Transparency - 降低透明度 */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-blur-sm: 0px;
+    --glass-blur-md: 0px;
+    --glass-blur-lg: 0px;
+    --glass-blur-xl: 0px;
+    --glass-blur-2xl: 0px;
+
+    --glass-surface-base: var(--color-surface-default);
+    --glass-surface-elevated: var(--color-surface-elevated);
+    --glass-surface-overlay: var(--color-surface-overlay);
+
+    --glass-border-light: var(--color-border-default);
+    --glass-border-medium: var(--color-border-strong);
+    --glass-border-strong: var(--color-border-strong);
+  }
+}
+
+/* High Contrast Mode - 高對比模式 */
+[data-contrast='high'] {
+  --color-text-primary: rgb(0 0 0);
+  --color-text-secondary: rgb(0 0 0);
+  --color-border-default: rgb(0 0 0);
+  --color-border-strong: rgb(0 0 0);
+  --color-accent-primary: rgb(0 0 139);
+
+  --glass-surface-base: rgb(255 255 255);
+  --glass-surface-elevated: rgb(255 255 255);
+  --glass-border-light: rgb(0 0 0);
+  --glass-border-medium: rgb(0 0 0);
+}
+
+[data-theme='dark'][data-contrast='high'] {
+  --color-text-primary: rgb(255 255 255);
+  --color-text-secondary: rgb(255 255 255);
+  --color-border-default: rgb(255 255 255);
+  --color-border-strong: rgb(255 255 255);
+  --color-accent-primary: rgb(173 216 230);
+
+  --glass-surface-base: rgb(0 0 0);
+  --glass-surface-elevated: rgb(0 0 0);
+  --glass-border-light: rgb(255 255 255);
+  --glass-border-medium: rgb(255 255 255);
+}
+
+/* Reduced Motion - 減少動態效果 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+    --duration-slower: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   8. UTILITY CLASSES - 工具類別
+   ============================================================ */
+
+/* Glass Card Utilities */
+.glass-base {
+  background: var(--glass-surface-base);
+  backdrop-filter: blur(var(--glass-blur-md));
+  -webkit-backdrop-filter: blur(var(--glass-blur-md));
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-xl);
+}
+
+.glass-elevated {
+  background: var(--glass-surface-elevated);
+  backdrop-filter: blur(var(--glass-blur-lg));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  border: 1px solid var(--glass-border-medium);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.glass-overlay {
+  background: var(--glass-surface-overlay);
+  backdrop-filter: blur(var(--glass-blur-xl));
+  -webkit-backdrop-filter: blur(var(--glass-blur-xl));
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Focus Ring Utility */
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Safe Area Insets (for notched devices) */
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
