@@ -480,6 +480,53 @@ export const zIndexTokens = {
 } as const;
 
 /**
+ * Responsive Breakpoint Tokens - P1-2
+ *
+ * @description 響應式斷點系統 (2025 Best Practices)
+ * @reference https://tailwindcss.com/docs/responsive-design
+ */
+export const screenTokens = {
+  xs: 'var(--breakpoint-xs)', // 375px - Small phones
+  sm: 'var(--breakpoint-sm)', // 640px - Large phones
+  md: 'var(--breakpoint-md)', // 768px - Tablets
+  lg: 'var(--breakpoint-lg)', // 1024px - Small desktops
+  xl: 'var(--breakpoint-xl)', // 1280px - Large desktops
+  '2xl': 'var(--breakpoint-2xl)', // 1536px - Extra large
+} as const;
+
+/**
+ * Fluid Typography Tokens - P1-1
+ *
+ * @description 流體排版系統使用 clamp() 實現平滑縮放
+ */
+export const fluidFontSizeTokens: Record<string, [string, { lineHeight: string }]> = {
+  sm: ['var(--font-size-fluid-sm)', { lineHeight: 'var(--line-height-normal)' }],
+  base: ['var(--font-size-fluid-base)', { lineHeight: 'var(--line-height-normal)' }],
+  lg: ['var(--font-size-fluid-lg)', { lineHeight: 'var(--line-height-snug)' }],
+  xl: ['var(--font-size-fluid-xl)', { lineHeight: 'var(--line-height-snug)' }],
+  '2xl': ['var(--font-size-fluid-2xl)', { lineHeight: 'var(--line-height-tight)' }],
+  '3xl': ['var(--font-size-fluid-3xl)', { lineHeight: 'var(--line-height-tight)' }],
+  '4xl': ['var(--font-size-fluid-4xl)', { lineHeight: 'var(--line-height-tight)' }],
+  '5xl': ['var(--font-size-fluid-5xl)', { lineHeight: 'var(--line-height-tight)' }],
+};
+
+/**
+ * M3 Expressive Shape Tokens - P2-3
+ *
+ * @description Material Design 3 形狀系統
+ * @reference https://m3.material.io/styles/shape/overview
+ */
+export const shapeTokens = {
+  none: 'var(--shape-none)',
+  'extra-small': 'var(--shape-extra-small)',
+  small: 'var(--shape-small)',
+  medium: 'var(--shape-medium)',
+  large: 'var(--shape-large)',
+  'extra-large': 'var(--shape-extra-large)',
+  full: 'var(--shape-full)',
+} as const;
+
+/**
  * 取得 Design Token 配置
  *
  * @returns Design token 物件（包含 colors）
@@ -534,6 +581,15 @@ export function generateTailwindThemeExtension(): Config['theme'] {
       transitionDuration: transitionDurationTokens,
       transitionTimingFunction: transitionTimingTokens,
       zIndex: zIndexTokens,
+    },
+    // P1-2: Responsive breakpoints as CSS Variables
+    screens: {
+      xs: '375px',
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+      '2xl': '1536px',
     },
   };
 }

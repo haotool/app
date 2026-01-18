@@ -102,8 +102,8 @@
   --font-sans: 'Noto Sans TC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'SF Mono', ui-monospace, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
 
-  /* Font Sizes */
-  --font-size-xs: 12px;
+  /* Font Sizes (2025 Best Practices: min 14px for readability) */
+  --font-size-xs: 14px; /* P0 Fix: 12px → 14px for WCAG readability */
   --font-size-sm: 14px;
   --font-size-base: 16px;
   --font-size-lg: 18px;
@@ -112,6 +112,16 @@
   --font-size-3xl: 30px;
   --font-size-4xl: 36px;
   --font-size-5xl: 48px;
+
+  /* P1: Fluid Typography with clamp() */
+  --font-size-fluid-sm: clamp(14px, 0.875rem + 0.1vw, 15px);
+  --font-size-fluid-base: clamp(16px, 1rem + 0.2vw, 18px);
+  --font-size-fluid-lg: clamp(18px, 1.125rem + 0.3vw, 21px);
+  --font-size-fluid-xl: clamp(20px, 1.25rem + 0.4vw, 24px);
+  --font-size-fluid-2xl: clamp(24px, 1.5rem + 0.5vw, 30px);
+  --font-size-fluid-3xl: clamp(30px, 1.875rem + 0.75vw, 38px);
+  --font-size-fluid-4xl: clamp(36px, 2.25rem + 1vw, 48px);
+  --font-size-fluid-5xl: clamp(48px, 3rem + 1.5vw, 64px);
 
   /* Font Weights */
   --font-weight-normal: 400;
@@ -180,6 +190,46 @@
   --z-popover: 1500;
   --z-toast: 1600;
   --z-tooltip: 1700;
+
+  /* --------------------------------------------------
+     1.8 Responsive Breakpoints (P1-2: 2025 Best Practices)
+     @see https://tailwindcss.com/docs/responsive-design
+     -------------------------------------------------- */
+  --breakpoint-xs: 375px; /* Small phones (iPhone SE) */
+  --breakpoint-sm: 640px; /* Large phones */
+  --breakpoint-md: 768px; /* Tablets */
+  --breakpoint-lg: 1024px; /* Small desktops */
+  --breakpoint-xl: 1280px; /* Large desktops */
+  --breakpoint-2xl: 1536px; /* Extra large screens */
+
+  /* --------------------------------------------------
+     1.9 Density Tokens (P2-2: M3 Density System)
+     @see https://m3.material.io/foundations/layout/density
+     -------------------------------------------------- */
+  --density-compact: -4px; /* Tighter spacing for data-dense UIs */
+  --density-normal: 0px; /* Default spacing */
+  --density-comfortable: 4px; /* Extra breathing room */
+
+  /* Density-adjusted spacing */
+  --spacing-density-1: calc(var(--spacing-1) + var(--density-normal));
+  --spacing-density-2: calc(var(--spacing-2) + var(--density-normal));
+  --spacing-density-4: calc(var(--spacing-4) + var(--density-normal));
+
+  /* --------------------------------------------------
+     1.10 M3 Expressive Shape Tokens (P2-3)
+     @see https://m3.material.io/styles/shape/overview
+     -------------------------------------------------- */
+  --shape-none: 0px;
+  --shape-extra-small: 4px;
+  --shape-small: 8px;
+  --shape-medium: 12px;
+  --shape-large: 16px;
+  --shape-extra-large: 28px;
+  --shape-full: 9999px;
+
+  /* Shape morphing for interactive states */
+  --shape-pressed: var(--shape-medium);
+  --shape-hovered: var(--shape-large);
 }
 
 /* ============================================================
@@ -317,18 +367,18 @@
   --icon-xl: 32px;
 
   /* --------------------------------------------------
-     4.4 Button Heights
+     4.4 Button Heights (WCAG 2.2 + Apple HIG 44pt minimum)
      -------------------------------------------------- */
-  --button-height-sm: 32px;
-  --button-height-md: 40px;
-  --button-height-lg: 48px;
+  --button-height-sm: 44px; /* P0 Fix: 32px → 44px for touch target compliance */
+  --button-height-md: 48px; /* MD3 comfortable touch target */
+  --button-height-lg: 56px; /* Large touch target */
 
   /* --------------------------------------------------
-     4.5 Input Heights
+     4.5 Input Heights (WCAG 2.2 + Apple HIG 44pt minimum)
      -------------------------------------------------- */
-  --input-height-sm: 36px;
-  --input-height-md: 44px;
-  --input-height-lg: 52px;
+  --input-height-sm: 44px; /* P0 Fix: 36px → 44px for touch target compliance */
+  --input-height-md: 48px; /* MD3 comfortable touch target */
+  --input-height-lg: 56px; /* Large touch target */
 }
 
 /* ============================================================
@@ -583,4 +633,112 @@
 
 .safe-area-inset-top {
   padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ============================================================
+   9. RESPONSIVE TYPOGRAPHY - P1-3: Mobile 優化
+   ============================================================ */
+
+/* Mobile-first: Default is mobile (use larger body text) */
+:root {
+  --font-size-body: var(--font-size-lg); /* 18px on mobile for better readability */
+  --font-size-body-secondary: var(--font-size-base); /* 16px */
+}
+
+/* Tablet and above: Can use standard sizes */
+@media (min-width: 768px) {
+  :root {
+    --font-size-body: var(--font-size-base); /* 16px on desktop */
+    --font-size-body-secondary: var(--font-size-sm); /* 14px */
+  }
+}
+
+/* ============================================================
+   10. CONTAINER QUERIES - P2-1: Component-based Responsiveness
+   ============================================================ */
+
+/* Container Query Base Classes */
+.container-responsive {
+  container-type: inline-size;
+  container-name: responsive;
+}
+
+.container-card {
+  container-type: inline-size;
+  container-name: card;
+}
+
+.container-form {
+  container-type: inline-size;
+  container-name: form;
+}
+
+/* Container Query Breakpoints */
+@container responsive (min-width: 400px) {
+  .cq\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container responsive (min-width: 600px) {
+  .cq\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container card (min-width: 300px) {
+  .cq\:card-horizontal {
+    flex-direction: row;
+  }
+  .cq\:card-padding-lg {
+    padding: var(--spacing-6);
+  }
+}
+
+@container form (min-width: 500px) {
+  .cq\:form-inline {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-4);
+  }
+}
+
+/* ============================================================
+   11. DENSITY VARIANTS - P2-2: Compact/Comfortable Modes
+   ============================================================ */
+
+/* Compact Mode - for data-dense interfaces */
+[data-density='compact'] {
+  --density-normal: -4px;
+  --spacing-1: 2px;
+  --spacing-2: 4px;
+  --spacing-3: 8px;
+  --spacing-4: 12px;
+  --spacing-6: 16px;
+  --spacing-8: 24px;
+
+  --font-size-base: 14px;
+  --font-size-sm: 12px;
+  --font-size-xs: 11px;
+
+  --button-height-sm: 36px;
+  --button-height-md: 40px;
+  --input-height-sm: 36px;
+  --input-height-md: 40px;
+}
+
+/* Comfortable Mode - extra breathing room */
+[data-density='comfortable'] {
+  --density-normal: 4px;
+  --spacing-1: 6px;
+  --spacing-2: 12px;
+  --spacing-3: 16px;
+  --spacing-4: 20px;
+  --spacing-6: 28px;
+  --spacing-8: 40px;
+
+  --button-height-sm: 48px;
+  --button-height-md: 56px;
+  --input-height-sm: 48px;
+  --input-height-md: 56px;
 }

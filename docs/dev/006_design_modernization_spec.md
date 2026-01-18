@@ -1,10 +1,34 @@
 # Ratewise Design Modernization Specification
 
-> **版本**: 2.1.0
+> **版本**: 3.0.0
 > **建立日期**: 2025-01-17
-> **最後更新**: 2025-01-17
-> **狀態**: 📋 規劃中
-> **依據**: W3C DTCG 2025.10, Apple Liquid Glass, Material Design 3, Android/iOS HIG
+> **最後更新**: 2025-01-18
+> **狀態**: ✅ 已實作
+> **依據**: W3C DTCG 2025.10, Apple Liquid Glass, Material Design 3, Android/iOS HIG, WCAG 2.2
+
+---
+
+## 變更日誌
+
+### v3.0.0 (2025-01-18) - 2025 標準合規更新
+
+#### P0 - 無障礙合規 (已完成)
+
+- ✅ `--button-height-sm`: 32px → 44px (WCAG 2.2 觸控目標)
+- ✅ `--input-height-sm`: 36px → 44px (WCAG 2.2 觸控目標)
+- ✅ `--font-size-xs`: 12px → 14px (可讀性最低標準)
+
+#### P1 - 2025 標準合規 (已完成)
+
+- ✅ 新增流體排版 `clamp()` tokens (`--font-size-fluid-*`)
+- ✅ 新增響應式斷點 tokens (`--breakpoint-xs/sm/md/lg/xl/2xl`)
+- ✅ Mobile 內文優化：使用 18px 作為預設 body 字級
+
+#### P2 - 增強體驗 (已完成)
+
+- ✅ 新增 Container Query 支援 (`.container-responsive`, `@container`)
+- ✅ 新增密度 tokens (`[data-density='compact/comfortable']`)
+- ✅ 對齊 M3 Expressive 形狀系統 (`--shape-*`)
 
 ---
 
