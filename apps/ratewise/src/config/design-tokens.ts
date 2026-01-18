@@ -353,6 +353,133 @@ export const darkTheme = {
 } as const;
 
 /**
+ * Spacing Tokens - 使用 CSS Variables
+ *
+ * @description 基於 4px base unit 的間距系統
+ * @reference Material Design spacing: https://m3.material.io/foundations/layout/spacing
+ */
+export const spacingTokens = {
+  0: 'var(--spacing-0)',
+  1: 'var(--spacing-1)',
+  2: 'var(--spacing-2)',
+  3: 'var(--spacing-3)',
+  4: 'var(--spacing-4)',
+  5: 'var(--spacing-5)',
+  6: 'var(--spacing-6)',
+  8: 'var(--spacing-8)',
+  10: 'var(--spacing-10)',
+  12: 'var(--spacing-12)',
+  16: 'var(--spacing-16)',
+  20: 'var(--spacing-20)',
+  24: 'var(--spacing-24)',
+} as const;
+
+/**
+ * Border Radius Tokens - 使用 CSS Variables
+ *
+ * @description 統一圓角系統
+ */
+export const borderRadiusTokens = {
+  none: 'var(--radius-none)',
+  sm: 'var(--radius-sm)',
+  DEFAULT: 'var(--radius-md)',
+  md: 'var(--radius-md)',
+  lg: 'var(--radius-lg)',
+  xl: 'var(--radius-xl)',
+  '2xl': 'var(--radius-2xl)',
+  '3xl': 'var(--radius-3xl)',
+  full: 'var(--radius-full)',
+} as const;
+
+/**
+ * Box Shadow Tokens - 使用 CSS Variables
+ *
+ * @description 統一陰影系統
+ */
+export const boxShadowTokens = {
+  sm: 'var(--shadow-sm)',
+  DEFAULT: 'var(--shadow-md)',
+  md: 'var(--shadow-md)',
+  lg: 'var(--shadow-lg)',
+  xl: 'var(--shadow-xl)',
+  '2xl': 'var(--shadow-2xl)',
+  inner: 'var(--shadow-inner)',
+  none: 'none',
+  // Glass-specific shadows
+  'glass-glow': 'var(--glass-shadow-glow)',
+  'glass-inner': 'var(--glass-shadow-inner)',
+} as const;
+
+/**
+ * Font Size Tokens - 使用 CSS Variables
+ *
+ * @description 統一字級系統
+ */
+export const fontSizeTokens: Record<string, [string, { lineHeight: string }]> = {
+  xs: ['var(--font-size-xs)', { lineHeight: 'var(--line-height-normal)' }],
+  sm: ['var(--font-size-sm)', { lineHeight: 'var(--line-height-normal)' }],
+  base: ['var(--font-size-base)', { lineHeight: 'var(--line-height-normal)' }],
+  lg: ['var(--font-size-lg)', { lineHeight: 'var(--line-height-snug)' }],
+  xl: ['var(--font-size-xl)', { lineHeight: 'var(--line-height-snug)' }],
+  '2xl': ['var(--font-size-2xl)', { lineHeight: 'var(--line-height-tight)' }],
+  '3xl': ['var(--font-size-3xl)', { lineHeight: 'var(--line-height-tight)' }],
+  '4xl': ['var(--font-size-4xl)', { lineHeight: 'var(--line-height-tight)' }],
+  '5xl': ['var(--font-size-5xl)', { lineHeight: 'var(--line-height-tight)' }],
+};
+
+/**
+ * Transition Duration Tokens - 使用 CSS Variables
+ *
+ * @description 動畫時長系統
+ */
+export const transitionDurationTokens = {
+  0: 'var(--duration-instant)',
+  75: '75ms',
+  100: 'var(--duration-fast)',
+  150: '150ms',
+  200: 'var(--duration-normal)',
+  300: 'var(--duration-slow)',
+  500: 'var(--duration-slower)',
+  700: '700ms',
+  1000: '1000ms',
+} as const;
+
+/**
+ * Transition Timing Function Tokens - 使用 CSS Variables
+ *
+ * @description 緩動函數系統
+ */
+export const transitionTimingTokens = {
+  linear: 'var(--easing-linear)',
+  in: 'var(--easing-ease-in)',
+  out: 'var(--easing-ease-out)',
+  'in-out': 'var(--easing-ease-in-out)',
+  spring: 'var(--easing-spring)',
+} as const;
+
+/**
+ * Z-Index Tokens - 使用 CSS Variables
+ *
+ * @description 層級系統
+ */
+export const zIndexTokens = {
+  0: 'var(--z-base)',
+  10: '10',
+  20: '20',
+  30: '30',
+  40: '40',
+  50: '50',
+  dropdown: 'var(--z-dropdown)',
+  sticky: 'var(--z-sticky)',
+  fixed: 'var(--z-fixed)',
+  drawer: 'var(--z-drawer)',
+  modal: 'var(--z-modal)',
+  popover: 'var(--z-popover)',
+  toast: 'var(--z-toast)',
+  tooltip: 'var(--z-tooltip)',
+} as const;
+
+/**
  * 取得 Design Token 配置
  *
  * @returns Design token 物件（包含 colors）
@@ -365,7 +492,13 @@ export const darkTheme = {
  * ```
  */
 export function getDesignTokens() {
-  return { colors: semanticColors };
+  return {
+    colors: semanticColors,
+    spacing: spacingTokens,
+    borderRadius: borderRadiusTokens,
+    boxShadow: boxShadowTokens,
+    fontSize: fontSizeTokens,
+  };
 }
 
 /**
@@ -394,6 +527,13 @@ export function generateTailwindThemeExtension(): Config['theme'] {
   return {
     extend: {
       colors: semanticColors,
+      spacing: spacingTokens,
+      borderRadius: borderRadiusTokens,
+      boxShadow: boxShadowTokens,
+      fontSize: fontSizeTokens,
+      transitionDuration: transitionDurationTokens,
+      transitionTimingFunction: transitionTimingTokens,
+      zIndex: zIndexTokens,
     },
   };
 }
