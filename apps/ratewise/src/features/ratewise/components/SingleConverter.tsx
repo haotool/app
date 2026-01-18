@@ -1,10 +1,24 @@
+/**
+ * SingleConverter - Primary currency conversion interface
+ *
+ * Features:
+ * - Real-time exchange rate display with trend visualization
+ * - Bidirectional currency input with calculator support
+ * - Quick amount selection buttons
+ * - Spot/Cash rate toggle
+ * - Swap currencies with haptic feedback
+ *
+ * @module features/ratewise/components/SingleConverter
+ */
+
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { RefreshCw } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateType } from '../types';
-// [fix:2025-12-24] Lazy load MiniTrendChart 減少初始 JS 載入量
-// lightweight-charts (144KB) 和 motion (40KB) 只在展開趨勢圖時載入
+
+// Lazy load MiniTrendChart to reduce initial bundle size
+// lightweight-charts (144KB) and motion (40KB) load on-demand
 const MiniTrendChart = lazy(() =>
   import('./MiniTrendChart').then((m) => ({ default: m.MiniTrendChart })),
 );
@@ -16,7 +30,8 @@ import {
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
 import { formatAmountDisplay } from '../../../utils/currencyFormatter';
-// [fix:2025-12-24] Lazy load CalculatorKeyboard - 只在用戶點擊計算機按鈕時載入
+
+// Lazy load CalculatorKeyboard - only loads when user opens calculator
 const CalculatorKeyboard = lazy(() =>
   import('../../calculator/components/CalculatorKeyboard').then((m) => ({
     default: m.CalculatorKeyboard,
@@ -25,7 +40,6 @@ const CalculatorKeyboard = lazy(() =>
 import { logger } from '../../../utils/logger';
 import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
-// 新的 UI 元件
 import { CurrencyInput, QuickAmountButtons } from '../../../components/ui';
 import { RateDisplayCard } from '../../../components/ui';
 
@@ -50,7 +64,7 @@ interface SingleConverterProps {
   onRateTypeChange: (type: RateType) => void;
 }
 
-// 轉換貨幣定義為 CurrencyInput 所需格式
+// Transform currency definitions to CurrencyInput format
 const currencyOptions = CURRENCY_CODES.map((code) => ({
   code,
   flag: CURRENCY_DEFINITIONS[code].flag,
@@ -79,7 +93,7 @@ export const SingleConverter = ({
   const [isSwapping, setIsSwapping] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
 
-  // 計算機鍵盤狀態（使用統一的 Hook）
+  // Calculator keyboard state using unified hook
   const calculator = useCalculatorModal<'from' | 'to'>({
     onConfirm: (field, result) => {
       if (field === 'from') {
@@ -89,14 +103,14 @@ export const SingleConverter = ({
       }
     },
     getInitialValue: (field) => {
-      // 使用當前輸入框的實際值，如果為空或無效則使用 0
+      // Use current input value, default to 0 if empty or invalid
       const value = field === 'from' ? fromAmount : toAmount;
       const parsed = parseFloat(value);
       return Number.isNaN(parsed) ? 0 : parsed;
     },
   });
 
-  // 獲取指定貨幣的匯率（優先使用 details + rateType，有 fallback 機制）
+  // Get exchange rate for currency (uses details + rateType with fallback)
   const getRate = (currency: CurrencyCode): number => {
     return getExchangeRate(currency, details, rateType, exchangeRates) ?? 1;
   };
@@ -106,24 +120,24 @@ export const SingleConverter = ({
   const exchangeRate = fromRate / toRate;
   const reverseRate = toRate / fromRate;
 
-  // 趨勢圖進場動畫
+  // Trend chart fade-in animation on mount
   useEffect(() => {
     const timer = setTimeout(() => setShowTrend(true), 300);
     return () => clearTimeout(timer);
   }, []);
 
-  // 處理交換按鈕點擊
+  // Handle currency swap button click
   const handleSwap = () => {
     setIsSwapping(true);
     onSwapCurrencies();
 
-    // 觸覺反饋（如果支援）
+    // Haptic feedback if supported
     if ('vibrate' in navigator) {
       navigator.vibrate(50);
     }
   };
 
-  // 重置動畫狀態
+  // Reset swap animation state
   useEffect(() => {
     if (!isSwapping) return;
 
@@ -131,11 +145,11 @@ export const SingleConverter = ({
     return () => clearTimeout(timer);
   }, [isSwapping]);
 
-  // 獲取當前貨幣的快速金額選項
+  // Get quick amount presets for current currencies
   const fromQuickAmounts = CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD;
   const toQuickAmounts = CURRENCY_QUICK_AMOUNTS[toCurrency] || CURRENCY_QUICK_AMOUNTS.TWD;
 
-  // Load historical data for trend chart (並行獲取優化)
+  // Load historical data for trend chart (parallel fetch optimization)
   useEffect(() => {
     // Skip in test environment (avoid window is not defined error)
     if (typeof window === 'undefined') {
@@ -169,7 +183,7 @@ export const SingleConverter = ({
           .filter((item): item is MiniTrendDataPoint => item !== null)
           .reverse();
 
-        // 整合即時匯率到歷史數據
+        // Merge latest rates with historical data
         let mergedPoints = historyPoints;
 
         if (latestRates) {
@@ -178,12 +192,12 @@ export const SingleConverter = ({
           const latestRate = latestFromRate / latestToRate;
 
           if (Number.isFinite(latestRate) && latestRate > 0) {
-            // 提取日期並轉換為 YYYY-MM-DD 格式
+            // Extract date and convert to YYYY-MM-DD format
             const latestDate =
               latestRates.updateTime?.split(/\s+/)[0]?.replace(/\//g, '-') ??
               new Date().toISOString().slice(0, 10);
 
-            // 去重：過濾掉相同日期的歷史數據，添加最新數據點
+            // Deduplicate: filter out historical data with same date, add latest point
             mergedPoints = [
               ...historyPoints.filter((point) => point.date !== latestDate),
               { date: latestDate, rate: latestRate },
@@ -191,7 +205,7 @@ export const SingleConverter = ({
           }
         }
 
-        // 按日期排序並限制最多30天
+        // Sort by date and limit to 30 days
         const sortedPoints = mergedPoints.sort((a, b) => a.date.localeCompare(b.date));
         setTrendData(sortedPoints.slice(-MAX_TREND_DAYS));
       } catch {
@@ -211,7 +225,7 @@ export const SingleConverter = ({
     };
   }, [fromCurrency, toCurrency]);
 
-  // 開發工具：強制觸發骨架屏效果（僅開發模式）
+  // Dev tools: Force trigger skeleton screen effect (dev mode only)
   /* v8 ignore next 22 */
   useEffect(() => {
     if (!import.meta.env.DEV || typeof window === 'undefined') return;
@@ -238,7 +252,7 @@ export const SingleConverter = ({
     };
   }, [trendData]);
 
-  // 趨勢圖渲染
+  // Render trend chart with loading states
   const renderTrendChart = () => (
     <div
       className={`w-full h-full transition-all duration-500 ${
@@ -268,7 +282,7 @@ export const SingleConverter = ({
 
   return (
     <>
-      {/* 來源貨幣輸入 */}
+      {/* Source currency input */}
       <div className="mb-4">
         <CurrencyInput
           label="轉換金額"
@@ -288,9 +302,9 @@ export const SingleConverter = ({
         <QuickAmountButtons amounts={fromQuickAmounts} onSelect={onQuickAmount} />
       </div>
 
-      {/* 匯率顯示卡片 + 交換按鈕 */}
+      {/* Rate display card with swap button */}
       <div className="flex flex-col items-center mb-4">
-        {/* 匯率卡片（含趨勢圖） */}
+        {/* Rate card with integrated trend chart */}
         <RateDisplayCard
           fromCurrency={fromCurrency}
           toCurrency={toCurrency}
@@ -303,16 +317,16 @@ export const SingleConverter = ({
           className="mb-3"
         />
 
-        {/* 轉換按鈕 - 高級微互動 */}
+        {/* Swap button with advanced micro-interactions */}
         <div className="relative group/swap">
-          {/* 外圍光環 */}
+          {/* Outer glow ring */}
           <div
             className={`absolute -inset-1 bg-gradient-to-r from-primary-light via-primary-hover to-primary-light rounded-full blur-md transition-all duration-500 ${
               isSwapping ? 'opacity-60 scale-125' : 'opacity-0 group-hover/swap:opacity-30'
             } animate-pulse`}
           />
 
-          {/* 按鈕本體 */}
+          {/* Button element */}
           <button
             onClick={handleSwap}
             className={`relative p-3 bg-gradient-to-r from-brand-button-from to-brand-button-to hover:from-brand-button-hover-from hover:to-brand-button-hover-to text-white rounded-full shadow-lg transition-all duration-500 transform hover:scale-110 active:scale-95 group-hover/swap:shadow-2xl ${
@@ -322,14 +336,14 @@ export const SingleConverter = ({
             title="交換幣別"
             disabled={isSwapping}
           >
-            {/* 背景脈動效果 */}
+            {/* Background pulse effect */}
             <div
               className={`absolute inset-0 rounded-full bg-white transition-opacity duration-300 ${
                 isSwapping ? 'opacity-30' : 'opacity-0 group-hover/swap:opacity-20'
               } animate-ping`}
             />
 
-            {/* 圖示 - 點擊旋轉 */}
+            {/* Icon with rotation animation */}
             <RefreshCw
               size={20}
               className={`relative z-10 transition-all duration-600 ${
@@ -340,7 +354,7 @@ export const SingleConverter = ({
               }}
             />
 
-            {/* 點擊漣漪效果 */}
+            {/* Click ripple effect */}
             <span
               className={`absolute inset-0 rounded-full bg-white transition-opacity duration-300 ${
                 isSwapping ? 'opacity-30 animate-ping' : 'opacity-0'
@@ -348,16 +362,16 @@ export const SingleConverter = ({
             />
           </button>
 
-          {/* 懸停提示 */}
+          {/* Hover tooltip */}
           <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
             <span className="text-xs font-medium text-neutral-text-secondary whitespace-nowrap bg-white px-2 py-1 rounded-full shadow-md">
-              點擊交換
+              Click to swap
             </span>
           </div>
         </div>
       </div>
 
-      {/* 目標貨幣輸入 */}
+      {/* Target currency input */}
       <div className="mb-4">
         <CurrencyInput
           label="轉換結果"
@@ -377,7 +391,7 @@ export const SingleConverter = ({
         <QuickAmountButtons
           amounts={toQuickAmounts}
           onSelect={(amount) => {
-            // 直接設定目標貨幣金額，不需要轉換
+            // Set target amount directly without conversion
             const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
             onToAmountChange(amount.toFixed(decimals));
           }}
@@ -385,7 +399,7 @@ export const SingleConverter = ({
         />
       </div>
 
-      {/* 加入歷史記錄按鈕 */}
+      {/* Add to history button */}
       <button
         onClick={onAddToHistory}
         className="w-full py-3 bg-gradient-to-r from-brand-button-from to-brand-button-to hover:from-brand-button-hover-from hover:to-brand-button-hover-to text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
@@ -396,8 +410,8 @@ export const SingleConverter = ({
         加入歷史記錄
       </button>
 
-      {/* 計算機鍵盤 Bottom Sheet */}
-      {/* [fix:2025-12-25] 始終渲染 CalculatorKeyboard，讓彩蛋在計算機關閉後仍可顯示 */}
+      {/* Calculator keyboard bottom sheet */}
+      {/* Always render CalculatorKeyboard to allow easter eggs after close */}
       <Suspense fallback={null}>
         <CalculatorKeyboard
           isOpen={calculator.isOpen}
