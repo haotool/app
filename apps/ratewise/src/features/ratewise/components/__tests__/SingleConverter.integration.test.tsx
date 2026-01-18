@@ -200,12 +200,11 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
     });
 
     it('歷史資料為空時顯示骨架且不渲染迷你趨勢圖', async () => {
+      // 兩個數據源都返回空或失敗，確保 trendData 為空
       vi.mocked(exchangeRateHistoryService.fetchHistoricalRatesRange).mockResolvedValue([]);
-      vi.mocked(exchangeRateHistoryService.fetchLatestRates).mockResolvedValue({
-        updateTime: '2025/10/17 08:00:00',
-        source: 'Taiwan Bank',
-        rates: { ...mockExchangeRates },
-      });
+      vi.mocked(exchangeRateHistoryService.fetchLatestRates).mockRejectedValue(
+        new Error('Network error'),
+      );
 
       render(<SingleConverter {...mockProps} />);
 

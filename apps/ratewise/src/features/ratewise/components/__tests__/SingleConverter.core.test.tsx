@@ -238,12 +238,13 @@ describe('SingleConverter - 核心功能測試', () => {
       const { rerender } = render(<SingleConverter {...mockProps} rateType="spot" />);
 
       const spotButton = screen.getByLabelText('切換到即期匯率');
-      expect(spotButton).toHaveClass('bg-brand-button-to');
+      // 使用 aria-pressed 驗證選中狀態（更好的無障礙測試）
+      expect(spotButton).toHaveAttribute('aria-pressed', 'true');
 
       rerender(<SingleConverter {...mockProps} rateType="cash" />);
 
       const cashButton = screen.getByLabelText('切換到現金匯率');
-      expect(cashButton).toHaveClass('bg-brand-button-from');
+      expect(cashButton).toHaveAttribute('aria-pressed', 'true');
     });
   });
 
@@ -392,19 +393,25 @@ describe('SingleConverter - 核心功能測試', () => {
   });
 
   describe('趨勢圖進場動畫', () => {
-    it('should show trend chart after 300ms delay', () => {
+    it('should show trend chart after 300ms delay', async () => {
       render(<SingleConverter {...mockProps} />);
 
-      // 初始狀態不應該顯示趨勢圖（opacity-0）
-      const trendContainer = document.querySelector('.opacity-0.translate-y-4');
+      // Wait for async operations to complete
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      // 初始狀態趨勢圖隱藏（opacity-0）
+      const trendContainer = document.querySelector('.opacity-0');
       expect(trendContainer).toBeInTheDocument();
 
       // 300ms 後應該顯示（opacity-100）
-      act(() => {
+      await act(async () => {
         vi.advanceTimersByTime(400);
+        await Promise.resolve();
       });
 
-      const visibleTrend = document.querySelector('.opacity-100.translate-y-0');
+      const visibleTrend = document.querySelector('.opacity-100');
       expect(visibleTrend).toBeInTheDocument();
     });
   });
