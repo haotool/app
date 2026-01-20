@@ -1,10 +1,10 @@
 # 開發獎懲記錄
 
-**版本**: 2.0.9
+**版本**: 2.1.0
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2026-01-20T22:15:00+08:00
+**更新時間**: 2026-01-21T00:10:00+08:00
 **狀態**: ✅ 完成
-**當前總分**: +97
+**當前總分**: +128
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                | 依據                                                                                                     | 分數 |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---- |
@@ -76,29 +76,39 @@
 | ✅ 成功 | quake-school ESLint 警告修復                     | 1) RouterWrapper.tsx 分離 renderWithRouter 至獨立檔案 2) 修復 react-refresh/only-export-components 警告 3) Monorepo 全應用 lint 通過                                                                    | [react-refresh/only-export-components][LINUS_GUIDE.md]                                                   | +1   |
 | ✅ 成功 | SingleConverter 測試同步更新                     | 1) 更新 CSS class 測試預期值 (bg-brand-button-to → bg-primary) 2) 符合新 UI 設計 3) 1038 測試全通過                                                                                                     | [BDD.md:Red-Green-Refactor]                                                                              | +1   |
 | ✅ 成功 | AGENTS.md 文檔更新                               | 1) 任務狀態日期更新 (2025-12-25 → 2026-01-20) 2) 測試數量更新 (895 → 1038) 3) 版本更新 v2.1 → v2.2                                                                                                      | [AGENTS.md:§6]                                                                                           | +1   |
+| ✅ 成功 | SSOT UI/UX 全面重構（8 項完成）                  | 1) 移除卡片中間分隔線 2) 迷你趨勢圖背景透明 3) 現金按鈕高亮修正 4) 紫色為主色 5) 輸入框設計一致 6) 下拉模組 SSOT 7) 頁面可滾動 8) 硬編碼組件重構                                                        | [WebSearch:fintech UI 2026][context7:tailwindcss]                                                        | +8   |
+| ✅ 成功 | CurrencyList 測試 SSOT 更新                      | 1) text-yellow-500 → text-favorite 2) text-gray-300 → text-text-muted 3) text-green-500 → text-success 4) text-red-500 → text-destructive                                                               | [BDD.md:Red-Green-Refactor]                                                                              | +1   |
+| ✅ 成功 | 移除未使用依賴 framer-motion                     | 1) depcheck 發現 framer-motion 未使用（已被 motion 取代） 2) pnpm remove framer-motion 3) 1038 測試全通過 4) 減少 bundle 冗餘                                                                           | [context7:/websites/motion_dev:motion-vs-framer-motion:2026-01-20]                                       | +1   |
 
 ---
 
 ## 歷史錯誤模式警告（防止重蹈覆轍）
 
-| 類型    | 摘要                                                   | 教訓                                                                                                                                                |
-| ------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --- |
-| ❌ 重大 | SEO 分支合併未驗證生產環境（2025-12-24）               | **強制檢查**：1) 本地測試 `VITE_*_BASE_PATH='/xxx/' pnpm build && preview` 2) 檢查圖片檔案存在性 3) 禁止絕對路徑和動態 BASE_URL 4) 執行 Linus 三問  |
-| ❌ 重大 | 圖片路徑使用動態 BASE_URL 導致 hydration               | **永遠使用相對路徑**：`<img src="logo.png">` 而非 `/logo.png` 或 `${BASE_URL}logo.png`，讓 Vite 自動處理 base path                                  |
-| ❌ 重大 | 過度優化導致複雜化（AVIF/WebP 未準備）                 | **YAGNI 原則**：不要為未來需求預先優化，先確保基礎功能正常，再考慮進階優化                                                                          |
-| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效                    | SSG 無法生成 nonce，避免使用 strict-dynamic                                                                                                         |
-| ❌ 歷史 | 文檔與程式碼實作狀態不符                               | 每次修改必須逐一驗證實際檔案                                                                                                                        |
-| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）                | 新增路由後必須同步更新相關測試                                                                                                                      |
-| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx               | 新增路由後必須同步更新 ssgOptions.includedRoutes                                                                                                    |
-| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據                  | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                                                                                               |
-| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用                 | 2025 年起 Google 不再支援 image:caption/title/license                                                                                               |
-| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限                 | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除                                                                      |
-| ⚠️ 注意 | `<picture>` 標籤 SSG 路徑解析問題                      | `import.meta.env.BASE_URL` 在 SSG 時可能無法正確解析，導致 srcSet 為 null                                                                           |
-| ⚠️ 注意 | E2E 頁尾 toBeVisible 假設元素在 viewport               | 使用 toBeAttached 檢查 DOM 存在性，不假設元素在初始 viewport                                                                                        |
-| ❌ 歷史 | `new Date()` 在 SSG 組件中導致 Hydration 錯誤          | **禁止在 SSG 組件渲染路徑使用動態時間**：改用固定值（BUILD_TIME、CURRENT_YEAR）或 suppressHydrationWarning                                          |
-| ❌ 歷史 | `localStorage` 在 useState 初始化中導致 Hydration 錯誤 | **禁止在 useState 初始化函數中使用 localStorage/window**：useState 使用固定初始值，然後在 useEffect 中讀取 localStorage 並更新                      |
-| ✅ 已解 | React Hydration #418 在 SSG 環境中偶發                 | **已解決**：1) ClientOnly 包裝動態組件 2) console.error 攔截器過濾預期錯誤 3) 參考 [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25] |
-| ✅ 成功 | 高級金融 App 風格 UI 重構 - 匯率卡片                   | 1) 移除彩色漸層背景，改用純淨 `bg-surface` 2) 微妙邊框 `border-border/50` 3) 現代化玻璃擬態按鈕 4) 圖表微光漸層 25%→0% 5) 多主題驗證（Zen/Nitro）   | [WebSearch:fintech app UI 2026][Bloomberg/Robinhood/Revolut 設計參考] | +3  |
+| 類型    | 摘要                                                        | 教訓                                                                                                                                                                                                              |
+| ------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --- |
+| ❌ 重大 | SEO 分支合併未驗證生產環境（2025-12-24）                    | **強制檢查**：1) 本地測試 `VITE_*_BASE_PATH='/xxx/' pnpm build && preview` 2) 檢查圖片檔案存在性 3) 禁止絕對路徑和動態 BASE_URL 4) 執行 Linus 三問                                                                |
+| ❌ 重大 | 圖片路徑使用動態 BASE_URL 導致 hydration                    | **永遠使用相對路徑**：`<img src="logo.png">` 而非 `/logo.png` 或 `${BASE_URL}logo.png`，讓 Vite 自動處理 base path                                                                                                |
+| ❌ 重大 | 過度優化導致複雜化（AVIF/WebP 未準備）                      | **YAGNI 原則**：不要為未來需求預先優化，先確保基礎功能正常，再考慮進階優化                                                                                                                                        |
+| ❌ 歷史 | CSP strict-dynamic 導致生產環境失效                         | SSG 無法生成 nonce，避免使用 strict-dynamic                                                                                                                                                                       |
+| ❌ 歷史 | 文檔與程式碼實作狀態不符                                    | 每次修改必須逐一驗證實際檔案                                                                                                                                                                                      |
+| ❌ 歷史 | 測試預期值未同步更新（xhtml:link 數量）                     | 新增路由後必須同步更新相關測試                                                                                                                                                                                    |
+| ❌ 歷史 | vite.config.ts SSG 路徑未同步 routes.tsx                    | 新增路由後必須同步更新 ssgOptions.includedRoutes                                                                                                                                                                  |
+| ⚠️ 注意 | llms.txt 包含與 Schema 相同的虛假數據                       | 移除 AggregateRating 後需同步檢查 llms.txt 避免不一致                                                                                                                                                             |
+| ⚠️ 注意 | sitemap image:caption 已被 Google 棄用                      | 2025 年起 Google 不再支援 image:caption/title/license                                                                                                                                                             |
+| ⚠️ 注意 | CSP meta tag 太長導致 charset 位置超限                      | vite-plugin-csp-guard 生成的 meta tag 可能超過 1024 bytes，需用 postbuild 移除                                                                                                                                    |
+| ⚠️ 注意 | `<picture>` 標籤 SSG 路徑解析問題                           | `import.meta.env.BASE_URL` 在 SSG 時可能無法正確解析，導致 srcSet 為 null                                                                                                                                         |
+| ⚠️ 注意 | E2E 頁尾 toBeVisible 假設元素在 viewport                    | 使用 toBeAttached 檢查 DOM 存在性，不假設元素在初始 viewport                                                                                                                                                      |
+| ❌ 歷史 | `new Date()` 在 SSG 組件中導致 Hydration 錯誤               | **禁止在 SSG 組件渲染路徑使用動態時間**：改用固定值（BUILD_TIME、CURRENT_YEAR）或 suppressHydrationWarning                                                                                                        |
+| ❌ 歷史 | `localStorage` 在 useState 初始化中導致 Hydration 錯誤      | **禁止在 useState 初始化函數中使用 localStorage/window**：useState 使用固定初始值，然後在 useEffect 中讀取 localStorage 並更新                                                                                    |
+| ✅ 已解 | React Hydration #418 在 SSG 環境中偶發                      | **已解決**：1) ClientOnly 包裝動態組件 2) console.error 攔截器過濾預期錯誤 3) 參考 [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]                                                               |
+| ✅ 成功 | 高級金融 App 風格 UI 重構 - 匯率卡片                        | 1) 移除彩色漸層背景，改用純淨 `bg-surface` 2) 微妙邊框 `border-border/50` 3) 現代化玻璃擬態按鈕 4) 圖表微光漸層 25%→0% 5) 多主題驗證（Zen/Nitro）                                                                 | [WebSearch:fintech app UI 2026][Bloomberg/Robinhood/Revolut 設計參考] | +3  |
+| ✅ 成功 | SSOT Design Token 4 項重構完成                              | 1) 交換/歷史按鈕 `from-brand-*` → `from-primary` 2) 趨勢圖 `bg-surface-elevated` 區分度 3) 下拉刷新 SSOT token + scrollY≤10 觸發 4) 轉換歷史 `bg-surface-card` + `text-text`                                      | [SSOT Design System][AGENTS.md:§6]                                    | +4  |
+| ✅ 成功 | 深度掃描：SkeletonLoader/VersionDisplay SSOT 重構           | 1) SkeletonLoader `bg-white` → `bg-surface` (4 處) 2) VersionDisplay `text-gray-400` → `text-text-muted` 3) 1038 測試通過                                                                                         | [SSOT Design System][深度掃描:潛在硬編碼]                             | +2  |
+| ✅ 成功 | 深度掃描：功能組件 SSOT 重構 (3 處)                         | 1) RateWise.tsx 錯誤區塊 `bg-white` → `bg-surface` 2) MultiConverter.tsx 非收藏星星 `text-gray-300` → `text-text-muted` 3) CalculatorKeyboard.tsx 鍵盤背景 `bg-white` → `bg-surface`                              | [SSOT Design System][深度掃描:功能組件硬編碼]                         | +3  |
+| ✅ 成功 | 深度掃描 Round 2：更多功能組件 SSOT (3 處)                  | 1) Settings.tsx `text-red-500/bg-red-*` → `text-destructive/bg-destructive` 2) Breadcrumb.tsx `hover:text-indigo-600` → `hover:text-primary` 3) ToastProvider.tsx `text-green/red-*` → `text-success/destructive` | [SSOT Design System][深度掃描:Round 2]                                | +3  |
+| ✅ 成功 | 深度掃描 Round 3：Tooltip/Footer/ErrorBoundary SSOT (3 處)  | 1) VersionDisplay.tsx tooltip `bg-gray-900` → `bg-text` 2) Footer.tsx 版本 tooltip `gray-*` → `text/white` 3) ErrorBoundary.tsx 錯誤 UI `gray-*` → `text/text-muted/destructive`                                  | [SSOT Design System][深度掃描:Round 3]                                | +3  |
+| ✅ 成功 | 深度掃描 Round 4：NotFound/SkeletonLoader/Toast SSOT (3 處) | 1) NotFound.tsx 404 頁 `purple-*` → `primary/primary-hover` 2) SkeletonLoader.tsx `purple-50/200` → `primary-bg/primary-light` 3) ToastProvider.tsx info toast `purple-*` → `primary` token                       | [SSOT Design System][深度掃描:Round 4]                                | +3  |
+| ✅ 成功 | 卡片一體化設計：消除上下區塊視覺切分                        | 1) 上方區塊 `bg-surface` + `rounded-t-xl` 2) 下方趨勢圖 `bg-surface-elevated` + `rounded-b-xl` 3) Zen/Nitro 雙主題截圖驗證一體化效果 4) 1038 測試通過                                                             | [高級金融 App 設計][SSOT Design System]                               | +3  |
 
 ---
 
