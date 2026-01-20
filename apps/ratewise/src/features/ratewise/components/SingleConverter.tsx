@@ -244,7 +244,7 @@ export const SingleConverter = ({
           <select
             value={fromCurrency}
             onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-neutral-light rounded-lg px-2 py-1.5 text-base font-semibold border-none focus:outline-none focus:ring-2 focus:ring-primary-ring"
+            className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
             aria-label="選擇來源貨幣"
           >
             {CURRENCY_CODES.map((code) => (
@@ -297,7 +297,7 @@ export const SingleConverter = ({
                 e.preventDefault();
               }
             }}
-            className="w-full pl-32 pr-14 py-3 text-2xl font-bold border-2 border-neutral rounded-2xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
+            className="w-full pl-32 pr-14 py-3 text-2xl font-bold bg-surface border-2 border-border/60 rounded-2xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
             placeholder="0.00"
             aria-label={`轉換金額 (${fromCurrency})`}
           />
@@ -334,13 +334,13 @@ export const SingleConverter = ({
       </div>
 
       <div className="flex flex-col items-center mb-4">
-        {/* 匯率卡片 - 現代化高級金融 App 風格 */}
-        {/* [fix:2026-01-20] 移除彩色漸層背景，改用純淨 surface 色 + 微妙邊框 */}
-        <div className="relative bg-surface rounded-xl mb-3 w-full group cursor-pointer hover:shadow-xl transition-all duration-500 border border-border/50 hover:border-primary/30">
+        {/* 匯率卡片 - 一體化設計，無切分感 */}
+        {/* [fix:2026-01-21] 統一背景色 + 從上到下微漸層，消除上下區塊視覺切分 */}
+        <div className="relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl mb-3 w-full group cursor-pointer hover:shadow-xl transition-all duration-500 border border-border/50 hover:border-primary/30">
           {/* 微光效果 - 極淺的漸層覆蓋 */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl" />
 
-          {/* 匯率資訊區塊 - 包含切換按鈕和匯率顯示 */}
+          {/* 匯率資訊區塊 - 透明背景繼承父元素漸層 */}
           <div className="relative text-center pt-12 pb-6 px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden">
             {/* 匯率類型切換按鈕 - 現代化玻璃擬態設計 */}
             <div className="absolute top-3 left-1/2 -translate-x-1/2 inline-flex bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60">
@@ -349,7 +349,7 @@ export const SingleConverter = ({
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ${
                   rateType === 'spot'
                     ? 'bg-primary text-white shadow-md scale-105'
-                    : 'text-text/60 hover:text-text hover:bg-primary/10'
+                    : 'text-text/70 hover:text-text hover:bg-primary/10'
                 }`}
                 aria-label="切換到即期匯率"
               >
@@ -363,12 +363,13 @@ export const SingleConverter = ({
                 </svg>
                 <span>即期</span>
               </button>
+              {/* [fix:2026-01-20] 現金按鈕使用 primary 色保持一致，提升文字對比度 */}
               <button
                 onClick={() => onRateTypeChange('cash')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ${
                   rateType === 'cash'
-                    ? 'bg-secondary text-white shadow-md scale-105'
-                    : 'text-text/60 hover:text-text hover:bg-secondary/10'
+                    ? 'bg-primary text-white shadow-md scale-105'
+                    : 'text-text/70 hover:text-text hover:bg-primary/10'
                 }`}
                 aria-label="切換到現金匯率"
               >
@@ -395,15 +396,13 @@ export const SingleConverter = ({
             </div>
           </div>
 
-          {/* 滿版趨勢圖 - 現代化 Sparkline 設計 */}
-          {/* [fix:2026-01-20] 高級金融 App 風格：純淨背景 + 微妙分隔線 */}
+          {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
+          {/* [fix:2026-01-21] 移除 bg-surface-elevated，讓上下區塊成為無縫整體 */}
           <div
-            className={`relative w-full h-20 transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] group-hover:h-24 overflow-hidden rounded-b-xl bg-surface ${
+            className={`relative w-full h-20 transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] group-hover:h-24 overflow-hidden rounded-b-xl ${
               showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
-            {/* 頂部微妙分隔線 */}
-            <div className="absolute top-0 left-4 right-4 h-px bg-border/30" />
             <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
               <ErrorBoundary
                 fallback={
@@ -424,8 +423,8 @@ export const SingleConverter = ({
                 )}
               </ErrorBoundary>
             </div>
-            {/* 互動提示 - 極淺漸層 */}
-            <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-1 pointer-events-none">
+            {/* 互動提示 - 與整體漸層融合 */}
+            <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface-elevated/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-1 pointer-events-none">
               <span className="text-[10px] font-semibold text-text-muted">查看趨勢圖</span>
             </div>
           </div>
@@ -440,11 +439,11 @@ export const SingleConverter = ({
             } animate-pulse motion-reduce:animate-none`}
           />
 
-          {/* 按鈕本體 */}
+          {/* 按鈕本體 - [fix:2026-01-20] 使用 SSOT primary token */}
           <button
             ref={swapButtonRef}
             onClick={handleSwap}
-            className={`relative p-3 bg-gradient-to-r from-brand-button-from to-brand-button-to hover:from-brand-button-hover-from hover:to-brand-button-hover-to text-white rounded-full shadow-lg transition-all duration-500 transform hover:scale-110 active:scale-95 group-hover/swap:shadow-2xl ${
+            className={`relative p-3 bg-primary hover:bg-primary-hover text-white rounded-full shadow-lg transition-all duration-500 transform hover:scale-110 active:scale-95 group-hover/swap:shadow-2xl ${
               isSwapping ? 'scale-95' : ''
             }`}
             aria-label="交換幣別"
@@ -492,7 +491,7 @@ export const SingleConverter = ({
           <select
             value={toCurrency}
             onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-neutral-light rounded-lg px-2 py-1.5 text-base font-semibold border-none focus:outline-none focus:ring-2 focus:ring-primary-ring"
+            className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
             aria-label="選擇目標貨幣"
           >
             {CURRENCY_CODES.map((code) => (
@@ -542,7 +541,7 @@ export const SingleConverter = ({
                 e.preventDefault();
               }
             }}
-            className="w-full pl-32 pr-14 py-3 text-2xl font-bold border-2 border-primary-hover rounded-2xl bg-primary-bg focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
+            className="w-full pl-32 pr-14 py-3 text-2xl font-bold bg-primary-bg/30 border-2 border-primary/30 rounded-2xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
             placeholder="0.00"
             aria-label={`轉換結果 (${toCurrency})`}
           />
@@ -580,9 +579,10 @@ export const SingleConverter = ({
         </div>
       </div>
 
+      {/* [fix:2026-01-20] 使用 SSOT primary token */}
       <button
         onClick={onAddToHistory}
-        className="w-full py-3 bg-gradient-to-r from-brand-button-from to-brand-button-to hover:from-brand-button-hover-from hover:to-brand-button-hover-to text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
+        className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
       >
         加入歷史記錄
       </button>
