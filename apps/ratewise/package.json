@@ -32,7 +32,6 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "framer-motion": "^12.24.12",
     "idb-keyval": "^6.2.2",
     "lightweight-charts": "^5.1.0",
     "lucide-react": "^0.562.0",
