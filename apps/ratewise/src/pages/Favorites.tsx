@@ -1,8 +1,9 @@
 /**
- * Favorites & History Page
+ * Favorites & History Page - ParkKeeper 風格
  *
- * 收藏與歷史記錄頁面
- * 使用 SSOT design tokens 確保主題一致性
+ * @description 收藏與歷史記錄頁面，採用 ParkKeeper 設計風格
+ *              SSOT: 設計來自 Settings.tsx 風格參考
+ * @version 2.0.0
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -82,7 +83,7 @@ export default function Favorites() {
   if (ratesError) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4">
-        <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full text-center border border-border/50">
+        <div className="card p-8 max-w-md w-full text-center">
           <AlertCircle className="text-destructive mx-auto" size={48} />
           <h1 className="text-2xl font-bold text-text mt-4">載入失敗</h1>
           <p className="text-text-muted mt-2 mb-6">無法載入資料，請重試。</p>
@@ -99,128 +100,161 @@ export default function Favorites() {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden pb-20">
-      {/* Header with Tabs */}
-      <div className="flex-shrink-0 px-4 pt-4 pb-3">
-        <div className="flex gap-2 bg-surface-soft rounded-xl p-1">
-          <button
-            onClick={() => setActiveTab('favorites')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              activeTab === 'favorites'
-                ? 'bg-primary text-white shadow-md'
-                : 'text-text-muted hover:text-text hover:bg-surface/50'
-            }`}
-          >
-            <Star size={16} />
-            常用貨幣
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              activeTab === 'history'
-                ? 'bg-primary text-white shadow-md'
-                : 'text-text-muted hover:text-text hover:bg-surface/50'
-            }`}
-          >
-            <Clock size={16} />
-            轉換歷史
-          </button>
-        </div>
-      </div>
+    <div className="h-full overflow-y-auto no-scrollbar pb-32">
+      <div className="px-5 py-6 max-w-md mx-auto">
+        {/* Tab 切換區塊 - 參考 Settings 語言切換風格 */}
+        <section className="mb-6">
+          <div className="bg-black/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
+            <button
+              onClick={() => setActiveTab('favorites')}
+              className={`flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out ${
+                activeTab === 'favorites'
+                  ? 'hover:scale-[1.02] active:scale-[0.98]'
+                  : 'opacity-60 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]'
+              }`}
+            >
+              {activeTab === 'favorites' && (
+                <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
+              )}
+              <Star size={18} className={activeTab === 'favorites' ? 'text-primary' : ''} />
+              <span className="text-[10px] font-bold">常用貨幣</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out ${
+                activeTab === 'history'
+                  ? 'hover:scale-[1.02] active:scale-[0.98]'
+                  : 'opacity-60 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]'
+              }`}
+            >
+              {activeTab === 'history' && (
+                <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
+              )}
+              <Clock size={18} className={activeTab === 'history' ? 'text-primary' : ''} />
+              <span className="text-[10px] font-bold">轉換歷史</span>
+            </button>
+          </div>
+        </section>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 no-scrollbar">
-        {activeTab === 'favorites' ? (
-          <div className="space-y-3">
+        {/* 常用貨幣區塊 */}
+        {activeTab === 'favorites' && (
+          <section>
+            <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+              <Star className="w-3.5 h-3.5" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">常用貨幣</h3>
+            </div>
+
             {favorites.length === 0 ? (
-              <div className="bg-surface rounded-xl p-8 text-center border border-border/30">
-                <Star className="w-12 h-12 text-text-muted mx-auto mb-4" />
-                <h2 className="text-lg font-bold text-text mb-2">尚無常用貨幣</h2>
-                <p className="text-sm text-text-muted mb-4">
+              <div className="card p-8 text-center">
+                <Star className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-30" />
+                <h2 className="text-sm font-bold text-text mb-2">尚無常用貨幣</h2>
+                <p className="text-[10px] text-text-muted mb-4 opacity-60">
                   在單幣別或多幣別頁面中點擊 ⭐ 加入常用貨幣
                 </p>
                 <button
                   onClick={() => navigate('/')}
-                  className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold transition hover:bg-primary-hover"
+                  className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs transition hover:bg-primary-hover active:scale-[0.98]"
                 >
                   前往換算
                 </button>
               </div>
             ) : (
-              favorites.map((code) => (
-                <div
-                  key={code}
-                  className="w-full flex items-center justify-between p-4 bg-surface rounded-xl border border-border/30 hover:border-primary/30 hover:shadow-md transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(code);
-                      }}
-                      className="hover:scale-110 transition"
-                      aria-label={`移除 ${code} 從常用`}
-                    >
-                      <Star className="text-favorite" size={20} fill="currentColor" />
-                    </button>
-                    <span className="text-2xl">{CURRENCY_DEFINITIONS[code]?.flag}</span>
-                    <button onClick={() => handleFavoriteClick(code)} className="text-left">
-                      <div className="font-semibold text-text">{code}</div>
-                      <div className="text-xs text-text-muted">
-                        {CURRENCY_DEFINITIONS[code]?.name}
-                      </div>
-                    </button>
-                  </div>
-                  <button
+              <div className="space-y-2">
+                {favorites.map((code) => (
+                  <div
+                    key={code}
+                    className="card p-4 flex items-center justify-between group hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.99]"
                     onClick={() => handleFavoriteClick(code)}
-                    className="flex items-center gap-2 cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
+                    }}
                   >
-                    {trend[code] === 'up' && <span className="text-success text-sm">↑</span>}
-                    {trend[code] === 'down' && <span className="text-destructive text-sm">↓</span>}
-                    <span className="text-sm font-medium text-text-muted group-hover:text-primary transition">
-                      點擊換算 →
-                    </span>
-                  </button>
-                </div>
-              ))
+                    <div className="flex items-center gap-3">
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(code);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            toggleFavorite(code);
+                          }
+                        }}
+                        className="hover:scale-110 transition cursor-pointer"
+                        aria-label={`移除 ${code} 從常用`}
+                      >
+                        <Star className="text-favorite" size={18} fill="currentColor" />
+                      </div>
+                      <span className="text-2xl">{CURRENCY_DEFINITIONS[code]?.flag}</span>
+                      <div>
+                        <div className="font-bold text-sm">{code}</div>
+                        <div className="text-[10px] opacity-60">
+                          {CURRENCY_DEFINITIONS[code]?.name}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {trend[code] === 'up' && <span className="text-success text-xs">↑</span>}
+                      {trend[code] === 'down' && (
+                        <span className="text-destructive text-xs">↓</span>
+                      )}
+                      <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
+                        換算 →
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
-          </div>
-        ) : (
-          <div className="space-y-3">
+          </section>
+        )}
+
+        {/* 轉換歷史區塊 */}
+        {activeTab === 'history' && (
+          <section>
+            <div className="flex items-center justify-between px-2 mb-3">
+              <div className="flex items-center gap-2 opacity-40">
+                <Clock className="w-3.5 h-3.5" />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">轉換歷史</h3>
+              </div>
+              {history.length > 0 && (
+                <button
+                  onClick={clearAllHistory}
+                  className="flex items-center gap-1 text-[10px] text-destructive hover:bg-destructive/10 px-2 py-1 rounded-lg transition font-bold"
+                >
+                  <Trash2 size={12} />
+                  清除全部
+                </button>
+              )}
+            </div>
+
             {history.length === 0 ? (
-              <div className="bg-surface rounded-xl p-8 text-center border border-border/30">
-                <Clock className="w-12 h-12 text-text-muted mx-auto mb-4" />
-                <h2 className="text-lg font-bold text-text mb-2">尚無轉換記錄</h2>
-                <p className="text-sm text-text-muted mb-4">開始使用匯率換算，記錄會自動保存</p>
+              <div className="card p-8 text-center">
+                <Clock className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-30" />
+                <h2 className="text-sm font-bold text-text mb-2">尚無轉換記錄</h2>
+                <p className="text-[10px] text-text-muted mb-4 opacity-60">
+                  開始使用匯率換算，記錄會自動保存
+                </p>
                 <button
                   onClick={() => navigate('/')}
-                  className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold transition hover:bg-primary-hover"
+                  className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs transition hover:bg-primary-hover active:scale-[0.98]"
                 >
                   前往換算
                 </button>
               </div>
             ) : (
-              <>
-                {/* Clear All Button */}
-                <div className="flex justify-end">
-                  <button
-                    onClick={clearAllHistory}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-lg transition"
-                  >
-                    <Trash2 size={14} />
-                    清除全部
-                  </button>
-                </div>
-
-                {/* History List */}
-                <ConversionHistory
-                  history={history}
-                  onReconvert={handleReconvert}
-                  onClearAll={clearAllHistory}
-                />
-              </>
+              <ConversionHistory
+                history={history}
+                onReconvert={handleReconvert}
+                onClearAll={clearAllHistory}
+              />
             )}
-          </div>
+          </section>
         )}
       </div>
     </div>

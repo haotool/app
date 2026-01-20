@@ -85,14 +85,14 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* 語言區塊（未來功能） */}
+        {/* 語言區塊 - SSOT 風格 */}
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Globe className="w-3.5 h-3.5" />
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">語言</h3>
           </div>
 
-          <div className="bg-black/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
+          <div className="bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
             <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out opacity-60 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]">
               <span className="text-xl mb-1 filter drop-shadow-sm">🇺🇸</span>
               <span className="text-[10px] font-bold">English</span>
