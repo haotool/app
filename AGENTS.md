@@ -654,7 +654,7 @@ docker logs <container-id>
 
 ---
 
-## 8. 當前任務狀態（2026-01-20 更新）
+## 8. 當前任務狀態（2026-01-21 更新）
 
 ### ✅ 已完成 (Phase 0 - MVP)
 
@@ -667,7 +667,7 @@ docker logs <container-id>
 - ✅ TypeScript 嚴格化
 - ✅ 安全標頭配置
 - ✅ 歷史匯率功能 (30 天資料追蹤)
-- ✅ 17 個 SEO 長尾落地頁 (USD/JPY/EUR/GBP 等)
+- ✅ 18 個 SEO 長尾落地頁 (USD/JPY/EUR/GBP 等)
 
 ### ✅ 已完成 (M0 - 清理與基礎強化)
 
@@ -697,9 +697,18 @@ docker logs <container-id>
 - ✅ CI jest-dom matchers 修復 (expect.extend + 顯式 import)
 - ✅ Cloudflare CDN 自動清除工作流程 (Release workflow)
 
-### 📋 可選 (M4 - 架構演進，4週)
+### ✅ 已完成 (M4 - UI/UX SSOT 重構)
 
-- [ ] useCurrencyConverter 拆分 (317 行 → 多個小 hook)
+- ✅ MultiConverter 頁面整合 (多幣別即時換算)
+- ✅ Favorites 頁面整合 (常用貨幣 + 轉換歷史)
+- ✅ 技術債清理 (20+ 時間戳標記移除，統一英文 JSDoc)
+- ✅ 6 種主題瀏覽器驗證 (Zen/Nitro/Kawaii/Classic/Ocean/Forest)
+- ✅ SSOT Design Token 一致性
+
+### 📋 可選 (M5 - 架構演進，4週)
+
+- [ ] useCurrencyConverter 拆分 (449 行 → 多個小 hook)
+- [ ] i18n 國際化系統 (react-i18next)
 - ✅ 歷史匯率功能整合 (30 天趨勢圖已實作)
 - ✅ 匯率趨勢圖 (使用 lightweight-charts)
 
@@ -809,8 +818,8 @@ docker logs <container-id>
 
 > **總結**: Agent 的任務是保持流程可靠並回報結果，不參與需求判斷、不做超出授權範圍的操作。所有操作依照本文檔與 `docs/dev/` 文檔執行。
 
-**最後更新**: 2026-01-20T22:13:00+08:00
-**版本**: v2.2 (任務狀態更新 + 測試數量更新)
+**最後更新**: 2026-01-21T02:16:00+08:00
+**版本**: v2.3 (M4 UI/UX SSOT 重構完成)
 **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
 
 _本文檔依照 Linus Torvalds 開發哲學產生，所有建議經過實用性驗證。_
