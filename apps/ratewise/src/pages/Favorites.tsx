@@ -3,15 +3,8 @@
  *
  * 收藏與歷史記錄頁面
  *
- * 功能（未來實作）：
- * - 收藏的貨幣對管理
- * - 轉換歷史記錄
- * - 快速訪問常用貨幣
- * - 清除歷史功能
- * - 匯出記錄功能
- *
- * [refactor:2026-01-15] 新增收藏與歷史模組（佔位頁面）
- * 依據：Phase 2 架構升級計畫
+ * @description 管理收藏的貨幣對，查看轉換歷史記錄，快速訪問常用貨幣
+ * @features 收藏管理、歷史記錄、快速訪問、清除/匯出功能
  */
 
 import { Star } from 'lucide-react';
@@ -22,7 +15,7 @@ export default function Favorites() {
       <div className="max-w-md w-full text-center">
         {/* 圖標 */}
         <div className="mb-6 flex justify-center">
-          <div className="w-20 h-20 bg-primary-light bg-primary-light rounded-full flex items-center justify-center">
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
             <Star className="w-10 h-10 text-primary" aria-hidden="true" />
           </div>
         </div>
@@ -36,13 +29,13 @@ export default function Favorites() {
         </p>
 
         {/* 狀態 */}
-        <div className="bg-primary-light bg-primary-light rounded-lg px-6 py-4 border border-primary/20">
+        <div className="bg-primary/10 rounded-xl px-6 py-4 border border-primary/20">
           <p className="text-primary font-medium">🚧 功能開發中</p>
           <p className="text-sm text-neutral-text-muted mt-2">此功能即將推出，敬請期待！</p>
         </div>
 
         {/* 預覽功能列表 */}
-        <div className="mt-8 text-left bg-neutral-light  rounded-lg p-4">
+        <div className="mt-8 text-left bg-surface-elevated rounded-xl p-4">
           <h2 className="text-sm font-semibold text-neutral-text mb-3">即將推出的功能：</h2>
           <ul className="space-y-2 text-sm text-neutral-text-muted">
             <li className="flex items-start gap-2">
