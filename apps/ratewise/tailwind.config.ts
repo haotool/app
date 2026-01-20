@@ -29,7 +29,11 @@ export default {
       colors: {
         // 新版語義化 token（主要使用）
         // SSOT: 基礎語義色彩
-        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        surface: {
+          DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
+          elevated: 'rgb(var(--color-surface-elevated) / <alpha-value>)',
+          sunken: 'rgb(var(--color-surface-sunken) / <alpha-value>)',
+        },
         text: 'rgb(var(--color-text) / <alpha-value>)',
         background: 'rgb(var(--color-background) / <alpha-value>)',
         'background-secondary': 'rgb(var(--color-background-secondary) / <alpha-value>)',
