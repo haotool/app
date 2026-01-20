@@ -206,14 +206,15 @@ export function Footer() {
             </div>
             <span className="font-semibold">匯率好工具</span>
             <span className="text-white/50">•</span>
+            {/* [fix:2026-01-20] SSOT: gray-400/gray-900 → text-muted/text */}
             <span
-              className="relative inline-block cursor-help text-xs text-gray-400 font-mono group"
+              className="relative inline-block cursor-help text-xs text-white/60 font-mono group"
               title={`Built on ${buildTime}`}
             >
               {appVersion}
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-text rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
                 Built on {buildTime}
-                <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-text" />
               </span>
             </span>
             <span className="text-white/50">•</span>

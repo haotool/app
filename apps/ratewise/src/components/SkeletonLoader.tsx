@@ -81,8 +81,8 @@ export const SkeletonLoader = () => {
           <div className="h-10 w-32 bg-neutral rounded-lg"></div>
         </div>
 
-        {/* Main Converter Card Skeleton */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4 animate-pulse">
+        {/* Main Converter Card Skeleton - [fix:2026-01-20] SSOT token */}
+        <div className="bg-surface rounded-2xl shadow-lg p-6 space-y-4 animate-pulse">
           {/* Currency Selectors */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -101,10 +101,10 @@ export const SkeletonLoader = () => {
             <div className="h-14 bg-neutral rounded-lg"></div>
           </div>
 
-          {/* Result Display */}
-          <div className="bg-purple-50 rounded-xl p-4 space-y-2">
-            <div className="h-6 w-full bg-purple-200 rounded"></div>
-            <div className="h-4 w-3/4 bg-purple-200 rounded"></div>
+          {/* Result Display - [fix:2026-01-20] SSOT: purple-* → primary-bg/primary-light */}
+          <div className="bg-primary-bg rounded-xl p-4 space-y-2">
+            <div className="h-6 w-full bg-primary-light rounded"></div>
+            <div className="h-4 w-3/4 bg-primary-light rounded"></div>
           </div>
 
           {/* Quick Amounts */}
@@ -115,14 +115,14 @@ export const SkeletonLoader = () => {
           </div>
         </div>
 
-        {/* Trend Chart Skeleton */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
+        {/* Trend Chart Skeleton - [fix:2026-01-20] SSOT token */}
+        <div className="bg-surface rounded-2xl shadow-lg p-6 animate-pulse">
           <div className="h-4 w-32 bg-neutral rounded mb-4"></div>
           <div className="h-64 bg-neutral rounded-lg"></div>
         </div>
 
-        {/* Favorites Skeleton */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
+        {/* Favorites Skeleton - [fix:2026-01-20] SSOT token */}
+        <div className="bg-surface rounded-2xl shadow-lg p-6 animate-pulse">
           <div className="h-4 w-24 bg-neutral rounded mb-4"></div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {[1, 2, 3].map((i) => (
@@ -142,7 +142,7 @@ export const SkeletonLoader = () => {
  */
 export const CurrencyCardSkeleton = () => {
   return (
-    <div className="bg-white rounded-lg p-3 shadow-sm animate-pulse" role="status">
+    <div className="bg-surface rounded-lg p-3 shadow-sm animate-pulse" role="status">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-neutral rounded-full"></div>
@@ -181,7 +181,8 @@ export const ConverterSkeleton = ({ mode }: { mode: 'single' | 'multi' }) => {
         <div className="h-14 bg-neutral rounded-lg"></div>
         <div className="h-14 bg-neutral rounded-lg"></div>
       </div>
-      <div className="h-16 bg-purple-200 rounded-xl"></div>
+      {/* [fix:2026-01-20] SSOT: purple-200 → primary-light */}
+      <div className="h-16 bg-primary-light rounded-xl"></div>
     </div>
   );
 };

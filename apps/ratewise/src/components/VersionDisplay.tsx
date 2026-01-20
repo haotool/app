@@ -59,15 +59,15 @@ export function VersionDisplay() {
 
   return (
     <span
-      className="relative inline-block cursor-help text-xs text-gray-400 font-mono group"
+      className="relative inline-block cursor-help text-xs text-text-muted font-mono group"
       title={`Built on ${formattedDate} ${formattedTime}`}
     >
       v{version}
       {isDev && <span className="ml-1 text-[10px] text-orange-500">dev</span>}
-      {/* Tooltip - 桌面版 hover 顯示 */}
-      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+      {/* Tooltip - 桌面版 hover 顯示 - [fix:2026-01-20] SSOT: gray-900 → text */}
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-text rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
         Built on {formattedDate} {formattedTime}
-        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-text" />
       </span>
     </span>
   );
