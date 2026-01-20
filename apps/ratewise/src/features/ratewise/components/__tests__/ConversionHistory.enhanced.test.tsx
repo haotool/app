@@ -165,9 +165,8 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
       const firstRecord = screen.getByText('1000 USD').closest('div[class*="cursor-pointer"]');
-      // 🟢 GREEN: 驗證使用語義化 token 而非硬編碼顏色
-      // @see src/config/design-tokens.ts - primary-bg = violet-50
-      expect(firstRecord).toHaveClass('hover:bg-primary-bg');
+      // [fix:2026-01-20] 使用 SSOT token: hover:bg-primary/10
+      expect(firstRecord).toHaveClass('hover:bg-primary/10');
     });
   });
 
@@ -350,7 +349,8 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       const mockHistory = createMockHistory();
       const { container } = render(<ConversionHistory history={mockHistory} />);
 
-      const card = container.querySelector('.bg-white.rounded-3xl.shadow-xl');
+      // [fix:2026-01-20] 使用 SSOT token bg-surface 替代硬編碼 bg-white
+      const card = container.querySelector('.bg-surface.rounded-3xl.shadow-xl');
       expect(card).toBeInTheDocument();
     });
 

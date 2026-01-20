@@ -127,35 +127,36 @@ describe('CurrencyList Component', () => {
     expect(defaultProps.onToggleFavorite).toHaveBeenCalledWith('EUR');
   });
 
+  // [fix:2026-01-20] 更新測試以匹配 SSOT design token 類名
   it('shows filled star for favorite currencies', () => {
     render(<CurrencyList {...defaultProps} />);
 
-    // USD 和 JPY 是收藏的，應該有 text-yellow-500 class
-    const stars = document.querySelectorAll('.text-yellow-500');
+    // USD 和 JPY 是收藏的，應該有 text-favorite class
+    const stars = document.querySelectorAll('.text-favorite');
     expect(stars.length).toBeGreaterThan(0);
   });
 
   it('shows empty star for non-favorite currencies', () => {
     render(<CurrencyList {...defaultProps} />);
 
-    // 非收藏貨幣的星星應該有 text-gray-300 class
-    const emptyStars = document.querySelectorAll('.text-gray-300');
+    // 非收藏貨幣的星星應該有 text-text-muted/30 class (SSOT design token)
+    const emptyStars = document.querySelectorAll('[class*="text-text-muted"]');
     expect(emptyStars.length).toBeGreaterThan(0);
   });
 
   it('displays up trend icon for currencies with up trend', () => {
     render(<CurrencyList {...defaultProps} />);
 
-    // USD 有 up trend，應該顯示綠色趨勢圖標
-    const upTrends = document.querySelectorAll('.text-green-500');
+    // USD 有 up trend，應該顯示 text-success (SSOT design token)
+    const upTrends = document.querySelectorAll('.text-success');
     expect(upTrends.length).toBeGreaterThan(0);
   });
 
   it('displays down trend icon for currencies with down trend', () => {
     render(<CurrencyList {...defaultProps} />);
 
-    // JPY 有 down trend，應該顯示紅色趨勢圖標
-    const downTrends = document.querySelectorAll('.text-red-500');
+    // JPY 有 down trend，應該顯示 text-destructive (SSOT design token)
+    const downTrends = document.querySelectorAll('.text-destructive');
     expect(downTrends.length).toBeGreaterThan(0);
   });
 
@@ -200,11 +201,13 @@ describe('CurrencyList Component', () => {
     expect(listRegion).toHaveClass('max-h-96');
   });
 
+  // [fix:2026-01-20] 更新測試以匹配 SSOT design token 類名
   it('applies hover styles on currency row', () => {
     render(<CurrencyList {...defaultProps} />);
 
     const currencyRow = screen.getByText('USD').closest('div[class*="group"]');
-    expect(currencyRow).toHaveClass('hover:bg-gray-50');
+    // 使用 SSOT design token: hover:bg-primary/5
+    expect(currencyRow).toHaveClass('hover:bg-primary/5');
   });
 });
 
