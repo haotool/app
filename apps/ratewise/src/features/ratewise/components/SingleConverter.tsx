@@ -406,8 +406,11 @@ export const SingleConverter = ({
                     趨勢圖載入失敗
                   </div>
                 }
-                onError={(error) => {
-                  logger.error('MiniTrendChart loading failed', error);
+                onError={(error: unknown) => {
+                  logger.error(
+                    'MiniTrendChart loading failed',
+                    error instanceof Error ? error : undefined,
+                  );
                 }}
               >
                 {trendData.length === 0 ? (

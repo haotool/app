@@ -2,9 +2,9 @@
 
 **版本**: 2.1.0
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2026-01-21T00:48:00+08:00
+**更新時間**: 2026-01-21T01:00:00+08:00
 **狀態**: ✅ 完成
-**當前總分**: +131
+**當前總分**: +133
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                | 依據                                                                                                     | 分數 |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---- |
@@ -110,6 +110,8 @@
 | ✅ 成功 | 深度掃描 Round 4：NotFound/SkeletonLoader/Toast SSOT (3 處) | 1) NotFound.tsx 404 頁 `purple-*` → `primary/primary-hover` 2) SkeletonLoader.tsx `purple-50/200` → `primary-bg/primary-light` 3) ToastProvider.tsx info toast `purple-*` → `primary` token                       | [SSOT Design System][深度掃描:Round 4]                                | +3  |
 | ✅ 成功 | 卡片一體化設計：消除上下區塊視覺切分                        | 1) 上方區塊 `bg-surface` + `rounded-t-xl` 2) 下方趨勢圖 `bg-surface-elevated` + `rounded-b-xl` 3) Zen/Nitro 雙主題截圖驗證一體化效果 4) 1038 測試通過                                                             | [高級金融 App 設計][SSOT Design System]                               | +3  |
 | ✅ 成功 | 技術債時間戳註解大規模清理 (95→22)                          | 1) 移除 73 個 `[fix:YYYY-MM-DD]`、`[Lighthouse]`、`[refactor:YYYY]` 時間戳標記 2) 28 檔案修改 3) 簡化 JSDoc 為專業開源格式 4) 1038 測試通過 + ESLint/TypeScript/Prettier 全通過                                   | [開源專案註解最佳實踐][AGENTS.md:技術債清理]                          | +3  |
+
+|| ✅ 成功 | 依賴更新 + react-error-boundary 6.1.0 類型修復 | 1) 更新 7 個 patch/minor 依賴 2) 修復 `onError` callback 類型 (`Error` → `unknown`) 3) 1038 測試通過 4) TypeScript/ESLint 全通過 | [context7:/bvaughn/react-error-boundary:onError:2026-01-21] | +2 |
 
 ---
 
