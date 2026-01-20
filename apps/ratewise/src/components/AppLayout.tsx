@@ -116,9 +116,9 @@ export function AppLayout() {
             <Header />
           </div>
 
-          {/* 主內容區 */}
-          <main className="flex-1 relative overflow-hidden">
-            <div className="h-full">
+          {/* 主內容區 - [fix:2026-01-20] 啟用垂直滾動 */}
+          <main className="flex-1 relative overflow-y-auto overflow-x-hidden">
+            <div className="h-full pb-safe-bottom">
               <Outlet />
             </div>
           </main>

@@ -45,12 +45,8 @@ export function PullToRefreshIndicator({
       ? '放開以重新整理'
       : '下拉重新整理';
 
-  // Color scheme - Brand aligned (blue-indigo-purple gradient, no emoji)
-  const iconColor = isRefreshing
-    ? 'text-indigo-500'
-    : canTrigger
-      ? 'text-indigo-600'
-      : 'text-indigo-400';
+  // [fix:2026-01-20] Color scheme - 使用 SSOT token
+  const iconColor = isRefreshing ? 'text-primary' : canTrigger ? 'text-primary' : 'text-primary/70';
 
   return (
     <div
@@ -61,13 +57,13 @@ export function PullToRefreshIndicator({
         transition: isRefreshing ? 'none' : 'opacity 0.2s ease-out, transform 0.2s ease-out',
       }}
     >
-      {/* Glassmorphism Container - 棉花糖風格 + 品牌配色 */}
+      {/* Glassmorphism Container - 使用 SSOT token */}
       <div
         className="
           mt-4 px-6 py-3 rounded-[32px]
           backdrop-blur-xl backdrop-saturate-150
-          bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
-          border-2 border-indigo-100
+          bg-surface/90
+          border-2 border-primary/20
           shadow-xl
         "
         style={{
@@ -80,8 +76,8 @@ export function PullToRefreshIndicator({
         <div className="flex items-center gap-3">
           {/* Animated Icon with subtle glow */}
           <div className="relative">
-            {/* Icon glow effect */}
-            <div className="absolute inset-0 rounded-full bg-indigo-200 blur-md opacity-50" />
+            {/* Icon glow effect - 使用 SSOT token */}
+            <div className="absolute inset-0 rounded-full bg-primary/30 blur-md opacity-50" />
             {/* Main icon */}
             <RefreshCw
               className={`
@@ -98,11 +94,11 @@ export function PullToRefreshIndicator({
             />
           </div>
 
-          {/* Status Text - 品牌藍紫色調 */}
+          {/* Status Text - 使用 SSOT token */}
           <span
             className="
               text-sm font-medium
-              text-indigo-700
+              text-text
               transition-colors duration-300
             "
           >
