@@ -2,9 +2,9 @@
 
 **版本**: 2.1.0
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2026-01-21T01:00:00+08:00
+**更新時間**: 2026-01-21T01:20:03+08:00
 **狀態**: ✅ 完成
-**當前總分**: +135
+**當前總分**: +137
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                | 依據                                                                                                     | 分數 |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---- |
@@ -113,6 +113,7 @@
 
 || ✅ 成功 | 依賴更新 + react-error-boundary 6.1.0 類型修復 | 1) 更新 7 個 patch/minor 依賴 2) 修復 `onError` callback 類型 (`Error` → `unknown`) 3) 1038 測試通過 4) TypeScript/ESLint 全通過 | [context7:/bvaughn/react-error-boundary:onError:2026-01-21] | +2 |
 || ✅ 成功 | haotool @react-three/fiber v9 TypeScript 類型修復 | 1) 新增 `react-three-fiber.d.ts` 聲明文件 2) 使用 module augmentation 擴展 JSX.IntrinsicElements 3) 修復 onPointerOver 事件類型 4) Monorepo 4/4 apps TypeScript 通過 | [context7:/pmndrs/react-three-fiber:TypeScript:2026-01-21] | +2 |
+| ✅ 成功 | Monorepo 依賴批量更新 (patch/minor) | 1) haotool: @testing-library/react, @types/react, @vitest/coverage-v8, vitest, framer-motion 2) nihonname: 同上 3) quake-school: 同上 + motion 4) 所有 4 apps TypeScript 通過 5) 1189 測試全通過 (ratewise 1038 + haotool 114 + quake-school 37) | [pnpm outdated][Renovate Best Practices] | +2 |
 
 ---
 

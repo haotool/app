@@ -27,7 +27,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
-    "motion": "^12.24.12",
+    "motion": "^12.27.5",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^6.30.3"
@@ -36,12 +36,12 @@
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^24.10.1",
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.2.2",
-    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/coverage-v8": "^4.0.17",
     "autoprefixer": "^10.4.23",
     "beasties": "0.1.0",
     "jsdom": "^27.4.0",
@@ -53,7 +53,7 @@
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-pwa": "^1.2.0",
     "vite-react-ssg": "^0.8.9",
-    "vitest": "^4.0.16",
+    "vitest": "^4.0.17",
     "workbox-window": "^7.4.0"
   }
 }
