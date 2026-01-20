@@ -20,7 +20,7 @@
      Zen 風格 - 極簡專業（預設）
      禪意極簡，以 violet/blue 為圖表色調
      ======================================== */
-  /* [fix:2026-01-20] 極簡風格：紫色為主色，符合高級金融 App 設計 */
+  /* 極簡風格：紫色為主色 */
   :root,
   [data-style='zen'] {
     --color-background: 248 250 252;
@@ -38,7 +38,7 @@
     --color-chart-area-top: 139 92 246; /* violet-500 */
     --color-chart-area-bottom: 59 130 246; /* blue-500 */
 
-    /* [fix:2026-01-20] 卡片層級區分 Token - 用於嵌套卡片視覺區分 */
+    /* 卡片層級區分 Token - 用於嵌套卡片視覺區分 */
     --color-surface-elevated: 248 250 252; /* slate-50 - 微灰底色 */
     --color-surface-sunken: 241 245 249; /* slate-100 - 下沉區域 */
 
@@ -154,7 +154,7 @@
     --color-chart-area-top: 103 232 249; /* cyan-300 */
     --color-chart-area-bottom: 0 255 136; /* 霓虹綠 */
 
-    /* [fix:2026-01-20] 卡片層級區分 Token - 深色主題 */
+    /* 卡片層級區分 Token - 深色主題 */
     --color-surface-elevated: 30 41 59; /* slate-800 - 略亮於 surface */
     --color-surface-sunken: 2 6 23; /* slate-950 - 下沉區域 */
 
@@ -201,7 +201,7 @@
     --color-chart-area-top: 236 72 153; /* pink-500 */
     --color-chart-area-bottom: 244 114 182; /* pink-400 */
 
-    /* [fix:2026-01-20] 卡片層級區分 Token - 粉嫩風格 */
+    /* 卡片層級區分 Token - 粉嫩風格 */
     --color-surface-elevated: 255 241 242; /* rose-50 */
     --color-surface-sunken: 255 228 230; /* rose-100 */
 
@@ -248,7 +248,7 @@
     --color-chart-area-top: 180 83 9; /* amber-700 */
     --color-chart-area-bottom: 217 119 6; /* amber-600 */
 
-    /* [fix:2026-01-20] 卡片層級區分 Token - 復古風格 */
+    /* 卡片層級區分 Token - 復古風格 */
     --color-surface-elevated: 254 252 232; /* yellow-50 - 羊皮紙 */
     --color-surface-sunken: 254 249 195; /* yellow-100 */
 
@@ -295,7 +295,7 @@
     --color-chart-area-top: 6 182 212; /* cyan-500 */
     --color-chart-area-bottom: 20 184 166; /* teal-500 */
 
-    /* [fix:2026-01-20] 卡片層級區分 Token - 海洋風格 */
+    /* 卡片層級區分 Token - 海洋風格 */
     --color-surface-elevated: 224 242 254; /* sky-100 - 淺海 */
     --color-surface-sunken: 186 230 253; /* sky-200 */
 
@@ -342,7 +342,7 @@
     --color-chart-area-top: 5 150 105; /* emerald-600 */
     --color-chart-area-bottom: 34 197 94; /* green-500 */
 
-    /* [fix:2026-01-20] 卡片層級區分 Token - 森林風格 */
+    /* 卡片層級區分 Token - 森林風格 */
     --color-surface-elevated: 220 252 231; /* green-100 - 嫩葉 */
     --color-surface-sunken: 187 247 208; /* green-200 */
 

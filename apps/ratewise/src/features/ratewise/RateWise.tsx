@@ -1,13 +1,8 @@
 /**
  * RateWise - 單幣別轉換器組件
  *
- * [refactor:2026-01-15] 重構為內容組件
- * - 移除頁面級元素（背景、標題、Footer）
- * - 專注於轉換器核心功能
- * - 配合 AppLayout 使用
- *
  * 功能：
- * - 單幣別/多幣別轉換
+ * - 單幣別轉換
  * - 即期/現金匯率切換
  * - 轉換歷史記錄
  * - 收藏貨幣列表
@@ -18,7 +13,6 @@ import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
-// import { MultiConverter } from './components/MultiConverter'; // [refactor:2026-01-15] 移至獨立頁面
 import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
 import { ConversionHistory } from './components/ConversionHistory';
@@ -65,20 +59,7 @@ const RateWise = () => {
     setIsHydrated(true);
   }, []);
 
-  /**
-   * [fix:2025-12-25] 修復 React Hydration Error #418 根本問題
-   *
-   * 問題：在 useState 初始化函數中使用 localStorage.getItem()
-   * - SSG 時：typeof window === 'undefined'，返回 'spot'
-   * - 客戶端：如果用戶有儲存 'cash'，返回 'cash'
-   * - 造成 SSG HTML 與客戶端初始渲染不一致 → React Error #418
-   *
-   * 解法：useState 永遠使用固定初始值 'spot'，
-   * 然後在 useEffect (客戶端專用) 中讀取 localStorage 並更新
-   *
-   * 參考: [context7:/reactjs/react.dev:useState:2025-12-25]
-   * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
-   */
+  // 使用固定初始值避免 SSR hydration mismatch，在 useEffect 中從 localStorage 恢復
   const [rateType, setRateType] = useState<RateType>('spot');
 
   // Restore user preferences from localStorage after hydration
@@ -146,8 +127,6 @@ const RateWise = () => {
     [lastUpdate, lastFetchedAt],
   );
 
-  // [refactor:2026-01-15] 單幣別轉換器專用
-  // 移除多幣別相關變量：mode, multiAmounts, baseCurrency, sortedCurrencies, setMode, setBaseCurrency, handleMultiAmountChange
   const {
     fromCurrency,
     toCurrency,
@@ -169,18 +148,6 @@ const RateWise = () => {
     generateTrends,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
 
-  /**
-   * [fix:2025-12-25] 修復 React Hydration Error #418
-   *
-   * 問題：SSG 時渲染 SkeletonLoader，但客戶端 hydration 時
-   * 如果 ratesLoading 快速變成 false（快取命中），會導致
-   * shouldShowSkeleton 變化，造成 hydration 不一致
-   *
-   * 解法：hydration 完成前，永遠返回 SkeletonLoader，
-   * 確保首次渲染與 SSG 生成的 HTML 完全一致
-   *
-   * 參考: [context7:/reactjs/react.dev:hydration:2025-12-25]
-   */
   // 在 hydration 完成前，永遠返回 SkeletonLoader（與 SSG 一致）
   if (!isHydrated) {
     return <SkeletonLoader />;
@@ -197,7 +164,6 @@ const RateWise = () => {
   if (ratesError) {
     return (
       <div className="min-h-screen bg-danger-bg flex items-center justify-center p-4">
-        {/* [fix:2026-01-20] SSOT: bg-white → bg-surface */}
         <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           <AlertCircle className="text-danger" size={48} />
           <h1 className="text-2xl font-bold text-neutral-text mt-4">匯率載入失敗</h1>
@@ -216,9 +182,6 @@ const RateWise = () => {
     );
   }
 
-  // [refactor:2026-01-15] 移除 modeToggleButton
-  // 單幣別/多幣別切換改由底部導覽列處理
-
   return (
     <>
       <HomeStructuredData faq={HOMEPAGE_FAQ} />
@@ -232,9 +195,6 @@ const RateWise = () => {
         />
       )}
 
-      {/* [refactor:2026-01-15] 移除 min-h-screen 和頁面級背景
-          改為由 AppLayout 處理整體頁面結構
-          此組件專注於內容區域的渲染 */}
       <div ref={mainRef} className="space-y-4">
         {/* 狀態提示區 */}
         {ratesLoading && (
@@ -246,8 +206,6 @@ const RateWise = () => {
         {/* 主要轉換區塊 */}
         <div className="grid md:grid-cols-3 gap-4 md:gap-6">
           <div className="md:col-span-2">
-            {/* [refactor:2026-01-15] 單幣別轉換器
-                多幣別功能已移至獨立頁面 (/multi) */}
             <div className="card p-4 md:p-6">
               <SingleConverter
                 fromCurrency={fromCurrency}
@@ -288,11 +246,6 @@ const RateWise = () => {
             />
           </div>
         </div>
-
-        {/* [refactor:2026-01-15] 移除 FAQ 精選和行動版 Footer
-            - FAQ 精選移至獨立區塊或 FAQ 頁面連結
-            - Footer 由 AppLayout 統一處理
-            - 保留資料來源顯示，移至更新時間旁 */}
 
         {/* 更新時間與資料來源 */}
         {!ratesLoading && lastUpdate && (

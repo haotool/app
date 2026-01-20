@@ -1,7 +1,7 @@
 /**
  * 離線儲存工具 - IndexedDB 備援策略
  *
- * [fix:2026-01-11] Safari PWA 冷啟動離線問題解決方案
+ * Safari PWA 冷啟動離線問題解決方案：
  *
  * 問題根因：
  * - Safari 的 Cache Storage 只持續到瀏覽器關閉或從記憶體卸載
@@ -12,15 +12,11 @@
  * - 使用 IndexedDB 作為備援（限制 500MB，比 Cache API 更持久）
  * - 雙重儲存策略：localStorage (5 分鐘) + IndexedDB (7 天)
  *
- * [fix:2026-01-11] SSR/SSG 相容性修復
+ * SSR/SSG 相容性：
  * - 使用 lazy initialization 避免在模組載入時存取 indexedDB
- * - 參考: [Vue.js SSR Guide](https://vuejs.org/guide/scaling-up/ssr.html)
  *
- * 參考:
- * - [Apple Developer Forums: Safari iOS PWA Data Persistence](https://developer.apple.com/forums/thread/710157)
- * - [idb-keyval: Simple key-value store](https://github.com/jakearchibald/idb-keyval)
- *
- * @module offlineStorage
+ * @see https://developer.apple.com/forums/thread/710157
+ * @see https://github.com/jakearchibald/idb-keyval
  */
 
 import { get, set, del, createStore } from 'idb-keyval';
@@ -382,11 +378,10 @@ export async function getExchangeRatesFromIDBAnytime(): Promise<ExchangeRateData
 /**
  * 從 IndexedDB 讀取匯率資料並返回陳舊度資訊
  *
- * [fix:2026-01-11] 修復離線備援忽略 7 天有效期問題
- * - 返回陳舊度資訊讓調用方決定如何處理
- * - 超過 7 天的資料會標記為 EXPIRED，建議使用 fallback
+ * 返回陳舊度資訊讓調用方決定如何處理。
+ * 超過 7 天的資料會標記為 EXPIRED，建議使用 fallback。
  *
- * @returns Promise<{ data: ExchangeRateData | null; staleness: StalenessInfo }> 資料與陳舊度資訊
+ * @returns 資料與陳舊度資訊
  */
 export async function getExchangeRatesFromIDBWithStaleness(): Promise<{
   data: ExchangeRateData | null;

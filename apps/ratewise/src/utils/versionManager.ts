@@ -154,19 +154,11 @@ export function recordVersionUpdate(): void {
 }
 
 /**
- * [fix:2025-12-29] 強制更新 Service Worker
- * 確保舊用戶能接收新功能（如 12 月彩蛋）
+ * 強制更新 Service Worker
  *
- * 問題根因：
- * - 舊 Service Worker 使用 StaleWhileRevalidate 策略
- * - 舊用戶開啟應用時，SW 會先返回舊版快取
- * - 必須強制 SW 更新並重新註冊
- *
- * [fix:2026-01-11] 移除冗餘的 SKIP_WAITING 消息發送
- * 原因：sw.ts 直接調用 self.skipWaiting()，SW 安裝後立即激活
- * 因此 registration.waiting 永遠為 null，postMessage 永遠不會執行
- *
- * 參考: [context7:/vite-pwa/vite-plugin-pwa:2026-01-11]
+ * 確保舊用戶能接收新功能。
+ * 由於 sw.ts 直接調用 self.skipWaiting()，SW 安裝後立即激活，
+ * 因此不需要發送 SKIP_WAITING 消息。
  */
 export async function forceServiceWorkerUpdate(): Promise<boolean> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
@@ -194,8 +186,6 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
 
 /**
  * 處理版本更新流程
- *
- * [fix:2025-12-29] 加入強制 SW 更新確保舊用戶接收新功能
  *
  * 流程:
  * 1. 檢測版本變更

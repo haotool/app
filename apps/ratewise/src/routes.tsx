@@ -19,13 +19,6 @@
  *   - `/update-prompt-test`: UpdatePrompt 測試
  *   - `/*`: 404 頁面
  *
- * [refactor:2026-01-15] 重構路由支援底部導覽列與模組化架構
- * 依據：Phase 2 架構升級計畫 - 嵌套路由與 AppLayout 整合
- *
- * 參考：
- * - [Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
- * - [fix:2025-12-04] importWithRetry 處理 chunk 載入失敗
- * - [fix:2025-12-25] ClientOnly 解決 React Hydration #418
  */
 
 import type { RouteRecord } from 'vite-react-ssg';
@@ -40,10 +33,7 @@ import MultiConverter from './pages/MultiConverter';
 import Favorites from './pages/Favorites';
 import Settings from './pages/Settings';
 
-/**
- * 帶重試機制的動態 import
- * [fix:2025-12-04] 修復 SSG 部署後 chunk 載入失敗導致的 JSON 解析錯誤
- */
+/** 帶重試機制的動態 import */
 async function importWithRetry<T>(
   importFn: () => Promise<T>,
   retries = 3,
@@ -141,11 +131,8 @@ function createLazyRoute(
 /**
  * Route Configuration for vite-react-ssg
  *
- * [refactor:2026-01-15] 新增嵌套路由支援底部導覽列架構
  * 架構：AppLayout（父路由）包含 4 個子路由（Single, Multi, Favorites, Settings）
- *
- * [fix:2025-12-04] 使用 createLazyRoute 處理 chunk 載入失敗
- * [fix:2025-12-25] 首頁使用 ClientOnly 避免 React Hydration #418 錯誤
+ * 首頁使用 ClientOnly 避免 hydration mismatch
  */
 export const routes: RouteRecord[] = [
   // ✅ AppLayout 路由（底部導覽列 + 模組化架構）
@@ -231,11 +218,7 @@ export const routes: RouteRecord[] = [
  * 指定哪些路徑應該被預渲染為靜態 HTML
  *
  * 策略：
- * - ✅ 預渲染：首頁、FAQ、About、Guide + 13 個幣別落地頁（爬蟲需要的 SEO 頁面）
+ * - ✅ 預渲染：首頁、FAQ、About、Guide + 13 個幣別落地頁
  * - ❌ 不預渲染：404、color-scheme（動態處理或內部工具）
- *
- * [fix:2025-11-30] 新增 /guide 到預渲染列表，與 vite.config.ts SSG 配置同步
- * [refactor:2025-12-14] 使用集中式 SEO 路徑配置，避免多處維護
- * 依據：sitemap.xml 與 SSG 預渲染路徑一致性 + SEO Best Practices 2025
  */
 export { getIncludedRoutes } from './config/seo-paths';

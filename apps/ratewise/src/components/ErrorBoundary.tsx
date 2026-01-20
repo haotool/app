@@ -50,8 +50,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       errorInfo,
     });
 
-    // 🚀 [Lighthouse-optimization:2025-10-30] On-demand Sentry 初始化
-    // 只在真正發生錯誤時才載入 Sentry（首次錯誤時會初始化，後續直接使用）
+    // On-demand Sentry 初始化
     if (import.meta.env.PROD || import.meta.env.VITE_SENTRY_DSN) {
       void (async () => {
         try {
@@ -86,7 +85,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.fallback;
       }
 
-      // Default fallback UI - [fix:2026-01-20] SSOT: gray-* → text/text-muted/destructive
+      // Default fallback UI
       return (
         <div className="min-h-screen bg-gradient-to-br from-danger-bg to-warning-light flex items-center justify-center p-4">
           <div className="bg-surface rounded-2xl shadow-2xl p-8 max-w-md w-full">

@@ -62,20 +62,7 @@ interface UseCurrencyConverterOptions {
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
   const { exchangeRates, details, rateType = 'spot' } = options;
 
-  /**
-   * [fix:2025-12-25] 修復 React Hydration Error #418
-   *
-   * 問題：useState 初始化函數中使用 readString/readJSON 從 localStorage 讀取
-   * - SSG 時：isBrowser = false，返回 fallback 值
-   * - 客戶端 hydration：isBrowser = true，返回 localStorage 實際值
-   * - 造成 SSG HTML 與客戶端初始渲染不一致 → React Error #418
-   *
-   * 解法：useState 永遠使用固定初始值（與 SSG fallback 相同），
-   * 然後在 useEffect（客戶端專用）中讀取 localStorage 並更新
-   *
-   * 參考: [context7:/reactjs/react.dev:useState:2025-12-25]
-   * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
-   */
+  // 使用固定初始值避免 SSR hydration mismatch，在 useEffect 中從 localStorage 恢復
   const [mode, setMode] = useState<ConverterMode>('single');
   const [fromCurrency, setFromCurrency] = useState<CurrencyCode>(DEFAULT_FROM_CURRENCY);
   const [toCurrency, setToCurrency] = useState<CurrencyCode>(DEFAULT_TO_CURRENCY);

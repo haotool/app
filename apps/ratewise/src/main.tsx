@@ -1,18 +1,8 @@
 /**
- * Vite React SSG Entry Point - SEO Phase 2B-2
+ * Vite React SSG Entry Point
  *
- * 遷移說明：
- * - 從 ReactDOM.createRoot() 改為 ViteReactSSG()
- * - 保留所有初始化邏輯（logger, webVitals, versionManager）
- * - 使用 setup callback 處理客戶端初始化
- *
- * 參考：fix/seo-phase2b-prerendering
- * 依據：[Context7:daydreamer-riri/vite-react-ssg:2025-11-25]
- *
- * [fix:2025-12-25] 抑制 React Hydration #418 預期錯誤
- * 原因：vite-react-ssg + 動態內容（匯率數據）在 SSG/hydration 間存在固有差異
- * 參考：[context7:/reactjs/react.dev:onRecoverableError:2025-12-25]
- * 參考：docs/dev/002_development_reward_penalty_log.md - "預期行為" 說明
+ * 使用 ViteReactSSG() 進行 SSG 預渲染，保留所有初始化邏輯。
+ * 抑制 React Hydration #418 預期錯誤（SSG + 動態內容固有差異）。
  */
 
 // Filter expected React hydration errors (SSG + dynamic content side effect)

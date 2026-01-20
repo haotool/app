@@ -18,12 +18,6 @@
  * - 提升爬蟲發現效率
  * - 改善用戶導航體驗
  *
- * [fix:2025-12-25] 使用 ClientOnly 包裝動態時間顯示避免 React Hydration #418
- * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
- *
- * 建立時間: 2025-12-20
- * 更新時間: 2025-12-25T14:00:00+08:00
- * BDD 階段: Stage 6 GREEN
  */
 
 import { Link } from 'react-router-dom';
@@ -31,12 +25,7 @@ import { ClientOnly } from 'vite-react-ssg';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 import { FOOTER_SECTIONS, POPULAR_RATE_LINKS } from '../config/footer-links';
 
-/**
- * [fix:2025-12-25] 使用固定年份避免 SSG/hydration mismatch (React Error #418)
- * SSG 時生成的年份與客戶端 hydration 時可能不同（跨年情況）
- * 使用 suppressHydrationWarning 作為備用方案
- * 參考: [context7:/reactjs/react.dev:suppressHydrationWarning:2025-12-25]
- */
+/** 固定年份避免 SSG/hydration mismatch */
 const CURRENT_YEAR = 2025;
 
 // 格式化時間為 MM/DD HH:mm
@@ -54,11 +43,7 @@ const formatTime = (dateString: string | null) => {
   }
 };
 
-/**
- * [fix:2025-12-25] 獨立的時間顯示組件，用於 ClientOnly 渲染
- * 避免 SSG 時的 hydration mismatch (React Error #418)
- * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
- */
+/** 獨立的時間顯示組件，用於 ClientOnly 渲染以避免 hydration mismatch */
 function UpdateTimeDisplay() {
   const { lastUpdate, lastFetchedAt } = useExchangeRates();
 
@@ -119,13 +104,7 @@ export function Footer() {
               />
             </svg>
           </a>
-          {/**
-           * [fix:2025-12-25] 使用 ClientOnly 避免 React Hydration Error #418
-           * 問題：lastUpdate/lastFetchedAt 在 SSG 時為 null（顯示 --/-- --:--），
-           * 客戶端 hydration 時為實際值（顯示時間），造成 text node 不一致
-           * 解法：使用 vite-react-ssg 的 ClientOnly 組件確保只在客戶端渲染
-           * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
-           */}
+          {/* ClientOnly 避免 hydration mismatch */}
           <div className="flex items-center gap-2 text-sm text-white/80">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -205,7 +184,6 @@ export function Footer() {
             </div>
             <span className="font-semibold">匯率好工具</span>
             <span className="text-white/50">•</span>
-            {/* [fix:2026-01-20] SSOT: gray-400/gray-900 → text-muted/text */}
             <span
               className="relative inline-block cursor-help text-xs text-white/60 font-mono group"
               title={`Built on ${buildTime}`}
@@ -273,13 +251,7 @@ export function Footer() {
               />
             </svg>
           </a>
-          {/**
-           * [fix:2025-12-25] 使用 ClientOnly 避免 React Hydration Error #418
-           * 問題：lastUpdate/lastFetchedAt 在 SSG 時為 null（顯示 --/-- --:--），
-           * 客戶端 hydration 時為實際值（顯示時間），造成 text node 不一致
-           * 解法：使用 vite-react-ssg 的 ClientOnly 組件確保只在客戶端渲染
-           * 參考: [context7:/daydreamer-riri/vite-react-ssg:ClientOnly:2025-12-25]
-           */}
+          {/* ClientOnly 避免 hydration mismatch */}
           <div className="flex items-center gap-2 text-sm text-white/80">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

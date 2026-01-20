@@ -444,7 +444,6 @@ export function getStyleColors(style: ThemeStyle): SemanticColors {
  * @param spaceDelimited - 空格分隔的 RGB 值，如 "99 102 241"
  * @returns 逗號分隔的 RGB 值，如 "99, 102, 241"
  *
- * @reference [fix:2026-01-17] lightweight-charts addColorStop SyntaxError 修復
  */
 function toCommaSeparatedRgb(spaceDelimited: string): string {
   return spaceDelimited.split(' ').join(', ');
@@ -453,13 +452,8 @@ function toCommaSeparatedRgb(spaceDelimited: string): string {
 /**
  * 獲取當前主題的圖表顏色（供 MiniTrendChart 使用）
  *
- * @description SSOT - 從 CSS Variables 獲取圖表配色
- *
- * [fix:2026-01-20] 高級金融 App 風格優化
- * - 線條透明度保持 100%（清晰可見）
- * - 頂部漸層透明度降至 25%（微光效果）
- * - 底部漸層透明度降至 0%（完全透明）
- * - 參考：Bloomberg、Robinhood、Revolut 等專業金融 App
+ * SSOT - 從 CSS Variables 獲取圖表配色。
+ * 採用高級金融 App 風格：線條 100% 透明度、頂部 25%、底部 0%
  *
  * @returns 圖表顏色配置，格式為標準 rgba(r, g, b, a) 以相容 Canvas/lightweight-charts
  */

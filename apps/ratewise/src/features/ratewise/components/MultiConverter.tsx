@@ -199,7 +199,6 @@ export const MultiConverter = ({
                   aria-label={isFavorite ? `移除常用貨幣 ${code}` : `加入常用貨幣 ${code}`}
                   title={isFavorite ? `移除常用貨幣 ${code}` : `加入常用貨幣 ${code}`}
                 >
-                  {/* [fix:2026-01-20] SSOT: text-gray-300 → text-text-muted */}
                   <Star
                     className={isFavorite ? 'text-favorite' : 'text-text-muted'}
                     size={18}
@@ -274,8 +273,7 @@ export const MultiConverter = ({
         })}
       </div>
 
-      {/* 🔧 計算機 Modal */}
-      {/* [fix:2025-12-25] 始終渲染 CalculatorKeyboard，讓彩蛋在計算機關閉後仍可顯示 */}
+      {/* 計算機鍵盤 */}
       <CalculatorKeyboard
         isOpen={calculator.isOpen}
         onClose={calculator.closeCalculator}

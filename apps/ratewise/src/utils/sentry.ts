@@ -1,10 +1,10 @@
 /**
  * Sentry initialization with lazy loading
- * [context7:@sentry/react:2025-10-18T02:00:00+08:00]
- * [Lighthouse-optimization:2025-10-27] Lazy load Sentry (969KB, 86% unused in initial load)
- * 參考: https://web.dev/articles/optimize-lcp
  *
- * Initialize only in production or when VITE_SENTRY_DSN is explicitly set
+ * Lazy loads Sentry SDK to reduce initial bundle size.
+ * Initialize only in production or when VITE_SENTRY_DSN is explicitly set.
+ *
+ * @see https://web.dev/articles/optimize-lcp
  */
 import { logger } from './logger';
 
@@ -74,7 +74,6 @@ export async function initSentry() {
 
 /**
  * Capture exception manually (use sparingly, ErrorBoundary handles most)
- * [Lighthouse-optimization] Lazy load Sentry only when needed
  */
 export async function captureException(error: Error, context?: Record<string, unknown>) {
   if (!SENTRY_DSN) return;
@@ -86,10 +85,7 @@ export async function captureException(error: Error, context?: Record<string, un
   Sentry.captureException(error);
 }
 
-/**
- * Add breadcrumb for debugging
- * [Lighthouse-optimization] Lazy load Sentry only when needed
- */
+/** Add breadcrumb for debugging */
 export async function addBreadcrumb(message: string, data?: Record<string, unknown>) {
   if (!SENTRY_DSN) return;
 

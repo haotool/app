@@ -1,17 +1,14 @@
 /**
  * useDecemberTheme Hook
- * @file useDecemberTheme.ts
- * @description 自動偵測 12 月並管理聖誕主題狀態
+ *
+ * 自動偵測 12 月並管理聖誕主題狀態。
+ * 使用 useSyncExternalStore 和 lazy initial state 避免 SSR hydration mismatch。
  *
  * 功能：
  * - 自動偵測是否為 12 月
  * - 結合 prefers-reduced-motion 設定
  * - 提供主題開關控制
  * - SSR 安全
- *
- * [fix:2025-12-26] 修復 ESLint set-state-in-effect 錯誤
- * 參考: [context7:/websites/react_dev_reference:useEffect:2025-12-26]
- * 解法: 使用 useSyncExternalStore 或 lazy initial state 避免 SSR hydration mismatch
  */
 
 import { useState, useCallback, useSyncExternalStore } from 'react';
@@ -38,9 +35,8 @@ const THEME_DISABLED_KEY = 'ratewise-december-theme-disabled';
 
 /**
  * 取得目前月份和年份（SSR 安全）
- * @returns { isDecember, currentYear }
  *
- * [fix:2026-01-16] 使用 build time 作為 SSR 的基準時間，避免 hydration mismatch
+ * 使用 build time 作為 SSR 的基準時間，避免 hydration mismatch：
  * - SSR/SSG 時使用 VITE_BUILD_TIME 環境變數
  * - 客戶端 hydration 時也使用相同的 build time
  * - 這確保 SSR 和客戶端的初始渲染一致

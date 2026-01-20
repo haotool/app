@@ -16,9 +16,10 @@ import {
 } from '../utils/offlineStorage';
 
 /**
- * [fix:2026-01-08] 離線 fallback 預設匯率
- * 當用戶首次離線訪問（無 localStorage 快取）時使用
- * 數據來源: 2026-01 台灣銀行牌告匯率（近似值）
+ * 離線 fallback 預設匯率
+ *
+ * 當用戶首次離線訪問（無 localStorage 快取）時使用。
+ * 數據來源: 台灣銀行牌告匯率（近似值）
  * 這確保 PWA 在任何情況下都能顯示 UI，而非 Safari 的「無法打開網頁」錯誤
  */
 const FALLBACK_RATES: Record<string, number> = {
@@ -73,7 +74,7 @@ interface CachedData {
 /**
  * 從快取讀取匯率資料（檢查有效性）
  *
- * [fix:2025-12-28] 離線快取保護改進：
+ * 離線快取保護策略：
  * - 不再刪除過期快取，保留給離線使用
  * - 過期只表示需要更新，不代表數據無效
  * - 只有成功獲取新數據時才覆蓋舊快取
@@ -110,7 +111,7 @@ function getFromCache(): ExchangeRateData | null {
 /**
  * 儲存匯率資料到快取
  *
- * [fix:2026-01-11] 雙重儲存策略
+ * 雙重儲存策略：
  * - localStorage: 5 分鐘有效期（控制數據新鮮度）
  * - IndexedDB: 7 天有效期（Safari PWA 冷啟動離線備援）
  */
@@ -183,15 +184,16 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
 }
 
 /**
- * [fix:2025-12-28] 檢測網路狀態
- * 參考: https://developer.mozilla.org/en-US/docs/Web/API/Navigator/onLine
+ * 檢測網路狀態
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/onLine
  */
 function isOnline(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine;
 }
 
 /**
- * [fix:2025-12-28] 嘗試讀取任何可用的快取（包括過期的）
+ * 嘗試讀取任何可用的快取（包括過期的）
+ *
  * 用於離線模式或網路請求失敗時的備援
  */
 function getAnyCachedData(): ExchangeRateData | null {
@@ -214,12 +216,12 @@ function getAnyCachedData(): ExchangeRateData | null {
 /**
  * 獲取匯率資料（帶快取和 fallback）
  *
- * [fix:2025-12-28] 離線優先策略改進：
+ * 離線優先策略：
  * 1. 離線時直接使用快取，不嘗試網路請求（節省資源）
  * 2. 在線時優先使用有效快取，過期才請求網路
  * 3. 網路失敗時使用任何可用快取（即使過期）
  *
- * [fix:2026-01-11] Safari PWA 冷啟動離線優化：
+ * Safari PWA 冷啟動離線優化：
  * 4. 增加 IndexedDB 作為第二層備援（localStorage → IndexedDB → FALLBACK_RATES）
  * 5. IndexedDB 有效期 7 天，比 localStorage (5 分鐘) 更持久
  */

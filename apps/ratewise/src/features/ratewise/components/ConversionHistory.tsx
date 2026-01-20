@@ -31,10 +31,7 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
     return null;
   }
 
-  /**
-   * 複製轉換結果到剪貼簿
-   * [fix:2026-01-04] 新增 Toast 通知，移除 TODO 標記
-   */
+  /** 複製轉換結果到剪貼簿 */
   const handleCopy = async (entry: ConversionHistoryEntry) => {
     const text = formatConversionForCopy(entry);
     const success = await copyToClipboard(text);
@@ -74,7 +71,7 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
         )}
       </div>
 
-      {/* 歷史記錄列表 - [fix:2026-01-20] 使用 SSOT token */}
+      {/* 歷史記錄列表 */}
       <div className="space-y-3">
         {history.map((item, index) => (
           <div

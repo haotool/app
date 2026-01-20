@@ -334,7 +334,6 @@ export const SingleConverter = ({
 
       <div className="flex flex-col items-center mb-4">
         {/* 匯率卡片 - 一體化設計，無切分感 */}
-        {/* [fix:2026-01-21] 統一背景色 + 從上到下微漸層，消除上下區塊視覺切分 */}
         <div className="relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl mb-3 w-full group cursor-pointer hover:shadow-xl transition-all duration-500 border border-border/50 hover:border-primary/30">
           {/* 微光效果 - 極淺的漸層覆蓋 */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl" />
@@ -362,7 +361,6 @@ export const SingleConverter = ({
                 </svg>
                 <span>即期</span>
               </button>
-              {/* [fix:2026-01-20] 現金按鈕使用 primary 色保持一致，提升文字對比度 */}
               <button
                 onClick={() => onRateTypeChange('cash')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ${
@@ -396,7 +394,6 @@ export const SingleConverter = ({
           </div>
 
           {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
-          {/* [fix:2026-01-21] 移除 bg-surface-elevated，讓上下區塊成為無縫整體 */}
           <div
             className={`relative w-full h-20 transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] group-hover:h-24 overflow-hidden rounded-b-xl ${
               showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -438,7 +435,7 @@ export const SingleConverter = ({
             } animate-pulse motion-reduce:animate-none`}
           />
 
-          {/* 按鈕本體 - [fix:2026-01-20] 使用 SSOT primary token */}
+          {/* 交換按鈕 */}
           <button
             ref={swapButtonRef}
             onClick={handleSwap}
@@ -578,7 +575,7 @@ export const SingleConverter = ({
         </div>
       </div>
 
-      {/* [fix:2026-01-20] 使用 SSOT primary token */}
+      {/* 加入歷史記錄按鈕 */}
       <button
         onClick={onAddToHistory}
         className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
@@ -587,7 +584,6 @@ export const SingleConverter = ({
       </button>
 
       {/* 計算機鍵盤 Bottom Sheet */}
-      {/* [fix:2025-12-25] 始終渲染 CalculatorKeyboard，讓彩蛋在計算機關閉後仍可顯示 */}
       <Suspense fallback={null}>
         <CalculatorKeyboard
           isOpen={calculator.isOpen}

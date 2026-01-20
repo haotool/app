@@ -1,9 +1,7 @@
 /**
- * CurrencyList Component - SSOT Design Token 重構
+ * CurrencyList Component
  *
- * [fix:2026-01-20] 移除硬編碼顏色，統一使用 SSOT design token
- *
- * @reference index.css SSOT design system
+ * 顯示所有貨幣的即時匯率列表，使用 SSOT design token
  */
 import { RefreshCw, Star, TrendingDown, TrendingUp } from 'lucide-react';
 import { CURRENCY_DEFINITIONS } from '../constants';

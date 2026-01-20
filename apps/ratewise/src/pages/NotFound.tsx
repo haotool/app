@@ -27,7 +27,6 @@ export default function NotFound() {
         robots="noindex, follow"
       />
 
-      {/* [fix:2026-01-20] SSOT: purple-* → primary/primary-hover token */}
       <div className="max-w-md w-full text-center">
         {/* 404 Error Display */}
         <div className="mb-8">

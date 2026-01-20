@@ -97,7 +97,7 @@ function buildLhciMockRates(date: Date): ExchangeRateData {
 /**
  * 快取配置
  *
- * [fix:2025-12-28] 雙層快取策略：
+ * 雙層快取策略：
  * - 記憶體快取：5 分鐘過期，用於減少重複請求
  * - localStorage 快取：30 天過期，用於離線使用
  */
@@ -117,18 +117,14 @@ const CONFIG = {
  */
 const cache = new Map<string, { data: unknown; timestamp: number }>();
 
-/**
- * [fix:2025-12-28] localStorage 歷史數據快取結構
- */
+/** localStorage 歷史數據快取結構 */
 interface StorageHistoryCache {
   version: number;
   lastUpdated: number;
   rates: Record<string, { data: ExchangeRateData; timestamp: number }>;
 }
 
-/**
- * [fix:2025-12-28] 從 localStorage 讀取歷史快取
- */
+/** 從 localStorage 讀取歷史快取 */
 function getStorageCache(): StorageHistoryCache | null {
   try {
     if (typeof localStorage === 'undefined') return null;
@@ -140,9 +136,7 @@ function getStorageCache(): StorageHistoryCache | null {
   }
 }
 
-/**
- * [fix:2025-12-28] 儲存歷史數據到 localStorage
- */
+/** 儲存歷史數據到 localStorage */
 function saveToStorageCache(dateKey: string, data: ExchangeRateData): void {
   try {
     if (typeof localStorage === 'undefined') return;
@@ -173,9 +167,7 @@ function saveToStorageCache(dateKey: string, data: ExchangeRateData): void {
   }
 }
 
-/**
- * [fix:2025-12-28] 從 localStorage 讀取指定日期的歷史數據
- */
+/** 從 localStorage 讀取指定日期的歷史數據 */
 function getFromStorageCache(dateKey: string): ExchangeRateData | null {
   const cache = getStorageCache();
   if (!cache) return null;
@@ -224,9 +216,7 @@ function saveToCache<T>(key: string, data: T): void {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
-/**
- * [fix:2025-12-28] 檢測網路狀態
- */
+/** 檢測網路狀態 */
 function isOnline(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine;
 }
@@ -234,7 +224,7 @@ function isOnline(): boolean {
 /**
  * 從 URL 列表依序嘗試獲取資料
  *
- * [fix:2025-12-28] 離線優先快取策略：
+ * 離線優先快取策略：
  * 1. 記憶體快取（5 分鐘）- 減少網路請求
  * 2. 網路請求（如果在線）
  * 3. localStorage 快取（30 天）- 離線備援
@@ -497,8 +487,8 @@ export async function fetchHistoricalRatesRange(
 /**
  * 清除快取
  *
- * [fix:2025-12-28] 清除記憶體和 localStorage 快取
- * @param includeStorage 是否同時清除 localStorage 快取（預設 false，保留離線數據）
+ * 清除記憶體和 localStorage 快取
+ * @param includeStorage - 是否同時清除 localStorage 快取（預設 false，保留離線數據）
  */
 export function clearCache(includeStorage = false): void {
   cache.clear();

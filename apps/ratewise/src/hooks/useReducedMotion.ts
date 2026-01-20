@@ -1,15 +1,12 @@
 /**
  * useReducedMotion Hook
- * @file useReducedMotion.ts
- * @description 偵測使用者的 prefers-reduced-motion 設定
+ *
+ * 偵測使用者的 prefers-reduced-motion 設定。
+ * 使用 useSyncExternalStore 訂閱 media query 變化。
  *
  * 用途：
  * - 尊重使用者的無障礙設定
  * - 在使用者偏好減少動畫時停用動畫效果
- *
- * [fix:2025-12-26] 修復 ESLint set-state-in-effect 錯誤
- * 參考: [context7:/websites/react_dev_reference:useSyncExternalStore:2025-12-26]
- * 解法: 使用 useSyncExternalStore 訂閱 media query 變化
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
  */

@@ -143,7 +143,6 @@ export default function Settings() {
           </div>
 
           <div className="card overflow-hidden">
-            {/* [fix:2026-01-20] SSOT: text-red-500/bg-red-* → text-destructive/bg-destructive */}
             <button
               onClick={resetTheme}
               disabled={!isLoaded}

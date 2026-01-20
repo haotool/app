@@ -13,8 +13,8 @@ interface AlternateLink {
 
 /**
  * FAQ Entry for JSON-LD schema
- * [fix:2025-11-28] answer 必須是純文字，不能包含 JSX
- * JSX 無法正確序列化為 JSON，會導致 SSG 輸出警告
+ *
+ * 注意：answer 必須是純文字，不能包含 JSX，否則會導致 SSG 序列化警告
  */
 interface FAQEntry {
   question: string;
@@ -363,9 +363,7 @@ export function SEOHelmet({
       <meta name="author" content="haotool" />
       <meta name="robots" content={robots} />
       <meta name="language" content={locale} />
-      {/* [fix:2026-01-03] 移除過時的 http-equiv="content-language"
-          W3C Validator: "Using the meta element to specify the document-wide default language is obsolete"
-          正確做法：使用 <html lang="zh-TW"> 指定語言 */}
+      {/* 注意：文檔語言由 <html lang="zh-TW"> 指定，不使用 http-equiv */}
       <link rel="canonical" href={canonicalUrl} />
       {normalizedAlternates.map(({ href, hrefLang }) => (
         <link key={hrefLang} rel="alternate" hrefLang={hrefLang} href={href} />
@@ -381,8 +379,7 @@ export function SEOHelmet({
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content="RateWise 匯率轉換器應用截圖" />
       <meta property="og:locale" content={ogLocale} />
-      {/* [fix:2026-01-03] og:locale:alternate 只應包含與主要 locale 不同的語言
-          對於單一語言網站，不應生成 og:locale:alternate */}
+      {/* og:locale:alternate 只包含與主要 locale 不同的語言 */}
       {normalizedAlternates
         .filter(
           ({ hrefLang }) => hrefLang !== 'x-default' && hrefLang.replace('-', '_') !== ogLocale,
