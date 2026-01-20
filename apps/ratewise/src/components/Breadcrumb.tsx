@@ -128,10 +128,10 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
                     {item.label}
                   </span>
                 ) : (
-                  // Parent Pages - Links
+                  // Parent Pages - Links [fix:2026-01-20] SSOT: hover:text-indigo-600 → hover:text-primary
                   <Link
                     to={item.href}
-                    className="hover:text-indigo-600 transition-colors duration-200 hover:underline"
+                    className="hover:text-primary transition-colors duration-200 hover:underline"
                   >
                     {item.label}
                   </Link>

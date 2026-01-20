@@ -75,28 +75,30 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
 
   // 根據類型選擇樣式
   const getStyles = () => {
+    // [fix:2026-01-20] SSOT: 硬編碼顏色 → SSOT design token
     switch (type) {
       case 'success':
         return {
-          bg: 'from-green-50 via-emerald-50 to-green-100',
-          border: 'border-green-200/50',
-          text: 'text-green-800',
-          icon: <Check className="w-4 h-4 text-green-600" />,
+          bg: 'from-success/10 via-success/5 to-success/15',
+          border: 'border-success/30',
+          text: 'text-success',
+          icon: <Check className="w-4 h-4 text-success" />,
         };
       case 'error':
         return {
-          bg: 'from-red-50 via-pink-50 to-red-100',
-          border: 'border-red-200/50',
-          text: 'text-red-800',
-          icon: <X className="w-4 h-4 text-red-600" />,
+          bg: 'from-destructive/10 via-destructive/5 to-destructive/15',
+          border: 'border-destructive/30',
+          text: 'text-destructive',
+          icon: <X className="w-4 h-4 text-destructive" />,
         };
       case 'info':
       default:
+        // [fix:2026-01-20] SSOT: purple-* → primary token
         return {
-          bg: 'from-purple-50 via-blue-50 to-purple-100',
-          border: 'border-purple-200/50',
-          text: 'text-purple-800',
-          icon: <Info className="w-4 h-4 text-purple-600" />,
+          bg: 'from-primary-bg via-primary-bg to-primary-light',
+          border: 'border-primary/30',
+          text: 'text-primary',
+          icon: <Info className="w-4 h-4 text-primary" />,
         };
     }
   };

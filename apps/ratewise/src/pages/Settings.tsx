@@ -143,15 +143,16 @@ export default function Settings() {
           </div>
 
           <div className="card overflow-hidden">
+            {/* [fix:2026-01-20] SSOT: text-red-500/bg-red-* → text-destructive/bg-destructive */}
             <button
               onClick={resetTheme}
               disabled={!isLoaded}
-              className="w-full px-5 py-4 flex items-center justify-between hover:bg-red-50 active:bg-red-100 group transition-all duration-200 ease-out disabled:opacity-50"
+              className="w-full px-5 py-4 flex items-center justify-between hover:bg-destructive/10 active:bg-destructive/20 group transition-all duration-200 ease-out disabled:opacity-50"
             >
-              <span className="text-xs font-black text-red-500 uppercase tracking-widest">
+              <span className="text-xs font-black text-destructive uppercase tracking-widest">
                 重置主題設定
               </span>
-              <ShieldAlert className="w-4 h-4 text-red-500 opacity-40 group-active:opacity-100 transition-opacity" />
+              <ShieldAlert className="w-4 h-4 text-destructive opacity-40 group-active:opacity-100 transition-opacity" />
             </button>
           </div>
         </section>
