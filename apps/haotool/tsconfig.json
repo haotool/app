@@ -21,7 +21,7 @@
     },
     "baseUrl": "."
   },
-  "include": ["src", "env.d.ts", "app.config.mjs.d.ts"],
+  "include": ["src", "src/**/*.d.ts", "env.d.ts", "app.config.mjs.d.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

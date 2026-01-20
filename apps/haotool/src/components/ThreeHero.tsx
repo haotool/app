@@ -177,7 +177,7 @@ const PrismLogic = ({ perf, isActive }: { perf: PerformanceState; isActive: bool
           ref={outerRef}
           castShadow
           receiveShadow
-          onPointerOver={(e) => {
+          onPointerOver={(e: { stopPropagation: () => void }) => {
             e.stopPropagation();
             if (typeof document !== 'undefined') {
               document.body.style.cursor = 'pointer';
