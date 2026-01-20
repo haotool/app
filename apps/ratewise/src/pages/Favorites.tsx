@@ -104,7 +104,7 @@ export default function Favorites() {
       <div className="px-5 py-6 max-w-md mx-auto">
         {/* Tab 切換區塊 - 參考 Settings 語言切換風格 */}
         <section className="mb-6">
-          <div className="bg-black/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
+          <div className="bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
             <button
               onClick={() => setActiveTab('favorites')}
               className={`flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out ${
