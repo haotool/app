@@ -15,9 +15,7 @@
  * 參考：docs/dev/002_development_reward_penalty_log.md - "預期行為" 說明
  */
 
-// [fix:2025-12-25] 在任何 React 代碼執行前，攔截並過濾 React Hydration 預期錯誤
-// [fix:2025-12-27] 增強錯誤檢測，處理 Error 物件和字串兩種格式
-// 這些錯誤是 SSG + 動態內容的固有特性，不影響功能，只是開發者警告
+// Filter expected React hydration errors (SSG + dynamic content side effect)
 if (typeof window !== 'undefined') {
   const originalConsoleError = console.error;
   console.error = (...args: unknown[]) => {
@@ -82,7 +80,7 @@ export const createRoot = ViteReactSSG(
   ({ isClient }) => {
     // Client-side initialization
     if (isClient) {
-      // [fix:2025-11-26] 初始化 CSP 違規監控
+      // Initialize CSP violation monitoring
       initCSPReporter();
 
       // Log application startup
@@ -134,8 +132,7 @@ export const createRoot = ViteReactSSG(
       });
 
       // Initialize observability (non-blocking)
-      // [Lighthouse-optimization:2025-10-30] 🚀 激進優化：Sentry 只在真正發生錯誤時才載入
-      // 移除啟動時的 initSentry()，改由 ErrorBoundary 首次錯誤時觸發（節省 969KB 初始載入）
+      // Sentry loads on-demand via ErrorBoundary to save initial bundle size
       initWebVitals();
 
       // Log successful mount

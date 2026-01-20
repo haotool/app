@@ -6,8 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import RateWise from './RateWise';
 import * as pullToRefreshModule from '../../hooks/usePullToRefresh';
 
-// Test helper: wrap component with required providers
-// [fix:2025-11-10] 添加 MemoryRouter 支援 Link 組件
+// Test helper: wrap component with required providers including MemoryRouter
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <MemoryRouter>
@@ -81,7 +80,7 @@ describe('RateWise Component', () => {
       json: () => Promise.resolve(mockRatesResponse),
     } as Response);
     vi.stubGlobal('fetch', fetchMock);
-    // [fix:2026-01-16] 使用 setTimeout 延遲執行避免 motion-dom 無限遞迴
+    // Use setTimeout to avoid motion-dom infinite recursion
     let rafId = 0;
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
       rafId++;

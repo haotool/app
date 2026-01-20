@@ -238,7 +238,6 @@ describe('SingleConverter - 核心功能測試', () => {
       const { rerender } = render(<SingleConverter {...mockProps} rateType="spot" />);
 
       const spotButton = screen.getByLabelText('切換到即期匯率');
-      // [fix:2026-01-20] 更新為新的 UI 設計 class (高級金融 App 風格)
       expect(spotButton).toHaveClass('bg-primary');
 
       rerender(<SingleConverter {...mockProps} rateType="cash" />);

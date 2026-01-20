@@ -75,7 +75,6 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
 
   // 根據類型選擇樣式
   const getStyles = () => {
-    // [fix:2026-01-20] SSOT: 硬編碼顏色 → SSOT design token
     switch (type) {
       case 'success':
         return {
@@ -93,7 +92,6 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
         };
       case 'info':
       default:
-        // [fix:2026-01-20] SSOT: purple-* → primary token
         return {
           bg: 'from-primary-bg via-primary-bg to-primary-light',
           border: 'border-primary/30',

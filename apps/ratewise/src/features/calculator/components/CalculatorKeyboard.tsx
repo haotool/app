@@ -190,8 +190,7 @@ export function CalculatorKeyboard({
     }
   };
 
-  // 使用 Portal 渲染到 document.body，避免父元素 transform 影響定位
-  // [SEO Phase 2B-2: 2025-11-25] SSR guard for document.body
+  // Portal render to document.body with SSR guard
   if (typeof document === 'undefined') {
     return null; // Skip rendering during SSR
   }

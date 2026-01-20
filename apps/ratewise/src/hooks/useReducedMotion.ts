@@ -62,7 +62,6 @@ function subscribe(callback: () => void): () => void {
  * }
  */
 export function useReducedMotion(): boolean {
-  // [fix:2025-12-26] 使用 useSyncExternalStore 避免 useEffect 中同步 setState
-  // 這是 React 18+ 推薦訂閱外部狀態的方式
+  // Use useSyncExternalStore (React 18+ recommended pattern for external state)
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

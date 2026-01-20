@@ -27,8 +27,7 @@ export function formatIsoTimestamp(iso: string): string {
     return '';
   }
 
-  // [fix:2025-11-05] 使用 Asia/Taipei 時區確保時區一致性
-  // 不使用 date.getMonth() / date.getDate()，因為它們使用本地時區
+  // Use Asia/Taipei timezone for consistency
   // 在 CI (UTC) 環境會導致測試失敗
   const formatter = new Intl.DateTimeFormat('zh-TW', {
     timeZone: 'Asia/Taipei',

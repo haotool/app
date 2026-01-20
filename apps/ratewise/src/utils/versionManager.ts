@@ -222,7 +222,7 @@ export async function handleVersionUpdate(): Promise<void> {
   // 清除快取
   await clearAppCache();
 
-  // [fix:2025-12-29] 強制更新 Service Worker
+  // Force Service Worker update
   await forceServiceWorkerUpdate();
 
   // 記錄更新歷史

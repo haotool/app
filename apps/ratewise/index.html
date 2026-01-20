@@ -1,54 +1,22 @@
 <!doctype html>
-<!-- [Build: 2025-12-24 Lighthouse Optimization] -->
 <html lang="zh-Hant">
   <head>
-    <!-- [Lighthouse Fix 2025-12-24] Charset must be first in head -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <!--
-      [SEO Fix 2025-11-25 Phase 2A - BDD Approach]
-      **恢復**靜態 SEO meta tags - Phase 1 的決策錯誤已修正
-
-      Phase 1 錯誤假設：React Helmet 可以完全取代靜態 meta tags
-      Phase 2A 正確理解：
-      1. Google 爬蟲兩階段索引：
-         - 階段 1 (Crawl Queue): 立即讀取靜態 HTML ✅
-         - 階段 2 (Render Queue): 延遲數小時至數天執行 JavaScript ⚠️
-      2. AI 搜尋引擎（GPTBot, ClaudeBot, PerplexityBot）：
-         - 完全不執行 JavaScript ❌
-         - 只能讀取靜態 HTML ✅
-      3. 社交媒體爬蟲（Facebook, Twitter）：
-         - 讀取靜態 HTML 優先 ✅
-
-      正確策略：靜態 + 動態分離
-      - index.html (靜態): 首頁的 meta tags (給 Google 第一階段 + AI 爬蟲)
-      - SEOHelmet (動態): 只用於子頁面 (FAQ, About, 404)
-
-      依據：
-      - [SEO 審查報告 2025-11-25] 68% → 90% 符合度提升計劃
-      - [Google Search Central: JavaScript SEO Basics]
-      - [Stack Overflow: React Helmet meta tags 爬蟲問題]
-      - [Evergreen Googlebot Two-Stage Indexing]
-
-      參考：fix/seo-phase2a-bdd-approach
-    -->
-
     <meta name="theme-color" content="#8B5CF6" />
 
-    <!-- [fix:2025-11-26] 停用 Cloudflare Rocket Loader -->
-    <!-- 原因：與嚴格的 CSP 和 Trusted Types 衝突 -->
-    <!-- 參考：https://developers.cloudflare.com/speed/optimization/content/rocket-loader/ -->
+    <!-- Cloudflare Rocket Loader 停用（與 CSP/Trusted Types 衝突） -->
     <meta name="cloudflare-rocket-loader" content="off" />
 
-    <!-- [fix:2025-11-05] 版本資訊 meta 標籤（用於 runtime 版本檢查） -->
+    <!-- 版本資訊（runtime 版本檢查用） -->
     <meta name="app-version" content="__APP_VERSION__" />
     <meta name="build-time" content="__BUILD_TIME__" />
 
-    <!-- Google Search Console Verification -->
+    <!-- Google Search Console -->
     <meta name="google-site-verification" content="NBCorB6Jq_872WFLMgbSieWf_Wvt0EGse1QWXnM4AOo" />
 
-    <!-- [SEO Fix 2025-11-25 Phase 2A] 基礎 SEO Meta Tags -->
+    <!-- SEO Meta Tags -->
     <meta
       name="description"
       content="RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。"
@@ -62,12 +30,8 @@
       name="robots"
       content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     />
-    <!-- Canonical 和 hreflang 由 SEOHelmet 動態生成，避免與子頁面衝突 -->
-    <!-- [fix:2026-01-03] 移除過時的 http-equiv="content-language"
-         W3C Validator: "Using the meta element to specify the document-wide default language is obsolete"
-         正確做法：使用 <html lang="zh-TW"> 指定語言（已設定於 <html> 標籤）-->
 
-    <!-- [SEO Fix 2026-01-07] Open Graph Tags - 標題延長至 50+ 字元，描述 120+ 字元 -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://app.haotool.org/ratewise/" />
     <meta property="og:title" content="RateWise 匯率好工具｜即時匯率換算・30+ 貨幣・台銀牌告參考" />
@@ -82,7 +46,7 @@
     <meta property="og:locale" content="zh_TW" />
     <meta property="og:site_name" content="RateWise" />
 
-    <!-- [SEO Fix 2026-01-07] Twitter Card Tags - 標題延長至 50+ 字元 -->
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
@@ -98,7 +62,7 @@
     />
     <meta name="twitter:image:alt" content="RateWise 匯率轉換器" />
 
-    <!-- PWA Configuration -->
+    <!-- PWA -->
     <link rel="icon" href="/ratewise/favicon.ico?v=20251208" sizes="48x48" />
     <link rel="icon" href="/ratewise/favicon.svg?v=20251208" sizes="any" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/ratewise/apple-touch-icon.png?v=20251208" />
@@ -107,29 +71,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="RateWise" />
 
-    <!-- [Lighthouse-optimization:2025-10-27] Resource hints -->
-    <!-- 參考: https://web.dev/articles/optimize-lcp -->
-
-    <!-- Preconnect to external domains for faster resource loading -->
+    <!-- Resource Hints -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
-
-    <!-- [Optimization 2025-11-26] Preconnect to critical origins -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin />
 
-    <!-- [fix:2025-11-14] 移除 Logo preload - Logo 不是 LCP 元素 -->
-    <!-- 根據 Lighthouse 分析，LCP 元素是匯率顯示文字區域，不是 Logo 圖片 -->
-    <!-- Preload 非 LCP 資源會浪費頻寬並導致 Chrome DevTools 警告 -->
-    <!-- 參考: tmp/lighthouse/PERFORMANCE_BOTTLENECK_ANALYSIS_20251114.md:39-50 -->
-
-    <!-- Modulepreload for critical scripts (Vite generates these automatically) -->
-    <!-- Vite will inject modulepreload links for vendor chunks during build -->
-
-    <!-- [fix:2026-01-17] 同步主題初始化腳本 - 防止 FOUC (Flash of Unstyled Content) -->
-    <!-- 此腳本必須在任何 CSS/JS 載入前執行，確保第一次繪製就使用正確的主題 -->
-    <!-- [update:2026-01-17] 移除深色模式邏輯，僅保留風格切換 -->
+    <!-- Theme Initialization (防止 FOUC) -->
     <script>
       (function () {
         var STORAGE_KEY = 'ratewise-theme';
@@ -140,33 +89,23 @@
           if (stored) {
             var config = JSON.parse(stored);
             var style = config.style || DEFAULT_STYLE;
-
-            // 設置 data-style attribute（CSS 會根據此值應用正確的變數）
             document.documentElement.dataset.style = style;
-
-            // 設置字體（Classic 使用 serif）
-            if (style === 'classic') {
-              document.documentElement.classList.add('font-serif');
-            } else {
-              document.documentElement.classList.add('font-sans');
-            }
+            document.documentElement.classList.add(
+              style === 'classic' ? 'font-serif' : 'font-sans',
+            );
           } else {
-            // 預設配置
             document.documentElement.dataset.style = DEFAULT_STYLE;
             document.documentElement.classList.add('font-sans');
           }
         } catch (e) {
-          // localStorage 不可用時使用預設值
           document.documentElement.dataset.style = DEFAULT_STYLE;
           document.documentElement.classList.add('font-sans');
         }
       })();
     </script>
 
-    <!-- [Lighthouse-optimization:2025-10-28] Skeleton Screen Critical CSS -->
-    <!-- 參考: https://blog.logrocket.com/ux-design/skeleton-loading-screen-design/ -->
+    <!-- Critical CSS -->
     <style>
-      /* Critical CSS - 內聯確保立即渲染 */
       body {
         margin: 0;
         padding: 0;
@@ -178,7 +117,6 @@
           -apple-system,
           sans-serif;
       }
-      /* Skeleton Screen - 立即顯示內容結構，提升 perceived performance */
       .skeleton-container {
         max-width: 56rem;
         margin: 0 auto;
@@ -221,7 +159,6 @@
         background: #ede9fe;
         border-radius: 0.75rem;
       }
-      /* 平滑的脈動動畫 */
       @keyframes pulse {
         0%,
         100% {
@@ -244,17 +181,11 @@
       }
     </style>
 
-    <!-- [Lighthouse-optimization:2025-10-28] 非阻塞 CSS 載入 -->
-    <!-- 參考: https://web.dev/articles/defer-non-critical-css -->
-    <!-- Vite 會在 build 時注入 CSS link，我們使用 media="print" 技巧非阻塞載入 -->
-
-    <!-- [Lighthouse-optimization:2025-10-27] 延遲載入 noscript CSS -->
     <noscript>
       <link rel="stylesheet" href="./loading.css" />
     </noscript>
 
-    <!-- [SEO Fix 2025-11-25 Phase 2B] JSON-LD Structured Data for AI Search Optimization -->
-    <!-- WebApplication Schema - Enhanced with complete fields -->
+    <!-- Structured Data -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -285,7 +216,6 @@
       }
     </script>
 
-    <!-- Organization Schema - Enhanced with optimized logo -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -302,7 +232,6 @@
       }
     </script>
 
-    <!-- WebSite Schema - Added for search functionality -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -317,8 +246,6 @@
         }
       }
     </script>
-
-    <!-- Homepage-only structured data moved to HomeStructuredData component -->
 
     <title>RateWise - 匯率好工具 | 即時匯率換算</title>
   </head>
@@ -352,9 +279,6 @@
         </p>
       </div>
     </noscript>
-    <!-- [Lighthouse-optimization:2025-10-28] Skeleton Screen for instant content -->
-    <!-- 靜態骨架屏：立即顯示內容結構，提升 FCP/LCP 並改善 perceived performance -->
-    <!-- React 掛載時會替換整個 #root 內容 -->
     <div id="root">
       <div class="skeleton-container" role="status" aria-live="polite">
         <div class="skeleton-header"></div>

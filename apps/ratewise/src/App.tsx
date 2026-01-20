@@ -9,12 +9,10 @@ import CurrencyConverter from './features/ratewise/RateWise';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
 // Lazy load pages with retry mechanism
-// [fix:2025-12-04] 修復 SSG 部署後 "Unexpected token '<'" 錯誤
 const FAQ = lazyWithRetry(() => import('./pages/FAQ'));
 const About = lazyWithRetry(() => import('./pages/About'));
 const ColorSchemeComparison = lazyWithRetry(() => import('./pages/ColorSchemeComparison'));
 const USDToTWD = lazyWithRetry(() => import('./pages/USDToTWD'));
-// [SEO Fix 2025-11-25 Phase 2A-2] Lazy load 404 page with noindex SEO
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 // [refactor:2026-01-15] 新增 App 架構頁面
 const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
@@ -34,8 +32,7 @@ const DecemberTheme = lazyWithRetry(() =>
  * 必須在 Router 內部使用，負責自動重定向大寫 URL 到小寫版本
  */
 function UrlNormalizer({ children }: { children: React.ReactNode }) {
-  // [SEO:2025-12-01] 自動處理 URL 標準化（大寫轉小寫）
-  // 修復重複內容問題，集中 PageRank 權重
+  // Auto-normalize URLs (uppercase to lowercase) for SEO
   // 參考：docs/dev/SEO_DEEP_AUDIT_2025-12-01.md
   useUrlNormalization();
   return <>{children}</>;

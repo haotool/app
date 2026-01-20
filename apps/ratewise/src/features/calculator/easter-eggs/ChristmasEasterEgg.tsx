@@ -16,8 +16,7 @@ import { SnowAnimation } from './SnowAnimation';
 import { CHRISTMAS_EASTER_EGG_DURATION } from './utils';
 import './styles/christmas.css';
 
-// [fix:2026-01-16] 使用 build time 年份避免 SSG/hydration mismatch
-// 不使用 new Date().getFullYear() 因為 SSG 和客戶端可能產生不同年份導致 React Error #418
+// Use build time year to avoid SSG/hydration mismatch
 const BUILD_YEAR =
   typeof import.meta.env.VITE_BUILD_TIME === 'string'
     ? new Date(import.meta.env.VITE_BUILD_TIME).getFullYear()

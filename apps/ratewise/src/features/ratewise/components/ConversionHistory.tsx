@@ -59,7 +59,6 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
   };
 
   return (
-    // [fix:2026-01-20] 使用 SSOT token 替代硬編碼 bg-white
     <div className="bg-surface rounded-3xl shadow-xl p-6 mt-4 md:mt-6">
       {/* 標題與清除按鈕 */}
       <div className="flex items-center justify-between mb-4">

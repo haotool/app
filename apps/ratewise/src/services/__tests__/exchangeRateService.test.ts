@@ -185,8 +185,7 @@ describe('exchangeRateService', () => {
 
       expect(result).toEqual(mockRateData);
       expect(global.fetch).toHaveBeenCalled();
-      // [fix:2025-12-28] 不再刪除過期快取，保留給離線使用
-      // 過期快取會被新數據覆蓋，而非刪除
+      // Stale cache kept for offline fallback, overwritten by new data
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'exchangeRates',
         expect.stringContaining('2025-10-31 01:00'),
@@ -209,7 +208,7 @@ describe('exchangeRateService', () => {
     });
 
     it('CDN 失敗時使用過期快取作為 fallback', async () => {
-      // [fix:2025-12-28] 過期快取不再被刪除，可作為離線備援
+      // Stale cache serves as offline fallback
       const staleData = {
         data: { ...mockRateData, updateTime: '2025-10-31 00:40' },
         timestamp: Date.now() - 20 * 60 * 1000, // 20 minutes ago (expired)

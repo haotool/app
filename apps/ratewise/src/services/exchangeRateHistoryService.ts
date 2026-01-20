@@ -247,7 +247,7 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
     return cached;
   }
 
-  // [fix:2025-12-28] 提取日期 key（用於 localStorage）
+  // Extract date key for localStorage
   const dateKey = cacheKey.replace(`${CACHE_KEY_PREFIX}-`, '');
 
   // 2. 離線時直接使用 localStorage 快取
@@ -269,8 +269,7 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
     try {
       logger.debug(`Fetching from ${url}`, { service: 'exchangeRateHistoryService' });
 
-      // [fix:2025-11-07] 靜默處理 404，避免在 PageSpeed Insights 中顯示錯誤
-      // 參考: https://web.dev/articles/fetch-api-error-handling
+      // Silently handle 404 to avoid PageSpeed Insights errors
       // [2025-12-10] 使用 fetchWithRequestId 自動注入 X-Correlation-ID header
       const response = await fetchWithRequestId(url, {
         method: 'GET',
@@ -309,7 +308,7 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
 
       // 存入記憶體快取
       saveToCache(cacheKey, data);
-      // [fix:2025-12-28] 同時存入 localStorage 快取（離線用）
+      // Also save to localStorage for offline use
       saveToStorageCache(dateKey, data);
 
       logger.info(`Successfully fetched from ${url}`, { service: 'exchangeRateHistoryService' });

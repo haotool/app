@@ -82,8 +82,7 @@ const getServerSnapshot = () => false;
  * @returns 主題狀態和控制函數
  */
 export function useDecemberTheme(): DecemberThemeState {
-  // [fix:2025-12-26] 使用 useSyncExternalStore 避免 SSR hydration mismatch
-  // 這是 React 18+ 推薦的方式來訂閱外部狀態（如 localStorage）
+  // Use useSyncExternalStore to subscribe to external state (React 18+ pattern)
   const isDisabledByUser = useSyncExternalStore(
     subscribeToStorage,
     getStoredPreference,

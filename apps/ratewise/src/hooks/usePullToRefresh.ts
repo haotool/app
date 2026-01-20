@@ -64,8 +64,7 @@ export function usePullToRefresh(
      * Touch start handler - Capture initial Y position
      */
     const handleTouchStart = (e: TouchEvent) => {
-      // [fix:2025-12-13] 放寬滾動檢查條件：允許 <=10px 誤差
-      // 原本嚴格要求 scrollY === 0，但某些設備可能有 1-2px 誤差
+      // Allow slight scroll tolerance (≤10px) for device variance
       const currentScrollY = window.scrollY;
       logger.debug('Pull-to-refresh: touchstart', { scrollY: currentScrollY });
 

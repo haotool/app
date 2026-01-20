@@ -96,8 +96,7 @@ const DEFAULT_KEYWORDS = [
 ];
 const SOCIAL_LINKS = ['https://www.threads.net/@azlife_1224', 'https://github.com/haotool/app'];
 
-// [fix:2025-11-27] 使用 build time 避免 SSG/hydration mismatch
-// 不使用 new Date().toISOString() 因為 SSG 和客戶端會產生不同時間戳導致 React Error #418
+// Use build time to avoid SSG/hydration mismatch
 const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? '2025-01-01T00:00:00.000Z';
 
 const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
@@ -297,8 +296,6 @@ export function SEOHelmet({
     hrefLang,
     href: buildCanonical(href),
   }));
-  // [fix:2025-11-27] 使用 build time 避免 hydration mismatch (React Error #418)
-  // 參考: https://react.dev/link/hydration-mismatch
   const updatedTimestamp = updatedTime ?? BUILD_TIME;
   const ogLocale = locale.replace('-', '_');
 

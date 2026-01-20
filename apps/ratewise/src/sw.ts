@@ -13,8 +13,7 @@
 
 /// <reference lib="webworker" />
 
-// [fix:2026-01-11] Workbox location polyfill
-// Service Workers 沒有 location 全域變數，但 Workbox 需要 location.href
+// Workbox location polyfill for Service Worker environment
 // 解決方案：使用 post-build script (scripts/patch-sw.mjs) 在編譯後注入 polyfill
 // 此方法確保 polyfill 在 IIFE 外部執行，才能被內部代碼訪問
 // Reference: [MDN: ServiceWorkerGlobalScope] [Vite Issue #12611]
@@ -39,9 +38,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 // Clean up outdated caches from previous versions
 cleanupOutdatedCaches();
 
-// =============================================================================
-// [fix:2026-01-14] Service Worker 立即激活 + 立即控制所有 Client
-// =============================================================================
+// Service Worker immediate activation + client claim
 // 問題：用戶滑掉 app 後，SW 不會自動重新控制頁面，導致離線功能失效
 // 原因：缺少 clientsClaim()，SW 只會控制「在 SW 激活後打開的頁面」
 // 解決：同時使用 skipWaiting() + clientsClaim()
@@ -57,9 +54,7 @@ cleanupOutdatedCaches();
 void self.skipWaiting();
 clientsClaim();
 
-// =============================================================================
-// [fix:2026-01-10] 動態獲取 base path，修復路徑硬編碼問題
-// =============================================================================
+// Dynamic base path resolution
 // 問題：原先使用 '/index.html' 和 '/offline.html' 硬編碼路徑
 // 在生產環境 base 為 '/ratewise/' 時會導致路徑不匹配
 // 解決方案：使用 self.registration.scope 動態計算 base path
@@ -92,15 +87,13 @@ function resolvePath(relativePath: string): string {
   return `${basePath}${cleanPath}`;
 }
 
-// =============================================================================
-// [fix:2026-01-09] Critical Fix: Offline Navigation Fallback
-// =============================================================================
+// Offline Navigation Fallback
 // Problem: navigateFallback to index.html doesn't work offline
 // Root cause: index.html requires JavaScript bundles and API calls to render
 // Solution: setCatchHandler to serve /offline.html on navigation errors
 // =============================================================================
 
-// [fix:2026-01-10] 使用動態路徑替代硬編碼
+// Use dynamic path instead of hardcoded
 const indexHtmlPath = resolvePath('index.html');
 
 // Navigation Route: Handle SPA navigation with proper denylist
@@ -122,8 +115,7 @@ registerRoute(navigationRoute);
 // This is the proper way according to Workbox official documentation
 // Reference: https://developer.chrome.com/docs/workbox/modules/workbox-routing#set-a-catch-handler
 //
-// [fix:2026-01-09] 使用 matchPrecache 替代 caches.match
-// 原因：caches.match('/offline.html') 使用絕對路徑，但當 base 是 /ratewise/ 時，
+// Use matchPrecache instead of caches.match for correct path resolution
 // 預快取的實際 URL 是 /ratewise/offline.html，導致快取未命中
 // matchPrecache 會自動處理 base path 和 revision 參數
 setCatchHandler(async ({ event }): Promise<Response> => {
@@ -214,8 +206,7 @@ registerRoute(
 );
 
 // Latest rates: StaleWhileRevalidate for fast display + background update
-// [fix:2026-01-11] 延長 SW Cache 過期時間至 7 天，作為離線 fallback
-// 注意：應用層 localStorage 仍使用 5 分鐘有效期控制新鮮度
+// Cache expiry 7 days as offline fallback; app layer uses 5-min freshness
 // SW Cache 僅作為離線時的最後防線，確保冷啟動後仍能顯示數據
 // Safari PWA 離線問題參考: [Apple Developer Forums: Safari iOS PWA Data Persistence]
 registerRoute(
@@ -300,8 +291,7 @@ registerRoute(
   }),
 );
 
-// Offline fallback: CacheFirst for instant offline availability
-// [fix:2026-01-10] 使用動態路徑匹配，支援不同 base path
+// Offline fallback: CacheFirst with dynamic path matching
 registerRoute(
   ({ url }: { url: URL }) => {
     const offlinePath = resolvePath('offline.html');

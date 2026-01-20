@@ -485,8 +485,7 @@ export function getChartColors(): {
   const top = style.getPropertyValue('--color-chart-area-top').trim() || '99 102 241';
   const bottom = style.getPropertyValue('--color-chart-area-bottom').trim() || '59 130 246';
 
-  // 轉換為逗號分隔格式（Canvas/lightweight-charts 相容）
-  // [fix:2026-01-20] 高級金融 App 風格：微光漸層（25% -> 0%）
+  // Convert to comma-separated format for Canvas/lightweight-charts
   return {
     lineColor: `rgb(${toCommaSeparatedRgb(line)})`,
     topColor: `rgba(${toCommaSeparatedRgb(top)}, 0.25)`,

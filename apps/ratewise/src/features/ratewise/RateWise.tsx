@@ -81,7 +81,7 @@ const RateWise = () => {
    */
   const [rateType, setRateType] = useState<RateType>('spot');
 
-  // [fix:2025-12-25] 客戶端 hydration 後從 localStorage 恢復用戶偏好
+  // Restore user preferences from localStorage after hydration
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEYS.RATE_TYPE);
     if (stored === 'cash') {
@@ -105,8 +105,7 @@ const RateWise = () => {
     lastFetchedAt,
   } = useExchangeRates();
 
-  // [fix:2025-12-13] 修復下拉刷新：清除快取 + 強制重新載入頁面
-  // 問題: 只清除快取不重新載入，用戶仍看到記憶體中的舊版本 JS/CSS
+  // Pull-to-refresh: clear cache and force reload page
   // 解決方案: 清除快取後強制重新載入頁面，確保載入最新版本
   // 參考:
   // - https://plainenglish.io/blog/how-to-force-a-pwa-to-refresh-its-content

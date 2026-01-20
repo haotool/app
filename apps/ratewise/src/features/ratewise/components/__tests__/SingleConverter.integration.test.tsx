@@ -193,7 +193,7 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       render(<SingleConverter {...mockProps} />);
 
-      // [fix:2025-12-24] 增加等待時間以支援 lazy loaded MiniTrendChart
+      // Wait for lazy loaded MiniTrendChart
       await waitFor(() => expect(screen.getByTestId('mini-trend-chart')).toBeInTheDocument(), {
         timeout: 5000,
       });

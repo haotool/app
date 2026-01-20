@@ -26,15 +26,12 @@
 import { get, set, del, createStore } from 'idb-keyval';
 import { logger } from './logger';
 
-// ============================================================
-// [fix:2026-01-11] Lazy initialization pattern for SSR/SSG
-// ============================================================
+// Lazy initialization pattern for SSR/SSG
 // 問題：createStore() 在模組載入時存取 indexedDB，導致 SSR/SSG 失敗
 // 解決：延遲到第一次使用時才創建 store
 // ============================================================
 
-// [fix:2026-01-12] 使用 ReturnType 推斷類型避免 UseStore 類型錯誤
-// UseStore 是 idb-keyval 內部類型，直接導入會導致 ESLint 錯誤
+// Use ReturnType for type inference (UseStore is internal to idb-keyval)
 type IDBStore = ReturnType<typeof createStore>;
 
 let offlineStore: IDBStore | null = null;

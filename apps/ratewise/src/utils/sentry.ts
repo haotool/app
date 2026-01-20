@@ -19,7 +19,7 @@ export async function initSentry() {
   }
 
   try {
-    // [Lighthouse-optimization] Lazy load Sentry SDK (-969KB from initial bundle)
+    // Lazy load Sentry SDK to reduce initial bundle size
     const Sentry = await import('@sentry/react');
 
     Sentry.init({

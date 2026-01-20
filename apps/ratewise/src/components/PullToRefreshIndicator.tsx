@@ -45,7 +45,7 @@ export function PullToRefreshIndicator({
       ? '放開以重新整理'
       : '下拉重新整理';
 
-  // [fix:2026-01-20] Color scheme - 使用 SSOT token
+  // Color scheme using SSOT tokens
   const iconColor = isRefreshing ? 'text-primary' : canTrigger ? 'text-primary' : 'text-primary/70';
 
   return (

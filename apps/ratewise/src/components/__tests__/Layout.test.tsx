@@ -97,8 +97,7 @@ describe('Layout Component', () => {
 
   describe('UpdatePrompt 載入失敗處理', () => {
     it.skip('應該處理 UpdatePrompt 載入錯誤並仍然渲染內容', async () => {
-      // [fix:2025-12-13] Skip this test - vi.doMock factory cannot throw errors
-      // This violates Vitest's hoisting rules. UpdatePrompt is dynamically imported
+      // Skip: vi.doMock factory cannot throw errors (Vitest hoisting limitation)
       // in Layout.tsx with proper error handling, which is sufficient.
       // TODO: Rewrite this test using a different approach if needed
     });

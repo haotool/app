@@ -80,7 +80,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   const [fromCurrency, setFromCurrency] = useState<CurrencyCode>(DEFAULT_FROM_CURRENCY);
   const [toCurrency, setToCurrency] = useState<CurrencyCode>(DEFAULT_TO_CURRENCY);
 
-  // [fix:2025-12-25] 客戶端 hydration 後從 localStorage 恢復用戶偏好
+  // Restore user preferences from localStorage after hydration
   useEffect(() => {
     const storedMode = readString(STORAGE_KEYS.CURRENCY_CONVERTER_MODE, 'single');
     if (storedMode === 'multi') {
@@ -97,10 +97,10 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   const [fromAmount, setFromAmount] = useState<string>('1000');
   const [toAmount, setToAmount] = useState<string>('');
 
-  // [fix:2025-12-25] 使用固定初始值避免 hydration mismatch
+  // Fixed initial value to avoid hydration mismatch
   const [favorites, setFavorites] = useState<CurrencyCode[]>([...DEFAULT_FAVORITES]);
 
-  // [fix:2025-12-25] 客戶端 hydration 後從 localStorage 恢復 favorites
+  // Restore favorites from localStorage after hydration
   useEffect(() => {
     const storedFavorites = readJSON<CurrencyCode[]>(STORAGE_KEYS.FAVORITES, [
       ...DEFAULT_FAVORITES,

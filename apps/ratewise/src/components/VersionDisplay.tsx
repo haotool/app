@@ -15,8 +15,7 @@ import { useState, useEffect } from 'react';
  * - 參考: https://react.dev/errors/418
  */
 
-// [fix:2025-11-28] 使用固定的 build time 作為 SSG 初始值
-// 避免 SSG 和 hydration 產生不同的 HTML 導致 React Error #418
+// Build time as SSG initial value to avoid hydration mismatch
 const INITIAL_BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? '2025-01-01T00:00:00.000Z';
 
 export function VersionDisplay() {
@@ -24,8 +23,7 @@ export function VersionDisplay() {
   const version = import.meta.env.VITE_APP_VERSION ?? '1.0.0';
   const isDev = import.meta.env.DEV;
 
-  // [fix:2025-11-28] 使用固定的初始值避免 hydration mismatch
-  // 開發模式：hydration 後更新為實時時間
+  // Fixed initial value to avoid hydration mismatch; updates in dev mode
   // 生產模式：始終使用構建時間
   const [buildTimeString, setBuildTimeString] = useState(INITIAL_BUILD_TIME);
 

@@ -127,7 +127,6 @@ describe('CurrencyList Component', () => {
     expect(defaultProps.onToggleFavorite).toHaveBeenCalledWith('EUR');
   });
 
-  // [fix:2026-01-20] 更新測試以匹配 SSOT design token 類名
   it('shows filled star for favorite currencies', () => {
     render(<CurrencyList {...defaultProps} />);
 
@@ -201,7 +200,6 @@ describe('CurrencyList Component', () => {
     expect(listRegion).toHaveClass('max-h-96');
   });
 
-  // [fix:2026-01-20] 更新測試以匹配 SSOT design token 類名
   it('applies hover styles on currency row', () => {
     render(<CurrencyList {...defaultProps} />);
 

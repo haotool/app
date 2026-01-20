@@ -3,8 +3,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { RefreshCw, Calculator } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateType } from '../types';
-// [fix:2025-12-24] Lazy load MiniTrendChart 減少初始 JS 載入量
-// lightweight-charts (144KB) 和 motion (40KB) 只在展開趨勢圖時載入
+// Lazy load MiniTrendChart to reduce initial bundle size
 const MiniTrendChart = lazy(() =>
   import('./MiniTrendChart').then((m) => ({ default: m.MiniTrendChart })),
 );
@@ -16,7 +15,7 @@ import {
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
-// [fix:2025-12-24] Lazy load CalculatorKeyboard - 只在用戶點擊計算機按鈕時載入
+// Lazy load CalculatorKeyboard on demand
 const CalculatorKeyboard = lazy(() =>
   import('../../calculator/components/CalculatorKeyboard').then((m) => ({
     default: m.CalculatorKeyboard,

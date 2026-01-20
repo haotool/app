@@ -95,8 +95,7 @@ function getFromCache(): ExchangeRateData | null {
       logger.debug(
         `Cache expired: ${ageMinutes} minutes old (limit: ${CACHE_DURATION / 60000} minutes)`,
       );
-      // [fix:2025-12-28] 不刪除過期快取！保留給離線使用
-      // 返回 null 表示需要嘗試獲取新數據，但舊數據仍保留在 localStorage
+      // Don't delete stale cache - keep for offline fallback
       return null;
     }
 
@@ -228,9 +227,7 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
   const online = isOnline();
   logger.debug('Getting exchange rates', { online });
 
-  // [fix:2025-12-28] 離線時直接使用快取，不嘗試網路請求
-  // [fix:2026-01-08] 離線無快取時使用 fallback 數據，避免 Safari 顯示「無法打開網頁」
-  // [fix:2026-01-11] 增加 IndexedDB 備援層
+  // Offline: use cache directly without network request; fallback to static data
   if (!online) {
     // 第一層：嘗試 localStorage
     const cachedData = getAnyCachedData();
@@ -241,8 +238,7 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
       return cachedData;
     }
 
-    // 第二層：嘗試 IndexedDB（Safari PWA 冷啟動關鍵備援）
-    // [fix:2026-01-11] 使用 staleness 檢查，超過 7 天的資料回落到 fallback
+    // Second layer: try IndexedDB (critical fallback for Safari PWA cold start)
     try {
       const { data: idbData, staleness } = await getExchangeRatesFromIDBWithStaleness();
       if (idbData) {
@@ -307,8 +303,7 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
       return staleData;
     }
 
-    // 3b. 嘗試 IndexedDB（Safari PWA 冷啟動關鍵備援）
-    // [fix:2026-01-11] 使用 staleness 檢查，超過 7 天的資料拋出錯誤讓上層處理
+    // 3b. Try IndexedDB (critical fallback for Safari PWA cold start)
     try {
       const { data: idbData, staleness } = await getExchangeRatesFromIDBWithStaleness();
       if (idbData) {

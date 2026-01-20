@@ -165,7 +165,6 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
       const firstRecord = screen.getByText('1000 USD').closest('div[class*="cursor-pointer"]');
-      // [fix:2026-01-20] 使用 SSOT token: hover:bg-primary/10
       expect(firstRecord).toHaveClass('hover:bg-primary/10');
     });
   });
@@ -349,7 +348,6 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       const mockHistory = createMockHistory();
       const { container } = render(<ConversionHistory history={mockHistory} />);
 
-      // [fix:2026-01-20] 使用 SSOT token bg-surface 替代硬編碼 bg-white
       const card = container.querySelector('.bg-surface.rounded-3xl.shadow-xl');
       expect(card).toBeInTheDocument();
     });
