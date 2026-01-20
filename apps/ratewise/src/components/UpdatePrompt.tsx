@@ -1,41 +1,15 @@
 /**
- * PWA 更新通知組件 - 粉彩雲朵配色（響應式優化版）
+ * PWA Update Prompt Component
  *
- * 更新時間: 2025-12-29T00:35:00+08:00
- * 版本: 2.0.0
+ * Material Design snackbar-style notification for PWA updates.
+ * Uses vite-plugin-pwa's official useRegisterSW hook.
  *
- * [fix:2025-12-29] 重構為使用 vite-plugin-pwa 官方 React Hook
- * 參考: [context7:/vite-pwa/vite-plugin-pwa:useRegisterSW:2025-12-29]
- *
- * 重構原因：
- * - 原本使用 Workbox 類手動註冊 SW，與 vite.config.ts 的 injectRegister: 'auto' 衝突
- * - 改用 virtual:pwa-register/react 的 useRegisterSW hook（官方推薦）
- * - 避免雙重註冊，確保更新機制一致
- *
- * 設計特點：
- * - 柔和天空色調漸變 (purple-50 → blue-50 → purple-100)
- * - 清晨薄霧的柔和感受
- * - 圓潤現代的視覺元素 (24px 圓角)
- * - 雲朵質感裝飾效果
- * - 極度柔和的視覺體驗
- *
- * 響應式最佳實踐（2025 更新）：
- * - 手機 (<375px): 最大寬度 280px, padding 16px, 緊湊設計
- * - 手機 (375-639px): 最大寬度 300px, padding 20px
- * - 平板/桌面 (640px+): 最大寬度 320px, padding 24px
- * - 總是保持距離邊緣 1rem (16px) 安全間距
- *
- * 技術實現：
- * - 使用 useRegisterSW hook（vite-plugin-pwa 官方）
- * - 彈性入場動畫 (spring physics)
- * - 底部中央定位，不影響用戶操作
- * - 完整無障礙支援 (ARIA labels, keyboard navigation)
- * - 響應式設計 (手機/桌面適配)
- *
- * 研究來源：
- * - [context7:/vite-pwa/vite-plugin-pwa:useRegisterSW:2025-12-29]
- * - shadcn/ui, Smashing Magazine, CSS-Tricks, NN/g
- * - Windows UX Guidelines: min 800x600 support
+ * Features:
+ * - Pastel gradient design with cloud decorations
+ * - Spring animation entrance
+ * - Bottom-center positioning
+ * - Full accessibility support (ARIA, keyboard nav)
+ * - Responsive design (mobile/tablet/desktop)
  */
 import { useEffect, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';

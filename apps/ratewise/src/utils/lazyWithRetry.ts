@@ -1,18 +1,10 @@
 /**
  * Lazy loading with retry and auto-refresh for chunk load errors
  *
- * [fix:2025-12-04] 修復 SSG 部署後 chunk 載入失敗導致的 JSON 解析錯誤
- * 問題: "Unexpected token '<', "<!DOCTYPE "... is not valid JSON"
- *
- * 根因:
- * 1. 部署新版本後，舊的 chunk hash 變化，用戶快取的舊 HTML 嘗試載入不存在的 chunk
- * 2. 服務器返回 HTML 404 頁面，前端嘗試將其解析為 JS 模組
- * 3. Service Worker 快取了錯誤的響應
- *
- * 解決方案:
- * 1. 檢測 chunk 載入錯誤（ChunkLoadError 或 JSON 解析錯誤）
- * 2. 自動重試載入（最多 3 次）
- * 3. 重試失敗後自動刷新頁面（清除快取）
+ * Handles chunk load failures after deployments (stale cache scenarios):
+ * - Detects ChunkLoadError and JSON parse errors
+ * - Auto-retries (up to 3 times) with exponential backoff
+ * - Forces page refresh with cache clear on final failure
  *
  * @see https://web.dev/articles/service-worker-lifecycle
  * @see https://reactrouter.com/en/main/guides/code-splitting

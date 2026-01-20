@@ -30,8 +30,8 @@ interface RatewiseTrustedTypesFactory {
 /**
  * Trusted Types Policy Configuration
  *
- * [fix:2025-11-26] 增強 policy 以支援 Cloudflare Insights
- * 允許來自信任來源的 scripts，阻止其他來源
+ * Allows scripts from trusted sources (Cloudflare Insights, SSG hydration)
+ * and blocks untrusted script URLs.
  */
 const POLICY_CONFIG: RatewiseTrustedTypePolicyOptions = {
   createHTML: passThrough,

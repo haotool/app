@@ -1,20 +1,16 @@
 /**
  * Side Navigation Component (Desktop)
  *
- * 桌面版側邊欄導覽，與 BottomNavigation 相同的 4 大功能模組：
- * - 單幣別轉換 (Single Converter)
- * - 多幣別轉換 (Multi Converter)
- * - 收藏與歷史 (Favorites)
- * - 設定 (Settings)
+ * Desktop sidebar navigation with 4 main modules:
+ * - Single Currency Converter
+ * - Multi Currency Converter
+ * - Favorites & History
+ * - Settings
  *
- * 設計特性：
- * - 桌面優先（≥ 768px 顯示，< 768px 隱藏）
- * - 垂直佈局（與底部導覽列相反）
- * - 相同的圖標與標籤
- * - ARIA 無障礙性支援
- *
- * [refactor:2026-01-15] 新增桌面版側邊欄導覽組件
- * 依據：Phase 2 架構升級計畫 - 響應式導覽策略
+ * Design features:
+ * - Desktop-first (visible ≥ 768px, hidden < 768px)
+ * - Vertical layout
+ * - ARIA accessibility support
  */
 
 import { Link, useLocation } from 'react-router-dom';

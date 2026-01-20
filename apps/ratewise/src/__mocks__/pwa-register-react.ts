@@ -1,10 +1,10 @@
 /**
  * Mock for virtual:pwa-register/react
  *
- * [fix:2025-12-29] vite-plugin-pwa 虛擬模組 mock
- * 虛擬模組在測試環境無法解析，提供 mock 實作以支援單元測試
+ * Virtual modules cannot be resolved in test environment.
+ * This mock provides a test-compatible implementation.
  *
- * 參考: https://vite-pwa-org.netlify.app/frameworks/react.html
+ * Reference: https://vite-pwa-org.netlify.app/frameworks/react.html
  */
 
 import { useState } from 'react';

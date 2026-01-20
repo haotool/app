@@ -1,18 +1,15 @@
 /**
  * Zustand State Management - Converter Store
  *
- * 跨模組共享狀態：
- * - 貨幣選擇（fromCurrency, toCurrency）
- * - 收藏的貨幣對（favorites）
- * - 轉換歷史記錄（history）
+ * Cross-module shared state:
+ * - Currency selection (fromCurrency, toCurrency)
+ * - Favorite currency pairs
+ * - Conversion history
  *
- * 特性：
- * - localStorage 持久化
- * - TypeScript 類型安全
- * - 跨模組狀態同步
- *
- * [refactor:2026-01-15] 新增 Zustand 狀態管理支援底部導覽列架構
- * 依據：Phase 2 架構升級計畫
+ * Features:
+ * - localStorage persistence
+ * - TypeScript type safety
+ * - Cross-module state sync
  */
 
 import { create } from 'zustand';

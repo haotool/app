@@ -2,10 +2,10 @@
  * FAQ Page
  * Frequently Asked Questions with FAQPage structured data for SEO
  *
- * [fix:2025-11-28] 分離 UI 顯示內容和 JSON-LD 純文字內容
- * - FAQ_DATA: 包含 JSX 用於 UI 渲染
- * - FAQ_JSONLD_DATA: 包含純文字用於 JSON-LD schema
- * - 參考: https://schema.org/FAQPage
+ * Structure:
+ * - FAQ_JSONLD_DATA: Plain text for JSON-LD schema
+ * - FAQ_UI_DATA: JSX for rich UI rendering
+ * - Reference: https://schema.org/FAQPage
  */
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';

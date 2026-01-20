@@ -1,10 +1,9 @@
 /**
- * Service Worker 工具函數
+ * Service Worker Utilities
  *
- * 用於管理 PWA Service Worker 快取與更新
+ * Manages PWA Service Worker cache and updates
  *
- * [fix:2025-11-05] 提供強制更新和清除快取功能
- * 參考:
+ * References:
  * - https://web.dev/learn/pwa/update
  * - https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
  */
@@ -64,14 +63,12 @@ export async function hasServiceWorkerUpdate(): Promise<boolean> {
 }
 
 /**
- * 強制更新 Service Worker（跳過等待）
+ * Force Service Worker update (skip waiting)
  *
- * [fix:2026-01-11] 移除冗餘的 SKIP_WAITING 消息發送
- * 原因：sw.ts 直接調用 self.skipWaiting()，SW 安裝後立即激活
- * 因此 registration.waiting 永遠為 null，postMessage 永遠不會執行
- * 參考：[context7:vite-pwa/vite-plugin-pwa:2026-01-11] 官方建議使用直接 skipWaiting()
+ * Note: sw.ts calls self.skipWaiting() directly, so the SW activates immediately
+ * after installation. registration.waiting is always null.
  *
- * @returns Promise<boolean> 是否成功觸發更新
+ * @returns Promise<boolean> Whether update was triggered successfully
  */
 export async function forceServiceWorkerUpdate(): Promise<boolean> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
