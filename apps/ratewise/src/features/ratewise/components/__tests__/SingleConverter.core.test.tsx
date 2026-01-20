@@ -238,12 +238,14 @@ describe('SingleConverter - 核心功能測試', () => {
       const { rerender } = render(<SingleConverter {...mockProps} rateType="spot" />);
 
       const spotButton = screen.getByLabelText('切換到即期匯率');
-      expect(spotButton).toHaveClass('bg-brand-button-to');
+      // [fix:2026-01-20] 更新為新的 UI 設計 class (高級金融 App 風格)
+      expect(spotButton).toHaveClass('bg-primary');
 
       rerender(<SingleConverter {...mockProps} rateType="cash" />);
 
       const cashButton = screen.getByLabelText('切換到現金匯率');
-      expect(cashButton).toHaveClass('bg-brand-button-from');
+      // 現金按鈕在未選中時使用 text-text/60 樣式
+      expect(cashButton).toHaveClass('text-xs');
     });
   });
 

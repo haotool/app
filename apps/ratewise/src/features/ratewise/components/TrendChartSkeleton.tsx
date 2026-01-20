@@ -1,32 +1,47 @@
-import type { FC } from 'react';
+import { useId, type FC } from 'react';
 
 /**
  * Trend Chart Skeleton - Line Trace Wave
  * 波浪式繪製骨架屏，用於趨勢圖載入
- * 保持原配色：藍紫漸層背景
+ * 顏色使用 CSS Variables，自動隨主題切換
  */
 export const TrendChartSkeleton: FC = () => {
+  const uniqueId = useId();
+
+  // 生成唯一的 gradient IDs（避免多個骨架屏時 ID 衝突）
+  const waveGradId = `waveGrad-${uniqueId}`;
+  const waveAreaId = `waveArea-${uniqueId}`;
+  const waveMaskId = `waveMask-${uniqueId}`;
+
   return (
     <div
       role="status"
       aria-live="polite"
-      className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 rounded-b-xl overflow-hidden relative"
+      className="w-full h-full flex items-center justify-center rounded-b-xl overflow-hidden relative skeleton-bg"
       data-testid="trend-chart-skeleton"
     >
       <svg className="w-full h-full px-4 py-3" viewBox="0 0 400 100" preserveAspectRatio="none">
         <defs>
-          <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#3b82f6" />
-            <stop offset="50%" stopColor="#8b5cf6" />
-            <stop offset="100%" stopColor="#c084fc" />
+          {/* 波浪漸層 - 使用 CSS Variables 實現主題切換 */}
+          <linearGradient id={waveGradId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style={{ stopColor: 'rgb(var(--color-chart-area-bottom))' }} />
+            <stop offset="50%" style={{ stopColor: 'rgb(var(--color-chart-line))' }} />
+            <stop offset="100%" style={{ stopColor: 'rgb(var(--color-accent))' }} />
           </linearGradient>
 
-          <linearGradient id="waveArea" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.03" />
+          {/* 區域填充漸層 */}
+          <linearGradient id={waveAreaId} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop
+              offset="0%"
+              style={{ stopColor: 'rgb(var(--color-chart-line))', stopOpacity: 0.2 }}
+            />
+            <stop
+              offset="100%"
+              style={{ stopColor: 'rgb(var(--color-chart-line))', stopOpacity: 0.03 }}
+            />
           </linearGradient>
 
-          <mask id="waveMask">
+          <mask id={waveMaskId}>
             <rect x="0" y="0" width="400" height="100" fill="white">
               <animate
                 attributeName="width"
@@ -42,24 +57,30 @@ export const TrendChartSkeleton: FC = () => {
         {/* 區域填充 */}
         <path
           d="M 0 55 Q 40 38, 80 52 T 160 48 T 240 54 T 320 50 T 400 52 L 400 100 L 0 100 Z"
-          fill="url(#waveArea)"
-          mask="url(#waveMask)"
+          fill={`url(#${waveAreaId})`}
+          mask={`url(#${waveMaskId})`}
         />
 
         {/* 波浪線條 */}
         <path
           d="M 0 55 Q 40 38, 80 52 T 160 48 T 240 54 T 320 50 T 400 52"
-          stroke="url(#waveGrad)"
+          stroke={`url(#${waveGradId})`}
           strokeWidth="2.5"
           fill="none"
-          mask="url(#waveMask)"
+          mask={`url(#${waveMaskId})`}
           strokeLinecap="round"
         />
 
         {/* 波浪跟隨點 */}
-        <g mask="url(#waveMask)">
+        <g mask={`url(#${waveMaskId})`}>
           {/* 波紋環 1 */}
-          <circle r="6" fill="none" stroke="#8b5cf6" strokeWidth="1.5" opacity="0.4">
+          <circle
+            r="6"
+            fill="none"
+            style={{ stroke: 'rgb(var(--color-chart-line))' }}
+            strokeWidth="1.5"
+            opacity="0.4"
+          >
             <animateMotion
               dur="2.6s"
               repeatCount="indefinite"
@@ -75,7 +96,13 @@ export const TrendChartSkeleton: FC = () => {
           </circle>
 
           {/* 波紋環 2 */}
-          <circle r="4" fill="none" stroke="#c084fc" strokeWidth="1" opacity="0.5">
+          <circle
+            r="4"
+            fill="none"
+            style={{ stroke: 'rgb(var(--color-accent))' }}
+            strokeWidth="1"
+            opacity="0.5"
+          >
             <animateMotion
               dur="2.6s"
               repeatCount="indefinite"
@@ -91,7 +118,7 @@ export const TrendChartSkeleton: FC = () => {
           </circle>
 
           {/* 核心點 */}
-          <circle r="3" fill="url(#waveGrad)">
+          <circle r="3" fill={`url(#${waveGradId})`}>
             <animateMotion
               dur="2.6s"
               repeatCount="indefinite"
@@ -100,7 +127,7 @@ export const TrendChartSkeleton: FC = () => {
           </circle>
 
           {/* 中心亮點 */}
-          <circle r="1.2" fill="white">
+          <circle r="1.2" style={{ fill: 'rgb(var(--color-surface))' }}>
             <animateMotion
               dur="2.6s"
               repeatCount="indefinite"

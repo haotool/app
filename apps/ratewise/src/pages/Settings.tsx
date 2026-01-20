@@ -10,32 +10,21 @@
  * - Nitro - 深色科技感
  * - Kawaii - 可愛粉嫩
  * - Classic - 復古書卷
- * - Ocean - 海洋深邃（新增）
- * - Forest - 自然森林（新增）
+ * - Ocean - 海洋深邃
+ * - Forest - 自然森林
  *
  * @reference ParkKeeper UI Design, themes.ts SSOT
  * @created 2026-01-15
- * @updated 2026-01-16 - 擴充至 6 種風格，使用 SSOT Design Token
+ * @updated 2026-01-17 - 移除深色模式功能，簡化為僅風格切換
+ * @version 4.0.0
  */
 
-import { Palette, Globe, Database, ShieldAlert, Check, Sun, Moon, Monitor } from 'lucide-react';
+import { Palette, Globe, Database, ShieldAlert, Check } from 'lucide-react';
 import { useAppTheme } from '../hooks/useAppTheme';
-import { STYLE_OPTIONS, MODE_OPTIONS, type ThemeMode } from '../config/themes';
+import { STYLE_OPTIONS } from '../config/themes';
 
 export default function Settings() {
-  const { style, mode, resolvedMode, setStyle, setMode, resetTheme, isLoaded } = useAppTheme();
-
-  // 獲取模式圖標
-  const getModeIcon = (modeValue: ThemeMode) => {
-    switch (modeValue) {
-      case 'light':
-        return <Sun className="w-5 h-5" />;
-      case 'dark':
-        return <Moon className="w-5 h-5" />;
-      case 'auto':
-        return <Monitor className="w-5 h-5" />;
-    }
-  };
+  const { style, setStyle, resetTheme, isLoaded } = useAppTheme();
 
   return (
     <div className="h-full overflow-y-auto no-scrollbar pb-32">
@@ -96,40 +85,6 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* 顯示模式區塊 */}
-        <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-            <Sun className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">顯示模式</h3>
-          </div>
-
-          <div className="bg-black/5 dark:bg-white/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
-            {MODE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setMode(option.value)}
-                disabled={!isLoaded}
-                className={`
-                  flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 
-                  relative z-10 transition-all duration-200 ease-out disabled:opacity-50
-                  hover:scale-[1.02] active:scale-[0.98]
-                  ${mode === option.value ? '' : 'opacity-60 hover:opacity-100'}
-                `}
-              >
-                {mode === option.value && (
-                  <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
-                )}
-                <span className="mb-1">{getModeIcon(option.value)}</span>
-                <span className="text-[10px] font-bold">{option.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <p className="text-[10px] mt-3 opacity-40 font-medium text-center">
-            目前：{resolvedMode === 'dark' ? '深色模式' : '淺色模式'}
-          </p>
-        </section>
-
         {/* 語言區塊（未來功能） */}
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
@@ -137,7 +92,7 @@ export default function Settings() {
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">語言</h3>
           </div>
 
-          <div className="bg-black/5 dark:bg-white/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
+          <div className="bg-black/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
             <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out opacity-60 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]">
               <span className="text-xl mb-1 filter drop-shadow-sm">🇺🇸</span>
               <span className="text-[10px] font-bold">English</span>
@@ -191,7 +146,7 @@ export default function Settings() {
             <button
               onClick={resetTheme}
               disabled={!isLoaded}
-              className="w-full px-5 py-4 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-950/50 active:bg-red-100 dark:active:bg-red-950 group transition-all duration-200 ease-out disabled:opacity-50"
+              className="w-full px-5 py-4 flex items-center justify-between hover:bg-red-50 active:bg-red-100 group transition-all duration-200 ease-out disabled:opacity-50"
             >
               <span className="text-xs font-black text-red-500 uppercase tracking-widest">
                 重置主題設定
@@ -207,7 +162,7 @@ export default function Settings() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between items-center">
                 <span className="opacity-60">應用程式版本</span>
-                <span className="font-bold font-mono">v3.0.0</span>
+                <span className="font-bold font-mono">v4.0.0</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="opacity-60">設計系統</span>
@@ -219,7 +174,7 @@ export default function Settings() {
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
+            <div className="mt-4 pt-4 border-t border-black/5">
               <p className="text-[10px] opacity-40 text-center font-medium">
                 © 2026 RateWise. Built with Design Token SSOT
               </p>

@@ -102,6 +102,9 @@ apps/ratewise/dev-server.log
 # Example files (reference only)
 .example/
 
+# External vendor libraries (cloned for reference)
+vendor/
+
 # Generated sitemap files (build artifacts, not source)
 # NOTE: ratewise 和 quake-school 的 sitemap.xml 手動維護，不再忽略
 # apps/*/public/sitemap.xml

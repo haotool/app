@@ -26,7 +26,6 @@
 import { Outlet } from 'react-router-dom';
 import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
-import { ThemeToggle } from './ThemeToggle';
 
 /**
  * Logo 組件 - 參考 ParkKeeper 的 SVG Logo 風格
@@ -74,7 +73,7 @@ function Header() {
       className="
         px-6 pb-4 pt-safe-top z-30
         bg-background/80 backdrop-blur-xl
-        border-b border-black/[0.03] dark:border-white/[0.03]
+        border-b border-black/[0.03]
       "
     >
       <div className="flex justify-between items-center max-w-md mx-auto w-full pt-4">
@@ -94,9 +93,6 @@ function Header() {
             RateWise
           </h1>
         </div>
-
-        {/* 主題切換按鈕 */}
-        <ThemeToggle />
       </div>
     </header>
   );

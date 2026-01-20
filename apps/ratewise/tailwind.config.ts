@@ -28,6 +28,9 @@ export default {
       // 現代化語義色彩（使用 CSS Variables）
       colors: {
         // 新版語義化 token（主要使用）
+        // SSOT: 基礎語義色彩
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        text: 'rgb(var(--color-text) / <alpha-value>)',
         background: 'rgb(var(--color-background) / <alpha-value>)',
         'background-secondary': 'rgb(var(--color-background-secondary) / <alpha-value>)',
         'background-tertiary': 'rgb(var(--color-background-tertiary) / <alpha-value>)',

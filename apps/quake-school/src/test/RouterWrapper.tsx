@@ -1,6 +1,7 @@
 /**
  * Test Router Wrapper with v7 future flags
  * [fix:2026-01-09] 消除測試中的 React Router Future Flag 警告
+ * [fix:2026-01-20] 修復 react-refresh/only-export-components 警告
  * [context7:remix-run/react-router:2026-01-09]
  */
 import type { ReactNode } from 'react';
@@ -27,10 +28,3 @@ export function TestMemoryRouter({ children, initialEntries = ['/'] }: RouterWra
     </MemoryRouter>
   );
 }
-
-/**
- * 簡單的 renderWithRouter helper
- */
-export const renderWithRouter = (ui: React.ReactElement, initialEntries?: string[]) => {
-  return <TestMemoryRouter initialEntries={initialEntries}>{ui}</TestMemoryRouter>;
-};

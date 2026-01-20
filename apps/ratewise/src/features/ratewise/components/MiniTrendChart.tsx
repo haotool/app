@@ -48,8 +48,30 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
 
-  // 獲取主題色彩（SSOT from CSS Variables）
-  const getThemeColors = useCallback(() => getChartColors(), []);
+  // 追蹤主題變化 - 用於觸發圖表重建
+  const [themeVersion, setThemeVersion] = useState(0);
+
+  // MutationObserver 監聽 <html> class 變化（主題切換）
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.attributeName === 'class') {
+          setThemeVersion((v) => v + 1);
+        }
+      }
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // 獲取主題色彩（SSOT from CSS Variables）- themeVersion 變化時重新獲取
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- themeVersion 是故意的依賴，用於觸發主題切換時重建圖表
+  const getThemeColors = useCallback(() => getChartColors(), [themeVersion]);
 
   const stats = useMemo(() => {
     if (displayData.length === 0) {

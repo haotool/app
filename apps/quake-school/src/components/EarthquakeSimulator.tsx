@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 
 interface Props {
@@ -27,10 +27,10 @@ const EarthquakeSimulator: React.FC<Props> = ({ value, onValueChange }) => {
     }
   };
 
-  const handleModeToggle = (newMode: 'magnitude' | 'intensity') => {
+  const handleModeToggle = useCallback((newMode: 'magnitude' | 'intensity') => {
     setMode(newMode);
     if (navigator.vibrate) navigator.vibrate(10);
-  };
+  }, []);
 
   const stats = useMemo(() => {
     const intensity = (value - 1) / 8; // 0 to 1

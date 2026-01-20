@@ -77,7 +77,7 @@ export function BottomNavigation() {
       className="
         fixed bottom-0 inset-x-0 h-20 pb-safe-bottom z-30
         bg-background/80 backdrop-blur-xl
-        border-t border-black/[0.02] dark:border-white/[0.02]
+        border-t border-black/[0.02]
         md:hidden
       "
       aria-label="主要導航"
