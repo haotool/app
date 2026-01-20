@@ -214,9 +214,9 @@ export function CalculatorKeyboard({
               aria-hidden="true"
             />
 
-            {/* Bottom Sheet 容器 */}
+            {/* Bottom Sheet 容器 - [fix:2026-01-20] SSOT: bg-white → bg-surface */}
             <motion.div
-              className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden"
+              className="fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}

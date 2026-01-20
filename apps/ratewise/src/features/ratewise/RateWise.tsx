@@ -198,7 +198,8 @@ const RateWise = () => {
   if (ratesError) {
     return (
       <div className="min-h-screen bg-danger-bg flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+        {/* [fix:2026-01-20] SSOT: bg-white → bg-surface */}
+        <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           <AlertCircle className="text-danger" size={48} />
           <h1 className="text-2xl font-bold text-neutral-text mt-4">匯率載入失敗</h1>
           <p className="text-neutral-text-secondary mt-2 mb-6">
