@@ -59,14 +59,15 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl p-6 mt-4 md:mt-6">
+    // [fix:2026-01-20] 使用 SSOT token 替代硬編碼 bg-white
+    <div className="bg-surface rounded-3xl shadow-xl p-6 mt-4 md:mt-6">
       {/* 標題與清除按鈕 */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-neutral-text">轉換歷史</h2>
+        <h2 className="text-xl font-bold text-text">轉換歷史</h2>
         {onClearAll && (
           <button
             onClick={onClearAll}
-            className="text-sm text-neutral-text-secondary hover:text-danger-text transition-colors"
+            className="text-sm text-text-muted hover:text-destructive transition-colors"
             aria-label="清除全部歷史記錄"
           >
             清除全部
@@ -74,7 +75,7 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
         )}
       </div>
 
-      {/* 歷史記錄列表 */}
+      {/* 歷史記錄列表 - [fix:2026-01-20] 使用 SSOT token */}
       <div className="space-y-3">
         {history.map((item, index) => (
           <div
@@ -83,18 +84,18 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
             onKeyDown={(e) => handleKeyDown(e, item)}
             role="button"
             tabIndex={0}
-            className="flex items-center justify-between p-3 bg-neutral-bg rounded-xl
-                       hover:bg-primary-bg hover:shadow-md transition-all cursor-pointer
-                       group focus:outline-none focus:ring-2 focus:ring-primary-ring focus:ring-offset-2"
+            className="flex items-center justify-between p-3 bg-surface-elevated rounded-xl
+                       hover:bg-primary/10 hover:shadow-md transition-all cursor-pointer
+                       group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             aria-label={`重新轉換 ${item.amount} ${item.from} 到 ${item.to}`}
           >
             {/* 轉換資訊 */}
             <div className="flex items-center gap-3">
-              <span className="text-sm text-neutral-text-muted">{item.time}</span>
-              <span className="font-semibold">
+              <span className="text-sm text-text-muted">{item.time}</span>
+              <span className="font-semibold text-text">
                 {item.amount} {item.from}
               </span>
-              <span className="text-neutral-text-muted">→</span>
+              <span className="text-text-muted">→</span>
               <span className="font-semibold text-primary">
                 {item.result} {item.to}
               </span>
@@ -103,11 +104,11 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
             {/* 複製按鈕（懸停時顯示） */}
             <button
               onClick={(e) => {
-                e.stopPropagation(); // 防止觸發外層 onClick
+                e.stopPropagation();
                 void handleCopy(item);
               }}
               className="opacity-0 group-hover:opacity-100 transition-opacity
-                         p-2 rounded-lg hover:bg-primary-light focus:opacity-100"
+                         p-2 rounded-lg hover:bg-primary/20 focus:opacity-100"
               aria-label="複製轉換結果"
               tabIndex={0}
             >
