@@ -187,9 +187,13 @@ const zhTW = {
   // Errors
   errors: {
     loadingFailed: '載入失敗',
+    rateLoadFailed: '匯率載入失敗',
+    networkCheckRetry: '無法獲取最新匯率資料，請檢查網路連線後重試。',
+    dataLoadFailed: '無法載入資料，請重試。',
     networkError: '網路錯誤',
     unknownError: '未知錯誤',
     tryAgain: '請稍後再試',
+    reload: '重新載入',
   },
 
   // PWA

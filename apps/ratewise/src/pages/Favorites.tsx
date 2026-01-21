@@ -8,6 +8,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AlertCircle, RefreshCw, Star, Clock, Trash2 } from 'lucide-react';
 import { ConversionHistory } from '../features/ratewise/components/ConversionHistory';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
@@ -18,6 +19,7 @@ import type { RateType, CurrencyCode, ConversionHistoryEntry } from '../features
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 export default function Favorites() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isTestEnv = import.meta.env.MODE === 'test';
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
@@ -85,14 +87,14 @@ export default function Favorites() {
       <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div className="card p-8 max-w-md w-full text-center">
           <AlertCircle className="text-destructive mx-auto" size={48} />
-          <h1 className="text-2xl font-bold text-text mt-4">載入失敗</h1>
-          <p className="text-text-muted mt-2 mb-6">無法載入資料，請重試。</p>
+          <h1 className="text-2xl font-bold text-text mt-4">{t('errors.loadingFailed')}</h1>
+          <p className="text-text-muted mt-2 mb-6">{t('errors.dataLoadFailed')}</p>
           <button
             onClick={() => window.location.reload()}
             className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
           >
             <RefreshCw size={18} />
-            重新載入
+            {t('errors.reload')}
           </button>
         </div>
       </div>
@@ -117,7 +119,7 @@ export default function Favorites() {
                 <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
               )}
               <Star size={18} className={activeTab === 'favorites' ? 'text-primary' : ''} />
-              <span className="text-[10px] font-bold">常用貨幣</span>
+              <span className="text-[10px] font-bold">{t('favorites.title')}</span>
             </button>
             <button
               onClick={() => setActiveTab('history')}
@@ -131,7 +133,7 @@ export default function Favorites() {
                 <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
               )}
               <Clock size={18} className={activeTab === 'history' ? 'text-primary' : ''} />
-              <span className="text-[10px] font-bold">轉換歷史</span>
+              <span className="text-[10px] font-bold">{t('favorites.history')}</span>
             </button>
           </div>
         </section>
@@ -141,21 +143,23 @@ export default function Favorites() {
           <section>
             <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
               <Star className="w-3.5 h-3.5" />
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">常用貨幣</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+                {t('favorites.title')}
+              </h3>
             </div>
 
             {favorites.length === 0 ? (
               <div className="card p-8 text-center">
                 <Star className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-30" />
-                <h2 className="text-sm font-bold text-text mb-2">尚無常用貨幣</h2>
+                <h2 className="text-sm font-bold text-text mb-2">{t('favorites.noFavorites')}</h2>
                 <p className="text-[10px] text-text-muted mb-4 opacity-60">
-                  在單幣別或多幣別頁面中點擊 ⭐ 加入常用貨幣
+                  {t('favorites.noFavoritesHint')}
                 </p>
                 <button
                   onClick={() => navigate('/')}
                   className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs transition hover:bg-primary-hover active:scale-[0.98]"
                 >
-                  前往換算
+                  {t('favorites.goToConvert')}
                 </button>
               </div>
             ) : (
@@ -186,7 +190,7 @@ export default function Favorites() {
                           }
                         }}
                         className="hover:scale-110 transition cursor-pointer"
-                        aria-label={`移除 ${code} 從常用`}
+                        aria-label={`${t('favorites.removeFavorite')} ${code}`}
                       >
                         <Star className="text-favorite" size={18} fill="currentColor" />
                       </div>
@@ -194,7 +198,7 @@ export default function Favorites() {
                       <div>
                         <div className="font-bold text-sm">{code}</div>
                         <div className="text-[10px] opacity-60">
-                          {CURRENCY_DEFINITIONS[code]?.name}
+                          {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
                         </div>
                       </div>
                     </div>
@@ -204,7 +208,7 @@ export default function Favorites() {
                         <span className="text-destructive text-xs">↓</span>
                       )}
                       <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
-                        換算 →
+                        {t('favorites.clickToConvert')}
                       </span>
                     </div>
                   </div>
@@ -220,7 +224,9 @@ export default function Favorites() {
             <div className="flex items-center justify-between px-2 mb-3">
               <div className="flex items-center gap-2 opacity-40">
                 <Clock className="w-3.5 h-3.5" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">轉換歷史</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+                  {t('favorites.history')}
+                </h3>
               </div>
               {history.length > 0 && (
                 <button
@@ -228,7 +234,7 @@ export default function Favorites() {
                   className="flex items-center gap-1 text-[10px] text-destructive hover:bg-destructive/10 px-2 py-1 rounded-lg transition font-bold"
                 >
                   <Trash2 size={12} />
-                  清除全部
+                  {t('common.clearAll')}
                 </button>
               )}
             </div>
@@ -236,15 +242,15 @@ export default function Favorites() {
             {history.length === 0 ? (
               <div className="card p-8 text-center">
                 <Clock className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-30" />
-                <h2 className="text-sm font-bold text-text mb-2">尚無轉換記錄</h2>
+                <h2 className="text-sm font-bold text-text mb-2">{t('favorites.noHistory')}</h2>
                 <p className="text-[10px] text-text-muted mb-4 opacity-60">
-                  開始使用匯率換算，記錄會自動保存
+                  {t('favorites.noHistoryHint')}
                 </p>
                 <button
                   onClick={() => navigate('/')}
                   className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs transition hover:bg-primary-hover active:scale-[0.98]"
                 >
-                  前往換算
+                  {t('favorites.goToConvert')}
                 </button>
               </div>
             ) : (

@@ -187,9 +187,13 @@ const ja = {
   // Errors
   errors: {
     loadingFailed: '読み込みに失敗しました',
+    rateLoadFailed: 'レートの読み込みに失敗しました',
+    networkCheckRetry: '最新の為替レートを取得できませんでした。接続を確認して再試行してください。',
+    dataLoadFailed: 'データの読み込みに失敗しました。再試行してください。',
     networkError: 'ネットワークエラー',
     unknownError: '不明なエラー',
     tryAgain: 'しばらくしてからもう一度お試しください',
+    reload: '再読み込み',
   },
 
   // PWA

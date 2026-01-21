@@ -188,9 +188,14 @@ const en = {
   // Errors
   errors: {
     loadingFailed: 'Loading failed',
+    rateLoadFailed: 'Failed to load rates',
+    networkCheckRetry:
+      'Unable to fetch latest exchange rates. Please check your connection and try again.',
+    dataLoadFailed: 'Failed to load data. Please try again.',
     networkError: 'Network error',
     unknownError: 'Unknown error',
     tryAgain: 'Please try again later',
+    reload: 'Reload',
   },
 
   // PWA
