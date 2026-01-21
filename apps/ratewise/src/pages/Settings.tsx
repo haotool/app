@@ -41,7 +41,9 @@ export default function Settings() {
         <section className="mb-8">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Palette className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">介面風格</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {t('settings.interfaceStyle')}
+            </h3>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -130,24 +132,26 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Database className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">儲存與快取</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {t('settings.storageCache')}
+            </h3>
           </div>
 
           <div className="card p-5">
             <div className="flex justify-between items-center mb-4">
               <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
-                匯率資料來源
+                {t('settings.dataSource')}
               </span>
-              <span className="text-lg font-black">台灣銀行</span>
+              <span className="text-lg font-black">{t('settings.taiwanBank')}</span>
             </div>
             <div className="flex justify-between items-center mb-4">
               <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
-                更新頻率
+                {t('settings.updateFrequency')}
               </span>
-              <span className="text-lg font-black">5 分鐘</span>
+              <span className="text-lg font-black">{t('settings.fiveMinutes')}</span>
             </div>
             <p className="text-[10px] mt-2 opacity-40 font-medium text-center">
-              匯率資料每 5 分鐘自動更新。
+              {t('settings.updateNote')}
             </p>
           </div>
         </section>
@@ -156,7 +160,9 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <ShieldAlert className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">資料管理</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {t('settings.dataManagement')}
+            </h3>
           </div>
 
           <div className="card overflow-hidden">
@@ -166,7 +172,7 @@ export default function Settings() {
               className="w-full px-5 py-4 flex items-center justify-between hover:bg-destructive/10 active:bg-destructive/20 group transition-all duration-200 ease-out disabled:opacity-50"
             >
               <span className="text-xs font-black text-destructive uppercase tracking-widest">
-                重置主題設定
+                {t('settings.resetTheme')}
               </span>
               <ShieldAlert className="w-4 h-4 text-destructive opacity-40 group-active:opacity-100 transition-opacity" />
             </button>
@@ -178,22 +184,22 @@ export default function Settings() {
           <div className="card p-5">
             <div className="space-y-3 text-sm">
               <div className="flex justify-between items-center">
-                <span className="opacity-60">應用程式版本</span>
+                <span className="opacity-60">{t('settings.appVersion')}</span>
                 <span className="font-bold font-mono">v4.0.0</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="opacity-60">設計系統</span>
-                <span className="font-bold">6 Styles SSOT</span>
+                <span className="opacity-60">{t('settings.designSystem')}</span>
+                <span className="font-bold">{t('settings.sixStylesSST')}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="opacity-60">技術棧</span>
-                <span className="font-bold">React + Tailwind</span>
+                <span className="opacity-60">{t('settings.techStack')}</span>
+                <span className="font-bold">{t('settings.reactTailwind')}</span>
               </div>
             </div>
 
             <div className="mt-4 pt-4 border-t border-black/5">
               <p className="text-[10px] opacity-40 text-center font-medium">
-                © 2026 RateWise. Built with Design Token SSOT
+                {t('settings.copyright')}
               </p>
             </div>
           </div>
