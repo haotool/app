@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { RefreshCw, Calculator } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateType } from '../types';
 // Lazy load MiniTrendChart to reduce initial bundle size
@@ -63,6 +64,7 @@ export const SingleConverter = ({
   onAddToHistory,
   onRateTypeChange,
 }: SingleConverterProps) => {
+  const { t } = useTranslation();
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
   const [_loadingTrend, setLoadingTrend] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
@@ -237,14 +239,14 @@ export const SingleConverter = ({
     <>
       <div className="mb-4">
         <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
-          轉換金額
+          {t('singleConverter.fromAmount')}
         </label>
         <div className="relative">
           <select
             value={fromCurrency}
             onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
             className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
-            aria-label="選擇來源貨幣"
+            aria-label={t('singleConverter.selectFromCurrency')}
           >
             {CURRENCY_CODES.map((code) => (
               <option key={code} value={code}>
@@ -298,7 +300,7 @@ export const SingleConverter = ({
             }}
             className="w-full pl-32 pr-14 py-3 text-2xl font-bold bg-surface border-2 border-border/60 rounded-2xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
             placeholder="0.00"
-            aria-label={`轉換金額 (${fromCurrency})`}
+            aria-label={t('singleConverter.fromAmountLabel', { code: fromCurrency })}
           />
           {/* 計算機按鈕 */}
           <button
@@ -307,7 +309,7 @@ export const SingleConverter = ({
               calculator.openCalculator('from');
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-primary hover:text-primary-dark hover:bg-primary-bg rounded-lg transition-colors duration-200"
-            aria-label="開啟計算機 (轉換金額)"
+            aria-label={t('singleConverter.openCalculatorFrom')}
             data-testid="calculator-trigger-from"
           >
             <Calculator aria-hidden="true" className="w-5 h-5" />
@@ -349,7 +351,7 @@ export const SingleConverter = ({
                     ? 'bg-primary text-white shadow-md scale-105'
                     : 'text-text/70 hover:text-text hover:bg-primary/10'
                 }`}
-                aria-label="切換到即期匯率"
+                aria-label={t('singleConverter.switchToSpot')}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -359,7 +361,7 @@ export const SingleConverter = ({
                     d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
                   />
                 </svg>
-                <span>即期</span>
+                <span>{t('singleConverter.spotRate')}</span>
               </button>
               <button
                 onClick={() => onRateTypeChange('cash')}
@@ -368,7 +370,7 @@ export const SingleConverter = ({
                     ? 'bg-primary text-white shadow-md scale-105'
                     : 'text-text/70 hover:text-text hover:bg-primary/10'
                 }`}
-                aria-label="切換到現金匯率"
+                aria-label={t('singleConverter.switchToCash')}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -378,7 +380,7 @@ export const SingleConverter = ({
                     d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
                   />
                 </svg>
-                <span>現金</span>
+                <span>{t('singleConverter.cashRate')}</span>
               </button>
             </div>
 
@@ -476,7 +478,7 @@ export const SingleConverter = ({
           {/* 懸停提示 - SSOT surface 色 */}
           <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
             <span className="text-xs font-medium text-neutral-text-secondary whitespace-nowrap bg-surface px-2 py-1 rounded-full shadow-md">
-              點擊交換
+              {t('singleConverter.clickToSwap')}
             </span>
           </div>
         </div>
@@ -484,14 +486,14 @@ export const SingleConverter = ({
 
       <div className="mb-4">
         <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
-          轉換結果
+          {t('singleConverter.toAmount')}
         </label>
         <div className="relative">
           <select
             value={toCurrency}
             onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
             className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
-            aria-label="選擇目標貨幣"
+            aria-label={t('singleConverter.selectToCurrency')}
           >
             {CURRENCY_CODES.map((code) => (
               <option key={code} value={code}>
@@ -542,7 +544,7 @@ export const SingleConverter = ({
             }}
             className="w-full pl-32 pr-14 py-3 text-2xl font-bold bg-primary-bg/30 border-2 border-primary/30 rounded-2xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
             placeholder="0.00"
-            aria-label={`轉換結果 (${toCurrency})`}
+            aria-label={t('singleConverter.toAmountLabel', { code: toCurrency })}
           />
           {/* 計算機按鈕 */}
           <button
@@ -551,7 +553,7 @@ export const SingleConverter = ({
               calculator.openCalculator('to');
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-primary hover:text-primary-dark hover:bg-primary-bg rounded-lg transition-colors duration-200"
-            aria-label="開啟計算機 (轉換結果)"
+            aria-label={t('singleConverter.openCalculatorTo')}
             data-testid="calculator-trigger-to"
           >
             <Calculator aria-hidden="true" className="w-5 h-5" />
@@ -583,7 +585,7 @@ export const SingleConverter = ({
         onClick={onAddToHistory}
         className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
       >
-        加入歷史記錄
+        {t('singleConverter.addToHistory')}
       </button>
 
       {/* 計算機鍵盤 Bottom Sheet */}

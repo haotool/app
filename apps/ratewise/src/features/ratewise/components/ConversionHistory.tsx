@@ -14,6 +14,7 @@
  */
 
 import { Copy } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { ConversionHistoryEntry } from '../types';
 import { copyToClipboard, formatConversionForCopy } from '../../../utils/clipboard';
 import { useToast } from '../../../components/Toast';
@@ -25,6 +26,7 @@ interface ConversionHistoryProps {
 }
 
 export const ConversionHistory = ({ history, onReconvert, onClearAll }: ConversionHistoryProps) => {
+  const { t } = useTranslation();
   const { showToast } = useToast();
 
   if (history.length === 0) {
@@ -36,9 +38,9 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
     const text = formatConversionForCopy(entry);
     const success = await copyToClipboard(text);
     if (success) {
-      showToast('已複製到剪貼簿', 'success');
+      showToast(t('common.copied'), 'success');
     } else {
-      showToast('複製失敗', 'error');
+      showToast(t('conversionHistory.copyFailed'), 'error');
     }
   };
 
@@ -59,14 +61,14 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
     <div className="bg-surface rounded-3xl shadow-xl p-6 mt-4 md:mt-6">
       {/* 標題與清除按鈕 */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-text">轉換歷史</h2>
+        <h2 className="text-xl font-bold text-text">{t('conversionHistory.title')}</h2>
         {onClearAll && (
           <button
             onClick={onClearAll}
             className="text-sm text-text-muted hover:text-destructive transition-colors"
-            aria-label="清除全部歷史記錄"
+            aria-label={t('conversionHistory.clearAllAriaLabel')}
           >
-            清除全部
+            {t('common.clearAll')}
           </button>
         )}
       </div>
@@ -83,7 +85,11 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
             className="flex items-center justify-between p-3 bg-surface-elevated rounded-xl
                        hover:bg-primary/10 hover:shadow-md transition-all cursor-pointer
                        group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            aria-label={`重新轉換 ${item.amount} ${item.from} 到 ${item.to}`}
+            aria-label={t('conversionHistory.reconvertAriaLabel', {
+              amount: item.amount,
+              from: item.from,
+              to: item.to,
+            })}
           >
             {/* 轉換資訊 */}
             <div className="flex items-center gap-3">
@@ -105,7 +111,7 @@ export const ConversionHistory = ({ history, onReconvert, onClearAll }: Conversi
               }}
               className="opacity-0 group-hover:opacity-100 transition-opacity
                          p-2 rounded-lg hover:bg-primary/20 focus:opacity-100"
-              aria-label="複製轉換結果"
+              aria-label={t('conversionHistory.copyAriaLabel')}
               tabIndex={0}
             >
               <Copy className="w-4 h-4 text-primary" />

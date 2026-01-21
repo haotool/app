@@ -51,6 +51,8 @@ const ja = {
     selectFromCurrency: '変換元通貨を選択',
     selectToCurrency: '変換先通貨を選択',
     openCalculator: '電卓を開く',
+    openCalculatorFrom: '電卓を開く (金額)',
+    openCalculatorTo: '電卓を開く (結果)',
     swapCurrencies: '通貨を入れ替え',
     clickToSwap: 'クリックで入れ替え',
     addToHistory: '履歴に追加',
@@ -59,6 +61,8 @@ const ja = {
     switchToSpot: '直物レートに切替',
     switchToCash: '現金レートに切替',
     viewTrendChart: 'トレンドチャートを見る',
+    fromAmountLabel: '金額 ({{code}})',
+    toAmountLabel: '結果 ({{code}})',
   },
 
   // Multi Currency Converter
@@ -139,6 +143,7 @@ const ja = {
   // Currency List
   currencyList: {
     title: 'すべての通貨',
+    allCurrencies: 'すべての通貨',
     favoriteCurrencies: 'お気に入り通貨',
     refreshTrends: 'トレンドデータを更新',
     currencyListLabel: '通貨リスト',
@@ -152,6 +157,10 @@ const ja = {
     reconvert: '再換算',
     today: '今日',
     yesterday: '昨日',
+    copyFailed: 'コピーに失敗しました',
+    clearAllAriaLabel: 'すべての履歴を削除',
+    reconvertAriaLabel: '{{amount}} {{from}} から {{to}} に再換算',
+    copyAriaLabel: '換算結果をコピー',
   },
 
   // Calculator
@@ -224,7 +233,22 @@ const ja = {
   // Footer
   footer: {
     taiwanBankRates: '台湾銀行レート',
+    taiwanBankFull: 'Taiwan Bank (台湾銀行公式レート)',
     dataSource: 'データソース',
+    updateTime: '更新時間',
+    source: 'ソース',
+    refresh: '更新',
+    disclaimer:
+      '為替レートは台湾銀行の公式レート（現金・直物売りレート）を参照しています。実際の取引レートは銀行の発表をご確認ください。',
+    disclaimerDesktop: '台湾銀行のレートを5分ごとに更新。参考用のみ。',
+    faq: 'よくある質問',
+    about: '私たちについて',
+    appName: 'RateWise',
+    allRightsReserved: 'All rights reserved.',
+    createdBy: '作成者',
+    by: 'By',
+    builtWith: 'Built with React • Vite • Tailwind CSS • Progressive Web App (PWA)',
+    openSourceOn: 'オープンソース',
   },
 };
 

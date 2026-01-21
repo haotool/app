@@ -51,6 +51,8 @@ const zhTW = {
     selectFromCurrency: '選擇來源貨幣',
     selectToCurrency: '選擇目標貨幣',
     openCalculator: '開啟計算機',
+    openCalculatorFrom: '開啟計算機 (轉換金額)',
+    openCalculatorTo: '開啟計算機 (轉換結果)',
     swapCurrencies: '交換幣別',
     clickToSwap: '點擊交換',
     addToHistory: '加入歷史記錄',
@@ -59,6 +61,8 @@ const zhTW = {
     switchToSpot: '切換到即期匯率',
     switchToCash: '切換到現金匯率',
     viewTrendChart: '查看趨勢圖',
+    fromAmountLabel: '轉換金額 ({{code}})',
+    toAmountLabel: '轉換結果 ({{code}})',
   },
 
   // Multi Currency Converter
@@ -139,6 +143,7 @@ const zhTW = {
   // Currency List
   currencyList: {
     title: '全部幣種',
+    allCurrencies: '全部幣種',
     favoriteCurrencies: '常用貨幣',
     refreshTrends: '刷新趨勢數據',
     currencyListLabel: '貨幣列表',
@@ -152,6 +157,10 @@ const zhTW = {
     reconvert: '重新轉換',
     today: '今天',
     yesterday: '昨天',
+    copyFailed: '複製失敗',
+    clearAllAriaLabel: '清除全部歷史記錄',
+    reconvertAriaLabel: '重新轉換 {{amount}} {{from}} 到 {{to}}',
+    copyAriaLabel: '複製轉換結果',
   },
 
   // Calculator
@@ -224,7 +233,23 @@ const zhTW = {
   // Footer
   footer: {
     taiwanBankRates: '臺灣銀行牌告',
+    taiwanBankFull: 'Taiwan Bank (臺灣銀行牌告匯率)',
     dataSource: '資料來源',
+    updateTime: '更新時間',
+    source: '來源',
+    refresh: '刷新',
+    disclaimer:
+      '本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）· 實際交易匯率以各銀行公告為準',
+    disclaimerDesktop:
+      '匯率數據參考臺灣銀行牌告匯率，每 5 分鐘更新。僅供參考，實際交易請以銀行公告為準。',
+    faq: '常見問題',
+    about: '關於我們',
+    appName: '匯率好工具',
+    allRightsReserved: 'All rights reserved.',
+    createdBy: 'Created by',
+    by: 'By',
+    builtWith: 'Built with React • Vite • Tailwind CSS • Progressive Web App (PWA)',
+    openSourceOn: 'Open Source on',
   },
 };
 

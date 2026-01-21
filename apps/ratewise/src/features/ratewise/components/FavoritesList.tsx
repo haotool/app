@@ -4,6 +4,7 @@
  * 顯示使用者收藏的貨幣匯率，使用 SSOT design token
  */
 import { Star, TrendingDown, TrendingUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode, TrendState } from '../types';
 import { formatExchangeRate } from '../../../utils/currencyFormatter';
@@ -15,11 +16,13 @@ interface FavoritesListProps {
 }
 
 export const FavoritesList = ({ favorites, trend, exchangeRates }: FavoritesListProps) => {
+  const { t } = useTranslation();
+
   return (
     <div className="bg-surface rounded-3xl shadow-xl p-6 border border-border/30">
       <div className="flex items-center gap-2 mb-4">
         <Star className="text-favorite" size={20} fill="currentColor" />
-        <h2 className="text-xl font-bold text-text">常用貨幣</h2>
+        <h2 className="text-xl font-bold text-text">{t('currencyList.favoriteCurrencies')}</h2>
       </div>
       <div className="space-y-2">
         {favorites.map((code) => (

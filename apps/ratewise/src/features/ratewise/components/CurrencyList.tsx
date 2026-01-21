@@ -4,6 +4,7 @@
  * 顯示所有貨幣的即時匯率列表，使用 SSOT design token
  */
 import { RefreshCw, Star, TrendingDown, TrendingUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode, TrendState } from '../types';
 import { formatExchangeRate } from '../../../utils/currencyFormatter';
@@ -25,16 +26,18 @@ export const CurrencyList = ({
   onToggleFavorite,
   onRefreshTrends,
 }: CurrencyListProps) => {
+  const { t } = useTranslation();
+
   return (
     <div className="bg-surface rounded-3xl shadow-xl p-6 border border-border/30">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-text">全部幣種</h2>
+        <h2 className="text-xl font-bold text-text">{t('currencyList.allCurrencies')}</h2>
         <button
           onClick={onRefreshTrends}
           className="p-2 hover:bg-primary/10 rounded-lg transition-colors duration-200"
           type="button"
-          aria-label="刷新趨勢數據"
-          title="刷新趨勢數據"
+          aria-label={t('currencyList.refreshTrends')}
+          title={t('currencyList.refreshTrends')}
         >
           <RefreshCw size={16} className="text-text-muted" />
         </button>
@@ -43,7 +46,7 @@ export const CurrencyList = ({
         className="space-y-2 max-h-96 overflow-y-auto"
         tabIndex={0}
         role="region"
-        aria-label="貨幣列表"
+        aria-label={t('currencyList.currencyListLabel')}
       >
         {CURRENCY_CODES.map((code) => (
           <div

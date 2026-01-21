@@ -22,6 +22,7 @@
 
 import { Link } from 'react-router-dom';
 import { ClientOnly } from 'vite-react-ssg';
+import { useTranslation } from 'react-i18next';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 import { FOOTER_SECTIONS, POPULAR_RATE_LINKS } from '../config/footer-links';
 
@@ -45,21 +46,29 @@ const formatTime = (dateString: string | null) => {
 
 /** 獨立的時間顯示組件，用於 ClientOnly 渲染以避免 hydration mismatch */
 function UpdateTimeDisplay() {
+  const { t } = useTranslation();
   const { lastUpdate, lastFetchedAt } = useExchangeRates();
 
   return (
     <span>
-      更新時間 來源 {formatTime(lastUpdate)} · 刷新 {formatTime(lastFetchedAt)}
+      {t('footer.updateTime')} {t('footer.source')} {formatTime(lastUpdate)} · {t('footer.refresh')}{' '}
+      {formatTime(lastFetchedAt)}
     </span>
   );
 }
 
 /** 時間顯示的 Fallback (SSG 時顯示的靜態內容) */
 function UpdateTimeFallback() {
-  return <span>更新時間 來源 --/-- --:-- · 刷新 --/-- --:--</span>;
+  const { t } = useTranslation();
+  return (
+    <span>
+      {t('footer.updateTime')} {t('footer.source')} --/-- --:-- · {t('footer.refresh')} --/-- --:--
+    </span>
+  );
 }
 
 export function Footer() {
+  const { t } = useTranslation();
   // Version and build time from environment
   const appVersion = import.meta.env.VITE_APP_VERSION ?? 'v1.2.2';
   const buildTime = import.meta.env.VITE_BUILD_TIME ?? '2025/12/24 01:14';
@@ -89,7 +98,7 @@ export function Footer() {
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span className="text-sm font-medium text-white">Taiwan Bank (臺灣銀行牌告匯率)</span>
+            <span className="text-sm font-medium text-white">{t('footer.taiwanBankFull')}</span>
             <svg
               className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform"
               fill="none"
@@ -120,9 +129,7 @@ export function Footer() {
 
         {/* 免責聲明 */}
         <div className="text-center mb-6">
-          <p className="text-xs text-white/70 leading-relaxed">
-            本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）· 實際交易匯率以各銀行公告為準
-          </p>
+          <p className="text-xs text-white/70 leading-relaxed">{t('footer.disclaimer')}</p>
         </div>
 
         {/* 快速連結 */}
@@ -134,7 +141,7 @@ export function Footer() {
             <span aria-hidden="true" className="text-white/50">
               ?
             </span>
-            常見問題
+            {t('footer.faq')}
           </Link>
           <Link
             to="/about/"
@@ -143,7 +150,7 @@ export function Footer() {
             <span aria-hidden="true" className="text-white/50">
               i
             </span>
-            關於我們
+            {t('footer.about')}
           </Link>
         </div>
 
@@ -182,7 +189,7 @@ export function Footer() {
                 />
               </svg>
             </div>
-            <span className="font-semibold">匯率好工具</span>
+            <span className="font-semibold">{t('footer.appName')}</span>
             <span className="text-white/50">•</span>
             <span
               className="relative inline-block cursor-help text-xs text-white/60 font-mono group"
@@ -200,7 +207,7 @@ export function Footer() {
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-white/80">
-            <span>By</span>
+            <span>{t('footer.by')}</span>
             <a
               href="https://www.threads.net/@azlife_1224"
               target="_blank"
@@ -236,7 +243,7 @@ export function Footer() {
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span className="text-sm font-medium text-white">Taiwan Bank (臺灣銀行牌告匯率)</span>
+            <span className="text-sm font-medium text-white">{t('footer.taiwanBankFull')}</span>
             <svg
               className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform"
               fill="none"
@@ -267,9 +274,7 @@ export function Footer() {
 
         {/* 免責聲明 */}
         <div className="text-center mb-6">
-          <p className="text-xs text-white/70 leading-relaxed">
-            本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）· 實際交易匯率以各銀行公告為準
-          </p>
+          <p className="text-xs text-white/70 leading-relaxed">{t('footer.disclaimer')}</p>
         </div>
 
         {/* 快速連結 */}
@@ -281,7 +286,7 @@ export function Footer() {
             <span aria-hidden="true" className="text-white/50">
               ?
             </span>
-            常見問題
+            {t('footer.faq')}
           </Link>
           <Link
             to="/about/"
@@ -290,7 +295,7 @@ export function Footer() {
             <span aria-hidden="true" className="text-white/50">
               i
             </span>
-            關於我們
+            {t('footer.about')}
           </Link>
         </div>
 
@@ -337,9 +342,7 @@ export function Footer() {
               </a>
               . All rights reserved.
             </p>
-            <p className="mt-1 text-xs text-white/70">
-              匯率數據參考臺灣銀行牌告匯率，每 5 分鐘更新。僅供參考，實際交易請以銀行公告為準。
-            </p>
+            <p className="mt-1 text-xs text-white/70">{t('footer.disclaimerDesktop')}</p>
           </div>
 
           {/* Threads Link */}
@@ -350,7 +353,7 @@ export function Footer() {
             className="group flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/10 border border-transparent hover:border-white/20 transition-all duration-300"
           >
             <span className="text-sm text-white/70 group-hover:text-white/90 transition-colors">
-              Created by
+              {t('footer.createdBy')}
             </span>
             <svg
               viewBox="0 0 192 192"
@@ -369,9 +372,9 @@ export function Footer() {
 
         {/* Additional Info */}
         <div className="mt-6 text-xs text-white/70 text-center md:text-left">
-          <p>Built with React • Vite • Tailwind CSS • Progressive Web App (PWA)</p>
+          <p>{t('footer.builtWith')}</p>
           <p className="mt-1">
-            Open Source on{' '}
+            {t('footer.openSourceOn')}{' '}
             <a
               href="https://github.com/haotool/app"
               target="_blank"

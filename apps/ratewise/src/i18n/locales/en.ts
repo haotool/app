@@ -51,6 +51,8 @@ const en = {
     selectFromCurrency: 'Select source currency',
     selectToCurrency: 'Select target currency',
     openCalculator: 'Open calculator',
+    openCalculatorFrom: 'Open calculator (Amount)',
+    openCalculatorTo: 'Open calculator (Result)',
     swapCurrencies: 'Swap currencies',
     clickToSwap: 'Click to swap',
     addToHistory: 'Add to history',
@@ -59,6 +61,8 @@ const en = {
     switchToSpot: 'Switch to spot rate',
     switchToCash: 'Switch to cash rate',
     viewTrendChart: 'View trend chart',
+    fromAmountLabel: 'Amount ({{code}})',
+    toAmountLabel: 'Result ({{code}})',
   },
 
   // Multi Currency Converter
@@ -140,6 +144,7 @@ const en = {
   // Currency List
   currencyList: {
     title: 'All Currencies',
+    allCurrencies: 'All Currencies',
     favoriteCurrencies: 'Favorite Currencies',
     refreshTrends: 'Refresh trend data',
     currencyListLabel: 'Currency list',
@@ -153,6 +158,10 @@ const en = {
     reconvert: 'Reconvert',
     today: 'Today',
     yesterday: 'Yesterday',
+    copyFailed: 'Copy failed',
+    clearAllAriaLabel: 'Clear all history',
+    reconvertAriaLabel: 'Reconvert {{amount}} {{from}} to {{to}}',
+    copyAriaLabel: 'Copy conversion result',
   },
 
   // Calculator
@@ -226,7 +235,23 @@ const en = {
   // Footer
   footer: {
     taiwanBankRates: 'Taiwan Bank Rates',
+    taiwanBankFull: 'Taiwan Bank (Official Exchange Rates)',
     dataSource: 'Data source',
+    updateTime: 'Update time',
+    source: 'Source',
+    refresh: 'Refresh',
+    disclaimer:
+      'Exchange rates are based on Taiwan Bank official rates (cash and spot selling rates). Actual transaction rates may vary.',
+    disclaimerDesktop:
+      'Exchange rates from Taiwan Bank, updated every 5 minutes. For reference only.',
+    faq: 'FAQ',
+    about: 'About Us',
+    appName: 'RateWise',
+    allRightsReserved: 'All rights reserved.',
+    createdBy: 'Created by',
+    by: 'By',
+    builtWith: 'Built with React • Vite • Tailwind CSS • Progressive Web App (PWA)',
+    openSourceOn: 'Open Source on',
   },
 };
 
