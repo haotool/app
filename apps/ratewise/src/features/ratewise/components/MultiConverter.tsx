@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
@@ -35,6 +36,7 @@ export const MultiConverter = ({
   onRateTypeChange,
   onBaseCurrencyChange,
 }: MultiConverterProps) => {
+  const { t } = useTranslation();
   const inputRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // 🔧 計算機 Modal 狀態（使用統一的 Hook）
@@ -63,10 +65,18 @@ export const MultiConverter = ({
     const hasCash = detail.cash?.sell != null;
 
     if (hasSpot && !hasCash) {
-      return { hasOnlyOne: true, availableType: 'spot', reason: `${currency} 僅提供即期匯率` };
+      return {
+        hasOnlyOne: true,
+        availableType: 'spot',
+        reason: t('multiConverter.spotOnlyNote', { code: currency }),
+      };
     }
     if (hasCash && !hasSpot) {
-      return { hasOnlyOne: true, availableType: 'cash', reason: `${currency} 僅提供現金匯率` };
+      return {
+        hasOnlyOne: true,
+        availableType: 'cash',
+        reason: t('multiConverter.cashOnlyNote', { code: currency }),
+      };
     }
     return { hasOnlyOne: false, availableType: null, reason: '' };
   };
@@ -75,19 +85,19 @@ export const MultiConverter = ({
   const getRateDisplay = (currency: CurrencyCode): string => {
     // 基準貨幣直接顯示「基準貨幣」
     if (currency === baseCurrency) {
-      return '基準貨幣';
+      return t('multiConverter.baseCurrency');
     }
 
     // 特殊處理：TWD 作為基準貨幣（API 原生支援）
     if (baseCurrency === 'TWD') {
       const detail = details?.[currency];
-      if (!detail) return '計算中...';
+      if (!detail) return t('multiConverter.calculating');
 
       let rate = detail[rateType]?.sell;
       if (rate == null) {
         const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
         rate = detail[fallbackType]?.sell;
-        if (rate == null) return '無資料';
+        if (rate == null) return t('multiConverter.noData');
       }
 
       // API 提供：1 外幣 = rate TWD，需反向計算：1 TWD = 1/rate 外幣
@@ -96,18 +106,15 @@ export const MultiConverter = ({
     }
 
     // 特殊處理：目標貨幣是 TWD（反向匯率）
-    // 例如：基準貨幣是 CNY，目標貨幣是 TWD
-    // 已知：1 CNY = 4.41 TWD
-    // 顯示：1 CNY = 4.41 TWD
     if (currency === 'TWD') {
       const baseDetail = details?.[baseCurrency];
-      if (!baseDetail) return '計算中...';
+      if (!baseDetail) return t('multiConverter.calculating');
 
       let rate = baseDetail[rateType]?.sell;
       if (rate == null) {
         const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
         rate = baseDetail[fallbackType]?.sell;
-        if (rate == null) return '無資料';
+        if (rate == null) return t('multiConverter.noData');
       }
 
       // API 提供：1 外幣 = rate TWD，直接顯示
@@ -115,13 +122,10 @@ export const MultiConverter = ({
     }
 
     // 一般情況：基準貨幣是外幣（需計算交叉匯率）
-    // 例如：基準貨幣是 USD，要顯示 JPY 的匯率
-    // 已知：1 USD = 30.97 TWD, 1 JPY = 0.204 TWD
-    // 計算：1 USD = (30.97 / 0.204) JPY = 151.8 JPY
     const baseDetail = details?.[baseCurrency];
     const targetDetail = details?.[currency];
 
-    if (!baseDetail || !targetDetail) return '計算中...';
+    if (!baseDetail || !targetDetail) return t('multiConverter.calculating');
 
     // 獲取基準貨幣和目標貨幣對 TWD 的匯率
     let baseRate = baseDetail[rateType]?.sell;
@@ -137,7 +141,7 @@ export const MultiConverter = ({
       targetRate = targetDetail[fallbackType]?.sell;
     }
 
-    if (baseRate == null || targetRate == null) return '無資料';
+    if (baseRate == null || targetRate == null) return t('multiConverter.noData');
 
     // 計算交叉匯率：1 基準貨幣 = (baseRate / targetRate) 目標貨幣
     const crossRate = baseRate / targetRate;
@@ -148,8 +152,10 @@ export const MultiConverter = ({
     <>
       <div className="mb-3">
         <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
-          即時多幣別換算{' '}
-          <span className="text-xs text-neutral-text-secondary">（點擊 ⭐ 可加入常用）</span>
+          {t('multiConverter.instantConversion')}{' '}
+          <span className="text-xs text-neutral-text-secondary">
+            ({t('multiConverter.addToFavorites')})
+          </span>
         </label>
         <div className="flex gap-2 mb-3 flex-wrap">
           {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
@@ -170,7 +176,7 @@ export const MultiConverter = ({
         className="flex-grow overflow-y-auto space-y-2 pr-2"
         tabIndex={0}
         role="region"
-        aria-label="貨幣列表"
+        aria-label={t('multiConverter.currencyListLabel')}
       >
         {sortedCurrencies.map((code) => {
           const isFavorite = favorites.includes(code);
@@ -196,8 +202,16 @@ export const MultiConverter = ({
                   }}
                   className="hover:scale-110 transition"
                   type="button"
-                  aria-label={isFavorite ? `移除常用貨幣 ${code}` : `加入常用貨幣 ${code}`}
-                  title={isFavorite ? `移除常用貨幣 ${code}` : `加入常用貨幣 ${code}`}
+                  aria-label={
+                    isFavorite
+                      ? t('multiConverter.removeFavorite', { code })
+                      : t('multiConverter.addFavorite', { code })
+                  }
+                  title={
+                    isFavorite
+                      ? t('multiConverter.removeFavorite', { code })
+                      : t('multiConverter.addFavorite', { code })
+                  }
                 >
                   <Star
                     className={isFavorite ? 'text-favorite' : 'text-text-muted'}
@@ -231,7 +245,10 @@ export const MultiConverter = ({
                     }
                   }}
                   className="w-full text-right pr-3 pl-3 py-2 text-lg font-bold rounded-lg bg-transparent transition cursor-pointer focus:outline-none"
-                  aria-label={`${CURRENCY_DEFINITIONS[code].name} (${code}) 金額，點擊開啟計算機`}
+                  aria-label={t('multiConverter.amountClickCalculator', {
+                    name: CURRENCY_DEFINITIONS[code].name,
+                    code,
+                  })}
                 >
                   {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
                 </div>
@@ -247,7 +264,9 @@ export const MultiConverter = ({
                           className="font-medium text-neutral-text-muted cursor-help hover:text-neutral-text-secondary transition-colors"
                           aria-label={rateTypeInfo.reason}
                         >
-                          {displayType === 'spot' ? '即期' : '現金'}
+                          {displayType === 'spot'
+                            ? t('multiConverter.spotRate')
+                            : t('multiConverter.cashRate')}
                         </button>
                       </RateTypeTooltip>
                     ) : (
@@ -259,9 +278,15 @@ export const MultiConverter = ({
                         className={`font-medium transition-colors hover:opacity-80 ${
                           rateType === 'spot' ? 'text-brand-button-to' : 'text-brand-button-from'
                         }`}
-                        aria-label={`切換到${rateType === 'spot' ? '現金' : '即期'}匯率`}
+                        aria-label={
+                          rateType === 'spot'
+                            ? t('multiConverter.switchToCash')
+                            : t('multiConverter.switchToSpot')
+                        }
                       >
-                        {rateType === 'spot' ? '即期' : '現金'}
+                        {rateType === 'spot'
+                          ? t('multiConverter.spotRate')
+                          : t('multiConverter.cashRate')}
                       </button>
                     );
                   })()}

@@ -1,10 +1,30 @@
 import { expect, vi } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+import zhTW from './i18n/locales/zh-TW';
 
 // 明確擴展 expect 以包含 jest-dom matchers
 // 這確保 CI 環境中 matchers 正確載入
 // 參考: https://testing-library.com/docs/ecosystem-jest-dom/#with-vitest
 expect.extend(matchers);
+
+// 初始化 i18next 測試環境
+// 使用繁體中文作為測試語言，確保測試中的翻譯與 UI 一致
+void i18n.use(initReactI18next).init({
+  resources: {
+    'zh-TW': { translation: zhTW },
+  },
+  lng: 'zh-TW',
+  fallbackLng: 'zh-TW',
+  interpolation: {
+    escapeValue: false,
+  },
+  react: {
+    useSuspense: false,
+  },
+});
 
 // Mock virtual:pwa-register/react for test environment
 // Mock 透過 vitest.config.ts alias 指向 src/__mocks__/pwa-register-react.ts
