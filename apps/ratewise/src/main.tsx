@@ -41,6 +41,9 @@ if (typeof window !== 'undefined') {
 // Initialize Trusted Types first (must run before any DOM manipulation)
 import './trusted-types-bootstrap';
 
+// Initialize i18n (must be before any React rendering)
+import './i18n';
+
 import { ViteReactSSG } from 'vite-react-ssg';
 import { routes } from './routes';
 import './index.css';

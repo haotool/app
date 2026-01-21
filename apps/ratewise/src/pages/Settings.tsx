@@ -20,11 +20,19 @@
  */
 
 import { Palette, Globe, Database, ShieldAlert, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_OPTIONS } from '../config/themes';
+import { LANGUAGE_OPTIONS, type SupportedLanguage } from '../i18n';
 
 export default function Settings() {
+  const { t, i18n } = useTranslation();
   const { style, setStyle, resetTheme, isLoaded } = useAppTheme();
+  const currentLanguage = i18n.language as SupportedLanguage;
+
+  const handleLanguageChange = (lang: SupportedLanguage) => {
+    void i18n.changeLanguage(lang);
+  };
 
   return (
     <div className="h-full overflow-y-auto no-scrollbar pb-32">
@@ -89,23 +97,32 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Globe className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">語言</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {t('settings.language')}
+            </h3>
           </div>
 
           <div className="bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
-            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out opacity-60 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]">
-              <span className="text-xl mb-1 filter drop-shadow-sm">🇺🇸</span>
-              <span className="text-[10px] font-bold">English</span>
-            </button>
-            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]">
-              <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
-              <span className="text-xl mb-1 filter drop-shadow-sm">🇹🇼</span>
-              <span className="text-[10px] font-bold">繁體中文</span>
-            </button>
-            <button className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out opacity-60 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]">
-              <span className="text-xl mb-1 filter drop-shadow-sm">🇯🇵</span>
-              <span className="text-[10px] font-bold">日本語</span>
-            </button>
+            {LANGUAGE_OPTIONS.map((option) => {
+              const isActive = currentLanguage === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => handleLanguageChange(option.value)}
+                  className={`flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98] ${
+                    isActive ? '' : 'opacity-60 hover:opacity-100'
+                  }`}
+                  aria-pressed={isActive}
+                  aria-label={option.label}
+                >
+                  {isActive && (
+                    <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
+                  )}
+                  <span className="text-xl mb-1 filter drop-shadow-sm">{option.flag}</span>
+                  <span className="text-[10px] font-bold">{option.label}</span>
+                </button>
+              );
+            })}
           </div>
         </section>
 

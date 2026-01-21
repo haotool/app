@@ -20,44 +20,45 @@
 
 import { Link, useLocation } from 'react-router-dom';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 導覽項目類型
  */
 interface NavItem {
   path: string;
-  label: string;
+  labelKey: string;
+  ariaLabelKey: string;
   icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean; strokeWidth?: number }>;
-  ariaLabel: string;
 }
 
 /**
- * 導覽項目配置
+ * 導覽項目配置 - 使用 i18n keys
  */
 const navItems: NavItem[] = [
   {
     path: '/',
-    label: '單幣別',
+    labelKey: 'nav.singleCurrency',
+    ariaLabelKey: 'nav.singleCurrencyFull',
     icon: CreditCard,
-    ariaLabel: '單幣別轉換',
   },
   {
     path: '/multi',
-    label: '多幣別',
+    labelKey: 'nav.multiCurrency',
+    ariaLabelKey: 'nav.multiCurrencyFull',
     icon: Globe,
-    ariaLabel: '多幣別轉換',
   },
   {
     path: '/favorites',
-    label: '收藏',
+    labelKey: 'nav.favorites',
+    ariaLabelKey: 'nav.favoritesFull',
     icon: Star,
-    ariaLabel: '收藏與歷史',
   },
   {
     path: '/settings',
-    label: '設定',
+    labelKey: 'nav.settings',
+    ariaLabelKey: 'nav.settingsFull',
     icon: Settings,
-    ariaLabel: '應用程式設定',
   },
 ];
 
@@ -70,6 +71,7 @@ const navItems: NavItem[] = [
  * - 極簡文字標籤
  */
 export function BottomNavigation() {
+  const { t } = useTranslation();
   const location = useLocation();
 
   return (
@@ -80,7 +82,7 @@ export function BottomNavigation() {
         border-t border-black/[0.02]
         md:hidden
       "
-      aria-label="主要導航"
+      aria-label={t('nav.singleCurrencyFull')}
     >
       <div className="flex h-full max-w-md mx-auto relative px-6">
         {navItems.map((item) => {
@@ -92,7 +94,7 @@ export function BottomNavigation() {
               key={item.path}
               to={item.path}
               className="flex-1 h-full"
-              aria-label={item.ariaLabel}
+              aria-label={t(item.ariaLabelKey)}
               aria-current={isActive ? 'page' : undefined}
             >
               <button
@@ -121,7 +123,7 @@ export function BottomNavigation() {
                     ${isActive ? 'text-primary' : 'opacity-30'}
                   `}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </span>
 
                 {/* 選中指示條 */}
