@@ -171,6 +171,12 @@ const ja = {
     confirm: '確認',
     invalidExpression: '無効な式',
     divideByZero: 'ゼロで割ることはできません',
+    close: '電卓を閉じる',
+    currentExpression: '現在の式',
+    inputPlaceholder: '数字または式を入力',
+    previewResult: 'プレビュー結果 {{value}}',
+    calculationResult: '計算結果',
+    resultIs: '計算結果は {{value}}',
   },
 
   // Rate Info

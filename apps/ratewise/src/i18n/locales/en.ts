@@ -172,6 +172,12 @@ const en = {
     confirm: 'Confirm',
     invalidExpression: 'Invalid expression',
     divideByZero: 'Cannot divide by zero',
+    close: 'Close calculator',
+    currentExpression: 'Current expression',
+    inputPlaceholder: 'Enter number or expression',
+    previewResult: 'Preview result {{value}}',
+    calculationResult: 'Calculation Result',
+    resultIs: 'Result is {{value}}',
   },
 
   // Rate Info

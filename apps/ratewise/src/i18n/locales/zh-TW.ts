@@ -171,6 +171,12 @@ const zhTW = {
     confirm: '確認',
     invalidExpression: '無效運算式',
     divideByZero: '不能除以零',
+    close: '關閉計算機',
+    currentExpression: '當前表達式',
+    inputPlaceholder: '輸入數字或表達式',
+    previewResult: '預覽結果 {{value}}',
+    calculationResult: '計算結果',
+    resultIs: '計算結果為 {{value}}',
   },
 
   // Rate Info

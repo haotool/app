@@ -7,6 +7,7 @@
 
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import type { CalculatorKeyboardProps, KeyDefinition } from '../types';
 import { useCalculator } from '../hooks/useCalculator';
 import { useCalculatorKeyboard } from '../hooks/useCalculatorKeyboard';
@@ -95,6 +96,8 @@ export function CalculatorKeyboard({
   onConfirm,
   initialValue,
 }: CalculatorKeyboardProps) {
+  const { t } = useTranslation();
+
   // 🔧 Phase 2: 背景滾動鎖定（iOS/Android 兼容）
   // @see docs/dev/012_calculator_modal_sync_enhancement.md Feature 2
   useBodyScrollLock(isOpen);
@@ -226,7 +229,7 @@ export function CalculatorKeyboard({
               onDragEnd={handleDragEnd}
               role="dialog"
               aria-modal="true"
-              aria-label="計算機"
+              aria-label={t('calculator.title')}
             >
               {/* 拖曳指示器 */}
               <div className="flex justify-center py-3">
@@ -237,11 +240,13 @@ export function CalculatorKeyboard({
               <div className="px-6 pb-8">
                 {/* 標題和關閉按鈕 */}
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-neutral-text">計算機</h2>
+                  <h2 className="text-lg font-semibold text-neutral-text">
+                    {t('calculator.title')}
+                  </h2>
                   <button
                     onClick={onClose}
                     className="text-neutral-text-muted hover:text-neutral-text-secondary transition-colors"
-                    aria-label="關閉計算機"
+                    aria-label={t('calculator.close')}
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path

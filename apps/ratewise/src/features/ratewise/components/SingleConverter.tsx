@@ -447,8 +447,8 @@ export const SingleConverter = ({
             className={`relative p-3 bg-primary hover:bg-primary-hover text-white rounded-full shadow-lg transition-all duration-500 transform hover:scale-110 active:scale-95 group-hover/swap:shadow-2xl ${
               isSwapping ? 'scale-95' : ''
             }`}
-            aria-label="交換幣別"
-            title="交換幣別"
+            aria-label={t('singleConverter.swapCurrencies')}
+            title={t('singleConverter.swapCurrencies')}
             disabled={isSwapping}
           >
             {/* 背景脈動效果 - SSOT surface 色 */}

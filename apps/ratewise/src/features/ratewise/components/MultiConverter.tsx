@@ -223,7 +223,7 @@ export const MultiConverter = ({
                 <div>
                   <div className="font-semibold text-neutral-text">{code}</div>
                   <div className="text-xs text-neutral-text-secondary">
-                    {CURRENCY_DEFINITIONS[code].name}
+                    {t(`currencies.${code}`)}
                   </div>
                 </div>
               </div>
@@ -246,7 +246,7 @@ export const MultiConverter = ({
                   }}
                   className="w-full text-right pr-3 pl-3 py-2 text-lg font-bold rounded-lg bg-transparent transition cursor-pointer focus:outline-none"
                   aria-label={t('multiConverter.amountClickCalculator', {
-                    name: CURRENCY_DEFINITIONS[code].name,
+                    name: t(`currencies.${code}`),
                     code,
                   })}
                 >

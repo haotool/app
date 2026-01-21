@@ -13,6 +13,7 @@
  */
 
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import type { ExpressionDisplayProps } from '../types';
 import { formatCalculatorNumber, formatExpression } from '../utils/formatCalculatorNumber';
 
@@ -31,6 +32,8 @@ import { formatCalculatorNumber, formatExpression } from '../utils/formatCalcula
  * ```
  */
 export function ExpressionDisplay({ expression, result, error, preview }: ExpressionDisplayProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="mb-6 space-y-2">
       {/* 表達式顯示區（套用千位分隔符，提升 UX 可讀性） */}
@@ -38,12 +41,14 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
         <div
           className="text-right text-2xl text-neutral-text-secondary font-mono tabular-nums overflow-x-auto scrollbar-hide"
           role="status"
-          aria-label="當前表達式"
+          aria-label={t('calculator.currentExpression')}
         >
           {expression ? (
             formatExpression(expression)
           ) : (
-            <span className="text-neutral-text-muted text-base font-sans">輸入數字或表達式</span>
+            <span className="text-neutral-text-muted text-base font-sans">
+              {t('calculator.inputPlaceholder')}
+            </span>
           )}
         </div>
 
@@ -57,7 +62,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
               transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
               className="text-right text-lg text-neutral-text-muted font-mono tabular-nums mt-1"
               role="status"
-              aria-label={`預覽結果 ${formatCalculatorNumber(preview)}`}
+              aria-label={t('calculator.previewResult', { value: formatCalculatorNumber(preview) })}
               aria-live="polite"
             >
               = {formatCalculatorNumber(preview)}
@@ -74,11 +79,13 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
         >
-          <div className="text-sm text-primary font-medium mb-1">計算結果</div>
+          <div className="text-sm text-primary font-medium mb-1">
+            {t('calculator.calculationResult')}
+          </div>
           <div
             className="text-right text-3xl font-bold text-primary-dark font-mono tabular-nums"
             role="status"
-            aria-label={`計算結果為 ${formatCalculatorNumber(result)}`}
+            aria-label={t('calculator.resultIs', { value: formatCalculatorNumber(result) })}
             aria-live="polite"
           >
             = {formatCalculatorNumber(result)}

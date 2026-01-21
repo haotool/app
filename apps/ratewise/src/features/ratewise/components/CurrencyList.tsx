@@ -58,7 +58,7 @@ export const CurrencyList = ({
               <span className="text-xl">{CURRENCY_DEFINITIONS[code].flag}</span>
               <div>
                 <div className="text-sm font-semibold text-text">{code}</div>
-                <div className="text-xs text-text-muted">{CURRENCY_DEFINITIONS[code].name}</div>
+                <div className="text-xs text-text-muted">{t(`currencies.${code}`)}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
