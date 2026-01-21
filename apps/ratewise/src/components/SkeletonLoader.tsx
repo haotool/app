@@ -1,26 +1,27 @@
 /**
- * Skeleton Loader Component
+ * Skeleton Loader Components - SSOT Design System
  *
- * 取代 loading spinner，提升 perceived performance。
- * SSG 輸出包含 SEO 友好的靜態內容（H1、H2、段落）。
+ * @description 骨架屏組件系統，提升 perceived performance
+ *              使用 SSOT design tokens，自動適應所有主題
  *
- * 優勢:
- * - 即時顯示內容結構，減少 perceived loading time
- * - 用戶可預期內容佈局，降低 cognitive load
- * - 避免 spinner 的「等待感」，提升 UX
+ * 設計原則 (來源: web.dev, smashingmagazine):
+ * - 布局與最終 UI 結構高度一致，減少 CLS
+ * - 使用 shimmer 動畫提升感知速度
+ * - CSS-only 動畫，避免 JavaScript 阻塞
+ * - 主題感知顏色，適應所有 6 種風格
  *
- * @see https://blog.logrocket.com/ux-design/skeleton-loading-screen-design/
+ * @see https://web.dev/articles/cls
+ * @see https://www.smashingmagazine.com/2020/04/skeleton-screens-react/
  */
 
+/**
+ * 主頁面骨架屏
+ * 對應 SingleConverter 頁面布局
+ */
 export const SkeletonLoader = () => {
   return (
-    <div className="min-h-screen bg-neutral-light p-4 md:p-6" role="status" aria-live="polite">
-      {/**
-       * SEO 靜態內容區塊
-       * - 使用 sr-only 對視覺用戶隱藏
-       * - 對 SEO 爬蟲可見，提供完整的語義結構
-       * - 包含 H1、H2、段落文字（>250 字）
-       */}
+    <div className="skeleton-page p-4 md:p-6" role="status" aria-live="polite">
+      {/* SEO 靜態內容區塊 - 對 SEO 爬蟲可見 */}
       <div className="sr-only">
         <h1>RateWise 匯率好工具 - 即時匯率換算</h1>
         <p>
@@ -60,104 +61,119 @@ export const SkeletonLoader = () => {
         </p>
       </div>
 
-      <div className="mx-auto max-w-4xl space-y-6">
-        {/* Header Skeleton */}
-        <div className="animate-pulse">
-          <div className="h-8 w-48 bg-neutral rounded-lg mb-2"></div>
-          <div className="h-4 w-32 bg-neutral rounded"></div>
+      <div className="mx-auto max-w-md space-y-4">
+        {/* 匯率顯示卡片骨架 - 對應 RateCard */}
+        <div className="skeleton-card p-4 space-y-3">
+          {/* 匯率類型切換器 */}
+          <div className="flex justify-center">
+            <div className="skeleton-shimmer h-7 w-32 rounded-full" />
+          </div>
+
+          {/* 主匯率顯示 */}
+          <div className="text-center space-y-2 py-4">
+            <div className="skeleton-shimmer h-8 w-48 mx-auto rounded-lg" />
+            <div className="skeleton-shimmer h-5 w-36 mx-auto rounded" />
+          </div>
+
+          {/* 迷你趨勢圖區域 */}
+          <div className="skeleton-bg h-20 rounded-xl" />
         </div>
 
-        {/* Mode Switcher Skeleton */}
-        <div className="flex gap-2 mb-4 animate-pulse">
-          <div className="h-10 w-32 bg-neutral rounded-lg"></div>
-          <div className="h-10 w-32 bg-neutral rounded-lg"></div>
-        </div>
-
-        {/* Main Converter Card Skeleton */}
-        <div className="bg-surface rounded-2xl shadow-lg p-6 space-y-4 animate-pulse">
-          {/* Currency Selectors */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="h-4 w-16 bg-neutral rounded"></div>
-              <div className="h-12 bg-neutral rounded-lg"></div>
+        {/* 貨幣選擇器骨架 - From */}
+        <div className="skeleton-card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="skeleton-shimmer w-10 h-10 rounded-full" />
+              <div className="space-y-1.5">
+                <div className="skeleton-shimmer h-5 w-16 rounded" />
+                <div className="skeleton-shimmer h-4 w-24 rounded" />
+              </div>
             </div>
-            <div className="space-y-2">
-              <div className="h-4 w-16 bg-neutral rounded"></div>
-              <div className="h-12 bg-neutral rounded-lg"></div>
-            </div>
+            <div className="skeleton-shimmer h-4 w-4 rounded" />
           </div>
 
-          {/* Amount Input */}
-          <div className="space-y-2">
-            <div className="h-4 w-20 bg-neutral rounded"></div>
-            <div className="h-14 bg-neutral rounded-lg"></div>
-          </div>
+          {/* 金額輸入區域 */}
+          <div className="skeleton-shimmer h-14 w-full rounded-2xl" />
 
-          {/* Result Display */}
-          <div className="bg-primary-bg rounded-xl p-4 space-y-2">
-            <div className="h-6 w-full bg-primary-light rounded"></div>
-            <div className="h-4 w-3/4 bg-primary-light rounded"></div>
-          </div>
-
-          {/* Quick Amounts */}
-          <div className="flex gap-2 flex-wrap">
+          {/* 快速金額按鈕 */}
+          <div className="flex gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-10 w-20 bg-neutral rounded-lg"></div>
+              <div key={i} className="skeleton-shimmer h-8 flex-1 rounded-lg" />
             ))}
           </div>
         </div>
 
-        {/* Trend Chart Skeleton */}
-        <div className="bg-surface rounded-2xl shadow-lg p-6 animate-pulse">
-          <div className="h-4 w-32 bg-neutral rounded mb-4"></div>
-          <div className="h-64 bg-neutral rounded-lg"></div>
+        {/* 交換按鈕骨架 */}
+        <div className="flex justify-center -my-1">
+          <div className="skeleton-shimmer-accent w-10 h-10 rounded-full" />
         </div>
 
-        {/* Favorites Skeleton */}
-        <div className="bg-surface rounded-2xl shadow-lg p-6 animate-pulse">
-          <div className="h-4 w-24 bg-neutral rounded mb-4"></div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 bg-neutral rounded-lg"></div>
+        {/* 貨幣選擇器骨架 - To */}
+        <div className="skeleton-card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="skeleton-shimmer w-10 h-10 rounded-full" />
+              <div className="space-y-1.5">
+                <div className="skeleton-shimmer h-5 w-16 rounded" />
+                <div className="skeleton-shimmer h-4 w-24 rounded" />
+              </div>
+            </div>
+            <div className="skeleton-shimmer h-4 w-4 rounded" />
+          </div>
+
+          {/* 結果顯示區域 */}
+          <div className="skeleton-shimmer-accent h-14 w-full rounded-2xl" />
+        </div>
+
+        {/* 常用貨幣區域骨架 */}
+        <div className="skeleton-card p-4 space-y-3">
+          <div className="skeleton-shimmer h-4 w-24 rounded" />
+          <div className="flex gap-2 flex-wrap">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="skeleton-shimmer h-8 w-16 rounded-lg" />
             ))}
           </div>
         </div>
       </div>
+
       <span className="sr-only">載入匯率資料中...</span>
     </div>
   );
 };
 
 /**
- * Lightweight Currency Card Skeleton
- * 用於貨幣列表的輕量化骨架屏
+ * 貨幣卡片骨架屏
+ * 對應 CurrencyCard 組件
  */
 export const CurrencyCardSkeleton = () => {
   return (
-    <div className="bg-surface rounded-lg p-3 shadow-sm animate-pulse" role="status">
+    <div className="skeleton-card p-3" role="status">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-neutral rounded-full"></div>
+          <div className="skeleton-shimmer w-8 h-8 rounded-full" />
           <div className="space-y-1">
-            <div className="h-4 w-12 bg-neutral rounded"></div>
-            <div className="h-3 w-20 bg-neutral rounded"></div>
+            <div className="skeleton-shimmer h-4 w-12 rounded" />
+            <div className="skeleton-shimmer h-3 w-20 rounded" />
           </div>
         </div>
-        <div className="h-4 w-16 bg-neutral rounded"></div>
+        <div className="skeleton-shimmer h-4 w-16 rounded" />
       </div>
     </div>
   );
 };
 
 /**
- * Converter Mode Skeleton
- * 針對特定轉換模式的骨架屏
+ * 轉換器模式骨架屏
+ * 支援 single/multi 兩種模式
  */
 export const ConverterSkeleton = ({ mode }: { mode: 'single' | 'multi' }) => {
   if (mode === 'multi') {
     return (
-      <div className="space-y-4 animate-pulse" role="status">
-        <div className="h-12 bg-neutral rounded-lg"></div>
+      <div className="space-y-4" role="status">
+        {/* 基準貨幣輸入 */}
+        <div className="skeleton-shimmer h-12 rounded-lg" />
+
+        {/* 貨幣卡片列表 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <CurrencyCardSkeleton key={i} />
@@ -168,12 +184,153 @@ export const ConverterSkeleton = ({ mode }: { mode: 'single' | 'multi' }) => {
   }
 
   return (
-    <div className="space-y-4 animate-pulse" role="status">
+    <div className="space-y-4" role="status">
+      {/* 貨幣選擇器 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="h-14 bg-neutral rounded-lg"></div>
-        <div className="h-14 bg-neutral rounded-lg"></div>
+        <div className="skeleton-shimmer h-14 rounded-lg" />
+        <div className="skeleton-shimmer h-14 rounded-lg" />
       </div>
-      <div className="h-16 bg-primary-light rounded-xl"></div>
+
+      {/* 結果顯示 */}
+      <div className="skeleton-shimmer-accent h-16 rounded-xl" />
+    </div>
+  );
+};
+
+/**
+ * 設定頁面骨架屏
+ * 對應 Settings 頁面布局
+ */
+export const SettingsSkeleton = () => {
+  return (
+    <div className="skeleton-page p-5 max-w-md mx-auto space-y-6" role="status" aria-live="polite">
+      {/* 介面風格區塊 */}
+      <section className="space-y-3">
+        <div className="skeleton-shimmer h-4 w-20 rounded" />
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="skeleton-shimmer h-20 rounded-xl" />
+          ))}
+        </div>
+      </section>
+
+      {/* 語言區塊 */}
+      <section className="space-y-3">
+        <div className="skeleton-shimmer h-4 w-12 rounded" />
+        <div className="skeleton-card p-1.5">
+          <div className="flex gap-1">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="skeleton-shimmer flex-1 h-16 rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 儲存與快取區塊 */}
+      <section className="space-y-3">
+        <div className="skeleton-shimmer h-4 w-24 rounded" />
+        <div className="skeleton-card p-5 space-y-4">
+          <div className="flex justify-between">
+            <div className="skeleton-shimmer h-4 w-24 rounded" />
+            <div className="skeleton-shimmer h-5 w-16 rounded" />
+          </div>
+          <div className="flex justify-between">
+            <div className="skeleton-shimmer h-4 w-20 rounded" />
+            <div className="skeleton-shimmer h-5 w-12 rounded" />
+          </div>
+        </div>
+      </section>
+
+      <span className="sr-only">載入設定中...</span>
+    </div>
+  );
+};
+
+/**
+ * 收藏頁面骨架屏
+ * 對應 Favorites 頁面布局
+ */
+export const FavoritesSkeleton = () => {
+  return (
+    <div className="skeleton-page p-5 max-w-md mx-auto space-y-6" role="status" aria-live="polite">
+      {/* 頁籤切換器 */}
+      <div className="skeleton-card p-1.5">
+        <div className="flex gap-1">
+          {[1, 2].map((i) => (
+            <div key={i} className="skeleton-shimmer flex-1 h-14 rounded-2xl" />
+          ))}
+        </div>
+      </div>
+
+      {/* 常用貨幣列表 */}
+      <section className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="skeleton-card p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="skeleton-shimmer w-10 h-10 rounded-full" />
+                <div className="space-y-1.5">
+                  <div className="skeleton-shimmer h-5 w-20 rounded" />
+                  <div className="skeleton-shimmer h-4 w-28 rounded" />
+                </div>
+              </div>
+              <div className="skeleton-shimmer h-8 w-8 rounded-lg" />
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <span className="sr-only">載入收藏中...</span>
+    </div>
+  );
+};
+
+/**
+ * 多幣別頁面骨架屏
+ * 對應 MultiConverter 頁面布局
+ */
+export const MultiConverterSkeleton = () => {
+  return (
+    <div className="skeleton-page p-5 max-w-md mx-auto space-y-4" role="status" aria-live="polite">
+      {/* 基準貨幣輸入卡片 */}
+      <div className="skeleton-card p-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="skeleton-shimmer w-12 h-12 rounded-full" />
+          <div className="space-y-1.5">
+            <div className="skeleton-shimmer h-5 w-16 rounded" />
+            <div className="skeleton-shimmer h-4 w-24 rounded" />
+          </div>
+        </div>
+        <div className="skeleton-shimmer h-12 w-full rounded-xl" />
+        <div className="flex gap-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="skeleton-shimmer h-8 flex-1 rounded-lg" />
+          ))}
+        </div>
+      </div>
+
+      {/* 貨幣列表 */}
+      <div className="space-y-2">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="skeleton-card p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="skeleton-shimmer w-8 h-8 rounded-full" />
+                <div className="space-y-1">
+                  <div className="skeleton-shimmer h-4 w-12 rounded" />
+                  <div className="skeleton-shimmer h-3 w-20 rounded" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="skeleton-shimmer h-5 w-20 rounded" />
+                <div className="skeleton-shimmer h-6 w-6 rounded" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <span className="sr-only">載入多幣別換算中...</span>
     </div>
   );
 };

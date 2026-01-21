@@ -575,12 +575,80 @@ body {
      （SVG 內部元素不支援 CSS class 樣式）
      ======================================== */
 
-  /* 骨架屏容器背景 */
+  /* ========================================
+     骨架屏設計系統 (Skeleton Screen SSOT)
+     
+     最佳實踐來源：
+     - web.dev/cls (CLS 優化)
+     - smashingmagazine.com/skeleton-screens-react
+     - css-tricks.com/building-skeleton-screens-css-custom-properties
+     ======================================== */
+
+  /* 骨架屏容器背景 - 趨勢圖專用 */
   .skeleton-bg {
     background: linear-gradient(
       to bottom right,
       rgb(var(--color-chart-area-bottom) / 0.15),
       rgb(var(--color-chart-line) / 0.1)
     );
+  }
+
+  /* 骨架屏基礎元素 - 使用主題感知顏色 */
+  .skeleton-base {
+    background-color: rgb(var(--color-border) / 0.6);
+  }
+
+  /* 骨架屏強調元素 - 用於高亮區域 */
+  .skeleton-accent {
+    background-color: rgb(var(--color-primary) / 0.15);
+  }
+
+  /* Shimmer 動畫效果 - 更好的感知速度 */
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-border) / 0.4) 25%,
+      rgb(var(--color-border) / 0.6) 50%,
+      rgb(var(--color-border) / 0.4) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* 強調區域 Shimmer */
+  .skeleton-shimmer-accent {
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-primary) / 0.1) 25%,
+      rgb(var(--color-primary) / 0.2) 50%,
+      rgb(var(--color-primary) / 0.1) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* 骨架屏頁面容器 */
+  .skeleton-page {
+    background-color: rgb(var(--color-background));
+    min-height: 100vh;
+  }
+
+  /* 骨架屏卡片容器 */
+  .skeleton-card {
+    background-color: rgb(var(--color-surface));
+    border-radius: 1.5rem;
+    border: 1px solid rgb(var(--color-border) / 0.5);
+    box-shadow:
+      0 1px 2px 0 rgb(0 0 0 / 0.03),
+      0 1px 3px 0 rgb(0 0 0 / 0.05);
   }
 }
