@@ -100,11 +100,8 @@ describe('MultiConverter', () => {
       expect(screen.getByRole('button', { name: '1,000' })).toBeInTheDocument();
     });
 
-    it('應該顯示即時多幣別換算標籤', () => {
-      render(<MultiConverter {...defaultProps} />);
-
-      expect(screen.getByText(/即時多幣別換算/)).toBeInTheDocument();
-    });
+    // 移除：即時多幣別換算標籤已在簡約設計中移除
+    // 現在頁面使用更簡潔的 UI，標籤在 page 層級而非組件內
   });
 
   describe('快速金額功能', () => {
@@ -150,9 +147,10 @@ describe('MultiConverter', () => {
     it('基準貨幣應該有特殊的樣式', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // TWD 是基準貨幣，應該有警告色背景
+      // TWD 是基準貨幣，應該有 primary 背景和 ring 樣式
       const twdRow = screen.getByText('TWD').closest('div[class*="rounded-xl"]');
-      expect(twdRow).toHaveClass('from-highlight-from');
+      expect(twdRow).toHaveClass('bg-primary/10');
+      expect(twdRow).toHaveClass('ring-2');
     });
   });
 

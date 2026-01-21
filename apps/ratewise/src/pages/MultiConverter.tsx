@@ -104,7 +104,7 @@ export default function MultiConverter() {
   return (
     <div className="h-full overflow-y-auto no-scrollbar pb-32">
       <div className="px-5 py-6 max-w-md mx-auto">
-        {/* 多幣別換算區塊 */}
+        {/* 多幣別換算區塊 - 簡約風格 */}
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Coins className="w-3.5 h-3.5" />
@@ -114,9 +114,6 @@ export default function MultiConverter() {
           </div>
 
           <div className="card p-4">
-            <p className="text-[10px] opacity-60 mb-3 text-center font-medium">
-              {t('multiConverter.description')}
-            </p>
             <MultiConverterComponent
               sortedCurrencies={sortedCurrencies}
               multiAmounts={multiAmounts}

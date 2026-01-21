@@ -150,48 +150,43 @@ export const MultiConverter = ({
 
   return (
     <>
-      <div className="mb-3">
-        <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
-          {t('multiConverter.instantConversion')}{' '}
-          <span className="text-xs text-neutral-text-secondary">
-            ({t('multiConverter.addToFavorites')})
-          </span>
-        </label>
-        <div className="flex gap-2 mb-3 flex-wrap">
-          {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
-            (amount: number) => (
-              <button
-                key={amount}
-                onClick={() => onQuickAmount(amount)}
-                className="px-3 py-1 bg-neutral-light hover:bg-primary-light rounded-lg text-sm font-medium transition"
-              >
-                {amount.toLocaleString()}
-              </button>
-            ),
-          )}
-        </div>
+      {/* 快速金額按鈕 - 簡約風格 */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
+          (amount: number) => (
+            <button
+              key={amount}
+              onClick={() => onQuickAmount(amount)}
+              className="px-3 py-1.5 bg-surface-soft hover:bg-primary/10 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {amount.toLocaleString()}
+            </button>
+          ),
+        )}
       </div>
 
+      {/* 貨幣列表 - SSOT 風格 */}
       <div
-        className="flex-grow overflow-y-auto space-y-2 pr-2"
+        className="flex-grow overflow-y-auto space-y-2"
         tabIndex={0}
         role="region"
         aria-label={t('multiConverter.currencyListLabel')}
       >
         {sortedCurrencies.map((code) => {
           const isFavorite = favorites.includes(code);
+          const isBase = code === baseCurrency;
           return (
             <div
               key={code}
               onClick={() => {
-                if (code !== baseCurrency) {
+                if (!isBase) {
                   onBaseCurrencyChange(code);
                 }
               }}
-              className={`flex items-center justify-between p-3 rounded-xl transition ${
-                code === baseCurrency
-                  ? 'bg-gradient-to-r from-highlight-from to-highlight-to cursor-default'
-                  : 'bg-gradient-to-r from-brand-from to-brand-to cursor-pointer hover:shadow-md'
+              className={`flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${
+                isBase
+                  ? 'bg-primary/10 ring-2 ring-primary/30 cursor-default'
+                  : 'bg-surface-soft cursor-pointer hover:bg-primary/5 hover:shadow-sm active:scale-[0.99]'
               }`}
             >
               <div className="flex items-center gap-3 flex-shrink-0">
@@ -221,10 +216,8 @@ export const MultiConverter = ({
                 </button>
                 <span className="text-2xl">{CURRENCY_DEFINITIONS[code].flag}</span>
                 <div>
-                  <div className="font-semibold text-neutral-text">{code}</div>
-                  <div className="text-xs text-neutral-text-secondary">
-                    {t(`currencies.${code}`)}
-                  </div>
+                  <div className="font-semibold">{code}</div>
+                  <div className="text-xs opacity-60">{t(`currencies.${code}`)}</div>
                 </div>
               </div>
               <div className="flex-grow ml-3 relative">
@@ -252,7 +245,7 @@ export const MultiConverter = ({
                 >
                   {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
                 </div>
-                <div className="text-xs text-right mt-0.5">
+                <div className="text-xs text-right mt-0.5 opacity-70">
                   {(() => {
                     const rateTypeInfo = hasOnlyOneRateType(code);
                     const isDisabled = rateTypeInfo.hasOnlyOne;
@@ -261,7 +254,7 @@ export const MultiConverter = ({
                     return isDisabled ? (
                       <RateTypeTooltip message={rateTypeInfo.reason} isDisabled={true}>
                         <button
-                          className="font-medium text-neutral-text-muted cursor-help hover:text-neutral-text-secondary transition-colors"
+                          className="font-medium opacity-60 cursor-help hover:opacity-80 transition-opacity"
                           aria-label={rateTypeInfo.reason}
                         >
                           {displayType === 'spot'
@@ -275,9 +268,7 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onRateTypeChange(rateType === 'spot' ? 'cash' : 'spot');
                         }}
-                        className={`font-medium transition-colors hover:opacity-80 ${
-                          rateType === 'spot' ? 'text-brand-button-to' : 'text-brand-button-from'
-                        }`}
+                        className="font-semibold text-primary hover:text-primary-hover transition-colors"
                         aria-label={
                           rateType === 'spot'
                             ? t('multiConverter.switchToCash')
@@ -290,7 +281,7 @@ export const MultiConverter = ({
                       </button>
                     );
                   })()}
-                  <span className="text-neutral-text-muted"> · {getRateDisplay(code)}</span>
+                  <span className="opacity-80"> · {getRateDisplay(code)}</span>
                 </div>
               </div>
             </div>

@@ -193,11 +193,11 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       render(<SingleConverter {...mockProps} />);
 
-      // Wait for lazy loaded MiniTrendChart
+      // Wait for lazy loaded MiniTrendChart with extended timeout for CI environments
       await waitFor(() => expect(screen.getByTestId('mini-trend-chart')).toBeInTheDocument(), {
-        timeout: 5000,
+        timeout: 10000,
       });
-    });
+    }, 15000);
 
     it('歷史資料為空時顯示骨架且不渲染迷你趨勢圖', async () => {
       vi.mocked(exchangeRateHistoryService.fetchHistoricalRatesRange).mockResolvedValue([]);

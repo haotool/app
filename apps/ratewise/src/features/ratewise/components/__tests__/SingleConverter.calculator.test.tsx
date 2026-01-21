@@ -10,6 +10,19 @@ vi.mock('../../../../services/exchangeRateHistoryService', () => ({
   fetchLatestRates: vi.fn().mockResolvedValue({ lastUpdate: '2025-11-15', rates: {} }),
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'singleConverter.openCalculatorFrom': 'Open calculator (Amount)',
+        'singleConverter.openCalculatorTo': 'Open calculator (Result)',
+        'calculator.title': 'Calculator',
+      };
+      return translations[key] ?? key;
+    },
+  }),
+}));
+
 const exchangeRates = Object.fromEntries(
   Object.keys(CURRENCY_DEFINITIONS).map((code) => [code, 1]),
 ) as Record<CurrencyCode, number | null>;
@@ -35,10 +48,10 @@ const mockProps = {
 describe('SingleConverter calculator button', () => {
   it('opens calculator keyboard dialog when FROM amount button clicked', async () => {
     render(<SingleConverter {...mockProps} />);
-    fireEvent.click(screen.getByLabelText('開啟計算機 (轉換金額)'));
+    fireEvent.click(screen.getByLabelText('Open calculator (Amount)'));
     await waitFor(
       () => {
-        expect(screen.getByRole('dialog', { name: '計算機' })).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: 'Calculator' })).toBeInTheDocument();
       },
       { timeout: 10000 },
     );
@@ -46,10 +59,10 @@ describe('SingleConverter calculator button', () => {
 
   it('opens calculator keyboard dialog when TO amount button clicked', async () => {
     render(<SingleConverter {...mockProps} />);
-    fireEvent.click(screen.getByLabelText('開啟計算機 (轉換結果)'));
+    fireEvent.click(screen.getByLabelText('Open calculator (Result)'));
     await waitFor(
       () => {
-        expect(screen.getByRole('dialog', { name: '計算機' })).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: 'Calculator' })).toBeInTheDocument();
       },
       { timeout: 10000 },
     );
