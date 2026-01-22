@@ -12,3 +12,12 @@
 [[IgnoredVulns]]
 id = "GHSA-g9mf-h72j-4rw9"
 reason = "Low severity (CVSS 3.7), dev dependency via wrangler/miniflare, waiting for upstream fix"
+
+# GHSA-36p8-mvp6-cv38: wrangler 漏洞 (CVSS 7.7)
+# - 影響版本: 4.51.0
+# - wrangler 是 Cloudflare Workers 本地開發工具
+# - 僅用於開發環境測試，不影響生產環境
+# - 待 Cloudflare 發布修復版本後更新
+[[IgnoredVulns]]
+id = "GHSA-36p8-mvp6-cv38"
+reason = "High severity (CVSS 7.7), wrangler is a dev-only tool for local testing, not used in production"
