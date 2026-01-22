@@ -125,6 +125,28 @@
     --color-footer-from: var(--color-text);
     --color-footer-via: var(--color-text);
     --color-footer-to: var(--color-text);
+
+    /* ========================================
+       計算機按鍵色彩系統 (Zen 預設風格)
+       恢復原本配色：淺灰數字鍵、紫色運算符
+       ======================================== */
+    /* 數字鍵 (0-9, .) - 淺灰背景、深色字 */
+    --color-calc-number: 241 245 249; /* slate-100 */
+    --color-calc-number-text: 51 65 85; /* slate-700 */
+    --color-calc-number-hover: 226 232 240; /* slate-200 */
+    --color-calc-number-active: 203 213 225; /* slate-300 */
+
+    /* 運算符 (+, -, ×, ÷, =) - 紫色背景、白字 */
+    --color-calc-operator: 139 92 246; /* violet-500 */
+    --color-calc-operator-text: 255 255 255; /* white */
+    --color-calc-operator-hover: 124 58 237; /* violet-600 */
+    --color-calc-operator-active: 167 139 250; /* violet-400 */
+
+    /* 功能鍵 (AC, ⌫, %, +/-) - 中灰背景、深色字 */
+    --color-calc-function: 226 232 240; /* slate-200 */
+    --color-calc-function-text: 51 65 85; /* slate-700 */
+    --color-calc-function-hover: 241 245 249; /* slate-100 */
+    --color-calc-function-active: 203 213 225; /* slate-300 */
   }
 
   /* ========================================
@@ -172,6 +194,22 @@
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
+
+    /* 計算機按鍵色彩 - Nitro 霓虹風格 */
+    --color-calc-number: 51 65 85; /* slate-700 - 較淺深色 */
+    --color-calc-number-text: 255 255 255; /* white */
+    --color-calc-number-hover: 71 85 105; /* slate-600 */
+    --color-calc-number-active: 30 41 59; /* slate-800 */
+
+    --color-calc-operator: 34 211 238; /* cyan-400 - 霓虹藍 */
+    --color-calc-operator-text: 15 23 42; /* slate-900 - 深色字 */
+    --color-calc-operator-hover: 6 182 212; /* cyan-500 */
+    --color-calc-operator-active: 103 232 249; /* cyan-300 */
+
+    --color-calc-function: 100 116 139; /* slate-500 - 較淺 */
+    --color-calc-function-text: 248 250 252; /* slate-50 */
+    --color-calc-function-hover: 71 85 105; /* slate-600 */
+    --color-calc-function-active: 51 65 85; /* slate-700 */
   }
 
   /* ========================================
@@ -219,6 +257,22 @@
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
+
+    /* 計算機按鍵色彩 - Kawaii 粉嫩風格 */
+    --color-calc-number: 252 231 243; /* pink-100 - 淺粉 */
+    --color-calc-number-text: 157 23 77; /* pink-800 */
+    --color-calc-number-hover: 251 207 232; /* pink-200 */
+    --color-calc-number-active: 249 168 212; /* pink-300 */
+
+    --color-calc-operator: 236 72 153; /* pink-500 */
+    --color-calc-operator-text: 255 255 255; /* white */
+    --color-calc-operator-hover: 219 39 119; /* pink-600 */
+    --color-calc-operator-active: 244 114 182; /* pink-400 */
+
+    --color-calc-function: 251 207 232; /* pink-200 */
+    --color-calc-function-text: 157 23 77; /* pink-800 */
+    --color-calc-function-hover: 252 231 243; /* pink-100 */
+    --color-calc-function-active: 249 168 212; /* pink-300 */
   }
 
   /* ========================================
@@ -266,6 +320,22 @@
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
+
+    /* 計算機按鍵色彩 - Classic 復古風格 */
+    --color-calc-number: 254 243 199; /* amber-100 - 淺琥珀 */
+    --color-calc-number-text: 120 53 15; /* amber-900 */
+    --color-calc-number-hover: 253 230 138; /* amber-200 */
+    --color-calc-number-active: 252 211 77; /* amber-300 */
+
+    --color-calc-operator: 217 119 6; /* amber-600 */
+    --color-calc-operator-text: 255 255 255; /* white */
+    --color-calc-operator-hover: 180 83 9; /* amber-700 */
+    --color-calc-operator-active: 245 158 11; /* amber-500 */
+
+    --color-calc-function: 253 230 138; /* amber-200 */
+    --color-calc-function-text: 120 53 15; /* amber-900 */
+    --color-calc-function-hover: 254 243 199; /* amber-100 */
+    --color-calc-function-active: 252 211 77; /* amber-300 */
   }
 
   /* ========================================
@@ -313,6 +383,22 @@
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
+
+    /* 計算機按鍵色彩 - Ocean 海洋風格 */
+    --color-calc-number: 224 242 254; /* sky-100 - 淺天藍 */
+    --color-calc-number-text: 7 89 133; /* cyan-800 */
+    --color-calc-number-hover: 186 230 253; /* sky-200 */
+    --color-calc-number-active: 125 211 252; /* sky-300 */
+
+    --color-calc-operator: 6 182 212; /* cyan-500 */
+    --color-calc-operator-text: 255 255 255; /* white */
+    --color-calc-operator-hover: 8 145 178; /* cyan-600 */
+    --color-calc-operator-active: 34 211 238; /* cyan-400 */
+
+    --color-calc-function: 186 230 253; /* sky-200 */
+    --color-calc-function-text: 7 89 133; /* cyan-800 */
+    --color-calc-function-hover: 224 242 254; /* sky-100 */
+    --color-calc-function-active: 125 211 252; /* sky-300 */
   }
 
   /* ========================================
@@ -360,6 +446,22 @@
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
+
+    /* 計算機按鍵色彩 - Forest 森林風格 */
+    --color-calc-number: 220 252 231; /* green-100 - 淺綠 */
+    --color-calc-number-text: 20 83 45; /* green-800 */
+    --color-calc-number-hover: 187 247 208; /* green-200 */
+    --color-calc-number-active: 134 239 172; /* green-300 */
+
+    --color-calc-operator: 16 185 129; /* emerald-500 */
+    --color-calc-operator-text: 255 255 255; /* white */
+    --color-calc-operator-hover: 5 150 105; /* emerald-600 */
+    --color-calc-operator-active: 52 211 153; /* emerald-400 */
+
+    --color-calc-function: 187 247 208; /* green-200 */
+    --color-calc-function-text: 20 83 45; /* green-800 */
+    --color-calc-function-hover: 220 252 231; /* green-100 */
+    --color-calc-function-active: 134 239 172; /* green-300 */
   }
 }
 

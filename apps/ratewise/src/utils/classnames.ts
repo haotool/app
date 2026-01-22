@@ -97,6 +97,47 @@ export const tokenClasses = {
     active: 'active:bg-warning-active',
     all: 'bg-warning-light text-warning hover:bg-warning-hover active:bg-warning-active',
   },
+
+  /* ========================================
+     計算機專用 Token (iOS-inspired 三色分組)
+     參考：Apple Calculator、UX Collective 最佳實踐
+     - 數字鍵：深灰背景、白字
+     - 運算符：橙色背景、白字（含等號）
+     - 功能鍵：淺灰背景、深色字（AC, ⌫, %, +/-）
+     ======================================== */
+
+  /**
+   * 計算機數字鍵 (0-9, .)
+   * 深灰背景、白字 - 背景級視覺優先
+   */
+  calcNumber: {
+    base: 'bg-calc-number text-calc-number-text',
+    hover: 'hover:bg-calc-number-hover',
+    active: 'active:bg-calc-number-active',
+    all: 'bg-calc-number text-calc-number-text hover:bg-calc-number-hover active:bg-calc-number-active',
+  },
+
+  /**
+   * 計算機運算符 (+, -, ×, ÷, =)
+   * 橙色背景、白字 - 最高視覺優先級
+   */
+  calcOperator: {
+    base: 'bg-calc-operator text-calc-operator-text',
+    hover: 'hover:bg-calc-operator-hover',
+    active: 'active:bg-calc-operator-active',
+    all: 'bg-calc-operator text-calc-operator-text hover:bg-calc-operator-hover active:bg-calc-operator-active',
+  },
+
+  /**
+   * 計算機功能鍵 (AC, ⌫, %, +/-)
+   * 淺灰背景、深色字 - 中等視覺優先級
+   */
+  calcFunction: {
+    base: 'bg-calc-function text-calc-function-text',
+    hover: 'hover:bg-calc-function-hover',
+    active: 'active:bg-calc-function-active',
+    all: 'bg-calc-function text-calc-function-text hover:bg-calc-function-hover active:bg-calc-function-active',
+  },
 } as const;
 
 /**

@@ -75,6 +75,20 @@ export default {
           foreground: 'rgb(var(--color-sidebar-foreground) / <alpha-value>)',
           active: 'rgb(var(--color-sidebar-active) / <alpha-value>)',
         },
+        // 計算機按鍵專用色彩（iOS-inspired 三色分組）
+        // @see docs/dev/xxx_calculator_color_system.md
+        'calc-number': 'rgb(var(--color-calc-number) / <alpha-value>)',
+        'calc-number-text': 'rgb(var(--color-calc-number-text) / <alpha-value>)',
+        'calc-number-hover': 'rgb(var(--color-calc-number-hover) / <alpha-value>)',
+        'calc-number-active': 'rgb(var(--color-calc-number-active) / <alpha-value>)',
+        'calc-operator': 'rgb(var(--color-calc-operator) / <alpha-value>)',
+        'calc-operator-text': 'rgb(var(--color-calc-operator-text) / <alpha-value>)',
+        'calc-operator-hover': 'rgb(var(--color-calc-operator-hover) / <alpha-value>)',
+        'calc-operator-active': 'rgb(var(--color-calc-operator-active) / <alpha-value>)',
+        'calc-function': 'rgb(var(--color-calc-function) / <alpha-value>)',
+        'calc-function-text': 'rgb(var(--color-calc-function-text) / <alpha-value>)',
+        'calc-function-hover': 'rgb(var(--color-calc-function-hover) / <alpha-value>)',
+        'calc-function-active': 'rgb(var(--color-calc-function-active) / <alpha-value>)',
         // 保留舊版 token 向後相容
         ...generateTailwindThemeExtension().extend?.colors,
       },

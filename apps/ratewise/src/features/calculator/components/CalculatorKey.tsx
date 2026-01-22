@@ -41,48 +41,50 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
    * 按鍵樣式映射
    * @description 根據按鍵類型返回對應的 Tailwind CSS 類別
    *
-   * 🔄 重構 2026-01-12: 遷移到 Design Token 系統
-   * - Phase 1: 使用語義化色彩類別（neutral, primary, danger, warning）
-   * - Phase 2: 使用 classnames.ts 工具函數簡化邏輯（減少 20 行程式碼）
-   * @see src/config/design-tokens.ts - SSOT Design Token 定義
-   * @see src/utils/classnames.ts - 類別名稱工具函數
-   * @see docs/dev/005_design_token_refactoring.md - 技術決策記錄
+   * 🔄 重構 2026-01-22: 遷移到計算機專用 Design Token 系統 (iOS-inspired)
+   * - 數字鍵：calcNumber（深灰背景、白字）
+   * - 運算符：calcOperator（橙色背景、白字）- 含等號
+   * - 功能鍵：calcFunction（淺灰背景、深色字）- AC, ⌫, %, +/-
+   *
+   * @see src/utils/classnames.ts - 計算機專用 token 類別
+   * @see src/index.css - 6 種風格的 CSS Variables 定義
+   * @see Apple Calculator、UX Collective 最佳實踐
    *
    * 🐛 修復：移除 transition-all，避免與 Motion 動畫衝突
    * @see Bug Report 2025-11-19 - 按鈕放大動畫未顯現
    */
   const getKeyStyles = (): string => {
-    // 數字鍵樣式（中性色系）
+    // 數字鍵樣式（深灰背景、白字）- 背景級視覺優先
     if (type === 'number' || type === 'decimal') {
-      return getCalculatorKeyClasses('neutral', { size: 'text-2xl' });
+      return getCalculatorKeyClasses('calcNumber', { size: 'text-2xl' });
     }
 
-    // 運算符鍵樣式（品牌主色）- 添加 calculator-key--operator 以支援客製化漣漪
+    // 運算符鍵樣式（橙色背景、白字）- 最高視覺優先級
     if (type === 'operator') {
-      return getCalculatorKeyClasses('primaryLight', {
+      return getCalculatorKeyClasses('calcOperator', {
         size: 'text-2xl',
         customClass: 'calculator-key--operator',
       });
     }
 
-    // 清除鍵樣式（危險色系）
+    // 清除鍵樣式（淺灰背景、深色字）- iOS 標準
     if (value === 'clear') {
-      return getCalculatorKeyClasses('danger', { size: 'text-lg' });
+      return getCalculatorKeyClasses('calcFunction', { size: 'text-lg' });
     }
 
-    // 刪除鍵樣式（警告色系）
+    // 刪除鍵樣式（淺灰背景、深色字）- iOS 標準
     if (value === 'backspace') {
-      return getCalculatorKeyClasses('warning', { size: 'text-lg' });
+      return getCalculatorKeyClasses('calcFunction', { size: 'text-lg' });
     }
 
-    // 功能鍵樣式（%, +/-）- 中性色系（iOS 標準淺灰色）
+    // 功能鍵樣式（%, +/-）- 淺灰背景、深色字
     if (value === 'percent' || value === 'negate') {
-      return getCalculatorKeyClasses('neutralFunction', { size: 'text-lg' });
+      return getCalculatorKeyClasses('calcFunction', { size: 'text-lg' });
     }
 
-    // 計算鍵樣式（=）- 品牌主色強調
+    // 等號鍵樣式（=）- 與運算符同色（iOS 標準）
     if (value === 'calculate') {
-      return getCalculatorKeyClasses('primaryStrong', {
+      return getCalculatorKeyClasses('calcOperator', {
         size: 'text-2xl',
         customClass: 'calculator-key--equals',
       });

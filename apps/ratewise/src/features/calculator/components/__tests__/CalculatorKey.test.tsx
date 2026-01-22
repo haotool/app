@@ -427,17 +427,17 @@ describe('CalculatorKey Component - BDD Tests', () => {
       render(<CalculatorKey keyDef={keyDef} onClick={vi.fn()} />);
       const button = screen.getByRole('button', { name: '數字 0' });
 
-      // Then: 驗證樣式類別包含基礎樣式和語義化 token
+      // Then: 驗證樣式類別包含基礎樣式和計算機專用 token
       expect(button).toHaveClass('calculator-key');
-      // 🟢 GREEN: 驗證使用語義化 token 而非硬編碼顏色
-      expect(button.className).toContain('bg-neutral-light'); // 數字鍵背景色（語義化）
-      expect(button.className).toContain('text-neutral-text'); // 數字鍵文字色（語義化）
-      // 確認不再使用硬編碼類別
+      // 🟢 GREEN: 驗證使用計算機專用 token (iOS-inspired)
+      expect(button.className).toContain('bg-calc-number'); // 數字鍵背景色（深灰）
+      expect(button.className).toContain('text-calc-number-text'); // 數字鍵文字色（白）
+      // 確認不再使用舊的 neutral 類別
+      expect(button.className).not.toContain('bg-neutral-light');
       expect(button.className).not.toContain('bg-slate-100');
-      expect(button.className).not.toContain('text-slate-900');
     });
 
-    it('應該為運算符鍵套用正確樣式（使用語義化 token）', () => {
+    it('應該為運算符鍵套用正確樣式（使用計算機專用 token）', () => {
       // Given: 準備測試數據
       const keyDef: KeyDefinition = {
         label: '-',
@@ -450,14 +450,14 @@ describe('CalculatorKey Component - BDD Tests', () => {
       render(<CalculatorKey keyDef={keyDef} onClick={vi.fn()} />);
       const button = screen.getByRole('button', { name: '減法' });
 
-      // Then: 驗證樣式類別（語義化 token）
+      // Then: 驗證樣式類別（計算機專用 token）
       expect(button).toHaveClass('calculator-key--operator');
-      // 🟢 GREEN: 驗證使用語義化 token 而非硬編碼顏色
-      expect(button.className).toContain('bg-primary-light'); // 運算符鍵背景色（語義化）
-      expect(button.className).toContain('text-primary-text'); // 運算符鍵文字色（語義化）
-      // 確認不再使用硬編碼類別
+      // 🟢 GREEN: 驗證使用計算機專用 token (iOS-inspired 橙色)
+      expect(button.className).toContain('bg-calc-operator'); // 運算符鍵背景色（橙色）
+      expect(button.className).toContain('text-calc-operator-text'); // 運算符鍵文字色（白）
+      // 確認不再使用舊的 primary 類別
+      expect(button.className).not.toContain('bg-primary-light');
       expect(button.className).not.toContain('bg-violet-100');
-      expect(button.className).not.toContain('text-violet-700');
     });
   });
 });
