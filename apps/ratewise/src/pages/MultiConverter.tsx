@@ -57,8 +57,14 @@ export default function MultiConverter() {
     quickAmount,
     toggleFavorite,
     setBaseCurrency,
+    setMode,
     baseCurrency,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
+
+  // Set mode to 'multi' on mount
+  useEffect(() => {
+    setMode('multi');
+  }, [setMode]);
 
   const handleQuickAmount = useCallback(
     (amount: number) => {
