@@ -1,20 +1,21 @@
 /**
  * CalculatorKey - Design Token Integration Test
- * 測試組件正確使用 Design Token（iOS-inspired 計算機專用 token）
+ * 測試組件正確使用 Design Token（計算機專用 token）
  *
  * @see docs/prompt/BDD.md - BDD Given-When-Then 測試格式
  * @see src/utils/classnames.ts - 計算機專用 token 類別
  * @see src/index.css - 6 種風格的 CSS Variables 定義
  *
- * 🟢 GREEN Phase: 組件已遷移到 iOS-inspired 計算機配色系統
- * - 數字鍵使用 calc-number-* 類別（深灰背景、白字）
- * - 運算符鍵使用 calc-operator-* 類別（橙色背景、白字）- 含等號
+ * 🟢 GREEN Phase: 組件已遷移到計算機配色系統
+ * - 數字鍵使用 calc-number-* 類別（淺灰背景、深色字）
+ * - 運算符鍵使用 calc-operator-* 類別（淺色背景、深色字）
+ * - 等號鍵使用 calc-equals-* 類別（深色背景、淺色字）- 最高視覺優先
  * - 功能鍵使用 calc-function-* 類別（淺灰背景、深色字）- AC, ⌫, %, +/-
  *
  * @reference Apple Calculator、UX Collective 最佳實踐
  * @created 2026-01-12
- * @updated 2026-01-22 - 遷移到 iOS-inspired 計算機配色系統
- * @version 2.0.0
+ * @updated 2026-01-23 - 分離運算符與等號配色，等號使用深色強調
+ * @version 3.0.0
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -163,7 +164,7 @@ describe('CalculatorKey - Design Token Integration', () => {
           expect(button?.className).not.toContain('bg-violet-100');
         });
 
-        it('Then: 等號鍵應該與運算符使用相同配色（iOS 標準）', () => {
+        it('Then: 等號鍵應該使用 calc-equals-* 類別（深色強調，最高視覺優先）', () => {
           const keyDef: KeyDefinition = {
             label: '=',
             value: 'calculate',
@@ -175,10 +176,11 @@ describe('CalculatorKey - Design Token Integration', () => {
 
           const button = container.querySelector('button');
 
-          // 🟢 GREEN: 等號鍵使用 calc-operator（與運算符同色 - iOS 標準）
-          expect(button?.className).toContain('bg-calc-operator');
-          expect(button?.className).toContain('text-calc-operator-text');
+          // 🟢 GREEN: 等號鍵使用 calc-equals（深色強調 - 最高視覺優先級）
+          expect(button?.className).toContain('bg-calc-equals');
+          expect(button?.className).toContain('text-calc-equals-text');
           expect(button?.className).not.toContain('bg-primary');
+          expect(button?.className).not.toContain('bg-calc-operator');
         });
       });
 

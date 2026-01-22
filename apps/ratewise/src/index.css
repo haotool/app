@@ -128,7 +128,7 @@
 
     /* ========================================
        計算機按鍵色彩系統 (Zen 預設風格)
-       恢復原本配色：淺灰數字鍵、紫色運算符
+       三種按鍵：數字鍵（淺灰）、運算符（淺紫）、等號（深紫）
        ======================================== */
     /* 數字鍵 (0-9, .) - 淺灰背景、深色字 */
     --color-calc-number: 241 245 249; /* slate-100 */
@@ -136,11 +136,17 @@
     --color-calc-number-hover: 226 232 240; /* slate-200 */
     --color-calc-number-active: 203 213 225; /* slate-300 */
 
-    /* 運算符 (+, -, ×, ÷, =) - 紫色背景、白字 */
-    --color-calc-operator: 139 92 246; /* violet-500 */
-    --color-calc-operator-text: 255 255 255; /* white */
-    --color-calc-operator-hover: 124 58 237; /* violet-600 */
-    --color-calc-operator-active: 167 139 250; /* violet-400 */
+    /* 運算符 (+, -, ×, ÷) - 淺紫背景、深紫字 */
+    --color-calc-operator: 237 233 254; /* violet-100 */
+    --color-calc-operator-text: 109 40 217; /* violet-700 */
+    --color-calc-operator-hover: 221 214 254; /* violet-200 */
+    --color-calc-operator-active: 196 181 253; /* violet-300 */
+
+    /* 等號 (=) - 深紫背景、白字 - 最高視覺優先 */
+    --color-calc-equals: 139 92 246; /* violet-500 */
+    --color-calc-equals-text: 255 255 255; /* white */
+    --color-calc-equals-hover: 124 58 237; /* violet-600 */
+    --color-calc-equals-active: 167 139 250; /* violet-400 */
 
     /* 功能鍵 (AC, ⌫, %, +/-) - 中灰背景、深色字 */
     --color-calc-function: 226 232 240; /* slate-200 */
@@ -195,21 +201,33 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
-    /* 計算機按鍵色彩 - Nitro 霓虹風格 */
-    --color-calc-number: 51 65 85; /* slate-700 - 較淺深色 */
-    --color-calc-number-text: 255 255 255; /* white */
-    --color-calc-number-hover: 71 85 105; /* slate-600 */
-    --color-calc-number-active: 30 41 59; /* slate-800 */
+    /* 計算機按鍵色彩 - Nitro 深色科技感
+       數字鍵/功能鍵：深灰階一致風格
+       運算符/等號：霓虹藍主色調 */
 
-    --color-calc-operator: 34 211 238; /* cyan-400 - 霓虹藍 */
-    --color-calc-operator-text: 15 23 42; /* slate-900 - 深色字 */
-    --color-calc-operator-hover: 6 182 212; /* cyan-500 */
-    --color-calc-operator-active: 103 232 249; /* cyan-300 */
+    /* 數字鍵 - 深灰背景、白字 */
+    --color-calc-number: 30 41 59; /* slate-800 */
+    --color-calc-number-text: 226 232 240; /* slate-200 */
+    --color-calc-number-hover: 51 65 85; /* slate-700 */
+    --color-calc-number-active: 15 23 42; /* slate-900 */
 
-    --color-calc-function: 100 116 139; /* slate-500 - 較淺 */
-    --color-calc-function-text: 248 250 252; /* slate-50 */
+    /* 功能鍵 - 略亮深灰背景、白字 */
+    --color-calc-function: 51 65 85; /* slate-700 */
+    --color-calc-function-text: 203 213 225; /* slate-300 */
     --color-calc-function-hover: 71 85 105; /* slate-600 */
-    --color-calc-function-active: 51 65 85; /* slate-700 */
+    --color-calc-function-active: 30 41 59; /* slate-800 */
+
+    /* 運算符 - 深青背景、亮青字（霓虹風格） */
+    --color-calc-operator: 22 78 99; /* cyan-900 */
+    --color-calc-operator-text: 103 232 249; /* cyan-300 */
+    --color-calc-operator-hover: 21 94 117; /* cyan-800 */
+    --color-calc-operator-active: 14 116 144; /* cyan-700 */
+
+    /* 等號 - 霓虹藍背景、深色字（最高視覺優先） */
+    --color-calc-equals: 34 211 238; /* cyan-400 */
+    --color-calc-equals-text: 15 23 42; /* slate-900 */
+    --color-calc-equals-hover: 6 182 212; /* cyan-500 */
+    --color-calc-equals-active: 103 232 249; /* cyan-300 */
   }
 
   /* ========================================
@@ -258,21 +276,35 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
-    /* 計算機按鍵色彩 - Kawaii 粉嫩風格 */
-    --color-calc-number: 252 231 243; /* pink-100 - 淺粉 */
-    --color-calc-number-text: 157 23 77; /* pink-800 */
-    --color-calc-number-hover: 251 207 232; /* pink-200 */
-    --color-calc-number-active: 249 168 212; /* pink-300 */
+    /* 計算機按鍵色彩 - Kawaii 風格
+       背景：warm cream (255 250 244)
+       數字鍵：淺玫瑰色（接近白色但非純白，配合粉嫩風格）
+       功能鍵：粉玫瑰色（配合溫暖背景）
+       運算符/等號：粉紅主色調 */
 
-    --color-calc-operator: 236 72 153; /* pink-500 */
-    --color-calc-operator-text: 255 255 255; /* white */
-    --color-calc-operator-hover: 219 39 119; /* pink-600 */
-    --color-calc-operator-active: 244 114 182; /* pink-400 */
+    /* 數字鍵 - 淺玫瑰色背景（接近白色但帶粉調） */
+    --color-calc-number: 255 251 252; /* rose-50 lighter - 比純白柔和 */
+    --color-calc-number-text: 142 124 128; /* muted pink-brown */
+    --color-calc-number-hover: 255 241 242; /* rose-50 */
+    --color-calc-number-active: 255 228 230; /* rose-100 */
 
-    --color-calc-function: 251 207 232; /* pink-200 */
+    /* 功能鍵 - 玫瑰色調（配合溫暖背景） */
+    --color-calc-function: 255 228 225; /* misty rose */
     --color-calc-function-text: 157 23 77; /* pink-800 */
-    --color-calc-function-hover: 252 231 243; /* pink-100 */
-    --color-calc-function-active: 249 168 212; /* pink-300 */
+    --color-calc-function-hover: 255 241 242; /* rose-50 */
+    --color-calc-function-active: 254 205 211; /* rose-200 */
+
+    /* 運算符 - 淺粉背景、深粉字 */
+    --color-calc-operator: 252 231 243; /* pink-100 */
+    --color-calc-operator-text: 190 24 93; /* pink-700 */
+    --color-calc-operator-hover: 251 207 232; /* pink-200 */
+    --color-calc-operator-active: 249 168 212; /* pink-300 */
+
+    /* 等號 - 深粉背景、白字（最高視覺優先） */
+    --color-calc-equals: 236 72 153; /* pink-500 */
+    --color-calc-equals-text: 255 255 255; /* white */
+    --color-calc-equals-hover: 219 39 119; /* pink-600 */
+    --color-calc-equals-active: 244 114 182; /* pink-400 */
   }
 
   /* ========================================
@@ -321,21 +353,35 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
-    /* 計算機按鍵色彩 - Classic 復古風格 */
-    --color-calc-number: 254 243 199; /* amber-100 - 淺琥珀 */
-    --color-calc-number-text: 120 53 15; /* amber-900 */
-    --color-calc-number-hover: 253 230 138; /* amber-200 */
-    --color-calc-number-active: 252 211 77; /* amber-300 */
+    /* 計算機按鍵色彩 - Classic 風格
+       背景：warm white/象牙白 (255 250 251)
+       數字鍵：淺羊皮紙色（接近白色但非純白，配合復古風格）
+       功能鍵：淺琥珀色（配合復古風格）
+       運算符/等號：琥珀主色調 */
 
-    --color-calc-operator: 217 119 6; /* amber-600 */
-    --color-calc-operator-text: 255 255 255; /* white */
-    --color-calc-operator-hover: 180 83 9; /* amber-700 */
-    --color-calc-operator-active: 245 158 11; /* amber-500 */
+    /* 數字鍵 - 淺羊皮紙色背景（接近白色但帶暖調） */
+    --color-calc-number: 255 254 250; /* yellow-50 lighter - 比純白溫暖 */
+    --color-calc-number-text: 67 20 7; /* dark brown */
+    --color-calc-number-hover: 254 252 232; /* yellow-50 */
+    --color-calc-number-active: 254 249 195; /* yellow-100 */
 
-    --color-calc-function: 253 230 138; /* amber-200 */
+    /* 功能鍵 - 淺亞麻色（配合復古風格） */
+    --color-calc-function: 254 249 195; /* yellow-100 - 羊皮紙色 */
     --color-calc-function-text: 120 53 15; /* amber-900 */
-    --color-calc-function-hover: 254 243 199; /* amber-100 */
-    --color-calc-function-active: 252 211 77; /* amber-300 */
+    --color-calc-function-hover: 254 252 232; /* yellow-50 */
+    --color-calc-function-active: 253 230 138; /* amber-200 */
+
+    /* 運算符 - 淺琥珀背景、深琥珀字 */
+    --color-calc-operator: 254 243 199; /* amber-100 */
+    --color-calc-operator-text: 180 83 9; /* amber-700 */
+    --color-calc-operator-hover: 253 230 138; /* amber-200 */
+    --color-calc-operator-active: 252 211 77; /* amber-300 */
+
+    /* 等號 - 深琥珀背景、白字（最高視覺優先） */
+    --color-calc-equals: 217 119 6; /* amber-600 */
+    --color-calc-equals-text: 255 255 255; /* white */
+    --color-calc-equals-hover: 180 83 9; /* amber-700 */
+    --color-calc-equals-active: 245 158 11; /* amber-500 */
   }
 
   /* ========================================
@@ -384,21 +430,35 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
-    /* 計算機按鍵色彩 - Ocean 海洋風格 */
-    --color-calc-number: 224 242 254; /* sky-100 - 淺天藍 */
+    /* 計算機按鍵色彩 - Ocean 風格
+       背景：sky-50 (240 249 255)
+       數字鍵：淺天藍色（接近白色但非純白，配合海洋風格）
+       功能鍵：淺天藍色（配合海洋風格）
+       運算符/等號：青藍主色調 */
+
+    /* 數字鍵 - 淺天藍色背景（接近白色但帶藍調） */
+    --color-calc-number: 252 254 255; /* sky-50 lighter - 比純白清涼 */
     --color-calc-number-text: 7 89 133; /* cyan-800 */
-    --color-calc-number-hover: 186 230 253; /* sky-200 */
-    --color-calc-number-active: 125 211 252; /* sky-300 */
+    --color-calc-number-hover: 240 249 255; /* sky-50 */
+    --color-calc-number-active: 224 242 254; /* sky-100 */
 
-    --color-calc-operator: 6 182 212; /* cyan-500 */
-    --color-calc-operator-text: 255 255 255; /* white */
-    --color-calc-operator-hover: 8 145 178; /* cyan-600 */
-    --color-calc-operator-active: 34 211 238; /* cyan-400 */
+    /* 功能鍵 - 淺天藍色（配合海洋風格） */
+    --color-calc-function: 224 242 254; /* sky-100 */
+    --color-calc-function-text: 3 105 161; /* sky-700 */
+    --color-calc-function-hover: 240 249 255; /* sky-50 */
+    --color-calc-function-active: 186 230 253; /* sky-200 */
 
-    --color-calc-function: 186 230 253; /* sky-200 */
-    --color-calc-function-text: 7 89 133; /* cyan-800 */
-    --color-calc-function-hover: 224 242 254; /* sky-100 */
-    --color-calc-function-active: 125 211 252; /* sky-300 */
+    /* 運算符 - 淺青背景、深青字 */
+    --color-calc-operator: 207 250 254; /* cyan-100 */
+    --color-calc-operator-text: 14 116 144; /* cyan-700 */
+    --color-calc-operator-hover: 165 243 252; /* cyan-200 */
+    --color-calc-operator-active: 103 232 249; /* cyan-300 */
+
+    /* 等號 - 深青背景、白字（最高視覺優先） */
+    --color-calc-equals: 6 182 212; /* cyan-500 */
+    --color-calc-equals-text: 255 255 255; /* white */
+    --color-calc-equals-hover: 8 145 178; /* cyan-600 */
+    --color-calc-equals-active: 34 211 238; /* cyan-400 */
   }
 
   /* ========================================
@@ -447,21 +507,35 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
-    /* 計算機按鍵色彩 - Forest 森林風格 */
-    --color-calc-number: 220 252 231; /* green-100 - 淺綠 */
+    /* 計算機按鍵色彩 - Forest 風格
+       背景：green-50 (240 253 244)
+       數字鍵：淺薄荷色（接近白色但非純白，配合森林風格）
+       功能鍵：淺綠色（配合森林風格）
+       運算符/等號：翠綠主色調 */
+
+    /* 數字鍵 - 淺薄荷色背景（接近白色但帶綠調） */
+    --color-calc-number: 252 255 253; /* green-50 lighter - 比純白清新 */
     --color-calc-number-text: 20 83 45; /* green-800 */
-    --color-calc-number-hover: 187 247 208; /* green-200 */
-    --color-calc-number-active: 134 239 172; /* green-300 */
+    --color-calc-number-hover: 240 253 244; /* green-50 */
+    --color-calc-number-active: 220 252 231; /* green-100 */
 
-    --color-calc-operator: 16 185 129; /* emerald-500 */
-    --color-calc-operator-text: 255 255 255; /* white */
-    --color-calc-operator-hover: 5 150 105; /* emerald-600 */
-    --color-calc-operator-active: 52 211 153; /* emerald-400 */
+    /* 功能鍵 - 淺綠色（配合森林風格） */
+    --color-calc-function: 220 252 231; /* green-100 */
+    --color-calc-function-text: 21 128 61; /* green-700 */
+    --color-calc-function-hover: 240 253 244; /* green-50 */
+    --color-calc-function-active: 187 247 208; /* green-200 */
 
-    --color-calc-function: 187 247 208; /* green-200 */
-    --color-calc-function-text: 20 83 45; /* green-800 */
-    --color-calc-function-hover: 220 252 231; /* green-100 */
-    --color-calc-function-active: 134 239 172; /* green-300 */
+    /* 運算符 - 淺翠綠背景、深綠字 */
+    --color-calc-operator: 209 250 229; /* emerald-100 */
+    --color-calc-operator-text: 4 120 87; /* emerald-700 */
+    --color-calc-operator-hover: 167 243 208; /* emerald-200 */
+    --color-calc-operator-active: 110 231 183; /* emerald-300 */
+
+    /* 等號 - 深綠背景、白字（最高視覺優先） */
+    --color-calc-equals: 16 185 129; /* emerald-500 */
+    --color-calc-equals-text: 255 255 255; /* white */
+    --color-calc-equals-hover: 5 150 105; /* emerald-600 */
+    --color-calc-equals-active: 52 211 153; /* emerald-400 */
   }
 }
 

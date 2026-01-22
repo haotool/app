@@ -89,6 +89,11 @@ export default {
         'calc-function-text': 'rgb(var(--color-calc-function-text) / <alpha-value>)',
         'calc-function-hover': 'rgb(var(--color-calc-function-hover) / <alpha-value>)',
         'calc-function-active': 'rgb(var(--color-calc-function-active) / <alpha-value>)',
+        // 等號鍵專用色彩（深色強調）
+        'calc-equals': 'rgb(var(--color-calc-equals) / <alpha-value>)',
+        'calc-equals-text': 'rgb(var(--color-calc-equals-text) / <alpha-value>)',
+        'calc-equals-hover': 'rgb(var(--color-calc-equals-hover) / <alpha-value>)',
+        'calc-equals-active': 'rgb(var(--color-calc-equals-active) / <alpha-value>)',
         // 保留舊版 token 向後相容
         ...generateTailwindThemeExtension().extend?.colors,
       },

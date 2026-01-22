@@ -138,6 +138,17 @@ export const tokenClasses = {
     active: 'active:bg-calc-function-active',
     all: 'bg-calc-function text-calc-function-text hover:bg-calc-function-hover active:bg-calc-function-active',
   },
+
+  /**
+   * 計算機等號鍵 (=)
+   * 深色背景、淺色字 - 最高視覺優先級，強調執行動作
+   */
+  calcEquals: {
+    base: 'bg-calc-equals text-calc-equals-text',
+    hover: 'hover:bg-calc-equals-hover',
+    active: 'active:bg-calc-equals-active',
+    all: 'bg-calc-equals text-calc-equals-text hover:bg-calc-equals-hover active:bg-calc-equals-active',
+  },
 } as const;
 
 /**

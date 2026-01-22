@@ -52,14 +52,18 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
    *
    * 🐛 修復：移除 transition-all，避免與 Motion 動畫衝突
    * @see Bug Report 2025-11-19 - 按鈕放大動畫未顯現
+   *
+   * 🔄 重構 2026-01-23: 分離運算符與等號樣式
+   * - 運算符（+, -, ×, ÷）：淺色背景、深色字
+   * - 等號（=）：深色背景、淺色字（最高視覺優先）
    */
   const getKeyStyles = (): string => {
-    // 數字鍵樣式（深灰背景、白字）- 背景級視覺優先
+    // 數字鍵樣式（淺灰背景、深色字）- 背景級視覺優先
     if (type === 'number' || type === 'decimal') {
       return getCalculatorKeyClasses('calcNumber', { size: 'text-2xl' });
     }
 
-    // 運算符鍵樣式（橙色背景、白字）- 最高視覺優先級
+    // 運算符鍵樣式（淺色背景、深色字）- 中等視覺優先級
     if (type === 'operator') {
       return getCalculatorKeyClasses('calcOperator', {
         size: 'text-2xl',
@@ -82,9 +86,9 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
       return getCalculatorKeyClasses('calcFunction', { size: 'text-lg' });
     }
 
-    // 等號鍵樣式（=）- 與運算符同色（iOS 標準）
+    // 等號鍵樣式（=）- 深色背景、淺色字（最高視覺優先級）
     if (value === 'calculate') {
-      return getCalculatorKeyClasses('calcOperator', {
+      return getCalculatorKeyClasses('calcEquals', {
         size: 'text-2xl',
         customClass: 'calculator-key--equals',
       });
