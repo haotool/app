@@ -167,7 +167,7 @@ export const MultiConverter = ({
 
       {/* 貨幣列表 - SSOT 風格 */}
       <div
-        className="flex-grow overflow-y-auto space-y-2"
+        className="flex-grow overflow-y-auto overflow-x-visible space-y-2 -mx-1 px-1"
         tabIndex={0}
         role="region"
         aria-label={t('multiConverter.currencyListLabel')}
@@ -183,19 +183,20 @@ export const MultiConverter = ({
                   onBaseCurrencyChange(code);
                 }
               }}
-              className={`flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 ${
                 isBase
                   ? 'bg-primary/10 ring-2 ring-primary/30 cursor-default'
                   : 'bg-surface-soft cursor-pointer hover:bg-primary/5 hover:shadow-sm active:scale-[0.99]'
               }`}
             >
-              <div className="flex items-center gap-3 flex-shrink-0">
+              {/* 左側：星星 + 國旗 + 貨幣資訊 */}
+              <div className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggleFavorite(code);
                   }}
-                  className="hover:scale-110 transition"
+                  className="hover:scale-110 transition flex-shrink-0"
                   type="button"
                   aria-label={
                     isFavorite
@@ -210,17 +211,21 @@ export const MultiConverter = ({
                 >
                   <Star
                     className={isFavorite ? 'text-favorite' : 'text-text-muted'}
-                    size={18}
+                    size={16}
                     fill={isFavorite ? 'currentColor' : 'none'}
                   />
                 </button>
-                <span className="text-2xl">{CURRENCY_DEFINITIONS[code].flag}</span>
-                <div>
-                  <div className="font-semibold">{code}</div>
-                  <div className="text-xs opacity-60">{t(`currencies.${code}`)}</div>
+                <span className="text-xl flex-shrink-0">{CURRENCY_DEFINITIONS[code].flag}</span>
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm leading-tight">{code}</div>
+                  <div className="text-[11px] opacity-60 leading-tight truncate">
+                    {t(`currencies.${code}`)}
+                  </div>
                 </div>
               </div>
-              <div className="flex-grow ml-3 relative">
+
+              {/* 右側：金額 + 匯率資訊（與左側對齊） */}
+              <div className="flex-1 min-w-0 ml-2">
                 <div
                   ref={(el) => {
                     inputRefs.current[code] = el;
@@ -228,7 +233,7 @@ export const MultiConverter = ({
                   role="button"
                   tabIndex={0}
                   onClick={(e) => {
-                    e.stopPropagation(); // 防止觸發行 onClick（切換基準貨幣）
+                    e.stopPropagation();
                     calculator.openCalculator(code);
                   }}
                   onKeyDown={(e) => {
@@ -237,7 +242,7 @@ export const MultiConverter = ({
                       calculator.openCalculator(code);
                     }
                   }}
-                  className="w-full text-right pr-3 pl-3 py-2 text-lg font-bold rounded-lg bg-transparent transition cursor-pointer focus:outline-none"
+                  className="text-right text-base font-bold leading-tight cursor-pointer transition hover:opacity-80"
                   aria-label={t('multiConverter.amountClickCalculator', {
                     name: t(`currencies.${code}`),
                     code,
@@ -245,7 +250,7 @@ export const MultiConverter = ({
                 >
                   {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
                 </div>
-                <div className="text-xs text-right mt-0.5 opacity-70">
+                <div className="text-[11px] text-right leading-tight opacity-70 mt-0.5">
                   {(() => {
                     const rateTypeInfo = hasOnlyOneRateType(code);
                     const isDisabled = rateTypeInfo.hasOnlyOne;
