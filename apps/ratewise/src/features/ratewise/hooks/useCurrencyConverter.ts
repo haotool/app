@@ -19,7 +19,7 @@ import { readJSON, readString, writeJSON, writeString } from '../storage';
 import { STORAGE_KEYS } from '../storage-keys';
 import type { RateDetails } from './useExchangeRates';
 import { logger } from '../../../utils/logger';
-import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
+import { getExchangeRate, convertCurrencyAmount } from '../../../utils/exchangeRateCalculation';
 import { getRelativeTimeString } from '../../../utils/timeFormatter';
 import { INP_LONG_TASK_THRESHOLD_MS } from '../../../utils/interactionBudget';
 
@@ -171,7 +171,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     [exchangeRates, details, rateType],
   );
 
-  // Conversion calculations
+  // Conversion calculations using unified convertCurrencyAmount
   const recalcMultiAmounts = useCallback(
     (
       sourceCode: CurrencyCode,
@@ -180,12 +180,9 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     ): MultiAmountsState => {
       const amount = parseFloat(sourceAmount);
       const hasValue = !Number.isNaN(amount);
-      const sourceRate = getRate(sourceCode);
 
-      // 開發模式：記錄基準貨幣匯率
       logger.debug('Multi-currency calculation base', {
         sourceCode,
-        sourceRate,
         amount,
       });
 
@@ -196,40 +193,35 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
             return acc;
           }
 
-          if (!hasValue || sourceRate === null) {
+          if (!hasValue) {
             acc[code] = '';
             return acc;
           }
 
-          const targetRate = getRate(code);
-          if (targetRate === null) {
-            acc[code] = 'N/A'; // Mark as Not Available
-            // 開發模式：記錄無匯率的貨幣
+          const converted = convertCurrencyAmount(
+            amount,
+            sourceCode,
+            code,
+            details,
+            rateType,
+            exchangeRates,
+          );
+
+          if (converted === 0 && amount !== 0) {
+            acc[code] = 'N/A';
             logger.warn(`No exchange rate available for ${code}`, { code });
             return acc;
           }
 
-          const converted = (amount * sourceRate) / targetRate;
           const decimals = CURRENCY_DEFINITIONS[code].decimals;
-          acc[code] = converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0');
-
-          // 開發模式：記錄計算過程（僅 TWD）
-          if (code === 'TWD') {
-            logger.debug('Multi-currency conversion to TWD', {
-              from: sourceCode,
-              amount,
-              sourceRate,
-              targetRate,
-              result: converted,
-            });
-          }
+          acc[code] = converted.toFixed(decimals);
 
           return acc;
         },
         { ...prev },
       );
     },
-    [getRate],
+    [details, rateType, exchangeRates],
   );
 
   const calculateFromAmount = useCallback(() => {
