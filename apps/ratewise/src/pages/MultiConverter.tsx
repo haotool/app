@@ -3,12 +3,14 @@
  *
  * @description 多幣別轉換器頁面，採用 ParkKeeper 設計風格
  *              SSOT: 設計來自 Settings.tsx 風格參考
- * @version 2.0.0
+ *              標題區塊已移除，由底部導航 Tab 識別頁面
+ * @version 2.1.0
+ * @updated 2026-01-24 - 移除標題區塊，優化垂直空間
  */
 
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, RefreshCw, Coins, Clock } from 'lucide-react';
+import { AlertCircle, RefreshCw, Clock } from 'lucide-react';
 import { MultiConverter as MultiConverterComponent } from '../features/ratewise/components/MultiConverter';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConverter';
@@ -110,15 +112,8 @@ export default function MultiConverter() {
   return (
     <div className="h-full overflow-y-auto no-scrollbar pb-32">
       <div className="px-5 py-6 max-w-md mx-auto">
-        {/* 多幣別換算區塊 - 簡約風格 */}
+        {/* 多幣別換算區塊 - 簡約風格（標題已移除，由底部導航識別） */}
         <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-            <Coins className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {t('multiConverter.title')}
-            </h3>
-          </div>
-
           <div className="card p-4">
             <MultiConverterComponent
               sortedCurrencies={sortedCurrencies}

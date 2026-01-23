@@ -17,6 +17,36 @@
 
 @layer base {
   /* ========================================
+     Navigation Design Tokens (SSOT)
+     Mobile-first navigation inspired by Threads/Instagram
+
+     Industry Standards:
+     - iOS HIG: Header 44pt, Tab Bar 49pt
+     - Material Design 3: App Bar 56dp, Nav Bar 56dp
+     - WCAG 2.2: Touch targets min 44px
+
+     @see src/config/design-tokens.ts navigationTokens
+     @created 2026-01-24
+     ======================================== */
+  :root {
+    /* Header Configuration */
+    --nav-header-height: 48px;
+    --nav-header-padding-x: 16px;
+    --nav-header-padding-y: 8px;
+    --nav-header-logo-size: 28px;
+
+    /* Bottom Navigation Configuration */
+    --nav-bottom-height: 56px;
+    --nav-bottom-icon-size: 20px;
+    --nav-bottom-label-size: 8px;
+    --nav-bottom-indicator-width: 24px;
+    --nav-bottom-indicator-height: 3px;
+
+    /* Accessibility */
+    --nav-touch-target-min: 44px;
+  }
+
+  /* ========================================
      Zen 風格 - 極簡專業（預設）
      禪意極簡，以 violet/blue 為圖表色調
      ======================================== */

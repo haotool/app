@@ -1,26 +1,29 @@
 /**
- * App Layout Component - ParkKeeper Style
+ * App Layout Component - ParkKeeper Style (Compact)
  *
  * 整合底部導覽列（移動端）與側邊欄導覽（桌面端）的主要佈局組件
- * 參考 ParkKeeper 設計風格：
+ * 參考 ParkKeeper 設計風格與社群媒體導航規範：
  * - 毛玻璃 Header（backdrop-blur-xl + bg-background/80）
  * - 極細邊框（border-black/[0.03]）
  * - 品牌 Logo + 標題組合
+ * - 緊湊導航高度（Header 48px，參考 Threads/Instagram）
  *
  * 佈局結構：
  * ```
  * <div class="h-screen flex flex-col overflow-hidden">
- *   <Header /> (sticky, glass effect)
+ *   <Header /> (h-12, 48px, glass effect)
  *   <main class="flex-1 overflow-hidden">
  *     <Outlet /> (內容區)
  *   </main>
- *   <BottomNavigation /> (fixed bottom)
+ *   <BottomNavigation /> (h-14, 56px, fixed bottom)
  * </div>
  * ```
  *
  * @reference ParkKeeper UI Design
+ * @reference iOS HIG Tab Bars, Material Design 3 Navigation Bar
+ * @see src/config/design-tokens.ts - navigationTokens SSOT
  * @created 2026-01-15
- * @updated 2026-01-16 - ParkKeeper 風格重構
+ * @updated 2026-01-24 - 緊湊導航高度（Threads/Instagram 風格）
  */
 
 import { Outlet } from 'react-router-dom';
@@ -31,10 +34,11 @@ import { SideNavigation } from './SideNavigation';
  * Logo 組件 - 參考 ParkKeeper 的 SVG Logo 風格
  *
  * @description 使用明確的 width/height 屬性確保 SVG 尺寸一致
+ * @see navigationTokens.header.logo - SSOT for logo dimensions
  */
 function Logo() {
   return (
-    <svg viewBox="0 0 40 40" width="32" height="32" className="w-8 h-8 shrink-0" aria-hidden="true">
+    <svg viewBox="0 0 40 40" width="28" height="28" className="w-7 h-7 shrink-0" aria-hidden="true">
       {/* 圓角矩形框 */}
       <rect
         x="6"
@@ -60,31 +64,35 @@ function Logo() {
 }
 
 /**
- * Header 組件 - ParkKeeper 風格
+ * Header 組件 - ParkKeeper 風格（Compact）
  *
  * 特點：
  * - 毛玻璃背景
  * - 品牌 Logo + 標題
- * - 主題切換按鈕
+ * - 48px 高度（參考 Threads/Instagram）
+ *
+ * @see navigationTokens.header - SSOT for header dimensions
+ * @see https://developer.apple.com/design/human-interface-guidelines/tab-bars
  */
 function Header() {
   return (
     <header
       className="
-        px-6 pb-4 pt-safe-top z-30
+        h-12 px-4 pt-safe-top z-30
         bg-background/80 backdrop-blur-xl
         border-b border-black/[0.03]
+        flex items-center
       "
     >
-      <div className="flex justify-between items-center max-w-md mx-auto w-full pt-4">
+      <div className="flex justify-between items-center max-w-md mx-auto w-full">
         {/* 品牌 Logo + 標題 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div className="flex items-center justify-center">
             <Logo />
           </div>
           <h1
             className="
-              text-2xl font-black tracking-tight
+              text-xl font-black tracking-tight
               bg-clip-text text-transparent
               bg-gradient-to-r from-[rgb(var(--color-text))] to-[rgb(var(--color-primary))]
               [--webkit-background-clip:text]

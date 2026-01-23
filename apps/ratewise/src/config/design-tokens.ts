@@ -369,6 +369,115 @@ export function getDesignTokens() {
 }
 
 /**
+ * Navigation Design Tokens (SSOT)
+ *
+ * Mobile-first navigation system inspired by modern social media apps.
+ * Balances compactness with accessibility requirements.
+ *
+ * Industry Standards Reference:
+ * - iOS Human Interface Guidelines: Header 44pt min, Tab Bar 49pt
+ *   @see https://developer.apple.com/design/human-interface-guidelines/tab-bars
+ * - Material Design 3: App Bar 56dp, Navigation Bar 56dp
+ *   @see https://m3.material.io/components/navigation-bar
+ * - WCAG 2.2 Success Criterion 2.5.8: Touch targets min 44x44 CSS pixels
+ *   @see https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum
+ * - Threads/Instagram: Header ~44-48px, Bottom Nav ~50px (industry observation)
+ *
+ * Design Decision:
+ * Compact social-media-inspired navigation optimized for content visibility:
+ * - Header: 48px (iOS-inspired, compact yet comfortable)
+ * - Bottom Nav: 56px (balanced between iOS 49pt and Material 56dp)
+ * - Touch targets: 44px minimum (WCAG AAA compliant)
+ *
+ * @created 2026-01-24
+ * @version 1.0.0
+ */
+export const navigationTokens = {
+  /**
+   * Header Configuration
+   * Compact header inspired by Threads/Instagram design language
+   */
+  header: {
+    /** Total header height in pixels (excluding safe area) */
+    height: 48,
+    /** CSS value including safe area for notched devices */
+    heightWithSafeArea: 'calc(48px + env(safe-area-inset-top, 0px))',
+    /** Tailwind class for header height */
+    heightClass: 'h-12',
+    /** Logo dimensions */
+    logo: {
+      size: 28,
+      sizeClass: 'w-7 h-7',
+    },
+    /** Title typography */
+    title: {
+      fontSize: 'text-xl',
+      fontWeight: 'font-black',
+    },
+    /** Padding values */
+    padding: {
+      horizontal: 16,
+      vertical: 8,
+      class: 'px-4 py-2',
+    },
+  },
+
+  /**
+   * Bottom Navigation Configuration
+   * Balanced design between iOS Tab Bar (49pt) and Material Navigation Bar (56dp)
+   */
+  bottomNav: {
+    /** Total bottom nav height in pixels (excluding safe area) */
+    height: 56,
+    /** CSS value including safe area for notched devices */
+    heightWithSafeArea: 'calc(56px + env(safe-area-inset-bottom, 0px))',
+    /** Tailwind class for bottom nav height */
+    heightClass: 'h-14',
+    /** Icon configuration */
+    icon: {
+      size: 20,
+      sizeClass: 'w-5 h-5',
+      activeStrokeWidth: 2.5,
+      inactiveStrokeWidth: 2,
+    },
+    /** Label typography */
+    label: {
+      fontSize: 8,
+      fontSizeClass: 'text-[8px]',
+      fontWeight: 'font-black',
+      letterSpacing: '0.15em',
+      letterSpacingClass: 'tracking-[0.15em]',
+    },
+    /** Active indicator bar */
+    indicator: {
+      width: 24,
+      height: 3,
+      widthClass: 'w-6',
+      heightClass: 'h-[3px]',
+    },
+    /** Touch target for accessibility */
+    touchTarget: {
+      /** Minimum touch target size (WCAG 2.2 AAA) */
+      minSize: 44,
+    },
+  },
+
+  /**
+   * Safe Area Configuration
+   * For devices with notches (iPhone X+) or navigation gestures
+   */
+  safeArea: {
+    top: 'env(safe-area-inset-top, 0px)',
+    bottom: 'env(safe-area-inset-bottom, 0px)',
+    /** Tailwind safe area classes */
+    classes: {
+      top: 'pt-safe-top',
+      bottom: 'pb-safe-bottom',
+    },
+  },
+} as const;
+
+/**
  * 生成 Tailwind 主題擴展配置
  *
  * 基於 Context7 官方最佳實踐，生成可直接用於 tailwind.config.ts 的配置

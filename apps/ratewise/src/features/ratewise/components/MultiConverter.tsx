@@ -165,9 +165,17 @@ export const MultiConverter = ({
         )}
       </div>
 
-      {/* 貨幣列表 - SSOT 風格 */}
+      {/* 貨幣列表 - SSOT 風格
+       *
+       * Ring Overflow 處理：
+       * 基準貨幣使用 ring-2 (2px box-shadow) 高亮顯示，
+       * 需要在四個方向預留空間以避免被父容器裁剪。
+       * 使用 -m-0.5 p-0.5 (2px) 確保 ring 完整顯示。
+       *
+       * @see https://tailwindcss.com/docs/ring-width
+       */}
       <div
-        className="flex-grow overflow-y-auto overflow-x-visible space-y-2 -mx-1 px-1"
+        className="flex-grow overflow-y-auto overflow-x-visible space-y-2 -m-0.5 p-0.5"
         tabIndex={0}
         role="region"
         aria-label={t('multiConverter.currencyListLabel')}
