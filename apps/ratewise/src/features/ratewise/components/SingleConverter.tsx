@@ -315,18 +315,32 @@ export const SingleConverter = ({
             <Calculator aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
+        {/* 快速金額按鈕 - From Currency (Neutral variant)
+         *
+         * Design System:
+         * - Neutral variant: 中性色調，表示「來源」貨幣
+         * - Micro-interactions: scale + shadow + color transition
+         * - Haptic feedback: 30ms vibration on supported devices
+         */}
         <div className="flex gap-2 mt-2 flex-wrap">
           {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
             <button
               key={amount}
               onClick={() => {
                 onQuickAmount(amount);
-                // 觸覺反饋
                 if ('vibrate' in navigator) {
                   navigator.vibrate(30);
                 }
               }}
-              className="px-3 py-1 bg-neutral-light hover:bg-primary-light active:bg-primary-hover rounded-lg text-sm font-medium transition-[background-color,transform,box-shadow] duration-200 transform active:scale-95 hover:scale-105 hover:shadow-md"
+              className="
+                px-3 py-1.5 rounded-xl text-sm font-semibold
+                bg-surface-elevated text-text/70
+                hover:bg-primary/10 hover:text-primary
+                active:bg-primary/20 active:text-primary
+                transition-all duration-200 ease-out
+                hover:scale-[1.03] active:scale-[0.97]
+                hover:shadow-md active:shadow-sm
+              "
             >
               {amount.toLocaleString()}
             </button>
@@ -559,20 +573,33 @@ export const SingleConverter = ({
             <Calculator aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
+        {/* 快速金額按鈕 - To Currency (Primary variant)
+         *
+         * Design System:
+         * - Primary variant: 主色調，表示「目標」貨幣，視覺較突出
+         * - Micro-interactions: scale + shadow + color transition
+         * - Haptic feedback: 30ms vibration on supported devices
+         */}
         <div className="flex gap-2 mt-2 flex-wrap">
           {quickAmounts.map((amount) => (
             <button
               key={amount}
               onClick={() => {
-                // 直接設定目標貨幣金額，不需要轉換
                 const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
                 onToAmountChange(amount.toFixed(decimals));
-                // 觸覺反饋
                 if ('vibrate' in navigator) {
                   navigator.vibrate(30);
                 }
               }}
-              className="px-3 py-1 bg-primary-light hover:bg-primary-hover active:bg-primary-active rounded-lg text-sm font-medium transition-[background-color,transform,box-shadow] duration-200 transform active:scale-95 hover:scale-105 hover:shadow-md"
+              className="
+                px-3 py-1.5 rounded-xl text-sm font-semibold
+                bg-primary/15 text-primary
+                hover:bg-primary/25 hover:text-primary-dark
+                active:bg-primary/35 active:text-primary-dark
+                transition-all duration-200 ease-out
+                hover:scale-[1.03] active:scale-[0.97]
+                hover:shadow-md hover:shadow-primary/20 active:shadow-sm
+              "
             >
               {amount.toLocaleString()}
             </button>

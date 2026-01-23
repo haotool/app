@@ -150,14 +150,33 @@ export const MultiConverter = ({
 
   return (
     <>
-      {/* 快速金額按鈕 - 簡約風格 */}
+      {/* 快速金額按鈕 - Primary variant
+       *
+       * Design System:
+       * - Primary variant: 主色調，與基準貨幣高亮呼應
+       * - Micro-interactions: scale + shadow + color transition
+       * - Consistent with SingleConverter To Currency buttons
+       */}
       <div className="flex gap-2 mb-4 flex-wrap">
         {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
           (amount: number) => (
             <button
               key={amount}
-              onClick={() => onQuickAmount(amount)}
-              className="px-3 py-1.5 bg-surface-soft hover:bg-primary/10 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              onClick={() => {
+                onQuickAmount(amount);
+                if ('vibrate' in navigator) {
+                  navigator.vibrate(30);
+                }
+              }}
+              className="
+                px-3 py-1.5 rounded-xl text-sm font-semibold
+                bg-primary/15 text-primary
+                hover:bg-primary/25 hover:text-primary-dark
+                active:bg-primary/35 active:text-primary-dark
+                transition-all duration-200 ease-out
+                hover:scale-[1.03] active:scale-[0.97]
+                hover:shadow-md hover:shadow-primary/20 active:shadow-sm
+              "
             >
               {amount.toLocaleString()}
             </button>
