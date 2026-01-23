@@ -315,12 +315,12 @@ export const SingleConverter = ({
             <Calculator aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
-        {/* 快速金額按鈕 - From Currency (Neutral variant)
+        {/* 快速金額按鈕 - From Currency (Outlined variant)
          *
          * Design System:
-         * - Neutral variant: 中性色調，表示「來源」貨幣
-         * - Micro-interactions: scale + shadow + color transition
-         * - Haptic feedback: 30ms vibration on supported devices
+         * - Outlined variant: 細邊框 + 白底，清爽簡約
+         * - Hover: 淡紫背景漸入，邊框變紫
+         * - Micro-interactions: subtle scale + border color transition
          */}
         <div className="flex gap-2 mt-2 flex-wrap">
           {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
@@ -333,13 +333,11 @@ export const SingleConverter = ({
                 }
               }}
               className="
-                px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary
-                active:bg-primary/20 active:text-primary
-                transition-all duration-200 ease-out
-                hover:scale-[1.03] active:scale-[0.97]
-                hover:shadow-md active:shadow-sm
+                px-3 py-1.5 rounded-lg text-sm font-medium
+                bg-white border border-border/80 text-text/70
+                hover:bg-primary-light hover:border-primary/40 hover:text-primary
+                active:bg-primary-light active:scale-[0.97]
+                transition-all duration-150 ease-out
               "
             >
               {amount.toLocaleString()}
@@ -573,12 +571,12 @@ export const SingleConverter = ({
             <Calculator aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
-        {/* 快速金額按鈕 - To Currency (Primary variant)
+        {/* 快速金額按鈕 - To Currency (Filled variant)
          *
          * Design System:
-         * - Primary variant: 主色調，表示「目標」貨幣，視覺較突出
-         * - Micro-interactions: scale + shadow + color transition
-         * - Haptic feedback: 30ms vibration on supported devices
+         * - Filled variant: 淡紫背景 + 紫色文字，視覺突出
+         * - Hover: 背景加深，增加對比度
+         * - Micro-interactions: subtle scale + background transition
          */}
         <div className="flex gap-2 mt-2 flex-wrap">
           {quickAmounts.map((amount) => (
@@ -592,13 +590,11 @@ export const SingleConverter = ({
                 }
               }}
               className="
-                px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-primary/15 text-primary
-                hover:bg-primary/25 hover:text-primary-dark
-                active:bg-primary/35 active:text-primary-dark
-                transition-all duration-200 ease-out
-                hover:scale-[1.03] active:scale-[0.97]
-                hover:shadow-md hover:shadow-primary/20 active:shadow-sm
+                px-3 py-1.5 rounded-lg text-sm font-medium
+                bg-primary-light text-primary border border-primary/20
+                hover:bg-primary-hover hover:text-white hover:border-transparent
+                active:bg-primary active:scale-[0.97]
+                transition-all duration-150 ease-out
               "
             >
               {amount.toLocaleString()}
