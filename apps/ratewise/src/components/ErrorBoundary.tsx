@@ -15,8 +15,32 @@ interface ErrorBoundaryState {
 }
 
 /**
- * Error Boundary component to catch and handle React component errors
- * Prevents entire app crashes by showing fallback UI
+ * ErrorBoundary Component - React Error Boundary with Fallback UI
+ *
+ * @description Catches and handles React component errors gracefully
+ *
+ * @features
+ * - Prevents entire app crashes by showing fallback UI
+ * - Automatic error logging via logger service
+ * - On-demand Sentry integration (production only)
+ * - Custom fallback UI support
+ * - Development mode error details display
+ * - Design token integration for consistent styling
+ *
+ * @performance
+ * - Lazy Sentry initialization (only on first error)
+ * - Reduces initial bundle size
+ *
+ * @accessibility
+ * - Clear error messaging
+ * - Keyboard-accessible retry button
+ *
+ * @see https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary
+ * @see docs/dev/005_design_token_refactoring.md - Design token migration
+ *
+ * @created 2025-01-01
+ * @updated 2026-01-24
+ * @version 2.0.0
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
@@ -88,26 +112,28 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default fallback UI
       return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-danger-bg to-warning-light flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
             <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className="text-red-500" size={32} />
-              <h1 className="text-2xl font-bold text-gray-800">哎呀！發生錯誤</h1>
+              <AlertCircle className="text-danger" size={32} />
+              <h1 className="text-2xl font-bold text-neutral-text">哎呀！發生錯誤</h1>
             </div>
 
-            <p className="text-gray-600 mb-4">抱歉，應用程式遇到了一些問題。請重新整理頁面試試。</p>
+            <p className="text-neutral-text-secondary mb-4">
+              抱歉，應用程式遇到了一些問題。請重新整理頁面試試。
+            </p>
 
             {import.meta.env.DEV && this.state.error && (
               <details className="mb-4">
-                <summary className="cursor-pointer text-sm font-semibold text-gray-700 mb-2">
+                <summary className="cursor-pointer text-sm font-semibold text-neutral-text-secondary mb-2">
                   錯誤詳情（開發模式）
                 </summary>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-xs font-mono text-red-800 mb-2">
+                <div className="bg-danger-bg border border-danger-light rounded-lg p-3">
+                  <p className="text-xs font-mono text-danger mb-2">
                     {this.state.error.toString()}
                   </p>
                   {this.state.errorInfo && (
-                    <pre className="text-xs font-mono text-red-700 overflow-x-auto">
+                    <pre className="text-xs font-mono text-danger overflow-x-auto">
                       {this.state.errorInfo.componentStack}
                     </pre>
                   )}
@@ -117,13 +143,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
             <button
               onClick={this.handleReset}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-brand-button-to to-brand-button-from hover:from-brand-button-hover-to hover:to-brand-button-hover-from text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
             >
               <RefreshCw size={18} />
               重新載入
             </button>
 
-            <p className="text-xs text-gray-500 text-center mt-4">
+            <p className="text-xs text-neutral-text-muted text-center mt-4">
               若問題持續發生，請嘗試清除瀏覽器快取或聯繫技術支援。
             </p>
           </div>

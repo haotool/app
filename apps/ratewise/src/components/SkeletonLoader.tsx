@@ -1,23 +1,33 @@
 /**
- * Skeleton Loader Component
- * [Lighthouse-optimization:2025-10-28] 取代 loading spinner，提升 perceived performance
- * [SEO-fix:2026-01-06] 添加靜態 SEO 內容，解決 Seobility 爬蟲無法看到 H1/內容的問題
+ * SkeletonLoader Component - SEO-Friendly Loading Placeholders
  *
- * 參考:
- * - https://blog.logrocket.com/ux-design/skeleton-loading-screen-design/
- * - https://react.dev/reference/react/Suspense
- * - Seobility SEO 審計報告 2026-01-06
+ * @description Loading skeleton with embedded SEO content for improved perceived performance
  *
- * 優勢:
- * - 即時顯示內容結構，減少 perceived loading time
- * - 用戶可預期內容佈局，降低 cognitive load
- * - 避免 spinner 的「等待感」，提升 UX
- * - SSG 輸出包含 SEO 友好的靜態內容（H1、H2、段落）
+ * @features
+ * - Replaces loading spinners with content structure preview
+ * - Reduces perceived loading time
+ * - Lower cognitive load - users can anticipate content layout
+ * - Avoids spinner "waiting" feeling, improving UX
+ * - SSG outputs include SEO-friendly static content (H1, H2, paragraphs)
+ * - Design token integration for consistent styling
  *
- * SEO 修復說明:
- * - 問題：ClientOnly 導致 SSG 輸出只有骨架動畫，沒有真實文字
- * - Seobility 報告：無 H1、只有 60 字、無段落
- * - 解決方案：在骨架屏中嵌入 SEO 靜態內容，使用 sr-only 對視覺用戶隱藏
+ * @seo-fix [2026-01-06]
+ * - Issue: ClientOnly caused SSG output with only skeleton animations, no real text
+ * - Seobility report: No H1, only 60 characters, no paragraphs
+ * - Solution: Embed SEO static content in skeleton using sr-only (visually hidden, SEO visible)
+ *
+ * @performance
+ * - Immediate content structure display
+ * - Better perceived performance than spinners
+ *
+ * @see https://blog.logrocket.com/ux-design/skeleton-loading-screen-design/
+ * @see https://react.dev/reference/react/Suspense
+ * @see Seobility SEO Audit Report 2026-01-06
+ * @see docs/dev/005_design_token_refactoring.md - Design token migration
+ *
+ * @created 2025-10-28
+ * @updated 2026-01-24
+ * @version 2.0.0
  */
 
 export const SkeletonLoader = () => {
@@ -102,9 +112,9 @@ export const SkeletonLoader = () => {
           </div>
 
           {/* Result Display */}
-          <div className="bg-purple-50 rounded-xl p-4 space-y-2">
-            <div className="h-6 w-full bg-purple-200 rounded"></div>
-            <div className="h-4 w-3/4 bg-purple-200 rounded"></div>
+          <div className="bg-primary-bg rounded-xl p-4 space-y-2">
+            <div className="h-6 w-full bg-primary-light rounded"></div>
+            <div className="h-4 w-3/4 bg-primary-light rounded"></div>
           </div>
 
           {/* Quick Amounts */}
@@ -181,7 +191,7 @@ export const ConverterSkeleton = ({ mode }: { mode: 'single' | 'multi' }) => {
         <div className="h-14 bg-neutral rounded-lg"></div>
         <div className="h-14 bg-neutral rounded-lg"></div>
       </div>
-      <div className="h-16 bg-purple-200 rounded-xl"></div>
+      <div className="h-16 bg-primary-light rounded-xl"></div>
     </div>
   );
 };

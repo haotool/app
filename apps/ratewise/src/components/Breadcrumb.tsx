@@ -1,29 +1,39 @@
 /**
- * Breadcrumb Component (UI + Client-Side Schema)
+ * Breadcrumb Component - Navigation Breadcrumbs with Structured Data
  *
- * 依據：
- * - [WCAG 2.1] 無障礙導航要求
- *   https://www.w3.org/WAI/ARIA/apg/patterns/breadcrumb/
- * - [Google 2025] Evergreen Googlebot 執行 JavaScript
- *   https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics
+ * @description Visual breadcrumb navigation with client-side JSON-LD schema generation
  *
- * 功能：
- * - 視覺化麵包屑導航（響應式）
- * - 完整無障礙支持 (a11y)
- * - **客戶端** BreadcrumbList Schema 生成
+ * @features
+ * - Responsive breadcrumb navigation
+ * - Full accessibility support (WCAG 2.1)
+ * - Client-side BreadcrumbList schema generation
+ * - Design token integration for consistent styling
  *
- * 建立時間: 2025-12-20
- * 最後更新: 2025-12-23 (恢復 Schema 生成 - SSG 架構限制)
- * BDD 階段: Stage 3 GREEN
+ * @accessibility
+ * - ARIA breadcrumb pattern implementation
+ * - Keyboard navigation support
+ * - Screen reader optimized
  *
- * **架構決策記錄**:
- * - **理想方案**: SEOHelmet 統一管理所有 Schema（符合 SRP）
- * - **現實限制**: react-helmet-async 不支援 SSG 靜態渲染
- * - **務實選擇**: Breadcrumb 組件生成客戶端 Schema
- *   - ✅ Google 2025 Evergreen Googlebot 會執行 JS
- *   - ✅ 確保 Schema 能被索引
- *   - ⚠️  違反 SRP，但務實可行
- * - **後續改進**: 遷移到支援 SSG 的框架（Astro, Next.js）
+ * @seo
+ * - Structured data (BreadcrumbList JSON-LD)
+ * - Google Evergreen Googlebot compatible
+ *
+ * @architecture-decision
+ * - Ideal: SEOHelmet manages all schemas (follows SRP)
+ * - Reality: react-helmet-async doesn't support SSG static rendering
+ * - Pragmatic: Breadcrumb component generates client-side schema
+ *   - ✅ Google 2025 Evergreen Googlebot executes JavaScript
+ *   - ✅ Ensures schema indexing
+ *   - ⚠️  Violates SRP, but pragmatically viable
+ * - Future: Migrate to SSG-friendly frameworks (Astro, Next.js)
+ *
+ * @see https://www.w3.org/WAI/ARIA/apg/patterns/breadcrumb/ - WCAG 2.1 Breadcrumb Pattern
+ * @see https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics - Google JS SEO
+ * @see docs/dev/005_design_token_refactoring.md - Design token migration
+ *
+ * @created 2025-12-20
+ * @updated 2026-01-24
+ * @version 2.0.0
  */
 
 import { Link } from 'react-router-dom';
@@ -131,7 +141,7 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
                   // Parent Pages - Links
                   <Link
                     to={item.href}
-                    className="hover:text-indigo-600 transition-colors duration-200 hover:underline"
+                    className="hover:text-primary transition-colors duration-200 hover:underline"
                   >
                     {item.label}
                   </Link>

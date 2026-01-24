@@ -1,24 +1,34 @@
 import { RefreshCw } from 'lucide-react';
 
 /**
- * PullToRefreshIndicator - Visual feedback component for pull-to-refresh
+ * PullToRefreshIndicator - Pull-to-Refresh Visual Feedback Component
  *
- * 品牌對齊風格 (Brand Aligned - Cotton Candy inspired):
- * - 柔和藍紫漸變 (soft blue-indigo-purple gradient)
- * - 參考 UpdatePrompt 的棉花糖風格但無 emoji
- * - 超大圓角 (32px) 打造柔和感
- * - 精緻玻璃擬態效果
- * - 品牌藍紫基調 (與主應用一致)
+ * @description Brand-aligned indicator with cotton candy inspired glassmorphism design
+ *
+ * @features
+ * - Soft blue-purple gradient (brand-aligned)
+ * - Large border radius (32px) for soft aesthetic
+ * - Premium glassmorphism effect with backdrop blur
  * - Smooth rotation animation based on pull distance
- * - Progressive text states (clean, professional)
+ * - Progressive text states
+ * - Design token integration for consistent brand colors
  *
- * States:
- * - Pulling: "下拉重新整理" (indigo-400)
- * - Ready: "放開以重新整理" (indigo-600)
- * - Refreshing: "重新整理中..." (indigo-500)
+ * @states
+ * - Pulling: "下拉重新整理" (primary color)
+ * - Ready: "放開以重新整理" (primary dark)
+ * - Refreshing: "重新整理中..." (primary default)
  *
- * Design: UpdatePrompt 棉花糖風格 + 品牌藍紫配色
- * Updated: 2025-10-22 - 棉花糖風格統一，無 emoji
+ * @design-philosophy
+ * - Cotton candy aesthetic inspired by UpdatePrompt
+ * - Brand blue-purple color palette
+ * - Clean, professional, no emojis
+ *
+ * @see UpdatePrompt - Shared cotton candy design language
+ * @see docs/dev/005_design_token_refactoring.md - Design token migration
+ *
+ * @created 2025-10-22
+ * @updated 2026-01-24
+ * @version 2.0.0
  */
 
 interface PullToRefreshIndicatorProps {
@@ -45,12 +55,12 @@ export function PullToRefreshIndicator({
       ? '放開以重新整理'
       : '下拉重新整理';
 
-  // Color scheme - Brand aligned (blue-indigo-purple gradient, no emoji)
+  // Color scheme - Brand aligned design tokens
   const iconColor = isRefreshing
-    ? 'text-indigo-500'
+    ? 'text-primary'
     : canTrigger
-      ? 'text-indigo-600'
-      : 'text-indigo-400';
+      ? 'text-primary-dark'
+      : 'text-primary-text-light';
 
   return (
     <div
@@ -61,14 +71,14 @@ export function PullToRefreshIndicator({
         transition: isRefreshing ? 'none' : 'opacity 0.2s ease-out, transform 0.2s ease-out',
       }}
     >
-      {/* Glassmorphism Container - 棉花糖風格 + 品牌配色 */}
+      {/* Glassmorphism Container - Cotton candy style with brand colors */}
       <div
         className="
           mt-4 px-6 py-3 rounded-[32px]
           backdrop-blur-xl backdrop-saturate-150
-          bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
+          bg-gradient-to-br from-brand-from via-brand-via to-brand-to
           dark:bg-neutral/80
-          border-2 border-indigo-100
+          border-2 border-brand-border
           shadow-xl
         "
         style={{
@@ -82,7 +92,7 @@ export function PullToRefreshIndicator({
           {/* Animated Icon with subtle glow */}
           <div className="relative">
             {/* Icon glow effect */}
-            <div className="absolute inset-0 rounded-full bg-indigo-200 blur-md opacity-50" />
+            <div className="absolute inset-0 rounded-full bg-primary-light blur-md opacity-50" />
             {/* Main icon */}
             <RefreshCw
               className={`
@@ -99,11 +109,11 @@ export function PullToRefreshIndicator({
             />
           </div>
 
-          {/* Status Text - 品牌藍紫色調 */}
+          {/* Status Text - Brand color */}
           <span
             className="
               text-sm font-medium
-              text-indigo-700
+              text-primary-dark
               transition-colors duration-300
             "
           >
@@ -112,13 +122,13 @@ export function PullToRefreshIndicator({
         </div>
       </div>
 
-      {/* 裝飾性泡泡 (棉花糖風格) */}
+      {/* Decorative bubbles (cotton candy style) */}
       <div
-        className="absolute top-0 right-0 w-24 h-24 rounded-full bg-indigo-100/50 blur-3xl"
+        className="absolute top-0 right-0 w-24 h-24 rounded-full bg-brand-decoration/50 blur-3xl"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-blue-100/50 blur-3xl"
+        className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-brand-from/50 blur-3xl"
         aria-hidden="true"
       />
     </div>

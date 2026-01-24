@@ -1,18 +1,32 @@
 import { useState, useEffect } from 'react';
 
 /**
- * VersionDisplay - 版本資訊顯示組件
+ * VersionDisplay - Version Information Display Component
  *
- * 2025 UX 最佳實踐:
- * - 簡約設計，不使用下底線
- * - Hover 顯示建置時間 tooltip
- * - 支援桌面 hover 和行動裝置 tap
- * - 開發模式下顯示實時時間，生產模式顯示構建時間
+ * @description Displays application version with build time tooltip
  *
- * [fix:2025-11-28] Hydration Mismatch 修復
- * - SSG 時使用固定的 BUILD_TIME 避免 React Error #418
- * - 客戶端 hydration 後才更新為實時時間（僅開發模式）
- * - 參考: https://react.dev/errors/418
+ * @features
+ * - Minimal design without underlines
+ * - Hover tooltip showing build timestamp
+ * - Desktop hover and mobile tap support
+ * - Real-time updates in development mode
+ * - Static build time in production mode
+ * - Design token integration for consistent styling
+ *
+ * @accessibility
+ * - Tooltip for additional context
+ * - Keyboard navigation support via title attribute
+ *
+ * @performance
+ * - SSG-safe: Fixed initial value to prevent hydration mismatch
+ * - Client-side updates only in development mode
+ *
+ * @see https://react.dev/errors/418 - Hydration mismatch prevention
+ * @see docs/dev/005_design_token_refactoring.md - Design token migration
+ *
+ * @created 2025-01-01
+ * @updated 2026-01-24
+ * @version 2.0.0
  */
 
 // [fix:2025-11-28] 使用固定的 build time 作為 SSG 初始值
@@ -59,15 +73,15 @@ export function VersionDisplay() {
 
   return (
     <span
-      className="relative inline-block cursor-help text-xs text-gray-400 font-mono group"
+      className="relative inline-block cursor-help text-xs text-neutral-text-muted font-mono group"
       title={`Built on ${formattedDate} ${formattedTime}`}
     >
       v{version}
-      {isDev && <span className="ml-1 text-[10px] text-orange-500">dev</span>}
-      {/* Tooltip - 桌面版 hover 顯示 */}
-      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+      {isDev && <span className="ml-1 text-[10px] text-warning">dev</span>}
+      {/* Tooltip - Desktop hover display */}
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-neutral-darker rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
         Built on {formattedDate} {formattedTime}
-        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-neutral-darker" />
       </span>
     </span>
   );

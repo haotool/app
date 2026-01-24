@@ -1,10 +1,30 @@
 import { useState } from 'react';
 
 /**
- * RateTypeTooltip - 匯率類型提示組件
+ * RateTypeTooltip - Exchange Rate Type Tooltip Component
  *
- * Linus 風格：簡單的 CSS 相對定位，不需要複雜的 JS 計算
- * "好的代碼不需要注釋，但這個需要因為你可能想回到複雜版本"
+ * @description Displays contextual tooltip for disabled rate type toggle
+ *
+ * @features
+ * - Simple CSS relative positioning (Linus philosophy: avoid complex JS calculations)
+ * - Click to show/hide with auto-dismiss after 3 seconds
+ * - Backdrop click to dismiss
+ * - Smooth fade-in animation
+ * - Design token integration for brand-aligned styling
+ *
+ * @philosophy
+ * "Good code doesn't need comments, but this one does because you might want
+ *  to go back to the complex version" - Linus Torvalds style simplicity
+ *
+ * @accessibility
+ * - Click-based interaction for touch devices
+ * - Backdrop dismiss for easy cancellation
+ *
+ * @see docs/dev/005_design_token_refactoring.md - Design token migration
+ *
+ * @created 2025-01-01
+ * @updated 2026-01-24
+ * @version 2.0.0
  */
 
 interface RateTypeTooltipProps {
@@ -39,15 +59,15 @@ export const RateTypeTooltip = ({ children, message, isDisabled }: RateTypeToolt
           {/* 背景遮罩（點擊關閉） */}
           <div className="fixed inset-0 z-40" onClick={() => setShow(false)} />
 
-          {/* Tooltip 內容（相對定位在觸發元素上方） */}
+          {/* Tooltip Content (positioned above trigger element) */}
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 animate-in fade-in-0 zoom-in-95 duration-200">
-            <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg shadow-2xl border border-white/20 backdrop-blur-sm whitespace-nowrap">
-              {/* 訊息內容 */}
+            <div className="relative bg-gradient-to-r from-brand-button-to to-brand-button-from text-white px-4 py-2 rounded-lg shadow-2xl border border-white/20 backdrop-blur-sm whitespace-nowrap">
+              {/* Message content */}
               <p className="text-sm font-medium">{message}</p>
 
-              {/* 小箭頭（指向下方） */}
+              {/* Arrow pointing downwards */}
               <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-                <div className="w-3 h-3 bg-blue-600 rotate-45 border-r border-b border-white/20" />
+                <div className="w-3 h-3 bg-brand-button-to rotate-45 border-r border-b border-white/20" />
               </div>
             </div>
           </div>

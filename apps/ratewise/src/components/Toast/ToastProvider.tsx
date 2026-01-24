@@ -1,16 +1,26 @@
 /**
- * Toast Provider - 包裝應用程式以啟用 Toast 功能
+ * ToastProvider - Toast Notification System
  *
- * [2026-01-04] 從 Toast.tsx 拆分以符合 react-refresh/only-export-components 規則
- * 參考: [context7:/reactjs/react.dev:toast-notification:2025-12-29]
+ * @description Application wrapper to enable toast notifications with cotton candy styling
  *
- * 設計特點：
- * - 無外部依賴，純 React + Tailwind CSS
- * - 支援成功、錯誤、資訊三種類型
- * - 自動消失（2 秒）
- * - 滑順的入場/退場動畫
- * - 堆疊顯示多個通知
- * - 符合棉花糖雲朵風格
+ * @features
+ * - Zero external dependencies (pure React + Tailwind CSS)
+ * - Three types: success, error, info
+ * - Auto-dismiss after 2 seconds
+ * - Smooth entrance/exit animations
+ * - Stacked display for multiple notifications
+ * - Cotton candy cloud-inspired design
+ * - Design token integration for brand-aligned colors
+ *
+ * @architecture
+ * - Extracted from Toast.tsx to comply with react-refresh/only-export-components rule
+ *
+ * @see https://react.dev/reference/react/createContext - Toast notification pattern
+ * @see docs/dev/005_design_token_refactoring.md - Design token migration
+ *
+ * @created 2026-01-04
+ * @updated 2026-01-24
+ * @version 2.0.0
  */
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
@@ -73,30 +83,30 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
     };
   }, [onClose]);
 
-  // 根據類型選擇樣式
+  // Select styles based on toast type (design token integrated)
   const getStyles = () => {
     switch (type) {
       case 'success':
         return {
-          bg: 'from-green-50 via-emerald-50 to-green-100',
-          border: 'border-green-200/50',
-          text: 'text-green-800',
-          icon: <Check className="w-4 h-4 text-green-600" />,
+          bg: 'from-success-bg via-success-light to-success-bg',
+          border: 'border-success-light/50',
+          text: 'text-success-text',
+          icon: <Check className="w-4 h-4 text-success" />,
         };
       case 'error':
         return {
-          bg: 'from-red-50 via-pink-50 to-red-100',
-          border: 'border-red-200/50',
-          text: 'text-red-800',
-          icon: <X className="w-4 h-4 text-red-600" />,
+          bg: 'from-danger-bg via-danger-light to-danger-bg',
+          border: 'border-danger-light/50',
+          text: 'text-danger-text',
+          icon: <X className="w-4 h-4 text-danger" />,
         };
       case 'info':
       default:
         return {
-          bg: 'from-purple-50 via-blue-50 to-purple-100',
-          border: 'border-purple-200/50',
-          text: 'text-purple-800',
-          icon: <Info className="w-4 h-4 text-purple-600" />,
+          bg: 'from-brand-from via-brand-via to-brand-to',
+          border: 'border-brand-border/50',
+          text: 'text-brand-text-dark',
+          icon: <Info className="w-4 h-4 text-primary" />,
         };
     }
   };
@@ -113,7 +123,7 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
         overflow-hidden rounded-2xl
         bg-gradient-to-br ${styles.bg}
         border-2 ${styles.border}
-        shadow-lg shadow-purple-100/30
+        shadow-lg shadow-brand-shadow/30
         transform transition-all duration-300 ease-out
         ${isVisible && !isExiting ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}
       `}
