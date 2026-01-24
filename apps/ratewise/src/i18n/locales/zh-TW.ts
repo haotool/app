@@ -100,6 +100,8 @@ const zhTW = {
     clickToConvert: '換算 →',
     reconvert: '重新轉換',
     clearAllHistory: '清除全部歷史記錄',
+    dragToReorder: '拖曳排序',
+    dragHandle: '拖曳手柄',
   },
 
   // Settings

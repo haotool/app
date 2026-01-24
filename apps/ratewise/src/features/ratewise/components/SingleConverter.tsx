@@ -332,6 +332,8 @@ export const SingleConverter = ({
             <button
               key={amount}
               onClick={() => {
+                // 直接更新來源金額，繞過 mode 狀態依賴
+                onFromAmountChange(amount.toString());
                 onQuickAmount(amount);
                 if ('vibrate' in navigator) {
                   navigator.vibrate(30);

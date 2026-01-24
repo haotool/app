@@ -1,5 +1,4 @@
 import { useRef } from 'react';
-import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
@@ -13,12 +12,10 @@ interface MultiConverterProps {
   sortedCurrencies: CurrencyCode[];
   multiAmounts: MultiAmountsState;
   baseCurrency: CurrencyCode;
-  favorites: CurrencyCode[];
   rateType: RateType;
   details?: Record<string, RateDetails>;
   onAmountChange: (code: CurrencyCode, value: string) => void;
   onQuickAmount: (amount: number) => void;
-  onToggleFavorite: (code: CurrencyCode) => void;
   onRateTypeChange: (type: RateType) => void;
   onBaseCurrencyChange: (code: CurrencyCode) => void;
 }
@@ -27,12 +24,10 @@ export const MultiConverter = ({
   sortedCurrencies,
   multiAmounts,
   baseCurrency,
-  favorites,
   rateType,
   details,
   onAmountChange,
   onQuickAmount,
-  onToggleFavorite,
   onRateTypeChange,
   onBaseCurrencyChange,
 }: MultiConverterProps) => {
@@ -205,7 +200,6 @@ export const MultiConverter = ({
         aria-label={t('multiConverter.currencyListLabel')}
       >
         {sortedCurrencies.map((code) => {
-          const isFavorite = favorites.includes(code);
           const isBase = code === baseCurrency;
           return (
             <div
@@ -221,32 +215,8 @@ export const MultiConverter = ({
                   : 'bg-surface-soft cursor-pointer hover:bg-primary/5 hover:shadow-sm active:scale-[0.99]'
               }`}
             >
-              {/* 左側：星星 + 國旗 + 貨幣資訊 */}
+              {/* 左側：國旗 + 貨幣資訊 */}
               <div className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleFavorite(code);
-                  }}
-                  className="hover:scale-110 transition flex-shrink-0"
-                  type="button"
-                  aria-label={
-                    isFavorite
-                      ? t('multiConverter.removeFavorite', { code })
-                      : t('multiConverter.addFavorite', { code })
-                  }
-                  title={
-                    isFavorite
-                      ? t('multiConverter.removeFavorite', { code })
-                      : t('multiConverter.addFavorite', { code })
-                  }
-                >
-                  <Star
-                    className={isFavorite ? 'text-favorite' : 'text-text-muted'}
-                    size={16}
-                    fill={isFavorite ? 'currentColor' : 'none'}
-                  />
-                </button>
                 <span className="text-xl flex-shrink-0">{CURRENCY_DEFINITIONS[code].flag}</span>
                 <div className="min-w-0">
                   <div className="font-semibold text-sm leading-tight">{code}</div>

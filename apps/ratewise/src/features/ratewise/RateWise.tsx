@@ -15,7 +15,6 @@ import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
 import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
-import { ConversionHistory } from './components/ConversionHistory';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator';
 import { formatDisplayTime } from '../../utils/timeFormatter';
@@ -133,7 +132,6 @@ const RateWise = () => {
     fromAmount,
     toAmount,
     favorites,
-    history,
     trend,
     setFromCurrency,
     setToCurrency,
@@ -143,8 +141,6 @@ const RateWise = () => {
     swapCurrencies,
     toggleFavorite,
     addToHistory,
-    clearAllHistory,
-    reconvertFromHistory,
     generateTrends,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
 
@@ -232,15 +228,6 @@ const RateWise = () => {
                 onRateTypeChange={setRateType}
               />
             </div>
-          </section>
-
-          {/* 轉換歷史記錄區塊 */}
-          <section className="mb-6">
-            <ConversionHistory
-              history={history}
-              onReconvert={reconvertFromHistory}
-              onClearAll={clearAllHistory}
-            />
           </section>
 
           {/* 收藏與貨幣列表區塊（桌面版顯示於側欄） */}

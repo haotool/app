@@ -101,6 +101,8 @@ const en = {
     clickToConvert: 'Convert →',
     reconvert: 'Reconvert',
     clearAllHistory: 'Clear all history',
+    dragToReorder: 'Drag to reorder',
+    dragHandle: 'Drag handle',
   },
 
   // Settings

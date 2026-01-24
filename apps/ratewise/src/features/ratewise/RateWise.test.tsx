@@ -339,27 +339,8 @@ describe('RateWise Component', () => {
     }, 10000); // Increased timeout to 10s for complex interactions
   });
 
-  describe('History Tracking', () => {
-    it('renders conversion history after adding an entry', async () => {
-      renderWithProviders(<RateWise />);
-
-      const addButton = screen.getByText('加入歷史記錄');
-      const inputs = screen.getAllByPlaceholderText('0.00') as HTMLInputElement[];
-      const toInput = inputs[1]!;
-
-      await waitFor(() => {
-        expect(toInput.value).not.toBe('');
-      });
-
-      fireEvent.click(addButton);
-
-      await waitFor(() => {
-        expect(screen.getByText('轉換歷史')).toBeInTheDocument();
-      });
-
-      expect(screen.getAllByText(/TWD/).length).toBeGreaterThan(0);
-    });
-  });
+  // 轉換歷史功能已移至收藏頁面，保持 SSOT 原則
+  // 相關測試請參考 pages/__tests__/Favorites.test.tsx
 
   /**
    * [refactor:2026-01-16] 多幣別互動測試已移除

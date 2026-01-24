@@ -73,7 +73,6 @@ describe('MultiConverter', () => {
     } as unknown as Record<string, RateDetails>,
     onAmountChange: vi.fn(),
     onQuickAmount: vi.fn(),
-    onToggleFavorite: vi.fn(),
     onRateTypeChange: vi.fn(),
     onBaseCurrencyChange: vi.fn(),
   };
@@ -113,25 +112,8 @@ describe('MultiConverter', () => {
     });
   });
 
-  describe('收藏功能', () => {
-    it('應該顯示收藏狀態', () => {
-      render(<MultiConverter {...defaultProps} />);
-
-      // TWD 和 JPY 是收藏的
-      const twdFavoriteBtn = screen.getByRole('button', { name: '移除常用貨幣 TWD' });
-      const usdFavoriteBtn = screen.getByRole('button', { name: '加入常用貨幣 USD' });
-
-      expect(twdFavoriteBtn).toBeInTheDocument();
-      expect(usdFavoriteBtn).toBeInTheDocument();
-    });
-
-    it('點擊收藏按鈕應該呼叫 onToggleFavorite', () => {
-      render(<MultiConverter {...defaultProps} />);
-
-      fireEvent.click(screen.getByRole('button', { name: '加入常用貨幣 USD' }));
-      expect(defaultProps.onToggleFavorite).toHaveBeenCalledWith('USD');
-    });
-  });
+  // 收藏功能已移至收藏頁面，保持 SSOT 原則
+  // 多幣別頁面不再顯示收藏按鈕
 
   describe('基準貨幣切換', () => {
     it('點擊非基準貨幣應該呼叫 onBaseCurrencyChange', () => {

@@ -52,12 +52,10 @@ export default function MultiConverter() {
   } = useExchangeRates();
 
   const {
-    favorites,
     multiAmounts,
     sortedCurrencies,
     handleMultiAmountChange,
     quickAmount,
-    toggleFavorite,
     setBaseCurrency,
     setMode,
     baseCurrency,
@@ -119,12 +117,10 @@ export default function MultiConverter() {
               sortedCurrencies={sortedCurrencies}
               multiAmounts={multiAmounts}
               baseCurrency={baseCurrency}
-              favorites={favorites}
               rateType={rateType}
               details={details}
               onAmountChange={handleMultiAmountChange}
               onQuickAmount={handleQuickAmount}
-              onToggleFavorite={toggleFavorite}
               onRateTypeChange={setRateType}
               onBaseCurrencyChange={handleBaseCurrencyChange}
             />

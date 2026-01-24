@@ -100,6 +100,8 @@ const ja = {
     clickToConvert: '換算 →',
     reconvert: '再換算',
     clearAllHistory: 'すべての履歴を削除',
+    dragToReorder: 'ドラッグで並べ替え',
+    dragHandle: 'ドラッグハンドル',
   },
 
   // Settings

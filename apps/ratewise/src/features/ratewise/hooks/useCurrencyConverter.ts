@@ -261,19 +261,16 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     // No-op: 趨勢數據由 SingleConverter 直接管理
   }, []);
 
-  // Effects for calculations
+  // 單幣別換算效果（路由決定顯示，無需依賴 mode 狀態）
   useEffect(() => {
-    if (mode === 'single') {
-      if (lastEdited === 'from') {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- 響應式計算，必須在依賴變更時同步更新
-        calculateFromAmount();
-      } else {
-        calculateToAmount();
-      }
+    if (lastEdited === 'from') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 響應式計算，必須在依賴變更時同步更新
+      calculateFromAmount();
+    } else {
+      calculateToAmount();
     }
     generateTrends();
   }, [
-    mode,
     lastEdited,
     fromAmount,
     toAmount,
@@ -367,6 +364,12 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     );
   };
 
+  /** 重新排序收藏貨幣（拖曳排序用） */
+  const reorderFavorites = (newOrder: CurrencyCode[]) => {
+    setFavorites(newOrder);
+    writeJSON(STORAGE_KEYS.FAVORITES, newOrder);
+  };
+
   const addToHistory = () => {
     const timestamp = Date.now();
     const entry: ConversionHistoryEntry = {
@@ -433,6 +436,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     quickAmount,
     swapCurrencies,
     toggleFavorite,
+    reorderFavorites,
     addToHistory,
     clearAllHistory,
     reconvertFromHistory,
