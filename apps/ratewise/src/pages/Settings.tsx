@@ -21,6 +21,7 @@
 
 import { Palette, Globe, Database, ShieldAlert, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'motion/react';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_OPTIONS } from '../config/themes';
 import { LANGUAGE_OPTIONS, type SupportedLanguage } from '../i18n';
@@ -117,10 +118,25 @@ export default function Settings() {
                   aria-pressed={isActive}
                   aria-label={option.label}
                 >
+                  {/* 滑動背景指示器 - 使用 layoutId 實現平滑過渡 */}
                   {isActive && (
-                    <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
+                    <motion.div
+                      layoutId="language-indicator"
+                      className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]"
+                      transition={{
+                        type: 'spring',
+                        stiffness: 500,
+                        damping: 30,
+                      }}
+                    />
                   )}
-                  <span className="text-xl mb-1 filter drop-shadow-sm">{option.flag}</span>
+                  <motion.span
+                    animate={{ scale: isActive ? 1.1 : 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xl mb-1 filter drop-shadow-sm"
+                  >
+                    {option.flag}
+                  </motion.span>
                   <span className="text-[10px] font-bold">{option.label}</span>
                 </button>
               );

@@ -5,7 +5,7 @@
  * - 毛玻璃效果背景（backdrop-blur-xl + bg-background/80）
  * - 極細邊框（border-black/[0.02]）
  * - 緊湊標籤風格（text-[8px] + uppercase + tracking-[0.15em]）
- * - 選中指示條動畫
+ * - 選中指示條滑動動畫（Motion layoutId）
  * - 56px 高度（平衡 iOS 49pt 與 Material 56dp 標準）
  *
  * 導覽項目：
@@ -17,11 +17,11 @@
  * @reference ParkKeeper UI Design
  * @reference iOS HIG Tab Bars (49pt), Material Design 3 Nav Bar (56dp)
  * @see src/config/design-tokens.ts - navigationTokens SSOT
- * @created 2026-01-15
- * @updated 2026-01-24 - 緊湊導航高度（Threads/Instagram 風格）
+ * @see https://motion.dev/docs/react/-layout-group - layoutId 動畫
  */
 
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -114,29 +114,43 @@ export function BottomNavigation() {
                 tabIndex={-1}
               >
                 {/* 圖標 - 20px (navigationTokens.bottomNav.icon.size) */}
-                <div
-                  className={`
-                    transition-all duration-300
-                    ${isActive ? 'text-primary scale-105' : 'opacity-30 group-hover:opacity-50'}
-                  `}
+                <motion.div
+                  animate={{
+                    scale: isActive ? 1.05 : 1,
+                    opacity: isActive ? 1 : 0.3,
+                  }}
+                  transition={{ duration: 0.2 }}
+                  className={isActive ? 'text-primary' : 'group-hover:opacity-50'}
                 >
                   <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} aria-hidden={true} />
-                </div>
+                </motion.div>
 
                 {/* 標籤 - 8px (navigationTokens.bottomNav.label.fontSize) */}
-                <span
+                <motion.span
+                  animate={{
+                    opacity: isActive ? 1 : 0.3,
+                  }}
+                  transition={{ duration: 0.2 }}
                   className={`
                     text-[8px] font-black uppercase tracking-[0.15em]
-                    transition-all duration-300
-                    ${isActive ? 'text-primary' : 'opacity-30'}
+                    ${isActive ? 'text-primary' : ''}
                   `}
                 >
                   {t(item.labelKey)}
-                </span>
+                </motion.span>
 
                 {/* 選中指示條 - w-6 h-[3px] (navigationTokens.bottomNav.indicator) */}
+                {/* 使用 layoutId 實現滑動動畫效果 */}
                 {isActive && (
-                  <div className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))] origin-center" />
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]"
+                    transition={{
+                      type: 'spring',
+                      stiffness: 500,
+                      damping: 30,
+                    }}
+                  />
                 )}
               </button>
             </Link>
