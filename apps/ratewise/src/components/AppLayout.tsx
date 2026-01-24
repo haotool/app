@@ -107,17 +107,17 @@ function Header() {
 }
 
 /**
- * AppLayout 組件
+ * AppLayout Component
  *
- * ParkKeeper 風格主佈局
+ * Main application layout with ParkKeeper design system.
  *
- * iOS PWA Standalone 模式修復：
- * - 使用 h-dvh 替代 h-screen (100vh → 100dvh)
- * - 100vh 在 iOS standalone 模式會包含 status bar + home indicator
- * - 100dvh (Dynamic Viewport Height) 正確計算可用視窗高度
+ * iOS PWA Standalone Mode Fix:
+ * - Uses h-dvh instead of h-screen (100vh → 100dvh)
+ * - 100vh incorrectly includes status bar + home indicator in iOS standalone
+ * - 100dvh (Dynamic Viewport Height) correctly calculates available viewport
  *
- * @reference https://web.dev/viewport-units/
- * @reference https://webkit.org/blog/7929/designing-websites-for-iphone-x/
+ * @see https://web.dev/viewport-units/
+ * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
  */
 export function AppLayout() {
   return (

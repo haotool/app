@@ -822,14 +822,14 @@
 }
 
 /**
- * 基礎 Body 樣式
+ * Base Body Styles
  *
- * iOS PWA Standalone 模式修復：
- * - -webkit-text-size-adjust: 100% - 防止 iOS 文字自動放大
- * - touch-action: manipulation - 停用雙擊縮放，改善觸控回應
+ * iOS PWA Standalone Mode Optimizations:
+ * - -webkit-text-size-adjust: 100% - Prevents iOS text auto-sizing
+ * - touch-action: manipulation - Disables double-tap zoom for better touch response
  *
- * @reference https://web.dev/viewport-units/
- * @reference https://webkit.org/blog/7929/designing-websites-for-iphone-x/
+ * @see https://web.dev/viewport-units/
+ * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
  */
 body {
   background-color: rgb(var(--color-background));
@@ -855,27 +855,25 @@ body {
  * 現代化動畫與工具類
  */
 @layer utilities {
-  /* ========================================
-     iOS PWA Viewport Height 修復
-
-     問題：iOS standalone 模式下 100vh 包含 status bar + home indicator
-     解決：使用 Dynamic Viewport Height (dvh) 或 -webkit-fill-available
-
-     瀏覽器支援：
-     - dvh: Safari 15.4+, Chrome 108+, Firefox 101+
-     - -webkit-fill-available: Safari 全版本（作為 fallback）
-
-     @reference https://web.dev/viewport-units/
-     @reference https://webkit.org/blog/7929/designing-websites-for-iphone-x/
-     @created 2026-01-24
-     ======================================== */
+  /**
+   * iOS PWA Viewport Height Fix
+   *
+   * Problem: 100vh includes status bar + home indicator in iOS standalone mode
+   * Solution: Use Dynamic Viewport Height (dvh) with progressive enhancement
+   *
+   * Browser Support:
+   * - 100dvh: Safari 15.4+, Chrome 108+, Firefox 101+
+   * - -webkit-fill-available: All Safari versions (fallback)
+   * - 100vh: Legacy fallback
+   *
+   * @see https://web.dev/viewport-units/
+   * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
+   * @since 1.5.200
+   */
   .h-dvh {
-    /* Fallback for older browsers */
-    height: 100vh;
-    /* iOS Safari workaround */
-    height: -webkit-fill-available;
-    /* Modern browsers with dvh support */
-    height: 100dvh;
+    height: 100vh; /* Fallback for legacy browsers */
+    height: -webkit-fill-available; /* iOS Safari workaround */
+    height: 100dvh; /* Modern browsers with dvh support */
   }
 
   .min-h-dvh {
