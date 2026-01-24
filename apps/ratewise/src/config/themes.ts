@@ -486,3 +486,131 @@ export function getChartColors(): {
     bottomColor: `rgba(${toCommaSeparatedRgb(bottom)}, 0)`,
   };
 }
+
+// ============================================================================
+// Seasonal Colors - 季節性主題顏色
+// ============================================================================
+
+/**
+ * 季節性顏色配置介面
+ *
+ * @description 用於聖誕節、冬季等季節性裝飾組件
+ *              支援 6 種風格的主題感知顏色
+ *
+ * @created 2026-01-24
+ */
+export interface SeasonalColors {
+  /** 星星顏色 */
+  star: string;
+  starStroke: string;
+  starGlow: string;
+  /** 樹冠顏色 */
+  tree: string;
+  treeDark: string;
+  treeStroke: string;
+  /** 樹幹顏色 */
+  trunk: string;
+  trunkDark: string;
+  trunkStroke: string;
+  /** 裝飾球顏色 */
+  ornamentRed: string;
+  ornamentRedStroke: string;
+  ornamentGold: string;
+  ornamentGoldStroke: string;
+  ornamentBlue: string;
+  ornamentBlueStroke: string;
+  /** 積雪顏色 */
+  snow: string;
+  snowShadow: string;
+  /** 底座顏色 */
+  base: string;
+  baseStroke: string;
+}
+
+/**
+ * 獲取當前主題的季節性顏色（供 Easter Egg 組件使用）
+ *
+ * SSOT - 從 CSS Variables 獲取季節性配色
+ * 用於 ChristmasTree、MiniChristmasTree、SnowAccumulation 等組件
+ *
+ * @returns 季節性顏色配置，格式為標準 rgb(r, g, b)
+ */
+export function getSeasonalColors(): SeasonalColors {
+  // SSR fallback - 使用 Zen 預設值
+  const defaultColors: SeasonalColors = {
+    star: '#fbbf24',
+    starStroke: '#f59e0b',
+    starGlow: '#fef08a',
+    tree: '#22c55e',
+    treeDark: '#166534',
+    treeStroke: '#14532d',
+    trunk: '#92400e',
+    trunkDark: '#78350f',
+    trunkStroke: '#451a03',
+    ornamentRed: '#ef4444',
+    ornamentRedStroke: '#dc2626',
+    ornamentGold: '#fbbf24',
+    ornamentGoldStroke: '#f59e0b',
+    ornamentBlue: '#3b82f6',
+    ornamentBlueStroke: '#2563eb',
+    snow: '#ffffff',
+    snowShadow: '#f8fafc',
+    base: '#dc2626',
+    baseStroke: '#b91c1c',
+  };
+
+  if (typeof window === 'undefined') {
+    return defaultColors;
+  }
+
+  const root = document.documentElement;
+  const style = getComputedStyle(root);
+
+  /**
+   * 將 CSS 變數值轉換為 rgb() 格式
+   * @param varName CSS 變數名稱
+   * @param fallback 預設值（hex 格式）
+   */
+  const getColor = (varName: string, fallback: string): string => {
+    const value = style.getPropertyValue(varName).trim();
+    if (!value) return fallback;
+    return `rgb(${toCommaSeparatedRgb(value)})`;
+  };
+
+  return {
+    // 星星
+    star: getColor('--color-seasonal-star', defaultColors.star),
+    starStroke: getColor('--color-seasonal-star-stroke', defaultColors.starStroke),
+    starGlow: getColor('--color-seasonal-star-glow', defaultColors.starGlow),
+    // 樹冠
+    tree: getColor('--color-seasonal-tree', defaultColors.tree),
+    treeDark: getColor('--color-seasonal-tree-dark', defaultColors.treeDark),
+    treeStroke: getColor('--color-seasonal-tree-stroke', defaultColors.treeStroke),
+    // 樹幹
+    trunk: getColor('--color-seasonal-trunk', defaultColors.trunk),
+    trunkDark: getColor('--color-seasonal-trunk-dark', defaultColors.trunkDark),
+    trunkStroke: getColor('--color-seasonal-trunk-stroke', defaultColors.trunkStroke),
+    // 裝飾球
+    ornamentRed: getColor('--color-seasonal-ornament-red', defaultColors.ornamentRed),
+    ornamentRedStroke: getColor(
+      '--color-seasonal-ornament-red-stroke',
+      defaultColors.ornamentRedStroke,
+    ),
+    ornamentGold: getColor('--color-seasonal-ornament-gold', defaultColors.ornamentGold),
+    ornamentGoldStroke: getColor(
+      '--color-seasonal-ornament-gold-stroke',
+      defaultColors.ornamentGoldStroke,
+    ),
+    ornamentBlue: getColor('--color-seasonal-ornament-blue', defaultColors.ornamentBlue),
+    ornamentBlueStroke: getColor(
+      '--color-seasonal-ornament-blue-stroke',
+      defaultColors.ornamentBlueStroke,
+    ),
+    // 積雪
+    snow: getColor('--color-seasonal-snow', defaultColors.snow),
+    snowShadow: getColor('--color-seasonal-snow-shadow', defaultColors.snowShadow),
+    // 底座
+    base: getColor('--color-seasonal-base', defaultColors.base),
+    baseStroke: getColor('--color-seasonal-base-stroke', defaultColors.baseStroke),
+  };
+}

@@ -157,6 +157,44 @@
     --color-footer-to: var(--color-text);
 
     /* ========================================
+       Seasonal Design Tokens (季節性主題)
+       用於聖誕節、冬季等季節性裝飾組件
+       支援 6 種風格的主題感知顏色
+       @created 2026-01-24
+       ======================================== */
+
+    /* 星星顏色 - 金色調 */
+    --color-seasonal-star: 251 191 36; /* amber-400 */
+    --color-seasonal-star-stroke: 245 158 11; /* amber-500 */
+    --color-seasonal-star-glow: 254 240 138; /* yellow-200 */
+
+    /* 樹冠顏色 - 綠色調 */
+    --color-seasonal-tree: 34 197 94; /* green-500 */
+    --color-seasonal-tree-dark: 22 101 52; /* green-800 */
+    --color-seasonal-tree-stroke: 20 83 45; /* green-900 */
+
+    /* 樹幹顏色 - 棕色調 */
+    --color-seasonal-trunk: 146 64 14; /* amber-800 */
+    --color-seasonal-trunk-dark: 120 53 15; /* amber-900 */
+    --color-seasonal-trunk-stroke: 69 26 3; /* amber-950 */
+
+    /* 裝飾球顏色 */
+    --color-seasonal-ornament-red: 239 68 68; /* red-500 */
+    --color-seasonal-ornament-red-stroke: 220 38 38; /* red-600 */
+    --color-seasonal-ornament-gold: 251 191 36; /* amber-400 */
+    --color-seasonal-ornament-gold-stroke: 245 158 11; /* amber-500 */
+    --color-seasonal-ornament-blue: 59 130 246; /* blue-500 */
+    --color-seasonal-ornament-blue-stroke: 37 99 235; /* blue-600 */
+
+    /* 積雪顏色 - 主題感知白色 */
+    --color-seasonal-snow: 255 255 255; /* white */
+    --color-seasonal-snow-shadow: 248 250 252; /* slate-50 */
+
+    /* 底座顏色 */
+    --color-seasonal-base: 220 38 38; /* red-600 */
+    --color-seasonal-base-stroke: 185 28 28; /* red-700 */
+
+    /* ========================================
        計算機按鍵色彩系統 (Zen 預設風格)
        三種按鍵：數字鍵（淺灰）、運算符（淺紫）、等號（深紫）
        ======================================== */
@@ -230,6 +268,42 @@
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
+
+    /* ========================================
+       Seasonal Design Tokens - Nitro 深色科技感
+       霓虹綠/藍為主調，營造科幻聖誕氛圍
+       ======================================== */
+
+    /* 星星顏色 - 霓虹黃/綠 */
+    --color-seasonal-star: 163 230 53; /* lime-400 */
+    --color-seasonal-star-stroke: 132 204 22; /* lime-500 */
+    --color-seasonal-star-glow: 190 242 100; /* lime-300 */
+
+    /* 樹冠顏色 - 霓虹綠 */
+    --color-seasonal-tree: 0 255 136; /* neon green */
+    --color-seasonal-tree-dark: 16 185 129; /* emerald-500 */
+    --color-seasonal-tree-stroke: 6 95 70; /* emerald-900 */
+
+    /* 樹幹顏色 - 深銅色 */
+    --color-seasonal-trunk: 180 83 9; /* amber-700 */
+    --color-seasonal-trunk-dark: 146 64 14; /* amber-800 */
+    --color-seasonal-trunk-stroke: 69 26 3; /* amber-950 */
+
+    /* 裝飾球顏色 - 霓虹色調 */
+    --color-seasonal-ornament-red: 248 113 113; /* red-400 */
+    --color-seasonal-ornament-red-stroke: 239 68 68; /* red-500 */
+    --color-seasonal-ornament-gold: 163 230 53; /* lime-400 */
+    --color-seasonal-ornament-gold-stroke: 132 204 22; /* lime-500 */
+    --color-seasonal-ornament-blue: 103 232 249; /* cyan-300 */
+    --color-seasonal-ornament-blue-stroke: 34 211 238; /* cyan-400 */
+
+    /* 積雪顏色 - 深色主題用淺灰 */
+    --color-seasonal-snow: 226 232 240; /* slate-200 */
+    --color-seasonal-snow-shadow: 148 163 184; /* slate-400 */
+
+    /* 底座顏色 - 霓虹紅 */
+    --color-seasonal-base: 248 113 113; /* red-400 */
+    --color-seasonal-base-stroke: 239 68 68; /* red-500 */
 
     /* 計算機按鍵色彩 - Nitro 深色科技感
        數字鍵/功能鍵：深灰階一致風格
@@ -305,6 +379,42 @@
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
+
+    /* ========================================
+       Seasonal Design Tokens - Kawaii 可愛粉嫩
+       粉紅/薄荷為主調，營造夢幻聖誕氛圍
+       ======================================== */
+
+    /* 星星顏色 - 夢幻金粉 */
+    --color-seasonal-star: 253 224 71; /* yellow-300 */
+    --color-seasonal-star-stroke: 250 204 21; /* yellow-400 */
+    --color-seasonal-star-glow: 254 249 195; /* yellow-100 */
+
+    /* 樹冠顏色 - 薄荷綠 */
+    --color-seasonal-tree: 134 239 172; /* green-300 */
+    --color-seasonal-tree-dark: 74 222 128; /* green-400 */
+    --color-seasonal-tree-stroke: 34 197 94; /* green-500 */
+
+    /* 樹幹顏色 - 奶茶棕 */
+    --color-seasonal-trunk: 217 119 6; /* amber-600 */
+    --color-seasonal-trunk-dark: 180 83 9; /* amber-700 */
+    --color-seasonal-trunk-stroke: 120 53 15; /* amber-900 */
+
+    /* 裝飾球顏色 - 馬卡龍色調 */
+    --color-seasonal-ornament-red: 251 113 133; /* rose-400 */
+    --color-seasonal-ornament-red-stroke: 244 63 94; /* rose-500 */
+    --color-seasonal-ornament-gold: 253 224 71; /* yellow-300 */
+    --color-seasonal-ornament-gold-stroke: 250 204 21; /* yellow-400 */
+    --color-seasonal-ornament-blue: 147 197 253; /* blue-300 */
+    --color-seasonal-ornament-blue-stroke: 96 165 250; /* blue-400 */
+
+    /* 積雪顏色 - 奶白色 */
+    --color-seasonal-snow: 255 255 255; /* white */
+    --color-seasonal-snow-shadow: 255 241 242; /* rose-50 */
+
+    /* 底座顏色 - 草莓粉 */
+    --color-seasonal-base: 244 63 94; /* rose-500 */
+    --color-seasonal-base-stroke: 225 29 72; /* rose-600 */
 
     /* 計算機按鍵色彩 - Kawaii 風格
        背景：warm cream (255 250 244)
@@ -383,6 +493,42 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
+    /* ========================================
+       Seasonal Design Tokens - Classic 復古書卷
+       琥珀/墨綠為主調，營造維多利亞聖誕氛圍
+       ======================================== */
+
+    /* 星星顏色 - 古銅金 */
+    --color-seasonal-star: 217 119 6; /* amber-600 */
+    --color-seasonal-star-stroke: 180 83 9; /* amber-700 */
+    --color-seasonal-star-glow: 253 230 138; /* amber-200 */
+
+    /* 樹冠顏色 - 維多利亞綠 */
+    --color-seasonal-tree: 22 163 74; /* green-600 */
+    --color-seasonal-tree-dark: 21 128 61; /* green-700 */
+    --color-seasonal-tree-stroke: 20 83 45; /* green-900 */
+
+    /* 樹幹顏色 - 深橡木棕 */
+    --color-seasonal-trunk: 120 53 15; /* amber-900 */
+    --color-seasonal-trunk-dark: 69 26 3; /* amber-950 */
+    --color-seasonal-trunk-stroke: 67 20 7; /* dark brown */
+
+    /* 裝飾球顏色 - 復古調性 */
+    --color-seasonal-ornament-red: 185 28 28; /* red-700 */
+    --color-seasonal-ornament-red-stroke: 153 27 27; /* red-800 */
+    --color-seasonal-ornament-gold: 217 119 6; /* amber-600 */
+    --color-seasonal-ornament-gold-stroke: 180 83 9; /* amber-700 */
+    --color-seasonal-ornament-blue: 59 130 246; /* blue-500 - 墨水藍 */
+    --color-seasonal-ornament-blue-stroke: 37 99 235; /* blue-600 */
+
+    /* 積雪顏色 - 象牙白 */
+    --color-seasonal-snow: 255 255 255; /* white */
+    --color-seasonal-snow-shadow: 254 252 232; /* yellow-50 */
+
+    /* 底座顏色 - 磚紅 */
+    --color-seasonal-base: 185 28 28; /* red-700 */
+    --color-seasonal-base-stroke: 153 27 27; /* red-800 */
+
     /* 計算機按鍵色彩 - Classic 風格
        背景：warm white/象牙白 (255 250 251)
        數字鍵：淺羊皮紙色（接近白色但非純白，配合復古風格）
@@ -460,6 +606,42 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
+    /* ========================================
+       Seasonal Design Tokens - Ocean 海洋深邃
+       青藍/珊瑚為主調，營造海底聖誕氛圍
+       ======================================== */
+
+    /* 星星顏色 - 海星金 */
+    --color-seasonal-star: 250 204 21; /* yellow-400 */
+    --color-seasonal-star-stroke: 234 179 8; /* yellow-500 */
+    --color-seasonal-star-glow: 254 240 138; /* yellow-200 */
+
+    /* 樹冠顏色 - 海草綠 */
+    --color-seasonal-tree: 20 184 166; /* teal-500 */
+    --color-seasonal-tree-dark: 13 148 136; /* teal-600 */
+    --color-seasonal-tree-stroke: 17 94 89; /* teal-800 */
+
+    /* 樹幹顏色 - 珊瑚棕 */
+    --color-seasonal-trunk: 180 83 9; /* amber-700 */
+    --color-seasonal-trunk-dark: 146 64 14; /* amber-800 */
+    --color-seasonal-trunk-stroke: 120 53 15; /* amber-900 */
+
+    /* 裝飾球顏色 - 海洋調性 */
+    --color-seasonal-ornament-red: 248 113 113; /* red-400 - 珊瑚紅 */
+    --color-seasonal-ornament-red-stroke: 239 68 68; /* red-500 */
+    --color-seasonal-ornament-gold: 250 204 21; /* yellow-400 */
+    --color-seasonal-ornament-gold-stroke: 234 179 8; /* yellow-500 */
+    --color-seasonal-ornament-blue: 56 189 248; /* sky-400 */
+    --color-seasonal-ornament-blue-stroke: 14 165 233; /* sky-500 */
+
+    /* 積雪顏色 - 海沫白 */
+    --color-seasonal-snow: 255 255 255; /* white */
+    --color-seasonal-snow-shadow: 224 242 254; /* sky-100 */
+
+    /* 底座顏色 - 珊瑚紅 */
+    --color-seasonal-base: 248 113 113; /* red-400 */
+    --color-seasonal-base-stroke: 239 68 68; /* red-500 */
+
     /* 計算機按鍵色彩 - Ocean 風格
        背景：sky-50 (240 249 255)
        數字鍵：淺天藍色（接近白色但非純白，配合海洋風格）
@@ -536,6 +718,42 @@
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
+
+    /* ========================================
+       Seasonal Design Tokens - Forest 森林自然
+       翠綠/漿果為主調，營造自然聖誕氛圍
+       ======================================== */
+
+    /* 星星顏色 - 螢火蟲金 */
+    --color-seasonal-star: 234 179 8; /* yellow-500 */
+    --color-seasonal-star-stroke: 202 138 4; /* yellow-600 */
+    --color-seasonal-star-glow: 253 224 71; /* yellow-300 */
+
+    /* 樹冠顏色 - 森林翠綠 */
+    --color-seasonal-tree: 34 197 94; /* green-500 */
+    --color-seasonal-tree-dark: 22 163 74; /* green-600 */
+    --color-seasonal-tree-stroke: 20 83 45; /* green-900 */
+
+    /* 樹幹顏色 - 橡木棕 */
+    --color-seasonal-trunk: 146 64 14; /* amber-800 */
+    --color-seasonal-trunk-dark: 120 53 15; /* amber-900 */
+    --color-seasonal-trunk-stroke: 69 26 3; /* amber-950 */
+
+    /* 裝飾球顏色 - 自然調性 */
+    --color-seasonal-ornament-red: 220 38 38; /* red-600 - 漿果紅 */
+    --color-seasonal-ornament-red-stroke: 185 28 28; /* red-700 */
+    --color-seasonal-ornament-gold: 234 179 8; /* yellow-500 */
+    --color-seasonal-ornament-gold-stroke: 202 138 4; /* yellow-600 */
+    --color-seasonal-ornament-blue: 59 130 246; /* blue-500 */
+    --color-seasonal-ornament-blue-stroke: 37 99 235; /* blue-600 */
+
+    /* 積雪顏色 - 霜白 */
+    --color-seasonal-snow: 255 255 255; /* white */
+    --color-seasonal-snow-shadow: 220 252 231; /* green-100 */
+
+    /* 底座顏色 - 漿果紅 */
+    --color-seasonal-base: 220 38 38; /* red-600 */
+    --color-seasonal-base-stroke: 185 28 28; /* red-700 */
 
     /* 計算機按鍵色彩 - Forest 風格
        背景：green-50 (240 253 244)

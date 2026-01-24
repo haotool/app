@@ -35,9 +35,12 @@
   touch-action: manipulation;
 }
 
-/* Focus visible for keyboard navigation (accessibility) */
+/* Focus visible for keyboard navigation (accessibility)
+ * 使用 --color-primary token 確保主題一致性
+ * @updated 2026-01-24 - 遷移至 Design Token 系統
+ */
 .calculator-key:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;
 }
 

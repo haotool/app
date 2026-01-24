@@ -3,8 +3,17 @@
  * @file december-theme.css
  * @description 12 月聖誕主題的動畫樣式
  *
- * 特效：
- * - 常駐下雪動畫（GPU 加速）- 純白色 SVG 雪花
+ * @design 使用 Design Token 系統支援 6 種主題風格
+ *         所有硬編碼顏色已遷移至 CSS Variables
+ *
+ * @tokens 使用以下 tokens:
+ *         - --color-seasonal-snow: 雪花/積雪顏色
+ *         - --color-seasonal-tree: 樹發光顏色
+ *         - --color-seasonal-star: 星星發光顏色
+ *         - --color-primary/secondary: 按鈕/tooltip 顏色
+ *
+ * @features
+ * - 常駐下雪動畫（GPU 加速）- 主題感知顏色
  * - 三種雪花尺寸：大雪、中雪、小雪
  * - 精緻搖擺動畫，可變強度
  * - 積雪效果樣式
@@ -12,7 +21,8 @@
  * - 響應式斷點適配
  * - 尊重 prefers-reduced-motion
  *
- * @author UIUX Designer Upgrade 2025-12-27
+ * @created 2025-12-xx
+ * @updated 2026-01-24 - 遷移至 Design Token 系統
  */
 
 /* ============================================
@@ -28,15 +38,15 @@
 }
 
 /* ============================================
-   基礎雪花樣式 - 微灰調白色 SVG（高級質感 + 白背景可見）
+   基礎雪花樣式 - 使用 seasonal-snow token（主題感知）
    ============================================ */
 .december-snowflake {
   position: absolute;
   top: -30px;
-  /* 使用微灰調白色 #f8f9fa 而非純白，在白背景更可見 */
-  color: rgba(248, 249, 250, 0.95);
+  /* 使用 seasonal-snow token 替代硬編碼顏色 */
+  color: rgb(var(--color-seasonal-snow) / 0.95);
   /* 精簡陰影：單層柔和發光（效能最佳） */
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
+  filter: drop-shadow(0 0 8px rgb(var(--color-seasonal-snow) / 0.7));
   will-change: transform;
   transform: translateZ(0);
   --sway-intensity: 1;
@@ -179,7 +189,7 @@
 }
 
 /* ============================================
-   積雪效果
+   積雪效果 - 使用 seasonal-snow token
    ============================================ */
 .snow-accumulation {
   position: absolute;
@@ -194,7 +204,7 @@
 .snow-accumulation__main {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.2));
+  filter: drop-shadow(0 2px 4px rgb(var(--color-seasonal-snow) / 0.2));
 }
 
 .snow-accumulation__sparkles {
@@ -207,9 +217,9 @@
   position: absolute;
   top: 2px;
   font-size: 6px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgb(var(--color-seasonal-snow) / 0.9);
   animation: sparkle-twinkle 2s ease-in-out infinite;
-  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
+  filter: drop-shadow(0 0 3px rgb(var(--color-seasonal-snow) / 0.8));
 }
 
 @keyframes sparkle-twinkle {
@@ -226,15 +236,15 @@
 
 /* 積雪變體 */
 .snow-accumulation--thick .snow-accumulation__main {
-  filter: drop-shadow(0 3px 6px rgba(255, 255, 255, 0.3));
+  filter: drop-shadow(0 3px 6px rgb(var(--color-seasonal-snow) / 0.3));
 }
 
 .snow-accumulation--thin .snow-accumulation__main {
-  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.15));
+  filter: drop-shadow(0 1px 2px rgb(var(--color-seasonal-snow) / 0.15));
 }
 
 /* ============================================
-   迷你聖誕樹
+   迷你聖誕樹 - 使用 seasonal tokens
    ============================================ */
 .mini-christmas-tree-container {
   position: fixed;
@@ -251,12 +261,14 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 4px 8px rgb(0 0 0 / 0.2));
   transition: filter 0.3s ease;
 }
 
+/* hover 發光效果 - 使用 seasonal-tree token */
 .mini-christmas-tree:hover {
-  filter: drop-shadow(0 0 16px rgba(34, 197, 94, 0.6)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 0 16px rgb(var(--color-seasonal-tree) / 0.6))
+    drop-shadow(0 4px 8px rgb(0 0 0 / 0.2));
 }
 
 /* 移除點擊時的綠色外框 */
@@ -265,7 +277,7 @@
   outline: none;
 }
 
-/* 星星閃爍動畫 */
+/* 星星閃爍動畫 - 使用 seasonal-star token */
 .mini-tree-star {
   animation: star-glow 1.5s ease-in-out infinite;
 }
@@ -273,11 +285,11 @@
 @keyframes star-glow {
   0%,
   100% {
-    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.8));
+    filter: drop-shadow(0 0 4px rgb(var(--color-seasonal-star) / 0.8));
     opacity: 1;
   }
   50% {
-    filter: drop-shadow(0 0 12px rgba(251, 191, 36, 1));
+    filter: drop-shadow(0 0 12px rgb(var(--color-seasonal-star)));
     opacity: 0.8;
   }
 }
@@ -306,7 +318,9 @@
   }
 }
 
-/* 提示氣泡 */
+/* ============================================
+   提示氣泡 - 使用主題 primary/secondary tokens
+   ============================================ */
 .mini-tree-tooltip {
   position: absolute;
   bottom: 100%;
@@ -314,19 +328,24 @@
   transform: translateX(-50%);
   margin-bottom: 8px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+  /* 使用主題顏色漸層 */
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-secondary)) 0%,
+    rgb(var(--color-primary)) 100%
+  );
   border-radius: 20px;
   white-space: nowrap;
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.2),
-    0 0 20px rgba(124, 58, 237, 0.3);
+    0 4px 16px rgb(0 0 0 / 0.2),
+    0 0 20px rgb(var(--color-primary) / 0.3);
 }
 
 .tooltip-text {
   font-size: 14px;
   font-weight: 600;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  color: rgb(var(--color-surface));
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
 }
 
 /* ============================================
@@ -338,10 +357,10 @@
   right: 16px;
   z-index: 100;
   padding: 8px 12px;
-  background: rgba(30, 41, 59, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgb(var(--color-surface) / 0.9);
+  border: 1px solid rgb(var(--color-border));
   border-radius: 20px;
-  color: white;
+  color: rgb(var(--color-text));
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -349,12 +368,13 @@
 }
 
 .december-theme-toggle:hover {
-  background: rgba(30, 41, 59, 1);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: rgb(var(--color-surface));
+  border-color: rgb(var(--color-primary) / 0.4);
 }
 
+/* focus outline - 使用 primary token */
 .december-theme-toggle:focus {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;
 }
 

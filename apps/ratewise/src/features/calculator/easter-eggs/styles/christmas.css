@@ -3,13 +3,26 @@
  * @file christmas.css
  * @description 聖誕彩蛋的動畫樣式（下雪效果）
  *
- * 特效：
+ * @design 使用 Design Token 系統支援 6 種主題風格
+ *         所有硬編碼顏色已遷移至 CSS Variables
+ *
+ * @tokens 使用以下 tokens:
+ *         - --color-seasonal-snow: 雪花顏色
+ *         - --color-seasonal-tree: 樹發光顏色
+ *         - --color-surface/background: 背景漸層
+ *
+ * @features
  * - CSS 純動畫下雪效果（GPU 加速）
  * - 雪花隨機飄落
  * - 星星閃爍效果
+ *
+ * @created 2025-12-xx
+ * @updated 2026-01-24 - 遷移至 Design Token 系統
  */
 
-/* 雪花容器 */
+/* ============================================
+   雪花容器
+   ============================================ */
 .christmas-snow-container {
   position: fixed;
   inset: 0;
@@ -18,19 +31,23 @@
   z-index: 100;
 }
 
-/* 單一雪花 */
+/* ============================================
+   單一雪花 - 使用 seasonal-snow token
+   ============================================ */
 .christmas-snowflake {
   position: absolute;
   top: -20px;
-  color: white;
+  color: rgb(var(--color-seasonal-snow));
   font-size: 1rem;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+  text-shadow: 0 0 5px rgb(var(--color-seasonal-snow) / 0.8);
   animation: snowfall linear infinite;
   will-change: transform;
   transform: translateZ(0);
 }
 
-/* 雪花飄落動畫 */
+/* ============================================
+   雪花飄落動畫
+   ============================================ */
 @keyframes snowfall {
   0% {
     transform: translateY(0) rotate(0deg);
@@ -42,7 +59,9 @@
   }
 }
 
-/* 星星閃爍動畫 */
+/* ============================================
+   星星閃爍動畫
+   ============================================ */
 @keyframes twinkle {
   0%,
   100% {
@@ -59,14 +78,16 @@
   animation: twinkle 1.5s ease-in-out infinite;
 }
 
-/* 聖誕樹發光效果 */
+/* ============================================
+   聖誕樹發光效果 - 使用 seasonal-tree token
+   ============================================ */
 @keyframes tree-glow {
   0%,
   100% {
-    filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.5));
+    filter: drop-shadow(0 0 10px rgb(var(--color-seasonal-tree) / 0.5));
   }
   50% {
-    filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.8));
+    filter: drop-shadow(0 0 20px rgb(var(--color-seasonal-tree) / 0.8));
   }
 }
 
@@ -74,7 +95,9 @@
   animation: tree-glow 2s ease-in-out infinite;
 }
 
-/* 祝福文字淡入動畫 */
+/* ============================================
+   祝福文字淡入動畫
+   ============================================ */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -90,7 +113,15 @@
   animation: fadeInUp 1s ease-out forwards;
 }
 
-/* 彩蛋背景漸層 */
+/* ============================================
+   彩蛋背景漸層 - 使用主題感知顏色
+   深色主題（Nitro）時自動適配
+   ============================================ */
 .christmas-background {
-  background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  background: linear-gradient(
+    180deg,
+    rgb(var(--color-background)) 0%,
+    rgb(var(--color-surface)) 50%,
+    rgb(var(--color-border)) 100%
+  );
 }
