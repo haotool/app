@@ -112,34 +112,37 @@ function Header() {
  * Main application layout with ParkKeeper design system.
  *
  * iOS PWA Standalone Mode Fix:
- * - Uses h-dvh instead of h-screen (100vh → 100dvh)
- * - 100vh incorrectly includes status bar + home indicator in iOS standalone
- * - 100dvh (Dynamic Viewport Height) correctly calculates available viewport
+ * - Uses min-h-dvh for dynamic viewport height calculation
+ * - Content area reserves space for fixed BottomNavigation (56px + safe area)
+ * - Safe area handled via CSS env() variables
+ *
+ * Layout Structure:
+ * - Header: 48px (mobile only)
+ * - Main: flex-1 with bottom padding for nav
+ * - BottomNavigation: fixed, 56px + safe-area-inset-bottom
  *
  * @see https://web.dev/viewport-units/
  * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
  */
 export function AppLayout() {
   return (
-    <div className="h-dvh w-full flex flex-col overflow-hidden font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))]">
-      {/* 桌面版側邊欄（≥ 768px 顯示） - 移至內容區旁 */}
-      <div className="flex flex-1 overflow-hidden">
+    <div className="min-h-dvh w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))]">
+      {/* Desktop sidebar (≥768px) */}
+      <div className="flex flex-1">
         <SideNavigation className="hidden md:block" />
 
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header（移動端） */}
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* Header (mobile only) */}
           <div className="md:hidden">
             <Header />
           </div>
 
-          {/* 主內容區 */}
-          <main className="flex-1 relative overflow-y-auto overflow-x-hidden">
-            <div className="h-full pb-safe-bottom">
-              <Outlet />
-            </div>
+          {/* Main content area - reserves space for fixed bottom nav */}
+          <main className="flex-1 relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0">
+            <Outlet />
           </main>
 
-          {/* 移動版底部導覽列（< 768px 顯示） */}
+          {/* Mobile bottom navigation (<768px) */}
           <BottomNavigation />
         </div>
       </div>

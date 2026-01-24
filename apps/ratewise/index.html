@@ -111,23 +111,26 @@
     <!-- Critical CSS (iOS PWA Optimized) -->
     <style>
       /**
-       * iOS PWA Standalone Viewport Height Fix
+       * iOS PWA Standalone Mode - Safe Area Handling
        *
-       * Problem: 100vh includes status bar + home indicator in iOS standalone mode
-       * Solution: Use -webkit-fill-available as fallback, 100dvh for modern browsers
+       * When using black-translucent status bar, content extends behind the status bar.
+       * We need to handle safe areas properly to prevent content from being obscured.
+       *
+       * Key fix: html min-height includes safe-area-inset-top to prevent bottom white bar
        *
        * @see https://web.dev/viewport-units/
        * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
+       * @see https://dev.to/oncode/display-your-pwa-website-fullscreen-4776
        */
       html {
         height: 100%;
-        height: -webkit-fill-available;
+        /* Prevent bottom white bar when content shifts up for status bar */
+        min-height: calc(100% + env(safe-area-inset-top, 0px));
       }
       body {
         margin: 0;
         padding: 0;
         min-height: 100%;
-        min-height: -webkit-fill-available;
         min-height: 100dvh;
         background: #f8fafc;
         font-family:

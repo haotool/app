@@ -852,33 +852,57 @@ body {
 }
 
 /**
+ * iOS PWA Status Bar Blur Effect
+ *
+ * When using black-translucent, content scrolls behind the transparent status bar.
+ * This pseudo-element creates a blurred backdrop to improve readability.
+ *
+ * @see https://muffinman.io/blog/pwa-ios-status-bar-blur/
+ * @see https://danielpietzsch.com/articles/how-to-create-a-blurry-status-bar-for-pwas-on-ios
+ */
+@supports (backdrop-filter: blur(10px)) and (padding-top: env(safe-area-inset-top)) {
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background-color: rgb(var(--color-background) / 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    z-index: 9999;
+    pointer-events: none;
+  }
+}
+
+/**
  * 現代化動畫與工具類
  */
 @layer utilities {
   /**
-   * iOS PWA Viewport Height Fix
+   * iOS PWA Viewport Height Utilities
    *
    * Problem: 100vh includes status bar + home indicator in iOS standalone mode
    * Solution: Use Dynamic Viewport Height (dvh) with progressive enhancement
    *
    * Browser Support:
    * - 100dvh: Safari 15.4+, Chrome 108+, Firefox 101+
-   * - -webkit-fill-available: All Safari versions (fallback)
    * - 100vh: Legacy fallback
+   *
+   * Note: -webkit-fill-available removed as it can cause issues with flex layouts
    *
    * @see https://web.dev/viewport-units/
    * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
    * @since 1.5.200
    */
   .h-dvh {
-    height: 100vh; /* Fallback for legacy browsers */
-    height: -webkit-fill-available; /* iOS Safari workaround */
-    height: 100dvh; /* Modern browsers with dvh support */
+    height: 100vh;
+    height: 100dvh;
   }
 
   .min-h-dvh {
     min-height: 100vh;
-    min-height: -webkit-fill-available;
     min-height: 100dvh;
   }
 

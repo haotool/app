@@ -66,15 +66,20 @@ const navItems: NavItem[] = [
 ];
 
 /**
- * BottomNavigation 組件
+ * BottomNavigation Component
  *
- * ParkKeeper 風格導覽列（緊湊版）：
- * - 毛玻璃效果
- * - 選中狀態指示條
- * - 緊湊文字標籤（8px）
- * - 56px 高度（WCAG 44px touch target 合規）
+ * ParkKeeper-style navigation bar (compact version):
+ * - Glassmorphism effect
+ * - Active state indicator
+ * - Compact text labels (8px)
+ * - 56px content height + safe area (WCAG 44px touch target compliant)
+ *
+ * iOS PWA Safe Area Fix:
+ * - Uses padding-bottom for safe area instead of fixed height
+ * - Navigation content stays at 56px, safe area extends below
  *
  * @see navigationTokens.bottomNav - SSOT for dimensions
+ * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
  */
 export function BottomNavigation() {
   const { t } = useTranslation();
@@ -83,14 +88,15 @@ export function BottomNavigation() {
   return (
     <nav
       className="
-        fixed bottom-0 inset-x-0 h-14 pb-safe-bottom z-30
+        fixed bottom-0 inset-x-0 z-30
         bg-background/80 backdrop-blur-xl
         border-t border-black/[0.02]
         md:hidden
+        pb-[env(safe-area-inset-bottom,0px)]
       "
       aria-label={t('nav.singleCurrencyFull')}
     >
-      <div className="flex h-full max-w-md mx-auto relative px-4">
+      <div className="flex h-14 max-w-md mx-auto relative px-4">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
