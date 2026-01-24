@@ -83,12 +83,12 @@ const Guide = () => {
         }}
       />
 
-      <main className="min-h-screen bg-gradient-to-br from-neutral-light via-violet-50 to-neutral-light">
+      <main className="min-h-screen bg-page-gradient">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* 返回首頁 */}
           <Link
             to="/"
-            className="inline-flex items-center text-violet-600 hover:text-violet-700 mb-4 transition-colors"
+            className="inline-flex items-center text-primary hover:text-primary-hover mb-4 transition-colors"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -138,7 +138,7 @@ const Guide = () => {
                 <a
                   key={step.position}
                   href={`#step-${step.position}`}
-                  className="text-sm text-violet-600 hover:text-violet-700 hover:underline"
+                  className="text-sm text-primary hover:text-primary-hover hover:underline"
                 >
                   {step.position}. {step.name}
                 </a>
@@ -155,7 +155,7 @@ const Guide = () => {
                 className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow scroll-mt-4"
               >
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-10 h-10 bg-violet-600 text-white rounded-full flex items-center justify-center font-bold text-lg mr-4">
+                  <div className="flex-shrink-0 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg mr-4">
                     {step.position}
                   </div>
                   <div className="flex-1">
@@ -172,33 +172,33 @@ const Guide = () => {
             <h2 className="text-2xl font-bold text-neutral-text mb-4">進階功能</h2>
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">多幣別換算</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">多幣別換算</h3>
                 <p className="text-neutral-text-secondary leading-relaxed">
                   點選「多幣別換算」模式，可同時查看一個基準貨幣對所有支援貨幣的換算結果。適合出國旅遊比價、國際貿易報價比較。
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">歷史匯率趨勢</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">歷史匯率趨勢</h3>
                 <p className="text-neutral-text-secondary leading-relaxed">
                   在單幣別換算模式下，匯率卡片會自動顯示該貨幣對過去 30
                   天的歷史趨勢線圖，包括最高點、最低點與平均值標記。幫助您選擇最佳換匯時機。
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">收藏常用貨幣</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">收藏常用貨幣</h3>
                 <p className="text-neutral-text-secondary leading-relaxed">
                   點擊貨幣卡片的星號圖示，將常用貨幣加入收藏。收藏的貨幣會顯示在「常用貨幣」區塊，方便快速存取。
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">離線使用</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">離線使用</h3>
                 <p className="text-neutral-text-secondary leading-relaxed">
                   RateWise 採用 PWA
                   技術，支援離線使用。即使沒有網路連線，也能使用最後一次更新的匯率資料進行換算。
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">計算機功能</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">計算機功能</h3>
                 <p className="text-neutral-text-secondary leading-relaxed">
                   點擊金額輸入框旁的計算機圖示，可開啟內建計算機進行複雜運算。支援加減乘除、百分比等基本運算。
                 </p>
@@ -207,31 +207,31 @@ const Guide = () => {
           </div>
 
           {/* 提示與技巧 */}
-          <div className="mt-8 p-6 bg-violet-50 rounded-lg border border-violet-100">
+          <div className="mt-8 p-6 bg-primary-bg rounded-lg border border-primary-light">
             <h2 className="text-xl font-semibold text-neutral-text mb-2">💡 提示與技巧</h2>
             <ul className="space-y-2 text-neutral-text-secondary">
               <li className="flex items-start">
-                <span className="text-violet-600 mr-2">•</span>
+                <span className="text-primary mr-2">•</span>
                 <span>下拉重新整理可手動更新匯率至最新數據（每 5 分鐘自動更新）</span>
               </li>
               <li className="flex items-start">
-                <span className="text-violet-600 mr-2">•</span>
+                <span className="text-primary mr-2">•</span>
                 <span>點擊匯率卡片可展開查看詳細資訊與 30 天趨勢圖</span>
               </li>
               <li className="flex items-start">
-                <span className="text-violet-600 mr-2">•</span>
+                <span className="text-primary mr-2">•</span>
                 <span>使用快速金額按鈕（100、1000、10000）可快速輸入常用金額</span>
               </li>
               <li className="flex items-start">
-                <span className="text-violet-600 mr-2">•</span>
+                <span className="text-primary mr-2">•</span>
                 <span>切換「現金匯率」與「即期匯率」以查看不同匯率類型</span>
               </li>
               <li className="flex items-start">
-                <span className="text-violet-600 mr-2">•</span>
+                <span className="text-primary mr-2">•</span>
                 <span>匯率資料 100% 來自臺灣銀行牌告匯率，每 5 分鐘同步一次</span>
               </li>
               <li className="flex items-start">
-                <span className="text-violet-600 mr-2">•</span>
+                <span className="text-primary mr-2">•</span>
                 <span>將 RateWise 加入手機主畫面，可獲得接近原生 App 的使用體驗</span>
               </li>
             </ul>
@@ -262,7 +262,7 @@ const Guide = () => {
               </div>
             </div>
             <div className="mt-4">
-              <Link to="/faq" className="text-violet-600 hover:text-violet-700 text-sm font-medium">
+              <Link to="/faq" className="text-primary hover:text-primary-hover text-sm font-medium">
                 查看更多常見問題 →
               </Link>
             </div>
@@ -272,7 +272,7 @@ const Guide = () => {
           <div className="mt-12 text-center">
             <Link
               to="/"
-              className="inline-flex items-center px-6 py-3 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors shadow-md hover:shadow-lg"
+              className="inline-flex items-center px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-hover transition-colors shadow-md hover:shadow-lg"
             >
               開始使用 RateWise
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

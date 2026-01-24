@@ -157,6 +157,15 @@
     --color-footer-to: var(--color-text);
 
     /* ========================================
+       Page Gradient Tokens (頁面漸層)
+       用於頁面背景漸層，支援 6 種風格主題切換
+       @created 2026-01-24
+       ======================================== */
+    --color-page-gradient-from: 241 245 249; /* slate-100 / neutral-light */
+    --color-page-gradient-via: 237 233 254; /* violet-100 */
+    --color-page-gradient-to: 255 255 255; /* white */
+
+    /* ========================================
        Seasonal Design Tokens (季節性主題)
        用於聖誕節、冬季等季節性裝飾組件
        支援 6 種風格的主題感知顏色
@@ -269,6 +278,11 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
+    /* Page Gradient Tokens - Nitro 深色科技漸層 */
+    --color-page-gradient-from: 2 6 23; /* slate-950 */
+    --color-page-gradient-via: 30 41 59; /* slate-800 */
+    --color-page-gradient-to: 15 23 42; /* slate-900 */
+
     /* ========================================
        Seasonal Design Tokens - Nitro 深色科技感
        霓虹綠/藍為主調，營造科幻聖誕氛圍
@@ -379,6 +393,11 @@
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
+
+    /* Page Gradient Tokens - Kawaii 夢幻粉嫩漸層 */
+    --color-page-gradient-from: 255 250 244; /* warm cream */
+    --color-page-gradient-via: 255 228 230; /* rose-100 */
+    --color-page-gradient-to: 255 255 255; /* white */
 
     /* ========================================
        Seasonal Design Tokens - Kawaii 可愛粉嫩
@@ -493,6 +512,11 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
+    /* Page Gradient Tokens - Classic 復古典雅漸層 */
+    --color-page-gradient-from: 255 250 251; /* warm white */
+    --color-page-gradient-via: 254 243 199; /* amber-100 */
+    --color-page-gradient-to: 255 255 255; /* white */
+
     /* ========================================
        Seasonal Design Tokens - Classic 復古書卷
        琥珀/墨綠為主調，營造維多利亞聖誕氛圍
@@ -606,6 +630,11 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
+    /* Page Gradient Tokens - Ocean 海洋深邃漸層 */
+    --color-page-gradient-from: 240 249 255; /* sky-50 */
+    --color-page-gradient-via: 224 242 254; /* sky-100 */
+    --color-page-gradient-to: 255 255 255; /* white */
+
     /* ========================================
        Seasonal Design Tokens - Ocean 海洋深邃
        青藍/珊瑚為主調，營造海底聖誕氛圍
@@ -718,6 +747,11 @@
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
+
+    /* Page Gradient Tokens - Forest 森林自然漸層 */
+    --color-page-gradient-from: 240 253 244; /* green-50 */
+    --color-page-gradient-via: 220 252 231; /* green-100 */
+    --color-page-gradient-to: 255 255 255; /* white */
 
     /* ========================================
        Seasonal Design Tokens - Forest 森林自然
@@ -925,6 +959,20 @@ body {
  * 現代化元件樣式（ParkKeeper 風格）
  */
 @layer components {
+  /* ========================================
+     Page Gradient - 主題感知頁面漸層
+     使用 CSS Variables 支援 6 種風格切換
+     @created 2026-01-24
+     ======================================== */
+  .bg-page-gradient {
+    background: linear-gradient(
+      to bottom right,
+      rgb(var(--color-page-gradient-from)),
+      rgb(var(--color-page-gradient-via)),
+      rgb(var(--color-page-gradient-to))
+    );
+  }
+
   /* 毛玻璃效果 */
   .glass {
     background-color: rgb(var(--color-background) / 0.8);

@@ -65,7 +65,7 @@ export default function USDToTWD() {
         }}
       />
 
-      <main className="min-h-screen bg-gradient-to-br from-neutral-light via-indigo-50 to-white">
+      <main className="min-h-screen bg-page-gradient">
         <div className="container mx-auto px-4 py-10 max-w-5xl">
           {/* Breadcrumb Navigation */}
           <Breadcrumb
@@ -87,7 +87,7 @@ export default function USDToTWD() {
             </div>
             <Link
               to="/"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-primary-hover transition-colors"
             >
               返回主換算器
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,25 +106,25 @@ export default function USDToTWD() {
               <h2 className="text-xl font-semibold text-neutral-text mb-3">匯率快速重點</h2>
               <ul className="space-y-3 text-neutral-text">
                 <li className="flex items-start gap-2">
-                  <span className="text-indigo-600 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   <span>資料來源：臺灣銀行牌告匯率，現金/即期買入賣出價完整呈現。</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-indigo-600 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   <span>更新頻率：每 5 分鐘自動同步，首頁顯示最近更新時間。</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-indigo-600 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   <span>模式：單幣別/多幣別切換，支援 30+ 貨幣同時換算。</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-indigo-600 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   <span>離線：PWA 快取資源與最近匯率，無網路仍可換算。</span>
                 </li>
               </ul>
             </div>
 
-            <div className="bg-indigo-600 text-white rounded-2xl shadow p-5">
+            <div className="bg-primary text-white rounded-2xl shadow p-5">
               <h2 className="text-xl font-semibold mb-3">如何快速使用</h2>
               <ol className="space-y-3">
                 {HOW_TO_STEPS.map((step) => (
@@ -160,7 +160,7 @@ export default function USDToTWD() {
 
           <section className="bg-white rounded-2xl shadow p-6 border border-neutral-dark">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+              <div className="w-10 h-10 rounded-full bg-primary-bg text-primary flex items-center justify-center font-bold">
                 ?
               </div>
               <div>

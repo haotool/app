@@ -201,13 +201,13 @@ export default function FAQ() {
         ]}
         faq={FAQ_JSONLD_DATA}
       />
-      <main className="min-h-screen bg-gradient-to-br from-neutral-light via-violet-50 to-neutral-light">
+      <main className="min-h-screen bg-page-gradient">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="mb-8">
             <Link
               to="/"
-              className="inline-flex items-center text-violet-600 hover:text-violet-700 mb-4 transition-colors"
+              className="inline-flex items-center text-primary hover:text-primary-hover mb-4 transition-colors"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -239,8 +239,8 @@ export default function FAQ() {
                 key={index}
                 className="group bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
               >
-                <summary className="flex items-center justify-between cursor-pointer p-6 hover:text-violet-600 transition-colors list-none">
-                  <h2 className="text-lg font-semibold text-neutral-text group-hover:text-violet-600 transition-colors">
+                <summary className="flex items-center justify-between cursor-pointer p-6 hover:text-primary transition-colors list-none">
+                  <h2 className="text-lg font-semibold text-neutral-text group-hover:text-primary transition-colors">
                     {faq.question}
                   </h2>
                   <svg
@@ -265,13 +265,13 @@ export default function FAQ() {
           </div>
 
           {/* Contact Section */}
-          <div className="mt-12 p-6 bg-violet-50 rounded-lg border border-violet-100">
+          <div className="mt-12 p-6 bg-primary-bg rounded-lg border border-primary-light">
             <h2 className="text-xl font-semibold text-neutral-text mb-2">還有其他問題？</h2>
             <p className="text-neutral-text-secondary">
               如果您有其他問題或建議，歡迎透過
               <a
                 href="mailto:haotool.org@gmail.com"
-                className="text-violet-600 hover:text-violet-700 underline ml-1"
+                className="text-primary hover:text-primary-hover underline ml-1"
               >
                 haotool.org@gmail.com
               </a>
