@@ -315,17 +315,17 @@ export const SingleConverter = ({
             <Calculator aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
-        {/* Quick Amount Buttons - From Currency
+        {/* 快速金額按鈕 - 來源貨幣
          *
-         * SSOT Design Token: Neutral variant (consistent across all converters)
-         * @see apps/ratewise/src/config/design-tokens.ts - quickAmountButton
+         * SSOT 設計規範：中性變體（所有轉換器一致）
+         * @see design-tokens.ts - quickAmountButtonTokens
          *
-         * Interaction States:
-         * - Default: surface-elevated background, muted text
-         * - Hover: primary/10 tint, primary text, subtle scale-up
-         * - Active: primary/20 tint, scale-down feedback
+         * 互動狀態：
+         * - 預設：抬升表面背景 + 柔和文字
+         * - 懸停：主色調淡化 + 主色文字 + 微幅放大
+         * - 按壓：主色調加深 + 縮放回饋
          *
-         * Accessibility: Haptic feedback (30ms) on supported devices
+         * 無障礙：支援裝置觸覺回饋 (30ms)
          */}
         <div className="flex gap-2 mt-2 flex-wrap">
           {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
@@ -578,17 +578,17 @@ export const SingleConverter = ({
             <Calculator aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
-        {/* Quick Amount Buttons - To Currency
+        {/* 快速金額按鈕 - 目標貨幣
          *
-         * SSOT Design Token: Neutral variant (consistent across all converters)
-         * @see apps/ratewise/src/config/design-tokens.ts - quickAmountButton
+         * SSOT 設計規範：中性變體（所有轉換器一致）
+         * @see design-tokens.ts - quickAmountButtonTokens
          *
-         * Interaction States:
-         * - Default: surface-elevated background, muted text
-         * - Hover: primary/10 tint, primary text, subtle scale-up
-         * - Active: primary/20 tint, scale-down feedback
+         * 互動狀態：
+         * - 預設：抬升表面背景 + 柔和文字
+         * - 懸停：主色調淡化 + 主色文字 + 微幅放大
+         * - 按壓：主色調加深 + 縮放回饋
          *
-         * Accessibility: Haptic feedback (30ms) on supported devices
+         * 無障礙：支援裝置觸覺回饋 (30ms)
          */}
         <div className="flex gap-2 mt-2 flex-wrap">
           {quickAmounts.map((amount) => (

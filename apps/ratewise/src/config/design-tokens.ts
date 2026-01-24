@@ -478,32 +478,74 @@ export const navigationTokens = {
 } as const;
 
 /**
- * Quick Amount Button Design Tokens (SSOT)
+ * 頁面佈局設計規範 (SSOT)
  *
- * Unified button styling for currency quick amount selection.
- * Used consistently across SingleConverter and MultiConverter components.
+ * 統一所有頁面的外層容器與內容區域間距配置。
+ * 確保 Settings、MultiConverter、Favorites、SingleConverter 等頁面視覺一致性。
  *
- * Design Rationale:
- * - Neutral variant provides subtle, non-competing visual weight
- * - Allows primary actions (conversion, submit) to stand out
- * - Hover/active states provide clear interaction feedback
+ * 設計原理：
+ * - 外層容器：全高度滾動區域，隱藏捲軸，底部留白避免被導覽列遮蓋
+ * - 內容區域：水平內距 20px (px-5)，垂直內距 24px (py-6)，最大寬度 448px (max-w-md)
+ * - 區塊間距：各區塊使用 mb-6 分隔，卡片內距 p-4
  *
- * Interaction Model:
- * - Default: Elevated surface with muted text (bg-surface-elevated text-text/70)
- * - Hover: Primary tint with primary text (bg-primary/10 text-primary)
- * - Active: Deeper primary tint with scale feedback (bg-primary/20 scale-[0.97])
+ * @see Settings.tsx, MultiConverter.tsx, Favorites.tsx - 參考實作
+ * @created 2026-01-25
+ * @version 1.0.0
+ */
+export const pageLayoutTokens = {
+  /** 外層滾動容器 */
+  container: {
+    base: 'h-full overflow-y-auto no-scrollbar',
+    bottomPadding: 'pb-32',
+    /** 完整類別組合 */
+    className: 'h-full overflow-y-auto no-scrollbar pb-32',
+  },
+  /** 內容區域 */
+  content: {
+    horizontalPadding: 20,
+    verticalPadding: 24,
+    maxWidth: 448,
+    /** 完整類別組合 */
+    className: 'px-5 py-6 max-w-md mx-auto',
+  },
+  /** 區塊配置 */
+  section: {
+    marginBottom: 24,
+    className: 'mb-6',
+  },
+  /** 卡片配置 */
+  card: {
+    padding: 16,
+    className: 'card p-4',
+  },
+} as const;
+
+/**
+ * 快速金額按鈕設計規範 (SSOT)
+ *
+ * 統一貨幣快速金額選擇按鈕樣式。
+ * 適用於 SingleConverter 與 MultiConverter 元件。
+ *
+ * 設計原理：
+ * - 中性變體：低視覺權重，不與主要操作競爭注意力
+ * - 互動回饋：色彩漸變 + 縮放動畫，提供明確操作反饋
+ *
+ * 互動狀態：
+ * - 預設：抬升表面背景 + 柔和文字 (bg-surface-elevated text-text/70)
+ * - 懸停：主色調淡化 + 主色文字 (bg-primary/10 text-primary)
+ * - 按壓：主色調加深 + 縮放回饋 (bg-primary/20 scale-[0.97])
  *
  * @created 2026-01-25
  * @version 1.0.0
  */
 export const quickAmountButtonTokens = {
-  /** Base styling */
+  /** 基礎樣式 */
   base: {
     padding: 'px-3 py-1.5',
     borderRadius: 'rounded-xl',
     typography: 'text-sm font-semibold',
   },
-  /** Color states */
+  /** 色彩狀態 */
   colors: {
     default: {
       background: 'bg-surface-elevated',
@@ -518,7 +560,7 @@ export const quickAmountButtonTokens = {
       text: 'text-primary',
     },
   },
-  /** Micro-interactions */
+  /** 微互動效果 */
   interactions: {
     transition: 'transition-all duration-200 ease-out',
     hoverScale: 'hover:scale-[1.03]',
@@ -526,7 +568,7 @@ export const quickAmountButtonTokens = {
     hoverShadow: 'hover:shadow-md',
     activeShadow: 'active:shadow-sm',
   },
-  /** Haptic feedback duration (ms) */
+  /** 觸覺回饋時長 (毫秒) */
   hapticDuration: 30,
 } as const;
 

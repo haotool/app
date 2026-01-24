@@ -186,7 +186,7 @@ const RateWise = () => {
     <>
       <HomeStructuredData faq={HOMEPAGE_FAQ} />
 
-      {/* Pull-to-Refresh Indicator */}
+      {/* 下拉重新整理指示器 */}
       {isPullToRefreshEnabled && (
         <PullToRefreshIndicator
           pullDistance={pullDistance}
@@ -195,18 +195,25 @@ const RateWise = () => {
         />
       )}
 
-      <div ref={mainRef} className="space-y-4">
-        {/* 狀態提示區 */}
-        {ratesLoading && (
-          <div className="text-center text-sm text-neutral-text-secondary py-2">
-            載入即時匯率中...
-          </div>
-        )}
+      {/* 頁面主容器
+       *
+       * SSOT 頁面佈局規範：
+       * - 外層容器：h-full overflow-y-auto no-scrollbar pb-32
+       * - 內容區域：px-5 py-6 max-w-md mx-auto
+       * @see design-tokens.ts - pageLayoutTokens
+       */}
+      <div ref={mainRef} className="h-full overflow-y-auto no-scrollbar pb-32">
+        <div className="px-5 py-6 max-w-md mx-auto">
+          {/* 載入狀態提示 */}
+          {ratesLoading && (
+            <div className="text-center text-sm text-neutral-text-secondary py-2">
+              載入即時匯率中...
+            </div>
+          )}
 
-        {/* 主要轉換區塊 */}
-        <div className="grid md:grid-cols-3 gap-4 md:gap-6">
-          <div className="md:col-span-2">
-            <div className="card p-4 md:p-6">
+          {/* 單幣別轉換區塊 */}
+          <section className="mb-6">
+            <div className="card p-4">
               <SingleConverter
                 fromCurrency={fromCurrency}
                 toCurrency={toCurrency}
@@ -225,61 +232,67 @@ const RateWise = () => {
                 onRateTypeChange={setRateType}
               />
             </div>
+          </section>
 
-            {/* 轉換歷史記錄 */}
+          {/* 轉換歷史記錄區塊 */}
+          <section className="mb-6">
             <ConversionHistory
               history={history}
               onReconvert={reconvertFromHistory}
               onClearAll={clearAllHistory}
             />
-          </div>
+          </section>
 
-          {/* 側欄區塊（桌面版顯示） */}
-          <div className="space-y-4">
-            <FavoritesList favorites={favorites} trend={trend} exchangeRates={exchangeRates} />
-            <CurrencyList
-              favorites={favorites}
-              trend={trend}
-              exchangeRates={exchangeRates}
-              onToggleFavorite={toggleFavorite}
-              onRefreshTrends={generateTrends}
-            />
-          </div>
+          {/* 收藏與貨幣列表區塊（桌面版顯示於側欄） */}
+          <section className="mb-6 hidden md:block">
+            <div className="space-y-4">
+              <FavoritesList favorites={favorites} trend={trend} exchangeRates={exchangeRates} />
+              <CurrencyList
+                favorites={favorites}
+                trend={trend}
+                exchangeRates={exchangeRates}
+                onToggleFavorite={toggleFavorite}
+                onRefreshTrends={generateTrends}
+              />
+            </div>
+          </section>
+
+          {/* 資料來源與更新時間區塊 */}
+          {!ratesLoading && lastUpdate && (
+            <section>
+              <div className="flex items-center justify-center gap-4 text-sm text-neutral-text-secondary">
+                <a
+                  href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  臺灣銀行牌告
+                </a>
+                <span>•</span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {formattedLastUpdate}
+                </span>
+              </div>
+            </section>
+          )}
         </div>
-
-        {/* 更新時間與資料來源 */}
-        {!ratesLoading && lastUpdate && (
-          <div className="mt-4 flex items-center justify-center gap-4 text-sm text-neutral-text-secondary">
-            <a
-              href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              臺灣銀行牌告
-            </a>
-            <span>•</span>
-            <span className="flex items-center gap-1.5">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              {formattedLastUpdate}
-            </span>
-          </div>
-        )}
       </div>
     </>
   );
