@@ -150,12 +150,17 @@ export const MultiConverter = ({
 
   return (
     <>
-      {/* 快速金額按鈕 - Primary variant
+      {/* Quick Amount Buttons
        *
-       * Design System:
-       * - Primary variant: 主色調，與基準貨幣高亮呼應
-       * - Micro-interactions: scale + shadow + color transition
-       * - Consistent with SingleConverter To Currency buttons
+       * SSOT Design Token: Neutral variant (consistent across all converters)
+       * @see apps/ratewise/src/config/design-tokens.ts - quickAmountButton
+       *
+       * Interaction States:
+       * - Default: surface-elevated background, muted text
+       * - Hover: primary/10 tint, primary text, subtle scale-up
+       * - Active: primary/20 tint, scale-down feedback
+       *
+       * Accessibility: Haptic feedback (30ms) on supported devices
        */}
       <div className="flex gap-2 mb-4 flex-wrap">
         {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
@@ -170,12 +175,12 @@ export const MultiConverter = ({
               }}
               className="
                 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-primary/15 text-primary
-                hover:bg-primary/25 hover:text-primary-dark
-                active:bg-primary/35 active:text-primary-dark
+                bg-surface-elevated text-text/70
+                hover:bg-primary/10 hover:text-primary
+                active:bg-primary/20 active:text-primary
                 transition-all duration-200 ease-out
                 hover:scale-[1.03] active:scale-[0.97]
-                hover:shadow-md hover:shadow-primary/20 active:shadow-sm
+                hover:shadow-md active:shadow-sm
               "
             >
               {amount.toLocaleString()}

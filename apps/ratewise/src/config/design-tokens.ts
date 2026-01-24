@@ -478,6 +478,59 @@ export const navigationTokens = {
 } as const;
 
 /**
+ * Quick Amount Button Design Tokens (SSOT)
+ *
+ * Unified button styling for currency quick amount selection.
+ * Used consistently across SingleConverter and MultiConverter components.
+ *
+ * Design Rationale:
+ * - Neutral variant provides subtle, non-competing visual weight
+ * - Allows primary actions (conversion, submit) to stand out
+ * - Hover/active states provide clear interaction feedback
+ *
+ * Interaction Model:
+ * - Default: Elevated surface with muted text (bg-surface-elevated text-text/70)
+ * - Hover: Primary tint with primary text (bg-primary/10 text-primary)
+ * - Active: Deeper primary tint with scale feedback (bg-primary/20 scale-[0.97])
+ *
+ * @created 2026-01-25
+ * @version 1.0.0
+ */
+export const quickAmountButtonTokens = {
+  /** Base styling */
+  base: {
+    padding: 'px-3 py-1.5',
+    borderRadius: 'rounded-xl',
+    typography: 'text-sm font-semibold',
+  },
+  /** Color states */
+  colors: {
+    default: {
+      background: 'bg-surface-elevated',
+      text: 'text-text/70',
+    },
+    hover: {
+      background: 'bg-primary/10',
+      text: 'text-primary',
+    },
+    active: {
+      background: 'bg-primary/20',
+      text: 'text-primary',
+    },
+  },
+  /** Micro-interactions */
+  interactions: {
+    transition: 'transition-all duration-200 ease-out',
+    hoverScale: 'hover:scale-[1.03]',
+    activeScale: 'active:scale-[0.97]',
+    hoverShadow: 'hover:shadow-md',
+    activeShadow: 'active:shadow-sm',
+  },
+  /** Haptic feedback duration (ms) */
+  hapticDuration: 30,
+} as const;
+
+/**
  * 生成 Tailwind 主題擴展配置
  *
  * 基於 Context7 官方最佳實踐，生成可直接用於 tailwind.config.ts 的配置

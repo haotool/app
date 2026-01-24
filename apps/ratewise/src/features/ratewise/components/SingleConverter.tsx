@@ -315,12 +315,17 @@ export const SingleConverter = ({
             <Calculator aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
-        {/* 快速金額按鈕 - From Currency (Neutral variant)
+        {/* Quick Amount Buttons - From Currency
          *
-         * Design System:
-         * - Neutral variant: 中性色調，表示「來源」貨幣
-         * - Micro-interactions: scale + shadow + color transition
-         * - Haptic feedback: 30ms vibration on supported devices
+         * SSOT Design Token: Neutral variant (consistent across all converters)
+         * @see apps/ratewise/src/config/design-tokens.ts - quickAmountButton
+         *
+         * Interaction States:
+         * - Default: surface-elevated background, muted text
+         * - Hover: primary/10 tint, primary text, subtle scale-up
+         * - Active: primary/20 tint, scale-down feedback
+         *
+         * Accessibility: Haptic feedback (30ms) on supported devices
          */}
         <div className="flex gap-2 mt-2 flex-wrap">
           {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
@@ -573,12 +578,17 @@ export const SingleConverter = ({
             <Calculator aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
-        {/* 快速金額按鈕 - To Currency (Primary variant)
+        {/* Quick Amount Buttons - To Currency
          *
-         * Design System:
-         * - Primary variant: 主色調，表示「目標」貨幣，視覺較突出
-         * - Micro-interactions: scale + shadow + color transition
-         * - Haptic feedback: 30ms vibration on supported devices
+         * SSOT Design Token: Neutral variant (consistent across all converters)
+         * @see apps/ratewise/src/config/design-tokens.ts - quickAmountButton
+         *
+         * Interaction States:
+         * - Default: surface-elevated background, muted text
+         * - Hover: primary/10 tint, primary text, subtle scale-up
+         * - Active: primary/20 tint, scale-down feedback
+         *
+         * Accessibility: Haptic feedback (30ms) on supported devices
          */}
         <div className="flex gap-2 mt-2 flex-wrap">
           {quickAmounts.map((amount) => (
@@ -593,12 +603,12 @@ export const SingleConverter = ({
               }}
               className="
                 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-primary/15 text-primary
-                hover:bg-primary/25 hover:text-primary-dark
-                active:bg-primary/35 active:text-primary-dark
+                bg-surface-elevated text-text/70
+                hover:bg-primary/10 hover:text-primary
+                active:bg-primary/20 active:text-primary
                 transition-all duration-200 ease-out
                 hover:scale-[1.03] active:scale-[0.97]
-                hover:shadow-md hover:shadow-primary/20 active:shadow-sm
+                hover:shadow-md active:shadow-sm
               "
             >
               {amount.toLocaleString()}
