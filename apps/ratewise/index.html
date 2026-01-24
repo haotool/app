@@ -68,7 +68,10 @@
     <link rel="apple-touch-icon" href="/ratewise/apple-touch-icon.png?v=20251208" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- iOS PWA Status Bar: black-translucent 允許內容延伸至 status bar 區域
+         搭配 viewport-fit=cover 和 env(safe-area-inset-top) 使用
+         @reference https://webkit.org/blog/7929/designing-websites-for-iphone-x/ -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="RateWise" />
 
     <!-- Resource Hints -->
@@ -104,18 +107,28 @@
       })();
     </script>
 
-    <!-- Critical CSS -->
+    <!-- Critical CSS (iOS PWA optimized) -->
     <style>
+      /* iOS PWA Standalone 模式高度修復
+         使用 dvh 替代 vh 確保正確計算視窗高度 */
+      html {
+        height: 100%;
+        height: -webkit-fill-available;
+      }
       body {
         margin: 0;
         padding: 0;
-        min-height: 100vh;
+        min-height: 100%;
+        min-height: -webkit-fill-available;
+        min-height: 100dvh;
         background: #f8fafc;
         font-family:
           'Noto Sans TC',
           system-ui,
           -apple-system,
           sans-serif;
+        /* 防止 iOS 文字自動放大 */
+        -webkit-text-size-adjust: 100%;
       }
       .skeleton-container {
         max-width: 56rem;

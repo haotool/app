@@ -823,12 +823,22 @@
 
 /**
  * 基礎 Body 樣式
+ *
+ * iOS PWA Standalone 模式修復：
+ * - -webkit-text-size-adjust: 100% - 防止 iOS 文字自動放大
+ * - touch-action: manipulation - 停用雙擊縮放，改善觸控回應
+ *
+ * @reference https://web.dev/viewport-units/
+ * @reference https://webkit.org/blog/7929/designing-websites-for-iphone-x/
  */
 body {
   background-color: rgb(var(--color-background));
   color: rgb(var(--color-text));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
   font-family:
     'Inter',
     'Noto Sans TC',
@@ -845,6 +855,35 @@ body {
  * 現代化動畫與工具類
  */
 @layer utilities {
+  /* ========================================
+     iOS PWA Viewport Height 修復
+
+     問題：iOS standalone 模式下 100vh 包含 status bar + home indicator
+     解決：使用 Dynamic Viewport Height (dvh) 或 -webkit-fill-available
+
+     瀏覽器支援：
+     - dvh: Safari 15.4+, Chrome 108+, Firefox 101+
+     - -webkit-fill-available: Safari 全版本（作為 fallback）
+
+     @reference https://web.dev/viewport-units/
+     @reference https://webkit.org/blog/7929/designing-websites-for-iphone-x/
+     @created 2026-01-24
+     ======================================== */
+  .h-dvh {
+    /* Fallback for older browsers */
+    height: 100vh;
+    /* iOS Safari workaround */
+    height: -webkit-fill-available;
+    /* Modern browsers with dvh support */
+    height: 100dvh;
+  }
+
+  .min-h-dvh {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    min-height: 100dvh;
+  }
+
   /* 隱藏滾動條但保留滾動功能（ParkKeeper 風格） */
   .no-scrollbar {
     -ms-overflow-style: none;

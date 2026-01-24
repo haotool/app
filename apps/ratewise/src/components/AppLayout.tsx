@@ -110,10 +110,18 @@ function Header() {
  * AppLayout 組件
  *
  * ParkKeeper 風格主佈局
+ *
+ * iOS PWA Standalone 模式修復：
+ * - 使用 h-dvh 替代 h-screen (100vh → 100dvh)
+ * - 100vh 在 iOS standalone 模式會包含 status bar + home indicator
+ * - 100dvh (Dynamic Viewport Height) 正確計算可用視窗高度
+ *
+ * @reference https://web.dev/viewport-units/
+ * @reference https://webkit.org/blog/7929/designing-websites-for-iphone-x/
  */
 export function AppLayout() {
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))]">
+    <div className="h-dvh w-full flex flex-col overflow-hidden font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))]">
       {/* 桌面版側邊欄（≥ 768px 顯示） - 移至內容區旁 */}
       <div className="flex flex-1 overflow-hidden">
         <SideNavigation className="hidden md:block" />
