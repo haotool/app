@@ -89,6 +89,9 @@ const zhTW = {
   // Favorites
   favorites: {
     title: '常用貨幣',
+    allCurrencies: '所有貨幣',
+    starred: '已收藏',
+    otherCurrencies: '其他貨幣',
     history: '轉換歷史',
     noFavorites: '尚無常用貨幣',
     noFavoritesHint: '在單幣別或多幣別頁面中點擊 ⭐ 加入常用貨幣',

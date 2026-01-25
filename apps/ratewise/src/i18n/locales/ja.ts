@@ -89,6 +89,9 @@ const ja = {
   // Favorites
   favorites: {
     title: 'お気に入り通貨',
+    allCurrencies: 'すべての通貨',
+    starred: 'お気に入り',
+    otherCurrencies: 'その他の通貨',
     history: '換算履歴',
     noFavorites: 'お気に入り通貨がありません',
     noFavoritesHint: '単一または複数通貨ページで⭐をタップしてお気に入りを追加',

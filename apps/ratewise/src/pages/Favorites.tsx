@@ -29,6 +29,18 @@ import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 import type { RateType, CurrencyCode, ConversionHistoryEntry } from '../features/ratewise/types';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
+/** Get all available currency codes sorted: favorites first, then rest alphabetically */
+function getAllCurrenciesSorted(favorites: CurrencyCode[]): CurrencyCode[] {
+  const allCodes = Object.keys(CURRENCY_DEFINITIONS).filter(
+    (code) => code !== 'TWD',
+  ) as CurrencyCode[];
+  const favSet = new Set(favorites);
+
+  // Favorites in their saved order, then non-favorites alphabetically
+  const nonFavorites = allCodes.filter((code) => !favSet.has(code)).sort();
+  return [...favorites, ...nonFavorites];
+}
+
 export default function Favorites() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -168,14 +180,14 @@ export default function Favorites() {
           </div>
         </section>
 
-        {/* 常用貨幣區塊 - 支援拖曳排序 */}
+        {/* 所有貨幣區塊 - 收藏在上方，支援拖曳排序 */}
         {activeTab === 'favorites' && (
           <section>
             <div className="flex items-center justify-between px-2 mb-3">
               <div className="flex items-center gap-2 opacity-40">
                 <Star className="w-3.5 h-3.5" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
-                  {t('favorites.title')}
+                  {t('favorites.allCurrencies')}
                 </h3>
               </div>
               {favorites.length > 0 && (
@@ -185,111 +197,174 @@ export default function Favorites() {
               )}
             </div>
 
-            {favorites.length === 0 ? (
-              <div className="card p-8 text-center">
-                <Star className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-30" />
-                <h2 className="text-sm font-bold text-text mb-2">{t('favorites.noFavorites')}</h2>
-                <p className="text-[10px] text-text-muted mb-4 opacity-60">
-                  {t('favorites.noFavoritesHint')}
-                </p>
-                <button
-                  onClick={() => navigate('/')}
-                  className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs transition hover:bg-primary-hover active:scale-[0.98]"
-                >
-                  {t('favorites.goToConvert')}
-                </button>
-              </div>
-            ) : (
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="favorites-list">
-                  {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`space-y-2 transition-colors duration-200 rounded-xl ${
-                        snapshot.isDraggingOver ? 'bg-primary/5' : ''
-                      }`}
-                    >
-                      {favorites.map((code, index) => (
-                        <Draggable key={code} draggableId={code} index={index}>
-                          {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={`card p-4 flex items-center justify-between group transition-all duration-200 ${
-                                snapshot.isDragging
-                                  ? 'shadow-lg scale-[1.02] bg-surface ring-2 ring-primary/30'
-                                  : 'hover:shadow-md cursor-pointer active:scale-[0.99]'
-                              }`}
-                              onClick={() => !snapshot.isDragging && handleFavoriteClick(code)}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
-                              }}
-                            >
-                              {/* 拖曳手柄 */}
+            {/* Favorites Section - Draggable */}
+            {favorites.length > 0 && (
+              <div className="mb-4">
+                <div className="flex items-center gap-2 px-2 mb-2">
+                  <span className="text-[9px] font-bold text-primary uppercase tracking-wider">
+                    ★ {t('favorites.starred')} ({favorites.length})
+                  </span>
+                </div>
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="favorites-list">
+                    {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`space-y-2 transition-colors duration-200 rounded-xl ${
+                          snapshot.isDraggingOver ? 'bg-primary/5' : ''
+                        }`}
+                      >
+                        {favorites.map((code, index) => (
+                          <Draggable key={code} draggableId={code} index={index}>
+                            {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
                               <div
-                                {...provided.dragHandleProps}
-                                className="mr-2 cursor-grab active:cursor-grabbing touch-none"
-                                onClick={(e) => e.stopPropagation()}
-                                aria-label={t('favorites.dragHandle')}
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`card p-4 flex items-center justify-between group transition-all duration-200 ${
+                                  snapshot.isDragging
+                                    ? 'shadow-lg scale-[1.02] bg-surface ring-2 ring-primary/30'
+                                    : 'hover:shadow-md cursor-pointer active:scale-[0.99]'
+                                }`}
+                                onClick={() => !snapshot.isDragging && handleFavoriteClick(code)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
+                                }}
                               >
-                                <GripVertical
-                                  size={16}
-                                  className="text-text-muted opacity-40 group-hover:opacity-70 transition"
-                                />
-                              </div>
-
-                              <div className="flex items-center gap-3 flex-1">
+                                {/* 拖曳手柄 */}
                                 <div
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFavorite(code);
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
+                                  {...provided.dragHandleProps}
+                                  className="mr-2 cursor-grab active:cursor-grabbing touch-none"
+                                  onClick={(e) => e.stopPropagation()}
+                                  aria-label={t('favorites.dragHandle')}
+                                >
+                                  <GripVertical
+                                    size={16}
+                                    className="text-text-muted opacity-40 group-hover:opacity-70 transition"
+                                  />
+                                </div>
+
+                                <div className="flex items-center gap-3 flex-1">
+                                  <div
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={(e) => {
                                       e.stopPropagation();
                                       toggleFavorite(code);
-                                    }
-                                  }}
-                                  className="hover:scale-110 transition cursor-pointer"
-                                  aria-label={`${t('favorites.removeFavorite')} ${code}`}
-                                >
-                                  <Star className="text-favorite" size={18} fill="currentColor" />
-                                </div>
-                                <span className="text-2xl">{CURRENCY_DEFINITIONS[code]?.flag}</span>
-                                <div>
-                                  <div className="font-bold text-sm">{code}</div>
-                                  <div className="text-[10px] opacity-60">
-                                    {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.stopPropagation();
+                                        toggleFavorite(code);
+                                      }
+                                    }}
+                                    className="hover:scale-110 transition cursor-pointer"
+                                    aria-label={`${t('favorites.removeFavorite')} ${code}`}
+                                  >
+                                    <Star className="text-favorite" size={18} fill="currentColor" />
+                                  </div>
+                                  <span className="text-2xl">
+                                    {CURRENCY_DEFINITIONS[code]?.flag}
+                                  </span>
+                                  <div>
+                                    <div className="font-bold text-sm">{code}</div>
+                                    <div className="text-[10px] opacity-60">
+                                      {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
 
-                              <div className="flex items-center gap-2">
-                                {trend[code] === 'up' && (
-                                  <span className="text-success text-xs">↑</span>
-                                )}
-                                {trend[code] === 'down' && (
-                                  <span className="text-destructive text-xs">↓</span>
-                                )}
-                                <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
-                                  {t('favorites.clickToConvert')}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  {trend[code] === 'up' && (
+                                    <span className="text-success text-xs">↑</span>
+                                  )}
+                                  {trend[code] === 'down' && (
+                                    <span className="text-destructive text-xs">↓</span>
+                                  )}
+                                  <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
+                                    {t('favorites.clickToConvert')}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              </div>
             )}
+
+            {/* All Other Currencies Section */}
+            <div>
+              <div className="flex items-center gap-2 px-2 mb-2">
+                <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">
+                  {t('favorites.otherCurrencies')} (
+                  {Object.keys(CURRENCY_DEFINITIONS).length - 1 - favorites.length})
+                </span>
+              </div>
+              <div className="space-y-2">
+                {getAllCurrenciesSorted(favorites)
+                  .filter((code) => !favorites.includes(code))
+                  .map((code) => (
+                    <div
+                      key={code}
+                      className="card p-4 flex items-center justify-between group transition-all duration-200 hover:shadow-md cursor-pointer active:scale-[0.99]"
+                      onClick={() => handleFavoriteClick(code)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
+                      }}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(code);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.stopPropagation();
+                              toggleFavorite(code);
+                            }
+                          }}
+                          className="hover:scale-110 transition cursor-pointer"
+                          aria-label={`${t('favorites.addFavorite')} ${code}`}
+                        >
+                          <Star
+                            className="text-text-muted opacity-30 hover:opacity-60 hover:text-favorite transition"
+                            size={18}
+                          />
+                        </div>
+                        <span className="text-2xl">{CURRENCY_DEFINITIONS[code]?.flag}</span>
+                        <div>
+                          <div className="font-bold text-sm">{code}</div>
+                          <div className="text-[10px] opacity-60">
+                            {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {trend[code] === 'up' && <span className="text-success text-xs">↑</span>}
+                        {trend[code] === 'down' && (
+                          <span className="text-destructive text-xs">↓</span>
+                        )}
+                        <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
+                          {t('favorites.clickToConvert')}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
           </section>
         )}
 

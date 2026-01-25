@@ -90,6 +90,9 @@ const en = {
   // Favorites
   favorites: {
     title: 'Favorite Currencies',
+    allCurrencies: 'All Currencies',
+    starred: 'Starred',
+    otherCurrencies: 'Other Currencies',
     history: 'Conversion History',
     noFavorites: 'No favorite currencies',
     noFavoritesHint: 'Tap ⭐ in Single or Multi currency page to add favorites',

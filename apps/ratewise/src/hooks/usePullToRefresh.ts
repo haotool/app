@@ -10,9 +10,10 @@ import { logger } from '../utils/logger';
  * - Trigger refresh at 100px threshold
  * - Smooth CSS transitions
  * - Prevents native pull-to-refresh with overscroll-behavior
- * - 只在頁面頂部觸發 (window.scrollY === 0)
+ * - 只在捲動容器頂部觸發 (scrollTop === 0)
  *
  * Fixed: 2025-10-22 - 修正 scrollTop 檢查邏輯，改用 window.scrollY
+ * Fixed: 2026-01-25 - 支援內部容器捲動，使用 scrollContainerRef.scrollTop
  *
  * Research sources:
  * - https://www.strictmode.io/articles/react-pull-to-refresh
@@ -24,6 +25,25 @@ const SHOW_INDICATOR_THRESHOLD = 50; // Show visual indicator
 const TRIGGER_THRESHOLD = 100; // Trigger refresh callback
 const MAX_PULL_DISTANCE = 128; // Maximum pull distance (with tension)
 const TENSION_FACTOR = 0.5; // Spring tension coefficient
+
+/**
+ * Find the closest scrollable parent element
+ * Checks overflow-y style for 'auto', 'scroll', or 'overlay'
+ */
+function findScrollableParent(element: HTMLElement | null): HTMLElement | null {
+  if (!element) return null;
+
+  let current: HTMLElement | null = element;
+  while (current && current !== document.body) {
+    const style = getComputedStyle(current);
+    const overflowY = style.overflowY;
+    if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
+      return current;
+    }
+    current = current.parentElement;
+  }
+  return null;
+}
 
 interface PullToRefreshState {
   pullDistance: number;
@@ -43,9 +63,14 @@ function applyTension(distance: number): number {
 export function usePullToRefresh(
   containerRef: RefObject<HTMLElement | null>,
   onRefresh: () => Promise<void> | void,
-  options?: { enabled?: boolean },
+  options?: {
+    enabled?: boolean;
+    /** Scroll container ref - defaults to containerRef if not provided */
+    scrollContainerRef?: RefObject<HTMLElement | null>;
+  },
 ): PullToRefreshState {
   const isEnabled = options?.enabled ?? true;
+  const scrollContainerRef = options?.scrollContainerRef ?? containerRef;
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [canTrigger, setCanTrigger] = useState(false);
@@ -62,14 +87,25 @@ export function usePullToRefresh(
 
     /**
      * Touch start handler - Capture initial Y position
+     * Uses scroll container's scrollTop for internal scrolling containers
      */
     const handleTouchStart = (e: TouchEvent) => {
-      // Allow slight scroll tolerance (≤10px) for device variance
-      const currentScrollY = window.scrollY;
-      logger.debug('Pull-to-refresh: touchstart', { scrollY: currentScrollY });
+      // Get scroll position from the scroll container
+      // Priority: explicit scrollContainerRef > auto-detected scrollable parent > window
+      let scrollContainer = scrollContainerRef.current;
+      if (!scrollContainer || scrollContainer === container) {
+        // Auto-detect scrollable parent if no explicit scroll container
+        scrollContainer = findScrollableParent(container);
+      }
+      const currentScrollTop = scrollContainer ? scrollContainer.scrollTop : window.scrollY;
+      logger.debug('Pull-to-refresh: touchstart', {
+        scrollTop: currentScrollTop,
+        hasScrollContainer: !!scrollContainer,
+      });
 
-      if (currentScrollY > 10) {
-        logger.debug('Pull-to-refresh: not at top, ignoring', { scrollY: currentScrollY });
+      // Allow slight scroll tolerance (≤10px) for device variance
+      if (currentScrollTop > 10) {
+        logger.debug('Pull-to-refresh: not at top, ignoring', { scrollTop: currentScrollTop });
         return;
       }
       if (isRefreshing) {
@@ -77,7 +113,7 @@ export function usePullToRefresh(
         return;
       }
 
-      logger.info('Pull-to-refresh: starting drag', { scrollY: currentScrollY });
+      logger.info('Pull-to-refresh: starting drag', { scrollTop: currentScrollTop });
       startY.current = e.touches[0]?.clientY ?? 0;
       currentY.current = startY.current;
       isDragging.current = true;
@@ -184,7 +220,15 @@ export function usePullToRefresh(
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [containerRef, onRefresh, isRefreshing, canTrigger, pullDistance, isEnabled]);
+  }, [
+    containerRef,
+    scrollContainerRef,
+    onRefresh,
+    isRefreshing,
+    canTrigger,
+    pullDistance,
+    isEnabled,
+  ]);
 
   return {
     pullDistance,
