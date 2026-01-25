@@ -10,7 +10,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+  type DroppableProvided,
+  type DroppableStateSnapshot,
+  type DraggableProvided,
+  type DraggableStateSnapshot,
+} from '@hello-pangea/dnd';
 import { AlertCircle, RefreshCw, Star, Clock, Trash2, GripVertical } from 'lucide-react';
 import { ConversionHistory } from '../features/ratewise/components/ConversionHistory';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
@@ -193,7 +202,7 @@ export default function Favorites() {
             ) : (
               <DragDropContext onDragEnd={handleDragEnd}>
                 <Droppable droppableId="favorites-list">
-                  {(provided, snapshot) => (
+                  {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
@@ -203,7 +212,7 @@ export default function Favorites() {
                     >
                       {favorites.map((code, index) => (
                         <Draggable key={code} draggableId={code} index={index}>
-                          {(provided, snapshot) => (
+                          {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
