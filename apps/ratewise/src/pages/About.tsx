@@ -18,13 +18,13 @@ export default function About() {
           { name: '關於我們', item: '/about/' },
         ]}
       />
-      <main className="min-h-screen bg-gradient-to-br from-neutral-light via-violet-50 to-neutral-light">
+      <main className="min-h-screen bg-page-gradient">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="mb-8">
             <Link
               to="/"
-              className="inline-flex items-center text-violet-600 hover:text-violet-700 mb-4 transition-colors"
+              className="inline-flex items-center text-primary hover:text-primary-hover mb-4 transition-colors"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -68,7 +68,7 @@ export default function About() {
             <h2 className="text-2xl font-bold text-neutral-text mb-4">資料來源</h2>
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">臺灣銀行牌告匯率</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">臺灣銀行牌告匯率</h3>
                 <p className="text-neutral-text-secondary leading-relaxed">
                   <strong>我們的匯率數據來源為臺灣銀行官方牌告匯率</strong>，
                   這是台灣最權威的匯率參考指標之一。臺灣銀行作為台灣最大的公營銀行，
@@ -76,14 +76,14 @@ export default function About() {
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">更新頻率</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">更新頻率</h3>
                 <p className="text-neutral-text-secondary leading-relaxed">
                   <strong>匯率數據每 5 分鐘自動更新一次</strong>，確保您隨時獲得最新的匯率資訊。
                   我們的系統會持續監控臺灣銀行的匯率變動，並即時同步到應用程式中。
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">重要聲明</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">重要聲明</h3>
                 <p className="text-neutral-text-secondary leading-relaxed">
                   RateWise
                   提供的匯率數據僅供參考用途。實際交易匯率可能因銀行、兌換商或交易時間而有所差異。
@@ -97,29 +97,29 @@ export default function About() {
           <section className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-2xl font-bold text-neutral-text mb-4">技術優勢</h2>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-4 bg-violet-50 rounded-lg border border-violet-100">
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">⚡ 極致效能</h3>
+              <div className="p-4 bg-primary-bg rounded-lg border border-primary-light">
+                <h3 className="text-lg font-semibold text-primary mb-2">⚡ 極致效能</h3>
                 <p className="text-neutral-text-secondary text-sm leading-relaxed">
                   <strong>Lighthouse Performance 97/100</strong>， LCP 僅 489ms，CLS
                   0.00046，遠優於業界標準。 使用 React + Vite 打造，提供流暢的使用體驗。
                 </p>
               </div>
-              <div className="p-4 bg-violet-50 rounded-lg border border-violet-100">
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">📱 PWA 技術</h3>
+              <div className="p-4 bg-primary-bg rounded-lg border border-primary-light">
+                <h3 className="text-lg font-semibold text-primary mb-2">📱 PWA 技術</h3>
                 <p className="text-neutral-text-secondary text-sm leading-relaxed">
                   <strong>支援離線使用，可安裝至桌面</strong>。 採用 Progressive Web App
                   技術，即使沒有網路連線， 也能使用最近更新的匯率資料進行換算。
                 </p>
               </div>
-              <div className="p-4 bg-violet-50 rounded-lg border border-violet-100">
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">🎨 響應式設計</h3>
+              <div className="p-4 bg-primary-bg rounded-lg border border-primary-light">
+                <h3 className="text-lg font-semibold text-primary mb-2">🎨 響應式設計</h3>
                 <p className="text-neutral-text-secondary text-sm leading-relaxed">
                   <strong>完美支援桌面與行動裝置</strong>。
                   無論您使用手機、平板或電腦，都能獲得最佳的使用體驗。
                 </p>
               </div>
-              <div className="p-4 bg-violet-50 rounded-lg border border-violet-100">
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">🔒 隱私保護</h3>
+              <div className="p-4 bg-primary-bg rounded-lg border border-primary-light">
+                <h3 className="text-lg font-semibold text-primary mb-2">🔒 隱私保護</h3>
                 <p className="text-neutral-text-secondary text-sm leading-relaxed">
                   <strong>完全免費、無廣告、不追蹤</strong>。
                   我們不收集個人資訊，所有數據僅存儲在您的裝置上。
@@ -133,7 +133,7 @@ export default function About() {
             <h2 className="text-2xl font-bold text-neutral-text mb-4">核心功能</h2>
             <ul className="space-y-3">
               <li className="flex items-start">
-                <span className="text-violet-600 mr-3 mt-1">✓</span>
+                <span className="text-primary mr-3 mt-1">✓</span>
                 <div>
                   <strong className="text-neutral-text">單幣別換算</strong>
                   <p className="text-neutral-text-secondary text-sm">
@@ -142,7 +142,7 @@ export default function About() {
                 </div>
               </li>
               <li className="flex items-start">
-                <span className="text-violet-600 mr-3 mt-1">✓</span>
+                <span className="text-primary mr-3 mt-1">✓</span>
                 <div>
                   <strong className="text-neutral-text">多幣別換算</strong>
                   <p className="text-neutral-text-secondary text-sm">
@@ -151,7 +151,7 @@ export default function About() {
                 </div>
               </li>
               <li className="flex items-start">
-                <span className="text-violet-600 mr-3 mt-1">✓</span>
+                <span className="text-primary mr-3 mt-1">✓</span>
                 <div>
                   <strong className="text-neutral-text">收藏與歷史</strong>
                   <p className="text-neutral-text-secondary text-sm">
@@ -160,7 +160,7 @@ export default function About() {
                 </div>
               </li>
               <li className="flex items-start">
-                <span className="text-violet-600 mr-3 mt-1">✓</span>
+                <span className="text-primary mr-3 mt-1">✓</span>
                 <div>
                   <strong className="text-neutral-text">匯率類型切換</strong>
                   <p className="text-neutral-text-secondary text-sm">
@@ -169,7 +169,7 @@ export default function About() {
                 </div>
               </li>
               <li className="flex items-start">
-                <span className="text-violet-600 mr-3 mt-1">✓</span>
+                <span className="text-primary mr-3 mt-1">✓</span>
                 <div>
                   <strong className="text-neutral-text">下拉刷新</strong>
                   <p className="text-neutral-text-secondary text-sm">
@@ -178,7 +178,7 @@ export default function About() {
                 </div>
               </li>
               <li className="flex items-start">
-                <span className="text-violet-600 mr-3 mt-1">✓</span>
+                <span className="text-primary mr-3 mt-1">✓</span>
                 <div>
                   <strong className="text-neutral-text">離線可用</strong>
                   <p className="text-neutral-text-secondary text-sm">
@@ -227,12 +227,12 @@ export default function About() {
             <h2 className="text-2xl font-bold text-neutral-text mb-4">聯繫我們</h2>
             <div className="space-y-3">
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">一般支援</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">一般支援</h3>
                 <p className="text-neutral-text-secondary">
                   如有任何問題或建議，歡迎透過{' '}
                   <a
                     href="mailto:haotool.org@gmail.com"
-                    className="text-violet-600 hover:text-violet-700 underline"
+                    className="text-primary hover:text-primary-hover underline"
                   >
                     haotool.org@gmail.com
                   </a>{' '}
@@ -240,12 +240,12 @@ export default function About() {
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">安全問題</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">安全問題</h3>
                 <p className="text-neutral-text-secondary">
                   若發現安全漏洞，請透過{' '}
                   <a
                     href="mailto:haotool.org@gmail.com"
-                    className="text-violet-600 hover:text-violet-700 underline"
+                    className="text-primary hover:text-primary-hover underline"
                   >
                     haotool.org@gmail.com
                   </a>{' '}
@@ -253,14 +253,14 @@ export default function About() {
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-violet-600 mb-2">開放原始碼</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">開放原始碼</h3>
                 <p className="text-neutral-text-secondary">
                   RateWise 是開放原始碼專案，歡迎在{' '}
                   <a
                     href="https://github.com/haotool/app"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-violet-600 hover:text-violet-700 underline"
+                    className="text-primary hover:text-primary-hover underline"
                   >
                     GitHub
                   </a>{' '}
