@@ -29,6 +29,7 @@
 import { Outlet } from 'react-router-dom';
 import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
+import { ToastProvider } from './Toast';
 
 /**
  * Logo 組件 - 參考 ParkKeeper 的 SVG Logo 風格
@@ -126,26 +127,28 @@ function Header() {
  */
 export function AppLayout() {
   return (
-    <div className="min-h-dvh w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))]">
-      {/* Desktop sidebar (≥768px) */}
-      <div className="flex flex-1">
-        <SideNavigation className="hidden md:block" />
+    <ToastProvider>
+      <div className="min-h-dvh w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))]">
+        {/* Desktop sidebar (≥768px) */}
+        <div className="flex flex-1">
+          <SideNavigation className="hidden md:block" />
 
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Header (mobile only) */}
-          <div className="md:hidden">
-            <Header />
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Header (mobile only) */}
+            <div className="md:hidden">
+              <Header />
+            </div>
+
+            {/* Main content area - reserves space for fixed bottom nav */}
+            <main className="flex-1 relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0">
+              <Outlet />
+            </main>
+
+            {/* Mobile bottom navigation (<768px) */}
+            <BottomNavigation />
           </div>
-
-          {/* Main content area - reserves space for fixed bottom nav */}
-          <main className="flex-1 relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0">
-            <Outlet />
-          </main>
-
-          {/* Mobile bottom navigation (<768px) */}
-          <BottomNavigation />
         </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }

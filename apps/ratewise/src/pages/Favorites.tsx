@@ -1,10 +1,14 @@
 /**
- * Favorites & History Page - ParkKeeper 風格
+ * Favorites & History Page - ParkKeeper Design Style
+ * 收藏與歷史記錄頁面 - ParkKeeper 設計風格
  *
- * @description 收藏與歷史記錄頁面，採用 ParkKeeper 設計風格
- *              支援拖曳排序收藏貨幣（@hello-pangea/dnd）
- *              SSOT: 設計來自 Settings.tsx 風格參考
- * @version 2.1.0
+ * @description Favorites and conversion history page with ParkKeeper design style.
+ *              Supports drag-and-drop reordering for favorite currencies using @hello-pangea/dnd.
+ *              All currencies are displayed in a unified list with favorites at the top.
+ *              收藏與歷史記錄頁面，採用 ParkKeeper 設計風格。
+ *              支援拖曳排序收藏貨幣（@hello-pangea/dnd）。
+ *              所有幣別以統一列表顯示，收藏在最上方。
+ * @version 2.2.0
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -29,7 +33,13 @@ import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 import type { RateType, CurrencyCode, ConversionHistoryEntry } from '../features/ratewise/types';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
-/** Get all available currency codes sorted: favorites first, then rest alphabetically */
+/**
+ * Get all available currency codes sorted: favorites first, then rest alphabetically
+ * 取得所有可用幣別代碼並排序：收藏優先，其餘按字母順序
+ *
+ * @param favorites - Array of favorite currency codes / 收藏幣別代碼陣列
+ * @returns Sorted array of currency codes / 排序後的幣別代碼陣列
+ */
 function getAllCurrenciesSorted(favorites: CurrencyCode[]): CurrencyCode[] {
   const allCodes = Object.keys(CURRENCY_DEFINITIONS).filter(
     (code) => code !== 'TWD',
@@ -200,11 +210,6 @@ export default function Favorites() {
             {/* Favorites Section - Draggable */}
             {favorites.length > 0 && (
               <div className="mb-4">
-                <div className="flex items-center gap-2 px-2 mb-2">
-                  <span className="text-[9px] font-bold text-primary uppercase tracking-wider">
-                    ★ {t('favorites.starred')} ({favorites.length})
-                  </span>
-                </div>
                 <DragDropContext onDragEnd={handleDragEnd}>
                   <Droppable droppableId="favorites-list">
                     {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
@@ -300,70 +305,62 @@ export default function Favorites() {
             )}
 
             {/* All Other Currencies Section */}
-            <div>
-              <div className="flex items-center gap-2 px-2 mb-2">
-                <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">
-                  {t('favorites.otherCurrencies')} (
-                  {Object.keys(CURRENCY_DEFINITIONS).length - 1 - favorites.length})
-                </span>
-              </div>
-              <div className="space-y-2">
-                {getAllCurrenciesSorted(favorites)
-                  .filter((code) => !favorites.includes(code))
-                  .map((code) => (
-                    <div
-                      key={code}
-                      className="card p-4 flex items-center justify-between group transition-all duration-200 hover:shadow-md cursor-pointer active:scale-[0.99]"
-                      onClick={() => handleFavoriteClick(code)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
-                      }}
-                    >
-                      <div className="flex items-center gap-3 flex-1">
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onClick={(e) => {
+            <div className="space-y-2">
+              {getAllCurrenciesSorted(favorites)
+                .filter((code) => !favorites.includes(code))
+                .map((code) => (
+                  <div
+                    key={code}
+                    className="card p-4 flex items-center justify-between group transition-all duration-200 hover:shadow-md cursor-pointer active:scale-[0.99]"
+                    onClick={() => handleFavoriteClick(code)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
+                    }}
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(code);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
                             e.stopPropagation();
                             toggleFavorite(code);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.stopPropagation();
-                              toggleFavorite(code);
-                            }
-                          }}
-                          className="hover:scale-110 transition cursor-pointer"
-                          aria-label={`${t('favorites.addFavorite')} ${code}`}
-                        >
-                          <Star
-                            className="text-text-muted opacity-30 hover:opacity-60 hover:text-favorite transition"
-                            size={18}
-                          />
-                        </div>
-                        <span className="text-2xl">{CURRENCY_DEFINITIONS[code]?.flag}</span>
-                        <div>
-                          <div className="font-bold text-sm">{code}</div>
-                          <div className="text-[10px] opacity-60">
-                            {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
-                          </div>
-                        </div>
+                          }
+                        }}
+                        className="hover:scale-110 transition cursor-pointer"
+                        aria-label={`${t('favorites.addFavorite')} ${code}`}
+                      >
+                        <Star
+                          className="text-text-muted opacity-30 hover:opacity-60 hover:text-favorite transition"
+                          size={18}
+                        />
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        {trend[code] === 'up' && <span className="text-success text-xs">↑</span>}
-                        {trend[code] === 'down' && (
-                          <span className="text-destructive text-xs">↓</span>
-                        )}
-                        <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
-                          {t('favorites.clickToConvert')}
-                        </span>
+                      <span className="text-2xl">{CURRENCY_DEFINITIONS[code]?.flag}</span>
+                      <div>
+                        <div className="font-bold text-sm">{code}</div>
+                        <div className="text-[10px] opacity-60">
+                          {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
+                        </div>
                       </div>
                     </div>
-                  ))}
-              </div>
+
+                    <div className="flex items-center gap-2">
+                      {trend[code] === 'up' && <span className="text-success text-xs">↑</span>}
+                      {trend[code] === 'down' && (
+                        <span className="text-destructive text-xs">↓</span>
+                      )}
+                      <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
+                        {t('favorites.clickToConvert')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
             </div>
           </section>
         )}

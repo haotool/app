@@ -22,6 +22,7 @@ const en = {
     clearAll: 'Clear All',
     copy: 'Copy',
     copied: 'Copied',
+    clickToCopy: 'Click to copy',
   },
 
   // Navigation
@@ -56,6 +57,7 @@ const en = {
     swapCurrencies: 'Swap currencies',
     clickToSwap: 'Click to swap',
     addToHistory: 'Add to history',
+    addedToHistory: 'Added to history',
     spotRate: 'Spot',
     cashRate: 'Cash',
     switchToSpot: 'Switch to spot rate',

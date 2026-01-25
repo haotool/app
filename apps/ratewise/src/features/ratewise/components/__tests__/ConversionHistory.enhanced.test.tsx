@@ -128,10 +128,12 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      // 新 UI：金額和貨幣代碼分開顯示
+      // 新 UI v3.0：點擊複製，雙擊重新轉換
       const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
       expect(firstRecord).toBeTruthy();
-      fireEvent.click(firstRecord!);
+
+      // 雙擊觸發重新轉換
+      fireEvent.doubleClick(firstRecord!);
 
       expect(onReconvert).toHaveBeenCalledWith(mockHistory[0]);
     });
@@ -142,9 +144,9 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      // 新 UI：金額和貨幣代碼分開顯示
+      // 新 UI v3.0：雙擊觸發重新轉換
       const secondRecord = screen.getByText('10000').closest('div[class*="cursor-pointer"]');
-      fireEvent.click(secondRecord!);
+      fireEvent.doubleClick(secondRecord!);
 
       expect(onReconvert).toHaveBeenCalledWith({
         from: 'JPY',
@@ -172,35 +174,38 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
   // ConversionHistory 組件現在是純展示組件
 
   describe('複製功能', () => {
-    it('應該顯示複製按鈕', () => {
+    it('應該在點擊卡片時複製轉換結果', () => {
       const mockHistory = createMockHistory();
       render(<ConversionHistory history={mockHistory} />);
 
-      const copyButtons = screen.getAllByLabelText('複製轉換結果');
-      expect(copyButtons.length).toBe(3); // 3 條歷史記錄
-    });
-
-    it('應該在點擊複製按鈕時複製正確的文字', () => {
-      const mockHistory = createMockHistory();
-      render(<ConversionHistory history={mockHistory} />);
-
-      const copyButtons = screen.getAllByLabelText('複製轉換結果');
-      fireEvent.click(copyButtons[0]!);
+      // 新 UI v3.0：點擊卡片即可複製
+      const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
+      fireEvent.click(firstRecord!);
 
       expect(clipboardMock.writeText).toHaveBeenCalledWith('1000 USD = 30900 TWD');
     });
 
-    it('應該在點擊複製按鈕時停止事件冒泡', () => {
+    it('應該顯示複製圖示提示', () => {
+      const mockHistory = createMockHistory();
+      render(<ConversionHistory history={mockHistory} />);
+
+      // 新 UI v3.0：卡片上有複製圖示
+      const copyIcons = document.querySelectorAll('.lucide-copy');
+      expect(copyIcons.length).toBe(3); // 3 條歷史記錄
+    });
+
+    it('點擊應該複製而非重新轉換', () => {
       const mockHistory = createMockHistory();
       const onReconvert = vi.fn();
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      const copyButtons = screen.getAllByLabelText('複製轉換結果');
-      fireEvent.click(copyButtons[0]!);
+      const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
+      fireEvent.click(firstRecord!);
 
-      // 不應該觸發 onReconvert（事件冒泡被阻止）
+      // 單擊不應該觸發 onReconvert（只複製）
       expect(onReconvert).not.toHaveBeenCalled();
+      expect(clipboardMock.writeText).toHaveBeenCalled();
     });
 
     it('應該處理剪貼簿 API 錯誤', async () => {
@@ -354,38 +359,48 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
   });
 
   describe('無障礙性', () => {
-    it('應該有正確的 aria-label（複製按鈕）', () => {
+    it('應該有正確的 aria-label（卡片）', () => {
       const mockHistory = createMockHistory();
       render(<ConversionHistory history={mockHistory} />);
 
-      const copyButtons = screen.getAllByLabelText('複製轉換結果');
-      expect(copyButtons.length).toBe(3);
+      // 新 UI v3.0：卡片有複製的 aria-label
+      const cards = screen.getAllByLabelText('複製轉換結果');
+      expect(cards.length).toBe(3);
     });
 
-    it('應該支援鍵盤操作（Enter 鍵）', () => {
+    it('應該支援鍵盤操作（Enter 鍵複製）', () => {
       const mockHistory = createMockHistory();
-      const onReconvert = vi.fn();
+      render(<ConversionHistory history={mockHistory} />);
 
-      render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
-
-      // 新 UI：金額和貨幣代碼分開顯示
+      // 新 UI v3.0：Enter 鍵複製
       const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
       fireEvent.keyDown(firstRecord!, { key: 'Enter' });
 
-      expect(onReconvert).toHaveBeenCalledWith(mockHistory[0]);
+      expect(clipboardMock.writeText).toHaveBeenCalledWith('1000 USD = 30900 TWD');
     });
 
-    it('應該支援鍵盤操作（Space 鍵）', () => {
+    it('應該支援鍵盤操作（Shift+Enter 重新轉換）', () => {
       const mockHistory = createMockHistory();
       const onReconvert = vi.fn();
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      // 新 UI：金額和貨幣代碼分開顯示
+      // 新 UI v3.0：Shift+Enter 重新轉換
+      const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
+      fireEvent.keyDown(firstRecord!, { key: 'Enter', shiftKey: true });
+
+      expect(onReconvert).toHaveBeenCalledWith(mockHistory[0]);
+    });
+
+    it('應該支援鍵盤操作（Space 鍵複製）', () => {
+      const mockHistory = createMockHistory();
+      render(<ConversionHistory history={mockHistory} />);
+
+      // 新 UI v3.0：Space 鍵複製
       const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
       fireEvent.keyDown(firstRecord!, { key: ' ' });
 
-      expect(onReconvert).toHaveBeenCalledWith(mockHistory[0]);
+      expect(clipboardMock.writeText).toHaveBeenCalledWith('1000 USD = 30900 TWD');
     });
   });
 });

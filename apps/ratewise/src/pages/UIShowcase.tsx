@@ -1,502 +1,375 @@
 /**
- * UI Showcase 頁面 - UpdatePrompt 組件展示
+ * UI Showcase Page - Complete RateWise Component Gallery
+ * UI 展示頁面 - 完整的 RateWise 組件庫
  *
- * 創建時間: 2025-12-27
- * 目的: 展示 UpdatePrompt 的各個狀態和配色風格
+ * @description Comprehensive showcase of all RateWise UI components,
+ *              design tokens, and theme variations.
+ *              完整展示所有 RateWise UI 組件、設計 Token 和主題變化。
+ * @version 2.0.0
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import {
+  ArrowLeft,
+  Check,
+  X,
+  Info,
+  Copy,
+  Star,
+  Clock,
+  Settings,
+  ArrowRight,
+  RefreshCw,
+  Palette,
+  Type,
+  Layout,
+  Bell,
+  Smartphone,
+} from 'lucide-react';
+import { useToast } from '../components/Toast';
+import { Button } from '../components/Button';
+import {
+  SkeletonLoader,
+  SettingsSkeleton,
+  FavoritesSkeleton,
+  MultiConverterSkeleton,
+} from '../components/SkeletonLoader';
+import { ConversionHistory } from '../features/ratewise/components/ConversionHistory';
+import type { ConversionHistoryEntry } from '../features/ratewise/types';
 
-interface UpdatePromptDemoProps {
-  variant: 'offline' | 'update';
-  title: string;
-  description: string;
-  colorScheme?: 'brand' | 'cotton-candy' | 'pastel-cloud';
-}
-
-function UpdatePromptDemo({
-  variant,
-  title,
+/**
+ * Theme color swatch component
+ * 主題色彩樣本組件
+ */
+function ColorSwatch({
+  name,
+  cssVar,
   description,
-  colorScheme = 'brand',
-}: UpdatePromptDemoProps) {
-  const isOffline = variant === 'offline';
-
-  // 棉花糖甜心配色
-  const cottonCandyColors = {
-    bg: 'from-pink-50 via-purple-50 to-blue-50',
-    border: 'border-purple-100',
-    bubble1: 'bg-purple-100/50',
-    bubble2: 'bg-pink-100/50',
-    iconGlow: 'bg-purple-200',
-    iconBg: 'from-pink-200 via-purple-200 to-blue-200',
-    iconColor: 'text-purple-600',
-    titleColor: 'text-purple-700',
-    descColor: 'text-purple-500',
-    primaryBtn:
-      'from-pink-300 via-purple-300 to-blue-300 hover:from-pink-400 hover:via-purple-400 hover:to-blue-400',
-    secondaryBtn: 'text-purple-600 border-purple-200 hover:border-purple-300',
-    closeBtn: 'text-purple-400 hover:text-purple-600',
-  };
-
-  // RateWise 品牌配色
-  const brandColors = {
-    bg: 'from-blue-50 via-indigo-50 to-purple-50',
-    border: 'border-blue-200',
-    bubble1: 'bg-blue-200/30',
-    bubble2: 'bg-indigo-200/30',
-    iconGlow: 'bg-blue-300',
-    iconBg: 'from-blue-500 to-indigo-600',
-    iconColor: 'text-white',
-    titleColor: 'text-blue-900',
-    descColor: 'text-indigo-700',
-    primaryBtn: 'from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700',
-    secondaryBtn: 'text-blue-700 border-blue-200 hover:border-blue-300',
-    closeBtn: 'text-blue-500 hover:text-blue-700',
-  };
-
-  // 粉彩雲朵配色
-  const pastelCloudColors = {
-    bg: 'from-purple-50 via-blue-50 to-purple-100',
-    border: 'border-purple-200/50',
-    bubble1: 'bg-white/40',
-    bubble2: 'bg-purple-100/40',
-    iconGlow: 'bg-purple-200',
-    iconBg: 'from-purple-200 to-blue-200',
-    iconColor: 'text-purple-600',
-    titleColor: 'text-purple-800',
-    descColor: 'text-purple-600',
-    primaryBtn: 'from-purple-400 to-blue-400 hover:from-purple-500 hover:to-blue-500',
-    secondaryBtn: 'text-purple-600 border-purple-200 hover:bg-white',
-    closeBtn: 'text-purple-400 hover:text-purple-600',
-  };
-
-  const colors =
-    colorScheme === 'cotton-candy'
-      ? cottonCandyColors
-      : colorScheme === 'pastel-cloud'
-        ? pastelCloudColors
-        : brandColors;
-
+}: {
+  name: string;
+  cssVar: string;
+  description: string;
+}) {
   return (
-    <div
-      className={`relative overflow-hidden rounded-3xl w-80 bg-gradient-to-br ${colors.bg} border-2 ${colors.border} shadow-xl shadow-blue-100/50`}
-    >
-      {/* 泡泡裝飾 */}
-      <div className={`absolute top-0 right-0 w-32 h-32 rounded-full ${colors.bubble1} blur-3xl`} />
+    <div className="flex items-center gap-3 p-3 bg-surface rounded-xl border border-border">
       <div
-        className={`absolute bottom-0 left-0 w-32 h-32 rounded-full ${colors.bubble2} blur-3xl`}
+        className="w-12 h-12 rounded-lg shadow-sm border border-border"
+        style={{ backgroundColor: `rgb(var(${cssVar}))` }}
       />
-
-      {/* 內容區域 */}
-      <div className="relative p-6">
-        {/* 圖標區 */}
-        <div className="flex justify-center mb-4">
-          <div className="relative">
-            {/* 外圈光暈 */}
-            <div
-              className={`absolute inset-0 rounded-full ${colors.iconGlow} blur-md opacity-40`}
-            />
-            {/* 主圖標 */}
-            <div
-              className={`relative w-16 h-16 rounded-full bg-gradient-to-br ${colors.iconBg} flex items-center justify-center shadow-lg`}
-            >
-              <svg
-                className={`w-8 h-8 ${colors.iconColor}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {isOffline ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                )}
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* 標題 */}
-        <h2 className={`text-xl font-bold ${colors.titleColor} mb-2 text-center`}>{title}</h2>
-
-        {/* 描述 */}
-        <p className={`text-sm ${colors.descColor} mb-5 leading-relaxed text-center px-2`}>
-          {description}
-        </p>
-
-        {/* 按鈕 */}
-        <div className="flex flex-col space-y-2">
-          {!isOffline && (
-            <button
-              className={`w-full px-5 py-3 rounded-2xl bg-gradient-to-r ${colors.primaryBtn} text-white text-sm font-bold shadow-lg shadow-blue-200/50 active:scale-[0.98] transition-all duration-200`}
-            >
-              馬上更新
-            </button>
-          )}
-
-          <button
-            className={`w-full px-5 py-3 rounded-2xl bg-white/90 backdrop-blur-sm ${colors.secondaryBtn} text-sm font-semibold border-2 hover:bg-white active:scale-[0.98] transition-all duration-200`}
-          >
-            {isOffline ? '好的' : '等等再說'}
-          </button>
-        </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-text text-sm truncate">{name}</div>
+        <div className="text-xs text-text-muted font-mono truncate">{cssVar}</div>
+        <div className="text-[10px] text-text-muted opacity-60 truncate">{description}</div>
       </div>
-
-      {/* 關閉按鈕 */}
-      <button
-        className={`absolute top-4 right-4 p-2 rounded-full bg-white/80 ${colors.closeBtn} hover:bg-white transition-colors`}
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
     </div>
   );
 }
 
-interface ColorSwatchProps {
-  color: string;
-  name: string;
-  value: string;
-}
-
-function ColorSwatch({ color, name, value }: ColorSwatchProps) {
+/**
+ * Section wrapper component
+ * 區塊包裝組件
+ */
+function Section({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-neutral">
-      <div className={`w-12 h-12 rounded-lg ${color} shadow-sm`} />
-      <div>
-        <div className="font-semibold text-neutral-text text-sm">{name}</div>
-        <div className="text-xs text-neutral-text-muted font-mono">{value}</div>
+    <section className="card p-6 space-y-4">
+      <div className="flex items-center gap-2 text-primary">
+        <Icon size={20} />
+        <h2 className="text-lg font-bold">{title}</h2>
       </div>
-    </div>
+      {children}
+    </section>
   );
 }
 
 export default function UIShowcase() {
-  const [activeDemo, setActiveDemo] = useState<'offline' | 'update' | null>(null);
-  const [colorScheme, setColorScheme] = useState<'brand' | 'cotton-candy' | 'pastel-cloud'>(
-    'brand',
+  useTranslation(); // Initialize i18n context
+  const { showToast } = useToast();
+  const [activeTab, setActiveTab] = useState<'colors' | 'components' | 'skeletons'>('colors');
+
+  // Sample history data for demo - using useMemo to avoid impure function calls during render
+  const sampleHistory: ConversionHistoryEntry[] = useMemo(
+    () => [
+      {
+        from: 'TWD',
+        to: 'USD',
+        amount: '1000',
+        result: '31.62',
+        time: '今天 上午10:30',
+        timestamp: 1706140200000, // Fixed timestamp for demo
+      },
+      {
+        from: 'USD',
+        to: 'JPY',
+        amount: '100',
+        result: '15,234',
+        time: '今天 上午09:15',
+        timestamp: 1706136600000,
+      },
+      {
+        from: 'EUR',
+        to: 'TWD',
+        amount: '500',
+        result: '17,100',
+        time: '昨天 下午03:45',
+        timestamp: 1706053800000,
+      },
+    ],
+    [],
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-light via-blue-50 to-purple-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* 標題區 */}
-        <div className="mb-8">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 bg-white/80 px-4 py-2.5 rounded-full shadow border border-blue-100 hover:text-blue-900 hover:bg-white transition-colors mb-4"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            返回主頁
-          </Link>
-          <h1 className="text-4xl font-bold text-neutral-text mt-4">UI Showcase</h1>
-          <p className="text-neutral-text-secondary mt-2">
-            UpdatePrompt 組件的各個狀態和配色風格展示
-          </p>
-        </div>
-
-        {/* 配色切換 */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-neutral mb-8">
-          <h2 className="text-2xl font-semibold text-neutral-text mb-4">配色方案</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button
-              onClick={() => setColorScheme('brand')}
-              className={`px-6 py-4 rounded-xl font-semibold transition-all ${
-                colorScheme === 'brand'
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg'
-                  : 'bg-neutral-light text-neutral-text hover:bg-neutral'
-              }`}
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="p-2 rounded-xl bg-surface border border-border hover:bg-primary/10 transition-colors"
             >
-              💙 RateWise 品牌配色
-            </button>
-            <button
-              onClick={() => setColorScheme('cotton-candy')}
-              className={`px-6 py-4 rounded-xl font-semibold transition-all ${
-                colorScheme === 'cotton-candy'
-                  ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 text-white shadow-lg'
-                  : 'bg-neutral-light text-neutral-text hover:bg-neutral'
-              }`}
-            >
-              🍬 棉花糖甜心配色
-            </button>
-            <button
-              onClick={() => setColorScheme('pastel-cloud')}
-              className={`px-6 py-4 rounded-xl font-semibold transition-all ${
-                colorScheme === 'pastel-cloud'
-                  ? 'bg-gradient-to-r from-purple-400 to-blue-400 text-white shadow-lg'
-                  : 'bg-neutral-light text-neutral-text hover:bg-neutral'
-              }`}
-            >
-              ☁️ 粉彩雲朵配色
-            </button>
-          </div>
-        </div>
-
-        {/* 狀態展示區 */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-neutral mb-8">
-          <h2 className="text-2xl font-semibold text-neutral-text mb-6">組件狀態</h2>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* 離線模式已就緒 */}
-            <div className="flex flex-col items-center">
-              <div className="mb-4 text-center">
-                <h3 className="text-lg font-semibold text-neutral-text mb-2">✨ 離線模式已就緒</h3>
-                <p className="text-sm text-neutral-text-secondary">當 PWA 首次安裝完成後顯示</p>
-              </div>
-              <UpdatePromptDemo
-                variant="offline"
-                title="✨ 離線模式已就緒"
-                description="應用已準備好，隨時隨地都能使用！"
-                colorScheme={colorScheme}
-              />
-            </div>
-
-            {/* 發現新版本 */}
-            <div className="flex flex-col items-center">
-              <div className="mb-4 text-center">
-                <h3 className="text-lg font-semibold text-neutral-text mb-2">🎉 發現新版本</h3>
-                <p className="text-sm text-neutral-text-secondary">當有新版本可用時顯示</p>
-              </div>
-              <UpdatePromptDemo
-                variant="update"
-                title="🎉 發現新版本"
-                description="新版本帶來更棒的體驗哦！"
-                colorScheme={colorScheme}
-              />
+              <ArrowLeft size={20} className="text-text" />
+            </Link>
+            <div>
+              <h1 className="text-2xl font-black text-text">UI Showcase</h1>
+              <p className="text-sm text-text-muted">RateWise 組件庫展示</p>
             </div>
           </div>
+        </header>
 
-          {/* 互動測試 */}
-          <div className="border-t border-neutral pt-6">
-            <h3 className="text-lg font-semibold text-neutral-text mb-4">互動測試</h3>
-            <div className="flex flex-wrap gap-3">
+        {/* Tab Navigation */}
+        <nav className="card p-1.5">
+          <div className="flex gap-1">
+            {[
+              { id: 'colors' as const, label: '色彩系統', icon: Palette },
+              { id: 'components' as const, label: '組件展示', icon: Layout },
+              { id: 'skeletons' as const, label: '骨架屏', icon: Smartphone },
+            ].map(({ id, label, icon: TabIcon }) => (
               <button
-                onClick={() => setActiveDemo('offline')}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold shadow-lg hover:from-emerald-600 hover:to-teal-600 transition-all"
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${
+                  activeTab === id
+                    ? 'bg-primary text-white shadow-md'
+                    : 'text-text-muted hover:bg-surface'
+                }`}
               >
-                顯示離線模式
+                <TabIcon size={16} />
+                {label}
               </button>
-              <button
-                onClick={() => setActiveDemo('update')}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg hover:from-blue-600 hover:to-indigo-600 transition-all"
-              >
-                顯示更新提示
-              </button>
-              <button
-                onClick={() => setActiveDemo(null)}
-                className="px-6 py-3 rounded-xl bg-neutral text-neutral-text font-semibold hover:bg-neutral-dark transition-all"
-              >
-                關閉
-              </button>
-            </div>
+            ))}
           </div>
-        </div>
+        </nav>
 
-        {/* 配色系統 */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-neutral mb-8">
-          <h2 className="text-2xl font-semibold text-neutral-text mb-6">配色系統</h2>
-
-          {colorScheme === 'brand' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <ColorSwatch
-                color="bg-gradient-to-br from-blue-500 to-indigo-600"
-                name="主要漸變"
-                value="blue-500 → indigo-600"
-              />
-              <ColorSwatch
-                color="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
-                name="背景漸變"
-                value="blue-50 → purple-50"
-              />
-              <ColorSwatch color="bg-blue-200" name="邊框色" value="blue-200" />
-              <ColorSwatch color="bg-blue-900" name="標題文字" value="blue-900" />
-              <ColorSwatch color="bg-indigo-700" name="描述文字" value="indigo-700" />
-              <ColorSwatch color="bg-blue-600" name="按鈕背景" value="blue-600" />
-            </div>
-          ) : colorScheme === 'cotton-candy' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <ColorSwatch
-                color="bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200"
-                name="圖標漸變"
-                value="pink-200 → blue-200"
-              />
-              <ColorSwatch
-                color="bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50"
-                name="背景漸變"
-                value="pink-50 → blue-50"
-              />
-              <ColorSwatch color="bg-purple-100" name="邊框色" value="purple-100" />
-              <ColorSwatch color="bg-purple-700" name="標題文字" value="purple-700" />
-              <ColorSwatch color="bg-purple-500" name="描述文字" value="purple-500" />
-              <ColorSwatch
-                color="bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300"
-                name="按鈕漸變"
-                value="pink-300 → blue-300"
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <ColorSwatch
-                color="bg-gradient-to-br from-purple-200 to-blue-200"
-                name="圖標漸變"
-                value="purple-200 → blue-200"
-              />
-              <ColorSwatch
-                color="bg-gradient-to-br from-purple-50 via-blue-50 to-purple-100"
-                name="背景漸變"
-                value="purple-50 → purple-100"
-              />
-              <ColorSwatch
-                color="bg-purple-200/50 border border-purple-200"
-                name="邊框色"
-                value="purple-200/50"
-              />
-              <ColorSwatch color="bg-purple-800" name="標題文字" value="purple-800" />
-              <ColorSwatch color="bg-purple-600" name="描述文字" value="purple-600" />
-              <ColorSwatch
-                color="bg-gradient-to-r from-purple-400 to-blue-400"
-                name="按鈕漸變"
-                value="purple-400 → blue-400"
-              />
-            </div>
-          )}
-        </div>
-
-        {/* 設計特點 */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-neutral">
-          <h2 className="text-2xl font-semibold text-neutral-text mb-6">設計特點</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-bold">1</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-neutral-text mb-1">藍紫漸變品牌色</h3>
-                  <p className="text-sm text-neutral-text-secondary">
-                    使用 RateWise 品牌識別色，營造專業可信賴的形象
-                  </p>
-                </div>
+        {/* Colors Tab */}
+        {activeTab === 'colors' && (
+          <div className="space-y-6">
+            <Section title="主要色彩" icon={Palette}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <ColorSwatch name="Primary" cssVar="--color-primary" description="主要品牌色" />
+                <ColorSwatch name="Accent" cssVar="--color-accent" description="強調色" />
+                <ColorSwatch name="Background" cssVar="--color-background" description="背景色" />
+                <ColorSwatch name="Surface" cssVar="--color-surface" description="卡片表面色" />
+                <ColorSwatch name="Text" cssVar="--color-text" description="主要文字色" />
+                <ColorSwatch
+                  name="Text Muted"
+                  cssVar="--color-text-muted"
+                  description="次要文字色"
+                />
               </div>
+            </Section>
 
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-bold">2</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-neutral-text mb-1">圓潤現代視覺</h3>
-                  <p className="text-sm text-neutral-text-secondary">
-                    24px 圓角設計，柔和親和的視覺語言
-                  </p>
-                </div>
+            <Section title="狀態色彩" icon={Bell}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <ColorSwatch name="Success" cssVar="--color-success" description="成功狀態" />
+                <ColorSwatch
+                  name="Destructive"
+                  cssVar="--color-destructive"
+                  description="錯誤/危險"
+                />
+                <ColorSwatch name="Warning" cssVar="--color-warning" description="警告狀態" />
+                <ColorSwatch name="Info" cssVar="--color-info" description="資訊提示" />
               </div>
+            </Section>
 
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-bold">3</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-neutral-text mb-1">柔和光暈效果</h3>
-                  <p className="text-sm text-neutral-text-secondary">
-                    藍靛色光暈裝飾，增添品牌質感
-                  </p>
-                </div>
+            <Section title="特殊色彩" icon={Star}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <ColorSwatch name="Favorite" cssVar="--color-favorite" description="收藏星星色" />
+                <ColorSwatch name="Border" cssVar="--color-border" description="邊框色" />
+                <ColorSwatch name="Card" cssVar="--color-card" description="卡片背景" />
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-bold">4</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-neutral-text mb-1">Emoji 點綴</h3>
-                  <p className="text-sm text-neutral-text-secondary">
-                    ✨ 和 🎉 增加親和力和情感連結
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-bold">5</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-neutral-text mb-1">彈性入場動畫</h3>
-                  <p className="text-sm text-neutral-text-secondary">
-                    Spring physics 動畫，流暢自然的視覺體驗
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-bold">6</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-neutral-text mb-1">完整無障礙支援</h3>
-                  <p className="text-sm text-neutral-text-secondary">
-                    ARIA labels, keyboard navigation, 符合 WCAG 標準
-                  </p>
-                </div>
-              </div>
-            </div>
+            </Section>
           </div>
-        </div>
+        )}
+
+        {/* Components Tab */}
+        {activeTab === 'components' && (
+          <div className="space-y-6">
+            {/* Buttons */}
+            <Section title="按鈕組件" icon={Layout}>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="primary">Primary</Button>
+                  <Button variant="secondary">Secondary</Button>
+                  <Button variant="ghost">Ghost</Button>
+                  <Button variant="danger">Danger</Button>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button size="sm">Small</Button>
+                  <Button size="md">Medium</Button>
+                  <Button size="lg">Large</Button>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button loading>Loading</Button>
+                  <Button disabled>Disabled</Button>
+                  <Button leftIcon={<Star size={16} />}>With Icon</Button>
+                </div>
+              </div>
+            </Section>
+
+            {/* Toast Notifications */}
+            <Section title="Toast 通知" icon={Bell}>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="primary"
+                  leftIcon={<Check size={16} />}
+                  onClick={() => showToast('操作成功！', 'success')}
+                >
+                  成功通知
+                </Button>
+                <Button
+                  variant="danger"
+                  leftIcon={<X size={16} />}
+                  onClick={() => showToast('發生錯誤', 'error')}
+                >
+                  錯誤通知
+                </Button>
+                <Button
+                  variant="secondary"
+                  leftIcon={<Info size={16} />}
+                  onClick={() => showToast('提示資訊', 'info')}
+                >
+                  資訊通知
+                </Button>
+                <Button
+                  variant="secondary"
+                  leftIcon={<Copy size={16} />}
+                  onClick={() => showToast('已複製到剪貼簿', 'success')}
+                >
+                  複製通知
+                </Button>
+              </div>
+            </Section>
+
+            {/* Conversion History */}
+            <Section title="轉換歷史" icon={Clock}>
+              <p className="text-sm text-text-muted mb-3">
+                點擊卡片複製轉換結果，雙擊或長按重新轉換
+              </p>
+              <ConversionHistory
+                history={sampleHistory}
+                onReconvert={(entry) => {
+                  showToast(`重新轉換: ${entry.amount} ${entry.from} → ${entry.to}`, 'info');
+                }}
+              />
+            </Section>
+
+            {/* Typography */}
+            <Section title="文字排版" icon={Type}>
+              <div className="space-y-3">
+                <h1 className="text-3xl font-black text-text">Heading 1 - 標題一</h1>
+                <h2 className="text-2xl font-bold text-text">Heading 2 - 標題二</h2>
+                <h3 className="text-xl font-semibold text-text">Heading 3 - 標題三</h3>
+                <p className="text-base text-text">Body text - 正文文字</p>
+                <p className="text-sm text-text-muted">Small text - 小字文字</p>
+                <p className="text-xs text-text-muted opacity-60">Caption - 說明文字</p>
+              </div>
+            </Section>
+
+            {/* Cards */}
+            <Section title="卡片樣式" icon={Layout}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="card p-4">
+                  <h3 className="font-bold text-text mb-2">基本卡片</h3>
+                  <p className="text-sm text-text-muted">使用 .card 類別的基本卡片樣式</p>
+                </div>
+                <div className="card p-4 border-2 border-primary/30">
+                  <h3 className="font-bold text-primary mb-2">強調卡片</h3>
+                  <p className="text-sm text-text-muted">帶有主題色邊框的強調卡片</p>
+                </div>
+              </div>
+            </Section>
+
+            {/* Icons */}
+            <Section title="圖示展示" icon={Star}>
+              <div className="flex flex-wrap gap-4">
+                {[
+                  { icon: Star, name: 'Star', color: 'text-favorite' },
+                  { icon: Clock, name: 'Clock', color: 'text-text-muted' },
+                  { icon: Settings, name: 'Settings', color: 'text-text' },
+                  { icon: ArrowRight, name: 'Arrow', color: 'text-primary' },
+                  { icon: RefreshCw, name: 'Refresh', color: 'text-success' },
+                  { icon: Copy, name: 'Copy', color: 'text-info' },
+                  { icon: Check, name: 'Check', color: 'text-success' },
+                  { icon: X, name: 'Close', color: 'text-destructive' },
+                ].map(({ icon: IconComponent, name, color }) => (
+                  <div
+                    key={name}
+                    className="flex flex-col items-center gap-1 p-3 rounded-xl bg-surface"
+                  >
+                    <IconComponent size={24} className={color} />
+                    <span className="text-xs text-text-muted">{name}</span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          </div>
+        )}
+
+        {/* Skeletons Tab */}
+        {activeTab === 'skeletons' && (
+          <div className="space-y-6">
+            <Section title="主頁面骨架屏" icon={Smartphone}>
+              <div className="border border-border rounded-xl overflow-hidden">
+                <SkeletonLoader />
+              </div>
+            </Section>
+
+            <Section title="設定頁面骨架屏" icon={Settings}>
+              <div className="border border-border rounded-xl overflow-hidden">
+                <SettingsSkeleton />
+              </div>
+            </Section>
+
+            <Section title="收藏頁面骨架屏" icon={Star}>
+              <div className="border border-border rounded-xl overflow-hidden">
+                <FavoritesSkeleton />
+              </div>
+            </Section>
+
+            <Section title="多幣別頁面骨架屏" icon={RefreshCw}>
+              <div className="border border-border rounded-xl overflow-hidden">
+                <MultiConverterSkeleton />
+              </div>
+            </Section>
+          </div>
+        )}
+
+        {/* Footer */}
+        <footer className="text-center py-6 text-sm text-text-muted">
+          <p>RateWise UI Showcase v2.0.0</p>
+          <p className="text-xs opacity-60 mt-1">使用 SSOT Design Token 系統 | 支援 6 種主題風格</p>
+        </footer>
       </div>
-
-      {/* 右上角互動展示 */}
-      {activeDemo && (
-        <div className="fixed top-4 right-4 z-50 animate-slide-in-bounce">
-          {activeDemo === 'offline' ? (
-            <UpdatePromptDemo
-              variant="offline"
-              title="✨ 離線模式已就緒"
-              description="應用已準備好，隨時隨地都能使用！"
-              colorScheme={colorScheme}
-            />
-          ) : (
-            <UpdatePromptDemo
-              variant="update"
-              title="🎉 發現新版本"
-              description="新版本帶來更棒的體驗哦！"
-              colorScheme={colorScheme}
-            />
-          )}
-          <button
-            onClick={() => setActiveDemo(null)}
-            className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
-          >
-            ×
-          </button>
-        </div>
-      )}
     </div>
   );
 }

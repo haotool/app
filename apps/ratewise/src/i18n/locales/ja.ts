@@ -22,6 +22,7 @@ const ja = {
     clearAll: 'すべてクリア',
     copy: 'コピー',
     copied: 'コピーしました',
+    clickToCopy: 'クリックでコピー',
   },
 
   // Navigation
@@ -56,6 +57,7 @@ const ja = {
     swapCurrencies: '通貨を入れ替え',
     clickToSwap: 'クリックで入れ替え',
     addToHistory: '履歴に追加',
+    addedToHistory: '履歴に追加しました',
     spotRate: '直物',
     cashRate: '現金',
     switchToSpot: '直物レートに切替',

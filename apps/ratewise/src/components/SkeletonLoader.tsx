@@ -247,13 +247,16 @@ export const SettingsSkeleton = () => {
 };
 
 /**
+ * Favorites Page Skeleton
  * 收藏頁面骨架屏
- * 對應 Favorites 頁面布局
+ *
+ * @description Skeleton for Favorites page with tabs and currency list
+ *              收藏頁面骨架屏，包含頁籤和貨幣列表
  */
 export const FavoritesSkeleton = () => {
   return (
     <div className="skeleton-page p-5 max-w-md mx-auto space-y-6" role="status" aria-live="polite">
-      {/* 頁籤切換器 */}
+      {/* Tab switcher */}
       <div className="skeleton-card p-1.5">
         <div className="flex gap-1">
           {[1, 2].map((i) => (
@@ -262,19 +265,21 @@ export const FavoritesSkeleton = () => {
         </div>
       </div>
 
-      {/* 常用貨幣列表 */}
-      <section className="space-y-3">
-        {[1, 2, 3].map((i) => (
+      {/* Favorite currencies list with drag handles */}
+      <section className="space-y-2">
+        {[1, 2, 3, 4].map((i) => (
           <div key={i} className="skeleton-card p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="skeleton-shimmer w-10 h-10 rounded-full" />
-                <div className="space-y-1.5">
-                  <div className="skeleton-shimmer h-5 w-20 rounded" />
-                  <div className="skeleton-shimmer h-4 w-28 rounded" />
-                </div>
+            <div className="flex items-center gap-3">
+              {/* Drag handle */}
+              <div className="skeleton-shimmer w-4 h-8 rounded" />
+              {/* Flag and info */}
+              <div className="skeleton-shimmer w-10 h-10 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <div className="skeleton-shimmer h-5 w-16 rounded" />
+                <div className="skeleton-shimmer h-4 w-24 rounded" />
               </div>
-              <div className="skeleton-shimmer h-8 w-8 rounded-lg" />
+              {/* Star icon */}
+              <div className="skeleton-shimmer h-6 w-6 rounded" />
             </div>
           </div>
         ))}

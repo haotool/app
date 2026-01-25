@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CURRENCY_DEFINITIONS,
   DEFAULT_BASE_CURRENCY,
@@ -22,6 +23,7 @@ import { logger } from '../../../utils/logger';
 import { getExchangeRate, convertCurrencyAmount } from '../../../utils/exchangeRateCalculation';
 import { getRelativeTimeString } from '../../../utils/timeFormatter';
 import { INP_LONG_TASK_THRESHOLD_MS } from '../../../utils/interactionBudget';
+import { useToast } from '../../../components/Toast';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -61,6 +63,8 @@ interface UseCurrencyConverterOptions {
 
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
   const { exchangeRates, details, rateType = 'spot' } = options;
+  const { t } = useTranslation();
+  const { showToast } = useToast();
 
   // 使用固定初始值避免 SSR hydration mismatch，在 useEffect 中從 localStorage 恢復
   const [mode, setMode] = useState<ConverterMode>('single');
@@ -370,6 +374,10 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     writeJSON(STORAGE_KEYS.FAVORITES, newOrder);
   };
 
+  /**
+   * Add current conversion to history with toast notification
+   * 將當前轉換加入歷史記錄並顯示 Toast 通知
+   */
   const addToHistory = () => {
     const timestamp = Date.now();
     const entry: ConversionHistoryEntry = {
@@ -387,6 +395,9 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, updated);
       return updated;
     });
+
+    // 顯示成功通知
+    showToast(t('singleConverter.addedToHistory'), 'success');
   };
 
   // [feat:2025-12-26] 清除全部歷史記錄

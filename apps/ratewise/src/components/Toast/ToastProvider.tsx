@@ -1,24 +1,23 @@
 /**
- * Toast Provider - 包裝應用程式以啟用 Toast 功能
+ * Toast Provider - Application Toast Notification System
+ * Toast 提供者 - 應用程式 Toast 通知系統
  *
- * [2026-01-04] 從 Toast.tsx 拆分以符合 react-refresh/only-export-components 規則
- * 參考: [context7:/reactjs/react.dev:toast-notification:2025-12-29]
+ * @description Toast notification system with SSOT design tokens.
+ *              Supports success, error, and info types with smooth animations.
+ *              使用 SSOT 設計 Token 的 Toast 通知系統。
+ *              支援成功、錯誤、資訊三種類型，並具有流暢動畫。
  *
- * 設計特點：
- * - 無外部依賴，純 React + Tailwind CSS
- * - 支援成功、錯誤、資訊三種類型
- * - 自動消失（2 秒）
- * - 滑順的入場/退場動畫
- * - 堆疊顯示多個通知
- * - 符合棉花糖雲朵風格
+ * @see [context7:/reactjs/react.dev:toast-notification:2025-12-29]
+ * @version 3.0.0
  */
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
-import { Check, X, Info } from 'lucide-react';
+import { Check, X, Info, Copy } from 'lucide-react';
 import { ToastContext, type ToastMessage, type ToastType } from './ToastContext';
 
 /**
- * Toast Provider - 包裝應用程式以啟用 Toast 功能
+ * Toast Provider - Wraps application to enable Toast functionality
+ * Toast 提供者 - 包裝應用程式以啟用 Toast 功能
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -35,8 +34,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {/* Toast 容器 - 右上角堆疊 */}
-      <div className="fixed top-20 right-4 z-[60] flex flex-col gap-2 pointer-events-none">
+      {/* Toast container - top center for better visibility */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex flex-col gap-2 pointer-events-none">
         {toasts.map((toast) => (
           <Toast key={toast.id} {...toast} onClose={() => removeToast(toast.id)} />
         ))}
@@ -46,22 +45,23 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * 單個 Toast 組件
+ * Single Toast Component - SSOT Design Token Styled
+ * 單個 Toast 組件 - SSOT 設計 Token 風格
  */
 function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: () => void }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
-    // 入場動畫
+    // Entry animation
     const showTimer = setTimeout(() => setIsVisible(true), 10);
 
-    // 2 秒後開始退場
+    // Start exit after 2 seconds
     const hideTimer = setTimeout(() => {
       setIsExiting(true);
     }, 2000);
 
-    // 退場動畫完成後移除
+    // Remove after exit animation completes
     const removeTimer = setTimeout(() => {
       onClose();
     }, 2300);
@@ -73,30 +73,41 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
     };
   }, [onClose]);
 
-  // 根據類型選擇樣式
+  /**
+   * Get styles based on toast type - using SSOT design tokens
+   * 根據 Toast 類型獲取樣式 - 使用 SSOT 設計 Token
+   */
   const getStyles = () => {
     switch (type) {
       case 'success':
         return {
-          bg: 'from-success/10 via-success/5 to-success/15',
-          border: 'border-success/30',
+          bg: 'bg-surface',
+          border: 'border-success/40',
           text: 'text-success',
-          icon: <Check className="w-4 h-4 text-success" />,
+          iconBg: 'bg-success/15',
+          icon: <Check className="w-4 h-4" strokeWidth={2.5} />,
         };
       case 'error':
         return {
-          bg: 'from-destructive/10 via-destructive/5 to-destructive/15',
-          border: 'border-destructive/30',
+          bg: 'bg-surface',
+          border: 'border-destructive/40',
           text: 'text-destructive',
-          icon: <X className="w-4 h-4 text-destructive" />,
+          iconBg: 'bg-destructive/15',
+          icon: <X className="w-4 h-4" strokeWidth={2.5} />,
         };
       case 'info':
       default:
         return {
-          bg: 'from-primary-bg via-primary-bg to-primary-light',
-          border: 'border-primary/30',
+          bg: 'bg-surface',
+          border: 'border-primary/40',
           text: 'text-primary',
-          icon: <Info className="w-4 h-4 text-primary" />,
+          iconBg: 'bg-primary/15',
+          icon:
+            message.includes('複製') || message.includes('Copied') || message.includes('コピー') ? (
+              <Copy className="w-4 h-4" strokeWidth={2.5} />
+            ) : (
+              <Info className="w-4 h-4" strokeWidth={2.5} />
+            ),
         };
     }
   };
@@ -107,24 +118,32 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
     <div
       role="alert"
       aria-live="polite"
+      data-testid="toast"
       className={`
         pointer-events-auto
-        max-w-xs
+        min-w-[200px] max-w-xs
         overflow-hidden rounded-2xl
-        bg-gradient-to-br ${styles.bg}
+        ${styles.bg}
         border-2 ${styles.border}
-        shadow-lg shadow-purple-100/30
+        shadow-xl shadow-black/10
+        backdrop-blur-sm
         transform transition-all duration-300 ease-out
-        ${isVisible && !isExiting ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}
+        ${
+          isVisible && !isExiting
+            ? 'translate-y-0 opacity-100 scale-100'
+            : '-translate-y-2 opacity-0 scale-95'
+        }
       `}
     >
       <div className="flex items-center gap-3 px-4 py-3">
-        {/* 圖標 */}
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
+        {/* Icon with themed background */}
+        <div
+          className={`flex-shrink-0 w-8 h-8 rounded-full ${styles.iconBg} ${styles.text} flex items-center justify-center`}
+        >
           {styles.icon}
         </div>
-        {/* 訊息 */}
-        <span className={`text-sm font-medium ${styles.text}`}>{message}</span>
+        {/* Message */}
+        <span className={`text-sm font-semibold ${styles.text}`}>{message}</span>
       </div>
     </div>
   );

@@ -22,6 +22,7 @@ const zhTW = {
     clearAll: '清除全部',
     copy: '複製',
     copied: '已複製',
+    clickToCopy: '點擊複製',
   },
 
   // Navigation
@@ -56,6 +57,7 @@ const zhTW = {
     swapCurrencies: '交換幣別',
     clickToSwap: '點擊交換',
     addToHistory: '加入歷史記錄',
+    addedToHistory: '已加入歷史記錄',
     spotRate: '即期',
     cashRate: '現金',
     switchToSpot: '切換到即期匯率',
