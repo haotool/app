@@ -573,6 +573,317 @@ export const quickAmountButtonTokens = {
 } as const;
 
 /**
+ * 間距設計規範 (SSOT)
+ *
+ * 統一應用程式間距系統，基於 4px 基礎網格。
+ * 遵循 Tailwind CSS 官方間距系統，確保一致性。
+ *
+ * 設計原理：
+ * - 基礎單位：4px (0.25rem)
+ * - 倍數系統：xs=4, sm=8, md=16, lg=24, xl=32, 2xl=48, 3xl=64
+ * - 用途區分：內距 (padding)、外距 (margin)、間隙 (gap)
+ *
+ * @reference Tailwind CSS Spacing Scale
+ * @see https://tailwindcss.com/docs/customizing-spacing
+ * @created 2026-01-25
+ * @version 1.0.0
+ */
+export const spacingTokens = {
+  /** 基礎單位 (4px) */
+  base: 4,
+
+  /** 間距比例表 */
+  scale: {
+    /** 4px - 極小間距 (圖標與文字間) */
+    xs: { px: 4, rem: '0.25rem', class: '1' },
+    /** 8px - 小間距 (元素內部) */
+    sm: { px: 8, rem: '0.5rem', class: '2' },
+    /** 12px - 中小間距 */
+    'md-sm': { px: 12, rem: '0.75rem', class: '3' },
+    /** 16px - 中間距 (卡片內距、按鈕間距) */
+    md: { px: 16, rem: '1rem', class: '4' },
+    /** 20px - 中大間距 */
+    'md-lg': { px: 20, rem: '1.25rem', class: '5' },
+    /** 24px - 大間距 (區塊間距) */
+    lg: { px: 24, rem: '1.5rem', class: '6' },
+    /** 32px - 超大間距 (主要區塊間) */
+    xl: { px: 32, rem: '2rem', class: '8' },
+    /** 48px - 2倍超大間距 */
+    '2xl': { px: 48, rem: '3rem', class: '12' },
+    /** 64px - 3倍超大間距 (頁面區段間) */
+    '3xl': { px: 64, rem: '4rem', class: '16' },
+  },
+
+  /** 常用組合 - 直接複製使用 */
+  patterns: {
+    /** 卡片內距 */
+    cardPadding: 'p-4', // 16px
+    /** 區塊間距 */
+    sectionGap: 'gap-6', // 24px
+    /** 列表項目間距 */
+    listGap: 'gap-3', // 12px
+    /** 表單欄位間距 */
+    formGap: 'gap-4', // 16px
+    /** 按鈕組間距 */
+    buttonGroupGap: 'gap-2', // 8px
+    /** 頁面水平內距 */
+    pageHorizontal: 'px-5', // 20px
+    /** 頁面垂直內距 */
+    pageVertical: 'py-6', // 24px
+  },
+} as const;
+
+/**
+ * 字型設計規範 (SSOT)
+ *
+ * 統一應用程式字型系統，確保視覺層次與可讀性。
+ * 基於 Tailwind CSS 字型比例，針對中英文混排優化。
+ *
+ * 設計原理：
+ * - 字型家族：Inter (英文) + Noto Sans TC (中文) + system-ui
+ * - 字重系統：regular(400), medium(500), semibold(600), bold(700), black(900)
+ * - 行高優化：緊湊(1.25)、標準(1.5)、寬鬆(1.75)
+ *
+ * @reference Tailwind CSS Typography
+ * @see https://tailwindcss.com/docs/font-size
+ * @created 2026-01-25
+ * @version 1.0.0
+ */
+export const typographyTokens = {
+  /** 字型家族 */
+  fontFamily: {
+    sans: ['Inter', '"Noto Sans TC"', 'system-ui', 'sans-serif'],
+    mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'monospace'],
+  },
+
+  /** 字型大小比例表 */
+  fontSize: {
+    /** 10px - 極小標籤 */
+    '2xs': { size: '0.625rem', lineHeight: '0.875rem', class: 'text-[10px]' },
+    /** 12px - 小標籤、說明文字 */
+    xs: { size: '0.75rem', lineHeight: '1rem', class: 'text-xs' },
+    /** 14px - 次要內容 */
+    sm: { size: '0.875rem', lineHeight: '1.25rem', class: 'text-sm' },
+    /** 16px - 正文 */
+    base: { size: '1rem', lineHeight: '1.5rem', class: 'text-base' },
+    /** 18px - 大正文 */
+    lg: { size: '1.125rem', lineHeight: '1.75rem', class: 'text-lg' },
+    /** 20px - 小標題 */
+    xl: { size: '1.25rem', lineHeight: '1.75rem', class: 'text-xl' },
+    /** 24px - 標題 */
+    '2xl': { size: '1.5rem', lineHeight: '2rem', class: 'text-2xl' },
+    /** 30px - 大標題 */
+    '3xl': { size: '1.875rem', lineHeight: '2.25rem', class: 'text-3xl' },
+    /** 36px - 超大標題 */
+    '4xl': { size: '2.25rem', lineHeight: '2.5rem', class: 'text-4xl' },
+    /** 48px - 巨大標題 (Hero) */
+    '5xl': { size: '3rem', lineHeight: '1', class: 'text-5xl' },
+  },
+
+  /** 字重 */
+  fontWeight: {
+    regular: { value: 400, class: 'font-normal' },
+    medium: { value: 500, class: 'font-medium' },
+    semibold: { value: 600, class: 'font-semibold' },
+    bold: { value: 700, class: 'font-bold' },
+    black: { value: 900, class: 'font-black' },
+  },
+
+  /** 行高 */
+  lineHeight: {
+    tight: { value: 1.25, class: 'leading-tight' },
+    normal: { value: 1.5, class: 'leading-normal' },
+    relaxed: { value: 1.75, class: 'leading-relaxed' },
+  },
+
+  /** 常用組合 - 直接複製使用 */
+  patterns: {
+    /** 頁面標題 (H1) */
+    pageTitle: 'text-2xl font-bold leading-tight',
+    /** 區塊標題 (H2) */
+    sectionTitle: 'text-xl font-semibold leading-tight',
+    /** 卡片標題 (H3) */
+    cardTitle: 'text-lg font-semibold',
+    /** 正文 */
+    body: 'text-base font-normal leading-normal',
+    /** 次要文字 */
+    secondary: 'text-sm text-foreground-secondary',
+    /** 小標籤 */
+    label: 'text-xs font-medium uppercase tracking-wide',
+    /** 數值顯示 (匯率、金額) */
+    numeric: 'text-2xl font-bold tabular-nums',
+    /** 小數值 */
+    numericSmall: 'text-lg font-semibold tabular-nums',
+  },
+} as const;
+
+/**
+ * RWD 斷點設計規範 (SSOT)
+ *
+ * 統一應用程式響應式斷點策略，採用 Mobile-First 設計。
+ * 與 Tailwind CSS 預設斷點對齊，確保一致性。
+ *
+ * 設計原理：
+ * - Mobile-First：預設樣式為行動裝置，使用 min-width 向上擴展
+ * - 斷點選擇：基於常見裝置寬度，非任意數值
+ * - 內容優先：斷點位置取決於內容需求，而非特定裝置
+ *
+ * @reference Tailwind CSS Responsive Design
+ * @see https://tailwindcss.com/docs/responsive-design
+ * @created 2026-01-25
+ * @version 1.0.0
+ */
+export const breakpointTokens = {
+  /** 斷點定義 (min-width) */
+  screens: {
+    /** 640px - 大型手機/小平板 (橫向) */
+    sm: { min: '640px', max: '767px', class: 'sm:' },
+    /** 768px - 平板 (直向) */
+    md: { min: '768px', max: '1023px', class: 'md:' },
+    /** 1024px - 平板 (橫向) / 小筆電 */
+    lg: { min: '1024px', max: '1279px', class: 'lg:' },
+    /** 1280px - 筆電 / 桌機 */
+    xl: { min: '1280px', max: '1535px', class: 'xl:' },
+    /** 1536px - 大螢幕桌機 */
+    '2xl': { min: '1536px', max: null, class: '2xl:' },
+  },
+
+  /** 容器最大寬度 */
+  container: {
+    sm: '640px',
+    md: '768px',
+    lg: '1024px',
+    xl: '1280px',
+    '2xl': '1536px',
+  },
+
+  /** 常用響應式模式 */
+  patterns: {
+    /** 隱藏於行動裝置，桌面顯示 */
+    desktopOnly: 'hidden md:block',
+    /** 顯示於行動裝置，桌面隱藏 */
+    mobileOnly: 'block md:hidden',
+    /** 響應式網格 (1→2→3→4 欄) */
+    responsiveGrid: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+    /** 響應式 Flex (堆疊→並排) */
+    responsiveFlex: 'flex flex-col md:flex-row',
+    /** 響應式文字 (小→中→大) */
+    responsiveText: 'text-sm md:text-base lg:text-lg',
+    /** 響應式間距 (小→中→大) */
+    responsiveSpacing: 'p-4 md:p-6 lg:p-8',
+  },
+
+  /** 媒體查詢輔助函數 */
+  mediaQueries: {
+    /** 手機 (<640px) */
+    mobile: '@media (max-width: 639px)',
+    /** 平板以上 (≥768px) */
+    tablet: '@media (min-width: 768px)',
+    /** 桌面以上 (≥1024px) */
+    desktop: '@media (min-width: 1024px)',
+    /** 觸控裝置 */
+    touch: '@media (hover: none) and (pointer: coarse)',
+    /** 滑鼠裝置 */
+    pointer: '@media (hover: hover) and (pointer: fine)',
+    /** 減少動畫偏好 */
+    reducedMotion: '@media (prefers-reduced-motion: reduce)',
+  },
+} as const;
+
+/**
+ * 按鈕設計規範 (SSOT)
+ *
+ * 統一應用程式按鈕系統，支援多種變體與尺寸。
+ * 結合語義色彩與微互動效果。
+ *
+ * 設計原理：
+ * - 變體分類：primary (主要)、secondary (次要)、ghost (幽靈)、danger (危險)
+ * - 尺寸分類：sm (小)、md (中)、lg (大)
+ * - 狀態完整：default、hover、active、disabled、loading
+ *
+ * @created 2026-01-25
+ * @version 1.0.0
+ */
+export const buttonTokens = {
+  /** 基礎樣式 (所有按鈕共用) */
+  base: {
+    display: 'inline-flex items-center justify-center',
+    typography: 'font-semibold',
+    border: 'rounded-2xl',
+    cursor: 'cursor-pointer',
+    transition: 'transition-all duration-200 ease-out',
+    focus:
+      'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+    disabled: 'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
+  },
+
+  /** 尺寸變體 */
+  sizes: {
+    sm: {
+      padding: 'px-3 py-1.5',
+      fontSize: 'text-sm',
+      height: 'h-8',
+      iconSize: 'w-4 h-4',
+      gap: 'gap-1.5',
+    },
+    md: {
+      padding: 'px-4 py-2',
+      fontSize: 'text-base',
+      height: 'h-10',
+      iconSize: 'w-5 h-5',
+      gap: 'gap-2',
+    },
+    lg: {
+      padding: 'px-6 py-3',
+      fontSize: 'text-lg',
+      height: 'h-12',
+      iconSize: 'w-6 h-6',
+      gap: 'gap-2.5',
+    },
+  },
+
+  /** 顏色變體 */
+  variants: {
+    /** 主要按鈕 - 高視覺權重 */
+    primary: {
+      default: 'bg-primary text-white',
+      hover: 'hover:bg-primary-hover hover:shadow-lg hover:-translate-y-0.5',
+      active: 'active:translate-y-0 active:shadow-md',
+    },
+    /** 次要按鈕 - 中視覺權重 */
+    secondary: {
+      default: 'bg-surface-elevated text-text border border-border',
+      hover: 'hover:bg-surface hover:border-primary/30 hover:text-primary',
+      active: 'active:bg-surface-sunken',
+    },
+    /** 幽靈按鈕 - 低視覺權重 */
+    ghost: {
+      default: 'bg-transparent text-text',
+      hover: 'hover:bg-surface-elevated hover:text-primary',
+      active: 'active:bg-surface-sunken',
+    },
+    /** 危險按鈕 - 警示操作 */
+    danger: {
+      default: 'bg-destructive text-white',
+      hover: 'hover:bg-destructive-hover hover:shadow-lg hover:-translate-y-0.5',
+      active: 'active:translate-y-0 active:shadow-md',
+    },
+  },
+
+  /** 完整類別組合 - 直接複製使用 */
+  patterns: {
+    primaryMd:
+      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-primary text-white hover:bg-primary-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md',
+    secondaryMd:
+      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-surface-elevated text-text border border-border hover:bg-surface hover:border-primary/30 hover:text-primary active:bg-surface-sunken',
+    ghostMd:
+      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-transparent text-text hover:bg-surface-elevated hover:text-primary active:bg-surface-sunken',
+    dangerMd:
+      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-destructive text-white hover:bg-destructive-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md',
+  },
+} as const;
+
+/**
  * 生成 Tailwind 主題擴展配置
  *
  * 基於 Context7 官方最佳實踐，生成可直接用於 tailwind.config.ts 的配置

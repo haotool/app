@@ -1,19 +1,25 @@
 import type { Config } from 'tailwindcss';
-import { generateTailwindThemeExtension } from './src/config/design-tokens';
+import {
+  generateTailwindThemeExtension,
+  spacingTokens,
+  typographyTokens,
+  breakpointTokens,
+} from './src/config/design-tokens';
 
 /**
  * Tailwind CSS Configuration
  *
- * @description 現代化設計系統 - 扁平 UI + 語義化 Token
- * @see src/config/design-tokens.ts - 舊版 Design Token（向後相容）
- * @see src/config/themes.ts - 新版主題系統（4 風格 × 4 配色）
+ * @description 現代化設計系統 - 扁平 UI + 語義化 Token + SSOT
+ * @see src/config/design-tokens.ts - Design Token SSOT (色彩、間距、字型、斷點)
  * @see src/index.css - CSS Variables 定義
+ * @see src/components/Button.tsx - 統一按鈕組件
+ * @see src/components/PageContainer.tsx - 統一頁面佈局組件
  *
  * @reference
  * - shadcn/ui Theming: https://ui.shadcn.com/docs/theming
  * - Tailwind CSS Theme: https://tailwindcss.com/docs/theme
  *
- * @updated 2026-01-16 - 新增現代化語義 token
+ * @updated 2026-01-25 - 整合 spacingTokens、typographyTokens、breakpointTokens SSOT
  */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -22,8 +28,16 @@ export default {
     ...generateTailwindThemeExtension(),
     extend: {
       ...generateTailwindThemeExtension().extend,
+      // 字型家族 - 使用 typographyTokens SSOT
       fontFamily: {
-        sans: ['Inter', '"Noto Sans TC"', 'system-ui', 'sans-serif'],
+        sans: typographyTokens.fontFamily.sans,
+        mono: typographyTokens.fontFamily.mono,
+      },
+      // 自定義間距 - 使用 spacingTokens SSOT 擴展
+      spacing: {
+        // 額外的間距值（補充 Tailwind 預設）
+        '18': '4.5rem', // 72px
+        '22': '5.5rem', // 88px
       },
       // 現代化語義色彩（使用 CSS Variables）
       colors: {
@@ -129,6 +143,18 @@ export default {
           to: { transform: 'translateY(0)', opacity: '1' },
         },
       },
+      // 字型大小 - 補充 2xs 尺寸
+      fontSize: {
+        '2xs': [typographyTokens.fontSize['2xs'].size, typographyTokens.fontSize['2xs'].lineHeight],
+      },
+    },
+    // 斷點 - 使用 breakpointTokens SSOT (覆蓋預設)
+    screens: {
+      sm: breakpointTokens.screens.sm.min,
+      md: breakpointTokens.screens.md.min,
+      lg: breakpointTokens.screens.lg.min,
+      xl: breakpointTokens.screens.xl.min,
+      '2xl': breakpointTokens.screens['2xl'].min,
     },
   },
   plugins: [],
