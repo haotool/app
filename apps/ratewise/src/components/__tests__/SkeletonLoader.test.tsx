@@ -232,9 +232,15 @@ describe('性能測試', () => {
 });
 
 describe('SSOT Design Tokens', () => {
-  it('使用 skeleton-page 作為頁面容器', () => {
+  it('使用完整 AppLayout 結構作為頁面容器（h-dvh + flex）', () => {
     const { container } = render(<SkeletonLoader />);
-    expect(container.querySelector('.skeleton-page')).toBeInTheDocument();
+    // v2.0.0: SkeletonLoader 現在使用完整 AppLayout 結構
+    // 包含 Header（行動端）、主內容區、BottomNavigation（行動端）
+    const rootDiv = container.firstChild as HTMLElement;
+    expect(rootDiv).toHaveClass('h-dvh');
+    expect(rootDiv).toHaveClass('flex');
+    expect(rootDiv).toHaveClass('flex-col');
+    expect(rootDiv.getAttribute('role')).toBe('status');
   });
 
   it('使用 skeleton-card 作為卡片容器', () => {

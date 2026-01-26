@@ -255,19 +255,24 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   );
 
   /**
-   * Handle touch move event for tooltip tracking
-   * 處理觸控滑動事件以追蹤 Tooltip 位置
+   * Handle touch move event for tooltip tracking (native event handler)
+   * 處理觸控滑動事件以追蹤 Tooltip 位置（原生事件處理器）
+   *
+   * IMPORTANT: This is a native TouchEvent handler, NOT a React.TouchEvent handler.
+   * React's synthetic event handlers are passive by default, preventing preventDefault().
+   * We use useEffect to attach this handler with { passive: false } to enable preventDefault().
    *
    * Uses lightweight-charts API:
    * - coordinateToLogical() converts x coordinate to data index
    * - setCrosshairPosition() programmatically moves the crosshair
    *
    * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
+   * @see https://stackoverflow.com/questions/63663025/react-onwheel-handler-cant-preventdefault-because-its-a-passive-event-listener
    */
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
+  const handleTouchMoveNative = useCallback(
+    (e: TouchEvent) => {
       if (!isTouching) return;
-      e.preventDefault(); // Prevent page scrolling while tracking
+      e.preventDefault(); // Prevent page scrolling while tracking (works with passive: false)
 
       const touch = e.touches[0];
       if (!touch || !chartContainerRef.current || !chartRef.current || !seriesRef.current) return;
@@ -309,6 +314,27 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   );
 
   /**
+   * Attach touchmove event listener with passive: false
+   * 附加 touchmove 事件監聽器，設定 passive: false 以支援 preventDefault()
+   *
+   * React's synthetic events are passive by default for touch/wheel events.
+   * To call preventDefault(), we must use native addEventListener with { passive: false }.
+   *
+   * @see https://stackoverflow.com/questions/76406592/how-to-do-passivefalse-event-listeners-in-react
+   */
+  useEffect(() => {
+    const container = chartContainerRef.current;
+    if (!container) return;
+
+    // Add non-passive touchmove listener to enable preventDefault()
+    container.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchmove', handleTouchMoveNative);
+    };
+  }, [handleTouchMoveNative]);
+
+  /**
    * Handle touch end event to clean up tracking state
    * 處理觸控結束事件以清理追蹤狀態
    *
@@ -348,12 +374,12 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       whileHover={{ y: -2 }}
     >
       {/* Lightweight Charts 趨勢圖 - 支援觸控 */}
+      {/* Note: touchmove handler attached via useEffect with { passive: false } */}
       <div
         ref={chartContainerRef}
         data-testid="mini-trend-chart-surface"
         className={`w-full h-full touch-none ${isTouching ? 'select-none' : ''}`}
         onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       />

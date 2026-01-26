@@ -178,8 +178,8 @@ export default function Favorites() {
   }
 
   return (
-    <div className="min-h-full">
-      <div className="px-5 py-6 max-w-md mx-auto">
+    <div className="flex flex-col min-h-full">
+      <div className="flex-1 px-5 py-6 max-w-md mx-auto w-full">
         {/* Tab 切換區塊 - 參考 Settings 語言切換風格 */}
         <section className="mb-6">
           <div className="bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
@@ -257,10 +257,17 @@ export default function Favorites() {
                                   : 'hover:shadow-md'
                               }`}
                             >
-                              {/* 拖曳手柄 */}
+                              {/* 拖曳手柄
+                               *
+                               * IMPORTANT: 移除 touch-none 以允許頁面滾動
+                               * @hello-pangea/dnd 會自行處理觸控事件的區分（滾動 vs 拖曳）
+                               * 使用 touch-manipulation 啟用瀏覽器最佳化觸控處理
+                               *
+                               * @see https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/guides/how-we-use-dom-events.md
+                               */}
                               <div
                                 {...provided.dragHandleProps}
-                                className="mr-2 cursor-grab active:cursor-grabbing touch-none"
+                                className="mr-2 cursor-grab active:cursor-grabbing touch-manipulation"
                                 aria-label={t('favorites.dragHandle')}
                               >
                                 <GripVertical
