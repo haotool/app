@@ -247,34 +247,44 @@ const RateWise = () => {
           {/* 資料來源與更新時間區塊 */}
           {!ratesLoading && lastUpdate && (
             <section>
-              <div className="flex items-center justify-center gap-4 text-sm text-neutral-text-secondary">
+              {/* 匯率來源標籤 - 現代化 pill 設計 */}
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
                 <a
                   href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  臺灣銀行牌告
+                  <span className="font-medium">臺灣銀行牌告</span>
                 </a>
-                <span>•</span>
-                <span className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-elevated text-text-muted">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  {formattedLastUpdate}
+                  <span className="font-medium">{formattedLastUpdate}</span>
                 </span>
               </div>
             </section>

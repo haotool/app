@@ -3,9 +3,9 @@
  * UI 展示頁面 - 完整的 RateWise 組件庫
  *
  * @description Comprehensive showcase of all RateWise UI components,
- *              design tokens, and theme variations.
- *              完整展示所有 RateWise UI 組件、設計 Token 和主題變化。
- * @version 2.0.0
+ *              design tokens, and theme variations with live theme switching.
+ *              完整展示所有 RateWise UI 組件、設計 Token 和主題變化，支援即時主題切換。
+ * @version 3.0.0
  */
 
 import { useState, useMemo } from 'react';
@@ -27,6 +27,12 @@ import {
   Layout,
   Bell,
   Smartphone,
+  Sun,
+  Moon,
+  Sparkles,
+  Zap,
+  Leaf,
+  Waves,
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { Button } from '../components/Button';
@@ -37,6 +43,8 @@ import {
   MultiConverterSkeleton,
 } from '../components/SkeletonLoader';
 import { ConversionHistory } from '../features/ratewise/components/ConversionHistory';
+import { useAppTheme } from '../hooks/useAppTheme';
+import { STYLE_DEFINITIONS, type ThemeStyle } from '../config/themes';
 import type { ConversionHistoryEntry } from '../features/ratewise/types';
 
 /**
@@ -91,10 +99,26 @@ function Section({
   );
 }
 
+/**
+ * Theme style icons mapping
+ * 主題風格圖示對應
+ */
+const STYLE_ICONS: Record<ThemeStyle, React.ElementType> = {
+  nitro: Zap,
+  kawaii: Sparkles,
+  zen: Sun,
+  classic: Moon,
+  ocean: Waves,
+  forest: Leaf,
+};
+
 export default function UIShowcase() {
   useTranslation(); // Initialize i18n context
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'colors' | 'components' | 'skeletons'>('colors');
+  const { config, setStyle, isLoaded } = useAppTheme();
+  const [activeTab, setActiveTab] = useState<'themes' | 'colors' | 'components' | 'skeletons'>(
+    'themes',
+  );
 
   // Sample history data for demo - using useMemo to avoid impure function calls during render
   const sampleHistory: ConversionHistoryEntry[] = useMemo(
@@ -148,16 +172,17 @@ export default function UIShowcase() {
 
         {/* Tab Navigation */}
         <nav className="card p-1.5">
-          <div className="flex gap-1">
+          <div className="flex gap-1 overflow-x-auto">
             {[
-              { id: 'colors' as const, label: '色彩系統', icon: Palette },
-              { id: 'components' as const, label: '組件展示', icon: Layout },
+              { id: 'themes' as const, label: '主題', icon: Palette },
+              { id: 'colors' as const, label: '色彩', icon: Sun },
+              { id: 'components' as const, label: '組件', icon: Layout },
               { id: 'skeletons' as const, label: '骨架屏', icon: Smartphone },
             ].map(({ id, label, icon: TabIcon }) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
                   activeTab === id
                     ? 'bg-primary text-white shadow-md'
                     : 'text-text-muted hover:bg-surface'
@@ -169,6 +194,83 @@ export default function UIShowcase() {
             ))}
           </div>
         </nav>
+
+        {/* Themes Tab - Live Theme Switching */}
+        {activeTab === 'themes' && (
+          <div className="space-y-6">
+            <Section title="主題風格切換" icon={Palette}>
+              <p className="text-sm text-text-muted mb-4">
+                即時切換主題風格，查看所有組件在不同主題下的表現
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {(Object.keys(STYLE_DEFINITIONS) as ThemeStyle[]).map((styleKey) => {
+                  const styleDef = STYLE_DEFINITIONS[styleKey];
+                  const StyleIcon = STYLE_ICONS[styleKey];
+                  const isActive = config.style === styleKey;
+
+                  return (
+                    <button
+                      key={styleKey}
+                      onClick={() => setStyle(styleKey)}
+                      disabled={!isLoaded}
+                      className={`
+                        relative p-4 rounded-2xl border-2 transition-all duration-200
+                        ${
+                          isActive
+                            ? 'border-primary bg-primary/10 shadow-lg scale-[1.02]'
+                            : 'border-border bg-surface hover:border-primary/50 hover:shadow-md'
+                        }
+                        ${!isLoaded ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                      `}
+                    >
+                      {isActive && (
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                          <Check size={14} className="text-white" />
+                        </div>
+                      )}
+                      <div className="flex flex-col items-center gap-2">
+                        <div
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                            isActive ? 'bg-primary text-white' : 'bg-surface-elevated text-primary'
+                          }`}
+                        >
+                          <StyleIcon size={24} />
+                        </div>
+                        <span className="font-bold text-sm text-text">{styleDef.name}</span>
+                        <span className="text-xs text-text-muted text-center">
+                          {styleDef.description}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </Section>
+
+            {/* Current Theme Preview */}
+            <Section title="當前主題預覽" icon={Star}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-4 rounded-xl bg-primary text-white text-center">
+                  <span className="text-sm font-bold">Primary</span>
+                </div>
+                <div className="p-4 rounded-xl bg-accent text-white text-center">
+                  <span className="text-sm font-bold">Accent</span>
+                </div>
+                <div className="p-4 rounded-xl bg-success text-white text-center">
+                  <span className="text-sm font-bold">Success</span>
+                </div>
+                <div className="p-4 rounded-xl bg-destructive text-white text-center">
+                  <span className="text-sm font-bold">Destructive</span>
+                </div>
+              </div>
+              <div className="mt-4 p-4 card">
+                <p className="text-text font-semibold">主要文字 (text)</p>
+                <p className="text-text-muted">次要文字 (text-muted)</p>
+                <p className="text-primary">主題色文字 (primary)</p>
+              </div>
+            </Section>
+          </div>
+        )}
 
         {/* Colors Tab */}
         {activeTab === 'colors' && (

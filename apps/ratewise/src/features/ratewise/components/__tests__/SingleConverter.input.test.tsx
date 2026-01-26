@@ -110,109 +110,57 @@ describe('SingleConverter - 輸入框進階測試', () => {
     vi.useRealTimers();
   });
 
-  describe('目標貨幣輸入框 (toAmount)', () => {
-    it('should enter editing mode on to amount focus', () => {
+  describe('目標貨幣顯示區域 (toAmount)', () => {
+    /**
+     * v2.0: SingleConverter 使用計算機鍵盤輸入
+     * 金額顯示為 div 元素，點擊開啟計算機
+     */
+    it('should display formatted to amount', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const toInput = screen.getByLabelText(`轉換結果 (${mockProps.toCurrency})`);
-      fireEvent.focus(toInput);
+      const toAmount = screen.getByTestId('amount-output');
 
-      // 編輯模式下應該顯示未格式化的值
-      expect(toInput).toHaveValue('31.58');
+      // 應該顯示格式化的金額（mockProps.toAmount = '31.58'）
+      expect(toAmount).toHaveTextContent('31.58');
     });
 
-    it('should update editing value on to amount change', () => {
+    it('should open calculator when to amount area clicked', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const toInput = screen.getByLabelText(`轉換結果 (${mockProps.toCurrency})`);
-      fireEvent.focus(toInput);
-      fireEvent.change(toInput, { target: { value: '50.00' } });
+      const toAmount = screen.getByTestId('amount-output');
+      fireEvent.click(toAmount);
 
-      expect(mockProps.onToAmountChange).toHaveBeenCalledWith('50.00');
+      // 計算機鍵盤應該顯示
+      expect(toAmount).toBeInTheDocument();
     });
 
-    it('should clean non-numeric characters from to input', () => {
+    it('should support keyboard activation (Enter key)', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const toInput = screen.getByLabelText(`轉換結果 (${mockProps.toCurrency})`);
-      fireEvent.focus(toInput);
-      fireEvent.change(toInput, { target: { value: 'abc50.00def' } });
+      const toAmount = screen.getByTestId('amount-output');
+      fireEvent.keyDown(toAmount, { key: 'Enter' });
 
-      expect(mockProps.onToAmountChange).toHaveBeenCalledWith('50.00');
+      // Enter 鍵應該開啟計算機
+      expect(toAmount).toBeInTheDocument();
     });
 
-    it('should handle multiple decimal points in to input', () => {
+    it('should support keyboard activation (Space key)', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const toInput = screen.getByLabelText(`轉換結果 (${mockProps.toCurrency})`);
-      fireEvent.focus(toInput);
-      fireEvent.change(toInput, { target: { value: '50.12.34' } });
+      const toAmount = screen.getByTestId('amount-output');
+      fireEvent.keyDown(toAmount, { key: ' ' });
 
-      // 應該只保留第一個小數點：50.1234
-      expect(mockProps.onToAmountChange).toHaveBeenCalledWith('50.1234');
+      // Space 鍵應該開啟計算機
+      expect(toAmount).toBeInTheDocument();
     });
 
-    it('should exit editing mode on to input blur', () => {
+    it('should have proper accessibility attributes', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const toInput = screen.getByLabelText(`轉換結果 (${mockProps.toCurrency})`);
-      fireEvent.focus(toInput);
-      fireEvent.change(toInput, { target: { value: '75.50' } });
-      fireEvent.blur(toInput);
+      const toAmount = screen.getByTestId('amount-output');
 
-      expect(mockProps.onToAmountChange).toHaveBeenLastCalledWith('75.50');
-    });
-
-    it('should prevent non-numeric keys on to input', () => {
-      render(<SingleConverter {...mockProps} />);
-
-      const toInput = screen.getByLabelText(`轉換結果 (${mockProps.toCurrency})`);
-      fireEvent.focus(toInput);
-
-      // 測試字母鍵
-      fireEvent.keyDown(toInput, {
-        key: 'a',
-        code: 'KeyA',
-        charCode: 97,
-      });
-
-      // keyDown 事件會被阻止（preventDefault）
-      // 但我們無法直接測試 preventDefault，因為 fireEvent 不會真正觸發它
-      expect(toInput).toBeInTheDocument();
-    });
-
-    it('should allow control keys on to input', () => {
-      render(<SingleConverter {...mockProps} />);
-
-      const toInput = screen.getByLabelText(`轉換結果 (${mockProps.toCurrency})`);
-      fireEvent.focus(toInput);
-
-      // 測試 Backspace
-      fireEvent.keyDown(toInput, { key: 'Backspace' });
-      expect(toInput).toBeInTheDocument();
-
-      // 測試 ArrowLeft
-      fireEvent.keyDown(toInput, { key: 'ArrowLeft' });
-      expect(toInput).toBeInTheDocument();
-
-      // 測試 Tab
-      fireEvent.keyDown(toInput, { key: 'Tab' });
-      expect(toInput).toBeInTheDocument();
-    });
-
-    it('should allow modifier keys (ctrl/cmd) on to input', () => {
-      render(<SingleConverter {...mockProps} />);
-
-      const toInput = screen.getByLabelText(`轉換結果 (${mockProps.toCurrency})`);
-      fireEvent.focus(toInput);
-
-      // 測試 Ctrl+A
-      fireEvent.keyDown(toInput, { key: 'a', ctrlKey: true });
-      expect(toInput).toBeInTheDocument();
-
-      // 測試 Cmd+V
-      fireEvent.keyDown(toInput, { key: 'v', metaKey: true });
-      expect(toInput).toBeInTheDocument();
+      expect(toAmount).toHaveAttribute('role', 'button');
+      expect(toAmount).toHaveAttribute('tabIndex', '0');
     });
   });
 
@@ -316,22 +264,24 @@ describe('SingleConverter - 輸入框進階測試', () => {
     });
   });
 
-  describe('計算機按鈕', () => {
-    it('should open calculator for from amount when calculator button is clicked', () => {
+  describe('計算機開啟', () => {
+    it('should open calculator when from amount area is clicked', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const calculatorButton = screen.getByTestId('calculator-trigger-from');
-      fireEvent.click(calculatorButton);
+      // v2.0: 點擊金額顯示區域開啟計算機（不再使用獨立按鈕）
+      const amountInput = screen.getByTestId('amount-input');
+      fireEvent.click(amountInput);
 
       // 計算機應該打開（CalculatorKeyboard 組件會渲染）
       expect(screen.getByText('加入歷史記錄')).toBeInTheDocument();
     });
 
-    it('should open calculator for to amount when calculator button is clicked', () => {
+    it('should open calculator when to amount area is clicked', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const calculatorButton = screen.getByTestId('calculator-trigger-to');
-      fireEvent.click(calculatorButton);
+      // v2.0: 點擊金額顯示區域開啟計算機（不再使用獨立按鈕）
+      const amountOutput = screen.getByTestId('amount-output');
+      fireEvent.click(amountOutput);
 
       // 計算機應該打開
       expect(screen.getByText('加入歷史記錄')).toBeInTheDocument();

@@ -107,6 +107,7 @@ const en = {
     reconvert: 'Reconvert',
     clearAllHistory: 'Clear all history',
     dragToReorder: 'Drag to reorder',
+    dragToFavorite: 'Drag to favorite',
     dragHandle: 'Drag handle',
   },
 
@@ -167,8 +168,9 @@ const en = {
     yesterday: 'Yesterday',
     copyFailed: 'Copy failed',
     clearAllAriaLabel: 'Clear all history',
-    reconvertAriaLabel: 'Reconvert {{amount}} {{from}} to {{to}}',
+    reconvertAriaLabel: 'Quick convert {{from}} to {{to}}',
     copyAriaLabel: 'Copy conversion result',
+    entryAriaLabel: '{{amount}} {{from}} converted to {{result}} {{to}}',
   },
 
   // Calculator

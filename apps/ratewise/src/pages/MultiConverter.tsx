@@ -59,6 +59,8 @@ export default function MultiConverter() {
     setBaseCurrency,
     setMode,
     baseCurrency,
+    favorites,
+    toggleFavorite,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
 
   // Set mode to 'multi' on mount
@@ -119,10 +121,12 @@ export default function MultiConverter() {
               baseCurrency={baseCurrency}
               rateType={rateType}
               details={details}
+              favorites={favorites}
               onAmountChange={handleMultiAmountChange}
               onQuickAmount={handleQuickAmount}
               onRateTypeChange={setRateType}
               onBaseCurrencyChange={handleBaseCurrencyChange}
+              onToggleFavorite={toggleFavorite}
             />
           </div>
         </section>

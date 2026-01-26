@@ -45,10 +45,12 @@ const mockProps = {
   onRateTypeChange: () => {},
 };
 
-describe('SingleConverter calculator button', () => {
-  it('opens calculator keyboard dialog when FROM amount button clicked', async () => {
+describe('SingleConverter calculator integration', () => {
+  it('opens calculator keyboard dialog when FROM amount area clicked', async () => {
     render(<SingleConverter {...mockProps} />);
-    fireEvent.click(screen.getByLabelText('Open calculator (Amount)'));
+    // v2.0: 點擊金額顯示區域開啟計算機
+    const amountInput = screen.getByTestId('amount-input');
+    fireEvent.click(amountInput);
     await waitFor(
       () => {
         expect(screen.getByRole('dialog', { name: 'Calculator' })).toBeInTheDocument();
@@ -57,9 +59,11 @@ describe('SingleConverter calculator button', () => {
     );
   }, 15000);
 
-  it('opens calculator keyboard dialog when TO amount button clicked', async () => {
+  it('opens calculator keyboard dialog when TO amount area clicked', async () => {
     render(<SingleConverter {...mockProps} />);
-    fireEvent.click(screen.getByLabelText('Open calculator (Result)'));
+    // v2.0: 點擊金額顯示區域開啟計算機
+    const amountOutput = screen.getByTestId('amount-output');
+    fireEvent.click(amountOutput);
     await waitFor(
       () => {
         expect(screen.getByRole('dialog', { name: 'Calculator' })).toBeInTheDocument();

@@ -2,13 +2,13 @@
  * Toast Provider - Application Toast Notification System
  * Toast 提供者 - 應用程式 Toast 通知系統
  *
- * @description Toast notification system with SSOT design tokens.
+ * @description Modern toast notification system with SSOT design tokens.
  *              Supports success, error, and info types with smooth animations.
- *              使用 SSOT 設計 Token 的 Toast 通知系統。
- *              支援成功、錯誤、資訊三種類型，並具有流暢動畫。
+ *              位置：底部導航列上方，避免遮擋內容。
+ *              使用 SSOT 設計 Token 的現代化 Toast 通知系統。
  *
- * @see [context7:/reactjs/react.dev:toast-notification:2025-12-29]
- * @version 3.0.0
+ * @see [context7:/reactjs/react.dev:toast-notification:2026-01-25]
+ * @version 4.0.0
  */
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
@@ -34,8 +34,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {/* Toast container - top center for better visibility */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex flex-col gap-2 pointer-events-none">
+      {/* Toast container - bottom center, above bottom navigation */}
+      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[60] flex flex-col gap-2 pointer-events-none">
         {toasts.map((toast) => (
           <Toast key={toast.id} {...toast} onClose={() => removeToast(toast.id)} />
         ))}
@@ -45,8 +45,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * Single Toast Component - SSOT Design Token Styled
- * 單個 Toast 組件 - SSOT 設計 Token 風格
+ * Single Toast Component - Modern SSOT Design Token Styled
+ * 單個 Toast 組件 - 現代化 SSOT 設計 Token 風格
  */
 function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: () => void }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -56,15 +56,15 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
     // Entry animation
     const showTimer = setTimeout(() => setIsVisible(true), 10);
 
-    // Start exit after 2 seconds
+    // Start exit after 2.5 seconds
     const hideTimer = setTimeout(() => {
       setIsExiting(true);
-    }, 2000);
+    }, 2500);
 
     // Remove after exit animation completes
     const removeTimer = setTimeout(() => {
       onClose();
-    }, 2300);
+    }, 2800);
 
     return () => {
       clearTimeout(showTimer);
@@ -74,40 +74,46 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
   }, [onClose]);
 
   /**
-   * Get styles based on toast type - using SSOT design tokens
-   * 根據 Toast 類型獲取樣式 - 使用 SSOT 設計 Token
+   * Detect if message is copy-related
+   * 偵測訊息是否與複製相關
+   */
+  const isCopyMessage =
+    message.includes('複製') ||
+    message.includes('Copied') ||
+    message.includes('コピー') ||
+    message.includes('已複製');
+
+  /**
+   * Get styles based on toast type - using SSOT design tokens with primary color
+   * 根據 Toast 類型獲取樣式 - 使用 SSOT 設計 Token 和主題主色
    */
   const getStyles = () => {
     switch (type) {
       case 'success':
         return {
-          bg: 'bg-surface',
-          border: 'border-success/40',
-          text: 'text-success',
-          iconBg: 'bg-success/15',
-          icon: <Check className="w-4 h-4" strokeWidth={2.5} />,
+          gradient: 'from-primary/95 to-primary-hover/95',
+          text: 'text-white',
+          iconBg: 'bg-white/20',
+          icon: isCopyMessage ? (
+            <Copy className="w-4 h-4" strokeWidth={2.5} />
+          ) : (
+            <Check className="w-4 h-4" strokeWidth={2.5} />
+          ),
         };
       case 'error':
         return {
-          bg: 'bg-surface',
-          border: 'border-destructive/40',
-          text: 'text-destructive',
-          iconBg: 'bg-destructive/15',
+          gradient: 'from-destructive/95 to-destructive/85',
+          text: 'text-white',
+          iconBg: 'bg-white/20',
           icon: <X className="w-4 h-4" strokeWidth={2.5} />,
         };
       case 'info':
       default:
         return {
-          bg: 'bg-surface',
-          border: 'border-primary/40',
-          text: 'text-primary',
-          iconBg: 'bg-primary/15',
-          icon:
-            message.includes('複製') || message.includes('Copied') || message.includes('コピー') ? (
-              <Copy className="w-4 h-4" strokeWidth={2.5} />
-            ) : (
-              <Info className="w-4 h-4" strokeWidth={2.5} />
-            ),
+          gradient: 'from-primary/95 to-accent/95',
+          text: 'text-white',
+          iconBg: 'bg-white/20',
+          icon: <Info className="w-4 h-4" strokeWidth={2.5} />,
         };
     }
   };
@@ -121,29 +127,28 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
       data-testid="toast"
       className={`
         pointer-events-auto
-        min-w-[200px] max-w-xs
-        overflow-hidden rounded-2xl
-        ${styles.bg}
-        border-2 ${styles.border}
-        shadow-xl shadow-black/10
-        backdrop-blur-sm
+        min-w-[180px] max-w-[280px]
+        overflow-hidden rounded-full
+        bg-gradient-to-r ${styles.gradient}
+        shadow-lg shadow-primary/20
+        backdrop-blur-md
         transform transition-all duration-300 ease-out
         ${
           isVisible && !isExiting
             ? 'translate-y-0 opacity-100 scale-100'
-            : '-translate-y-2 opacity-0 scale-95'
+            : 'translate-y-4 opacity-0 scale-95'
         }
       `}
     >
-      <div className="flex items-center gap-3 px-4 py-3">
-        {/* Icon with themed background */}
+      <div className="flex items-center gap-2.5 px-4 py-2.5">
+        {/* Icon with subtle background */}
         <div
-          className={`flex-shrink-0 w-8 h-8 rounded-full ${styles.iconBg} ${styles.text} flex items-center justify-center`}
+          className={`flex-shrink-0 w-7 h-7 rounded-full ${styles.iconBg} ${styles.text} flex items-center justify-center`}
         >
           {styles.icon}
         </div>
         {/* Message */}
-        <span className={`text-sm font-semibold ${styles.text}`}>{message}</span>
+        <span className={`text-sm font-semibold ${styles.text} whitespace-nowrap`}>{message}</span>
       </div>
     </div>
   );

@@ -106,6 +106,7 @@ const zhTW = {
     reconvert: '重新轉換',
     clearAllHistory: '清除全部歷史記錄',
     dragToReorder: '拖曳排序',
+    dragToFavorite: '拖曳加收藏',
     dragHandle: '拖曳手柄',
   },
 
@@ -166,8 +167,9 @@ const zhTW = {
     yesterday: '昨天',
     copyFailed: '複製失敗',
     clearAllAriaLabel: '清除全部歷史記錄',
-    reconvertAriaLabel: '重新轉換 {{amount}} {{from}} 到 {{to}}',
+    reconvertAriaLabel: '點擊快速換算 {{from}} 到 {{to}}',
     copyAriaLabel: '複製轉換結果',
+    entryAriaLabel: '{{amount}} {{from}} 換算為 {{result}} {{to}}',
   },
 
   // Calculator

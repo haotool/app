@@ -122,18 +122,17 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
   // ConversionHistory 是純展示組件，不處理 localStorage
 
   describe('點擊重新轉換', () => {
-    it('應該在點擊歷史記錄時呼叫 onReconvert', () => {
+    it('應該在點擊國旗區域時呼叫 onReconvert', () => {
       const mockHistory = createMockHistory();
       const onReconvert = vi.fn();
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      // 新 UI v3.0：點擊複製，雙擊重新轉換
-      const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
-      expect(firstRecord).toBeTruthy();
+      // 新 UI v4.0：點擊國旗區域（左側按鈕）觸發重新轉換
+      const reconvertButtons = screen.getAllByRole('button', { name: /快速換算|Quick convert/i });
+      expect(reconvertButtons.length).toBeGreaterThan(0);
 
-      // 雙擊觸發重新轉換
-      fireEvent.doubleClick(firstRecord!);
+      fireEvent.click(reconvertButtons[0]!);
 
       expect(onReconvert).toHaveBeenCalledWith(mockHistory[0]);
     });
@@ -144,9 +143,9 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      // 新 UI v3.0：雙擊觸發重新轉換
-      const secondRecord = screen.getByText('10000').closest('div[class*="cursor-pointer"]');
-      fireEvent.doubleClick(secondRecord!);
+      // 新 UI v4.0：點擊國旗按鈕觸發重新轉換
+      const reconvertButtons = screen.getAllByRole('button', { name: /快速換算|Quick convert/i });
+      fireEvent.click(reconvertButtons[1]!);
 
       expect(onReconvert).toHaveBeenCalledWith({
         from: 'JPY',
@@ -164,9 +163,9 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      // 新 UI：使用 card 類別和 hover:shadow-md
-      const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
-      expect(firstRecord).toHaveClass('hover:shadow-md');
+      // 新 UI v4.0：卡片具有 hover:shadow-md 效果
+      const firstCard = screen.getByText('1000').closest('div[role="group"]');
+      expect(firstCard).toHaveClass('hover:shadow-md');
     });
   });
 
@@ -174,13 +173,13 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
   // ConversionHistory 組件現在是純展示組件
 
   describe('複製功能', () => {
-    it('應該在點擊卡片時複製轉換結果', () => {
+    it('應該在點擊轉換詳情區域時複製轉換結果', () => {
       const mockHistory = createMockHistory();
       render(<ConversionHistory history={mockHistory} />);
 
-      // 新 UI v3.0：點擊卡片即可複製
-      const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
-      fireEvent.click(firstRecord!);
+      // 新 UI v4.0：點擊轉換詳情區域（中間按鈕）複製
+      const copyButtons = screen.getAllByLabelText('複製轉換結果');
+      fireEvent.click(copyButtons[0]!);
 
       expect(clipboardMock.writeText).toHaveBeenCalledWith('1000 USD = 30900 TWD');
     });
@@ -189,21 +188,22 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       const mockHistory = createMockHistory();
       render(<ConversionHistory history={mockHistory} />);
 
-      // 新 UI v3.0：卡片上有複製圖示
+      // 新 UI v4.0：每個卡片右側有複製圖示
       const copyIcons = document.querySelectorAll('.lucide-copy');
       expect(copyIcons.length).toBe(3); // 3 條歷史記錄
     });
 
-    it('點擊應該複製而非重新轉換', () => {
+    it('點擊詳情區域應該複製而非重新轉換', () => {
       const mockHistory = createMockHistory();
       const onReconvert = vi.fn();
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
-      fireEvent.click(firstRecord!);
+      // 點擊複製按鈕（中間區域）
+      const copyButtons = screen.getAllByLabelText('複製轉換結果');
+      fireEvent.click(copyButtons[0]!);
 
-      // 單擊不應該觸發 onReconvert（只複製）
+      // 點擊複製按鈕不應該觸發 onReconvert（只複製）
       expect(onReconvert).not.toHaveBeenCalled();
       expect(clipboardMock.writeText).toHaveBeenCalled();
     });
@@ -285,7 +285,8 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       const mockHistory = createMockHistory();
       const { container } = render(<ConversionHistory history={mockHistory} />);
 
-      const historyItems = container.querySelectorAll('[class*="cursor-pointer"]');
+      // v4.0: 使用 role="group" 標識每個歷史記錄卡片
+      const historyItems = container.querySelectorAll('[role="group"]');
 
       // 應該有 3 個歷史記錄項目
       expect(historyItems.length).toBe(3);
@@ -314,7 +315,8 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
 
       const { container } = render(<ConversionHistory history={sameMinuteRecords} />);
 
-      const historyItems = container.querySelectorAll('[class*="cursor-pointer"]');
+      // v4.0: 使用 role="group" 標識每個歷史記錄卡片
+      const historyItems = container.querySelectorAll('[role="group"]');
 
       // 應該有 2 個歷史記錄項目（沒有因為 key 重複被合併）
       expect(historyItems.length).toBe(2);
@@ -359,22 +361,22 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
   });
 
   describe('無障礙性', () => {
-    it('應該有正確的 aria-label（卡片）', () => {
+    it('應該有正確的 aria-label（複製按鈕）', () => {
       const mockHistory = createMockHistory();
       render(<ConversionHistory history={mockHistory} />);
 
-      // 新 UI v3.0：卡片有複製的 aria-label
-      const cards = screen.getAllByLabelText('複製轉換結果');
-      expect(cards.length).toBe(3);
+      // v4.0：複製按鈕有 aria-label
+      const copyButtons = screen.getAllByLabelText('複製轉換結果');
+      expect(copyButtons.length).toBe(3);
     });
 
     it('應該支援鍵盤操作（Enter 鍵複製）', () => {
       const mockHistory = createMockHistory();
       render(<ConversionHistory history={mockHistory} />);
 
-      // 新 UI v3.0：Enter 鍵複製
-      const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
-      fireEvent.keyDown(firstRecord!, { key: 'Enter' });
+      // v4.0：在卡片（role="group"）上按 Enter 複製
+      const firstCard = screen.getByText('1000').closest('[role="group"]');
+      fireEvent.keyDown(firstCard!, { key: 'Enter' });
 
       expect(clipboardMock.writeText).toHaveBeenCalledWith('1000 USD = 30900 TWD');
     });
@@ -385,9 +387,9 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      // 新 UI v3.0：Shift+Enter 重新轉換
-      const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
-      fireEvent.keyDown(firstRecord!, { key: 'Enter', shiftKey: true });
+      // v4.0：在卡片（role="group"）上按 Shift+Enter 重新轉換
+      const firstCard = screen.getByText('1000').closest('[role="group"]');
+      fireEvent.keyDown(firstCard!, { key: 'Enter', shiftKey: true });
 
       expect(onReconvert).toHaveBeenCalledWith(mockHistory[0]);
     });
@@ -396,9 +398,9 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       const mockHistory = createMockHistory();
       render(<ConversionHistory history={mockHistory} />);
 
-      // 新 UI v3.0：Space 鍵複製
-      const firstRecord = screen.getByText('1000').closest('div[class*="cursor-pointer"]');
-      fireEvent.keyDown(firstRecord!, { key: ' ' });
+      // v4.0：在卡片（role="group"）上按 Space 複製
+      const firstCard = screen.getByText('1000').closest('[role="group"]');
+      fireEvent.keyDown(firstCard!, { key: ' ' });
 
       expect(clipboardMock.writeText).toHaveBeenCalledWith('1000 USD = 30900 TWD');
     });

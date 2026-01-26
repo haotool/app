@@ -75,6 +75,7 @@ describe('MultiConverter', () => {
     onQuickAmount: vi.fn(),
     onRateTypeChange: vi.fn(),
     onBaseCurrencyChange: vi.fn(),
+    onToggleFavorite: vi.fn(),
   };
 
   beforeEach(() => {

@@ -3,12 +3,12 @@
  * 收藏與歷史記錄頁面 - ParkKeeper 設計風格
  *
  * @description Favorites and conversion history page with ParkKeeper design style.
- *              Supports drag-and-drop reordering for favorite currencies using @hello-pangea/dnd.
- *              All currencies are displayed in a unified list with favorites at the top.
+ *              All currencies support drag-and-drop with smooth spring animations.
+ *              Dragging a non-favorite currency automatically adds it to favorites.
  *              收藏與歷史記錄頁面，採用 ParkKeeper 設計風格。
- *              支援拖曳排序收藏貨幣（@hello-pangea/dnd）。
- *              所有幣別以統一列表顯示，收藏在最上方。
- * @version 2.2.0
+ *              所有貨幣支援拖曳，具有流暢的彈簧動畫。
+ *              拖曳非收藏貨幣時自動加入收藏。
+ * @version 3.0.0
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -91,22 +91,46 @@ export default function Favorites() {
     setToCurrency,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
 
-  /** 處理拖曳結束事件 */
+  /** 取得所有貨幣列表（已收藏 + 未收藏） */
+  const allCurrencies = getAllCurrenciesSorted(favorites);
+
+  /**
+   * 處理拖曳結束事件
+   * - 支援所有貨幣拖曳（包含未收藏的）
+   * - 拖曳未收藏貨幣時自動加入收藏
+   */
   const handleDragEnd = useCallback(
     (result: DropResult) => {
       if (!result.destination) return;
       if (result.source.index === result.destination.index) return;
 
-      const newOrder = Array.from(favorites);
-      const [removed] = newOrder.splice(result.source.index, 1);
+      const draggedCode = allCurrencies[result.source.index];
+      if (!draggedCode) return;
 
-      // 確保移除的元素存在
-      if (!removed) return;
+      // 計算新的收藏列表順序
+      const isFavorite = favorites.includes(draggedCode);
+      let newFavorites: CurrencyCode[];
 
-      newOrder.splice(result.destination.index, 0, removed);
-      reorderFavorites(newOrder);
+      if (isFavorite) {
+        // 已收藏：重新排序
+        const favIndex = favorites.indexOf(draggedCode);
+        newFavorites = [...favorites];
+        newFavorites.splice(favIndex, 1);
+
+        // 計算目標位置在收藏列表中的索引
+        const destIndex = Math.min(result.destination.index, favorites.length - 1);
+        newFavorites.splice(destIndex, 0, draggedCode);
+      } else {
+        // 未收藏：拖曳即加入收藏
+        newFavorites = [...favorites];
+        // 計算目標位置在收藏列表中的索引
+        const destIndex = Math.min(result.destination.index, favorites.length);
+        newFavorites.splice(destIndex, 0, draggedCode);
+      }
+
+      reorderFavorites(newFavorites);
     },
-    [favorites, reorderFavorites],
+    [allCurrencies, favorites, reorderFavorites],
   );
 
   const handleReconvert = useCallback(
@@ -207,161 +231,128 @@ export default function Favorites() {
               )}
             </div>
 
-            {/* Favorites Section - Draggable */}
-            {favorites.length > 0 && (
-              <div className="mb-4">
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <Droppable droppableId="favorites-list">
-                    {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`space-y-2 transition-colors duration-200 rounded-xl ${
-                          snapshot.isDraggingOver ? 'bg-primary/5' : ''
-                        }`}
-                      >
-                        {favorites.map((code, index) => (
-                          <Draggable key={code} draggableId={code} index={index}>
-                            {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
+            {/* 所有貨幣統一拖曳區域 */}
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="all-currencies-list">
+                {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`space-y-2 transition-colors duration-200 rounded-xl p-1 -m-1 ${
+                      snapshot.isDraggingOver ? 'bg-primary/5' : ''
+                    }`}
+                  >
+                    {allCurrencies.map((code, index) => {
+                      const isFavorite = favorites.includes(code);
+                      return (
+                        <Draggable key={code} draggableId={code} index={index}>
+                          {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              style={{
+                                ...provided.draggableProps.style,
+                                // 優化拖曳動畫 - 彈簧效果
+                                transition: snapshot.isDragging
+                                  ? 'none'
+                                  : 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
+                              }}
+                              className={`card p-4 flex items-center justify-between group ${
+                                snapshot.isDragging
+                                  ? 'shadow-2xl scale-[1.02] bg-surface ring-2 ring-primary/40 z-50'
+                                  : 'hover:shadow-md cursor-pointer active:scale-[0.99] transition-all duration-200'
+                              }`}
+                              onClick={() => !snapshot.isDragging && handleFavoriteClick(code)}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
+                              }}
+                            >
+                              {/* 拖曳手柄 */}
                               <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                className={`card p-4 flex items-center justify-between group transition-all duration-200 ${
-                                  snapshot.isDragging
-                                    ? 'shadow-lg scale-[1.02] bg-surface ring-2 ring-primary/30'
-                                    : 'hover:shadow-md cursor-pointer active:scale-[0.99]'
-                                }`}
-                                onClick={() => !snapshot.isDragging && handleFavoriteClick(code)}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
-                                }}
+                                {...provided.dragHandleProps}
+                                className="mr-2 cursor-grab active:cursor-grabbing touch-none"
+                                onClick={(e) => e.stopPropagation()}
+                                aria-label={t('favorites.dragHandle')}
                               >
-                                {/* 拖曳手柄 */}
-                                <div
-                                  {...provided.dragHandleProps}
-                                  className="mr-2 cursor-grab active:cursor-grabbing touch-none"
-                                  onClick={(e) => e.stopPropagation()}
-                                  aria-label={t('favorites.dragHandle')}
-                                >
-                                  <GripVertical
-                                    size={16}
-                                    className="text-text-muted opacity-40 group-hover:opacity-70 transition"
-                                  />
-                                </div>
+                                <GripVertical
+                                  size={16}
+                                  className={`transition ${
+                                    snapshot.isDragging
+                                      ? 'text-primary opacity-100'
+                                      : 'text-text-muted opacity-40 group-hover:opacity-70'
+                                  }`}
+                                />
+                              </div>
 
-                                <div className="flex items-center gap-3 flex-1">
-                                  <div
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={(e) => {
+                              <div className="flex items-center gap-3 flex-1">
+                                {/* 收藏星號 */}
+                                <div
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFavorite(code);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
                                       e.stopPropagation();
                                       toggleFavorite(code);
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' || e.key === ' ') {
-                                        e.stopPropagation();
-                                        toggleFavorite(code);
-                                      }
-                                    }}
-                                    className="hover:scale-110 transition cursor-pointer"
-                                    aria-label={`${t('favorites.removeFavorite')} ${code}`}
-                                  >
-                                    <Star className="text-favorite" size={18} fill="currentColor" />
-                                  </div>
-                                  <span className="text-2xl">
-                                    {CURRENCY_DEFINITIONS[code]?.flag}
-                                  </span>
-                                  <div>
-                                    <div className="font-bold text-sm">{code}</div>
-                                    <div className="text-[10px] opacity-60">
-                                      {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
-                                    </div>
-                                  </div>
+                                    }
+                                  }}
+                                  className="hover:scale-110 transition cursor-pointer"
+                                  aria-label={
+                                    isFavorite
+                                      ? `${t('favorites.removeFavorite')} ${code}`
+                                      : `${t('favorites.addFavorite')} ${code}`
+                                  }
+                                >
+                                  <Star
+                                    className={
+                                      isFavorite
+                                        ? 'text-favorite'
+                                        : 'text-text-muted opacity-30 hover:opacity-60 hover:text-favorite transition'
+                                    }
+                                    size={18}
+                                    fill={isFavorite ? 'currentColor' : 'none'}
+                                  />
                                 </div>
-
-                                <div className="flex items-center gap-2">
-                                  {trend[code] === 'up' && (
-                                    <span className="text-success text-xs">↑</span>
-                                  )}
-                                  {trend[code] === 'down' && (
-                                    <span className="text-destructive text-xs">↓</span>
-                                  )}
-                                  <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
-                                    {t('favorites.clickToConvert')}
-                                  </span>
+                                {/* 國旗 - 固定寬度避免變形 */}
+                                <span className="text-2xl w-8 text-center leading-none">
+                                  {CURRENCY_DEFINITIONS[code]?.flag}
+                                </span>
+                                <div>
+                                  <div className="font-bold text-sm">{code}</div>
+                                  <div className="text-[10px] opacity-60">
+                                    {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
+                                  </div>
                                 </div>
                               </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
-              </div>
-            )}
 
-            {/* All Other Currencies Section */}
-            <div className="space-y-2">
-              {getAllCurrenciesSorted(favorites)
-                .filter((code) => !favorites.includes(code))
-                .map((code) => (
-                  <div
-                    key={code}
-                    className="card p-4 flex items-center justify-between group transition-all duration-200 hover:shadow-md cursor-pointer active:scale-[0.99]"
-                    onClick={() => handleFavoriteClick(code)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
-                    }}
-                  >
-                    <div className="flex items-center gap-3 flex-1">
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(code);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.stopPropagation();
-                            toggleFavorite(code);
-                          }
-                        }}
-                        className="hover:scale-110 transition cursor-pointer"
-                        aria-label={`${t('favorites.addFavorite')} ${code}`}
-                      >
-                        <Star
-                          className="text-text-muted opacity-30 hover:opacity-60 hover:text-favorite transition"
-                          size={18}
-                        />
-                      </div>
-                      <span className="text-2xl">{CURRENCY_DEFINITIONS[code]?.flag}</span>
-                      <div>
-                        <div className="font-bold text-sm">{code}</div>
-                        <div className="text-[10px] opacity-60">
-                          {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {trend[code] === 'up' && <span className="text-success text-xs">↑</span>}
-                      {trend[code] === 'down' && (
-                        <span className="text-destructive text-xs">↓</span>
-                      )}
-                      <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
-                        {t('favorites.clickToConvert')}
-                      </span>
-                    </div>
+                              <div className="flex items-center gap-2">
+                                {trend[code] === 'up' && (
+                                  <span className="text-success text-xs">↑</span>
+                                )}
+                                {trend[code] === 'down' && (
+                                  <span className="text-destructive text-xs">↓</span>
+                                )}
+                                <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
+                                  {isFavorite
+                                    ? t('favorites.clickToConvert')
+                                    : t('favorites.dragToFavorite')}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    })}
+                    {provided.placeholder}
                   </div>
-                ))}
-            </div>
+                )}
+              </Droppable>
+            </DragDropContext>
           </section>
         )}
 

@@ -106,6 +106,7 @@ const ja = {
     reconvert: '再換算',
     clearAllHistory: 'すべての履歴を削除',
     dragToReorder: 'ドラッグで並べ替え',
+    dragToFavorite: 'お気に入りに追加',
     dragHandle: 'ドラッグハンドル',
   },
 
@@ -166,8 +167,9 @@ const ja = {
     yesterday: '昨日',
     copyFailed: 'コピーに失敗しました',
     clearAllAriaLabel: 'すべての履歴を削除',
-    reconvertAriaLabel: '{{amount}} {{from}} から {{to}} に再換算',
+    reconvertAriaLabel: 'クイック換算 {{from}} から {{to}}',
     copyAriaLabel: '換算結果をコピー',
+    entryAriaLabel: '{{amount}} {{from}} を {{result}} {{to}} に換算',
   },
 
   // Calculator

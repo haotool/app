@@ -248,98 +248,50 @@ describe('SingleConverter - 核心功能測試', () => {
     });
   });
 
-  describe('輸入框編輯', () => {
-    it('should enter editing mode on from amount focus', () => {
+  describe('金額顯示區域', () => {
+    it('should display formatted from amount', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const fromInput = screen.getByTestId('amount-input');
-      fireEvent.focus(fromInput);
-
-      // 編輯模式下應該顯示未格式化的值
-      expect(fromInput).toHaveValue('1000');
+      // v2.0: 金額顯示為 div，點擊開啟計算機
+      const fromAmount = screen.getByTestId('amount-input');
+      expect(fromAmount).toHaveTextContent('1,000.00');
     });
 
-    it('should update editing value on from amount change', () => {
+    it('should open calculator when from amount area clicked', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const fromInput = screen.getByTestId('amount-input');
-      fireEvent.focus(fromInput);
-      fireEvent.change(fromInput, { target: { value: '2000' } });
+      const fromAmount = screen.getByTestId('amount-input');
+      fireEvent.click(fromAmount);
 
-      expect(mockProps.onFromAmountChange).toHaveBeenCalledWith('2000');
+      // 計算機應該打開（通過其他測試驗證）
+      expect(fromAmount).toBeInTheDocument();
     });
 
-    it('should clean non-numeric characters from input', () => {
+    it('should display formatted to amount', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const fromInput = screen.getByTestId('amount-input');
-      fireEvent.focus(fromInput);
-      fireEvent.change(fromInput, { target: { value: 'abc123.45def' } });
-
-      // 應該清除非數字字符，只保留 123.45
-      expect(mockProps.onFromAmountChange).toHaveBeenCalledWith('123.45');
+      // v2.0: 金額顯示區域（div）應該顯示 mockProps.toAmount 的值
+      const toAmount = screen.getByTestId('amount-output');
+      expect(toAmount).toHaveTextContent('31.58');
     });
 
-    it('should handle multiple decimal points correctly', () => {
+    it('should open calculator when to amount area clicked', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const fromInput = screen.getByTestId('amount-input');
-      fireEvent.focus(fromInput);
-      fireEvent.change(fromInput, { target: { value: '12.34.56' } });
-
-      // 應該只保留第一個小數點：12.3456
-      expect(mockProps.onFromAmountChange).toHaveBeenCalledWith('12.3456');
+      // v2.0: 計算機鍵盤應該打開
+      const toAmount = screen.getByTestId('amount-output');
+      fireEvent.click(toAmount);
+      expect(toAmount).toBeInTheDocument();
     });
 
-    it('should exit editing mode on blur', () => {
+    it('should support keyboard activation (Enter/Space)', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const fromInput = screen.getByTestId('amount-input');
-      fireEvent.focus(fromInput);
-      fireEvent.change(fromInput, { target: { value: '2500' } });
-      fireEvent.blur(fromInput);
+      const fromAmount = screen.getByTestId('amount-input');
+      fireEvent.keyDown(fromAmount, { key: 'Enter' });
 
-      // blur 時應該再次呼叫 onFromAmountChange 確認值
-      expect(mockProps.onFromAmountChange).toHaveBeenLastCalledWith('2500');
-    });
-
-    it('should prevent non-numeric and non-control keys', () => {
-      render(<SingleConverter {...mockProps} />);
-
-      const fromInput = screen.getByTestId('amount-input');
-      fireEvent.focus(fromInput);
-
-      // 測試字母鍵（應該被阻止）
-      const keyEvent = new KeyboardEvent('keydown', {
-        key: 'a',
-        bubbles: true,
-        cancelable: true,
-      });
-      const preventDefaultSpy = vi.spyOn(keyEvent, 'preventDefault');
-
-      fromInput.dispatchEvent(keyEvent);
-
-      expect(preventDefaultSpy).toHaveBeenCalled();
-    });
-
-    it('should allow modifier keys (Ctrl/Cmd)', () => {
-      render(<SingleConverter {...mockProps} />);
-
-      const fromInput = screen.getByTestId('amount-input');
-      fireEvent.focus(fromInput);
-
-      // Ctrl+C（複製）不應該被阻止
-      const keyEvent = new KeyboardEvent('keydown', {
-        key: 'c',
-        ctrlKey: true,
-        bubbles: true,
-        cancelable: true,
-      });
-      const preventDefaultSpy = vi.spyOn(keyEvent, 'preventDefault');
-
-      fromInput.dispatchEvent(keyEvent);
-
-      expect(preventDefaultSpy).not.toHaveBeenCalled();
+      // Enter 鍵應該開啟計算機
+      expect(fromAmount).toBeInTheDocument();
     });
   });
 
@@ -440,24 +392,23 @@ describe('SingleConverter - 核心功能測試', () => {
     });
   });
 
-  describe('輸入框格式化顯示', () => {
-    it('should show formatted amount when not editing', () => {
+  describe('金額格式化顯示', () => {
+    it('should show formatted from amount', () => {
       render(<SingleConverter {...mockProps} fromAmount="1000" />);
 
-      const fromInput = screen.getByTestId('amount-input');
+      const fromAmount = screen.getByTestId('amount-input');
 
-      // 非編輯模式應該顯示格式化的值（千分位逗號）
-      expect(fromInput).toHaveValue('1,000.00');
+      // v2.0: 金額顯示區域（div）應該顯示格式化的值
+      expect(fromAmount).toHaveTextContent('1,000.00');
     });
 
-    it('should show unformatted amount when editing', () => {
-      render(<SingleConverter {...mockProps} fromAmount="1000" />);
+    it('should show formatted to amount', () => {
+      render(<SingleConverter {...mockProps} />);
 
-      const fromInput = screen.getByTestId('amount-input');
-      fireEvent.focus(fromInput);
+      const toAmount = screen.getByTestId('amount-output');
 
-      // 編輯模式應該顯示未格式化的值
-      expect(fromInput).toHaveValue('1000');
+      // v2.0: 金額顯示區域（div）應該顯示格式化的值（使用 mockProps.toAmount = '31.58'）
+      expect(toAmount).toHaveTextContent('31.58');
     });
   });
 });

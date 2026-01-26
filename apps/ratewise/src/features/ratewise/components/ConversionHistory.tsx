@@ -3,12 +3,12 @@
  * 轉換歷史記錄組件 - 轉換歷史列表
  *
  * @description ParkKeeper styled conversion history list component.
- *              Click anywhere on the card to copy the conversion result.
- *              Long press or double-click to reconvert.
+ *              Click on flag area (left) to quickly reconvert with the same currencies.
+ *              Click on result area (right) to copy conversion result.
  *              ParkKeeper 風格的轉換歷史列表組件。
- *              點擊卡片任意位置即可複製轉換結果。
- *              長按或雙擊可重新轉換。
- * @version 3.0.0
+ *              點擊國旗區域（左側）可快速帶入相同貨幣進行換算。
+ *              點擊結果區域（右側）可複製轉換結果。
+ * @version 4.0.0
  */
 
 import { ArrowRight, Copy } from 'lucide-react';
@@ -141,27 +141,45 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
       {history.map((item, index) => (
         <div
           key={`${index}-${item.timestamp}`}
-          onClick={() => handleClick(item)}
-          onDoubleClick={() => handleDoubleClick(item)}
-          onTouchStart={() => handleTouchStart(item)}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchEnd}
           onKeyDown={(e) => handleKeyDown(e, item)}
-          role="button"
+          role="group"
           tabIndex={0}
           className="card p-4 flex items-center gap-3 group transition-all duration-200
-                     hover:shadow-md cursor-pointer active:scale-[0.98]
-                     focus:outline-none focus:ring-2 focus:ring-primary/30"
-          aria-label={t('conversionHistory.copyAriaLabel')}
+                     hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30"
+          aria-label={t('conversionHistory.entryAriaLabel', {
+            from: item.from,
+            to: item.to,
+            amount: item.amount,
+            result: item.result,
+          })}
         >
-          {/* 貨幣旗幟 */}
-          <div className="flex items-center -space-x-2 flex-shrink-0">
+          {/* 左側區域：國旗 - 點擊快速換算 */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onReconvert?.(item);
+            }}
+            onTouchStart={() => handleTouchStart(item)}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+            className="flex items-center -space-x-2 flex-shrink-0 p-1 -m-1 rounded-lg
+                       hover:bg-primary/10 active:scale-95 transition-all cursor-pointer"
+            aria-label={t('conversionHistory.reconvertAriaLabel', {
+              from: item.from,
+              to: item.to,
+            })}
+          >
             <span className="text-xl z-10">{CURRENCY_DEFINITIONS[item.from]?.flag || '💱'}</span>
             <span className="text-xl">{CURRENCY_DEFINITIONS[item.to]?.flag || '💱'}</span>
-          </div>
+          </button>
 
-          {/* 轉換詳情 - 完整顯示不截斷 */}
-          <div className="flex-1 min-w-0">
+          {/* 中間區域：轉換詳情 - 點擊複製 */}
+          <button
+            onClick={() => handleClick(item)}
+            onDoubleClick={() => handleDoubleClick(item)}
+            className="flex-1 min-w-0 text-left cursor-pointer hover:opacity-80 transition-opacity"
+            aria-label={t('conversionHistory.copyAriaLabel')}
+          >
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm font-bold">
               <span className="text-text">{item.amount}</span>
               <span className="text-text-muted">{item.from}</span>
@@ -170,13 +188,16 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
               <span className="text-primary">{item.to}</span>
             </div>
             <span className="text-[10px] text-text-muted opacity-60 block mt-0.5">{item.time}</span>
-          </div>
+          </button>
 
-          {/* 複製圖示提示 */}
-          <div className="flex items-center gap-1.5 flex-shrink-0 opacity-40 group-hover:opacity-100 transition-opacity">
-            <Copy size={14} className="text-text-muted" />
-            <span className="text-[10px] font-medium text-text-muted hidden sm:inline">
-              {t('common.clickToCopy')}
+          {/* 右側區域：操作提示 */}
+          <div className="flex flex-col items-end gap-0.5 flex-shrink-0 text-[10px]">
+            <span className="flex items-center gap-1 text-text-muted opacity-40 group-hover:opacity-100 transition-opacity">
+              <Copy size={12} />
+              <span className="hidden sm:inline">{t('common.copy')}</span>
+            </span>
+            <span className="text-primary opacity-0 group-hover:opacity-60 transition-opacity">
+              {t('favorites.clickToConvert')}
             </span>
           </div>
         </div>

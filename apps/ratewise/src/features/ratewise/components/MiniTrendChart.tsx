@@ -35,10 +35,13 @@ interface TooltipData {
  * 使用 lightweight-charts 專業金融圖表庫
  * 特色：
  * - 左到右酷炫動畫
- * - Hover 互動顯示日期和價格
+ * - Hover/Touch 互動顯示日期和價格
+ * - 觸控長按滑動支援（行動裝置）
  * - 數據 ≥ 2 天時統一延伸到最寬
  * - 現代化配色與微互動
  * - **SSOT Design Token** - 圖表顏色從 CSS Variables 獲取
+ *
+ * @version 2.0.0 - 新增觸控長按滑動 Tooltip 支援
  */
 export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   // 使用真實數據（Safari 404 問題已透過 logger.debug 降級處理修復）
@@ -47,6 +50,8 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
+  const [isTouching, setIsTouching] = useState(false);
+  const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 追蹤主題變化 - 用於觸發圖表重建
   const [themeVersion, setThemeVersion] = useState(0);
@@ -198,6 +203,75 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     };
   }, [displayData, stats.maxIndex, stats.minIndex, getThemeColors]);
 
+  /**
+   * 觸控事件處理 - 長按 150ms 後啟動 Tooltip 滑動模式
+   */
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch || !chartContainerRef.current || !chartRef.current || !seriesRef.current) return;
+
+    touchTimerRef.current = setTimeout(() => {
+      setIsTouching(true);
+      // 發送模擬的滑鼠位置
+      const container = chartContainerRef.current;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        // Note: Y coordinate could be used for vertical tooltip positioning in future
+        void (touch.clientY - rect.top);
+        chartRef.current?.applyOptions({
+          crosshair: {
+            mode: 0,
+          },
+        });
+        // 觸發 crosshair 移動（利用現有的 subscribeCrosshairMove）
+        const logicalX = chartRef.current?.timeScale().coordinateToLogical(x);
+        if (logicalX !== null && logicalX !== undefined) {
+          // lightweight-charts 內部處理
+        }
+      }
+    }, 150); // 150ms 長按啟動
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isTouching) return;
+      e.preventDefault(); // 防止滾動
+
+      const touch = e.touches[0];
+      if (!touch || !chartContainerRef.current || !chartRef.current || !seriesRef.current) return;
+
+      const container = chartContainerRef.current;
+      const rect = container.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+
+      // 計算對應的數據點
+      const timeScale = chartRef.current.timeScale();
+      const logical = timeScale.coordinateToLogical(x);
+      if (logical !== null && logical >= 0 && logical < displayData.length) {
+        const dataPoint = displayData[Math.round(logical)];
+        if (dataPoint) {
+          setTooltipData({
+            date: dataPoint.date,
+            rate: dataPoint.rate,
+            x: touch.clientX,
+            y: touch.clientY - 20,
+          });
+        }
+      }
+    },
+    [isTouching, displayData],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
+    setIsTouching(false);
+    setTooltipData(null);
+  }, []);
+
   // 數據不足時不顯示圖表
   if (displayData.length < 2) {
     return null;
@@ -215,11 +289,15 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       }}
       whileHover={{ y: -2 }}
     >
-      {/* Lightweight Charts 趨勢圖 */}
+      {/* Lightweight Charts 趨勢圖 - 支援觸控 */}
       <div
         ref={chartContainerRef}
         data-testid="mini-trend-chart-surface"
-        className="w-full h-full"
+        className={`w-full h-full touch-none ${isTouching ? 'select-none' : ''}`}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       />
 
       {/* Hover Tooltip - SSOT 主題色設計 */}

@@ -1,5 +1,16 @@
+/**
+ * MultiConverter Component - Multi-Currency Converter with Favorites
+ * 多幣別轉換器組件 - 支援收藏功能
+ *
+ * @description Multi-currency converter with star favorite toggle on the left,
+ *              fixed flag aspect ratio, and SSOT design tokens.
+ *              支援左側星號收藏切換、固定國旗比例、SSOT 設計 Token。
+ * @version 2.0.0
+ */
+
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Star } from 'lucide-react';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
@@ -14,10 +25,12 @@ interface MultiConverterProps {
   baseCurrency: CurrencyCode;
   rateType: RateType;
   details?: Record<string, RateDetails>;
+  favorites: CurrencyCode[];
   onAmountChange: (code: CurrencyCode, value: string) => void;
   onQuickAmount: (amount: number) => void;
   onRateTypeChange: (type: RateType) => void;
   onBaseCurrencyChange: (code: CurrencyCode) => void;
+  onToggleFavorite: (code: CurrencyCode) => void;
 }
 
 export const MultiConverter = ({
@@ -26,10 +39,12 @@ export const MultiConverter = ({
   baseCurrency,
   rateType,
   details,
+  favorites,
   onAmountChange,
   onQuickAmount,
   onRateTypeChange,
   onBaseCurrencyChange,
+  onToggleFavorite,
 }: MultiConverterProps) => {
   const { t } = useTranslation();
   const inputRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -215,9 +230,38 @@ export const MultiConverter = ({
                   : 'bg-surface-soft cursor-pointer hover:bg-primary/5 hover:shadow-sm active:scale-[0.99]'
               }`}
             >
-              {/* 左側：國旗 + 貨幣資訊 */}
-              <div className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
-                <span className="text-xl flex-shrink-0">{CURRENCY_DEFINITIONS[code].flag}</span>
+              {/* 左側：星號收藏 + 國旗 + 貨幣資訊 */}
+              <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+                {/* 收藏星號 - 固定寬度確保對齊 */}
+                <div className="w-6 flex-shrink-0 flex items-center justify-center">
+                  {favorites.includes(code) ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite(code);
+                      }}
+                      className="p-0.5 transition-transform hover:scale-110"
+                      aria-label={t('favorites.removeFavorite')}
+                    >
+                      <Star className="w-4 h-4 text-favorite fill-favorite" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite(code);
+                      }}
+                      className="p-0.5 opacity-30 hover:opacity-60 transition-opacity"
+                      aria-label={t('favorites.addFavorite')}
+                    >
+                      <Star className="w-4 h-4 text-text-muted" />
+                    </button>
+                  )}
+                </div>
+                {/* 國旗 - 使用固定寬度避免變形 */}
+                <span className="text-xl flex-shrink-0 w-7 text-center leading-none">
+                  {CURRENCY_DEFINITIONS[code].flag}
+                </span>
                 <div className="min-w-0">
                   <div className="font-semibold text-sm leading-tight">{code}</div>
                   <div className="text-[11px] opacity-60 leading-tight truncate">

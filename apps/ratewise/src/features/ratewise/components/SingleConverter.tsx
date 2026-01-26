@@ -1,6 +1,18 @@
+/**
+ * SingleConverter Component - Single Currency Converter
+ * 單幣別轉換器組件
+ *
+ * @description Single currency converter with inline calculator activation.
+ *              Click on the amount input to open the calculator keyboard.
+ *              Simplified design without separate calculator buttons.
+ *              點擊金額輸入框即可開啟計算機鍵盤。
+ *              簡化設計，移除獨立計算機按鈕。
+ * @version 2.0.0
+ */
+
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { RefreshCw, Calculator } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateType } from '../types';
@@ -71,11 +83,9 @@ export const SingleConverter = ({
   const [showTrend, setShowTrend] = useState(false);
   const swapButtonRef = useRef<HTMLButtonElement>(null);
 
-  // 追蹤正在編輯的輸入框（使用未格式化的值）
-  const [editingField, setEditingField] = useState<'from' | 'to' | null>(null);
-  const [editingValue, setEditingValue] = useState<string>('');
-  const fromInputRef = useRef<HTMLInputElement>(null);
-  const toInputRef = useRef<HTMLInputElement>(null);
+  // 輸入框 refs（用於焦點管理）
+  const fromInputRef = useRef<HTMLDivElement>(null);
+  const toInputRef = useRef<HTMLDivElement>(null);
 
   // 計算機鍵盤狀態（使用統一的 Hook）
   const calculator = useCalculatorModal<'from' | 'to'>({
@@ -254,66 +264,24 @@ export const SingleConverter = ({
               </option>
             ))}
           </select>
-          <input
+          {/* 金額輸入框 - 點擊開啟計算機鍵盤 */}
+          <div
             ref={fromInputRef}
-            type="text"
-            inputMode="decimal"
+            role="button"
+            tabIndex={0}
             data-testid="amount-input"
-            value={
-              editingField === 'from' ? editingValue : formatAmountDisplay(fromAmount, fromCurrency)
-            }
-            onFocus={() => {
-              setEditingField('from');
-              setEditingValue(fromAmount);
-            }}
-            onChange={(e) => {
-              const cleaned = e.target.value.replace(/[^\d.]/g, '');
-              const parts = cleaned.split('.');
-              const validValue =
-                parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
-              setEditingValue(validValue);
-              onFromAmountChange(validValue);
-            }}
-            onBlur={() => {
-              onFromAmountChange(editingValue);
-              setEditingField(null);
-              setEditingValue('');
-            }}
+            onClick={() => calculator.openCalculator('from')}
             onKeyDown={(e) => {
-              const allowedKeys = [
-                'Backspace',
-                'Delete',
-                'ArrowLeft',
-                'ArrowRight',
-                'ArrowUp',
-                'ArrowDown',
-                'Home',
-                'End',
-                'Tab',
-                '.',
-              ];
-              const isNumber = /^[0-9]$/.test(e.key);
-              const isModifierKey = e.ctrlKey || e.metaKey;
-              if (!isNumber && !allowedKeys.includes(e.key) && !isModifierKey) {
+              if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
+                calculator.openCalculator('from');
               }
             }}
-            className="w-full pl-32 pr-14 py-3 text-2xl font-bold bg-surface border-2 border-border/60 rounded-2xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
-            placeholder="0.00"
+            className="w-full pl-32 pr-4 py-3 text-2xl font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
             aria-label={t('singleConverter.fromAmountLabel', { code: fromCurrency })}
-          />
-          {/* 計算機按鈕 */}
-          <button
-            type="button"
-            onClick={() => {
-              calculator.openCalculator('from');
-            }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-primary hover:text-primary-dark hover:bg-primary-bg rounded-lg transition-colors duration-200"
-            aria-label={t('singleConverter.openCalculatorFrom')}
-            data-testid="calculator-trigger-from"
           >
-            <Calculator aria-hidden="true" className="w-5 h-5" />
-          </button>
+            {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
+          </div>
         </div>
         {/* 快速金額按鈕 - 來源貨幣
          *
@@ -522,63 +490,24 @@ export const SingleConverter = ({
               </option>
             ))}
           </select>
-          <input
+          {/* 金額輸入框 - 點擊開啟計算機鍵盤 */}
+          <div
             ref={toInputRef}
-            type="text"
-            inputMode="decimal"
-            value={editingField === 'to' ? editingValue : formatAmountDisplay(toAmount, toCurrency)}
-            onFocus={() => {
-              setEditingField('to');
-              setEditingValue(toAmount);
-            }}
-            onChange={(e) => {
-              const cleaned = e.target.value.replace(/[^\d.]/g, '');
-              const parts = cleaned.split('.');
-              const validValue =
-                parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
-              setEditingValue(validValue);
-              onToAmountChange(validValue);
-            }}
-            onBlur={() => {
-              onToAmountChange(editingValue);
-              setEditingField(null);
-              setEditingValue('');
-            }}
+            role="button"
+            tabIndex={0}
+            data-testid="amount-output"
+            onClick={() => calculator.openCalculator('to')}
             onKeyDown={(e) => {
-              const allowedKeys = [
-                'Backspace',
-                'Delete',
-                'ArrowLeft',
-                'ArrowRight',
-                'ArrowUp',
-                'ArrowDown',
-                'Home',
-                'End',
-                'Tab',
-                '.',
-              ];
-              const isNumber = /^[0-9]$/.test(e.key);
-              const isModifierKey = e.ctrlKey || e.metaKey;
-              if (!isNumber && !allowedKeys.includes(e.key) && !isModifierKey) {
+              if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
+                calculator.openCalculator('to');
               }
             }}
-            className="w-full pl-32 pr-14 py-3 text-2xl font-bold bg-primary-bg/30 border-2 border-primary/30 rounded-2xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
-            placeholder="0.00"
+            className="w-full pl-32 pr-4 py-3 text-2xl font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
             aria-label={t('singleConverter.toAmountLabel', { code: toCurrency })}
-          />
-          {/* 計算機按鈕 */}
-          <button
-            type="button"
-            onClick={() => {
-              calculator.openCalculator('to');
-            }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-primary hover:text-primary-dark hover:bg-primary-bg rounded-lg transition-colors duration-200"
-            aria-label={t('singleConverter.openCalculatorTo')}
-            data-testid="calculator-trigger-to"
           >
-            <Calculator aria-hidden="true" className="w-5 h-5" />
-          </button>
+            {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
+          </div>
         </div>
         {/* 快速金額按鈕 - 目標貨幣
          *
