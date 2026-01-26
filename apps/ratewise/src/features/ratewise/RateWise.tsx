@@ -193,16 +193,16 @@ const RateWise = () => {
 
       {/* 頁面主容器
        *
-       * SSOT 頁面佈局規範（2025 最佳實踐）：
-       * - 外層容器：min-h-full（不使用 overflow，由 AppLayout 處理）
-       * - 內容區域：px-5 py-6 max-w-md mx-auto
-       * - 移除 pb-32（AppLayout 已有 pb-[calc(56px+safe-area)]）
+       * SSOT 頁面佈局規範（2026 最佳實踐）：
+       * - 外層容器：flex flex-col min-h-full（填滿可用空間）
+       * - 內容區域：flex-1 flex flex-col px-5 py-4 max-w-md mx-auto w-full
+       * - 滾動由 AppLayout 統一處理，避免嵌套滾動
        *
        * @see AppLayout.tsx - 外層滾動容器
        * @see https://web.dev/viewport-units/ - 動態視口高度
        */}
-      <div ref={mainRef} className="min-h-full">
-        <div className="px-5 py-6 max-w-md mx-auto">
+      <div ref={mainRef} className="flex flex-col min-h-full">
+        <div className="flex-1 flex flex-col px-5 py-4 max-w-md mx-auto w-full">
           {/* 載入狀態提示 */}
           {ratesLoading && (
             <div className="text-center text-sm text-neutral-text-secondary py-2">
@@ -210,9 +210,9 @@ const RateWise = () => {
             </div>
           )}
 
-          {/* 單幣別轉換區塊 */}
-          <section className="mb-6">
-            <div className="card p-4">
+          {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
+          <section className="flex-1 flex flex-col mb-4">
+            <div className="card p-4 flex-1">
               <SingleConverter
                 fromCurrency={fromCurrency}
                 toCurrency={toCurrency}
@@ -234,7 +234,7 @@ const RateWise = () => {
           </section>
 
           {/* 收藏與貨幣列表區塊（桌面版顯示於側欄） */}
-          <section className="mb-6 hidden md:block">
+          <section className="mb-4 hidden md:block flex-shrink-0">
             <div className="space-y-4">
               <FavoritesList favorites={favorites} trend={trend} exchangeRates={exchangeRates} />
               <CurrencyList
@@ -247,9 +247,9 @@ const RateWise = () => {
             </div>
           </section>
 
-          {/* 資料來源與更新時間區塊 - 現代化精簡設計 */}
+          {/* 資料來源與更新時間區塊 - 現代化精簡設計，固定在底部 */}
           {!ratesLoading && lastUpdate && (
-            <section className="text-center">
+            <section className="text-center flex-shrink-0">
               <div className="inline-flex items-center gap-2 text-[10px] text-text-muted/60">
                 <a
                   href="https://rate.bot.com.tw/xrt?Lang=zh-TW"

@@ -110,11 +110,17 @@ export default function MultiConverter() {
   }
 
   return (
-    <div className="min-h-full">
-      <div className="px-5 py-6 max-w-md mx-auto">
-        {/* 多幣別換算區塊 - 簡約風格（標題已移除，由底部導航識別） */}
-        <section className="mb-6">
-          <div className="card p-4">
+    <div className="flex flex-col min-h-full">
+      <div className="flex-1 flex flex-col px-5 py-4 max-w-md mx-auto w-full">
+        {/* 多幣別換算區塊 - 簡約風格（標題已移除，由底部導航識別）
+         *
+         * RWD 全頁面佈局：
+         * - flex-1：填滿可用垂直空間
+         * - flex flex-col：垂直佈局允許貨幣列表自適應擴展
+         * - 滾動由 AppLayout 統一處理，避免嵌套滾動
+         */}
+        <section className="flex-1 flex flex-col">
+          <div className="card p-4 flex-1 flex flex-col">
             <MultiConverterComponent
               sortedCurrencies={sortedCurrencies}
               multiAmounts={multiAmounts}
@@ -131,9 +137,9 @@ export default function MultiConverter() {
           </div>
         </section>
 
-        {/* 更新時間區塊 */}
+        {/* 更新時間區塊 - 固定在底部 */}
         {!ratesLoading && lastUpdate && (
-          <section>
+          <section className="mt-4 flex-shrink-0">
             <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
               <Clock className="w-3.5 h-3.5" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">

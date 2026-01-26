@@ -12,7 +12,7 @@
 
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { RefreshCw } from 'lucide-react';
+// RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateType } from '../types';
@@ -424,53 +424,72 @@ export const SingleConverter = ({
           </div>
         </div>
 
-        {/* 轉換按鈕 - 高級微互動 */}
+        {/* 轉換按鈕 - 現代化微互動設計
+         *
+         * 設計規範：
+         * - 雙箭頭圖示 (ArrowUpDown) 取代旋轉圖示
+         * - 漸層光環效果 (gradient glow)
+         * - 懸停放大 + 陰影加深
+         * - 點擊縮放 + Y軸旋轉動畫
+         */}
         <div className="relative group/swap">
-          {/* 外圍光環 */}
+          {/* 外圍漸層光環 */}
           <div
-            className={`absolute -inset-1 bg-gradient-to-r from-primary-light via-primary-hover to-primary-light rounded-full blur-md transition-[opacity,transform] duration-500 ${
-              isSwapping ? 'opacity-60 scale-125' : 'opacity-0 group-hover/swap:opacity-30'
-            } animate-pulse motion-reduce:animate-none`}
+            className={`absolute -inset-2 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-full blur-xl transition-all duration-500 ${
+              isSwapping
+                ? 'opacity-80 scale-110'
+                : 'opacity-0 group-hover/swap:opacity-40 group-hover/swap:scale-100'
+            }`}
           />
 
-          {/* 交換按鈕 */}
+          {/* 交換按鈕 - 玻璃擬態設計 */}
           <button
             ref={swapButtonRef}
             onClick={handleSwap}
-            className={`relative p-3 bg-primary hover:bg-primary-hover text-white rounded-full shadow-lg transition-all duration-500 transform hover:scale-110 active:scale-95 group-hover/swap:shadow-2xl ${
-              isSwapping ? 'scale-95' : ''
-            }`}
+            className={`
+              relative p-3.5
+              bg-gradient-to-br from-primary to-primary-hover
+              text-white rounded-full
+              shadow-lg shadow-primary/30
+              transition-all duration-300 ease-out
+              hover:shadow-xl hover:shadow-primary/40
+              hover:scale-110 active:scale-95
+              ${isSwapping ? 'scale-90' : ''}
+            `}
             aria-label={t('singleConverter.swapCurrencies')}
             title={t('singleConverter.swapCurrencies')}
             disabled={isSwapping}
           >
-            {/* 背景脈動效果 - SSOT surface 色 */}
-            <div
-              className={`absolute inset-0 rounded-full bg-surface transition-opacity duration-300 ${
-                isSwapping ? 'opacity-30' : 'opacity-0 group-hover/swap:opacity-20'
-              } animate-ping motion-reduce:animate-none`}
-            />
-
-            {/* 圖示 - 點擊旋轉 */}
-            <RefreshCw
-              aria-hidden="true"
-              size={20}
-              className={`relative z-10 transition-transform duration-600 ${
-                isSwapping ? 'rotate-180' : 'group-hover/swap:rotate-180'
-              }`}
-            />
-
-            {/* 點擊漣漪效果 - SSOT surface 色 */}
+            {/* 內部光暈效果 */}
             <span
-              className={`absolute inset-0 rounded-full bg-surface transition-opacity duration-300 ${
-                isSwapping ? 'opacity-30 animate-ping motion-reduce:animate-none' : 'opacity-0'
+              className={`absolute inset-0 rounded-full bg-white/20 transition-opacity duration-300 ${
+                isSwapping ? 'opacity-100' : 'opacity-0 group-hover/swap:opacity-30'
               }`}
             />
+
+            {/* 雙箭頭圖示 - Y軸旋轉動畫 */}
+            <svg
+              className={`relative z-10 w-5 h-5 transition-transform duration-500 ${
+                isSwapping
+                  ? '[transform:rotateY(180deg)]'
+                  : 'group-hover/swap:[transform:rotateY(180deg)]'
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M7 16V4m0 0L3 8m4-4l4 4" />
+              <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
           </button>
 
-          {/* 懸停提示 - SSOT surface 色 */}
-          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
-            <span className="text-xs font-medium text-neutral-text-secondary whitespace-nowrap bg-surface px-2 py-1 rounded-full shadow-md">
+          {/* 懸停提示標籤 */}
+          <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
+            <span className="text-[10px] font-semibold text-text-muted whitespace-nowrap bg-surface/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md border border-border/50">
               {t('singleConverter.clickToSwap')}
             </span>
           </div>
@@ -551,12 +570,41 @@ export const SingleConverter = ({
         </div>
       </div>
 
-      {/* 加入歷史記錄按鈕 */}
+      {/* 加入歷史記錄按鈕 - 現代化微互動設計
+       *
+       * 設計規範：
+       * - 主色調漸層背景 (primary → primary-hover)
+       * - 玻璃擬態陰影效果 (shadow-xl shadow-primary/25)
+       * - 微互動：hover scale + 漣漪光暈
+       * - 點擊縮放回饋 (active:scale-[0.98])
+       */}
       <button
         onClick={onAddToHistory}
-        className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
+        className="
+          relative w-full py-3.5 overflow-hidden
+          bg-gradient-to-r from-primary to-primary-hover
+          text-white font-bold rounded-2xl
+          shadow-xl shadow-primary/25
+          transition-all duration-300 ease-out
+          hover:shadow-2xl hover:shadow-primary/30
+          hover:scale-[1.02] active:scale-[0.98]
+          group
+        "
       >
-        {t('singleConverter.addToHistory')}
+        {/* 光暈效果 */}
+        <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out" />
+        <span className="relative z-10 flex items-center justify-center gap-2">
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={2.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          {t('singleConverter.addToHistory')}
+        </span>
       </button>
 
       {/* 計算機鍵盤 Bottom Sheet */}

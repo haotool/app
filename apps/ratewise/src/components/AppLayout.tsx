@@ -27,6 +27,7 @@
  */
 
 import { Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
 import { ToastProvider } from './Toast';
@@ -69,17 +70,23 @@ function Logo() {
  *
  * 特點：
  * - 毛玻璃背景
- * - 品牌 Logo + 標題
+ * - 品牌 Logo + 標題（支援多語系）
  * - 48px 高度（參考 Threads/Instagram）
+ * - shrink-0 確保 Header 不會被壓縮
  *
  * @see navigationTokens.header - SSOT for header dimensions
  * @see https://developer.apple.com/design/human-interface-guidelines/tab-bars
  */
 function Header() {
+  // 使用 i18n 動態顯示標題
+  // 中文：RateWise 匯率好工具，英文：RateWise
+  const { t, i18n } = useTranslation();
+  const isZhTW = i18n.language === 'zh-TW' || i18n.language === 'zh';
+
   return (
     <header
       className="
-        h-12 px-4 pt-safe-top z-30
+        h-12 px-4 pt-safe-top z-30 shrink-0
         bg-background/80 backdrop-blur-xl
         border-b border-black/[0.03]
         flex items-center
@@ -93,13 +100,13 @@ function Header() {
           </div>
           <h1
             className="
-              text-xl font-black tracking-tight
+              text-lg font-black tracking-tight
               bg-clip-text text-transparent
               bg-gradient-to-r from-[rgb(var(--color-text))] to-[rgb(var(--color-primary))]
-              [--webkit-background-clip:text]
+              [-webkit-background-clip:text]
             "
           >
-            RateWise
+            {isZhTW ? 'RateWise 匯率好工具' : t('app.title')}
           </h1>
         </div>
       </div>
@@ -112,35 +119,42 @@ function Header() {
  *
  * Main application layout with ParkKeeper design system.
  *
+ * 2025 最佳實踐 - Flexbox 滾動容器修正：
+ * - h-dvh 而非 min-h-dvh：確保固定高度約束，啟用 overflow 滾動
+ * - min-h-0 on flex children：允許 flex 子元素收縮以啟用 overflow
+ * - 內容區使用 overflow-y-auto：唯一的滾動點，避免嵌套滾動
+ *
  * iOS PWA Standalone Mode Fix:
- * - Uses min-h-dvh for dynamic viewport height calculation
+ * - Uses h-dvh for dynamic viewport height calculation
  * - Content area reserves space for fixed BottomNavigation (56px + safe area)
  * - Safe area handled via CSS env() variables
  *
  * Layout Structure:
- * - Header: 48px (mobile only)
- * - Main: flex-1 with bottom padding for nav
+ * - Header: 48px (mobile only, shrink-0)
+ * - Main: flex-1 min-h-0 with overflow-y-auto
  * - BottomNavigation: fixed, 56px + safe-area-inset-bottom
  *
  * @see https://web.dev/viewport-units/
  * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
+ * @see https://stackoverflow.com/questions/21515042/scrolling-a-flexbox-with-overflowing-content
  */
 export function AppLayout() {
   return (
     <ToastProvider>
-      <div className="min-h-dvh w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))]">
+      {/* 根容器：固定視口高度，啟用 flex 滾動 */}
+      <div className="h-dvh w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))] overflow-hidden">
         {/* Desktop sidebar (≥768px) */}
-        <div className="flex flex-1">
+        <div className="flex flex-1 min-h-0">
           <SideNavigation className="hidden md:block" />
 
           <div className="flex-1 flex flex-col min-h-0">
-            {/* Header (mobile only) */}
-            <div className="md:hidden">
+            {/* Header (mobile only) - shrink-0 確保不被壓縮 */}
+            <div className="md:hidden shrink-0">
               <Header />
             </div>
 
-            {/* Main content area - reserves space for fixed bottom nav */}
-            <main className="flex-1 relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0">
+            {/* Main content area - flex-1 min-h-0 啟用滾動，唯一滾動點 */}
+            <main className="flex-1 min-h-0 relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0">
               <Outlet />
             </main>
 

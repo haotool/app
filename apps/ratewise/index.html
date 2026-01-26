@@ -108,23 +108,15 @@
       })();
     </script>
 
-    <!-- Critical CSS (iOS PWA Optimized) -->
+    <!-- Critical CSS (iOS PWA Optimized + Modern Skeleton) -->
     <style>
       /**
        * iOS PWA Standalone Mode - Safe Area Handling
-       *
-       * When using black-translucent status bar, content extends behind the status bar.
-       * We need to handle safe areas properly to prevent content from being obscured.
-       *
-       * Key fix: html min-height includes safe-area-inset-top to prevent bottom white bar
-       *
        * @see https://web.dev/viewport-units/
        * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
-       * @see https://dev.to/oncode/display-your-pwa-website-fullscreen-4776
        */
       html {
         height: 100%;
-        /* Prevent bottom white bar when content shifts up for status bar */
         min-height: calc(100% + env(safe-area-inset-top, 0px));
       }
       body {
@@ -138,70 +130,163 @@
           system-ui,
           -apple-system,
           sans-serif;
-        /* Prevent iOS text size adjustment */
         -webkit-text-size-adjust: 100%;
       }
-      .skeleton-container {
-        max-width: 56rem;
-        margin: 0 auto;
+      /* Theme-aware skeleton variables
+       * Maps to user's selected theme for seamless loading experience
+       * @see index.css - theme color definitions
+       */
+      :root,
+      [data-style='zen'] {
+        --sk-bg: #f8fafc;
+        --sk-surface: #ffffff;
+        --sk-border: #e2e8f0;
+        --sk-shimmer: #cbd5e1;
+        --sk-accent: rgba(139, 92, 246, 0.15);
+        --sk-accent-shimmer: rgba(139, 92, 246, 0.25);
+      }
+      [data-style='nitro'] {
+        --sk-bg: #020617;
+        --sk-surface: #0f172a;
+        --sk-border: #1e293b;
+        --sk-shimmer: #334155;
+        --sk-accent: rgba(14, 165, 233, 0.2);
+        --sk-accent-shimmer: rgba(14, 165, 233, 0.35);
+      }
+      [data-style='kawaii'] {
+        --sk-bg: #fffaf4;
+        --sk-surface: #ffffff;
+        --sk-border: #fce7f3;
+        --sk-shimmer: #fbcfe8;
+        --sk-accent: rgba(244, 114, 182, 0.15);
+        --sk-accent-shimmer: rgba(244, 114, 182, 0.25);
+      }
+      [data-style='classic'] {
+        --sk-bg: #fffafb;
+        --sk-surface: #ffffff;
+        --sk-border: #e7e5e4;
+        --sk-shimmer: #d6d3d1;
+        --sk-accent: rgba(180, 83, 9, 0.12);
+        --sk-accent-shimmer: rgba(180, 83, 9, 0.2);
+      }
+      [data-style='ocean'] {
+        --sk-bg: #f0f9ff;
+        --sk-surface: #ffffff;
+        --sk-border: #bae6fd;
+        --sk-shimmer: #7dd3fc;
+        --sk-accent: rgba(6, 182, 212, 0.15);
+        --sk-accent-shimmer: rgba(6, 182, 212, 0.25);
+      }
+      [data-style='forest'] {
+        --sk-bg: #f0fdf4;
+        --sk-surface: #ffffff;
+        --sk-border: #bbf7d0;
+        --sk-shimmer: #86efac;
+        --sk-accent: rgba(22, 163, 74, 0.15);
+        --sk-accent-shimmer: rgba(22, 163, 74, 0.25);
+      }
+      /* Skeleton page container */
+      .skeleton-page {
+        background: var(--sk-bg);
+        min-height: 100vh;
         padding: 1rem;
       }
-      .skeleton-header {
-        height: 2rem;
-        width: 12rem;
-        background: #e2e8f0;
-        border-radius: 0.5rem;
-        margin-bottom: 0.5rem;
+      .skeleton-page > .inner {
+        max-width: 28rem;
+        margin: 0 auto;
       }
-      .skeleton-subtitle {
-        height: 1rem;
-        width: 8rem;
-        background: #e2e8f0;
-        border-radius: 0.25rem;
-        margin-bottom: 1.5rem;
+      /* Shimmer animation */
+      @keyframes skeleton-shimmer {
+        0% {
+          background-position: -200% 0;
+        }
+        100% {
+          background-position: 200% 0;
+        }
       }
+      .skeleton-shimmer {
+        background: linear-gradient(
+          90deg,
+          var(--sk-border) 25%,
+          var(--sk-shimmer) 50%,
+          var(--sk-border) 75%
+        );
+        background-size: 200% 100%;
+        animation: skeleton-shimmer 1.5s ease-in-out infinite;
+      }
+      .skeleton-shimmer-accent {
+        background: linear-gradient(
+          90deg,
+          var(--sk-accent) 25%,
+          var(--sk-accent-shimmer) 50%,
+          var(--sk-accent) 75%
+        );
+        background-size: 200% 100%;
+        animation: skeleton-shimmer 1.5s ease-in-out infinite;
+      }
+      /* Card style */
       .skeleton-card {
-        background: white;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        margin-bottom: 1.5rem;
+        background: var(--sk-surface);
+        border-radius: 1.5rem;
+        border: 1px solid var(--sk-border);
+        padding: 1rem;
       }
-      .skeleton-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1rem;
-      }
-      .skeleton-input {
-        height: 3rem;
-        background: #e2e8f0;
-        border-radius: 0.5rem;
-      }
-      .skeleton-result {
-        height: 4rem;
-        background: #ede9fe;
+      /* Trend area */
+      .skeleton-bg {
+        background: linear-gradient(to bottom right, var(--sk-accent), transparent);
         border-radius: 0.75rem;
       }
-      @keyframes pulse {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.5;
-        }
+      /* Utilities */
+      .sk-space-y-4 > * + * {
+        margin-top: 1rem;
       }
-      .skeleton-header,
-      .skeleton-subtitle,
-      .skeleton-input,
-      .skeleton-result {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      .sk-space-y-3 > * + * {
+        margin-top: 0.75rem;
       }
-      @media (max-width: 768px) {
-        .skeleton-row {
-          grid-template-columns: 1fr;
-        }
+      .sk-space-y-2 > * + * {
+        margin-top: 0.5rem;
+      }
+      .sk-flex {
+        display: flex;
+      }
+      .sk-gap-2 {
+        gap: 0.5rem;
+      }
+      .sk-justify-center {
+        justify-content: center;
+      }
+      .sk-text-center {
+        text-align: center;
+      }
+      .sk-mx-auto {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .sk-py-3 {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+      }
+      .sk-rounded {
+        border-radius: 0.25rem;
+      }
+      .sk-rounded-xl {
+        border-radius: 0.75rem;
+      }
+      .sk-rounded-2xl {
+        border-radius: 1rem;
+      }
+      .sk-rounded-full {
+        border-radius: 9999px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
       }
     </style>
 
@@ -304,19 +389,109 @@
       </div>
     </noscript>
     <div id="root">
-      <div class="skeleton-container" role="status" aria-live="polite">
-        <div class="skeleton-header"></div>
-        <div class="skeleton-subtitle"></div>
-        <div class="skeleton-card">
-          <div class="skeleton-row">
-            <div class="skeleton-input"></div>
-            <div class="skeleton-input"></div>
+      <!-- Modern Skeleton matching SkeletonLoader.tsx -->
+      <div class="skeleton-page" role="status" aria-live="polite">
+        <div class="inner sk-space-y-4">
+          <!-- 來源貨幣輸入骨架 -->
+          <div class="sk-space-y-3">
+            <div class="skeleton-shimmer sk-rounded" style="height: 1rem; width: 5rem"></div>
+            <div class="skeleton-shimmer sk-rounded-2xl" style="height: 3.5rem; width: 100%"></div>
+            <!-- 快速金額按鈕 -->
+            <div class="sk-flex sk-gap-2" style="overflow: hidden">
+              <div
+                class="skeleton-shimmer sk-rounded-xl"
+                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+              ></div>
+              <div
+                class="skeleton-shimmer sk-rounded-xl"
+                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+              ></div>
+              <div
+                class="skeleton-shimmer sk-rounded-xl"
+                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+              ></div>
+              <div
+                class="skeleton-shimmer sk-rounded-xl"
+                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+              ></div>
+              <div
+                class="skeleton-shimmer sk-rounded-xl"
+                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+              ></div>
+            </div>
           </div>
-          <div class="skeleton-input" style="width: 100%; margin-bottom: 1rem"></div>
-          <div class="skeleton-result"></div>
-        </div>
-        <div class="skeleton-card">
-          <div class="skeleton-input" style="height: 12rem"></div>
+
+          <!-- 匯率卡片骨架 -->
+          <div class="skeleton-card sk-space-y-3">
+            <div class="sk-flex sk-justify-center">
+              <div
+                class="skeleton-shimmer sk-rounded-full"
+                style="height: 1.75rem; width: 7rem"
+              ></div>
+            </div>
+            <div class="sk-text-center sk-space-y-2 sk-py-3">
+              <div
+                class="skeleton-shimmer sk-rounded-xl sk-mx-auto"
+                style="height: 1.75rem; width: 13rem"
+              ></div>
+              <div
+                class="skeleton-shimmer sk-rounded sk-mx-auto"
+                style="height: 1rem; width: 10rem"
+              ></div>
+            </div>
+            <div class="skeleton-bg" style="height: 5rem"></div>
+          </div>
+
+          <!-- 交換按鈕骨架 -->
+          <div class="sk-flex sk-justify-center">
+            <div
+              class="skeleton-shimmer-accent sk-rounded-full"
+              style="width: 2.75rem; height: 2.75rem"
+            ></div>
+          </div>
+
+          <!-- 目標貨幣輸入骨架 -->
+          <div class="sk-space-y-3">
+            <div class="skeleton-shimmer sk-rounded" style="height: 1rem; width: 5rem"></div>
+            <div
+              class="skeleton-shimmer-accent sk-rounded-2xl"
+              style="height: 3.5rem; width: 100%"
+            ></div>
+            <!-- 快速金額按鈕 -->
+            <div class="sk-flex sk-gap-2" style="overflow: hidden">
+              <div
+                class="skeleton-shimmer sk-rounded-xl"
+                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+              ></div>
+              <div
+                class="skeleton-shimmer sk-rounded-xl"
+                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+              ></div>
+              <div
+                class="skeleton-shimmer sk-rounded-xl"
+                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+              ></div>
+              <div
+                class="skeleton-shimmer sk-rounded-xl"
+                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+              ></div>
+              <div
+                class="skeleton-shimmer sk-rounded-xl"
+                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+              ></div>
+            </div>
+          </div>
+
+          <!-- 加入歷史記錄按鈕骨架 -->
+          <div
+            class="skeleton-shimmer-accent sk-rounded-xl"
+            style="height: 3rem; width: 100%"
+          ></div>
+
+          <!-- 資料來源骨架 -->
+          <div class="sk-flex sk-justify-center">
+            <div class="skeleton-shimmer sk-rounded" style="height: 0.75rem; width: 10rem"></div>
+          </div>
         </div>
         <span class="sr-only">載入匯率資料中...</span>
       </div>

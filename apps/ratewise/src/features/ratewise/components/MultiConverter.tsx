@@ -159,7 +159,7 @@ export const MultiConverter = ({
   };
 
   return (
-    <>
+    <div className="flex-1 flex flex-col min-h-0">
       {/* 快速金額按鈕
        *
        * SSOT 設計規範：中性變體（所有轉換器一致）
@@ -209,10 +209,13 @@ export const MultiConverter = ({
        * 需要在四個方向預留空間以避免被父容器裁剪。
        * 使用 -m-0.5 p-0.5 (2px) 確保 ring 完整顯示。
        *
+       * 滾動由 AppLayout 統一處理，此處移除 overflow-y-auto 避免嵌套滾動
+       * flex-1 讓列表填滿可用空間
+       * @see AppLayout.tsx - main 區域處理 overflow-y-auto
        * @see https://tailwindcss.com/docs/ring-width
        */}
       <div
-        className="flex-grow overflow-y-auto overflow-x-visible space-y-2 -m-0.5 p-0.5"
+        className="flex-1 space-y-2 -m-0.5 p-0.5"
         tabIndex={0}
         role="region"
         aria-label={t('multiConverter.currencyListLabel')}
@@ -350,6 +353,6 @@ export const MultiConverter = ({
         onConfirm={calculator.handleConfirm}
         initialValue={calculator.initialValue}
       />
-    </>
+    </div>
   );
 };
