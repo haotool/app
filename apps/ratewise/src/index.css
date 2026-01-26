@@ -827,10 +827,20 @@
  * iOS PWA Standalone Mode Optimizations:
  * - -webkit-text-size-adjust: 100% - Prevents iOS text auto-sizing
  * - touch-action: manipulation - Disables double-tap zoom for better touch response
+ * - -webkit-overflow-scrolling: touch - Enables momentum scrolling on iOS Safari
  *
  * @see https://web.dev/viewport-units/
  * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-overflow-scrolling
  */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 body {
   background-color: rgb(var(--color-background));
   color: rgb(var(--color-text));

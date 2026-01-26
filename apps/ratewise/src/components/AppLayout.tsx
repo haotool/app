@@ -153,8 +153,17 @@ export function AppLayout() {
               <Header />
             </div>
 
-            {/* Main content area - flex-1 min-h-0 啟用滾動，唯一滾動點 */}
-            <main className="flex-1 min-h-0 relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0">
+            {/* Main content area - flex-1 min-h-0 啟用滾動，唯一滾動點
+             *
+             * iOS Safari Scroll Fix (2026 最佳實踐):
+             * - overflow-y: scroll (not auto) - explicit scroll container
+             * - -webkit-overflow-scrolling: touch - enables momentum scrolling on iOS
+             * - overscroll-behavior-y: contain - prevents scroll chaining
+             *
+             * @see https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-overflow-scrolling
+             * @see https://bugs.webkit.org/show_bug.cgi?id=275209
+             */}
+            <main className="flex-1 min-h-0 relative overflow-y-scroll overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain">
               <Outlet />
             </main>
 

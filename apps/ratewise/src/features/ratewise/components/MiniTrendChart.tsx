@@ -204,39 +204,70 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   }, [displayData, stats.maxIndex, stats.minIndex, getThemeColors]);
 
   /**
+   * Touch event handler - Enables tooltip after 150ms long press
    * 觸控事件處理 - 長按 150ms 後啟動 Tooltip 滑動模式
+   *
+   * Implementation based on lightweight-charts best practices:
+   * - Long press (150ms) activates tracking mode
+   * - Touch coordinates are converted to data points
+   * - Tooltip displays date and exchange rate
+   *
+   * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
    */
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    if (!touch || !chartContainerRef.current || !chartRef.current || !seriesRef.current) return;
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch || !chartContainerRef.current || !chartRef.current || !seriesRef.current) return;
 
-    touchTimerRef.current = setTimeout(() => {
-      setIsTouching(true);
-      // 發送模擬的滑鼠位置
-      const container = chartContainerRef.current;
-      if (container) {
-        const rect = container.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        // Note: Y coordinate could be used for vertical tooltip positioning in future
-        void (touch.clientY - rect.top);
-        chartRef.current?.applyOptions({
-          crosshair: {
-            mode: 0,
-          },
-        });
-        // 觸發 crosshair 移動（利用現有的 subscribeCrosshairMove）
-        const logicalX = chartRef.current?.timeScale().coordinateToLogical(x);
-        if (logicalX !== null && logicalX !== undefined) {
-          // lightweight-charts 內部處理
+      // Store initial touch position for use in timer callback
+      const initialClientX = touch.clientX;
+      const initialClientY = touch.clientY;
+
+      touchTimerRef.current = setTimeout(() => {
+        setIsTouching(true);
+
+        // Calculate tooltip data immediately when long press is detected
+        const container = chartContainerRef.current;
+        const chart = chartRef.current;
+        if (container && chart) {
+          const rect = container.getBoundingClientRect();
+          const x = initialClientX - rect.left;
+
+          // Convert screen coordinate to logical index
+          const timeScale = chart.timeScale();
+          const logical = timeScale.coordinateToLogical(x);
+
+          if (logical !== null && logical >= 0 && logical < displayData.length) {
+            const dataPoint = displayData[Math.round(logical)];
+            if (dataPoint) {
+              setTooltipData({
+                date: dataPoint.date,
+                rate: dataPoint.rate,
+                x: initialClientX,
+                y: initialClientY - 20,
+              });
+            }
+          }
         }
-      }
-    }, 150); // 150ms 長按啟動
-  }, []);
+      }, 150); // 150ms long press threshold
+    },
+    [displayData],
+  );
 
+  /**
+   * Handle touch move event for tooltip tracking
+   * 處理觸控滑動事件以追蹤 Tooltip 位置
+   *
+   * Uses lightweight-charts API:
+   * - coordinateToLogical() converts x coordinate to data index
+   * - setCrosshairPosition() programmatically moves the crosshair
+   *
+   * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
+   */
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
       if (!isTouching) return;
-      e.preventDefault(); // 防止滾動
+      e.preventDefault(); // Prevent page scrolling while tracking
 
       const touch = e.touches[0];
       if (!touch || !chartContainerRef.current || !chartRef.current || !seriesRef.current) return;
@@ -245,24 +276,44 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       const rect = container.getBoundingClientRect();
       const x = touch.clientX - rect.left;
 
-      // 計算對應的數據點
+      // Convert screen coordinate to logical data index
       const timeScale = chartRef.current.timeScale();
       const logical = timeScale.coordinateToLogical(x);
+
       if (logical !== null && logical >= 0 && logical < displayData.length) {
-        const dataPoint = displayData[Math.round(logical)];
+        const index = Math.round(logical);
+        const dataPoint = displayData[index];
         if (dataPoint) {
+          // Update tooltip data with touch position
           setTooltipData({
             date: dataPoint.date,
             rate: dataPoint.rate,
             x: touch.clientX,
-            y: touch.clientY - 20,
+            y: touch.clientY - 20, // Position tooltip above finger
           });
+
+          // Programmatically set crosshair position for visual feedback
+          try {
+            chartRef.current.setCrosshairPosition(
+              dataPoint.rate,
+              dataPoint.date,
+              seriesRef.current,
+            );
+          } catch {
+            // Silently fail if setCrosshairPosition is not supported
+          }
         }
       }
     },
     [isTouching, displayData],
   );
 
+  /**
+   * Handle touch end event to clean up tracking state
+   * 處理觸控結束事件以清理追蹤狀態
+   *
+   * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
+   */
   const handleTouchEnd = useCallback(() => {
     if (touchTimerRef.current) {
       clearTimeout(touchTimerRef.current);
@@ -270,6 +321,13 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     }
     setIsTouching(false);
     setTooltipData(null);
+
+    // Clear crosshair position when touch ends
+    try {
+      chartRef.current?.clearCrosshairPosition();
+    } catch {
+      // Silently fail if clearCrosshairPosition is not supported
+    }
   }, []);
 
   // 數據不足時不顯示圖表
