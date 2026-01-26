@@ -41,8 +41,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {/* Toast 容器 - 右上角定位，避免遮擋底部按鈕 */}
-      <div className="fixed top-4 right-4 z-[60] flex flex-col items-end gap-2 pointer-events-none">
+      {/* Toast 容器 - 右上角定位，安全區域內縮 */}
+      <div className="fixed top-16 right-4 z-[60] flex flex-col items-end gap-2 pointer-events-none">
         {toasts.map((toast) => (
           <Toast key={toast.id} {...toast} onClose={() => removeToast(toast.id)} />
         ))}
@@ -94,13 +94,21 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
    * Get styles based on toast type - using SSOT design tokens with primary color
    * 根據 Toast 類型獲取樣式 - 使用 SSOT 設計 Token 和主題主色
    */
+  /**
+   * 取得 Toast 樣式 - 使用淡化主色搭配 SSOT Design Token
+   *
+   * 設計理念：
+   * - 淡化主色背景 (primary/15) 取代深色漸層
+   * - 主色文字搭配淡色背景，視覺更柔和
+   * - 符合現代化 Toast 設計趨勢
+   */
   const getStyles = () => {
     switch (type) {
       case 'success':
         return {
-          gradient: 'from-primary/95 to-primary-hover/95',
-          text: 'text-white',
-          iconBg: 'bg-white/20',
+          bg: 'bg-primary/15 border border-primary/20',
+          text: 'text-primary',
+          iconBg: 'bg-primary/20',
           icon: isCopyMessage ? (
             <Copy className="w-4 h-4" strokeWidth={2.5} />
           ) : (
@@ -109,17 +117,17 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
         };
       case 'error':
         return {
-          gradient: 'from-destructive/95 to-destructive/85',
-          text: 'text-white',
-          iconBg: 'bg-white/20',
+          bg: 'bg-destructive/15 border border-destructive/20',
+          text: 'text-destructive',
+          iconBg: 'bg-destructive/20',
           icon: <X className="w-4 h-4" strokeWidth={2.5} />,
         };
       case 'info':
       default:
         return {
-          gradient: 'from-primary/95 to-accent/95',
-          text: 'text-white',
-          iconBg: 'bg-white/20',
+          bg: 'bg-primary/15 border border-primary/20',
+          text: 'text-primary',
+          iconBg: 'bg-primary/20',
           icon: <Info className="w-4 h-4" strokeWidth={2.5} />,
         };
     }
@@ -134,11 +142,11 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
       data-testid="toast"
       className={`
         pointer-events-auto
-        w-fit max-w-[min(25ch,90vw)]
-        overflow-hidden rounded-2xl
-        bg-gradient-to-r ${styles.gradient}
-        shadow-lg shadow-primary/20
-        backdrop-blur-md
+        w-fit max-w-[min(30ch,90vw)]
+        overflow-hidden rounded-xl
+        ${styles.bg}
+        shadow-md
+        backdrop-blur-xl
         transform transition-all duration-300 ease-out
         ${
           isVisible && !isExiting
@@ -147,14 +155,14 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
         }
       `}
     >
-      <div className="flex items-center gap-2 px-3.5 py-2">
+      <div className="flex items-center gap-2.5 px-4 py-2.5">
         {/* 圖示 - 較小的圓形背景 */}
         <div
           className={`flex-shrink-0 w-6 h-6 rounded-full ${styles.iconBg} ${styles.text} flex items-center justify-center`}
         >
           {styles.icon}
         </div>
-        {/* 訊息文字 - 自動換行 */}
+        {/* 訊息文字 */}
         <span className={`text-sm font-semibold ${styles.text}`}>{message}</span>
       </div>
     </div>

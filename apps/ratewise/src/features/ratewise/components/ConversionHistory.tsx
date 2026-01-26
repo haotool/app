@@ -173,33 +173,33 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
             <span className="text-xl">{CURRENCY_DEFINITIONS[item.to]?.flag || '💱'}</span>
           </button>
 
-          {/* 中間區域：轉換詳情 - 點擊複製 */}
+          {/* 中間 + 右側區域：統一點擊複製 */}
           <button
             onClick={() => handleClick(item)}
             onDoubleClick={() => handleDoubleClick(item)}
-            className="flex-1 min-w-0 text-left cursor-pointer hover:opacity-80 transition-opacity"
+            className="flex-1 min-w-0 flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
             aria-label={t('conversionHistory.copyAriaLabel')}
           >
-            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm font-bold">
-              <span className="text-text">{item.amount}</span>
-              <span className="text-text-muted">{item.from}</span>
-              <ArrowRight size={12} className="text-text-muted flex-shrink-0" />
-              <span className="text-primary">{item.result}</span>
-              <span className="text-primary">{item.to}</span>
+            {/* 轉換詳情 */}
+            <div className="text-left">
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm font-bold">
+                <span className="text-text">{item.amount}</span>
+                <span className="text-text-muted">{item.from}</span>
+                <ArrowRight size={12} className="text-text-muted flex-shrink-0" />
+                <span className="text-primary">{item.result}</span>
+                <span className="text-primary">{item.to}</span>
+              </div>
+              <span className="text-[10px] text-text-muted opacity-60 block mt-0.5">
+                {item.time}
+              </span>
             </div>
-            <span className="text-[10px] text-text-muted opacity-60 block mt-0.5">{item.time}</span>
-          </button>
 
-          {/* 右側區域：操作提示 */}
-          <div className="flex flex-col items-end gap-0.5 flex-shrink-0 text-[10px]">
-            <span className="flex items-center gap-1 text-text-muted opacity-40 group-hover:opacity-100 transition-opacity">
-              <Copy size={12} />
-              <span className="hidden sm:inline">{t('common.copy')}</span>
-            </span>
-            <span className="text-primary opacity-0 group-hover:opacity-60 transition-opacity">
-              {t('favorites.clickToConvert')}
-            </span>
-          </div>
+            {/* 複製圖示 - 垂直置中 */}
+            <div className="flex items-center gap-1 text-text-muted opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
+              <Copy size={14} />
+              <span className="hidden sm:inline text-[10px]">{t('common.copy')}</span>
+            </div>
+          </button>
         </div>
       ))}
     </div>

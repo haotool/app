@@ -254,20 +254,13 @@ export default function Favorites() {
                               className={`card p-4 flex items-center justify-between group ${
                                 snapshot.isDragging
                                   ? 'shadow-2xl scale-[1.02] bg-surface ring-2 ring-primary/40 z-50'
-                                  : 'hover:shadow-md cursor-pointer active:scale-[0.99]'
+                                  : 'hover:shadow-md'
                               }`}
-                              onClick={() => !snapshot.isDragging && handleFavoriteClick(code)}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
-                              }}
                             >
                               {/* 拖曳手柄 */}
                               <div
                                 {...provided.dragHandleProps}
                                 className="mr-2 cursor-grab active:cursor-grabbing touch-none"
-                                onClick={(e) => e.stopPropagation()}
                                 aria-label={t('favorites.dragHandle')}
                               >
                                 <GripVertical
@@ -280,28 +273,23 @@ export default function Favorites() {
                                 />
                               </div>
 
-                              <div className="flex items-center gap-3 flex-1">
+                              {/* 左側：點擊星星或貨幣資訊 → 切換收藏狀態 */}
+                              <div
+                                className="flex items-center gap-3 flex-1 cursor-pointer active:scale-[0.99] transition"
+                                onClick={() => !snapshot.isDragging && toggleFavorite(code)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') toggleFavorite(code);
+                                }}
+                                aria-label={
+                                  isFavorite
+                                    ? `${t('favorites.removeFavorite')} ${code}`
+                                    : `${t('favorites.addFavorite')} ${code}`
+                                }
+                              >
                                 {/* 收藏星號 */}
-                                <div
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFavorite(code);
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                      e.stopPropagation();
-                                      toggleFavorite(code);
-                                    }
-                                  }}
-                                  className="hover:scale-110 transition cursor-pointer"
-                                  aria-label={
-                                    isFavorite
-                                      ? `${t('favorites.removeFavorite')} ${code}`
-                                      : `${t('favorites.addFavorite')} ${code}`
-                                  }
-                                >
+                                <div className="hover:scale-110 transition">
                                   <Star
                                     className={
                                       isFavorite
@@ -324,17 +312,25 @@ export default function Favorites() {
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2">
+                              {/* 右側：點擊 → 進入單幣別換算 */}
+                              <div
+                                className="flex items-center gap-2 cursor-pointer px-2 py-1 -mr-2 rounded-lg hover:bg-primary/10 active:scale-[0.97] transition"
+                                onClick={() => !snapshot.isDragging && handleFavoriteClick(code)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') handleFavoriteClick(code);
+                                }}
+                                aria-label={`${t('favorites.goToConvert')} ${code}`}
+                              >
                                 {trend[code] === 'up' && (
                                   <span className="text-success text-xs">↑</span>
                                 )}
                                 {trend[code] === 'down' && (
                                   <span className="text-destructive text-xs">↓</span>
                                 )}
-                                <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 group-hover:text-primary transition">
-                                  {isFavorite
-                                    ? t('favorites.clickToConvert')
-                                    : t('favorites.dragToFavorite')}
+                                <span className="text-[10px] font-bold opacity-60 group-hover:opacity-100 group-hover:text-primary transition">
+                                  {t('favorites.clickToConvert')}
                                 </span>
                               </div>
                             </div>

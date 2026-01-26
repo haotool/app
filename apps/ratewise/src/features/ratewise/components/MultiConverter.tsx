@@ -165,14 +165,17 @@ export const MultiConverter = ({
        * SSOT 設計規範：中性變體（所有轉換器一致）
        * @see design-tokens.ts - quickAmountButtonTokens
        *
+       * 響應式設計（行動端單行水平滾動）：
+       * - overflow-x-auto：內容溢出時啟用水平滾動
+       * - scrollbar-hide：隱藏滾動條保持簡潔美觀
+       * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
+       *
        * 互動狀態：
        * - 預設：抬升表面背景 + 柔和文字
        * - 懸停：主色調淡化 + 主色文字 + 微幅放大
        * - 按壓：主色調加深 + 縮放回饋
-       *
-       * 無障礙：支援裝置觸覺回饋 (30ms)
        */}
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
         {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
           (amount: number) => (
             <button
@@ -184,7 +187,7 @@ export const MultiConverter = ({
                 }
               }}
               className="
-                px-3 py-1.5 rounded-xl text-sm font-semibold
+                flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
                 bg-surface-elevated text-text/70
                 hover:bg-primary/10 hover:text-primary
                 active:bg-primary/20 active:text-primary

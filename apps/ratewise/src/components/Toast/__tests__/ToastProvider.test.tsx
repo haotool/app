@@ -160,12 +160,12 @@ describe('ToastProvider', () => {
     // Trigger success toast
     fireEvent.click(screen.getByTestId('success-btn'));
 
-    // Should have gradient background for success type
-    const toast = container.querySelector('[class*="bg-gradient-to-r"]');
+    // Should have backdrop-blur for modern design
+    const toast = container.querySelector('[class*="backdrop-blur"]');
     expect(toast).toBeInTheDocument();
   });
 
-  it('applies primary gradient for success type', () => {
+  it('applies primary background for success type', () => {
     const { container } = render(
       <ToastProvider>
         <TestComponent />
@@ -174,12 +174,12 @@ describe('ToastProvider', () => {
 
     fireEvent.click(screen.getByTestId('success-btn'));
 
-    // Success toast should have from-primary gradient
-    const toast = container.querySelector('[class*="from-primary"]');
+    // Success toast should have bg-primary background (v5.0: 淡化主色設計)
+    const toast = container.querySelector('[class*="bg-primary"]');
     expect(toast).toBeInTheDocument();
   });
 
-  it('applies destructive gradient for error type', () => {
+  it('applies destructive background for error type', () => {
     const { container } = render(
       <ToastProvider>
         <TestComponent />
@@ -188,8 +188,8 @@ describe('ToastProvider', () => {
 
     fireEvent.click(screen.getByTestId('error-btn'));
 
-    // Error toast should have from-destructive gradient
-    const toast = container.querySelector('[class*="from-destructive"]');
+    // Error toast should have bg-destructive background (v5.0: 淡化主色設計)
+    const toast = container.querySelector('[class*="bg-destructive"]');
     expect(toast).toBeInTheDocument();
   });
 
