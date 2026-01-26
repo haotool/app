@@ -232,15 +232,16 @@ describe('性能測試', () => {
 });
 
 describe('SSOT Design Tokens', () => {
-  it('使用完整 AppLayout 結構作為頁面容器（h-dvh + flex）', () => {
+  it('僅渲染內容骨架，不包含 AppLayout 結構', () => {
     const { container } = render(<SkeletonLoader />);
-    // v2.0.0: SkeletonLoader 現在使用完整 AppLayout 結構
-    // 包含 Header（行動端）、主內容區、BottomNavigation（行動端）
+    // v2.1.0: SkeletonLoader 移除 AppLayout 結構，避免 Hydration mismatch
+    // 作為 ClientOnly fallback，僅渲染內容區域骨架
     const rootDiv = container.firstChild as HTMLElement;
-    expect(rootDiv).toHaveClass('h-dvh');
-    expect(rootDiv).toHaveClass('flex');
-    expect(rootDiv).toHaveClass('flex-col');
+    // 根元素應為簡單的 div，使用 p-4 padding
+    expect(rootDiv).toHaveClass('p-4');
     expect(rootDiv.getAttribute('role')).toBe('status');
+    // 不應包含 h-dvh、flex 等 AppLayout 專屬類
+    expect(rootDiv).not.toHaveClass('h-dvh');
   });
 
   it('使用 skeleton-card 作為卡片容器', () => {
