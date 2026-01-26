@@ -915,6 +915,20 @@ body {
     display: none;
   }
 
+  /**
+   * 隱藏水平滾動條（用於快速金額按鈕列）
+   *
+   * @description 允許水平滾動但隱藏滾動條視覺元素
+   * @see SingleConverter.tsx 快速金額按鈕
+   */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   /* 安全區域適配 */
   .pt-safe-top {
     padding-top: env(safe-area-inset-top, 0);

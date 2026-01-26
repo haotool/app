@@ -2,13 +2,20 @@
  * Toast Provider - Application Toast Notification System
  * Toast 提供者 - 應用程式 Toast 通知系統
  *
- * @description Modern toast notification system with SSOT design tokens.
- *              Supports success, error, and info types with smooth animations.
- *              位置：底部導航列上方，避免遮擋內容。
- *              使用 SSOT 設計 Token 的現代化 Toast 通知系統。
+ * @description 現代化 Toast 通知系統，使用 SSOT 設計 Token。
+ *              支援 success、error、info 類型，具有流暢動畫效果。
  *
- * @see [context7:/reactjs/react.dev:toast-notification:2026-01-25]
- * @version 4.0.0
+ * 位置策略（響應式設計）：
+ * - 桌面端：右上角（不干擾主要內容區域）
+ * - 行動端：右上角（避免遮擋底部「加入歷史記錄」按鈕）
+ *
+ * 寬度策略：
+ * - 使用 w-fit 自動適應內容寬度
+ * - max-width 限制最大寬度為 90vw
+ *
+ * @see [web.dev/patterns/components/toast] Toast 最佳實踐
+ * @see [logrocket.com/ux-design/toast-notifications] UX 設計指南
+ * @version 5.0.0 - 右上角定位 + 自適應寬度
  */
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
@@ -34,8 +41,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {/* Toast container - bottom center, above bottom navigation */}
-      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[60] flex flex-col gap-2 pointer-events-none">
+      {/* Toast 容器 - 右上角定位，避免遮擋底部按鈕 */}
+      <div className="fixed top-4 right-4 z-[60] flex flex-col items-end gap-2 pointer-events-none">
         {toasts.map((toast) => (
           <Toast key={toast.id} {...toast} onClose={() => removeToast(toast.id)} />
         ))}
@@ -127,28 +134,28 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
       data-testid="toast"
       className={`
         pointer-events-auto
-        min-w-[180px] max-w-[280px]
-        overflow-hidden rounded-full
+        w-fit max-w-[min(25ch,90vw)]
+        overflow-hidden rounded-2xl
         bg-gradient-to-r ${styles.gradient}
         shadow-lg shadow-primary/20
         backdrop-blur-md
         transform transition-all duration-300 ease-out
         ${
           isVisible && !isExiting
-            ? 'translate-y-0 opacity-100 scale-100'
-            : 'translate-y-4 opacity-0 scale-95'
+            ? 'translate-x-0 opacity-100 scale-100'
+            : 'translate-x-4 opacity-0 scale-95'
         }
       `}
     >
-      <div className="flex items-center gap-2.5 px-4 py-2.5">
-        {/* Icon with subtle background */}
+      <div className="flex items-center gap-2 px-3.5 py-2">
+        {/* 圖示 - 較小的圓形背景 */}
         <div
-          className={`flex-shrink-0 w-7 h-7 rounded-full ${styles.iconBg} ${styles.text} flex items-center justify-center`}
+          className={`flex-shrink-0 w-6 h-6 rounded-full ${styles.iconBg} ${styles.text} flex items-center justify-center`}
         >
           {styles.icon}
         </div>
-        {/* Message */}
-        <span className={`text-sm font-semibold ${styles.text} whitespace-nowrap`}>{message}</span>
+        {/* 訊息文字 - 自動換行 */}
+        <span className={`text-sm font-semibold ${styles.text}`}>{message}</span>
       </div>
     </div>
   );

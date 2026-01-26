@@ -27,6 +27,7 @@ const zhTW = {
 
   // Navigation
   nav: {
+    mainNavigation: '主導覽列',
     singleCurrency: '單幣別',
     multiCurrency: '多幣別',
     favorites: '收藏',

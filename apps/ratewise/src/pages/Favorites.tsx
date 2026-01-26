@@ -250,17 +250,11 @@ export default function Favorites() {
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
-                              style={{
-                                ...provided.draggableProps.style,
-                                // 優化拖曳動畫 - 彈簧效果
-                                transition: snapshot.isDragging
-                                  ? 'none'
-                                  : 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
-                              }}
+                              style={provided.draggableProps.style}
                               className={`card p-4 flex items-center justify-between group ${
                                 snapshot.isDragging
                                   ? 'shadow-2xl scale-[1.02] bg-surface ring-2 ring-primary/40 z-50'
-                                  : 'hover:shadow-md cursor-pointer active:scale-[0.99] transition-all duration-200'
+                                  : 'hover:shadow-md cursor-pointer active:scale-[0.99]'
                               }`}
                               onClick={() => !snapshot.isDragging && handleFavoriteClick(code)}
                               role="button"

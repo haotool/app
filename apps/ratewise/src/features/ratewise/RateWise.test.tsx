@@ -136,8 +136,9 @@ describe('RateWise Component', () => {
     it('updates amount when quick button is clicked', async () => {
       renderWithProviders(<RateWise />);
 
-      const quickButton = screen.getByText('5,000');
-      fireEvent.click(quickButton);
+      // 選擇第一個 '5,000' 按鈕（來源貨幣的快速金額）
+      const quickButtons = screen.getAllByText('5,000');
+      fireEvent.click(quickButtons[0]!);
 
       await waitFor(() => {
         const amountInput = screen.getByTestId('amount-input');
@@ -339,14 +340,14 @@ describe('RateWise Component', () => {
 
       const [fromSelect, toSelect] = screen.getAllByRole('combobox') as HTMLSelectElement[];
       expect(fromSelect).toHaveValue('TWD');
-      expect(toSelect).toHaveValue('USD');
+      expect(toSelect).toHaveValue('JPY'); // 預設目標貨幣已更新為日圓（台灣人最熱門旅遊目的地）
 
       const swapButton = screen.getByRole('button', { name: '交換幣別' });
       fireEvent.click(swapButton);
 
       await waitFor(() => {
         const [updatedFrom, updatedTo] = screen.getAllByRole('combobox') as HTMLSelectElement[];
-        expect(updatedFrom).toHaveValue('USD');
+        expect(updatedFrom).toHaveValue('JPY');
         expect(updatedTo).toHaveValue('TWD');
       });
     });

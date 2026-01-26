@@ -27,6 +27,7 @@ const en = {
 
   // Navigation
   nav: {
+    mainNavigation: 'Main Navigation',
     singleCurrency: 'Single',
     multiCurrency: 'Multi',
     favorites: 'Favorites',

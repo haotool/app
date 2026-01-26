@@ -244,48 +244,20 @@ const RateWise = () => {
             </div>
           </section>
 
-          {/* 資料來源與更新時間區塊 */}
+          {/* 資料來源與更新時間區塊 - 現代化精簡設計 */}
           {!ratesLoading && lastUpdate && (
-            <section>
-              {/* 匯率來源標籤 - 現代化 pill 設計 */}
-              <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+            <section className="text-center">
+              <div className="inline-flex items-center gap-2 text-[10px] text-text-muted/60">
                 <a
                   href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  className="hover:text-primary transition-colors"
                 >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2.5}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span className="font-medium">臺灣銀行牌告</span>
+                  臺灣銀行牌告
                 </a>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-elevated text-text-muted">
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2.5}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span className="font-medium">{formattedLastUpdate}</span>
-                </span>
+                <span>·</span>
+                <span>{formattedLastUpdate}</span>
               </div>
             </section>
           )}

@@ -94,7 +94,7 @@ export function BottomNavigation() {
         md:hidden
         pb-[env(safe-area-inset-bottom,0px)]
       "
-      aria-label={t('nav.singleCurrencyFull')}
+      aria-label={t('nav.mainNavigation')}
     >
       <div className="flex h-14 max-w-md mx-auto relative px-4">
         {navItems.map((item) => {

@@ -1,30 +1,58 @@
+/**
+ * 貨幣定義 (SSOT)
+ *
+ * @description 所有支援的貨幣定義，順序基於台灣人旅遊熱門目的地。
+ *
+ * 資料來源：2024-2025 台灣出境旅遊統計
+ * 1. 日本（第一名）
+ * 2. 南韓
+ * 3. 中國大陸
+ * 4. 越南
+ * 5. 泰國
+ * 6. 香港
+ * 7. 菲律賓
+ * 8. 馬來西亞
+ * 9. 新加坡
+ * 10. 澳門（使用港幣）
+ *
+ * @see https://www.businessweekly.com.tw/business/blog/3019355
+ * @updated 2026-01-26 - 依據台灣人旅遊熱門目的地重新排序
+ */
 export const CURRENCY_DEFINITIONS = {
+  // 基準貨幣
   TWD: { name: '新台幣', flag: '🇹🇼', symbol: 'NT$', decimals: 2 },
-  USD: { name: '美元', flag: '🇺🇸', symbol: '$', decimals: 2 },
-  HKD: { name: '港幣', flag: '🇭🇰', symbol: 'HK$', decimals: 2 },
-  GBP: { name: '英鎊', flag: '🇬🇧', symbol: '£', decimals: 2 },
-  AUD: { name: '澳幣', flag: '🇦🇺', symbol: 'A$', decimals: 2 },
-  CAD: { name: '加幣', flag: '🇨🇦', symbol: 'C$', decimals: 2 },
-  SGD: { name: '新加坡幣', flag: '🇸🇬', symbol: 'S$', decimals: 2 },
-  CHF: { name: '瑞士法郎', flag: '🇨🇭', symbol: 'CHF', decimals: 2 },
+  // 台灣人旅遊熱門目的地 (依據 2024-2025 出境統計排序)
   JPY: { name: '日圓', flag: '🇯🇵', symbol: '¥', decimals: 0 },
-  EUR: { name: '歐元', flag: '🇪🇺', symbol: '€', decimals: 2 },
   KRW: { name: '韓元', flag: '🇰🇷', symbol: '₩', decimals: 0 },
   CNY: { name: '人民幣', flag: '🇨🇳', symbol: '¥', decimals: 2 },
-  // 新增東南亞與大洋洲幣別（與台灣銀行牌告匯率同步）
-  NZD: { name: '紐元', flag: '🇳🇿', symbol: 'NZ$', decimals: 2 },
-  THB: { name: '泰銖', flag: '🇹🇭', symbol: '฿', decimals: 2 },
-  PHP: { name: '菲律賓披索', flag: '🇵🇭', symbol: '₱', decimals: 2 },
-  IDR: { name: '印尼盾', flag: '🇮🇩', symbol: 'Rp', decimals: 0 },
   VND: { name: '越南盾', flag: '🇻🇳', symbol: '₫', decimals: 0 },
+  THB: { name: '泰銖', flag: '🇹🇭', symbol: '฿', decimals: 2 },
+  HKD: { name: '港幣', flag: '🇭🇰', symbol: 'HK$', decimals: 2 },
+  PHP: { name: '菲律賓披索', flag: '🇵🇭', symbol: '₱', decimals: 2 },
   MYR: { name: '馬來幣', flag: '🇲🇾', symbol: 'RM', decimals: 2 },
+  SGD: { name: '新加坡幣', flag: '🇸🇬', symbol: 'S$', decimals: 2 },
+  // 其他主要貨幣 (依據全球外匯交易量排序)
+  USD: { name: '美元', flag: '🇺🇸', symbol: '$', decimals: 2 },
+  EUR: { name: '歐元', flag: '🇪🇺', symbol: '€', decimals: 2 },
+  GBP: { name: '英鎊', flag: '🇬🇧', symbol: '£', decimals: 2 },
+  CHF: { name: '瑞士法郎', flag: '🇨🇭', symbol: 'CHF', decimals: 2 },
+  AUD: { name: '澳幣', flag: '🇦🇺', symbol: 'A$', decimals: 2 },
+  CAD: { name: '加幣', flag: '🇨🇦', symbol: 'C$', decimals: 2 },
+  NZD: { name: '紐元', flag: '🇳🇿', symbol: 'NZ$', decimals: 2 },
+  IDR: { name: '印尼盾', flag: '🇮🇩', symbol: 'Rp', decimals: 0 },
 } as const;
 
 export const DEFAULT_FROM_CURRENCY = 'TWD';
-export const DEFAULT_TO_CURRENCY = 'USD';
+export const DEFAULT_TO_CURRENCY = 'JPY'; // 日本為台灣人最熱門旅遊目的地
 export const DEFAULT_BASE_CURRENCY = 'TWD';
 
-export const DEFAULT_FAVORITES = ['TWD', 'USD', 'JPY', 'KRW'] as const;
+/**
+ * 預設收藏貨幣 (SSOT)
+ *
+ * @description 基於台灣人旅遊熱門目的地排序
+ *              日本、韓國、越南、泰國為前 5 名目的地
+ */
+export const DEFAULT_FAVORITES = ['JPY', 'KRW', 'VND', 'THB', 'HKD', 'USD'] as const;
 
 // 各貨幣常見兌換金額（基於旅遊者和商務人士實際使用習慣）
 export const CURRENCY_QUICK_AMOUNTS = {

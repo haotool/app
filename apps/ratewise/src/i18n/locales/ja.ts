@@ -27,6 +27,7 @@ const ja = {
 
   // Navigation
   nav: {
+    mainNavigation: 'メインナビゲーション',
     singleCurrency: '単一',
     multiCurrency: '複数',
     favorites: 'お気に入り',

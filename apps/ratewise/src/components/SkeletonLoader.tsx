@@ -62,77 +62,62 @@ export const SkeletonLoader = () => {
       </div>
 
       <div className="mx-auto max-w-md space-y-4">
-        {/* 匯率顯示卡片骨架 - 對應 RateCard */}
-        <div className="skeleton-card p-4 space-y-3">
+        {/* 來源貨幣輸入骨架 - 對應 SingleConverter 上半部 */}
+        <div className="space-y-3">
+          <div className="skeleton-shimmer h-4 w-20 rounded" />
+          <div className="relative">
+            {/* 貨幣選擇器 + 金額輸入 */}
+            <div className="skeleton-shimmer h-14 w-full rounded-2xl" />
+          </div>
+          {/* 快速金額按鈕 - 水平排列 */}
+          <div className="flex gap-2 overflow-hidden">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-xl" />
+            ))}
+          </div>
+        </div>
+
+        {/* 匯率卡片骨架 - 對應匯率顯示區塊 */}
+        <div className="skeleton-card rounded-xl p-4 space-y-3">
           {/* 匯率類型切換器 */}
           <div className="flex justify-center">
-            <div className="skeleton-shimmer h-7 w-32 rounded-full" />
+            <div className="skeleton-shimmer h-7 w-28 rounded-full" />
           </div>
-
           {/* 主匯率顯示 */}
-          <div className="text-center space-y-2 py-4">
-            <div className="skeleton-shimmer h-8 w-48 mx-auto rounded-lg" />
-            <div className="skeleton-shimmer h-5 w-36 mx-auto rounded" />
+          <div className="text-center space-y-2 py-3">
+            <div className="skeleton-shimmer h-7 w-52 mx-auto rounded-lg" />
+            <div className="skeleton-shimmer h-4 w-40 mx-auto rounded" />
           </div>
-
           {/* 迷你趨勢圖區域 */}
           <div className="skeleton-bg h-20 rounded-xl" />
         </div>
 
-        {/* 貨幣選擇器骨架 - From */}
-        <div className="skeleton-card p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="skeleton-shimmer w-10 h-10 rounded-full" />
-              <div className="space-y-1.5">
-                <div className="skeleton-shimmer h-5 w-16 rounded" />
-                <div className="skeleton-shimmer h-4 w-24 rounded" />
-              </div>
-            </div>
-            <div className="skeleton-shimmer h-4 w-4 rounded" />
-          </div>
-
-          {/* 金額輸入區域 */}
-          <div className="skeleton-shimmer h-14 w-full rounded-2xl" />
-
-          {/* 快速金額按鈕 */}
-          <div className="flex gap-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="skeleton-shimmer h-8 flex-1 rounded-lg" />
-            ))}
-          </div>
-        </div>
-
         {/* 交換按鈕骨架 */}
-        <div className="flex justify-center -my-1">
-          <div className="skeleton-shimmer-accent w-10 h-10 rounded-full" />
+        <div className="flex justify-center">
+          <div className="skeleton-shimmer-accent w-11 h-11 rounded-full" />
         </div>
 
-        {/* 貨幣選擇器骨架 - To */}
-        <div className="skeleton-card p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="skeleton-shimmer w-10 h-10 rounded-full" />
-              <div className="space-y-1.5">
-                <div className="skeleton-shimmer h-5 w-16 rounded" />
-                <div className="skeleton-shimmer h-4 w-24 rounded" />
-              </div>
-            </div>
-            <div className="skeleton-shimmer h-4 w-4 rounded" />
+        {/* 目標貨幣輸入骨架 - 對應 SingleConverter 下半部 */}
+        <div className="space-y-3">
+          <div className="skeleton-shimmer h-4 w-20 rounded" />
+          <div className="relative">
+            {/* 貨幣選擇器 + 金額輸出 */}
+            <div className="skeleton-shimmer-accent h-14 w-full rounded-2xl" />
           </div>
-
-          {/* 結果顯示區域 */}
-          <div className="skeleton-shimmer-accent h-14 w-full rounded-2xl" />
-        </div>
-
-        {/* 常用貨幣區域骨架 */}
-        <div className="skeleton-card p-4 space-y-3">
-          <div className="skeleton-shimmer h-4 w-24 rounded" />
-          <div className="flex gap-2 flex-wrap">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="skeleton-shimmer h-8 w-16 rounded-lg" />
+          {/* 快速金額按鈕 - 水平排列 */}
+          <div className="flex gap-2 overflow-hidden">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-xl" />
             ))}
           </div>
+        </div>
+
+        {/* 加入歷史記錄按鈕骨架 */}
+        <div className="skeleton-shimmer-accent h-12 w-full rounded-xl" />
+
+        {/* 資料來源骨架 - 對應底部小字 */}
+        <div className="flex justify-center">
+          <div className="skeleton-shimmer h-3 w-40 rounded" />
         </div>
       </div>
 
