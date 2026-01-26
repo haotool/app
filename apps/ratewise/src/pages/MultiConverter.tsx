@@ -110,7 +110,7 @@ export default function MultiConverter() {
   }
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar pb-32">
+    <div className="min-h-full">
       <div className="px-5 py-6 max-w-md mx-auto">
         {/* 多幣別換算區塊 - 簡約風格（標題已移除，由底部導航識別） */}
         <section className="mb-6">

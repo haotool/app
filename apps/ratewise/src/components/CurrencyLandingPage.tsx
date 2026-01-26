@@ -96,8 +96,8 @@ export function CurrencyLandingPage({
       <SEOHelmet {...seoProps} />
 
       {/* Main container - PWA optimized with safe area handling */}
-      <main className="h-full overflow-y-auto no-scrollbar">
-        <div className="px-4 sm:px-6 py-6 pb-32 max-w-3xl mx-auto">
+      <main className="min-h-full">
+        <div className="px-4 sm:px-6 py-6 max-w-3xl mx-auto">
           {/* Back Navigation */}
           <Link
             to="/"

@@ -4,9 +4,10 @@
  * 統一所有頁面的內容區域佈局，確保視覺一致性。
  * 使用 design-tokens.ts 中的 pageLayoutTokens 作為 SSOT。
  *
- * 設計原理：
- * - 外層容器：全高度滾動區域，隱藏捲軸，底部留白避免被導覽列遮蓋
+ * 設計原理（2025 最佳實踐）：
+ * - 外層容器：min-h-full（不重複 overflow，由 AppLayout 統一處理滾動）
  * - 內容區域：水平內距 20px、垂直內距 24px、最大寬度 448px
+ * - 底部留白：由 AppLayout pb-[calc(56px+safe-area)] 統一處理
  * - 支援自定義變體：default (標準)、full (滿版)、centered (置中)
  *
  * @example
@@ -34,8 +35,10 @@
  * ```
  *
  * @see src/config/design-tokens.ts - pageLayoutTokens SSOT
+ * @see AppLayout.tsx - 外層滾動容器
  * @created 2026-01-25
- * @version 1.0.0
+ * @updated 2026-01-26 - 修正捲軸跑版問題
+ * @version 2.0.0
  */
 
 import React from 'react';
@@ -53,7 +56,10 @@ export interface PageContainerProps {
   padding?: PageContainerPadding;
   /** 自定義類別 */
   className?: string;
-  /** 是否顯示底部留白 (預設 true，適用於有底部導覽的頁面) */
+  /**
+   * 是否顯示底部留白
+   * @deprecated 已由 AppLayout 統一處理，此參數已無作用
+   */
   hasBottomNav?: boolean;
   /** 作為 section 還是 div */
   as?: 'div' | 'section' | 'article';
@@ -61,10 +67,12 @@ export interface PageContainerProps {
 
 /**
  * 取得容器類別
+ *
+ * @description 使用 min-h-full 確保內容至少填滿視口，
+ *              滾動由 AppLayout 統一處理，避免雙重滾動問題
  */
-function getContainerClasses(hasBottomNav: boolean): string {
-  const { container } = pageLayoutTokens;
-  return `${container.base} ${hasBottomNav ? container.bottomPadding : ''}`;
+function getContainerClasses(): string {
+  return pageLayoutTokens.container.className;
 }
 
 /**
@@ -100,11 +108,11 @@ export function PageContainer({
   variant = 'default',
   padding = 'default',
   className,
-  hasBottomNav = true,
+  hasBottomNav: _hasBottomNav = true, // deprecated, kept for backwards compatibility
   as: Component = 'div',
 }: PageContainerProps) {
   return (
-    <div className={getContainerClasses(hasBottomNav)}>
+    <div className={getContainerClasses()}>
       <Component className={getContentClasses(variant, padding, className)}>{children}</Component>
     </div>
   );

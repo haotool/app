@@ -178,7 +178,7 @@ export default function Favorites() {
   }
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar pb-32">
+    <div className="min-h-full">
       <div className="px-5 py-6 max-w-md mx-auto">
         {/* Tab 切換區塊 - 參考 Settings 語言切換風格 */}
         <section className="mb-6">

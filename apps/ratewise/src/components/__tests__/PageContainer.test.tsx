@@ -28,24 +28,27 @@ describe('PageContainer Component', () => {
       expect(screen.getByText('Test content')).toBeInTheDocument();
     });
 
-    it('預設應該有底部留白', () => {
+    it('應該使用 min-h-full 容器類別', () => {
       const { container } = render(
         <PageContainer>
           <p>Content</p>
         </PageContainer>,
       );
       const outerDiv = container.firstChild as HTMLElement;
-      expect(outerDiv.className).toContain('pb-32');
+      // v2.0.0: 改用 min-h-full，底部留白由 AppLayout 統一處理
+      expect(outerDiv.className).toContain('min-h-full');
     });
 
-    it('hasBottomNav=false 時不應該有底部留白', () => {
+    it('hasBottomNav 參數已廢棄但保持向後相容', () => {
+      // v2.0.0: hasBottomNav 參數已廢棄，由 AppLayout 統一處理底部留白
       const { container } = render(
         <PageContainer hasBottomNav={false}>
           <p>Content</p>
         </PageContainer>,
       );
       const outerDiv = container.firstChild as HTMLElement;
-      expect(outerDiv.className).not.toContain('pb-32');
+      // 無論 hasBottomNav 為何值，都使用相同的 min-h-full 類別
+      expect(outerDiv.className).toContain('min-h-full');
     });
   });
 

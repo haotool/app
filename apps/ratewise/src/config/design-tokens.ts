@@ -483,22 +483,28 @@ export const navigationTokens = {
  * 統一所有頁面的外層容器與內容區域間距配置。
  * 確保 Settings、MultiConverter、Favorites、SingleConverter 等頁面視覺一致性。
  *
- * 設計原理：
- * - 外層容器：全高度滾動區域，隱藏捲軸，底部留白避免被導覽列遮蓋
+ * 設計原理（2025 最佳實踐）：
+ * - 外層容器：min-h-full（不重複 overflow，由 AppLayout 統一處理滾動）
  * - 內容區域：水平內距 20px (px-5)，垂直內距 24px (py-6)，最大寬度 448px (max-w-md)
  * - 區塊間距：各區塊使用 mb-6 分隔，卡片內距 p-4
+ * - 底部留白：由 AppLayout pb-[calc(56px+safe-area)] 統一處理
  *
+ * 避免問題：
+ * - 雙重滾動（nested overflow-y-auto）
+ * - 跑版（h-full + pb-32 導致超出視口）
+ *
+ * @see AppLayout.tsx - 外層滾動容器
+ * @see https://web.dev/viewport-units/ - 動態視口高度最佳實踐
  * @see Settings.tsx, MultiConverter.tsx, Favorites.tsx - 參考實作
  * @created 2026-01-25
- * @version 1.0.0
+ * @updated 2026-01-26 - 修正捲軸跑版問題
+ * @version 2.0.0
  */
 export const pageLayoutTokens = {
-  /** 外層滾動容器 */
+  /** 外層頁面容器（不處理滾動，由 AppLayout 統一管理） */
   container: {
-    base: 'h-full overflow-y-auto no-scrollbar',
-    bottomPadding: 'pb-32',
     /** 完整類別組合 */
-    className: 'h-full overflow-y-auto no-scrollbar pb-32',
+    className: 'min-h-full',
   },
   /** 內容區域 */
   content: {

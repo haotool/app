@@ -36,7 +36,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar pb-32">
+    <div className="min-h-full">
       <div className="px-5 py-6 max-w-md mx-auto">
         {/* 介面風格區塊 */}
         <section className="mb-8">

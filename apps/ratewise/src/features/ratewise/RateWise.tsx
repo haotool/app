@@ -193,12 +193,15 @@ const RateWise = () => {
 
       {/* 頁面主容器
        *
-       * SSOT 頁面佈局規範：
-       * - 外層容器：h-full overflow-y-auto no-scrollbar pb-32
+       * SSOT 頁面佈局規範（2025 最佳實踐）：
+       * - 外層容器：min-h-full（不使用 overflow，由 AppLayout 處理）
        * - 內容區域：px-5 py-6 max-w-md mx-auto
-       * @see design-tokens.ts - pageLayoutTokens
+       * - 移除 pb-32（AppLayout 已有 pb-[calc(56px+safe-area)]）
+       *
+       * @see AppLayout.tsx - 外層滾動容器
+       * @see https://web.dev/viewport-units/ - 動態視口高度
        */}
-      <div ref={mainRef} className="h-full overflow-y-auto no-scrollbar pb-32">
+      <div ref={mainRef} className="min-h-full">
         <div className="px-5 py-6 max-w-md mx-auto">
           {/* 載入狀態提示 */}
           {ratesLoading && (

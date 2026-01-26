@@ -22,7 +22,7 @@ export default function ThemeShowcase() {
   const { style, setStyle, isLoaded } = useAppTheme();
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar pb-32">
+    <div className="min-h-full">
       <div className="px-5 py-6 max-w-2xl mx-auto">
         {/* 返回按鈕 */}
         <Link
