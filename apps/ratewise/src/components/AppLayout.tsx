@@ -33,6 +33,7 @@ import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
 import { ToastProvider } from './Toast';
 import { getResolvedLanguage } from '../i18n';
+import { navigationTokens } from '../config/design-tokens';
 
 /**
  * Logo 組件 - 參考 ParkKeeper 的 SVG Logo 風格
@@ -103,11 +104,15 @@ function Header() {
   return (
     <header
       className="
-        h-12 px-4 pt-safe-top z-30 shrink-0
+        px-4 z-30 shrink-0
         bg-background/80 backdrop-blur-xl
         border-b border-black/[0.03]
         flex items-center
       "
+      style={{
+        height: navigationTokens.header.heightWithSafeArea,
+        paddingTop: navigationTokens.safeArea.top,
+      }}
     >
       <div className="flex justify-between items-center max-w-md mx-auto w-full">
         {/* 品牌 Logo + 標題 */}

@@ -91,7 +91,22 @@ describe('Layout Component', () => {
 
       const main = screen.getByRole('main');
       expect(main).toBeInTheDocument();
-      expect(main).toHaveClass('min-h-screen');
+      expect(main).toHaveClass('min-h-full');
+    });
+
+    it('應該提供可捲動容器以支援長內容頁面', async () => {
+      const { Layout } = await import('../Layout');
+
+      const { container } = render(
+        <Layout>
+          <div>Content</div>
+        </Layout>,
+      );
+
+      const scrollContainer = container.querySelector('[data-scroll-container="layout"]');
+      expect(scrollContainer).toBeInTheDocument();
+      expect(scrollContainer).toHaveClass('h-dvh');
+      expect(scrollContainer).toHaveClass('overflow-y-auto');
     });
   });
 

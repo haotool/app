@@ -63,17 +63,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <React.StrictMode>
       <HelmetProvider context={helmetContext}>
         <ErrorBoundary>
-          {/* Main Content */}
-          <main className="min-h-screen [overscroll-behavior-y:contain]">
-            {/* [SEO Fix 2025-11-26] 移除 Layout 的 sr-only H1，讓各頁面自定義語義 H1
-                依據：[Google SEO Guidelines] 每頁應有唯一的語義 H1
-                參考：[Context7:vite-react-ssg] Head component best practices */}
-            <React.Suspense fallback={<SkeletonLoader />}>{children}</React.Suspense>
-          </main>
+          <div
+            data-scroll-container="layout"
+            className="h-dvh min-h-0 overflow-y-auto overflow-x-hidden"
+          >
+            {/* 主要內容 */}
+            <main className="min-h-full [overscroll-behavior-y:contain]">
+              {/* [SEO Fix 2025-11-26] 移除 Layout 的 sr-only H1，讓各頁面自定義語義 H1
+                  依據：[Google SEO Guidelines] 每頁應有唯一的語義 H1
+                  參考：[Context7:vite-react-ssg] Head component best practices */}
+              <React.Suspense fallback={<SkeletonLoader />}>{children}</React.Suspense>
+            </main>
 
-          {/* Footer - Stage 6: 內部連結結構 (只在桌面版顯示) */}
-          <div className="hidden md:block">
-            <Footer />
+            {/* 頁尾 - Stage 6：內部連結結構（僅桌面版顯示） */}
+            <div className="hidden md:block">
+              <Footer />
+            </div>
           </div>
         </ErrorBoundary>
         {/* PWA 更新通知 - 只在客戶端動態載入（避免 SSR 時 workbox-window 錯誤） */}

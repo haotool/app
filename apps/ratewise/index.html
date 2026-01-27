@@ -203,7 +203,7 @@
         margin: 0 auto;
       }
       .skeleton-header {
-        height: 3rem;
+        height: calc(3rem + env(safe-area-inset-top, 0px));
         padding: env(safe-area-inset-top, 0px) 1rem 0;
         display: flex;
         align-items: center;
