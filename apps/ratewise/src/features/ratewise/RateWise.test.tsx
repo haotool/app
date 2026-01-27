@@ -125,11 +125,11 @@ describe('RateWise Component', () => {
   });
 
   describe('RWD 高度斷點', () => {
-    it('底部資料來源應套用 compact 隱藏類別', async () => {
+    it('底部資料來源應套用 short 隱藏類別', async () => {
       renderWithProviders(<RateWise />);
 
       const infoSection = await screen.findByTestId('ratewise-data-source');
-      expect(infoSection).toHaveClass(breakpointTokens.patterns.compactHidden);
+      expect(infoSection).toHaveClass(breakpointTokens.patterns.shortHidden);
     });
   });
 
