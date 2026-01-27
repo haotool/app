@@ -189,11 +189,59 @@
       .skeleton-page {
         background: var(--sk-bg);
         min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+      .skeleton-main {
+        flex: 1;
+        overflow: hidden;
         padding: 1rem;
       }
-      .skeleton-page > .inner {
+      .skeleton-main > .inner {
         max-width: 28rem;
         margin: 0 auto;
+      }
+      .skeleton-header {
+        height: 3rem;
+        padding: env(safe-area-inset-top, 0px) 1rem 0;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+        background: var(--sk-surface);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+      }
+      .skeleton-header-inner {
+        width: 100%;
+        max-width: 28rem;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+      }
+      .skeleton-bottom-nav {
+        height: 3.5rem;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        border-top: 1px solid rgba(0, 0, 0, 0.03);
+        background: var(--sk-surface);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+      }
+      .skeleton-bottom-nav-inner {
+        height: 3.5rem;
+        max-width: 28rem;
+        margin: 0 auto;
+        padding: 0 1rem;
+        display: flex;
+      }
+      .skeleton-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
       }
       /* Shimmer animation */
       @keyframes skeleton-shimmer {
@@ -391,109 +439,151 @@
     <div id="root">
       <!-- Modern Skeleton matching SkeletonLoader.tsx -->
       <div class="skeleton-page" role="status" aria-live="polite">
-        <div class="inner sk-space-y-4">
-          <!-- 來源貨幣輸入骨架 -->
-          <div class="sk-space-y-3">
-            <div class="skeleton-shimmer sk-rounded" style="height: 1rem; width: 5rem"></div>
-            <div class="skeleton-shimmer sk-rounded-2xl" style="height: 3.5rem; width: 100%"></div>
-            <!-- 快速金額按鈕 -->
-            <div class="sk-flex sk-gap-2" style="overflow: hidden">
-              <div
-                class="skeleton-shimmer sk-rounded-xl"
-                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-              ></div>
-              <div
-                class="skeleton-shimmer sk-rounded-xl"
-                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-              ></div>
-              <div
-                class="skeleton-shimmer sk-rounded-xl"
-                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-              ></div>
-              <div
-                class="skeleton-shimmer sk-rounded-xl"
-                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-              ></div>
-              <div
-                class="skeleton-shimmer sk-rounded-xl"
-                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-              ></div>
-            </div>
+        <header class="skeleton-header">
+          <div class="skeleton-header-inner">
+            <div class="skeleton-shimmer sk-rounded" style="height: 1.75rem; width: 1.75rem"></div>
+            <div class="skeleton-shimmer sk-rounded" style="height: 1rem; width: 9rem"></div>
           </div>
+        </header>
 
-          <!-- 匯率卡片骨架 -->
-          <div class="skeleton-card sk-space-y-3">
+        <main class="skeleton-main">
+          <div class="inner sk-space-y-4">
+            <!-- 來源貨幣輸入骨架 -->
+            <div class="sk-space-y-3">
+              <div class="skeleton-shimmer sk-rounded" style="height: 1rem; width: 5rem"></div>
+              <div
+                class="skeleton-shimmer sk-rounded-2xl"
+                style="height: 3.5rem; width: 100%"
+              ></div>
+              <!-- 快速金額按鈕 -->
+              <div class="sk-flex sk-gap-2" style="overflow: hidden">
+                <div
+                  class="skeleton-shimmer sk-rounded-xl"
+                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+                ></div>
+                <div
+                  class="skeleton-shimmer sk-rounded-xl"
+                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+                ></div>
+                <div
+                  class="skeleton-shimmer sk-rounded-xl"
+                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+                ></div>
+                <div
+                  class="skeleton-shimmer sk-rounded-xl"
+                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+                ></div>
+                <div
+                  class="skeleton-shimmer sk-rounded-xl"
+                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+                ></div>
+              </div>
+            </div>
+
+            <!-- 匯率卡片骨架 -->
+            <div class="skeleton-card sk-space-y-3">
+              <div class="sk-flex sk-justify-center">
+                <div
+                  class="skeleton-shimmer sk-rounded-full"
+                  style="height: 1.75rem; width: 7rem"
+                ></div>
+              </div>
+              <div class="sk-text-center sk-space-y-2 sk-py-3">
+                <div
+                  class="skeleton-shimmer sk-rounded-xl sk-mx-auto"
+                  style="height: 1.75rem; width: 13rem"
+                ></div>
+                <div
+                  class="skeleton-shimmer sk-rounded sk-mx-auto"
+                  style="height: 1rem; width: 10rem"
+                ></div>
+              </div>
+              <div class="skeleton-bg" style="height: 5rem"></div>
+            </div>
+
+            <!-- 交換按鈕骨架 -->
             <div class="sk-flex sk-justify-center">
               <div
-                class="skeleton-shimmer sk-rounded-full"
-                style="height: 1.75rem; width: 7rem"
+                class="skeleton-shimmer-accent sk-rounded-full"
+                style="width: 2.75rem; height: 2.75rem"
               ></div>
             </div>
-            <div class="sk-text-center sk-space-y-2 sk-py-3">
+
+            <!-- 目標貨幣輸入骨架 -->
+            <div class="sk-space-y-3">
+              <div class="skeleton-shimmer sk-rounded" style="height: 1rem; width: 5rem"></div>
               <div
-                class="skeleton-shimmer sk-rounded-xl sk-mx-auto"
-                style="height: 1.75rem; width: 13rem"
+                class="skeleton-shimmer-accent sk-rounded-2xl"
+                style="height: 3.5rem; width: 100%"
               ></div>
-              <div
-                class="skeleton-shimmer sk-rounded sk-mx-auto"
-                style="height: 1rem; width: 10rem"
-              ></div>
+              <!-- 快速金額按鈕 -->
+              <div class="sk-flex sk-gap-2" style="overflow: hidden">
+                <div
+                  class="skeleton-shimmer sk-rounded-xl"
+                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+                ></div>
+                <div
+                  class="skeleton-shimmer sk-rounded-xl"
+                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+                ></div>
+                <div
+                  class="skeleton-shimmer sk-rounded-xl"
+                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+                ></div>
+                <div
+                  class="skeleton-shimmer sk-rounded-xl"
+                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+                ></div>
+                <div
+                  class="skeleton-shimmer sk-rounded-xl"
+                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
+                ></div>
+              </div>
             </div>
-            <div class="skeleton-bg" style="height: 5rem"></div>
-          </div>
 
-          <!-- 交換按鈕骨架 -->
-          <div class="sk-flex sk-justify-center">
-            <div
-              class="skeleton-shimmer-accent sk-rounded-full"
-              style="width: 2.75rem; height: 2.75rem"
-            ></div>
-          </div>
+            <!-- 加入歷史記錄按鈕骨架 -->
+            <div class="skeleton-shimmer-accent sk-rounded-xl" style="height: 3rem"></div>
 
-          <!-- 目標貨幣輸入骨架 -->
-          <div class="sk-space-y-3">
-            <div class="skeleton-shimmer sk-rounded" style="height: 1rem; width: 5rem"></div>
-            <div
-              class="skeleton-shimmer-accent sk-rounded-2xl"
-              style="height: 3.5rem; width: 100%"
-            ></div>
-            <!-- 快速金額按鈕 -->
-            <div class="sk-flex sk-gap-2" style="overflow: hidden">
-              <div
-                class="skeleton-shimmer sk-rounded-xl"
-                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-              ></div>
-              <div
-                class="skeleton-shimmer sk-rounded-xl"
-                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-              ></div>
-              <div
-                class="skeleton-shimmer sk-rounded-xl"
-                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-              ></div>
-              <div
-                class="skeleton-shimmer sk-rounded-xl"
-                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-              ></div>
-              <div
-                class="skeleton-shimmer sk-rounded-xl"
-                style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-              ></div>
+            <!-- 資料來源骨架 -->
+            <div class="sk-flex sk-justify-center">
+              <div class="skeleton-shimmer sk-rounded" style="height: 0.75rem; width: 10rem"></div>
             </div>
           </div>
+          <span class="sr-only">載入匯率資料中...</span>
+        </main>
 
-          <!-- 加入歷史記錄按鈕骨架 -->
-          <div
-            class="skeleton-shimmer-accent sk-rounded-xl"
-            style="height: 3rem; width: 100%"
-          ></div>
-
-          <!-- 資料來源骨架 -->
-          <div class="sk-flex sk-justify-center">
-            <div class="skeleton-shimmer sk-rounded" style="height: 0.75rem; width: 10rem"></div>
+        <nav class="skeleton-bottom-nav">
+          <div class="skeleton-bottom-nav-inner">
+            <div class="skeleton-nav-item">
+              <div
+                class="skeleton-shimmer sk-rounded"
+                style="height: 1.25rem; width: 1.25rem"
+              ></div>
+              <div class="skeleton-shimmer sk-rounded" style="height: 0.5rem; width: 2rem"></div>
+            </div>
+            <div class="skeleton-nav-item">
+              <div
+                class="skeleton-shimmer sk-rounded"
+                style="height: 1.25rem; width: 1.25rem"
+              ></div>
+              <div class="skeleton-shimmer sk-rounded" style="height: 0.5rem; width: 2rem"></div>
+            </div>
+            <div class="skeleton-nav-item">
+              <div
+                class="skeleton-shimmer sk-rounded"
+                style="height: 1.25rem; width: 1.25rem"
+              ></div>
+              <div class="skeleton-shimmer sk-rounded" style="height: 0.5rem; width: 2rem"></div>
+            </div>
+            <div class="skeleton-nav-item">
+              <div
+                class="skeleton-shimmer sk-rounded"
+                style="height: 1.25rem; width: 1.25rem"
+              ></div>
+              <div class="skeleton-shimmer sk-rounded" style="height: 0.5rem; width: 2rem"></div>
+            </div>
           </div>
-        </div>
-        <span class="sr-only">載入匯率資料中...</span>
+        </nav>
       </div>
     </div>
     <script type="module" data-cfasync="false" src="./src/main.tsx"></script>

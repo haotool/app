@@ -35,6 +35,9 @@ function findScrollableParent(element: HTMLElement | null): HTMLElement | null {
 
   let current: HTMLElement | null = element;
   while (current && current !== document.body) {
+    if (current.hasAttribute('data-scroll-container')) {
+      return current;
+    }
     const style = getComputedStyle(current);
     const overflowY = style.overflowY;
     if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
@@ -97,7 +100,22 @@ export function usePullToRefresh(
         // Auto-detect scrollable parent if no explicit scroll container
         scrollContainer = findScrollableParent(container);
       }
-      const currentScrollTop = scrollContainer ? scrollContainer.scrollTop : window.scrollY;
+
+      const bodyOverflowY = getComputedStyle(document.body).overflowY;
+      const htmlOverflowY = getComputedStyle(document.documentElement).overflowY;
+      const canUseWindowScroll = bodyOverflowY !== 'hidden' || htmlOverflowY !== 'hidden';
+
+      const currentScrollTop = scrollContainer
+        ? scrollContainer.scrollTop
+        : canUseWindowScroll
+          ? window.scrollY
+          : null;
+
+      if (currentScrollTop === null) {
+        logger.debug('Pull-to-refresh: no scroll container found, skipping');
+        return;
+      }
+
       logger.debug('Pull-to-refresh: touchstart', {
         scrollTop: currentScrollTop,
         hasScrollContainer: !!scrollContainer,

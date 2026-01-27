@@ -44,6 +44,10 @@
 
     /* Accessibility */
     --nav-touch-target-min: 44px;
+
+    /* Title Gradient Tokens (SSOT) */
+    --color-title-gradient-from: var(--color-text);
+    --color-title-gradient-to: var(--color-primary);
   }
 
   /* ========================================

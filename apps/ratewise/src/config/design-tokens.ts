@@ -733,11 +733,13 @@ export const typographyTokens = {
  * - Mobile-First：預設樣式為行動裝置，使用 min-width 向上擴展
  * - 斷點選擇：基於常見裝置寬度，非任意數值
  * - 內容優先：斷點位置取決於內容需求，而非特定裝置
+ * - 高度斷點：支援小螢幕裝置 (iPhone SE/8) 的垂直空間優化
  *
  * @reference Tailwind CSS Responsive Design
  * @see https://tailwindcss.com/docs/responsive-design
  * @created 2026-01-25
- * @version 1.0.0
+ * @updated 2026-01-27 - 新增高度斷點 (short/tall) 支援小螢幕 RWD
+ * @version 1.1.0
  */
 export const breakpointTokens = {
   /** 斷點定義 (min-width) */
@@ -752,6 +754,11 @@ export const breakpointTokens = {
     xl: { min: '1280px', max: '1535px', class: 'xl:' },
     /** 1536px - 大螢幕桌機 */
     '2xl': { min: '1536px', max: null, class: '2xl:' },
+
+    /** 高度斷點 - 小螢幕裝置 (iPhone SE 568px, iPhone 8 667px) */
+    short: { raw: '(max-height: 600px)', class: 'short:' },
+    /** 高度斷點 - 正常螢幕 (>600px) */
+    tall: { raw: '(min-height: 601px)', class: 'tall:' },
   },
 
   /** 容器最大寬度 */
@@ -777,6 +784,11 @@ export const breakpointTokens = {
     responsiveText: 'text-sm md:text-base lg:text-lg',
     /** 響應式間距 (小→中→大) */
     responsiveSpacing: 'p-4 md:p-6 lg:p-8',
+
+    /** 小螢幕隱藏（高度 ≤600px） */
+    shortHidden: 'short:hidden',
+    /** 正常螢幕才顯示（高度 >600px） */
+    tallOnly: 'hidden tall:flex',
   },
 
   /** 媒體查詢輔助函數 */

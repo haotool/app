@@ -102,7 +102,7 @@ function Header() {
             className="
               text-lg font-black tracking-tight
               bg-clip-text text-transparent
-              bg-gradient-to-r from-[rgb(var(--color-text))] to-[rgb(var(--color-primary))]
+              bg-gradient-to-r from-[rgb(var(--color-title-gradient-from))] to-[rgb(var(--color-title-gradient-to))]
               [-webkit-background-clip:text]
             "
           >
@@ -163,7 +163,10 @@ export function AppLayout() {
              * @see https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-overflow-scrolling
              * @see https://bugs.webkit.org/show_bug.cgi?id=275209
              */}
-            <main className="flex-1 min-h-0 relative overflow-y-scroll overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain">
+            <main
+              data-scroll-container="main"
+              className="flex-1 min-h-0 relative overflow-y-scroll overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"
+            >
               <Outlet />
             </main>
 

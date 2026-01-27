@@ -299,7 +299,7 @@ export const SingleConverter = ({
          * - 懸停：主色調淡化 + 主色文字 + 微幅放大
          * - 按壓：主色調加深 + 縮放回饋
          */}
-        <div className="flex gap-2 mt-2 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
+        <div className="hidden tall:flex gap-2 mt-2 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
           {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
             <button
               key={amount}
@@ -390,7 +390,7 @@ export const SingleConverter = ({
 
           {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
           <div
-            className={`relative w-full h-20 transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] group-hover:h-24 overflow-hidden rounded-b-xl ${
+            className={`relative w-full h-20 short:h-14 transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] group-hover:h-24 short:group-hover:h-16 overflow-hidden rounded-b-xl ${
               showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
@@ -435,7 +435,7 @@ export const SingleConverter = ({
         <div className="relative group/swap">
           {/* 外圍漸層光環 */}
           <div
-            className={`absolute -inset-2 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-full blur-xl transition-all duration-500 ${
+            className={`absolute -inset-2 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-full blur-xl transition-all duration-500 short:hidden ${
               isSwapping
                 ? 'opacity-80 scale-110'
                 : 'opacity-0 group-hover/swap:opacity-40 group-hover/swap:scale-100'
@@ -543,7 +543,7 @@ export const SingleConverter = ({
          * - flex-nowrap：防止按鈕換行
          * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
          */}
-        <div className="flex gap-2 mt-2 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
+        <div className="hidden tall:flex gap-2 mt-2 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
           {quickAmounts.map((amount) => (
             <button
               key={amount}

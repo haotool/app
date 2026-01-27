@@ -123,6 +123,34 @@ describe('usePullToRefresh', () => {
       expect(result.current.pullDistance).toBe(0);
     });
 
+    it('應該在無可用 scroll container 且 body overflow hidden 時不初始化拖拽', () => {
+      const originalBodyOverflow = document.body.style.overflowY;
+      const originalHtmlOverflow = document.documentElement.style.overflowY;
+
+      document.body.style.overflowY = 'hidden';
+      document.documentElement.style.overflowY = 'hidden';
+
+      const { result } = renderHook(() => usePullToRefresh(containerRef, onRefresh));
+
+      act(() => {
+        const touchStartEvent = new TouchEvent('touchstart', {
+          touches: [{ clientY: 100 } as Touch],
+        });
+        container.dispatchEvent(touchStartEvent);
+
+        const touchMoveEvent = new TouchEvent('touchmove', {
+          touches: [{ clientY: 150 } as Touch],
+          cancelable: true,
+        });
+        container.dispatchEvent(touchMoveEvent);
+      });
+
+      expect(result.current.pullDistance).toBe(0);
+
+      document.body.style.overflowY = originalBodyOverflow;
+      document.documentElement.style.overflowY = originalHtmlOverflow;
+    });
+
     it('應該在 isRefreshing 時不初始化拖拽', () => {
       window.scrollY = 0;
 
