@@ -33,9 +33,19 @@ export const LANGUAGE_OPTIONS: { value: SupportedLanguage; label: string; flag: 
   { value: 'ja', label: '日本語', flag: '🇯🇵' },
 ];
 
+/**
+ * i18next resources 配置
+ *
+ * 重要：zh-Hant 必須映射到 zh-TW 翻譯
+ * 因為 index.html 的 lang="zh-Hant"，當 localStorage 無值時，
+ * LanguageDetector 會從 htmlTag 偵測到 zh-Hant
+ *
+ * @reference [context7:/websites/i18next:fallback:2026-01-27]
+ */
 const resources = {
   en: { translation: en },
   'zh-TW': { translation: zhTW },
+  'zh-Hant': { translation: zhTW }, // 映射 zh-Hant → zh-TW 翻譯
   ja: { translation: ja },
 };
 
@@ -98,10 +108,14 @@ void i18n
   .use(initReactI18next)
   .init({
     resources,
-    supportedLngs: ['zh-TW', 'en', 'ja'],
-    // 允許 zh-Hant 等變體通過檢查並映射到 zh-TW
-    nonExplicitSupportedLngs: true,
-    fallbackLng: 'zh-TW',
+    // 明確列出所有支援的語系代碼（包含 zh-Hant 因為 index.html lang="zh-Hant"）
+    supportedLngs: ['zh-TW', 'zh-Hant', 'en', 'ja'],
+    // 語系 fallback 配置：zh-Hant → zh-TW
+    fallbackLng: {
+      'zh-Hant': ['zh-TW'],
+      zh: ['zh-TW'],
+      default: ['zh-TW'],
+    },
     defaultNS: 'translation',
     interpolation: {
       escapeValue: false,
