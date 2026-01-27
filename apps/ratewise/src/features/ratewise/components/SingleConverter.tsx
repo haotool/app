@@ -460,7 +460,7 @@ export const SingleConverter = ({
          */}
         <div
           data-testid="swap-button"
-          className={`relative group/swap ${singleConverterLayoutTokens.swap.compactHidden}`}
+          className={`relative group/swap ${singleConverterLayoutTokens.swap.shortHidden}`}
         >
           {/* 外圍漸層光環 */}
           <div

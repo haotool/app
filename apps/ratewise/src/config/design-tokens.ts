@@ -900,10 +900,10 @@ export const singleConverterLayoutTokens = {
   quickAmounts: {
     base: 'flex gap-2 mt-2 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
     fromVisibility: breakpointTokens.patterns.shortHidden,
-    toVisibility: breakpointTokens.patterns.compactHidden,
+    toVisibility: breakpointTokens.patterns.shortHidden,
   },
   swap: {
-    compactHidden: breakpointTokens.patterns.compactHidden,
+    shortHidden: breakpointTokens.patterns.shortHidden,
   },
   addToHistory: {
     padding: ['py-3.5', 'compact:py-3', 'short:py-2'].join(' '),
