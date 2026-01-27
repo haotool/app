@@ -5,40 +5,11 @@
  * 抑制 React Hydration #418 預期錯誤（SSG + 動態內容固有差異）。
  */
 
-// Filter expected React hydration errors (SSG + dynamic content side effect)
-if (typeof window !== 'undefined') {
-  const originalConsoleError = console.error;
-  console.error = (...args: unknown[]) => {
-    // 檢查是否為 React Hydration #418 錯誤
-    // 錯誤可能是字串或 Error 物件
-    const isHydrationError = args.some((arg) => {
-      if (typeof arg === 'string') {
-        return (
-          arg.includes('Minified React error #418') ||
-          arg.includes('Text content does not match server-rendered HTML') ||
-          arg.includes('Hydration failed because')
-        );
-      }
-      if (arg instanceof Error) {
-        return (
-          arg.message.includes('#418') ||
-          arg.message.includes('Hydration') ||
-          arg.message.includes('Text content does not match')
-        );
-      }
-      return false;
-    });
+// IMPORTANT: This MUST be the first import to suppress hydration warnings
+// before React loads. See suppress-hydration-warning.ts for details.
+import './suppress-hydration-warning';
 
-    if (isHydrationError) {
-      // 這是 SSG 環境下的預期錯誤，不需要顯示在 console
-      // 參考：docs/dev/002_development_reward_penalty_log.md
-      return;
-    }
-    originalConsoleError.apply(console, args);
-  };
-}
-
-// Initialize Trusted Types first (must run before any DOM manipulation)
+// Initialize Trusted Types (must run before any DOM manipulation)
 import './trusted-types-bootstrap';
 
 // Initialize i18n (must be before any React rendering)

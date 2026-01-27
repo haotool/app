@@ -26,6 +26,7 @@
  * @updated 2026-01-24 - 緊湊導航高度（Threads/Instagram 風格）
  */
 
+import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BottomNavigation } from './BottomNavigation';
@@ -75,17 +76,28 @@ function Logo() {
  * - 48px 高度（參考 Threads/Instagram）
  * - shrink-0 確保 Header 不會被壓縮
  *
+ * SSR/Hydration 修正 (2026-01-27):
+ * - 使用 useState + useEffect 確保 SSR 與 client 初始渲染一致
+ * - SSR 時使用固定的預設語系（zh-TW），避免 React #418 hydration mismatch
+ * - Client hydration 完成後才更新為實際語系
+ *
  * @see navigationTokens.header - SSOT for header dimensions
  * @see https://developer.apple.com/design/human-interface-guidelines/tab-bars
+ * @see https://react.dev/errors/418 - Hydration mismatch error
  */
 function Header() {
-  // 使用 i18n 動態顯示標題
-  // 中文：RateWise 匯率好工具，英文：RateWise
   const { t } = useTranslation();
 
-  // 使用正規化後的語系判斷（涵蓋 zh-Hant, zh-TW, zh 等變體）
-  // @see i18n/index.ts - getResolvedLanguage()
-  const currentLanguage = getResolvedLanguage();
+  // SSR 時使用固定的預設值，避免 hydration mismatch
+  // Client 端 useEffect 後才更新為實際語系
+  const [isHydrated, setIsHydrated] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  // SSR 時使用固定的預設語系（zh-TW），client hydration 後才使用實際語系
+  const currentLanguage = isHydrated ? getResolvedLanguage() : 'zh-TW';
   const isZhTW = currentLanguage === 'zh-TW';
 
   return (
