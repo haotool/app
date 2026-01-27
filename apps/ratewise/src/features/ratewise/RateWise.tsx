@@ -24,6 +24,7 @@ import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { HomeStructuredData } from '../../components/HomeStructuredData';
 import type { RateType } from './types';
 import { STORAGE_KEYS } from './storage-keys';
+import { rateWiseLayoutTokens } from '../../config/design-tokens';
 
 const HOMEPAGE_FAQ = [
   {
@@ -201,8 +202,15 @@ const RateWise = () => {
        * @see AppLayout.tsx - 外層滾動容器
        * @see https://web.dev/viewport-units/ - 動態視口高度
        */}
-      <div ref={mainRef} className="flex flex-col min-h-full">
-        <div className="flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full">
+      <div ref={mainRef} className={rateWiseLayoutTokens.container.className}>
+        <div
+          className={[
+            rateWiseLayoutTokens.content.base,
+            rateWiseLayoutTokens.content.padding,
+            rateWiseLayoutTokens.content.compact,
+            rateWiseLayoutTokens.content.short,
+          ].join(' ')}
+        >
           {/* 載入狀態提示 */}
           {ratesLoading && (
             <div className="text-center text-sm text-neutral-text-secondary py-2">
@@ -211,8 +219,22 @@ const RateWise = () => {
           )}
 
           {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
-          <section className="flex-1 flex flex-col mb-4">
-            <div className="card p-4 flex-1">
+          <section
+            className={[
+              'flex-1 flex flex-col',
+              rateWiseLayoutTokens.section.base,
+              rateWiseLayoutTokens.section.compact,
+              rateWiseLayoutTokens.section.short,
+            ].join(' ')}
+          >
+            <div
+              className={[
+                'flex-1',
+                rateWiseLayoutTokens.card.base,
+                rateWiseLayoutTokens.card.compact,
+                rateWiseLayoutTokens.card.short,
+              ].join(' ')}
+            >
               <SingleConverter
                 fromCurrency={fromCurrency}
                 toCurrency={toCurrency}
@@ -234,7 +256,14 @@ const RateWise = () => {
           </section>
 
           {/* 收藏與貨幣列表區塊（桌面版顯示於側欄） */}
-          <section className="mb-4 hidden md:block flex-shrink-0">
+          <section
+            className={[
+              rateWiseLayoutTokens.section.base,
+              rateWiseLayoutTokens.section.compact,
+              rateWiseLayoutTokens.section.short,
+              'hidden md:block flex-shrink-0',
+            ].join(' ')}
+          >
             <div className="space-y-4">
               <FavoritesList favorites={favorites} trend={trend} exchangeRates={exchangeRates} />
               <CurrencyList
@@ -249,7 +278,13 @@ const RateWise = () => {
 
           {/* 資料來源與更新時間區塊 - 現代化精簡設計，固定在底部 */}
           {!ratesLoading && lastUpdate && (
-            <section className="text-center flex-shrink-0">
+            <section
+              data-testid="ratewise-data-source"
+              className={[
+                rateWiseLayoutTokens.info.base,
+                rateWiseLayoutTokens.info.compactHidden,
+              ].join(' ')}
+            >
               <div className="inline-flex items-center gap-2 text-[10px] text-text-muted/60">
                 <a
                   href="https://rate.bot.com.tw/xrt?Lang=zh-TW"

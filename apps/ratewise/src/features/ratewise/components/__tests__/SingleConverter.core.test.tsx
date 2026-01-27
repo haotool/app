@@ -4,6 +4,7 @@ import '@testing-library/jest-dom/vitest';
 import { SingleConverter } from '../SingleConverter';
 import type { CurrencyCode } from '../../types';
 import { CURRENCY_DEFINITIONS } from '../../constants';
+import { breakpointTokens, singleConverterLayoutTokens } from '../../../../config/design-tokens';
 
 // Mock services
 vi.mock('../../../../services/exchangeRateHistoryService', () => ({
@@ -168,6 +169,24 @@ describe('SingleConverter - 核心功能測試', () => {
         expect(fromValues).toContain(code);
         expect(toValues).toContain(code);
       });
+    });
+  });
+
+  describe('高度斷點佈局', () => {
+    it('應該套用 compact/short 的隱藏與高度調整類別', () => {
+      render(<SingleConverter {...mockProps} />);
+
+      const quickAmountsFrom = screen.getByTestId('quick-amounts-from');
+      const quickAmountsTo = screen.getByTestId('quick-amounts-to');
+      const swapButton = screen.getByTestId('swap-button');
+      const trendChart = screen.getByTestId('trend-chart');
+
+      expect(quickAmountsFrom).toHaveClass(breakpointTokens.patterns.shortHidden);
+      expect(quickAmountsTo).toHaveClass(breakpointTokens.patterns.compactHidden);
+      expect(swapButton).toHaveClass(breakpointTokens.patterns.compactHidden);
+
+      const trendClasses = singleConverterLayoutTokens.rateCard.chartHeight;
+      expect(trendChart.className).toContain(trendClasses);
     });
   });
 

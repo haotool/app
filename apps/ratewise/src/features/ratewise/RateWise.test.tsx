@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import RateWise from './RateWise';
 import * as pullToRefreshModule from '../../hooks/usePullToRefresh';
+import { breakpointTokens } from '../../config/design-tokens';
 
 // Test helper: wrap component with required providers including MemoryRouter
 const renderWithProviders = (component: React.ReactElement) => {
@@ -121,6 +122,15 @@ describe('RateWise Component', () => {
     // Note: Quick amount buttons are tested in "Currency Conversion > updates amount when quick button is clicked"
     // and "User Interactions > allows switching between quick amounts multiple times".
     // Removed fragile "shows default quick amount buttons" test that was timing out due to async data loading.
+  });
+
+  describe('RWD 高度斷點', () => {
+    it('底部資料來源應套用 compact 隱藏類別', async () => {
+      renderWithProviders(<RateWise />);
+
+      const infoSection = await screen.findByTestId('ratewise-data-source');
+      expect(infoSection).toHaveClass(breakpointTokens.patterns.compactHidden);
+    });
   });
 
   describe('Currency Conversion', () => {

@@ -37,6 +37,7 @@ const CalculatorKeyboard = lazy(() =>
 import { logger } from '../../../utils/logger';
 import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
+import { singleConverterLayoutTokens } from '../../../config/design-tokens';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
@@ -247,7 +248,13 @@ export const SingleConverter = ({
 
   return (
     <>
-      <div className="mb-4">
+      <div
+        className={[
+          singleConverterLayoutTokens.section.base,
+          singleConverterLayoutTokens.section.compact,
+          singleConverterLayoutTokens.section.short,
+        ].join(' ')}
+      >
         <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
           {t('singleConverter.fromAmount')}
         </label>
@@ -277,7 +284,7 @@ export const SingleConverter = ({
                 calculator.openCalculator('from');
               }
             }}
-            className="w-full pl-32 pr-4 py-3 text-2xl font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
+            className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountDisplay.padding} ${singleConverterLayoutTokens.amountDisplay.typography} font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
             aria-label={t('singleConverter.fromAmountLabel', { code: fromCurrency })}
           >
             {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
@@ -302,7 +309,13 @@ export const SingleConverter = ({
          * min-w-0：允許 flex 子元素收縮，避免擠壓父容器
          * @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
          */}
-        <div className="hidden tall:flex gap-2 mt-2 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
+        <div
+          data-testid="quick-amounts-from"
+          className={[
+            singleConverterLayoutTokens.quickAmounts.base,
+            singleConverterLayoutTokens.quickAmounts.fromVisibility,
+          ].join(' ')}
+        >
           {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
             <button
               key={amount}
@@ -330,14 +343,23 @@ export const SingleConverter = ({
         </div>
       </div>
 
-      <div className="flex flex-col items-center mb-4">
+      <div
+        className={[
+          'flex flex-col items-center',
+          singleConverterLayoutTokens.section.base,
+          singleConverterLayoutTokens.section.compact,
+          singleConverterLayoutTokens.section.short,
+        ].join(' ')}
+      >
         {/* 匯率卡片 - 一體化設計，無切分感 */}
         <div className="relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl mb-3 w-full group cursor-pointer hover:shadow-xl transition-all duration-500 border border-border/50 hover:border-primary/30">
           {/* 微光效果 - 極淺的漸層覆蓋 */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl" />
 
           {/* 匯率資訊區塊 - 透明背景繼承父元素漸層 */}
-          <div className="relative text-center pt-12 pb-6 px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden">
+          <div
+            className={`relative text-center ${singleConverterLayoutTokens.rateCard.padding} px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden`}
+          >
             {/* 匯率類型切換按鈕 - 現代化玻璃擬態設計 */}
             <div className="absolute top-3 left-1/2 -translate-x-1/2 inline-flex bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60">
               <button
@@ -393,7 +415,8 @@ export const SingleConverter = ({
 
           {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
           <div
-            className={`relative w-full h-20 short:h-14 transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] group-hover:h-24 short:group-hover:h-16 overflow-hidden rounded-b-xl ${
+            data-testid="trend-chart"
+            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] overflow-hidden rounded-b-xl ${
               showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
@@ -435,7 +458,10 @@ export const SingleConverter = ({
          * - 懸停放大 + 陰影加深
          * - 點擊縮放 + Y軸旋轉動畫
          */}
-        <div className="relative group/swap">
+        <div
+          data-testid="swap-button"
+          className={`relative group/swap ${singleConverterLayoutTokens.swap.compactHidden}`}
+        >
           {/* 外圍漸層光環 */}
           <div
             className={`absolute -inset-2 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-full blur-xl transition-all duration-500 short:hidden ${
@@ -499,7 +525,13 @@ export const SingleConverter = ({
         </div>
       </div>
 
-      <div className="mb-4">
+      <div
+        className={[
+          singleConverterLayoutTokens.section.base,
+          singleConverterLayoutTokens.section.compact,
+          singleConverterLayoutTokens.section.short,
+        ].join(' ')}
+      >
         <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
           {t('singleConverter.toAmount')}
         </label>
@@ -529,7 +561,7 @@ export const SingleConverter = ({
                 calculator.openCalculator('to');
               }
             }}
-            className="w-full pl-32 pr-4 py-3 text-2xl font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300"
+            className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountDisplay.padding} ${singleConverterLayoutTokens.amountDisplay.typography} font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
             aria-label={t('singleConverter.toAmountLabel', { code: toCurrency })}
           >
             {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
@@ -549,7 +581,13 @@ export const SingleConverter = ({
          * min-w-0：允許 flex 子元素收縮，避免擠壓父容器
          * @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
          */}
-        <div className="hidden tall:flex gap-2 mt-2 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
+        <div
+          data-testid="quick-amounts-to"
+          className={[
+            singleConverterLayoutTokens.quickAmounts.base,
+            singleConverterLayoutTokens.quickAmounts.toVisibility,
+          ].join(' ')}
+        >
           {quickAmounts.map((amount) => (
             <button
               key={amount}
@@ -586,16 +624,17 @@ export const SingleConverter = ({
        */}
       <button
         onClick={onAddToHistory}
-        className="
-          relative w-full py-3.5 overflow-hidden
-          bg-gradient-to-r from-primary to-primary-hover
-          text-white font-bold rounded-2xl
-          shadow-xl shadow-primary/25
-          transition-all duration-300 ease-out
-          hover:shadow-2xl hover:shadow-primary/30
-          hover:scale-[1.02] active:scale-[0.98]
-          group
-        "
+        className={[
+          'relative w-full overflow-hidden',
+          singleConverterLayoutTokens.addToHistory.padding,
+          'bg-gradient-to-r from-primary to-primary-hover',
+          'text-white font-bold rounded-2xl',
+          'shadow-xl shadow-primary/25',
+          'transition-all duration-300 ease-out',
+          'hover:shadow-2xl hover:shadow-primary/30',
+          'hover:scale-[1.02] active:scale-[0.98]',
+          'group',
+        ].join(' ')}
       >
         {/* 光暈效果 */}
         <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out" />
