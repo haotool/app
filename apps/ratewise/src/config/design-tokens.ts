@@ -854,7 +854,7 @@ export const rateWiseLayoutTokens = {
   },
   info: {
     base: 'text-center flex-shrink-0',
-    shortHidden: breakpointTokens.patterns.shortHidden,
+    compactHidden: breakpointTokens.patterns.compactHidden,
   },
 } as const;
 

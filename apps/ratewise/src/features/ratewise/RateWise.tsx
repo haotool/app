@@ -282,7 +282,7 @@ const RateWise = () => {
               data-testid="ratewise-data-source"
               className={[
                 rateWiseLayoutTokens.info.base,
-                rateWiseLayoutTokens.info.shortHidden,
+                rateWiseLayoutTokens.info.compactHidden,
               ].join(' ')}
             >
               <div className="inline-flex items-center gap-2 text-[10px] text-text-muted/60">
