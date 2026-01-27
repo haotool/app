@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
 import { ToastProvider } from './Toast';
+import { getResolvedLanguage } from '../i18n';
 
 /**
  * Logo 組件 - 參考 ParkKeeper 的 SVG Logo 風格
@@ -80,8 +81,12 @@ function Logo() {
 function Header() {
   // 使用 i18n 動態顯示標題
   // 中文：RateWise 匯率好工具，英文：RateWise
-  const { t, i18n } = useTranslation();
-  const isZhTW = i18n.language === 'zh-TW' || i18n.language === 'zh';
+  const { t } = useTranslation();
+
+  // 使用正規化後的語系判斷（涵蓋 zh-Hant, zh-TW, zh 等變體）
+  // @see i18n/index.ts - getResolvedLanguage()
+  const currentLanguage = getResolvedLanguage();
+  const isZhTW = currentLanguage === 'zh-TW';
 
   return (
     <header

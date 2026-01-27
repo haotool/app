@@ -298,8 +298,11 @@ export const SingleConverter = ({
          * - 預設：抬升表面背景 + 柔和文字
          * - 懸停：主色調淡化 + 主色文字 + 微幅放大
          * - 按壓：主色調加深 + 縮放回饋
+         *
+         * min-w-0：允許 flex 子元素收縮，避免擠壓父容器
+         * @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
          */}
-        <div className="hidden tall:flex gap-2 mt-2 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
+        <div className="hidden tall:flex gap-2 mt-2 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
           {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
             <button
               key={amount}
@@ -542,8 +545,11 @@ export const SingleConverter = ({
          * - scrollbar-hide：隱藏滾動條保持簡潔美觀
          * - flex-nowrap：防止按鈕換行
          * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
+         *
+         * min-w-0：允許 flex 子元素收縮，避免擠壓父容器
+         * @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
          */}
-        <div className="hidden tall:flex gap-2 mt-2 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
+        <div className="hidden tall:flex gap-2 mt-2 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
           {quickAmounts.map((amount) => (
             <button
               key={amount}

@@ -166,6 +166,8 @@ export const MultiConverter = ({
        * @see design-tokens.ts - quickAmountButtonTokens
        *
        * 響應式設計（行動端單行水平滾動）：
+       * - min-w-0：允許 flex 子元素收縮到內容尺寸以下，避免擠壓父容器
+       *   @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
        * - overflow-x-auto：內容溢出時啟用水平滾動
        * - scrollbar-hide：隱藏滾動條保持簡潔美觀
        * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
@@ -175,7 +177,7 @@ export const MultiConverter = ({
        * - 懸停：主色調淡化 + 主色文字 + 微幅放大
        * - 按壓：主色調加深 + 縮放回饋
        */}
-      <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
+      <div className="flex gap-2 mb-4 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
         {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
           (amount: number) => (
             <button

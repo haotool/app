@@ -24,12 +24,15 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_OPTIONS } from '../config/themes';
-import { LANGUAGE_OPTIONS, type SupportedLanguage } from '../i18n';
+import { LANGUAGE_OPTIONS, getResolvedLanguage, type SupportedLanguage } from '../i18n';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { style, setStyle, resetTheme, isLoaded } = useAppTheme();
-  const currentLanguage = i18n.language as SupportedLanguage;
+
+  // 使用正規化後的語系（zh-Hant → zh-TW）
+  // @see i18n/index.ts - getResolvedLanguage()
+  const currentLanguage = getResolvedLanguage();
 
   const handleLanguageChange = (lang: SupportedLanguage) => {
     void i18n.changeLanguage(lang);
