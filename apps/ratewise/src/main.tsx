@@ -22,7 +22,6 @@ import { logger } from './utils/logger';
 import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
 import { initCSPReporter } from './utils/csp-reporter';
-import { ensureStaticLoaderData } from './utils/ssg-loader-data';
 
 // 使用 import.meta.env 優先，如果不存在則使用全域變數，最後使用預設值
 const appVersion =
@@ -47,9 +46,6 @@ export const createRoot = ViteReactSSG(
     if (isClient) {
       // Initialize CSP violation monitoring
       initCSPReporter();
-
-      // 預先建立靜態載入資料，避免導覽時 JSON 解析錯誤
-      void ensureStaticLoaderData();
 
       // Log application startup
       logger.info('Application starting', {

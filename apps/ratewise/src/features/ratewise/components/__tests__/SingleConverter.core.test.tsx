@@ -182,8 +182,8 @@ describe('SingleConverter - 核心功能測試', () => {
       const trendChart = screen.getByTestId('trend-chart');
 
       expect(quickAmountsFrom).toHaveClass(breakpointTokens.patterns.shortHidden);
-      expect(quickAmountsTo).toHaveClass(breakpointTokens.patterns.shortHidden);
-      expect(swapButton).toHaveClass(breakpointTokens.patterns.shortHidden);
+      expect(quickAmountsTo).toHaveClass(breakpointTokens.patterns.compactHidden);
+      expect(swapButton).toHaveClass(breakpointTokens.patterns.compactHidden);
 
       const trendClasses = singleConverterLayoutTokens.rateCard.chartHeight;
       expect(trendChart.className).toContain(trendClasses);
