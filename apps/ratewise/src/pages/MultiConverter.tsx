@@ -92,7 +92,7 @@ export default function MultiConverter() {
 
   if (ratesError) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4">
         <div className="card p-8 max-w-md w-full text-center">
           <AlertCircle className="text-destructive mx-auto" size={48} />
           <h1 className="text-2xl font-bold text-text mt-4">{t('errors.rateLoadFailed')}</h1>

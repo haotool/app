@@ -159,7 +159,7 @@ const RateWise = () => {
   // Error state UI
   if (ratesError) {
     return (
-      <div className="min-h-screen bg-danger-bg flex items-center justify-center p-4">
+      <div className="min-h-dvh bg-danger-bg flex items-center justify-center p-4">
         <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           <AlertCircle className="text-danger" size={48} />
           <h1 className="text-2xl font-bold text-neutral-text mt-4">匯率載入失敗</h1>

@@ -11,48 +11,50 @@
  * - Desktop-first (visible ≥ 768px, hidden < 768px)
  * - Vertical layout
  * - ARIA accessibility support
+ * - i18n-aware labels and aria attributes
  */
 
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 
 /**
- * 導覽項目類型
+ * 導覽項目類型 - 使用 i18n keys（與 BottomNavigation 一致）
  */
 interface NavItem {
   path: string;
-  label: string;
+  labelKey: string;
+  ariaLabelKey: string;
   icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  ariaLabel: string;
 }
 
 /**
- * 導覽項目配置（與 BottomNavigation 相同）
+ * 導覽項目配置（與 BottomNavigation 使用相同 i18n keys）
  */
 const navItems: NavItem[] = [
   {
     path: '/',
-    label: '單幣別',
+    labelKey: 'nav.singleCurrency',
+    ariaLabelKey: 'nav.singleCurrencyFull',
     icon: CreditCard,
-    ariaLabel: '單幣別轉換',
   },
   {
     path: '/multi',
-    label: '多幣別',
+    labelKey: 'nav.multiCurrency',
+    ariaLabelKey: 'nav.multiCurrencyFull',
     icon: Globe,
-    ariaLabel: '多幣別轉換',
   },
   {
     path: '/favorites',
-    label: '收藏',
+    labelKey: 'nav.favorites',
+    ariaLabelKey: 'nav.favoritesFull',
     icon: Star,
-    ariaLabel: '收藏與歷史',
   },
   {
     path: '/settings',
-    label: '設定',
+    labelKey: 'nav.settings',
+    ariaLabelKey: 'nav.settingsFull',
     icon: Settings,
-    ariaLabel: '應用程式設定',
   },
 ];
 
@@ -70,6 +72,7 @@ interface SideNavigationProps {
  * 使用響應式 CSS 控制顯示（hidden md:block）
  */
 export function SideNavigation({ className = '' }: SideNavigationProps) {
+  const { t } = useTranslation();
   const location = useLocation();
 
   return (
@@ -81,12 +84,12 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
         border-r border-[rgb(var(--color-border))]
         flex flex-col
       `}
-      aria-label="主要導航"
+      aria-label={t('nav.mainNavigation')}
     >
       {/* Logo / Brand */}
       <div className="px-6 py-4 border-b border-[rgb(var(--color-border))]">
-        <h1 className="text-xl font-bold text-[rgb(var(--color-text))]">RateWise</h1>
-        <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">匯率換算工具</p>
+        <h1 className="text-xl font-bold text-[rgb(var(--color-text))]">{t('app.title')}</h1>
+        <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">{t('app.subtitle')}</p>
       </div>
 
       {/* Navigation Items */}
@@ -110,14 +113,14 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
                     : 'text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-border)/0.5)] hover:text-[rgb(var(--color-text))]'
                 }
               `}
-              aria-label={item.ariaLabel}
+              aria-label={t(item.ariaLabelKey)}
               aria-current={isActive ? 'page' : undefined}
             >
               <Icon
                 className={`w-5 h-5 ${isActive ? 'text-[rgb(var(--color-primary))]' : ''}`}
                 aria-hidden={true}
               />
-              <span className="text-sm">{item.label}</span>
+              <span className="text-sm">{t(item.labelKey)}</span>
             </Link>
           );
         })}
@@ -125,7 +128,7 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-[rgb(var(--color-border))]">
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">版本 v2.0.0</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('app.version')} v2.0.0</p>
       </div>
     </aside>
   );

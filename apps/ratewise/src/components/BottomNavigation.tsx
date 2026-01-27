@@ -14,6 +14,11 @@
  * - 收藏與歷史 (Favorites)
  * - 設定 (Settings)
  *
+ * Accessibility (a11y):
+ * - 使用 <Link> 作為唯一互動元素（不巢狀 <button>）
+ * - ARIA labels 使用 i18n keys
+ * - aria-current="page" 標記當前頁面
+ *
  * @reference ParkKeeper UI Design
  * @reference iOS HIG Tab Bars (49pt), Material Design 3 Nav Bar (56dp)
  * @see src/config/design-tokens.ts - navigationTokens SSOT
@@ -105,54 +110,49 @@ export function BottomNavigation() {
             <Link
               key={item.path}
               to={item.path}
-              className="flex-1 h-full"
+              className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 relative group transition-transform duration-200 ease-out active:scale-95"
               aria-label={t(item.ariaLabelKey)}
               aria-current={isActive ? 'page' : undefined}
             >
-              <button
-                className="w-full h-full flex flex-col items-center justify-center gap-0.5 relative group transition-transform duration-200 ease-out active:scale-95"
-                tabIndex={-1}
+              {/* 圖標 - 20px (navigationTokens.bottomNav.icon.size) */}
+              <motion.div
+                animate={{
+                  scale: isActive ? 1.05 : 1,
+                  opacity: isActive ? 1 : 0.3,
+                }}
+                transition={{ duration: 0.2 }}
+                className={isActive ? 'text-primary' : 'group-hover:opacity-50'}
               >
-                {/* 圖標 - 20px (navigationTokens.bottomNav.icon.size) */}
+                <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} aria-hidden={true} />
+              </motion.div>
+
+              {/* 標籤 - 8px (navigationTokens.bottomNav.label.fontSize) */}
+              <motion.span
+                animate={{
+                  opacity: isActive ? 1 : 0.3,
+                }}
+                transition={{ duration: 0.2 }}
+                className={`
+                  text-[8px] font-black uppercase tracking-[0.15em]
+                  ${isActive ? 'text-primary' : ''}
+                `}
+              >
+                {t(item.labelKey)}
+              </motion.span>
+
+              {/* 選中指示條 - w-6 h-[3px] (navigationTokens.bottomNav.indicator) */}
+              {/* 使用 layoutId 實現滑動動畫效果 */}
+              {isActive && (
                 <motion.div
-                  animate={{
-                    scale: isActive ? 1.05 : 1,
-                    opacity: isActive ? 1 : 0.3,
+                  layoutId="nav-indicator"
+                  className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]"
+                  transition={{
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 30,
                   }}
-                  transition={{ duration: 0.2 }}
-                  className={isActive ? 'text-primary' : 'group-hover:opacity-50'}
-                >
-                  <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} aria-hidden={true} />
-                </motion.div>
-
-                {/* 標籤 - 8px (navigationTokens.bottomNav.label.fontSize) */}
-                <motion.span
-                  animate={{
-                    opacity: isActive ? 1 : 0.3,
-                  }}
-                  transition={{ duration: 0.2 }}
-                  className={`
-                    text-[8px] font-black uppercase tracking-[0.15em]
-                    ${isActive ? 'text-primary' : ''}
-                  `}
-                >
-                  {t(item.labelKey)}
-                </motion.span>
-
-                {/* 選中指示條 - w-6 h-[3px] (navigationTokens.bottomNav.indicator) */}
-                {/* 使用 layoutId 實現滑動動畫效果 */}
-                {isActive && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]"
-                    transition={{
-                      type: 'spring',
-                      stiffness: 500,
-                      damping: 30,
-                    }}
-                  />
-                )}
-              </button>
+                />
+              )}
             </Link>
           );
         })}
