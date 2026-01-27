@@ -157,8 +157,6 @@ export default {
       '2xl': breakpointTokens.screens['2xl'].min,
       // 高度斷點 - 小螢幕 RWD 優化 (iPhone SE/8)
       short: { raw: breakpointTokens.screens.short.raw },
-      // 高度斷點 - 緊湊螢幕 (大多數手機 PWA)
-      compact: { raw: breakpointTokens.screens.compact.raw },
       tall: { raw: breakpointTokens.screens.tall.raw },
     },
   },

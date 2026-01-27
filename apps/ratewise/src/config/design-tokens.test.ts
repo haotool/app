@@ -201,22 +201,12 @@ describe('Design Token System - BDD', () => {
       expect(container.lg).toBe('1024px');
     });
 
-    it('應該有高度斷點定義', async () => {
-      const { breakpointTokens } = await import('./design-tokens');
-      const screens = breakpointTokens.screens;
-
-      expect(screens.short.raw).toBe('(max-height: 700px)');
-      expect(screens.compact.raw).toBe('(max-height: 860px)');
-      expect(screens.tall.raw).toBe('(min-height: 861px)');
-    });
-
     it('應該有響應式模式', async () => {
       const { breakpointTokens } = await import('./design-tokens');
       const patterns = breakpointTokens.patterns;
 
       expect(patterns.desktopOnly).toBe('hidden md:block');
       expect(patterns.mobileOnly).toBe('block md:hidden');
-      expect(patterns.compactHidden).toBe('compact:hidden');
       expect(patterns.responsiveGrid).toContain('grid-cols-1');
     });
 

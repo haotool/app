@@ -724,15 +724,6 @@ export const typographyTokens = {
 } as const;
 
 /**
- * SingleConverter 高度響應佈局 (SSOT)
- *
- * 依照高度斷點調整間距與顯示元素，確保單幣別頁面在 PWA 中盡量滿版。
- *
- * @see breakpointTokens - 高度斷點
- * @created 2026-01-28
- * @version 1.0.0
- */
-/**
  * RWD 斷點設計規範 (SSOT)
  *
  * 統一應用程式響應式斷點策略，採用 Mobile-First 設計。
@@ -764,12 +755,10 @@ export const breakpointTokens = {
     /** 1536px - 大螢幕桌機 */
     '2xl': { min: '1536px', max: null, class: '2xl:' },
 
-    /** 高度斷點 - 極短螢幕 (iPhone SE/8 等小高度裝置) */
-    short: { raw: '(max-height: 700px)', class: 'short:' },
-    /** 高度斷點 - 緊湊螢幕 (大多數手機 PWA 視口) */
-    compact: { raw: '(max-height: 860px)', class: 'compact:' },
-    /** 高度斷點 - 寬裕螢幕 (>860px) */
-    tall: { raw: '(min-height: 861px)', class: 'tall:' },
+    /** 高度斷點 - 小螢幕裝置 (iPhone SE 568px, iPhone 8 667px) */
+    short: { raw: '(max-height: 600px)', class: 'short:' },
+    /** 高度斷點 - 正常螢幕 (>600px) */
+    tall: { raw: '(min-height: 601px)', class: 'tall:' },
   },
 
   /** 容器最大寬度 */
@@ -796,11 +785,9 @@ export const breakpointTokens = {
     /** 響應式間距 (小→中→大) */
     responsiveSpacing: 'p-4 md:p-6 lg:p-8',
 
-    /** 小螢幕隱藏（高度 ≤700px） */
+    /** 小螢幕隱藏（高度 ≤600px） */
     shortHidden: 'short:hidden',
-    /** 緊湊螢幕隱藏（高度 ≤860px） */
-    compactHidden: 'compact:hidden',
-    /** 正常螢幕才顯示（高度 >860px） */
+    /** 正常螢幕才顯示（高度 >600px） */
     tallOnly: 'hidden tall:flex',
   },
 
@@ -818,95 +805,6 @@ export const breakpointTokens = {
     pointer: '@media (hover: hover) and (pointer: fine)',
     /** 減少動畫偏好 */
     reducedMotion: '@media (prefers-reduced-motion: reduce)',
-  },
-} as const;
-
-/**
- * RateWise 單幣別頁面佈局規範 (SSOT)
- *
- * 目標：在 PWA 視口中盡量滿版且避免不必要捲動。
- * - compact：縮小垂直間距並隱藏低優先區塊
- * - short：進一步壓縮空間，保留核心轉換與趨勢圖
- *
- * @see breakpointTokens - 高度斷點定義
- * @created 2026-01-28
- * @version 1.0.0
- */
-export const rateWiseLayoutTokens = {
-  container: {
-    className: 'flex flex-col min-h-full',
-  },
-  content: {
-    base: 'flex-1 flex flex-col max-w-md mx-auto w-full',
-    padding: 'px-3 sm:px-5 py-4',
-    compact: 'compact:px-3 compact:py-3',
-    short: 'short:py-2',
-  },
-  section: {
-    base: 'mb-4',
-    compact: 'compact:mb-3',
-    short: 'short:mb-2',
-  },
-  card: {
-    base: 'card p-4',
-    compact: 'compact:p-3',
-    short: 'short:p-3',
-  },
-  info: {
-    base: 'text-center flex-shrink-0',
-    compactHidden: breakpointTokens.patterns.compactHidden,
-  },
-} as const;
-
-/**
- * SingleConverter 高度響應佈局 (SSOT)
- *
- * 依照高度斷點調整間距與顯示元素，確保單幣別頁面在 PWA 中盡量滿版。
- *
- * @see breakpointTokens - 高度斷點
- * @created 2026-01-28
- * @version 1.0.0
- */
-export const singleConverterLayoutTokens = {
-  section: {
-    base: 'mb-4',
-    compact: 'compact:mb-3',
-    short: 'short:mb-2',
-  },
-  card: {
-    base: 'card p-4',
-    compact: 'compact:p-3',
-    short: 'short:p-3',
-  },
-  amountDisplay: {
-    typography: [
-      typographyTokens.fontSize['2xl'].class,
-      `compact:${typographyTokens.fontSize.xl.class}`,
-      `short:${typographyTokens.fontSize.lg.class}`,
-    ].join(' '),
-    padding: ['py-3', 'compact:py-2', 'short:py-2'].join(' '),
-  },
-  rateCard: {
-    padding: ['pt-12 pb-6', 'compact:pt-10 compact:pb-5', 'short:pt-8 short:pb-4'].join(' '),
-    chartHeight: [
-      'h-20',
-      'compact:h-16',
-      'short:h-14',
-      'group-hover:h-24',
-      'compact:group-hover:h-20',
-      'short:group-hover:h-16',
-    ].join(' '),
-  },
-  quickAmounts: {
-    base: 'flex gap-2 mt-2 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
-    fromVisibility: breakpointTokens.patterns.shortHidden,
-    toVisibility: breakpointTokens.patterns.compactHidden,
-  },
-  swap: {
-    compactHidden: breakpointTokens.patterns.compactHidden,
-  },
-  addToHistory: {
-    padding: ['py-3.5', 'compact:py-3', 'short:py-2'].join(' '),
   },
 } as const;
 
