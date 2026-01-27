@@ -187,13 +187,19 @@ describe('RateWise Component', () => {
       renderWithProviders(<RateWise />);
 
       // Initial favorites should be saved
-      await waitFor(() => {
-        const favorites = localStorage.getItem('favorites');
-        expect(favorites).toBeTruthy();
-        const parsed = JSON.parse(favorites ?? '[]') as string[];
-        expect(Array.isArray(parsed)).toBe(true);
-      });
-    });
+      // Uses longer timeout because the component triggers many async effects
+      // (exchange rate fetch, animation frames, recalculations) that compete
+      // for event loop time when running the full test suite in parallel
+      await waitFor(
+        () => {
+          const favorites = localStorage.getItem('favorites');
+          expect(favorites).toBeTruthy();
+          const parsed = JSON.parse(favorites ?? '[]') as string[];
+          expect(Array.isArray(parsed)).toBe(true);
+        },
+        { timeout: 5000 },
+      );
+    }, 10000);
 
     it('persists from currency selection', async () => {
       renderWithProviders(<RateWise />);
