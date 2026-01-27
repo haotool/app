@@ -202,7 +202,7 @@ const RateWise = () => {
        * @see https://web.dev/viewport-units/ - 動態視口高度
        */}
       <div ref={mainRef} className="flex flex-col min-h-full">
-        <div className="flex-1 flex flex-col px-5 py-4 max-w-md mx-auto w-full">
+        <div className="flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full">
           {/* 載入狀態提示 */}
           {ratesLoading && (
             <div className="text-center text-sm text-neutral-text-secondary py-2">

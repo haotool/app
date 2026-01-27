@@ -179,7 +179,7 @@ export default function Favorites() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="flex-1 px-5 py-6 max-w-md mx-auto w-full">
+      <div className="flex-1 px-3 sm:px-5 py-6 max-w-md mx-auto w-full">
         {/* Tab 切換區塊 - 參考 Settings 語言切換風格 */}
         <section className="mb-6">
           <div className="bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">

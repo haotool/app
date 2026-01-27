@@ -149,10 +149,10 @@ export function AppLayout() {
       {/* 根容器：固定視口高度，啟用 flex 滾動 */}
       <div className="h-dvh w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))] overflow-hidden">
         {/* Desktop sidebar (≥768px) */}
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0 min-w-0">
           <SideNavigation className="hidden md:block" />
 
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col min-h-0 min-w-0">
             {/* Header (mobile only) - shrink-0 確保不被壓縮 */}
             <div className="md:hidden shrink-0">
               <Header />
@@ -170,7 +170,7 @@ export function AppLayout() {
              */}
             <main
               data-scroll-container="main"
-              className="flex-1 min-h-0 relative overflow-y-scroll overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"
+              className="flex-1 min-h-0 min-w-0 w-full relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"
             >
               <Outlet />
             </main>

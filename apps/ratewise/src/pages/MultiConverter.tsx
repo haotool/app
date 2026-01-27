@@ -111,7 +111,7 @@ export default function MultiConverter() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="flex-1 flex flex-col px-5 py-4 max-w-md mx-auto w-full">
+      <div className="flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full">
         {/* 多幣別換算區塊 - 簡約風格（標題已移除，由底部導航識別）
          *
          * RWD 全頁面佈局：

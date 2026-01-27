@@ -40,7 +40,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-full">
-      <div className="px-5 py-6 max-w-md mx-auto">
+      <div className="px-3 sm:px-5 py-6 max-w-md mx-auto">
         {/* 介面風格區塊 */}
         <section className="mb-8">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
