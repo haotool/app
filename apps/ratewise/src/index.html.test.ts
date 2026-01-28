@@ -49,9 +49,11 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
       expect(indexHtmlContent).not.toMatch(/<meta\s+name="keywords"/);
     });
 
-    it('should NOT have hardcoded robots meta tag', () => {
-      // [2026-01-29] SEOHelmet 是 robots 的唯一來源
-      expect(indexHtmlContent).not.toMatch(/<meta\s+name="robots"/);
+    it('should have homepage robots meta tag (ClientOnly SSG limitation)', () => {
+      // 首頁使用 ClientOnly 無法在 SSG 時渲染 SEOHelmet
+      // 因此需要在 index.html 保留首頁基本 robots 指令
+      expect(indexHtmlContent).toContain('name="robots"');
+      expect(indexHtmlContent).toContain('index, follow');
     });
 
     it('should NOT have hardcoded canonical URL', () => {
