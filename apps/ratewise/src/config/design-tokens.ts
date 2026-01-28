@@ -530,10 +530,18 @@ export const pageLayoutTokens = {
  * 單幣別頁面高度斷點佈局規範 (SSOT)
  *
  * 以高度為主的 RWD 佈局調整，優先保留核心功能並降低捲動需求。
- * 保留順序：輸入/結果與趨勢圖 > 快速金額 > 交換按鈕 > 資料來源。
+ *
+ * 高度斷點設計原則 v2.0：
+ * - tall (≥761px): 完整顯示所有元素
+ * - compact (≤760px): 縮減間距，保留所有功能
+ * - short (≤700px): 隱藏光暈效果、縮減 padding
+ * - tiny (≤650px): 隱藏資料來源、隱藏「來源」快速金額按鈕
+ * - micro (≤600px): 隱藏交換按鈕、隱藏「結果」快速金額按鈕
+ * - nano (≤560px): 極簡模式，僅保留核心輸入/輸出
  *
  * @created 2026-01-27
- * @version 1.0.0
+ * @updated 2026-01-28 - v2.0 重新設計匯率卡片佈局，解決按鈕擠壓問題
+ * @version 2.0.0
  */
 export const rateWiseLayoutTokens = {
   /** 外層容器 */
@@ -541,15 +549,15 @@ export const rateWiseLayoutTokens = {
   /** 內容容器 */
   content: {
     className:
-      'flex-1 flex flex-col max-w-md mx-auto w-full px-3 sm:px-5 py-4 compact:py-3 short:py-2 tiny:py-2 micro:py-2 nano:py-1.5',
+      'flex-1 flex flex-col max-w-md mx-auto w-full px-3 sm:px-5 py-4 compact:py-3 short:py-2 tiny:py-1.5 micro:py-1 nano:py-1',
   },
   /** 單幣別區塊 */
   section: {
-    className: 'flex-1 flex flex-col mb-4 compact:mb-3 short:mb-3 tiny:mb-2 micro:mb-2 nano:mb-2',
+    className: 'flex-1 flex flex-col mb-4 compact:mb-3 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
   },
   /** 單幣別卡片 */
   card: {
-    className: 'card flex-1 p-4 compact:p-3 short:p-3 tiny:p-3 micro:p-2.5 nano:p-2',
+    className: 'card flex-1 p-4 compact:p-3 short:p-2.5 tiny:p-2 micro:p-2 nano:p-1.5',
   },
   /** 資料來源區塊 */
   info: {
@@ -563,41 +571,58 @@ export const rateWiseLayoutTokens = {
  *
  * 控制元件間距、文字尺寸與顯示優先順序。
  *
+ * 匯率卡片佈局 v2.0：
+ * - 移除固定 pt- padding，改用 flex 自動間距
+ * - 即期/現金按鈕改為 relative 定位，不再絕對覆蓋
+ * - 小螢幕時按鈕縮小並水平排列在匯率上方
+ *
  * @created 2026-01-27
- * @version 1.0.0
+ * @updated 2026-01-28 - v2.0 解決按鈕擠壓匯率的問題
+ * @version 2.0.0
  */
 export const singleConverterLayoutTokens = {
   /** 區塊間距 */
   section: {
-    className: 'mb-4 compact:mb-3 short:mb-3 tiny:mb-2 micro:mb-2 nano:mb-2',
+    className: 'mb-4 compact:mb-3 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
   },
   /** 標籤間距 */
   label: {
-    className: 'mb-2 short:mb-1.5 tiny:mb-1 micro:mb-1 nano:mb-1',
+    className: 'mb-2 short:mb-1.5 tiny:mb-1 micro:mb-0.5 nano:mb-0.5',
   },
   /** 金額輸入框尺寸 */
   amountInput: {
     className:
-      'py-3 text-2xl compact:py-2.5 compact:text-xl short:py-2 short:text-xl tiny:py-2 tiny:text-lg micro:py-2 micro:text-lg nano:py-1.5 nano:text-base',
+      'py-3 text-2xl compact:py-2.5 compact:text-xl short:py-2 short:text-xl tiny:py-1.5 tiny:text-lg micro:py-1.5 micro:text-lg nano:py-1 nano:text-base',
   },
-  /** 匯率卡片區塊 */
+  /** 匯率卡片區塊 - v2.0 重新設計 */
   rateCard: {
     section:
-      'flex flex-col items-center mb-4 compact:mb-3 short:mb-3 tiny:mb-2 micro:mb-2 nano:mb-2',
-    cardSpacing: 'mb-3 compact:mb-2.5 short:mb-2 tiny:mb-2 micro:mb-1.5 nano:mb-1.5',
-    infoPadding:
-      'pt-12 pb-6 compact:pt-10 compact:pb-5 short:pt-9 short:pb-4 tiny:pt-8 tiny:pb-4 micro:pt-7 micro:pb-3 nano:pt-6 nano:pb-3',
-    rateText: 'text-2xl compact:text-xl short:text-lg tiny:text-lg micro:text-base nano:text-base',
-    rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-[10px] nano:text-[10px]',
-    chartHeight: 'h-20 compact:h-18 short:h-16 tiny:h-14 micro:h-12 nano:h-12',
+      'flex flex-col items-center mb-4 compact:mb-3 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
+    cardSpacing: 'mb-3 compact:mb-2 short:mb-1.5 tiny:mb-1 micro:mb-1 nano:mb-0.5',
+    /** 匯率資訊區 - 使用 flex 自動間距，移除固定 pt- */
+    infoPadding: 'py-4 compact:py-3 short:py-2.5 tiny:py-2 micro:py-1.5 nano:py-1',
+    /** 匯率類型按鈕容器 - 相對定位，在匯率上方 */
+    rateTypeContainer: 'mb-3 compact:mb-2.5 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
+    /** 匯率類型按鈕尺寸 */
+    rateTypeButton:
+      'px-2.5 py-1 text-xs compact:px-2 compact:py-0.5 compact:text-[11px] short:px-2 short:py-0.5 short:text-[11px] tiny:px-1.5 tiny:py-0.5 tiny:text-[10px] micro:px-1.5 micro:py-0.5 micro:text-[10px] nano:px-1 nano:py-0.5 nano:text-[9px]',
+    /** 匯率類型圖示尺寸 */
+    rateTypeIcon:
+      'w-3 h-3 compact:w-2.5 compact:h-2.5 short:w-2.5 short:h-2.5 tiny:w-2 tiny:h-2 micro:w-2 micro:h-2 nano:hidden',
+    rateText: 'text-2xl compact:text-xl short:text-lg tiny:text-base micro:text-base nano:text-sm',
+    rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-[11px] nano:text-[10px]',
+    chartHeight: 'h-20 compact:h-16 short:h-14 tiny:h-12 micro:h-10 nano:h-8',
     chartHoverHeight:
-      'group-hover:h-24 compact:group-hover:h-20 short:group-hover:h-18 tiny:group-hover:h-16 micro:group-hover:h-14 nano:group-hover:h-14',
+      'group-hover:h-24 compact:group-hover:h-20 short:group-hover:h-16 tiny:group-hover:h-14 micro:group-hover:h-12 nano:group-hover:h-10',
   },
-  /** 快速金額區塊 */
+  /** 快速金額區塊 - 分層隱藏 */
   quickAmounts: {
     container:
-      'flex gap-2 mt-2 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
-    visibility: 'nano:hidden',
+      'flex gap-2 mt-2 compact:mt-1.5 short:mt-1 tiny:mt-1 micro:mt-0.5 nano:mt-0.5 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
+    /** 來源快速金額：tiny 以下隱藏 */
+    fromVisibility: 'tiny:hidden',
+    /** 結果快速金額：micro 以下隱藏 */
+    toVisibility: 'micro:hidden',
   },
   /** 交換按鈕 */
   swap: {
@@ -607,7 +632,7 @@ export const singleConverterLayoutTokens = {
   },
   /** 加入歷史按鈕 */
   addToHistory: {
-    className: 'py-3.5 compact:py-3 short:py-2.5 tiny:py-2.5 micro:py-2 nano:py-2',
+    className: 'py-3.5 compact:py-3 short:py-2.5 tiny:py-2 micro:py-1.5 nano:py-1.5',
   },
 } as const;
 
@@ -840,16 +865,16 @@ export const breakpointTokens = {
     /** 1536px - 大螢幕桌機 */
     '2xl': { min: '1536px', max: null, class: '2xl:' },
 
-    /** 高度斷點 - 中短螢幕 (≤760px) */
+    /** 高度斷點 - 中短螢幕 (≤760px) - 影響 <1% 設備 */
     compact: { raw: '(max-height: 760px)', class: 'compact:' },
-    /** 高度斷點 - 短螢幕 (≤700px) */
+    /** 高度斷點 - 短螢幕 (≤700px) - 影響 <5% 設備 */
     short: { raw: '(max-height: 700px)', class: 'short:' },
-    /** 高度斷點 - 極短螢幕 (≤620px) */
-    tiny: { raw: '(max-height: 620px)', class: 'tiny:' },
-    /** 高度斷點 - 超短螢幕 (≤580px) */
-    micro: { raw: '(max-height: 580px)', class: 'micro:' },
-    /** 高度斷點 - 最小螢幕 (≤540px) */
-    nano: { raw: '(max-height: 540px)', class: 'nano:' },
+    /** 高度斷點 - 極短螢幕 (≤650px) - 避免影響 iPhone SE 2022 (667px) */
+    tiny: { raw: '(max-height: 650px)', class: 'tiny:' },
+    /** 高度斷點 - 超短螢幕 (≤600px) - 針對 iPhone SE 原版 (568px) */
+    micro: { raw: '(max-height: 600px)', class: 'micro:' },
+    /** 高度斷點 - 最小螢幕 (≤560px) - 給 iPhone SE 原版一點餘裕 */
+    nano: { raw: '(max-height: 560px)', class: 'nano:' },
     /** 高度斷點 - 長螢幕 (≥761px) */
     tall: { raw: '(min-height: 761px)', class: 'tall:' },
   },

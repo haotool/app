@@ -198,9 +198,9 @@ describe('Design Token System - BDD', () => {
 
       expect(screens.compact.raw).toBe('(max-height: 760px)');
       expect(screens.short.raw).toBe('(max-height: 700px)');
-      expect(screens.tiny.raw).toBe('(max-height: 620px)');
-      expect(screens.micro.raw).toBe('(max-height: 580px)');
-      expect(screens.nano.raw).toBe('(max-height: 540px)');
+      expect(screens.tiny.raw).toBe('(max-height: 650px)');
+      expect(screens.micro.raw).toBe('(max-height: 600px)');
+      expect(screens.nano.raw).toBe('(max-height: 560px)');
       expect(screens.tall.raw).toBe('(min-height: 761px)');
     });
 
@@ -255,9 +255,14 @@ describe('Design Token System - BDD', () => {
       const { singleConverterLayoutTokens } = await import('./design-tokens');
 
       expect(singleConverterLayoutTokens).toBeDefined();
-      expect(singleConverterLayoutTokens.quickAmounts.visibility).toBe('nano:hidden');
+      // v2.0: 分層隱藏快速金額
+      expect(singleConverterLayoutTokens.quickAmounts.fromVisibility).toBe('tiny:hidden');
+      expect(singleConverterLayoutTokens.quickAmounts.toVisibility).toBe('micro:hidden');
       expect(singleConverterLayoutTokens.swap.visibility).toBe('micro:hidden');
-      expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-18');
+      expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-16');
+      // v2.0: 新增匯率類型按鈕配置
+      expect(singleConverterLayoutTokens.rateCard.rateTypeContainer).toContain('mb-');
+      expect(singleConverterLayoutTokens.rateCard.rateTypeButton).toContain('px-');
     });
   });
 

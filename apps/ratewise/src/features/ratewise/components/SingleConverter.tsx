@@ -307,7 +307,7 @@ export const SingleConverter = ({
          */}
         <div
           data-testid="quick-amounts-from"
-          className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.visibility}`}
+          className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.fromVisibility}`}
         >
           {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
             <button
@@ -348,18 +348,25 @@ export const SingleConverter = ({
           <div
             className={`relative text-center px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden ${singleConverterLayoutTokens.rateCard.infoPadding}`}
           >
-            {/* 匯率類型切換按鈕 - 現代化玻璃擬態設計 */}
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 inline-flex bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60">
+            {/* 匯率類型切換按鈕 - v2.0 相對定位設計，避免擠壓匯率 */}
+            <div
+              className={`inline-flex bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60 ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
+            >
               <button
                 onClick={() => onRateTypeChange('spot')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ${
+                className={`flex items-center gap-1 ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ${
                   rateType === 'spot'
                     ? 'bg-primary text-white shadow-md scale-105'
                     : 'text-text/70 hover:text-text hover:bg-primary/10'
                 }`}
                 aria-label={t('singleConverter.switchToSpot')}
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -371,14 +378,19 @@ export const SingleConverter = ({
               </button>
               <button
                 onClick={() => onRateTypeChange('cash')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ${
+                className={`flex items-center gap-1 ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ${
                   rateType === 'cash'
                     ? 'bg-primary text-white shadow-md scale-105'
                     : 'text-text/70 hover:text-text hover:bg-primary/10'
                 }`}
                 aria-label={t('singleConverter.switchToCash')}
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -393,7 +405,7 @@ export const SingleConverter = ({
             {/* 匯率顯示 - 使用 SSOT text 色 */}
             <div className="w-full">
               <div
-                className={`${singleConverterLayoutTokens.rateCard.rateText} font-bold tabular-nums text-text mb-2 transition-transform duration-300 group-hover:scale-105`}
+                className={`${singleConverterLayoutTokens.rateCard.rateText} font-bold tabular-nums text-text mb-1 transition-transform duration-300 group-hover:scale-105`}
               >
                 1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
               </div>
@@ -571,7 +583,7 @@ export const SingleConverter = ({
          */}
         <div
           data-testid="quick-amounts-to"
-          className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.visibility}`}
+          className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.toVisibility}`}
         >
           {quickAmounts.map((amount) => (
             <button

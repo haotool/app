@@ -217,15 +217,16 @@ describe('SingleConverter - 核心功能測試', () => {
   });
 
   describe('高度斷點佈局', () => {
-    it('快速金額與交換按鈕應套用高度斷點顯示規則', () => {
+    it('快速金額與交換按鈕應套用高度斷點顯示規則 (v2.0 分層隱藏)', () => {
       render(<SingleConverter {...mockProps} />);
 
       const quickFrom = screen.getByTestId('quick-amounts-from');
       const quickTo = screen.getByTestId('quick-amounts-to');
       const swapButton = screen.getByTestId('swap-button');
 
-      expect(quickFrom).toHaveClass(singleConverterLayoutTokens.quickAmounts.visibility);
-      expect(quickTo).toHaveClass(singleConverterLayoutTokens.quickAmounts.visibility);
+      // v2.0: 分層隱藏 - 來源快速金額 tiny 隱藏，結果快速金額 micro 隱藏
+      expect(quickFrom).toHaveClass(singleConverterLayoutTokens.quickAmounts.fromVisibility);
+      expect(quickTo).toHaveClass(singleConverterLayoutTokens.quickAmounts.toVisibility);
       expect(swapButton).toHaveClass(singleConverterLayoutTokens.swap.visibility);
     });
 
