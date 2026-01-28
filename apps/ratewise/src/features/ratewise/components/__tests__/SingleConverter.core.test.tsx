@@ -217,14 +217,14 @@ describe('SingleConverter - 核心功能測試', () => {
   });
 
   describe('高度斷點佈局', () => {
-    it('快速金額與交換按鈕應套用高度斷點顯示規則 (v2.0 分層隱藏)', () => {
+    it('快速金額與交換按鈕應套用高度斷點顯示規則', () => {
       render(<SingleConverter {...mockProps} />);
 
       const quickFrom = screen.getByTestId('quick-amounts-from');
       const quickTo = screen.getByTestId('quick-amounts-to');
       const swapButton = screen.getByTestId('swap-button');
 
-      // v2.0: 分層隱藏 - 來源快速金額 tiny 隱藏，結果快速金額 micro 隱藏
+      // 隱藏優先順序：快速金額(來源) short → 快速金額(結果) tiny → 交換按鈕 micro
       expect(quickFrom).toHaveClass(singleConverterLayoutTokens.quickAmounts.fromVisibility);
       expect(quickTo).toHaveClass(singleConverterLayoutTokens.quickAmounts.toVisibility);
       expect(swapButton).toHaveClass(singleConverterLayoutTokens.swap.visibility);
@@ -268,8 +268,8 @@ describe('SingleConverter - 核心功能測試', () => {
       rerender(<SingleConverter {...mockProps} rateType="cash" />);
 
       const cashButton = screen.getByLabelText('切換到現金匯率');
-      // 現金按鈕在未選中時使用 text-text/60 樣式
-      expect(cashButton).toHaveClass('text-xs');
+      // 現金按鈕在未選中時使用基礎按鈕樣式
+      expect(cashButton).toHaveClass('text-[11px]');
     });
   });
 

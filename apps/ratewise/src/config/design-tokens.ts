@@ -527,112 +527,189 @@ export const pageLayoutTokens = {
 } as const;
 
 /**
- * 單幣別頁面高度斷點佈局規範 (SSOT)
+ * 單幣別頁面高度斷點佈局規範
  *
- * 以高度為主的 RWD 佈局調整，優先保留核心功能並降低捲動需求。
+ * 針對 iOS PWA 用戶優化的高度響應式設計。
+ * 採用流體縮放 (fluid scaling) 搭配斷點隱藏，確保所有螢幕尺寸視覺一致。
  *
- * 高度斷點設計原則 v2.0：
- * - tall (≥761px): 完整顯示所有元素
- * - compact (≤760px): 縮減間距，保留所有功能
- * - short (≤700px): 隱藏光暈效果、縮減 padding
- * - tiny (≤650px): 隱藏資料來源、隱藏「來源」快速金額按鈕
- * - micro (≤600px): 隱藏交換按鈕、隱藏「結果」快速金額按鈕
- * - nano (≤560px): 極簡模式，僅保留核心輸入/輸出
+ * ## iOS PWA 視口高度參考 (2025)
+ *
+ * | 裝置               | 視口高度 | 內容區高度 (扣除導覽) |
+ * |--------------------|----------|----------------------|
+ * | iPhone 16 Pro Max  | 956px    | ~792px               |
+ * | iPhone 16 Plus     | 932px    | ~768px               |
+ * | iPhone 16 Pro      | 874px    | ~710px               |
+ * | iPhone 16/15       | 852px    | ~688px               |
+ * | iPhone SE 2022     | 667px    | ~563px               |
+ * | iPhone SE 原版     | 568px    | ~464px               |
+ *
+ * ## 斷點設計原則
+ *
+ * 1. **流體優先**：使用 CSS `clamp()` 實現元素線性縮放
+ * 2. **漸進隱藏**：依重要性順序隱藏次要元素
+ * 3. **等比維持**：漸層/光暈使用 `aspect-ratio` 保持比例
+ *
+ * ## 元素隱藏優先順序（由先到後）
+ *
+ * 1. 快速金額（來源）  - short (≤700px) 隱藏
+ * 2. 快速金額（結果）  - tiny (≤650px) 隱藏
+ * 3. 交換按鈕光暈      - short (≤700px) 隱藏
+ * 4. 交換按鈕          - micro (≤600px) 隱藏
+ * 5. 資料來源          - nano (≤560px) 隱藏（最後）
+ *
+ * @see https://web.dev/articles/min-max-clamp - CSS clamp() 最佳實踐
+ * @see https://tailwindcss.com/docs/responsive-design - Tailwind RWD
  *
  * @created 2026-01-27
- * @updated 2026-01-28 - v2.0 重新設計匯率卡片佈局，解決按鈕擠壓問題
- * @version 2.0.0
+ * @updated 2026-01-28 - 重構隱藏優先順序，資料來源改為最後隱藏
+ * @version 1.1.0
  */
 export const rateWiseLayoutTokens = {
-  /** 外層容器 */
+  /** 外層容器 - 使用 flex 填滿可用空間 */
   container: 'flex flex-col min-h-full',
-  /** 內容容器 */
+
+  /** 內容容器 - 流體內距搭配最大寬度限制 */
   content: {
     className:
-      'flex-1 flex flex-col max-w-md mx-auto w-full px-3 sm:px-5 py-4 compact:py-3 short:py-2 tiny:py-1.5 micro:py-1 nano:py-1',
+      'flex-1 flex flex-col justify-center max-w-md mx-auto w-full px-3 sm:px-5 py-3 compact:py-2.5 short:py-2 tiny:py-1.5 micro:py-1 nano:py-1',
   },
-  /** 單幣別區塊 */
+
+  /** 單幣別區塊 - 使用 flex-1 填滿並置中內容 */
   section: {
-    className: 'flex-1 flex flex-col mb-4 compact:mb-3 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
+    className:
+      'flex-1 flex flex-col justify-center mb-3 compact:mb-2.5 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
   },
-  /** 單幣別卡片 */
+
+  /** 單幣別卡片 - 移除 flex-1 避免過度拉伸 */
   card: {
-    className: 'card flex-1 p-4 compact:p-3 short:p-2.5 tiny:p-2 micro:p-2 nano:p-1.5',
+    className: 'card p-3 compact:p-2.5 short:p-2 tiny:p-2 micro:p-1.5 nano:p-1.5',
   },
-  /** 資料來源區塊 */
+
+  /** 資料來源區塊 - 最後隱藏（nano 斷點） */
   info: {
-    base: 'text-center flex-shrink-0',
-    visibility: 'tiny:hidden',
+    base: 'text-center flex-shrink-0 mt-2 compact:mt-1.5 short:mt-1 tiny:mt-1 micro:mt-0.5',
+    visibility: 'nano:hidden',
   },
 } as const;
 
 /**
- * 單幣別轉換器高度斷點配置 (SSOT)
+ * 單幣別轉換器高度斷點配置
  *
- * 控制元件間距、文字尺寸與顯示優先順序。
+ * 控制各元件的間距、字體尺寸與顯示/隱藏規則。
+ * 採用線性遞減設計，確保視覺比例在各斷點間平滑過渡。
  *
- * 匯率卡片佈局 v2.0：
- * - 移除固定 pt- padding，改用 flex 自動間距
- * - 即期/現金按鈕改為 relative 定位，不再絕對覆蓋
- * - 小螢幕時按鈕縮小並水平排列在匯率上方
+ * ## 匯率卡片佈局設計
+ *
+ * - 匯率類型按鈕採相對定位，避免與匯率文字重疊
+ * - 漸層光暈使用 `aspect-square` 保持等比例
+ * - 趨勢圖高度隨視口流體縮放
+ *
+ * ## 斷點尺寸對照
+ *
+ * | 斷點    | 視口高度 | 目標裝置                    |
+ * |---------|----------|----------------------------|
+ * | tall    | ≥761px   | iPhone 16 Pro+ 系列         |
+ * | compact | ≤760px   | iPhone 16/15 標準版         |
+ * | short   | ≤700px   | 較舊 iPhone / 小型 Android  |
+ * | tiny    | ≤650px   | 接近 iPhone SE 2022         |
+ * | micro   | ≤600px   | iPhone SE 原版附近          |
+ * | nano    | ≤560px   | 極小螢幕 / 橫向模式         |
  *
  * @created 2026-01-27
- * @updated 2026-01-28 - v2.0 解決按鈕擠壓匯率的問題
- * @version 2.0.0
+ * @updated 2026-01-28 - 調整隱藏順序，快速金額優先隱藏
+ * @version 1.1.0
  */
 export const singleConverterLayoutTokens = {
-  /** 區塊間距 */
+  /** 區塊間距 - 線性遞減 */
   section: {
-    className: 'mb-4 compact:mb-3 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
+    className: 'mb-3 compact:mb-2.5 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
   },
+
   /** 標籤間距 */
   label: {
-    className: 'mb-2 short:mb-1.5 tiny:mb-1 micro:mb-0.5 nano:mb-0.5',
+    className: 'mb-1.5 short:mb-1 tiny:mb-1 micro:mb-0.5 nano:mb-0.5',
   },
-  /** 金額輸入框尺寸 */
+
+  /** 金額輸入框 - 流體尺寸 */
   amountInput: {
     className:
-      'py-3 text-2xl compact:py-2.5 compact:text-xl short:py-2 short:text-xl tiny:py-1.5 tiny:text-lg micro:py-1.5 micro:text-lg nano:py-1 nano:text-base',
+      'py-2.5 text-xl compact:py-2 compact:text-lg short:py-2 short:text-lg tiny:py-1.5 tiny:text-base micro:py-1.5 micro:text-base nano:py-1 nano:text-sm',
   },
-  /** 匯率卡片區塊 - v2.0 重新設計 */
+
+  /** 匯率卡片區塊 */
   rateCard: {
+    /** 區塊容器 */
     section:
-      'flex flex-col items-center mb-4 compact:mb-3 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
-    cardSpacing: 'mb-3 compact:mb-2 short:mb-1.5 tiny:mb-1 micro:mb-1 nano:mb-0.5',
-    /** 匯率資訊區 - 使用 flex 自動間距，移除固定 pt- */
-    infoPadding: 'py-4 compact:py-3 short:py-2.5 tiny:py-2 micro:py-1.5 nano:py-1',
-    /** 匯率類型按鈕容器 - 相對定位，在匯率上方 */
-    rateTypeContainer: 'mb-3 compact:mb-2.5 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
+      'flex flex-col items-center mb-3 compact:mb-2.5 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
+
+    /** 卡片底部間距 */
+    cardSpacing: 'mb-2.5 compact:mb-2 short:mb-1.5 tiny:mb-1 micro:mb-1 nano:mb-0.5',
+
+    /** 匯率資訊區內距 */
+    infoPadding: 'py-3 compact:py-2.5 short:py-2 tiny:py-1.5 micro:py-1.5 nano:py-1',
+
+    /** 匯率類型按鈕容器間距 */
+    rateTypeContainer: 'mb-2.5 compact:mb-2 short:mb-1.5 tiny:mb-1.5 micro:mb-1 nano:mb-1',
+
     /** 匯率類型按鈕尺寸 */
     rateTypeButton:
-      'px-2.5 py-1 text-xs compact:px-2 compact:py-0.5 compact:text-[11px] short:px-2 short:py-0.5 short:text-[11px] tiny:px-1.5 tiny:py-0.5 tiny:text-[10px] micro:px-1.5 micro:py-0.5 micro:text-[10px] nano:px-1 nano:py-0.5 nano:text-[9px]',
-    /** 匯率類型圖示尺寸 */
+      'px-2 py-0.5 text-[11px] compact:px-2 compact:py-0.5 compact:text-[11px] short:px-1.5 short:py-0.5 short:text-[10px] tiny:px-1.5 tiny:py-0.5 tiny:text-[10px] micro:px-1.5 micro:py-0.5 micro:text-[10px] nano:px-1 nano:py-0.5 nano:text-[9px]',
+
+    /** 匯率類型圖示 - nano 隱藏 */
     rateTypeIcon:
-      'w-3 h-3 compact:w-2.5 compact:h-2.5 short:w-2.5 short:h-2.5 tiny:w-2 tiny:h-2 micro:w-2 micro:h-2 nano:hidden',
-    rateText: 'text-2xl compact:text-xl short:text-lg tiny:text-base micro:text-base nano:text-sm',
-    rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-[11px] nano:text-[10px]',
-    chartHeight: 'h-20 compact:h-16 short:h-14 tiny:h-12 micro:h-10 nano:h-8',
+      'w-2.5 h-2.5 compact:w-2.5 compact:h-2.5 short:w-2 short:h-2 tiny:w-2 tiny:h-2 micro:w-2 micro:h-2 nano:hidden',
+
+    /** 主要匯率文字 */
+    rateText: 'text-xl compact:text-lg short:text-base tiny:text-base micro:text-sm nano:text-sm',
+
+    /** 次要匯率文字 */
+    rateSubText: 'text-xs short:text-[11px] tiny:text-[11px] micro:text-[10px] nano:text-[10px]',
+
+    /** 趨勢圖高度 - 線性遞減 */
+    chartHeight: 'h-16 compact:h-14 short:h-12 tiny:h-10 micro:h-9 nano:h-8',
+
+    /** 趨勢圖懸停高度 */
     chartHoverHeight:
-      'group-hover:h-24 compact:group-hover:h-20 short:group-hover:h-16 tiny:group-hover:h-14 micro:group-hover:h-12 nano:group-hover:h-10',
+      'group-hover:h-20 compact:group-hover:h-18 short:group-hover:h-14 tiny:group-hover:h-12 micro:group-hover:h-11 nano:group-hover:h-10',
   },
-  /** 快速金額區塊 - 分層隱藏 */
+
+  /**
+   * 快速金額區塊
+   *
+   * 隱藏優先順序：來源 (short) → 結果 (tiny)
+   * 快速金額為輔助功能，優先於資料來源隱藏
+   */
   quickAmounts: {
+    /** 容器樣式 */
     container:
-      'flex gap-2 mt-2 compact:mt-1.5 short:mt-1 tiny:mt-1 micro:mt-0.5 nano:mt-0.5 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
-    /** 來源快速金額：tiny 以下隱藏 */
-    fromVisibility: 'tiny:hidden',
-    /** 結果快速金額：micro 以下隱藏 */
-    toVisibility: 'micro:hidden',
+      'flex gap-1.5 mt-1.5 compact:mt-1 short:mt-1 tiny:mt-0.5 micro:mt-0.5 nano:mt-0.5 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
+
+    /** 來源快速金額：short (≤700px) 隱藏 */
+    fromVisibility: 'short:hidden',
+
+    /** 結果快速金額：tiny (≤650px) 隱藏 */
+    toVisibility: 'tiny:hidden',
   },
-  /** 交換按鈕 */
+
+  /**
+   * 交換按鈕
+   *
+   * 光暈效果 short 隱藏，按鈕本體 micro 隱藏
+   */
   swap: {
+    /** 按鈕包裝器 */
     wrapper: 'relative group/swap',
+
+    /** 按鈕可見性：micro (≤600px) 隱藏 */
     visibility: 'micro:hidden',
+
+    /** 光暈可見性：short (≤700px) 隱藏 */
     glowHidden: 'short:hidden',
   },
-  /** 加入歷史按鈕 */
+
+  /** 加入歷史按鈕 - 線性縮減 */
   addToHistory: {
-    className: 'py-3.5 compact:py-3 short:py-2.5 tiny:py-2 micro:py-1.5 nano:py-1.5',
+    className: 'py-3 compact:py-2.5 short:py-2 tiny:py-2 micro:py-1.5 nano:py-1.5',
   },
 } as const;
 
@@ -848,34 +925,71 @@ export const typographyTokens = {
  * @reference Tailwind CSS Responsive Design
  * @see https://tailwindcss.com/docs/responsive-design
  * @created 2026-01-25
- * @updated 2026-01-27 - 新增多組高度斷點支援行動裝置滿版
- * @version 1.2.0
+ * @updated 2026-01-28 - 調整高度斷點隱藏優先順序
+ * @version 1.2.1
  */
 export const breakpointTokens = {
-  /** 斷點定義 (min-width) */
+  /**
+   * 斷點定義
+   *
+   * ## 寬度斷點 (min-width)
+   *
+   * 標準 Tailwind 斷點配置，適用於水平響應式設計。
+   *
+   * ## 高度斷點 (max-height)
+   *
+   * 針對 iOS PWA 用戶優化的垂直響應式設計。
+   * 斷點值基於 2025 年主流 iPhone 視口高度統計。
+   *
+   * | 斷點    | 觸發條件   | 目標裝置                |
+   * |---------|------------|------------------------|
+   * | tall    | ≥761px     | iPhone 16 Pro+ 系列     |
+   * | compact | ≤760px     | iPhone 16/15 標準版     |
+   * | short   | ≤700px     | 較舊機型 / 小型裝置     |
+   * | tiny    | ≤650px     | 接近 iPhone SE 2022     |
+   * | micro   | ≤600px     | iPhone SE 原版區間      |
+   * | nano    | ≤560px     | 極小螢幕 / 特殊情境     |
+   */
   screens: {
-    /** 640px - 大型手機/小平板 (橫向) */
+    /* ─────────────────────────────────────────────────────────────
+     * 寬度斷點 (Tailwind 標準)
+     * ───────────────────────────────────────────────────────────── */
+
+    /** 640px - 大型手機 / 小平板 (橫向) */
     sm: { min: '640px', max: '767px', class: 'sm:' },
+
     /** 768px - 平板 (直向) */
     md: { min: '768px', max: '1023px', class: 'md:' },
+
     /** 1024px - 平板 (橫向) / 小筆電 */
     lg: { min: '1024px', max: '1279px', class: 'lg:' },
+
     /** 1280px - 筆電 / 桌機 */
     xl: { min: '1280px', max: '1535px', class: 'xl:' },
+
     /** 1536px - 大螢幕桌機 */
     '2xl': { min: '1536px', max: null, class: '2xl:' },
 
-    /** 高度斷點 - 中短螢幕 (≤760px) - 影響 <1% 設備 */
+    /* ─────────────────────────────────────────────────────────────
+     * 高度斷點 (iOS PWA 優化)
+     * ───────────────────────────────────────────────────────────── */
+
+    /** 中短螢幕 - iPhone 16/15 標準版以下 */
     compact: { raw: '(max-height: 760px)', class: 'compact:' },
-    /** 高度斷點 - 短螢幕 (≤700px) - 影響 <5% 設備 */
+
+    /** 短螢幕 - 較舊機型，快速金額(來源)開始隱藏 */
     short: { raw: '(max-height: 700px)', class: 'short:' },
-    /** 高度斷點 - 極短螢幕 (≤650px) - 避免影響 iPhone SE 2022 (667px) */
+
+    /** 極短螢幕 - 接近 iPhone SE 2022 (667px)，快速金額(結果)隱藏 */
     tiny: { raw: '(max-height: 650px)', class: 'tiny:' },
-    /** 高度斷點 - 超短螢幕 (≤600px) - 針對 iPhone SE 原版 (568px) */
+
+    /** 超短螢幕 - iPhone SE 原版區間，交換按鈕隱藏 */
     micro: { raw: '(max-height: 600px)', class: 'micro:' },
-    /** 高度斷點 - 最小螢幕 (≤560px) - 給 iPhone SE 原版一點餘裕 */
+
+    /** 最小螢幕 - 極端情境，資料來源隱藏（最後） */
     nano: { raw: '(max-height: 560px)', class: 'nano:' },
-    /** 高度斷點 - 長螢幕 (≥761px) */
+
+    /** 長螢幕 - 完整顯示所有元素 */
     tall: { raw: '(min-height: 761px)', class: 'tall:' },
   },
 

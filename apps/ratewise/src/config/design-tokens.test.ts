@@ -248,19 +248,22 @@ describe('Design Token System - BDD', () => {
 
       expect(rateWiseLayoutTokens).toBeDefined();
       expect(rateWiseLayoutTokens.content.className).toContain('compact:');
-      expect(rateWiseLayoutTokens.info.visibility).toBe('tiny:hidden');
+      // 資料來源最後隱藏 (nano 斷點)
+      expect(rateWiseLayoutTokens.info.visibility).toBe('nano:hidden');
     });
 
     it('應該導出 singleConverterLayoutTokens', async () => {
       const { singleConverterLayoutTokens } = await import('./design-tokens');
 
       expect(singleConverterLayoutTokens).toBeDefined();
-      // v2.0: 分層隱藏快速金額
-      expect(singleConverterLayoutTokens.quickAmounts.fromVisibility).toBe('tiny:hidden');
-      expect(singleConverterLayoutTokens.quickAmounts.toVisibility).toBe('micro:hidden');
+
+      // 隱藏優先順序：快速金額(來源) → 快速金額(結果) → 交換按鈕 → 資料來源
+      expect(singleConverterLayoutTokens.quickAmounts.fromVisibility).toBe('short:hidden');
+      expect(singleConverterLayoutTokens.quickAmounts.toVisibility).toBe('tiny:hidden');
       expect(singleConverterLayoutTokens.swap.visibility).toBe('micro:hidden');
-      expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-16');
-      // v2.0: 新增匯率類型按鈕配置
+
+      // 流體縮放配置
+      expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-14');
       expect(singleConverterLayoutTokens.rateCard.rateTypeContainer).toContain('mb-');
       expect(singleConverterLayoutTokens.rateCard.rateTypeButton).toContain('px-');
     });

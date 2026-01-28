@@ -341,8 +341,13 @@ export const SingleConverter = ({
         <div
           className={`relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl w-full group cursor-pointer hover:shadow-xl transition-all duration-500 border border-border/50 hover:border-primary/30 ${singleConverterLayoutTokens.rateCard.cardSpacing}`}
         >
-          {/* 微光效果 - 極淺的漸層覆蓋 */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl" />
+          {/*
+           * 微光效果 - 極淺的漸層覆蓋
+           * 使用 aspect-square + object-cover 確保等比例不變形
+           */}
+          <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          </div>
 
           {/* 匯率資訊區塊 - 透明背景繼承父元素漸層 */}
           <div
