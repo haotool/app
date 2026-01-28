@@ -44,7 +44,7 @@ test.describe('無障礙性掃描', () => {
 
   test('多幣別模式應該通過無障礙性掃描', async ({ rateWisePage: page }) => {
     // 切換到多幣別模式
-    await page.getByRole('button', { name: /多幣別/i }).click();
+    await page.getByRole('link', { name: /多幣別/i }).click();
     await page.waitForTimeout(500);
 
     const accessibilityScanResults = await new AxeBuilder({ page })

@@ -28,8 +28,8 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(page.getByText(/即時匯率換算/i)).toBeVisible();
 
     // 檢查模式切換按鈕
-    await expect(page.getByRole('button', { name: /單幣別/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /多幣別/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /單幣別/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /多幣別/i })).toBeVisible();
 
     // 檢查頁尾資料來源 (使用 toBeAttached - 頁尾可能需要滾動才能進入 viewport)
     // [fix:2025-12-24] 從 toBeVisible 改為 toBeAttached，因為頁尾在較小視窗下不在初始 viewport
@@ -67,7 +67,7 @@ test.describe('RateWise 核心功能測試', () => {
 
   test('多幣別模式：應該能夠切換並顯示多幣別換算', async ({ rateWisePage: page }) => {
     // 切換到多幣別模式
-    const multiModeButton = page.getByRole('button', { name: /多幣別/i });
+    const multiModeButton = page.getByRole('link', { name: /多幣別/i });
     await multiModeButton.click();
 
     // 等待 UI 更新
@@ -85,7 +85,7 @@ test.describe('RateWise 核心功能測試', () => {
 
   test('多幣別模式：應該能夠輸入基準金額並看到所有貨幣換算', async ({ rateWisePage: page }) => {
     // 切換到多幣別模式
-    await page.getByRole('button', { name: /多幣別/i }).click();
+    await page.getByRole('link', { name: /多幣別/i }).click();
 
     // 等待 UI 完全切換
     await page.waitForTimeout(500);
@@ -129,7 +129,7 @@ test.describe('RateWise 核心功能測試', () => {
       await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
 
       // 檢查模式切換按鈕在小螢幕上可點擊
-      const singleModeButton = page.getByRole('button', { name: /單幣別/i });
+      const singleModeButton = page.getByRole('link', { name: /單幣別/i });
       await expect(singleModeButton).toBeVisible();
 
       // 驗證點擊目標大小足夠（至少 24x24px）
@@ -146,7 +146,7 @@ test.describe('RateWise 核心功能測試', () => {
     // Fixture already handles navigation and waits for key UI element
     // Just verify key content is rendered (already checked in fixture)
     await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /多幣別/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /多幣別/i })).toBeVisible();
   });
 
   test('錯誤處理：網路錯誤時應該顯示友善錯誤訊息', async ({ page, context }) => {

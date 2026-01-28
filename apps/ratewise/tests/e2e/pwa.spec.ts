@@ -255,7 +255,7 @@ test.describe('PWA Features', () => {
     );
 
     // 執行一個可能觸發 API 請求的操作（如切換模式）
-    const multiButton = page.getByRole('button', { name: /多幣別/i });
+    const multiButton = page.getByRole('link', { name: /多幣別/i });
     if (await multiButton.isVisible()) {
       await multiButton.click();
     }
