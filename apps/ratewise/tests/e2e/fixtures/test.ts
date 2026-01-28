@@ -94,7 +94,8 @@ export const test = base.extend<RateWiseFixtures>({
         // Web-first assertion: wait for functional UI element instead of data attribute
         // This is more reliable than waiting for data-app-ready attribute
         // because it verifies actual React hydration completed
-        await expect(page.getByRole('button', { name: /多幣別/i })).toBeVisible({
+        // [fix:2026-01-28] 底部導覽列改用 <a> 標籤，使用 link role 檢測
+        await expect(page.getByRole('link', { name: /多幣別/i })).toBeVisible({
           timeout: 25_000,
         });
 
