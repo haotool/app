@@ -15,7 +15,7 @@
  * - [OWASP: Secure Headers](https://owasp.org/www-project-secure-headers/)
  * - [MDN: CSP script-src](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
  *
- * 最後更新：2026-01-07
+ * 最後更新：2026-01-29
  *
  * ⚠️ 重要：不要使用 'strict-dynamic'！
  * - strict-dynamic 會忽略 'self' 和域名白名單
@@ -65,8 +65,10 @@ export default {
 			// HSTS - 強制 HTTPS
 			'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
 
-			// Permissions Policy - 限制瀏覽器功能
-			'Permissions-Policy': 'geolocation=(), microphone=(), camera=(), payment=()',
+			// Permissions Policy - 限制瀏覽器功能（僅使用標準化功能）
+			// 移除已棄用: ambient-light-sensor, document-domain, vr
+			'Permissions-Policy':
+				'geolocation=(), microphone=(), camera=(), payment=(), ' + 'accelerometer=(), gyroscope=(), magnetometer=(), usb=()',
 
 			// Cross-Origin 隔離標頭 - 增強安全性
 			// 參考: https://web.dev/cross-origin-isolation-guide/

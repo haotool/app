@@ -2,22 +2,23 @@
 
 > 台灣用戶取向的即時匯率換算工具，資料 100% 來源於臺灣銀行牌告匯率，支援 30+ 種貨幣、PWA 離線與歷史走勢。
 
-Version: v1.4.0 (2026-01-06)
+Version: v2.0.0 (2026-01-29)
 
 Answer Capsule (Quick Q&A):
-- Q: RateWise 提供什麼？ A: 即時匯率換算（單幣別/多幣別），並支援歷史趨勢與離線使用。
+- Q: RateWise 提供什麼？ A: 即時匯率換算（單幣別/多幣別），並支援歷史趨勢、收藏管理、多語言（繁中/英/日）與離線使用。
 - Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金與即期買入/賣出）。
 - Q: 更新頻率？ A: 每 5 分鐘自動同步。
 - Q: 建議用途？ A: 出國旅遊換匯、跨境購物匯率比較、日常外幣查詢。
 
 E-E-A-T Signals:
-- 專業性：匯率計算邏輯與格式化策略具完整測試覆蓋。
+- 專業性：匯率計算邏輯與格式化策略具完整測試覆蓋（92%+ 覆蓋率）。
 - 權威性：資料來源為臺灣銀行官方牌告匯率。
 - 可信度：開源 GPL-3.0，透明可驗證；提供聯絡方式。
 
 Key Metrics:
-- LCP 489ms, CLS 0.00046, INP < 100ms（本地基準）
-- Lighthouse SEO 100/100, Performance 97/100
+- LCP < 500ms, CLS ~0, INP < 100ms
+- Lighthouse SEO 100/100, Performance 97+/100
+- 6 種主題風格、i18n 三語言支援
 
 ## Core Pages
 
@@ -34,6 +35,12 @@ Key Metrics:
 - [HKD/TWD 港幣](https://app.haotool.org/ratewise/hkd-twd/): 港澳常用
 - [CNY/TWD 人民幣](https://app.haotool.org/ratewise/cny-twd/): 跨境購物需求
 - [KRW/TWD 韓元](https://app.haotool.org/ratewise/krw-twd/): 旅遊與消費需求
+
+## AI/LLM Access Control
+
+Allow: GPTBot, ClaudeBot, PerplexityBot, ChatGPT-User, Google-Extended
+Attribution: Required (link back to source)
+Contact: haotool.org@gmail.com
 
 ## Optional
 

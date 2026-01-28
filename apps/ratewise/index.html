@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -16,51 +16,7 @@
     <!-- Google Search Console -->
     <meta name="google-site-verification" content="NBCorB6Jq_872WFLMgbSieWf_Wvt0EGse1QWXnM4AOo" />
 
-    <!-- SEO Meta Tags -->
-    <meta
-      name="description"
-      content="RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。"
-    />
-    <meta
-      name="keywords"
-      content="匯率好工具,RateWise,匯率工具,匯率換算,即時匯率,台幣匯率,TWD匯率,USD匯率,外幣兌換,匯率查詢,臺灣銀行匯率,台灣匯率,美金匯率,日幣匯率,歐元匯率,線上匯率,匯率計算機,匯率轉換器,貨幣換算,台幣換算,exchange rate,currency converter"
-    />
-    <meta name="author" content="haotool" />
-    <meta
-      name="robots"
-      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-    />
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://app.haotool.org/ratewise/" />
-    <meta property="og:title" content="RateWise 匯率好工具｜即時匯率換算・30+ 貨幣・台銀牌告參考" />
-    <meta
-      property="og:description"
-      content="RateWise 提供免費即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP、CNY 等 30+ 種貨幣。快速、準確、離線可用，是您換匯的最佳助手。"
-    />
-    <meta property="og:image" content="https://app.haotool.org/ratewise/og-image.png?v=20251208" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="RateWise 匯率轉換器應用截圖" />
-    <meta property="og:locale" content="zh_TW" />
-    <meta property="og:site_name" content="RateWise" />
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta
-      name="twitter:title"
-      content="RateWise 匯率好工具｜即時匯率換算・30+ 貨幣・台銀牌告參考"
-    />
-    <meta
-      name="twitter:description"
-      content="RateWise 提供免費即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP、CNY 等 30+ 種貨幣。快速、準確、離線可用，是您換匯的最佳助手。"
-    />
-    <meta
-      name="twitter:image"
-      content="https://app.haotool.org/ratewise/twitter-image.png?v=20251208"
-    />
-    <meta name="twitter:image:alt" content="RateWise 匯率轉換器" />
+    <!-- SEO Meta Tags managed by SEOHelmet component (prevents duplicate tags) -->
 
     <!-- PWA -->
     <link rel="icon" href="/ratewise/favicon.ico?v=20251208" sizes="48x48" />
@@ -87,23 +43,56 @@
       (function () {
         var STORAGE_KEY = 'ratewise-theme';
         var DEFAULT_STYLE = 'zen';
+        // Security: Whitelist of allowed theme styles to prevent injection
+        var ALLOWED_STYLES = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'];
+
+        /**
+         * Validates theme config structure and style value
+         * @param {unknown} config - Parsed config from localStorage
+         * @returns {string} - Validated style or DEFAULT_STYLE
+         */
+        function getValidatedStyle(config) {
+          // Security: Validate config is a plain object (not null, array, or prototype-polluted)
+          if (
+            config === null ||
+            typeof config !== 'object' ||
+            Array.isArray(config) ||
+            config.constructor !== Object
+          ) {
+            return DEFAULT_STYLE;
+          }
+
+          // Security: Validate style property exists and is a string
+          if (!Object.prototype.hasOwnProperty.call(config, 'style')) {
+            return DEFAULT_STYLE;
+          }
+
+          var style = config.style;
+          if (typeof style !== 'string') {
+            return DEFAULT_STYLE;
+          }
+
+          // Security: Whitelist validation - only allow predefined styles
+          return ALLOWED_STYLES.indexOf(style) !== -1 ? style : DEFAULT_STYLE;
+        }
+
+        function applyStyle(style) {
+          document.documentElement.dataset.style = style;
+          document.documentElement.classList.add(style === 'classic' ? 'font-serif' : 'font-sans');
+        }
 
         try {
           var stored = localStorage.getItem(STORAGE_KEY);
           if (stored) {
             var config = JSON.parse(stored);
-            var style = config.style || DEFAULT_STYLE;
-            document.documentElement.dataset.style = style;
-            document.documentElement.classList.add(
-              style === 'classic' ? 'font-serif' : 'font-sans',
-            );
+            var style = getValidatedStyle(config);
+            applyStyle(style);
           } else {
-            document.documentElement.dataset.style = DEFAULT_STYLE;
-            document.documentElement.classList.add('font-sans');
+            applyStyle(DEFAULT_STYLE);
           }
         } catch (e) {
-          document.documentElement.dataset.style = DEFAULT_STYLE;
-          document.documentElement.classList.add('font-sans');
+          // Fallback for JSON parse errors or localStorage access errors
+          applyStyle(DEFAULT_STYLE);
         }
       })();
     </script>
@@ -342,69 +331,8 @@
       <link rel="stylesheet" href="./loading.css" />
     </noscript>
 
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "RateWise",
-        "alternateName": "匯率好工具",
-        "description": "RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。",
-        "url": "https://app.haotool.org/ratewise/",
-        "applicationCategory": "FinanceApplication",
-        "operatingSystem": "Any",
-        "browserRequirements": "Requires JavaScript",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
-        "featureList": [
-          "即時匯率查詢",
-          "單幣別換算",
-          "多幣別同時換算",
-          "歷史匯率趨勢",
-          "離線使用",
-          "PWA 支援",
-          "台灣銀行牌告匯率",
-          "30+ 種貨幣支援"
-        ],
-        "screenshot": "https://app.haotool.org/ratewise/screenshots/desktop-converter.png"
-      }
-    </script>
-
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "RateWise",
-        "url": "https://app.haotool.org/ratewise/",
-        "logo": "https://app.haotool.org/ratewise/optimized/logo-512w.png",
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "contactType": "Customer Support",
-          "email": "haotool.org@gmail.com"
-        },
-        "sameAs": ["https://www.threads.net/@azlife_1224", "https://github.com/haotool/app"]
-      }
-    </script>
-
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "RateWise",
-        "url": "https://app.haotool.org/ratewise/",
-        "inLanguage": "zh-TW",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://app.haotool.org/ratewise/?q={search_term_string}",
-          "query-input": "required name=search_term_string"
-        }
-      }
-    </script>
-
-    <title>RateWise - 匯率好工具 | 即時匯率換算</title>
+    <!-- Structured Data managed by SEOHelmet component (prevents duplicate schemas) -->
+    <!-- Title managed by SEOHelmet component (prevents duplicate titles) -->
   </head>
   <body class="bg-slate-50">
     <noscript>

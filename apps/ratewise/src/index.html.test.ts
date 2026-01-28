@@ -1,148 +1,176 @@
-/**
- * index.html BDD Tests - Static SEO Meta Tags Verification
- *
- * BDD 重構測試：驗證 index.html 包含完整的靜態 SEO meta tags
- *
- * 測試策略：
- * - ✅ 首頁應該包含靜態 meta tags（description, keywords, robots）
- * - ✅ 首頁應該包含 Open Graph tags（og:*）
- * - ✅ 首頁應該包含 Twitter Card tags（twitter:*）
- * - ⚠️ canonical URL 由 SEOHelmet 動態生成（避免多頁面衝突）
- * - ✅ 首頁應該包含 JSON-LD structured data
- *
- * 架構決策 [2025-12-03]:
- * - index.html 僅包含靜態內容（title、description、OG tags）
- * - canonical 和 hreflang 完全由 SEOHelmet 動態管理（Single Source of Truth）
- * - 避免硬編碼 canonical 導致多頁面衝突（React Error #418、Lighthouse SEO 失敗）
- *
- * 參考：fix/seo-phase2a-bdd-approach, fix/canonical-conflict
- * 依據：[SEO 審查報告 2025-11-25] Google 爬蟲讀取靜態 HTML
- */
+/** index.html 靜態模板測試 - 驗證 SEOHelmet 架構 */
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-describe('index.html - Static SEO Meta Tags (BDD Refactor)', () => {
-  // 正確的路徑：從 src/ 目錄往上一層到項目根目錄
+describe('index.html - Static Template (SEOHelmet Architecture)', () => {
   const indexHtmlPath = resolve(__dirname, '..', 'index.html');
   const indexHtmlContent = readFileSync(indexHtmlPath, 'utf-8');
 
-  // Debug: 打印文件路徑和內容長度
-  console.log('📁 index.html路徑:', indexHtmlPath);
-  console.log('📏 文件長度:', indexHtmlContent.length, 'characters');
-  console.log('🔍 包含 description meta tag?', indexHtmlContent.includes('name="description"'));
-
-  describe('🔵 REFACTOR: 基礎 SEO Meta Tags', () => {
-    it('should have <html lang="zh-Hant"> attribute', () => {
-      expect(indexHtmlContent).toContain('<html lang="zh-Hant">');
+  describe('🟢 基礎設施 Meta Tags（保留）', () => {
+    it('should have <html lang="zh-TW"> attribute', () => {
+      expect(indexHtmlContent).toContain('<html lang="zh-TW">');
     });
 
-    it('should have meta description tag', () => {
-      // 考慮多行格式和空白字元
-      expect(indexHtmlContent).toMatch(/name="description"/);
-      expect(indexHtmlContent).toContain('RateWise 提供即時匯率換算服務');
+    it('should have charset and viewport meta tags', () => {
+      expect(indexHtmlContent).toContain('<meta charset="UTF-8"');
+      expect(indexHtmlContent).toContain('<meta name="viewport"');
     });
 
-    it('should have meta keywords tag', () => {
-      // 考慮多行格式和空白字元
-      expect(indexHtmlContent).toMatch(/name="keywords"/);
-      expect(indexHtmlContent).toContain('匯率好工具');
+    it('should have theme-color meta tag', () => {
+      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#8B5CF6"');
     });
 
-    it('should have meta robots tag with full directives', () => {
-      // 考慮多行格式和空白字元
-      expect(indexHtmlContent).toMatch(/name="robots"/);
-      expect(indexHtmlContent).toContain('index, follow');
-      expect(indexHtmlContent).toContain('max-image-preview:large');
+    it('should have Cloudflare Rocket Loader disabled', () => {
+      expect(indexHtmlContent).toContain('cloudflare-rocket-loader');
     });
 
-    it('should NOT have hardcoded canonical URL (managed by SEOHelmet)', () => {
-      // 架構改進 [2025-12-03]: canonical 由 SEOHelmet 動態生成，避免多頁面衝突
-      // 根因：index.html 硬編碼 canonical 與 FAQ/About 頁面動態 canonical 衝突
-      // 結果：Lighthouse SEO 失敗、React Error #418 (Hydration mismatch)
-      // 解決：移除 index.html 硬編碼，完全由 SEOHelmet 管理
+    it('should have app-version and build-time meta tags', () => {
+      expect(indexHtmlContent).toContain('<meta name="app-version"');
+      expect(indexHtmlContent).toContain('<meta name="build-time"');
+    });
+
+    it('should have Google Search Console verification', () => {
+      expect(indexHtmlContent).toContain('<meta name="google-site-verification"');
+    });
+  });
+
+  describe('🟢 SEO Tags 由 SEOHelmet 管理（不在 index.html）', () => {
+    it('should NOT have hardcoded description meta tag', () => {
+      // [2026-01-29] SEOHelmet 是 description 的唯一來源
+      expect(indexHtmlContent).not.toMatch(/<meta\s+name="description"/);
+    });
+
+    it('should NOT have hardcoded keywords meta tag', () => {
+      // [2026-01-29] SEOHelmet 是 keywords 的唯一來源
+      expect(indexHtmlContent).not.toMatch(/<meta\s+name="keywords"/);
+    });
+
+    it('should NOT have hardcoded robots meta tag', () => {
+      // [2026-01-29] SEOHelmet 是 robots 的唯一來源
+      expect(indexHtmlContent).not.toMatch(/<meta\s+name="robots"/);
+    });
+
+    it('should NOT have hardcoded canonical URL', () => {
       expect(indexHtmlContent).not.toContain('<link rel="canonical"');
     });
   });
 
-  describe('🔵 REFACTOR: Open Graph Tags', () => {
-    it('should have og:type tag', () => {
-      expect(indexHtmlContent).toContain('<meta property="og:type" content="website"');
+  describe('🟢 Open Graph Tags 由 SEOHelmet 管理（不在 index.html）', () => {
+    it('should NOT have hardcoded og:url tag', () => {
+      // [2026-01-29] 這是 C1 Critical Issue 的根因
+      // 硬編碼 og:url 導致 16/17 頁面顯示錯誤的 URL
+      expect(indexHtmlContent).not.toMatch(/<meta\s+property="og:url"/);
     });
 
-    it('should have og:url tag', () => {
-      expect(indexHtmlContent).toContain('<meta property="og:url"');
-      expect(indexHtmlContent).toContain('https://app.haotool.org/ratewise/');
+    it('should NOT have hardcoded og:title tag', () => {
+      expect(indexHtmlContent).not.toMatch(/<meta\s+property="og:title"/);
     });
 
-    it('should have og:title tag', () => {
-      // 考慮多行格式和空白字元
-      expect(indexHtmlContent).toMatch(/property="og:title"/);
-      expect(indexHtmlContent).toContain('RateWise');
+    it('should NOT have hardcoded og:description tag', () => {
+      expect(indexHtmlContent).not.toMatch(/<meta\s+property="og:description"/);
     });
 
-    it('should have og:description tag', () => {
-      // 考慮多行格式和空白字元
-      expect(indexHtmlContent).toMatch(/property="og:description"/);
+    it('should NOT have hardcoded og:image tag', () => {
+      expect(indexHtmlContent).not.toMatch(/<meta\s+property="og:image"\s+content="/);
     });
 
-    it('should have og:image tag with correct dimensions and versioned cache busting', () => {
-      expect(indexHtmlContent).toContain('property="og:image"');
-      expect(indexHtmlContent).toContain('og-image.png?v=20251208');
-      expect(indexHtmlContent).toContain('<meta property="og:image:width" content="1200"');
-      expect(indexHtmlContent).toContain('<meta property="og:image:height" content="630"');
-    });
-
-    it('should have og:locale tag', () => {
-      expect(indexHtmlContent).toContain('<meta property="og:locale" content="zh_TW"');
+    it('should NOT have hardcoded og:type tag', () => {
+      expect(indexHtmlContent).not.toMatch(/<meta\s+property="og:type"/);
     });
   });
 
-  describe('🔵 REFACTOR: Twitter Card Tags', () => {
-    it('should have twitter:card tag', () => {
-      expect(indexHtmlContent).toContain('<meta name="twitter:card" content="summary_large_image"');
+  describe('🟢 Twitter Card Tags 由 SEOHelmet 管理（不在 index.html）', () => {
+    it('should NOT have hardcoded twitter:card tag', () => {
+      expect(indexHtmlContent).not.toMatch(/<meta\s+name="twitter:card"/);
     });
 
-    it('should have twitter:title tag', () => {
-      // 考慮多行格式和空白字元
-      expect(indexHtmlContent).toMatch(/name="twitter:title"/);
-      expect(indexHtmlContent).toContain('RateWise');
+    it('should NOT have hardcoded twitter:title tag', () => {
+      expect(indexHtmlContent).not.toMatch(/<meta\s+name="twitter:title"/);
     });
 
-    it('should have twitter:description tag', () => {
-      // 考慮多行格式和空白字元
-      expect(indexHtmlContent).toMatch(/name="twitter:description"/);
-    });
-
-    it('should have twitter:image tag', () => {
-      expect(indexHtmlContent).toContain('name="twitter:image"');
-      expect(indexHtmlContent).toContain('twitter-image.png?v=20251208');
+    it('should NOT have hardcoded twitter:image tag', () => {
+      expect(indexHtmlContent).not.toMatch(/<meta\s+name="twitter:image"/);
     });
   });
 
-  describe('🔵 REFACTOR: JSON-LD Structured Data', () => {
-    it('should have JSON-LD script tag', () => {
-      expect(indexHtmlContent).toContain('<script type="application/ld+json">');
+  describe('🟢 JSON-LD Structured Data 由 SEOHelmet 管理（不在 index.html）', () => {
+    it('should NOT have hardcoded JSON-LD script tags', () => {
+      // [2026-01-29] 這是 C2 Critical Issue 的修復
+      // 硬編碼 JSON-LD 導致重複 Organization, WebSite, WebApplication schemas
+      expect(indexHtmlContent).not.toContain('<script type="application/ld+json">');
     });
 
-    it('should have WebApplication schema', () => {
-      expect(indexHtmlContent).toContain('"@type": "WebApplication"');
-      expect(indexHtmlContent).toContain('"name": "RateWise"');
-      expect(indexHtmlContent).toContain('"applicationCategory": "FinanceApplication"');
-    });
-
-    it('should have Organization schema', () => {
-      expect(indexHtmlContent).toContain('"@type": "Organization"');
-      expect(indexHtmlContent).toContain('"name": "RateWise"');
+    it('should NOT have hardcoded title tag', () => {
+      // [2026-01-29] title 由 SEOHelmet 管理
+      // 檢查 </head> 之前是否有 <title> tag
+      const headSection = indexHtmlContent.split('</head>')[0];
+      expect(headSection).not.toMatch(/<title>[^<]+<\/title>/);
     });
   });
 
-  describe('🔵 REFACTOR: PWA Meta Tags (保留)', () => {
+  describe('🟢 PWA Meta Tags（保留）', () => {
     it('should retain PWA essential tags', () => {
       expect(indexHtmlContent).toContain('<meta name="theme-color" content="#8B5CF6"');
       expect(indexHtmlContent).toContain('<meta name="viewport"');
       expect(indexHtmlContent).toContain('<link rel="apple-touch-icon"');
+      expect(indexHtmlContent).toContain('<link rel="icon"');
+    });
+
+    it('should retain PWA manifest hints', () => {
+      expect(indexHtmlContent).toContain('mobile-web-app-capable');
+      expect(indexHtmlContent).toContain('apple-mobile-web-app-capable');
+    });
+  });
+
+  describe('🟢 Resource Hints（保留）', () => {
+    it('should retain preconnect hints', () => {
+      expect(indexHtmlContent).toContain('<link rel="preconnect"');
+    });
+
+    it('should retain dns-prefetch hints', () => {
+      expect(indexHtmlContent).toContain('<link rel="dns-prefetch"');
+    });
+  });
+
+  describe('🟢 Noscript Fallback（保留）', () => {
+    it('should have noscript content for SEO', () => {
+      expect(indexHtmlContent).toContain('<noscript>');
+      expect(indexHtmlContent).toContain('RateWise 匯率好工具');
+    });
+  });
+
+  describe('🟢 Security: Theme Initialization Script', () => {
+    it('should have ALLOWED_STYLES whitelist for security', () => {
+      // [2026-01-29] Security fix: Whitelist validation prevents injection
+      expect(indexHtmlContent).toContain('ALLOWED_STYLES');
+      expect(indexHtmlContent).toContain("'zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'");
+    });
+
+    it('should have getValidatedStyle function for structure validation', () => {
+      // [2026-01-29] Security fix: Validates config structure before use
+      expect(indexHtmlContent).toContain('getValidatedStyle');
+    });
+
+    it('should check for prototype pollution prevention', () => {
+      // [2026-01-29] Security fix: Validates config is a plain object
+      expect(indexHtmlContent).toContain('config.constructor !== Object');
+    });
+
+    it('should use hasOwnProperty for property check', () => {
+      // [2026-01-29] Security fix: Safe property access
+      expect(indexHtmlContent).toContain('Object.prototype.hasOwnProperty.call');
+    });
+
+    it('should validate style is a string type', () => {
+      // [2026-01-29] Security fix: Type validation
+      expect(indexHtmlContent).toContain("typeof style !== 'string'");
+    });
+
+    it('should use indexOf for whitelist validation (ES5 compatible)', () => {
+      // [2026-01-29] Security fix: Whitelist check with ES5 compatibility
+      expect(indexHtmlContent).toContain('ALLOWED_STYLES.indexOf(style) !== -1');
     });
   });
 });

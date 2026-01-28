@@ -1,5 +1,50 @@
 # @app/ratewise
 
+## 2.0.0 (2026-01-29)
+
+### 🚀 Major Release - UI/UX 大幅重構與 SEO 優化
+
+這是一個重大版本更新，包含 133 個 commits，涵蓋 UI/UX 現代化、i18n 國際化、SEO 架構重構等核心改進。
+
+### Breaking Changes
+
+- **SEO 架構重構**: `index.html` 不再包含硬編碼的 SEO meta tags 與 JSON-LD，統一由 `SEOHelmet` 管理
+- **語言標籤變更**: `zh-Hant` → `zh-TW` 以符合 Google 建議
+- **Design Tokens SSOT**: 所有樣式統一使用 CSS Variables，移除硬編碼色彩值
+
+### Added
+
+- **i18n 國際化**: 支援繁體中文、英文、日文三種語言（react-i18next）
+- **6 種主題風格**: Zen、Nitro、Kawaii、Classic、Ocean、Forest
+- **拖曳排序收藏**: 使用 @hello-pangea/dnd 實現收藏貨幣拖曳排序
+- **微互動動畫**: 導覽列與語言切換滑動動畫、Toast 通知動畫
+- **高度斷點 RWD**: 支援小螢幕（如 iPhone SE 320px）的響應式佈局
+- **ParkKeeper 設計風格**: 統一的毛玻璃效果、緊湊導覽（48px Header）
+
+### Changed
+
+- **Header 語意化**: `<h1>` 改為 `<span>`，避免每頁重複 h1（SEO 最佳實踐）
+- **Permissions-Policy**: 移除已棄用的 `ambient-light-sensor`、`document-domain`、`vr`
+- **SearchAction 移除**: 從 WebSite Schema 移除不存在的 `?q=` 搜尋功能
+- **SoftwareApplication Schema**: 使用 SoftwareApplication 取代 WebApplication
+- **og:url 修復**: 修復 16/17 頁面 og:url 指向錯誤首頁 URL 的問題
+- **技術債清理**: 移除 95→22 個過時時間戳註解，統一開源專案風格
+
+### Fixed
+
+- **React Hydration #418**: 修復 SSG 預期錯誤抑制與 console.error 過濾
+- **iOS Safari 滾動**: 修正 PWA 離線啟動與捲動問題
+- **iPhone SE 佈局**: 修復 320px 小螢幕內容偏移問題
+- **語系載入**: 修復 zh-Hant 語系未正確載入翻譯的問題
+
+### Technical
+
+- **測試覆蓋率**: 92%+ (1038+ 測試用例)
+- **Lighthouse**: Performance 97+, SEO 100, Accessibility 100
+- **CI/CD**: 6 個 workflows (ci, release, seo-audit, seo-production, update-rates x2)
+
+---
+
 ## 1.5.0 (2026-01-15)
 
 ### Minor Changes

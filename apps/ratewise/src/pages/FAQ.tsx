@@ -1,20 +1,12 @@
 /**
- * FAQ Page
- * Frequently Asked Questions with FAQPage structured data for SEO
- *
- * Structure:
- * - FAQ_JSONLD_DATA: Plain text for JSON-LD schema
- * - FAQ_UI_DATA: JSX for rich UI rendering
- * - Reference: https://schema.org/FAQPage
+ * FAQ Page - 常見問題頁面
+ * 提供 FAQPage Schema 結構化資料以增強 SEO
  */
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { Breadcrumb } from '../components/Breadcrumb';
 
-/**
- * FAQ 純文字資料 - 用於 JSON-LD schema
- * JSON-LD 需要純文字，不能包含 JSX
- */
+/** FAQ 純文字資料 - 用於 JSON-LD schema */
 const FAQ_JSONLD_DATA = [
   {
     question: '什麼是 RateWise 匯率好工具？',
@@ -68,10 +60,7 @@ const FAQ_JSONLD_DATA = [
   },
 ];
 
-/**
- * FAQ UI 資料 - 包含 JSX 用於豐富的 UI 顯示
- * 使用 <strong> 標籤強調重點
- */
+/** FAQ UI 資料 - 包含 JSX 用於 UI 顯示 */
 const FAQ_UI_DATA = [
   {
     question: '什麼是 RateWise 匯率好工具？',

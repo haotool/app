@@ -1,29 +1,6 @@
 /**
- * App Layout Component - ParkKeeper Style (Compact)
- *
- * 整合底部導覽列（移動端）與側邊欄導覽（桌面端）的主要佈局組件
- * 參考 ParkKeeper 設計風格與社群媒體導航規範：
- * - 毛玻璃 Header（backdrop-blur-xl + bg-background/80）
- * - 極細邊框（border-black/[0.03]）
- * - 品牌 Logo + 標題組合
- * - 緊湊導航高度（Header 48px，參考 Threads/Instagram）
- *
- * 佈局結構：
- * ```
- * <div class="h-screen flex flex-col overflow-hidden">
- *   <Header /> (h-12, 48px, glass effect)
- *   <main class="flex-1 overflow-hidden">
- *     <Outlet /> (內容區)
- *   </main>
- *   <BottomNavigation /> (h-14, 56px, fixed bottom)
- * </div>
- * ```
- *
- * @reference ParkKeeper UI Design
- * @reference iOS HIG Tab Bars, Material Design 3 Navigation Bar
- * @see src/config/design-tokens.ts - navigationTokens SSOT
- * @created 2026-01-15
- * @updated 2026-01-24 - 緊湊導航高度（Threads/Instagram 風格）
+ * AppLayout - 主要應用佈局組件
+ * 整合 Header、側邊欄、底部導覽與內容區域
  */
 
 import React from 'react';
@@ -35,15 +12,8 @@ import { ToastProvider } from './Toast';
 import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
 
-/**
- * Logo 組件 - 使用 PNG 圖片
- *
- * @description 使用高效能 PNG 圖片確保 SEO 與跨瀏覽器相容性
- * @see navigationTokens.header.logo - SSOT for logo dimensions
- * @see public/logo.png - 原始圖片資源
- */
+/** Logo 組件 */
 function Logo() {
-  // [fix:2026-01-28] 使用 base path 處理不同部署環境
   const basePath = import.meta.env.BASE_URL || '/';
 
   return (
@@ -80,15 +50,13 @@ function Logo() {
 function Header() {
   const { t } = useTranslation();
 
-  // SSR 時使用固定的預設值，避免 hydration mismatch
-  // Client 端 useEffect 後才更新為實際語系
+  // SSR/Hydration 一致性處理
   const [isHydrated, setIsHydrated] = React.useState(false);
 
   React.useEffect(() => {
     setIsHydrated(true);
   }, []);
 
-  // SSR 時使用固定的預設語系（zh-TW），client hydration 後才使用實際語系
   const currentLanguage = isHydrated ? getResolvedLanguage() : 'zh-TW';
   const isZhTW = currentLanguage === 'zh-TW';
 
@@ -106,10 +74,10 @@ function Header() {
       }}
     >
       <div className="flex justify-between items-center max-w-md mx-auto w-full">
-        {/* 品牌 Logo + 標題 */}
+        {/* 品牌 Logo + 標題（使用 span 而非 h1，避免每頁重複 h1）*/}
         <div className="flex items-center gap-1.5">
           <Logo />
-          <h1
+          <span
             className="
               text-lg font-black tracking-tight
               bg-clip-text text-transparent
@@ -118,37 +86,14 @@ function Header() {
             "
           >
             {isZhTW ? 'RateWise 匯率好工具' : t('app.title')}
-          </h1>
+          </span>
         </div>
       </div>
     </header>
   );
 }
 
-/**
- * AppLayout Component
- *
- * Main application layout with ParkKeeper design system.
- *
- * 2025 最佳實踐 - Flexbox 滾動容器修正：
- * - h-dvh 而非 min-h-dvh：確保固定高度約束，啟用 overflow 滾動
- * - min-h-0 on flex children：允許 flex 子元素收縮以啟用 overflow
- * - 內容區使用 overflow-y-auto：唯一的滾動點，避免嵌套滾動
- *
- * iOS PWA Standalone Mode Fix:
- * - Uses h-dvh for dynamic viewport height calculation
- * - Content area reserves space for fixed BottomNavigation (56px + safe area)
- * - Safe area handled via CSS env() variables
- *
- * Layout Structure:
- * - Header: 48px (mobile only, shrink-0)
- * - Main: flex-1 min-h-0 with overflow-y-auto
- * - BottomNavigation: fixed, 56px + safe-area-inset-bottom
- *
- * @see https://web.dev/viewport-units/
- * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
- * @see https://stackoverflow.com/questions/21515042/scrolling-a-flexbox-with-overflowing-content
- */
+/** 主應用佈局 - 支援 iOS PWA 安全區域與響應式側邊欄 */
 export function AppLayout() {
   return (
     <ToastProvider>
@@ -164,16 +109,7 @@ export function AppLayout() {
               <Header />
             </div>
 
-            {/* Main content area - flex-1 min-h-0 啟用滾動，唯一滾動點
-             *
-             * iOS Safari Scroll Fix (2026 最佳實踐):
-             * - overflow-y: scroll (not auto) - explicit scroll container
-             * - -webkit-overflow-scrolling: touch - enables momentum scrolling on iOS
-             * - overscroll-behavior-y: contain - prevents scroll chaining
-             *
-             * @see https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-overflow-scrolling
-             * @see https://bugs.webkit.org/show_bug.cgi?id=275209
-             */}
+            {/* 內容區域 - 支援 iOS Safari 慣性滾動 */}
             <main
               data-scroll-container="main"
               className="flex-1 min-h-0 min-w-0 w-full relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"

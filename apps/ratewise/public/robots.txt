@@ -1,5 +1,5 @@
 # RateWise Robots Configuration
-# 最後更新：2025-11-26
+# 最後更新：2026-01-29
 
 User-agent: *
 Allow: /
@@ -7,13 +7,15 @@ Allow: /
 # Sitemap
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 
-# Crawl-delay for polite bots
-Crawl-delay: 1
-
 # Disallow Service Worker and internal assets
 Disallow: /sw.js
 Disallow: /workbox-*.js
-Disallow: /*.json$
+Disallow: /*.json
+
+# Disallow internal/debug pages
+Disallow: /color-scheme
+Disallow: /ui-showcase
+Disallow: /update-prompt-test
 
 # Allow AI search engines (AEO/LLMO)
 User-agent: GPTBot

@@ -1,8 +1,6 @@
 /**
- * SEO Helmet Component
- * [context7:daydreamer-riri/vite-react-ssg:2026-01-03T02:20:55+08:00]
- *
- * Centralized SEO metadata management with JSON-LD structured data
+ * SEO Helmet - 統一 SEO 元資料管理
+ * 負責 meta tags、Open Graph、Twitter Cards 與 JSON-LD Schema
  */
 import { Head } from 'vite-react-ssg';
 
@@ -34,10 +32,7 @@ interface HowToData {
   totalTime?: string; // ISO 8601 duration format (e.g., 'PT30S', 'PT2M')
 }
 
-/**
- * Breadcrumb item for navigation trail
- * 依據 Google 2025 最佳實踐: https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
- */
+/** Breadcrumb item for navigation trail */
 interface BreadcrumbItem {
   name: string;
   item: string; // URL
@@ -68,7 +63,7 @@ const DEFAULT_DESCRIPTION =
   'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。';
 const DEFAULT_OG_IMAGE = '/og-image.png';
 const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratewise/'; // Fallback 尾斜線
-const ASSET_VERSION = 'v=20251208';
+const ASSET_VERSION = 'v=20260129';
 const DEFAULT_LOCALE = 'zh-TW';
 const DEFAULT_KEYWORDS = [
   '匯率好工具',
@@ -97,7 +92,7 @@ const DEFAULT_KEYWORDS = [
 const SOCIAL_LINKS = ['https://www.threads.net/@azlife_1224', 'https://github.com/haotool/app'];
 
 // Use build time to avoid SSG/hydration mismatch
-const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? '2025-01-01T00:00:00.000Z';
+const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? '2026-01-29T00:00:00.000Z';
 
 const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`);
@@ -197,11 +192,8 @@ const DEFAULT_JSON_LD = [
     name: 'RateWise',
     url: SITE_BASE_URL,
     inLanguage: DEFAULT_LOCALE,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${SITE_BASE_URL}?q={search_term_string}`,
-      'query-input': 'required name=search_term_string',
-    },
+    // SearchAction removed: No ?q= search functionality exists
+    // @see https://developers.google.com/search/docs/appearance/structured-data/sitelinks-searchbox
   },
 ];
 

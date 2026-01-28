@@ -15,7 +15,7 @@
  * - [OWASP: Secure Headers](https://owasp.org/www-project-secure-headers/)
  * - [MDN: CSP script-src](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src)
  *
- * 最後更新：2025-11-29
+ * 最後更新：2026-01-29
  *
  * ⚠️ 重要：不要使用 'strict-dynamic'！
  * - strict-dynamic 會忽略 'self' 和域名白名單

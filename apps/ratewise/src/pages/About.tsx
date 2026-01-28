@@ -1,6 +1,6 @@
 /**
- * About Page
- * E-E-A-T building page with organization info and data sources
+ * About Page - 關於我們頁面
+ * 提供 E-E-A-T 信號、組織資訊與資料來源說明
  */
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
@@ -100,8 +100,8 @@ export default function About() {
               <div className="p-4 bg-primary-bg rounded-lg border border-primary-light">
                 <h3 className="text-lg font-semibold text-primary mb-2">⚡ 極致效能</h3>
                 <p className="text-neutral-text-secondary text-sm leading-relaxed">
-                  <strong>Lighthouse Performance 97/100</strong>， LCP 僅 489ms，CLS
-                  0.00046，遠優於業界標準。 使用 React + Vite 打造，提供流暢的使用體驗。
+                  <strong>Lighthouse Performance 97+/100</strong>， LCP 低於 500ms，CLS 趨近於
+                  0，遠優於業界標準。 使用 React 19 + Vite 7 打造，提供流暢的使用體驗。
                 </p>
               </div>
               <div className="p-4 bg-primary-bg rounded-lg border border-primary-light">
@@ -195,28 +195,32 @@ export default function About() {
             <div className="space-y-3">
               <div className="flex items-center">
                 <span className="text-neutral-text-secondary font-semibold w-32">前端框架</span>
-                <span className="text-neutral-text">React 19 + TypeScript</span>
+                <span className="text-neutral-text">React 19 + TypeScript 5</span>
               </div>
               <div className="flex items-center">
                 <span className="text-neutral-text-secondary font-semibold w-32">建置工具</span>
-                <span className="text-neutral-text">Vite 7</span>
+                <span className="text-neutral-text">Vite 7 + vite-react-ssg (SSG)</span>
               </div>
               <div className="flex items-center">
                 <span className="text-neutral-text-secondary font-semibold w-32">PWA</span>
-                <span className="text-neutral-text">vite-plugin-pwa</span>
+                <span className="text-neutral-text">vite-plugin-pwa + Workbox</span>
               </div>
               <div className="flex items-center">
                 <span className="text-neutral-text-secondary font-semibold w-32">樣式</span>
-                <span className="text-neutral-text">Tailwind CSS 3</span>
+                <span className="text-neutral-text">Tailwind CSS 4 + SSOT Design Tokens</span>
               </div>
               <div className="flex items-center">
                 <span className="text-neutral-text-secondary font-semibold w-32">圖表</span>
                 <span className="text-neutral-text">lightweight-charts (TradingView)</span>
               </div>
               <div className="flex items-center">
+                <span className="text-neutral-text-secondary font-semibold w-32">國際化</span>
+                <span className="text-neutral-text">react-i18next (繁中/英/日)</span>
+              </div>
+              <div className="flex items-center">
                 <span className="text-neutral-text-secondary font-semibold w-32">SEO</span>
                 <span className="text-neutral-text">
-                  vite-react-ssg Head (Lighthouse SEO 100/100)
+                  SSG + JSON-LD Schema (Lighthouse SEO 100/100)
                 </span>
               </div>
             </div>
@@ -272,8 +276,8 @@ export default function About() {
 
           {/* Footer */}
           <div className="text-center text-neutral-text-muted text-sm">
-            <p>© 2025 RateWise. 保留所有權利。</p>
-            <p className="mt-2">最後更新：2025-11-12 | 版本：v1.1</p>
+            <p>© 2024-2026 RateWise. 採用 GPL-3.0 授權。</p>
+            <p className="mt-2">最後更新：2026-01-29 | 版本：v2.0.0</p>
           </div>
         </div>
       </main>
