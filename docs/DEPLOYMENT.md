@@ -253,6 +253,7 @@ healthy
   - TypeScript 型別檢查
   - 單元測試（coverage）
   - 建置驗證
+  - SEO workflows（seo-audit / seo-e2e-tests / seo-health-check）
 ```
 
 ## 版本資訊
@@ -275,7 +276,7 @@ healthy
 
 **🤖 Generated with Claude Code**
 
-_最後更新: 2026-01-29 01:11 UTC+8_
+_最後更新: 2026-01-29 01:39 UTC+8_
 
 [ref:web.dev-service-worker:2025-11-09]: https://web.dev/articles/service-worker-lifecycle
 [ref:nginx-headers:2025-11-09]: https://nginx.org/en/docs/http/ngx_http_headers_module.html

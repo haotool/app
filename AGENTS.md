@@ -263,7 +263,7 @@ browser_snapshot  // 取得 DOM 結構驗證
 
 **自動合併條件**:
 
-1. ✅ 所有 CI 檢查通過 (lint/typecheck/test/build)
+1. ✅ 所有 CI 檢查通過（核心 CI：lint/typecheck/test/build；SEO workflows 如觸發）
 2. ✅ 版本非 0.x (避免不穩定版本)
 3. ✅ 類型為 patch/minor (Major 需手動審查)
 4. ✅ 穩定期 ≥3 天 (避免剛發布的版本)
@@ -659,7 +659,7 @@ docker logs <container-id>
 ### ✅ 已完成 (Phase 0 - MVP)
 
 - ✅ 測試覆蓋率 ≥80% (目前 1038 測試，92%+)
-- ✅ CI/CD Pipeline (GitHub Actions - Core workflow)
+- ✅ CI/CD Pipeline (GitHub Actions - Core + SEO workflows)
 - ✅ 觀測性 (Logger + Error Boundary)
 - ✅ Docker 化部署
 - ✅ 元件拆分 (RateWise.tsx 已模組化)
@@ -819,8 +819,8 @@ docker logs <container-id>
 
 > **總結**: Agent 的任務是保持流程可靠並回報結果，不參與需求判斷、不做超出授權範圍的操作。所有操作依照本文檔與 `docs/dev/` 文檔執行。
 
-**最後更新**: 2026-01-29T01:11:11+08:00
-**版本**: v2.5 (核心 CI/CD 精簡)
+**最後更新**: 2026-01-29T01:39:05+08:00
+**版本**: v2.6 (核心 CI + SEO workflows)
 **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
 
 _本文檔依照 Linus Torvalds 開發哲學產生，所有建議經過實用性驗證。_

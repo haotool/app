@@ -1,0 +1,64 @@
+name: SEO Health Check
+
+# 生產環境 SEO 健康檢查 - 自動化批次檢測
+# 功能:
+# 1. 自動發現所有 apps (workspace-utils.mjs)
+# 2. 批次驗證所有頁面返回 200
+# 3. 驗證 sitemap.xml, robots.txt, llms.txt 配置正確
+# 4. 驗證 hreflang 配置一致性
+# 5. 支援所有專案：ratewise + nihonname + haotool
+#
+# 觸發條件:
+# - Release 工作流程成功後自動執行
+# - 手動觸發 (workflow_dispatch)
+# - 每日定時檢查 (UTC 00:00 = 台北 08:00)
+#
+# 建立時間: 2025-11-30T15:50:00+08:00
+# 更新時間: 2025-12-15 - 重構為自動化批次檢測，消除硬編碼
+# 依據: [moss.sh/deployment/health-checks][SEO Best Practices 2025][Linus: 消除特殊情況]
+
+on:
+  # Release 成功後自動執行
+  workflow_run:
+    workflows: ['Release']
+    types:
+      - completed
+
+  # 手動觸發
+  workflow_dispatch:
+
+  # 每日定時檢查 (UTC 00:00 = 台北 08:00)
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  seo-health-check:
+    name: SEO Health Check
+    runs-on: ubuntu-latest
+
+    # 只在 Release 成功時執行 (或手動/定時觸發)
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # 等待 Zeabur 部署完成 (約 2-3 分鐘)
+      - name: Wait for deployment
+        if: github.event_name == 'workflow_run'
+        run: |
+          echo "⏳ 等待 Zeabur 部署完成..."
+          sleep 180
+
+      # 批次檢測所有 apps
+      - name: Run All Apps SEO Health Check
+        run: |
+          node scripts/verify-all-apps.mjs

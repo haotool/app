@@ -1,0 +1,90 @@
+name: SEO Audit
+
+on:
+  pull_request:
+    paths:
+      - 'apps/ratewise/**'
+      - 'scripts/**'
+      - '.github/workflows/seo-audit.yml'
+  push:
+    branches:
+      - main
+      - 'claude/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  seo-audit:
+    name: SEO 2025 Standards Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build RateWise
+        run: pnpm build:ratewise
+
+      - name: Run SEO Full Audit
+        run: |
+          chmod +x scripts/seo-full-audit.mjs
+          node scripts/seo-full-audit.mjs
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-audit-report
+          path: |
+            apps/ratewise/dist/
+            apps/ratewise/public/sitemap.xml
+          retention-days: 7
+
+      - name: Comment PR (on failure)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ SEO 審計失敗！請檢查以下項目：\n\n' +
+                    '- Sitemap 2025 標準合規性\n' +
+                    '- Breadcrumb Schema 正確性\n' +
+                    '- JSON-LD 結構化數據完整性\n\n' +
+                    '詳細資訊請查看 [Actions 日誌](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+            })
+
+      - name: Comment PR (on success)
+        if: success() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ SEO 審計通過！所有 2025 標準驗證項目都符合要求。\n\n' +
+                    '- ✅ Sitemap 2025 標準\n' +
+                    '- ✅ Breadcrumb Schema\n' +
+                    '- ✅ JSON-LD 結構化數據\n' +
+                    '- ✅ 內部連結結構'
+            })
