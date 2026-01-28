@@ -565,19 +565,27 @@ export const pageLayoutTokens = {
  * @version 1.1.0
  */
 export const rateWiseLayoutTokens = {
-  /** 外層容器 - 使用 flex 填滿可用空間 */
-  container: 'flex flex-col min-h-full',
+  /**
+   * 外層容器 - 使用 flex 填滿可用空間
+   * [fix:2026-01-28] 移除 min-h-full 避免與 AppLayout 高度衝突
+   */
+  container: 'flex flex-col h-full',
 
-  /** 內容容器 - 流體內距搭配最大寬度限制 */
+  /**
+   * 內容容器 - 流體內距搭配最大寬度限制
+   * [fix:2026-01-28] 調整為 justify-between 讓資料來源區塊對齊底部
+   */
   content: {
     className:
-      'flex-1 flex flex-col justify-center max-w-md mx-auto w-full px-3 sm:px-5 py-3 compact:py-2.5 short:py-2 tiny:py-1.5 micro:py-1 nano:py-1',
+      'flex-1 flex flex-col justify-between max-w-md mx-auto w-full px-3 sm:px-5 py-2 compact:py-1.5 short:py-1 tiny:py-1 micro:py-0.5 nano:py-0.5',
   },
 
-  /** 單幣別區塊 - 使用 flex-1 填滿並置中內容 */
+  /**
+   * 單幣別區塊 - 使用 flex-1 置中內容
+   * [fix:2026-01-28] 優化間距讓資料來源區塊更好對齊
+   */
   section: {
-    className:
-      'flex-1 flex flex-col justify-center mb-3 compact:mb-2.5 short:mb-2 tiny:mb-1.5 micro:mb-1 nano:mb-1',
+    className: 'flex-1 flex flex-col justify-center',
   },
 
   /** 單幣別卡片 - 移除 flex-1 避免過度拉伸 */
@@ -585,9 +593,12 @@ export const rateWiseLayoutTokens = {
     className: 'card p-3 compact:p-2.5 short:p-2 tiny:p-2 micro:p-1.5 nano:p-1.5',
   },
 
-  /** 資料來源區塊 - 最後隱藏（nano 斷點） */
+  /**
+   * 資料來源區塊 - 最後隱藏（nano 斷點）
+   * [fix:2026-01-28] 調整間距讓區塊剛好落在容器與底部導覽列之間
+   */
   info: {
-    base: 'text-center flex-shrink-0 mt-2 compact:mt-1.5 short:mt-1 tiny:mt-1 micro:mt-0.5',
+    base: 'text-center flex-shrink-0 py-2 compact:py-1.5 short:py-1 tiny:py-1 micro:py-0.5',
     visibility: 'nano:hidden',
   },
 } as const;

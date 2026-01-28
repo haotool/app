@@ -36,35 +36,26 @@ import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
 
 /**
- * Logo 組件 - 參考 ParkKeeper 的 SVG Logo 風格
+ * Logo 組件 - 使用 PNG 圖片
  *
- * @description 使用明確的 width/height 屬性確保 SVG 尺寸一致
+ * @description 使用高效能 PNG 圖片確保 SEO 與跨瀏覽器相容性
  * @see navigationTokens.header.logo - SSOT for logo dimensions
+ * @see public/logo.png - 原始圖片資源
  */
 function Logo() {
+  // [fix:2026-01-28] 使用 base path 處理不同部署環境
+  const basePath = import.meta.env.BASE_URL || '/';
+
   return (
-    <svg viewBox="0 0 40 40" width="28" height="28" className="w-7 h-7 shrink-0" aria-hidden="true">
-      {/* 圓角矩形框 */}
-      <rect
-        x="6"
-        y="6"
-        width="28"
-        height="28"
-        rx="8"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        fill="none"
-      />
-      {/* R 字母 */}
-      <path
-        d="M 15 28 L 15 12 L 22 12 C 25 12 26 13 26 16 C 26 19 25 20 22 20 L 15 20"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        fill="none"
-      />
-      {/* 主題色裝飾圓點 */}
-      <circle cx="28" cy="28" r="4" fill="rgb(var(--color-accent))" />
-    </svg>
+    <img
+      src={`${basePath}logo.png`}
+      alt="RateWise"
+      width={28}
+      height={28}
+      className="w-7 h-7 shrink-0"
+      loading="eager"
+      decoding="async"
+    />
   );
 }
 

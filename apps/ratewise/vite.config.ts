@@ -295,13 +295,20 @@ export default defineConfig(({ mode }) => {
         // [fix:2026-01-09] Precache offline.html for instant offline availability
         // This ensures offline.html is available when setCatchHandler needs it
         injectManifest: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp,txt,xml,webmanifest}'],
+          // [fix:2026-01-28] 移除 xml,webmanifest 避免預快取 sitemap.xml/manifest.webmanifest
+          // 問題：staging 環境 sitemap.xml 404 導致 bad-precaching-response
+          // 解決：SEO 檔案不需要預快取，透過 runtimeCaching 處理即可
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp}'],
           globIgnores: [
             '**/og-image-old.png',
             '**/node_modules/**',
             '**/lighthouse-reports/**',
             '**/rates/**/*.json',
             '**/offline.html', // [fix:2026-01-11] Exclude offline.html to avoid duplicate (manually added in additionalManifestEntries)
+            '**/sitemap.xml', // [fix:2026-01-28] SEO 檔案不預快取
+            '**/robots.txt',
+            '**/llms.txt',
+            '**/manifest.webmanifest',
           ],
           // Precache offline.html (critical for offline navigation fallback)
           additionalManifestEntries: [{ url: 'offline.html', revision: '2026010901' }],

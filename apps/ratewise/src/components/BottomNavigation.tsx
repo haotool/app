@@ -139,20 +139,6 @@ export function BottomNavigation() {
               >
                 {t(item.labelKey)}
               </motion.span>
-
-              {/* 選中指示條 - w-6 h-[3px] (navigationTokens.bottomNav.indicator) */}
-              {/* 使用 layoutId 實現滑動動畫效果 */}
-              {isActive && (
-                <motion.div
-                  layoutId="nav-indicator"
-                  className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]"
-                  transition={{
-                    type: 'spring',
-                    stiffness: 500,
-                    damping: 30,
-                  }}
-                />
-              )}
             </Link>
           );
         })}

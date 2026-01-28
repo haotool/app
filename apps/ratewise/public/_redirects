@@ -1,0 +1,18 @@
+# Zeabur/Netlify SPA 重定向規則
+
+# SEO 靜態檔案直接提供（不重定向）
+/sitemap.xml    /sitemap.xml    200
+/robots.txt     /robots.txt     200
+/llms.txt       /llms.txt       200
+/manifest.webmanifest  /manifest.webmanifest  200
+
+# Service Worker 相關檔案
+/sw.js          /sw.js          200
+/registerSW.js  /registerSW.js  200
+/workbox-*.js   /workbox-*.js   200
+
+# 離線頁面
+/offline.html   /offline.html   200
+
+# SPA 路由（所有未匹配的路徑回到 index.html）
+/*              /index.html     200
