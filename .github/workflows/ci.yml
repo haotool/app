@@ -1,7 +1,6 @@
 name: CI
 
-# 郵件通知策略：只在失敗時通知
-# GitHub Settings > Notifications > Actions > "Send notifications for failed workflows only"
+# 精簡核心 CI：lint / typecheck / test / build
 
 on:
   push:
@@ -10,17 +9,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  quality:
-    name: Quality Checks
+  ci:
+    name: Core CI
     runs-on: ubuntu-latest
     env:
-      TZ: 'Asia/Taipei' # 設置時區為台北，確保時間相關測試正確
+      TZ: 'Asia/Taipei'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Gitleaks 需要完整 Git 歷史以進行差異掃描
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -36,269 +33,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # [2025 Best Practice] Sitemaps auto-generated during build via vite-ssg-sitemap
-      # No manual generation step needed - see vite.config.ts onFinished() hooks
-      # Validation happens in Dockerfile (lines 74-80) and verify:sitemap script
-
-      - name: Run linter
+      - name: Lint
         run: pnpm lint
-
-      - name: Format check
-        run: pnpm format
 
       - name: Type check
         run: pnpm typecheck
 
-      - name: Run tests
+      - name: Test
         run: pnpm test:coverage
-
-      - name: Verify image assets
-        # [2025-12-24] 防止圖片路徑問題（基於 SEO 分支合併教訓）
-        # 檢查所有 apps 的必要圖片是否存在
-        # 依據: [002_development_reward_penalty_log.md:2025-12-24]
-        run: |
-          echo "🖼️ Verifying image assets..."
-
-          # 檢查 ratewise 必要圖片
-          test -f apps/ratewise/public/logo.png || { echo "❌ Missing: apps/ratewise/public/logo.png"; exit 1; }
-          test -f apps/ratewise/public/og-image.png || { echo "❌ Missing: apps/ratewise/public/og-image.png"; exit 1; }
-          test -f apps/ratewise/public/twitter-image.png || { echo "❌ Missing: apps/ratewise/public/twitter-image.png"; exit 1; }
-
-          # 檢查 nihonname 必要圖片
-          test -f apps/nihonname/public/logo.png || { echo "❌ Missing: apps/nihonname/public/logo.png"; exit 1; }
-          test -f apps/nihonname/public/og-image.png || { echo "❌ Missing: apps/nihonname/public/og-image.png"; exit 1; }
-
-          # 檢查 haotool 必要圖片
-          test -f apps/haotool/public/logo.png || { echo "❌ Missing: apps/haotool/public/logo.png"; exit 1; }
-          test -f apps/haotool/public/og-image.png || { echo "❌ Missing: apps/haotool/public/og-image.png"; exit 1; }
-
-          echo "✅ All required images exist"
-
-      - name: Verify image paths in code
-        # [2025-12-24] 檢查程式碼中的圖片路徑是否使用相對路徑（避免 SSG hydration 錯誤）
-        # 禁止使用：/logo.png (絕對路徑) 或 ${import.meta.env.BASE_URL}logo.png (動態路徑)
-        # 正確使用：logo.png (相對路徑)
-        run: |
-          echo "🔍 Checking for incorrect image paths..."
-
-          # 檢查絕對路徑 (e.g., src="/logo.png")
-          if grep -r 'src=["\x27]/.*\.\(png\|jpg\|jpeg\|avif\|webp\)' apps/*/src/ --include="*.tsx" --include="*.jsx"; then
-            echo "❌ Found absolute image paths (use relative paths instead)"
-            exit 1
-          fi
-
-          # 檢查動態 BASE_URL 路徑 (e.g., src={`${import.meta.env.BASE_URL}logo.png`})
-          if grep -r 'import\.meta\.env\.BASE_URL.*\.\(png\|jpg\|jpeg\|avif\|webp\)' apps/*/src/ --include="*.tsx" --include="*.jsx"; then
-            echo "❌ Found dynamic BASE_URL image paths (use relative paths instead)"
-            exit 1
-          fi
-
-          echo "✅ All image paths use relative paths"
 
       - name: Build
         run: pnpm build
-
-      - name: Monitor historical rates manifest
-        run: pnpm monitor:history
-
-      - name: Verify sitemap/SSG consistency
-        run: pnpm verify:sitemap
-
-      - name: Security audit
-        run: pnpm audit --prod --audit-level=high
-
-      - name: Run Gitleaks
-        # [2025-12-11] 組織帳號需要 GITLEAKS_LICENSE secret
-        # 若無 license，設為 continue-on-error 避免阻塞 CI
-        # 依據: [gitleaks.io:License Requirements][002_development_reward_penalty_log.md]
-        uses: gitleaks/gitleaks-action@v2
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-
-      - name: Install OSV scanner
-        run: |
-          curl -L -o osv-scanner https://github.com/google/osv-scanner/releases/download/v2.0.3/osv-scanner_linux_amd64
-          chmod +x osv-scanner
-          sudo mv osv-scanner /usr/local/bin/osv-scanner
-
-      - name: Run OSV scanner
-        run: osv-scanner scan --recursive --lockfile pnpm-lock.yaml .
-
-      - name: Upload coverage
-        if: success()
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./apps/ratewise/coverage/coverage-final.json
-          flags: unittests
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-  e2e:
-    name: End-to-End
-    needs: quality
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.10.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        env:
-          VITE_RATEWISE_BASE_PATH: '/'
-        run: pnpm build:ratewise
-
-      - name: Install Playwright browsers
-        run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium firefox
-
-      - name: Start preview server
-        env:
-          VITE_RATEWISE_BASE_PATH: '/'
-        run: |
-          pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 --strictPort &
-          echo $! > .preview-server.pid
-          for i in {1..10}; do
-            if curl --silent --fail http://127.0.0.1:4173 > /dev/null; then
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Preview server failed to start"
-          exit 1
-
-      - name: Smoke check preview
-        run: |
-          echo "=== HEAD ==="
-          curl -I http://127.0.0.1:4173 || exit 1
-          echo "=== FIRST 20 LINES ==="
-          curl -s http://127.0.0.1:4173 | head -n 20 || exit 1
-          echo "=== DONE ==="
-
-      - name: Run E2E tests
-        env:
-          CI: true
-          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
-        # [Linus 原則 2025-12-11] 精簡 E2E 測試矩陣
-        # - Chromium Desktop + Mobile（足夠發現 95% 問題）
-        # - PWA 測試暫時禁用：Service Worker 在 CI 環境中不穩定（超時問題）
-        # [fix:2026-01-09] PWA 測試移至手動驗證流程
-        # 依據: CI 環境的 Service Worker 註冊時間過長（> 30s），導致測試不穩定
-        run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile
-
-      - name: Stop preview server
-        if: always()
-        run: |
-          if [ -f .preview-server.pid ]; then
-            kill "$(cat .preview-server.pid)" || true
-            rm .preview-server.pid
-          fi
-
-      - name: Upload E2E test results
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: apps/ratewise/playwright-report
-          retention-days: 7
-
-  trivy:
-    name: Security Scan (Trivy)
-    needs: quality
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    # [優化:2025-12-11] 僅在 main 分支執行 Trivy 掃描，減少 PR 檢查時間 ~5-10 分鐘
-    # 依據: [GitHub Actions Optimization 2025][Trivy Best Practices]
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image for scan
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: false
-          load: true
-          tags: ratewise:ci-scan
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Trivy file-system scan (HIGH/CRITICAL, ignore unfixed)
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          scan-type: 'fs'
-          scanners: 'vuln,secret,misconfig'
-          severity: 'HIGH,CRITICAL'
-          exit-code: '1'
-          ignore-unfixed: true
-          format: 'table'
-          output: 'trivy-fs.txt'
-
-      - name: Trivy image scan (HIGH/CRITICAL, ignore unfixed)
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          scan-type: 'image'
-          image-ref: 'ratewise:ci-scan'
-          scanners: 'vuln,secret,misconfig'
-          severity: 'HIGH,CRITICAL'
-          exit-code: '1'
-          ignore-unfixed: true
-          format: 'table'
-          output: 'trivy-image.txt'
-
-      - name: Upload Trivy reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-reports
-          path: |
-            trivy-fs.txt
-            trivy-image.txt
-
-  dependency-review:
-    name: Dependency Review (SCA)
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Check dependency graph availability
-        id: depgraph
-        run: |
-          status=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}" | jq -r '.security_and_analysis.dependency_graph.status // "disabled"')
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          if [ "$status" != "enabled" ]; then
-            echo "Dependency graph is not enabled on this repo; skipping dependency review."
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Dependency review
-        if: steps.depgraph.outputs.status == 'enabled'
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: 'high'

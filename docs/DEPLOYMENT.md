@@ -249,9 +249,9 @@ healthy
 
 ```yaml
 - Phase 0.2: CI/CD Pipeline ✅
-  - Lint & Format 檢查
+  - Lint 檢查
   - TypeScript 型別檢查
-  - 單元測試 (37 tests, 89.8% coverage)
+  - 單元測試（coverage）
   - 建置驗證
 ```
 
@@ -275,7 +275,7 @@ healthy
 
 **🤖 Generated with Claude Code**
 
-_最後更新: 2025-10-13 01:58 UTC+8_
+_最後更新: 2026-01-29 01:11 UTC+8_
 
 [ref:web.dev-service-worker:2025-11-09]: https://web.dev/articles/service-worker-lifecycle
 [ref:nginx-headers:2025-11-09]: https://nginx.org/en/docs/http/ngx_http_headers_module.html

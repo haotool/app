@@ -1,5 +1,8 @@
 # MVP 快速流程與環境設定指南
 
+> **最後更新**: 2026-01-29T01:11:11+08:00  
+> **版本**: v1.1 (核心 CI 更新)  
+> **狀態**: ✅ 已完成  
 > **重點**：這是一個給資深工程師的最低摩擦流程，目標是幾個小型 React 應用可以快速驗證、快速部署，同時保持乾淨的結構與最低技術債。
 
 ---
@@ -135,7 +138,7 @@ RateWise.tsx  # re-export，保留向後相容
 1. ✅ RateWise 核心邏輯已移至 `apps/ratewise/src/features/ratewise`，並加入型別與模組化常數。
 2. 加入 Vitest + React Testing Library 針對關鍵計算撰寫單元測試（確保 MVP 行為穩定）。
 3. Docker 化並部署到 Cloudflare Pages / Workers 或自管主機。
-4. 建立 GitHub Actions：`pnpm lint`, `pnpm test`, `pnpm build`, `docker build`.
+4. 建立 GitHub Actions：`pnpm lint`, `pnpm typecheck`, `pnpm test:coverage`, `pnpm build`.
 
 ---
 
