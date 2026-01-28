@@ -1,0 +1,131 @@
+name: SEO Production Validation
+
+# 生產環境 SEO 統一驗證工作流
+# 功能:
+# 1. 健康檢查: HTTP 200、sitemap.xml、robots.txt、llms.txt
+# 2. E2E 測試: Meta Tags、Open Graph、JSON-LD、圖片資源
+# 3. 支援所有 apps: ratewise + nihonname + haotool
+#
+# 觸發條件:
+# - Release 成功後自動執行
+# - 手動觸發 (workflow_dispatch)
+# - 每日定時檢查 (UTC 00:00 = 台北 08:00)
+#
+# 更新時間: 2026-01-29
+# 依據: [SEO Best Practices 2025][Linus: 消除特殊情況]
+
+on:
+  workflow_run:
+    workflows: ['Release']
+    types:
+      - completed
+
+  workflow_dispatch:
+
+  schedule:
+    - cron: '0 0 * * *'
+
+env:
+  RATEWISE_BASE_URL: 'https://app.haotool.org/ratewise'
+  NIHONNAME_BASE_URL: 'https://app.haotool.org/nihonname'
+  HAOTOOL_BASE_URL: 'https://app.haotool.org'
+
+jobs:
+  health-check:
+    name: SEO Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Wait for deployment
+        if: github.event_name == 'workflow_run'
+        run: |
+          echo "⏳ 等待 Zeabur 部署完成..."
+          sleep 180
+
+      - name: Run All Apps SEO Health Check
+        run: node scripts/verify-all-apps.mjs
+
+  e2e-validation:
+    name: SEO E2E Validation
+    needs: health-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @app/nihonname exec playwright install chromium --with-deps
+
+      - name: Run NihonName SEO E2E tests
+        id: seo_tests
+        run: |
+          echo "🔍 執行 NihonName SEO E2E 測試"
+          echo "📍 Base URL: ${{ env.NIHONNAME_BASE_URL }}"
+          pnpm --filter @app/nihonname test:e2e tests/e2e/seo-validation.spec.ts
+        continue-on-error: true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-e2e-report
+          path: apps/nihonname/playwright-report/
+          retention-days: 30
+
+      - name: Check test results
+        run: |
+          TEST_RESULT="${{ steps.seo_tests.outcome }}"
+          if [ "$TEST_RESULT" != "success" ]; then
+            echo "❌ SEO E2E 測試失敗"
+            exit 1
+          fi
+          echo "✅ SEO E2E 測試通過"
+
+  summary:
+    name: Generate Summary
+    needs: [health-check, e2e-validation]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Generate workflow summary
+        run: |
+          echo "## 🔍 SEO Production Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Health Check | ${{ needs.health-check.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Validation | ${{ needs.e2e-validation.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

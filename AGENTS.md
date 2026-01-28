@@ -659,7 +659,7 @@ docker logs <container-id>
 ### ✅ 已完成 (Phase 0 - MVP)
 
 - ✅ 測試覆蓋率 ≥80% (目前 1038 測試，92%+)
-- ✅ CI/CD Pipeline (GitHub Actions - Core + SEO workflows)
+- ✅ CI/CD Pipeline (GitHub Actions - 6 workflows: ci, release, seo-audit, seo-production, update-rates x2)
 - ✅ 觀測性 (Logger + Error Boundary)
 - ✅ Docker 化部署
 - ✅ 元件拆分 (RateWise.tsx 已模組化)
@@ -819,8 +819,8 @@ docker logs <container-id>
 
 > **總結**: Agent 的任務是保持流程可靠並回報結果，不參與需求判斷、不做超出授權範圍的操作。所有操作依照本文檔與 `docs/dev/` 文檔執行。
 
-**最後更新**: 2026-01-29T01:39:05+08:00
-**版本**: v2.6 (核心 CI + SEO workflows)
+**最後更新**: 2026-01-29T01:55:00+08:00
+**版本**: v2.7 (CI/CD 整合優化 - 11 workflows 整合為 6 workflows)
 **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
 
 _本文檔依照 Linus Torvalds 開發哲學產生，所有建議經過實用性驗證。_

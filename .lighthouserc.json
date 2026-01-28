@@ -20,6 +20,23 @@
         "categories:accessibility": ["error", { "minScore": 0.95 }],
         "categories:best-practices": ["warn", { "minScore": 0.95 }],
         "categories:pwa": ["warn", { "minScore": 0.8 }],
+
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "total-blocking-time": ["warn", { "maxNumericValue": 300 }],
+        "first-contentful-paint": ["warn", { "maxNumericValue": 1800 }],
+        "speed-index": ["warn", { "maxNumericValue": 3400 }],
+
+        "resource-summary:script:size": ["warn", { "maxNumericValue": 300000 }],
+        "resource-summary:stylesheet:size": ["warn", { "maxNumericValue": 100000 }],
+        "resource-summary:total:size": ["warn", { "maxNumericValue": 500000 }],
+
+        "meta-description": "error",
+        "document-title": "error",
+        "html-has-lang": "error",
+        "link-text": "warn",
+        "crawlable-anchors": "warn",
+
         "service-worker": "warn",
         "installable-manifest": "warn",
         "maskable-icon": "warn",

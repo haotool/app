@@ -1,6 +1,10 @@
 name: CI
 
-# 精簡核心 CI：lint / typecheck / test / build
+# 完整核心 CI Pipeline
+# 功能: lint / format / typecheck / test / build / security / e2e
+#
+# 更新時間: 2026-01-29
+# 依據: [CLAUDE.md:CI/CD 品質門檻][GitHub Actions Best Practices 2025]
 
 on:
   push:
@@ -9,11 +13,93 @@ on:
   workflow_dispatch:
 
 jobs:
-  ci:
-    name: Core CI
+  quality:
+    name: Quality Checks
     runs-on: ubuntu-latest
     env:
       TZ: 'Asia/Taipei'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test:coverage
+
+      - name: Verify image assets
+        run: |
+          echo "🖼️ Verifying image assets..."
+
+          # ratewise
+          test -f apps/ratewise/public/logo.png || { echo "❌ Missing: apps/ratewise/public/logo.png"; exit 1; }
+          test -f apps/ratewise/public/og-image.png || { echo "❌ Missing: apps/ratewise/public/og-image.png"; exit 1; }
+          test -f apps/ratewise/public/twitter-image.png || { echo "❌ Missing: apps/ratewise/public/twitter-image.png"; exit 1; }
+
+          # nihonname
+          test -f apps/nihonname/public/logo.png || { echo "❌ Missing: apps/nihonname/public/logo.png"; exit 1; }
+          test -f apps/nihonname/public/og-image.png || { echo "❌ Missing: apps/nihonname/public/og-image.png"; exit 1; }
+
+          # haotool
+          test -f apps/haotool/public/logo.png || { echo "❌ Missing: apps/haotool/public/logo.png"; exit 1; }
+          test -f apps/haotool/public/og-image.png || { echo "❌ Missing: apps/haotool/public/og-image.png"; exit 1; }
+
+          echo "✅ All required images exist"
+
+      - name: Build
+        run: pnpm build
+
+      - name: Verify sitemap/SSG consistency
+        run: pnpm verify:sitemap
+
+      - name: Security audit
+        run: pnpm audit --prod --audit-level=high
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Upload coverage
+        if: success()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./apps/ratewise/coverage/coverage-final.json
+          flags: unittests
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  e2e:
+    name: E2E Tests
+    needs: quality
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -33,14 +119,168 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Type check
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test:coverage
-
       - name: Build
+        env:
+          VITE_RATEWISE_BASE_PATH: '/'
+        run: pnpm build:ratewise
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium firefox
+
+      - name: Start preview server
+        env:
+          VITE_RATEWISE_BASE_PATH: '/'
+        run: |
+          pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 --strictPort &
+          echo $! > .preview-server.pid
+          for i in {1..10}; do
+            if curl --silent --fail http://127.0.0.1:4173 > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Preview server failed to start"
+          exit 1
+
+      - name: Run E2E tests
+        env:
+          CI: true
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+        run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile
+
+      - name: Stop preview server
+        if: always()
+        run: |
+          if [ -f .preview-server.pid ]; then
+            kill "$(cat .preview-server.pid)" || true
+            rm .preview-server.pid
+          fi
+
+      - name: Upload E2E test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/ratewise/playwright-report
+          retention-days: 7
+
+  lighthouse:
+    name: Lighthouse CI
+    needs: quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
         run: pnpm build
+        env:
+          VITE_RATEWISE_BASE_PATH: '/'
+          VITE_HAOTOOL_BASE_PATH: '/'
+          VITE_NIHONNAME_BASE_PATH: '/'
+          VITE_LHCI_OFFLINE: 'true'
+
+      - name: Install Lighthouse CI
+        run: pnpm dlx @lhci/cli@0.15.1 --help
+
+      - name: Install xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Run Lighthouse CI
+        run: xvfb-run --auto-servernum --server-args='-screen 0 1920x1080x24' pnpm dlx @lhci/cli@0.15.1 autorun --config=.lighthouserc.json
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: lighthouse-reports/lhci
+          retention-days: 30
+
+  security:
+    name: Security Scan
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for scan
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: ratewise:ci-scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy file-system scan
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: 'fs'
+          scanners: 'vuln,secret,misconfig'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+          ignore-unfixed: true
+          format: 'table'
+          output: 'trivy-fs.txt'
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: 'image'
+          image-ref: 'ratewise:ci-scan'
+          scanners: 'vuln,secret,misconfig'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+          ignore-unfixed: true
+          format: 'table'
+          output: 'trivy-image.txt'
+
+      - name: Upload Trivy reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-reports
+          path: |
+            trivy-fs.txt
+            trivy-image.txt
+
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: 'high'
