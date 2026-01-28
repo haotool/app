@@ -37,9 +37,11 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
   });
 
   describe('🟢 SEO Tags 由 SEOHelmet 管理（不在 index.html）', () => {
-    it('should NOT have hardcoded description meta tag', () => {
-      // [2026-01-29] SEOHelmet 是 description 的唯一來源
-      expect(indexHtmlContent).not.toMatch(/<meta\s+name="description"/);
+    it('should have homepage description (ClientOnly SSG limitation)', () => {
+      // 首頁使用 ClientOnly 無法在 SSG 時渲染 SEOHelmet
+      // 因此需要在 index.html 保留首頁基本 description
+      expect(indexHtmlContent).toContain('<meta');
+      expect(indexHtmlContent).toContain('name="description"');
     });
 
     it('should NOT have hardcoded keywords meta tag', () => {
@@ -102,11 +104,10 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
       expect(indexHtmlContent).not.toContain('<script type="application/ld+json">');
     });
 
-    it('should NOT have hardcoded title tag', () => {
-      // [2026-01-29] title 由 SEOHelmet 管理
-      // 檢查 </head> 之前是否有 <title> tag
-      const headSection = indexHtmlContent.split('</head>')[0];
-      expect(headSection).not.toMatch(/<title>[^<]+<\/title>/);
+    it('should have homepage title (ClientOnly SSG limitation)', () => {
+      // 首頁使用 ClientOnly 無法在 SSG 時渲染 SEOHelmet
+      // 因此需要在 index.html 保留首頁基本 title
+      expect(indexHtmlContent).toContain('<title>RateWise');
     });
   });
 
