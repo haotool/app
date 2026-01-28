@@ -4,6 +4,7 @@ import '@testing-library/jest-dom/vitest';
 import { SingleConverter } from '../SingleConverter';
 import type { CurrencyCode } from '../../types';
 import { CURRENCY_DEFINITIONS } from '../../constants';
+import { singleConverterLayoutTokens } from '../../../../config/design-tokens';
 
 // Mock services
 vi.mock('../../../../services/exchangeRateHistoryService', () => ({
@@ -212,6 +213,29 @@ describe('SingleConverter - 核心功能測試', () => {
       expect(mockProps.onToAmountChange).toHaveBeenCalledWith('100.00');
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(navigator.vibrate).toHaveBeenCalledWith(30);
+    });
+  });
+
+  describe('高度斷點佈局', () => {
+    it('快速金額與交換按鈕應套用高度斷點顯示規則', () => {
+      render(<SingleConverter {...mockProps} />);
+
+      const quickFrom = screen.getByTestId('quick-amounts-from');
+      const quickTo = screen.getByTestId('quick-amounts-to');
+      const swapButton = screen.getByTestId('swap-button');
+
+      expect(quickFrom).toHaveClass(singleConverterLayoutTokens.quickAmounts.visibility);
+      expect(quickTo).toHaveClass(singleConverterLayoutTokens.quickAmounts.visibility);
+      expect(swapButton).toHaveClass(singleConverterLayoutTokens.swap.visibility);
+    });
+
+    it('趨勢圖容器應套用高度斷點高度設定', () => {
+      render(<SingleConverter {...mockProps} />);
+
+      const trendChart = screen.getByTestId('trend-chart');
+      singleConverterLayoutTokens.rateCard.chartHeight.split(' ').forEach((className) => {
+        expect(trendChart).toHaveClass(className);
+      });
     });
   });
 

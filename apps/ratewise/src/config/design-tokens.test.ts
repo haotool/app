@@ -192,6 +192,18 @@ describe('Design Token System - BDD', () => {
       expect(screens['2xl'].min).toBe('1536px');
     });
 
+    it('應該有高度斷點設定', async () => {
+      const { breakpointTokens } = await import('./design-tokens');
+      const screens = breakpointTokens.screens;
+
+      expect(screens.compact.raw).toBe('(max-height: 760px)');
+      expect(screens.short.raw).toBe('(max-height: 700px)');
+      expect(screens.tiny.raw).toBe('(max-height: 620px)');
+      expect(screens.micro.raw).toBe('(max-height: 580px)');
+      expect(screens.nano.raw).toBe('(max-height: 540px)');
+      expect(screens.tall.raw).toBe('(min-height: 761px)');
+    });
+
     it('應該有容器最大寬度定義', async () => {
       const { breakpointTokens } = await import('./design-tokens');
       const container = breakpointTokens.container;
@@ -210,6 +222,16 @@ describe('Design Token System - BDD', () => {
       expect(patterns.responsiveGrid).toContain('grid-cols-1');
     });
 
+    it('應該有高度斷點顯示模式', async () => {
+      const { breakpointTokens } = await import('./design-tokens');
+      const patterns = breakpointTokens.patterns;
+
+      expect(patterns.shortHidden).toBe('short:hidden');
+      expect(patterns.tinyHidden).toBe('tiny:hidden');
+      expect(patterns.microHidden).toBe('micro:hidden');
+      expect(patterns.nanoHidden).toBe('nano:hidden');
+    });
+
     it('應該有媒體查詢輔助', async () => {
       const { breakpointTokens } = await import('./design-tokens');
       const mediaQueries = breakpointTokens.mediaQueries;
@@ -217,6 +239,25 @@ describe('Design Token System - BDD', () => {
       expect(mediaQueries.mobile).toBe('@media (max-width: 639px)');
       expect(mediaQueries.tablet).toBe('@media (min-width: 768px)');
       expect(mediaQueries.reducedMotion).toBe('@media (prefers-reduced-motion: reduce)');
+    });
+  });
+
+  describe('🟢 GREEN: 單幣別 RWD 佈局 Token 定義', () => {
+    it('應該導出 rateWiseLayoutTokens', async () => {
+      const { rateWiseLayoutTokens } = await import('./design-tokens');
+
+      expect(rateWiseLayoutTokens).toBeDefined();
+      expect(rateWiseLayoutTokens.content.className).toContain('compact:');
+      expect(rateWiseLayoutTokens.info.visibility).toBe('tiny:hidden');
+    });
+
+    it('應該導出 singleConverterLayoutTokens', async () => {
+      const { singleConverterLayoutTokens } = await import('./design-tokens');
+
+      expect(singleConverterLayoutTokens).toBeDefined();
+      expect(singleConverterLayoutTokens.quickAmounts.visibility).toBe('nano:hidden');
+      expect(singleConverterLayoutTokens.swap.visibility).toBe('micro:hidden');
+      expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-18');
     });
   });
 

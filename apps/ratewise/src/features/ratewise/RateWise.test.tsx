@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import RateWise from './RateWise';
 import * as pullToRefreshModule from '../../hooks/usePullToRefresh';
+import { rateWiseLayoutTokens } from '../../config/design-tokens';
 
 // Test helper: wrap component with required providers including MemoryRouter
 const renderWithProviders = (component: React.ReactElement) => {
@@ -116,6 +117,13 @@ describe('RateWise Component', () => {
       // 應顯示貨幣選擇器
       const selects = screen.getAllByRole('combobox');
       expect(selects.length).toBeGreaterThanOrEqual(2); // from + to
+    });
+
+    it('資料來源區塊應套用高度斷點顯示規則', async () => {
+      renderWithProviders(<RateWise />);
+
+      const dataSource = await screen.findByTestId('ratewise-data-source');
+      expect(dataSource).toHaveClass(rateWiseLayoutTokens.info.visibility);
     });
 
     // Note: Quick amount buttons are tested in "Currency Conversion > updates amount when quick button is clicked"

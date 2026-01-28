@@ -527,6 +527,91 @@ export const pageLayoutTokens = {
 } as const;
 
 /**
+ * 單幣別頁面高度斷點佈局規範 (SSOT)
+ *
+ * 以高度為主的 RWD 佈局調整，優先保留核心功能並降低捲動需求。
+ * 保留順序：輸入/結果與趨勢圖 > 快速金額 > 交換按鈕 > 資料來源。
+ *
+ * @created 2026-01-27
+ * @version 1.0.0
+ */
+export const rateWiseLayoutTokens = {
+  /** 外層容器 */
+  container: 'flex flex-col min-h-full',
+  /** 內容容器 */
+  content: {
+    className:
+      'flex-1 flex flex-col max-w-md mx-auto w-full px-3 sm:px-5 py-4 compact:py-3 short:py-2 tiny:py-2 micro:py-2 nano:py-1.5',
+  },
+  /** 單幣別區塊 */
+  section: {
+    className: 'flex-1 flex flex-col mb-4 compact:mb-3 short:mb-3 tiny:mb-2 micro:mb-2 nano:mb-2',
+  },
+  /** 單幣別卡片 */
+  card: {
+    className: 'card flex-1 p-4 compact:p-3 short:p-3 tiny:p-3 micro:p-2.5 nano:p-2',
+  },
+  /** 資料來源區塊 */
+  info: {
+    base: 'text-center flex-shrink-0',
+    visibility: 'tiny:hidden',
+  },
+} as const;
+
+/**
+ * 單幣別轉換器高度斷點配置 (SSOT)
+ *
+ * 控制元件間距、文字尺寸與顯示優先順序。
+ *
+ * @created 2026-01-27
+ * @version 1.0.0
+ */
+export const singleConverterLayoutTokens = {
+  /** 區塊間距 */
+  section: {
+    className: 'mb-4 compact:mb-3 short:mb-3 tiny:mb-2 micro:mb-2 nano:mb-2',
+  },
+  /** 標籤間距 */
+  label: {
+    className: 'mb-2 short:mb-1.5 tiny:mb-1 micro:mb-1 nano:mb-1',
+  },
+  /** 金額輸入框尺寸 */
+  amountInput: {
+    className:
+      'py-3 text-2xl compact:py-2.5 compact:text-xl short:py-2 short:text-xl tiny:py-2 tiny:text-lg micro:py-2 micro:text-lg nano:py-1.5 nano:text-base',
+  },
+  /** 匯率卡片區塊 */
+  rateCard: {
+    section:
+      'flex flex-col items-center mb-4 compact:mb-3 short:mb-3 tiny:mb-2 micro:mb-2 nano:mb-2',
+    cardSpacing: 'mb-3 compact:mb-2.5 short:mb-2 tiny:mb-2 micro:mb-1.5 nano:mb-1.5',
+    infoPadding:
+      'pt-12 pb-6 compact:pt-10 compact:pb-5 short:pt-9 short:pb-4 tiny:pt-8 tiny:pb-4 micro:pt-7 micro:pb-3 nano:pt-6 nano:pb-3',
+    rateText: 'text-2xl compact:text-xl short:text-lg tiny:text-lg micro:text-base nano:text-base',
+    rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-[10px] nano:text-[10px]',
+    chartHeight: 'h-20 compact:h-18 short:h-16 tiny:h-14 micro:h-12 nano:h-12',
+    chartHoverHeight:
+      'group-hover:h-24 compact:group-hover:h-20 short:group-hover:h-18 tiny:group-hover:h-16 micro:group-hover:h-14 nano:group-hover:h-14',
+  },
+  /** 快速金額區塊 */
+  quickAmounts: {
+    container:
+      'flex gap-2 mt-2 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
+    visibility: 'nano:hidden',
+  },
+  /** 交換按鈕 */
+  swap: {
+    wrapper: 'relative group/swap',
+    visibility: 'micro:hidden',
+    glowHidden: 'short:hidden',
+  },
+  /** 加入歷史按鈕 */
+  addToHistory: {
+    className: 'py-3.5 compact:py-3 short:py-2.5 tiny:py-2.5 micro:py-2 nano:py-2',
+  },
+} as const;
+
+/**
  * 快速金額按鈕設計規範 (SSOT)
  *
  * 統一貨幣快速金額選擇按鈕樣式。
@@ -738,8 +823,8 @@ export const typographyTokens = {
  * @reference Tailwind CSS Responsive Design
  * @see https://tailwindcss.com/docs/responsive-design
  * @created 2026-01-25
- * @updated 2026-01-27 - 新增高度斷點 (short/tall) 支援小螢幕 RWD
- * @version 1.1.0
+ * @updated 2026-01-27 - 新增多組高度斷點支援行動裝置滿版
+ * @version 1.2.0
  */
 export const breakpointTokens = {
   /** 斷點定義 (min-width) */
@@ -755,10 +840,18 @@ export const breakpointTokens = {
     /** 1536px - 大螢幕桌機 */
     '2xl': { min: '1536px', max: null, class: '2xl:' },
 
-    /** 高度斷點 - 小螢幕裝置 (iPhone SE 568px, iPhone 8 667px) */
-    short: { raw: '(max-height: 600px)', class: 'short:' },
-    /** 高度斷點 - 正常螢幕 (>600px) */
-    tall: { raw: '(min-height: 601px)', class: 'tall:' },
+    /** 高度斷點 - 中短螢幕 (≤760px) */
+    compact: { raw: '(max-height: 760px)', class: 'compact:' },
+    /** 高度斷點 - 短螢幕 (≤700px) */
+    short: { raw: '(max-height: 700px)', class: 'short:' },
+    /** 高度斷點 - 極短螢幕 (≤620px) */
+    tiny: { raw: '(max-height: 620px)', class: 'tiny:' },
+    /** 高度斷點 - 超短螢幕 (≤580px) */
+    micro: { raw: '(max-height: 580px)', class: 'micro:' },
+    /** 高度斷點 - 最小螢幕 (≤540px) */
+    nano: { raw: '(max-height: 540px)', class: 'nano:' },
+    /** 高度斷點 - 長螢幕 (≥761px) */
+    tall: { raw: '(min-height: 761px)', class: 'tall:' },
   },
 
   /** 容器最大寬度 */
@@ -785,8 +878,14 @@ export const breakpointTokens = {
     /** 響應式間距 (小→中→大) */
     responsiveSpacing: 'p-4 md:p-6 lg:p-8',
 
-    /** 小螢幕隱藏（高度 ≤600px） */
+    /** 短螢幕隱藏（高度 ≤700px） */
     shortHidden: 'short:hidden',
+    /** 極短螢幕隱藏（高度 ≤620px） */
+    tinyHidden: 'tiny:hidden',
+    /** 超短螢幕隱藏（高度 ≤580px） */
+    microHidden: 'micro:hidden',
+    /** 最小螢幕隱藏（高度 ≤540px） */
+    nanoHidden: 'nano:hidden',
     /** 正常螢幕才顯示（高度 >600px） */
     tallOnly: 'hidden tall:flex',
   },

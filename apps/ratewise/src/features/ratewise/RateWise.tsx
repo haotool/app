@@ -22,6 +22,7 @@ import { clearAllServiceWorkerCaches, forceServiceWorkerUpdate } from '../../uti
 import { logger } from '../../utils/logger';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { HomeStructuredData } from '../../components/HomeStructuredData';
+import { rateWiseLayoutTokens } from '../../config/design-tokens';
 import type { RateType } from './types';
 import { STORAGE_KEYS } from './storage-keys';
 
@@ -201,8 +202,8 @@ const RateWise = () => {
        * @see AppLayout.tsx - 外層滾動容器
        * @see https://web.dev/viewport-units/ - 動態視口高度
        */}
-      <div ref={mainRef} className="flex flex-col min-h-full">
-        <div className="flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full">
+      <div ref={mainRef} className={rateWiseLayoutTokens.container}>
+        <div className={rateWiseLayoutTokens.content.className}>
           {/* 載入狀態提示 */}
           {ratesLoading && (
             <div className="text-center text-sm text-neutral-text-secondary py-2">
@@ -211,8 +212,8 @@ const RateWise = () => {
           )}
 
           {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
-          <section className="flex-1 flex flex-col mb-4">
-            <div className="card p-4 flex-1">
+          <section className={rateWiseLayoutTokens.section.className}>
+            <div className={rateWiseLayoutTokens.card.className}>
               <SingleConverter
                 fromCurrency={fromCurrency}
                 toCurrency={toCurrency}
@@ -249,7 +250,10 @@ const RateWise = () => {
 
           {/* 資料來源與更新時間區塊 - 現代化精簡設計，固定在底部 */}
           {!ratesLoading && lastUpdate && (
-            <section className="text-center flex-shrink-0">
+            <section
+              data-testid="ratewise-data-source"
+              className={`${rateWiseLayoutTokens.info.base} ${rateWiseLayoutTokens.info.visibility}`}
+            >
               <div className="inline-flex items-center gap-2 text-[10px] text-text-muted/60">
                 <a
                   href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
