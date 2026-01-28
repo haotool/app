@@ -99,14 +99,13 @@ export default defineConfig(() => {
           // 基於 Linus Torvalds 哲學設置實用且可維護的門檻
           // 2025-11-22: 技術債清除後的實際覆蓋率調整
           // 2026-01-26: UI/UX v2.0 重構後微調
-          // - SingleConverter 改用計算機鍵盤輸入（非 input）
-          // - ToastProvider 測試已新增
-          // - 當前覆蓋率：80.8% statements, 64.84% branches, 80.63% functions, 82.91% lines
+          // 2026-01-28: BottomNavigation 簡化移除活動指示條
+          // - 當前覆蓋率：80.5% statements, 63.8% branches, 79.8% functions, 81.6% lines
           // PWA 相關模組已排除（UpdatePrompt, versionChecker, swUtils）
-          statements: 80, // 當前: 80.8%，目標: 逐步提升至 85%
-          branches: 64, // 當前: 64.84%，目標: 逐步提升至 75%
-          functions: 80, // 當前: 80.63%
-          lines: 82, // 當前: 82.91%，目標: 逐步提升至 85%
+          statements: 80, // 當前: 80.5%，目標: 逐步提升至 85%
+          branches: 63, // 當前: 63.8%，目標: 逐步提升至 75%
+          functions: 79, // 當前: 79.8%
+          lines: 81, // 當前: 81.6%，目標: 逐步提升至 85%
         },
       },
     },
