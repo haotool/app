@@ -269,7 +269,7 @@ describe('SingleConverter - 核心功能測試', () => {
 
       const cashButton = screen.getByLabelText('切換到現金匯率');
       // 現金按鈕在未選中時使用基礎按鈕樣式
-      expect(cashButton).toHaveClass('text-[11px]');
+      expect(cashButton).toHaveClass('text-xs');
     });
   });
 

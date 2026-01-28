@@ -18,6 +18,7 @@ import { SkeletonLoader } from '../components/SkeletonLoader';
 import { formatDisplayTime } from '../utils/timeFormatter';
 import type { RateType, CurrencyCode } from '../features/ratewise/types';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
+import { multiConverterLayoutTokens } from '../config/design-tokens';
 
 export default function MultiConverter() {
   const { t } = useTranslation();
@@ -110,8 +111,8 @@ export default function MultiConverter() {
   }
 
   return (
-    <div className="flex flex-col min-h-full">
-      <div className="flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full">
+    <div className={multiConverterLayoutTokens.container}>
+      <div className={multiConverterLayoutTokens.content.className}>
         {/* 多幣別換算區塊 - 簡約風格（標題已移除，由底部導航識別）
          *
          * RWD 全頁面佈局：
@@ -119,8 +120,8 @@ export default function MultiConverter() {
          * - flex flex-col：垂直佈局允許貨幣列表自適應擴展
          * - 滾動由 AppLayout 統一處理，避免嵌套滾動
          */}
-        <section className="flex-1 flex flex-col">
-          <div className="card p-4 flex-1 flex flex-col">
+        <section className={multiConverterLayoutTokens.section.className}>
+          <div className={multiConverterLayoutTokens.card.className}>
             <MultiConverterComponent
               sortedCurrencies={sortedCurrencies}
               multiAmounts={multiAmounts}
@@ -139,15 +140,15 @@ export default function MultiConverter() {
 
         {/* 更新時間區塊 - 固定在底部 */}
         {!ratesLoading && lastUpdate && (
-          <section className="mt-4 flex-shrink-0">
-            <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+          <section className={multiConverterLayoutTokens.info.wrapper}>
+            <div className={multiConverterLayoutTokens.info.titleRow}>
               <Clock className="w-3.5 h-3.5" />
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              <h3 className={multiConverterLayoutTokens.info.titleText}>
                 {t('footer.dataSource')}
               </h3>
             </div>
-            <div className="card p-4">
-              <p className="text-[10px] text-center opacity-60 font-medium">
+            <div className={multiConverterLayoutTokens.info.card}>
+              <p className={multiConverterLayoutTokens.info.text}>
                 {formatDisplayTime(lastUpdate, lastFetchedAt)}
               </p>
             </div>

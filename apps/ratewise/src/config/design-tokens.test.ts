@@ -247,7 +247,7 @@ describe('Design Token System - BDD', () => {
       const { rateWiseLayoutTokens } = await import('./design-tokens');
 
       expect(rateWiseLayoutTokens).toBeDefined();
-      expect(rateWiseLayoutTokens.content.className).toContain('compact:');
+      expect(rateWiseLayoutTokens.content.className).toContain('py-4');
       // 資料來源最後隱藏 (nano 斷點)
       expect(rateWiseLayoutTokens.info.visibility).toBe('nano:hidden');
     });
@@ -263,9 +263,20 @@ describe('Design Token System - BDD', () => {
       expect(singleConverterLayoutTokens.swap.visibility).toBe('micro:hidden');
 
       // 流體縮放配置
-      expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-14');
-      expect(singleConverterLayoutTokens.rateCard.rateTypeContainer).toContain('mb-');
+      expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-16');
+      expect(singleConverterLayoutTokens.rateCard.rateTypeContainer).toContain('absolute');
       expect(singleConverterLayoutTokens.rateCard.rateTypeButton).toContain('px-');
+    });
+  });
+
+  describe('🟢 GREEN: 多幣別頁面佈局 Token 定義', () => {
+    it('應該導出 multiConverterLayoutTokens', async () => {
+      const { multiConverterLayoutTokens } = await import('./design-tokens');
+
+      expect(multiConverterLayoutTokens).toBeDefined();
+      expect(multiConverterLayoutTokens.content.className).toContain('py-4');
+      expect(multiConverterLayoutTokens.card.className).toContain('card');
+      expect(multiConverterLayoutTokens.info.text).toContain('text-[10px]');
     });
   });
 
