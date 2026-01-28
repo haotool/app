@@ -107,10 +107,8 @@ function Header() {
     >
       <div className="flex justify-between items-center max-w-md mx-auto w-full">
         {/* 品牌 Logo + 標題 */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center">
-            <Logo />
-          </div>
+        <div className="flex items-center gap-1.5">
+          <Logo />
           <h1
             className="
               text-lg font-black tracking-tight

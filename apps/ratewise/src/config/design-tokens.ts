@@ -656,8 +656,9 @@ export const singleConverterLayoutTokens = {
     /** 卡片底部間距 */
     cardSpacing: 'mb-2.5 compact:mb-2 short:mb-1.5 tiny:mb-1 micro:mb-1 nano:mb-0.5',
 
-    /** 匯率資訊區內距 */
-    infoPadding: 'py-3 compact:py-2.5 short:py-2 tiny:py-1.5 micro:py-1.5 nano:py-1',
+    /** 匯率資訊區內距 - 保持充足空間感 */
+    infoPadding:
+      'pt-4 pb-3 compact:pt-3.5 compact:pb-2.5 short:pt-3 short:pb-2 tiny:pt-2.5 tiny:pb-1.5 micro:pt-2 micro:pb-1.5 nano:pt-1.5 nano:pb-1',
 
     /** 匯率類型按鈕容器間距 */
     rateTypeContainer: 'mb-2.5 compact:mb-2 short:mb-1.5 tiny:mb-1.5 micro:mb-1 nano:mb-1',

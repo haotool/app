@@ -126,7 +126,7 @@ export function BottomNavigation() {
                 <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} aria-hidden={true} />
               </motion.div>
 
-              {/* 標籤 - 8px (navigationTokens.bottomNav.label.fontSize) */}
+              {/* 標籤 - 8px */}
               <motion.span
                 animate={{
                   opacity: isActive ? 1 : 0.3,
@@ -139,6 +139,15 @@ export function BottomNavigation() {
               >
                 {t(item.labelKey)}
               </motion.span>
+
+              {/* 選中指示條 - layoutId 滑動動畫 */}
+              {isActive && (
+                <motion.div
+                  layoutId="nav-indicator"
+                  className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]"
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              )}
             </Link>
           );
         })}
