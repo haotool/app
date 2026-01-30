@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import dns from 'node:dns';
 
 // [fix:2025-11-23] 確保 localhost 解析一致性（Node.js v17+ DNS 變更）
@@ -16,6 +17,35 @@ import dns from 'node:dns';
 dns.setDefaultResultOrder('verbatim');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * 計算檔案內容 hash 作為 revision
+ * 用於 PWA 預快取資源版本控制
+ * @param filePath - 相對於專案根目錄的檔案路徑（僅允許 public/ 目錄）
+ */
+function getFileRevision(filePath: string): string {
+  // 安全性驗證：僅允許 public/ 目錄下的檔案
+  if (!filePath.startsWith('public/') || filePath.includes('..')) {
+    throw new Error(`Invalid file path: ${filePath}`);
+  }
+
+  try {
+    const absolutePath = resolve(__dirname, filePath);
+    // 確保解析後的路徑仍在專案目錄內
+    if (!absolutePath.startsWith(__dirname)) {
+      throw new Error(`Path traversal detected: ${filePath}`);
+    }
+    const content = readFileSync(absolutePath, 'utf-8');
+    // 使用 SHA-256 並取前 12 字元（48 位），降低碰撞風險
+    return createHash('sha256').update(content).digest('hex').slice(0, 12);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Invalid')) {
+      throw error;
+    }
+    // fallback: 使用時間戳
+    return Date.now().toString(36);
+  }
+}
 
 /**
  * 自動生成版本號
@@ -311,7 +341,10 @@ export default defineConfig(({ mode }) => {
             '**/manifest.webmanifest',
           ],
           // Precache offline.html (critical for offline navigation fallback)
-          additionalManifestEntries: [{ url: 'offline.html', revision: '2026010901' }],
+          // revision 基於內容 hash，確保檔案變更時自動更新快取
+          additionalManifestEntries: [
+            { url: 'offline.html', revision: getFileRevision('public/offline.html') },
+          ],
           // [fix:2026-01-10] 使用 IIFE 格式修復 ServiceWorker script evaluation failed
           // ES 模組格式在某些瀏覽器環境中會導致評估失敗
           // Reference: [context7:/vite-pwa/vite-plugin-pwa:2026-01-10 FAQ rollupFormat]
