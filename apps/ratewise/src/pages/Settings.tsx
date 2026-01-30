@@ -25,6 +25,8 @@ import { motion } from 'motion/react';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_OPTIONS } from '../config/themes';
 import { LANGUAGE_OPTIONS, getResolvedLanguage, type SupportedLanguage } from '../i18n';
+import { getDisplayVersion } from '../config/version';
+import { transitions } from '../config/animations';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
@@ -52,14 +54,16 @@ export default function Settings() {
 
           <div className="grid grid-cols-2 gap-3">
             {STYLE_OPTIONS.map((option) => (
-              <button
+              <motion.button
                 key={option.value}
                 onClick={() => setStyle(option.value)}
                 disabled={!isLoaded}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={transitions.instant}
                 className={`
                   relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-xl
-                  transition-all duration-200 ease-out shadow-sm disabled:opacity-50
-                  hover:scale-[1.02] hover:shadow-md active:scale-[0.98]
+                  shadow-sm disabled:opacity-50
                   ${style === option.value ? 'ring-2 ring-offset-2 shadow-md' : ''}
                 `}
                 style={
@@ -74,19 +78,24 @@ export default function Settings() {
                 aria-label={`${option.label} - ${option.description}`}
               >
                 {/* 裝飾圓形 */}
-                <div
+                <motion.div
                   className="absolute top-0 right-0 w-16 h-16 opacity-15 -mr-4 -mt-4 rounded-full"
                   style={{ backgroundColor: option.previewAccent }}
+                  animate={{ scale: style === option.value ? 1.1 : 1 }}
+                  transition={transitions.spring}
                 />
 
                 {/* 選中指示器 */}
                 {style === option.value && (
-                  <div
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={transitions.spring}
                     className="absolute top-2 right-2 rounded-full p-0.5"
                     style={{ backgroundColor: option.previewAccent }}
                   >
                     <Check className="w-3 h-3 text-white" />
-                  </div>
+                  </motion.div>
                 )}
 
                 {/* 內容 */}
@@ -94,7 +103,7 @@ export default function Settings() {
                   <span className="font-bold text-sm leading-tight">{option.label}</span>
                   <span className="text-[10px] opacity-60 leading-tight">{option.description}</span>
                 </div>
-              </button>
+              </motion.button>
             ))}
           </div>
         </section>
@@ -185,16 +194,25 @@ export default function Settings() {
           </div>
 
           <div className="card overflow-hidden">
-            <button
+            <motion.button
               onClick={resetTheme}
               disabled={!isLoaded}
-              className="w-full px-5 py-4 flex items-center justify-between hover:bg-destructive/10 active:bg-destructive/20 group transition-all duration-200 ease-out disabled:opacity-50"
+              whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+              whileTap={{ scale: 0.99 }}
+              transition={transitions.instant}
+              className="w-full px-5 py-4 flex items-center justify-between group disabled:opacity-50"
             >
               <span className="text-xs font-black text-destructive uppercase tracking-widest">
                 {t('settings.resetTheme')}
               </span>
-              <ShieldAlert className="w-4 h-4 text-destructive opacity-40 group-active:opacity-100 transition-opacity" />
-            </button>
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={transitions.instant}
+              >
+                <ShieldAlert className="w-4 h-4 text-destructive opacity-40 group-hover:opacity-100 transition-opacity" />
+              </motion.div>
+            </motion.button>
           </div>
         </section>
 
@@ -204,7 +222,7 @@ export default function Settings() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between items-center">
                 <span className="opacity-60">{t('settings.appVersion')}</span>
-                <span className="font-bold font-mono">v4.0.0</span>
+                <span className="font-bold font-mono">{getDisplayVersion()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="opacity-60">{t('settings.designSystem')}</span>

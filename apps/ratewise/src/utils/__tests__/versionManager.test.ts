@@ -102,12 +102,12 @@ describe('versionManager', () => {
       expect(version).toBe('2.0.0');
     });
 
-    it('當環境變數不存在時返回預設版本 1.0.0', () => {
+    it('當環境變數不存在時返回預設版本 2.0.0', () => {
       vi.stubEnv('VITE_APP_VERSION', undefined);
 
       const version = getCurrentVersion();
 
-      expect(version).toBe('1.0.0');
+      expect(version).toBe('2.0.0');
     });
   });
 

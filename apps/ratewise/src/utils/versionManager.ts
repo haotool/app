@@ -5,6 +5,9 @@
  * 1. 檢測版本變更
  * 2. 清除過期快取（保留用戶數據）
  * 3. 記錄版本更新歷史
+ *
+ * 注意: 此模組直接讀取環境變數以支援測試中的 vi.stubEnv
+ * UI 組件應使用 config/version.ts 的 SSOT 導出
  */
 
 import { logger } from './logger';
@@ -20,9 +23,10 @@ interface VersionInfo {
 
 /**
  * 獲取當前應用版本號
+ * 直接讀取環境變數以支援測試（vi.stubEnv）
  */
 export function getCurrentVersion(): string {
-  return import.meta.env.VITE_APP_VERSION ?? '1.0.0';
+  return import.meta.env.VITE_APP_VERSION ?? '2.0.0';
 }
 
 /**

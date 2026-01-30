@@ -715,7 +715,73 @@ docker logs <container-id>
 
 ---
 
-## 9. 故障排除
+## 9. 版本管理規範（SSOT）
+
+### Monorepo 版本管理策略
+
+**工具**: 使用 Changesets 管理版本與 CHANGELOG
+
+**核心原則**:
+
+- **SSOT**: 版本號統一來源於 `package.json`
+- **語義化版本**: 遵循 SemVer 2.0.0 規範
+- **自動化**: 版本號由 Vite 建置時自動注入
+
+### 版本號生成策略
+
+```typescript
+// vite.config.ts - 版本生成邏輯
+// 1. 優先: Git 標籤 (@app/ratewise@x.y.z)
+// 2. 次之: package.json 版本 + commit 數
+// 3. 開發: 版本 + sha.hash[-dirty]
+```
+
+### 版本 SSOT 結構
+
+```
+apps/ratewise/
+├── package.json          # 版本真實來源
+├── src/config/
+│   └── version.ts        # 版本 SSOT 模組
+└── vite.config.ts        # 版本注入邏輯
+```
+
+### 版本使用規範
+
+**正確做法**:
+
+```typescript
+// ✅ 從 SSOT 導入版本
+import { APP_VERSION, getDisplayVersion } from '@/config/version';
+```
+
+**禁止行為**:
+
+```typescript
+// ❌ 硬編碼版本
+const version = 'v2.0.0';
+
+// ❌ 直接使用 import.meta.env（應封裝於 version.ts）
+const version = import.meta.env.VITE_APP_VERSION;
+```
+
+### 版本升級流程
+
+1. **修改 `package.json`** 中的 `version` 欄位
+2. **建立 Changeset**: `pnpm changeset`
+3. **生成 CHANGELOG**: `pnpm changeset version`
+4. **驗證**: `pnpm build` 確認版本正確注入
+5. **提交**: 遵循 Commit Convention
+
+### 自動版本更新（Renovate + Changesets）
+
+- Patch/Minor 更新由 Renovate 自動合併
+- Major 更新需人工審查
+- 版本變更自動同步至 CHANGELOG
+
+---
+
+## 10. 故障排除
 
 ### 建置失敗
 
@@ -761,7 +827,7 @@ docker logs <container-id>
 
 ---
 
-## 10. 品質門檻
+## 11. 品質門檻
 
 每個 PR 必須通過:
 
@@ -773,7 +839,7 @@ docker logs <container-id>
 
 ---
 
-## 11. 聯絡與支援
+## 12. 聯絡與支援
 
 - **問題回報**: 建立 Issue 並標記適當 label
 - **安全問題**: 標記 `security` 並通知維運
@@ -782,7 +848,7 @@ docker logs <container-id>
 
 ---
 
-## 12. 技術債掃描報告（2025-10-26）
+## 13. 技術債掃描報告（2025-10-26）
 
 ### 總評分數卡
 
