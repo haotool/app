@@ -18,7 +18,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-neutral-light to-neutral px-4">
+    <main className="min-h-screen flex items-center justify-center bg-page-gradient px-4">
       {/* SEO Configuration: noindex to prevent 404 pages from being indexed */}
       <SEOHelmet
         title="404 - 找不到頁面"
@@ -33,8 +33,8 @@ export default function NotFound() {
           <h1 className="text-9xl font-bold text-primary mb-4" aria-label="404 錯誤">
             404
           </h1>
-          <h2 className="text-2xl font-semibold text-neutral-text mb-2">找不到頁面</h2>
-          <p className="text-neutral-text-secondary mb-6">
+          <h2 className="text-2xl font-semibold text-text mb-2">找不到頁面</h2>
+          <p className="text-text-muted mb-6">
             很抱歉，您訪問的頁面不存在。
             <br />
             請檢查網址是否正確，或返回首頁繼續瀏覽。
@@ -45,7 +45,7 @@ export default function NotFound() {
         <div className="mb-8">
           <Link
             to="/"
-            className="inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
+            className="inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
           >
             返回首頁
           </Link>
@@ -53,17 +53,17 @@ export default function NotFound() {
 
         {/* Suggested Pages */}
         <div className="space-y-3">
-          <p className="text-sm text-neutral-text-muted mb-3">或許您想前往：</p>
+          <p className="text-sm text-text-muted mb-3">或許您想前往：</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/faq/"
-              className="px-4 py-2 text-primary hover:text-primary-hover hover:bg-primary-bg rounded-lg transition-colors font-medium"
+              className="px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
             >
               常見問題
             </Link>
             <Link
               to="/about/"
-              className="px-4 py-2 text-primary hover:text-primary-hover hover:bg-primary-bg rounded-lg transition-colors font-medium"
+              className="px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
             >
               關於我們
             </Link>
@@ -71,13 +71,13 @@ export default function NotFound() {
         </div>
 
         {/* Additional Help Text */}
-        <p className="mt-8 text-xs text-neutral-text-muted">
+        <p className="mt-8 text-xs text-text-muted">
           如果您認為這是一個錯誤，請
           <a
             href="https://github.com/haotool/app/issues"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:text-primary-hover underline ml-1"
+            className="text-primary hover:text-primary/80 underline ml-1"
           >
             回報問題
           </a>

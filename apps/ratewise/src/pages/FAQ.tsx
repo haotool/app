@@ -217,23 +217,20 @@ export default function FAQ() {
               ]}
             />
 
-            <h1 className="text-4xl font-bold text-neutral-text mb-2">常見問題</h1>
-            <p className="text-neutral-text-secondary">關於 RateWise 匯率好工具的常見問題解答</p>
+            <h1 className="text-4xl font-bold text-text mb-2">常見問題</h1>
+            <p className="text-text-muted">關於 RateWise 匯率好工具的常見問題解答</p>
           </div>
 
           {/* FAQ List - 使用 UI 資料（包含 JSX） */}
           <div className="space-y-4">
             {FAQ_UI_DATA.map((faq, index) => (
-              <details
-                key={index}
-                className="group bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
-              >
+              <details key={index} className="group card p-0 hover:shadow-md transition-shadow">
                 <summary className="flex items-center justify-between cursor-pointer p-6 hover:text-primary transition-colors list-none">
-                  <h2 className="text-lg font-semibold text-neutral-text group-hover:text-primary transition-colors">
+                  <h2 className="text-lg font-semibold text-text group-hover:text-primary transition-colors">
                     {faq.question}
                   </h2>
                   <svg
-                    className="w-5 h-5 text-neutral-text-muted group-open:rotate-180 transition-transform flex-shrink-0 ml-4"
+                    className="w-5 h-5 text-text-muted group-open:rotate-180 transition-transform flex-shrink-0 ml-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -246,7 +243,7 @@ export default function FAQ() {
                     />
                   </svg>
                 </summary>
-                <div className="px-6 pb-6 text-neutral-text-secondary leading-relaxed border-t border-neutral-dark pt-4">
+                <div className="px-6 pb-6 text-text-muted leading-relaxed border-t border-border pt-4">
                   {faq.answer}
                 </div>
               </details>
@@ -254,13 +251,13 @@ export default function FAQ() {
           </div>
 
           {/* Contact Section */}
-          <div className="mt-12 p-6 bg-primary-bg rounded-lg border border-primary-light">
-            <h2 className="text-xl font-semibold text-neutral-text mb-2">還有其他問題？</h2>
-            <p className="text-neutral-text-secondary">
+          <div className="mt-12 p-6 card bg-primary/5 border-primary/20">
+            <h2 className="text-xl font-semibold text-text mb-2">還有其他問題？</h2>
+            <p className="text-text-muted">
               如果您有其他問題或建議，歡迎透過
               <a
                 href="mailto:haotool.org@gmail.com"
-                className="text-primary hover:text-primary-hover underline ml-1"
+                className="text-primary hover:text-primary/80 underline ml-1"
               >
                 haotool.org@gmail.com
               </a>
