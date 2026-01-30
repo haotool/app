@@ -74,20 +74,19 @@ describe('PWA 離線功能測試', () => {
 
     it('should try cache before offline.html fallback', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      // 應該優先嘗試從快取匹配當前頁面
+      // 應該優先嘗試從 runtime cache 匹配當前頁面
       expect(swContent).toContain('caches.match(req.url)');
-      // 然後嘗試預快取的 index.html（使用 resolvePath）
-      expect(swContent).toContain("resolvePath('index.html')");
-      expect(swContent).toContain('matchPrecache(indexHtmlPath)');
+      // 然後嘗試預快取的 index.html（使用相對路徑與 manifest 一致）
+      expect(swContent).toContain("matchPrecache('index.html')");
     });
 
     it('should have offline-first strategy in setCatchHandler', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
       // 確保離線優先策略註解存在
       expect(swContent).toContain('離線優先策略');
-      // 確保使用 resolvePath 正確處理路徑
-      expect(swContent).toContain("resolvePath('index.html')");
-      expect(swContent).toContain("resolvePath('offline.html')");
+      // 確保 matchPrecache 使用相對路徑（與 manifest 一致）
+      expect(swContent).toContain("matchPrecache('index.html')");
+      expect(swContent).toContain("matchPrecache('offline.html')");
       // 確保有 origin 驗證防止跨域攻擊
       expect(swContent).toContain('requestOrigin !== swOrigin');
     });
