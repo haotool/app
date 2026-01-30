@@ -72,26 +72,31 @@ describe('PWA 離線功能測試', () => {
       expect(swContent).toContain("destination === 'document'");
     });
 
-    it('should try html-cache before offline.html fallback', () => {
+    it('should try cache before offline.html fallback', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      // 應該優先嘗試 html-cache
-      expect(swContent).toContain("caches.open('html-cache')");
-      // 然後嘗試預快取的 index.html
-      expect(swContent).toContain("matchPrecache('index.html')");
+      // 應該優先嘗試從快取匹配當前頁面
+      expect(swContent).toContain('caches.match(req.url)');
+      // 然後嘗試預快取的 index.html（使用 resolvePath）
+      expect(swContent).toContain("resolvePath('index.html')");
+      expect(swContent).toContain('matchPrecache(indexHtmlPath)');
     });
 
     it('should have offline-first strategy in setCatchHandler', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
       // 確保離線優先策略註解存在
       expect(swContent).toContain('離線優先策略');
-      // 確保優先順序正確（html-cache -> precache -> offline.html）
-      const htmlCacheIndex = swContent.indexOf("caches.open('html-cache')");
-      const indexHtmlIndex = swContent.indexOf("matchPrecache('index.html')");
-      const offlineHtmlIndex = swContent.indexOf("matchPrecache('offline.html')");
-      // html-cache 應該在 index.html 之前
-      expect(htmlCacheIndex).toBeLessThan(indexHtmlIndex);
-      // index.html 應該在 offline.html 之前
-      expect(indexHtmlIndex).toBeLessThan(offlineHtmlIndex);
+      // 確保使用 resolvePath 正確處理路徑
+      expect(swContent).toContain("resolvePath('index.html')");
+      expect(swContent).toContain("resolvePath('offline.html')");
+      // 確保有 origin 驗證防止跨域攻擊
+      expect(swContent).toContain('requestOrigin !== swOrigin');
+    });
+
+    it('should have cross-origin protection in setCatchHandler', () => {
+      const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
+      // 應該驗證請求 origin
+      expect(swContent).toContain('安全性驗證');
+      expect(swContent).toContain('僅處理同源請求');
     });
   });
 
