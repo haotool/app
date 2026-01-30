@@ -20,8 +20,11 @@ const MOBILE_VIEWPORT = { width: 375, height: 667 }; // iPhone SE
 const DESKTOP_VIEWPORT = { width: 1280, height: 720 };
 
 const openCalculator = async (page: Page, trigger: 'from' | 'to' = 'from') => {
-  await page.getByTestId(`calculator-trigger-${trigger}`).click();
-  await expect(page.getByRole('dialog', { name: '計算機' })).toBeVisible();
+  // [fix:2026-01-31] 使用正確的 data-testid，UI 已更新
+  const testId = trigger === 'from' ? 'amount-input' : 'result-input';
+  await page.getByTestId(testId).click();
+  // [fix:2026-01-31] 使用英文 aria-label "Calculator"
+  await expect(page.getByRole('dialog', { name: 'Calculator' })).toBeVisible();
 };
 
 const openCalculatorClean = async (page: Page, trigger: 'from' | 'to' = 'from') => {
@@ -51,7 +54,8 @@ const resetCalculator = async (page: Page) => {
 };
 
 const expectExpression = async (page: Page, matcher: RegExp | string) => {
-  const expression = page.getByRole('status', { name: '當前表達式' });
+  // [fix:2026-01-31] 使用英文 aria-label "Current expression"
+  const expression = page.getByRole('status', { name: 'Current expression' });
   await expect(expression).toHaveText(matcher);
 };
 
@@ -94,7 +98,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
 
     // Then: 驗證結果（計算機應該關閉並填入結果）
     // 注意：計算機關閉後，結果會填入輸入框
-    await expect(page.getByRole('dialog', { name: '計算機' })).not.toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Calculator' })).not.toBeVisible();
   });
 
   /**
@@ -189,7 +193,7 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
     await page.getByRole('button', { name: '計算結果' }).click();
 
     // Then: 驗證計算機關閉（與桌面版一致）
-    await expect(page.getByRole('dialog', { name: '計算機' })).not.toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Calculator' })).not.toBeVisible();
   });
 
   /**
@@ -264,10 +268,11 @@ test.describe('Calculator Fix Verification - E2E Tests', () => {
     await openCalculator(page, 'from');
 
     // When: 點擊關閉按鈕（X）
-    await page.getByRole('button', { name: '關閉計算機' }).click();
+    // [fix:2026-01-31] 使用英文 aria-label "Close calculator"
+    await page.getByRole('button', { name: 'Close calculator' }).click();
 
     // Then: 計算機應該關閉
-    await expect(page.getByRole('dialog', { name: '計算機' })).not.toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Calculator' })).not.toBeVisible();
   });
 
   /**

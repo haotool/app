@@ -74,11 +74,11 @@ test.describe('RateWise 核心功能測試', () => {
     // 等待 UI 更新
     await page.waitForTimeout(500);
 
-    // 檢查多幣別模式標題可見
-    await expect(page.getByText(/即時多幣別換算/i)).toBeVisible();
+    // [fix:2026-01-31] 檢查多幣別模式下的貨幣列表區域可見（新 UI 無標題文字）
+    await expect(page.getByRole('region', { name: /currency list/i })).toBeVisible();
 
-    // 檢查是否顯示多個貨幣（使用 aria-label 包含「金額」的元素至少 3 個）
-    const amountDisplays = page.locator('[aria-label*="金額"]');
+    // [fix:2026-01-31] 檢查是否顯示多個貨幣（使用英文 aria-label "amount"）
+    const amountDisplays = page.locator('[aria-label*="amount"]');
     await expect(amountDisplays.nth(0)).toBeVisible();
     const displayCount = await amountDisplays.count();
     expect(displayCount).toBeGreaterThan(2);
@@ -98,12 +98,12 @@ test.describe('RateWise 核心功能測試', () => {
       .first();
     await quickAmountButton.click();
 
-    // 驗證基準貨幣顯示更新（TWD 金額文字包含 1,000）
-    const twdDisplay = page.getByLabel(/新台幣.*TWD.*金額/i);
+    // [fix:2026-01-31] 驗證基準貨幣顯示更新（使用英文 aria-label）
+    const twdDisplay = page.getByLabel(/Taiwan Dollar.*TWD.*amount/i);
     await expect(twdDisplay).toContainText(/1,000/);
 
-    // 驗證其他貨幣的金額顯示不為 0（顯示為文字，所以檢查非空且非 "0.00"）
-    const usdDisplay = page.getByLabel(/美元.*USD.*金額/i);
+    // [fix:2026-01-31] 驗證其他貨幣的金額顯示不為 0（使用英文 aria-label）
+    const usdDisplay = page.getByLabel(/US Dollar.*USD.*amount/i);
     await expect(usdDisplay).toBeVisible();
     const usdText = await usdDisplay.innerText();
     expect(usdText.trim()).not.toBe('');
