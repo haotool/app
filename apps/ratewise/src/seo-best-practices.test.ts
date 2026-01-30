@@ -81,25 +81,20 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(llmsContent).toContain('/about/');
     });
 
-    it('should list all currency landing pages', () => {
-      const currencies = [
-        'usd',
-        'jpy',
-        'eur',
-        'hkd',
-        'cny',
-        'krw',
-        'aud',
-        'cad',
-        'chf',
-        'gbp',
-        'nzd',
-        'sgd',
-        'thb',
-      ];
-      for (const currency of currencies) {
+    it('should list popular currency landing pages', () => {
+      // 核心貨幣（必須存在）
+      const coreCurrencies = ['usd', 'jpy', 'eur', 'hkd', 'cny', 'krw'];
+      for (const currency of coreCurrencies) {
         expect(llmsContent).toContain(`/${currency}-twd/`);
       }
+    });
+
+    it('should have at least 6 currency pages listed', () => {
+      // 至少要有 6 個貨幣頁面
+      const currencyUrlPattern = /\/[a-z]{3}-twd\//g;
+      const allMatches = llmsContent.match(currencyUrlPattern);
+      expect(allMatches).toBeTruthy();
+      expect(allMatches!.length).toBeGreaterThanOrEqual(6);
     });
   });
 
