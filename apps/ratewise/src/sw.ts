@@ -111,38 +111,78 @@ registerRoute(navigationRoute);
 // =============================================================================
 // Critical: Catch Handler for Offline Navigation
 // =============================================================================
-// When navigation fails (offline or network error), serve offline.html
-// This is the proper way according to Workbox official documentation
-// Reference: https://developer.chrome.com/docs/workbox/modules/workbox-routing#set-a-catch-handler
+// 問題：原先直接返回 offline.html，導致用戶無法使用完整應用
+// 解決：優先嘗試從各種快取獲取完整頁面，最後才 fallback 到 offline.html
 //
-// Use matchPrecache instead of caches.match for correct path resolution
-// 預快取的實際 URL 是 /ratewise/offline.html，導致快取未命中
-// matchPrecache 會自動處理 base path 和 revision 參數
-setCatchHandler(async ({ event }): Promise<Response> => {
-  // Type assertion: Workbox's setCatchHandler passes FetchEvent
+// 離線優先策略（5 步驟）：
+// 1. 驗證請求 origin，防止跨域攻擊
+// 2. html-cache (runtime): NetworkFirst 策略快取的 HTML
+// 3. precache: Vite build 時預快取的 index.html（使用 resolvePath）
+// 4. offline.html: 最終 fallback（使用 resolvePath）
+// 5. 所有快取失效時返回 Response.error()
+//
+// Reference: [context7:/googlechrome/workbox:2026-01-31] setCatchHandler
+setCatchHandler(async ({ event, request }): Promise<Response> => {
   const fetchEvent = event as FetchEvent;
+  const req = request ?? fetchEvent.request;
 
-  // Only handle document (navigation) requests
-  if (fetchEvent.request.destination === 'document') {
-    // 使用 matchPrecache 查找預快取的 offline.html
-    // matchPrecache 會自動處理 URL 映射和 revision 查找
-    const offlineResponse = await matchPrecache('offline.html');
-    if (offlineResponse) {
-      return offlineResponse;
-    }
-
-    // Fallback: 嘗試使用 SW scope 構建完整 URL
-    const scope = self.registration.scope;
-    const offlineUrl = new URL('offline.html', scope).href;
-    const fallbackResponse = await caches.match(offlineUrl);
-    if (fallbackResponse) {
-      return fallbackResponse;
-    }
-
+  // 僅處理 document (navigation) 請求
+  if (req.destination !== 'document') {
     return Response.error();
   }
 
-  // For other request types, return error
+  // 安全性驗證：僅處理同源請求
+  const requestOrigin = new URL(req.url).origin;
+  const swOrigin = new URL(self.registration.scope).origin;
+  if (requestOrigin !== swOrigin) {
+    return Response.error();
+  }
+
+  // 1. 嘗試從 html-cache 獲取當前頁面
+  // html-cache 由 NetworkFirst 策略維護，包含最近訪問的頁面
+  try {
+    const cachedHtml = await caches.match(req.url);
+    if (cachedHtml) {
+      return cachedHtml;
+    }
+  } catch {
+    // 快取讀取失敗，繼續嘗試其他快取
+  }
+
+  // 2. 嘗試從預快取獲取 index.html（SPA 的主入口）
+  // 使用 resolvePath 確保路徑正確（考慮 base path）
+  const indexHtmlPath = resolvePath('index.html');
+  const indexHtml = await matchPrecache(indexHtmlPath);
+  if (indexHtml) {
+    return indexHtml;
+  }
+
+  // 3. 嘗試使用完整 URL 匹配 index.html
+  const scope = self.registration.scope;
+  const indexUrl = new URL('index.html', scope).href;
+  try {
+    const indexFromCache = await caches.match(indexUrl);
+    if (indexFromCache) {
+      return indexFromCache;
+    }
+  } catch {
+    // 快取讀取失敗
+  }
+
+  // 4. 最終 fallback：offline.html（使用 resolvePath）
+  const offlineHtmlPath = resolvePath('offline.html');
+  const offlineResponse = await matchPrecache(offlineHtmlPath);
+  if (offlineResponse) {
+    return offlineResponse;
+  }
+
+  // 5. 最後嘗試直接從快取匹配 offline.html
+  const offlineUrl = new URL('offline.html', scope).href;
+  const fallbackResponse = await caches.match(offlineUrl);
+  if (fallbackResponse) {
+    return fallbackResponse;
+  }
+
   return Response.error();
 });
 
