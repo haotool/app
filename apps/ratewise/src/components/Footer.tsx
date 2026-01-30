@@ -74,7 +74,7 @@ export function Footer() {
   const buildTime = import.meta.env.VITE_BUILD_TIME ?? '2025/12/24 01:14';
 
   return (
-    <footer className="bg-gradient-to-br from-footer-from via-footer-via to-footer-to text-neutral mt-16">
+    <footer className="bg-gradient-to-br from-footer-from via-footer-via to-footer-to text-surface mt-16">
       {/* 行動版簡潔 Footer */}
       <div className="md:hidden max-w-6xl mx-auto px-4 py-8">
         {/* 匯率來源與更新時間 */}

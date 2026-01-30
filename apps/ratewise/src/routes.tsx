@@ -25,6 +25,9 @@ import type { RouteRecord } from 'vite-react-ssg';
 import type { ComponentType } from 'react';
 import { ClientOnly } from 'vite-react-ssg';
 import CurrencyConverter from './features/ratewise/RateWise';
+import { HOMEPAGE_FAQ } from './features/ratewise/constants';
+import { SEOHelmet } from './components/SEOHelmet';
+import { HomeStructuredData } from './components/HomeStructuredData';
 import { Layout } from './components/Layout';
 import { AppLayout } from './components/AppLayout';
 import { SkeletonLoader } from './components/SkeletonLoader';
@@ -141,10 +144,16 @@ export const routes: RouteRecord[] = [
     element: <AppLayout />,
     children: [
       // 單幣別轉換器（首頁）
+      // SEOHelmet + HomeStructuredData 放在 ClientOnly 外面，確保 SSG 時渲染 SEO metadata
+      // @see https://vite-react-ssg.netlify.app/docs/components — Head 獨立於 ClientOnly
       {
         path: '',
         element: (
-          <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
+          <>
+            <SEOHelmet pathname="/" />
+            <HomeStructuredData faq={HOMEPAGE_FAQ} />
+            <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
+          </>
         ),
         entry: 'src/features/ratewise/RateWise',
       },
