@@ -544,6 +544,44 @@ try {
 
 ---
 
+## 版本管理規範（SSOT）
+
+### 版本號生成策略
+
+版本號由 `vite.config.ts` 在建置時自動生成：
+
+1. **優先**: Git 標籤 `@app/ratewise@x.y.z`
+2. **次之**: `package.json` 版本 + commit 數
+3. **開發**: 版本 + `sha.hash[-dirty]`
+
+### 版本 SSOT 模組
+
+所有版本資訊必須從 `src/config/version.ts` 導入：
+
+```typescript
+// ✅ 正確: 使用 SSOT 模組
+import { APP_VERSION, getDisplayVersion } from '@/config/version';
+
+// ❌ 錯誤: 硬編碼版本
+const version = 'v2.0.0';
+```
+
+### 版本升級流程
+
+1. 修改 `package.json` 中的 `version` 欄位
+2. 建立 Changeset: `pnpm changeset`
+3. 生成 CHANGELOG: `pnpm changeset version`
+4. 驗證: `pnpm build` 確認版本正確注入
+5. 提交: 遵循 Commit Convention
+
+### 禁止行為
+
+- ❌ 在組件中硬編碼版本號
+- ❌ 直接使用 `import.meta.env.VITE_APP_VERSION`（應封裝於 version.ts）
+- ❌ 手動修改建置後的版本標記
+
+---
+
 ## 安全守則
 
 ### 分層防禦原則

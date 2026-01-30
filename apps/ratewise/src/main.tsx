@@ -22,14 +22,7 @@ import { logger } from './utils/logger';
 import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
 import { initCSPReporter } from './utils/csp-reporter';
-
-// 使用 import.meta.env 優先，如果不存在則使用全域變數，最後使用預設值
-const appVersion =
-  import.meta.env.VITE_APP_VERSION ??
-  (typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0');
-const buildTime =
-  import.meta.env.VITE_BUILD_TIME ??
-  (typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString());
+import { APP_VERSION, BUILD_TIME } from './config/version';
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(
@@ -50,8 +43,8 @@ export const createRoot = ViteReactSSG(
       // Log application startup
       logger.info('Application starting', {
         environment: import.meta.env.MODE,
-        version: appVersion,
-        buildTime,
+        version: APP_VERSION,
+        buildTime: BUILD_TIME,
       });
 
       // 處理版本更新（檢測版本變更並清除快取）
@@ -101,16 +94,16 @@ export const createRoot = ViteReactSSG(
 
       // Log successful mount
       logger.info('Application mounted successfully (client-side)', {
-        version: appVersion,
-        buildTime,
+        version: APP_VERSION,
+        buildTime: BUILD_TIME,
       });
 
       // Service Worker 註冊由 UpdatePrompt 組件處理
     } else {
       // Server-side rendering log
       logger.info('Generating static HTML (server-side)', {
-        version: appVersion,
-        buildTime,
+        version: APP_VERSION,
+        buildTime: BUILD_TIME,
       });
     }
   },

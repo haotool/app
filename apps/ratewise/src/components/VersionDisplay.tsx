@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { APP_VERSION, BUILD_TIME, IS_DEV } from '../config/version';
 
 /**
  * VersionDisplay - 版本資訊顯示組件
@@ -9,28 +10,21 @@ import { useState, useEffect } from 'react';
  * - 支援桌面 hover 和行動裝置 tap
  * - 開發模式下顯示實時時間，生產模式顯示構建時間
  *
+ * SSOT: 版本資訊來自 config/version.ts
  * SSG 時使用固定的 BUILD_TIME 避免 hydration mismatch
  */
-
-// Build time as SSG initial value to avoid hydration mismatch
-const INITIAL_BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? '2025-01-01T00:00:00.000Z';
-
 export function VersionDisplay() {
-  // 使用 import.meta.env 讀取 Vite 注入的環境變數
-  const version = import.meta.env.VITE_APP_VERSION ?? '1.0.0';
-  const isDev = import.meta.env.DEV;
+  // SSOT: 版本資訊來自 config/version.ts
+  const version = APP_VERSION;
+  const isDev = IS_DEV;
 
   // Fixed initial value to avoid hydration mismatch; updates in dev mode
-  // 生產模式：始終使用構建時間
-  const [buildTimeString, setBuildTimeString] = useState(INITIAL_BUILD_TIME);
+  const [buildTimeString, setBuildTimeString] = useState(BUILD_TIME);
 
   useEffect(() => {
-    // 開發模式下每秒更新一次時間，確保顯示最新狀態
-    if (!isDev) {
-      return; // 生產模式不需要更新
-    }
+    // 開發模式下每秒更新一次時間
+    if (!isDev) return;
 
-    // hydration 完成後才開始更新時間
     const updateTime = () => setBuildTimeString(new Date().toISOString());
     updateTime();
 

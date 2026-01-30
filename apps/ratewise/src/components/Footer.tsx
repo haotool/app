@@ -25,6 +25,7 @@ import { ClientOnly } from 'vite-react-ssg';
 import { useTranslation } from 'react-i18next';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 import { FOOTER_SECTIONS, POPULAR_RATE_LINKS } from '../config/footer-links';
+import { getDisplayVersion, getFormattedBuildTime } from '../config/version';
 
 /** 固定年份避免 SSG/hydration mismatch */
 const CURRENT_YEAR = 2025;
@@ -69,9 +70,9 @@ function UpdateTimeFallback() {
 
 export function Footer() {
   const { t } = useTranslation();
-  // Version and build time from environment
-  const appVersion = import.meta.env.VITE_APP_VERSION ?? 'v1.2.2';
-  const buildTime = import.meta.env.VITE_BUILD_TIME ?? '2025/12/24 01:14';
+  // SSOT: 版本資訊來自 config/version.ts
+  const appVersion = getDisplayVersion();
+  const buildTime = getFormattedBuildTime();
 
   return (
     <footer className="bg-gradient-to-br from-footer-from via-footer-via to-footer-to text-surface mt-16">

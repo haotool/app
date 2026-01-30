@@ -29,6 +29,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { transitions } from '../config/animations';
 
 /**
  * 導覽項目類型
@@ -110,17 +111,25 @@ export function BottomNavigation() {
             <Link
               key={item.path}
               to={item.path}
-              className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 relative group transition-transform duration-200 ease-out active:scale-95"
+              className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 relative group"
               aria-label={t(item.ariaLabelKey)}
               aria-current={isActive ? 'page' : undefined}
             >
+              {/* 點擊回饋背景 */}
+              <motion.div
+                className="absolute inset-1 rounded-xl bg-primary/0"
+                whileTap={{ backgroundColor: 'rgba(var(--color-primary), 0.1)' }}
+                transition={transitions.instant}
+              />
+
               {/* 圖標 - 20px (navigationTokens.bottomNav.icon.size) */}
               <motion.div
                 animate={{
-                  scale: isActive ? 1.05 : 1,
-                  opacity: isActive ? 1 : 0.3,
+                  scale: isActive ? 1.1 : 1,
+                  opacity: isActive ? 1 : 0.35,
                 }}
-                transition={{ duration: 0.2 }}
+                whileTap={{ scale: 0.9 }}
+                transition={transitions.spring}
                 className={isActive ? 'text-primary' : 'group-hover:opacity-50'}
               >
                 <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} aria-hidden={true} />
@@ -129,9 +138,10 @@ export function BottomNavigation() {
               {/* 標籤 - 8px */}
               <motion.span
                 animate={{
-                  opacity: isActive ? 1 : 0.3,
+                  opacity: isActive ? 1 : 0.35,
+                  y: isActive ? 0 : 1,
                 }}
-                transition={{ duration: 0.2 }}
+                transition={transitions.default}
                 className={`
                   text-[8px] font-black uppercase tracking-[0.15em]
                   ${isActive ? 'text-primary' : ''}
@@ -145,7 +155,7 @@ export function BottomNavigation() {
                 <motion.div
                   layoutId="nav-indicator"
                   className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]"
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  transition={transitions.spring}
                 />
               )}
             </Link>
