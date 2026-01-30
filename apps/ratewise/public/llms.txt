@@ -35,6 +35,13 @@ Key Metrics:
 - [HKD/TWD 港幣](https://app.haotool.org/ratewise/hkd-twd/): 港澳常用
 - [CNY/TWD 人民幣](https://app.haotool.org/ratewise/cny-twd/): 跨境購物需求
 - [KRW/TWD 韓元](https://app.haotool.org/ratewise/krw-twd/): 旅遊與消費需求
+- [AUD/TWD 澳幣](https://app.haotool.org/ratewise/aud-twd/): 澳洲旅遊與留學
+- [CAD/TWD 加幣](https://app.haotool.org/ratewise/cad-twd/): 加拿大移民與貿易
+- [CHF/TWD 瑞士法郎](https://app.haotool.org/ratewise/chf-twd/): 避險貨幣參考
+- [GBP/TWD 英鎊](https://app.haotool.org/ratewise/gbp-twd/): 英國留學與貿易
+- [NZD/TWD 紐幣](https://app.haotool.org/ratewise/nzd-twd/): 紐西蘭旅遊與打工
+- [SGD/TWD 新加坡幣](https://app.haotool.org/ratewise/sgd-twd/): 東南亞商務需求
+- [THB/TWD 泰銖](https://app.haotool.org/ratewise/thb-twd/): 泰國旅遊常用
 
 ## AI/LLM Access Control
 

@@ -21,7 +21,7 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
 
   return (
     <nav aria-label="麵包屑導航" className={`mb-4 ${className}`}>
-      <ol className="flex items-center gap-2 text-sm text-neutral-text-secondary flex-wrap">
+      <ol className="flex items-center gap-2 text-sm text-text-muted flex-wrap">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
 
@@ -30,7 +30,7 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
               {/* Separator */}
               {index > 0 && (
                 <ChevronRight
-                  className="w-4 h-4 text-neutral-text-muted flex-shrink-0"
+                  className="w-4 h-4 text-text-muted flex-shrink-0"
                   aria-hidden="true"
                 />
               )}
@@ -38,7 +38,7 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
               {/* Breadcrumb Item */}
               {isLast ? (
                 // Current Page - Not a link
-                <span className="font-medium text-neutral-text" aria-current="page">
+                <span className="font-medium text-text" aria-current="page">
                   {item.label}
                 </span>
               ) : (

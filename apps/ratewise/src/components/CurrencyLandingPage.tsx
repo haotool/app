@@ -161,7 +161,7 @@ export function CurrencyLandingPage({
               <ul className="space-y-3">
                 {highlights.map((highlight, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <span className="w-6 h-6 rounded-full bg-primary-bg text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                       {index + 1}
                     </span>
                     <span className="text-text text-sm sm:text-base leading-relaxed">
@@ -210,8 +210,8 @@ export function CurrencyLandingPage({
             <div className="space-y-3">
               {faqEntries.map((faq, index) => (
                 <details key={index} className="card group" open={index === 0}>
-                  <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-start gap-3 hover:bg-surface-soft/50 transition-colors rounded-2xl">
-                    <div className="w-8 h-8 rounded-full bg-primary-bg text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-start gap-3 hover:bg-surface/50 transition-colors rounded-2xl">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
                       <HelpCircle className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -235,7 +235,7 @@ export function CurrencyLandingPage({
 
           {/* Guide Link Section */}
           <section className="mb-6">
-            <div className="card p-4 sm:p-5 bg-primary-bg border border-primary-light">
+            <div className="card p-4 sm:p-5 bg-primary/5 border-primary/20">
               <div className="flex items-center gap-3">
                 <BookOpen className="w-8 h-8 text-primary flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -246,7 +246,7 @@ export function CurrencyLandingPage({
                 </div>
                 <Link
                   to="/guide/"
-                  className="px-3 py-2 bg-primary text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary-hover transition-colors flex-shrink-0"
+                  className="px-3 py-2 bg-primary text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors flex-shrink-0"
                 >
                   使用指南
                 </Link>

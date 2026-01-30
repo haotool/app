@@ -149,6 +149,116 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
     });
   });
 
+  describe('🟢 首頁 SEO Meta Tags（由 SEOHelmet 在 ClientOnly 外層注入）', () => {
+    const indexHtml = resolve(distPath, 'index.html');
+
+    it('should have homepage title in static HTML', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      expect(content).toMatch(/<title[^>]*>/);
+      expect(content).toMatch(/RateWise/);
+    });
+
+    it('should have homepage description meta tag', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      expect(content).toMatch(/<meta[^>]*name="description"/);
+    });
+
+    it('should have correct canonical URL for homepage', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      expect(content).toMatch(
+        /<link[^>]*rel="canonical"[^>]*href="https:\/\/app\.haotool\.org\/ratewise\/"/,
+      );
+    });
+
+    it('should have og:url for homepage', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      expect(content).toMatch(/<meta[^>]*property="og:url"/);
+    });
+
+    it('should have Twitter Card tags for homepage', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      expect(content).toMatch(/<meta[^>]*name="twitter:card"/);
+    });
+
+    it('should have JSON-LD structured data for homepage', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      expect(content).toMatch(/<script[^>]*type="application\/ld\+json"/);
+      expect(content).toMatch(/"@type":\s*"SoftwareApplication"/);
+    });
+
+    it('should have only ONE title tag (no duplicates from template)', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      const titleMatches = content.match(/<title[^>]*>[^<]+<\/title>/g);
+      expect(titleMatches).toBeTruthy();
+      expect(titleMatches?.length).toBe(1);
+    });
+
+    it('should have only ONE description meta tag', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      const descMatches = content.match(/<meta[^>]*name="description"[^>]*>/g);
+      expect(descMatches).toBeTruthy();
+      expect(descMatches?.length).toBe(1);
+    });
+  });
+
+  describe('🟢 子頁面不應有重複 meta tags', () => {
+    it('FAQ page should have only ONE title tag', () => {
+      const faqHtml = resolve(distPath, 'faq/index.html');
+      if (!existsSync(faqHtml)) return;
+
+      const content = readFileSync(faqHtml, 'utf-8');
+      const titleMatches = content.match(/<title[^>]*>[^<]+<\/title>/g);
+      expect(titleMatches).toBeTruthy();
+      expect(titleMatches?.length).toBe(1);
+    });
+
+    it('FAQ page should have only ONE description meta tag', () => {
+      const faqHtml = resolve(distPath, 'faq/index.html');
+      if (!existsSync(faqHtml)) return;
+
+      const content = readFileSync(faqHtml, 'utf-8');
+      const descMatches = content.match(/<meta[^>]*name="description"[^>]*>/g);
+      expect(descMatches).toBeTruthy();
+      expect(descMatches?.length).toBe(1);
+    });
+
+    it('About page should have only ONE title tag', () => {
+      const aboutHtml = resolve(distPath, 'about/index.html');
+      if (!existsSync(aboutHtml)) return;
+
+      const content = readFileSync(aboutHtml, 'utf-8');
+      const titleMatches = content.match(/<title[^>]*>[^<]+<\/title>/g);
+      expect(titleMatches).toBeTruthy();
+      expect(titleMatches?.length).toBe(1);
+    });
+
+    it('About page should have only ONE description meta tag', () => {
+      const aboutHtml = resolve(distPath, 'about/index.html');
+      if (!existsSync(aboutHtml)) return;
+
+      const content = readFileSync(aboutHtml, 'utf-8');
+      const descMatches = content.match(/<meta[^>]*name="description"[^>]*>/g);
+      expect(descMatches).toBeTruthy();
+      expect(descMatches?.length).toBe(1);
+    });
+  });
+
   describe('🟢 CSP & Security', () => {
     const indexHtml = resolve(distPath, 'index.html');
 
@@ -201,17 +311,14 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toMatch(/"@type":\s*"Organization"/);
     });
 
-    it('Homepage should have SoftwareApplication or HowTo JSON-LD', () => {
+    it('Homepage should have SoftwareApplication and HowTo JSON-LD', () => {
       if (!existsSync(indexHtml)) return;
 
       const content = readFileSync(indexHtml, 'utf-8');
-      // Homepage uses HomeStructuredData component which injects schemas client-side
-      // OR SEOHelmet injects SoftwareApplication
-      // We just verify JSON-LD exists (from HomeStructuredData or SEOHelmet)
-      const hasJsonLd = content.includes('application/ld+json');
-      // Homepage may not have JSON-LD if it uses client-side HomeStructuredData
-      // This is acceptable as Googlebot executes JavaScript
-      expect(hasJsonLd || !hasJsonLd).toBe(true); // Always passes - just documenting behavior
+      // [2026-01-30] SEOHelmet + HomeStructuredData 現在在 ClientOnly 外層
+      // SSG 時會渲染完整 JSON-LD
+      expect(content).toContain('application/ld+json');
+      expect(content).toMatch(/"@type":\s*"SoftwareApplication"/);
     });
 
     it('FAQ page should have exactly ONE Organization schema in top-level', () => {

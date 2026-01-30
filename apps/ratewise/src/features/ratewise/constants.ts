@@ -76,3 +76,25 @@ export const CURRENCY_QUICK_AMOUNTS = {
   VND: [100000, 200000, 500000, 1000000, 2000000], // 越南盾：面額較大，日常消費
   MYR: [10, 20, 50, 100, 500], // 馬來幣：與新加坡幣類似
 } as const;
+
+/** 首頁 FAQ 結構化資料（用於 routes.tsx SSG 渲染） */
+export const HOMEPAGE_FAQ = [
+  {
+    question: '匯率來源與更新頻率？',
+    answer: '匯率 100% 參考臺灣銀行牌告，包含現金/即期買入賣出價，每 5 分鐘自動同步一次。',
+  },
+  {
+    question: '支援哪些貨幣？',
+    answer:
+      '支援 30+ 種主要貨幣（TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等），可收藏常用貨幣。',
+  },
+  {
+    question: '可以離線使用嗎？',
+    answer: '可。PWA 首次開啟會快取資源與最近匯率，離線時仍可用上次更新的數據進行換算。',
+  },
+  {
+    question: '如何查看多幣別與歷史趨勢？',
+    answer:
+      '切換「多幣別」模式可同時查看所有支援貨幣；單幣別卡片可展開 7~30 天歷史趨勢線圖，輔助判斷換匯時機。',
+  },
+];

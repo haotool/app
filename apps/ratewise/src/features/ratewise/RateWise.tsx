@@ -21,31 +21,9 @@ import { formatDisplayTime } from '../../utils/timeFormatter';
 import { clearAllServiceWorkerCaches, forceServiceWorkerUpdate } from '../../utils/swUtils';
 import { logger } from '../../utils/logger';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
-import { HomeStructuredData } from '../../components/HomeStructuredData';
 import { rateWiseLayoutTokens } from '../../config/design-tokens';
 import type { RateType } from './types';
 import { STORAGE_KEYS } from './storage-keys';
-
-const HOMEPAGE_FAQ = [
-  {
-    question: '匯率來源與更新頻率？',
-    answer: '匯率 100% 參考臺灣銀行牌告，包含現金/即期買入賣出價，每 5 分鐘自動同步一次。',
-  },
-  {
-    question: '支援哪些貨幣？',
-    answer:
-      '支援 30+ 種主要貨幣（TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等），可收藏常用貨幣。',
-  },
-  {
-    question: '可以離線使用嗎？',
-    answer: '可。PWA 首次開啟會快取資源與最近匯率，離線時仍可用上次更新的數據進行換算。',
-  },
-  {
-    question: '如何查看多幣別與歷史趨勢？',
-    answer:
-      '切換「多幣別」模式可同時查看所有支援貨幣；單幣別卡片可展開 7~30 天歷史趨勢線圖，輔助判斷換匯時機。',
-  },
-];
 
 const RateWise = () => {
   // Main container ref for pull-to-refresh
@@ -181,8 +159,6 @@ const RateWise = () => {
 
   return (
     <>
-      <HomeStructuredData faq={HOMEPAGE_FAQ} />
-
       {/* 下拉重新整理指示器 */}
       {isPullToRefreshEnabled && (
         <PullToRefreshIndicator

@@ -21,8 +21,9 @@ import { test, expect } from './fixtures/test';
 
 test.describe('RateWise 核心功能測試', () => {
   test('應該正確載入首頁並顯示關鍵元素', async ({ rateWisePage: page }) => {
-    // 檢查標題
-    await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
+    // 檢查標題 - Header 使用 <span> 而非 <h1>，改用 getByText
+    // [fix:2026-01-30] 配合 Header 架構調整
+    await expect(page.getByText(/RateWise 匯率好工具/i).first()).toBeVisible();
 
     // 檢查副標題（匯率載入完成後）
     await expect(page.getByText(/即時匯率換算/i)).toBeVisible();
@@ -61,8 +62,8 @@ test.describe('RateWise 核心功能測試', () => {
     // Playwright auto-waiting 會自動等待元素可操作
     await swapButton.click();
 
-    // 驗證頁面狀態正常
-    await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
+    // 驗證頁面狀態正常 - [fix:2026-01-30] 配合 Header 架構調整
+    await expect(page.getByText(/RateWise 匯率好工具/i).first()).toBeVisible();
   });
 
   test('多幣別模式：應該能夠切換並顯示多幣別換算', async ({ rateWisePage: page }) => {
@@ -118,15 +119,15 @@ test.describe('RateWise 核心功能測試', () => {
     await firstFavoriteButton.click();
     await page.waitForTimeout(500);
 
-    // 至少確認頁面沒有崩潰且我的最愛功能正常執行
-    await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
+    // 至少確認頁面沒有崩潰且我的最愛功能正常執行 - [fix:2026-01-30] 配合 Header 架構調整
+    await expect(page.getByText(/RateWise 匯率好工具/i).first()).toBeVisible();
   });
 
   test('響應式設計：行動版應該正確顯示', async ({ rateWisePage: page, viewport }) => {
     // 僅在行動裝置尺寸執行
     if (viewport && viewport.width < 768) {
-      // 檢查標題在小螢幕上仍然可見
-      await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
+      // 檢查標題在小螢幕上仍然可見 - [fix:2026-01-30] 配合 Header 架構調整
+      await expect(page.getByText(/RateWise 匯率好工具/i).first()).toBeVisible();
 
       // 檢查模式切換按鈕在小螢幕上可點擊
       const singleModeButton = page.getByRole('link', { name: /單幣別/i });
@@ -145,7 +146,8 @@ test.describe('RateWise 核心功能測試', () => {
   test('效能：首頁應該在合理時間內完成載入', async ({ rateWisePage: page }) => {
     // Fixture already handles navigation and waits for key UI element
     // Just verify key content is rendered (already checked in fixture)
-    await expect(page.getByRole('heading', { name: /匯率好工具/i })).toBeVisible();
+    // [fix:2026-01-30] 配合 Header 架構調整
+    await expect(page.getByText(/RateWise 匯率好工具/i).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /多幣別/i })).toBeVisible();
   });
 
@@ -173,9 +175,8 @@ test.describe('視覺穩定性測試', () => {
     // Fixture already navigates and confirms app is loaded (multi-currency button visible)
     // Now verify layout stability
 
-    // [fix:2025-11-27] 使用正確的選擇器：頁面上是 h1 元素，不是 h2
-    // 選擇視覺標題 h1（「RateWise 匯率好工具」）
-    const titleLocator = page.getByRole('heading', { name: /RateWise 匯率好工具/i, level: 1 });
+    // [fix:2026-01-30] Header 使用 <span> 而非 <h1>，改用 getByText
+    const titleLocator = page.getByText(/RateWise 匯率好工具/i).first();
 
     // [fix:2025-11-27] 使用 web-first assertion 取代 waitForSelector
     await expect(titleLocator).toBeVisible({ timeout: 10000 });
