@@ -19,4 +19,32 @@ describe('llms.txt structure', () => {
     expect(content).toContain('## Optional');
     expect(content).toMatch(/https:\/\/app\.haotool\.org\/ratewise\/.*\//);
   });
+
+  it('lists all 13 currency pages in Popular Rates', () => {
+    const content = readFileSync(llmsPath, 'utf-8');
+    const currencies = [
+      'usd-twd',
+      'jpy-twd',
+      'eur-twd',
+      'hkd-twd',
+      'cny-twd',
+      'krw-twd',
+      'aud-twd',
+      'cad-twd',
+      'chf-twd',
+      'gbp-twd',
+      'nzd-twd',
+      'sgd-twd',
+      'thb-twd',
+    ];
+
+    for (const currency of currencies) {
+      expect(content).toContain(`https://app.haotool.org/ratewise/${currency}/`);
+    }
+
+    // Verify exact count: 13 currency URLs in the file
+    const currencyUrlPattern = /https:\/\/app\.haotool\.org\/ratewise\/[a-z]{3}-twd\//g;
+    const matches = content.match(currencyUrlPattern);
+    expect(matches).toHaveLength(13);
+  });
 });

@@ -36,24 +36,24 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
     });
   });
 
-  describe('🟢 SEO Tags 由 SEOHelmet 管理（不在 index.html）', () => {
-    it('should have homepage description (ClientOnly SSG limitation)', () => {
-      // 首頁使用 ClientOnly 無法在 SSG 時渲染 SEOHelmet
-      // 因此需要在 index.html 保留首頁基本 description
-      expect(indexHtmlContent).toContain('<meta');
-      expect(indexHtmlContent).toContain('name="description"');
+  describe('🟢 SEO Tags 由 SEOHelmet 統一管理（不在 index.html）', () => {
+    it('should NOT have hardcoded title tag', () => {
+      // [2026-01-30] SEOHelmet 現在在 ClientOnly 外面，所有頁面統一管理
+      expect(indexHtmlContent).not.toMatch(/<title>/);
+    });
+
+    it('should NOT have hardcoded description meta tag', () => {
+      // [2026-01-30] 移除硬編碼 description，避免子頁面重複
+      expect(indexHtmlContent).not.toMatch(/<meta\s+name="description"/);
     });
 
     it('should NOT have hardcoded keywords meta tag', () => {
-      // [2026-01-29] SEOHelmet 是 keywords 的唯一來源
       expect(indexHtmlContent).not.toMatch(/<meta\s+name="keywords"/);
     });
 
-    it('should have homepage robots meta tag (ClientOnly SSG limitation)', () => {
-      // 首頁使用 ClientOnly 無法在 SSG 時渲染 SEOHelmet
-      // 因此需要在 index.html 保留首頁基本 robots 指令
-      expect(indexHtmlContent).toContain('name="robots"');
-      expect(indexHtmlContent).toContain('index, follow');
+    it('should NOT have hardcoded robots meta tag', () => {
+      // [2026-01-30] 移除硬編碼 robots，避免子頁面重複
+      expect(indexHtmlContent).not.toMatch(/<meta\s+name="robots"/);
     });
 
     it('should NOT have hardcoded canonical URL', () => {
@@ -106,10 +106,9 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
       expect(indexHtmlContent).not.toContain('<script type="application/ld+json">');
     });
 
-    it('should have homepage title (ClientOnly SSG limitation)', () => {
-      // 首頁使用 ClientOnly 無法在 SSG 時渲染 SEOHelmet
-      // 因此需要在 index.html 保留首頁基本 title
-      expect(indexHtmlContent).toContain('<title>RateWise');
+    it('should NOT have hardcoded title in template', () => {
+      // [2026-01-30] title 由 SEOHelmet 統一管理，不在 index.html
+      expect(indexHtmlContent).not.toMatch(/<title>/);
     });
   });
 

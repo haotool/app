@@ -5,18 +5,30 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
-  describe('🟢 RateWise.tsx 不應該使用 SEOHelmet', () => {
+  describe('🟢 RateWise.tsx 不應該直接使用 SEO 元件（由 routes.tsx 外層管理）', () => {
     const rateWisePath = resolve(__dirname, 'features/ratewise/RateWise.tsx');
     const rateWiseContent = readFileSync(rateWisePath, 'utf-8');
 
     it('should NOT import SEOHelmet in RateWise.tsx', () => {
-      // 首頁元件不應該 import SEOHelmet
       expect(rateWiseContent).not.toContain('import { SEOHelmet } from');
     });
 
     it('should NOT use <SEOHelmet> component in RateWise.tsx', () => {
-      // 首頁元件不應該使用 <SEOHelmet>
       expect(rateWiseContent).not.toContain('<SEOHelmet');
+    });
+
+    it('should NOT import HomeStructuredData in RateWise.tsx', () => {
+      // [2026-01-30] HomeStructuredData 移至 routes.tsx ClientOnly 外層
+      expect(rateWiseContent).not.toContain('import { HomeStructuredData } from');
+    });
+
+    it('should NOT use <HomeStructuredData> in RateWise.tsx', () => {
+      expect(rateWiseContent).not.toContain('<HomeStructuredData');
+    });
+
+    it('should NOT define HOMEPAGE_FAQ in RateWise.tsx', () => {
+      // [2026-01-30] HOMEPAGE_FAQ 移至 constants.ts，由 routes.tsx 匯入
+      expect(rateWiseContent).not.toContain('HOMEPAGE_FAQ');
     });
   });
 
