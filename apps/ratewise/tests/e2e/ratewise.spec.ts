@@ -1,6 +1,8 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures/test';
 
+const getVisibleAppTitle = (page: Page) => page.locator('[data-testid="app-title"]:visible');
+
 /**
  * RateWise 核心流程 E2E 測試
  *
@@ -21,15 +23,13 @@ import { test, expect } from './fixtures/test';
  */
 
 test.describe('RateWise 核心功能測試', () => {
-  const getVisibleAppTitle = (page: Page) => page.locator('[data-testid="app-title"]:visible');
-
   test('應該正確載入首頁並顯示關鍵元素', async ({ rateWisePage: page }) => {
     // 檢查標題 - Header 使用 <span> 而非 <h1>，改用 getByText
     // [fix:2026-01-30] 配合 Header 架構調整
     await expect(getVisibleAppTitle(page)).toBeVisible();
 
-    // 檢查副標題（匯率載入完成後）
-    await expect(page.getByText(/即時匯率換算/i)).toBeVisible();
+    // 檢查核心輸入區塊（使用 data-testid 避免文案變動）
+    await expect(page.getByTestId('amount-input')).toBeVisible();
 
     // 檢查模式切換按鈕
     await expect(page.getByRole('link', { name: /單幣別/i })).toBeVisible();
@@ -46,7 +46,6 @@ test.describe('RateWise 核心功能測試', () => {
     const toAmountOutput = page.getByTestId('amount-output');
 
     // 透過快速金額按鈕輸入，避免操作非 input 元素
-    await fromAmountInput.click();
     const quickAmountButton = page
       .getByTestId('quick-amounts-from')
       .getByRole('button', { name: /1[, ]?000|1000/ })
@@ -82,7 +81,7 @@ test.describe('RateWise 核心功能測試', () => {
     await page.waitForTimeout(1000);
 
     // [fix:2026-01-31] 使用多重選擇器適配不同環境
-    const currencyList = page.getByTestId('currency-list');
+    const currencyList = page.getByTestId('multi-currency-list');
     await expect(currencyList).toBeVisible({ timeout: 10000 });
 
     // [fix:2026-01-31] 驗證頁面有多個貨幣相關按鈕

@@ -223,6 +223,7 @@ export const MultiConverter = ({
         tabIndex={0}
         role="region"
         aria-label={t('multiConverter.currencyListLabel')}
+        data-testid="multi-currency-list"
       >
         <AnimatePresence>
           {sortedCurrencies.map((code) => {

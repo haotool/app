@@ -10,6 +10,7 @@
  */
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
@@ -26,6 +27,7 @@ import type { RateType } from './types';
 import { STORAGE_KEYS } from './storage-keys';
 
 const RateWise = () => {
+  const { t } = useTranslation();
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);
   const isTestEnv = import.meta.env.MODE === 'test';
@@ -180,6 +182,7 @@ const RateWise = () => {
        */}
       <div ref={mainRef} className={rateWiseLayoutTokens.container}>
         <div className={rateWiseLayoutTokens.content.className}>
+          <h1 className="sr-only">{t('app.title')}</h1>
           {/* 載入狀態提示 */}
           {ratesLoading && (
             <div className="text-center text-sm text-neutral-text-secondary py-2">
