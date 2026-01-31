@@ -47,6 +47,7 @@ export const CurrencyList = ({
         tabIndex={0}
         role="region"
         aria-label={t('currencyList.currencyListLabel')}
+        data-testid="currency-list"
       >
         {CURRENCY_CODES.map((code) => (
           <div

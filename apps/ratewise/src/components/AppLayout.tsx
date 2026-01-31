@@ -78,6 +78,7 @@ function Header() {
         <div className="flex items-center gap-1.5">
           <Logo />
           <span
+            data-testid="app-title"
             className="
               text-lg font-black tracking-tight
               bg-clip-text text-transparent

@@ -9,7 +9,7 @@ test('core content parity across desktop and mobile', async ({ page }) => {
 
   // [fix:2026-01-31] 新 UI 結構：檢查主要區塊
   // 應用名稱
-  await expect(page.getByText('RateWise').first()).toBeVisible();
+  await expect(page.locator('[data-testid="app-title"]:visible')).toBeVisible();
 
   // [fix:2026-01-31] 貨幣選擇器（核心功能）
   await expect(page.getByRole('combobox').first()).toBeVisible({ timeout: 10000 });
