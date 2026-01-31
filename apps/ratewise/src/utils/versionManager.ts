@@ -10,6 +10,7 @@
  * UI 組件應使用 config/version.ts 的 SSOT 導出
  */
 
+import { DEFAULT_APP_VERSION } from '../config/version';
 import { logger } from './logger';
 import { CACHE_KEYS } from '../features/ratewise/storage-keys';
 
@@ -26,7 +27,7 @@ interface VersionInfo {
  * 直接讀取環境變數以支援測試（vi.stubEnv）
  */
 export function getCurrentVersion(): string {
-  return import.meta.env.VITE_APP_VERSION ?? '2.0.0';
+  return import.meta.env.VITE_APP_VERSION ?? DEFAULT_APP_VERSION;
 }
 
 /**

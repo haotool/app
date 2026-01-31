@@ -197,13 +197,11 @@ export default function Favorites() {
                 <motion.button
                   key={tab.value}
                   onClick={() => setActiveTab(tab.value)}
-                  whileHover={segmentedSwitch.item.whileHover}
+                  whileHover={{ ...segmentedSwitch.item.whileHover, opacity: 1 }}
                   whileTap={segmentedSwitch.item.whileTap}
-                  className={`${segmentedSwitch.itemBaseClass} flex-col gap-1 ${
-                    isActive
-                      ? ''
-                      : `opacity-${segmentedSwitch.inactiveOpacity * 100} hover:opacity-100`
-                  }`}
+                  animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
+                  transition={transitions.default}
+                  className={`${segmentedSwitch.itemBaseClass} flex-col gap-1`}
                   aria-pressed={isActive}
                 >
                   {isActive && (

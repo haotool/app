@@ -45,6 +45,7 @@ import {
 import { ConversionHistory } from '../features/ratewise/components/ConversionHistory';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_DEFINITIONS, type ThemeStyle } from '../config/themes';
+import { getDisplayVersion } from '../config/version';
 import type { ConversionHistoryEntry } from '../features/ratewise/types';
 
 /**
@@ -468,7 +469,7 @@ export default function UIShowcase() {
 
         {/* Footer */}
         <footer className="text-center py-6 text-sm text-text-muted">
-          <p>RateWise UI Showcase v2.0.0</p>
+          <p>RateWise UI Showcase {getDisplayVersion()}</p>
           <p className="text-xs opacity-60 mt-1">使用 SSOT Design Token 系統 | 支援 6 種主題風格</p>
         </footer>
       </div>

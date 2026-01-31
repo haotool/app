@@ -15,6 +15,7 @@
  */
 
 import { Link, useLocation } from 'react-router-dom';
+import { getDisplayVersion } from '../config/version';
 import { useTranslation } from 'react-i18next';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 
@@ -129,7 +130,9 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-[rgb(var(--color-border))]">
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('app.version')} v2.0.0</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">
+          {t('app.version')} {getDisplayVersion()}
+        </p>
       </div>
     </aside>
   );

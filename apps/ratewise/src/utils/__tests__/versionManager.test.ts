@@ -20,6 +20,7 @@ import {
   handleVersionUpdate,
   getVersionHistory,
 } from '../versionManager';
+import { DEFAULT_APP_VERSION } from '../../config/version';
 import * as logger from '../logger';
 
 // ===== Mock Setup =====
@@ -102,12 +103,12 @@ describe('versionManager', () => {
       expect(version).toBe('2.0.0');
     });
 
-    it('當環境變數不存在時返回預設版本 2.0.0', () => {
+    it('當環境變數不存在時返回預設版本', () => {
       vi.stubEnv('VITE_APP_VERSION', undefined);
 
       const version = getCurrentVersion();
 
-      expect(version).toBe('2.0.0');
+      expect(version).toBe(DEFAULT_APP_VERSION);
     });
   });
 

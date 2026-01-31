@@ -124,11 +124,11 @@ export default function Settings() {
                 <motion.button
                   key={option.value}
                   onClick={() => handleLanguageChange(option.value)}
-                  whileHover={segmentedSwitch.item.whileHover}
+                  whileHover={{ ...segmentedSwitch.item.whileHover, opacity: 1 }}
                   whileTap={segmentedSwitch.item.whileTap}
-                  className={`${segmentedSwitch.itemBaseClass} flex-col ${
-                    isActive ? '' : 'opacity-60 hover:opacity-100'
-                  }`}
+                  animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
+                  transition={transitions.default}
+                  className={`${segmentedSwitch.itemBaseClass} flex-col`}
                   aria-pressed={isActive}
                   aria-label={option.label}
                 >
