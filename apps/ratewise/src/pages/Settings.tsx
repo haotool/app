@@ -26,7 +26,7 @@ import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_OPTIONS } from '../config/themes';
 import { LANGUAGE_OPTIONS, getResolvedLanguage, type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
-import { transitions } from '../config/animations';
+import { transitions, segmentedSwitch } from '../config/animations';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
@@ -58,8 +58,8 @@ export default function Settings() {
                 key={option.value}
                 onClick={() => setStyle(option.value)}
                 disabled={!isLoaded}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={segmentedSwitch.item.whileHover}
+                whileTap={segmentedSwitch.item.whileTap}
                 transition={transitions.instant}
                 className={`
                   relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-xl
@@ -81,7 +81,7 @@ export default function Settings() {
                 <motion.div
                   className="absolute top-0 right-0 w-16 h-16 opacity-15 -mr-4 -mt-4 rounded-full"
                   style={{ backgroundColor: option.previewAccent }}
-                  animate={{ scale: style === option.value ? 1.1 : 1 }}
+                  animate={{ scale: style === option.value ? segmentedSwitch.activeIconScale : 1 }}
                   transition={transitions.spring}
                 />
 
@@ -117,40 +117,38 @@ export default function Settings() {
             </h3>
           </div>
 
-          <div className="bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
+          <div className={segmentedSwitch.containerClass}>
             {LANGUAGE_OPTIONS.map((option) => {
               const isActive = currentLanguage === option.value;
               return (
-                <button
+                <motion.button
                   key={option.value}
                   onClick={() => handleLanguageChange(option.value)}
-                  className={`flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98] ${
+                  whileHover={segmentedSwitch.item.whileHover}
+                  whileTap={segmentedSwitch.item.whileTap}
+                  className={`${segmentedSwitch.itemBaseClass} flex-col ${
                     isActive ? '' : 'opacity-60 hover:opacity-100'
                   }`}
                   aria-pressed={isActive}
                   aria-label={option.label}
                 >
-                  {/* 滑動背景指示器 - 使用 layoutId 實現平滑過渡 */}
+                  {/* 滑動背景指示器 - SSOT layoutId 動畫 */}
                   {isActive && (
                     <motion.div
                       layoutId="language-indicator"
-                      className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]"
-                      transition={{
-                        type: 'spring',
-                        stiffness: 500,
-                        damping: 30,
-                      }}
+                      className={segmentedSwitch.indicatorClass}
+                      transition={segmentedSwitch.indicator}
                     />
                   )}
                   <motion.span
-                    animate={{ scale: isActive ? 1.1 : 1 }}
-                    transition={{ duration: 0.2 }}
+                    animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
+                    transition={transitions.default}
                     className="text-xl mb-1 filter drop-shadow-sm"
                   >
                     {option.flag}
                   </motion.span>
                   <span className="text-[10px] font-bold">{option.label}</span>
-                </button>
+                </motion.button>
               );
             })}
           </div>
@@ -197,21 +195,15 @@ export default function Settings() {
             <motion.button
               onClick={resetTheme}
               disabled={!isLoaded}
-              whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
-              whileTap={{ scale: 0.99 }}
+              whileHover={segmentedSwitch.item.whileHover}
+              whileTap={segmentedSwitch.item.whileTap}
               transition={transitions.instant}
-              className="w-full px-5 py-4 flex items-center justify-between group disabled:opacity-50"
+              className="w-full px-5 py-4 flex items-center justify-between group disabled:opacity-50 hover:bg-destructive/10"
             >
               <span className="text-xs font-black text-destructive uppercase tracking-widest">
                 {t('settings.resetTheme')}
               </span>
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                transition={transitions.instant}
-              >
-                <ShieldAlert className="w-4 h-4 text-destructive opacity-40 group-hover:opacity-100 transition-opacity" />
-              </motion.div>
+              <ShieldAlert className="w-4 h-4 text-destructive opacity-40 group-hover:opacity-100 transition-opacity" />
             </motion.button>
           </div>
         </section>

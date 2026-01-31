@@ -11,6 +11,7 @@ import { useRef } from 'react';
 import type { CalculatorKeyProps } from '../types';
 import { lightHaptic, mediumHaptic } from '../utils/haptics';
 import { getCalculatorKeyClasses } from '@app/ratewise/utils/classnames';
+import { transitions, calculatorKeyVariants } from '../../../config/animations';
 import '../styles/calculator-animations.css';
 
 /**
@@ -193,14 +194,9 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
       className={getKeyStyles()}
       disabled={disabled}
       aria-label={ariaLabel}
-      whileTap={{ scale: 1.1 }} // 🔧 放大到 110%：更明顯的視覺反饋
-      whileHover={{ scale: 1.02 }} // 輕微放大：避免過度動畫
-      transition={{
-        duration: 0.1, // iOS 極速回饋：100ms
-        type: 'spring',
-        stiffness: 500, // 提高剛性：更快反應
-        damping: 30, // 提高阻尼：減少彈跳
-      }}
+      whileTap={calculatorKeyVariants.tap}
+      whileHover={calculatorKeyVariants.hover}
+      transition={transitions.spring}
       // 🔧 修復 2025-11-20：使用 Motion.js 手勢 API 替代原生 touch 事件
       // 這確保移動裝置上 whileTap 動畫正常工作（不會被 onTouchStart/onTouchEnd 干擾）
       onTapStart={isBackspace ? handleLongPressStart : undefined}

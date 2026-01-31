@@ -33,6 +33,12 @@ export const transitions = {
 
   /** 輕柔彈性（Toast、提示） */
   gentle: { type: 'spring', stiffness: 300, damping: 25 } as Transition,
+
+  /** 計算機回饋（iOS 150ms 標準） */
+  calculatorFeedback: { duration: 0.15, ease: 'easeOut' } as Transition,
+
+  /** 計算機鍵盤 Bottom Sheet 彈出 */
+  keyboardSheet: { type: 'spring', stiffness: 300, damping: 30 } as Transition,
 } as const;
 
 /**
@@ -101,6 +107,93 @@ export const staggerItemVariants: Variants = {
   hidden: { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0 },
 };
+
+/**
+ * 計算機按鍵動畫變體
+ *
+ * 與標準 buttonVariants 不同：
+ * - tap 放大到 1.1（強調觸覺回饋，iOS Calculator 風格）
+ * - hover 與 buttonVariants 一致（1.02）
+ */
+export const calculatorKeyVariants = {
+  hover: { scale: 1.02 },
+  tap: { scale: 1.1 },
+} as const;
+
+/**
+ * 趨勢圖動畫過渡配置
+ *
+ * 用於 MiniTrendChart 的進場與 Tooltip 動畫：
+ * - fadeIn: Material Design 標準曲線，圖表載入淡入
+ * - tooltipBounce: overshoot 曲線，Tooltip 彈跳出現
+ */
+export const chartTransitions = {
+  /** 圖表載入淡入（Material Design 標準曲線） */
+  fadeIn: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] } as Transition,
+
+  /** Tooltip 彈跳出現（overshoot 曲線） */
+  tooltipBounce: { duration: 0.18, ease: [0.34, 1.56, 0.64, 1] } as Transition,
+} as const;
+
+/**
+ * Segmented Switch 動畫配置
+ *
+ * 統一所有「分段切換」元件的動畫行為：
+ * - 語言切換（Settings）
+ * - 即期/現金切換（SingleConverter）
+ * - 常用貨幣/轉換歷史 tab（Favorites）
+ *
+ * 使用 motion layoutId 實現滑動背景指示器
+ */
+export const segmentedSwitch = {
+  /** 滑動背景指示器過渡（layoutId 用） */
+  indicator: transitions.spring,
+
+  /** 選中項目圖標/emoji 縮放 */
+  activeIconScale: 1.1,
+
+  /** 未選中項目透明度 */
+  inactiveOpacity: 0.6,
+
+  /** 切換按鈕的 hover/tap 微互動 */
+  item: {
+    whileHover: { scale: 1.02 },
+    whileTap: { scale: 0.98 },
+  },
+
+  /** 容器樣式 token（保持視覺一致） */
+  containerClass: 'bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner',
+  indicatorClass: 'absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]',
+  itemBaseClass: 'flex-1 py-3 rounded-2xl flex items-center justify-center gap-1 relative z-10',
+} as const;
+
+/**
+ * 列表項目活躍高亮動畫配置
+ *
+ * 用於列表中「選中項目」的滑動高亮效果：
+ * - 多幣別轉換器的基準貨幣指示器（MultiConverter）
+ *
+ * 使用 motion layoutId 實現高亮在列表項目間的平滑滑動
+ * 與 segmentedSwitch 的差異：segmentedSwitch 用於固定選項切換，
+ * activeHighlight 用於動態列表項目的選中狀態
+ */
+export const activeHighlight = {
+  /** 高亮滑動過渡（layoutId 用，柔和彈性避免列表跳動） */
+  transition: transitions.gentle,
+
+  /** 高亮層樣式（絕對定位，作為選中背景） */
+  highlightClass: 'absolute inset-0 rounded-xl bg-primary/10 ring-2 ring-primary/30',
+
+  /** 列表項目基礎樣式（需 relative 定位以容納高亮層） */
+  itemBaseClass: 'relative flex items-center justify-between px-3 py-2.5 rounded-xl',
+
+  /** 未選中項目互動樣式 */
+  itemInactiveClass:
+    'bg-surface-soft cursor-pointer hover:bg-primary/5 hover:shadow-sm active:scale-[0.99]',
+
+  /** 選中項目樣式（不可點擊） */
+  itemActiveClass: 'cursor-default',
+} as const;
 
 /**
  * Tailwind 微互動類名

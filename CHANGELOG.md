@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-02-01
+
+### Added
+
+- **動畫 SSOT 擴展** - 新增 4 組動畫配置到 `config/animations.ts`
+  - `segmentedSwitch` - 統一分段切換元件動畫（語言切換、即期/現金、常用/歷史 tab）
+  - `activeHighlight` - 列表項目選中高亮滑動效果（MultiConverter 基準貨幣）
+  - `calculatorKeyVariants` - 計算機按鍵 hover/tap 動畫變體
+  - `chartTransitions` - 趨勢圖載入淡入與 Tooltip 彈跳動畫
+- **深色主題色彩 Token** - 新增 `--color-primary-dark`、`--color-primary-text`、`--color-neutral-text-secondary` CSS 變數
+- **無障礙改善** - Segmented Switch 元件新增 `aria-pressed` 屬性
+
+### Changed
+
+- **SingleConverter** - 即期/現金切換改用 `segmentedSwitch` SSOT + Motion layoutId 滑動指示器
+- **MultiConverter** - 基準貨幣指示器改用 `activeHighlight` SSOT + Motion layoutId 平滑過渡
+- **Favorites** - Tab 切換改用 `segmentedSwitch` SSOT 統一動畫行為
+- **Settings** - 語言切換與主題選擇改用 `segmentedSwitch` SSOT Token
+- **CalculatorKey** - 動畫參數從內聯改為引用 `calculatorKeyVariants` + `transitions.spring`
+- **CalculatorKeyboard** - Bottom Sheet 彈出動畫改用 `transitions.keyboardSheet`
+- **ExpressionDisplay** - 預覽動畫改用 `transitions.calculatorFeedback`
+- **MiniTrendChart** - 載入與 Tooltip 動畫改用 `chartTransitions` SSOT
+
+### Technical Details
+
+- **測試更新**: 85+ 行新增測試覆蓋所有新動畫配置
+- **無障礙**: MultiConverter/SingleConverter 測試改為 `aria-pressed` 斷言
+- **Token 減量**: 消除 6 個元件中的內聯動畫硬編碼，統一到 `animations.ts`
+
 ## [Unreleased] - 2026-01-16
 
 ### Added

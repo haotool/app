@@ -263,13 +263,15 @@ describe('SingleConverter - 核心功能測試', () => {
       const { rerender } = render(<SingleConverter {...mockProps} rateType="spot" />);
 
       const spotButton = screen.getByLabelText('切換到即期匯率');
-      expect(spotButton).toHaveClass('bg-primary');
+      expect(spotButton).toHaveAttribute('aria-pressed', 'true');
 
       rerender(<SingleConverter {...mockProps} rateType="cash" />);
 
       const cashButton = screen.getByLabelText('切換到現金匯率');
-      // 現金按鈕在未選中時使用基礎按鈕樣式
-      expect(cashButton).toHaveClass('text-xs');
+      expect(cashButton).toHaveAttribute('aria-pressed', 'true');
+      // 即期按鈕切換為未選中
+      const spotButtonAfter = screen.getByLabelText('切換到即期匯率');
+      expect(spotButtonAfter).toHaveAttribute('aria-pressed', 'false');
     });
   });
 

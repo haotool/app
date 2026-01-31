@@ -24,7 +24,9 @@ import {
   type DraggableProvided,
   type DraggableStateSnapshot,
 } from '@hello-pangea/dnd';
+import { motion } from 'motion/react';
 import { AlertCircle, RefreshCw, Star, Clock, Trash2, GripVertical } from 'lucide-react';
+import { segmentedSwitch, transitions } from '../config/animations';
 import { ConversionHistory } from '../features/ratewise/components/ConversionHistory';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConverter';
@@ -180,37 +182,47 @@ export default function Favorites() {
   return (
     <div className="flex flex-col min-h-full">
       <div className="flex-1 px-3 sm:px-5 py-6 max-w-md mx-auto w-full">
-        {/* Tab 切換區塊 - 參考 Settings 語言切換風格 */}
+        {/* Tab 切換區塊 - Segmented Switch SSOT 動畫 */}
         <section className="mb-6">
-          <div className="bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
-            <button
-              onClick={() => setActiveTab('favorites')}
-              className={`flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out ${
-                activeTab === 'favorites'
-                  ? 'hover:scale-[1.02] active:scale-[0.98]'
-                  : 'opacity-60 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]'
-              }`}
-            >
-              {activeTab === 'favorites' && (
-                <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
-              )}
-              <Star size={18} className={activeTab === 'favorites' ? 'text-primary' : ''} />
-              <span className="text-[10px] font-bold">{t('favorites.title')}</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-all duration-200 ease-out ${
-                activeTab === 'history'
-                  ? 'hover:scale-[1.02] active:scale-[0.98]'
-                  : 'opacity-60 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]'
-              }`}
-            >
-              {activeTab === 'history' && (
-                <div className="absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]" />
-              )}
-              <Clock size={18} className={activeTab === 'history' ? 'text-primary' : ''} />
-              <span className="text-[10px] font-bold">{t('favorites.history')}</span>
-            </button>
+          <div className={segmentedSwitch.containerClass}>
+            {(
+              [
+                { value: 'favorites' as const, icon: Star, label: t('favorites.title') },
+                { value: 'history' as const, icon: Clock, label: t('favorites.history') },
+              ] as const
+            ).map((tab) => {
+              const isActive = activeTab === tab.value;
+              const TabIcon = tab.icon;
+              return (
+                <motion.button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  whileHover={segmentedSwitch.item.whileHover}
+                  whileTap={segmentedSwitch.item.whileTap}
+                  className={`${segmentedSwitch.itemBaseClass} flex-col gap-1 ${
+                    isActive
+                      ? ''
+                      : `opacity-${segmentedSwitch.inactiveOpacity * 100} hover:opacity-100`
+                  }`}
+                  aria-pressed={isActive}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="favorites-tab-indicator"
+                      className={segmentedSwitch.indicatorClass}
+                      transition={segmentedSwitch.indicator}
+                    />
+                  )}
+                  <motion.div
+                    animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
+                    transition={transitions.default}
+                  >
+                    <TabIcon size={18} className={isActive ? 'text-primary' : ''} />
+                  </motion.div>
+                  <span className="text-[10px] font-bold">{tab.label}</span>
+                </motion.button>
+              );
+            })}
           </div>
         </section>
 

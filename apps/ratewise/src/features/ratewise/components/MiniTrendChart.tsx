@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { formatExchangeRate } from '../../../utils/currencyFormatter';
 import { getChartColors } from '../../../config/themes';
+import { chartTransitions } from '../../../config/animations';
 import type { CurrencyCode } from '../types';
 
 export interface MiniTrendDataPoint {
@@ -367,11 +368,8 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       data-testid="mini-trend-chart"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.5,
-        ease: [0.25, 0.1, 0.25, 1],
-      }}
-      whileHover={{ y: -2 }}
+      transition={chartTransitions.fadeIn}
+      whileHover={{ scale: 1.01, y: -2 }}
     >
       {/* Lightweight Charts 趨勢圖 - 支援觸控 */}
       {/* Note: touchmove handler attached via useEffect with { passive: false } */}
@@ -391,7 +389,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
             initial={{ opacity: 0, scale: 0.85, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 8 }}
-            transition={{ duration: 0.18, ease: [0.34, 1.56, 0.64, 1] }}
+            transition={chartTransitions.tooltipBounce}
             className="pointer-events-none"
             style={{
               position: 'fixed',
