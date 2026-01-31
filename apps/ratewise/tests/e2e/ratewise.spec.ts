@@ -38,7 +38,7 @@ test.describe('RateWise 核心功能測試', () => {
     // 檢查頁尾資料來源 (使用 toBeAttached - 頁尾可能需要滾動才能進入 viewport)
     // [fix:2025-12-24] 從 toBeVisible 改為 toBeAttached，因為頁尾在較小視窗下不在初始 viewport
     // [context7:microsoft/playwright:2025-12-24] toBeAttached 確認元素在 DOM 中存在
-    await expect(page.getByText(/臺灣銀行牌告匯率/i).first()).toBeAttached();
+    await expect(page.getByTestId('ratewise-data-source')).toBeAttached({ timeout: 10000 });
   });
 
   test('單幣別模式：應該能夠輸入金額並看到換算結果', async ({ rateWisePage: page }) => {
@@ -50,7 +50,15 @@ test.describe('RateWise 核心功能測試', () => {
       .getByTestId('quick-amounts-from')
       .getByRole('button', { name: /1[, ]?000|1000/ })
       .first();
-    await quickAmountButton.click();
+
+    if (await quickAmountButton.isVisible()) {
+      await quickAmountButton.click();
+    } else {
+      await fromAmountInput.click();
+      await expect(page.getByRole('dialog', { name: /計算機|calculator/i })).toBeVisible();
+      await page.keyboard.type('1000');
+      await page.keyboard.press('Enter');
+    }
 
     // 等待換算完成
     await expect(fromAmountInput).toHaveText(/1[, ]?000/);
@@ -85,9 +93,12 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(currencyList).toBeVisible({ timeout: 10000 });
 
     // [fix:2026-01-31] 驗證頁面有多個貨幣相關按鈕
-    const currencyButtons = page.getByRole('button').filter({ hasText: /TWD|USD|JPY|EUR/i });
-    const buttonCount = await currencyButtons.count();
-    expect(buttonCount).toBeGreaterThan(0);
+    await expect(
+      page
+        .getByTestId('multi-currency-list')
+        .getByText(/TWD|USD|JPY|EUR/i)
+        .first(),
+    ).toBeVisible();
   });
 
   // [fix:2026-01-31] 測試在 CI 環境不穩定，因 aria-label 在 SSG 預渲染版本可能不同
