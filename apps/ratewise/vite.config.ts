@@ -495,11 +495,6 @@ if (typeof location === 'undefined') {
                 return 'vendor-react';
               }
 
-              // Sentry 獨立打包 (已 lazy load，罕用時不載入)
-              if (id.includes('@sentry')) {
-                return 'vendor-sentry';
-              }
-
               // Charts library 獨立打包 (583KB, 57% unused)
               if (id.includes('lightweight-charts')) {
                 return 'vendor-charts';

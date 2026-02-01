@@ -96,10 +96,26 @@ function ensureVersionSyncIfStaged() {
   }
 }
 
+function ensureChangelogUpdatedIfVersionChanged() {
+  const stagedFiles = getStagedFiles();
+  const hasPackageVersionChange = stagedFiles.some(
+    (file) => file === 'package.json' || file === 'apps/ratewise/package.json',
+  );
+  if (!hasPackageVersionChange) return;
+
+  const appVersion = readJson(join(appDir, 'package.json')).version;
+  const changelog = readFileSync(join(rootDir, 'CHANGELOG.md'), 'utf-8');
+  const versionHeader = `## [${appVersion}]`;
+  if (!changelog.includes(versionHeader)) {
+    errors.push(`CHANGELOG.md 缺少版本 ${appVersion} 條目`);
+  }
+}
+
 function main() {
   ensureNoDirectEnvAccess();
   ensureNoRawStorageKeys();
   ensureVersionSyncIfStaged();
+  ensureChangelogUpdatedIfVersionChanged();
 
   if (errors.length > 0) {
     console.error('版本 SSOT 驗證失敗:');

@@ -168,6 +168,10 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
     return false;
   }
+  if (typeof navigator.serviceWorker.getRegistration !== 'function') {
+    logger.warn('Service Worker registration API not available');
+    return false;
+  }
 
   try {
     const registration = await navigator.serviceWorker.getRegistration();

@@ -1,8 +1,8 @@
 # AGENT 操作守則與工具說明
 
-> **最後更新**: 2026-02-01T20:16:16+08:00  
+> **最後更新**: 2026-02-01T20:54:01+08:00  
 > **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
-> **版本**: v2.8 (版本 SSOT 驗證流程更新)  
+> **版本**: v2.9 (版本 SSOT 驗證加入 CHANGELOG 檢查)  
 > **角色**: 自動化代理 (Agents) 負責重複性檢查、端到端驗證與部署流程觸發。本文檔說明所有可用工具與工作流程。
 
 ---
@@ -330,7 +330,7 @@ pnpm preview  # 啟動 preview server
 ```bash
 # 1. Pre-commit hooks
 pre-commit run --all-files
-# Pre-commit 內含版本 SSOT 驗證 (scripts/verify-version-ssot.mjs)
+# Pre-commit 內含版本 SSOT 與 CHANGELOG 驗證 (scripts/verify-version-ssot.mjs)
 
 # 2. Lint
 pnpm lint
@@ -886,8 +886,8 @@ docker logs <container-id>
 
 > **總結**: Agent 的任務是保持流程可靠並回報結果，不參與需求判斷、不做超出授權範圍的操作。所有操作依照本文檔與 `docs/dev/` 文檔執行。
 
-**最後更新**: 2026-02-01T20:16:16+08:00
-**版本**: v2.8 (版本 SSOT 驗證流程更新)
+**最後更新**: 2026-02-01T20:54:01+08:00
+**版本**: v2.9 (版本 SSOT 驗證加入 CHANGELOG 檢查)
 **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
 
 _本文檔依照 Linus Torvalds 開發哲學產生，所有建議經過實用性驗證。_

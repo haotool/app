@@ -34,7 +34,11 @@ vi.mock('motion/react', () => ({
         disabled,
         onTap,
         onTapStart,
-        ...props
+        whileTap: _whileTap,
+        whileHover: _whileHover,
+        transition: _transition,
+        onTapCancel: _onTapCancel,
+        ...rest
       }: {
         children?: React.ReactNode;
         onClick?: (e: React.MouseEvent) => void;
@@ -55,7 +59,7 @@ vi.mock('motion/react', () => ({
         };
 
         return (
-          <button onClick={handleClick} className={className} disabled={disabled} {...props}>
+          <button onClick={handleClick} className={className} disabled={disabled} {...rest}>
             {children}
           </button>
         );

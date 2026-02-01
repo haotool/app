@@ -8,7 +8,7 @@
  * @version 2.0.0
  */
 
-import { useRef } from 'react';
+import { Suspense, lazy, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
@@ -18,8 +18,13 @@ import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
-import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
+
+const CalculatorKeyboard = lazy(() =>
+  import('../../calculator/components/CalculatorKeyboard').then((m) => ({
+    default: m.CalculatorKeyboard,
+  })),
+);
 
 interface MultiConverterProps {
   sortedCurrencies: CurrencyCode[];
@@ -360,12 +365,14 @@ export const MultiConverter = ({
       </div>
 
       {/* 計算機鍵盤 */}
-      <CalculatorKeyboard
-        isOpen={calculator.isOpen}
-        onClose={calculator.closeCalculator}
-        onConfirm={calculator.handleConfirm}
-        initialValue={calculator.initialValue}
-      />
+      <Suspense fallback={null}>
+        <CalculatorKeyboard
+          isOpen={calculator.isOpen}
+          onClose={calculator.closeCalculator}
+          onConfirm={calculator.handleConfirm}
+          initialValue={calculator.initialValue}
+        />
+      </Suspense>
     </div>
   );
 };

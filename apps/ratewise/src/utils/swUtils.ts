@@ -47,6 +47,10 @@ export async function hasServiceWorkerUpdate(): Promise<boolean> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
     return false;
   }
+  if (typeof navigator.serviceWorker.getRegistration !== 'function') {
+    logger.warn('Service Worker registration API not available');
+    return false;
+  }
 
   try {
     const registration = await navigator.serviceWorker.getRegistration();
@@ -72,6 +76,10 @@ export async function hasServiceWorkerUpdate(): Promise<boolean> {
  */
 export async function forceServiceWorkerUpdate(): Promise<boolean> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    return false;
+  }
+  if (typeof navigator.serviceWorker.getRegistration !== 'function') {
+    logger.warn('Service Worker registration API not available');
     return false;
   }
 
@@ -144,6 +152,10 @@ export async function getServiceWorkerStatus(): Promise<ServiceWorkerStatus> {
   };
 
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    return defaultStatus;
+  }
+  if (typeof navigator.serviceWorker.getRegistration !== 'function') {
+    logger.warn('Service Worker registration API not available');
     return defaultStatus;
   }
 
