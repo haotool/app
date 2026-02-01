@@ -96,6 +96,14 @@ function ensureVersionSyncIfStaged() {
   }
 }
 
+function readStaged(filePath) {
+  try {
+    return execSync(`git show :${filePath}`, { encoding: 'utf-8' });
+  } catch {
+    return null;
+  }
+}
+
 function ensureChangelogUpdatedIfVersionChanged() {
   const stagedFiles = getStagedFiles();
   const hasPackageVersionChange = stagedFiles.some(
@@ -103,8 +111,24 @@ function ensureChangelogUpdatedIfVersionChanged() {
   );
   if (!hasPackageVersionChange) return;
 
-  const appVersion = readJson(join(appDir, 'package.json')).version;
-  const changelog = readFileSync(join(rootDir, 'CHANGELOG.md'), 'utf-8');
+  // 讀取暫存區的 package.json 取得目標版本
+  const stagedPkg = readStaged('apps/ratewise/package.json');
+  const appVersion = stagedPkg
+    ? JSON.parse(stagedPkg).version
+    : readJson(join(appDir, 'package.json')).version;
+
+  // 確認 CHANGELOG.md 已暫存且包含版本條目
+  if (!stagedFiles.includes('CHANGELOG.md')) {
+    errors.push(`CHANGELOG.md 未暫存：版本 ${appVersion} 變更需同步更新 CHANGELOG`);
+    return;
+  }
+
+  const changelog = readStaged('CHANGELOG.md');
+  if (!changelog) {
+    errors.push(`無法讀取暫存區 CHANGELOG.md`);
+    return;
+  }
+
   const versionHeader = `## [${appVersion}]`;
   if (!changelog.includes(versionHeader)) {
     errors.push(`CHANGELOG.md 缺少版本 ${appVersion} 條目`);
