@@ -5,6 +5,7 @@
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { APP_INFO } from '../config/app-info';
 
 /** FAQ 純文字資料 - 用於 JSON-LD schema */
 const FAQ_JSONLD_DATA = [
@@ -190,7 +191,7 @@ export default function FAQ() {
         ]}
         faq={FAQ_JSONLD_DATA}
       />
-      <main className="min-h-screen bg-page-gradient">
+      <main className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="mb-8">
@@ -256,10 +257,10 @@ export default function FAQ() {
             <p className="text-text-muted">
               如果您有其他問題或建議，歡迎透過
               <a
-                href="mailto:haotool.org@gmail.com"
+                href={`mailto:${APP_INFO.email}`}
                 className="text-primary hover:text-primary/80 underline ml-1"
               >
-                haotool.org@gmail.com
+                {APP_INFO.email}
               </a>
               與我們聯繫。
             </p>

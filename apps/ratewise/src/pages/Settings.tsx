@@ -19,7 +19,17 @@
  * @version 4.0.0
  */
 
-import { Palette, Globe, Database, ShieldAlert, Check } from 'lucide-react';
+import {
+  Palette,
+  Globe,
+  Database,
+  ShieldAlert,
+  Check,
+  HelpCircle,
+  ChevronRight,
+  ExternalLink,
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import { useAppTheme } from '../hooks/useAppTheme';
@@ -27,6 +37,7 @@ import { STYLE_OPTIONS } from '../config/themes';
 import { LANGUAGE_OPTIONS, getResolvedLanguage, type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { transitions, segmentedSwitch } from '../config/animations';
+import { APP_INFO } from '../config/app-info';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
@@ -208,31 +219,47 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* 關於區塊 */}
+        {/* 支援與資訊區塊 */}
         <section className="mb-6">
-          <div className="card p-5">
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="opacity-60">{t('settings.appVersion')}</span>
-                <span className="font-bold font-mono">{getDisplayVersion()}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="opacity-60">{t('settings.designSystem')}</span>
-                <span className="font-bold">{t('settings.sixStylesSST')}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="opacity-60">{t('settings.techStack')}</span>
-                <span className="font-bold">{t('settings.reactTailwind')}</span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <HelpCircle className="w-3.5 h-3.5" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {t('settings.supportInfo')}
+            </h3>
+          </div>
 
-            <div className="mt-4 pt-4 border-t border-black/5">
-              <p className="text-[10px] opacity-40 text-center font-medium">
-                {t('settings.copyright')}
-              </p>
-            </div>
+          <div className="card overflow-hidden divide-y divide-border">
+            <Link
+              to="/faq"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+            >
+              <span className="text-sm font-medium">{t('settings.faq')}</span>
+              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+            </Link>
+            <Link
+              to="/about"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+            >
+              <span className="text-sm font-medium">{t('settings.aboutUs')}</span>
+              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+            </Link>
+            <a
+              href={APP_INFO.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+            >
+              <span className="text-sm font-medium">{t('settings.openSource')}</span>
+              <ExternalLink className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+            </a>
           </div>
         </section>
+
+        {/* 版本資訊 */}
+        <footer className="text-center mt-8 pb-4">
+          <p className="text-[10px] opacity-40">{t('settings.copyright')}</p>
+          <p className="text-xs font-mono opacity-60 mt-1">{getDisplayVersion()}</p>
+        </footer>
       </div>
     </div>
   );

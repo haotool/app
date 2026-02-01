@@ -128,9 +128,14 @@ const zhTW = {
     appVersion: '應用程式版本',
     designSystem: '設計系統',
     techStack: '技術棧',
-    copyright: '© 2026 RateWise. Built with Design Token SSOT',
+    copyright: '© 2025-2026 RateWise',
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
+    // 支援與資訊區塊
+    supportInfo: '支援與資訊',
+    faq: '常見問題',
+    aboutUs: '關於我們',
+    openSource: '開放原始碼',
   },
 
   // Styles

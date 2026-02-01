@@ -129,9 +129,14 @@ const en = {
     appVersion: 'App Version',
     designSystem: 'Design System',
     techStack: 'Tech Stack',
-    copyright: '© 2026 RateWise. Built with Design Token SSOT',
+    copyright: '© 2025-2026 RateWise',
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
+    // Support & Info section
+    supportInfo: 'Support & Info',
+    faq: 'FAQ',
+    aboutUs: 'About Us',
+    openSource: 'Open Source',
   },
 
   // Styles
