@@ -1,108 +1,22 @@
 /**
- * Lazy loading with retry and auto-refresh for chunk load errors
+ * 帶重試與自動刷新機制的 lazy 載入
  *
- * Handles chunk load failures after deployments (stale cache scenarios):
- * - Detects ChunkLoadError and JSON parse errors
- * - Auto-retries (up to 3 times) with exponential backoff
- * - Forces page refresh with cache clear on final failure
+ * 用途：
+ * - 部署後避免舊快取造成 chunk 載入失敗
+ * - 偵測 ChunkLoadError 與 JSON 解析失敗
+ * - 指數退避重試（預設 3 次）
+ * - 最後觸發完整刷新流程
  *
- * @see https://web.dev/articles/service-worker-lifecycle
- * @see https://reactrouter.com/en/main/guides/code-splitting
+ * 參考：
+ * - https://web.dev/articles/service-worker-lifecycle
+ * - https://reactrouter.com/en/main/guides/code-splitting
  */
 import { lazy, type ComponentType } from 'react';
 import { logger } from './logger';
-
-// 追蹤已刷新的頁面，避免無限刷新循環
-const REFRESH_KEY = 'chunk_load_refresh_timestamp';
-const REFRESH_COOLDOWN_MS = 30000; // 30 秒內不重複刷新
+import { isChunkLoadError, recoverFromChunkLoadError } from './chunkLoadRecovery';
 
 /**
- * 檢查是否為 chunk 載入錯誤
- */
-function isChunkLoadError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-
-  const message = error.message.toLowerCase();
-  const name = error.name.toLowerCase();
-
-  // 常見的 chunk 載入錯誤模式
-  return (
-    name.includes('chunkloaderror') ||
-    message.includes('loading chunk') ||
-    message.includes('failed to fetch dynamically imported module') ||
-    message.includes('unexpected token') ||
-    message.includes('<!doctype') ||
-    message.includes('is not valid json') ||
-    message.includes('syntax error') ||
-    message.includes("unexpected token '<'")
-  );
-}
-
-/**
- * 檢查是否可以安全刷新（避免無限刷新循環）
- */
-function canSafelyRefresh(): boolean {
-  if (typeof window === 'undefined') return false;
-
-  try {
-    const lastRefresh = sessionStorage.getItem(REFRESH_KEY);
-    if (!lastRefresh) return true;
-
-    const lastRefreshTime = parseInt(lastRefresh, 10);
-    const now = Date.now();
-
-    return now - lastRefreshTime > REFRESH_COOLDOWN_MS;
-  } catch {
-    return true; // sessionStorage 不可用時允許刷新
-  }
-}
-
-/**
- * 標記已刷新
- */
-function markRefreshed(): void {
-  if (typeof window === 'undefined') return;
-
-  try {
-    sessionStorage.setItem(REFRESH_KEY, Date.now().toString());
-  } catch {
-    // sessionStorage 不可用時忽略
-  }
-}
-
-/**
- * 強制刷新頁面並清除 Service Worker 快取
- */
-async function forceRefresh(): Promise<void> {
-  if (typeof window === 'undefined') return;
-
-  // 嘗試清除 Service Worker 快取
-  if ('serviceWorker' in navigator) {
-    try {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map((r) => r.unregister()));
-    } catch {
-      // 忽略 SW 清除錯誤
-    }
-  }
-
-  // 嘗試清除 Cache Storage
-  if ('caches' in window) {
-    try {
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map((name) => caches.delete(name)));
-    } catch {
-      // 忽略快取清除錯誤
-    }
-  }
-
-  // 標記已刷新並強制重新載入
-  markRefreshed();
-  window.location.reload();
-}
-
-/**
- * 帶重試機制的 lazy loading
+ * 帶重試機制的 lazy 載入
  *
  * @param importFn - 動態 import 函數
  * @param retries - 重試次數（預設 3 次）
@@ -146,10 +60,7 @@ export function lazyWithRetry<T extends ComponentType<unknown>>(
     }
 
     // 所有重試都失敗後，檢查是否可以安全刷新
-    if (canSafelyRefresh()) {
-      logger.warn('All chunk load retries failed, forcing page refresh');
-      await forceRefresh();
-    }
+    await recoverFromChunkLoadError();
 
     // 如果無法刷新（可能已經刷新過），拋出原始錯誤
     throw lastError;

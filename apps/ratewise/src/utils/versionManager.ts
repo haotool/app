@@ -13,6 +13,7 @@
 
 import { APP_VERSION } from '../config/version';
 import { logger } from './logger';
+import { forceServiceWorkerUpdate } from './swUtils';
 import { CACHE_KEYS, STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 interface VersionHistoryEntry {
@@ -70,8 +71,8 @@ export function hasVersionChanged(): boolean {
  * 清除應用快取（保留用戶數據）
  *
  * 清除策略:
- * - ✅ 清除: 匯率快取數據 (CACHE_KEYS)
- * - ❌ 保留: 用戶設定、收藏、貨幣選擇 (USER_DATA_KEYS)
+ * - 清除: 匯率快取數據 (CACHE_KEYS)
+ * - 保留: 用戶設定、收藏、貨幣選擇 (USER_DATA_KEYS)
  */
 export async function clearAppCache(): Promise<void> {
   if (typeof window === 'undefined') {
@@ -158,41 +159,6 @@ export function recordVersionUpdate(): void {
 }
 
 /**
- * 強制更新 Service Worker
- *
- * 確保舊用戶能接收新功能。
- * 由於 sw.ts 直接調用 self.skipWaiting()，SW 安裝後立即激活，
- * 因此不需要發送 SKIP_WAITING 消息。
- */
-export async function forceServiceWorkerUpdate(): Promise<boolean> {
-  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
-    return false;
-  }
-  if (typeof navigator.serviceWorker.getRegistration !== 'function') {
-    logger.warn('Service Worker registration API not available');
-    return false;
-  }
-
-  try {
-    const registration = await navigator.serviceWorker.getRegistration();
-    if (!registration) {
-      logger.debug('No Service Worker registration found');
-      return false;
-    }
-
-    // 強制檢查更新
-    // 注意：由於 sw.ts 直接調用 skipWaiting()，新 SW 會立即激活
-    // 不需要發送 SKIP_WAITING 消息（registration.waiting 永遠為 null）
-    await registration.update();
-    logger.info('Service Worker update check triggered');
-    return true;
-  } catch (error) {
-    logger.error('Failed to force Service Worker update', error as Error);
-    return false;
-  }
-}
-
-/**
  * 處理版本更新流程
  *
  * 流程:
@@ -233,6 +199,8 @@ export async function handleVersionUpdate(): Promise<void> {
     version: currentVersion,
   });
 }
+
+export { forceServiceWorkerUpdate };
 
 /**
  * 獲取版本更新歷史

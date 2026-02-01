@@ -16,6 +16,7 @@ import { HelmetProvider } from '../utils/react-helmet-async';
 import { ErrorBoundary } from './ErrorBoundary';
 import { SkeletonLoader } from './SkeletonLoader';
 import { Footer } from './Footer';
+import { UpdatePromptLoader } from './UpdatePromptLoader';
 
 // [December-Theme:2025-12-26] 動態載入 12 月主題組件（Lazy Loading）
 const DecemberTheme = React.lazy(() => import('../features/calculator/easter-eggs/DecemberTheme'));
@@ -23,7 +24,6 @@ const DecemberTheme = React.lazy(() => import('../features/calculator/easter-egg
 export function Layout({ children }: { children: React.ReactNode }) {
   // [SSR-fix:2025-11-26] Check if running in browser (client-side)
   const isBrowser = typeof window !== 'undefined';
-  const [UpdatePrompt, setUpdatePrompt] = React.useState<React.ComponentType | null>(null);
   const [showDecemberTheme, setShowDecemberTheme] = React.useState(false);
 
   // [SSR-fix:2025-12-03] react-helmet-async 需要在 SSR 時提供 context
@@ -32,16 +32,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // - Client: 使用默認 context (undefined)，HelmetProvider 會自動管理
   // 這修復了 React Error #418 Hydration mismatch (FAQ/About 頁面)
   const helmetContext = isBrowser ? undefined : {};
-
-  // [SSR-fix:2025-11-26] Dynamically import UpdatePrompt only on client-side
-  // This prevents workbox-window from being loaded during SSR
-  React.useEffect(() => {
-    if (isBrowser) {
-      import('./UpdatePrompt')
-        .then((module) => setUpdatePrompt(() => module.UpdatePrompt))
-        .catch((err) => console.error('Failed to load UpdatePrompt:', err));
-    }
-  }, [isBrowser]);
 
   // [December-Theme:2025-12-26] 偵測 12 月並啟用聖誕主題
   React.useEffect(() => {
@@ -82,7 +72,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </ErrorBoundary>
         {/* PWA 更新通知 - 只在客戶端動態載入（避免 SSR 時 workbox-window 錯誤） */}
-        {UpdatePrompt && <UpdatePrompt />}
+        <UpdatePromptLoader />
 
         {/* [December-Theme:2025-12-26] 12 月聖誕主題 - 動態載入 */}
         {showDecemberTheme && (

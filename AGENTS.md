@@ -331,6 +331,7 @@ pnpm preview  # 啟動 preview server
 # 1. Pre-commit hooks
 pre-commit run --all-files
 # Pre-commit 內含版本 SSOT 與 CHANGELOG 驗證 (scripts/verify-version-ssot.mjs)
+# RateWise 產出變更需版本號更新或新增 changeset
 
 # 2. Lint
 pnpm lint
@@ -886,8 +887,8 @@ docker logs <container-id>
 
 > **總結**: Agent 的任務是保持流程可靠並回報結果，不參與需求判斷、不做超出授權範圍的操作。所有操作依照本文檔與 `docs/dev/` 文檔執行。
 
-**最後更新**: 2026-02-01T20:54:01+08:00
-**版本**: v2.9 (版本 SSOT 驗證加入 CHANGELOG 檢查)
+**最後更新**: 2026-02-02T00:07:40+08:00
+**版本**: v2.10 (版本 SSOT 驗證加入版本更新強制檢查)
 **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
 
 _本文檔依照 Linus Torvalds 開發哲學產生，所有建議經過實用性驗證。_
