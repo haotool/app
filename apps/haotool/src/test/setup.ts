@@ -44,6 +44,7 @@ function filterMotionProps(props: Record<string, unknown>): Record<string, unkno
     variants: _variants,
     viewport: _viewport,
     layoutId: _layoutId,
+    layout: _layout,
     style,
     ...rest
   } = props;

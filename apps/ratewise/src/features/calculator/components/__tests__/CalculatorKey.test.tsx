@@ -30,7 +30,11 @@ vi.mock('motion/react', () => ({
         disabled,
         onTap,
         onTapStart,
-        ...props
+        whileTap: _whileTap,
+        whileHover: _whileHover,
+        transition: _transition,
+        onTapCancel: _onTapCancel,
+        ...rest
       }: {
         children?: React.ReactNode;
         onClick?: (e: React.MouseEvent) => void;
@@ -59,7 +63,7 @@ vi.mock('motion/react', () => ({
             onClick={handleClick}
             className={className}
             disabled={disabled}
-            {...props}
+            {...rest}
             data-testid="motion-button"
             // whileTap, whileHover, onTapStart, onTap, onTapCancel 不傳遞到 DOM
           >

@@ -152,7 +152,7 @@ describe('MultiConverter', () => {
   });
 
   describe('計算機功能', () => {
-    it('點擊金額應該開啟計算機', () => {
+    it('點擊金額應該開啟計算機', async () => {
       render(<MultiConverter {...defaultProps} />);
 
       // 點擊 TWD 金額區域
@@ -161,10 +161,10 @@ describe('MultiConverter', () => {
       });
       fireEvent.click(twdAmountBtn);
 
-      expect(screen.getByTestId('calculator-keyboard')).toBeInTheDocument();
+      expect(await screen.findByTestId('calculator-keyboard')).toBeInTheDocument();
     });
 
-    it('計算機確認應該更新金額', () => {
+    it('計算機確認應該更新金額', async () => {
       render(<MultiConverter {...defaultProps} />);
 
       // 開啟計算機
@@ -174,12 +174,12 @@ describe('MultiConverter', () => {
       fireEvent.click(twdAmountBtn);
 
       // 確認計算結果
-      fireEvent.click(screen.getByTestId('calculator-confirm'));
+      fireEvent.click(await screen.findByTestId('calculator-confirm'));
 
       expect(defaultProps.onAmountChange).toHaveBeenCalledWith('TWD', '12345');
     });
 
-    it('計算機關閉應該隱藏', () => {
+    it('計算機關閉應該隱藏', async () => {
       render(<MultiConverter {...defaultProps} />);
 
       // 開啟計算機
@@ -189,12 +189,12 @@ describe('MultiConverter', () => {
       fireEvent.click(twdAmountBtn);
 
       // 關閉計算機
-      fireEvent.click(screen.getByTestId('calculator-close'));
+      fireEvent.click(await screen.findByTestId('calculator-close'));
 
       expect(screen.queryByTestId('calculator-keyboard')).not.toBeInTheDocument();
     });
 
-    it('鍵盤 Enter 應該開啟計算機', () => {
+    it('鍵盤 Enter 應該開啟計算機', async () => {
       render(<MultiConverter {...defaultProps} />);
 
       const twdAmountBtn = screen.getByRole('button', {
@@ -202,10 +202,10 @@ describe('MultiConverter', () => {
       });
       fireEvent.keyDown(twdAmountBtn, { key: 'Enter' });
 
-      expect(screen.getByTestId('calculator-keyboard')).toBeInTheDocument();
+      expect(await screen.findByTestId('calculator-keyboard')).toBeInTheDocument();
     });
 
-    it('鍵盤 Space 應該開啟計算機', () => {
+    it('鍵盤 Space 應該開啟計算機', async () => {
       render(<MultiConverter {...defaultProps} />);
 
       const twdAmountBtn = screen.getByRole('button', {
@@ -213,7 +213,7 @@ describe('MultiConverter', () => {
       });
       fireEvent.keyDown(twdAmountBtn, { key: ' ' });
 
-      expect(screen.getByTestId('calculator-keyboard')).toBeInTheDocument();
+      expect(await screen.findByTestId('calculator-keyboard')).toBeInTheDocument();
     });
   });
 
