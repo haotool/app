@@ -29,23 +29,34 @@ describe('app-info', () => {
       expect(APP_INFO.license).toBe('GPL-3.0');
     });
 
-    it('should have copyright years defined', () => {
+    it('should have copyright start year defined', () => {
       expect(APP_INFO.copyrightStartYear).toBe(2025);
-      expect(APP_INFO.copyrightEndYear).toBe(2026);
     });
   });
 
   describe('getCopyrightYears', () => {
-    it('should return formatted year range', () => {
+    it('should return year range with current year', () => {
       const years = getCopyrightYears();
-      expect(years).toBe('2025-2026');
+      const currentYear = new Date().getFullYear();
+      expect(years).toBe(`2025-${currentYear}`);
+    });
+
+    it('should return single year when start equals current year', () => {
+      const currentYear = new Date().getFullYear();
+      const originalStart = APP_INFO.copyrightStartYear;
+      // @ts-expect-error -- 測試用暫時覆寫 readonly
+      APP_INFO.copyrightStartYear = currentYear;
+      expect(getCopyrightYears()).toBe(String(currentYear));
+      // @ts-expect-error -- 還原
+      APP_INFO.copyrightStartYear = originalStart;
     });
   });
 
   describe('getCopyrightNotice', () => {
-    it('should return formatted copyright notice', () => {
+    it('should return formatted copyright notice with current year', () => {
       const notice = getCopyrightNotice();
-      expect(notice).toBe('© 2025-2026 RateWise');
+      const currentYear = new Date().getFullYear();
+      expect(notice).toBe(`© 2025-${currentYear} RateWise`);
     });
   });
 });

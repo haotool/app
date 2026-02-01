@@ -27,9 +27,6 @@ export const APP_INFO = {
   /** 版權起始年份 */
   copyrightStartYear: 2025,
 
-  /** 版權結束年份（當前年份） */
-  copyrightEndYear: 2026,
-
   /** 網站 URL */
   siteUrl: 'https://app.haotool.org/ratewise/',
 } as const;
@@ -40,9 +37,8 @@ export const APP_INFO = {
  */
 export function getCopyrightYears(): string {
   const start = APP_INFO.copyrightStartYear;
-  const end = APP_INFO.copyrightEndYear;
-  // 使用 Number() 轉換避免 TypeScript 字面類型比較錯誤
-  if (Number(start) === Number(end)) {
+  const end = new Date().getFullYear();
+  if (start === end) {
     return String(start);
   }
   return `${start}-${end}`;
