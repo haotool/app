@@ -237,6 +237,13 @@ export default function Settings() {
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
+              to="/guide"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+            >
+              <span className="text-sm font-medium">{t('settings.usageGuide')}</span>
+              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+            </Link>
+            <Link
               to="/about"
               className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >

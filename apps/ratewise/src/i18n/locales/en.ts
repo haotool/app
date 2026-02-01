@@ -135,6 +135,7 @@ const en = {
     // Support & Info section
     supportInfo: 'Support & Info',
     faq: 'FAQ',
+    usageGuide: 'Usage Guide',
     aboutUs: 'About Us',
     openSource: 'Open Source',
   },

@@ -134,6 +134,7 @@ const ja = {
     // サポートと情報セクション
     supportInfo: 'サポートと情報',
     faq: 'よくある質問',
+    usageGuide: 'ご利用ガイド',
     aboutUs: '私たちについて',
     openSource: 'オープンソース',
   },

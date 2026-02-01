@@ -134,6 +134,7 @@ const zhTW = {
     // 支援與資訊區塊
     supportInfo: '支援與資訊',
     faq: '常見問題',
+    usageGuide: '使用指南',
     aboutUs: '關於我們',
     openSource: '開放原始碼',
   },
