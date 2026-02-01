@@ -104,6 +104,43 @@ function readStaged(filePath) {
   }
 }
 
+function readFromGit(ref, filePath) {
+  try {
+    return execSync(`git show ${ref}:${filePath}`, { encoding: 'utf-8' });
+  } catch {
+    return null;
+  }
+}
+
+function hasPackageVersionBump(filePath) {
+  const stagedContent = readStaged(filePath);
+  if (!stagedContent) return false;
+
+  const headContent = readFromGit('HEAD', filePath);
+  if (!headContent) return true;
+
+  const stagedVersion = JSON.parse(stagedContent).version;
+  const headVersion = JSON.parse(headContent).version;
+  return stagedVersion !== headVersion;
+}
+
+function isRuntimeChange(filePath) {
+  if (filePath.startsWith('apps/ratewise/public/')) return true;
+  if (filePath === 'apps/ratewise/index.html') return true;
+  if (filePath === 'apps/ratewise/vite.config.ts') return true;
+  if (!filePath.startsWith('apps/ratewise/src/')) return false;
+
+  const isTestFile =
+    filePath.includes('/__tests__/') ||
+    filePath.endsWith('.test.ts') ||
+    filePath.endsWith('.test.tsx') ||
+    filePath.endsWith('.spec.ts') ||
+    filePath.endsWith('.spec.tsx') ||
+    filePath.endsWith('.stories.tsx');
+
+  return !isTestFile;
+}
+
 function ensureChangelogUpdatedIfVersionChanged() {
   const stagedFiles = getStagedFiles();
   const hasPackageVersionChange = stagedFiles.some(
@@ -135,11 +172,28 @@ function ensureChangelogUpdatedIfVersionChanged() {
   }
 }
 
+function ensureVersionBumpForAppChanges() {
+  const stagedFiles = getStagedFiles();
+  const hasRuntimeChanges = stagedFiles.some((file) => isRuntimeChange(file));
+  if (!hasRuntimeChanges) return;
+
+  const hasVersionBump =
+    hasPackageVersionBump('apps/ratewise/package.json') || hasPackageVersionBump('package.json');
+  const hasChangeset = stagedFiles.some(
+    (file) => file.startsWith('.changeset/') && file.endsWith('.md'),
+  );
+
+  if (!hasVersionBump && !hasChangeset) {
+    errors.push('偵測到 RateWise 產出內容變更，需更新版本號或新增 changeset 檔案');
+  }
+}
+
 function main() {
   ensureNoDirectEnvAccess();
   ensureNoRawStorageKeys();
   ensureVersionSyncIfStaged();
   ensureChangelogUpdatedIfVersionChanged();
+  ensureVersionBumpForAppChanges();
 
   if (errors.length > 0) {
     console.error('版本 SSOT 驗證失敗:');

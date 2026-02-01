@@ -1,5 +1,5 @@
 /**
- * Vite React SSG Routes Configuration - Modern App Architecture
+ * Vite React SSG 路由設定
  *
  * 路由策略：
  * - AppLayout 路由（底部導覽列 + 模組化架構）：
@@ -32,6 +32,7 @@ import { Layout } from './components/Layout';
 import { AppLayout } from './components/AppLayout';
 import { SkeletonLoader } from './components/SkeletonLoader';
 import { logger } from './utils/logger';
+import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import MultiConverter from './pages/MultiConverter';
 import Favorites from './pages/Favorites';
 import Settings from './pages/Settings';
@@ -50,15 +51,7 @@ async function importWithRetry<T>(
     } catch (error) {
       lastError = error;
 
-      // 檢查是否為 chunk 載入錯誤
-      const isChunkError =
-        error instanceof Error &&
-        (error.message.toLowerCase().includes('unexpected token') ||
-          error.message.toLowerCase().includes('<!doctype') ||
-          error.message.toLowerCase().includes('loading chunk') ||
-          error.message.toLowerCase().includes('failed to fetch'));
-
-      if (!isChunkError) {
+      if (!isChunkLoadError(error)) {
         throw error;
       }
 
@@ -72,36 +65,7 @@ async function importWithRetry<T>(
     }
   }
 
-  // 所有重試都失敗後，嘗試刷新頁面
-  if (typeof window !== 'undefined') {
-    const REFRESH_KEY = 'chunk_load_refresh_timestamp';
-    const REFRESH_COOLDOWN_MS = 30000;
-
-    try {
-      const lastRefresh = sessionStorage.getItem(REFRESH_KEY);
-      const canRefresh =
-        !lastRefresh || Date.now() - parseInt(lastRefresh, 10) > REFRESH_COOLDOWN_MS;
-
-      if (canRefresh) {
-        logger.warn('All chunk load retries failed, forcing page refresh');
-        sessionStorage.setItem(REFRESH_KEY, Date.now().toString());
-
-        // 清除 Service Worker 和快取
-        if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(registrations.map((r) => r.unregister()));
-        }
-        if ('caches' in window) {
-          const cacheNames = await caches.keys();
-          await Promise.all(cacheNames.map((name) => caches.delete(name)));
-        }
-
-        window.location.reload();
-      }
-    } catch {
-      // 忽略 sessionStorage 錯誤
-    }
-  }
+  await recoverFromChunkLoadError();
 
   throw lastError;
 }
@@ -132,13 +96,13 @@ function createLazyRoute(
 }
 
 /**
- * Route Configuration for vite-react-ssg
+ * vite-react-ssg 路由設定
  *
  * 架構：AppLayout（父路由）包含 4 個子路由（Single, Multi, Favorites, Settings）
  * 首頁使用 ClientOnly 避免 hydration mismatch
  */
 export const routes: RouteRecord[] = [
-  // ✅ AppLayout 路由（底部導覽列 + 模組化架構）
+  // AppLayout 路由（底部導覽列 + 模組化架構）
   {
     path: '/',
     element: <AppLayout />,
@@ -186,12 +150,12 @@ export const routes: RouteRecord[] = [
     ],
   },
 
-  // ✅ Layout 路由（SEO 落地頁，保留原有結構）
+  // Layout 路由（SEO 落地頁，保留原有結構）
   createLazyRoute('/faq', () => import('./pages/FAQ'), 'src/pages/FAQ.tsx'),
   createLazyRoute('/about', () => import('./pages/About'), 'src/pages/About.tsx'),
   createLazyRoute('/guide', () => import('./pages/Guide'), 'src/pages/Guide.tsx'),
 
-  // ✅ 13 個幣別落地頁（SEO 預渲染）
+  // 13 個幣別落地頁（SEO 預渲染）
   createLazyRoute('/usd-twd', () => import('./pages/USDToTWD'), 'src/pages/USDToTWD.tsx'),
   createLazyRoute('/jpy-twd', () => import('./pages/JPYToTWD'), 'src/pages/JPYToTWD.tsx'),
   createLazyRoute('/eur-twd', () => import('./pages/EURToTWD'), 'src/pages/EURToTWD.tsx'),
@@ -206,7 +170,7 @@ export const routes: RouteRecord[] = [
   createLazyRoute('/nzd-twd', () => import('./pages/NZDToTWD'), 'src/pages/NZDToTWD.tsx'),
   createLazyRoute('/chf-twd', () => import('./pages/CHFToTWD'), 'src/pages/CHFToTWD.tsx'),
 
-  // ❌ 不預渲染內部工具頁面
+  // 不預渲染內部工具頁面
   createLazyRoute(
     '/color-scheme',
     () => import('./pages/ColorSchemeComparison'),
@@ -219,7 +183,7 @@ export const routes: RouteRecord[] = [
   ),
   createLazyRoute('/ui-showcase', () => import('./pages/UIShowcase'), 'src/pages/UIShowcase.tsx'),
 
-  // ❌ 不預渲染 404 頁面（動態處理）
+  // 不預渲染 404 頁面（動態處理）
   createLazyRoute('*', () => import('./pages/NotFound'), 'src/pages/NotFound.tsx'),
 ];
 
@@ -227,7 +191,7 @@ export const routes: RouteRecord[] = [
  * 指定哪些路徑應該被預渲染為靜態 HTML
  *
  * 策略：
- * - ✅ 預渲染：首頁、FAQ、About、Guide + 13 個幣別落地頁
- * - ❌ 不預渲染：404、color-scheme（動態處理或內部工具）
+ * - 預渲染：首頁、FAQ、About、Guide + 13 個幣別落地頁
+ * - 不預渲染：404、color-scheme（動態處理或內部工具）
  */
 export { getIncludedRoutes } from './config/seo-paths';

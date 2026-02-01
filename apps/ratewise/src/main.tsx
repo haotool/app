@@ -23,6 +23,7 @@ import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
 import { initCSPReporter } from './utils/csp-reporter';
 import { APP_VERSION, BUILD_TIME } from './config/version';
+import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(
@@ -67,6 +68,19 @@ export const createRoot = ViteReactSSG(
           errorMessage = typeof msg === 'string' ? msg : JSON.stringify(reason);
         }
 
+        const errorObject =
+          reason instanceof Error ? reason : new Error(errorMessage || 'Unhandled rejection');
+
+        // 先處理 chunk 載入錯誤（避免被歷史匯率錯誤規則吞掉）
+        if (isChunkLoadError(errorObject)) {
+          logger.warn('Chunk load error captured by global handler', {
+            reason: errorMessage,
+          });
+          event.preventDefault();
+          void recoverFromChunkLoadError();
+          return;
+        }
+
         // 檢查是否為歷史匯率相關的網路錯誤
         const isHistoricalRates404 =
           errorMessage.includes('history') ||
@@ -79,13 +93,11 @@ export const createRoot = ViteReactSSG(
             reason: errorMessage,
           });
           event.preventDefault(); // 防止錯誤顯示在瀏覽器 console
-        } else {
-          // 其他未處理的錯誤記錄但不阻止
-          logger.error(
-            'Unhandled promise rejection',
-            reason instanceof Error ? reason : new Error(errorMessage),
-          );
+          return;
         }
+
+        // 其他未處理的錯誤記錄但不阻止
+        logger.error('Unhandled promise rejection', errorObject);
       });
 
       // Initialize observability (non-blocking)

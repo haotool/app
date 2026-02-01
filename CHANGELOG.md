@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2026-02-01
+
+### Fixed
+
+- PWA 更新提示在主應用佈局中載入，避免更新提示未顯示
+- Chunk 載入錯誤恢復流程統一偵測與刷新守門，降低「Load failed」中斷
+- 全域錯誤處理優先處理 chunk 載入錯誤，避免被歷史匯率錯誤規則吞掉
+
+### Changed
+
+- 版本更新流程改用 swUtils 的 Service Worker 更新函式，移除重複實作
+- 版本 SSOT 驗證新增版本更新強制檢查（產出變更需版本或 changeset）
+
 ## [2.2.0] - 2026-02-01
 
 ### Added

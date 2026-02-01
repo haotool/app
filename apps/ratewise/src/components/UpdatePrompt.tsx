@@ -1,18 +1,19 @@
 /**
- * PWA Update Prompt Component
+ * PWA 更新提示元件
  *
- * Material Design snackbar-style notification for PWA updates.
- * Uses vite-plugin-pwa's official useRegisterSW hook.
+ * 以 Material Design snackbar 樣式呈現更新提示
+ * 使用 vite-plugin-pwa 提供的 useRegisterSW
  *
- * Features:
- * - Pastel gradient design with cloud decorations
- * - Spring animation entrance
- * - Bottom-center positioning
- * - Full accessibility support (ARIA, keyboard nav)
- * - Responsive design (mobile/tablet/desktop)
+ * 特點：
+ * - 漸層視覺與雲朵裝飾
+ * - 入場動畫
+ * - 置中底部定位
+ * - 完整無障礙支援（ARIA、鍵盤操作）
+ * - 響應式設計（手機、平板、桌面）
  */
 import { useEffect, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { logger } from '../utils/logger';
 
 export function UpdatePrompt() {
   const [show, setShow] = useState(false);
@@ -27,6 +28,7 @@ export function UpdatePrompt() {
     onRegistered(r) {
       // Service Worker 已註冊，設定定期更新檢查（每小時）
       if (r) {
+        void r.update();
         setInterval(
           () => {
             void r.update();
@@ -36,7 +38,8 @@ export function UpdatePrompt() {
       }
     },
     onRegisterError(error) {
-      console.error('SW registration error:', error);
+      const errorObject = error instanceof Error ? error : new Error(String(error));
+      logger.error('Service Worker registration error', errorObject);
     },
   });
 
