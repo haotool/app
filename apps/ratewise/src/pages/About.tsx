@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { getDisplayVersion } from '../config/version';
+import { APP_INFO, getCopyrightYears } from '../config/app-info';
 
 export default function About() {
   return (
@@ -19,7 +20,7 @@ export default function About() {
           { name: '關於我們', item: '/about/' },
         ]}
       />
-      <main className="min-h-screen bg-page-gradient">
+      <main className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="mb-8">
@@ -238,10 +239,10 @@ export default function About() {
                 <p className="text-text-muted">
                   如有任何問題或建議，歡迎透過{' '}
                   <a
-                    href="mailto:haotool.org@gmail.com"
+                    href={`mailto:${APP_INFO.email}`}
                     className="text-primary hover:text-primary/80 underline"
                   >
-                    haotool.org@gmail.com
+                    {APP_INFO.email}
                   </a>{' '}
                   與我們聯繫。
                 </p>
@@ -251,10 +252,10 @@ export default function About() {
                 <p className="text-text-muted">
                   若發現安全漏洞，請透過{' '}
                   <a
-                    href="mailto:haotool.org@gmail.com"
+                    href={`mailto:${APP_INFO.email}`}
                     className="text-primary hover:text-primary/80 underline"
                   >
-                    haotool.org@gmail.com
+                    {APP_INFO.email}
                   </a>{' '}
                   回報，我們會在 48 小時內回應。
                 </p>
@@ -262,9 +263,9 @@ export default function About() {
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-2">開放原始碼</h3>
                 <p className="text-text-muted">
-                  RateWise 是開放原始碼專案，歡迎在{' '}
+                  {APP_INFO.name} 是開放原始碼專案，歡迎在{' '}
                   <a
-                    href="https://github.com/haotool/app"
+                    href={APP_INFO.github}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:text-primary/80 underline"
@@ -279,8 +280,10 @@ export default function About() {
 
           {/* Footer */}
           <div className="text-center text-text-muted text-sm">
-            <p>© 2024-2026 RateWise. 採用 GPL-3.0 授權。</p>
-            <p className="mt-2">最後更新：2026-02-01 | 版本：{getDisplayVersion()}</p>
+            <p>
+              © {getCopyrightYears()} {APP_INFO.name}. 採用 {APP_INFO.license} 授權。
+            </p>
+            <p className="mt-2">版本：{getDisplayVersion()}</p>
           </div>
         </div>
       </main>

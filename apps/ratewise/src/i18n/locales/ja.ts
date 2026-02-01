@@ -128,9 +128,14 @@ const ja = {
     appVersion: 'アプリバージョン',
     designSystem: 'デザインシステム',
     techStack: '技術スタック',
-    copyright: '© 2026 RateWise. Built with Design Token SSOT',
+    copyright: '© 2025-2026 RateWise',
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
+    // サポートと情報セクション
+    supportInfo: 'サポートと情報',
+    faq: 'よくある質問',
+    aboutUs: '私たちについて',
+    openSource: 'オープンソース',
   },
 
   // Styles
