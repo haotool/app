@@ -14,6 +14,7 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { transitions } from '../../../config/animations';
 import type { ExpressionDisplayProps } from '../types';
 import { formatCalculatorNumber, formatExpression } from '../utils/formatCalculatorNumber';
 
@@ -59,7 +60,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
+              transition={transitions.calculatorFeedback}
               className="text-right text-lg text-neutral-text-muted font-mono tabular-nums mt-1"
               role="status"
               aria-label={t('calculator.previewResult', { value: formatCalculatorNumber(preview) })}

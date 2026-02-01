@@ -271,13 +271,17 @@
     --color-primary-bg: 30 41 59; /* slate-800 */
     --color-primary-light: 30 41 59; /* slate-800 - 深色背景用 */
     --color-primary-hover: 34 211 238; /* cyan-400 - 霓虹藍亮色 */
+    --color-primary-dark: 103 232 249; /* cyan-300 - 深色主題高對比結果文字 */
+    --color-primary-darker: 34 211 238; /* cyan-400 */
+    --color-primary-text: 0 212 255; /* 霓虹藍 - 與 primary 一致 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
     --color-neutral-text: var(--color-text);
-    --color-neutral-text-muted: var(--color-text-muted);
+    --color-neutral-text-secondary: 203 213 225; /* slate-300 - 算式文字高對比 */
+    --color-neutral-text-muted: 148 163 184; /* slate-400 - 預覽文字可讀 */
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);

@@ -9,17 +9,30 @@
  */
 
 /**
+ * 應用程式版本號預設值（SSOT）
+ * 來源: vite.config.ts / vitest.config.ts define 注入 __APP_VERSION__
+ */
+export const DEFAULT_APP_VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0';
+
+/**
  * 應用程式版本號
  * 來源: vite.config.ts generateVersion()
  * 格式: {semver}[+build.{distance}] 或 {semver}[+sha.{hash}[-dirty]]
  */
-export const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? '2.0.0';
+export const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? DEFAULT_APP_VERSION;
+
+/**
+ * 建置時間預設值（SSOT）
+ * 來源: vite.config.ts / vitest.config.ts define 注入 __BUILD_TIME__
+ */
+export const DEFAULT_BUILD_TIME =
+  typeof __BUILD_TIME__ === 'string' ? __BUILD_TIME__ : new Date().toISOString();
 
 /**
  * 建置時間 (ISO 8601)
  * 來源: vite.config.ts buildTime
  */
-export const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString();
+export const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? DEFAULT_BUILD_TIME;
 
 /**
  * 是否為開發模式

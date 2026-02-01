@@ -15,6 +15,7 @@
  */
 
 import { Link, useLocation } from 'react-router-dom';
+import { getDisplayVersion } from '../config/version';
 import { useTranslation } from 'react-i18next';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 
@@ -89,7 +90,9 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
       {/* Logo / Brand */}
       <div className="px-6 py-4 border-b border-[rgb(var(--color-border))]">
         {/* 品牌標題（使用 span 而非 h1，與 mobile Header 一致，避免每頁重複 h1） */}
-        <span className="text-xl font-bold text-[rgb(var(--color-text))]">{t('app.title')}</span>
+        <span data-testid="app-title" className="text-xl font-bold text-[rgb(var(--color-text))]">
+          {t('app.title')}
+        </span>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">{t('app.subtitle')}</p>
       </div>
 
@@ -129,7 +132,9 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-[rgb(var(--color-border))]">
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('app.version')} v2.0.0</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">
+          {t('app.version')} {getDisplayVersion()}
+        </p>
       </div>
     </aside>
   );

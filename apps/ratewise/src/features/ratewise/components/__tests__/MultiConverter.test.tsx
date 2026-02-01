@@ -130,10 +130,12 @@ describe('MultiConverter', () => {
     it('基準貨幣應該有特殊的樣式', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // TWD 是基準貨幣，應該有 primary 背景和 ring 樣式
+      // TWD 是基準貨幣，應該有 cursor-default（不可點擊）和 activeHighlight SSOT 樣式
       const twdRow = screen.getByText('TWD').closest('div[class*="rounded-xl"]');
-      expect(twdRow).toHaveClass('bg-primary/10');
-      expect(twdRow).toHaveClass('ring-2');
+      expect(twdRow).toHaveClass('cursor-default');
+      // 非基準貨幣應該有 cursor-pointer
+      const usdRow = screen.getByText('USD').closest('div[class*="rounded-xl"]');
+      expect(usdRow).toHaveClass('cursor-pointer');
     });
   });
 

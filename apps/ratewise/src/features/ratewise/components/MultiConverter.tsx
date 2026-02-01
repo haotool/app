@@ -10,7 +10,9 @@
 
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
+import { activeHighlight } from '../../../config/animations';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
@@ -221,131 +223,140 @@ export const MultiConverter = ({
         tabIndex={0}
         role="region"
         aria-label={t('multiConverter.currencyListLabel')}
+        data-testid="multi-currency-list"
       >
-        {sortedCurrencies.map((code) => {
-          const isBase = code === baseCurrency;
-          return (
-            <div
-              key={code}
-              onClick={() => {
-                if (!isBase) {
-                  onBaseCurrencyChange(code);
-                }
-              }}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                isBase
-                  ? 'bg-primary/10 ring-2 ring-primary/30 cursor-default'
-                  : 'bg-surface-soft cursor-pointer hover:bg-primary/5 hover:shadow-sm active:scale-[0.99]'
-              }`}
-            >
-              {/* 左側：星號收藏 + 國旗 + 貨幣資訊 */}
-              <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
-                {/* 收藏星號 - 固定寬度確保對齊 */}
-                <div className="w-6 flex-shrink-0 flex items-center justify-center">
-                  {favorites.includes(code) ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleFavorite(code);
-                      }}
-                      className="p-0.5 transition-transform hover:scale-110"
-                      aria-label={t('favorites.removeFavorite')}
-                    >
-                      <Star className="w-4 h-4 text-favorite fill-favorite" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleFavorite(code);
-                      }}
-                      className="p-0.5 opacity-30 hover:opacity-60 transition-opacity"
-                      aria-label={t('favorites.addFavorite')}
-                    >
-                      <Star className="w-4 h-4 text-text-muted" />
-                    </button>
-                  )}
-                </div>
-                {/* 國旗 - 使用固定寬度避免變形 */}
-                <span className="text-xl flex-shrink-0 w-7 text-center leading-none">
-                  {CURRENCY_DEFINITIONS[code].flag}
-                </span>
-                <div className="min-w-0">
-                  <div className="font-semibold text-sm leading-tight">{code}</div>
-                  <div className="text-[11px] opacity-60 leading-tight truncate">
-                    {t(`currencies.${code}`)}
-                  </div>
-                </div>
-              </div>
-
-              {/* 右側：金額 + 匯率資訊（與左側對齊） */}
-              <div className="flex-1 min-w-0 ml-2">
-                <div
-                  ref={(el) => {
-                    inputRefs.current[code] = el;
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    calculator.openCalculator(code);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      calculator.openCalculator(code);
-                    }
-                  }}
-                  className="text-right text-base font-bold leading-tight cursor-pointer transition hover:opacity-80"
-                  aria-label={t('multiConverter.amountClickCalculator', {
-                    name: t(`currencies.${code}`),
-                    code,
-                  })}
-                >
-                  {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
-                </div>
-                <div className="text-[11px] text-right leading-tight opacity-70 mt-0.5">
-                  {(() => {
-                    const rateTypeInfo = hasOnlyOneRateType(code);
-                    const isDisabled = rateTypeInfo.hasOnlyOne;
-                    const displayType = rateTypeInfo.availableType ?? rateType;
-
-                    return isDisabled ? (
-                      <RateTypeTooltip message={rateTypeInfo.reason} isDisabled={true}>
-                        <button
-                          className="font-medium opacity-60 cursor-help hover:opacity-80 transition-opacity"
-                          aria-label={rateTypeInfo.reason}
-                        >
-                          {displayType === 'spot'
-                            ? t('multiConverter.spotRate')
-                            : t('multiConverter.cashRate')}
-                        </button>
-                      </RateTypeTooltip>
+        <AnimatePresence>
+          {sortedCurrencies.map((code) => {
+            const isBase = code === baseCurrency;
+            return (
+              <div
+                key={code}
+                onClick={() => {
+                  if (!isBase) {
+                    onBaseCurrencyChange(code);
+                  }
+                }}
+                className={`${activeHighlight.itemBaseClass} transition-colors duration-200 ${
+                  isBase ? activeHighlight.itemActiveClass : activeHighlight.itemInactiveClass
+                }`}
+              >
+                {/* 基準貨幣滑動高亮指示器 - layoutId 驅動平滑過渡 */}
+                {isBase && (
+                  <motion.div
+                    layoutId="base-currency-highlight"
+                    className={activeHighlight.highlightClass}
+                    transition={activeHighlight.transition}
+                  />
+                )}
+                {/* 左側：星號收藏 + 國旗 + 貨幣資訊（z-10 確保在高亮層上方） */}
+                <div className="relative z-10 flex items-center gap-2 flex-shrink-0 min-w-0">
+                  {/* 收藏星號 - 固定寬度確保對齊 */}
+                  <div className="w-6 flex-shrink-0 flex items-center justify-center">
+                    {favorites.includes(code) ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleFavorite(code);
+                        }}
+                        className="p-0.5 transition-transform hover:scale-110"
+                        aria-label={t('favorites.removeFavorite')}
+                      >
+                        <Star className="w-4 h-4 text-favorite fill-favorite" />
+                      </button>
                     ) : (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onRateTypeChange(rateType === 'spot' ? 'cash' : 'spot');
+                          onToggleFavorite(code);
                         }}
-                        className="font-semibold text-primary hover:text-primary-hover transition-colors"
-                        aria-label={
-                          rateType === 'spot'
-                            ? t('multiConverter.switchToCash')
-                            : t('multiConverter.switchToSpot')
-                        }
+                        className="p-0.5 opacity-30 hover:opacity-60 transition-opacity"
+                        aria-label={t('favorites.addFavorite')}
                       >
-                        {rateType === 'spot'
-                          ? t('multiConverter.spotRate')
-                          : t('multiConverter.cashRate')}
+                        <Star className="w-4 h-4 text-text-muted" />
                       </button>
-                    );
-                  })()}
-                  <span className="opacity-80"> · {getRateDisplay(code)}</span>
+                    )}
+                  </div>
+                  {/* 國旗 - 使用固定寬度避免變形 */}
+                  <span className="text-xl flex-shrink-0 w-7 text-center leading-none">
+                    {CURRENCY_DEFINITIONS[code].flag}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm leading-tight">{code}</div>
+                    <div className="text-[11px] opacity-60 leading-tight truncate">
+                      {t(`currencies.${code}`)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 右側：金額 + 匯率資訊（z-10 確保在高亮層上方） */}
+                <div className="relative z-10 flex-1 min-w-0 ml-2">
+                  <div
+                    ref={(el) => {
+                      inputRefs.current[code] = el;
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      calculator.openCalculator(code);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        calculator.openCalculator(code);
+                      }
+                    }}
+                    className="text-right text-base font-bold leading-tight cursor-pointer transition hover:opacity-80"
+                    aria-label={t('multiConverter.amountClickCalculator', {
+                      name: t(`currencies.${code}`),
+                      code,
+                    })}
+                  >
+                    {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
+                  </div>
+                  <div className="text-[11px] text-right leading-tight opacity-70 mt-0.5">
+                    {(() => {
+                      const rateTypeInfo = hasOnlyOneRateType(code);
+                      const isDisabled = rateTypeInfo.hasOnlyOne;
+                      const displayType = rateTypeInfo.availableType ?? rateType;
+
+                      return isDisabled ? (
+                        <RateTypeTooltip message={rateTypeInfo.reason} isDisabled={true}>
+                          <button
+                            className="font-medium opacity-60 cursor-help hover:opacity-80 transition-opacity"
+                            aria-label={rateTypeInfo.reason}
+                          >
+                            {displayType === 'spot'
+                              ? t('multiConverter.spotRate')
+                              : t('multiConverter.cashRate')}
+                          </button>
+                        </RateTypeTooltip>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRateTypeChange(rateType === 'spot' ? 'cash' : 'spot');
+                          }}
+                          className="font-semibold text-primary hover:text-primary-hover transition-colors"
+                          aria-label={
+                            rateType === 'spot'
+                              ? t('multiConverter.switchToCash')
+                              : t('multiConverter.switchToSpot')
+                          }
+                        >
+                          {rateType === 'spot'
+                            ? t('multiConverter.spotRate')
+                            : t('multiConverter.cashRate')}
+                        </button>
+                      );
+                    })()}
+                    <span className="opacity-80"> · {getRateDisplay(code)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </AnimatePresence>
       </div>
 
       {/* 計算機鍵盤 */}

@@ -8,6 +8,7 @@
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { transitions } from '../../../config/animations';
 import type { CalculatorKeyboardProps, KeyDefinition } from '../types';
 import { useCalculator } from '../hooks/useCalculator';
 import { useCalculatorKeyboard } from '../hooks/useCalculatorKeyboard';
@@ -222,7 +223,7 @@ export function CalculatorKeyboard({
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              transition={transitions.keyboardSheet}
               drag="y"
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={0.2}

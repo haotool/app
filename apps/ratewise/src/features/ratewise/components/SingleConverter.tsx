@@ -28,7 +28,9 @@ import {
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
+import { motion } from 'motion/react';
 import { singleConverterLayoutTokens } from '../../../config/design-tokens';
+import { segmentedSwitch } from '../../../config/animations';
 // Lazy load CalculatorKeyboard on demand
 const CalculatorKeyboard = lazy(() =>
   import('../../calculator/components/CalculatorKeyboard').then((m) => ({
@@ -357,54 +359,59 @@ export const SingleConverter = ({
             <div
               className={`inline-flex bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60 ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
             >
-              <button
-                onClick={() => onRateTypeChange('spot')}
-                className={`flex items-center gap-1 ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ${
-                  rateType === 'spot'
-                    ? 'bg-primary text-white shadow-md scale-105'
-                    : 'text-text/70 hover:text-text hover:bg-primary/10'
-                }`}
-                aria-label={t('singleConverter.switchToSpot')}
-              >
-                <svg
-                  className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-                <span>{t('singleConverter.spotRate')}</span>
-              </button>
-              <button
-                onClick={() => onRateTypeChange('cash')}
-                className={`flex items-center gap-1 ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ${
-                  rateType === 'cash'
-                    ? 'bg-primary text-white shadow-md scale-105'
-                    : 'text-text/70 hover:text-text hover:bg-primary/10'
-                }`}
-                aria-label={t('singleConverter.switchToCash')}
-              >
-                <svg
-                  className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-                <span>{t('singleConverter.cashRate')}</span>
-              </button>
+              {(
+                [
+                  {
+                    value: 'spot' as RateType,
+                    label: t('singleConverter.spotRate'),
+                    ariaLabel: t('singleConverter.switchToSpot'),
+                    icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+                  },
+                  {
+                    value: 'cash' as RateType,
+                    label: t('singleConverter.cashRate'),
+                    ariaLabel: t('singleConverter.switchToCash'),
+                    icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
+                  },
+                ] as const
+              ).map((option) => {
+                const isActive = rateType === option.value;
+                return (
+                  <motion.button
+                    key={option.value}
+                    onClick={() => onRateTypeChange(option.value)}
+                    whileHover={segmentedSwitch.item.whileHover}
+                    whileTap={segmentedSwitch.item.whileTap}
+                    className={`flex items-center gap-1 ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative ${
+                      isActive ? 'text-white' : 'text-text/70 hover:text-text'
+                    }`}
+                    aria-label={option.ariaLabel}
+                    aria-pressed={isActive}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="rate-type-indicator"
+                        className="absolute inset-0 rounded-full bg-primary shadow-md"
+                        transition={segmentedSwitch.indicator}
+                      />
+                    )}
+                    <svg
+                      className={`${singleConverterLayoutTokens.rateCard.rateTypeIcon} relative z-10`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d={option.icon}
+                      />
+                    </svg>
+                    <span className="relative z-10">{option.label}</span>
+                  </motion.button>
+                );
+              })}
             </div>
 
             {/* 匯率顯示 - 使用 SSOT text 色 */}

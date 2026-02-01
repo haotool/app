@@ -1,4 +1,7 @@
+import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures/test';
+
+const getVisibleAppTitle = (page: Page) => page.locator('[data-testid="app-title"]:visible');
 
 /**
  * RateWise 核心流程 E2E 測試
@@ -23,10 +26,10 @@ test.describe('RateWise 核心功能測試', () => {
   test('應該正確載入首頁並顯示關鍵元素', async ({ rateWisePage: page }) => {
     // 檢查標題 - Header 使用 <span> 而非 <h1>，改用 getByText
     // [fix:2026-01-30] 配合 Header 架構調整
-    await expect(page.getByText(/RateWise 匯率好工具/i).first()).toBeVisible();
+    await expect(getVisibleAppTitle(page)).toBeVisible();
 
-    // 檢查副標題（匯率載入完成後）
-    await expect(page.getByText(/即時匯率換算/i)).toBeVisible();
+    // 檢查核心輸入區塊（使用 data-testid 避免文案變動）
+    await expect(page.getByTestId('amount-input')).toBeVisible();
 
     // 檢查模式切換按鈕
     await expect(page.getByRole('link', { name: /單幣別/i })).toBeVisible();
@@ -35,24 +38,35 @@ test.describe('RateWise 核心功能測試', () => {
     // 檢查頁尾資料來源 (使用 toBeAttached - 頁尾可能需要滾動才能進入 viewport)
     // [fix:2025-12-24] 從 toBeVisible 改為 toBeAttached，因為頁尾在較小視窗下不在初始 viewport
     // [context7:microsoft/playwright:2025-12-24] toBeAttached 確認元素在 DOM 中存在
-    await expect(page.getByText(/臺灣銀行牌告匯率/i).first()).toBeAttached();
+    await expect(page.getByTestId('ratewise-data-source')).toBeAttached({ timeout: 10000 });
   });
 
   test('單幣別模式：應該能夠輸入金額並看到換算結果', async ({ rateWisePage: page }) => {
-    // 使用 data-testid 避免嚴格模式雙重匹配 (input + calculator trigger)
     const fromAmountInput = page.getByTestId('amount-input');
-    const toAmountInput = page.getByRole('textbox', { name: /轉換結果/i });
+    const toAmountOutput = page.getByTestId('amount-output');
 
-    // Playwright auto-waiting - 不需要額外 waitFor
-    await fromAmountInput.fill('1000');
+    // 透過快速金額按鈕輸入，避免操作非 input 元素
+    const quickAmountButton = page
+      .getByTestId('quick-amounts-from')
+      .getByRole('button', { name: /1[, ]?000|1000/ })
+      .first();
+
+    if (await quickAmountButton.isVisible()) {
+      await quickAmountButton.click();
+    } else {
+      await fromAmountInput.click();
+      await expect(page.getByRole('dialog', { name: /計算機|calculator/i })).toBeVisible();
+      await page.keyboard.type('1000');
+      await page.keyboard.press('Enter');
+    }
 
     // 等待換算完成
-    await expect(toAmountInput).not.toHaveValue('', { timeout: 5000 });
-    await expect(toAmountInput).not.toHaveValue('0');
+    await expect(fromAmountInput).toHaveText(/1[, ]?000/);
+    await expect(toAmountOutput).not.toHaveText(/0\.00/, { timeout: 5000 });
 
     // 驗證換算結果是數字
-    const toAmount = await toAmountInput.inputValue();
-    expect(parseFloat(toAmount.replace(/,/g, ''))).toBeGreaterThan(0);
+    const toAmount = await toAmountOutput.textContent();
+    expect(parseFloat((toAmount ?? '0').replace(/,/g, ''))).toBeGreaterThan(0);
   });
 
   test('單幣別模式：應該能夠交換貨幣', async ({ rateWisePage: page }) => {
@@ -63,7 +77,7 @@ test.describe('RateWise 核心功能測試', () => {
     await swapButton.click();
 
     // 驗證頁面狀態正常 - [fix:2026-01-30] 配合 Header 架構調整
-    await expect(page.getByText(/RateWise 匯率好工具/i).first()).toBeVisible();
+    await expect(getVisibleAppTitle(page)).toBeVisible();
   });
 
   test('多幣別模式：應該能夠切換並顯示多幣別換算', async ({ rateWisePage: page }) => {
@@ -75,15 +89,16 @@ test.describe('RateWise 核心功能測試', () => {
     await page.waitForTimeout(1000);
 
     // [fix:2026-01-31] 使用多重選擇器適配不同環境
-    const currencyList = page
-      .getByRole('region', { name: /currency list/i })
-      .or(page.locator('[data-testid="currency-list"]'));
+    const currencyList = page.getByTestId('multi-currency-list');
     await expect(currencyList).toBeVisible({ timeout: 10000 });
 
     // [fix:2026-01-31] 驗證頁面有多個貨幣相關按鈕
-    const currencyButtons = page.getByRole('button').filter({ hasText: /TWD|USD|JPY|EUR/i });
-    const buttonCount = await currencyButtons.count();
-    expect(buttonCount).toBeGreaterThan(0);
+    await expect(
+      page
+        .getByTestId('multi-currency-list')
+        .getByText(/TWD|USD|JPY|EUR/i)
+        .first(),
+    ).toBeVisible();
   });
 
   // [fix:2026-01-31] 測試在 CI 環境不穩定，因 aria-label 在 SSG 預渲染版本可能不同
@@ -125,14 +140,14 @@ test.describe('RateWise 核心功能測試', () => {
     await page.waitForTimeout(500);
 
     // 至少確認頁面沒有崩潰且我的最愛功能正常執行 - [fix:2026-01-30] 配合 Header 架構調整
-    await expect(page.getByText(/RateWise 匯率好工具/i).first()).toBeVisible();
+    await expect(getVisibleAppTitle(page)).toBeVisible();
   });
 
   test('響應式設計：行動版應該正確顯示', async ({ rateWisePage: page, viewport }) => {
     // 僅在行動裝置尺寸執行
     if (viewport && viewport.width < 768) {
       // 檢查標題在小螢幕上仍然可見 - [fix:2026-01-30] 配合 Header 架構調整
-      await expect(page.getByText(/RateWise 匯率好工具/i).first()).toBeVisible();
+      await expect(getVisibleAppTitle(page)).toBeVisible();
 
       // 檢查模式切換按鈕在小螢幕上可點擊
       const singleModeButton = page.getByRole('link', { name: /單幣別/i });
@@ -152,7 +167,7 @@ test.describe('RateWise 核心功能測試', () => {
     // Fixture already handles navigation and waits for key UI element
     // Just verify key content is rendered (already checked in fixture)
     // [fix:2026-01-30] 配合 Header 架構調整
-    await expect(page.getByText(/RateWise 匯率好工具/i).first()).toBeVisible();
+    await expect(getVisibleAppTitle(page)).toBeVisible();
     await expect(page.getByRole('link', { name: /多幣別/i })).toBeVisible();
   });
 
@@ -181,7 +196,7 @@ test.describe('視覺穩定性測試', () => {
     // Now verify layout stability
 
     // [fix:2026-01-30] Header 使用 <span> 而非 <h1>，改用 getByText
-    const titleLocator = page.getByText(/RateWise 匯率好工具/i).first();
+    const titleLocator = getVisibleAppTitle(page);
 
     // [fix:2025-11-27] 使用 web-first assertion 取代 waitForSelector
     await expect(titleLocator).toBeVisible({ timeout: 10000 });

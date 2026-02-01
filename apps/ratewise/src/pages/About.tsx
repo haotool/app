@@ -5,6 +5,7 @@
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { getDisplayVersion } from '../config/version';
 
 export default function About() {
   return (
@@ -279,7 +280,7 @@ export default function About() {
           {/* Footer */}
           <div className="text-center text-text-muted text-sm">
             <p>© 2024-2026 RateWise. 採用 GPL-3.0 授權。</p>
-            <p className="mt-2">最後更新：2026-01-29 | 版本：v2.0.0</p>
+            <p className="mt-2">最後更新：2026-02-01 | 版本：{getDisplayVersion()}</p>
           </div>
         </div>
       </main>
