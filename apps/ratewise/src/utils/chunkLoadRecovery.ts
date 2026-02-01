@@ -28,7 +28,6 @@ export function isChunkLoadError(error: unknown): boolean {
     message.includes('failed to fetch dynamically imported module') ||
     message.includes('importing a module script failed') ||
     message.includes('failed to load module script') ||
-    message.includes('load failed') ||
     message.includes('unexpected token') ||
     message.includes('<!doctype') ||
     message.includes('is not valid json') ||

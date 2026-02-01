@@ -34,15 +34,18 @@ describe('chunkLoadRecovery', () => {
       'Failed to fetch dynamically imported module',
       'Importing a module script failed',
       'Failed to load module script',
-      'Load failed',
       'Unexpected token <',
       'SyntaxError: Unexpected token < in JSON',
     ])('should detect chunk load errors: %s', (message) => {
       expect(isChunkLoadError(new Error(message))).toBe(true);
     });
 
-    it('should return false for non chunk errors', () => {
-      expect(isChunkLoadError(new Error('Network request failed'))).toBe(false);
+    it.each([
+      'Network request failed',
+      'Load failed', // Safari generic fetch TypeError — not chunk-specific
+      'AbortError: The operation was aborted',
+    ])('should return false for non chunk errors: %s', (message) => {
+      expect(isChunkLoadError(new Error(message))).toBe(false);
     });
 
     it('should return false for non Error input', () => {
