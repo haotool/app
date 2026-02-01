@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-02-01
+
+### Added
+
+- **設定頁 IA 重構** - 新增「支援與資訊」區塊，統一頁腳資訊架構 (#115)
+  - 建立 `config/app-info.ts` SSOT 模組集中管理應用資訊（名稱、版本、GitHub、授權）
+  - 新增 `getCopyrightYears()` / `getCopyrightNotice()` 工具函數
+  - 完整測試覆蓋 `app-info.test.ts`
+- **使用指南連結** - Settings 頁新增 `/guide` 導航入口
+- **版本 SSOT 驗證腳本** - `scripts/verify-version-ssot.mjs` 新增 CHANGELOG 暫存區檢查
+
+### Fixed
+
+- **版權年份硬編碼** - `getCopyrightYears()` 改為動態 `new Date().getFullYear()`，消除跨年維護負擔
+- **CHANGELOG 驗證漏洞** - `verify-version-ssot.mjs` 改讀暫存區（`git show :CHANGELOG.md`），防止忘記 `git add` 時放行
+- **Motion.js 測試警告** - CalculatorKey 測試過濾 `whileTap`/`whileHover`/`transition`/`layout` 非 DOM 屬性
+- **MultiConverter 載入效能** - CalculatorKeyboard 改用 `React.lazy` + `Suspense` 延遲載入
+- **Service Worker 防禦** - `swUtils.ts` / `versionManager.ts` 新增 `getRegistration` 存在性檢查
+- **noscript 404** - `index.html` 內聯 noscript 樣式，移除對不存在的 `loading.css` 引用
+- **空 Sentry chunk** - 移除 `vite.config.ts` 中無效的 `vendor-sentry` 手動分塊
+
+### Changed
+
+- **Settings 頁面** - About/FAQ/Guide/GitHub 連結移至「支援與資訊」分組
+- **About/FAQ 頁面** - 版權聲明改用 `getCopyrightNotice()` SSOT
+- **i18n** - 新增 `settings.support`、`settings.usageGuide` 等翻譯鍵（zh-TW/en/ja）
+- **版本管理 SSOT** - `versionManager.ts` 改用 `APP_VERSION` + `STORAGE_KEYS` 集中管理
+- **Storage Keys** - 新增 `APP_VERSION`、`VERSION_HISTORY` 到 `storage-keys.ts`
+- **Pre-commit Hook** - 5 步驟驗證流程（lint → typecheck → format → SEO SSOT → 版本 SSOT）
+
 ## [2.1.0] - 2026-02-01
 
 ### Added
@@ -643,4 +673,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-**最後更新**: 2025-10-18
+**最後更新**: 2026-02-01
