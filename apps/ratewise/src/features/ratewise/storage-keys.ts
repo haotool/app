@@ -17,6 +17,14 @@ export const STORAGE_KEYS = {
   /** 匯率數據快取 - 5 分鐘過期，由 exchangeRateService.ts 管理 */
   EXCHANGE_RATES: 'exchangeRates',
 
+  // === 系統數據 (版本管理) ===
+
+  /** 當前應用版本號 - 由 versionManager.ts 管理 */
+  APP_VERSION: 'app_version',
+
+  /** 版本更新歷史 - 最近 10 筆，由 versionManager.ts 管理 */
+  VERSION_HISTORY: 'version_history',
+
   // === 用戶數據 (不可清除) ===
 
   /** 貨幣轉換器模式 (single/multi) - 用戶界面偏好 */

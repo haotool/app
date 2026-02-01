@@ -19,7 +19,7 @@ import { CurrencyList } from './components/CurrencyList';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator';
 import { formatDisplayTime } from '../../utils/timeFormatter';
-import { clearAllServiceWorkerCaches, forceServiceWorkerUpdate } from '../../utils/swUtils';
+import { performFullRefresh } from '../../utils/swUtils';
 import { logger } from '../../utils/logger';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { rateWiseLayoutTokens } from '../../config/design-tokens';
@@ -66,32 +66,11 @@ const RateWise = () => {
     lastFetchedAt,
   } = useExchangeRates();
 
-  // Pull-to-refresh: clear cache and force reload page
-  // 解決方案: 清除快取後強制重新載入頁面，確保載入最新版本
-  // 參考:
-  // - https://plainenglish.io/blog/how-to-force-a-pwa-to-refresh-its-content
-  // - https://web.dev/learn/pwa/update
+  // Pull-to-refresh: 使用共用流程確保快取與 Service Worker 更新一致
   const handlePullToRefresh = useCallback(async () => {
-    try {
-      logger.info('Pull-to-refresh: starting full refresh');
-
-      // 1. 清除 Service Worker 快取
-      const clearedCount = await clearAllServiceWorkerCaches();
-      logger.debug('Pull-to-refresh: caches cleared', { count: clearedCount });
-
-      // 2. 檢查並嘗試更新 Service Worker
-      await forceServiceWorkerUpdate();
-
-      // 3. 強制重新載入頁面 (確保載入最新版本的 JS/CSS/HTML)
-      window.location.reload();
-
-      logger.info('Pull-to-refresh: completed successfully');
-    } catch (error) {
-      logger.error('Pull-to-refresh: failed', error as Error);
-      // 即使出錯，仍然重新載入頁面
-      window.location.reload();
-    }
-  }, []); // 移除 refresh 依賴，因為頁面會重新載入
+    logger.info('Pull-to-refresh: starting full refresh');
+    await performFullRefresh();
+  }, []);
 
   // Pull-to-refresh functionality
   const isPullToRefreshEnabled = isHydrated && !ratesLoading && !ratesError && !isTestEnv;

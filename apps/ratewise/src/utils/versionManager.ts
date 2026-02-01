@@ -6,28 +6,26 @@
  * 2. 清除過期快取（保留用戶數據）
  * 3. 記錄版本更新歷史
  *
- * 注意: 此模組直接讀取環境變數以支援測試中的 vi.stubEnv
- * UI 組件應使用 config/version.ts 的 SSOT 導出
+ * SSOT:
+ * - 版本號來源: config/version.ts (APP_VERSION)
+ * - Storage keys 來源: features/ratewise/storage-keys.ts (STORAGE_KEYS)
  */
 
-import { DEFAULT_APP_VERSION } from '../config/version';
+import { APP_VERSION } from '../config/version';
 import { logger } from './logger';
-import { CACHE_KEYS } from '../features/ratewise/storage-keys';
+import { CACHE_KEYS, STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
-const VERSION_STORAGE_KEY = 'app_version';
-const VERSION_HISTORY_KEY = 'version_history';
-
-interface VersionInfo {
+interface VersionHistoryEntry {
   version: string;
   timestamp: string;
 }
 
 /**
  * 獲取當前應用版本號
- * 直接讀取環境變數以支援測試（vi.stubEnv）
+ * SSOT: 從 config/version.ts 的 APP_VERSION 取得
  */
 export function getCurrentVersion(): string {
-  return import.meta.env.VITE_APP_VERSION ?? DEFAULT_APP_VERSION;
+  return APP_VERSION;
 }
 
 /**
@@ -37,7 +35,7 @@ export function getPreviousVersion(): string | null {
   if (typeof window === 'undefined' || !window.localStorage) {
     return null;
   }
-  return localStorage.getItem(VERSION_STORAGE_KEY);
+  return localStorage.getItem(STORAGE_KEYS.APP_VERSION);
 }
 
 /**
@@ -48,7 +46,7 @@ export function saveCurrentVersion(): void {
     return;
   }
   const currentVersion = getCurrentVersion();
-  localStorage.setItem(VERSION_STORAGE_KEY, currentVersion);
+  localStorage.setItem(STORAGE_KEYS.APP_VERSION, currentVersion);
   logger.info('Version saved', { version: currentVersion });
 }
 
@@ -137,8 +135,9 @@ export function recordVersionUpdate(): void {
   }
 
   try {
-    const historyJson = localStorage.getItem(VERSION_HISTORY_KEY) ?? '[]';
-    const history = JSON.parse(historyJson) as VersionInfo[];
+    const historyJson = localStorage.getItem(STORAGE_KEYS.VERSION_HISTORY) ?? '[]';
+    const parsed = JSON.parse(historyJson) as unknown;
+    const history = Array.isArray(parsed) ? (parsed as VersionHistoryEntry[]) : [];
 
     history.push({
       version: currentVersion,
@@ -147,7 +146,7 @@ export function recordVersionUpdate(): void {
 
     // 只保留最近 10 筆記錄
     const recentHistory = history.slice(-10);
-    localStorage.setItem(VERSION_HISTORY_KEY, JSON.stringify(recentHistory));
+    localStorage.setItem(STORAGE_KEYS.VERSION_HISTORY, JSON.stringify(recentHistory));
 
     logger.info('Version update recorded', {
       from: previousVersion,
@@ -234,14 +233,15 @@ export async function handleVersionUpdate(): Promise<void> {
 /**
  * 獲取版本更新歷史
  */
-export function getVersionHistory(): VersionInfo[] {
+export function getVersionHistory(): VersionHistoryEntry[] {
   if (typeof window === 'undefined' || !window.localStorage) {
     return [];
   }
 
   try {
-    const historyJson = localStorage.getItem(VERSION_HISTORY_KEY) ?? '[]';
-    return JSON.parse(historyJson) as VersionInfo[];
+    const historyJson = localStorage.getItem(STORAGE_KEYS.VERSION_HISTORY) ?? '[]';
+    const parsed = JSON.parse(historyJson) as unknown;
+    return Array.isArray(parsed) ? (parsed as VersionHistoryEntry[]) : [];
   } catch {
     return [];
   }

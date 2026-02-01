@@ -109,12 +109,8 @@ export async function performFullRefresh(): Promise<void> {
     const clearedCount = await clearAllServiceWorkerCaches();
     logger.debug('Caches cleared', { count: clearedCount });
 
-    // 2. 檢查並強制更新 Service Worker
-    const hasUpdate = await hasServiceWorkerUpdate();
-    if (hasUpdate) {
-      await forceServiceWorkerUpdate();
-      logger.info('Service Worker update applied');
-    }
+    // 2. 主動檢查並更新 Service Worker
+    await forceServiceWorkerUpdate();
 
     // 3. 重新載入頁面
     window.location.reload();
