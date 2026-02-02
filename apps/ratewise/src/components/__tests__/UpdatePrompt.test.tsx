@@ -23,6 +23,39 @@
 import { describe, it, expect } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 
+describe('UpdatePrompt - setInterval 洩漏防護', () => {
+  // 🔴 RED: onRegistered 中的 setInterval 應被儲存，以便元件卸載時清除
+  it('should store interval ID for cleanup (no memory leak)', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
+    const sourceCode = await fs.readFile(componentPath, 'utf-8');
+
+    // setInterval 的回傳值必須被儲存（不是直接呼叫後丟棄）
+    // 正確：const intervalId = setInterval(...)  或 useRef 儲存
+    // 錯誤：setInterval(() => { ... }, 60000) 沒有儲存回傳值
+
+    // 檢查 setInterval 是否有賦值給變數或 ref
+    const hasStoredInterval =
+      /(?:const|let|var)\s+\w+\s*=\s*setInterval/.test(sourceCode) ||
+      /\.current\s*=\s*setInterval/.test(sourceCode);
+
+    expect(hasStoredInterval).toBe(true);
+  });
+
+  it('should clear interval on cleanup', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
+    const sourceCode = await fs.readFile(componentPath, 'utf-8');
+
+    // 必須有 clearInterval 呼叫
+    expect(sourceCode).toContain('clearInterval');
+  });
+});
+
 describe('UpdatePrompt Component - 粉彩雲朵配色 (BDD)', () => {
   describe('🔴 RED: 粉彩雲朵配色源碼驗證', () => {
     it('should use pastel cloud background gradient (purple-50 via-blue-50 to-purple-100)', async () => {

@@ -141,40 +141,69 @@ describe('Service Worker Offline Fallback', () => {
 
 describe('Service Worker Cache Strategies', () => {
   /**
-   * 驗證快取策略配置
+   * 驗證快取策略配置（預期值 = 修復後的正確配置）
    */
-  const cacheStrategies = {
+  const expectedStrategies = {
     'html-cache': { strategy: 'NetworkFirst', maxAge: 7 * 24 * 60 * 60 },
     'history-rates-cdn': { strategy: 'CacheFirst', maxAge: 365 * 24 * 60 * 60 },
-    'latest-rate-cache': { strategy: 'StaleWhileRevalidate', maxAge: 5 * 60 },
+    'latest-rate-cache': { strategy: 'StaleWhileRevalidate', maxAge: 7 * 24 * 60 * 60 },
     'image-cache': { strategy: 'CacheFirst', maxAge: 90 * 24 * 60 * 60 },
     'font-cache': { strategy: 'CacheFirst', maxAge: 365 * 24 * 60 * 60 },
-    'static-resources': { strategy: 'NetworkFirst', maxAge: 7 * 24 * 60 * 60 },
-    'offline-fallback': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60 },
+    'static-resources': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60 },
   };
 
   it('should have correct HTML cache configuration', () => {
-    const config = cacheStrategies['html-cache'];
+    const config = expectedStrategies['html-cache'];
     expect(config.strategy).toBe('NetworkFirst');
     expect(config.maxAge).toBe(7 * 24 * 60 * 60); // 7 days
   });
 
   it('should have correct historical rates cache configuration', () => {
-    const config = cacheStrategies['history-rates-cdn'];
+    const config = expectedStrategies['history-rates-cdn'];
     expect(config.strategy).toBe('CacheFirst');
     expect(config.maxAge).toBe(365 * 24 * 60 * 60); // 1 year
   });
 
   it('should have correct latest rate cache configuration', () => {
-    const config = cacheStrategies['latest-rate-cache'];
+    const config = expectedStrategies['latest-rate-cache'];
     expect(config.strategy).toBe('StaleWhileRevalidate');
-    expect(config.maxAge).toBe(5 * 60); // 5 minutes
+    expect(config.maxAge).toBe(7 * 24 * 60 * 60); // 7 days
   });
 
-  it('should have correct offline fallback configuration', () => {
-    const config = cacheStrategies['offline-fallback'];
-    expect(config.strategy).toBe('CacheFirst');
-    expect(config.maxAge).toBe(30 * 24 * 60 * 60); // 30 days
+  // 🔴 RED: JS/CSS 應使用 CacheFirst（Vite hash-based filenames 是 immutable）
+  it('should use CacheFirst for JS/CSS static resources (hash-based filenames are immutable)', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    // 找到 cacheName: 'static-resources' 所在位置，往前找最近的 new XxxStrategy
+    const cacheNameIdx = sourceCode.indexOf("cacheName: 'static-resources'");
+    expect(cacheNameIdx).toBeGreaterThan(-1);
+
+    // 截取 cacheName 前面的一小段程式碼（策略宣告在同一個 registerRoute 內）
+    const preceding = sourceCode.slice(Math.max(0, cacheNameIdx - 200), cacheNameIdx);
+    const strategyMatch = preceding.match(/new\s+(\w+)\s*\(\s*\{/g);
+    expect(strategyMatch).not.toBeNull();
+
+    // 取最後一個匹配（最靠近 cacheName 的策略）
+    const lastMatch = strategyMatch![strategyMatch!.length - 1] ?? '';
+    const nameMatch = /new\s+(\w+)/.exec(lastMatch);
+    expect(nameMatch).not.toBeNull();
+    expect(nameMatch![1]).toBe('CacheFirst');
+  });
+
+  // 🔴 RED: offline.html 不應有冗餘的 runtime route（已在 precache 中）
+  it('should NOT have a redundant offline-fallback runtime route (already in precache)', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    // 不應有 cacheName: 'offline-fallback' 的 runtime route
+    expect(sourceCode).not.toContain("cacheName: 'offline-fallback'");
   });
 });
 
