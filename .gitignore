@@ -55,6 +55,9 @@ Thumbs.db
 .temp/
 tmp/
 
+# SSG build temp files
+.vite-react-ssg-temp/
+
 # Docker
 .dockerignore
 
