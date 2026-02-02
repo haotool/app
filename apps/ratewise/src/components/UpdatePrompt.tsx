@@ -11,12 +11,13 @@
  * - 完整無障礙支援（ARIA、鍵盤操作）
  * - 響應式設計（手機、平板、桌面）
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { logger } from '../utils/logger';
 
 export function UpdatePrompt() {
   const [show, setShow] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 使用 vite-plugin-pwa 官方 React Hook
   // [context7:/vite-pwa/vite-plugin-pwa:2025-12-29]
@@ -29,7 +30,7 @@ export function UpdatePrompt() {
       // Service Worker 已註冊，設定定期更新檢查（每小時）
       if (r) {
         void r.update();
-        setInterval(
+        intervalRef.current = setInterval(
           () => {
             void r.update();
           },
@@ -42,6 +43,15 @@ export function UpdatePrompt() {
       logger.error('Service Worker registration error', errorObject);
     },
   });
+
+  // 清除 interval 防止記憶體洩漏
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   // 手動更新：用戶點擊「更新」按鈕時執行
   const handleUpdate = () => {

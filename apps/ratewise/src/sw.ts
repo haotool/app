@@ -309,19 +309,23 @@ registerRoute(
   }),
 );
 
-// JS/CSS: NetworkFirst to ensure latest version (Vite hash-based filenames)
+// JS/CSS: CacheFirst — Vite hash-based filenames are immutable
+// 檔名含 content hash（例如 index-a1b2c3.js），相同 hash = 相同內容
+// 不需要每次重新驗證，離線時也能立即載入
 registerRoute(
   ({ request }: { request: Request }) =>
     request.destination === 'script' || request.destination === 'style',
-  new NetworkFirst({
+  new CacheFirst({
     cacheName: 'static-resources',
     plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
       new ExpirationPlugin({
         maxEntries: 60,
-        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+        maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
       }),
     ],
-    networkTimeoutSeconds: 3,
   }),
 );
 
@@ -339,21 +343,7 @@ registerRoute(
   }),
 );
 
-// Offline fallback: CacheFirst with dynamic path matching
-registerRoute(
-  ({ url }: { url: URL }) => {
-    const offlinePath = resolvePath('offline.html');
-    return url.pathname === offlinePath;
-  },
-  new CacheFirst({
-    cacheName: 'offline-fallback',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 1,
-        maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-      }),
-    ],
-  }),
-);
+// offline.html 由 precacheAndRoute 管理（透過 additionalManifestEntries 加入）
+// 不需要額外的 runtime route，避免冗餘快取浪費 Safari iOS 50MB 限制
 
 // Service Worker initialization complete (use browser DevTools to debug)
