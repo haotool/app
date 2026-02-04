@@ -1,5 +1,25 @@
 # @app/ratewise
 
+## 2.2.2 (2026-02-04)
+
+### Fixed
+
+- **PWA 離線快取策略修正**: 修復 SW 註冊錯誤處理與記憶體洩漏（interval 清理）
+- **Chunk load 錯誤恢復**: 統一錯誤恢復流程，修正誤判邏輯
+
+### Changed
+
+- **UpdatePrompt motion/react 整合**: 以 `AnimatePresence` + `notificationAnimations.enter` 取代 CSS `animate-slide-in-bounce`，入場／退場動畫更流暢
+- **按鈕微互動**: CTA 按鈕 `hover:scale-[1.02] active:scale-[0.98]`、關閉按鈕 `hover:scale-[1.05] active:scale-[0.95]`
+- **Brand 配色 SSOT**: 6 種風格（Zen / Nitro / Kawaii / Classic / Ocean / Forest）各定義 14 個 `--color-brand-*` CSS 變數，UpdatePrompt 自動適配
+- **focus-visible 統一**: 所有按鈕 `focus:` → `focus-visible:`，避免滑鼠點擊顯示焦點環
+- **transition 明確化**: `transition-all` → `transition-[color,background-color,border-color,transform]`
+- **註解正式化**: 全部改為簡短正式繁體中文 JSDoc 風格
+
+### Removed
+
+- **移除未使用 CSS**: 刪除 `@keyframes slide-in-bounce` 與 `.animate-slide-in-bounce`（已由 motion/react 取代）
+
 ## 2.0.0 (2026-01-29)
 
 ### 🚀 Major Release - UI/UX 大幅重構與 SEO 優化

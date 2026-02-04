@@ -1,41 +1,59 @@
 /**
- * PWA 更新提示元件
+ * PWA 更新通知元件
  *
- * 以 Material Design snackbar 樣式呈現更新提示
- * 使用 vite-plugin-pwa 提供的 useRegisterSW
+ * Material Design snackbar 風格，固定於視窗底部中央。
+ * 唯一實例於 App.tsx 渲染，內建 SSR 安全檢查。
  *
- * 特點：
- * - 漸層視覺與雲朵裝飾
- * - 入場動畫
- * - 置中底部定位
- * - 完整無障礙支援（ARIA、鍵盤操作）
- * - 響應式設計（手機、平板、桌面）
+ * 功能：
+ * - SSR 安全（伺服器端不渲染，避免 hydration 不匹配）
+ * - SSOT（notificationTokens + notificationAnimations）
+ * - motion/react 入場／退場動畫與按鈕微互動
+ * - i18n 國際化
+ * - prefers-reduced-motion 無障礙支援
+ * - 四狀態：offlineReady / needRefresh / isUpdating / updateFailed
+ * - offlineReady 5 秒自動消失
+ * - ARIA role 依緊急程度切換（status / alert）
+ * - 定時器清理，防止記憶體洩漏
+ *
+ * @see notificationTokens — design-tokens.ts
+ * @see notificationAnimations — animations.ts
  */
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { AnimatePresence, motion } from 'motion/react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { notificationTokens } from '../config/design-tokens';
+import { notificationAnimations, safeTransition } from '../config/animations';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import { logger } from '../utils/logger';
 
+/** SSR 安全入口：伺服器端回傳 null */
 export function UpdatePrompt() {
-  const [show, setShow] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  if (typeof window === 'undefined') return null;
 
-  // 使用 vite-plugin-pwa 官方 React Hook
-  // [context7:/vite-pwa/vite-plugin-pwa:2025-12-29]
+  return <UpdatePromptClient />;
+}
+
+function UpdatePromptClient() {
+  const { t } = useTranslation();
+  const prefersReducedMotion = useReducedMotion();
+
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateFailed, setUpdateFailed] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const {
     offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered(r) {
-      // Service Worker 已註冊，設定定期更新檢查（每小時）
       if (r) {
         void r.update();
-        intervalRef.current = setInterval(
-          () => {
-            void r.update();
-          },
-          60 * 60 * 1000,
-        );
+        intervalRef.current = setInterval(() => {
+          void r.update();
+        }, notificationTokens.timing.updateInterval);
       }
     },
     onRegisterError(error) {
@@ -44,7 +62,7 @@ export function UpdatePrompt() {
     },
   });
 
-  // 清除 interval 防止記憶體洩漏
+  // 清除定期更新 interval
   useEffect(() => {
     return () => {
       if (intervalRef.current !== null) {
@@ -53,165 +71,331 @@ export function UpdatePrompt() {
     };
   }, []);
 
-  // 手動更新：用戶點擊「更新」按鈕時執行
-  const handleUpdate = () => {
-    void updateServiceWorker(true);
-  };
-
-  // 動畫效果：延遲顯示以實現入場動畫
-  // 修正：使用條件返回避免 effect 中直接呼叫 setState
-  // [context7:/react/react.dev:useEffect:2025-12-29]
+  // offlineReady 自動消失
   useEffect(() => {
-    // 只有當需要顯示時才設定計時器
-    if (!offlineReady && !needRefresh) {
-      // 不需要顯示時，直接返回（不在 effect 中設定 state）
-      return undefined;
+    if (offlineReady) {
+      autoDismissRef.current = setTimeout(() => {
+        setOfflineReady(false);
+        setNeedRefresh(false);
+        setUpdateFailed(false);
+      }, notificationTokens.timing.autoDismiss);
     }
-    // 微延遲讓瀏覽器準備好渲染動畫
-    const timer = setTimeout(() => setShow(true), 100);
     return () => {
-      clearTimeout(timer);
-      // 清理時重置 show 狀態（在 cleanup 中調用是安全的）
-      setShow(false);
+      if (autoDismissRef.current !== null) {
+        clearTimeout(autoDismissRef.current);
+      }
     };
-  }, [offlineReady, needRefresh]);
+  }, [offlineReady, setOfflineReady, setNeedRefresh]);
+
+  const handleUpdate = async () => {
+    setIsUpdating(true);
+    setUpdateFailed(false);
+    try {
+      await updateServiceWorker(true);
+    } catch {
+      setUpdateFailed(true);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const close = () => {
     setOfflineReady(false);
     setNeedRefresh(false);
-    setShow(false);
+    setUpdateFailed(false);
   };
 
-  if (!offlineReady && !needRefresh) {
-    return null;
+  const shouldRender = offlineReady || needRefresh || isUpdating || updateFailed;
+  const isUrgent = needRefresh || updateFailed || isUpdating;
+
+  return (
+    <AnimatePresence>
+      {shouldRender && (
+        <motion.div
+          key="update-prompt"
+          className={notificationTokens.position}
+          role={isUrgent ? 'alert' : 'status'}
+          aria-live={isUrgent ? 'assertive' : 'polite'}
+          aria-labelledby="update-prompt-title"
+          aria-describedby="update-prompt-description"
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          variants={notificationAnimations.enter.variants}
+          transition={safeTransition(
+            {
+              ...notificationAnimations.enter.transition,
+              delay: notificationTokens.timing.showDelay / 1000,
+            },
+            prefersReducedMotion,
+          )}
+        >
+          <div
+            className={`
+              relative overflow-hidden ${notificationTokens.borderRadius}
+              ${notificationTokens.container}
+              bg-gradient-to-r from-brand-from via-brand-via to-brand-to
+              border border-brand-border/60
+              ${notificationTokens.shadow}
+            `}
+          >
+            {/* 裝飾光暈 */}
+            <div
+              className={`absolute top-0 right-0 ${notificationTokens.decoration.size} rounded-full ${notificationTokens.decoration.topRight} ${notificationTokens.decoration.blur} ${prefersReducedMotion ? 'hidden' : ''}`}
+              aria-hidden="true"
+            />
+            <div
+              className={`absolute bottom-0 left-0 ${notificationTokens.decoration.size} rounded-full ${notificationTokens.decoration.bottomLeft} ${notificationTokens.decoration.blur} ${prefersReducedMotion ? 'hidden' : ''}`}
+              aria-hidden="true"
+            />
+
+            {/* 內容 */}
+            <div className={`relative ${notificationTokens.padding}`}>
+              <div className="flex items-center gap-3">
+                {/* 狀態圖標 */}
+                <div className="flex-shrink-0">
+                  <div
+                    className={`relative ${notificationTokens.icon.container} bg-gradient-to-br from-brand-icon-from to-brand-icon-to flex items-center justify-center shadow`}
+                  >
+                    <StatusIcon
+                      offlineReady={offlineReady}
+                      isUpdating={isUpdating}
+                      updateFailed={updateFailed}
+                      strokeWidth={notificationTokens.icon.strokeWidth}
+                      className={notificationTokens.icon.svg}
+                    />
+                  </div>
+                </div>
+
+                {/* 標題與描述 */}
+                <div className="flex-1 min-w-0">
+                  <h2
+                    id="update-prompt-title"
+                    className="text-sm font-semibold text-brand-text-dark truncate"
+                  >
+                    <StatusTitle
+                      offlineReady={offlineReady}
+                      needRefresh={needRefresh}
+                      isUpdating={isUpdating}
+                      updateFailed={updateFailed}
+                      t={t}
+                    />
+                  </h2>
+                  <p id="update-prompt-description" className="text-xs text-brand-text truncate">
+                    <StatusDescription
+                      offlineReady={offlineReady}
+                      needRefresh={needRefresh}
+                      isUpdating={isUpdating}
+                      updateFailed={updateFailed}
+                      t={t}
+                    />
+                  </p>
+                </div>
+
+                {/* 操作按鈕 */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <ActionButtons
+                    offlineReady={offlineReady}
+                    needRefresh={needRefresh}
+                    isUpdating={isUpdating}
+                    updateFailed={updateFailed}
+                    onUpdate={handleUpdate}
+                    onClose={close}
+                    t={t}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* --- 子元件 --- */
+
+interface StatusIconProps {
+  offlineReady: boolean;
+  isUpdating: boolean;
+  updateFailed: boolean;
+  strokeWidth: number;
+  className: string;
+}
+
+function StatusIcon({
+  offlineReady,
+  isUpdating,
+  updateFailed,
+  strokeWidth,
+  className,
+}: StatusIconProps) {
+  if (isUpdating) {
+    return (
+      <svg
+        className={`${className} text-brand-text animate-spin`}
+        fill="none"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth={4}
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
+    );
   }
 
   return (
-    <div
-      className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-out ${
-        show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-      }`}
-      role="alertdialog"
-      aria-labelledby="update-prompt-title"
-      aria-describedby="update-prompt-description"
+    <svg
+      className={`${className} text-brand-text`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
     >
-      {/* Material Design Snackbar 風格卡片 - 緊湊水平布局 */}
-      <div
-        className="
-          relative overflow-hidden rounded-lg
-          w-[calc(100vw-2rem)] max-w-[344px]
-          bg-gradient-to-r from-brand-from via-brand-via to-brand-to
-          border border-brand-border/60
-          shadow-lg shadow-brand-shadow/50
-          animate-slide-in-bounce
-        "
+      {updateFailed ? (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+          d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+        />
+      ) : offlineReady ? (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+          d="M5 13l4 4L19 7"
+        />
+      ) : (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+        />
+      )}
+    </svg>
+  );
+}
+
+interface StatusTextProps {
+  offlineReady: boolean;
+  needRefresh: boolean;
+  isUpdating: boolean;
+  updateFailed: boolean;
+  t: (key: string) => string;
+}
+
+function StatusTitle({ offlineReady, isUpdating, updateFailed, t }: StatusTextProps) {
+  if (isUpdating) return <>{t('pwa.updatingTitle')}</>;
+  if (updateFailed) return <>{t('pwa.updateFailedTitle')}</>;
+  if (offlineReady) return <>{t('pwa.offlineReadyTitle')}</>;
+  return <>{t('pwa.needRefreshTitle')}</>;
+}
+
+function StatusDescription({ offlineReady, isUpdating, updateFailed, t }: StatusTextProps) {
+  if (isUpdating) return <>{t('pwa.updatingDescription')}</>;
+  if (updateFailed) return <>{t('pwa.updateFailedDescription')}</>;
+  if (offlineReady) return <>{t('pwa.offlineReadyDescription')}</>;
+  return <>{t('pwa.needRefreshDescription')}</>;
+}
+
+interface ActionButtonsProps {
+  offlineReady: boolean;
+  needRefresh: boolean;
+  isUpdating: boolean;
+  updateFailed: boolean;
+  onUpdate: () => Promise<void>;
+  onClose: () => void;
+  t: (key: string) => string;
+}
+
+/** CTA 按鈕共用樣式（更新／重試） */
+const CTA_CLASS = `
+  px-3 py-1.5 rounded-full text-xs font-medium
+  bg-gradient-to-r from-brand-button-from to-brand-button-to
+  text-white shadow-sm
+  hover:from-brand-button-hover-from hover:to-brand-button-hover-to
+  hover:scale-[1.02] active:scale-[0.98]
+  transition-[color,background-color,border-color,transform] duration-200 ease-out
+  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
+`;
+
+function ActionButtons({
+  needRefresh,
+  isUpdating,
+  updateFailed,
+  onUpdate,
+  onClose,
+  t,
+}: ActionButtonsProps) {
+  if (isUpdating) {
+    return null;
+  }
+
+  if (updateFailed) {
+    return (
+      <button
+        onClick={() => void onUpdate()}
+        className={CTA_CLASS}
+        aria-label={t('pwa.actionRetry')}
       >
-        {/* 雲朵裝飾 - 優化尺寸 */}
-        <div
-          className="absolute top-0 right-0 w-16 h-16 rounded-full bg-white/40 blur-2xl"
-          aria-hidden="true"
+        {t('pwa.actionRetry')}
+      </button>
+    );
+  }
+
+  if (needRefresh) {
+    return (
+      <button
+        onClick={() => void onUpdate()}
+        className={CTA_CLASS}
+        aria-label={t('pwa.actionUpdate')}
+      >
+        {t('pwa.actionUpdate')}
+      </button>
+    );
+  }
+
+  // offlineReady: 關閉按鈕
+  return (
+    <button
+      onClick={onClose}
+      className="
+        p-1.5 rounded-full
+        bg-brand-icon-from/80 text-brand-text
+        hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05]
+        active:scale-[0.95]
+        transition-[color,background-color,transform] duration-200 ease-out
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
+      "
+      aria-label={t('pwa.actionClose')}
+    >
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M6 18L18 6M6 6l12 12"
         />
-        <div
-          className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-brand-decoration/40 blur-2xl"
-          aria-hidden="true"
-        />
-
-        {/* 內容區域 - Material Design 內距 (14px/24px) */}
-        <div className="relative px-6 py-3.5">
-          <div className="flex items-center gap-3">
-            {/* 圖標區 - 緊湊尺寸 */}
-            <div className="flex-shrink-0">
-              <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-brand-icon-from to-brand-icon-to flex items-center justify-center shadow">
-                <svg
-                  className="w-5 h-5 text-brand-text"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  {offlineReady ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2.5}
-                      d="M5 13l4 4L19 7"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2.5}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  )}
-                </svg>
-              </div>
-            </div>
-
-            {/* 文字區 - 彈性空間 */}
-            <div className="flex-1 min-w-0">
-              <h2
-                id="update-prompt-title"
-                className="text-sm font-semibold text-brand-text-dark truncate"
-              >
-                {offlineReady ? '✨ 離線模式已就緒' : '🎉 發現新版本'}
-              </h2>
-              <p id="update-prompt-description" className="text-xs text-brand-text truncate">
-                {offlineReady ? '隨時隨地都能使用' : '點擊更新獲取最新功能'}
-              </p>
-            </div>
-
-            {/* 行動區 - 緊湊按鈕 */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {needRefresh ? (
-                // 發現新版本時顯示「更新」按鈕
-                <button
-                  onClick={handleUpdate}
-                  className="
-                    px-3 py-1.5 rounded-full text-xs font-medium
-                    bg-gradient-to-r from-brand-button-from to-brand-button-to
-                    text-white shadow-sm
-                    hover:from-brand-button-hover-from hover:to-brand-button-hover-to
-                    transition-all
-                    focus:outline-none focus:ring-2 focus:ring-primary-ring focus:ring-offset-1
-                  "
-                  aria-label="更新應用程式"
-                >
-                  更新
-                </button>
-              ) : (
-                // 離線就緒時顯示關閉按鈕
-                <button
-                  onClick={close}
-                  className="
-                    p-1.5 rounded-full
-                    bg-white/80 text-primary-text-light
-                    hover:text-primary hover:bg-white
-                    transition-colors
-                    focus:outline-none focus:ring-2 focus:ring-primary-ring focus:ring-offset-1
-                  "
-                  aria-label="關閉通知"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </svg>
+    </button>
   );
 }

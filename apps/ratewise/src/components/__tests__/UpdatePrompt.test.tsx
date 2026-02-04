@@ -1,154 +1,195 @@
 /**
- * UpdatePrompt.tsx BDD Tests - 粉彩雲朵配色
+ * UpdatePrompt.tsx BDD Tests
  *
- * BDD 測試：驗證 UpdatePrompt 組件使用粉彩雲朵配色
- *
- * 測試策略：
- * - 🔴 RED: 驗證源碼使用粉彩雲朵配色（purple-50, purple-200, purple-800 等）
- * - 🟢 GREEN: 更新配色後測試通過
- * - 🔵 REFACTOR: 確保代碼品質
- *
- * 參考配色：
- * - 背景：from-purple-50 via-blue-50 to-purple-100
- * - 邊框：border-purple-200/50
- * - 圖標：from-purple-200 to-blue-200
- * - 標題：text-purple-800
- * - 描述：text-purple-600
- * - 更新按鈕：from-purple-400 to-blue-400
- *
- * 創建時間: 2025-12-27
- * 更新時間: 2025-12-28
+ * 驗證 PWA 更新提示元件的：
+ * - 記憶體洩漏防護（setInterval 清理）
+ * - SSOT tokens 引用
+ * - i18n 多語系支援
+ * - useReducedMotion 支援
+ * - 4 個狀態（offlineReady / needRefresh / isUpdating / updateFailed）
+ * - ARIA 語義化
+ * - SSR 安全
+ * - 單一實例渲染
  */
 
 import { describe, it, expect } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 
+async function readSource() {
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+  const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
+  return fs.readFile(componentPath, 'utf-8');
+}
+
 describe('UpdatePrompt - setInterval 洩漏防護', () => {
-  // 🔴 RED: onRegistered 中的 setInterval 應被儲存，以便元件卸載時清除
   it('should store interval ID for cleanup (no memory leak)', async () => {
-    const fs = await import('node:fs/promises');
-    const path = await import('node:path');
-
-    const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
-    const sourceCode = await fs.readFile(componentPath, 'utf-8');
-
-    // setInterval 的回傳值必須被儲存（不是直接呼叫後丟棄）
-    // 正確：const intervalId = setInterval(...)  或 useRef 儲存
-    // 錯誤：setInterval(() => { ... }, 60000) 沒有儲存回傳值
-
-    // 檢查 setInterval 是否有賦值給變數或 ref
+    const sourceCode = await readSource();
     const hasStoredInterval =
       /(?:const|let|var)\s+\w+\s*=\s*setInterval/.test(sourceCode) ||
       /\.current\s*=\s*setInterval/.test(sourceCode);
-
     expect(hasStoredInterval).toBe(true);
   });
 
   it('should clear interval on cleanup', async () => {
-    const fs = await import('node:fs/promises');
-    const path = await import('node:path');
-
-    const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
-    const sourceCode = await fs.readFile(componentPath, 'utf-8');
-
-    // 必須有 clearInterval 呼叫
+    const sourceCode = await readSource();
     expect(sourceCode).toContain('clearInterval');
   });
 });
 
-describe('UpdatePrompt Component - 粉彩雲朵配色 (BDD)', () => {
-  describe('🔴 RED: 粉彩雲朵配色源碼驗證', () => {
-    it('should use pastel cloud background gradient (purple-50 via-blue-50 to-purple-100)', async () => {
-      // Given: 讀取 UpdatePrompt.tsx 源碼
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
+describe('UpdatePrompt - SSOT tokens 引用', () => {
+  it('should import notificationTokens from design-tokens', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('notificationTokens');
+    expect(sourceCode).toContain("from '../config/design-tokens'");
+  });
 
-      const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
-      const sourceCode = await fs.readFile(componentPath, 'utf-8');
+  it('should use notificationTokens.timing for intervals', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('notificationTokens.timing.updateInterval');
+    expect(sourceCode).toContain('notificationTokens.timing.showDelay');
+    expect(sourceCode).toContain('notificationTokens.timing.autoDismiss');
+  });
 
-      // When: 檢查背景漸變配色
-      // Then: ✅ 應該使用 design token: from-brand-from via-brand-via to-brand-to
-      expect(sourceCode).toContain('from-brand-from via-brand-via to-brand-to');
-    });
+  it('should use notificationTokens for layout', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('notificationTokens.position');
+    expect(sourceCode).toContain('notificationTokens.container');
+    expect(sourceCode).toContain('notificationTokens.padding');
+    expect(sourceCode).toContain('notificationTokens.borderRadius');
+  });
+});
 
-    it('should use pastel cloud border color (purple-200/50)', async () => {
-      // Given: 讀取源碼
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
+describe('UpdatePrompt - i18n 多語系', () => {
+  it('should use useTranslation hook', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('useTranslation');
+  });
 
-      const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
-      const sourceCode = await fs.readFile(componentPath, 'utf-8');
+  it('should use pwa.* i18n keys for all states', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain("t('pwa.offlineReadyTitle')");
+    expect(sourceCode).toContain("t('pwa.offlineReadyDescription')");
+    expect(sourceCode).toContain("t('pwa.needRefreshTitle')");
+    expect(sourceCode).toContain("t('pwa.needRefreshDescription')");
+    expect(sourceCode).toContain("t('pwa.updatingTitle')");
+    expect(sourceCode).toContain("t('pwa.updatingDescription')");
+    expect(sourceCode).toContain("t('pwa.updateFailedTitle')");
+    expect(sourceCode).toContain("t('pwa.updateFailedDescription')");
+    expect(sourceCode).toContain("t('pwa.actionUpdate')");
+    expect(sourceCode).toContain("t('pwa.actionClose')");
+    expect(sourceCode).toContain("t('pwa.actionRetry')");
+  });
 
-      // When: 檢查邊框顏色
-      // Then: ✅ 應該使用 design token: border-brand-border
-      expect(sourceCode).toContain('border-brand-border');
-    });
+  it('should NOT contain hardcoded Chinese strings for states', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).not.toContain('離線模式已就緒');
+    expect(sourceCode).not.toContain('發現新版本');
+    expect(sourceCode).not.toContain('隨時隨地都能使用');
+    expect(sourceCode).not.toContain('點擊更新獲取最新功能');
+    expect(sourceCode).not.toContain('更新應用程式');
+    expect(sourceCode).not.toContain('關閉通知');
+  });
+});
 
-    it('should use pastel cloud icon gradient (purple-200 to-blue-200)', async () => {
-      // Given: 讀取源碼
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
+describe('UpdatePrompt - useReducedMotion 支援', () => {
+  it('should import and use useReducedMotion', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('useReducedMotion');
+    expect(sourceCode).toContain('prefersReducedMotion');
+  });
 
-      const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
-      const sourceCode = await fs.readFile(componentPath, 'utf-8');
+  it('should conditionally hide decorations for reduced motion', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain("prefersReducedMotion ? 'hidden' : ''");
+  });
+});
 
-      // When: 檢查圖標漸變
-      // Then: ✅ 應該使用 design token: from-brand-icon-from to-brand-icon-to
-      expect(sourceCode).toContain('from-brand-icon-from to-brand-icon-to');
-    });
+describe('UpdatePrompt - 4 個狀態', () => {
+  it('should have isUpdating state', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('isUpdating');
+    expect(sourceCode).toContain('setIsUpdating');
+  });
 
-    it('should use pastel cloud title color (purple-800)', async () => {
-      // Given: 讀取源碼
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
+  it('should have updateFailed state', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('updateFailed');
+    expect(sourceCode).toContain('setUpdateFailed');
+  });
 
-      const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
-      const sourceCode = await fs.readFile(componentPath, 'utf-8');
+  it('should handle update with try/catch for error recovery', async () => {
+    const sourceCode = await readSource();
+    // handleUpdate should catch errors and set updateFailed
+    expect(sourceCode).toContain('await updateServiceWorker(true)');
+    expect(sourceCode).toContain('setUpdateFailed(true)');
+    expect(sourceCode).toContain('setIsUpdating(false)');
+  });
+});
 
-      // When: 檢查標題文字顏色
-      // Then: ✅ 應該使用 design token: text-brand-text-dark
-      expect(sourceCode).toContain('text-brand-text-dark');
-    });
+describe('UpdatePrompt - ARIA 語義', () => {
+  it('should use role="status" for offlineReady (low urgency)', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain("role={isUrgent ? 'alert' : 'status'}");
+  });
 
-    it('should use pastel cloud description color (purple-600)', async () => {
-      // Given: 讀取源碼
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
+  it('should use role="alert" for needRefresh/updateFailed (high urgency)', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain("aria-live={isUrgent ? 'assertive' : 'polite'}");
+  });
 
-      const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
-      const sourceCode = await fs.readFile(componentPath, 'utf-8');
+  it('should NOT use alertdialog role', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).not.toContain('alertdialog');
+  });
+});
 
-      // When: 檢查描述文字顏色
-      // Then: ✅ 應該使用 design token: text-brand-text
-      expect(sourceCode).toContain('text-brand-text');
-    });
+describe('UpdatePrompt - SSR 安全', () => {
+  it('should check for window undefined at component level', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain("typeof window === 'undefined'");
+  });
+});
 
-    it('should use pastel cloud update button gradient (purple-400 to-blue-400)', async () => {
-      // Given: 讀取源碼
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
+describe('UpdatePrompt - Design token 品牌配色', () => {
+  it('should use brand gradient', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('from-brand-from via-brand-via to-brand-to');
+  });
 
-      const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
-      const sourceCode = await fs.readFile(componentPath, 'utf-8');
+  it('should use brand border', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('border-brand-border');
+  });
 
-      // When: 檢查更新按鈕配色
-      // Then: ✅ 應該使用 design token: from-brand-button-from to-brand-button-to
-      expect(sourceCode).toContain('from-brand-button-from to-brand-button-to');
-    });
+  it('should use brand icon gradient', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('from-brand-icon-from to-brand-icon-to');
+  });
 
-    it('should NOT use brand blue colors (blue-500, blue-600, indigo-600)', async () => {
-      // Given: 讀取源碼
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
+  it('should use brand text colors', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('text-brand-text-dark');
+    expect(sourceCode).toContain('text-brand-text');
+  });
 
-      const componentPath = path.resolve(__dirname, '../UpdatePrompt.tsx');
-      const sourceCode = await fs.readFile(componentPath, 'utf-8');
+  it('should use brand button gradient', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('from-brand-button-from to-brand-button-to');
+  });
 
-      // When: 檢查是否移除了藍色品牌配色
-      // Then: 🔴 不應該包含舊的藍色系配色
-      expect(sourceCode).not.toContain('from-blue-500 to-indigo-600');
-      expect(sourceCode).not.toContain('text-blue-900');
-      expect(sourceCode).not.toContain('text-indigo-700');
-    });
+  it('should NOT use hardcoded blue/indigo/purple colors', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).not.toContain('from-blue-500 to-indigo-600');
+    expect(sourceCode).not.toContain('text-blue-900');
+    expect(sourceCode).not.toContain('text-indigo-700');
+  });
+});
+
+describe('UpdatePrompt - offlineReady 自動消失', () => {
+  it('should have autoDismiss timer for offlineReady', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('autoDismissRef');
+    expect(sourceCode).toContain('notificationTokens.timing.autoDismiss');
   });
 });

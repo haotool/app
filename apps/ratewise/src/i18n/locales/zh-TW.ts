@@ -243,6 +243,17 @@ const zhTW = {
     refresh: '重新整理',
     dismiss: '稍後',
     pullToRefresh: '下拉重新整理',
+    offlineReadyTitle: '離線模式已就緒',
+    offlineReadyDescription: '隨時隨地都能使用',
+    needRefreshTitle: '發現新版本',
+    needRefreshDescription: '點擊更新獲取最新功能',
+    actionUpdate: '更新',
+    actionClose: '關閉通知',
+    updatingTitle: '正在更新',
+    updatingDescription: '請稍候...',
+    updateFailedTitle: '更新失敗',
+    updateFailedDescription: '請重試或檢查網路',
+    actionRetry: '重試',
   },
 
   // 404

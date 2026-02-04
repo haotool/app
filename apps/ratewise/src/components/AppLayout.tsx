@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
 import { ToastProvider } from './Toast';
-import { UpdatePromptLoader } from './UpdatePromptLoader';
+
 import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
 
@@ -124,7 +124,6 @@ export function AppLayout() {
           </div>
         </div>
       </div>
-      <UpdatePromptLoader />
     </ToastProvider>
   );
 }

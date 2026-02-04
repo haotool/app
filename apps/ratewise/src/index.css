@@ -354,6 +354,22 @@
     --color-calc-equals-text: 15 23 42; /* slate-900 */
     --color-calc-equals-hover: 6 182 212; /* cyan-500 */
     --color-calc-equals-active: 103 232 249; /* cyan-300 */
+
+    /* Brand 系列（霓虹深色風格） */
+    --color-brand-from: 15 23 42; /* slate-900 */
+    --color-brand-via: 30 41 59; /* slate-800 */
+    --color-brand-to: 15 23 42; /* slate-900 */
+    --color-brand-border: 51 65 85; /* slate-700 */
+    --color-brand-decoration: 30 41 59; /* slate-800 */
+    --color-brand-button-from: 6 182 212; /* cyan-500 */
+    --color-brand-button-to: 8 145 178; /* cyan-600 */
+    --color-brand-button-hover-from: 8 145 178; /* cyan-600 */
+    --color-brand-button-hover-to: 14 116 144; /* cyan-700 */
+    --color-brand-icon-from: 30 41 59; /* slate-800 */
+    --color-brand-icon-to: 30 41 59; /* slate-800 */
+    --color-brand-text: 103 232 249; /* cyan-300 */
+    --color-brand-text-dark: 255 255 255; /* white */
+    --color-brand-shadow: 30 41 59; /* slate-800 */
   }
 
   /* ========================================
@@ -472,6 +488,22 @@
     --color-calc-equals-text: 255 255 255; /* white */
     --color-calc-equals-hover: 219 39 119; /* pink-600 */
     --color-calc-equals-active: 244 114 182; /* pink-400 */
+
+    /* Brand 系列（可愛粉嫩風格） */
+    --color-brand-from: 255 250 244; /* warm cream */
+    --color-brand-via: 255 241 242; /* rose-50 */
+    --color-brand-to: 255 250 244; /* warm cream */
+    --color-brand-border: 255 228 225; /* misty rose */
+    --color-brand-decoration: 252 231 243; /* pink-100 */
+    --color-brand-button-from: 236 72 153; /* pink-500 */
+    --color-brand-button-to: 219 39 119; /* pink-600 */
+    --color-brand-button-hover-from: 219 39 119; /* pink-600 */
+    --color-brand-button-hover-to: 190 24 93; /* pink-700 */
+    --color-brand-icon-from: 252 231 243; /* pink-100 */
+    --color-brand-icon-to: 252 231 243; /* pink-100 */
+    --color-brand-text: 236 72 153; /* pink-500 */
+    --color-brand-text-dark: 157 23 77; /* pink-800 */
+    --color-brand-shadow: 252 231 243; /* pink-100 */
   }
 
   /* ========================================
@@ -590,6 +622,22 @@
     --color-calc-equals-text: 255 255 255; /* white */
     --color-calc-equals-hover: 180 83 9; /* amber-700 */
     --color-calc-equals-active: 245 158 11; /* amber-500 */
+
+    /* Brand 系列（復古書卷風格） */
+    --color-brand-from: 255 250 251; /* warm white - 象牙白 */
+    --color-brand-via: 255 251 235; /* amber-50 */
+    --color-brand-to: 255 250 251; /* warm white */
+    --color-brand-border: 245 230 220; /* linen */
+    --color-brand-decoration: 254 243 199; /* amber-100 */
+    --color-brand-button-from: 217 119 6; /* amber-600 */
+    --color-brand-button-to: 180 83 9; /* amber-700 */
+    --color-brand-button-hover-from: 180 83 9; /* amber-700 */
+    --color-brand-button-hover-to: 146 64 14; /* amber-800 */
+    --color-brand-icon-from: 254 243 199; /* amber-100 */
+    --color-brand-icon-to: 254 243 199; /* amber-100 */
+    --color-brand-text: 180 83 9; /* amber-700 */
+    --color-brand-text-dark: 67 20 7; /* dark brown */
+    --color-brand-shadow: 254 243 199; /* amber-100 */
   }
 
   /* ========================================
@@ -708,6 +756,22 @@
     --color-calc-equals-text: 255 255 255; /* white */
     --color-calc-equals-hover: 8 145 178; /* cyan-600 */
     --color-calc-equals-active: 34 211 238; /* cyan-400 */
+
+    /* Brand 系列（海洋深邃風格） */
+    --color-brand-from: 240 249 255; /* sky-50 */
+    --color-brand-via: 224 242 254; /* cyan-50 */
+    --color-brand-to: 240 249 255; /* sky-50 */
+    --color-brand-border: 186 230 253; /* sky-200 */
+    --color-brand-decoration: 207 250 254; /* cyan-100 */
+    --color-brand-button-from: 6 182 212; /* cyan-500 */
+    --color-brand-button-to: 8 145 178; /* cyan-600 */
+    --color-brand-button-hover-from: 8 145 178; /* cyan-600 */
+    --color-brand-button-hover-to: 14 116 144; /* cyan-700 */
+    --color-brand-icon-from: 207 250 254; /* cyan-100 */
+    --color-brand-icon-to: 207 250 254; /* cyan-100 */
+    --color-brand-text: 6 182 212; /* cyan-500 */
+    --color-brand-text-dark: 21 94 117; /* cyan-800 */
+    --color-brand-shadow: 207 250 254; /* cyan-100 */
   }
 
   /* ========================================
@@ -826,6 +890,22 @@
     --color-calc-equals-text: 255 255 255; /* white */
     --color-calc-equals-hover: 5 150 105; /* emerald-600 */
     --color-calc-equals-active: 52 211 153; /* emerald-400 */
+
+    /* Brand 系列（森林自然風格） */
+    --color-brand-from: 240 253 244; /* green-50 */
+    --color-brand-via: 209 250 229; /* emerald-50 */
+    --color-brand-to: 240 253 244; /* green-50 */
+    --color-brand-border: 187 247 208; /* green-200 */
+    --color-brand-decoration: 209 250 229; /* emerald-100 */
+    --color-brand-button-from: 16 185 129; /* emerald-500 */
+    --color-brand-button-to: 5 150 105; /* emerald-600 */
+    --color-brand-button-hover-from: 5 150 105; /* emerald-600 */
+    --color-brand-button-hover-to: 4 120 87; /* emerald-700 */
+    --color-brand-icon-from: 209 250 229; /* emerald-100 */
+    --color-brand-icon-to: 209 250 229; /* emerald-100 */
+    --color-brand-text: 5 150 105; /* emerald-600 */
+    --color-brand-text-dark: 20 83 45; /* green-800 */
+    --color-brand-shadow: 209 250 229; /* emerald-100 */
   }
 }
 
@@ -976,30 +1056,12 @@ body {
     }
   }
 
-  @keyframes slide-in-bounce {
-    0% {
-      transform: translateY(-1rem) scale(0.95);
-      opacity: 0.3;
-    }
-    50% {
-      transform: translateY(0.25rem) scale(1.01);
-    }
-    100% {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-    }
-  }
-
   .animate-fade-in {
     animation: fade-in 0.3s ease-out;
   }
 
   .animate-slide-up {
     animation: slide-up 0.3s ease-out;
-  }
-
-  .animate-slide-in-bounce {
-    animation: slide-in-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   /* 緩慢脈動 */
