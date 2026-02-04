@@ -1196,37 +1196,39 @@ export const buttonTokens = {
  * @version 1.0.0
  */
 export const notificationTokens = {
-  /** 佈局定位 */
+  /** 固定定位（視窗底部中央） */
   position: 'fixed bottom-4 left-1/2 -translate-x-1/2 z-50',
-  /** 容器尺寸 */
+  /** 容器尺寸（響應式，最大 344px） */
   container: 'w-[calc(100vw-2rem)] max-w-[344px]',
-  /** 內容內距 */
+  /** 內距 */
   padding: 'px-6 py-3.5',
-  /** 圓角 */
-  borderRadius: 'rounded-lg',
+  /** 圓角（與 card / button 統一） */
+  borderRadius: 'rounded-2xl',
+  /** 陰影（統一 shadow-card token） */
+  shadow: 'shadow-card shadow-brand-shadow/20',
 
   /** 裝飾光暈 */
   decoration: {
     size: 'w-16 h-16',
     blur: 'blur-2xl',
-    topRight: 'bg-white/40',
+    topRight: 'bg-brand-icon-from/40',
     bottomLeft: 'bg-brand-decoration/40',
   },
 
-  /** 圖標配置 */
+  /** 狀態圖標 */
   icon: {
-    container: 'w-8 h-8 rounded-full',
+    container: 'w-8 h-8 rounded-xl',
     svg: 'w-5 h-5',
     strokeWidth: 2.5,
   },
 
-  /** 時序配置 */
+  /** 時序 */
   timing: {
-    /** 入場動畫延遲 (ms) */
+    /** 入場延遲 (ms) */
     showDelay: 100,
-    /** SW 定期檢查間隔 (ms, 1 小時) */
+    /** SW 定期檢查間隔 (ms) */
     updateInterval: 3_600_000,
-    /** offlineReady 自動消失時間 (ms) */
+    /** offlineReady 自動消失 (ms) */
     autoDismiss: 5_000,
   },
 } as const;

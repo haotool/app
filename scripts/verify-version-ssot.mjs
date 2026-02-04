@@ -155,20 +155,22 @@ function ensureChangelogUpdatedIfVersionChanged() {
     : readJson(join(appDir, 'package.json')).version;
 
   // 確認 CHANGELOG.md 已暫存且包含版本條目
-  if (!stagedFiles.includes('CHANGELOG.md')) {
-    errors.push(`CHANGELOG.md 未暫存：版本 ${appVersion} 變更需同步更新 CHANGELOG`);
+  const changelogPath = 'apps/ratewise/CHANGELOG.md';
+  if (!stagedFiles.includes(changelogPath)) {
+    errors.push(`${changelogPath} 未暫存：版本 ${appVersion} 變更需同步更新 CHANGELOG`);
     return;
   }
 
-  const changelog = readStaged('CHANGELOG.md');
+  const changelog = readStaged(changelogPath);
   if (!changelog) {
-    errors.push(`無法讀取暫存區 CHANGELOG.md`);
+    errors.push(`無法讀取暫存區 ${changelogPath}`);
     return;
   }
 
-  const versionHeader = `## [${appVersion}]`;
-  if (!changelog.includes(versionHeader)) {
-    errors.push(`CHANGELOG.md 缺少版本 ${appVersion} 條目`);
+  const hasVersionEntry =
+    changelog.includes(`## [${appVersion}]`) || changelog.includes(`## ${appVersion}`);
+  if (!hasVersionEntry) {
+    errors.push(`${changelogPath} 缺少版本 ${appVersion} 條目`);
   }
 }
 

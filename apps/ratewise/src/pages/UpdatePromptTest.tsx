@@ -1,8 +1,12 @@
 /**
- * UpdatePrompt 測試頁面 - 展示 6 種風格 × 4 種狀態
+ * UpdatePrompt 測試頁面
  *
- * 風格：Zen / Nitro / Kawaii / Classic / Ocean / Forest
- * 狀態：offlineReady / needRefresh / isUpdating / updateFailed
+ * 展示 6 種風格（Zen / Nitro / Kawaii / Classic / Ocean / Forest）
+ * 與 4 種狀態（offlineReady / needRefresh / isUpdating / updateFailed）
+ * 共 24 種通知卡片組合。
+ *
+ * 視覺結構與 UpdatePrompt 生產元件一致，
+ * 使用相同 brand token、圓角、陰影與微互動效果。
  */
 
 import { Link } from 'react-router-dom';
@@ -42,11 +46,20 @@ const STYLE_LABELS: Record<string, string> = {
   forest: 'Forest 森林自然',
 };
 
+/** CTA 按鈕共用樣式（與 UpdatePrompt 一致） */
+const CTA_CLASS =
+  'px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-brand-button-from to-brand-button-to text-white shadow-sm hover:from-brand-button-hover-from hover:to-brand-button-hover-to hover:scale-[1.02] active:scale-[0.98] transition-[color,background-color,border-color,transform] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1';
+
+/** 關閉按鈕樣式（與 UpdatePrompt 一致） */
+const CLOSE_CLASS =
+  'p-1.5 rounded-full bg-brand-icon-from/80 text-brand-text hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05] active:scale-[0.95] transition-[color,background-color,transform] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1';
+
 function NotificationCard({ state }: { state: State }) {
   return (
-    <div className="relative overflow-hidden rounded-lg w-full max-w-[344px] bg-gradient-to-r from-brand-from via-brand-via to-brand-to border border-brand-border/60 shadow-lg shadow-brand-shadow/50">
+    <div className="relative overflow-hidden rounded-2xl w-full max-w-[344px] bg-gradient-to-r from-brand-from via-brand-via to-brand-to border border-brand-border/60 shadow-card shadow-brand-shadow/20">
+      {/* 裝飾光暈 */}
       <div
-        className="absolute top-0 right-0 w-16 h-16 rounded-full bg-white/40 blur-2xl"
+        className="absolute top-0 right-0 w-16 h-16 rounded-full bg-brand-icon-from/40 blur-2xl"
         aria-hidden="true"
       />
       <div
@@ -54,16 +67,17 @@ function NotificationCard({ state }: { state: State }) {
         aria-hidden="true"
       />
 
+      {/* 內容 */}
       <div className="relative px-6 py-3.5">
         <div className="flex items-center gap-3">
-          {/* Icon */}
+          {/* 狀態圖標 */}
           <div className="flex-shrink-0">
-            <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-brand-icon-from to-brand-icon-to flex items-center justify-center shadow">
+            <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-brand-icon-from to-brand-icon-to flex items-center justify-center shadow">
               <StateIcon state={state} />
             </div>
           </div>
 
-          {/* Text */}
+          {/* 標題與描述 */}
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-brand-text-dark truncate">
               {STATE_TITLE[state]}
@@ -71,7 +85,7 @@ function NotificationCard({ state }: { state: State }) {
             <p className="text-xs text-brand-text truncate">{STATE_DESC[state]}</p>
           </div>
 
-          {/* Action */}
+          {/* 操作按鈕 */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <StateAction state={state} />
           </div>
@@ -133,20 +147,14 @@ function StateAction({ state }: { state: State }) {
 
   if (state === 'needRefresh' || state === 'updateFailed') {
     return (
-      <button
-        className="px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-brand-button-from to-brand-button-to text-white shadow-sm hover:from-brand-button-hover-from hover:to-brand-button-hover-to transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1"
-        aria-label={state === 'updateFailed' ? '重試更新' : '立即更新'}
-      >
+      <button className={CTA_CLASS} aria-label={state === 'updateFailed' ? '重試更新' : '立即更新'}>
         {state === 'updateFailed' ? '重試' : '更新'}
       </button>
     );
   }
 
   return (
-    <button
-      className="p-1.5 rounded-full bg-brand-icon-from/80 text-brand-text hover:text-brand-text-dark hover:bg-brand-icon-from transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1"
-      aria-label="關閉通知"
-    >
+    <button className={CLOSE_CLASS} aria-label="關閉通知">
       <svg
         className="w-4 h-4"
         fill="none"
@@ -169,7 +177,7 @@ export default function UpdatePromptTest() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-light via-blue-50 to-purple-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* 頁首 */}
         <div className="mb-8">
           <Link
             to="/"
@@ -189,7 +197,7 @@ export default function UpdatePromptTest() {
           <p className="text-neutral-text-secondary mt-2">6 種風格 × 4 種狀態 = 24 種組合</p>
         </div>
 
-        {/* Column headers (states) */}
+        {/* 欄標題（狀態） */}
         <div className="hidden md:grid grid-cols-[140px_repeat(4,1fr)] gap-3 mb-3">
           <div />
           {STATES.map((s) => (
@@ -202,7 +210,7 @@ export default function UpdatePromptTest() {
           ))}
         </div>
 
-        {/* Grid: rows = styles, cols = states */}
+        {/* 矩陣：列=風格，欄=狀態 */}
         <div className="flex flex-col gap-6">
           {STYLES.map((style) => (
             <div
@@ -210,12 +218,12 @@ export default function UpdatePromptTest() {
               data-style={style}
               className="md:grid md:grid-cols-[140px_repeat(4,1fr)] md:gap-3 md:items-center"
             >
-              {/* Row label */}
+              {/* 列標籤 */}
               <div className="mb-2 md:mb-0">
                 <span className="text-sm font-bold text-neutral-text">{STYLE_LABELS[style]}</span>
               </div>
 
-              {/* 4 states */}
+              {/* 四種狀態 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:contents gap-3">
                 {STATES.map((state) => (
                   <div key={state} className="flex justify-center py-1.5 md:py-0">
