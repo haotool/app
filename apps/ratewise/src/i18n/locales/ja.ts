@@ -243,6 +243,17 @@ const ja = {
     refresh: '更新',
     dismiss: '後で',
     pullToRefresh: '下にスワイプして更新',
+    offlineReadyTitle: 'オフライン対応完了',
+    offlineReadyDescription: 'いつでもどこでも利用可能',
+    needRefreshTitle: '新バージョンを検出',
+    needRefreshDescription: '更新をタップして最新機能を取得',
+    actionUpdate: '更新',
+    actionClose: '通知を閉じる',
+    updatingTitle: '更新中',
+    updatingDescription: 'しばらくお待ちください...',
+    updateFailedTitle: '更新に失敗しました',
+    updateFailedDescription: '再試行するかネットワークを確認してください',
+    actionRetry: '再試行',
   },
 
   // 404

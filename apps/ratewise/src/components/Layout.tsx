@@ -1,5 +1,5 @@
 /**
- * Layout Component with ErrorBoundary + HelmetProvider + UpdatePrompt + DecemberTheme
+ * Layout Component with ErrorBoundary + HelmetProvider + DecemberTheme
  *
  * [SSR-fix:2025-11-26] 從 routes.tsx 分離以解決 Fast Refresh 警告
  * 依據：eslint-plugin-react-refresh (只導出組件的文件才能 Fast Refresh)
@@ -16,7 +16,6 @@ import { HelmetProvider } from '../utils/react-helmet-async';
 import { ErrorBoundary } from './ErrorBoundary';
 import { SkeletonLoader } from './SkeletonLoader';
 import { Footer } from './Footer';
-import { UpdatePromptLoader } from './UpdatePromptLoader';
 
 // [December-Theme:2025-12-26] 動態載入 12 月主題組件（Lazy Loading）
 const DecemberTheme = React.lazy(() => import('../features/calculator/easter-eggs/DecemberTheme'));
@@ -71,8 +70,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </ErrorBoundary>
-        {/* PWA 更新通知 - 只在客戶端動態載入（避免 SSR 時 workbox-window 錯誤） */}
-        <UpdatePromptLoader />
 
         {/* [December-Theme:2025-12-26] 12 月聖誕主題 - 動態載入 */}
         {showDecemberTheme && (

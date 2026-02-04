@@ -1,22 +1,175 @@
 /**
- * UpdatePrompt 測試頁面 - 用於展示「離線模式已就緒」和「發現新版本」
+ * UpdatePrompt 測試頁面 - 展示 6 種風格 × 4 種狀態
  *
- * 創建時間: 2025-12-27T00:14:00+08:00
- * 更新時間: 2025-12-27T00:35:00+08:00
- * 目的: 測試 RateWise 品牌配色的 PWA 更新提示
+ * 風格：Zen / Nitro / Kawaii / Classic / Ocean / Forest
+ * 狀態：offlineReady / needRefresh / isUpdating / updateFailed
  */
 
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-export default function UpdatePromptTest() {
-  const [showOfflineReady, setShowOfflineReady] = useState(false);
-  const [showNeedRefresh, setShowNeedRefresh] = useState(false);
+const STYLES = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'] as const;
+
+const STATES = ['offlineReady', 'needRefresh', 'isUpdating', 'updateFailed'] as const;
+type State = (typeof STATES)[number];
+
+const STATE_LABELS: Record<State, string> = {
+  offlineReady: '離線就緒',
+  needRefresh: '發現新版本',
+  isUpdating: '更新中',
+  updateFailed: '更新失敗',
+};
+
+const STATE_TITLE: Record<State, string> = {
+  offlineReady: '離線模式已就緒',
+  needRefresh: '發現新版本',
+  isUpdating: '正在更新',
+  updateFailed: '更新失敗',
+};
+
+const STATE_DESC: Record<State, string> = {
+  offlineReady: '隨時隨地都能使用',
+  needRefresh: '點擊更新獲取最新功能',
+  isUpdating: '請稍候...',
+  updateFailed: '請重試或檢查網路',
+};
+
+const STYLE_LABELS: Record<string, string> = {
+  zen: 'Zen 極簡專業',
+  nitro: 'Nitro 深色科技',
+  kawaii: 'Kawaii 可愛粉嫩',
+  classic: 'Classic 復古書卷',
+  ocean: 'Ocean 海洋深邃',
+  forest: 'Forest 森林自然',
+};
+
+function NotificationCard({ state }: { state: State }) {
+  return (
+    <div className="relative overflow-hidden rounded-lg w-full max-w-[344px] bg-gradient-to-r from-brand-from via-brand-via to-brand-to border border-brand-border/60 shadow-lg shadow-brand-shadow/50">
+      <div
+        className="absolute top-0 right-0 w-16 h-16 rounded-full bg-white/40 blur-2xl"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-brand-decoration/40 blur-2xl"
+        aria-hidden="true"
+      />
+
+      <div className="relative px-6 py-3.5">
+        <div className="flex items-center gap-3">
+          {/* Icon */}
+          <div className="flex-shrink-0">
+            <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-brand-icon-from to-brand-icon-to flex items-center justify-center shadow">
+              <StateIcon state={state} />
+            </div>
+          </div>
+
+          {/* Text */}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-brand-text-dark truncate">
+              {STATE_TITLE[state]}
+            </h3>
+            <p className="text-xs text-brand-text truncate">{STATE_DESC[state]}</p>
+          </div>
+
+          {/* Action */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <StateAction state={state} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StateIcon({ state }: { state: State }) {
+  if (state === 'isUpdating') {
+    return (
+      <svg
+        className="w-5 h-5 text-brand-text animate-spin"
+        fill="none"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth={4}
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
+    );
+  }
+
+  const paths: Record<string, string> = {
+    updateFailed:
+      'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z',
+    offlineReady: 'M5 13l4 4L19 7',
+    needRefresh:
+      'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-light via-blue-50 to-purple-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* 標題區 */}
+    <svg
+      className="w-5 h-5 text-brand-text"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={paths[state]} />
+    </svg>
+  );
+}
+
+function StateAction({ state }: { state: State }) {
+  if (state === 'isUpdating') return null;
+
+  if (state === 'needRefresh' || state === 'updateFailed') {
+    return (
+      <button
+        className="px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-brand-button-from to-brand-button-to text-white shadow-sm hover:from-brand-button-hover-from hover:to-brand-button-hover-to transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1"
+        aria-label={state === 'updateFailed' ? '重試更新' : '立即更新'}
+      >
+        {state === 'updateFailed' ? '重試' : '更新'}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      className="p-1.5 rounded-full bg-brand-icon-from/80 text-brand-text hover:text-brand-text-dark hover:bg-brand-icon-from transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1"
+      aria-label="關閉通知"
+    >
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+    </button>
+  );
+}
+
+export default function UpdatePromptTest() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-neutral-light via-blue-50 to-purple-50 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="mb-8">
           <Link
             to="/"
@@ -32,206 +185,48 @@ export default function UpdatePromptTest() {
             </svg>
             返回主頁
           </Link>
-          <h1 className="text-3xl font-bold text-neutral-text mt-4">UpdatePrompt 測試頁面</h1>
-          <p className="text-neutral-text-secondary mt-2">
-            測試 RateWise 品牌配色的 PWA 更新提示組件
-          </p>
+          <h1 className="text-3xl font-bold text-neutral-text mt-4">UpdatePrompt Brand 配色總覽</h1>
+          <p className="text-neutral-text-secondary mt-2">6 種風格 × 4 種狀態 = 24 種組合</p>
         </div>
 
-        {/* 控制面板 */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-neutral mb-8">
-          <h2 className="text-xl font-semibold text-neutral-text mb-4">控制面板</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              onClick={() => {
-                setShowNeedRefresh(false);
-                setShowOfflineReady(true);
-              }}
-              className="px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold shadow-lg hover:from-emerald-600 hover:to-teal-600 transition-all"
-            >
-              ✨ 顯示「離線模式已就緒」
-            </button>
-            <button
-              onClick={() => {
-                setShowOfflineReady(false);
-                setShowNeedRefresh(true);
-              }}
-              className="px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg hover:from-blue-600 hover:to-indigo-600 transition-all"
-            >
-              🎉 顯示「發現新版本」
-            </button>
-          </div>
-          <button
-            onClick={() => {
-              setShowOfflineReady(false);
-              setShowNeedRefresh(false);
-            }}
-            className="w-full mt-4 px-6 py-3 rounded-xl bg-neutral text-neutral-text font-semibold hover:bg-neutral-dark transition-all"
-          >
-            關閉所有提示
-          </button>
-        </div>
-
-        {/* 說明區 */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-neutral">
-          <h2 className="text-xl font-semibold text-neutral-text mb-4">設計特點</h2>
-          <ul className="space-y-3 text-neutral-text-secondary">
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
-              <span>
-                <strong>藍紫漸變品牌色</strong> - RateWise 主題配色
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
-              <span>
-                <strong>圓潤現代的視覺元素</strong> - 24px 圓角設計
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
-              <span>
-                <strong>柔和的光暈裝飾效果</strong> - 藍靛色光暈背景
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
-              <span>
-                <strong>emoji 點綴增加親和力</strong> - ✨ 和 🎉
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
-              <span>
-                <strong>右上角定位</strong> - 不影響用戶操作
-              </span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* 模擬 UpdatePrompt 組件 */}
-      {(showOfflineReady || showNeedRefresh) && (
-        <div
-          className="fixed top-4 right-4 z-50 transition-all duration-500 ease-out opacity-100 translate-y-0"
-          role="alertdialog"
-          aria-labelledby="update-prompt-title"
-          aria-describedby="update-prompt-description"
-        >
-          {/* RateWise 品牌風格卡片 */}
-          <div className="relative overflow-hidden rounded-3xl w-80 max-w-[calc(100vw-2rem)] bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200 shadow-xl shadow-blue-100/50 animate-slide-in-bounce">
-            {/* 品牌光暈裝飾 */}
+        {/* Column headers (states) */}
+        <div className="hidden md:grid grid-cols-[140px_repeat(4,1fr)] gap-3 mb-3">
+          <div />
+          {STATES.map((s) => (
             <div
-              className="absolute top-0 right-0 w-32 h-32 rounded-full bg-blue-200/30 blur-3xl"
-              aria-hidden="true"
-            />
-            <div
-              className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-indigo-200/30 blur-3xl"
-              aria-hidden="true"
-            />
+              key={s}
+              className="text-center text-xs font-semibold text-neutral-text-secondary uppercase tracking-wide"
+            >
+              {STATE_LABELS[s]}
+            </div>
+          ))}
+        </div>
 
-            {/* 內容區域 */}
-            <div className="relative p-6">
-              {/* 圖標區 */}
-              <div className="flex justify-center mb-4">
-                <div className="relative">
-                  {/* 外圈光暈 */}
-                  <div className="absolute inset-0 rounded-full bg-blue-300 blur-md opacity-40" />
-                  {/* 主圖標 */}
-                  <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <svg
-                      className="w-8 h-8 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      {showOfflineReady ? (
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2.5}
-                          d="M5 13l4 4L19 7"
-                        />
-                      ) : (
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2.5}
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        />
-                      )}
-                    </svg>
-                  </div>
-                </div>
+        {/* Grid: rows = styles, cols = states */}
+        <div className="flex flex-col gap-6">
+          {STYLES.map((style) => (
+            <div
+              key={style}
+              data-style={style}
+              className="md:grid md:grid-cols-[140px_repeat(4,1fr)] md:gap-3 md:items-center"
+            >
+              {/* Row label */}
+              <div className="mb-2 md:mb-0">
+                <span className="text-sm font-bold text-neutral-text">{STYLE_LABELS[style]}</span>
               </div>
 
-              {/* 標題 */}
-              <h2
-                id="update-prompt-title"
-                className="text-xl font-bold text-blue-900 mb-2 text-center"
-              >
-                {showOfflineReady ? '✨ 離線模式已就緒' : '🎉 發現新版本'}
-              </h2>
-
-              {/* 描述 */}
-              <p
-                id="update-prompt-description"
-                className="text-sm text-purple-500 mb-5 leading-relaxed text-center px-2"
-              >
-                {showOfflineReady ? '應用已準備好，隨時隨地都能使用！' : '新版本帶來更棒的體驗哦！'}
-              </p>
-
-              {/* 按鈕 */}
-              <div className="flex flex-col space-y-2">
-                {showNeedRefresh && (
-                  <button
-                    onClick={() => alert('模擬更新：實際會重新載入頁面')}
-                    className="w-full px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-lg shadow-blue-200/50 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    馬上更新
-                  </button>
-                )}
-
-                <button
-                  onClick={() => {
-                    setShowOfflineReady(false);
-                    setShowNeedRefresh(false);
-                  }}
-                  className="w-full px-5 py-3 rounded-2xl bg-white/90 backdrop-blur-sm text-blue-700 text-sm font-semibold border-2 border-blue-200 hover:bg-white hover:border-blue-300 active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                >
-                  {showNeedRefresh ? '等等再說' : '好的'}
-                </button>
+              {/* 4 states */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:contents gap-3">
+                {STATES.map((state) => (
+                  <div key={state} className="flex justify-center py-1.5 md:py-0">
+                    <NotificationCard state={state} />
+                  </div>
+                ))}
               </div>
             </div>
-
-            {/* 關閉按鈕 */}
-            <button
-              onClick={() => {
-                setShowOfflineReady(false);
-                setShowNeedRefresh(false);
-              }}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 text-blue-500 hover:text-blue-700 hover:bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              aria-label="關閉通知"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

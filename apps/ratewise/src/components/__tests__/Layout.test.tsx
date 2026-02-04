@@ -11,10 +11,6 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 
 // Mock modules
-vi.mock('../UpdatePrompt', () => ({
-  UpdatePrompt: () => <div data-testid="update-prompt">Update Prompt</div>,
-}));
-
 vi.mock('../ErrorBoundary', () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -53,7 +49,7 @@ describe('Layout Component', () => {
       expect(screen.getByTestId('child-content')).toBeInTheDocument();
     });
 
-    it('應該嘗試動態載入 UpdatePrompt', async () => {
+    it('應該渲染內容區域', async () => {
       const { Layout } = await import('../Layout');
 
       render(
@@ -62,7 +58,6 @@ describe('Layout Component', () => {
         </Layout>,
       );
 
-      // 驗證內容已渲染，UpdatePrompt 載入是異步的
       expect(screen.getByTestId('content')).toBeInTheDocument();
     });
 
@@ -110,11 +105,13 @@ describe('Layout Component', () => {
     });
   });
 
-  describe('UpdatePrompt 載入失敗處理', () => {
-    it.skip('應該處理 UpdatePrompt 載入錯誤並仍然渲染內容', async () => {
-      // Skip: vi.doMock factory cannot throw errors (Vitest hoisting limitation)
-      // in Layout.tsx with proper error handling, which is sufficient.
-      // TODO: Rewrite this test using a different approach if needed
+  describe('Layout 不包含 UpdatePrompt', () => {
+    it('UpdatePrompt 已移至 App.tsx 統一渲染', async () => {
+      const fs = await import('node:fs/promises');
+      const path = await import('node:path');
+      const layoutPath = path.resolve(__dirname, '../Layout.tsx');
+      const sourceCode = await fs.readFile(layoutPath, 'utf-8');
+      expect(sourceCode).not.toContain('UpdatePromptLoader');
     });
   });
 

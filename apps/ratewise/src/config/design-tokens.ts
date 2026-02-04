@@ -1186,6 +1186,52 @@ export const buttonTokens = {
 } as const;
 
 /**
+ * PWA 更新通知設計規範 (SSOT)
+ *
+ * 統一 UpdatePrompt 組件的佈局、裝飾、圖標與時序配置。
+ * Material Design snackbar 風格，置中底部定位。
+ *
+ * @see src/components/UpdatePrompt.tsx
+ * @created 2026-02-03
+ * @version 1.0.0
+ */
+export const notificationTokens = {
+  /** 佈局定位 */
+  position: 'fixed bottom-4 left-1/2 -translate-x-1/2 z-50',
+  /** 容器尺寸 */
+  container: 'w-[calc(100vw-2rem)] max-w-[344px]',
+  /** 內容內距 */
+  padding: 'px-6 py-3.5',
+  /** 圓角 */
+  borderRadius: 'rounded-lg',
+
+  /** 裝飾光暈 */
+  decoration: {
+    size: 'w-16 h-16',
+    blur: 'blur-2xl',
+    topRight: 'bg-white/40',
+    bottomLeft: 'bg-brand-decoration/40',
+  },
+
+  /** 圖標配置 */
+  icon: {
+    container: 'w-8 h-8 rounded-full',
+    svg: 'w-5 h-5',
+    strokeWidth: 2.5,
+  },
+
+  /** 時序配置 */
+  timing: {
+    /** 入場動畫延遲 (ms) */
+    showDelay: 100,
+    /** SW 定期檢查間隔 (ms, 1 小時) */
+    updateInterval: 3_600_000,
+    /** offlineReady 自動消失時間 (ms) */
+    autoDismiss: 5_000,
+  },
+} as const;
+
+/**
  * 生成 Tailwind 主題擴展配置
  *
  * 基於 Context7 官方最佳實踐，生成可直接用於 tailwind.config.ts 的配置

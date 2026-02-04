@@ -245,6 +245,17 @@ const en = {
     refresh: 'Refresh',
     dismiss: 'Later',
     pullToRefresh: 'Pull to refresh',
+    offlineReadyTitle: 'Offline Ready',
+    offlineReadyDescription: 'Use anytime, anywhere',
+    needRefreshTitle: 'New Version Available',
+    needRefreshDescription: 'Tap update for latest features',
+    actionUpdate: 'Update',
+    actionClose: 'Close notification',
+    updatingTitle: 'Updating',
+    updatingDescription: 'Please wait...',
+    updateFailedTitle: 'Update Failed',
+    updateFailedDescription: 'Please retry or check network',
+    actionRetry: 'Retry',
   },
 
   // 404

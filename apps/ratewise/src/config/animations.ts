@@ -196,6 +196,26 @@ export const activeHighlight = {
 } as const;
 
 /**
+ * PWA 更新通知動畫配置
+ *
+ * 通知入場（底部彈入）動畫，搭配 notificationTokens 使用。
+ *
+ * @see src/components/UpdatePrompt.tsx
+ * @see notificationTokens in design-tokens.ts
+ */
+export const notificationAnimations = {
+  /** 通知入場（底部彈入） */
+  enter: {
+    transition: transitions.gentle,
+    variants: {
+      hidden: { opacity: 0, y: 16 },
+      visible: { opacity: 1, y: 0 },
+      exit: { opacity: 0, y: 16 },
+    } as Variants,
+  },
+} as const;
+
+/**
  * Tailwind 微互動類名
  * 用於不需要 Motion 的簡單效果
  */
