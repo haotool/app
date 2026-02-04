@@ -1,5 +1,18 @@
 # @app/ratewise
 
+## 2.2.3
+
+### Patch Changes
+
+- e37687f: fix(a11y,csp): 修正 W3C 驗證問題與 CSP 報告機制
+  - 修正 BottomNavigation 的 A11y 違規：motion.div tabIndex 問題
+  - 升級 CSP 報告：新增 Reporting-Endpoints，report-to 優先
+  - 新增 BottomNavigation A11y 測試
+
+- 78c6251: 移除 isChunkLoadError 中過於寬鬆的 'load failed' 匹配，避免 Safari 通用 fetch 失敗被誤判為 chunk 載入錯誤
+- 53eee93: PWA 離線快取策略修正：JS/CSS 改用 CacheFirst、移除冗餘 offline-fallback route、修復 UpdatePrompt setInterval 記憶體洩漏
+- 009fa9c: UpdatePrompt 整合重構：修復三重渲染 BUG、SSOT tokens 提取、i18n 多語系、4 狀態支援、ARIA 語義化、prefers-reduced-motion、Brand 色系 CSS 變數
+
 ## 2.2.2 (2026-02-04)
 
 ### Fixed
