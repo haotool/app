@@ -56,7 +56,7 @@ const ARTICLE_SCHEMA = {
     url: 'https://haotool.org',
     logo: {
       '@type': 'ImageObject',
-      url: `${SITE_BASE_URL}optimized/logo-512w.png`,
+      url: `${SITE_BASE_URL}icons/ratewise-icon-512x512.png`,
     },
   },
   url: SITE_BASE_URL,
