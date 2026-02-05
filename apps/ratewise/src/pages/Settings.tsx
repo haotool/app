@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { SEOHelmet } from '../components/SEOHelmet';
 import { motion } from 'motion/react';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_OPTIONS } from '../config/themes';
@@ -53,6 +54,11 @@ export default function Settings() {
 
   return (
     <div className="min-h-full">
+      <SEOHelmet
+        title="設定"
+        description="RateWise 應用程式設定，自訂介面風格（Zen、Nitro、Kawaii、Classic、Ocean、Forest）、語言切換、資料來源查看與快取管理。"
+        pathname="/settings"
+      />
       <div className="px-3 sm:px-5 py-6 max-w-md mx-auto">
         {/* 介面風格區塊 */}
         <section className="mb-8">

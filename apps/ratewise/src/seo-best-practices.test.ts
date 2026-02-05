@@ -355,9 +355,9 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(homeContent).toContain("'@type': 'Article'");
     });
 
-    it('should have image metadata for Article', () => {
-      expect(homeContent).toContain('acquireLicensePage');
-      expect(homeContent).toContain('copyrightNotice');
+    it('should have publisher and image for Article', () => {
+      expect(homeContent).toContain('publisher');
+      expect(homeContent).toContain('image: OG_IMAGE_URL');
     });
   });
 

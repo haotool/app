@@ -28,9 +28,9 @@
 export const SkeletonLoader = () => {
   return (
     <div className="p-4 md:p-6" role="status" aria-live="polite">
-      {/* SEO 靜態內容區塊 - 對 SEO 爬蟲可見 */}
+      {/* SEO 靜態內容區塊 - 對 SEO 爬蟲可見（使用 p 避免與頁面 h1 重複）*/}
       <div className="sr-only">
-        <h1>RateWise 匯率好工具 - 即時匯率換算</h1>
+        <p className="font-bold text-lg">RateWise 匯率好工具 - 即時匯率換算</p>
         <p>
           RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援
           TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等超過 30

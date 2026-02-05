@@ -249,25 +249,34 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO_PATHS 配置驗證', () => {
-    it('應該包含 17 個路徑', () => {
-      // Given: SEO_PATHS 配置
+    it('應該包含 20 個路徑', () => {
+      // Given: SEO_PATHS 配置（7 核心 + 13 幣別）
 
       // When: 檢查路徑數量
       const count = SEO_PATHS.length;
 
-      // Then: 應該有 17 個路徑
-      expect(count).toBe(17);
+      // Then: 應該有 20 個路徑
+      expect(count).toBe(20);
     });
 
     it('應該包含所有核心頁面', () => {
-      // Given: 核心頁面列表
-      const corePages = ['/', '/faq/', '/about/', '/guide/'] as const;
+      // Given: 核心頁面列表（7 個）
+      const corePages = [
+        '/',
+        '/multi/',
+        '/favorites/',
+        '/settings/',
+        '/faq/',
+        '/about/',
+        '/guide/',
+      ] as const;
 
       // When: 檢查是否都在 SEO_PATHS 中
       const allIncluded = corePages.every((page) => SEO_PATHS.includes(page));
 
       // Then: 應該全部包含
       expect(allIncluded).toBe(true);
+      expect(corePages.length).toBe(7);
     });
 
     it('應該包含所有 13 個幣別頁面', () => {
@@ -477,14 +486,22 @@ describe('SEO Paths Configuration', () => {
 
   describe('isCorePagePath（類型守衛）', () => {
     it('應該識別所有核心頁面', () => {
-      // Given: 核心頁面路徑
-      const corePaths = ['/', '/faq/', '/about/', '/guide/'];
+      // Given: 核心頁面路徑（7 個）
+      const corePaths = [
+        '/',
+        '/multi/',
+        '/favorites/',
+        '/settings/',
+        '/faq/',
+        '/about/',
+        '/guide/',
+      ];
 
       // When: 檢查每個路徑
       const results = corePaths.map(isCorePagePath);
 
       // Then: 都應該返回 true
-      expect(results).toEqual([true, true, true, true]);
+      expect(results).toEqual([true, true, true, true, true, true, true]);
     });
 
     it('應該拒絕幣別頁面', () => {
