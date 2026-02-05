@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
 import { ToastProvider } from './Toast';
+import { RouteErrorBoundary } from './RouteErrorBoundary';
 
 import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
@@ -116,7 +117,9 @@ export function AppLayout() {
               data-scroll-container="main"
               className="flex-1 min-h-0 min-w-0 w-full relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"
             >
-              <Outlet />
+              <RouteErrorBoundary>
+                <Outlet />
+              </RouteErrorBoundary>
             </main>
 
             {/* Mobile bottom navigation (<768px) */}

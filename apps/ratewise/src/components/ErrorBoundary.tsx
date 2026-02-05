@@ -71,11 +71,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   handleReset = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    });
+    // 直接重載頁面以取得最新資源
+    // 僅重置 React 狀態無法修復 chunk 載入錯誤（舊 hash 的 JS 已不存在於伺服器）
+    window.location.reload();
   };
 
   override render(): ReactNode {

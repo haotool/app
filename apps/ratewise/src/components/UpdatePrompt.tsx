@@ -42,6 +42,7 @@ function UpdatePromptClient() {
   const [updateFailed, setUpdateFailed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
   const {
     offlineReady: [offlineReady, setOfflineReady],
@@ -50,6 +51,7 @@ function UpdatePromptClient() {
   } = useRegisterSW({
     onRegistered(r) {
       if (r) {
+        registrationRef.current = r;
         void r.update();
         intervalRef.current = setInterval(() => {
           void r.update();
@@ -61,6 +63,22 @@ function UpdatePromptClient() {
       logger.error('Service Worker registration error', errorObject);
     },
   });
+
+  // visibilitychange: 當 PWA 從背景回到前景時檢查更新
+  // 這是舊 PWA 用戶獲得更新通知的關鍵機制
+  // iOS Safari PWA 會在背景殺掉 SW，回到前景時需要主動檢查
+  useEffect(() => {
+    const checkUpdate = () => {
+      if (document.visibilityState === 'visible' && registrationRef.current) {
+        void registrationRef.current.update();
+      }
+    };
+
+    document.addEventListener('visibilitychange', checkUpdate);
+    return () => {
+      document.removeEventListener('visibilitychange', checkUpdate);
+    };
+  }, []);
 
   // 清除定期更新 interval
   useEffect(() => {

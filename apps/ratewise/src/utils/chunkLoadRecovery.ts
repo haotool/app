@@ -15,12 +15,23 @@ export const CHUNK_REFRESH_COOLDOWN_MS = 30000;
 
 /**
  * 判斷是否為 chunk 載入錯誤
+ *
+ * Safari 特殊處理：
+ * Safari 動態 import 失敗時拋出 TypeError("Load failed")
+ * PR #117 移除了過於寬鬆的 "load failed" 匹配（會誤判 API fetch 失敗）
+ * 此處改為精確匹配：僅 TypeError + "load failed" 才視為 chunk 錯誤
  */
 export function isChunkLoadError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
 
   const message = error.message.toLowerCase();
   const name = error.name.toLowerCase();
+
+  // Safari 動態 import 失敗: TypeError("Load failed")
+  // 僅限 TypeError，避免誤判一般 fetch 錯誤
+  if (name === 'typeerror' && message === 'load failed') {
+    return true;
+  }
 
   return (
     name.includes('chunkloaderror') ||
