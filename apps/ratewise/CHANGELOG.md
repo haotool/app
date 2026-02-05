@@ -1,11 +1,27 @@
 # @app/ratewise
 
+## 2.2.5
+
+### Patch Changes
+
+- fix(a11y): 完全移除 BottomNavigation `<a>` 子孫中的 tabindex 屬性
+  - 移除 `motion.div` 的 `whileTap` 動畫，改用 CSS `group-active:` 偽類
+  - 通過 W3C Nu HTML Checker 驗證：`<a>` 內部零 tabindex 屬性
+- fix(ssg): 修正 /multi、/favorites、/settings 頁面 SSG 預渲染缺少 `<title>`
+  - 將 `SEOHelmet` 提升至條件渲染之前，確保 SSG 時始終輸出 meta 資料
+- fix(seo): 新增 /multi/、/favorites/、/settings/ 至 SEO 路徑與 sitemap
+  - `seo-paths.ts` 與 `seo-paths.config.mjs` 同步新增 3 條核心路徑（17→20）
+  - `isCorePagePath` 函數更新（4→7 核心頁面）
+  - `sitemap.xml` 新增 3 條 URL 與 hreflang 配置（34→40 條 xhtml:link）
+- fix(seo): 修正 JSON-LD `publisher.logo.url` 指向實際存在的 PNG 圖片
+  - `optimized/logo-512w.png`（404）→ `icons/ratewise-icon-512x512.png`
+
 ## 2.2.4
 
 ### Patch Changes
 
 - ee14578: fix(pwa): 舊用戶更新偵測 + 路由錯誤恢復 + Safari chunk 修復
-  - UpdatePrompt 加入 visibilitychange 監聽，iOS PWA 從背景恢復時主動檢查更新
+  - UpdatePrompt 加入 visibilitychange 監聯，iOS PWA 從背景恢復時主動檢查更新
   - 新增 RouteErrorBoundary 包裝路由內容，頁面錯誤時保留底部導覽可切換
   - ErrorBoundary handleReset 改為 window.location.reload() 修復 chunk 錯誤循環
   - chunkLoadRecovery 精確匹配 Safari TypeError("Load failed") 動態 import 失敗

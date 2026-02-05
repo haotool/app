@@ -117,32 +117,35 @@ export function BottomNavigation() {
             >
               {/* 點擊回饋背景
                *
-               * W3C A11y Fix: 設定 tabIndex={-1} 移除焦點行為
-               * 原因：motion.div 的 whileTap 會自動添加 tabindex="0"，
-               * 但 W3C 規範禁止 <a> 元素內部有 tabindex 屬性的子元素
+               * W3C A11y Fix: 使用 CSS :active 偽類替代 motion whileTap
+               * 原因：W3C 規範禁止 <a> 元素內部有任何 tabindex 屬性的子元素
+               * motion 的 whileTap 會自動添加 tabindex，即使設為 -1 也違反規範
                * @see https://rocketvalidator.com/html-validation/an-element-with-the-attribute-tabindex-must-not-appear-as-a-descendant-of-the-a-element
                */}
-              <motion.div
-                className="absolute inset-1 rounded-xl bg-primary/0"
-                whileTap={{ backgroundColor: 'rgba(var(--color-primary), 0.1)' }}
-                transition={transitions.instant}
-                tabIndex={-1}
+              <div
+                className="
+                  absolute inset-1 rounded-xl bg-primary/0
+                  transition-colors duration-75
+                  group-active:bg-primary/10
+                "
               />
 
               {/* 圖標 - 20px (navigationTokens.bottomNav.icon.size)
                *
-               * W3C A11y Fix: 設定 tabIndex={-1} 移除焦點行為
-               * 父元素 <Link> 已經可聚焦，子元素不需要額外的 tabindex
+               * W3C A11y Fix: 移除 whileTap 動畫，改用 CSS :active 偽類
+               * 使用 motion.div 僅做 animate（不產生 tabindex），:active 處理點擊縮放
                */}
               <motion.div
                 animate={{
                   scale: isActive ? 1.1 : 1,
                   opacity: isActive ? 1 : 0.35,
                 }}
-                whileTap={{ scale: 0.9 }}
                 transition={transitions.spring}
-                className={isActive ? 'text-primary' : 'group-hover:opacity-50'}
-                tabIndex={-1}
+                className={`
+                  ${isActive ? 'text-primary' : 'group-hover:opacity-50'}
+                  transition-transform duration-75
+                  group-active:scale-90
+                `}
               >
                 <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} aria-hidden={true} />
               </motion.div>

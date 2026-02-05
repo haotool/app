@@ -45,9 +45,12 @@ describe('BottomNavigation A11y Compliance', () => {
    * W3C Validation Rule:
    * An element with the attribute tabindex must not appear as a descendant of the `<a>` element.
    *
-   * This test ensures that no descendant elements within `<a>` (Link) have tabindex attributes.
+   * IMPORTANT: 根據 W3C 規範，任何 tabindex 屬性（包括 tabindex="-1"）都不允許出現在 <a> 的子孫中。
+   * 這是因為規範規定「含有 tabindex 屬性的元素不得成為 <a> 的子孫」，無論該值為何。
+   *
+   * @see https://rocketvalidator.com/html-validation/an-element-with-the-attribute-tabindex-must-not-appear-as-a-descendant-of-the-a-element
    */
-  it('應該確保 Link 元素內部沒有帶有 tabindex 屬性的子元素（W3C 規範）', () => {
+  it('應該確保 Link 元素內部沒有任何帶有 tabindex 屬性的子元素（W3C 規範，包含 -1）', () => {
     const { container } = render(
       <MemoryRouter initialEntries={['/']}>
         <BottomNavigation />
@@ -58,18 +61,14 @@ describe('BottomNavigation A11y Compliance', () => {
     const links = container.querySelectorAll('a');
     expect(links.length).toBeGreaterThan(0);
 
-    // 檢查每個 link 內部是否有帶 tabindex 的子元素
+    // 檢查每個 link 內部是否有「任何」帶 tabindex 的子元素（無論值為何）
     links.forEach((link, index) => {
       const descendantsWithTabindex = link.querySelectorAll('[tabindex]');
 
-      // 過濾掉 tabindex="-1" 的元素（這是合法的，用於移除焦點）
-      const invalidDescendants = Array.from(descendantsWithTabindex).filter(
-        (el) => el.getAttribute('tabindex') !== '-1',
-      );
-
       expect(
-        invalidDescendants.length,
-        `Link ${index + 1} 內有 ${invalidDescendants.length} 個帶有 tabindex 的非法子元素。這違反了 W3C 規範。`,
+        descendantsWithTabindex.length,
+        `Link ${index + 1} (href="${link.getAttribute('href')}") 內有 ${descendantsWithTabindex.length} 個帶有 tabindex 屬性的子元素。` +
+          `W3C 規範禁止任何 tabindex 屬性（包含 -1）出現在 <a> 的子孫中。`,
       ).toBe(0);
     });
   });

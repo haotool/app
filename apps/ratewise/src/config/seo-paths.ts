@@ -25,15 +25,18 @@ export function normalizeSiteUrl(value: string): string {
 /**
  * RateWise 所有需要預渲染的 SEO 路徑
  *
- * 總計：17 個路徑
- * - 4 個核心頁面：首頁、FAQ、About、Guide
+ * 總計：20 個路徑
+ * - 7 個核心頁面：首頁、Multi、Favorites、Settings、FAQ、About、Guide
  * - 13 個幣別落地頁：依字母順序排列
  *
  * 格式：統一使用尾斜線結尾（符合 SEO Best Practices 2025）
  */
 export const SEO_PATHS = [
-  // 核心頁面 (4)
+  // 核心頁面 (7)
   '/',
+  '/multi/',
+  '/favorites/',
+  '/settings/',
   '/faq/',
   '/about/',
   '/guide/',
@@ -95,9 +98,10 @@ export const SITE_CONFIG = {
  * @returns 標準化後的路徑（帶尾斜線，根路徑除外）
  */
 export function normalizePath(path: string): string {
-  if (path === '/') return '/';
-  // 移除尾斜線後再添加，確保一致性
-  return path.replace(/\/+$/, '') + '/';
+  if (path === '/' || path === '') return '/';
+  // 確保前導斜線 + 移除尾斜線後再添加，確保一致性
+  const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
+  return withLeadingSlash.replace(/\/+$/, '') + '/';
 }
 
 /**
@@ -149,9 +153,16 @@ export type ImageResource = (typeof IMAGE_RESOURCES)[number];
 export type SiteConfig = typeof SITE_CONFIG;
 
 /**
- * 核心頁面路徑（前 4 個）
+ * 核心頁面路徑（7 個）
  */
-export type CorePagePath = '/' | '/faq/' | '/about/' | '/guide/';
+export type CorePagePath =
+  | '/'
+  | '/multi/'
+  | '/favorites/'
+  | '/settings/'
+  | '/faq/'
+  | '/about/'
+  | '/guide/';
 
 /**
  * 幣別頁面路徑（後 13 個）
@@ -190,7 +201,15 @@ export function isSEOPath(path: string): path is SEOPath {
  * @returns 是否為核心頁面
  */
 export function isCorePagePath(path: string): path is CorePagePath {
-  const corePaths: readonly CorePagePath[] = ['/', '/faq/', '/about/', '/guide/'];
+  const corePaths: readonly CorePagePath[] = [
+    '/',
+    '/multi/',
+    '/favorites/',
+    '/settings/',
+    '/faq/',
+    '/about/',
+    '/guide/',
+  ];
   return corePaths.includes(path as CorePagePath);
 }
 

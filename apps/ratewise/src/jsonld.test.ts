@@ -99,11 +99,12 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
       expect(homeStructuredData).toContain("'@type': 'Article'");
     });
 
-    it('should include image metadata for homepage Article', () => {
-      expect(homeStructuredData).toContain('acquireLicensePage');
-      expect(homeStructuredData).toContain('creator');
-      expect(homeStructuredData).toContain('creditText');
-      expect(homeStructuredData).toContain('copyrightNotice');
+    it('should include publisher and image for homepage Article', () => {
+      expect(homeStructuredData).toContain("'@type': 'Organization'");
+      expect(homeStructuredData).toContain('publisher');
+      expect(homeStructuredData).toContain('image: OG_IMAGE_URL');
+      expect(homeStructuredData).toContain('datePublished');
+      expect(homeStructuredData).toContain('dateModified');
     });
   });
 

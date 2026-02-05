@@ -28,6 +28,7 @@ import { motion } from 'motion/react';
 import { AlertCircle, RefreshCw, Star, Clock, Trash2, GripVertical } from 'lucide-react';
 import { segmentedSwitch, transitions } from '../config/animations';
 import { ConversionHistory } from '../features/ratewise/components/ConversionHistory';
+import { SEOHelmet } from '../components/SEOHelmet';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConverter';
 import { SkeletonLoader } from '../components/SkeletonLoader';
@@ -152,35 +153,59 @@ export default function Favorites() {
     [setFromCurrency, setToCurrency, navigate],
   );
 
+  // SSG Fix: SEOHelmet 必須在所有 early return 之前，確保 SSG 時能正確渲染 meta tags
+  // @see https://vite-react-ssg.netlify.app/docs/components — Head 獨立於渲染狀態
+  const seoHelmet = (
+    <SEOHelmet
+      title="收藏與歷史記錄"
+      description="RateWise 收藏管理與換算歷史記錄，快速存取常用貨幣對，支援拖曳排序、一鍵換算。記錄您的每次匯率換算，方便回顧與重新換算。"
+      pathname="/favorites"
+    />
+  );
+
   if (!isHydrated) {
-    return <SkeletonLoader />;
+    return (
+      <>
+        {seoHelmet}
+        <SkeletonLoader />
+      </>
+    );
   }
 
   if (ratesLoading && !isTestEnv) {
-    return <SkeletonLoader />;
+    return (
+      <>
+        {seoHelmet}
+        <SkeletonLoader />
+      </>
+    );
   }
 
   if (ratesError) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="card p-8 max-w-md w-full text-center">
-          <AlertCircle className="text-destructive mx-auto" size={48} />
-          <h1 className="text-2xl font-bold text-text mt-4">{t('errors.loadingFailed')}</h1>
-          <p className="text-text-muted mt-2 mb-6">{t('errors.dataLoadFailed')}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
-          >
-            <RefreshCw size={18} />
-            {t('errors.reload')}
-          </button>
+      <>
+        {seoHelmet}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="card p-8 max-w-md w-full text-center">
+            <AlertCircle className="text-destructive mx-auto" size={48} />
+            <h1 className="text-2xl font-bold text-text mt-4">{t('errors.loadingFailed')}</h1>
+            <p className="text-text-muted mt-2 mb-6">{t('errors.dataLoadFailed')}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
+            >
+              <RefreshCw size={18} />
+              {t('errors.reload')}
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <div className="flex flex-col min-h-full">
+      {seoHelmet}
       <div className="flex-1 px-3 sm:px-5 py-6 max-w-md mx-auto w-full">
         {/* Tab 切換區塊 - Segmented Switch SSOT 動畫 */}
         <section className="mb-6">

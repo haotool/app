@@ -12,6 +12,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, RefreshCw, Clock } from 'lucide-react';
 import { MultiConverter as MultiConverterComponent } from '../features/ratewise/components/MultiConverter';
+import { SEOHelmet } from '../components/SEOHelmet';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConverter';
 import { SkeletonLoader } from '../components/SkeletonLoader';
@@ -83,35 +84,59 @@ export default function MultiConverter() {
     [setBaseCurrency],
   );
 
+  // SSG Fix: SEOHelmet 必須在所有 early return 之前，確保 SSG 時能正確渲染 meta tags
+  // @see https://vite-react-ssg.netlify.app/docs/components — Head 獨立於渲染狀態
+  const seoHelmet = (
+    <SEOHelmet
+      title="多幣別換算"
+      description="RateWise 多幣別同時換算功能，一次查看所有支援貨幣的即時匯率，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR 等 30+ 種貨幣快速比較。"
+      pathname="/multi"
+    />
+  );
+
   if (!isHydrated) {
-    return <SkeletonLoader />;
+    return (
+      <>
+        {seoHelmet}
+        <SkeletonLoader />
+      </>
+    );
   }
 
   if (ratesLoading && !isTestEnv) {
-    return <SkeletonLoader />;
+    return (
+      <>
+        {seoHelmet}
+        <SkeletonLoader />
+      </>
+    );
   }
 
   if (ratesError) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="card p-8 max-w-md w-full text-center">
-          <AlertCircle className="text-destructive mx-auto" size={48} />
-          <h1 className="text-2xl font-bold text-text mt-4">{t('errors.rateLoadFailed')}</h1>
-          <p className="text-text-muted mt-2 mb-6">{t('errors.networkCheckRetry')}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
-          >
-            <RefreshCw size={18} />
-            {t('errors.reload')}
-          </button>
+      <>
+        {seoHelmet}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="card p-8 max-w-md w-full text-center">
+            <AlertCircle className="text-destructive mx-auto" size={48} />
+            <h1 className="text-2xl font-bold text-text mt-4">{t('errors.rateLoadFailed')}</h1>
+            <p className="text-text-muted mt-2 mb-6">{t('errors.networkCheckRetry')}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
+            >
+              <RefreshCw size={18} />
+              {t('errors.reload')}
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <div className={multiConverterLayoutTokens.container}>
+      {seoHelmet}
       <div className={multiConverterLayoutTokens.content.className}>
         {/* 多幣別換算區塊 - 簡約風格（標題已移除，由底部導航識別）
          *
