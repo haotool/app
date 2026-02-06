@@ -275,6 +275,10 @@ jobs:
     name: Dependency Review
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # Note: Requires Dependency Graph enabled in repo settings
+    # For private repos, also requires GitHub Advanced Security license
+    # @see https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/configuring-the-dependency-review-action
+    continue-on-error: true
 
     steps:
       - name: Checkout code
