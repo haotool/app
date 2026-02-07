@@ -4,6 +4,11 @@
 
 ### Patch Changes
 
+- chore(deps): 修復測試依賴聲明 + 新增死代碼分析報告
+  - 新增缺失的測試依賴: vitest, xml2js（修正 scripts/**tests** 中的未聲明依賴）
+  - 生成完整死代碼分析報告（knip + depcheck 工具）
+  - 識別 26 個未使用檔案、100+ 個未使用導出、9 個未使用依賴
+  - Phase 1 安全清理完成，Phase 2-4 需團隊審查
 - fix(security): resolve Dependabot alerts + CI best practices
   - Update @isaacs/brace-expansion to >=5.0.1 (HIGH - ReDoS)
   - Update lodash/lodash-es to >=4.17.23 (MEDIUM - Prototype Pollution)
