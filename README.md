@@ -66,14 +66,14 @@
 
 | 類別         | 技術                         |
 | ------------ | ---------------------------- |
-| **框架**     | React 19 + TypeScript 5.9    |
+| **框架**     | React 19.2 + TypeScript 5.9  |
 | **建置工具** | Vite 7.3 + vite-react-ssg    |
-| **樣式**     | Tailwind CSS 3.4 / 4.0       |
-| **測試**     | Vitest 4.0 + Playwright      |
-| **套件管理** | pnpm 9.10 (Monorepo)         |
-| **CI/CD**    | GitHub Actions (9 workflows) |
+| **樣式**     | Tailwind CSS 3.4             |
+| **測試**     | Vitest 4.0 + Playwright 1.57 |
+| **套件管理** | pnpm 9.10.0 (Monorepo)       |
+| **CI/CD**    | GitHub Actions (6 workflows) |
 | **部署**     | Docker + Zeabur / Vercel     |
-| **安全**     | Gitleaks + SARIF 報告        |
+| **安全**     | Gitleaks + Trivy + SARIF     |
 
 ### 📊 品質指標
 
@@ -84,13 +84,13 @@
 | **TypeScript** | Strict Mode |
 | **ESLint**     | 0 警告      |
 | **Lighthouse** | 95+ 全類別  |
-| **CI 管線**    | 9 個全通過  |
+| **CI 管線**    | 6 個全通過  |
 
 ### 🚀 快速開始
 
 #### 環境需求
 
-- **Node.js**: >= 20.0.0
+- **Node.js**: >= 24.0.0
 - **pnpm**: >= 9.10.0
 
 #### 安裝與開發
@@ -191,13 +191,14 @@ haotool-app/
 
 ### 🛠️ Tech Stack
 
-- **Framework**: React 19 + TypeScript 5.9
+- **Framework**: React 19.2 + TypeScript 5.9
 - **Build**: Vite 7.3 + vite-react-ssg
-- **Styling**: Tailwind CSS 3.4 / 4.0
-- **Testing**: Vitest 4.0 + Playwright
-- **Package Manager**: pnpm 9.10 (Monorepo)
-- **CI/CD**: GitHub Actions (9 workflows)
+- **Styling**: Tailwind CSS 3.4
+- **Testing**: Vitest 4.0 + Playwright 1.57
+- **Package Manager**: pnpm 9.10.0 (Monorepo)
+- **CI/CD**: GitHub Actions (6 workflows)
 - **Deployment**: Docker + Zeabur / Vercel
+- **Security**: Gitleaks + Trivy + SARIF
 
 ### 🚀 Quick Start
 
