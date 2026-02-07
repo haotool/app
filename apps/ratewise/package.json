@@ -36,7 +36,7 @@
     "i18next-browser-languagedetector": "^8.2.0",
     "idb-keyval": "^6.2.2",
     "lightweight-charts": "^5.1.0",
-    "lucide-react": "^0.562.0",
+    "lucide-react": "^0.563.0",
     "motion": "^12.27.5",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
