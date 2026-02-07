@@ -1,191 +1,292 @@
-# 安全政策
+# Security Policy
 
-## 🔒 支援的版本
+## Supported Versions
 
-我們目前支援以下版本的安全更新：
+We actively maintain and provide security updates for the following versions:
 
-| 版本  | 支援狀態  |
-| ----- | --------- |
-| 0.0.x | ✅ 支援中 |
+| Version | Supported          |
+| ------- | ------------------ |
+| 2.x.x   | :white_check_mark: |
+| 1.x.x   | :x:                |
 
-> 注意：專案目前處於早期開發階段，版本號為 0.0.x。一旦達到 1.0.0 穩定版本，將提供長期支援策略。
+## Reporting a Vulnerability
 
-## 🚨 回報安全漏洞
+We take security vulnerabilities seriously. If you discover a security issue, please follow the responsible disclosure process outlined below.
 
-**請勿公開揭露安全漏洞**
+### Reporting Channels
 
-我們非常重視安全問題。如果您發現安全漏洞，請透過以下方式回報：
+**IMPORTANT: Do not create public GitHub issues for security vulnerabilities.**
 
-### 回報方式
+1. **GitHub Security Advisories (Preferred)**
+   - Navigate to [Security Advisories](https://github.com/haotool/app/security/advisories)
+   - Click "Report a vulnerability"
+   - Fill in the detailed information
 
-1. **GitHub Security Advisories（建議）**
-   - 前往 [Security Advisories](https://github.com/haotool/app/security/advisories)
-   - 點擊 "Report a vulnerability"
-   - 填寫詳細資訊
+2. **Private Contact**
+   - Email: haotool.org@gmail.com
+   - Threads: [@azlife_1224](https://threads.net/@azlife_1224)
 
-2. **私下聯繫**
-   - 透過 Email: haotool.org@gmail.com
-   - 或透過 Threads: [@azlife_1224](https://threads.net/@azlife_1224)
+### Required Information
 
-### 回報應包含
+Please include the following in your report:
 
-請在回報中包含以下資訊：
+- **Vulnerability Type**: e.g., XSS, SQL Injection, CSRF, authentication bypass
+- **Affected Versions**: Which versions are impacted
+- **Reproduction Steps**: Detailed steps to reproduce the issue
+- **Proof of Concept**: Code snippets or screenshots (optional)
+- **Impact Assessment**: Potential security impact and affected components
+- **Suggested Fix**: Your recommendations if available (optional)
 
-- **漏洞類型**：例如 XSS、SQL Injection、CSRF 等
-- **受影響的版本**：哪些版本受到影響
-- **重現步驟**：詳細的步驟以重現漏洞
-- **概念驗證**（可選）：PoC 程式碼或截圖
-- **潛在影響**：此漏洞可能造成的影響
-- **建議的修復方案**（可選）：如果您有想法
-
-### 回報範例
+### Report Template
 
 ```markdown
-## 漏洞描述
+## Vulnerability Description
 
-發現一個 XSS 漏洞，允許攻擊者在貨幣名稱欄位注入惡意腳本。
+[Brief description of the vulnerability]
 
-## 受影響版本
+## Affected Versions
 
-0.0.0 及更早版本
+[e.g., 2.2.5 and earlier]
 
-## 重現步驟
+## Reproduction Steps
 
-1. 前往匯率轉換頁面
-2. 在貨幣選擇器中輸入 `<script>alert('XSS')</script>`
-3. 腳本被執行
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
 
-## 潛在影響
+## Potential Impact
 
-- 可能竊取使用者的 localStorage 資料
-- 可能進行 session hijacking
+- [Impact 1]
+- [Impact 2]
 
-## 建議修復
+## Suggested Fix
 
-對所有使用者輸入進行 HTML 轉義
+[Your recommendations if available]
 ```
 
-## ⏱️ 回應時效
+## Response Timeline
 
-- **初始回應**：24 小時內確認收到回報
-- **評估時間**：7 天內評估嚴重性
-- **修復時程**：
-  - 🔴 嚴重（Critical）：24-48 小時
-  - 🟠 高（High）：7 天內
-  - 🟡 中（Medium）：30 天內
-  - 🟢 低（Low）：90 天內或下一個版本
+- **Initial Response**: Within 24 hours of receipt
+- **Severity Assessment**: Within 7 days
+- **Fix Development Timeline**:
+  - Critical: 24-48 hours
+  - High: Within 7 days
+  - Medium: Within 30 days
+  - Low: Within 90 days or next release
 
-## 🛡️ 安全最佳實踐
+## Security Measures
 
-### 應用層安全
+### Application Architecture
 
-本專案已實施以下安全措施：
+This monorepo contains three production applications built with security-first principles:
 
-1. **輸入驗證**
-   - React 19 自動防 XSS 攻擊
-   - TypeScript 嚴格型別檢查
+- **RateWise**: Currency exchange rate calculator
+- **NihonName**: Japanese name generation tool
+- **haotool**: Main portal application
 
-2. **資料儲存**
-   - 僅使用 localStorage 儲存非敏感資料
-   - 不儲存使用者個人資訊
+Technology Stack:
 
-3. **依賴管理**
-   - 定期更新依賴套件
-   - 使用 `pnpm audit` 檢查已知漏洞
+- React 19 with built-in XSS protection
+- TypeScript 5.9 with strict type checking
+- Vite 7.3 for secure build pipeline
+- 92%+ test coverage including security tests
 
-4. **容器安全**
-   - 使用非 root 使用者執行（nodejs:1001）
-   - 多階段建置減少攻擊面
-   - 基於 Alpine Linux 的最小化映像
+### Layered Defense Architecture
 
-### 邊緣層安全（建議 Cloudflare 管理）
+**1. CDN/Edge Layer (Cloudflare)**
 
-以下安全標頭建議在 CDN 層設定：
+- Web Application Firewall (WAF)
+- DDoS protection
+- Rate limiting
+- Security headers enforcement
+- SSL/TLS termination
 
-- `Content-Security-Policy`
-- `Strict-Transport-Security`
-- `X-Content-Type-Options`
-- `X-Frame-Options`
-- `Permissions-Policy`
+**2. Application Layer**
 
-詳見 [SECURITY_BASELINE.md](./docs/SECURITY_BASELINE.md)
+- Input validation and sanitization
+- React's built-in XSS escaping
+- Content Security Policy (CSP)
+- Error boundary protection
+- Secure coding standards (see CLAUDE.md)
 
-## 🔐 安全配置
+**3. Container Layer**
 
-### 環境變數
+- Non-root user execution (nodejs:1001)
+- Multi-stage build for minimal attack surface
+- Alpine Linux-based minimal images
+- Read-only filesystem where possible
 
-- ✅ 使用 `.env.example` 提供範例
-- ✅ 所有敏感資訊透過環境變數管理
-- ❌ 絕不提交 `.env` 檔案到版本控制
+### Continuous Security Monitoring
 
-### Docker 部署
+**Automated Security Scanning**:
 
-```dockerfile
-# 使用非 root 使用者
-USER nodejs:1001
+- Dependabot vulnerability alerts
+- GitHub Advanced Security scanning
+- Trivy container image scanning with SARIF reports
+- SBOM (Software Bill of Materials) generation
+- Daily dependency vulnerability checks
 
-# 最小化權限
-RUN chown -R nodejs:nodejs /usr/share/nginx/html
+**CI/CD Security Gates**:
+
+All changes must pass:
+
+- `pnpm audit` with critical/high vulnerability blocking
+- Dependency review for licensing and security
+- Trivy filesystem and container image scanning
+- TypeScript strict mode compilation
+- 80%+ test coverage requirement
+
+### Dependency Management
+
+We use pnpm with strict version overrides to address known vulnerabilities. Current security overrides:
+
+```json
+{
+  "pnpm": {
+    "overrides": {
+      "@isaacs/brace-expansion": ">=5.0.1",
+      "lodash": ">=4.17.23",
+      "lodash-es": ">=4.17.23",
+      "undici": ">=7.18.2",
+      "tmp": ">=0.2.4"
+    }
+  }
+}
 ```
 
-### 依賴審查
+**Security Update Process**:
 
-```bash
-# 檢查已知漏洞
-pnpm audit
+1. Dependabot creates automated PRs for vulnerabilities
+2. CI validates security impact
+3. Maintainers review and merge within SLA
+4. CHANGELOG.md updated with security fixes
+5. New version published
 
-# 修復可修復的漏洞
-pnpm audit --fix
+## Security Best Practices for Contributors
+
+### Pre-Commit Security Checks
+
+Before committing code, verify:
+
+- [ ] No hardcoded secrets (API keys, passwords, tokens)
+- [ ] All user inputs are validated
+- [ ] SQL queries use parameterized statements
+- [ ] HTML output is properly escaped
+- [ ] Authentication and authorization verified
+- [ ] Rate limiting implemented on API endpoints
+- [ ] Error messages do not expose sensitive data
+- [ ] Tests pass with 80%+ coverage
+
+### Secret Management
+
+**PROHIBITED**:
+
+```typescript
+// NEVER hardcode secrets
+const apiKey = 'sk-proj-xxxxx';
+const dbPassword = 'admin123';
 ```
 
-## 📋 安全檢查清單
+**REQUIRED**:
 
-在部署前，請確認以下項目：
+```typescript
+// ALWAYS use environment variables
+const apiKey = process.env.OPENAI_API_KEY;
 
-- [ ] 所有依賴套件已更新至最新穩定版本
-- [ ] `pnpm audit` 無高危或嚴重漏洞
-- [ ] 環境變數已正確配置
-- [ ] Docker 容器使用非 root 使用者
-- [ ] 安全標頭已在 CDN 層配置
-- [ ] 應用程式不洩露敏感資訊（錯誤訊息、stack trace）
-- [ ] HTTPS 已啟用（生產環境）
+if (!apiKey) {
+  throw new Error('OPENAI_API_KEY not configured');
+}
+```
 
-## 🎯 已知限制
+### Input Validation
 
-### 目前已知的安全考量
+```typescript
+// Use validation libraries
+import { z } from 'zod';
 
-1. **客戶端資料快取**
-   - 匯率資料快取在 localStorage
-   - 風險：低（資料為公開資訊）
+const schema = z.object({
+  email: z.string().email(),
+  age: z.number().int().min(0).max(150),
+});
 
-2. **第三方資料來源**
-   - 依賴台灣銀行 API 與 CDN
-   - 風險：中（應實施資料驗證）
+const validated = schema.parse(userInput);
+```
 
-3. **CORS 政策**
-   - 允許跨域請求獲取匯率資料
-   - 風險：低（唯讀公開資料）
+### Secure Coding Standards
 
-## 📚 安全資源
+Refer to CLAUDE.md for comprehensive security guidelines including:
+
+- Immutability principles
+- Error handling requirements
+- Testing requirements (unit, integration, E2E)
+- Code review process
+
+## Known Security Considerations
+
+### Client-Side Data Caching
+
+- **Description**: Exchange rate data cached in localStorage
+- **Risk Level**: Low
+- **Rationale**: Data is public information from Taiwan Bank API
+- **Mitigation**: 5-minute TTL, cache invalidation on errors
+
+### Third-Party Data Sources
+
+- **Description**: Depends on Taiwan Bank API and CDN
+- **Risk Level**: Medium
+- **Mitigation**: Input validation, error handling, fallback mechanisms
+
+### CORS Policy
+
+- **Description**: Cross-origin requests allowed for rate data
+- **Risk Level**: Low
+- **Rationale**: Read-only access to public data only
+
+## Disclosure Policy
+
+### Coordinated Disclosure
+
+- Security vulnerabilities disclosed publicly only after fix is available
+- 90-day disclosure timeline (may be extended by agreement)
+- Credit given to security researchers who report responsibly
+- CVE assignment for applicable vulnerabilities
+
+### Security Advisories
+
+Critical security issues published as GitHub Security Advisories including:
+
+- CVE identifier (when applicable)
+- CVSS severity rating
+- Affected versions and components
+- Mitigation steps and workarounds
+- Patch availability and upgrade path
+
+## Security Acknowledgments
+
+We thank the following security researchers for responsible disclosure:
+
+(None yet)
+
+If you have reported a security vulnerability and would like to be listed here, please let us know.
+
+## Additional Resources
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [React Security Best Practices](https://react.dev/learn/security)
+- [React Security Best Practices](https://react.dev/learn)
 - [Docker Security Best Practices](https://docs.docker.com/develop/security-best-practices/)
+- [GitHub Security Best Practices](https://docs.github.com/en/code-security)
+- [SECURITY_BASELINE.md](./docs/SECURITY_BASELINE.md) - Infrastructure security configuration
 
-## 🙏 致謝
+## Contact
 
-我們感謝以下安全研究人員的貢獻：
-
-（目前尚無）
-
-如果您回報了安全漏洞並希望被列入此處，請告知我們。
-
----
-
-**感謝您協助保護 RateWise 及其使用者！** 🛡️
+- **Security Issues**: haotool.org@gmail.com
+- **Maintainer**: haotool
+- **Threads**: [@azlife_1224](https://threads.net/@azlife_1224)
 
 ---
 
-**Copyright (C) 2025 haotool. Licensed under GPL-3.0.**
+**Last Updated**: 2026-02-07
+**Version**: 2.2.5
+**License**: GPL-3.0
 
-**聯絡方式**: haotool.org@gmail.com | [Threads @azlife_1224](https://threads.net/@azlife_1224)
+Copyright (C) 2025 haotool. All rights reserved.
