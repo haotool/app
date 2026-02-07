@@ -1,15 +1,15 @@
 <div align="center">
 
-# 🛠️ haotool Apps
+# haotool Apps
 
-**現代化 React 應用 Monorepo | Modern React Applications Monorepo**
+**Modern React Applications Monorepo**
 
 [![CI](https://github.com/haotool/app/actions/workflows/ci.yml/badge.svg)](https://github.com/haotool/app/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev/)
+[![React](https://img.shields.io/badge/React-19.2-61dafb?logo=react)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7.3-646cff?logo=vite)](https://vitejs.dev/)
-[![pnpm](https://img.shields.io/badge/pnpm-9.10-yellow?logo=pnpm)](https://pnpm.io/)
+[![pnpm](https://img.shields.io/badge/pnpm-9.10.0-yellow?logo=pnpm)](https://pnpm.io/)
 
 [English](#english) · [繁體中文](#繁體中文)
 
@@ -19,50 +19,63 @@
 
 ## 繁體中文
 
-### 📋 專案概述
+### 專案概述
 
-**haotool Apps** 是一個專業的 pnpm Monorepo，包含多個高品質的 React 19 應用程式。所有應用程式共享統一的工程標準、CI/CD 管線和開發工具鏈。
+haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 19 應用程式。所有應用程式共享統一的工程標準、CI/CD 管線和開發工具鏈。
 
-「HAO」取自中文「好」的拼音，我們的核心理念是打造真正的「**好工具**」。
+「HAO」取自中文「好」的拼音，我們的核心理念是打造真正的「好工具」。
 
-### 🚀 應用程式
+### 應用程式
 
-| 應用                               | 描述                              | 狀態    | 連結                                                            |
-| ---------------------------------- | --------------------------------- | ------- | --------------------------------------------------------------- |
-| **[RateWise](./apps/ratewise/)**   | 即時匯率換算工具，支援 30+ 種貨幣 | 🟢 Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)   |
-| **[NihonName](./apps/nihonname/)** | 日本名字產生器，探索皇民化歷史    | 🟢 Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/) |
-| **[haotool](./apps/haotool/)**     | 專案展示平台，3D 互動首頁         | 🟢 Live | [app.haotool.org](https://app.haotool.org/)                     |
+| 應用                                     | 描述                              | 狀態 | 連結                                                                  |
+| ---------------------------------------- | --------------------------------- | ---- | --------------------------------------------------------------------- |
+| **[RateWise](./apps/ratewise/)**         | 即時匯率換算工具，支援 30+ 種貨幣 | Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
+| **[NihonName](./apps/nihonname/)**       | 日本名字產生器，探索皇民化歷史    | Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
+| **[Quake-School](./apps/quake-school/)** | 互動式地震科學教育平台            | Live | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
+| **[haotool](./apps/haotool/)**           | 專案展示平台，3D 互動首頁         | Live | [app.haotool.org](https://app.haotool.org/)                           |
 
-### ✨ RateWise 匯率好工具
+### 應用特色
 
-> 基於臺灣銀行牌告匯率的即時匯率 PWA 應用
+#### RateWise - 匯率好工具
 
-- 🔄 **雙模式換算**：單幣別與多幣別同時換算
-- 💹 **即時匯率**：每 5 分鐘同步臺灣銀行牌告匯率
-- 📊 **趨勢圖表**：30 天歷史匯率走勢視覺化
-- 📱 **PWA 支援**：可安裝至手機，支援離線使用
-- ⭐ **收藏管理**：自訂常用貨幣快速存取
+基於臺灣銀行牌告匯率的即時匯率 PWA 應用
 
-### 🏯 NihonName 皇民化改姓生成器
+- 雙模式換算：單幣別與多幣別同時換算
+- 即時匯率：每 5 分鐘同步臺灣銀行牌告匯率
+- 趨勢圖表：30 天歷史匯率走勢視覺化
+- PWA 支援：可安裝至手機，支援離線使用
+- 收藏管理：自訂常用貨幣快速存取
 
-> 探索 1940 年代台灣皇民化運動的歷史改姓對照
+#### NihonName - 皇民化改姓生成器
 
-- 🎌 **姓名變換所**：查詢歷史上的日式改姓對照
-- 📚 **歷史專區**：皇民化運動、馬關條約、舊金山和約
-- 🎲 **諧音梗名字**：500+ 趣味諧音日本名
-- 🎨 **和紙質感 UI**：日式傳統美學設計
+探索 1940 年代台灣皇民化運動的歷史改姓對照
 
-### 🌐 haotool 專案平台
+- 姓名變換所：查詢歷史上的日式改姓對照
+- 歷史專區：皇民化運動、馬關條約、舊金山和約
+- 諧音梗名字：500+ 趣味諧音日本名
+- 和紙質感 UI：日式傳統美學設計
 
-> 3D 互動展示平台，介紹所有專案
+#### Quake-School - 地震知識小學堂
 
-- 🎨 **Three.js 3D 效果**：沉浸式視覺體驗
-- 📱 **響應式設計**：完美適配各種裝置
-- ⚡ **極致效能**：Lighthouse 95+ 全類別
+互動式地震科學教育網站
+
+- 地震模擬器：互動式調整規模與深度，即時視覺化影響
+- 分級課程：幼兒園到進階程度的地震知識
+- 知識測驗：互動問答測驗，驗證學習成效
+- 震度視覺化：台灣震度分級圖表
+- 地震波動畫：P 波、S 波視覺化展示
+
+#### haotool - 專案平台
+
+3D 互動展示平台，介紹所有專案
+
+- Three.js 3D 效果：沉浸式視覺體驗
+- 響應式設計：完美適配各種裝置
+- 極致效能：Lighthouse 95+ 全類別
 
 ---
 
-### 🛠️ 技術棧
+### 技術棧
 
 | 類別         | 技術                         |
 | ------------ | ---------------------------- |
@@ -75,7 +88,7 @@
 | **部署**     | Docker + Zeabur / Vercel     |
 | **安全**     | Gitleaks + Trivy + SARIF     |
 
-### 📊 品質指標
+### 品質指標
 
 | 指標           | 數值        |
 | -------------- | ----------- |
@@ -86,7 +99,7 @@
 | **Lighthouse** | 95+ 全類別  |
 | **CI 管線**    | 6 個全通過  |
 
-### 🚀 快速開始
+### 快速開始
 
 #### 環境需求
 
@@ -107,9 +120,10 @@ pnpm install
 pnpm dev
 
 # 或啟動特定應用
-pnpm --filter @app/ratewise dev    # RateWise (http://localhost:4173)
-pnpm --filter @app/nihonname dev   # NihonName (http://localhost:3002)
-pnpm --filter @app/haotool dev     # haotool (http://localhost:3000)
+pnpm --filter @app/ratewise dev      # RateWise (http://localhost:4173)
+pnpm --filter @app/nihonname dev     # NihonName (http://localhost:3002)
+pnpm --filter @app/quake-school dev  # Quake-School (http://localhost:3003)
+pnpm --filter @app/haotool dev       # haotool (http://localhost:3000)
 ```
 
 #### 建置與測試
@@ -128,25 +142,32 @@ pnpm typecheck
 pnpm lint
 ```
 
-### 📁 專案結構
+### 專案結構
 
 ```
 haotool-app/
 ├── apps/
 │   ├── ratewise/         # 匯率換算工具
 │   ├── nihonname/        # 日本名字產生器
+│   ├── quake-school/     # 地震知識小學堂
 │   ├── haotool/          # 專案展示平台
 │   └── shared/           # 共用模組
 ├── docs/                 # 文檔
 ├── scripts/              # 自動化腳本
 ├── .github/
 │   └── workflows/        # CI/CD 管線
+│       ├── ci.yml                      # 主要 CI 流程
+│       ├── release.yml                 # 版本發布
+│       ├── seo-audit.yml               # SEO 審查
+│       ├── seo-production.yml          # 生產環境 SEO
+│       ├── update-historical-rates.yml # 歷史匯率更新
+│       └── update-latest-rates.yml     # 最新匯率更新
 ├── package.json          # Monorepo 根配置
 ├── pnpm-workspace.yaml   # pnpm workspace 配置
 └── tsconfig.base.json    # 共用 TypeScript 配置
 ```
 
-### 📚 文檔
+### 文檔
 
 | 文檔                                           | 描述                 |
 | ---------------------------------------------- | -------------------- |
@@ -157,15 +178,15 @@ haotool-app/
 | [SECURITY.md](./SECURITY.md)                   | 安全政策             |
 | [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md) | 提交規範             |
 
-### 🤝 貢獻
+### 貢獻
 
 歡迎提交 Issue 和 Pull Request！請先閱讀 [貢獻指南](./CONTRIBUTING.md)。
 
-### 📄 授權
+### 授權
 
 本專案採用 [GPL-3.0](./LICENSE) 授權。
 
-### 👥 團隊
+### 團隊
 
 - **作者**: [haotool](https://haotool.org)
 - **Threads**: [@azlife_1224](https://www.threads.net/@azlife_1224)
@@ -175,21 +196,22 @@ haotool-app/
 
 ## English
 
-### 📋 Overview
+### Overview
 
-**haotool Apps** is a professional pnpm Monorepo containing multiple high-quality React 19 applications. All applications share unified engineering standards, CI/CD pipelines, and development toolchains.
+haotool Apps is a professional pnpm Monorepo containing multiple high-quality React 19 applications. All applications share unified engineering standards, CI/CD pipelines, and development toolchains.
 
 "HAO" comes from the Chinese word "好" (good). Our core philosophy is to build truly **good tools**.
 
-### 🚀 Applications
+### Applications
 
-| App                                | Description                                     | Status  | Link                                                            |
-| ---------------------------------- | ----------------------------------------------- | ------- | --------------------------------------------------------------- |
-| **[RateWise](./apps/ratewise/)**   | Real-time currency converter, 30+ currencies    | 🟢 Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)   |
-| **[NihonName](./apps/nihonname/)** | Japanese name generator, historical exploration | 🟢 Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/) |
-| **[haotool](./apps/haotool/)**     | Project showcase with 3D interactive homepage   | 🟢 Live | [app.haotool.org](https://app.haotool.org/)                     |
+| App                                      | Description                                     | Status | Link                                                                  |
+| ---------------------------------------- | ----------------------------------------------- | ------ | --------------------------------------------------------------------- |
+| **[RateWise](./apps/ratewise/)**         | Real-time currency converter, 30+ currencies    | Live   | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
+| **[NihonName](./apps/nihonname/)**       | Japanese name generator, historical exploration | Live   | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
+| **[Quake-School](./apps/quake-school/)** | Interactive earthquake science education        | Live   | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
+| **[haotool](./apps/haotool/)**           | Project showcase with 3D interactive homepage   | Live   | [app.haotool.org](https://app.haotool.org/)                           |
 
-### 🛠️ Tech Stack
+### Tech Stack
 
 - **Framework**: React 19.2 + TypeScript 5.9
 - **Build**: Vite 7.3 + vite-react-ssg
@@ -200,7 +222,7 @@ haotool-app/
 - **Deployment**: Docker + Zeabur / Vercel
 - **Security**: Gitleaks + Trivy + SARIF
 
-### 🚀 Quick Start
+### Quick Start
 
 ```bash
 # Clone repository
@@ -214,7 +236,7 @@ pnpm install
 pnpm dev
 ```
 
-### 📄 License
+### License
 
 This project is licensed under [GPL-3.0](./LICENSE).
 
