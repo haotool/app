@@ -4,6 +4,17 @@
 
 ### Patch Changes
 
+- fix(security): resolve Dependabot alerts + CI best practices
+  - Update @isaacs/brace-expansion to >=5.0.1 (HIGH - ReDoS)
+  - Update lodash/lodash-es to >=4.17.23 (MEDIUM - Prototype Pollution)
+  - Update undici to >=7.18.2 (MEDIUM - Unbounded decompression)
+  - Add tmp >=0.2.4 override (LOW - Symbolic link attack)
+  - Add enhanced security audit with JSON parsing
+  - Generate SBOM (Software Bill of Materials)
+  - Upgrade Trivy to 0.34.0 with SARIF reports
+  - Add Dependabot monitoring job
+  - Improve dependency-review with license checks
+  - All 5 open Dependabot alerts resolved
 - fix(security): P2 安全修復 Review - 3 個殘留 CodeQL 警告徹底修復
   - Shell Injection 徹底修復: verify-all-apps.mjs 和 seo-full-audit.mjs 改用 spawnSync + 陣列參數
   - URL Sanitization 深度修復: trusted-types-bootstrap.ts createScript 函數改用 URL 正則提取 + URL 對象解析

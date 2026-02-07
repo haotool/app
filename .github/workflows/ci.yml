@@ -81,8 +81,29 @@ jobs:
       - name: Verify sitemap/SSG consistency
         run: pnpm verify:sitemap
 
-      - name: Security audit
+      - name: Security audit (pnpm)
         run: pnpm audit --prod --audit-level=high
+        continue-on-error: true
+
+      - name: Check for vulnerable dependencies
+        run: |
+          echo "🔍 Checking for known vulnerabilities..."
+          pnpm audit --json > audit-results.json || true
+
+          # 檢查是否有 high/critical 漏洞
+          CRITICAL=$(jq '[.vulnerabilities | to_entries[] | select(.value.severity == "critical")] | length' audit-results.json)
+          HIGH=$(jq '[.vulnerabilities | to_entries[] | select(.value.severity == "high")] | length' audit-results.json)
+
+          echo "Critical vulnerabilities: $CRITICAL"
+          echo "High vulnerabilities: $HIGH"
+
+          if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+            echo "❌ Found $CRITICAL critical and $HIGH high severity vulnerabilities"
+            echo "Please review and update dependencies"
+            exit 1
+          fi
+
+          echo "✅ No critical or high severity vulnerabilities found"
 
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
@@ -90,6 +111,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Generate SBOM (Software Bill of Materials)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "📋 Generating SBOM..."
+          pnpm list --json --depth=Infinity > sbom.json
+          echo "✅ SBOM generated"
+
+      - name: Upload SBOM
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+          retention-days: 90
 
       - name: Upload coverage
         if: success()
@@ -252,18 +288,25 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trivy file-system scan
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           scan-type: 'fs'
           scanners: 'vuln,secret,misconfig'
           severity: 'HIGH,CRITICAL'
           exit-code: '1'
           ignore-unfixed: true
-          format: 'table'
-          output: 'trivy-fs.txt'
+          format: 'sarif'
+          output: 'trivy-fs.sarif'
+
+      - name: Upload Trivy FS results to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-fs.sarif'
+          category: 'trivy-fs'
 
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           scan-type: 'image'
           image-ref: 'ratewise:ci-scan'
@@ -271,8 +314,15 @@ jobs:
           severity: 'HIGH,CRITICAL'
           exit-code: '1'
           ignore-unfixed: true
-          format: 'table'
-          output: 'trivy-image.txt'
+          format: 'sarif'
+          output: 'trivy-image.sarif'
+
+      - name: Upload Trivy Image results to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-image.sarif'
+          category: 'trivy-image'
 
       - name: Upload Trivy reports
         if: always()
@@ -280,8 +330,9 @@ jobs:
         with:
           name: trivy-reports
           path: |
-            trivy-fs.txt
-            trivy-image.txt
+            trivy-fs.sarif
+            trivy-image.sarif
+          retention-days: 30
 
   dependency-review:
     name: Dependency Review
@@ -296,10 +347,54 @@ jobs:
     continue-on-error: true
 
     steps:
-      - name: Checkout code
+      - name: Checkpoint code
         uses: actions/checkout@v4
 
       - name: Dependency review
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: 'high'
+          deny-licenses: 'GPL-3.0, AGPL-3.0'
+          comment-summary-in-pr: 'always'
+
+  dependabot-monitor:
+    name: Monitor Dependabot Alerts
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: read
+
+    steps:
+      - name: Check Dependabot alerts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Checking Dependabot alerts..."
+
+          # 取得 open alerts
+          ALERTS=$(gh api /repos/${{ github.repository }}/dependabot/alerts \
+            --jq '[.[] | select(.state == "open")] | length')
+
+          CRITICAL=$(gh api /repos/${{ github.repository }}/dependabot/alerts \
+            --jq '[.[] | select(.state == "open" and .security_advisory.severity == "critical")] | length')
+
+          HIGH=$(gh api /repos/${{ github.repository }}/dependabot/alerts \
+            --jq '[.[] | select(.state == "open" and .security_advisory.severity == "high")] | length')
+
+          echo "Total open alerts: $ALERTS"
+          echo "Critical: $CRITICAL"
+          echo "High: $HIGH"
+
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ Found $CRITICAL critical Dependabot alerts!"
+            echo "Please review: https://github.com/${{ github.repository }}/security/dependabot"
+            exit 1
+          fi
+
+          if [ "$HIGH" -gt 0 ]; then
+            echo "⚠️  Found $HIGH high severity Dependabot alerts"
+            echo "Review recommended: https://github.com/${{ github.repository }}/security/dependabot"
+          fi
+
+          echo "✅ No critical Dependabot alerts"
