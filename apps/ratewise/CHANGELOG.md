@@ -4,6 +4,10 @@
 
 ### Patch Changes
 
+- fix(security): P2 安全修復 Review - 3 個殘留 CodeQL 警告徹底修復
+  - Shell Injection 徹底修復: verify-all-apps.mjs 和 seo-full-audit.mjs 改用 spawnSync + 陣列參數
+  - URL Sanitization 深度修復: trusted-types-bootstrap.ts createScript 函數改用 URL 正則提取 + URL 對象解析
+  - 分離 SSG 標記檢查（安全識別符）和域名檢查（URL 驗證）
 - fix(security): P2 安全修復 - 7 個 CodeQL Medium 級別警告全部修復
   - URL Sanitization: 使用 URL 對象驗證域名替代 .includes() 檢查
   - Shell Injection: 添加白名單驗證與 resolve() 路徑安全

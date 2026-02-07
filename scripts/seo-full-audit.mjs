@@ -24,7 +24,7 @@
  * BDD 階段: Stage 7 GREEN
  */
 
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, resolve, basename } from 'path';
@@ -88,10 +88,16 @@ function runVerification(scriptPath, name) {
   }
 
   try {
-    execSync(`node ${safeScriptPath}`, {
+    const result = spawnSync('node', [safeScriptPath], {
       stdio: 'inherit',
       cwd: resolve(__dirname, '..'),
     });
+
+    if (result.error || result.status !== 0) {
+      log(colors.red, '❌', `${name} 驗證失敗`);
+      return false;
+    }
+
     log(colors.green, '✅', `${name} 驗證通過`);
     return true;
   } catch (error) {

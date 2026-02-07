@@ -55,15 +55,32 @@ const POLICY_CONFIG: RatewiseTrustedTypePolicyOptions = {
   createHTML: passThrough,
   createScript: (input: string, sink?: string) => {
     // 允許 Cloudflare Insights 和 SSG 生成的 inline scripts
-    if (
-      sink === 'script' &&
-      (input.includes('cloudflareinsights.com') ||
+    if (sink === 'script') {
+      // 檢查 SSG hydration 標記（這些是安全的識別符，不是 URL）
+      const hasSSGMarker =
         input.includes('__staticRouterHydrationData') ||
         input.includes('$RC') || // React SSG hydration
         input.includes('$RV') || // React SSG hydration
-        input.includes('__VITE_REACT_SSG_HASH__'))
-    ) {
-      return input;
+        input.includes('__VITE_REACT_SSG_HASH__');
+
+      if (hasSSGMarker) {
+        return input;
+      }
+
+      // 檢查 Cloudflare Insights 域名（使用 URL 解析）
+      try {
+        // 提取腳本中的 URL 模式
+        const urlMatch = /https?:\/\/[^\s'"]+/.exec(input);
+        if (urlMatch) {
+          const url = new URL(urlMatch[0]);
+          const allowedDomains = ['cloudflareinsights.com', 'static.cloudflareinsights.com'];
+          if (allowedDomains.some((d) => url.hostname === d || url.hostname.endsWith(`.${d}`))) {
+            return input;
+          }
+        }
+      } catch {
+        // 不包含 URL 的 inline script，允許通過
+      }
     }
     return passThrough(input);
   },

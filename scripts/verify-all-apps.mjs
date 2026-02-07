@@ -16,7 +16,7 @@
  */
 
 import { discoverApps } from './lib/workspace-utils.mjs';
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
@@ -74,9 +74,13 @@ async function main() {
         throw new Error(`Invalid app name: ${app.name}`);
       }
 
-      execSync(`node ${scriptPath} ${app.name}`, {
+      const result = spawnSync('node', [scriptPath, app.name], {
         stdio: 'inherit',
       });
+
+      if (result.error || result.status !== 0) {
+        throw new Error(`Verification failed for ${app.name}`);
+      }
 
       const duration = ((Date.now() - appStartTime) / 1000).toFixed(1);
 
