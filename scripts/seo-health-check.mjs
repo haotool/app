@@ -146,9 +146,10 @@ function checkLlmsTxt() {
     try {
       const urlObj = new URL(url);
       const pathname = urlObj.pathname;
+      const hostname = urlObj.hostname;
 
-      // 跳過外部連結
-      if (!urlObj.hostname.includes('haotool.org')) {
+      // 跳過外部連結（僅允許 haotool.org 及其子域名）
+      if (hostname !== 'haotool.org' && !hostname.endsWith('.haotool.org')) {
         return;
       }
 

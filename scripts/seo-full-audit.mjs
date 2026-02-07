@@ -27,7 +27,7 @@
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { dirname, resolve, basename } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -63,13 +63,32 @@ function runVerification(scriptPath, name) {
   console.log(`\n🔍 執行驗證: ${name}`);
   console.log('─'.repeat(60));
 
-  if (!existsSync(scriptPath)) {
-    log(colors.yellow, '⚠', `腳本不存在: ${scriptPath}`);
+  // 安全性：白名單驗證腳本名稱
+  const allowedScripts = [
+    'verify-sitemap-2025.mjs',
+    'verify-breadcrumb-schema.mjs',
+    'verify-structured-data.mjs',
+    'verify-history-data.mjs',
+    'verify-precache-assets.mjs',
+    'verify-sitemap-ssg.mjs',
+  ];
+
+  const scriptName = basename(scriptPath);
+  if (!allowedScripts.includes(scriptName)) {
+    log(colors.red, '❌', `不允許的腳本: ${scriptName}`);
+    return false;
+  }
+
+  // 使用 resolve 確保路徑安全
+  const safeScriptPath = resolve(__dirname, scriptName);
+
+  if (!existsSync(safeScriptPath)) {
+    log(colors.yellow, '⚠', `腳本不存在: ${safeScriptPath}`);
     return false;
   }
 
   try {
-    execSync(`node ${scriptPath}`, {
+    execSync(`node ${safeScriptPath}`, {
       stdio: 'inherit',
       cwd: resolve(__dirname, '..'),
     });

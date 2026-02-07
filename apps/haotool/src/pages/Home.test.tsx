@@ -100,9 +100,16 @@ describe('Home', () => {
 
     // GitHub link should be external
     const githubLinks = screen.getAllByRole('link', { name: /GitHub/i });
-    const externalGithub = githubLinks.find((link) =>
-      link.getAttribute('href')?.includes('github.com'),
-    );
+    const externalGithub = githubLinks.find((link) => {
+      const href = link.getAttribute('href');
+      if (!href) return false;
+      try {
+        const url = new URL(href);
+        return url.hostname === 'github.com' || url.hostname.endsWith('.github.com');
+      } catch {
+        return false;
+      }
+    });
     expect(externalGithub).toBeInTheDocument();
   });
 

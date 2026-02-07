@@ -18,7 +18,7 @@
 import { discoverApps } from './lib/workspace-utils.mjs';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -66,7 +66,15 @@ async function main() {
     const appStartTime = Date.now();
 
     try {
-      execSync(`node ${join(__dirname, 'verify-production-seo.mjs')} ${app.name}`, {
+      // 使用 resolve 確保路徑安全，並白名單驗證 app name
+      const scriptPath = resolve(__dirname, 'verify-production-seo.mjs');
+      const allowedApps = ['ratewise', 'nihonname', 'haotool', 'quake-school'];
+
+      if (!allowedApps.includes(app.name)) {
+        throw new Error(`Invalid app name: ${app.name}`);
+      }
+
+      execSync(`node ${scriptPath} ${app.name}`, {
         stdio: 'inherit',
       });
 

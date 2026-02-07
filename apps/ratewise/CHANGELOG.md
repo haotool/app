@@ -4,6 +4,10 @@
 
 ### Patch Changes
 
+- fix(security): P2 安全修復 - 7 個 CodeQL Medium 級別警告全部修復
+  - URL Sanitization: 使用 URL 對象驗證域名替代 .includes() 檢查
+  - Shell Injection: 添加白名單驗證與 resolve() 路徑安全
+  - Identity Replacement: 修正無效字串替換邏輯
 - fix(security): P0+P1 安全修復 - GitHub Actions 權限 + Dependabot HIGH + XSS
   - GitHub Actions 權限限縮: 添加最小權限原則 (contents: read)
   - Dependabot HIGH 升級: 強制升級 6 個有漏洞依賴 (brace-expansion, fast-xml-parser, jsonpath, lodash, undici)

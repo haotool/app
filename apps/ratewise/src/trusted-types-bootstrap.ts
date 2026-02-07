@@ -28,6 +28,24 @@ interface RatewiseTrustedTypesFactory {
 }
 
 /**
+ * 安全驗證 URL 域名
+ * @param url - 要驗證的 URL
+ * @param allowedDomains - 允許的域名列表
+ * @returns 是否為允許的域名
+ */
+function isAllowedDomain(url: string, allowedDomains: string[]): boolean {
+  try {
+    const urlObj = new URL(url, window.location.origin);
+    const hostname = urlObj.hostname;
+
+    return allowedDomains.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+  } catch {
+    // 相對路徑或無效 URL，允許通過（由瀏覽器處理）
+    return url.startsWith('/') || url.startsWith('./');
+  }
+}
+
+/**
  * Trusted Types Policy Configuration
  *
  * Allows scripts from trusted sources (Cloudflare Insights, SSG hydration)
@@ -50,15 +68,13 @@ const POLICY_CONFIG: RatewiseTrustedTypePolicyOptions = {
     return passThrough(input);
   },
   createScriptURL: (input: string) => {
-    // 允許 self 和 Cloudflare Insights
-    if (
-      input.startsWith('/') ||
-      input.startsWith('./') ||
-      input.includes('cloudflareinsights.com') ||
-      input.includes('static.cloudflareinsights.com')
-    ) {
+    // 允許相對路徑和 Cloudflare Insights
+    const allowedDomains = ['cloudflareinsights.com', 'static.cloudflareinsights.com'];
+
+    if (input.startsWith('/') || input.startsWith('./') || isAllowedDomain(input, allowedDomains)) {
       return input;
     }
+
     logger.warn('Blocked untrusted script URL', { url: input });
     return '';
   },

@@ -177,7 +177,7 @@ export default function ColorSchemeComparison() {
             <button
               className={`
                 absolute top-4 right-4 p-2 rounded-full
-                bg-white/80 ${variant.titleColor.replace('text-', 'text-').split('-')[0]}-400
+                bg-white/80 ${variant.titleColor.replace('text-', '').split('-')[0]}-400
                 hover:bg-white
                 transition-colors
               `}
