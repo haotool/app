@@ -25,6 +25,9 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+permissions:
+  contents: read
+
 env:
   RATEWISE_BASE_URL: 'https://app.haotool.org/ratewise'
   NIHONNAME_BASE_URL: 'https://app.haotool.org/nihonname'
@@ -35,6 +38,8 @@ jobs:
     name: SEO Health Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
 
     if: |
       github.event_name == 'workflow_dispatch' ||
@@ -64,6 +69,8 @@ jobs:
     needs: health-check
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -116,6 +123,8 @@ jobs:
     needs: [health-check, e2e-validation]
     runs-on: ubuntu-latest
     if: always()
+    permissions:
+      contents: read
 
     steps:
       - name: Generate workflow summary

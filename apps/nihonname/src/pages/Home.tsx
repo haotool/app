@@ -469,7 +469,7 @@ const LookupModal = ({
               歷史來源：巴哈姆特
             </a>
             <a
-              href={`https://www.google.com/search?q=日治時期+${key}+改姓`}
+              href={`https://www.google.com/search?q=${encodeURIComponent(`日治時期 ${key} 改姓`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-none flex items-center justify-center bg-white hover:text-red-600 text-stone-400 p-3 rounded-lg border border-stone-200 shadow-sm transition-colors"

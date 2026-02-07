@@ -4,6 +4,10 @@
 
 ### Patch Changes
 
+- fix(security): P0+P1 安全修復 - GitHub Actions 權限 + Dependabot HIGH + XSS
+  - GitHub Actions 權限限縮: 添加最小權限原則 (contents: read)
+  - Dependabot HIGH 升級: 強制升級 6 個有漏洞依賴 (brace-expansion, fast-xml-parser, jsonpath, lodash, undici)
+  - XSS 修復: nihonname Google 搜尋 URL 使用 encodeURIComponent
 - fix(a11y): 完全移除 BottomNavigation `<a>` 子孫中的 tabindex 屬性
   - 移除 `motion.div` 的 `whileTap` 動畫，改用 CSS `group-active:` 偽類
   - 通過 W3C Nu HTML Checker 驗證：`<a>` 內部零 tabindex 屬性

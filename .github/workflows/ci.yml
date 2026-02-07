@@ -12,10 +12,15 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   quality:
     name: Quality Checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       TZ: 'Asia/Taipei'
 
@@ -100,6 +105,8 @@ jobs:
     name: E2E Tests
     needs: quality
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -168,6 +175,8 @@ jobs:
     name: Lighthouse CI
     needs: quality
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -220,6 +229,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - name: Checkout code
@@ -275,6 +287,9 @@ jobs:
     name: Dependency Review
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     # Note: Requires Dependency Graph enabled in repo settings
     # For private repos, also requires GitHub Advanced Security license
     # @see https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/configuring-the-dependency-review-action
