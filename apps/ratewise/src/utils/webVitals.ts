@@ -3,9 +3,12 @@
  * [context7:googlechrome/web-vitals:2026-01-06T01:22:11+08:00]
  *
  * Reports LCP, INP, CLS to console and optionally to analytics endpoint
+ *
+ * 註：使用標準建構而非 attribution 建構避免 Safari performance.mark() SyntaxError
+ * Safari 對 performance.mark() 參數驗證嚴格，attribution 建構的診斷標記會觸發
+ * "The string did not match the expected pattern" 錯誤
  */
-import { onCLS, onINP, onLCP } from 'web-vitals/attribution';
-import { onFCP, onTTFB, type Metric } from 'web-vitals';
+import { onCLS, onFCP, onINP, onLCP, onTTFB, type Metric } from 'web-vitals';
 import { logger } from './logger';
 import { reportWebVitals, sendToAnalytics } from './reportWebVitals';
 import { getVsiRating, VSI_GOOD_THRESHOLD } from './vsi';

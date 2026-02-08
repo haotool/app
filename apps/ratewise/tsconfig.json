@@ -2,13 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ESNext", "DOM", "WebWorker"],
-    "types": [
-      "vite/client",
-      "vite-plugin-pwa/client",
-      "node",
-      "vitest/globals",
-      "@testing-library/jest-dom"
-    ],
+    "types": ["vite/client", "node", "vitest/globals", "@testing-library/jest-dom"],
     "noEmit": true,
     "baseUrl": ".",
     "paths": {

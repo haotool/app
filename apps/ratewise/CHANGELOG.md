@@ -4,6 +4,11 @@
 
 ### Patch Changes
 
+- fix(safari): Safari 頁面切換錯誤修復 - 移除 web-vitals attribution 建構
+  - 修復切換頁面時出現 "The string did not match the expected pattern" 錯誤
+  - 改用標準 web-vitals 建構替代 attribution 建構
+  - Safari 對 performance.mark() 參數驗證嚴格，attribution 診斷標記觸發 SyntaxError
+  - 測試: reportWebVitals 11/11 通過
 - chore(deps): 修復測試依賴聲明 + 新增死代碼分析報告
   - 新增缺失的測試依賴: vitest, xml2js（修正 scripts/**tests** 中的未聲明依賴）
   - 生成完整死代碼分析報告（knip + depcheck 工具）
