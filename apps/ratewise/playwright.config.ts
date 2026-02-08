@@ -68,7 +68,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
       },
-      testIgnore: /pwa\.spec\.ts/, // PWA 測試由專用 project 處理
+      testIgnore: /pwa\.spec\.ts|offline-pwa\.spec\.ts/, // PWA 測試由專用 project 處理
     },
     {
       name: 'chromium-mobile',
@@ -76,9 +76,10 @@ export default defineConfig({
         ...devices['Pixel 5'],
         viewport: { width: 375, height: 667 },
       },
-      testIgnore: /pwa\.spec\.ts/,
+      testIgnore: /pwa\.spec\.ts|offline-pwa\.spec\.ts/,
     },
     // PWA 專用 project - 允許 Service Worker
+    // 注意：使用正向前瞻確保不匹配 offline-pwa.spec.ts
     {
       name: 'pwa-chromium',
       use: {
@@ -86,7 +87,36 @@ export default defineConfig({
         viewport: { width: 1440, height: 900 },
         serviceWorkers: 'allow',
       },
-      testMatch: /pwa\.spec\.ts/,
+      testMatch: /(?<!offline-)pwa\.spec\.ts$/,
+    },
+    // Offline PWA 專用 project - 允許 Service Worker + 離線模擬
+    // [2026-02-08] 新增離線 PWA 功能測試
+    {
+      name: 'offline-pwa-chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 900 },
+        serviceWorkers: 'allow',
+        // 增加超時時間，因為離線測試需要等待 SW 預快取
+        actionTimeout: 15000,
+        navigationTimeout: process.env['CI'] ? 90_000 : 60_000,
+      },
+      testMatch: /offline-pwa\.spec\.ts/,
+      // 離線測試可能需要重試
+      retries: process.env['CI'] ? 2 : 1,
+    },
+    // Firefox 離線測試 - 跨瀏覽器驗證
+    {
+      name: 'offline-pwa-firefox',
+      use: {
+        ...devices['Desktop Firefox'],
+        viewport: { width: 1440, height: 900 },
+        serviceWorkers: 'allow',
+        actionTimeout: 15000,
+        navigationTimeout: process.env['CI'] ? 90_000 : 60_000,
+      },
+      testMatch: /offline-pwa\.spec\.ts/,
+      retries: process.env['CI'] ? 2 : 1,
     },
   ],
 

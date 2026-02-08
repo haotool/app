@@ -54,16 +54,29 @@ function OfflineIndicatorClient() {
 
     // 混合式離線狀態檢查
     const checkNetworkStatus = async () => {
+      // 先快速檢查 navigator.onLine
+      const basicCheck = typeof navigator !== 'undefined' ? navigator.onLine : true;
+
+      // 如果 navigator.onLine 為 false，立即標記離線（可信的離線狀態）
+      if (!basicCheck) {
+        setIsOffline(true);
+        logger.warn('Network connection lost - entering offline mode (navigator.onLine)');
+        setIsDismissed(false);
+        return;
+      }
+
+      // navigator.onLine 為 true 時，仍需進行實際網路驗證
+      // 因為 true 不可靠（可能只是連接到網路，但沒有網際網路）
       const online = await isOnline();
       const offline = !online;
 
       setIsOffline(offline);
 
       if (offline) {
-        logger.warn('Network connection lost - entering offline mode (hybrid detection)');
-        setIsDismissed(false); // 重新顯示指示器
+        logger.warn('Network connection lost - entering offline mode (hybrid verification)');
+        setIsDismissed(false);
       } else {
-        logger.info('Network connection restored - back online (hybrid detection)');
+        logger.info('Network connection restored - back online (hybrid verification)');
       }
     };
 

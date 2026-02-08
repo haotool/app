@@ -204,6 +204,11 @@ describe('OfflineIndicator', () => {
       vi.mocked(networkStatus.isOnline).mockResolvedValue(true);
       window.dispatchEvent(new Event('online'));
 
+      // Wait for online state to be processed
+      await waitFor(() => {
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      });
+
       // Go offline again
       Object.defineProperty(window.navigator, 'onLine', {
         writable: true,

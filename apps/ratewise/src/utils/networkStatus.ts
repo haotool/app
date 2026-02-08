@@ -36,10 +36,10 @@ export function checkOnlineStatus(): boolean {
  * 發送 HEAD 請求到自己的 origin 驗證實際網路連線
  * 使用隨機 query parameter 防止瀏覽器快取
  *
- * @param timeout - 請求超時時間（毫秒），預設 5000ms
+ * @param timeout - 請求超時時間（毫秒），預設 3000ms（優化為 3 秒以提升響應速度）
  * @returns Promise<boolean> - true 表示有實際網路連線，false 表示無法連線
  */
-export async function checkNetworkConnectivity(timeout = 5000): Promise<boolean> {
+export async function checkNetworkConnectivity(timeout = 3000): Promise<boolean> {
   if (typeof window === 'undefined') {
     return true; // SSR 環境預設為在線
   }
