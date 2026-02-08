@@ -26,6 +26,7 @@ import { notificationTokens } from '../config/design-tokens';
 import { notificationAnimations, safeTransition } from '../config/animations';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { logger } from '../utils/logger';
+import { isOnline } from '../utils/networkStatus';
 
 /**
  * 離線指示器位置配置
@@ -47,31 +48,48 @@ function OfflineIndicatorClient() {
   const [isOffline, setIsOffline] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // 監控網路連線狀態
+  // 監控網路連線狀態 - 混合式檢測（navigator.onLine + 實際網路請求）
   useEffect(() => {
-    // 初始狀態檢查
-    const checkOnlineStatus = () => {
-      const offline = !navigator.onLine;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    // 混合式離線狀態檢查
+    const checkNetworkStatus = async () => {
+      const online = await isOnline();
+      const offline = !online;
+
       setIsOffline(offline);
 
       if (offline) {
-        logger.warn('Network connection lost - entering offline mode');
+        logger.warn('Network connection lost - entering offline mode (hybrid detection)');
         setIsDismissed(false); // 重新顯示指示器
       } else {
-        logger.info('Network connection restored - back online');
+        logger.info('Network connection restored - back online (hybrid detection)');
       }
     };
 
     // 初始檢查
-    checkOnlineStatus();
+    void checkNetworkStatus();
 
-    // 監聽網路狀態變更
-    window.addEventListener('online', checkOnlineStatus);
-    window.addEventListener('offline', checkOnlineStatus);
+    // 定期檢查網路狀態（每 30 秒）
+    // 因為 navigator.onLine 在某些情況下不可靠，需要定期驗證
+    intervalId = setInterval(() => {
+      void checkNetworkStatus();
+    }, 30000);
+
+    // 監聽 online/offline 事件作為快速反應機制
+    const handleOnlineEvent = () => {
+      void checkNetworkStatus();
+    };
+
+    window.addEventListener('online', handleOnlineEvent);
+    window.addEventListener('offline', handleOnlineEvent);
 
     return () => {
-      window.removeEventListener('online', checkOnlineStatus);
-      window.removeEventListener('offline', checkOnlineStatus);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      window.removeEventListener('online', handleOnlineEvent);
+      window.removeEventListener('offline', handleOnlineEvent);
     };
   }, []);
 
