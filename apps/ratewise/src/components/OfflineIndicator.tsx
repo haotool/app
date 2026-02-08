@@ -38,7 +38,6 @@ const OFFLINE_INDICATOR_POSITION =
 /** SSR 安全入口：伺服器端回傳 null */
 export function OfflineIndicator() {
   if (typeof window === 'undefined') return null;
-
   return <OfflineIndicatorClient />;
 }
 
