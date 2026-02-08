@@ -65,12 +65,24 @@ clientsClaim();
  * @example
  *   scope: 'https://example.com/ratewise/' -> '/ratewise/'
  *   scope: 'https://example.com/' -> '/'
+ *
+ * Safari 防禦：strict URL validation
+ * Safari PWA 對 URL 驗證嚴格，必須驗證輸入格式避免 SyntaxError
+ * Reference: [context7:w3c/ServiceWorker:2026-02-08]
  */
 function getBasePath(): string {
   try {
-    const scopeUrl = new URL(self.registration.scope);
+    // Safari 防禦：驗證 scope 格式
+    const scope = self.registration?.scope;
+    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
+      return '/';
+    }
+
+    const scopeUrl = new URL(scope);
     return scopeUrl.pathname; // 例如 '/ratewise/' 或 '/'
-  } catch {
+  } catch (error) {
+    // Safari 可能拋出 "The string did not match the expected pattern"
+    console.error('[SW] getBasePath failed:', error);
     return '/'; // fallback
   }
 }
@@ -131,13 +143,25 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   }
 
   // 安全性驗證：僅處理同源請求
-  // 增強錯誤處理：無效 URL 返回錯誤（防止 SW 崩潰）
+  // Safari 防禦：URL 驗證失敗時返回錯誤避免崩潰
+  // Safari PWA 對 URL 格式驗證嚴格，必須防禦性檢查
   let requestOrigin: string;
   let swOrigin: string;
   try {
+    // Safari 防禦：驗證 URL 格式
+    if (!req.url || typeof req.url !== 'string' || req.url.trim() === '') {
+      return Response.error();
+    }
+    const scope = self.registration?.scope;
+    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
+      return Response.error();
+    }
+
     requestOrigin = new URL(req.url).origin;
-    swOrigin = new URL(self.registration.scope).origin;
-  } catch {
+    swOrigin = new URL(scope).origin;
+  } catch (error) {
+    // Safari 可能拋出 "The string did not match the expected pattern"
+    console.error('[SW] Origin validation failed:', error);
     return Response.error();
   }
   if (requestOrigin !== swOrigin) {
@@ -145,16 +169,24 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   }
 
   // 1. 嘗試從 runtime cache 獲取當前頁面
-  // 防禦深度：驗證路徑不包含路徑遍歷字元
+  // Safari 防禦：URL 解析失敗時跳過此步驟
   try {
+    // Safari 防禦：驗證 URL 格式
+    if (!req.url || typeof req.url !== 'string' || req.url.trim() === '') {
+      throw new Error('Invalid URL');
+    }
+
     const requestUrl = new URL(req.url);
+    // 防禦深度：驗證路徑不包含路徑遍歷字元
     if (!requestUrl.pathname.includes('..')) {
       const cachedHtml = await caches.match(req.url);
       if (cachedHtml) {
         return cachedHtml;
       }
     }
-  } catch {
+  } catch (error) {
+    // Safari 可能拋出 "The string did not match the expected pattern"
+    console.error('[SW] Runtime cache match failed:', error);
     // 快取讀取失敗，繼續嘗試其他快取
   }
 
@@ -166,15 +198,23 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   }
 
   // 3. 嘗試使用完整 URL 匹配 index.html（備用）
-  const scope = self.registration.scope;
-  const indexUrl = new URL('index.html', scope).href;
+  // Safari 防禦：URL 建構失敗時跳過此步驟
   try {
+    // Safari 防禦：驗證 scope 格式
+    const scope = self.registration?.scope;
+    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
+      throw new Error('Invalid scope');
+    }
+
+    const indexUrl = new URL('index.html', scope).href;
     const indexFromCache = await caches.match(indexUrl);
     if (indexFromCache) {
       return indexFromCache;
     }
-  } catch {
-    // 快取讀取失敗
+  } catch (error) {
+    // Safari 可能拋出 "The string did not match the expected pattern"
+    console.error('[SW] Index URL construction failed:', error);
+    // 快取讀取失敗，繼續嘗試其他快取
   }
 
   // 4. 最終 fallback：offline.html
@@ -185,10 +225,21 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   }
 
   // 備用：嘗試完整 URL 匹配 offline.html
-  const offlineUrl = new URL('offline.html', scope).href;
-  const fallbackResponse = await caches.match(offlineUrl);
-  if (fallbackResponse) {
-    return fallbackResponse;
+  // Safari 防禦：URL 建構失敗時直接返回錯誤
+  try {
+    const scope = self.registration?.scope;
+    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
+      return Response.error();
+    }
+
+    const offlineUrl = new URL('offline.html', scope).href;
+    const fallbackResponse = await caches.match(offlineUrl);
+    if (fallbackResponse) {
+      return fallbackResponse;
+    }
+  } catch (error) {
+    // Safari 可能拋出 "The string did not match the expected pattern"
+    console.error('[SW] Offline URL construction failed:', error);
   }
 
   return Response.error();

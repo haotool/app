@@ -1,5 +1,31 @@
 # @app/ratewise
 
+## 2.2.7
+
+### Patch Changes
+
+- fix(safari): Safari PWA 深度修復 - Service Worker URL 解析防禦
+
+  **問題**: v2.2.6 修復 web-vitals 後，PWA 環境仍偶發 "The string did not match the expected pattern" 錯誤
+
+  **深度調查**: WebSearch 發現 Safari PWA 對 `new URL()` 驗證極嚴格，Service Worker 中的 URL 解析是主要風險點
+
+  **全面修復**:
+  - getBasePath(): 新增 scope 格式驗證（null/非字串/空字串檢查）+ 錯誤日誌
+  - Origin validation: 新增 req.url 和 scope 格式驗證，失敗時返回 Response.error()
+  - Runtime cache: 新增 URL 格式驗證，失敗時跳過快取讀取
+  - Index/Offline URL: 新增 scope 驗證，建構失敗時跳過或返回錯誤
+  - JSON.parse 審查: 所有 JSON.parse 呼叫已有 try-catch 保護 ✅
+
+  **驗證**: Service Worker 測試 30/30 通過 ✅、typecheck ✅、build ✅（133 precache entries）
+
+  **References**:
+  - [TrackJS: string did not match expected pattern](https://trackjs.com/javascript-errors/string-did-not-match-the-expected-pattern/)
+  - [GitHub: getsentry/sentry-javascript#2487](https://github.com/getsentry/sentry-javascript/issues/2487)
+  - [GitHub: open-webui#10847](https://github.com/open-webui/open-webui/discussions/10847)
+  - [Apple Forums: iOS 17 PWA issues](https://developer.apple.com/forums/thread/737827)
+  - [GitHub: PWA-POLICE/pwa-bugs](https://github.com/PWA-POLICE/pwa-bugs)
+
 ## 2.2.6
 
 ### Patch Changes
