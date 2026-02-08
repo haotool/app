@@ -113,11 +113,12 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock ResizeObserver for chart resizing tests
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// Must use function keyword (not arrow function) to work as constructor
+global.ResizeObserver = vi.fn(function (this: ResizeObserver) {
+  this.observe = vi.fn();
+  this.unobserve = vi.fn();
+  this.disconnect = vi.fn();
+}) as unknown as typeof ResizeObserver;
 
 // Provide a resilient in-memory storage fallback to avoid TypeError in CI
 type StorageTarget = 'localStorage' | 'sessionStorage';
