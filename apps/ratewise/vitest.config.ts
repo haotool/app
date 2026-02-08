@@ -30,6 +30,9 @@ export default defineConfig(() => {
         // 虛擬模組在測試環境無法解析，需要提供 mock 實作
         // 參考: https://vite-pwa-org.netlify.app/frameworks/react.html
         'virtual:pwa-register/react': resolve(__dirname, './src/__mocks__/pwa-register-react.ts'),
+        // [fix:2026-02-08] Mock vite-react-ssg 模組
+        // SSG 模組在測試環境無法解析，需要提供 mock 實作
+        'vite-react-ssg': resolve(__dirname, './src/__mocks__/vite-react-ssg.ts'),
       },
     },
     test: {
