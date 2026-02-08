@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { OfflineIndicator } from '../OfflineIndicator';
+import * as networkStatus from '../../utils/networkStatus';
 
 // Mock dependencies
 vi.mock('react-i18next', () => ({
@@ -27,6 +28,13 @@ vi.mock('../../utils/logger', () => ({
   },
 }));
 
+// Mock network status utilities to control online/offline state
+vi.mock('../../utils/networkStatus', () => ({
+  isOnline: vi.fn(),
+  checkOnlineStatus: vi.fn(),
+  checkNetworkConnectivity: vi.fn(),
+}));
+
 describe('OfflineIndicator', () => {
   beforeEach(() => {
     // Mock navigator.onLine
@@ -35,6 +43,9 @@ describe('OfflineIndicator', () => {
       configurable: true,
       value: true,
     });
+
+    // Setup network status mock - default to online
+    vi.mocked(networkStatus.isOnline).mockResolvedValue(true);
 
     // Clear all event listeners
     vi.clearAllMocks();
@@ -58,6 +69,9 @@ describe('OfflineIndicator', () => {
         value: false,
       });
 
+      // Mock isOnline to return false (offline)
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
+
       render(<OfflineIndicator />);
 
       // Trigger offline event
@@ -75,6 +89,9 @@ describe('OfflineIndicator', () => {
         value: false,
       });
 
+      // Mock isOnline to return false (offline)
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
+
       const { rerender } = render(<OfflineIndicator />);
       window.dispatchEvent(new Event('offline'));
 
@@ -87,6 +104,9 @@ describe('OfflineIndicator', () => {
         writable: true,
         value: true,
       });
+
+      // Mock isOnline to return true (online)
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(true);
 
       window.dispatchEvent(new Event('online'));
       rerender(<OfflineIndicator />);
@@ -103,6 +123,9 @@ describe('OfflineIndicator', () => {
         writable: true,
         value: false,
       });
+
+      // Mock isOnline to return false (offline)
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
 
       render(<OfflineIndicator />);
       window.dispatchEvent(new Event('offline'));
@@ -125,6 +148,9 @@ describe('OfflineIndicator', () => {
         writable: true,
         value: false,
       });
+
+      // Mock isOnline to return false (offline)
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
 
       render(<OfflineIndicator />);
       window.dispatchEvent(new Event('offline'));
@@ -151,6 +177,9 @@ describe('OfflineIndicator', () => {
         value: false,
       });
 
+      // Mock isOnline to return false (offline)
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
+
       render(<OfflineIndicator />);
 
       // First offline
@@ -172,6 +201,7 @@ describe('OfflineIndicator', () => {
         writable: true,
         value: true,
       });
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(true);
       window.dispatchEvent(new Event('online'));
 
       // Go offline again
@@ -179,6 +209,7 @@ describe('OfflineIndicator', () => {
         writable: true,
         value: false,
       });
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
       window.dispatchEvent(new Event('offline'));
 
       // Should re-show indicator
@@ -194,6 +225,9 @@ describe('OfflineIndicator', () => {
         writable: true,
         value: false,
       });
+
+      // Mock isOnline to return false (offline)
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
 
       render(<OfflineIndicator />);
       window.dispatchEvent(new Event('offline'));
@@ -211,6 +245,9 @@ describe('OfflineIndicator', () => {
         value: false,
       });
 
+      // Mock isOnline to return false (offline)
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
+
       render(<OfflineIndicator />);
       window.dispatchEvent(new Event('offline'));
 
@@ -225,6 +262,9 @@ describe('OfflineIndicator', () => {
         writable: true,
         value: false,
       });
+
+      // Mock isOnline to return false (offline)
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
 
       render(<OfflineIndicator />);
       window.dispatchEvent(new Event('offline'));
@@ -241,6 +281,9 @@ describe('OfflineIndicator', () => {
         writable: true,
         value: false,
       });
+
+      // Mock isOnline to return false (offline)
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
 
       render(<OfflineIndicator />);
       window.dispatchEvent(new Event('offline'));
