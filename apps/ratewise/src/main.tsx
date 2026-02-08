@@ -24,6 +24,7 @@ import { handleVersionUpdate } from './utils/versionManager';
 import { initCSPReporter } from './utils/csp-reporter';
 import { APP_VERSION, BUILD_TIME } from './config/version';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
+import { initPWAStorageManager } from './utils/pwaStorageManager';
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(
@@ -50,6 +51,12 @@ export const createRoot = ViteReactSSG(
 
       // 處理版本更新（檢測版本變更並清除快取）
       void handleVersionUpdate();
+
+      // [fix:2026-02-08] iOS PWA Cache Persistence Strategy
+      // iOS Safari 會在 PWA 關閉後清除 Cache Storage
+      // 解決方案：應用啟動時重新快取關鍵資源 + 請求持久化儲存
+      // Reference: [GitHub:PWA-POLICE/pwa-bugs] [GitHub:Workbox#1494]
+      void initPWAStorageManager(import.meta.env.BASE_URL || '/');
 
       // 全域錯誤處理器 - 捕捉網路請求錯誤
       // [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]

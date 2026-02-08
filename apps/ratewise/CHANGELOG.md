@@ -1,5 +1,52 @@
 # @app/ratewise
 
+## 2.2.8
+
+### Patch Changes
+
+- fix(pwa): iOS Safari PWA 離線快取持久化策略 - 解決完全白屏問題
+
+  **問題**: v2.2.7 修復 SyntaxError 後，用戶報告「完全滑掉應用後不會快取到最新的匯率和內容而是整個白屏」
+
+  **根本原因**:
+  - iOS Safari 會在 PWA 關閉後清除 Cache Storage (Workbox Issue #1494)
+  - Service Worker 也可能被 iOS 移除
+  - Cache Storage 只持續到 Safari 完全卸載為止
+  - 7 天 script-writable storage 上限
+  - 50MB Cache API 限制
+
+  **解決方案**:
+  1. **PWA Storage Manager**（全新模組）:
+     - `requestPersistentStorage()`: 請求持久化儲存（Safari/Chrome 相容）
+     - `recacheCriticalResourcesOnLaunch()`: 應用啟動時重新快取關鍵資源
+     - `checkCacheHealth()`: 快取健康度診斷
+     - `getStoragePersistenceStatus()`: 儲存狀態監控
+  2. **應用啟動時自動重新快取**:
+     - `main.tsx`: 整合 `initPWAStorageManager()`，應用啟動時執行
+     - 關鍵資源列表: `/`, `/offline.html`, `/manifest.webmanifest`, icons
+  3. **前景恢復時重新快取**:
+     - `UpdatePrompt.tsx`: `visibilitychange` 事件同時觸發 Service Worker 更新 + 重新快取
+     - 確保從背景回到前景時快取可用
+  4. **快取監控與診斷**:
+     - 儲存使用率追蹤（iOS 50MB 限制警告）
+     - 關鍵資源快取狀態檢查
+     - 持久化權限狀態記錄
+
+  **技術細節**:
+  - Storage API: `navigator.storage.persist()` + `navigator.storage.estimate()`
+  - 快取策略: 使用 Workbox precache 名稱（`workbox-precache-v2-*`）
+  - iOS 50MB 限制：80% 使用率警告（40MB threshold）
+  - 錯誤處理：graceful degradation，即使 Storage API 不可用也能運作
+
+  **驗證**: typecheck ✅、build ✅（133 precache entries）
+
+  **References**:
+  - [GitHub: PWA-POLICE/pwa-bugs](https://github.com/PWA-POLICE/pwa-bugs)
+  - [Apple Forums: iOS 17 Safari PWA issues](https://developer.apple.com/forums/thread/737827)
+  - [GitHub: Workbox#1494 - SW removed when PWA closed](https://github.com/GoogleChrome/workbox/issues/1494)
+  - [Vinova: Safari iOS PWA Limitations](https://vinova.sg/navigating-safari-ios-pwa-limitations/)
+  - [MDN: Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API)
+
 ## 2.2.7
 
 ### Patch Changes

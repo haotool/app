@@ -26,6 +26,7 @@ import { notificationTokens } from '../config/design-tokens';
 import { notificationAnimations, safeTransition } from '../config/animations';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { logger } from '../utils/logger';
+import { recacheCriticalResourcesOnLaunch } from '../utils/pwaStorageManager';
 
 /** SSR 安全入口：伺服器端回傳 null */
 export function UpdatePrompt() {
@@ -67,10 +68,18 @@ function UpdatePromptClient() {
   // visibilitychange: 當 PWA 從背景回到前景時檢查更新
   // 這是舊 PWA 用戶獲得更新通知的關鍵機制
   // iOS Safari PWA 會在背景殺掉 SW，回到前景時需要主動檢查
+  // [fix:2026-02-08] 同時重新快取關鍵資源，解決 iOS 清除 Cache Storage 問題
+  // Reference: [GitHub:PWA-POLICE/pwa-bugs] [GitHub:Workbox#1494]
   useEffect(() => {
     const checkUpdate = () => {
-      if (document.visibilityState === 'visible' && registrationRef.current) {
-        void registrationRef.current.update();
+      if (document.visibilityState === 'visible') {
+        // 檢查 Service Worker 更新
+        if (registrationRef.current) {
+          void registrationRef.current.update();
+        }
+
+        // 重新快取關鍵資源（iOS Safari 可能已清除快取）
+        void recacheCriticalResourcesOnLaunch(import.meta.env.BASE_URL || '/');
       }
     };
 
