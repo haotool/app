@@ -1,5 +1,31 @@
 # @app/ratewise
 
+## 2.2.6
+
+### Patch Changes
+
+- 6107b69: fix(security): P2 安全修復 - 7 個 CodeQL Medium 級別警告全部修復
+  - URL Sanitization: 使用 URL 對象驗證域名替代 .includes() 檢查
+  - Shell Injection: 添加白名單驗證與 resolve() 路徑安全
+  - Identity Replacement: 修正無效字串替換邏輯
+
+- 69c53b3: fix(security): P2 安全修復 Review - 徹底修復 3 個殘留 CodeQL 警告
+  - Shell Injection 徹底修復: execSync 改用 spawnSync + 陣列參數，消除字串拼接風險
+  - URL Sanitization 深度修復: trusted-types-bootstrap.ts createScript 函數改用 URL 正則提取 + URL 對象解析
+  - 分離 SSG 標記檢查（安全識別符）和域名檢查（URL 驗證）
+
+- b8cbe89: fix(safari): Safari 頁面切換錯誤修復 - 移除 web-vitals attribution 建構
+  - 修復切換頁面時出現 "The string did not match the expected pattern" 錯誤
+  - 改用標準 web-vitals 建構替代 attribution 建構，避免 Safari performance.mark() SyntaxError
+  - 測試: reportWebVitals 11/11 通過
+
+- 4b03fb1: fix(types): vite-react-ssg 類型定義與測試 mock
+  - 修正 ViteReactSSG 函數簽名：接受 options 物件而非 App component
+  - 新增 SSGContext 介面定義 isClient 型別
+  - ClientOnly children 支援 function 型別避免 TypeScript 錯誤
+  - 新增測試環境 vite-react-ssg mock 實作
+  - 所有測試通過：1364/1364 ✅
+
 ## 2.2.5
 
 ### Patch Changes
