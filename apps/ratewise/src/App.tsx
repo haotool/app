@@ -2,6 +2,7 @@ import { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { UpdatePrompt } from './components/UpdatePrompt';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { SkeletonLoader } from './components/SkeletonLoader';
 import { useUrlNormalization } from './hooks/useUrlNormalization';
 import { AppLayout } from './components/AppLayout';
@@ -80,6 +81,8 @@ function App() {
           </Suspense>
         </UrlNormalizer>
       </Router>
+      {/* 離線模式指示器 - 顯示網路連線狀態 */}
+      <OfflineIndicator />
       {/* PWA 更新通知 - 品牌對齊風格 */}
       <UpdatePrompt />
     </ErrorBoundary>
