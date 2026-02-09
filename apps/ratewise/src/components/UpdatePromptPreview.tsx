@@ -103,7 +103,6 @@ function UpdatePromptPreviewClient({
           <div
             className={`
               relative overflow-hidden ${notificationTokens.borderRadius}
-              ${notificationTokens.container}
               ${notificationTokens.background.brand}
               ${notificationTokens.background.brandBorder}
               ${notificationTokens.shadow}

@@ -54,7 +54,7 @@ describe('UpdatePrompt - SSOT tokens 引用', () => {
   it('should use notificationTokens for layout', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('notificationTokens.position');
-    expect(sourceCode).toContain('notificationTokens.container');
+    // Note: width constraints now in position token, not separate container
     expect(sourceCode).toContain('notificationTokens.padding');
     expect(sourceCode).toContain('notificationTokens.borderRadius');
   });

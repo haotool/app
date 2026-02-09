@@ -1203,12 +1203,10 @@ export const buttonTokens = {
  * @version 2.0.0
  */
 export const notificationTokens = {
-  /** 固定定位（視窗底部中央） - UpdatePrompt 專用 */
-  position: 'fixed bottom-4 left-1/2 -translate-x-1/2 z-50',
-  /** 固定定位（視窗頂部中央） - OfflineIndicator 專用 */
-  positionTop: 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999]',
-  /** 容器尺寸（響應式，最大 344px） */
-  container: 'w-[calc(100vw-2rem)] max-w-[344px]',
+  /** 固定定位 + 容器尺寸（視窗底部中央） - UpdatePrompt 專用 */
+  position: 'fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] max-w-[344px] z-50',
+  /** 固定定位 + 容器尺寸（視窗頂部中央） - OfflineIndicator 專用 */
+  positionTop: 'fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] max-w-[344px] z-[9999]',
   /** 內距 */
   padding: 'px-6 py-3.5',
   /** 圓角（與 card / button 統一） */

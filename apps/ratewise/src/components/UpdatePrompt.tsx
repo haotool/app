@@ -160,7 +160,6 @@ function UpdatePromptClient() {
           <div
             className={`
               relative overflow-hidden ${notificationTokens.borderRadius}
-              ${notificationTokens.container}
               bg-gradient-to-r from-brand-from via-brand-via to-brand-to
               border border-brand-border/60
               ${notificationTokens.shadow}
