@@ -63,7 +63,8 @@ const DEFAULT_DESCRIPTION =
   'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具，歷史趨勢圖一目了然，多幣別同時比較，是您出國旅遊與外幣兌換的最佳助手。';
 const DEFAULT_OG_IMAGE = '/og-image.png';
 const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratewise/'; // Fallback 尾斜線
-const ASSET_VERSION = 'v=20260129';
+/** 資產版本快取破壞參數 - 從建置時間自動生成，避免硬編碼日期 */
+const ASSET_VERSION = `v=${(import.meta.env.VITE_BUILD_TIME ?? '').replace(/[-T:Z.]/g, '').slice(0, 8) || 'dev'}`;
 const DEFAULT_LOCALE = 'zh-TW';
 const DEFAULT_KEYWORDS = [
   '匯率好工具',
@@ -91,8 +92,8 @@ const DEFAULT_KEYWORDS = [
 ];
 const SOCIAL_LINKS = ['https://www.threads.net/@azlife_1224', 'https://github.com/haotool/app'];
 
-// Use build time to avoid SSG/hydration mismatch
-const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? '2026-01-29T00:00:00.000Z';
+/** 建置時間戳 - 由 vite.config.ts define 注入，避免 SSG/hydration 不一致 */
+const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString();
 
 const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`);

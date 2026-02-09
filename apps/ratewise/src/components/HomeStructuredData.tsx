@@ -7,7 +7,9 @@ interface FaqEntry {
 
 const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratewise/';
 const SITE_BASE_URL = SITE_URL.endsWith('/') ? SITE_URL : `${SITE_URL}/`;
-const OG_IMAGE_URL = `${SITE_BASE_URL}og-image.png?v=20251208`;
+const BUILD_DATE =
+  (import.meta.env.VITE_BUILD_TIME ?? '').replace(/[-T:Z.]/g, '').slice(0, 8) || 'dev';
+const OG_IMAGE_URL = `${SITE_BASE_URL}og-image.png?v=${BUILD_DATE}`;
 
 const HOW_TO_STEPS = [
   {
@@ -42,9 +44,9 @@ const HOW_TO_SCHEMA = {
 const ARTICLE_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'Article',
-  headline: 'RateWise 2025 預渲染與 PWA 強化',
+  headline: 'RateWise 即時匯率轉換器 - 離線可用的 PWA 匯率工具',
   description:
-    'RateWise 採用 vite-react-ssg 預渲染與 PWA 快取，提供離線匯率、iOS 風格計算機體驗及多幣別快速換算。',
+    'RateWise 採用 vite-react-ssg 預渲染與 PWA 快取策略，提供離線匯率查詢、iOS 風格計算機體驗及多幣別快速換算服務。',
   author: {
     '@type': 'Person',
     name: 'haotool',
@@ -64,7 +66,7 @@ const ARTICLE_SCHEMA = {
   image: OG_IMAGE_URL,
   thumbnailUrl: OG_IMAGE_URL,
   datePublished: '2025-11-26T00:00:00+08:00',
-  dateModified: '2026-01-03T23:24:00+08:00',
+  dateModified: import.meta.env.VITE_BUILD_TIME ?? '2026-02-09T00:00:00+08:00',
 };
 
 export function HomeStructuredData({ faq }: { faq: FaqEntry[] }) {

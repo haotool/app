@@ -97,18 +97,20 @@ export default defineConfig(() => {
           // [fix:2026-01-16] Theme system modules - requires browser APIs (localStorage, matchMedia, DOM)
           'src/hooks/useAppTheme.ts', // SSR-safe theme hook, requires browser APIs
           'src/stores/converterStore.ts', // Zustand store, integration-tested via E2E
+          // PWA runtime 模組 - 依賴 Cache API / Storage API / Service Worker context
+          'src/utils/pwaStorageManager.ts', // iOS Cache Persistence，需 Cache API + SW
+          'src/utils/workbox-window.ts', // ESM wrapper，純 re-export 無邏輯
+          'src/utils/react-helmet-async.ts', // ESM wrapper，純 re-export 無邏輯
+          'src/i18n/index.ts', // i18next 初始化，需 browser runtime
+          'src/suppress-hydration-warning.ts', // console.error override，SSR 專用
         ],
         thresholds: {
-          // 基於 Linus Torvalds 哲學設置實用且可維護的門檻
-          // 2025-11-22: 技術債清除後的實際覆蓋率調整
-          // 2026-01-26: UI/UX v2.0 重構後微調
-          // 2026-01-28: BottomNavigation 簡化移除活動指示條
-          // - 當前覆蓋率：80.5% statements, 63.8% branches, 79.8% functions, 81.6% lines
-          // PWA 相關模組已排除（UpdatePrompt, versionChecker, swUtils）
-          statements: 80, // 當前: 80.5%，目標: 逐步提升至 85%
-          branches: 63, // 當前: 63.8%，目標: 逐步提升至 75%
-          functions: 79, // 當前: 79.8%
-          lines: 81, // 當前: 81.6%，目標: 逐步提升至 85%
+          // 2026-02-09: v2.4.0 覆蓋率校準
+          // 排除 PWA runtime 模組後的實際覆蓋率
+          statements: 80,
+          branches: 63,
+          functions: 79,
+          lines: 81,
         },
       },
     },
