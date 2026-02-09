@@ -36,6 +36,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { Button } from '../components/Button';
+import { OfflineIndicator } from '../components/OfflineIndicator';
+import { UpdatePromptPreview } from '../components/UpdatePromptPreview';
 import {
   SkeletonLoader,
   SettingsSkeleton,
@@ -120,6 +122,10 @@ export default function UIShowcase() {
   const [activeTab, setActiveTab] = useState<'themes' | 'colors' | 'components' | 'skeletons'>(
     'themes',
   );
+  const [forceOfflinePreview, setForceOfflinePreview] = useState(false);
+  const [updatePromptState, setUpdatePromptState] = useState<
+    'offlineReady' | 'needRefresh' | 'isUpdating' | 'updateFailed' | null
+  >(null);
 
   // Sample history data for demo - using useMemo to avoid impure function calls during render
   const sampleHistory: ConversionHistoryEntry[] = useMemo(
@@ -154,6 +160,20 @@ export default function UIShowcase() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
+      {/* Update Prompt - 真實固定定位（底部） */}
+      <UpdatePromptPreview
+        state={updatePromptState}
+        onClose={() => setUpdatePromptState(null)}
+        onUpdate={() => {
+          if (updatePromptState === 'needRefresh' || updatePromptState === 'updateFailed') {
+            showToast(updatePromptState === 'updateFailed' ? '重試更新' : '開始更新', 'info');
+          }
+        }}
+      />
+
+      {/* Offline Indicator - 真實固定定位（頂部） */}
+      <OfflineIndicator forceOffline={forceOfflinePreview ? true : undefined} />
+
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <header className="flex items-center justify-between">
@@ -317,6 +337,74 @@ export default function UIShowcase() {
         {/* Components Tab */}
         {activeTab === 'components' && (
           <div className="space-y-6">
+            {/* Update Prompt Preview */}
+            <Section title="PWA 更新通知" icon={RefreshCw}>
+              <p className="text-sm text-text-muted mb-3">
+                PWA 更新通知的四種狀態展示，統一品牌漸變設計。
+                <br />
+                <strong className="text-warning">通知會顯示在頁面底部中央的真實位置</strong>
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Button
+                  variant={updatePromptState === 'offlineReady' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() =>
+                    setUpdatePromptState((prev) =>
+                      prev === 'offlineReady' ? null : 'offlineReady',
+                    )
+                  }
+                >
+                  {updatePromptState === 'offlineReady' ? '✓ ' : ''}離線就緒
+                </Button>
+                <Button
+                  variant={updatePromptState === 'needRefresh' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() =>
+                    setUpdatePromptState((prev) => (prev === 'needRefresh' ? null : 'needRefresh'))
+                  }
+                >
+                  {updatePromptState === 'needRefresh' ? '✓ ' : ''}需要更新
+                </Button>
+                <Button
+                  variant={updatePromptState === 'isUpdating' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() =>
+                    setUpdatePromptState((prev) => (prev === 'isUpdating' ? null : 'isUpdating'))
+                  }
+                >
+                  {updatePromptState === 'isUpdating' ? '✓ ' : ''}更新中
+                </Button>
+                <Button
+                  variant={updatePromptState === 'updateFailed' ? 'danger' : 'secondary'}
+                  size="sm"
+                  onClick={() =>
+                    setUpdatePromptState((prev) =>
+                      prev === 'updateFailed' ? null : 'updateFailed',
+                    )
+                  }
+                >
+                  {updatePromptState === 'updateFailed' ? '✓ ' : ''}更新失敗
+                </Button>
+              </div>
+            </Section>
+
+            {/* Offline Indicator Preview */}
+            <Section title="離線指示器" icon={Bell}>
+              <p className="text-sm text-text-muted mb-3">
+                強制顯示離線指示器，方便設計檢視。未強制時會使用真實網路狀態。
+                <br />
+                <strong className="text-warning">通知會顯示在頁面頂部中央的真實位置</strong>
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant={forceOfflinePreview ? 'danger' : 'secondary'}
+                  onClick={() => setForceOfflinePreview((prev) => !prev)}
+                >
+                  {forceOfflinePreview ? '✓ 停止強制離線' : '強制顯示離線'}
+                </Button>
+              </div>
+            </Section>
+
             {/* Buttons */}
             <Section title="按鈕組件" icon={Layout}>
               <div className="space-y-4">

@@ -1186,18 +1186,27 @@ export const buttonTokens = {
 } as const;
 
 /**
- * PWA 更新通知設計規範 (SSOT)
+ * PWA 通知設計規範 (SSOT)
  *
- * 統一 UpdatePrompt 組件的佈局、裝飾、圖標與時序配置。
- * Material Design snackbar 風格，置中底部定位。
+ * 統一 UpdatePrompt 與 OfflineIndicator 的視覺風格。
+ * Material Design snackbar 風格，支援頂部與底部定位。
+ *
+ * 設計原則：
+ * - 統一品牌漸變背景（藍-靛-紫）
+ * - 透過圖標顏色區分狀態（更新=品牌色、離線=警告色）
+ * - 一致的裝飾光暈、按鈕樣式、動畫效果
  *
  * @see src/components/UpdatePrompt.tsx
+ * @see src/components/OfflineIndicator.tsx
  * @created 2026-02-03
- * @version 1.0.0
+ * @updated 2026-02-09 - 新增離線通知變體，統一設計系統
+ * @version 2.0.0
  */
 export const notificationTokens = {
-  /** 固定定位（視窗底部中央） */
+  /** 固定定位（視窗底部中央） - UpdatePrompt 專用 */
   position: 'fixed bottom-4 left-1/2 -translate-x-1/2 z-50',
+  /** 固定定位（視窗頂部中央） - OfflineIndicator 專用 */
+  positionTop: 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999]',
   /** 容器尺寸（響應式，最大 344px） */
   container: 'w-[calc(100vw-2rem)] max-w-[344px]',
   /** 內距 */
@@ -1207,12 +1216,24 @@ export const notificationTokens = {
   /** 陰影（統一 shadow-card token） */
   shadow: 'shadow-card shadow-brand-shadow/20',
 
+  /** 背景漸變（統一品牌風格） */
+  background: {
+    /** 品牌漸變 - 淡藍-淡靛-淡紫 */
+    brand: 'bg-gradient-to-r from-brand-from via-brand-via to-brand-to',
+    /** 邊框 - 品牌色 */
+    brandBorder: 'border border-brand-border/60',
+  },
+
   /** 裝飾光暈 */
   decoration: {
     size: 'w-16 h-16',
     blur: 'blur-2xl',
+    /** 品牌色光暈（UpdatePrompt） */
     topRight: 'bg-brand-icon-from/40',
     bottomLeft: 'bg-brand-decoration/40',
+    /** 警告色光暈（OfflineIndicator） */
+    offlineTopRight: 'bg-warning/20',
+    offlineBottomLeft: 'bg-warning/10',
   },
 
   /** 狀態圖標 */
@@ -1220,6 +1241,20 @@ export const notificationTokens = {
     container: 'w-8 h-8 rounded-xl',
     svg: 'w-5 h-5',
     strokeWidth: 2.5,
+    /** 品牌漸變 - UpdatePrompt 圖標背景 */
+    brandGradient: 'bg-gradient-to-br from-brand-icon-from to-brand-icon-to',
+    /** 警告漸變 - OfflineIndicator 圖標背景 */
+    warningGradient: 'bg-gradient-to-br from-warning-light to-warning',
+  },
+
+  /** 文字顏色 */
+  text: {
+    /** 品牌色標題（UpdatePrompt） */
+    brandTitle: 'text-brand-text-dark',
+    brandDescription: 'text-brand-text',
+    /** 警告色標題（OfflineIndicator） */
+    warningTitle: 'text-warning',
+    warningDescription: 'text-neutral-text-secondary',
   },
 
   /** 時序 */

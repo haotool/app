@@ -16,6 +16,8 @@ import { HelmetProvider } from '../utils/react-helmet-async';
 import { ErrorBoundary } from './ErrorBoundary';
 import { SkeletonLoader } from './SkeletonLoader';
 import { Footer } from './Footer';
+import { OfflineIndicator } from './OfflineIndicator';
+import { UpdatePrompt } from './UpdatePrompt';
 
 // [December-Theme:2025-12-26] 動態載入 12 月主題組件（Lazy Loading）
 const DecemberTheme = React.lazy(() => import('../features/calculator/easter-eggs/DecemberTheme'));
@@ -70,6 +72,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </ErrorBoundary>
+
+        {/* 全域 PWA/離線狀態提示 */}
+        <OfflineIndicator />
+        <UpdatePrompt />
 
         {/* [December-Theme:2025-12-26] 12 月聖誕主題 - 動態載入 */}
         {showDecemberTheme && (

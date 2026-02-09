@@ -10,6 +10,8 @@ import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
 import { ToastProvider } from './Toast';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
+import { OfflineIndicator } from './OfflineIndicator';
+import { UpdatePrompt } from './UpdatePrompt';
 
 import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
@@ -127,6 +129,10 @@ export function AppLayout() {
           </div>
         </div>
       </div>
+
+      {/* 全域 PWA/離線狀態提示 */}
+      <OfflineIndicator />
+      <UpdatePrompt />
     </ToastProvider>
   );
 }
