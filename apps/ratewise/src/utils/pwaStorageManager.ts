@@ -42,15 +42,20 @@ export interface StoragePersistenceStatus {
 }
 
 /**
- * 關鍵資源 URL 列表
- * 這些資源在 PWA 啟動時必須確保已快取
+ * 關鍵資源 URL 列表（相對路徑）
+ *
+ * 重要：路徑不可帶前導 `/`，否則 `new URL('/path', origin + basePath)` 會忽略 basePath，
+ * 直接從 origin 根路徑解析，導致生產環境 404。
+ *
+ * 正確：`new URL('offline.html', 'https://host/ratewise/')` → `/ratewise/offline.html`
+ * 錯誤：`new URL('/offline.html', 'https://host/ratewise/')` → `/offline.html`
  */
 const CRITICAL_RESOURCES = [
-  '/', // 首頁
-  '/offline.html', // 離線頁面
-  '/manifest.webmanifest', // PWA manifest
-  '/icons/ratewise-icon-192x192.png', // 應用圖標
-  '/icons/ratewise-icon-512x512.png',
+  './', // 首頁（解析為 basePath 本身）
+  'offline.html', // 離線頁面
+  'manifest.webmanifest', // PWA manifest
+  'icons/ratewise-icon-192x192.png', // 應用圖標
+  'icons/ratewise-icon-512x512.png',
 ];
 
 /**
