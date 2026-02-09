@@ -204,13 +204,16 @@ export const activeHighlight = {
  * @see notificationTokens in design-tokens.ts
  */
 export const notificationAnimations = {
-  /** 通知入場（底部彈入） */
+  /** 通知入場（底部彈入）
+   * 注意：使用 x: '-50%' 實現水平置中，避免與 CSS transform 衝突
+   * 參考：https://www.w3docs.com/snippets/css/how-to-center-an-element-with-a-fixed-position.html
+   */
   enter: {
     transition: transitions.gentle,
     variants: {
-      hidden: { opacity: 0, y: 16 },
-      visible: { opacity: 1, y: 0 },
-      exit: { opacity: 0, y: 16 },
+      hidden: { opacity: 0, y: 16, x: '-50%' },
+      visible: { opacity: 1, y: 0, x: '-50%' },
+      exit: { opacity: 0, y: 16, x: '-50%' },
     } as Variants,
   },
 } as const;
