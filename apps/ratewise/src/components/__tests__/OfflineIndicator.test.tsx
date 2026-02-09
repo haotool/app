@@ -297,8 +297,10 @@ describe('OfflineIndicator', () => {
         const status = screen.getByRole('status');
         const styledDiv = status.querySelector('div[class*="bg-gradient-to-r"]');
         expect(styledDiv).toBeTruthy();
-        expect(styledDiv?.className).toContain('from-neutral-dark');
-        expect(styledDiv?.className).toContain('border-warning');
+        expect(styledDiv?.className).toContain('from-brand-from');
+        expect(styledDiv?.className).toContain('via-brand-via');
+        expect(styledDiv?.className).toContain('to-brand-to');
+        expect(styledDiv?.className).toContain('border-brand-border');
       });
     });
   });
