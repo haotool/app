@@ -158,7 +158,7 @@ export async function recacheCriticalResourcesOnLaunch(baseUrl: string): Promise
     // 取得 precache 名稱（Workbox 使用 workbox-precache-v2-https://... 格式）
     const cacheNames = await caches.keys();
     const precacheName =
-      cacheNames.find((name) => name.startsWith('workbox-precache')) || 'critical-cache';
+      cacheNames.find((name) => name.startsWith('workbox-precache')) ?? 'critical-cache';
 
     const cache = await caches.open(precacheName);
     let successCount = 0;

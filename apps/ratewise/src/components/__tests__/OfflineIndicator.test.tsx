@@ -111,9 +111,13 @@ describe('OfflineIndicator', () => {
       window.dispatchEvent(new Event('online'));
       rerender(<OfflineIndicator />);
 
-      await waitFor(() => {
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      });
+      // AnimatePresence exit 動畫需要時間完成，增加 timeout
+      await waitFor(
+        () => {
+          expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
     });
   });
 

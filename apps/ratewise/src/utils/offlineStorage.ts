@@ -366,16 +366,6 @@ export async function getExchangeRatesFromIDB(): Promise<ExchangeRateData | null
 }
 
 /**
- * 從 IndexedDB 讀取匯率資料（忽略過期，緊急離線備援）
- *
- * @returns Promise<ExchangeRateData | null> 匯率資料或 null
- * @deprecated 使用 getExchangeRatesFromIDBWithStaleness() 以獲取陳舊度資訊
- */
-export async function getExchangeRatesFromIDBAnytime(): Promise<ExchangeRateData | null> {
-  return getOfflineDataAnyAge<ExchangeRateData>(EXCHANGE_RATES_IDB_KEY);
-}
-
-/**
  * 從 IndexedDB 讀取匯率資料並返回陳舊度資訊
  *
  * 返回陳舊度資訊讓調用方決定如何處理。
