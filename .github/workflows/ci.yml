@@ -361,7 +361,6 @@ jobs:
     name: Monitor Dependabot Alerts
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       contents: read
       security-events: read
@@ -371,17 +370,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           echo "🔍 Checking Dependabot alerts..."
 
-          # 取得 open alerts
-          ALERTS=$(gh api /repos/${{ github.repository }}/dependabot/alerts \
-            --jq '[.[] | select(.state == "open")] | length')
+          ERR_LOG="$(mktemp)"
+          if ! ALERTS_JSON="$(gh api "/repos/${{ github.repository }}/dependabot/alerts?per_page=100" 2>"$ERR_LOG")"; then
+            if grep -qi 'HTTP 403' "$ERR_LOG"; then
+              echo "⚠️ 無法讀取 Dependabot alerts（可能是權限限制），此步驟改為警告不阻擋。"
+              cat "$ERR_LOG"
+              rm -f "$ERR_LOG"
+              exit 0
+            fi
+            cat "$ERR_LOG"
+            rm -f "$ERR_LOG"
+            exit 1
+          fi
+          rm -f "$ERR_LOG"
 
-          CRITICAL=$(gh api /repos/${{ github.repository }}/dependabot/alerts \
-            --jq '[.[] | select(.state == "open" and .security_advisory.severity == "critical")] | length')
-
-          HIGH=$(gh api /repos/${{ github.repository }}/dependabot/alerts \
-            --jq '[.[] | select(.state == "open" and .security_advisory.severity == "high")] | length')
+          ALERTS=$(echo "$ALERTS_JSON" | jq '[.[] | select(.state == "open")] | length')
+          CRITICAL=$(echo "$ALERTS_JSON" | jq '[.[] | select(.state == "open" and .security_advisory.severity == "critical")] | length')
+          HIGH=$(echo "$ALERTS_JSON" | jq '[.[] | select(.state == "open" and .security_advisory.severity == "high")] | length')
 
           echo "Total open alerts: $ALERTS"
           echo "Critical: $CRITICAL"

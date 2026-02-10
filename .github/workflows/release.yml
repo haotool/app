@@ -83,7 +83,6 @@ jobs:
       - name: Create Release Pull Request
         id: changesets
         if: steps.check_changesets.outputs.has_changesets == 'true'
-        continue-on-error: true
         uses: changesets/action@v1
         with:
           # 這會執行 `changeset version` 並建立 PR
@@ -91,28 +90,6 @@ jobs:
           commit: 'chore: Version Packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure git for fallback versioning
-        if: steps.check_changesets.outputs.has_changesets == 'true' && steps.changesets.outcome == 'failure'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Fallback versioning on main (non-interactive)
-        if: steps.check_changesets.outputs.has_changesets == 'true' && steps.changesets.outcome == 'failure'
-        run: |
-          set -euo pipefail
-          echo "changesets/action failed. Running fallback release versioning on main..."
-          pnpm changeset:version
-
-          if git diff --quiet && git diff --cached --quiet; then
-            echo "No fallback version changes generated."
-            exit 0
-          fi
-
-          git add -A
-          git commit -m "chore(release): fallback version packages"
-          git push origin HEAD:main
 
       - name: Configure git for tagging
         if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'
