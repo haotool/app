@@ -8,7 +8,7 @@
  * @version 2.0.0
  */
 
-import { Suspense, lazy, useRef } from 'react';
+import { Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
@@ -19,12 +19,8 @@ import type { RateDetails } from '../hooks/useExchangeRates';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
-
-const CalculatorKeyboard = lazy(() =>
-  import('../../calculator/components/CalculatorKeyboard').then((m) => ({
-    default: m.CalculatorKeyboard,
-  })),
-);
+// 直接 import 以確保離線冷啟動可用（消除 code-splitting 導致的 chunk 載入失敗）
+import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 
 interface MultiConverterProps {
   sortedCurrencies: CurrencyCode[];
