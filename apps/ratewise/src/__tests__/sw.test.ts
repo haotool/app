@@ -170,6 +170,17 @@ describe('Service Worker Cache Strategies', () => {
     expect(config.maxAge).toBe(7 * 24 * 60 * 60); // 7 days
   });
 
+  it('should register a network-only route for connectivity probe', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    expect(sourceCode).toContain('__network_probe__');
+    expect(sourceCode).toContain('new NetworkOnly(');
+  });
+
   // 🔴 RED: JS/CSS 應使用 CacheFirst（Vite hash-based filenames 是 immutable）
   it('should use CacheFirst for JS/CSS static resources (hash-based filenames are immutable)', async () => {
     const fs = await import('node:fs/promises');

@@ -30,6 +30,7 @@ vi.mock('motion/react', () => ({
   motion: {
     div: ({
       children,
+      custom,
       variants: _variants,
       initial: _initial,
       exit: _exit,
@@ -37,15 +38,19 @@ vi.mock('motion/react', () => ({
       ...rest
     }: React.HTMLAttributes<HTMLDivElement> & {
       children?: React.ReactNode;
+      custom?: unknown;
       variants?: unknown;
       initial?: unknown;
       exit?: unknown;
       transition?: unknown;
-    }) => (
-      <div data-testid="page-transition" {...rest}>
-        {children}
-      </div>
-    ),
+    }) => {
+      const direction = typeof custom === 'number' ? custom : 0;
+      return (
+        <div data-testid="page-transition" data-transition-direction={direction} {...rest}>
+          {children}
+        </div>
+      );
+    },
   },
 }));
 
@@ -81,11 +86,17 @@ describe('AppLayout 頁面切換', () => {
 
     expect(screen.getByTestId('current-path')).toHaveTextContent('/');
     expect(screen.getByTestId('page-transition')).toBeInTheDocument();
+    expect(screen.getByTestId('page-transition')).toHaveAttribute('data-transition-direction', '0');
 
     fireEvent.click(screen.getByRole('button', { name: 'to-multi' }));
     expect(screen.getByTestId('current-path')).toHaveTextContent('/multi');
+    expect(screen.getByTestId('page-transition')).toHaveAttribute('data-transition-direction', '1');
 
     fireEvent.click(screen.getByRole('button', { name: 'to-home' }));
     expect(screen.getByTestId('current-path')).toHaveTextContent('/');
+    expect(screen.getByTestId('page-transition')).toHaveAttribute(
+      'data-transition-direction',
+      '-1',
+    );
   });
 });

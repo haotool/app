@@ -1,29 +1,4 @@
-/**
- * Bottom Navigation Component - ParkKeeper Style (Compact)
- *
- * 移動端底部導覽列，參考 ParkKeeper 設計風格與社群媒體導航規範：
- * - 毛玻璃效果背景（backdrop-blur-xl + bg-background/80）
- * - 極細邊框（border-black/[0.02]）
- * - 緊湊標籤風格（text-[8px] + uppercase + tracking-[0.15em]）
- * - 選中指示條滑動動畫（Motion layoutId）
- * - 56px 高度（平衡 iOS 49pt 與 Material 56dp 標準）
- *
- * 導覽項目：
- * - 單幣別轉換 (Single Converter)
- * - 多幣別轉換 (Multi Converter)
- * - 收藏與歷史 (Favorites)
- * - 設定 (Settings)
- *
- * Accessibility (a11y):
- * - 使用 <Link> 作為唯一互動元素（不巢狀 <button>）
- * - ARIA labels 使用 i18n keys
- * - aria-current="page" 標記當前頁面
- *
- * @reference ParkKeeper UI Design
- * @reference iOS HIG Tab Bars (49pt), Material Design 3 Nav Bar (56dp)
- * @see src/config/design-tokens.ts - navigationTokens SSOT
- * @see https://motion.dev/docs/react/-layout-group - layoutId 動畫
- */
+/** BottomNavigation：行動版四頁導覽列。 */
 
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
@@ -31,9 +6,7 @@ import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { transitions } from '../config/animations';
 
-/**
- * 導覽項目類型
- */
+/** 導覽項目型別。 */
 interface NavItem {
   path: string;
   labelKey: string;
@@ -41,9 +14,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean; strokeWidth?: number }>;
 }
 
-/**
- * 導覽項目配置 - 使用 i18n keys
- */
+/** 導覽項目設定（使用 i18n key）。 */
 const navItems: NavItem[] = [
   {
     path: '/',
@@ -71,22 +42,7 @@ const navItems: NavItem[] = [
   },
 ];
 
-/**
- * BottomNavigation Component
- *
- * ParkKeeper-style navigation bar (compact version):
- * - Glassmorphism effect
- * - Active state indicator
- * - Compact text labels (8px)
- * - 56px content height + safe area (WCAG 44px touch target compliant)
- *
- * iOS PWA Safe Area Fix:
- * - Uses padding-bottom for safe area instead of fixed height
- * - Navigation content stays at 56px, safe area extends below
- *
- * @see navigationTokens.bottomNav - SSOT for dimensions
- * @see https://webkit.org/blog/7929/designing-websites-for-iphone-x/
- */
+/** 底部導覽列（含安全區域與選中指示器）。 */
 export function BottomNavigation() {
   const { t } = useTranslation();
   const location = useLocation();
@@ -111,17 +67,11 @@ export function BottomNavigation() {
             <Link
               key={item.path}
               to={item.path}
-              className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 relative group"
+              className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 relative group touch-manipulation"
               aria-label={t(item.ariaLabelKey)}
               aria-current={isActive ? 'page' : undefined}
             >
-              {/* 點擊回饋背景
-               *
-               * W3C A11y Fix: 使用 CSS :active 偽類替代 motion whileTap
-               * 原因：W3C 規範禁止 <a> 元素內部有任何 tabindex 屬性的子元素
-               * motion 的 whileTap 會自動添加 tabindex，即使設為 -1 也違反規範
-               * @see https://rocketvalidator.com/html-validation/an-element-with-the-attribute-tabindex-must-not-appear-as-a-descendant-of-the-a-element
-               */}
+              {/* 觸控回饋背景（避免在 <a> 內使用 whileTap 產生 tabindex）。 */}
               <div
                 className="
                   absolute inset-1 rounded-xl bg-primary/0
@@ -130,11 +80,7 @@ export function BottomNavigation() {
                 "
               />
 
-              {/* 圖標 - 20px (navigationTokens.bottomNav.icon.size)
-               *
-               * W3C A11y Fix: 移除 whileTap 動畫，改用 CSS :active 偽類
-               * 使用 motion.div 僅做 animate（不產生 tabindex），:active 處理點擊縮放
-               */}
+              {/* 圖標動畫（僅使用 animate，避免 tabindex 問題）。 */}
               <motion.div
                 animate={{
                   scale: isActive ? 1.1 : 1,
@@ -142,7 +88,7 @@ export function BottomNavigation() {
                 }}
                 transition={transitions.spring}
                 className={`
-                  ${isActive ? 'text-primary' : 'group-hover:opacity-50'}
+                  ${isActive ? 'text-primary' : ''}
                   transition-transform duration-75
                   group-active:scale-90
                 `}

@@ -195,13 +195,50 @@ export const activeHighlight = {
   itemActiveClass: 'cursor-default',
 } as const;
 
-/** 頁面切換動畫 - 輕量 crossfade（GPU 加速，不觸發 reflow） */
+export type TransitionDirection = -1 | 0 | 1;
+
+const TOP_LEVEL_ROUTES = ['/', '/multi', '/favorites', '/settings'] as const;
+
+function normalizePathname(pathname: string): string {
+  if (!pathname || pathname === '/') return '/';
+  return pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+}
+
+/** 取得底部導覽頁面的順序索引，非底導頁面回傳 -1 */
+export function getTopLevelRouteIndex(pathname: string): number {
+  const normalizedPath = normalizePathname(pathname);
+  return TOP_LEVEL_ROUTES.indexOf(normalizedPath as (typeof TOP_LEVEL_ROUTES)[number]);
+}
+
+/** 計算頁面切換方向：右移為 +1，左移為 -1，淡入淡出為 0 */
+export function getTopLevelTransitionDirection(
+  fromPath: string,
+  toPath: string,
+): TransitionDirection {
+  const fromIndex = getTopLevelRouteIndex(fromPath);
+  const toIndex = getTopLevelRouteIndex(toPath);
+
+  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) {
+    return 0;
+  }
+
+  return toIndex > fromIndex ? 1 : -1;
+}
+
+/** 頁面切換動畫：底導頁採方向滑動，其餘頁面採輕量淡入淡出 */
 export const pageTransition = {
-  transition: { duration: 0.15, ease: [0.4, 0, 0.2, 1] } as Transition,
+  transition: { duration: 0.18, ease: [0.4, 0, 0.2, 1] } as Transition,
+  offset: 16,
   variants: {
-    initial: { opacity: 0 },
+    initial: (direction: TransitionDirection = 0) => ({
+      opacity: 0,
+      x: direction === 0 ? 0 : direction * 16,
+    }),
     animate: { opacity: 1 },
-    exit: { opacity: 0 },
+    exit: (direction: TransitionDirection = 0) => ({
+      opacity: 0,
+      x: direction === 0 ? 0 : direction * -16,
+    }),
   } as Variants,
 } as const;
 

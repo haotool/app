@@ -1,8 +1,4 @@
-/**
- * AppLayout - 主要應用佈局組件
- * 整合 Header、側邊欄、底部導覽與內容區域
- * 頁面切換使用輕量 crossfade 動畫，支援 prefers-reduced-motion
- */
+/** AppLayout：整合頁首、導覽與內容區，並處理頁面切換動畫。 */
 
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
@@ -17,7 +13,11 @@ import { UpdatePrompt } from './UpdatePrompt';
 
 import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
-import { pageTransition } from '../config/animations';
+import {
+  getTopLevelTransitionDirection,
+  pageTransition,
+  type TransitionDirection,
+} from '../config/animations';
 
 /** Logo 組件 */
 function Logo() {
@@ -36,28 +36,11 @@ function Logo() {
   );
 }
 
-/**
- * Header 組件 - ParkKeeper 風格（Compact）
- *
- * 特點：
- * - 毛玻璃背景
- * - 品牌 Logo + 標題（支援多語系）
- * - 48px 高度（參考 Threads/Instagram）
- * - shrink-0 確保 Header 不會被壓縮
- *
- * SSR/Hydration 修正 (2026-01-27):
- * - 使用 useState + useEffect 確保 SSR 與 client 初始渲染一致
- * - SSR 時使用固定的預設語系（zh-TW），避免 React #418 hydration mismatch
- * - Client hydration 完成後才更新為實際語系
- *
- * @see navigationTokens.header - SSOT for header dimensions
- * @see https://developer.apple.com/design/human-interface-guidelines/tab-bars
- * @see https://react.dev/errors/418 - Hydration mismatch error
- */
+/** Header：行動版頁首，並避免 SSR hydration 語系不一致。 */
 function Header() {
   const { t } = useTranslation();
 
-  // SSR/Hydration 一致性處理
+  // 先用固定語系渲染，hydrate 後再切換到實際語系。
   const [isHydrated, setIsHydrated] = React.useState(false);
 
   React.useEffect(() => {
@@ -101,12 +84,26 @@ function Header() {
   );
 }
 
-/** 主應用佈局 - 支援 iOS PWA 安全區域與響應式側邊欄 */
+/** 主應用佈局：含安全區域、響應式導覽與轉場動畫。 */
 export function AppLayout() {
   const location = useLocation();
+  const previousPathRef = React.useRef(location.pathname);
+  const [transitionDirection, setTransitionDirection] = React.useState<TransitionDirection>(0);
+
+  const useIsomorphicLayoutEffect =
+    typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
 
   const prefersReducedMotion =
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  useIsomorphicLayoutEffect(() => {
+    const nextDirection = getTopLevelTransitionDirection(
+      previousPathRef.current,
+      location.pathname,
+    );
+    setTransitionDirection(nextDirection);
+    previousPathRef.current = location.pathname;
+  }, [location.pathname]);
 
   return (
     <ToastProvider>
@@ -128,15 +125,16 @@ export function AppLayout() {
               className="flex-1 min-h-0 min-w-0 w-full relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"
             >
               <RouteErrorBoundary>
-                <AnimatePresence mode="wait" initial={false}>
+                <AnimatePresence mode="wait" initial={false} custom={transitionDirection}>
                   <motion.div
                     key={location.pathname}
+                    custom={transitionDirection}
                     variants={pageTransition.variants}
                     initial={prefersReducedMotion ? false : 'initial'}
                     animate="animate"
                     exit="exit"
                     transition={prefersReducedMotion ? { duration: 0 } : pageTransition.transition}
-                    className="min-h-full"
+                    className="min-h-full will-change-[opacity,transform]"
                   >
                     <Outlet />
                   </motion.div>

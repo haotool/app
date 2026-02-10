@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.4.2
+
+### Patch Changes
+
+- bf910f3: 修復頁面切換方向動畫、離線探測誤判、底部導覽觸控體驗，並新增 release 自動化 fallback。
+
 ## 2.4.1
 
 ### Patch Changes

@@ -118,4 +118,18 @@ describe('BottomNavigation A11y Compliance', () => {
     const nav = screen.getByRole('navigation');
     expect(nav).toHaveAttribute('aria-label', 'Main Navigation');
   });
+
+  it('應該啟用 touch-manipulation 以避免行動端雙擊觸發', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <BottomNavigation />
+      </MemoryRouter>,
+    );
+
+    const links = container.querySelectorAll('a');
+    expect(links.length).toBeGreaterThan(0);
+    links.forEach((link) => {
+      expect(link.className).toContain('touch-manipulation');
+    });
+  });
 });

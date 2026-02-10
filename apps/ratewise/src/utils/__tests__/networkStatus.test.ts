@@ -2,8 +2,8 @@
  * Network Status Detection Tests
  *
  * 測試混合式離線偵測策略：
- * 1. navigator.onLine API (基本檢查)
- * 2. 實際網路請求驗證 (fetch HEAD + cache busting)
+ * 1. navigator.onLine API（基本檢查）
+ * 2. probe 路徑實際探測（避免快取誤判）
  * 3. 混合式檢測邏輯
  *
  * @created 2026-02-08
@@ -61,11 +61,12 @@ describe('🔴 RED: Network Status Detection', () => {
       expect(result).toBe(true);
       expect(global.fetch).toHaveBeenCalledTimes(1);
 
-      // Verify cache busting query parameter exists
+      // Verify probe path + cache busting query parameter exist
       const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as
         | string
         | undefined;
       expect(fetchCall).toBeDefined();
+      expect(fetchCall).toContain('__network_probe__');
       expect(fetchCall).toMatch(/\?t=\d+/);
     });
 
@@ -76,7 +77,7 @@ describe('🔴 RED: Network Status Detection', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false when fetch returns non-ok status', async () => {
+    it('should return true when fetch resolves even with non-ok status', async () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
           ok: false,
@@ -85,10 +86,10 @@ describe('🔴 RED: Network Status Detection', () => {
       );
 
       const result = await checkNetworkConnectivity();
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
 
-    it('should use HEAD method to minimize bandwidth', async () => {
+    it('should use GET request on probe endpoint', async () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
@@ -99,9 +100,10 @@ describe('🔴 RED: Network Status Detection', () => {
       await checkNetworkConnectivity();
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('?t='),
+        expect.stringContaining('__network_probe__'),
         expect.objectContaining({
-          method: 'HEAD',
+          method: 'GET',
+          credentials: 'same-origin',
         }),
       );
     });
