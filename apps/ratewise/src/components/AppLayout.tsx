@@ -3,7 +3,7 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
 import { ToastProvider } from './Toast';
@@ -13,11 +13,7 @@ import { UpdatePrompt } from './UpdatePrompt';
 
 import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
-import {
-  getTopLevelTransitionDirection,
-  pageTransition,
-  type TransitionDirection,
-} from '../config/animations';
+import { getTopLevelTransitionDirection, pageTransition } from '../config/animations';
 
 /** Logo 組件 */
 function Logo() {
@@ -84,21 +80,27 @@ function Header() {
   );
 }
 
-/** 主應用佈局：含安全區域、響應式導覽與轉場動畫。 */
+/**
+ * 主應用佈局：含安全區域、響應式導覽與進場動畫。
+ *
+ * 使用 enter-only 動畫（無 exit），避免 mode="wait" 造成的空白閃爍。
+ * 此為 iOS/Android tab bar 切換的業界標準做法。
+ */
 export function AppLayout() {
   const location = useLocation();
-  const previousPathRef = React.useRef(location.pathname);
-  const [transitionDirection, setTransitionDirection] = React.useState<TransitionDirection>(0);
+  const [direction, setDirection] = React.useState<-1 | 0 | 1>(0);
 
   const prefersReducedMotion =
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* useLayoutEffect 在 DOM 更新後、瀏覽器繪製前同步觸發，確保動畫方向正確 */
+  /* 路徑變更時於繪製前同步計算方向 */
+  const prevPathRef = React.useRef(location.pathname);
   React.useLayoutEffect(() => {
-    setTransitionDirection(
-      getTopLevelTransitionDirection(previousPathRef.current, location.pathname),
-    );
-    previousPathRef.current = location.pathname;
+    const prev = prevPathRef.current;
+    if (prev !== location.pathname) {
+      setDirection(getTopLevelTransitionDirection(prev, location.pathname));
+      prevPathRef.current = location.pathname;
+    }
   }, [location.pathname]);
 
   return (
@@ -121,20 +123,20 @@ export function AppLayout() {
               className="flex-1 min-h-0 min-w-0 w-full relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"
             >
               <RouteErrorBoundary>
-                <AnimatePresence mode="wait" initial={false} custom={transitionDirection}>
-                  <motion.div
-                    key={location.pathname}
-                    custom={transitionDirection}
-                    variants={pageTransition.variants}
-                    initial={prefersReducedMotion ? false : 'initial'}
-                    animate="animate"
-                    exit="exit"
-                    transition={prefersReducedMotion ? { duration: 0 } : pageTransition.transition}
-                    className="min-h-full will-change-[opacity,transform]"
-                  >
-                    <Outlet />
-                  </motion.div>
-                </AnimatePresence>
+                {/* enter-only：key 變化觸發 remount，新頁面從方向滑入淡入 */}
+                <motion.div
+                  key={location.pathname}
+                  initial={
+                    prefersReducedMotion
+                      ? false
+                      : { opacity: 0, x: direction === 0 ? 0 : `${direction * 8}%` }
+                  }
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={prefersReducedMotion ? { duration: 0 } : pageTransition.transition}
+                  className="min-h-full"
+                >
+                  <Outlet />
+                </motion.div>
               </RouteErrorBoundary>
             </main>
 

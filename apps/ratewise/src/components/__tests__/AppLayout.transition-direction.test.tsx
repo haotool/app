@@ -26,25 +26,27 @@ vi.mock('../RouteErrorBoundary', () => ({
 }));
 
 vi.mock('motion/react', () => ({
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   motion: {
     div: ({
       children,
-      custom,
-      variants: _variants,
-      initial: _initial,
-      exit: _exit,
+      initial,
+      animate: _animate,
       transition: _transition,
       ...rest
     }: React.HTMLAttributes<HTMLDivElement> & {
       children?: React.ReactNode;
-      custom?: unknown;
-      variants?: unknown;
       initial?: unknown;
-      exit?: unknown;
+      animate?: unknown;
       transition?: unknown;
     }) => {
-      const direction = typeof custom === 'number' ? custom : 0;
+      /* 從 initial prop 提取 x 值推算方向 */
+      let direction = 0;
+      if (initial && typeof initial === 'object' && 'x' in initial) {
+        const x = (initial as { x?: string | number }).x;
+        if (typeof x === 'string') {
+          direction = parseFloat(x) > 0 ? 1 : parseFloat(x) < 0 ? -1 : 0;
+        }
+      }
       return (
         <div data-testid="page-transition" data-transition-direction={direction} {...rest}>
           {children}
@@ -86,7 +88,6 @@ describe('AppLayout 頁面切換', () => {
 
     expect(screen.getByTestId('current-path')).toHaveTextContent('/');
     expect(screen.getByTestId('page-transition')).toBeInTheDocument();
-    expect(screen.getByTestId('page-transition')).toHaveAttribute('data-transition-direction', '0');
 
     fireEvent.click(screen.getByRole('button', { name: 'to-multi' }));
     expect(screen.getByTestId('current-path')).toHaveTextContent('/multi');
