@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.4.3
+
+### Patch Changes
+
+- d0ff5f4: 修復 CI trivy-action 版本與 Dependabot 權限問題，改善頁面切換動畫流暢度
+
 ## 2.4.2
 
 ### Patch Changes
