@@ -1,11 +1,17 @@
 /**
  * AppLayout - 主要應用佈局組件
  * 整合 Header、側邊欄、底部導覽與內容區域
+ *
+ * 頁面切換動畫：
+ * - 使用 motion/react AnimatePresence 實現左右滑動效果
+ * - 根據導覽順序判斷滑動方向（減少暈動感）
+ * - 支援 prefers-reduced-motion 無障礙需求
  */
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AnimatePresence, motion } from 'motion/react';
 import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
 import { ToastProvider } from './Toast';
@@ -15,6 +21,7 @@ import { UpdatePrompt } from './UpdatePrompt';
 
 import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
+import { pageTransition } from '../config/animations';
 
 /** Logo 組件 */
 function Logo() {
@@ -98,8 +105,35 @@ function Header() {
   );
 }
 
+/**
+ * 取得路由對應的索引（用於判斷頁面切換方向）
+ * 未知路由預設為 0
+ */
+function getRouteIndex(pathname: string): number {
+  // 移除 base path 前綴以匹配 routeIndex
+  const basePath = import.meta.env.BASE_URL?.replace(/\/$/, '') ?? '';
+  const normalizedPath = pathname.replace(basePath, '') || '/';
+  return pageTransition.routeIndex[normalizedPath] ?? 0;
+}
+
 /** 主應用佈局 - 支援 iOS PWA 安全區域與響應式側邊欄 */
 export function AppLayout() {
+  const location = useLocation();
+  const currentIndex = getRouteIndex(location.pathname);
+  const [direction, setDirection] = React.useState(1);
+  const prevIndexRef = React.useRef(currentIndex);
+
+  // 路由變化時計算滑動方向
+  React.useEffect(() => {
+    const prevIndex = prevIndexRef.current;
+    setDirection(currentIndex >= prevIndex ? 1 : -1);
+    prevIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  // 偵測使用者是否偏好減少動畫
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   return (
     <ToastProvider>
       {/* 根容器：固定視口高度，啟用 flex 滾動 */}
@@ -120,7 +154,26 @@ export function AppLayout() {
               className="flex-1 min-h-0 min-w-0 w-full relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"
             >
               <RouteErrorBoundary>
-                <Outlet />
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={location.pathname}
+                    initial={
+                      prefersReducedMotion
+                        ? false
+                        : { opacity: 0, x: direction * pageTransition.offsetX }
+                    }
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={
+                      prefersReducedMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, x: -direction * pageTransition.offsetX }
+                    }
+                    transition={prefersReducedMotion ? { duration: 0 } : pageTransition.transition}
+                    className="min-h-full"
+                  >
+                    <Outlet />
+                  </motion.div>
+                </AnimatePresence>
               </RouteErrorBoundary>
             </main>
 
