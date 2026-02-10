@@ -90,18 +90,14 @@ export function AppLayout() {
   const previousPathRef = React.useRef(location.pathname);
   const [transitionDirection, setTransitionDirection] = React.useState<TransitionDirection>(0);
 
-  const useIsomorphicLayoutEffect =
-    typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
-
   const prefersReducedMotion =
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  useIsomorphicLayoutEffect(() => {
-    const nextDirection = getTopLevelTransitionDirection(
-      previousPathRef.current,
-      location.pathname,
+  /* useLayoutEffect 在 DOM 更新後、瀏覽器繪製前同步觸發，確保動畫方向正確 */
+  React.useLayoutEffect(() => {
+    setTransitionDirection(
+      getTopLevelTransitionDirection(previousPathRef.current, location.pathname),
     );
-    setTransitionDirection(nextDirection);
     previousPathRef.current = location.pathname;
   }, [location.pathname]);
 

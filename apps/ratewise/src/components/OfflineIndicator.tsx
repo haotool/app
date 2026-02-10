@@ -27,7 +27,7 @@ const AUTO_DISMISS_MS = 10_000;
 /** 同次 session 是否已顯示過離線提示 */
 let sessionDismissed = false;
 
-/** 重置 session 狀態（僅供測試使用） */
+// eslint-disable-next-line react-refresh/only-export-components -- 測試用輔助函式
 export function resetSessionDismissed() {
   sessionDismissed = false;
 }

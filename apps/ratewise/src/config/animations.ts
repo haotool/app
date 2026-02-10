@@ -225,19 +225,25 @@ export function getTopLevelTransitionDirection(
   return toIndex > fromIndex ? 1 : -1;
 }
 
-/** 頁面切換動畫：底導頁採方向滑動，其餘頁面採輕量淡入淡出 */
+/**
+ * 頁面切換動畫：底導頁方向滑動 + 淡入淡出
+ *
+ * 動畫邏輯（與底部導覽指示條方向一致）：
+ * - 向右切換（index 增加）：舊頁左滑出，新頁從右滑入
+ * - 向左切換（index 減少）：舊頁右滑出，新頁從左滑入
+ * - 非底導頁面：純淡入淡出
+ */
 export const pageTransition = {
-  transition: { duration: 0.18, ease: [0.4, 0, 0.2, 1] } as Transition,
-  offset: 16,
+  transition: { duration: 0.15, ease: [0.25, 0.1, 0.25, 1] } as Transition,
   variants: {
     initial: (direction: TransitionDirection = 0) => ({
       opacity: 0,
-      x: direction === 0 ? 0 : direction * 16,
+      x: direction === 0 ? 0 : `${direction * 8}%`,
     }),
-    animate: { opacity: 1 },
+    animate: { opacity: 1, x: 0 },
     exit: (direction: TransitionDirection = 0) => ({
       opacity: 0,
-      x: direction === 0 ? 0 : direction * -16,
+      x: direction === 0 ? 0 : `${direction * -8}%`,
     }),
   } as Variants,
 } as const;
