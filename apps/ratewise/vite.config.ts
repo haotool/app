@@ -328,7 +328,10 @@ export default defineConfig(({ mode }) => {
           // [fix:2026-01-28] 移除 xml,webmanifest 避免預快取 sitemap.xml/manifest.webmanifest
           // 問題：staging 環境 sitemap.xml 404 導致 bad-precaching-response
           // 解決：SEO 檔案不需要預快取，透過 runtimeCaching 處理即可
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp}'],
+          // [fix:2026-02-10] 加入 json 以預快取 static-loader-data-manifest-*.json
+          // 問題：vite-react-ssg 建置時產生此檔案供 React Router 進行 client-side navigation
+          // 離線時無法取得此 manifest 導致所有 SPA 導覽失敗 (Load failed)
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp,json}'],
           globIgnores: [
             '**/og-image-old.png',
             '**/node_modules/**',
