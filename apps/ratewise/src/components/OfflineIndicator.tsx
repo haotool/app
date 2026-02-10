@@ -20,7 +20,7 @@
  * @updated 2026-02-09 - 統一品牌風格，與 UpdatePrompt 保持一致
  * @version 2.0.0
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'motion/react';
 import { WifiOff } from 'lucide-react';
@@ -49,11 +49,31 @@ export function OfflineIndicator({ forceOffline }: OfflineIndicatorProps) {
   return <OfflineIndicatorClient forceOffline={forceOffline} />;
 }
 
+/** 離線指示器自動關閉延遲（毫秒） */
+const AUTO_DISMISS_MS = 10_000;
+
 function OfflineIndicatorClient({ forceOffline, positionClassName }: OfflineIndicatorProps) {
   const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
   const [isOffline, setIsOffline] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 自動關閉：離線指示器顯示超過 10 秒後自動消失
+  useEffect(() => {
+    if (isOffline && !isDismissed) {
+      autoDismissRef.current = setTimeout(() => {
+        setIsDismissed(true);
+      }, AUTO_DISMISS_MS);
+    }
+
+    return () => {
+      if (autoDismissRef.current !== null) {
+        clearTimeout(autoDismissRef.current);
+        autoDismissRef.current = null;
+      }
+    };
+  }, [isOffline, isDismissed]);
 
   // 監控網路連線狀態 - 混合式檢測（navigator.onLine + 實際網路請求）
   useEffect(() => {

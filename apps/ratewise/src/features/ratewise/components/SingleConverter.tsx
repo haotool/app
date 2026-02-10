@@ -10,16 +10,14 @@
  * @version 2.0.0
  */
 
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateType } from '../types';
-// Lazy load MiniTrendChart to reduce initial bundle size
-const MiniTrendChart = lazy(() =>
-  import('./MiniTrendChart').then((m) => ({ default: m.MiniTrendChart })),
-);
+// 直接 import 以確保離線冷啟動可用（消除 code-splitting 導致的 chunk 載入失敗）
+import { MiniTrendChart } from './MiniTrendChart';
 import type { MiniTrendDataPoint } from './MiniTrendChart';
 import { TrendChartSkeleton } from './TrendChartSkeleton';
 import type { RateDetails } from '../hooks/useExchangeRates';
@@ -31,12 +29,8 @@ import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currency
 import { motion } from 'motion/react';
 import { singleConverterLayoutTokens } from '../../../config/design-tokens';
 import { segmentedSwitch } from '../../../config/animations';
-// Lazy load CalculatorKeyboard on demand
-const CalculatorKeyboard = lazy(() =>
-  import('../../calculator/components/CalculatorKeyboard').then((m) => ({
-    default: m.CalculatorKeyboard,
-  })),
-);
+// 直接 import 以確保離線冷啟動可用
+import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
 import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
