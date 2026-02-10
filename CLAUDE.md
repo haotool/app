@@ -544,6 +544,24 @@ try {
 
 ---
 
+## PWA 離線快取策略
+
+### 關鍵要點
+
+1. **globPatterns 必須包含 json**：`vite-react-ssg` 建置產生 `static-loader-data-manifest-*.json`，React Router 的 client-side navigation 依賴此檔案。若未預快取，離線時所有 SPA 頁面導覽將失敗（Load failed）。
+2. **globIgnores 排除非必要 json**：`rates/**/*.json`、`sitemap.xml`、`robots.txt`、`manifest.webmanifest` 不需預快取。
+3. **injectManifest 策略**：使用 `injectManifest` 而非 `generateSW`，以支援 `setCatchHandler` 離線 fallback。
+4. **IIFE 格式**：Service Worker 使用 `rollupFormat: 'iife'`，避免 ES module 在部分瀏覽器評估失敗。
+5. **離線指示器**：`OfflineIndicator` 僅在完全離線時顯示，10 秒自動關閉，同次 session 不再重複。
+
+### 常見陷阱
+
+- **新增頁面時**：確認路由已在 `routes.tsx` 註冊，SSG 會自動產生對應的 data manifest。
+- **新增靜態資源格式時**：檢查 `globPatterns` 是否涵蓋該副檔名。
+- **測試離線功能**：必須在 `pnpm build && pnpm preview` 環境測試，開發模式不啟用 Service Worker。
+
+---
+
 ## 版本管理規範（SSOT）
 
 ### 版本號生成策略

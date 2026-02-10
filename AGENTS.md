@@ -717,6 +717,20 @@ docker logs <container-id>
 
 ---
 
+## PWA 離線快取策略（2026-02-10 驗證通過）
+
+**關鍵設定**：
+
+1. `globPatterns` 必須含 `json`：`vite-react-ssg` 產生 `static-loader-data-manifest-*.json`，React Router client-side navigation 依賴此檔案。缺失時離線 SPA 導覽全部失敗。
+2. `globIgnores` 排除 `rates/**/*.json`、SEO 檔案（sitemap/robots/llms/manifest）。
+3. 使用 `injectManifest` 策略，支援 `setCatchHandler` 離線 fallback。
+4. `rollupFormat: 'iife'`，避免 ES module 在部分瀏覽器評估失敗。
+5. `OfflineIndicator` 僅完全離線時顯示，10 秒自動關閉，同次 session 不再重複。
+
+**Agent 操作注意**：新增頁面或靜態資源格式時，檢查 `globPatterns` 與 `globIgnores` 是否正確。離線測試必須在 `pnpm build && pnpm preview` 環境執行。
+
+---
+
 ## 9. 版本管理規範（SSOT）
 
 ### Monorepo 版本管理策略

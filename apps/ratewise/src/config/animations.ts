@@ -195,30 +195,14 @@ export const activeHighlight = {
   itemActiveClass: 'cursor-default',
 } as const;
 
-/**
- * 頁面切換動畫配置
- *
- * 輕量化方案：僅使用 opacity + translateX 實現高級 App 的頁面滑動效果
- * 使用 GPU 加速屬性（transform + opacity），不觸發 layout reflow
- *
- * 導覽順序：單幣別(0) → 多幣別(1) → 收藏(2) → 設定(3)
- * 向右導覽（index 增大）：新頁面從右邊滑入，舊頁面向左滑出
- * 向左導覽（index 減小）：新頁面從左邊滑入，舊頁面向右滑出
- */
+/** 頁面切換動畫 - 輕量 crossfade（GPU 加速，不觸發 reflow） */
 export const pageTransition = {
-  /** 過渡配置 */
-  transition: { duration: 0.25, ease: [0.4, 0, 0.2, 1] } as Transition,
-
-  /** 滑動偏移量（px），保持輕微以避免暈動症 */
-  offsetX: 40,
-
-  /** 路由索引映射（用於判斷滑動方向） */
-  routeIndex: {
-    '/': 0,
-    '/multi': 1,
-    '/favorites': 2,
-    '/settings': 3,
-  } as Record<string, number>,
+  transition: { duration: 0.15, ease: [0.4, 0, 0.2, 1] } as Transition,
+  variants: {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+  } as Variants,
 } as const;
 
 /**
