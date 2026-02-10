@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { OfflineIndicator } from '../OfflineIndicator';
+import { OfflineIndicator, resetSessionDismissed } from '../OfflineIndicator';
 import * as networkStatus from '../../utils/networkStatus';
 
 // Mock dependencies
@@ -37,17 +37,16 @@ vi.mock('../../utils/networkStatus', () => ({
 
 describe('OfflineIndicator', () => {
   beforeEach(() => {
-    // Mock navigator.onLine
+    // 重置 session 狀態
+    resetSessionDismissed();
+
     Object.defineProperty(window.navigator, 'onLine', {
       writable: true,
       configurable: true,
       value: true,
     });
 
-    // Setup network status mock - default to online
     vi.mocked(networkStatus.isOnline).mockResolvedValue(true);
-
-    // Clear all event listeners
     vi.clearAllMocks();
   });
 
@@ -175,24 +174,22 @@ describe('OfflineIndicator', () => {
       });
     });
 
-    it('should re-show indicator when going offline again after dismissal', async () => {
+    it('should NOT re-show indicator after dismissal in same session', async () => {
       Object.defineProperty(window.navigator, 'onLine', {
         writable: true,
         value: false,
       });
 
-      // Mock isOnline to return false (offline)
       vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
 
       render(<OfflineIndicator />);
 
-      // First offline
       window.dispatchEvent(new Event('offline'));
       await waitFor(() => {
         expect(screen.getByRole('status')).toBeInTheDocument();
       });
 
-      // Dismiss
+      // 手動關閉
       const closeButton = screen.getByRole('button', { name: /關閉離線提示/i });
       fireEvent.click(closeButton);
 
@@ -200,7 +197,7 @@ describe('OfflineIndicator', () => {
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
       });
 
-      // Go online briefly
+      // 再次離線 - 同次 session 不應再顯示
       Object.defineProperty(window.navigator, 'onLine', {
         writable: true,
         value: true,
@@ -208,12 +205,6 @@ describe('OfflineIndicator', () => {
       vi.mocked(networkStatus.isOnline).mockResolvedValue(true);
       window.dispatchEvent(new Event('online'));
 
-      // Wait for online state to be processed
-      await waitFor(() => {
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      });
-
-      // Go offline again
       Object.defineProperty(window.navigator, 'onLine', {
         writable: true,
         value: false,
@@ -221,9 +212,9 @@ describe('OfflineIndicator', () => {
       vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
       window.dispatchEvent(new Event('offline'));
 
-      // Should re-show indicator
+      // 不應重新顯示
       await waitFor(() => {
-        expect(screen.getByRole('status')).toBeInTheDocument();
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
       });
     });
   });
