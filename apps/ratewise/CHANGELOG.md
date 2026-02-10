@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.4.4
+
+### Patch Changes
+
+- b135712: 修復頁面切換空白閃爍：移除 AnimatePresence mode="wait"，改用 enter-only 進場動畫
+
 ## 2.4.3
 
 ### Patch Changes
