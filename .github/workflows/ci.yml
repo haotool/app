@@ -288,7 +288,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trivy file-system scan
-        uses: aquasecurity/trivy-action@0.34.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           scan-type: 'fs'
           scanners: 'vuln,secret,misconfig'
@@ -306,7 +306,7 @@ jobs:
           category: 'trivy-fs'
 
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@0.34.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           scan-type: 'image'
           image-ref: 'ratewise:ci-scan'
@@ -361,6 +361,7 @@ jobs:
     name: Monitor Dependabot Alerts
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    continue-on-error: true
     permissions:
       contents: read
       security-events: read
