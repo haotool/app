@@ -116,17 +116,40 @@ function getRouteIndex(pathname: string): number {
   return pageTransition.routeIndex[normalizedPath] ?? 0;
 }
 
+/**
+ * 根據導覽順序判斷頁面切換方向
+ * 1: 向右導覽（新頁從右進、舊頁往左出）
+ * -1: 向左導覽（新頁從左進、舊頁往右出）
+ */
+function getTransitionDirection(currentIndex: number, previousIndex: number): 1 | -1 {
+  return currentIndex >= previousIndex ? 1 : -1;
+}
+
+const pageTransitionVariants = {
+  enter: (direction: 1 | -1) => ({
+    opacity: 0,
+    x: direction * pageTransition.offsetX,
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+  },
+  exit: (direction: 1 | -1) => ({
+    opacity: 0,
+    x: -direction * pageTransition.offsetX,
+  }),
+} as const;
+
 /** 主應用佈局 - 支援 iOS PWA 安全區域與響應式側邊欄 */
 export function AppLayout() {
   const location = useLocation();
   const currentIndex = getRouteIndex(location.pathname);
-  const [direction, setDirection] = React.useState(1);
   const prevIndexRef = React.useRef(currentIndex);
+  // eslint-disable-next-line react-hooks/refs -- 需以「前一次索引」推導當次轉場方向，避免方向延遲一拍
+  const direction = getTransitionDirection(currentIndex, prevIndexRef.current);
 
-  // 路由變化時計算滑動方向
+  // 更新前一個路由索引，供下一次 render 計算方向
   React.useEffect(() => {
-    const prevIndex = prevIndexRef.current;
-    setDirection(currentIndex >= prevIndex ? 1 : -1);
     prevIndexRef.current = currentIndex;
   }, [currentIndex]);
 
@@ -154,20 +177,14 @@ export function AppLayout() {
               className="flex-1 min-h-0 min-w-0 w-full relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"
             >
               <RouteErrorBoundary>
-                <AnimatePresence mode="wait" initial={false}>
+                <AnimatePresence mode="wait" initial={false} custom={direction}>
                   <motion.div
                     key={location.pathname}
-                    initial={
-                      prefersReducedMotion
-                        ? false
-                        : { opacity: 0, x: direction * pageTransition.offsetX }
-                    }
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={
-                      prefersReducedMotion
-                        ? { opacity: 0 }
-                        : { opacity: 0, x: -direction * pageTransition.offsetX }
-                    }
+                    variants={pageTransitionVariants}
+                    custom={direction}
+                    initial={prefersReducedMotion ? false : 'enter'}
+                    animate="center"
+                    exit={prefersReducedMotion ? { opacity: 0 } : 'exit'}
                     transition={prefersReducedMotion ? { duration: 0 } : pageTransition.transition}
                     className="min-h-full"
                   >
