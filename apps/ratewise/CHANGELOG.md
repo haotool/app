@@ -1,5 +1,30 @@
 # @app/ratewise
 
+## 2.4.1
+
+### Patch Changes
+
+- d6ca40c: 新增頁面切換左右滑動動畫，消除導覽閃爍，支援 prefers-reduced-motion
+- 82e439b: 使用 Motion x 屬性實現水平置中，避免 CSS transform 衝突
+  - 移除 CSS 的 -translate-x-1/2
+  - 改用 Motion 的 x: '-50%' 統一管理所有 transform
+  - 修正通知元件偏右問題，實現完美水平置中
+
+- b444a8e: 修正通知元件水平置中偏移問題
+  - 合併 position + container token 為單一定位 token
+  - 確保 translate-x-1/2 基於正確寬度計算
+  - 遵循 UI/UX 最佳實踐：固定定位 + 寬度約束在同一層
+
+- eccf6c4: 修正 PWA 關鍵資源路徑解析：移除 CRITICAL_RESOURCES 前導斜線，避免 new URL() 忽略 base path 導致 404
+- 3482046: 修正 PWA 離線冷啟動多幣別/收藏/設定頁面 Load failed：移除核心元件 lazy loading 消除 code-splitting 依賴
+- d6ca40c: 修復離線導覽 Load failed - 預快取 React Router 資料 manifest JSON 檔案
+- 5f50abd: 修復 AppLayout 路由切換方向延遲，避免返回時頁面轉場方向錯誤。
+- 4c3b912: 清除技術債 - 硬編碼日期、覆蓋率排除、deprecated 函數
+  - SEOHelmet ASSET_VERSION 改從建置時間自動生成
+  - HomeStructuredData OG_IMAGE_URL 版本參數改為動態
+  - 移除 deprecated getExchangeRatesFromIDBAnytime 函數
+  - 覆蓋率排除 PWA runtime 模組
+
 ## 2.4.0
 
 ### Minor Changes
