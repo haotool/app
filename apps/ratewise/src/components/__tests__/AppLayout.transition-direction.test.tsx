@@ -25,36 +25,48 @@ vi.mock('../RouteErrorBoundary', () => ({
   RouteErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('motion/react', () => ({
-  motion: {
-    div: ({
-      children,
-      initial,
-      animate: _animate,
-      transition: _transition,
-      ...rest
-    }: React.HTMLAttributes<HTMLDivElement> & {
-      children?: React.ReactNode;
-      initial?: unknown;
-      animate?: unknown;
-      transition?: unknown;
-    }) => {
-      /* 從 initial prop 提取 x 值推算方向 */
-      let direction = 0;
-      if (initial && typeof initial === 'object' && 'x' in initial) {
-        const x = (initial as { x?: string | number }).x;
-        if (typeof x === 'string') {
-          direction = parseFloat(x) > 0 ? 1 : parseFloat(x) < 0 ? -1 : 0;
-        }
+vi.mock('motion/react', () => {
+  /* 模擬 motion 元件：掛載時鎖定 initial */
+  function MotionDiv({
+    children,
+    initial,
+    animate: _animate,
+    transition: _transition,
+    ...rest
+  }: React.HTMLAttributes<HTMLDivElement> & {
+    children?: React.ReactNode;
+    initial?: unknown;
+    animate?: unknown;
+    transition?: unknown;
+  }) {
+    const [mountedInitial] = React.useState(initial);
+
+    let direction = 0;
+    if (mountedInitial && typeof mountedInitial === 'object' && 'x' in mountedInitial) {
+      const x = (mountedInitial as { x?: string | number }).x;
+      if (typeof x === 'string') {
+        direction = parseFloat(x) > 0 ? 1 : parseFloat(x) < 0 ? -1 : 0;
       }
-      return (
-        <div data-testid="page-transition" data-transition-direction={direction} {...rest}>
-          {children}
-        </div>
-      );
+    }
+
+    return (
+      <div
+        data-testid="page-transition"
+        data-transition-direction={direction}
+        data-initial-disabled={mountedInitial === false ? 'true' : 'false'}
+        {...rest}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  return {
+    motion: {
+      div: MotionDiv,
     },
-  },
-}));
+  };
+});
 
 function RouteContent() {
   const navigate = useNavigate();
@@ -74,6 +86,20 @@ function RouteContent() {
 }
 
 describe('AppLayout 頁面切換', () => {
+  it('首次渲染應停用進場動畫，避免冷啟動淡入閃爍', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<AppLayout />}>
+            <Route index element={<RouteContent />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId('page-transition')).toHaveAttribute('data-initial-disabled', 'true');
+  });
+
   it('導覽時應正確渲染 transition wrapper 與內容', () => {
     render(
       <MemoryRouter initialEntries={['/']}>

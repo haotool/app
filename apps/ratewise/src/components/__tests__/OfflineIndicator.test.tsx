@@ -39,6 +39,7 @@ describe('OfflineIndicator', () => {
   beforeEach(() => {
     // 重置 session 狀態
     resetSessionDismissed();
+    sessionStorage.clear();
 
     Object.defineProperty(window.navigator, 'onLine', {
       writable: true,
@@ -213,6 +214,36 @@ describe('OfflineIndicator', () => {
       window.dispatchEvent(new Event('offline'));
 
       // 不應重新顯示
+      await waitFor(() => {
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should keep dismissed state after simulated page reload in same session', async () => {
+      Object.defineProperty(window.navigator, 'onLine', {
+        writable: true,
+        value: false,
+      });
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
+
+      const { unmount } = render(<OfflineIndicator />);
+      window.dispatchEvent(new Event('offline'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('status')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /關閉離線提示/i }));
+      await waitFor(() => {
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      });
+
+      // 模擬整頁重載：模組變數重置，但 sessionStorage 保留
+      unmount();
+      resetSessionDismissed();
+      render(<OfflineIndicator />);
+      window.dispatchEvent(new Event('offline'));
+
       await waitFor(() => {
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
       });

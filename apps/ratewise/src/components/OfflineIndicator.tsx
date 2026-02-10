@@ -23,9 +23,33 @@ export function OfflineIndicator({ forceOffline }: OfflineIndicatorProps) {
 }
 
 const AUTO_DISMISS_MS = 10_000;
+const OFFLINE_DISMISSED_KEY = 'ratewise.offline-indicator.dismissed';
 
 /** 同次 session 是否已顯示過離線提示 */
 let sessionDismissed = false;
+
+function readSessionDismissed(): boolean {
+  if (typeof window === 'undefined') return sessionDismissed;
+  try {
+    return sessionStorage.getItem(OFFLINE_DISMISSED_KEY) === '1' || sessionDismissed;
+  } catch {
+    return sessionDismissed;
+  }
+}
+
+function setSessionDismissed(value: boolean): void {
+  sessionDismissed = value;
+  if (typeof window === 'undefined') return;
+  try {
+    if (value) {
+      sessionStorage.setItem(OFFLINE_DISMISSED_KEY, '1');
+    } else {
+      sessionStorage.removeItem(OFFLINE_DISMISSED_KEY);
+    }
+  } catch {
+    // sessionStorage 不可用時忽略
+  }
+}
 
 // eslint-disable-next-line react-refresh/only-export-components -- 測試用輔助函式
 export function resetSessionDismissed() {
@@ -36,14 +60,14 @@ function OfflineIndicatorClient({ forceOffline, positionClassName }: OfflineIndi
   const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
   const [isOffline, setIsOffline] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(sessionDismissed);
+  const [isDismissed, setIsDismissed] = useState(() => readSessionDismissed());
   const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 10 秒自動關閉，關閉後同次 session 不再顯示
   useEffect(() => {
     if (isOffline && !isDismissed) {
       autoDismissRef.current = setTimeout(() => {
-        sessionDismissed = true;
+        setSessionDismissed(true);
         setIsDismissed(true);
       }, AUTO_DISMISS_MS);
     }
@@ -61,7 +85,7 @@ function OfflineIndicatorClient({ forceOffline, positionClassName }: OfflineIndi
       queueMicrotask(() => {
         setIsOffline(forceOffline);
         if (forceOffline) {
-          sessionDismissed = false;
+          setSessionDismissed(false);
           setIsDismissed(false);
         }
       });
@@ -103,7 +127,7 @@ function OfflineIndicatorClient({ forceOffline, positionClassName }: OfflineIndi
   }, [forceOffline]);
 
   const handleDismiss = () => {
-    sessionDismissed = true;
+    setSessionDismissed(true);
     setIsDismissed(true);
   };
 

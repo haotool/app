@@ -87,11 +87,10 @@ export class RouteErrorBoundary extends Component<Props, State> {
       return this.props.children;
     }
 
-    const { isOffline, error } = this.state;
-    const isChunkError = error ? isChunkLoadError(error) : false;
+    const { isOffline } = this.state;
 
-    // 離線 + chunk 載入失敗：顯示離線專用 UI
-    if (isOffline || isChunkError) {
+    // 僅在離線時顯示離線介面
+    if (isOffline) {
       return (
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="card p-8 max-w-sm w-full text-center">
@@ -112,7 +111,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // 在線但載入失敗：清除快取後重載
+    // 在線載入失敗（含 chunk 錯誤）：清除快取後重載
     return (
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="card p-8 max-w-sm w-full text-center">

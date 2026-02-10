@@ -88,20 +88,27 @@ function Header() {
  */
 export function AppLayout() {
   const location = useLocation();
-  const [direction, setDirection] = React.useState<-1 | 0 | 1>(0);
+  const [previousPathname, setPreviousPathname] = React.useState(location.pathname);
+  const [hasMounted, setHasMounted] = React.useState(false);
 
   const prefersReducedMotion =
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* 路徑變更時於繪製前同步計算方向 */
-  const prevPathRef = React.useRef(location.pathname);
-  React.useLayoutEffect(() => {
-    const prev = prevPathRef.current;
-    if (prev !== location.pathname) {
-      setDirection(getTopLevelTransitionDirection(prev, location.pathname));
-      prevPathRef.current = location.pathname;
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (previousPathname !== location.pathname) {
+      setPreviousPathname(location.pathname);
     }
-  }, [location.pathname]);
+  }, [location.pathname, previousPathname]);
+
+  const direction =
+    previousPathname === location.pathname
+      ? 0
+      : getTopLevelTransitionDirection(previousPathname, location.pathname);
+  const disableInitialAnimation = prefersReducedMotion || !hasMounted;
 
   return (
     <ToastProvider>
@@ -127,7 +134,7 @@ export function AppLayout() {
                 <motion.div
                   key={location.pathname}
                   initial={
-                    prefersReducedMotion
+                    disableInitialAnimation
                       ? false
                       : { opacity: 0, x: direction === 0 ? 0 : `${direction * 8}%` }
                   }
