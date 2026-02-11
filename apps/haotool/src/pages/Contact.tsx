@@ -13,6 +13,7 @@ interface ContactMethod {
   icon: typeof Mail;
   label: string;
   value: string;
+  displayValue?: string;
   href: string;
   isCopyable?: boolean;
   isExternal?: boolean;
@@ -24,6 +25,7 @@ const CONTACT_METHODS: ContactMethod[] = [
     icon: Mail,
     label: 'Email',
     value: SOCIAL_LINKS.email,
+    displayValue: 'Gmail 信箱（點擊複製）',
     href: `mailto:${SOCIAL_LINKS.email}`,
     isCopyable: true,
     color: 'brand',
@@ -107,7 +109,9 @@ export default function Contact() {
                   <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">
                     {method.label}
                   </p>
-                  <p className="text-white font-medium truncate">{method.value}</p>
+                  <p className="text-white font-medium truncate">
+                    {method.displayValue ?? method.value}
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-2">
