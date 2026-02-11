@@ -62,7 +62,7 @@ export default function NZDToTWD() {
       currencyFlag="🇳🇿"
       currencyName="紐元"
       title="NZD 對 TWD 匯率換算器 | 即時紐元台幣匯率"
-      description="即時紐元對台幣匯率，參考臺灣銀行牌告，每 5 分鐘更新。紐西蘭旅遊換匯必備工具，支援現金/即期匯率、離線 PWA、多幣別模式。"
+      description="即時紐西蘭幣兌台幣匯率換算，參考臺灣銀行官方牌告匯率，每 5 分鐘自動更新。1 NZD 等於多少台幣？紐西蘭旅遊換匯必備，支援現金匯率與即期匯率切換、離線 PWA 使用、多幣別同時換算。"
       pathname="/nzd-twd"
       canonical="https://app.haotool.org/ratewise/nzd-twd/"
       keywords={[

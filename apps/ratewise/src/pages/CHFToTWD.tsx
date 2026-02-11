@@ -62,7 +62,7 @@ export default function CHFToTWD() {
       currencyFlag="🇨🇭"
       currencyName="瑞士法郎"
       title="CHF 對 TWD 匯率換算器 | 即時瑞士法郎台幣匯率"
-      description="即時瑞士法郎對台幣匯率，參考臺灣銀行牌告，每 5 分鐘更新。瑞士旅遊換匯必備工具，支援現金/即期匯率、離線 PWA、多幣別模式。"
+      description="即時瑞士法郎兌台幣匯率換算，參考臺灣銀行官方牌告匯率，每 5 分鐘自動更新。1 CHF 等於多少台幣？瑞士旅遊換匯必備，支援現金匯率與即期匯率切換、離線 PWA 使用、多幣別同時換算。"
       pathname="/chf-twd"
       canonical="https://app.haotool.org/ratewise/chf-twd/"
       keywords={[
