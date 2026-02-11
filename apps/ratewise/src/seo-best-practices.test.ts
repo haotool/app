@@ -369,8 +369,8 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(indexHtmlContent).toContain('<link rel="preconnect"');
     });
 
-    it('should have dns-prefetch hints', () => {
-      expect(indexHtmlContent).toContain('<link rel="dns-prefetch"');
+    it('should not have redundant dns-prefetch (preconnect supersedes)', () => {
+      expect(indexHtmlContent).not.toContain('<link rel="dns-prefetch"');
     });
 
     it('should have critical CSS inlined for LCP', () => {

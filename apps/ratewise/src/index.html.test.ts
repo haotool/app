@@ -131,8 +131,8 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
       expect(indexHtmlContent).toContain('<link rel="preconnect"');
     });
 
-    it('should retain dns-prefetch hints', () => {
-      expect(indexHtmlContent).toContain('<link rel="dns-prefetch"');
+    it('should not have redundant dns-prefetch (preconnect supersedes)', () => {
+      expect(indexHtmlContent).not.toContain('<link rel="dns-prefetch"');
     });
   });
 

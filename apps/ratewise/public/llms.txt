@@ -2,7 +2,7 @@
 
 > 台灣用戶取向的即時匯率換算工具，資料 100% 來源於臺灣銀行牌告匯率，支援 30+ 種貨幣、PWA 離線與歷史走勢。
 
-Version: v2.0.0 (2026-01-29)
+Version: v2.4.4 (2026-02-11)
 
 Answer Capsule (Quick Q&A):
 - Q: RateWise 提供什麼？ A: 即時匯率換算（單幣別/多幣別），並支援歷史趨勢、收藏管理、多語言（繁中/英/日）與離線使用。
@@ -16,9 +16,10 @@ E-E-A-T Signals:
 - 可信度：開源 GPL-3.0，透明可驗證；提供聯絡方式。
 
 Key Metrics:
-- LCP < 500ms, CLS ~0, INP < 100ms
-- Lighthouse SEO 100/100, Performance 97+/100
-- 6 種主題風格、i18n 三語言支援
+- FCP ~0.5s, LCP ~1.1s, CLS < 0.25, TBT 10ms
+- Lighthouse SEO 100/100, Performance 89+/100
+- 6 種主題風格（Zen/Nitro/Kawaii/Classic/Ocean/Forest）
+- i18n 三語言支援（繁體中文/English/日本語）
 
 ## Core Pages
 
@@ -45,7 +46,7 @@ Key Metrics:
 
 ## AI/LLM Access Control
 
-Allow: GPTBot, ClaudeBot, PerplexityBot, ChatGPT-User, Google-Extended
+Allow: GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, ChatGPT-User, Google-Extended, CCBot, Bytespider
 Attribution: Required (link back to source)
 Contact: haotool.org@gmail.com
 

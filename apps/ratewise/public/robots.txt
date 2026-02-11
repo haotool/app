@@ -1,24 +1,25 @@
 # RateWise Robots Configuration
-# 最後更新：2026-01-29
+# 最後更新：2026-02-11
 
 User-agent: *
 Allow: /
-
-# Sitemap
-Sitemap: https://app.haotool.org/ratewise/sitemap.xml
-
-# Disallow Service Worker and internal assets
 Disallow: /sw.js
 Disallow: /workbox-*.js
 Disallow: /*.json
-
-# Disallow internal/debug pages
 Disallow: /color-scheme
 Disallow: /ui-showcase
 Disallow: /update-prompt-test
 
-# Allow AI search engines (AEO/LLMO)
+Sitemap: https://app.haotool.org/ratewise/sitemap.xml
+
+# AI search crawlers (allow indexing & citation)
 User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
 Allow: /
 
 User-agent: ClaudeBot
@@ -27,13 +28,16 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
-User-agent: ChatGPT-User
-Allow: /
-
 User-agent: Google-Extended
 Allow: /
 
-# Allow social media crawlers
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+# Social media crawlers
 User-agent: facebookexternalbot
 Allow: /
 

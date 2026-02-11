@@ -48,8 +48,8 @@ const ARTICLE_SCHEMA = {
   description:
     'RateWise 採用 vite-react-ssg 預渲染與 PWA 快取策略，提供離線匯率查詢、iOS 風格計算機體驗及多幣別快速換算服務。',
   author: {
-    '@type': 'Person',
-    name: 'haotool',
+    '@type': 'Organization',
+    name: 'HaoTool',
     url: 'https://haotool.org',
   },
   publisher: {

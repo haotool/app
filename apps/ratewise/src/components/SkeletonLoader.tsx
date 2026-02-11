@@ -28,8 +28,17 @@
 export const SkeletonLoader = () => {
   return (
     <div className="p-4 md:p-6" role="status" aria-live="polite">
-      {/* SEO 靜態內容區塊 - 對 SEO 爬蟲可見（使用 p 避免與頁面 h1 重複）*/}
-      <div className="sr-only">
+      {/* SEO 靜態內容 - 對爬蟲可見，inline style 確保 CSS 載入前即隱藏，避免 CLS */}
+      <div
+        className="sr-only"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+          clip: 'rect(0,0,0,0)',
+        }}
+      >
         <p className="font-bold text-lg">RateWise 匯率好工具 - 即時匯率換算</p>
         <p>
           RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援
