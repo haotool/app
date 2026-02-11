@@ -22,7 +22,7 @@ const ROUTE_METADATA: Record<
   }
 > = {
   '/': {
-    title: 'haotool.org | 阿璋的作品集',
+    title: 'haotool.org | 阿璋的全端作品集 - React TypeScript',
     description:
       '嗨，我是阿璋。「haotool」取自「好工具」的諧音，代表每個作品都要兼具實用與優雅。使用 React、TypeScript 打造高品質數位工具，融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。開源、免費，持續開發中。歡迎體驗！',
     type: 'website',
@@ -39,21 +39,21 @@ const ROUTE_METADATA: Record<
     ],
   },
   '/projects/': {
-    title: '作品集 | haotool.org',
+    title: '作品集 | React TypeScript 開源專案展示 - haotool.org',
     description:
       '精選作品展示：日本名字產生器（Vite SSG、PWA、100% SEO）、RateWise 即時匯率計算機（30天歷史圖表）等。每個作品都傾注對品質的執著，展現 React、TypeScript 全端開發、UI 設計與問題解決能力，全部開源免費。',
     type: 'website',
     keywords: ['作品集', '專案', 'React 專案', 'TypeScript', 'PWA', '開源'],
   },
   '/about/': {
-    title: '關於阿璋 | haotool.org',
+    title: '關於阿璋 | 全端工程師 React TypeScript - haotool.org',
     description:
       '我是阿璋，「haotool」取自「好工具」的諧音，也延伸自我名字的 HAO 音節，代表我對產出的堅持：它必須是個好工具。了解我的技術專長（React、TypeScript、Node.js）、開發哲學、Lighthouse 滿分方法論與職涯歷程。',
     type: 'profile',
     keywords: ['阿璋', '關於', '全端工程師', '技術背景', '開發者'],
   },
   '/contact/': {
-    title: '聯繫 | haotool.org',
+    title: '聯繫阿璋 | 合作委託 React 前端開發 - haotool.org',
     description:
       '有任何問題、想法或合作委託？歡迎透過 Email、GitHub 或 Threads 與阿璋聯繫，通常在 24 小時內回覆您。承接 Web 前端開發、React 應用架構、PWA 設計等技術委託，歡迎詢問合作方案，一起打造令人驚艷的數位體驗！',
     type: 'website',

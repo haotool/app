@@ -420,10 +420,10 @@ export default function Home() {
                   </div>
                 ))}
                 <div className="flex flex-col items-start space-y-1">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+                  <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
                     Current Focus
-                  </div>
-                  <div className="flex items-center gap-2 text-brand-300 pt-1">
+                  </dt>
+                  <dd className="flex items-center gap-2 text-brand-300 pt-1">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
@@ -431,7 +431,7 @@ export default function Home() {
                     <span className="font-mono text-xs md:text-sm text-slate-300">
                       Advanced Shaders
                     </span>
-                  </div>
+                  </dd>
                 </div>
               </dl>
             </div>

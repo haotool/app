@@ -284,19 +284,28 @@ export default function Layout() {
                         exit={{ scale: 0.5, opacity: 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <item.icon className="h-5 w-5 text-slate-400 group-hover:text-white transition-colors duration-300" />
+                        <item.icon
+                          className="h-5 w-5 text-slate-400 group-hover:text-white transition-colors duration-300"
+                          aria-hidden="true"
+                        />
                       </motion.div>
                     )}
                   </AnimatePresence>
+                  <span className="sr-only">{item.label}</span>
                 </motion.a>
               ))}
             </div>
           </div>
 
-          <div className="mt-8 pt-8 border-t border-white/5 text-center">
+          <div className="mt-8 pt-8 border-t border-white/5 text-center flex flex-col items-center gap-3">
             <p className="text-sm text-slate-500">
               © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
             </p>
+            <div className="flex items-center gap-4 text-xs text-slate-600">
+              <Link to="/ratewise/privacy" className="hover:text-slate-400 transition-colors">
+                Privacy Policy
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

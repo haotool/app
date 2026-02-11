@@ -139,7 +139,9 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
           <img
             src={project.imageUrl}
             alt={`${project.title} 預覽圖`}
-            loading="lazy"
+            width={1200}
+            height={630}
+            loading={index < 2 ? 'eager' : 'lazy'}
             className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105"
           />
         ) : null}
