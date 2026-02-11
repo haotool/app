@@ -154,7 +154,7 @@ const DEFAULT_JSON_LD = [
       'Service Worker 快取',
       '台灣銀行牌告匯率',
       '30+ 種貨幣支援',
-      '極速性能（LCP 489ms）',
+      '極速性能（Lighthouse 90+）',
     ],
     screenshot: {
       '@type': 'ImageObject',
@@ -321,7 +321,7 @@ export function SEOHelmet({
     url: ogImageUrl,
     width: '1200',
     height: '630',
-    encodingFormat: 'image/png',
+    encodingFormat: 'image/jpeg',
     name: 'RateWise 匯率轉換器應用截圖',
     description: 'RateWise 即時匯率換算工具界面截圖，展示單幣別與多幣別換算功能',
     // [GSC 2025-12-31] 新增建議欄位
@@ -394,6 +394,8 @@ export function SEOHelmet({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImageUrl} />
       <meta name="twitter:image:alt" content="RateWise 匯率轉換器" />
+      <meta name="twitter:site" content="@azlife_1224" />
+      <meta name="twitter:creator" content="@azlife_1224" />
 
       {/* JSON-LD Structured Data */}
       {structuredData.map((item, index) => (
