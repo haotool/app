@@ -116,6 +116,7 @@ export const routes: RouteRecord[] = [
           <>
             <SEOHelmet pathname="/" />
             <HomeStructuredData faq={HOMEPAGE_FAQ} />
+            <h1 className="sr-only">RateWise 匯率好工具 - 台灣銀行即時匯率換算</h1>
             <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
           </>
         ),

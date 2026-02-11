@@ -206,6 +206,7 @@ export default function Favorites() {
   return (
     <div className="flex flex-col min-h-full">
       {seoHelmet}
+      <h1 className="sr-only">收藏貨幣與換算歷史記錄 - 快速存取常用匯率</h1>
       <div className="flex-1 px-3 sm:px-5 py-6 max-w-md mx-auto w-full">
         {/* Tab 切換區塊 - Segmented Switch SSOT 動畫 */}
         <section className="mb-6">

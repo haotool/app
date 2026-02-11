@@ -137,6 +137,7 @@ export default function MultiConverter() {
   return (
     <div className={multiConverterLayoutTokens.container}>
       {seoHelmet}
+      <h1 className="sr-only">多幣別同時換算 - 一次比較 30+ 種即時匯率</h1>
       <div className={multiConverterLayoutTokens.content.className}>
         {/* 多幣別換算區塊 - 簡約風格（標題已移除，由底部導航識別）
          *
