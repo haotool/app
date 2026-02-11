@@ -63,7 +63,7 @@ export default function USDToTWD() {
       currencyFlag="🇺🇸"
       currencyName="美金"
       title="USD 對 TWD 匯率換算器 | 即時台幣匯率"
-      description="即時美金兌台幣匯率換算，參考臺灣銀行官方牌告匯率，每 5 分鐘自動更新。1 USD 等於多少台幣？支援現金匯率與即期匯率切換、離線 PWA 使用、多幣別同時換算，是出國旅遊必備的匯率查詢工具。"
+      description="即時美金兌台幣匯率換算，參考臺灣銀行官方牌告匯率，每 5 分鐘自動更新。1 USD 等於多少台幣？支援現金匯率與即期匯率切換、離線 PWA 使用、多幣別同時換算。完全免費、無廣告，不追蹤個人資料，資料 100% 來自臺灣銀行官方牌告匯率，是出國旅遊必備的匯率查詢工具。"
       pathname="/usd-twd"
       canonical="https://app.haotool.org/ratewise/usd-twd/"
       keywords={['USD TWD 匯率', '美金換台幣', '美金匯率', '匯率換算', '匯率好工具', 'RateWise']}

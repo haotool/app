@@ -62,7 +62,7 @@ export default function THBToTWD() {
       currencyFlag="🇹🇭"
       currencyName="泰銖"
       title="THB 對 TWD 匯率換算器 | 即時泰銖台幣匯率"
-      description="即時泰銖兌台幣匯率換算，參考臺灣銀行官方牌告匯率，每 5 分鐘自動更新。1 THB 等於多少台幣？泰國旅遊換匯必備，支援現金匯率與即期匯率切換、離線 PWA 使用、多幣別同時換算。"
+      description="即時泰銖兌台幣匯率換算，參考臺灣銀行官方牌告匯率，每 5 分鐘自動更新。1 THB 等於多少台幣？泰國旅遊換匯必備，支援現金匯率與即期匯率切換、多幣別同時換算。完全免費使用、無廣告，不追蹤個人資料，資料 100% 來自臺灣銀行官方牌告匯率。"
       pathname="/thb-twd"
       canonical="https://app.haotool.org/ratewise/thb-twd/"
       keywords={[

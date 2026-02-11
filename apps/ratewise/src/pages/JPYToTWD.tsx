@@ -62,7 +62,7 @@ export default function JPYToTWD() {
       currencyFlag="🇯🇵"
       currencyName="日圓"
       title="JPY 對 TWD 匯率換算器 | 即時日圓台幣匯率"
-      description="即時日圓兌台幣匯率換算，參考臺灣銀行官方牌告匯率，每 5 分鐘自動更新。1 JPY 等於多少台幣？100 日圓換台幣即時報價，日本旅遊換匯必備，支援現金匯率與即期匯率切換、離線 PWA 使用。"
+      description="即時日圓兌台幣匯率換算，參考臺灣銀行官方牌告匯率，每 5 分鐘自動更新。1 JPY 等於多少台幣？100 日圓換台幣即時報價，日本旅遊換匯必備，支援現金匯率與即期匯率切換、多幣別同時換算。完全免費、無廣告，不追蹤個人資料，資料 100% 來自臺灣銀行官方牌告匯率。"
       pathname="/jpy-twd"
       canonical="https://app.haotool.org/ratewise/jpy-twd/"
       keywords={[
