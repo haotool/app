@@ -54,7 +54,7 @@ export const PROJECTS: Project[] = [
       '即時匯率換算工具，整合 30 天歷史數據視覺化圖表。支援 13+ 幣別、離線使用 (PWA)、深色模式。技術棧：React 19, TypeScript, lightweight-charts, Service Worker。',
     tags: ['React 19', 'TypeScript', 'PWA', 'Charts', 'Tailwind CSS'],
     link: '/ratewise/',
-    imageUrl: '/projects/ratewise-og.png',
+    imageUrl: '/projects/ratewise-og.jpg',
     featured: true,
     category: ProjectCategory.TOOL,
     status: 'live',
