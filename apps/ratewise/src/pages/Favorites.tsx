@@ -167,6 +167,7 @@ export default function Favorites() {
     return (
       <>
         {seoHelmet}
+        <h1 className="sr-only">收藏貨幣與換算歷史記錄 - 快速存取常用匯率</h1>
         <SkeletonLoader />
       </>
     );
@@ -176,6 +177,7 @@ export default function Favorites() {
     return (
       <>
         {seoHelmet}
+        <h1 className="sr-only">收藏貨幣與換算歷史記錄 - 快速存取常用匯率</h1>
         <SkeletonLoader />
       </>
     );

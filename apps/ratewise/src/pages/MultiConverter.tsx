@@ -98,6 +98,7 @@ export default function MultiConverter() {
     return (
       <>
         {seoHelmet}
+        <h1 className="sr-only">多幣別同時換算 - 一次比較 30+ 種即時匯率</h1>
         <SkeletonLoader />
       </>
     );
@@ -107,6 +108,7 @@ export default function MultiConverter() {
     return (
       <>
         {seoHelmet}
+        <h1 className="sr-only">多幣別同時換算 - 一次比較 30+ 種即時匯率</h1>
         <SkeletonLoader />
       </>
     );
