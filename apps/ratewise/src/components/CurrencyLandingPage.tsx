@@ -96,7 +96,7 @@ export function CurrencyLandingPage({
       <SEOHelmet {...seoProps} />
 
       {/* Main container - PWA optimized with safe area handling */}
-      <main className="min-h-full">
+      <div className="min-h-full">
         <div className="px-4 sm:px-6 py-6 max-w-3xl mx-auto">
           {/* Back Navigation */}
           <Link
@@ -260,7 +260,7 @@ export function CurrencyLandingPage({
             <p className="mt-1">© 2025 RateWise 匯率好工具</p>
           </footer>
         </div>
-      </main>
+      </div>
     </>
   );
 }

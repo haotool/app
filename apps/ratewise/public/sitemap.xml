@@ -137,4 +137,10 @@
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/usd-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/usd-twd/" />
   </url>
+  <url>
+    <loc>https://app.haotool.org/ratewise/privacy/</loc>
+    <lastmod>2026-02-11T11:00:00Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/privacy/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/privacy/" />
+  </url>
 </urlset>

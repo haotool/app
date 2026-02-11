@@ -26,7 +26,7 @@ export default function ThemeShowcase() {
       <div className="px-5 py-6 max-w-2xl mx-auto">
         {/* 返回按鈕 */}
         <Link
-          to="/settings"
+          to="/settings/"
           className="inline-flex items-center gap-2 text-sm font-medium opacity-60 hover:opacity-100 transition-opacity mb-6"
         >
           <ArrowLeft className="w-4 h-4" />

@@ -12,15 +12,15 @@ export default function About() {
   return (
     <>
       <SEOHelmet
-        title="關於我們"
-        description="RateWise 是一個專為台灣用戶設計的即時匯率工具，提供準確、快速且支援離線使用的匯率換算服務。了解我們的資料來源、技術優勢與聯繫方式。"
+        title="關於 RateWise 匯率好工具 - 資料來源與技術特色"
+        description="RateWise 是專為台灣用戶設計的即時匯率 PWA 工具，100% 基於臺灣銀行官方牌告匯率，支援 30+ 種貨幣換算，離線可用。了解我們的資料來源、Lighthouse Performance 97+ 的技術優勢與聯繫方式。"
         pathname="/about"
         breadcrumb={[
           { name: 'RateWise 首頁', item: '/' },
           { name: '關於我們', item: '/about/' },
         ]}
       />
-      <main className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="mb-8">
@@ -239,7 +239,11 @@ export default function About() {
                 <p className="text-text-muted">
                   如有任何問題或建議，歡迎透過{' '}
                   <a
-                    href={`mailto:${APP_INFO.email}`}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = `mailto:${APP_INFO.email}`;
+                    }}
                     className="text-primary hover:text-primary/80 underline"
                   >
                     {APP_INFO.email}
@@ -252,7 +256,11 @@ export default function About() {
                 <p className="text-text-muted">
                   若發現安全漏洞，請透過{' '}
                   <a
-                    href={`mailto:${APP_INFO.email}`}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = `mailto:${APP_INFO.email}`;
+                    }}
                     className="text-primary hover:text-primary/80 underline"
                   >
                     {APP_INFO.email}
@@ -286,7 +294,7 @@ export default function About() {
             <p className="mt-2">版本：{getDisplayVersion()}</p>
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }

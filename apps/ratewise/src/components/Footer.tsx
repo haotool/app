@@ -153,6 +153,15 @@ export function Footer() {
             </span>
             {t('footer.about')}
           </Link>
+          <Link
+            to="/privacy/"
+            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+          >
+            <span aria-hidden="true" className="text-white/50">
+              🔒
+            </span>
+            隱私政策
+          </Link>
         </div>
 
         {/* 熱門匯率快速導航 */}
@@ -297,6 +306,15 @@ export function Footer() {
               i
             </span>
             {t('footer.about')}
+          </Link>
+          <Link
+            to="/privacy/"
+            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+          >
+            <span aria-hidden="true" className="text-white/50">
+              🔒
+            </span>
+            隱私政策
           </Link>
         </div>
 

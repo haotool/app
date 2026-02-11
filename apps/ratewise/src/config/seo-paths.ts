@@ -25,8 +25,8 @@ export function normalizeSiteUrl(value: string): string {
 /**
  * RateWise 所有需要預渲染的 SEO 路徑
  *
- * 總計：20 個路徑
- * - 7 個核心頁面：首頁、Multi、Favorites、Settings、FAQ、About、Guide
+ * 總計：21 個路徑
+ * - 8 個核心頁面：首頁、Multi、Favorites、Settings、FAQ、About、Privacy、Guide
  * - 13 個幣別落地頁：依字母順序排列
  *
  * 格式：統一使用尾斜線結尾（符合 SEO Best Practices 2025）
@@ -39,6 +39,7 @@ export const SEO_PATHS = [
   '/settings/',
   '/faq/',
   '/about/',
+  '/privacy/',
   '/guide/',
 
   // 幣別落地頁 (13) - 依字母順序排列
@@ -162,6 +163,7 @@ export type CorePagePath =
   | '/settings/'
   | '/faq/'
   | '/about/'
+  | '/privacy/'
   | '/guide/';
 
 /**
@@ -208,6 +210,7 @@ export function isCorePagePath(path: string): path is CorePagePath {
     '/settings/',
     '/faq/',
     '/about/',
+    '/privacy/',
     '/guide/',
   ];
   return corePaths.includes(path as CorePagePath);

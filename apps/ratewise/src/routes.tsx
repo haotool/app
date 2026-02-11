@@ -153,6 +153,7 @@ export const routes: RouteRecord[] = [
   // Layout 路由（SEO 落地頁，保留原有結構）
   createLazyRoute('/faq', () => import('./pages/FAQ'), 'src/pages/FAQ.tsx'),
   createLazyRoute('/about', () => import('./pages/About'), 'src/pages/About.tsx'),
+  createLazyRoute('/privacy', () => import('./pages/Privacy'), 'src/pages/Privacy.tsx'),
   createLazyRoute('/guide', () => import('./pages/Guide'), 'src/pages/Guide.tsx'),
 
   // 13 個幣別落地頁（SEO 預渲染）

@@ -55,8 +55,8 @@ export default function Settings() {
   return (
     <div className="min-h-full">
       <SEOHelmet
-        title="設定"
-        description="RateWise 應用程式設定，自訂介面風格（Zen、Nitro、Kawaii、Classic、Ocean、Forest）、語言切換、資料來源查看與快取管理。"
+        title="應用程式設定 - 介面風格切換與語言偏好管理"
+        description="RateWise 應用程式設定頁面，自訂介面風格（Zen、Nitro、Kawaii、Classic、Ocean、Forest 共 6 種）、切換繁體中文/English/日本語，管理匯率快取與資料來源，個人化您的匯率查詢體驗。"
         pathname="/settings"
       />
       <div className="px-3 sm:px-5 py-6 max-w-md mx-auto">
@@ -92,7 +92,7 @@ export default function Settings() {
                   } as React.CSSProperties
                 }
                 aria-pressed={style === option.value}
-                aria-label={`${option.label} - ${option.description}`}
+                aria-label={`${option.label}`}
               >
                 {/* 裝飾圓形 */}
                 <motion.div
@@ -161,6 +161,7 @@ export default function Settings() {
                     animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
                     transition={transitions.default}
                     className="text-xl mb-1 filter drop-shadow-sm"
+                    aria-hidden="true"
                   >
                     {option.flag}
                   </motion.span>
@@ -236,21 +237,21 @@ export default function Settings() {
 
           <div className="card overflow-hidden divide-y divide-border">
             <Link
-              to="/faq"
+              to="/faq/"
               className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >
               <span className="text-sm font-medium">{t('settings.faq')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
-              to="/guide"
+              to="/guide/"
               className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >
               <span className="text-sm font-medium">{t('settings.usageGuide')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
-              to="/about"
+              to="/about/"
               className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >
               <span className="text-sm font-medium">{t('settings.aboutUs')}</span>

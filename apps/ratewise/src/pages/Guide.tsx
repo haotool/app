@@ -83,7 +83,7 @@ const Guide = () => {
         }}
       />
 
-      <main className="min-h-screen bg-page-gradient">
+      <div className="min-h-screen bg-page-gradient">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* 返回首頁 */}
           <Link
@@ -260,7 +260,7 @@ const Guide = () => {
               </div>
             </div>
             <div className="mt-4">
-              <Link to="/faq" className="text-primary hover:text-primary/80 text-sm font-medium">
+              <Link to="/faq/" className="text-primary hover:text-primary/80 text-sm font-medium">
                 查看更多常見問題 →
               </Link>
             </div>
@@ -284,7 +284,7 @@ const Guide = () => {
             </Link>
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 };

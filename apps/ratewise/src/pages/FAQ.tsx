@@ -182,8 +182,8 @@ export default function FAQ() {
   return (
     <>
       <SEOHelmet
-        title="常見問題"
-        description="RateWise 匯率好工具常見問題：匯率來源、支援貨幣、離線使用、更新頻率等問題解答。"
+        title="常見問題 - RateWise 匯率工具完整 FAQ 解答"
+        description="RateWise 匯率好工具完整 FAQ 解答：匯率數據來源、支援 30+ 種貨幣、離線使用方式、安裝到手機、更新頻率、歷史匯率查看等。100% 基於臺灣銀行官方牌告匯率，5 分鐘自動更新，完全免費無廣告。"
         pathname="/faq"
         breadcrumb={[
           { name: 'RateWise 首頁', item: '/' },
@@ -191,7 +191,7 @@ export default function FAQ() {
         ]}
         faq={FAQ_JSONLD_DATA}
       />
-      <main className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
           <div className="mb-8">
@@ -257,7 +257,11 @@ export default function FAQ() {
             <p className="text-text-muted">
               如果您有其他問題或建議，歡迎透過
               <a
-                href={`mailto:${APP_INFO.email}`}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = `mailto:${APP_INFO.email}`;
+                }}
                 className="text-primary hover:text-primary/80 underline ml-1"
               >
                 {APP_INFO.email}
@@ -266,7 +270,7 @@ export default function FAQ() {
             </p>
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }
