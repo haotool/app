@@ -249,18 +249,18 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO_PATHS 配置驗證', () => {
-    it('應該包含 20 個路徑', () => {
-      // Given: SEO_PATHS 配置（7 核心 + 13 幣別）
+    it('應該包含 21 個路徑', () => {
+      // Given: SEO_PATHS 配置（8 核心 + 13 幣別）
 
       // When: 檢查路徑數量
       const count = SEO_PATHS.length;
 
-      // Then: 應該有 20 個路徑
-      expect(count).toBe(20);
+      // Then: 應該有 21 個路徑（新增 /privacy/）
+      expect(count).toBe(21);
     });
 
     it('應該包含所有核心頁面', () => {
-      // Given: 核心頁面列表（7 個）
+      // Given: 核心頁面列表（8 個，含 /privacy/）
       const corePages = [
         '/',
         '/multi/',
@@ -269,6 +269,7 @@ describe('SEO Paths Configuration', () => {
         '/faq/',
         '/about/',
         '/guide/',
+        '/privacy/',
       ] as const;
 
       // When: 檢查是否都在 SEO_PATHS 中
@@ -276,7 +277,7 @@ describe('SEO Paths Configuration', () => {
 
       // Then: 應該全部包含
       expect(allIncluded).toBe(true);
-      expect(corePages.length).toBe(7);
+      expect(corePages.length).toBe(8);
     });
 
     it('應該包含所有 13 個幣別頁面', () => {

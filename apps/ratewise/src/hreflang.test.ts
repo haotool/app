@@ -77,8 +77,8 @@ describe('Hreflang Configuration (BDD)', () => {
       const xlinkMatches = sitemapContent.match(/<xhtml:link/g);
       if (xlinkMatches) {
         // 如果有 xhtml:link，檢查數量正確
-        // 20 條 URL * 2 語言 = 40
-        expect(xlinkMatches.length).toBe(40);
+        // 21 條 URL * 2 語言 = 42（含新增的 /privacy/）
+        expect(xlinkMatches.length).toBe(42);
       } else {
         // 沒有 xhtml:link 也是可接受的（hreflang 由 HTML meta tags 提供）
         console.log('ℹ️ sitemap.xml 不包含 xhtml:link（由 HTML meta tags 提供）');

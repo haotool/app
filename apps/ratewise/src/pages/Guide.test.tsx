@@ -209,7 +209,7 @@ describe('Guide Page - HowTo Schema', () => {
     it('renders link to full FAQ page', () => {
       renderGuide();
       const faqLink = screen.getByRole('link', { name: /查看更多常見問題/i });
-      expect(faqLink).toHaveAttribute('href', '/faq');
+      expect(faqLink).toHaveAttribute('href', '/faq/');
     });
   });
 
