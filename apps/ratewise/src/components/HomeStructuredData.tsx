@@ -9,7 +9,7 @@ const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratew
 const SITE_BASE_URL = SITE_URL.endsWith('/') ? SITE_URL : `${SITE_URL}/`;
 const BUILD_DATE =
   (import.meta.env.VITE_BUILD_TIME ?? '').replace(/[-T:Z.]/g, '').slice(0, 8) || 'dev';
-const OG_IMAGE_URL = `${SITE_BASE_URL}og-image.png?v=${BUILD_DATE}`;
+const OG_IMAGE_URL = `${SITE_BASE_URL}og-image.jpg?v=${BUILD_DATE}`;
 
 const HOW_TO_STEPS = [
   {

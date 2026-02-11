@@ -365,8 +365,8 @@ describe('SEO Paths Configuration', () => {
     it('應該包含 OG 圖片', () => {
       // Given: IMAGE_RESOURCES 配置
 
-      // When: 檢查 og-image.png
-      const hasOGImage = IMAGE_RESOURCES.includes('/og-image.png');
+      // When: 檢查 og-image.jpg
+      const hasOGImage = IMAGE_RESOURCES.includes('/og-image.jpg');
 
       // Then: 應該包含
       expect(hasOGImage).toBe(true);
