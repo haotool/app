@@ -110,6 +110,9 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
   }
 
   tags.push(`<meta name="author" content="阿璋 | ${SITE_NAME}" />`);
+  tags.push(`<meta property="article:author" content="阿璋" />`);
+  tags.push(`<meta property="article:published_time" content="2025-01-01T00:00:00Z" />`);
+  tags.push(`<meta property="article:modified_time" content="${buildTime}" />`);
   tags.push(`<meta name="robots" content="index, follow" />`);
   tags.push(`<meta name="googlebot" content="index, follow" />`);
 

@@ -12,7 +12,7 @@ const SITE_BASE_URL = 'https://app.haotool.org/nihonname/';
 const ASSET_VERSION = 'v=20251208';
 const DEFAULT_TITLE = 'NihonName 皇民化改姓生成器 | 1940年代台灣日式姓名產生器';
 const DEFAULT_DESCRIPTION =
-  '探索1940年代台灣皇民化運動的歷史改姓對照。輸入你的姓氏，發現日治時期的日式姓名與趣味諧音名。基於歷史文獻《内地式改姓名の仕方》。';
+  '探索1940年代台灣皇民化運動的歷史改姓對照。輸入你的姓氏，發現日治時期的日式姓名與趣味諧音名。基於歷史文獻《内地式改姓名の仕方》，以正確的歷史視角重現台灣日治時代的改姓政策。完全免費、開源。';
 const DEFAULT_OG_IMAGE = 'og-image.png';
 
 interface MetaTagsConfig {

@@ -14,9 +14,9 @@ const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const NAV_ITEMS = [
   { label: 'Home', path: '/' },
-  { label: 'Projects', path: '/projects' },
-  { label: 'About', path: '/about' },
-  { label: 'Contact', path: '/contact' },
+  { label: 'Projects', path: '/projects/' },
+  { label: 'About', path: '/about/' },
+  { label: 'Contact', path: '/contact/' },
 ];
 
 export default function Layout() {

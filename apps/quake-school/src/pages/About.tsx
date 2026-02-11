@@ -78,6 +78,14 @@ const About: React.FC = () => {
           <footer className="text-center text-sm text-slate-500 font-bold py-4">
             <p>© 2025 haotool.org. All rights reserved.</p>
             <p className="mt-1">版本: {import.meta.env.VITE_APP_VERSION || '1.0.0'}</p>
+            <p className="mt-2">
+              <a
+                href="/ratewise/privacy/"
+                className="underline hover:text-sky-500 transition-colors font-normal"
+              >
+                隱私權政策
+              </a>
+            </p>
           </footer>
         </div>
       </motion.div>

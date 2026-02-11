@@ -13,7 +13,7 @@ export default function About() {
     <>
       <SEOHelmet
         title="關於 RateWise 匯率好工具 - 資料來源與技術特色"
-        description="RateWise 是專為台灣用戶設計的即時匯率 PWA 工具，100% 基於臺灣銀行官方牌告匯率，支援 30+ 種貨幣換算，離線可用。了解我們的資料來源、Lighthouse Performance 97+ 的技術優勢與聯繫方式。"
+        description="RateWise 是專為台灣用戶設計的即時匯率 PWA 工具，100% 基於臺灣銀行官方牌告匯率，支援 30+ 種貨幣換算，離線可用。了解我們的資料來源、Lighthouse Performance 97+ 的技術優勢與聯繫方式。完全免費、無廣告。"
         pathname="/about"
         breadcrumb={[
           { name: 'RateWise 首頁', item: '/' },

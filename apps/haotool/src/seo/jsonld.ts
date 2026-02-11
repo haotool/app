@@ -40,7 +40,13 @@ interface WebPageJsonLd extends JsonLdBase {
   description: string;
   url: string;
   inLanguage: string;
+  datePublished?: string;
   dateModified: string;
+  author?: {
+    '@type': 'Person';
+    name: string;
+    url: string;
+  };
   isPartOf: {
     '@type': 'WebSite';
     name: string;
@@ -195,7 +201,13 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
     description: metadata.description,
     url: `${SITE_URL}${normalizedRoute}`,
     inLanguage: 'zh-TW',
+    datePublished: '2025-01-01T00:00:00Z',
     dateModified: buildTime,
+    author: {
+      '@type': 'Person',
+      name: AUTHOR_NAME,
+      url: SITE_URL,
+    },
     isPartOf: {
       '@type': 'WebSite',
       name: SITE_NAME,

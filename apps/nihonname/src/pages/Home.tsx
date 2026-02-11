@@ -1636,15 +1636,21 @@ export default function Home() {
               <span className="text-stone-300">·</span>
               <span>作者：阿璋</span>
               <span className="text-stone-300">·</span>
-              <a
-                href="https://www.threads.com/@azlife_1224/post/DR2NCeEj6Fo?xmt=AQF0K8pg5PLpzoBz7nnYMEI2CdxVzs2pUyIJHabwZWeYCw"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/faq/"
                 className="hover:text-red-700 transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
-                @azlife_1224
-              </a>
+                FAQ
+              </Link>
+              <span className="text-stone-300">·</span>
+              <Link
+                to="/about/"
+                className="hover:text-red-700 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                關於
+              </Link>
             </div>
           </footer>
         </div>

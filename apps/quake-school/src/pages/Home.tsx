@@ -2,7 +2,7 @@
  * 地震知識小學堂 - 首頁
  */
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Helmet } from 'react-helmet-async';
 import Logo from '../components/Logo';
@@ -89,6 +89,21 @@ const Home: React.FC = () => {
           className="absolute bottom-1/4 -right-10 w-60 h-60 bg-blue-100/50 rounded-full blur-3xl"
           aria-hidden="true"
         />
+
+        {/* 頁尾導覽 */}
+        <footer className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-4 text-xs text-slate-400">
+          <Link to="/lessons/" className="hover:text-sky-500 transition-colors">
+            課程學習
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/quiz/" className="hover:text-sky-500 transition-colors">
+            知識測驗
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/about/" className="hover:text-sky-500 transition-colors">
+            關於
+          </Link>
+        </footer>
       </motion.div>
     </>
   );

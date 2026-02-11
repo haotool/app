@@ -56,7 +56,7 @@ export default function Settings() {
     <div className="min-h-full">
       <SEOHelmet
         title="應用程式設定 - 介面風格切換與語言偏好管理"
-        description="RateWise 應用程式設定頁面，自訂介面風格（Zen、Nitro、Kawaii、Classic、Ocean、Forest 共 6 種）、切換繁體中文/English/日本語，管理匯率快取與資料來源，個人化您的匯率查詢體驗。"
+        description="RateWise 應用程式設定頁面，自訂介面風格（Zen、Nitro、Kawaii、Classic、Ocean、Forest 共 6 種）、切換繁體中文/English/日本語，管理匯率快取與資料來源，個人化您的匯率查詢體驗，提升使用效率。"
         pathname="/settings"
       />
       <h1 className="sr-only">應用程式設定 - 介面風格切換與語言偏好管理</h1>
