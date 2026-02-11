@@ -92,7 +92,7 @@ export default function Settings() {
                   } as React.CSSProperties
                 }
                 aria-pressed={style === option.value}
-                aria-label={`${option.label}`}
+                aria-label={`${option.label}${option.description}`}
               >
                 {/* 裝飾圓形 */}
                 <motion.div
