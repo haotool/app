@@ -158,7 +158,7 @@ export default function Favorites() {
   const seoHelmet = (
     <SEOHelmet
       title="收藏貨幣與換算歷史記錄 - 快速存取常用匯率"
-      description="RateWise 收藏管理與換算歷史記錄，快速存取常用貨幣對。支援拖曳排序重新排列收藏順序、一鍵跳轉換算、查看歷史記錄。完整記錄您的每次匯率換算，方便回顧匯率變動與重新計算。"
+      description="RateWise 收藏管理與換算歷史記錄，快速存取常用貨幣對。支援拖曳排序重新排列收藏順序、一鍵跳轉換算、查看歷史記錄。完整記錄您的每次匯率換算，方便回顧匯率變動與重新計算。支援 30+ 種貨幣，每 5 分鐘自動同步臺灣銀行牌告匯率，完全免費無廣告。"
       pathname="/favorites"
     />
   );

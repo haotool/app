@@ -11,7 +11,7 @@ export default function Privacy() {
     <>
       <SEOHelmet
         title="隱私政策 - RateWise 個人資料保護說明"
-        description="RateWise 匯率好工具隱私政策。我們不收集個人資料、不使用追蹤 Cookie、所有資料僅存儲於您的裝置本地。完全免費、無廣告、完全透明的隱私保護說明。"
+        description="RateWise 匯率好工具隱私政策。我們不收集個人資料、不使用追蹤 Cookie、所有資料僅存儲於您的裝置本地。完全免費、無廣告、完全透明的隱私保護說明。資料 100% 存在您的裝置，絕不上傳伺服器，符合個資保護原則，請安心使用我們的服務。"
         pathname="/privacy"
         breadcrumb={[
           { name: 'RateWise 首頁', item: '/' },

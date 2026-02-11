@@ -67,7 +67,7 @@ const Guide = () => {
     <>
       <SEOHelmet
         title="使用指南 - 如何使用 RateWise 進行匯率換算 | RateWise 匯率好工具"
-        description="完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算。包含模式選擇、匯率類型切換、歷史趨勢查看、收藏功能等完整操作指南。"
+        description="完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算。包含模式選擇、匯率類型切換、歷史趨勢查看、收藏功能等完整操作指南。完整圖文教學，適合初次使用者快速上手，發揮 RateWise 所有功能特色，立即免費開始使用。"
         canonical="https://app.haotool.org/ratewise/guide/"
         pathname="/guide"
         breadcrumb={[

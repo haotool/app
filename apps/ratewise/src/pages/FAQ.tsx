@@ -183,7 +183,7 @@ export default function FAQ() {
     <>
       <SEOHelmet
         title="常見問題 - RateWise 匯率工具完整 FAQ 解答"
-        description="RateWise 匯率好工具完整 FAQ 解答：匯率數據來源、支援 30+ 種貨幣、離線使用方式、安裝到手機、更新頻率、歷史匯率查看等。100% 基於臺灣銀行官方牌告匯率，5 分鐘自動更新，完全免費無廣告。"
+        description="RateWise 匯率好工具完整 FAQ 解答：匯率數據來源、支援 30+ 種貨幣、離線使用方式、安裝到手機、更新頻率、歷史匯率查看等。100% 基於臺灣銀行官方牌告匯率，5 分鐘自動更新，完全免費無廣告，快速解決所有換匯常見問題，立即查詢。"
         pathname="/faq"
         breadcrumb={[
           { name: 'RateWise 首頁', item: '/' },

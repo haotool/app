@@ -89,7 +89,7 @@ export default function MultiConverter() {
   const seoHelmet = (
     <SEOHelmet
       title="多幣別同時換算 - 一次比較 30+ 種即時匯率"
-      description="RateWise 多幣別同時換算功能，一次查看所有支援貨幣的即時匯率換算結果。參考臺灣銀行官方牌告匯率，同時顯示 30+ 種貨幣對台幣匯率，支援收藏常用貨幣、切換現金/即期匯率，適合旅遊換匯比價與跨境貿易報價。"
+      description="RateWise 多幣別同時換算功能，一次查看所有支援貨幣的即時匯率換算結果。參考臺灣銀行官方牌告匯率，同時顯示 30+ 種貨幣對台幣匯率，支援收藏常用貨幣、切換現金/即期匯率，適合旅遊換匯比價與跨境貿易報價。支援 PWA 離線使用，完全免費，無廣告。"
       pathname="/multi"
     />
   );
