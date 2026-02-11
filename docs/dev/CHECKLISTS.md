@@ -1,16 +1,15 @@
 # 品質檢查清單
 
-> **最後更新**: 2026-01-29T01:11:11+08:00  
-> **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
-> **版本**: v2.1 (核心 CI 流程調整)  
-> **狀態**: 持續更新  
-> **參考**: TECH_DEBT_AUDIT.md, REFACTOR_PLAN.md, DEPENDENCY_UPGRADE_PLAN.md
+> **最後更新**: 2026-02-11T00:00:00+08:00
+> **版本**: v3.0 (全面更新：反映當前實際狀態)
+> **狀態**: ✅ 大部分目標已達成
+> **參考**: ARCHITECTURE_BASELINE.md, 037_state_machine_flows.md
 
 ---
 
 ## Linus 品質哲學
 
-> "If you think your code is too complex, you're probably right. Simplify."  
+> "If you think your code is too complex, you're probably right. Simplify."
 > — Linus Torvalds
 
 **品質檢查三原則**：
@@ -21,102 +20,201 @@
 
 ---
 
-## Quick Wins (立即可做)
+## 品質門檻（2026-02-11 現況）
 
-### 已完成 ✅
-
-- [x] 補齊 README.md
-- [x] 補齊 .editorconfig
-- [x] 修正 PostCSS → ESM
-- [x] 補齊 Error Boundary
-- [x] 補齊 .env.example
-
-### 本週完成（M0 - 清理與基礎強化）
-
-- [x] 建立 `apps/ratewise/public/robots.txt`、`sitemap.xml`
-- [ ] 刪除臨時報告文檔（E2E_FIXES_SUMMARY.md 等）
-- [ ] 刪除 ReloadPrompt.tsx（未使用，測試覆蓋率 0%）
-- [ ] 提升測試覆蓋率門檻至 80%
-- [ ] ESLint `any` 規則改為 `error`
-- [ ] 建立品質門檻自動化檢查腳本
+| 項目                 | 目標     | 現況             | 狀態      |
+| -------------------- | -------- | ---------------- | --------- |
+| 測試覆蓋率（lines）  | ≥80%     | ≥80% ✓           | ✅ 達標   |
+| TypeScript Strict    | 啟用     | 啟用             | ✅        |
+| ESLint 9             | 0 errors | 通過 CI          | ✅        |
+| SSG 預渲染頁面       | 20 頁    | 20 頁            | ✅        |
+| CI 通過率            | ≥95%     | ≥95%             | ✅        |
+| PWA 離線功能         | 啟用     | localStorage+IDB | ✅        |
+| Build Size           | <500KB   | 已壓縮           | ✅        |
+| 多語言 (i18n)        | zh/en/ja | zh-TW / en / ja  | ✅        |
+| 設計系統 Token SSOT  | 啟用     | design-tokens.ts | ✅        |
+| Lighthouse 效能分數  | ≥90      | 需定期檢查       | ⚠️ 監控中 |
+| Logger 遠端整合      | Sentry   | 僅 console       | 📋 規劃中 |
+| useCurrencyConverter | 拆分     | 仍為 ~400 行     | 📋 可選   |
 
 ---
 
-## 阻擋項 (必須修復才能上線)
+## 提交前強制檢查清單（每次 commit 必須通過）
 
-### 已完成 ✅
+### 代碼品質
 
-- [x] **測試覆蓋率 ≥80%** (目前 89.8%)
-- [x] **CI/CD Pipeline**
-- [x] **Docker 化**
-- [x] **安全標頭**（Cloudflare/Nginx 層）
-- [x] **基礎觀測性 (Logger + Error Boundary)**
+- [ ] `pnpm lint` 無錯誤
+- [ ] `pnpm typecheck` 無錯誤
+- [ ] `pnpm test` 全部通過，覆蓋率 ≥80%
+- [ ] `pnpm build` 建置成功
 
-### 待完成（M1 - 觀測性）⚠️
+### 安全
 
-- [ ] **Sentry 正確配置並測試**（目前測試覆蓋率 0%）
-- [ ] **Web Vitals 整合至監控平台**（目前測試覆蓋率 0%）
-- [ ] **Logger 整合遠端服務**（目前僅 console 輸出）
+- [ ] 無硬編碼 API keys / tokens / secrets
+- [ ] 用戶輸入已驗證
+- [ ] 無 console.log 殘留（Husky hook 自動檢查）
+
+### BDD 流程
+
+- [ ] 紅燈確認（測試先失敗）
+- [ ] 綠燈確認（測試通過）
+- [ ] 重構後測試仍通過
+
+### 文檔
+
+- [ ] `002_development_reward_penalty_log.md` 已更新
+- [ ] Linus 三問已驗證
+- [ ] CHANGELOG.md 已更新（如有用戶可見變更）
 
 ---
 
-## 長期改善
+## 功能開發清單（BDD 強制流程）
 
-### 已完成 ✅
+### Step 1: 🔴 RED - 先寫失敗測試
 
-- [x] 拆分 RateWise 元件
-- [x] TypeScript 嚴格化
-- [x] 依賴鎖版策略
-- [x] E2E 測試基礎建立
+```bash
+# 建立測試文件
+touch apps/ratewise/src/features/ratewise/__tests__/NewFeature.test.tsx
 
-### 進行中 🔄
+# 執行確認紅燈
+pnpm --filter @app/ratewise test NewFeature
+# 期望: FAIL (紅燈)
+```
 
-- [ ] **Vite 7 Build 優化**（目前 6.4.0，可升級至 7.1.10）
-- [ ] **Tailwind 4 升級**（目前 3.4.18，可升級至 4.1.14）
-- [ ] **E2E 測試穩定性**（目前有 retry，需降至 0）
-- [ ] **Lighthouse CI 整合**（改為手動，不納入核心 CI）
+### Step 2: 🟢 GREEN - 最小實作
 
-### 規劃中 📋
+```bash
+# 實作最小可行代碼
 
-- [ ] TODO 項目完成（5 個待處理）
-  - Logger 整合遠端服務
-  - Safari 404 修復
-  - 歷史匯率數據整合
-- [ ] 測試覆蓋率達 95%
-- [ ] Commitlint 20 升級
-- [ ] Husky 9 升級
+# 執行確認綠燈
+pnpm --filter @app/ratewise test NewFeature
+# 期望: PASS (綠燈)
+```
+
+### Step 3: 🔵 REFACTOR - 優化
+
+```bash
+# 重構後完整驗證
+pnpm --filter @app/ratewise test          # 全部通過
+pnpm lint                                  # 無錯誤
+pnpm typecheck                             # 無錯誤
+pnpm build                                 # 建置成功
+pnpm --filter @app/ratewise test:coverage  # ≥80%
+```
+
+---
+
+## 完整里程碑狀態（更新版）
+
+### M0: 清理與基礎強化 ✅ 完成
+
+- [x] README.md 完整
+- [x] .editorconfig 設定
+- [x] PostCSS → ESM
+- [x] Error Boundary
+- [x] .env.example
+- [x] robots.txt, sitemap.xml
+- [x] 刪除臨時報告文檔
+- [x] 測試覆蓋率門檻 ≥80%
+- [x] ESLint 嚴格規則
+
+### M1: 觀測性建立 ✅ 完成（部分）
+
+- [x] Logger (utils/logger.ts) 結構化日誌
+- [x] Request ID 追蹤 (utils/requestId.ts)
+- [x] Error Boundary 完整實作
+- [x] Core Web Vitals 上報 (reportWebVitals.ts)
+- [x] INP 預算追蹤 (interactionBudget.ts)
+- [ ] Sentry 遠端整合（規劃中）
+- [ ] Logger 遠端 sink（規劃中）
+
+### M2: 依賴升級 ✅ 完成
+
+- [x] Vite 7.3.1 (升級自 6.x)
+- [x] Vitest 4.0.17 (升級自 3.x)
+- [x] React 19.2.3 (升級自 18.x)
+- [x] TypeScript 5.6.2
+- [x] Node.js 24+ 支援
+
+### M3: 測試強化 ✅ 完成
+
+- [x] 覆蓋率 ≥80%
+- [x] BDD 開發流程建立
+- [x] E2E 測試 (Playwright 1.57)
+- [x] SEO 自動化測試 (prerender.test.ts)
+
+### M4: SSG 架構 ✅ 完成
+
+- [x] 20 頁靜態預渲染
+- [x] 13 個幣別落地頁
+- [x] JSON-LD 結構化資料
+- [x] sitemap.xml 自動生成
+- [x] llms.txt (AI 搜尋優化)
+
+### M5: PWA 離線優化 ✅ 完成
+
+- [x] Service Worker (Workbox injectManifest)
+- [x] IndexedDB 雙重儲存
+- [x] FALLBACK_RATES 備援
+- [x] OfflineIndicator 元件
+- [x] 版本更新提示 (UpdatePrompt)
+- [x] 拉動刷新 (usePullToRefresh)
+- [x] Safari PWA 相容性
+
+### M6: 計算機功能 ✅ 完成
+
+- [x] Apple 風格計算機 UI
+- [x] 鍵盤快捷鍵支援
+- [x] 觸覺反饋 (HapticFeedback)
+- [x] 計算機與匯率同步 (useCalculatorSync)
+- [x] 聖誕彩蛋功能
+
+### M7: 歷史匯率 ✅ 完成
+
+- [x] exchangeRateHistoryService
+- [x] useHistoricalRates hook
+- [x] 趨勢圖 (TrendChart)
+- [x] 歷史匯率圖表 (HistoricalRateChart)
+- [x] 每日自動更新 CI workflow
+
+### M8: 多語言 (i18n) ✅ 完成
+
+- [x] zh-TW 繁體中文（主要）
+- [x] en 英文
+- [x] ja 日文
+- [x] 語言自動偵測（navigator.language）
+- [x] localStorage 語言偏好持久化
+
+### M9: 設計系統 ✅ 完成
+
+- [x] design-tokens.ts SSOT
+- [x] 語義化色彩 token
+- [x] 間距/字型/斷點 token
+- [x] 計算機按鍵三色系
+- [x] December 主題（聖誕節）
+
+### Next: 可選優化 📋 規劃中
+
+- [ ] useCurrencyConverter 拆分（~400 行 → 多個小 hook）
+- [ ] Sentry 遠端錯誤追蹤
+- [ ] Logger 遠端 sink 整合
+- [ ] Tailwind 4 升級評估
 
 ---
 
 ## 命令快查
 
-### 開發
+### 日常開發
 
 ```bash
 # 啟動開發伺服器
 pnpm dev
 
-# 建置生產版本
+# 建置生產版本（含 SSG 預渲染）
 pnpm build
 
-# 預覽生產版本
+# 預覽建置結果（測試 PWA/Service Worker）
 pnpm preview
-```
-
-### 測試
-
-```bash
-# 執行單元測試
-pnpm test
-
-# 執行測試並產生覆蓋率報告
-pnpm test:coverage
-
-# 執行 E2E 測試
-pnpm --filter @app/ratewise test:e2e
-
-# 查看 E2E 測試報告
-pnpm --filter @app/ratewise test:e2e:report
 ```
 
 ### 品質檢查
@@ -128,148 +226,96 @@ pnpm typecheck
 # Lint 檢查
 pnpm lint
 
-# 格式檢查
+# 格式化
 pnpm format
 
-# 完整品質檢查（建議在 commit 前執行）
-bash scripts/verify-quality.sh
+# 執行所有測試
+pnpm test
+
+# 測試覆蓋率報告
+pnpm test --coverage
+
+# E2E 測試
+pnpm --filter @app/ratewise test:e2e
 ```
 
-### 依賴管理
+### Monorepo 操作
 
 ```bash
-# 檢查過時依賴
-pnpm -r outdated
+# 建置所有應用
+pnpm -r build
 
-# 安全審計
-pnpm audit --prod --audit-level=high
+# 只建置 ratewise
+pnpm --filter @app/ratewise build
 
-# 升級依賴（謹慎執行）
-pnpm -w up --interactive --latest
+# Root 安裝 dev dependency
+pnpm -w add -D <package>
+```
+
+### SEO 驗證
+
+```bash
+# 驗證 ratewise SEO
+node scripts/verify-production-seo.mjs ratewise
+
+# 批次驗證所有 apps
+node scripts/verify-all-apps.mjs
+
+# SEO 健康檢查
+pnpm seo:health-check
+```
+
+### 版本管理
+
+```bash
+# 建立 changeset
+pnpm changeset
+
+# 生成版本與 CHANGELOG
+pnpm changeset:version
+
+# 發佈（建立 git tag）
+pnpm changeset:publish
 ```
 
 ---
 
-## 品質門檻
-
-| 項目                | 目標  | 現況   | 狀態        |
-| ------------------- | ----- | ------ | ----------- |
-| 測試覆蓋率（lines） | ≥80%  | 89.8%  | ✅          |
-| 測試覆蓋率門檻      | ≥80%  | 60%    | ⚠️ 需提升   |
-| TypeScript Strict   | 啟用  | 啟用   | ✅          |
-| ESLint `any` 規則   | Error | Warn   | ⚠️ 需強化   |
-| Lighthouse 分數     | ≥90   | 未測量 | ⚠️ 需整合   |
-| CI 通過率           | ≥95%  | ~85%   | ⚠️ 有 retry |
-| 技術債項目          | 0     | 10     | ⚠️ 需清理   |
-| TODO 數量           | 0     | 5      | ⚠️ 需完成   |
-
----
-
-## 重構里程碑追蹤
-
-詳見 `REFACTOR_PLAN.md` - 完整 6-10 週重構計畫
-
-### M0: 清理與基礎強化（1週）🔄 進行中
-
-- [ ] 刪除 ReloadPrompt.tsx (未使用)
-- [ ] 刪除臨時報告文檔 (_\_REPORT.md, _\_SUMMARY.md)
-- [ ] ESLint `any` 規則改為 error
-- [ ] 測試門檻提升至 80%
-
-**驗收腳本**: `bash scripts/verify-m0.sh`
-
-### M1: 觀測性建立（1週）📋 待開始
-
-- [ ] Sentry 整合 (logger.ts Line 78)
-- [ ] Secrets 掃描 (gitleaks)
-- [ ] Web Vitals 串接監控
-
-**驗收腳本**: `bash scripts/verify-security.sh`
-
-### M2: 依賴升級（2週）📋 待開始
-
-- [ ] Patch 安全升級 (Vite 7.1.12, Playwright 1.56.1)
-- [ ] Vitest 3 → 4 (major，需分支驗證)
-- [ ] (可選) Tailwind 3 → 4
-
-**驗收腳本**: `pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build`
-
-### M3: 測試強化與 TODO 清理（2週）📋 待開始
-
-- [ ] 清理 5 個 TODO
-- [ ] 降低 E2E retry 至 0
-- [ ] CI 通過率提升至 ≥95%
-
-**驗收腳本**: `grep -r "TODO" apps/ratewise/src` (應無結果)
-
-### M4: 架構演進（4週）📋 可選
-
-- [ ] useCurrencyConverter 拆分
-- [ ] 歷史匯率功能整合
-- [ ] 趨勢圖表實作
-
-**驗收腳本**: 測試覆蓋率保持 ≥89.8%
-
----
-
-## 快速驗證腳本
-
-### 一鍵品質檢查
+## 快速驗證腳本（一鍵品質檢查）
 
 ```bash
 #!/bin/bash
-# scripts/verify-all.sh
+# 完整品質驗證（建議在 PR 前執行）
 
-echo "🚀 執行完整品質檢查"
+set -e
 
-# 1. Linting
-pnpm lint || { echo "❌ Lint 失敗"; exit 1; }
+echo "▶ Lint..."
+pnpm lint
 
-# 2. Type checking
-pnpm typecheck || { echo "❌ TypeCheck 失敗"; exit 1; }
+echo "▶ TypeCheck..."
+pnpm typecheck
 
-# 3. 測試
-pnpm test:coverage || { echo "❌ 測試失敗"; exit 1; }
+echo "▶ Test + Coverage..."
+pnpm test --coverage
 
-# 4. 建置
-pnpm build || { echo "❌ 建置失敗"; exit 1; }
+echo "▶ Build..."
+pnpm build
 
-# 5. E2E (可選)
-# pnpm test:e2e || { echo "⚠️ E2E 失敗"; }
+echo "▶ SEO Verify..."
+node scripts/verify-production-seo.mjs ratewise
 
-echo "✅ 所有檢查通過"
-```
-
-### 分數卡自動產生
-
-```bash
-#!/bin/bash
-# scripts/generate-scorecard.sh
-
-echo "📊 產生品質分數卡"
-
-# 測試覆蓋率
-COVERAGE=$(pnpm test:coverage --reporter=json | jq '.coverageMap.total.lines.pct')
-echo "測試覆蓋率: $COVERAGE%"
-
-# Lint 錯誤數
-LINT_ERRORS=$(pnpm lint 2>&1 | grep -c "error")
-echo "Lint 錯誤: $LINT_ERRORS"
-
-# TODO 數量
-TODO_COUNT=$(grep -r "TODO" apps/ratewise/src | wc -l)
-echo "TODO 數量: $TODO_COUNT"
-
-# 總評
-if [ "$COVERAGE" -ge 80 ] && [ "$LINT_ERRORS" -eq 0 ] && [ "$TODO_COUNT" -le 5 ]; then
-  echo "✅ 品質分數: 優秀"
-else
-  echo "⚠️ 品質分數: 需改善"
-fi
+echo "✅ 全部通過"
 ```
 
 ---
 
-_詳細說明參見 `TECH_DEBT_AUDIT.md` & `REFACTOR_PLAN.md`_
+## 狀態機相關文檔
 
-_本檢查清單依照 Linus Torvalds 實用主義原則產生，專注快速驗證與自動化。_
+完整狀態機規格請見：
+
+- [037_state_machine_flows.md](./037_state_machine_flows.md) - 所有狀態機與流程圖
+- [ARCHITECTURE_BASELINE.md](./ARCHITECTURE_BASELINE.md) - 分層架構與組件關係
+
+---
+
+_本檢查清單依照 Linus Torvalds 實用主義原則維護，專注快速驗證與自動化。_
+_最後更新：2026-02-11_
