@@ -89,7 +89,7 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
         target={isExternal ? '_blank' : '_self'}
         rel={isExternal ? 'noopener noreferrer' : undefined}
         className="absolute inset-0 z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-2xl"
-        aria-label={`View project details for ${project.title}`}
+        aria-label={`View ${project.title}`}
       >
         <span className="sr-only">View {project.title}</span>
       </a>

@@ -60,7 +60,7 @@ export default function Contact() {
   };
 
   return (
-    <main className="min-h-screen pt-24 pb-20 flex items-center">
+    <div className="min-h-screen pt-24 pb-20 flex items-center">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full">
         {/* Header */}
         <motion.div
@@ -172,6 +172,6 @@ export default function Contact() {
           <p className="text-slate-500 text-sm">通常會在 24 小時內回覆 · {APP_NAME}</p>
         </motion.div>
       </div>
-    </main>
+    </div>
   );
 }

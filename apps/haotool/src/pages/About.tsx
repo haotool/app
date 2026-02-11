@@ -39,7 +39,7 @@ const SKILLS = [
 
 export default function About() {
   return (
-    <main className="min-h-screen pt-24 pb-20">
+    <div className="min-h-screen pt-24 pb-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <motion.div
@@ -171,6 +171,6 @@ export default function About() {
           </div>
         </motion.div>
       </div>
-    </main>
+    </div>
   );
 }

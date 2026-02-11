@@ -406,7 +406,7 @@ export default function Home() {
         {/* Stats Section */}
         <section className="relative z-10 border-y border-white/[0.03] bg-[#020617]/50 backdrop-blur-sm py-12 md:py-16">
           <div className="mx-auto max-w-7xl px-6">
-            <div className="grid grid-cols-2 gap-y-10 gap-x-8 md:grid-cols-4">
+            <dl className="grid grid-cols-2 gap-y-10 gap-x-8 md:grid-cols-4">
               {STATS.map((stat, idx) => (
                 <div key={idx} className="flex flex-col items-start space-y-1">
                   <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
@@ -431,7 +431,7 @@ export default function Home() {
                   </span>
                 </div>
               </div>
-            </div>
+            </dl>
           </div>
         </section>
 
