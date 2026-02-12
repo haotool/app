@@ -1651,6 +1651,14 @@ export default function Home() {
               >
                 關於
               </Link>
+              <span className="text-stone-300">·</span>
+              <a
+                href="/ratewise/privacy/"
+                className="hover:text-red-700 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                隱私政策
+              </a>
             </div>
           </footer>
         </div>
