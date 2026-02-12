@@ -157,7 +157,8 @@ export default function Contact() {
                       className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
                       aria-label={`Open ${method.label}`}
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      <span className="sr-only">{method.label}</span>
                     </a>
                   )}
                 </div>
