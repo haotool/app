@@ -302,9 +302,9 @@ export default function Layout() {
               © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-xs text-slate-600">
-              <Link to="/ratewise/privacy" className="hover:text-slate-400 transition-colors">
+              <a href="/ratewise/privacy/" className="hover:text-slate-400 transition-colors">
                 Privacy Policy
-              </Link>
+              </a>
             </div>
           </div>
         </div>

@@ -80,7 +80,7 @@ const About: React.FC = () => {
             <p className="mt-1">版本: {import.meta.env.VITE_APP_VERSION || '1.0.0'}</p>
             <p className="mt-2">
               <a
-                href="/ratewise/privacy/"
+                href="https://app.haotool.org/ratewise/privacy/"
                 className="underline hover:text-sky-500 transition-colors font-normal"
               >
                 隱私權政策

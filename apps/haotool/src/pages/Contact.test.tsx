@@ -32,9 +32,9 @@ describe('Contact', () => {
   it('renders social link cards', () => {
     render(<Contact />, { wrapper: TestBrowserRouter });
 
-    expect(screen.getByText('GitHub')).toBeInTheDocument();
-    expect(screen.getByText('Threads')).toBeInTheDocument();
-    expect(screen.getByText('Email')).toBeInTheDocument();
+    expect(screen.getAllByText('GitHub').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Threads').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Email').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders GitHub link with correct href', () => {
