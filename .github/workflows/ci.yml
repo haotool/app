@@ -60,10 +60,10 @@ jobs:
         run: |
           echo "🖼️ Verifying image assets..."
 
-          # ratewise
+          # ratewise（og/twitter 使用 .jpg 格式）
           test -f apps/ratewise/public/logo.png || { echo "❌ Missing: apps/ratewise/public/logo.png"; exit 1; }
-          test -f apps/ratewise/public/og-image.png || { echo "❌ Missing: apps/ratewise/public/og-image.png"; exit 1; }
-          test -f apps/ratewise/public/twitter-image.png || { echo "❌ Missing: apps/ratewise/public/twitter-image.png"; exit 1; }
+          test -f apps/ratewise/public/og-image.jpg || { echo "❌ Missing: apps/ratewise/public/og-image.jpg"; exit 1; }
+          test -f apps/ratewise/public/twitter-image.jpg || { echo "❌ Missing: apps/ratewise/public/twitter-image.jpg"; exit 1; }
 
           # nihonname
           test -f apps/nihonname/public/logo.png || { echo "❌ Missing: apps/nihonname/public/logo.png"; exit 1; }
