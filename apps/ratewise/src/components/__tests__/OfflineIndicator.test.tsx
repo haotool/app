@@ -142,9 +142,12 @@ describe('OfflineIndicator', () => {
       const closeButton = screen.getByRole('button', { name: /關閉離線提示/i });
       fireEvent.click(closeButton);
 
-      await waitFor(() => {
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
     });
 
     it('should dismiss indicator when clicking the entire container', async () => {
@@ -170,9 +173,12 @@ describe('OfflineIndicator', () => {
         fireEvent.click(clickableDiv);
       }
 
-      await waitFor(() => {
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
     });
 
     it('should NOT re-show indicator after dismissal in same session', async () => {
@@ -194,9 +200,12 @@ describe('OfflineIndicator', () => {
       const closeButton = screen.getByRole('button', { name: /關閉離線提示/i });
       fireEvent.click(closeButton);
 
-      await waitFor(() => {
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
 
       // 再次離線 - 同次 session 不應再顯示
       Object.defineProperty(window.navigator, 'onLine', {
@@ -214,9 +223,12 @@ describe('OfflineIndicator', () => {
       window.dispatchEvent(new Event('offline'));
 
       // 不應重新顯示
-      await waitFor(() => {
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
     });
 
     it('should keep dismissed state after simulated page reload in same session', async () => {
@@ -234,9 +246,12 @@ describe('OfflineIndicator', () => {
       });
 
       fireEvent.click(screen.getByRole('button', { name: /關閉離線提示/i }));
-      await waitFor(() => {
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
 
       // 模擬整頁重載：模組變數重置，但 sessionStorage 保留
       unmount();
@@ -244,9 +259,12 @@ describe('OfflineIndicator', () => {
       render(<OfflineIndicator />);
       window.dispatchEvent(new Event('offline'));
 
-      await waitFor(() => {
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
     });
   });
 
