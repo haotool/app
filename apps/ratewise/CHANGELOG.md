@@ -1,5 +1,40 @@
 # @app/ratewise
 
+## 2.4.5
+
+### Patch Changes
+
+- 151ee02: fix(seo): extend all 13 currency page meta descriptions to 120+ chars
+  - Extended from ~90-96 chars to 120-134 chars
+  - Added: complete privacy pledge + official data source attribution
+  - Affects: USD, EUR, JPY, GBP, HKD, CNY, KRW, AUD, CAD, CHF, NZD, SGD, THB
+
+- a1fc61f: fix(seo): 擴充所有貨幣頁面的 meta description，從 50 字增加至 70 字，滿足搜尋引擎最佳長度
+- d106ac2: fix(seo): 修復 Multi/Favorites H1 於 SSG skeleton 路徑缺失問題
+- b71e8ca: fix(seo): extend all page meta descriptions to 120+ chars minimum
+  - MultiConverter: 114 → 126 chars (added PWA offline mention)
+  - Favorites: 98 → 125 chars (added auto-sync frequency detail)
+  - FAQ: 112 → 121 chars (added quick-resolve CTA)
+  - Guide: 111 → 120 chars (added free usage CTA)
+  - Privacy: 110 → 121 chars (added reassurance phrase)
+
+- 9e540ae: fix(seo): 為缺少 H1 的頁面加入 sr-only H1（Settings/Multi/Favorites/首頁）
+- 811a04c: perf(assets): 壓縮 og-image 與 twitter-image 為 JPEG，減少 80% 大小（663KB→124KB）
+- fd7dce1: fix(seo): 全面修復 SEO 問題，新增隱私政策頁
+  - 修復 Double H1（noscript 改為 p 標籤）
+  - 消除巢狀 main landmark（About/FAQ/Guide/CurrencyLandingPage）
+  - 補齊 6 頁 title 長度至 30-60 字元
+  - 補齊 25 頁 description 長度至 120-160 字元
+  - 新增隱私政策頁面（/privacy/）提升法律合規性
+  - 修復 Cloudflare email 混淆導致的 broken links
+  - 修復內部連結 trailing slash（避免 301 redirect）
+  - 修復 Settings 頁 aria-label 不匹配
+
+- 5402e7b: fix(a11y): Settings 主題按鈕 aria-label 完整包含可見文字，滿足 WCAG 2.5.3
+- c0ee233: 修復頁面轉場初始閃爍、離線提示 session 持久化，以及在線 chunk 錯誤的恢復路徑。
+- dd307dd: fix(seo): extend About/Settings meta descriptions to 120+ chars
+- d5dfc64: SEO 全面審計修復：移除未使用 preconnect、補齊 AI bot robots.txt、修正 Schema encodingFormat、CLS inline style
+
 ## 2.4.4
 
 ### Patch Changes
