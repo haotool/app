@@ -65,7 +65,7 @@ export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
  * 圖片資源路徑（用於生產環境驗證）
  */
 export const IMAGE_RESOURCES = [
-  '/og-image.png', // Open Graph 分享圖片
+  '/og-image.jpg', // Open Graph 分享圖片
   '/favicon.ico', // Favicon
   '/apple-touch-icon.png', // Apple 觸控圖標
   '/icons/ratewise-icon-192x192.png', // PWA icon 192x192
