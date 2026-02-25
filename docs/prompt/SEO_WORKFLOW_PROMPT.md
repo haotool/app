@@ -1,8 +1,8 @@
 # 🔍 SEO Perfection Engine｜100 分 SEO 零接觸全自動工作流 Prompt
 
 > **建立時間**: 2026-02-25T12:00:00+08:00  
-> **最後更新**: 2026-02-25T23:00:00+08:00  
-> **版本**: 2.1.0  
+> **最後更新**: 2026-02-26T01:00:00+08:00  
+> **版本**: 3.0.0  
 > **維護者**: HaoTool Team  
 > **狀態**: ✅ 生產就緒  
 > **SSOT 位置**: `docs/prompt/SEO_WORKFLOW_PROMPT.md`  
@@ -34,7 +34,7 @@ Agent 會全自動完成以下所有工作，無需任何人工介入：
 1. [角色定義與核心能力](#1-角色定義與核心能力)
 2. [技術棧自動偵測引擎](#2-技術棧自動偵測引擎)
 3. [MCP 工具與 Skills 整合矩陣](#3-mcp-工具與-skills-整合矩陣)
-4. [全自動執行編排引擎](#4-全自動執行編排引擎)
+4. [全自動執行編排引擎（有限狀態機）](#4-全自動執行編排引擎有限狀態機)
 5. [TDD 驅動的 SEO 修復流程](#5-tdd-驅動的-seo-修復流程)
 6. [Cloudflare SSOT 安全標頭策略](#6-cloudflare-ssot-安全標頭策略)
 7. [本地環境持續驗證引擎](#7-本地環境持續驗證引擎)
@@ -49,6 +49,7 @@ Agent 會全自動完成以下所有工作，無需任何人工介入：
 16. [TODO 清單模板](#16-todo-清單模板)
 17. [啟動指令](#17-啟動指令)
 18. [附錄：權威來源與引用](#18-附錄權威來源與引用)
+19. [附錄：Cloudflare 安全標頭手動設定指引](#19-附錄cloudflare-安全標頭手動設定指引)
 
 ---
 
@@ -317,91 +318,183 @@ Agent 執行 SEO 工作流時，自動搜尋以下主題取得最新資訊：
 
 ---
 
-## 4. 全自動執行編排引擎
+## 4. 全自動執行編排引擎（有限狀態機）
 
-### 4.1 零接觸自動化主循環
+### 4.1 狀態機定義
 
-Agent 接收到啟動指令後，自動執行以下完整編排，無需人工確認：
+Agent 接收到啟動指令後，進入以下確定性有限狀態機（FSM），每個狀態有明確的進入條件、執行動作、退出守衛（guard）和錯誤恢復路徑。
 
-```yaml
-主循環:
-  phase_0_環境準備:
-    - 自動偵測技術棧（§2）
-    - 自動安裝 SEO CLI 工具（§4.2）
-    - 自動啟動本地 preview server（§7）
-    - 自動調用 Context7 查詢框架最新 SEO 文件
-    - 自動調用 WebSearch 查詢當年度 SEO 標準更新
-
-  phase_1_審計:
-    parallel:
-      - squirrelscan 全站審計（audit-website skill）
-      - Lighthouse 審計（shell agent: pnpm build && npx lighthouse）
-      - 結構化資料驗證（shell agent: verify-structured-data）
-      - 安全標頭檢查（browser-use agent: securityheaders.com）
-    output: '缺陷清單（按嚴重度排序）'
-
-  phase_2_TDD修復迭代:
-    for_each 缺陷 in 缺陷清單:
-      - 🔴 RED: 撰寫失敗測試（驗證缺陷存在）
-      - 執行測試，確認紅燈
-      - 🟢 GREEN: 最小修復讓測試通過
-      - 執行測試，確認綠燈
-      - 🔵 REFACTOR: 重構代碼品質
-      - 執行完整測試套件（pnpm test）
-      - 執行 pnpm lint && pnpm typecheck
-      - 原子化 git commit（一個修復一個 commit）
-
-  phase_3_本地驗證:
-    - pnpm build（確保建置成功）
-    - pnpm preview（啟動本地 server）
-    - squirrelscan 對本地站點重新審計
-    - Lighthouse 重新審計
-    - 對比基線分數
-
-  phase_4_回歸檢查:
-    - 全部測試通過？→ 繼續
-    - Lighthouse SEO = 100？→ 繼續
-    - squirrelscan ≥ 95？→ 繼續
-    - 任何失敗？→ 回到 phase_2 修復
-
-  phase_5_交付:
-    - 更新 SEO_TODO.md 進度
-    - 更新 CHANGELOG.md
-    - 輸出最終 SEO 報告
-
-  終止條件:
-    - 所有 20 項品質門檻全部達標
-    - 或達到最大迭代次數（10 輪）並報告剩餘問題
+```
+                    ┌─────────┐
+                    │  IDLE   │
+                    └────┬────┘
+                         │ trigger: "執行 SEO Perfection Engine"
+                         ▼
+                    ┌─────────┐
+             ┌──────│  INIT   │
+             │      └────┬────┘
+             │ fail      │ guard: tools_installed && stack_detected
+             │           ▼
+             │      ┌─────────┐
+             │      │ AUDIT   │◄──────────────────────────┐
+             │      └────┬────┘                           │
+             │           │ guard: baseline_recorded       │
+             │           ▼                                │
+             │      ┌─────────┐                           │
+             │      │  FIX    │──── per defect ──┐        │
+             │      └────┬────┘                  │        │
+             │           │                       │        │
+             │           │  ┌──────────┐         │        │
+             │           │  │ TDD_LOOP │ 🔴→🟢→🔵 │        │
+             │           │  └────┬─────┘         │        │
+             │           │       │ commit        │        │
+             │           │       ▼               │        │
+             │           │  next defect?─────────┘        │
+             │           │                                │
+             │           │ guard: all_defects_processed   │
+             │           ▼                                │
+             │      ┌─────────┐                           │
+             │      │ VERIFY  │                           │
+             │      └────┬────┘                           │
+             │           │                                │
+             │     ┌─────┴──────┐                         │
+             │     │            │                         │
+             │  ALL PASS    ANY FAIL                      │
+             │     │            │ iteration < 10          │
+             │     ▼            └─────────────────────────┘
+             │ ┌─────────┐
+             │ │ DELIVER │
+             │ └────┬────┘
+             │      │ guard: git_clean && scores_logged
+             │      ▼
+             │ ┌─────────┐
+             └►│  DONE   │
+               └─────────┘
 ```
 
-### 4.2 SEO CLI 工具自動安裝
-
-Agent 啟動時自動檢測並安裝所需工具：
+### 4.2 狀態詳細定義
 
 ```yaml
-自動安裝清單:
-  squirrelscan:
-    check: 'which squirrel || squirrel --version'
-    install: 'curl -fsSL https://squirrelscan.com/install | bash'
-    verify: 'squirrel --version'
+S0_IDLE:
+  description: '等待啟動指令'
+  transition: '收到指令 → S1_INIT'
 
-  lighthouse:
-    check: 'npx lighthouse --version'
-    install: '已內建於 npm（npx lighthouse）'
+S1_INIT:
+  description: '環境準備與工具安裝'
+  actions:
+    - 偵測技術棧（§2）
+    - 安裝 CLI 工具（§4.3）
+    - Context7 查詢框架 SEO 文件
+    - WebSearch 查詢當年度 SEO 標準
+    - pnpm build && pnpm preview（背景）
+  guard_to_S2: 'squirrel --version OK && preview server HTTP 200'
+  on_fail: '記錄失敗原因 → 嘗試替代工具 → 若仍失敗 → S_DONE（報告環境錯誤）'
+  max_duration: '5 min'
 
-  web_vitals:
-    check: '在 package.json 中檢查 web-vitals'
-    install: 'pnpm add web-vitals'
+S2_AUDIT:
+  description: '並行取得 SEO 基線分數'
+  actions_parallel:
+    - 'squirrel audit {url} -C surface --format llm → baseline_squirrel'
+    - 'npx lighthouse {url} --output json → baseline_lighthouse'
+    - 'node scripts/verify-structured-data.mjs → baseline_schema'
+    - 'curl -sI {url} | grep -i security → baseline_headers'
+  output: 'defect_list[]（按 severity 排序: error > warning > notice）'
+  guard_to_S3: 'defect_list.length > 0'
+  guard_to_S5: 'defect_list.length === 0（已完美 → 直接交付）'
+  stores: 'baseline_scores = { squirrel, lighthouse_seo, lighthouse_perf }'
 
-  playwright:
-    check: 'npx playwright --version'
-    install: 'pnpm add -D @playwright/test && npx playwright install chromium'
+S3_FIX:
+  description: '逐缺陷 TDD 修復'
+  for_each: 'defect in defect_list'
+  sub_states:
+    S3a_RED:
+      action: '撰寫測試驗證缺陷存在'
+      command: 'pnpm test {file} → 預期失敗'
+      on_pass: '錯誤：缺陷不存在，跳過此 defect'
+    S3b_GREEN:
+      action: '最小修復讓測試通過'
+      command: 'pnpm test {file} → 預期通過'
+      on_fail: '重試修復（max 3 次）→ 仍失敗 → 標記 NEEDS_HUMAN'
+    S3c_REFACTOR:
+      action: '重構代碼品質'
+      commands: ['pnpm test', 'pnpm lint', 'pnpm typecheck']
+      on_fail: '回退到 S3b_GREEN 的程式碼，重試重構'
+    S3d_COMMIT:
+      action: 'git add + git commit（原子化）'
+      format: 'fix(seo): {defect.summary}'
+  guard_to_S4: '所有 defect 已處理'
 
-安裝策略:
-  - 優先使用 npx（零安裝）
-  - 全域工具使用 curl 安裝（squirrelscan）
-  - 專案依賴使用 pnpm add
-  - 安裝失敗不阻塞流程，改用替代工具
+S4_VERIFY:
+  description: '重新審計，對比基線'
+  actions:
+    - 'pnpm build → 必須成功'
+    - 'squirrel audit {url} -C quick --format llm → current_squirrel'
+    - 'npx lighthouse {url} --output json → current_lighthouse'
+    - '產出 before/after 差異表'
+  display_diff: |
+    ┌────────────────────┬──────────┬──────────┬────────┐
+    │ 指標               │ 修復前   │ 修復後   │ 變化   │
+    ├────────────────────┼──────────┼──────────┼────────┤
+    │ squirrelscan       │ {before} │ {after}  │ {diff} │
+    │ Lighthouse SEO     │ {before} │ {after}  │ {diff} │
+    │ Lighthouse Perf    │ {before} │ {after}  │ {diff} │
+    │ Broken Links       │ {before} │ {after}  │ {diff} │
+    │ Missing Alt Text   │ {before} │ {after}  │ {diff} │
+    └────────────────────┴──────────┴──────────┴────────┘
+  guards:
+    all_pass: 'squirrel ≥ 95 && LH_SEO = 100 && LH_Perf ≥ 95 → S5_DELIVER'
+    any_fail: 'iteration < 10 → 回到 S2_AUDIT（重新取得缺陷清單）'
+    max_iterations: 'iteration ≥ 10 → S5_DELIVER（附帶剩餘問題清單）'
+
+S5_DELIVER:
+  description: '最終交付'
+  actions:
+    - 'squirrel audit {url} -C full --format llm → final_report'
+    - 'squirrel report --regression-since {domain} --format llm → regression_diff'
+    - '輸出最終 before/after 差異表'
+    - '若 CF 安全標頭未配置 → 輸出 §19 CF 設定指引'
+    - '更新 docs/dev/SEO_TODO.md'
+    - 'git status → 確認 working tree clean'
+  guard_to_DONE: 'git status clean'
+
+S_DONE:
+  description: '工作流結束'
+  output: '完整 SEO 成果報告 + 分數差異 + CF 設定指引（如需要）'
+```
+
+### 4.3 SEO CLI 工具自動安裝
+
+### 4.3 SEO CLI 工具自動安裝
+
+Agent 在 S1_INIT 狀態自動檢測並安裝：
+
+```yaml
+squirrelscan:
+  latest: "v0.0.38（2026-02-12）"
+  features: "240+ rules, 21 categories, --publish, WAF detection, LLM output"
+  check: "squirrel --version"
+  install_macos_linux: "curl -fsSL https://squirrelscan.com/install | bash"
+  install_windows: "irm https://squirrelscan.com/install.ps1 | iex"
+  path_fix: 'export PATH="$HOME/.local/bin:$PATH"'
+  project_init: "squirrel init -n {project-name}"
+  verify: "squirrel --version && squirrel self doctor"
+  update: "squirrel self update"
+
+lighthouse:
+  check: "npx lighthouse --version"
+  install: "npx（零安裝，直接使用）"
+
+web_vitals:
+  check: "grep web-vitals package.json"
+  install: "pnpm add web-vitals"
+
+playwright:
+  check: "npx playwright --version"
+  install: "pnpm add -D @playwright/test && npx playwright install chromium"
+
+安裝順序:
+  1. squirrel（全域，curl）→ 2. squirrel init → 3. lighthouse（npx）→ 4. 專案依賴（pnpm）
+  失敗策略: 記錄失敗工具，使用替代方案繼續（不阻塞）
 ```
 
 ### 4.3 自動 Skill 調用編排
@@ -1915,21 +2008,63 @@ Agent 自動清理:
 
 ## 15. squirrelscan 深度整合規範
 
-### 15.1 審計覆蓋模式與分數目標
+### 15.1 版本與功能（v0.0.38, 2026-02-12）
+
+```yaml
+版本: 'v0.0.38'
+規則數: '240+'
+分類數: '21'
+輸出格式: 'console, json, html, markdown, text, llm, xml'
+新功能:
+  - '--publish 公開/私密發布報告'
+  - 'WAF Challenge Page Detection（排除 Cloudflare/Imperva 攔截頁）'
+  - 'Crawl payload 減少 ~60%'
+  - 'SQLite Lock 改善（15 秒 busy timeout）'
+  - 'Apex/www domain alias 自動匹配'
+
+21 個審計分類:
+  - a11y（無障礙）: accesskeys, aria-labels, button-name, color-contrast, focus-visible, form-labels, heading-order, link-text, touch-targets, zoom-disabled
+  - adblock: blocked-links, element-hiding
+  - ai: ai-content, llm-parsability
+  - analytics: consent-mode, gtm-present
+  - content: article-links, author-info, duplicate-description, duplicate-title, heading-hierarchy, keyword-stuffing, quality, word-count
+  - core: canonical, charset, doctype, favicon, h1, meta-description, meta-title, og-tags, robots-meta, title-unique, twitter-cards
+  - crawl: all-noindex-pages, indexability, redirect-chain, robots-txt, sitemap-*, 4xx-pages-in-sitemap
+  - eeat: about-page, affiliate-disclosure, author-byline, citations, contact-page, content-dates, privacy-policy, terms-of-service, trust-signals, ymyl-detection
+  - i18n: hreflang, lang-attribute
+  - images: alt-text, broken-images, dimensions, filename-quality, image-file-size, lazy-loading, modern-format, responsive-size, srcset
+  - legal: cookie-consent, privacy-policy, terms-of-service
+  - links: anchor-text, broken-external-links, broken-links, dead-end-pages, https-downgrade, internal-links, orphan-pages, redirect-chains
+  - local: geo-meta, nap-consistency, service-area
+  - mobile: font-size, horizontal-scroll, tap-targets, viewport, viewport-zoom
+  - perf: cache-headers, cls-hints, compression, dom-size, font-loading, http2, inp-hints, lcp-hints, render-blocking, ttfb
+  - schema: article, breadcrumb, faq, json-ld-valid, local-business, organization, product, review, video, website-search
+  - security: csp, hsts, https, http-to-https, leaked-secrets, mixed-content, new-tab, x-content-type, x-frame-options
+  - social: og-image-size, og-url-match, share-buttons, social-profiles
+  - url: hyphens, length, lowercase, parameters, slug-keywords, special-chars, stop-words, trailing-slash
+  - video: video-accessible, video-schema, video-thumbnail
+
+規則文檔: 'https://docs.squirrelscan.com/rules/{category}/{rule-id}'
+```
+
+### 15.2 審計覆蓋模式與分數目標
 
 ```yaml
 覆蓋模式選擇:
   quick（25頁）:
-    用途: 'CI 快速檢查、每次修復後快速驗證'
+    用途: 'S3_FIX 後快速驗證、CI checks'
     命令: 'squirrel audit {url} -C quick --format llm'
+    適用狀態機: 'S4_VERIFY（每輪迭代）'
 
   surface（100頁）:
-    用途: '一般審計、PR 級別檢查'
+    用途: 'S2_AUDIT 初始審計、PR 檢查'
     命令: 'squirrel audit {url} -C surface --format llm'
+    適用狀態機: 'S2_AUDIT（首次）'
 
   full（500頁）:
-    用途: '完整審計、發布前檢查、最終驗證'
+    用途: 'S5_DELIVER 最終驗證、發布前'
     命令: 'squirrel audit {url} -C full --format llm'
+    適用狀態機: 'S5_DELIVER'
 
 分數目標:
   起始 < 50（F）: '目標 75+（C），大量修復'
@@ -2127,23 +2262,36 @@ Agent 自動清理:
 已達成指標:
   lighthouse_seo: '100/100（所有 21 頁面）'
   lighthouse_performance: '97/100'
-  test_coverage: '93.8%（1038+ 測試）'
+  lighthouse_accessibility: '≥ 95/100'
+  test_count: '1397 測試（81 檔案）'
   json_ld_schemas: '6 種（Organization, WebSite, SoftwareApplication, FAQPage, HowTo, BreadcrumbList）'
-  hreflang_tags: '40+ 個（20 路徑 × 2 語言）'
+  hreflang_tags: '40 個（20 路徑 × 2 語言）'
   seo_pages: '21 個（8 核心 + 13 幣別落地頁）'
-  ci_workflows: '8 個 workflow 全綠'
-  squirrelscan: '95+/100'
+  ci_workflows: '3 SEO workflow（seo-audit, seo-production, ci/lighthouse）'
+  squirrelscan: '95+/100（從 68 分提升）'
+  seo_scripts: '12 個驗證/生成腳本'
+  seo_tests: '79 AI SEO 專項測試'
 
-演進時間軸:
-  2025-10-19: 'SEO 基礎設施（robots.txt, sitemap.xml）'
-  2025-10-20: 'Lighthouse SEO 100, llms.txt, AI SEO'
-  2025-11-07: 'Open Graph, Twitter Card, JSON-LD Phase 1'
-  2025-11-25: 'vite-react-ssg SSG 預渲染'
-  2025-12-02: '13 個幣別落地頁, 34 hreflang tags'
-  2025-12-20: 'Schema.org 完整驗證, BreadcrumbList'
-  2026-01-03: 'Google Search Console 2025 標準對齊'
-  2026-01-30: 'v2.0.0 SEO + UI/UX 現代化'
-  2026-02-12: 'squirrelscan 68→95+ 修復, E-E-A-T 強化'
+演進時間軸（已驗證成功模式）:
+  2025-10-19: 'Phase 0 — robots.txt + sitemap.xml 基礎設施'
+  2025-10-20: 'Phase 1 — Lighthouse SEO 100, llms.txt v1.0, AI 爬蟲配置'
+  2025-11-07: 'Phase 2 — OG + Twitter Card + JSON-LD Phase 1'
+  2025-11-25: 'Phase 3 — vite-react-ssg SSG 預渲染（解決 CSR SEO 問題）'
+  2025-12-02: 'Phase 4 — 13 幣別落地頁 + 34 hreflang tags + schema 驗證腳本'
+  2025-12-15: 'Phase 4.5 — verify-all-apps.mjs 多應用批次 SEO 健康檢查'
+  2025-12-20: 'Phase 5 — Sitemap 2025 標準（移除 changefreq/priority）+ BreadcrumbList'
+  2026-01-06: 'Phase 6 — VSI + INP 優化 + Footer 內部連結 + llms.txt v1.4.0'
+  2026-01-30: 'Phase 7 — 79 AI SEO 測試 + v2.0.0 SEO 現代化'
+  2026-02-06: 'Phase 8 — W3C validation + SSG prerendering 修正 + JSON-LD fixes'
+  2026-02-11: 'Phase 9 — squirrelscan 68→95+（H1/title/desc/privacy/links 修復）'
+  2026-02-12: 'Phase 10 — E-E-A-T 強化 + 內部連結補強 + redirect 修復'
+
+已驗證成功模式（供新專案複用）:
+  - SSG + ClientOnly 分離: 'SSG 給爬蟲靜態 HTML，ClientOnly 給用戶互動元件'
+  - app.config.mjs SSOT: 'seoPaths 單一定義，sitemap/CI/prerender 全部消費'
+  - BDD for SEO: 'Red→Green→Refactor 循環確保每個 SEO 元素有測試保護'
+  - 多層驗證: 'scripts（verify-*）+ CI（seo-audit/seo-production）+ CLI（squirrelscan/lighthouse）'
+  - 原子化提交: '一個 commit 修一個 SEO 問題，可獨立回滾'
 ```
 
 ---
@@ -2257,7 +2405,122 @@ pnpm build && pnpm preview 後 squirrelscan 審計，
 
 ---
 
+## 19. 附錄：Cloudflare 安全標頭手動設定指引
+
+> Agent 在 S5_DELIVER 狀態偵測到安全標頭未配置時，輸出此指引。
+
+### 19.1 Cloudflare Dashboard 設定步驟
+
+```
+Step 1: 登入 Cloudflare Dashboard → 選擇網域
+Step 2: Rules → Transform Rules → Modify Response Header
+Step 3: Create Rule → 名稱: "Security Headers"
+Step 4: When: "All incoming requests"（或指定 hostname）
+Step 5: 依序 Add Header（Set dynamic/static）:
+```
+
+### 19.2 必設標頭清單
+
+```yaml
+headers:
+  - name: 'Strict-Transport-Security'
+    value: 'max-age=31536000; includeSubDomains; preload'
+    type: 'static'
+
+  - name: 'X-Content-Type-Options'
+    value: 'nosniff'
+    type: 'static'
+
+  - name: 'X-Frame-Options'
+    value: 'DENY'
+    type: 'static'
+
+  - name: 'Referrer-Policy'
+    value: 'strict-origin-when-cross-origin'
+    type: 'static'
+
+  - name: 'Permissions-Policy'
+    value: 'camera=(), microphone=(), geolocation=(), payment=()'
+    type: 'static'
+
+  - name: 'X-XSS-Protection'
+    value: '0'
+    type: 'static'
+    note: 'CSP 取代，設 0 避免舊瀏覽器誤觸 XSS filter'
+
+  - name: 'Cross-Origin-Opener-Policy'
+    value: 'same-origin'
+    type: 'static'
+
+  - name: 'Cross-Origin-Resource-Policy'
+    value: 'same-origin'
+    type: 'static'
+
+  - name: 'Content-Security-Policy'
+    value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.exchangerate-api.com https://*.sentry.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+    type: 'static'
+    note: '依實際使用的外部資源調整 domain 白名單'
+```
+
+### 19.3 Cloudflare Pages（\_headers 檔案）
+
+若使用 Cloudflare Pages，在 `public/_headers` 放置：
+
+```
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  X-XSS-Protection: 0
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
+```
+
+### 19.4 驗證
+
+```bash
+# 線上驗證（目標 Grade A+）
+curl -sI https://{domain} | grep -iE "strict-transport|x-content|x-frame|referrer|permissions|csp|cross-origin"
+
+# 或使用 securityheaders.com
+# 或使用 browser MCP 導航到 securityheaders.com 驗證
+```
+
+### 19.5 CSP 白名單調整指引
+
+```yaml
+常見外部資源:
+  Google_Fonts: 'style-src https://fonts.googleapis.com; font-src https://fonts.gstatic.com'
+  Google_Analytics: 'script-src https://www.googletagmanager.com https://www.google-analytics.com; connect-src https://www.google-analytics.com'
+  Sentry: 'connect-src https://*.sentry.io'
+  Cloudflare_Analytics: 'script-src https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com'
+  外部_API: 'connect-src https://api.{service}.com'
+
+調整原則:
+  - 只加白名單，不使用 'unsafe-eval'
+  - SSG 框架需要 'unsafe-inline'（已知權衡，記錄在 SECURITY_BASELINE.md）
+  - 定期檢查 CSP 報告，移除不再使用的 domain
+```
+
+---
+
 ## 更新記錄
+
+### v3.0.0 (2026-02-26)
+
+**新增（狀態機 + 工具升級 + CF 指引）**：
+
+- 新增 §4 有限狀態機（FSM）：7 個狀態、明確 guard 條件、錯誤恢復路徑
+- 狀態機確保一次跑通：IDLE → INIT → AUDIT → FIX → VERIFY → DELIVER → DONE
+- Before/After 差異表自動輸出（使用者可直觀看到分數變化）
+- squirrelscan 升級至 v0.0.38（240+ rules, --publish, WAF detection）
+- 新增 §15.1 完整 21 分類 + 規則 ID 清單
+- 新增 §19 Cloudflare 安全標頭手動設定指引（Dashboard + \_headers + CSP 白名單）
+- 整合 RateWise 全 12 個 Phase 成功紀錄（含 12 個 verify 腳本、79 AI SEO 測試、1397 測試）
+- 覆蓋模式與狀態機對齊（surface→S2, quick→S4, full→S5）
 
 ### v2.1.0 (2026-02-25)
 
@@ -2301,4 +2564,4 @@ pnpm build && pnpm preview 後 squirrelscan 審計，
 
 ---
 
-**總結**：此工作流 Prompt 是完全零接觸的 SEO 自動化引擎。使用者只需附加此 Prompt 和目標專案，Agent 即自動完成：技術棧偵測 → CLI 工具安裝 → 審計基線 → TDD 修復循環 → Cloudflare 安全標頭 → 本地持續驗證 → 原子化 Commit → 交付。所有修復遵循 `/tdd-workflow` skill 的 Red→Green→Refactor 流程，審計遵循 `/seo-audit` + `/audit-website` skill 的 230+ 規則框架，安全標頭遵循 Cloudflare SSOT 原則。工作流嚴格禁止產出任何一次性報告或臨時文檔，只留下永久保留的程式碼、測試、配置與 CI/CD，最終交付零技術債、100 分 SEO 的完美結果。
+**總結**：此工作流 Prompt 是基於有限狀態機（FSM）的零接觸 SEO 自動化引擎。7 個狀態（IDLE → INIT → AUDIT → FIX → VERIFY → DELIVER → DONE）確保一次跑通、不走彎路。每個狀態有明確的 guard 條件和錯誤恢復路徑。使用者只需附加此 Prompt 和目標專案，Agent 即自動完成全部工作。審計使用 squirrelscan v0.0.38（240+ rules, 21 categories）+ Lighthouse，修復走 TDD Red→Green→Refactor 循環，安全標頭走 Cloudflare SSOT。工作流嚴格禁止產出任何臨時文檔，只留下永久保留的程式碼、測試、配置與 CI/CD。CF 未配置時自動輸出完整設定指引（§19）。最終交付零技術債、100 分 SEO 的完美結果，並以 Before/After 差異表直觀展示成果。

@@ -46,17 +46,16 @@
 
 **核心功能**:
 
+- 有限狀態機（FSM）確保一次跑通（IDLE→INIT→AUDIT→FIX→VERIFY→DELIVER→DONE）
 - 零接觸全自動執行（使用者只需 @prompt + @專案 + 一句話）
-- 技術棧自動偵測引擎（React/Vue/Angular/Astro/Next.js/Nuxt）
-- MCP 工具與 Skills 整合矩陣（9 工具自動調用）
+- squirrelscan v0.0.38 深度整合（240+ rules, 21 categories, --publish）
+- Before/After 差異表直觀展示分數變化
 - TDD 驅動 SEO 修復（/tdd-workflow Red→Green→Refactor）
-- squirrelscan 深度整合（230+ 規則、覆蓋模式、回歸偵測）
-- seo-audit skill 審計框架（5 層優先序、E-E-A-T）
-- Cloudflare SSOT 安全標頭策略（CSP/HSTS/Permissions-Policy）
-- 十階段 SEO 完美執行流程
+- Cloudflare SSOT 安全標頭 + 手動設定指引（§19）
+- 技術棧自動偵測引擎（React/Vue/Angular/Astro/Next.js/Nuxt）
+- 十階段 SEO 完美執行流程 + 100 分品質門檻（20 項指標）
 - 零技術債強制規則（禁止一次性報告與臨時文檔）
-- 100 分品質門檻（20 項指標）
-- 原子化 Commit 與本地持續驗證引擎
+- RateWise 12 Phase 成功紀錄內建（1397 測試、12 驗證腳本）
 
 **適用場景**:
 
