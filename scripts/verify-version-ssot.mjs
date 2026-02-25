@@ -148,6 +148,10 @@ function ensureChangelogUpdatedIfVersionChanged() {
   );
   if (!hasPackageVersionChange) return;
 
+  const versionActuallyBumped =
+    hasPackageVersionBump('package.json') || hasPackageVersionBump('apps/ratewise/package.json');
+  if (!versionActuallyBumped) return;
+
   // 讀取暫存區的 package.json 取得目標版本
   const stagedPkg = readStaged('apps/ratewise/package.json');
   const appVersion = stagedPkg
