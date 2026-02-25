@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for haotool.org Portfolio
-# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/)
+# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), park-keeper (/park-keeper/)
 # syntax=docker/dockerfile:1
 
 # Build stage
@@ -14,6 +14,7 @@ ARG VITE_HAOTOOL_BASE_PATH=/
 ARG VITE_RATEWISE_BASE_PATH=/ratewise/
 ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 ARG VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/
+ARG VITE_PARK_KEEPER_BASE_PATH=/park-keeper/
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
@@ -39,6 +40,7 @@ COPY apps/ratewise/package.json ./apps/ratewise/
 COPY apps/nihonname/package.json ./apps/nihonname/
 COPY apps/haotool/package.json ./apps/haotool/
 COPY apps/quake-school/package.json ./apps/quake-school/
+COPY apps/park-keeper/package.json ./apps/park-keeper/
 
 # [fix:2025-11-06] 安裝依賴時禁用 Husky 並清空 NODE_ENV
 # Zeabur 可能自動設置 NODE_ENV=production，導致 devDependencies 被跳過
@@ -68,14 +70,16 @@ RUN set -eux; \
   VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
   VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname && \
-  VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school
+  VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school && \
+  VITE_PARK_KEEPER_BASE_PATH=/park-keeper/ pnpm build:park-keeper
 
 # [fix:2025-12-30] 驗證 sitemaps 已生成並包含在構建中
 # Sitemaps 應該在 dist/ 目錄（構建輸出）而非 public/
 RUN test -f /app/apps/ratewise/dist/sitemap.xml && \
     test -f /app/apps/nihonname/dist/sitemap.xml && \
     test -f /app/apps/haotool/dist/sitemap.xml && \
-    test -f /app/apps/quake-school/dist/sitemap.xml || \
+    test -f /app/apps/quake-school/dist/sitemap.xml && \
+    test -f /app/apps/park-keeper/dist/sitemap.xml || \
     { echo "ERROR: Sitemaps not generated in Docker build"; exit 1; }
 
 # Production stage
@@ -100,10 +104,14 @@ COPY --from=builder /app/apps/nihonname/dist /usr/share/nginx/html/nihonname-app
 # [fix:2025-12-29] Copy built assets for quake-school 到子目錄
 COPY --from=builder /app/apps/quake-school/dist /usr/share/nginx/html/quake-school-app
 
+# Copy park-keeper static assets
+COPY --from=builder /app/apps/park-keeper/dist /usr/share/nginx/html/park-keeper-app
+
 # 創建符號連結以支援路由
 RUN ln -s /usr/share/nginx/html/ratewise-app /usr/share/nginx/html/ratewise && \
     ln -s /usr/share/nginx/html/nihonname-app /usr/share/nginx/html/nihonname && \
-    ln -s /usr/share/nginx/html/quake-school-app /usr/share/nginx/html/quake-school
+    ln -s /usr/share/nginx/html/quake-school-app /usr/share/nginx/html/quake-school && \
+    ln -s /usr/share/nginx/html/park-keeper-app /usr/share/nginx/html/park-keeper
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf

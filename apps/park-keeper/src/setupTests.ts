@@ -15,27 +15,30 @@ declare global {
 }
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+const hasWindow = typeof window !== 'undefined';
 
 // Stabilize requestAnimationFrame in tests
 vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
-  window.setTimeout(() => callback(performance.now()), 0),
+  globalThis.setTimeout(() => callback(globalThis.performance?.now?.() ?? Date.now()), 0),
 );
-vi.stubGlobal('cancelAnimationFrame', (handle: number) => window.clearTimeout(handle));
+vi.stubGlobal('cancelAnimationFrame', (handle: number) => globalThis.clearTimeout(handle));
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+if (hasWindow) {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
 
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn(function (this: ResizeObserver) {
@@ -87,10 +90,12 @@ const ensureStorage = (target: StorageTarget): Storage => {
   return memoryStorage;
 };
 
-beforeEach(() => {
-  ensureStorage('localStorage').clear();
-  ensureStorage('sessionStorage').clear();
-});
+if (hasWindow) {
+  beforeEach(() => {
+    ensureStorage('localStorage').clear();
+    ensureStorage('sessionStorage').clear();
+  });
+}
 
 // Mock HTMLCanvasElement.getContext for Leaflet compatibility
 const mockCanvasRenderingContext2D = {
@@ -125,9 +130,11 @@ const mockCanvasRenderingContext2D = {
   canvas: null,
 };
 
-HTMLCanvasElement.prototype.getContext = vi.fn((contextType: string) => {
-  if (contextType === '2d') {
-    return mockCanvasRenderingContext2D as unknown as CanvasRenderingContext2D;
-  }
-  return null;
-}) as typeof HTMLCanvasElement.prototype.getContext;
+if (typeof HTMLCanvasElement !== 'undefined') {
+  HTMLCanvasElement.prototype.getContext = vi.fn((contextType: string) => {
+    if (contextType === '2d') {
+      return mockCanvasRenderingContext2D as unknown as CanvasRenderingContext2D;
+    }
+    return null;
+  }) as typeof HTMLCanvasElement.prototype.getContext;
+}

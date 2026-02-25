@@ -9,7 +9,6 @@ import { ClientOnly } from 'vite-react-ssg';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import About from './pages/About';
-import Settings from './pages/Settings';
 import HomeSkeleton from './components/HomeSkeleton';
 
 export const routes: RouteRecord[] = [
@@ -22,7 +21,14 @@ export const routes: RouteRecord[] = [
         element: <ClientOnly fallback={<HomeSkeleton />}>{() => <Home />}</ClientOnly>,
       },
       { path: 'about', element: <About /> },
-      { path: 'settings', element: <Settings /> },
+      {
+        path: 'settings',
+        element: (
+          <ClientOnly fallback={<HomeSkeleton />}>
+            {() => <Home initialTab="settings" />}
+          </ClientOnly>
+        ),
+      },
     ],
   },
 ];
