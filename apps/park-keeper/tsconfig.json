@@ -9,6 +9,6 @@
     },
     "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom", "node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "app.config.mjs"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "app.config.mjs", "*.test.ts"],
   "exclude": ["node_modules", "dist"]
 }

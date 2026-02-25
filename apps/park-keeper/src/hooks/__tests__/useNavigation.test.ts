@@ -1,5 +1,10 @@
 import { renderHook, act } from '@testing-library/react';
-import { getDistance, getBearing, useNavigation } from '@app/park-keeper/hooks/useNavigation';
+import {
+  getDistance,
+  getBearing,
+  estimateMagneticDeclination,
+  useNavigation,
+} from '@app/park-keeper/hooks/useNavigation';
 import type { ParkingRecord } from '@app/park-keeper/types';
 
 describe('useNavigation - getDistance', () => {
@@ -49,6 +54,25 @@ describe('useNavigation - getBearing', () => {
     const bearingEast = getBearing(45, 0, 45, 1);
     expect(bearingEast).toBeGreaterThan(85);
     expect(bearingEast).toBeLessThan(95);
+  });
+});
+
+describe('estimateMagneticDeclination', () => {
+  it('should return baseline for Taipei center (25, 121)', () => {
+    const dec = estimateMagneticDeclination(25, 121);
+    expect(dec).toBeCloseTo(-4.5, 1);
+  });
+
+  it('should increase for higher latitudes', () => {
+    const decNorth = estimateMagneticDeclination(35, 121);
+    const decSouth = estimateMagneticDeclination(20, 121);
+    expect(decNorth).toBeGreaterThan(decSouth);
+  });
+
+  it('should vary with longitude', () => {
+    const decEast = estimateMagneticDeclination(25, 130);
+    const decWest = estimateMagneticDeclination(25, 110);
+    expect(decEast).toBeGreaterThan(decWest);
   });
 });
 
@@ -155,19 +179,22 @@ describe('useNavigation hook', () => {
     expect(result.current.isIndoor).toBe(true);
   });
 
-  it('should update heading on device orientation', () => {
+  it('should update heading on device orientation (smoothed)', () => {
     const { result } = renderHook(() => useNavigation(mockRecord));
 
-    act(() => {
-      orientationHandler?.({
-        alpha: 90,
-        beta: 30,
-        gamma: 0,
-        absolute: false,
-      } as unknown as Event);
-    });
+    for (let i = 0; i < 20; i++) {
+      act(() => {
+        orientationHandler?.({
+          alpha: 90,
+          beta: 30,
+          gamma: 0,
+          absolute: false,
+        } as unknown as Event);
+      });
+    }
 
-    expect(result.current.heading).toBe(270);
+    expect(result.current.heading).toBeGreaterThan(265);
+    expect(result.current.heading).toBeLessThan(275);
     expect(result.current.deviceTilt).toBe(30);
   });
 
@@ -205,20 +232,23 @@ describe('useNavigation hook', () => {
     expect(window.removeEventListener).toHaveBeenCalled();
   });
 
-  it('should handle webkitCompassHeading', () => {
+  it('should handle webkitCompassHeading (smoothed)', () => {
     const { result } = renderHook(() => useNavigation(mockRecord));
 
-    act(() => {
-      orientationHandler?.({
-        webkitCompassHeading: 45,
-        alpha: null,
-        beta: 10,
-        gamma: 0,
-        absolute: false,
-      } as unknown as Event);
-    });
+    for (let i = 0; i < 20; i++) {
+      act(() => {
+        orientationHandler?.({
+          webkitCompassHeading: 45,
+          alpha: null,
+          beta: 10,
+          gamma: 0,
+          absolute: false,
+        } as unknown as Event);
+      });
+    }
 
-    expect(result.current.heading).toBe(45);
+    expect(result.current.heading).toBeGreaterThan(40);
+    expect(result.current.heading).toBeLessThan(50);
   });
 
   it('should count steps in indoor mode via devicemotion', () => {

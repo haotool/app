@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
@@ -65,6 +66,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
+      tailwindcss(),
       react(),
       {
         name: 'inject-version-meta',
@@ -186,10 +188,17 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 600,
     },
     ssgOptions: {
-      script: 'async',
+      // Keep client entry ordered after HTML parsing so vite-react-ssg hydration data
+      // (injected later in the document) is available before React bootstraps.
+      script: 'defer',
       formatting: 'none',
       dirStyle: 'nested',
       concurrency: 10,
+      // Disable beasties: Tailwind v4 @layer utilities is not properly extracted,
+      // causing CSS to be deferred to end of <body> with empty critical CSS inlined.
+      // This makes the SSG skeleton invisible on initial paint. Keeping CSS in <head>
+      // (render-blocking but styled) is the correct trade-off for this PWA use case.
+      beastiesOptions: false,
       async includedRoutes() {
         const { SEO_PATHS } = await import('./app.config.mjs');
         return SEO_PATHS.map((path: string) => (path === '/' ? path : path.replace(/\/$/, '')));
