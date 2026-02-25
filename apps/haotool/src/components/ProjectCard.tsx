@@ -181,7 +181,7 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
           )}
         </div>
 
-        <p className="mt-3 text-sm leading-relaxed text-slate-400 flex-1 line-clamp-3">
+        <p className="mt-3 text-sm leading-relaxed text-slate-300 flex-1 line-clamp-3">
           {project.description}
         </p>
 

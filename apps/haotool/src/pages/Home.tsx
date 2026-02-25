@@ -237,7 +237,7 @@ export default function Home() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1, ease: EASING_NEBULA }}
-              className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400"
+              className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300"
             >
               <a
                 href="#projects"
@@ -455,7 +455,7 @@ export default function Home() {
                   <h2 className="text-3xl font-bold text-white md:text-5xl tracking-tighter mb-4 md:mb-6">
                     Selected Works
                   </h2>
-                  <p className="text-slate-400 max-w-md text-base md:text-lg font-light leading-relaxed">
+                  <p className="text-slate-300 max-w-md text-base md:text-lg font-light leading-relaxed">
                     結合實用性與娛樂性的數位實驗。
                   </p>
                 </motion.div>
@@ -556,7 +556,7 @@ export default function Home() {
                           </div>
                         </div>
 
-                        <p className="text-slate-400 mb-6 text-sm leading-relaxed">
+                        <p className="text-slate-300 mb-6 text-sm leading-relaxed">
                           專注於現代 Web 開發技術，追求效能、可維護性與開發體驗的最佳平衡。
                         </p>
 
@@ -622,7 +622,7 @@ export default function Home() {
                 <h2 className="text-3xl font-bold text-white md:text-5xl tracking-tighter mb-6">
                   Let&apos;s Build Something
                 </h2>
-                <p className="text-slate-400 max-w-2xl text-base md:text-lg font-light leading-relaxed">
+                <p className="text-slate-300 max-w-2xl text-base md:text-lg font-light leading-relaxed">
                   有專案想法？或只是想聊聊技術？隨時歡迎透過以下方式聯繫。
                 </p>
               </motion.div>
@@ -655,7 +655,7 @@ export default function Home() {
                           </div>
                         </div>
 
-                        <p className="text-slate-400 mb-6 text-sm leading-relaxed">
+                        <p className="text-slate-300 mb-6 text-sm leading-relaxed">
                           專注於現代 Web 技術與 3D
                           互動體驗，致力於打造兼具實用性與美感的數位產品。從概念設計到程式實作，追求每個細節的完美呈現。
                         </p>
