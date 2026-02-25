@@ -46,15 +46,17 @@
 
 **核心功能**:
 
+- 零接觸全自動執行（使用者只需 @prompt + @專案 + 一句話）
 - 技術棧自動偵測引擎（React/Vue/Angular/Astro/Next.js/Nuxt）
 - MCP 工具與 Skills 整合矩陣（9 工具自動調用）
+- TDD 驅動 SEO 修復（/tdd-workflow Red→Green→Refactor）
+- squirrelscan 深度整合（230+ 規則、覆蓋模式、回歸偵測）
+- seo-audit skill 審計框架（5 層優先序、E-E-A-T）
+- Cloudflare SSOT 安全標頭策略（CSP/HSTS/Permissions-Policy）
 - 十階段 SEO 完美執行流程
-- SEO 元素 SSOT 規範（robots/sitemap/llms.txt/meta/JSON-LD）
-- AI 搜尋優化（GEO）專項
-- 並行任務排程與角色指派
-- 自動迭代與缺陷修復機制
+- 零技術債強制規則（禁止一次性報告與臨時文檔）
 - 100 分品質門檻（20 項指標）
-- 完整 TODO 清單模板
+- 原子化 Commit 與本地持續驗證引擎
 
 **適用場景**:
 

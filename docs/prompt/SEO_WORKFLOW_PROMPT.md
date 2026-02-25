@@ -1,8 +1,8 @@
 # 🔍 SEO Perfection Engine｜100 分 SEO 零接觸全自動工作流 Prompt
 
 > **建立時間**: 2026-02-25T12:00:00+08:00  
-> **最後更新**: 2026-02-25T16:00:00+08:00  
-> **版本**: 2.0.0  
+> **最後更新**: 2026-02-25T23:00:00+08:00  
+> **版本**: 2.1.0  
 > **維護者**: HaoTool Team  
 > **狀態**: ✅ 生產就緒  
 > **SSOT 位置**: `docs/prompt/SEO_WORKFLOW_PROMPT.md`  
@@ -44,10 +44,11 @@ Agent 會全自動完成以下所有工作，無需任何人工介入：
 11. [AI 搜尋優化（GEO）專項](#11-ai-搜尋優化geo專項)
 12. [並行任務排程與角色指派](#12-並行任務排程與角色指派)
 13. [自動迭代與缺陷修復機制](#13-自動迭代與缺陷修復機制)
-14. [自動 Commit 與交付規範](#14-自動-commit-與交付規範)
-15. [TODO 清單模板](#15-todo-清單模板)
-16. [啟動指令](#16-啟動指令)
-17. [附錄：權威來源與引用](#17-附錄權威來源與引用)
+14. [自動 Commit、零技術債與交付規範](#14-自動-commit與交付規範)
+15. [squirrelscan 深度整合規範](#15-squirrelscan-深度整合規範)
+16. [TODO 清單模板](#16-todo-清單模板)
+17. [啟動指令](#17-啟動指令)
+18. [附錄：權威來源與引用](#18-附錄權威來源與引用)
 
 ---
 
@@ -1136,7 +1137,13 @@ onTTFB(sendToAnalytics);
     - Google-Extended
     - CCBot (Common Crawl)
     - Bytespider (ByteDance)
+    - Meta-ExternalAgent (Meta/LLaMA)
     - Twitterbot / facebookexternalhit / LinkedInBot
+
+  策略（2026 最佳實踐）:
+    - 訓練型爬蟲（GPTBot、Google-Extended、CCBot）：視內容策略決定允許/封鎖
+    - 引用型爬蟲（ChatGPT-User、PerplexityBot、OAI-SearchBot）：建議允許（會帶回流量與引用）
+    - 搜尋引擎（Googlebot、Bingbot）：必須允許
 
   禁止:
     - /sw.js（Service Worker）
@@ -1315,7 +1322,7 @@ onTTFB(sendToAnalytics);
 
 ## 9. SEO 元素 SSOT 規範
 
-### 5.1 robots.txt 完整模板
+### 9.1 robots.txt 完整模板
 
 ```
 # robots.txt - {應用名稱}
@@ -1353,6 +1360,9 @@ Allow: /
 User-agent: Bytespider
 Allow: /
 
+User-agent: Meta-ExternalAgent
+Allow: /
+
 # 社群媒體爬蟲
 User-agent: Twitterbot
 Allow: /
@@ -1375,7 +1385,7 @@ Disallow: /*.json
 Sitemap: https://{domain}/{base-path}/sitemap.xml
 ```
 
-### 5.2 sitemap.xml 規範
+### 9.2 sitemap.xml 規範
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1408,7 +1418,7 @@ Sitemap: https://{domain}/{base-path}/sitemap.xml
 - 單檔 ≤ 50MB 或 50,000 URL
 - 使用絕對 URL
 
-### 5.3 llms.txt 模板
+### 9.3 llms.txt 模板
 
 ```markdown
 # {應用名稱}
@@ -1452,7 +1462,7 @@ _Version: {version}_
 _Last Updated: {date}_
 ```
 
-### 5.4 HTML Head 必備元素清單
+### 9.4 HTML Head 必備元素清單
 
 ```html
 <!DOCTYPE html>
@@ -1576,7 +1586,7 @@ squirrel audit https://{domain} -C full --format llm
 
 ## 11. AI 搜尋優化（GEO）專項
 
-### 7.1 GEO 策略總覽
+### 11.1 GEO 策略總覽
 
 ```yaml
 目標: '讓 AI 搜尋引擎（ChatGPT、Claude、Perplexity、Gemini）正確引用網站'
@@ -1600,7 +1610,7 @@ squirrel audit https://{domain} -C full --format llm
     - 數據支撐（指標、統計）
 ```
 
-### 7.2 Answer Capsule 設計
+### 11.2 Answer Capsule 設計
 
 每個核心頁面都應包含 AI 可直接引用的「回答膠囊」：
 
@@ -1615,7 +1625,7 @@ squirrel audit https://{domain} -C full --format llm
 </section>
 ```
 
-### 7.3 noscript SEO Fallback
+### 11.3 noscript SEO Fallback
 
 ```html
 <noscript>
@@ -1872,9 +1882,141 @@ commit_規則:
     - [ ] 安全標頭 SSOT 在 Cloudflare（非應用層）
 ```
 
+### 14.4 零技術債強制規則
+
+```yaml
+禁止產出:
+  - ❌ 任何 *_REPORT.md 一次性報告檔案
+  - ❌ 任何 *_SUMMARY.md 總結文檔
+  - ❌ 任何 *_PLAN.md 已完成計畫
+  - ❌ 任何 *_ANALYSIS.md 一次性分析
+  - ❌ 任何 TODO/FIXME/HACK 標記殘留在代碼中
+  - ❌ 任何硬編碼值（URL、版本號、路徑）
+  - ❌ 任何重複的安全標頭設定（CF 層 vs 應用層）
+  - ❌ 任何未被測試覆蓋的 SEO 元件
+  - ❌ 任何未從 SSOT 導入的 SEO 配置
+
+允許產出:
+  - ✅ 永久保留的 SEO 配置檔案（app.config.mjs、seo-paths.ts）
+  - ✅ 永久保留的 SEO 元件（SEOHelmet.tsx、HomeStructuredData.tsx）
+  - ✅ 永久保留的測試檔案（*.test.ts、*.spec.ts）
+  - ✅ 永久保留的驗證腳本（scripts/verify-*.mjs）
+  - ✅ 永久保留的 CI/CD workflow（.github/workflows/seo-*.yml）
+  - ✅ 更新 docs/dev/SEO_TODO.md 進度（長期追蹤文檔）
+  - ✅ 更新 docs/SEO_GUIDE.md（長期維護指南）
+
+Agent 自動清理:
+  - 工作流結束前掃描是否有臨時檔案產出
+  - 有則刪除並在 commit 中記錄
+  - 確保 git status 乾淨
+```
+
 ---
 
-## 15. TODO 清單模板
+## 15. squirrelscan 深度整合規範
+
+### 15.1 審計覆蓋模式與分數目標
+
+```yaml
+覆蓋模式選擇:
+  quick（25頁）:
+    用途: 'CI 快速檢查、每次修復後快速驗證'
+    命令: 'squirrel audit {url} -C quick --format llm'
+
+  surface（100頁）:
+    用途: '一般審計、PR 級別檢查'
+    命令: 'squirrel audit {url} -C surface --format llm'
+
+  full（500頁）:
+    用途: '完整審計、發布前檢查、最終驗證'
+    命令: 'squirrel audit {url} -C full --format llm'
+
+分數目標:
+  起始 < 50（F）: '目標 75+（C），大量修復'
+  起始 50-70（D）: '目標 85+（B），中量修復'
+  起始 70-85（C）: '目標 90+（A），精修'
+  起始 > 85（B+）: '目標 95+（A+），微調'
+
+  完成標準: '分數 ≥ 95（Grade A）且覆蓋模式為 full'
+```
+
+### 15.2 迭代修復循環（來自 audit-website skill）
+
+```yaml
+自動迭代循環:
+  1: 'squirrel audit（full 模式）→ 取得缺陷清單'
+  2: '按嚴重度批次修復（error → warning → notice）'
+  3: 'squirrel audit（quick 模式）→ 驗證修復'
+  4: '對比分數：只升不降'
+  5: '重複 1-4 直到 ≥ 95 分'
+
+並行修復策略:
+  可並行（使用 subagent）:
+    - 圖片 alt text 修復（多檔案同時）
+    - heading 結構修復（多檔案同時）
+    - meta description 長度修復（多頁面同時）
+    - HTTP→HTTPS 連結替換（批次 sed）
+
+  必須序列:
+    - 共用元件修改（SEOHelmet.tsx）
+    - JSON-LD schema 變更（SSOT）
+    - 配置檔修改（app.config.mjs）
+
+回歸偵測:
+  命令: 'squirrel report --regression-since {domain} --format llm'
+  用途: '部署後自動比對前次審計，偵測分數下降'
+```
+
+### 15.3 seo-audit skill 審計框架整合
+
+```yaml
+審計優先序（來自 seo-audit skill）:
+  1_可爬取性:
+    - robots.txt 無意外封鎖
+    - sitemap 存在且已提交 Search Console
+    - 重要頁面 3 次點擊內可達
+    - 無孤立頁面
+    - 無重導迴圈
+
+  2_索引狀態:
+    - site:domain.com 結果與預期一致
+    - 無意外 noindex
+    - canonical 方向正確（self-referencing）
+    - HTTP→HTTPS canonical
+    - www vs non-www 一致
+    - 尾部斜線一致
+
+  3_技術基礎:
+    - Core Web Vitals 全部達標
+    - HTTPS 全站 + 有效 SSL
+    - 響應式設計（非 m. 子網域）
+    - 無混合內容
+
+  4_頁面優化:
+    - 每頁 title 唯一、含關鍵字、50-60 字元
+    - 每頁 description 唯一、150-160 字元
+    - 每頁唯一 H1、含關鍵字
+    - heading 層級邏輯正確（H1→H2→H3 不跳級）
+    - 圖片全部有 alt text
+    - 內部連結充足，anchor text 描述性
+
+  5_內容品質:
+    - E-E-A-T 信號完整
+    - 內容深度優於競品
+    - 無薄弱頁面（thin content）
+    - 無重複/近似內容
+    - 定期更新
+
+關鍵字策略:
+  - 每頁明確主要關鍵字
+  - title、H1、URL 對齊
+  - 無關鍵字互食（cannibalization）
+  - 邏輯性主題群集（topical clusters）
+```
+
+---
+
+## 16. TODO 清單模板
 
 ### 新專案 SEO 完整 TODO
 
@@ -2006,7 +2148,7 @@ commit_規則:
 
 ---
 
-## 16. 啟動指令
+## 17. 啟動指令
 
 ### 零接觸啟動（推薦）
 
@@ -2069,9 +2211,9 @@ pnpm build && pnpm preview 後 squirrelscan 審計，
 
 ---
 
-## 17. 附錄：權威來源與引用
+## 18. 附錄：權威來源與引用
 
-### 17.1 Google 官方
+### 18.1 Google 官方
 
 | 來源              | URL                                                              | 用途        |
 | ----------------- | ---------------------------------------------------------------- | ----------- |
@@ -2082,7 +2224,7 @@ pnpm build && pnpm preview 後 squirrelscan 審計，
 | Rich Results Test | search.google.com/test/rich-results                              | Schema 驗證 |
 | Search Console    | search.google.com/search-console                                 | 監控        |
 
-### 17.2 SEO 工具
+### 18.2 SEO 工具
 
 | 工具             | URL                                        | 用途          |
 | ---------------- | ------------------------------------------ | ------------- |
@@ -2093,14 +2235,14 @@ pnpm build && pnpm preview 後 squirrelscan 審計，
 | SecurityHeaders  | securityheaders.com                        | 安全標頭      |
 | opengraph.xyz    | opengraph.xyz                              | OG 預覽       |
 
-### 17.3 AI 搜尋標準
+### 18.3 AI 搜尋標準
 
 | 來源          | URL         | 用途                           |
 | ------------- | ----------- | ------------------------------ |
 | llms.txt 規範 | llmstxt.org | AI 搜尋優化                    |
 | GEO 策略      | various     | Generative Engine Optimization |
 
-### 17.4 技術文檔（via Context7）
+### 18.4 技術文檔（via Context7）
 
 | Library        | Context7 ID                       | 查詢主題                |
 | -------------- | --------------------------------- | ----------------------- |
@@ -2116,6 +2258,16 @@ pnpm build && pnpm preview 後 squirrelscan 審計，
 ---
 
 ## 更新記錄
+
+### v2.1.0 (2026-02-25)
+
+**修正（品質強化）**：
+
+- 修正 §9/§11 子章節編號不一致（5.1→9.1、7.1→11.1）
+- 新增 §14.4 零技術債強制規則（禁止一次性報告、臨時文檔、TODO 殘留）
+- 新增 §15 squirrelscan 深度整合規範（覆蓋模式、分數目標、迭代循環、並行策略）
+- 新增 §15.3 seo-audit skill 審計框架（5 層優先序、關鍵字策略、E-E-A-T）
+- 目錄更新至 18 章，所有章節編號連續一致
 
 ### v2.0.0 (2026-02-25)
 
@@ -2149,4 +2301,4 @@ pnpm build && pnpm preview 後 squirrelscan 審計，
 
 ---
 
-**總結**：此工作流 Prompt 是完全零接觸的 SEO 自動化引擎。使用者只需附加此 Prompt 和目標專案，Agent 即自動完成：技術棧偵測 → CLI 工具安裝 → 審計基線 → TDD 修復循環 → Cloudflare 安全標頭 → 本地持續驗證 → 原子化 Commit → 交付。所有修復遵循 /tdd-workflow skill 的 Red→Green→Refactor 流程，安全標頭遵循 Cloudflare SSOT 原則，最終交付零技術債、100 分 SEO 的完美結果。
+**總結**：此工作流 Prompt 是完全零接觸的 SEO 自動化引擎。使用者只需附加此 Prompt 和目標專案，Agent 即自動完成：技術棧偵測 → CLI 工具安裝 → 審計基線 → TDD 修復循環 → Cloudflare 安全標頭 → 本地持續驗證 → 原子化 Commit → 交付。所有修復遵循 `/tdd-workflow` skill 的 Red→Green→Refactor 流程，審計遵循 `/seo-audit` + `/audit-website` skill 的 230+ 規則框架，安全標頭遵循 Cloudflare SSOT 原則。工作流嚴格禁止產出任何一次性報告或臨時文檔，只留下永久保留的程式碼、測試、配置與 CI/CD，最終交付零技術債、100 分 SEO 的完美結果。
