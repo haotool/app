@@ -298,14 +298,24 @@ export default function Layout() {
           </div>
 
           <div className="mt-8 pt-8 border-t border-white/5 text-center flex flex-col items-center gap-3">
-            <p className="text-sm text-slate-500">
-              © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
-            </p>
-            <div className="flex items-center gap-4 text-xs text-slate-600">
-              <a href="/ratewise/privacy/" className="hover:text-slate-400 transition-colors">
+            <address className="not-italic text-sm text-slate-500">
+              © {new Date().getFullYear()}{' '}
+              <a href="/about/" rel="author" className="hover:text-slate-400 transition-colors">
+                阿璋 (Ah Zhang)
+              </a>{' '}
+              · {APP_NAME}. All rights reserved.
+            </address>
+            <nav className="flex items-center gap-4 text-xs text-slate-600" aria-label="Footer">
+              <a href="/about/" className="hover:text-slate-400 transition-colors">
+                About
+              </a>
+              <a href="/contact/" className="hover:text-slate-400 transition-colors">
+                Contact
+              </a>
+              <a href="/about/#privacy" className="hover:text-slate-400 transition-colors">
                 Privacy Policy
               </a>
-            </div>
+            </nav>
           </div>
         </div>
       </footer>

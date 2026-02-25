@@ -57,6 +57,10 @@ export default function About() {
               阿璋
             </span>
           </h1>
+          <p className="text-xs text-slate-500 mb-4">
+            <span rel="author">阿璋 (Ah Zhang)</span> · 全端工程師 ·{' '}
+            <time dateTime="2025-01-01">Since 2025</time>
+          </p>
           <div className="prose prose-invert prose-lg text-slate-400 font-light">
             <p className="text-xl leading-relaxed mb-6">
               嗨，我是阿璋。一位將程式碼雕琢為數位藝術的全端開發者。
@@ -131,6 +135,41 @@ export default function About() {
             ))}
           </div>
         </motion.div>
+
+        {/* Privacy Section */}
+        <motion.section
+          id="privacy"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: EASING_NEBULA }}
+          className="mb-20"
+        >
+          <h2 className="text-2xl font-bold text-white mb-6">隱私權政策</h2>
+          <div className="prose prose-invert prose-sm text-slate-400 max-w-3xl">
+            <p>
+              haotool.org 重視您的隱私。本站不收集任何個人識別資訊，不使用第三方追蹤工具或廣告 SDK。
+            </p>
+            <p>本站可能使用以下技術：</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                <strong className="text-slate-300">localStorage</strong>
+                ：僅用於儲存用戶偏好設定（如主題模式），資料完全保留在您的瀏覽器中。
+              </li>
+              <li>
+                <strong className="text-slate-300">Service Worker</strong>
+                ：用於 PWA 離線快取，不傳輸任何個人資料。
+              </li>
+            </ul>
+            <p>
+              如有任何隱私相關疑問，歡迎透過{' '}
+              <Link to="/contact" className="text-brand-400 hover:text-brand-300">
+                聯繫頁面
+              </Link>{' '}
+              與我聯繫。
+            </p>
+          </div>
+        </motion.section>
 
         {/* CTA */}
         <motion.div

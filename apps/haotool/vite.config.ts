@@ -104,8 +104,8 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         injectRegister: 'auto',
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp}'],
-          globIgnores: ['**/node_modules/**'],
+          globPatterns: ['**/*.{js,css,html,json,ico,png,svg,woff,woff2,avif,webp}'],
+          globIgnores: ['**/node_modules/**', 'rates/**/*.json'],
           ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
           clientsClaim: true,
           skipWaiting: true,

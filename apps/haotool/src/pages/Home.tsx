@@ -751,17 +751,39 @@ export default function Home() {
         <footer className="border-t border-white/[0.03] py-8 relative z-10">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+              <address className="not-italic flex items-center gap-3">
                 <div className="relative h-5 w-5 flex items-center justify-center">
                   <div className="absolute inset-0 bg-brand-500 rounded blur-[2px] opacity-40" />
                   <div className="relative h-2 w-2 bg-slate-100 rounded-sm z-10" />
                 </div>
                 <span className="text-sm text-slate-500">
-                  © 2025 {APP_NAME}. All rights reserved.
+                  © {new Date().getFullYear()}{' '}
+                  <a href="/about/" rel="author" className="hover:text-slate-400 transition-colors">
+                    阿璋 (Ah Zhang)
+                  </a>{' '}
+                  · {APP_NAME}
                 </span>
-              </div>
+              </address>
 
               <div className="flex items-center gap-6">
+                <a
+                  href="/about/"
+                  className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+                >
+                  About
+                </a>
+                <a
+                  href="/contact/"
+                  className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+                >
+                  Contact
+                </a>
+                <a
+                  href="/about/#privacy"
+                  className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+                >
+                  Privacy
+                </a>
                 <a
                   href={SOCIAL_LINKS.threads}
                   target="_blank"

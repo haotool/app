@@ -45,8 +45,8 @@ describe('Layout', () => {
 
     expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Projects' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'About' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Contact' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'About' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Contact' }).length).toBeGreaterThan(0);
   });
 
   it('renders logo as link to home', () => {
