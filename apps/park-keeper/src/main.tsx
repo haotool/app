@@ -6,4 +6,7 @@ import { routes } from './routes';
 import './services/i18n';
 import './index.css';
 
-export const createRoot = ViteReactSSG({ routes });
+export const createRoot = ViteReactSSG({
+  routes,
+  basename: import.meta.env.BASE_URL || '/',
+});
