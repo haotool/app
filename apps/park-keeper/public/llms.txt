@@ -1,0 +1,31 @@
+# 停車好工具 (ParkKeeper)
+# https://app.haotool.org/park-keeper/
+
+> 停車好工具是一款免費的 PWA 停車位置記錄與導航工具，由 haotool.org 出品。
+
+## 功能
+
+- 記錄停車位置：車牌號碼、樓層區域、GPS 座標
+- 拍攝車位照片，自動壓縮儲存
+- 羅盤導航：利用 GPS 和裝置方向感測器找回愛車
+- 室內模式：GPS 訊號弱時自動切換計步器估算距離
+- 四種介面主題：Zen、Nitro、Kawaii、Classic
+- 三語言：繁體中文、English、日本語
+- 離線使用：IndexedDB 本地儲存，完全隱私
+- PWA 安裝：可新增至主畫面
+
+## 頁面
+
+- [首頁](https://app.haotool.org/park-keeper/): 停車紀錄列表與快速新增
+- [關於](https://app.haotool.org/park-keeper/about/): 功能介紹與隱私政策
+- [設定](https://app.haotool.org/park-keeper/settings/): 主題、語言、快取管理
+
+## 技術
+
+- React 19 + TypeScript + Vite 7
+- Leaflet 地圖 (Taiwan WMTS)
+- Framer Motion 動畫
+- i18next 國際化
+- IndexedDB 離線儲存
+- vite-react-ssg 靜態預渲染
+- VitePWA Service Worker
