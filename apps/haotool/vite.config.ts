@@ -244,24 +244,28 @@ export default defineConfig(({ mode }) => {
       // [fix:2025-12-13] 使用 onPageRendered hook 注入 JSON-LD 和 Meta Tags
       // [fix:2026-02-12] 移除重複 description 與替換 title，避免 SEO 重複內容
       async onPageRendered(route, renderedHTML) {
-        // 動態導入 SEO 配置
         const { getJsonLdForRoute, jsonLdToScriptTags } = await import('./src/seo/jsonld');
         const { getMetaTagsForRoute } = await import('./src/seo/meta-tags');
 
-        // 1. 生成 Meta Tags（包含 <title> 和 <meta name="description">）
         const metaTags = getMetaTagsForRoute(route, buildTime);
-
-        // 2. 生成 JSON-LD Script Tags
         const jsonLd = getJsonLdForRoute(route, buildTime);
         const scriptTags = jsonLdToScriptTags(jsonLd);
 
-        // 3. 移除 index.html 的重複 <meta name="description">（避免 SEO 重複內容）
-        let html = renderedHTML.replace(/<meta[^>]*name="description"[^>]*>/gis, '');
+        let html = renderedHTML;
 
-        // 4. 移除 index.html 的靜態 <title>（由 metaTags 中的 <title> 替換）
+        // Remove all SEO tags from index.html to avoid duplicates
         html = html.replace(/<title>[^<]*<\/title>/gi, '');
+        html = html.replace(/<meta[^>]*name="description"[^>]*>/gis, '');
+        html = html.replace(/<meta[^>]*name="keywords"[^>]*>/gis, '');
+        html = html.replace(/<meta[^>]*name="robots"[^>]*>/gis, '');
+        html = html.replace(/<meta[^>]*name="author"[^>]*>/gis, '');
+        html = html.replace(/<link[^>]*rel="canonical"[^>]*>/gis, '');
+        html = html.replace(/<meta[^>]*property="og:[^"]*"[^>]*>/gis, '');
+        html = html.replace(/<meta[^>]*name="twitter:[^"]*"[^>]*>/gis, '');
+        html = html.replace(/<!-- SEO Meta Tags -->/gi, '');
+        html = html.replace(/<!-- Open Graph \/ Facebook -->/gi, '');
+        html = html.replace(/<!-- Twitter -->/gi, '');
 
-        // 5. 將 Meta Tags 和 JSON-LD 一起注入到 </head> 前
         return html.replace('</head>', `${metaTags}\n${scriptTags}</head>`);
       },
     },
