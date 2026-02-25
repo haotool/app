@@ -257,6 +257,20 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
             url: `${SITE_URL}/ratewise/`,
             description: '即時匯率換算工具，整合 30 天歷史數據視覺化。',
           },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: '停車好工具 ParkKeeper',
+            url: `${SITE_URL}/park-keeper/`,
+            description: '智慧停車記錄與導航 PWA，支援停車位置快速記錄與回車導航。',
+          },
+          {
+            '@type': 'ListItem',
+            position: 4,
+            name: '地震知識小學堂',
+            url: `${SITE_URL}/quake-school/`,
+            description: '互動式地震衛教平台，提供測驗與防災知識學習內容。',
+          },
         ],
       },
     };

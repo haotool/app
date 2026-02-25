@@ -1,4 +1,4 @@
-# RateWise 部署指南
+# Monorepo 靜態站台部署指南（含 Park-Keeper）
 
 > 最小可行部署方案 - 基於 Docker 多階段構建與 Nginx
 
@@ -16,8 +16,9 @@ pnpm dev
 # 執行測試
 pnpm test
 
-# 建置生產版本
+# 建置生產版本（可單獨建置 Park-Keeper）
 pnpm build:ratewise
+pnpm build:park-keeper
 ```
 
 ### Docker 部署
@@ -53,6 +54,7 @@ curl http://localhost:8080/health
 
 # 訪問應用
 open http://localhost:8080
+open http://localhost:8080/park-keeper/
 ```
 
 #### 4. 停止容器
@@ -99,16 +101,16 @@ docker stop ratewise && docker rm ratewise
 - ✅ **[critical] PWA Manifest 動態更新** (manifest.webmanifest 不快取)
 - ✅ Health check endpoint (/health)
 - ✅ 最小安全標頭 (X-Content-Type-Options, X-Frame-Options)
-- ✅ 子路徑靜態檔（`/ratewise/manifest.webmanifest`、`/ratewise/robots.txt`、`/ratewise/llms.txt`、`/ratewise/sitemap.xml`）具專屬 `location` 規則，避免被 SPA fallback 攔截
+- ✅ 子路徑靜態檔（`/ratewise/*`、`/nihonname/*`、`/quake-school/*`、`/park-keeper/*` 的 `manifest.webmanifest` / `robots.txt` / `llms.txt` / `sitemap.xml`）具專屬 `location` 規則，避免被 SPA fallback 攔截
 - ✅ `/ratewise`（無尾斜線）直返 SPA 入口，避免 Nginx 自動 301 導至 `:8080`
 
 ### Cache 驗證流程
 
-依照 [web.dev Service Worker Lifecycle][ref:web.dev-service-worker:2025-11-09] 與 [nginx add_header 指南][ref:nginx-headers:2025-11-09]，所有 Service Worker 腳本與 `index.html` 必須以 `Cache-Control: no-cache` 送出。部署前請在 Docker 容器內實際驗證：
+依照 [web.dev Service Worker Lifecycle][ref:web.dev-service-worker:2025-11-09] 與 [nginx add_header 指南][ref:nginx-headers:2025-11-09]，所有 Service Worker 腳本與 `index.html` 必須以 `Cache-Control: no-cache` 送出。部署前請在 Docker 容器內實際驗證（以下示範 RateWise 與 Park-Keeper）：
 
 ```bash
 docker build -t ratewise:test .
-docker run -d --rm -p 8080:80 --name ratewise-test ratewise:test
+docker run -d --rm -p 8080:8080 --name ratewise-test ratewise:test
 
 # Service Worker / registerSW / manifest
 curl -I http://localhost:8080/ratewise/sw.js | grep -i cache-control
@@ -117,6 +119,16 @@ curl -I http://localhost:8080/ratewise/manifest.webmanifest | grep -i cache-cont
 
 # 入口文件
 curl -I http://localhost:8080/ratewise/index.html | grep -i cache-control
+
+# Park-Keeper Service Worker / registerSW / manifest
+curl -I http://localhost:8080/park-keeper/sw.js | grep -i cache-control
+curl -I http://localhost:8080/park-keeper/registerSW.js | grep -i cache-control
+curl -I http://localhost:8080/park-keeper/manifest.webmanifest | grep -i cache-control
+
+# Park-Keeper 入口文件與 SSG 子頁面
+curl -I http://localhost:8080/park-keeper/index.html | grep -i cache-control
+curl -I http://localhost:8080/park-keeper/settings/ | head -n 5
+curl -I http://localhost:8080/park-keeper/about/ | head -n 5
 ```
 
 預期輸出：
@@ -124,7 +136,7 @@ curl -I http://localhost:8080/ratewise/index.html | grep -i cache-control
 - `sw.js` / `registerSW.js`: `Cache-Control: no-cache, no-store, must-revalidate`
 - `manifest.webmanifest` 與 `index.html`: `Cache-Control: no-cache, must-revalidate`
 
-若未符合，請確認 `nginx.conf` 正則是否包含 `/ratewise/*` 路徑，再行建置。
+若未符合，請確認 `nginx.conf` 的 Service Worker / `index.html` 正則是否包含對應子路徑（例如 `/park-keeper/*`），再行建置。
 
 ### CDN Purge 需求
 
@@ -223,6 +235,8 @@ healthy
 - 若版本號仍顯示 `1.1.0`，請確保 builder 映像已安裝 `git` 並保留 `.git` 目錄，供 `git rev-list --count` 取得 Commit 數（參考 MDN start_url、W3C App Manifest、web.dev Learn PWA Update — 擷取於 2025-11-05）
 - 建置時請傳入或使用預設 `VITE_RATEWISE_BASE_PATH=/ratewise/`，避免 PWA `start_url` 回退至根目錄導致安裝後連結錯誤
 - Dockerfile 會在複製編譯結果後建立符號連結 `ratewise -> /usr/share/nginx/html`，確保 `/ratewise/assets/*` 與 `/assets/*` 指向同一份靜態檔案，避免子目錄部署時出現 404
+- `park-keeper` 建置時請傳入或使用預設 `VITE_PARK_KEEPER_BASE_PATH=/park-keeper/`，避免容器中 PWA 與路由資產路徑錯誤
+- Dockerfile 會建立 `park-keeper -> /usr/share/nginx/html/park-keeper-app` 符號連結，搭配 `nginx.conf` 子路徑規則提供 `/park-keeper/` 多頁面 SSG
 
 **Q: 容器無法啟動**
 

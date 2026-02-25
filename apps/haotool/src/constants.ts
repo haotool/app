@@ -60,6 +60,18 @@ export const PROJECTS: Project[] = [
     status: 'live',
   },
   {
+    id: 'park-keeper',
+    title: '停車好工具 ParkKeeper',
+    description:
+      '智慧停車記錄與導航 PWA，支援車位快速記錄、樓層與備註、地圖定位與回車導航。針對手機操作優化，提供多主題介面與離線可用體驗。',
+    tags: ['React 19', 'TypeScript', 'PWA', 'Geolocation', 'Leaflet'],
+    link: 'https://app.haotool.org/park-keeper/',
+    imageUrl: '/projects/park-keeper-og.svg',
+    featured: true,
+    category: ProjectCategory.TOOL,
+    status: 'live',
+  },
+  {
     id: 'quake-school',
     title: '地震知識小學堂',
     description:
@@ -81,7 +93,7 @@ export interface Stat {
 
 export const STATS: Stat[] = [
   { value: '3', suffix: '+', label: '年開發經驗' },
-  { value: '3', label: '上線專案' },
+  { value: '4', label: '上線專案' },
   { value: '100', suffix: '%', label: '開源貢獻' },
   { value: '24', suffix: '/7', label: '持續學習' },
 ];

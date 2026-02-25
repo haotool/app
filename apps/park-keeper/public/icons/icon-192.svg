@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#g)"/>
+  <text x="96" y="130" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="120" font-weight="900" fill="white">P</text>
+  <!-- Small pin accent -->
+  <circle cx="140" cy="52" r="16" fill="#60a5fa" opacity="0.8"/>
+  <path d="M140,40 L146,48 L140,60 L134,48 Z" fill="white" opacity="0.9"/>
+</svg>
