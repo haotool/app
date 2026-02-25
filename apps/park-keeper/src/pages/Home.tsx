@@ -833,7 +833,7 @@ export default function Home() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-4">
+      <div className="flex-1 px-4">
         <AnimatePresence mode="wait">
           {activeTab === 'list' ? (
             <motion.div
@@ -880,7 +880,7 @@ export default function Home() {
             />
           )}
         </AnimatePresence>
-      </main>
+      </div>
 
       {/* Bottom nav */}
       <nav

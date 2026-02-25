@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ParkingRecord } from '@app/park-keeper/types';
 
 export const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -20,7 +20,32 @@ export const getBearing = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 };
 
-const estimateMagneticDeclination = (_lat: number, lng: number) => lng / 10 - 5;
+/**
+ * IGRF-13 simplified model for Taiwan/East-Asia region.
+ * For global precision, use a full WMM/IGRF lookup table.
+ */
+export const estimateMagneticDeclination = (lat: number, lng: number) => {
+  const baseDec = -4.5;
+  const latCorr = (lat - 25) * 0.15;
+  const lngCorr = (lng - 121) * 0.12;
+  return baseDec + latCorr + lngCorr;
+};
+
+/**
+ * Exponential Moving Average low-pass filter for heading smoothing.
+ * Handles circular wraparound (0/360 boundary) correctly.
+ */
+function smoothHeading(prev: number, raw: number, alpha = 0.3): number {
+  let diff = raw - prev;
+  if (diff > 180) diff -= 360;
+  else if (diff < -180) diff += 360;
+  return (((prev + alpha * diff) % 360) + 360) % 360;
+}
+
+const STEP_THRESHOLD = 11.5;
+const STEP_DEBOUNCE_MS = 400;
+const INDOOR_ACCURACY_THRESHOLD = 20;
+const HEADING_SMOOTHING_ALPHA = 0.25;
 
 export function useNavigation(record: ParkingRecord) {
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
@@ -28,17 +53,35 @@ export function useNavigation(record: ParkingRecord) {
   const [animHeading, setAnimHeading] = useState(0);
   const prevHeadingRef = useRef(0);
   const virtualHeadingRef = useRef(0);
+  const smoothedHeadingRef = useRef(0);
   const [deviceTilt, setDeviceTilt] = useState(0);
   const [distance, setDistance] = useState<number | null>(null);
+  const distanceRef = useRef<number | null>(null);
   const [targetBearing, setTargetBearing] = useState(0);
   const [animTargetBearing, setAnimTargetBearing] = useState(0);
   const prevTargetRef = useRef(0);
   const virtualTargetRef = useRef(0);
   const [stepCount, setStepCount] = useState(0);
   const [isIndoor, setIsIndoor] = useState(false);
+  const isIndoorRef = useRef(false);
   const [magneticDeclination, setMagneticDeclination] = useState(0);
   const watchId = useRef<number | null>(null);
   const lastStepTime = useRef(0);
+
+  const handleMotion = useCallback((e: DeviceMotionEvent) => {
+    if (!isIndoorRef.current) return;
+    const acc = e.accelerationIncludingGravity;
+    if (!acc) return;
+    const mag = Math.sqrt((acc.x ?? 0) ** 2 + (acc.y ?? 0) ** 2 + (acc.z ?? 0) ** 2);
+    const now = Date.now();
+    if (mag > STEP_THRESHOLD && now - lastStepTime.current > STEP_DEBOUNCE_MS) {
+      setStepCount((prev) => prev + 1);
+      lastStepTime.current = now;
+      if (distanceRef.current !== null) {
+        setDistance((d) => Math.max(0, (d ?? 0) - 0.7));
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
@@ -52,9 +95,10 @@ export function useNavigation(record: ParkingRecord) {
           setUserLoc({ lat: uLat, lng: uLng });
           setMagneticDeclination(estimateMagneticDeclination(uLat, uLng));
 
-          if (record.latitude && record.longitude) {
+          if (record.latitude != null && record.longitude != null) {
             const dist = getDistance(uLat, uLng, record.latitude, record.longitude);
             setDistance(dist);
+            distanceRef.current = dist;
             const bearing = getBearing(uLat, uLng, record.latitude, record.longitude);
             let diff = bearing - prevTargetRef.current;
             if (diff > 180) diff -= 360;
@@ -63,44 +107,39 @@ export function useNavigation(record: ParkingRecord) {
             prevTargetRef.current = bearing;
             setTargetBearing(bearing);
             setAnimTargetBearing(virtualTargetRef.current);
-            setIsIndoor(accuracy > 20);
-            if (accuracy <= 20) setStepCount(0);
+
+            const indoor = accuracy > INDOOR_ACCURACY_THRESHOLD;
+            setIsIndoor(indoor);
+            isIndoorRef.current = indoor;
+            if (!indoor) setStepCount(0);
           }
         },
         undefined,
-        { enableHighAccuracy: true },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
       );
     }
 
     const handleOrientation = (e: DeviceOrientationEvent & { webkitCompassHeading?: number }) => {
       let h: number | null = null;
-      if (typeof e.webkitCompassHeading === 'number') h = e.webkitCompassHeading;
-      else if (e.alpha !== null) h = 360 - (e.alpha ?? 0);
+      if (typeof e.webkitCompassHeading === 'number') {
+        h = e.webkitCompassHeading;
+      } else if (e.alpha !== null) {
+        h = 360 - (e.alpha ?? 0);
+      }
 
       if (h !== null) {
-        let diff = h - prevHeadingRef.current;
+        const smoothed = smoothHeading(smoothedHeadingRef.current, h, HEADING_SMOOTHING_ALPHA);
+        smoothedHeadingRef.current = smoothed;
+
+        let diff = smoothed - prevHeadingRef.current;
         if (diff > 180) diff -= 360;
         else if (diff < -180) diff += 360;
         virtualHeadingRef.current += diff;
-        prevHeadingRef.current = h;
-        setHeading(h);
+        prevHeadingRef.current = smoothed;
+        setHeading(smoothed);
         setAnimHeading(virtualHeadingRef.current);
       }
       if (e.beta) setDeviceTilt(Math.abs(e.beta));
-    };
-
-    const handleMotion = (e: DeviceMotionEvent) => {
-      if (!isIndoor) return;
-      const acc = e.accelerationIncludingGravity;
-      if (acc) {
-        const mag = Math.sqrt((acc.x ?? 0) ** 2 + (acc.y ?? 0) ** 2 + (acc.z ?? 0) ** 2);
-        const now = Date.now();
-        if (mag > 11.5 && now - lastStepTime.current > 500) {
-          setStepCount((prev) => prev + 1);
-          lastStepTime.current = now;
-          if (distance !== null) setDistance((d) => Math.max(0, (d ?? 0) - 0.7));
-        }
-      }
     };
 
     const requestPermission = (
@@ -123,7 +162,7 @@ export function useNavigation(record: ParkingRecord) {
       window.removeEventListener('deviceorientation', handleOrientation as EventListener);
       window.removeEventListener('devicemotion', handleMotion);
     };
-  }, [record, isIndoor, distance]);
+  }, [record, handleMotion]);
 
   const trueHeading = (heading + magneticDeclination + 360) % 360;
   const relativeRotation = (targetBearing - trueHeading + 360) % 360;
