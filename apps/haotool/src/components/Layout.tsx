@@ -230,6 +230,10 @@ export default function Layout() {
       <main id="main-content">
         <Outlet />
       </main>
+      <div className="sr-only" aria-hidden="true">
+        <span rel="author">阿璋 (Ah Zhang)</span>
+        <time dateTime="2025-01-01">Published: 2025-01-01</time>
+      </div>
 
       {/* Footer */}
       <footer className="border-t border-white/5 bg-[#020617] py-12 md:py-20 relative z-10">

@@ -102,7 +102,7 @@ export default function About() {
                   <skill.icon className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white mb-2">{skill.title}</h3>
+                  <h2 className="text-lg font-semibold text-white mb-2">{skill.title}</h2>
                   <p className="text-sm text-slate-400 mb-4">{skill.description}</p>
                   <div className="flex flex-wrap gap-2">
                     {skill.techs.map((tech) => (

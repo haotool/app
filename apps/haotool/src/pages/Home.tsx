@@ -747,6 +747,11 @@ export default function Home() {
         </main>
         {/* End main content */}
 
+        <div className="sr-only" aria-hidden="true">
+          <span rel="author">阿璋 (Ah Zhang)</span>
+          <time dateTime="2025-01-01">Published: 2025-01-01</time>
+        </div>
+
         {/* Footer */}
         <footer className="border-t border-white/[0.03] py-8 relative z-10">
           <div className="max-w-7xl mx-auto px-6">
