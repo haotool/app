@@ -136,6 +136,25 @@ function summarizeBuild() {
   }
 }
 
+/**
+ * Copy {dir}/index.html → {dir}.html for non-trailing-slash compatibility
+ * Ensures /about serves the same content as /about/
+ */
+function generateNonTrailingSlashPages() {
+  const ssgDirs = ['projects', 'about', 'contact'];
+  console.log('\n🔗 Generating non-trailing-slash HTML files...');
+
+  for (const dir of ssgDirs) {
+    const indexPath = resolve(distDir, dir, 'index.html');
+    const flatPath = resolve(distDir, `${dir}.html`);
+
+    if (existsSync(indexPath) && !existsSync(flatPath)) {
+      copyFileSync(indexPath, flatPath);
+      console.log(`  ✅ ${dir}/index.html → ${dir}.html`);
+    }
+  }
+}
+
 // Main execution
 console.log('🔧 Running post-build tasks for haotool...');
 
@@ -143,7 +162,10 @@ console.log('🔧 Running post-build tasks for haotool...');
 console.log('\n📝 Fixing HTML files...');
 fixAllHtmlFiles(distDir);
 
-// 2. 驗證 build
+// 2. 生成非尾斜線 HTML
+generateNonTrailingSlashPages();
+
+// 3. 驗證 build
 validateBuild();
 summarizeBuild();
 console.log('\n✅ Post-build complete!\n');
