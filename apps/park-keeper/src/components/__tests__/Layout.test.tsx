@@ -2,12 +2,15 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Layout from '../Layout';
 
-function renderWithRouter() {
+const ROUTER_FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true } as const;
+
+function renderWithRouter(initialEntries: string[] = ['/']) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter future={ROUTER_FUTURE} initialEntries={initialEntries}>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<span>Test content</span>} />
+          <Route path="about" element={<span>About content</span>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -15,28 +18,31 @@ function renderWithRouter() {
 }
 
 describe('Layout', () => {
-  it('should render footer with copyright text', () => {
+  it('should hide footer on immersive app routes', () => {
     renderWithRouter();
-    const year = new Date().getFullYear();
-    expect(screen.getByText(new RegExp(`© ${year}`))).toBeInTheDocument();
+    expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument();
   });
 
-  it('should render author name', () => {
-    renderWithRouter();
+  it('should render footer with copyright text on about route', () => {
+    renderWithRouter(['/about']);
+    expect(screen.getByText(/© 2026/)).toBeInTheDocument();
+  });
+
+  it('should render author name on about route', () => {
+    renderWithRouter(['/about']);
     expect(screen.getByRole('link', { name: '阿璋 (Ah Zhang)' })).toBeInTheDocument();
   });
 
-  it('should render navigation links (About, Settings, Privacy)', () => {
-    renderWithRouter();
+  it('should render navigation links (About, Settings, Privacy) on about route', () => {
+    renderWithRouter(['/about']);
     expect(screen.getByRole('link', { name: 'About' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Privacy' })).toBeInTheDocument();
   });
 
-  it('should have current year in copyright', () => {
-    renderWithRouter();
-    const year = new Date().getFullYear();
-    const copyrightEl = screen.getByText(new RegExp(`© ${year}`));
+  it('should have current year in copyright on about route', () => {
+    renderWithRouter(['/about']);
+    const copyrightEl = screen.getByText(/© 2026/);
     expect(copyrightEl).toBeInTheDocument();
   });
 

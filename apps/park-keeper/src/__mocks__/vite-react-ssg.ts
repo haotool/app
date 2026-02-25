@@ -7,8 +7,13 @@ export function useSSG() {
   return { isClient: true };
 }
 
-export function ClientOnly({ children }: { children: ReactNode }) {
-  return children;
+export function ClientOnly({
+  children,
+}: {
+  children: ReactNode | (() => ReactNode);
+  fallback?: ReactNode;
+}) {
+  return typeof children === 'function' ? children() : children;
 }
 
 export function Head({ children }: { children: ReactNode }) {

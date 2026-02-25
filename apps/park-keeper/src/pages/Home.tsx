@@ -1,29 +1,34 @@
 /**
  * Park-Keeper Home Page
- * Main app view: records list, settings tab, QuickEntry FAB, NavOverlay compass.
+ * Faithfully reproduces the original .example/park-keeper/App.tsx UI/UX
+ * within the monorepo SSG architecture.
  */
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { motion, AnimatePresence, type Variants } from 'motion/react';
+import { motion, AnimatePresence, LayoutGroup, type Variants } from 'motion/react';
 import {
-  Search,
   Plus,
-  List,
-  Settings,
+  Settings as SettingsIcon,
+  Car,
   Trash2,
-  Compass,
-  X,
-  ChevronRight,
-  Camera,
+  Search,
+  Check,
+  List as ListIcon,
+  Palette,
+  Globe,
+  Database,
+  ShieldAlert,
   MapPin,
+  Clock,
+  X,
+  Navigation,
+  Navigation2,
+  Footprints,
+  ArrowUp,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type {
-  ThemeConfig,
-  ParkingRecord,
-  AppSettings,
-  ThemeType,
-  LanguageType,
-} from '@app/park-keeper/types';
+import type { ThemeConfig, ParkingRecord, AppSettings, LanguageType } from '@app/park-keeper/types';
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
@@ -31,948 +36,1135 @@ import { useNavigation } from '@app/park-keeper/hooks/useNavigation';
 
 const MiniMap = lazy(() => import('@app/park-keeper/components/MiniMap'));
 
-// -----------------------------------------------------------------------------
-// BRAND LOGO - Theme-specific SVG
-// -----------------------------------------------------------------------------
-function BrandLogo({ theme, className = '' }: { theme: ThemeConfig; className?: string }) {
-  const c = theme.colors.primary;
-  const size = 36;
+// ---------------------------------------------------------------------------
+// ANIMATION VARIANTS
+// ---------------------------------------------------------------------------
+const pageVariants: Variants = {
+  hidden: { opacity: 0, y: 15, scale: 0.98, filter: 'blur(4px)' },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    filter: 'blur(0px)',
+    transition: { ease: [0.25, 0.46, 0.45, 0.94], duration: 0.4 },
+  },
+  exit: {
+    opacity: 0,
+    y: -10,
+    scale: 1.01,
+    filter: 'blur(2px)',
+    transition: { ease: 'easeIn', duration: 0.25 },
+  },
+};
+
+// ---------------------------------------------------------------------------
+// BRAND LOGO – Original "P" letter designs
+// ---------------------------------------------------------------------------
+function BrandLogo({ theme }: { theme: ThemeConfig }) {
+  const colors = theme.colors;
 
   switch (theme.id) {
     case 'racing':
       return (
-        <svg viewBox="0 0 48 48" width={size} height={size} className={className} aria-hidden>
-          <path
-            d="M8 28 L12 20 L16 24 L20 16 L28 20 L32 12 L40 16 L40 36 L8 36 Z"
-            fill="none"
-            stroke={c}
-            strokeWidth="2"
-            strokeLinejoin="round"
-          />
-          <circle cx="14" cy="36" r="4" fill={c} />
-          <circle cx="34" cy="36" r="4" fill={c} />
-          <path d="M24 16 L24 28" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
+        <div className="flex items-center justify-center">
+          <svg viewBox="0 0 40 40" className="w-8 h-8 drop-shadow-[0_0_8px_rgba(0,242,255,0.6)]">
+            <defs>
+              <linearGradient id="nitroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={colors.primary} />
+                <stop offset="100%" stopColor={colors.secondary} />
+              </linearGradient>
+            </defs>
+            <path
+              d="M 8 32 L 14 8 L 32 8 L 28 20 L 16 20 L 13 32 Z"
+              fill="none"
+              stroke="url(#nitroGrad)"
+              strokeWidth="3"
+              strokeLinecap="square"
+            />
+            <path d="M 32 8 L 36 8" stroke={colors.accent} strokeWidth="3" />
+            <circle cx="22" cy="14" r="2" fill={colors.accent} />
+          </svg>
+        </div>
       );
     case 'cute':
       return (
-        <svg viewBox="0 0 48 48" width={size} height={size} className={className} aria-hidden>
-          <ellipse cx="24" cy="28" rx="14" ry="10" fill={c} opacity="0.9" />
-          <rect x="12" y="20" width="24" height="14" rx="4" fill={c} />
-          <circle cx="18" cy="34" r="4" fill={theme.colors.text} opacity="0.4" />
-          <circle cx="30" cy="34" r="4" fill={theme.colors.text} opacity="0.4" />
-          <path
-            d="M22 14 Q24 10 26 14"
-            fill="none"
-            stroke={c}
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-      );
-    case 'minimalist':
-      return (
-        <svg viewBox="0 0 48 48" width={size} height={size} className={className} aria-hidden>
-          <rect
-            x="10"
-            y="18"
-            width="28"
-            height="16"
-            rx="2"
-            fill="none"
-            stroke={c}
-            strokeWidth="2"
-          />
-          <path d="M16 34 L16 38 M32 34 L32 38" stroke={c} strokeWidth="2" strokeLinecap="round" />
-          <circle cx="16" cy="38" r="2" fill={c} />
-          <circle cx="32" cy="38" r="2" fill={c} />
-        </svg>
+        <div className="flex items-center justify-center">
+          <svg
+            viewBox="0 0 40 40"
+            className="w-10 h-10 transform hover:scale-110 transition-transform duration-300"
+          >
+            <defs>
+              <linearGradient id="cuteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={colors.primary} />
+                <stop offset="100%" stopColor={colors.secondary} />
+              </linearGradient>
+            </defs>
+            <path
+              d="M 12 32 L 12 14 C 12 6 30 6 30 15 C 30 24 12 24 12 24"
+              stroke="url(#cuteGrad)"
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+            <path
+              d="M 12 14 C 12 9 24 9 24 15"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              fill="none"
+              opacity="0.5"
+            />
+            <path
+              d="M 34 32 L 30 36 L 26 32 C 25 31 25 29 26 28 C 27 27 29 27 30 28 L 30 28 L 31 28 C 32 27 34 27 35 28 C 36 29 36 31 35 32 Z"
+              fill={colors.accent}
+              stroke={colors.primary}
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
       );
     case 'literary':
       return (
-        <svg viewBox="0 0 48 48" width={size} height={size} className={className} aria-hidden>
-          <path
-            d="M14 24 L20 16 L26 24 L32 18 L38 26 L38 34 L14 34 Z"
-            fill="none"
-            stroke={c}
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
-          <circle cx="18" cy="34" r="3" fill={c} />
-          <circle cx="34" cy="34" r="3" fill={c} />
-        </svg>
+        <div className="flex items-center justify-center">
+          <svg viewBox="0 0 40 40" className="w-8 h-8">
+            <path
+              d="M 12 32 L 12 10 C 12 8 13 6 18 6 L 24 6 C 30 6 32 10 32 15 C 32 20 28 23 24 23 L 14 23"
+              stroke={colors.primary}
+              strokeWidth="2.5"
+              fill="none"
+            />
+            <path d="M 12 32 L 8 32 M 12 32 L 16 32" stroke={colors.primary} strokeWidth="2.5" />
+            <path d="M 10 8 L 8 8" stroke={colors.primary} strokeWidth="2.5" />
+            <path d="M 22 11 L 22 17" stroke={colors.accent} strokeWidth="2" opacity="0.6" />
+          </svg>
+        </div>
       );
     default:
       return (
-        <svg viewBox="0 0 48 48" width={size} height={size} className={className} aria-hidden>
-          <rect
-            x="12"
-            y="20"
-            width="24"
-            height="14"
-            rx="2"
-            fill="none"
-            stroke={c}
-            strokeWidth="2"
-          />
-          <circle cx="18" cy="36" r="3" fill={c} />
-          <circle cx="30" cy="36" r="3" fill={c} />
-        </svg>
+        <div className="flex items-center justify-center">
+          <svg viewBox="0 0 40 40" className="w-8 h-8">
+            <rect
+              x="6"
+              y="6"
+              width="28"
+              height="28"
+              rx="8"
+              stroke={colors.primary}
+              strokeWidth="2.5"
+              fill="none"
+            />
+            <path
+              d="M 15 28 L 15 12 L 22 12 C 25 12 26 13 26 16 C 26 19 25 20 22 20 L 15 20"
+              stroke={colors.primary}
+              strokeWidth="2.5"
+              fill="none"
+            />
+            <circle cx="28" cy="28" r="4" fill={colors.accent} />
+          </svg>
+        </div>
       );
   }
 }
 
-// -----------------------------------------------------------------------------
-// NAV OVERLAY - Full-screen compass navigation
-// -----------------------------------------------------------------------------
-interface NavOverlayProps {
+// ---------------------------------------------------------------------------
+// NAV OVERLAY – Full-screen compass navigation (original "liquid glass" design)
+// ---------------------------------------------------------------------------
+function NavOverlay({
+  record,
+  theme,
+  onClose,
+}: {
   record: ParkingRecord;
   theme: ThemeConfig;
   onClose: () => void;
-}
-
-function NavOverlay({ record, theme, onClose }: NavOverlayProps) {
+}) {
   const { t } = useTranslation();
   const nav = useNavigation(record);
   const {
     userLoc,
+    heading,
     trueAnimHeading,
     distance,
     stepCount,
-    targetBearing,
+    animTargetBearing,
     relativeRotation,
     isPhoneFlat,
     isIndoor,
+    magneticDeclination,
   } = nav;
 
-  const hasLocation = typeof record.latitude === 'number' && typeof record.longitude === 'number';
+  const isDarkTheme = theme.id === 'racing' || theme.id === 'minimalist';
+  const glassStyle = isDarkTheme
+    ? {
+        bg: 'bg-slate-900/60',
+        border: 'border-white/10',
+        text: 'text-white',
+        subText: 'text-white/60',
+      }
+    : {
+        bg: 'bg-white/60',
+        border: 'border-black/5',
+        text: 'text-slate-900',
+        subText: 'text-slate-900/60',
+      };
+
   const arrived = distance !== null && distance < 8;
 
-  const getDirectionHint = (): string => {
-    if (arrived) return t('nav.arrived');
-    if (relativeRotation >= 345 || relativeRotation <= 15) return t('nav.straight');
-    if (relativeRotation > 15 && relativeRotation < 180) return t('nav.turn_right');
-    return t('nav.turn_left');
-  };
-
-  const vibrate = (p: number | number[] = 10) => {
-    if (navigator.vibrate) navigator.vibrate(p);
-  };
-
-  if (!hasLocation) return null;
+  let directionHint = t('nav.straight');
+  let showLeft = false;
+  let showRight = false;
+  if (relativeRotation > 20 && relativeRotation < 180) {
+    directionHint = t('nav.turn_right');
+    showRight = true;
+  } else if (relativeRotation >= 180 && relativeRotation < 340) {
+    directionHint = t('nav.turn_left');
+    showLeft = true;
+  }
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-black/30 backdrop-blur-sm">
-      {/* Header */}
-      <header
-        className="flex items-center justify-between px-4 pt-safe-top pb-3"
-        style={{ backgroundColor: theme.colors.surface + 'E6', color: theme.colors.text }}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      className="fixed inset-0 z-1000 flex flex-col overflow-hidden font-sans min-h-dvh"
+      style={{ backgroundColor: theme.colors.background }}
+    >
+      {/* 1. Top Header */}
+      <div
+        className="absolute top-0 inset-x-0 h-32 z-30 px-6 pt-safe-top flex justify-between items-start pointer-events-none"
+        style={{
+          background: `linear-gradient(to bottom, ${theme.colors.background} 0%, ${theme.colors.background}E6 60%, transparent 100%)`,
+        }}
       >
-        <div className="flex flex-col">
-          <span className="text-lg font-bold tracking-tight">{record.plateNumber}</span>
-          <span className="text-sm opacity-70">{record.floor}</span>
+        <div className="pointer-events-auto mt-2">
+          <div className="flex items-center gap-2 mb-1">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-md"
+              style={{ backgroundColor: `${theme.colors.primary}20`, color: theme.colors.primary }}
+            >
+              <Car size={16} />
+            </div>
+            <h2
+              className="text-3xl font-black tracking-tighter drop-shadow-sm"
+              style={{ color: theme.colors.text }}
+            >
+              {record.plateNumber}
+            </h2>
+          </div>
+          <div
+            className="flex items-center gap-2 font-black uppercase text-[10px] tracking-[0.2em] opacity-80 pl-10"
+            style={{ color: theme.colors.primary }}
+          >
+            <MapPin size={12} strokeWidth={3} /> {t('record.floor')} • {record.floor}
+          </div>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => {
-            vibrate(10);
-            onClose();
+        <button
+          type="button"
+          onClick={onClose}
+          className="pointer-events-auto w-10 h-10 mt-2 flex items-center justify-center backdrop-blur-2xl rounded-full transition-all active:scale-90 shadow-lg"
+          style={{
+            backgroundColor: `${theme.colors.surface}80`,
+            color: theme.colors.text,
+            border: `1px solid ${theme.colors.text}10`,
           }}
-          className="p-2 rounded-full hover:bg-black/5"
-          aria-label="Close"
         >
-          <X size={24} />
-        </motion.button>
-      </header>
+          <X size={20} />
+        </button>
+      </div>
 
-      {/* Map background */}
-      <div className="absolute inset-0 top-16 z-0">
+      {/* 2. Liquid Glass HUD */}
+      <div className="absolute top-28 left-4 right-4 z-30 pointer-events-none flex flex-col items-center">
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className={`backdrop-blur-2xl saturate-150 border rounded-4xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.1)] flex items-center justify-between relative overflow-hidden w-full max-w-sm ${glassStyle.bg} ${glassStyle.border}`}
+        >
+          <div className="flex items-center gap-4 relative z-10">
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors duration-500 shadow-lg"
+              style={{
+                backgroundColor: isIndoor ? '#fb923c' : theme.colors.primary,
+                color: '#fff',
+              }}
+            >
+              {isIndoor ? (
+                <Footprints size={24} />
+              ) : (
+                <Navigation2 size={24} strokeWidth={3} className="rotate-45" />
+              )}
+            </div>
+            <div>
+              <p
+                className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${glassStyle.subText}`}
+              >
+                {isIndoor ? t('nav.indoor_mode') : t('record.distance')}
+              </p>
+              <div className="flex items-baseline gap-1">
+                <p className={`text-2xl font-black tracking-tight ${glassStyle.text}`}>
+                  {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
+                </p>
+                <span className={`text-xs font-bold uppercase ${glassStyle.subText}`}>
+                  {isIndoor ? t('nav.steps') : 'Meters'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={`h-10 w-px mx-2 opacity-20 ${glassStyle.text === 'text-white' ? 'bg-white' : 'bg-black'}`}
+          />
+
+          <div className="text-right relative z-10 min-w-[80px]">
+            <p
+              className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${glassStyle.subText}`}
+            >
+              {t('record.bearing')}
+            </p>
+            <p
+              className="text-sm font-black uppercase flex flex-col"
+              style={{ color: theme.colors.primary }}
+            >
+              {Math.round(relativeRotation)}°
+              <span className={`text-[10px] opacity-60 mt-0.5 ${glassStyle.text}`}>
+                {directionHint}
+              </span>
+            </p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* 3. Map Layer (Background) */}
+      <div className="flex-1 relative z-0">
         <Suspense
           fallback={
-            <div
-              className="w-full h-full animate-pulse"
-              style={{ backgroundColor: theme.colors.background }}
-            />
+            <div className="w-full h-full" style={{ background: theme.colors.background }} />
           }
         >
-          {userLoc && record.latitude != null && record.longitude != null && (
+          {record.latitude != null && record.longitude != null && (
             <MiniMap
               lat={record.latitude}
               lng={record.longitude}
-              userLat={userLoc.lat}
-              userLng={userLoc.lng}
+              userLat={userLoc?.lat}
+              userLng={userLoc?.lng}
+              heading={heading}
               theme={theme}
               interactive={false}
-              mapKey="nav"
+              className="grayscale-[0.2]"
+              mapKey={`nav-${record.id}`}
             />
           )}
         </Suspense>
       </div>
 
-      {/* Glass HUD */}
+      {/* 4. Professional Compass Deck */}
       <div
-        className="relative z-10 mx-4 mt-4 flex items-center justify-between rounded-2xl px-5 py-4 backdrop-blur-xl"
+        className="absolute bottom-0 inset-x-0 h-[45vh] border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] -mt-8 z-20 overflow-hidden pb-safe-bottom"
         style={{
-          backgroundColor: theme.colors.surface + 'CC',
-          border: `1px solid ${theme.colors.primary}30`,
+          backgroundColor: theme.colors.background,
+          borderColor: `${theme.colors.text}10`,
         }}
       >
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold uppercase opacity-60">{t('record.distance')}</span>
-          <span className="text-xl font-black">
-            {arrived ? (
-              <span style={{ color: theme.colors.accent }}>{t('nav.arrived')}</span>
-            ) : isIndoor ? (
-              `${stepCount} ${t('nav.steps')}`
-            ) : distance !== null ? (
-              `${Math.round(distance)} m`
-            ) : (
-              '--'
-            )}
-          </span>
-        </div>
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] font-bold uppercase opacity-60">{t('record.bearing')}</span>
-          <span className="text-xl font-black">{Math.round(targetBearing)}°</span>
-        </div>
-      </div>
+        <div
+          className="absolute inset-0 opacity-[0.05]"
+          style={{
+            backgroundImage: `radial-gradient(circle at center, ${theme.colors.text} 1px, transparent 1px)`,
+            backgroundSize: '24px 24px',
+          }}
+        />
 
-      {/* Compass dial */}
-      <div className="flex-1 flex items-center justify-center relative z-10 px-6">
-        <div className="relative w-64 h-64">
-          <motion.svg
-            viewBox="0 0 200 200"
-            className="w-full h-full"
-            style={{
-              filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))',
-              transform: `rotate(${-trueAnimHeading}deg)`,
-            }}
-          >
-            <circle
-              cx="100"
-              cy="100"
-              r="95"
-              fill="none"
-              stroke={theme.colors.primary}
-              strokeWidth="2"
-              opacity="0.3"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="85"
-              fill={theme.colors.surface + 'E6'}
-              stroke={theme.colors.primary}
-              strokeWidth="1"
-            />
-            {/* Degree ticks */}
-            {Array.from({ length: 36 }).map((_, i) => {
-              const deg = i * 10;
-              const rad = ((deg - 90) * Math.PI) / 180;
-              const r1 = 85;
-              const r2 = deg % 90 === 0 ? 70 : deg % 30 === 0 ? 78 : 82;
-              const x1 = 100 + r1 * Math.cos(rad);
-              const y1 = 100 + r1 * Math.sin(rad);
-              const x2 = 100 + r2 * Math.cos(rad);
-              const y2 = 100 + r2 * Math.sin(rad);
-              return (
-                <line
-                  key={i}
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke={theme.colors.primary}
-                  strokeWidth={deg % 90 === 0 ? 2 : 1}
-                  opacity={deg % 90 === 0 ? 1 : 0.5}
-                />
-              );
-            })}
-            {/* N E S W labels */}
-            {[
-              { label: t('compass.n'), y: 22 },
-              { label: t('compass.e'), x: 178, y: 100 },
-              { label: t('compass.s'), y: 178 },
-              { label: t('compass.w'), x: 22, y: 100 },
-            ].map(({ label, x = 100, y }) => (
-              <text
-                key={label}
-                x={x}
-                y={y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                style={{
-                  fill: theme.colors.primary,
-                  fontSize: 14,
-                  fontWeight: 'bold',
-                }}
-              >
-                {label}
-              </text>
-            ))}
-            {/* Target arrow - points to bearing relative to phone */}
-            <g transform={`translate(100, 100) rotate(${relativeRotation}) translate(0, -55)`}>
-              <path
-                d="M 0 -20 L -8 12 L 0 8 L 8 12 Z"
-                fill={theme.colors.accent}
-                stroke={theme.colors.text}
-                strokeWidth="1"
-              />
-            </g>
-          </motion.svg>
-        </div>
-      </div>
-
-      {/* Direction hint */}
-      <div
-        className="relative z-10 mx-6 mb-4 rounded-xl py-3 text-center font-bold"
-        style={{
-          backgroundColor: theme.colors.surface + 'E6',
-          color: theme.colors.text,
-        }}
-      >
-        {getDirectionHint()}
-      </div>
-
-      {/* Phone flat alert */}
-      <AnimatePresence>
-        {!isPhoneFlat && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-24 left-6 right-6 z-20 rounded-xl py-3 px-4 flex items-center gap-3"
-            style={{
-              backgroundColor: theme.colors.accent + 'E6',
-              color: theme.colors.text,
-            }}
-          >
-            <Compass size={20} />
-            <span className="text-sm font-bold">{t('nav.hold_flat')}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// -----------------------------------------------------------------------------
-// SETTINGS TAB
-// -----------------------------------------------------------------------------
-interface SettingsTabProps {
-  theme: ThemeConfig;
-  settings: AppSettings;
-  onSettingsChange: (s: Partial<AppSettings>) => void;
-  onSaveSettings: (s: AppSettings) => Promise<void>;
-}
-
-const LANGUAGE_OPTIONS: { code: LanguageType; flag: string; label: string }[] = [
-  { code: 'en', flag: '🇺🇸', label: 'English' },
-  { code: 'zh-TW', flag: '🇹🇼', label: '繁體中文' },
-  { code: 'ja', flag: '🇯🇵', label: '日本語' },
-];
-
-function SettingsTab({ theme, settings, onSettingsChange, onSaveSettings }: SettingsTabProps) {
-  const { t } = useTranslation();
-
-  const handleThemeSelect = (id: ThemeType) => {
-    onSettingsChange({ theme: id });
-  };
-
-  const handleLanguageSelect = (lang: LanguageType) => {
-    onSettingsChange({ language: lang });
-  };
-
-  const handleCacheChange = (days: number) => {
-    onSettingsChange({ cacheDurationDays: days });
-  };
-
-  const handleClearAll = async () => {
-    if (!window.confirm(t('settings.erase') + '?')) return;
-    await dbService.clearAllData();
-    void onSaveSettings(DEFAULT_SETTINGS);
-    if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-  };
-
-  const themeKeys = Object.keys(THEMES) as ThemeType[];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="space-y-8 pb-32"
-    >
-      {/* Theme selection */}
-      <section>
-        <h2 className="text-xs font-black uppercase tracking-widest opacity-60 mb-4">
-          {t('settings.visual')}
-        </h2>
-        <div className="grid grid-cols-2 gap-4">
-          {themeKeys.map((id) => {
-            const tConfig = THEMES[id];
-            if (!tConfig) return null;
-            const isSelected = settings.theme === id;
-            return (
-              <motion.button
-                key={id}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleThemeSelect(id)}
-                className="flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-colors"
-                style={{
-                  backgroundColor: tConfig.colors.surface,
-                  borderColor: isSelected ? tConfig.colors.primary : 'transparent',
-                  boxShadow: isSelected ? `0 0 0 2px ${tConfig.colors.primary}` : undefined,
-                }}
-              >
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: tConfig.colors.primary + '30' }}
-                >
-                  <BrandLogo theme={tConfig} />
-                </div>
-                <span className="text-sm font-bold" style={{ color: tConfig.colors.text }}>
-                  {tConfig.name}
-                </span>
-              </motion.button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Language selection */}
-      <section>
-        <h2 className="text-xs font-black uppercase tracking-widest opacity-60 mb-4">
-          {t('settings.language')}
-        </h2>
-        <div className="flex gap-3">
-          {LANGUAGE_OPTIONS.map((opt) => {
-            const isSelected = settings.language === opt.code;
-            return (
-              <motion.button
-                key={opt.code}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleLanguageSelect(opt.code)}
-                className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl border-2 transition-all"
-                style={{
-                  backgroundColor: isSelected ? theme.colors.primary + '20' : theme.colors.surface,
-                  borderColor: isSelected ? theme.colors.primary : 'transparent',
-                }}
-              >
-                <span className="text-2xl">{opt.flag}</span>
-                <span className="text-xs font-bold" style={{ color: theme.colors.text }}>
-                  {opt.label}
-                </span>
-                {isSelected && (
-                  <motion.div
-                    layoutId="lang-indicator"
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: theme.colors.primary }}
-                  />
-                )}
-              </motion.button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Cache duration */}
-      <section>
-        <h2 className="text-xs font-black uppercase tracking-widest opacity-60 mb-4">
-          {t('settings.storage')}
-        </h2>
-        <div className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span style={{ color: theme.colors.textMuted }}>{t('settings.cache_desc')}</span>
-            <span className="font-bold" style={{ color: theme.colors.primary }}>
-              {settings.cacheDurationDays} {t('settings.days')}
+        <div className="w-full h-full flex flex-col items-center pt-6">
+          {/* Phone Holding Guidance */}
+          <div className="flex flex-col items-center mb-2 animate-bounce">
+            <ArrowUp size={24} style={{ color: theme.colors.primary }} strokeWidth={3} />
+            <span
+              className="text-[10px] font-black uppercase tracking-widest mt-1"
+              style={{ color: theme.colors.primary }}
+            >
+              {t('nav.phone_top')}
             </span>
           </div>
-          <input
-            type="range"
-            min={1}
-            max={30}
-            value={settings.cacheDurationDays}
-            onChange={(e) => handleCacheChange(parseInt(e.target.value, 10))}
-            className="w-full h-2 rounded-full appearance-none cursor-pointer"
-            style={{
-              accentColor: theme.colors.primary,
-            }}
-          />
-        </div>
-      </section>
 
-      {/* Danger zone */}
-      <section>
-        <h2 className="text-xs font-black uppercase tracking-widest opacity-60 mb-4">
-          {t('settings.danger')}
-        </h2>
-        <motion.button
-          whileTap={{ scale: 0.98 }}
-          onClick={() => void handleClearAll()}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-red-500/50 bg-red-500/10 text-red-600 font-bold"
-        >
-          <Trash2 size={18} />
-          {t('settings.erase')}
-        </motion.button>
-      </section>
+          {/* Phone Flat Alert */}
+          <AnimatePresence>
+            {!isPhoneFlat && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="absolute top-20 z-50 flex flex-col items-center backdrop-blur-md px-4 py-2 rounded-full border shadow-lg"
+                style={{
+                  backgroundColor: `${theme.colors.surface}D9`,
+                  borderColor: `${theme.colors.text}10`,
+                }}
+              >
+                <span className="text-[9px] font-black uppercase tracking-widest text-red-500">
+                  {t('nav.hold_flat')}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Main Compass Dial */}
+          <div className="relative w-64 h-64 flex items-center justify-center">
+            {/* Left/Right Hints */}
+            <AnimatePresence>
+              {showLeft && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute -left-8 top-1/2 -translate-y-1/2 flex items-center gap-1"
+                >
+                  <ChevronLeft className="animate-pulse" style={{ color: theme.colors.text }} />
+                  <span className="text-[10px] font-bold" style={{ color: theme.colors.text }}>
+                    {t('nav.turn_left')}
+                  </span>
+                </motion.div>
+              )}
+              {showRight && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute -right-8 top-1/2 -translate-y-1/2 flex items-center gap-1"
+                >
+                  <span className="text-[10px] font-bold" style={{ color: theme.colors.text }}>
+                    {t('nav.turn_right')}
+                  </span>
+                  <ChevronRight className="animate-pulse" style={{ color: theme.colors.text }} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* SVG Compass Ring */}
+            <motion.div
+              className="absolute inset-0"
+              style={{ rotate: -trueAnimHeading }}
+              transition={{ type: 'spring', stiffness: 50, damping: 15 }}
+            >
+              <svg viewBox="0 0 300 300" className="w-full h-full overflow-visible">
+                {Array.from({ length: 36 }).map((_, i) => {
+                  const angle = i * 10;
+                  const isCardinal = i % 9 === 0;
+                  const length = isCardinal ? 20 : 10;
+                  const strokeWidth = isCardinal ? 2 : 1;
+                  return (
+                    <g key={i} transform={`rotate(${angle} 150 150)`}>
+                      <line
+                        x1="150"
+                        y1="10"
+                        x2="150"
+                        y2={10 + length}
+                        stroke={theme.colors.text}
+                        strokeWidth={strokeWidth}
+                        opacity={isCardinal ? 1 : 0.3}
+                      />
+                      {isCardinal && (
+                        <text
+                          x="150"
+                          y="50"
+                          textAnchor="middle"
+                          fill={theme.colors.text}
+                          fontSize="24"
+                          fontWeight="900"
+                          transform={`rotate(${-angle} 150 50)`}
+                        >
+                          {i === 0
+                            ? t('compass.n')
+                            : i === 9
+                              ? t('compass.e')
+                              : i === 18
+                                ? t('compass.s')
+                                : t('compass.w')}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+              </svg>
+            </motion.div>
+
+            {/* Target Pointer */}
+            <motion.div className="absolute inset-0" style={{ rotate: -trueAnimHeading }}>
+              <motion.div
+                className="w-full h-full"
+                style={{ rotate: animTargetBearing }}
+                transition={{ type: 'spring', stiffness: 60, damping: 15 }}
+              >
+                <div className="absolute top-8 left-1/2 -translate-x-1/2">
+                  <div
+                    className="w-0 h-0 border-l-10 border-l-transparent border-r-10 border-r-transparent border-b-30 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                    style={{ borderBottomColor: theme.colors.primary }}
+                  />
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Center Hub / Phone Graphic */}
+            <div
+              className="absolute w-24 h-24 rounded-full border-4 shadow-2xl flex flex-col items-center justify-center z-10 backdrop-blur-sm"
+              style={{ borderColor: `${theme.colors.text}15` }}
+            >
+              <div
+                className="w-10 h-16 border-2 rounded-lg opacity-30 mb-1"
+                style={{ borderColor: theme.colors.text }}
+              />
+              <span
+                className="text-[10px] font-black tracking-widest opacity-80"
+                style={{ color: theme.colors.text }}
+              >
+                {t('nav.guide_hint')}
+              </span>
+            </div>
+          </div>
+
+          {/* Status Footer */}
+          <div className="mt-auto mb-2 flex flex-col items-center">
+            <span
+              className="text-[10px] font-bold opacity-30 tracking-widest mb-2"
+              style={{ color: theme.colors.text }}
+            >
+              {t('nav.declination')} {magneticDeclination > 0 ? '+' : ''}
+              {magneticDeclination.toFixed(1)}°
+            </span>
+            {arrived ? (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="px-8 py-3 bg-green-500 rounded-full text-xs font-black uppercase tracking-[0.3em] text-white shadow-[0_0_30px_rgba(34,197,94,0.4)] animate-bounce"
+              >
+                {t('nav.arrived')}
+              </motion.div>
+            ) : (
+              <div className="h-6" />
+            )}
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 }
 
-// -----------------------------------------------------------------------------
-// RECORD CARD
-// -----------------------------------------------------------------------------
-interface RecordCardProps {
-  record: ParkingRecord;
-  theme: ThemeConfig;
-  onNavigate: () => void;
-  onDelete: () => void;
-}
-
-function RecordCard({ record, theme, onNavigate, onDelete }: RecordCardProps) {
-  const { t } = useTranslation();
-  const hasLocation = typeof record.latitude === 'number' && typeof record.longitude === 'number';
-  const canNavigate = hasLocation;
-
-  const vibrate = (p: number | number[] = 10) => {
-    if (navigator.vibrate) navigator.vibrate(p);
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    vibrate([20, 40]);
-    onDelete();
-  };
-
-  return (
-    <motion.article
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -100 }}
-      className="rounded-2xl overflow-hidden border shadow-sm"
-      style={{
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.primary + '20',
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => canNavigate && (vibrate(10), onNavigate())}
-        className="w-full flex gap-4 p-4 text-left"
-      >
-        {/* Photo thumbnail */}
-        <div className="w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-black/5 flex items-center justify-center">
-          {record.hasPhoto && record.photoData ? (
-            <img src={record.photoData} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <Camera size={24} style={{ color: theme.colors.textMuted }} />
-          )}
-        </div>
-
-        {/* Mini map or placeholder */}
-        <div className="w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-black/5">
-          {hasLocation ? (
-            <Suspense
-              fallback={
-                <div
-                  className="w-full h-full animate-pulse"
-                  style={{ backgroundColor: theme.colors.background }}
-                />
-              }
-            >
-              <MiniMap
-                lat={record.latitude ?? 0}
-                lng={record.longitude ?? 0}
-                theme={theme}
-                interactive={false}
-                mapKey={record.id}
-              />
-            </Suspense>
-          ) : (
-            <div
-              className="w-full h-full flex items-center justify-center"
-              style={{ color: theme.colors.textMuted }}
-            >
-              <MapPin size={20} />
-            </div>
-          )}
-        </div>
-
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div
-            className="font-black text-lg tracking-tight truncate"
-            style={{ color: theme.colors.text }}
-          >
-            {record.plateNumber}
-          </div>
-          <div className="text-sm font-bold mt-0.5" style={{ color: theme.colors.textMuted }}>
-            {record.floor}
-          </div>
-          <div className="text-xs mt-1 opacity-70" style={{ color: theme.colors.textMuted }}>
-            {new Date(record.timestamp).toLocaleString()}
-          </div>
-        </div>
-
-        {canNavigate && (
-          <div className="shrink-0 flex items-center">
-            <ChevronRight size={20} style={{ color: theme.colors.primary }} />
-          </div>
-        )}
-      </button>
-
-      {/* Delete */}
-      <div className="px-4 pb-4 flex justify-end">
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={handleDelete}
-          className="flex items-center gap-1.5 py-2 px-3 rounded-xl text-red-600 text-sm font-bold"
-        >
-          <Trash2 size={14} />
-          {t('record.deleted').toLowerCase()}
-        </motion.button>
-      </div>
-    </motion.article>
-  );
-}
-
-// -----------------------------------------------------------------------------
-// TOAST
-// -----------------------------------------------------------------------------
-function Toast({
-  message,
-  visible,
+// ---------------------------------------------------------------------------
+// SETTING GROUP
+// ---------------------------------------------------------------------------
+function SettingGroup({
+  icon: Icon,
+  title,
+  children,
   theme,
-  onDismiss,
 }: {
-  message: string;
-  visible: boolean;
+  icon: React.ComponentType<{ size: number }>;
+  title: string;
+  children?: React.ReactNode;
   theme: ThemeConfig;
-  onDismiss: () => void;
 }) {
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 50 }}
-          className="fixed bottom-24 left-4 right-4 z-50 rounded-2xl py-4 px-5 shadow-lg"
-          style={{
-            backgroundColor: theme.colors.surface,
-            color: theme.colors.text,
-            border: `1px solid ${theme.colors.primary}30`,
-          }}
-          role="status"
-          aria-live="polite"
-        >
-          <div className="flex items-center justify-between">
-            <span className="font-bold">{message}</span>
-            <button
-              type="button"
-              onClick={onDismiss}
-              className="p-2 -mr-2 rounded-full hover:bg-black/5"
-              aria-label="Dismiss"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className="space-y-3 mb-6">
+      <div className="flex items-center gap-2 px-2 opacity-40">
+        <Icon size={14} />
+        <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme.font}`}>
+          {title}
+        </h3>
+      </div>
+      {children}
+    </div>
   );
 }
 
-// -----------------------------------------------------------------------------
-// HOME PAGE
-// -----------------------------------------------------------------------------
-const listVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.05 },
-  },
-  exit: { opacity: 0 },
-};
-
-export default function Home() {
+// ---------------------------------------------------------------------------
+// SETTINGS TAB – Original design with gradient decorations and animated lang
+// ---------------------------------------------------------------------------
+function SettingsTab({
+  settings,
+  updateSettings,
+  theme,
+}: {
+  settings: AppSettings;
+  updateSettings: (s: AppSettings) => void;
+  theme: ThemeConfig;
+}) {
   const { t, i18n } = useTranslation();
-  const [records, setRecords] = useState<ParkingRecord[]>([]);
+
+  const handleLanguageChange = (lang: LanguageType) => {
+    void i18n.changeLanguage(lang);
+    updateSettings({ ...settings, language: lang });
+  };
+
+  const clearAll = async () => {
+    if (window.confirm(t('settings.erase') + '?')) {
+      await dbService.clearAllData();
+      window.location.reload();
+    }
+  };
+
+  const handleCacheChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const days = parseInt(e.target.value, 10);
+    updateSettings({ ...settings, cacheDurationDays: days });
+    await dbService.cleanupCache(days);
+  };
+
+  return (
+    <div className="h-full overflow-y-auto no-scrollbar pb-32">
+      <div className="px-5 py-6 max-w-md mx-auto">
+        {/* Theme Selection */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <Palette size={14} />
+            <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme.font}`}>
+              {t('settings.visual')}
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {Object.values(THEMES).map((th) => {
+              const isActive = settings.theme === th.id;
+              const decorColor =
+                th.id === 'racing'
+                  ? '#00D4FF'
+                  : th.id === 'cute'
+                    ? '#FF69B4'
+                    : th.id === 'minimalist'
+                      ? '#2C3E50'
+                      : '#8B4513';
+
+              return (
+                <button
+                  key={th.id}
+                  type="button"
+                  onClick={() => updateSettings({ ...settings, theme: th.id })}
+                  className={`relative p-4 h-24 flex items-end overflow-hidden rounded-xl transition-all shadow-sm ${isActive ? 'ring-2 ring-offset-2' : ''}`}
+                  style={
+                    {
+                      backgroundColor: th.colors.background,
+                      color: th.colors.text,
+                      '--tw-ring-color': theme.colors.primary,
+                    } as React.CSSProperties
+                  }
+                >
+                  <div
+                    className="absolute top-0 right-0 w-20 h-20 opacity-10 -mr-6 -mt-6 rounded-full"
+                    style={{ backgroundColor: decorColor }}
+                  />
+                  <div className="flex justify-between items-center w-full relative z-10">
+                    <span className={`font-bold ${th.font}`}>{th.name}</span>
+                    {isActive && (
+                      <div className="bg-green-500 rounded-full p-1">
+                        <Check size={12} color="white" strokeWidth={2} />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Language Selection (Segmented Control Animation) */}
+        <SettingGroup icon={Globe} title={t('settings.language')} theme={theme}>
+          <LayoutGroup>
+            <div className="bg-black/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
+              {[
+                { id: 'en', flag: '🇺🇸', name: 'English' },
+                { id: 'zh-TW', flag: '🇹🇼', name: '繁體中文' },
+                { id: 'ja', flag: '🇯🇵', name: '日本語' },
+              ].map((lang) => {
+                const isActive = settings.language === lang.id;
+                return (
+                  <button
+                    type="button"
+                    key={lang.id}
+                    onClick={() => handleLanguageChange(lang.id as LanguageType)}
+                    className={`flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-colors ${isActive ? '' : 'opacity-60 hover:opacity-100'}`}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeLang"
+                        className="absolute inset-0 rounded-2xl shadow-sm z-[-1]"
+                        style={{ backgroundColor: theme.colors.surface }}
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    <span className="text-xl mb-1 filter drop-shadow-sm">{lang.flag}</span>
+                    <span className="text-[10px] font-bold">{lang.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </LayoutGroup>
+        </SettingGroup>
+
+        {/* Storage & Cache */}
+        <SettingGroup icon={Database} title={t('settings.storage')} theme={theme}>
+          <div
+            className="rounded-3xl overflow-hidden shadow-elevation-1 border border-black/5 p-5"
+            style={{ backgroundColor: theme.colors.surface }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
+                {t('settings.days')}
+              </span>
+              <span className="text-2xl font-black" style={{ color: theme.colors.primary }}>
+                {settings.cacheDurationDays}
+              </span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="30"
+              value={settings.cacheDurationDays}
+              onChange={(e) => void handleCacheChange(e)}
+              className="w-full h-1.5 bg-black/5 rounded-lg appearance-none cursor-pointer accent-current"
+              style={{ accentColor: theme.colors.primary }}
+            />
+            <p className="text-[10px] mt-4 opacity-40 font-medium text-center">
+              {t('settings.cache_desc')}
+            </p>
+          </div>
+        </SettingGroup>
+
+        {/* Danger Zone */}
+        <SettingGroup icon={ShieldAlert} title={t('settings.danger')} theme={theme}>
+          <div
+            className="rounded-3xl overflow-hidden shadow-elevation-1 border border-black/5"
+            style={{ backgroundColor: theme.colors.surface }}
+          >
+            <button
+              type="button"
+              onClick={() => void clearAll()}
+              className="w-full px-5 py-4 flex items-center justify-between active:bg-red-50 group transition-colors"
+            >
+              <span className="text-xs font-black text-red-500 uppercase tracking-widest">
+                {t('settings.erase')}
+              </span>
+              <Trash2
+                size={16}
+                className="text-red-500 opacity-40 group-active:opacity-100 transition-opacity"
+              />
+            </button>
+          </div>
+        </SettingGroup>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// HOME PAGE
+// ---------------------------------------------------------------------------
+interface HomeProps {
+  initialTab?: 'list' | 'settings';
+}
+
+export default function Home({ initialTab = 'list' }: HomeProps) {
+  const { t, i18n } = useTranslation();
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
-  const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'list' | 'settings'>('list');
-  const [quickEntryOpen, setQuickEntryOpen] = useState(false);
+  const [records, setRecords] = useState<ParkingRecord[]>([]);
+  const [currentTab, setCurrentTab] = useState<'list' | 'settings'>(initialTab);
+  const [showQuickEntry, setShowQuickEntry] = useState(false);
   const [navRecord, setNavRecord] = useState<ParkingRecord | null>(null);
-  const [toast, setToast] = useState({ message: '', visible: false });
-  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [toast, setToast] = useState<string | null>(null);
 
-  const theme = THEMES[settings.theme] ?? THEMES['minimalist'] ?? THEMES['racing'];
+  const minimalistTheme = THEMES['minimalist'];
+  const theme = THEMES[settings.theme] ?? minimalistTheme ?? THEMES['racing'];
   if (!theme) throw new Error('Theme config not found');
-
-  const showToast = useCallback((message: string) => {
-    setToast({ message, visible: true });
-    const tId = setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 3000);
-    return () => clearTimeout(tId);
-  }, []);
 
   const loadRecords = useCallback(async () => {
     const data = await dbService.getRecords();
     setRecords(data);
   }, []);
 
-  const loadSettings = useCallback(async () => {
-    const data = await dbService.getSettings();
-    setSettings(data);
+  useEffect(() => {
+    const init = async () => {
+      const savedSettings = await dbService.getSettings();
+      setSettings(savedSettings);
+      void i18n.changeLanguage(savedSettings.language);
+      await loadRecords();
+    };
+    void init();
+  }, [i18n, loadRecords]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--color-primary', theme.colors.primary);
+    document.documentElement.style.setProperty('--color-bg', theme.colors.background);
+    document.documentElement.style.setProperty('--color-surface', theme.colors.surface);
+    document.documentElement.style.setProperty('--color-text', theme.colors.text);
+
+    const hex = theme.colors.primary.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    document.documentElement.style.setProperty('--color-primary-rgb', `${r}, ${g}, ${b}`);
+  }, [theme]);
+
+  const updateSettings = useCallback((next: AppSettings) => {
+    setSettings(next);
+    void dbService.saveSettings(next);
   }, []);
 
-  useEffect(() => {
-    const load = async () => {
-      await loadRecords();
-      await loadSettings();
-      setIsLoading(false);
-    };
-    void load();
-  }, [loadRecords, loadSettings]);
-
-  useEffect(() => {
-    void i18n.changeLanguage(settings.language);
-  }, [settings.language, i18n]);
-
-  const handleSaveRecord = useCallback(
-    async (partial: Partial<ParkingRecord>) => {
-      const record: ParkingRecord = {
+  const handleSave = useCallback(
+    async (data: Partial<ParkingRecord>) => {
+      const newRecord: ParkingRecord = {
         id: crypto.randomUUID(),
-        plateNumber: partial.plateNumber ?? 'N/A',
-        floor: partial.floor ?? '1F',
-        notes: partial.notes,
+        plateNumber: data.plateNumber ?? 'N/A',
+        floor: data.floor ?? '?',
+        notes: data.notes ?? '',
         timestamp: Date.now(),
-        photoData: partial.photoData,
-        hasPhoto: partial.hasPhoto ?? false,
-        latitude: partial.latitude,
-        longitude: partial.longitude,
+        photoData: data.photoData,
+        hasPhoto: !!data.hasPhoto,
+        latitude: data.latitude,
+        longitude: data.longitude,
       };
-      await dbService.saveRecord(record);
-      setRecords((prev) => [record, ...prev]);
-      showToast(t('record.saved'));
+      await dbService.saveRecord(newRecord);
+      await loadRecords();
+      setToast(t('record.saved'));
+      setTimeout(() => setToast(null), 2500);
+      if (currentTab !== 'list') setCurrentTab('list');
     },
-    [showToast, t],
+    [loadRecords, t, currentTab],
   );
 
-  const handleDeleteRecord = useCallback(
+  const handleDelete = useCallback(
     async (id: string) => {
       await dbService.deleteRecord(id);
-      setRecords((prev) => prev.filter((r) => r.id !== id));
-      showToast(t('record.deleted'));
+      await loadRecords();
+      setToast(t('record.deleted'));
+      setTimeout(() => setToast(null), 2500);
     },
-    [showToast, t],
+    [loadRecords, t],
   );
-
-  const handleSettingsChange = useCallback((patch: Partial<AppSettings>) => {
-    setSettings((prev) => {
-      const next = { ...prev, ...patch };
-      void dbService.saveSettings(next);
-      return next;
-    });
-  }, []);
-
-  const handleSaveSettings = useCallback(async (s: AppSettings) => {
-    await dbService.saveSettings(s);
-    setSettings(s);
-  }, []);
 
   const filteredRecords = records.filter(
     (r) =>
-      r.plateNumber.toLowerCase().includes(search.toLowerCase()) ||
+      r.plateNumber.includes(search.toUpperCase()) ||
       r.floor.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const vibrate = (p: number | number[] = 10) => {
-    if (navigator.vibrate) navigator.vibrate(p);
-  };
-
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
-        backgroundColor: theme.colors.background,
-        color: theme.colors.text,
-        fontFamily: `var(--font-${theme.font})`,
-      }}
-    >
-      {/* Premium header */}
-      <header
-        className="sticky top-0 z-30 px-4 pt-safe-top pb-4"
-        style={{ backgroundColor: theme.colors.background }}
+    <LayoutGroup>
+      <div
+        className="h-screen w-full flex flex-col overflow-hidden font-sans"
+        style={{ backgroundColor: theme.colors.background, color: theme.colors.text }}
       >
-        <div className="flex items-center gap-3 mb-4">
-          <BrandLogo theme={theme} />
-          <h1 className="text-xl font-black tracking-tight">{t('app.title')}</h1>
-        </div>
-        <div className="relative">
-          <Search
-            size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2"
-            style={{ color: theme.colors.textMuted }}
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('record.search')}
-            aria-label={t('record.search')}
-            className="w-full pl-11 pr-4 py-3 rounded-2xl outline-none font-medium"
-            style={{
-              backgroundColor: theme.colors.surface,
-              color: theme.colors.text,
-              border: `2px solid ${theme.colors.primary}10`,
-            }}
-          />
-        </div>
-      </header>
-
-      {/* Content */}
-      <div className="flex-1 px-4">
-        <AnimatePresence mode="wait">
-          {activeTab === 'list' ? (
-            <motion.div
-              key="list"
-              variants={listVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="space-y-4 pb-36"
-            >
-              {isLoading ? (
-                <div
-                  className="py-16 text-center font-bold"
-                  style={{ color: theme.colors.textMuted }}
+        {/* Premium Header */}
+        <header
+          className="px-6 pb-4 pt-safe-top z-30 backdrop-blur-xl border-b border-black/3"
+          style={{ backgroundColor: theme.colors.background + 'CC' }}
+        >
+          <div className="flex justify-between items-center max-w-md mx-auto w-full pt-4">
+            <div className="flex items-center gap-3">
+              <BrandLogo theme={theme} />
+              {theme.id === 'cute' ? (
+                <h1
+                  className={`text-3xl font-black tracking-normal ${theme.font} bg-clip-text text-transparent bg-linear-to-r from-[#FF9A9E] via-[#FFB7B2] to-[#FF9A9E] drop-shadow-[0_2px_2px_rgba(0,0,0,0.05)]`}
                 >
-                  Loading...
-                </div>
-              ) : filteredRecords.length === 0 ? (
-                <div
-                  className="py-16 text-center font-bold"
-                  style={{ color: theme.colors.textMuted }}
-                >
-                  {t('record.empty')}
-                </div>
+                  ParkKeeper
+                </h1>
               ) : (
-                filteredRecords.map((record) => (
-                  <RecordCard
-                    key={record.id}
-                    record={record}
-                    theme={theme}
-                    onNavigate={() => setNavRecord(record)}
-                    onDelete={() => void handleDeleteRecord(record.id)}
-                  />
-                ))
+                <h1
+                  className={`text-2xl font-black tracking-tight ${theme.font} bg-clip-text text-transparent`}
+                  style={{
+                    backgroundImage: `linear-gradient(to right, ${theme.colors.text}, ${theme.colors.primary})`,
+                  }}
+                >
+                  ParkKeeper
+                </h1>
               )}
+            </div>
+
+            {currentTab === 'list' && (
+              <div className="relative w-32 transition-all focus-within:w-40">
+                <Search
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-30"
+                  size={14}
+                />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t('record.search')}
+                  className="w-full h-10 pl-9 pr-3 rounded-full text-[11px] font-bold outline-none bg-black/4 focus:bg-white/50 focus:shadow-sm transition-all"
+                />
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            {currentTab === 'list' ? (
+              <motion.div
+                key="list"
+                variants={pageVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="h-full overflow-y-auto no-scrollbar px-5 pt-5 pb-40"
+              >
+                <div className="max-w-md mx-auto space-y-5">
+                  {filteredRecords.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 opacity-10">
+                      <Car size={60} strokeWidth={1.5} />
+                      <p className="font-black text-sm uppercase mt-4 tracking-[0.2em]">
+                        {t('record.empty')}
+                      </p>
+                    </div>
+                  ) : (
+                    filteredRecords.map((r) => (
+                      <div
+                        key={r.id}
+                        className="rounded-4xl p-5 shadow-elevation-2 border border-black/1 overflow-hidden"
+                        style={{ backgroundColor: theme.colors.surface }}
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="p-2.5 rounded-2xl"
+                              style={{
+                                backgroundColor: `${theme.colors.primary}15`,
+                                color: theme.colors.primary,
+                              }}
+                            >
+                              <Car size={18} />
+                            </div>
+                            <div>
+                              <h3 className="font-black text-base leading-none mb-1">
+                                {r.plateNumber}
+                              </h3>
+                              <div className="flex items-center gap-3 text-[10px] font-black opacity-30 uppercase tracking-tight">
+                                <span
+                                  className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+                                  style={{
+                                    backgroundColor: `${theme.colors.primary}08`,
+                                    color: theme.colors.primary,
+                                  }}
+                                >
+                                  <MapPin size={10} />
+                                  {r.floor}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock size={10} />
+                                  {new Date(r.timestamp).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(r.id)}
+                            className="p-2 opacity-10 hover:opacity-100 hover:text-red-500 transition-all"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+
+                        {/* Photo + Map row */}
+                        <div className="flex gap-2.5 h-36 mb-4">
+                          <div className="flex-[1.2] rounded-2xl overflow-hidden bg-black/5 shadow-inner">
+                            {r.photoData ? (
+                              <img
+                                src={r.photoData}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center opacity-20">
+                                <Plus size={20} />
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setNavRecord(r)}
+                            className="flex-1 rounded-2xl overflow-hidden bg-black/5 shadow-inner border border-black/2 cursor-pointer active:scale-95 transition-transform group relative"
+                          >
+                            {r.latitude != null && r.longitude != null ? (
+                              <Suspense
+                                fallback={
+                                  <div className="w-full h-full animate-pulse bg-gray-200" />
+                                }
+                              >
+                                <MiniMap
+                                  lat={r.latitude}
+                                  lng={r.longitude}
+                                  theme={theme}
+                                  interactive={false}
+                                  mapKey={r.id}
+                                />
+                              </Suspense>
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center opacity-20 text-[8px] font-black uppercase tracking-widest">
+                                No Map
+                              </div>
+                            )}
+                            <div
+                              className="absolute inset-0 z-10 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                              style={{ backgroundColor: `${theme.colors.primary}66` }}
+                            >
+                              <Navigation
+                                size={28}
+                                className="text-white drop-shadow-2xl animate-bounce mb-1"
+                              />
+                              <span className="text-[8px] font-black text-white uppercase tracking-widest">
+                                NAVIGATE
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+
+                        {r.notes && (
+                          <p className="text-[11px] opacity-60 bg-black/2 p-3 rounded-2xl font-medium leading-relaxed italic">
+                            &ldquo;{r.notes}&rdquo;
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="settings"
+                variants={pageVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="h-full"
+              >
+                <SettingsTab settings={settings} updateSettings={updateSettings} theme={theme} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+
+        {/* QuickEntry */}
+        <QuickEntry
+          theme={theme}
+          onSave={handleSave}
+          isVisible={showQuickEntry}
+          onClose={() => setShowQuickEntry(false)}
+        />
+
+        {/* NavOverlay */}
+        <AnimatePresence>
+          {navRecord && (
+            <NavOverlay record={navRecord} theme={theme} onClose={() => setNavRecord(null)} />
+          )}
+        </AnimatePresence>
+
+        {/* Bottom Navigation */}
+        <nav
+          className="fixed bottom-0 inset-x-0 h-20 pb-safe-bottom z-30 backdrop-blur-xl border-t border-black/2"
+          style={{ backgroundColor: theme.colors.background + 'CC' }}
+        >
+          <div className="flex h-full max-w-md mx-auto relative px-6">
+            {/* List Tab */}
+            <div className="flex-1 h-full">
+              <button
+                type="button"
+                onClick={() => setCurrentTab('list')}
+                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group"
+              >
+                <div
+                  className={`transition-all duration-300 ${currentTab === 'list' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
+                  style={{ color: currentTab === 'list' ? theme.colors.primary : undefined }}
+                >
+                  <ListIcon size={22} strokeWidth={currentTab === 'list' ? 2.5 : 2} />
+                </div>
+                <span
+                  className={`text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${currentTab === 'list' ? '' : 'opacity-30'}`}
+                  style={{ color: currentTab === 'list' ? theme.colors.primary : undefined }}
+                >
+                  {t('tab.list')}
+                </span>
+
+                {currentTab === 'list' && (
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute bottom-0 w-8 h-1 rounded-t-full"
+                    style={{ backgroundColor: theme.colors.primary }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </button>
+            </div>
+
+            {/* FAB spacer */}
+            <div className="w-20" />
+
+            {/* Centered FAB */}
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2">
+              <motion.button
+                type="button"
+                onClick={() => setShowQuickEntry(true)}
+                whileTap={{ scale: 0.9, rotate: 90 }}
+                whileHover={{ scale: 1.05 }}
+                className="w-16 h-16 rounded-full flex items-center justify-center shadow-elevation-3 border-4 transition-colors"
+                style={{
+                  backgroundColor: theme.colors.primary,
+                  borderColor: theme.colors.background,
+                  boxShadow: `${theme.colors.primary}66 0px 8px 25px`,
+                }}
+              >
+                <Plus size={32} stroke="#fff" strokeWidth={3} />
+              </motion.button>
+            </div>
+
+            {/* Settings Tab */}
+            <div className="flex-1 h-full">
+              <button
+                type="button"
+                onClick={() => setCurrentTab('settings')}
+                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group"
+              >
+                <div
+                  className={`transition-all duration-300 ${currentTab === 'settings' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
+                  style={{ color: currentTab === 'settings' ? theme.colors.primary : undefined }}
+                >
+                  <SettingsIcon size={22} strokeWidth={currentTab === 'settings' ? 2.5 : 2} />
+                </div>
+                <span
+                  className={`text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${currentTab === 'settings' ? '' : 'opacity-30'}`}
+                  style={{ color: currentTab === 'settings' ? theme.colors.primary : undefined }}
+                >
+                  {t('tab.settings')}
+                </span>
+
+                {currentTab === 'settings' && (
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute bottom-0 w-8 h-1 rounded-t-full"
+                    style={{ backgroundColor: theme.colors.primary }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        {/* Toast (centered pill) */}
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="fixed bottom-24 left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
+              style={{ backgroundColor: theme.colors.primary, color: '#fff' }}
+            >
+              <span className="text-[11px] font-black uppercase tracking-widest">{toast}</span>
             </motion.div>
-          ) : (
-            <SettingsTab
-              key="settings"
-              theme={theme}
-              settings={settings}
-              onSettingsChange={handleSettingsChange}
-              onSaveSettings={handleSaveSettings}
-            />
           )}
         </AnimatePresence>
       </div>
-
-      {/* Bottom nav */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 flex pb-safe-bottom px-4 py-3 gap-2 z-40"
-        style={{
-          backgroundColor: theme.colors.surface + 'F5',
-          borderTop: `1px solid ${theme.colors.primary}15`,
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => {
-            vibrate(10);
-            setActiveTab('list');
-          }}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold transition-colors ${
-            activeTab === 'list' ? 'text-white' : ''
-          }`}
-          style={{
-            backgroundColor: activeTab === 'list' ? theme.colors.primary : 'transparent',
-            color: activeTab === 'list' ? theme.colors.surface : theme.colors.textMuted,
-          }}
-        >
-          <List size={20} />
-          {t('tab.list')}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            vibrate(10);
-            setActiveTab('settings');
-          }}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold transition-colors ${
-            activeTab === 'settings' ? 'text-white' : ''
-          }`}
-          style={{
-            backgroundColor: activeTab === 'settings' ? theme.colors.primary : 'transparent',
-            color: activeTab === 'settings' ? theme.colors.surface : theme.colors.textMuted,
-          }}
-        >
-          <Settings size={20} />
-          {t('tab.settings')}
-        </button>
-      </nav>
-
-      {/* FAB */}
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        whileHover={{ scale: 1.05 }}
-        onClick={() => {
-          vibrate(20);
-          setQuickEntryOpen(true);
-        }}
-        className="fixed bottom-24 right-6 z-40 w-14 h-14 rounded-full shadow-lg flex items-center justify-center"
-        style={{
-          backgroundColor: theme.colors.primary,
-          color: theme.colors.surface,
-        }}
-        aria-label="Add parking record"
-      >
-        <Plus size={28} strokeWidth={3} />
-      </motion.button>
-
-      {/* QuickEntry */}
-      <QuickEntry
-        theme={theme}
-        onSave={handleSaveRecord}
-        isVisible={quickEntryOpen}
-        onClose={() => setQuickEntryOpen(false)}
-      />
-
-      {/* NavOverlay */}
-      <AnimatePresence>
-        {navRecord?.latitude != null && navRecord?.longitude != null && navRecord && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100]"
-          >
-            <NavOverlay record={navRecord} theme={theme} onClose={() => setNavRecord(null)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Toast */}
-      <Toast
-        message={toast.message}
-        visible={toast.visible}
-        theme={theme}
-        onDismiss={() => setToast((prev) => ({ ...prev, visible: false }))}
-      />
-    </div>
+    </LayoutGroup>
   );
 }
