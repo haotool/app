@@ -41,7 +41,7 @@ export const PROJECTS: Project[] = [
     description:
       '輸入你的中文姓氏，瞬間產生道地的日文名字與諧音梗。支援 100+ 漢姓對照，提供羅馬拼音、歷史來源說明，並可一鍵分享至社群。Built with React 19, TypeScript, Vite SSG，Lighthouse SEO 100/100。',
     tags: ['React 19', 'TypeScript', 'Vite SSG', 'PWA', 'Tailwind CSS'],
-    link: '/nihonname/',
+    link: 'https://app.haotool.org/nihonname/',
     imageUrl: '/projects/nihonname-og.svg',
     featured: true,
     category: ProjectCategory.CREATIVE,
@@ -53,7 +53,7 @@ export const PROJECTS: Project[] = [
     description:
       '即時匯率換算工具，整合 30 天歷史數據視覺化圖表。支援 13+ 幣別、離線使用 (PWA)、深色模式。技術棧：React 19, TypeScript, lightweight-charts, Service Worker。',
     tags: ['React 19', 'TypeScript', 'PWA', 'Charts', 'Tailwind CSS'],
-    link: '/ratewise/',
+    link: 'https://app.haotool.org/ratewise/',
     imageUrl: '/projects/ratewise-og.jpg',
     featured: true,
     category: ProjectCategory.TOOL,
@@ -65,7 +65,7 @@ export const PROJECTS: Project[] = [
     description:
       '互動式地震衛教平台，透過 18 道精心設計的測驗題與 SVG 動畫，深入淺出講解地震科學知識。規模看大小，震度看搖晃！支援 PWA 離線使用，隨時隨地學習防災知識。',
     tags: ['React 19', 'TypeScript', 'SVG Animation', 'PWA', 'Tailwind CSS'],
-    link: '/quake-school/',
+    link: 'https://app.haotool.org/quake-school/',
     imageUrl: '/projects/quake-school-og.svg',
     featured: true,
     category: ProjectCategory.EDUCATION,
