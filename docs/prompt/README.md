@@ -38,6 +38,39 @@
 
 ---
 
+### 0.5. 🔍 SEO Perfection Engine｜100 分 SEO 全自動化工作流
+
+**檔案**: `SEO_WORKFLOW_PROMPT.md`
+
+**用途**: 任何新專案的完整 SEO 配置自動化工作流
+
+**核心功能**:
+
+- 技術棧自動偵測引擎（React/Vue/Angular/Astro/Next.js/Nuxt）
+- MCP 工具與 Skills 整合矩陣（9 工具自動調用）
+- 十階段 SEO 完美執行流程
+- SEO 元素 SSOT 規範（robots/sitemap/llms.txt/meta/JSON-LD）
+- AI 搜尋優化（GEO）專項
+- 並行任務排程與角色指派
+- 自動迭代與缺陷修復機制
+- 100 分品質門檻（20 項指標）
+- 完整 TODO 清單模板
+
+**適用場景**:
+
+- 新專案 SEO 從零配置
+- 現有專案 SEO 審計與修復
+- SEO 持續監控與維護
+- AI 搜尋引擎優化（GEO）
+
+**啟動指令**:
+
+```
+請執行 SEO Perfection Engine 完整工作流。
+```
+
+---
+
 ### 1. 🔒 Ultrathink Pro｜資安檢測工作流
 
 **檔案**: `ultrathink_pro_security_workflow.md`
@@ -214,6 +247,7 @@ Agent 會自動：
 docs/prompt/
 ├── README.md                              # 本文檔（索引）
 ├── AUTONOMOUS_AGENT_WORKFLOW.md           # 🤖 超級自動化工作流（核心）
+├── SEO_WORKFLOW_PROMPT.md                 # 🔍 SEO 100分全自動化工作流（新增）
 ├── MCP_QUICK_REFERENCE.md                 # 🚀 MCP 工具快速參考卡
 ├── ultrathink_pro_security_workflow.md    # 🔒 資安檢測工作流
 ├── lighthouse_optimization_workflow.md    # 🚀 效能優化工作流
