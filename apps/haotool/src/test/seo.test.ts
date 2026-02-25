@@ -38,6 +38,17 @@ describe('SEO - JSON-LD', () => {
       expect(collection).toBeDefined();
     });
 
+    it('should include park-keeper in projects CollectionPage', () => {
+      const result = getJsonLdForRoute('/projects/', TEST_BUILD_TIME);
+      const collection = result.find((r) => r['@type'] === 'CollectionPage');
+      const itemList = collection?.mainEntity?.itemListElement;
+
+      expect(Array.isArray(itemList)).toBe(true);
+      expect(itemList?.some((item) => item.url === 'https://app.haotool.org/park-keeper/')).toBe(
+        true,
+      );
+    });
+
     it('should normalize routes with trailing slashes', () => {
       const result1 = getJsonLdForRoute('/about', TEST_BUILD_TIME);
       const result2 = getJsonLdForRoute('/about/', TEST_BUILD_TIME);

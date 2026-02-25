@@ -48,6 +48,13 @@ describe('Constants', () => {
       expect(ratewise).toBeDefined();
       expect(ratewise?.featured).toBe(true);
     });
+
+    it('should include park-keeper project', () => {
+      const parkKeeper = PROJECTS.find((p) => p.id === 'park-keeper');
+      expect(parkKeeper).toBeDefined();
+      expect(parkKeeper?.featured).toBe(true);
+      expect(parkKeeper?.link).toContain('/park-keeper/');
+    });
   });
 
   describe('STATS', () => {
