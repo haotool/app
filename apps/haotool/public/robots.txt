@@ -1,37 +1,52 @@
 # robots.txt for haotool.org
 # https://app.haotool.org/
-# Updated: 2025-12-26
-# [context7:/google/robots-txt:2025-12-15]
 
-User-agent: *
+User-agent: Googlebot
 Allow: /
 
-# AI Crawlers - Allow all major AI search engines
-User-agent: GPTBot
-User-agent: ChatGPT-User
-User-agent: ClaudeBot
-User-agent: PerplexityBot
-User-agent: anthropic-ai
-User-agent: Google-Extended
 User-agent: Bingbot
 Allow: /
 
-# Social Media Crawlers - For rich previews
-User-agent: facebookexternalbot
-User-agent: Twitterbot
-User-agent: LinkedInBot
-User-agent: Slackbot
-User-agent: Discordbot
-User-agent: TelegramBot
+User-agent: GPTBot
 Allow: /
 
-# Security - Disallow sensitive files
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: *
+Allow: /
 Disallow: /sw.js
-Disallow: /service-worker.js
-Disallow: /*.json$
+Disallow: /workbox-*.js
+Disallow: /*.json
 
-# Sitemaps
 Sitemap: https://app.haotool.org/sitemap.xml
-
-# Crawl-delay (optional, for polite crawling)
-Crawl-delay: 1
