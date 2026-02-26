@@ -221,8 +221,56 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
 
       const mapContainer = container.querySelector('[data-testid="map-container"]');
       expect(mapContainer).not.toHaveAttribute('data-maxbounds');
-      expect(mapContainer).toHaveAttribute('data-zoomcontrol', 'true');
+      expect(mapContainer).toHaveAttribute('data-zoomcontrol', 'false');
       expect(Number(mapContainer?.getAttribute('data-minzoom'))).toBeLessThanOrEqual(3);
+    });
+
+    it('should allow gesture zoom on interactive maps without zoom buttons (compass page UX)', () => {
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={true} />,
+      );
+
+      const mapContainer = container.querySelector('[data-testid="map-container"]');
+      expect(mapContainer).toHaveAttribute('data-touchzoom', 'true');
+      expect(mapContainer).toHaveAttribute('data-scrollwheelzoom', 'center');
+      expect(mapContainer).toHaveAttribute('data-doubleclickzoom', 'true');
+      expect(mapContainer).toHaveAttribute('data-zoomcontrol', 'false');
+    });
+
+    it('should support explicit zoom control buttons when requested', () => {
+      const { container } = render(
+        <MiniMap
+          lat={25.033}
+          lng={121.5654}
+          theme={mockTheme}
+          interactive={true}
+          showZoomControl={true}
+        />,
+      );
+
+      const mapContainer = container.querySelector('[data-testid="map-container"]');
+      expect(mapContainer).toHaveAttribute('data-zoomcontrol', 'true');
+    });
+
+    it('should disable zoom on small interactive picker maps while keeping drag interactions', () => {
+      const { container } = render(
+        <MiniMap
+          lat={25.033}
+          lng={121.5654}
+          theme={mockTheme}
+          interactive={true}
+          allowZoom={false}
+          lockBounds={true}
+        />,
+      );
+
+      const mapContainer = container.querySelector('[data-testid="map-container"]');
+      expect(mapContainer).toHaveAttribute('data-dragging', 'true');
+      expect(mapContainer).toHaveAttribute('data-touchzoom', 'false');
+      expect(mapContainer).toHaveAttribute('data-doubleclickzoom', 'false');
+      expect(mapContainer).toHaveAttribute('data-scrollwheelzoom', 'false');
+      expect(mapContainer).toHaveAttribute('data-zoomcontrol', 'false');
+      expect(mapContainer).toHaveAttribute('data-maxbounds');
     });
   });
 
@@ -403,6 +451,29 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
 
       const parentDiv = container.querySelector('.relative.w-full.h-full');
       expect(parentDiv).toHaveAttribute('aria-live', 'polite');
+    });
+
+    it('should render recenter button when enabled on interactive map (Google Maps style)', () => {
+      const { getByRole } = render(
+        <MiniMap
+          lat={25.033}
+          lng={121.5654}
+          theme={mockTheme}
+          interactive={true}
+          showRecenterButton={true}
+          recenterLabel="Recenter to parking location"
+        />,
+      );
+
+      expect(getByRole('button', { name: 'Recenter to parking location' })).toBeInTheDocument();
+    });
+
+    it('should not render recenter button by default', () => {
+      const { queryByRole } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={true} />,
+      );
+
+      expect(queryByRole('button', { name: /recenter/i })).not.toBeInTheDocument();
     });
   });
 

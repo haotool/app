@@ -281,6 +281,9 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
                           lng={location.lng}
                           theme={theme}
                           interactive={true}
+                          allowZoom={false}
+                          showZoomControl={false}
+                          lockBounds={true}
                           onLocationSelect={(la, ln) => setLocation({ lat: la, lng: ln })}
                         />
                       )}

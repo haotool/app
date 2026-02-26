@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { ThemeConfig } from '@app/park-keeper/types';
@@ -11,6 +11,11 @@ interface MiniMapProps {
   heading?: number;
   theme: ThemeConfig;
   interactive?: boolean;
+  allowZoom?: boolean;
+  showZoomControl?: boolean;
+  lockBounds?: boolean;
+  showRecenterButton?: boolean;
+  recenterLabel?: string;
   onLocationSelect?: (lat: number, lng: number) => void;
   className?: string;
   mapKey?: string;
@@ -129,10 +134,14 @@ function MapController({
   center,
   userLoc,
   interactive,
+  zoomEnabled,
+  recenterRequestId,
 }: {
   center: [number, number];
   userLoc?: [number, number];
   interactive: boolean;
+  zoomEnabled: boolean;
+  recenterRequestId: number;
 }) {
   const map = useMap();
   const didInitRef = useRef(false);
@@ -141,7 +150,7 @@ function MapController({
   useEffect(() => {
     const centerKey = `${center[0].toFixed(6)},${center[1].toFixed(6)}`;
     const userKey = userLoc ? `${userLoc[0].toFixed(6)},${userLoc[1].toFixed(6)}` : 'none';
-    const viewportKey = `${interactive ? 'interactive' : 'static'}|${centerKey}|${userKey}`;
+    const viewportKey = interactive ? `interactive|${centerKey}` : `static|${centerKey}|${userKey}`;
 
     if (lastViewportKeyRef.current === viewportKey) {
       return;
@@ -181,13 +190,39 @@ function MapController({
   }, [map]);
 
   useEffect(() => {
+    if (recenterRequestId === 0) return;
+
+    if (interactive) {
+      const currentZoom = typeof map.getZoom === 'function' ? map.getZoom() : DEFAULT_MAP_ZOOM;
+      map.flyTo(center, currentZoom, { animate: true, duration: 0.6, easeLinearity: 0.25 });
+      return;
+    }
+
+    if (userLoc) {
+      const bounds = L.latLngBounds([center, userLoc]);
+      map.fitBounds(bounds, { padding: [80, 80], animate: true });
+      return;
+    }
+
+    map.setView(center, DEFAULT_MAP_ZOOM, { animate: true });
+  }, [center, interactive, map, recenterRequestId, userLoc]);
+
+  useEffect(() => {
     if (interactive) {
       map.dragging.enable();
-      map.touchZoom.enable();
-      map.doubleClickZoom.enable();
-      map.scrollWheelZoom.enable();
-      map.boxZoom.enable();
-      map.keyboard.enable();
+      if (zoomEnabled) {
+        map.touchZoom.enable();
+        map.doubleClickZoom.enable();
+        map.scrollWheelZoom.enable();
+        map.boxZoom.enable();
+        map.keyboard.enable();
+      } else {
+        map.touchZoom.disable();
+        map.doubleClickZoom.disable();
+        map.scrollWheelZoom.disable();
+        map.boxZoom.disable();
+        map.keyboard.disable();
+      }
     } else {
       map.dragging.disable();
       map.touchZoom.disable();
@@ -196,7 +231,7 @@ function MapController({
       map.boxZoom.disable();
       map.keyboard.disable();
     }
-  }, [map, interactive]);
+  }, [map, interactive, zoomEnabled]);
 
   return null;
 }
@@ -241,6 +276,11 @@ export default function MiniMap({
   heading = 0,
   theme,
   interactive = false,
+  allowZoom = interactive,
+  showZoomControl = false,
+  lockBounds = !interactive,
+  showRecenterButton = false,
+  recenterLabel = 'Recenter map',
   onLocationSelect,
   className = '',
   mapKey,
@@ -268,6 +308,9 @@ export default function MiniMap({
     [validUserLat, validUserLng],
   );
   const mapMinZoom = interactive ? INTERACTIVE_MIN_ZOOM : STATIC_MIN_ZOOM;
+  const zoomEnabled = interactive && allowZoom;
+  const shouldLockBounds = lockBounds;
+  const [recenterRequestId, setRecenterRequestId] = useState(0);
 
   // Taiwan NLSC High-Precision Tile Service
   // Source: https://maps.nlsc.gov.tw/S09SOA/homePage.action
@@ -314,31 +357,41 @@ export default function MiniMap({
         maxZoom={20}
         zoomDelta={1}
         zoomSnap={1}
+        zoomAnimationThreshold={8}
+        wheelDebounceTime={60}
+        wheelPxPerZoomLevel={120}
         style={{ width: '100%', height: '100%', background: theme.colors.background }}
-        zoomControl={interactive}
+        zoomControl={interactive && zoomEnabled && showZoomControl}
         attributionControl={false}
         dragging={interactive}
-        touchZoom={interactive}
-        doubleClickZoom={interactive}
-        scrollWheelZoom={interactive ? 'center' : false}
-        boxZoom={interactive}
-        keyboard={interactive}
+        touchZoom={zoomEnabled}
+        doubleClickZoom={zoomEnabled}
+        scrollWheelZoom={zoomEnabled ? 'center' : false}
+        boxZoom={zoomEnabled}
+        keyboard={zoomEnabled}
         preferCanvas={true}
-        maxBounds={interactive ? undefined : maxBounds}
-        maxBoundsViscosity={interactive ? 0 : 1}
+        trackResize={interactive}
+        maxBounds={shouldLockBounds ? maxBounds : undefined}
+        maxBoundsViscosity={shouldLockBounds ? 1 : 0}
         worldCopyJump={false}
         tapTolerance={interactive ? 15 : 0}
       >
         <TileLayer
           url={tileUrl}
-          updateWhenZooming={interactive}
-          updateWhenIdle={!interactive}
-          keepBuffer={interactive ? 4 : 3}
+          updateWhenZooming={zoomEnabled}
+          updateWhenIdle={!interactive || !zoomEnabled}
+          keepBuffer={zoomEnabled ? 4 : 2}
           maxNativeZoom={maxNativeZoom}
           noWrap={true}
           crossOrigin="anonymous"
         />
-        <MapController center={centerPosition} userLoc={userPosition} interactive={interactive} />
+        <MapController
+          center={centerPosition}
+          userLoc={userPosition}
+          interactive={interactive}
+          zoomEnabled={zoomEnabled}
+          recenterRequestId={recenterRequestId}
+        />
         {interactive && onLocationSelect ? (
           <DraggableMarker
             position={centerPosition}
@@ -355,6 +408,36 @@ export default function MiniMap({
           <div className="bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-[10px] font-bold shadow-sm border border-white/20 whitespace-nowrap">
             Drag car to adjust
           </div>
+        </div>
+      )}
+      {interactive && showRecenterButton && (
+        <div className="absolute top-3 right-3 z-[450]">
+          <button
+            type="button"
+            aria-label={recenterLabel}
+            title={recenterLabel}
+            onClick={() => setRecenterRequestId((prev) => prev + 1)}
+            className="h-11 w-11 rounded-full bg-white/95 backdrop-blur-sm border border-black/10 shadow-[0_2px_10px_rgba(0,0,0,0.18)] flex items-center justify-center active:scale-95 transition-transform touch-manipulation"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+              className="text-slate-700"
+            >
+              <path
+                d="M12 3V6M12 18V21M3 12H6M18 12H21"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <circle cx="12" cy="12" r="6.25" stroke="currentColor" strokeWidth="1.8" />
+              <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+            </svg>
+          </button>
         </div>
       )}
       {!interactive && (

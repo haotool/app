@@ -351,7 +351,12 @@ function NavOverlay({
               userLng={userLoc?.lng}
               heading={heading}
               theme={theme}
-              interactive={false}
+              interactive={true}
+              allowZoom={true}
+              showZoomControl={false}
+              lockBounds={false}
+              showRecenterButton={true}
+              recenterLabel="Recenter to parking location"
               className="grayscale-[0.2]"
               mapKey={`nav-${record.id}`}
             />
