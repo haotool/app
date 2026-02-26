@@ -1,6 +1,50 @@
 # Claude Code 開發指南
 
 > **適用對象**: 使用 Claude Code 開發本專案的所有開發者與 AI 助手
+> **最後更新**: 2026-02-27T02:57:50+08:00
+> **版本**: v2.1 (整合 `.example/config` 基準：Monorepo 快照、Skills 盤點、QA/Commitlint 規範同步)
+
+---
+
+## 專案快照（Monorepo 現況）
+
+### 核心技術棧
+
+- **Monorepo**: `pnpm workspace`（`apps/*`）
+- **前端框架**: React 19 + TypeScript + Vite 7
+- **路由/輸出**: `react-router-dom` + `vite-react-ssg`
+- **測試**: Vitest + Testing Library + Playwright（部分 app）
+- **PWA**: `vite-plugin-pwa` + Workbox（多個 app 使用，`ratewise` 最重）
+- **樣式**: Tailwind CSS v3/v4（`park-keeper` 已用 v4；其他 app 仍有 v3）
+
+### 主要應用（apps）
+
+- `apps/ratewise`：匯率換算主站（PWA / SEO / 測試密度最高）
+- `apps/nihonname`：日文命名工具（SSG + SEO）
+- `apps/haotool`：作品入口站（含動畫與視覺展示）
+- `apps/quake-school`：地震學習工具（SSG）
+- `apps/park-keeper`：停車紀錄工具（Leaflet + i18n + Tailwind v4）
+
+### Root 常用命令（以 `pnpm` 為準）
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev                     # 預設啟動 @app/ratewise
+pnpm build                   # 建置所有 apps
+pnpm build:ratewise          # 建置單一 app（常用）
+pnpm typecheck
+pnpm test
+pnpm test:coverage
+pnpm test:e2e                # ratewise + nihonname（Playwright）
+pnpm lint
+pnpm format                  # prettier --check .
+pnpm format:fix
+```
+
+### 工作樹注意事項
+
+- 專案可能存在未追蹤的 `.agents/skills/*` 本地 skill 內容，除非任務要求，**不要**任意刪除或覆蓋
+- 修改流程/規範文件時，優先同步更新 `AGENTS.md` 與本文件，避免規則分裂
 
 ---
 
@@ -382,14 +426,25 @@ pnpm build
 ### 2. 品質檢查
 
 ```bash
+# 先跑 hooks（模擬提交流程）
+pre-commit run --all-files
+
+# Repo 品質檢查
 pnpm lint
 pnpm format
 pnpm audit
 ```
 
+### 2.5 CI 失敗預防（格式與 Hook 同步）
+
+- `pnpm install` 會觸發 `prepare`，安裝 Husky hooks
+- `.husky/commit-msg` 會執行 `npx --no -- commitlint --edit $1`
+- `.husky/pre-commit` 會跑 `lint-staged`、`pnpm typecheck`、`pnpm format`，並視變更內容觸發 SSOT 驗證
+- `pnpm format` 在 root 是 `prettier --check .`；若失敗請使用 `pnpm format:fix`
+
 ### 3. 提交規範
 
-**Commit Message 格式**（簡潔有力）:
+**Commit Message 格式**（符合目前 `commitlint.config.cjs` 強化規則）:
 
 ```
 type(scope): 簡短描述改了什麼（50字內）
@@ -397,6 +452,8 @@ type(scope): 簡短描述改了什麼（50字內）
 - 修改點1：具體改動
 - 修改點2：具體改動
 - 修改點3：具體改動
+
+測試：<執行過的檢查或未執行原因>
 ```
 
 **正確範例**:
@@ -408,6 +465,8 @@ fix(ui): 交換匯率顯示順序，主顯示目標貨幣匯率
 - 次要顯示：1 {fromCurrency} = X {toCurrency}
 - 修正趨勢圖計算：fromRate/toRate 替代單一 rates[toCurrency]
 - 修正 useEffect 依賴：[fromCurrency, toCurrency] 確保交換時更新
+
+測試：pnpm --filter @app/ratewise typecheck && pnpm --filter @app/ratewise test -- --run
 ```
 
 **錯誤範例** ❌:
@@ -429,7 +488,22 @@ fix(ui): 修正匯率顯示順序，符合用戶換匯心理預期
 
 （太冗長！commit 不是寫報告）
 
-**Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+**Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+
+**Commitlint 實際硬規則（root `commitlint.config.cjs`）**:
+
+- 標題需包含中文（CJK）
+- 主體第一個非空行必須以 `- ` 開頭
+- 必須包含 `測試：...` 頁尾
+- 禁止常見簡體字（維持繁體中文提交）
+- `type` 必須為小寫且在允許清單中
+
+**自動化提交豁免**（避免卡住 bot / release 流程）:
+
+- `Version Packages`
+- `chore(release): ...`
+- `chore(deps): ...`
+- `build(deps): ...`
 
 **原子化提交原則**:
 
@@ -464,6 +538,90 @@ specs-workflow --action init --featureName "功能名稱" --introduction "簡介
 specs-workflow --action check
 specs-workflow --action complete_task --taskNumber "1"
 ```
+
+### Puppeteer / Playwright MCP（QA 產物規範）
+
+- 截圖檔一律存放在 `screenshots/`，禁止落在專案根目錄
+- `browser_take_screenshot` 必須顯式指定 `filename: "screenshots/<name>.png"`
+- 完成 UI/E2E 驗證前，確認瀏覽器 console 無錯誤（0 errors）
+- `ratewise` PWA / 離線功能驗證需在 `pnpm build && pnpm preview` 環境執行（非 dev mode）
+
+---
+
+## Skills 使用策略與盤點（2026-02-27 新增）
+
+### 來源優先順序（同名衝突處理）
+
+1. `.agents/skills/*`（專案本地）
+2. `~/.agents/skills/*`（使用者全域）
+3. `~/.codex/skills/*`（Codex 全域備援）
+
+### 專案高優先 Skills（建議預設納入思考）
+
+| Skill                       | 來源             | 何時用                                           |
+| --------------------------- | ---------------- | ------------------------------------------------ |
+| `react`                     | `.agents/skills` | React 19 元件、狀態與 render 行為調整            |
+| `vite-react-best-practices` | `.agents/skills` | Vite/SPA/SSG 架構與建置優化                      |
+| `vitest`                    | `.agents/skills` | Vitest 測試、mock、非同步測試                    |
+| `pwa-development`           | `.agents/skills` | Workbox / SW / 離線快取策略（特別是 `ratewise`） |
+| `typescript`                | `.agents/skills` | 型別錯誤、tsconfig、型別設計                     |
+| `wcag-compliance`           | `.agents/skills` | 無障礙稽核與修正                                 |
+| `ui-ux-pro-max`             | `.agents/skills` | 視覺/互動重構與版面品質提升                      |
+| `framer-motion`             | `.agents/skills` | `haotool` 的 `framer-motion` 動畫優化            |
+| `tailwind-v4-shadcn`        | `.agents/skills` | `park-keeper`（Tailwind v4）主題與 CSS 變數問題  |
+| `zod`                       | `.agents/skills` | 新增 schema 驗證、設定驗證時                     |
+
+### 全域補強 Skills（按任務啟用）
+
+| Skill                         | 來源                     | 專案適用性                                      |
+| ----------------------------- | ------------------------ | ----------------------------------------------- |
+| `seo-audit`                   | `~/.agents` / `~/.codex` | 多 app SSG/SEO 驗證常用                         |
+| `audit-website`               | `~/.agents` / `~/.codex` | 網站健康檢查、Broken links、SEO/效能            |
+| `frontend-design`             | `~/.agents` / `~/.codex` | 新頁面/landing page 視覺設計                    |
+| `web-design-guidelines`       | `~/.agents` / `~/.codex` | UI/UX review 與無障礙基線檢查                   |
+| `vercel-react-best-practices` | `~/.agents` / `~/.codex` | React 效能補充規則（與本地 `react` skill 搭配） |
+| `leaflet-mapping`             | `~/.agents`              | `park-keeper` 地圖功能與互動                    |
+| `security-review`             | `~/.codex`               | 新增敏感功能/API/輸入處理時                     |
+| `find-skills`                 | `~/.agents` / `~/.codex` | 現有技能不足時搜尋新 skill                      |
+
+### 已存在於全域 Skills 的重複項（盤點結果）
+
+- `audit-website`
+- `find-skills`
+- `frontend-design`
+- `seo-audit`
+- `vercel-react-best-practices`
+- `web-design-guidelines`
+
+**操作原則**:
+
+- 使用技能前先讀 `SKILL.md`
+- 任務明確提及 skill 名稱或明顯符合 skill 描述時，優先套用該 skill
+- 同一任務只保留最小必要 skill 集合，避免規則互相牴觸
+
+---
+
+## 禁止檔案與 QA 產物規範（從 `.example/config` 納入）
+
+### 禁止建立的臨時文檔
+
+- `*_REPORT*.md`
+- `*_REVIEW*.md`
+- `AUDIT*.md`
+- `ANALYSIS*.md`
+
+### 禁止放在專案根目錄的 QA 圖檔
+
+- `*.png`
+- `*.jpg`
+- `*.jpeg`
+- `*.webp`
+
+### QA 產物處理原則
+
+- 截圖集中在 `screenshots/`
+- 非任務明確要求，不提交 QA 截圖到版本控制
+- 完成 QA 任務前確認 console 0 errors，再回報結果
 
 ---
 
@@ -623,6 +781,7 @@ const version = 'v2.0.0';
 - ✅ CI 全綠 (lint + typecheck + test + build)
 - ✅ Test coverage ≥80%
 - ✅ Build size <500KB
+- ✅ E2E 測試通過（必要時手動驗證 / Playwright）
 - ✅ Code review 通過
 
 ---
@@ -643,8 +802,10 @@ pnpm preview                # 預覽建置結果
 pnpm typecheck              # TypeScript 檢查
 pnpm lint                   # ESLint 檢查
 pnpm format                 # Prettier 格式化
+pnpm format:fix             # Prettier 自動修正
 pnpm test                   # 執行測試
 pnpm test --coverage        # 測試覆蓋率報告
+pnpm test:e2e               # Playwright E2E（ratewise + nihonname）
 ```
 
 ### Monorepo
@@ -734,6 +895,6 @@ Claude Code 的任務是：
 
 ---
 
-**最後更新**: 2025-10-14
-**版本**: v1.0
+**最後更新**: 2026-02-27T02:57:50+08:00
+**版本**: v2.1 (整合 `.example/config` 基準：Monorepo 快照、Skills 盤點、QA/Commitlint 規範同步)
 **維護者**: Claude Code

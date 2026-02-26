@@ -1,8 +1,8 @@
 # AGENT 操作守則與工具說明
 
-> **最後更新**: 2026-02-01T20:54:01+08:00  
+> **最後更新**: 2026-02-27T02:57:50+08:00  
 > **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
-> **版本**: v2.9 (版本 SSOT 驗證加入 CHANGELOG 檢查)  
+> **版本**: v2.11 (整合 .example/config 基準：Skills 盤點、QA 產物規範、Commitlint 規則同步)  
 > **角色**: 自動化代理 (Agents) 負責重複性檢查、端到端驗證與部署流程觸發。本文檔說明所有可用工具與工作流程。
 
 ---
@@ -201,8 +201,8 @@ specs-workflow --action complete_task --taskNumber "1"  # 完成任務
 // 1. 啟動瀏覽器
 browser_navigate --url "http://localhost:4173"
 
-// 2. 截圖
-browser_take_screenshot --filename "homepage.png"
+// 2. 截圖（QA 產物統一存放到 screenshots/）
+browser_take_screenshot --filename "screenshots/homepage.png"
 
 // 3. 互動測試
 browser_click --element "單幣別" --ref "[data-testid='single-mode']"
@@ -300,6 +300,68 @@ gh pr close <pr-number> --comment "延後處理"
 
 ---
 
+### Skills（專案本地 / 全域）盤點與使用策略（2026-02-27 新增）
+
+**技能來源優先順序（避免同名衝突）**:
+
+1. `.agents/skills/*`（專案本地，優先反映本 repo 實際需求）
+2. `~/.agents/skills/*`（使用者全域，偏通用前端/SEO/設計）
+3. `~/.codex/skills/*`（Codex 全域備援與工程通用模式）
+
+**重複 skill 處理原則**:
+
+- 同名 skill 若同時存在於 `~/.agents/skills` 與 `~/.codex/skills`，優先使用 `~/.agents/skills`
+- 若專案內 `.agents/skills` 有同名 skill，優先使用專案版本（通常更貼近現況）
+- 任務明確提到 skill 名稱時，先讀對應 `SKILL.md`，再決定是否需要額外 skill
+
+#### A. 專案高優先 Skills（建議預設考慮）
+
+| Skill                       | 來源             | 適用場景                          | 專案關聯                                |
+| --------------------------- | ---------------- | --------------------------------- | --------------------------------------- |
+| `react`                     | `.agents/skills` | React 19 元件/狀態/效能調整       | 全部 React apps                         |
+| `vite-react-best-practices` | `.agents/skills` | Vite SPA 架構、建置、部署與效能   | 全部 apps（Vite + `vite-react-ssg`）    |
+| `vitest`                    | `.agents/skills` | Vitest 測試撰寫/除錯/mocking      | 全部 apps                               |
+| `pwa-development`           | `.agents/skills` | Service Worker、Workbox、離線快取 | `ratewise`（PWA 重度使用）              |
+| `typescript`                | `.agents/skills` | TS 型別錯誤、tsconfig、型別效能   | 全 repo                                 |
+| `wcag-compliance`           | `.agents/skills` | 無障礙稽核與 WCAG 2.2 AA 修正     | `ratewise`、`nihonname`、`quake-school` |
+| `framer-motion`             | `.agents/skills` | `framer-motion` 動畫與效能優化    | `haotool`                               |
+| `ui-ux-pro-max`             | `.agents/skills` | UI/UX 重構、版面與視覺設計        | `ratewise`、`park-keeper`、`haotool`    |
+| `zod`                       | `.agents/skills` | schema 驗證、設定/輸入驗證        | 新增 API/表單驗證時                     |
+| `tailwind-v4-shadcn`        | `.agents/skills` | Tailwind v4 / CSS 變數 / 主題系統 | `park-keeper`（Tailwind v4）            |
+| `tdd`                       | `.agents/skills` | 紅綠燈迴圈、小步重構              | 功能修復與重構任務                      |
+
+#### B. 全域補強 Skills（按需求啟用）
+
+| Skill                             | 來源                                   | 適用場景                                 | 備註                          |
+| --------------------------------- | -------------------------------------- | ---------------------------------------- | ----------------------------- |
+| `seo-audit`                       | `~/.agents/skills` / `~/.codex/skills` | 技術 SEO 問題診斷、排名與索引排查        | 本 repo 多個 SEO/SSG app 常用 |
+| `audit-website`                   | `~/.agents/skills` / `~/.codex/skills` | 網站健康檢查、Broken links、SEO/效能報告 | 使用 squirrelscan CLI         |
+| `web-design-guidelines`           | `~/.agents/skills` / `~/.codex/skills` | UI 規範/設計審查                         | 前端 review 任務              |
+| `frontend-design`                 | `~/.agents/skills` / `~/.codex/skills` | 建立高辨識度介面                         | 新頁面/落地頁設計             |
+| `vercel-react-best-practices`     | `~/.agents/skills` / `~/.codex/skills` | React 效能與 rerender 模式               | 與本地 `react` skill 搭配     |
+| `find-skills`                     | `~/.agents/skills` / `~/.codex/skills` | 搜尋與安裝新 skills                      | 需求超出現有技能時            |
+| `leaflet-mapping`                 | `~/.agents/skills`                     | Leaflet / react-leaflet 地圖互動         | `park-keeper` 地圖功能        |
+| `mapbox-web-performance-patterns` | `~/.agents/skills`                     | Mapbox GL 效能優化                       | 目前未使用 Mapbox，預備       |
+| `security-review`                 | `~/.codex/skills`                      | 安全檢查清單、輸入/密鑰/API 風險         | 新增敏感功能時                |
+| `frontend-patterns`               | `~/.codex/skills`                      | 通用前端架構/狀態管理模式                | 大型重構時                    |
+| `coding-standards`                | `~/.codex/skills`                      | 通用程式碼風格與品質模式                 | 跨語言/跨 app 重構時          |
+| `tdd-workflow`                    | `~/.codex/skills`                      | 完整 TDD/BDD 工作流                      | 大功能或高風險修復            |
+
+#### C. 當前專案與 Skills 快速對照
+
+- `apps/ratewise`: `react`、`vite-react-best-practices`、`vitest`、`pwa-development`、`wcag-compliance`、`ui-ux-pro-max`
+- `apps/park-keeper`: `react`、`tailwind-v4-shadcn`、`leaflet-mapping`、`typescript`、`vitest`
+- `apps/haotool`: `framer-motion`、`frontend-design`、`seo-audit`、`vite-react-best-practices`
+- `apps/nihonname` / `apps/quake-school`: `react`、`vite-react-best-practices`、`vitest`、`seo-audit`、`wcag-compliance`
+
+#### D. Agent 操作責任（Skills）
+
+- 任務明確提到 skill 名稱，或任務內容明顯符合 skill 描述時，必須先讀該 `SKILL.md`
+- 同一任務只使用最小必要 skill 集合，避免堆疊過多規則造成衝突
+- 若 skill 不可用、檔案缺失或指引不清楚，需在回報中說明並採用次佳方案
+
+---
+
 ## 2. 工作流程
 
 ### 初始建置流程
@@ -343,6 +405,14 @@ pnpm format
 pnpm audit
 ```
 
+### QA 產物與截圖規範（2026-02-27 從 `.example/config` 納入）
+
+- **截圖檔案統一放置**：`screenshots/<name>.png`，禁止放在專案根目錄
+- **Puppeteer / Playwright MCP**：`browser_take_screenshot` 必須顯式傳入 `filename: "screenshots/<name>.png"`
+- **`screenshots/` 為 QA 產物目錄**：不應納入正式提交（除非任務明確要求）
+- **完成 QA 任務前**：需確認瀏覽器 console 無錯誤（0 errors）
+- **重建 Docker / 發版前**：至少確認 `pnpm typecheck`、`pnpm test`、`pnpm build:ratewise` 可通過（或在回報中說明未執行原因）
+
 ### Docker 建置流程
 
 ```bash
@@ -354,7 +424,7 @@ docker run -p 8080:80 ratewise:latest
 
 # 3. 健康檢查 (使用 Puppeteer MCP)
 browser_navigate --url "http://localhost:8080"
-browser_take_screenshot --filename "docker-health-check.png"
+browser_take_screenshot --filename "screenshots/docker-health-check.png"
 ```
 
 ---
@@ -440,20 +510,35 @@ footer
 - `docs`: 文件變更
 - `style`: 格式調整 (不影響程式碼)
 - `refactor`: 重構
+- `perf`: 效能優化
 - `test`: 測試相關
+- `build`: 建置相關
+- `ci`: CI/CD 設定
 - `chore`: 建置工具或輔助工具變更
+- `revert`: 還原提交
 
-**範例**:
+**範例**（符合目前 `commitlint.config.cjs` 強化規則）:
 
 ```
-feat(converter): 新增多幣別即時換算功能
+feat(converter): 新增多幣別即時換算功能與測試規範提示
 
 - 實作 MultiConverter 元件
 - 新增 useCurrencyConverter hook
 - 補齊單元測試
 
-Closes #123
+測試：pnpm typecheck && pnpm test && pnpm build:ratewise
 ```
+
+### Commitlint 與 Husky 同步規則（2026-02-27 升級）
+
+- `.husky/commit-msg` 會執行 `npx --no -- commitlint --edit $1`
+- `commitlint.config.cjs` 強制規則（人工作業提交）：
+  - 標題需包含中文（CJK）
+  - 主體第一個非空行需以 `- ` 條列開頭
+  - 需包含 `測試：...` 頁尾說明
+  - 禁止常見簡體字（維持繁體中文提交）
+  - 允許類型：`feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`
+- 自動化提交豁免（bot/版本發佈）：`Version Packages`、`chore(release): ...`、`chore(deps): ...`、`build(deps): ...`
 
 ### 原子化提交原則
 
@@ -901,8 +986,8 @@ docker logs <container-id>
 
 > **總結**: Agent 的任務是保持流程可靠並回報結果，不參與需求判斷、不做超出授權範圍的操作。所有操作依照本文檔與 `docs/dev/` 文檔執行。
 
-**最後更新**: 2026-02-02T00:07:40+08:00
-**版本**: v2.10 (版本 SSOT 驗證加入版本更新強制檢查)
+**最後更新**: 2026-02-27T02:57:50+08:00
+**版本**: v2.11 (整合 .example/config 基準：Skills 盤點、QA 產物規範、Commitlint 規則同步)
 **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
 
 _本文檔依照 Linus Torvalds 開發哲學產生，所有建議經過實用性驗證。_
