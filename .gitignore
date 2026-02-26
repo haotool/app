@@ -114,3 +114,11 @@ vendor/
 
 # SquirrelScan audit tool configuration
 squirrel.toml
+
+# Agent/AI skill caches
+.agent/
+.agents/skills/*/assets/
+.agents/skills/*/data/
+.agents/skills/*/scripts/
+.agents/skills/*/references/
+.agents/skills/*/AGENTS.md
