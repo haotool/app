@@ -182,6 +182,16 @@ function NavOverlay({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const miniMapText = {
+    markerCarLabel: t('map.marker_car'),
+    markerUserLabel: t('map.marker_you'),
+    legendCurrentLabel: t('map.legend_current'),
+    legendCarLabel: t('map.legend_car'),
+    dragCarHintLabel: t('map.drag_car_hint'),
+    ariaInteractiveSelectionLabel: t('map.aria_interactive_selection'),
+    ariaInteractiveTrackingLabel: t('map.aria_interactive_tracking'),
+    ariaStaticLabel: t('map.aria_static'),
+  };
   const nav = useNavigation(record);
   const {
     userLoc,
@@ -355,8 +365,10 @@ function NavOverlay({
               allowZoom={true}
               showZoomControl={false}
               lockBounds={false}
+              autoFitTrackedPositions={true}
               showRecenterButton={true}
-              recenterLabel="Recenter to parking location"
+              recenterLabel={t('map.recenter_both')}
+              text={miniMapText}
               className="grayscale-[0.2]"
               mapKey={`nav-${record.id}`}
             />
@@ -806,6 +818,16 @@ interface HomeProps {
 
 export default function Home({ initialTab = 'list' }: HomeProps) {
   const { t, i18n } = useTranslation();
+  const miniMapText = {
+    markerCarLabel: t('map.marker_car'),
+    markerUserLabel: t('map.marker_you'),
+    legendCurrentLabel: t('map.legend_current'),
+    legendCarLabel: t('map.legend_car'),
+    dragCarHintLabel: t('map.drag_car_hint'),
+    ariaInteractiveSelectionLabel: t('map.aria_interactive_selection'),
+    ariaInteractiveTrackingLabel: t('map.aria_interactive_tracking'),
+    ariaStaticLabel: t('map.aria_static'),
+  };
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [records, setRecords] = useState<ParkingRecord[]>([]);
   const [currentTab, setCurrentTab] = useState<'list' | 'settings'>(initialTab);
@@ -1043,6 +1065,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                                   lng={r.longitude}
                                   theme={theme}
                                   interactive={false}
+                                  text={miniMapText}
                                   mapKey={r.id}
                                 />
                               </Suspense>

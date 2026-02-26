@@ -5,6 +5,22 @@ import type { ThemeConfig } from '@app/park-keeper/types';
 
 import type { ReactNode } from 'react';
 
+const mockMapInstance = {
+  flyTo: vi.fn(),
+  flyToBounds: vi.fn(),
+  fitBounds: vi.fn(),
+  panTo: vi.fn(),
+  setView: vi.fn(),
+  getZoom: vi.fn(() => 17),
+  invalidateSize: vi.fn(),
+  dragging: { enable: vi.fn(), disable: vi.fn() },
+  touchZoom: { enable: vi.fn(), disable: vi.fn() },
+  doubleClickZoom: { enable: vi.fn(), disable: vi.fn() },
+  scrollWheelZoom: { enable: vi.fn(), disable: vi.fn() },
+  boxZoom: { enable: vi.fn(), disable: vi.fn() },
+  keyboard: { enable: vi.fn(), disable: vi.fn() },
+};
+
 function serializeTestProp(value: unknown): string | undefined {
   if (value === undefined || typeof value === 'function') return undefined;
   if (typeof value === 'object' && value !== null) return JSON.stringify(value);
@@ -61,19 +77,7 @@ vi.mock('react-leaflet', () => ({
     />
   ),
   useMap: () => ({
-    flyTo: vi.fn(),
-    flyToBounds: vi.fn(),
-    fitBounds: vi.fn(),
-    panTo: vi.fn(),
-    setView: vi.fn(),
-    getZoom: vi.fn(() => 17),
-    invalidateSize: vi.fn(),
-    dragging: { enable: vi.fn(), disable: vi.fn() },
-    touchZoom: { enable: vi.fn(), disable: vi.fn() },
-    doubleClickZoom: { enable: vi.fn(), disable: vi.fn() },
-    scrollWheelZoom: { enable: vi.fn(), disable: vi.fn() },
-    boxZoom: { enable: vi.fn(), disable: vi.fn() },
-    keyboard: { enable: vi.fn(), disable: vi.fn() },
+    ...mockMapInstance,
   }),
 }));
 
@@ -223,6 +227,41 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
       expect(mapContainer).not.toHaveAttribute('data-maxbounds');
       expect(mapContainer).toHaveAttribute('data-zoomcontrol', 'false');
       expect(Number(mapContainer?.getAttribute('data-minzoom'))).toBeLessThanOrEqual(3);
+    });
+
+    it('should continuously auto-fit user and car on interactive map when tracking mode is enabled', () => {
+      render(
+        <MiniMap
+          lat={25.033}
+          lng={121.5654}
+          userLat={25.043}
+          userLng={121.5754}
+          theme={mockTheme}
+          interactive={true}
+          autoFitTrackedPositions={true}
+        />,
+      );
+
+      expect(mockMapInstance.fitBounds).toHaveBeenCalled();
+      expect(mockMapInstance.fitBounds).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ animate: false, maxZoom: 17 }),
+      );
+    });
+
+    it('should not auto-fit tracked positions by default on interactive map', () => {
+      render(
+        <MiniMap
+          lat={25.033}
+          lng={121.5654}
+          userLat={25.043}
+          userLng={121.5754}
+          theme={mockTheme}
+          interactive={true}
+        />,
+      );
+
+      expect(mockMapInstance.fitBounds).not.toHaveBeenCalled();
     });
 
     it('should allow gesture zoom on interactive maps without zoom buttons (compass page UX)', () => {
@@ -453,6 +492,23 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
       expect(parentDiv).toHaveAttribute('aria-live', 'polite');
     });
 
+    it('should describe both current and vehicle positions in ARIA label when user location is available', () => {
+      const { container } = render(
+        <MiniMap
+          lat={25.033}
+          lng={121.5654}
+          userLat={25.043}
+          userLng={121.5754}
+          theme={mockTheme}
+          interactive={true}
+        />,
+      );
+
+      const parentDiv = container.querySelector('.relative.w-full.h-full');
+      expect(parentDiv?.getAttribute('aria-label')).toContain('current location');
+      expect(parentDiv?.getAttribute('aria-label')).toContain('vehicle');
+    });
+
     it('should render recenter button when enabled on interactive map (Google Maps style)', () => {
       const { getByRole } = render(
         <MiniMap
@@ -626,6 +682,53 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
       });
 
       expect(userMarker).toBeTruthy();
+    });
+
+    it('should render a clear legend for current location and car on interactive navigation map', () => {
+      const { getByText } = render(
+        <MiniMap
+          lat={25.033}
+          lng={121.5654}
+          userLat={25.043}
+          userLng={121.5754}
+          theme={mockTheme}
+          interactive={true}
+        />,
+      );
+
+      expect(getByText('Current')).toBeInTheDocument();
+      expect(getByText('Car')).toBeInTheDocument();
+    });
+
+    it('should support custom map copy for i18n labels', () => {
+      const { getByText } = render(
+        <MiniMap
+          lat={25.033}
+          lng={121.5654}
+          userLat={25.043}
+          userLng={121.5754}
+          theme={mockTheme}
+          interactive={true}
+          text={{
+            legendCurrentLabel: '目前位置',
+            legendCarLabel: '車輛位置',
+            markerUserLabel: '我',
+            markerCarLabel: '車',
+          }}
+        />,
+      );
+
+      expect(getByText('目前位置')).toBeInTheDocument();
+      expect(getByText('車輛位置')).toBeInTheDocument();
+    });
+
+    it('should not render location legend when user location is not available', () => {
+      const { queryByText } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={true} />,
+      );
+
+      expect(queryByText('Current')).not.toBeInTheDocument();
+      expect(queryByText('Car')).not.toBeInTheDocument();
     });
 
     it('should enable dragging in interactive mode', () => {

@@ -14,16 +14,40 @@ interface MiniMapProps {
   allowZoom?: boolean;
   showZoomControl?: boolean;
   lockBounds?: boolean;
+  autoFitTrackedPositions?: boolean;
   showRecenterButton?: boolean;
   recenterLabel?: string;
+  text?: Partial<MiniMapText>;
   onLocationSelect?: (lat: number, lng: number) => void;
   className?: string;
   mapKey?: string;
 }
 
+export interface MiniMapText {
+  markerCarLabel: string;
+  markerUserLabel: string;
+  legendCurrentLabel: string;
+  legendCarLabel: string;
+  dragCarHintLabel: string;
+  ariaInteractiveSelectionLabel: string;
+  ariaInteractiveTrackingLabel: string;
+  ariaStaticLabel: string;
+}
+
 const DEFAULT_MAP_ZOOM = 17;
 const STATIC_MIN_ZOOM = 10;
 const INTERACTIVE_MIN_ZOOM = 1;
+const DEFAULT_MINI_MAP_TEXT: MiniMapText = {
+  markerCarLabel: 'Car',
+  markerUserLabel: 'You',
+  legendCurrentLabel: 'Current',
+  legendCarLabel: 'Car',
+  dragCarHintLabel: 'Drag car to adjust',
+  ariaInteractiveSelectionLabel: 'Interactive map for parking location selection',
+  ariaInteractiveTrackingLabel:
+    'Interactive map showing current location and parked vehicle location',
+  ariaStaticLabel: 'Static map showing parking location',
+};
 
 /**
  * Clamp latitude to valid range [-90, 90]
@@ -80,7 +104,33 @@ const calculateMaxBounds = (
   ];
 };
 
-const createPremiumCarIcon = (color: string, isInteractive: boolean) => {
+const createMarkerLabelBadge = (label: string, backgroundColor: string) => {
+  return `
+    <div style="
+      position:absolute;
+      top:-18px;
+      left:50%;
+      transform:translateX(-50%);
+      padding:3px 8px;
+      border-radius:999px;
+      background:${backgroundColor};
+      color:#fff;
+      border:1px solid rgba(255,255,255,0.24);
+      box-shadow:0 2px 8px rgba(0,0,0,0.2);
+      font:700 10px/1 system-ui,-apple-system,sans-serif;
+      white-space:nowrap;
+      letter-spacing:0.02em;
+      pointer-events:none;
+      z-index:20;
+    ">${label}</div>`;
+};
+
+const createPremiumCarIcon = (
+  color: string,
+  isInteractive: boolean,
+  showLabel: boolean,
+  markerLabel: string,
+) => {
   const filterDef = isInteractive
     ? `<filter id="carGlow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
@@ -95,19 +145,24 @@ const createPremiumCarIcon = (color: string, isInteractive: boolean) => {
       </circle>`
     : '';
 
+  const label = showLabel ? createMarkerLabelBadge(markerLabel, '#0f172ad9') : '';
+
   const svgString = `
-  <svg viewBox="0 0 40 60" width="40" height="60" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
-    <defs>${filterDef}</defs>
-    <g transform="translate(20,30)">
-      ${pulse}
-      <rect x="-12" y="-24" width="24" height="48" rx="4" fill="${color}" stroke="${color}" stroke-width="0.5" stroke-opacity="0.8" ${isInteractive ? 'filter="url(#carGlow)"' : ''} />
-      <path d="M-9-22L9-22L12-10L-12-10Z" fill="rgba(255,255,255,0.15)"/>
-      <path d="M-7-10Q0-12 7-10L7-4Q0-6-7-4Z" fill="rgba(200,230,255,0.6)" stroke="rgba(255,255,255,0.5)" stroke-width="0.5"/>
-      <rect x="-10" y="-4" width="20" height="20" rx="2" fill="rgba(0,0,0,0.1)"/>
-      <rect x="-7" y="16" width="14" height="4" rx="1" fill="rgba(200,230,255,0.4)"/>
-      <path d="M0-32L3-26L-3-26Z" fill="${color}" stroke="white" stroke-width="1" opacity="0.9"/>
-    </g>
-  </svg>`;
+    <div style="width:40px;height:60px;position:relative;overflow:visible">
+      ${label}
+      <svg viewBox="0 0 40 60" width="40" height="60" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;position:absolute;inset:0">
+        <defs>${filterDef}</defs>
+        <g transform="translate(20,30)">
+          ${pulse}
+          <rect x="-12" y="-24" width="24" height="48" rx="4" fill="${color}" stroke="${color}" stroke-width="0.5" stroke-opacity="0.8" ${isInteractive ? 'filter="url(#carGlow)"' : ''} />
+          <path d="M-9-22L9-22L12-10L-12-10Z" fill="rgba(255,255,255,0.15)"/>
+          <path d="M-7-10Q0-12 7-10L7-4Q0-6-7-4Z" fill="rgba(200,230,255,0.6)" stroke="rgba(255,255,255,0.5)" stroke-width="0.5"/>
+          <rect x="-10" y="-4" width="20" height="20" rx="2" fill="rgba(0,0,0,0.1)"/>
+          <rect x="-7" y="16" width="14" height="4" rx="1" fill="rgba(200,230,255,0.4)"/>
+          <path d="M0-32L3-26L-3-26Z" fill="${color}" stroke="white" stroke-width="1" opacity="0.9"/>
+        </g>
+      </svg>
+    </div>`;
 
   return L.divIcon({
     className: 'premium-car-marker',
@@ -118,11 +173,17 @@ const createPremiumCarIcon = (color: string, isInteractive: boolean) => {
   });
 };
 
-const createUserIcon = (heading = 0, color = '#3b82f6') =>
+const createUserIcon = (
+  heading = 0,
+  color = '#3b82f6',
+  showLabel = false,
+  markerLabel = DEFAULT_MINI_MAP_TEXT.markerUserLabel,
+) =>
   L.divIcon({
     className: 'user-loc-marker',
     html: `
-      <div style="width:24px;height:24px;position:relative;display:flex;align-items:center;justify-content:center">
+      <div style="width:24px;height:24px;position:relative;display:flex;align-items:center;justify-content:center;overflow:visible">
+        ${showLabel ? createMarkerLabelBadge(markerLabel, '#2563ebeb') : ''}
         <div style="position:absolute;top:50%;left:50%;width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-bottom:60px solid ${color}40;transform:translate(-50%,-50%) rotate(${heading}deg);transform-origin:center bottom;margin-top:-30px;pointer-events:none;z-index:0;opacity:0.5"></div>
         <div style="width:16px;height:16px;background:${color};border:3px solid white;border-radius:50%;box-shadow:0 2px 5px rgba(0,0,0,0.3);z-index:10;position:relative"></div>
       </div>`,
@@ -130,17 +191,33 @@ const createUserIcon = (heading = 0, color = '#3b82f6') =>
     iconAnchor: [12, 12],
   });
 
+const fitMapToCarAndUser = (
+  map: L.Map,
+  carPosition: [number, number],
+  userPosition: [number, number],
+  animate: boolean,
+) => {
+  const bounds = L.latLngBounds([carPosition, userPosition]);
+  map.fitBounds(bounds, {
+    padding: [80, 80],
+    animate,
+    maxZoom: DEFAULT_MAP_ZOOM,
+  });
+};
+
 function MapController({
   center,
   userLoc,
   interactive,
   zoomEnabled,
+  autoFitTrackedPositions,
   recenterRequestId,
 }: {
   center: [number, number];
   userLoc?: [number, number];
   interactive: boolean;
   zoomEnabled: boolean;
+  autoFitTrackedPositions: boolean;
   recenterRequestId: number;
 }) {
   const map = useMap();
@@ -150,7 +227,11 @@ function MapController({
   useEffect(() => {
     const centerKey = `${center[0].toFixed(6)},${center[1].toFixed(6)}`;
     const userKey = userLoc ? `${userLoc[0].toFixed(6)},${userLoc[1].toFixed(6)}` : 'none';
-    const viewportKey = interactive ? `interactive|${centerKey}` : `static|${centerKey}|${userKey}`;
+    const viewportKey = interactive
+      ? autoFitTrackedPositions && userLoc
+        ? `interactive-follow|${centerKey}|${userKey}`
+        : `interactive|${centerKey}`
+      : `static|${centerKey}|${userKey}`;
 
     if (lastViewportKeyRef.current === viewportKey) {
       return;
@@ -160,9 +241,8 @@ function MapController({
     if (!didInitRef.current) {
       didInitRef.current = true;
 
-      if (!interactive && userLoc) {
-        const bounds = L.latLngBounds([center, userLoc]);
-        map.fitBounds(bounds, { padding: [80, 80], animate: false });
+      if (userLoc && (!interactive || autoFitTrackedPositions)) {
+        fitMapToCarAndUser(map, center, userLoc, false);
       } else if (!interactive) {
         map.setView(center, DEFAULT_MAP_ZOOM, { animate: false });
       }
@@ -170,9 +250,13 @@ function MapController({
       return;
     }
 
+    if (interactive && autoFitTrackedPositions && userLoc) {
+      fitMapToCarAndUser(map, center, userLoc, true);
+      return;
+    }
+
     if (!interactive && userLoc) {
-      const bounds = L.latLngBounds([center, userLoc]);
-      map.fitBounds(bounds, { padding: [80, 80], animate: false });
+      fitMapToCarAndUser(map, center, userLoc, false);
       return;
     }
 
@@ -182,7 +266,7 @@ function MapController({
     }
 
     map.setView(center, DEFAULT_MAP_ZOOM, { animate: false });
-  }, [center, userLoc, map, interactive]);
+  }, [autoFitTrackedPositions, center, userLoc, map, interactive]);
 
   useEffect(() => {
     const timer = setTimeout(() => map.invalidateSize(), 100);
@@ -192,6 +276,11 @@ function MapController({
   useEffect(() => {
     if (recenterRequestId === 0) return;
 
+    if (interactive && userLoc) {
+      fitMapToCarAndUser(map, center, userLoc, true);
+      return;
+    }
+
     if (interactive) {
       const currentZoom = typeof map.getZoom === 'function' ? map.getZoom() : DEFAULT_MAP_ZOOM;
       map.flyTo(center, currentZoom, { animate: true, duration: 0.6, easeLinearity: 0.25 });
@@ -199,8 +288,7 @@ function MapController({
     }
 
     if (userLoc) {
-      const bounds = L.latLngBounds([center, userLoc]);
-      map.fitBounds(bounds, { padding: [80, 80], animate: true });
+      fitMapToCarAndUser(map, center, userLoc, true);
       return;
     }
 
@@ -279,8 +367,10 @@ export default function MiniMap({
   allowZoom = interactive,
   showZoomControl = false,
   lockBounds = !interactive,
+  autoFitTrackedPositions = false,
   showRecenterButton = false,
   recenterLabel = 'Recenter map',
+  text,
   onLocationSelect,
   className = '',
   mapKey,
@@ -310,6 +400,9 @@ export default function MiniMap({
   const mapMinZoom = interactive ? INTERACTIVE_MIN_ZOOM : STATIC_MIN_ZOOM;
   const zoomEnabled = interactive && allowZoom;
   const shouldLockBounds = lockBounds;
+  const mapText = useMemo<MiniMapText>(() => ({ ...DEFAULT_MINI_MAP_TEXT, ...text }), [text]);
+  const showPositionLabels = interactive && userPosition !== undefined;
+  const showPositionLegend = interactive && userPosition !== undefined;
   const [recenterRequestId, setRecenterRequestId] = useState(0);
 
   // Taiwan NLSC High-Precision Tile Service
@@ -326,18 +419,33 @@ export default function MiniMap({
   const maxNativeZoom = theme.id === 'racing' ? 18 : 20;
 
   const carIcon = useMemo(
-    () => createPremiumCarIcon(theme.colors.primary, interactive),
-    [theme.colors.primary, interactive],
+    () =>
+      createPremiumCarIcon(
+        theme.colors.primary,
+        interactive,
+        showPositionLabels,
+        mapText.markerCarLabel,
+      ),
+    [theme.colors.primary, interactive, mapText.markerCarLabel, showPositionLabels],
   );
   const userIcon = useMemo(
-    () => createUserIcon(heading, interactive ? '#3b82f6' : theme.colors.accent),
-    [heading, interactive, theme.colors.accent],
+    () =>
+      createUserIcon(
+        heading,
+        interactive ? '#3b82f6' : theme.colors.accent,
+        showPositionLabels,
+        mapText.markerUserLabel,
+      ),
+    [heading, interactive, mapText.markerUserLabel, showPositionLabels, theme.colors.accent],
   );
 
   // ARIA label for accessibility
-  const ariaLabel = interactive
-    ? 'Interactive map for parking location selection'
-    : 'Static map showing parking location';
+  const ariaLabel =
+    interactive && userPosition
+      ? mapText.ariaInteractiveTrackingLabel
+      : interactive
+        ? mapText.ariaInteractiveSelectionLabel
+        : mapText.ariaStaticLabel;
 
   return (
     <div
@@ -390,6 +498,7 @@ export default function MiniMap({
           userLoc={userPosition}
           interactive={interactive}
           zoomEnabled={zoomEnabled}
+          autoFitTrackedPositions={autoFitTrackedPositions}
           recenterRequestId={recenterRequestId}
         />
         {interactive && onLocationSelect ? (
@@ -403,10 +512,32 @@ export default function MiniMap({
         )}
         {userPosition && <Marker position={userPosition} icon={userIcon} zIndexOffset={900} />}
       </MapContainer>
+      {showPositionLegend && (
+        <div className="absolute top-3 left-3 z-[430] pointer-events-none">
+          <div className="rounded-2xl bg-white/90 backdrop-blur-md border border-black/10 shadow-[0_4px_16px_rgba(0,0,0,0.12)] px-3 py-2 flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-white shadow-sm" />
+              <span className="text-[10px] font-black tracking-tight text-slate-700 whitespace-nowrap">
+                {mapText.legendCurrentLabel}
+              </span>
+            </div>
+            <div className="h-4 w-px bg-black/10" />
+            <div className="flex items-center gap-1.5">
+              <span
+                className="inline-flex h-2.5 w-2.5 rounded-sm shadow-sm border border-white/70"
+                style={{ backgroundColor: theme.colors.primary }}
+              />
+              <span className="text-[10px] font-black tracking-tight text-slate-700 whitespace-nowrap">
+                {mapText.legendCarLabel}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
       {interactive && onLocationSelect && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[400] pointer-events-none">
           <div className="bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-[10px] font-bold shadow-sm border border-white/20 whitespace-nowrap">
-            Drag car to adjust
+            {mapText.dragCarHintLabel}
           </div>
         </div>
       )}

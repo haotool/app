@@ -45,6 +45,16 @@ const itemVariants: Variants = {
 
 export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickEntryProps) {
   const { t } = useTranslation();
+  const miniMapText = {
+    markerCarLabel: t('map.marker_car'),
+    markerUserLabel: t('map.marker_you'),
+    legendCurrentLabel: t('map.legend_current'),
+    legendCarLabel: t('map.legend_car'),
+    dragCarHintLabel: t('map.drag_car_hint'),
+    ariaInteractiveSelectionLabel: t('map.aria_interactive_selection'),
+    ariaInteractiveTrackingLabel: t('map.aria_interactive_tracking'),
+    ariaStaticLabel: t('map.aria_static'),
+  };
   const [plate, setPlate] = useState('');
   const [selectedFloor, setSelectedFloor] = useState('');
   const [notes, setNotes] = useState('');
@@ -284,6 +294,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
                           allowZoom={false}
                           showZoomControl={false}
                           lockBounds={true}
+                          text={miniMapText}
                           onLocationSelect={(la, ln) => setLocation({ lat: la, lng: ln })}
                         />
                       )}
