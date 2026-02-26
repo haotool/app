@@ -127,7 +127,8 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
 
       const mapContainer = container.querySelector('[data-testid="map-container"]');
       expect(mapContainer).toHaveAttribute('data-maxzoom');
-      expect(Number(mapContainer?.getAttribute('data-maxzoom'))).toBeLessThanOrEqual(19);
+      // NLSC supports maxZoom: 20 for highest precision
+      expect(Number(mapContainer?.getAttribute('data-maxzoom'))).toBeLessThanOrEqual(20);
     });
 
     it('should set defaultZoom within min/max range', () => {
@@ -226,7 +227,8 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
 
       const tileLayer = container.querySelector('[data-testid="tile-layer"]');
       expect(tileLayer).toHaveAttribute('data-maxnativezoom');
-      expect(Number(tileLayer?.getAttribute('data-maxnativezoom'))).toBe(18);
+      // NLSC supports maxNativeZoom: 20, CartoDB: 18
+      expect(Number(tileLayer?.getAttribute('data-maxnativezoom'))).toBe(20);
     });
 
     it('should use crossOrigin for tile loading security', () => {
@@ -356,6 +358,120 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
 
       const parentDiv = container.querySelector('.relative.w-full.h-full');
       expect(parentDiv).toHaveAttribute('aria-live', 'polite');
+    });
+  });
+
+  describe('🔴 RED: Taiwan NLSC High-Precision Tile Service', () => {
+    it('should use NLSC WMTS tile service for Taiwan maps', () => {
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={false} />,
+      );
+
+      const tileLayer = container.querySelector('[data-testid="tile-layer"]');
+      const url = tileLayer?.getAttribute('data-url') ?? '';
+
+      // Should use NLSC WMTS service
+      expect(url).toContain('wmts.nlsc.gov.tw');
+      expect(url).toContain('EMAP');
+    });
+
+    it('should configure maxNativeZoom: 20 for NLSC tile service (highest precision)', () => {
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={false} />,
+      );
+
+      const tileLayer = container.querySelector('[data-testid="tile-layer"]');
+
+      // NLSC supports up to zoom level 20 (0.15m per pixel)
+      expect(tileLayer).toHaveAttribute('data-maxnativezoom', '20');
+    });
+
+    it('should allow maxZoom: 20 for maximum precision viewing', () => {
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={true} />,
+      );
+
+      const mapContainer = container.querySelector('[data-testid="map-container"]');
+
+      // User should be able to zoom to level 20
+      expect(Number(mapContainer?.getAttribute('data-maxzoom'))).toBe(20);
+    });
+
+    it('should use GoogleMapsCompatible tile matrix for NLSC', () => {
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={false} />,
+      );
+
+      const tileLayer = container.querySelector('[data-testid="tile-layer"]');
+      const url = tileLayer?.getAttribute('data-url') ?? '';
+
+      // NLSC WMTS uses GoogleMapsCompatible tile matrix
+      expect(url).toContain('GoogleMapsCompatible');
+    });
+
+    it('should fallback to CartoDB dark theme for racing mode', () => {
+      const racingTheme: ThemeConfig = {
+        ...mockTheme,
+        id: 'racing',
+      };
+
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={racingTheme} interactive={false} />,
+      );
+
+      const tileLayer = container.querySelector('[data-testid="tile-layer"]');
+      const url = tileLayer?.getAttribute('data-url') ?? '';
+
+      // Racing theme should use CartoDB dark tiles (better performance at night)
+      expect(url).toContain('cartocdn.com/dark_all');
+    });
+  });
+
+  describe('🔴 RED: Coordinate Precision Storage (6 decimal places)', () => {
+    it('should preserve 6 decimal places for latitude when rendering', () => {
+      const highPrecisionLat = 25.033964; // 6 decimal places = ~0.11m accuracy
+      const { container } = render(
+        <MiniMap lat={highPrecisionLat} lng={121.5654} theme={mockTheme} />,
+      );
+
+      const mapContainer = container.querySelector('[data-testid="map-container"]');
+      const center = JSON.parse(mapContainer?.getAttribute('data-center') ?? '[]');
+
+      expect(center[0]).toBe(highPrecisionLat);
+      // Verify precision is maintained (not rounded to fewer decimals)
+      expect(center[0].toString()).toContain('033964');
+    });
+
+    it('should preserve 6 decimal places for longitude when rendering', () => {
+      const highPrecisionLng = 121.565432; // 6 decimal places
+      const { container } = render(
+        <MiniMap lat={25.033} lng={highPrecisionLng} theme={mockTheme} />,
+      );
+
+      const mapContainer = container.querySelector('[data-testid="map-container"]');
+      const center = JSON.parse(mapContainer?.getAttribute('data-center') ?? '[]');
+
+      expect(center[1]).toBe(highPrecisionLng);
+      expect(center[1].toString()).toContain('565432');
+    });
+
+    it('should handle marker positioning with high precision coordinates', () => {
+      const lat = 25.033964;
+      const lng = 121.565432;
+      const { container } = render(<MiniMap lat={lat} lng={lng} theme={mockTheme} />);
+
+      const markers = container.querySelectorAll('[data-testid="marker"]');
+      const carMarker = Array.from(markers).find((m) => {
+        const pos = JSON.parse(m.getAttribute('data-position') ?? '[]');
+        return pos[0] === lat && pos[1] === lng;
+      });
+
+      expect(carMarker).toBeTruthy();
+      const position = JSON.parse(carMarker?.getAttribute('data-position') ?? '[]');
+
+      // Verify marker position maintains precision
+      expect(position[0]).toBe(lat);
+      expect(position[1]).toBe(lng);
     });
   });
 

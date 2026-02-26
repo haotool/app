@@ -216,10 +216,18 @@ export default function MiniMap({
     [validLat, validLng, validUserLat, validUserLng],
   );
 
+  // Taiwan NLSC High-Precision Tile Service
+  // Source: https://maps.nlsc.gov.tw/S09SOA/homePage.action
+  // NLSC supports maxNativeZoom: 20 (0.15m per pixel precision)
+  // Best Practice: Use NLSC for Taiwan, fallback to CartoDB for racing theme
   const tileUrl =
     theme.id === 'racing'
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
       : 'https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}';
+
+  // Set maxNativeZoom based on tile service
+  // NLSC supports zoom 20, CartoDB supports zoom 18
+  const maxNativeZoom = theme.id === 'racing' ? 18 : 20;
 
   const carIcon = useMemo(
     () => createPremiumCarIcon(theme.colors.primary, interactive),
@@ -250,7 +258,7 @@ export default function MiniMap({
         center={[validLat, validLng]}
         zoom={17}
         minZoom={10}
-        maxZoom={19}
+        maxZoom={20}
         zoomDelta={0.5}
         style={{ width: '100%', height: '100%', background: theme.colors.background }}
         zoomControl={false}
@@ -265,7 +273,7 @@ export default function MiniMap({
           url={tileUrl}
           updateWhenZooming={false}
           keepBuffer={3}
-          maxNativeZoom={18}
+          maxNativeZoom={maxNativeZoom}
           crossOrigin="anonymous"
         />
         <MapController
