@@ -489,6 +489,7 @@ export default function MiniMap({
           updateWhenZooming={zoomEnabled}
           updateWhenIdle={!interactive || !zoomEnabled}
           keepBuffer={zoomEnabled ? 4 : 2}
+          maxZoom={20}
           maxNativeZoom={maxNativeZoom}
           noWrap={true}
           crossOrigin="anonymous"

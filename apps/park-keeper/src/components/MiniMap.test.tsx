@@ -314,6 +314,70 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
   });
 
   describe('🔴 RED: Tile Layer Optimization (Best Practice #3)', () => {
+    /**
+     * REGRESSION TEST: Map tiles disappear after zooming in
+     * Root cause: TileLayer was missing maxZoom property
+     * Fix: Added maxZoom={20} to TileLayer component
+     * Reference: Leaflet documentation - both maxZoom and maxNativeZoom required for proper tile loading
+     */
+    describe('Regression: Tile disappearing on zoom (Critical Bug Fix)', () => {
+      it('should have TileLayer maxZoom set to prevent tile disappearing when user zooms beyond native tile level', () => {
+        const { container } = render(
+          <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={true} />,
+        );
+
+        const tileLayer = container.querySelector('[data-testid="tile-layer"]');
+
+        // CRITICAL: TileLayer MUST have maxZoom to enable tile upscaling beyond maxNativeZoom
+        // Without this, tiles disappear when user zooms past native tile level
+        expect(tileLayer).toHaveAttribute('data-maxzoom', '20');
+      });
+
+      it('should have both maxZoom and maxNativeZoom configured on TileLayer for NLSC tiles', () => {
+        const { container } = render(
+          <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={false} />,
+        );
+
+        const tileLayer = container.querySelector('[data-testid="tile-layer"]');
+
+        // Both properties are required per Leaflet documentation
+        expect(tileLayer).toHaveAttribute('data-maxzoom', '20');
+        expect(tileLayer).toHaveAttribute('data-maxnativezoom', '20');
+      });
+
+      it('should have both maxZoom and maxNativeZoom configured on TileLayer for CartoDB tiles (racing theme)', () => {
+        const racingTheme: ThemeConfig = {
+          ...mockTheme,
+          id: 'racing',
+        };
+
+        const { container } = render(
+          <MiniMap lat={25.033} lng={121.5654} theme={racingTheme} interactive={true} />,
+        );
+
+        const tileLayer = container.querySelector('[data-testid="tile-layer"]');
+
+        // CartoDB supports native zoom 18, but allows upscaling to 20
+        expect(tileLayer).toHaveAttribute('data-maxzoom', '20');
+        expect(tileLayer).toHaveAttribute('data-maxnativezoom', '18');
+      });
+
+      it('should maintain MapContainer maxZoom equal to or greater than TileLayer maxZoom', () => {
+        const { container } = render(
+          <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={true} />,
+        );
+
+        const mapContainer = container.querySelector('[data-testid="map-container"]');
+        const tileLayer = container.querySelector('[data-testid="tile-layer"]');
+
+        const mapMaxZoom = Number(mapContainer?.getAttribute('data-maxzoom'));
+        const tileMaxZoom = Number(tileLayer?.getAttribute('data-maxzoom'));
+
+        // MapContainer maxZoom must be >= TileLayer maxZoom for proper zooming
+        expect(mapMaxZoom).toBeGreaterThanOrEqual(tileMaxZoom);
+      });
+    });
+
     it('should defer tile refresh until zoom end for static previews', () => {
       const { container } = render(
         <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={false} />,
