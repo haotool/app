@@ -120,10 +120,41 @@ vendor/
 # SquirrelScan audit tool configuration
 squirrel.toml
 
-# Agent/AI skill caches
+# Agent/AI skill caches & symlinks
 .agent/
 .agents/skills/*/assets/
 .agents/skills/*/data/
 .agents/skills/*/scripts/
 .agents/skills/*/references/
 .agents/skills/*/AGENTS.md
+
+# AI tool local skill copies (synced from .agents/skills/)
+.claude/
+.codex/
+.gemini/
+
+# AI tool auto-generated directories
+.codebuddy/
+.commandcode/
+.continue/
+.crush/
+.factory/
+.goose/
+.kilocode/
+.kiro/
+.mcpjam/
+.mux/
+.neovate/
+.openhands/
+.pi/
+.qoder/
+.qwen/
+.roo/
+.trae/
+.windsurf/
+.zencoder/
+skills-lock.json
+/skills/
+
+# Binary assets in skills
+.agents/skills/*/canvas-fonts/
