@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ParkingRecord } from '@app/park-keeper/types';
+import { useOrientationPermission } from './useOrientationPermission';
+import type { OrientationPermissionState } from './useOrientationPermission';
 
 export const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371e3;
@@ -49,7 +51,31 @@ const HEADING_SMOOTHING_ALPHA = 0.25;
 const ARRIVAL_THRESHOLD = 8; // metres – enter "arrived" state
 const DEPARTURE_THRESHOLD = 15; // metres – exit "arrived" state (hysteresis)
 
-export function useNavigation(record: ParkingRecord) {
+export interface UseNavigationResult {
+  userLoc: { lat: number; lng: number } | null;
+  heading: number;
+  animHeading: number;
+  trueAnimHeading: number;
+  deviceTilt: number;
+  distance: number | null;
+  targetBearing: number;
+  animTargetBearing: number;
+  stepCount: number;
+  isIndoor: boolean;
+  magneticDeclination: number;
+  relativeRotation: number;
+  isPhoneFlat: boolean;
+  arrivedState: boolean;
+  hasValidLocation: boolean;
+  /** iOS permission state; 'not-required' on Android/Chrome */
+  orientationPermission: OrientationPermissionState;
+  /** True if the user has previously granted orientation permission (localStorage cache) */
+  previouslyGranted: boolean;
+  /** Call from an onClick handler to trigger iOS permission dialog */
+  requestOrientationPermission: () => Promise<void>;
+}
+
+export function useNavigation(record: ParkingRecord): UseNavigationResult {
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [heading, setHeading] = useState(0);
   const [animHeading, setAnimHeading] = useState(0);
@@ -71,6 +97,8 @@ export function useNavigation(record: ParkingRecord) {
   const watchId = useRef<number | null>(null);
   const lastStepTime = useRef(0);
 
+  const { permissionState, previouslyGranted, requestPermission } = useOrientationPermission();
+
   const handleMotion = useCallback((e: DeviceMotionEvent) => {
     if (!isIndoorRef.current) return;
     const acc = e.accelerationIncludingGravity;
@@ -86,6 +114,7 @@ export function useNavigation(record: ParkingRecord) {
     }
   }, []);
 
+  // ── Effect 1: Geolocation (always active, no sensor permissions needed) ──
   useEffect(() => {
     if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
 
@@ -125,6 +154,16 @@ export function useNavigation(record: ParkingRecord) {
       );
     }
 
+    return () => {
+      if (watchId.current != null) navigator.geolocation.clearWatch(watchId.current);
+    };
+  }, [record]);
+
+  // ── Effect 2: Orientation & motion sensors (requires permission on iOS) ──
+  useEffect(() => {
+    // Only attach listeners when permission is confirmed (or not required on Android/Chrome)
+    if (permissionState !== 'granted' && permissionState !== 'not-required') return;
+
     const handleOrientation = (e: DeviceOrientationEvent & { webkitCompassHeading?: number }) => {
       let h: number | null = null;
       if (typeof e.webkitCompassHeading === 'number') {
@@ -148,27 +187,14 @@ export function useNavigation(record: ParkingRecord) {
       if (e.beta) setDeviceTilt(Math.abs(e.beta));
     };
 
-    const requestPermission = (
-      DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> }
-    ).requestPermission;
-    if (typeof requestPermission === 'function') {
-      void requestPermission().then((res: string) => {
-        if (res === 'granted') {
-          window.addEventListener('deviceorientation', handleOrientation as EventListener);
-          window.addEventListener('devicemotion', handleMotion);
-        }
-      });
-    } else {
-      window.addEventListener('deviceorientation', handleOrientation as EventListener);
-      window.addEventListener('devicemotion', handleMotion);
-    }
+    window.addEventListener('deviceorientation', handleOrientation as EventListener);
+    window.addEventListener('devicemotion', handleMotion);
 
     return () => {
-      if (watchId.current) navigator.geolocation.clearWatch(watchId.current);
       window.removeEventListener('deviceorientation', handleOrientation as EventListener);
       window.removeEventListener('devicemotion', handleMotion);
     };
-  }, [record, handleMotion]);
+  }, [permissionState, handleMotion]);
 
   const trueHeading = (heading + magneticDeclination + 360) % 360;
   const relativeRotation = (targetBearing - trueHeading + 360) % 360;
@@ -192,5 +218,8 @@ export function useNavigation(record: ParkingRecord) {
     isPhoneFlat,
     arrivedState,
     hasValidLocation,
+    orientationPermission: permissionState,
+    previouslyGranted,
+    requestOrientationPermission: requestPermission,
   };
 }
