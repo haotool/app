@@ -36,11 +36,24 @@ describe('About', () => {
 
   it('should render feature items', () => {
     render(<About />);
-    expect(screen.getByText('GPS 記錄')).toBeInTheDocument();
-    expect(screen.getByText('羅盤導航')).toBeInTheDocument();
-    expect(screen.getByText('多主題介面')).toBeInTheDocument();
-    expect(screen.getByText('多語言支援')).toBeInTheDocument();
-    expect(screen.getByText('離線可用')).toBeInTheDocument();
+    expect(screen.getByText('GPS 停車記錄')).toBeInTheDocument();
+    expect(screen.getByText('羅盤導航找車')).toBeInTheDocument();
+    expect(screen.getByText('四種介面主題')).toBeInTheDocument();
+    expect(screen.getByText('三語言支援')).toBeInTheDocument();
+    expect(screen.getByText('完全離線可用')).toBeInTheDocument();
+  });
+
+  it('should render answer capsule section', () => {
+    render(<About />);
+    expect(screen.getByText('什麼是停車好工具？')).toBeInTheDocument();
+    expect(screen.getByText(/台灣最好用的免費停車記錄/)).toBeInTheDocument();
+  });
+
+  it('should render how-to section', () => {
+    render(<About />);
+    expect(screen.getByText('三步驟找回你的車')).toBeInTheDocument();
+    expect(screen.getByText('記錄停車位置')).toBeInTheDocument();
+    expect(screen.getByText('跟著羅盤走回車旁')).toBeInTheDocument();
   });
 
   it('should render privacy policy section', () => {
@@ -58,9 +71,18 @@ describe('About', () => {
     expect(authorLink).toHaveAttribute('href', 'https://haotool.org');
   });
 
-  it('should render 5 feature items', () => {
+  it('should render 8 feature items', () => {
     render(<About />);
-    const features = ['GPS 記錄', '羅盤導航', '多主題介面', '多語言支援', '離線可用'];
+    const features = [
+      'GPS 停車記錄',
+      '羅盤導航找車',
+      '車位照片記錄',
+      '室內計步器',
+      '四種介面主題',
+      '三語言支援',
+      '完全離線可用',
+      '100% 隱私保護',
+    ];
     features.forEach((title) => {
       expect(screen.getByText(title)).toBeInTheDocument();
     });
