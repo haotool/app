@@ -18,17 +18,69 @@ function readPackageVersion(): string {
   return packageJson.version;
 }
 
+function getVersionFromGitTag(): string | null {
+  try {
+    const described = execSync('git describe --tags --long --match "@app/park-keeper@*"', {
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+
+    const tagMatch = /@app\/park-keeper@(\d+\.\d+\.\d+)-(\d+)-g[0-9a-f]+/.exec(described);
+    if (!tagMatch) return null;
+
+    const tagVersion = tagMatch[1];
+    const distance = tagMatch[2];
+    if (!tagVersion || !distance) return null;
+    return Number(distance) === 0 ? tagVersion : `${tagVersion}+build.${distance}`;
+  } catch {
+    return null;
+  }
+}
+
+function getVersionFromBuildMetadata(baseVersion: string): string | null {
+  try {
+    const commitCount =
+      process.env['GIT_COMMIT_COUNT'] ??
+      execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
+    return `${baseVersion}+build.${commitCount}`;
+  } catch {
+    return null;
+  }
+}
+
+function getDevelopmentVersion(baseVersion: string): string {
+  try {
+    const commitHash =
+      process.env['GIT_COMMIT_HASH'] ??
+      execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
+    const isDirty =
+      execSync('git status --porcelain', { encoding: 'utf-8' }).trim().length > 0 ? '-dirty' : '';
+    return `${baseVersion}+sha.${commitHash}${isDirty}`;
+  } catch {
+    return baseVersion;
+  }
+}
+
+function isValidSemverLikeVersion(version: string): boolean {
+  return /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version);
+}
+
 function generateVersion(): string {
   const baseVersion = readPackageVersion();
+
+  // Development builds keep package.json semver and append git SHA metadata.
   if (!process.env['CI'] && process.env['NODE_ENV'] !== 'production') {
-    try {
-      const commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
-      return `${baseVersion}+sha.${commitHash}`;
-    } catch {
-      return baseVersion;
-    }
+    return getDevelopmentVersion(baseVersion);
   }
-  return baseVersion;
+
+  // Production builds prefer release tags, then fallback to build metadata.
+  const version = getVersionFromGitTag() ?? getVersionFromBuildMetadata(baseVersion) ?? baseVersion;
+
+  if (!isValidSemverLikeVersion(version)) {
+    return baseVersion;
+  }
+
+  return version;
 }
 
 export default defineConfig(({ mode }) => {

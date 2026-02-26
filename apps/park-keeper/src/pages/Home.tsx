@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, ParkingRecord, AppSettings, LanguageType } from '@app/park-keeper/types';
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
+import { getVersionInfo } from '@app/park-keeper/config/version';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
 import { useNavigation } from '@app/park-keeper/hooks/useNavigation';
 
@@ -587,6 +588,7 @@ function SettingsTab({
   theme: ThemeConfig;
 }) {
   const { t, i18n } = useTranslation();
+  const versionInfo = getVersionInfo();
 
   const handleLanguageChange = (lang: LanguageType) => {
     void i18n.changeLanguage(lang);
@@ -745,6 +747,46 @@ function SettingsTab({
             </button>
           </div>
         </SettingGroup>
+
+        {/* App Info */}
+        <SettingGroup icon={Clock} title={t('settings.app_info')} theme={theme}>
+          <div
+            className="rounded-3xl overflow-hidden shadow-elevation-1 border border-black/5 p-5"
+            style={{ backgroundColor: theme.colors.surface }}
+          >
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
+                {t('settings.current_version')}
+              </span>
+              <span
+                className="text-lg font-black font-mono tracking-tight"
+                style={{ color: theme.colors.primary }}
+              >
+                {versionInfo.displayVersion}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
+                {t('settings.build_time')}
+              </span>
+              <span className="text-xs font-medium opacity-80">
+                {versionInfo.formattedBuildTime}
+              </span>
+            </div>
+            <p className="text-[10px] mt-4 opacity-40 font-medium text-center break-all">
+              {versionInfo.fullVersion}
+            </p>
+          </div>
+        </SettingGroup>
+
+        <footer className="text-center mt-8 pb-4" aria-label={t('settings.current_version')}>
+          <p className={`text-[10px] opacity-35 uppercase tracking-[0.18em] ${theme.font}`}>
+            {t('settings.current_version')}
+          </p>
+          <p className="text-xs font-mono font-bold opacity-70 mt-1">
+            {versionInfo.displayVersion}
+          </p>
+        </footer>
       </div>
     </div>
   );
