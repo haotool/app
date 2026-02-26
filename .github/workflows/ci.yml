@@ -57,23 +57,7 @@ jobs:
         run: pnpm test:coverage
 
       - name: Verify image assets
-        run: |
-          echo "🖼️ Verifying image assets..."
-
-          # ratewise（og/twitter 使用 .jpg 格式）
-          test -f apps/ratewise/public/logo.png || { echo "❌ Missing: apps/ratewise/public/logo.png"; exit 1; }
-          test -f apps/ratewise/public/og-image.jpg || { echo "❌ Missing: apps/ratewise/public/og-image.jpg"; exit 1; }
-          test -f apps/ratewise/public/twitter-image.jpg || { echo "❌ Missing: apps/ratewise/public/twitter-image.jpg"; exit 1; }
-
-          # nihonname
-          test -f apps/nihonname/public/logo.png || { echo "❌ Missing: apps/nihonname/public/logo.png"; exit 1; }
-          test -f apps/nihonname/public/og-image.png || { echo "❌ Missing: apps/nihonname/public/og-image.png"; exit 1; }
-
-          # haotool
-          test -f apps/haotool/public/logo.png || { echo "❌ Missing: apps/haotool/public/logo.png"; exit 1; }
-          test -f apps/haotool/public/og-image.png || { echo "❌ Missing: apps/haotool/public/og-image.png"; exit 1; }
-
-          echo "✅ All required images exist"
+        run: node scripts/verify-image-assets-ci.mjs
 
       - name: Build
         run: pnpm build
@@ -127,16 +111,23 @@ jobs:
           path: sbom.json
           retention-days: 90
 
-      - name: Upload coverage
+      - name: Discover coverage paths
+        id: coverage
         if: success()
+        run: echo "paths=$(node scripts/get-coverage-paths.mjs)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload coverage
+        if: success() && steps.coverage.outputs.paths != ''
         uses: codecov/codecov-action@v4
         with:
-          files: ./apps/ratewise/coverage/coverage-final.json
+          files: ${{ steps.coverage.outputs.paths }}
           flags: unittests
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+  # NOTE: E2E tests currently target ratewise only.
+  # To add other apps, convert to a matrix strategy with app-specific config.
   e2e:
     name: E2E Tests
     needs: quality
@@ -259,6 +250,8 @@ jobs:
           path: lighthouse-reports/lhci
           retention-days: 30
 
+  # NOTE: Security scan builds Docker image from root Dockerfile (currently serves ratewise).
+  # The Trivy file-system scan covers the entire monorepo regardless.
   security:
     name: Security Scan
     needs: quality

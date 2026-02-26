@@ -61,35 +61,44 @@ jobs:
             echo "has_changesets=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Detect Version Change
+      - name: Detect Version Changes
         id: detect_version
         run: |
           set -euo pipefail
-          CURRENT_VERSION=$(node -p "JSON.parse(require('fs').readFileSync('apps/ratewise/package.json','utf8')).version")
-          echo "current_version=${CURRENT_VERSION}" >> "$GITHUB_OUTPUT"
+          CHANGED_APPS=$(node scripts/get-release-metadata.mjs --changed)
+          echo "changed_apps=${CHANGED_APPS}" >> "$GITHUB_OUTPUT"
 
-          if git show HEAD^:apps/ratewise/package.json >/tmp/prev-package.json 2>/dev/null; then
-            PREVIOUS_VERSION=$(node -p "JSON.parse(require('fs').readFileSync('/tmp/prev-package.json','utf8')).version")
-          else
-            PREVIOUS_VERSION=""
-          fi
+          CHANGED_COUNT=$(echo "${CHANGED_APPS}" | node -e "
+            const d = require('fs').readFileSync(0,'utf-8');
+            console.log(JSON.parse(d).length);
+          ")
+          echo "changed_count=${CHANGED_COUNT}" >> "$GITHUB_OUTPUT"
 
-          if [ -n "$PREVIOUS_VERSION" ] && [ "$PREVIOUS_VERSION" = "$CURRENT_VERSION" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
+          if [ "$CHANGED_COUNT" -gt 0 ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create Release Pull Request
         id: changesets
         if: steps.check_changesets.outputs.has_changesets == 'true'
+        continue-on-error: true
         uses: changesets/action@v1
         with:
-          # 這會執行 `changeset version` 並建立 PR
           version: pnpm changeset:version
           commit: 'chore: Version Packages'
         env:
+          # NOTE: Requires org + repo Settings → Actions → General → Workflow permissions
+          #       → "Allow GitHub Actions to create and approve pull requests" enabled
+          # If this fails with HTTP 403, ask an org admin to enable the setting.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Report Release PR status
+        if: steps.changesets.outcome == 'failure'
+        run: |
+          echo "::warning::Release PR creation failed. This is typically caused by org-level restrictions."
+          echo "::warning::Ask an org admin to enable: Organization Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests"
 
       - name: Configure git for tagging
         if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'
@@ -99,30 +108,42 @@ jobs:
 
       - name: Create release tags
         if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'
-        env:
-          VERSION: ${{ steps.detect_version.outputs.current_version }}
         run: |
           set -euo pipefail
-          if ! git rev-parse "@app/ratewise@${VERSION}" >/dev/null 2>&1; then
-            pnpm changeset tag
-          else
-            echo "changeset tag already exists for @app/ratewise@${VERSION}, skipping generation"
-          fi
-          if ! git rev-parse "ratewise-v${VERSION}" >/dev/null 2>&1; then
-            git tag "ratewise-v${VERSION}"
-          fi
-          git push origin "@app/ratewise@${VERSION}"
-          git push origin "ratewise-v${VERSION}"
+          pnpm changeset tag 2>/dev/null || true
 
-      - name: Create GitHub release
+          echo '${{ steps.detect_version.outputs.changed_apps }}' | node -e "
+            const apps = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
+            for (const app of apps) {
+              console.log(app.packageName + '@' + app.version);
+              console.log(app.name + '-v' + app.version);
+            }
+          " | while IFS= read -r tag; do
+            if ! git rev-parse "$tag" >/dev/null 2>&1; then
+              git tag "$tag"
+            fi
+            git push origin "$tag" 2>/dev/null || echo "Tag $tag already pushed or failed"
+          done
+
+      - name: Create GitHub releases
         if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'
-        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: '@app/ratewise@${{ steps.detect_version.outputs.current_version }}'
-          release_name: 'RateWise v${{ steps.detect_version.outputs.current_version }}'
-          body: 'Automated release created by Changesets workflow.'
+        run: |
+          set -euo pipefail
+          echo '${{ steps.detect_version.outputs.changed_apps }}' | node -e "
+            const apps = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
+            for (const app of apps) {
+              console.log(JSON.stringify({
+                tag: app.packageName + '@' + app.version,
+                title: app.displayName + ' v' + app.version,
+              }));
+            }
+          " | while IFS= read -r meta; do
+            TAG=$(echo "$meta" | jq -r '.tag')
+            TITLE=$(echo "$meta" | jq -r '.title')
+            gh release create "$TAG" --title "$TITLE" --notes "Automated release via Changesets workflow." --verify-tag 2>/dev/null || echo "Release for $TAG already exists or skipped"
+          done
 
       # Cloudflare CDN 快取清除
       # 參考: Context7 /websites/developers_cloudflare - Cache Purge API

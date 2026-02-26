@@ -1,908 +1,394 @@
-# AGENT 操作守則與工具說明
+# AGENTS.md
 
-> **最後更新**: 2026-02-01T20:54:01+08:00  
-> **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
-> **版本**: v2.9 (版本 SSOT 驗證加入 CHANGELOG 檢查)  
-> **角色**: 自動化代理 (Agents) 負責重複性檢查、端到端驗證與部署流程觸發。本文檔說明所有可用工具與工作流程。
+RateWise Monorepo -- Agent 標準作業程序（SOP）與稽核控制規範。
 
----
+## 文件控制（Document Control）
 
-## 語言政策（溝通規範）
+| 欄位       | 內容                                                                                                               |
+| ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| 文件名稱   | `AGENTS.md`                                                                                                        |
+| 文件性質   | Agent 操作 SOP / 稽核控制基準                                                                                      |
+| 適用範圍   | 本 repo 全部 workspace (`apps/*`)、root 流程與文件更新                                                             |
+| 文件狀態   | Active                                                                                                             |
+| 文件擁有者 | Repo Maintainer                                                                                                    |
+| 核准角色   | Repo Maintainer                                                                                                    |
+| 生效日期   | 2026-02-27                                                                                                         |
+| 審查週期   | 每 90 日或重大流程變更後                                                                                           |
+| 下次審查日 | 2026-05-28                                                                                                         |
+| 關聯文件   | `CLAUDE.md`, `commitlint.config.cjs`, `.husky/*`, `package.json`, `docs/dev/002_development_reward_penalty_log.md` |
 
-- 與最終使用者互動時，Agent 必須全程使用繁體中文回應，包含狀態更新、錯誤訊息與補充說明。
+## 用語等級（Normative Language）
 
----
+為避免稽核歧義，本文件使用以下等級詞：
 
-## Linus 三問（開始任何操作前）
+- **必須（MUST）**：不可省略；違反視為流程不合規
+- **建議（RECOMMENDED）**：通常應遵守；若不採用需說明理由
+- **可（MAY）**：視任務情境選用
 
-1. **"這是個真問題還是臆想出來的？"** - 拒絕過度設計
-2. **"有更簡單的方法嗎？"** - 永遠尋找最簡方案
-3. **"會破壞什麼嗎？"** - 向後相容是鐵律
+## 語言政策
 
----
+- Agent 與使用者互動、狀態更新、錯誤說明與結案摘要，**必須**使用繁體中文。
 
-## 強制規範（2025-10-31 新增）
+## Project Overview
 
-**所有 Agent 必須遵守這些規範，違反將導致 PR 被拒絕**
+- **Repo 型態**: `pnpm` monorepo（`apps/*` workspace）
+- **主要技術棧**: React 19 + TypeScript + Vite 7 + Vitest + Playwright
+- **樣式與互動**: Tailwind CSS（v3/v4 混合）、Framer Motion（部分 app）
+- **PWA/SSG**: `vite-plugin-pwa` + Workbox、`vite-react-ssg`（以 `ratewise` 為主）
+- **品質閘門**: Husky (`commit-msg`, `pre-commit`, `pre-push`) + Commitlint
+- **版本管理**: Changesets + package.json SSOT（`ratewise` 有版本 SSOT 驗證）
 
-### 1. 開發文檔編號規則
+### 主要應用（apps）
 
-所有開發相關文檔必須使用編號格式 `00X_主題名稱.md` 放在 `docs/dev/` 目錄：
+- `apps/ratewise`：匯率換算主站（PWA/SEO/測試密度最高）
+- `apps/nihonname`：日文命名工具（SSG/SEO）
+- `apps/haotool`：作品入口與視覺展示
+- `apps/quake-school`：地震學習工具（SSG）
+- `apps/park-keeper`：停車紀錄工具（Leaflet / i18n / Tailwind v4）
+- `apps/poplog`：子應用（依任務確認）
+- `apps/shared`：共用程式碼/資源
 
-- `001_exchange_rate_data_strategy.md` - 匯率數據策略
-- `002_development_reward_penalty_log.md` - 開發獎懲記錄
-- `003_ui_transparency_improvements.md` - UI 透明度改進
-- 未來新增文檔依序遞增 `004_`, `005_` ...
-
-**Agent 責任**:
-
-- 建立新開發文檔時，必須檢查現有最大編號並遞增
-- 使用 `ls docs/dev/ | grep -E '^[0-9]{3}_'` 確認現有編號
-
-### 2. 獎懲記錄強制流程
-
-**每個 Agent 在 `git commit` 前，必須更新 `docs/dev/002_development_reward_penalty_log.md`**
-
-**強制步驟**:
-
-1. 遇到錯誤或不確定的決策時，先透過 Context7 查閱官方文件
-2. 在 `002_development_reward_penalty_log.md` 中新增條目：
-   ```markdown
-   | 類型    | 摘要           | 採取行動     | 依據              | 分數 |
-   | ------- | -------------- | ------------ | ----------------- | ---- |
-   | ✅ 成功 | 簡短描述成功點 | 具體解決方案 | [context7:source] | +1   |
-   ```
-3. 更新「當前總分」
-4. 若總分為負，必須在待追蹤事項中說明改進計畫
-
-**Agent 責任**:
-
-- 每次準備提交前，自動檢查是否已更新 002 記錄
-- 引用 Context7 來源時，使用完整格式 `[context7:org/repo:timestamp]`
-
-### 3. Context7 優先原則
-
-**Agent 遇到以下情況，必須先查閱 Context7 官方文件**:
-
-**強制查詢時機**:
-
-- ❌ Build/test/lint 錯誤
-- ❓ 不確定最佳實踐或設計模式
-- 🆕 使用新的 library、framework、工具
-- 🔧 修改 CI/CD、部署配置
-- 📦 升級 major 版本依賴
-
-**Agent 操作流程**:
+## Environment
 
 ```bash
-# 1. 自動觸發 Context7 查詢
-resolve-library-id --libraryName "目標套件"
-
-# 2. 獲取相關文件
-get-library-docs --context7CompatibleLibraryID "/org/repo" --topic "相關主題"
-
-# 3. 根據官方建議實作
-
-# 4. 在 002 記錄中引用來源
-```
-
-**禁止行為**:
-
-- ❌ Agent 不得憑記憶或假設實作
-- ❌ 不得跳過官方文件，直接試錯
-- ❌ 不得使用未經驗證的第三方教學
-
-**目的**: 確保 Agent 所有決策基於權威來源，減少人工介入
-
-### 4. Linus 三問檢查點
-
-**每個 Agent 在執行任何操作前，必須先執行 Linus 三問檢查**
-
-**Agent 自我檢查流程**:
-
-**操作前（Planning Phase）**:
-
-1. **"這是個真問題還是臆想出來的？"**
-   - 檢查是否有明確的 issue、bug report、或用戶需求
-   - 若無，拒絕執行並向用戶確認
-
-2. **"有更簡單的方法嗎？"**
-   - 搜尋現有工具函數是否可復用
-   - 評估是否有 library 內建解決方案
-   - 若有更簡方案，自動採用並記錄於 002
-
-3. **"會破壞什麼嗎？"**
-   - 自動執行 `pnpm typecheck` 與 `pnpm test`
-   - 檢查是否影響現有 API 或功能
-   - 若有風險，先警告用戶並等待確認
-
-**操作後（Validation Phase）**:
-
-- Agent 必須在操作日誌中記錄三問的驗證結果
-- 若建立開發文檔，必須包含 "Linus 三問驗證" 章節
-
-**目的**: 培養 Agent 工程品味，避免過度設計，確保程式碼簡潔實用
-
----
-
-## 1. 可用 MCP 工具
-
-### Context7 MCP (官方文件檢索)
-
-```bash
-# 安裝
-claude mcp add --transport http context7 https://mcp.context7.com/mcp
-```
-
-**用途**:
-
-- 檢索 React, Vite, TypeScript 等官方文件
-- 獲取最新 API 範例與最佳實踐
-
-**工作流**:
-
-```bash
-# 1. 解析 library ID
-resolve-library-id --libraryName "React"
-
-# 2. 取得文件
-get-library-docs --context7CompatibleLibraryID "/reactjs/react.dev" --topic "hooks"
-```
-
----
-
-### Grep MCP (GitHub 程式碼搜尋)
-
-```bash
-# 安裝
-claude mcp add --transport http grep https://mcp.grep.app
-```
-
-**用途**:
-
-- 搜尋真實專案程式碼範例
-- 研究特定模式在產業的實作
-
----
-
-### Spec-Workflow MCP (規格文件管理)
-
-```bash
-# 安裝
-claude mcp add spec-workflow-mcp -s user -- npx -y spec-workflow-mcp@latest
-```
-
-**用途**:
-
-- 維護 `docs/specs/*` 需求與設計文件
-- 追蹤功能實作進度
-
-**工作流**:
-
-```bash
-specs-workflow --action init --featureName "匯率API整合" --introduction "整合即時匯率API"
-specs-workflow --action check  # 檢查當前狀態
-specs-workflow --action complete_task --taskNumber "1"  # 完成任務
-```
-
----
-
-### Puppeteer MCP (瀏覽器自動化)
-
-**用途**:
-
-- E2E 測試自動化
-- UI 截圖與視覺回歸測試
-- 效能指標收集
-
-**典型流程**:
-
-```typescript
-// 1. 啟動瀏覽器
-browser_navigate --url "http://localhost:4173"
-
-// 2. 截圖
-browser_take_screenshot --filename "homepage.png"
-
-// 3. 互動測試
-browser_click --element "單幣別" --ref "[data-testid='single-mode']"
-
-// 4. 驗證
-browser_snapshot  // 取得 DOM 結構驗證
-```
-
----
-
-### Renovate Bot (依賴自動化更新)
-
-**配置檔案**: `/renovate.json`
-
-**用途**:
-
-- 自動背景更新依賴（patch/minor 無破壞性變更）
-- Grouping 策略減少 PR 數量
-- 通過 CI 後自動合併
-
-**核心策略** (2025-12-26 優化):
-
-```json
-{
-  "packageRules": [
-    {
-      "description": "📦 Patch - 自動合併（排除 0.x）",
-      "matchUpdateTypes": ["patch"],
-      "matchCurrentVersion": "!/^0/",
-      "groupName": "patch dependencies",
-      "automerge": true,
-      "platformAutomerge": true
-    },
-    {
-      "description": "🔄 Minor - 自動合併（排除 0.x）",
-      "matchUpdateTypes": ["minor"],
-      "matchCurrentVersion": "!/^0/",
-      "groupName": "minor dependencies",
-      "automerge": true,
-      "platformAutomerge": true
-    },
-    {
-      "description": "⚠️ Major - 需要手動審查",
-      "matchUpdateTypes": ["major"],
-      "automerge": false,
-      "labels": ["major-update", "needs-review"]
-    }
-  ],
-  "prConcurrentLimit": 10,
-  "schedule": ["before 3am on Monday"]
-}
-```
-
-**執行時間**:
-
-- **Renovate**: 每週一 01:00-03:00 (主要)
-- **Dependabot**: 每週日 02:00 (備援)
-
-**自動合併條件**:
-
-1. ✅ 所有 CI 檢查通過（核心 CI：lint/typecheck/test/build；SEO workflows 如觸發）
-2. ✅ 版本非 0.x (避免不穩定版本)
-3. ✅ 類型為 patch/minor (Major 需手動審查)
-4. ✅ 穩定期 ≥3 天 (避免剛發布的版本)
-
-**手動操作**:
-
-```bash
-# 檢視 Renovate Dashboard
-gh pr list --label dependencies
-
-# 手動觸發 Renovate (需 renovate/github-action)
-gh workflow run renovate.yml
-
-# 關閉 Renovate PR
-gh pr close <pr-number> --comment "延後處理"
-```
-
-**最佳實踐** (來自 Context7 + WebSearch 2025):
-
-- ✅ Grouping 減少 PR 噪音（patch→1 PR, minor→1 PR）
-- ✅ platformAutomerge 使用 GitHub 原生合併
-- ✅ 排除 0.x 版本（避免破壞性變更）
-- ✅ 穩定期 3 天（等待社群驗證）
-- ✅ 保留 Dependabot 作為備援
-
-**與 Dependabot 比較**:
-
-| 功能      | Renovate    | Dependabot    |
-| --------- | ----------- | ------------- |
-| Grouping  | ✅ 強大     | ⚠️ 有限       |
-| Automerge | ✅ 彈性配置 | ❌ 需 Actions |
-| 排程      | ✅ 精確     | ⚠️ 粗略       |
-| Monorepo  | ✅ 優秀     | ⚠️ 普通       |
-
----
-
-## 2. 工作流程
-
-### 初始建置流程
-
-```bash
-# 1. 同步需求
-# 以 docs/SETUP.md 與 docs/dev/*.md 為準
-
-# 2. 安裝依賴
 pnpm install --frozen-lockfile
-
-# 3. 類型檢查
-pnpm typecheck
-
-# 4. 測試
-pnpm test --coverage
-
-# 5. 建置
-pnpm build
-
-# 6. E2E 測試 (Puppeteer)
-pnpm preview  # 啟動 preview server
-# 使用 Puppeteer MCP 執行測試
-```
-
-### 品質檢查流程
-
-```bash
-# 1. Pre-commit hooks
-pre-commit run --all-files
-# Pre-commit 內含版本 SSOT 與 CHANGELOG 驗證 (scripts/verify-version-ssot.mjs)
-# RateWise 產出變更需版本號更新或新增 changeset
-
-# 2. Lint
+pnpm dev                     # 預設啟動 @app/ratewise
+pnpm build                   # 建置所有 workspace apps
+pnpm build:ratewise          # 單一 app 建置（常用）
+pnpm typecheck               # 實際為 pnpm -r typecheck
+pnpm test                    # 實際為 pnpm -r test
+pnpm test:e2e                # ratewise + nihonname（Playwright）
 pnpm lint
-
-# 3. Format check
-pnpm format
-
-# 4. 安全掃描
-pnpm audit
+pnpm format                  # prettier --check .
+pnpm format:fix              # prettier --write .
 ```
 
-### Docker 建置流程
+### Engines（以 root `package.json` 為準）
 
-```bash
-# 1. 建置映像
-docker build -t ratewise:latest .
+- **Node.js**: `^24.0.0`
+- **pnpm**: `9.10.0`
 
-# 2. 執行容器
-docker run -p 8080:80 ratewise:latest
-
-# 3. 健康檢查 (使用 Puppeteer MCP)
-browser_navigate --url "http://localhost:8080"
-browser_take_screenshot --filename "docker-health-check.png"
-```
-
----
-
-## 3. 開發哲學與設計原則
-
-### KISS 原則 - Keep It Simple, Stupid
-
-遵循 Linus Torvalds 的核心哲學，確保程式碼簡潔且易於維護：
-
-**核心準則**：
-
-1. **"好品味" (Good Taste)**
-   - 消除特殊情況永遠優於增加條件判斷
-   - 重新設計資料結構以移除 if/else 分支
-   - 10 行帶判斷的程式碼 → 4 行無條件分支
-
-2. **實用主義優先**
-   - 解決實際問題，而非假想的威脅
-   - 拒絕過度工程化與"理論完美"的方案
-   - 程式碼為現實服務，不是為論文服務
-
-3. **簡潔執念**
-   - 函數必須短小精悍，只做一件事
-   - 超過 3 層縮排就是警訊，需要重構
-   - 複雜性是萬惡之源
-
-**Linus 三問**（開始任何開發前）：
+## Project Structure
 
 ```text
-1. "這是個真問題還是臆想出來的？" - 拒絕過度設計
-2. "有更簡單的方法嗎？" - 永遠尋找最簡方案
-3. "會破壞什麼嗎？" - 向後相容是鐵律
+apps/                 # workspace apps（前端為主）
+docs/                 # 使用手冊、部署、安全、功能文件
+docs/dev/             # 開發決策與基線文件（強制編號）
+scripts/              # 驗證/SEO/版本/SSOT 腳本
+.husky/               # Git hooks（commit-msg / pre-commit / pre-push）
+.changeset/           # Changesets 版本管理資料
 ```
 
-**實踐範例**：
+## 控制目標（Control Objectives）
 
-```typescript
-// ❌ 糟糕：特殊情況處理
-function deleteNode(list, node) {
-  if (node === list.head) {
-    list.head = node.next;
-  } else {
-    let prev = list.head;
-    while (prev.next !== node) {
-      prev = prev.next;
-    }
-    prev.next = node.next;
-  }
-}
+本 SOP 的控制目標如下：
 
-// ✅ 好品味：消除特殊情況
-function deleteNode(indirect, node) {
-  *indirect = node.next;
-}
+1. **可追溯性**：每次變更可追溯到需求、提交、PR、驗證與依據
+2. **一致性**：文件敘述與 repo 實際設定一致（SSOT）
+3. **可重現性**：重要操作有命令、條件與驗證結果
+4. **最小風險**：避免無關改動、避免破壞既有功能
+5. **稽核可證明性**：保留必要證據（logs、CI、PR、截圖、記錄）
+
+## 核心原則（Engineering Principles）
+
+1. **Linus 三問先行**（真問題 / 更簡單 / 會破壞什麼）
+2. **KISS / MVP First**：先解決問題，再做延伸優化
+3. **SSOT 優先**：規則以 `package.json`、`.husky/*`、`commitlint.config.cjs` 為準
+4. **最小必要變更**：降低回歸風險與審查成本
+5. **文件同步責任**：流程/規則變更時同步更新本文件與 `CLAUDE.md`
+
+## 角色與責任（Roles & Responsibilities）
+
+| 角色                       | 責任                                           |
+| -------------------------- | ---------------------------------------------- |
+| User / Requester           | 提供需求、確認業務決策與授權範圍               |
+| Agent                      | 執行變更、驗證、更新文件、提交證據、遵守本 SOP |
+| Repo Maintainer / Reviewer | 審核 PR、處理例外批准、決定合併策略            |
+| CI / Git Hooks             | 自動化驗證提交品質、阻擋不合規提交/推送        |
+
+## 控制矩陣（Audit Control Matrix）
+
+| 控制 ID      | 控制項       | 必須要求                                                                | 證據                                     | SSOT / 來源                                      |
+| ------------ | ------------ | ----------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------ |
+| `AGT-CTX-01` | 官方文件查證 | 遇 build/test/lint 錯誤、新工具、CI/CD 變更、major 升級時，先查官方文件 | Context7 / Web 查詢紀錄、引用來源        | 本 SOP、`CLAUDE.md`                              |
+| `AGT-DOC-01` | 開發文檔編號 | `docs/dev/` 新檔名必須 `00X_*.md`                                       | `git diff`, 檔名紀錄                     | `docs/dev/` 結構                                 |
+| `AGT-LOG-01` | 獎懲記錄更新 | 每次 `git commit` 前更新 `docs/dev/002...`                              | 002 檔案 diff、總分更新                  | `docs/dev/002_development_reward_penalty_log.md` |
+| `AGT-CMT-01` | 提交格式     | commit message 通過 commitlint 硬規則                                   | `commit-msg` hook / commitlint 結果      | `commitlint.config.cjs`                          |
+| `AGT-PC-01`  | 提交前檢查   | `pre-commit` 5 步驟通過                                                 | hook log                                 | `.husky/pre-commit`                              |
+| `AGT-PP-01`  | 推送前檢查   | `typecheck` + `test` + `build:ratewise` 通過                            | hook log / CI                            | `.husky/pre-push`                                |
+| `AGT-QA-01`  | QA 截圖管理  | 截圖集中於 `screenshots/`，不得污染 root                                | 檔案路徑、`git status --ignored --short` | `.gitignore`, 本 SOP                             |
+| `AGT-DOC-02` | 文件同步     | 流程/規則變更需同步更新 `AGENTS.md` / `CLAUDE.md`                       | 文件 diff                                | 本 SOP、`CLAUDE.md`                              |
+| `AGT-MRG-01` | 主支合併     | 透過 PR 與 `gh` 進行合併；避免未審查直推主支                            | PR 編號、merge 記錄                      | GitHub / `gh`                                    |
+
+## Mandatory Workflow (Agent SOP)
+
+### Phase 1. 需求確認（Intake & Risk Screening）
+
+Agent **必須**先完成：
+
+1. 確認需求屬真實問題（bug / 功能 / 文件 /維運）
+2. 判斷影響面（程式碼、文件、CI、部署、SEO、PWA、版本）
+3. 選擇最小可行方案並說明不採用更複雜方案的理由（Linus 三問）
+
+### Phase 2. 文件與依據查證（Evidence-First）
+
+以下情境 **必須**先查官方文件（Context7 或官方網站）：
+
+- build / test / lint 錯誤
+- 不確定最佳實踐或設計模式
+- 新 library / framework / 工具導入
+- CI/CD、部署設定修改
+- major 版本依賴升級
+
+**建議**：在回報或 `docs/dev/002...` 記錄查詢來源與結論。
+
+### Phase 3. 實作與驗證（Execution & Validation）
+
+- 功能/修復/重構任務 **建議**採 BDD/TDD（RED → GREEN → REFACTOR）
+- 文檔任務 **必須**校對內容與 repo 實際設定一致
+- 驗證範圍採最小必要原則；高風險變更再擴大驗證
+
+### Phase 4. 提交前控制（Pre-Commit Controls）
+
+提交前 Agent **必須**：
+
+1. 更新 `docs/dev/002_development_reward_penalty_log.md`
+2. 檢查 QA 截圖與暫存檔未污染 root
+3. 確認受影響文件同步（至少 `AGENTS.md` / `CLAUDE.md`）
+4. 使用符合 commitlint 規範的 commit message
+
+### Phase 5. 推送與合併（Push & Merge Controls）
+
+- 推送前 **必須**通過 `pre-push` hook
+- 合併主支 **必須**透過 PR 與 `gh`（避免本地未審查直推 `main`）
+- 若 PR checks 未完成或失敗，**不得**強制合併（除非維護者批准例外）
+
+## Quality Gates (Repo SSOT)
+
+### `commit-msg`（Husky）
+
+- 執行：`npx --no -- commitlint --edit $1`
+- 規則來源：`commitlint.config.cjs`
+
+### `pre-commit`（Husky，實際 5 步驟）
+
+1. `pnpm lint-staged`
+2. `pnpm typecheck`
+3. `pnpm format`（`prettier --check .`）
+4. `node scripts/verify-ssot-sync.mjs`（僅相關檔變更時）
+5. `node scripts/verify-version-ssot.mjs`（僅版本相關檔變更時）
+
+### `pre-push`（Husky，快速必要檢查）
+
+1. `pnpm typecheck`
+2. `pnpm test`
+3. `pnpm build:ratewise`
+
+- E2E / coverage / Lighthouse 由 CI 執行（本地 pre-push 不做完整長時間檢查）
+
+## Commit Format（commitlint SSOT）
+
+```text
+type(scope): 繁體中文標題
+
+- 條列說明變更內容
+- 第二點（如有）
+
+測試：執行了哪些測試 / 未執行原因
 ```
 
-### 最小可行方案 (MVP First)
+### Allowed Types
 
-- ✅ 先實作核心功能，驗證可行性
-- ✅ 避免提前優化與複雜架構
-- ✅ 確保每個 commit 都是可編譯、可測試的完整狀態
-- ❌ 禁止在 MVP 階段引入微服務、複雜設計模式
+- `feat`
+- `fix`
+- `docs`
+- `style`
+- `refactor`
+- `perf`
+- `test`
+- `build`
+- `ci`
+- `chore`
+- `revert`
 
----
+### Hard Rules（目前實作）
 
-## 4. 提交規範
+- 標題 **必須**包含中文（CJK）
+- 主體 **必須**存在，且第一個非空行 **必須**以 `- ` 開頭
+- 內容 **必須**包含 `測試：...`（全形冒號）
+- 內容 **必須**使用繁體中文（禁止常見簡體字）
+- `header` 長度上限 `100`
 
-### Commit Message Format
+### Bot / Release 豁免（已內建）
 
-```
-type(scope): subject
+以下訊息由 commitlint 忽略：
 
-body
+- `Version Packages`
+- `chore(release): ...`
+- `chore(deps): ...`
+- `build(deps): ...`
 
-footer
-```
+## QA Artifact Rules（截圖與測試產物）
 
-**Types**:
+### 強制規則
 
-- `feat`: 新功能
-- `fix`: 修復 bug
-- `docs`: 文件變更
-- `style`: 格式調整 (不影響程式碼)
-- `refactor`: 重構
-- `test`: 測試相關
-- `chore`: 建置工具或輔助工具變更
+- QA 截圖 **必須**存放於 `screenshots/<name>.png`
+- QA 圖檔 **不得**放在專案根目錄（`*.png`, `*.jpg`, `*.jpeg`, `*.webp`）
+- Playwright / Puppeteer MCP 截圖 **必須**顯式指定 `filename: "screenshots/<name>.png"`
+- `screenshots/` 視為 QA 暫存目錄，除非任務明確要求，**不得**提交
 
-**範例**:
+### QA 完成前最小檢查
 
-```
-feat(converter): 新增多幣別即時換算功能
+- browser console error = `0`
+- `git status --short` / `git status --ignored --short` 確認未污染 root
+- UI/PWA 變更至少完成對應 app 的 build 或核心測試驗證
 
-- 實作 MultiConverter 元件
-- 新增 useCurrencyConverter hook
-- 補齊單元測試
-
-Closes #123
-```
-
-### 原子化提交原則
-
-每個 commit 必須遵循以下原則：
-
-1. **單一職責**: 一個 commit 只解決一個問題或實現一個功能
-2. **完整性**: 每個 commit 都應該是可編譯、可測試的完整狀態
-3. **可回溯性**: 每個 commit 都應該能獨立回滾而不影響其他功能
-4. **專業描述**: 使用清晰、專業的語言描述變更內容
-
-**好的範例**:
+### 截圖指令範例
 
 ```bash
-fix(types): 修正 useCurrencyConverter 的 TypeScript 類型定義
-
-- 更新 exchangeRates 類型為 Record<string, number | null>
-- 增強 getRate 函數的 null 檢查邏輯
-- 遵循 TypeScript 官方最佳實踐
-
-Fixes #12
+browser_take_screenshot --filename "screenshots/homepage.png"
 ```
 
-**不好的範例**:
+## Root Hygiene（根目錄整潔控制）
+
+### 常見噪音來源（正常現象）
+
+- `.playwright-mcp/`（大量瀏覽器暫存截圖）
+- root-level QA 截圖（通常已被 `.gitignore` 忽略）
+- AI 工具目錄（`.agents` / `.claude` / `.cursor` / `.agent`）
+- monorepo 共用設定檔集中於 root
+
+### 排查命令（建議）
 
 ```bash
-# ❌ 過於簡略
-fix: 修bug
-
-# ❌ 包含多個不相關的變更
-feat: 新增功能並修復bug還有更新文檔
-
-# ❌ 非專業描述
-update: 改了一些東西
+git status --short
+git status --ignored --short
+ls -la
 ```
 
-### PR 檢查清單
+### 清理原則
 
-- [ ] 需求連結 (Issue #)
-- [ ] CI 全綠
-- [ ] 測試證據 (coverage report)
-- [ ] E2E 測試通過（必要時手動驗證）
-- [ ] Build size 無顯著增加
-- [ ] 文件已更新
+- 先辨識「正式資產」與「本機 QA 暫存」再刪除
+- **不得**誤刪未追蹤的 `.agents/skills/*`（可能為本機技能庫）
+- `.example/` 為參考模板目錄（已忽略），清理通常不會進入 commit
+
+## Skills Strategy（專案本地 / 全域）
+
+### 優先順序
+
+1. `.agents/skills/*`（專案本地）
+2. `~/.agents/skills/*`（使用者全域）
+3. `~/.codex/skills/*`（Codex 全域備援）
+
+### 專案高優先 Skills（建議預設考慮）
+
+- `react`
+- `vite-react-best-practices`
+- `vitest`
+- `pwa-development`
+- `typescript`
+- `wcag-compliance`
+- `ui-ux-pro-max`
+- `framer-motion`
+- `tailwind-v4-shadcn`
+- `zod`
+- `tdd`
+
+### 全域補強 Skills（按任務啟用）
+
+- `seo-audit`, `audit-website`
+- `frontend-design`, `web-design-guidelines`
+- `vercel-react-best-practices`
+- `leaflet-mapping`
+- `security-review`
+- `find-skills`
+
+### Skill 使用規則
+
+- 任務明確提到 skill 名稱或內容明顯符合 skill 描述時，**必須**先讀 `SKILL.md`
+- 同一任務 **建議**使用最小必要 skill 集合（避免規則衝突）
+- 若 skill 不可用或內容不清楚，**必須**在回報中說明並採次佳方案
+
+## Documentation Sync Rules（文件同步控制）
+
+### 流程 / CI / 部署變更
+
+- 修改 CI/CD 或 Git hooks → 更新 `AGENTS.md`、`CLAUDE.md`（必要時 `docs/DEPLOYMENT.md`）
+- 修改 commit 規範 → 同步 `commitlint.config.cjs` 與文件說明
+- 修改版本流程 → 同步 `AGENTS.md`、`CLAUDE.md`、Changesets / `CHANGELOG.md` 說明
+
+### 安全 / 架構 / 功能變更
+
+- 安全標頭或責任界面 → 更新 `SECURITY.md` / `docs/SECURITY_BASELINE.md`
+- 架構分層變更 → 更新 `docs/dev/ARCHITECTURE_BASELINE.md`
+- 新增長期技術決策 → 建立 `docs/dev/00X_*.md`
+
+### 文檔品質最低要求
+
+- 有更新時間（重大文件）
+- 有版本或狀態標記（重大文件）
+- 有資料來源（技術決策需附權威來源）
+- 不保留一次性報告檔（見下方禁止清單）
+
+## Prohibited Files / Actions
+
+### 禁止建立或保留（除非任務明確要求）
+
+- `*_REPORT*.md`
+- `*_REVIEW*.md`
+- `*_SUMMARY*.md`
+- `ANALYSIS*.md`
+- root-level QA 圖檔（`*.png`, `*.jpg`, `*.jpeg`, `*.webp`）
+
+### 禁止操作
+
+- 提交 `.env` / secrets / token
+- 在應用層重複設定 Cloudflare 已處理之安全標頭（未確認責任界面前）
+- 未經確認執行 destructive git 指令（如 `git reset --hard`）
+- 未經 PR 審查直推 `main`（緊急例外除外）
+
+## 例外處理（Deviation / Exception Handling）
+
+當任務需偏離本 SOP（例如緊急 hotfix、CI 故障、工具失效），Agent **必須**記錄：
+
+1. 偏離原因（Why）
+2. 偏離範圍（What changed / What was skipped）
+3. 風險評估（Impact）
+4. 暫時補償控制（Compensating controls）
+5. 批准者或確認者（Who approved）
+6. 後續補正計畫（Follow-up）
+
+**建議記錄位置**：PR 描述、PR comment、或 `docs/dev/002...` 條目。
+
+## 稽核證據清單（Evidence Pack Checklist）
+
+Agent 在結案或提交時，應能提供下列證據（依任務適用性）：
+
+- 需求來源（user 指示 / issue / PR comment）
+- 變更檔案清單與摘要
+- 官方文件 / 權威來源引用（Context7 或 Web）
+- 測試/建置命令與結果（成功/跳過原因）
+- 截圖路徑（若有 UI 驗證）
+- commit SHA、PR 編號、merge 結果
+
+## 外部寫作與 SOP 格式基準（2026-02-27 查詢）
+
+本文件格式與寫法吸收以下最佳實踐，並結合 `.example/config/AGENTS.md` 的簡潔風格：
+
+- Google Developer Documentation Style Guide（簡潔、以任務為中心、強制用語一致）: <https://developers.google.com/style>
+- Google Documentation Best Practices（結構清晰、維護性、受眾導向）: <https://developers.google.com/style/documentation>
+- Microsoft Writing Style Guide（清楚、一致、可掃讀）: <https://learn.microsoft.com/en-us/style-guide/welcome/>
+- Diátaxis（區分 how-to / reference / explanation / tutorial）: <https://diataxis.fr/start-here/>
+- University of Utah SOP Template Guidance（SOP 欄位結構參考）: <https://campusguides.lib.utah.edu/c.php?g=160840&p=1055382>
+
+## 修訂紀錄（Revision History）
+
+| 日期       | 版本 | 變更摘要                                                                                    |
+| ---------- | ---- | ------------------------------------------------------------------------------------------- |
+| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善格式：新增文件控制、控制矩陣、例外流程、稽核證據清單與外部格式基準 |
+| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫為精簡且對齊 monorepo 實際規則版本                             |
 
 ---
 
-## 5. 安全守則
-
-### 分層防禦原則
-
-- **Cloudflare 層**: WAF, DDoS防護, Rate Limiting, 安全標頭
-- **應用層**: Input validation, XSS 防護, Error Boundary
-
-### 禁止事項
-
-❌ 在應用程式內重複設定 Cloudflare 已處理的安全標頭
-❌ 處理金流或密鑰 (應由環境變數管理)
-❌ 提交 `.env` 檔案到版本控制
-
-### 異常處理
-
-- 發現可疑流量 → 標記 `security` 並通知維運
-- 建置失敗 → 收集 log + `pnpm env info` 提交 Issue
-- 外部服務失敗 → 最多重試 3 次 (間隔 60s)
-
----
-
-## 6. 文檔結構與維護規範
-
-> **⚠️ 強制規則**：任何影響以下文檔的變更，必須同步更新對應文檔。違反此規則的 PR 不得合併。
-
-### 文檔維護檢查清單
-
-每次變更前，必須檢查是否影響以下文檔並同步更新：
-
-**流程變更**：
-
-- 修改 CI/CD → 更新 `AGENTS.md`、`DEPLOYMENT.md`
-- 新增 MCP 工具 → 更新 `AGENTS.md` § 1
-- 修改 Git workflow → 更新 `AGENTS.md` § 4、§ 3
-
-**架構變更**：
-
-- 新增/移除目錄 → 更新 `ARCHITECTURE_BASELINE.md`
-- 修改分層邏輯 → 更新 `ARCHITECTURE_BASELINE.md`、`LINUS_GUIDE.md`
-- 新增服務 → 更新本節文檔結構清單
-
-**部署變更**：
-
-- 修改 Docker → 更新 `DEPLOYMENT.md`、`Dockerfile` 註解
-- 修改 Nginx → 更新 `nginx.conf` 註解、`DEPLOYMENT.md`
-
-- 修改環境變數 → 更新 `.env.example`、`SETUP.md`
-
-**依賴變更**：
-
-- 升級 major 版本 → 更新 `DEPENDENCY_UPGRADE_PLAN.md`
-
-- 新增套件 → 更新 `CITATIONS.md`（如為核心技術）
-- 移除套件 → 清理所有相關文檔引用
-
-**安全變更**：
-
-- 修改安全標頭 → 更新 `SECURITY_BASELINE.md`、`nginx.conf`
-- 新增安全檢查 → 更新 `AGENTS.md` § 5
-
-**功能變更**：
-
-- 新增功能 → 建立對應文檔於 `docs/`
-- 完成 TODO → 更新 `AGENTS.md` § 8、`CHECKLISTS.md`
-
-### 核心指南 (專案根目錄)
-
-- `AGENTS.md` (本文件) - Agent 操作守則與工具說明
-- `LINUS_GUIDE.md` - 開發哲學與程式碼品質準則
-- `README.md` - 專案說明與快速開始
-
-### 部署與設定 (docs/)
-
-- `SETUP.md` - MVP 快速流程與環境設定
-- `DEPLOYMENT.md` - Docker 部署指南
-- `ZEABUR_DEPLOYMENT.md` - Zeabur 平台部署指南
-- `SECURITY_BASELINE.md` - 安全基線與責任界面
-
-### 功能文檔 (docs/)
-
-- `HISTORICAL_RATES_IMPLEMENTATION.md` - 歷史匯率功能實施指南
-- `QUICK_START_HISTORICAL_RATES.md` - 歷史匯率快速開始
-- `EXCHANGE_RATE_UPDATE_STRATEGIES.md` - 匯率更新策略比較
-
-### 開發參考 (docs/dev/)
-
-- `CITATIONS.md` - 權威來源清單與技術引用
-- `DEPENDENCY_UPGRADE_PLAN.md` - 依賴升級策略
-- `ARCHITECTURE_BASELINE.md` - 架構藍圖與分層準則
-- `CHECKLISTS.md` - 品質檢查清單
-
-### 文檔品質要求
-
-**所有文檔必須符合**：
-
-1. **時間戳記**：建立與更新時間（使用 `time.now` 工具）
-2. **版本標記**：重大變更需更新版本號
-3. **狀態標記**：✅ 已完成、🔄 進行中、📋 規劃中、❌ 已廢棄
-4. **引用來源**：技術決策需標註 `[context7:source:timestamp]` 或 `[ref: #n]`
-5. **範例程式碼**：必須可執行或明確標註 `(未實作)` / `(範例)`
-6. **向後相容**：不得刪除仍在使用的指令或流程，僅能標註 `(已廢棄)`
-
-**docs/dev 規範**：
-
-- 新增開發文檔時必須以三位數遞增前綴命名（`001_*.md`、`002_*.md` ...），保持有序。
-- `docs/dev/002_development_reward_penalty_log.md` 為強制更新檔案：每次開發過程遇到錯誤或完成修正，必須在 **commit 前** 追加紀錄、Context7 引用與分數調整。
-- 若流程中未同步更新獎懲記錄或缺乏引用來源，**禁止進行 `git commit`**，需先補齊後才可提交 PR。
-- 建立任何新文檔需同時填寫建立/更新時間、版本、狀態與資料來源。
-
-**文檔清理原則**：
-
-- ❌ 禁止保留臨時報告（`*_REPORT.md`、`*_SUMMARY.md`）
-- ❌ 禁止保留已完成的計畫文檔（`*_PLAN.md` 完成後應移除或歸檔）
-- ✅ 保留操作指南、技術決策、最佳實踐
-- ✅ 保留快速開始、故障排除、檢查清單
-
----
-
-## 7. 常用指令速查
-
-### 開發
-
-```bash
-pnpm dev                    # 啟動開發伺服器
-pnpm build                  # 生產建置
-pnpm preview                # 預覽建置結果
-```
-
-### 品質
-
-```bash
-pnpm typecheck              # TypeScript 檢查
-pnpm lint                   # ESLint 檢查
-pnpm format                 # Prettier 格式化
-pnpm test                   # 執行測試
-pnpm test --coverage        # 測試覆蓋率報告
-```
-
-### Monorepo
-
-```bash
-pnpm -r build               # 建置所有 workspace
-pnpm --filter @app/ratewise dev    # 執行特定 workspace
-pnpm -w add -D <package>    # Root 安裝 dev dependency
-```
-
-### Docker
-
-```bash
-docker build -t ratewise:latest .
-docker run -p 8080:80 ratewise:latest
-docker logs <container-id>
-```
-
----
-
-## 8. 當前任務狀態（2026-01-21 更新）
-
-### ✅ 已完成 (Phase 0 - MVP)
-
-- ✅ 測試覆蓋率 ≥80% (目前 1038 測試，92%+)
-- ✅ CI/CD Pipeline (GitHub Actions - 6 workflows: ci, release, seo-audit, seo-production, update-rates x2)
-- ✅ 觀測性 (Logger + Error Boundary)
-- ✅ Docker 化部署
-- ✅ 元件拆分 (RateWise.tsx 已模組化)
-- ✅ 工程工具鏈 (Husky + lint-staged)
-- ✅ TypeScript 嚴格化
-- ✅ 安全標頭配置
-- ✅ 歷史匯率功能 (30 天資料追蹤)
-- ✅ 18 個 SEO 長尾落地頁 (USD/JPY/EUR/GBP 等)
-
-### ✅ 已完成 (M0 - 清理與基礎強化)
-
-- ✅ 刪除 ReloadPrompt.tsx (已移除)
-- ✅ 刪除臨時報告文檔 (已清理)
-- ✅ ESLint `any` 規則改為 error (已生效)
-- ✅ 測試覆蓋率門檻提升至 80%+ (目前 92%+)
-
-### ✅ 已完成 (M1 - 觀測性建立)
-
-- ✅ Sentry 整合 (logger.ts Line 78 已實作，需設定 VITE_SENTRY_DSN)
-- ✅ Secrets 掃描 (gitleaks CLI v8.18.4 已整合 [2025-12-25])
-- ✅ Web Vitals 串接 (web-vitals 5.x 已整合)
-
-### ✅ 已完成 (M2 - 依賴升級)
-
-- ✅ Vite 已升級至 7.2.6
-- ✅ Vitest 已升級至 4.0.15
-- ✅ Tailwind 已升級至 4.x
-
-### ✅ 已完成 (M3 - 測試強化與 TODO 清理，2週)
-
-- ✅ 清理 TODO 標記 (僅剩 1 個，為 vi.doMock 技術限制，已說明)
-- ✅ E2E retry 優化 (toBeAttached 修正)
-- ✅ CI 通過率 100%
-- ✅ React Hydration #418 修復 (ClientOnly + console.error 過濾)
-- ✅ CI jest-dom matchers 修復 (expect.extend + 顯式 import)
-- ✅ Cloudflare CDN 自動清除工作流程 (Release workflow)
-
-### ✅ 已完成 (M4 - UI/UX SSOT 重構)
-
-- ✅ MultiConverter 頁面整合 (多幣別即時換算)
-- ✅ Favorites 頁面整合 (常用貨幣 + 轉換歷史)
-- ✅ 技術債清理 (20+ 時間戳標記移除，統一英文 JSDoc)
-- ✅ 6 種主題瀏覽器驗證 (Zen/Nitro/Kawaii/Classic/Ocean/Forest)
-- ✅ SSOT Design Token 一致性
-- ✅ ParkKeeper UI/UX 風格統一 (MultiConverter/Favorites 頁面重構)
-
-### 📋 可選 (M5 - 架構演進，4週)
-
-- [ ] useCurrencyConverter 拆分 (449 行 → 多個小 hook)
-- [ ] i18n 國際化系統 (react-i18next)
-- ✅ 歷史匯率功能整合 (30 天趨勢圖已實作)
-- ✅ 匯率趨勢圖 (使用 lightweight-charts)
-
----
-
-## PWA 離線快取策略（2026-02-10 驗證通過）
-
-**關鍵設定**：
-
-1. `globPatterns` 必須含 `json`：`vite-react-ssg` 產生 `static-loader-data-manifest-*.json`，React Router client-side navigation 依賴此檔案。缺失時離線 SPA 導覽全部失敗。
-2. `globIgnores` 排除 `rates/**/*.json`、SEO 檔案（sitemap/robots/llms/manifest）。
-3. 使用 `injectManifest` 策略，支援 `setCatchHandler` 離線 fallback。
-4. `rollupFormat: 'iife'`，避免 ES module 在部分瀏覽器評估失敗。
-5. `OfflineIndicator` 僅完全離線時顯示，10 秒自動關閉，同次 session 不再重複。
-
-**Agent 操作注意**：新增頁面或靜態資源格式時，檢查 `globPatterns` 與 `globIgnores` 是否正確。離線測試必須在 `pnpm build && pnpm preview` 環境執行。
-
----
-
-## 9. 版本管理規範（SSOT）
-
-### Monorepo 版本管理策略
-
-**工具**: 使用 Changesets 管理版本與 CHANGELOG
-
-**核心原則**:
-
-- **SSOT**: 版本號統一來源於 `package.json`
-- **語義化版本**: 遵循 SemVer 2.0.0 規範
-- **自動化**: 版本號由 Vite 建置時自動注入
-
-### 版本號生成策略
-
-```typescript
-// vite.config.ts - 版本生成邏輯
-// 1. 優先: Git 標籤 (@app/ratewise@x.y.z)
-// 2. 次之: package.json 版本 + commit 數
-// 3. 開發: 版本 + sha.hash[-dirty]
-```
-
-### 版本 SSOT 結構
-
-```
-apps/ratewise/
-├── package.json          # 版本真實來源
-├── src/config/
-│   └── version.ts        # 版本 SSOT 模組
-└── vite.config.ts        # 版本注入邏輯
-```
-
-### 版本使用規範
-
-**正確做法**:
-
-```typescript
-// ✅ 從 SSOT 導入版本
-import { APP_VERSION, getDisplayVersion } from '@/config/version';
-```
-
-**禁止行為**:
-
-```typescript
-// ❌ 硬編碼版本
-const version = 'v2.0.0';
-
-// ❌ 直接使用 import.meta.env（應封裝於 version.ts）
-const version = import.meta.env.VITE_APP_VERSION;
-```
-
-### 版本升級流程
-
-1. **修改 `package.json`** 中的 `version` 欄位
-2. **建立 Changeset**: `pnpm changeset`
-3. **生成 CHANGELOG**: `pnpm changeset version`
-4. **驗證**: `pnpm build` 確認版本正確注入
-5. **提交**: 遵循 Commit Convention
-
-### 自動版本更新（Renovate + Changesets）
-
-- Patch/Minor 更新由 Renovate 自動合併
-- Major 更新需人工審查
-- 版本變更自動同步至 CHANGELOG
-
----
-
-## 10. 故障排除
-
-### 建置失敗
-
-```bash
-# 1. 清除快取
-pnpm store prune
-rm -rf node_modules
-pnpm install
-
-# 2. 檢查環境
-node -v    # 應為 20+
-pnpm -v    # 應為 9+
-
-# 3. 檢查類型錯誤
-pnpm typecheck
-```
-
-### 測試失敗
-
-```bash
-# 1. 更新測試快照
-pnpm test -u
-
-# 2. 執行單一測試
-pnpm test RateWise.test.tsx
-
-# 3. 檢查覆蓋率
-pnpm test --coverage
-```
-
-### Docker 建置失敗
-
-```bash
-# 1. 檢查 Dockerfile 語法
-docker build --no-cache -t ratewise:latest .
-
-# 2. 進入容器除錯
-docker run -it ratewise:latest sh
-
-# 3. 檢查日誌
-docker logs <container-id>
-```
-
----
-
-## 11. 品質門檻
-
-每個 PR 必須通過:
-
-- ✅ CI 全綠 (lint + typecheck + test + build)
-- ✅ Test coverage ≥80%
-- ✅ Build size <500KB
-- ✅ E2E 測試通過（必要時手動）
-- ✅ Code review 通過
-
----
-
-## 12. 聯絡與支援
-
-- **問題回報**: 建立 Issue 並標記適當 label
-- **安全問題**: 標記 `security` 並通知維運
-- **文檔問題**: 參考 `docs/dev/*.md`
-- **工具問題**: 參考 [LINUS_GUIDE.md](./LINUS_GUIDE.md)
-
----
-
-## 13. 技術債掃描報告（2025-10-26）
-
-### 總評分數卡
-
-| 項目           | 分數   | 狀態      |
-| -------------- | ------ | --------- |
-| **可維護性**   | 82/100 | 🟢 優秀   |
-| **測試品質**   | 90/100 | 🟢 優秀   |
-| **資安成熟度** | 75/100 | 🟡 良好   |
-| **效能**       | 80/100 | 🟢 優秀   |
-| **觀測性**     | 65/100 | 🟡 可接受 |
-| **工程流程化** | 85/100 | 🟢 優秀   |
-
-**總評**: 78/100 🟢 **優秀** - 符合 Linus 標準的實用主義專案
-
-### 風險矩陣 Top 3
-
-1. **Logger 未串接遠端服務** (Impact: High, Likelihood: High) → M1 修復
-2. **5 個 TODO 未完成** (Impact: Medium, Likelihood: High) → M3 清理
-3. **Vite 6.4 → 7.1.12 可升級** (Impact: Medium, Likelihood: Medium) → M2 升級
-
-### 完整報告
-
-詳見以下文檔：
-
-- `docs/dev/TECH_DEBT_AUDIT.md` - 完整技術債報告與分數卡
-- `docs/dev/REFACTOR_PLAN.md` - 分階段重構路線圖（6-10 週）
-- `docs/dev/DEPENDENCY_UPGRADE_PLAN.md` - pnpm 依賴升級策略
-- `docs/dev/ARCHITECTURE_BASELINE.md` - 架構藍圖與分層準則
-- `docs/dev/CHECKLISTS.md` - 品質檢查清單
-- `docs/dev/CITATIONS.md` - 權威來源清單 (17 個來源)
-- `docs/SECURITY_BASELINE.md` - 安全基線與責任界面
-
----
-
-> **總結**: Agent 的任務是保持流程可靠並回報結果，不參與需求判斷、不做超出授權範圍的操作。所有操作依照本文檔與 `docs/dev/` 文檔執行。
-
-**最後更新**: 2026-02-02T00:07:40+08:00
-**版本**: v2.10 (版本 SSOT 驗證加入版本更新強制檢查)
-**執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
-
-_本文檔依照 Linus Torvalds 開發哲學產生，所有建議經過實用性驗證。_
+**最後更新**: 2026-02-27T03:46:59+0800  
+**版本**: v3.1（企業 SOP / 嚴格審計風格重寫，保留 `.example/config` 風格與 repo 實際規則 SSOT）

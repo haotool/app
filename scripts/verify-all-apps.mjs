@@ -66,13 +66,7 @@ async function main() {
     const appStartTime = Date.now();
 
     try {
-      // 使用 resolve 確保路徑安全，並白名單驗證 app name
       const scriptPath = resolve(__dirname, 'verify-production-seo.mjs');
-      const allowedApps = ['ratewise', 'nihonname', 'haotool', 'quake-school'];
-
-      if (!allowedApps.includes(app.name)) {
-        throw new Error(`Invalid app name: ${app.name}`);
-      }
 
       const result = spawnSync('node', [scriptPath, app.name], {
         stdio: 'inherit',
