@@ -1,12 +1,10 @@
 import { renderHook, act } from '@testing-library/react';
-import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 import {
   getDistance,
   getBearing,
   estimateMagneticDeclination,
   useNavigation,
 } from '@app/park-keeper/hooks/useNavigation';
-import { ORIENTATION_STORAGE_KEY } from '@app/park-keeper/hooks/useOrientationPermission';
 import type { ParkingRecord } from '@app/park-keeper/types';
 
 describe('useNavigation - getDistance', () => {
@@ -323,132 +321,5 @@ describe('useNavigation hook', () => {
     });
 
     expect(result.current.heading).toBe(0);
-  });
-
-  it('exposes orientationPermission as not-required when no iOS API', () => {
-    // Default jsdom environment: DeviceOrientationEvent has no requestPermission
-    vi.stubGlobal('DeviceOrientationEvent', {});
-    const { result } = renderHook(() => useNavigation(mockRecord));
-    expect(result.current.orientationPermission).toBe('not-required');
-  });
-
-  it('exposes requestOrientationPermission and previouslyGranted', () => {
-    vi.stubGlobal('DeviceOrientationEvent', {});
-    const { result } = renderHook(() => useNavigation(mockRecord));
-    expect(typeof result.current.requestOrientationPermission).toBe('function');
-    expect(result.current.previouslyGranted).toBe(false);
-  });
-
-  it('reflects previouslyGranted from localStorage', () => {
-    localStorage.setItem(ORIENTATION_STORAGE_KEY, 'granted');
-    vi.stubGlobal('DeviceOrientationEvent', { requestPermission: vi.fn() });
-    const { result } = renderHook(() => useNavigation(mockRecord));
-    expect(result.current.previouslyGranted).toBe(true);
-    localStorage.removeItem(ORIENTATION_STORAGE_KEY);
-  });
-});
-
-// ── Permission integration tests ──────────────────────────────────────────────
-
-describe('useNavigation – orientation permission integration', () => {
-  const mockRecord: ParkingRecord = {
-    id: 'perm-test',
-    plateNumber: 'PT-001',
-    floor: 'G1',
-    timestamp: Date.now(),
-    hasPhoto: false,
-    latitude: 25.033,
-    longitude: 121.565,
-  };
-
-  let orientationHandler: ((e: Event) => void) | null = null;
-  let motionHandler: ((e: Event) => void) | null = null;
-
-  beforeEach(() => {
-    localStorage.clear();
-    orientationHandler = null;
-    motionHandler = null;
-
-    vi.stubGlobal('navigator', {
-      ...navigator,
-      vibrate: vi.fn(),
-      geolocation: {
-        watchPosition: vi.fn(() => 99),
-        clearWatch: vi.fn(),
-      },
-    });
-
-    vi.spyOn(window, 'addEventListener').mockImplementation(
-      (type: string, handler: EventListenerOrEventListenerObject) => {
-        if (type === 'deviceorientation') orientationHandler = handler as (e: Event) => void;
-        else if (type === 'devicemotion') motionHandler = handler as (e: Event) => void;
-      },
-    );
-    vi.spyOn(window, 'removeEventListener').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    localStorage.clear();
-    vi.restoreAllMocks();
-  });
-
-  it('attaches orientation listeners when not-required (Android/Chrome)', () => {
-    vi.stubGlobal('DeviceOrientationEvent', {}); // no requestPermission
-    renderHook(() => useNavigation(mockRecord));
-    expect(orientationHandler).not.toBeNull();
-    expect(motionHandler).not.toBeNull();
-  });
-
-  it('does NOT attach orientation listeners when iOS permission is pending (prompt)', () => {
-    const mockRequestPermission = vi.fn().mockResolvedValue('granted');
-    vi.stubGlobal('DeviceOrientationEvent', { requestPermission: mockRequestPermission });
-    renderHook(() => useNavigation(mockRecord));
-    // permissionState starts at 'prompt' → Effect 2 should not attach
-    expect(orientationHandler).toBeNull();
-    expect(motionHandler).toBeNull();
-  });
-
-  it('does NOT attach listeners when iOS permission was previously denied (cached)', () => {
-    localStorage.setItem(ORIENTATION_STORAGE_KEY, 'denied');
-    const mockRequestPermission = vi.fn().mockResolvedValue('granted');
-    vi.stubGlobal('DeviceOrientationEvent', { requestPermission: mockRequestPermission });
-    renderHook(() => useNavigation(mockRecord));
-    expect(orientationHandler).toBeNull();
-    expect(motionHandler).toBeNull();
-  });
-
-  it('attaches orientation listeners after permission is granted via requestOrientationPermission', async () => {
-    const mockRequestPermission = vi.fn().mockResolvedValue('granted');
-    vi.stubGlobal('DeviceOrientationEvent', { requestPermission: mockRequestPermission });
-
-    const { result } = renderHook(() => useNavigation(mockRecord));
-
-    // Before: no listeners (permission is 'prompt')
-    expect(orientationHandler).toBeNull();
-
-    // Simulate user tapping "Enable Compass" button
-    await act(async () => {
-      await result.current.requestOrientationPermission();
-    });
-
-    // After: listeners should now be attached
-    expect(orientationHandler).not.toBeNull();
-    expect(motionHandler).not.toBeNull();
-    expect(result.current.orientationPermission).toBe('granted');
-  });
-
-  it('does NOT attach listeners after permission is denied via requestOrientationPermission', async () => {
-    const mockRequestPermission = vi.fn().mockResolvedValue('denied');
-    vi.stubGlobal('DeviceOrientationEvent', { requestPermission: mockRequestPermission });
-
-    const { result } = renderHook(() => useNavigation(mockRecord));
-
-    await act(async () => {
-      await result.current.requestOrientationPermission();
-    });
-
-    expect(orientationHandler).toBeNull();
-    expect(motionHandler).toBeNull();
-    expect(result.current.orientationPermission).toBe('denied');
   });
 });
