@@ -291,11 +291,22 @@ function NavOverlay({
             <div
               className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors duration-500 shadow-lg"
               style={{
-                backgroundColor: isIndoor ? '#fb923c' : theme.colors.primary,
+                backgroundColor: !hasValidLocation
+                  ? '#f59e0b'
+                  : isIndoor
+                    ? '#fb923c'
+                    : theme.colors.primary,
                 color: '#fff',
               }}
             >
-              {isIndoor ? (
+              {!hasValidLocation ? (
+                <motion.div
+                  animate={{ opacity: [1, 0.35, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+                >
+                  <Navigation size={24} />
+                </motion.div>
+              ) : isIndoor ? (
                 <Footprints size={24} />
               ) : (
                 <Navigation2 size={24} strokeWidth={3} className="rotate-45" />
@@ -305,15 +316,27 @@ function NavOverlay({
               <p
                 className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${glassStyle.subText}`}
               >
-                {isIndoor ? t('nav.indoor_mode') : t('record.distance')}
+                {!hasValidLocation
+                  ? t('nav.gps_waiting')
+                  : isIndoor
+                    ? t('nav.indoor_mode')
+                    : t('record.distance')}
               </p>
               <div className="flex items-baseline gap-1">
                 <p className={`text-2xl font-black tracking-tight ${glassStyle.text}`}>
-                  {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
+                  {!hasValidLocation
+                    ? '···'
+                    : isIndoor
+                      ? stepCount
+                      : distance !== null
+                        ? Math.round(distance)
+                        : '--'}
                 </p>
-                <span className={`text-xs font-bold uppercase ${glassStyle.subText}`}>
-                  {isIndoor ? t('nav.steps') : 'Meters'}
-                </span>
+                {hasValidLocation && (
+                  <span className={`text-xs font-bold uppercase ${glassStyle.subText}`}>
+                    {isIndoor ? t('nav.steps') : 'Meters'}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -451,33 +474,60 @@ function NavOverlay({
               </motion.div>
             </motion.div>
 
-            {/* Center Hub – Distance + Direction */}
+            {/* Center Hub – Distance + Direction / Arrived / GPS Waiting */}
             <div
-              className="absolute w-28 h-28 rounded-full border-2 shadow-2xl flex flex-col items-center justify-center z-10 backdrop-blur-sm"
+              className="absolute w-28 h-28 rounded-full border-2 flex flex-col items-center justify-center z-10 backdrop-blur-sm transition-all duration-500"
               style={{
-                borderColor: `${theme.colors.text}12`,
+                borderColor: arrived ? 'rgba(34,197,94,0.5)' : `${theme.colors.text}12`,
                 backgroundColor: `${theme.colors.background}CC`,
+                boxShadow: arrived
+                  ? '0 0 0 6px rgba(34,197,94,0.12), 0 4px 24px rgba(0,0,0,0.12)'
+                  : '0 4px 24px rgba(0,0,0,0.12)',
               }}
             >
-              <p
-                className="text-3xl font-black tracking-tight leading-none"
-                style={{ color: theme.colors.text }}
-              >
-                {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
-              </p>
-              <p
-                className="text-[10px] font-bold uppercase tracking-widest mt-0.5"
-                style={{ color: theme.colors.text, opacity: 0.45 }}
-              >
-                {isIndoor ? t('nav.steps') : 'm'}
-              </p>
-              {!arrived && (
-                <p
-                  className="text-[9px] font-black uppercase tracking-widest mt-2"
-                  style={{ color: theme.colors.primary, opacity: 0.9 }}
+              {arrived ? (
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 220, damping: 14 }}
                 >
-                  {directionHint}
-                </p>
+                  <Check size={38} style={{ color: '#22c55e' }} strokeWidth={3} />
+                </motion.div>
+              ) : !hasValidLocation ? (
+                <motion.div
+                  className="flex flex-col items-center gap-1"
+                  animate={{ opacity: [1, 0.4, 1] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                >
+                  <Navigation size={24} style={{ color: theme.colors.primary }} />
+                  <p
+                    className="text-[8px] font-bold uppercase tracking-widest"
+                    style={{ color: theme.colors.text, opacity: 0.45 }}
+                  >
+                    GPS
+                  </p>
+                </motion.div>
+              ) : (
+                <>
+                  <p
+                    className="text-3xl font-black tracking-tight leading-none"
+                    style={{ color: theme.colors.text }}
+                  >
+                    {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
+                  </p>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-widest mt-0.5"
+                    style={{ color: theme.colors.text, opacity: 0.45 }}
+                  >
+                    {isIndoor ? t('nav.steps') : 'm'}
+                  </p>
+                  <p
+                    className="text-[9px] font-black uppercase tracking-widest mt-2"
+                    style={{ color: theme.colors.primary, opacity: 0.9 }}
+                  >
+                    {directionHint}
+                  </p>
+                </>
               )}
             </div>
           </div>
