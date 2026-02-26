@@ -8,6 +8,14 @@
  *
  * iOS permission resets every browser session by design (Apple privacy policy).
  * localStorage cache is used only to improve button label UX ("Re-enable" vs "Enable").
+ *
+ * CRITICAL iOS constraints (both must be respected):
+ *   1. Call .requestPermission() directly on DeviceOrientationEvent — extracting it to
+ *      a variable loses the required 'this' binding, causing a silent TypeError on iOS.
+ *   2. Call synchronously from the user-gesture handler — iOS WebKit may drop the
+ *      "user activation" token through async function layers, suppressing the dialog.
+ *   3. Only persist 'denied' from an explicit user denial (resolved 'denied'), NOT from
+ *      technical errors (TypeError, SecurityError) — so the button reappears on reload.
  */
 import { useState } from 'react';
 
@@ -19,14 +27,17 @@ export type OrientationPermissionState =
   | 'not-required' // Android / Chrome – no permission needed
   | 'prompt' // iOS – waiting for user to tap the Enable button
   | 'granted' // iOS – permission granted in this session
-  | 'denied'; // iOS – permission denied (this session or cached)
+  | 'denied'; // iOS – permission explicitly denied by user (cached)
 
 export interface UseOrientationPermissionResult {
   /** Current permission state */
   permissionState: OrientationPermissionState;
   /** True if the user previously granted permission (cached in localStorage) */
   previouslyGranted: boolean;
-  /** Call this from a user-gesture handler (onClick) to trigger iOS permission dialog */
+  /**
+   * Call this from a user-gesture handler (onClick) to trigger iOS permission dialog.
+   * Returns Promise<void> for awaiting in tests; synchronous call path for iOS user-activation.
+   */
   requestPermission: () => Promise<void>;
 }
 
@@ -86,32 +97,53 @@ export function useOrientationPermission(): UseOrientationPermissionResult {
   // previouslyGranted: read once from storage; affects button label only
   const previouslyGranted = readStoredPermission() === 'granted';
 
-  const requestPermission = async (): Promise<void> => {
+  /**
+   * NOT declared `async` — this is intentional.
+   *
+   * iOS WebKit requirements enforced here:
+   * 1. .requestPermission() is called directly on DeviceOrientationEvent (not via a
+   *    variable), preserving the required 'this' binding. Calling a detached reference
+   *    (const fn = DeviceOrientationEvent.requestPermission; fn()) throws a silent
+   *    TypeError on iOS, which was our primary bug.
+   * 2. No `async` keyword so WebKit does not wrap the execution in a new microtask
+   *    before the API call, preserving the user-activation token.
+   * 3. Technical errors (SecurityError, TypeError) do NOT persist 'denied' to
+   *    localStorage — only an explicit user denial does. This allows the button to
+   *    reappear on the next page load so the user can retry.
+   */
+  const requestPermission = (): Promise<void> => {
     // No-op for non-iOS or already-resolved states
     if (
       permissionState === 'not-required' ||
       permissionState === 'granted' ||
       permissionState === 'denied'
     ) {
-      return;
+      return Promise.resolve();
     }
 
-    try {
-      const requestFn = (
-        DeviceOrientationEvent as unknown as {
-          requestPermission: () => Promise<string>;
+    // Call directly on DeviceOrientationEvent — preserves 'this' binding.
+    // Using .then()/.catch() (not async/await) to maintain synchronous call path.
+    return (
+      DeviceOrientationEvent as unknown as {
+        requestPermission: () => Promise<string>;
+      }
+    )
+      .requestPermission()
+      .then((result) => {
+        if (result === 'granted') {
+          storePermission('granted');
+          setPermissionState('granted');
+        } else {
+          // Explicit user denial: persist so button does not re-appear next session
+          storePermission('denied');
+          setPermissionState('denied');
         }
-      ).requestPermission;
-
-      const result = await requestFn();
-      const newState: OrientationPermissionState = result === 'granted' ? 'granted' : 'denied';
-      storePermission(newState === 'granted' ? 'granted' : 'denied');
-      setPermissionState(newState);
-    } catch {
-      // User dismissed or permission error
-      storePermission('denied');
-      setPermissionState('denied');
-    }
+      })
+      .catch(() => {
+        // Technical error (SecurityError, TypeError, no-user-gesture, etc.).
+        // Do NOT persist to localStorage — button reappears on reload so user can retry.
+        setPermissionState('denied');
+      });
   };
 
   return { permissionState, previouslyGranted, requestPermission };

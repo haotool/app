@@ -60,7 +60,7 @@ describe('useOrientationPermission', () => {
   it('requestPermission is a no-op when not-required', async () => {
     removeIOSPermissionAPI();
     const { result } = renderHook(() => useOrientationPermission());
-    // Should resolve without throwing and state stays not-required
+    // Should resolve (Promise.resolve()) without throwing and state stays not-required
     await act(async () => {
       await result.current.requestPermission();
     });
@@ -121,7 +121,9 @@ describe('useOrientationPermission', () => {
     expect(localStorage.getItem(ORIENTATION_STORAGE_KEY)).toBe('denied');
   });
 
-  it('transitions to denied and saves to localStorage when native throws', async () => {
+  it('transitions to denied but does NOT save to localStorage when native throws (technical error)', async () => {
+    // Technical errors (TypeError from wrong 'this', SecurityError from no user gesture, etc.)
+    // should NOT persist 'denied' to localStorage — button should reappear on next reload.
     mockIOSPermissionAPI('throws');
     const { result } = renderHook(() => useOrientationPermission());
 
@@ -130,7 +132,8 @@ describe('useOrientationPermission', () => {
     });
 
     expect(result.current.permissionState).toBe<OrientationPermissionState>('denied');
-    expect(localStorage.getItem(ORIENTATION_STORAGE_KEY)).toBe('denied');
+    // Intentionally NOT stored — allows retry on reload
+    expect(localStorage.getItem(ORIENTATION_STORAGE_KEY)).toBeNull();
   });
 
   it('is a no-op when state is already granted', async () => {
