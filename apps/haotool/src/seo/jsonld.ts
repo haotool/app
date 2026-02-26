@@ -7,96 +7,8 @@ const SITE_URL = 'https://app.haotool.org';
 const SITE_NAME = 'haotool.org';
 const AUTHOR_NAME = '阿璋';
 
-interface JsonLdBase {
-  '@context': 'https://schema.org';
-  '@type': string;
-}
-
-interface WebSiteJsonLd extends JsonLdBase {
-  '@type': 'WebSite';
-  name: string;
-  url: string;
-  description: string;
-  inLanguage: string;
-  author: {
-    '@type': 'Person';
-    name: string;
-    url: string;
-  };
-}
-
-interface PersonJsonLd extends JsonLdBase {
-  '@type': 'Person';
-  name: string;
-  url: string;
-  sameAs: string[];
-  jobTitle: string;
-  description: string;
-}
-
-interface WebPageJsonLd extends JsonLdBase {
-  '@type': 'WebPage';
-  name: string;
-  description: string;
-  url: string;
-  inLanguage: string;
-  datePublished?: string;
-  dateModified: string;
-  author?: {
-    '@type': 'Person';
-    name: string;
-    url: string;
-  };
-  isPartOf: {
-    '@type': 'WebSite';
-    name: string;
-    url: string;
-  };
-  breadcrumb?: BreadcrumbListJsonLd;
-}
-
-interface BreadcrumbListJsonLd extends JsonLdBase {
-  '@type': 'BreadcrumbList';
-  itemListElement: {
-    '@type': 'ListItem';
-    position: number;
-    name: string;
-    item: string;
-  }[];
-}
-
-interface CollectionPageJsonLd extends JsonLdBase {
-  '@type': 'CollectionPage';
-  name: string;
-  description: string;
-  url: string;
-  mainEntity: {
-    '@type': 'ItemList';
-    itemListElement: {
-      '@type': 'ListItem';
-      position: number;
-      name: string;
-      url: string;
-      description?: string;
-    }[];
-  };
-}
-
-interface ProfilePageJsonLd extends JsonLdBase {
-  '@type': 'ProfilePage';
-  name: string;
-  description: string;
-  url: string;
-  mainEntity: PersonJsonLd;
-}
-
-type JsonLd =
-  | WebSiteJsonLd
-  | PersonJsonLd
-  | WebPageJsonLd
-  | BreadcrumbListJsonLd
-  | CollectionPageJsonLd
-  | ProfilePageJsonLd;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type JsonLd = Record<string, any>;
 
 /**
  * Route-specific metadata
@@ -110,31 +22,31 @@ const ROUTE_METADATA: Record<
   }
 > = {
   '/': {
-    title: 'haotool.org | 阿璋的作品集',
+    title: 'haotool.org — 阿璋的全端作品集',
     description:
-      '嗨，我是阿璋。「haotool」取自「好工具」的諧音，代表每個作品都必須實用又優雅。融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。',
+      '「haotool」取自「好工具」的諧音。阿璋以 React 19、TypeScript、Vite 7 打造高品質數位工具，融合 3D 互動與動態設計，全部開源、免費。',
   },
   '/projects/': {
-    title: '作品集 | haotool.org',
+    title: '作品集 — haotool.org',
     description:
-      '精選作品展示：日本名字產生器、RateWise 匯率計算機等。每個專案都傾注對細節的執著。',
+      '精選作品：RateWise 匯率計算機、日本名字產生器、停車好工具 ParkKeeper、地震知識小學堂。每個專案 Lighthouse 90+ 分，全部開源免費。',
     breadcrumbs: [
       { name: '首頁', url: '/' },
       { name: '作品集', url: '/projects/' },
     ],
   },
   '/about/': {
-    title: '關於阿璋 | haotool.org',
+    title: '關於阿璋 — haotool.org',
     description:
-      '我是阿璋，「haotool」取自「好工具」的諧音，也延伸自我名字的 HAO 音節，代表我對產出的堅持：它必須是個好工具。',
+      '我是阿璋，「haotool」取自「好工具」的諧音。專精 React 19、TypeScript、Vite、Tailwind CSS，追求 Lighthouse 滿分的開發哲學。',
     breadcrumbs: [
       { name: '首頁', url: '/' },
       { name: '關於', url: '/about/' },
     ],
   },
   '/contact/': {
-    title: '聯繫 | haotool.org',
-    description: '有問題或想法想討論？歡迎透過 Email、GitHub 或 Threads 與我聯繫。',
+    title: '聯繫阿璋 — haotool.org',
+    description: '有專案想法或合作委託？歡迎透過 Email、GitHub 或 Threads 聯繫。',
     breadcrumbs: [
       { name: '首頁', url: '/' },
       { name: '聯繫', url: '/contact/' },
@@ -161,40 +73,102 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
   }
   const jsonLdArray: JsonLd[] = [];
 
-  // Person schema (used on multiple pages)
-  const personSchema: PersonJsonLd = {
+  const personSchema: JsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Person',
+    '@id': `${SITE_URL}/#person`,
     name: AUTHOR_NAME,
     url: SITE_URL,
-    sameAs: ['https://github.com/azlife', 'https://www.threads.net/@azlife_1224'],
+    sameAs: [
+      'https://github.com/azlife',
+      'https://www.threads.net/@azlife_1224',
+      'https://github.com/haotool',
+    ],
     jobTitle: '全端工程師',
-    description: '專注於 React, TypeScript, Tailwind CSS 開發，打造高效能 Web 應用。',
+    description:
+      '專注於 React 19、TypeScript、Vite、Tailwind CSS 開發，打造高效能 Web 應用與互動體驗。',
+    knowsAbout: ['React', 'TypeScript', 'Vite', 'PWA', 'Tailwind CSS', 'Three.js'],
   };
 
-  // Always include WebSite schema on home page
   if (normalizedRoute === '/') {
-    const websiteJsonLd: WebSiteJsonLd = {
+    // Organization
+    jsonLdArray.push({
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: `${SITE_URL}/og-image.png`,
+      founder: { '@id': `${SITE_URL}/#person` },
+      sameAs: ['https://github.com/haotool', 'https://www.threads.net/@azlife_1224'],
+    });
+
+    // WebSite with SearchAction
+    jsonLdArray.push({
       '@context': 'https://schema.org',
       '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
       name: SITE_NAME,
+      alternateName: ['haotool', '好工具', '阿璋作品集'],
       url: SITE_URL,
       description: metadata.description,
       inLanguage: 'zh-TW',
-      author: {
-        '@type': 'Person',
-        name: AUTHOR_NAME,
-        url: SITE_URL,
+      publisher: { '@id': `${SITE_URL}/#organization` },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${SITE_URL}/projects/?q={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
       },
-    };
-    jsonLdArray.push(websiteJsonLd);
+    });
 
-    // Add Person schema on home page
     jsonLdArray.push(personSchema);
+
+    // FAQPage
+    jsonLdArray.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: 'haotool.org 是什麼？有哪些好用的工具？',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'haotool.org 是阿璋的全端作品集，「haotool」取自「好工具」的諧音。主要作品包括：RateWise 即時匯率計算機（支援 30+ 幣別、30 天歷史圖表）、日本名字產生器（100+ 漢姓對照）、停車好工具 ParkKeeper（GPS 停車記錄與導航）、地震知識小學堂（互動式防災教育）。全部免費開源，Lighthouse 90+ 分。',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'haotool 的名字由來？',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: '「HAO」是中文「好」的拼音。haotool 的核心理念是打造真正的「好工具」——每個數位產品不僅要有功能，更要在使用過程中帶來愉悅感。',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'haotool 使用什麼技術？',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: '主要技術棧：React 19、TypeScript、Vite 7、Tailwind CSS、Framer Motion、Three.js。採用 SSG 預渲染、PWA 離線支援、Workbox 快取策略，追求 Lighthouse 90+ 分的效能表現。',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: '阿璋接受合作委託嗎？',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: '是的，目前開放承接 Web 前端開發、React 應用架構、PWA 設計、3D 互動網頁等技術委託。歡迎透過 Email（haotool.org@gmail.com）、GitHub 或 Threads 聯繫，通常 24 小時內回覆。',
+          },
+        },
+      ],
+    });
   }
 
-  // Add WebPage schema for all pages
-  const webPageJsonLd: WebPageJsonLd = {
+  // WebPage for all pages
+  const webPageJsonLd: JsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: metadata.title,
@@ -203,38 +177,27 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
     inLanguage: 'zh-TW',
     datePublished: '2025-01-01T00:00:00Z',
     dateModified: buildTime,
-    author: {
-      '@type': 'Person',
-      name: AUTHOR_NAME,
-      url: SITE_URL,
-    },
-    isPartOf: {
-      '@type': 'WebSite',
-      name: SITE_NAME,
-      url: SITE_URL,
-    },
+    author: { '@id': `${SITE_URL}/#person` },
+    isPartOf: { '@id': `${SITE_URL}/#website` },
   };
 
-  // Add breadcrumbs if available
   if (metadata.breadcrumbs && metadata.breadcrumbs.length > 0) {
-    const breadcrumbJsonLd: BreadcrumbListJsonLd = {
-      '@context': 'https://schema.org',
+    webPageJsonLd['breadcrumb'] = {
       '@type': 'BreadcrumbList',
       itemListElement: metadata.breadcrumbs.map((item, index) => ({
-        '@type': 'ListItem' as const,
+        '@type': 'ListItem',
         position: index + 1,
         name: item.name,
         item: `${SITE_URL}${item.url}`,
       })),
     };
-    webPageJsonLd.breadcrumb = breadcrumbJsonLd;
   }
 
   jsonLdArray.push(webPageJsonLd);
 
-  // Add CollectionPage schema for projects page
+  // CollectionPage for projects
   if (normalizedRoute === '/projects/') {
-    const collectionJsonLd: CollectionPageJsonLd = {
+    jsonLdArray.push({
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
       name: '精選作品',
@@ -246,48 +209,46 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
           {
             '@type': 'ListItem',
             position: 1,
-            name: '日本名字產生器',
-            url: `${SITE_URL}/nihonname/`,
-            description: '輸入中文姓氏，產生道地日文名字與諧音梗。',
+            name: 'RateWise 匯率計算機',
+            url: `${SITE_URL}/ratewise/`,
+            description: '即時匯率換算工具，整合台灣銀行牌告匯率與 30 天歷史數據視覺化。',
           },
           {
             '@type': 'ListItem',
             position: 2,
-            name: 'RateWise 匯率計算機',
-            url: `${SITE_URL}/ratewise/`,
-            description: '即時匯率換算工具，整合 30 天歷史數據視覺化。',
+            name: '日本名字產生器',
+            url: `${SITE_URL}/nihonname/`,
+            description: '輸入中文姓氏，瞬間產生道地日文名字與諧音梗，支援 100+ 漢姓對照。',
           },
           {
             '@type': 'ListItem',
             position: 3,
             name: '停車好工具 ParkKeeper',
             url: `${SITE_URL}/park-keeper/`,
-            description: '智慧停車記錄與導航 PWA，支援停車位置快速記錄與回車導航。',
+            description: '台灣最好用的免費停車記錄 App，支援 GPS 定位、羅盤導航、離線使用。',
           },
           {
             '@type': 'ListItem',
             position: 4,
             name: '地震知識小學堂',
             url: `${SITE_URL}/quake-school/`,
-            description: '互動式地震衛教平台，提供測驗與防災知識學習內容。',
+            description: '互動式地震衛教平台，18 道測驗題搭配 SVG 動畫深入淺出講解地震科學。',
           },
         ],
       },
-    };
-    jsonLdArray.push(collectionJsonLd);
+    });
   }
 
-  // Add ProfilePage schema for about page
+  // ProfilePage for about
   if (normalizedRoute === '/about/') {
-    const profileJsonLd: ProfilePageJsonLd = {
+    jsonLdArray.push({
       '@context': 'https://schema.org',
       '@type': 'ProfilePage',
       name: metadata.title,
       description: metadata.description,
       url: `${SITE_URL}/about/`,
       mainEntity: personSchema,
-    };
-    jsonLdArray.push(profileJsonLd);
+    });
   }
 
   return jsonLdArray;

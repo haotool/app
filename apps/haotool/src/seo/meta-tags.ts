@@ -22,42 +22,55 @@ const ROUTE_METADATA: Record<
   }
 > = {
   '/': {
-    title: 'haotool.org | 阿璋的全端作品集 - React TypeScript',
+    title: 'haotool.org — 阿璋的全端作品集 | React TypeScript 高品質數位工具',
     description:
-      '嗨，我是阿璋。「haotool」取自「好工具」的諧音，代表每個作品都要兼具實用與優雅。使用 React、TypeScript 打造高品質數位工具，融合現代 Web 技術與動態設計，打造令人過目不忘的使用者體驗。開源、免費，持續開發中。歡迎體驗！',
+      '「haotool」取自「好工具」的諧音。阿璋以 React 19、TypeScript、Vite 7 打造高品質數位工具：RateWise 匯率計算機、日本名字產生器、停車好工具 ParkKeeper、地震知識小學堂。融合 3D 互動與動態設計，全部開源、免費、Lighthouse 90+ 分。',
     type: 'website',
     keywords: [
-      '前端開發',
-      '全端工程師',
-      'React',
-      'TypeScript',
-      '作品集',
-      '開源專案',
       '阿璋',
       'haotool',
+      '好工具',
+      '全端工程師',
+      '作品集',
+      'React',
+      'TypeScript',
+      'PWA',
+      '開源專案',
       'Web 開發',
+      '匯率計算機',
+      '日本名字產生器',
+      '停車好工具',
     ],
   },
   '/projects/': {
-    title: '作品集 | React TypeScript 開源專案展示 - haotool.org',
+    title: '作品集 | React TypeScript 開源專案展示 — haotool.org',
     description:
-      '精選作品展示：日本名字產生器（Vite SSG、PWA、100% SEO）、RateWise 即時匯率計算機（30天歷史圖表）等。每個作品都傾注對品質的執著，展現 React、TypeScript 全端開發、UI 設計與問題解決能力，全部開源免費。',
+      '精選作品展示：RateWise 即時匯率計算機（30 天歷史圖表）、日本名字產生器（Vite SSG、PWA）、停車好工具 ParkKeeper（GPS 停車記錄）、地震知識小學堂。每個作品 Lighthouse 90+ 分，全部開源免費。',
     type: 'website',
-    keywords: ['作品集', '專案', 'React 專案', 'TypeScript', 'PWA', '開源'],
+    keywords: [
+      '作品集',
+      '開源專案',
+      'React 專案',
+      'TypeScript',
+      'PWA',
+      'RateWise',
+      '停車好工具',
+      '日本名字產生器',
+    ],
   },
   '/about/': {
-    title: '關於阿璋 | 全端工程師 React TypeScript - haotool.org',
+    title: '關於阿璋 | 全端工程師 React TypeScript — haotool.org',
     description:
-      '我是阿璋，「haotool」取自「好工具」的諧音，也延伸自我名字的 HAO 音節，代表我對產出的堅持：它必須是個好工具。了解我的技術專長（React、TypeScript、Node.js）、開發哲學、Lighthouse 滿分方法論與職涯歷程。',
+      '我是阿璋，「haotool」取自「好工具」的諧音，也延伸自我名字的 HAO 音節，代表我對產出的堅持：它必須是個好工具。專精 React 19、TypeScript、Vite、Tailwind CSS，追求 Lighthouse 滿分的開發哲學。',
     type: 'profile',
-    keywords: ['阿璋', '關於', '全端工程師', '技術背景', '開發者'],
+    keywords: ['阿璋', '全端工程師', 'React', 'TypeScript', '技術背景', '開發者', 'haotool'],
   },
   '/contact/': {
-    title: '聯繫阿璋 | 合作委託 React 前端開發 - haotool.org',
+    title: '聯繫阿璋 | 合作委託 React 前端開發 — haotool.org',
     description:
-      '有任何問題、想法或合作委託？歡迎透過 Email、GitHub 或 Threads 與阿璋聯繫，通常在 24 小時內回覆您。承接 Web 前端開發、React 應用架構、PWA 設計等技術委託，歡迎詢問合作方案，一起打造令人驚艷的數位體驗！',
+      '有專案想法或合作委託？歡迎透過 Email、GitHub 或 Threads 聯繫阿璋。承接 Web 前端開發、React 應用架構、PWA 設計、3D 互動網頁等技術委託，通常 24 小時內回覆。',
     type: 'website',
-    keywords: ['聯繫', '合作', '委託', '諮詢'],
+    keywords: ['聯繫', '合作', '委託', '前端開發', 'React', 'PWA'],
   },
 };
 
@@ -113,11 +126,19 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
   tags.push(`<meta property="article:author" content="阿璋" />`);
   tags.push(`<meta property="article:published_time" content="2025-01-01T00:00:00Z" />`);
   tags.push(`<meta property="article:modified_time" content="${buildTime}" />`);
-  tags.push(`<meta name="robots" content="index, follow" />`);
-  tags.push(`<meta name="googlebot" content="index, follow" />`);
+  tags.push(
+    `<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />`,
+  );
+  tags.push(
+    `<meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1" />`,
+  );
 
   // Canonical URL
   tags.push(`<link rel="canonical" href="${canonicalUrl}" />`);
+
+  // Hreflang
+  tags.push(`<link rel="alternate" hreflang="zh-TW" href="${canonicalUrl}" />`);
+  tags.push(`<link rel="alternate" hreflang="x-default" href="${canonicalUrl}" />`);
 
   // Open Graph Tags
   tags.push(`<meta property="og:type" content="${metadata.type ?? 'website'}" />`);
@@ -126,9 +147,11 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
   tags.push(`<meta property="og:description" content="${escapeHtml(metadata.description)}" />`);
   tags.push(`<meta property="og:url" content="${canonicalUrl}" />`);
   tags.push(`<meta property="og:image" content="${imageUrl}" />`);
+  tags.push(`<meta property="og:image:alt" content="${escapeHtml(metadata.title)}" />`);
   tags.push(`<meta property="og:image:width" content="1200" />`);
   tags.push(`<meta property="og:image:height" content="630" />`);
   tags.push(`<meta property="og:locale" content="zh_TW" />`);
+  tags.push(`<meta property="og:updated_time" content="${buildTime}" />`);
 
   // Twitter Card Tags
   tags.push(`<meta name="twitter:card" content="summary_large_image" />`);
@@ -137,6 +160,7 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
   tags.push(`<meta name="twitter:title" content="${escapeHtml(metadata.title)}" />`);
   tags.push(`<meta name="twitter:description" content="${escapeHtml(metadata.description)}" />`);
   tags.push(`<meta name="twitter:image" content="${imageUrl}" />`);
+  tags.push(`<meta name="twitter:image:alt" content="${escapeHtml(metadata.title)}" />`);
 
   // Additional Meta Tags
   tags.push(`<meta name="theme-color" content="#6366f1" />`);

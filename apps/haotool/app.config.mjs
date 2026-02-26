@@ -45,10 +45,10 @@ export const IMAGE_RESOURCES = [
  */
 export const SITE_CONFIG = {
   url: 'https://app.haotool.org/',
-  name: 'haotool.org - Digital Portfolio',
-  title: 'haotool.org - Full-Stack Developer Portfolio',
+  name: 'haotool.org',
+  title: 'haotool.org — 阿璋的全端作品集 | React TypeScript 高品質數位工具',
   description:
-    'Full-stack developer portfolio showcasing high-performance web applications built with modern technologies.',
+    '「haotool」取自「好工具」的諧音。阿璋以 React 19、TypeScript、Vite 7 打造高品質數位工具：RateWise 匯率計算機、日本名字產生器、停車好工具 ParkKeeper、地震知識小學堂。全部開源、免費、Lighthouse 90+ 分。',
 };
 
 /**

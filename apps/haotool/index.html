@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>haotool.org | 阿璋的全端作品集 - React TypeScript</title>
+    <title>haotool.org — 阿璋的全端作品集 | React TypeScript 高品質數位工具</title>
 
     <!-- SEO Meta Tags -->
     <meta
@@ -15,8 +15,13 @@
       name="keywords"
       content="haotool, Full-Stack Developer, Web Developer, React, TypeScript, Portfolio, 阿璋"
     />
-    <meta name="robots" content="index, follow" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
     <link rel="canonical" href="https://app.haotool.org/" />
+    <link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/" />
+    <link rel="alternate" hreflang="x-default" href="https://app.haotool.org/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -77,6 +82,65 @@
   </head>
   <body class="bg-[#050505] text-white antialiased">
     <div id="root"></div>
+    <noscript>
+      <div
+        style="
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 2rem;
+          font-family: system-ui, sans-serif;
+          color: #e2e8f0;
+          background: #020617;
+        "
+      >
+        <h1>haotool.org — 阿璋的全端作品集</h1>
+        <p>
+          「haotool」取自「好工具」的諧音，是阿璋以 React 19、TypeScript、Vite 7
+          打造的高品質數位工具作品集。融合 3D 互動與動態設計，全部開源、免費、Lighthouse 90+ 分。
+        </p>
+        <h2>精選作品</h2>
+        <ul>
+          <li>
+            <a href="https://app.haotool.org/ratewise/">RateWise 匯率計算機</a> —
+            即時台灣銀行牌告匯率，支援 30+ 幣別與 30 天歷史圖表
+          </li>
+          <li>
+            <a href="https://app.haotool.org/nihonname/">日本名字產生器</a> —
+            輸入中文姓氏產生道地日文名字，100+ 漢姓對照
+          </li>
+          <li>
+            <a href="https://app.haotool.org/park-keeper/">停車好工具 ParkKeeper</a> —
+            台灣最好用的免費停車記錄 App，GPS 定位與羅盤導航
+          </li>
+          <li>
+            <a href="https://app.haotool.org/quake-school/">地震知識小學堂</a> —
+            互動式地震防災教育平台，18 道測驗搭配動畫
+          </li>
+        </ul>
+        <h2>常見問題</h2>
+        <dl>
+          <dt>haotool.org 是什麼？</dt>
+          <dd>
+            haotool.org
+            是阿璋的全端作品集，「haotool」取自「好工具」的諧音。包含匯率計算機、日本名字產生器、停車記錄工具、地震教育平台等實用工具。
+          </dd>
+          <dt>haotool 使用什麼技術？</dt>
+          <dd>
+            React 19、TypeScript、Vite 7、Tailwind CSS、Framer Motion、Three.js。全部支援 PWA
+            離線使用。
+          </dd>
+        </dl>
+        <nav>
+          <a href="https://app.haotool.org/">首頁</a> ·
+          <a href="https://app.haotool.org/projects/">作品集</a> ·
+          <a href="https://app.haotool.org/about/">關於</a> ·
+          <a href="https://app.haotool.org/contact/">聯繫</a>
+        </nav>
+        <footer style="margin-top: 2rem; font-size: 0.875rem; color: #64748b">
+          <p>© 2025 阿璋 (Ah Zhang) · haotool.org · GPL-3.0</p>
+        </footer>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

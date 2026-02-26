@@ -1,12 +1,24 @@
 # robots.txt for haotool.org
 # https://app.haotool.org/
+# Last Updated: 2026-02-27
 
+# Search Engines
 User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Mobile
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
+User-agent: Yandex
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# AI Retrieval (search/citation)
 User-agent: GPTBot
 Allow: /
 
@@ -22,6 +34,10 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
+User-agent: cohere-ai
+Allow: /
+
+# AI Training
 User-agent: Google-Extended
 Allow: /
 
@@ -31,6 +47,7 @@ Allow: /
 User-agent: Bytespider
 Allow: /
 
+# Social Media
 User-agent: Meta-ExternalAgent
 Allow: /
 
@@ -43,6 +60,10 @@ Allow: /
 User-agent: LinkedInBot
 Allow: /
 
+User-agent: Slackbot
+Allow: /
+
+# Default
 User-agent: *
 Allow: /
 Disallow: /sw.js
