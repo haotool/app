@@ -127,14 +127,18 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
     setSaveStatus('saving');
     vibrate([20, 40]);
 
+    // Fallback to Taipei 101 if GPS unavailable
+    const DEFAULT_LAT = 25.033;
+    const DEFAULT_LNG = 121.5654;
+
     const recordData: Partial<ParkingRecord> = {
       plateNumber: plate || 'N/A',
       floor: floorValue,
       notes: notes.trim(),
       photoData: photo ?? undefined,
       hasPhoto: !!photo,
-      latitude: location?.lat,
-      longitude: location?.lng,
+      latitude: location?.lat ?? DEFAULT_LAT,
+      longitude: location?.lng ?? DEFAULT_LNG,
     };
 
     await new Promise((r) => setTimeout(r, 600));
