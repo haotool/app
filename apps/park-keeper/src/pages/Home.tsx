@@ -402,15 +402,15 @@ function NavOverlay({
               transition={{ type: 'spring', stiffness: 50, damping: 15 }}
             >
               <svg viewBox="0 0 300 300" className="w-full h-full overflow-visible">
-                {/* Outer compass boundary ring */}
+                {/* Outer compass boundary ring – turns green on arrival */}
                 <circle
                   cx="150"
                   cy="150"
                   r="140"
                   fill="none"
-                  stroke={theme.colors.text}
-                  strokeWidth="1"
-                  opacity="0.1"
+                  stroke={arrived ? '#22c55e' : theme.colors.text}
+                  strokeWidth={arrived ? 2 : 1}
+                  opacity={arrived ? 0.45 : 0.1}
                 />
                 {Array.from({ length: 36 }).map((_, i) => {
                   const angle = i * 10;
@@ -458,13 +458,12 @@ function NavOverlay({
               </svg>
             </motion.div>
 
-            {/* Target Pointer – dimmed when GPS unavailable */}
+            {/* Target Pointer – fades: arrived → 0 (jitter at ~0m), indoor → 0.4, no GPS → 0.25 */}
             <motion.div
-              className="absolute inset-0 transition-opacity duration-500"
-              style={{
-                rotate: -trueAnimHeading,
-                opacity: hasValidLocation ? 1 : 0.25,
-              }}
+              className="absolute inset-0"
+              animate={{ opacity: !hasValidLocation ? 0.25 : arrived ? 0 : isIndoor ? 0.4 : 1 }}
+              transition={{ duration: 0.6 }}
+              style={{ rotate: -trueAnimHeading }}
             >
               <motion.div
                 className="w-full h-full"
