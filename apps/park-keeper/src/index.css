@@ -1,0 +1,77 @@
+@import 'tailwindcss';
+
+:root {
+  --color-primary: #1e293b;
+  --color-primary-rgb: 30, 41, 59;
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text: #0f172a;
+}
+
+body {
+  transition:
+    background-color 0.4s ease,
+    color 0.3s ease;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.leaflet-container {
+  background: transparent !important;
+}
+
+@utility pt-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility font-racing {
+  font-family: 'Orbitron', sans-serif;
+}
+
+@utility font-cute {
+  font-family: 'Fredoka', sans-serif;
+}
+
+@utility font-minimalist {
+  font-family: 'Inter', sans-serif;
+}
+
+@utility font-literary {
+  font-family: 'Lora', serif;
+}
+
+@utility shadow-elevation-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+@utility shadow-elevation-2 {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+@utility shadow-elevation-3 {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+
+@utility shadow-elevation-4 {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
