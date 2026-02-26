@@ -23,9 +23,6 @@ import {
   Navigation,
   Navigation2,
   Footprints,
-  ArrowUp,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, ParkingRecord, AppSettings, LanguageType } from '@app/park-keeper/types';
@@ -201,9 +198,7 @@ function NavOverlay({
     stepCount,
     animTargetBearing,
     relativeRotation,
-    isPhoneFlat,
     isIndoor,
-    magneticDeclination,
   } = nav;
 
   const isDarkTheme = theme.id === 'racing' || theme.id === 'minimalist';
@@ -224,14 +219,10 @@ function NavOverlay({
   const arrived = distance !== null && distance < 8;
 
   let directionHint = t('nav.straight');
-  let showLeft = false;
-  let showRight = false;
   if (relativeRotation > 20 && relativeRotation < 180) {
     directionHint = t('nav.turn_right');
-    showRight = true;
   } else if (relativeRotation >= 180 && relativeRotation < 340) {
     directionHint = t('nav.turn_left');
-    showLeft = true;
   }
 
   return (
@@ -322,27 +313,6 @@ function NavOverlay({
               </div>
             </div>
           </div>
-
-          <div
-            className={`h-10 w-px mx-2 opacity-20 ${glassStyle.text === 'text-white' ? 'bg-white' : 'bg-black'}`}
-          />
-
-          <div className="text-right relative z-10 min-w-[80px]">
-            <p
-              className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${glassStyle.subText}`}
-            >
-              {t('record.bearing')}
-            </p>
-            <p
-              className="text-sm font-black uppercase flex flex-col"
-              style={{ color: theme.colors.primary }}
-            >
-              {Math.round(relativeRotation)}°
-              <span className={`text-[10px] opacity-60 mt-0.5 ${glassStyle.text}`}>
-                {directionHint}
-              </span>
-            </p>
-          </div>
         </motion.div>
       </div>
 
@@ -392,70 +362,9 @@ function NavOverlay({
           }}
         />
 
-        <div className="w-full h-full flex flex-col items-center pt-6">
-          {/* Phone Holding Guidance */}
-          <div className="flex flex-col items-center mb-2 animate-bounce">
-            <ArrowUp size={24} style={{ color: theme.colors.primary }} strokeWidth={3} />
-            <span
-              className="text-[10px] font-black uppercase tracking-widest mt-1"
-              style={{ color: theme.colors.primary }}
-            >
-              {t('nav.phone_top')}
-            </span>
-          </div>
-
-          {/* Phone Flat Alert */}
-          <AnimatePresence>
-            {!isPhoneFlat && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="absolute top-20 z-50 flex flex-col items-center backdrop-blur-md px-4 py-2 rounded-full border shadow-lg"
-                style={{
-                  backgroundColor: `${theme.colors.surface}D9`,
-                  borderColor: `${theme.colors.text}10`,
-                }}
-              >
-                <span className="text-[9px] font-black uppercase tracking-widest text-red-500">
-                  {t('nav.hold_flat')}
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
+        <div className="w-full h-full flex flex-col items-center justify-center pt-2 pb-2">
           {/* Main Compass Dial */}
-          <div className="relative w-64 h-64 flex items-center justify-center">
-            {/* Left/Right Hints */}
-            <AnimatePresence>
-              {showLeft && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute -left-8 top-1/2 -translate-y-1/2 flex items-center gap-1"
-                >
-                  <ChevronLeft className="animate-pulse" style={{ color: theme.colors.text }} />
-                  <span className="text-[10px] font-bold" style={{ color: theme.colors.text }}>
-                    {t('nav.turn_left')}
-                  </span>
-                </motion.div>
-              )}
-              {showRight && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute -right-8 top-1/2 -translate-y-1/2 flex items-center gap-1"
-                >
-                  <span className="text-[10px] font-bold" style={{ color: theme.colors.text }}>
-                    {t('nav.turn_right')}
-                  </span>
-                  <ChevronRight className="animate-pulse" style={{ color: theme.colors.text }} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
+          <div className="relative w-72 h-72 flex items-center justify-center">
             {/* SVG Compass Ring */}
             <motion.div
               className="absolute inset-0"
@@ -466,28 +375,33 @@ function NavOverlay({
                 {Array.from({ length: 36 }).map((_, i) => {
                   const angle = i * 10;
                   const isCardinal = i % 9 === 0;
-                  const length = isCardinal ? 20 : 10;
-                  const strokeWidth = isCardinal ? 2 : 1;
+                  const isMajor = i % 3 === 0 && !isCardinal;
+                  const tickLength = isCardinal ? 22 : isMajor ? 13 : 7;
+                  const strokeW = isCardinal ? 3 : isMajor ? 1.5 : 0.8;
+                  const opacity = isCardinal ? 1 : isMajor ? 0.45 : 0.18;
+                  const isNorth = i === 0;
                   return (
                     <g key={i} transform={`rotate(${angle} 150 150)`}>
                       <line
                         x1="150"
                         y1="10"
                         x2="150"
-                        y2={10 + length}
-                        stroke={theme.colors.text}
-                        strokeWidth={strokeWidth}
-                        opacity={isCardinal ? 1 : 0.3}
+                        y2={10 + tickLength}
+                        stroke={isNorth ? '#ef4444' : theme.colors.text}
+                        strokeWidth={strokeW}
+                        opacity={opacity}
+                        strokeLinecap="round"
                       />
                       {isCardinal && (
                         <text
                           x="150"
-                          y="50"
+                          y="68"
                           textAnchor="middle"
-                          fill={theme.colors.text}
-                          fontSize="24"
+                          fill={isNorth ? '#ef4444' : theme.colors.text}
+                          fontSize="20"
                           fontWeight="900"
-                          transform={`rotate(${-angle} 150 50)`}
+                          transform={`rotate(${-angle} 150 68)`}
+                          opacity={isNorth ? 1 : 0.85}
                         >
                           {i === 0
                             ? t('compass.n')
@@ -511,53 +425,67 @@ function NavOverlay({
                 style={{ rotate: animTargetBearing }}
                 transition={{ type: 'spring', stiffness: 60, damping: 15 }}
               >
-                <div className="absolute top-8 left-1/2 -translate-x-1/2">
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5">
                   <div
-                    className="w-0 h-0 border-l-10 border-l-transparent border-r-10 border-r-transparent border-b-30 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
-                    style={{ borderBottomColor: theme.colors.primary }}
+                    className="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-b-[26px]"
+                    style={{
+                      borderBottomColor: theme.colors.primary,
+                      filter: `drop-shadow(0 0 8px ${theme.colors.primary}90)`,
+                    }}
+                  />
+                  <div
+                    className="w-0.5 h-4 rounded-full opacity-40"
+                    style={{ backgroundColor: theme.colors.primary }}
                   />
                 </div>
               </motion.div>
             </motion.div>
 
-            {/* Center Hub / Phone Graphic */}
+            {/* Center Hub – Distance + Direction */}
             <div
-              className="absolute w-24 h-24 rounded-full border-4 shadow-2xl flex flex-col items-center justify-center z-10 backdrop-blur-sm"
-              style={{ borderColor: `${theme.colors.text}15` }}
+              className="absolute w-28 h-28 rounded-full border-2 shadow-2xl flex flex-col items-center justify-center z-10 backdrop-blur-sm"
+              style={{
+                borderColor: `${theme.colors.text}12`,
+                backgroundColor: `${theme.colors.background}CC`,
+              }}
             >
-              <div
-                className="w-10 h-16 border-2 rounded-lg opacity-30 mb-1"
-                style={{ borderColor: theme.colors.text }}
-              />
-              <span
-                className="text-[10px] font-black tracking-widest opacity-80"
+              <p
+                className="text-3xl font-black tracking-tight leading-none"
                 style={{ color: theme.colors.text }}
               >
-                {t('nav.guide_hint')}
-              </span>
+                {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
+              </p>
+              <p
+                className="text-[10px] font-bold uppercase tracking-widest mt-0.5"
+                style={{ color: theme.colors.text, opacity: 0.45 }}
+              >
+                {isIndoor ? t('nav.steps') : 'm'}
+              </p>
+              {!arrived && (
+                <p
+                  className="text-[9px] font-black uppercase tracking-widest mt-2"
+                  style={{ color: theme.colors.primary, opacity: 0.9 }}
+                >
+                  {directionHint}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Status Footer */}
-          <div className="mt-auto mb-2 flex flex-col items-center">
-            <span
-              className="text-[10px] font-bold opacity-30 tracking-widest mb-2"
-              style={{ color: theme.colors.text }}
-            >
-              {t('nav.declination')} {magneticDeclination > 0 ? '+' : ''}
-              {magneticDeclination.toFixed(1)}°
-            </span>
-            {arrived ? (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="px-8 py-3 bg-green-500 rounded-full text-xs font-black uppercase tracking-[0.3em] text-white shadow-[0_0_30px_rgba(34,197,94,0.4)] animate-bounce"
-              >
-                {t('nav.arrived')}
-              </motion.div>
-            ) : (
-              <div className="h-6" />
-            )}
+          <div className="mt-4 mb-2 flex flex-col items-center min-h-[48px] justify-center">
+            <AnimatePresence>
+              {arrived && (
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0, y: 8 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  className="px-8 py-3 bg-green-500 rounded-full text-xs font-black uppercase tracking-[0.3em] text-white shadow-[0_0_20px_rgba(34,197,94,0.35)]"
+                >
+                  {t('nav.arrived')}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

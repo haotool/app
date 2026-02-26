@@ -59,6 +59,10 @@ apps/ratewise/dev-server.log
 .DS_Store
 Thumbs.db
 
+# Agent/Skill directories (external tooling files)
+.agent/
+.agents/
+
 # Archives
 *.zip
 *.tar.gz
