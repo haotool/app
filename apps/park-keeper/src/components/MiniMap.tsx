@@ -16,6 +16,10 @@ interface MiniMapProps {
   mapKey?: string;
 }
 
+const DEFAULT_MAP_ZOOM = 17;
+const STATIC_MIN_ZOOM = 10;
+const INTERACTIVE_MIN_ZOOM = 1;
+
 /**
  * Clamp latitude to valid range [-90, 90]
  * @param lat - Input latitude
@@ -131,22 +135,59 @@ function MapController({
   interactive: boolean;
 }) {
   const map = useMap();
+  const didInitRef = useRef(false);
+  const lastViewportKeyRef = useRef<string>('');
 
   useEffect(() => {
+    const centerKey = `${center[0].toFixed(6)},${center[1].toFixed(6)}`;
+    const userKey = userLoc ? `${userLoc[0].toFixed(6)},${userLoc[1].toFixed(6)}` : 'none';
+    const viewportKey = `${interactive ? 'interactive' : 'static'}|${centerKey}|${userKey}`;
+
+    if (lastViewportKeyRef.current === viewportKey) {
+      return;
+    }
+    lastViewportKeyRef.current = viewportKey;
+
+    if (!didInitRef.current) {
+      didInitRef.current = true;
+
+      if (!interactive && userLoc) {
+        const bounds = L.latLngBounds([center, userLoc]);
+        map.fitBounds(bounds, { padding: [80, 80], animate: false });
+      } else if (!interactive) {
+        map.setView(center, DEFAULT_MAP_ZOOM, { animate: false });
+      }
+
+      return;
+    }
+
     if (!interactive && userLoc) {
       const bounds = L.latLngBounds([center, userLoc]);
-      map.flyToBounds(bounds, { padding: [80, 80], animate: true, duration: 1.5 });
-    } else {
-      map.flyTo(center, 17, { animate: true, duration: 1.5, easeLinearity: 0.25 });
+      map.fitBounds(bounds, { padding: [80, 80], animate: false });
+      return;
     }
+
+    if (interactive) {
+      map.panTo(center, { animate: true, duration: 0.35, easeLinearity: 0.25 });
+      return;
+    }
+
+    map.setView(center, DEFAULT_MAP_ZOOM, { animate: false });
+  }, [center, userLoc, map, interactive]);
+
+  useEffect(() => {
     const timer = setTimeout(() => map.invalidateSize(), 100);
     return () => clearTimeout(timer);
-  }, [center, userLoc, map, interactive]);
+  }, [map]);
 
   useEffect(() => {
     if (interactive) {
       map.dragging.enable();
       map.touchZoom.enable();
+      map.doubleClickZoom.enable();
+      map.scrollWheelZoom.enable();
+      map.boxZoom.enable();
+      map.keyboard.enable();
     } else {
       map.dragging.disable();
       map.touchZoom.disable();
@@ -215,6 +256,18 @@ export default function MiniMap({
     () => calculateMaxBounds(validLat, validLng, validUserLat, validUserLng),
     [validLat, validLng, validUserLat, validUserLng],
   );
+  const centerPosition = useMemo<[number, number]>(
+    () => [validLat, validLng],
+    [validLat, validLng],
+  );
+  const userPosition = useMemo<[number, number] | undefined>(
+    () =>
+      validUserLat !== undefined && validUserLng !== undefined
+        ? [validUserLat, validUserLng]
+        : undefined,
+    [validUserLat, validUserLng],
+  );
+  const mapMinZoom = interactive ? INTERACTIVE_MIN_ZOOM : STATIC_MIN_ZOOM;
 
   // Taiwan NLSC High-Precision Tile Service
   // Source: https://maps.nlsc.gov.tw/S09SOA/homePage.action
@@ -255,48 +308,47 @@ export default function MiniMap({
         key={
           mapKey ? `map-${mapKey}` : interactive ? 'interactive' : `static-${validLat}-${validLng}`
         }
-        center={[validLat, validLng]}
-        zoom={17}
-        minZoom={10}
+        center={centerPosition}
+        zoom={DEFAULT_MAP_ZOOM}
+        minZoom={mapMinZoom}
         maxZoom={20}
-        zoomDelta={0.5}
+        zoomDelta={1}
+        zoomSnap={1}
         style={{ width: '100%', height: '100%', background: theme.colors.background }}
-        zoomControl={false}
+        zoomControl={interactive}
         attributionControl={false}
         dragging={interactive}
+        touchZoom={interactive}
+        doubleClickZoom={interactive}
+        scrollWheelZoom={interactive ? 'center' : false}
+        boxZoom={interactive}
+        keyboard={interactive}
         preferCanvas={true}
-        maxBounds={maxBounds}
+        maxBounds={interactive ? undefined : maxBounds}
+        maxBoundsViscosity={interactive ? 0 : 1}
         worldCopyJump={false}
         tapTolerance={interactive ? 15 : 0}
       >
         <TileLayer
           url={tileUrl}
-          updateWhenZooming={false}
-          keepBuffer={3}
+          updateWhenZooming={interactive}
+          updateWhenIdle={!interactive}
+          keepBuffer={interactive ? 4 : 3}
           maxNativeZoom={maxNativeZoom}
+          noWrap={true}
           crossOrigin="anonymous"
         />
-        <MapController
-          center={[validLat, validLng]}
-          userLoc={
-            validUserLat !== undefined && validUserLng !== undefined
-              ? [validUserLat, validUserLng]
-              : undefined
-          }
-          interactive={interactive}
-        />
+        <MapController center={centerPosition} userLoc={userPosition} interactive={interactive} />
         {interactive && onLocationSelect ? (
           <DraggableMarker
-            position={[validLat, validLng]}
+            position={centerPosition}
             onDragEnd={(newPos) => onLocationSelect(newPos.lat, newPos.lng)}
             icon={carIcon}
           />
         ) : (
-          <Marker position={[validLat, validLng]} icon={carIcon} />
+          <Marker position={centerPosition} icon={carIcon} />
         )}
-        {validUserLat !== undefined && validUserLng !== undefined && (
-          <Marker position={[validUserLat, validUserLng]} icon={userIcon} zIndexOffset={900} />
-        )}
+        {userPosition && <Marker position={userPosition} icon={userIcon} zIndexOffset={900} />}
       </MapContainer>
       {interactive && onLocationSelect && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[400] pointer-events-none">

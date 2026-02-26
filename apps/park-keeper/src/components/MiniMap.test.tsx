@@ -5,6 +5,17 @@ import type { ThemeConfig } from '@app/park-keeper/types';
 
 import type { ReactNode } from 'react';
 
+function serializeTestProp(value: unknown): string | undefined {
+  if (value === undefined || typeof value === 'function') return undefined;
+  if (typeof value === 'object' && value !== null) return JSON.stringify(value);
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+    return `${value}`;
+  }
+  if (typeof value === 'symbol') return value.description ?? 'symbol';
+  return undefined;
+}
+
 // Mock react-leaflet to avoid DOM dependencies in tests
 vi.mock('react-leaflet', () => ({
   MapContainer: ({ children, ...props }: Record<string, unknown> & { children?: ReactNode }) => {
@@ -13,11 +24,8 @@ vi.mock('react-leaflet', () => ({
     Object.keys(props).forEach((key) => {
       if (key === 'style' || key === 'key') return; // Skip non-serializable props
       const value = props[key];
-      if (typeof value === 'object' && value !== null) {
-        testProps[`data-${key.toLowerCase()}`] = JSON.stringify(value);
-      } else {
-        testProps[`data-${key.toLowerCase()}`] = String(value);
-      }
+      const serialized = serializeTestProp(value);
+      if (serialized !== undefined) testProps[`data-${key.toLowerCase()}`] = serialized;
     });
 
     return (
@@ -30,7 +38,9 @@ vi.mock('react-leaflet', () => ({
     const testProps: Record<string, string> = {};
     Object.keys(props).forEach((key) => {
       if (key === 'style') return;
-      testProps[`data-${key.toLowerCase()}`] = String(props[key]);
+      const value = props[key];
+      const serialized = serializeTestProp(value);
+      if (serialized !== undefined) testProps[`data-${key.toLowerCase()}`] = serialized;
     });
     return <div data-testid="tile-layer" {...testProps} />;
   },
@@ -53,13 +63,17 @@ vi.mock('react-leaflet', () => ({
   useMap: () => ({
     flyTo: vi.fn(),
     flyToBounds: vi.fn(),
+    fitBounds: vi.fn(),
+    panTo: vi.fn(),
+    setView: vi.fn(),
+    getZoom: vi.fn(() => 17),
     invalidateSize: vi.fn(),
     dragging: { enable: vi.fn(), disable: vi.fn() },
     touchZoom: { enable: vi.fn(), disable: vi.fn() },
-    doubleClickZoom: { disable: vi.fn() },
-    scrollWheelZoom: { disable: vi.fn() },
-    boxZoom: { disable: vi.fn() },
-    keyboard: { disable: vi.fn() },
+    doubleClickZoom: { enable: vi.fn(), disable: vi.fn() },
+    scrollWheelZoom: { enable: vi.fn(), disable: vi.fn() },
+    boxZoom: { enable: vi.fn(), disable: vi.fn() },
+    keyboard: { enable: vi.fn(), disable: vi.fn() },
   }),
 }));
 
@@ -145,14 +159,15 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
       expect(defaultZoom).toBeLessThanOrEqual(maxZoom);
     });
 
-    it('should use finer zoom control with zoomDelta for precision', () => {
+    it('should use integer zoom steps to avoid raster tile blur artifacts', () => {
       const { container } = render(
         <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={true} />,
       );
 
       const mapContainer = container.querySelector('[data-testid="map-container"]');
       expect(mapContainer).toHaveAttribute('data-zoomdelta');
-      expect(Number(mapContainer?.getAttribute('data-zoomdelta'))).toBe(0.5);
+      expect(Number(mapContainer?.getAttribute('data-zoomdelta'))).toBe(1);
+      expect(Number(mapContainer?.getAttribute('data-zoomsnap'))).toBe(1);
     });
   });
 
@@ -198,16 +213,37 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
       expect(mapContainer).toHaveAttribute('data-taptolerance');
       expect(Number(mapContainer?.getAttribute('data-taptolerance'))).toBeGreaterThan(0);
     });
+
+    it('should not clamp interactive map with maxBounds (free zoom and pan)', () => {
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={true} />,
+      );
+
+      const mapContainer = container.querySelector('[data-testid="map-container"]');
+      expect(mapContainer).not.toHaveAttribute('data-maxbounds');
+      expect(mapContainer).toHaveAttribute('data-zoomcontrol', 'true');
+      expect(Number(mapContainer?.getAttribute('data-minzoom'))).toBeLessThanOrEqual(3);
+    });
   });
 
   describe('🔴 RED: Tile Layer Optimization (Best Practice #3)', () => {
-    it('should configure tile layer with updateWhenZooming for smoother transitions', () => {
+    it('should defer tile refresh until zoom end for static previews', () => {
       const { container } = render(
         <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={false} />,
       );
 
       const tileLayer = container.querySelector('[data-testid="tile-layer"]');
       expect(tileLayer).toHaveAttribute('data-updatewhenzooming', 'false');
+    });
+
+    it('should update tiles during zoom in interactive mode for smoother zooming', () => {
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={true} />,
+      );
+
+      const tileLayer = container.querySelector('[data-testid="tile-layer"]');
+      expect(tileLayer).toHaveAttribute('data-updatewhenzooming', 'true');
+      expect(tileLayer).toHaveAttribute('data-updatewhenidle', 'false');
     });
 
     it('should set keepBuffer for tile caching to improve performance', () => {
@@ -238,6 +274,15 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
 
       const tileLayer = container.querySelector('[data-testid="tile-layer"]');
       expect(tileLayer).toHaveAttribute('data-crossorigin', 'anonymous');
+    });
+
+    it('should disable tile wrapping to avoid duplicate world tiles when zoomed out', () => {
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} interactive={true} />,
+      );
+
+      const tileLayer = container.querySelector('[data-testid="tile-layer"]');
+      expect(tileLayer).toHaveAttribute('data-nowrap', 'true');
     });
   });
 
