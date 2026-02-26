@@ -46,6 +46,8 @@ const STEP_THRESHOLD = 11.5;
 const STEP_DEBOUNCE_MS = 400;
 const INDOOR_ACCURACY_THRESHOLD = 20;
 const HEADING_SMOOTHING_ALPHA = 0.25;
+const ARRIVAL_THRESHOLD = 8; // metres – enter "arrived" state
+const DEPARTURE_THRESHOLD = 15; // metres – exit "arrived" state (hysteresis)
 
 export function useNavigation(record: ParkingRecord) {
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
@@ -64,6 +66,7 @@ export function useNavigation(record: ParkingRecord) {
   const [stepCount, setStepCount] = useState(0);
   const [isIndoor, setIsIndoor] = useState(false);
   const isIndoorRef = useRef(false);
+  const [arrivedState, setArrivedState] = useState(false);
   const [magneticDeclination, setMagneticDeclination] = useState(0);
   const watchId = useRef<number | null>(null);
   const lastStepTime = useRef(0);
@@ -99,6 +102,9 @@ export function useNavigation(record: ParkingRecord) {
             const dist = getDistance(uLat, uLng, record.latitude, record.longitude);
             setDistance(dist);
             distanceRef.current = dist;
+            setArrivedState((prev) =>
+              prev ? dist <= DEPARTURE_THRESHOLD : dist < ARRIVAL_THRESHOLD,
+            );
             const bearing = getBearing(uLat, uLng, record.latitude, record.longitude);
             let diff = bearing - prevTargetRef.current;
             if (diff > 180) diff -= 360;
@@ -168,6 +174,7 @@ export function useNavigation(record: ParkingRecord) {
   const relativeRotation = (targetBearing - trueHeading + 360) % 360;
   const trueAnimHeading = animHeading + magneticDeclination;
   const isPhoneFlat = deviceTilt < 45;
+  const hasValidLocation = userLoc !== null;
 
   return {
     userLoc,
@@ -183,5 +190,7 @@ export function useNavigation(record: ParkingRecord) {
     magneticDeclination,
     relativeRotation,
     isPhoneFlat,
+    arrivedState,
+    hasValidLocation,
   };
 }

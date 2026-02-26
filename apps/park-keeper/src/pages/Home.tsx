@@ -199,29 +199,33 @@ function NavOverlay({
     animTargetBearing,
     relativeRotation,
     isIndoor,
+    arrivedState,
+    hasValidLocation,
   } = nav;
 
   const isDarkTheme = theme.id === 'racing' || theme.id === 'minimalist';
   const glassStyle = isDarkTheme
     ? {
-        bg: 'bg-slate-900/60',
-        border: 'border-white/10',
+        bg: 'bg-slate-900/70',
+        border: 'border-white/20',
         text: 'text-white',
-        subText: 'text-white/60',
+        subText: 'text-white/70',
       }
     : {
-        bg: 'bg-white/60',
-        border: 'border-black/5',
+        bg: 'bg-white/80',
+        border: 'border-black/10',
         text: 'text-slate-900',
-        subText: 'text-slate-900/60',
+        subText: 'text-slate-900/70',
       };
 
-  const arrived = distance !== null && distance < 8;
+  const arrived = arrivedState;
 
+  // Symmetric ±30° threshold; dead-band at [0,30] ∪ [330,360) → straight
+  const TURN_DEG = 30;
   let directionHint = t('nav.straight');
-  if (relativeRotation > 20 && relativeRotation < 180) {
+  if (relativeRotation > TURN_DEG && relativeRotation < 180 - TURN_DEG) {
     directionHint = t('nav.turn_right');
-  } else if (relativeRotation >= 180 && relativeRotation < 340) {
+  } else if (relativeRotation > 180 + TURN_DEG && relativeRotation < 360 - TURN_DEG) {
     directionHint = t('nav.turn_left');
   }
 
@@ -418,8 +422,14 @@ function NavOverlay({
               </svg>
             </motion.div>
 
-            {/* Target Pointer */}
-            <motion.div className="absolute inset-0" style={{ rotate: -trueAnimHeading }}>
+            {/* Target Pointer – dimmed when GPS unavailable */}
+            <motion.div
+              className="absolute inset-0 transition-opacity duration-500"
+              style={{
+                rotate: -trueAnimHeading,
+                opacity: hasValidLocation ? 1 : 0.25,
+              }}
+            >
               <motion.div
                 className="w-full h-full"
                 style={{ rotate: animTargetBearing }}
@@ -430,7 +440,7 @@ function NavOverlay({
                     className="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-b-[26px]"
                     style={{
                       borderBottomColor: theme.colors.primary,
-                      filter: `drop-shadow(0 0 8px ${theme.colors.primary}90)`,
+                      filter: `drop-shadow(0 0 10px ${theme.colors.primary}80) drop-shadow(0 2px 4px rgba(0,0,0,0.25))`,
                     }}
                   />
                   <div
