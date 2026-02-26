@@ -223,10 +223,13 @@ function NavOverlay({
   // Symmetric ±30° threshold; dead-band at [0,30] ∪ [330,360) → straight
   const TURN_DEG = 30;
   let directionHint = t('nav.straight');
+  let directionArrow = '↑';
   if (relativeRotation > TURN_DEG && relativeRotation < 180 - TURN_DEG) {
     directionHint = t('nav.turn_right');
+    directionArrow = '→';
   } else if (relativeRotation > 180 + TURN_DEG && relativeRotation < 360 - TURN_DEG) {
     directionHint = t('nav.turn_left');
+    directionArrow = '←';
   }
 
   return (
@@ -399,6 +402,16 @@ function NavOverlay({
               transition={{ type: 'spring', stiffness: 50, damping: 15 }}
             >
               <svg viewBox="0 0 300 300" className="w-full h-full overflow-visible">
+                {/* Outer compass boundary ring */}
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="140"
+                  fill="none"
+                  stroke={theme.colors.text}
+                  strokeWidth="1"
+                  opacity="0.1"
+                />
                 {Array.from({ length: 36 }).map((_, i) => {
                   const angle = i * 10;
                   const isCardinal = i % 9 === 0;
@@ -521,12 +534,15 @@ function NavOverlay({
                   >
                     {isIndoor ? t('nav.steps') : 'm'}
                   </p>
-                  <p
-                    className="text-[9px] font-black uppercase tracking-widest mt-2"
-                    style={{ color: theme.colors.primary, opacity: 0.9 }}
-                  >
-                    {directionHint}
-                  </p>
+                  {!isIndoor && (
+                    <p
+                      className="text-sm font-black mt-1 leading-none"
+                      style={{ color: theme.colors.primary }}
+                      aria-label={directionHint}
+                    >
+                      {directionArrow}
+                    </p>
+                  )}
                 </>
               )}
             </div>
