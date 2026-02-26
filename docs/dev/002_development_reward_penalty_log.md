@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-02-27T03:32:17+08:00
-> **當前總分**: 1055 (初始分: 100) [+14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正]
+> **最後更新**: 2026-02-27T03:46:59+08:00
+> **當前總分**: 1057 (初始分: 100) [+14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構]
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -16,6 +16,15 @@
 - **-1**: 違反 Linus 三問 (過度設計)
 - **-2**: 破壞現有功能 (Regression)
 - **-3**: 造成生產環境停機
+
+---
+
+## 補充紀錄（2026-02-27）
+
+- ✅ 成功｜`AGENTS.md`、`CLAUDE.md` 升級為企業 SOP / 稽核友善格式（文件控制、控制矩陣、證據清單、例外流程、修訂紀錄）
+- ✅ 成功｜上網查詢文件寫作與 SOP 格式最佳實踐，並保留 `.example/config` 的簡潔章節風格
+- 依據｜Google Developer Documentation Style Guide、Google Documentation Best Practices、Microsoft Writing Style Guide、Diátaxis、University of Utah SOP template guidance
+- 分數｜`+2`
 
 ---
 
