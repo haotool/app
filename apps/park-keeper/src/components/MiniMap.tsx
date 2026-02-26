@@ -16,6 +16,61 @@ interface MiniMapProps {
   mapKey?: string;
 }
 
+/**
+ * Clamp latitude to valid range [-90, 90]
+ * @param lat - Input latitude
+ * @returns Clamped latitude
+ */
+const clampLatitude = (lat: number): number => {
+  return Math.max(-90, Math.min(90, lat));
+};
+
+/**
+ * Normalize longitude to valid range [-180, 180]
+ * @param lng - Input longitude
+ * @returns Normalized longitude
+ */
+const normalizeLongitude = (lng: number): number => {
+  let normalized = lng % 360;
+  if (normalized > 180) normalized -= 360;
+  if (normalized < -180) normalized += 360;
+  return normalized;
+};
+
+/**
+ * Calculate maxBounds with padding for map boundaries
+ * Best Practice: Prevent unnecessary tile loading and user confusion
+ * @param centerLat - Center latitude
+ * @param centerLng - Center longitude
+ * @param userLat - Optional user latitude
+ * @param userLng - Optional user longitude
+ * @returns Bounds array [[minLat, minLng], [maxLat, maxLng]]
+ */
+const calculateMaxBounds = (
+  centerLat: number,
+  centerLng: number,
+  userLat?: number,
+  userLng?: number,
+): [[number, number], [number, number]] => {
+  const padding = 0.05; // ~5.5 km at equator
+
+  if (typeof userLat === 'number' && typeof userLng === 'number') {
+    const minLat = Math.min(centerLat, userLat) - padding;
+    const maxLat = Math.max(centerLat, userLat) + padding;
+    const minLng = Math.min(centerLng, userLng) - padding;
+    const maxLng = Math.max(centerLng, userLng) + padding;
+    return [
+      [clampLatitude(minLat), normalizeLongitude(minLng)],
+      [clampLatitude(maxLat), normalizeLongitude(maxLng)],
+    ];
+  }
+
+  return [
+    [clampLatitude(centerLat - padding), normalizeLongitude(centerLng - padding)],
+    [clampLatitude(centerLat + padding), normalizeLongitude(centerLng + padding)],
+  ];
+};
+
 const createPremiumCarIcon = (color: string, isInteractive: boolean) => {
   const filterDef = isInteractive
     ? `<filter id="carGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -149,6 +204,18 @@ export default function MiniMap({
   className = '',
   mapKey,
 }: MiniMapProps) {
+  // Validate and normalize coordinates
+  const validLat = clampLatitude(lat);
+  const validLng = normalizeLongitude(lng);
+  const validUserLat = typeof userLat === 'number' ? clampLatitude(userLat) : undefined;
+  const validUserLng = typeof userLng === 'number' ? normalizeLongitude(userLng) : undefined;
+
+  // Calculate maxBounds to prevent excessive panning
+  const maxBounds = useMemo(
+    () => calculateMaxBounds(validLat, validLng, validUserLat, validUserLng),
+    [validLat, validLng, validUserLat, validUserLng],
+  );
+
   const tileUrl =
     theme.id === 'racing'
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
@@ -163,37 +230,64 @@ export default function MiniMap({
     [heading, interactive, theme.colors.accent],
   );
 
+  // ARIA label for accessibility
+  const ariaLabel = interactive
+    ? 'Interactive map for parking location selection'
+    : 'Static map showing parking location';
+
   return (
     <div
       className={`relative w-full h-full overflow-hidden bg-gray-100 ${className}`}
       style={{ borderRadius: 'inherit', isolation: 'isolate' }}
+      role="region"
+      aria-label={ariaLabel}
+      aria-live={interactive ? 'polite' : undefined}
     >
       <MapContainer
-        key={mapKey ? `map-${mapKey}` : interactive ? 'interactive' : `static-${lat}-${lng}`}
-        center={[lat, lng]}
+        key={
+          mapKey ? `map-${mapKey}` : interactive ? 'interactive' : `static-${validLat}-${validLng}`
+        }
+        center={[validLat, validLng]}
         zoom={17}
+        minZoom={10}
+        maxZoom={19}
+        zoomDelta={0.5}
         style={{ width: '100%', height: '100%', background: theme.colors.background }}
         zoomControl={false}
         attributionControl={false}
         dragging={interactive}
+        preferCanvas={true}
+        maxBounds={maxBounds}
+        worldCopyJump={false}
+        tapTolerance={interactive ? 15 : 0}
       >
-        <TileLayer url={tileUrl} />
+        <TileLayer
+          url={tileUrl}
+          updateWhenZooming={false}
+          keepBuffer={3}
+          maxNativeZoom={18}
+          crossOrigin="anonymous"
+        />
         <MapController
-          center={[lat, lng]}
-          userLoc={userLat && userLng ? [userLat, userLng] : undefined}
+          center={[validLat, validLng]}
+          userLoc={
+            validUserLat !== undefined && validUserLng !== undefined
+              ? [validUserLat, validUserLng]
+              : undefined
+          }
           interactive={interactive}
         />
         {interactive && onLocationSelect ? (
           <DraggableMarker
-            position={[lat, lng]}
+            position={[validLat, validLng]}
             onDragEnd={(newPos) => onLocationSelect(newPos.lat, newPos.lng)}
             icon={carIcon}
           />
         ) : (
-          <Marker position={[lat, lng]} icon={carIcon} />
+          <Marker position={[validLat, validLng]} icon={carIcon} />
         )}
-        {typeof userLat === 'number' && typeof userLng === 'number' && (
-          <Marker position={[userLat, userLng]} icon={userIcon} zIndexOffset={900} />
+        {validUserLat !== undefined && validUserLng !== undefined && (
+          <Marker position={[validUserLat, validUserLng]} icon={userIcon} zIndexOffset={900} />
         )}
       </MapContainer>
       {interactive && onLocationSelect && (
