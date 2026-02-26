@@ -15,6 +15,8 @@ export default tseslint.config(
       '**/build/**',
       '**/coverage/**',
       '**/.example/**',
+      '**/.agents/**',
+      '**/.agent/**',
       '**/.next/**',
       '**/.turbo/**',
       '**/public/**',
