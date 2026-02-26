@@ -1,8 +1,8 @@
 # AGENT 操作守則與工具說明
 
-> **最後更新**: 2026-02-27T02:57:50+08:00  
+> **最後更新**: 2026-02-27T03:30:41+08:00  
 > **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
-> **版本**: v2.11 (整合 .example/config 基準：Skills 盤點、QA 產物規範、Commitlint 規則同步)  
+> **版本**: v2.12 (根目錄整潔摘要、截圖忽略規則修正、`.example/config` 已整合項清理)  
 > **角色**: 自動化代理 (Agents) 負責重複性檢查、端到端驗證與部署流程觸發。本文檔說明所有可用工具與工作流程。
 
 ---
@@ -412,6 +412,15 @@ pnpm audit
 - **`screenshots/` 為 QA 產物目錄**：不應納入正式提交（除非任務明確要求）
 - **完成 QA 任務前**：需確認瀏覽器 console 無錯誤（0 errors）
 - **重建 Docker / 發版前**：至少確認 `pnpm typecheck`、`pnpm test`、`pnpm build:ratewise` 可通過（或在回報中說明未執行原因）
+
+### 根目錄整潔摘要（2026-02-27）
+
+- 根目錄看起來雜亂的常見原因：monorepo 共用設定檔集中、AI/工具目錄（`.agents`/`.claude`/`.cursor`/`.playwright-mcp`）、以及本機 QA 截圖暫存
+- QA 截圖最佳實踐位置：本節（`AGENTS.md`）與 `CLAUDE.md` 的「Puppeteer / Playwright MCP（QA 產物規範）」與「禁止檔案與 QA 產物規範」
+- 排查建議：
+  - `git status --short`（看未追蹤/已修改）
+  - `git status --ignored --short`（看被忽略的本機暫存，如 QA 截圖）
+  - `ls -la`（快速辨識 root-level 圖檔是否堆積）
 
 ### Docker 建置流程
 
@@ -986,8 +995,8 @@ docker logs <container-id>
 
 > **總結**: Agent 的任務是保持流程可靠並回報結果，不參與需求判斷、不做超出授權範圍的操作。所有操作依照本文檔與 `docs/dev/` 文檔執行。
 
-**最後更新**: 2026-02-27T02:57:50+08:00
-**版本**: v2.11 (整合 .example/config 基準：Skills 盤點、QA 產物規範、Commitlint 規則同步)
+**最後更新**: 2026-02-27T03:30:41+08:00
+**版本**: v2.12 (根目錄整潔摘要、截圖忽略規則修正、`.example/config` 已整合項清理)
 **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
 
 _本文檔依照 Linus Torvalds 開發哲學產生，所有建議經過實用性驗證。_

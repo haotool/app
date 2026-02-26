@@ -1,8 +1,8 @@
 # Claude Code 開發指南
 
 > **適用對象**: 使用 Claude Code 開發本專案的所有開發者與 AI 助手
-> **最後更新**: 2026-02-27T02:57:50+08:00
-> **版本**: v2.1 (整合 `.example/config` 基準：Monorepo 快照、Skills 盤點、QA/Commitlint 規範同步)
+> **最後更新**: 2026-02-27T03:30:41+08:00
+> **版本**: v2.2 (根目錄整潔摘要、截圖忽略規則修正、`.example/config` 已整合項清理)
 
 ---
 
@@ -45,6 +45,9 @@ pnpm format:fix
 
 - 專案可能存在未追蹤的 `.agents/skills/*` 本地 skill 內容，除非任務要求，**不要**任意刪除或覆蓋
 - 修改流程/規範文件時，優先同步更新 `AGENTS.md` 與本文件，避免規則分裂
+- 根目錄若看起來很亂，先區分「已追蹤來源檔」與「本機暫存/忽略檔」：
+  - 常見噪音來源：AI 工具目錄、`.playwright-mcp/`、本機 QA 截圖（root-level `*.png`）
+  - 先跑 `git status --ignored --short` 再判斷是否需要清理
 
 ---
 
@@ -623,6 +626,12 @@ specs-workflow --action complete_task --taskNumber "1"
 - 非任務明確要求，不提交 QA 截圖到版本控制
 - 完成 QA 任務前確認 console 0 errors，再回報結果
 
+### 截圖最佳實踐索引（快速定位）
+
+- `CLAUDE.md` → 「Puppeteer / Playwright MCP（QA 產物規範）」
+- `CLAUDE.md` → 本章「禁止檔案與 QA 產物規範」
+- `AGENTS.md` → 「QA 產物與截圖規範」
+
 ---
 
 ## 文檔維護規範
@@ -895,6 +904,6 @@ Claude Code 的任務是：
 
 ---
 
-**最後更新**: 2026-02-27T02:57:50+08:00
-**版本**: v2.1 (整合 `.example/config` 基準：Monorepo 快照、Skills 盤點、QA/Commitlint 規範同步)
+**最後更新**: 2026-02-27T03:30:41+08:00
+**版本**: v2.2 (根目錄整潔摘要、截圖忽略規則修正、`.example/config` 已整合項清理)
 **維護者**: Claude Code

@@ -94,9 +94,14 @@ reports/lighthouse/
 !public/**/*.png
 !**/public/*.png
 !**/public/**/*.png
-!**/screenshots/*.png
 !**/icons/*.png
 !**/og-image.png
+/screenshots/
+# Root-level ad-hoc screenshots (QA artifacts) should not pollute repo root
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
 
 # PID files
 apps/ratewise/dev-server.pid
