@@ -28,10 +28,12 @@ on:
 permissions:
   contents: read
 
-env:
-  RATEWISE_BASE_URL: 'https://app.haotool.org/ratewise'
-  NIHONNAME_BASE_URL: 'https://app.haotool.org/nihonname'
-  HAOTOOL_BASE_URL: 'https://app.haotool.org'
+# ❌ 移除硬編碼環境變數
+# 改用動態生成（從 app.config.mjs SSOT）
+# env:
+#   RATEWISE_BASE_URL: 'https://app.haotool.org/ratewise'
+#   NIHONNAME_BASE_URL: 'https://app.haotool.org/nihonname'
+#   HAOTOOL_BASE_URL: 'https://app.haotool.org'
 
 jobs:
   health-check:
@@ -54,6 +56,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+
+      - name: Generate dynamic env vars from app.config.mjs (SSOT)
+        run: node scripts/generate-app-env-vars.mjs >> $GITHUB_ENV
 
       - name: Wait for deployment
         if: github.event_name == 'workflow_run'
@@ -89,6 +94,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate dynamic env vars from app.config.mjs (SSOT)
+        run: node scripts/generate-app-env-vars.mjs >> $GITHUB_ENV
 
       - name: Install Playwright browsers
         run: pnpm --filter @app/nihonname exec playwright install chromium --with-deps
