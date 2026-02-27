@@ -146,6 +146,12 @@ curl -I http://localhost:8080/park-keeper/about/ | head -n 5
 - Cloudflare：設定 `CLOUDFLARE_ZONE_ID` 與 `CLOUDFLARE_API_TOKEN`。
 - 無 API 時：依腳本輸出清單於 CDN 後台手動操作。
 
+### Release Workflow 與 Cloudflare Worker 同步
+
+- `Release` workflow 在 `main` push 時，會先嘗試部署 `security-headers/wrangler.jsonc` 對應的 Cloudflare Worker，再執行 CDN purge；有版本變更時則會一併建立 GitHub release/tag。
+- 依 Cloudflare Workers CI/CD 官方做法，非互動部署必須提供 `CLOUDFLARE_API_TOKEN` 與 `CLOUDFLARE_ACCOUNT_ID`；缺任一 secret 時 workflow 會明確 `skip`，不會假裝正式站標頭已同步。
+- 若只看到 app release 成功，但正式站 `Permissions-Policy` / CSP 等標頭仍為舊值，優先檢查 `security-headers` worker 是否已成功部署，而不是誤判為 app bundle 回退。
+
 ### Precache 資產驗證
 
 - 依 [Workbox Precaching 文檔][ref:workbox-precaching:2025-11-09]，Service Worker 安裝前必須確保清單內所有資產皆可 200 回應，否則會出現 `bad-precaching-response`。

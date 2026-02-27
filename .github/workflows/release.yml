@@ -145,6 +145,24 @@ jobs:
             gh release create "$TAG" --title "$TITLE" --notes "Automated release via Changesets workflow." --verify-tag 2>/dev/null || echo "Release for $TAG already exists or skipped"
           done
 
+      # Cloudflare Security Headers Worker 同步部署
+      # 依 Cloudflare Workers CI/CD 文檔，非互動環境需使用 API Token 與 Account ID。
+      - name: Deploy Cloudflare security-headers worker
+        if: success()
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "⚠️ Cloudflare worker deploy secrets not configured, skipping security-headers worker deploy"
+            echo "To enable: Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to repository secrets"
+            exit 0
+          fi
+
+          echo "🔐 Deploying security-headers worker for app.haotool.org/ratewise/* ..."
+          npm ci --prefix security-headers
+          npx --prefix security-headers wrangler deploy --config security-headers/wrangler.jsonc
+
       # Cloudflare CDN 快取清除
       # 參考: Context7 /websites/developers_cloudflare - Cache Purge API
       - name: Purge Cloudflare Cache

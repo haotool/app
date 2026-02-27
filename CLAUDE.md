@@ -304,6 +304,12 @@ ls -la
 - Repo 宣告 Node `^24.0.0`
 - 是否阻塞以實際 hook / script 結果為準（warning 不一定失敗）
 
+### 4. Cloudflare 邊緣同步
+
+- RateWise release 不只看 app bundle；若正式站標頭由 `security-headers` worker 控制，必須一起確認 worker 是否已部署
+- 非互動 `wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` 與 `CLOUDFLARE_ACCOUNT_ID`
+- 若 secret 缺失，workflow 應明確 `skip` 並回報，不可把「release 綠燈」等同於「邊緣標頭已同步」
+
 ## 外部寫作與 SOP 格式基準（2026-02-27 查詢）
 
 本文件格式與寫法結合 `.example/config/CLAUDE.md` 的簡潔風格，並參考：
@@ -315,12 +321,13 @@ ls -la
 
 ## 修訂紀錄（Revision History）
 
-| 日期       | 版本 | 變更摘要                                                                                          |
-| ---------- | ---- | ------------------------------------------------------------------------------------------------- |
-| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP |
-| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                             |
+| 日期       | 版本 | 變更摘要                                                                                            |
+| ---------- | ---- | --------------------------------------------------------------------------------------------------- |
+| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口 |
+| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP   |
+| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                               |
 
 ---
 
-**最後更新**: 2026-02-27T03:46:59+0800  
-**版本**: v3.1（企業 SOP / 嚴格審計風格重寫，保留 `.example/config` 風格與 repo 實際規則 SSOT）
+**最後更新**: 2026-02-27T18:24:54+0800
+**版本**: v3.2（補充 Cloudflare 邊緣同步規則：release 需同時檢查 app bundle、worker 與 secret 缺口）
