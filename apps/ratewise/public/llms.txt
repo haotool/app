@@ -1,48 +1,92 @@
 # RateWise 匯率好工具
 
-> 台灣用戶取向的即時匯率換算工具，資料 100% 來源於臺灣銀行牌告匯率，支援 30+ 種貨幣、PWA 離線與歷史走勢。
+> 台灣用戶取向的即時匯率換算工具，資料 100% 來源於臺灣銀行牌告匯率，支援 30+ 種貨幣、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、3 語言介面與 PWA 離線使用。
 
-Version: v2.4.4 (2026-02-11)
+Version: v2.4.7 (2026-02-27)
 
-Answer Capsule (Quick Q&A):
-- Q: RateWise 提供什麼？ A: 即時匯率換算（單幣別/多幣別），並支援歷史趨勢、收藏管理、多語言（繁中/英/日）與離線使用。
-- Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金與即期買入/賣出）。
+## Answer Capsule (Quick Q&A)
+
+- Q: RateWise 提供什麼？ A: 即時匯率換算（單幣別/多幣別），內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、6 種主題風格、3 語言介面與 PWA 離線使用。
+- Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金買入/賣出、即期買入/賣出四種報價）。
 - Q: 更新頻率？ A: 每 5 分鐘自動同步。
 - Q: 建議用途？ A: 出國旅遊換匯、跨境購物匯率比較、日常外幣查詢。
+- Q: 現金匯率和即期匯率的差別？ A: 現金匯率適用臨櫃換鈔，即期匯率適用匯款與帳戶轉帳。現鈔通常比即期差，因為銀行有保管與運送成本。
+- Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行角度。您拿外幣換回台幣看「買入」價，您拿台幣買外幣看「賣出」價。
+- Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。刷卡匯率由發卡組織（Visa/Mastercard）決定清算匯率，再加上發卡銀行海外手續費，與台銀牌告是不同體系。
 
-E-E-A-T Signals:
-- 專業性：匯率計算邏輯與格式化策略具完整測試覆蓋（92%+ 覆蓋率）。
-- 權威性：資料來源為臺灣銀行官方牌告匯率。
+## E-E-A-T Signals
+
+- 專業性：匯率計算邏輯與格式化策略具完整測試覆蓋（1389 測試、84 測試檔案）。
+- 權威性：資料來源為臺灣銀行官方牌告匯率，每 5 分鐘自動同步。
 - 可信度：開源 GPL-3.0，透明可驗證；提供聯絡方式。
+- 經驗：專為台灣用戶設計，依各國旅遊消費習慣提供常用金額按鈕。
 
-Key Metrics:
+## Key Metrics
+
 - FCP ~0.5s, LCP ~1.1s, CLS < 0.25, TBT 10ms
 - Lighthouse SEO 100/100, Performance 89+/100
 - 6 種主題風格（Zen/Nitro/Kawaii/Classic/Ocean/Forest）
 - i18n 三語言支援（繁體中文/English/日本語）
 
+## Features
+
+- 單幣別精準換算：選擇來源/目標貨幣，即時計算換算結果
+- 多幣別同時比較：一個基準貨幣同時查看 30+ 種貨幣換算
+- 計算機鍵盤：底部滑出式計算機，支援加減乘除、百分比、退格
+- 快速金額按鈕：依幣別顯示常用金額（如韓元 10,000~300,000、日圓 1,000~30,000）
+- 現金/即期匯率切換：一鍵切換適合不同換匯情境
+- 收藏管理：點擊星號收藏常用貨幣
+- 拖曳排序：在收藏頁面透過拖曳手柄自訂貨幣順序
+- 換算歷史紀錄：自動記錄每次換算，可複製或重新換算
+- 7~30 天歷史趨勢圖：視覺化匯率波動，判斷換匯時機
+- 下拉更新（Pull to Refresh）：首頁下拉同步最新匯率
+- PWA 離線使用：Service Worker 快取，無網路仍可換算
+- 6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林）
+
+## URL Parameters (Deep Linking)
+
+支援 URL 查詢參數自動帶入換算，適合 LLM 與搜尋引擎引導用戶直接查看結果：
+
+- `?amount=50000&from=KRW&to=TWD` → 自動帶入 50,000 韓元換台幣
+- `?amount=100&from=USD&to=TWD` → 自動帶入 100 美金換台幣
+- `?amount=10000&from=JPY&to=TWD` → 自動帶入 10,000 日圓換台幣
+
+範例完整 URL：
+- https://app.haotool.org/ratewise/?amount=50000&from=KRW&to=TWD
+- https://app.haotool.org/ratewise/?amount=1000&from=JPY&to=TWD
+- https://app.haotool.org/ratewise/?amount=100&from=USD&to=TWD
+
 ## Core Pages
 
-- [首頁](https://app.haotool.org/ratewise/): 匯率換算主入口與工具入口
-- [常見問題](https://app.haotool.org/ratewise/faq/): FAQ 與 Rich Results 內容
-- [使用指南](https://app.haotool.org/ratewise/guide/): 完整操作與功能說明
+- [首頁](https://app.haotool.org/ratewise/): 匯率換算主入口
+- [常見問題](https://app.haotool.org/ratewise/faq/): 21 題完整 FAQ（含現金/即期差別、買入賣出、刷卡匯率等）
+- [使用指南](https://app.haotool.org/ratewise/guide/): 8 步驟完整操作教學
 - [關於我們](https://app.haotool.org/ratewise/about/): 專案背景與作者資訊
 
-## Popular Rates
+## Popular Rates（每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
 
-- [USD/TWD 美元](https://app.haotool.org/ratewise/usd-twd/): 熱門換匯基準
-- [JPY/TWD 日圓](https://app.haotool.org/ratewise/jpy-twd/): 旅遊高頻需求
-- [EUR/TWD 歐元](https://app.haotool.org/ratewise/eur-twd/): 歐洲交易參考
-- [HKD/TWD 港幣](https://app.haotool.org/ratewise/hkd-twd/): 港澳常用
-- [CNY/TWD 人民幣](https://app.haotool.org/ratewise/cny-twd/): 跨境購物需求
-- [KRW/TWD 韓元](https://app.haotool.org/ratewise/krw-twd/): 旅遊與消費需求
+- [USD/TWD 美元](https://app.haotool.org/ratewise/usd-twd/): 美國旅遊與海外付款
+- [JPY/TWD 日圓](https://app.haotool.org/ratewise/jpy-twd/): 日本旅遊換匯
+- [EUR/TWD 歐元](https://app.haotool.org/ratewise/eur-twd/): 歐洲旅遊與跨境付款
+- [GBP/TWD 英鎊](https://app.haotool.org/ratewise/gbp-twd/): 英國旅遊換匯
+- [KRW/TWD 韓元](https://app.haotool.org/ratewise/krw-twd/): 韓國旅遊換匯
+- [CNY/TWD 人民幣](https://app.haotool.org/ratewise/cny-twd/): 人民幣付款與報價
+- [HKD/TWD 港幣](https://app.haotool.org/ratewise/hkd-twd/): 香港旅遊換匯
 - [AUD/TWD 澳幣](https://app.haotool.org/ratewise/aud-twd/): 澳洲旅遊與留學
-- [CAD/TWD 加幣](https://app.haotool.org/ratewise/cad-twd/): 加拿大移民與貿易
-- [CHF/TWD 瑞士法郎](https://app.haotool.org/ratewise/chf-twd/): 避險貨幣參考
-- [GBP/TWD 英鎊](https://app.haotool.org/ratewise/gbp-twd/): 英國留學與貿易
-- [NZD/TWD 紐幣](https://app.haotool.org/ratewise/nzd-twd/): 紐西蘭旅遊與打工
-- [SGD/TWD 新加坡幣](https://app.haotool.org/ratewise/sgd-twd/): 東南亞商務需求
-- [THB/TWD 泰銖](https://app.haotool.org/ratewise/thb-twd/): 泰國旅遊常用
+- [CAD/TWD 加幣](https://app.haotool.org/ratewise/cad-twd/): 加拿大旅遊與留學
+- [SGD/TWD 新加坡幣](https://app.haotool.org/ratewise/sgd-twd/): 新加坡旅遊與商務
+- [THB/TWD 泰銖](https://app.haotool.org/ratewise/thb-twd/): 泰國旅遊換匯
+- [NZD/TWD 紐元](https://app.haotool.org/ratewise/nzd-twd/): 紐西蘭旅遊與留學
+- [CHF/TWD 瑞士法郎](https://app.haotool.org/ratewise/chf-twd/): 瑞士旅遊與跨境付款
+
+## Data Source
+
+- Source: 臺灣銀行牌告匯率
+- Source URL: https://rate.bot.com.tw/xrt
+- Update: 每 5 分鐘自動同步（GitHub Actions）
+- Rate Types: 現金買入、現金賣出、即期買入、即期賣出
+- Currencies: 30+ 種（TWD, USD, JPY, EUR, GBP, HKD, CNY, KRW, AUD, CAD, SGD, THB, NZD, CHF, VND, PHP, IDR, MYR 等）
+- Disclaimer: 匯率僅供參考，實際交易請以金融機構公告為準。
 
 ## AI/LLM Access Control
 

@@ -1,33 +1,21 @@
-# 即時匯率更新策略
+# 即時匯率更新（每 5 分鐘同步臺灣銀行牌告）
 #
-# 職責：每 30 分鐘更新 latest.json（即時匯率）
-#
-# 特點：
-# ✅ 高頻更新（每 30 分鐘）
-# ✅ 單一職責（只更新即時匯率）
-# ✅ 容錯設計（外部 API 故障時優雅降級）
-# ✅ 智能重試（指數退避，最多 3 次）
-# ✅ 開源專案 GitHub Actions 完全免費
+# 職責：定期更新 latest.json
+# 容錯：外部 API 故障時優雅降級，指數退避重試（最多 3 次）
+# 成本：開源專案 GitHub Actions 免費
 
 name: Update Latest Exchange Rates
 
-# 郵件通知策略：只在失敗時通知
-# GitHub Settings > Notifications > Actions > "Send notifications for failed workflows only"
-
-# 並發控制：確保同時只有一個 workflow 能推送到 data 分支
+# 並發控制：確保同一時間只有一個 workflow 推送至 data 分支
 concurrency:
   group: data-branch-push
   cancel-in-progress: false
 
 on:
   schedule:
-    # 每 30 分鐘執行一次
-    - cron: '0,30 * * * *'
-
-  # 允許手動觸發
+    - cron: '*/5 * * * *'
   workflow_dispatch:
-
-  # 測試用：當腳本被修改時執行
+  # 腳本變更時觸發測試
   push:
     paths:
       - 'scripts/fetch-taiwan-bank-rates.js'
@@ -57,7 +45,6 @@ jobs:
 
       - name: Ensure data branch is up to date with scripts
         run: |
-          # 確保有最新的腳本
           git fetch origin main
           git checkout origin/main -- scripts/fetch-taiwan-bank-rates.js
           git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates
@@ -98,7 +85,7 @@ jobs:
             echo "📝 Amending previous commit on data branch..."
             git commit --amend --reset-author -m "chore(rates): update latest rates - ${UPDATE_TIME}" \
               -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
-              -m "🤖 Auto-updated every 30 minutes" \
+              -m "🤖 Auto-updated every 5 minutes" \
               -m "Source: https://rate.bot.com.tw/xrt/flcsv/0/day"
 
             # 推送前先拉取最新變更，避免並發衝突
@@ -108,7 +95,7 @@ jobs:
             echo "📝 Creating new commit on data branch..."
             git commit -m "chore(rates): update latest rates - ${UPDATE_TIME}" \
               -m "Updated ${CURRENCY_COUNT} currencies from Taiwan Bank" \
-              -m "🤖 Auto-updated every 30 minutes" \
+              -m "🤖 Auto-updated every 5 minutes" \
               -m "Source: https://rate.bot.com.tw/xrt/flcsv/0/day"
 
             # 推送前先拉取最新變更，避免並發衝突
@@ -161,7 +148,7 @@ jobs:
           echo "# ℹ️ No rate changes detected" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The exchange rates have not changed since the last update." >> $GITHUB_STEP_SUMMARY
-          echo "Next check: 30 minutes from now" >> $GITHUB_STEP_SUMMARY
+          echo "Next check: 5 minutes from now" >> $GITHUB_STEP_SUMMARY
 
       - name: Update workflow summary (API failure)
         if: steps.fetch-rates.outcome == 'failure'
@@ -175,7 +162,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Impact" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ **No user impact**: App continues using cached exchange rates" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Automatic recovery**: Next scheduled run in 30 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Automatic recovery**: Next scheduled run in 5 minutes" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ **No manual intervention required**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Technical Details" >> $GITHUB_STEP_SUMMARY

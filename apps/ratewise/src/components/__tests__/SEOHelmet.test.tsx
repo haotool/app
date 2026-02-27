@@ -93,6 +93,7 @@ describe('SEOHelmet Component', () => {
                 description: 'Description',
                 steps: [
                   {
+                    position: 1,
                     name: 'Step 1',
                     text: 'Do this',
                   },
@@ -121,7 +122,7 @@ describe('SEOHelmet Component', () => {
               howTo={{
                 name: 'How to test',
                 description: 'Testing guide',
-                steps: [{ name: 'Step 1', text: 'Test' }],
+                steps: [{ position: 1, name: 'Step 1', text: 'Test' }],
               }}
             />
           </HelmetProvider>,

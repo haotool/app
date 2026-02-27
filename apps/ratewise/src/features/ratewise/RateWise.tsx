@@ -10,6 +10,7 @@
  */
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
@@ -22,7 +23,8 @@ import { performFullRefresh } from '../../utils/swUtils';
 import { logger } from '../../utils/logger';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { rateWiseLayoutTokens } from '../../config/design-tokens';
-import type { RateType } from './types';
+import type { CurrencyCode, RateType } from './types';
+import { CURRENCY_DEFINITIONS } from './constants';
 import { STORAGE_KEYS } from './storage-keys';
 
 const RateWise = () => {
@@ -101,6 +103,23 @@ const RateWise = () => {
     addToHistory,
     generateTrends,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const from = searchParams.get('from')?.toUpperCase();
+    const to = searchParams.get('to')?.toUpperCase();
+    const amount = searchParams.get('amount');
+
+    if (!from && !to && !amount) return;
+
+    const validCodes = Object.keys(CURRENCY_DEFINITIONS);
+    if (from && validCodes.includes(from)) setFromCurrency(from as CurrencyCode);
+    if (to && validCodes.includes(to)) setToCurrency(to as CurrencyCode);
+    if (amount && /^\d+(\.\d+)?$/.test(amount)) handleFromAmountChange(amount);
+
+    setSearchParams({}, { replace: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 只在首次掛載時讀取 URL 參數
 
   // 在 hydration 完成前，永遠返回 SkeletonLoader（與 SSG 一致）
   if (!isHydrated) {
