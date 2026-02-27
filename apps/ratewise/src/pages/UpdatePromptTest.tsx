@@ -10,6 +10,7 @@
  */
 
 import { Link } from 'react-router-dom';
+import { Head } from 'vite-react-ssg';
 
 const STYLES = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'] as const;
 
@@ -176,8 +177,10 @@ function StateAction({ state }: { state: State }) {
 export default function UpdatePromptTest() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-light via-blue-50 to-purple-50 p-4 md:p-8">
+      <Head>
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
       <div className="max-w-7xl mx-auto">
-        {/* 頁首 */}
         <div className="mb-8">
           <Link
             to="/"

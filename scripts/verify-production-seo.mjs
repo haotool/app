@@ -124,6 +124,7 @@ async function verifySitemapContent(
   canonicalBaseUrl,
   seoPaths,
   appShellPaths = [],
+  imageResources = [],
 ) {
   const response = await fetchSitemap(requestBaseUrl);
   if (!response.ok || response.body == null) {
@@ -146,8 +147,11 @@ async function verifySitemapContent(
     }
   }
 
-  if (response.body.includes('og-image.png') || response.body.includes('twitter-image.png')) {
-    errors.push('sitemap.xml 仍引用舊的 PNG 社交圖片 URL');
+  const hasJpgOgImage = imageResources.some((img) => img.endsWith('.jpg') && img.includes('og-'));
+  if (hasJpgOgImage) {
+    if (response.body.includes('og-image.png') || response.body.includes('twitter-image.png')) {
+      errors.push('sitemap.xml 仍引用舊的 PNG 社交圖片 URL（應為 .jpg）');
+    }
   }
 
   const hreflangMatches = response.body.match(/<xhtml:link/g) || [];
@@ -318,6 +322,7 @@ async function main() {
     canonicalBaseUrl,
     config.seoPaths,
     config.appShellPaths,
+    config.resources?.images ?? [],
   );
   if (sitemapResult.ok) {
     log(colors.green, '✓', 'sitemap.xml 內容正確');

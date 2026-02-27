@@ -3,26 +3,24 @@
  *
  * 執行時機：prebuild（與 generate-llms-txt.mjs 同階段）
  * 功能：產生靜態 JSON metadata，指向 GitHub data 分支的即時匯率 API
- * SSOT 來源：package.json (version) + seo-paths.config.mjs (currencies)
+ * SSOT 來源：package.json (version) + seo-paths.config.mjs (currencies) + constants.ts (全幣別)
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CURRENCY_SEO_PATHS, SITE_CONFIG } from '../seo-paths.config.mjs';
+import { SITE_CONFIG } from '../seo-paths.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
-const BUILD_DATE = new Date().toISOString();
 
 const DATA_BASE_URL = 'https://raw.githubusercontent.com/haotool/app/data/public/rates';
 
-const currencies = CURRENCY_SEO_PATHS.map((p) => {
-  const slug = p.replace(/\//g, '');
-  return slug.split('-')[0].toUpperCase();
-});
+const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
+const constantsContent = readFileSync(constantsPath, 'utf-8');
+const currencyKeys = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].map((m) => m[1]);
 
 const latestJson = {
   name: 'RateWise Exchange Rate API',
@@ -31,10 +29,9 @@ const latestJson = {
   source: '臺灣銀行牌告匯率',
   sourceUrl: 'https://rate.bot.com.tw/xrt',
   updateFrequency: 'every 5 minutes',
-  generatedAt: BUILD_DATE,
   baseCurrency: 'TWD',
   rateTypes: ['cash_buy', 'cash_sell', 'spot_buy', 'spot_sell'],
-  supportedCurrencies: ['TWD', ...currencies],
+  supportedCurrencies: currencyKeys,
   endpoints: {
     latest: `${DATA_BASE_URL}/latest.json`,
     history: `${DATA_BASE_URL}/history/{YYYY-MM-DD}.json`,
@@ -50,4 +47,4 @@ const latestJson = {
 const apiDir = resolve(ROOT, 'public/api');
 mkdirSync(apiDir, { recursive: true });
 writeFileSync(resolve(apiDir, 'latest.json'), JSON.stringify(latestJson, null, 2) + '\n');
-console.log(`✅ api/latest.json generated: v${pkg.version}, ${currencies.length} currencies`);
+console.log(`✅ api/latest.json generated: v${pkg.version}, ${currencyKeys.length} currencies`);

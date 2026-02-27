@@ -104,7 +104,7 @@ const RateWise = () => {
     generateTrends,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const from = searchParams.get('from')?.toUpperCase();
@@ -117,8 +117,6 @@ const RateWise = () => {
     if (from && validCodes.includes(from)) setFromCurrency(from as CurrencyCode);
     if (to && validCodes.includes(to)) setToCurrency(to as CurrencyCode);
     if (amount && /^\d+(\.\d+)?$/.test(amount)) handleFromAmountChange(amount);
-
-    setSearchParams({}, { replace: true });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 只在首次掛載時讀取 URL 參數
 
   // 在 hydration 完成前，永遠返回 SkeletonLoader（與 SSG 一致）
