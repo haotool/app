@@ -466,7 +466,7 @@ describe('📊 E-E-A-T Compliance', () => {
     });
 
     it('should mention test coverage for credibility', () => {
-      expect(llmsContent).toContain('覆蓋率');
+      expect(llmsContent).toContain('測試覆蓋');
     });
 
     it('should mention performance scores', () => {

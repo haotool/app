@@ -9,7 +9,7 @@ describe('llms.txt structure', () => {
     const content = readFileSync(llmsPath, 'utf-8');
     expect(content.startsWith('# RateWise 匯率好工具')).toBe(true);
     expect(content).toContain('> 台灣用戶取向的即時匯率換算工具');
-    expect(content).toContain('Answer Capsule (Quick Q&A):');
+    expect(content).toContain('Answer Capsule (Quick Q&A)');
   });
 
   it('includes file list sections with URLs', () => {

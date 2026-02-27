@@ -1,61 +1,26 @@
-/**
- * CurrencyLandingPage - Reusable SEO Landing Page Component
- *
- * @description ParkKeeper-inspired design system for currency landing pages.
- *              Provides consistent styling across all 13 currency landing pages.
- *              SSOT: Design tokens from index.css, structure inspired by Settings/Favorites.
- *
- * Features:
- * - Fully responsive (mobile-first: 320px → tablet: 768px → desktop: 1024px)
- * - Design token SSOT compliance
- * - SEO-optimized structure with schema.org support
- * - PWA-friendly layout with safe area handling
- *
- * @version 1.0.0
- * @created 2026-01-25
- */
+/** 幣別 SEO 頁面共用元件：13 組幣對頁 SSOT 渲染，含 JSON-LD、常見金額錨點、旅遊提示 */
 
 import { Link } from 'react-router-dom';
-import { ArrowLeft, HelpCircle, BookOpen, Sparkles } from 'lucide-react';
+import { ArrowLeft, HelpCircle, BookOpen, Sparkles, Calculator } from 'lucide-react';
 import { SEOHelmet } from './SEOHelmet';
 import { Breadcrumb } from './Breadcrumb';
-
-export interface FAQEntry {
-  question: string;
-  answer: string;
-}
-
-export interface HowToStep {
-  position: number;
-  name: string;
-  text: string;
-}
+import type { FAQEntry, HowToStep, CommonAmountEntry } from '../config/seo-metadata';
 
 export interface CurrencyLandingPageProps {
-  /** Currency code (e.g., 'USD', 'JPY') */
   currencyCode: string;
-  /** Currency flag emoji */
   currencyFlag: string;
-  /** Currency full name in Chinese */
   currencyName: string;
-  /** Page title for SEO */
   title: string;
-  /** Page description for SEO */
   description: string;
-  /** URL pathname (e.g., '/usd-twd') */
   pathname: string;
-  /** Canonical URL */
   canonical: string;
-  /** SEO keywords */
   keywords: string[];
-  /** FAQ entries for schema.org */
   faqEntries: FAQEntry[];
-  /** How-to steps for schema.org */
   howToSteps: HowToStep[];
-  /** Quick highlights for the currency */
   highlights: string[];
-  /** Optional custom FAQ section title */
   faqTitle?: string;
+  commonAmounts?: CommonAmountEntry[];
+  travelTip?: string;
 }
 
 export function CurrencyLandingPage({
@@ -71,6 +36,8 @@ export function CurrencyLandingPage({
   howToSteps,
   highlights,
   faqTitle = '常見問題',
+  commonAmounts = [],
+  travelTip,
 }: CurrencyLandingPageProps) {
   const seoProps = {
     title,
@@ -199,6 +166,55 @@ export function CurrencyLandingPage({
               ))}
             </div>
           </section>
+
+          {/* Common Amounts Section */}
+          {commonAmounts.length > 0 && (
+            <section className="mb-6 sm:mb-8">
+              <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+                <Calculator className="w-3.5 h-3.5" />
+                <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">常見金額換算</h2>
+              </div>
+
+              <div className="card p-4 sm:p-5">
+                <p className="text-text-muted text-xs sm:text-sm mb-4">
+                  以下為{currencyName}兌台幣的常見換算金額，點擊即可前往換算器查看最新匯率結果：
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {commonAmounts.map((entry) => (
+                    <Link
+                      key={entry.amount}
+                      to={`/?amount=${entry.amount}&from=${currencyCode}&to=TWD`}
+                      className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface hover:bg-primary/10 transition-colors group"
+                    >
+                      <span className="text-sm font-medium text-text group-hover:text-primary transition-colors">
+                        {entry.question}
+                      </span>
+                      <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-text-muted group-hover:text-primary transition-colors flex-shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Travel Tip Section */}
+          {travelTip && (
+            <section className="mb-6 sm:mb-8">
+              <div className="card p-4 sm:p-5 bg-amber-50 dark:bg-amber-950/20 border-amber-200/30">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl flex-shrink-0">💡</span>
+                  <div>
+                    <h3 className="font-bold text-text text-sm sm:text-base mb-1">
+                      旅遊換匯小提示
+                    </h3>
+                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
+                      {travelTip}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* FAQ Section */}
           <section className="mb-6 sm:mb-8">
