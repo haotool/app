@@ -90,23 +90,19 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
     });
   });
 
-  describe('🟢 Homepage JSON-LD should live in HomeStructuredData', () => {
-    const homeStructuredDataPath = resolve(__dirname, 'components/HomeStructuredData.tsx');
-    const homeStructuredData = readFileSync(homeStructuredDataPath, 'utf-8');
+  describe('🟢 Homepage JSON-LD should live in seo-metadata.ts (SSOT)', () => {
+    const seoMetadataPath = resolve(__dirname, 'config/seo-metadata.ts');
+    const seoMetadata = readFileSync(seoMetadataPath, 'utf-8');
 
-    it('should define HowTo, FAQPage, and Article schemas', () => {
-      // 首頁專屬 schema 集中在 HomeStructuredData
-      expect(homeStructuredData).toContain("'@type': 'HowTo'");
-      expect(homeStructuredData).toContain("'@type': 'FAQPage'");
-      expect(homeStructuredData).toContain("'@type': 'Article'");
+    it('should define HowTo and FAQ schemas in seo-metadata.ts', () => {
+      expect(seoMetadata).toContain('HOMEPAGE_HOW_TO');
+      expect(seoMetadata).toContain('HOMEPAGE_FAQ');
+      expect(seoMetadata).toContain("'@type': 'ImageObject'");
     });
 
-    it('should include publisher and image for homepage Article', () => {
-      expect(homeStructuredData).toContain("'@type': 'Organization'");
-      expect(homeStructuredData).toContain('publisher');
-      expect(homeStructuredData).toContain('image: OG_IMAGE_URL');
-      expect(homeStructuredData).toContain('datePublished');
-      expect(homeStructuredData).toContain('dateModified');
+    it('should NOT have dead code HomeStructuredData.tsx', () => {
+      const deadCodePath = resolve(__dirname, 'components/HomeStructuredData.tsx');
+      expect(() => readFileSync(deadCodePath, 'utf-8')).toThrow();
     });
   });
 

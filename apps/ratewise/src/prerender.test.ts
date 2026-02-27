@@ -315,7 +315,7 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       if (!existsSync(indexHtml)) return;
 
       const content = readFileSync(indexHtml, 'utf-8');
-      // [2026-01-30] SEOHelmet + HomeStructuredData 現在在 ClientOnly 外層
+      // [2026-02-27] SEOHelmet 在 ClientOnly 外層管理所有 JSON-LD
       // SSG 時會渲染完整 JSON-LD
       expect(content).toContain('application/ld+json');
       expect(content).toMatch(/"@type":\s*"SoftwareApplication"/);

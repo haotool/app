@@ -33,6 +33,9 @@ export const APP_INFO = {
   /** 版權起始年份 */
   copyrightStartYear: 2025,
 
+  /** 組織官網 URL（非 app URL，用於 Organization schema） */
+  organizationUrl: 'https://haotool.org',
+
   /** 網站 URL */
   siteUrl: 'https://app.haotool.org/ratewise/',
 } as const;

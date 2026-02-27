@@ -86,6 +86,7 @@ const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString();
 const ASSET_VERSION = `v=${BUILD_TIME.replace(/[-T:Z.]/g, '').slice(0, 8) || 'dev'}`;
 
 export const DEFAULT_LOCALE = 'zh-TW' as const;
+export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
 export const DEFAULT_TITLE =
   'RateWise 匯率好工具 - 即時匯率轉換器 | 支援 TWD、USD、JPY、EUR 等多幣別換算';
 export const DEFAULT_DESCRIPTION =
@@ -219,7 +220,7 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
     creator: {
       '@type': 'Organization',
       name: APP_INFO.author,
-      url: 'https://haotool.org',
+      url: APP_INFO.organizationUrl,
     },
     copyrightHolder: {
       '@type': 'Organization',
@@ -280,9 +281,7 @@ export const HOMEPAGE_SEO = {
   keywords: [...SITE_SEO.keywords],
   faq: [...HOMEPAGE_FAQ],
   howTo: HOMEPAGE_HOW_TO,
-  jsonLd: [
-    buildShareImageJsonLd('RateWise 匯率轉換器分享圖片', 'RateWise 首頁匯率換算與趨勢功能預覽'),
-  ],
+  jsonLd: [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`)],
   content: {
     eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步',
     heading: 'RateWise 即時匯率換算',

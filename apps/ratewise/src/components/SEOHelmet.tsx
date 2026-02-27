@@ -14,6 +14,7 @@ import {
   type HowToData,
   type JsonLdBlock,
   DEFAULT_LOCALE,
+  OG_IMAGE_ALT,
   SITE_SEO,
   buildAbsoluteAssetUrl,
   buildCanonicalUrl,
@@ -117,10 +118,13 @@ export function SEOHelmet({
   }));
   const ogLocale = locale.replace('-', '_');
   const additionalJsonLd = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+  const hasImageObject = additionalJsonLd.some((block) => block['@type'] === 'ImageObject');
   const structuredData: JsonLdBlock[] = [
     ...buildSiteJsonLd(),
     ...additionalJsonLd,
-    buildShareImageJsonLd('RateWise 匯率轉換器分享圖片', 'RateWise 匯率換算工具預覽圖'),
+    ...(hasImageObject
+      ? []
+      : [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 匯率換算工具預覽圖`)]),
   ];
 
   if (faq?.length) {
@@ -159,7 +163,7 @@ export function SEOHelmet({
       <meta property="og:image" content={ogImageUrl} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content="RateWise 匯率轉換器分享圖片" />
+      <meta property="og:image:alt" content={OG_IMAGE_ALT} />
       <meta property="og:locale" content={ogLocale} />
       {normalizedAlternates
         .filter(
@@ -180,7 +184,7 @@ export function SEOHelmet({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImageUrl} />
-      <meta name="twitter:image:alt" content="RateWise 匯率轉換器分享圖片" />
+      <meta name="twitter:image:alt" content={OG_IMAGE_ALT} />
       <meta name="twitter:site" content={APP_INFO.socialHandle} />
       <meta name="twitter:creator" content={APP_INFO.socialHandle} />
 

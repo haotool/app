@@ -339,25 +339,24 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
     });
   });
 
-  describe('🏠 HomeStructuredData - Homepage Rich Results', () => {
-    const homePath = resolve(SRC_PATH, 'components/HomeStructuredData.tsx');
-    const homeContent = readFile(homePath);
+  describe('🏠 Homepage Rich Results (seo-metadata.ts SSOT)', () => {
+    const seoMetadataPath = resolve(SRC_PATH, 'config/seo-metadata.ts');
+    const seoMetadataContent = readFile(seoMetadataPath);
 
-    it('should have HowTo schema for conversion steps', () => {
-      expect(homeContent).toContain("'@type': 'HowTo'");
+    it('should have HowTo schema via HOMEPAGE_HOW_TO', () => {
+      expect(seoMetadataContent).toContain('HOMEPAGE_HOW_TO');
     });
 
-    it('should have FAQPage schema', () => {
-      expect(homeContent).toContain("'@type': 'FAQPage'");
+    it('should have FAQ schema via HOMEPAGE_FAQ', () => {
+      expect(seoMetadataContent).toContain('HOMEPAGE_FAQ');
     });
 
-    it('should have Article schema for content', () => {
-      expect(homeContent).toContain("'@type': 'Article'");
+    it('should have ImageObject schema via buildShareImageJsonLd', () => {
+      expect(seoMetadataContent).toContain("'@type': 'ImageObject'");
     });
 
-    it('should have publisher and image for Article', () => {
-      expect(homeContent).toContain('publisher');
-      expect(homeContent).toContain('image: OG_IMAGE_URL');
+    it('should use OG_IMAGE_ALT from SSOT', () => {
+      expect(seoMetadataContent).toContain('OG_IMAGE_ALT');
     });
   });
 
