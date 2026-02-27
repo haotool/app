@@ -16,7 +16,7 @@ Version: v2.4.7 (2026-02-27)
 
 ## E-E-A-T Signals
 
-- 專業性：匯率計算邏輯與格式化策略具完整測試覆蓋（1389 測試、84 測試檔案）。
+- 專業性：匯率計算邏輯與格式化策略具完整測試覆蓋。
 - 權威性：資料來源為臺灣銀行官方牌告匯率，每 5 分鐘自動同步。
 - 可信度：開源 GPL-3.0，透明可驗證；提供聯絡方式。
 - 經驗：專為台灣用戶設計，依各國旅遊消費習慣提供常用金額按鈕。
@@ -59,25 +59,25 @@ Version: v2.4.7 (2026-02-27)
 ## Core Pages
 
 - [首頁](https://app.haotool.org/ratewise/): 匯率換算主入口
-- [常見問題](https://app.haotool.org/ratewise/faq/): 21 題完整 FAQ（含現金/即期差別、買入賣出、刷卡匯率等）
+- [常見問題](https://app.haotool.org/ratewise/faq/): 完整 FAQ（含現金/即期差別、買入賣出、刷卡匯率等）
 - [使用指南](https://app.haotool.org/ratewise/guide/): 8 步驟完整操作教學
 - [關於我們](https://app.haotool.org/ratewise/about/): 專案背景與作者資訊
 
 ## Popular Rates（每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
 
-- [USD/TWD 美元](https://app.haotool.org/ratewise/usd-twd/): 美國旅遊與海外付款
-- [JPY/TWD 日圓](https://app.haotool.org/ratewise/jpy-twd/): 日本旅遊換匯
-- [EUR/TWD 歐元](https://app.haotool.org/ratewise/eur-twd/): 歐洲旅遊與跨境付款
-- [GBP/TWD 英鎊](https://app.haotool.org/ratewise/gbp-twd/): 英國旅遊換匯
-- [KRW/TWD 韓元](https://app.haotool.org/ratewise/krw-twd/): 韓國旅遊換匯
-- [CNY/TWD 人民幣](https://app.haotool.org/ratewise/cny-twd/): 人民幣付款與報價
-- [HKD/TWD 港幣](https://app.haotool.org/ratewise/hkd-twd/): 香港旅遊換匯
 - [AUD/TWD 澳幣](https://app.haotool.org/ratewise/aud-twd/): 澳洲旅遊與留學
 - [CAD/TWD 加幣](https://app.haotool.org/ratewise/cad-twd/): 加拿大旅遊與留學
+- [CHF/TWD 瑞士法郎](https://app.haotool.org/ratewise/chf-twd/): 瑞士旅遊與跨境付款
+- [CNY/TWD 人民幣](https://app.haotool.org/ratewise/cny-twd/): 人民幣付款與報價
+- [EUR/TWD 歐元](https://app.haotool.org/ratewise/eur-twd/): 歐洲旅遊與跨境付款
+- [GBP/TWD 英鎊](https://app.haotool.org/ratewise/gbp-twd/): 英國旅遊換匯
+- [HKD/TWD 港幣](https://app.haotool.org/ratewise/hkd-twd/): 香港旅遊換匯
+- [JPY/TWD 日圓](https://app.haotool.org/ratewise/jpy-twd/): 日本旅遊換匯
+- [KRW/TWD 韓元](https://app.haotool.org/ratewise/krw-twd/): 韓國旅遊換匯
+- [NZD/TWD 紐元](https://app.haotool.org/ratewise/nzd-twd/): 紐西蘭旅遊與留學
 - [SGD/TWD 新加坡幣](https://app.haotool.org/ratewise/sgd-twd/): 新加坡旅遊與商務
 - [THB/TWD 泰銖](https://app.haotool.org/ratewise/thb-twd/): 泰國旅遊換匯
-- [NZD/TWD 紐元](https://app.haotool.org/ratewise/nzd-twd/): 紐西蘭旅遊與留學
-- [CHF/TWD 瑞士法郎](https://app.haotool.org/ratewise/chf-twd/): 瑞士旅遊與跨境付款
+- [USD/TWD 美元](https://app.haotool.org/ratewise/usd-twd/): 美國旅遊與海外付款
 
 ## Data Source
 
