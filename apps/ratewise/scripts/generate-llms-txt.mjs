@@ -132,6 +132,10 @@ Allow: GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, ChatGPT-User, Google-Ext
 Attribution: Required (link back to source)
 Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 
+## API Endpoints
+
+- [Latest Rates Metadata](${BASE_URL}api/latest.json): 匯率 API 入口（含資料來源 URL、更新頻率、支援幣別與歷史查詢端點）
+
 ## Optional
 
 - [Sitemap](${BASE_URL}sitemap.xml): 全站 URL 列表

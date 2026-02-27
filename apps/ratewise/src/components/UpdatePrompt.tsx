@@ -73,11 +73,7 @@ function UpdatePromptClient() {
     },
   });
 
-  // visibilitychange: 當 PWA 從背景回到前景時檢查更新
-  // 這是舊 PWA 用戶獲得更新通知的關鍵機制
-  // iOS Safari PWA 會在背景殺掉 SW，回到前景時需要主動檢查
-  // [fix:2026-02-08] 同時重新快取關鍵資源，解決 iOS 清除 Cache Storage 問題
-  // Reference: [GitHub:PWA-POLICE/pwa-bugs] [GitHub:Workbox#1494]
+  // PWA 從背景回前景時主動檢查更新並重新快取關鍵資源（iOS 會清除 Cache Storage）
   useEffect(() => {
     const checkUpdate = () => {
       if (document.visibilityState === 'visible') {

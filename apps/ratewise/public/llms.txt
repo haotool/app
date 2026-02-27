@@ -94,6 +94,10 @@ Allow: GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, ChatGPT-User, Google-Ext
 Attribution: Required (link back to source)
 Contact: haotool.org@gmail.com
 
+## API Endpoints
+
+- [Latest Rates Metadata](https://app.haotool.org/ratewise/api/latest.json): 匯率 API 入口（含資料來源 URL、更新頻率、支援幣別與歷史查詢端點）
+
 ## Optional
 
 - [Sitemap](https://app.haotool.org/ratewise/sitemap.xml): 全站 URL 列表

@@ -1205,7 +1205,7 @@ export const buttonTokens = {
 export const notificationTokens = {
   /** 固定定位 + 容器尺寸（視窗底部中央） - UpdatePrompt 專用
    * 注意：不使用 -translate-x-1/2，改用 Motion 的 x: '-50%' 避免 transform 衝突
-   * [fix:2026-02-27] 行動版改放在 header 下方，避免 snackbar 阻擋底部導覽與主要 CTA
+   * 行動版定位在 header 下方，避免阻擋底部導覽列
    */
   position:
     'fixed top-[var(--notification-mobile-top-offset)] md:top-auto md:bottom-4 left-1/2 w-[calc(100vw-2rem)] max-w-[344px] z-50',
