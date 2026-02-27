@@ -25,12 +25,12 @@ import type { RouteRecord } from 'vite-react-ssg';
 import type { ComponentType } from 'react';
 import { ClientOnly } from 'vite-react-ssg';
 import CurrencyConverter from './features/ratewise/RateWise';
-import { HOMEPAGE_FAQ } from './features/ratewise/constants';
 import { SEOHelmet } from './components/SEOHelmet';
-import { HomeStructuredData } from './components/HomeStructuredData';
+import { HomepageSEOSection } from './components/HomepageSEOSection';
 import { Layout } from './components/Layout';
 import { AppLayout } from './components/AppLayout';
 import { SkeletonLoader } from './components/SkeletonLoader';
+import { HOMEPAGE_SEO } from './config/seo-metadata';
 import { logger } from './utils/logger';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import MultiConverter from './pages/MultiConverter';
@@ -108,16 +108,21 @@ export const routes: RouteRecord[] = [
     element: <AppLayout />,
     children: [
       // 單幣別轉換器（首頁）
-      // SEOHelmet + HomeStructuredData 放在 ClientOnly 外面，確保 SSG 時渲染 SEO metadata
-      // @see https://vite-react-ssg.netlify.app/docs/components — Head 獨立於 ClientOnly
+      // 首頁可索引內容與 head metadata 都在 ClientOnly 外層，避免爬蟲只拿到互動骨架。
       {
         path: '',
         element: (
           <>
-            <SEOHelmet pathname="/" />
-            <HomeStructuredData faq={HOMEPAGE_FAQ} />
-            <h1 className="sr-only">RateWise 匯率好工具 - 台灣銀行即時匯率換算</h1>
+            <SEOHelmet
+              pathname={HOMEPAGE_SEO.pathname}
+              description={HOMEPAGE_SEO.description}
+              keywords={HOMEPAGE_SEO.keywords}
+              faq={HOMEPAGE_SEO.faq}
+              howTo={HOMEPAGE_SEO.howTo}
+              jsonLd={HOMEPAGE_SEO.jsonLd}
+            />
             <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
+            <HomepageSEOSection />
           </>
         ),
         entry: 'src/features/ratewise/RateWise',

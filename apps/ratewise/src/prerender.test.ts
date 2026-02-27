@@ -315,7 +315,7 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       if (!existsSync(indexHtml)) return;
 
       const content = readFileSync(indexHtml, 'utf-8');
-      // [2026-01-30] SEOHelmet + HomeStructuredData 現在在 ClientOnly 外層
+      // [2026-02-27] SEOHelmet 在 ClientOnly 外層管理所有 JSON-LD
       // SSG 時會渲染完整 JSON-LD
       expect(content).toContain('application/ld+json');
       expect(content).toMatch(/"@type":\s*"SoftwareApplication"/);
@@ -325,8 +325,10 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
-      // Count top-level Organization schemas (not nested ones in ImageObject)
-      const orgMatches = content.match(/"@type":"Organization","name":"RateWise"/g);
+      // Count top-level Organization schemas (not nested ones in ImageObject creator/copyrightHolder)
+      const orgMatches = content.match(
+        /"@context":"https:\/\/schema\.org","@type":"Organization"/g,
+      );
       expect(orgMatches).toBeTruthy();
       expect(orgMatches?.length).toBe(1);
     });

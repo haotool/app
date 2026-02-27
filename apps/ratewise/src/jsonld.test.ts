@@ -66,45 +66,43 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
     });
   });
 
-  describe('🟢 SEOHelmet 負責所有 JSON-LD 生成', () => {
+  describe('🟢 SEO 層負責所有 JSON-LD 生成（SEOHelmet + seo-metadata）', () => {
     const seoHelmetPath = resolve(__dirname, 'components/SEOHelmet.tsx');
+    const seoMetadataPath = resolve(__dirname, 'config/seo-metadata.ts');
     const seoHelmetContent = readFileSync(seoHelmetPath, 'utf-8');
+    const seoMetadataContent = readFileSync(seoMetadataPath, 'utf-8');
+    const combinedContent = seoHelmetContent + seoMetadataContent;
 
-    it('should have SoftwareApplication schema in SEOHelmet', () => {
-      expect(seoHelmetContent).toContain("'@type': 'SoftwareApplication'");
+    it('should have SoftwareApplication schema in SEO layer', () => {
+      expect(combinedContent).toContain("'@type': 'SoftwareApplication'");
     });
 
-    it('should have Organization schema in SEOHelmet', () => {
-      expect(seoHelmetContent).toContain("'@type': 'Organization'");
+    it('should have Organization schema in SEO layer', () => {
+      expect(combinedContent).toContain("'@type': 'Organization'");
     });
 
-    it('should have WebSite schema in SEOHelmet', () => {
-      expect(seoHelmetContent).toContain("'@type': 'WebSite'");
+    it('should have WebSite schema in SEO layer', () => {
+      expect(combinedContent).toContain("'@type': 'WebSite'");
     });
 
-    it('should NOT have SearchAction in SEOHelmet', () => {
-      // [2026-01-29] H4 fix: SearchAction 被移除
-      expect(seoHelmetContent).not.toContain("'@type': 'SearchAction'");
+    it('should NOT have SearchAction in SEO layer', () => {
+      expect(combinedContent).not.toContain("'@type': 'SearchAction'");
     });
   });
 
-  describe('🟢 Homepage JSON-LD should live in HomeStructuredData', () => {
-    const homeStructuredDataPath = resolve(__dirname, 'components/HomeStructuredData.tsx');
-    const homeStructuredData = readFileSync(homeStructuredDataPath, 'utf-8');
+  describe('🟢 Homepage JSON-LD should live in seo-metadata.ts (SSOT)', () => {
+    const seoMetadataPath = resolve(__dirname, 'config/seo-metadata.ts');
+    const seoMetadata = readFileSync(seoMetadataPath, 'utf-8');
 
-    it('should define HowTo, FAQPage, and Article schemas', () => {
-      // 首頁專屬 schema 集中在 HomeStructuredData
-      expect(homeStructuredData).toContain("'@type': 'HowTo'");
-      expect(homeStructuredData).toContain("'@type': 'FAQPage'");
-      expect(homeStructuredData).toContain("'@type': 'Article'");
+    it('should define HowTo and FAQ schemas in seo-metadata.ts', () => {
+      expect(seoMetadata).toContain('HOMEPAGE_HOW_TO');
+      expect(seoMetadata).toContain('HOMEPAGE_FAQ');
+      expect(seoMetadata).toContain("'@type': 'ImageObject'");
     });
 
-    it('should include publisher and image for homepage Article', () => {
-      expect(homeStructuredData).toContain("'@type': 'Organization'");
-      expect(homeStructuredData).toContain('publisher');
-      expect(homeStructuredData).toContain('image: OG_IMAGE_URL');
-      expect(homeStructuredData).toContain('datePublished');
-      expect(homeStructuredData).toContain('dateModified');
+    it('should NOT have dead code HomeStructuredData.tsx', () => {
+      const deadCodePath = resolve(__dirname, 'components/HomeStructuredData.tsx');
+      expect(() => readFileSync(deadCodePath, 'utf-8')).toThrow();
     });
   });
 

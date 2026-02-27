@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-02-27T18:19:58+08:00
-> **當前總分**: 1068 (初始分: 100) [+14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強]
+> **最後更新**: 2026-02-28T07:55:00+08:00
+> **當前總分**: 1079 (初始分: 100) [+2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強]
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -19,7 +19,23 @@
 
 ---
 
-## 補充紀錄（2026-02-27）
+## 補充紀錄（2026-02-28）
+
+- ✅ 成功｜Sitemap hreflang SSOT 同步修復：public/sitemap.xml 含 21 URL（42 hreflang）但 SEO_PATHS 僅 17 條，透過 generate-sitemap-2025.mjs 重新生成修復為 17 URL / 34 hreflang，CI SEO Audit 通過
+- 分數｜`+2`
+
+---
+
+- ✅ 成功｜SEO 技術債清除：移除 HomeStructuredData.tsx dead code、修復 SEOHelmet 重複 ImageObject（7→6 schema blocks）、硬編碼 og:image:alt/twitter:image:alt 改用 OG_IMAGE_ALT SSOT、buildShareImageJsonLd URL 改用 APP_INFO.organizationUrl、新增 organizationUrl 到 APP_INFO SSOT
+- ✅ 成功｜更新 jsonld.test.ts 與 seo-best-practices.test.ts 移除 dead code 依賴，改為驗證 seo-metadata.ts SSOT
+- 分數｜`+3`
+
+---
+
+- ✅ 成功｜修復 prerender.test.ts（Organization schema regex 改為匹配 `@context` 前綴區分 top-level）與 hreflang.test.ts（恢復 42 筆 xhtml:link 斷言，對齊 vite-ssg-sitemap 實際產出）
+- 分數｜`+1`
+
+---
 
 - ✅ 成功｜`AGENTS.md`、`CLAUDE.md` 升級為企業 SOP / 稽核友善格式（文件控制、控制矩陣、證據清單、例外流程、修訂紀錄）
 - ✅ 成功｜上網查詢文件寫作與 SOP 格式最佳實踐，並保留 `.example/config` 的簡潔章節風格
@@ -566,3 +582,4 @@ test.describe.skip('Calculator Fix Verification - E2E Tests', () => {
 | ✅ 成功 | haotool SEO Workflow 全自動迭代 — squirrelscan 66→73, 9 個滿分分類 | 1) **sitemap 2025+ 標準**: 移除 changefreq/priority（Google 已棄用）、新增 image sitemap extension 2) **robots.txt 修正**: facebookexternalbot → facebookexternalhit、新增 OAI-SearchBot/CCBot/Bytespider/Meta-ExternalAgent 3) **E-E-A-T 強化**: 新增 About 頁隱私政策章節（/about/#privacy）、Footer `<address>` 語義化 rel=author、footer nav About/Contact/Privacy、author byline + `<time>` datePublished 4) **SSG meta 去重**: onPageRendered 完整清除 OG/Twitter/canonical/keywords/robots 後注入路由專屬 meta，修復 /about/ 和 /contact/ 顯示首頁 title 的問題 5) **非尾斜線 HTML**: postbuild 複製 {dir}/index.html → {dir}.html 確保 /about 和 /about/ 返回相同 SSG 內容 6) **專案連結改絕對 URL**: 消除爬蟲跟蹤 /nihonname /ratewise /quake-school 產生 duplicate title 7) **a11y 色彩對比度**: text-slate-400 → text-slate-300 提升 WCAG AA 合規 8) **heading 層級修正**: About 技能卡 h3 → h2 9) **PWA globPatterns**: 加入 json 修復離線 SPA 導覽 10) **Google Fonts 非阻塞**: media=print onload 11) **分數提升**: Core SEO 95→100、Content 77→94、Legal 44→100、E-E-A-T 58→71、Performance 85→89 12) **7 個原子化 commits**、114/114 測試通過、typecheck ✅、lint ✅ 13) **Linus 三問**: 真問題（squirrelscan 6 errors + 48 warnings）、最簡方案（SSG 管線修復 + 語義化標記）、不破壞（測試全過） | [squirrelscan v0.0.38][context7:/google/seo-starter-guide][SEO Workflow Prompt FSM][Linus 三問驗證] | +5 | 2026-02-26T07:40:00+08:00 |
 | ✅ 成功 | park-keeper monorepo 整合 — SSG + PWA + SEO + TDD 87 tests (95% lines) | 1) **完整重構**: 從獨立 prototype 重構為 @app/park-keeper workspace，src/{pages,components,hooks,services,seo,config} 分層架構 2) **SSG 預渲染**: vite-react-ssg 預渲染 3 頁（/, /about/, /settings/），含 basename 修正避免客戶端路由 404 3) **PWA 支援**: VitePWA autoUpdate + 20 precache entries + runtime caching 4) **SEO 完整**: meta-tags + JSON-LD（WebApp/FAQ/Breadcrumb）+ sitemap + robots.txt + llms.txt + E-E-A-T byline 5) **TDD 測試**: 87 tests pass，11 test suites，覆蓋率 92% stmts / 65% branches / 88% funcs / 95% lines 6) **fake-indexeddb**: db.ts 完整測試（save/get/delete/export/cleanup） 7) **useNavigation hook**: geolocation + compass + step counter + indoor mode 全覆蓋 8) **SSOT 版本驗證修正**: verify-version-ssot.mjs 使用 hasPackageVersionBump() 避免 package.json 僅改 scripts 時誤判 9) **Tailwind 4.x build-time**: 移除 CDN，建置時生成 CSS 10) **SVG 資產**: favicon + og-image + PWA icons 全 SVG 11) **4 原子化 commits**: feat + chore + test + fix 12) **Linus 三問**: 真問題（park-keeper 需整合 monorepo）、最簡方案（參照 ratewise 架構）、不破壞（所有 app typecheck + lint + test 通過） | [context7:/vite-pwa/vite-plugin-pwa:2026-02-26][context7:/AriPerkkio/fake-indexeddb:2026-02-26][SEO Workflow Prompt v3.0][vite-react-ssg:basename][Linus 三問驗證] | +8 | 2026-02-26T08:30:00+08:00 |
 | ✅ 成功 | park-keeper 前端渲染完全修復 — 3 根因系統性消除 | 1) **根因 1: 巢狀 `<main>` HTML 違規**: Layout.tsx 已有 `<main>` 包裝 Outlet，Home.tsx 內部再次使用 `<main className=\"flex-1 px-4\">`，產生巢狀 main（HTML spec 禁止），瀏覽器確認 mainCount=2。修復：Home.tsx 改為 `<div className=\"flex-1 px-4\">`，87/87 tests pass 2) **根因 2: beasties 與 Tailwind v4 不相容**: vite-react-ssg 的 beasties critical CSS extractor 將 CSS 移到 `<body>` 末尾，導致初始渲染完全無樣式（skeleton 不可見）。修復：`ssgOptions: { beastiesOptions: false }` 將 CSS 保留在 `<head>` 3) **根因 3: Tailwind v4 未安裝 @tailwindcss/vite 插件**: CSS 產出包含字面量 `@layer utilities{@tailwind utilities;}` 而非已編譯的工具類。修復：`pnpm add -D @tailwindcss/vite` + vite.config.ts 新增 `tailwindcss()` 插件。CSS 從 20KB（未編譯）→ 30KB（已編譯），`display:flex`/`min-height:100vh`/`flex-grow:1` 全部正確計算 4) **瀏覽器驗證**: 零 console 錯誤/警告、About 頁完整樣式、Settings 正常重導向 5) **測試**: 93/93 tests pass (新增 test 6 個) 6) **Context7 引用**: `tailwindcss/vite` 官方安裝流程確認 7) **Linus 三問**: 真問題（頁面空白，只顯示 footer）、最簡方案（3 個原子修復，各自獨立可驗證）、不破壞（測試全過、零 console 錯誤） | [context7:/websites/tailwindcss_installation_using-vite:@tailwindcss/vite:2026-02-26][Linus 三問驗證][BDD 流程] | +9 | 2026-02-26T17:20:00+08:00 |
+|| ✅ 成功 | SSOT 驗證腳本修復 + SEO 架構重構 + HomepageSEOSection 位置最佳化 | 1) **SSOT 驗證失敗根因**: `verify-ssot-sync.mjs` 使用 regex 提取路徑，無法解析 spread 語法（`[...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS]`），導致提取 0 個路徑 vs TypeScript 21 個路徑，阻擋 Zeabur 部署 2) **驗證腳本修復**: a) 改用 `pathToFileURL` + `await import()` 動態載入 mjs 檔取得實際 SEO_PATHS 值 b) Fallback: 提取子陣列合併 c) Regex 改用 `matchAll` 支援同行多路徑 3) **SEO 架構重構**: seo-paths.ts 從 monolithic 改為分類結構（CONTENT/LEGAL/CURRENCY/APP_ONLY），對齊 mjs SSOT 4) **seo-metadata.ts**: 新建集中式 SEO 配置（JSON-LD builders + FAQ/HowTo + 貨幣頁 metadata）5) **HomepageSEOSection.tsx**: 新建首頁 SEO 可見內容組件，移至 CurrencyConverter 下方 6) **測試更新**: 4 個測試檔修正為檢查 combined SEO layer 7) **驗證**: typecheck ✅、1389/1389 tests ✅、build:ratewise ✅（SSOT 17/17 同步）8) **Linus 三問**: 真問題（Zeabur 部署阻擋）、最簡方案（dynamic import + 架構對齊）、不破壞（全測試通過） | [verify-ssot-sync.mjs:dynamic-import][SEO Best Practice:content-below-fold][Linus 三問驗證] | +5 | 2026-02-27T23:20:00+08:00 |

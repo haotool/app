@@ -15,24 +15,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://app.haotool.org/ratewise/multi/</loc>
-    <lastmod>2026-02-27T09:57:25Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/multi/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/multi/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/favorites/</loc>
-    <lastmod>2026-02-27T09:57:25Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/favorites/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/favorites/" />
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/settings/</loc>
-    <lastmod>2026-02-27T09:57:25Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/settings/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/settings/" />
-  </url>
-  <url>
     <loc>https://app.haotool.org/ratewise/faq/</loc>
     <lastmod>2026-02-13T09:28:17Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/faq/" />
@@ -49,12 +31,6 @@
     <image:image>
       <image:loc>https://app.haotool.org/ratewise/og-image.png</image:loc>
     </image:image>
-  </url>
-  <url>
-    <loc>https://app.haotool.org/ratewise/privacy/</loc>
-    <lastmod>2026-02-27T09:57:25Z</lastmod>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/privacy/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/privacy/" />
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/guide/</loc>

@@ -61,10 +61,10 @@ describe('ratewise build scripts', () => {
   });
 
   it('should not reference a removed optimized PNG logo in structured data', async () => {
-    const seoHelmetPath = path.resolve(__dirname, '../../components/SEOHelmet.tsx');
-    const seoHelmet = await readFile(seoHelmetPath, 'utf-8');
+    const seoMetadataPath = path.resolve(__dirname, '../seo-metadata.ts');
+    const seoMetadata = await readFile(seoMetadataPath, 'utf-8');
 
-    expect(seoHelmet).not.toContain('optimized/logo-512w.png');
-    expect(seoHelmet).toContain('icons/ratewise-icon-512x512.png');
+    expect(seoMetadata).not.toContain('optimized/logo-512w.png');
+    expect(seoMetadata).toContain('icons/ratewise-icon-512x512.png');
   });
 });
