@@ -180,6 +180,7 @@ jobs:
         env:
           CI: true
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+          E2E_BASE_PATH: '/'
         run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile
 
       - name: Stop preview server

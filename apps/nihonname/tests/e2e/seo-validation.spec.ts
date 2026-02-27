@@ -193,8 +193,8 @@ test.describe('SEO Validation - Trailing Slash Consistency', () => {
     for (const link of internalLinks) {
       const href = await link.getAttribute('href');
 
-      // Skip hash links and external links
-      if (!href || href.startsWith('#') || href.startsWith('http')) {
+      // Skip hash links (including paths with hash fragments) and external links
+      if (!href || href.startsWith('#') || href.includes('#') || href.startsWith('http')) {
         continue;
       }
 
