@@ -1,83 +1,80 @@
 /**
- * SEO 路徑配置 - TypeScript SSOT
+ * SEO 路徑配置 - TypeScript mirror
  *
- * ⚠️ 這是 TypeScript 代碼的單一真實來源 (SSOT)
+ * 說明：
+ * - `../../seo-paths.config.mjs` 供 Node 腳本與建置流程使用
+ * - 本檔提供 app runtime 與 TypeScript 型別
  *
- * 同步要求：
- * - ../../seo-paths.config.mjs 必須與此文件保持同步（供 .js 腳本使用）
- * - 修改路徑時，必須同時更新 seo-paths.config.mjs
- *
- * 建立時間: 2025-12-14
- * 依據: [Linus: Single Source of Truth][SEO Best Practices 2025]
+ * 兩者必須保持一致，避免 sitemap / prerender / noindex 白名單互相衝突。
  */
 
-/**
- * 確保 URL 具備尾斜線，避免 prerender/canonical 路徑拼接錯誤
- *
- * @param value - 原始 URL
- * @returns 具尾斜線的 URL
- */
 export function normalizeSiteUrl(value: string): string {
   const trimmed = value.trim();
   return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
 }
 
-/**
- * RateWise 所有需要預渲染的 SEO 路徑
- *
- * 總計：21 個路徑
- * - 8 個核心頁面：首頁、Multi、Favorites、Settings、FAQ、About、Privacy、Guide
- * - 13 個幣別落地頁：依字母順序排列
- *
- * 格式：統一使用尾斜線結尾（符合 SEO Best Practices 2025）
- */
-export const SEO_PATHS = [
-  // 核心頁面 (7)
-  '/',
+export const CONTENT_SEO_PATHS = ['/', '/faq/', '/about/', '/guide/'] as const;
+
+export const LEGAL_SSG_PATHS = ['/privacy/'] as const;
+
+export const CURRENCY_SEO_PATHS = [
+  '/aud-twd/',
+  '/cad-twd/',
+  '/chf-twd/',
+  '/cny-twd/',
+  '/eur-twd/',
+  '/gbp-twd/',
+  '/hkd-twd/',
+  '/jpy-twd/',
+  '/krw-twd/',
+  '/nzd-twd/',
+  '/sgd-twd/',
+  '/thb-twd/',
+  '/usd-twd/',
+] as const;
+
+export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS] as const;
+
+export const APP_ONLY_PATHS = [
   '/multi/',
   '/favorites/',
   '/settings/',
-  '/faq/',
-  '/about/',
-  '/privacy/',
-  '/guide/',
-
-  // 幣別落地頁 (13) - 依字母順序排列
-  '/aud-twd/', // 澳幣 - Australian Dollar
-  '/cad-twd/', // 加幣 - Canadian Dollar
-  '/chf-twd/', // 瑞士法郎 - Swiss Franc
-  '/cny-twd/', // 人民幣 - Chinese Yuan
-  '/eur-twd/', // 歐元 - Euro
-  '/gbp-twd/', // 英鎊 - British Pound
-  '/hkd-twd/', // 港幣 - Hong Kong Dollar
-  '/jpy-twd/', // 日圓 - Japanese Yen
-  '/krw-twd/', // 韓元 - Korean Won
-  '/nzd-twd/', // 紐幣 - New Zealand Dollar
-  '/sgd-twd/', // 新加坡幣 - Singapore Dollar
-  '/thb-twd/', // 泰銖 - Thai Baht
-  '/usd-twd/', // 美金 - US Dollar
+  '/theme-showcase/',
+  '/color-scheme/',
+  '/update-prompt-test/',
+  '/ui-showcase/',
 ] as const;
 
-/**
- * SEO 配置文件路徑
- */
+export const APP_ONLY_PRERENDER_PATHS = [...APP_ONLY_PATHS] as const;
+
+export const PRERENDER_PATHS = [
+  ...SEO_PATHS,
+  ...LEGAL_SSG_PATHS,
+  ...APP_ONLY_PRERENDER_PATHS,
+] as const;
+
+export const KNOWN_ROUTE_PATHS = [...PRERENDER_PATHS] as const;
+
 export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'] as const;
 
-/**
- * 圖片資源路徑（用於生產環境驗證）
- */
+export const SHARE_IMAGE = '/og-image.jpg' as const;
+export const TWITTER_IMAGE = '/twitter-image.jpg' as const;
+
+export const LEGACY_ASSET_REDIRECTS = {
+  '/og-image.png': SHARE_IMAGE,
+  '/twitter-image.png': TWITTER_IMAGE,
+} as const;
+
 export const IMAGE_RESOURCES = [
-  '/og-image.jpg', // Open Graph 分享圖片
-  '/favicon.ico', // Favicon
-  '/apple-touch-icon.png', // Apple 觸控圖標
-  '/icons/ratewise-icon-192x192.png', // PWA icon 192x192
-  '/icons/ratewise-icon-512x512.png', // PWA icon 512x512
-  '/icons/ratewise-icon-maskable-512x512.png', // PWA maskable icon
+  SHARE_IMAGE,
+  TWITTER_IMAGE,
+  '/favicon.ico',
+  '/apple-touch-icon.png',
+  '/icons/ratewise-icon-192x192.png',
+  '/icons/ratewise-icon-512x512.png',
+  '/icons/ratewise-icon-maskable-512x512.png',
 ] as const;
 
-/**
- * 網站基本配置
- */
 export const SITE_CONFIG = {
   url: normalizeSiteUrl('https://app.haotool.org/ratewise/'),
   name: 'RateWise - 匯率好工具',
@@ -91,136 +88,66 @@ export const SITE_CONFIG = {
   description: string;
 }>;
 
-/**
- * 路徑標準化函數
- * 用於比較路徑時統一格式
- *
- * @param path - 原始路徑
- * @returns 標準化後的路徑（帶尾斜線，根路徑除外）
- */
+export const APP_CONFIG = {
+  name: 'ratewise',
+  displayName: 'RateWise',
+  basePath: {
+    development: '/',
+    ci: '/',
+    production: '/ratewise/',
+  },
+  seoPaths: SEO_PATHS,
+  prerenderPaths: PRERENDER_PATHS,
+  appShellPaths: APP_ONLY_PATHS,
+  knownRoutes: KNOWN_ROUTE_PATHS,
+  legacyAssetRedirects: LEGACY_ASSET_REDIRECTS,
+  siteUrl: SITE_CONFIG.url,
+  build: {
+    ssg: true,
+    pwa: true,
+  },
+  resources: {
+    seoFiles: SEO_FILES,
+    images: IMAGE_RESOURCES,
+  },
+} as const;
+
 export function normalizePath(path: string): string {
   if (path === '/' || path === '') return '/';
-  // 確保前導斜線 + 移除尾斜線後再添加，確保一致性
   const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
-  return withLeadingSlash.replace(/\/+$/, '') + '/';
+  const trimmed = withLeadingSlash.replace(/\/+$/, '');
+  return trimmed === '' ? '/' : `${trimmed}/`;
 }
 
-/**
- * 檢查路徑是否應該被預渲染
- *
- * @param path - 要檢查的路徑
- * @returns 是否應該預渲染
- */
 export function shouldPrerender(path: string): boolean {
   const normalized = normalizePath(path);
-  return SEO_PATHS.includes(normalized as (typeof SEO_PATHS)[number]);
+  return PRERENDER_PATHS.includes(normalized as (typeof PRERENDER_PATHS)[number]);
 }
 
-/**
- * 從所有路徑中過濾出需要預渲染的路徑
- *
- * @param paths - 所有可用路徑
- * @returns 需要預渲染的路徑
- */
 export function getIncludedRoutes(paths: string[]): string[] {
   return paths.filter((path) => shouldPrerender(path));
 }
 
-// ============================================================================
-// TypeScript 類型導出
-// ============================================================================
-
-/**
- * SEO 路徑字面類型（從配置中提取）
- * @example "/" | "/faq/" | "/about/" | ...
- */
 export type SEOPath = (typeof SEO_PATHS)[number];
-
-/**
- * SEO 檔案字面類型（從配置中提取）
- * @example "/sitemap.xml" | "/robots.txt" | "/llms.txt"
- */
 export type SEOFile = (typeof SEO_FILES)[number];
-
-/**
- * 圖片資源字面類型（從配置中提取）
- * @example "/og-image.jpg" | "/favicon.ico" | ...
- */
 export type ImageResource = (typeof IMAGE_RESOURCES)[number];
-
-/**
- * 網站配置類型
- */
 export type SiteConfig = typeof SITE_CONFIG;
+export type CorePagePath = (typeof CONTENT_SEO_PATHS)[number];
+export type CurrencyPagePath = (typeof CURRENCY_SEO_PATHS)[number];
+export type AppOnlyPath = (typeof APP_ONLY_PATHS)[number];
 
-/**
- * 核心頁面路徑（7 個）
- */
-export type CorePagePath =
-  | '/'
-  | '/multi/'
-  | '/favorites/'
-  | '/settings/'
-  | '/faq/'
-  | '/about/'
-  | '/privacy/'
-  | '/guide/';
-
-/**
- * 幣別頁面路徑（後 13 個）
- */
-export type CurrencyPagePath =
-  | '/aud-twd/'
-  | '/cad-twd/'
-  | '/chf-twd/'
-  | '/cny-twd/'
-  | '/eur-twd/'
-  | '/gbp-twd/'
-  | '/hkd-twd/'
-  | '/jpy-twd/'
-  | '/krw-twd/'
-  | '/nzd-twd/'
-  | '/sgd-twd/'
-  | '/thb-twd/'
-  | '/usd-twd/';
-
-// ============================================================================
-// 類型守衛（Type Guards）
-// ============================================================================
-
-/**
- * 檢查路徑是否為有效的 SEO 路徑
- * @param path - 要檢查的路徑
- * @returns 是否為有效的 SEO 路徑
- */
 export function isSEOPath(path: string): path is SEOPath {
   return SEO_PATHS.includes(path as SEOPath);
 }
 
-/**
- * 檢查路徑是否為核心頁面
- * @param path - 要檢查的路徑
- * @returns 是否為核心頁面
- */
 export function isCorePagePath(path: string): path is CorePagePath {
-  const corePaths: readonly CorePagePath[] = [
-    '/',
-    '/multi/',
-    '/favorites/',
-    '/settings/',
-    '/faq/',
-    '/about/',
-    '/privacy/',
-    '/guide/',
-  ];
-  return corePaths.includes(path as CorePagePath);
+  return CONTENT_SEO_PATHS.includes(path as CorePagePath);
 }
 
-/**
- * 檢查路徑是否為幣別頁面
- * @param path - 要檢查的路徑
- * @returns 是否為幣別頁面
- */
 export function isCurrencyPagePath(path: string): path is CurrencyPagePath {
-  return isSEOPath(path) && !isCorePagePath(path);
+  return CURRENCY_SEO_PATHS.includes(path as CurrencyPagePath);
+}
+
+export function isAppOnlyPath(path: string): path is AppOnlyPath {
+  return APP_ONLY_PATHS.includes(path as AppOnlyPath);
 }

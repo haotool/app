@@ -12,7 +12,7 @@
  */
 
 import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -32,55 +32,62 @@ function log(color, symbol, message) {
 }
 
 /**
- * 從 TypeScript 文件中提取路徑數組
+ * 從文件內容中提取具名陣列的字串項目
+ */
+function extractNamedArray(content, arrayName, asSuffix = '') {
+  const escapedSuffix = asSuffix ? asSuffix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+  const pattern = new RegExp(`export const ${arrayName} = \\[([\\s\\S]*?)\\]${escapedSuffix};`);
+  const match = content.match(pattern);
+  if (!match) return [];
+
+  const allMatches = [...match[1].matchAll(/['"]([^'"]+)['"]/g)];
+  return allMatches.map((m) => m[1]);
+}
+
+/**
+ * 從 TypeScript 文件中提取 SEO 路徑
+ * 支援 inline 與 spread 語法
  */
 function extractPathsFromTS(filePath) {
   const content = readFileSync(filePath, 'utf-8');
 
-  // 提取 SEO_PATHS 數組
-  const pathsMatch = content.match(/export const SEO_PATHS = \[([\s\S]*?)\] as const;/);
-  if (!pathsMatch) {
-    throw new Error('無法從 TypeScript 文件中提取 SEO_PATHS');
+  const inlinePaths = extractNamedArray(content, 'SEO_PATHS', ' as const');
+  if (inlinePaths.length > 0) return inlinePaths;
+
+  const contentPaths = extractNamedArray(content, 'CONTENT_SEO_PATHS', ' as const');
+  const currencyPaths = extractNamedArray(content, 'CURRENCY_SEO_PATHS', ' as const');
+  if (contentPaths.length > 0 || currencyPaths.length > 0) {
+    return [...contentPaths, ...currencyPaths];
   }
 
-  // 提取所有路徑（移除註釋和空白）
-  const paths = pathsMatch[1]
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("'") || line.startsWith('"'))
-    .map((line) => {
-      const match = line.match(/['"](.+?)['"]/);
-      return match ? match[1] : null;
-    })
-    .filter(Boolean);
-
-  return paths;
+  throw new Error('無法從 TypeScript 文件中提取 SEO_PATHS');
 }
 
 /**
- * 從 JavaScript (.mjs) 文件中提取路徑數組
+ * 從 JavaScript (.mjs) 文件中提取 SEO 路徑
+ * 優先使用 dynamic import；fallback 為 regex
  */
-function extractPathsFromMJS(filePath) {
-  const content = readFileSync(filePath, 'utf-8');
-
-  // 提取 SEO_PATHS 數組
-  const pathsMatch = content.match(/export const SEO_PATHS = \[([\s\S]*?)\];/);
-  if (!pathsMatch) {
-    throw new Error('無法從 .mjs 文件中提取 SEO_PATHS');
+async function extractPathsFromMJS(filePath) {
+  try {
+    const mod = await import(pathToFileURL(filePath).href);
+    if (mod.SEO_PATHS && Array.isArray(mod.SEO_PATHS) && mod.SEO_PATHS.length > 0) {
+      return [...mod.SEO_PATHS];
+    }
+  } catch {
+    // dynamic import 失敗時 fallback 到 regex
   }
 
-  // 提取所有路徑（移除註釋和空白）
-  const paths = pathsMatch[1]
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("'") || line.startsWith('"'))
-    .map((line) => {
-      const match = line.match(/['"](.+?)['"]/);
-      return match ? match[1] : null;
-    })
-    .filter(Boolean);
+  const content = readFileSync(filePath, 'utf-8');
+  const inlinePaths = extractNamedArray(content, 'SEO_PATHS');
+  if (inlinePaths.length > 0) return inlinePaths;
 
-  return paths;
+  const contentPaths = extractNamedArray(content, 'CONTENT_SEO_PATHS');
+  const currencyPaths = extractNamedArray(content, 'CURRENCY_SEO_PATHS');
+  if (contentPaths.length > 0 || currencyPaths.length > 0) {
+    return [...contentPaths, ...currencyPaths];
+  }
+
+  throw new Error('無法從 .mjs 文件中提取 SEO_PATHS');
 }
 
 /**
@@ -142,7 +149,7 @@ async function main() {
     log(colors.green, '✓', `提取 ${tsPaths.length} 個路徑`);
 
     log(colors.cyan, '→', 'JavaScript: seo-paths.config.mjs');
-    const mjsPaths = extractPathsFromMJS(mjsPath);
+    const mjsPaths = await extractPathsFromMJS(mjsPath);
     log(colors.green, '✓', `提取 ${mjsPaths.length} 個路徑`);
 
     // 2. 比較路徑

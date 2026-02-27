@@ -211,66 +211,66 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
 
   describe('🏷️ JSON-LD Structured Data - Schema.org', () => {
     const seoHelmetPath = resolve(SRC_PATH, 'components/SEOHelmet.tsx');
+    const seoMetadataPath = resolve(SRC_PATH, 'config/seo-metadata.ts');
     const seoHelmetContent = readFile(seoHelmetPath);
+    const seoMetadataContent = readFile(seoMetadataPath);
+    const combinedContent = seoHelmetContent + seoMetadataContent;
 
     it('should have SoftwareApplication schema', () => {
-      // 2026 推薦：SoftwareApplication 比 WebApplication 更豐富
-      expect(seoHelmetContent).toContain("'@type': 'SoftwareApplication'");
+      expect(combinedContent).toContain("'@type': 'SoftwareApplication'");
     });
 
     it('should have Organization schema', () => {
-      expect(seoHelmetContent).toContain("'@type': 'Organization'");
+      expect(combinedContent).toContain("'@type': 'Organization'");
     });
 
     it('should have WebSite schema', () => {
-      expect(seoHelmetContent).toContain("'@type': 'WebSite'");
+      expect(combinedContent).toContain("'@type': 'WebSite'");
     });
 
     it('should have FAQPage schema builder', () => {
-      expect(seoHelmetContent).toContain("'@type': 'FAQPage'");
+      expect(combinedContent).toContain("'@type': 'FAQPage'");
     });
 
     it('should have HowTo schema builder', () => {
-      expect(seoHelmetContent).toContain("'@type': 'HowTo'");
+      expect(combinedContent).toContain("'@type': 'HowTo'");
     });
 
     it('should have BreadcrumbList schema builder', () => {
-      expect(seoHelmetContent).toContain("'@type': 'BreadcrumbList'");
+      expect(combinedContent).toContain("'@type': 'BreadcrumbList'");
     });
 
     it('should have ImageObject schema with creator metadata', () => {
-      // 2026 AI 圖片理解增強
-      expect(seoHelmetContent).toContain("'@type': 'ImageObject'");
-      expect(seoHelmetContent).toContain('creator');
-      expect(seoHelmetContent).toContain('copyrightNotice');
+      expect(combinedContent).toContain("'@type': 'ImageObject'");
+      expect(combinedContent).toContain('creator');
+      expect(combinedContent).toContain('copyrightNotice');
     });
 
     it('should NOT have SearchAction (no search functionality)', () => {
-      // 沒有 ?q= 搜尋功能，不應該有 SearchAction
-      expect(seoHelmetContent).not.toContain("'@type': 'SearchAction'");
+      expect(combinedContent).not.toContain("'@type': 'SearchAction'");
     });
 
     it('should have applicationCategory for app type', () => {
-      expect(seoHelmetContent).toContain('applicationCategory');
-      expect(seoHelmetContent).toContain('FinanceApplication');
+      expect(combinedContent).toContain('applicationCategory');
+      expect(combinedContent).toContain('FinanceApplication');
     });
 
     it('should have featureList for app capabilities', () => {
-      expect(seoHelmetContent).toContain('featureList');
+      expect(combinedContent).toContain('featureList');
     });
 
     it('should have offers with price for app schema', () => {
-      expect(seoHelmetContent).toContain("'@type': 'Offer'");
-      expect(seoHelmetContent).toContain("price: '0'");
+      expect(combinedContent).toContain("'@type': 'Offer'");
+      expect(combinedContent).toContain("price: '0'");
     });
 
     it('should have contactPoint for Organization', () => {
-      expect(seoHelmetContent).toContain("'@type': 'ContactPoint'");
-      expect(seoHelmetContent).toContain('email');
+      expect(combinedContent).toContain("'@type': 'ContactPoint'");
+      expect(combinedContent).toContain('email');
     });
 
     it('should have sameAs for social profiles', () => {
-      expect(seoHelmetContent).toContain('sameAs');
+      expect(combinedContent).toContain('sameAs');
     });
   });
 
@@ -390,7 +390,10 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
 
   describe('🌐 Internationalization - Language SEO', () => {
     const seoHelmetPath = resolve(SRC_PATH, 'components/SEOHelmet.tsx');
+    const seoMetadataPath = resolve(SRC_PATH, 'config/seo-metadata.ts');
     const seoHelmetContent = readFile(seoHelmetPath);
+    const seoMetadataContent = readFile(seoMetadataPath);
+    const combinedContent = seoHelmetContent + seoMetadataContent;
     const indexHtmlPath = resolve(ROOT_PATH, 'index.html');
     const indexHtmlContent = readFile(indexHtmlPath);
 
@@ -399,15 +402,15 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
     });
 
     it('should have DEFAULT_LOCALE set to zh-TW', () => {
-      expect(seoHelmetContent).toContain("DEFAULT_LOCALE = 'zh-TW'");
+      expect(combinedContent).toContain("DEFAULT_LOCALE = 'zh-TW'");
     });
 
     it('should have x-default hreflang', () => {
-      expect(seoHelmetContent).toContain("hrefLang: 'x-default'");
+      expect(combinedContent).toContain("hrefLang: 'x-default'");
     });
 
     it('should have inLanguage for WebSite schema', () => {
-      expect(seoHelmetContent).toContain('inLanguage');
+      expect(combinedContent).toContain('inLanguage');
     });
   });
 
