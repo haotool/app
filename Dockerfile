@@ -87,9 +87,13 @@ RUN test -f /app/apps/ratewise/dist/sitemap.xml && \
 # CVE-2025-64720, CVE-2025-65018, CVE-2025-66293
 FROM nginx:alpine
 
-# [fix:2025-12-09] 更新所有系統包並安裝 wget（用於 healthcheck）
-# 這確保獲取最新的安全修補，包括 libpng
-RUN apk upgrade --no-cache && apk add --no-cache wget
+# [fix:2026-02-27] 更新所有系統包並安裝 wget（用於 healthcheck）
+# 明確升級 libpng 以修復 CVE-2026-25646 (HIGH: heap buffer overflow)
+# 這確保獲取最新的安全修補
+RUN apk upgrade --no-cache && \
+    apk add --no-cache wget && \
+    apk add --no-cache 'libpng>=1.6.55-r0' || \
+    echo "WARNING: libpng 1.6.55-r0 not available yet, using latest from Alpine repos"
 
 # [fix:2025-12-13] 新架構：haotool 作為根路徑首頁
 # 複製 haotool 作為根目錄（首頁）

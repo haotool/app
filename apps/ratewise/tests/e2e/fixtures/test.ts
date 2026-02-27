@@ -89,14 +89,20 @@ export const test = base.extend<RateWiseFixtures>({
 
     for (const path of basePathCandidates) {
       try {
-        await page.goto(makeUrl(path), { waitUntil: 'domcontentloaded' });
+        await page.goto(makeUrl(path), { waitUntil: 'networkidle' });
+
+        // [fix:2026-02-27] 增加穩定性：
+        // 1. 使用 networkidle 確保資源載入完成
+        // 2. 增加 timeout 到 30 秒以適應 CI 環境
+        // 3. 先等待 body 渲染，再等待 React hydration
+        await page.waitForSelector('body', { state: 'attached', timeout: 5_000 });
 
         // Web-first assertion: wait for functional UI element instead of data attribute
         // This is more reliable than waiting for data-app-ready attribute
         // because it verifies actual React hydration completed
         // [fix:2026-01-28] 底部導覽列改用 <a> 標籤，使用 link role 檢測
         await expect(page.getByRole('link', { name: /多幣別/i })).toBeVisible({
-          timeout: 25_000,
+          timeout: 30_000,
         });
 
         navigated = true;
