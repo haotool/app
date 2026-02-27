@@ -10,7 +10,7 @@
  * - motion/react 入場／退場動畫與按鈕微互動
  * - i18n 國際化
  * - prefers-reduced-motion 無障礙支援
- * - 四狀態：offlineReady / needRefresh / isUpdating / updateFailed
+ * - 五狀態：offlineReady / needRefresh / isUpdating / updateFailed / registrationFailed
  * - offlineReady 5 秒自動消失
  * - ARIA role 依緊急程度切換（status / alert）
  * - 定時器清理，防止記憶體洩漏
@@ -27,6 +27,7 @@ import { notificationAnimations, safeTransition } from '../config/animations';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { logger } from '../utils/logger';
 import { recacheCriticalResourcesOnLaunch } from '../utils/pwaStorageManager';
+import { SupportContactLinks } from './SupportContactLinks';
 
 /** SSR 安全入口：伺服器端回傳 null */
 export function UpdatePrompt() {
@@ -41,6 +42,7 @@ function UpdatePromptClient() {
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateFailed, setUpdateFailed] = useState(false);
+  const [registrationFailed, setRegistrationFailed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
@@ -53,6 +55,7 @@ function UpdatePromptClient() {
     onRegistered(r) {
       if (r) {
         registrationRef.current = r;
+        setRegistrationFailed(false);
         void r.update();
         intervalRef.current = setInterval(() => {
           void r.update();
@@ -61,6 +64,10 @@ function UpdatePromptClient() {
     },
     onRegisterError(error) {
       const errorObject = error instanceof Error ? error : new Error(String(error));
+      setRegistrationFailed(true);
+      setOfflineReady(false);
+      setNeedRefresh(false);
+      setUpdateFailed(false);
       logger.error('Service Worker registration error', errorObject);
     },
   });
@@ -73,12 +80,10 @@ function UpdatePromptClient() {
   useEffect(() => {
     const checkUpdate = () => {
       if (document.visibilityState === 'visible') {
-        // 檢查 Service Worker 更新
         if (registrationRef.current) {
           void registrationRef.current.update();
         }
 
-        // 重新快取關鍵資源（iOS Safari 可能已清除快取）
         void recacheCriticalResourcesOnLaunch(import.meta.env.BASE_URL || '/');
       }
     };
@@ -89,7 +94,6 @@ function UpdatePromptClient() {
     };
   }, []);
 
-  // 清除定期更新 interval
   useEffect(() => {
     return () => {
       if (intervalRef.current !== null) {
@@ -98,7 +102,6 @@ function UpdatePromptClient() {
     };
   }, []);
 
-  // offlineReady 自動消失
   useEffect(() => {
     if (offlineReady) {
       autoDismissRef.current = setTimeout(() => {
@@ -116,6 +119,7 @@ function UpdatePromptClient() {
 
   const handleUpdate = async () => {
     setIsUpdating(true);
+    setRegistrationFailed(false);
     setUpdateFailed(false);
     try {
       await updateServiceWorker(true);
@@ -126,14 +130,20 @@ function UpdatePromptClient() {
     }
   };
 
+  const handleReload = () => {
+    window.location.reload();
+  };
+
   const close = () => {
     setOfflineReady(false);
     setNeedRefresh(false);
     setUpdateFailed(false);
+    setRegistrationFailed(false);
   };
 
-  const shouldRender = offlineReady || needRefresh || isUpdating || updateFailed;
-  const isUrgent = needRefresh || updateFailed || isUpdating;
+  const shouldRender =
+    offlineReady || needRefresh || isUpdating || updateFailed || registrationFailed;
+  const isUrgent = needRefresh || updateFailed || isUpdating || registrationFailed;
 
   return (
     <AnimatePresence>
@@ -165,7 +175,6 @@ function UpdatePromptClient() {
               ${notificationTokens.shadow}
             `}
           >
-            {/* 裝飾光暈 */}
             <div
               className={`absolute top-0 right-0 ${notificationTokens.decoration.size} rounded-full ${notificationTokens.decoration.topRight} ${notificationTokens.decoration.blur} ${prefersReducedMotion ? 'hidden' : ''}`}
               aria-hidden="true"
@@ -175,61 +184,72 @@ function UpdatePromptClient() {
               aria-hidden="true"
             />
 
-            {/* 內容 */}
             <div className={`relative ${notificationTokens.padding}`}>
-              <div className="flex items-center gap-3">
-                {/* 狀態圖標 */}
-                <div className="flex-shrink-0">
-                  <div
-                    className={`relative ${notificationTokens.icon.container} bg-gradient-to-br from-brand-icon-from to-brand-icon-to flex items-center justify-center shadow`}
-                  >
-                    <StatusIcon
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <div
+                      className={`relative ${notificationTokens.icon.container} bg-gradient-to-br from-brand-icon-from to-brand-icon-to flex items-center justify-center shadow`}
+                    >
+                      <StatusIcon
+                        offlineReady={offlineReady}
+                        isUpdating={isUpdating}
+                        registrationFailed={registrationFailed}
+                        updateFailed={updateFailed}
+                        strokeWidth={notificationTokens.icon.strokeWidth}
+                        className={notificationTokens.icon.svg}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h2
+                      id="update-prompt-title"
+                      className="text-sm font-semibold text-brand-text-dark truncate"
+                    >
+                      <StatusTitle
+                        offlineReady={offlineReady}
+                        needRefresh={needRefresh}
+                        isUpdating={isUpdating}
+                        registrationFailed={registrationFailed}
+                        updateFailed={updateFailed}
+                        t={t}
+                      />
+                    </h2>
+                    <p id="update-prompt-description" className="text-xs text-brand-text">
+                      <StatusDescription
+                        offlineReady={offlineReady}
+                        needRefresh={needRefresh}
+                        isUpdating={isUpdating}
+                        registrationFailed={registrationFailed}
+                        updateFailed={updateFailed}
+                        t={t}
+                      />
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <ActionButtons
                       offlineReady={offlineReady}
+                      needRefresh={needRefresh}
                       isUpdating={isUpdating}
+                      registrationFailed={registrationFailed}
                       updateFailed={updateFailed}
-                      strokeWidth={notificationTokens.icon.strokeWidth}
-                      className={notificationTokens.icon.svg}
+                      onReload={handleReload}
+                      onUpdate={handleUpdate}
+                      onClose={close}
+                      t={t}
                     />
                   </div>
                 </div>
 
-                {/* 標題與描述 */}
-                <div className="flex-1 min-w-0">
-                  <h2
-                    id="update-prompt-title"
-                    className="text-sm font-semibold text-brand-text-dark truncate"
-                  >
-                    <StatusTitle
-                      offlineReady={offlineReady}
-                      needRefresh={needRefresh}
-                      isUpdating={isUpdating}
-                      updateFailed={updateFailed}
-                      t={t}
-                    />
-                  </h2>
-                  <p id="update-prompt-description" className="text-xs text-brand-text truncate">
-                    <StatusDescription
-                      offlineReady={offlineReady}
-                      needRefresh={needRefresh}
-                      isUpdating={isUpdating}
-                      updateFailed={updateFailed}
-                      t={t}
-                    />
-                  </p>
-                </div>
-
-                {/* 操作按鈕 */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <ActionButtons
-                    offlineReady={offlineReady}
-                    needRefresh={needRefresh}
-                    isUpdating={isUpdating}
-                    updateFailed={updateFailed}
-                    onUpdate={handleUpdate}
-                    onClose={close}
-                    t={t}
+                {registrationFailed || updateFailed ? (
+                  <SupportContactLinks
+                    title={t('support.reportIssueLead')}
+                    description={t('support.reportIssueHint')}
+                    tone="brand"
                   />
-                </div>
+                ) : null}
               </div>
             </div>
           </div>
@@ -239,11 +259,10 @@ function UpdatePromptClient() {
   );
 }
 
-/* --- 子元件 --- */
-
 interface StatusIconProps {
   offlineReady: boolean;
   isUpdating: boolean;
+  registrationFailed: boolean;
   updateFailed: boolean;
   strokeWidth: number;
   className: string;
@@ -252,6 +271,7 @@ interface StatusIconProps {
 function StatusIcon({
   offlineReady,
   isUpdating,
+  registrationFailed,
   updateFailed,
   strokeWidth,
   className,
@@ -289,7 +309,7 @@ function StatusIcon({
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
-      {updateFailed ? (
+      {updateFailed || registrationFailed ? (
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -319,18 +339,33 @@ interface StatusTextProps {
   offlineReady: boolean;
   needRefresh: boolean;
   isUpdating: boolean;
+  registrationFailed: boolean;
   updateFailed: boolean;
   t: (key: string) => string;
 }
 
-function StatusTitle({ offlineReady, isUpdating, updateFailed, t }: StatusTextProps) {
+function StatusTitle({
+  offlineReady,
+  isUpdating,
+  registrationFailed,
+  updateFailed,
+  t,
+}: StatusTextProps) {
+  if (registrationFailed) return <>{t('pwa.registrationFailedTitle')}</>;
   if (isUpdating) return <>{t('pwa.updatingTitle')}</>;
   if (updateFailed) return <>{t('pwa.updateFailedTitle')}</>;
   if (offlineReady) return <>{t('pwa.offlineReadyTitle')}</>;
   return <>{t('pwa.needRefreshTitle')}</>;
 }
 
-function StatusDescription({ offlineReady, isUpdating, updateFailed, t }: StatusTextProps) {
+function StatusDescription({
+  offlineReady,
+  isUpdating,
+  registrationFailed,
+  updateFailed,
+  t,
+}: StatusTextProps) {
+  if (registrationFailed) return <>{t('pwa.registrationFailedDescription')}</>;
   if (isUpdating) return <>{t('pwa.updatingDescription')}</>;
   if (updateFailed) return <>{t('pwa.updateFailedDescription')}</>;
   if (offlineReady) return <>{t('pwa.offlineReadyDescription')}</>;
@@ -341,13 +376,14 @@ interface ActionButtonsProps {
   offlineReady: boolean;
   needRefresh: boolean;
   isUpdating: boolean;
+  registrationFailed: boolean;
   updateFailed: boolean;
+  onReload: () => void;
   onUpdate: () => Promise<void>;
   onClose: () => void;
   t: (key: string) => string;
 }
 
-/** CTA 按鈕共用樣式（更新／重試） */
 const CTA_CLASS = `
   px-3 py-1.5 rounded-full text-xs font-medium
   bg-gradient-to-r from-brand-button-from to-brand-button-to
@@ -361,13 +397,23 @@ const CTA_CLASS = `
 function ActionButtons({
   needRefresh,
   isUpdating,
+  registrationFailed,
   updateFailed,
+  onReload,
   onUpdate,
   onClose,
   t,
 }: ActionButtonsProps) {
   if (isUpdating) {
     return null;
+  }
+
+  if (registrationFailed) {
+    return (
+      <button onClick={onReload} className={CTA_CLASS} aria-label={t('pwa.actionReload')}>
+        {t('pwa.actionReload')}
+      </button>
+    );
   }
 
   if (updateFailed) {
@@ -394,7 +440,6 @@ function ActionButtons({
     );
   }
 
-  // offlineReady: 關閉按鈕
   return (
     <button
       onClick={onClose}

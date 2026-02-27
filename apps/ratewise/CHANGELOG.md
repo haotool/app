@@ -1,5 +1,12 @@
 # @app/ratewise
 
+## 2.4.6
+
+### Patch Changes
+
+- afbf5fc: fix(seo): 移除首頁重複 H1，確保每頁僅一個 H1
+- fix(pwa): 修復舊版 service worker 更新與 runtime 回歸
+
 ## 2.4.5
 
 ### Patch Changes

@@ -18,6 +18,12 @@ export const APP_INFO = {
   /** 聯繫信箱 */
   email: 'haotool.org@gmail.com',
 
+  /** 社群帳號 */
+  socialHandle: '@azlife_1224',
+
+  /** Threads 個人頁 */
+  threadsUrl: 'https://www.threads.net/@azlife_1224',
+
   /** GitHub 倉庫 URL */
   github: 'https://github.com/haotool/app',
 
@@ -30,6 +36,30 @@ export const APP_INFO = {
   /** 網站 URL */
   siteUrl: 'https://app.haotool.org/ratewise/',
 } as const;
+
+export const AUTHOR_CONTACT_LINK_MAP = {
+  threads: {
+    id: 'threads',
+    label: 'Threads',
+    href: APP_INFO.threadsUrl,
+    value: APP_INFO.socialHandle,
+    external: true,
+  },
+  email: {
+    id: 'email',
+    label: 'Email',
+    href: `mailto:${APP_INFO.email}`,
+    value: APP_INFO.email,
+    external: false,
+  },
+} as const;
+
+export const AUTHOR_CONTACT_LINKS = [
+  AUTHOR_CONTACT_LINK_MAP.threads,
+  AUTHOR_CONTACT_LINK_MAP.email,
+] as const;
+
+export const SEO_SOCIAL_LINKS = [APP_INFO.threadsUrl, APP_INFO.github] as const;
 
 /**
  * 取得版權年份字串
@@ -53,3 +83,4 @@ export function getCopyrightNotice(): string {
 }
 
 export type AppInfo = typeof APP_INFO;
+export type AuthorContactLink = (typeof AUTHOR_CONTACT_LINKS)[number];

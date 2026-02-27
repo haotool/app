@@ -5,7 +5,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { APP_INFO, getCopyrightYears, getCopyrightNotice } from '../app-info';
+import {
+  APP_INFO,
+  AUTHOR_CONTACT_LINKS,
+  SEO_SOCIAL_LINKS,
+  getCopyrightYears,
+  getCopyrightNotice,
+} from '../app-info';
 
 describe('app-info', () => {
   describe('APP_INFO constants', () => {
@@ -23,6 +29,14 @@ describe('app-info', () => {
 
     it('should have valid GitHub URL', () => {
       expect(APP_INFO.github).toMatch(/^https:\/\/github\.com\//);
+    });
+
+    it('should have valid Threads URL', () => {
+      expect(APP_INFO.threadsUrl).toMatch(/^https:\/\/www\.threads\.net\/@/);
+    });
+
+    it('should have social handle defined', () => {
+      expect(APP_INFO.socialHandle).toMatch(/^@/);
     });
 
     it('should have license defined', () => {
@@ -57,6 +71,26 @@ describe('app-info', () => {
       const notice = getCopyrightNotice();
       const currentYear = new Date().getFullYear();
       expect(notice).toBe(`© 2025-${currentYear} RateWise`);
+    });
+  });
+
+  describe('SSOT contact links', () => {
+    it('should expose support links from a single source of truth', () => {
+      expect(AUTHOR_CONTACT_LINKS).toHaveLength(2);
+      expect(AUTHOR_CONTACT_LINKS[0]).toMatchObject({
+        id: 'threads',
+        href: APP_INFO.threadsUrl,
+        value: APP_INFO.socialHandle,
+      });
+      expect(AUTHOR_CONTACT_LINKS[1]).toMatchObject({
+        id: 'email',
+        href: `mailto:${APP_INFO.email}`,
+        value: APP_INFO.email,
+      });
+    });
+
+    it('should expose social links for SEO schema from SSOT', () => {
+      expect(SEO_SOCIAL_LINKS).toEqual([APP_INFO.threadsUrl, APP_INFO.github]);
     });
   });
 });

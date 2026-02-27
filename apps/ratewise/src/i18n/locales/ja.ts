@@ -235,6 +235,12 @@ const ja = {
     unknownError: '不明なエラー',
     tryAgain: 'しばらくしてからもう一度お試しください',
     reload: '再読み込み',
+    offlineModeTitle: 'オフラインモード',
+    offlineModeDescription:
+      'このページの読み込みにはネットワーク接続が必要です。再接続後は自動で再試行するか、下のボタンから手動で再試行できます。',
+    routeLoadFailedTitle: 'ページの読み込みに失敗しました',
+    routeLoadFailedDescription:
+      '最近の更新でキャッシュ済みリソースが不整合になっている可能性があります。ページを再読み込みしてください。',
   },
 
   // PWA
@@ -253,7 +259,16 @@ const ja = {
     updatingDescription: 'しばらくお待ちください...',
     updateFailedTitle: '更新に失敗しました',
     updateFailedDescription: '再試行するかネットワークを確認してください',
+    registrationFailedTitle: 'バックグラウンド更新の初期化に失敗しました',
+    registrationFailedDescription:
+      '更新ワーカーを起動できませんでした。ページを再読み込みし、続く場合は作者へ連絡してください。',
     actionRetry: '再試行',
+    actionReload: '再読み込み',
+  },
+
+  support: {
+    reportIssueLead: '問題が続く場合は、作者へ直接ご連絡ください。',
+    reportIssueHint: 'エラー画面、再現手順、端末情報を添えると、原因の特定が早くなります。',
   },
 
   // 404

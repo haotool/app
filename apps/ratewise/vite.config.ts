@@ -48,8 +48,35 @@ function readPackageVersion(): string {
   return packageJson.version;
 }
 
-/** 從 Git 標籤取得版本號（優先策略） */
-function getVersionFromGitTag(): string | null {
+function parseSemver(version: string): [number, number, number] | null {
+  const match = /^(\d+)\.(\d+)\.(\d+)/.exec(version);
+  if (!match) {
+    return null;
+  }
+
+  return [Number(match[1]), Number(match[2]), Number(match[3])];
+}
+
+function compareSemver(left: string, right: string): number {
+  const leftSemver = parseSemver(left);
+  const rightSemver = parseSemver(right);
+
+  if (!leftSemver || !rightSemver) {
+    return left.localeCompare(right, undefined, { numeric: true });
+  }
+
+  for (let index = 0; index < leftSemver.length; index += 1) {
+    const delta = leftSemver[index] - rightSemver[index];
+    if (delta !== 0) {
+      return delta;
+    }
+  }
+
+  return 0;
+}
+
+/** 從 Git 標籤取得版本號（僅附加 build metadata，不覆寫 package.json semver） */
+function getVersionFromGitTag(baseVersion: string): string | null {
   try {
     const matchingTags = execSync('git tag --list "@app/ratewise@*"', { encoding: 'utf-8' })
       .trim()
@@ -70,13 +97,19 @@ function getVersionFromGitTag(): string | null {
     }
 
     const [, tagVersion, distance] = tagMatch;
-    return Number(distance) === 0 ? tagVersion : `${tagVersion}+build.${distance}`;
+
+    // package.json 是版本 SSOT；舊 tag 不得覆蓋較新的 semver。
+    if (tagVersion !== baseVersion) {
+      return null;
+    }
+
+    return Number(distance) === 0 ? tagVersion : `${baseVersion}+build.${distance}`;
   } catch {
     return null;
   }
 }
 
-/** 使用 Git commit 數生成版本號（Docker 建置優先用環境變數） */
+/** 使用 Git commit 數生成版本號（附加於 package.json semver） */
 function getVersionFromCommitCount(baseVersion: string): string | null {
   try {
     // 優先使用 Docker build args 傳入的環境變數
@@ -84,8 +117,7 @@ function getVersionFromCommitCount(baseVersion: string): string | null {
       process.env.GIT_COMMIT_COUNT ??
       execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
 
-    const [major = '1', minor = '0'] = baseVersion.split('.').slice(0, 2);
-    return `${major}.${minor}.${commitCount}`;
+    return `${baseVersion}+build.${commitCount}`;
   } catch {
     return null;
   }
@@ -106,7 +138,7 @@ function getDevelopmentVersion(baseVersion: string): string {
   }
 }
 
-/** 生成版本號 - 優先 Git 標籤 > commit 數 > package.json */
+/** 生成版本號 - package.json semver 為 SSOT，Git 僅提供 build metadata */
 function generateVersion(): string {
   const baseVersion = readPackageVersion();
 
@@ -115,8 +147,17 @@ function generateVersion(): string {
     return getDevelopmentVersion(baseVersion);
   }
 
-  // 生產環境：優先使用 Git 標籤，次之 commit 數，最後 fallback 到 package.json
-  const version = getVersionFromGitTag() ?? getVersionFromCommitCount(baseVersion) ?? baseVersion;
+  const versionFromGitTag = getVersionFromGitTag(baseVersion);
+  if (versionFromGitTag) {
+    console.log(`✅ Generated version: ${versionFromGitTag}`);
+    return versionFromGitTag;
+  }
+
+  const versionFromCommitCount = getVersionFromCommitCount(baseVersion);
+  const version =
+    versionFromCommitCount && compareSemver(versionFromCommitCount, baseVersion) >= 0
+      ? versionFromCommitCount
+      : baseVersion;
 
   // 版本號有效性驗證
   if (!version || version.length < 5) {
@@ -176,6 +217,7 @@ export default defineConfig(({ mode }) => {
       alias: {
         // React 19 shim: react-is AsyncMode 相容性
         'react-is': resolve(__dirname, './src/utils/react-is-shim.ts'),
+        'react-helmet-async': resolve(__dirname, './src/utils/react-helmet-async-shim.tsx'),
         '@app/ratewise': resolve(__dirname, './src'),
         '@shared': resolve(__dirname, '../shared'),
       },
@@ -384,14 +426,12 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';
-              if (id.includes('lightweight-charts')) return 'vendor-charts';
-              if (id.includes('motion') || id.includes('framer-motion')) return 'vendor-motion';
-              if (id.includes('react-router')) return 'vendor-router';
-              if (id.includes('lucide-react')) return 'vendor-icons';
-              return 'vendor-libs';
-            }
+            if (!id.includes('node_modules')) return undefined;
+
+            // 只對重量級且相對獨立的套件做手動拆分。
+            // React / router / i18n 生態交由 Rollup 自動分配，避免循環 chunk。
+            if (id.includes('lightweight-charts')) return 'vendor-charts';
+            if (id.includes('motion') || id.includes('framer-motion')) return 'vendor-motion';
             return undefined;
           },
           chunkFileNames: 'assets/[name]-[hash].js',
@@ -420,7 +460,7 @@ export default defineConfig(({ mode }) => {
     },
     // SSR 設定 - CommonJS 模組打包（ESM 相容）
     ssr: {
-      noExternal: ['react-helmet-async', 'workbox-window'],
+      noExternal: ['workbox-window'],
       resolve: {
         conditions: ['module', 'node', 'import'],
         externalConditions: ['module', 'node'],
@@ -428,7 +468,7 @@ export default defineConfig(({ mode }) => {
     },
     // 依賴預打包（CommonJS → ESM）
     optimizeDeps: {
-      include: ['react-helmet-async', 'workbox-window'],
+      include: ['workbox-window'],
       esbuildOptions: { mainFields: ['module', 'main'] },
     },
     // SSG 預渲染（路徑從 SSOT 導入）

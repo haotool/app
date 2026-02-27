@@ -6,7 +6,7 @@
  * - SSOT tokens 引用
  * - i18n 多語系支援
  * - useReducedMotion 支援
- * - 4 個狀態（offlineReady / needRefresh / isUpdating / updateFailed）
+ * - 5 個狀態（offlineReady / needRefresh / isUpdating / updateFailed / registrationFailed）
  * - ARIA 語義化
  * - SSR 安全
  * - 單一實例渲染
@@ -54,7 +54,6 @@ describe('UpdatePrompt - SSOT tokens 引用', () => {
   it('should use notificationTokens for layout', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('notificationTokens.position');
-    // Note: width constraints now in position token, not separate container
     expect(sourceCode).toContain('notificationTokens.padding');
     expect(sourceCode).toContain('notificationTokens.borderRadius');
   });
@@ -76,9 +75,18 @@ describe('UpdatePrompt - i18n 多語系', () => {
     expect(sourceCode).toContain("t('pwa.updatingDescription')");
     expect(sourceCode).toContain("t('pwa.updateFailedTitle')");
     expect(sourceCode).toContain("t('pwa.updateFailedDescription')");
+    expect(sourceCode).toContain("t('pwa.registrationFailedTitle')");
+    expect(sourceCode).toContain("t('pwa.registrationFailedDescription')");
     expect(sourceCode).toContain("t('pwa.actionUpdate')");
     expect(sourceCode).toContain("t('pwa.actionClose')");
     expect(sourceCode).toContain("t('pwa.actionRetry')");
+    expect(sourceCode).toContain("t('pwa.actionReload')");
+  });
+
+  it('should use support.* i18n keys for issue reporting', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain("t('support.reportIssueLead')");
+    expect(sourceCode).toContain("t('support.reportIssueHint')");
   });
 
   it('should NOT contain hardcoded Chinese strings for states', async () => {
@@ -105,7 +113,7 @@ describe('UpdatePrompt - useReducedMotion 支援', () => {
   });
 });
 
-describe('UpdatePrompt - 4 個狀態', () => {
+describe('UpdatePrompt - 5 個狀態', () => {
   it('should have isUpdating state', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('isUpdating');
@@ -118,9 +126,22 @@ describe('UpdatePrompt - 4 個狀態', () => {
     expect(sourceCode).toContain('setUpdateFailed');
   });
 
+  it('should have registrationFailed state for service worker registration errors', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('registrationFailed');
+    expect(sourceCode).toContain('setRegistrationFailed');
+    expect(sourceCode).toContain('onRegisterError');
+    expect(sourceCode).toContain('setRegistrationFailed(true)');
+  });
+
+  it('should render support links when registration or update fails', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('SupportContactLinks');
+    expect(sourceCode).toContain('registrationFailed || updateFailed');
+  });
+
   it('should handle update with try/catch for error recovery', async () => {
     const sourceCode = await readSource();
-    // handleUpdate should catch errors and set updateFailed
     expect(sourceCode).toContain('await updateServiceWorker(true)');
     expect(sourceCode).toContain('setUpdateFailed(true)');
     expect(sourceCode).toContain('setIsUpdating(false)');

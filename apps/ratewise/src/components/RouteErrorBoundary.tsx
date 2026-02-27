@@ -17,8 +17,10 @@
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertCircle, RefreshCw, WifiOff } from 'lucide-react';
+import i18n from '../i18n';
 import { logger } from '../utils/logger';
 import { isChunkLoadError } from '../utils/chunkLoadRecovery';
+import { SupportContactLinks } from './SupportContactLinks';
 
 interface Props {
   children: ReactNode;
@@ -28,6 +30,47 @@ interface State {
   hasError: boolean;
   error: Error | null;
   isOffline: boolean;
+}
+
+interface ErrorCardProps {
+  actionLabel: string;
+  description: string;
+  icon: typeof AlertCircle;
+  iconClassName: string;
+  onAction: () => void;
+  title: string;
+}
+
+function ErrorCard({
+  actionLabel,
+  description,
+  icon: Icon,
+  iconClassName,
+  onAction,
+  title,
+}: ErrorCardProps) {
+  return (
+    <div className="flex-1 flex items-center justify-center p-6">
+      <div className="card p-8 max-w-sm w-full text-center space-y-4">
+        <Icon className={`mx-auto ${iconClassName}`} size={40} />
+        <div>
+          <h2 className="text-lg font-bold text-text mb-2">{title}</h2>
+          <p className="text-sm text-text-muted">{description}</p>
+        </div>
+        <button
+          onClick={onAction}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
+        >
+          <RefreshCw size={18} />
+          {actionLabel}
+        </button>
+        <SupportContactLinks
+          title={i18n.t('support.reportIssueLead')}
+          description={i18n.t('support.reportIssueHint')}
+        />
+      </div>
+    </div>
+  );
 }
 
 export class RouteErrorBoundary extends Component<Props, State> {
@@ -87,46 +130,28 @@ export class RouteErrorBoundary extends Component<Props, State> {
       return this.props.children;
     }
 
-    const { isOffline } = this.state;
-
-    // 僅在離線時顯示離線介面
-    if (isOffline) {
+    if (this.state.isOffline) {
       return (
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="card p-8 max-w-sm w-full text-center">
-            <WifiOff className="text-warning mx-auto mb-4" size={40} />
-            <h2 className="text-lg font-bold text-text mb-2">離線模式</h2>
-            <p className="text-sm text-text-muted mb-6">
-              此頁面需要網路連線才能載入。恢復連線後將自動重試，或點擊下方按鈕手動重試。
-            </p>
-            <button
-              onClick={this.handleRetry}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
-            >
-              <RefreshCw size={18} />
-              重試
-            </button>
-          </div>
-        </div>
+        <ErrorCard
+          actionLabel={i18n.t('common.retry')}
+          description={i18n.t('errors.offlineModeDescription')}
+          icon={WifiOff}
+          iconClassName="text-warning"
+          onAction={this.handleRetry}
+          title={i18n.t('errors.offlineModeTitle')}
+        />
       );
     }
 
-    // 在線載入失敗（含 chunk 錯誤）：清除快取後重載
     return (
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="card p-8 max-w-sm w-full text-center">
-          <AlertCircle className="text-destructive mx-auto mb-4" size={40} />
-          <h2 className="text-lg font-bold text-text mb-2">頁面載入失敗</h2>
-          <p className="text-sm text-text-muted mb-6">可能是版本更新中，請重新載入試試。</p>
-          <button
-            onClick={this.handleReload}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
-          >
-            <RefreshCw size={18} />
-            重新載入
-          </button>
-        </div>
-      </div>
+      <ErrorCard
+        actionLabel={i18n.t('errors.reload')}
+        description={i18n.t('errors.routeLoadFailedDescription')}
+        icon={AlertCircle}
+        iconClassName="text-destructive"
+        onAction={this.handleReload}
+        title={i18n.t('errors.routeLoadFailedTitle')}
+      />
     );
   }
 }

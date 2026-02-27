@@ -2,16 +2,9 @@
 
 /// <reference lib="webworker" />
 
-// 由 postbuild 腳本注入 Workbox location polyfill（scripts/patch-sw.mjs）。
-
 import { clientsClaim } from 'workbox-core';
-import {
-  cleanupOutdatedCaches,
-  createHandlerBoundToURL,
-  matchPrecache,
-  precacheAndRoute,
-} from 'workbox-precaching';
-import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing';
+import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching';
+import { registerRoute, setCatchHandler } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
@@ -28,49 +21,11 @@ cleanupOutdatedCaches();
 void self.skipWaiting();
 clientsClaim();
 
-/** 從 registration scope 解析 base path，避免硬編碼路徑。 */
-function getBasePath(): string {
-  try {
-    const scope = self.registration?.scope;
-    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
-      return '/';
-    }
-
-    const scopeUrl = new URL(scope);
-    return scopeUrl.pathname;
-  } catch (error) {
-    console.error('[SW] getBasePath failed:', error);
-    return '/';
-  }
-}
-
-/** 將相對路徑轉為 scope 下完整路徑。 */
-function resolvePath(relativePath: string): string {
-  const basePath = getBasePath();
-  const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
-  return `${basePath}${cleanPath}`;
-}
-
 // 離線探測專用路徑：永遠走網路，避免快取誤判在線。
 registerRoute(
   ({ url }: { url: URL }) => url.pathname.endsWith('/__network_probe__'),
   new NetworkOnly(),
 );
-
-// 依部署路徑動態取得 SPA 入口。
-const indexHtmlPath = resolvePath('index.html');
-
-// SPA 導覽路由。
-const navigationRoute = new NavigationRoute(createHandlerBoundToURL(indexHtmlPath), {
-  denylist: [
-    /^\/api/, // API endpoints
-    /^\/rates/, // Historical rates JSON
-    /\.[a-zA-Z0-9]+$/, // Files with extensions (except HTML)
-    /\/sw\.js$/, // Service Worker itself
-    /\/workbox-.*\.js$/, // Workbox runtime files
-  ],
-});
-registerRoute(navigationRoute);
 
 // 離線優先策略：導覽請求失敗時先嘗試既有快取，再回退 index/offline 頁面。
 setCatchHandler(async ({ event, request }): Promise<Response> => {

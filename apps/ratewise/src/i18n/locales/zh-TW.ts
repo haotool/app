@@ -235,6 +235,11 @@ const zhTW = {
     unknownError: '未知錯誤',
     tryAgain: '請稍後再試',
     reload: '重新載入',
+    offlineModeTitle: '離線模式',
+    offlineModeDescription:
+      '此頁面需要網路連線才能載入。恢復連線後將自動重試，或點擊下方按鈕手動重試。',
+    routeLoadFailedTitle: '頁面載入失敗',
+    routeLoadFailedDescription: '可能是最近版本更新造成資源不一致，請重新載入試試。',
   },
 
   // PWA
@@ -253,7 +258,15 @@ const zhTW = {
     updatingDescription: '請稍候...',
     updateFailedTitle: '更新失敗',
     updateFailedDescription: '請重試或檢查網路',
+    registrationFailedTitle: '背景更新初始化失敗',
+    registrationFailedDescription: '更新模組載入失敗，請重新載入；若仍持續發生，請直接聯繫作者。',
     actionRetry: '重試',
+    actionReload: '重新載入',
+  },
+
+  support: {
+    reportIssueLead: '若問題持續發生，請直接聯繫作者回報。',
+    reportIssueHint: '建議附上錯誤畫面、操作步驟與裝置資訊，方便快速排查。',
   },
 
   // 404

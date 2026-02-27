@@ -2,7 +2,7 @@
  * SEO Helmet - 統一 SEO 元資料管理
  * 負責 meta tags、Open Graph、Twitter Cards 與 JSON-LD Schema
  */
-import { Head } from 'vite-react-ssg';
+import { APP_INFO, SEO_SOCIAL_LINKS } from '../config/app-info';
 
 interface AlternateLink {
   hrefLang: string;
@@ -62,7 +62,7 @@ const DEFAULT_TITLE = 'RateWise 匯率好工具 - 即時匯率轉換器 | 支援
 const DEFAULT_DESCRIPTION =
   'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具，歷史趨勢圖一目了然，多幣別同時比較，是您出國旅遊與外幣兌換的最佳助手。';
 const DEFAULT_OG_IMAGE = '/og-image.jpg';
-const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://app.haotool.org/ratewise/'; // Fallback 尾斜線
+const SITE_URL = import.meta.env.VITE_SITE_URL ?? APP_INFO.siteUrl; // Fallback 尾斜線
 /** 資產版本快取破壞參數 - 從建置時間自動生成，避免硬編碼日期 */
 const ASSET_VERSION = `v=${(import.meta.env.VITE_BUILD_TIME ?? '').replace(/[-T:Z.]/g, '').slice(0, 8) || 'dev'}`;
 const DEFAULT_LOCALE = 'zh-TW';
@@ -90,7 +90,6 @@ const DEFAULT_KEYWORDS = [
   'exchange rate',
   'currency converter',
 ];
-const SOCIAL_LINKS = ['https://www.threads.net/@azlife_1224', 'https://github.com/haotool/app'];
 
 /** 建置時間戳 - 由 vite.config.ts define 注入，避免 SSG/hydration 不一致 */
 const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString();
@@ -166,7 +165,7 @@ const DEFAULT_JSON_LD = [
       description: 'RateWise 匯率換算工具桌面版界面',
       creator: {
         '@type': 'Organization',
-        name: 'haotool',
+        name: APP_INFO.author,
         url: 'https://haotool.org',
       },
       copyrightNotice: '© 2025 haotool',
@@ -179,13 +178,13 @@ const DEFAULT_JSON_LD = [
     '@type': 'Organization',
     name: 'RateWise',
     url: SITE_BASE_URL,
-    logo: buildAssetUrl('optimized/logo-512w.png'),
+    logo: buildAssetUrl('icons/ratewise-icon-512x512.png'),
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Customer Support',
-      email: 'haotool.org@gmail.com',
+      email: APP_INFO.email,
     },
-    sameAs: SOCIAL_LINKS,
+    sameAs: SEO_SOCIAL_LINKS,
   },
   {
     '@context': 'https://schema.org',
@@ -347,7 +346,7 @@ export function SEOHelmet({
   });
 
   return (
-    <Head>
+    <>
       {/* Primary Meta Tags */}
       <title>{fullTitle}</title>
       <meta name="title" content={fullTitle} />
@@ -394,8 +393,8 @@ export function SEOHelmet({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImageUrl} />
       <meta name="twitter:image:alt" content="RateWise 匯率轉換器" />
-      <meta name="twitter:site" content="@azlife_1224" />
-      <meta name="twitter:creator" content="@azlife_1224" />
+      <meta name="twitter:site" content={APP_INFO.socialHandle} />
+      <meta name="twitter:creator" content={APP_INFO.socialHandle} />
 
       {/* JSON-LD Structured Data */}
       {structuredData.map((item, index) => (
@@ -403,6 +402,6 @@ export function SEOHelmet({
           {JSON.stringify(item)}
         </script>
       ))}
-    </Head>
+    </>
   );
 }

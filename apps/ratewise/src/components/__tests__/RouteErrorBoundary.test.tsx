@@ -22,7 +22,7 @@ describe('RouteErrorBoundary', () => {
     });
   });
 
-  it('在線時遇到 chunk 錯誤應提供重新載入', () => {
+  it('在線時遇到 chunk 錯誤應提供重新載入與回報問題聯絡方式', () => {
     const chunkError = new Error('Loading chunk 123 failed');
 
     render(
@@ -33,10 +33,18 @@ describe('RouteErrorBoundary', () => {
 
     expect(screen.getByText('頁面載入失敗')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '重新載入' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /threads/i })).toHaveAttribute(
+      'href',
+      'https://www.threads.net/@azlife_1224',
+    );
+    expect(screen.getByRole('link', { name: /email/i })).toHaveAttribute(
+      'href',
+      'mailto:haotool.org@gmail.com',
+    );
     expect(screen.queryByText('離線模式')).not.toBeInTheDocument();
   });
 
-  it('離線時應顯示離線重試介面', () => {
+  it('離線時應顯示離線重試介面與聯絡方式', () => {
     Object.defineProperty(window.navigator, 'onLine', {
       writable: true,
       configurable: true,
@@ -51,5 +59,13 @@ describe('RouteErrorBoundary', () => {
 
     expect(screen.getByText('離線模式')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /threads/i })).toHaveAttribute(
+      'href',
+      'https://www.threads.net/@azlife_1224',
+    );
+    expect(screen.getByRole('link', { name: /email/i })).toHaveAttribute(
+      'href',
+      'mailto:haotool.org@gmail.com',
+    );
   });
 });

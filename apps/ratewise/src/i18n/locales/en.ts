@@ -237,6 +237,12 @@ const en = {
     unknownError: 'Unknown error',
     tryAgain: 'Please try again later',
     reload: 'Reload',
+    offlineModeTitle: 'Offline Mode',
+    offlineModeDescription:
+      'This page needs a network connection to load. It will retry automatically when you are back online, or you can retry manually below.',
+    routeLoadFailedTitle: 'Page Load Failed',
+    routeLoadFailedDescription:
+      'A recent update may have left cached assets out of sync. Please reload the page.',
   },
 
   // PWA
@@ -255,7 +261,17 @@ const en = {
     updatingDescription: 'Please wait...',
     updateFailedTitle: 'Update Failed',
     updateFailedDescription: 'Please retry or check network',
+    registrationFailedTitle: 'Background updater failed to start',
+    registrationFailedDescription:
+      'The update worker could not start. Reload the page, and contact the author if it keeps happening.',
     actionRetry: 'Retry',
+    actionReload: 'Reload',
+  },
+
+  support: {
+    reportIssueLead: 'If this problem keeps happening, contact the author directly.',
+    reportIssueHint:
+      'Include the error screen, reproduction steps, and device details so the issue can be diagnosed quickly.',
   },
 
   // 404

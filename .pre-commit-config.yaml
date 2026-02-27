@@ -11,10 +11,10 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
-  - repo: https://github.com/prettier/prettier
-    rev: 3.3.3
+  - repo: local
     hooks:
       - id: prettier
-        additional_dependencies:
-          - prettier@3.3.3
-          - prettier-plugin-tailwindcss@0.6.7
+        name: prettier
+        entry: pnpm exec prettier --write
+        language: system
+        types_or: [javascript, jsx, ts, tsx, json, markdown, yaml]

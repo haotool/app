@@ -216,6 +216,19 @@ describe('Service Worker Cache Strategies', () => {
     // 不應有 cacheName: 'offline-fallback' 的 runtime route
     expect(sourceCode).not.toContain("cacheName: 'offline-fallback'");
   });
+
+  // 🔴 RED: NavigationRoute + createHandlerBoundToURL(index.html) 會在 index.html
+  // 未進 precache 時讓 SW 初始化直接失敗
+  it('should NOT bind navigation handling to createHandlerBoundToURL(index.html)', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    expect(sourceCode).not.toContain('createHandlerBoundToURL(');
+    expect(sourceCode).not.toContain('new NavigationRoute(');
+  });
 });
 
 describe('Service Worker URL Matching', () => {
