@@ -201,9 +201,6 @@ function NavOverlay({
     isIndoor,
     arrivedState,
     hasValidLocation,
-    orientationPermission,
-    previouslyGranted,
-    requestOrientationPermission,
   } = nav;
 
   const isDarkTheme = theme.id === 'racing' || theme.id === 'minimalist';
@@ -396,192 +393,160 @@ function NavOverlay({
         />
 
         <div className="w-full h-full flex flex-col items-center justify-center pt-2 pb-2">
-          {/* iOS Orientation Permission Prompt */}
-          {(orientationPermission === 'prompt' || orientationPermission === 'denied') && (
-            <div className="flex flex-col items-center gap-4 px-8 text-center">
-              {orientationPermission === 'prompt' ? (
-                <button
-                  type="button"
-                  onClick={() => void requestOrientationPermission()}
-                  className="w-48 py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-transform"
-                  style={{
-                    backgroundColor: theme.colors.primary,
-                    color: '#fff',
-                  }}
-                >
-                  {previouslyGranted ? t('nav.reenable_compass') : t('nav.enable_compass')}
-                </button>
-              ) : (
-                <div
-                  className="w-48 py-4 rounded-2xl font-black uppercase tracking-widest text-sm"
-                  style={{ backgroundColor: `${theme.colors.text}12`, color: theme.colors.text }}
-                >
-                  {t('nav.compass_denied')}
-                </div>
-              )}
-              <p className="text-xs opacity-60 font-medium" style={{ color: theme.colors.text }}>
-                {orientationPermission === 'prompt'
-                  ? t('nav.compass_reason')
-                  : t('nav.compass_denied_hint')}
-              </p>
-            </div>
-          )}
-          {/* Main Compass Dial – shown only when orientation is available */}
-          {(orientationPermission === 'not-required' || orientationPermission === 'granted') && (
-            <div className="relative w-72 h-72 flex items-center justify-center">
-              {/* SVG Compass Ring */}
+          {/* Main Compass Dial */}
+          <div className="relative w-72 h-72 flex items-center justify-center">
+            {/* SVG Compass Ring */}
+            <motion.div
+              className="absolute inset-0"
+              style={{ rotate: -trueAnimHeading }}
+              transition={{ type: 'spring', stiffness: 50, damping: 15 }}
+            >
+              <svg viewBox="0 0 300 300" className="w-full h-full overflow-visible">
+                {/* Outer compass boundary ring – turns green on arrival */}
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="140"
+                  fill="none"
+                  stroke={arrived ? '#22c55e' : theme.colors.text}
+                  strokeWidth={arrived ? 2 : 1}
+                  opacity={arrived ? 0.45 : 0.1}
+                />
+                {Array.from({ length: 36 }).map((_, i) => {
+                  const angle = i * 10;
+                  const isCardinal = i % 9 === 0;
+                  const isMajor = i % 3 === 0 && !isCardinal;
+                  const tickLength = isCardinal ? 22 : isMajor ? 13 : 7;
+                  const strokeW = isCardinal ? 3 : isMajor ? 1.5 : 0.8;
+                  const opacity = isCardinal ? 1 : isMajor ? 0.45 : 0.18;
+                  const isNorth = i === 0;
+                  return (
+                    <g key={i} transform={`rotate(${angle} 150 150)`}>
+                      <line
+                        x1="150"
+                        y1="10"
+                        x2="150"
+                        y2={10 + tickLength}
+                        stroke={isNorth ? '#ef4444' : theme.colors.text}
+                        strokeWidth={strokeW}
+                        opacity={opacity}
+                        strokeLinecap="round"
+                      />
+                      {isCardinal && (
+                        <text
+                          x="150"
+                          y="68"
+                          textAnchor="middle"
+                          fill={isNorth ? '#ef4444' : theme.colors.text}
+                          fontSize="20"
+                          fontWeight="900"
+                          transform={`rotate(${-angle} 150 68)`}
+                          opacity={isNorth ? 1 : 0.85}
+                        >
+                          {i === 0
+                            ? t('compass.n')
+                            : i === 9
+                              ? t('compass.e')
+                              : i === 18
+                                ? t('compass.s')
+                                : t('compass.w')}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+              </svg>
+            </motion.div>
+
+            {/* Target Pointer – fades: arrived → 0 (jitter at ~0m), indoor → 0.4, no GPS → 0.25 */}
+            <motion.div
+              className="absolute inset-0"
+              animate={{ opacity: !hasValidLocation ? 0.25 : arrived ? 0 : isIndoor ? 0.4 : 1 }}
+              transition={{ duration: 0.6 }}
+              style={{ rotate: -trueAnimHeading }}
+            >
               <motion.div
-                className="absolute inset-0"
-                style={{ rotate: -trueAnimHeading }}
-                transition={{ type: 'spring', stiffness: 50, damping: 15 }}
+                className="w-full h-full"
+                style={{ rotate: animTargetBearing }}
+                transition={{ type: 'spring', stiffness: 60, damping: 15 }}
               >
-                <svg viewBox="0 0 300 300" className="w-full h-full overflow-visible">
-                  {/* Outer compass boundary ring – turns green on arrival */}
-                  <circle
-                    cx="150"
-                    cy="150"
-                    r="140"
-                    fill="none"
-                    stroke={arrived ? '#22c55e' : theme.colors.text}
-                    strokeWidth={arrived ? 2 : 1}
-                    opacity={arrived ? 0.45 : 0.1}
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5">
+                  <div
+                    className="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-b-[26px]"
+                    style={{
+                      borderBottomColor: theme.colors.primary,
+                      filter: `drop-shadow(0 0 10px ${theme.colors.primary}80) drop-shadow(0 2px 4px rgba(0,0,0,0.25))`,
+                    }}
                   />
-                  {Array.from({ length: 36 }).map((_, i) => {
-                    const angle = i * 10;
-                    const isCardinal = i % 9 === 0;
-                    const isMajor = i % 3 === 0 && !isCardinal;
-                    const tickLength = isCardinal ? 22 : isMajor ? 13 : 7;
-                    const strokeW = isCardinal ? 3 : isMajor ? 1.5 : 0.8;
-                    const opacity = isCardinal ? 1 : isMajor ? 0.45 : 0.18;
-                    const isNorth = i === 0;
-                    return (
-                      <g key={i} transform={`rotate(${angle} 150 150)`}>
-                        <line
-                          x1="150"
-                          y1="10"
-                          x2="150"
-                          y2={10 + tickLength}
-                          stroke={isNorth ? '#ef4444' : theme.colors.text}
-                          strokeWidth={strokeW}
-                          opacity={opacity}
-                          strokeLinecap="round"
-                        />
-                        {isCardinal && (
-                          <text
-                            x="150"
-                            y="68"
-                            textAnchor="middle"
-                            fill={isNorth ? '#ef4444' : theme.colors.text}
-                            fontSize="20"
-                            fontWeight="900"
-                            transform={`rotate(${-angle} 150 68)`}
-                            opacity={isNorth ? 1 : 0.85}
-                          >
-                            {i === 0
-                              ? t('compass.n')
-                              : i === 9
-                                ? t('compass.e')
-                                : i === 18
-                                  ? t('compass.s')
-                                  : t('compass.w')}
-                          </text>
-                        )}
-                      </g>
-                    );
-                  })}
-                </svg>
+                  <div
+                    className="w-0.5 h-4 rounded-full opacity-40"
+                    style={{ backgroundColor: theme.colors.primary }}
+                  />
+                </div>
               </motion.div>
+            </motion.div>
 
-              {/* Target Pointer – fades: arrived → 0 (jitter at ~0m), indoor → 0.4, no GPS → 0.25 */}
-              <motion.div
-                className="absolute inset-0"
-                animate={{ opacity: !hasValidLocation ? 0.25 : arrived ? 0 : isIndoor ? 0.4 : 1 }}
-                transition={{ duration: 0.6 }}
-                style={{ rotate: -trueAnimHeading }}
-              >
+            {/* Center Hub – Distance + Direction / Arrived / GPS Waiting */}
+            <div
+              className="absolute w-28 h-28 rounded-full border-2 flex flex-col items-center justify-center z-10 backdrop-blur-sm transition-all duration-500"
+              style={{
+                borderColor: arrived ? 'rgba(34,197,94,0.5)' : `${theme.colors.text}12`,
+                backgroundColor: `${theme.colors.background}CC`,
+                boxShadow: arrived
+                  ? '0 0 0 6px rgba(34,197,94,0.12), 0 4px 24px rgba(0,0,0,0.12)'
+                  : '0 4px 24px rgba(0,0,0,0.12)',
+              }}
+            >
+              {arrived ? (
                 <motion.div
-                  className="w-full h-full"
-                  style={{ rotate: animTargetBearing }}
-                  transition={{ type: 'spring', stiffness: 60, damping: 15 }}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 220, damping: 14 }}
                 >
-                  <div className="absolute top-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5">
-                    <div
-                      className="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-b-[26px]"
-                      style={{
-                        borderBottomColor: theme.colors.primary,
-                        filter: `drop-shadow(0 0 10px ${theme.colors.primary}80) drop-shadow(0 2px 4px rgba(0,0,0,0.25))`,
-                      }}
-                    />
-                    <div
-                      className="w-0.5 h-4 rounded-full opacity-40"
-                      style={{ backgroundColor: theme.colors.primary }}
-                    />
-                  </div>
+                  <Check size={38} style={{ color: '#22c55e' }} strokeWidth={3} />
                 </motion.div>
-              </motion.div>
-
-              {/* Center Hub – Distance + Direction / Arrived / GPS Waiting */}
-              <div
-                className="absolute w-28 h-28 rounded-full border-2 flex flex-col items-center justify-center z-10 backdrop-blur-sm transition-all duration-500"
-                style={{
-                  borderColor: arrived ? 'rgba(34,197,94,0.5)' : `${theme.colors.text}12`,
-                  backgroundColor: `${theme.colors.background}CC`,
-                  boxShadow: arrived
-                    ? '0 0 0 6px rgba(34,197,94,0.12), 0 4px 24px rgba(0,0,0,0.12)'
-                    : '0 4px 24px rgba(0,0,0,0.12)',
-                }}
-              >
-                {arrived ? (
-                  <motion.div
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 220, damping: 14 }}
+              ) : !hasValidLocation ? (
+                <motion.div
+                  className="flex flex-col items-center gap-1"
+                  animate={{ opacity: [1, 0.4, 1] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                >
+                  <Navigation size={24} style={{ color: theme.colors.primary }} />
+                  <p
+                    className="text-[8px] font-bold uppercase tracking-widest"
+                    style={{ color: theme.colors.text, opacity: 0.45 }}
                   >
-                    <Check size={38} style={{ color: '#22c55e' }} strokeWidth={3} />
-                  </motion.div>
-                ) : !hasValidLocation ? (
-                  <motion.div
-                    className="flex flex-col items-center gap-1"
-                    animate={{ opacity: [1, 0.4, 1] }}
-                    transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                    GPS
+                  </p>
+                </motion.div>
+              ) : (
+                <>
+                  <p
+                    className="text-3xl font-black tracking-tight leading-none"
+                    style={{ color: theme.colors.text }}
                   >
-                    <Navigation size={24} style={{ color: theme.colors.primary }} />
+                    {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
+                  </p>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-widest mt-0.5"
+                    style={{ color: theme.colors.text, opacity: 0.45 }}
+                  >
+                    {isIndoor ? t('nav.steps') : 'm'}
+                  </p>
+                  {!isIndoor && (
                     <p
-                      className="text-[8px] font-bold uppercase tracking-widest"
-                      style={{ color: theme.colors.text, opacity: 0.45 }}
+                      className="text-sm font-black mt-1 leading-none"
+                      style={{ color: theme.colors.primary }}
+                      aria-label={directionHint}
                     >
-                      GPS
+                      {directionArrow}
                     </p>
-                  </motion.div>
-                ) : (
-                  <>
-                    <p
-                      className="text-3xl font-black tracking-tight leading-none"
-                      style={{ color: theme.colors.text }}
-                    >
-                      {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
-                    </p>
-                    <p
-                      className="text-[10px] font-bold uppercase tracking-widest mt-0.5"
-                      style={{ color: theme.colors.text, opacity: 0.45 }}
-                    >
-                      {isIndoor ? t('nav.steps') : 'm'}
-                    </p>
-                    {!isIndoor && (
-                      <p
-                        className="text-sm font-black mt-1 leading-none"
-                        style={{ color: theme.colors.primary }}
-                        aria-label={directionHint}
-                      >
-                        {directionArrow}
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
+                  )}
+                </>
+              )}
             </div>
-          )}{' '}
-          {/* end compass dial conditional */}
+          </div>
+
           {/* Status Footer */}
           <div className="mt-4 mb-2 flex flex-col items-center min-h-[48px] justify-center">
             <AnimatePresence>

@@ -43,9 +43,9 @@ export const IMAGE_RESOURCES = [
 export const SITE_CONFIG = {
   url: 'https://app.haotool.org/park-keeper/',
   name: '停車好工具',
-  title: '停車好工具 — 台灣最好用的免費停車記錄與導航 App',
+  title: '停車好工具 | 智慧停車記錄與導航 PWA',
   description:
-    '台灣最好用的停車工具！免費記錄車牌、樓層、GPS 座標與照片，羅盤導航秒找愛車。PWA 離線可用、零註冊、完全隱私。',
+    '免費停車位置記錄工具。記錄車牌、樓層、GPS 座標與照片，透過羅盤導航快速找回愛車。支援離線使用、多主題與多語言。',
 };
 
 /**

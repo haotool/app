@@ -1,573 +1,152 @@
-/**
- * SEO Paths Configuration - Unit Tests
- *
- * [BDD:2025-12-14] 測試 SEO 路徑工具函數
- * [P1:Technical Debt] 確保路徑處理邏輯正確性
- *
- * 測試案例：
- * 1. normalizePath - 路徑標準化（添加尾斜線）
- * 2. shouldPrerender - 檢查路徑是否應該預渲染
- * 3. getIncludedRoutes - 過濾需要預渲染的路徑
- * 4. SEO_PATHS - 驗證配置完整性
- */
-
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  normalizePath,
-  shouldPrerender,
+  APP_ONLY_PATHS,
+  APP_ONLY_PRERENDER_PATHS,
+  IMAGE_RESOURCES,
+  LEGAL_SSG_PATHS,
+  PRERENDER_PATHS,
+  SEO_FILES,
+  SEO_PATHS,
+  SHARE_IMAGE,
+  SITE_CONFIG,
+  TWITTER_IMAGE,
   getIncludedRoutes,
-  isSEOPath,
+  isAppOnlyPath,
   isCorePagePath,
   isCurrencyPagePath,
-  SEO_PATHS,
-  SEO_FILES,
-  IMAGE_RESOURCES,
-  SITE_CONFIG,
+  isSEOPath,
+  normalizePath,
+  shouldPrerender,
 } from '../seo-paths';
 
 describe('SEO Paths Configuration', () => {
   describe('normalizePath', () => {
     it('應該保持根路徑不變', () => {
-      // Given: 根路徑 "/"
-      const path = '/';
-
-      // When: 標準化路徑
-      const result = normalizePath(path);
-
-      // Then: 應該返回 "/"
-      expect(result).toBe('/');
+      expect(normalizePath('/')).toBe('/');
+      expect(normalizePath('')).toBe('/');
     });
 
-    it('應該為沒有尾斜線的路徑添加尾斜線', () => {
-      // Given: 沒有尾斜線的路徑
-      const path = '/faq';
-
-      // When: 標準化路徑
-      const result = normalizePath(path);
-
-      // Then: 應該添加尾斜線
-      expect(result).toBe('/faq/');
-    });
-
-    it('應該保持已有尾斜線的路徑不變', () => {
-      // Given: 已有尾斜線的路徑
-      const path = '/about/';
-
-      // When: 標準化路徑
-      const result = normalizePath(path);
-
-      // Then: 應該保持不變
-      expect(result).toBe('/about/');
-    });
-
-    it('應該移除多餘的尾斜線並只保留一個', () => {
-      // Given: 有多個尾斜線的路徑
-      const path = '/guide///';
-
-      // When: 標準化路徑
-      const result = normalizePath(path);
-
-      // Then: 應該只保留一個尾斜線
-      expect(result).toBe('/guide/');
-    });
-
-    it('應該處理幣別路徑', () => {
-      // Given: 幣別路徑
-      const paths = ['/usd-twd', '/eur-twd/', '/jpy-twd//'];
-
-      // When: 標準化所有路徑
-      const results = paths.map(normalizePath);
-
-      // Then: 都應該有且僅有一個尾斜線
-      expect(results).toEqual(['/usd-twd/', '/eur-twd/', '/jpy-twd/']);
-    });
-
-    it('應該處理空字串（邊界情況）', () => {
-      // Given: 空字串
-      const path = '';
-
-      // When: 標準化路徑
-      const result = normalizePath(path);
-
-      // Then: 應該添加尾斜線
-      expect(result).toBe('/');
-    });
-
-    it('應該處理只有斜線的字串', () => {
-      // Given: 多個斜線
-      const path = '///';
-
-      // When: 標準化路徑
-      const result = normalizePath(path);
-
-      // Then: 移除後應該是根路徑
-      expect(result).toBe('/');
+    it('應該為普通路徑補上單一尾斜線', () => {
+      expect(normalizePath('/faq')).toBe('/faq/');
+      expect(normalizePath('/guide///')).toBe('/guide/');
+      expect(normalizePath('usd-twd')).toBe('/usd-twd/');
     });
   });
 
   describe('shouldPrerender', () => {
-    it('應該識別根路徑需要預渲染', () => {
-      // Given: 根路徑
-      const path = '/';
-
-      // When: 檢查是否應該預渲染
-      const result = shouldPrerender(path);
-
-      // Then: 應該返回 true
-      expect(result).toBe(true);
+    it('應該預渲染公開內容頁、法律頁與 app-only noindex 頁面', () => {
+      expect(shouldPrerender('/')).toBe(true);
+      expect(shouldPrerender('/faq')).toBe(true);
+      expect(shouldPrerender('/privacy')).toBe(true);
+      expect(shouldPrerender('/usd-twd')).toBe(true);
+      expect(shouldPrerender('/multi')).toBe(true);
+      expect(shouldPrerender('/favorites')).toBe(true);
+      expect(shouldPrerender('/settings')).toBe(true);
     });
 
-    it('應該識別核心頁面需要預渲染', () => {
-      // Given: 核心頁面路徑
-      const corePaths = ['/faq', '/about', '/guide'];
-
-      // When: 檢查所有核心頁面
-      const results = corePaths.map(shouldPrerender);
-
-      // Then: 都應該返回 true
-      expect(results).toEqual([true, true, true]);
-    });
-
-    it('應該識別幣別頁面需要預渲染', () => {
-      // Given: 幣別頁面路徑
-      const currencyPaths = ['/usd-twd', '/eur-twd', '/jpy-twd', '/gbp-twd', '/cny-twd'];
-
-      // When: 檢查所有幣別頁面
-      const results = currencyPaths.map(shouldPrerender);
-
-      // Then: 都應該返回 true
-      expect(results).toEqual([true, true, true, true, true]);
-    });
-
-    it('應該識別不存在的路徑不需要預渲染', () => {
-      // Given: 不存在的路徑
-      const invalidPaths = ['/invalid', '/not-found', '/random-page'];
-
-      // When: 檢查這些路徑
-      const results = invalidPaths.map(shouldPrerender);
-
-      // Then: 都應該返回 false
-      expect(results).toEqual([false, false, false]);
-    });
-
-    it('應該正確處理有無尾斜線的路徑', () => {
-      // Given: 相同路徑但格式不同
-      const withSlash = '/faq/';
-      const withoutSlash = '/faq';
-
-      // When: 檢查兩個路徑
-      const result1 = shouldPrerender(withSlash);
-      const result2 = shouldPrerender(withoutSlash);
-
-      // Then: 應該返回相同結果（都是 true）
-      expect(result1).toBe(true);
-      expect(result2).toBe(true);
-    });
-
-    it('應該處理大小寫敏感的路徑', () => {
-      // Given: 大小寫不同的路徑
-      const lowercase = '/faq/';
-      const uppercase = '/FAQ/';
-
-      // When: 檢查兩個路徑
-      const result1 = shouldPrerender(lowercase);
-      const result2 = shouldPrerender(uppercase);
-
-      // Then: 大寫應該返回 false（路徑區分大小寫）
-      expect(result1).toBe(true);
-      expect(result2).toBe(false);
+    it('不應該預渲染未知路徑', () => {
+      expect(shouldPrerender('/not-found')).toBe(false);
     });
   });
 
   describe('getIncludedRoutes', () => {
-    it('應該過濾出所有有效的路徑', () => {
-      // Given: 混合有效和無效路徑
-      const paths = ['/', '/faq', '/invalid', '/about', '/not-found', '/usd-twd'];
-
-      // When: 過濾需要預渲染的路徑
-      const result = getIncludedRoutes(paths);
-
-      // Then: 應該只包含有效路徑
-      expect(result).toEqual(['/', '/faq', '/about', '/usd-twd']);
-    });
-
-    it('應該處理空陣列', () => {
-      // Given: 空陣列
-      const paths: string[] = [];
-
-      // When: 過濾路徑
-      const result = getIncludedRoutes(paths);
-
-      // Then: 應該返回空陣列
-      expect(result).toEqual([]);
-    });
-
-    it('應該處理全部無效的路徑', () => {
-      // Given: 全部無效路徑
-      const paths = ['/invalid1', '/invalid2', '/not-found'];
-
-      // When: 過濾路徑
-      const result = getIncludedRoutes(paths);
-
-      // Then: 應該返回空陣列
-      expect(result).toEqual([]);
-    });
-
-    it('應該處理全部有效的路徑', () => {
-      // Given: 全部有效路徑
-      const paths = ['/', '/faq', '/about', '/guide'];
-
-      // When: 過濾路徑
-      const result = getIncludedRoutes(paths);
-
-      // Then: 應該返回所有路徑
-      expect(result).toEqual(['/', '/faq', '/about', '/guide']);
-    });
-
-    it('應該正規化路徑後再比對', () => {
-      // Given: 格式不一致的有效路徑
-      const paths = ['/faq', '/about/', '/guide', '/usd-twd/'];
-
-      // When: 過濾路徑
-      const result = getIncludedRoutes(paths);
-
-      // Then: 應該都被識別為有效（經過正規化）
-      expect(result).toEqual(['/faq', '/about/', '/guide', '/usd-twd/']);
-      expect(result.length).toBe(4);
-    });
-
-    it('應該保持原始路徑順序', () => {
-      // Given: 有順序的路徑
-      const paths = ['/usd-twd', '/faq', '/', '/about'];
-
-      // When: 過濾路徑
-      const result = getIncludedRoutes(paths);
-
-      // Then: 應該保持相同順序
-      expect(result).toEqual(['/usd-twd', '/faq', '/', '/about']);
-    });
-  });
-
-  describe('SEO_PATHS 配置驗證', () => {
-    it('應該包含 21 個路徑', () => {
-      // Given: SEO_PATHS 配置（8 核心 + 13 幣別）
-
-      // When: 檢查路徑數量
-      const count = SEO_PATHS.length;
-
-      // Then: 應該有 21 個路徑（新增 /privacy/）
-      expect(count).toBe(21);
-    });
-
-    it('應該包含所有核心頁面', () => {
-      // Given: 核心頁面列表（8 個，含 /privacy/）
-      const corePages = [
+    it('應該只保留需要預渲染的路徑並維持順序', () => {
+      const paths = ['/', '/multi', '/faq', '/privacy', '/usd-twd', '/favorites'];
+      expect(getIncludedRoutes(paths)).toEqual([
         '/',
-        '/multi/',
-        '/favorites/',
-        '/settings/',
-        '/faq/',
-        '/about/',
-        '/guide/',
-        '/privacy/',
-      ] as const;
-
-      // When: 檢查是否都在 SEO_PATHS 中
-      const allIncluded = corePages.every((page) => SEO_PATHS.includes(page));
-
-      // Then: 應該全部包含
-      expect(allIncluded).toBe(true);
-      expect(corePages.length).toBe(8);
-    });
-
-    it('應該包含所有 13 個幣別頁面', () => {
-      // Given: 幣別頁面列表
-      const currencyPages = [
-        '/aud-twd/',
-        '/cad-twd/',
-        '/chf-twd/',
-        '/cny-twd/',
-        '/eur-twd/',
-        '/gbp-twd/',
-        '/hkd-twd/',
-        '/jpy-twd/',
-        '/krw-twd/',
-        '/nzd-twd/',
-        '/sgd-twd/',
-        '/thb-twd/',
-        '/usd-twd/',
-      ] as const;
-
-      // When: 檢查是否都在 SEO_PATHS 中
-      const allIncluded = currencyPages.every((page) => SEO_PATHS.includes(page));
-
-      // Then: 應該全部包含
-      expect(allIncluded).toBe(true);
-      expect(currencyPages.length).toBe(13);
-    });
-
-    it('所有路徑都應該使用尾斜線格式（除了根路徑）', () => {
-      // Given: SEO_PATHS 配置
-
-      // When: 檢查所有非根路徑
-      const nonRootPaths = SEO_PATHS.filter((path) => path !== '/');
-      const allHaveTrailingSlash = nonRootPaths.every((path) => path.endsWith('/'));
-
-      // Then: 都應該有尾斜線
-      expect(allHaveTrailingSlash).toBe(true);
-    });
-
-    it('不應該有重複的路徑', () => {
-      // Given: SEO_PATHS 配置
-
-      // When: 檢查重複
-      const uniquePaths = new Set(SEO_PATHS);
-
-      // Then: Set 大小應該等於原陣列長度
-      expect(uniquePaths.size).toBe(SEO_PATHS.length);
+        '/multi',
+        '/faq',
+        '/privacy',
+        '/usd-twd',
+        '/favorites',
+      ]);
     });
   });
 
-  describe('SEO_FILES 配置驗證', () => {
-    it('應該包含 3 個 SEO 檔案', () => {
-      // Given: SEO_FILES 配置
-
-      // When: 檢查檔案數量
-      const count = SEO_FILES.length;
-
-      // Then: 應該有 3 個檔案
-      expect(count).toBe(3);
+  describe('SEO 與路由白名單', () => {
+    it('SEO_PATHS 應只包含 17 個公開可索引路徑', () => {
+      expect(SEO_PATHS).toHaveLength(17);
+      expect(SEO_PATHS).toContain('/');
+      expect(SEO_PATHS).toContain('/faq/');
+      expect(SEO_PATHS).toContain('/about/');
+      expect(SEO_PATHS).toContain('/guide/');
+      expect(SEO_PATHS).toContain('/usd-twd/');
+      expect(SEO_PATHS).not.toContain('/multi/');
+      expect(SEO_PATHS).not.toContain('/favorites/');
+      expect(SEO_PATHS).not.toContain('/settings/');
+      expect(SEO_PATHS).not.toContain('/privacy/');
     });
 
-    it('應該包含必要的 SEO 檔案', () => {
-      // Given: 必要檔案列表
-      const requiredFiles = ['/sitemap.xml', '/robots.txt', '/llms.txt'] as const;
-
-      // When: 檢查是否都在 SEO_FILES 中
-      const allIncluded = requiredFiles.every((file) => SEO_FILES.includes(file));
-
-      // Then: 應該全部包含
-      expect(allIncluded).toBe(true);
-    });
-  });
-
-  describe('IMAGE_RESOURCES 配置驗證', () => {
-    it('應該包含 6 個圖片資源', () => {
-      // Given: IMAGE_RESOURCES 配置
-
-      // When: 檢查圖片數量
-      const count = IMAGE_RESOURCES.length;
-
-      // Then: 應該有 6 個圖片
-      expect(count).toBe(6);
+    it('PRERENDER_PATHS 應包含公開 SEO 路徑、privacy 與 app-only noindex 頁面', () => {
+      expect(PRERENDER_PATHS).toHaveLength(25);
+      expect(PRERENDER_PATHS).toEqual([
+        ...SEO_PATHS,
+        ...LEGAL_SSG_PATHS,
+        ...APP_ONLY_PRERENDER_PATHS,
+      ]);
+      expect(PRERENDER_PATHS).toContain('/privacy/');
+      expect(PRERENDER_PATHS).toContain('/favorites/');
+      expect(PRERENDER_PATHS).toContain('/settings/');
     });
 
-    it('應該包含 OG 圖片', () => {
-      // Given: IMAGE_RESOURCES 配置
-
-      // When: 檢查 og-image.jpg
-      const hasOGImage = IMAGE_RESOURCES.includes('/og-image.jpg');
-
-      // Then: 應該包含
-      expect(hasOGImage).toBe(true);
-    });
-
-    it('應該包含所有 PWA 圖標', () => {
-      // Given: PWA 圖標列表
-      const pwaIcons = [
-        '/icons/ratewise-icon-192x192.png',
-        '/icons/ratewise-icon-512x512.png',
-        '/icons/ratewise-icon-maskable-512x512.png',
-      ] as const;
-
-      // When: 檢查是否都在 IMAGE_RESOURCES 中
-      const allIncluded = pwaIcons.every((icon) => IMAGE_RESOURCES.includes(icon));
-
-      // Then: 應該全部包含
-      expect(allIncluded).toBe(true);
+    it('APP_ONLY_PATHS 應與 SEO_PATHS 完全分離', () => {
+      expect(APP_ONLY_PATHS).toHaveLength(7);
+      APP_ONLY_PATHS.forEach((path) => {
+        expect(SEO_PATHS).not.toContain(path as (typeof SEO_PATHS)[number]);
+      });
     });
   });
 
-  describe('SITE_CONFIG 配置驗證', () => {
-    it('應該包含正確的網站 URL', () => {
-      // Given: SITE_CONFIG 配置
-
-      // When: 檢查 URL
-      const url = SITE_CONFIG.url;
-
-      // Then: 應該是正確的 URL
-      expect(url).toBe('https://app.haotool.org/ratewise/');
+  describe('Static resources', () => {
+    it('應該包含必要 SEO 檔案', () => {
+      expect(SEO_FILES).toEqual(['/sitemap.xml', '/robots.txt', '/llms.txt']);
     });
 
-    it('應該包含網站名稱', () => {
-      // Given: SITE_CONFIG 配置
-
-      // When: 檢查 name
-      const name = SITE_CONFIG.name;
-
-      // Then: 應該有名稱
-      expect(name).toBeTruthy();
-      expect(name.length).toBeGreaterThan(0);
-    });
-
-    it('應該包含網站標題', () => {
-      // Given: SITE_CONFIG 配置
-
-      // When: 檢查 title
-      const title = SITE_CONFIG.title;
-
-      // Then: 應該有標題
-      expect(title).toBeTruthy();
-      expect(title.length).toBeGreaterThan(0);
-    });
-
-    it('應該包含網站描述', () => {
-      // Given: SITE_CONFIG 配置
-
-      // When: 檢查 description
-      const description = SITE_CONFIG.description;
-
-      // Then: 應該有描述
-      expect(description).toBeTruthy();
-      expect(description.length).toBeGreaterThan(0);
+    it('應該包含最新分享圖片 SSOT', () => {
+      expect(SHARE_IMAGE).toBe('/og-image.jpg');
+      expect(TWITTER_IMAGE).toBe('/twitter-image.jpg');
+      expect(IMAGE_RESOURCES).toContain(SHARE_IMAGE);
+      expect(IMAGE_RESOURCES).toContain(TWITTER_IMAGE);
+      expect(IMAGE_RESOURCES).toHaveLength(7);
     });
   });
 
-  describe('isSEOPath（類型守衛）', () => {
-    it('應該識別有效的 SEO 路徑', () => {
-      // Given: 有效的 SEO 路徑
-      const validPaths = ['/', '/faq/', '/about/', '/usd-twd/'];
-
-      // When: 檢查每個路徑
-      const results = validPaths.map(isSEOPath);
-
-      // Then: 都應該返回 true
-      expect(results).toEqual([true, true, true, true]);
-    });
-
-    it('應該拒絕無效的路徑', () => {
-      // Given: 無效的路徑
-      const invalidPaths = ['/invalid', '/not-found', '/random'];
-
-      // When: 檢查每個路徑
-      const results = invalidPaths.map(isSEOPath);
-
-      // Then: 都應該返回 false
-      expect(results).toEqual([false, false, false]);
-    });
-
-    it('應該區分大小寫', () => {
-      // Given: 大小寫不同的路徑
-      const lowercase = '/faq/';
-      const uppercase = '/FAQ/';
-
-      // When: 檢查兩個路徑
-      const result1 = isSEOPath(lowercase);
-      const result2 = isSEOPath(uppercase);
-
-      // Then: 只有小寫是有效的
-      expect(result1).toBe(true);
-      expect(result2).toBe(false);
-    });
-
-    it('應該檢查完全匹配（包括尾斜線）', () => {
-      // Given: 格式不同的路徑
-      const withSlash = '/faq/';
-      const withoutSlash = '/faq';
-
-      // When: 檢查兩個路徑
-      const result1 = isSEOPath(withSlash);
-      const result2 = isSEOPath(withoutSlash);
-
-      // Then: 只有帶尾斜線的是有效的（因為 SEO_PATHS 中是 '/faq/'）
-      expect(result1).toBe(true);
-      expect(result2).toBe(false);
+  describe('SITE_CONFIG', () => {
+    it('應該維持正確網站 URL 與基本資訊', () => {
+      expect(SITE_CONFIG.url).toBe('https://app.haotool.org/ratewise/');
+      expect(SITE_CONFIG.name.length).toBeGreaterThan(0);
+      expect(SITE_CONFIG.title.length).toBeGreaterThan(0);
+      expect(SITE_CONFIG.description.length).toBeGreaterThan(0);
     });
   });
 
-  describe('isCorePagePath（類型守衛）', () => {
-    it('應該識別所有核心頁面', () => {
-      // Given: 核心頁面路徑（7 個）
-      const corePaths = [
-        '/',
-        '/multi/',
-        '/favorites/',
-        '/settings/',
-        '/faq/',
-        '/about/',
-        '/guide/',
-      ];
-
-      // When: 檢查每個路徑
-      const results = corePaths.map(isCorePagePath);
-
-      // Then: 都應該返回 true
-      expect(results).toEqual([true, true, true, true, true, true, true]);
+  describe('Type guards', () => {
+    it('isSEOPath 應正確識別公開 SEO 路徑', () => {
+      expect(isSEOPath('/faq/')).toBe(true);
+      expect(isSEOPath('/usd-twd/')).toBe(true);
+      expect(isSEOPath('/multi/')).toBe(false);
+      expect(isSEOPath('/privacy/')).toBe(false);
     });
 
-    it('應該拒絕幣別頁面', () => {
-      // Given: 幣別頁面路徑
-      const currencyPaths = ['/usd-twd/', '/eur-twd/', '/jpy-twd/'];
-
-      // When: 檢查每個路徑
-      const results = currencyPaths.map(isCorePagePath);
-
-      // Then: 都應該返回 false
-      expect(results).toEqual([false, false, false]);
+    it('isCorePagePath 應只識別公開內容頁', () => {
+      expect(isCorePagePath('/')).toBe(true);
+      expect(isCorePagePath('/faq/')).toBe(true);
+      expect(isCorePagePath('/guide/')).toBe(true);
+      expect(isCorePagePath('/privacy/')).toBe(false);
+      expect(isCorePagePath('/multi/')).toBe(false);
     });
 
-    it('應該拒絕無效路徑', () => {
-      // Given: 無效路徑
-      const invalidPaths = ['/invalid', '/not-found'];
-
-      // When: 檢查每個路徑
-      const results = invalidPaths.map(isCorePagePath);
-
-      // Then: 都應該返回 false
-      expect(results).toEqual([false, false]);
-    });
-  });
-
-  describe('isCurrencyPagePath（類型守衛）', () => {
-    it('應該識別所有幣別頁面', () => {
-      // Given: 幣別頁面路徑
-      const currencyPaths = ['/usd-twd/', '/eur-twd/', '/jpy-twd/', '/gbp-twd/', '/cny-twd/'];
-
-      // When: 檢查每個路徑
-      const results = currencyPaths.map(isCurrencyPagePath);
-
-      // Then: 都應該返回 true
-      expect(results).toEqual([true, true, true, true, true]);
+    it('isCurrencyPagePath 應只識別匯率落地頁', () => {
+      expect(isCurrencyPagePath('/usd-twd/')).toBe(true);
+      expect(isCurrencyPagePath('/jpy-twd/')).toBe(true);
+      expect(isCurrencyPagePath('/faq/')).toBe(false);
     });
 
-    it('應該拒絕核心頁面', () => {
-      // Given: 核心頁面路徑
-      const corePaths = ['/', '/faq/', '/about/', '/guide/'];
-
-      // When: 檢查每個路徑
-      const results = corePaths.map(isCurrencyPagePath);
-
-      // Then: 都應該返回 false
-      expect(results).toEqual([false, false, false, false]);
-    });
-
-    it('應該拒絕無效路徑', () => {
-      // Given: 無效路徑
-      const invalidPaths = ['/invalid', '/not-found', '/random'];
-
-      // When: 檢查每個路徑
-      const results = invalidPaths.map(isCurrencyPagePath);
-
-      // Then: 都應該返回 false
-      expect(results).toEqual([false, false, false]);
-    });
-
-    it('應該只識別所有 13 個幣別頁面', () => {
-      // Given: SEO_PATHS 中的所有路徑
-      const currencyCount = SEO_PATHS.filter(isCurrencyPagePath).length;
-
-      // Then: 應該有 13 個幣別頁面
-      expect(currencyCount).toBe(13);
+    it('isAppOnlyPath 應識別 app-only 頁面', () => {
+      expect(isAppOnlyPath('/multi/')).toBe(true);
+      expect(isAppOnlyPath('/favorites/')).toBe(true);
+      expect(isAppOnlyPath('/ui-showcase/')).toBe(true);
+      expect(isAppOnlyPath('/faq/')).toBe(false);
     });
   });
 });

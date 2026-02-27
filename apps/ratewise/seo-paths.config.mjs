@@ -23,38 +23,68 @@ const withTrailingSlash = (value) => {
 export const normalizeSiteUrl = withTrailingSlash;
 
 /**
- * RateWise 所有需要預渲染的 SEO 路徑
- *
- * 總計：21 個路徑
- * - 8 個核心頁面：首頁、Multi、Favorites、Settings、FAQ、About、Privacy、Guide
- * - 13 個幣別落地頁：依字母順序排列
+ * 公開可索引內容頁（4 個）
  */
-export const SEO_PATHS = [
-  // 核心頁面 (7)
-  '/',
+export const CONTENT_SEO_PATHS = ['/', '/faq/', '/about/', '/guide/'];
+
+/**
+ * 公開法律頁面：保留 SSG，但不主動放進 sitemap
+ */
+export const LEGAL_SSG_PATHS = ['/privacy/'];
+
+/**
+ * 匯率落地頁（13 個）
+ */
+export const CURRENCY_SEO_PATHS = [
+  '/aud-twd/',
+  '/cad-twd/',
+  '/chf-twd/',
+  '/cny-twd/',
+  '/eur-twd/',
+  '/gbp-twd/',
+  '/hkd-twd/',
+  '/jpy-twd/',
+  '/krw-twd/',
+  '/nzd-twd/',
+  '/sgd-twd/',
+  '/thb-twd/',
+  '/usd-twd/',
+];
+
+/**
+ * 公開可索引 SEO 路徑（17 個）
+ */
+export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS];
+
+/**
+ * 需要回傳 app shell 的互動頁面（app-only）
+ */
+export const APP_ONLY_PATHS = [
   '/multi/',
   '/favorites/',
   '/settings/',
-  '/faq/',
-  '/about/',
-  '/privacy/',
-  '/guide/',
-
-  // 幣別落地頁 (13) - 依字母順序排列
-  '/aud-twd/', // 澳幣 - Australian Dollar
-  '/cad-twd/', // 加幣 - Canadian Dollar
-  '/chf-twd/', // 瑞士法郎 - Swiss Franc
-  '/cny-twd/', // 人民幣 - Chinese Yuan
-  '/eur-twd/', // 歐元 - Euro
-  '/gbp-twd/', // 英鎊 - British Pound
-  '/hkd-twd/', // 港幣 - Hong Kong Dollar
-  '/jpy-twd/', // 日圓 - Japanese Yen
-  '/krw-twd/', // 韓元 - Korean Won
-  '/nzd-twd/', // 紐幣 - New Zealand Dollar
-  '/sgd-twd/', // 新加坡幣 - Singapore Dollar
-  '/thb-twd/', // 泰銖 - Thai Baht
-  '/usd-twd/', // 美金 - US Dollar
+  '/theme-showcase/',
+  '/color-scheme/',
+  '/update-prompt-test/',
+  '/ui-showcase/',
 ];
+
+/**
+ * 需要預渲染的 app-only 路由
+ *
+ * 雖然不應出現在 sitemap，但要直接輸出 noindex 首屏 HTML。
+ */
+export const APP_ONLY_PRERENDER_PATHS = [...APP_ONLY_PATHS];
+
+/**
+ * 需要預渲染的靜態內容頁
+ */
+export const PRERENDER_PATHS = [...SEO_PATHS, ...LEGAL_SSG_PATHS, ...APP_ONLY_PRERENDER_PATHS];
+
+/**
+ * 所有已知前端路由
+ */
+export const KNOWN_ROUTE_PATHS = [...PRERENDER_PATHS];
 
 /**
  * SEO 配置文件路徑
@@ -62,29 +92,39 @@ export const SEO_PATHS = [
 export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
 
 /**
+ * 社交分享圖片與舊資源相容重定向
+ */
+export const SHARE_IMAGE = '/og-image.jpg';
+export const TWITTER_IMAGE = '/twitter-image.jpg';
+export const LEGACY_ASSET_REDIRECTS = {
+  '/og-image.png': SHARE_IMAGE,
+  '/twitter-image.png': TWITTER_IMAGE,
+};
+
+/**
  * 圖片資源路徑（用於生產環境驗證）
  */
 export const IMAGE_RESOURCES = [
-  '/og-image.jpg', // Open Graph 分享圖片
-  '/favicon.ico', // Favicon
-  '/apple-touch-icon.png', // Apple 觸控圖標
-  '/icons/ratewise-icon-192x192.png', // PWA icon 192x192
-  '/icons/ratewise-icon-512x512.png', // PWA icon 512x512
-  '/icons/ratewise-icon-maskable-512x512.png', // PWA maskable icon
+  SHARE_IMAGE,
+  TWITTER_IMAGE,
+  '/favicon.ico',
+  '/apple-touch-icon.png',
+  '/icons/ratewise-icon-192x192.png',
+  '/icons/ratewise-icon-512x512.png',
+  '/icons/ratewise-icon-maskable-512x512.png',
 ];
 
 /**
  * 路徑標準化函數
- * 用於比較路徑時統一格式
  *
  * @param {string} path - 原始路徑
  * @returns {string} 標準化後的路徑（帶尾斜線，根路徑除外）
  */
 export function normalizePath(path) {
   if (path === '/' || path === '') return '/';
-  // 確保前導斜線 + 移除尾斜線後再添加，確保一致性
   const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
-  return withLeadingSlash.replace(/\/+$/, '') + '/';
+  const trimmed = withLeadingSlash.replace(/\/+$/, '');
+  return trimmed === '' ? '/' : `${trimmed}/`;
 }
 
 /**
@@ -95,7 +135,7 @@ export function normalizePath(path) {
  */
 export function shouldPrerender(path) {
   const normalized = normalizePath(path);
-  return SEO_PATHS.includes(normalized);
+  return PRERENDER_PATHS.includes(normalized);
 }
 
 /**
@@ -121,42 +161,25 @@ export const SITE_CONFIG = {
 
 /**
  * 統一應用配置 - 單一真實來源 (SSOT)
- *
- * 用於 workspace-utils.mjs 自動發現和 CI 批次檢測
- *
- * @type {{
- *   name: string,
- *   displayName: string,
- *   basePath: {development: string, ci: string, production: string},
- *   seoPaths: string[],
- *   siteUrl: string,
- *   build: {ssg: boolean, pwa: boolean},
- *   resources: {seoFiles: string[], images: string[]}
- * }}
  */
 export const APP_CONFIG = {
-  // 應用識別
   name: 'ratewise',
   displayName: 'RateWise',
-
-  // 部署路徑配置
   basePath: {
     development: '/',
     ci: '/',
     production: '/ratewise/',
   },
-
-  // SEO 路徑 (從現有 SEO_PATHS 導入)
   seoPaths: SEO_PATHS,
+  prerenderPaths: PRERENDER_PATHS,
+  appShellPaths: APP_ONLY_PATHS,
+  knownRoutes: KNOWN_ROUTE_PATHS,
+  legacyAssetRedirects: LEGACY_ASSET_REDIRECTS,
   siteUrl: SITE_CONFIG.url,
-
-  // 建置配置
   build: {
     ssg: true,
     pwa: true,
   },
-
-  // 資源配置
   resources: {
     seoFiles: SEO_FILES,
     images: IMAGE_RESOURCES,

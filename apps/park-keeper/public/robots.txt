@@ -1,18 +1,12 @@
 # robots.txt for 停車好工具 (ParkKeeper)
 # https://app.haotool.org/park-keeper/
-# Last Updated: 2026-02-27
 
-# Search Engine Crawlers
 User-agent: Googlebot
-Allow: /
-
-User-agent: Googlebot-Mobile
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
-# AI Crawlers — Retrieval (bring traffic & citations)
 User-agent: GPTBot
 Allow: /
 
@@ -28,7 +22,6 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
-# AI Crawlers — Training
 User-agent: Google-Extended
 Allow: /
 
@@ -41,28 +34,16 @@ Allow: /
 User-agent: Meta-ExternalAgent
 Allow: /
 
-User-agent: cohere-ai
-Allow: /
-
-# Social Media Crawlers
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: LinkedInBot
-Allow: /
-
-User-agent: Slackbot
-Allow: /
-
-# Default Rule
 User-agent: *
 Allow: /
 Disallow: /sw.js
 Disallow: /workbox-*.js
-Disallow: /*.json$
+Disallow: /*.json
 
-# Sitemap & LLMs.txt
 Sitemap: https://app.haotool.org/park-keeper/sitemap.xml
