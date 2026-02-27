@@ -18,6 +18,7 @@
  * @see notificationTokens — design-tokens.ts
  * @see notificationAnimations — animations.ts
  */
+import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'motion/react';
@@ -144,13 +145,17 @@ function UpdatePromptClient() {
   const shouldRender =
     offlineReady || needRefresh || isUpdating || updateFailed || registrationFailed;
   const isUrgent = needRefresh || updateFailed || isUpdating || registrationFailed;
+  const mobilePositionStyle = {
+    '--notification-mobile-top-offset': notificationTokens.mobileTopOffset,
+  } as CSSProperties;
 
   return (
     <AnimatePresence>
       {shouldRender && (
         <motion.div
           key="update-prompt"
-          className={notificationTokens.position}
+          className={`${notificationTokens.position} pointer-events-none`}
+          style={mobilePositionStyle}
           role={isUrgent ? 'alert' : 'status'}
           aria-live={isUrgent ? 'assertive' : 'polite'}
           aria-labelledby="update-prompt-title"
@@ -169,7 +174,7 @@ function UpdatePromptClient() {
         >
           <div
             className={`
-              relative overflow-hidden ${notificationTokens.borderRadius}
+              relative overflow-hidden pointer-events-none ${notificationTokens.borderRadius}
               bg-gradient-to-r from-brand-from via-brand-via to-brand-to
               border border-brand-border/60
               ${notificationTokens.shadow}
@@ -385,6 +390,7 @@ interface ActionButtonsProps {
 }
 
 const CTA_CLASS = `
+  pointer-events-auto
   px-3 py-1.5 rounded-full text-xs font-medium
   bg-gradient-to-r from-brand-button-from to-brand-button-to
   text-white shadow-sm
@@ -444,6 +450,7 @@ function ActionButtons({
     <button
       onClick={onClose}
       className="
+        pointer-events-auto
         p-1.5 rounded-full
         bg-brand-icon-from/80 text-brand-text
         hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05]

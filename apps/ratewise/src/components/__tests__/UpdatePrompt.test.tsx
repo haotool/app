@@ -22,6 +22,13 @@ async function readSource() {
   return fs.readFile(componentPath, 'utf-8');
 }
 
+async function readDesignTokensSource() {
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+  const tokensPath = path.resolve(__dirname, '../../config/design-tokens.ts');
+  return fs.readFile(tokensPath, 'utf-8');
+}
+
 describe('UpdatePrompt - setInterval 洩漏防護', () => {
   it('should store interval ID for cleanup (no memory leak)', async () => {
     const sourceCode = await readSource();
@@ -54,8 +61,18 @@ describe('UpdatePrompt - SSOT tokens 引用', () => {
   it('should use notificationTokens for layout', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('notificationTokens.position');
+    expect(sourceCode).toContain('notificationTokens.mobileTopOffset');
     expect(sourceCode).toContain('notificationTokens.padding');
     expect(sourceCode).toContain('notificationTokens.borderRadius');
+  });
+
+  it('should use mobile top offset CSS variable to avoid blocking primary actions', async () => {
+    const [sourceCode, designTokensSource] = await Promise.all([
+      readSource(),
+      readDesignTokensSource(),
+    ]);
+    expect(sourceCode).toContain('--notification-mobile-top-offset');
+    expect(designTokensSource).toContain('top-[var(--notification-mobile-top-offset)]');
   });
 });
 
@@ -212,5 +229,17 @@ describe('UpdatePrompt - offlineReady 自動消失', () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('autoDismissRef');
     expect(sourceCode).toContain('notificationTokens.timing.autoDismiss');
+  });
+});
+
+describe('UpdatePrompt - mobile interaction safety', () => {
+  it('should make outer prompt container transparent to pointer events', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('pointer-events-none');
+  });
+
+  it('should keep the card itself interactive for buttons and links', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('pointer-events-auto');
   });
 });

@@ -44,7 +44,7 @@ export function SupportContactLinks({
 
   return (
     <section
-      className={`rounded-2xl border p-4 text-left backdrop-blur-sm ${styles.container} ${className}`.trim()}
+      className={`pointer-events-none rounded-2xl border p-4 text-left backdrop-blur-sm ${styles.container} ${className}`.trim()}
       aria-label="Support contact links"
     >
       {title ? <p className={`text-sm font-semibold ${styles.title}`}>{title}</p> : null}
@@ -61,7 +61,7 @@ export function SupportContactLinks({
               key={link.id}
               href={link.href}
               {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-              className={`group flex items-center justify-between gap-3 rounded-xl border px-3 py-2 transition-colors duration-200 ${styles.item}`}
+              className={`pointer-events-auto group flex items-center justify-between gap-3 rounded-xl border px-3 py-2 transition-colors duration-200 ${styles.item}`}
               aria-label={link.label}
             >
               <span className="flex min-w-0 items-center gap-2">

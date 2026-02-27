@@ -19,4 +19,12 @@ describe('SupportContactLinks', () => {
     expect(emailLink).toHaveAttribute('href', `mailto:${APP_INFO.email}`);
     expect(emailLink).toHaveTextContent(APP_INFO.email);
   });
+
+  it('keeps the container non-blocking while preserving clickable contact links', () => {
+    const { container } = render(<SupportContactLinks />);
+
+    expect(container.firstChild).toHaveClass('pointer-events-none');
+    expect(screen.getByRole('link', { name: /threads/i })).toHaveClass('pointer-events-auto');
+    expect(screen.getByRole('link', { name: /email/i })).toHaveClass('pointer-events-auto');
+  });
 });

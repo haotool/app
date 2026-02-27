@@ -1205,8 +1205,12 @@ export const buttonTokens = {
 export const notificationTokens = {
   /** 固定定位 + 容器尺寸（視窗底部中央） - UpdatePrompt 專用
    * 注意：不使用 -translate-x-1/2，改用 Motion 的 x: '-50%' 避免 transform 衝突
+   * [fix:2026-02-27] 行動版改放在 header 下方，避免 snackbar 阻擋底部導覽與主要 CTA
    */
-  position: 'fixed bottom-4 left-1/2 w-[calc(100vw-2rem)] max-w-[344px] z-50',
+  position:
+    'fixed top-[var(--notification-mobile-top-offset)] md:top-auto md:bottom-4 left-1/2 w-[calc(100vw-2rem)] max-w-[344px] z-50',
+  /** 行動版頂部偏移量：header 高度 + safe area + 16px 間距 */
+  mobileTopOffset: `calc(${navigationTokens.header.height}px + env(safe-area-inset-top, 0px) + 16px)`,
   /** 固定定位 + 容器尺寸（視窗頂部中央） - OfflineIndicator 專用
    * 注意：不使用 -translate-x-1/2，改用 Motion 的 x: '-50%' 避免 transform 衝突
    */

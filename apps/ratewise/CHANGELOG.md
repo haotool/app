@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.4.7
+
+### Patch Changes
+
+- fix mobile update prompt so it no longer blocks primary actions during PWA recovery states.
+
 ## 2.4.6
 
 ### Patch Changes
