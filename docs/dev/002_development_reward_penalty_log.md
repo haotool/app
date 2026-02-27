@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-02-27T23:20:00+08:00
-> **當前總分**: 1073 (初始分: 100) [+5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強]
+> **最後更新**: 2026-02-27T23:23:00+08:00
+> **當前總分**: 1074 (初始分: 100) [+1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強]
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -20,6 +20,11 @@
 ---
 
 ## 補充紀錄（2026-02-27）
+
+- ✅ 成功｜修復 prerender.test.ts（Organization schema regex 改為匹配 `@context` 前綴區分 top-level）與 hreflang.test.ts（恢復 42 筆 xhtml:link 斷言，對齊 vite-ssg-sitemap 實際產出）
+- 分數｜`+1`
+
+---
 
 - ✅ 成功｜`AGENTS.md`、`CLAUDE.md` 升級為企業 SOP / 稽核友善格式（文件控制、控制矩陣、證據清單、例外流程、修訂紀錄）
 - ✅ 成功｜上網查詢文件寫作與 SOP 格式最佳實踐，並保留 `.example/config` 的簡潔章節風格

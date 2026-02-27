@@ -76,8 +76,8 @@ describe('Hreflang Configuration (BDD)', () => {
       // vite-ssg-sitemap doesn't generate xhtml:link by default
       const xlinkMatches = sitemapContent.match(/<xhtml:link/g);
       if (xlinkMatches) {
-        // 17 條 SEO URL * 2 語言 = 34（app-only 與 legal 頁面不含 hreflang）
-        expect(xlinkMatches.length).toBe(34);
+        // 21 條預渲染 URL * 2 語言 = 42（vite-ssg-sitemap 含所有預渲染路由）
+        expect(xlinkMatches.length).toBe(42);
       } else {
         // 沒有 xhtml:link 也是可接受的（hreflang 由 HTML meta tags 提供）
         console.log('ℹ️ sitemap.xml 不包含 xhtml:link（由 HTML meta tags 提供）');

@@ -325,8 +325,10 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
-      // Count top-level Organization schemas (not nested ones in ImageObject)
-      const orgMatches = content.match(/"@type":"Organization","name":"RateWise"/g);
+      // Count top-level Organization schemas (not nested ones in ImageObject creator/copyrightHolder)
+      const orgMatches = content.match(
+        /"@context":"https:\/\/schema\.org","@type":"Organization"/g,
+      );
       expect(orgMatches).toBeTruthy();
       expect(orgMatches?.length).toBe(1);
     });
