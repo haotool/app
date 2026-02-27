@@ -533,3 +533,45 @@ describe('💰 Exchange Rate Knowledge Coverage', () => {
     expect(faqContent).toContain("'@type': 'FinancialService'");
   });
 });
+
+describe('📡 Static API Endpoint (api/latest.json)', () => {
+  const apiPath = resolve(__dirname, '../public/api/latest.json');
+
+  it('should exist and be valid JSON', () => {
+    const content = readFile(apiPath);
+    expect(() => JSON.parse(content)).not.toThrow();
+  });
+
+  it('should have version matching package.json', () => {
+    const content = JSON.parse(readFile(apiPath));
+    const pkg = JSON.parse(readFile(resolve(__dirname, '../package.json')));
+    expect(content.version).toBe(pkg.version);
+  });
+
+  it('should declare data source and update frequency', () => {
+    const content = JSON.parse(readFile(apiPath));
+    expect(content.source).toContain('臺灣銀行');
+    expect(content.sourceUrl).toContain('rate.bot.com.tw');
+    expect(content.updateFrequency).toBe('every 5 minutes');
+  });
+
+  it('should have latest and history endpoints', () => {
+    const content = JSON.parse(readFile(apiPath));
+    expect(content.endpoints.latest).toContain('latest.json');
+    expect(content.endpoints.history).toContain('{YYYY-MM-DD}');
+  });
+
+  it('should list supported currencies including TWD', () => {
+    const content = JSON.parse(readFile(apiPath));
+    expect(content.baseCurrency).toBe('TWD');
+    expect(content.supportedCurrencies).toContain('TWD');
+    expect(content.supportedCurrencies).toContain('USD');
+    expect(content.supportedCurrencies).toContain('JPY');
+    expect(content.supportedCurrencies.length).toBeGreaterThanOrEqual(14);
+  });
+
+  it('should have deep link template', () => {
+    const content = JSON.parse(readFile(apiPath));
+    expect(content.deepLink).toContain('?amount={AMOUNT}&from={FROM}&to={TO}');
+  });
+});

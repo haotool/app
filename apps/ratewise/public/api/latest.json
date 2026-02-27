@@ -1,0 +1,37 @@
+{
+  "name": "RateWise Exchange Rate API",
+  "version": "2.4.7",
+  "description": "臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步",
+  "source": "臺灣銀行牌告匯率",
+  "sourceUrl": "https://rate.bot.com.tw/xrt",
+  "updateFrequency": "every 5 minutes",
+  "generatedAt": "2026-02-27T18:48:31.254Z",
+  "baseCurrency": "TWD",
+  "rateTypes": ["cash_buy", "cash_sell", "spot_buy", "spot_sell"],
+  "supportedCurrencies": [
+    "TWD",
+    "AUD",
+    "CAD",
+    "CHF",
+    "CNY",
+    "EUR",
+    "GBP",
+    "HKD",
+    "JPY",
+    "KRW",
+    "NZD",
+    "SGD",
+    "THB",
+    "USD"
+  ],
+  "endpoints": {
+    "latest": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
+    "history": "https://raw.githubusercontent.com/haotool/app/data/public/rates/history/{YYYY-MM-DD}.json"
+  },
+  "documentation": "https://app.haotool.org/ratewise/llms.txt",
+  "webapp": "https://app.haotool.org/ratewise/",
+  "deepLink": "https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}",
+  "disclaimer": "匯率僅供參考，實際交易請以金融機構公告為準。",
+  "license": "GPL-3.0",
+  "contact": "haotool.org@gmail.com"
+}

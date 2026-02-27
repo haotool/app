@@ -27,6 +27,12 @@ describe('llms.txt structure', () => {
     expect(content).toMatch(/https:\/\/app\.haotool\.org\/ratewise\/.*\//);
   });
 
+  it('includes API Endpoints section with latest.json reference', () => {
+    const content = readFileSync(llmsPath, 'utf-8');
+    expect(content).toContain('## API Endpoints');
+    expect(content).toContain('api/latest.json');
+  });
+
   it('lists all 13 currency pages in Popular Rates', () => {
     const content = readFileSync(llmsPath, 'utf-8');
     const currencies = [
