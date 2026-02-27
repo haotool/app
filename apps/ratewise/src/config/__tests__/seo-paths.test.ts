@@ -64,8 +64,8 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO 與路由白名單', () => {
-    it('SEO_PATHS 應只包含 17 個公開可索引路徑', () => {
-      expect(SEO_PATHS).toHaveLength(17);
+    it('SEO_PATHS 應只包含 21 個公開可索引路徑', () => {
+      expect(SEO_PATHS).toHaveLength(21);
       expect(SEO_PATHS).toContain('/');
       expect(SEO_PATHS).toContain('/faq/');
       expect(SEO_PATHS).toContain('/about/');
@@ -78,7 +78,7 @@ describe('SEO Paths Configuration', () => {
     });
 
     it('PRERENDER_PATHS 應包含公開 SEO 路徑、privacy 與 app-only noindex 頁面', () => {
-      expect(PRERENDER_PATHS).toHaveLength(25);
+      expect(PRERENDER_PATHS).toHaveLength(29);
       expect(PRERENDER_PATHS).toEqual([
         ...SEO_PATHS,
         ...LEGAL_SSG_PATHS,

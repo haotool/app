@@ -189,9 +189,9 @@ export function CurrencyLandingPage({
                       to={`/?amount=${entry.amount}&from=${currencyCode}&to=TWD`}
                       className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface hover:bg-primary/10 transition-colors group"
                     >
-                      <span className="text-sm font-medium text-text group-hover:text-primary transition-colors">
+                      <h3 className="text-sm font-medium text-text group-hover:text-primary transition-colors">
                         {entry.question}
-                      </span>
+                      </h3>
                       <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-text-muted group-hover:text-primary transition-colors flex-shrink-0" />
                     </Link>
                   ))}
@@ -276,7 +276,7 @@ export function CurrencyLandingPage({
           {/* Data Source Notice */}
           <footer className="text-center text-text-muted text-xs opacity-60">
             <p>資料來源：臺灣銀行牌告匯率 · 每 5 分鐘自動更新</p>
-            <p className="mt-1">© 2025 RateWise 匯率好工具</p>
+            <p className="mt-1">© 2026 RateWise 匯率好工具</p>
           </footer>
         </div>
       </div>

@@ -98,9 +98,9 @@ const ASSET_VERSION = `v=${BUILD_TIME.replace(/[-T:Z.]/g, '').slice(0, 8) || 'de
 export const DEFAULT_LOCALE = 'zh-TW' as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
 export const DEFAULT_TITLE =
-  'RateWise 匯率好工具 - 即時匯率轉換器 | 支援 TWD、USD、JPY、EUR 等多幣別換算';
+  'RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價';
 export const DEFAULT_DESCRIPTION =
-  'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR 等 30+ 種貨幣。內建計算機快速輸入、收藏管理、拖曳排序、換算歷史、歷史趨勢圖、多幣別同時比較，現金與即期匯率自由切換。6 種主題風格、3 語言支援（繁中／英／日），離線可用 PWA，是出國旅遊與外幣兌換的最佳工具。';
+  'RateWise 顯示臺灣銀行牌告的實際買入賣出價，而非中間價——讓你換匯前就知道真正要付多少台幣。支援 30+ 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏拖曳排序、7~30 天趨勢圖，每 5 分鐘同步，離線可用 PWA。台灣出國旅遊與外幣兌換的最佳選擇。';
 export const DEFAULT_KEYWORDS = [
   '匯率好工具',
   'RateWise',
@@ -122,8 +122,16 @@ export const DEFAULT_KEYWORDS = [
   '匯率轉換器',
   '貨幣換算',
   '台幣換算',
+  '台銀匯率',
+  '現金匯率',
+  '即期匯率',
+  '賣出匯率',
+  '買入匯率',
+  '換匯計算',
+  '旅遊換匯',
   'exchange rate',
   'currency converter',
+  'Taiwan bank exchange rate',
 ] as const;
 
 export const SITE_SEO = {
@@ -140,7 +148,9 @@ export const SITE_SEO = {
     category: 'FinanceApplication',
     browserRequirements: 'Requires JavaScript',
     featureList: [
-      '即時匯率查詢（臺灣銀行牌告）',
+      '顯示實際買賣價（非中間價）——換匯金額更精準',
+      '即時匯率查詢（臺灣銀行牌告匯率）',
+      '現金與即期匯率切換（適合不同換匯情境）',
       '單幣別精準換算',
       '多幣別同時比較',
       '計算機鍵盤快速輸入',
@@ -149,7 +159,6 @@ export const SITE_SEO = {
       '拖曳排序自訂幣別順序',
       '換算歷史記錄',
       '7~30 天歷史匯率趨勢圖',
-      '現金與即期匯率切換',
       '6 種主題風格',
       '3 語言支援（繁中／英／日）',
       '下拉更新即時同步',
@@ -324,14 +333,14 @@ export const HOMEPAGE_SEO = {
   howTo: HOMEPAGE_HOW_TO,
   jsonLd: [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`)],
   content: {
-    eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步',
+    eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步 · 顯示實際買賣價',
     heading: 'RateWise 即時匯率換算',
     intro:
-      '提供台幣、美元、日圓、歐元、港幣、人民幣等主要貨幣的即時換算與歷史趨勢，內建計算機、收藏管理、拖曳排序與換算歷史，適合出國旅遊、海外付款與跨境報價。',
+      '顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援台幣、美元、日圓、韓元、歐元等 30+ 種貨幣，每 5 分鐘自動同步，適合出國旅遊、海外付款與跨境報價前快速比價。',
     highlights: [
-      '100% 參考臺灣銀行牌告匯率，支援現金與即期買入賣出價，每 5 分鐘自動同步。',
-      '支援 30+ 種主要貨幣，提供計算機快速輸入、收藏管理與拖曳排序。',
-      '6 種主題風格、3 語言介面（繁中／英／日），PWA 可離線使用。',
+      '顯示實際買賣價：臺灣銀行牌告匯率的現金與即期買入賣出四種報價，不是中間價——換匯金額更精準。',
+      '支援 30+ 種主要貨幣，提供計算機快速輸入、收藏管理、拖曳排序與換算歷史。',
+      '6 種主題風格、3 語言介面（繁中／英／日），PWA 可離線使用，重新連線自動同步。',
     ],
     quickLinks: [
       { href: '/usd-twd/', label: 'USD/TWD 匯率' },
@@ -712,6 +721,43 @@ const CURRENCY_PAGE_OVERRIDES = {
     popularAmounts: [1, 10, 50, 100, 500, 1000],
     travelTip: '瑞士消費水準高，刷卡普遍，建議備少量法郎現金。',
     searchQueries: ['100 瑞士法郎等於多少台幣', '瑞郎匯率', '瑞士法郎換台幣'],
+  },
+  VND: {
+    displayName: '越南盾',
+    region: '越南旅遊換匯',
+    question: '100000 VND 等於多少台幣？',
+    keyword: '越南盾換台幣',
+    popularAmounts: [10000, 50000, 100000, 500000, 1000000, 5000000],
+    travelTip:
+      '越南以現金為主，建議準備充足越南盾。信用卡在大城市飯店與餐廳可用，但市集與路邊攤需現金。',
+    searchQueries: ['100000 越南盾多少台幣', '越南盾匯率', '越南幣換台幣'],
+  },
+  PHP: {
+    displayName: '菲律賓披索',
+    region: '菲律賓旅遊換匯',
+    question: '1000 PHP 等於多少台幣？',
+    keyword: '菲律賓披索換台幣',
+    popularAmounts: [100, 500, 1000, 5000, 10000, 50000],
+    travelTip: '菲律賓刷卡接受度視地區而異，宿霧與長灘島觀光區較普及，偏遠地區建議準備現金。',
+    searchQueries: ['1000 菲律賓披索等於多少台幣', '菲律賓披索匯率', '披索換台幣'],
+  },
+  IDR: {
+    displayName: '印尼盾',
+    region: '印尼旅遊換匯',
+    question: '100000 IDR 等於多少台幣？',
+    keyword: '印尼盾換台幣',
+    popularAmounts: [10000, 50000, 100000, 500000, 1000000, 5000000],
+    travelTip: '印尼（峇里島）以現金為主，建議在機場或市區換匯所兌換。注意面額較大的紙鈔較受歡迎。',
+    searchQueries: ['100000 印尼盾多少台幣', '印尼盾匯率', '印尼盾換台幣'],
+  },
+  MYR: {
+    displayName: '馬來幣',
+    region: '馬來西亞旅遊換匯',
+    question: '100 MYR 等於多少台幣？',
+    keyword: '馬來幣換台幣',
+    popularAmounts: [10, 50, 100, 500, 1000, 5000],
+    travelTip: '馬來西亞刷卡普及度中等，吉隆坡市區可刷卡，但夜市、熟食中心與小鎮建議準備現金。',
+    searchQueries: ['100 馬來幣等於多少台幣', '馬來幣匯率', '馬來西亞幣換台幣'],
   },
 } as const;
 

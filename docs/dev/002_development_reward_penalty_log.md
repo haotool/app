@@ -21,6 +21,11 @@
 
 ## 補充紀錄（2026-02-28）
 
+- ✅ 成功｜RateWise SEO 權威定位：品牌更新為「台灣最精準匯率換算器·顯示實際買賣價」，新增 VND/PHP/IDR/MYR 4 個幣對 SEO 頁，SSOT 同步 TS/MJS 21 路徑，sitemap 21 URL，llms.txt 17 幣對，api/latest.json 18 幣別，常見金額 h3 語意化，所有 1405 測試通過
+- 分數｜`+3`
+
+---
+
 - ✅ 成功｜Sitemap hreflang SSOT 同步修復：public/sitemap.xml 含 21 URL（42 hreflang）但 SEO_PATHS 僅 17 條，透過 generate-sitemap-2025.mjs 重新生成修復為 17 URL / 34 hreflang，CI SEO Audit 通過
 - 分數｜`+2`
 

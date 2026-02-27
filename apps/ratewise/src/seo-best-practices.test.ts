@@ -187,7 +187,7 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(sitemapContent).toContain('/ratewise/guide/</loc>');
     });
 
-    it('should have all 13 currency landing pages', () => {
+    it('should have all 17 currency landing pages', () => {
       const currencies = [
         'usd',
         'jpy',
@@ -202,6 +202,10 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
         'nzd',
         'sgd',
         'thb',
+        'vnd',
+        'php',
+        'idr',
+        'myr',
       ];
       for (const currency of currencies) {
         expect(sitemapContent).toContain(`/${currency}-twd/</loc>`);

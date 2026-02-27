@@ -12,7 +12,7 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
   it('includes required headings and answer capsule', () => {
     const content = readFileSync(llmsPath, 'utf-8');
     expect(content.startsWith('# RateWise 匯率好工具')).toBe(true);
-    expect(content).toContain('> 台灣用戶取向的即時匯率換算工具');
+    expect(content).toContain('台灣最精準的匯率換算器');
     expect(content).toContain('Answer Capsule (Quick Q&A)');
   });
 
@@ -36,7 +36,7 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
     expect(content).toContain('api/latest.json');
   });
 
-  it('lists all 13 currency pages in Popular Rates', () => {
+  it('lists all 17 currency pages in Popular Rates', () => {
     const content = readFileSync(llmsPath, 'utf-8');
     const currencies = [
       'usd-twd',
@@ -52,6 +52,10 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
       'nzd-twd',
       'sgd-twd',
       'thb-twd',
+      'vnd-twd',
+      'php-twd',
+      'idr-twd',
+      'myr-twd',
     ];
 
     for (const currency of currencies) {
@@ -60,6 +64,6 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
 
     const currencyUrlPattern = /https:\/\/app\.haotool\.org\/ratewise\/[a-z]{3}-twd\//g;
     const matches = content.match(currencyUrlPattern);
-    expect(matches).toHaveLength(13);
+    expect(matches).toHaveLength(17);
   });
 });

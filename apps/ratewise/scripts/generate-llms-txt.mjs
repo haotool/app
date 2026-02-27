@@ -32,6 +32,10 @@ const CURRENCY_DISPLAY = {
   thb: { code: 'THB', name: '泰銖', desc: '泰國旅遊換匯' },
   nzd: { code: 'NZD', name: '紐元', desc: '紐西蘭旅遊與留學' },
   chf: { code: 'CHF', name: '瑞士法郎', desc: '瑞士旅遊與跨境付款' },
+  vnd: { code: 'VND', name: '越南盾', desc: '越南旅遊換匯' },
+  php: { code: 'PHP', name: '菲律賓披索', desc: '菲律賓旅遊換匯' },
+  idr: { code: 'IDR', name: '印尼盾', desc: '印尼旅遊換匯' },
+  myr: { code: 'MYR', name: '馬來幣', desc: '馬來西亞旅遊換匯' },
 };
 
 function buildPopularRates() {
@@ -59,15 +63,16 @@ const FEATURES = [
   '6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林）',
 ];
 
-const content = `# RateWise 匯率好工具
+const content = `# RateWise 匯率好工具 — 台灣最精準的匯率換算器
 
-> 台灣用戶取向的即時匯率換算工具，資料 100% 來源於臺灣銀行牌告匯率，支援 30+ 種貨幣、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、3 語言介面與 PWA 離線使用。
+> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 30+ 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、3 語言介面與 PWA 離線使用。
 
 Version: v${VERSION} (${BUILD_DATE})
 
 ## Answer Capsule (Quick Q&A)
 
-- Q: RateWise 提供什麼？ A: 即時匯率換算（單幣別/多幣別），內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、6 種主題風格、3 語言介面與 PWA 離線使用。
+- Q: RateWise 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、6 種主題風格、3 語言介面與 PWA 離線使用。
+- Q: 為什麼 RateWise 比其他匯率工具更精準？ A: 多數匯率工具只顯示中間價（mid-rate），而 RateWise 顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），直接對應你在銀行換匯的真實金額。
 - Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金買入/賣出、即期買入/賣出四種報價）。
 - Q: 更新頻率？ A: 每 5 分鐘自動同步。
 - Q: 建議用途？ A: 出國旅遊換匯、跨境購物匯率比較、日常外幣查詢。
@@ -119,7 +124,7 @@ ${buildPopularRates()}
 
 ## Data Source
 
-- Source: 臺灣銀行牌告匯率
+- Source: 100% 來源於臺灣銀行牌告匯率（Bank of Taiwan）
 - Source URL: https://rate.bot.com.tw/xrt
 - Update: 每 5 分鐘自動同步（GitHub Actions）
 - Rate Types: 現金買入、現金賣出、即期買入、即期賣出
