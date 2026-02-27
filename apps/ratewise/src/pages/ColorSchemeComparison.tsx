@@ -3,6 +3,8 @@
  * 用於展示和比較不同的通知視窗配色方案
  */
 
+import { Head } from 'vite-react-ssg';
+
 export default function ColorSchemeComparison() {
   const notificationVariants = [
     {
@@ -219,8 +221,10 @@ export default function ColorSchemeComparison() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-8">
+      <Head>
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
       <div className="max-w-7xl mx-auto">
-        {/* 頁面標題 */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-3">
             通知視窗配色方案比較

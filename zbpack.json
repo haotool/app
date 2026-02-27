@@ -1,0 +1,5 @@
+{
+  "build_type": "dockerfile",
+  "dockerfile": "Dockerfile",
+  "cache_dependencies": false
+}

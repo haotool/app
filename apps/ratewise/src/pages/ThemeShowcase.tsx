@@ -15,6 +15,7 @@
 
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, Palette, Box, Type } from 'lucide-react';
+import { Head } from 'vite-react-ssg';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_OPTIONS } from '../config/themes';
 
@@ -23,6 +24,9 @@ export default function ThemeShowcase() {
 
   return (
     <div className="min-h-full">
+      <Head>
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
       <div className="px-5 py-6 max-w-2xl mx-auto">
         {/* 返回按鈕 */}
         <Link

@@ -10,6 +10,7 @@
 
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Head } from 'vite-react-ssg';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
@@ -160,7 +161,9 @@ export default function UIShowcase() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
-      {/* Update Prompt - 真實固定定位（底部） */}
+      <Head>
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
       <UpdatePromptPreview
         state={updatePromptState}
         onClose={() => setUpdatePromptState(null)}

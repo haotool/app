@@ -30,6 +30,7 @@ const __dirname = dirname(__filename);
 import {
   SEO_PATHS,
   SITE_CONFIG,
+  SHARE_IMAGE,
   IMAGE_RESOURCES,
   normalizeSiteUrl,
 } from '../apps/ratewise/seo-paths.config.mjs';
@@ -77,10 +78,12 @@ const PATH_TO_SOURCE = {
  * 頁面圖片映射
  * 定義每個頁面包含哪些圖片資源
  */
+const OG_IMAGE_URL = `${SITE_URL}${SHARE_IMAGE.replace(/^\//, '')}`;
+
 const PAGE_IMAGES = {
   '/': [
     {
-      loc: `${SITE_URL}og-image.png`,
+      loc: OG_IMAGE_URL,
       caption: 'RateWise - 即時匯率轉換器 Open Graph 圖片',
     },
     {
@@ -88,22 +91,21 @@ const PAGE_IMAGES = {
       caption: 'RateWise Logo',
     },
   ],
-  // 其他核心頁面使用相同圖片
   '/faq/': [
     {
-      loc: `${SITE_URL}og-image.png`,
+      loc: OG_IMAGE_URL,
       caption: 'RateWise FAQ - 常見問題',
     },
   ],
   '/about/': [
     {
-      loc: `${SITE_URL}og-image.png`,
+      loc: OG_IMAGE_URL,
       caption: 'RateWise About - 關於我們',
     },
   ],
   '/guide/': [
     {
-      loc: `${SITE_URL}og-image.png`,
+      loc: OG_IMAGE_URL,
       caption: 'RateWise Guide - 使用指南',
     },
   ],

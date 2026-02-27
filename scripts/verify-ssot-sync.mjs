@@ -132,6 +132,20 @@ function comparePaths(tsPaths, mjsPaths) {
   return errors;
 }
 
+/**
+ * 驗證單一路徑群組的 TS/MJS 一致性
+ */
+function verifyGroup(groupName, tsContent, mjsContent, asSuffix) {
+  const tsPaths = extractNamedArray(tsContent, groupName, asSuffix);
+  const mjsPaths = extractNamedArray(mjsContent, groupName);
+  if (tsPaths.length === 0 && mjsPaths.length === 0) return [];
+  const errors = comparePaths(tsPaths, mjsPaths).map((e) => `[${groupName}] ${e}`);
+  if (errors.length === 0) {
+    log(colors.green, '✓', `${groupName}: ${tsPaths.length} 路徑一致`);
+  }
+  return errors;
+}
+
 async function main() {
   console.log('\n🔍 SSOT 同步驗證');
   console.log('─'.repeat(50));
@@ -142,39 +156,45 @@ async function main() {
   let hasErrors = false;
 
   try {
-    // 1. 提取路徑
     console.log('\n📂 讀取配置文件:');
     log(colors.cyan, '→', 'TypeScript: src/config/seo-paths.ts');
     const tsPaths = extractPathsFromTS(tsPath);
-    log(colors.green, '✓', `提取 ${tsPaths.length} 個路徑`);
+    log(colors.green, '✓', `提取 ${tsPaths.length} 個 SEO 路徑`);
 
     log(colors.cyan, '→', 'JavaScript: seo-paths.config.mjs');
     const mjsPaths = await extractPathsFromMJS(mjsPath);
-    log(colors.green, '✓', `提取 ${mjsPaths.length} 個路徑`);
+    log(colors.green, '✓', `提取 ${mjsPaths.length} 個 SEO 路徑`);
 
-    // 2. 比較路徑
-    console.log('\n🔄 比較路徑配置:');
-    const errors = comparePaths(tsPaths, mjsPaths);
+    console.log('\n🔄 比較 SEO_PATHS:');
+    const seoErrors = comparePaths(tsPaths, mjsPaths);
 
-    if (errors.length === 0) {
-      log(colors.green, '✅', 'SSOT 完全同步！');
-      console.log(`\n   TypeScript 路徑: ${tsPaths.length}`);
-      console.log(`   JavaScript 路徑: ${mjsPaths.length}`);
-      console.log(`   一致性檢查: 通過`);
+    if (seoErrors.length === 0) {
+      log(colors.green, '✅', 'SEO_PATHS 完全同步！');
+      console.log(`   TypeScript: ${tsPaths.length} | JavaScript: ${mjsPaths.length}`);
     } else {
-      log(colors.red, '❌', 'SSOT 不同步，發現以下問題:');
-      errors.forEach((error) => {
-        log(colors.red, '  ✗', error);
-      });
+      log(colors.red, '❌', 'SEO_PATHS 不同步:');
+      seoErrors.forEach((e) => log(colors.red, '  ✗', e));
       hasErrors = true;
     }
 
-    // 3. 顯示路徑列表（僅在錯誤時）
+    console.log('\n🔄 比較其他路徑群組:');
+    const tsContent = readFileSync(tsPath, 'utf-8');
+    const mjsContent = readFileSync(mjsPath, 'utf-8');
+
+    const groups = ['CONTENT_SEO_PATHS', 'CURRENCY_SEO_PATHS', 'APP_ONLY_PATHS', 'LEGAL_SSG_PATHS'];
+    for (const group of groups) {
+      const groupErrors = verifyGroup(group, tsContent, mjsContent, ' as const');
+      if (groupErrors.length > 0) {
+        groupErrors.forEach((e) => log(colors.red, '  ✗', e));
+        hasErrors = true;
+      }
+    }
+
     if (hasErrors) {
       console.log('\n📋 詳細路徑列表:');
-      console.log('\nTypeScript SSOT:');
+      console.log('\nTypeScript SEO_PATHS:');
       tsPaths.forEach((p, i) => console.log(`  ${i + 1}. ${p}`));
-      console.log('\nJavaScript SSOT:');
+      console.log('\nJavaScript SEO_PATHS:');
       mjsPaths.forEach((p, i) => console.log(`  ${i + 1}. ${p}`));
     }
   } catch (error) {
@@ -187,7 +207,7 @@ async function main() {
   if (hasErrors) {
     console.log('\n💡 修復建議:');
     console.log('  1. 檢查 src/config/seo-paths.ts 和 seo-paths.config.mjs');
-    console.log('  2. 確保兩個文件的 SEO_PATHS 數組完全一致');
+    console.log('  2. 確保所有路徑群組完全一致（SEO_PATHS, APP_ONLY_PATHS 等）');
     console.log('  3. 路徑必須按照相同順序排列');
     console.log('  4. 路徑格式必須一致（包括尾斜線）\n');
     process.exit(1);
