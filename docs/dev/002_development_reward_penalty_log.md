@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-02-28T07:36:00+08:00
-> **當前總分**: 1077 (初始分: 100) [+3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強]
+> **最後更新**: 2026-02-28T07:55:00+08:00
+> **當前總分**: 1079 (初始分: 100) [+2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強]
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -20,6 +20,11 @@
 ---
 
 ## 補充紀錄（2026-02-28）
+
+- ✅ 成功｜Sitemap hreflang SSOT 同步修復：public/sitemap.xml 含 21 URL（42 hreflang）但 SEO_PATHS 僅 17 條，透過 generate-sitemap-2025.mjs 重新生成修復為 17 URL / 34 hreflang，CI SEO Audit 通過
+- 分數｜`+2`
+
+---
 
 - ✅ 成功｜SEO 技術債清除：移除 HomeStructuredData.tsx dead code、修復 SEOHelmet 重複 ImageObject（7→6 schema blocks）、硬編碼 og:image:alt/twitter:image:alt 改用 OG_IMAGE_ALT SSOT、buildShareImageJsonLd URL 改用 APP_INFO.organizationUrl、新增 organizationUrl 到 APP_INFO SSOT
 - ✅ 成功｜更新 jsonld.test.ts 與 seo-best-practices.test.ts 移除 dead code 依賴，改為驗證 seo-metadata.ts SSOT
