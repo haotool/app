@@ -272,6 +272,21 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
     it('should have sameAs for social profiles', () => {
       expect(combinedContent).toContain('sameAs');
     });
+
+    it('should have FinancialService schema for currency pages', () => {
+      expect(seoMetadataContent).toContain("'@type': 'FinancialService'");
+      expect(seoMetadataContent).toContain("serviceType: 'CurrencyExchange'");
+    });
+
+    it('should have areaServed for financial service locality', () => {
+      expect(seoMetadataContent).toContain('areaServed');
+      expect(seoMetadataContent).toContain('Taiwan');
+    });
+
+    it('should have availableChannel with multilingual support', () => {
+      expect(seoMetadataContent).toContain('availableChannel');
+      expect(seoMetadataContent).toContain("'zh-TW', 'en', 'ja'");
+    });
   });
 
   describe('📝 Meta Tags - Open Graph & Twitter Cards', () => {
@@ -490,5 +505,31 @@ describe('📊 E-E-A-T Compliance', () => {
       expect(llmsContent).toContain('100%');
       expect(llmsContent).toContain('臺灣銀行');
     });
+  });
+});
+
+describe('💰 Exchange Rate Knowledge Coverage', () => {
+  const seoMetadataPath = resolve(SRC_PATH, 'config/seo-metadata.ts');
+  const faqContent = readFile(seoMetadataPath);
+
+  it('should cover cash vs spot rate difference', () => {
+    expect(faqContent).toContain('現金匯率為什麼比即期匯率差');
+  });
+
+  it('should cover DCC (Dynamic Currency Conversion)', () => {
+    expect(faqContent).toContain('DCC');
+    expect(faqContent).toContain('動態貨幣轉換');
+  });
+
+  it('should cover card rate calculation', () => {
+    expect(faqContent).toContain('刷卡匯率怎麼計算');
+  });
+
+  it('should cover which rate to use for different scenarios', () => {
+    expect(faqContent).toContain('我要換外幣應該看哪個匯率');
+  });
+
+  it('should have FinancialService JSON-LD for currency pages', () => {
+    expect(faqContent).toContain("'@type': 'FinancialService'");
   });
 });

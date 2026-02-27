@@ -83,6 +83,7 @@ export interface CurrencyLandingPageContent {
   faqTitle: string;
   commonAmounts: CommonAmountEntry[];
   travelTip: string;
+  jsonLd: JsonLdBlock[];
 }
 
 const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
@@ -446,12 +447,32 @@ export const FAQ_PAGE_ENTRIES = [
     answer:
       '在首頁向下拉動畫面超過一定距離，即可觸發匯率資料重新載入，同步臺灣銀行最新牌告匯率。此功能模擬原生 App 的「Pull to Refresh」操作體驗。',
   },
+  {
+    question: '什麼是 DCC（動態貨幣轉換）？為什麼要拒絕？',
+    answer:
+      'DCC（Dynamic Currency Conversion）是商家在刷卡時提供「以台幣結帳」的選項，看似方便但匯率通常比卡組織（Visa/Mastercard）的清算匯率差 3~5%，因此建議選擇「以當地貨幣結帳」，讓發卡行以較優的卡組織匯率計算。',
+  },
+  {
+    question: '我要換外幣應該看哪個匯率？',
+    answer:
+      '依您的換匯情境決定：臨櫃換鈔看「現金賣出」價格，外幣帳戶線上換匯看「即期賣出」價格。若您要把外幣換回台幣，則分別看「現金買入」或「即期買入」。RateWise 支援一鍵切換現金與即期匯率，幫助您快速比較。',
+  },
+  {
+    question: '刷卡匯率怎麼計算？',
+    answer:
+      '海外刷卡匯率包含三個部分：(1) 卡組織匯率（Visa/Mastercard 清算匯率），(2) 發卡銀行海外交易手續費（通常 1.5%），(3) 若選擇 DCC 還會額外被商家加匯差。因此刷卡匯率與臺灣銀行牌告匯率是不同體系，RateWise 目前提供的是台銀牌告匯率。',
+  },
+  {
+    question: '現金匯率為什麼比即期匯率差？',
+    answer:
+      '銀行持有實體外幣需要保管、運送、保險與偽鈔鑑定成本，這些成本反映在現金匯率的價差（買入與賣出價之間的差距）上。即期匯率是電子帳面轉帳，成本較低，因此通常比現金匯率更優。',
+  },
 ] as const satisfies readonly FAQEntry[];
 
 export const FAQ_PAGE_SEO = {
   title: '常見問題 - RateWise 匯率工具完整 FAQ 解答',
   description:
-    'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
+    'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
   pathname: '/faq',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -714,6 +735,34 @@ export function getCurrencyLandingPageContent(
     question: `${formatAmount(amount)} ${displayName}等於多少台幣？`,
   }));
 
+  const canonicalUrl = buildCanonicalUrl(pathname);
+
+  const financialServiceJsonLd: JsonLdBlock = {
+    '@context': 'https://schema.org',
+    '@type': 'FinancialService',
+    name: `${displayName}兌台幣匯率換算 — ${APP_INFO.name}`,
+    description: `即時${displayName}（${code}）兌新台幣（TWD）匯率換算服務，資料來源為臺灣銀行官方牌告匯率，支援現金與即期匯率切換。`,
+    url: canonicalUrl,
+    serviceType: 'CurrencyExchange',
+    provider: {
+      '@type': 'Organization',
+      name: APP_INFO.author,
+      url: APP_INFO.organizationUrl,
+    },
+    areaServed: { '@type': 'Country', name: 'Taiwan' },
+    availableChannel: {
+      '@type': 'ServiceChannel',
+      serviceUrl: canonicalUrl,
+      availableLanguage: ['zh-TW', 'en', 'ja'],
+    },
+    termsOfService: buildCanonicalUrl('/privacy'),
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'TWD',
+    },
+  };
+
   return {
     currencyCode: code,
     currencyFlag: definition.flag,
@@ -721,7 +770,7 @@ export function getCurrencyLandingPageContent(
     title: `${code} 對 TWD 匯率換算器 | 即時${displayName}台幣匯率`,
     description: `即時${displayName}兌台幣匯率換算，參考臺灣銀行官方牌告匯率，每 5 分鐘自動更新。${override.question}支援現金匯率與即期匯率切換、計算機快速輸入、多幣別同時換算與離線 PWA 使用。適合${override.region}前快速比價。`,
     pathname,
-    canonical: buildCanonicalUrl(pathname),
+    canonical: canonicalUrl,
     keywords: [
       `${code} TWD 匯率`,
       override.keyword,
@@ -730,6 +779,13 @@ export function getCurrencyLandingPageContent(
       ...override.searchQueries,
       '匯率換算',
       APP_INFO.name,
+    ],
+    jsonLd: [
+      financialServiceJsonLd,
+      buildShareImageJsonLd(
+        `${displayName}兌台幣匯率分享圖片`,
+        `${APP_INFO.name} ${code}/TWD 即時匯率換算與趨勢`,
+      ),
     ],
     faqEntries: [
       {

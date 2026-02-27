@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, HelpCircle, BookOpen, Sparkles, Calculator } from 'lucide-react';
 import { SEOHelmet } from './SEOHelmet';
 import { Breadcrumb } from './Breadcrumb';
-import type { FAQEntry, HowToStep, CommonAmountEntry } from '../config/seo-metadata';
+import type { FAQEntry, HowToStep, CommonAmountEntry, JsonLdBlock } from '../config/seo-metadata';
 
 export interface CurrencyLandingPageProps {
   currencyCode: string;
@@ -21,6 +21,7 @@ export interface CurrencyLandingPageProps {
   faqTitle?: string;
   commonAmounts?: CommonAmountEntry[];
   travelTip?: string;
+  jsonLd?: JsonLdBlock[];
 }
 
 export function CurrencyLandingPage({
@@ -38,6 +39,7 @@ export function CurrencyLandingPage({
   faqTitle = '常見問題',
   commonAmounts = [],
   travelTip,
+  jsonLd,
 }: CurrencyLandingPageProps) {
   const seoProps = {
     title,
@@ -45,6 +47,7 @@ export function CurrencyLandingPage({
     pathname,
     canonical,
     keywords,
+    jsonLd,
     breadcrumb: [
       { name: 'RateWise 首頁', item: '/' },
       { name: `${currencyCode} → TWD 匯率`, item: `${pathname}/` },
