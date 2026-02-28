@@ -40,9 +40,11 @@ export default defineConfig({
         'src/vite-env.d.ts',
         'src/vitest-dom.d.ts',
         'src/types.ts',
+        'src/routes.tsx', // SSG route declarations are configuration, not meaningful unit targets
         'src/pages/Home.tsx',
         'src/components/MiniMap.tsx',
         'src/components/QuickEntry.tsx',
+        'src/sw.ts', // Service worker runtime depends on Workbox + SW globals; validate via build/runtime tests
       ],
       thresholds: {
         statements: 80,
