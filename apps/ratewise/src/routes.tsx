@@ -162,7 +162,7 @@ export const routes: RouteRecord[] = [
   createLazyRoute('/privacy', () => import('./pages/Privacy'), 'src/pages/Privacy.tsx'),
   createLazyRoute('/guide', () => import('./pages/Guide'), 'src/pages/Guide.tsx'),
 
-  // 13 個幣別落地頁（SEO 預渲染）
+  // 17 個幣別落地頁（SEO 預渲染）
   createLazyRoute('/usd-twd', () => import('./pages/USDToTWD'), 'src/pages/USDToTWD.tsx'),
   createLazyRoute('/jpy-twd', () => import('./pages/JPYToTWD'), 'src/pages/JPYToTWD.tsx'),
   createLazyRoute('/eur-twd', () => import('./pages/EURToTWD'), 'src/pages/EURToTWD.tsx'),
@@ -176,6 +176,10 @@ export const routes: RouteRecord[] = [
   createLazyRoute('/thb-twd', () => import('./pages/THBToTWD'), 'src/pages/THBToTWD.tsx'),
   createLazyRoute('/nzd-twd', () => import('./pages/NZDToTWD'), 'src/pages/NZDToTWD.tsx'),
   createLazyRoute('/chf-twd', () => import('./pages/CHFToTWD'), 'src/pages/CHFToTWD.tsx'),
+  createLazyRoute('/vnd-twd', () => import('./pages/VNDToTWD'), 'src/pages/VNDToTWD.tsx'),
+  createLazyRoute('/php-twd', () => import('./pages/PHPToTWD'), 'src/pages/PHPToTWD.tsx'),
+  createLazyRoute('/idr-twd', () => import('./pages/IDRToTWD'), 'src/pages/IDRToTWD.tsx'),
+  createLazyRoute('/myr-twd', () => import('./pages/MYRToTWD'), 'src/pages/MYRToTWD.tsx'),
 
   // 不預渲染內部工具頁面
   createLazyRoute(

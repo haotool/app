@@ -72,6 +72,10 @@ const PATH_TO_SOURCE = {
   '/thb-twd/': 'apps/ratewise/src/pages/THBToTWD.tsx',
   '/nzd-twd/': 'apps/ratewise/src/pages/NZDToTWD.tsx',
   '/chf-twd/': 'apps/ratewise/src/pages/CHFToTWD.tsx',
+  '/vnd-twd/': 'apps/ratewise/src/pages/VNDToTWD.tsx',
+  '/php-twd/': 'apps/ratewise/src/pages/PHPToTWD.tsx',
+  '/idr-twd/': 'apps/ratewise/src/pages/IDRToTWD.tsx',
+  '/myr-twd/': 'apps/ratewise/src/pages/MYRToTWD.tsx',
 };
 
 /**

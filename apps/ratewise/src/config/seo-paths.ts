@@ -25,12 +25,16 @@ export const CURRENCY_SEO_PATHS = [
   '/eur-twd/',
   '/gbp-twd/',
   '/hkd-twd/',
+  '/idr-twd/',
   '/jpy-twd/',
   '/krw-twd/',
+  '/myr-twd/',
   '/nzd-twd/',
+  '/php-twd/',
   '/sgd-twd/',
   '/thb-twd/',
   '/usd-twd/',
+  '/vnd-twd/',
 ] as const;
 
 export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS] as const;
@@ -78,9 +82,9 @@ export const IMAGE_RESOURCES = [
 export const SITE_CONFIG = {
   url: normalizeSiteUrl('https://app.haotool.org/ratewise/'),
   name: 'RateWise - 匯率好工具',
-  title: 'RateWise - 即時匯率轉換器',
+  title: 'RateWise — 台灣最精準匯率換算器',
   description:
-    'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。',
+    'RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 30+ 種貨幣，讓你換匯前就知道真正要付多少台幣。',
 } as const satisfies Readonly<{
   url: string;
   name: string;

@@ -4,7 +4,7 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://app.haotool.org/ratewise/</loc>
-    <lastmod>2026-02-27T18:15:41Z</lastmod>
+    <lastmod>2026-02-27T19:58:49Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/" />
     <image:image>
@@ -84,6 +84,12 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/hkd-twd/" />
   </url>
   <url>
+    <loc>https://app.haotool.org/ratewise/idr-twd/</loc>
+    <lastmod>2026-02-27T20:00:14Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/idr-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/idr-twd/" />
+  </url>
+  <url>
     <loc>https://app.haotool.org/ratewise/jpy-twd/</loc>
     <lastmod>2026-02-27T18:15:41Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/jpy-twd/" />
@@ -96,10 +102,22 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/krw-twd/" />
   </url>
   <url>
+    <loc>https://app.haotool.org/ratewise/myr-twd/</loc>
+    <lastmod>2026-02-27T20:00:15Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/myr-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/myr-twd/" />
+  </url>
+  <url>
     <loc>https://app.haotool.org/ratewise/nzd-twd/</loc>
     <lastmod>2026-02-27T18:15:41Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/nzd-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/nzd-twd/" />
+  </url>
+  <url>
+    <loc>https://app.haotool.org/ratewise/php-twd/</loc>
+    <lastmod>2026-02-27T20:00:13Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/php-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/php-twd/" />
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/sgd-twd/</loc>
@@ -118,5 +136,11 @@
     <lastmod>2026-02-27T18:15:41Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/usd-twd/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/usd-twd/" />
+  </url>
+  <url>
+    <loc>https://app.haotool.org/ratewise/vnd-twd/</loc>
+    <lastmod>2026-02-27T20:00:12Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/vnd-twd/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/vnd-twd/" />
   </url>
 </urlset>
