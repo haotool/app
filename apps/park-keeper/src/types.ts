@@ -32,6 +32,7 @@ export interface ParkingRecord {
   hasPhoto: boolean;
   latitude?: number;
   longitude?: number;
+  parkedHeading?: number;
 }
 
 export interface AppSettings {

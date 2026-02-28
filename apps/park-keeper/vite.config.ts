@@ -142,47 +142,19 @@ export default defineConfig(({ mode }) => {
         base,
         registerType: 'autoUpdate',
         injectRegister: 'auto',
-        workbox: {
-          globPatterns: ['**/*.{js,css,html,json,ico,png,svg,woff,woff2,avif,webp}'],
+        strategies: 'injectManifest',
+        srcDir: 'src',
+        filename: 'sw.ts',
+        injectManifest: {
+          globPatterns: [
+            '**/*.js',
+            '**/*.css',
+            '**/*.html',
+            '**/*.json',
+            '**/*.svg',
+            '**/*.webmanifest',
+          ],
           globIgnores: ['**/node_modules/**'],
-          ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
-          clientsClaim: true,
-          skipWaiting: true,
-          cleanupOutdatedCaches: true,
-          navigationPreload: false,
-          navigateFallback: 'index.html',
-          navigateFallbackDenylist: [
-            /^\/api/,
-            /\.(?:png|jpg|jpeg|gif|svg|ico|webp|avif)$/,
-            /\.(?:js|css|json|woff|woff2)$/,
-          ],
-          runtimeCaching: [
-            {
-              urlPattern: /\.html$/,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'html-cache',
-                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 },
-                networkTimeoutSeconds: 5,
-              },
-            },
-            {
-              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif|ico)$/,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'image-cache',
-                expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              },
-            },
-            {
-              urlPattern: /\.(?:woff|woff2|ttf|otf|eot)$/,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'font-cache',
-                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              },
-            },
-          ],
         },
         manifest: {
           id: manifestScope,

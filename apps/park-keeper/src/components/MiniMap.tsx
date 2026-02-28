@@ -23,6 +23,10 @@ interface MiniMapProps {
   className?: string;
   mapKey?: string;
   cacheDurationDays?: number;
+  photoData?: string;
+  onPhotoClick?: () => void;
+  parkedHeading?: number;
+  trackedViewportInsets?: Partial<MapViewportInsets>;
 }
 
 export interface MiniMapText {
@@ -36,9 +40,26 @@ export interface MiniMapText {
   ariaStaticLabel: string;
 }
 
+export interface MapViewportInsets {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
 const DEFAULT_MAP_ZOOM = 17;
 const STATIC_MIN_ZOOM = 10;
 const INTERACTIVE_MIN_ZOOM = 1;
+const USER_FOLLOW_PAUSE_MS = 10_000;
+const MOVEMENT_THRESHOLD_METERS = 6;
+const MOVEMENT_CONTINUITY_WINDOW_MS = 15_000;
+const PROGRAMMATIC_GESTURE_GUARD_MS = 800;
+const DEFAULT_TRACKED_VIEWPORT_INSETS: MapViewportInsets = {
+  top: 80,
+  right: 80,
+  bottom: 80,
+  left: 80,
+};
 const DEFAULT_MINI_MAP_TEXT: MiniMapText = {
   markerCarLabel: 'Car',
   markerUserLabel: 'You',
@@ -132,6 +153,8 @@ const createPremiumCarIcon = (
   isInteractive: boolean,
   showLabel: boolean,
   markerLabel: string,
+  photoData?: string,
+  rotationDegrees = 0,
 ) => {
   const filterDef = isInteractive
     ? `<filter id="carGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -149,12 +172,38 @@ const createPremiumCarIcon = (
 
   const label = showLabel ? createMarkerLabelBadge(markerLabel, '#0f172ad9') : '';
 
+  // Photo thumbnail positioned above car marker
+  const photoThumbnail = photoData
+    ? `<img
+        src="${photoData}"
+        alt="Parking spot photo"
+        style="
+          position:absolute;
+          top:-80px;
+          left:50%;
+          transform:translateX(-50%);
+          width:60px;
+          height:60px;
+          object-fit:cover;
+          border-radius:8px;
+          border:2px solid white;
+          box-shadow:0 4px 12px rgba(0,0,0,0.3);
+          cursor:pointer;
+          pointer-events:auto;
+          z-index:30;
+          transition:box-shadow 0.2s ease;
+        "
+        class="parking-photo-thumbnail"
+      />`
+    : '';
+
   const svgString = `
-    <div style="width:40px;height:60px;position:relative;overflow:visible">
+    <div style="width:40px;height:${photoData ? '140px' : '60px'};position:relative;overflow:visible">
+      ${photoThumbnail}
       ${label}
-      <svg viewBox="0 0 40 60" width="40" height="60" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;position:absolute;inset:0">
+      <svg viewBox="0 0 40 60" width="40" height="60" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;position:absolute;${photoData ? 'bottom:0' : 'inset:0'}">
         <defs>${filterDef}</defs>
-        <g transform="translate(20,30)">
+        <g transform="translate(20,30) rotate(${rotationDegrees})">
           ${pulse}
           <rect x="-12" y="-24" width="24" height="48" rx="4" fill="${color}" stroke="${color}" stroke-width="0.5" stroke-opacity="0.8" ${isInteractive ? 'filter="url(#carGlow)"' : ''} />
           <path d="M-9-22L9-22L12-10L-12-10Z" fill="rgba(255,255,255,0.15)"/>
@@ -169,9 +218,9 @@ const createPremiumCarIcon = (
   return L.divIcon({
     className: 'premium-car-marker',
     html: svgString,
-    iconSize: [40, 60],
-    iconAnchor: [20, 30],
-    popupAnchor: [0, -30],
+    iconSize: [40, photoData ? 140 : 60],
+    iconAnchor: [20, photoData ? 140 : 30],
+    popupAnchor: [0, photoData ? -140 : -30],
   });
 };
 
@@ -198,13 +247,33 @@ const fitMapToCarAndUser = (
   carPosition: [number, number],
   userPosition: [number, number],
   animate: boolean,
+  viewportInsets: MapViewportInsets,
 ) => {
   const bounds = L.latLngBounds([carPosition, userPosition]);
   map.fitBounds(bounds, {
-    padding: [80, 80],
+    paddingTopLeft: [viewportInsets.left, viewportInsets.top],
+    paddingBottomRight: [viewportInsets.right, viewportInsets.bottom],
     animate,
     maxZoom: DEFAULT_MAP_ZOOM,
+    duration: animate ? 0.35 : undefined,
+    easeLinearity: 0.25,
   });
+};
+
+const getDistanceInMeters = (start: [number, number], end: [number, number]) => {
+  const [lat1, lng1] = start;
+  const [lat2, lng2] = end;
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const earthRadius = 6371e3;
+  const deltaLat = toRadians(lat2 - lat1);
+  const deltaLng = toRadians(lng2 - lng1);
+  const normalizedLat1 = toRadians(lat1);
+  const normalizedLat2 = toRadians(lat2);
+  const haversine =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(normalizedLat1) * Math.cos(normalizedLat2) * Math.sin(deltaLng / 2) ** 2;
+
+  return earthRadius * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
 };
 
 function MapController({
@@ -215,6 +284,7 @@ function MapController({
   autoFitTrackedPositions,
   recenterRequestId,
   cacheDurationDays = 7,
+  trackedViewportInsets,
 }: {
   center: [number, number];
   userLoc?: [number, number];
@@ -223,10 +293,15 @@ function MapController({
   autoFitTrackedPositions: boolean;
   recenterRequestId: number;
   cacheDurationDays?: number;
+  trackedViewportInsets: MapViewportInsets;
 }) {
   const map = useMap();
   const didInitRef = useRef(false);
   const lastViewportKeyRef = useRef<string>('');
+  const lastTrackedUserLocRef = useRef<[number, number] | null>(null);
+  const lastMeaningfulMovementAtRef = useRef(0);
+  const autoFitPausedUntilRef = useRef(0);
+  const gestureGuardUntilRef = useRef(0);
 
   // Apply performance optimization based on cache settings
   useMapPerformance({
@@ -236,6 +311,63 @@ function MapController({
   });
 
   useEffect(() => {
+    if (!interactive || typeof map.on !== 'function' || typeof map.off !== 'function') {
+      return undefined;
+    }
+
+    const handleManualGesture = () => {
+      if (Date.now() < gestureGuardUntilRef.current) {
+        return;
+      }
+
+      autoFitPausedUntilRef.current = Date.now() + USER_FOLLOW_PAUSE_MS;
+    };
+
+    map.on('zoomstart', handleManualGesture);
+    map.on('dragstart', handleManualGesture);
+
+    return () => {
+      map.off('zoomstart', handleManualGesture);
+      map.off('dragstart', handleManualGesture);
+    };
+  }, [interactive, map]);
+
+  useEffect(() => {
+    const runProgrammaticViewportUpdate = (callback: () => void) => {
+      gestureGuardUntilRef.current = Date.now() + PROGRAMMATIC_GESTURE_GUARD_MS;
+      callback();
+    };
+
+    const fitTrackedBounds = (animate: boolean) => {
+      if (!userLoc) return;
+
+      runProgrammaticViewportUpdate(() => {
+        fitMapToCarAndUser(map, center, userLoc, animate, trackedViewportInsets);
+      });
+    };
+
+    const getMovementState = (nextUserLoc: [number, number]) => {
+      const previousUserLoc = lastTrackedUserLocRef.current;
+      lastTrackedUserLocRef.current = nextUserLoc;
+
+      if (!previousUserLoc) {
+        return 'initial';
+      }
+
+      const movementDistance = getDistanceInMeters(previousUserLoc, nextUserLoc);
+      if (movementDistance < MOVEMENT_THRESHOLD_METERS) {
+        return 'steady';
+      }
+
+      const now = Date.now();
+      const isContinuousMovement =
+        lastMeaningfulMovementAtRef.current > 0 &&
+        now - lastMeaningfulMovementAtRef.current <= MOVEMENT_CONTINUITY_WINDOW_MS;
+
+      lastMeaningfulMovementAtRef.current = now;
+      return isContinuousMovement ? 'continuous' : 'fresh';
+    };
+
     const centerKey = `${center[0].toFixed(6)},${center[1].toFixed(6)}`;
     const userKey = userLoc ? `${userLoc[0].toFixed(6)},${userLoc[1].toFixed(6)}` : 'none';
     const viewportKey = interactive
@@ -253,7 +385,7 @@ function MapController({
       didInitRef.current = true;
 
       if (userLoc && (!interactive || autoFitTrackedPositions)) {
-        fitMapToCarAndUser(map, center, userLoc, false);
+        fitTrackedBounds(false);
       } else if (!interactive) {
         map.setView(center, DEFAULT_MAP_ZOOM, { animate: false });
       }
@@ -262,22 +394,31 @@ function MapController({
     }
 
     if (interactive && autoFitTrackedPositions && userLoc) {
-      fitMapToCarAndUser(map, center, userLoc, true);
+      const movementState = getMovementState(userLoc);
+      if (Date.now() < autoFitPausedUntilRef.current) {
+        return;
+      }
+
+      if (movementState === 'continuous') {
+        fitTrackedBounds(true);
+      }
       return;
     }
 
     if (!interactive && userLoc) {
-      fitMapToCarAndUser(map, center, userLoc, false);
+      fitTrackedBounds(false);
       return;
     }
 
     if (interactive) {
-      map.panTo(center, { animate: true, duration: 0.35, easeLinearity: 0.25 });
+      runProgrammaticViewportUpdate(() => {
+        map.panTo(center, { animate: true, duration: 0.35, easeLinearity: 0.25 });
+      });
       return;
     }
 
     map.setView(center, DEFAULT_MAP_ZOOM, { animate: false });
-  }, [autoFitTrackedPositions, center, userLoc, map, interactive]);
+  }, [autoFitTrackedPositions, center, userLoc, map, interactive, trackedViewportInsets]);
 
   useEffect(() => {
     const timer = setTimeout(() => map.invalidateSize(), 100);
@@ -287,24 +428,28 @@ function MapController({
   useEffect(() => {
     if (recenterRequestId === 0) return;
 
+    autoFitPausedUntilRef.current = 0;
+
     if (interactive && userLoc) {
-      fitMapToCarAndUser(map, center, userLoc, true);
+      gestureGuardUntilRef.current = Date.now() + PROGRAMMATIC_GESTURE_GUARD_MS;
+      fitMapToCarAndUser(map, center, userLoc, true, trackedViewportInsets);
       return;
     }
 
     if (interactive) {
       const currentZoom = typeof map.getZoom === 'function' ? map.getZoom() : DEFAULT_MAP_ZOOM;
+      gestureGuardUntilRef.current = Date.now() + PROGRAMMATIC_GESTURE_GUARD_MS;
       map.flyTo(center, currentZoom, { animate: true, duration: 0.6, easeLinearity: 0.25 });
       return;
     }
 
     if (userLoc) {
-      fitMapToCarAndUser(map, center, userLoc, true);
+      fitMapToCarAndUser(map, center, userLoc, true, trackedViewportInsets);
       return;
     }
 
     map.setView(center, DEFAULT_MAP_ZOOM, { animate: true });
-  }, [center, interactive, map, recenterRequestId, userLoc]);
+  }, [center, interactive, map, recenterRequestId, trackedViewportInsets, userLoc]);
 
   useEffect(() => {
     if (interactive) {
@@ -335,14 +480,70 @@ function MapController({
   return null;
 }
 
+function PhotoClickableMarker({
+  position,
+  icon,
+  onPhotoClick,
+  zIndexOffset,
+}: {
+  position: [number, number];
+  icon: L.DivIcon;
+  onPhotoClick?: () => void;
+  zIndexOffset?: number;
+}) {
+  const markerRef = useRef<L.Marker>(null);
+
+  // Handle photo thumbnail clicks via event delegation
+  useEffect(() => {
+    if (!onPhotoClick) return undefined;
+
+    const marker = markerRef.current;
+    if (!marker) return undefined;
+    let frameId: number | null = null;
+    let markerElement: HTMLElement | null = null;
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('parking-photo-thumbnail')) {
+        e.stopPropagation();
+        onPhotoClick();
+      }
+    };
+
+    const bindClickHandler = () => {
+      const element = marker.getElement();
+      if (!element) {
+        frameId = window.requestAnimationFrame(bindClickHandler);
+        return;
+      }
+
+      markerElement = element;
+      markerElement.addEventListener('click', handleClick);
+    };
+
+    bindClickHandler();
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      markerElement?.removeEventListener('click', handleClick);
+    };
+  }, [onPhotoClick]);
+
+  return <Marker position={position} ref={markerRef} icon={icon} zIndexOffset={zIndexOffset} />;
+}
+
 function DraggableMarker({
   position,
   onDragEnd,
   icon,
+  onPhotoClick,
 }: {
   position: [number, number];
   onDragEnd: (pos: L.LatLng) => void;
   icon: L.DivIcon;
+  onPhotoClick?: () => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
   const eventHandlers = useMemo(
@@ -354,6 +555,44 @@ function DraggableMarker({
     }),
     [onDragEnd],
   );
+
+  // Handle photo thumbnail clicks via event delegation
+  useEffect(() => {
+    if (!onPhotoClick) return undefined;
+
+    const marker = markerRef.current;
+    if (!marker) return undefined;
+    let frameId: number | null = null;
+    let markerElement: HTMLElement | null = null;
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('parking-photo-thumbnail')) {
+        e.stopPropagation();
+        onPhotoClick();
+      }
+    };
+
+    const bindClickHandler = () => {
+      const element = marker.getElement();
+      if (!element) {
+        frameId = window.requestAnimationFrame(bindClickHandler);
+        return;
+      }
+
+      markerElement = element;
+      markerElement.addEventListener('click', handleClick);
+    };
+
+    bindClickHandler();
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      markerElement?.removeEventListener('click', handleClick);
+    };
+  }, [onPhotoClick]);
 
   return (
     <Marker
@@ -386,6 +625,10 @@ export default function MiniMap({
   className = '',
   mapKey,
   cacheDurationDays = 7,
+  photoData,
+  onPhotoClick,
+  parkedHeading = 0,
+  trackedViewportInsets,
 }: MiniMapProps) {
   // Validate and normalize coordinates
   const validLat = clampLatitude(lat);
@@ -416,6 +659,13 @@ export default function MiniMap({
   const showPositionLabels = interactive && userPosition !== undefined;
   const showPositionLegend = interactive && userPosition !== undefined;
   const [recenterRequestId, setRecenterRequestId] = useState(0);
+  const effectiveTrackedViewportInsets = useMemo<MapViewportInsets>(
+    () => ({
+      ...DEFAULT_TRACKED_VIEWPORT_INSETS,
+      ...trackedViewportInsets,
+    }),
+    [trackedViewportInsets],
+  );
 
   // Calculate tile performance settings based on cache configuration
   const tileSettings = useMemo(
@@ -448,8 +698,17 @@ export default function MiniMap({
         interactive,
         showPositionLabels,
         mapText.markerCarLabel,
+        photoData,
+        parkedHeading,
       ),
-    [theme.colors.primary, interactive, mapText.markerCarLabel, showPositionLabels],
+    [
+      theme.colors.primary,
+      interactive,
+      mapText.markerCarLabel,
+      showPositionLabels,
+      photoData,
+      parkedHeading,
+    ],
   );
   const userIcon = useMemo(
     () =>
@@ -525,15 +784,21 @@ export default function MiniMap({
           autoFitTrackedPositions={autoFitTrackedPositions}
           recenterRequestId={recenterRequestId}
           cacheDurationDays={cacheDurationDays}
+          trackedViewportInsets={effectiveTrackedViewportInsets}
         />
         {interactive && onLocationSelect ? (
           <DraggableMarker
             position={centerPosition}
             onDragEnd={(newPos) => onLocationSelect(newPos.lat, newPos.lng)}
             icon={carIcon}
+            onPhotoClick={onPhotoClick}
           />
         ) : (
-          <Marker position={centerPosition} icon={carIcon} />
+          <PhotoClickableMarker
+            position={centerPosition}
+            icon={carIcon}
+            onPhotoClick={onPhotoClick}
+          />
         )}
         {userPosition && <Marker position={userPosition} icon={userIcon} zIndexOffset={900} />}
       </MapContainer>

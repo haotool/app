@@ -2,16 +2,17 @@
  * RecordCard Component - 停車記錄卡片（支援快速編輯車牌）
  *
  * 功能特色：
- * - useOptimistic 即時 UI 更新
- * - useDebounce 自動儲存防抖（300ms）
- * - 雙擊編輯車牌號碼
+ * - 點擊即進入快速編輯
+ * - useDebounce 自動儲存防抖
+ * - 即時 optimistic 顯示
  * - 視覺反饋與載入狀態
  */
-import { useState, useOptimistic, startTransition, Suspense, lazy } from 'react';
+import { useCallback, useEffect, useRef, useState, Suspense, lazy } from 'react';
 import { motion } from 'motion/react';
 import { Car, Trash2, MapPin, Clock, Navigation, Loader2, Edit2 } from 'lucide-react';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { useDebounce } from '@app/park-keeper/hooks/useDebounce';
+import PhotoViewerModal from './PhotoViewerModal';
 
 const MiniMap = lazy(() => import('./MiniMap'));
 
@@ -45,58 +46,82 @@ export default function RecordCard({
 }: RecordCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(record.plateNumber);
+  const [displayPlate, setDisplayPlate] = useState(record.plateNumber);
   const [isSaving, setIsSaving] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const lastCommittedPlateRef = useRef(record.plateNumber);
 
-  // useOptimistic for instant UI feedback
-  const [optimisticPlate, setOptimisticPlate] = useOptimistic(
-    record.plateNumber,
-    (_state, newPlate: string) => newPlate,
-  );
+  const debouncedValue = useDebounce(editValue, 400);
 
-  // Debounced value for auto-save (300ms delay)
-  const debouncedValue = useDebounce(editValue, 300);
+  useEffect(() => {
+    lastCommittedPlateRef.current = record.plateNumber;
+    setDisplayPlate(record.plateNumber);
 
-  // Auto-save when debounced value changes
-  useState(() => {
-    if (isEditing && debouncedValue !== record.plateNumber && debouncedValue.trim()) {
-      void handleSave(debouncedValue);
+    if (!isEditing) {
+      setEditValue(record.plateNumber);
     }
-  });
+  }, [record.plateNumber, isEditing]);
 
-  const handleSave = (newPlate: string) => {
-    if (newPlate === record.plateNumber || !newPlate.trim()) return;
+  const normalizePlate = useCallback((value: string) => value.trim().toUpperCase(), []);
 
-    setIsSaving(true);
+  const handleSave = useCallback(
+    async (rawPlate: string, closeEditor = false) => {
+      const nextPlate = normalizePlate(rawPlate);
+      const currentPlate = lastCommittedPlateRef.current;
 
-    startTransition(async () => {
-      // Optimistically update UI
-      setOptimisticPlate(newPlate.toUpperCase());
+      if (!nextPlate) {
+        setDisplayPlate(currentPlate);
+        setEditValue(currentPlate);
+        setIsEditing(false);
+        return;
+      }
+
+      if (nextPlate === currentPlate) {
+        setDisplayPlate(currentPlate);
+        setEditValue(currentPlate);
+        if (closeEditor) {
+          setIsEditing(false);
+        }
+        return;
+      }
+
+      setIsSaving(true);
+      setDisplayPlate(nextPlate);
 
       try {
-        // Actual save operation
-        await onUpdate(record.id, { plateNumber: newPlate.toUpperCase() });
+        await onUpdate(record.id, { plateNumber: nextPlate });
+        lastCommittedPlateRef.current = nextPlate;
+        setEditValue(nextPlate);
       } catch (error) {
         console.error('Failed to update plate number:', error);
-        // Revert on error (useOptimistic handles this automatically)
+        setDisplayPlate(currentPlate);
+        setEditValue(currentPlate);
       } finally {
         setIsSaving(false);
-        setIsEditing(false);
+        if (closeEditor) {
+          setIsEditing(false);
+        }
       }
-    });
-  };
+    },
+    [normalizePlate, onUpdate, record.id],
+  );
 
-  const handleDoubleClick = () => {
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const nextPlate = normalizePlate(debouncedValue);
+    if (!nextPlate || nextPlate === lastCommittedPlateRef.current) return;
+
+    void handleSave(debouncedValue);
+  }, [debouncedValue, handleSave, isEditing, normalizePlate]);
+
+  const handleEditStart = () => {
     setIsEditing(true);
-    setEditValue(record.plateNumber);
+    setEditValue(lastCommittedPlateRef.current);
   };
 
   const handleBlur = () => {
-    if (editValue.trim() && editValue !== record.plateNumber) {
-      void handleSave(editValue);
-    } else {
-      setIsEditing(false);
-      setEditValue(record.plateNumber);
-    }
+    void handleSave(editValue, true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -104,7 +129,8 @@ export default function RecordCard({
       e.currentTarget.blur();
     } else if (e.key === 'Escape') {
       setIsEditing(false);
-      setEditValue(record.plateNumber);
+      setEditValue(lastCommittedPlateRef.current);
+      setDisplayPlate(lastCommittedPlateRef.current);
     }
   };
 
@@ -153,18 +179,20 @@ export default function RecordCard({
               </div>
             ) : (
               <div className="group flex items-center gap-2">
-                <h3
-                  className="font-black text-base leading-none mb-1 cursor-pointer hover:opacity-70 transition-opacity"
-                  onDoubleClick={handleDoubleClick}
-                  title="雙擊編輯"
-                >
-                  {optimisticPlate}
-                </h3>
                 <button
                   type="button"
-                  onClick={handleDoubleClick}
+                  className="font-black text-base leading-none mb-1 cursor-text text-left hover:opacity-70 transition-opacity"
+                  onClick={handleEditStart}
+                  aria-label={`編輯車牌 ${displayPlate}`}
+                >
+                  {displayPlate}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEditStart}
                   className="opacity-0 group-hover:opacity-30 hover:!opacity-100 transition-opacity"
                   title="編輯車牌"
+                  aria-label="編輯車牌"
                 >
                   <Edit2 size={14} style={{ color: theme.colors.primary }} />
                 </button>
@@ -231,6 +259,9 @@ export default function RecordCard({
                 cacheDurationDays={cacheDurationDays}
                 text={miniMapText}
                 mapKey={record.id}
+                photoData={record.photoData}
+                onPhotoClick={() => setShowPhotoModal(true)}
+                parkedHeading={record.parkedHeading}
               />
             </Suspense>
           ) : (
@@ -267,6 +298,15 @@ export default function RecordCard({
           <Loader2 size={12} className="animate-spin" />
           <span>正在儲存...</span>
         </motion.div>
+      )}
+
+      {/* Photo Modal */}
+      {showPhotoModal && record.photoData && (
+        <PhotoViewerModal
+          src={record.photoData}
+          alt="Parking spot"
+          onClose={() => setShowPhotoModal(false)}
+        />
       )}
     </div>
   );

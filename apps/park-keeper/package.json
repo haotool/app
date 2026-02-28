@@ -1,6 +1,6 @@
 {
   "name": "@app/park-keeper",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "license": "GPL-3.0",
   "author": {
@@ -55,6 +55,11 @@
     "vite-plugin-pwa": "^1.2.0",
     "vite-react-ssg": "^0.8.9",
     "vitest": "^4.0.17",
+    "workbox-cacheable-response": "^7.4.0",
+    "workbox-expiration": "^7.4.0",
+    "workbox-precaching": "^7.4.0",
+    "workbox-routing": "^7.4.0",
+    "workbox-strategies": "^7.4.0",
     "workbox-window": "^7.4.0"
   }
 }
