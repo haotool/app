@@ -4,6 +4,7 @@ import { Camera, Trash2, Check, Grid, Loader2, AlertCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { compressImage } from '@app/park-keeper/services/imageUtils';
+import { useDeviceOrientation } from '@app/park-keeper/hooks/useDeviceOrientation';
 
 const MiniMap = lazy(() => import('./MiniMap'));
 
@@ -66,7 +67,9 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
   const [photoError, setPhotoError] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+  const [locationHeading, setLocationHeading] = useState<number | null>(null);
   const watchId = useRef<number | null>(null);
+  const { heading: parkedHeading } = useDeviceOrientation();
 
   const vibrate = (pattern: number | number[] = 15) => {
     if (navigator.vibrate) navigator.vibrate(pattern);
@@ -86,6 +89,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
       (pos) => {
         setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocationAccuracy(pos.coords.accuracy);
+        setLocationHeading(typeof pos.coords.heading === 'number' ? pos.coords.heading : null);
         setIsLocating(false);
       },
       () => {
@@ -108,6 +112,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
       setPhotoError(false);
       setSaveStatus('idle');
       setCustomFloorMode(false);
+      setLocationHeading(null);
     }
     return () => stopTracking();
   }, [isVisible, startPrecisionTracking, stopTracking]);
@@ -149,6 +154,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
       hasPhoto: !!photo,
       latitude: location?.lat ?? DEFAULT_LAT,
       longitude: location?.lng ?? DEFAULT_LNG,
+      parkedHeading: parkedHeading ?? locationHeading ?? undefined,
     };
 
     await new Promise((r) => setTimeout(r, 600));

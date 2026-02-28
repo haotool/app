@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-02-28T07:55:00+08:00
-> **當前總分**: 1079 (初始分: 100) [+2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強]
+> **最後更新**: 2026-02-28T17:12:15+08:00
+> **當前總分**: 1085 (初始分: 100) [+2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強 + +6 park-keeper 車牌快編、導航地圖快取與羅盤 UX 優化]
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -20,6 +20,11 @@
 ---
 
 ## 補充紀錄（2026-02-28）
+
+- ✅ 成功｜park-keeper Phase 3 接手收尾：車牌快編自動儲存、停車朝向、地圖快取與羅盤 UX 整合 1) **列表頁快編**：`RecordCard` 改為點擊即編輯，加入 400ms 防抖自動儲存、blur 立即提交、父層 optimistic atomic update，避免每次儲存都重新載入清單 2) **停車朝向**：新增 `parkedHeading`，QuickEntry 於記錄時保存手機方向，地圖車輛 marker 依停車朝向旋轉 3) **全屏地圖 UX**：`MiniMap` 改為 `fitBounds + paddingTopLeft/paddingBottomRight + maxZoom`，讓使用者位置與車輛在底部羅盤面板遮蔽下仍完整可見；加入手動縮放/拖曳後暫停自動跟隨 10 秒、僅在持續移動時才再次自動調整 4) **照片互動**：新增 `PhotoViewerModal`，停車照片可在地圖 marker 上方預覽，點擊後可放大、縮小、重設與拖曳 5) **羅盤整合**：恢復舊版「手機上方 / 請平放手機」導引，將已抵達、平放提示與方向文案收斂到羅盤中心 Hub，並強化車位方向箭頭辨識 6) **PWA Tile Cache**：`vite-plugin-pwa` 改為 `injectManifest`，新增 `src/sw.ts` 與 tile cache 同步訊息，將外部地圖磚快取桶與 `cacheDurationDays` 對齊、背景刷新、過期清理與舊桶刪除整合 7) **驗證**：`pnpm --filter @app/park-keeper lint` ✅、`pnpm --filter @app/park-keeper test -- --run` ✅（19 suites / 179 tests）、`pnpm --filter @app/park-keeper typecheck` ✅、`pnpm --filter @app/park-keeper build` ✅；版本 `1.0.4 -> 1.0.5`
+- 分數｜`+6`
+
+---
 
 - ✅ 成功｜RateWise SEO 權威定位：品牌更新為「台灣最精準匯率換算器·顯示實際買賣價」，新增 VND/PHP/IDR/MYR 4 個幣對 SEO 頁，SSOT 同步 TS/MJS 21 路徑，sitemap 21 URL，llms.txt 17 幣對，api/latest.json 18 幣別，常見金額 h3 語意化，所有 1405 測試通過
 - 分數｜`+3`

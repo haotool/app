@@ -32,6 +32,7 @@ export interface ParkingRecord {
   hasPhoto: boolean;
   latitude?: number;
   longitude?: number;
+  parkedHeading?: number;
 }
 
 export interface AppSettings {
@@ -44,6 +45,7 @@ export interface AppSettings {
 // Service Types
 export interface StorageService {
   saveRecord(record: ParkingRecord): Promise<void>;
+  updateRecord(id: string, updates: Partial<ParkingRecord>): Promise<void>;
   getRecords(): Promise<ParkingRecord[]>;
   deleteRecord(id: string): Promise<void>;
   getSettings(): Promise<AppSettings>;

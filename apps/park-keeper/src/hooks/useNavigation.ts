@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ParkingRecord } from '@app/park-keeper/types';
+import {
+  getCompassHeading,
+  getDeviceTilt,
+  isPhoneFlatFromTilt,
+  type CompassOrientationEvent,
+} from '@app/park-keeper/services/deviceOrientation';
 
 export const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371e3;
@@ -125,13 +131,9 @@ export function useNavigation(record: ParkingRecord) {
       );
     }
 
-    const handleOrientation = (e: DeviceOrientationEvent & { webkitCompassHeading?: number }) => {
-      let h: number | null = null;
-      if (typeof e.webkitCompassHeading === 'number') {
-        h = e.webkitCompassHeading;
-      } else if (e.alpha !== null) {
-        h = 360 - (e.alpha ?? 0);
-      }
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      const h = getCompassHeading(e as CompassOrientationEvent);
+      const tilt = getDeviceTilt(e as CompassOrientationEvent);
 
       if (h !== null) {
         const smoothed = smoothHeading(smoothedHeadingRef.current, h, HEADING_SMOOTHING_ALPHA);
@@ -145,7 +147,7 @@ export function useNavigation(record: ParkingRecord) {
         setHeading(smoothed);
         setAnimHeading(virtualHeadingRef.current);
       }
-      if (e.beta) setDeviceTilt(Math.abs(e.beta));
+      if (tilt !== null) setDeviceTilt(tilt);
     };
 
     const requestPermission = (
@@ -173,7 +175,7 @@ export function useNavigation(record: ParkingRecord) {
   const trueHeading = (heading + magneticDeclination + 360) % 360;
   const relativeRotation = (targetBearing - trueHeading + 360) % 360;
   const trueAnimHeading = animHeading + magneticDeclination;
-  const isPhoneFlat = deviceTilt < 45;
+  const isPhoneFlat = isPhoneFlatFromTilt(deviceTilt);
   const hasValidLocation = userLoc !== null;
 
   return {

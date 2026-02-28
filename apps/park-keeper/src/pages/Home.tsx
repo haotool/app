@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence, LayoutGroup, type Variants } from 'motion/react';
 import {
+  ArrowUp,
   Plus,
   Settings as SettingsIcon,
   Car,
@@ -28,8 +29,11 @@ import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, ParkingRecord, AppSettings, LanguageType } from '@app/park-keeper/types';
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
+import { syncMapTileCacheConfig } from '@app/park-keeper/services/mapTileCache';
 import { getVersionInfo } from '@app/park-keeper/config/version';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
+import PhotoViewerModal from '@app/park-keeper/components/PhotoViewerModal';
+import RecordCard from '@app/park-keeper/components/RecordCard';
 import { useNavigation } from '@app/park-keeper/hooks/useNavigation';
 
 const MiniMap = lazy(() => import('@app/park-keeper/components/MiniMap'));
@@ -173,12 +177,15 @@ function NavOverlay({
   record,
   theme,
   onClose,
+  cacheDurationDays = 7,
 }: {
   record: ParkingRecord;
   theme: ThemeConfig;
   onClose: () => void;
+  cacheDurationDays?: number;
 }) {
   const { t } = useTranslation();
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const miniMapText = {
     markerCarLabel: t('map.marker_car'),
     markerUserLabel: t('map.marker_you'),
@@ -201,6 +208,7 @@ function NavOverlay({
     isIndoor,
     arrivedState,
     hasValidLocation,
+    isPhoneFlat,
   } = nav;
 
   const isDarkTheme = theme.id === 'racing' || theme.id === 'minimalist';
@@ -368,9 +376,14 @@ function NavOverlay({
               autoFitTrackedPositions={true}
               showRecenterButton={true}
               recenterLabel={t('map.recenter_both')}
+              cacheDurationDays={cacheDurationDays}
               text={miniMapText}
               className="grayscale-[0.2]"
               mapKey={`nav-${record.id}`}
+              photoData={record.photoData}
+              onPhotoClick={() => setShowPhotoModal(true)}
+              parkedHeading={record.parkedHeading}
+              trackedViewportInsets={{ top: 148, right: 36, bottom: 332, left: 36 }}
             />
           )}
         </Suspense>
@@ -393,6 +406,16 @@ function NavOverlay({
         />
 
         <div className="w-full h-full flex flex-col items-center justify-center pt-2 pb-2">
+          <div className="mb-3 flex flex-col items-center">
+            <ArrowUp size={20} style={{ color: theme.colors.primary }} strokeWidth={3} />
+            <span
+              className="text-[10px] font-black uppercase tracking-[0.28em]"
+              style={{ color: theme.colors.primary }}
+            >
+              {t('nav.phone_top')}
+            </span>
+          </div>
+
           {/* Main Compass Dial */}
           <div className="relative w-72 h-72 flex items-center justify-center">
             {/* SVG Compass Ring */}
@@ -470,31 +493,43 @@ function NavOverlay({
                 style={{ rotate: animTargetBearing }}
                 transition={{ type: 'spring', stiffness: 60, damping: 15 }}
               >
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5">
+                <div className="absolute top-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
                   <div
-                    className="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-b-[26px]"
+                    className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg"
+                    style={{ backgroundColor: `${theme.colors.primary}E6` }}
+                  >
+                    {t('map.marker_car')}
+                  </div>
+                  <div
+                    className="w-0 h-0 border-l-[11px] border-l-transparent border-r-[11px] border-r-transparent border-b-[32px]"
                     style={{
                       borderBottomColor: theme.colors.primary,
                       filter: `drop-shadow(0 0 10px ${theme.colors.primary}80) drop-shadow(0 2px 4px rgba(0,0,0,0.25))`,
                     }}
                   />
                   <div
-                    className="w-0.5 h-4 rounded-full opacity-40"
+                    className="w-1 h-5 rounded-full opacity-60"
                     style={{ backgroundColor: theme.colors.primary }}
                   />
                 </div>
               </motion.div>
             </motion.div>
 
-            {/* Center Hub – Distance + Direction / Arrived / GPS Waiting */}
+            {/* Center Hub – Distance + Direction / Arrived / GPS Waiting / Hold Flat */}
             <div
-              className="absolute w-28 h-28 rounded-full border-2 flex flex-col items-center justify-center z-10 backdrop-blur-sm transition-all duration-500"
+              className="absolute w-32 h-32 rounded-full border-2 flex flex-col items-center justify-center z-10 backdrop-blur-sm transition-all duration-500 px-3 text-center"
               style={{
-                borderColor: arrived ? 'rgba(34,197,94,0.5)' : `${theme.colors.text}12`,
+                borderColor: arrived
+                  ? 'rgba(34,197,94,0.5)'
+                  : !isPhoneFlat && hasValidLocation
+                    ? 'rgba(239,68,68,0.35)'
+                    : `${theme.colors.text}12`,
                 backgroundColor: `${theme.colors.background}CC`,
                 boxShadow: arrived
                   ? '0 0 0 6px rgba(34,197,94,0.12), 0 4px 24px rgba(0,0,0,0.12)'
-                  : '0 4px 24px rgba(0,0,0,0.12)',
+                  : !isPhoneFlat && hasValidLocation
+                    ? '0 0 0 6px rgba(239,68,68,0.08), 0 4px 24px rgba(0,0,0,0.12)'
+                    : '0 4px 24px rgba(0,0,0,0.12)',
               }}
             >
               {arrived ? (
@@ -502,8 +537,12 @@ function NavOverlay({
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: 'spring', stiffness: 220, damping: 14 }}
+                  className="flex flex-col items-center gap-1"
                 >
                   <Check size={38} style={{ color: '#22c55e' }} strokeWidth={3} />
+                  <p className="text-[11px] font-black uppercase tracking-[0.24em] text-green-500">
+                    {t('nav.arrived')}
+                  </p>
                 </motion.div>
               ) : !hasValidLocation ? (
                 <motion.div
@@ -517,6 +556,17 @@ function NavOverlay({
                     style={{ color: theme.colors.text, opacity: 0.45 }}
                   >
                     GPS
+                  </p>
+                </motion.div>
+              ) : !isPhoneFlat ? (
+                <motion.div
+                  className="flex flex-col items-center gap-1.5"
+                  animate={{ opacity: [1, 0.55, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                >
+                  <ArrowUp size={22} style={{ color: '#ef4444' }} strokeWidth={3} />
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">
+                    {t('nav.hold_flat')}
                   </p>
                 </motion.div>
               ) : (
@@ -533,37 +583,35 @@ function NavOverlay({
                   >
                     {isIndoor ? t('nav.steps') : 'm'}
                   </p>
-                  {!isIndoor && (
-                    <p
-                      className="text-sm font-black mt-1 leading-none"
-                      style={{ color: theme.colors.primary }}
-                      aria-label={directionHint}
-                    >
-                      {directionArrow}
-                    </p>
-                  )}
+                  <p
+                    className="mt-1 text-base font-black leading-none"
+                    style={{ color: theme.colors.primary }}
+                    aria-label={directionHint}
+                  >
+                    {directionArrow}
+                  </p>
+                  <p
+                    className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em]"
+                    style={{ color: theme.colors.text, opacity: 0.55 }}
+                  >
+                    {isIndoor ? t('nav.indoor_mode') : directionHint}
+                  </p>
                 </>
               )}
             </div>
           </div>
-
-          {/* Status Footer */}
-          <div className="mt-4 mb-2 flex flex-col items-center min-h-[48px] justify-center">
-            <AnimatePresence>
-              {arrived && (
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0, y: 8 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
-                  className="px-8 py-3 bg-green-500 rounded-full text-xs font-black uppercase tracking-[0.3em] text-white shadow-[0_0_20px_rgba(34,197,94,0.35)]"
-                >
-                  {t('nav.arrived')}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
       </div>
+
+      {/* Photo Modal */}
+      {showPhotoModal && record.photoData && (
+        <PhotoViewerModal
+          src={record.photoData}
+          alt="Parking spot"
+          onClose={() => setShowPhotoModal(false)}
+          containerClassName="absolute inset-0"
+        />
+      )}
     </motion.div>
   );
 }
@@ -871,6 +919,10 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     document.documentElement.style.setProperty('--color-primary-rgb', `${r}, ${g}, ${b}`);
   }, [theme]);
 
+  useEffect(() => {
+    void syncMapTileCacheConfig(settings.cacheDurationDays);
+  }, [settings.cacheDurationDays]);
+
   const updateSettings = useCallback((next: AppSettings) => {
     setSettings(next);
     void dbService.saveSettings(next);
@@ -888,6 +940,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
         hasPhoto: !!data.hasPhoto,
         latitude: data.latitude,
         longitude: data.longitude,
+        parkedHeading: data.parkedHeading,
       };
       await dbService.saveRecord(newRecord);
       await loadRecords();
@@ -907,6 +960,31 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     },
     [loadRecords, t],
   );
+
+  const handleUpdate = useCallback(async (id: string, updates: Partial<ParkingRecord>) => {
+    let previousRecord: ParkingRecord | null = null;
+
+    setRecords((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        previousRecord = item;
+        return { ...item, ...updates };
+      }),
+    );
+    setNavRecord((prev) => (prev?.id === id ? { ...prev, ...updates } : prev));
+
+    try {
+      await dbService.updateRecord(id, updates);
+    } catch (error) {
+      if (previousRecord) {
+        setRecords((prev) =>
+          prev.map((item) => (item.id === id ? (previousRecord ?? item) : item)),
+        );
+        setNavRecord((prev) => (prev?.id === id ? previousRecord : prev));
+      }
+      throw error;
+    }
+  }, []);
 
   const filteredRecords = records.filter(
     (r) =>
@@ -986,118 +1064,16 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                     </div>
                   ) : (
                     filteredRecords.map((r) => (
-                      <div
+                      <RecordCard
                         key={r.id}
-                        className="rounded-4xl p-5 shadow-elevation-2 border border-black/1 overflow-hidden"
-                        style={{ backgroundColor: theme.colors.surface }}
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="p-2.5 rounded-2xl"
-                              style={{
-                                backgroundColor: `${theme.colors.primary}15`,
-                                color: theme.colors.primary,
-                              }}
-                            >
-                              <Car size={18} />
-                            </div>
-                            <div>
-                              <h3 className="font-black text-base leading-none mb-1">
-                                {r.plateNumber}
-                              </h3>
-                              <div className="flex items-center gap-3 text-[10px] font-black opacity-30 uppercase tracking-tight">
-                                <span
-                                  className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-                                  style={{
-                                    backgroundColor: `${theme.colors.primary}08`,
-                                    color: theme.colors.primary,
-                                  }}
-                                >
-                                  <MapPin size={10} />
-                                  {r.floor}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Clock size={10} />
-                                  {new Date(r.timestamp).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => void handleDelete(r.id)}
-                            className="p-2 opacity-10 hover:opacity-100 hover:text-red-500 transition-all"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-
-                        {/* Photo + Map row */}
-                        <div className="flex gap-2.5 h-36 mb-4">
-                          <div className="flex-[1.2] rounded-2xl overflow-hidden bg-black/5 shadow-inner">
-                            {r.photoData ? (
-                              <img
-                                src={r.photoData}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center opacity-20">
-                                <Plus size={20} />
-                              </div>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setNavRecord(r)}
-                            className="flex-1 rounded-2xl overflow-hidden bg-black/5 shadow-inner border border-black/2 cursor-pointer active:scale-95 transition-transform group relative"
-                          >
-                            {r.latitude != null && r.longitude != null ? (
-                              <Suspense
-                                fallback={
-                                  <div className="w-full h-full animate-pulse bg-gray-200" />
-                                }
-                              >
-                                <MiniMap
-                                  lat={r.latitude}
-                                  lng={r.longitude}
-                                  theme={theme}
-                                  interactive={false}
-                                  text={miniMapText}
-                                  mapKey={r.id}
-                                />
-                              </Suspense>
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center opacity-20 text-[8px] font-black uppercase tracking-widest">
-                                No Map
-                              </div>
-                            )}
-                            <div
-                              className="absolute inset-0 z-10 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
-                              style={{ backgroundColor: `${theme.colors.primary}66` }}
-                            >
-                              <Navigation
-                                size={28}
-                                className="text-white drop-shadow-2xl animate-bounce mb-1"
-                              />
-                              <span className="text-[8px] font-black text-white uppercase tracking-widest">
-                                NAVIGATE
-                              </span>
-                            </div>
-                          </button>
-                        </div>
-
-                        {r.notes && (
-                          <p className="text-[11px] opacity-60 bg-black/2 p-3 rounded-2xl font-medium leading-relaxed italic">
-                            &ldquo;{r.notes}&rdquo;
-                          </p>
-                        )}
-                      </div>
+                        record={r}
+                        theme={theme}
+                        onDelete={handleDelete}
+                        onUpdate={handleUpdate}
+                        onNavigate={setNavRecord}
+                        cacheDurationDays={settings.cacheDurationDays}
+                        miniMapText={miniMapText}
+                      />
                     ))
                   )}
                 </div>
@@ -1128,7 +1104,12 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
         {/* NavOverlay */}
         <AnimatePresence>
           {navRecord && (
-            <NavOverlay record={navRecord} theme={theme} onClose={() => setNavRecord(null)} />
+            <NavOverlay
+              record={navRecord}
+              theme={theme}
+              onClose={() => setNavRecord(null)}
+              cacheDurationDays={settings.cacheDurationDays}
+            />
           )}
         </AnimatePresence>
 
