@@ -178,11 +178,13 @@ function NavOverlay({
   theme,
   onClose,
   cacheDurationDays = 7,
+  onPhotoOffsetChange,
 }: {
   record: ParkingRecord;
   theme: ThemeConfig;
   onClose: () => void;
   cacheDurationDays?: number;
+  onPhotoOffsetChange?: (offset: { x: number; y: number }) => void;
 }) {
   const { t } = useTranslation();
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -384,6 +386,8 @@ function NavOverlay({
               onPhotoClick={() => setShowPhotoModal(true)}
               parkedHeading={record.parkedHeading}
               trackedViewportInsets={{ top: 148, right: 36, bottom: 332, left: 36 }}
+              photoOffset={record.photoOffset}
+              onPhotoPositionChange={onPhotoOffsetChange}
             />
           )}
         </Suspense>
@@ -1109,6 +1113,9 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
               theme={theme}
               onClose={() => setNavRecord(null)}
               cacheDurationDays={settings.cacheDurationDays}
+              onPhotoOffsetChange={(offset) => {
+                void handleUpdate(navRecord.id, { photoOffset: offset });
+              }}
             />
           )}
         </AnimatePresence>

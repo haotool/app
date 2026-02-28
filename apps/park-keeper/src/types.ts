@@ -33,6 +33,7 @@ export interface ParkingRecord {
   latitude?: number;
   longitude?: number;
   parkedHeading?: number;
+  photoOffset?: { x: number; y: number }; // Photo position relative to car marker
 }
 
 export interface AppSettings {

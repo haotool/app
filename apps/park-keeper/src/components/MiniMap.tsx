@@ -27,6 +27,8 @@ interface MiniMapProps {
   onPhotoClick?: () => void;
   parkedHeading?: number;
   trackedViewportInsets?: Partial<MapViewportInsets>;
+  photoOffset?: { x: number; y: number };
+  onPhotoPositionChange?: (offset: { x: number; y: number }) => void;
 }
 
 export interface MiniMapText {
@@ -155,6 +157,7 @@ const createPremiumCarIcon = (
   markerLabel: string,
   photoData?: string,
   rotationDegrees = 0,
+  photoOffset = { x: 0, y: -80 },
 ) => {
   const filterDef = isInteractive
     ? `<filter id="carGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -172,15 +175,21 @@ const createPremiumCarIcon = (
 
   const label = showLabel ? createMarkerLabelBadge(markerLabel, '#0f172ad9') : '';
 
-  // Photo thumbnail positioned above car marker
+  // Photo thumbnail positioned relative to car marker (draggable)
+  // Constrain offset to ±50px range for reasonable positioning
+  const constrainedOffset = {
+    x: Math.max(-50, Math.min(50, photoOffset.x)),
+    y: Math.max(-130, Math.min(-30, photoOffset.y)),
+  };
+
   const photoThumbnail = photoData
     ? `<img
         src="${photoData}"
         alt="Parking spot photo"
         style="
           position:absolute;
-          top:-80px;
-          left:50%;
+          top:${constrainedOffset.y}px;
+          left:calc(50% + ${constrainedOffset.x}px);
           transform:translateX(-50%);
           width:60px;
           height:60px;
@@ -188,12 +197,14 @@ const createPremiumCarIcon = (
           border-radius:8px;
           border:2px solid white;
           box-shadow:0 4px 12px rgba(0,0,0,0.3);
-          cursor:pointer;
+          cursor:move;
           pointer-events:auto;
           z-index:30;
           transition:box-shadow 0.2s ease;
+          touch-action:none;
         "
-        class="parking-photo-thumbnail"
+        class="parking-photo-thumbnail draggable-photo"
+        data-draggable="true"
       />`
     : '';
 
@@ -485,51 +496,148 @@ function PhotoClickableMarker({
   icon,
   onPhotoClick,
   zIndexOffset,
+  onPhotoPositionChange,
 }: {
   position: [number, number];
   icon: L.DivIcon;
   onPhotoClick?: () => void;
   zIndexOffset?: number;
+  onPhotoPositionChange?: (offset: { x: number; y: number }) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
 
-  // Handle photo thumbnail clicks via event delegation
+  // Handle photo thumbnail clicks and drag via event delegation
   useEffect(() => {
-    if (!onPhotoClick) return undefined;
-
     const marker = markerRef.current;
     if (!marker) return undefined;
     let frameId: number | null = null;
     let markerElement: HTMLElement | null = null;
 
-    const handleClick = (e: MouseEvent) => {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let currentOffsetX = 0;
+    let currentOffsetY = -80; // Default offset
+    let touchIdentifier: number | null = null;
+
+    const handlePointerDown = (e: PointerEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
-      if (target.classList.contains('parking-photo-thumbnail')) {
-        e.stopPropagation();
-        onPhotoClick();
+      if (!target.classList.contains('draggable-photo')) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      isDragging = true;
+
+      if ('touches' in e && e.touches[0]) {
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        touchIdentifier = touch.identifier;
+      } else if ('clientX' in e && 'clientY' in e) {
+        startX = e.clientX;
+        startY = e.clientY;
+      }
+
+      // Parse current position from style
+      const computedStyle = window.getComputedStyle(target);
+      const matrix = new DOMMatrixReadOnly(computedStyle.transform);
+      currentOffsetX = matrix.m41;
+      currentOffsetY = parseInt(target.style.top || '-80px', 10);
+    };
+
+    const handlePointerMove = (e: PointerEvent | TouchEvent) => {
+      if (!isDragging) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      let clientX: number, clientY: number;
+      if ('touches' in e) {
+        const touch = Array.from(e.touches).find((t) => t.identifier === touchIdentifier);
+        if (!touch) return;
+        clientX = touch.clientX;
+        clientY = touch.clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      const deltaX = clientX - startX;
+      const deltaY = clientY - startY;
+
+      const newOffsetX = Math.max(-50, Math.min(50, currentOffsetX + deltaX));
+      const newOffsetY = Math.max(-130, Math.min(-30, currentOffsetY + deltaY));
+
+      const photoElement = markerElement?.querySelector('.draggable-photo');
+      if (photoElement instanceof HTMLElement) {
+        photoElement.style.top = `${newOffsetY}px`;
+        photoElement.style.left = `calc(50% + ${newOffsetX}px)`;
       }
     };
 
-    const bindClickHandler = () => {
+    const handlePointerUp = (e: PointerEvent | TouchEvent) => {
+      if (!isDragging) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      isDragging = false;
+      touchIdentifier = null;
+
+      const photoElement = markerElement?.querySelector('.draggable-photo');
+      if (photoElement instanceof HTMLElement && onPhotoPositionChange) {
+        const finalY = parseInt(photoElement.style.top ?? '-80px', 10);
+        const leftValue = photoElement.style.left ?? '50%';
+        const match = /calc\(50% \+ (-?\d+)px\)/.exec(leftValue);
+        const finalX = match?.[1] ? parseInt(match[1], 10) : 0;
+
+        onPhotoPositionChange({ x: finalX, y: finalY });
+      }
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('parking-photo-thumbnail') && !isDragging) {
+        e.stopPropagation();
+        onPhotoClick?.();
+      }
+    };
+
+    const bindEventHandlers = () => {
       const element = marker.getElement();
       if (!element) {
-        frameId = window.requestAnimationFrame(bindClickHandler);
+        frameId = window.requestAnimationFrame(bindEventHandlers);
         return;
       }
 
       markerElement = element;
       markerElement.addEventListener('click', handleClick);
+      markerElement.addEventListener('pointerdown', handlePointerDown as EventListener);
+      markerElement.addEventListener('pointermove', handlePointerMove as EventListener);
+      markerElement.addEventListener('pointerup', handlePointerUp as EventListener);
+      markerElement.addEventListener('touchstart', handlePointerDown as EventListener, {
+        passive: false,
+      });
+      markerElement.addEventListener('touchmove', handlePointerMove as EventListener, {
+        passive: false,
+      });
+      markerElement.addEventListener('touchend', handlePointerUp as EventListener);
     };
 
-    bindClickHandler();
+    bindEventHandlers();
 
     return () => {
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);
       }
       markerElement?.removeEventListener('click', handleClick);
+      markerElement?.removeEventListener('pointerdown', handlePointerDown as EventListener);
+      markerElement?.removeEventListener('pointermove', handlePointerMove as EventListener);
+      markerElement?.removeEventListener('pointerup', handlePointerUp as EventListener);
+      markerElement?.removeEventListener('touchstart', handlePointerDown as EventListener);
+      markerElement?.removeEventListener('touchmove', handlePointerMove as EventListener);
+      markerElement?.removeEventListener('touchend', handlePointerUp as EventListener);
     };
-  }, [onPhotoClick]);
+  }, [onPhotoClick, onPhotoPositionChange]);
 
   return <Marker position={position} ref={markerRef} icon={icon} zIndexOffset={zIndexOffset} />;
 }
@@ -539,11 +647,13 @@ function DraggableMarker({
   onDragEnd,
   icon,
   onPhotoClick,
+  onPhotoPositionChange,
 }: {
   position: [number, number];
   onDragEnd: (pos: L.LatLng) => void;
   icon: L.DivIcon;
   onPhotoClick?: () => void;
+  onPhotoPositionChange?: (offset: { x: number; y: number }) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
   const eventHandlers = useMemo(
@@ -556,43 +666,138 @@ function DraggableMarker({
     [onDragEnd],
   );
 
-  // Handle photo thumbnail clicks via event delegation
+  // Handle photo thumbnail clicks and drag via event delegation
   useEffect(() => {
-    if (!onPhotoClick) return undefined;
-
     const marker = markerRef.current;
     if (!marker) return undefined;
     let frameId: number | null = null;
     let markerElement: HTMLElement | null = null;
 
-    const handleClick = (e: MouseEvent) => {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let currentOffsetX = 0;
+    let currentOffsetY = -80; // Default offset
+    let touchIdentifier: number | null = null;
+
+    const handlePointerDown = (e: PointerEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
-      if (target.classList.contains('parking-photo-thumbnail')) {
-        e.stopPropagation();
-        onPhotoClick();
+      if (!target.classList.contains('draggable-photo')) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      isDragging = true;
+
+      if ('touches' in e && e.touches[0]) {
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        touchIdentifier = touch.identifier;
+      } else if ('clientX' in e && 'clientY' in e) {
+        startX = e.clientX;
+        startY = e.clientY;
+      }
+
+      // Parse current position from style
+      const computedStyle = window.getComputedStyle(target);
+      const matrix = new DOMMatrixReadOnly(computedStyle.transform);
+      currentOffsetX = matrix.m41;
+      currentOffsetY = parseInt(target.style.top || '-80px', 10);
+    };
+
+    const handlePointerMove = (e: PointerEvent | TouchEvent) => {
+      if (!isDragging) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      let clientX: number, clientY: number;
+      if ('touches' in e) {
+        const touch = Array.from(e.touches).find((t) => t.identifier === touchIdentifier);
+        if (!touch) return;
+        clientX = touch.clientX;
+        clientY = touch.clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      const deltaX = clientX - startX;
+      const deltaY = clientY - startY;
+
+      const newOffsetX = Math.max(-50, Math.min(50, currentOffsetX + deltaX));
+      const newOffsetY = Math.max(-130, Math.min(-30, currentOffsetY + deltaY));
+
+      const photoElement = markerElement?.querySelector('.draggable-photo');
+      if (photoElement instanceof HTMLElement) {
+        photoElement.style.top = `${newOffsetY}px`;
+        photoElement.style.left = `calc(50% + ${newOffsetX}px)`;
       }
     };
 
-    const bindClickHandler = () => {
+    const handlePointerUp = (e: PointerEvent | TouchEvent) => {
+      if (!isDragging) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      isDragging = false;
+      touchIdentifier = null;
+
+      const photoElement = markerElement?.querySelector('.draggable-photo');
+      if (photoElement instanceof HTMLElement && onPhotoPositionChange) {
+        const finalY = parseInt(photoElement.style.top ?? '-80px', 10);
+        const leftValue = photoElement.style.left ?? '50%';
+        const match = /calc\(50% \+ (-?\d+)px\)/.exec(leftValue);
+        const finalX = match?.[1] ? parseInt(match[1], 10) : 0;
+
+        onPhotoPositionChange({ x: finalX, y: finalY });
+      }
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('parking-photo-thumbnail') && !isDragging) {
+        e.stopPropagation();
+        onPhotoClick?.();
+      }
+    };
+
+    const bindEventHandlers = () => {
       const element = marker.getElement();
       if (!element) {
-        frameId = window.requestAnimationFrame(bindClickHandler);
+        frameId = window.requestAnimationFrame(bindEventHandlers);
         return;
       }
 
       markerElement = element;
       markerElement.addEventListener('click', handleClick);
+      markerElement.addEventListener('pointerdown', handlePointerDown as EventListener);
+      markerElement.addEventListener('pointermove', handlePointerMove as EventListener);
+      markerElement.addEventListener('pointerup', handlePointerUp as EventListener);
+      markerElement.addEventListener('touchstart', handlePointerDown as EventListener, {
+        passive: false,
+      });
+      markerElement.addEventListener('touchmove', handlePointerMove as EventListener, {
+        passive: false,
+      });
+      markerElement.addEventListener('touchend', handlePointerUp as EventListener);
     };
 
-    bindClickHandler();
+    bindEventHandlers();
 
     return () => {
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);
       }
       markerElement?.removeEventListener('click', handleClick);
+      markerElement?.removeEventListener('pointerdown', handlePointerDown as EventListener);
+      markerElement?.removeEventListener('pointermove', handlePointerMove as EventListener);
+      markerElement?.removeEventListener('pointerup', handlePointerUp as EventListener);
+      markerElement?.removeEventListener('touchstart', handlePointerDown as EventListener);
+      markerElement?.removeEventListener('touchmove', handlePointerMove as EventListener);
+      markerElement?.removeEventListener('touchend', handlePointerUp as EventListener);
     };
-  }, [onPhotoClick]);
+  }, [onPhotoClick, onPhotoPositionChange]);
 
   return (
     <Marker
@@ -629,6 +834,8 @@ export default function MiniMap({
   onPhotoClick,
   parkedHeading = 0,
   trackedViewportInsets,
+  photoOffset = { x: 0, y: -80 },
+  onPhotoPositionChange,
 }: MiniMapProps) {
   // Validate and normalize coordinates
   const validLat = clampLatitude(lat);
@@ -700,6 +907,7 @@ export default function MiniMap({
         mapText.markerCarLabel,
         photoData,
         parkedHeading,
+        photoOffset,
       ),
     [
       theme.colors.primary,
@@ -708,6 +916,7 @@ export default function MiniMap({
       showPositionLabels,
       photoData,
       parkedHeading,
+      photoOffset,
     ],
   );
   const userIcon = useMemo(
@@ -792,12 +1001,14 @@ export default function MiniMap({
             onDragEnd={(newPos) => onLocationSelect(newPos.lat, newPos.lng)}
             icon={carIcon}
             onPhotoClick={onPhotoClick}
+            onPhotoPositionChange={onPhotoPositionChange}
           />
         ) : (
           <PhotoClickableMarker
             position={centerPosition}
             icon={carIcon}
             onPhotoClick={onPhotoClick}
+            onPhotoPositionChange={onPhotoPositionChange}
           />
         )}
         {userPosition && <Marker position={userPosition} icon={userIcon} zIndexOffset={900} />}
