@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence, type Variants } from 'motion/react';
-import { Camera, Trash2, Check, Grid, Loader2, AlertCircle } from 'lucide-react';
+import { Camera, Trash2, Check, Grid, Loader2, AlertCircle, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { compressImage } from '@app/park-keeper/services/imageUtils';
@@ -9,6 +9,7 @@ import { useDeviceOrientation } from '@app/park-keeper/hooks/useDeviceOrientatio
 const MiniMap = lazy(() => import('./MiniMap'));
 
 const FLOORS = ['B3', 'B2', 'B1', '1F', '2F', '3F', '4F', 'Custom'];
+const LAST_PLATE_KEY = 'park-keeper:last-plate';
 
 interface QuickEntryProps {
   theme: ThemeConfig;
@@ -56,7 +57,13 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
     ariaInteractiveTrackingLabel: t('map.aria_interactive_tracking'),
     ariaStaticLabel: t('map.aria_static'),
   };
-  const [plate, setPlate] = useState('');
+  const [plate, setPlate] = useState(() => {
+    try {
+      return localStorage.getItem(LAST_PLATE_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
   const [selectedFloor, setSelectedFloor] = useState('');
   const [notes, setNotes] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
@@ -76,7 +83,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
   };
 
   const stopTracking = useCallback(() => {
-    if (watchId.current !== null) {
+    if (watchId.current !== null && navigator.geolocation) {
       navigator.geolocation.clearWatch(watchId.current);
       watchId.current = null;
     }
@@ -105,7 +112,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
       startPrecisionTracking();
     } else {
       stopTracking();
-      setPlate('');
+      // ✅ 不在關閉時清空車牌，保留給下次使用
       setSelectedFloor('');
       setNotes('');
       setPhoto(null);
@@ -116,6 +123,19 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
     }
     return () => stopTracking();
   }, [isVisible, startPrecisionTracking, stopTracking]);
+
+  // ✅ 同步車牌至 localStorage
+  useEffect(() => {
+    try {
+      if (plate) {
+        localStorage.setItem(LAST_PLATE_KEY, plate);
+      } else {
+        localStorage.removeItem(LAST_PLATE_KEY);
+      }
+    } catch {
+      // Silently fail in environments without localStorage
+    }
+  }, [plate]);
 
   const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -160,6 +180,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
     await new Promise((r) => setTimeout(r, 600));
     await onSave(recordData);
     setSaveStatus('success');
+    // ✅ 車牌透過 localStorage 保留，關閉面板即可
     setTimeout(() => onClose(), 400);
   };
 
@@ -315,13 +336,28 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
                 </motion.div>
 
                 <motion.div variants={itemVariants} className="space-y-4">
-                  <input
-                    type="text"
-                    value={plate}
-                    onChange={(e) => setPlate(e.target.value.toUpperCase())}
-                    placeholder={t('record.plate')}
-                    className="w-full h-16 px-6 rounded-2xl bg-[var(--color-surface)] border-2 border-[color:var(--color-primary)]/5 outline-none font-black text-2xl tracking-tighter shadow-sm focus:border-[color:var(--color-primary)]/20 transition-all placeholder:opacity-30"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={plate}
+                      onChange={(e) => setPlate(e.target.value.toUpperCase())}
+                      placeholder={t('record.plate')}
+                      className="w-full h-16 px-6 pr-14 rounded-2xl bg-[var(--color-surface)] border-2 border-[color:var(--color-primary)]/5 outline-none font-black text-2xl tracking-tighter shadow-sm focus:border-[color:var(--color-primary)]/20 transition-all placeholder:opacity-30"
+                    />
+                    {plate && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPlate('');
+                          vibrate(10);
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors"
+                        aria-label="清空車牌"
+                      >
+                        <X size={20} className="opacity-40" />
+                      </button>
+                    )}
+                  </div>
                   <input
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
