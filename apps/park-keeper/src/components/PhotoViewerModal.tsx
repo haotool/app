@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Minus, Plus, RotateCcw, X } from 'lucide-react';
 
@@ -23,6 +23,17 @@ export default function PhotoViewerModal({
 }: PhotoViewerModalProps) {
   const [scale, setScale] = useState(1);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -30,6 +41,9 @@ export default function PhotoViewerModal({
       exit={{ opacity: 0 }}
       className={`${containerClassName} z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm`}
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="照片檢視器"
     >
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <button

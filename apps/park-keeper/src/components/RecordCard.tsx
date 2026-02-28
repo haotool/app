@@ -223,6 +223,7 @@ export default function RecordCard({
           type="button"
           onClick={() => void onDelete(record.id)}
           className="p-2 opacity-10 hover:opacity-100 hover:text-red-500 transition-all"
+          aria-label={`刪除停車記錄 ${displayPlate}`}
         >
           <Trash2 size={16} />
         </button>
