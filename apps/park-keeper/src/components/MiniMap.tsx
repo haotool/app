@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { ThemeConfig } from '@app/park-keeper/types';
+import { useMapPerformance, calculateTileSettings } from '@app/park-keeper/hooks/useMapPerformance';
 
 interface MiniMapProps {
   lat: number;
@@ -21,6 +22,7 @@ interface MiniMapProps {
   onLocationSelect?: (lat: number, lng: number) => void;
   className?: string;
   mapKey?: string;
+  cacheDurationDays?: number;
 }
 
 export interface MiniMapText {
@@ -212,6 +214,7 @@ function MapController({
   zoomEnabled,
   autoFitTrackedPositions,
   recenterRequestId,
+  cacheDurationDays = 7,
 }: {
   center: [number, number];
   userLoc?: [number, number];
@@ -219,10 +222,18 @@ function MapController({
   zoomEnabled: boolean;
   autoFitTrackedPositions: boolean;
   recenterRequestId: number;
+  cacheDurationDays?: number;
 }) {
   const map = useMap();
   const didInitRef = useRef(false);
   const lastViewportKeyRef = useRef<string>('');
+
+  // Apply performance optimization based on cache settings
+  useMapPerformance({
+    cacheDurationDays,
+    interactive,
+    zoomEnabled,
+  });
 
   useEffect(() => {
     const centerKey = `${center[0].toFixed(6)},${center[1].toFixed(6)}`;
@@ -374,6 +385,7 @@ export default function MiniMap({
   onLocationSelect,
   className = '',
   mapKey,
+  cacheDurationDays = 7,
 }: MiniMapProps) {
   // Validate and normalize coordinates
   const validLat = clampLatitude(lat);
@@ -404,6 +416,17 @@ export default function MiniMap({
   const showPositionLabels = interactive && userPosition !== undefined;
   const showPositionLegend = interactive && userPosition !== undefined;
   const [recenterRequestId, setRecenterRequestId] = useState(0);
+
+  // Calculate tile performance settings based on cache configuration
+  const tileSettings = useMemo(
+    () =>
+      calculateTileSettings({
+        cacheDurationDays,
+        interactive,
+        zoomEnabled,
+      }),
+    [cacheDurationDays, interactive, zoomEnabled],
+  );
 
   // Taiwan NLSC High-Precision Tile Service
   // Source: https://maps.nlsc.gov.tw/S09SOA/homePage.action
@@ -486,9 +509,9 @@ export default function MiniMap({
       >
         <TileLayer
           url={tileUrl}
-          updateWhenZooming={zoomEnabled}
-          updateWhenIdle={!interactive || !zoomEnabled}
-          keepBuffer={zoomEnabled ? 4 : 2}
+          updateWhenZooming={tileSettings.updateWhenZooming}
+          updateWhenIdle={tileSettings.updateWhenIdle}
+          keepBuffer={tileSettings.keepBuffer}
           maxZoom={20}
           maxNativeZoom={maxNativeZoom}
           noWrap={true}
@@ -501,6 +524,7 @@ export default function MiniMap({
           zoomEnabled={zoomEnabled}
           autoFitTrackedPositions={autoFitTrackedPositions}
           recenterRequestId={recenterRequestId}
+          cacheDurationDays={cacheDurationDays}
         />
         {interactive && onLocationSelect ? (
           <DraggableMarker

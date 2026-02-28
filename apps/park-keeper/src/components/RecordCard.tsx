@@ -21,6 +21,7 @@ interface RecordCardProps {
   onDelete: (id: string) => void | Promise<void>;
   onUpdate: (id: string, updates: Partial<ParkingRecord>) => void | Promise<void>;
   onNavigate: (record: ParkingRecord) => void;
+  cacheDurationDays?: number;
   miniMapText: {
     markerCarLabel: string;
     markerUserLabel: string;
@@ -39,6 +40,7 @@ export default function RecordCard({
   onDelete,
   onUpdate,
   onNavigate,
+  cacheDurationDays = 7,
   miniMapText,
 }: RecordCardProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -226,6 +228,7 @@ export default function RecordCard({
                 lng={record.longitude}
                 theme={theme}
                 interactive={false}
+                cacheDurationDays={cacheDurationDays}
                 text={miniMapText}
                 mapKey={record.id}
               />

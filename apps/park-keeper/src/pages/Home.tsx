@@ -174,10 +174,12 @@ function NavOverlay({
   record,
   theme,
   onClose,
+  cacheDurationDays = 7,
 }: {
   record: ParkingRecord;
   theme: ThemeConfig;
   onClose: () => void;
+  cacheDurationDays?: number;
 }) {
   const { t } = useTranslation();
   const miniMapText = {
@@ -369,6 +371,7 @@ function NavOverlay({
               autoFitTrackedPositions={true}
               showRecenterButton={true}
               recenterLabel={t('map.recenter_both')}
+              cacheDurationDays={cacheDurationDays}
               text={miniMapText}
               className="grayscale-[0.2]"
               mapKey={`nav-${record.id}`}
@@ -1004,6 +1007,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         onDelete={handleDelete}
                         onUpdate={handleUpdate}
                         onNavigate={setNavRecord}
+                        cacheDurationDays={settings.cacheDurationDays}
                         miniMapText={miniMapText}
                       />
                     ))
@@ -1036,7 +1040,12 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
         {/* NavOverlay */}
         <AnimatePresence>
           {navRecord && (
-            <NavOverlay record={navRecord} theme={theme} onClose={() => setNavRecord(null)} />
+            <NavOverlay
+              record={navRecord}
+              theme={theme}
+              onClose={() => setNavRecord(null)}
+              cacheDurationDays={settings.cacheDurationDays}
+            />
           )}
         </AnimatePresence>
 
