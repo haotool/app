@@ -34,6 +34,7 @@ import { getVersionInfo } from '@app/park-keeper/config/version';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
 import PhotoViewerModal from '@app/park-keeper/components/PhotoViewerModal';
 import RecordCard from '@app/park-keeper/components/RecordCard';
+import PhoneFlatPrompt from '@app/park-keeper/components/PhoneFlatPrompt';
 import { useNavigation } from '@app/park-keeper/hooks/useNavigation';
 
 const MiniMap = lazy(() => import('@app/park-keeper/components/MiniMap'));
@@ -563,16 +564,11 @@ function NavOverlay({
                   </p>
                 </motion.div>
               ) : !isPhoneFlat ? (
-                <motion.div
-                  className="flex flex-col items-center gap-1.5"
-                  animate={{ opacity: [1, 0.55, 1] }}
-                  transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
-                >
-                  <ArrowUp size={22} style={{ color: '#ef4444' }} strokeWidth={3} />
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">
-                    {t('nav.hold_flat')}
-                  </p>
-                </motion.div>
+                <PhoneFlatPrompt
+                  text={t('nav.hold_flat')}
+                  color={theme.colors.accent}
+                  orientation="portrait"
+                />
               ) : (
                 <>
                   <p
