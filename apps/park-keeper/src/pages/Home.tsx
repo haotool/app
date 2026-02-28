@@ -30,6 +30,7 @@ import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { getVersionInfo } from '@app/park-keeper/config/version';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
+import RecordCard from '@app/park-keeper/components/RecordCard';
 import { useNavigation } from '@app/park-keeper/hooks/useNavigation';
 
 const MiniMap = lazy(() => import('@app/park-keeper/components/MiniMap'));
@@ -908,6 +909,16 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     [loadRecords, t],
   );
 
+  const handleUpdate = useCallback(
+    async (id: string, updates: Partial<ParkingRecord>) => {
+      await dbService.updateRecord(id, updates);
+      await loadRecords();
+      setToast(t('record.saved'));
+      setTimeout(() => setToast(null), 2500);
+    },
+    [loadRecords, t],
+  );
+
   const filteredRecords = records.filter(
     (r) =>
       r.plateNumber.includes(search.toUpperCase()) ||
@@ -986,118 +997,15 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                     </div>
                   ) : (
                     filteredRecords.map((r) => (
-                      <div
+                      <RecordCard
                         key={r.id}
-                        className="rounded-4xl p-5 shadow-elevation-2 border border-black/1 overflow-hidden"
-                        style={{ backgroundColor: theme.colors.surface }}
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="p-2.5 rounded-2xl"
-                              style={{
-                                backgroundColor: `${theme.colors.primary}15`,
-                                color: theme.colors.primary,
-                              }}
-                            >
-                              <Car size={18} />
-                            </div>
-                            <div>
-                              <h3 className="font-black text-base leading-none mb-1">
-                                {r.plateNumber}
-                              </h3>
-                              <div className="flex items-center gap-3 text-[10px] font-black opacity-30 uppercase tracking-tight">
-                                <span
-                                  className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-                                  style={{
-                                    backgroundColor: `${theme.colors.primary}08`,
-                                    color: theme.colors.primary,
-                                  }}
-                                >
-                                  <MapPin size={10} />
-                                  {r.floor}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Clock size={10} />
-                                  {new Date(r.timestamp).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => void handleDelete(r.id)}
-                            className="p-2 opacity-10 hover:opacity-100 hover:text-red-500 transition-all"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-
-                        {/* Photo + Map row */}
-                        <div className="flex gap-2.5 h-36 mb-4">
-                          <div className="flex-[1.2] rounded-2xl overflow-hidden bg-black/5 shadow-inner">
-                            {r.photoData ? (
-                              <img
-                                src={r.photoData}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center opacity-20">
-                                <Plus size={20} />
-                              </div>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setNavRecord(r)}
-                            className="flex-1 rounded-2xl overflow-hidden bg-black/5 shadow-inner border border-black/2 cursor-pointer active:scale-95 transition-transform group relative"
-                          >
-                            {r.latitude != null && r.longitude != null ? (
-                              <Suspense
-                                fallback={
-                                  <div className="w-full h-full animate-pulse bg-gray-200" />
-                                }
-                              >
-                                <MiniMap
-                                  lat={r.latitude}
-                                  lng={r.longitude}
-                                  theme={theme}
-                                  interactive={false}
-                                  text={miniMapText}
-                                  mapKey={r.id}
-                                />
-                              </Suspense>
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center opacity-20 text-[8px] font-black uppercase tracking-widest">
-                                No Map
-                              </div>
-                            )}
-                            <div
-                              className="absolute inset-0 z-10 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
-                              style={{ backgroundColor: `${theme.colors.primary}66` }}
-                            >
-                              <Navigation
-                                size={28}
-                                className="text-white drop-shadow-2xl animate-bounce mb-1"
-                              />
-                              <span className="text-[8px] font-black text-white uppercase tracking-widest">
-                                NAVIGATE
-                              </span>
-                            </div>
-                          </button>
-                        </div>
-
-                        {r.notes && (
-                          <p className="text-[11px] opacity-60 bg-black/2 p-3 rounded-2xl font-medium leading-relaxed italic">
-                            &ldquo;{r.notes}&rdquo;
-                          </p>
-                        )}
-                      </div>
+                        record={r}
+                        theme={theme}
+                        onDelete={handleDelete}
+                        onUpdate={handleUpdate}
+                        onNavigate={setNavRecord}
+                        miniMapText={miniMapText}
+                      />
                     ))
                   )}
                 </div>

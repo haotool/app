@@ -49,6 +49,42 @@ export const dbService: StorageService = {
     }
   },
 
+  async updateRecord(id: string, updates: Partial<ParkingRecord>): Promise<void> {
+    try {
+      const db = await openDB();
+      const tx = db.transaction(STORES.RECORDS, 'readwrite');
+      const store = tx.objectStore(STORES.RECORDS);
+
+      // Get existing record
+      const getRequest = store.get(id);
+      const existingRecord = await new Promise<ParkingRecord>((resolve, reject) => {
+        getRequest.onsuccess = () => resolve(getRequest.result as ParkingRecord);
+        getRequest.onerror = () => reject(getRequest.error ?? new Error('Record not found'));
+      });
+
+      if (!existingRecord) {
+        throw new Error('Record not found');
+      }
+
+      // Merge updates
+      const updatedRecord: ParkingRecord = {
+        ...existingRecord,
+        ...updates,
+        id, // Ensure ID doesn't change
+      };
+
+      // Save updated record
+      await new Promise<void>((resolve, reject) => {
+        const putRequest = store.put(updatedRecord);
+        putRequest.onsuccess = () => resolve();
+        putRequest.onerror = () => reject(putRequest.error ?? new Error('DB error'));
+      });
+    } catch (error) {
+      console.error('Update Record Error:', error);
+      throw new Error('Failed to update record.');
+    }
+  },
+
   async getRecords(): Promise<ParkingRecord[]> {
     try {
       const db = await openDB();
