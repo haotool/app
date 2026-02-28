@@ -1,56 +1,57 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import PhoneFlatPrompt from '../PhoneFlatPrompt';
 
-describe('PhoneFlatPrompt - 平放手機提示動畫', () => {
-  it('RED: 應該渲染高級動畫 SVG 元素', () => {
-    render(<PhoneFlatPrompt />);
+describe('PhoneFlatPrompt - 俯視圖 3D 平放動畫', () => {
+  it('RED: 應該渲染俯視圖 3D SVG 動畫', () => {
+    const { container } = render(<PhoneFlatPrompt color="#3b82f6" />);
 
     // 驗證 SVG 容器存在
-    const svg = document.querySelector('svg');
+    const svg = container.querySelector('svg');
     expect(svg).toBeInTheDocument();
     expect(svg).toHaveAttribute('viewBox');
   });
 
-  it('RED: 應該包含手機外框與旋轉動畫', () => {
-    const { container } = render(<PhoneFlatPrompt />);
+  it('RED: 應該包含手機從直立到平放的 3D 旋轉動畫', () => {
+    const { container } = render(<PhoneFlatPrompt color="#3b82f6" />);
 
-    // 驗證手機外框元素
-    const phoneFrame = container.querySelector('[data-testid="phone-frame"]');
-    expect(phoneFrame).toBeInTheDocument();
-
-    // 驗證動畫元素
-    const animatedGroup = container.querySelector('[data-testid="animated-group"]');
-    expect(animatedGroup).toBeInTheDocument();
+    // 驗證手機元素存在（帶有旋轉動畫）
+    const phone = container.querySelector('[data-testid="phone-3d"]');
+    expect(phone).toBeInTheDocument();
   });
 
-  it('RED: 應該顯示提示文字', () => {
-    render(<PhoneFlatPrompt text="請平放手機以獲取羅盤方位" />);
+  it('RED: 應該顯示手機頂端箭頭指向小車的動畫', () => {
+    const { container } = render(<PhoneFlatPrompt color="#3b82f6" />);
 
-    // 驗證提示文字顯示
-    expect(screen.getByText('請平放手機以獲取羅盤方位')).toBeInTheDocument();
+    // 驗證箭頭元素
+    const arrow = container.querySelector('[data-testid="phone-arrow"]');
+    expect(arrow).toBeInTheDocument();
+
+    // 驗證小車元素
+    const car = container.querySelector('[data-testid="car-icon"]');
+    expect(car).toBeInTheDocument();
+  });
+
+  it('RED: 應該在圓圈中央顯示完整動畫', () => {
+    const { container } = render(<PhoneFlatPrompt color="#3b82f6" />);
+
+    // 驗證圓圈容器
+    const circle = container.querySelector('[data-testid="animation-circle"]');
+    expect(circle).toBeInTheDocument();
   });
 
   it('RED: 應該支援自訂主題顏色', () => {
-    const { container } = render(<PhoneFlatPrompt color="#3b82f6" />);
+    const { container } = render(<PhoneFlatPrompt color="#ef4444" />);
 
-    // 驗證顏色應用（檢查 SVG 元素的樣式）
     const svg = container.querySelector('svg');
     expect(svg).toBeInTheDocument();
   });
 
-  it('RED: 應該包含流暢的脈動動畫效果', () => {
-    const { container } = render(<PhoneFlatPrompt />);
+  it('RED: 應該包含流暢的脈動與呼吸動畫', () => {
+    const { container } = render(<PhoneFlatPrompt color="#3b82f6" />);
 
     // 驗證動畫元素存在
-    const pulseElements = container.querySelectorAll('[data-animation="pulse"]');
-    expect(pulseElements.length).toBeGreaterThan(0);
-  });
-
-  it('RED: 應該在 landscape 模式顯示不同的提示', () => {
-    render(<PhoneFlatPrompt orientation="landscape" text="手機已平放" />);
-
-    // 驗證不同方向的文字
-    expect(screen.getByText('手機已平放')).toBeInTheDocument();
+    const animatedElements = container.querySelectorAll('[data-animation="pulse"]');
+    expect(animatedElements.length).toBeGreaterThan(0);
   });
 });
