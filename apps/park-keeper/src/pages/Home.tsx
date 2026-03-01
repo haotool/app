@@ -564,11 +564,7 @@ function NavOverlay({
                   </p>
                 </motion.div>
               ) : !isPhoneFlat ? (
-                <PhoneFlatPrompt
-                  text={t('nav.hold_flat')}
-                  color={theme.colors.accent}
-                  orientation="portrait"
-                />
+                <PhoneFlatPrompt color={theme.colors.accent} />
               ) : (
                 <>
                   <p

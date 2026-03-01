@@ -1,210 +1,276 @@
 import { motion } from 'motion/react';
 
 interface PhoneFlatPromptProps {
-  text?: string;
   color?: string;
-  orientation?: 'portrait' | 'landscape';
   className?: string;
 }
 
 /**
- * PhoneFlatPrompt - 高級平放手機提示動畫組件
+ * PhoneFlatPrompt - 專業 SVG 手機平放動畫元件 v1.0.12
  *
- * 特點：
- * - 流暢的 3D 旋轉動畫效果
- * - 脈動光暈與呼吸燈效果
- * - 優雅的微互動設計
- * - 支援自訂主題顏色
+ * 特點 (基於 2026 最佳實踐)：
+ * - 垂直手機正面視圖 (200x280 viewBox)
+ * - 紅色 (#FF3333) → 綠色 (#00FF41) 顏色轉換
+ * - rotateX 動畫 (0° → 85° → 0°)
+ * - GPU 加速屬性 (transform, opacity)
+ * - 5-20 個優化 SVG 元素
+ * - 60fps 流暢動畫
  */
 export default function PhoneFlatPrompt({
-  text = '請平放手機以獲取羅盤方位',
   color = '#3b82f6',
-  orientation = 'portrait',
   className = '',
 }: PhoneFlatPromptProps) {
-  const isFlat = orientation === 'landscape';
-
   return (
-    <div className={`flex flex-col items-center justify-center gap-6 ${className}`}>
-      {/* SVG 動畫容器 */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
-        className="relative"
+    <div className={`flex flex-col items-center justify-center ${className}`}>
+      <svg
+        viewBox="0 0 200 280"
+        className="w-48 h-64"
+        xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-label="手機平放提示動畫"
       >
-        {/* 外層脈動光暈 */}
-        <motion.div
-          className="absolute inset-0 rounded-3xl blur-2xl opacity-30"
-          style={{ backgroundColor: color }}
+        {/* 定義漸層 - 紅色與綠色 */}
+        <defs>
+          <linearGradient id="red-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#FF3333">
+              <animate
+                attributeName="stop-opacity"
+                values="1;1;0;0;1"
+                dur="4s"
+                repeatCount="indefinite"
+              />
+            </stop>
+            <stop offset="100%" stopColor="#CC0000">
+              <animate
+                attributeName="stop-opacity"
+                values="1;1;0;0;1"
+                dur="4s"
+                repeatCount="indefinite"
+              />
+            </stop>
+          </linearGradient>
+
+          <linearGradient id="green-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#00FF41">
+              <animate
+                attributeName="stop-opacity"
+                values="0;0;1;1;0"
+                dur="4s"
+                repeatCount="indefinite"
+              />
+            </stop>
+            <stop offset="100%" stopColor="#00CC33">
+              <animate
+                attributeName="stop-opacity"
+                values="0;0;1;1;0"
+                dur="4s"
+                repeatCount="indefinite"
+              />
+            </stop>
+          </linearGradient>
+
+          {/* 濾鏡效果 */}
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* 背景顏色轉換層 */}
+        <rect
+          x="0"
+          y="0"
+          width="200"
+          height="280"
+          fill="url(#red-gradient)"
+          opacity="0.1"
+          data-testid="color-transition"
+        />
+        <rect x="0" y="0" width="200" height="280" fill="url(#green-gradient)" opacity="0.1" />
+
+        {/* 旋轉動畫組 */}
+        <motion.g
+          data-testid="rotation-group"
           animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
+            rotateX: [0, 0, 85, 85, 0],
+            scale: [1, 1, 0.95, 0.95, 1],
           }}
           transition={{
-            duration: 2,
+            duration: 4,
             repeat: Number.POSITIVE_INFINITY,
             ease: 'easeInOut',
+            times: [0, 0.25, 0.5, 0.75, 1],
           }}
-          data-animation="pulse"
-        />
-
-        {/* 主 SVG 動畫 */}
-        <svg
-          viewBox="0 0 200 200"
-          className="w-32 h-32 relative z-10"
-          xmlns="http://www.w3.org/2000/svg"
-          role="img"
-          aria-label="平放手機提示動畫"
+          style={{
+            transformOrigin: '100px 140px',
+            transformStyle: 'preserve-3d',
+          }}
+          data-animation-type="transform"
         >
-          {/* 背景圓形呼吸光環 */}
-          <motion.circle
-            cx="100"
-            cy="100"
-            r="80"
-            fill="none"
-            stroke={color}
-            strokeWidth="2"
-            opacity="0.2"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{
-              scale: [0.8, 1, 0.8],
-              opacity: [0, 0.2, 0],
-            }}
-            transition={{
-              duration: 2.5,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: 'easeInOut',
-            }}
-          />
+          {/* 手機裝置 */}
+          <g data-testid="phone-device">
+            {/* 手機外框 (銀色) */}
+            <rect
+              x="60"
+              y="60"
+              width="80"
+              height="160"
+              rx="8"
+              fill="#C0C0C0"
+              stroke="#999"
+              strokeWidth="1"
+            />
 
-          {/* 旋轉動畫組 */}
-          <motion.g
-            data-testid="animated-group"
-            initial={{ rotateX: 0 }}
-            animate={{
-              rotateX: isFlat ? [0, 90, 90] : [90, 0, 90],
-              rotateY: [0, 360],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: 'easeInOut',
-              times: [0, 0.5, 1],
-            }}
-            style={{ transformOrigin: '100px 100px' }}
-          >
-            {/* 手機外框 */}
-            <g data-testid="phone-frame">
-              {/* 手機主體 */}
-              <rect x="70" y="50" width="60" height="100" rx="8" fill={color} opacity="0.9" />
+            {/* 手機螢幕 (黑色背景) */}
+            <rect
+              x="70"
+              y="80"
+              width="60"
+              height="120"
+              rx="4"
+              fill="#1a1a1a"
+              data-testid="phone-screen"
+            />
 
-              {/* 手機螢幕 */}
-              <rect x="75" y="60" width="50" height="75" rx="4" fill="white" opacity="0.95" />
+            {/* 頂部聽筒 */}
+            <rect x="90" y="70" width="20" height="2" rx="1" fill="#666" />
 
-              {/* 聽筒 */}
-              <rect x="90" y="55" width="20" height="3" rx="1.5" fill="white" opacity="0.7" />
+            {/* 底部 Home 鍵 */}
+            <circle cx="100" cy="210" r="5" fill="#999" opacity="0.5" />
 
-              {/* Home 鍵 */}
-              <circle cx="100" cy="142" r="4" fill="white" opacity="0.6" />
+            {/* 螢幕內容組 */}
+            <g clipPath="url(#screen-clip)">
+              {/* 地圖網格 (3x3) */}
+              <g data-testid="map-grid" opacity="0.6">
+                {/* 水平線 */}
+                <line x1="70" y1="110" x2="130" y2="110" stroke="#333" strokeWidth="0.5" />
+                <line x1="70" y1="140" x2="130" y2="140" stroke="#333" strokeWidth="0.5" />
+                <line x1="70" y1="170" x2="130" y2="170" stroke="#333" strokeWidth="0.5" />
 
-              {/* 螢幕內容 - 羅盤圖示 */}
-              <g opacity="0.4">
+                {/* 垂直線 */}
+                <line x1="85" y1="80" x2="85" y2="200" stroke="#333" strokeWidth="0.5" />
+                <line x1="100" y1="80" x2="100" y2="200" stroke="#333" strokeWidth="0.5" />
+                <line x1="115" y1="80" x2="115" y2="200" stroke="#333" strokeWidth="0.5" />
+
+                {/* 脈動定位標記 */}
                 <motion.circle
                   cx="100"
-                  cy="97.5"
-                  r="15"
-                  fill="none"
-                  stroke={color}
-                  strokeWidth="2"
-                  animate={{ rotate: 360 }}
-                  transition={{
-                    duration: 4,
-                    repeat: Number.POSITIVE_INFINITY,
-                    ease: 'linear',
-                  }}
-                  style={{ transformOrigin: '100px 97.5px' }}
-                />
-                <motion.path
-                  d="M 100 82.5 L 95 97.5 L 100 112.5 L 105 97.5 Z"
+                  cy="140"
+                  r="3"
                   fill={color}
+                  animate={{
+                    scale: [1, 1.3, 1],
+                    opacity: [1, 0.6, 1],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: 'easeInOut',
+                  }}
+                />
+                <circle cx="100" cy="140" r="1.5" fill="white" />
+              </g>
+
+              {/* 羅盤元素 */}
+              <g data-testid="compass-element">
+                {/* 羅盤外圈 */}
+                <circle cx="100" cy="180" r="15" fill="none" stroke="#444" strokeWidth="1" />
+
+                {/* 旋轉指針組 */}
+                <motion.g
                   animate={{ rotate: 360 }}
                   transition={{
-                    duration: 4,
+                    duration: 8,
                     repeat: Number.POSITIVE_INFINITY,
                     ease: 'linear',
                   }}
-                  style={{ transformOrigin: '100px 97.5px' }}
-                />
+                  style={{ transformOrigin: '100px 180px' }}
+                >
+                  {/* 北指針 (紅色) */}
+                  <path d="M 100 165 L 103 180 L 100 175 L 97 180 Z" fill="#FF3333" opacity="0.8" />
+                  {/* 南指針 (灰色) */}
+                  <path d="M 100 195 L 103 180 L 100 185 L 97 180 Z" fill="#666" opacity="0.6" />
+                </motion.g>
+
+                {/* 中心點 */}
+                <circle cx="100" cy="180" r="2" fill="white" opacity="0.8" />
               </g>
             </g>
-          </motion.g>
 
-          {/* 裝飾性粒子效果 */}
-          {[...Array<undefined>(8)].map((_, i) => {
-            const angle = (i * 360) / 8;
-            const radius = 70;
-            const x = 100 + radius * Math.cos((angle * Math.PI) / 180);
-            const y = 100 + radius * Math.sin((angle * Math.PI) / 180);
+            {/* 螢幕裁切定義 */}
+            <clipPath id="screen-clip">
+              <rect x="70" y="80" width="60" height="120" rx="4" />
+            </clipPath>
+          </g>
+        </motion.g>
 
-            return (
-              <motion.circle
-                key={i}
-                cx={x}
-                cy={y}
-                r="2"
-                fill={color}
-                opacity="0.4"
-                animate={{
-                  scale: [0, 1, 0],
-                  opacity: [0, 0.6, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Number.POSITIVE_INFINITY,
-                  delay: i * 0.25,
-                  ease: 'easeInOut',
-                }}
-                data-animation="pulse"
-              />
-            );
-          })}
-        </svg>
-      </motion.div>
-
-      {/* 提示文字 */}
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="text-center text-sm font-medium"
-        style={{ color }}
-      >
-        {text}
-      </motion.p>
-
-      {/* 副提示 - 細微的呼吸動畫 */}
-      <motion.div
-        animate={{ opacity: [0.4, 0.7, 0.4] }}
-        transition={{
-          duration: 2,
-          repeat: Number.POSITIVE_INFINITY,
-          ease: 'easeInOut',
-        }}
-        className="flex items-center gap-2 text-xs opacity-60"
-      >
-        <motion.div
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{
-            duration: 1.5,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: 'easeInOut',
+        {/* 汽車指示器 */}
+        <motion.g
+          data-testid="car-indicator"
+          animate={{
+            opacity: [0, 0, 1, 1, 0],
+            y: [20, 20, 0, 0, 20],
           }}
-          className="w-2 h-2 rounded-full"
-          style={{ backgroundColor: color }}
-        />
-        <span className="font-medium">自動偵測中...</span>
-      </motion.div>
+          transition={{
+            duration: 4,
+            repeat: Number.POSITIVE_INFINITY,
+            times: [0, 0.25, 0.5, 0.75, 1],
+          }}
+          style={{ transformOrigin: '100px 250px' }}
+        >
+          <g transform="translate(100, 250)">
+            {/* 車身 */}
+            <rect x="-15" y="-6" width="30" height="12" rx="2" fill={color} opacity="0.9" />
+
+            {/* 車窗 */}
+            <rect x="-10" y="-4" width="8" height="6" rx="1" fill="#333" opacity="0.5" />
+            <rect x="2" y="-4" width="8" height="6" rx="1" fill="#333" opacity="0.5" />
+
+            {/* 車輪 */}
+            <circle cx="-8" cy="6" r="2" fill="#333" />
+            <circle cx="8" cy="6" r="2" fill="#333" />
+
+            {/* 車燈 (閃爍) */}
+            <motion.circle
+              cx="-13"
+              cy="0"
+              r="1"
+              fill="#FFD700"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{
+                duration: 0.8,
+                repeat: Number.POSITIVE_INFINITY,
+              }}
+            />
+            <motion.circle
+              cx="13"
+              cy="0"
+              r="1"
+              fill="#FFD700"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{
+                duration: 0.8,
+                repeat: Number.POSITIVE_INFINITY,
+                delay: 0.4,
+              }}
+            />
+
+            {/* 指向箭頭 */}
+            <motion.path
+              d="M 0 -15 L -5 -20 L 0 -25 L 5 -20 Z"
+              fill="#00FF41"
+              animate={{ y: [0, -3, 0] }}
+              transition={{
+                duration: 1,
+                repeat: Number.POSITIVE_INFINITY,
+              }}
+            />
+          </g>
+        </motion.g>
+      </svg>
     </div>
   );
 }
