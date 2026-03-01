@@ -1,5 +1,22 @@
 # @app/ratewise
 
+## 2.5.0
+
+### Minor Changes
+
+- feat(seo): 新增 `generate-openapi.mjs` 腳本，prebuild 自動產生 `public/openapi.json`（OpenAPI 3.1 規格），涵蓋 jsDelivr CDN 與 GitHub Raw 雙伺服器、完整匯率回應 schema
+- feat(seo): `llms.txt` 加入 CDN 即時匯率 URL（jsDelivr）、四種匯率類型說明（現金/即期買入賣出）及開發者指引（SSOT 自動驅動，不需手動維護）
+- feat(seo): `api/latest.json` 加入 `cdnEndpoints`（jsDelivr 端點）、`rateTypeDescriptions`（匯率類型說明）與 `openapi` 規格 URL
+- feat(seo): 所有幣別頁 `<title>` 改為「即時 XXX 匯率 — 台銀實際賣出價 | XXX/TWD RateWise」格式，強調賣出價精準定位
+- feat(seo): 所有幣別頁 meta description 開頭改為「台銀實際 XXX 賣出價（非中間價）」，與僅顯示中間價的競品形成明確差異
+- feat(seo): 所有幣別頁 FAQ 新增「為何匯率與其他 App 不同（中間價 vs 賣出價）」及「現金賣出與即期賣出的差別與選擇建議」兩則常見問答
+- feat(seo): 所有幣別頁 `highlights` 新增首項「精準賣出價」說明，共 6 項亮點
+- feat(seo): `financialServiceJsonLd` 新增 `hasOfferCatalog`，包含現金賣出與即期賣出兩種 Offer schema，強化 Google 財務服務結構化資料
+- feat(ui): `CurrencyLandingPage` 新增「為什麼 RateWise 比其他工具更精準？」教育卡片（中間價 vs 賣出價對比說明），置於換算 CTA 上方
+- feat(ui): `CurrencyLandingPage` 容器從 `max-w-3xl` 擴展至 `max-w-4xl`（桌面版 RWD 寬度優化）
+- feat(ui): CTA 文字更新為主動強調台銀實際賣出價，引導用戶了解真實換匯成本
+- feat(ui): howToSteps 區塊桌面端改為 `md:grid-cols-2` 兩欄佈局，提升桌面閱讀效率
+
 ## 2.4.7
 
 ### Patch Changes

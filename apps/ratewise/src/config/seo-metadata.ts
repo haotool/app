@@ -807,14 +807,30 @@ export function getCurrencyLandingPageContent(
       price: '0',
       priceCurrency: 'TWD',
     },
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: `${code}/TWD 匯率報價目錄`,
+      itemListElement: [
+        {
+          '@type': 'Offer',
+          name: `${displayName}現金賣出匯率`,
+          description: `臺灣銀行牌告${displayName}（${code}）現金賣出匯率，適用臨櫃換外幣現鈔`,
+        },
+        {
+          '@type': 'Offer',
+          name: `${displayName}即期賣出匯率`,
+          description: `臺灣銀行牌告${displayName}（${code}）即期賣出匯率，適用網銀外幣帳戶`,
+        },
+      ],
+    },
   };
 
   return {
     currencyCode: code,
     currencyFlag: definition.flag,
     currencyName: displayName,
-    title: `${code} 對 TWD 匯率換算器 | 即時${displayName}台幣匯率`,
-    description: `即時${displayName}兌台幣匯率換算，參考臺灣銀行官方牌告匯率，每 5 分鐘自動更新。${override.question}支援現金匯率與即期匯率切換、計算機快速輸入、多幣別同時換算與離線 PWA 使用。適合${override.region}前快速比價。`,
+    title: `即時${displayName}匯率 — 台銀實際賣出價 | ${code}/TWD RateWise`,
+    description: `台銀實際${displayName}賣出價（非中間價），換匯前先知道要付多少台幣。${override.question}每 5 分鐘更新，支援現金與即期匯率切換、計算機快速輸入。適合${override.region}。`,
     pathname,
     canonical: canonicalUrl,
     keywords: [
@@ -834,6 +850,14 @@ export function getCurrencyLandingPageContent(
       ),
     ],
     faqEntries: [
+      {
+        question: `用其他 App 查${displayName}匯率為什麼跟 RateWise 不一樣？`,
+        answer: `多數匯率 App 顯示中間價（mid-rate），是買入與賣出的平均值，並非你實際換匯的價格。RateWise 顯示臺灣銀行牌告的「現金賣出」價——你拿台幣去銀行換${displayName}現鈔時，這才是真正要付的金額。中間價通常比實際賣出價優惠 1~3%，換 10 萬日圓大約差 1,500~3,000 元台幣，換匯金額越大差距越明顯。`,
+      },
+      {
+        question: `${displayName}現金賣出和即期賣出有什麼差別？怎麼選？`,
+        answer: `「現金賣出」適合臨櫃換外幣現鈔，「即期賣出」適合網銀外幣帳戶轉換或匯款。現金匯率通常比即期差，因為銀行需負擔現鈔的保管、運送與保險成本。出國旅遊前換現金看「現金賣出」，線上外幣轉換看「即期賣出」。`,
+      },
       {
         question: override.question,
         answer: `使用 RateWise 可即時查看 ${code} 兌 TWD 最新匯率，資料 100% 參考臺灣銀行牌告，每 5 分鐘自動更新。點擊「開始換算」即可輸入任意金額查看結果。`,
@@ -891,6 +915,7 @@ export function getCurrencyLandingPageContent(
       },
     ],
     highlights: [
+      `精準賣出價：顯示臺灣銀行牌告的現金賣出與即期賣出實際報價，非中間價——換匯金額更精準，避免低估所需台幣。`,
       `資料來源：臺灣銀行牌告匯率，現金與即期買入賣出四種報價完整呈現。`,
       `更新頻率：每 5 分鐘自動同步，首頁顯示最近更新時間，亦可下拉手動重新整理。`,
       `適用情境：${override.region}前快速查看 ${code}/TWD 即時換算與歷史趨勢。`,
