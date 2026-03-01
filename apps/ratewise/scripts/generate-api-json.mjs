@@ -17,6 +17,7 @@ const ROOT = resolve(__dirname, '..');
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 
 const DATA_BASE_URL = 'https://raw.githubusercontent.com/haotool/app/data/public/rates';
+const CDN_BASE_URL = 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates';
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
@@ -36,6 +37,17 @@ const latestJson = {
     latest: `${DATA_BASE_URL}/latest.json`,
     history: `${DATA_BASE_URL}/history/{YYYY-MM-DD}.json`,
   },
+  cdnEndpoints: {
+    latest: `${CDN_BASE_URL}/latest.json`,
+    history: `${CDN_BASE_URL}/history/{YYYY-MM-DD}.json`,
+  },
+  rateTypeDescriptions: {
+    cash_buy: '現金買入：銀行以此價收購外幣現鈔（你拿外幣換台幣）',
+    cash_sell: '現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）',
+    spot_buy: '即期買入：電匯/帳戶轉入匯率（你匯款回台灣）',
+    spot_sell: '即期賣出：電匯/帳戶轉出匯率（你從台灣匯款出去）',
+  },
+  openapi: `${SITE_CONFIG.url}openapi.json`,
   documentation: `${SITE_CONFIG.url}llms.txt`,
   webapp: SITE_CONFIG.url,
   deepLink: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,

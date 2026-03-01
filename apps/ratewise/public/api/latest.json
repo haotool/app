@@ -1,6 +1,6 @@
 {
   "name": "RateWise Exchange Rate API",
-  "version": "2.4.7",
+  "version": "2.5.0",
   "description": "臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步",
   "source": "臺灣銀行牌告匯率",
   "sourceUrl": "https://rate.bot.com.tw/xrt",
@@ -31,6 +31,17 @@
     "latest": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
     "history": "https://raw.githubusercontent.com/haotool/app/data/public/rates/history/{YYYY-MM-DD}.json"
   },
+  "cdnEndpoints": {
+    "latest": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json",
+    "history": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json"
+  },
+  "rateTypeDescriptions": {
+    "cash_buy": "現金買入：銀行以此價收購外幣現鈔（你拿外幣換台幣）",
+    "cash_sell": "現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）",
+    "spot_buy": "即期買入：電匯/帳戶轉入匯率（你匯款回台灣）",
+    "spot_sell": "即期賣出：電匯/帳戶轉出匯率（你從台灣匯款出去）"
+  },
+  "openapi": "https://app.haotool.org/ratewise/openapi.json",
   "documentation": "https://app.haotool.org/ratewise/llms.txt",
   "webapp": "https://app.haotool.org/ratewise/",
   "deepLink": "https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}",

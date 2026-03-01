@@ -79,6 +79,7 @@ Version: v${VERSION} (${BUILD_DATE})
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率適用臨櫃換鈔，即期匯率適用匯款與帳戶轉帳。現鈔通常比即期差，因為銀行有保管與運送成本。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行角度。您拿外幣換回台幣看「買入」價，您拿台幣買外幣看「賣出」價。
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。刷卡匯率由發卡組織（Visa/Mastercard）決定清算匯率，再加上發卡銀行海外手續費，與台銀牌告是不同體系。
+- Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（Unix 時間戳）、updateTime（ISO 8601 更新時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。每 5 分鐘由 GitHub Actions 自動同步。完整規格見 ${BASE_URL}openapi.json。
 
 ## E-E-A-T Signals
 
@@ -139,7 +140,21 @@ Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 
 ## API Endpoints
 
-- [Latest Rates Metadata](${BASE_URL}api/latest.json): 匯率 API 入口（含資料來源 URL、更新頻率、支援幣別與歷史查詢端點）
+### 即時匯率資料（真實數據，每 5 分鐘更新）
+- 即時匯率 JSON（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
+  - 欄位：timestamp, updateTime, source, rates{USD/JPY/EUR/...}, details{貨幣:{spot:{buy,sell}, cash:{buy,sell}}}
+  - 匯率類型：cash_buy=現金買入, cash_sell=現金賣出, spot_buy=即期買入, spot_sell=即期賣出
+  - 說明：賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價
+
+### 應用程式深層連結（帶入換算參數）
+- 格式：${BASE_URL}?amount={金額}&from={來源幣}&to={目標幣}
+- 範例：${BASE_URL}?amount=50000&from=KRW&to=TWD
+- 範例：${BASE_URL}?amount=10000&from=JPY&to=TWD
+- 範例：${BASE_URL}?amount=100&from=USD&to=TWD
+
+### API 規格文件
+- [API Metadata](${BASE_URL}api/latest.json): 版本、來源、支援幣別清單（靜態 JSON metadata）
+- [OpenAPI 3.1 規格](${BASE_URL}openapi.json): 機器可讀 API 規格（含完整欄位說明、schema、範例回應）
 
 ## Optional
 

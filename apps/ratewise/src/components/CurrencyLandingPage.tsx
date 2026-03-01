@@ -67,7 +67,7 @@ export function CurrencyLandingPage({
 
       {/* Main container - PWA optimized with safe area handling */}
       <div className="min-h-full">
-        <div className="px-4 sm:px-6 py-6 max-w-3xl mx-auto">
+        <div className="px-4 sm:px-6 py-6 max-w-4xl mx-auto">
           {/* Back Navigation */}
           <Link
             to="/"
@@ -100,6 +100,42 @@ export function CurrencyLandingPage({
             </div>
           </header>
 
+          {/* 精準換匯：為什麼看賣出價 */}
+          <section className="mb-6 sm:mb-8">
+            <div className="card p-4 sm:p-5 bg-surface border border-amber-500/30">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">⚖️</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-bold text-text text-sm sm:text-base mb-2">
+                    為什麼 RateWise 比其他工具更精準？
+                  </h2>
+                  <p className="text-text-muted text-xs sm:text-sm leading-relaxed mb-3">
+                    多數匯率工具顯示「中間價」（mid-rate），是買入與賣出的平均值，不是你實際換匯的價格。
+                    RateWise 直接顯示臺灣銀行牌告的「
+                    <strong className="text-text font-semibold">現金賣出</strong>」價格—— 你去銀行換{' '}
+                    {currencyName} 現鈔時實際要付的台幣金額。
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200/30 p-2 text-center">
+                      <div className="font-bold text-red-600 dark:text-red-400 mb-0.5">
+                        中間價（其他工具）
+                      </div>
+                      <div className="text-text-muted">不是實際換匯金額</div>
+                    </div>
+                    <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200/30 p-2 text-center">
+                      <div className="font-bold text-green-600 dark:text-green-400 mb-0.5">
+                        賣出價（RateWise）
+                      </div>
+                      <div className="text-text-muted">銀行實際收你的台幣</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Quick Action Card */}
           <div className="card p-4 sm:p-5 mb-6 bg-primary text-white">
             <div className="flex items-center gap-2 mb-3 opacity-80">
@@ -107,7 +143,8 @@ export function CurrencyLandingPage({
               <h2 className="text-xs font-black uppercase tracking-wider">立即換算</h2>
             </div>
             <p className="text-sm sm:text-base mb-4 opacity-90">
-              前往主換算器，即時查看{currencyName}對台幣匯率，支援現金/即期匯率切換。
+              立即查看{currencyName}
+              賣出價——台銀實際牌告，非中間價，讓你換匯前就知道真正要付多少台幣。
             </p>
             <Link
               to="/"
@@ -150,7 +187,7 @@ export function CurrencyLandingPage({
               <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">使用步驟</h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
               {howToSteps.map((step) => (
                 <div
                   key={step.position}
