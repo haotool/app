@@ -200,6 +200,8 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       applicationCategory: SITE_SEO.application.category,
       operatingSystem: 'Any',
       browserRequirements: SITE_SEO.application.browserRequirements,
+      datePublished: `${APP_INFO.copyrightStartYear}-01-01`,
+      dateModified: BUILD_TIME,
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -213,6 +215,7 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       '@type': 'Organization',
       name: APP_INFO.author,
       url: SITE_BASE_URL,
+      foundingDate: String(APP_INFO.copyrightStartYear),
       logo: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
       contactPoint: {
         '@type': 'ContactPoint',
@@ -227,6 +230,7 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       name: APP_INFO.name,
       url: SITE_BASE_URL,
       inLanguage: SITE_SEO.locale,
+      dateModified: BUILD_TIME,
     },
   ];
 }
@@ -261,7 +265,7 @@ export const HOMEPAGE_FAQ = [
   {
     question: 'RateWise 和其他匯率工具有什麼不同？',
     answer:
-      'Google Finance、XE、Yahoo Finance 等工具顯示的是「中間價」（mid-rate）——買入與賣出匯率的平均值，並非你去銀行實際換匯的價格。RateWise 顯示臺灣銀行牌告的實際買入賣出價（現金與即期共四種報價），讓您換匯前就能知道真正要付多少台幣。以日圓為例，中間價與實際賣出價差距約 1～3%，換 10 萬日圓大約差 1,500～3,000 元台幣。',
+      '多數匯率工具顯示「中間價」（買賣均值），並非銀行實際換匯報價。RateWise 直接顯示臺灣銀行牌告的現金與即期買賣四種報價，讓您換匯前就知道真正要付多少台幣。以日圓為例，中間價與賣出價差約 1～3%，換 10 萬日圓大約差 1,500～3,000 元台幣。',
   },
   {
     question: '支援哪些貨幣？',
@@ -440,7 +444,7 @@ export const FAQ_PAGE_ENTRIES = [
   {
     question: '什麼是 DCC（動態貨幣轉換）？為什麼要拒絕？',
     answer:
-      'DCC（Dynamic Currency Conversion）是商家在刷卡時提供「以台幣結帳」的選項，看似方便但匯率通常比卡組織（Visa/Mastercard）的清算匯率差 3~5%，因此建議選擇「以當地貨幣結帳」，讓發卡行以較優的卡組織匯率計算。',
+      'DCC（動態貨幣轉換）是商家刷卡時提供「以台幣結帳」的選項，但匯率通常比卡組織清算匯率差 3~5%。建議選「以當地貨幣結帳」，讓發卡行套用較優的卡組織匯率計算費用。',
   },
   {
     question: '我要換外幣應該看哪個匯率？',
@@ -450,7 +454,7 @@ export const FAQ_PAGE_ENTRIES = [
   {
     question: '刷卡匯率怎麼計算？',
     answer:
-      '海外刷卡匯率包含三個部分：(1) 卡組織匯率（Visa/Mastercard 清算匯率），(2) 發卡銀行海外交易手續費（通常 1.5%），(3) 若選擇 DCC 還會額外被商家加匯差。因此刷卡匯率與臺灣銀行牌告匯率是不同體系，RateWise 目前提供的是台銀牌告匯率。',
+      '海外刷卡費用 = 卡組織清算匯率（Visa/Mastercard）+ 銀行海外手續費（約 1.5%）+ 若選 DCC 則再加商家匯差。三者合計，與台銀牌告匯率屬不同體系，RateWise 提供的是台銀牌告匯率。',
   },
   {
     question: '現金匯率為什麼比即期匯率差？',
@@ -540,6 +544,29 @@ export const GUIDE_PAGE_SEO = {
   jsonLd: [buildShareImageJsonLd('RateWise 使用指南分享圖片', 'RateWise 使用指南與換算步驟預覽')],
 } as const satisfies SEOPageMetadata;
 
+export const ABOUT_PAGE_FAQ = [
+  {
+    question: 'RateWise 匯率數據來源是什麼？',
+    answer:
+      '100% 來源自臺灣銀行官方牌告匯率，每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。',
+  },
+  {
+    question: 'RateWise 是免費的嗎？需要帳號或有廣告嗎？',
+    answer:
+      '完全免費、無廣告、無付費功能，不需要建立帳號。計算機、收藏、歷史記錄、主題風格等所有功能皆可直接使用。',
+  },
+  {
+    question: 'RateWise 和一般匯率 App 有什麼不同？',
+    answer:
+      '一般工具顯示中間價（買賣均值），RateWise 顯示臺灣銀行牌告的實際現金與即期四種報價，讓您換匯前就知道真正要付多少台幣。',
+  },
+  {
+    question: '如何聯絡 RateWise 開發者？',
+    answer:
+      '可透過 Email（haotool.org@gmail.com）聯繫，歡迎回饋意見或錯誤回報，也可在 GitHub（github.com/haotool/app）查看原始碼或提交 Issue。',
+  },
+] as const satisfies readonly FAQEntry[];
+
 export const ABOUT_PAGE_SEO = {
   title: '關於 RateWise 匯率好工具 - 資料來源與技術特色',
   description:
@@ -549,6 +576,7 @@ export const ABOUT_PAGE_SEO = {
     { name: 'RateWise 首頁', item: '/' },
     { name: '關於我們', item: '/about/' },
   ],
+  faq: [...ABOUT_PAGE_FAQ],
 } as const satisfies SEOPageMetadata;
 
 export const PRIVACY_PAGE_SEO = {
@@ -771,6 +799,7 @@ export function getCurrencyLandingPageContent(
     description: `即時${displayName}（${code}）兌新台幣（TWD）匯率換算服務，資料來源為臺灣銀行官方牌告匯率，支援現金與即期匯率切換。`,
     url: canonicalUrl,
     serviceType: 'CurrencyExchange',
+    dateModified: BUILD_TIME,
     provider: {
       '@type': 'Organization',
       name: APP_INFO.author,

@@ -93,7 +93,7 @@ export const KNOWN_ROUTE_PATHS = [...PRERENDER_PATHS];
 /**
  * SEO 配置文件路徑
  */
-export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
+export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt', '/llms-full.txt'];
 
 /**
  * 社交分享圖片與舊資源相容重定向
