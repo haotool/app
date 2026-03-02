@@ -7,6 +7,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { getDisplayVersion } from '../config/version';
 import { APP_INFO, getCopyrightYears } from '../config/app-info';
+import { ABOUT_PAGE_FAQ } from '../config/seo-metadata';
 
 export default function About() {
   return (
@@ -19,6 +20,7 @@ export default function About() {
           { name: 'RateWise 首頁', item: '/' },
           { name: '關於我們', item: '/about/' },
         ]}
+        faq={[...ABOUT_PAGE_FAQ]}
       />
       <div className="min-h-screen">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
