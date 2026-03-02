@@ -1,5 +1,20 @@
 # @app/ratewise
 
+## 2.6.0
+
+### Minor Changes
+
+- 8509609: 品牌定位「台灣最精準匯率換算器」+ 新增 VND/PHP/IDR/MYR 4 個幣對 SEO 頁 + SSOT 21 路徑 + llms.txt 品牌強化 + 常見金額 h3 語意化
+- 9a4e6e4: 靜態 API 端點（/api/latest.json）自動生成、llms.txt 新增 API 入口宣告、config/components 註解技術債清除為專業繁中
+- 926c10e: 13 幣對頁 SSOT 重構、常見金額錨點區塊、URL 參數換算深度連結、FAQ 擴充至 21 題、llms.txt v2.4.7 全面升級、旅遊換匯提示
+
+### Patch Changes
+
+- ac956da: 修復 Codex Review 8 項 P1/P2 建議：測試 prebuild 解耦、zbpack.json 恢復、sitemap PNG→JPG、URL 深連結保留、API 幣別擴充、SSOT 驗證擴充、app-only noindex
+- ae3dab8: 修復 SSOT 驗證腳本（支援 spread 語法）與 SEO 架構重構（seo-metadata.ts 集中管理、HomepageSEOSection 下移、移除 HomeStructuredData dead code、修復重複 ImageObject、硬編碼改用 SSOT）
+- 23d9667: llms.txt SSOT 自動生成（build-time 腳本）、FinancialService JSON-LD 結構化資料、FAQ 換匯知識擴充（DCC/刷卡匯率/現金即期差異）
+- 686dd15: SEO 最佳實踐與程式碼品質全面優化：Schema.org @graph 模式、FAQ 重構、TypeScript 型別安全強化
+
 ## 2.5.0
 
 ### Minor Changes
