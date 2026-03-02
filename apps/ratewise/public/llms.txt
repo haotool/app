@@ -118,8 +118,33 @@ Contact: haotool.org@gmail.com
 - [API Metadata](https://app.haotool.org/ratewise/api/latest.json): 版本、來源、支援幣別清單（靜態 JSON metadata）
 - [OpenAPI 3.1 規格](https://app.haotool.org/ratewise/openapi.json): 機器可讀 API 規格（含完整欄位說明、schema、範例回應）
 
+## Tool Use (For LLM Function Calling)
+
+適合 LLM/AI agent 直接調用取得即時台銀匯率：
+
+```
+# 1. Fetch latest rates (no auth required, CORS enabled)
+GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
+
+# 2. Parse response — key fields:
+#    updateTime   : "2026-03-03T10:05:00+08:00"  (ISO 8601, last sync time)
+#    details.USD  : { spot: { buy: 32.45, sell: 32.75 }, cash: { buy: 32.15, sell: 33.05 } }
+#
+# 3. Rate selection guide:
+#    User wants to BUY foreign currency with TWD  → use sell price (cash.sell / spot.sell)
+#    User wants to SELL foreign currency for TWD  → use buy price  (cash.buy  / spot.buy)
+#    Cash exchange at counter (換鈔)              → use cash rates
+#    Wire transfer / remittance (匯款)            → use spot rates
+
+# 4. Deep link to calculator (auto-fill user query):
+#    https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM_CURRENCY}&to=TWD
+```
+
+完整技術文件：[llms-full.txt](https://app.haotool.org/ratewise/llms-full.txt)
+
 ## Optional
 
 - [Sitemap](https://app.haotool.org/ratewise/sitemap.xml): 全站 URL 列表
 - [Robots](https://app.haotool.org/ratewise/robots.txt): 爬蟲規則
-- [llms.txt](https://app.haotool.org/ratewise/llms.txt): LLM 友善索引入口
+- [llms.txt](https://app.haotool.org/ratewise/llms.txt): LLM 友善索引入口（精簡版）
+- [llms-full.txt](https://app.haotool.org/ratewise/llms-full.txt): LLM 完整技術文件（含 JSON schema、程式碼範例）
