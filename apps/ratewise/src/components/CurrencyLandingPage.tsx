@@ -117,20 +117,28 @@ export function CurrencyLandingPage({
                     <strong className="text-text font-semibold">現金賣出</strong>」價格—— 你去銀行換{' '}
                     {currencyName} 現鈔時實際要付的台幣金額。
                   </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-2 gap-2 text-xs mb-3">
                     <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200/30 p-2 text-center">
                       <div className="font-bold text-red-600 dark:text-red-400 mb-0.5">
-                        中間價（其他工具）
+                        中間價（Google／XE）
                       </div>
-                      <div className="text-text-muted">不是實際換匯金額</div>
+                      <div className="text-text-muted">買入與賣出的平均值</div>
+                      <div className="text-text-muted mt-0.5">≠ 實際換匯金額</div>
                     </div>
                     <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200/30 p-2 text-center">
                       <div className="font-bold text-green-600 dark:text-green-400 mb-0.5">
                         賣出價（RateWise）
                       </div>
-                      <div className="text-text-muted">銀行實際收你的台幣</div>
+                      <div className="text-text-muted">臺灣銀行牌告實際報價</div>
+                      <div className="text-text-muted mt-0.5">= 銀行實際收你的台幣</div>
                     </div>
                   </div>
+                  <p className="text-text-muted text-xs leading-relaxed bg-amber-50 dark:bg-amber-950/20 rounded-lg px-3 py-2 border border-amber-200/30">
+                    <strong className="text-text">差距有多大？</strong> 換 10
+                    萬日圓，中間價與實際賣出價相差約{' '}
+                    <strong className="text-text">1,500～3,000 元台幣</strong>。
+                    換匯金額越大，差距越明顯。
+                  </p>
                 </div>
               </div>
             </div>
@@ -165,9 +173,12 @@ export function CurrencyLandingPage({
             </div>
 
             <div className="card p-4 sm:p-5">
-              <ul className="space-y-3">
+              <ul className="space-y-3 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
                 {highlights.map((highlight, index) => (
-                  <li key={index} className="flex items-start gap-3">
+                  <li
+                    key={index}
+                    className="flex items-start gap-3 md:rounded-xl md:bg-surface md:p-3"
+                  >
                     <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                       {index + 1}
                     </span>
@@ -219,7 +230,7 @@ export function CurrencyLandingPage({
                 <p className="text-text-muted text-xs sm:text-sm mb-4">
                   以下為{currencyName}兌台幣的常見換算金額，點擊即可前往換算器查看最新匯率結果：
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {commonAmounts.map((entry) => (
                     <Link
                       key={entry.amount}
@@ -263,7 +274,7 @@ export function CurrencyLandingPage({
               <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">{faqTitle}</h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 md:max-w-3xl md:mx-auto">
               {faqEntries.map((faq, index) => (
                 <details key={index} className="card group" open={index === 0}>
                   <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-start gap-3 hover:bg-surface/50 transition-colors rounded-2xl">

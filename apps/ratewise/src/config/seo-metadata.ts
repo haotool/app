@@ -261,7 +261,7 @@ export const HOMEPAGE_FAQ = [
   {
     question: 'RateWise 和其他匯率工具有什麼不同？',
     answer:
-      'RateWise 顯示臺灣銀行牌告的實際買入賣出價（現金與即期共四種報價），而非一般工具常用的中間價，讓您換匯前就能知道真正要付多少台幣。',
+      'Google Finance、XE、Yahoo Finance 等工具顯示的是「中間價」（mid-rate）——買入與賣出匯率的平均值，並非你去銀行實際換匯的價格。RateWise 顯示臺灣銀行牌告的實際買入賣出價（現金與即期共四種報價），讓您換匯前就能知道真正要付多少台幣。以日圓為例，中間價與實際賣出價差距約 1～3%，換 10 萬日圓大約差 1,500～3,000 元台幣。',
   },
   {
     question: '支援哪些貨幣？',
@@ -868,8 +868,8 @@ export function getCurrencyLandingPageContent(
         answer: `臺灣銀行各分行可兌換${displayName}現鈔，也可透過外幣帳戶線上換匯。建議出發前先用 RateWise 比較 ${code}/TWD 現金與即期匯率，選擇最適合的換匯方式。`,
       },
       {
-        question: `${displayName}換匯有最低金額限制嗎？`,
-        answer: `各銀行規定不同，臨櫃換鈔通常無嚴格最低限制但可能有手續費。線上換匯則依各銀行外幣帳戶規定。建議先用 RateWise 估算所需金額，再至銀行確認細節。`,
+        question: `出國刷卡的匯率跟 RateWise 顯示的${displayName}台銀牌告匯率一樣嗎？`,
+        answer: `不一樣。出國刷卡使用的是發卡組織（Visa、Mastercard）的清算匯率，再加上發卡銀行的海外交易手續費（通常 1.5%），與臺灣銀行牌告匯率是不同體系。RateWise 顯示的台銀牌告匯率適用於臨櫃換鈔或外幣帳戶匯款，不代表你出國刷卡時的實際扣款匯率。若出國以刷卡為主，建議另行查詢發卡銀行的海外手續費規定。`,
       },
     ],
     howToSteps: [
