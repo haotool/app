@@ -40,10 +40,9 @@ interface SEOProps {
   robots?: string;
 }
 
-const buildFaqSchema = (faq: FAQEntry[], url: string): JsonLdBlock => ({
+const buildFaqSchema = (faq: FAQEntry[]): JsonLdBlock => ({
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  url,
   mainEntity: faq.map(({ question, answer }) => ({
     '@type': 'Question',
     name: question,
@@ -128,7 +127,7 @@ export function SEOHelmet({
   ];
 
   if (faq?.length) {
-    structuredData.push(buildFaqSchema(faq, canonicalUrl));
+    structuredData.push(buildFaqSchema(faq));
   }
 
   if (howTo) {

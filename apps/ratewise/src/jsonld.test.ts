@@ -106,6 +106,36 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
     });
   });
 
+  describe('🟢 FAQPage Schema 不得包含 url 欄位（防止 Google 欄位重複錯誤）', () => {
+    const seoHelmetPath = resolve(__dirname, 'components/SEOHelmet.tsx');
+    const seoHelmetContent = readFileSync(seoHelmetPath, 'utf-8');
+
+    it('buildFaqSchema should NOT include url field to prevent Google duplicate field error', () => {
+      // 提取 buildFaqSchema 函式內容，確認無 url 欄位
+      const faqSchemaMatch = /const buildFaqSchema\s*=[\s\S]*?(?=\nconst build)/.exec(
+        seoHelmetContent,
+      );
+      expect(faqSchemaMatch).toBeTruthy();
+      if (faqSchemaMatch) {
+        expect(faqSchemaMatch[0]).not.toContain('url,');
+        expect(faqSchemaMatch[0]).not.toContain('url:');
+      }
+    });
+
+    it('FAQPage schema should only have @context, @type, and mainEntity fields', () => {
+      // 驗證 buildFaqSchema 僅含 @context、@type、mainEntity
+      const faqSchemaMatch = /const buildFaqSchema\s*=[\s\S]*?(?=\nconst build)/.exec(
+        seoHelmetContent,
+      );
+      expect(faqSchemaMatch).toBeTruthy();
+      if (faqSchemaMatch) {
+        expect(faqSchemaMatch[0]).toContain("'@context': 'https://schema.org'");
+        expect(faqSchemaMatch[0]).toContain("'@type': 'FAQPage'");
+        expect(faqSchemaMatch[0]).toContain('mainEntity');
+      }
+    });
+  });
+
   describe('🟢 SEOHelmet 應該用於子頁面', () => {
     const faqPath = resolve(__dirname, 'pages/FAQ.tsx');
     const aboutPath = resolve(__dirname, 'pages/About.tsx');
