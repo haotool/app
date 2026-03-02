@@ -134,6 +134,33 @@ AI 助手 **必須**：
 3. 推送分支並確認 PR 狀態
 4. 使用 `gh` 合併 PR 至 `main`（在 checks 通過後）
 
+### Phase 7. 版本發布與依賴管理（Release & Dependencies）
+
+**版本發布流程**（適用於 changesets 管理的專案）：
+
+1. 執行 `pnpm changeset version` 處理待發布變更
+2. 驗證版本 SSOT 同步：root `package.json` 與 app `package.json` 版本一致
+3. 執行 `pnpm --filter @app/<name> prebuild` 同步公開 API 檔案版本
+4. 提交版本更新：`chore(release): <App> v<X.Y.Z>`
+5. 推送並確認所有 pre-push 檢查通過
+
+**依賴安全管理**（Dependabot 警告處理）：
+
+1. 查詢開放警告：`gh api repos/<org>/<repo>/dependabot/alerts --jq '.[] | select(.state == "open")'`
+2. 檢查 `package.json` 的 `pnpm.overrides` 是否已涵蓋
+3. 添加缺失的安全版本 override（格式：`"package@<version-range>": ">=<safe-version>"`）
+4. 執行 `pnpm install --no-frozen-lockfile` 套用 override
+5. 提交安全修復：`fix(security): 修復 <package> 安全漏洞`
+
+**PR Rebase 與合併**（處理版本衝突）：
+
+1. 檢查 PR 狀態：`gh pr view <NUMBER> --json mergeStateStatus,mergeable`
+2. 若 `DIRTY/CONFLICTING`，fetch PR 分支並檢查衝突來源
+3. 手動 rebase：`git checkout -b temp-rebase origin/<branch>` → `git rebase origin/main`
+4. 解決版本衝突（優先採用 main 分支版本）
+5. 強制推送：`git push origin temp-rebase:<branch> --force-with-lease`
+6. 等待 CI 通過後使用 `gh pr merge <NUMBER> --squash` 合併
+
 ## Git Workflow & Commit Rules（操作摘要）
 
 ### Commit Message（SSOT: `commitlint.config.cjs`）
@@ -321,13 +348,14 @@ ls -la
 
 ## 修訂紀錄（Revision History）
 
-| 日期       | 版本 | 變更摘要                                                                                            |
-| ---------- | ---- | --------------------------------------------------------------------------------------------------- |
-| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口 |
-| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP   |
-| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                               |
+| 日期       | 版本 | 變更摘要                                                                                                             |
+| ---------- | ---- | -------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史） |
+| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口                  |
+| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP                    |
+| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                                                |
 
 ---
 
-**最後更新**: 2026-02-27T18:24:54+0800
-**版本**: v3.2（補充 Cloudflare 邊緣同步規則：release 需同時檢查 app bundle、worker 與 secret 缺口）
+**最後更新**: 2026-03-02T11:20:00+0800
+**版本**: v3.3（新增版本發布、安全管理、PR Rebase 完整操作流程）
