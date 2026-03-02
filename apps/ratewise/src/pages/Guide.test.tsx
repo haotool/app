@@ -131,34 +131,44 @@ describe('Guide Page - HowTo Schema', () => {
       renderGuide();
       await new Promise((resolve) => setTimeout(resolve, 100));
       const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
-      const howToScript = scripts.find((script) => {
+      const graphScript = scripts.find((script) => {
         try {
-          const data = JSON.parse(script.textContent || '{}') as { '@type'?: string };
-          return data['@type'] === 'HowTo';
+          const data = JSON.parse(script.textContent || '{}') as { '@graph'?: unknown[] };
+          return Array.isArray(data['@graph']);
         } catch {
           return false;
         }
       });
-      expect(howToScript).toBeTruthy();
+      expect(graphScript).toBeTruthy();
+
+      if (graphScript) {
+        const data = JSON.parse(graphScript.textContent || '{}') as {
+          '@graph': { '@type'?: string }[];
+        };
+        const howToItem = data['@graph'].find((item) => item['@type'] === 'HowTo');
+        expect(howToItem).toBeTruthy();
+      }
     });
 
     it('HowTo schema has correct structure with 8 steps', async () => {
       renderGuide();
       await new Promise((resolve) => setTimeout(resolve, 100));
       const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
-      const howToScript = scripts.find((script) => {
+      const graphScript = scripts.find((script) => {
         try {
-          const data = JSON.parse(script.textContent || '{}') as { '@type'?: string };
-          return data['@type'] === 'HowTo';
+          const data = JSON.parse(script.textContent || '{}') as { '@graph'?: unknown[] };
+          return Array.isArray(data['@graph']);
         } catch {
           return false;
         }
       });
 
-      if (howToScript) {
-        const data = JSON.parse(howToScript.textContent || '{}') as Record<string, unknown>;
+      if (graphScript) {
+        const graphData = JSON.parse(graphScript.textContent || '{}') as {
+          '@graph': Record<string, unknown>[];
+        };
+        const data = graphData['@graph'].find((item) => item['@type'] === 'HowTo')!;
         expect(data).toMatchObject({
-          '@context': 'https://schema.org',
           '@type': 'HowTo',
           name: expect.stringContaining('如何使用 RateWise'),
           description: expect.any(String),

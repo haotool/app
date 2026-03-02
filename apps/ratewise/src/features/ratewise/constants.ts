@@ -77,11 +77,12 @@ export const CURRENCY_QUICK_AMOUNTS = {
   MYR: [10, 20, 50, 100, 500], // 馬來幣：與新加坡幣類似
 } as const;
 
-/** 首頁 FAQ 結構化資料（用於 routes.tsx SSG 渲染） */
+/** @deprecated 首頁 FAQ SSOT 已移至 config/seo-metadata.ts HOMEPAGE_FAQ，此處僅保留向後相容 */
 export const HOMEPAGE_FAQ = [
   {
-    question: '匯率來源與更新頻率？',
-    answer: '匯率 100% 參考臺灣銀行牌告，包含現金/即期買入賣出價，每 5 分鐘自動同步一次。',
+    question: 'RateWise 和其他匯率工具有什麼不同？',
+    answer:
+      'RateWise 顯示臺灣銀行牌告的實際買入賣出價（現金與即期共四種報價），而非一般工具常用的中間價，讓您換匯前就能知道真正要付多少台幣。',
   },
   {
     question: '支援哪些貨幣？',
@@ -90,11 +91,11 @@ export const HOMEPAGE_FAQ = [
   },
   {
     question: '可以離線使用嗎？',
-    answer: '可。PWA 首次開啟會快取資源與最近匯率，離線時仍可用上次更新的數據進行換算。',
+    answer: '可以。PWA 首次開啟會快取資源與最近匯率，離線時仍可用上次更新的數據進行換算。',
   },
   {
-    question: '如何查看多幣別與歷史趨勢？',
+    question: '匯率多久更新一次？',
     answer:
-      '切換「多幣別」模式可同時查看所有支援貨幣；單幣別卡片可展開 7~30 天歷史趨勢線圖，輔助判斷換匯時機。',
+      '匯率數據每 5 分鐘自動同步臺灣銀行最新牌告匯率，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理以手動同步。',
   },
 ];

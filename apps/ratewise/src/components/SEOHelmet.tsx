@@ -188,11 +188,15 @@ export function SEOHelmet({
       <meta name="twitter:site" content={APP_INFO.socialHandle} />
       <meta name="twitter:creator" content={APP_INFO.socialHandle} />
 
-      {structuredData.map((item, index) => (
-        <script key={index} type="application/ld+json">
-          {JSON.stringify(item)}
-        </script>
-      ))}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@graph': structuredData.map((item) => {
+            const { '@context': _, ...rest } = item as Record<string, unknown>;
+            return rest;
+          }),
+        })}
+      </script>
     </Head>
   );
 }

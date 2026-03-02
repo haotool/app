@@ -259,8 +259,9 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
 
 export const HOMEPAGE_FAQ = [
   {
-    question: '匯率來源與更新頻率？',
-    answer: '匯率 100% 參考臺灣銀行牌告，包含現金與即期買入賣出價，每 5 分鐘自動同步一次。',
+    question: 'RateWise 和其他匯率工具有什麼不同？',
+    answer:
+      'RateWise 顯示臺灣銀行牌告的實際買入賣出價（現金與即期共四種報價），而非一般工具常用的中間價，讓您換匯前就能知道真正要付多少台幣。',
   },
   {
     question: '支援哪些貨幣？',
@@ -272,19 +273,14 @@ export const HOMEPAGE_FAQ = [
     answer: '可以。PWA 首次開啟會快取資源與最近匯率，離線時仍可用上次更新的數據進行換算。',
   },
   {
-    question: '如何查看多幣別與歷史趨勢？',
+    question: '匯率多久更新一次？',
     answer:
-      '切換到多幣別模式可同時查看所有支援貨幣；單幣別卡片可展開 7 到 30 天歷史趨勢圖，輔助判斷換匯時機。',
+      '匯率數據每 5 分鐘自動同步臺灣銀行最新牌告匯率，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理以手動同步。',
   },
   {
-    question: '如何使用計算機鍵盤快速輸入？',
+    question: '單幣別和多幣別模式有什麼差別？',
     answer:
-      '點擊金額輸入框即可開啟底部計算機鍵盤，支援四則運算（加減乘除）、百分比與退格等操作，單幣別與多幣別模式皆可使用。另有依幣別設計的快速金額按鈕可一鍵帶入常用數字。',
-  },
-  {
-    question: '可以自訂貨幣排列順序嗎？',
-    answer:
-      '可以。在收藏頁面的「所有貨幣」列表中，透過拖曳手柄即可重新排列貨幣順序，拖曳未收藏的貨幣會自動加入收藏，調整後的順序會自動儲存。',
+      '單幣別模式適合精準換算一組貨幣對，可查看詳細買賣價與趨勢圖。多幣別模式可同時查看一個基準貨幣對所有支援貨幣的即時換算結果，適合旅遊前快速比價。',
   },
   {
     question: '支援哪些介面語言？',
@@ -294,6 +290,11 @@ export const HOMEPAGE_FAQ = [
     question: '有哪些主題風格可選？',
     answer:
       '提供 6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林），可在設定頁面中切換。',
+  },
+  {
+    question: '什麼是現金匯率和即期匯率？',
+    answer:
+      '現金匯率適用於臨櫃換鈔，即期匯率適用於匯款與帳戶轉帳。RateWise 同時提供兩種匯率，您可依換匯情境一鍵切換，方便比較差異。',
   },
 ] as const satisfies readonly FAQEntry[];
 
@@ -362,11 +363,6 @@ export const FAQ_PAGE_ENTRIES = [
       'RateWise 的匯率數據 100% 參考臺灣銀行官方牌告匯率，每 5 分鐘自動同步一次，涵蓋現金與即期買入賣出價四種報價。',
   },
   {
-    question: '支援哪些貨幣？',
-    answer:
-      'RateWise 支援超過 30 種主要國際貨幣，涵蓋 TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD、THB、NZD、CHF、VND、PHP、IDR、MYR 等常用幣別。',
-  },
-  {
     question: '現金匯率和即期匯率有什麼差別？',
     answer:
       '現金匯率適用於臨櫃或現鈔兌換，即期匯率適用於匯款與帳戶間轉帳。現金匯率通常比即期匯率差，因為銀行有現鈔保管與運送成本。RateWise 提供兩種匯率切換功能，方便依情境選擇。',
@@ -402,24 +398,9 @@ export const FAQ_PAGE_ENTRIES = [
       '每次換算結果會自動記錄在收藏頁面的「歷史記錄」分頁中。單擊可複製結果到剪貼簿，雙擊或長按可重新載入該組換算，也可一鍵清除全部歷史。',
   },
   {
-    question: '可以離線使用嗎？',
-    answer:
-      '可以。RateWise 採用 PWA 技術與 Service Worker 快取，首次開啟後會快取資源與最近匯率資料，離線時仍可用上次同步的數據進行換算。',
-  },
-  {
     question: '匯率更新頻率如何？',
     answer:
       '匯率數據每 5 分鐘自動更新一次，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理（Pull to Refresh）以手動同步最新牌告資料。',
-  },
-  {
-    question: '有哪些主題風格可以選？',
-    answer:
-      'RateWise 提供 6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林），可在設定頁面中切換。',
-  },
-  {
-    question: '支援哪些介面語言？',
-    answer:
-      '支援繁體中文、English 與日本語三種介面語言，可在設定頁面中切換，所有按鈕、選單與提示文字都會隨語言同步更新。',
   },
   {
     question: '如何安裝 RateWise 到手機桌面？',
@@ -863,33 +844,32 @@ export function getCurrencyLandingPageContent(
         answer: `使用 RateWise 可即時查看 ${code} 兌 TWD 最新匯率，資料 100% 參考臺灣銀行牌告，每 5 分鐘自動更新。點擊「開始換算」即可輸入任意金額查看結果。`,
       },
       {
-        question: `${displayName}匯率數據來源與更新頻率？`,
-        answer: `資料 100% 參考臺灣銀行官方牌告匯率，包含現金買入、現金賣出、即期買入、即期賣出四種報價，每 5 分鐘自動同步一次。`,
+        question: `${displayName}的現金匯率和即期匯率差多少？`,
+        answer: `${displayName}現金匯率與即期匯率的價差取決於銀行現鈔保管與運送成本。臨櫃換鈔看「現金」匯率，外幣帳戶匯款看「即期」匯率。RateWise 可一鍵切換 ${code}/TWD 的現金與即期報價，方便比較差異。`,
       },
       {
-        question: `換${displayName}應該看現金還是即期匯率？`,
-        answer: `若您到銀行臨櫃兌換現鈔，看「現金」匯率；若透過外幣帳戶匯款或線上換匯，看「即期」匯率。現金匯率通常比即期差，因為銀行有現鈔保管與運送成本。RateWise 支援一鍵切換。`,
-      },
-      {
-        question: `${displayName}匯率的買入和賣出怎麼看？`,
-        answer: `買入與賣出是銀行角度。您拿${displayName}換回台幣，看「買入」價格；您拿台幣買${displayName}，看「賣出」價格。RateWise 會依照您選擇的換算方向自動套用正確報價。`,
+        question: `台幣買${displayName}和${displayName}換回台幣的匯率一樣嗎？`,
+        answer: `不一樣。台幣買${displayName}看銀行「賣出」價格，${displayName}換回台幣看銀行「買入」價格，兩者之間有價差。RateWise 會依照您選擇的 ${code}/TWD 換算方向自動套用正確報價。`,
       },
       {
         question: `去${override.region.replace(/前.*$/, '')}前要準備多少${displayName}？`,
         answer: `${override.travelTip}您可使用 RateWise 的快速金額按鈕（${override.popularAmounts.slice(0, 3).map(formatAmount).join('、')} ${code} 等常用金額）估算所需台幣，並在出發前觀察 7~30 天匯率趨勢選擇換匯時機。`,
       },
       {
-        question: '換算結果與實際交易是否相同？',
-        answer: `RateWise 提供臺灣銀行牌告參考匯率，實際交易匯率仍可能因金融機構、交易平台與手續費產生差異，僅供參考，實際交易前請以交易方公告為準。`,
+        question: `${displayName}匯率最近走勢如何？`,
+        answer: `在 RateWise 展開 ${code}/TWD 匯率卡片即可查看 7~30 天歷史趨勢圖，包含最高、最低與平均值，幫助您觀察${displayName}匯率波動並選擇較合適的換匯時機。`,
       },
       {
-        question: '可以離線查看匯率嗎？',
-        answer:
-          '可以。RateWise 採用 PWA 技術，首次開啟後會快取資源與最近匯率資料，離線時仍可用上次同步的數據進行換算。',
+        question: `${formatAmount(override.popularAmounts.at(-1) ?? 0)} ${displayName}大約等於多少台幣？`,
+        answer: `${formatAmount(override.popularAmounts.at(-1) ?? 0)} ${code} 的台幣金額會隨匯率浮動，請使用 RateWise 輸入金額即時查看最新換算結果。資料參考臺灣銀行牌告匯率，每 5 分鐘自動更新。`,
       },
       {
-        question: `如何同時查看${displayName}對多種貨幣？`,
-        answer: `切換到多幣別模式即可同時查看 ${code} 對所有 30+ 種支援貨幣的換算結果。點擊任一貨幣即可設為新的基準貨幣，也可收藏常用貨幣以便快速存取。`,
+        question: `在台灣哪裡可以換${displayName}？`,
+        answer: `臺灣銀行各分行可兌換${displayName}現鈔，也可透過外幣帳戶線上換匯。建議出發前先用 RateWise 比較 ${code}/TWD 現金與即期匯率，選擇最適合的換匯方式。`,
+      },
+      {
+        question: `${displayName}換匯有最低金額限制嗎？`,
+        answer: `各銀行規定不同，臨櫃換鈔通常無嚴格最低限制但可能有手續費。線上換匯則依各銀行外幣帳戶規定。建議先用 RateWise 估算所需金額，再至銀行確認細節。`,
       },
     ],
     howToSteps: [

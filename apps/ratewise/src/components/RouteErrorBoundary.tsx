@@ -15,6 +15,8 @@
  * - 用戶無法透過底部導覽切換到其他頁面或重試
  */
 
+/* eslint-disable react-refresh/only-export-components */
+
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertCircle, RefreshCw, WifiOff } from 'lucide-react';
 import i18n from '../i18n';
