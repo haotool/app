@@ -209,7 +209,15 @@ function extractJsonLd(html) {
   scripts.forEach((script) => {
     try {
       const jsonLd = JSON.parse(script.textContent);
-      jsonLdList.push(jsonLd);
+      // 展開 @graph 格式（SEOHelmet 使用 @graph 輸出）
+      if (jsonLd['@graph'] && Array.isArray(jsonLd['@graph'])) {
+        jsonLd['@graph'].forEach((item) => {
+          const ctx = item['@context'] ?? jsonLd['@context'];
+          jsonLdList.push(ctx ? { '@context': ctx, ...item } : item);
+        });
+      } else {
+        jsonLdList.push(jsonLd);
+      }
     } catch (error) {
       console.warn(`Failed to parse JSON-LD: ${error.message}`);
     }
@@ -337,11 +345,8 @@ async function main() {
     if (r.result.valid && existsSync(r.page.html)) {
       const html = readFileSync(r.page.html, 'utf-8');
       const jsonLdList = extractJsonLd(html);
-      jsonLdList.forEach((jsonLd) => {
-        const schemas = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
-        schemas.forEach((s) => {
-          if (s['@type']) schemaTypes.add(s['@type']);
-        });
+      jsonLdList.forEach((s) => {
+        if (s['@type']) schemaTypes.add(s['@type']);
       });
     }
   });

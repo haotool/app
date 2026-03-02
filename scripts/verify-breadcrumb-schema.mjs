@@ -163,6 +163,13 @@ function verifyPageBreadcrumb(htmlPath, pagePath) {
       } else if (jsonLd['@type'] === 'BreadcrumbList') {
         breadcrumbSchema = jsonLd;
         break;
+      } else if (jsonLd['@graph'] && Array.isArray(jsonLd['@graph'])) {
+        // 處理 @graph 格式（SEOHelmet 使用 @graph 輸出，@context 在父層）
+        const found = jsonLd['@graph'].find((s) => s['@type'] === 'BreadcrumbList');
+        if (found) {
+          breadcrumbSchema = { '@context': jsonLd['@context'], ...found };
+          break;
+        }
       }
     } catch (error) {
       console.warn(`Failed to parse JSON-LD: ${error.message}`);
