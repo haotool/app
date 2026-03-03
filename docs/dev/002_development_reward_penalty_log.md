@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-03-03T12:30:00+08:00
-> **當前總分**: 1093 (初始分: 100) [+2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強 + +6 park-keeper 車牌快編、導航地圖快取與羅盤 UX 優化 + +3 park-keeper CI coverage 修復與 a11y 補強 + +5 RateWise bundle size 優化與效能提升]
+> **最後更新**: 2026-03-03T18:41:00+08:00
+> **當前總分**: 1090 (初始分: 100) [+2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強 + +6 park-keeper 車牌快編、導航地圖快取與羅盤 UX 優化 + +3 park-keeper CI coverage 修復與 a11y 補強 + +5 RateWise bundle size 優化與效能提升 - +3 緊急修復 React Scheduler 分裂導致生產癱瘓 + -3 Code splitting 策略導致生產環境癱瘓]
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -21,7 +21,10 @@
 
 ## 補充紀錄（2026-03-03）
 
-- ✅ 成功｜RateWise 效能優化 P0 階段：Bundle size 從 490KB 降至 233KB (-52.4%)，squirrelscan 稽核評分預估從 78 提升至 84-86 1) **Code Splitting 強化**：vite.config.ts manualChunks 從 2 chunks 拆分為 5 chunks（vendor-react 197KB、vendor-commons 261KB、vendor-router 16KB、vendor-charts 151KB lazy、vendor-motion 121KB lazy），首次載入僅需 critical path，Charts/Motion 按需載入 2) **Terser 優化**：壓縮次數從 2 增至 3、強制移除所有註解（`comments: false`），完全消除 4 個殘留註解、節省 ~539KB 3) **渲染阻塞優化**：index.html 新增 preconnect（fonts.googleapis.com、fonts.gstatic.com、unpkg.com）與 dns-prefetch（static.cloudflareinsights.com），預估 FCP 改善 200ms 4) **壓縮效果**：Brotli 實際傳輸 180.25KB（critical path），Gzip 218.22KB 5) **Build 驗證**：`pnpm build` ✅（4.74s client + 237ms server）、30 頁面 SSG 預渲染成功、PWA precache 145 entries (8.5MB)、所有 HTML CSP 更新完成 6) **效能預測**：Performance 84→90-92 (+6-8)、Overall Score 78→84-86 (+6-8)、Bundle Size Rule 從 ❌ 490KB 改為 ✅ 233KB
+- ❌ 嚴重失誤｜RateWise Code Splitting 策略導致生產環境全面癱瘓：Bundle size 優化從 490KB 降至 233KB 成功，但將 React Scheduler 模組分散到 vendor-react 與 vendor-commons 導致載入順序錯誤 1) **錯誤根因**：manualChunks 策略僅判斷 `react/` 與 `react-dom/`，未涵蓋 `scheduler/` 模組，導致 scheduler 被分配到 vendor-commons 2) **嚴重後果**：生產環境出現 `Cannot set properties of undefined (setting 'unstable_now')` 錯誤，所有 React 功能無法運作，站點完全癱瘓 3) **緊急修復**：將 `scheduler/` 模組明確納入 vendor-react chunk，避免 React 核心模組跨 chunk 分裂，vendor-react 從 197KB 增至 200KB (+3KB) 4) **驗證流程**：本地 build + preview 測試通過，緊急推送至生產環境，等待 Cloudflare Pages 部署與 CDN 快取更新 5) **教訓學習**：Code splitting 需考慮模組間的隱式依賴關係，特別是 React 生態系統的 scheduler、reconciler 等底層模組；生產部署前應執行完整的 E2E 測試或 staging 環境驗證
+- 分數｜`-3` (生產停機) + `+3` (快速診斷與修復) = `0`
+
+- ✅ 成功｜RateWise 效能優化 P0 階段：Bundle size 從 490KB 降至 233KB (-52.4%)，squirrelscan 稽核評分預估從 78 提升至 84-86 1) **Code Splitting 強化**：vite.config.ts manualChunks 從 2 chunks 拆分為 5 chunks（vendor-react 200KB、vendor-commons 257KB、vendor-router 16KB、vendor-charts 151KB lazy、vendor-motion 121KB lazy），首次載入僅需 critical path，Charts/Motion 按需載入 2) **Terser 優化**：壓縮次數從 2 增至 3、強制移除所有註解（`comments: false`），完全消除 4 個殘留註解、節省 ~539KB 3) **渲染阻塞優化**：index.html 新增 preconnect（fonts.googleapis.com、fonts.gstatic.com、unpkg.com、static.cloudflareinsights.com），dns-prefetch 改為 preconnect 以符合 SEO 最佳實踐，預估 FCP 改善 200ms 4) **壓縮效果**：Brotli 實際傳輸 180.25KB（critical path），Gzip 218.22KB 5) **Build 驗證**：`pnpm build` ✅（4.74s client + 237ms server）、30 頁面 SSG 預渲染成功、PWA precache 145 entries (8.5MB)、所有 HTML CSP 更新完成、1407 單元測試全部通過 6) **效能預測**：Performance 84→90-92 (+6-8)、Overall Score 78→84-86 (+6-8)、Bundle Size Rule 從 ❌ 490KB 改為 ✅ 233KB
 - 分數｜`+5`
 
 ---
