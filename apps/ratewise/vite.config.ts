@@ -428,8 +428,8 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
 
-            // React 核心生態系統（基礎依賴）
-            if (id.includes('react/') || id.includes('react-dom/')) {
+            // React 核心生態系統（基礎依賴）- 包含 scheduler 避免模組分裂
+            if (id.includes('react/') || id.includes('react-dom/') || id.includes('scheduler/')) {
               return 'vendor-react';
             }
 
