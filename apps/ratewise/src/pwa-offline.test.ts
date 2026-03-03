@@ -106,9 +106,9 @@ describe('PWA 離線功能測試', () => {
       viteConfig = readFileSync(resolve(ROOT_PATH, 'vite.config.ts'), 'utf-8');
     });
 
-    it('should allow Cloudflare Insights in script-src', () => {
-      // CSP 應該允許 Cloudflare Insights
-      expect(viteConfig).toContain('static.cloudflareinsights.com');
+    it('should not manage CSP allowlists inside vite config when Cloudflare is the SSOT', () => {
+      expect(viteConfig).not.toContain('vite-plugin-csp-guard');
+      expect(viteConfig).not.toContain('static.cloudflareinsights.com');
     });
   });
 
