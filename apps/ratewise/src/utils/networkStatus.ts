@@ -1,5 +1,9 @@
 /** 網路狀態工具：先看 navigator.onLine，再做實際探測。 */
 
+function isLoopbackHost(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+}
+
 function getProbeUrl(): string {
   const basePath = import.meta.env.BASE_URL || '/';
   const normalizedBase = basePath.endsWith('/') ? basePath : `${basePath}/`;
@@ -22,17 +26,21 @@ export async function checkNetworkConnectivity(timeout = 3000): Promise<boolean>
     return true;
   }
 
+  if (isLoopbackHost(window.location.hostname)) {
+    return true;
+  }
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
-    await fetch(getProbeUrl(), {
+    const response = await fetch(getProbeUrl(), {
       method: 'GET',
       cache: 'no-store',
       credentials: 'same-origin',
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
-    return true;
+    return response.ok;
   } catch {
     return false;
   }

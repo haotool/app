@@ -12,7 +12,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { checkOnlineStatus, checkNetworkConnectivity, isOnline } from '../networkStatus';
 
 describe('🔴 RED: Network Status Detection', () => {
+  const originalLocation = window.location;
+
   beforeEach(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: new URL('https://app.haotool.org/ratewise/'),
+    });
+
     // Reset fetch mock
     vi.clearAllMocks();
 
@@ -26,6 +33,10 @@ describe('🔴 RED: Network Status Detection', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    });
   });
 
   describe('checkOnlineStatus - Basic navigator.onLine Check', () => {
@@ -61,13 +72,14 @@ describe('🔴 RED: Network Status Detection', () => {
       expect(result).toBe(true);
       expect(global.fetch).toHaveBeenCalledTimes(1);
 
-      // Verify probe path + cache busting query parameter exist
+      // Verify probe asset + cache busting query parameter exist
       const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as
         | string
         | undefined;
       expect(fetchCall).toBeDefined();
       expect(fetchCall).toContain('__network_probe__');
       expect(fetchCall).toMatch(/\?t=\d+/);
+      expect(fetchCall).not.toContain('/ratewise/manifest.webmanifest');
     });
 
     it('should return false when fetch fails with network error', async () => {
@@ -77,7 +89,7 @@ describe('🔴 RED: Network Status Detection', () => {
       expect(result).toBe(false);
     });
 
-    it('should return true when fetch resolves even with non-ok status', async () => {
+    it('should return false when fetch resolves with non-ok status', async () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
           ok: false,
@@ -86,7 +98,7 @@ describe('🔴 RED: Network Status Detection', () => {
       );
 
       const result = await checkNetworkConnectivity();
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     it('should use GET request on probe endpoint', async () => {
@@ -106,6 +118,14 @@ describe('🔴 RED: Network Status Detection', () => {
           credentials: 'same-origin',
         }),
       );
+    });
+
+    it('should treat missing probe resource as offline only when fetch rejects', async () => {
+      global.fetch = vi.fn(() => Promise.reject(new TypeError('Failed to fetch')));
+
+      const result = await checkNetworkConnectivity();
+
+      expect(result).toBe(false);
     });
 
     it('should use cache: no-store to bypass cache', async () => {
@@ -141,6 +161,25 @@ describe('🔴 RED: Network Status Detection', () => {
       // 使用較短的超時時間（100ms）來快速測試
       const result = await checkNetworkConnectivity(100);
       expect(result).toBe(false);
+    });
+
+    it('should skip active probe on localhost to avoid stale service worker noise', async () => {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: new URL('http://127.0.0.1:4173/ratewise/'),
+      });
+
+      global.fetch = vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+        } as Response),
+      );
+
+      const result = await checkNetworkConnectivity();
+
+      expect(result).toBe(true);
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 

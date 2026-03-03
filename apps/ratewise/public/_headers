@@ -34,6 +34,10 @@
   Cache-Control: public, max-age=0, must-revalidate
 /workbox-*.js
   Cache-Control: public, max-age=0, must-revalidate
+/__network_probe__
+  Cache-Control: no-store
+/ratewise/__network_probe__
+  Cache-Control: no-store
 
 # Manifest 與 Icons - 中期快取（1天）
 /manifest.webmanifest

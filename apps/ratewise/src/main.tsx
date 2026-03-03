@@ -21,7 +21,6 @@ import './index.css';
 import { logger } from './utils/logger';
 import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
-import { initCSPReporter } from './utils/csp-reporter';
 import { APP_VERSION, BUILD_TIME } from './config/version';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { initPWAStorageManager } from './utils/pwaStorageManager';
@@ -39,9 +38,6 @@ export const createRoot = ViteReactSSG(
   ({ isClient }) => {
     // Client-side initialization
     if (isClient) {
-      // Initialize CSP violation monitoring
-      initCSPReporter();
-
       // Log application startup
       logger.info('Application starting', {
         environment: import.meta.env.MODE,

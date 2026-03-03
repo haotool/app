@@ -269,21 +269,11 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toContain('<meta name="cloudflare-rocket-loader" content="off"');
     });
 
-    it('should not have unsafe-inline in script-src CSP', () => {
+    it('should not inject Content-Security-Policy meta tags into prerendered HTML', () => {
       if (!existsSync(indexHtml)) return;
 
       const content = readFileSync(indexHtml, 'utf-8');
-      const cspMetaMatch =
-        /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/i.exec(content);
-
-      if (cspMetaMatch?.[1]) {
-        const cspContent = cspMetaMatch[1];
-        const scriptSrcMatch = /script-src[^;]+/.exec(cspContent);
-
-        if (scriptSrcMatch) {
-          expect(scriptSrcMatch[0]).not.toContain('unsafe-inline');
-        }
-      }
+      expect(content).not.toMatch(/<meta[^>]*http-equiv="Content-Security-Policy"/i);
     });
   });
 

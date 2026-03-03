@@ -4,7 +4,6 @@ import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { imagetools } from 'vite-imagetools';
-import csp from 'vite-plugin-csp-guard';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -224,24 +223,6 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
-      // CSP 防護（開發禁用，生產由 Nginx HTTP header 提供）
-      csp({
-        algorithm: 'sha256',
-        dev: { run: false }, // 開發模式禁用 CSP（允許 HMR 和 CSS-in-JS）
-        build: {
-          sri: true, // 啟用 Subresource Integrity
-        },
-        policy: {
-          'script-src': ["'self'", 'https://static.cloudflareinsights.com'],
-          'style-src': [
-            "'self'",
-            // CSS-in-JS 空字串 SHA-256 hash
-            "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
-          ],
-          // 允許匯率 API 請求
-          'connect-src': ["'self'", 'https://raw.githubusercontent.com'],
-        },
-      }),
       // 圖片優化（自動生成 avif/webp/png 多格式）
       imagetools({
         defaultDirectives: (url) => {
@@ -262,7 +243,7 @@ export default defineConfig(({ mode }) => {
           return html.replace(/__APP_VERSION__/g, appVersion).replace(/__BUILD_TIME__/g, buildTime);
         },
       },
-      // Brotli 壓縮（CSP meta 由 postbuild 移除，CSP 由 Nginx header 提供）
+      // Brotli 壓縮
       viteCompression({
         algorithm: 'brotliCompress',
         ext: '.br',

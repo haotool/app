@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -21,6 +22,11 @@ async function readRootPackageJson() {
 async function readViteConfig() {
   const viteConfigPath = path.resolve(__dirname, '../../../vite.config.ts');
   return readFile(viteConfigPath, 'utf-8');
+}
+
+async function readMainEntry() {
+  const mainEntryPath = path.resolve(__dirname, '../../../src/main.tsx');
+  return readFile(mainEntryPath, 'utf-8');
 }
 
 describe('ratewise build scripts', () => {
@@ -66,5 +72,21 @@ describe('ratewise build scripts', () => {
 
     expect(seoMetadata).not.toContain('optimized/logo-512w.png');
     expect(seoMetadata).toContain('icons/ratewise-icon-512x512.png');
+  });
+
+  it('should not manage CSP inside the app build pipeline when Cloudflare is the SSOT', async () => {
+    const packageJson = await readPackageJson();
+    const viteConfig = await readViteConfig();
+    const mainEntry = await readMainEntry();
+
+    expect(packageJson.scripts?.['postbuild']).not.toContain('update-csp-meta');
+    expect(viteConfig).not.toContain("from 'vite-plugin-csp-guard'");
+    expect(viteConfig).not.toContain('csp({');
+    expect(mainEntry).not.toContain('initCSPReporter');
+  });
+
+  it('should ship a real network probe asset for online checks', () => {
+    const probePath = path.resolve(__dirname, '../../../public/__network_probe__');
+    expect(existsSync(probePath)).toBe(true);
   });
 });
