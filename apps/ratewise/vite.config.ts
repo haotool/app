@@ -428,11 +428,28 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
 
-            // 只對重量級且相對獨立的套件做手動拆分。
-            // React / router / i18n 生態交由 Rollup 自動分配，避免循環 chunk。
-            if (id.includes('lightweight-charts')) return 'vendor-charts';
-            if (id.includes('motion') || id.includes('framer-motion')) return 'vendor-motion';
-            return undefined;
+            // React 核心生態系統（基礎依賴）
+            if (id.includes('react/') || id.includes('react-dom/')) {
+              return 'vendor-react';
+            }
+
+            // Router（路由系統）
+            if (id.includes('react-router')) {
+              return 'vendor-router';
+            }
+
+            // Charts（重量級視覺化庫）
+            if (id.includes('lightweight-charts')) {
+              return 'vendor-charts';
+            }
+
+            // Animation（重量級動畫庫）
+            if (id.includes('motion') || id.includes('framer-motion')) {
+              return 'vendor-motion';
+            }
+
+            // 其他 vendor 依賴統一打包
+            return 'vendor-commons';
           },
           chunkFileNames: 'assets/[name]-[hash].js',
           entryFileNames: 'assets/[name]-[hash].js',
@@ -448,9 +465,12 @@ export default defineConfig(({ mode }) => {
           drop_console: true, // 生產環境移除 console
           drop_debugger: true,
           pure_funcs: ['console.log', 'console.debug', 'console.info', 'console.warn'],
-          passes: 2,
+          passes: 3, // 增加壓縮次數以獲得更好的結果
           dead_code: true,
           unused: true,
+        },
+        format: {
+          comments: false, // 強制移除所有註解
         },
         mangle: {
           safari10: true,
