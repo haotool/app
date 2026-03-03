@@ -202,6 +202,22 @@ export default tseslint.config(
     },
   },
 
+  // Cloudflare Workers 全域變數（security-headers worker）
+  {
+    files: ['security-headers/src/**/*.js'],
+    languageOptions: {
+      globals: {
+        URL: 'readonly',
+        Response: 'readonly',
+        Request: 'readonly',
+        fetch: 'readonly',
+        crypto: 'readonly',
+        TextEncoder: 'readonly',
+        btoa: 'readonly',
+      },
+    },
+  },
+
   // Prettier 配置（必須放在最後）
   prettierConfig,
 );
