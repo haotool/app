@@ -7,7 +7,6 @@
 import React from 'react';
 // ESM 封裝層：react-helmet-async 在 Vite 7 SSR 下需經相容處理
 import { HelmetProvider } from '../utils/react-helmet-async';
-import { RouteAnalytics } from '@shared/analytics';
 import { ErrorBoundary } from './ErrorBoundary';
 import { SkeletonLoader } from './SkeletonLoader';
 import { Footer } from './Footer';
@@ -39,8 +38,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <React.StrictMode>
-      {/* SEO 落地頁間的 SPA 路由切換追蹤 */}
-      <RouteAnalytics />
       <HelmetProvider context={helmetContext}>
         <ErrorBoundary>
           <div
