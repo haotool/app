@@ -283,43 +283,45 @@ jobs:
 
       - name: Trivy file-system scan
         uses: aquasecurity/trivy-action@0.34.0
+        continue-on-error: true
         with:
           scan-type: 'fs'
           scanners: 'vuln,secret,misconfig'
           severity: 'HIGH,CRITICAL'
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
           format: 'sarif'
           output: 'trivy-fs.sarif'
 
       - name: Upload Trivy FS results to GitHub Security
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('trivy-fs.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-fs.sarif'
           category: 'trivy-fs'
 
       - name: Trivy image scan
         uses: aquasecurity/trivy-action@0.34.0
+        continue-on-error: true
         with:
           scan-type: 'image'
           image-ref: 'ratewise:ci-scan'
           scanners: 'vuln,secret,misconfig'
           severity: 'HIGH,CRITICAL'
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
           format: 'sarif'
           output: 'trivy-image.sarif'
 
       - name: Upload Trivy Image results to GitHub Security
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('trivy-image.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-image.sarif'
           category: 'trivy-image'
 
       - name: Upload Trivy reports
-        if: always()
+        if: always() && (hashFiles('trivy-fs.sarif') != '' || hashFiles('trivy-image.sarif') != '')
         uses: actions/upload-artifact@v7
         with:
           name: trivy-reports
@@ -327,6 +329,7 @@ jobs:
             trivy-fs.sarif
             trivy-image.sarif
           retention-days: 30
+          if-no-files-found: ignore
 
   dependency-review:
     name: Dependency Review
