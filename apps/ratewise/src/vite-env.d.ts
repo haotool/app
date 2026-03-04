@@ -8,6 +8,7 @@ declare const __BUILD_TIME__: string;
 interface ImportMetaEnv {
   readonly VITE_APP_VERSION?: string;
   readonly VITE_BUILD_TIME?: string;
+  readonly VITE_GA_ID?: string;
 }
 
 interface ImportMeta {

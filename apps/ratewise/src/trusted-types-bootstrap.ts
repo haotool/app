@@ -85,8 +85,13 @@ const POLICY_CONFIG: RatewiseTrustedTypePolicyOptions = {
     return passThrough(input);
   },
   createScriptURL: (input: string) => {
-    // 允許相對路徑和 Cloudflare Insights
-    const allowedDomains = ['cloudflareinsights.com', 'static.cloudflareinsights.com'];
+    // 允許相對路徑、Cloudflare Insights 和 Google Analytics（gtag.js 動態注入）
+    const allowedDomains = [
+      'cloudflareinsights.com',
+      'static.cloudflareinsights.com',
+      'googletagmanager.com',
+      'www.googletagmanager.com',
+    ];
 
     if (input.startsWith('/') || input.startsWith('./') || isAllowedDomain(input, allowedDomains)) {
       return input;

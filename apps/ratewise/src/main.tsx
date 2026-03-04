@@ -24,6 +24,7 @@ import { handleVersionUpdate } from './utils/versionManager';
 import { APP_VERSION, BUILD_TIME } from './config/version';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { initPWAStorageManager } from './utils/pwaStorageManager';
+import { initGA, trackPageview } from '@shared/analytics';
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(
@@ -38,6 +39,11 @@ export const createRoot = ViteReactSSG(
   ({ isClient }) => {
     // Client-side initialization
     if (isClient) {
+      // GA4 初始化（VITE_GA_ID 空值時不啟用，避免污染 dev 報表）
+      initGA(import.meta.env.VITE_GA_ID ?? '');
+      // 送出初始 pageview（send_page_view: false 所以需手動送）
+      trackPageview(window.location.pathname + window.location.search);
+
       // Log application startup
       logger.info('Application starting', {
         environment: import.meta.env.MODE,

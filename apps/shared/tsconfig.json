@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM"],
+    "noEmit": true,
+    "baseUrl": "."
+  },
+  "include": ["analytics/**/*.ts", "analytics/**/*.tsx"]
+}

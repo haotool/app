@@ -508,6 +508,9 @@ importers:
 
   apps/ratewise:
     dependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -656,6 +659,18 @@ importers:
       workbox-window:
         specifier: ^7.4.0
         version: 7.4.0
+
+  apps/shared:
+    devDependencies:
+      '@types/react':
+        specifier: ^19.2.9
+        version: 19.2.9
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
+      react-router-dom:
+        specifier: ^6.30.3
+        version: 6.30.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
 
 packages:
 

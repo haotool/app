@@ -14,6 +14,7 @@ import { UpdatePrompt } from './UpdatePrompt';
 import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
 import { getTopLevelTransitionDirection, pageTransition } from '../config/animations';
+import { RouteAnalytics } from '@shared/analytics';
 
 /** Logo 組件 */
 function Logo() {
@@ -112,6 +113,8 @@ export function AppLayout() {
 
   return (
     <ToastProvider>
+      {/* SPA 路由變更時送出 GA4 page_view */}
+      <RouteAnalytics />
       {/* 根容器：固定視口高度，啟用 flex 滾動 */}
       <div className="h-dvh w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))] overflow-hidden">
         {/* Desktop sidebar (≥768px) */}
