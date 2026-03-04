@@ -41,6 +41,7 @@ COPY apps/nihonname/package.json ./apps/nihonname/
 COPY apps/haotool/package.json ./apps/haotool/
 COPY apps/quake-school/package.json ./apps/quake-school/
 COPY apps/park-keeper/package.json ./apps/park-keeper/
+COPY apps/shared/package.json ./apps/shared/
 
 # [fix:2025-11-06] 安裝依賴時禁用 Husky 並清空 NODE_ENV
 # Zeabur 可能自動設置 NODE_ENV=production，導致 devDependencies 被跳過
