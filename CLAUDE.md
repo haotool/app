@@ -337,6 +337,41 @@ ls -la
 - 非互動 `wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` 與 `CLOUDFLARE_ACCOUNT_ID`
 - 若 secret 缺失，workflow 應明確 `skip` 並回報，不可把「release 綠燈」等同於「邊緣標頭已同步」
 
+### 5. security-headers Worker 部署 SOP
+
+**目錄**：`security-headers/`，唯一維護對象為 `src/worker.js`
+
+**認證**：wrangler OAuth token 會過期；部署前先確認：
+
+```bash
+npx wrangler whoami  # 若失敗改用 CLOUDFLARE_API_TOKEN env var 或 wrangler login
+```
+
+**部署**：
+
+```bash
+cd security-headers && npx wrangler deploy
+```
+
+**版本號**：修改時必須同步 4 處（JSDoc 標題、變更記錄、`__network_probe__` header、主回應 header）
+
+**部署後驗證**（必須用 GET，不能用 HEAD）：
+
+```bash
+curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy-version\|script-src'
+# 範例：curl -s --compressed https://app.haotool.org/ratewise/ -D - -o /dev/null | grep -i 'x-security-policy-version\|script-src'
+```
+
+**已知假陽性**：
+
+- HEAD 請求 CSP 無 hash — 正確行為（無 body 可計算）
+- Playwright 顯示 `ERR_FAILED @ gtag/js` — `--disable-background-networking` 測試環境攔截，非 CSP 問題
+- Cloudflare Dashboard 程式碼與本地不同 — wrangler 用 esbuild 編譯，正常現象
+
+**esbuild 說明**：wrangler deploy 自動用 esbuild 打包，Cloudflare 上看到的是編譯輸出（含 `__defProp`、`__name()` 等 helper）— 只維護 `src/worker.js`，不直接編輯 Dashboard。
+
+**ratewise CSP connect-src 必要域名**：`googletagmanager.com`（GA4 配置請求）、`google-analytics.com`、`region1.google-analytics.com`、`analytics.google.com`、`cdn.jsdelivr.net`
+
 ## 外部寫作與 SOP 格式基準（2026-02-27 查詢）
 
 本文件格式與寫法結合 `.example/config/CLAUDE.md` 的簡潔風格，並參考：
@@ -348,12 +383,13 @@ ls -la
 
 ## 修訂紀錄（Revision History）
 
-| 日期       | 版本 | 變更摘要                                                                                                             |
-| ---------- | ---- | -------------------------------------------------------------------------------------------------------------------- |
-| 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史） |
-| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口                  |
-| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP                    |
-| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                                                |
+| 日期       | 版本 | 變更摘要                                                                                                                |
+| ---------- | ---- | ----------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-06 | v3.4 | 新增「security-headers Worker 部署 SOP」：wrangler 認證、esbuild 說明、版本號同步、假陽性清單、CSP connect-src 必要域名 |
+| 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史）    |
+| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口                     |
+| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP                       |
+| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                                                   |
 
 ---
 

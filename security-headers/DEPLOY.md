@@ -33,18 +33,32 @@ pnpm exec wrangler deploy
 ### 部署後驗證
 
 ```bash
-# 1. 檢查版本號
-curl -I https://app.haotool.org/ratewise/ | grep X-Security-Policy-Version
-# 預期: X-Security-Policy-Version: 3.3
+# 1. 檢查版本號（HEAD 請求即可）
+curl -sI https://app.haotool.org/ratewise/ | grep X-Security-Policy-Version
+# 預期: x-security-policy-version: 3.4
 
-# 2. 使用 Playwright 驗證 Console 無錯誤
-# 預期: 0 errors, 0-3 warnings (Permissions-Policy 非關鍵)
+# 2. 確認 CSP hashes（必須用 GET，HEAD 請求不含 hash — 這是正確行為）
+curl -s --compressed https://app.haotool.org/ratewise/ -D - -o /dev/null | grep script-src
+# 預期: 5 個 sha256-... hash + https://www.googletagmanager.com
 
-# 3. 驗證 Google Analytics 載入
-# 預期: https://www.googletagmanager.com/gtag/js 成功載入
+# 3. 確認 connect-src 包含 googletagmanager
+curl -sI https://app.haotool.org/ratewise/ | grep connect-src
+# 預期: ... https://www.googletagmanager.com ...
+
+# 4. Playwright console 驗證（預期 1 個假陽性 ERR_FAILED，0 個 CSP 違規）
 ```
 
+**注意**：Playwright 顯示的 `ERR_FAILED @ gtag/js` 是測試環境假陽性（`--disable-background-networking` flag），生產環境不受影響。
+
 ## 版本歷史
+
+### v3.4 (2026-03-06)
+
+**修復**: GA4 XHR 請求被 CSP connect-src 阻擋；GA4 script COEP 相容性
+
+- `connect-src` 新增 `https://www.googletagmanager.com`（gtag.js 初始化時的配置 fetch）
+- `ga.ts` 動態注入 `<script>` 加上 `crossOrigin = 'anonymous'`（符合 `COEP: require-corp`）
+- `__network_probe__` 版本號從 `3.2` 對齊至 `3.4`
 
 ### v3.3 (2026-03-05)
 
