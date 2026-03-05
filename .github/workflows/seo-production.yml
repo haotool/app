@@ -3,16 +3,17 @@ name: SEO Production Validation
 # 生產環境 SEO 統一驗證工作流
 # 功能:
 # 1. 健康檢查: HTTP 200、sitemap.xml、robots.txt、llms.txt
-# 2. E2E 測試: Meta Tags、Open Graph、JSON-LD、圖片資源
-# 3. 支援所有 apps: ratewise + nihonname + haotool
+# 2. JSON-LD 驗證: Schema.org 結構化數據完整性與正確性
+# 3. E2E 測試: Meta Tags、Open Graph、圖片資源
+# 4. 支援所有 apps: ratewise + nihonname + haotool
 #
 # 觸發條件:
 # - Release 成功後自動執行
 # - 手動觸發 (workflow_dispatch)
 # - 每日定時檢查 (UTC 00:00 = 台北 08:00)
 #
-# 更新時間: 2026-01-29
-# 依據: [SEO Best Practices 2025][Linus: 消除特殊情況]
+# 更新時間: 2026-03-05
+# 依據: [SEO Best Practices 2025][Schema.org Guidelines 2025][Linus: 消除特殊情況]
 
 on:
   workflow_run:
@@ -68,6 +69,38 @@ jobs:
 
       - name: Run All Apps SEO Health Check
         run: node scripts/verify-all-apps.mjs
+
+  structured-data-validation:
+    name: Structured Data Validation
+    needs: health-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build RateWise for validation
+        run: pnpm build:ratewise
+
+      - name: Verify JSON-LD Structured Data
+        run: node scripts/verify-structured-data.mjs
 
   e2e-validation:
     name: SEO E2E Validation
@@ -128,7 +161,7 @@ jobs:
 
   summary:
     name: Generate Summary
-    needs: [health-check, e2e-validation]
+    needs: [health-check, structured-data-validation, e2e-validation]
     runs-on: ubuntu-latest
     if: always()
     permissions:
@@ -142,6 +175,7 @@ jobs:
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Health Check | ${{ needs.health-check.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Structured Data | ${{ needs.structured-data-validation.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E Validation | ${{ needs.e2e-validation.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
