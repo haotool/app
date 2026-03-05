@@ -41,8 +41,10 @@ export function initGA(measurementId: string): void {
   });
 
   // CSP script-src 已允許 googletagmanager.com，Trusted Types 亦已加白名單。
+  // crossOrigin='anonymous'：CORS 模式載入，符合 COEP require-corp 跨源隔離環境要求。
   const script = document.createElement('script');
   script.async = true;
+  script.crossOrigin = 'anonymous';
   script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
   document.head.appendChild(script);
 }

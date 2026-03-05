@@ -1,36 +1,32 @@
 /**
- * Cloudflare Worker - Security Headers (SSOT) v3.3
+ * 安全標頭 Worker v3.4
  *
- * 目標：
- * 1. Cloudflare 成為安全標頭唯一來源
- * 2. RateWise / haotool.org/ratewise/ 保持 A+ 安全標頭評等
- * 3. 動態計算 inline script SHA-256 hash，移除 unsafe-inline
- * 4. haotool.org / www.haotool.org 根站達到 A+ 評等
- * 5. GA4 / GTM-W4LKKNL 不被 CSP 阻擋
- * 6. Zeabur 來源標頭對外隱藏
+ * 本 Worker 為 HTTP 安全標頭的唯一來源（SSOT），統一管理所有路由的安全政策，
+ * 無需修改應用程式原始碼。
  *
- * 設計原則：
- * - CSP 僅套用在 text/html，避免非 HTML 資源帶上不必要 header
- * - ratewise 路徑（任意 host）：動態計算 inline script hashes 取代 unsafe-inline
- * - haotool.org 非 ratewise 路徑：寬鬆基本標頭（達 A+ 最低要求）
- * - OG / social 圖片保留跨域例外
- * - COEP/COOP 僅對 ratewise 生效，避免未知跨域資源中斷
+ * 路由策略：
+ * - /ratewise/*  嚴格 CSP，動態計算 SHA-256 inline script hash 取代 unsafe-inline；
+ *                啟用 COEP/COOP 跨域隔離；connect-src 相容 GA4 所需域名。
+ * - haotool.org  寬鬆基準 CSP，符合 A+ 安全評等最低要求。
+ * - OG 圖片資源  開放跨域存取，確保社群平台爬取正常運作。
+ * - 所有路由     HSTS、X-Content-Type-Options、X-Frame-Options；
+ *                移除洩漏來源資訊的上游標頭（Server、X-Powered-By 等）。
  *
- * v3.3 變更記錄 (2026-03-05)：
- * - 修復：移除 inline script 內容 trim()，保留原始空白以符合瀏覽器 CSP hash 驗證
- * - 影響：解決 GA4 inline script 被 CSP 阻擋問題（ERR_FAILED）
+ * CSP Hash 計算原則：
+ * 使用 Web Crypto API（SHA-256）對 inline script 原始內容進行雜湊計算。
+ * 內容不可正規化空白，瀏覽器以原始字元序列驗證。
  */
 
 const HSTS = 'max-age=31536000; includeSubDomains; preload';
 
-/** 計算 HTML 中所有 inline script 的 SHA-256 hash（Web Crypto API） */
+/** 解析 HTML 中所有 inline script，回傳 CSP 所需的 SHA-256 hash token 陣列。 */
 async function computeInlineScriptHashes(html) {
 	const hashes = [];
 	const re = /<script([^>]*)>([\s\S]*?)<\/script>/gi;
 	let m;
 	while ((m = re.exec(html)) !== null) {
 		const attrs = m[1];
-		const content = m[2]; // 不 trim，保留原始空白以符合瀏覽器 CSP 驗證
+		const content = m[2]; // 保留原始空白，不可正規化；瀏覽器以原始字元序列驗證 hash。
 		if (!attrs.includes('src') && content) {
 			const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content));
 			const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
@@ -40,7 +36,7 @@ async function computeInlineScriptHashes(html) {
 	return hashes;
 }
 
-/** ratewise CSP：script-src 使用動態 hash 取代 unsafe-inline */
+/** 組建 /ratewise/* 路由的 Content-Security-Policy 標頭值。 */
 function buildRatewiseCSP(scriptHashes) {
 	const scriptSrc = ["'self'", ...scriptHashes, 'https://static.cloudflareinsights.com', 'https://www.googletagmanager.com'].join(' ');
 
@@ -50,7 +46,7 @@ function buildRatewiseCSP(scriptHashes) {
 		"style-src 'self' 'unsafe-inline'; " +
 		"font-src 'self'; " +
 		"img-src 'self' data: blob: https://www.google-analytics.com; " +
-		"connect-src 'self' https://cdn.jsdelivr.net https://raw.githubusercontent.com https://static.cloudflareinsights.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com; " +
+		"connect-src 'self' https://cdn.jsdelivr.net https://raw.githubusercontent.com https://static.cloudflareinsights.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://www.googletagmanager.com; " +
 		"worker-src 'self' blob:; " +
 		"manifest-src 'self'; " +
 		"frame-ancestors 'self'; " +
@@ -62,7 +58,7 @@ function buildRatewiseCSP(scriptHashes) {
 	);
 }
 
-/** haotool.org 根站基本安全標頭（非 ratewise 路徑，達 A+ 最低要求） */
+/** 非 ratewise 路由的基準安全標頭組合，符合 A+ 安全評等要求。 */
 const HAOTOOL_BASE_HEADERS = {
 	'Content-Security-Policy':
 		"default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; " +
@@ -86,7 +82,7 @@ function isOgLikeAsset(pathname) {
 export default {
 	async fetch(request) {
 		const url = new URL(request.url);
-		// 任意 host 下的 /ratewise/ 路徑均視為 ratewise（含 haotool.org/ratewise/）
+		// 所有已綁定路由中，路徑以 /ratewise/ 開頭者均套用 ratewise 政策。
 		const isRatewise = url.pathname.startsWith('/ratewise/');
 
 		if (url.pathname === '/ratewise/__network_probe__') {
@@ -94,12 +90,12 @@ export default {
 				status: 204,
 				headers: {
 					'Cache-Control': 'no-store',
-					'X-Security-Policy-Version': '3.2',
+					'X-Security-Policy-Version': '3.4',
 				},
 			});
 		}
 
-		// CSP Report 端點
+		// CSP 違規回報收集端點。
 		if (url.pathname === '/ratewise/csp-report') {
 			return new Response(null, {
 				status: 204,
@@ -117,7 +113,7 @@ export default {
 		let newResponse;
 
 		if (isRatewise && isHTML) {
-			// 緩衝 HTML body 以動態計算 inline script hashes（取代 unsafe-inline）
+			// 緩衝完整 HTML body，逐回應動態計算 inline script hash。
 			const html = await response.text();
 			const scriptHashes = await computeInlineScriptHashes(html);
 			const csp = buildRatewiseCSP(scriptHashes);
@@ -145,7 +141,7 @@ export default {
 		}
 
 		newResponse.headers.set('Strict-Transport-Security', HSTS);
-		newResponse.headers.set('X-Security-Policy-Version', '3.3');
+		newResponse.headers.set('X-Security-Policy-Version', '3.4');
 
 		if (isOgAsset) {
 			newResponse.headers.set('Access-Control-Allow-Origin', '*');
@@ -153,13 +149,13 @@ export default {
 			newResponse.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
 			newResponse.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
 		} else if (isRatewise && !isOgLikeAsset(url.pathname)) {
-			// 僅 ratewise 套用嚴格 cross-origin policy；haotool.org 根站保持瀏覽器預設
+			// /ratewise/* 套用嚴格跨域隔離；根網域保持瀏覽器預設值。
 			newResponse.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
 			newResponse.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
 			newResponse.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 		}
 
-		// 移除洩漏來源資訊的標頭（含 Zeabur 特有標頭）
+		// 移除可能洩漏後端基礎架構資訊的回應標頭。
 		['Server', 'X-Powered-By', 'X-AspNet-Version', 'X-Runtime', 'x-zeabur-ip-country', 'x-zeabur-request-id'].forEach((h) =>
 			newResponse.headers.delete(h),
 		);
