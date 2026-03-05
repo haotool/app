@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker - Security Headers (SSOT) v3.2
+ * Cloudflare Worker - Security Headers (SSOT) v3.3
  *
  * 目標：
  * 1. Cloudflare 成為安全標頭唯一來源
@@ -15,6 +15,10 @@
  * - haotool.org 非 ratewise 路徑：寬鬆基本標頭（達 A+ 最低要求）
  * - OG / social 圖片保留跨域例外
  * - COEP/COOP 僅對 ratewise 生效，避免未知跨域資源中斷
+ *
+ * v3.3 變更記錄 (2026-03-05)：
+ * - 修復：移除 inline script 內容 trim()，保留原始空白以符合瀏覽器 CSP hash 驗證
+ * - 影響：解決 GA4 inline script 被 CSP 阻擋問題（ERR_FAILED）
  */
 
 const HSTS = 'max-age=31536000; includeSubDomains; preload';
@@ -26,7 +30,7 @@ async function computeInlineScriptHashes(html) {
 	let m;
 	while ((m = re.exec(html)) !== null) {
 		const attrs = m[1];
-		const content = m[2].trim();
+		const content = m[2]; // 不 trim，保留原始空白以符合瀏覽器 CSP 驗證
 		if (!attrs.includes('src') && content) {
 			const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content));
 			const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
@@ -141,7 +145,7 @@ export default {
 		}
 
 		newResponse.headers.set('Strict-Transport-Security', HSTS);
-		newResponse.headers.set('X-Security-Policy-Version', '3.2');
+		newResponse.headers.set('X-Security-Policy-Version', '3.3');
 
 		if (isOgAsset) {
 			newResponse.headers.set('Access-Control-Allow-Origin', '*');
