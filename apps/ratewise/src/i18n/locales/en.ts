@@ -63,6 +63,9 @@ const en = {
     cashRate: 'Cash',
     switchToSpot: 'Switch to spot rate',
     switchToCash: 'Switch to cash rate',
+    rateTypeUnavailable: '{{rateType}} rate is currently unavailable',
+    rateTypeUnavailableForCurrencies:
+      '{{currencies}} does not provide {{rateType}} rate, switched to {{fallbackType}}',
     viewTrendChart: 'View trend chart',
     fromAmountLabel: 'Amount ({{code}})',
     toAmountLabel: 'Result ({{code}})',

@@ -26,6 +26,10 @@ import { rateWiseLayoutTokens } from '../../config/design-tokens';
 import type { CurrencyCode, RateType } from './types';
 import { CURRENCY_DEFINITIONS } from './constants';
 import { STORAGE_KEYS } from './storage-keys';
+import {
+  getPairRateTypeAvailability,
+  resolveRateTypeByAvailability,
+} from '../../utils/exchangeRateCalculation';
 
 const RateWise = () => {
   // Main container ref for pull-to-refresh
@@ -119,6 +123,28 @@ const RateWise = () => {
     if (amount && /^\d+(\.\d+)?$/.test(amount)) handleFromAmountChange(amount);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 只在首次掛載時讀取 URL 參數
 
+  const rateTypeAvailability = useMemo(
+    () => getPairRateTypeAvailability(fromCurrency, toCurrency, details),
+    [fromCurrency, toCurrency, details],
+  );
+
+  useEffect(() => {
+    if (!rateTypeAvailability.spot && !rateTypeAvailability.cash) return;
+    const resolvedRateType = resolveRateTypeByAvailability(rateType, rateTypeAvailability);
+    if (resolvedRateType !== rateType) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 匯率類型需依可用性即時收斂，避免顯示不可用選項造成誤導
+      setRateType(resolvedRateType);
+    }
+  }, [rateType, rateTypeAvailability]);
+
+  const handleRateTypeChange = useCallback(
+    (nextType: RateType) => {
+      if (!rateTypeAvailability[nextType]) return;
+      setRateType(nextType);
+    },
+    [rateTypeAvailability],
+  );
+
   // 在 hydration 完成前，永遠返回 SkeletonLoader（與 SSG 一致）
   if (!isHydrated) {
     return <SkeletonLoader />;
@@ -195,6 +221,7 @@ const RateWise = () => {
                 exchangeRates={exchangeRates}
                 details={details}
                 rateType={rateType}
+                rateTypeAvailability={rateTypeAvailability}
                 onFromCurrencyChange={setFromCurrency}
                 onToCurrencyChange={setToCurrency}
                 onFromAmountChange={handleFromAmountChange}
@@ -202,7 +229,7 @@ const RateWise = () => {
                 onQuickAmount={quickAmount}
                 onSwapCurrencies={swapCurrencies}
                 onAddToHistory={addToHistory}
-                onRateTypeChange={setRateType}
+                onRateTypeChange={handleRateTypeChange}
               />
             </div>
           </section>

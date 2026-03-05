@@ -273,6 +273,52 @@ describe('SingleConverter - 核心功能測試', () => {
       const spotButtonAfter = screen.getByLabelText('切換到即期匯率');
       expect(spotButtonAfter).toHaveAttribute('aria-pressed', 'false');
     });
+
+    it('should disable unavailable rate type button for current currency pair', () => {
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="TWD"
+          toCurrency="KRW"
+          rateType="cash"
+          details={{
+            KRW: {
+              name: '韓元',
+              spot: { buy: 0, sell: null },
+              cash: { buy: 0.0226, sell: 0.024 },
+            },
+          }}
+          rateTypeAvailability={{ spot: false, cash: true }}
+        />,
+      );
+
+      const spotButton = screen.getByLabelText('切換到即期匯率');
+      expect(spotButton).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('should not call onRateTypeChange when target rate type is unavailable', () => {
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="TWD"
+          toCurrency="KRW"
+          rateType="cash"
+          details={{
+            KRW: {
+              name: '韓元',
+              spot: { buy: 0, sell: null },
+              cash: { buy: 0.0226, sell: 0.024 },
+            },
+          }}
+          rateTypeAvailability={{ spot: false, cash: true }}
+        />,
+      );
+
+      const spotButton = screen.getByLabelText('切換到即期匯率');
+      fireEvent.click(spotButton);
+
+      expect(mockProps.onRateTypeChange).not.toHaveBeenCalled();
+    });
   });
 
   describe('金額顯示區域', () => {

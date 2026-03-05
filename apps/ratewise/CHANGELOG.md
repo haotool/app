@@ -1,5 +1,15 @@
 # @app/ratewise
 
+## 2.6.1
+
+### Patch Changes
+
+- fix(ratewise): 修復單幣別匯率類型誤導切換（部分幣別無即期仍可切換顯示即期）
+  - 新增匯率類型可用性 SSOT：`getCurrencyRateTypeAvailability`、`getPairRateTypeAvailability`、`resolveRateTypeByAvailability`
+  - 單幣別改為依幣別對可用性禁用不可用切換，並以 Tooltip 提示原因
+  - 多幣別「單一匯率類型」判斷改用共用工具，消除重複邏輯
+  - 新增回歸測試覆蓋不可用匯率類型禁用與可用性解析
+
 ## 2.6.0
 
 ### Minor Changes

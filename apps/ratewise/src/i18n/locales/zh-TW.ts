@@ -63,6 +63,9 @@ const zhTW = {
     cashRate: '現金',
     switchToSpot: '切換到即期匯率',
     switchToCash: '切換到現金匯率',
+    rateTypeUnavailable: '目前不提供 {{rateType}} 匯率',
+    rateTypeUnavailableForCurrencies:
+      '{{currencies}} 不提供 {{rateType}} 匯率，已改用 {{fallbackType}}',
     viewTrendChart: '查看趨勢圖',
     fromAmountLabel: '轉換金額 ({{code}})',
     toAmountLabel: '轉換結果 ({{code}})',

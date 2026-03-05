@@ -11,6 +11,75 @@ import type { RateDetails } from '../features/ratewise/hooks/useExchangeRates';
 import type { CurrencyCode, RateType } from '../features/ratewise/types';
 import { logger } from './logger';
 
+export interface RateTypeAvailability {
+  spot: boolean;
+  cash: boolean;
+}
+
+const hasValidSellRate = (value: number | null | undefined): value is number =>
+  value !== null && value !== undefined;
+
+/**
+ * 取得單一幣別的匯率類型可用性
+ * @description TWD 視為同時支援即期與現金，其他幣別依 details 判斷
+ */
+export function getCurrencyRateTypeAvailability(
+  code: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+): RateTypeAvailability {
+  if (code === 'TWD') {
+    return { spot: true, cash: true };
+  }
+
+  const detail = details?.[code];
+  if (!detail) {
+    return { spot: false, cash: false };
+  }
+
+  return {
+    spot: hasValidSellRate(detail.spot?.sell),
+    cash: hasValidSellRate(detail.cash?.sell),
+  };
+}
+
+/**
+ * 取得單幣別換算（來源/目標幣別對）的匯率類型可用性
+ * @description 僅當來源與目標都支援該類型時，該類型才可用
+ */
+export function getPairRateTypeAvailability(
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+): RateTypeAvailability {
+  const fromAvailability = getCurrencyRateTypeAvailability(fromCurrency, details);
+  const toAvailability = getCurrencyRateTypeAvailability(toCurrency, details);
+
+  return {
+    spot: fromAvailability.spot && toAvailability.spot,
+    cash: fromAvailability.cash && toAvailability.cash,
+  };
+}
+
+/**
+ * 根據可用性解析最終可用的匯率類型
+ * @description 優先維持原選擇，不可用時嘗試另一種；若兩者都不可用則回傳原值
+ */
+export function resolveRateTypeByAvailability(
+  preferred: RateType,
+  availability: RateTypeAvailability,
+): RateType {
+  if (availability[preferred]) {
+    return preferred;
+  }
+
+  const fallbackType: RateType = preferred === 'spot' ? 'cash' : 'spot';
+  if (availability[fallbackType]) {
+    return fallbackType;
+  }
+
+  return preferred;
+}
+
 /**
  * 獲取指定貨幣的匯率（帶 fallback 機制）
  * @description 統一的匯率獲取邏輯，優先使用指定類型，失敗時自動 fallback

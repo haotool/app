@@ -63,6 +63,9 @@ const ja = {
     cashRate: '現金',
     switchToSpot: '直物レートに切替',
     switchToCash: '現金レートに切替',
+    rateTypeUnavailable: '{{rateType}}レートは現在利用できません',
+    rateTypeUnavailableForCurrencies:
+      '{{currencies}} は {{rateType}} レート非対応のため、{{fallbackType}} を使用します',
     viewTrendChart: 'トレンドチャートを見る',
     fromAmountLabel: '金額 ({{code}})',
     toAmountLabel: '結果 ({{code}})',

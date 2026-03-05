@@ -29,10 +29,12 @@ import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currency
 import { motion } from 'motion/react';
 import { singleConverterLayoutTokens } from '../../../config/design-tokens';
 import { segmentedSwitch } from '../../../config/animations';
+import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
 import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
+import type { RateTypeAvailability } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
@@ -46,6 +48,7 @@ interface SingleConverterProps {
   exchangeRates: Record<CurrencyCode, number | null>;
   details?: Record<string, RateDetails>;
   rateType: RateType;
+  rateTypeAvailability?: RateTypeAvailability;
   onFromCurrencyChange: (currency: CurrencyCode) => void;
   onToCurrencyChange: (currency: CurrencyCode) => void;
   onFromAmountChange: (amount: string) => void;
@@ -64,6 +67,7 @@ export const SingleConverter = ({
   exchangeRates,
   details,
   rateType,
+  rateTypeAvailability = { spot: true, cash: true },
   onFromCurrencyChange,
   onToCurrencyChange,
   onFromAmountChange,
@@ -110,6 +114,32 @@ export const SingleConverter = ({
   const toRate = getRate(toCurrency);
   const exchangeRate = fromRate / toRate;
   const reverseRate = toRate / fromRate;
+
+  const getRateTypeUnavailableMessage = (targetRateType: RateType): string => {
+    const unavailableCurrencies = [fromCurrency, toCurrency].filter((code) => {
+      if (code === 'TWD') return false;
+      const detail = details?.[code];
+      return detail?.[targetRateType]?.sell == null;
+    });
+
+    const fallbackType: RateType = targetRateType === 'spot' ? 'cash' : 'spot';
+    const targetLabel =
+      targetRateType === 'spot' ? t('singleConverter.spotRate') : t('singleConverter.cashRate');
+    const fallbackLabel =
+      fallbackType === 'spot' ? t('singleConverter.spotRate') : t('singleConverter.cashRate');
+
+    if (unavailableCurrencies.length === 0) {
+      return t('singleConverter.rateTypeUnavailable', {
+        rateType: targetLabel,
+      });
+    }
+
+    return t('singleConverter.rateTypeUnavailableForCurrencies', {
+      currencies: unavailableCurrencies.join(', '),
+      rateType: targetLabel,
+      fallbackType: fallbackLabel,
+    });
+  };
 
   // 趨勢圖進場動畫
   useEffect(() => {
@@ -370,17 +400,22 @@ export const SingleConverter = ({
                 ] as const
               ).map((option) => {
                 const isActive = rateType === option.value;
-                return (
+                const isUnavailable = !rateTypeAvailability[option.value];
+                const optionButton = (
                   <motion.button
                     key={option.value}
-                    onClick={() => onRateTypeChange(option.value)}
-                    whileHover={segmentedSwitch.item.whileHover}
-                    whileTap={segmentedSwitch.item.whileTap}
+                    onClick={() => {
+                      if (isUnavailable || isActive) return;
+                      onRateTypeChange(option.value);
+                    }}
+                    whileHover={isUnavailable ? undefined : segmentedSwitch.item.whileHover}
+                    whileTap={isUnavailable ? undefined : segmentedSwitch.item.whileTap}
                     className={`flex items-center gap-1 ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative ${
                       isActive ? 'text-white' : 'text-text/70 hover:text-text'
-                    }`}
+                    } ${isUnavailable ? 'opacity-50 cursor-not-allowed' : ''}`}
                     aria-label={option.ariaLabel}
                     aria-pressed={isActive}
+                    aria-disabled={isUnavailable}
                   >
                     {isActive && (
                       <motion.div
@@ -404,6 +439,20 @@ export const SingleConverter = ({
                     </svg>
                     <span className="relative z-10">{option.label}</span>
                   </motion.button>
+                );
+
+                if (!isUnavailable) {
+                  return optionButton;
+                }
+
+                return (
+                  <RateTypeTooltip
+                    key={option.value}
+                    message={getRateTypeUnavailableMessage(option.value)}
+                    isDisabled={true}
+                  >
+                    {optionButton}
+                  </RateTypeTooltip>
                 );
               })}
             </div>

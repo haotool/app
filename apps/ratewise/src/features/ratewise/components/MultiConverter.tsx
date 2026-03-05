@@ -19,6 +19,7 @@ import type { RateDetails } from '../hooks/useExchangeRates';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
+import { getCurrencyRateTypeAvailability } from '../../../utils/exchangeRateCalculation';
 // 直接 import 以確保離線冷啟動可用（消除 code-splitting 導致的 chunk 載入失敗）
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 
@@ -69,13 +70,13 @@ export const MultiConverter = ({
   const hasOnlyOneRateType = (
     currency: CurrencyCode,
   ): { hasOnlyOne: boolean; availableType: RateType | null; reason: string } => {
-    const detail = details?.[currency];
-    if (!detail) {
+    const availability = getCurrencyRateTypeAvailability(currency, details);
+    const hasSpot = availability.spot;
+    const hasCash = availability.cash;
+
+    if (!hasSpot && !hasCash) {
       return { hasOnlyOne: false, availableType: null, reason: '' };
     }
-
-    const hasSpot = detail.spot?.sell != null;
-    const hasCash = detail.cash?.sell != null;
 
     if (hasSpot && !hasCash) {
       return {

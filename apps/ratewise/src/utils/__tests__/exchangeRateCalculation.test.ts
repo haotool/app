@@ -17,6 +17,9 @@ import {
   calculateCrossRate,
   convertCurrencyAmount,
   hasOnlyOneRateType,
+  getCurrencyRateTypeAvailability,
+  getPairRateTypeAvailability,
+  resolveRateTypeByAvailability,
 } from '../exchangeRateCalculation';
 import type { RateDetails } from '../../features/ratewise/hooks/useExchangeRates';
 import type { CurrencyCode, RateType } from '../../features/ratewise/types';
@@ -350,6 +353,27 @@ describe('匯率計算邏輯', () => {
 
     it('應在 details 為空物件時返回 true', () => {
       expect(hasOnlyOneRateType({})).toBe(true);
+    });
+  });
+
+  describe('匯率類型可用性函數', () => {
+    it('應正確判斷單一幣別可用性（KRW 僅現金）', () => {
+      expect(getCurrencyRateTypeAvailability('KRW', mockRateDetails)).toEqual({
+        spot: false,
+        cash: true,
+      });
+    });
+
+    it('應正確判斷幣別對可用性（TWD→KRW 僅現金）', () => {
+      expect(getPairRateTypeAvailability('TWD', 'KRW', mockRateDetails)).toEqual({
+        spot: false,
+        cash: true,
+      });
+    });
+
+    it('應在偏好匯率不可用時回退到可用匯率', () => {
+      const availability = getPairRateTypeAvailability('TWD', 'KRW', mockRateDetails);
+      expect(resolveRateTypeByAvailability('spot', availability)).toBe('cash');
     });
   });
 });
