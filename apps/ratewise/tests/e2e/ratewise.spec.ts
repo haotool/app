@@ -131,12 +131,21 @@ test.describe('RateWise 核心功能測試', () => {
   });
 
   test('我的最愛：應該能夠新增和移除最愛貨幣', async ({ rateWisePage: page }) => {
-    // 找到星號按鈕（我的最愛切換）
-    const favoriteButtons = page.locator('button').filter({ has: page.locator('svg') });
-    const firstFavoriteButton = favoriteButtons.first();
+    // 收藏切換行為已集中在收藏頁，透過導覽連結進入可兼容不同 base path
+    await page
+      .getByRole('link', { name: /收藏|Favorites/i })
+      .first()
+      .click();
+
+    // 使用收藏頁的語意化 aria-label 定位（含幣別代碼）
+    const favoriteButton = page
+      .getByRole('button', {
+        name: /加入常用貨幣\s*[A-Z]{3}|移除常用貨幣\s*[A-Z]{3}|Add to favorites\s*[A-Z]{3}|Remove from favorites\s*[A-Z]{3}|お気に入りに追加\s*[A-Z]{3}|お気に入りから削除\s*[A-Z]{3}/i,
+      })
+      .first();
 
     // 點擊切換
-    await firstFavoriteButton.click();
+    await favoriteButton.click();
     await page.waitForTimeout(500);
 
     // 至少確認頁面沒有崩潰且我的最愛功能正常執行 - [fix:2026-01-30] 配合 Header 架構調整
