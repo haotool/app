@@ -9,7 +9,11 @@
   "start_url": "/ratewise/",
   "id": "/ratewise/",
   "orientation": "portrait-primary",
-  "categories": ["finance", "utilities", "productivity"],
+  "categories": [
+    "finance",
+    "utilities",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "icons/ratewise-icon-192x192.png?v=20260306",
