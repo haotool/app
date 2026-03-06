@@ -13,7 +13,7 @@
  * - ✅ 必須包含 <lastmod> 且格式正確
  * - ✅ 時間戳必須真實（≥3 個不同日期）
  * - ✅ 必須包含 Image Sitemap Extension
- * - ✅ 所有 17 個 SEO 路徑必須存在
+ * - ✅ 所有公開 sitemap 路徑必須存在
  * - ✅ Hreflang 配置完整
  *
  * 建立時間: 2025-12-20
@@ -29,6 +29,8 @@ const __dirname = dirname(__filename);
 
 // 從 SSOT 導入配置
 import { SEO_PATHS, SITE_CONFIG, normalizeSiteUrl } from '../apps/ratewise/seo-paths.config.mjs';
+
+const PUBLIC_SITEMAP_PATHS = [...new Set(SEO_PATHS)];
 
 // 顏色輸出
 const colors = {
@@ -207,11 +209,11 @@ async function runTests() {
   }
 
   // Test 9: 所有 SEO 路徑都在 sitemap 中
-  console.log('\n📋 測試 9: SEO 路徑完整性（17 個路徑）');
+  console.log('\n📋 測試 9: sitemap 公開路徑完整性');
   const siteUrl = normalizeSiteUrl(SITE_CONFIG.url);
   const missingPaths = [];
 
-  SEO_PATHS.forEach((path) => {
+  PUBLIC_SITEMAP_PATHS.forEach((path) => {
     const expectedUrl = path === '/' ? siteUrl : `${siteUrl}${path.slice(1)}`; // 移除開頭的 /
     if (!xml.includes(`<loc>${expectedUrl}</loc>`)) {
       missingPaths.push(path);
@@ -223,13 +225,13 @@ async function runTests() {
     missingPaths.forEach((path) => console.log(`    ${path}`));
     hasErrors = true;
   } else {
-    log(colors.green, '✓', `PASSED: 所有 ${SEO_PATHS.length} 個 SEO 路徑都存在`);
+    log(colors.green, '✓', `PASSED: 所有 ${PUBLIC_SITEMAP_PATHS.length} 個 sitemap 公開路徑都存在`);
   }
 
   // Test 10: Hreflang 配置
   console.log('\n📋 測試 10: Hreflang 配置');
   const hreflangMatches = xml.match(/<xhtml:link/g) || [];
-  const expectedHreflangCount = SEO_PATHS.length * 2; // 每個 URL 2 個 hreflang
+  const expectedHreflangCount = PUBLIC_SITEMAP_PATHS.length * 2; // 每個 URL 2 個 hreflang
 
   if (hreflangMatches.length !== expectedHreflangCount) {
     log(

@@ -1,96 +1,62 @@
-/**
- * Guide Page - 使用指南
- * [BDD Implementation: Green Light]
- * [Updated: 2025-12-03] 擴充至 8 步驟完整教學
- *
- * Feature: HowTo Schema for AI Search Optimization
- * 依據: docs/dev/013_ai_search_optimization_spec.md
- * 依據: docs/dev/019_optional_features_spec.md
- */
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { GUIDE_PAGE_SEO } from '../config/seo-metadata';
+
+const HOW_TO = GUIDE_PAGE_SEO.howTo;
+const HOW_TO_STEPS = HOW_TO?.steps ?? [];
+
+const RATE_READING_TIPS = [
+  {
+    title: '先判斷你是買外幣還是賣外幣',
+    description: '拿台幣買外幣時，通常要看銀行賣出價；把外幣換回台幣時，則看銀行買入價。',
+  },
+  {
+    title: '現金與即期不是同一種匯率',
+    description: '臨櫃換現鈔看現金匯率，外幣帳戶、網銀或匯款看即期匯率。現金匯率通常會比即期差。',
+  },
+  {
+    title: '海外刷卡不等於台銀牌告',
+    description:
+      '海外刷卡會走 Visa、Mastercard 等卡組織清算匯率，再加發卡銀行海外手續費，與牌告匯率不同。',
+  },
+];
+
+const FAQ_ITEMS = [
+  {
+    question: '匯率多久更新一次？',
+    answer: '匯率資料每 5 分鐘自動同步臺灣銀行牌告匯率，也可在首頁下拉手動更新。',
+  },
+  {
+    question: '現金匯率和即期匯率有什麼差別？',
+    answer: '現金匯率適用於臨櫃換鈔，即期匯率適用於帳戶轉換與匯款。一般來說，即期匯率較佳。',
+  },
+  {
+    question: '離線時可以使用嗎？',
+    answer: '可以。RateWise 會快取最近一次更新的資料，離線時仍可進行換算。',
+  },
+];
 
 const Guide = () => {
-  const howToSteps = [
-    {
-      position: 1,
-      name: '開啟 RateWise',
-      text: '在瀏覽器中開啟 RateWise 匯率好工具（app.haotool.org/ratewise），或將其加入手機主畫面作為 PWA 應用程式使用。',
-      image: '/screenshots/step1-open-app.png',
-    },
-    {
-      position: 2,
-      name: '選擇換算模式',
-      text: '在頁面頂部選擇「單幣別」或「多幣別」換算模式。單幣別適合一對一換算，多幣別適合同時查看多種貨幣匯率。',
-      image: '/screenshots/step2-select-mode.png',
-    },
-    {
-      position: 3,
-      name: '選擇原始貨幣',
-      text: '在「從」欄位選擇您要兌換的貨幣（例如：TWD 台幣）。RateWise 支援 18 種主要貨幣。',
-      image: '/screenshots/step3-select-from.png',
-    },
-    {
-      position: 4,
-      name: '選擇目標貨幣',
-      text: '在「到」欄位選擇您要兌換成的貨幣（例如：USD 美元、JPY 日圓）。',
-      image: '/screenshots/step4-select-to.png',
-    },
-    {
-      position: 5,
-      name: '輸入金額',
-      text: '在原始貨幣欄位輸入金額，或使用快速金額按鈕（100、1000、10000）。系統會即時計算並顯示換算結果。',
-      image: '/screenshots/step5-enter-amount.png',
-    },
-    {
-      position: 6,
-      name: '選擇匯率類型',
-      text: '切換「現金匯率」或「即期匯率」。現金匯率適用於實體換匯，即期匯率適用於銀行轉帳。',
-      image: '/screenshots/step6-rate-type.png',
-    },
-    {
-      position: 7,
-      name: '查看歷史趨勢',
-      text: '點擊匯率卡片展開詳細資訊，查看過去 30 天的匯率趨勢圖，包括最高點、最低點與平均值標記。',
-      image: '/screenshots/step7-trend-chart.png',
-    },
-    {
-      position: 8,
-      name: '收藏常用貨幣',
-      text: '點擊貨幣卡片的星號圖示，將常用貨幣加入收藏。收藏的貨幣會顯示在「常用貨幣」區塊，方便快速存取。',
-      image: '/screenshots/step8-favorites.png',
-    },
-  ];
-
   return (
     <>
       <SEOHelmet
-        title="使用指南 - 如何使用 RateWise 進行匯率換算 | RateWise 匯率好工具"
-        description="完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算。包含模式選擇、匯率類型切換、歷史趨勢查看、收藏功能等完整操作指南。完整圖文教學，適合初次使用者快速上手，發揮 RateWise 所有功能特色，立即免費開始使用。"
+        title={GUIDE_PAGE_SEO.title}
+        description={GUIDE_PAGE_SEO.description}
         canonical="https://app.haotool.org/ratewise/guide/"
-        pathname="/guide"
-        breadcrumb={[
-          { name: 'RateWise 首頁', item: '/' },
-          { name: '使用教學', item: '/guide/' },
-        ]}
-        howTo={{
-          name: '如何使用 RateWise 進行匯率換算',
-          description:
-            '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含進階功能操作指南',
-          steps: howToSteps,
-          totalTime: 'PT2M', // 2 分鐘完成
-        }}
+        pathname={GUIDE_PAGE_SEO.pathname}
+        breadcrumb={GUIDE_PAGE_SEO.breadcrumb}
+        howTo={HOW_TO}
+        jsonLd={GUIDE_PAGE_SEO.jsonLd}
       />
 
       <div className="min-h-screen bg-page-gradient">
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          {/* 返回首頁 */}
+        <div className="container mx-auto max-w-5xl px-4 py-8">
           <Link
             to="/"
-            className="inline-flex items-center text-primary hover:text-primary-hover mb-4 transition-colors"
+            className="mb-4 inline-flex items-center text-primary transition-colors hover:text-primary-hover"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -101,7 +67,6 @@ const Guide = () => {
             回到首頁
           </Link>
 
-          {/* Breadcrumb Navigation */}
           <Breadcrumb
             items={[
               { label: '首頁', href: '/' },
@@ -109,14 +74,13 @@ const Guide = () => {
             ]}
           />
 
-          {/* 標題 */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-text mb-2">如何使用 RateWise 進行匯率換算</h1>
+            <h1 className="mb-2 text-4xl font-bold text-text">如何使用 RateWise 進行匯率換算</h1>
             <p className="text-text-muted">
-              完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算
+              完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算。
             </p>
             <div className="mt-2 flex items-center text-sm text-text-muted">
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -128,160 +92,151 @@ const Guide = () => {
             </div>
           </div>
 
-          {/* 快速導航 */}
-          <div className="mb-8 p-4 card">
-            <h2 className="text-lg font-semibold text-text mb-3">快速導航</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {howToSteps.map((step) => (
-                <a
-                  key={step.position}
-                  href={`#step-${step.position}`}
-                  className="text-sm text-primary hover:text-primary/80 hover:underline"
-                >
-                  {step.position}. {step.name}
-                </a>
-              ))}
-            </div>
-          </div>
+          <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+            <aside className="lg:sticky lg:top-6 lg:self-start">
+              <div className="card p-4">
+                <h2 className="mb-3 text-lg font-semibold text-text">快速導航</h2>
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
+                  {HOW_TO_STEPS.map((step) => (
+                    <a
+                      key={step.position}
+                      href={`#step-${step.position}`}
+                      className="text-sm text-primary hover:text-primary/80 hover:underline"
+                    >
+                      {step.position}. {step.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </aside>
 
-          {/* 步驟說明 */}
-          <div className="space-y-6">
-            {howToSteps.map((step) => (
-              <div
-                key={step.position}
-                id={`step-${step.position}`}
-                className="card p-6 hover:shadow-md transition-shadow scroll-mt-4"
-              >
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg mr-4">
-                    {step.position}
+            <div className="space-y-6">
+              {HOW_TO_STEPS.map((step) => (
+                <div
+                  key={step.position}
+                  id={`step-${step.position}`}
+                  className="card scroll-mt-4 p-6 transition-shadow hover:shadow-md"
+                >
+                  <div className="flex items-start">
+                    <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-white">
+                      {step.position}
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="mb-2 text-2xl font-semibold text-text">{step.name}</h2>
+                      <p className="leading-relaxed text-text-muted">{step.text}</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-semibold text-text mb-2">{step.name}</h2>
-                    <p className="text-text-muted leading-relaxed">{step.text}</p>
+                </div>
+              ))}
+
+              <div className="card p-6">
+                <h2 className="mb-4 text-2xl font-bold text-text">進階功能</h2>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="mb-2 text-lg font-semibold text-primary">多幣別換算</h3>
+                    <p className="leading-relaxed text-text-muted">
+                      一次比較同一基準貨幣對多個幣別的換算結果，適合旅遊預算與跨境報價比對。
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-lg font-semibold text-primary">歷史匯率趨勢</h3>
+                    <p className="leading-relaxed text-text-muted">
+                      展開匯率卡片即可查看近 7~30 天走勢，快速理解最近的波動方向。
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-lg font-semibold text-primary">收藏常用貨幣</h3>
+                    <p className="leading-relaxed text-text-muted">
+                      可在收藏頁面集中管理常用幣別，並透過拖曳手柄重新排序。
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-lg font-semibold text-primary">離線使用</h3>
+                    <p className="leading-relaxed text-text-muted">
+                      PWA 會保存最近一次資料快取，沒有網路時仍可用於估算。
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-lg font-semibold text-primary">計算機功能</h3>
+                    <p className="leading-relaxed text-text-muted">
+                      點擊金額區即可開啟計算機鍵盤，支援加減乘除、百分比與快速修正輸入。
+                    </p>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* 進階功能 */}
-          <div className="mt-12 card p-6">
-            <h2 className="text-2xl font-bold text-text mb-4">進階功能</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-2">多幣別換算</h3>
-                <p className="text-text-muted leading-relaxed">
-                  點選「多幣別換算」模式，可同時查看一個基準貨幣對所有支援貨幣的換算結果。適合出國旅遊比價、國際貿易報價比較。
-                </p>
+              <div className="card p-6">
+                <h2 className="mb-4 text-2xl font-bold text-text">判讀匯率的小技巧</h2>
+                <div className="space-y-4">
+                  {RATE_READING_TIPS.map((tip) => (
+                    <div key={tip.title}>
+                      <h3 className="mb-1 text-lg font-semibold text-primary">{tip.title}</h3>
+                      <p className="leading-relaxed text-text-muted">{tip.description}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-2">歷史匯率趨勢</h3>
-                <p className="text-text-muted leading-relaxed">
-                  在單幣別換算模式下，匯率卡片會自動顯示該貨幣對過去 30
-                  天的歷史趨勢線圖，包括最高點、最低點與平均值標記。幫助您選擇最佳換匯時機。
-                </p>
+
+              <div className="card border-primary/20 bg-primary/5 p-6">
+                <h2 className="mb-2 text-xl font-semibold text-text">💡 提示與技巧</h2>
+                <ul className="space-y-2 text-text-muted">
+                  <li className="flex items-start">
+                    <span className="mr-2 text-primary">•</span>
+                    <span>首頁下拉可重新整理匯率資料並同步最新牌告。</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="mr-2 text-primary">•</span>
+                    <span>快速金額按鈕適合旅遊與常見消費場景，可大幅減少重複輸入。</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="mr-2 text-primary">•</span>
+                    <span>若主要情境是海外刷卡，請額外留意發卡銀行手續費與 DCC。</span>
+                  </li>
+                </ul>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-2">收藏常用貨幣</h3>
-                <p className="text-text-muted leading-relaxed">
-                  點擊貨幣卡片的星號圖示，將常用貨幣加入收藏。收藏的貨幣會顯示在「常用貨幣」區塊，方便快速存取。
-                </p>
+
+              <div className="card p-6">
+                <h2 className="mb-4 text-xl font-semibold text-text">❓ 常見問題</h2>
+                <div className="space-y-4">
+                  {FAQ_ITEMS.map((item) => (
+                    <div key={item.question}>
+                      <h3 className="font-medium text-text">{item.question}</h3>
+                      <p className="mt-1 text-sm text-text-muted">{item.answer}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4">
+                  <Link
+                    to="/faq/"
+                    className="text-sm font-medium text-primary hover:text-primary/80"
+                  >
+                    查看更多常見問題 →
+                  </Link>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-2">離線使用</h3>
-                <p className="text-text-muted leading-relaxed">
-                  RateWise 採用 PWA
-                  技術，支援離線使用。即使沒有網路連線，也能使用最後一次更新的匯率資料進行換算。
-                </p>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-2">計算機功能</h3>
-                <p className="text-text-muted leading-relaxed">
-                  點擊金額輸入框旁的計算機圖示，可開啟內建計算機進行複雜運算。支援加減乘除、百分比等基本運算。
-                </p>
+
+              <div className="text-center">
+                <Link
+                  to="/"
+                  className="inline-flex items-center rounded-lg bg-primary px-6 py-3 font-semibold text-white shadow-md transition-colors hover:bg-primary/90 hover:shadow-lg"
+                >
+                  開始使用 RateWise
+                  <svg
+                    className="ml-2 h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M14 5l7 7m0 0l-7 7m7-7H3"
+                    />
+                  </svg>
+                </Link>
               </div>
             </div>
-          </div>
-
-          {/* 提示與技巧 */}
-          <div className="mt-8 p-6 card bg-primary/5 border-primary/20">
-            <h2 className="text-xl font-semibold text-text mb-2">💡 提示與技巧</h2>
-            <ul className="space-y-2 text-text-muted">
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>下拉重新整理可手動更新匯率至最新數據（每 5 分鐘自動更新）</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>點擊匯率卡片可展開查看詳細資訊與 30 天趨勢圖</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>使用快速金額按鈕（100、1000、10000）可快速輸入常用金額</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>切換「現金匯率」與「即期匯率」以查看不同匯率類型</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>匯率資料 100% 來自臺灣銀行牌告匯率，每 5 分鐘同步一次</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">•</span>
-                <span>將 RateWise 加入手機主畫面，可獲得接近原生 App 的使用體驗</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* 常見問題 */}
-          <div className="mt-8 p-6 card">
-            <h2 className="text-xl font-semibold text-text mb-4">❓ 常見問題</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-text">匯率多久更新一次？</h3>
-                <p className="text-text-muted text-sm mt-1">
-                  匯率資料每 5 分鐘自動同步臺灣銀行牌告匯率，您也可以下拉頁面手動更新。
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium text-text">現金匯率和即期匯率有什麼差別？</h3>
-                <p className="text-text-muted text-sm mt-1">
-                  現金匯率適用於實體現金兌換（如銀行臨櫃換匯），即期匯率適用於銀行帳戶間轉帳。一般來說，即期匯率較優惠。
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium text-text">離線時可以使用嗎？</h3>
-                <p className="text-text-muted text-sm mt-1">
-                  可以！RateWise 採用 PWA
-                  技術，會快取最近的匯率資料。離線時會使用最後一次更新的匯率進行換算。
-                </p>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Link to="/faq/" className="text-primary hover:text-primary/80 text-sm font-medium">
-                查看更多常見問題 →
-              </Link>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="mt-12 text-center">
-            <Link
-              to="/"
-              className="inline-flex items-center px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
-            >
-              開始使用 RateWise
-              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
-            </Link>
           </div>
         </div>
       </div>

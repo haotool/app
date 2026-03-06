@@ -259,11 +259,7 @@ const openApiSpec = {
   'x-deep-link': {
     description: '應用程式深層連結（帶入換算參數）',
     format: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,
-    examples: [
-      `${SITE_CONFIG.url}?amount=50000&from=KRW&to=TWD`,
-      `${SITE_CONFIG.url}?amount=10000&from=JPY&to=TWD`,
-      `${SITE_CONFIG.url}?amount=100&from=USD&to=TWD`,
-    ],
+    exampleTemplate: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,
   },
 };
 

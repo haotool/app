@@ -25,8 +25,9 @@ Version: v2.6.1 (2026-03-06)
 
 ## Key Metrics
 
-- FCP ~0.5s, LCP ~1.1s, CLS < 0.25, TBT 10ms
-- Lighthouse SEO 100/100, Performance 89+/100
+- 支援貨幣：18 種
+- 更新頻率：每 5 分鐘自動同步
+- 匯率類型：現金買入、現金賣出、即期買入、即期賣出
 - 6 種主題風格（Zen/Nitro/Kawaii/Classic/Ocean/Forest）
 - i18n 三語言支援（繁體中文/English/日本語）
 
@@ -47,16 +48,10 @@ Version: v2.6.1 (2026-03-06)
 
 ## URL Parameters (Deep Linking)
 
-支援 URL 查詢參數自動帶入換算，適合 LLM 與搜尋引擎引導用戶直接查看結果：
+支援 URL 查詢參數自動帶入換算，適合 LLM 與內部工具帶入首頁狀態：
 
-- `?amount=50000&from=KRW&to=TWD` → 自動帶入 50,000 韓元換台幣
-- `?amount=100&from=USD&to=TWD` → 自動帶入 100 美金換台幣
-- `?amount=10000&from=JPY&to=TWD` → 自動帶入 10,000 日圓換台幣
-
-範例完整 URL：
-- https://app.haotool.org/ratewise/?amount=50000&from=KRW&to=TWD
-- https://app.haotool.org/ratewise/?amount=1000&from=JPY&to=TWD
-- https://app.haotool.org/ratewise/?amount=100&from=USD&to=TWD
+- 格式：`?amount={AMOUNT}&from={FROM}&to={TO}`
+- 用途：自動帶入首頁換算器，不建立獨立索引頁
 
 ## Core Pages
 
@@ -64,6 +59,12 @@ Version: v2.6.1 (2026-03-06)
 - [常見問題](https://app.haotool.org/ratewise/faq/): 完整 FAQ（含現金/即期差別、買入賣出、刷卡匯率等）
 - [使用指南](https://app.haotool.org/ratewise/guide/): 8 步驟完整操作教學
 - [關於我們](https://app.haotool.org/ratewise/about/): 專案背景與作者資訊
+
+## Authority Guides
+
+- [賣出價與中間價差異](https://app.haotool.org/ratewise/sell-rate-vs-mid-rate/): 解釋為什麼換匯估算不能只看中間價
+- [現金匯率與即期匯率差異](https://app.haotool.org/ratewise/cash-vs-spot-rate/): 判斷臨櫃換鈔、外幣帳戶與匯款該看哪種報價
+- [刷卡匯率與 DCC 指南](https://app.haotool.org/ratewise/card-rate-guide/): 釐清台銀牌告、卡組織匯率、海外手續費與 DCC 差異
 
 ## Popular Rates（每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
 
@@ -87,7 +88,7 @@ Version: v2.6.1 (2026-03-06)
 
 ## Data Source
 
-- Source: 100% 來源於臺灣銀行牌告匯率（Bank of Taiwan）
+- Source: 臺灣銀行牌告匯率（Bank of Taiwan）
 - Source URL: https://rate.bot.com.tw/xrt
 - Update: 每 5 分鐘自動同步（GitHub Actions）
 - Rate Types: 現金買入、現金賣出、即期買入、即期賣出
@@ -110,9 +111,7 @@ Contact: haotool.org@gmail.com
 
 ### 應用程式深層連結（帶入換算參數）
 - 格式：https://app.haotool.org/ratewise/?amount={金額}&from={來源幣}&to={目標幣}
-- 範例：https://app.haotool.org/ratewise/?amount=50000&from=KRW&to=TWD
-- 範例：https://app.haotool.org/ratewise/?amount=10000&from=JPY&to=TWD
-- 範例：https://app.haotool.org/ratewise/?amount=100&from=USD&to=TWD
+- 說明：僅作為首頁換算器狀態模板，避免公開列出具體參數網址造成重複抓取
 
 ### API 規格文件
 - [API Metadata](https://app.haotool.org/ratewise/api/latest.json): 版本、來源、支援幣別清單（靜態 JSON metadata）

@@ -191,14 +191,16 @@ describe('Sitemap 2025 Standards', () => {
   });
 
   describe('URL Count', () => {
-    it('should have all 17 SEO paths', async () => {
+    it('should have all public sitemap paths', async () => {
       const xml = readSitemap();
       const parsed = await parseSitemap(xml);
 
       const urls = parsed.urlset.url;
 
-      // RateWise 應該有 17 個 SEO 路徑
-      expect(urls.length, 'Should have 17 SEO paths (4 core + 13 currency pages)').toBe(17);
+      expect(
+        urls.length,
+        'Should have 25 public sitemap paths (7 content + 1 legal + 17 currency pages)',
+      ).toBe(25);
     });
   });
 });

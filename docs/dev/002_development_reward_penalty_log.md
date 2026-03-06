@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-03-06T01:56:00+08:00
-> **當前總分**: 1094 (初始分: 100) [+3 修復 RateWise 單幣別匯率類型誤導切換（幣別對可用性 SSOT + UI 防呆 + 回歸測試） + +1 建立 RateWise Cloudflare 稽核工作流文件 + +2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強 + +6 park-keeper 車牌快編、導航地圖快取與羅盤 UX 優化 + +3 park-keeper CI coverage 修復與 a11y 補強 + +5 RateWise bundle size 優化與效能提升 - +3 緊急修復 React Scheduler 分裂導致生產癱瘓 + -3 Code splitting 策略導致生產環境癱瘓]
+> **最後更新**: 2026-03-07T04:39:00+08:00
+> **當前總分**: 1110 (初始分: 100) [+3 RateWise SEO Audit hreflang 驗證硬編碼根因修復 + +4 RateWise rebase 後版本與 sitemap SSOT 根因修復 + +1 RateWise 公開產物格式漂移收斂與提交潔淨化 + +6 RateWise SEO 權威內容頁、參數頁重複抓取抑制與 deep-link 模板收斂 + +5 RateWise SEO 真實性、sitemap 與 robots SSOT 根因修復 + +1 建立 RateWise Cloudflare 稽核工作流文件 + +2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強 + +6 park-keeper 車牌快編、導航地圖快取與羅盤 UX 優化 + +3 park-keeper CI coverage 修復與 a11y 補強 + +5 RateWise bundle size 優化與效能提升 - +3 緊急修復 React Scheduler 分裂導致生產癱瘓 + -3 Code splitting 策略導致生產環境癱瘓]
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -19,12 +19,26 @@
 
 ---
 
-## 補充紀錄（2026-03-06）
+## 補充紀錄（2026-03-03）
 
-- ✅ 成功｜修復 RateWise 單幣別嚴重誤導：部分幣別缺少即期/現金時仍可切換，導致 UI 顯示與實際計算 fallback 類型不一致 1) **根因**：單幣別切換按鈕未檢查「幣別對可用性」，且底層 `getExchangeRate` 會自動 fallback，形成「可切換但非實際使用」的誤導狀態 2) **SSOT 收斂**：於 `exchangeRateCalculation.ts` 新增 `getCurrencyRateTypeAvailability`、`getPairRateTypeAvailability`、`resolveRateTypeByAvailability`，統一多幣別與單幣別判斷來源 3) **原子修復**：`RateWise.tsx` 增加可用性收斂（不可用時自動切回可用類型）；`SingleConverter.tsx` 對不可用類型按鈕加上 `aria-disabled` 與 Tooltip 提示，阻止誤導點擊；`MultiConverter.tsx` 改用共用可用性函式，消除重複判斷邏輯 4) **回歸驗證**：新增工具層與 UI 層測試，確認 KRW（僅現金）情境下不可切換至即期且不觸發 `onRateTypeChange`；既有 fallback 計算行為維持 5) **品質結果**：`@app/ratewise` lint/typecheck 與關鍵測試通過，維持低技術債與可維護性
+## 補充紀錄（2026-03-07）
+
+- ✅ 成功｜RateWise SEO 權威內容頁、參數頁重複抓取抑制與 deep-link 模板收斂：1) 新增三個公開可索引權威內容頁 `/sell-rate-vs-mid-rate/`、`/cash-vs-spot-rate/`、`/card-rate-guide/`，集中回答「賣出價 vs 中間價」、「現金 vs 即期」、「刷卡匯率與 DCC」三組高意圖主題，並透過 `AuthorityGuidePage` + `seo-metadata.ts` 維持內容與 metadata SSOT 2) `CONTENT_SEO_PATHS` / `SEO_PATHS` / `PRERENDER_PATHS` 與 sitemap、hreflang、llms.txt、路由設定全面同步，新增頁面已納入 SSG 預渲染與公開 sitemap 3) `CurrencyLandingPage` 的常見金額入口由可爬 `<Link>` 改為互動按鈕導頁，避免再從幣別落地頁直接暴露 `?amount=&from=&to=` 參數頁 4) `llms.txt`、`llms-full.txt`、`openapi.json` 的 deep-link 文件從具體範例 URL 改為模板化格式，保留 LLM/agent 可讀性，同時降低搜尋引擎從公開文件發現參數變體的機率 5) `SEO_FILES` TypeScript mirror 補回 `/llms-full.txt`，修正 JS/TS 路徑 SSOT 漂移 6) 驗證：`pnpm --filter @app/ratewise prebuild` ✅、`pnpm --filter @app/ratewise test -- --run src/components/__tests__/CurrencyLandingPage.test.tsx src/config/__tests__/seo-paths.test.ts src/hreflang.test.ts src/seo-best-practices.test.ts src/components/__tests__/SEOHelmet.test.tsx` ✅（135 tests）、`pnpm vitest run scripts/__tests__/sitemap-2025.test.ts` ✅（11 tests）、`pnpm --filter @app/ratewise test -- --run src/prerender.test.ts src/seo-truthfulness.test.ts` ✅（45 tests）、`pnpm --filter @app/ratewise typecheck` ✅、`node scripts/verify-sitemap-2025.mjs` ✅、`pnpm --filter @app/ratewise build` ✅（33 routes prerendered）
+- 依據｜[Context7: vite-react-ssg 靜態路由與 Head][Google Search Central: canonical 重複網址、helpful content 原則][seo / seo-audit / audit-website / tdd-workflow][Linus 三問驗證]
+- 分數｜`+6`
+
+- ✅ 成功｜RateWise 公開產物格式漂移收斂與提交潔淨化：1) 追查 `git push` 後工作樹殘留差異，確認 `api/latest.json`、`openapi.json`、`manifest.webmanifest` 為 prebuild/build 後的格式化產物，而非邏輯回歸 2) 將公開產物重新納入版本控制，避免 PR diff 與正式生成結果不一致 3) 保持 OpenAPI、API JSON 與 manifest 皆由腳本輸出之最終格式作為 SSOT，降低後續 CI 與 reviewer 誤判 4) 驗證：`git diff --stat` 僅剩 3 個公開產物格式差異，無額外程式碼變更
+- 分數｜`+1`
+
+- ✅ 成功｜RateWise rebase 後版本與 sitemap SSOT 根因修復：1) PR rebase 到最新 `main` 後，`@app/ratewise/package.json` 仍停留在 `2.6.0`，但 `public/api/latest.json` 與 `public/openapi.json` 已由生成器輸出 `2.6.1`，造成版本 SSOT 漂移；已將 app 版本正式對齊至 `2.6.1` 2) `seo-paths.ts` 與 `seo-paths.config.mjs` 在 `/privacy/` 是否屬於公開 SEO 路徑上再次分歧，進一步導致 sitemap 生成器重複把 `/privacy/` 納入輸出，hreflang 計數從 50 錯誤膨脹到 52；已將 JS/TS mirror 對齊並在 `generate-sitemap-2025.mjs` 加入去重收斂 3) 更新 `seo-paths.test.ts` 斷言，讓測試直接反映當前 SSOT：`SEO_PATHS = 25`、`PRERENDER_PATHS = 32`、`/privacy/` 屬於公開 SEO 路徑 4) 驗證：`pnpm --filter @app/ratewise prebuild` ✅、`pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-paths.test.ts src/seo-best-practices.test.ts src/hreflang.test.ts src/seo-truthfulness.test.ts` ✅（124 tests）、`pnpm vitest run scripts/__tests__/sitemap-2025.test.ts` ✅（11 tests）5) 依據：Context7 查詢 Vitest 官方文件，確認可用 CLI 方式重跑最小測試集合，避免在 rebase 修復期擴散驗證面
+- 分數｜`+4`
+
+- ✅ 成功｜RateWise SEO Audit hreflang 驗證硬編碼根因修復：1) GitHub Actions `SEO 2025 Standards Audit` 失敗日誌顯示，`verify-sitemap-2025.mjs` 仍使用 `SEO_PATHS + LEGAL_SSG_PATHS` 計算公開 sitemap 路徑，導致 `/privacy/` 被重複計入，CI 錯誤期待 26 個公開 URL / 52 個 hreflang 2) 已將驗證腳本改為和生成器相同的去重來源 `new Set(SEO_PATHS)`，讓 audit 與實際 sitemap 產物回到同一份 SSOT 3) 驗證：`node scripts/verify-sitemap-2025.mjs` ✅、`node scripts/seo-full-audit.mjs` ✅（自動驗證 3/3 通過）4) 根因結論：問題在審計腳本硬編碼，不在 sitemap 產物本身
 - 分數｜`+3`
 
----
+- ✅ 成功｜RateWise SEO 真實性、sitemap 與 robots SSOT 根因修復：1) 清除 `30+`、過時 Lighthouse 分數與「不使用追蹤 Cookie」等不實文案，改為以 `SUPPORTED_CURRENCY_COUNT`、實際資料來源與匿名分析服務揭露為準 2) `SEOHelmet` 新增 `noindex` 結構化資料抑制邏輯，避免 `/favorites`、`/multi`、`/settings` 這類 app-only 頁面再產生 schema/noindex 衝突 3) `About`、`FAQ`、`Guide`、`Privacy` 內容改為對應現有功能與台灣使用情境，強化「賣出價比中間價更接近實際成本」的產品定位 4) `robots.txt`、`manifest.webmanifest`、`llms.txt`、`openapi.json` 改由腳本自動生成，移除會誤擋公開 JSON 介面的 `Disallow: /*.json` 5) 修復 root `haotool` robots 自動生成，新增多 sitemap 宣告，讓 `ratewise`、`nihonname`、`park-keeper`、`quake-school` 都能透過 host root 被搜尋引擎發現 6) 修復 `generate-sitemap-2025.mjs` 與驗證腳本，將 `/privacy/` 正式納入 public sitemap，並補齊對應測試 7) 驗證：`pnpm --filter @app/ratewise prebuild` ✅、`pnpm --filter @app/haotool prebuild` ✅、`pnpm --filter @app/ratewise typecheck` ✅、`pnpm --filter @app/ratewise test -- --run src/components/__tests__/SEOHelmet.test.tsx src/pages/Guide.test.tsx src/seo-best-practices.test.ts src/seo-truthfulness.test.ts` ✅（135 tests）、`pnpm vitest run scripts/__tests__/sitemap-2025.test.ts` ✅（11 tests）、`node scripts/verify-sitemap-2025.mjs` ✅、`pnpm --filter @app/ratewise build` ✅、`pnpm --filter @app/haotool build` ✅
+- 依據｜[Context7: vite-react-ssg / vite-plugin-pwa / vite 7][Google Search Central: robots、sitemaps、canonical、localized versions][squirrel surface audit][Linus 三問驗證][seo / seo-audit / audit-website / tdd-workflow]
+- 分數｜`+5`
 
 ## 補充紀錄（2026-03-03）
 

@@ -24,7 +24,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
-import { SEOHelmet } from '../SEOHelmet';
+import { SEOHelmet, shouldRenderStructuredData } from '../SEOHelmet';
 
 describe('SEOHelmet Component', () => {
   describe('Component Rendering', () => {
@@ -166,6 +166,17 @@ describe('SEOHelmet Component', () => {
       );
 
       expect(container).toBeDefined();
+    });
+  });
+
+  describe('Noindex 行為', () => {
+    it('noindex 頁面不應輸出結構化資料', () => {
+      expect(shouldRenderStructuredData('noindex, follow')).toBe(false);
+      expect(shouldRenderStructuredData('noindex, nofollow')).toBe(false);
+    });
+
+    it('可索引頁面應保留結構化資料', () => {
+      expect(shouldRenderStructuredData('index, follow')).toBe(true);
     });
   });
 

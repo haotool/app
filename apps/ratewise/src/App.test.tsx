@@ -65,13 +65,13 @@ describe('App Component - SEO Configuration (BDD)', () => {
 
       // FAQ 應該包含 SEOHelmet
       expect(faqContent).toContain('<SEOHelmet');
-      expect(faqContent).toContain('title="常見問題 - RateWise 匯率工具完整 FAQ 解答"');
-      expect(faqContent).toContain('pathname="/faq"');
+      expect(faqContent).toContain('title={FAQ_PAGE_SEO.title}');
+      expect(faqContent).toContain('pathname={FAQ_PAGE_SEO.pathname}');
 
       // About 應該包含 SEOHelmet
       expect(aboutContent).toContain('<SEOHelmet');
-      expect(aboutContent).toContain('title="關於 RateWise 匯率好工具 - 資料來源與技術特色"');
-      expect(aboutContent).toContain('pathname="/about"');
+      expect(aboutContent).toContain('title={ABOUT_PAGE_SEO.title}');
+      expect(aboutContent).toContain('pathname={ABOUT_PAGE_SEO.pathname}');
     });
   });
 

@@ -1,36 +1,18 @@
-# haotool — Robots Exclusion Protocol
+# haotool.org — Robots Exclusion Protocol
 # https://app.haotool.org/
 # 最後更新：2026-03-06
 
-# Content Signals Policy (ContentSignals.org / CC0)
-Content-Signal: search=yes, ai-train=no, ai-input=yes
-
-# ── 預設規則 ──────────────────────────────────────────
 User-agent: *
 Allow: /
 Disallow: /sw.js
 Disallow: /workbox-*.js
-Disallow: /*.json
 
 Sitemap: https://app.haotool.org/sitemap.xml
+Sitemap: https://app.haotool.org/ratewise/sitemap.xml
+Sitemap: https://app.haotool.org/nihonname/sitemap.xml
+Sitemap: https://app.haotool.org/park-keeper/sitemap.xml
+Sitemap: https://app.haotool.org/quake-school/sitemap.xml
 
-# ── 傳統搜索引擎 ──────────────────────────────────────
-User-agent: Googlebot
-Allow: /
-
-User-agent: Googlebot-Mobile
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Yandex
-Allow: /
-
-User-agent: DuckDuckBot
-Allow: /
-
-# ── OpenAI ────────────────────────────────────────────
 User-agent: GPTBot
 Allow: /
 
@@ -40,63 +22,27 @@ Allow: /
 User-agent: ChatGPT-User
 Allow: /
 
-# ── Anthropic ─────────────────────────────────────────
 User-agent: ClaudeBot
 Allow: /
 
 User-agent: anthropic-ai
 Allow: /
 
-User-agent: Claude-User
-Allow: /
-
-User-agent: Claude-SearchBot
-Allow: /
-
-# ── Perplexity ────────────────────────────────────────
 User-agent: PerplexityBot
 Allow: /
 
-User-agent: Perplexity-User
-Allow: /
-
-# ── Google AI ─────────────────────────────────────────
 User-agent: Google-Extended
 Allow: /
 
-# ── xAI (Grok) ────────────────────────────────────────
-User-agent: GrokBot
-Allow: /
-
-# ── Cohere ────────────────────────────────────────────
 User-agent: cohere-ai
 Allow: /
 
-# ── You.com ───────────────────────────────────────────
-User-agent: YouBot
-Allow: /
-
-# ── DuckDuckGo AI ─────────────────────────────────────
-User-agent: DuckAssistBot
-Allow: /
-
-# ── Amazon ────────────────────────────────────────────
-User-agent: Amazonbot
-Allow: /
-
-# ── Apple ─────────────────────────────────────────────
-User-agent: Applebot-Extended
-Allow: /
-
-# ── Common Crawl ──────────────────────────────────────
 User-agent: CCBot
 Allow: /
 
-# ── ByteDance ─────────────────────────────────────────
 User-agent: Bytespider
 Allow: /
 
-# ── 社群媒體 ──────────────────────────────────────────
 User-agent: Meta-ExternalAgent
 Allow: /
 

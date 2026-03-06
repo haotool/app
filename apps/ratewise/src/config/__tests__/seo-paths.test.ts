@@ -3,7 +3,6 @@ import {
   APP_ONLY_PATHS,
   APP_ONLY_PRERENDER_PATHS,
   IMAGE_RESOURCES,
-  LEGAL_SSG_PATHS,
   PRERENDER_PATHS,
   SEO_FILES,
   SEO_PATHS,
@@ -64,26 +63,25 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO 與路由白名單', () => {
-    it('SEO_PATHS 應只包含 21 個公開可索引路徑', () => {
-      expect(SEO_PATHS).toHaveLength(21);
+    it('SEO_PATHS 應只包含 25 個公開可索引路徑', () => {
+      expect(SEO_PATHS).toHaveLength(25);
       expect(SEO_PATHS).toContain('/');
       expect(SEO_PATHS).toContain('/faq/');
       expect(SEO_PATHS).toContain('/about/');
       expect(SEO_PATHS).toContain('/guide/');
+      expect(SEO_PATHS).toContain('/privacy/');
+      expect(SEO_PATHS).toContain('/sell-rate-vs-mid-rate/');
+      expect(SEO_PATHS).toContain('/cash-vs-spot-rate/');
+      expect(SEO_PATHS).toContain('/card-rate-guide/');
       expect(SEO_PATHS).toContain('/usd-twd/');
       expect(SEO_PATHS).not.toContain('/multi/');
       expect(SEO_PATHS).not.toContain('/favorites/');
       expect(SEO_PATHS).not.toContain('/settings/');
-      expect(SEO_PATHS).not.toContain('/privacy/');
     });
 
-    it('PRERENDER_PATHS 應包含公開 SEO 路徑、privacy 與 app-only noindex 頁面', () => {
-      expect(PRERENDER_PATHS).toHaveLength(29);
-      expect(PRERENDER_PATHS).toEqual([
-        ...SEO_PATHS,
-        ...LEGAL_SSG_PATHS,
-        ...APP_ONLY_PRERENDER_PATHS,
-      ]);
+    it('PRERENDER_PATHS 應包含公開 SEO 路徑與 app-only noindex 頁面', () => {
+      expect(PRERENDER_PATHS).toHaveLength(32);
+      expect(PRERENDER_PATHS).toEqual([...SEO_PATHS, ...APP_ONLY_PRERENDER_PATHS]);
       expect(PRERENDER_PATHS).toContain('/privacy/');
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');
@@ -99,7 +97,7 @@ describe('SEO Paths Configuration', () => {
 
   describe('Static resources', () => {
     it('應該包含必要 SEO 檔案', () => {
-      expect(SEO_FILES).toEqual(['/sitemap.xml', '/robots.txt', '/llms.txt']);
+      expect(SEO_FILES).toEqual(['/sitemap.xml', '/robots.txt', '/llms.txt', '/llms-full.txt']);
     });
 
     it('應該包含最新分享圖片 SSOT', () => {
@@ -124,8 +122,8 @@ describe('SEO Paths Configuration', () => {
     it('isSEOPath 應正確識別公開 SEO 路徑', () => {
       expect(isSEOPath('/faq/')).toBe(true);
       expect(isSEOPath('/usd-twd/')).toBe(true);
+      expect(isSEOPath('/privacy/')).toBe(true);
       expect(isSEOPath('/multi/')).toBe(false);
-      expect(isSEOPath('/privacy/')).toBe(false);
     });
 
     it('isCorePagePath 應只識別公開內容頁', () => {
