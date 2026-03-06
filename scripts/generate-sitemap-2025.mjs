@@ -61,6 +61,9 @@ const PATH_TO_SOURCE = {
   '/faq/': 'apps/ratewise/src/pages/FAQ.tsx',
   '/about/': 'apps/ratewise/src/pages/About.tsx',
   '/guide/': 'apps/ratewise/src/pages/Guide.tsx',
+  '/sell-rate-vs-mid-rate/': 'apps/ratewise/src/pages/SellRateVsMidRate.tsx',
+  '/cash-vs-spot-rate/': 'apps/ratewise/src/pages/CashVsSpotRate.tsx',
+  '/card-rate-guide/': 'apps/ratewise/src/pages/CardRateGuide.tsx',
   '/privacy/': 'apps/ratewise/src/pages/Privacy.tsx',
   '/usd-twd/': 'apps/ratewise/src/pages/USDToTWD.tsx',
   '/jpy-twd/': 'apps/ratewise/src/pages/JPYToTWD.tsx',
@@ -114,6 +117,24 @@ const PAGE_IMAGES = {
     {
       loc: OG_IMAGE_URL,
       caption: 'RateWise Guide - 使用指南',
+    },
+  ],
+  '/sell-rate-vs-mid-rate/': [
+    {
+      loc: OG_IMAGE_URL,
+      caption: 'RateWise Guide - 賣出價與中間價差異',
+    },
+  ],
+  '/cash-vs-spot-rate/': [
+    {
+      loc: OG_IMAGE_URL,
+      caption: 'RateWise Guide - 現金與即期匯率差異',
+    },
+  ],
+  '/card-rate-guide/': [
+    {
+      loc: OG_IMAGE_URL,
+      caption: 'RateWise Guide - 刷卡匯率與 DCC',
     },
   ],
   '/privacy/': [

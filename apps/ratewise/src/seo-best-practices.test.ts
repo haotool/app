@@ -81,6 +81,18 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(llmsContent).toContain('/about/');
     });
 
+    it('should list authority content pages', () => {
+      expect(llmsContent).toContain('/sell-rate-vs-mid-rate/');
+      expect(llmsContent).toContain('/cash-vs-spot-rate/');
+      expect(llmsContent).toContain('/card-rate-guide/');
+    });
+
+    it('should avoid publishing concrete parameterized deep-link examples', () => {
+      expect(llmsContent).not.toContain('?amount=50000&from=KRW&to=TWD');
+      expect(llmsContent).not.toContain('?amount=10000&from=JPY&to=TWD');
+      expect(llmsContent).not.toContain('?amount=100&from=USD&to=TWD');
+    });
+
     it('should list popular currency landing pages', () => {
       // 核心貨幣（必須存在）
       const coreCurrencies = ['usd', 'jpy', 'eur', 'hkd', 'cny', 'krw'];
@@ -186,6 +198,12 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(sitemapContent).toContain('/ratewise/about/</loc>');
       expect(sitemapContent).toContain('/ratewise/guide/</loc>');
       expect(sitemapContent).toContain('/ratewise/privacy/</loc>');
+    });
+
+    it('should include authority content pages', () => {
+      expect(sitemapContent).toContain('/ratewise/sell-rate-vs-mid-rate/</loc>');
+      expect(sitemapContent).toContain('/ratewise/cash-vs-spot-rate/</loc>');
+      expect(sitemapContent).toContain('/ratewise/card-rate-guide/</loc>');
     });
 
     it('should have all 17 currency landing pages', () => {
@@ -540,6 +558,7 @@ describe('💰 Exchange Rate Knowledge Coverage', () => {
 });
 
 const apiPath = resolve(__dirname, '../public/api/latest.json');
+const openapiPath = resolve(__dirname, '../public/openapi.json');
 const apiExists = existsSync(apiPath);
 const describeIfApiGenerated = apiExists ? describe : describe.skip;
 
@@ -580,5 +599,12 @@ describeIfApiGenerated('📡 Static API Endpoint (api/latest.json) (requires pre
   it('should have deep link template', () => {
     const content = JSON.parse(readFile(apiPath));
     expect(content.deepLink).toContain('?amount={AMOUNT}&from={FROM}&to={TO}');
+  });
+
+  it('should avoid concrete parameterized examples in OpenAPI deep-link metadata', () => {
+    const content = readFile(openapiPath);
+    expect(content).not.toContain('?amount=50000&from=KRW&to=TWD');
+    expect(content).not.toContain('?amount=10000&from=JPY&to=TWD');
+    expect(content).not.toContain('?amount=100&from=USD&to=TWD');
   });
 });

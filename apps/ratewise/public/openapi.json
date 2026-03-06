@@ -351,10 +351,6 @@
   "x-deep-link": {
     "description": "應用程式深層連結（帶入換算參數）",
     "format": "https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}",
-    "examples": [
-      "https://app.haotool.org/ratewise/?amount=50000&from=KRW&to=TWD",
-      "https://app.haotool.org/ratewise/?amount=10000&from=JPY&to=TWD",
-      "https://app.haotool.org/ratewise/?amount=100&from=USD&to=TWD"
-    ]
+    "exampleTemplate": "https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}"
   }
 }

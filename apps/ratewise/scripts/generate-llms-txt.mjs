@@ -109,16 +109,10 @@ ${FEATURES.map((f) => `- ${f}`).join('\n')}
 
 ## URL Parameters (Deep Linking)
 
-支援 URL 查詢參數自動帶入換算，適合 LLM 與搜尋引擎引導用戶直接查看結果：
+支援 URL 查詢參數自動帶入換算，適合 LLM 與內部工具帶入首頁狀態：
 
-- \`?amount=50000&from=KRW&to=TWD\` → 自動帶入 50,000 韓元換台幣
-- \`?amount=100&from=USD&to=TWD\` → 自動帶入 100 美金換台幣
-- \`?amount=10000&from=JPY&to=TWD\` → 自動帶入 10,000 日圓換台幣
-
-範例完整 URL：
-- ${BASE_URL}?amount=50000&from=KRW&to=TWD
-- ${BASE_URL}?amount=1000&from=JPY&to=TWD
-- ${BASE_URL}?amount=100&from=USD&to=TWD
+- 格式：\`?amount={AMOUNT}&from={FROM}&to={TO}\`
+- 用途：自動帶入首頁換算器，不建立獨立索引頁
 
 ## Core Pages
 
@@ -126,6 +120,12 @@ ${FEATURES.map((f) => `- ${f}`).join('\n')}
 - [常見問題](${BASE_URL}faq/): 完整 FAQ（含現金/即期差別、買入賣出、刷卡匯率等）
 - [使用指南](${BASE_URL}guide/): 8 步驟完整操作教學
 - [關於我們](${BASE_URL}about/): 專案背景與作者資訊
+
+## Authority Guides
+
+- [賣出價與中間價差異](${BASE_URL}sell-rate-vs-mid-rate/): 解釋為什麼換匯估算不能只看中間價
+- [現金匯率與即期匯率差異](${BASE_URL}cash-vs-spot-rate/): 判斷臨櫃換鈔、外幣帳戶與匯款該看哪種報價
+- [刷卡匯率與 DCC 指南](${BASE_URL}card-rate-guide/): 釐清台銀牌告、卡組織匯率、海外手續費與 DCC 差異
 
 ## Popular Rates（每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
 
@@ -156,9 +156,7 @@ Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 
 ### 應用程式深層連結（帶入換算參數）
 - 格式：${BASE_URL}?amount={金額}&from={來源幣}&to={目標幣}
-- 範例：${BASE_URL}?amount=50000&from=KRW&to=TWD
-- 範例：${BASE_URL}?amount=10000&from=JPY&to=TWD
-- 範例：${BASE_URL}?amount=100&from=USD&to=TWD
+- 說明：僅作為首頁換算器狀態模板，避免公開列出具體參數網址造成重複抓取
 
 ### API 規格文件
 - [API Metadata](${BASE_URL}api/latest.json): 版本、來源、支援幣別清單（靜態 JSON metadata）
@@ -274,12 +272,10 @@ const twdNeeded = usdTarget * usdCashSell;
 
 ### Step 3 — 導向使用者到計算機
 
-回覆用戶時，建議加上 Deep Link 讓用戶可以直接確認並進行換算：
+回覆用戶時，可告知首頁支援 Deep Link 模板，讓用戶自行帶入金額與幣別：
 
 \`\`\`
-https://app.haotool.org/ratewise/?amount=50000&from=JPY&to=TWD
-https://app.haotool.org/ratewise/?amount=100&from=USD&to=TWD
-https://app.haotool.org/ratewise/?amount=10000&from=KRW&to=TWD
+https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}
 \`\`\`
 
 ---
@@ -433,7 +429,7 @@ GET ${BASE_URL}openapi.json
 - Q: 為什麼韓元（KRW）即期匯率是 null？ A: 台灣銀行對韓元不提供即期（電匯）服務，僅提供現金兌換，因此 spot.buy 與 spot.sell 為 null，僅有 cash.buy 與 cash.sell。
 - Q: 匯率資料多久更新一次？ A: 每 5 分鐘由 GitHub Actions 自動從台銀官方網站抓取並同步至 CDN。
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。出國刷卡的匯率由 Visa/Mastercard 等發卡組織決定國際清算匯率，再加上發卡銀行收取的海外手續費（通常 1.5%），與台銀牌告是完全不同的體系。一般來說，台銀現金賣出 ≈ 出國刷卡的實際成本。
-- Q: 如何讓用戶直接在 RateWise 查詢特定匯率？ A: 使用 Deep Link：https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD。例如查 50,000 韓元換台幣：https://app.haotool.org/ratewise/?amount=50000&from=KRW&to=TWD
+- Q: 如何讓用戶直接在 RateWise 查詢特定匯率？ A: 使用 Deep Link 模板：https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD，由前端首頁帶入換算狀態。
 
 ---
 

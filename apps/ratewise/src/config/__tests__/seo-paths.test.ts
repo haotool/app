@@ -64,12 +64,15 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO 與路由白名單', () => {
-    it('SEO_PATHS 應只包含 21 個公開可索引路徑', () => {
-      expect(SEO_PATHS).toHaveLength(21);
+    it('SEO_PATHS 應只包含 24 個公開可索引路徑', () => {
+      expect(SEO_PATHS).toHaveLength(24);
       expect(SEO_PATHS).toContain('/');
       expect(SEO_PATHS).toContain('/faq/');
       expect(SEO_PATHS).toContain('/about/');
       expect(SEO_PATHS).toContain('/guide/');
+      expect(SEO_PATHS).toContain('/sell-rate-vs-mid-rate/');
+      expect(SEO_PATHS).toContain('/cash-vs-spot-rate/');
+      expect(SEO_PATHS).toContain('/card-rate-guide/');
       expect(SEO_PATHS).toContain('/usd-twd/');
       expect(SEO_PATHS).not.toContain('/multi/');
       expect(SEO_PATHS).not.toContain('/favorites/');
@@ -78,7 +81,7 @@ describe('SEO Paths Configuration', () => {
     });
 
     it('PRERENDER_PATHS 應包含公開 SEO 路徑、privacy 與 app-only noindex 頁面', () => {
-      expect(PRERENDER_PATHS).toHaveLength(29);
+      expect(PRERENDER_PATHS).toHaveLength(32);
       expect(PRERENDER_PATHS).toEqual([
         ...SEO_PATHS,
         ...LEGAL_SSG_PATHS,
@@ -99,7 +102,7 @@ describe('SEO Paths Configuration', () => {
 
   describe('Static resources', () => {
     it('應該包含必要 SEO 檔案', () => {
-      expect(SEO_FILES).toEqual(['/sitemap.xml', '/robots.txt', '/llms.txt']);
+      expect(SEO_FILES).toEqual(['/sitemap.xml', '/robots.txt', '/llms.txt', '/llms-full.txt']);
     });
 
     it('應該包含最新分享圖片 SSOT', () => {

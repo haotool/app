@@ -12,6 +12,9 @@
  *   - `/faq`: FAQ 頁面 - 預渲染靜態 HTML
  *   - `/about`: About 頁面 - 預渲染靜態 HTML
  *   - `/guide`: Guide 頁面 - 預渲染靜態 HTML + HowTo Schema
+ *   - `/sell-rate-vs-mid-rate`: 賣出價與中間價差異指南
+ *   - `/cash-vs-spot-rate`: 現金與即期匯率指南
+ *   - `/card-rate-guide`: 刷卡匯率與 DCC 指南
  *   - `/xxx-twd`: 13 個幣別落地頁 - 預渲染靜態 HTML
  *
  * - 工具頁面（不預渲染）：
@@ -161,6 +164,21 @@ export const routes: RouteRecord[] = [
   createLazyRoute('/about', () => import('./pages/About'), 'src/pages/About.tsx'),
   createLazyRoute('/privacy', () => import('./pages/Privacy'), 'src/pages/Privacy.tsx'),
   createLazyRoute('/guide', () => import('./pages/Guide'), 'src/pages/Guide.tsx'),
+  createLazyRoute(
+    '/sell-rate-vs-mid-rate',
+    () => import('./pages/SellRateVsMidRate'),
+    'src/pages/SellRateVsMidRate.tsx',
+  ),
+  createLazyRoute(
+    '/cash-vs-spot-rate',
+    () => import('./pages/CashVsSpotRate'),
+    'src/pages/CashVsSpotRate.tsx',
+  ),
+  createLazyRoute(
+    '/card-rate-guide',
+    () => import('./pages/CardRateGuide'),
+    'src/pages/CardRateGuide.tsx',
+  ),
 
   // 17 個幣別落地頁（SEO 預渲染）
   createLazyRoute('/usd-twd', () => import('./pages/USDToTWD'), 'src/pages/USDToTWD.tsx'),

@@ -13,7 +13,15 @@ export function normalizeSiteUrl(value: string): string {
   return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
 }
 
-export const CONTENT_SEO_PATHS = ['/', '/faq/', '/about/', '/guide/'] as const;
+export const CONTENT_SEO_PATHS = [
+  '/',
+  '/faq/',
+  '/about/',
+  '/guide/',
+  '/sell-rate-vs-mid-rate/',
+  '/cash-vs-spot-rate/',
+  '/card-rate-guide/',
+] as const;
 
 export const LEGAL_SSG_PATHS = ['/privacy/'] as const;
 

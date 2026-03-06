@@ -199,8 +199,8 @@ describe('Sitemap 2025 Standards', () => {
 
       expect(
         urls.length,
-        'Should have 22 public sitemap paths (4 content + 1 legal + 17 currency pages)',
-      ).toBe(22);
+        'Should have 25 public sitemap paths (7 content + 1 legal + 17 currency pages)',
+      ).toBe(25);
     });
   });
 });

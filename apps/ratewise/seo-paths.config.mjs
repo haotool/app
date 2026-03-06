@@ -23,9 +23,17 @@ const withTrailingSlash = (value) => {
 export const normalizeSiteUrl = withTrailingSlash;
 
 /**
- * 公開可索引內容頁（4 個）
+ * 公開可索引內容頁（7 個）
  */
-export const CONTENT_SEO_PATHS = ['/', '/faq/', '/about/', '/guide/'];
+export const CONTENT_SEO_PATHS = [
+  '/',
+  '/faq/',
+  '/about/',
+  '/guide/',
+  '/sell-rate-vs-mid-rate/',
+  '/cash-vs-spot-rate/',
+  '/card-rate-guide/',
+];
 
 /**
  * 公開法律頁面：保留獨立分組，並納入 sitemap
@@ -56,7 +64,7 @@ export const CURRENCY_SEO_PATHS = [
 ];
 
 /**
- * 公開可索引 SEO 路徑（21 個）
+ * 公開可索引 SEO 路徑（24 個）
  */
 export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS];
 
