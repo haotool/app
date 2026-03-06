@@ -321,6 +321,24 @@ ls -la
 - `lint-staged` 會對 `*.md` 執行 `prettier --write`
 - 表格與長段落常被重排（尤其 `docs/dev/002...`）
 
+### 6. Prettier 格式漂移（prebuild 產出物）
+
+**症狀**：`prettier --check` 每次 pre-commit 報 `api/latest.json`、`openapi.json`、`llms.txt` 格式不一致。
+
+**根本原因**：`JSON.stringify(null, 2)` 總是多行展開；Prettier 依 `printWidth` 決定是否單行。每次 prebuild 重新生成 → 格式漂移。
+
+**正確做法（MUST）**：將 prebuild 產出物加入 `.prettierignore`；**禁止**在 prebuild script 內呼叫 Prettier API。
+
+```
+# .prettierignore — Generated files（prebuild 自動產出，非源碼）
+apps/ratewise/public/api/latest.json
+apps/ratewise/public/openapi.json
+apps/ratewise/public/llms.txt
+apps/ratewise/public/llms-full.txt
+```
+
+**業界依據**：Prettier 官方文件建議用 `.prettierignore` 排除非源碼檔案；Next.js、TypeScript 主流專案均採此做法。
+
 ### 2. `git status` 看不到 root 截圖
 
 - 很多 root QA 圖檔已被 `.gitignore` 忽略
@@ -383,15 +401,16 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 
 ## 修訂紀錄（Revision History）
 
-| 日期       | 版本 | 變更摘要                                                                                                                |
-| ---------- | ---- | ----------------------------------------------------------------------------------------------------------------------- |
-| 2026-03-06 | v3.4 | 新增「security-headers Worker 部署 SOP」：wrangler 認證、esbuild 說明、版本號同步、假陽性清單、CSP connect-src 必要域名 |
-| 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史）    |
-| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口                     |
-| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP                       |
-| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                                                   |
+| 日期       | 版本 | 變更摘要                                                                                                                      |
+| ---------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-07 | v3.5 | 新增 Troubleshooting #6「Prettier 格式漂移」：prebuild 產出物應加入 `.prettierignore`，禁止 prebuild script 呼叫 Prettier API |
+| 2026-03-06 | v3.4 | 新增「security-headers Worker 部署 SOP」：wrangler 認證、esbuild 說明、版本號同步、假陽性清單、CSP connect-src 必要域名       |
+| 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史）          |
+| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口                           |
+| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP                             |
+| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                                                         |
 
 ---
 
-**最後更新**: 2026-03-02T11:20:00+0800
-**版本**: v3.3（新增版本發布、安全管理、PR Rebase 完整操作流程）
+**最後更新**: 2026-03-07T00:00:00+0800
+**版本**: v3.5（新增 Prettier 格式漂移根本修法：.prettierignore 管理 prebuild 產出物）
