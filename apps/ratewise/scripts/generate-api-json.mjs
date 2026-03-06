@@ -7,7 +7,6 @@
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import prettier from 'prettier';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG } from '../seo-paths.config.mjs';
