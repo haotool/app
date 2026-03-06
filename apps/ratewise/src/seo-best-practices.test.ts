@@ -473,7 +473,7 @@ describe('📊 E-E-A-T Compliance', () => {
     });
 
     it('should mention update frequency', () => {
-      expect(aboutContent).toContain('5 分鐘');
+      expect(aboutContent).toMatch(/5\s*分鐘/);
     });
   });
 
