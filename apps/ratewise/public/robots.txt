@@ -14,10 +14,10 @@ Allow: /
 Disallow: /sw.js
 Disallow: /workbox-*.js
 Disallow: /*.json
-Disallow: /theme-showcase
-Disallow: /color-scheme
-Disallow: /update-prompt-test
-Disallow: /ui-showcase
+Disallow: /theme-showcase/
+Disallow: /color-scheme/
+Disallow: /update-prompt-test/
+Disallow: /ui-showcase/
 
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 

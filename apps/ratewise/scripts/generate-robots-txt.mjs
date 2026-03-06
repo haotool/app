@@ -24,8 +24,9 @@ const ROOT = resolve(__dirname, '..');
 const BUILD_DATE = new Date().toISOString().split('T')[0];
 const SITEMAP_URL = `${SITE_CONFIG.url}sitemap.xml`;
 
-// robots.txt 慣例不加尾斜線
-const devDisallows = DEV_ONLY_PATHS.map((p) => p.replace(/\/$/, ''));
+// Google 規格：指向目錄路徑必須以 / 結尾，保留 DEV_ONLY_PATHS 的尾斜線
+// Disallow: /theme-showcase/ 只匹配 /theme-showcase/，不會誤匹配 /theme-showcase-beta
+const devDisallows = DEV_ONLY_PATHS.map((p) => (p.endsWith('/') ? p : `${p}/`));
 
 const content = `# RateWise — Robots Exclusion Protocol
 # ${SITE_CONFIG.url}
