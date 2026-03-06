@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- fix(ratewise): 修復 rebase 後版本、SEO 路徑 mirror 與 sitemap `/privacy/` 重複輸出的 SSOT 漂移，並同步更新 llms/public 產物與回歸測試
 - fix(ratewise): 修復單幣別匯率類型誤導切換（部分幣別無即期仍可切換顯示即期）
   - 新增匯率類型可用性 SSOT：`getCurrencyRateTypeAvailability`、`getPairRateTypeAvailability`、`resolveRateTypeByAvailability`
   - 單幣別改為依幣別對可用性禁用不可用切換，並以 Tooltip 提示原因

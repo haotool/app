@@ -64,9 +64,9 @@ export const CURRENCY_SEO_PATHS = [
 ];
 
 /**
- * 公開可索引 SEO 路徑（24 個）
+ * 公開可索引 SEO 路徑（25 個）
  */
-export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS];
+export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...LEGAL_SSG_PATHS, ...CURRENCY_SEO_PATHS];
 
 /**
  * 需要回傳 app shell 的互動頁面（app-only）
@@ -101,7 +101,7 @@ export const APP_ONLY_PRERENDER_PATHS = [...APP_ONLY_PATHS];
 /**
  * 需要預渲染的靜態內容頁
  */
-export const PRERENDER_PATHS = [...SEO_PATHS, ...LEGAL_SSG_PATHS, ...APP_ONLY_PRERENDER_PATHS];
+export const PRERENDER_PATHS = [...SEO_PATHS, ...APP_ONLY_PRERENDER_PATHS];
 
 /**
  * 所有已知前端路由

@@ -29,7 +29,6 @@ const __dirname = dirname(__filename);
 // 從 SSOT 導入配置
 import {
   SEO_PATHS,
-  LEGAL_SSG_PATHS,
   SITE_CONFIG,
   SHARE_IMAGE,
   IMAGE_RESOURCES,
@@ -37,7 +36,7 @@ import {
 } from '../apps/ratewise/seo-paths.config.mjs';
 
 const SITE_URL = normalizeSiteUrl(SITE_CONFIG.url);
-const PUBLIC_SITEMAP_PATHS = [...SEO_PATHS, ...LEGAL_SSG_PATHS];
+const PUBLIC_SITEMAP_PATHS = [...new Set(SEO_PATHS)];
 
 // 顏色輸出
 const colors = {
