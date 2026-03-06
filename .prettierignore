@@ -54,6 +54,7 @@ yarn.lock
 # Generated files (prebuild 自動產出，非源碼，不需格式化)
 apps/ratewise/dev-server.pid
 apps/ratewise/dev-server.log
+apps/ratewise/public/robots.txt
 apps/ratewise/public/api/latest.json
 apps/ratewise/public/openapi.json
 apps/ratewise/public/llms.txt
