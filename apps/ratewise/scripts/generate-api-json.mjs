@@ -7,6 +7,7 @@
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import prettier from 'prettier';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG } from '../seo-paths.config.mjs';
@@ -58,5 +59,11 @@ const latestJson = {
 
 const apiDir = resolve(ROOT, 'public/api');
 mkdirSync(apiDir, { recursive: true });
-writeFileSync(resolve(apiDir, 'latest.json'), JSON.stringify(latestJson, null, 2) + '\n');
+const apiOutputPath = resolve(apiDir, 'latest.json');
+const apiConfig = await prettier.resolveConfig(apiOutputPath);
+const apiFormatted = await prettier.format(JSON.stringify(latestJson, null, 2), {
+  ...apiConfig,
+  parser: 'json',
+});
+writeFileSync(apiOutputPath, apiFormatted);
 console.log(`✅ api/latest.json generated: v${pkg.version}, ${currencyKeys.length} currencies`);

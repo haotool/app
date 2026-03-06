@@ -7,6 +7,7 @@
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import prettier from 'prettier';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG } from '../seo-paths.config.mjs';
@@ -267,7 +268,13 @@ const openApiSpec = {
   },
 };
 
-writeFileSync(resolve(ROOT, 'public/openapi.json'), JSON.stringify(openApiSpec, null, 2) + '\n');
+const openapiOutputPath = resolve(ROOT, 'public/openapi.json');
+const openapiConfig = await prettier.resolveConfig(openapiOutputPath);
+const openapiFormatted = await prettier.format(JSON.stringify(openApiSpec, null, 2), {
+  ...openapiConfig,
+  parser: 'json',
+});
+writeFileSync(openapiOutputPath, openapiFormatted);
 console.log(
   `✅ openapi.json generated: v${VERSION}, OpenAPI 3.1, ${SUPPORTED_CURRENCIES.length} currencies`,
 );
