@@ -1,45 +1,11 @@
-# robots.txt for 停車好工具 (ParkKeeper)
+# 停車好工具 (ParkKeeper) — Robots Exclusion Protocol
 # https://app.haotool.org/park-keeper/
+# 最後更新：2026-03-06
 
-User-agent: Googlebot
-Allow: /
+# Content Signals Policy (ContentSignals.org / CC0)
+Content-Signal: search=yes, ai-train=no, ai-input=yes
 
-User-agent: Bingbot
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: Bytespider
-Allow: /
-
-User-agent: Meta-ExternalAgent
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# ── 預設規則 ──────────────────────────────────────────
 User-agent: *
 Allow: /
 Disallow: /sw.js
@@ -47,3 +13,89 @@ Disallow: /workbox-*.js
 Disallow: /*.json
 
 Sitemap: https://app.haotool.org/park-keeper/sitemap.xml
+
+# ── 傳統搜索引擎 ──────────────────────────────────────
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# ── OpenAI ────────────────────────────────────────────
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# ── Anthropic ─────────────────────────────────────────
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+# ── Perplexity ────────────────────────────────────────
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# ── Google AI ─────────────────────────────────────────
+User-agent: Google-Extended
+Allow: /
+
+# ── xAI (Grok) ────────────────────────────────────────
+User-agent: GrokBot
+Allow: /
+
+# ── Cohere ────────────────────────────────────────────
+User-agent: cohere-ai
+Allow: /
+
+# ── You.com ───────────────────────────────────────────
+User-agent: YouBot
+Allow: /
+
+# ── DuckDuckGo AI ─────────────────────────────────────
+User-agent: DuckAssistBot
+Allow: /
+
+# ── Amazon ────────────────────────────────────────────
+User-agent: Amazonbot
+Allow: /
+
+# ── Apple ─────────────────────────────────────────────
+User-agent: Applebot-Extended
+Allow: /
+
+# ── Common Crawl ──────────────────────────────────────
+User-agent: CCBot
+Allow: /
+
+# ── ByteDance ─────────────────────────────────────────
+User-agent: Bytespider
+Allow: /
+
+# ── 社群媒體 ──────────────────────────────────────────
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /

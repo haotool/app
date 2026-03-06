@@ -1,5 +1,5 @@
 /**
- * 安全標頭 Worker v3.4
+ * 安全標頭 Worker v3.5
  *
  * 本 Worker 為 HTTP 安全標頭的唯一來源（SSOT），統一管理所有路由的安全政策，
  * 無需修改應用程式原始碼。
@@ -61,7 +61,7 @@ function buildRatewiseCSP(scriptHashes) {
 /** 非 ratewise 路由的基準安全標頭組合，符合 A+ 安全評等要求。 */
 const HAOTOOL_BASE_HEADERS = {
 	'Content-Security-Policy':
-		"default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; " +
+		"default-src 'self' 'unsafe-inline' https:; " +
 		'img-src * data: blob:; ' +
 		"frame-ancestors 'self'; " +
 		"base-uri 'self'; " +
@@ -90,7 +90,7 @@ export default {
 				status: 204,
 				headers: {
 					'Cache-Control': 'no-store',
-					'X-Security-Policy-Version': '3.4',
+					'X-Security-Policy-Version': '3.5',
 				},
 			});
 		}
@@ -141,7 +141,7 @@ export default {
 		}
 
 		newResponse.headers.set('Strict-Transport-Security', HSTS);
-		newResponse.headers.set('X-Security-Policy-Version', '3.4');
+		newResponse.headers.set('X-Security-Policy-Version', '3.5');
 
 		if (isOgAsset) {
 			newResponse.headers.set('Access-Control-Allow-Origin', '*');

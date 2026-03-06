@@ -1,37 +1,110 @@
-# NihonName - Robots.txt
+# NihonName — Robots Exclusion Protocol
 # https://app.haotool.org/nihonname/
-# Updated: 2025-12-06
+# 最後更新：2026-03-06
 
+# Content Signals Policy (ContentSignals.org / CC0)
+Content-Signal: search=yes, ai-train=no, ai-input=yes
+
+# ── 預設規則 ──────────────────────────────────────────
 User-agent: *
 Allow: /
-
-# AI Crawlers - Allow all major AI search engines
-User-agent: GPTBot
-User-agent: ChatGPT-User
-User-agent: ClaudeBot
-User-agent: PerplexityBot
-User-agent: anthropic-ai
-User-agent: Google-Extended
-User-agent: Bingbot
-Allow: /
-
-# Social Media Crawlers - For rich previews
-User-agent: facebookexternalbot
-User-agent: Twitterbot
-User-agent: LinkedInBot
-User-agent: Slackbot
-User-agent: Discordbot
-User-agent: TelegramBot
-Allow: /
-
-# Security - Disallow sensitive files
 Disallow: /sw.js
 Disallow: /service-worker.js
 Disallow: /*.json$
 
-# Sitemaps
 Sitemap: https://app.haotool.org/nihonname/sitemap.xml
 
-# LLMs.txt reference for AI language models
-# See: https://app.haotool.org/nihonname/llms.txt
+# ── 傳統搜索引擎 ──────────────────────────────────────
+User-agent: Googlebot
+Allow: /
 
+User-agent: Bingbot
+Allow: /
+
+# ── OpenAI ────────────────────────────────────────────
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# ── Anthropic ─────────────────────────────────────────
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+# ── Perplexity ────────────────────────────────────────
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# ── Google AI ─────────────────────────────────────────
+User-agent: Google-Extended
+Allow: /
+
+# ── xAI (Grok) ────────────────────────────────────────
+User-agent: GrokBot
+Allow: /
+
+# ── Cohere ────────────────────────────────────────────
+User-agent: cohere-ai
+Allow: /
+
+# ── You.com ───────────────────────────────────────────
+User-agent: YouBot
+Allow: /
+
+# ── DuckDuckGo AI ─────────────────────────────────────
+User-agent: DuckAssistBot
+Allow: /
+
+# ── Amazon ────────────────────────────────────────────
+User-agent: Amazonbot
+Allow: /
+
+# ── Apple ─────────────────────────────────────────────
+User-agent: Applebot-Extended
+Allow: /
+
+# ── Common Crawl ──────────────────────────────────────
+User-agent: CCBot
+Allow: /
+
+# ── ByteDance ─────────────────────────────────────────
+User-agent: Bytespider
+Allow: /
+
+# ── 社群媒體 ──────────────────────────────────────────
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+User-agent: TelegramBot
+Allow: /

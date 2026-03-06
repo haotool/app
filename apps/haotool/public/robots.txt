@@ -1,8 +1,20 @@
-# robots.txt for haotool.org
+# haotool — Robots Exclusion Protocol
 # https://app.haotool.org/
-# Last Updated: 2026-02-27
+# 最後更新：2026-03-06
 
-# Search Engines
+# Content Signals Policy (ContentSignals.org / CC0)
+Content-Signal: search=yes, ai-train=no, ai-input=yes
+
+# ── 預設規則 ──────────────────────────────────────────
+User-agent: *
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+Disallow: /*.json
+
+Sitemap: https://app.haotool.org/sitemap.xml
+
+# ── 傳統搜索引擎 ──────────────────────────────────────
 User-agent: Googlebot
 Allow: /
 
@@ -18,43 +30,80 @@ Allow: /
 User-agent: DuckDuckBot
 Allow: /
 
-# AI Retrieval (search/citation)
+# ── OpenAI ────────────────────────────────────────────
 User-agent: GPTBot
-Allow: /
-
-User-agent: ChatGPT-User
 Allow: /
 
 User-agent: OAI-SearchBot
 Allow: /
 
+User-agent: ChatGPT-User
+Allow: /
+
+# ── Anthropic ─────────────────────────────────────────
 User-agent: ClaudeBot
 Allow: /
 
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+# ── Perplexity ────────────────────────────────────────
 User-agent: PerplexityBot
 Allow: /
 
-User-agent: cohere-ai
+User-agent: Perplexity-User
 Allow: /
 
-# AI Training
+# ── Google AI ─────────────────────────────────────────
 User-agent: Google-Extended
 Allow: /
 
+# ── xAI (Grok) ────────────────────────────────────────
+User-agent: GrokBot
+Allow: /
+
+# ── Cohere ────────────────────────────────────────────
+User-agent: cohere-ai
+Allow: /
+
+# ── You.com ───────────────────────────────────────────
+User-agent: YouBot
+Allow: /
+
+# ── DuckDuckGo AI ─────────────────────────────────────
+User-agent: DuckAssistBot
+Allow: /
+
+# ── Amazon ────────────────────────────────────────────
+User-agent: Amazonbot
+Allow: /
+
+# ── Apple ─────────────────────────────────────────────
+User-agent: Applebot-Extended
+Allow: /
+
+# ── Common Crawl ──────────────────────────────────────
 User-agent: CCBot
 Allow: /
 
+# ── ByteDance ─────────────────────────────────────────
 User-agent: Bytespider
 Allow: /
 
-# Social Media
+# ── 社群媒體 ──────────────────────────────────────────
 User-agent: Meta-ExternalAgent
 Allow: /
 
-User-agent: Twitterbot
+User-agent: facebookexternalhit
 Allow: /
 
-User-agent: facebookexternalhit
+User-agent: Twitterbot
 Allow: /
 
 User-agent: LinkedInBot
@@ -62,12 +111,3 @@ Allow: /
 
 User-agent: Slackbot
 Allow: /
-
-# Default
-User-agent: *
-Allow: /
-Disallow: /sw.js
-Disallow: /workbox-*.js
-Disallow: /*.json
-
-Sitemap: https://app.haotool.org/sitemap.xml

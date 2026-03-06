@@ -1,38 +1,97 @@
-# Quake-School Robots Configuration
-# 最後更新：2025-12-31
+# 地震防災教育平台 (Quake-School) — Robots Exclusion Protocol
+# https://app.haotool.org/quake-school/
+# 最後更新：2026-03-06
 
+# Content Signals Policy (ContentSignals.org / CC0)
+Content-Signal: search=yes, ai-train=no, ai-input=yes
+
+# ── 預設規則 ──────────────────────────────────────────
 User-agent: *
 Allow: /
-
-# Sitemap
-Sitemap: https://app.haotool.org/quake-school/sitemap.xml
-
-# Crawl-delay for polite bots
-Crawl-delay: 1
-
-# Disallow Service Worker and internal assets
 Disallow: /sw.js
 Disallow: /workbox-*.js
 Disallow: /*.json$
 
-# Allow AI search engines (AEO/LLMO)
+Sitemap: https://app.haotool.org/quake-school/sitemap.xml
+
+# ── 傳統搜索引擎 ──────────────────────────────────────
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# ── OpenAI ────────────────────────────────────────────
 User-agent: GPTBot
 Allow: /
 
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: PerplexityBot
+User-agent: OAI-SearchBot
 Allow: /
 
 User-agent: ChatGPT-User
 Allow: /
 
+# ── Anthropic ─────────────────────────────────────────
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+# ── Perplexity ────────────────────────────────────────
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# ── Google AI ─────────────────────────────────────────
 User-agent: Google-Extended
 Allow: /
 
-# Allow social media crawlers
-User-agent: facebookexternalbot
+# ── xAI (Grok) ────────────────────────────────────────
+User-agent: GrokBot
+Allow: /
+
+# ── Cohere ────────────────────────────────────────────
+User-agent: cohere-ai
+Allow: /
+
+# ── You.com ───────────────────────────────────────────
+User-agent: YouBot
+Allow: /
+
+# ── DuckDuckGo AI ─────────────────────────────────────
+User-agent: DuckAssistBot
+Allow: /
+
+# ── Amazon ────────────────────────────────────────────
+User-agent: Amazonbot
+Allow: /
+
+# ── Apple ─────────────────────────────────────────────
+User-agent: Applebot-Extended
+Allow: /
+
+# ── Common Crawl ──────────────────────────────────────
+User-agent: CCBot
+Allow: /
+
+# ── ByteDance ─────────────────────────────────────────
+User-agent: Bytespider
+Allow: /
+
+# ── 社群媒體 ──────────────────────────────────────────
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: facebookexternalhit
 Allow: /
 
 User-agent: Twitterbot

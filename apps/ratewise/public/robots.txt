@@ -1,6 +1,14 @@
-# RateWise Robots Configuration
-# 最後更新：2026-02-11
+# RateWise — Robots Exclusion Protocol
+# https://app.haotool.org/ratewise/
+# 最後更新：2026-03-06
 
+# Content Signals Policy (ContentSignals.org / CC0)
+# search=yes     允許 AI 搜索引用與索引
+# ai-train=no    不同意用於模型訓練
+# ai-input=yes   允許用於即時 AI 查詢回答
+Content-Signal: search=yes, ai-train=no, ai-input=yes
+
+# ── 預設規則 ──────────────────────────────────────────
 User-agent: *
 Allow: /
 Disallow: /sw.js
@@ -12,7 +20,7 @@ Disallow: /update-prompt-test
 
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 
-# AI search crawlers (allow indexing & citation)
+# ── OpenAI ────────────────────────────────────────────
 User-agent: GPTBot
 Allow: /
 
@@ -22,23 +30,67 @@ Allow: /
 User-agent: ChatGPT-User
 Allow: /
 
+# ── Anthropic ─────────────────────────────────────────
 User-agent: ClaudeBot
 Allow: /
 
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+# ── Perplexity ────────────────────────────────────────
 User-agent: PerplexityBot
 Allow: /
 
+User-agent: Perplexity-User
+Allow: /
+
+# ── Google ────────────────────────────────────────────
 User-agent: Google-Extended
 Allow: /
 
+# ── xAI (Grok) ────────────────────────────────────────
+User-agent: GrokBot
+Allow: /
+
+# ── Cohere ────────────────────────────────────────────
+User-agent: cohere-ai
+Allow: /
+
+# ── You.com ───────────────────────────────────────────
+User-agent: YouBot
+Allow: /
+
+# ── DuckDuckGo AI ─────────────────────────────────────
+User-agent: DuckAssistBot
+Allow: /
+
+# ── Amazon ────────────────────────────────────────────
+User-agent: Amazonbot
+Allow: /
+
+# ── Apple ─────────────────────────────────────────────
+User-agent: Applebot-Extended
+Allow: /
+
+# ── Common Crawl ──────────────────────────────────────
 User-agent: CCBot
 Allow: /
 
+# ── ByteDance ─────────────────────────────────────────
 User-agent: Bytespider
 Allow: /
 
-# Social media crawlers
-User-agent: facebookexternalbot
+# ── 社群媒體 ──────────────────────────────────────────
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: facebookexternalhit
 Allow: /
 
 User-agent: Twitterbot
