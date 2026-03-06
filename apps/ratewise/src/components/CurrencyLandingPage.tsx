@@ -1,6 +1,6 @@
 /** 幣別 SEO 頁面共用元件：13 組幣對頁 SSOT 渲染，含 JSON-LD、常見金額錨點、旅遊提示 */
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, HelpCircle, BookOpen, Sparkles, Calculator } from 'lucide-react';
 import { SEOHelmet } from './SEOHelmet';
 import { Breadcrumb } from './Breadcrumb';
@@ -41,6 +41,8 @@ export function CurrencyLandingPage({
   travelTip,
   jsonLd,
 }: CurrencyLandingPageProps) {
+  const navigate = useNavigate();
+
   const seoProps = {
     title,
     description,
@@ -232,16 +234,19 @@ export function CurrencyLandingPage({
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {commonAmounts.map((entry) => (
-                    <Link
+                    <button
                       key={entry.amount}
-                      to={`/?amount=${entry.amount}&from=${currencyCode}&to=TWD`}
-                      className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface hover:bg-primary/10 transition-colors group"
+                      type="button"
+                      onClick={() =>
+                        navigate(`/?amount=${entry.amount}&from=${currencyCode}&to=TWD`)
+                      }
+                      className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface hover:bg-primary/10 transition-colors group text-left"
                     >
                       <h3 className="text-sm font-medium text-text group-hover:text-primary transition-colors">
                         {entry.question}
                       </h3>
                       <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-text-muted group-hover:text-primary transition-colors flex-shrink-0" />
-                    </Link>
+                    </button>
                   ))}
                 </div>
               </div>

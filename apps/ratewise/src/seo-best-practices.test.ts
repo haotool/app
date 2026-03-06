@@ -185,6 +185,7 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(sitemapContent).toContain('/ratewise/faq/</loc>');
       expect(sitemapContent).toContain('/ratewise/about/</loc>');
       expect(sitemapContent).toContain('/ratewise/guide/</loc>');
+      expect(sitemapContent).toContain('/ratewise/privacy/</loc>');
     });
 
     it('should have all 17 currency landing pages', () => {
@@ -259,6 +260,11 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(combinedContent).toContain('FinanceApplication');
     });
 
+    it('should suppress structured data on noindex pages', () => {
+      expect(seoHelmetContent).toContain('shouldRenderStructuredData');
+      expect(seoHelmetContent).toContain('/\\bnoindex\\b/i');
+    });
+
     it('should have featureList for app capabilities', () => {
       expect(combinedContent).toContain('featureList');
     });
@@ -296,6 +302,10 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
   describe('📝 Meta Tags - Open Graph & Twitter Cards', () => {
     const seoHelmetPath = resolve(SRC_PATH, 'components/SEOHelmet.tsx');
     const seoHelmetContent = readFile(seoHelmetPath);
+    const currencyLandingPagePath = resolve(SRC_PATH, 'components/CurrencyLandingPage.tsx');
+    const currencyLandingPageContent = readFile(currencyLandingPagePath);
+    const routesPath = resolve(SRC_PATH, 'routes.tsx');
+    const routesContent = readFile(routesPath);
 
     it('should have og:type meta tag', () => {
       expect(seoHelmetContent).toContain('property="og:type"');
@@ -355,6 +365,21 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       // 2026 AI 搜索優化：max-image-preview:large 允許 AI 使用圖片
       expect(seoHelmetContent).toContain('max-image-preview:large');
       expect(seoHelmetContent).toContain('max-snippet:-1');
+    });
+
+    it('should avoid crawlable query links on currency landing pages', () => {
+      expect(currencyLandingPageContent).toContain('navigate(`/?amount=');
+      expect(currencyLandingPageContent).not.toContain('to={`/?amount=');
+    });
+
+    it('should noindex homepage parameter URLs', () => {
+      expect(routesContent).toContain('shouldNoindexHomepageParams');
+      expect(routesContent).toContain("'amount'");
+      expect(routesContent).toContain("'from'");
+      expect(routesContent).toContain("'to'");
+      expect(routesContent).toContain("'q'");
+      expect(routesContent).toContain("'search_term_string'");
+      expect(routesContent).toContain("'noindex, follow, max-image-preview:large");
     });
   });
 
@@ -438,6 +463,12 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
 
     it('should have Cloudflare Worker for security headers', () => {
       expect(existsSync(workerPath)).toBe(true);
+    });
+
+    it('should canonicalize RateWise URL path at the edge', () => {
+      const workerContent = readFile(workerPath);
+      expect(workerContent).toContain('getCanonicalRatewisePath');
+      expect(workerContent).toContain('Response.redirect(url.toString(), 301)');
     });
 
     it('should have Permissions-Policy without deprecated features in policy value', () => {

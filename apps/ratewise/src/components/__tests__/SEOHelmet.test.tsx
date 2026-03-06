@@ -24,7 +24,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
-import { SEOHelmet } from '../SEOHelmet';
+import { SEOHelmet, shouldRenderStructuredData } from '../SEOHelmet';
 
 describe('SEOHelmet Component', () => {
   describe('Component Rendering', () => {
@@ -166,6 +166,16 @@ describe('SEOHelmet Component', () => {
       );
 
       expect(container).toBeDefined();
+    });
+  });
+
+  describe('Structured Data Policy', () => {
+    it('should render structured data for indexable pages', () => {
+      expect(shouldRenderStructuredData('index, follow')).toBe(true);
+    });
+
+    it('should not render structured data for noindex pages', () => {
+      expect(shouldRenderStructuredData('noindex, nofollow')).toBe(false);
     });
   });
 

@@ -1,41 +1,30 @@
 /**
- * Generate sitemap.xml and robots.txt for SEO
- * [context7:/google/seo-starter-guide:2025-12-15]
+ * 產生 sitemap.xml 與 robots.txt
  *
- * 更新說明:
- * - 2025-12-15: 新增 hreflang 標籤支援 (zh-TW + x-default)
- * - 2025-12-15: 新增 AI 爬蟲配置 (GPTBot, ClaudeBot, etc.)
+ * 說明：
+ * - 以 app.config.mjs 為 SSOT
+ * - root robots 額外宣告 RateWise sitemap，確保 host-level discovery 完整
  */
 import { writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SEO_PATHS, SITE_CONFIG } from '../app.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-const SITE_URL = 'https://app.haotool.org';
 const BUILD_DATE = new Date().toISOString().split('T')[0];
-
-// Define routes with priorities and change frequencies
-const ROUTES = [
-  { path: '/', priority: '1.0', changefreq: 'weekly' },
-  { path: '/projects/', priority: '0.9', changefreq: 'weekly' },
-  { path: '/about/', priority: '0.8', changefreq: 'monthly' },
-  { path: '/contact/', priority: '0.7', changefreq: 'monthly' },
-];
+const SITE_URL = SITE_CONFIG.url.replace(/\/$/, '');
+const RATEWISE_SITEMAP_URL = `${SITE_URL}/ratewise/sitemap.xml`;
 
 /**
- * Generate sitemap.xml with hreflang tags
- * [SEO Best Practices 2025: hreflang for international targeting]
+ * 產生 sitemap.xml
  */
 function generateSitemap() {
-  const urls = ROUTES.map(
-    (route) => `  <url>
-    <loc>${SITE_URL}${route.path}</loc>
-    <lastmod>${BUILD_DATE}</lastmod>
-    <changefreq>${route.changefreq}</changefreq>
-    <priority>${route.priority}</priority>
-    <xhtml:link rel="alternate" hreflang="zh-TW" href="${SITE_URL}${route.path}" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}${route.path}" />
+  const urls = SEO_PATHS.map(
+    (path) => `  <url>
+    <loc>${SITE_URL}${path}</loc>
+    <lastmod>${BUILD_DATE}T00:00:00Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="${SITE_URL}${path}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}${path}" />
   </url>`,
   );
 
@@ -47,56 +36,102 @@ ${urls.join('\n')}
 
   const publicDir = resolve(__dirname, '../public');
   writeFileSync(resolve(publicDir, 'sitemap.xml'), sitemap);
-  console.log('✅ Generated sitemap.xml (with hreflang)');
+  console.log('✅ Generated sitemap.xml');
 }
 
 /**
- * Generate robots.txt with AI crawler configurations
- * [SEO Best Practices 2025: AI crawler policies]
+ * 產生 robots.txt
  */
 function generateRobotsTxt() {
-  const robotsTxt = `# robots.txt for haotool.org
-# https://app.haotool.org/
-# Updated: ${BUILD_DATE}
-# [context7:/google/robots-txt:2025-12-15]
+  const robotsTxt = `# haotool — Robots Exclusion Protocol
+# ${SITE_URL}/
+# 最後更新：${BUILD_DATE}
+
+# Content-Signal 宣告已停用
+# 原因：避免非標準 directive 影響 robots 驗證
 
 User-agent: *
 Allow: /
-
-# AI Crawlers - Allow all major AI search engines
-User-agent: GPTBot
-User-agent: ChatGPT-User
-User-agent: ClaudeBot
-User-agent: PerplexityBot
-User-agent: anthropic-ai
-User-agent: Google-Extended
-User-agent: Bingbot
-Allow: /
-
-# Social Media Crawlers - For rich previews
-User-agent: facebookexternalbot
-User-agent: Twitterbot
-User-agent: LinkedInBot
-User-agent: Slackbot
-User-agent: Discordbot
-User-agent: TelegramBot
-Allow: /
-
-# Security - Disallow sensitive files
 Disallow: /sw.js
 Disallow: /service-worker.js
-Disallow: /*.json$
+Disallow: /*.json
 
-# Sitemaps
 Sitemap: ${SITE_URL}/sitemap.xml
+Sitemap: ${RATEWISE_SITEMAP_URL}
 
-# Crawl-delay (optional, for polite crawling)
-Crawl-delay: 1
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GrokBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: DuckAssistBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
 `;
 
   const publicDir = resolve(__dirname, '../public');
   writeFileSync(resolve(publicDir, 'robots.txt'), robotsTxt);
-  console.log('✅ Generated robots.txt (with AI crawler config)');
+  console.log('✅ Generated robots.txt');
 }
 
 // Main execution

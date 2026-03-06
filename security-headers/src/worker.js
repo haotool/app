@@ -1,5 +1,5 @@
 /**
- * 安全標頭 Worker v3.5
+ * 安全標頭 Worker v3.6
  *
  * 本 Worker 為 HTTP 安全標頭的唯一來源（SSOT），統一管理所有路由的安全政策，
  * 無需修改應用程式原始碼。
@@ -18,6 +18,25 @@
  */
 
 const HSTS = 'max-age=31536000; includeSubDomains; preload';
+
+/** 回傳 RateWise canonical 路徑；必要時補尾斜線並統一小寫。 */
+function getCanonicalRatewisePath(pathname) {
+	let normalizedPath = pathname.replace(/\/{2,}/g, '/');
+
+	if (normalizedPath === '/ratewise') {
+		return '/ratewise/';
+	}
+
+	if (normalizedPath.startsWith('/ratewise/')) {
+		const lastSegment = normalizedPath.split('/').filter(Boolean).at(-1) ?? '';
+		const isFileRequest = lastSegment.includes('.');
+		if (!isFileRequest && !normalizedPath.endsWith('/')) {
+			normalizedPath = `${normalizedPath}/`;
+		}
+	}
+
+	return normalizedPath.toLowerCase();
+}
 
 /** 解析 HTML 中所有 inline script，回傳 CSP 所需的 SHA-256 hash token 陣列。 */
 async function computeInlineScriptHashes(html) {
@@ -82,6 +101,11 @@ function isOgLikeAsset(pathname) {
 export default {
 	async fetch(request) {
 		const url = new URL(request.url);
+		const canonicalPath = getCanonicalRatewisePath(url.pathname);
+		if (canonicalPath !== url.pathname) {
+			url.pathname = canonicalPath;
+			return Response.redirect(url.toString(), 301);
+		}
 		// 所有已綁定路由中，路徑以 /ratewise/ 開頭者均套用 ratewise 政策。
 		const isRatewise = url.pathname.startsWith('/ratewise/');
 
@@ -90,7 +114,7 @@ export default {
 				status: 204,
 				headers: {
 					'Cache-Control': 'no-store',
-					'X-Security-Policy-Version': '3.5',
+					'X-Security-Policy-Version': '3.6',
 				},
 			});
 		}
@@ -141,7 +165,7 @@ export default {
 		}
 
 		newResponse.headers.set('Strict-Transport-Security', HSTS);
-		newResponse.headers.set('X-Security-Policy-Version', '3.5');
+		newResponse.headers.set('X-Security-Policy-Version', '3.6');
 
 		if (isOgAsset) {
 			newResponse.headers.set('Access-Control-Allow-Origin', '*');

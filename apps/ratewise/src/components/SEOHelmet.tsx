@@ -40,6 +40,10 @@ interface SEOProps {
   robots?: string;
 }
 
+export function shouldRenderStructuredData(robots: string): boolean {
+  return !/\bnoindex\b/i.test(robots);
+}
+
 const buildFaqSchema = (faq: FAQEntry[]): JsonLdBlock => ({
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
@@ -118,13 +122,16 @@ export function SEOHelmet({
   const ogLocale = locale.replace('-', '_');
   const additionalJsonLd = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
   const hasImageObject = additionalJsonLd.some((block) => block['@type'] === 'ImageObject');
-  const structuredData: JsonLdBlock[] = [
-    ...buildSiteJsonLd(),
-    ...additionalJsonLd,
-    ...(hasImageObject
-      ? []
-      : [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 匯率換算工具預覽圖`)]),
-  ];
+  const shouldRenderJsonLd = shouldRenderStructuredData(robots);
+  const structuredData: JsonLdBlock[] = shouldRenderJsonLd
+    ? [
+        ...buildSiteJsonLd(),
+        ...additionalJsonLd,
+        ...(hasImageObject
+          ? []
+          : [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 匯率換算工具預覽圖`)]),
+      ]
+    : [];
 
   if (faq?.length) {
     structuredData.push(buildFaqSchema(faq));
@@ -187,15 +194,17 @@ export function SEOHelmet({
       <meta name="twitter:site" content={APP_INFO.socialHandle} />
       <meta name="twitter:creator" content={APP_INFO.socialHandle} />
 
-      <script type="application/ld+json">
-        {JSON.stringify({
-          '@context': 'https://schema.org',
-          '@graph': structuredData.map((item) => {
-            const { '@context': _, ...rest } = item as Record<string, unknown>;
-            return rest;
-          }),
-        })}
-      </script>
+      {structuredData.length > 0 ? (
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': structuredData.map((item) => {
+              const { '@context': _, ...rest } = item as Record<string, unknown>;
+              return rest;
+            }),
+          })}
+        </script>
+      ) : null}
     </Head>
   );
 }

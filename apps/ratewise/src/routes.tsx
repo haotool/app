@@ -24,6 +24,7 @@
 import type { RouteRecord } from 'vite-react-ssg';
 import type { ComponentType } from 'react';
 import { ClientOnly } from 'vite-react-ssg';
+import { useSearchParams } from 'react-router-dom';
 import CurrencyConverter from './features/ratewise/RateWise';
 import { SEOHelmet } from './components/SEOHelmet';
 import { HomepageSEOSection } from './components/HomepageSEOSection';
@@ -95,6 +96,36 @@ function createLazyRoute(
   };
 }
 
+function shouldNoindexHomepageParams(searchParams: URLSearchParams): boolean {
+  const guardedKeys = ['amount', 'from', 'to', 'q', 'search_term_string'];
+  return guardedKeys.some((key) => searchParams.has(key));
+}
+
+function HomeRoute() {
+  const [searchParams] = useSearchParams();
+  const shouldNoindex = shouldNoindexHomepageParams(searchParams);
+
+  return (
+    <>
+      <SEOHelmet
+        pathname={HOMEPAGE_SEO.pathname}
+        description={HOMEPAGE_SEO.description}
+        keywords={HOMEPAGE_SEO.keywords}
+        faq={HOMEPAGE_SEO.faq}
+        howTo={HOMEPAGE_SEO.howTo}
+        jsonLd={HOMEPAGE_SEO.jsonLd}
+        robots={
+          shouldNoindex
+            ? 'noindex, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+            : undefined
+        }
+      />
+      <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
+      <HomepageSEOSection />
+    </>
+  );
+}
+
 /**
  * vite-react-ssg 路由設定
  *
@@ -111,20 +142,7 @@ export const routes: RouteRecord[] = [
       // 首頁可索引內容與 head metadata 都在 ClientOnly 外層，避免爬蟲只拿到互動骨架。
       {
         path: '',
-        element: (
-          <>
-            <SEOHelmet
-              pathname={HOMEPAGE_SEO.pathname}
-              description={HOMEPAGE_SEO.description}
-              keywords={HOMEPAGE_SEO.keywords}
-              faq={HOMEPAGE_SEO.faq}
-              howTo={HOMEPAGE_SEO.howTo}
-              jsonLd={HOMEPAGE_SEO.jsonLd}
-            />
-            <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
-            <HomepageSEOSection />
-          </>
-        ),
+        element: <HomeRoute />,
         entry: 'src/features/ratewise/RateWise',
       },
       // 多幣別轉換器
@@ -206,3 +224,4 @@ export const routes: RouteRecord[] = [
  * - 不預渲染：404、color-scheme（動態處理或內部工具）
  */
 export { getIncludedRoutes } from './config/seo-paths';
+export { shouldNoindexHomepageParams };

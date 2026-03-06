@@ -2,11 +2,9 @@
 # https://app.haotool.org/ratewise/
 # 最後更新：2026-03-06
 
-# Content Signals Policy (ContentSignals.org / CC0)
-# search=yes     允許 AI 搜索引用與索引
-# ai-train=no    不同意用於模型訓練
-# ai-input=yes   允許用於即時 AI 查詢回答
-Content-Signal: search=yes, ai-train=no, ai-input=yes
+# Content Signals 宣告已停用
+# 原因：避免非標準 directive 影響 robots 驗證
+# 需求仍以 llms.txt 與授權文件表達
 
 # ── 預設規則 ──────────────────────────────────────────
 User-agent: *

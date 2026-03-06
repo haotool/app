@@ -59,6 +59,7 @@ const PATH_TO_SOURCE = {
   '/faq/': 'apps/ratewise/src/pages/FAQ.tsx',
   '/about/': 'apps/ratewise/src/pages/About.tsx',
   '/guide/': 'apps/ratewise/src/pages/Guide.tsx',
+  '/privacy/': 'apps/ratewise/src/pages/Privacy.tsx',
   '/usd-twd/': 'apps/ratewise/src/pages/USDToTWD.tsx',
   '/jpy-twd/': 'apps/ratewise/src/pages/JPYToTWD.tsx',
   '/eur-twd/': 'apps/ratewise/src/pages/EURToTWD.tsx',
@@ -111,6 +112,12 @@ const PAGE_IMAGES = {
     {
       loc: OG_IMAGE_URL,
       caption: 'RateWise Guide - 使用指南',
+    },
+  ],
+  '/privacy/': [
+    {
+      loc: OG_IMAGE_URL,
+      caption: 'RateWise Privacy - 隱私政策',
     },
   ],
 };

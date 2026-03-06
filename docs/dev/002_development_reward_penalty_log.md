@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-03-06T01:56:00+08:00
-> **當前總分**: 1094 (初始分: 100) [+3 修復 RateWise 單幣別匯率類型誤導切換（幣別對可用性 SSOT + UI 防呆 + 回歸測試） + +1 建立 RateWise Cloudflare 稽核工作流文件 + +2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強 + +6 park-keeper 車牌快編、導航地圖快取與羅盤 UX 優化 + +3 park-keeper CI coverage 修復與 a11y 補強 + +5 RateWise bundle size 優化與效能提升 - +3 緊急修復 React Scheduler 分裂導致生產癱瘓 + -3 Code splitting 策略導致生產環境癱瘓]
+> **最後更新**: 2026-03-07T03:35:00+08:00
+> **當前總分**: 1097 (初始分: 100) [+3 RateWise SEO/robots/canonical 系統性修復（sitemap/robots SSOT、noindex/schema 一致、Worker 301 canonical 上線） + +3 修復 RateWise 單幣別匯率類型誤導切換（幣別對可用性 SSOT + UI 防呆 + 回歸測試） + +1 建立 RateWise Cloudflare 稽核工作流文件 + +2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強 + +6 park-keeper 車牌快編、導航地圖快取與羅盤 UX 優化 + +3 park-keeper CI coverage 修復與 a11y 補強 + +5 RateWise bundle size 優化與效能提升 - +3 緊急修復 React Scheduler 分裂導致生產環境癱瘓 + -3 Code splitting 策略導致生產環境癱瘓]
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -16,6 +16,13 @@
 - **-1**: 違反 Linus 三問 (過度設計)
 - **-2**: 破壞現有功能 (Regression)
 - **-3**: 造成生產環境停機
+
+---
+
+## 補充紀錄（2026-03-07）
+
+- ✅ 成功｜RateWise SEO/robots/canonical 系統性修復：1) 將 `/privacy/` 納入 sitemap 與 SEO_PATHS，修復可索引頁面與 sitemap 訊號不一致 2) 移除 `robots.txt` 非標準 `Content-Signal` directive，避免 robots 驗證失分；root robots 同步宣告 RateWise sitemap，補足 host-level discovery 3) `SEOHelmet` 對 `noindex` 頁停用 JSON-LD，消除 noindex/schema 衝突 4) 幣別落地頁常見金額改為程式導頁，避免產生可爬 query 參數頁 5) Cloudflare `security-headers` Worker 新增小寫化與尾斜線 canonical 301，正式站已驗證 `/ratewise/FAQ` 與 `/ratewise/usd-twd` 會導向標準 URL 6) 驗證通過：typecheck、SEO 測試 133/133、sitemap 2025 測試 11/11、兩個 app build、Worker live 版本 `3.6`
+- 分數｜`+3`
 
 ---
 
