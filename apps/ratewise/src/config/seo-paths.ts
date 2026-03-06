@@ -37,7 +37,7 @@ export const CURRENCY_SEO_PATHS = [
   '/vnd-twd/',
 ] as const;
 
-export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS] as const;
+export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...LEGAL_SSG_PATHS, ...CURRENCY_SEO_PATHS] as const;
 
 export const APP_ONLY_PATHS = [
   '/multi/',
@@ -49,17 +49,19 @@ export const APP_ONLY_PATHS = [
   '/ui-showcase/',
 ] as const;
 
+/** 使用者功能頁子集（前 3）：允許爬取 + SEOHelmet noindex */
+export const APP_ONLY_NOINDEX_PATHS = APP_ONLY_PATHS.slice(0, 3);
+
+/** 開發 / 展示頁子集（後 4）：直接 Disallow 爬取 */
+export const DEV_ONLY_PATHS = APP_ONLY_PATHS.slice(3);
+
 export const APP_ONLY_PRERENDER_PATHS = [...APP_ONLY_PATHS] as const;
 
-export const PRERENDER_PATHS = [
-  ...SEO_PATHS,
-  ...LEGAL_SSG_PATHS,
-  ...APP_ONLY_PRERENDER_PATHS,
-] as const;
+export const PRERENDER_PATHS = [...SEO_PATHS, ...APP_ONLY_PRERENDER_PATHS] as const;
 
 export const KNOWN_ROUTE_PATHS = [...PRERENDER_PATHS] as const;
 
-export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'] as const;
+export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt', '/llms-full.txt'] as const;
 
 export const SHARE_IMAGE = '/og-image.jpg' as const;
 export const TWITTER_IMAGE = '/twitter-image.jpg' as const;

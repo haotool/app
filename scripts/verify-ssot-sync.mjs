@@ -11,7 +11,7 @@
  * 依據: [P0 Priority] 防止 SSOT 不同步
  */
 
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join } from 'path';
 
@@ -55,9 +55,10 @@ function extractPathsFromTS(filePath) {
   if (inlinePaths.length > 0) return inlinePaths;
 
   const contentPaths = extractNamedArray(content, 'CONTENT_SEO_PATHS', ' as const');
+  const legalPaths = extractNamedArray(content, 'LEGAL_SSG_PATHS', ' as const');
   const currencyPaths = extractNamedArray(content, 'CURRENCY_SEO_PATHS', ' as const');
-  if (contentPaths.length > 0 || currencyPaths.length > 0) {
-    return [...contentPaths, ...currencyPaths];
+  if (contentPaths.length > 0 || legalPaths.length > 0 || currencyPaths.length > 0) {
+    return [...contentPaths, ...legalPaths, ...currencyPaths];
   }
 
   throw new Error('無法從 TypeScript 文件中提取 SEO_PATHS');
@@ -82,9 +83,10 @@ async function extractPathsFromMJS(filePath) {
   if (inlinePaths.length > 0) return inlinePaths;
 
   const contentPaths = extractNamedArray(content, 'CONTENT_SEO_PATHS');
+  const legalPaths = extractNamedArray(content, 'LEGAL_SSG_PATHS');
   const currencyPaths = extractNamedArray(content, 'CURRENCY_SEO_PATHS');
-  if (contentPaths.length > 0 || currencyPaths.length > 0) {
-    return [...contentPaths, ...currencyPaths];
+  if (contentPaths.length > 0 || legalPaths.length > 0 || currencyPaths.length > 0) {
+    return [...contentPaths, ...legalPaths, ...currencyPaths];
   }
 
   throw new Error('無法從 .mjs 文件中提取 SEO_PATHS');
@@ -127,6 +129,77 @@ function comparePaths(tsPaths, mjsPaths) {
 
   if (onlyInMJS.length > 0) {
     errors.push(`只存在於 JavaScript: ${onlyInMJS.join(', ')}`);
+  }
+
+  return errors;
+}
+
+/**
+ * 驗證 robots.txt 與 seo-paths.config.mjs 的 SSOT 一致性
+ *
+ * 檢查項目：
+ * - DEV_ONLY_PATHS 每條路徑都有對應 Disallow
+ * - APP_ONLY_NOINDEX_PATHS 路徑不應有 Disallow（由 SEOHelmet noindex 處理）
+ * - Sitemap URL 與 SITE_CONFIG.url 一致
+ */
+async function verifyRobotsTxt(mjsPath, robotsTxtPath) {
+  const errors = [];
+
+  if (!existsSync(robotsTxtPath)) {
+    return [
+      `[robots.txt] 檔案不存在: ${robotsTxtPath}（請先執行 node scripts/generate-robots-txt.mjs）`,
+    ];
+  }
+
+  let mod;
+  try {
+    mod = await import(pathToFileURL(mjsPath).href);
+  } catch (e) {
+    return [`[robots.txt] 無法載入 seo-paths.config.mjs: ${e.message}`];
+  }
+
+  const devOnlyPaths = mod.DEV_ONLY_PATHS;
+  const noindexPaths = mod.APP_ONLY_NOINDEX_PATHS;
+  const siteUrl = mod.SITE_CONFIG?.url;
+
+  if (!Array.isArray(devOnlyPaths) || !Array.isArray(noindexPaths) || !siteUrl) {
+    return [
+      '[robots.txt] seo-paths.config.mjs 缺少 DEV_ONLY_PATHS / APP_ONLY_NOINDEX_PATHS / SITE_CONFIG',
+    ];
+  }
+
+  const robotsTxt = readFileSync(robotsTxtPath, 'utf-8');
+  const expectedSitemap = `Sitemap: ${siteUrl}sitemap.xml`;
+
+  // DEV_ONLY_PATHS 必須有 Disallow（含尾斜線）
+  for (const path of devOnlyPaths) {
+    const disallowEntry = `Disallow: ${path.endsWith('/') ? path : `${path}/`}`;
+    if (!robotsTxt.includes(disallowEntry)) {
+      errors.push(`[robots.txt] DEV_ONLY_PATHS "${path}" 缺少 "${disallowEntry}"`);
+    }
+  }
+
+  // APP_ONLY_NOINDEX_PATHS 不應有 Disallow（Google 需爬取才能讀 noindex）
+  for (const path of noindexPaths) {
+    const bare = path.replace(/\/$/, '');
+    if (robotsTxt.includes(`Disallow: ${path}`) || robotsTxt.includes(`Disallow: ${bare}`)) {
+      errors.push(
+        `[robots.txt] noindex 頁面 "${path}" 有 Disallow（應移除，改由 SEOHelmet noindex 處理）`,
+      );
+    }
+  }
+
+  // Sitemap URL 須與 SITE_CONFIG.url 一致
+  if (!robotsTxt.includes(expectedSitemap)) {
+    errors.push(`[robots.txt] Sitemap URL 不符，預期: "${expectedSitemap}"`);
+  }
+
+  if (errors.length === 0) {
+    log(
+      colors.green,
+      '✓',
+      `robots.txt SSOT 同步（DEV Disallow: ${devOnlyPaths.length} 條，noindex 頁面: ${noindexPaths.length} 條未 Disallow）`,
+    );
   }
 
   return errors;
@@ -181,13 +254,27 @@ async function main() {
     const tsContent = readFileSync(tsPath, 'utf-8');
     const mjsContent = readFileSync(mjsPath, 'utf-8');
 
-    const groups = ['CONTENT_SEO_PATHS', 'CURRENCY_SEO_PATHS', 'APP_ONLY_PATHS', 'LEGAL_SSG_PATHS'];
+    const groups = [
+      'CONTENT_SEO_PATHS',
+      'CURRENCY_SEO_PATHS',
+      'APP_ONLY_PATHS',
+      'LEGAL_SSG_PATHS',
+      'SEO_FILES',
+    ];
     for (const group of groups) {
       const groupErrors = verifyGroup(group, tsContent, mjsContent, ' as const');
       if (groupErrors.length > 0) {
         groupErrors.forEach((e) => log(colors.red, '  ✗', e));
         hasErrors = true;
       }
+    }
+
+    console.log('\n🤖 robots.txt SSOT 驗證:');
+    const robotsTxtPath = join(__dirname, '../apps/ratewise/public/robots.txt');
+    const robotsErrors = await verifyRobotsTxt(mjsPath, robotsTxtPath);
+    if (robotsErrors.length > 0) {
+      robotsErrors.forEach((e) => log(colors.red, '  ✗', e));
+      hasErrors = true;
     }
 
     if (hasErrors) {
@@ -207,9 +294,12 @@ async function main() {
   if (hasErrors) {
     console.log('\n💡 修復建議:');
     console.log('  1. 檢查 src/config/seo-paths.ts 和 seo-paths.config.mjs');
-    console.log('  2. 確保所有路徑群組完全一致（SEO_PATHS, APP_ONLY_PATHS 等）');
+    console.log('  2. 確保所有路徑群組完全一致（SEO_PATHS, APP_ONLY_PATHS, SEO_FILES 等）');
     console.log('  3. 路徑必須按照相同順序排列');
-    console.log('  4. 路徑格式必須一致（包括尾斜線）\n');
+    console.log('  4. 路徑格式必須一致（包括尾斜線）');
+    console.log(
+      '  5. robots.txt 漂移：執行 node apps/ratewise/scripts/generate-robots-txt.mjs 重新生成\n',
+    );
     process.exit(1);
   } else {
     console.log('');
