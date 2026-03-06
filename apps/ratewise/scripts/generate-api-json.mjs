@@ -59,10 +59,5 @@ const latestJson = {
 const apiDir = resolve(ROOT, 'public/api');
 mkdirSync(apiDir, { recursive: true });
 const apiOutputPath = resolve(apiDir, 'latest.json');
-const apiConfig = await prettier.resolveConfig(apiOutputPath);
-const apiFormatted = await prettier.format(JSON.stringify(latestJson, null, 2), {
-  ...apiConfig,
-  parser: 'json',
-});
-writeFileSync(apiOutputPath, apiFormatted);
+writeFileSync(apiOutputPath, JSON.stringify(latestJson, null, 2) + '\n');
 console.log(`✅ api/latest.json generated: v${pkg.version}, ${currencyKeys.length} currencies`);

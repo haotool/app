@@ -55,7 +55,9 @@
         "summary": "取得最新匯率",
         "description": "取得臺灣銀行最新牌告匯率資料。 資料每 5 分鐘由 GitHub Actions 自動同步。 包含各幣別的現金買入、現金賣出、即期買入、即期賣出四種報價。",
         "operationId": "getLatestRates",
-        "tags": ["匯率資料"],
+        "tags": [
+          "匯率資料"
+        ],
         "responses": {
           "200": {
             "description": "成功取得最新匯率資料",
@@ -116,7 +118,10 @@
                                 "example": 32.085
                               }
                             },
-                            "required": ["buy", "sell"]
+                            "required": [
+                              "buy",
+                              "sell"
+                            ]
                           },
                           "cash": {
                             "type": "object",
@@ -133,10 +138,16 @@
                                 "example": 32.385
                               }
                             },
-                            "required": ["buy", "sell"]
+                            "required": [
+                              "buy",
+                              "sell"
+                            ]
                           }
                         },
-                        "required": ["spot", "cash"]
+                        "required": [
+                          "spot",
+                          "cash"
+                        ]
                       },
                       "example": {
                         "USD": {
@@ -162,7 +173,13 @@
                       }
                     }
                   },
-                  "required": ["timestamp", "updateTime", "source", "rates", "details"]
+                  "required": [
+                    "timestamp",
+                    "updateTime",
+                    "source",
+                    "rates",
+                    "details"
+                  ]
                 }
               }
             }
@@ -175,7 +192,9 @@
         "summary": "取得指定日期歷史匯率",
         "description": "取得指定日期的臺灣銀行牌告匯率歷史資料。",
         "operationId": "getHistoryRates",
-        "tags": ["匯率資料"],
+        "tags": [
+          "匯率資料"
+        ],
         "parameters": [
           {
             "name": "date",
@@ -249,7 +268,10 @@
                                 "example": 32.085
                               }
                             },
-                            "required": ["buy", "sell"]
+                            "required": [
+                              "buy",
+                              "sell"
+                            ]
                           },
                           "cash": {
                             "type": "object",
@@ -266,10 +288,16 @@
                                 "example": 32.385
                               }
                             },
-                            "required": ["buy", "sell"]
+                            "required": [
+                              "buy",
+                              "sell"
+                            ]
                           }
                         },
-                        "required": ["spot", "cash"]
+                        "required": [
+                          "spot",
+                          "cash"
+                        ]
                       },
                       "example": {
                         "USD": {
@@ -295,7 +323,13 @@
                       }
                     }
                   },
-                  "required": ["timestamp", "updateTime", "source", "rates", "details"]
+                  "required": [
+                    "timestamp",
+                    "updateTime",
+                    "source",
+                    "rates",
+                    "details"
+                  ]
                 }
               }
             }

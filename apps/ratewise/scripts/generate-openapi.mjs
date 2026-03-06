@@ -268,12 +268,7 @@ const openApiSpec = {
 };
 
 const openapiOutputPath = resolve(ROOT, 'public/openapi.json');
-const openapiConfig = await prettier.resolveConfig(openapiOutputPath);
-const openapiFormatted = await prettier.format(JSON.stringify(openApiSpec, null, 2), {
-  ...openapiConfig,
-  parser: 'json',
-});
-writeFileSync(openapiOutputPath, openapiFormatted);
+writeFileSync(openapiOutputPath, JSON.stringify(openApiSpec, null, 2) + '\n');
 console.log(
   `✅ openapi.json generated: v${VERSION}, OpenAPI 3.1, ${SUPPORTED_CURRENCIES.length} currencies`,
 );

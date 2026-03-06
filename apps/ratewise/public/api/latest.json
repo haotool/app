@@ -6,7 +6,12 @@
   "sourceUrl": "https://rate.bot.com.tw/xrt",
   "updateFrequency": "every 5 minutes",
   "baseCurrency": "TWD",
-  "rateTypes": ["cash_buy", "cash_sell", "spot_buy", "spot_sell"],
+  "rateTypes": [
+    "cash_buy",
+    "cash_sell",
+    "spot_buy",
+    "spot_sell"
+  ],
   "supportedCurrencies": [
     "TWD",
     "JPY",
