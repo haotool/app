@@ -29,6 +29,7 @@ const __dirname = dirname(__filename);
 // 從 SSOT 導入配置
 import {
   SEO_PATHS,
+  LEGAL_SSG_PATHS,
   SITE_CONFIG,
   SHARE_IMAGE,
   IMAGE_RESOURCES,
@@ -36,6 +37,7 @@ import {
 } from '../apps/ratewise/seo-paths.config.mjs';
 
 const SITE_URL = normalizeSiteUrl(SITE_CONFIG.url);
+const PUBLIC_SITEMAP_PATHS = [...SEO_PATHS, ...LEGAL_SSG_PATHS];
 
 // 顏色輸出
 const colors = {
@@ -59,6 +61,7 @@ const PATH_TO_SOURCE = {
   '/faq/': 'apps/ratewise/src/pages/FAQ.tsx',
   '/about/': 'apps/ratewise/src/pages/About.tsx',
   '/guide/': 'apps/ratewise/src/pages/Guide.tsx',
+  '/privacy/': 'apps/ratewise/src/pages/Privacy.tsx',
   '/usd-twd/': 'apps/ratewise/src/pages/USDToTWD.tsx',
   '/jpy-twd/': 'apps/ratewise/src/pages/JPYToTWD.tsx',
   '/eur-twd/': 'apps/ratewise/src/pages/EURToTWD.tsx',
@@ -111,6 +114,12 @@ const PAGE_IMAGES = {
     {
       loc: OG_IMAGE_URL,
       caption: 'RateWise Guide - 使用指南',
+    },
+  ],
+  '/privacy/': [
+    {
+      loc: OG_IMAGE_URL,
+      caption: 'RateWise Privacy - 隱私政策',
     },
   ],
 };
@@ -205,7 +214,7 @@ function generateSitemap() {
   xml += '        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n';
 
   // 生成所有 URL 條目
-  SEO_PATHS.forEach((path) => {
+  PUBLIC_SITEMAP_PATHS.forEach((path) => {
     xml += generateUrlEntry(path);
   });
 
@@ -234,11 +243,11 @@ async function main() {
 
   // 統計信息
   console.log('\n📊 生成統計:');
-  console.log(`  總計 URL: ${SEO_PATHS.length}`);
+  console.log(`  總計 URL: ${PUBLIC_SITEMAP_PATHS.length}`);
   console.log(`  包含圖片: ${Object.keys(PAGE_IMAGES).length} 個頁面`);
 
   // 驗證時間戳多樣性
-  const timestamps = SEO_PATHS.map((path) => getLastModDate(path));
+  const timestamps = PUBLIC_SITEMAP_PATHS.map((path) => getLastModDate(path));
   const uniqueDates = new Set(timestamps.map((d) => d.toISOString().split('T')[0]));
 
   console.log(`  不同日期: ${uniqueDates.size} 個`);

@@ -43,11 +43,11 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(llmsContent).toContain('可信度');
     });
 
-    it('should have Key Metrics for performance evidence', () => {
-      // 效能證據增加可信度
+    it('should have Key Metrics for operational evidence', () => {
       expect(llmsContent).toContain('Key Metrics');
-      expect(llmsContent).toContain('LCP');
-      expect(llmsContent).toContain('Lighthouse');
+      expect(llmsContent).toContain('支援貨幣');
+      expect(llmsContent).toContain('更新頻率');
+      expect(llmsContent).toContain('匯率類型');
     });
 
     it('should have AI/LLM Access Control section', () => {
@@ -185,6 +185,7 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(sitemapContent).toContain('/ratewise/faq/</loc>');
       expect(sitemapContent).toContain('/ratewise/about/</loc>');
       expect(sitemapContent).toContain('/ratewise/guide/</loc>');
+      expect(sitemapContent).toContain('/ratewise/privacy/</loc>');
     });
 
     it('should have all 17 currency landing pages', () => {
@@ -488,8 +489,9 @@ describe('📊 E-E-A-T Compliance', () => {
       expect(llmsContent).toContain('測試覆蓋');
     });
 
-    it('should mention performance scores', () => {
-      expect(llmsContent).toContain('Lighthouse');
+    it('should mention machine-readable interfaces', () => {
+      expect(llmsContent).toContain('OpenAPI');
+      expect(llmsContent).toContain('llms.txt');
     });
   });
 
@@ -506,7 +508,6 @@ describe('📊 E-E-A-T Compliance', () => {
     });
 
     it('should be transparent about data source', () => {
-      expect(llmsContent).toContain('100%');
       expect(llmsContent).toContain('臺灣銀行');
     });
   });

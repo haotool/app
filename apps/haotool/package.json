@@ -10,6 +10,7 @@
   },
   "type": "module",
   "scripts": {
+    "prebuild": "node scripts/generate-sitemap.js",
     "dev": "vite",
     "build": "tsc --noEmit && vite-react-ssg build --config vite.config.ts",
     "postbuild": "node scripts/postbuild.js",

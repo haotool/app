@@ -2,7 +2,7 @@
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。
 
-Version: v2.6.1 (2026-03-06)
+Version: v2.6.0 (2026-03-06)
 Compact index: https://app.haotool.org/ratewise/llms.txt
 
 ---
@@ -211,7 +211,7 @@ GET https://app.haotool.org/ratewise/api/latest.json
 
 ```json
 {
-  "version": "2.6.1",
+  "version": "2.6.0",
   "description": "RateWise Exchange Rate API",
   "rateTypes": ["cash_buy", "cash_sell", "spot_buy", "spot_sell"],
   "supportedCurrencies": ["TWD", "USD", "JPY", "EUR", "GBP", "HKD", "CNY",
@@ -247,7 +247,7 @@ GET https://app.haotool.org/ratewise/openapi.json
 ## E-E-A-T Signals
 
 - **專業性**：匯率計算邏輯與格式化策略具完整測試覆蓋（Vitest）。
-- **權威性**：100% 資料來源為臺灣銀行官方牌告匯率（rate.bot.com.tw），無第三方轉手。
+- **權威性**：資料來源為臺灣銀行官方牌告匯率（rate.bot.com.tw），無第三方轉手。
 - **可信度**：開源 GPL-3.0（github.com/haotool/app），透明可驗證；提供聯絡方式。
 - **經驗**：專為台灣用戶設計，依各國旅遊消費習慣提供常用金額按鈕（如韓元 10,000~300,000、日圓 1,000~30,000）。
 
@@ -255,7 +255,7 @@ GET https://app.haotool.org/ratewise/openapi.json
 
 ## Data Source
 
-- Source: 100% 來源於臺灣銀行牌告匯率（Bank of Taiwan）
+- Source: 臺灣銀行牌告匯率（Bank of Taiwan）
 - Source URL: https://rate.bot.com.tw/xrt
 - Update mechanism: GitHub Actions 自動排程，每 5 分鐘同步
 - CDN: jsDelivr（全球 CDN，99.9% uptime）

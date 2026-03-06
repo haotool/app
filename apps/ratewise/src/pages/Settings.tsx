@@ -39,10 +39,12 @@ import { LANGUAGE_OPTIONS, getResolvedLanguage, type SupportedLanguage } from '.
 import { getDisplayVersion } from '../config/version';
 import { transitions, segmentedSwitch } from '../config/animations';
 import { APP_INFO } from '../config/app-info';
+import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { style, setStyle, resetTheme, isLoaded } = useAppTheme();
+  const pageSeo = APP_ONLY_PAGE_SEO.settings;
 
   // 使用正規化後的語系（zh-Hant → zh-TW）
   // @see i18n/index.ts - getResolvedLanguage()
@@ -55,12 +57,12 @@ export default function Settings() {
   return (
     <div className="min-h-full">
       <SEOHelmet
-        title="應用程式設定 - 介面風格切換與語言偏好管理"
-        description="RateWise 應用程式設定頁面，自訂介面風格（Zen、Nitro、Kawaii、Classic、Ocean、Forest 共 6 種）、切換繁體中文/English/日本語，管理匯率快取與資料來源，個人化您的匯率查詢體驗，提升使用效率。"
-        pathname="/settings"
-        robots="noindex, nofollow"
+        title={pageSeo.title}
+        description={pageSeo.description}
+        pathname={pageSeo.pathname}
+        robots={pageSeo.robots}
       />
-      <h1 className="sr-only">應用程式設定 - 介面風格切換與語言偏好管理</h1>
+      <h1 className="sr-only">{pageSeo.title}</h1>
       <div className="px-3 sm:px-5 py-6 max-w-md mx-auto">
         {/* 介面風格區塊 */}
         <section className="mb-8">

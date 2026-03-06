@@ -32,6 +32,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConverter';
 import { SkeletonLoader } from '../components/SkeletonLoader';
+import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 import type { RateType, CurrencyCode, ConversionHistoryEntry } from '../features/ratewise/types';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
@@ -157,10 +158,10 @@ export default function Favorites() {
   // @see https://vite-react-ssg.netlify.app/docs/components — Head 獨立於渲染狀態
   const seoHelmet = (
     <SEOHelmet
-      title="收藏貨幣與換算歷史記錄 - 快速存取常用匯率"
-      description="RateWise 收藏管理與換算歷史記錄，快速存取常用貨幣對。支援拖曳排序重新排列收藏順序、一鍵跳轉換算、查看歷史記錄。完整記錄您的每次匯率換算，方便回顧匯率變動與重新計算。支援 18 種貨幣，每 5 分鐘自動同步臺灣銀行牌告匯率，完全免費無廣告。"
-      pathname="/favorites"
-      robots="noindex, nofollow"
+      title={pageSeo.title}
+      description={pageSeo.description}
+      pathname={pageSeo.pathname}
+      robots={pageSeo.robots}
     />
   );
 
@@ -168,7 +169,7 @@ export default function Favorites() {
     return (
       <>
         {seoHelmet}
-        <h1 className="sr-only">收藏貨幣與換算歷史記錄 - 快速存取常用匯率</h1>
+        <h1 className="sr-only">{pageSeo.title}</h1>
         <SkeletonLoader />
       </>
     );
@@ -178,7 +179,7 @@ export default function Favorites() {
     return (
       <>
         {seoHelmet}
-        <h1 className="sr-only">收藏貨幣與換算歷史記錄 - 快速存取常用匯率</h1>
+        <h1 className="sr-only">{pageSeo.title}</h1>
         <SkeletonLoader />
       </>
     );
@@ -209,7 +210,7 @@ export default function Favorites() {
   return (
     <div className="flex flex-col min-h-full">
       {seoHelmet}
-      <h1 className="sr-only">收藏貨幣與換算歷史記錄 - 快速存取常用匯率</h1>
+      <h1 className="sr-only">{pageSeo.title}</h1>
       <div className="flex-1 px-3 sm:px-5 py-6 max-w-md mx-auto w-full">
         {/* Tab 切換區塊 - Segmented Switch SSOT 動畫 */}
         <section className="mb-6">
@@ -440,3 +441,4 @@ export default function Favorites() {
     </div>
   );
 }
+const pageSeo = APP_ONLY_PAGE_SEO.favorites;

@@ -42,6 +42,9 @@ export const CURRENCY_DEFINITIONS = {
   IDR: { name: '印尼盾', flag: '🇮🇩', symbol: 'Rp', decimals: 0 },
 } as const;
 
+/** 支援幣別總數（含 TWD） */
+export const SUPPORTED_CURRENCY_COUNT = Object.keys(CURRENCY_DEFINITIONS).length;
+
 export const DEFAULT_FROM_CURRENCY = 'TWD';
 export const DEFAULT_TO_CURRENCY = 'JPY'; // 日本為台灣人最熱門旅遊目的地
 export const DEFAULT_BASE_CURRENCY = 'TWD';
@@ -87,7 +90,7 @@ export const HOMEPAGE_FAQ = [
   {
     question: '支援哪些貨幣？',
     answer:
-      '支援 18 種主要貨幣（TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等），可收藏常用貨幣。',
+      '支援 18 種貨幣（TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等），可收藏常用貨幣。',
   },
   {
     question: '可以離線使用嗎？',

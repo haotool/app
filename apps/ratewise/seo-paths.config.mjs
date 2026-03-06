@@ -28,7 +28,7 @@ export const normalizeSiteUrl = withTrailingSlash;
 export const CONTENT_SEO_PATHS = ['/', '/faq/', '/about/', '/guide/'];
 
 /**
- * 公開法律頁面：保留 SSG，但不主動放進 sitemap
+ * 公開法律頁面：保留獨立分組，並納入 sitemap
  */
 export const LEGAL_SSG_PATHS = ['/privacy/'];
 

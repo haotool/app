@@ -84,6 +84,10 @@ const buildBreadcrumbSchema = (items: BreadcrumbItem[]): JsonLdBlock | null => {
   };
 };
 
+export function shouldRenderStructuredData(robots: string): boolean {
+  return !robots.toLowerCase().includes('noindex');
+}
+
 export function SEOHelmet({
   title,
   description = SITE_SEO.description,
@@ -141,6 +145,8 @@ export function SEOHelmet({
     }
   }
 
+  const renderStructuredData = shouldRenderStructuredData(robots);
+
   return (
     <Head>
       <title>{fullTitle}</title>
@@ -187,15 +193,17 @@ export function SEOHelmet({
       <meta name="twitter:site" content={APP_INFO.socialHandle} />
       <meta name="twitter:creator" content={APP_INFO.socialHandle} />
 
-      <script type="application/ld+json">
-        {JSON.stringify({
-          '@context': 'https://schema.org',
-          '@graph': structuredData.map((item) => {
-            const { '@context': _, ...rest } = item as Record<string, unknown>;
-            return rest;
-          }),
-        })}
-      </script>
+      {renderStructuredData ? (
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': structuredData.map((item) => {
+              const { '@context': _, ...rest } = item as Record<string, unknown>;
+              return rest;
+            }),
+          })}
+        </script>
+      ) : null}
     </Head>
   );
 }
