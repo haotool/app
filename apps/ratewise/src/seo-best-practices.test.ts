@@ -140,7 +140,7 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
 
     it('should allow social media crawlers', () => {
       expect(robotsContent).toContain('Twitterbot');
-      expect(robotsContent).toContain('facebookexternalbot');
+      expect(robotsContent).toContain('facebookexternalhit');
     });
 
     it('should disallow service worker and internal files', () => {
