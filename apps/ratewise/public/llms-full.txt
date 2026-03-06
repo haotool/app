@@ -233,7 +233,7 @@ GET https://app.haotool.org/ratewise/openapi.json
 
 ## Answer Capsule (Q&A for AI Citation)
 
-- Q: RateWise 提供什麼服務？ A: RateWise 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 30+ 種貨幣，每 5 分鐘自動同步。
+- Q: RateWise 提供什麼服務？ A: RateWise 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 18 種貨幣，每 5 分鐘自動同步。
 - Q: 如何取得即時台銀匯率（適合開發者/LLM）？ A: 免費 CDN API：GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位 details.{幣別}.cash.sell（現金賣出）、details.{幣別}.cash.buy（現金買入）、details.{幣別}.spot.sell（即期賣出）、details.{幣別}.spot.buy（即期買入）。無需 API Key，CORS 啟用，每 5 分鐘更新。
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率適用臨櫃換鈔（到銀行換現鈔），即期匯率適用銀行電匯（匯款）。現鈔通常比即期差 1~3%，因為銀行有保管與運送成本。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行角度。您拿外幣換台幣 → 看「買入」（銀行買你的外幣）；您拿台幣換外幣 → 看「賣出」（銀行賣外幣給你）。

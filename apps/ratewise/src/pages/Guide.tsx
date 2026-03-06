@@ -28,7 +28,7 @@ const Guide = () => {
     {
       position: 3,
       name: '選擇原始貨幣',
-      text: '在「從」欄位選擇您要兌換的貨幣（例如：TWD 台幣）。RateWise 支援超過 30 種主要貨幣。',
+      text: '在「從」欄位選擇您要兌換的貨幣（例如：TWD 台幣）。RateWise 支援 18 種主要貨幣。',
       image: '/screenshots/step3-select-from.png',
     },
     {

@@ -84,7 +84,7 @@ export const SITE_CONFIG = {
   name: 'RateWise - 匯率好工具',
   title: 'RateWise — 台灣最精準匯率換算器',
   description:
-    'RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 30+ 種貨幣，讓你換匯前就知道真正要付多少台幣。',
+    'RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 18 種貨幣，讓你換匯前就知道真正要付多少台幣。',
 } as const satisfies Readonly<{
   url: string;
   name: string;

@@ -12,7 +12,7 @@ const FAQ_JSONLD_DATA = [
   {
     question: '什麼是 RateWise 匯率好工具？',
     answer:
-      'RateWise 是基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 30+ 種貨幣換算。提供單幣別與多幣別換算、收藏管理、轉換歷史、匯率趨勢圖、現金/即期匯率切換等完整功能。涵蓋 TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等主要貨幣。採用 Progressive Web App 技術支援離線使用，Lighthouse Performance 評分達 97/100，LCP 僅 489ms，提供極致快速的使用體驗。',
+      'RateWise 是基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 18 種貨幣換算。提供單幣別與多幣別換算、收藏管理、轉換歷史、匯率趨勢圖、現金/即期匯率切換等完整功能。涵蓋 TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等主要貨幣。採用 Progressive Web App 技術支援離線使用，Lighthouse Performance 評分達 97/100，LCP 僅 489ms，提供極致快速的使用體驗。',
   },
   {
     question: '匯率數據來源是什麼？',
@@ -22,12 +22,12 @@ const FAQ_JSONLD_DATA = [
   {
     question: '支援哪些貨幣？',
     answer:
-      'RateWise 支援超過 30 種主要國際貨幣。涵蓋亞洲貨幣（TWD 台幣、JPY 日圓、HKD 港幣、CNY 人民幣、KRW 韓元、SGD 新加坡幣、THB 泰銖、PHP 菲律賓披索）、歐美貨幣（USD 美元、EUR 歐元、GBP 英鎊、CAD 加幣、AUD 澳幣、NZD 紐幣、CHF 瑞士法郎）以及其他常用貨幣如瑞典克朗 (SEK)、南非幣 (ZAR) 等。完整貨幣清單請參考應用內的貨幣選擇器。',
+      'RateWise 支援 18 種主要國際貨幣，涵蓋亞洲貨幣（TWD 台幣、JPY 日圓、HKD 港幣、CNY 人民幣、KRW 韓元、SGD 新加坡幣、THB 泰銖、PHP 菲律賓披索、IDR 印尼盾、VND 越南盾、MYR 馬來幣）、歐美貨幣（USD 美元、EUR 歐元、GBP 英鎊、CAD 加幣、AUD 澳幣、NZD 紐幣、CHF 瑞士法郎）。完整貨幣清單請參考應用內的貨幣選擇器。',
   },
   {
     question: '如何使用多幣別換算功能？',
     answer:
-      '多幣別換算模式可同時顯示一個基準貨幣對多種目標貨幣的即時換算結果。使用方法：1. 在主畫面點選「多幣別換算」模式 2. 選擇基準貨幣（例如 USD）3. 輸入金額（例如 1000）4. 系統會即時顯示該金額對所有 30+ 種支援貨幣的換算結果。每個貨幣可獨立調整金額，支援收藏常用貨幣、切換現金/即期匯率、查看趨勢。特別適合出國旅遊比價、國際貿易報價比較、投資者同時追蹤多個貨幣對的匯率變化。',
+      '多幣別換算模式可同時顯示一個基準貨幣對多種目標貨幣的即時換算結果。使用方法：1. 在主畫面點選「多幣別換算」模式 2. 選擇基準貨幣（例如 USD）3. 輸入金額（例如 1000）4. 系統會即時顯示該金額對所有 18 種支援貨幣的換算結果。每個貨幣可獨立調整金額，支援收藏常用貨幣、切換現金/即期匯率、查看趨勢。特別適合出國旅遊比價、國際貿易報價比較、投資者同時追蹤多個貨幣對的匯率變化。',
   },
   {
     question: '可以離線使用嗎？',
@@ -67,7 +67,7 @@ const FAQ_UI_DATA = [
     question: '什麼是 RateWise 匯率好工具？',
     answer: (
       <>
-        <strong>RateWise 是基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 30+ 種貨幣換算。</strong>{' '}
+        <strong>RateWise 是基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 18 種貨幣換算。</strong>{' '}
         提供單幣別與多幣別換算、收藏管理、轉換歷史、匯率趨勢圖、現金/即期匯率切換等完整功能。 涵蓋
         TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等主要貨幣。 採用 Progressive Web App
         技術支援離線使用，Lighthouse Performance 評分達 97/100， LCP 僅
@@ -89,11 +89,10 @@ const FAQ_UI_DATA = [
     question: '支援哪些貨幣？',
     answer: (
       <>
-        <strong>RateWise 支援超過 30 種主要國際貨幣。</strong> 涵蓋亞洲貨幣（TWD 台幣、JPY 日圓、HKD
-        港幣、CNY 人民幣、KRW 韓元、SGD 新加坡幣、THB 泰銖、PHP 菲律賓披索）、歐美貨幣（USD
-        美元、EUR 歐元、GBP 英鎊、CAD 加幣、AUD 澳幣、NZD 紐幣、CHF
-        瑞士法郎）以及其他常用貨幣如瑞典克朗 (SEK)、南非幣 (ZAR)
-        等。完整貨幣清單請參考應用內的貨幣選擇器。
+        <strong>RateWise 支援 18 種主要國際貨幣。</strong> 涵蓋亞洲貨幣（TWD 台幣、JPY 日圓、HKD
+        港幣、CNY 人民幣、KRW 韓元、SGD 新加坡幣、THB 泰銖、PHP 菲律賓披索、IDR 印尼盾、VND
+        越南盾、MYR 馬來幣）、歐美貨幣（USD 美元、EUR 歐元、GBP 英鎊、CAD 加幣、AUD 澳幣、NZD
+        紐幣、CHF 瑞士法郎）。完整貨幣清單請參考應用內的貨幣選擇器。
       </>
     ),
   },
@@ -103,7 +102,7 @@ const FAQ_UI_DATA = [
       <>
         <strong>多幣別換算模式可同時顯示一個基準貨幣對多種目標貨幣的即時換算結果。</strong>{' '}
         使用方法：1. 在主畫面點選「多幣別換算」模式 2. 選擇基準貨幣（例如 USD）3. 輸入金額（例如
-        1000）4. 系統會即時顯示該金額對所有 30+ 種支援貨幣的換算結果。
+        1000）4. 系統會即時顯示該金額對所有 18 種支援貨幣的換算結果。
         每個貨幣可獨立調整金額，支援收藏常用貨幣、切換現金/即期匯率、查看趨勢。
         特別適合出國旅遊比價、國際貿易報價比較、投資者同時追蹤多個貨幣對的匯率變化。
       </>
@@ -183,7 +182,7 @@ export default function FAQ() {
     <>
       <SEOHelmet
         title="常見問題 - RateWise 匯率工具完整 FAQ 解答"
-        description="RateWise 匯率好工具完整 FAQ 解答：匯率數據來源、支援 30+ 種貨幣、離線使用方式、安裝到手機、更新頻率、歷史匯率查看等。100% 基於臺灣銀行官方牌告匯率，5 分鐘自動更新，完全免費無廣告，快速解決所有換匯常見問題，立即查詢。"
+        description="RateWise 匯率好工具完整 FAQ 解答：匯率數據來源、支援 18 種貨幣、離線使用方式、安裝到手機、更新頻率、歷史匯率查看等。100% 基於臺灣銀行官方牌告匯率，5 分鐘自動更新，完全免費無廣告，快速解決所有換匯常見問題，立即查詢。"
         pathname="/faq"
         breadcrumb={[
           { name: 'RateWise 首頁', item: '/' },

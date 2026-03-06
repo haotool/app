@@ -17,6 +17,9 @@ Disallow: /*.json
 Disallow: /color-scheme
 Disallow: /ui-showcase
 Disallow: /update-prompt-test
+Disallow: /multi
+Disallow: /favorites
+Disallow: /settings
 
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 

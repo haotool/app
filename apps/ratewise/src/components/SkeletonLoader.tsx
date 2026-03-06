@@ -42,7 +42,7 @@ export const SkeletonLoader = () => {
         <p className="font-bold text-lg">RateWise 匯率好工具 - 即時匯率換算</p>
         <p>
           RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援
-          TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等超過 30
+          TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等 18
           種主要貨幣。我們的匯率工具快速、準確、離線可用，是您出國旅遊、國際貿易、外幣兌換的最佳助手。
         </p>
 
@@ -56,7 +56,7 @@ export const SkeletonLoader = () => {
 
         <h2>支援貨幣列表</h2>
         <p>
-          我們支援超過 30 種主要貨幣，包括：新台幣 TWD、美元 USD、日圓 JPY、歐元 EUR、英鎊 GBP、港幣
+          我們支援 18 種主要貨幣，包括：新台幣 TWD、美元 USD、日圓 JPY、歐元 EUR、英鎊 GBP、港幣
           HKD、人民幣 CNY、韓元 KRW、澳幣 AUD、加幣 CAD、新加坡幣 SGD、瑞士法郎 CHF、紐幣 NZD、泰銖
           THB、菲律賓披索 PHP、印尼盾 IDR、越南盾 VND、馬來幣 MYR
           等。無論您需要換算哪種貨幣，RateWise 都能滿足您的需求。

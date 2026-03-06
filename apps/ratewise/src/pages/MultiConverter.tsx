@@ -88,9 +88,10 @@ export default function MultiConverter() {
   // @see https://vite-react-ssg.netlify.app/docs/components — Head 獨立於渲染狀態
   const seoHelmet = (
     <SEOHelmet
-      title="多幣別同時換算 - 一次比較 30+ 種即時匯率"
-      description="RateWise 多幣別同時換算功能，一次查看所有支援貨幣的即時匯率換算結果。參考臺灣銀行官方牌告匯率，同時顯示 30+ 種貨幣對台幣匯率，支援收藏常用貨幣、切換現金/即期匯率，適合旅遊換匯比價與跨境貿易報價。支援 PWA 離線使用，完全免費，無廣告。"
+      title="多幣別同時換算 - 一次比較 18 種即時匯率"
+      description="RateWise 多幣別同時換算功能，一次查看所有支援貨幣的即時匯率換算結果。參考臺灣銀行官方牌告匯率，同時顯示 18 種貨幣對台幣匯率，支援收藏常用貨幣、切換現金/即期匯率，適合旅遊換匯比價與跨境貿易報價。支援 PWA 離線使用，完全免費，無廣告。"
       pathname="/multi"
+      robots="noindex, nofollow"
     />
   );
 
@@ -98,7 +99,7 @@ export default function MultiConverter() {
     return (
       <>
         {seoHelmet}
-        <h1 className="sr-only">多幣別同時換算 - 一次比較 30+ 種即時匯率</h1>
+        <h1 className="sr-only">多幣別同時換算 - 一次比較 18 種即時匯率</h1>
         <SkeletonLoader />
       </>
     );
@@ -108,7 +109,7 @@ export default function MultiConverter() {
     return (
       <>
         {seoHelmet}
-        <h1 className="sr-only">多幣別同時換算 - 一次比較 30+ 種即時匯率</h1>
+        <h1 className="sr-only">多幣別同時換算 - 一次比較 18 種即時匯率</h1>
         <SkeletonLoader />
       </>
     );
@@ -139,7 +140,7 @@ export default function MultiConverter() {
   return (
     <div className={multiConverterLayoutTokens.container}>
       {seoHelmet}
-      <h1 className="sr-only">多幣別同時換算 - 一次比較 30+ 種即時匯率</h1>
+      <h1 className="sr-only">多幣別同時換算 - 一次比較 18 種即時匯率</h1>
       <div className={multiConverterLayoutTokens.content.className}>
         {/* 多幣別換算區塊 - 簡約風格（標題已移除，由底部導航識別）
          *

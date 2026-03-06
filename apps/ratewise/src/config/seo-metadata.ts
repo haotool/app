@@ -97,10 +97,9 @@ const ASSET_VERSION = `v=${BUILD_TIME.replace(/[-T:Z.]/g, '').slice(0, 8) || 'de
 
 export const DEFAULT_LOCALE = 'zh-TW' as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
-export const DEFAULT_TITLE =
-  'RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價';
+export const DEFAULT_TITLE = 'RateWise 匯率好工具 — 台銀即時匯率 | 顯示實際買賣價，非中間價';
 export const DEFAULT_DESCRIPTION =
-  'RateWise 顯示臺灣銀行牌告的實際買入賣出價，而非中間價——讓你換匯前就知道真正要付多少台幣。支援 30+ 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏拖曳排序、7~30 天趨勢圖，每 5 分鐘同步，離線可用 PWA。台灣出國旅遊與外幣兌換的最佳選擇。';
+  'RateWise 顯示臺灣銀行牌告的實際買入賣出價，而非中間價——讓你換匯前就知道真正要付多少台幣。支援 18 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏拖曳排序、7~30 天趨勢圖，每 5 分鐘同步，離線可用 PWA。台灣出國旅遊與外幣兌換的最佳選擇。';
 export const DEFAULT_KEYWORDS = [
   '匯率好工具',
   'RateWise',
@@ -163,7 +162,7 @@ export const SITE_SEO = {
       '3 語言支援（繁中／英／日）',
       '下拉更新即時同步',
       '離線使用（PWA）',
-      '30+ 種貨幣支援',
+      '18 種貨幣支援',
     ],
   },
 } as const;
@@ -270,7 +269,7 @@ export const HOMEPAGE_FAQ = [
   {
     question: '支援哪些貨幣？',
     answer:
-      '支援 30+ 種主要貨幣，包括 TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等，可收藏常用貨幣並以拖曳排序自訂順序。',
+      '支援 18 種主要貨幣，包括 TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等，可收藏常用貨幣並以拖曳排序自訂順序。',
   },
   {
     question: '可以離線使用嗎？',
@@ -310,7 +309,7 @@ export const HOMEPAGE_HOW_TO: HowToData = {
     {
       position: 1,
       name: '選擇貨幣',
-      text: '從下拉選單選擇來源貨幣與目標貨幣，支援 30+ 種主要貨幣，可收藏常用幣別以便快速存取。',
+      text: '從下拉選單選擇來源貨幣與目標貨幣，支援 18 種主要貨幣，可收藏常用幣別以便快速存取。',
     },
     {
       position: 2,
@@ -341,10 +340,10 @@ export const HOMEPAGE_SEO = {
     eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步 · 顯示實際買賣價',
     heading: 'RateWise 即時匯率換算',
     intro:
-      '顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援台幣、美元、日圓、韓元、歐元等 30+ 種貨幣，每 5 分鐘自動同步，適合出國旅遊、海外付款與跨境報價前快速比價。',
+      '顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援台幣、美元、日圓、韓元、歐元等 18 種貨幣，每 5 分鐘自動同步，適合出國旅遊、海外付款與跨境報價前快速比價。',
     highlights: [
       '顯示實際買賣價：臺灣銀行牌告匯率的現金與即期買入賣出四種報價，不是中間價——換匯金額更精準。',
-      '支援 30+ 種主要貨幣，提供計算機快速輸入、收藏管理、拖曳排序與換算歷史。',
+      '支援 18 種主要貨幣，提供計算機快速輸入、收藏管理、拖曳排序與換算歷史。',
       '6 種主題風格、3 語言介面（繁中／英／日），PWA 可離線使用，重新連線自動同步。',
     ],
     quickLinks: [
@@ -359,7 +358,7 @@ export const FAQ_PAGE_ENTRIES = [
   {
     question: '什麼是 RateWise 匯率好工具？',
     answer:
-      'RateWise 是基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 30+ 種貨幣換算，提供單幣別與多幣別模式、計算機鍵盤快速輸入、收藏管理、拖曳排序、換算歷史紀錄與 7~30 天匯率趨勢圖。',
+      'RateWise 是基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 18 種貨幣換算，提供單幣別與多幣別模式、計算機鍵盤快速輸入、收藏管理、拖曳排序、換算歷史紀錄與 7~30 天匯率趨勢圖。',
   },
   {
     question: '匯率數據來源是什麼？',
@@ -570,7 +569,7 @@ export const ABOUT_PAGE_FAQ = [
 export const ABOUT_PAGE_SEO = {
   title: '關於 RateWise 匯率好工具 - 資料來源與技術特色',
   description:
-    'RateWise 是專為台灣用戶設計的即時匯率 PWA 工具，100% 基於臺灣銀行官方牌告匯率，支援 30+ 種貨幣換算與離線使用。',
+    'RateWise 是專為台灣用戶設計的即時匯率 PWA 工具，100% 基於臺灣銀行官方牌告匯率，支援 18 種貨幣換算與離線使用。',
   pathname: '/about',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -593,7 +592,7 @@ export const PRIVACY_PAGE_SEO = {
 
 export const APP_ONLY_PAGE_SEO = {
   multi: {
-    title: '多幣別同時換算 - 一次比較 30+ 種即時匯率',
+    title: '多幣別同時換算 - 一次比較 18 種即時匯率',
     description:
       'RateWise 多幣別同時換算功能，一次查看所有支援貨幣的即時匯率換算結果，適合旅遊換匯比價與跨境貿易報價。',
     pathname: '/multi',

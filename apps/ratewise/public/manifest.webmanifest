@@ -1,7 +1,7 @@
 {
   "name": "RateWise - 即時匯率轉換器",
   "short_name": "RateWise",
-  "description": "RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。",
+  "description": "RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 18 種貨幣。快速、準確、離線可用的 PWA 匯率工具。",
   "theme_color": "#8B5CF6",
   "background_color": "#E8ECF4",
   "display": "standalone",

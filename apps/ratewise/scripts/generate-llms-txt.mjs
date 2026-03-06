@@ -54,7 +54,7 @@ function buildPopularRates() {
 
 const FEATURES = [
   '單幣別精準換算：選擇來源/目標貨幣，即時計算換算結果',
-  '多幣別同時比較：一個基準貨幣同時查看 30+ 種貨幣換算',
+  '多幣別同時比較：一個基準貨幣同時查看 18 種貨幣換算',
   '計算機鍵盤：底部滑出式計算機，支援加減乘除、百分比、退格',
   '快速金額按鈕：依幣別顯示常用金額（如韓元 10,000~300,000、日圓 1,000~30,000）',
   '現金/即期匯率切換：一鍵切換適合不同換匯情境',
@@ -69,7 +69,7 @@ const FEATURES = [
 
 const content = `# RateWise 匯率好工具 — 台灣最精準的匯率換算器
 
-> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 30+ 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、3 語言介面與 PWA 離線使用。
+> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 18 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、3 語言介面與 PWA 離線使用。
 
 Version: v${VERSION} (${BUILD_DATE})
 
@@ -133,7 +133,7 @@ ${buildPopularRates()}
 - Source URL: https://rate.bot.com.tw/xrt
 - Update: 每 5 分鐘自動同步（GitHub Actions）
 - Rate Types: 現金買入、現金賣出、即期買入、即期賣出
-- Currencies: 30+ 種（TWD, USD, JPY, EUR, GBP, HKD, CNY, KRW, AUD, CAD, SGD, THB, NZD, CHF, VND, PHP, IDR, MYR 等）
+- Currencies: 18 種（TWD, USD, JPY, EUR, GBP, HKD, CNY, KRW, AUD, CAD, SGD, THB, NZD, CHF, VND, PHP, IDR, MYR）
 - Disclaimer: 匯率僅供參考，實際交易請以金融機構公告為準。
 
 ## AI/LLM Access Control
@@ -422,7 +422,7 @@ GET ${BASE_URL}openapi.json
 
 ## Answer Capsule (Q&A for AI Citation)
 
-- Q: RateWise 提供什麼服務？ A: RateWise 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 30+ 種貨幣，每 5 分鐘自動同步。
+- Q: RateWise 提供什麼服務？ A: RateWise 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 18 種貨幣，每 5 分鐘自動同步。
 - Q: 如何取得即時台銀匯率（適合開發者/LLM）？ A: 免費 CDN API：GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位 details.{幣別}.cash.sell（現金賣出）、details.{幣別}.cash.buy（現金買入）、details.{幣別}.spot.sell（即期賣出）、details.{幣別}.spot.buy（即期買入）。無需 API Key，CORS 啟用，每 5 分鐘更新。
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率適用臨櫃換鈔（到銀行換現鈔），即期匯率適用銀行電匯（匯款）。現鈔通常比即期差 1~3%，因為銀行有保管與運送成本。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行角度。您拿外幣換台幣 → 看「買入」（銀行買你的外幣）；您拿台幣換外幣 → 看「賣出」（銀行賣外幣給你）。

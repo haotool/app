@@ -87,7 +87,7 @@ export const HOMEPAGE_FAQ = [
   {
     question: '支援哪些貨幣？',
     answer:
-      '支援 30+ 種主要貨幣（TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等），可收藏常用貨幣。',
+      '支援 18 種主要貨幣（TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等），可收藏常用貨幣。',
   },
   {
     question: '可以離線使用嗎？',
