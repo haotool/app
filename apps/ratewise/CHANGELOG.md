@@ -1,5 +1,29 @@
 # @app/ratewise
 
+## 2.7.1
+
+### Patch Changes
+
+- 7441a54: fix(ratewise): 離線狀態下禁止清除 SW 快取，保護 PWA 離線功能
+- 5a18fda: 修復 PWA 骨架屏卡住與下拉強制刷新失效問題
+  - AppLayout: 接線 usePullToRefresh + PullToRefreshIndicator，使用者可下拉強制清快取並重載
+  - SkeletonLoader: 新增 10 秒 watchdog，客戶端卡住時自動轉為錯誤復原 UI（強制重新載入 + 聯絡資訊）
+  - sw.ts: 新增 FORCE_HARD_RESET message handler，客戶端可命令 SW 清除所有快取後回報重載
+  - swUtils.ts: performFullRefresh 改為優先透過 SW 訊息清快取（forceHardReset），確保 SW 與 client 兩端快取均被清除；3 秒 timeout 兜底強制重載
+
+- 8127d17: 修復 FAQ schema 重複與 head hydration 後 metadata 重複問題
+  - SEOHelmet: 保留 SSG shim，改由 client effect 接管 title、canonical、meta 與 JSON-LD 去重，修復 hydration 後重複 head tags
+  - SEO metadata: FAQPage schema 收斂到真正 FAQ 頁，移除首頁、幣別頁與 About/AuthorityGuide 的重複 FAQ 標記
+  - ImageObject: 補齊 `license` 與 `acquireLicensePage`，統一由 APP_INFO / seo-metadata SSOT 管理
+  - Tests: 補強 prerender、JSON-LD 與 client-side head reconciliation 驗證
+  - SEOHelmet: 補上 unmount cleanup，避免跨頁殘留 canonical、description 與 JSON-LD metadata
+  - SEOHelmet: 以穩定 signature 取代陣列依賴，避免同 props rerender 時重跑整份 head 去重流程
+
+- 5a18fda: 修正 forceHardReset timeout fallback 未清快取的回歸
+
+  舊版 SW 無 FORCE_HARD_RESET handler 時，3 秒 timeout 僅重載未清快取，
+  導致使用者重整到同一批舊快取。修正：timeout 改為先清 Cache Storage 再重載。
+
 ## 2.7.0
 
 ### Minor Changes
