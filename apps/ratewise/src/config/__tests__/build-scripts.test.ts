@@ -54,7 +54,8 @@ describe('ratewise build scripts', () => {
     const packageJson = await readRootPackageJson();
 
     expect(packageJson.pnpm?.overrides?.['brace-expansion']).toBeUndefined();
-    expect(packageJson.pnpm?.overrides?.['brace-expansion@<2.0.2']).toBeDefined();
+    expect(packageJson.pnpm?.overrides?.['brace-expansion@<1.1.12']).toBeDefined();
+    expect(packageJson.pnpm?.overrides?.['brace-expansion@>=2.0.0 <2.0.2']).toBeDefined();
     expect(packageJson.pnpm?.overrides?.['brace-expansion@>=5.0.0 <5.0.2']).toBeDefined();
   });
 
