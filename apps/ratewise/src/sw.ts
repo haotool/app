@@ -11,6 +11,16 @@ import { ExpirationPlugin } from 'workbox-expiration';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
+// SW 自我修復：捕捉 precache 安裝失敗（常見於部署競態窗口，資源短暫 404）。
+// 自動登出並讓瀏覽器在下次導覽時重新安裝，避免用戶卡在壞掉的 SW 迴圈。
+self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+  if (String(event.reason).includes('bad-precaching-response')) {
+    console.warn('[SW] Precache 失敗，自動登出以允許重新安裝');
+    event.preventDefault();
+    void self.registration.unregister();
+  }
+});
+
 // 預快取 Vite 產生的靜態資源。
 precacheAndRoute(self.__WB_MANIFEST);
 
