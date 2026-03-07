@@ -134,10 +134,12 @@ export async function forceHardReset(): Promise<void> {
       navigator.serviceWorker.addEventListener('message', reloadOnMessage);
       sw.postMessage({ type: 'FORCE_HARD_RESET' });
 
-      // Fallback: 3 秒後若 SW 未回覆仍重載
+      // Fallback: 3 秒後若 SW 未回覆（舊版 SW 無 handler）仍清快取後重載
       setTimeout(() => {
         navigator.serviceWorker.removeEventListener('message', reloadOnMessage);
-        window.location.reload();
+        void clearAllServiceWorkerCaches().finally(() => {
+          window.location.reload();
+        });
       }, 3000);
       return;
     }
