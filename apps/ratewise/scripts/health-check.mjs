@@ -75,6 +75,64 @@ function request(url, options = {}) {
 }
 
 /**
+ * 嚴格探測：不接受 3xx redirect（偵測 nginx alias trailing-slash 問題）
+ * 成功條件：HTTP 2xx（含 204）
+ */
+async function strictProbe(url, method = 'GET') {
+  const startTime = Date.now();
+  try {
+    const res = await request(url, { method });
+    const responseTime = Date.now() - startTime;
+    const ok = res.statusCode >= 200 && res.statusCode < 300;
+
+    if (ok) {
+      log(colors.green, '✓', `[${method}] ${url} → ${res.statusCode} (${responseTime}ms)`);
+    } else {
+      log(
+        colors.red,
+        '✗',
+        `[${method}] ${url} → ${res.statusCode} (expected 2xx, redirect indicates missing nginx exact-match rule)`,
+      );
+    }
+    return { success: ok, statusCode: res.statusCode, responseTime };
+  } catch (error) {
+    log(colors.red, '✗', `[${method}] ${url} → ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Worker 部署驗證：檢查 X-Security-Policy-Version 標頭
+ * 缺少此標頭表示 Cloudflare Worker 未部署或路由未生效
+ */
+async function workerDeployCheck(url, expectedVersion) {
+  try {
+    const res = await request(url);
+    const version = res.headers['x-security-policy-version'];
+
+    if (!version) {
+      log(
+        colors.red,
+        '✗',
+        `Worker 未部署：${url} 缺少 X-Security-Policy-Version header（probe/csp-report 將 301/404）`,
+      );
+      return { success: false, reason: 'missing-header' };
+    }
+
+    if (expectedVersion && version !== expectedVersion) {
+      log(colors.yellow, '⚠', `Worker 版本漂移：期待 ${expectedVersion}，實際 ${version}`);
+      return { success: true, version, warning: 'version-mismatch' };
+    }
+
+    log(colors.green, '✓', `Worker 已部署：X-Security-Policy-Version: ${version}`);
+    return { success: true, version };
+  } catch (error) {
+    log(colors.red, '✗', `Worker 檢查失敗：${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 淺層健康檢查：HTTP 狀態碼 + 回應時間
  *
  * 接受 200 或 301（尾斜線重定向是正常的）
@@ -243,7 +301,39 @@ async function runHealthChecks(baseUrl) {
   ]);
   results.push({ url: '/guide (HowTo)', ...guideResult });
 
-  // 4. 靜態資源檢查
+  // 4. 關鍵端點嚴格檢查（不接受 3xx redirect）
+  console.log(`\n${colors.gray}[嚴格探測] 關鍵端點 - 不允許 redirect${colors.reset}`);
+
+  const probeResult = await strictProbe(`${baseUrl}/__network_probe__?t=${Date.now()}`);
+  results.push({ url: '/__network_probe__', ...probeResult });
+  if (!probeResult.success) {
+    log(
+      colors.yellow,
+      '⚠',
+      '  → 修復：確認 nginx exact-match location = /ratewise/__network_probe__ 存在並已部署',
+    );
+  }
+
+  const cspReportResult = await strictProbe(`${baseUrl}/csp-report`, 'POST');
+  results.push({ url: '/csp-report (POST)', ...cspReportResult });
+  if (!cspReportResult.success) {
+    log(
+      colors.yellow,
+      '⚠',
+      '  → 修復：確認 nginx exact-match location = /ratewise/csp-report 存在並已部署',
+    );
+  }
+
+  // 5. Cloudflare Worker 部署驗證
+  console.log(`\n${colors.gray}[Worker 驗證] Cloudflare Security Headers Worker${colors.reset}`);
+
+  const workerResult = await workerDeployCheck(baseUrl, '3.7');
+  results.push({ url: 'Worker deployment', ...workerResult });
+  if (!workerResult.success) {
+    log(colors.yellow, '⚠', '  → 修復：cd security-headers && npx wrangler deploy');
+  }
+
+  // 6. 靜態資源檢查
   console.log(`\n${colors.gray}[淺層檢查] 靜態資源${colors.reset}`);
 
   const staticFiles = [

@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { logger } from '../utils/logger';
+import { APP_INFO } from '../config/app-info';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -123,8 +124,32 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </button>
 
             <p className="text-xs text-text-muted text-center mt-4">
-              若問題持續發生，請嘗試清除瀏覽器快取或聯繫技術支援。
+              若問題持續發生，請清除瀏覽器快取後重試，或透過以下方式聯繫作者：
             </p>
+            <div className="flex justify-center gap-4 mt-2 flex-wrap">
+              <a
+                href={APP_INFO.threadsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs underline text-text-muted hover:text-text transition-colors"
+              >
+                Threads {APP_INFO.socialHandle}
+              </a>
+              <a
+                href={`${APP_INFO.github}/issues`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs underline text-text-muted hover:text-text transition-colors"
+              >
+                GitHub Issues
+              </a>
+              <a
+                href={`mailto:${APP_INFO.email}`}
+                className="text-xs underline text-text-muted hover:text-text transition-colors"
+              >
+                {APP_INFO.email}
+              </a>
+            </div>
           </div>
         </div>
       );
