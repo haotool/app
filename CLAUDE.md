@@ -132,10 +132,11 @@ AI 助手 **必須**：
 
 1. 更新 `docs/dev/002_development_reward_penalty_log.md`
 2. 確認 002 新增紀錄使用 entry blocks；整理舊資料時僅能產出精簡索引，不得再新增巨型 table
-3. 若 002 屬 `incident` / `regression`，必須明確寫出根因、影響、修復與預防
-4. 以 commitlint 規則提交（繁中標題、條列 body、`測試：...`）
-5. 推送分支並確認 PR 狀態
-6. 使用 `gh` 合併 PR 至 `main`（在 checks 通過後）
+3. 確認 002 新條目使用 v2 結構化欄位：至少包含 `id`、`content_type`、`topics`、`keywords`、`related_entries`
+4. 若 002 屬 `incident` / `regression`，必須明確寫出根因、影響、修復與預防
+5. 以 commitlint 規則提交（繁中標題、條列 body、`測試：...`）
+6. 推送分支並確認 PR 狀態
+7. 使用 `gh` 合併 PR 至 `main`（在 checks 通過後）
 
 ### Phase 7. 版本發布與依賴管理（Release & Dependencies）
 
@@ -428,5 +429,5 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 
 ---
 
-**最後更新**: 2026-03-08T03:57:10+0800
-**版本**: v3.7（補充 002 操作 / incident 規則與 FAQ/SEOHelmet Troubleshooting）
+**最後更新**: 2026-03-08T04:54:13+0800
+**版本**: v3.8（補充 002 v2 結構化索引規格與 FAQ/SEOHelmet Troubleshooting）
