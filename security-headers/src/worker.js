@@ -1,12 +1,13 @@
 /* global HTMLRewriter */
 
 /**
- * 安全標頭 Worker v3.6
+ * 安全標頭 Worker v3.7
  *
  * 本 Worker 為 HTTP 安全標頭的唯一來源（SSOT），統一管理所有路由的安全政策，
  * 無需修改應用程式原始碼。
  *
  * 變更記錄：
+ * - v3.7: CSP-Report-Only 新增 goog#html TrustedType，修復 Google Analytics 違規 console 噪音
  * - v3.6: 改用 HTMLRewriter 解析 inline script，避免以 regex 掃描 HTML 觸發 CodeQL `js/bad-tag-filter`
  *
  * 路由策略：
@@ -23,7 +24,7 @@
  */
 
 const HSTS = 'max-age=31536000; includeSubDomains; preload';
-const SECURITY_POLICY_VERSION = '3.6';
+const SECURITY_POLICY_VERSION = '3.7';
 
 /** 解析 HTML 中所有 inline script，回傳 CSP 所需的 SHA-256 hash token 陣列。 */
 async function computeInlineScriptHashes(html) {
@@ -153,7 +154,7 @@ export default {
 			newResponse.headers.set('Content-Security-Policy', csp);
 			newResponse.headers.set(
 				'Content-Security-Policy-Report-Only',
-				"require-trusted-types-for 'script'; trusted-types default ratewise#default 'allow-duplicates'; report-uri /ratewise/csp-report;",
+				"require-trusted-types-for 'script'; trusted-types default ratewise#default goog#html 'allow-duplicates'; report-uri /ratewise/csp-report;",
 			);
 			newResponse.headers.set(
 				'Permissions-Policy',

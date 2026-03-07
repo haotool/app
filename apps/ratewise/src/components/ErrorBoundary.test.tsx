@@ -238,8 +238,6 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     );
 
-    expect(
-      screen.getByText(/若問題持續發生，請嘗試清除瀏覽器快取或聯繫技術支援/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/若問題持續發生，請清除瀏覽器快取後重試/)).toBeInTheDocument();
   });
 });
