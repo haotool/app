@@ -1,8 +1,13 @@
+/* global HTMLRewriter */
+
 /**
- * 安全標頭 Worker v3.5
+ * 安全標頭 Worker v3.6
  *
  * 本 Worker 為 HTTP 安全標頭的唯一來源（SSOT），統一管理所有路由的安全政策，
  * 無需修改應用程式原始碼。
+ *
+ * 變更記錄：
+ * - v3.6: 改用 HTMLRewriter 解析 inline script，避免以 regex 掃描 HTML 觸發 CodeQL `js/bad-tag-filter`
  *
  * 路由策略：
  * - /ratewise/*  嚴格 CSP，動態計算 SHA-256 inline script hash 取代 unsafe-inline；
@@ -18,21 +23,47 @@
  */
 
 const HSTS = 'max-age=31536000; includeSubDomains; preload';
+const SECURITY_POLICY_VERSION = '3.6';
 
 /** 解析 HTML 中所有 inline script，回傳 CSP 所需的 SHA-256 hash token 陣列。 */
 async function computeInlineScriptHashes(html) {
-	const hashes = [];
-	const re = /<script([^>]*)>([\s\S]*?)<\/script>/gi;
-	let m;
-	while ((m = re.exec(html)) !== null) {
-		const attrs = m[1];
-		const content = m[2]; // 保留原始空白，不可正規化；瀏覽器以原始字元序列驗證 hash。
-		if (!attrs.includes('src') && content) {
-			const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content));
-			const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-			hashes.push(`'sha256-${b64}'`);
+	const inlineScripts = [];
+
+	class InlineScriptCollector {
+		constructor(scripts) {
+			this.scripts = scripts;
+			this.scriptChunkStack = [];
+		}
+
+		element(element) {
+			const chunks = element.getAttribute('src') === null ? [] : null;
+			this.scriptChunkStack.push(chunks);
+			element.onEndTag(() => {
+				const completedChunks = this.scriptChunkStack.pop();
+				if (completedChunks && completedChunks.length > 0) {
+					this.scripts.push(completedChunks.join(''));
+				}
+			});
+		}
+
+		text(text) {
+			const currentChunks = this.scriptChunkStack[this.scriptChunkStack.length - 1];
+			if (currentChunks) {
+				currentChunks.push(text.text);
+			}
 		}
 	}
+
+	// 讓 HTMLRewriter 以正式 parser 解析 script 內容，避免用 regex 比對 HTML。
+	await new HTMLRewriter().on('script', new InlineScriptCollector(inlineScripts)).transform(new Response(html)).text();
+
+	const hashes = [];
+	for (const content of inlineScripts) {
+		const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content));
+		const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+		hashes.push(`'sha256-${b64}'`);
+	}
+
 	return hashes;
 }
 
@@ -90,7 +121,7 @@ export default {
 				status: 204,
 				headers: {
 					'Cache-Control': 'no-store',
-					'X-Security-Policy-Version': '3.5',
+					'X-Security-Policy-Version': SECURITY_POLICY_VERSION,
 				},
 			});
 		}
@@ -141,7 +172,7 @@ export default {
 		}
 
 		newResponse.headers.set('Strict-Transport-Security', HSTS);
-		newResponse.headers.set('X-Security-Policy-Version', '3.5');
+		newResponse.headers.set('X-Security-Policy-Version', SECURITY_POLICY_VERSION);
 
 		if (isOgAsset) {
 			newResponse.headers.set('Access-Control-Allow-Origin', '*');
