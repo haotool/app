@@ -192,10 +192,20 @@ export function usePullToRefresh(
         canTrigger,
         pullDistance,
         threshold: TRIGGER_THRESHOLD,
+        isOnline: navigator.onLine,
       });
 
       // Enable smooth transition back
       container.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
+
+      // 離線時不觸發 onRefresh（避免清快取導致 PWA 離線功能失效）
+      if (!navigator.onLine) {
+        logger.warn('Pull-to-refresh: offline — skip refresh to preserve cache');
+        container.style.transform = 'translateY(0)';
+        setPullDistance(0);
+        setCanTrigger(false);
+        return;
+      }
 
       if (canTrigger && pullDistance >= TRIGGER_THRESHOLD) {
         // Trigger refresh

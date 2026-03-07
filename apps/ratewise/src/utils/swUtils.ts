@@ -21,6 +21,12 @@ export async function clearAllServiceWorkerCaches(): Promise<number> {
     return 0;
   }
 
+  // 離線時絕不清除快取，避免 PWA 離線功能失效
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    logger.warn('[swUtils] Offline — skipping cache clear to preserve PWA offline capability');
+    return 0;
+  }
+
   try {
     const cacheNames = await caches.keys();
     const deletePromises = cacheNames.map((name) => caches.delete(name));
@@ -115,6 +121,13 @@ export async function forceHardReset(): Promise<void> {
   logger.info('[swUtils] forceHardReset: starting');
 
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    window.location.reload();
+    return;
+  }
+
+  // 離線時只重載（不清快取），保留 SW 快取讓 PWA 離線功能正常運作
+  if (!navigator.onLine) {
+    logger.warn('[swUtils] forceHardReset: offline — reload without cache clear');
     window.location.reload();
     return;
   }
