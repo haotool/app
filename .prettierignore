@@ -59,6 +59,8 @@ apps/ratewise/public/api/latest.json
 apps/ratewise/public/openapi.json
 apps/ratewise/public/llms.txt
 apps/ratewise/public/llms-full.txt
+apps/ratewise/public/manifest.webmanifest
+apps/ratewise/public/sitemap.xml
 
 # OS files
 .DS_Store

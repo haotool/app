@@ -1,5 +1,88 @@
 # @app/ratewise
 
+## 2.7.0
+
+### Minor Changes
+
+- 1b693b1: 整合 GA4 直接 gtag.js 追蹤，建立 SSOT 架構
+  - 新增 @app/shared/analytics：initGA / trackPageview / trackEvent / RouteAnalytics
+  - arguments 物件實作避免 GA4 靜默失效；transport_type: beacon 確保頁面卸載不丟失事件
+  - SPA 路由變更自動追蹤；初始 mount 跳過防止 SSG hydration 重複計算
+  - 新增 17 個單元測試全數通過
+
+### Patch Changes
+
+- 14e2e12: 強化 JSON-LD schema 與 FAQ 最佳化以提升 AI 摘要命中率
+  - 新增 datePublished/dateModified 至 SoftwareApplication、WebSite、FinancialService schema
+  - 新增 foundingDate 至 Organization schema（E-E-A-T 信號）
+  - 新增 About 頁 FAQPage schema（4 則 Q&A）
+  - 精簡 FAQ 長答案至 30-50 詞 AEO 最佳格式
+
+- 14e2e12: 新增 llms-full.txt 並強化 LLM/AI 即時匯率調用文件
+  - 新增 llms-full.txt 完整版（含 JSON API schema、JavaScript/Python fetch 範例、完整幣別表）
+  - llms.txt 加入 `## Tool Use` 區塊，提供 LLM function calling 步驟與匯率選擇指南
+  - llms.txt Optional 區塊加入 llms-full.txt 連結
+  - seo-paths.config.mjs SEO_FILES 新增 /llms-full.txt
+  - generate-llms-txt.mjs 同時輸出 llms.txt（精簡索引）與 llms-full.txt（完整技術文件）
+
+- 58c215f: feat(seo): robots.txt 改由 SSOT 腳本自動生成
+  - 新增 `scripts/generate-robots-txt.mjs`：從 seo-paths.config.mjs 讀取 SITE_CONFIG、DEV_ONLY_PATHS
+  - seo-paths.config.mjs 新增 `DEV_ONLY_PATHS`（開發展示頁）、`APP_ONLY_NOINDEX_PATHS`（使用者功能頁）
+  - Sitemap URL 從 SITE_CONFIG.url 自動推導，不再硬編碼
+  - 日期欄位 BUILD_DATE 每次 prebuild 自動更新
+  - /multi, /favorites, /settings 改由 SEOHelmet noindex 處理（移除 Disallow，符合 Google 建議）
+  - 補上先前遺漏的 /theme-showcase Disallow
+  - robots.txt 加入 .prettierignore（prebuild 產出物，不需格式化）
+
+- 6af6cc8: feat(ssot): 更新 SEO 驗證腳本，涵蓋 robots.txt 與新路徑群組
+  - seo-paths.ts 新增 APP_ONLY_NOINDEX_PATHS、DEV_ONLY_PATHS 語意匯出
+  - seo-paths.ts SEO_PATHS 加入 LEGAL_SSG_PATHS（與 MJS 對齊，22 路徑）
+  - seo-paths.ts SEO_FILES 補齊 /llms-full.txt
+  - verify-ssot-sync.mjs 新增 SEO_FILES 群組驗證
+  - verify-ssot-sync.mjs 新增 verifyRobotsTxt()：確保 robots.txt 與 SSOT 不漂移
+
+- 6cd321f: - About / FAQ / Privacy 頁 LAST_UPDATED 加入 `timeZone: 'Asia/Taipei'`
+  - 修復 SSG build（UTC）與瀏覽器 hydration（UTC+8）日期不一致問題
+- 6d3977a: - ErrorBoundary 新增 Threads / GitHub Issues / Email 三種聯絡管道
+  - 所有聯絡資訊來自 app-info.ts SSOT，無硬編碼值
+- 82af685: 修復 FAQPage url 欄位重複並強化賣出價 SEO 定位
+  - 移除 buildFaqSchema 的 url 欄位，修復 Google Search Console「FAQPage 欄位重複」錯誤
+  - 幣別比較格加上 Google／XE 品牌標示與「換 10 萬日圓差約 1,500～3,000 元」量化說明
+  - 強化 HOMEPAGE_FAQ，明確點名競品顯示中間價而非賣出價
+  - 新增幣別頁「出國刷卡匯率 vs 台銀牌告」FAQ，提升 E-E-A-T
+  - 電腦版 RWD：highlights 3 欄、CommonAmounts lg:grid-cols-3、FAQ max-w-3xl
+
+- 3b852e9: 修正 Layout.tsx 不應依賴 react-router context
+
+  移除 Layout.tsx 中的 RouteAnalytics（需要 useLocation），
+  RouteAnalytics 僅在 AppLayout.tsx（SSG router 內）保留。
+  修復 Layout.test.tsx 全數失敗的問題。
+
+- 70431ac: 收斂 CSP 責任邊界並清理本地 preview 的網路探測噪音
+  - 移除 app 端 CSP build/runtime 管線，改由 Cloudflare 作為唯一安全標頭來源
+  - 新增 `__network_probe__` 靜態資產並修正 network probe 邏輯
+  - 避免 localhost 與 preview 環境出現假性 `FetchEvent` / `ERR_FAILED` console 噪音
+
+- ac2441c: 修復 RateWise SEO 真實性與 sitemap SSOT
+  - 移除不實的 `30+` 貨幣、舊 Lighthouse 分數與錯誤隱私宣稱，改由 SSOT 與實際服務能力產出內容
+  - `noindex` 頁面不再輸出 JSON-LD，避免 schema 與索引指令衝突
+  - 將 `/privacy/` 納入 public sitemap，並修復 host root `robots.txt` 多 sitemap discovery
+  - 新增 robots、manifest、sitemap 與內容真實性驗證測試
+
+- 0c9ee2e: 修正幣別數量聲明、新增 noindex、縮短首頁 title
+  - 全站「30+」→「18 種」（與 SSOT constants.ts 對齊：18 種含 TWD 基準）
+  - API 實際外幣 17 種（TWD 為基準不在 details），SEO 落地頁 17 種，均已驗證
+  - 移除 FAQ.tsx 錯誤聲明（SEK 瑞典克朗、ZAR 南非幣不在支援清單）
+  - MultiConverter / Favorites / Settings 新增 `robots="noindex, nofollow"`
+  - robots.txt 新增 Disallow /multi /favorites /settings
+  - DEFAULT_TITLE 縮短至 ~519px（閾值 535px，舊版 ~609px 超限）
+
+- bd7dd6e: - sw.ts 新增 unhandledrejection handler 捕捉 bad-precaching-response
+  - 僅在無健康 active worker 時才登出（首次安裝失敗場景）
+  - 若已有 active worker 仍在服務，保留其快取並讓瀏覽器下次自動重試新版安裝
+  - 修復部署競態窗口導致用戶 SW 卡在安裝失敗迴圈的問題
+- ac2441c: 補強 SEO 權威內容頁、公開文件 deep-link 模板與 sitemap 路徑同步。
+
 ## 2.6.1
 
 ### Patch Changes
