@@ -225,6 +225,9 @@ export function SEOHelmet({
     hrefLang,
     href: buildCanonicalUrl(href),
   }));
+  const normalizedAlternatesSignature = normalizedAlternates
+    .map(({ hrefLang, href }) => `${hrefLang}:${href}`)
+    .join('|');
   const ogLocale = locale.replace('-', '_');
   const additionalJsonLd = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
   const hasImageObject = additionalJsonLd.some((block) => block['@type'] === 'ImageObject');
@@ -363,7 +366,7 @@ export function SEOHelmet({
     fullTitle,
     keywordsContent,
     locale,
-    normalizedAlternates,
+    normalizedAlternatesSignature,
     ogImageUrl,
     ogLocale,
     ogType,

@@ -291,6 +291,47 @@ describe('SEOHelmet Component', () => {
       expect(viewport).not.toBeNull();
       expect(viewport).toHaveAttribute('content', 'width=device-width, initial-scale=1');
     });
+
+    it('should not recreate managed head nodes when rerendered with the same props', () => {
+      const props = {
+        title: '穩定頁面',
+        description: '相同 props 不應重建 head 節點',
+        canonical: '/stable/',
+        alternates: [
+          { hrefLang: 'x-default', href: '/stable/' },
+          { hrefLang: 'zh-TW', href: '/stable/' },
+        ],
+        faq: [{ question: 'Q?', answer: 'A' }],
+      };
+
+      const { rerender } = render(
+        <HelmetProvider>
+          <SEOHelmet {...props} />
+        </HelmetProvider>,
+      );
+
+      const initialCanonical = document.head.querySelector('link[rel="canonical"]');
+      const initialAlternate = document.head.querySelector(
+        'link[rel="alternate"][hreflang="zh-TW"]',
+      );
+      const initialStructuredData = document.head.querySelector(
+        'script[type="application/ld+json"]',
+      );
+
+      rerender(
+        <HelmetProvider>
+          <SEOHelmet {...props} />
+        </HelmetProvider>,
+      );
+
+      expect(document.head.querySelector('link[rel="canonical"]')).toBe(initialCanonical);
+      expect(document.head.querySelector('link[rel="alternate"][hreflang="zh-TW"]')).toBe(
+        initialAlternate,
+      );
+      expect(document.head.querySelector('script[type="application/ld+json"]')).toBe(
+        initialStructuredData,
+      );
+    });
   });
 
   describe('Code Review Verifications', () => {

@@ -9,3 +9,4 @@
 - ImageObject: 補齊 `license` 與 `acquireLicensePage`，統一由 APP_INFO / seo-metadata SSOT 管理
 - Tests: 補強 prerender、JSON-LD 與 client-side head reconciliation 驗證
 - SEOHelmet: 補上 unmount cleanup，避免跨頁殘留 canonical、description 與 JSON-LD metadata
+- SEOHelmet: 以穩定 signature 取代陣列依賴，避免同 props rerender 時重跑整份 head 去重流程
