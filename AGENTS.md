@@ -51,6 +51,14 @@ RateWise Monorepo -- Agent 標準作業程序（SOP）與稽核控制規範。
 ## Environment
 
 ```bash
+# Codex PR 評論過濾
+node scripts/codex-review.mjs           # 近 7 天所有 PR 的 Codex 評論
+node scripts/codex-review.mjs --days 14 # 自訂天數
+node scripts/codex-review.mjs --pr 168  # 指定 PR
+node scripts/codex-review.mjs --open    # 僅未解決
+```
+
+```bash
 pnpm install --frozen-lockfile
 pnpm dev                     # 預設啟動 @app/ratewise
 pnpm build                   # 建置所有 workspace apps

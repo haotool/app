@@ -80,6 +80,14 @@ pnpm format                  # prettier --check .
 pnpm format:fix              # prettier --write .
 ```
 
+```bash
+# Codex PR 評論過濾（查看近期 Codex 審查意見）
+node scripts/codex-review.mjs           # 近 7 天所有 PR
+node scripts/codex-review.mjs --days 14 # 自訂天數
+node scripts/codex-review.mjs --pr 168  # 指定 PR
+node scripts/codex-review.mjs --open    # 僅未解決
+```
+
 ## Execution SOP（AI 助手執行程序）
 
 ### Phase 1. 任務受理與界定（Intake）
