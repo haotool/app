@@ -53,7 +53,6 @@ export function CurrencyLandingPage({
       { name: 'RateWise 首頁', item: '/' },
       { name: `${currencyCode} → TWD 匯率`, item: `${pathname}/` },
     ],
-    faq: faqEntries,
     howTo: {
       name: `如何查看 ${currencyCode} 對 TWD 匯率`,
       description: `使用 RateWise ${howToSteps.length} 步驟快速換算${currencyName}對台幣，並查看歷史趨勢與多幣別。`,

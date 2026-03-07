@@ -31,6 +31,13 @@ describe('app-info', () => {
       expect(APP_INFO.github).toMatch(/^https:\/\/github\.com\//);
     });
 
+    it('should have valid license and image permission URLs', () => {
+      expect(APP_INFO.licenseUrl).toMatch(/^https:\/\/github\.com\//);
+      expect(APP_INFO.imageLicenseContactUrl).toMatch(
+        /^https:\/\/app\.haotool\.org\/ratewise\/about\/$/,
+      );
+    });
+
     it('should have valid Threads URL', () => {
       expect(APP_INFO.threadsUrl).toMatch(/^https:\/\/www\.threads\.net\/@/);
     });

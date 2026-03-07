@@ -198,6 +198,13 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toMatch(/"@type":\s*"SoftwareApplication"/);
     });
 
+    it('should NOT have FAQPage JSON-LD on homepage', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+    });
+
     it('should have only ONE title tag (no duplicates from template)', () => {
       if (!existsSync(indexHtml)) return;
 
@@ -256,6 +263,22 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       const descMatches = content.match(/<meta[^>]*name="description"[^>]*>/g);
       expect(descMatches).toBeTruthy();
       expect(descMatches?.length).toBe(1);
+    });
+  });
+
+  describe('🟢 幣別落地頁 Rich Results 範圍控制', () => {
+    const usdHtml = resolve(distPath, 'usd-twd/index.html');
+
+    it('USD/TWD page should exist as static HTML', () => {
+      expect(existsSync(usdHtml)).toBe(true);
+    });
+
+    it('USD/TWD page should NOT include FAQPage JSON-LD', () => {
+      if (!existsSync(usdHtml)) return;
+
+      const content = readFileSync(usdHtml, 'utf-8');
+      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+      expect(content).toMatch(/"@type":\s*"FinancialService"/);
     });
   });
 

@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025)
 
-> **最後更新**: 2026-03-07T04:39:00+08:00
-> **當前總分**: 1110 (初始分: 100) [+3 RateWise SEO Audit hreflang 驗證硬編碼根因修復 + +4 RateWise rebase 後版本與 sitemap SSOT 根因修復 + +1 RateWise 公開產物格式漂移收斂與提交潔淨化 + +6 RateWise SEO 權威內容頁、參數頁重複抓取抑制與 deep-link 模板收斂 + +5 RateWise SEO 真實性、sitemap 與 robots SSOT 根因修復 + +1 建立 RateWise Cloudflare 稽核工作流文件 + +2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強 + +6 park-keeper 車牌快編、導航地圖快取與羅盤 UX 優化 + +3 park-keeper CI coverage 修復與 a11y 補強 + +5 RateWise bundle size 優化與效能提升 - +3 緊急修復 React Scheduler 分裂導致生產癱瘓 + -3 Code splitting 策略導致生產環境癱瘓]
+> **最後更新**: 2026-03-08T01:26:56+08:00
+> **當前總分**: 1114 (初始分: 100) [+4 RateWise FAQ rich results 範圍收斂與 head hydration 去重根因修復 + +3 RateWise SEO Audit hreflang 驗證硬編碼根因修復 + +4 RateWise rebase 後版本與 sitemap SSOT 根因修復 + +1 RateWise 公開產物格式漂移收斂與提交潔淨化 + +6 RateWise SEO 權威內容頁、參數頁重複抓取抑制與 deep-link 模板收斂 + +5 RateWise SEO 真實性、sitemap 與 robots SSOT 根因修復 + +1 建立 RateWise Cloudflare 稽核工作流文件 + +2 Sitemap hreflang SSOT 同步修復 + +3 SEO 技術債清除與 SSOT 完整對齊 + +1 修復 prerender/hreflang 測試斷言 + +5 SSOT 驗證腳本修復與 SEO 重構 + +14 park-keeper 整合 + +5 haotool SEO Workflow 迭代 + +1 提交前風險檢查 + +1 lint 阻塞修復 + +3 Leaflet 地圖縮放渲染修復 + +2 羅盤頁手勢縮放 UX 收尾與版號更新 + +3 雙點自動追蹤與地圖 i18n + +2 AGENTS/CLAUDE/commitlint 規範對齊升級 + +1 root screenshot ignore 與文件摘要修正 + +2 AGENTS/CLAUDE 企業 SOP 審計風格重構 + +5 RateWise PWA 回歸修復與版本 SSOT 校正 + +3 RateWise mobile UpdatePrompt 非阻塞修復 + +3 Cloudflare security-headers 發版同步補強 + +6 park-keeper 車牌快編、導航地圖快取與羅盤 UX 優化 + +3 park-keeper CI coverage 修復與 a11y 補強 + +5 RateWise bundle size 優化與效能提升 - +3 緊急修復 React Scheduler 分裂導致生產癱瘓 + -3 Code splitting 策略導致生產環境癱瘓]
 > **目標**: >120 (優秀) | <80 (警示)
 
 ---
@@ -20,6 +20,12 @@
 ---
 
 ## 補充紀錄（2026-03-03）
+
+## 補充紀錄（2026-03-08）
+
+- ✅ 成功｜RateWise FAQ rich results 範圍收斂與 head hydration 去重根因修復：1) 依 Google Search Central 最新 FAQ rich results 文件與 Search Console 異常樣本，確認 FAQ rich result 已限於少數權威站點，且相同 FAQ 不應在首頁、幣別頁、About/Guide 權威內容頁重複標記；因此將 `FAQPage` schema 收斂到真正的 FAQ 頁，移除首頁、幣別落地頁與 About/AuthorityGuide 的 FAQ 結構化資料，保留頁面可讀內容與既有 HowTo/Breadcrumb/FinancialService schema 2) `SEOHelmet` 保留 `vite-react-ssg` shim 以維持 SSG 預渲染正確，但在 client runtime 改為 `useEffect` 接管 title、description、canonical、alternate、Open Graph、Twitter 與 JSON-LD，消除 hydration 後重複 head tags 的根因，並新增 `data-seo-helmet="structured-data"` 標記避免未來誤刪其他非 `SEOHelmet` 管理的 schema 3) `ImageObject` SSOT 補齊 `license` 與 `acquireLicensePage`，統一由 `APP_INFO` 與 `buildShareImageJsonLd()` 管理，對應 Search Console 圖片授權警告 4) 驗證：`pnpm --filter @app/ratewise typecheck` ✅、`pnpm --filter @app/ratewise exec vitest run src/components/__tests__/SEOHelmet.test.tsx src/jsonld.test.ts src/prerender.test.ts src/config/__tests__/app-info.test.ts src/seo-best-practices.test.ts` ✅（194 tests）、`pnpm --filter @app/ratewise build` ✅（33 routes prerendered，首頁與 `usd-twd` 無 FAQPage，`faq` 頁保留 FAQPage）、`squirrel audit https://app.haotool.org/ratewise/ --format llm --surface` ⚠️ 因目前 shell 外網限制無法連線，故以 live fetch + 官方文件 + 本地 build/測試交叉驗證替代
+- 依據｜[Google Search Central: FAQ structured data / Rich results 限制][Google Search Central: image license metadata][seo-audit / audit-website / seo][Linus 三問驗證]
+- 分數｜`+4`
 
 ## 補充紀錄（2026-03-07）
 

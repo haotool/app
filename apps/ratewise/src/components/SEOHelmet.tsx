@@ -6,6 +6,7 @@
  * - 所有預設值與 schema 來源統一收斂到 config/seo-metadata.ts
  */
 import { Head } from 'vite-react-ssg';
+import { useEffect } from 'react';
 import { APP_INFO } from '../config/app-info';
 import {
   type AlternateLink,
@@ -39,6 +40,9 @@ interface SEOProps {
   breadcrumb?: BreadcrumbItem[];
   robots?: string;
 }
+
+const STRUCTURED_DATA_SELECTOR =
+  'script[type="application/ld+json"][data-rh="true"], script[type="application/ld+json"][data-seo-helmet="structured-data"]';
 
 const buildFaqSchema = (faq: FAQEntry[]): JsonLdBlock => ({
   '@context': 'https://schema.org',
@@ -86,6 +90,92 @@ const buildBreadcrumbSchema = (items: BreadcrumbItem[]): JsonLdBlock | null => {
 
 export function shouldRenderStructuredData(robots: string): boolean {
   return !robots.toLowerCase().includes('noindex');
+}
+
+function upsertTitle(title: string) {
+  const existing = Array.from(document.head.querySelectorAll('title'));
+  const element = (existing[0] as HTMLTitleElement | undefined) ?? document.createElement('title');
+
+  if (!element.isConnected) {
+    document.head.appendChild(element);
+  }
+
+  existing.forEach((node) => {
+    if (node !== element) {
+      node.remove();
+    }
+  });
+
+  element.textContent = title;
+  element.setAttribute('data-rh', 'true');
+}
+
+function upsertMeta(selector: string, attributes: Record<string, string>) {
+  const existing = Array.from(document.head.querySelectorAll(selector));
+  const element =
+    (existing.find((node) => node.getAttribute('data-rh') === 'true') as
+      | HTMLMetaElement
+      | undefined) ??
+    (existing[0] as HTMLMetaElement | undefined) ??
+    document.createElement('meta');
+
+  if (!element.isConnected) {
+    document.head.appendChild(element);
+  }
+
+  existing.forEach((node) => {
+    if (node !== element) {
+      node.remove();
+    }
+  });
+
+  Array.from(element.attributes)
+    .map((attribute) => attribute.name)
+    .filter((name) => name !== 'data-rh')
+    .forEach((name) => element.removeAttribute(name));
+
+  Object.entries(attributes).forEach(([name, value]) => {
+    element.setAttribute(name, value);
+  });
+  element.setAttribute('data-rh', 'true');
+}
+
+function upsertLink(selector: string, attributes: Record<string, string>) {
+  const existing = Array.from(document.head.querySelectorAll(selector));
+  const element =
+    (existing.find((node) => node.getAttribute('data-rh') === 'true') as
+      | HTMLLinkElement
+      | undefined) ??
+    (existing[0] as HTMLLinkElement | undefined) ??
+    document.createElement('link');
+
+  if (!element.isConnected) {
+    document.head.appendChild(element);
+  }
+
+  existing.forEach((node) => {
+    if (node !== element) {
+      node.remove();
+    }
+  });
+
+  Array.from(element.attributes)
+    .map((attribute) => attribute.name)
+    .filter((name) => name !== 'data-rh')
+    .forEach((name) => element.removeAttribute(name));
+
+  Object.entries(attributes).forEach(([name, value]) => {
+    element.setAttribute(name, value);
+  });
+  element.setAttribute('data-rh', 'true');
+}
+
+function replaceHeadCollection(selector: string, elements: HTMLElement[]) {
+  document.head.querySelectorAll(selector).forEach((node) => node.remove());
+  elements.forEach((element) => {
+    element.setAttribute('data-rh', 'true');
+    document.head.appendChild(element);
+  });
 }
 
 export function SEOHelmet({
@@ -146,6 +236,126 @@ export function SEOHelmet({
   }
 
   const renderStructuredData = shouldRenderStructuredData(robots);
+  const structuredDataJson = renderStructuredData
+    ? JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': structuredData.map((item) => {
+          const { '@context': _, ...rest } = item as Record<string, unknown>;
+          return rest;
+        }),
+      })
+    : null;
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    upsertTitle(fullTitle);
+    upsertMeta('meta[name="title"]', { name: 'title', content: fullTitle });
+    upsertMeta('meta[name="description"]', { name: 'description', content: description });
+    upsertMeta('meta[name="keywords"]', { name: 'keywords', content: keywordsContent });
+    upsertMeta('meta[name="author"]', { name: 'author', content: APP_INFO.author });
+    upsertMeta('meta[name="robots"]', { name: 'robots', content: robots });
+    upsertMeta('meta[name="language"]', { name: 'language', content: locale });
+    upsertLink('link[rel="canonical"]', { rel: 'canonical', href: canonicalUrl });
+
+    const alternateLinks = normalizedAlternates.map(({ href, hrefLang }) => {
+      const element = document.createElement('link');
+      element.setAttribute('rel', 'alternate');
+      element.setAttribute('hrefLang', hrefLang);
+      element.setAttribute('href', href);
+      return element;
+    });
+    replaceHeadCollection('link[rel="alternate"][hreflang]', alternateLinks);
+
+    upsertMeta('meta[property="og:type"]', { property: 'og:type', content: ogType });
+    upsertMeta('meta[property="og:url"]', { property: 'og:url', content: canonicalUrl });
+    upsertMeta('meta[property="og:title"]', { property: 'og:title', content: fullTitle });
+    upsertMeta('meta[property="og:description"]', {
+      property: 'og:description',
+      content: description,
+    });
+    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: ogImageUrl });
+    upsertMeta('meta[property="og:image:width"]', { property: 'og:image:width', content: '1200' });
+    upsertMeta('meta[property="og:image:height"]', {
+      property: 'og:image:height',
+      content: '630',
+    });
+    upsertMeta('meta[property="og:image:alt"]', {
+      property: 'og:image:alt',
+      content: OG_IMAGE_ALT,
+    });
+    upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: ogLocale });
+    upsertMeta('meta[property="og:site_name"]', {
+      property: 'og:site_name',
+      content: APP_INFO.name,
+    });
+    upsertMeta('meta[property="og:updated_time"]', {
+      property: 'og:updated_time',
+      content: updatedTime,
+    });
+
+    const localeAlternates = normalizedAlternates
+      .filter(({ hrefLang }) => hrefLang !== 'x-default' && hrefLang.replace('-', '_') !== ogLocale)
+      .map(({ hrefLang }) => {
+        const element = document.createElement('meta');
+        element.setAttribute('property', 'og:locale:alternate');
+        element.setAttribute('content', hrefLang.replace('-', '_'));
+        return element;
+      });
+    replaceHeadCollection('meta[property="og:locale:alternate"]', localeAlternates);
+
+    upsertMeta('meta[name="twitter:card"]', {
+      name: 'twitter:card',
+      content: 'summary_large_image',
+    });
+    upsertMeta('meta[name="twitter:url"]', { name: 'twitter:url', content: canonicalUrl });
+    upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: fullTitle });
+    upsertMeta('meta[name="twitter:description"]', {
+      name: 'twitter:description',
+      content: description,
+    });
+    upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: ogImageUrl });
+    upsertMeta('meta[name="twitter:image:alt"]', {
+      name: 'twitter:image:alt',
+      content: OG_IMAGE_ALT,
+    });
+    upsertMeta('meta[name="twitter:site"]', {
+      name: 'twitter:site',
+      content: APP_INFO.socialHandle,
+    });
+    upsertMeta('meta[name="twitter:creator"]', {
+      name: 'twitter:creator',
+      content: APP_INFO.socialHandle,
+    });
+
+    document.head.querySelectorAll(STRUCTURED_DATA_SELECTOR).forEach((node) => node.remove());
+    if (structuredDataJson) {
+      const script = document.createElement('script');
+      script.setAttribute('type', 'application/ld+json');
+      script.setAttribute('data-rh', 'true');
+      script.setAttribute('data-seo-helmet', 'structured-data');
+      script.textContent = structuredDataJson;
+      document.head.appendChild(script);
+    }
+  }, [
+    canonicalUrl,
+    description,
+    fullTitle,
+    keywordsContent,
+    locale,
+    normalizedAlternates,
+    ogImageUrl,
+    ogLocale,
+    ogType,
+    renderStructuredData,
+    robots,
+    structuredDataJson,
+    updatedTime,
+  ]);
+
+  if (typeof window !== 'undefined') {
+    return null;
+  }
 
   return (
     <Head>
@@ -193,15 +403,9 @@ export function SEOHelmet({
       <meta name="twitter:site" content={APP_INFO.socialHandle} />
       <meta name="twitter:creator" content={APP_INFO.socialHandle} />
 
-      {renderStructuredData ? (
-        <script type="application/ld+json">
-          {JSON.stringify({
-            '@context': 'https://schema.org',
-            '@graph': structuredData.map((item) => {
-              const { '@context': _, ...rest } = item as Record<string, unknown>;
-              return rest;
-            }),
-          })}
+      {structuredDataJson ? (
+        <script type="application/ld+json" data-seo-helmet="structured-data">
+          {structuredDataJson}
         </script>
       ) : null}
     </Head>
