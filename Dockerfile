@@ -84,17 +84,13 @@ RUN test -f /app/apps/ratewise/dist/sitemap.xml && \
     { echo "ERROR: Sitemaps not generated in Docker build"; exit 1; }
 
 # Production stage
-# [fix:2025-12-09] 使用 nginx:alpine 並升級系統包以修復 libpng 漏洞
-# CVE-2025-64720, CVE-2025-65018, CVE-2025-66293
-FROM nginx:alpine
+# [fix:2026-03-07] 改用官方 nginx:stable（Debian trixie）以避開 Alpine zlib 供應鏈告警，
+# 並只安裝 healthcheck 所需的 wget，避免額外擴大攻擊面。
+FROM nginx:stable
 
-# [fix:2026-02-27] 更新所有系統包並安裝 wget（用於 healthcheck）
-# 明確升級 libpng 以修復 CVE-2026-25646 (HIGH: heap buffer overflow)
-# 這確保獲取最新的安全修補
-RUN apk upgrade --no-cache && \
-    apk add --no-cache wget && \
-    apk add --no-cache 'libpng>=1.6.55-r0' || \
-    echo "WARNING: libpng 1.6.55-r0 not available yet, using latest from Alpine repos"
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends wget && \
+    rm -rf /var/lib/apt/lists/*
 
 # [fix:2025-12-13] 新架構：haotool 作為根路徑首頁
 # 複製 haotool 作為根目錄（首頁）
@@ -122,7 +118,7 @@ RUN ln -s /usr/share/nginx/html/ratewise-app /usr/share/nginx/html/ratewise && \
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid 1001 nodejs
 RUN chown -R nodejs:nodejs /usr/share/nginx/html /var/cache/nginx /var/run /var/log/nginx
 
 # Expose port
