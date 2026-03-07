@@ -43,6 +43,11 @@ interface SEOProps {
 
 const STRUCTURED_DATA_SELECTOR =
   'script[type="application/ld+json"][data-rh="true"], script[type="application/ld+json"][data-seo-helmet="structured-data"]';
+const SEO_HELMET_MANAGED_ATTR = 'data-seo-helmet';
+const SEO_HELMET_MANAGED_VALUE = 'managed';
+const SEO_HELMET_STRUCTURED_DATA_VALUE = 'structured-data';
+const SEO_HELMET_MANAGED_SELECTOR = `[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_MANAGED_VALUE}"]`;
+const SEO_HELMET_STRUCTURED_DATA_SELECTOR = `[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_STRUCTURED_DATA_VALUE}"]`;
 
 const buildFaqSchema = (faq: FAQEntry[]): JsonLdBlock => ({
   '@context': 'https://schema.org',
@@ -108,6 +113,7 @@ function upsertTitle(title: string) {
 
   element.textContent = title;
   element.setAttribute('data-rh', 'true');
+  element.setAttribute(SEO_HELMET_MANAGED_ATTR, SEO_HELMET_MANAGED_VALUE);
 }
 
 function upsertMeta(selector: string, attributes: Record<string, string>) {
@@ -138,6 +144,7 @@ function upsertMeta(selector: string, attributes: Record<string, string>) {
     element.setAttribute(name, value);
   });
   element.setAttribute('data-rh', 'true');
+  element.setAttribute(SEO_HELMET_MANAGED_ATTR, SEO_HELMET_MANAGED_VALUE);
 }
 
 function upsertLink(selector: string, attributes: Record<string, string>) {
@@ -168,14 +175,23 @@ function upsertLink(selector: string, attributes: Record<string, string>) {
     element.setAttribute(name, value);
   });
   element.setAttribute('data-rh', 'true');
+  element.setAttribute(SEO_HELMET_MANAGED_ATTR, SEO_HELMET_MANAGED_VALUE);
 }
 
 function replaceHeadCollection(selector: string, elements: HTMLElement[]) {
   document.head.querySelectorAll(selector).forEach((node) => node.remove());
   elements.forEach((element) => {
     element.setAttribute('data-rh', 'true');
+    element.setAttribute(SEO_HELMET_MANAGED_ATTR, SEO_HELMET_MANAGED_VALUE);
     document.head.appendChild(element);
   });
+}
+
+function cleanupManagedHeadTags() {
+  document.head.querySelectorAll(SEO_HELMET_MANAGED_SELECTOR).forEach((node) => node.remove());
+  document.head
+    .querySelectorAll(SEO_HELMET_STRUCTURED_DATA_SELECTOR)
+    .forEach((node) => node.remove());
 }
 
 export function SEOHelmet({
@@ -333,10 +349,14 @@ export function SEOHelmet({
       const script = document.createElement('script');
       script.setAttribute('type', 'application/ld+json');
       script.setAttribute('data-rh', 'true');
-      script.setAttribute('data-seo-helmet', 'structured-data');
+      script.setAttribute(SEO_HELMET_MANAGED_ATTR, SEO_HELMET_STRUCTURED_DATA_VALUE);
       script.textContent = structuredDataJson;
       document.head.appendChild(script);
     }
+
+    return () => {
+      cleanupManagedHeadTags();
+    };
   }, [
     canonicalUrl,
     description,
@@ -404,7 +424,7 @@ export function SEOHelmet({
       <meta name="twitter:creator" content={APP_INFO.socialHandle} />
 
       {structuredDataJson ? (
-        <script type="application/ld+json" data-seo-helmet="structured-data">
+        <script type="application/ld+json" data-seo-helmet={SEO_HELMET_STRUCTURED_DATA_VALUE}>
           {structuredDataJson}
         </script>
       ) : null}

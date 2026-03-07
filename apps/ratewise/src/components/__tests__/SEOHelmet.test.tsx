@@ -224,14 +224,17 @@ describe('SEOHelmet Component', () => {
       expect(titles).toHaveLength(1);
       expect(titles[0]).toHaveTextContent('測試頁 | RateWise');
       expect(titles[0]).toHaveAttribute('data-rh', 'true');
+      expect(titles[0]).toHaveAttribute('data-seo-helmet', 'managed');
 
       expect(descriptions).toHaveLength(1);
       expect(descriptions[0]).toHaveAttribute('content', '新的描述');
       expect(descriptions[0]).toHaveAttribute('data-rh', 'true');
+      expect(descriptions[0]).toHaveAttribute('data-seo-helmet', 'managed');
 
       expect(canonicals).toHaveLength(1);
       expect(canonicals[0]).toHaveAttribute('href', 'https://app.haotool.org/ratewise/test/');
       expect(canonicals[0]).toHaveAttribute('data-rh', 'true');
+      expect(canonicals[0]).toHaveAttribute('data-seo-helmet', 'managed');
 
       expect(jsonLdScripts).toHaveLength(1);
       const structuredDataScript = jsonLdScripts.item(0);
@@ -253,6 +256,40 @@ describe('SEOHelmet Component', () => {
       );
 
       expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(0);
+    });
+
+    it('should cleanup SEOHelmet-managed tags on unmount without removing unrelated head tags', () => {
+      document.head.innerHTML = `
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+      `;
+
+      const { unmount } = render(
+        <HelmetProvider>
+          <SEOHelmet
+            title="會被清掉的頁面"
+            description="這組 metadata 應該在卸載後消失"
+            canonical="/cleanup/"
+            faq={[{ question: 'Q?', answer: 'A' }]}
+          />
+        </HelmetProvider>,
+      );
+
+      expect(document.head.querySelectorAll('[data-seo-helmet]')).not.toHaveLength(0);
+
+      unmount();
+
+      expect(document.head.querySelectorAll('title')).toHaveLength(0);
+      expect(document.head.querySelectorAll('meta[name="description"]')).toHaveLength(0);
+      expect(document.head.querySelectorAll('link[rel="canonical"]')).toHaveLength(0);
+      expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(0);
+      expect(document.head.querySelectorAll('[data-seo-helmet]')).toHaveLength(0);
+
+      const charset = document.head.querySelector('meta[charset="UTF-8"]');
+      const viewport = document.head.querySelector('meta[name="viewport"]');
+      expect(charset).not.toBeNull();
+      expect(viewport).not.toBeNull();
+      expect(viewport).toHaveAttribute('content', 'width=device-width, initial-scale=1');
     });
   });
 

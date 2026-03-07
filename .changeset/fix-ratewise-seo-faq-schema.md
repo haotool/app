@@ -8,3 +8,4 @@
 - SEO metadata: FAQPage schema 收斂到真正 FAQ 頁，移除首頁、幣別頁與 About/AuthorityGuide 的重複 FAQ 標記
 - ImageObject: 補齊 `license` 與 `acquireLicensePage`，統一由 APP_INFO / seo-metadata SSOT 管理
 - Tests: 補強 prerender、JSON-LD 與 client-side head reconciliation 驗證
+- SEOHelmet: 補上 unmount cleanup，避免跨頁殘留 canonical、description 與 JSON-LD metadata
