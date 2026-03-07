@@ -324,13 +324,17 @@ async function runHealthChecks(baseUrl) {
     );
   }
 
-  // 5. Cloudflare Worker 部署驗證
-  console.log(`\n${colors.gray}[Worker 驗證] Cloudflare Security Headers Worker${colors.reset}`);
-
-  const workerResult = await workerDeployCheck(baseUrl, '3.7');
-  results.push({ url: 'Worker deployment', ...workerResult });
-  if (!workerResult.success) {
-    log(colors.yellow, '⚠', '  → 修復：cd security-headers && npx wrangler deploy');
+  // 5. Cloudflare Worker 部署驗證（僅 prod 環境；localhost 無此標頭為正常）
+  const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(new URL(baseUrl).hostname);
+  if (!isLocalhost) {
+    console.log(`\n${colors.gray}[Worker 驗證] Cloudflare Security Headers Worker${colors.reset}`);
+    const workerResult = await workerDeployCheck(baseUrl, '3.7');
+    results.push({ url: 'Worker deployment', ...workerResult });
+    if (!workerResult.success) {
+      log(colors.yellow, '⚠', '  → 修復：cd security-headers && npx wrangler deploy');
+    }
+  } else {
+    log(colors.gray, '–', '[Worker 驗證] 跳過（dev 模式，localhost 無 X-Security-Policy-Version）');
   }
 
   // 6. 靜態資源檢查
