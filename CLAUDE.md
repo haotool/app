@@ -44,6 +44,7 @@ RateWise Monorepo -- Claude / Codex / AI 助手執行手冊（Enterprise SOP / A
 - 程序步驟使用動詞開頭（例如：檢查、執行、驗證、記錄）
 - 區分「強制規則」與「建議作法」
 - 流程文件優先使用範例命令與具體路徑，避免抽象敘述
+- `docs/dev/002_development_reward_penalty_log.md` 新增內容一律使用 entry blocks；歷史資料僅整理為精簡索引
 
 ## Project Snapshot
 
@@ -130,9 +131,11 @@ AI 助手 **必須**：
 若使用者要求提交/合併，AI 助手 **必須**：
 
 1. 更新 `docs/dev/002_development_reward_penalty_log.md`
-2. 以 commitlint 規則提交（繁中標題、條列 body、`測試：...`）
-3. 推送分支並確認 PR 狀態
-4. 使用 `gh` 合併 PR 至 `main`（在 checks 通過後）
+2. 確認 002 新增紀錄使用 entry blocks；整理舊資料時僅能產出精簡索引，不得再新增巨型 table
+3. 若 002 屬 `incident` / `regression`，必須明確寫出根因、影響、修復與預防
+4. 以 commitlint 規則提交（繁中標題、條列 body、`測試：...`）
+5. 推送分支並確認 PR 狀態
+6. 使用 `gh` 合併 PR 至 `main`（在 checks 通過後）
 
 ### Phase 7. 版本發布與依賴管理（Release & Dependencies）
 
@@ -339,6 +342,17 @@ apps/ratewise/public/llms-full.txt
 
 **業界依據**：Prettier 官方文件建議用 `.prettierignore` 排除非源碼檔案；Next.js、TypeScript 主流專案均採此做法。
 
+### 7. Search Console 報 `FAQPage` 欄位重複
+
+- 預設只在真正 FAQ 頁輸出 `FAQPage`
+- 首頁、幣別頁、About/Guide 若只是 FAQ 文案，保留內容即可，不要再標 `FAQPage`
+
+### 8. `SEOHelmet` / head metadata 在 client 端重複或殘留
+
+- `vite-react-ssg` + shim 若已驗證是 SSG 必要條件，**不要**直接移除 shim
+- 改在 client 端做 head reconciliation，並為手動寫入的節點加 managed 標記
+- `useEffect` 必須有 `cleanup`，依賴只能用穩定 primitive/signature，避免跨頁殘留與同 props 重跑
+
 ### 2. `git status` 看不到 root 截圖
 
 - 很多 root QA 圖檔已被 `.gitignore` 忽略
@@ -403,6 +417,8 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 
 | 日期       | 版本 | 變更摘要                                                                                                                      |
 | ---------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-08 | v3.7 | 補充 `002` 操作 / incident 規則：新紀錄使用 entry blocks，失敗紀錄必須寫出根因、影響、修復與預防                              |
+| 2026-03-08 | v3.6 | 新增 Troubleshooting #7-#8：FAQPage 重複與 `SEOHelmet` client head 重複/殘留的極簡解法                                        |
 | 2026-03-07 | v3.5 | 新增 Troubleshooting #6「Prettier 格式漂移」：prebuild 產出物應加入 `.prettierignore`，禁止 prebuild script 呼叫 Prettier API |
 | 2026-03-06 | v3.4 | 新增「security-headers Worker 部署 SOP」：wrangler 認證、esbuild 說明、版本號同步、假陽性清單、CSP connect-src 必要域名       |
 | 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史）          |
@@ -412,5 +428,5 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 
 ---
 
-**最後更新**: 2026-03-07T00:00:00+0800
-**版本**: v3.5（新增 Prettier 格式漂移根本修法：.prettierignore 管理 prebuild 產出物）
+**最後更新**: 2026-03-08T03:57:10+0800
+**版本**: v3.7（補充 002 操作 / incident 規則與 FAQ/SEOHelmet Troubleshooting）
