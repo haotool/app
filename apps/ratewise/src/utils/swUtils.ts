@@ -103,9 +103,61 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
 }
 
 /**
+ * 傳送 FORCE_HARD_RESET 訊息給 SW，讓 SW 清除所有快取後重載。
+ *
+ * 優先使用 SW message（讓 SW 從內部清除快取），
+ * 若 SW 不存在則直接由 client 清除快取。
+ * SW 回覆 SW_HARD_RESET_DONE 時頁面重載，或 3 秒 timeout 後強制重載。
+ *
+ * @returns Promise<void>
+ */
+export async function forceHardReset(): Promise<void> {
+  logger.info('[swUtils] forceHardReset: starting');
+
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    window.location.reload();
+    return;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    const sw = registration?.active ?? registration?.installing ?? registration?.waiting;
+
+    if (sw) {
+      // 等待 SW 回覆後重載，最多 3 秒
+      const reloadOnMessage = (event: MessageEvent) => {
+        if ((event.data as { type?: string })?.type === 'SW_HARD_RESET_DONE') {
+          navigator.serviceWorker.removeEventListener('message', reloadOnMessage);
+          window.location.reload();
+        }
+      };
+      navigator.serviceWorker.addEventListener('message', reloadOnMessage);
+      sw.postMessage({ type: 'FORCE_HARD_RESET' });
+
+      // Fallback: 3 秒後若 SW 未回覆仍重載
+      setTimeout(() => {
+        navigator.serviceWorker.removeEventListener('message', reloadOnMessage);
+        window.location.reload();
+      }, 3000);
+      return;
+    }
+  } catch (error) {
+    logger.warn('[swUtils] forceHardReset: SW message failed, fallback to direct clear', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  // Fallback：直接由 client 清除快取
+  await clearAllServiceWorkerCaches();
+  window.location.reload();
+}
+
+/**
  * 完整的刷新流程：清除快取 + 檢查更新 + 重新載入
  *
- * 用於下拉刷新等場景，確保用戶獲得最新內容
+ * 用於下拉刷新等場景，確保用戶獲得最新內容。
+ * 優先透過 SW 訊息清除快取（forceHardReset），
+ * 確保 SW 快取與 client 端快取均被清除。
  *
  * @returns Promise<void>
  */
@@ -113,18 +165,9 @@ export async function performFullRefresh(): Promise<void> {
   logger.info('Starting full refresh flow');
 
   try {
-    // 1. 清除所有 Service Worker 快取
-    const clearedCount = await clearAllServiceWorkerCaches();
-    logger.debug('Caches cleared', { count: clearedCount });
-
-    // 2. 主動檢查並更新 Service Worker
-    await forceServiceWorkerUpdate();
-
-    // 3. 重新載入頁面
-    window.location.reload();
+    await forceHardReset();
   } catch (error) {
     logger.error('Full refresh flow failed', error as Error);
-    // 即使出錯，仍然重新載入頁面
     window.location.reload();
   }
 }

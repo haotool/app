@@ -13,10 +13,65 @@
  * 重要：SkeletonLoader 僅渲染內容骨架，不包含 AppLayout 結構
  *       因為它作為 ClientOnly fallback 已在 AppLayout 內部渲染
  *
+ * Watchdog（2026-03-07）：
+ * - 客戶端顯示超過 SKELETON_TIMEOUT_MS 後自動轉為錯誤復原 UI
+ * - 避免 SW 快取過期、chunk 載入失敗導致永遠卡在骨架屏
+ * - 提供「強制重新載入」按鈕 + 聯絡資訊，確保使用者永遠有操作出口
+ *
  * @see https://web.dev/articles/cls
  * @see https://www.smashingmagazine.com/2020/04/skeleton-screens-react/
- * @updated 2026-01-26 - 移除 AppLayout 結構，避免 Hydration mismatch
  */
+
+import { useEffect, useState } from 'react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
+import { performFullRefresh } from '../utils/swUtils';
+import { APP_INFO } from '../config/app-info';
+import { SupportContactLinks } from './SupportContactLinks';
+
+/** 骨架屏超時閾值（毫秒）。超過此時間仍在顯示表示 app 初始化失敗。 */
+const SKELETON_TIMEOUT_MS = 10_000;
+
+/**
+ * 骨架屏卡住時的復原 UI
+ * 提供強制重新載入按鈕與聯絡資訊，確保使用者永遠有出口。
+ */
+function SkeletonTimeoutFallback() {
+  const [isReloading, setIsReloading] = useState(false);
+
+  const handleReload = () => {
+    setIsReloading(true);
+    void performFullRefresh();
+  };
+
+  return (
+    <div className="p-6 flex items-center justify-center min-h-[60vh]">
+      <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-sm w-full space-y-5 text-center">
+        <AlertCircle className="mx-auto text-warning" size={40} />
+        <div>
+          <h2 className="text-lg font-bold text-text mb-2">應用程式載入逾時</h2>
+          <p className="text-sm text-text-muted">
+            載入時間超過預期，可能是快取過期或網路問題。請強制重新載入以取得最新版本。
+          </p>
+        </div>
+        <button
+          onClick={handleReload}
+          disabled={isReloading}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white font-semibold rounded-xl shadow-lg transition"
+        >
+          <RefreshCw size={18} className={isReloading ? 'animate-spin' : ''} />
+          {isReloading ? '重新載入中...' : '強制重新載入（清除快取）'}
+        </button>
+        <SupportContactLinks title="若問題持續發生，請聯絡作者：" description="" />
+        <p className="text-xs text-text-muted">
+          也可嘗試：設定 → 清除瀏覽器快取，或聯絡{' '}
+          <a href={`mailto:${APP_INFO.email}`} className="underline">
+            {APP_INFO.email}
+          </a>
+        </p>
+      </div>
+    </div>
+  );
+}
 
 /**
  * 主頁面骨架屏
@@ -24,8 +79,23 @@
  *
  * @description 僅渲染內容骨架，不包含 Header/BottomNav（由 AppLayout 提供）
  *              作為 ClientOnly fallback，必須與最終渲染結構匹配
+ *              內建 watchdog：客戶端顯示超過 10 秒自動轉為錯誤復原 UI
  */
 export const SkeletonLoader = () => {
+  const [isTimedOut, setIsTimedOut] = useState(false);
+
+  useEffect(() => {
+    // SSR 環境不執行（useEffect 僅在 client 執行）
+    const timer = setTimeout(() => {
+      setIsTimedOut(true);
+    }, SKELETON_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isTimedOut) {
+    return <SkeletonTimeoutFallback />;
+  }
+
   return (
     <div className="p-4 md:p-6" role="status" aria-live="polite">
       {/* SEO 靜態內容 - 對爬蟲可見，inline style 確保 CSS 載入前即隱藏，避免 CLS */}
