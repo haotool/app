@@ -8,6 +8,7 @@ const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', 
   year: 'numeric',
   month: 'long',
   day: 'numeric',
+  timeZone: 'Asia/Taipei',
 });
 
 export default function Privacy() {
