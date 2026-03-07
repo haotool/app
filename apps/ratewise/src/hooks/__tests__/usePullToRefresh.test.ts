@@ -567,4 +567,80 @@ describe('usePullToRefresh', () => {
       expect(TRIGGER_THRESHOLD).toBe(100);
     });
   });
+
+  describe('§ 8 離線防護', () => {
+    function setOnline(value: boolean) {
+      Object.defineProperty(window.navigator, 'onLine', {
+        writable: true,
+        configurable: true,
+        value,
+      });
+    }
+
+    afterEach(() => {
+      setOnline(true);
+    });
+
+    it('離線時達到門檻後不呼叫 onRefresh', () => {
+      setOnline(false);
+      window.scrollY = 0;
+
+      const { result } = renderHook(() => usePullToRefresh(containerRef, onRefresh));
+
+      act(() => {
+        container.dispatchEvent(
+          new TouchEvent('touchstart', { touches: [{ clientY: 0 } as Touch] }),
+        );
+      });
+
+      act(() => {
+        container.dispatchEvent(
+          new TouchEvent('touchmove', {
+            touches: [{ clientY: 600 } as Touch],
+            cancelable: true,
+          }),
+        );
+      });
+
+      // Verify threshold reached
+      expect(result.current.pullDistance).toBeGreaterThanOrEqual(TRIGGER_THRESHOLD);
+
+      act(() => {
+        container.dispatchEvent(new TouchEvent('touchend'));
+      });
+
+      expect(onRefresh).not.toHaveBeenCalled();
+    });
+
+    it('在線時達到門檻後正常呼叫 onRefresh', () => {
+      setOnline(true);
+      window.scrollY = 0;
+
+      const { result } = renderHook(() => usePullToRefresh(containerRef, onRefresh));
+
+      act(() => {
+        container.dispatchEvent(
+          new TouchEvent('touchstart', { touches: [{ clientY: 0 } as Touch] }),
+        );
+      });
+
+      act(() => {
+        container.dispatchEvent(
+          new TouchEvent('touchmove', {
+            touches: [{ clientY: 600 } as Touch],
+            cancelable: true,
+          }),
+        );
+      });
+
+      // Verify threshold reached
+      expect(result.current.pullDistance).toBeGreaterThanOrEqual(TRIGGER_THRESHOLD);
+
+      act(() => {
+        container.dispatchEvent(new TouchEvent('touchend'));
+      });
+
+      expect(onRefresh).toHaveBeenCalledOnce();
+    });
+  });
 });
