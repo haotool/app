@@ -20,13 +20,26 @@
  * BDD 階段: Stage 3 GREEN
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
 import { SEOHelmet, shouldRenderStructuredData } from '../SEOHelmet';
 
 describe('SEOHelmet Component', () => {
+  const originalHead = document.head.innerHTML;
+  const originalTitle = document.title;
+
+  beforeEach(() => {
+    document.head.innerHTML = '';
+    document.title = '';
+  });
+
+  afterEach(() => {
+    document.head.innerHTML = originalHead;
+    document.title = originalTitle;
+  });
+
   describe('Component Rendering', () => {
     it('should render without errors with minimal props', () => {
       expect(() => {
@@ -177,6 +190,147 @@ describe('SEOHelmet Component', () => {
 
     it('可索引頁面應保留結構化資料', () => {
       expect(shouldRenderStructuredData('index, follow')).toBe(true);
+    });
+  });
+
+  describe('Client-side Head Reconciliation', () => {
+    it('should deduplicate existing title, description, canonical and structured data tags', () => {
+      document.head.innerHTML = `
+        <title>舊標題</title>
+        <title data-rh="true">舊標題 RH</title>
+        <meta name="description" content="舊描述">
+        <meta name="description" content="舊描述 RH" data-rh="true">
+        <link rel="canonical" href="https://old.example.com/">
+        <link rel="canonical" href="https://old-rh.example.com/" data-rh="true">
+        <script type="application/ld+json" data-rh="true">{"@context":"https://schema.org","@type":"Thing","name":"old"}</script>
+      `;
+
+      render(
+        <HelmetProvider>
+          <SEOHelmet
+            title="測試頁"
+            description="新的描述"
+            canonical="/test/"
+            faq={[{ question: 'Q?', answer: 'A' }]}
+          />
+        </HelmetProvider>,
+      );
+
+      const titles = document.head.querySelectorAll('title');
+      const descriptions = document.head.querySelectorAll('meta[name="description"]');
+      const canonicals = document.head.querySelectorAll('link[rel="canonical"]');
+      const jsonLdScripts = document.head.querySelectorAll('script[type="application/ld+json"]');
+
+      expect(titles).toHaveLength(1);
+      expect(titles[0]).toHaveTextContent('測試頁 | RateWise');
+      expect(titles[0]).toHaveAttribute('data-rh', 'true');
+      expect(titles[0]).toHaveAttribute('data-seo-helmet', 'managed');
+
+      expect(descriptions).toHaveLength(1);
+      expect(descriptions[0]).toHaveAttribute('content', '新的描述');
+      expect(descriptions[0]).toHaveAttribute('data-rh', 'true');
+      expect(descriptions[0]).toHaveAttribute('data-seo-helmet', 'managed');
+
+      expect(canonicals).toHaveLength(1);
+      expect(canonicals[0]).toHaveAttribute('href', 'https://app.haotool.org/ratewise/test/');
+      expect(canonicals[0]).toHaveAttribute('data-rh', 'true');
+      expect(canonicals[0]).toHaveAttribute('data-seo-helmet', 'managed');
+
+      expect(jsonLdScripts).toHaveLength(1);
+      const structuredDataScript = jsonLdScripts.item(0);
+      expect(structuredDataScript).not.toBeNull();
+      expect(structuredDataScript).toHaveAttribute('data-rh', 'true');
+      expect(structuredDataScript).toHaveAttribute('data-seo-helmet', 'structured-data');
+      expect(structuredDataScript?.textContent).toContain('"@type":"FAQPage"');
+    });
+
+    it('should remove structured data on noindex pages', () => {
+      document.head.innerHTML = `
+        <script type="application/ld+json" data-rh="true">{"@context":"https://schema.org","@type":"Thing","name":"old"}</script>
+      `;
+
+      render(
+        <HelmetProvider>
+          <SEOHelmet title="Noindex 頁面" robots="noindex, follow" />
+        </HelmetProvider>,
+      );
+
+      expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(0);
+    });
+
+    it('should cleanup SEOHelmet-managed tags on unmount without removing unrelated head tags', () => {
+      document.head.innerHTML = `
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+      `;
+
+      const { unmount } = render(
+        <HelmetProvider>
+          <SEOHelmet
+            title="會被清掉的頁面"
+            description="這組 metadata 應該在卸載後消失"
+            canonical="/cleanup/"
+            faq={[{ question: 'Q?', answer: 'A' }]}
+          />
+        </HelmetProvider>,
+      );
+
+      expect(document.head.querySelectorAll('[data-seo-helmet]')).not.toHaveLength(0);
+
+      unmount();
+
+      expect(document.head.querySelectorAll('title')).toHaveLength(0);
+      expect(document.head.querySelectorAll('meta[name="description"]')).toHaveLength(0);
+      expect(document.head.querySelectorAll('link[rel="canonical"]')).toHaveLength(0);
+      expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(0);
+      expect(document.head.querySelectorAll('[data-seo-helmet]')).toHaveLength(0);
+
+      const charset = document.head.querySelector('meta[charset="UTF-8"]');
+      const viewport = document.head.querySelector('meta[name="viewport"]');
+      expect(charset).not.toBeNull();
+      expect(viewport).not.toBeNull();
+      expect(viewport).toHaveAttribute('content', 'width=device-width, initial-scale=1');
+    });
+
+    it('should not recreate managed head nodes when rerendered with the same props', () => {
+      const props = {
+        title: '穩定頁面',
+        description: '相同 props 不應重建 head 節點',
+        canonical: '/stable/',
+        alternates: [
+          { hrefLang: 'x-default', href: '/stable/' },
+          { hrefLang: 'zh-TW', href: '/stable/' },
+        ],
+        faq: [{ question: 'Q?', answer: 'A' }],
+      };
+
+      const { rerender } = render(
+        <HelmetProvider>
+          <SEOHelmet {...props} />
+        </HelmetProvider>,
+      );
+
+      const initialCanonical = document.head.querySelector('link[rel="canonical"]');
+      const initialAlternate = document.head.querySelector(
+        'link[rel="alternate"][hreflang="zh-TW"]',
+      );
+      const initialStructuredData = document.head.querySelector(
+        'script[type="application/ld+json"]',
+      );
+
+      rerender(
+        <HelmetProvider>
+          <SEOHelmet {...props} />
+        </HelmetProvider>,
+      );
+
+      expect(document.head.querySelector('link[rel="canonical"]')).toBe(initialCanonical);
+      expect(document.head.querySelector('link[rel="alternate"][hreflang="zh-TW"]')).toBe(
+        initialAlternate,
+      );
+      expect(document.head.querySelector('script[type="application/ld+json"]')).toBe(
+        initialStructuredData,
+      );
     });
   });
 

@@ -15,7 +15,6 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
         description={page.description}
         pathname={page.pathname}
         breadcrumb={page.breadcrumb}
-        faq={page.faq}
       />
 
       <div className="min-h-screen">

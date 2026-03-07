@@ -120,7 +120,6 @@ export const routes: RouteRecord[] = [
               pathname={HOMEPAGE_SEO.pathname}
               description={HOMEPAGE_SEO.description}
               keywords={HOMEPAGE_SEO.keywords}
-              faq={HOMEPAGE_SEO.faq}
               howTo={HOMEPAGE_SEO.howTo}
               jsonLd={HOMEPAGE_SEO.jsonLd}
             />

@@ -265,6 +265,8 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
       name: APP_INFO.author,
       url: APP_INFO.organizationUrl,
     },
+    license: APP_INFO.licenseUrl,
+    acquireLicensePage: APP_INFO.imageLicenseContactUrl,
     copyrightHolder: {
       '@type': 'Organization',
       name: APP_INFO.author,

@@ -27,6 +27,9 @@ export const APP_INFO = {
   /** GitHub 倉庫 URL */
   github: 'https://github.com/haotool/app',
 
+  /** 原始碼授權說明頁 */
+  licenseUrl: 'https://github.com/haotool/app/blob/main/LICENSE',
+
   /** 授權類型 */
   license: 'GPL-3.0',
 
@@ -38,6 +41,9 @@ export const APP_INFO = {
 
   /** 網站 URL */
   siteUrl: 'https://app.haotool.org/ratewise/',
+
+  /** 取得圖片授權或使用許可的頁面 */
+  imageLicenseContactUrl: 'https://app.haotool.org/ratewise/about/',
 } as const;
 
 export const AUTHOR_CONTACT_LINK_MAP = {

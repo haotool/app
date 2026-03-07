@@ -266,6 +266,8 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
     it('should have ImageObject schema with creator metadata', () => {
       expect(combinedContent).toContain("'@type': 'ImageObject'");
       expect(combinedContent).toContain('creator');
+      expect(combinedContent).toContain('license');
+      expect(combinedContent).toContain('acquireLicensePage');
       expect(combinedContent).toContain('copyrightNotice');
     });
 

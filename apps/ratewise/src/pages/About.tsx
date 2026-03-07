@@ -3,7 +3,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { getDisplayVersion } from '../config/version';
 import { APP_INFO, getCopyrightYears } from '../config/app-info';
-import { ABOUT_PAGE_FAQ, ABOUT_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
+import { ABOUT_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 import { SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
 
 const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
@@ -21,7 +21,6 @@ export default function About() {
         description={ABOUT_PAGE_SEO.description}
         pathname={ABOUT_PAGE_SEO.pathname}
         breadcrumb={ABOUT_PAGE_SEO.breadcrumb}
-        faq={[...ABOUT_PAGE_FAQ]}
       />
 
       <div className="min-h-screen">
