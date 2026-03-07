@@ -36,6 +36,31 @@ cleanupOutdatedCaches();
 void self.skipWaiting();
 clientsClaim();
 
+// FORCE_HARD_RESET：客戶端（骨架屏超時、使用者手動下拉）可傳送此訊息。
+// SW 清除所有快取並通知 client 重新載入，確保使用者永遠能脫離卡住狀態。
+self.addEventListener('message', (event: ExtendableMessageEvent) => {
+  const data = event.data as { type?: string } | null;
+  if (data?.type !== 'FORCE_HARD_RESET') return;
+
+  event.waitUntil(
+    (async () => {
+      console.warn('[SW] FORCE_HARD_RESET 收到，清除所有快取並通知 client 重載');
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+        console.warn(`[SW] 已清除 ${String(cacheNames.length)} 個快取`);
+      } catch (err) {
+        console.error('[SW] 清除快取失敗:', err);
+      }
+      // 通知所有 client 重新載入
+      const clients = await self.clients.matchAll({ type: 'window' });
+      for (const client of clients) {
+        client.postMessage({ type: 'SW_HARD_RESET_DONE' });
+      }
+    })(),
+  );
+});
+
 // 離線探測專用路徑：永遠走網路，避免快取誤判在線。
 registerRoute(
   ({ url }: { url: URL }) => url.pathname.endsWith('/__network_probe__'),

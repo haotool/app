@@ -10,11 +10,14 @@ import { ToastProvider } from './Toast';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
 import { OfflineIndicator } from './OfflineIndicator';
 import { UpdatePrompt } from './UpdatePrompt';
+import { PullToRefreshIndicator } from './PullToRefreshIndicator';
 
 import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
 import { getTopLevelTransitionDirection, pageTransition } from '../config/animations';
 import { RouteAnalytics } from '@shared/analytics';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { performFullRefresh } from '../utils/swUtils';
 
 /** Logo 組件 */
 function Logo() {
@@ -91,9 +94,12 @@ export function AppLayout() {
   const location = useLocation();
   const [previousPathname, setPreviousPathname] = React.useState(location.pathname);
   const [hasMounted, setHasMounted] = React.useState(false);
+  const mainRef = React.useRef<HTMLElement>(null);
 
   const prefersReducedMotion =
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(mainRef, performFullRefresh);
 
   React.useEffect(() => {
     setHasMounted(true);
@@ -129,9 +135,15 @@ export function AppLayout() {
 
             {/* 內容區域 - 支援 iOS Safari 慣性滾動 */}
             <main
+              ref={mainRef}
               data-scroll-container="main"
               className="flex-1 min-h-0 min-w-0 w-full relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"
             >
+              <PullToRefreshIndicator
+                pullDistance={pullDistance}
+                isRefreshing={isRefreshing}
+                canTrigger={canTrigger}
+              />
               <RouteErrorBoundary>
                 {/* enter-only：key 變化觸發 remount，新頁面從方向滑入淡入 */}
                 <motion.div
