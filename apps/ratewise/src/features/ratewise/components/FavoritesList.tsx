@@ -3,19 +3,18 @@
  *
  * 顯示使用者收藏的貨幣匯率，使用 SSOT design token
  */
-import { Star, TrendingDown, TrendingUp } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS } from '../constants';
-import type { CurrencyCode, TrendState } from '../types';
+import type { CurrencyCode } from '../types';
 import { formatExchangeRate } from '../../../utils/currencyFormatter';
 
 interface FavoritesListProps {
   favorites: CurrencyCode[];
-  trend: TrendState;
   exchangeRates: Record<CurrencyCode, number | null>;
 }
 
-export const FavoritesList = ({ favorites, trend, exchangeRates }: FavoritesListProps) => {
+export const FavoritesList = ({ favorites, exchangeRates }: FavoritesListProps) => {
   const { t } = useTranslation();
 
   return (
@@ -38,8 +37,6 @@ export const FavoritesList = ({ favorites, trend, exchangeRates }: FavoritesList
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {trend[code] === 'up' && <TrendingUp className="text-success" size={16} />}
-              {trend[code] === 'down' && <TrendingDown className="text-destructive" size={16} />}
               <span className="text-sm font-medium text-text">
                 {formatExchangeRate(exchangeRates[code] ?? 0)}
               </span>

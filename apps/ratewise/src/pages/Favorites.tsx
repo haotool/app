@@ -86,7 +86,6 @@ export default function Favorites() {
   const {
     favorites,
     history,
-    trend,
     toggleFavorite,
     reorderFavorites,
     clearAllHistory,
@@ -370,12 +369,6 @@ export default function Favorites() {
                                 }}
                                 aria-label={`${t('favorites.goToConvert')} ${code}`}
                               >
-                                {trend[code] === 'up' && (
-                                  <span className="text-success text-xs">↑</span>
-                                )}
-                                {trend[code] === 'down' && (
-                                  <span className="text-destructive text-xs">↓</span>
-                                )}
                                 <span className="text-[10px] font-bold opacity-60 group-hover:opacity-100 group-hover:text-primary transition">
                                   {t('favorites.clickToConvert')}
                                 </span>

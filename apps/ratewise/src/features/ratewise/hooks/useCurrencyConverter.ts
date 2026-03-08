@@ -6,7 +6,6 @@ import type {
   ConversionHistoryEntry,
   CurrencyCode,
   MultiAmountsState,
-  TrendState,
   RateType,
 } from '../types';
 import { readJSON, writeJSON } from '../storage';
@@ -30,13 +29,6 @@ const createInitialMultiAmounts = (
     return acc;
   }, {} as MultiAmountsState);
 };
-
-// 初始化趨勢狀態為 null（等待真實數據）
-const seedTrends = (): TrendState =>
-  CURRENCY_CODES.reduce<TrendState>((acc, code) => {
-    acc[code] = null; // 使用 null 表示無數據，而非假數據
-    return acc;
-  }, {} as TrendState);
 
 const sanitizeFavorites = (codes: CurrencyCode[]): CurrencyCode[] => {
   const unique = Array.from(new Set(codes));
@@ -115,7 +107,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       setHistory(validHistory);
     }
   }, []);
-  const [trend] = useState<TrendState>(() => seedTrends()); // 暫時不更新趨勢，等待歷史數據整合
   const [lastEdited, setLastEdited] = useState<AmountField>('from');
 
   // Helper to get rate based on rateType (spot/cash)
@@ -210,13 +201,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     setFromAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
   }, [toAmount, fromCurrency, toCurrency, getRate]);
 
-  // [2025-11-28] 趨勢圖數據已在 SingleConverter 組件中直接整合
-  // 使用 exchangeRateHistoryService.fetchHistoricalRatesRange() 獲取真實數據
-  // 此處保留空函數以維持 API 相容性
-  const generateTrends = useCallback(() => {
-    // No-op: 趨勢數據由 SingleConverter 直接管理
-  }, []);
-
   // 單幣別換算效果（路由決定顯示，無需依賴 mode 狀態）
   useEffect(() => {
     if (lastEdited === 'from') {
@@ -225,7 +209,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     } else {
       calculateToAmount();
     }
-    generateTrends();
   }, [
     lastEdited,
     fromAmount,
@@ -234,7 +217,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     toCurrency,
     calculateFromAmount,
     calculateToAmount,
-    generateTrends,
   ]);
 
   useEffect(() => {
@@ -389,7 +371,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     multiAmounts,
     baseCurrency,
     history,
-    trend,
     sortedCurrencies,
 
     // Setters
@@ -409,6 +390,5 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     addToHistory,
     clearAllHistory,
     reconvertFromHistory,
-    generateTrends,
   };
 };

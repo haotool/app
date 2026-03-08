@@ -5,9 +5,7 @@
  * 1. 基本渲染
  * 2. 貨幣列表顯示
  * 3. 收藏功能
- * 4. 趨勢圖標顯示
- * 5. 刷新按鈕功能
- * 6. 匯率格式化
+ * 4. 匯率格式化
  *
  * 依據: [Context7:testing-library][LINUS_GUIDE.md:測試覆蓋率 ≥80%]
  */
@@ -16,7 +14,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CurrencyList } from '../CurrencyList';
-import type { CurrencyCode, TrendState } from '../../types';
+import type { CurrencyCode } from '../../types';
 
 // Mock formatExchangeRate
 vi.mock('../../../../utils/currencyFormatter', () => ({
@@ -26,11 +24,6 @@ vi.mock('../../../../utils/currencyFormatter', () => ({
 describe('CurrencyList Component', () => {
   const defaultProps = {
     favorites: ['USD', 'JPY'] as CurrencyCode[],
-    trend: {
-      USD: 'up',
-      JPY: 'down',
-      EUR: null,
-    } as TrendState,
     exchangeRates: {
       TWD: 1,
       USD: 31.5,
@@ -63,22 +56,6 @@ describe('CurrencyList Component', () => {
     render(<CurrencyList {...defaultProps} />);
 
     expect(screen.getByText('全部幣種')).toBeInTheDocument();
-  });
-
-  it('renders refresh button with correct aria-label', () => {
-    render(<CurrencyList {...defaultProps} />);
-
-    const refreshButton = screen.getByRole('button', { name: '刷新趨勢數據' });
-    expect(refreshButton).toBeInTheDocument();
-  });
-
-  it('calls onRefreshTrends when refresh button is clicked', () => {
-    render(<CurrencyList {...defaultProps} />);
-
-    const refreshButton = screen.getByRole('button', { name: '刷新趨勢數據' });
-    fireEvent.click(refreshButton);
-
-    expect(defaultProps.onRefreshTrends).toHaveBeenCalledTimes(1);
   });
 
   it('renders currency list region with correct aria-label', () => {
@@ -143,30 +120,6 @@ describe('CurrencyList Component', () => {
     expect(emptyStars.length).toBeGreaterThan(0);
   });
 
-  it('displays up trend icon for currencies with up trend', () => {
-    render(<CurrencyList {...defaultProps} />);
-
-    // USD 有 up trend，應該顯示 text-success (SSOT design token)
-    const upTrends = document.querySelectorAll('.text-success');
-    expect(upTrends.length).toBeGreaterThan(0);
-  });
-
-  it('displays down trend icon for currencies with down trend', () => {
-    render(<CurrencyList {...defaultProps} />);
-
-    // JPY 有 down trend，應該顯示 text-destructive (SSOT design token)
-    const downTrends = document.querySelectorAll('.text-destructive');
-    expect(downTrends.length).toBeGreaterThan(0);
-  });
-
-  it('does not display trend icon for currencies with null trend', () => {
-    render(<CurrencyList {...defaultProps} />);
-
-    // EUR 的 trend 是 null，不應該顯示趨勢圖標
-    // 這個測試確保 null trend 不會導致錯誤
-    expect(screen.getByText('EUR')).toBeInTheDocument();
-  });
-
   it('handles null exchange rate gracefully', () => {
     const propsWithNullRate = {
       ...defaultProps,
@@ -212,7 +165,6 @@ describe('CurrencyList Component', () => {
 describe('CurrencyList Accessibility', () => {
   const defaultProps = {
     favorites: [] as CurrencyCode[],
-    trend: {} as TrendState,
     exchangeRates: {
       TWD: 1,
       USD: 31.5,
@@ -234,15 +186,7 @@ describe('CurrencyList Accessibility', () => {
       IDR: 0.002,
     } as Record<CurrencyCode, number | null>,
     onToggleFavorite: vi.fn(),
-    onRefreshTrends: vi.fn(),
   };
-
-  it('has accessible refresh button with title', () => {
-    render(<CurrencyList {...defaultProps} />);
-
-    const refreshButton = screen.getByRole('button', { name: '刷新趨勢數據' });
-    expect(refreshButton).toHaveAttribute('title', '刷新趨勢數據');
-  });
 
   it('currency list region is focusable', () => {
     render(<CurrencyList {...defaultProps} />);
