@@ -197,7 +197,7 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(sitemapContent).toContain('/ratewise/faq/</loc>');
       expect(sitemapContent).toContain('/ratewise/about/</loc>');
       expect(sitemapContent).toContain('/ratewise/guide/</loc>');
-      expect(sitemapContent).toContain('/ratewise/privacy/</loc>');
+      expect(sitemapContent).not.toContain('/ratewise/privacy/</loc>'); // noindex 頁不應出現在 sitemap
     });
 
     it('should include authority content pages', () => {

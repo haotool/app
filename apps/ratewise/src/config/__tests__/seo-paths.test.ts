@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   APP_ONLY_PATHS,
-  APP_ONLY_PRERENDER_PATHS,
   IMAGE_RESOURCES,
   PRERENDER_PATHS,
   SEO_FILES,
@@ -63,13 +62,13 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO 與路由白名單', () => {
-    it('SEO_PATHS 應只包含 25 個公開可索引路徑', () => {
-      expect(SEO_PATHS).toHaveLength(25);
+    it('SEO_PATHS 應只包含 24 個公開可索引路徑（不含 noindex 的 privacy 頁）', () => {
+      expect(SEO_PATHS).toHaveLength(24);
       expect(SEO_PATHS).toContain('/');
       expect(SEO_PATHS).toContain('/faq/');
       expect(SEO_PATHS).toContain('/about/');
       expect(SEO_PATHS).toContain('/guide/');
-      expect(SEO_PATHS).toContain('/privacy/');
+      expect(SEO_PATHS).not.toContain('/privacy/'); // noindex 頁不納入 sitemap
       expect(SEO_PATHS).toContain('/sell-rate-vs-mid-rate/');
       expect(SEO_PATHS).toContain('/cash-vs-spot-rate/');
       expect(SEO_PATHS).toContain('/card-rate-guide/');
@@ -79,10 +78,10 @@ describe('SEO Paths Configuration', () => {
       expect(SEO_PATHS).not.toContain('/settings/');
     });
 
-    it('PRERENDER_PATHS 應包含公開 SEO 路徑與 app-only noindex 頁面', () => {
+    it('PRERENDER_PATHS 應包含公開 SEO 路徑、法律頁與 app-only noindex 頁面', () => {
       expect(PRERENDER_PATHS).toHaveLength(32);
-      expect(PRERENDER_PATHS).toEqual([...SEO_PATHS, ...APP_ONLY_PRERENDER_PATHS]);
-      expect(PRERENDER_PATHS).toContain('/privacy/');
+      // PRERENDER_PATHS = SEO_PATHS(24) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(7) = 32
+      expect(PRERENDER_PATHS).toContain('/privacy/'); // 仍需預渲染，但不在 sitemap
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');
     });
@@ -122,7 +121,7 @@ describe('SEO Paths Configuration', () => {
     it('isSEOPath 應正確識別公開 SEO 路徑', () => {
       expect(isSEOPath('/faq/')).toBe(true);
       expect(isSEOPath('/usd-twd/')).toBe(true);
-      expect(isSEOPath('/privacy/')).toBe(true);
+      expect(isSEOPath('/privacy/')).toBe(false); // noindex，不在 SEO_PATHS
       expect(isSEOPath('/multi/')).toBe(false);
     });
 
