@@ -68,9 +68,9 @@ export default function Settings() {
         <section className="mb-8">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Palette className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.interfaceStyle')}
-            </h3>
+            </h2>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -133,9 +133,9 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Globe className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.language')}
-            </h3>
+            </h2>
           </div>
 
           <div className={segmentedSwitch.containerClass}>
@@ -180,9 +180,9 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Database className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.storageCache')}
-            </h3>
+            </h2>
           </div>
 
           <div className="card p-5">
@@ -208,9 +208,9 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <ShieldAlert className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.dataManagement')}
-            </h3>
+            </h2>
           </div>
 
           <div className="card overflow-hidden">
@@ -234,9 +234,9 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <HelpCircle className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.supportInfo')}
-            </h3>
+            </h2>
           </div>
 
           <div className="card overflow-hidden divide-y divide-border">
