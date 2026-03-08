@@ -96,7 +96,6 @@ const RateWise = () => {
     fromAmount,
     toAmount,
     favorites,
-    trend,
     setFromCurrency,
     setToCurrency,
     handleFromAmountChange,
@@ -105,7 +104,6 @@ const RateWise = () => {
     swapCurrencies,
     toggleFavorite,
     addToHistory,
-    generateTrends,
   } = useCurrencyConverter({ exchangeRates, details, rateType });
 
   const [searchParams] = useSearchParams();
@@ -237,13 +235,11 @@ const RateWise = () => {
           {/* 收藏與貨幣列表區塊（桌面版顯示於側欄） */}
           <section className="mb-4 hidden md:block flex-shrink-0">
             <div className="space-y-4">
-              <FavoritesList favorites={favorites} trend={trend} exchangeRates={exchangeRates} />
+              <FavoritesList favorites={favorites} exchangeRates={exchangeRates} />
               <CurrencyList
                 favorites={favorites}
-                trend={trend}
                 exchangeRates={exchangeRates}
                 onToggleFavorite={toggleFavorite}
-                onRefreshTrends={generateTrends}
               />
             </div>
           </section>

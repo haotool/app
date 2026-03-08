@@ -1,33 +1,44 @@
 /**
- * Zustand State Management - Converter Store
+ * Zustand 狀態管理 — 貨幣轉換器 Store
  *
- * Cross-module shared state:
- * - Currency selection (fromCurrency, toCurrency)
- * - Favorite currency pairs
- * - Conversion history
+ * 跨模組共用狀態（SSOT）：
+ * - 貨幣選擇（fromCurrency、toCurrency）
+ * - 轉換器模式（single / multi）
+ * - 收藏貨幣
+ * - 轉換歷史
  *
- * Features:
- * - localStorage persistence
- * - TypeScript type safety
- * - Cross-module state sync
+ * 功能：
+ * - 透過 Zustand persist middleware 自動同步 localStorage
+ * - TypeScript 型別安全
+ * - 跨模組狀態共享，無需 prop drilling
+ * - 從舊版個別 localStorage key 的一次性遷移
  */
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CurrencyCode } from '../features/ratewise/types';
+import type { ConverterMode, CurrencyCode } from '../features/ratewise/types';
+import {
+  CURRENCY_DEFINITIONS,
+  DEFAULT_FAVORITES,
+  DEFAULT_FROM_CURRENCY,
+  DEFAULT_TO_CURRENCY,
+} from '../features/ratewise/constants';
+import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
-/**
- * 貨幣對類型
- */
-export interface CurrencyPair {
-  from: CurrencyCode;
-  to: CurrencyCode;
-  timestamp: number;
-}
+// ── 有效貨幣代碼集合（模組載入時計算一次）────────────────────────────────────
+const VALID_CODES = new Set(Object.keys(CURRENCY_DEFINITIONS));
 
-/**
- * 轉換記錄類型
- */
+const isCurrencyCode = (value: string): value is CurrencyCode => VALID_CODES.has(value);
+
+// ── 舊版 key 名稱（僅用於一次性遷移）─────────────────────────────────────────
+const LEGACY_KEYS = {
+  FROM_CURRENCY: STORAGE_KEYS.FROM_CURRENCY,
+  TO_CURRENCY: STORAGE_KEYS.TO_CURRENCY,
+  MODE: STORAGE_KEYS.CURRENCY_CONVERTER_MODE,
+  FAVORITES: STORAGE_KEYS.FAVORITES,
+} as const;
+
+// ── 轉換歷史記錄型別 ─────────────────────────────────────────────────────────
 export interface ConversionRecord {
   id: string;
   from: CurrencyCode;
@@ -38,99 +49,148 @@ export interface ConversionRecord {
   timestamp: number;
 }
 
-/**
- * Converter Store 狀態介面
- */
+// ── Store 狀態介面 ───────────────────────────────────────────────────────────
 interface ConverterState {
-  // 狀態
+  // ── 持久化狀態 ──────────────────────────────────────────────────────────
   fromCurrency: CurrencyCode;
   toCurrency: CurrencyCode;
-  favorites: CurrencyPair[];
+  mode: ConverterMode;
+  favorites: CurrencyCode[];
   history: ConversionRecord[];
 
-  // Actions
+  // ── Actions ──────────────────────────────────────────────────────────────
   setFromCurrency: (code: CurrencyCode) => void;
   setToCurrency: (code: CurrencyCode) => void;
+  setMode: (mode: ConverterMode) => void;
   swapCurrencies: () => void;
-  addFavorite: (pair: CurrencyPair) => void;
-  removeFavorite: (from: CurrencyCode, to: CurrencyCode) => void;
-  isFavorite: (from: CurrencyCode, to: CurrencyCode) => boolean;
+
+  /** 切換收藏狀態（immutable 更新） */
+  toggleFavorite: (code: CurrencyCode) => void;
+  /** 替換完整收藏列表（拖曳排序用） */
+  reorderFavorites: (codes: CurrencyCode[]) => void;
+  /** 檢查 `code` 是否在收藏列表中 */
+  isFavorite: (code: CurrencyCode) => boolean;
+
   addToHistory: (record: ConversionRecord) => void;
   clearHistory: () => void;
+
+  /** 供單元測試呼叫；亦由 onRehydrateStorage 在內部觸發 */
+  __migrateFromLegacy: () => void;
 }
 
-/**
- * Converter Store
- *
- * 使用 Zustand + persist middleware 實現跨模組狀態管理
- */
+// ── 遷移輔助函式 ─────────────────────────────────────────────────────────────
+
+function buildMigrationPatch(): Partial<
+  Pick<ConverterState, 'fromCurrency' | 'toCurrency' | 'mode' | 'favorites'>
+> | null {
+  if (typeof window === 'undefined') return null;
+
+  // 統一 key 已存在，代表已完成遷移，跳過
+  if (window.localStorage.getItem('ratewise-converter') !== null) return null;
+
+  const oldFrom = window.localStorage.getItem(LEGACY_KEYS.FROM_CURRENCY);
+  const oldTo = window.localStorage.getItem(LEGACY_KEYS.TO_CURRENCY);
+  const oldMode = window.localStorage.getItem(LEGACY_KEYS.MODE);
+  const oldFavoritesRaw = window.localStorage.getItem(LEGACY_KEYS.FAVORITES);
+
+  if (!oldFrom && !oldTo && !oldMode && !oldFavoritesRaw) return null;
+
+  const patch: Partial<Pick<ConverterState, 'fromCurrency' | 'toCurrency' | 'mode' | 'favorites'>> =
+    {};
+
+  if (oldFrom && isCurrencyCode(oldFrom)) patch.fromCurrency = oldFrom;
+  if (oldTo && isCurrencyCode(oldTo)) patch.toCurrency = oldTo;
+  if (oldMode === 'multi') patch.mode = 'multi';
+
+  if (oldFavoritesRaw) {
+    try {
+      const parsed: unknown = JSON.parse(oldFavoritesRaw);
+      if (Array.isArray(parsed)) {
+        const sanitized = (parsed as unknown[]).filter(
+          (c): c is CurrencyCode => typeof c === 'string' && isCurrencyCode(c),
+        );
+        // 空陣列為合法的使用者偏好（刻意清空收藏），必須保留
+        patch.favorites = sanitized;
+      }
+    } catch {
+      // 忽略格式錯誤的 JSON，保留預設收藏
+    }
+  }
+
+  return Object.keys(patch).length > 0 ? patch : null;
+}
+
+function removeLegacyKeys(): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(LEGACY_KEYS.FROM_CURRENCY);
+  window.localStorage.removeItem(LEGACY_KEYS.TO_CURRENCY);
+  window.localStorage.removeItem(LEGACY_KEYS.MODE);
+  window.localStorage.removeItem(LEGACY_KEYS.FAVORITES);
+}
+
+// ── Store 實例 ───────────────────────────────────────────────────────────────
 export const useConverterStore = create<ConverterState>()(
   persist(
     (set, get) => ({
-      // 初始狀態
-      fromCurrency: 'TWD',
-      toCurrency: 'USD',
-      favorites: [],
+      // ── 初始狀態 ────────────────────────────────────────────────────────
+      fromCurrency: DEFAULT_FROM_CURRENCY,
+      toCurrency: DEFAULT_TO_CURRENCY,
+      mode: 'single' as ConverterMode,
+      favorites: [...DEFAULT_FAVORITES] as CurrencyCode[],
       history: [],
 
-      // 設定來源貨幣
+      // ── Actions ──────────────────────────────────────────────────────────
       setFromCurrency: (code) => set({ fromCurrency: code }),
 
-      // 設定目標貨幣
       setToCurrency: (code) => set({ toCurrency: code }),
 
-      // 交換貨幣
+      setMode: (mode) => set({ mode }),
+
       swapCurrencies: () =>
         set((state) => ({
           fromCurrency: state.toCurrency,
           toCurrency: state.fromCurrency,
         })),
 
-      // 新增收藏
-      addFavorite: (pair) =>
-        set((state) => {
-          // 避免重複收藏
-          const exists = state.favorites.some((f) => f.from === pair.from && f.to === pair.to);
-          if (exists) return state;
-
-          return {
-            favorites: [...state.favorites, pair],
-          };
-        }),
-
-      // 移除收藏
-      removeFavorite: (from, to) =>
+      toggleFavorite: (code) =>
         set((state) => ({
-          favorites: state.favorites.filter((f) => !(f.from === from && f.to === to)),
+          favorites: state.favorites.includes(code)
+            ? state.favorites.filter((c) => c !== code)
+            : [...state.favorites, code],
         })),
 
-      // 檢查是否已收藏
-      isFavorite: (from, to) => {
-        const state = get();
-        return state.favorites.some((f) => f.from === from && f.to === to);
-      },
+      reorderFavorites: (codes) => set({ favorites: codes }),
 
-      // 新增轉換記錄
+      isFavorite: (code) => get().favorites.includes(code),
+
       addToHistory: (record) =>
         set((state) => ({
-          // 保留最新 50 筆記錄
           history: [record, ...state.history].slice(0, 50),
         })),
 
-      // 清除歷史記錄
       clearHistory: () => set({ history: [] }),
+
+      __migrateFromLegacy: () => {
+        const patch = buildMigrationPatch();
+        if (patch) {
+          set(patch);
+          removeLegacyKeys();
+        }
+      },
     }),
     {
-      // localStorage 持久化配置
       name: 'ratewise-converter',
-
-      // 只持久化必要的狀態（排除 SSR 時不存在的狀態）
       partialize: (state) => ({
         fromCurrency: state.fromCurrency,
         toCurrency: state.toCurrency,
+        mode: state.mode,
         favorites: state.favorites,
         history: state.history,
       }),
+      onRehydrateStorage: () => (_state, error) => {
+        if (error) return;
+        useConverterStore.getState().__migrateFromLegacy();
+      },
     },
   ),
 );

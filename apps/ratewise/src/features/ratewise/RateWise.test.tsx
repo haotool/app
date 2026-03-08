@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import RateWise from './RateWise';
 import * as pullToRefreshModule from '../../hooks/usePullToRefresh';
 import { rateWiseLayoutTokens } from '../../config/design-tokens';
+import { useConverterStore } from '../../stores/converterStore';
 
 // Test helper: wrap component with required providers including MemoryRouter
 const renderWithProviders = (component: React.ReactElement) => {
@@ -76,6 +77,14 @@ describe('RateWise Component', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    // 重置 Zustand store，防止測試間狀態洩漏
+    useConverterStore.setState({
+      fromCurrency: 'TWD',
+      toCurrency: 'JPY',
+      mode: 'single',
+      favorites: ['JPY', 'KRW', 'VND', 'THB', 'HKD', 'USD'],
+      history: [],
+    });
     fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockRatesResponse),
@@ -194,16 +203,13 @@ describe('RateWise Component', () => {
     it('persists favorite currencies to localStorage', async () => {
       renderWithProviders(<RateWise />);
 
-      // Initial favorites should be saved
-      // Uses longer timeout because the component triggers many async effects
-      // (exchange rate fetch, animation frames, recalculations) that compete
-      // for event loop time when running the full test suite in parallel
+      // 收藏列表統一存放於 Zustand persist 的 'ratewise-converter' key
       await waitFor(
         () => {
-          const favorites = localStorage.getItem('favorites');
-          expect(favorites).toBeTruthy();
-          const parsed = JSON.parse(favorites ?? '[]') as string[];
-          expect(Array.isArray(parsed)).toBe(true);
+          const raw = localStorage.getItem('ratewise-converter');
+          expect(raw).toBeTruthy();
+          const parsed = JSON.parse(raw ?? '{}') as { state?: { favorites?: string[] } };
+          expect(Array.isArray(parsed?.state?.favorites)).toBe(true);
         },
         { timeout: 5000 },
       );
@@ -217,8 +223,11 @@ describe('RateWise Component', () => {
 
       fireEvent.change(fromSelect, { target: { value: 'USD' } });
 
+      // 來源貨幣統一存放於 Zustand persist 的 'ratewise-converter' key
       await waitFor(() => {
-        expect(localStorage.getItem('fromCurrency')).toBe('USD');
+        const raw = localStorage.getItem('ratewise-converter');
+        const parsed = JSON.parse(raw ?? '{}') as { state?: { fromCurrency?: string } };
+        expect(parsed?.state?.fromCurrency).toBe('USD');
       });
     });
 
@@ -228,10 +237,13 @@ describe('RateWise Component', () => {
       const selects = screen.getAllByRole('combobox');
       const toSelect = selects[1]!;
 
-      fireEvent.change(toSelect, { target: { value: 'JPY' } });
+      fireEvent.change(toSelect, { target: { value: 'EUR' } });
 
+      // 目標貨幣統一存放於 Zustand persist 的 'ratewise-converter' key
       await waitFor(() => {
-        expect(localStorage.getItem('toCurrency')).toBe('JPY');
+        const raw = localStorage.getItem('ratewise-converter');
+        const parsed = JSON.parse(raw ?? '{}') as { state?: { toCurrency?: string } };
+        expect(parsed?.state?.toCurrency).toBe('EUR');
       });
     });
   });

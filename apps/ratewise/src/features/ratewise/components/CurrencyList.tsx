@@ -3,44 +3,27 @@
  *
  * 顯示所有貨幣的即時匯率列表，使用 SSOT design token
  */
-import { RefreshCw, Star, TrendingDown, TrendingUp } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS } from '../constants';
-import type { CurrencyCode, TrendState } from '../types';
+import type { CurrencyCode } from '../types';
 import { formatExchangeRate } from '../../../utils/currencyFormatter';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
 interface CurrencyListProps {
   favorites: CurrencyCode[];
-  trend: TrendState;
   exchangeRates: Record<CurrencyCode, number | null>;
   onToggleFavorite: (code: CurrencyCode) => void;
-  onRefreshTrends: () => void;
 }
 
-export const CurrencyList = ({
-  favorites,
-  trend,
-  exchangeRates,
-  onToggleFavorite,
-  onRefreshTrends,
-}: CurrencyListProps) => {
+export const CurrencyList = ({ favorites, exchangeRates, onToggleFavorite }: CurrencyListProps) => {
   const { t } = useTranslation();
 
   return (
     <div className="bg-surface rounded-3xl shadow-xl p-6 border border-border/30">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
         <h2 className="text-xl font-bold text-text">{t('currencyList.allCurrencies')}</h2>
-        <button
-          onClick={onRefreshTrends}
-          className="p-2 hover:bg-primary/10 rounded-lg transition-colors duration-200"
-          type="button"
-          aria-label={t('currencyList.refreshTrends')}
-          title={t('currencyList.refreshTrends')}
-        >
-          <RefreshCw size={16} className="text-text-muted" />
-        </button>
       </div>
       <div
         className="space-y-2 max-h-96 overflow-y-auto"
@@ -63,8 +46,6 @@ export const CurrencyList = ({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {trend[code] === 'up' && <TrendingUp className="text-success" size={14} />}
-              {trend[code] === 'down' && <TrendingDown className="text-destructive" size={14} />}
               <span className="text-sm text-text">
                 {formatExchangeRate(exchangeRates[code] ?? 0)}
               </span>

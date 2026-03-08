@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-08T03:56:39+08:00
-> **當前總分**: 1118（初始分: 100）
+> **最後更新**: 2026-03-08T04:54:01+08:00
+> **當前總分**: 1120（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -25,6 +25,7 @@
 
 | 分數 | 事項                                            | 日期       |
 | ---- | ----------------------------------------------- | ---------- |
+| +2   | 002 v2 結構化索引規格與主題分類升級             | 2026-03-08 |
 | +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理  | 2026-03-08 |
 | +1   | SEOHelmet effect 依賴穩定化                     | 2026-03-08 |
 | +1   | SEOHelmet 卸載 cleanup 與跨頁 head 污染修復     | 2026-03-08 |
@@ -46,12 +47,45 @@
 
 ---
 
-## 記錄格式（方案 A）
+## 記錄格式（方案 A / v2）
 
 - 每筆近期紀錄固定使用 `---` 區塊，不再新增巨型 table 條目
-- 欄位順序固定：`date` → `title` → `score` → `type` → `scope` → `tags` → `summary` → `actions` → `verification` → `references`
+- **v2 標準欄位順序**：`id` → `date` → `title` → `score` → `type` → `content_type` → `scope` → `topics` → `keywords` → `aliases` → `related_entries` → `summary` → `root_cause` → `impact` → `actions` → `prevention` → `verification` → `references`
 - 2026-02-28 起的重要紀錄保留完整 entry；更早歷史資料改為下方按月份整理的精簡索引
 - `type: incident` / `type: regression` 必須明確寫出根因、影響、修復與預防，避免只記結果不記教訓
+- 舊版完整紀錄若仍使用 `tags`，允許暫存；**新寫或重構後的條目一律改用 `topics` + `keywords`**
+
+### 內容型別（content_type）
+
+- `troubleshooting`：事故、回歸、失敗案例、排障與修復
+- `how_to`：可重複執行的操作流程
+- `reference`：穩定規則、欄位定義、SSOT 對照
+- `explanation`：原因說明、設計取捨、教訓總結
+
+### 受控主題分類（topics）
+
+- `seo`
+- `hydration`
+- `ssg`
+- `assets`
+- `deployment`
+- `security`
+- `headers`
+- `pwa`
+- `ci`
+- `ssot`
+- `documentation`
+- `testing`
+- `performance`
+- `routing`
+- `analytics`
+
+### 關鍵字索引規則（keywords）
+
+- 使用 `lowercase-kebab-case`，方便後續用腳本、SQLite、全文索引或靜態站工具直接抽取
+- 每筆建議 `3-8` 個關鍵字，只保留穩定技術詞，不寫整句
+- 同義詞、中文別名或常見錯字放在 `aliases`
+- 跨案例關聯使用 `related_entries` 指向穩定 `id`，不要只靠標題模糊比對
 
 ## Entries
 
@@ -81,6 +115,46 @@ actions:
 ---
 
 失敗紀錄只有在能快速回答「為什麼壞、怎麼修、下次怎麼避免」時才真正有價值。
+
+---
+
+id: log-v2-structured-indexing
+date: 2026-03-08
+title: 002 v2 結構化索引規格與主題分類升級
+score: +2
+type: success
+content_type: reference
+scope: repo
+topics: [documentation, ssot, testing]
+keywords: [front-matter, taxonomy, keywords-index, related-entries, controlled-vocabulary]
+aliases: [002 v2, 結構化索引, 主題分類]
+related_entries: [incident-ci-hardcoded-audit, regression-docs-tests-routes-sync]
+summary: 依文件前言、分類與搜尋最佳實踐，將 002 升級為可被腳本與靜態文件工具穩定解析的 v2 結構，補上受控主題分類、標準化關鍵字與跨案例關聯。
+root_cause:
+
+- 舊版 entry 可讀但索引欄位不穩定，主題與關鍵字無法可靠抽取
+- 相同類型案例雖已去重，仍缺少穩定 id、分類與關聯鍵
+  impact:
+- 後續若要自動做主題索引、全文檢索或知識圖譜，成本偏高
+  actions:
+- 新增 v2 標準欄位：`id`、`content_type`、`topics`、`keywords`、`aliases`、`related_entries`
+- 加入受控主題分類與關鍵字索引規則，降低自由標記漂移
+- 將歷史失敗案例整段改寫為可直接索引的結構化條目
+  prevention:
+- 新增或重構 002 條目時，先套 v2 欄位，再填內容
+- `topics` 使用受控詞彙，`keywords` 使用 kebab-case，避免自由發散
+  verification:
+- 002 可用固定欄位解析主題、關鍵字與關聯案例
+- AGENTS / CLAUDE 已同步要求新條目使用 v2 結構化欄位
+  references:
+- Google Developer Documentation Style Guide
+- Diataxis
+- Docusaurus front matter / tags docs
+- GitHub Docs YAML frontmatter
+
+---
+
+把可讀筆記轉成可索引資料後，未來不管要做 grep、SQLite、靜態站索引或知識圖譜都比較穩。
 
 ---
 
@@ -492,199 +566,345 @@ actions:
 
 測試斷言與 SOP 一起修，是因為兩者本質上都在維護 repo 的可驗證性。
 
-## 歷史失敗案例（已重構）
+## 歷史失敗案例（完整去重）
+
+> 以下將歷史上重複出現、但本質相同的事故合併為單一案例。目標不是保留所有時間軸，而是保留「最小可重用教訓」。
+
+### 主題去重對照表
+
+| 主題                         | 重複來源                                                                                           | 統一解法                                                                                                         |
+| ---------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| SSG / Hydration 非決定性輸出 | `new Date()`、`Math.random()`、`localStorage`、`LAST_UPDATED` 時區漂移、巢狀 Layout 導致首屏不一致 | 首屏只允許 deterministic 值；browser-only 資料延後到 `useEffect`；日期固定時區；避免 render phase 讀取瀏覽器 API |
+| Base path / 資產路徑漂移     | 動態 `BASE_URL` 拼接圖片、正式站 base path 驗證缺失、PWA 子路徑鏡像缺失                            | 資產預設用相對路徑；build/preview 必跑真實 base path；子路徑部署一律檢查 logo/OG/offline/manifest                |
+| SEO 公開路徑 SSOT 漂移       | sitemap、hreflang、llms.txt、robots、路由、SEO_PATHS 計數不同步                                    | 生成器做唯一來源；驗證腳本只能讀生成器同源資料；新增公開頁時同步更新所有公開清單                                 |
+| CI / 審計硬編碼              | 用固定字串檢查合規文件、用人工數字驗 sitemap/hreflang、把單一 app 規則套到全部 workspace           | 回到官方規範；檢查改為結構與正則；從 app config / 生成產物動態推導，不手寫常數                                   |
+| CSP / 安全標頭架構不匹配     | `strict-dynamic` 套到 SSG、worker / nginx / app 各自維護 header、console 問題只修 app 不驗 edge    | 安全標頭收斂到單一責任邊界；策略必須符合執行架構；部署後一定驗正式站 header 與 console                           |
+| 生產驗證缺口                 | 分支合併前只看 CI、不看正式 base path 與 edge 行為                                                 | 高風險 SEO / PWA / security 變更必做 build + preview + 正式站 smoke check                                        |
+| 過度優化導致複雜化           | AVIF/WebP 未準備就先做、manualChunks 拆過頭導致 scheduler 分裂、生產站掛掉                         | 先確認基礎資產與依賴邊界，再做優化；效能優化必配事故回滾與部署驗證                                               |
+| 文件 / 測試 / 路由不同步     | 文檔與程式碼狀態不符、xhtml:link 數量未同步、vite.config SSG 路徑未同步 routes                     | 新增路由後同步更新 routes、SSG、sitemap、測試與文件；若改規則，先更新 SSOT 再改斷言                              |
 
 ---
 
-date: 2026-03-07
-title: LAST_UPDATED 時區未固定導致 SSG hydration 漂移
+id: incident-ssg-hydration-determinism
+date: 2026-03-08
+title: SSG / Hydration 非決定性輸出
 score: 0
 type: incident
-scope: ratewise
-tags: [hydration, timezone, ssg, rendering]
-summary: 根因是頁面使用未固定時區的日期字串，server 與 client 可能依不同時區輸出不同內容；影響是 About / FAQ / Privacy 類靜態頁產生 hydration 漂移。
-actions:
+content_type: troubleshooting
+scope: repo
+topics: [hydration, ssg, testing]
+keywords: [hydration-mismatch, deterministic-render, localstorage, date-now, timezone-drift]
+aliases: [Hydration #418, 首屏漂移, render phase 讀取瀏覽器 API]
+related_entries: [incident-base-path-assets, incident-docs-tests-routes-sync]
+summary: 多次事故本質相同：server 與 client 首次 render 使用了不同輸入，例如 `new Date()`、`Math.random()`、`localStorage`、未固定時區的日期或巢狀 Layout，導致 Hydration #418、畫面重排或首屏內容漂移。
+root_cause:
 
-- 將 LAST_UPDATED 固定為 `Asia/Taipei`
-- 檢查所有靜態頁日期欄位是否共用同一輸出來源
-- 將日期顯示視為 SSG 穩定值，而不是 runtime 自行推導
+- server 與 client 首次 render 使用非 deterministic 值
+- browser-only API 提前進入 render phase
+- server / client 節點樹因 layout 或條件渲染不同步
+  impact:
+- Hydration 錯誤與首屏改寫
+- 靜態頁文字、日期或 UI 狀態在載入後跳動
+- 測試與正式站行為不一致，增加排查成本
+  actions:
+- 首屏只允許 deterministic 值，動態時間改用 `BUILD_TIME` / 固定時區字串
+- `localStorage`、`window`、裝置資訊等 browser-only 資料延後到 `useEffect`
+- 若內容必須 client-only 顯示，使用 `ClientOnly` 或 `suppressHydrationWarning`
+- 避免用多層 Layout 在 server / client 產生不同節點樹
+  prevention:
+- 凡是會出現在 SSG 首屏的值，先檢查是否跨時區、跨環境、跨裝置會變
+- 將 hydration 類事故統一歸檔到同一主題，不再分散記錄
   verification:
-- 靜態頁 hydration 不再因時區差異改寫文字
-- About / FAQ / Privacy 日期輸出一致
+- SSG HTML 與 client 首次 render 不再產生文字或節點差異
+- Hydration #418 / 首屏改寫錯誤消失
   references:
+- 2025-12-06 / 2025-12-07 / 2025-12-25 Hydration 修復紀錄
 - git commit 6cd321ff
 
 ---
 
-凡是會被輸出到 SSG 首屏的日期字串，都應先固定時區，再談顯示格式。
+只要某個值在 server 與 client 首次 render 可能不同，就應先視為 hydration 事故候選。
 
 ---
 
-date: 2026-03-07
-title: 生產環境安全標頭漂移與 console 錯誤未同步修復
+id: incident-base-path-assets
+date: 2026-03-08
+title: Base path / 資產路徑漂移
 score: 0
 type: incident
-scope: security
-tags: [security, headers, production, drift]
-summary: 根因是 app 端修復與 Cloudflare worker / health-check 驗證沒有同時收斂；影響是正式站仍可能保留舊 header 或 console 嚴重錯誤，形成「本地綠、正式站壞」的漂移。
-actions:
+content_type: troubleshooting
+scope: repo
+topics: [assets, deployment, ssg, seo]
+keywords: [base-path, asset-url, relative-path, og-image, manifest]
+aliases: [BASE_URL 漂移, 子路徑部署失敗, OG 圖片失效]
+related_entries: [incident-production-verification-gap, incident-ssg-hydration-determinism]
+summary: 多次正式站問題都來自同一根因：資產路徑在 component 內自行拼接，或只在本地根路徑驗證，沒用真實子路徑 / base path 檢查，最終造成 logo、OG、offline、manifest 或 favicon 在正式站失效。
+root_cause:
 
-- 將 worker、health-check、nginx 與 ErrorBoundary 修復放在同一輪收斂
-- 以正式站 header / console 驗證作為部署完成條件
-- 將安全標頭責任邊界集中到可驗證流程，避免多頭維護
+- 手動組合資產 URL，而不是讓打包工具處理
+- 僅在 root path 驗證，未覆蓋真實部署路徑
+  impact:
+- 正式站圖片、manifest、favicon、offline 頁失效
+- SEO 預覽圖與分享資產缺失
+- 子路徑部署與本地預覽結果脫鉤
+  actions:
+- 資產預設使用相對路徑，交由 Vite 處理 base path
+- 合併前以真實 `VITE_*_BASE_PATH` 跑 build + preview
+- 對 logo、OG image、offline.html、manifest、favicon 建立固定 smoke checklist
+  prevention:
+- 禁止在 component 內自行拼接分享圖、logo 或 manifest URL
+- 子路徑 app 一律在 preview 階段跑真實 base path 驗證
   verification:
-- health-check.mjs 驗證通過
-- 正式站 header 與 console 錯誤回歸消失
+- 子路徑部署下資產可正常載入
+- 正式站與 preview 對同一組路徑行為一致
   references:
+- 2025-12-15 生產環境 base 路徑修復
+- 2025-12-24 SEO 分支合併前未驗證生產環境
+- 2025-12-24 圖片路徑使用動態 BASE_URL 導致 hydration
+
+---
+
+在 Vite / SSG 專案裡，自己拼 asset URL 通常不是聰明，而是未來事故的起點。
+
+---
+
+id: incident-seo-public-path-ssot
+date: 2026-03-08
+title: SEO 公開路徑與產物 SSOT 漂移
+score: 0
+type: incident
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, ssot, routing, documentation]
+keywords: [sitemap, hreflang, llms, robots, seo-paths]
+aliases: [公開路徑不同步, sitemap 漂移, hreflang 計數錯誤]
+related_entries: [incident-ci-hardcoded-audit, regression-docs-tests-routes-sync]
+summary: sitemap、hreflang、llms.txt、robots、公開路由與驗證腳本曾多次互相脫鉤；表面症狀不同，但根因一致：公開 SEO 路徑不是由單一來源生成，導致每加一條路由就有多處需要手動同步。
+root_cause:
+
+- 公開 URL 清單存在多份來源
+- 驗證腳本與生成器使用不同資料源
+  impact:
+- SEO audit、hreflang 計數與 sitemap 互相打架
+- rebase 或新增頁面後容易出現 false red / false green
+  actions:
+- 讓 SEO 路徑、sitemap、robots、llms.txt、OpenAPI 與驗證腳本都回到同一生成來源
+- 新增公開頁時，同步更新 routes、PRERENDER_PATHS、SEO_PATHS 與 sitemap 驗證
+- 驗證腳本不得自行推導路徑或手寫計數
+  prevention:
+- 公開 URL 只允許一份 SSOT
+- 新增頁面 checklist 必含 sitemap / hreflang / llms / robots / routes
+  verification:
+- sitemap / hreflang / llms / robots / SEO audit 計數一致
+- rebase 或新增頁面後不再出現路徑數量漂移
+  references:
+- 2025-11-30 sitemap/SSG 一致性修復
+- 2026-02-28 Sitemap hreflang SSOT 同步修復
+- 2026-03-07 rebase 後版本與 sitemap SSOT 根因修復
+- 2026-03-07 SEO Audit sitemap 驗證漂移修復
+
+---
+
+只要公開 URL 清單超過一份，時間一久就一定會漂移。
+
+---
+
+id: incident-ci-hardcoded-audit
+date: 2026-03-08
+title: CI / 審計硬編碼造成假失敗
+score: 0
+type: incident
+content_type: troubleshooting
+scope: repo
+topics: [ci, ssot, documentation, testing]
+keywords: [hardcoded-check, audit-drift, regex-validation, generated-source]
+aliases: [假紅燈, audit 硬編碼, 檢查器漂移]
+related_entries: [incident-seo-public-path-ssot, regression-docs-tests-routes-sync]
+summary: 多次 CI 失敗不是產品真的壞掉，而是檢查工具寫死字串、路徑或數字，導致合規內容也被阻擋。這類問題本質上是檢查器違反 SSOT，而不是應用邏輯錯誤。
+root_cause:
+
+- 檢查器使用手寫常數、硬編碼字串或固定欄位假設
+- 未先對照官方規範確認必填欄位
+  impact:
+- CI 阻塞開發與發版
+- 合法內容被誤判為不合格
+  actions:
+- 先查官方規範，再決定檢查必要欄位
+- 將硬編碼字串改為結構驗證、正則或由 app config / 生成器動態推導
+- 禁止把某一個 app 的輸出格式直接複製到其他 workspace
+  prevention:
+- 驗證器修改必附規範來源
+- 所有計數型檢查優先從生成器輸出回推，不手填常數
+  verification:
+- 合法變體可通過 CI
+- 生成器輸出變更時，驗證腳本仍與 SSOT 同步
+  references:
+- 2026-01-07 CI 硬編碼檢查導致合規文件無法通過
+- 2026-02-27 消除 SEO workflow 硬編碼
+- 2026-03-07 SEO Audit sitemap 驗證漂移修復
+
+---
+
+檢查器只要開始手寫常數，遲早會變成比產品本身更脆弱的系統。
+
+---
+
+id: incident-csp-header-boundary
+date: 2026-03-08
+title: CSP / 安全標頭責任邊界錯置
+score: -3
+type: incident
+content_type: troubleshooting
+scope: security
+topics: [security, headers, deployment, ssg]
+keywords: [csp, strict-dynamic, nonce, edge-header, console-error]
+aliases: [安全標頭漂移, edge header drift, CSP 失效]
+related_entries: [incident-production-verification-gap]
+summary: 安全標頭曾經同時散落在 app、nginx、worker 與理論最佳實踐之間；像 `strict-dynamic` 這種策略在 SSG 架構下沒有穩定 nonce 來源，套上去只會讓正式站壞掉。另一類問題則是 app 端已修、edge 端仍舊 header，形成部署漂移。
+root_cause:
+
+- 安全標頭由多個層級同時維護
+- 採用了與執行架構不相容的 CSP 策略
+  impact:
+- 正式站 script 被 CSP 擋下或 console 出現嚴重安全錯誤
+- 本地與正式站 header 不一致，導致假綠燈
+  actions:
+- 安全標頭收斂到單一責任邊界，避免多頭維護
+- 只採用與執行架構相容的 CSP；SSG 無 nonce 時不使用需要 nonce 的策略
+- 部署完成條件必須包含正式站 header 與 console smoke check
+  prevention:
+- 每次調整 CSP 前先檢查架構是否支援 nonce/hash 模型
+- worker / nginx / app 的 header 來源只能有一個主責系統
+  verification:
+- 正式站 header 與 repo 設定一致
+- script 正常執行，console 無嚴重 CSP / security 錯誤
+  references:
+- 2025-11-29 CSP strict-dynamic 導致生產環境失效
+- 2025-12-11 / 2026-03-07 CSP 與安全標頭修復紀錄
 - git commit 6d3977a7
 
 ---
 
-只修 app、不驗證 edge，最後就會得到「程式碼看起來沒問題，但正式站還是錯」的假綠燈。
+安全策略不是越嚴越好，而是越符合現有架構、越可驗證越好。
 
 ---
 
-date: 2026-01-07
-title: CI 硬編碼檢查導致合規文件無法通過
+id: incident-production-verification-gap
+date: 2026-03-08
+title: 生產驗證缺口與假綠燈
 score: 0
 type: incident
+content_type: troubleshooting
 scope: repo
-tags: [ci, validation, documentation, ssot]
-summary: 根因是 CI 以硬編碼字串檢查合規文件，而不是依官方規範與 app SSOT 驗證；影響是內容其實合規仍被 gate 擋下。
-actions:
+topics: [deployment, testing, security, seo]
+keywords: [production-check, smoke-test, preview-gap, edge-verification]
+aliases: [本地綠正式站壞, 假綠燈, smoke check 缺失]
+related_entries: [incident-base-path-assets, incident-csp-header-boundary]
+summary: 多次事故共同模式是「本地綠、CI 綠，但正式站仍有問題」，原因包含沒有檢查真實 base path、沒有驗 edge header、沒有檢查正式 console、或部署順序讓 app 與 worker 不一致。
+root_cause:
 
-- 回到官方規範與 Context7 / Web 來源確認必填欄位
-- 將檢查改為正則與結構驗證，避免複製貼上 RateWise 規則到所有 app
-- 以 app.config.mjs 與公開產物作為 SSOT，而不是人工硬編碼字串
+- 驗證只停在本地與 CI，缺少正式站 smoke check
+- release 流程未將 app、worker、CDN purge 視為同一件事
+  impact:
+- 問題在合併或部署後才暴露
+- 使用者先看到故障，團隊後看到告警
+  actions:
+- 高風險變更至少執行本地 build、preview 與正式站 smoke check
+- 針對 SEO / PWA / security 類變更建立固定驗證清單
+- release 流程同時考慮 app bundle、worker、CDN purge 與 secret 缺口
+  prevention:
+- 將正式站驗證納入結案標準
+- 用固定 smoke checklist 覆蓋 base path、headers、console、關鍵資產
   verification:
-- 合規文件 CI 重新通過
-- 檢查邏輯可接受不同 app 的合法變體
+- preview 與正式站核心行為一致
+- 正式站 smoke check 通過後才視為結案
   references:
-- 2026-01-07 歷史失敗紀錄
+- 2025-12-24 SEO 分支合併前未驗證生產環境
+- 2026-03-03 Cloudflare 稽核工作流文件
+- 2026-03-07 生產環境安全標頭漂移與 console 錯誤未同步修復
 
 ---
 
-文件檢查一旦硬編碼，就會把流程工具變成阻塞源；規格應該來自官方與 SSOT，不是來自上一個 app 的格式。
+CI 綠燈只能證明「目前測到的東西沒壞」，不能證明正式站真的沒問題。
 
 ---
 
-date: 2025-12-24
-title: SEO 分支合併前未驗證生產環境
-score: 0
-type: incident
-scope: ratewise
-tags: [seo, release, production, verification]
-summary: 根因是分支合併前只看本地變更與 CI，沒有用實際 base path 與資產路徑驗證正式部署行為；影響是 SEO 相關改動可能在生產環境才暴露圖片或路徑錯誤。
-actions:
-
-- 將正式 base path 納入 build / preview 驗證流程
-- 合併前檢查關鍵圖片與公開資產是否存在
-- 禁止依賴動態 BASE_URL 推導圖片與分享資產路徑
-  verification:
-- 使用 `VITE_*_BASE_PATH='/xxx/' pnpm build` 搭配 preview 驗證
-- 生產環境資產實際可存取
-  references:
-- 2025-12-24 歷史重大教訓
-
----
-
-SEO / 資產類變更如果不在真實 base path 下驗證，CI 綠燈也不代表正式站安全。
-
----
-
-date: 2025-12-24
-title: 圖片路徑使用動態 BASE_URL 導致 hydration
-score: 0
-type: incident
-scope: ratewise
-tags: [hydration, assets, ssg]
-summary: 根因是圖片路徑在 SSG 與 client 端使用動態 BASE_URL 拼接，導致首屏 HTML 與 hydration 後結果不一致；影響是 hydration 錯誤與資產載入失敗。
-actions:
-
-- 改為一律使用相對路徑，交由 Vite 處理 base path
-- 禁止在 component 內自行組合分享圖或 logo URL
-- 將此規則寫入歷史失敗案例與 SOP
-  verification:
-- SSG HTML 與 client hydration 結果一致
-- 圖片在不同 base path 部署下皆可正常載入
-  references:
-- 2025-12-24 歷史重大教訓
-
----
-
-在 Vite / SSG 專案裡，資產路徑越「聰明」越容易出事；相對路徑通常才是正解。
-
----
-
-date: 2025-11-29
-title: CSP strict-dynamic 導致生產環境失效
+id: incident-over-optimization-before-stability
+date: 2026-03-08
+title: 過度優化先於基礎穩定性
 score: -3
 type: incident
-scope: ratewise
-tags: [security, csp, production, ssg]
-summary: 根因是將 `strict-dynamic` 套用到 SSG 輸出，但靜態頁沒有穩定 nonce 機制可配合；影響是正式站 script 載入被 CSP 擋下，導致站點失效。
-actions:
+content_type: explanation
+scope: repo
+topics: [performance, deployment, assets]
+keywords: [over-optimization, manualchunks, scheduler-split, avif, rollback]
+aliases: [先優化後翻車, scheduler 分裂, AVIF/WebP 過早導入]
+related_entries: [incident-production-verification-gap]
+summary: 幾次事故都來自同一思維：在基礎資產、依賴邊界或回滾方案沒準備好前先做優化，例如過早考慮 AVIF/WebP、把 React 核心模組拆錯 chunk，最終把性能優化變成生產事故。
+root_cause:
 
-- 移除不適用於當前架構的 `strict-dynamic`
-- 將 CSP 管理收斂到可驗證的 worker / build 流程，而不是理論上更嚴的策略
-- 補正式站 header 驗證，避免只在本地假設 CSP 正常
+- 在缺少回滾與依賴邊界驗證時就做進階優化
+- 把 bundle size 或理論最佳化當成唯一目標
+  impact:
+- 生產站掛點或功能回歸
+- 優化收益被排障成本吃掉
+  actions:
+- 先確認基礎資產、依賴圖與 fallback 已準備好，再做進階優化
+- 對 manualChunks、圖片格式、快取策略保留最小可回滾變更
+- 每次效能優化都必須伴隨部署驗證與事故回滾方案
+  prevention:
+- 效能優化 PR 必須包含回滾點與部署驗證證據
+- 先解決真實瓶頸，再導入進階格式或拆 chunk 策略
   verification:
-- 正式站 script 可執行
-- CSP header 與部署流程一致
+- 效能改善不再伴隨功能回歸或正式站掛點
+- 依賴圖 / chunk 邊界可用 build 產物驗證
   references:
-- 2025-11-29 失敗紀錄
+- 2025-11 未標記：過度優化導致複雜化（AVIF/WebP 未準備）
+- 2026-03-03 Code Splitting 生產癱瘓事故與根因修復
 
 ---
 
-安全策略不能脫離執行架構；SSG 沒有 nonce，就不應硬套需要 nonce 的 CSP 模式。
+優化不是目的，穩定交付才是；先把系統變複雜，通常只會把 debug 成本一起放大。
 
 ---
 
-date: 2025-12-07
-title: `new Date()` / `Math.random()` 進入 SSG 渲染路徑造成 Hydration 錯誤
+id: regression-docs-tests-routes-sync
+date: 2026-03-08
+title: 文件 / 測試 / 路由未同步更新
 score: 0
-type: incident
-scope: ratewise
-tags: [hydration, ssg, rendering]
-summary: 根因是動態時間與隨機值進入 SSG 首屏渲染，造成 server 與 client 初始輸出不同；影響是 React Hydration #418 與不穩定首屏。
-actions:
+type: regression
+content_type: troubleshooting
+scope: repo
+topics: [documentation, testing, routing, ssot]
+keywords: [route-sync, xhtml-link-count, prerender, doc-drift, ssot-update]
+aliases: [同步責任漏掉, 路由更新漏同步, false red]
+related_entries: [incident-seo-public-path-ssot, incident-ci-hardcoded-audit]
+summary: 多次小問題其實都屬同一類：改了 routes、SEO 路徑、xhtml:link 數量或文件敘述，但沒有同步測試與文檔，造成 false red 或更糟的 false green。
+root_cause:
 
-- 將動態值改為 BUILD_TIME、CURRENT_YEAR 等固定來源
-- 若必須顯示 client-only 值，改於 effect 後更新或使用 `suppressHydrationWarning`
-- 將此類動態值列為 SSG 渲染禁用項
+- 變更只修改執行邏輯，未同步測試、文檔與 SSG / SEO 設定
+- 提交前缺少跨層同步檢查
+  impact:
+- 測試斷言落後於真實行為
+- 文件狀態失真，增加下次變更風險
+  actions:
+- 任何公開路由變更都同步更新 routes、SSG、sitemap、測試與文件
+- 先更新 SSOT，再更新測試斷言與文檔敘述
+- 把「變更項是否需要同步測試 / 文件 / SEO 清單」納入提交前檢查
+  prevention:
+- 路由 / SEO / 文檔變更採 checklist 驗證
+- 失敗案例優先沉澱成主題知識，而不是只留在單次 commit 訊息
   verification:
-- Hydration #418 消失
-- SSG HTML 與 client 首次 render 一致
+- 路由、文檔與測試斷言一致
+- 不再出現 xhtml:link 數量、FAQ/About prerender 或文件狀態失真
   references:
-- 2025-12-07 / 2025-12-25 Hydration 修復紀錄
+- 未標記：文檔與程式碼實作狀態不符
+- 未標記：測試預期值未同步更新（xhtml:link 數量）
+- 未標記：vite.config.ts SSG 路徑未同步 routes.tsx
 
 ---
 
-凡是會隨時間或隨機變化的值，只要出現在 SSG 首屏，就應先假定它會造成 hydration 問題。
-
----
-
-date: 2025-12-25
-title: `localStorage` 在 useState 初始化中造成 Hydration 錯誤
-score: 0
-type: incident
-scope: ratewise
-tags: [hydration, localstorage, react, ssg]
-summary: 根因是在 `useState` 初始化函數直接讀取 `localStorage` / `window`，使 server 與 client 初始 state 不一致；影響是 hydration 錯誤與行為分叉。
-actions:
-
-- useState 改用固定初始值
-- 在 `useEffect` 讀取 localStorage 後再更新 client state
-- 將 browser-only API 視為 client phase 行為，不得進入初始渲染
-  verification:
-- Hydration 錯誤消失
-- 無 window / localStorage 依賴的首屏可正常 SSG
-  references:
-- 2025-12-25 Hydration 修復紀錄
-
----
-
-任何 browser-only API 只要提早進入 render phase，就會把 SSG 與 client state 拆成兩套世界。
+大部分「莫名其妙的紅燈」都不是難 bug，而是同步責任漏掉了。
 
 ## 歷史索引（精簡）
 
@@ -1103,12 +1323,3 @@ actions:
 - 未標記日期｜+2｜✅ 成功｜Toast 模組重構（react-refresh 規則）
 - 未標記日期｜+1｜✅ 成功｜Quake-School PageLoader 拆分
 - 未標記日期｜+1｜✅ 成功｜Quake-School README.md 新增
-- 未標記日期｜未標記｜❌ 重大｜過度優化導致複雜化（AVIF/WebP 未準備）
-- 未標記日期｜未標記｜❌ 歷史｜文檔與程式碼實作狀態不符
-- 未標記日期｜未標記｜❌ 歷史｜測試預期值未同步更新（xhtml:link 數量）
-- 未標記日期｜未標記｜❌ 歷史｜vite.config.ts SSG 路徑未同步 routes.tsx
-- 未標記日期｜未標記｜⚠️ 注意｜llms.txt 包含與 Schema 相同的虛假數據
-- 未標記日期｜未標記｜⚠️ 注意｜sitemap image:caption 已被 Google 棄用
-- 未標記日期｜未標記｜⚠️ 注意｜CSP meta tag 太長導致 charset 位置超限
-- 未標記日期｜未標記｜⚠️ 注意｜`<picture>` 標籤 SSG 路徑解析問題
-- 未標記日期｜未標記｜⚠️ 注意｜E2E 頁尾 toBeVisible 假設元素在 viewport

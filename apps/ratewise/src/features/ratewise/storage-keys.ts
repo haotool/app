@@ -59,12 +59,14 @@ export const CACHE_KEYS = [STORAGE_KEYS.EXCHANGE_RATES] as const;
 /**
  * 用戶數據類型的 Keys (不可清除)
  * 註: 這些 keys 由 versionManager.ts 在清除快取時保留
+ *
+ * 遷移說明（v2.7.1+）：
+ * - fromCurrency / toCurrency / currencyConverterMode / favorites
+ *   已遷移至 Zustand store，統一由 'ratewise-converter' key 管理
+ * - 舊的個別 keys 在首次啟動時由 converterStore migration 自動清除
  */
 export const USER_DATA_KEYS = [
-  STORAGE_KEYS.CURRENCY_CONVERTER_MODE,
-  STORAGE_KEYS.FAVORITES,
-  STORAGE_KEYS.FROM_CURRENCY,
-  STORAGE_KEYS.TO_CURRENCY,
+  'ratewise-converter', // Zustand store（含 fromCurrency/toCurrency/mode/favorites）
   STORAGE_KEYS.RATE_TYPE,
   STORAGE_KEYS.CONVERSION_HISTORY,
 ] as const;

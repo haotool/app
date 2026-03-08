@@ -39,6 +39,9 @@ export default defineConfig(() => {
       environment: 'jsdom',
       setupFiles: ['./src/setupTests.ts'],
       globals: true,
+      // 使用 forks pool 確保各測試檔案以獨立 process 執行，
+      // 防止 Object.defineProperty(window.localStorage) mock 跨檔案洩漏
+      pool: 'forks',
       // [context7:vitest-dev/vitest:2025-11-18]
       // 過濾測試中預期產生的錯誤日誌（錯誤處理測試案例）
       onConsoleLog(log: string, type: 'stdout' | 'stderr'): boolean | void {

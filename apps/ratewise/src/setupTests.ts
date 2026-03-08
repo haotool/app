@@ -164,6 +164,10 @@ const ensureStorage = (target: StorageTarget): Storage => {
   return memoryStorage;
 };
 
+// 模組載入時立即初始化 storage，確保 Zustand persist middleware 初始化時能存取有效的 localStorage
+ensureStorage('localStorage');
+ensureStorage('sessionStorage');
+
 beforeEach(() => {
   ensureStorage('localStorage').clear();
   ensureStorage('sessionStorage').clear();
