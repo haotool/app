@@ -134,7 +134,7 @@ root_cause:
 - `pnpm build:ratewise`
 - `pnpm --filter @app/ratewise test`
 - `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-ssot.test.ts src/hreflang.test.ts src/jsonld.test.ts src/seo-best-practices.test.ts src/prerender.test.ts src/components/__tests__/SEOHelmet.test.tsx src/seo-truthfulness.test.ts`
-references:
+  references:
 
 - Google Search Central: FAQ rich results / localized versions / JavaScript SEO best practices
 - apps/ratewise/src/config/seo-metadata.ts
@@ -174,7 +174,7 @@ actions:
 - 新增 .changeset/fix-twd-pinned-ordering.md（後續校正為 patch）
 - 新增 5 個 sortedCurrencies 測試（PR #181）
 - 記錄錯誤修復至 CLAUDE.md Troubleshooting #9-11 / AGENTS.md 實務模式
-verification:
+  verification:
 - 90 個測試檔，1488 個測試全通過
 - PR #181 CI 全通過（Lighthouse / E2E / Quality Checks / CodeQL）
 
