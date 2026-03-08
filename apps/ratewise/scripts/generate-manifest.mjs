@@ -13,9 +13,9 @@ const currencyCount = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].l
 const versioned = (path) => `${path}?v=${BUILD_DATE}`;
 
 const manifest = {
-  name: 'RateWise - 即時匯率轉換器',
+  name: 'RateWise 匯率好工具',
   short_name: 'RateWise',
-  description: `RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 ${currencyCount} 種貨幣。快速、準確、離線可用的 PWA 匯率工具。`,
+  description: `RateWise 匯率好工具顯示臺灣銀行牌告實際買賣價（非中間價），支援 ${currencyCount} 種貨幣換算，每 5 分鐘同步，離線可用的 PWA 匯率工具。`,
   theme_color: '#8B5CF6',
   background_color: '#E8ECF4',
   display: 'standalone',
