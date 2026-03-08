@@ -405,6 +405,49 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 
 **ratewise CSP connect-src 必要域名**：`googletagmanager.com`（GA4 配置請求）、`google-analytics.com`、`region1.google-analytics.com`、`analytics.google.com`、`cdn.jsdelivr.net`
 
+## Cloudflare SEO 直通實踐（CF SEO Straight-Path Patterns）
+
+基於 2026-03 SEO 審核執行歷史提煉，避免重蹈彎路。
+
+### 1. Email 連結 — 永遠用 `MailtoLink`
+
+**問題根源**：CF Email Obfuscation 在邊緣將 `<a href="mailto:...">` 改寫為 `/cdn-cgi/l/email-protection#…`，無 JS 爬蟲存取返回 404，SEO 審核報 broken link。
+
+**直通做法**：
+
+```tsx
+// ❌ 絕對不要在 SSG 頁面用 raw mailto
+<a href={`mailto:${APP_INFO.email}`}>{APP_INFO.email}</a>;
+
+// ✅ 永遠用 MailtoLink（SSG 無 href → CF 不動，hydration 後注入）
+import { MailtoLink } from '../components/MailtoLink';
+<MailtoLink email={APP_INFO.email} className="underline" />;
+```
+
+影響範圍：所有 SSG 頁面（FAQ、About、Privacy、ErrorBoundary、SkeletonLoader）。
+
+### 2. squirrelscan 使用規則
+
+- **範圍**：掃描整個 `app.haotool.org` 域，分數混入 nihonname / park-keeper / quake-school — ratewise 問題需以 `/ratewise/` 路徑篩選
+- **假陽性**：`CSP`、`X-Frame-Options` 警告 = squirrelscan 被 CF 邊緣保護封鎖，無法看到 security-headers Worker 注入的標頭 → **不修，用 `curl` 驗證**
+- **驗證優先**：`curl -s --compressed <URL> -D - -o /dev/null | grep -i 'content-security-policy\|x-frame-options'`
+
+### 3. CF Wrangler OAuth vs CF API Token
+
+- `~/Library/Preferences/.wrangler/config/default.toml` 的 token 是 wrangler OAuth token（約 87 字元），**不能**直接用於 CF API v4 Bearer header → 返回 `{"code":10000,"message":"Authentication error"}`
+- 要用 CF API：需 `CLOUDFLARE_API_TOKEN` env var 或 `wrangler login` 重新授權
+- 查 Zone ID / 設定：`npx wrangler whoami` 確認；部署前先確認登入有效
+
+### 4. noindex 頁面 — 不加入 sitemap（正確行為）
+
+| 頁面                  | 原因                  |
+| --------------------- | --------------------- |
+| `/ratewise/settings`  | 功能頁，無 SEO 價值   |
+| `/ratewise/favorites` | 個人化頁，無 SEO 價值 |
+| `/ratewise/multi`     | 功能頁，無 SEO 價值   |
+
+squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不需修正。
+
 ## 外部寫作與 SOP 格式基準（2026-02-27 查詢）
 
 本文件格式與寫法結合 `.example/config/CLAUDE.md` 的簡潔風格，並參考：
@@ -418,6 +461,8 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 
 | 日期       | 版本 | 變更摘要                                                                                                                      |
 | ---------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-08 | v3.9 | 新增「CF SEO 直通實踐」：MailtoLink 模式、squirrelscan 假陽性識別、CF API token 限制、noindex 頁面正確行為                    |
+| 2026-03-08 | v3.8 | 補充 002 v2 結構化索引規格與 FAQ/SEOHelmet Troubleshooting                                                                    |
 | 2026-03-08 | v3.7 | 補充 `002` 操作 / incident 規則：新紀錄使用 entry blocks，失敗紀錄必須寫出根因、影響、修復與預防                              |
 | 2026-03-08 | v3.6 | 新增 Troubleshooting #7-#8：FAQPage 重複與 `SEOHelmet` client head 重複/殘留的極簡解法                                        |
 | 2026-03-07 | v3.5 | 新增 Troubleshooting #6「Prettier 格式漂移」：prebuild 產出物應加入 `.prettierignore`，禁止 prebuild script 呼叫 Prettier API |
@@ -429,5 +474,5 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 
 ---
 
-**最後更新**: 2026-03-08T04:54:13+0800
-**版本**: v3.8（補充 002 v2 結構化索引規格與 FAQ/SEOHelmet Troubleshooting）
+**最後更新**: 2026-03-08T10:35:00+0800
+**版本**: v3.9（新增 CF SEO 直通實踐）
