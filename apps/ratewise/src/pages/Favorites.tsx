@@ -25,7 +25,7 @@ import {
   type DraggableStateSnapshot,
 } from '@hello-pangea/dnd';
 import { motion } from 'motion/react';
-import { AlertCircle, RefreshCw, Star, Clock, Trash2, GripVertical } from 'lucide-react';
+import { AlertCircle, RefreshCw, Star, Clock, Trash2 } from 'lucide-react';
 import { segmentedSwitch, transitions } from '../config/animations';
 import { ConversionHistory } from '../features/ratewise/components/ConversionHistory';
 import { SEOHelmet } from '../components/SEOHelmet';
@@ -36,24 +36,7 @@ import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 import type { RateType, CurrencyCode, ConversionHistoryEntry } from '../features/ratewise/types';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
-
-/**
- * Get all available currency codes sorted: favorites first, then rest alphabetically
- * 取得所有可用幣別代碼並排序：收藏優先，其餘按字母順序
- *
- * @param favorites - Array of favorite currency codes / 收藏幣別代碼陣列
- * @returns Sorted array of currency codes / 排序後的幣別代碼陣列
- */
-function getAllCurrenciesSorted(favorites: CurrencyCode[]): CurrencyCode[] {
-  const allCodes = Object.keys(CURRENCY_DEFINITIONS).filter(
-    (code) => code !== 'TWD',
-  ) as CurrencyCode[];
-  const favSet = new Set(favorites);
-
-  // Favorites in their saved order, then non-favorites alphabetically
-  const nonFavorites = allCodes.filter((code) => !favSet.has(code)).sort();
-  return [...favorites, ...nonFavorites];
-}
+import { getAllCurrenciesSorted } from './favorites-utils';
 
 export default function Favorites() {
   const { t } = useTranslation();
@@ -99,8 +82,12 @@ export default function Favorites() {
 
   /**
    * 處理拖曳結束事件
-   * - 支援所有貨幣拖曳（包含未收藏的）
-   * - 拖曳未收藏貨幣時自動加入收藏
+   *
+   * allCurrencies[0] 永遠是 TWD（isDragDisabled），
+   * 故 source/destination.index >= 1，需 -1 轉換成 favorites 陣列的索引。
+   *
+   * - 拖曳已收藏貨幣：重新排序
+   * - 拖曳未收藏貨幣：自動加入收藏並置於目標位置
    */
   const handleDragEnd = useCallback(
     (result: DropResult) => {
@@ -108,27 +95,25 @@ export default function Favorites() {
       if (result.source.index === result.destination.index) return;
 
       const draggedCode = allCurrencies[result.source.index];
-      if (!draggedCode) return;
+      // TWD 不可拖曳（isDragDisabled），此處為防禦性檢查
+      if (!draggedCode || draggedCode === 'TWD') return;
 
-      // 計算新的收藏列表順序
-      const isFavorite = favorites.includes(draggedCode);
+      // allCurrencies 中 index 0 = TWD，favorites 索引 = allCurrencies 索引 - 1
+      const destFavIndex = Math.max(0, result.destination.index - 1);
+
+      const isFav = favorites.includes(draggedCode);
       let newFavorites: CurrencyCode[];
 
-      if (isFavorite) {
+      if (isFav) {
         // 已收藏：重新排序
         const favIndex = favorites.indexOf(draggedCode);
         newFavorites = [...favorites];
         newFavorites.splice(favIndex, 1);
-
-        // 計算目標位置在收藏列表中的索引
-        const destIndex = Math.min(result.destination.index, favorites.length - 1);
-        newFavorites.splice(destIndex, 0, draggedCode);
+        newFavorites.splice(Math.min(destFavIndex, newFavorites.length), 0, draggedCode);
       } else {
         // 未收藏：拖曳即加入收藏
         newFavorites = [...favorites];
-        // 計算目標位置在收藏列表中的索引
-        const destIndex = Math.min(result.destination.index, favorites.length);
-        newFavorites.splice(destIndex, 0, draggedCode);
+        newFavorites.splice(Math.min(destFavIndex, newFavorites.length), 0, draggedCode);
       }
 
       reorderFavorites(newFavorites);
@@ -282,60 +267,51 @@ export default function Favorites() {
                     }`}
                   >
                     {allCurrencies.map((code, index) => {
+                      const isTWD = code === 'TWD';
                       const isFavorite = favorites.includes(code);
                       return (
-                        <Draggable key={code} draggableId={code} index={index}>
+                        <Draggable
+                          key={code}
+                          draggableId={code}
+                          index={index}
+                          isDragDisabled={isTWD}
+                        >
                           {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               style={provided.draggableProps.style}
-                              className={`card p-4 flex items-center justify-between group ${
+                              data-testid={`currency-row-${code}`}
+                              className={`card p-4 flex items-center gap-3 group ${
                                 snapshot.isDragging
                                   ? 'shadow-2xl scale-[1.02] bg-surface ring-2 ring-primary/40 z-50'
                                   : 'hover:shadow-md'
                               }`}
                             >
-                              {/* 拖曳手柄
+                              {/* 左側：星星欄位
                                *
-                               * IMPORTANT: 移除 touch-none 以允許頁面滾動
-                               * @hello-pangea/dnd 會自行處理觸控事件的區分（滾動 vs 拖曳）
-                               * 使用 touch-manipulation 啟用瀏覽器最佳化觸控處理
-                               *
-                               * @see https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/guides/how-we-use-dom-events.md
+                               * TWD  → 固定實心星（裝飾用，非互動元素）
+                               * 其他 → 可切換收藏的按鈕
                                */}
-                              <div
-                                {...provided.dragHandleProps}
-                                className="mr-2 cursor-grab active:cursor-grabbing touch-manipulation"
-                                aria-label={t('favorites.dragHandle')}
-                              >
-                                <GripVertical
-                                  size={16}
-                                  className={`transition ${
-                                    snapshot.isDragging
-                                      ? 'text-primary opacity-100'
-                                      : 'text-text-muted opacity-40 group-hover:opacity-70'
-                                  }`}
-                                />
-                              </div>
-
-                              {/* 左側：點擊星星或貨幣資訊 → 切換收藏狀態 */}
-                              <div
-                                className="flex items-center gap-3 flex-1 cursor-pointer active:scale-[0.99] transition"
-                                onClick={() => !snapshot.isDragging && toggleFavorite(code)}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') toggleFavorite(code);
-                                }}
-                                aria-label={
-                                  isFavorite
-                                    ? `${t('favorites.removeFavorite')} ${code}`
-                                    : `${t('favorites.addFavorite')} ${code}`
-                                }
-                              >
-                                {/* 收藏星號 */}
-                                <div className="hover:scale-110 transition">
+                              {isTWD ? (
+                                <div
+                                  className="w-7 flex-shrink-0 flex items-center justify-center"
+                                  aria-hidden="true"
+                                  data-testid="twd-star-fixed"
+                                >
+                                  <Star className="text-favorite" size={18} fill="currentColor" />
+                                </div>
+                              ) : (
+                                <button
+                                  className="w-7 flex-shrink-0 flex items-center justify-center p-0.5 hover:scale-110 transition"
+                                  onClick={() => toggleFavorite(code)}
+                                  aria-label={
+                                    isFavorite
+                                      ? `${t('favorites.removeFavorite')} ${code}`
+                                      : `${t('favorites.addFavorite')} ${code}`
+                                  }
+                                  data-testid={`star-toggle-${code}`}
+                                >
                                   <Star
                                     className={
                                       isFavorite
@@ -345,22 +321,52 @@ export default function Favorites() {
                                     size={18}
                                     fill={isFavorite ? 'currentColor' : 'none'}
                                   />
-                                </div>
-                                {/* 國旗 - 固定寬度避免變形 */}
-                                <span className="text-2xl w-8 text-center leading-none">
+                                </button>
+                              )}
+
+                              {/* 中間：貨幣資訊 + 拖曳區域
+                               *
+                               * TWD  → cursor-default（不可拖）
+                               * 其他 → dragHandleProps 套用於此區塊
+                               *        使用者在 [幣別名稱] 與 [換算] 之間的任意空白處拖曳
+                               *
+                               * IMPORTANT: 移除 touch-none 以允許頁面滾動
+                               * @hello-pangea/dnd 會自行處理觸控事件的區分（滾動 vs 拖曳）
+                               * 使用 touch-manipulation 啟用瀏覽器最佳化觸控處理
+                               *
+                               * @see https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/guides/how-we-use-dom-events.md
+                               */}
+                              <div
+                                {...(isTWD ? {} : provided.dragHandleProps)}
+                                className={`flex items-center gap-3 flex-1 min-w-0 ${
+                                  isTWD
+                                    ? 'cursor-default'
+                                    : 'cursor-grab active:cursor-grabbing touch-manipulation'
+                                }`}
+                                aria-label={isTWD ? undefined : t('favorites.dragHandle')}
+                                data-testid={isTWD ? 'twd-info' : `drag-zone-${code}`}
+                              >
+                                {/* 國旗 */}
+                                <span className="text-2xl w-8 text-center leading-none flex-shrink-0">
                                   {CURRENCY_DEFINITIONS[code]?.flag}
                                 </span>
-                                <div>
+                                {/* 幣別名稱 */}
+                                <div className="min-w-0">
                                   <div className="font-bold text-sm">{code}</div>
                                   <div className="text-[10px] opacity-60">
                                     {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
+                                    {isTWD && (
+                                      <span className="ml-1 opacity-50">
+                                        · {t('favorites.baseCurrency') || '基準幣'}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               </div>
 
-                              {/* 右側：點擊 → 進入單幣別換算 */}
+                              {/* 右側：換算按鈕 → 進入單幣別換算頁 */}
                               <div
-                                className="flex items-center gap-2 cursor-pointer px-2 py-1 -mr-2 rounded-lg hover:bg-primary/10 active:scale-[0.97] transition"
+                                className="flex items-center gap-2 cursor-pointer px-2 py-1 -mr-2 rounded-lg hover:bg-primary/10 active:scale-[0.97] transition flex-shrink-0"
                                 onClick={() => !snapshot.isDragging && handleFavoriteClick(code)}
                                 role="button"
                                 tabIndex={0}

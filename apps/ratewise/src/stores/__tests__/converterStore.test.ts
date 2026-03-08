@@ -116,6 +116,39 @@ describe('converterStore', () => {
       useConverterStore.getState().toggleFavorite('USD');
       expect(useConverterStore.getState().favorites).toEqual(['JPY', 'EUR']);
     });
+
+    // TWD 永久收藏保護
+    it('is a no-op when called with TWD — TWD cannot be toggled off', () => {
+      useConverterStore.setState({ favorites: ['JPY', 'USD'] });
+      useConverterStore.getState().toggleFavorite('TWD');
+      expect(useConverterStore.getState().favorites).not.toContain('TWD');
+    });
+
+    it('remains a complete no-op even if TWD is somehow in favorites array', () => {
+      useConverterStore.setState({ favorites: ['TWD', 'JPY'] });
+      const before = useConverterStore.getState().favorites;
+      useConverterStore.getState().toggleFavorite('TWD');
+      // toggleFavorite('TWD') 是完全 no-op：不移除、不新增，狀態不變
+      expect(useConverterStore.getState().favorites).toEqual(before);
+      expect(useConverterStore.getState().favorites).toContain('JPY');
+    });
+  });
+
+  // ── TWD 永久收藏（基準幣） ────────────────────────────────────────────────
+  describe('TWD as permanent base currency', () => {
+    it('never appears in favorites array after reorderFavorites', () => {
+      useConverterStore.getState().reorderFavorites(['TWD', 'JPY', 'USD']);
+      expect(useConverterStore.getState().favorites).not.toContain('TWD');
+    });
+
+    it('__validateAndSanitize removes TWD if corrupted into favorites', () => {
+      useConverterStore.setState({ favorites: ['TWD', 'JPY', 'USD'] });
+      useConverterStore.getState().__validateAndSanitize();
+      const { favorites } = useConverterStore.getState();
+      expect(favorites).not.toContain('TWD');
+      expect(favorites).toContain('JPY');
+      expect(favorites).toContain('USD');
+    });
   });
 
   // ── reorderFavorites ─────────────────────────────────────────────────────

@@ -108,13 +108,17 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
   if (!Array.isArray(state.favorites)) {
     patch.favorites = [...DEFAULT_FAVORITES] as CurrencyCode[];
     dirty = true;
-  } else if (
-    (state.favorites as unknown[]).some((c) => typeof c !== 'string' || !isCurrencyCode(c))
-  ) {
-    patch.favorites = (state.favorites as unknown[]).filter(
-      (c): c is CurrencyCode => typeof c === 'string' && isCurrencyCode(c),
+  } else {
+    const hasInvalid = (state.favorites as unknown[]).some(
+      (c) => typeof c !== 'string' || !isCurrencyCode(c),
     );
-    dirty = true;
+    const hasTWD = (state.favorites as unknown[]).includes('TWD');
+    if (hasInvalid || hasTWD) {
+      patch.favorites = (state.favorites as unknown[]).filter(
+        (c): c is CurrencyCode => typeof c === 'string' && isCurrencyCode(c) && c !== 'TWD',
+      );
+      dirty = true;
+    }
   }
 
   return dirty ? patch : null;
@@ -194,14 +198,19 @@ export const useConverterStore = create<ConverterState>()(
           toCurrency: state.fromCurrency,
         })),
 
-      toggleFavorite: (code) =>
+      toggleFavorite: (code) => {
+        // TWD 為基準幣，永遠不加入收藏陣列
+        if (code === 'TWD') return;
         set((state) => ({
           favorites: state.favorites.includes(code)
             ? state.favorites.filter((c) => c !== code)
             : [...state.favorites, code],
-        })),
+        }));
+      },
 
-      reorderFavorites: (codes) => set({ favorites: codes }),
+      reorderFavorites: (codes) =>
+        // TWD 不允許進入收藏陣列
+        set({ favorites: codes.filter((c) => c !== 'TWD') }),
 
       isFavorite: (code) => get().favorites.includes(code),
 
