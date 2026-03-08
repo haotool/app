@@ -11,7 +11,6 @@ import { APP_INFO } from '../config/app-info';
 import {
   type AlternateLink,
   type BreadcrumbItem,
-  type FAQEntry,
   type HowToData,
   type JsonLdBlock,
   DEFAULT_LOCALE,
@@ -19,6 +18,7 @@ import {
   SITE_SEO,
   buildAbsoluteAssetUrl,
   buildCanonicalUrl,
+  buildDefaultAlternates,
   buildShareImageJsonLd,
   buildSiteJsonLd,
 } from '../config/seo-metadata';
@@ -35,7 +35,6 @@ interface SEOProps {
   alternates?: AlternateLink[];
   keywords?: string[];
   updatedTime?: string;
-  faq?: FAQEntry[];
   howTo?: HowToData;
   breadcrumb?: BreadcrumbItem[];
   robots?: string;
@@ -48,19 +47,6 @@ const SEO_HELMET_MANAGED_VALUE = 'managed';
 const SEO_HELMET_STRUCTURED_DATA_VALUE = 'structured-data';
 const SEO_HELMET_MANAGED_SELECTOR = `[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_MANAGED_VALUE}"]`;
 const SEO_HELMET_STRUCTURED_DATA_SELECTOR = `[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_STRUCTURED_DATA_VALUE}"]`;
-
-const buildFaqSchema = (faq: FAQEntry[]): JsonLdBlock => ({
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: faq.map(({ question, answer }) => ({
-    '@type': 'Question',
-    name: question,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: answer,
-    },
-  })),
-});
 
 const buildHowToSchema = (howTo: HowToData, url: string): JsonLdBlock => ({
   '@context': 'https://schema.org',
@@ -206,7 +192,6 @@ export function SEOHelmet({
   alternates,
   keywords,
   updatedTime = SITE_SEO.updatedTime,
-  faq,
   howTo,
   breadcrumb,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
@@ -215,12 +200,7 @@ export function SEOHelmet({
   const canonicalUrl = canonical ? buildCanonicalUrl(canonical) : buildCanonicalUrl(pathname);
   const ogImageUrl = buildAbsoluteAssetUrl(ogImage);
   const keywordsContent = (keywords?.length ? keywords : SITE_SEO.keywords).join(', ');
-  const alternatesToRender = alternates?.length
-    ? alternates
-    : [
-        { hrefLang: 'x-default', href: canonicalUrl },
-        { hrefLang: DEFAULT_LOCALE, href: canonicalUrl },
-      ];
+  const alternatesToRender = alternates?.length ? alternates : buildDefaultAlternates(canonicalUrl);
   const normalizedAlternates = alternatesToRender.map(({ href, hrefLang }) => ({
     hrefLang,
     href: buildCanonicalUrl(href),
@@ -238,10 +218,6 @@ export function SEOHelmet({
       ? []
       : [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 匯率換算工具預覽圖`)]),
   ];
-
-  if (faq?.length) {
-    structuredData.push(buildFaqSchema(faq));
-  }
 
   if (howTo) {
     structuredData.push(buildHowToSchema(howTo, canonicalUrl));

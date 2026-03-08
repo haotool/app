@@ -305,14 +305,14 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
     const aboutHtml = resolve(distPath, 'about/index.html');
     const indexHtml = resolve(distPath, 'index.html');
 
-    it('FAQ page should have FAQPage JSON-LD in static HTML', () => {
+    it('FAQ page should NOT have FAQPage JSON-LD in static HTML', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
       // vite-react-ssg Head adds data-rh="true" attribute
       expect(content).toMatch(/<script[^>]*type="application\/ld\+json"/);
-      expect(content).toMatch(/"@type":\s*"FAQPage"/);
-      expect(content).toContain('"mainEntity"');
+      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+      expect(content).toMatch(/"@type":\s*"Organization"/);
     });
 
     it('About page should have Organization JSON-LD', () => {

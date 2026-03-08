@@ -77,18 +77,23 @@ describe('SEOHelmet Component', () => {
       }).not.toThrow();
     });
 
-    it('should render without errors with FAQ prop', () => {
+    it('should render without errors with HowTo prop', () => {
       expect(() => {
         render(
           <HelmetProvider>
             <SEOHelmet
               title="Test Page"
-              faq={[
-                {
-                  question: 'Test Question?',
-                  answer: 'Test Answer',
-                },
-              ]}
+              howTo={{
+                name: 'How to do something',
+                description: 'Description',
+                steps: [
+                  {
+                    position: 1,
+                    name: 'Step 1',
+                    text: 'Do this',
+                  },
+                ],
+              }}
             />
           </HelmetProvider>,
         );
@@ -131,7 +136,6 @@ describe('SEOHelmet Component', () => {
                 { name: 'Home', item: '/' },
                 { name: 'Test', item: '/test/' },
               ]}
-              faq={[{ question: 'Q?', answer: 'A' }]}
               howTo={{
                 name: 'How to test',
                 description: 'Testing guide',
@@ -211,7 +215,11 @@ describe('SEOHelmet Component', () => {
             title="測試頁"
             description="新的描述"
             canonical="/test/"
-            faq={[{ question: 'Q?', answer: 'A' }]}
+            howTo={{
+              name: 'How to test',
+              description: 'Testing guide',
+              steps: [{ position: 1, name: 'Step 1', text: 'Test' }],
+            }}
           />
         </HelmetProvider>,
       );
@@ -241,7 +249,8 @@ describe('SEOHelmet Component', () => {
       expect(structuredDataScript).not.toBeNull();
       expect(structuredDataScript).toHaveAttribute('data-rh', 'true');
       expect(structuredDataScript).toHaveAttribute('data-seo-helmet', 'structured-data');
-      expect(structuredDataScript?.textContent).toContain('"@type":"FAQPage"');
+      expect(structuredDataScript?.textContent).toContain('"@type":"HowTo"');
+      expect(structuredDataScript?.textContent).not.toContain('"@type":"FAQPage"');
     });
 
     it('should remove structured data on noindex pages', () => {
@@ -270,7 +279,11 @@ describe('SEOHelmet Component', () => {
             title="會被清掉的頁面"
             description="這組 metadata 應該在卸載後消失"
             canonical="/cleanup/"
-            faq={[{ question: 'Q?', answer: 'A' }]}
+            howTo={{
+              name: 'How to cleanup',
+              description: 'Cleanup guide',
+              steps: [{ position: 1, name: 'Step 1', text: 'Cleanup' }],
+            }}
           />
         </HelmetProvider>,
       );
@@ -301,7 +314,11 @@ describe('SEOHelmet Component', () => {
           { hrefLang: 'x-default', href: '/stable/' },
           { hrefLang: 'zh-TW', href: '/stable/' },
         ],
-        faq: [{ question: 'Q?', answer: 'A' }],
+        howTo: {
+          name: 'How to stay stable',
+          description: 'Stable guide',
+          steps: [{ position: 1, name: 'Step 1', text: 'Stay stable' }],
+        },
       };
 
       const { rerender } = render(

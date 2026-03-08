@@ -1,7 +1,7 @@
 /** JSON-LD 結構化資料測試 - 驗證 SEOHelmet 統一管理 */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
@@ -94,9 +94,9 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
     const seoMetadataPath = resolve(__dirname, 'config/seo-metadata.ts');
     const seoMetadata = readFileSync(seoMetadataPath, 'utf-8');
 
-    it('should define HowTo and FAQ schemas in seo-metadata.ts', () => {
+    it('should define HowTo and homepage FAQ content in seo-metadata.ts', () => {
       expect(seoMetadata).toContain('HOMEPAGE_HOW_TO');
-      expect(seoMetadata).toContain('HOMEPAGE_FAQ');
+      expect(seoMetadata).toContain('HOMEPAGE_FAQ_CONTENT');
       expect(seoMetadata).toContain("'@type': 'ImageObject'");
     });
 
@@ -106,33 +106,22 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
     });
   });
 
-  describe('🟢 FAQPage Schema 不得包含 url 欄位（防止 Google 欄位重複錯誤）', () => {
+  describe('🟢 FAQ rich result 最佳實踐', () => {
     const seoHelmetPath = resolve(__dirname, 'components/SEOHelmet.tsx');
     const seoHelmetContent = readFileSync(seoHelmetPath, 'utf-8');
+    const faqHtmlPath = resolve(__dirname, '../dist/faq/index.html');
 
-    it('buildFaqSchema should NOT include url field to prevent Google duplicate field error', () => {
-      // 提取 buildFaqSchema 函式內容，確認無 url 欄位
-      const faqSchemaMatch = /const buildFaqSchema\s*=[\s\S]*?(?=\nconst build)/.exec(
-        seoHelmetContent,
-      );
-      expect(faqSchemaMatch).toBeTruthy();
-      if (faqSchemaMatch) {
-        expect(faqSchemaMatch[0]).not.toContain('url,');
-        expect(faqSchemaMatch[0]).not.toContain('url:');
-      }
+    it('SEOHelmet should NOT define FAQPage schema builder', () => {
+      expect(seoHelmetContent).not.toContain('buildFaqSchema');
+      expect(seoHelmetContent).not.toContain("'@type': 'FAQPage'");
     });
 
-    it('FAQPage schema should only have @context, @type, and mainEntity fields', () => {
-      // 驗證 buildFaqSchema 僅含 @context、@type、mainEntity
-      const faqSchemaMatch = /const buildFaqSchema\s*=[\s\S]*?(?=\nconst build)/.exec(
-        seoHelmetContent,
-      );
-      expect(faqSchemaMatch).toBeTruthy();
-      if (faqSchemaMatch) {
-        expect(faqSchemaMatch[0]).toContain("'@context': 'https://schema.org'");
-        expect(faqSchemaMatch[0]).toContain("'@type': 'FAQPage'");
-        expect(faqSchemaMatch[0]).toContain('mainEntity');
-      }
+    it('FAQ prerendered HTML should NOT contain FAQPage JSON-LD', () => {
+      if (!existsSync(faqHtmlPath)) return;
+
+      const faqHtmlContent = readFileSync(faqHtmlPath, 'utf-8');
+      expect(faqHtmlContent).not.toContain('"@type":"FAQPage"');
+      expect(faqHtmlContent).not.toContain('"@type": "FAQPage"');
     });
   });
 

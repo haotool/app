@@ -43,7 +43,7 @@ export interface SEOPageMetadata {
   alternates?: AlternateLink[];
   keywords?: string[];
   updatedTime?: string;
-  faq?: FAQEntry[];
+  faqContent?: FAQEntry[];
   howTo?: HowToData;
   breadcrumb?: BreadcrumbItem[];
   robots?: string;
@@ -60,6 +60,12 @@ export interface HomepageContent {
   intro: string;
   highlights: string[];
   quickLinks: HomepageQuickLink[];
+}
+
+export interface HomepageSEOContent extends SEOPageMetadata {
+  content: HomepageContent;
+  howTo: HowToData;
+  faqContent: FAQEntry[];
 }
 
 export interface AuthorityGuideSection {
@@ -110,6 +116,7 @@ const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString();
 const ASSET_VERSION = `v=${BUILD_TIME.replace(/[-T:Z.]/g, '').slice(0, 8) || 'dev'}`;
 
 export const DEFAULT_LOCALE = 'zh-TW' as const;
+export const SEO_INDEXABLE_LOCALES = [DEFAULT_LOCALE] as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
 export const DEFAULT_TITLE =
   'RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價';
@@ -188,6 +195,15 @@ export function buildCanonicalUrl(pathname?: string): string {
   }
   const normalizedPath = `${ensureLeadingSlash(pathname).replace(/\/+$/, '')}/`;
   return `${SITE_BASE_URL}${normalizedPath.replace(/^\//, '')}`;
+}
+
+export function buildDefaultAlternates(pathname?: string): AlternateLink[] {
+  const canonicalUrl = buildCanonicalUrl(pathname);
+
+  return [
+    { hrefLang: 'x-default', href: canonicalUrl },
+    ...SEO_INDEXABLE_LOCALES.map((locale) => ({ hrefLang: locale, href: canonicalUrl })),
+  ];
 }
 
 export function withAssetVersion(url: string): string {
@@ -312,7 +328,7 @@ export function buildArticleJsonLd(
   };
 }
 
-export const HOMEPAGE_FAQ = [
+export const HOMEPAGE_FAQ_CONTENT = [
   {
     question: 'RateWise 和其他匯率工具有什麼不同？',
     answer:
@@ -384,7 +400,7 @@ export const HOMEPAGE_SEO = {
   description: SITE_SEO.description,
   pathname: '/',
   keywords: [...SITE_SEO.keywords],
-  faq: [...HOMEPAGE_FAQ],
+  faqContent: [...HOMEPAGE_FAQ_CONTENT],
   howTo: HOMEPAGE_HOW_TO,
   jsonLd: [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`)],
   content: {
@@ -403,7 +419,7 @@ export const HOMEPAGE_SEO = {
       { href: '/guide/', label: '使用指南' },
     ],
   },
-} as const satisfies SEOPageMetadata & { content: HomepageContent };
+} as const satisfies HomepageSEOContent;
 
 export const FAQ_PAGE_ENTRIES = [
   {
@@ -521,7 +537,7 @@ export const FAQ_PAGE_SEO = {
     { name: 'RateWise 首頁', item: '/' },
     { name: '常見問題', item: '/faq/' },
   ],
-  faq: [...FAQ_PAGE_ENTRIES],
+  faqContent: [...FAQ_PAGE_ENTRIES],
   jsonLd: buildArticleJsonLd(
     '常見問題 — RateWise 匯率好工具 FAQ 解答',
     'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算。',
@@ -638,7 +654,7 @@ export const ABOUT_PAGE_SEO = {
     { name: 'RateWise 首頁', item: '/' },
     { name: '關於我們', item: '/about/' },
   ],
-  faq: [...ABOUT_PAGE_FAQ],
+  faqContent: [...ABOUT_PAGE_FAQ],
   jsonLd: buildArticleJsonLd(
     '關於 RateWise 匯率好工具 - 資料來源與技術特色',
     `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。`,
@@ -687,7 +703,7 @@ export const SELL_RATE_VS_MID_RATE_PAGE = {
       ],
     },
   ],
-  faq: [
+  faqContent: [
     {
       question: '為什麼中間價看起來比較優惠？',
       answer:
@@ -749,7 +765,7 @@ export const CASH_VS_SPOT_RATE_PAGE = {
       ],
     },
   ],
-  faq: [
+  faqContent: [
     {
       question: '臨櫃換外幣要看現金還是即期？',
       answer: '臨櫃換現鈔通常看現金賣出；若是把外幣現鈔換回台幣，則看現金買入。',
@@ -808,7 +824,7 @@ export const CARD_RATE_GUIDE_PAGE = {
       ],
     },
   ],
-  faq: [
+  faqContent: [
     {
       question: '海外刷卡時應該選台幣還是當地貨幣？',
       answer:

@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-08T04:54:01+08:00
-> **當前總分**: 1120（初始分: 100）
+> **最後更新**: 2026-03-08T15:10:00+08:00
+> **當前總分**: 1122（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -25,6 +25,7 @@
 
 | 分數 | 事項                                            | 日期       |
 | ---- | ----------------------------------------------- | ---------- |
+| +2   | FAQ rich result 範圍收斂與 alternates SSOT 重構 | 2026-03-08 |
 | +2   | 002 v2 結構化索引規格與主題分類升級             | 2026-03-08 |
 | +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理  | 2026-03-08 |
 | +1   | SEOHelmet effect 依賴穩定化                     | 2026-03-08 |
@@ -123,6 +124,47 @@ actions:
   verification:
 - 90 個測試檔，1488 個測試全通過
 - PR #181 CI 全通過（Lighthouse / E2E / Quality Checks / CodeQL）
+
+---
+
+id: ratewise-seo-ssot-faq-scope
+date: 2026-03-08
+title: FAQ rich result 範圍收斂與 alternates SSOT 重構
+score: +2
+type: success
+content_type: reference
+scope: ratewise
+topics: [seo, ssot, testing, documentation]
+keywords: [faqpage, hreflang, alternates, canonical, json-ld, tdd]
+aliases: [seo-ssot, faq-rich-result, hreflang-ssot]
+related_entries: [fix-twd-pinned-multi-ordering, log-v2-structured-indexing]
+summary: 依 Google Search Central 最佳實踐，移除不適用於 RateWise 的 FAQ rich result schema，並將 fallback alternates 與首頁 FAQ 內容收斂為單一 SSOT，讓 SEO 測試改為驗證行為而非綁定內部實作。
+root_cause: >
+SEOHelmet 同時承擔 FAQ 內容與 FAQ rich result schema 輸出責任，fallback alternates 也散落在 component 內，
+導致規則不夠集中、測試過度依賴字串實作細節，未來容易在重構時產生 SEO 回歸。
+impact: >
+若持續沿用 FAQPage schema，可能偏離 Google 現行 rich result 支援範圍；
+alternates 與 FAQ 內容責任不清，也會提高 head、prerender 與 sitemap 驗證的維護成本。
+actions:
+
+- 新增 `SEO_INDEXABLE_LOCALES` 與 `buildDefaultAlternates()` 作為 alternates SSOT
+- 將 `faq` 改名為 `faqContent`，把 FAQ 內容與 rich result schema 責任分離
+- 移除 `SEOHelmet` 內的 FAQPage schema builder
+- 新增 `seo-ssot.test.ts`，並重構 `hreflang` / `jsonld` / `prerender` / `SEOHelmet` 測試
+- 新增 `docs/dev/039_ratewise_seo_ssot_tdd_spec.md` 規格文件
+  prevention: >
+  後續若要擴充多語 SEO 或 structured data，必須先擴充 `seo-metadata.ts` 的 SSOT helper 與 metadata 型別，
+  再由 component 消費；測試優先驗證 helper 回傳值、prerender 結果與公開 HTML 輸出。
+  verification:
+
+- `pnpm --filter @app/ratewise exec tsc --noEmit`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-ssot.test.ts src/hreflang.test.ts src/jsonld.test.ts src/seo-best-practices.test.ts src/prerender.test.ts src/components/__tests__/SEOHelmet.test.tsx src/seo-truthfulness.test.ts`
+- `pnpm build:ratewise`
+  references:
+
+- Google Search Central FAQPage docs
+- Google localized versions / hreflang docs
+- docs/dev/039_ratewise_seo_ssot_tdd_spec.md
 
 ---
 

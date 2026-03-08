@@ -80,7 +80,7 @@ export const CURRENCY_QUICK_AMOUNTS = {
   MYR: [10, 20, 50, 100, 500], // 馬來幣：與新加坡幣類似
 } as const;
 
-/** @deprecated 首頁 FAQ SSOT 已移至 config/seo-metadata.ts HOMEPAGE_FAQ，此處僅保留向後相容 */
+/** @deprecated 首頁 FAQ SSOT 已移至 config/seo-metadata.ts HOMEPAGE_FAQ_CONTENT，此處僅保留向後相容 */
 export const HOMEPAGE_FAQ = [
   {
     question: 'RateWise 和其他匯率工具有什麼不同？',
