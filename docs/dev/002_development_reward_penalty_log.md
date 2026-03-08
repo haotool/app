@@ -93,6 +93,39 @@
 
 ---
 
+id: fix-twd-pinned-multi-ordering
+date: 2026-03-09
+title: 修復 sortedCurrencies 未固定 TWD 與排序不一致
+score: +3
+content_type: incident
+topics: [bugfix, sorting, multi-converter, favorites, tdd]
+keywords: [sortedCurrencies, TWD, favorites, getAllCurrenciesSorted, useCurrencyConverter]
+related_entries: [log-v2-structured-indexing]
+type: success
+scope: ratewise
+summary: 修復多幣別頁（Multi）的 sortedCurrencies 舊版邏輯未固定 TWD 在首位、非收藏幣未字母排序，導致與收藏頁（Favorites）行為不一致。
+root_cause: >
+useCurrencyConverter 原始 sortedCurrencies 邏輯為 [...orderedFavorites, ...remaining]，
+未明確固定 TWD，非收藏幣也未排序；getAllCurrenciesSorted（Favorites 頁）則有正確邏輯。
+impact: Multi 頁排序不穩定；TWD 可能不在首位；Favorites 與 Multi 排序不一致。
+fix: >
+改為 ['TWD', ...favWithoutTWD, ...remaining.sort()]，與 getAllCurrenciesSorted 完全一致；
+新增 5 個 sortedCurrencies 單元測試（TWD 置頂、收藏順序、字母排序、一致性驗證）。
+prevention: >
+任何排序邏輯需與 favorites-utils.ts:getAllCurrenciesSorted 保持一致；
+新增排序相關功能時必須同時更新兩處（hook + utils），或抽取成共用函式。
+actions:
+
+- 修改 useCurrencyConverter.ts：sortedCurrencies 改用明確 TWD 置頂邏輯
+- 新增 .changeset/fix-twd-pinned-ordering.md（minor）
+- 新增 5 個 sortedCurrencies 測試（PR #181）
+- 記錄錯誤修復至 CLAUDE.md Troubleshooting #9-11 / AGENTS.md 實務模式
+  verification:
+- 90 個測試檔，1488 個測試全通過
+- PR #181 CI 全通過（Lighthouse / E2E / Quality Checks / CodeQL）
+
+---
+
 date: 2026-03-08
 title: Git 歷史失敗案例重構與 002 incident 知識庫整理
 score: +2
