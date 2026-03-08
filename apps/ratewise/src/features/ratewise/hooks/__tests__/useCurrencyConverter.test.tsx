@@ -1,15 +1,14 @@
 /**
- * useCurrencyConverter Hook Tests
- * useCurrencyConverter Hook 測試
+ * useCurrencyConverter Hook 單元測試
  *
- * @description Tests for currency converter hook including history management
- *              and toast notifications
+ * 涵蓋歷史記錄管理與 Toast 通知行為。
  */
 
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useCurrencyConverter } from '../useCurrencyConverter';
 import { STORAGE_KEYS } from '../../storage-keys';
+import { useConverterStore } from '../../../../stores/converterStore';
 
 // Mock dependencies
 const mockShowToast = vi.fn();
@@ -51,6 +50,14 @@ describe('useCurrencyConverter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.clear();
+    // 重置 Zustand store 至初始狀態，確保測試隔離
+    useConverterStore.setState({
+      fromCurrency: 'TWD',
+      toCurrency: 'JPY',
+      mode: 'single',
+      favorites: ['JPY', 'KRW', 'VND', 'THB', 'HKD', 'USD'],
+      history: [],
+    });
   });
 
   afterEach(() => {

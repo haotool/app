@@ -1,22 +1,15 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  CURRENCY_DEFINITIONS,
-  DEFAULT_BASE_CURRENCY,
-  DEFAULT_FAVORITES,
-  DEFAULT_FROM_CURRENCY,
-  DEFAULT_TO_CURRENCY,
-} from '../constants';
+import { CURRENCY_DEFINITIONS, DEFAULT_BASE_CURRENCY } from '../constants';
 import type {
   AmountField,
   ConversionHistoryEntry,
-  ConverterMode,
   CurrencyCode,
   MultiAmountsState,
   TrendState,
   RateType,
 } from '../types';
-import { readJSON, readString, writeJSON, writeString } from '../storage';
+import { readJSON, writeJSON } from '../storage';
 import { STORAGE_KEYS } from '../storage-keys';
 import type { RateDetails } from './useExchangeRates';
 import { logger } from '../../../utils/logger';
@@ -24,11 +17,9 @@ import { getExchangeRate, convertCurrencyAmount } from '../../../utils/exchangeR
 import { getRelativeTimeString } from '../../../utils/timeFormatter';
 import { INP_LONG_TASK_THRESHOLD_MS } from '../../../utils/interactionBudget';
 import { useToast } from '../../../components/Toast';
+import { useConverterStore } from '../../../stores/converterStore';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
-
-const isCurrencyCode = (value: string): value is CurrencyCode =>
-  CURRENCY_CODES.includes(value as CurrencyCode);
 
 const createInitialMultiAmounts = (
   baseCurrency: CurrencyCode,
@@ -49,11 +40,10 @@ const seedTrends = (): TrendState =>
 
 const sanitizeFavorites = (codes: CurrencyCode[]): CurrencyCode[] => {
   const unique = Array.from(new Set(codes));
+  const isCurrencyCode = (value: string): value is CurrencyCode =>
+    CURRENCY_CODES.includes(value as CurrencyCode);
   return unique.filter(isCurrencyCode);
 };
-
-const sanitizeCurrency = (candidate: string, fallback: CurrencyCode): CurrencyCode =>
-  isCurrencyCode(candidate) ? candidate : fallback;
 
 interface UseCurrencyConverterOptions {
   exchangeRates?: Record<string, number | null>;
@@ -66,43 +56,22 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   const { t } = useTranslation();
   const { showToast } = useToast();
 
-  // 使用固定初始值避免 SSR hydration mismatch，在 useEffect 中從 localStorage 恢復
-  const [mode, setMode] = useState<ConverterMode>('single');
-  const [fromCurrency, setFromCurrency] = useState<CurrencyCode>(DEFAULT_FROM_CURRENCY);
-  const [toCurrency, setToCurrency] = useState<CurrencyCode>(DEFAULT_TO_CURRENCY);
-
-  // Restore user preferences from localStorage after hydration
-  useEffect(() => {
-    const storedMode = readString(STORAGE_KEYS.CURRENCY_CONVERTER_MODE, 'single');
-    if (storedMode === 'multi') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶偏好
-      setMode('multi');
-    }
-
-    const storedFrom = readString(STORAGE_KEYS.FROM_CURRENCY, DEFAULT_FROM_CURRENCY);
-    const storedTo = readString(STORAGE_KEYS.TO_CURRENCY, DEFAULT_TO_CURRENCY);
-    setFromCurrency(sanitizeCurrency(storedFrom, DEFAULT_FROM_CURRENCY));
-    setToCurrency(sanitizeCurrency(storedTo, DEFAULT_TO_CURRENCY));
-  }, []);
+  // 持久化狀態由 Zustand store 管理（含 localStorage persist middleware）
+  const {
+    fromCurrency,
+    toCurrency,
+    mode,
+    favorites,
+    setFromCurrency,
+    setToCurrency,
+    setMode,
+    toggleFavorite: storeToggleFavorite,
+    reorderFavorites: storeReorderFavorites,
+    swapCurrencies: storeSwapCurrencies,
+  } = useConverterStore();
 
   const [fromAmount, setFromAmount] = useState<string>('1000');
   const [toAmount, setToAmount] = useState<string>('');
-
-  // Fixed initial value to avoid hydration mismatch
-  const [favorites, setFavorites] = useState<CurrencyCode[]>([...DEFAULT_FAVORITES]);
-
-  // Restore favorites from localStorage after hydration
-  useEffect(() => {
-    const storedFavorites = readJSON<CurrencyCode[]>(STORAGE_KEYS.FAVORITES, [
-      ...DEFAULT_FAVORITES,
-    ]);
-    const sanitized = sanitizeFavorites(storedFavorites);
-    // 只有當 localStorage 中的值與預設值不同時才更新
-    if (JSON.stringify(sanitized) !== JSON.stringify(DEFAULT_FAVORITES)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶偏好
-      setFavorites(sanitized);
-    }
-  }, []);
 
   const [multiAmounts, setMultiAmounts] = useState<MultiAmountsState>(() =>
     createInitialMultiAmounts(DEFAULT_BASE_CURRENCY),
@@ -148,23 +117,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   }, []);
   const [trend] = useState<TrendState>(() => seedTrends()); // 暫時不更新趨勢，等待歷史數據整合
   const [lastEdited, setLastEdited] = useState<AmountField>('from');
-
-  // Persist to localStorage
-  useEffect(() => {
-    writeString(STORAGE_KEYS.CURRENCY_CONVERTER_MODE, mode);
-  }, [mode]);
-
-  useEffect(() => {
-    writeString(STORAGE_KEYS.FROM_CURRENCY, fromCurrency);
-  }, [fromCurrency]);
-
-  useEffect(() => {
-    writeString(STORAGE_KEYS.TO_CURRENCY, toCurrency);
-  }, [toCurrency]);
-
-  useEffect(() => {
-    writeJSON(STORAGE_KEYS.FAVORITES, favorites);
-  }, [favorites]);
 
   // Helper to get rate based on rateType (spot/cash)
   // Returns null if the rate is not available or invalid.
@@ -356,22 +308,19 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   };
 
   const swapCurrencies = () => {
-    setFromCurrency(toCurrency);
-    setToCurrency(fromCurrency);
+    storeSwapCurrencies(); // 幣別互換（atomic，在 store 中一次性更新）
     setFromAmount(toAmount);
     setToAmount(fromAmount);
   };
 
   const toggleFavorite = (code: CurrencyCode) => {
-    setFavorites((prev) =>
-      prev.includes(code) ? prev.filter((item) => item !== code) : [...prev, code],
-    );
+    storeToggleFavorite(code);
   };
 
   /** 重新排序收藏貨幣（拖曳排序用） */
   const reorderFavorites = (newOrder: CurrencyCode[]) => {
-    setFavorites(newOrder);
-    writeJSON(STORAGE_KEYS.FAVORITES, newOrder);
+    storeReorderFavorites(newOrder);
+    // Zustand persist middleware 自動處理 localStorage 同步，無需手動 writeJSON
   };
 
   /**
