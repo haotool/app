@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-08T18:50:00+08:00
-> **當前總分**: 1124（初始分: 100）
+> **最後更新**: 2026-03-09T04:00:00+08:00
+> **當前總分**: 1125（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -25,6 +25,7 @@
 
 | 分數 | 事項                                                  | 日期       |
 | ---- | ----------------------------------------------------- | ---------- |
+| +1   | RateWise v2.8.1 patch release 與 changeset 版本化     | 2026-03-09 |
 | +4   | RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復 | 2026-03-08 |
 | +2   | 002 v2 結構化索引規格與主題分類升級                   | 2026-03-08 |
 | +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理        | 2026-03-08 |
@@ -91,6 +92,48 @@
 ## Entries
 
 ### 2026-03
+
+---
+
+id: ratewise-v2-8-1-patch-release
+date: 2026-03-09
+title: RateWise v2.8.1 patch release 與 changeset 版本化
+score: +1
+type: success
+content_type: how_to
+scope: ratewise
+topics: [documentation, ssot, ci]
+keywords: [changeset-version, patch-release, changelog, versioning, ratewise-2-8-1]
+aliases: [RateWise 2.8.1, patch 發版]
+related_entries: [ratewise-seo-ssot-faq-best-practices]
+summary: 將已合併到 main 的兩個 RateWise patch changeset 正式版本化為 v2.8.1，產出對應 CHANGELOG 並清除待處理 changeset，讓主支回到乾淨可發布狀態。
+root_cause:
+
+- `#177` 與 `#182` 合併後，main 上累積兩個 `@app/ratewise` patch changeset，需透過正式版本化流程寫回 package 與 CHANGELOG
+  impact:
+
+- 若不做版本化，主支會持續保留未消化 changeset，後續 release 與 changelog 追蹤會變得不一致
+  actions:
+
+- 從最新 `main` 建立 release 分支
+- 執行 `pnpm changeset version`，將 `apps/ratewise/package.json` 升至 `2.8.1`
+- 執行 `pnpm --filter @app/ratewise prebuild`，同步 `llms.txt`、`api/latest.json`、`openapi.json`
+- 產出 `apps/ratewise/CHANGELOG.md` 新版條目並移除已消化的 changeset 檔
+  prevention:
+
+- 後續每次 patch SEO / 結構化資料修復完成後，應在合併後立即完成一次版本化，避免 changeset 長時間堆積在主支
+  verification:
+
+- `node scripts/verify-version-ssot.mjs`
+- `pnpm --filter @app/ratewise prebuild`
+- `pnpm --filter @app/ratewise exec tsc --noEmit`
+- `pnpm --filter @app/ratewise test`
+- `pnpm build:ratewise`
+  references:
+
+- .changeset/ratewise-seo-ssot-pr182-final.md
+- .changeset/seo-eeeat-codesplit.md
+- apps/ratewise/CHANGELOG.md
 
 ---
 
