@@ -76,6 +76,48 @@ interface ConverterState {
 
   /** 供單元測試呼叫；亦由 onRehydrateStorage 在內部觸發 */
   __migrateFromLegacy: () => void;
+  /** hydrate 後驗證並修復不合法的欄位；由 onRehydrateStorage 自動觸發，亦可由單元測試直接呼叫 */
+  __validateAndSanitize: () => void;
+}
+
+// ── Schema 驗證輔助函式 ───────────────────────────────────────────────────────
+
+type PersistentFields = Pick<ConverterState, 'fromCurrency' | 'toCurrency' | 'mode' | 'favorites'>;
+
+/**
+ * 驗證 hydrate 後的狀態欄位是否符合當前 schema 契約。
+ * 若有欄位不合法（例如舊版 CurrencyPair 格式、損毀資料），回傳修復用的 patch；
+ * 所有欄位均合法時回傳 null。
+ */
+function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | null {
+  const patch: Partial<PersistentFields> = {};
+  let dirty = false;
+
+  if (!isCurrencyCode(state.fromCurrency as string)) {
+    patch.fromCurrency = DEFAULT_FROM_CURRENCY;
+    dirty = true;
+  }
+  if (!isCurrencyCode(state.toCurrency as string)) {
+    patch.toCurrency = DEFAULT_TO_CURRENCY;
+    dirty = true;
+  }
+  if (state.mode !== 'single' && state.mode !== 'multi') {
+    patch.mode = 'single';
+    dirty = true;
+  }
+  if (!Array.isArray(state.favorites)) {
+    patch.favorites = [...DEFAULT_FAVORITES] as CurrencyCode[];
+    dirty = true;
+  } else if (
+    (state.favorites as unknown[]).some((c) => typeof c !== 'string' || !isCurrencyCode(c))
+  ) {
+    patch.favorites = (state.favorites as unknown[]).filter(
+      (c): c is CurrencyCode => typeof c === 'string' && isCurrencyCode(c),
+    );
+    dirty = true;
+  }
+
+  return dirty ? patch : null;
 }
 
 // ── 遷移輔助函式 ─────────────────────────────────────────────────────────────
@@ -177,6 +219,11 @@ export const useConverterStore = create<ConverterState>()(
           removeLegacyKeys();
         }
       },
+
+      __validateAndSanitize: () => {
+        const patch = buildSanitizePatch(get());
+        if (patch) set(patch);
+      },
     }),
     {
       name: 'ratewise-converter',
@@ -189,6 +236,9 @@ export const useConverterStore = create<ConverterState>()(
       }),
       onRehydrateStorage: () => (_state, error) => {
         if (error) return;
+        // 修復不合法的持久化欄位（例如舊版 CurrencyPair 格式、損毀代碼）
+        useConverterStore.getState().__validateAndSanitize();
+        // 舊版個別 key 的一次性遷移
         useConverterStore.getState().__migrateFromLegacy();
       },
     },
