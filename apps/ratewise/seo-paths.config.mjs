@@ -176,7 +176,7 @@ export function getIncludedRoutes(paths) {
  */
 export const SITE_CONFIG = {
   url: withTrailingSlash('https://app.haotool.org/ratewise/'),
-  name: 'RateWise - 匯率好工具',
+  name: 'RateWise 匯率好工具',
   title: 'RateWise — 台灣最精準匯率換算器',
   description:
     'RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 18 種貨幣，讓你換匯前就知道真正要付多少台幣。',

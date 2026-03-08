@@ -16,7 +16,7 @@ import {
 describe('app-info', () => {
   describe('APP_INFO constants', () => {
     it('should have name defined', () => {
-      expect(APP_INFO.name).toBe('RateWise');
+      expect(APP_INFO.name).toBe('RateWise 匯率好工具');
     });
 
     it('should have author defined', () => {
@@ -77,7 +77,7 @@ describe('app-info', () => {
     it('should return formatted copyright notice with current year', () => {
       const notice = getCopyrightNotice();
       const currentYear = new Date().getFullYear();
-      expect(notice).toBe(`© 2025-${currentYear} RateWise`);
+      expect(notice).toBe(`© 2025-${currentYear} RateWise 匯率好工具`);
     });
   });
 

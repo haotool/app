@@ -113,7 +113,7 @@ export const DEFAULT_LOCALE = 'zh-TW' as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
 export const DEFAULT_TITLE =
   'RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價';
-export const DEFAULT_DESCRIPTION = `RateWise 顯示臺灣銀行牌告的實際買入賣出價，而非中間價，讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏拖曳排序與 7~30 天趨勢圖，每 5 分鐘同步，離線也可使用。`;
+export const DEFAULT_DESCRIPTION = `RateWise 匯率好工具顯示臺灣銀行牌告的實際買入賣出價，而非中間價，讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏拖曳排序與 7~30 天趨勢圖，每 5 分鐘同步，離線也可使用。`;
 export const DEFAULT_KEYWORDS = [
   '匯率好工具',
   'RateWise',
@@ -353,7 +353,7 @@ export const HOMEPAGE_SEO = {
   jsonLd: [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`)],
   content: {
     eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步 · 顯示實際買賣價',
-    heading: 'RateWise 即時匯率換算',
+    heading: 'RateWise 匯率好工具 即時匯率換算',
     intro: `顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援台幣、美元、日圓、韓元、歐元等 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，每 5 分鐘自動同步，適合出國旅遊、海外付款與跨境報價前快速比價。`,
     highlights: [
       '顯示實際買賣價：臺灣銀行牌告匯率的現金與即期買入賣出四種報價，不是中間價——換匯金額更精準。',
@@ -477,7 +477,7 @@ export const FAQ_PAGE_ENTRIES = [
 ] as const satisfies readonly FAQEntry[];
 
 export const FAQ_PAGE_SEO = {
-  title: '常見問題 - RateWise 匯率工具完整 FAQ 解答',
+  title: '常見問題 — RateWise 匯率好工具 FAQ 解答',
   description:
     'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
   pathname: '/faq',
@@ -540,7 +540,7 @@ export const GUIDE_HOW_TO_STEPS = [
 ] as const satisfies readonly HowToStep[];
 
 export const GUIDE_PAGE_SEO = {
-  title: '使用指南 - 如何使用 RateWise 進行匯率換算',
+  title: '使用指南 — 如何使用 RateWise 匯率好工具換算匯率',
   description:
     '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。',
   pathname: '/guide',
@@ -582,7 +582,7 @@ export const ABOUT_PAGE_FAQ = [
 
 export const ABOUT_PAGE_SEO = {
   title: '關於 RateWise 匯率好工具 - 資料來源與技術特色',
-  description: `RateWise 是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。`,
+  description: `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。`,
   pathname: '/about',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -1034,7 +1034,7 @@ export function getCurrencyLandingPageContent(
     currencyCode: code,
     currencyFlag: definition.flag,
     currencyName: displayName,
-    title: `即時${displayName}匯率 — 台銀實際賣出價 | ${code}/TWD RateWise`,
+    title: `即時${displayName}匯率 — 台銀實際賣出價 | ${code}/TWD`,
     description: `台銀實際${displayName}賣出價（非中間價），換匯前先知道要付多少台幣。${override.question}每 5 分鐘更新，支援現金與即期匯率切換、計算機快速輸入。適合${override.region}。`,
     pathname,
     canonical: canonicalUrl,

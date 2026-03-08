@@ -7,7 +7,7 @@
 
 export const APP_INFO = {
   /** 應用程式名稱 */
-  name: 'RateWise',
+  name: 'RateWise 匯率好工具',
 
   /** 應用程式副標題 */
   subtitle: '匯率好工具',
