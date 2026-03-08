@@ -205,5 +205,52 @@ describe('converterStore', () => {
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('currencyConverterMode');
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('favorites');
     });
+
+    it('使用者刻意清空收藏（[]）時，遷移後應保留空收藏而非恢復預設值', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          favorites: JSON.stringify([]),
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      // 使用者的空收藏必須被尊重，不應回復為預設值
+      expect(useConverterStore.getState().favorites).toEqual([]);
+    });
+
+    it('舊版 favorites 含無效代碼時，過濾後仍寫入空陣列（尊重使用者曾自訂收藏的意圖）', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          favorites: JSON.stringify(['INVALID_CODE', 'NOT_A_CURRENCY']),
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      // 所有代碼無效時過濾結果為 []，仍應遷移為空而非預設
+      expect(useConverterStore.getState().favorites).toEqual([]);
+    });
+
+    it('舊版 favorites 含有效與無效混合代碼時，僅保留有效代碼', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          favorites: JSON.stringify(['JPY', 'INVALID_CODE', 'USD']),
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      expect(useConverterStore.getState().favorites).toEqual(['JPY', 'USD']);
+    });
   });
 });

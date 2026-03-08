@@ -109,7 +109,8 @@ function buildMigrationPatch(): Partial<
         const sanitized = (parsed as unknown[]).filter(
           (c): c is CurrencyCode => typeof c === 'string' && isCurrencyCode(c),
         );
-        if (sanitized.length > 0) patch.favorites = sanitized;
+        // 空陣列為合法的使用者偏好（刻意清空收藏），必須保留
+        patch.favorites = sanitized;
       }
     } catch {
       // 忽略格式錯誤的 JSON，保留預設收藏
