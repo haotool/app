@@ -348,6 +348,34 @@ apps/ratewise/public/llms-full.txt
 - 預設只在真正 FAQ 頁輸出 `FAQPage`
 - 首頁、幣別頁、About/Guide 若只是 FAQ 文案，保留內容即可，不要再標 `FAQPage`
 
+### 9. `generate-manifest.mjs` 覆蓋品牌名稱（pre-push 回退）
+
+**症狀**：`pnpm build:ratewise` 在 pre-push 時重新執行 `generate-manifest.mjs`，將 `manifest.webmanifest` 的 `name`/`short_name` 覆蓋回舊值（硬編碼）。
+
+**根本原因**：`scripts/generate-manifest.mjs` 內有 hardcoded 品牌名稱字串，未改用 SSOT（constants/config）。
+
+**正確做法（MUST）**：修改 `generate-manifest.mjs`，從 `src/config/app-info.ts`（或等效 SSOT）讀取品牌名稱，不直接 hardcode。
+
+### 10. commitlint body-bullets 失敗
+
+**症狀**：`commit-msg` hook 報 `body-leading-bullet` 錯誤，commit 被阻擋。
+
+**根本原因**：commit 主體的**第一個非空行**未以 `- ` 開頭（例如寫成章節標題、空白行、或其他格式）。
+
+**正確做法（MUST）**：主體第一個非空行必須以 `- ` 開頭（全形條列無效）；每行 ≤100 字元；必須有 `測試：...` 行。
+
+### 11. `sortedCurrencies` 未將 TWD 固定在首位（Multi 頁排序不一致）
+
+**症狀**：多幣別頁（Multi）的貨幣列表不總是以 TWD 為首，且非收藏幣未按字母排序；與收藏頁（Favorites）的 `getAllCurrenciesSorted` 行為不一致。
+
+**根本原因**：`useCurrencyConverter` 的 `sortedCurrencies` 原始邏輯為 `[...orderedFavorites, ...remaining]`，未明確固定 TWD 在首位，也未對非收藏幣排序。
+
+**正確做法（MUST）**：`sortedCurrencies` 必須採用與 `getAllCurrenciesSorted` 完全相同的邏輯：
+
+1. TWD 固定在 index 0
+2. 其餘收藏幣按用戶偏好順序
+3. 非收藏幣按字母順序
+
 ### 8. `SEOHelmet` / head metadata 在 client 端重複或殘留
 
 - `vite-react-ssg` + shim 若已驗證是 SSG 必要條件，**不要**直接移除 shim
@@ -459,20 +487,21 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 ## 修訂紀錄（Revision History）
 
-| 日期       | 版本 | 變更摘要                                                                                                                      |
-| ---------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 2026-03-08 | v3.9 | 新增「CF SEO 直通實踐」：MailtoLink 模式、squirrelscan 假陽性識別、CF API token 限制、noindex 頁面正確行為                    |
-| 2026-03-08 | v3.8 | 補充 002 v2 結構化索引規格與 FAQ/SEOHelmet Troubleshooting                                                                    |
-| 2026-03-08 | v3.7 | 補充 `002` 操作 / incident 規則：新紀錄使用 entry blocks，失敗紀錄必須寫出根因、影響、修復與預防                              |
-| 2026-03-08 | v3.6 | 新增 Troubleshooting #7-#8：FAQPage 重複與 `SEOHelmet` client head 重複/殘留的極簡解法                                        |
-| 2026-03-07 | v3.5 | 新增 Troubleshooting #6「Prettier 格式漂移」：prebuild 產出物應加入 `.prettierignore`，禁止 prebuild script 呼叫 Prettier API |
-| 2026-03-06 | v3.4 | 新增「security-headers Worker 部署 SOP」：wrangler 認證、esbuild 說明、版本號同步、假陽性清單、CSP connect-src 必要域名       |
-| 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史）          |
-| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口                           |
-| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP                             |
-| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                                                         |
+| 日期       | 版本 | 變更摘要                                                                                                                       |
+| ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-09 | v4.0 | 新增 Troubleshooting #9-11：generate-manifest 品牌覆蓋、commitlint body-bullets、sortedCurrencies TWD 未置頂三項常見錯誤與修法 |
+| 2026-03-08 | v3.9 | 新增「CF SEO 直通實踐」：MailtoLink 模式、squirrelscan 假陽性識別、CF API token 限制、noindex 頁面正確行為                     |
+| 2026-03-08 | v3.8 | 補充 002 v2 結構化索引規格與 FAQ/SEOHelmet Troubleshooting                                                                     |
+| 2026-03-08 | v3.7 | 補充 `002` 操作 / incident 規則：新紀錄使用 entry blocks，失敗紀錄必須寫出根因、影響、修復與預防                               |
+| 2026-03-08 | v3.6 | 新增 Troubleshooting #7-#8：FAQPage 重複與 `SEOHelmet` client head 重複/殘留的極簡解法                                         |
+| 2026-03-07 | v3.5 | 新增 Troubleshooting #6「Prettier 格式漂移」：prebuild 產出物應加入 `.prettierignore`，禁止 prebuild script 呼叫 Prettier API  |
+| 2026-03-06 | v3.4 | 新增「security-headers Worker 部署 SOP」：wrangler 認證、esbuild 說明、版本號同步、假陽性清單、CSP connect-src 必要域名        |
+| 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史）           |
+| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口                            |
+| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP                              |
+| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                                                          |
 
 ---
 
-**最後更新**: 2026-03-08T10:35:00+0800
-**版本**: v3.9（新增 CF SEO 直通實踐）
+**最後更新**: 2026-03-09T01:30:00+0800
+**版本**: v4.0（新增 #9-11 Troubleshooting：manifest 品牌覆蓋、commitlint bullets、sortedCurrencies TWD 置頂）

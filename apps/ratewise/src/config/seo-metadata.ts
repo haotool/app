@@ -276,6 +276,42 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
   };
 }
 
+export function buildArticleJsonLd(
+  headline: string,
+  description: string,
+  url: string,
+  datePublished: string,
+): JsonLdBlock {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline,
+    description,
+    url: buildCanonicalUrl(url),
+    datePublished,
+    dateModified: BUILD_TIME,
+    author: {
+      '@type': 'Organization',
+      name: APP_INFO.author,
+      url: APP_INFO.organizationUrl,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: APP_INFO.author,
+      url: APP_INFO.organizationUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+      },
+    },
+    inLanguage: DEFAULT_LOCALE,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': buildCanonicalUrl(url),
+    },
+  };
+}
+
 export const HOMEPAGE_FAQ = [
   {
     question: 'RateWise 和其他匯率工具有什麼不同？',
@@ -486,7 +522,13 @@ export const FAQ_PAGE_SEO = {
     { name: '常見問題', item: '/faq/' },
   ],
   faq: [...FAQ_PAGE_ENTRIES],
-} as const satisfies SEOPageMetadata;
+  jsonLd: buildArticleJsonLd(
+    '常見問題 — RateWise 匯率好工具 FAQ 解答',
+    'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算。',
+    '/faq/',
+    `${APP_INFO.copyrightStartYear}-01-01`,
+  ),
+} satisfies SEOPageMetadata;
 
 export const GUIDE_HOW_TO_STEPS = [
   {
@@ -554,8 +596,16 @@ export const GUIDE_PAGE_SEO = {
     totalTime: 'PT2M',
     steps: [...GUIDE_HOW_TO_STEPS],
   },
-  jsonLd: [buildShareImageJsonLd('RateWise 使用指南分享圖片', 'RateWise 使用指南與換算步驟預覽')],
-} as const satisfies SEOPageMetadata;
+  jsonLd: [
+    buildShareImageJsonLd('RateWise 使用指南分享圖片', 'RateWise 使用指南與換算步驟預覽'),
+    buildArticleJsonLd(
+      '使用指南 — 如何使用 RateWise 匯率好工具換算匯率',
+      '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。',
+      '/guide/',
+      `${APP_INFO.copyrightStartYear}-01-01`,
+    ),
+  ],
+} satisfies SEOPageMetadata;
 
 export const ABOUT_PAGE_FAQ = [
   {
@@ -589,7 +639,13 @@ export const ABOUT_PAGE_SEO = {
     { name: '關於我們', item: '/about/' },
   ],
   faq: [...ABOUT_PAGE_FAQ],
-} as const satisfies SEOPageMetadata;
+  jsonLd: buildArticleJsonLd(
+    '關於 RateWise 匯率好工具 - 資料來源與技術特色',
+    `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。`,
+    '/about/',
+    `${APP_INFO.copyrightStartYear}-01-01`,
+  ),
+} satisfies SEOPageMetadata;
 
 export const SELL_RATE_VS_MID_RATE_PAGE = {
   title: '賣出價與中間價差在哪？為什麼換匯不能只看中間價',

@@ -26,7 +26,8 @@ function Logo() {
   return (
     <img
       src={`${basePath}logo.png`}
-      alt="RateWise"
+      srcSet={`${basePath}logo.png 1x, ${basePath}icons/ratewise-icon-64x64.png 2x, ${basePath}icons/ratewise-icon-128x128.png 4x`}
+      alt="RateWise 匯率好工具"
       width={28}
       height={28}
       className="w-7 h-7 shrink-0"

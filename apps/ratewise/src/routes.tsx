@@ -26,6 +26,7 @@
 
 import type { RouteRecord } from 'vite-react-ssg';
 import type { ComponentType } from 'react';
+import { Suspense } from 'react';
 import { ClientOnly } from 'vite-react-ssg';
 import CurrencyConverter from './features/ratewise/RateWise';
 import { SEOHelmet } from './components/SEOHelmet';
@@ -36,9 +37,11 @@ import { SkeletonLoader } from './components/SkeletonLoader';
 import { HOMEPAGE_SEO } from './config/seo-metadata';
 import { logger } from './utils/logger';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
-import MultiConverter from './pages/MultiConverter';
-import Favorites from './pages/Favorites';
-import Settings from './pages/Settings';
+import { lazyWithRetry } from './utils/lazyWithRetry';
+
+const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
+const Favorites = lazyWithRetry(() => import('./pages/Favorites'));
+const Settings = lazyWithRetry(() => import('./pages/Settings'));
 
 /** 帶重試機制的動態 import */
 async function importWithRetry<T>(
@@ -132,19 +135,31 @@ export const routes: RouteRecord[] = [
       // 多幣別轉換器
       {
         path: 'multi',
-        element: <MultiConverter />,
+        element: (
+          <Suspense fallback={<SkeletonLoader />}>
+            <MultiConverter />
+          </Suspense>
+        ),
         entry: 'src/pages/MultiConverter.tsx',
       },
       // 收藏與歷史
       {
         path: 'favorites',
-        element: <Favorites />,
+        element: (
+          <Suspense fallback={<SkeletonLoader />}>
+            <Favorites />
+          </Suspense>
+        ),
         entry: 'src/pages/Favorites.tsx',
       },
       // 應用程式設定
       {
         path: 'settings',
-        element: <Settings />,
+        element: (
+          <Suspense fallback={<SkeletonLoader />}>
+            <Settings />
+          </Suspense>
+        ),
         entry: 'src/pages/Settings.tsx',
       },
       // 主題展示頁面

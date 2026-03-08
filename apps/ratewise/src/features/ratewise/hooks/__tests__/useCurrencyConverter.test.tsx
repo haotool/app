@@ -230,6 +230,74 @@ describe('useCurrencyConverter', () => {
     });
   });
 
+  describe('sortedCurrencies', () => {
+    it('should always have TWD as the first currency', () => {
+      const { result } = renderHook(() => useCurrencyConverter({}));
+      expect(result.current.sortedCurrencies[0]).toBe('TWD');
+    });
+
+    it('should pin TWD first even when favorites do not include TWD', () => {
+      useConverterStore.setState({
+        fromCurrency: 'USD',
+        toCurrency: 'JPY',
+        mode: 'single',
+        favorites: ['USD', 'JPY', 'KRW'],
+        history: [],
+      });
+      const { result } = renderHook(() => useCurrencyConverter({}));
+      expect(result.current.sortedCurrencies[0]).toBe('TWD');
+    });
+
+    it('should place user favorites (without TWD) after TWD', () => {
+      useConverterStore.setState({
+        fromCurrency: 'USD',
+        toCurrency: 'JPY',
+        mode: 'single',
+        favorites: ['USD', 'JPY'],
+        history: [],
+      });
+      const { result } = renderHook(() => useCurrencyConverter({}));
+      const sorted = result.current.sortedCurrencies;
+      expect(sorted[0]).toBe('TWD');
+      expect(sorted[1]).toBe('USD');
+      expect(sorted[2]).toBe('JPY');
+    });
+
+    it('should have non-favorites sorted alphabetically after favorites', () => {
+      useConverterStore.setState({
+        fromCurrency: 'USD',
+        toCurrency: 'JPY',
+        mode: 'single',
+        favorites: ['USD'],
+        history: [],
+      });
+      const { result } = renderHook(() => useCurrencyConverter({}));
+      const sorted = result.current.sortedCurrencies;
+      // TWD first, then USD (favorite), then non-favorites alphabetically
+      expect(sorted[0]).toBe('TWD');
+      expect(sorted[1]).toBe('USD');
+      // remaining should be sorted alphabetically
+      const nonFavStart = 2;
+      for (let i = nonFavStart; i < sorted.length - 1; i++) {
+        expect(sorted[i]! <= sorted[i + 1]!).toBe(true);
+      }
+    });
+
+    it('should match getAllCurrenciesSorted output for same favorites', async () => {
+      const { getAllCurrenciesSorted } = await import('../../../../pages/favorites-utils');
+      const favs = ['JPY', 'KRW', 'VND'] as const;
+      useConverterStore.setState({
+        fromCurrency: 'TWD',
+        toCurrency: 'JPY',
+        mode: 'single',
+        favorites: [...favs],
+        history: [],
+      });
+      const { result } = renderHook(() => useCurrencyConverter({}));
+      expect(result.current.sortedCurrencies).toEqual(getAllCurrenciesSorted([...favs]));
+    });
+  });
+
   describe('reconvertFromHistory', () => {
     it('should restore conversion from history entry', () => {
       // Arrange

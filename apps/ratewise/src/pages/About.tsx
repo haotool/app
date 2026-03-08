@@ -22,6 +22,7 @@ export default function About() {
         description={ABOUT_PAGE_SEO.description}
         pathname={ABOUT_PAGE_SEO.pathname}
         breadcrumb={ABOUT_PAGE_SEO.breadcrumb}
+        jsonLd={ABOUT_PAGE_SEO.jsonLd}
       />
 
       <div className="min-h-screen">
@@ -61,8 +62,7 @@ export default function About() {
           <section className="card mb-6 p-6">
             <h2 className="mb-4 text-2xl font-bold text-text">我們的定位</h2>
             <p className="mb-4 leading-relaxed text-text-muted">
-              RateWise
-              的重點不是展示漂亮的中間價，而是協助你在換匯前快速判讀「實際比較接近會發生的金額」。
+              本工具的重點不是展示漂亮的中間價，而是協助你在換匯前快速判讀「實際比較接近會發生的金額」。
               當你拿台幣去買外幣時，真正影響成本的通常是銀行賣出價；當你把外幣換回台幣時，則要看銀行買入價。
             </p>
             <p className="leading-relaxed text-text-muted">
