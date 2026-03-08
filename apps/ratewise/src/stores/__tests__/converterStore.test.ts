@@ -6,6 +6,7 @@
  * - 簡化後的 isFavorite(code) 簽名
  * - swapCurrencies
  * - localStorage 舊 key 遷移邏輯
+ * - hydrate 後的 schema 驗證與狀態修復
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -251,6 +252,98 @@ describe('converterStore', () => {
       useConverterStore.getState().__migrateFromLegacy?.();
 
       expect(useConverterStore.getState().favorites).toEqual(['JPY', 'USD']);
+    });
+  });
+
+  // ── hydrated state schema validation ─────────────────────────────────────
+  describe('hydrated state schema validation (__validateAndSanitize)', () => {
+    it('過濾 favorites 中不合法的貨幣代碼（舊 CurrencyPair 物件格式）', () => {
+      // 模擬舊版 favorites 為 CurrencyPair[]（物件陣列）被 hydrate 進 store
+      useConverterStore.setState({
+        favorites: [
+          { from: 'USD', to: 'JPY' },
+          'JPY',
+        ] as unknown as import('../../features/ratewise/types').CurrencyCode[],
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      // 物件型別無效，應被過濾；'JPY' 為合法代碼，應保留
+      expect(useConverterStore.getState().favorites).toEqual(['JPY']);
+    });
+
+    it('favorites 含純無效字串代碼時，過濾後為空陣列', () => {
+      useConverterStore.setState({
+        favorites: [
+          'NOT_A_CODE',
+          'INVALID',
+        ] as unknown as import('../../features/ratewise/types').CurrencyCode[],
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      expect(useConverterStore.getState().favorites).toEqual([]);
+    });
+
+    it('favorites 為非陣列型別時，重置為預設收藏', () => {
+      useConverterStore.setState({
+        favorites: 'corrupted' as unknown as import('../../features/ratewise/types').CurrencyCode[],
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      // 非陣列無法修復，回退預設值
+      const { favorites } = useConverterStore.getState();
+      expect(Array.isArray(favorites)).toBe(true);
+      expect(favorites.length).toBeGreaterThan(0);
+    });
+
+    it('fromCurrency 為非有效代碼時，重置為 DEFAULT_FROM_CURRENCY', () => {
+      useConverterStore.setState({
+        fromCurrency: 'INVALID' as unknown as import('../../features/ratewise/types').CurrencyCode,
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      // 不合法代碼應重置為預設值（TWD）
+      expect(useConverterStore.getState().fromCurrency).toBe('TWD');
+    });
+
+    it('toCurrency 為非有效代碼時，重置為 DEFAULT_TO_CURRENCY', () => {
+      useConverterStore.setState({
+        toCurrency: 'BROKEN' as unknown as import('../../features/ratewise/types').CurrencyCode,
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      expect(useConverterStore.getState().toCurrency).toBe('JPY');
+    });
+
+    it('mode 為非法值時，重置為 single', () => {
+      useConverterStore.setState({
+        mode: 'invalid_mode' as unknown as 'single' | 'multi',
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      expect(useConverterStore.getState().mode).toBe('single');
+    });
+
+    it('所有欄位合法時，不修改 store 狀態', () => {
+      useConverterStore.setState({
+        fromCurrency: 'USD',
+        toCurrency: 'JPY',
+        mode: 'multi',
+        favorites: ['USD', 'EUR'],
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      const state = useConverterStore.getState();
+      expect(state.fromCurrency).toBe('USD');
+      expect(state.toCurrency).toBe('JPY');
+      expect(state.mode).toBe('multi');
+      expect(state.favorites).toEqual(['USD', 'EUR']);
     });
   });
 });
