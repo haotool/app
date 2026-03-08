@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { APP_INFO, getCopyrightYears } from '../config/app-info';
+import { MailtoLink } from '../components/MailtoLink';
 import { PRIVACY_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 
 const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
@@ -108,10 +109,7 @@ export default function Privacy() {
               <li>你也可以透過瀏覽器設定清除站點資料、Cookie 與本地儲存內容。</li>
               <li>
                 若對隱私有疑問，可來信
-                <a href={`mailto:${APP_INFO.email}`} className="ml-1 text-primary underline">
-                  {APP_INFO.email}
-                </a>
-                。
+                <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />。
               </li>
             </ul>
           </section>

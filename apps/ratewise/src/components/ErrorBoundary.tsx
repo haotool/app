@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { logger } from '../utils/logger';
 import { APP_INFO } from '../config/app-info';
+import { MailtoLink } from './MailtoLink';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -143,12 +144,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               >
                 GitHub Issues
               </a>
-              <a
-                href={`mailto:${APP_INFO.email}`}
+              <MailtoLink
+                email={APP_INFO.email}
                 className="text-xs underline text-text-muted hover:text-text transition-colors"
-              >
-                {APP_INFO.email}
-              </a>
+              />
             </div>
           </div>
         </div>

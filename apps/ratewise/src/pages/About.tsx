@@ -3,6 +3,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { getDisplayVersion } from '../config/version';
 import { APP_INFO, getCopyrightYears } from '../config/app-info';
+import { MailtoLink } from '../components/MailtoLink';
 import { ABOUT_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 import { SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
 
@@ -140,9 +141,7 @@ export default function About() {
               </p>
               <p>
                 <strong className="text-text">聯絡信箱：</strong>
-                <a href={`mailto:${APP_INFO.email}`} className="ml-1 text-primary underline">
-                  {APP_INFO.email}
-                </a>
+                <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />
               </p>
               <p>
                 <strong className="text-text">延伸閱讀：</strong>

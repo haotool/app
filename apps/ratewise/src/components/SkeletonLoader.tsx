@@ -26,6 +26,7 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { performFullRefresh } from '../utils/swUtils';
 import { APP_INFO } from '../config/app-info';
+import { MailtoLink } from './MailtoLink';
 import { SupportContactLinks } from './SupportContactLinks';
 
 /** 骨架屏超時閾值（毫秒）。超過此時間仍在顯示表示 app 初始化失敗。 */
@@ -64,9 +65,7 @@ function SkeletonTimeoutFallback() {
         <SupportContactLinks title="若問題持續發生，請聯絡作者：" description="" />
         <p className="text-xs text-text-muted">
           也可嘗試：設定 → 清除瀏覽器快取，或聯絡{' '}
-          <a href={`mailto:${APP_INFO.email}`} className="underline">
-            {APP_INFO.email}
-          </a>
+          <MailtoLink email={APP_INFO.email} className="underline" />
         </p>
       </div>
     </div>

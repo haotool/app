@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { APP_INFO } from '../config/app-info';
+import { MailtoLink } from '../components/MailtoLink';
 import { FAQ_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 
 const FAQ_ENTRIES = FAQ_PAGE_SEO.faq ?? [];
@@ -118,10 +119,7 @@ export default function FAQ() {
                 關於頁面
               </Link>
               ，若仍有問題可直接寄信至
-              <a href={`mailto:${APP_INFO.email}`} className="ml-1 text-primary underline">
-                {APP_INFO.email}
-              </a>
-              。
+              <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />。
             </p>
           </section>
         </div>
