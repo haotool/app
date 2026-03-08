@@ -32,7 +32,7 @@ const SOURCES = {
   thGov: {
     name: '國史館臺灣文獻館',
     title: '臺灣總督府檔案事典',
-    url: 'https://www.th.gov.tw/CP-218-218-1d8a9-1.htm',
+    url: 'https://www.th.gov.tw/',
   },
   wuPaper: {
     name: '吳秀環論文',

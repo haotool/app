@@ -19,7 +19,7 @@ const mockSources: SurnameSource[] = [
   {
     name: '國史館臺灣文獻館',
     title: '臺灣總督府檔案事典',
-    url: 'https://www.th.gov.tw/CP-218-218-1d8a9-1.htm',
+    url: 'https://www.th.gov.tw/',
   },
 ];
 
@@ -127,7 +127,7 @@ describe('SourceAccordion', () => {
         'href',
         'https://home.gamer.com.tw/creationDetail.php?sn=2850704',
       );
-      expect(links[1]).toHaveAttribute('href', 'https://www.th.gov.tw/CP-218-218-1d8a9-1.htm');
+      expect(links[1]).toHaveAttribute('href', 'https://www.th.gov.tw/');
     });
   });
 

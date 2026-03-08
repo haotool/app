@@ -198,7 +198,7 @@ export default function About() {
                 </li>
                 <li>
                   <a
-                    href="https://www.th.gov.tw/CP-218-218-1d8a9-1.htm"
+                    href="https://www.th.gov.tw/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center text-red-700 hover:text-red-900 transition-colors"
