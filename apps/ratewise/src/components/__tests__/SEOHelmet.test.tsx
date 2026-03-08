@@ -24,7 +24,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
-import { SEOHelmet, shouldRenderStructuredData } from '../SEOHelmet';
+import { SEOHelmet } from '../SEOHelmet';
+import { shouldRenderStructuredData } from '../seo-helmet-utils';
 
 describe('SEOHelmet Component', () => {
   const originalHead = document.head.innerHTML;
@@ -100,7 +101,7 @@ describe('SEOHelmet Component', () => {
       }).not.toThrow();
     });
 
-    it('should render without errors with HowTo prop', () => {
+    it('should render without errors with breadcrumb and HowTo prop', () => {
       expect(() => {
         render(
           <HelmetProvider>
@@ -216,9 +217,9 @@ describe('SEOHelmet Component', () => {
             description="新的描述"
             canonical="/test/"
             howTo={{
-              name: 'How to test',
-              description: 'Testing guide',
-              steps: [{ position: 1, name: 'Step 1', text: 'Test' }],
+              name: '如何測試',
+              description: '新的操作流程',
+              steps: [{ position: 1, name: '步驟一', text: '先測試' }],
             }}
           />
         </HelmetProvider>,
@@ -280,9 +281,9 @@ describe('SEOHelmet Component', () => {
             description="這組 metadata 應該在卸載後消失"
             canonical="/cleanup/"
             howTo={{
-              name: 'How to cleanup',
-              description: 'Cleanup guide',
-              steps: [{ position: 1, name: 'Step 1', text: 'Cleanup' }],
+              name: '清理流程',
+              description: '測試清理用',
+              steps: [{ position: 1, name: '步驟一', text: '清理' }],
             }}
           />
         </HelmetProvider>,
@@ -314,11 +315,7 @@ describe('SEOHelmet Component', () => {
           { hrefLang: 'x-default', href: '/stable/' },
           { hrefLang: 'zh-TW', href: '/stable/' },
         ],
-        howTo: {
-          name: 'How to stay stable',
-          description: 'Stable guide',
-          steps: [{ position: 1, name: 'Step 1', text: 'Stay stable' }],
-        },
+        faq: [{ question: 'Q?', answer: 'A' }],
       };
 
       const { rerender } = render(

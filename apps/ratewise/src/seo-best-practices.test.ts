@@ -251,7 +251,7 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(combinedContent).toContain("'@type': 'WebSite'");
     });
 
-    it('should NOT include FAQPage schema builder for non-government or non-health site', () => {
+    it('should NOT have FAQPage schema builder in SEO layer', () => {
       expect(combinedContent).not.toContain("'@type': 'FAQPage'");
     });
 
@@ -387,7 +387,7 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(seoMetadataContent).toContain('HOMEPAGE_HOW_TO');
     });
 
-    it('should have homepage FAQ content via HOMEPAGE_FAQ_CONTENT', () => {
+    it('should have FAQ content via HOMEPAGE_FAQ_CONTENT', () => {
       expect(seoMetadataContent).toContain('HOMEPAGE_FAQ_CONTENT');
     });
 

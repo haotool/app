@@ -64,8 +64,6 @@ export interface HomepageContent {
 
 export interface HomepageSEOContent extends SEOPageMetadata {
   content: HomepageContent;
-  howTo: HowToData;
-  faqContent: FAQEntry[];
 }
 
 export interface AuthorityGuideSection {
@@ -198,11 +196,11 @@ export function buildCanonicalUrl(pathname?: string): string {
 }
 
 export function buildDefaultAlternates(pathname?: string): AlternateLink[] {
-  const canonicalUrl = buildCanonicalUrl(pathname);
+  const href = buildCanonicalUrl(pathname);
 
   return [
-    { hrefLang: 'x-default', href: canonicalUrl },
-    ...SEO_INDEXABLE_LOCALES.map((locale) => ({ hrefLang: locale, href: canonicalUrl })),
+    { hrefLang: 'x-default', href },
+    { hrefLang: DEFAULT_LOCALE, href },
   ];
 }
 

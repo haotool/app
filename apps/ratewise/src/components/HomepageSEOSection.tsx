@@ -67,7 +67,7 @@ export function HomepageSEOSection() {
       <div className="mt-4 rounded-[28px] border border-black/5 bg-surface shadow-card p-5">
         <h2 className="text-lg font-black text-text">首頁常見問題</h2>
         <div className="mt-4 space-y-3">
-          {faqContent.map((entry, index) => (
+          {faqContent?.map((entry, index) => (
             <details
               key={entry.question}
               className="rounded-2xl border border-primary/10 bg-primary/5"

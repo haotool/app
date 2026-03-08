@@ -6,8 +6,9 @@
  * - 所有預設值與 schema 來源統一收斂到 config/seo-metadata.ts
  */
 import { Head } from 'vite-react-ssg';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { APP_INFO } from '../config/app-info';
+import { shouldRenderStructuredData } from './seo-helmet-utils';
 import {
   type AlternateLink,
   type BreadcrumbItem,
@@ -78,10 +79,6 @@ const buildBreadcrumbSchema = (items: BreadcrumbItem[]): JsonLdBlock | null => {
     })),
   };
 };
-
-export function shouldRenderStructuredData(robots: string): boolean {
-  return !robots.toLowerCase().includes('noindex');
-}
 
 function upsertTitle(title: string) {
   const existing = Array.from(document.head.querySelectorAll('title'));
@@ -190,7 +187,6 @@ export function SEOHelmet({
   pathname,
   locale = DEFAULT_LOCALE,
   alternates,
-  keywords,
   updatedTime = SITE_SEO.updatedTime,
   howTo,
   breadcrumb,
@@ -199,12 +195,14 @@ export function SEOHelmet({
   const fullTitle = title ? `${title} | ${APP_INFO.name}` : SITE_SEO.title;
   const canonicalUrl = canonical ? buildCanonicalUrl(canonical) : buildCanonicalUrl(pathname);
   const ogImageUrl = buildAbsoluteAssetUrl(ogImage);
-  const keywordsContent = (keywords?.length ? keywords : SITE_SEO.keywords).join(', ');
-  const alternatesToRender = alternates?.length ? alternates : buildDefaultAlternates(canonicalUrl);
-  const normalizedAlternates = alternatesToRender.map(({ href, hrefLang }) => ({
-    hrefLang,
-    href: buildCanonicalUrl(href),
-  }));
+  const normalizedAlternates = useMemo(() => {
+    const alternatesToRender = alternates?.length ? alternates : buildDefaultAlternates(pathname);
+
+    return alternatesToRender.map(({ href, hrefLang }) => ({
+      hrefLang,
+      href: buildCanonicalUrl(href),
+    }));
+  }, [alternates, pathname]);
   const normalizedAlternatesSignature = normalizedAlternates
     .map(({ hrefLang, href }) => `${hrefLang}:${href}`)
     .join('|');
@@ -245,12 +243,9 @@ export function SEOHelmet({
     if (typeof document === 'undefined') return;
 
     upsertTitle(fullTitle);
-    upsertMeta('meta[name="title"]', { name: 'title', content: fullTitle });
     upsertMeta('meta[name="description"]', { name: 'description', content: description });
-    upsertMeta('meta[name="keywords"]', { name: 'keywords', content: keywordsContent });
     upsertMeta('meta[name="author"]', { name: 'author', content: APP_INFO.author });
     upsertMeta('meta[name="robots"]', { name: 'robots', content: robots });
-    upsertMeta('meta[name="language"]', { name: 'language', content: locale });
     upsertLink('link[rel="canonical"]', { rel: 'canonical', href: canonicalUrl });
 
     const alternateLinks = normalizedAlternates.map(({ href, hrefLang }) => {
@@ -340,8 +335,8 @@ export function SEOHelmet({
     canonicalUrl,
     description,
     fullTitle,
-    keywordsContent,
     locale,
+    normalizedAlternates,
     normalizedAlternatesSignature,
     ogImageUrl,
     ogLocale,
@@ -359,12 +354,9 @@ export function SEOHelmet({
   return (
     <Head>
       <title>{fullTitle}</title>
-      <meta name="title" content={fullTitle} />
       <meta name="description" content={description} />
-      <meta name="keywords" content={keywordsContent} />
       <meta name="author" content={APP_INFO.author} />
       <meta name="robots" content={robots} />
-      <meta name="language" content={locale} />
       <link rel="canonical" href={canonicalUrl} />
       {normalizedAlternates.map(({ href, hrefLang }) => (
         <link key={hrefLang} rel="alternate" hrefLang={hrefLang} href={href} />

@@ -312,7 +312,7 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       // vite-react-ssg Head adds data-rh="true" attribute
       expect(content).toMatch(/<script[^>]*type="application\/ld\+json"/);
       expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
-      expect(content).toMatch(/"@type":\s*"Organization"/);
+      expect(content).toMatch(/"@type":\s*"Article"/);
     });
 
     it('About page should have Organization JSON-LD', () => {

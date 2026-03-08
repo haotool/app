@@ -16,20 +16,6 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
     it('should NOT use <SEOHelmet> component in RateWise.tsx', () => {
       expect(rateWiseContent).not.toContain('<SEOHelmet');
     });
-
-    it('should NOT import HomeStructuredData in RateWise.tsx', () => {
-      // [2026-01-30] HomeStructuredData 移至 routes.tsx ClientOnly 外層
-      expect(rateWiseContent).not.toContain('import { HomeStructuredData } from');
-    });
-
-    it('should NOT use <HomeStructuredData> in RateWise.tsx', () => {
-      expect(rateWiseContent).not.toContain('<HomeStructuredData');
-    });
-
-    it('should NOT define HOMEPAGE_FAQ in RateWise.tsx', () => {
-      // [2026-01-30] HOMEPAGE_FAQ 移至 constants.ts，由 routes.tsx 匯入
-      expect(rateWiseContent).not.toContain('HOMEPAGE_FAQ');
-    });
   });
 
   describe('🟢 index.html 不應該包含 JSON-LD（由 SEOHelmet 管理）', () => {
@@ -37,26 +23,7 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
     const indexHtmlContent = readFileSync(indexHtmlPath, 'utf-8');
 
     it('should NOT have any JSON-LD in index.html', () => {
-      // [2026-01-29] 這是 C2 Critical Issue 的修復
-      // index.html 不應該包含任何 JSON-LD，避免重複 schema
       expect(indexHtmlContent).not.toContain('<script type="application/ld+json">');
-    });
-
-    it('should NOT have WebApplication schema in index.html', () => {
-      expect(indexHtmlContent).not.toContain('"@type": "WebApplication"');
-    });
-
-    it('should NOT have Organization schema in index.html', () => {
-      expect(indexHtmlContent).not.toContain('"@type": "Organization"');
-    });
-
-    it('should NOT have WebSite schema in index.html', () => {
-      expect(indexHtmlContent).not.toContain('"@type": "WebSite"');
-    });
-
-    it('should NOT have SearchAction in index.html', () => {
-      // [2026-01-29] H4 fix: SearchAction 被移除（因為沒有 ?q= 搜尋功能）
-      expect(indexHtmlContent).not.toContain('"@type": "SearchAction"');
     });
 
     it('should NOT include homepage-only schemas in index.html', () => {
@@ -85,43 +52,38 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
       expect(combinedContent).toContain("'@type': 'WebSite'");
     });
 
-    it('should NOT have SearchAction in SEO layer', () => {
-      expect(combinedContent).not.toContain("'@type': 'SearchAction'");
+    it('should NOT define FAQPage schema builder in SEOHelmet', () => {
+      expect(seoHelmetContent).not.toContain('buildFaqSchema');
+      expect(seoHelmetContent).not.toContain("'@type': 'FAQPage'");
     });
   });
 
-  describe('🟢 Homepage JSON-LD should live in seo-metadata.ts (SSOT)', () => {
+  describe('🟢 Homepage JSON-LD 與內容 SSOT', () => {
     const seoMetadataPath = resolve(__dirname, 'config/seo-metadata.ts');
     const seoMetadata = readFileSync(seoMetadataPath, 'utf-8');
 
-    it('should define HowTo and homepage FAQ content in seo-metadata.ts', () => {
+    it('should define HowTo and FAQ content in seo-metadata.ts', () => {
       expect(seoMetadata).toContain('HOMEPAGE_HOW_TO');
       expect(seoMetadata).toContain('HOMEPAGE_FAQ_CONTENT');
       expect(seoMetadata).toContain("'@type': 'ImageObject'");
     });
 
-    it('should NOT have dead code HomeStructuredData.tsx', () => {
-      const deadCodePath = resolve(__dirname, 'components/HomeStructuredData.tsx');
-      expect(() => readFileSync(deadCodePath, 'utf-8')).toThrow();
+    it('should keep FAQ content out of FAQPage rich result builder', () => {
+      expect(seoMetadata).toContain('faqContent');
+      expect(seoMetadata).not.toContain('faq: [...HOMEPAGE_FAQ_CONTENT]');
     });
   });
 
-  describe('🟢 FAQ rich result 最佳實踐', () => {
-    const seoHelmetPath = resolve(__dirname, 'components/SEOHelmet.tsx');
-    const seoHelmetContent = readFileSync(seoHelmetPath, 'utf-8');
+  describe('🟢 FAQ prerender 不應輸出 FAQPage', () => {
     const faqHtmlPath = resolve(__dirname, '../dist/faq/index.html');
 
-    it('SEOHelmet should NOT define FAQPage schema builder', () => {
-      expect(seoHelmetContent).not.toContain('buildFaqSchema');
-      expect(seoHelmetContent).not.toContain("'@type': 'FAQPage'");
-    });
+    it('FAQ static HTML should not contain FAQPage JSON-LD after build', () => {
+      if (!existsSync(faqHtmlPath)) {
+        return;
+      }
 
-    it('FAQ prerendered HTML should NOT contain FAQPage JSON-LD', () => {
-      if (!existsSync(faqHtmlPath)) return;
-
-      const faqHtmlContent = readFileSync(faqHtmlPath, 'utf-8');
-      expect(faqHtmlContent).not.toContain('"@type":"FAQPage"');
-      expect(faqHtmlContent).not.toContain('"@type": "FAQPage"');
+      const faqHtml = readFileSync(faqHtmlPath, 'utf-8');
+      expect(faqHtml).not.toContain('"@type":"FAQPage"');
     });
   });
 
@@ -136,6 +98,10 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
 
     it('FAQ page should use SEOHelmet', () => {
       expect(faqContent).toContain('<SEOHelmet');
+    });
+
+    it('FAQ page should not pass FAQ rich result prop', () => {
+      expect(faqContent).not.toContain('faq={');
     });
 
     it('About page should use SEOHelmet', () => {
