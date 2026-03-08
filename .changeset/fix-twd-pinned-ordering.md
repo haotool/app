@@ -1,5 +1,5 @@
 ---
-'@app/ratewise': minor
+'@app/ratewise': patch
 ---
 
 fix(ratewise): 修復多幣別頁面 TWD 未置頂與收藏排序不一致問題
