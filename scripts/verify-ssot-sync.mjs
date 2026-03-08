@@ -54,10 +54,16 @@ function extractPathsFromTS(filePath) {
   const inlinePaths = extractNamedArray(content, 'SEO_PATHS', ' as const');
   if (inlinePaths.length > 0) return inlinePaths;
 
+  // 檢查 SEO_PATHS 的實際 spread 組成（是否包含 LEGAL_SSG_PATHS）
+  const seoPathsSpread = content.match(/export const SEO_PATHS = \[([^\]]+)\]/)?.[1] ?? '';
+  const includesLegal = seoPathsSpread.includes('LEGAL_SSG_PATHS');
+
   const contentPaths = extractNamedArray(content, 'CONTENT_SEO_PATHS', ' as const');
-  const legalPaths = extractNamedArray(content, 'LEGAL_SSG_PATHS', ' as const');
+  const legalPaths = includesLegal
+    ? extractNamedArray(content, 'LEGAL_SSG_PATHS', ' as const')
+    : [];
   const currencyPaths = extractNamedArray(content, 'CURRENCY_SEO_PATHS', ' as const');
-  if (contentPaths.length > 0 || legalPaths.length > 0 || currencyPaths.length > 0) {
+  if (contentPaths.length > 0 || currencyPaths.length > 0) {
     return [...contentPaths, ...legalPaths, ...currencyPaths];
   }
 
