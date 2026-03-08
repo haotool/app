@@ -1,5 +1,32 @@
 # @app/ratewise
 
+## 2.8.0
+
+### Minor Changes
+
+- 7aedab2: fix(ratewise): 修復多幣別頁面 TWD 未置頂與收藏排序不一致問題
+  - `useCurrencyConverter` 的 `sortedCurrencies` 現在永遠將 TWD 固定在第一位
+  - 非收藏幣別改為按字母順序排列，與收藏頁面的 `getAllCurrenciesSorted` 行為完全一致
+  - 新增 5 個 `sortedCurrencies` 單元測試（TWD 置頂、收藏順序、字母排序、與 Favorites 頁對齊）
+
+### Patch Changes
+
+- e8eb77c: 全局更新品牌名稱為「RateWise 匯率好工具」
+  - app-info.ts：APP_INFO.name 統一為 'RateWise 匯率好工具'（SSOT）
+  - seo-metadata.ts：DEFAULT_DESCRIPTION、首頁 heading、FAQ/Guide/About 標題與描述補上完整品牌名
+  - 幣別頁 title 移除尾端重複的 RateWise（由 SEOHelmet suffix 自動補全）
+  - seo-paths.config.mjs：SITE_CONFIG.name 移除連字號改為空格
+  - manifest.webmanifest：name 與 description 同步更新
+
+- 9fb484f: 移除 noindex privacy 頁面的 sitemap 條目，修正 noindex 與 sitemap 衝突
+- 7aedab2: SEO 最佳化：E-E-A-T 信號、標題階層、logo srcset、code-split
+  - seo-metadata.ts：新增 `buildArticleJsonLd` helper，為 FAQ/Guide/About 頁加上 Article schema（`datePublished`、`dateModified`、`author`、`publisher`）
+  - FAQ.tsx / About.tsx：傳入 `jsonLd` prop 啟用 Article structured data
+  - Settings.tsx：H1 直接接 H3 的標題階層問題修復，所有 section 標題由 `h3` 改為 `h2`
+  - AppLayout.tsx：logo 圖片加入 `srcset`（1x / 2x / 4x），alt 文字補完品牌全名
+  - About.tsx：about 頁正文以「本工具」取代重複品牌名稱，降低關鍵字密度
+  - routes.tsx：`MultiConverter`、`Favorites`、`Settings` 改為 `lazyWithRetry` 動態載入，減少初始 app.js 體積
+
 ## 2.7.5
 
 ### Patch Changes
