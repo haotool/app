@@ -1,5 +1,39 @@
 # @app/ratewise
 
+## 2.7.2
+
+### Patch Changes
+
+- cc60c58: 重構 converterStore — useCurrencyConverter 接入 Zustand SSOT
+  - 啟用 converterStore 作為貨幣選擇、模式、收藏的 SSOT
+  - useCurrencyConverter 改由 Zustand store 管理持久化狀態，移除手動 localStorage 操作
+  - 新增 converterStore 單元測試（16 tests）
+  - vitest.config.ts 改用 forks pool，防止 localStorage mock 跨測試檔案洩漏
+
+- f112a3c: 修復 legacy localStorage 遷移時空收藏陣列被預設值覆蓋的問題
+  - 舊版 favorites key 為 `[]`（使用者刻意清空）時，遷移後應保留空收藏
+  - 修正 buildMigrationPatch 的 `if (sanitized.length > 0)` 條件判斷
+  - 新增 3 個遷移模擬測試：空陣列保留、全無效代碼、混合有效/無效代碼
+
+- 374271c: 修復 setupTests 在 forks pool 模式下 localStorage 未初始化問題
+  - 在 setupTests.ts 頂層呼叫 ensureStorage，確保 Zustand persist middleware 於模組載入時即可存取有效的 localStorage
+
+- 4e5682c: 移除 trend dead state 與 generateTrends no-op
+  - 刪除 `seedTrends`、`const [trend]`、`generateTrends` useCallback 及其在 effect 中的呼叫
+  - 移除 `TrendDirection`、`TrendState` 型別定義（`types.ts`）
+  - 清理 `FavoritesList`、`CurrencyList`、`RateWise`、`Favorites` 頁面中所有 trend prop 與趨勢圖示
+  - 移除 `CurrencyList` 的重新整理趨勢按鈕（no-op 入口）
+  - 同步更新 `CurrencyList.test.tsx`：移除 trend/refresh 相關測試與 props
+
+- d835c07: 重構 useCurrencyConverter — 9 個 handler 補上 useCallback
+  - handleFromAmountChange、handleToAmountChange 補上 useCallback（deps: []）
+  - quickAmount 補上 useCallback（deps: mode, baseCurrency, handleMultiAmountChange）
+  - swapCurrencies 補上 useCallback（deps: storeSwapCurrencies, toAmount, fromAmount）
+  - toggleFavorite、reorderFavorites 補上 useCallback（deps: store actions）
+  - addToHistory 補上 useCallback（deps: fromCurrency, toCurrency, amounts, showToast, t）
+  - clearAllHistory 補上 useCallback（deps: []）
+  - reconvertFromHistory 補上 useCallback（deps: setFromCurrency, setToCurrency）
+
 ## 2.7.1
 
 ### Patch Changes
