@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-08T04:54:01+08:00
-> **當前總分**: 1120（初始分: 100）
+> **最後更新**: 2026-03-08T18:50:00+08:00
+> **當前總分**: 1124（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -23,27 +23,28 @@
 
 ## 分數變動摘要（近期）
 
-| 分數 | 事項                                            | 日期       |
-| ---- | ----------------------------------------------- | ---------- |
-| +2   | 002 v2 結構化索引規格與主題分類升級             | 2026-03-08 |
-| +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理  | 2026-03-08 |
-| +1   | SEOHelmet effect 依賴穩定化                     | 2026-03-08 |
-| +1   | SEOHelmet 卸載 cleanup 與跨頁 head 污染修復     | 2026-03-08 |
-| +4   | FAQ rich results 範圍收斂與 head hydration 去重 | 2026-03-08 |
-| +3   | SEO Audit hreflang 驗證硬編碼根因修復           | 2026-03-07 |
-| +4   | rebase 後版本與 sitemap SSOT 根因修復           | 2026-03-07 |
-| +1   | 公開產物格式漂移收斂與提交潔淨化                | 2026-03-07 |
-| +6   | SEO 權威內容頁、參數頁重複抓取抑制              | 2026-03-07 |
-| +5   | SEO 真實性、sitemap 與 robots SSOT 根因修復     | 2026-03-07 |
-| +1   | 建立 Cloudflare 稽核工作流文件                  | 2026-03-03 |
-| 0    | Code Splitting 生產癱瘓（-3）+ 快速修復（+3）   | 2026-03-03 |
-| +5   | 效能優化 Bundle 490KB→233KB                     | 2026-03-03 |
-| +6   | park-keeper Phase 3 收尾                        | 2026-02-28 |
-| +3   | RateWise SEO 權威定位：新增 4 幣對              | 2026-02-28 |
-| +2   | Sitemap hreflang SSOT 同步修復                  | 2026-02-28 |
-| +3   | SEO 技術債清除與 SSOT 完整對齊                  | 2026-02-28 |
-| +1   | 修復 prerender/hreflang 測試斷言                | 2026-02-28 |
-| +2   | AGENTS/CLAUDE 企業 SOP 升級                     | 2026-02-28 |
+| 分數 | 事項                                                  | 日期       |
+| ---- | ----------------------------------------------------- | ---------- |
+| +4   | RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復 | 2026-03-08 |
+| +2   | 002 v2 結構化索引規格與主題分類升級                   | 2026-03-08 |
+| +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理        | 2026-03-08 |
+| +1   | SEOHelmet effect 依賴穩定化                           | 2026-03-08 |
+| +1   | SEOHelmet 卸載 cleanup 與跨頁 head 污染修復           | 2026-03-08 |
+| +4   | FAQ rich results 範圍收斂與 head hydration 去重       | 2026-03-08 |
+| +3   | SEO Audit hreflang 驗證硬編碼根因修復                 | 2026-03-07 |
+| +4   | rebase 後版本與 sitemap SSOT 根因修復                 | 2026-03-07 |
+| +1   | 公開產物格式漂移收斂與提交潔淨化                      | 2026-03-07 |
+| +6   | SEO 權威內容頁、參數頁重複抓取抑制                    | 2026-03-07 |
+| +5   | SEO 真實性、sitemap 與 robots SSOT 根因修復           | 2026-03-07 |
+| +1   | 建立 Cloudflare 稽核工作流文件                        | 2026-03-03 |
+| 0    | Code Splitting 生產癱瘓（-3）+ 快速修復（+3）         | 2026-03-03 |
+| +5   | 效能優化 Bundle 490KB→233KB                           | 2026-03-03 |
+| +6   | park-keeper Phase 3 收尾                              | 2026-02-28 |
+| +3   | RateWise SEO 權威定位：新增 4 幣對                    | 2026-02-28 |
+| +2   | Sitemap hreflang SSOT 同步修復                        | 2026-02-28 |
+| +3   | SEO 技術債清除與 SSOT 完整對齊                        | 2026-02-28 |
+| +1   | 修復 prerender/hreflang 測試斷言                      | 2026-02-28 |
+| +2   | AGENTS/CLAUDE 企業 SOP 升級                           | 2026-02-28 |
 
 ---
 
@@ -93,6 +94,59 @@
 
 ---
 
+id: ratewise-seo-ssot-faq-best-practices
+date: 2026-03-08
+title: RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復
+score: +4
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, ssot, documentation, testing]
+keywords: [faq-rich-results, faq-content-ssot, hreflang, canonical, json-ld, noindex-rendering]
+aliases: [FAQPage 收斂, SEOHelmet SSOT, hreflang helper]
+related_entries: [log-v2-structured-indexing, regression-docs-tests-routes-sync, incident-seo-public-path-ssot]
+summary: 依 Google Search Central 最佳實踐重新審查 RateWise SEO PR，將 FAQ 內容與 rich result 責任拆分，移除不適用的 FAQPage schema、收斂 hreflang fallback 與 head metadata，並以 TDD 重寫 SEO 驗證，讓 SEO 行為回到單一 SSOT。
+root_cause:
+
+- FAQ 內容、FAQ rich result、hreflang fallback 與 head metadata 分散在 `SEOHelmet`、頁面元件與測試斷言中，導致 PR 表面通過但實際仍殘留舊 FAQPage 行為
+- 舊測試過度依賴 source code regex 與過時實作細節，無法可靠驗證最終 prerender / SSG 產物
+  impact:
+
+- FAQ 頁可能持續輸出不符合現行 Google rich result 範圍的 `FAQPage` schema
+- `meta keywords` / `meta title` / `meta language` 等冗餘訊號增加 head 複雜度與維護成本
+- SSOT 漂移會讓 reviewer 與未來維護者誤判 SEO 真實狀態
+  actions:
+
+- 將 `SEOPageMetadata.faq` 改為 `faqContent`，建立 `HomepageSEOContent` 與 `buildDefaultAlternates()` helper
+- 移除 `SEOHelmet` 內的 `FAQPage` builder，保留 `HowTo` / `BreadcrumbList` / 基礎站點 schema，並刪除無效 `meta keywords/title/language`
+- FAQ 頁與首頁改為只消費 FAQ 內容 SSOT，不再將 FAQ 內容直接輸出為 rich result schema
+- 新增 `seo-ssot.test.ts`，並重寫 `hreflang.test.ts`、`jsonld.test.ts`、`prerender.test.ts`、`SEOHelmet.test.tsx`，改以行為與產物為驗證核心
+- 順手修復 `converterStore.test.ts` 既有 lint 警告，讓 `pnpm --filter @app/ratewise lint` 回到全綠
+  prevention:
+
+- 之後若 UI 仍要顯示 FAQ 內容，必須明確標示為 `faqContent` 類內容欄位，不得預設等同 rich result schema
+- hreflang / canonical fallback 一律走 helper 與 SSOT 常數，不允許在 component 內散落手寫陣列
+- SEO 驗證優先檢查 prerender 產物與 helper 行為，不再用 regex 驗 source existence 當作真相
+  verification:
+
+- `pnpm --filter @app/ratewise exec tsc --noEmit`
+- `pnpm --filter @app/ratewise lint`
+- `pnpm build:ratewise`
+- `pnpm --filter @app/ratewise test`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-ssot.test.ts src/hreflang.test.ts src/jsonld.test.ts src/seo-best-practices.test.ts src/prerender.test.ts src/components/__tests__/SEOHelmet.test.tsx src/seo-truthfulness.test.ts`
+  references:
+
+- Google Search Central: FAQ rich results / localized versions / JavaScript SEO best practices
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/components/SEOHelmet.tsx
+- docs/dev/039_ratewise_seo_ssot_tdd_spec.md
+
+---
+
+SEO 真正的 SSOT 不是「某段 schema 曾經存在」，而是「最終靜態產物、head 與測試都指向同一套規則」。
+
+---
+
 id: fix-twd-pinned-multi-ordering
 date: 2026-03-09
 title: 修復 sortedCurrencies 未固定 TWD 與排序不一致
@@ -117,7 +171,7 @@ prevention: >
 actions:
 
 - 修改 useCurrencyConverter.ts：sortedCurrencies 改用明確 TWD 置頂邏輯
-- 新增 .changeset/fix-twd-pinned-ordering.md（minor）
+- 新增 .changeset/fix-twd-pinned-ordering.md（後續校正為 patch）
 - 新增 5 個 sortedCurrencies 測試（PR #181）
 - 記錄錯誤修復至 CLAUDE.md Troubleshooting #9-11 / AGENTS.md 實務模式
   verification:

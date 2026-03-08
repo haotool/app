@@ -122,7 +122,6 @@ export const routes: RouteRecord[] = [
             <SEOHelmet
               pathname={HOMEPAGE_SEO.pathname}
               description={HOMEPAGE_SEO.description}
-              keywords={HOMEPAGE_SEO.keywords}
               howTo={HOMEPAGE_SEO.howTo}
               jsonLd={HOMEPAGE_SEO.jsonLd}
             />

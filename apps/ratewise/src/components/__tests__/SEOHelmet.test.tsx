@@ -24,7 +24,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
-import { SEOHelmet, shouldRenderStructuredData } from '../SEOHelmet';
+import { SEOHelmet } from '../SEOHelmet';
+import { shouldRenderStructuredData } from '../seo-helmet-utils';
 
 describe('SEOHelmet Component', () => {
   const originalHead = document.head.innerHTML;
@@ -77,25 +78,30 @@ describe('SEOHelmet Component', () => {
       }).not.toThrow();
     });
 
-    it('should render without errors with FAQ prop', () => {
+    it('should render without errors with HowTo prop', () => {
       expect(() => {
         render(
           <HelmetProvider>
             <SEOHelmet
               title="Test Page"
-              faq={[
-                {
-                  question: 'Test Question?',
-                  answer: 'Test Answer',
-                },
-              ]}
+              howTo={{
+                name: 'How to do something',
+                description: 'Description',
+                steps: [
+                  {
+                    position: 1,
+                    name: 'Step 1',
+                    text: 'Do this',
+                  },
+                ],
+              }}
             />
           </HelmetProvider>,
         );
       }).not.toThrow();
     });
 
-    it('should render without errors with HowTo prop', () => {
+    it('should render without errors with breadcrumb and HowTo prop', () => {
       expect(() => {
         render(
           <HelmetProvider>
@@ -131,7 +137,6 @@ describe('SEOHelmet Component', () => {
                 { name: 'Home', item: '/' },
                 { name: 'Test', item: '/test/' },
               ]}
-              faq={[{ question: 'Q?', answer: 'A' }]}
               howTo={{
                 name: 'How to test',
                 description: 'Testing guide',
@@ -211,7 +216,11 @@ describe('SEOHelmet Component', () => {
             title="測試頁"
             description="新的描述"
             canonical="/test/"
-            faq={[{ question: 'Q?', answer: 'A' }]}
+            howTo={{
+              name: '如何測試',
+              description: '新的操作流程',
+              steps: [{ position: 1, name: '步驟一', text: '先測試' }],
+            }}
           />
         </HelmetProvider>,
       );
@@ -241,7 +250,8 @@ describe('SEOHelmet Component', () => {
       expect(structuredDataScript).not.toBeNull();
       expect(structuredDataScript).toHaveAttribute('data-rh', 'true');
       expect(structuredDataScript).toHaveAttribute('data-seo-helmet', 'structured-data');
-      expect(structuredDataScript?.textContent).toContain('"@type":"FAQPage"');
+      expect(structuredDataScript?.textContent).toContain('"@type":"HowTo"');
+      expect(structuredDataScript?.textContent).not.toContain('"@type":"FAQPage"');
     });
 
     it('should remove structured data on noindex pages', () => {
@@ -270,7 +280,11 @@ describe('SEOHelmet Component', () => {
             title="會被清掉的頁面"
             description="這組 metadata 應該在卸載後消失"
             canonical="/cleanup/"
-            faq={[{ question: 'Q?', answer: 'A' }]}
+            howTo={{
+              name: '清理流程',
+              description: '測試清理用',
+              steps: [{ position: 1, name: '步驟一', text: '清理' }],
+            }}
           />
         </HelmetProvider>,
       );

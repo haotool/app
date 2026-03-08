@@ -251,8 +251,8 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(combinedContent).toContain("'@type': 'WebSite'");
     });
 
-    it('should have FAQPage schema builder', () => {
-      expect(combinedContent).toContain("'@type': 'FAQPage'");
+    it('should NOT have FAQPage schema builder in SEO layer', () => {
+      expect(combinedContent).not.toContain("'@type': 'FAQPage'");
     });
 
     it('should have HowTo schema builder', () => {
@@ -387,8 +387,8 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(seoMetadataContent).toContain('HOMEPAGE_HOW_TO');
     });
 
-    it('should have FAQ schema via HOMEPAGE_FAQ', () => {
-      expect(seoMetadataContent).toContain('HOMEPAGE_FAQ');
+    it('should have FAQ content via HOMEPAGE_FAQ_CONTENT', () => {
+      expect(seoMetadataContent).toContain('HOMEPAGE_FAQ_CONTENT');
     });
 
     it('should have ImageObject schema via buildShareImageJsonLd', () => {

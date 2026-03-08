@@ -10,6 +10,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { CurrencyCode } from '../../features/ratewise/types';
 import { useConverterStore } from '../converterStore';
 
 // ── localStorage mock ─────────────────────────────────────────────────────────
@@ -293,10 +294,7 @@ describe('converterStore', () => {
     it('過濾 favorites 中不合法的貨幣代碼（舊 CurrencyPair 物件格式）', () => {
       // 模擬舊版 favorites 為 CurrencyPair[]（物件陣列）被 hydrate 進 store
       useConverterStore.setState({
-        favorites: [
-          { from: 'USD', to: 'JPY' },
-          'JPY',
-        ] as unknown as import('../../features/ratewise/types').CurrencyCode[],
+        favorites: [{ from: 'USD', to: 'JPY' }, 'JPY'] as unknown as CurrencyCode[],
       });
 
       useConverterStore.getState().__validateAndSanitize?.();
@@ -307,10 +305,7 @@ describe('converterStore', () => {
 
     it('favorites 含純無效字串代碼時，過濾後為空陣列', () => {
       useConverterStore.setState({
-        favorites: [
-          'NOT_A_CODE',
-          'INVALID',
-        ] as unknown as import('../../features/ratewise/types').CurrencyCode[],
+        favorites: ['NOT_A_CODE', 'INVALID'] as unknown as CurrencyCode[],
       });
 
       useConverterStore.getState().__validateAndSanitize?.();
@@ -320,7 +315,7 @@ describe('converterStore', () => {
 
     it('favorites 為非陣列型別時，重置為預設收藏', () => {
       useConverterStore.setState({
-        favorites: 'corrupted' as unknown as import('../../features/ratewise/types').CurrencyCode[],
+        favorites: 'corrupted' as unknown as CurrencyCode[],
       });
 
       useConverterStore.getState().__validateAndSanitize?.();
@@ -333,7 +328,7 @@ describe('converterStore', () => {
 
     it('fromCurrency 為非有效代碼時，重置為 DEFAULT_FROM_CURRENCY', () => {
       useConverterStore.setState({
-        fromCurrency: 'INVALID' as unknown as import('../../features/ratewise/types').CurrencyCode,
+        fromCurrency: 'INVALID' as unknown as CurrencyCode,
       });
 
       useConverterStore.getState().__validateAndSanitize?.();
@@ -344,7 +339,7 @@ describe('converterStore', () => {
 
     it('toCurrency 為非有效代碼時，重置為 DEFAULT_TO_CURRENCY', () => {
       useConverterStore.setState({
-        toCurrency: 'BROKEN' as unknown as import('../../features/ratewise/types').CurrencyCode,
+        toCurrency: 'BROKEN' as unknown as CurrencyCode,
       });
 
       useConverterStore.getState().__validateAndSanitize?.();

@@ -5,7 +5,7 @@ import { APP_INFO } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
 import { FAQ_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 
-const FAQ_ENTRIES = FAQ_PAGE_SEO.faq ?? [];
+const FAQ_ENTRIES = FAQ_PAGE_SEO.faqContent ?? [];
 const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
   year: 'numeric',
   month: 'long',
@@ -21,7 +21,6 @@ export default function FAQ() {
         description={FAQ_PAGE_SEO.description}
         pathname={FAQ_PAGE_SEO.pathname}
         breadcrumb={FAQ_PAGE_SEO.breadcrumb}
-        faq={FAQ_ENTRIES}
         jsonLd={FAQ_PAGE_SEO.jsonLd}
       />
 

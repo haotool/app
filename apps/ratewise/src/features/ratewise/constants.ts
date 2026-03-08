@@ -79,26 +79,3 @@ export const CURRENCY_QUICK_AMOUNTS = {
   VND: [100000, 200000, 500000, 1000000, 2000000], // 越南盾：面額較大，日常消費
   MYR: [10, 20, 50, 100, 500], // 馬來幣：與新加坡幣類似
 } as const;
-
-/** @deprecated 首頁 FAQ SSOT 已移至 config/seo-metadata.ts HOMEPAGE_FAQ，此處僅保留向後相容 */
-export const HOMEPAGE_FAQ = [
-  {
-    question: 'RateWise 和其他匯率工具有什麼不同？',
-    answer:
-      'Google Finance、XE、Yahoo Finance 等工具顯示的是「中間價」（mid-rate）——買入與賣出匯率的平均值，不是你去銀行實際換匯會用的價格。RateWise 顯示臺灣銀行牌告的實際買入賣出價（現金與即期共四種報價），讓您換匯前就能知道真正要付多少台幣。以日圓為例，中間價與實際賣出價差距約 1～3%，換 10 萬日圓大約差 1,500～3,000 元台幣。',
-  },
-  {
-    question: '支援哪些貨幣？',
-    answer:
-      '支援 18 種貨幣（TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等），可收藏常用貨幣。',
-  },
-  {
-    question: '可以離線使用嗎？',
-    answer: '可以。PWA 首次開啟會快取資源與最近匯率，離線時仍可用上次更新的數據進行換算。',
-  },
-  {
-    question: '匯率多久更新一次？',
-    answer:
-      '匯率數據每 5 分鐘自動同步臺灣銀行最新牌告匯率，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理以手動同步。',
-  },
-];

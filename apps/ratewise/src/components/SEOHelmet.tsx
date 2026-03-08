@@ -6,12 +6,12 @@
  * - 所有預設值與 schema 來源統一收斂到 config/seo-metadata.ts
  */
 import { Head } from 'vite-react-ssg';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { APP_INFO } from '../config/app-info';
+import { shouldRenderStructuredData } from './seo-helmet-utils';
 import {
   type AlternateLink,
   type BreadcrumbItem,
-  type FAQEntry,
   type HowToData,
   type JsonLdBlock,
   DEFAULT_LOCALE,
@@ -19,6 +19,7 @@ import {
   SITE_SEO,
   buildAbsoluteAssetUrl,
   buildCanonicalUrl,
+  buildDefaultAlternates,
   buildShareImageJsonLd,
   buildSiteJsonLd,
 } from '../config/seo-metadata';
@@ -35,7 +36,6 @@ interface SEOProps {
   alternates?: AlternateLink[];
   keywords?: string[];
   updatedTime?: string;
-  faq?: FAQEntry[];
   howTo?: HowToData;
   breadcrumb?: BreadcrumbItem[];
   robots?: string;
@@ -48,19 +48,6 @@ const SEO_HELMET_MANAGED_VALUE = 'managed';
 const SEO_HELMET_STRUCTURED_DATA_VALUE = 'structured-data';
 const SEO_HELMET_MANAGED_SELECTOR = `[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_MANAGED_VALUE}"]`;
 const SEO_HELMET_STRUCTURED_DATA_SELECTOR = `[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_STRUCTURED_DATA_VALUE}"]`;
-
-const buildFaqSchema = (faq: FAQEntry[]): JsonLdBlock => ({
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: faq.map(({ question, answer }) => ({
-    '@type': 'Question',
-    name: question,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: answer,
-    },
-  })),
-});
 
 const buildHowToSchema = (howTo: HowToData, url: string): JsonLdBlock => ({
   '@context': 'https://schema.org',
@@ -92,10 +79,6 @@ const buildBreadcrumbSchema = (items: BreadcrumbItem[]): JsonLdBlock | null => {
     })),
   };
 };
-
-export function shouldRenderStructuredData(robots: string): boolean {
-  return !robots.toLowerCase().includes('noindex');
-}
 
 function upsertTitle(title: string) {
   const existing = Array.from(document.head.querySelectorAll('title'));
@@ -204,9 +187,7 @@ export function SEOHelmet({
   pathname,
   locale = DEFAULT_LOCALE,
   alternates,
-  keywords,
   updatedTime = SITE_SEO.updatedTime,
-  faq,
   howTo,
   breadcrumb,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
@@ -214,17 +195,14 @@ export function SEOHelmet({
   const fullTitle = title ? `${title} | ${APP_INFO.name}` : SITE_SEO.title;
   const canonicalUrl = canonical ? buildCanonicalUrl(canonical) : buildCanonicalUrl(pathname);
   const ogImageUrl = buildAbsoluteAssetUrl(ogImage);
-  const keywordsContent = (keywords?.length ? keywords : SITE_SEO.keywords).join(', ');
-  const alternatesToRender = alternates?.length
-    ? alternates
-    : [
-        { hrefLang: 'x-default', href: canonicalUrl },
-        { hrefLang: DEFAULT_LOCALE, href: canonicalUrl },
-      ];
-  const normalizedAlternates = alternatesToRender.map(({ href, hrefLang }) => ({
-    hrefLang,
-    href: buildCanonicalUrl(href),
-  }));
+  const normalizedAlternates = useMemo(() => {
+    const alternatesToRender = alternates?.length ? alternates : buildDefaultAlternates(pathname);
+
+    return alternatesToRender.map(({ href, hrefLang }) => ({
+      hrefLang,
+      href: buildCanonicalUrl(href),
+    }));
+  }, [alternates, pathname]);
   const normalizedAlternatesSignature = normalizedAlternates
     .map(({ hrefLang, href }) => `${hrefLang}:${href}`)
     .join('|');
@@ -238,10 +216,6 @@ export function SEOHelmet({
       ? []
       : [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 匯率換算工具預覽圖`)]),
   ];
-
-  if (faq?.length) {
-    structuredData.push(buildFaqSchema(faq));
-  }
 
   if (howTo) {
     structuredData.push(buildHowToSchema(howTo, canonicalUrl));
@@ -269,12 +243,9 @@ export function SEOHelmet({
     if (typeof document === 'undefined') return;
 
     upsertTitle(fullTitle);
-    upsertMeta('meta[name="title"]', { name: 'title', content: fullTitle });
     upsertMeta('meta[name="description"]', { name: 'description', content: description });
-    upsertMeta('meta[name="keywords"]', { name: 'keywords', content: keywordsContent });
     upsertMeta('meta[name="author"]', { name: 'author', content: APP_INFO.author });
     upsertMeta('meta[name="robots"]', { name: 'robots', content: robots });
-    upsertMeta('meta[name="language"]', { name: 'language', content: locale });
     upsertLink('link[rel="canonical"]', { rel: 'canonical', href: canonicalUrl });
 
     const alternateLinks = normalizedAlternates.map(({ href, hrefLang }) => {
@@ -364,8 +335,8 @@ export function SEOHelmet({
     canonicalUrl,
     description,
     fullTitle,
-    keywordsContent,
     locale,
+    normalizedAlternates,
     normalizedAlternatesSignature,
     ogImageUrl,
     ogLocale,
@@ -383,12 +354,9 @@ export function SEOHelmet({
   return (
     <Head>
       <title>{fullTitle}</title>
-      <meta name="title" content={fullTitle} />
       <meta name="description" content={description} />
-      <meta name="keywords" content={keywordsContent} />
       <meta name="author" content={APP_INFO.author} />
       <meta name="robots" content={robots} />
-      <meta name="language" content={locale} />
       <link rel="canonical" href={canonicalUrl} />
       {normalizedAlternates.map(({ href, hrefLang }) => (
         <link key={hrefLang} rel="alternate" hrefLang={hrefLang} href={href} />
