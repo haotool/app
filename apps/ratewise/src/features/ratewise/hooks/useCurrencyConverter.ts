@@ -244,15 +244,15 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   }, [mode, baseCurrency, recalcMultiAmounts]);
 
   // Handlers
-  const handleFromAmountChange = (value: string) => {
+  const handleFromAmountChange = useCallback((value: string) => {
     setFromAmount(value);
     setLastEdited('from');
-  };
+  }, []);
 
-  const handleToAmountChange = (value: string) => {
+  const handleToAmountChange = useCallback((value: string) => {
     setToAmount(value);
     setLastEdited('to');
-  };
+  }, []);
 
   const scheduleMultiRecalc = useCallback(
     (code: CurrencyCode, value: string) => {
@@ -297,37 +297,45 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     [scheduleMultiRecalc],
   );
 
-  const quickAmount = (value: number) => {
-    const strValue = value.toString();
-    if (mode === 'single') {
-      setFromAmount(strValue);
-      setLastEdited('from');
-    } else {
-      handleMultiAmountChange(baseCurrency, strValue);
-    }
-  };
+  const quickAmount = useCallback(
+    (value: number) => {
+      const strValue = value.toString();
+      if (mode === 'single') {
+        setFromAmount(strValue);
+        setLastEdited('from');
+      } else {
+        handleMultiAmountChange(baseCurrency, strValue);
+      }
+    },
+    [mode, baseCurrency, handleMultiAmountChange],
+  );
 
-  const swapCurrencies = () => {
+  const swapCurrencies = useCallback(() => {
     storeSwapCurrencies(); // 幣別互換（atomic，在 store 中一次性更新）
     setFromAmount(toAmount);
     setToAmount(fromAmount);
-  };
+  }, [storeSwapCurrencies, toAmount, fromAmount]);
 
-  const toggleFavorite = (code: CurrencyCode) => {
-    storeToggleFavorite(code);
-  };
+  const toggleFavorite = useCallback(
+    (code: CurrencyCode) => {
+      storeToggleFavorite(code);
+    },
+    [storeToggleFavorite],
+  );
 
   /** 重新排序收藏貨幣（拖曳排序用） */
-  const reorderFavorites = (newOrder: CurrencyCode[]) => {
-    storeReorderFavorites(newOrder);
-    // Zustand persist middleware 自動處理 localStorage 同步，無需手動 writeJSON
-  };
+  const reorderFavorites = useCallback(
+    (newOrder: CurrencyCode[]) => {
+      storeReorderFavorites(newOrder);
+      // Zustand persist middleware 自動處理 localStorage 同步，無需手動 writeJSON
+    },
+    [storeReorderFavorites],
+  );
 
   /**
-   * Add current conversion to history with toast notification
    * 將當前轉換加入歷史記錄並顯示 Toast 通知
    */
-  const addToHistory = () => {
+  const addToHistory = useCallback(() => {
     const timestamp = Date.now();
     const entry: ConversionHistoryEntry = {
       from: fromCurrency,
@@ -335,33 +343,34 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       amount: fromAmount,
       result: toAmount,
       time: getRelativeTimeString(timestamp),
-      timestamp, // 完整時間戳記
+      timestamp,
     };
 
     setHistory((prev) => {
-      const updated = [entry, ...prev].slice(0, 10); // 增加至 10 條
-      // 持久化到 localStorage
+      const updated = [entry, ...prev].slice(0, 10);
       writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, updated);
       return updated;
     });
 
-    // 顯示成功通知
     showToast(t('singleConverter.addedToHistory'), 'success');
-  };
+  }, [fromCurrency, toCurrency, fromAmount, toAmount, showToast, t]);
 
-  // [feat:2025-12-26] 清除全部歷史記錄
-  const clearAllHistory = () => {
+  /** 清除全部歷史記錄 */
+  const clearAllHistory = useCallback(() => {
     setHistory([]);
     writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, []);
-  };
+  }, []);
 
-  // [feat:2025-12-26] 從歷史記錄重新轉換
-  const reconvertFromHistory = (entry: ConversionHistoryEntry) => {
-    setFromCurrency(entry.from);
-    setToCurrency(entry.to);
-    setFromAmount(entry.amount);
-    setLastEdited('from');
-  };
+  /** 從歷史記錄重新載入轉換參數 */
+  const reconvertFromHistory = useCallback(
+    (entry: ConversionHistoryEntry) => {
+      setFromCurrency(entry.from);
+      setToCurrency(entry.to);
+      setFromAmount(entry.amount);
+      setLastEdited('from');
+    },
+    [setFromCurrency, setToCurrency],
+  );
 
   const sortedCurrencies = useMemo(() => {
     const orderedFavorites = sanitizeFavorites(favorites);
