@@ -5,33 +5,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import worker from '../../../../security-headers/src/worker.js';
 
 class MockElement {
-  private readonly attributes = new Map<string, string>();
-
-  constructor(rawAttributes: string) {
-    const attributePattern = /([^\s=]+)(?:="([^"]*)")?/g;
-    let match: RegExpExecArray | null;
-
-    while ((match = attributePattern.exec(rawAttributes)) !== null) {
-      const name = match[1];
-      if (!name) continue;
-      this.attributes.set(name, match[2] ?? '');
-    }
-  }
+  constructor(private readonly element: Element) {}
 
   getAttribute(name: string) {
-    return this.attributes.has(name) ? (this.attributes.get(name) ?? null) : null;
+    return this.element.getAttribute(name);
   }
 
   setAttribute(name: string, value: string) {
-    this.attributes.set(name, value);
-  }
-
-  toString() {
-    const serialized = Array.from(this.attributes.entries())
-      .map(([name, value]) => (value === '' ? name : `${name}="${value}"`))
-      .join(' ');
-
-    return serialized === '' ? '' : ` ${serialized}`;
+    this.element.setAttribute(name, value);
   }
 }
 
@@ -53,20 +34,19 @@ class MockHTMLRewriter {
       new ReadableStream({
         async start(controller) {
           const html = await response.text();
-          const rewritten = handlers.reduce((currentHtml, { selector, handler }) => {
-            if (selector !== 'script' || !handler.element) return currentHtml;
+          const document = new DOMParser().parseFromString(html, 'text/html');
 
-            return currentHtml.replace(
-              /<script\b([^>]*)>/g,
-              (_match: string, rawAttributes: string) => {
-                const element = new MockElement(rawAttributes);
-                handler.element?.(element);
-                return `<script${element.toString()}>`;
-              },
-            );
-          }, html);
+          handlers.forEach(({ selector, handler }) => {
+            if (!handler.element) return;
 
-          controller.enqueue(new TextEncoder().encode(rewritten));
+            const matchedElements = document.querySelectorAll(selector) as NodeListOf<Element>;
+            matchedElements.forEach((element) => {
+              handler.element?.(new MockElement(element));
+            });
+          });
+
+          const serializedHtml = `<!DOCTYPE html>${document.documentElement.outerHTML}`;
+          controller.enqueue(new TextEncoder().encode(serializedHtml));
           controller.close();
         },
       }),

@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-10T03:35:27+08:00
-> **當前總分**: 1133（初始分: 100）
+> **最後更新**: 2026-03-10T03:42:50+08:00
+> **當前總分**: 1134（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -23,32 +23,33 @@
 
 ## 分數變動摘要（近期）
 
-| 分數 | 事項                                                  | 日期       |
-| ---- | ----------------------------------------------------- | ---------- |
-| +1   | 修復 security header 測試對 Worker 字串結構耦合       | 2026-03-10 |
-| +4   | Cloudflare 安全標頭分層重構與正式站驗證閉環           | 2026-03-10 |
-| +3   | 修復 vendor-router / vendor-commons 循環 chunk 警告   | 2026-03-09 |
-| +1   | RateWise v2.8.1 patch release 與 changeset 版本化     | 2026-03-09 |
-| +4   | RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復 | 2026-03-08 |
-| +2   | 002 v2 結構化索引規格與主題分類升級                   | 2026-03-08 |
-| +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理        | 2026-03-08 |
-| +1   | SEOHelmet effect 依賴穩定化                           | 2026-03-08 |
-| +1   | SEOHelmet 卸載 cleanup 與跨頁 head 污染修復           | 2026-03-08 |
-| +4   | FAQ rich results 範圍收斂與 head hydration 去重       | 2026-03-08 |
-| +3   | SEO Audit hreflang 驗證硬編碼根因修復                 | 2026-03-07 |
-| +4   | rebase 後版本與 sitemap SSOT 根因修復                 | 2026-03-07 |
-| +1   | 公開產物格式漂移收斂與提交潔淨化                      | 2026-03-07 |
-| +6   | SEO 權威內容頁、參數頁重複抓取抑制                    | 2026-03-07 |
-| +5   | SEO 真實性、sitemap 與 robots SSOT 根因修復           | 2026-03-07 |
-| +1   | 建立 Cloudflare 稽核工作流文件                        | 2026-03-03 |
-| 0    | Code Splitting 生產癱瘓（-3）+ 快速修復（+3）         | 2026-03-03 |
-| +5   | 效能優化 Bundle 490KB→233KB                           | 2026-03-03 |
-| +6   | park-keeper Phase 3 收尾                              | 2026-02-28 |
-| +3   | RateWise SEO 權威定位：新增 4 幣對                    | 2026-02-28 |
-| +2   | Sitemap hreflang SSOT 同步修復                        | 2026-02-28 |
-| +3   | SEO 技術債清除與 SSOT 完整對齊                        | 2026-02-28 |
-| +1   | 修復 prerender/hreflang 測試斷言                      | 2026-02-28 |
-| +2   | AGENTS/CLAUDE 企業 SOP 升級                           | 2026-02-28 |
+| 分數 | 事項                                                         | 日期       |
+| ---- | ------------------------------------------------------------ | ---------- |
+| +1   | 移除 security header 測試中的 HTML regex 以清除 CodeQL alert | 2026-03-10 |
+| +1   | 修復 security header 測試對 Worker 字串結構耦合              | 2026-03-10 |
+| +4   | Cloudflare 安全標頭分層重構與正式站驗證閉環                  | 2026-03-10 |
+| +3   | 修復 vendor-router / vendor-commons 循環 chunk 警告          | 2026-03-09 |
+| +1   | RateWise v2.8.1 patch release 與 changeset 版本化            | 2026-03-09 |
+| +4   | RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復        | 2026-03-08 |
+| +2   | 002 v2 結構化索引規格與主題分類升級                          | 2026-03-08 |
+| +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理               | 2026-03-08 |
+| +1   | SEOHelmet effect 依賴穩定化                                  | 2026-03-08 |
+| +1   | SEOHelmet 卸載 cleanup 與跨頁 head 污染修復                  | 2026-03-08 |
+| +4   | FAQ rich results 範圍收斂與 head hydration 去重              | 2026-03-08 |
+| +3   | SEO Audit hreflang 驗證硬編碼根因修復                        | 2026-03-07 |
+| +4   | rebase 後版本與 sitemap SSOT 根因修復                        | 2026-03-07 |
+| +1   | 公開產物格式漂移收斂與提交潔淨化                             | 2026-03-07 |
+| +6   | SEO 權威內容頁、參數頁重複抓取抑制                           | 2026-03-07 |
+| +5   | SEO 真實性、sitemap 與 robots SSOT 根因修復                  | 2026-03-07 |
+| +1   | 建立 Cloudflare 稽核工作流文件                               | 2026-03-03 |
+| 0    | Code Splitting 生產癱瘓（-3）+ 快速修復（+3）                | 2026-03-03 |
+| +5   | 效能優化 Bundle 490KB→233KB                                  | 2026-03-03 |
+| +6   | park-keeper Phase 3 收尾                                     | 2026-02-28 |
+| +3   | RateWise SEO 權威定位：新增 4 幣對                           | 2026-02-28 |
+| +2   | Sitemap hreflang SSOT 同步修復                               | 2026-02-28 |
+| +3   | SEO 技術債清除與 SSOT 完整對齊                               | 2026-02-28 |
+| +1   | 修復 prerender/hreflang 測試斷言                             | 2026-02-28 |
+| +2   | AGENTS/CLAUDE 企業 SOP 升級                                  | 2026-02-28 |
 
 ---
 
@@ -95,6 +96,47 @@
 ## Entries
 
 ### 2026-03
+
+---
+
+id: codeql-test-html-regex-removal
+date: 2026-03-10
+title: 移除 security header 測試中的 HTML regex 以清除 CodeQL alert
+score: +1
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [testing, security, ci, ssot]
+keywords: [codeql, github-advanced-security, html-parser, jsdom, test-mock]
+aliases: [CodeQL 測試告警, bad-tag-filter]
+related_entries: [cloudflare-security-headers-layered-refactor, security-header-test-structure-decoupling]
+summary: PR #185 的 GitHub Advanced Security 在 `apps/ratewise/src/__tests__/securityHeadersWorker.test.ts` 發現 `js/bad-tag-filter`，原因是測試用 mock `HTMLRewriter` 以 regex 改寫 `<script>` tag。雖然告警落在 `classifications: [test]`，但仍會讓 PR 顯示新增高嚴重度 security alert。修正方式改為使用 `jsdom` 建立 DOM、以 `querySelectorAll()` 套用 handler，不再用 regex 解析 HTML。
+root_cause:
+
+- 測試為了模擬 Cloudflare `HTMLRewriter`，以 regex 匹配 `<script ...>` 後手動重組 tag
+- GitHub Advanced Security 將此模式辨識為 `js/bad-tag-filter`，視為高嚴重度 XSS 風險樣式
+  impact:
+
+- PR #185 出現新增 1 個 high severity security vulnerability，阻礙審查與合併判讀
+- 即使實際生產 Worker 已無此問題，測試層的告警仍會污染整體安全訊號
+  actions:
+
+- 將 mock `HTMLRewriter` 改為 `jsdom` DOM 操作，透過 `querySelectorAll()` 對符合 selector 的節點套用 handler
+- 保留既有 7 個 Worker 測試案例，確認 nonce 注入與 header 行為不回歸
+- 補跑單檔 `vitest` 與 `eslint`，確保型別邊界沒有因 `jsdom` 引入新 lint 問題
+  prevention:
+
+- 測試或工具程式若需要處理 HTML 結構，優先使用 DOM parser / sanitizer，不可再以 regex 操作 tag 邊界
+- 發現 `classifications: [test]` 的 security alert 仍應修正，而不是依賴 dismiss，避免平台訊號失真
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/securityHeadersWorker.test.ts`
+- `pnpm --filter @app/ratewise exec eslint src/__tests__/securityHeadersWorker.test.ts`
+- `gh api 'repos/haotool/app/code-scanning/alerts?ref=refs/pull/185/head&state=open&per_page=100'`
+  references:
+
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
+- https://github.com/haotool/app/pull/185
 
 ---
 
