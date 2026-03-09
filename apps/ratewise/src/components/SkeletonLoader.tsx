@@ -319,14 +319,29 @@ export const SettingsSkeleton = () => {
  * Favorites Page Skeleton
  * 收藏頁面骨架屏
  *
- * @description Skeleton for Favorites page with tabs and currency list
- *              收藏頁面骨架屏，包含頁籤和貨幣列表
+ * 結構設計原則（CLS 防止）：
+ * - 完全鏡像實際 Favorites UI 的佈局層級
+ * - 頁籤：skeleton-card p-1.5，2 個 flex-1 h-14 tab（icon + label）
+ * - 貨幣列表：card p-4 flex items-center gap-3
+ *   - 星號欄（w-7，左側）→ 對應 Favorites.tsx 的 star/fixed-star column
+ *   - 國旗（text-2xl w-8 rounded-full）→ 對應 emoji flag placeholder
+ *   - 幣別名稱（flex-1）→ 對應 code + name
+ *   - 換算按鈕（flex-shrink-0）→ 對應「換算 →」按鈕區
+ *
+ * 舊版錯誤：左側為「拖曳手柄 w-4 h-8」→ 實際 UI 左側是 star(w-7)
+ *
+ * @see Favorites.tsx — 實際 UI 結構（star → flag+name → convert btn）
+ * @see segmentedSwitch tokens — Tab 高度 py-3.5 + icon(18) + label(10) ≈ h-14
  */
 export const FavoritesSkeleton = () => {
   return (
-    <div className="skeleton-page p-5 max-w-md mx-auto space-y-6" role="status" aria-live="polite">
-      {/* Tab switcher */}
-      <div className="skeleton-card p-1.5">
+    <div
+      className="flex-1 px-3 sm:px-5 py-6 max-w-md mx-auto w-full"
+      role="status"
+      aria-live="polite"
+    >
+      {/* 頁籤切換器 — 對應 'card p-1.5' segmented switch，2 個 flex-1 tab */}
+      <div className="skeleton-card p-1.5 mb-6">
         <div className="flex gap-1">
           {[1, 2].map((i) => (
             <div key={i} className="skeleton-shimmer flex-1 h-14 rounded-2xl" />
@@ -334,22 +349,28 @@ export const FavoritesSkeleton = () => {
         </div>
       </div>
 
-      {/* Favorite currencies list with drag handles */}
+      {/* 貨幣清單 — 對應 'space-y-2'，每行 'card p-4 flex items-center gap-3' */}
       <section className="space-y-2">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="skeleton-card p-4">
-            <div className="flex items-center gap-3">
-              {/* Drag handle */}
-              <div className="skeleton-shimmer w-4 h-8 rounded" />
-              {/* Flag and info */}
-              <div className="skeleton-shimmer w-10 h-10 rounded-full" />
-              <div className="flex-1 space-y-1.5">
-                <div className="skeleton-shimmer h-5 w-16 rounded" />
-                <div className="skeleton-shimmer h-4 w-24 rounded" />
-              </div>
-              {/* Star icon */}
-              <div className="skeleton-shimmer h-6 w-6 rounded" />
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="skeleton-card p-4 flex items-center gap-3">
+            {/* 星號欄 — 對應 'w-7 flex-shrink-0 flex items-center justify-center'
+             *  Favorites.tsx 左側永遠是 star（固定裝飾或互動按鈕），非拖曳手柄
+             */}
+            <div
+              data-testid="skeleton-star"
+              className="w-7 flex-shrink-0 flex items-center justify-center"
+            >
+              <div className="skeleton-shimmer w-5 h-5 rounded" />
             </div>
+            {/* 國旗 — 對應 'text-2xl w-8 text-center' emoji flag */}
+            <div className="skeleton-shimmer w-8 h-8 rounded-full flex-shrink-0" />
+            {/* 幣別代碼 + 名稱 — 對應 'flex-1 min-w-0' */}
+            <div className="flex-1 space-y-1.5 min-w-0">
+              <div className="skeleton-shimmer h-4 w-16 rounded" />
+              <div className="skeleton-shimmer h-3 w-24 rounded" />
+            </div>
+            {/* 換算按鈕區 — 對應 'px-2 py-1 flex-shrink-0' 的「換算 →」 */}
+            <div className="skeleton-shimmer h-4 w-14 rounded flex-shrink-0" />
           </div>
         ))}
       </section>
@@ -362,46 +383,64 @@ export const FavoritesSkeleton = () => {
 /**
  * 多幣別頁面骨架屏
  * 對應 MultiConverter 頁面布局
+ *
+ * 結構設計原則（CLS 防止）：
+ * - 完全鏡像實際 MultiConverter UI 的佈局層級
+ * - 外層：flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full
+ * - 卡片：skeleton-card p-4 flex-1 flex flex-col（對應 'card p-4 flex-1 flex flex-col'）
+ * - 快速金額列：5 個 pill，對應 flex gap-2 mb-4 overflow-x-auto
+ * - 貨幣清單：8 行，每行結構 star(w-6) | flag(w-7) | code+name | [right] amount+rate
+ *
+ * @see MultiConverter.tsx（component）— 實際 UI 結構
+ * @see multiConverterLayoutTokens — SSOT 頁面佈局 token
  */
 export const MultiConverterSkeleton = () => {
   return (
-    <div className="skeleton-page p-5 max-w-md mx-auto space-y-4" role="status" aria-live="polite">
-      {/* 基準貨幣輸入卡片 */}
-      <div className="skeleton-card p-4 space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="skeleton-shimmer w-12 h-12 rounded-full" />
-          <div className="space-y-1.5">
-            <div className="skeleton-shimmer h-5 w-16 rounded" />
-            <div className="skeleton-shimmer h-4 w-24 rounded" />
-          </div>
-        </div>
-        <div className="skeleton-shimmer h-12 w-full rounded-xl" />
-        <div className="flex gap-2">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="skeleton-shimmer h-8 flex-1 rounded-lg" />
+    <div
+      className="flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full"
+      role="status"
+      aria-live="polite"
+    >
+      {/* 主卡片 — 對應 'card p-4 flex-1 flex flex-col' */}
+      <div className="skeleton-card p-4 flex-1 flex flex-col">
+        {/* 快速金額 pill 列 — 對應 'flex gap-2 mb-4 overflow-x-auto scrollbar-hide' */}
+        <div className="flex gap-2 mb-4 overflow-hidden">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              data-testid="skeleton-quick-pill"
+              className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-xl"
+            />
           ))}
         </div>
-      </div>
 
-      {/* 貨幣列表 */}
-      <div className="space-y-2">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="skeleton-card p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="skeleton-shimmer w-8 h-8 rounded-full" />
-                <div className="space-y-1">
-                  <div className="skeleton-shimmer h-4 w-12 rounded" />
-                  <div className="skeleton-shimmer h-3 w-20 rounded" />
-                </div>
+        {/* 貨幣清單 — 對應 'flex-1 space-y-2 -m-0.5 p-0.5' */}
+        <div className="flex-1 space-y-2">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div
+              key={i}
+              data-testid="skeleton-currency-row"
+              className="flex items-center px-3 py-2.5 rounded-xl"
+            >
+              {/* 星號欄 — 對應 'w-6 flex-shrink-0 flex items-center justify-center' */}
+              <div className="w-6 flex-shrink-0 flex items-center justify-center">
+                <div className="skeleton-shimmer w-4 h-4 rounded" />
               </div>
-              <div className="flex items-center gap-2">
-                <div className="skeleton-shimmer h-5 w-20 rounded" />
-                <div className="skeleton-shimmer h-6 w-6 rounded" />
+              {/* 國旗欄 — 對應 'text-xl flex-shrink-0 w-7 text-center' */}
+              <div className="skeleton-shimmer w-6 h-5 rounded flex-shrink-0 mx-1" />
+              {/* 幣別代碼 + 名稱 — 對應 code text-sm + name text-[11px] */}
+              <div className="space-y-1 ml-1 flex-shrink-0">
+                <div className="skeleton-shimmer h-3.5 w-10 rounded" />
+                <div className="skeleton-shimmer h-2.5 w-16 rounded" />
+              </div>
+              {/* 金額 + 匯率資訊（右側）— 對應 'flex-1 ml-2' text-right */}
+              <div className="flex-1 ml-2 space-y-1">
+                <div className="skeleton-shimmer h-4 w-20 ml-auto rounded" />
+                <div className="skeleton-shimmer h-2.5 w-28 ml-auto rounded" />
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <span className="sr-only">載入多幣別換算中...</span>

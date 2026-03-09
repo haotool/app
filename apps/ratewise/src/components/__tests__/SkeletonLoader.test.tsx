@@ -176,10 +176,25 @@ describe('FavoritesSkeleton', () => {
     expect(screen.getByText('載入收藏中...')).toBeInTheDocument();
   });
 
-  it('包含頁籤切換器', () => {
+  it('包含頁籤切換器（2 個 h-14 shimmer tab）', () => {
     const { container } = render(<FavoritesSkeleton />);
     const tabs = container.querySelectorAll('.skeleton-shimmer.h-14');
     expect(tabs.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('貨幣列每行：星星在左（data-testid=skeleton-star），不是拖曳手柄', () => {
+    // 實際 Favorites UI 結構：star(w-7) | flag | code+name | convert-btn
+    // 舊版錯誤骨架：drag-handle(w-4 h-8) | circle(w-10) | code+name | star(h-6 w-6)
+    const { container } = render(<FavoritesSkeleton />);
+    const starPlaceholders = container.querySelectorAll('[data-testid="skeleton-star"]');
+    expect(starPlaceholders.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('不應包含 drag-handle skeleton（w-4 h-8）—— 對應實際 UI 無獨立拖曳圖示欄', () => {
+    // 實際 Favorites 拖曳手柄是整個中間區域，不是獨立的細長 bar
+    const { container } = render(<FavoritesSkeleton />);
+    const dragHandle = container.querySelector('.skeleton-shimmer.w-4.h-8');
+    expect(dragHandle).not.toBeInTheDocument();
   });
 });
 
@@ -190,11 +205,27 @@ describe('MultiConverterSkeleton', () => {
     expect(screen.getByText('載入多幣別換算中...')).toBeInTheDocument();
   });
 
-  it('包含貨幣列表', () => {
+  it('包含快速金額列（5 個 pill 骨架）—— 對應實際 UI 的 quick amounts row', () => {
+    // 實際 MultiConverter UI：flex gap-2 mb-4 的快速金額 pill 按鈕列
+    // 骨架屏必須有對應的 pill 骨架，不應有「基準幣大卡片」（無此結構）
     const { container } = render(<MultiConverterSkeleton />);
-    // 至少 5 個貨幣卡片骨架
-    const cards = container.querySelectorAll('.skeleton-card');
-    expect(cards.length).toBeGreaterThanOrEqual(5);
+    const quickPills = container.querySelectorAll('[data-testid="skeleton-quick-pill"]');
+    expect(quickPills.length).toBe(5);
+  });
+
+  it('包含貨幣清單列（至少 8 行），每行有 star ＋ flag ＋ code/name ＋ amount 結構', () => {
+    // 實際 MultiConverter UI 每行：star(w-6) | flag(w-7) | code+name | [right] amount+rate
+    const { container } = render(<MultiConverterSkeleton />);
+    const currencyRows = container.querySelectorAll('[data-testid="skeleton-currency-row"]');
+    expect(currencyRows.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it('不應包含「基準幣大輸入卡片」結構（h-12 全寬 shimmer）—— 實際 UI 無此元素', () => {
+    // 舊版錯誤骨架有一個 skeleton-shimmer h-12 w-full 的「基準幣輸入框」
+    // 實際 MultiConverter 只有 quick amounts pill 列，不存在此卡片
+    const { container } = render(<MultiConverterSkeleton />);
+    const largeInput = container.querySelector('.skeleton-shimmer.h-12.w-full');
+    expect(largeInput).not.toBeInTheDocument();
   });
 });
 

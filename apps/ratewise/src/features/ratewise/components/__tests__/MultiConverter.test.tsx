@@ -302,4 +302,49 @@ describe('MultiConverter', () => {
       ).toBeInTheDocument();
     });
   });
+
+  describe('TWD 收藏星號行為', () => {
+    it('TWD 星號應為固定裝飾（data-testid=twd-star-fixed），不論 favorites 是否包含 TWD', () => {
+      const propsWithoutTWDFav = {
+        ...defaultProps,
+        favorites: ['JPY'] as CurrencyCode[], // production scenario: TWD 永遠不在 favorites
+      };
+      render(<MultiConverter {...propsWithoutTWDFav} />);
+
+      // TWD row 應有固定裝飾星，非互動按鈕
+      expect(screen.getByTestId('twd-star-fixed')).toBeInTheDocument();
+    });
+
+    it('TWD 星號容器應設 aria-hidden="true"（純裝飾）', () => {
+      const propsWithoutTWDFav = {
+        ...defaultProps,
+        favorites: [] as CurrencyCode[],
+      };
+      const { container } = render(<MultiConverter {...propsWithoutTWDFav} />);
+
+      const twdStar = container.querySelector('[data-testid="twd-star-fixed"]');
+      expect(twdStar).toBeInTheDocument();
+      expect(twdStar?.closest('[aria-hidden="true"]')).toBeTruthy();
+    });
+
+    it('點擊 TWD 星號區域不應呼叫 onToggleFavorite', () => {
+      const propsWithoutTWDFav = {
+        ...defaultProps,
+        favorites: [] as CurrencyCode[],
+      };
+      render(<MultiConverter {...propsWithoutTWDFav} />);
+
+      const twdStar = screen.getByTestId('twd-star-fixed');
+      fireEvent.click(twdStar);
+      expect(defaultProps.onToggleFavorite).not.toHaveBeenCalledWith('TWD');
+    });
+
+    it('非 TWD 貨幣星號應為互動按鈕（JPY 已收藏 → filled star，aria-label 符合翻譯）', () => {
+      render(<MultiConverter {...defaultProps} />);
+
+      // JPY 在 favorites 中，應顯示可移除的按鈕（favorites.removeFavorite = '移除常用貨幣'）
+      const removeBtn = screen.getByRole('button', { name: /移除常用貨幣/ });
+      expect(removeBtn).toBeInTheDocument();
+    });
+  });
 });

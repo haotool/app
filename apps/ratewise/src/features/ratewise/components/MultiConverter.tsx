@@ -252,9 +252,17 @@ export const MultiConverter = ({
                 )}
                 {/* 左側：星號收藏 + 國旗 + 貨幣資訊（z-10 確保在高亮層上方） */}
                 <div className="relative z-10 flex items-center gap-2 flex-shrink-0 min-w-0">
-                  {/* 收藏星號 - 固定寬度確保對齊 */}
+                  {/* 收藏星號 - 固定寬度確保對齊
+                   * TWD → 固定實心星（裝飾用，aria-hidden，非互動）
+                   *       與 Favorites.tsx 一致：TWD 永遠置頂，非收藏概念
+                   * 其他 → 可切換收藏的互動按鈕
+                   */}
                   <div className="w-6 flex-shrink-0 flex items-center justify-center">
-                    {favorites.includes(code) ? (
+                    {code === 'TWD' ? (
+                      <div aria-hidden="true" data-testid="twd-star-fixed">
+                        <Star className="w-4 h-4 text-favorite fill-favorite" />
+                      </div>
+                    ) : favorites.includes(code) ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

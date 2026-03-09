@@ -31,7 +31,7 @@ import { ConversionHistory } from '../features/ratewise/components/ConversionHis
 import { SEOHelmet } from '../components/SEOHelmet';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConverter';
-import { SkeletonLoader } from '../components/SkeletonLoader';
+import { FavoritesSkeleton } from '../components/SkeletonLoader';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 import type { RateType, CurrencyCode, ConversionHistoryEntry } from '../features/ratewise/types';
@@ -154,7 +154,7 @@ export default function Favorites() {
       <>
         {seoHelmet}
         <h1 className="sr-only">{pageSeo.title}</h1>
-        <SkeletonLoader />
+        <FavoritesSkeleton />
       </>
     );
   }
@@ -164,7 +164,7 @@ export default function Favorites() {
       <>
         {seoHelmet}
         <h1 className="sr-only">{pageSeo.title}</h1>
-        <SkeletonLoader />
+        <FavoritesSkeleton />
       </>
     );
   }

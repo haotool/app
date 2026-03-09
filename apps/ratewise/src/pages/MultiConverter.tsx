@@ -15,7 +15,7 @@ import { MultiConverter as MultiConverterComponent } from '../features/ratewise/
 import { SEOHelmet } from '../components/SEOHelmet';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
 import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConverter';
-import { SkeletonLoader } from '../components/SkeletonLoader';
+import { MultiConverterSkeleton } from '../components/SkeletonLoader';
 import { formatDisplayTime } from '../utils/timeFormatter';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import type { RateType, CurrencyCode } from '../features/ratewise/types';
@@ -101,7 +101,7 @@ export default function MultiConverter() {
       <>
         {seoHelmet}
         <h1 className="sr-only">{pageSeo.title}</h1>
-        <SkeletonLoader />
+        <MultiConverterSkeleton />
       </>
     );
   }
@@ -111,7 +111,7 @@ export default function MultiConverter() {
       <>
         {seoHelmet}
         <h1 className="sr-only">{pageSeo.title}</h1>
-        <SkeletonLoader />
+        <MultiConverterSkeleton />
       </>
     );
   }
