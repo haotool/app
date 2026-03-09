@@ -16,6 +16,8 @@ dns.setDefaultResultOrder('verbatim');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+const ROUTER_ECOSYSTEM_PACKAGES = ['react-router', '@remix-run/router', 'vite-react-ssg'];
+
 /** 計算檔案內容 hash（PWA 預快取版本控制，僅允許 public/ 目錄） */
 function getFileRevision(filePath: string): string {
   // 安全性驗證：僅允許 public/ 目錄下的檔案
@@ -415,7 +417,9 @@ export default defineConfig(({ mode }) => {
             }
 
             // Router（路由系統）
-            if (id.includes('react-router')) {
+            // 將 react-router、底層 @remix-run/router 與 vite-react-ssg 維持在同一個 chunk，
+            // 避免 router runtime 與 SSG runtime 互相跨 chunk 引用造成循環依賴警告。
+            if (ROUTER_ECOSYSTEM_PACKAGES.some((pkg) => id.includes(pkg))) {
               return 'vendor-router';
             }
 

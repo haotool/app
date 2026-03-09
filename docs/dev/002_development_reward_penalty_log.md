@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-09T04:00:00+08:00
-> **當前總分**: 1125（初始分: 100）
+> **最後更新**: 2026-03-09T09:23:14+08:00
+> **當前總分**: 1128（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -25,6 +25,7 @@
 
 | 分數 | 事項                                                  | 日期       |
 | ---- | ----------------------------------------------------- | ---------- |
+| +3   | 修復 vendor-router / vendor-commons 循環 chunk 警告   | 2026-03-09 |
 | +1   | RateWise v2.8.1 patch release 與 changeset 版本化     | 2026-03-09 |
 | +4   | RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復 | 2026-03-08 |
 | +2   | 002 v2 結構化索引規格與主題分類升級                   | 2026-03-08 |
@@ -92,6 +93,46 @@
 ## Entries
 
 ### 2026-03
+
+---
+
+id: fix-ratewise-router-chunk-cycle
+date: 2026-03-09
+title: 修復 vendor-router / vendor-commons 循環 chunk 警告
+score: +3
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [performance, ssot, testing]
+keywords: [vite, manualchunks, vendor-router, vendor-commons, remix-router, vite-react-ssg]
+aliases: [Circular chunk 修復, router chunk SSOT]
+related_entries: [ratewise-v2-8-1-patch-release, ratewise-seo-ssot-faq-best-practices]
+summary: 針對 `pnpm build:ratewise` 既存的 `Circular chunk: vendor-router -> vendor-commons -> vendor-router` 警告，重整 `manualChunks` 的 router 生態系統分組，將 `react-router`、`@remix-run/router` 與 `vite-react-ssg` 收斂到同一個 chunk，消除跨 chunk 循環依賴。
+root_cause:
+
+- `manualChunks()` 只把 `react-router` 系列切到 `vendor-router`，但底層 `@remix-run/router` 被落入 `vendor-commons`
+- `vite-react-ssg` runtime 也被切到 `vendor-commons`，而它本身會依賴 router runtime，形成 `vendor-router -> vendor-commons -> vendor-router` 交叉引用
+  impact:
+
+- build 持續產生循環 chunk 警告，增加 chunk 邊界不透明度與後續效能調校成本
+- router / SSG runtime 被拆散後，未來調整 code-splitting 時更容易引入回歸
+  actions:
+
+- 在 `apps/ratewise/vite.config.ts` 新增 `ROUTER_ECOSYSTEM_PACKAGES` 常數
+- 將 `react-router`、`@remix-run/router`、`vite-react-ssg` 明確收斂到 `vendor-router`
+- 重新 build 並檢查產物 log，確認不再出現 `Circular chunk` 警告
+  prevention:
+
+- 後續調整 `manualChunks` 時，必須以「同一 runtime 生態鏈」為單位分組，而不是只看最上層套件名稱
+- 若新增 router/SSG 相關套件，需先確認是否應納入同一 chunk family，避免底層 runtime 被誤切到 `vendor-commons`
+  verification:
+
+- `pnpm build:ratewise`
+- `rg -n "Circular chunk|manual chunk logic" /tmp/ratewise-build.log`
+  references:
+
+- apps/ratewise/vite.config.ts
+- Vite build.rollupOptions / Rollup output.manualChunks 官方文件
 
 ---
 
