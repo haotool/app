@@ -307,7 +307,7 @@ export const SingleConverter = ({
               }
             }}
             className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
-            aria-label={t('singleConverter.fromAmountLabel', { code: fromCurrency })}
+            aria-label={`${t('singleConverter.fromAmountLabel', { code: fromCurrency })}: ${formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}`}
           >
             {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
           </div>
@@ -617,7 +617,7 @@ export const SingleConverter = ({
               }
             }}
             className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
-            aria-label={t('singleConverter.toAmountLabel', { code: toCurrency })}
+            aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
           >
             {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
           </div>

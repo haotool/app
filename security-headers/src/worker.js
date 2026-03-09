@@ -1,12 +1,13 @@
 /* global HTMLRewriter */
 
 /**
- * 安全標頭 Worker v3.7
+ * 安全標頭 Worker v3.8
  *
  * 本 Worker 為 HTTP 安全標頭的唯一來源（SSOT），統一管理所有路由的安全政策，
  * 無需修改應用程式原始碼。
  *
  * 變更記錄：
+ * - v3.8: 效能最佳化：ratewise HTML 移除 no-store 啟用 BFCache；Vite 靜態資源設 max-age=31536000, immutable
  * - v3.7: CSP-Report-Only 新增 goog#html TrustedType，修復 Google Analytics 違規 console 噪音
  * - v3.6: 改用 HTMLRewriter 解析 inline script，避免以 regex 掃描 HTML 觸發 CodeQL `js/bad-tag-filter`
  *
@@ -24,7 +25,13 @@
  */
 
 const HSTS = 'max-age=31536000; includeSubDomains; preload';
-const SECURITY_POLICY_VERSION = '3.7';
+const SECURITY_POLICY_VERSION = '3.8';
+
+/** 偵測 Vite 產出的帶 content hash 靜態資源（可永久快取）。
+ *  Pattern: /ratewise/assets/<name>-<hash8>.<ext>
+ *  Example: /ratewise/assets/vendor-react-IoArlj7w.js
+ */
+const VITE_HASHED_ASSET = /\/ratewise\/assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(js|css|mjs)$/;
 
 /** 解析 HTML 中所有 inline script，回傳 CSP 所需的 SHA-256 hash token 陣列。 */
 async function computeInlineScriptHashes(html) {
@@ -165,9 +172,16 @@ export default {
 			newResponse.headers.set('X-Frame-Options', 'SAMEORIGIN');
 			newResponse.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
 			newResponse.headers.set('Reporting-Endpoints', `csp-endpoint="https://${url.host}/ratewise/csp-report"`);
+			// 移除上游 no-store，讓瀏覽器可使用 BFCache（返回/前進時免重新請求）。
+			// no-cache 保留：仍需 revalidation，確保 SW 更新時使用者能取得最新 HTML。
+			newResponse.headers.set('Cache-Control', 'no-cache, must-revalidate');
 		} else if (!isRatewise && isHTML) {
 			newResponse = new Response(response.body, response);
 			Object.entries(HAOTOOL_BASE_HEADERS).forEach(([k, v]) => newResponse.headers.set(k, v));
+		} else if (VITE_HASHED_ASSET.test(url.pathname)) {
+			// Vite 帶 content hash 的靜態資源可永久快取（hash 變更即換 URL）。
+			newResponse = new Response(response.body, response);
+			newResponse.headers.set('Cache-Control', 'max-age=31536000, public, immutable');
 		} else {
 			newResponse = new Response(response.body, response);
 		}

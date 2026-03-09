@@ -1,5 +1,16 @@
 # @app/ratewise
 
+## 2.8.4
+
+### Patch Changes
+
+- 效能最佳化：BFCache 啟用、無障礙修復與 Article schema 補全
+  - 新增 per-page Suspense 邊界（/multi、/favorites、/settings），骨架屏精準對應頁面結構
+  - BottomNavigation 改用 useTransition + useNavigate，chunk 載入中顯示 pending 指示點
+  - Article JSON-LD 補上 image 欄位（squirrelscan schema 驗證修復）
+  - SingleConverter 金額輸入 aria-label 包含當前數值，修復 WCAG 2.5.3 Label in Name
+  - security-headers Worker v3.8：HTML 移除 no-store 啟用 BFCache；Vite 帶 hash 資源設 max-age=31536000, immutable
+
 ## 2.8.3
 
 ### Patch Changes

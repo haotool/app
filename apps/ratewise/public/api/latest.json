@@ -1,6 +1,6 @@
 {
   "name": "RateWise Exchange Rate API",
-  "version": "2.8.3",
+  "version": "2.8.4",
   "description": "臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步",
   "source": "臺灣銀行牌告匯率",
   "sourceUrl": "https://rate.bot.com.tw/xrt",

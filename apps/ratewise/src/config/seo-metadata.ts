@@ -304,6 +304,12 @@ export function buildArticleJsonLd(
     url: buildCanonicalUrl(url),
     datePublished,
     dateModified: BUILD_TIME,
+    image: {
+      '@type': 'ImageObject',
+      url: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
+      width: '1200',
+      height: '630',
+    },
     author: {
       '@type': 'Organization',
       name: APP_INFO.author,

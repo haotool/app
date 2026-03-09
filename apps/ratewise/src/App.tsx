@@ -3,7 +3,12 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { SkeletonLoader } from './components/SkeletonLoader';
+import {
+  SkeletonLoader,
+  MultiConverterSkeleton,
+  FavoritesSkeleton,
+  SettingsSkeleton,
+} from './components/SkeletonLoader';
 import { useUrlNormalization } from './hooks/useUrlNormalization';
 import { AppLayout } from './components/AppLayout';
 import CurrencyConverter from './features/ratewise/RateWise';
@@ -64,9 +69,30 @@ function App() {
               {/* 核心 App 路由 - 使用 AppLayout */}
               <Route element={<AppLayout />}>
                 <Route path="/" element={<CurrencyConverter />} />
-                <Route path="/multi" element={<MultiConverter />} />
-                <Route path="/favorites" element={<Favorites />} />
-                <Route path="/settings" element={<Settings />} />
+                <Route
+                  path="/multi"
+                  element={
+                    <Suspense fallback={<MultiConverterSkeleton />}>
+                      <MultiConverter />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/favorites"
+                  element={
+                    <Suspense fallback={<FavoritesSkeleton />}>
+                      <Favorites />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <Suspense fallback={<SettingsSkeleton />}>
+                      <Settings />
+                    </Suspense>
+                  }
+                />
               </Route>
 
               {/* SEO 落地頁 - 獨立佈局 */}

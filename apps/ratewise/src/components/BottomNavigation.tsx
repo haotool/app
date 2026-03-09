@@ -1,6 +1,7 @@
 /** BottomNavigation：行動版四頁導覽列。 */
 
-import { Link, useLocation } from 'react-router-dom';
+import React, { useTransition } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -46,6 +47,22 @@ const navItems: NavItem[] = [
 export function BottomNavigation() {
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [isPending, startTransition] = useTransition();
+  const [pendingPath, setPendingPath] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!isPending) setPendingPath(null);
+  }, [isPending]);
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    e.preventDefault();
+    if (path === location.pathname) return;
+    setPendingPath(path);
+    startTransition(() => {
+      navigate(path);
+    });
+  };
 
   return (
     <nav
@@ -61,12 +78,14 @@ export function BottomNavigation() {
       <div className="flex h-14 max-w-md mx-auto relative px-4">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
+          const isThisPending = isPending && pendingPath === item.path;
           const Icon = item.icon;
 
           return (
-            <Link
+            <a
               key={item.path}
-              to={item.path}
+              href={item.path}
+              onClick={(e) => handleNavClick(e, item.path)}
               className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 relative group touch-manipulation"
               aria-label={t(item.ariaLabelKey)}
               aria-current={isActive ? 'page' : undefined}
@@ -84,22 +103,34 @@ export function BottomNavigation() {
               <motion.div
                 animate={{
                   scale: isActive ? 1.1 : 1,
-                  opacity: isActive ? 1 : 0.35,
+                  opacity: isActive ? 1 : isThisPending ? 0.7 : 0.35,
                 }}
                 transition={transitions.spring}
                 className={`
+                  relative
                   ${isActive ? 'text-primary' : ''}
                   transition-transform duration-75
                   group-active:scale-90
                 `}
               >
-                <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} aria-hidden={true} />
+                <Icon
+                  className="w-5 h-5"
+                  strokeWidth={isActive ? 2.5 : isThisPending ? 2.25 : 2}
+                  aria-hidden={true}
+                />
+                {/* 等待指示點：chunk 載入中時顯示 */}
+                {isThisPending && (
+                  <span
+                    className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-primary animate-pulse"
+                    aria-hidden="true"
+                  />
+                )}
               </motion.div>
 
               {/* 標籤 - 8px */}
               <motion.span
                 animate={{
-                  opacity: isActive ? 1 : 0.35,
+                  opacity: isActive ? 1 : isThisPending ? 0.7 : 0.35,
                   y: isActive ? 0 : 1,
                 }}
                 transition={transitions.default}
@@ -119,7 +150,7 @@ export function BottomNavigation() {
                   transition={transitions.spring}
                 />
               )}
-            </Link>
+            </a>
           );
         })}
       </div>
