@@ -1,12 +1,13 @@
 /* global HTMLRewriter */
 
 /**
- * 安全標頭 Worker v3.8
+ * 安全標頭 Worker v3.9
  *
  * 本 Worker 為 HTTP 安全標頭的唯一來源（SSOT），統一管理所有路由的安全政策，
  * 無需修改應用程式原始碼。
  *
  * 變更記錄：
+ * - v3.9: 修復 PWA 冷啟動失效：COEP/COOP 移至 isHTML 分支，非 HTML 的 ratewise 靜態資源僅保留 CORP
  * - v3.8: 效能最佳化：ratewise HTML 移除 no-store 啟用 BFCache；Vite 靜態資源設 max-age=31536000, immutable
  * - v3.7: CSP-Report-Only 新增 goog#html TrustedType，修復 Google Analytics 違規 console 噪音
  * - v3.6: 改用 HTMLRewriter 解析 inline script，避免以 regex 掃描 HTML 觸發 CodeQL `js/bad-tag-filter`
@@ -25,7 +26,7 @@
  */
 
 const HSTS = 'max-age=31536000; includeSubDomains; preload';
-const SECURITY_POLICY_VERSION = '3.8';
+const SECURITY_POLICY_VERSION = '3.9';
 
 /** 偵測 Vite 產出的帶 content hash 靜態資源（可永久快取）。
  *  Pattern: /ratewise/assets/<name>-<hash8>.<ext>
@@ -175,6 +176,11 @@ export default {
 			// 移除上游 no-store，讓瀏覽器可使用 BFCache（返回/前進時免重新請求）。
 			// no-cache 保留：仍需 revalidation，確保 SW 更新時使用者能取得最新 HTML。
 			newResponse.headers.set('Cache-Control', 'no-cache, must-revalidate');
+			// COEP/COOP 僅對 HTML document 設定（主頁面跨域隔離）。
+			// JS/CSS sub-resource 帶 COEP 會阻止 SW 寫入 Cache Storage，破壞 PWA 冷啟動。
+			newResponse.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+			newResponse.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+			newResponse.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 		} else if (!isRatewise && isHTML) {
 			newResponse = new Response(response.body, response);
 			Object.entries(HAOTOOL_BASE_HEADERS).forEach(([k, v]) => newResponse.headers.set(k, v));
@@ -195,9 +201,8 @@ export default {
 			newResponse.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
 			newResponse.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
 		} else if (isRatewise && !isOgLikeAsset(url.pathname)) {
-			// /ratewise/* 套用嚴格跨域隔離；根網域保持瀏覽器預設值。
-			newResponse.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
-			newResponse.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+			// 非 HTML 的 ratewise 路徑（JS/CSS/manifest 等）僅設 CORP，不設 COEP/COOP。
+			// COEP 設於 sub-resource 會阻止 SW 將其寫入 Cache Storage，破壞 PWA 冷啟動。
 			newResponse.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 		}
 

@@ -170,6 +170,7 @@ registerRoute(
   new NetworkFirst({
     cacheName: 'html-cache',
     plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 20,
         maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
