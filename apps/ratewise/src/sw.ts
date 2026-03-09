@@ -1,4 +1,4 @@
-/** RateWise Service Worker：提供離線導覽與快取策略。 */
+/** RateWise Service Worker：離線導覽與快取策略。 */
 
 /// <reference lib="webworker" />
 
@@ -11,9 +11,7 @@ import { ExpirationPlugin } from 'workbox-expiration';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
-// SW 自我修復：捕捉 precache 安裝失敗（常見於部署競態窗口，資源短暫 404）。
-// 僅在無健康 active worker 時才登出（首次安裝失敗場景）；
-// 若已有 active worker 仍在服務，保留其快取並讓瀏覽器下次自動重試新版安裝。
+// precache 安裝失敗自動修復：首次安裝失敗時登出以允許重試；已有 active worker 則保留。
 self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
   if (String(event.reason).includes('bad-precaching-response')) {
     event.preventDefault();
@@ -26,22 +24,20 @@ self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
   }
 });
 
-// 預快取 Vite 產生的靜態資源。
+// 預快取 Vite 產出的靜態資源。
 precacheAndRoute(self.__WB_MANIFEST);
 
 // 清除舊版快取。
 cleanupOutdatedCaches();
 
-// prompt 模式：SW 安裝後進入 waiting 狀態，不自動接管頁面。
-// 由 UpdatePrompt 元件偵測到 needRefresh 後，使用者確認才觸發 SKIP_WAITING。
-// 這樣可避免版本撕裂（新 SW 接管 + 舊頁面動態 import 舊 chunk URL → Load failed）。
+// prompt 模式：新 SW 進入 waiting 狀態，由使用者確認後才接管，防止版本撕裂導致 Load failed。
 clientsClaim();
 
-// 統一 SW 訊息處理：SKIP_WAITING（標準更新流程）+ FORCE_HARD_RESET（緊急逃生）。
+// 訊息處理：SKIP_WAITING（prompt 更新流程）/ FORCE_HARD_RESET（緊急清除快取）。
 self.addEventListener('message', (event: ExtendableMessageEvent) => {
   const data = event.data as { type?: string } | null;
 
-  // 標準 Workbox prompt 模式：UpdatePrompt.updateServiceWorker(true) 發送此訊息。
+  // UpdatePrompt.updateServiceWorker(true) 觸發，讓 waiting SW 立即接管。
   if (data?.type === 'SKIP_WAITING') {
     void self.skipWaiting();
     return;
@@ -59,7 +55,6 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
       } catch (err) {
         console.error('[SW] 清除快取失敗:', err);
       }
-      // 通知所有 client 重新載入
       const clients = await self.clients.matchAll({ type: 'window' });
       for (const client of clients) {
         client.postMessage({ type: 'SW_HARD_RESET_DONE' });
@@ -68,23 +63,22 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   );
 });
 
-// 離線探測專用路徑：永遠走網路，避免快取誤判在線。
+// 離線探測端點：永遠走網路，避免快取誤判在線狀態。
 registerRoute(
   ({ url }: { url: URL }) => url.pathname.endsWith('/__network_probe__'),
   new NetworkOnly(),
 );
 
-// 離線優先策略：導覽請求失敗時先嘗試既有快取，再回退 index/offline 頁面。
+// 導覽請求失敗離線回退：runtime cache → precache index.html → offline.html。
 setCatchHandler(async ({ event, request }): Promise<Response> => {
   const fetchEvent = event as FetchEvent;
   const req = request ?? fetchEvent.request;
 
-  // 僅處理導覽請求。
   if (req.destination !== 'document') {
     return Response.error();
   }
 
-  // 安全性驗證：僅處理同源請求。
+  // 安全驗證：僅處理同源請求。
   let requestOrigin: string;
   let swOrigin: string;
   try {
@@ -106,7 +100,7 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
     return Response.error();
   }
 
-  // 1) 先取 runtime cache。
+  // 1) runtime cache 比對。
   try {
     if (!req.url || typeof req.url !== 'string' || req.url.trim() === '') {
       throw new Error('Invalid URL');
@@ -123,13 +117,13 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
     console.error('[SW] Runtime cache match failed:', error);
   }
 
-  // 2) 再取 precache index.html。
+  // 2) precache index.html。
   const indexHtml = await matchPrecache('index.html');
   if (indexHtml) {
     return indexHtml;
   }
 
-  // 3) 備援：完整 URL 匹配 index.html。
+  // 3) 完整 URL 比對 index.html。
   try {
     const scope = self.registration?.scope;
     if (!scope || typeof scope !== 'string' || scope.trim() === '') {
@@ -145,13 +139,13 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
     console.error('[SW] Index URL construction failed:', error);
   }
 
-  // 4) 最後回退 offline.html。
+  // 4) precache offline.html。
   const offlineResponse = await matchPrecache('offline.html');
   if (offlineResponse) {
     return offlineResponse;
   }
 
-  // 備援：完整 URL 匹配 offline.html。
+  // 5) 完整 URL 比對 offline.html。
   try {
     const scope = self.registration?.scope;
     if (!scope || typeof scope !== 'string' || scope.trim() === '') {
@@ -170,10 +164,8 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   return Response.error();
 });
 
-// Runtime 快取策略
-// HTML: NetworkFirst + 2 秒 timeout。
-// request.mode === 'navigate' 是 Workbox 官方建議的導覽請求判斷方式，
-// 比 destination === 'document' 更精確地涵蓋 prefetch/prerender 等情境。
+// 導覽請求（HTML）：NetworkFirst，2 秒 timeout 後回落快取。
+// request.mode === 'navigate' 為 Workbox 官方建議，較 destination === 'document' 更精確。
 registerRoute(
   ({ request }: { request: Request }) => request.mode === 'navigate',
   new NetworkFirst({
@@ -182,14 +174,14 @@ registerRoute(
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 20,
-        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
       }),
     ],
     networkTimeoutSeconds: 2,
   }),
 );
 
-// 歷史匯率（CDN）：CacheFirst。
+// 歷史匯率（CDN）：CacheFirst，不可變資料永久快取。
 registerRoute(
   ({ url }: { url: URL }) =>
     url.origin === 'https://cdn.jsdelivr.net' &&
@@ -198,12 +190,10 @@ registerRoute(
   new CacheFirst({
     cacheName: 'history-rates-cdn',
     plugins: [
-      new CacheableResponsePlugin({
-        statuses: [0, 200],
-      }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 180,
-        maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+        maxAgeSeconds: 60 * 60 * 24 * 365, // 1 年
       }),
     ],
   }),
@@ -218,9 +208,7 @@ registerRoute(
   new CacheFirst({
     cacheName: 'history-rates-raw',
     plugins: [
-      new CacheableResponsePlugin({
-        statuses: [0, 200],
-      }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 180,
         maxAgeSeconds: 60 * 60 * 24 * 365,
@@ -229,7 +217,7 @@ registerRoute(
   }),
 );
 
-// 最新匯率：StaleWhileRevalidate（離線備援 7 天）。
+// 最新匯率：StaleWhileRevalidate，離線備援 7 天。
 registerRoute(
   ({ url }: { url: URL }) =>
     url.origin === 'https://raw.githubusercontent.com' &&
@@ -237,70 +225,62 @@ registerRoute(
   new StaleWhileRevalidate({
     cacheName: 'latest-rate-cache',
     plugins: [
-      new CacheableResponsePlugin({
-        statuses: [0, 200],
-      }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 1,
-        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days (offline fallback)
+        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
       }),
     ],
   }),
 );
 
-// 圖片：CacheFirst。
+// 圖片：CacheFirst，90 天。
 registerRoute(
   ({ request }: { request: Request }) => request.destination === 'image',
   new CacheFirst({
     cacheName: 'image-cache',
     plugins: [
-      new CacheableResponsePlugin({
-        statuses: [0, 200],
-      }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 150,
-        maxAgeSeconds: 60 * 60 * 24 * 90, // 90 days
+        maxAgeSeconds: 60 * 60 * 24 * 90, // 90 天
       }),
     ],
   }),
 );
 
-// 字型：CacheFirst。
+// 字型：CacheFirst，1 年。
 registerRoute(
   ({ request }: { request: Request }) => request.destination === 'font',
   new CacheFirst({
     cacheName: 'font-cache',
     plugins: [
-      new CacheableResponsePlugin({
-        statuses: [0, 200],
-      }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 30,
-        maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+        maxAgeSeconds: 60 * 60 * 24 * 365, // 1 年
       }),
     ],
   }),
 );
 
-// JS/CSS：CacheFirst（hash 檔名可視為不可變）。
+// JS/CSS：CacheFirst，content hash 確保不可變性，30 天。
 registerRoute(
   ({ request }: { request: Request }) =>
     request.destination === 'script' || request.destination === 'style',
   new CacheFirst({
     cacheName: 'static-resources',
     plugins: [
-      new CacheableResponsePlugin({
-        statuses: [0, 200],
-      }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 60,
-        maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+        maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
       }),
     ],
   }),
 );
 
-// manifest/SEO 檔案：StaleWhileRevalidate。
+// manifest / SEO 文字檔案：StaleWhileRevalidate，7 天。
 registerRoute(
   ({ url }: { url: URL }) => /\.(webmanifest|txt|xml)$/.test(url.pathname),
   new StaleWhileRevalidate({
@@ -309,10 +289,10 @@ registerRoute(
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 10,
-        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
       }),
     ],
   }),
 );
 
-// offline.html 已由 precache 管理，無需額外 runtime route。
+// offline.html 由 precache 管理，無需額外 runtime route。

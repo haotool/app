@@ -1,5 +1,12 @@
 # @app/ratewise
 
+## 2.8.5
+
+### Patch Changes
+
+- 0d5b15d: 修復 PWA 冷啟動失效：sw.ts html-cache 補上 CacheableResponsePlugin
+- dac3fea: 修復 SW 快取策略：prompt 模式防版本撕裂、navigate 路由、seo-files-cache 補 CacheableResponsePlugin
+
 ## 2.8.4
 
 ### Patch Changes

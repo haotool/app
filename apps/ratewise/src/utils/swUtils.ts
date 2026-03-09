@@ -73,12 +73,12 @@ export async function hasServiceWorkerUpdate(): Promise<boolean> {
 }
 
 /**
- * Force Service Worker update (skip waiting)
+ * 強制 Service Worker 更新。
  *
- * prompt 模式：若有 waiting SW，發送 SKIP_WAITING 訊息讓其立即接管。
- * 若無 waiting SW，主動觸發 update() 檢查是否有新版本。
+ * prompt 模式：waiting SW 存在時發送 SKIP_WAITING 訊息使其立即接管；
+ * 否則主動觸發 update() 檢查新版本。
  *
- * @returns Promise<boolean> Whether update was triggered successfully
+ * @returns Promise<boolean> 是否成功觸發更新
  */
 export async function forceServiceWorkerUpdate(): Promise<boolean> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
