@@ -382,6 +382,40 @@ apps/ratewise/public/llms-full.txt
 - 改在 client 端做 head reconciliation，並為手動寫入的節點加 managed 標記
 - `useEffect` 必須有 `cleanup`，依賴只能用穩定 primitive/signature，避免跨頁殘留與同 props 重跑
 
+### 12. PWA 冷啟動 / 離線失效（COEP 阻止 SW precache 寫入）
+
+**症狀**：冷啟動離線白屏；DevTools → Cache Storage → `workbox-precache-v2-…` 僅 5 項（HTML/icons），無 JS/CSS chunk。
+
+**根本原因**：`security-headers` Worker 對 JS/CSS 靜態資源設定 `COEP: require-corp`，Chrome 拒絕 SW 在安裝階段將其寫入 Cache Storage → precache 不完整 → 離線時 JS chunk 找不到 → 白屏。
+
+**正確做法（MUST）**：COEP/COOP 只能設在 HTML document 回應；JS/CSS sub-resource 設 COEP 無意義且有害。
+
+修法 `security-headers/src/worker.js`：
+
+- 將 COEP/COOP 移入 `isRatewise && isHTML` 分支
+- 非 HTML 的 ratewise 路徑僅保留 `CORP: same-origin`
+
+**診斷命令**：
+
+```bash
+# 確認 JS asset 是否帶 COEP（正確行為：不應有）
+curl -sI "https://app.haotool.org/ratewise/assets/<chunk>.js" | grep -i cross-origin
+# DevTools 確認：Cache Storage → workbox-precache-v2-… 應 50+ 項
+```
+
+### 13. PWA 版本撕裂（非首頁 Load failed）
+
+**症狀**：SW 更新後，非首頁（如 `/ratewise/favorites`）顯示 `Unexpected Application Error! Load failed`。
+
+**根本原因**：`registerType: 'autoUpdate'` 自動呼叫 `skipWaiting()`，新 SW 立即接管；`cleanupOutdatedCaches()` 清除舊 chunk URL；舊頁面 HTML 仍引用舊 URL → chunk 找不到。
+
+**正確做法（MUST）**：改用 `registerType: 'prompt'`，SW 進入 waiting 狀態，由 `UpdatePrompt` 元件發送 `SKIP_WAITING` 訊息後才接管（確保整頁刷新後使用新 chunk URL）。
+
+配套修改：
+
+- `sw.ts`：移除主動 `skipWaiting()`；改在 `message` handler 監聽 `SKIP_WAITING`
+- `swUtils.ts`：`forceServiceWorkerUpdate()` 對 waiting SW 發送 `{ type: 'SKIP_WAITING' }`
+
 ### 2. `git status` 看不到 root 截圖
 
 - 很多 root QA 圖檔已被 `.gitignore` 忽略
@@ -476,6 +510,48 @@ import { MailtoLink } from '../components/MailtoLink';
 
 squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不需修正。
 
+## 程式碼註解風格（繁體中文，簡短正式）
+
+### 原則（MUST）
+
+- 繁體中文撰寫，句末加句號
+- 一句話說明「目的」或「設計決策」；禁止翻譯變數名稱或重複敘述程式碼
+- 多行說明用連續 `//`，不用 `/* */`
+- 段落分隔用空行，不用分隔線
+
+### 範例（以 `sw.ts` 為標準）
+
+```typescript
+// 預快取 Vite 產出的靜態資源。
+precacheAndRoute(self.__WB_MANIFEST);
+
+// prompt 模式：新 SW 進入 waiting 狀態，由使用者確認後才接管，防止版本撕裂導致 Load failed。
+clientsClaim();
+
+// 訊息處理：SKIP_WAITING（prompt 更新流程）/ FORCE_HARD_RESET（緊急清除快取）。
+self.addEventListener('message', ...);
+
+// 導覽請求（HTML）：NetworkFirst，2 秒 timeout 後回落快取。
+// request.mode === 'navigate' 為 Workbox 官方建議，較 destination === 'document' 更精確。
+registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  new NetworkFirst({ ... }),
+);
+```
+
+### 反模式（MUST NOT）
+
+```typescript
+// ❌ 翻譯程式碼（毫無資訊）
+// 呼叫 precacheAndRoute 函數
+
+// ❌ 過長敘述（拆短句或拆段落）
+// 這個 setCatchHandler 在導覽失敗時提供離線 fallback，依序嘗試 runtime cache、precache index.html、precache offline.html，並在過程中加入 origin 驗證防止跨域攻擊...
+
+// ✅ 簡短正式
+// 離線回退：runtime cache → precache index.html → offline.html。
+```
+
 ## 外部寫作與 SOP 格式基準（2026-02-27 查詢）
 
 本文件格式與寫法結合 `.example/config/CLAUDE.md` 的簡潔風格，並參考：
@@ -489,6 +565,7 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 | 日期       | 版本 | 變更摘要                                                                                                                       |
 | ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-10 | v4.1 | 新增 Troubleshooting #12-13（PWA COEP precache 失敗、版本撕裂 Load failed）與「程式碼註解風格」規範                            |
 | 2026-03-09 | v4.0 | 新增 Troubleshooting #9-11：generate-manifest 品牌覆蓋、commitlint body-bullets、sortedCurrencies TWD 未置頂三項常見錯誤與修法 |
 | 2026-03-08 | v3.9 | 新增「CF SEO 直通實踐」：MailtoLink 模式、squirrelscan 假陽性識別、CF API token 限制、noindex 頁面正確行為                     |
 | 2026-03-08 | v3.8 | 補充 002 v2 結構化索引規格與 FAQ/SEOHelmet Troubleshooting                                                                     |
@@ -503,5 +580,5 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 ---
 
-**最後更新**: 2026-03-09T01:30:00+0800
-**版本**: v4.0（新增 #9-11 Troubleshooting：manifest 品牌覆蓋、commitlint bullets、sortedCurrencies TWD 置頂）
+**最後更新**: 2026-03-10T00:00:00+0800
+**版本**: v4.1（新增 #12-13 PWA COEP precache 失敗、版本撕裂；程式碼註解風格規範）
