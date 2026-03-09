@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-09T09:23:14+08:00
-> **當前總分**: 1128（初始分: 100）
+> **最後更新**: 2026-03-10T03:28:42+08:00
+> **當前總分**: 1132（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -25,6 +25,7 @@
 
 | 分數 | 事項                                                  | 日期       |
 | ---- | ----------------------------------------------------- | ---------- |
+| +4   | Cloudflare 安全標頭分層重構與正式站驗證閉環           | 2026-03-10 |
 | +3   | 修復 vendor-router / vendor-commons 循環 chunk 警告   | 2026-03-09 |
 | +1   | RateWise v2.8.1 patch release 與 changeset 版本化     | 2026-03-09 |
 | +4   | RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復 | 2026-03-08 |
@@ -93,6 +94,69 @@
 ## Entries
 
 ### 2026-03
+
+---
+
+id: cloudflare-security-headers-layered-refactor
+date: 2026-03-10
+title: Cloudflare 安全標頭分層重構與正式站驗證閉環
+score: +4
+type: success
+content_type: troubleshooting
+scope: cloudflare-edge
+topics: [security, headers, deployment, testing, ssot, pwa]
+keywords: [cloudflare-worker, nonce-csp, permissions-policy, csp-report, immutable-assets, production-smoke]
+aliases: [security-headers v4.0, Cloudflare header hardening, edge security refactor]
+related_entries: [incident-csp-header-boundary, incident-production-verification-gap]
+summary: 針對 `security-headers` Worker 執行分層重構，將 HSTS 留在 Cloudflare Edge，讓 Worker 專注於依 app/path 分層 CSP、CSP report 與分享圖 CORS；同時把 `ratewise` 升級為 nonce 型 CSP、補上 `park-keeper` 導航感測器白名單與 hook 啟用條件，最後以 curl、Playwright MCP、正式站 Playwright smoke test 建立可重現的生產驗證閉環。
+root_cause:
+
+- 舊 Worker 雖已集中管理安全標頭，但 route 只覆蓋 `app.haotool.org/ratewise/*`，導致 `nihonname`、`park-keeper`、`quake-school` 與 root pages 缺少一致保護
+- `ratewise` 仍採逐請求全文讀取 + inline script hash 計算，造成邊緣 CPU / 記憶體成本偏高，也讓 CSP 維護與 HTML 耦合過深
+- `park-keeper` 的 `Permissions-Policy` 沒有反映真實產品需求，前端又在隱藏 modal 載入時就綁定感測器 listener，導致正式站 console 噪音與 capability 邊界不一致
+- 既有正式站 smoke test 的 asset path regex 會誤把 `/ratewise/assets/...` 截成 `/assets/...`，製造假陰性，削弱生產驗證可信度
+  impact:
+
+- 子 app 與 root pages 無法共享同一套可治理的安全標頭基線，Cloudflare 邊緣責任分層不清
+- `ratewise` CSP 成本過高，且未來擴展到其他 app 時維護風險偏大
+- `park-keeper` 正式站在首頁載入時出現 `Permissions policy violation` / `deviceorientation blocked` console 錯誤
+- 若繼續依賴錯誤的 smoke test，會把真實上線狀態與測試結果拉開，影響 PR 與 release 判斷
+  actions:
+
+- 重寫 `security-headers/src/worker.js`，建立 `ratewise`、`park-keeper`、`nihonname`、`quake-school`、root/fallback HTML profile，並將 route 擴大為 `app.haotool.org/*`
+- `ratewise` 改為 nonce + HTMLRewriter 串流注入 inline script，保留 CSP report 與 HTML 跨域隔離；`csp-report` 端點加入 method / content-type / payload size 防護
+- `park-keeper` 的 `Permissions-Policy` 改為最小白名單：`geolocation=(self)`、`accelerometer=(self)`、`gyroscope=(self)`、`magnetometer=(self)`；`QuickEntry` 改成 `isVisible` 才啟用 `useDeviceOrientation`
+- 新增 `apps/ratewise/src/__tests__/securityHeadersWorker.test.ts`，並更新正式站 `cloudflare-cache.spec.ts`，修正 asset path regex 與 header 斷言
+- 更新 `docs/SECURITY_CSP_STRATEGY.md`、`docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md`、`security-headers/DEPLOY.md`、`docs/dev/040_cloudflare_security_headers_refactor_spec.md`，讓文件與邊緣真實行為保持 SSOT
+  prevention:
+
+- 固定站點級政策（如 HSTS）只留在 Edge；只有依路徑與 HTML 內容變化的 header 才交由 Worker 處理
+- 任何新增 app 或調整感測器能力時，必須同步更新 Worker profile、正式站 smoke test 與文件矩陣，不可只改其中一層
+- 正式站驗證必須同時包含 curl、瀏覽器 console 與 production Playwright smoke test，避免只看 preview 或單一工具
+- 對子路徑 app 的資產檢查必須使用真實 base path，避免 regex 截斷造成假陰性
+  verification:
+
+- `pnpm --filter @app/park-keeper exec vitest run src/hooks/__tests__/useDeviceOrientation.test.ts`
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/securityHeadersWorker.test.ts`
+- `pnpm --filter @app/park-keeper exec tsc --noEmit`
+- `pnpm --filter @app/ratewise exec tsc --noEmit`
+- `pnpm exec prettier --check security-headers/src/worker.js apps/park-keeper/src/hooks/useDeviceOrientation.ts apps/park-keeper/src/components/QuickEntry.tsx apps/park-keeper/src/hooks/__tests__/useDeviceOrientation.test.ts apps/ratewise/src/__tests__/securityHeadersWorker.test.ts apps/ratewise/tests/e2e/cloudflare-cache.spec.ts docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md docs/SECURITY_CSP_STRATEGY.md docs/dev/040_cloudflare_security_headers_refactor_spec.md`
+- `pnpm exec wrangler deploy`
+- `curl -s --compressed https://app.haotool.org/park-keeper/ -D - -o /dev/null`
+- `curl -sSI -X GET https://app.haotool.org/ratewise/csp-report`
+- `RUN_PRODUCTION_TESTS=true pnpm --filter @app/ratewise exec playwright test tests/e2e/cloudflare-cache.spec.ts`
+  references:
+
+- security-headers/src/worker.js
+- security-headers/wrangler.jsonc
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
+- apps/ratewise/tests/e2e/cloudflare-cache.spec.ts
+- apps/park-keeper/src/hooks/useDeviceOrientation.ts
+- apps/park-keeper/src/components/QuickEntry.tsx
+- docs/SECURITY_CSP_STRATEGY.md
+- docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md
+- docs/dev/040_cloudflare_security_headers_refactor_spec.md
+- Cloudflare Workers / Transform Rules / HSTS / CSP 官方文件
 
 ---
 

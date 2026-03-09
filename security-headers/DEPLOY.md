@@ -1,105 +1,74 @@
 # Security Headers Worker 部署指引
 
-## 快速部署
+## 作用範圍
 
-### 前置條件
+- `app.haotool.org/*`
+- `haotool.org/*`
+- `www.haotool.org/*`
 
-- Cloudflare 帳號與 API Token
-- Worker 名稱：`security-headers`
-- 已綁定路由：`app.haotool.org/ratewise/*`, `haotool.org/*`, `www.haotool.org/*`
-
-### 部署步驟
-
-#### 方法 1: Wrangler CLI（推薦）
+## 前置檢查
 
 ```bash
 cd security-headers
+pnpm exec wrangler whoami
+```
 
-# 設定環境變數
-export CLOUDFLARE_API_TOKEN="your-api-token"
-export CLOUDFLARE_ACCOUNT_ID="your-account-id"
+若 `whoami` 失敗，先重新登入 `wrangler` 或補齊 Cloudflare token。
 
-# 部署
+## 部署
+
+```bash
+cd security-headers
 pnpm exec wrangler deploy
 ```
 
-#### 方法 2: Cloudflare Dashboard
+## 本版重點
 
-1. 登入 [Cloudflare Dashboard](https://dash.cloudflare.com/)
-2. 進入 Workers & Pages → `security-headers`
-3. Quick Edit → 複製貼上 `src/worker.js` 內容
-4. Save and Deploy
+- Worker 版本：`4.0`
+- HSTS 改由 Cloudflare Edge 管理，Worker 不再寫入
+- `app.haotool.org/*` 全域納入 Worker
+- `ratewise` 改為 nonce 型 CSP
+- `csp-report` 改為 `POST` only
+- 分享圖 CORS 白名單改為精準檔名
 
-### 部署後驗證
+## 部署後驗證
 
 ```bash
-# 1. 檢查版本號（HEAD 請求即可）
-curl -sI https://app.haotool.org/ratewise/ | grep X-Security-Policy-Version
-# 預期: x-security-policy-version: 3.4
+# 1. 版本號
+curl -sSI https://app.haotool.org/ratewise/ | grep -i 'x-security-policy-version'
 
-# 2. 確認 CSP hashes（必須用 GET，HEAD 請求不含 hash — 這是正確行為）
-curl -s --compressed https://app.haotool.org/ratewise/ -D - -o /dev/null | grep script-src
-# 預期: 5 個 sha256-... hash + https://www.googletagmanager.com
+# 2. RateWise nonce CSP（必須用 GET）
+curl -s --compressed https://app.haotool.org/ratewise/ | grep -Eo 'nonce=\"[^\"]+\"' | head
+curl -sSI https://app.haotool.org/ratewise/ | grep -i 'content-security-policy'
 
-# 3. 確認 connect-src 包含 googletagmanager
-curl -sI https://app.haotool.org/ratewise/ | grep connect-src
-# 預期: ... https://www.googletagmanager.com ...
+# 3. 其他子 app 已被覆蓋
+curl -sSI https://app.haotool.org/nihonname/ | grep -i 'content-security-policy\|x-frame-options\|x-content-type-options'
+curl -sSI https://app.haotool.org/park-keeper/ | grep -i 'content-security-policy\|permissions-policy'
+curl -sSI https://app.haotool.org/quake-school/ | grep -i 'content-security-policy'
 
-# 4. Playwright console 驗證（預期 1 個假陽性 ERR_FAILED，0 個 CSP 違規）
+# 4. CSP report endpoint
+curl -sSI -X GET https://app.haotool.org/ratewise/csp-report
+curl -sSI -X POST https://app.haotool.org/ratewise/csp-report -H 'content-type: application/csp-report'
+
+# 5. 分享圖 CORS
+curl -sSI https://app.haotool.org/ratewise/og-image.jpg | grep -i 'access-control-allow-origin\|cross-origin-resource-policy'
+
+# 6. Edge HSTS（確認仍存在，來源應為 Edge 而非 Worker）
+curl -sSI https://app.haotool.org/ratewise/ | grep -i 'strict-transport-security'
 ```
 
-**注意**：Playwright 顯示的 `ERR_FAILED @ gtag/js` 是測試環境假陽性（`--disable-background-networking` flag），生產環境不受影響。
+## 已知例外
 
-## 版本歷史
-
-### v3.4 (2026-03-06)
-
-**修復**: GA4 XHR 請求被 CSP connect-src 阻擋；GA4 script COEP 相容性
-
-- `connect-src` 新增 `https://www.googletagmanager.com`（gtag.js 初始化時的配置 fetch）
-- `ga.ts` 動態注入 `<script>` 加上 `crossOrigin = 'anonymous'`（符合 `COEP: require-corp`）
-- `__network_probe__` 版本號從 `3.2` 對齊至 `3.4`
-
-### v3.3 (2026-03-05)
-
-**修復**: CSP inline script hash 不匹配導致 GA4 阻擋問題
-
-- 移除 `computeInlineScriptHashes()` 中的 `trim()` 以保留原始空白
-- 解決瀏覽器 CSP 驗證與 Worker hash 計算不一致問題
-- 影響: Google Analytics inline script 被 CSP 阻擋（ERR_FAILED）
-
-### v3.2 (2026-03-04)
-
-- 動態計算 inline script SHA-256 hash 取代 `unsafe-inline`
-- 支援 GA4 / GTM-W4LKKNL
-- 隱藏 Zeabur 來源標頭
-
-### v3.0-3.1
-
-- 初始 SSOT 架構
-- RateWise A+ 安全標頭配置
-- HSTS + CSP + CORS 完整防護
-
-## 故障排除
-
-### CSP Violation 錯誤
-
-**症狀**: Console 顯示 "Executing inline script violates... Content Security Policy"
-**解決**: 確認 Worker v3.3+ 已部署，hash 計算不使用 trim()
-
-### GA4 無法載入
-
-**症狀**: Console 顯示 "Failed to load resource: net::ERR_FAILED" for gtag/js
-**解決**: 驗證 Worker CSP 包含 `https://www.googletagmanager.com`
-
-### Permissions-Policy 警告
-
-**影響**: 非關鍵警告，不影響安全性或 SEO
-**來源**: `ambient-light-sensor`, `document-domain`, `vr` 為瀏覽器已廢棄特性
-**處理**: 可忽略，或更新 Worker 移除這些特性（低優先度）
+- `haotool` 與 `nihonname` 目前仍保留 `script-src 'unsafe-inline'`
+  - 原因：正式輸出仍含 CSS preload `onload=` handoff
+- `quake-school` 目前仍保留 `script-src 'unsafe-inline'`
+  - 原因：正式輸出仍含 preload `onload=` handoff
+- `ratewise` 只對 HTML 啟用 COEP / COOP
+  - 非 HTML 靜態資源僅保留 `Cross-Origin-Resource-Policy: same-origin`
+  - 目的是避免再次破壞 PWA precache 與離線冷啟動
 
 ## 相關文件
 
-- Cloudflare Workers 官方文檔: <https://developers.cloudflare.com/workers/>
-- CSP Hash 規範: <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src>
-- 本專案 Security Baseline: `/Users/azlife.eth/Tools/app/docs/SECURITY_BASELINE.md`
+- `/Users/azlife.eth/Tools/app/docs/SECURITY_CSP_STRATEGY.md`
+- `/Users/azlife.eth/Tools/app/docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md`
+- `/Users/azlife.eth/Tools/app/docs/dev/040_cloudflare_security_headers_refactor_spec.md`

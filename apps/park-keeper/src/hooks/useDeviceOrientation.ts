@@ -22,6 +22,10 @@ export interface DeviceOrientationState {
   requestPermission?: () => Promise<void>;
 }
 
+export interface UseDeviceOrientationOptions {
+  enabled?: boolean;
+}
+
 /**
  * Device orientation hook that tracks compass heading
  *
@@ -43,7 +47,10 @@ export interface DeviceOrientationState {
  * return <div>目前朝向：{heading}°</div>;
  * ```
  */
-export function useDeviceOrientation(): DeviceOrientationState {
+export function useDeviceOrientation(
+  options: UseDeviceOrientationOptions = {},
+): DeviceOrientationState {
+  const { enabled = true } = options;
   const [heading, setHeading] = useState<number | null>(null);
   const [tilt, setTilt] = useState<number | null>(null);
   const [isSupported] = useState(
@@ -67,7 +74,7 @@ export function useDeviceOrientation(): DeviceOrientationState {
   }, []);
 
   useEffect(() => {
-    if (!isSupported) return;
+    if (!enabled || !isSupported) return;
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       const compassHeading = getCompassHeading(event as CompassOrientationEvent);
@@ -87,7 +94,7 @@ export function useDeviceOrientation(): DeviceOrientationState {
     return () => {
       window.removeEventListener('deviceorientation', handleOrientation);
     };
-  }, [isSupported]);
+  }, [enabled, isSupported]);
 
   return {
     heading,
@@ -95,6 +102,7 @@ export function useDeviceOrientation(): DeviceOrientationState {
     isPhoneFlat: isPhoneFlatFromTilt(tilt),
     isSupported,
     requestPermission:
+      enabled &&
       typeof DeviceOrientationEvent !== 'undefined' &&
       typeof (DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> })
         .requestPermission === 'function'

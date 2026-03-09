@@ -104,4 +104,14 @@ describe('useDeviceOrientation', () => {
 
     expect(mockRequestPermission).toHaveBeenCalled();
   });
+
+  it('面板未開啟時不應綁定方向感測事件', () => {
+    const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+
+    const { result } = renderHook(() => useDeviceOrientation({ enabled: false }));
+
+    expect(result.current.heading).toBeNull();
+    expect(result.current.requestPermission).toBeUndefined();
+    expect(addEventListenerSpy).not.toHaveBeenCalledWith('deviceorientation', expect.any(Function));
+  });
 });

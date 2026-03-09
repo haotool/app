@@ -6,7 +6,7 @@
 	"compatibility_date": "2025-11-26",
 	"routes": [
 		{
-			"pattern": "app.haotool.org/ratewise/*",
+			"pattern": "app.haotool.org/*",
 			"zone_name": "haotool.org",
 		},
 		{

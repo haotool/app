@@ -59,7 +59,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
   };
   const [plate, setPlate] = useState(() => {
     try {
-      return localStorage.getItem(LAST_PLATE_KEY) || '';
+      return localStorage.getItem(LAST_PLATE_KEY) ?? '';
     } catch {
       return '';
     }
@@ -76,7 +76,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
   const [locationHeading, setLocationHeading] = useState<number | null>(null);
   const watchId = useRef<number | null>(null);
-  const { heading: parkedHeading } = useDeviceOrientation();
+  const { heading: parkedHeading } = useDeviceOrientation({ enabled: isVisible });
 
   const vibrate = (pattern: number | number[] = 15) => {
     if (navigator.vibrate) navigator.vibrate(pattern);
