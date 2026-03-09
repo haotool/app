@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-10T03:28:42+08:00
-> **當前總分**: 1132（初始分: 100）
+> **最後更新**: 2026-03-10T03:35:27+08:00
+> **當前總分**: 1133（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -25,6 +25,7 @@
 
 | 分數 | 事項                                                  | 日期       |
 | ---- | ----------------------------------------------------- | ---------- |
+| +1   | 修復 security header 測試對 Worker 字串結構耦合       | 2026-03-10 |
 | +4   | Cloudflare 安全標頭分層重構與正式站驗證閉環           | 2026-03-10 |
 | +3   | 修復 vendor-router / vendor-commons 循環 chunk 警告   | 2026-03-09 |
 | +1   | RateWise v2.8.1 patch release 與 changeset 版本化     | 2026-03-09 |
@@ -94,6 +95,45 @@
 ## Entries
 
 ### 2026-03
+
+---
+
+id: security-header-test-structure-decoupling
+date: 2026-03-10
+title: 修復 security header 測試對 Worker 字串結構耦合
+score: +1
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [testing, security, ssot]
+keywords: [test-coupling, permissions-policy, worker-profile, pre-push, regex-drift]
+aliases: [Permissions-Policy 測試耦合, pre-push 測試漂移]
+related_entries: [cloudflare-security-headers-layered-refactor, incident-production-verification-gap]
+summary: `pre-push` 在 `apps/ratewise/src/seo-best-practices.test.ts` 揭露既有測試仍假設 Worker 以舊式物件字面值直接宣告 `Permissions-Policy`，與新版 profile/constant 架構不相容。改為驗證 `DEFAULT_PERMISSIONS_POLICY` / `PARK_KEEPER_PERMISSIONS_POLICY` 常數與實際 `response.headers.set()` 路徑後，測試重新回到對 SSOT 的行為驗證，而非對字串排版的脆弱耦合。
+root_cause:
+
+- `seo-best-practices.test.ts` 仍使用舊 regex 直接抓 `"'Permissions-Policy': '...'"` 字串，假設 Worker 採物件字面值寫法
+- `security-headers` v4.0 已改為 profile + constant 架構，導致測試抓不到 policy 值並在 pre-push 階段失敗
+  impact:
+
+- 本地 pre-push 被錯誤測試阻塞，降低安全重構 PR 的交付效率
+- 若維持舊測試，未來再次調整 Worker 結構時仍會反覆出現假失敗
+  actions:
+
+- 將測試改為比對 `response.headers.set('Permissions-Policy', profile.permissionsPolicy)` 實際路徑
+- 以 regex 抽取 `DEFAULT_PERMISSIONS_POLICY` 與 `PARK_KEEPER_PERMISSIONS_POLICY` 常數值，再驗證不含 deprecated features
+  prevention:
+
+- 針對 Worker / build script / config 類檔案，優先驗證 SSOT 常數與輸出行為，不要綁定特定排版或物件字面值格式
+- pre-push 發現假失敗時，應修測試與真實結構的耦合，而不是降級 hook
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/seo-best-practices.test.ts`
+- `git push -u origin codex/cloudflare-security-headers-v4`
+  references:
+
+- apps/ratewise/src/seo-best-practices.test.ts
+- security-headers/src/worker.js
 
 ---
 

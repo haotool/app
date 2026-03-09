@@ -464,13 +464,19 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
     it('should have Permissions-Policy without deprecated features in policy value', () => {
       const workerContent = readFile(workerPath);
       expect(workerContent).toContain('Permissions-Policy');
-      // 提取實際的 Permissions-Policy 值（排除註解）
-      const policyRegex = /'Permissions-Policy':\s*\n?\s*['"]([^'"]+)['"]/;
-      const policyMatch = policyRegex.exec(workerContent);
-      expect(policyMatch).toBeTruthy();
-      if (policyMatch) {
-        const policyValue = policyMatch[1];
-        // 實際 Policy 值不應該包含已棄用的功能
+      expect(workerContent).toContain(
+        "response.headers.set('Permissions-Policy', profile.permissionsPolicy)",
+      );
+
+      const policyMatches = Array.from(
+        workerContent.matchAll(
+          /const\s+(?:DEFAULT|PARK_KEEPER)_PERMISSIONS_POLICY\s*=\s*\n?\s*'([^']+)'/g,
+        ),
+      );
+
+      expect(policyMatches.length).toBeGreaterThan(0);
+
+      for (const [, policyValue] of policyMatches) {
         expect(policyValue).not.toContain('ambient-light-sensor');
         expect(policyValue).not.toContain('document-domain');
         expect(policyValue).not.toContain('vr');
