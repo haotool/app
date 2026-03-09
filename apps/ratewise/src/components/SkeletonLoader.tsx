@@ -310,6 +310,34 @@ export const SettingsSkeleton = () => {
         </div>
       </section>
 
+      {/* 資料管理區塊（危險操作）— 對應 Settings.tsx ShieldAlert section */}
+      <section className="space-y-3">
+        <div className="skeleton-shimmer h-4 w-20 rounded" />
+        <div className="skeleton-card overflow-hidden">
+          <div
+            data-testid="skeleton-settings-danger-btn"
+            className="skeleton-shimmer h-12 w-full rounded-none"
+          />
+        </div>
+      </section>
+
+      {/* 支援與資訊區塊 — 對應 Settings.tsx HelpCircle section（4 個連結列）*/}
+      <section className="space-y-3">
+        <div className="skeleton-shimmer h-4 w-28 rounded" />
+        <div className="skeleton-card overflow-hidden divide-y divide-border">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              data-testid="skeleton-settings-link"
+              className="px-5 py-4 flex items-center justify-between"
+            >
+              <div className="skeleton-shimmer h-4 w-24 rounded" />
+              <div className="skeleton-shimmer h-4 w-4 rounded" />
+            </div>
+          ))}
+        </div>
+      </section>
+
       <span className="sr-only">載入設定中...</span>
     </div>
   );

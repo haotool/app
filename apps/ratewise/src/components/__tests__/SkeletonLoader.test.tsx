@@ -167,6 +167,20 @@ describe('SettingsSkeleton', () => {
     const styleCards = container.querySelectorAll('.skeleton-shimmer.h-20');
     expect(styleCards).toHaveLength(6);
   });
+
+  it('包含資料管理區塊骨架（危險操作按鈕）', () => {
+    // Settings.tsx 第 4 個 section：ShieldAlert 清除 / 重置按鈕 (py-4 flex row)
+    const { container } = render(<SettingsSkeleton />);
+    const dangerBtn = container.querySelector('[data-testid="skeleton-settings-danger-btn"]');
+    expect(dangerBtn).toBeInTheDocument();
+  });
+
+  it('包含支援資訊連結列（4 個 skeleton-settings-link）', () => {
+    // Settings.tsx 第 5 個 section：FAQ / 使用說明 / 關於我們 / 開源 (4 links px-5 py-4)
+    const { container } = render(<SettingsSkeleton />);
+    const links = container.querySelectorAll('[data-testid="skeleton-settings-link"]');
+    expect(links).toHaveLength(4);
+  });
 });
 
 describe('FavoritesSkeleton', () => {

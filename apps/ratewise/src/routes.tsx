@@ -33,7 +33,12 @@ import { SEOHelmet } from './components/SEOHelmet';
 import { HomepageSEOSection } from './components/HomepageSEOSection';
 import { Layout } from './components/Layout';
 import { AppLayout } from './components/AppLayout';
-import { SkeletonLoader } from './components/SkeletonLoader';
+import {
+  SkeletonLoader,
+  MultiConverterSkeleton,
+  FavoritesSkeleton,
+  SettingsSkeleton,
+} from './components/SkeletonLoader';
 import { HOMEPAGE_SEO } from './config/seo-metadata';
 import { logger } from './utils/logger';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
@@ -135,7 +140,7 @@ export const routes: RouteRecord[] = [
       {
         path: 'multi',
         element: (
-          <Suspense fallback={<SkeletonLoader />}>
+          <Suspense fallback={<MultiConverterSkeleton />}>
             <MultiConverter />
           </Suspense>
         ),
@@ -145,7 +150,7 @@ export const routes: RouteRecord[] = [
       {
         path: 'favorites',
         element: (
-          <Suspense fallback={<SkeletonLoader />}>
+          <Suspense fallback={<FavoritesSkeleton />}>
             <Favorites />
           </Suspense>
         ),
@@ -155,7 +160,7 @@ export const routes: RouteRecord[] = [
       {
         path: 'settings',
         element: (
-          <Suspense fallback={<SkeletonLoader />}>
+          <Suspense fallback={<SettingsSkeleton />}>
             <Settings />
           </Suspense>
         ),
