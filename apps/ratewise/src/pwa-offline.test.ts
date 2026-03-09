@@ -82,8 +82,8 @@ describe('PWA 離線功能測試', () => {
 
     it('should have offline-first strategy in setCatchHandler', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      // 確保離線優先策略註解存在
-      expect(swContent).toContain('離線優先策略');
+      // 確保離線回退策略邏輯存在
+      expect(swContent).toContain('離線回退');
       // 確保 matchPrecache 使用相對路徑（與 manifest 一致）
       expect(swContent).toContain("matchPrecache('index.html')");
       expect(swContent).toContain("matchPrecache('offline.html')");
@@ -94,7 +94,7 @@ describe('PWA 離線功能測試', () => {
     it('should have cross-origin protection in setCatchHandler', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
       // 應該驗證請求 origin
-      expect(swContent).toContain('安全性驗證');
+      expect(swContent).toContain('安全驗證');
       expect(swContent).toContain('僅處理同源請求');
     });
   });
