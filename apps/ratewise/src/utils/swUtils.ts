@@ -75,8 +75,8 @@ export async function hasServiceWorkerUpdate(): Promise<boolean> {
 /**
  * Force Service Worker update (skip waiting)
  *
- * Note: sw.ts calls self.skipWaiting() directly, so the SW activates immediately
- * after installation. registration.waiting is always null.
+ * prompt 模式：若有 waiting SW，發送 SKIP_WAITING 訊息讓其立即接管。
+ * 若無 waiting SW，主動觸發 update() 檢查是否有新版本。
  *
  * @returns Promise<boolean> Whether update was triggered successfully
  */
@@ -96,9 +96,14 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
       return false;
     }
 
-    // 主動檢查更新
-    // 注意：由於 sw.ts 直接調用 skipWaiting()，新 SW 會立即激活
-    // 不需要發送 SKIP_WAITING 消息（registration.waiting 永遠為 null）
+    // prompt 模式：waiting SW 存在時發送 SKIP_WAITING 讓其接管（避免版本撕裂）
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      logger.info('SKIP_WAITING sent to waiting Service Worker');
+      return true;
+    }
+
+    // 無 waiting SW：主動檢查是否有新版本
     await registration.update();
     logger.info('Service Worker update check triggered');
     return true;

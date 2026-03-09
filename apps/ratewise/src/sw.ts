@@ -32,14 +32,21 @@ precacheAndRoute(self.__WB_MANIFEST);
 // 清除舊版快取。
 cleanupOutdatedCaches();
 
-// 立即啟用新版 SW，並接管現有頁面。
-void self.skipWaiting();
+// prompt 模式：SW 安裝後進入 waiting 狀態，不自動接管頁面。
+// 由 UpdatePrompt 元件偵測到 needRefresh 後，使用者確認才觸發 SKIP_WAITING。
+// 這樣可避免版本撕裂（新 SW 接管 + 舊頁面動態 import 舊 chunk URL → Load failed）。
 clientsClaim();
 
-// FORCE_HARD_RESET：客戶端（骨架屏超時、使用者手動下拉）可傳送此訊息。
-// SW 清除所有快取並通知 client 重新載入，確保使用者永遠能脫離卡住狀態。
+// 統一 SW 訊息處理：SKIP_WAITING（標準更新流程）+ FORCE_HARD_RESET（緊急逃生）。
 self.addEventListener('message', (event: ExtendableMessageEvent) => {
   const data = event.data as { type?: string } | null;
+
+  // 標準 Workbox prompt 模式：UpdatePrompt.updateServiceWorker(true) 發送此訊息。
+  if (data?.type === 'SKIP_WAITING') {
+    void self.skipWaiting();
+    return;
+  }
+
   if (data?.type !== 'FORCE_HARD_RESET') return;
 
   event.waitUntil(
@@ -165,8 +172,10 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
 
 // Runtime 快取策略
 // HTML: NetworkFirst + 2 秒 timeout。
+// request.mode === 'navigate' 是 Workbox 官方建議的導覽請求判斷方式，
+// 比 destination === 'document' 更精確地涵蓋 prefetch/prerender 等情境。
 registerRoute(
-  ({ request }: { request: Request }) => request.destination === 'document',
+  ({ request }: { request: Request }) => request.mode === 'navigate',
   new NetworkFirst({
     cacheName: 'html-cache',
     plugins: [
@@ -297,6 +306,7 @@ registerRoute(
   new StaleWhileRevalidate({
     cacheName: 'seo-files-cache',
     plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 10,
         maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
