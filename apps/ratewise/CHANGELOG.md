@@ -1,5 +1,12 @@
 # @app/ratewise
 
+## 2.8.3
+
+### Patch Changes
+
+- 3b560ce: 修復多幣別 TWD 星星裝飾顯示與骨架屏佈局不一致問題
+- 429f3bc: fix(ratewise): 補全 SettingsSkeleton 缺失區塊，修正 Suspense fallback 骨架屏
+
 ## 2.8.2
 
 ### Patch Changes
