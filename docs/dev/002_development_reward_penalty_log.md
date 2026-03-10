@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-11T00:55:00+08:00
-> **當前總分**: 1142（初始分: 100）
+> **最後更新**: 2026-03-10T23:35:00+08:00
+> **當前總分**: 1140（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -23,37 +23,36 @@
 
 ## 分數變動摘要（近期）
 
-| 分數 | 事項                                                               | 日期       |
-| ---- | ------------------------------------------------------------------ | ---------- |
-| +2   | PR #188 CI 補測、precache 驗證器修復與首頁 lazy chunk preload 收斂 | 2026-03-11 |
-| +4   | 修復 haotool 首頁 3D Hero CSP 崩潰與 RateWise basename 回歸        | 2026-03-10 |
-| +1   | Release workflow 權限受限時的手動 Version PR fallback              | 2026-03-10 |
-| +1   | PR #185 深度審查、Browser MCP 驗證與 patch release 準備            | 2026-03-10 |
-| +1   | 移除 security header 測試中的 HTML regex 以清除 CodeQL alert       | 2026-03-10 |
-| +1   | 修復 security header 測試對 Worker 字串結構耦合                    | 2026-03-10 |
-| +4   | Cloudflare 安全標頭分層重構與正式站驗證閉環                        | 2026-03-10 |
-| +3   | 修復 vendor-router / vendor-commons 循環 chunk 警告                | 2026-03-09 |
-| +1   | RateWise v2.8.1 patch release 與 changeset 版本化                  | 2026-03-09 |
-| +4   | RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復              | 2026-03-08 |
-| +2   | 002 v2 結構化索引規格與主題分類升級                                | 2026-03-08 |
-| +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理                     | 2026-03-08 |
-| +1   | SEOHelmet effect 依賴穩定化                                        | 2026-03-08 |
-| +1   | SEOHelmet 卸載 cleanup 與跨頁 head 污染修復                        | 2026-03-08 |
-| +4   | FAQ rich results 範圍收斂與 head hydration 去重                    | 2026-03-08 |
-| +3   | SEO Audit hreflang 驗證硬編碼根因修復                              | 2026-03-07 |
-| +4   | rebase 後版本與 sitemap SSOT 根因修復                              | 2026-03-07 |
-| +1   | 公開產物格式漂移收斂與提交潔淨化                                   | 2026-03-07 |
-| +6   | SEO 權威內容頁、參數頁重複抓取抑制                                 | 2026-03-07 |
-| +5   | SEO 真實性、sitemap 與 robots SSOT 根因修復                        | 2026-03-07 |
-| +1   | 建立 Cloudflare 稽核工作流文件                                     | 2026-03-03 |
-| 0    | Code Splitting 生產癱瘓（-3）+ 快速修復（+3）                      | 2026-03-03 |
-| +5   | 效能優化 Bundle 490KB→233KB                                        | 2026-03-03 |
-| +6   | park-keeper Phase 3 收尾                                           | 2026-02-28 |
-| +3   | RateWise SEO 權威定位：新增 4 幣對                                 | 2026-02-28 |
-| +2   | Sitemap hreflang SSOT 同步修復                                     | 2026-02-28 |
-| +3   | SEO 技術債清除與 SSOT 完整對齊                                     | 2026-02-28 |
-| +1   | 修復 prerender/hreflang 測試斷言                                   | 2026-02-28 |
-| +2   | AGENTS/CLAUDE 企業 SOP 升級                                        | 2026-02-28 |
+| 分數 | 事項                                                         | 日期       |
+| ---- | ------------------------------------------------------------ | ---------- |
+| +4   | 修復 haotool 首頁 3D Hero CSP 崩潰與 RateWise basename 回歸  | 2026-03-10 |
+| +1   | Release workflow 權限受限時的手動 Version PR fallback        | 2026-03-10 |
+| +1   | PR #185 深度審查、Browser MCP 驗證與 patch release 準備      | 2026-03-10 |
+| +1   | 移除 security header 測試中的 HTML regex 以清除 CodeQL alert | 2026-03-10 |
+| +1   | 修復 security header 測試對 Worker 字串結構耦合              | 2026-03-10 |
+| +4   | Cloudflare 安全標頭分層重構與正式站驗證閉環                  | 2026-03-10 |
+| +3   | 修復 vendor-router / vendor-commons 循環 chunk 警告          | 2026-03-09 |
+| +1   | RateWise v2.8.1 patch release 與 changeset 版本化            | 2026-03-09 |
+| +4   | RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復        | 2026-03-08 |
+| +2   | 002 v2 結構化索引規格與主題分類升級                          | 2026-03-08 |
+| +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理               | 2026-03-08 |
+| +1   | SEOHelmet effect 依賴穩定化                                  | 2026-03-08 |
+| +1   | SEOHelmet 卸載 cleanup 與跨頁 head 污染修復                  | 2026-03-08 |
+| +4   | FAQ rich results 範圍收斂與 head hydration 去重              | 2026-03-08 |
+| +3   | SEO Audit hreflang 驗證硬編碼根因修復                        | 2026-03-07 |
+| +4   | rebase 後版本與 sitemap SSOT 根因修復                        | 2026-03-07 |
+| +1   | 公開產物格式漂移收斂與提交潔淨化                             | 2026-03-07 |
+| +6   | SEO 權威內容頁、參數頁重複抓取抑制                           | 2026-03-07 |
+| +5   | SEO 真實性、sitemap 與 robots SSOT 根因修復                  | 2026-03-07 |
+| +1   | 建立 Cloudflare 稽核工作流文件                               | 2026-03-03 |
+| 0    | Code Splitting 生產癱瘓（-3）+ 快速修復（+3）                | 2026-03-03 |
+| +5   | 效能優化 Bundle 490KB→233KB                                  | 2026-03-03 |
+| +6   | park-keeper Phase 3 收尾                                     | 2026-02-28 |
+| +3   | RateWise SEO 權威定位：新增 4 幣對                           | 2026-02-28 |
+| +2   | Sitemap hreflang SSOT 同步修復                               | 2026-02-28 |
+| +3   | SEO 技術債清除與 SSOT 完整對齊                               | 2026-02-28 |
+| +1   | 修復 prerender/hreflang 測試斷言                             | 2026-02-28 |
+| +2   | AGENTS/CLAUDE 企業 SOP 升級                                  | 2026-02-28 |
 
 ---
 
@@ -100,60 +99,6 @@
 ## Entries
 
 ### 2026-03
-
----
-
-id: pr188-precache-verifier-and-home-lazy-chunk-audit
-date: 2026-03-11
-title: PR #188 CI 補測、precache 驗證器修復與首頁 lazy chunk preload 收斂
-score: +2
-type: success
-content_type: troubleshooting
-scope: monorepo
-topics: [ci, pwa, ssg, testing, deployment]
-keywords: [pr-188, coverage-guard, precache-verifier, injectmanifest, lazy-chunk-preload]
-aliases: [PR 188 收尾, verify-precache 修復, 首頁 preload 收斂]
-related_entries: [haotool-home-procedural-environment-and-ratewise-basename-guard, incident-production-verification-gap, incident-ci-hardcoded-audit]
-summary: PR #188 補上 `BottomNavigation` 與 `OfflineAwareError` 測試後，`ratewise` coverage 已回到 GitHub Actions 門檻以上；同時發現 root `verify:precache` 腳本仍只會解析舊版 `precacheAndRoute([...])` 字串，對目前 injectManifest 產出的 minified `sw.js` 會假性失敗。另一路正式檢查確認 `haotool` 首頁雖已移除 Suspense fallback marker，但 build 產物仍會 preload `ThreeHero` 與 `SectionBackground` lazy chunk，與「mount 後才載入」的設計不一致，因此改在 `postbuild.js` 直接清理首頁 preload，讓產物與設計一致。
-root_cause:
-
-- `Quality Checks` 失敗實際不是測試紅，而是 `BottomNavigation.tsx` / `OfflineAwareError.tsx` 新增路徑沒有對應 coverage
-- `scripts/verify-precache-assets.mjs` 對 Workbox manifest 的解析耦合在舊字串格式，未覆蓋 injectManifest + minify 後的 `var <manifest> = [...]` 型態
-- `haotool` 首頁 3D 與裝飾背景已改用 client-side import，但 build 輸出仍保留 modulepreload，讓 lazy 策略在網路層被提前破功
-  impact:
-
-- PR #188 會卡在 CI coverage gate，無法合併
-- 正式部署前的 precache 驗證工具會誤報「找不到 precache 清單」，降低 smoke check 可信度
-- 首頁仍會在第一屏預抓 3D / 裝飾 chunk，讓修復後的 lazy load 效益打折
-  actions:
-
-- 新增 `apps/ratewise/src/components/__tests__/BottomNavigation.test.tsx` 與 `apps/ratewise/src/components/__tests__/OfflineAwareError.test.tsx`，覆蓋 basename 導航與 chunk/offline fallback 行為
-- 修正 `scripts/verify-precache-assets.mjs`，先試舊 `precacheAndRoute([...])`，失敗再從 minified `sw.js` 內以 `offline.html` marker 反解 injectManifest 陣列
-- 將 `apps/haotool/scripts/postbuild.js` 納入首頁 preload 清理，移除 `ThreeHero` / `SectionBackground` 的 `modulepreload`
-- 重新執行 `ratewise test:coverage`、`typecheck`、`ratewise build`、`haotool build` 與 `verify:precache`
-- 以 Cloudflare MCP + curl 再次比對正式站 headers / routes，確認目前正式 edge 仍存在 `www.haotool.org` 307 與 repo 內 worker 308 不一致，部署後仍需 smoke check
-  prevention:
-
-- 新增 UI fallback / routing component 後要同步補 coverage，不可等 CI 才補
-- 驗證腳本必須對 build 產物格式去耦合，避免把 minify / bundler 輸出差異誤判成產品故障
-- 對「刻意延後載入」的 chunk，需直接驗 build HTML，不可只看 React 程式碼是否用了 dynamic import
-  verification:
-
-- `pnpm --filter @app/ratewise test:coverage`
-- `pnpm typecheck`
-- `pnpm --filter @app/ratewise build`
-- `VERIFY_BASE_URL=https://app.haotool.org/ratewise/ pnpm verify:precache`
-- `pnpm --filter @app/haotool exec vitest run src/pages/Home.ssg.test.tsx src/components/ThreeHero.test.tsx`
-- `pnpm --filter @app/haotool build`
-- `rg "modulepreload.*(ThreeHero|SectionBackground)" apps/haotool/dist/index.html`
-- `curl -sS -D - -o /dev/null https://www.haotool.org/`
-  references:
-
-- apps/ratewise/src/components/**tests**/BottomNavigation.test.tsx
-- apps/ratewise/src/components/**tests**/OfflineAwareError.test.tsx
-- scripts/verify-precache-assets.mjs
-- apps/haotool/scripts/postbuild.js
-- https://github.com/haotool/app/pull/188
 
 ---
 
