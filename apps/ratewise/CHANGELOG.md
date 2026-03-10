@@ -1,14 +1,5 @@
 # @app/ratewise
 
-## 2.8.9
-
-### Patch Changes
-
-- feat(pwa): autoUpdate 模式 — 接管前先驗證新 precache 完整性
-  - vite.config.ts：registerType 改為 autoUpdate，新 SW 安裝後自動接管
-  - sw.ts：SKIP_WAITING handler 先執行 verifyAndRepairPrecache()，確認新快取完整後才 skipWaiting，清除舊 chunk 前新資源已就緒
-  - UpdatePrompt.tsx：偵測到 needRefresh 時立即切換為 isUpdating 狀態（顯示 spinner），更新完成後頁面自動重新載入，無需使用者手動點擊
-
 ## 2.8.8
 
 ### Patch Changes
