@@ -43,6 +43,7 @@ import { HOMEPAGE_SEO } from './config/seo-metadata';
 import { logger } from './utils/logger';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { lazyWithRetry } from './utils/lazyWithRetry';
+import { ChunkErrorBoundary } from './components/OfflineAwareError';
 
 const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
 const Favorites = lazyWithRetry(() => import('./pages/Favorites'));
@@ -140,9 +141,11 @@ export const routes: RouteRecord[] = [
       {
         path: 'multi',
         element: (
-          <Suspense fallback={<MultiConverterSkeleton />}>
-            <MultiConverter />
-          </Suspense>
+          <ChunkErrorBoundary>
+            <Suspense fallback={<MultiConverterSkeleton />}>
+              <MultiConverter />
+            </Suspense>
+          </ChunkErrorBoundary>
         ),
         entry: 'src/pages/MultiConverter.tsx',
       },
@@ -150,9 +153,11 @@ export const routes: RouteRecord[] = [
       {
         path: 'favorites',
         element: (
-          <Suspense fallback={<FavoritesSkeleton />}>
-            <Favorites />
-          </Suspense>
+          <ChunkErrorBoundary>
+            <Suspense fallback={<FavoritesSkeleton />}>
+              <Favorites />
+            </Suspense>
+          </ChunkErrorBoundary>
         ),
         entry: 'src/pages/Favorites.tsx',
       },
@@ -160,9 +165,11 @@ export const routes: RouteRecord[] = [
       {
         path: 'settings',
         element: (
-          <Suspense fallback={<SettingsSkeleton />}>
-            <Settings />
-          </Suspense>
+          <ChunkErrorBoundary>
+            <Suspense fallback={<SettingsSkeleton />}>
+              <Settings />
+            </Suspense>
+          </ChunkErrorBoundary>
         ),
         entry: 'src/pages/Settings.tsx',
       },

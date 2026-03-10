@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.8.8
+
+### Patch Changes
+
+- 修復 PWA 離線 "Load failed" 問題：setCatchHandler 補查 script/style 快取、啟動時驗證並修復 precache、新增 ChunkErrorBoundary 顯示友善離線提示。
+
 ## 2.8.7
 
 ### Patch Changes

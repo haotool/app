@@ -305,6 +305,17 @@ export async function initPWAStorageManager(baseUrl: string): Promise<void> {
   logger.info('Initializing PWA Storage Manager');
 
   try {
+    // 線上時發送 VERIFY_AND_REPAIR_PRECACHE：補回 iOS cache eviction 清除的 JS/CSS chunk。
+    if (
+      typeof navigator !== 'undefined' &&
+      navigator.onLine &&
+      'serviceWorker' in navigator &&
+      navigator.serviceWorker.controller
+    ) {
+      navigator.serviceWorker.controller.postMessage({ type: 'VERIFY_AND_REPAIR_PRECACHE' });
+      logger.info('VERIFY_AND_REPAIR_PRECACHE 已發送至 SW');
+    }
+
     // 1. 請求持久化儲存
     const isPersistent = await requestPersistentStorage();
 

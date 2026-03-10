@@ -24,8 +24,59 @@ self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
   }
 });
 
+// 保存 manifest 供 VERIFY_AND_REPAIR_PRECACHE 使用。
+const WB_MANIFEST = self.__WB_MANIFEST;
+
 // 預快取 Vite 產出的靜態資源。
-precacheAndRoute(self.__WB_MANIFEST);
+precacheAndRoute(WB_MANIFEST);
+
+// precache 完整性驗證與修復：補回 iOS cache eviction 清除的 JS/CSS chunk。
+async function verifyAndRepairPrecache(): Promise<void> {
+  try {
+    const cacheNames = await caches.keys();
+    const precacheName = cacheNames.find((n) => n.startsWith('workbox-precache-v2'));
+    if (!precacheName) {
+      console.warn('[SW] Precache 快取不存在，跳過修復');
+      return;
+    }
+
+    const cache = await caches.open(precacheName);
+    const cachedRequests = await cache.keys();
+    const cachedUrls = new Set(cachedRequests.map((r) => r.url));
+    const scope = self.registration.scope;
+
+    type ManifestEntry = string | { url: string; revision?: string | null };
+    const missing = (WB_MANIFEST as ManifestEntry[]).filter((entry) => {
+      const relUrl = typeof entry === 'string' ? entry : entry.url;
+      if (!relUrl.endsWith('.js') && !relUrl.endsWith('.css')) return false;
+      const fullUrl = new URL(relUrl, scope).href;
+      return !cachedUrls.has(fullUrl);
+    });
+
+    if (missing.length === 0) {
+      return;
+    }
+
+    console.warn(`[SW] Precache 缺少 ${missing.length} 個條目，開始修復`);
+    await Promise.allSettled(
+      missing.map(async (entry) => {
+        const relUrl = typeof entry === 'string' ? entry : entry.url;
+        const fullUrl = new URL(relUrl, scope).href;
+        try {
+          const response = await fetch(fullUrl, { cache: 'no-cache' });
+          if (response.ok) {
+            await cache.put(fullUrl, response);
+          }
+        } catch (err) {
+          console.warn(`[SW] 修復失敗: ${fullUrl}`, err);
+        }
+      }),
+    );
+    console.warn('[SW] Precache 修復完成');
+  } catch (err) {
+    console.error('[SW] verifyAndRepairPrecache 執行失敗:', err);
+  }
+}
 
 // 清除舊版快取。
 cleanupOutdatedCaches();
@@ -40,6 +91,12 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   // UpdatePrompt.updateServiceWorker(true) 觸發，讓 waiting SW 立即接管。
   if (data?.type === 'SKIP_WAITING') {
     void self.skipWaiting();
+    return;
+  }
+
+  // 啟動時驗證 precache 完整性，補回 iOS cache eviction 清除的 chunk。
+  if (data?.type === 'VERIFY_AND_REPAIR_PRECACHE') {
+    event.waitUntil(verifyAndRepairPrecache());
     return;
   }
 
@@ -73,6 +130,17 @@ registerRoute(
 setCatchHandler(async ({ event, request }): Promise<Response> => {
   const fetchEvent = event as FetchEvent;
   const req = request ?? fetchEvent.request;
+
+  // JS/CSS 離線回退：iOS cache eviction 後先嘗試全快取比對，避免 "Load failed" 崩潰。
+  if (req.destination === 'script' || req.destination === 'style') {
+    try {
+      const cached = await caches.match(req);
+      if (cached) return cached;
+    } catch {
+      // 忽略快取存取錯誤。
+    }
+    return Response.error();
+  }
 
   if (req.destination !== 'document') {
     return Response.error();
