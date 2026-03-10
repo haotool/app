@@ -355,6 +355,31 @@ describe('exchangeRateService', () => {
       expect(capturedSignal).not.toBeNull();
       expect(capturedSignal).toBeInstanceOf(AbortSignal);
     });
+
+    it('逾時後記錄警告日誌（timeout callback 覆蓋）', async () => {
+      // 使用 fake timers 觸發 AbortController timeout callback（line 197）
+      vi.useFakeTimers();
+
+      (global.fetch as any).mockImplementation((_: unknown, init?: RequestInit) => {
+        // 當 signal abort 時 reject（模擬 AbortController 中斷）
+        return new Promise((_, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('The user aborted a request.', 'AbortError'));
+          });
+        });
+      });
+
+      const resultPromise = getExchangeRates().catch(() => {});
+      // 推進 fake timer 觸發 setTimeout callback（內含 logger.warn + controller.abort）
+      await vi.advanceTimersByTimeAsync(FETCH_TIMEOUT_MS + 100);
+      await resultPromise;
+
+      vi.useRealTimers();
+
+      expect(logger.logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('CDN fetch timed out'),
+      );
+    });
   });
 
   describe('clearExchangeRateCache', () => {
