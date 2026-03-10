@@ -208,11 +208,11 @@ describe('versionManager', () => {
   });
 
   describe('clearAppCache', () => {
-    it('清除 localStorage 中的快取 keys', async () => {
+    it('清除 localStorage 中的快取 keys', () => {
       // ✅ Setup: 預先設置一些快取數據
       mockLocalStorage.setItem(STORAGE_KEYS.EXCHANGE_RATES, '{"USD":30.5}');
 
-      await clearAppCache();
+      clearAppCache();
 
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.EXCHANGE_RATES);
       expect(logger.logger.info).toHaveBeenCalledWith('Starting cache clearance', {
@@ -220,27 +220,27 @@ describe('versionManager', () => {
       });
     });
 
-    it('清除所有 Service Worker caches', async () => {
-      await clearAppCache();
+    it('不清除 Service Worker 快取（防止 PWA 離線失效）', () => {
+      // SW precache 由 Workbox 自行管理，版本更新不應刪除
+      // 刪除 precache 會導致 PWA 冷啟動離線白屏
+      clearAppCache();
 
-      expect(mockCaches.keys).toHaveBeenCalled();
-      expect(mockCaches.delete).toHaveBeenCalledWith('cache-v1');
-      expect(mockCaches.delete).toHaveBeenCalledWith('cache-v2');
-      expect(logger.logger.info).toHaveBeenCalledWith('All Service Worker caches cleared');
+      expect(mockCaches.keys).not.toHaveBeenCalled();
+      expect(mockCaches.delete).not.toHaveBeenCalled();
     });
 
-    it('清除 sessionStorage', async () => {
-      await clearAppCache();
+    it('清除 sessionStorage', () => {
+      clearAppCache();
 
       expect(mockSessionStorage.clear).toHaveBeenCalled();
     });
 
-    it('錯誤處理: localStorage 清除失敗', async () => {
+    it('錯誤處理: localStorage 清除失敗', () => {
       mockLocalStorage.removeItem.mockImplementationOnce(() => {
         throw new Error('Storage quota exceeded');
       });
 
-      await clearAppCache();
+      clearAppCache();
 
       expect(logger.logger.error).toHaveBeenCalledWith(
         'Failed to clear localStorage cache',
@@ -248,15 +248,12 @@ describe('versionManager', () => {
       );
     });
 
-    it('錯誤處理: caches API 失敗', async () => {
-      mockCaches.keys.mockRejectedValueOnce(new Error('Cache API error'));
+    it('不觸碰 caches API（SW 快取由 Workbox 自行管理）', () => {
+      // 確認即使 caches.keys 會拋出，也不影響 clearAppCache 流程
+      // （因為我們根本不呼叫 caches API）
+      clearAppCache();
 
-      await clearAppCache();
-
-      expect(logger.logger.error).toHaveBeenCalledWith(
-        'Failed to clear Service Worker caches',
-        expect.any(Error),
-      );
+      expect(mockCaches.keys).not.toHaveBeenCalled();
     });
   });
 
