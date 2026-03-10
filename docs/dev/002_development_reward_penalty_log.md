@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-10T03:42:50+08:00
-> **當前總分**: 1134（初始分: 100）
+> **最後更新**: 2026-03-10T09:40:00+08:00
+> **當前總分**: 1135（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -25,6 +25,7 @@
 
 | 分數 | 事項                                                         | 日期       |
 | ---- | ------------------------------------------------------------ | ---------- |
+| +1   | PR #185 深度審查、Browser MCP 驗證與 patch release 準備      | 2026-03-10 |
 | +1   | 移除 security header 測試中的 HTML regex 以清除 CodeQL alert | 2026-03-10 |
 | +1   | 修復 security header 測試對 Worker 字串結構耦合              | 2026-03-10 |
 | +4   | Cloudflare 安全標頭分層重構與正式站驗證閉環                  | 2026-03-10 |
@@ -96,6 +97,54 @@
 ## Entries
 
 ### 2026-03
+
+---
+
+id: pr185-review-browser-verification-release-prep
+date: 2026-03-10
+title: PR #185 深度審查、Browser MCP 驗證與 patch release 準備
+score: +1
+type: success
+content_type: how_to
+scope: monorepo
+topics: [testing, ci, documentation, ssot]
+keywords: [pr-review, browser-mcp, changeset, release-prep, merge-readiness]
+aliases: [PR 185 合併前審查, 瀏覽器驗證閉環]
+related_entries: [cloudflare-security-headers-layered-refactor, security-header-test-structure-decoupling]
+summary: 針對 `codex/cloudflare-security-headers-v4` 執行合併前深度審查，補跑 Browser MCP 驗證 `ratewise` 與 `park-keeper` 核心路由與互動，確認 console 全程 0 error，並補上 multi-package patch changeset，讓 PR #185 合併後可以依 repo SSOT 正常產生 `Version Packages` PR。
+root_cause:
+
+- 使用者要求在合併前完成深度 review、瀏覽器功能確認與小版本更新，但 repo 的 versioning 規則明確禁止在功能分支直接執行 `changeset version`
+- 本地驗證過程曾產生 `apps/ratewise/public/*` 的 prebuild 日期異動，若不先辨識並還原，容易把暫時性產出誤帶進功能 PR
+  impact:
+
+- 若沒有補 Browser MCP 驗證，只看既有 CI 與 curl 仍無法覆蓋實際前端路由/互動
+- 若沒有先補 changeset，PR 雖可合併，但 `main` 不會自動產生 version PR，無法完成受控 patch release 流程
+  actions:
+
+- 逐頁驗證 `http://localhost:4173/ratewise/`、`/multi`、`/favorites`、`/settings`，確認標題、主要內容與 console 均正常
+- 驗證 `http://127.0.0.1:4176/park-keeper/` 的首頁、Quick Entry、設定與返回列表流程，並確認 console 0 error、遮罩可正常關閉面板
+- 還原本地 prebuild 造成的暫時性 `public/*` 日期變更，只保留真正需要提交的 release metadata
+- 新增 `.changeset/cloudflare-security-review-release.md`，將 `@app/ratewise` 與 `@app/park-keeper` 都標記為 patch
+  prevention:
+
+- 合併前審查需同時覆蓋 diff review、Browser MCP 與 versioning 規則，不可只依賴單一 CI 結果
+- 本地 build / preview 若改寫公開產出檔，必須先判斷是否屬正式 release 內容，避免把暫時性日期漂移帶入 PR
+- 使用者要求「更新小版本」時，應優先套用 repo 的 changeset / Version PR 流程，而不是在功能分支直接手動 bump 版本號
+  verification:
+
+- `gh pr view 185 --json mergeable,statusCheckRollup,url`
+- `curl -I http://localhost:4173/ratewise/`
+- `curl -I http://127.0.0.1:4176/park-keeper/`
+- Playwright MCP：`ratewise` 首頁 / multi / favorites / settings
+- Playwright MCP：`park-keeper` 首頁 / Quick Entry / settings / list
+- `git diff -- apps/ratewise/public/llms-full.txt apps/ratewise/public/llms.txt apps/ratewise/public/manifest.webmanifest apps/ratewise/public/robots.txt`
+  references:
+
+- .changeset/cloudflare-security-review-release.md
+- https://github.com/haotool/app/pull/185
+- apps/park-keeper/src/components/QuickEntry.tsx
+- security-headers/src/worker.js
 
 ---
 
