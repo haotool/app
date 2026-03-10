@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-10T09:40:00+08:00
-> **當前總分**: 1135（初始分: 100）
+> **最後更新**: 2026-03-10T09:48:00+08:00
+> **當前總分**: 1136（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -25,6 +25,7 @@
 
 | 分數 | 事項                                                         | 日期       |
 | ---- | ------------------------------------------------------------ | ---------- |
+| +1   | Release workflow 權限受限時的手動 Version PR fallback        | 2026-03-10 |
 | +1   | PR #185 深度審查、Browser MCP 驗證與 patch release 準備      | 2026-03-10 |
 | +1   | 移除 security header 測試中的 HTML regex 以清除 CodeQL alert | 2026-03-10 |
 | +1   | 修復 security header 測試對 Worker 字串結構耦合              | 2026-03-10 |
@@ -97,6 +98,51 @@
 ## Entries
 
 ### 2026-03
+
+---
+
+id: manual-version-pr-fallback-release-2026-03-10
+date: 2026-03-10
+title: Release workflow 權限受限時的手動 Version PR fallback
+score: +1
+type: success
+content_type: troubleshooting
+scope: monorepo
+topics: [ci, deployment, documentation, ssot]
+keywords: [changesets-action, workflow-permissions, manual-release-pr, versioning, release-fallback]
+aliases: [Version Packages fallback, 手動 release PR]
+related_entries: [pr185-review-browser-verification-release-prep, ratewise-v2-8-1-patch-release]
+summary: PR #185 合併到 `main` 後，`Release` workflow 確實被觸發，但組織層級未開啟 GitHub Actions 建立 PR 權限，導致 `changesets/action` 無法自動建立 `Version Packages` PR。為維持既有 release SSOT，本次改以 `codex/manual-release-ratewise-2-8-6-parkkeeper-1-0-10` 分支手動執行 `pnpm changeset:version` 與 `pnpm --filter @app/ratewise prebuild`，將 patch 版本展開為 RateWise `2.8.6` 與 ParkKeeper `1.0.10`，再透過一般 PR 流程回到 `main`。
+root_cause:
+
+- GitHub Actions `Release` run `22883131370` 在 `Create Release Pull Request` 後回報 org-level permission 缺失：未啟用「Allow GitHub Actions to create and approve pull requests」
+- repo 的版本治理要求必須透過 Version PR / release branch 完成版本化，不能因自動化失敗就跳過版本提交
+  impact:
+
+- 若不手動補救，`main` 上會保留已合併但尚未消化的 changeset，版本號、CHANGELOG 與公開 metadata 無法同步落版
+- release workflow 雖標示 success，但實際上不會產生任何版本 PR，容易造成「看似成功、實際未發版」的誤判
+  actions:
+
+- 監看 `Release` workflow，確認失敗點與 GitHub annotations，而不是直接假設 secrets 或程式碼錯誤
+- 從最新 `main` 建立 `codex/manual-release-ratewise-2-8-6-parkkeeper-1-0-10` release branch
+- 執行 `pnpm changeset:version`，同步 root `package.json`、`apps/ratewise/package.json`、`apps/park-keeper/package.json` 與 CHANGELOG
+- 補跑 `pnpm --filter @app/ratewise prebuild`，更新 `llms.txt`、`llms-full.txt`、`manifest.webmanifest`、`robots.txt`、`api/latest.json`、`openapi.json`
+  prevention:
+
+- 若維持現行 GitHub org 權限設定，未來每次有 changeset 合併到 `main` 後都需預期 `Version Packages` PR 不會自動產生，必須用同樣的手動 release fallback
+- 建議維護者補開 GitHub Actions 建立/批准 PR 權限，讓 changesets/action 回到預期自動化路徑，避免 release 流程長期依賴人工補位
+  verification:
+
+- `gh run view 22883131370 --json jobs,status,conclusion,url`
+- `pnpm changeset:version`
+- `pnpm --filter @app/ratewise prebuild`
+- `git diff --stat`
+  references:
+
+- .github/workflows/release.yml
+- apps/ratewise/CHANGELOG.md
+- apps/park-keeper/CHANGELOG.md
+- https://github.com/haotool/app/actions/runs/22883131370
 
 ---
 
