@@ -1,5 +1,15 @@
 # @app/ratewise
 
+## 2.8.9
+
+### Patch Changes
+
+- fix(ui): UpdatePrompt 定位改為底部置中（Material Design 3）
+
+  依 Material Design 3 snackbar 建議，行動版更新通知從頂部（header 下方）移至底部導覽列上方置中，桌面版固定在 bottom-6 置中。
+  - design-tokens.ts：position 改用 bottom 偏移，新增 mobileBottomOffset（底部導覽列高度 + safe-area-inset-bottom + 16px）
+  - UpdatePrompt.tsx：CSS 變數改為 --notification-bottom-offset
+
 ## 2.8.8
 
 ### Patch Changes

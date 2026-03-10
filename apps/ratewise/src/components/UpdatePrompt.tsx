@@ -142,7 +142,7 @@ function UpdatePromptClient() {
     offlineReady || needRefresh || isUpdating || updateFailed || registrationFailed;
   const isUrgent = needRefresh || updateFailed || isUpdating || registrationFailed;
   const mobilePositionStyle = {
-    '--notification-mobile-top-offset': notificationTokens.mobileTopOffset,
+    '--notification-bottom-offset': notificationTokens.mobileBottomOffset,
   } as CSSProperties;
 
   return (

@@ -1204,13 +1204,14 @@ export const buttonTokens = {
  */
 export const notificationTokens = {
   /** 固定定位 + 容器尺寸（視窗底部中央） - UpdatePrompt 專用
-   * 注意：不使用 -translate-x-1/2，改用 Motion 的 x: '-50%' 避免 transform 衝突
-   * 行動版定位在 header 下方，避免阻擋底部導覽列
+   * Material Design 3：行動版底部置中，桌面版底部右側或底部中央。
+   * 注意：不使用 -translate-x-1/2，改用 Motion 的 x: '-50%' 避免 transform 衝突。
+   * 行動版定位在底部導覽列上方，桌面版固定 bottom-6。
    */
   position:
-    'fixed top-[var(--notification-mobile-top-offset)] md:top-auto md:bottom-4 left-1/2 w-[calc(100vw-2rem)] max-w-[344px] z-50',
-  /** 行動版頂部偏移量：header 高度 + safe area + 16px 間距 */
-  mobileTopOffset: `calc(${navigationTokens.header.height}px + env(safe-area-inset-top, 0px) + 16px)`,
+    'fixed bottom-[var(--notification-bottom-offset)] md:bottom-6 left-1/2 w-[calc(100vw-2rem)] max-w-[344px] z-50',
+  /** 行動版底部偏移量：底部導覽列高度 + safe area + 16px 間距（避免遮擋導覽列） */
+  mobileBottomOffset: `calc(${navigationTokens.bottomNav.height}px + env(safe-area-inset-bottom, 0px) + 16px)`,
   /** 固定定位 + 容器尺寸（視窗頂部中央） - OfflineIndicator 專用
    * 注意：不使用 -translate-x-1/2，改用 Motion 的 x: '-50%' 避免 transform 衝突
    */
