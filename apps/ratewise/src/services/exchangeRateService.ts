@@ -56,6 +56,9 @@ const CDN_URLS = [
   // 或考慮自建 Cloudflare Workers/Pages Functions 作為中間層
 ];
 
+// 單次 CDN fetch 逾時上限。行動網路平均 RTT 約 200-500ms，8 秒足以涵蓋 3G 網路，同時防止無限等待。
+export const FETCH_TIMEOUT_MS = 8_000;
+
 // localStorage key 分離策略：
 // 使用 storage-keys.ts 集中管理所有 localStorage keys
 // - STORAGE_KEYS.EXCHANGE_RATES: 匯率數據快取（本檔案管理，5分鐘過期）
@@ -137,7 +140,7 @@ function saveToCache(data: ExchangeRateData): void {
 /**
  * 從 CDN 獲取匯率資料（帶 fallback）
  */
-async function fetchFromCDN(): Promise<ExchangeRateData> {
+async function fetchFromCDN(signal?: AbortSignal): Promise<ExchangeRateData> {
   const errors: Error[] = [];
   const startTime = Date.now();
 
@@ -149,7 +152,7 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
       logger.debug(`Trying CDN #${i + 1}/${CDN_URLS.length}`, { url: url.substring(0, 80) });
 
       // [2025-12-10] 使用 fetchWithRequestId 自動注入 X-Correlation-ID header
-      const response = await fetchWithRequestId(url);
+      const response = await fetchWithRequestId(url, signal ? { signal } : undefined);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -181,6 +184,24 @@ async function fetchFromCDN(): Promise<ExchangeRateData> {
   throw new Error(
     `Failed to fetch from all ${CDN_URLS.length} sources:\n${errors.map((e, i) => `  ${i + 1}. ${e.message}`).join('\n')}`,
   );
+}
+
+/**
+ * 帶逾時保護的 CDN fetch。
+ * 使用 AbortController 防止行動網路卡頓時無限等待。
+ */
+async function fetchWithTimeout(): Promise<ExchangeRateData> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+    logger.warn(`CDN fetch timed out after ${FETCH_TIMEOUT_MS}ms`);
+  }, FETCH_TIMEOUT_MS);
+
+  try {
+    return await fetchFromCDN(controller.signal);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /**
@@ -279,53 +300,51 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
     };
   }
 
-  // 1. 嘗試從快取讀取（getFromCache 會自動檢查並清除過期快取）
+  // 1. 嘗試從快取讀取（getFromCache 只返回 5 分鐘內的新鮮資料）
   const cached = getFromCache();
   if (cached) {
     return cached;
   }
 
-  // 2. 快取無效或過期，從 CDN 獲取新資料
-  logger.debug('Fetching fresh data from CDN');
+  // 2. Stale-while-revalidate：有過期快取時立即返回，背景更新。
+  // 根本解決骨架屏卡住問題：不讓 UI 等待 CDN 回應（行動網路可能很慢）。
+  const staleData = getAnyCachedData();
+  if (staleData) {
+    logger.info('Stale-while-revalidate: serving stale cache, refreshing in background', {
+      updateTime: staleData.updateTime,
+    });
+    void fetchWithTimeout()
+      .then((data) => {
+        saveToCache(data);
+        logger.debug('Background cache refresh completed', { updateTime: data.updateTime });
+      })
+      .catch((err: unknown) => {
+        logger.warn('Background cache refresh failed', { error: err });
+      });
+    return staleData;
+  }
+
+  // 3. 完全無快取（首次啟動）：帶逾時保護的 CDN fetch
+  logger.debug('No cache available, fetching from CDN with timeout');
   try {
-    const data = await fetchFromCDN();
+    const data = await fetchWithTimeout();
     saveToCache(data);
     logger.debug('Fresh data saved to cache');
     return data;
   } catch (error) {
     logger.error('Failed to fetch exchange rates', error instanceof Error ? error : undefined);
 
-    // 3. 如果 CDN 完全失敗，嘗試多層備援
-    // 3a. 嘗試 localStorage（即使過期）
-    const staleData = getAnyCachedData();
-    if (staleData) {
-      logger.warn('Using stale localStorage cache as fallback due to fetch error', {
-        updateTime: staleData.updateTime,
-      });
-      return staleData;
-    }
-
-    // 3b. Try IndexedDB (critical fallback for Safari PWA cold start)
+    // 4. 嘗試 IndexedDB 作為最後防線（Safari PWA 冷啟動）
     try {
       const { data: idbData, staleness } = await getExchangeRatesFromIDBWithStaleness();
-      if (idbData) {
-        // 如果資料已過期（> 7 天），不使用過時資料，拋出原始錯誤
-        if (staleness.isExpired) {
-          logger.warn('IndexedDB data expired, not using as fallback', {
-            updateTime: idbData.updateTime,
-            staleness: staleness.level,
-            ageDays: staleness.ageDays,
-          });
-          // 不返回過期資料，讓原始錯誤傳播
-        } else {
-          logger.warn('Using IndexedDB cache as fallback due to fetch error', {
-            updateTime: idbData.updateTime,
-            staleness: staleness.level,
-            shouldWarn: staleness.shouldWarn,
-            message: staleness.message,
-          });
-          return idbData;
-        }
+      if (idbData && !staleness.isExpired) {
+        logger.warn('Using IndexedDB cache as fallback due to fetch error', {
+          updateTime: idbData.updateTime,
+          staleness: staleness.level,
+          shouldWarn: staleness.shouldWarn,
+          message: staleness.message,
+        });
+        return idbData;
       }
     } catch (idbError) {
       logger.warn('IndexedDB fallback read failed', { error: idbError });

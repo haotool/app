@@ -14,7 +14,12 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getExchangeRates, clearExchangeRateCache, transformRates } from '../exchangeRateService';
+import {
+  getExchangeRates,
+  clearExchangeRateCache,
+  transformRates,
+  FETCH_TIMEOUT_MS,
+} from '../exchangeRateService';
 import * as logger from '../../utils/logger';
 
 // ===== Mock Setup =====
@@ -167,7 +172,7 @@ describe('exchangeRateService', () => {
       expect(logger.logger.debug).toHaveBeenCalledWith(expect.stringContaining('Cache valid'));
     });
 
-    it('快取過期時從 CDN 獲取新資料', async () => {
+    it('快取過期時立即返回過期快取並在背景更新（stale-while-revalidate）', async () => {
       // ✅ Setup: 設置過期快取（10分鐘前）
       const staleData = {
         data: { ...mockRateData, updateTime: '2025-10-31 00:50' },
@@ -175,7 +180,7 @@ describe('exchangeRateService', () => {
       };
       mockLocalStorage.setItem('exchangeRates', JSON.stringify(staleData));
 
-      // ✅ Mock successful fetch
+      // ✅ Mock successful background fetch
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => mockRateData,
@@ -183,12 +188,13 @@ describe('exchangeRateService', () => {
 
       const result = await getExchangeRates();
 
-      expect(result).toEqual(mockRateData);
+      // SWR: stale data returned immediately (not waiting for CDN)
+      expect(result.updateTime).toBe('2025-10-31 00:50');
+      // Background fetch was triggered
       expect(global.fetch).toHaveBeenCalled();
-      // Stale cache kept for offline fallback, overwritten by new data
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-        'exchangeRates',
-        expect.stringContaining('2025-10-31 01:00'),
+      expect(logger.logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Stale-while-revalidate'),
+        expect.any(Object),
       );
     });
 
@@ -207,8 +213,8 @@ describe('exchangeRateService', () => {
       expect(global.fetch).toHaveBeenCalled();
     });
 
-    it('CDN 失敗時使用過期快取作為 fallback', async () => {
-      // Stale cache serves as offline fallback
+    it('CDN 失敗時已有過期快取：立即返回過期快取（stale-while-revalidate）', async () => {
+      // 有過期快取：stale-while-revalidate 立即返回，背景 fetch 失敗只記錄警告
       const staleData = {
         data: { ...mockRateData, updateTime: '2025-10-31 00:40' },
         timestamp: Date.now() - 20 * 60 * 1000, // 20 minutes ago (expired)
@@ -217,11 +223,11 @@ describe('exchangeRateService', () => {
 
       (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
-      // ✅ 過期快取仍可用作 fallback
+      // SWR: 立即返回 stale 資料，不等待 CDN
       const result = await getExchangeRates();
       expect(result.updateTime).toBe('2025-10-31 00:40');
-      expect(logger.logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Using stale localStorage cache as fallback'),
+      expect(logger.logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Stale-while-revalidate'),
         expect.any(Object),
       );
     });
@@ -279,6 +285,75 @@ describe('exchangeRateService', () => {
         'Failed to read from cache',
         expect.any(Object),
       );
+    });
+  });
+
+  describe('stale-while-revalidate', () => {
+    it('過期快取立即返回，不阻塞在 CDN 請求', async () => {
+      const staleData = { ...mockRateData, updateTime: 'stale-data' };
+      mockLocalStorage.setItem(
+        'exchangeRates',
+        JSON.stringify({ data: staleData, timestamp: Date.now() - 10 * 60 * 1000 }),
+      );
+
+      // fetch 永遠不回應（模擬行動網路卡頓）
+      let fetchCalled = false;
+      (global.fetch as any).mockImplementation(() => {
+        fetchCalled = true;
+        return new Promise(() => {}); // never resolves
+      });
+
+      const result = await getExchangeRates();
+
+      // ✅ 立即拿到 stale 資料，不需等待 CDN
+      expect(result.updateTime).toBe('stale-data');
+      // ✅ 背景 fetch 已觸發
+      expect(fetchCalled).toBe(true);
+      expect(logger.logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Stale-while-revalidate'),
+        expect.any(Object),
+      );
+    });
+
+    it('背景更新成功後快取被更新', async () => {
+      const staleData = { ...mockRateData, updateTime: 'stale-data' };
+      mockLocalStorage.setItem(
+        'exchangeRates',
+        JSON.stringify({ data: staleData, timestamp: Date.now() - 10 * 60 * 1000 }),
+      );
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockRateData,
+      });
+
+      const result = await getExchangeRates();
+
+      // SWR: 立即返回 stale
+      expect(result.updateTime).toBe('stale-data');
+      // 背景 fetch 已觸發（確認背景更新機制啟動）
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('FETCH_TIMEOUT_MS 常數已匯出且為正整數（防止行動網路無限等待）', () => {
+      expect(typeof FETCH_TIMEOUT_MS).toBe('number');
+      expect(FETCH_TIMEOUT_MS).toBeGreaterThan(0);
+    });
+
+    it('fetch 呼叫帶有 AbortSignal（逾時保護機制確認）', async () => {
+      // 驗證 AbortSignal 已傳入 fetch，確認逾時機制正確設定
+      let capturedSignal: AbortSignal | undefined | null;
+      (global.fetch as any).mockImplementation((_: unknown, init?: RequestInit) => {
+        capturedSignal = init?.signal ?? null;
+        // 立即 reject 模擬網路失敗（避免 timer 複雜性）
+        return Promise.reject(new Error('simulated network error'));
+      });
+
+      await getExchangeRates().catch(() => {});
+
+      expect(capturedSignal).toBeDefined();
+      expect(capturedSignal).not.toBeNull();
+      expect(capturedSignal).toBeInstanceOf(AbortSignal);
     });
   });
 

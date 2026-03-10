@@ -1,5 +1,14 @@
 # @app/ratewise
 
+## 2.9.0
+
+### Minor Changes
+
+- fix(pwa): 修復 PWA 骨架屏卡住 — stale-while-revalidate + 逾時保護 + 移除 precache 誤刪
+  - `exchangeRateService`: 實作 stale-while-revalidate 模式，有舊快取時立即返回（不阻塞在 CDN 請求）
+  - `exchangeRateService`: 加入 8 秒 `AbortController` 逾時保護，防止行動網路卡頓時無限等待
+  - `versionManager`: 版本更新時不再刪除 SW 快取（Workbox precache 由 SW 自行管理），防止冷啟動離線失效
+
 ## 2.8.9
 
 ### Patch Changes

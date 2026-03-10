@@ -74,7 +74,7 @@ export function hasVersionChanged(): boolean {
  * - 清除: 匯率快取數據 (CACHE_KEYS)
  * - 保留: 用戶設定、收藏、貨幣選擇 (USER_DATA_KEYS)
  */
-export async function clearAppCache(): Promise<void> {
+export function clearAppCache(): void {
   if (typeof window === 'undefined') {
     return;
   }
@@ -91,21 +91,11 @@ export async function clearAppCache(): Promise<void> {
     logger.error('Failed to clear localStorage cache', error as Error);
   }
 
-  // 2. 清除 Service Worker 快取
-  if ('caches' in window) {
-    try {
-      const cacheNames = await caches.keys();
-      await Promise.all(
-        cacheNames.map(async (cacheName) => {
-          await caches.delete(cacheName);
-          logger.debug('Deleted cache', { cacheName });
-        }),
-      );
-      logger.info('All Service Worker caches cleared');
-    } catch (error) {
-      logger.error('Failed to clear Service Worker caches', error as Error);
-    }
-  }
+  // 2. ⚠️ 不清除 Service Worker 快取。
+  // Workbox precache 由 SW 自行管理（cleanupOutdatedCaches）。
+  // 版本更新時手動刪除 precache 會破壞 PWA 離線功能（冷啟動白屏）。
+  // SW 更新流程由 UpdatePrompt（registerType: 'prompt'）控制，
+  // 新 SW 接管後自行清理舊版本快取。
 
   // 3. 清除 sessionStorage（臨時數據）
   try {
@@ -184,7 +174,7 @@ export async function handleVersionUpdate(): Promise<void> {
   });
 
   // 清除快取
-  await clearAppCache();
+  clearAppCache();
 
   // Force Service Worker update
   await forceServiceWorkerUpdate();
