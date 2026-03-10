@@ -235,4 +235,18 @@ describe('security-headers worker', () => {
 
     expect(wranglerConfig).toContain('"pattern": "app.haotool.org/*"');
   });
+
+  it('www.haotool.org 應永久轉址到 apex，避免落到上游 404', async () => {
+    globalThis.fetch = vi.fn();
+
+    const response = await worker.fetch(
+      new Request('https://www.haotool.org/projects/?ref=nav', {
+        method: 'GET',
+      }),
+    );
+
+    expect(response.status).toBe(308);
+    expect(response.headers.get('location')).toBe('https://haotool.org/projects/?ref=nav');
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
 });

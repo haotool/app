@@ -26,6 +26,8 @@ const DEFAULT_PERMISSIONS_POLICY =
 	'geolocation=(), microphone=(), camera=(), payment=(), accelerometer=(), gyroscope=(), magnetometer=(), usb=()';
 const PARK_KEEPER_PERMISSIONS_POLICY =
 	'geolocation=(self), microphone=(), camera=(), payment=(), accelerometer=(self), gyroscope=(self), magnetometer=(self), usb=()';
+const CANONICAL_ROOT_HOST = 'haotool.org';
+const WWW_HOST = 'www.haotool.org';
 
 const BASE_RESPONSE_HEADERS = {
 	'Referrer-Policy': 'strict-origin-when-cross-origin',
@@ -367,6 +369,11 @@ export default {
 	async fetch(request) {
 		const url = new URL(request.url);
 		const isRatewisePath = url.pathname.startsWith('/ratewise/');
+
+		if (url.host === WWW_HOST) {
+			url.host = CANONICAL_ROOT_HOST;
+			return Response.redirect(url.toString(), 308);
+		}
 
 		if (url.pathname === '/ratewise/__network_probe__') {
 			return new Response(null, {

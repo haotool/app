@@ -1,7 +1,7 @@
 /** BottomNavigation：行動版四頁導覽列。 */
 
 import React, { useTransition } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useHref } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +43,97 @@ const navItems: NavItem[] = [
   },
 ];
 
+interface BottomNavigationItemProps {
+  item: NavItem;
+  isActive: boolean;
+  isPending: boolean;
+  onNavigate: (event: React.MouseEvent<HTMLAnchorElement>, path: string) => void;
+  t: (key: string) => string;
+}
+
+function BottomNavigationItem({
+  item,
+  isActive,
+  isPending,
+  onNavigate,
+  t,
+}: BottomNavigationItemProps) {
+  const resolvedHref = useHref(item.path);
+  const href = item.path === '/' && !resolvedHref.endsWith('/') ? `${resolvedHref}/` : resolvedHref;
+  const Icon = item.icon;
+
+  return (
+    <a
+      href={href}
+      onClick={(event) => onNavigate(event, item.path)}
+      className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 relative group touch-manipulation"
+      aria-label={t(item.ariaLabelKey)}
+      aria-current={isActive ? 'page' : undefined}
+    >
+      {/* 觸控回饋背景（避免在 <a> 內使用 whileTap 產生 tabindex）。 */}
+      <div
+        className="
+          absolute inset-1 rounded-xl bg-primary/0
+          transition-colors duration-75
+          group-active:bg-primary/10
+        "
+      />
+
+      {/* 圖標動畫（僅使用 animate，避免 tabindex 問題）。 */}
+      <motion.div
+        animate={{
+          scale: isActive ? 1.1 : 1,
+          opacity: isActive ? 1 : isPending ? 0.7 : 0.35,
+        }}
+        transition={transitions.spring}
+        className={`
+          relative
+          ${isActive ? 'text-primary' : ''}
+          transition-transform duration-75
+          group-active:scale-90
+        `}
+      >
+        <Icon
+          className="w-5 h-5"
+          strokeWidth={isActive ? 2.5 : isPending ? 2.25 : 2}
+          aria-hidden={true}
+        />
+        {/* 等待指示點：chunk 載入中時顯示 */}
+        {isPending && (
+          <span
+            className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-primary animate-pulse"
+            aria-hidden="true"
+          />
+        )}
+      </motion.div>
+
+      {/* 標籤 - 8px */}
+      <motion.span
+        animate={{
+          opacity: isActive ? 1 : isPending ? 0.7 : 0.35,
+          y: isActive ? 0 : 1,
+        }}
+        transition={transitions.default}
+        className={`
+          text-[8px] font-black uppercase tracking-[0.15em]
+          ${isActive ? 'text-primary' : ''}
+        `}
+      >
+        {t(item.labelKey)}
+      </motion.span>
+
+      {/* 選中指示條 - layoutId 滑動動畫 */}
+      {isActive && (
+        <motion.div
+          layoutId="nav-indicator"
+          className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]"
+          transition={transitions.spring}
+        />
+      )}
+    </a>
+  );
+}
+
 /** 底部導覽列（含安全區域與選中指示器）。 */
 export function BottomNavigation() {
   const { t } = useTranslation();
@@ -79,78 +170,16 @@ export function BottomNavigation() {
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const isThisPending = isPending && pendingPath === item.path;
-          const Icon = item.icon;
 
           return (
-            <a
+            <BottomNavigationItem
               key={item.path}
-              href={item.path}
-              onClick={(e) => handleNavClick(e, item.path)}
-              className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 relative group touch-manipulation"
-              aria-label={t(item.ariaLabelKey)}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              {/* 觸控回饋背景（避免在 <a> 內使用 whileTap 產生 tabindex）。 */}
-              <div
-                className="
-                  absolute inset-1 rounded-xl bg-primary/0
-                  transition-colors duration-75
-                  group-active:bg-primary/10
-                "
-              />
-
-              {/* 圖標動畫（僅使用 animate，避免 tabindex 問題）。 */}
-              <motion.div
-                animate={{
-                  scale: isActive ? 1.1 : 1,
-                  opacity: isActive ? 1 : isThisPending ? 0.7 : 0.35,
-                }}
-                transition={transitions.spring}
-                className={`
-                  relative
-                  ${isActive ? 'text-primary' : ''}
-                  transition-transform duration-75
-                  group-active:scale-90
-                `}
-              >
-                <Icon
-                  className="w-5 h-5"
-                  strokeWidth={isActive ? 2.5 : isThisPending ? 2.25 : 2}
-                  aria-hidden={true}
-                />
-                {/* 等待指示點：chunk 載入中時顯示 */}
-                {isThisPending && (
-                  <span
-                    className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-primary animate-pulse"
-                    aria-hidden="true"
-                  />
-                )}
-              </motion.div>
-
-              {/* 標籤 - 8px */}
-              <motion.span
-                animate={{
-                  opacity: isActive ? 1 : isThisPending ? 0.7 : 0.35,
-                  y: isActive ? 0 : 1,
-                }}
-                transition={transitions.default}
-                className={`
-                  text-[8px] font-black uppercase tracking-[0.15em]
-                  ${isActive ? 'text-primary' : ''}
-                `}
-              >
-                {t(item.labelKey)}
-              </motion.span>
-
-              {/* 選中指示條 - layoutId 滑動動畫 */}
-              {isActive && (
-                <motion.div
-                  layoutId="nav-indicator"
-                  className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]"
-                  transition={transitions.spring}
-                />
-              )}
-            </a>
+              item={item}
+              isActive={isActive}
+              isPending={isThisPending}
+              onNavigate={handleNavClick}
+              t={t}
+            />
           );
         })}
       </div>

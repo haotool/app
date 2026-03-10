@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-10T09:48:00+08:00
-> **當前總分**: 1136（初始分: 100）
+> **最後更新**: 2026-03-10T23:35:00+08:00
+> **當前總分**: 1140（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -25,6 +25,7 @@
 
 | 分數 | 事項                                                         | 日期       |
 | ---- | ------------------------------------------------------------ | ---------- |
+| +4   | 修復 haotool 首頁 3D Hero CSP 崩潰與 RateWise basename 回歸  | 2026-03-10 |
 | +1   | Release workflow 權限受限時的手動 Version PR fallback        | 2026-03-10 |
 | +1   | PR #185 深度審查、Browser MCP 驗證與 patch release 準備      | 2026-03-10 |
 | +1   | 移除 security header 測試中的 HTML regex 以清除 CodeQL alert | 2026-03-10 |
@@ -98,6 +99,67 @@
 ## Entries
 
 ### 2026-03
+
+---
+
+id: haotool-home-procedural-environment-and-ratewise-basename-guard
+date: 2026-03-10
+title: 修復 haotool 首頁 3D Hero CSP 崩潰與 RateWise basename 回歸
+score: +4
+type: success
+content_type: troubleshooting
+scope: monorepo
+topics: [security, headers, routing, pwa, testing, ssot]
+keywords: [haotool-homepage, procedural-environment, raw-githack, basename-href, offline-chunk-recovery]
+aliases: [首頁 3D Hero CSP 修復, BottomNavigation basename 修復]
+related_entries: [cloudflare-security-headers-layered-refactor, fix-ratewise-router-chunk-cycle]
+summary: 正式站複核時發現 `haotool.org` 首頁 3D Hero 使用 `@react-three/drei` 的遠端 HDR preset，執行期會抓 `raw.githack.com`，被既有 CSP 正常阻擋後直接連鎖觸發 React / WebGL 崩潰；進一步本地 production preview 又揭露首頁仍因 `React.lazy + Suspense` 包裝 client-only 3D 模組，讓 SSG HTML 帶入 Suspense fallback marker，觸發 `React error #418`。同一輪 `squirrel audit` 也揭露 `ratewise` 底部導覽在 SSR HTML 輸出裸路徑 href，讓 crawler 或無 JS 情境直接打到 `/multi`、`/favorites`、`/settings` 的 root 404。修正採最小責任原則：`haotool` 改為程序化 `Environment + Lightformer`，並把 3D 模組改成 mount 後再 `import()`；`ratewise` 導覽改為 `useHref()` 產生 basename-aware href，並確認既有 PWA chunk recovery 未提交變更可覆蓋 Chrome / Safari 的常見 chunk 失效路徑。
+root_cause:
+
+- `ThreeHero.tsx` 直接使用 `Environment preset="city"`，把首頁反射環境綁到第三方遠端 HDR 檔與 `connect-src`
+- `Home.tsx` 以 `React.lazy + Suspense` 直接包 client-only 3D 元件，讓 SSG HTML 含有 Suspense fallback marker，production hydration 會轉為 client rendering
+- `BottomNavigation` 以硬編碼 `href={item.path}` 輸出 SSR HTML，未經 Router basename 正規化
+- iOS / Safari cache eviction 與 SW `Response.error()` 類型錯誤先前僅部分覆蓋，需確認未提交補強是否足以處理實際冷啟動回歸
+  impact:
+
+- `haotool.org` 首頁在正式站會出現 CSP violation、`Could not load ...hdr`、`THREE.WebGLRenderer: Context Lost`，本地 production preview 則可重現 `React error #418`
+- `ratewise` 導覽在爬蟲與無 JS 情境會產生錯誤 canonical 導航，直接拉低 crawlability 與 UX
+- 若未確認 chunk recovery 補強的覆蓋範圍，離線冷啟動問題可能在新瀏覽器錯誤樣式下再次漏網
+  actions:
+
+- 新增 `ThreeHero.test.tsx`，先以紅燈鎖住「不得再依賴遠端 HDR preset」的回歸條件
+- 新增 `Home.ssg.test.tsx`，鎖住首頁 SSG HTML 不得再帶 React Suspense fallback 標記
+- 將 `ThreeHero` 改為程序化 `Environment resolution={256}` 搭配既有 `Lightformer`，完全移除首頁遠端 HDR runtime 依賴
+- 將 `Home` 的 client-only 3D 改為 mount 後再 `import()`，移除 server render 樹內的 `React.lazy + Suspense`
+- `BottomNavigation` 抽出 `BottomNavigationItem`，改用 `useHref()` 生成 basename-aware href，首頁補尾斜線避免多一次轉址
+- 驗證 `chunkLoadRecovery.ts`、`routes.tsx`、`OfflineAwareError.tsx` 的未提交變更，確認 Chrome `response served by service worker is an error` 與 Safari `Load failed` 都已納入判定與 fallback
+- 同步更新 `docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md`、`docs/SECURITY_CSP_STRATEGY.md`、`security-headers/DEPLOY.md`
+  prevention:
+
+- 首頁與核心路徑不得再引入第三方 runtime 資源依賴，除非先完成資產自管與 CSP 決策審核
+- SSG 關鍵頁面的 client-only 模組不得再直接以 `React.lazy + Suspense` 置於 server render 樹內
+- 子路徑 app 的所有 SSR 導航輸出必須經由 Router basename 產生，不可直接硬編碼裸路徑
+- PWA / SW 例外處理必須持續針對真實瀏覽器錯誤字串補測，不能只測單一 ChunkLoadError 名稱
+  verification:
+
+- `pnpm --filter @app/haotool exec vitest run src/components/ThreeHero.test.tsx src/pages/Home.ssg.test.tsx src/pages/Home.test.tsx src/components/Layout.test.tsx`
+- `pnpm --filter @app/haotool build`
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/securityHeadersWorker.test.ts src/components/__tests__/BottomNavigation.a11y.test.tsx src/pwa-offline.test.ts src/__tests__/sw.test.ts src/utils/__tests__/swUtils.test.ts src/utils/__tests__/chunkLoadRecovery.test.ts`
+- Browser MCP：`https://haotool.org/` 發現 `raw.githack.com` / WebGL crash 後，以本地修復版 preview 驗證 `http://localhost:4177/` console error = `0`
+- `squirrel audit https://app.haotool.org/ratewise/ --format llm`
+  references:
+
+- apps/haotool/src/components/ThreeHero.tsx
+- apps/haotool/src/components/ThreeHero.test.tsx
+- apps/haotool/src/pages/Home.tsx
+- apps/haotool/src/pages/Home.ssg.test.tsx
+- apps/ratewise/src/components/BottomNavigation.tsx
+- apps/ratewise/src/components/**tests**/BottomNavigation.a11y.test.tsx
+- apps/ratewise/src/utils/chunkLoadRecovery.ts
+- apps/ratewise/src/routes.tsx
+- docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md
+- docs/SECURITY_CSP_STRATEGY.md
+- security-headers/DEPLOY.md
 
 ---
 

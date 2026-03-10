@@ -132,4 +132,23 @@ describe('BottomNavigation A11y Compliance', () => {
       expect(link.className).toContain('touch-manipulation');
     });
   });
+
+  it('應該在 basename 環境產生正確的 /ratewise/* href，避免爬蟲打到根路徑 404', () => {
+    const { container } = render(
+      <MemoryRouter basename="/ratewise" initialEntries={['/ratewise/']}>
+        <BottomNavigation />
+      </MemoryRouter>,
+    );
+
+    const hrefs = Array.from(container.querySelectorAll('a')).map((link) =>
+      link.getAttribute('href'),
+    );
+
+    expect(hrefs).toEqual([
+      '/ratewise/',
+      '/ratewise/multi',
+      '/ratewise/favorites',
+      '/ratewise/settings',
+    ]);
+  });
 });

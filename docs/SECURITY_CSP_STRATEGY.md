@@ -1,7 +1,7 @@
 # Content Security Policy 策略基線
 
 > **最後更新**: 2026-03-10
-> **Worker 版本**: v4.0
+> **Worker 版本**: v4.1
 > **SSOT**: `security-headers/src/worker.js`
 > **詳細 SPEC**: `/Users/azlife.eth/Tools/app/docs/dev/040_cloudflare_security_headers_refactor_spec.md`
 
@@ -12,6 +12,7 @@
 - `ratewise` 改用 **nonce + HTMLRewriter 串流注入**，移除逐請求全文讀取與 SHA-256 hash 計算。
 - `park-keeper` 採 **nonce 型 CSP**。
 - `haotool`、`nihonname`、`quake-school` 因正式輸出仍有 preload `onload=` handoff，暫時保留 `script-src 'unsafe-inline'`。
+- `haotool` 首頁 3D Hero 已改為程序化 environment，不再為遠端 HDR preset 擴張 `connect-src`。
 
 ## 路徑矩陣
 
@@ -56,13 +57,24 @@ v4.0 對 `ratewise` 與 `park-keeper` 改為 nonce 後，Worker 只需串流為 
 
 在這些 inline event handler 清理完成前，不能把這些 app 升級到 nonce script policy。
 
+### `haotool` 首頁不得重新引入遠端 HDR preset
+
+`@react-three/drei` 的 `Environment preset="city"` 會在執行期抓取遠端 HDR。正式站審核已證明這會把首頁穩定性綁到第三方網域與 CSP allowlist。
+
+目前做法改為程序化 `Environment + Lightformer`：
+
+- 保留原本的反射 / 光照效果
+- 不新增 `raw.githack.com` 類型的外域 `connect-src`
+- 避免首頁因第三方資源失敗直接觸發 React / WebGL 崩潰
+
 ## 維護規則
 
 1. 新增 app 路徑時，先在 `security-headers/src/worker.js` 建立專屬 profile，再調整 `wrangler.jsonc` route 或 fallback。
 2. 若分享圖檔名改動，必須同步更新 Worker 的 public share asset 白名單。
 3. 若 `park-keeper` 權限需求變更，必須同步更新 `Permissions-Policy`，不可沿用預設 deny-all；目前最小白名單為 geolocation、accelerometer、gyroscope、magnetometer。
 4. 修改 `haotool` / `nihonname` / `quake-school` preload 策略後，應立即評估移除 legacy inline policy。
-5. 任何 CSP 變更都要用 `curl` 與瀏覽器 console 雙重驗證。
+5. `www.haotool.org` 必須持續 canonical redirect 到 `haotool.org`，避免 crawler / 使用者落到非預期上游。
+6. 任何 CSP 變更都要用 `curl` 與瀏覽器 console 雙重驗證。
 
 ## 驗證命令
 
@@ -74,6 +86,7 @@ curl -s --compressed https://app.haotool.org/ratewise/ | rg "nonce=|application/
 curl -sSI https://app.haotool.org/nihonname/
 curl -sSI https://app.haotool.org/park-keeper/
 curl -sSI https://app.haotool.org/quake-school/
+curl -sSI https://www.haotool.org/
 curl -sSI -X GET https://app.haotool.org/ratewise/csp-report
 curl -sSI https://app.haotool.org/ratewise/og-image.jpg
 ```

@@ -6,7 +6,7 @@
  * [context7:/websites/motion-dev-docs:2025-12-16] - Framer Motion animations
  * [context7:@react-three/fiber:2025-12-16] - 3D hero integration
  */
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { type ComponentType, useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, MotionConfig } from 'framer-motion';
 import Lenis from 'lenis';
 import { ArrowRight, Github, Sparkles, Menu, X, AtSign, Mail } from 'lucide-react';
@@ -19,12 +19,9 @@ import { STATS, PROJECTS, FAQS, SOCIAL_LINKS, APP_NAME } from '../constants';
 import MobileMenu from '../components/MobileMenu';
 import ThreeHeroFallback from '../components/ThreeHeroFallback';
 
-// Lazy load ThreeHero and SectionBackground for better initial load performance
-// [context7:/websites/react_dev_reference:2026-01-07] Declare lazy at module level
-const ThreeHero = lazy(() => import('../components/ThreeHero'));
-const SectionBackground = lazy(() => import('../components/SectionBackground'));
-
 const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
+type ThreeHeroComponent = ComponentType<{ isCtaHovered: boolean }>;
+type SectionBackgroundComponent = ComponentType;
 
 // [SEO-fix:2026-01-07] 檢測是否為 Lighthouse/PageSpeed 環境（避免 3D 超時）
 const isLighthouseBot = (): boolean => {
@@ -37,6 +34,9 @@ export default function Home() {
   const [isCtaHovered, setIsCtaHovered] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [ThreeHeroComponent, setThreeHeroComponent] = useState<ThreeHeroComponent | null>(null);
+  const [SectionBackgroundComponent, setSectionBackgroundComponent] =
+    useState<SectionBackgroundComponent | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
 
   // [SEO-fix:2026-01-07] IntersectionObserver 延遲載入 3D 場景
@@ -73,6 +73,40 @@ export default function Home() {
       observer.disconnect();
     };
   }, [handleIntersection]);
+
+  // client-only 裝飾背景：mount 後再載入，避免 SSG HTML 產生 Suspense boundary 標記。
+  useEffect(() => {
+    let isCancelled = false;
+
+    void import('../components/SectionBackground').then((module) => {
+      if (!isCancelled) {
+        setSectionBackgroundComponent(() => module.default);
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  // 3D Hero 僅在實際需要時才載入，保留 code splitting 並避免首頁 hydration mismatch。
+  useEffect(() => {
+    if (!show3D || ThreeHeroComponent) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    void import('../components/ThreeHero').then((module) => {
+      if (!isCancelled) {
+        setThreeHeroComponent(() => module.default);
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [show3D, ThreeHeroComponent]);
 
   // Initialize Lenis Smooth Scroll
   useEffect(() => {
@@ -304,9 +338,11 @@ export default function Home() {
           >
             {/* [SEO-fix:2026-01-07] 3D Background with IntersectionObserver lazy loading */}
             {/* Main 3D Background - Full screen absolute positioning */}
-            <Suspense fallback={<ThreeHeroFallback />}>
-              {show3D ? <ThreeHero isCtaHovered={isCtaHovered} /> : <ThreeHeroFallback />}
-            </Suspense>
+            {show3D && ThreeHeroComponent ? (
+              <ThreeHeroComponent isCtaHovered={isCtaHovered} />
+            ) : (
+              <ThreeHeroFallback />
+            )}
 
             {/* Mobile Overlay to ensure text readability against 3D */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-[#020617]/50 md:hidden z-0 pointer-events-none" />
@@ -440,9 +476,7 @@ export default function Home() {
           {/* Featured Projects Section */}
           <section id="projects" className="py-20 md:py-32 relative z-10">
             {/* Auxiliary 3D Background for Projects */}
-            <Suspense fallback={null}>
-              <SectionBackground />
-            </Suspense>
+            {SectionBackgroundComponent ? <SectionBackgroundComponent /> : null}
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
               <div className="mb-12 md:mb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-8">

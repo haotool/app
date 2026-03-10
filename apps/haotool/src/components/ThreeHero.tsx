@@ -286,7 +286,8 @@ const ThreeHero: React.FC<ThreeHeroProps> = ({ isCtaHovered = false }) => {
 
         <color attach="background" args={['#020617']} />
 
-        <Environment preset="city">
+        {/* 使用程序化 lightformers 生成 environment map，避免首頁執行期依賴外部 HDR 檔。 */}
+        <Environment resolution={256}>
           <Lightformer
             intensity={5}
             rotation-x={Math.PI / 2}
