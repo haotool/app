@@ -1,6 +1,6 @@
 # haotool.org — Robots Exclusion Protocol
 # https://app.haotool.org/
-# 最後更新：2026-03-06
+# 最後更新：2026-03-10
 
 User-agent: *
 Allow: /

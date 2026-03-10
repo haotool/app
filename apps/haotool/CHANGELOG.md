@@ -1,5 +1,11 @@
 # @app/haotool
 
+## 1.0.3
+
+### Patch Changes
+
+- 795f7ce: 修復 haotool 首頁 3D Hero 的 CSP / SSG hydration 問題，並補強 RateWise basename 導航與離線 chunk recovery 保護。
+
 ## 1.0.2
 
 ### Patch Changes

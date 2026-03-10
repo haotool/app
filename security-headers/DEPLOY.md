@@ -24,12 +24,14 @@ pnpm exec wrangler deploy
 
 ## 本版重點
 
-- Worker 版本：`4.0`
+- Worker 版本：`4.1`
 - HSTS 改由 Cloudflare Edge 管理，Worker 不再寫入
 - `app.haotool.org/*` 全域納入 Worker
+- `www.haotool.org/*` 由 Worker 永久轉址到 apex
 - `ratewise` 改為 nonce 型 CSP
 - `csp-report` 改為 `POST` only
 - 分享圖 CORS 白名單改為精準檔名
+- `haotool` 首頁改為程序化 3D environment，避免執行期依賴遠端 HDR preset
 
 ## 部署後驗證
 
@@ -45,6 +47,7 @@ curl -sSI https://app.haotool.org/ratewise/ | grep -i 'content-security-policy'
 curl -sSI https://app.haotool.org/nihonname/ | grep -i 'content-security-policy\|x-frame-options\|x-content-type-options'
 curl -sSI https://app.haotool.org/park-keeper/ | grep -i 'content-security-policy\|permissions-policy'
 curl -sSI https://app.haotool.org/quake-school/ | grep -i 'content-security-policy'
+curl -sSI https://www.haotool.org/ | grep -i '^location:'
 
 # 4. CSP report endpoint
 curl -sSI -X GET https://app.haotool.org/ratewise/csp-report
@@ -61,6 +64,8 @@ curl -sSI https://app.haotool.org/ratewise/ | grep -i 'strict-transport-security
 
 - `haotool` 與 `nihonname` 目前仍保留 `script-src 'unsafe-inline'`
   - 原因：正式輸出仍含 CSS preload `onload=` handoff
+- `haotool` 首頁不得再引入遠端 HDR preset / texture runtime 來源
+  - 如需新外域，必須先完成資產自管或明確更新 CSP 決策文件
 - `quake-school` 目前仍保留 `script-src 'unsafe-inline'`
   - 原因：正式輸出仍含 preload `onload=` handoff
 - `ratewise` 只對 HTML 啟用 COEP / COOP

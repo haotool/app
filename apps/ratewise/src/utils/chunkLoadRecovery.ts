@@ -33,6 +33,11 @@ export function isChunkLoadError(error: unknown): boolean {
     return true;
   }
 
+  // Chrome: SW setCatchHandler 回傳 Response.error() 時觸發的 TypeError。
+  if (name === 'typeerror' && message.includes('response served by service worker is an error')) {
+    return true;
+  }
+
   return (
     name.includes('chunkloaderror') ||
     message.includes('loading chunk') ||

@@ -51,6 +51,21 @@ describe('chunkLoadRecovery', () => {
     it('should return false for non Error input', () => {
       expect(isChunkLoadError('oops')).toBe(false);
     });
+
+    it('should detect Safari TypeError("Load failed")', () => {
+      const err = new TypeError('Load failed');
+      expect(isChunkLoadError(err)).toBe(true);
+    });
+
+    it('should detect Chrome SW Response.error() TypeError', () => {
+      const err = new TypeError('response served by service worker is an error');
+      expect(isChunkLoadError(err)).toBe(true);
+    });
+
+    it('should not detect generic Error("Load failed") as chunk error', () => {
+      const err = new Error('Load failed');
+      expect(isChunkLoadError(err)).toBe(false);
+    });
   });
 
   describe('refresh guard', () => {
