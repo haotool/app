@@ -43,7 +43,7 @@ import { HOMEPAGE_SEO } from './config/seo-metadata';
 import { logger } from './utils/logger';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { lazyWithRetry } from './utils/lazyWithRetry';
-import { ChunkErrorBoundary, OfflineAwareFallback } from './components/OfflineAwareError';
+import { ChunkErrorBoundary } from './components/OfflineAwareError';
 
 const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
 const Favorites = lazyWithRetry(() => import('./pages/Favorites'));
@@ -93,22 +93,15 @@ function createLazyRoute(
   return {
     path,
     lazy: async () => {
-      try {
-        const module = await importWithRetry(importFn);
-        const PageComponent = module.default;
-        return {
-          Component: () => (
-            <Layout>
-              <PageComponent />
-            </Layout>
-          ),
-        };
-      } catch (error) {
-        // 重試耗盡後顯示離線友善提示，防止 React Router 預設 "Unexpected Application Error!" 畫面。
-        return {
-          Component: () => <OfflineAwareFallback error={error} />,
-        };
-      }
+      const module = await importWithRetry(importFn);
+      const PageComponent = module.default;
+      return {
+        Component: () => (
+          <Layout>
+            <PageComponent />
+          </Layout>
+        ),
+      };
     },
     entry,
   };
@@ -184,12 +177,8 @@ export const routes: RouteRecord[] = [
       {
         path: 'theme-showcase',
         lazy: async () => {
-          try {
-            const module = await import('./pages/ThemeShowcase');
-            return { Component: module.default };
-          } catch (error) {
-            return { Component: () => <OfflineAwareFallback error={error} /> };
-          }
+          const module = await import('./pages/ThemeShowcase');
+          return { Component: module.default };
         },
       },
     ],

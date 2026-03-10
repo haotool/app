@@ -17,7 +17,7 @@ interface FallbackProps {
   error?: unknown;
 }
 
-export function OfflineAwareFallback({ error }: FallbackProps) {
+function OfflineAwareFallback({ error }: FallbackProps) {
   const { t } = useTranslation();
   const offline = typeof navigator !== 'undefined' && !navigator.onLine;
   const showOfflineUI = offline || isChunkLoadError(error);

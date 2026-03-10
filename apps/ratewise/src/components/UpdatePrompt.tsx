@@ -114,6 +114,13 @@ function UpdatePromptClient() {
     };
   }, [offlineReady, setOfflineReady, setNeedRefresh]);
 
+  // autoUpdate 模式：偵測到新版本時立即標記為更新中，頁面稍後自動重新載入。
+  useEffect(() => {
+    if (needRefresh && !isUpdating) {
+      setIsUpdating(true);
+    }
+  }, [needRefresh, isUpdating]);
+
   const handleUpdate = async () => {
     setIsUpdating(true);
     setRegistrationFailed(false);
@@ -142,7 +149,7 @@ function UpdatePromptClient() {
     offlineReady || needRefresh || isUpdating || updateFailed || registrationFailed;
   const isUrgent = needRefresh || updateFailed || isUpdating || registrationFailed;
   const mobilePositionStyle = {
-    '--notification-bottom-offset': notificationTokens.mobileBottomOffset,
+    '--notification-mobile-top-offset': notificationTokens.mobileTopOffset,
   } as CSSProperties;
 
   return (
@@ -232,7 +239,6 @@ function UpdatePromptClient() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <ActionButtons
                       offlineReady={offlineReady}
-                      needRefresh={needRefresh}
                       isUpdating={isUpdating}
                       registrationFailed={registrationFailed}
                       updateFailed={updateFailed}
@@ -375,7 +381,6 @@ function StatusDescription({
 
 interface ActionButtonsProps {
   offlineReady: boolean;
-  needRefresh: boolean;
   isUpdating: boolean;
   registrationFailed: boolean;
   updateFailed: boolean;
@@ -397,7 +402,6 @@ const CTA_CLASS = `
 `;
 
 function ActionButtons({
-  needRefresh,
   isUpdating,
   registrationFailed,
   updateFailed,
@@ -430,17 +434,7 @@ function ActionButtons({
     );
   }
 
-  if (needRefresh) {
-    return (
-      <button
-        onClick={() => void onUpdate()}
-        className={CTA_CLASS}
-        aria-label={t('pwa.actionUpdate')}
-      >
-        {t('pwa.actionUpdate')}
-      </button>
-    );
-  }
+  // autoUpdate 模式：needRefresh 已自動觸發 isUpdating，此處不需手動按鈕。
 
   return (
     <button

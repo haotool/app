@@ -1,23 +1,13 @@
 # @app/ratewise
 
-## 2.8.10
-
-### Patch Changes
-
-- 修復 SW 返回 Response.error() 導致的 Unexpected Application Error
-  - chunkLoadRecovery: 新增 Chrome SW TypeError 辨識模式
-  - OfflineAwareError: 匯出 OfflineAwareFallback 供 routes.tsx 使用
-  - routes.tsx: createLazyRoute 與 ThemeShowcase 加入 try-catch，重試耗盡後顯示離線友善提示
-
 ## 2.8.9
 
 ### Patch Changes
 
-- fix(ui): UpdatePrompt 定位改為底部置中（Material Design 3）
-
-  依 Material Design 3 snackbar 建議，行動版更新通知從頂部（header 下方）移至底部導覽列上方置中，桌面版固定在 bottom-6 置中。
-  - design-tokens.ts：position 改用 bottom 偏移，新增 mobileBottomOffset（底部導覽列高度 + safe-area-inset-bottom + 16px）
-  - UpdatePrompt.tsx：CSS 變數改為 --notification-bottom-offset
+- feat(pwa): autoUpdate 模式 — 接管前先驗證新 precache 完整性
+  - vite.config.ts：registerType 改為 autoUpdate，新 SW 安裝後自動接管
+  - sw.ts：SKIP_WAITING handler 先執行 verifyAndRepairPrecache()，確認新快取完整後才 skipWaiting，清除舊 chunk 前新資源已就緒
+  - UpdatePrompt.tsx：偵測到 needRefresh 時立即切換為 isUpdating 狀態（顯示 spinner），更新完成後頁面自動重新載入，無需使用者手動點擊
 
 ## 2.8.8
 

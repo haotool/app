@@ -273,9 +273,9 @@ export default defineConfig(({ mode }) => {
         strategies: 'injectManifest',
         srcDir: 'src',
         filename: 'sw.ts',
-        // prompt：新 SW 等待使用者確認後才接管，避免 skipWaiting 版本撕裂導致 "Load failed"
-        // UpdatePrompt 元件的 needRefresh 回調在此模式下正確觸發
-        registerType: 'prompt',
+        // autoUpdate：新 SW 安裝完成後自動接管；sw.ts 的 SKIP_WAITING handler
+        // 先驗證新 precache 完整性再 skipWaiting，確保舊快取清除前新資源已就緒。
+        registerType: 'autoUpdate',
         injectRegister: 'inline',
 
         injectManifest: {

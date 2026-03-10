@@ -61,18 +61,18 @@ describe('UpdatePrompt - SSOT tokens 引用', () => {
   it('should use notificationTokens for layout', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('notificationTokens.position');
-    expect(sourceCode).toContain('notificationTokens.mobileBottomOffset');
+    expect(sourceCode).toContain('notificationTokens.mobileTopOffset');
     expect(sourceCode).toContain('notificationTokens.padding');
     expect(sourceCode).toContain('notificationTokens.borderRadius');
   });
 
-  it('should use mobile bottom offset CSS variable above bottom nav', async () => {
+  it('should use mobile top offset CSS variable to avoid blocking primary actions', async () => {
     const [sourceCode, designTokensSource] = await Promise.all([
       readSource(),
       readDesignTokensSource(),
     ]);
-    expect(sourceCode).toContain('--notification-bottom-offset');
-    expect(designTokensSource).toContain('bottom-[var(--notification-bottom-offset)]');
+    expect(sourceCode).toContain('--notification-mobile-top-offset');
+    expect(designTokensSource).toContain('top-[var(--notification-mobile-top-offset)]');
   });
 });
 
