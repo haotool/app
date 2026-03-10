@@ -78,6 +78,10 @@ export async function hasServiceWorkerUpdate(): Promise<boolean> {
  * prompt 模式：waiting SW 存在時發送 SKIP_WAITING 訊息使其立即接管；
  * 否則主動觸發 update() 檢查新版本。
  *
+ * 離線防護：offline 時絕不送 SKIP_WAITING。
+ * 若送出 SKIP_WAITING 但頁面未重載，新 SW 接管後舊 HTML 仍引用
+ * 舊 chunk URL，新 SW precache 找不到舊 chunk → 版本撕裂 → Load failed。
+ *
  * @returns Promise<boolean> 是否成功觸發更新
  */
 export async function forceServiceWorkerUpdate(): Promise<boolean> {
@@ -86,6 +90,12 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
   }
   if (typeof navigator.serviceWorker.getRegistration !== 'function') {
     logger.warn('Service Worker registration API not available');
+    return false;
+  }
+
+  // 離線時跳過：送 SKIP_WAITING 而不重載頁面會造成版本撕裂（Load failed）。
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    logger.warn('[swUtils] Offline — skipping forceServiceWorkerUpdate to prevent version tear');
     return false;
   }
 

@@ -8,7 +8,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { clearAllServiceWorkerCaches, forceHardReset, performFullRefresh } from '../swUtils';
+import {
+  clearAllServiceWorkerCaches,
+  forceHardReset,
+  forceServiceWorkerUpdate,
+  performFullRefresh,
+} from '../swUtils';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -163,6 +168,104 @@ describe('swUtils', () => {
       // Cleanup: resolve via the SW_HARD_RESET_DONE message path or timeout
       // (we don't need to wait for reload in this test)
       promise.catch(() => {}); // prevent unhandled rejection if any
+    });
+  });
+
+  // ── forceServiceWorkerUpdate ──────────────────────────────────────────────
+
+  describe('forceServiceWorkerUpdate', () => {
+    it('離線且有 waiting SW 時不送 SKIP_WAITING，回傳 false', async () => {
+      setOnline(false);
+      const postMessage = vi.fn();
+
+      Object.defineProperty(window.navigator, 'serviceWorker', {
+        writable: true,
+        configurable: true,
+        value: {
+          getRegistration: vi.fn().mockResolvedValue({
+            waiting: { postMessage },
+            installing: null,
+          }),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        },
+      });
+
+      const result = await forceServiceWorkerUpdate();
+
+      expect(result).toBe(false);
+      expect(postMessage).not.toHaveBeenCalled();
+    });
+
+    it('離線且無 waiting SW 時不觸發 update()，回傳 false', async () => {
+      setOnline(false);
+      const updateStub = vi.fn().mockResolvedValue(undefined);
+
+      Object.defineProperty(window.navigator, 'serviceWorker', {
+        writable: true,
+        configurable: true,
+        value: {
+          getRegistration: vi.fn().mockResolvedValue({
+            waiting: null,
+            installing: null,
+            update: updateStub,
+          }),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        },
+      });
+
+      const result = await forceServiceWorkerUpdate();
+
+      expect(result).toBe(false);
+      expect(updateStub).not.toHaveBeenCalled();
+    });
+
+    it('在線且有 waiting SW 時送出 SKIP_WAITING，回傳 true', async () => {
+      setOnline(true);
+      const postMessage = vi.fn();
+
+      Object.defineProperty(window.navigator, 'serviceWorker', {
+        writable: true,
+        configurable: true,
+        value: {
+          getRegistration: vi.fn().mockResolvedValue({
+            waiting: { postMessage },
+            installing: null,
+          }),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        },
+      });
+
+      const result = await forceServiceWorkerUpdate();
+
+      expect(result).toBe(true);
+      expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    });
+
+    it('在線且無 waiting SW 時觸發 registration.update()，回傳 true', async () => {
+      setOnline(true);
+      const updateStub = vi.fn().mockResolvedValue(undefined);
+
+      Object.defineProperty(window.navigator, 'serviceWorker', {
+        writable: true,
+        configurable: true,
+        value: {
+          getRegistration: vi.fn().mockResolvedValue({
+            waiting: null,
+            installing: null,
+            update: updateStub,
+          }),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        },
+      });
+
+      const result = await forceServiceWorkerUpdate();
+
+      expect(result).toBe(true);
+      expect(updateStub).toHaveBeenCalledOnce();
     });
   });
 
