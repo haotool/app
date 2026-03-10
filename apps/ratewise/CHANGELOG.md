@@ -1,5 +1,14 @@
 # @app/ratewise
 
+## 2.8.10
+
+### Patch Changes
+
+- 修復 SW 返回 Response.error() 導致的 Unexpected Application Error
+  - chunkLoadRecovery: 新增 Chrome SW TypeError 辨識模式
+  - OfflineAwareError: 匯出 OfflineAwareFallback 供 routes.tsx 使用
+  - routes.tsx: createLazyRoute 與 ThemeShowcase 加入 try-catch，重試耗盡後顯示離線友善提示
+
 ## 2.8.9
 
 ### Patch Changes
