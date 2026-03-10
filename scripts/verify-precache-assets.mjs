@@ -19,18 +19,64 @@ function normalizeBase(url) {
 async function loadPrecacheEntries() {
   const swContent = await readFile(SW_PATH, 'utf-8');
   const match = swContent.match(/precacheAndRoute\((\[.*?\])\)/s);
-  if (!match) {
-    throw new Error('無法在 dist/sw.js 中找到 precacheAndRoute 清單，請先執行 pnpm build:ratewise');
+  const manifestSource = match?.[1] ?? extractInjectedManifest(swContent);
+  if (!manifestSource) {
+    throw new Error('無法在 dist/sw.js 中找到 precache 清單，請先執行 pnpm build:ratewise');
   }
 
   try {
-    const manifest = JSON.parse(match[1]);
+    const manifest = JSON.parse(manifestSource);
     return manifest;
   } catch (error) {
     throw new Error(
       `解析 precache 清單失敗: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+function extractInjectedManifest(swContent) {
+  const offlineMarker = '"url":"offline.html"';
+  const markerIndex = swContent.indexOf(offlineMarker);
+
+  if (markerIndex === -1) {
+    return null;
+  }
+
+  let start = -1;
+  let depth = 0;
+
+  for (let index = markerIndex; index >= 0; index -= 1) {
+    const char = swContent[index];
+    if (char === ']') {
+      depth += 1;
+      continue;
+    }
+
+    if (char === '[') {
+      if (depth === 0) {
+        start = index;
+        break;
+      }
+      depth -= 1;
+    }
+  }
+
+  if (start === -1) {
+    return null;
+  }
+
+  depth = 0;
+  for (let index = start; index < swContent.length; index += 1) {
+    const char = swContent[index];
+    if (char === '[') depth += 1;
+    if (char === ']') depth -= 1;
+
+    if (depth === 0) {
+      return swContent.slice(start, index + 1);
+    }
+  }
+
+  return null;
 }
 
 async function probe(url) {

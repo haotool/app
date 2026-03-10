@@ -31,9 +31,17 @@ function fixHtmlFile(htmlPath) {
   // 修復重複的 crossorigin 屬性
   html = html.replace(/crossorigin\s+crossorigin/gi, 'crossorigin');
 
+  // 首頁 3D 與裝飾背景採 mount 後載入，避免 SSG HTML 預先 preload lazy chunk。
+  if (htmlPath === resolve(distDir, 'index.html')) {
+    html = html.replace(
+      /<link rel="modulepreload" crossorigin href="\/assets\/(?:ThreeHero|SectionBackground)-[^"]+">/g,
+      '',
+    );
+  }
+
   if (html !== original) {
     writeFileSync(htmlPath, html, 'utf-8');
-    console.log(`  ✅ Fixed HTML (dedup crossorigin): ${htmlPath.replace(distDir, 'dist')}`);
+    console.log(`  ✅ Fixed HTML: ${htmlPath.replace(distDir, 'dist')}`);
   }
 }
 
