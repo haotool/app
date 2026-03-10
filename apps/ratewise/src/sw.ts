@@ -78,19 +78,24 @@ async function verifyAndRepairPrecache(): Promise<void> {
   }
 }
 
-// 清除舊版快取。
+// 清除舊版快取（在 SKIP_WAITING 驗證完新 precache 後才安全執行）。
 cleanupOutdatedCaches();
 
-// prompt 模式：新 SW 進入 waiting 狀態，由使用者確認後才接管，防止版本撕裂導致 Load failed。
+// autoUpdate 模式：vite-plugin-pwa 偵測到 waiting SW 時自動發送 SKIP_WAITING。
+// clientsClaim() 接管後觸發 controllerchange，頁面自動重新載入以載入新 chunk URL。
 clientsClaim();
 
-// 訊息處理：SKIP_WAITING（prompt 更新流程）/ FORCE_HARD_RESET（緊急清除快取）。
+// 訊息處理：SKIP_WAITING（autoUpdate 更新流程）/ FORCE_HARD_RESET（緊急清除快取）。
 self.addEventListener('message', (event: ExtendableMessageEvent) => {
   const data = event.data as { type?: string } | null;
 
-  // UpdatePrompt.updateServiceWorker(true) 觸發，讓 waiting SW 立即接管。
+  // autoUpdate 自動觸發：接管前先驗證新 precache 完整，確保舊快取清除前新資源已就緒。
   if (data?.type === 'SKIP_WAITING') {
-    void self.skipWaiting();
+    event.waitUntil(
+      verifyAndRepairPrecache().then(() => {
+        void self.skipWaiting();
+      }),
+    );
     return;
   }
 
