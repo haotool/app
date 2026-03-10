@@ -94,7 +94,7 @@ describe('UpdatePrompt - i18n 多語系', () => {
     expect(sourceCode).toContain("t('pwa.updateFailedDescription')");
     expect(sourceCode).toContain("t('pwa.registrationFailedTitle')");
     expect(sourceCode).toContain("t('pwa.registrationFailedDescription')");
-    // autoUpdate 模式：不再使用手動 actionUpdate 按鈕
+    expect(sourceCode).toContain("t('pwa.actionUpdate')");
     expect(sourceCode).toContain("t('pwa.actionClose')");
     expect(sourceCode).toContain("t('pwa.actionRetry')");
     expect(sourceCode).toContain("t('pwa.actionReload')");
