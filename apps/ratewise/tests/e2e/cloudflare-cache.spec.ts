@@ -1,204 +1,169 @@
 /**
- * Cloudflare Cache Strategy E2E Tests (BDD)
+ * Cloudflare 生產環境安全與快取驗證
  *
- * 目的：驗證 Cloudflare 快取策略是否正確配置
- *
- * 測試範圍：
- * 1. 靜態資產快取策略（活躍開發階段：1 day）
- * 2. HTML 不快取
- * 3. Service Worker 不快取
- * 4. 安全標頭配置
+ * 目的：
+ * 1. 驗證 Vite hashed asset 為 1 年 immutable
+ * 2. 驗證 HTML / Service Worker 快取策略
+ * 3. 驗證 ratewise 與其他子 app 的安全標頭覆蓋
+ * 4. 驗證 CSP report 與分享圖 CORS 行為
  *
  * 執行方式：
- * RUN_PRODUCTION_TESTS=true pnpm test cloudflare-cache.spec.ts
- *
- * 注意：這些測試需要在生產環境執行，因為需要檢查 Cloudflare 的 Response Headers
- * [fix:2025-11-27] 在 CI 環境跳過這些測試，因為 CI 使用本地 preview server
- * 參考: https://playwright.dev/docs/test-annotations#conditionally-skip-a-test
+ * RUN_PRODUCTION_TESTS=true pnpm --filter @app/ratewise exec playwright test tests/e2e/cloudflare-cache.spec.ts
  */
 
 import { test, expect } from '@playwright/test';
 
-const PRODUCTION_URL = 'https://app.haotool.org/ratewise';
-
-// [fix:2025-11-27] 只在生產環境測試時運行，CI 中跳過
-// 原因：CI 使用本地 preview server，沒有 Cloudflare headers
+const RATEWISE_URL = 'https://app.haotool.org/ratewise';
+const NIHONNAME_URL = 'https://app.haotool.org/nihonname';
+const PARK_KEEPER_URL = 'https://app.haotool.org/park-keeper';
+const QUAKE_SCHOOL_URL = 'https://app.haotool.org/quake-school';
 const isProductionTest = process.env['RUN_PRODUCTION_TESTS'] === 'true';
 
-test.describe('Cloudflare Cache Strategy (BDD)', () => {
-  // [fix:2025-11-27] 跳過生產環境測試，除非明確啟用
-  // CI 使用本地 preview server，沒有 Cloudflare headers
+function extractAssetPath(html: string, extension: 'js' | 'css') {
+  const match = new RegExp(`/ratewise/assets/[^"'\\s>]+\\.${extension}`).exec(html);
+  return match?.[0] ?? null;
+}
+
+test.describe('Cloudflare Production Headers', () => {
   test.skip(
     !isProductionTest,
     'Skipping production tests in CI (set RUN_PRODUCTION_TESTS=true to run)',
   );
 
-  test.describe('🔴 RED: 靜態資產快取策略', () => {
-    test('should have correct Cache-Control for JS assets (1 day)', async ({ request }) => {
-      // 獲取任意 JS 資產（從首頁 HTML 中提取）
-      const indexResponse = await request.get(`${PRODUCTION_URL}/`);
+  test.describe('Immutable Assets', () => {
+    test('RateWise JS hashed asset uses immutable cache', async ({ request }) => {
+      const indexResponse = await request.get(`${RATEWISE_URL}/`);
       const indexHtml = await indexResponse.text();
+      const jsPath = extractAssetPath(indexHtml, 'js');
 
-      // [fix:2025-11-27] 使用更通用的正則表達式匹配 JS 檔案
-      // Vite 可能產生 app-xxx.js 或 index-xxx.js 格式
-      const jsMatch = /\/assets\/(?:app|index)-[a-zA-Z0-9]+\.js/.exec(indexHtml);
-      expect(jsMatch).not.toBeNull();
+      expect(jsPath).not.toBeNull();
 
-      const jsAssetUrl = `${PRODUCTION_URL}${jsMatch![0]}`;
-      const response = await request.get(jsAssetUrl);
+      const response = await request.get(`https://app.haotool.org${jsPath}`);
+      const cacheControl = response.headers()['cache-control'] ?? '';
 
-      // 驗證 Cache-Control
-      const cacheControl = response.headers()['cache-control'];
-      expect(cacheControl).toContain('max-age=86400'); // 1 day = 86400 seconds
+      expect(cacheControl).toContain('max-age=31536000');
       expect(cacheControl).toContain('public');
-
-      // 活躍開發階段不應有 immutable
-      expect(cacheControl).not.toContain('immutable');
+      expect(cacheControl).toContain('immutable');
     });
 
-    test('should have correct Cache-Control for CSS assets (1 day)', async ({ request }) => {
-      const indexResponse = await request.get(`${PRODUCTION_URL}/`);
+    test('RateWise CSS hashed asset uses immutable cache', async ({ request }) => {
+      const indexResponse = await request.get(`${RATEWISE_URL}/`);
       const indexHtml = await indexResponse.text();
+      const cssPath = extractAssetPath(indexHtml, 'css');
 
-      // [fix:2025-11-27] 使用更通用的正則表達式匹配 CSS 檔案
-      const cssMatch = /\/assets\/(?:app|index)-[a-zA-Z0-9]+\.css/.exec(indexHtml);
-      expect(cssMatch).not.toBeNull();
+      expect(cssPath).not.toBeNull();
 
-      const cssAssetUrl = `${PRODUCTION_URL}${cssMatch![0]}`;
-      const response = await request.get(cssAssetUrl);
+      const response = await request.get(`https://app.haotool.org${cssPath}`);
+      const cacheControl = response.headers()['cache-control'] ?? '';
 
-      const cacheControl = response.headers()['cache-control'];
-      expect(cacheControl).toContain('max-age=86400');
+      expect(cacheControl).toContain('max-age=31536000');
       expect(cacheControl).toContain('public');
-    });
-
-    test('should have Cloudflare cache status header', async ({ request }) => {
-      const indexResponse = await request.get(`${PRODUCTION_URL}/`);
-      const indexHtml = await indexResponse.text();
-
-      // [fix:2025-11-27] 使用更通用的正則表達式匹配 JS 檔案
-      const jsMatch = /\/assets\/(?:app|index)-[a-zA-Z0-9]+\.js/.exec(indexHtml);
-      expect(jsMatch).not.toBeNull();
-
-      const jsAssetUrl = `${PRODUCTION_URL}${jsMatch![0]}`;
-      const response = await request.get(jsAssetUrl);
-
-      // Cloudflare 會添加 cf-cache-status header
-      const cfCacheStatus = response.headers()['cf-cache-status'];
-      expect(cfCacheStatus).toBeDefined();
-
-      // 可能的值：HIT, MISS, EXPIRED, BYPASS, DYNAMIC, REVALIDATED
-      expect(['HIT', 'MISS', 'EXPIRED', 'BYPASS', 'DYNAMIC', 'REVALIDATED']).toContain(
-        cfCacheStatus,
-      );
+      expect(cacheControl).toContain('immutable');
     });
   });
 
-  test.describe('🔴 RED: HTML 不快取', () => {
-    test('should not cache HTML pages', async ({ request }) => {
-      const response = await request.get(`${PRODUCTION_URL}/`);
+  test.describe('HTML and Service Worker Cache', () => {
+    test('RateWise HTML keeps revalidation semantics', async ({ request }) => {
+      const response = await request.get(`${RATEWISE_URL}/`);
+      const cacheControl = response.headers()['cache-control'] ?? '';
 
-      const cacheControl = response.headers()['cache-control'];
       expect(cacheControl).toContain('no-cache');
-
-      // Cloudflare 應該 bypass HTML 快取
-      const cfCacheStatus = response.headers()['cf-cache-status'];
-      // HTML 可能是 DYNAMIC 或 BYPASS
-      expect(['DYNAMIC', 'BYPASS']).toContain(cfCacheStatus);
+      expect(cacheControl).toContain('must-revalidate');
     });
 
-    test('should not cache FAQ page', async ({ request }) => {
-      const response = await request.get(`${PRODUCTION_URL}/faq/`);
+    test('RateWise Service Worker stays non-cacheable', async ({ request }) => {
+      const response = await request.get(`${RATEWISE_URL}/sw.js`);
+      const cacheControl = response.headers()['cache-control'] ?? '';
 
-      const cacheControl = response.headers()['cache-control'];
       expect(cacheControl).toContain('no-cache');
+      expect(cacheControl).toContain('no-store');
     });
   });
 
-  test.describe('🔴 RED: Service Worker 不快取', () => {
-    test('should not cache Service Worker', async ({ request }) => {
-      const response = await request.get(`${PRODUCTION_URL}/sw.js`);
+  test.describe('Security Headers', () => {
+    test('RateWise uses strict nonce CSP', async ({ request }) => {
+      const response = await request.get(`${RATEWISE_URL}/`);
+      const csp = response.headers()['content-security-policy'] ?? '';
+      const scriptSrcDirective = csp.match(/script-src[^;]+/)?.[0] ?? '';
 
-      const cacheControl = response.headers()['cache-control'];
-      expect(cacheControl).toContain('no-cache');
-
-      // Service Worker 應該 bypass 快取
-      const cfCacheStatus = response.headers()['cf-cache-status'];
-      expect(['DYNAMIC', 'BYPASS']).toContain(cfCacheStatus);
-    });
-  });
-
-  test.describe('🔴 RED: 安全標頭配置', () => {
-    test('should have Content-Security-Policy header', async ({ request }) => {
-      const response = await request.get(`${PRODUCTION_URL}/`);
-
-      const csp = response.headers()['content-security-policy'];
-      expect(csp).toBeDefined();
-
-      // 驗證關鍵 CSP 指令
       expect(csp).toContain("default-src 'self'");
-      expect(csp).toContain("script-src 'self'");
+      expect(scriptSrcDirective).toContain("'nonce-");
+      expect(scriptSrcDirective).not.toContain('unsafe-inline');
       expect(csp).toContain('https://static.cloudflareinsights.com');
-
-      // 確認 script-src 沒有 unsafe-inline
-      const scriptSrcMatch = csp?.match(/script-src[^;]+/);
-      expect(scriptSrcMatch).not.toBeNull();
-      expect(scriptSrcMatch![0]).not.toContain('unsafe-inline');
+      expect(csp).toContain('https://www.googletagmanager.com');
+      expect(response.headers()['x-content-type-options']).toBe('nosniff');
+      expect(response.headers()['x-frame-options']).toMatch(/SAMEORIGIN|DENY/i);
+      expect(response.headers()['referrer-policy']).toContain('strict-origin');
+      expect(response.headers()['strict-transport-security']).toContain('max-age=31536000');
     });
 
-    test('should have Strict-Transport-Security header', async ({ request }) => {
-      const response = await request.get(`${PRODUCTION_URL}/`);
+    test('NihonName homepage is covered by Cloudflare security headers', async ({ request }) => {
+      const response = await request.get(`${NIHONNAME_URL}/`);
+      const csp = response.headers()['content-security-policy'] ?? '';
 
-      const hsts = response.headers()['strict-transport-security'];
-      expect(hsts).toBeDefined();
-      expect(hsts).toContain('max-age=31536000');
-      expect(hsts).toContain('includeSubDomains');
+      expect(csp).toContain("default-src 'self'");
+      expect(csp).toContain('fonts.googleapis.com');
+      expect(csp).toContain('transparenttextures.com');
+      expect(response.headers()['x-security-policy-version']).toBeDefined();
+      expect(response.headers()['x-content-type-options']).toBe('nosniff');
     });
 
-    test('should have X-Frame-Options header', async ({ request }) => {
-      const response = await request.get(`${PRODUCTION_URL}/`);
+    test('Park Keeper keeps geolocation permission but remains locked down', async ({
+      request,
+    }) => {
+      const response = await request.get(`${PARK_KEEPER_URL}/`);
+      const csp = response.headers()['content-security-policy'] ?? '';
+      const permissionsPolicy = response.headers()['permissions-policy'] ?? '';
 
-      const xFrameOptions = response.headers()['x-frame-options'];
-      expect(xFrameOptions).toBeDefined();
-      expect(xFrameOptions).toMatch(/SAMEORIGIN|DENY/i);
+      expect(csp).toContain('wmts.nlsc.gov.tw');
+      expect(csp).toContain('basemaps.cartocdn.com');
+      expect(permissionsPolicy).toContain('geolocation=(self)');
+      expect(permissionsPolicy).toContain('accelerometer=(self)');
+      expect(permissionsPolicy).toContain('gyroscope=(self)');
+      expect(permissionsPolicy).toContain('magnetometer=(self)');
+      expect(response.headers()['x-frame-options']).toMatch(/SAMEORIGIN|DENY/i);
     });
 
-    test('should have X-Content-Type-Options header', async ({ request }) => {
-      const response = await request.get(`${PRODUCTION_URL}/`);
+    test('Quake School keeps legacy inline script allowance until preload cleanup finishes', async ({
+      request,
+    }) => {
+      const response = await request.get(`${QUAKE_SCHOOL_URL}/`);
+      const csp = response.headers()['content-security-policy'] ?? '';
 
-      const xContentTypeOptions = response.headers()['x-content-type-options'];
-      expect(xContentTypeOptions).toBeDefined();
-      expect(xContentTypeOptions).toBe('nosniff');
-    });
-
-    test('should have Referrer-Policy header', async ({ request }) => {
-      const response = await request.get(`${PRODUCTION_URL}/`);
-
-      const referrerPolicy = response.headers()['referrer-policy'];
-      expect(referrerPolicy).toBeDefined();
-      expect(referrerPolicy).toContain('strict-origin');
+      expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+      expect(csp).toContain('fonts.googleapis.com');
+      expect(response.headers()['x-security-policy-version']).toBeDefined();
     });
   });
 
-  test.describe('🟢 GREEN: Cloudflare 特定功能', () => {
-    test('should have Cloudflare server header', async ({ request }) => {
-      const response = await request.get(`${PRODUCTION_URL}/`);
+  test.describe('Special Endpoints', () => {
+    test('CSP report endpoint rejects GET but accepts POST', async ({ request }) => {
+      const getResponse = await request.fetch(`${RATEWISE_URL}/csp-report`, { method: 'GET' });
+      expect(getResponse.status()).toBe(405);
 
-      // Cloudflare 會添加 cf-ray header
-      const cfRay = response.headers()['cf-ray'];
-      expect(cfRay).toBeDefined();
+      const postResponse = await request.fetch(`${RATEWISE_URL}/csp-report`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/csp-report',
+        },
+        data: { 'csp-report': { 'effective-directive': 'script-src' } },
+      });
 
-      // cf-ray 格式：<ray-id>-<airport-code>
-      expect(cfRay).toMatch(/^[a-f0-9]+-[A-Z]{3}$/);
+      expect(postResponse.status()).toBe(204);
     });
 
-    test('should use HTTP/2 or HTTP/3', async ({ request }) => {
-      const response = await request.get(`${PRODUCTION_URL}/`);
+    test('RateWise share image is cross-origin readable', async ({ request }) => {
+      const response = await request.get(`${RATEWISE_URL}/og-image.jpg`);
 
-      // Playwright 會在 response 中包含 HTTP 版本資訊
-      // 注意：這個測試可能需要根據實際情況調整
-      const cfCacheStatus = response.headers()['cf-cache-status'];
-      expect(cfCacheStatus).toBeDefined();
+      expect(response.headers()['access-control-allow-origin']).toBe('*');
+      expect(response.headers()['cross-origin-resource-policy']).toBe('cross-origin');
     });
+  });
+
+  test('Cloudflare edge headers stay visible on production responses', async ({ request }) => {
+    const response = await request.get(`${RATEWISE_URL}/`);
+
+    expect(response.headers()['cf-ray']).toBeDefined();
+    expect(response.headers()['cf-cache-status']).toBeDefined();
   });
 });

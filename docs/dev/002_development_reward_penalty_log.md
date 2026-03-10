@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-09T09:23:14+08:00
-> **當前總分**: 1128（初始分: 100）
+> **最後更新**: 2026-03-10T09:40:00+08:00
+> **當前總分**: 1135（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -23,30 +23,34 @@
 
 ## 分數變動摘要（近期）
 
-| 分數 | 事項                                                  | 日期       |
-| ---- | ----------------------------------------------------- | ---------- |
-| +3   | 修復 vendor-router / vendor-commons 循環 chunk 警告   | 2026-03-09 |
-| +1   | RateWise v2.8.1 patch release 與 changeset 版本化     | 2026-03-09 |
-| +4   | RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復 | 2026-03-08 |
-| +2   | 002 v2 結構化索引規格與主題分類升級                   | 2026-03-08 |
-| +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理        | 2026-03-08 |
-| +1   | SEOHelmet effect 依賴穩定化                           | 2026-03-08 |
-| +1   | SEOHelmet 卸載 cleanup 與跨頁 head 污染修復           | 2026-03-08 |
-| +4   | FAQ rich results 範圍收斂與 head hydration 去重       | 2026-03-08 |
-| +3   | SEO Audit hreflang 驗證硬編碼根因修復                 | 2026-03-07 |
-| +4   | rebase 後版本與 sitemap SSOT 根因修復                 | 2026-03-07 |
-| +1   | 公開產物格式漂移收斂與提交潔淨化                      | 2026-03-07 |
-| +6   | SEO 權威內容頁、參數頁重複抓取抑制                    | 2026-03-07 |
-| +5   | SEO 真實性、sitemap 與 robots SSOT 根因修復           | 2026-03-07 |
-| +1   | 建立 Cloudflare 稽核工作流文件                        | 2026-03-03 |
-| 0    | Code Splitting 生產癱瘓（-3）+ 快速修復（+3）         | 2026-03-03 |
-| +5   | 效能優化 Bundle 490KB→233KB                           | 2026-03-03 |
-| +6   | park-keeper Phase 3 收尾                              | 2026-02-28 |
-| +3   | RateWise SEO 權威定位：新增 4 幣對                    | 2026-02-28 |
-| +2   | Sitemap hreflang SSOT 同步修復                        | 2026-02-28 |
-| +3   | SEO 技術債清除與 SSOT 完整對齊                        | 2026-02-28 |
-| +1   | 修復 prerender/hreflang 測試斷言                      | 2026-02-28 |
-| +2   | AGENTS/CLAUDE 企業 SOP 升級                           | 2026-02-28 |
+| 分數 | 事項                                                         | 日期       |
+| ---- | ------------------------------------------------------------ | ---------- |
+| +1   | PR #185 深度審查、Browser MCP 驗證與 patch release 準備      | 2026-03-10 |
+| +1   | 移除 security header 測試中的 HTML regex 以清除 CodeQL alert | 2026-03-10 |
+| +1   | 修復 security header 測試對 Worker 字串結構耦合              | 2026-03-10 |
+| +4   | Cloudflare 安全標頭分層重構與正式站驗證閉環                  | 2026-03-10 |
+| +3   | 修復 vendor-router / vendor-commons 循環 chunk 警告          | 2026-03-09 |
+| +1   | RateWise v2.8.1 patch release 與 changeset 版本化            | 2026-03-09 |
+| +4   | RateWise SEO SSOT 收斂與 FAQ rich result 最佳實踐修復        | 2026-03-08 |
+| +2   | 002 v2 結構化索引規格與主題分類升級                          | 2026-03-08 |
+| +2   | Git 歷史失敗案例重構與 002 incident 知識庫整理               | 2026-03-08 |
+| +1   | SEOHelmet effect 依賴穩定化                                  | 2026-03-08 |
+| +1   | SEOHelmet 卸載 cleanup 與跨頁 head 污染修復                  | 2026-03-08 |
+| +4   | FAQ rich results 範圍收斂與 head hydration 去重              | 2026-03-08 |
+| +3   | SEO Audit hreflang 驗證硬編碼根因修復                        | 2026-03-07 |
+| +4   | rebase 後版本與 sitemap SSOT 根因修復                        | 2026-03-07 |
+| +1   | 公開產物格式漂移收斂與提交潔淨化                             | 2026-03-07 |
+| +6   | SEO 權威內容頁、參數頁重複抓取抑制                           | 2026-03-07 |
+| +5   | SEO 真實性、sitemap 與 robots SSOT 根因修復                  | 2026-03-07 |
+| +1   | 建立 Cloudflare 稽核工作流文件                               | 2026-03-03 |
+| 0    | Code Splitting 生產癱瘓（-3）+ 快速修復（+3）                | 2026-03-03 |
+| +5   | 效能優化 Bundle 490KB→233KB                                  | 2026-03-03 |
+| +6   | park-keeper Phase 3 收尾                                     | 2026-02-28 |
+| +3   | RateWise SEO 權威定位：新增 4 幣對                           | 2026-02-28 |
+| +2   | Sitemap hreflang SSOT 同步修復                               | 2026-02-28 |
+| +3   | SEO 技術債清除與 SSOT 完整對齊                               | 2026-02-28 |
+| +1   | 修復 prerender/hreflang 測試斷言                             | 2026-02-28 |
+| +2   | AGENTS/CLAUDE 企業 SOP 升級                                  | 2026-02-28 |
 
 ---
 
@@ -93,6 +97,197 @@
 ## Entries
 
 ### 2026-03
+
+---
+
+id: pr185-review-browser-verification-release-prep
+date: 2026-03-10
+title: PR #185 深度審查、Browser MCP 驗證與 patch release 準備
+score: +1
+type: success
+content_type: how_to
+scope: monorepo
+topics: [testing, ci, documentation, ssot]
+keywords: [pr-review, browser-mcp, changeset, release-prep, merge-readiness]
+aliases: [PR 185 合併前審查, 瀏覽器驗證閉環]
+related_entries: [cloudflare-security-headers-layered-refactor, security-header-test-structure-decoupling]
+summary: 針對 `codex/cloudflare-security-headers-v4` 執行合併前深度審查，補跑 Browser MCP 驗證 `ratewise` 與 `park-keeper` 核心路由與互動，確認 console 全程 0 error，並補上 multi-package patch changeset，讓 PR #185 合併後可以依 repo SSOT 正常產生 `Version Packages` PR。
+root_cause:
+
+- 使用者要求在合併前完成深度 review、瀏覽器功能確認與小版本更新，但 repo 的 versioning 規則明確禁止在功能分支直接執行 `changeset version`
+- 本地驗證過程曾產生 `apps/ratewise/public/*` 的 prebuild 日期異動，若不先辨識並還原，容易把暫時性產出誤帶進功能 PR
+  impact:
+
+- 若沒有補 Browser MCP 驗證，只看既有 CI 與 curl 仍無法覆蓋實際前端路由/互動
+- 若沒有先補 changeset，PR 雖可合併，但 `main` 不會自動產生 version PR，無法完成受控 patch release 流程
+  actions:
+
+- 逐頁驗證 `http://localhost:4173/ratewise/`、`/multi`、`/favorites`、`/settings`，確認標題、主要內容與 console 均正常
+- 驗證 `http://127.0.0.1:4176/park-keeper/` 的首頁、Quick Entry、設定與返回列表流程，並確認 console 0 error、遮罩可正常關閉面板
+- 還原本地 prebuild 造成的暫時性 `public/*` 日期變更，只保留真正需要提交的 release metadata
+- 新增 `.changeset/cloudflare-security-review-release.md`，將 `@app/ratewise` 與 `@app/park-keeper` 都標記為 patch
+  prevention:
+
+- 合併前審查需同時覆蓋 diff review、Browser MCP 與 versioning 規則，不可只依賴單一 CI 結果
+- 本地 build / preview 若改寫公開產出檔，必須先判斷是否屬正式 release 內容，避免把暫時性日期漂移帶入 PR
+- 使用者要求「更新小版本」時，應優先套用 repo 的 changeset / Version PR 流程，而不是在功能分支直接手動 bump 版本號
+  verification:
+
+- `gh pr view 185 --json mergeable,statusCheckRollup,url`
+- `curl -I http://localhost:4173/ratewise/`
+- `curl -I http://127.0.0.1:4176/park-keeper/`
+- Playwright MCP：`ratewise` 首頁 / multi / favorites / settings
+- Playwright MCP：`park-keeper` 首頁 / Quick Entry / settings / list
+- `git diff -- apps/ratewise/public/llms-full.txt apps/ratewise/public/llms.txt apps/ratewise/public/manifest.webmanifest apps/ratewise/public/robots.txt`
+  references:
+
+- .changeset/cloudflare-security-review-release.md
+- https://github.com/haotool/app/pull/185
+- apps/park-keeper/src/components/QuickEntry.tsx
+- security-headers/src/worker.js
+
+---
+
+id: codeql-test-html-regex-removal
+date: 2026-03-10
+title: 移除 security header 測試中的 HTML regex 以清除 CodeQL alert
+score: +1
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [testing, security, ci, ssot]
+keywords: [codeql, github-advanced-security, html-parser, jsdom, test-mock]
+aliases: [CodeQL 測試告警, bad-tag-filter]
+related_entries: [cloudflare-security-headers-layered-refactor, security-header-test-structure-decoupling]
+summary: PR #185 的 GitHub Advanced Security 在 `apps/ratewise/src/__tests__/securityHeadersWorker.test.ts` 發現 `js/bad-tag-filter`，原因是測試用 mock `HTMLRewriter` 以 regex 改寫 `<script>` tag。雖然告警落在 `classifications: [test]`，但仍會讓 PR 顯示新增高嚴重度 security alert。修正方式改為使用 `jsdom` 建立 DOM、以 `querySelectorAll()` 套用 handler，不再用 regex 解析 HTML。
+root_cause:
+
+- 測試為了模擬 Cloudflare `HTMLRewriter`，以 regex 匹配 `<script ...>` 後手動重組 tag
+- GitHub Advanced Security 將此模式辨識為 `js/bad-tag-filter`，視為高嚴重度 XSS 風險樣式
+  impact:
+
+- PR #185 出現新增 1 個 high severity security vulnerability，阻礙審查與合併判讀
+- 即使實際生產 Worker 已無此問題，測試層的告警仍會污染整體安全訊號
+  actions:
+
+- 將 mock `HTMLRewriter` 改為 `jsdom` DOM 操作，透過 `querySelectorAll()` 對符合 selector 的節點套用 handler
+- 保留既有 7 個 Worker 測試案例，確認 nonce 注入與 header 行為不回歸
+- 補跑單檔 `vitest` 與 `eslint`，確保型別邊界沒有因 `jsdom` 引入新 lint 問題
+  prevention:
+
+- 測試或工具程式若需要處理 HTML 結構，優先使用 DOM parser / sanitizer，不可再以 regex 操作 tag 邊界
+- 發現 `classifications: [test]` 的 security alert 仍應修正，而不是依賴 dismiss，避免平台訊號失真
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/securityHeadersWorker.test.ts`
+- `pnpm --filter @app/ratewise exec eslint src/__tests__/securityHeadersWorker.test.ts`
+- `gh api 'repos/haotool/app/code-scanning/alerts?ref=refs/pull/185/head&state=open&per_page=100'`
+  references:
+
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
+- https://github.com/haotool/app/pull/185
+
+---
+
+id: security-header-test-structure-decoupling
+date: 2026-03-10
+title: 修復 security header 測試對 Worker 字串結構耦合
+score: +1
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [testing, security, ssot]
+keywords: [test-coupling, permissions-policy, worker-profile, pre-push, regex-drift]
+aliases: [Permissions-Policy 測試耦合, pre-push 測試漂移]
+related_entries: [cloudflare-security-headers-layered-refactor, incident-production-verification-gap]
+summary: `pre-push` 在 `apps/ratewise/src/seo-best-practices.test.ts` 揭露既有測試仍假設 Worker 以舊式物件字面值直接宣告 `Permissions-Policy`，與新版 profile/constant 架構不相容。改為驗證 `DEFAULT_PERMISSIONS_POLICY` / `PARK_KEEPER_PERMISSIONS_POLICY` 常數與實際 `response.headers.set()` 路徑後，測試重新回到對 SSOT 的行為驗證，而非對字串排版的脆弱耦合。
+root_cause:
+
+- `seo-best-practices.test.ts` 仍使用舊 regex 直接抓 `"'Permissions-Policy': '...'"` 字串，假設 Worker 採物件字面值寫法
+- `security-headers` v4.0 已改為 profile + constant 架構，導致測試抓不到 policy 值並在 pre-push 階段失敗
+  impact:
+
+- 本地 pre-push 被錯誤測試阻塞，降低安全重構 PR 的交付效率
+- 若維持舊測試，未來再次調整 Worker 結構時仍會反覆出現假失敗
+  actions:
+
+- 將測試改為比對 `response.headers.set('Permissions-Policy', profile.permissionsPolicy)` 實際路徑
+- 以 regex 抽取 `DEFAULT_PERMISSIONS_POLICY` 與 `PARK_KEEPER_PERMISSIONS_POLICY` 常數值，再驗證不含 deprecated features
+  prevention:
+
+- 針對 Worker / build script / config 類檔案，優先驗證 SSOT 常數與輸出行為，不要綁定特定排版或物件字面值格式
+- pre-push 發現假失敗時，應修測試與真實結構的耦合，而不是降級 hook
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/seo-best-practices.test.ts`
+- `git push -u origin codex/cloudflare-security-headers-v4`
+  references:
+
+- apps/ratewise/src/seo-best-practices.test.ts
+- security-headers/src/worker.js
+
+---
+
+id: cloudflare-security-headers-layered-refactor
+date: 2026-03-10
+title: Cloudflare 安全標頭分層重構與正式站驗證閉環
+score: +4
+type: success
+content_type: troubleshooting
+scope: cloudflare-edge
+topics: [security, headers, deployment, testing, ssot, pwa]
+keywords: [cloudflare-worker, nonce-csp, permissions-policy, csp-report, immutable-assets, production-smoke]
+aliases: [security-headers v4.0, Cloudflare header hardening, edge security refactor]
+related_entries: [incident-csp-header-boundary, incident-production-verification-gap]
+summary: 針對 `security-headers` Worker 執行分層重構，將 HSTS 留在 Cloudflare Edge，讓 Worker 專注於依 app/path 分層 CSP、CSP report 與分享圖 CORS；同時把 `ratewise` 升級為 nonce 型 CSP、補上 `park-keeper` 導航感測器白名單與 hook 啟用條件，最後以 curl、Playwright MCP、正式站 Playwright smoke test 建立可重現的生產驗證閉環。
+root_cause:
+
+- 舊 Worker 雖已集中管理安全標頭，但 route 只覆蓋 `app.haotool.org/ratewise/*`，導致 `nihonname`、`park-keeper`、`quake-school` 與 root pages 缺少一致保護
+- `ratewise` 仍採逐請求全文讀取 + inline script hash 計算，造成邊緣 CPU / 記憶體成本偏高，也讓 CSP 維護與 HTML 耦合過深
+- `park-keeper` 的 `Permissions-Policy` 沒有反映真實產品需求，前端又在隱藏 modal 載入時就綁定感測器 listener，導致正式站 console 噪音與 capability 邊界不一致
+- 既有正式站 smoke test 的 asset path regex 會誤把 `/ratewise/assets/...` 截成 `/assets/...`，製造假陰性，削弱生產驗證可信度
+  impact:
+
+- 子 app 與 root pages 無法共享同一套可治理的安全標頭基線，Cloudflare 邊緣責任分層不清
+- `ratewise` CSP 成本過高，且未來擴展到其他 app 時維護風險偏大
+- `park-keeper` 正式站在首頁載入時出現 `Permissions policy violation` / `deviceorientation blocked` console 錯誤
+- 若繼續依賴錯誤的 smoke test，會把真實上線狀態與測試結果拉開，影響 PR 與 release 判斷
+  actions:
+
+- 重寫 `security-headers/src/worker.js`，建立 `ratewise`、`park-keeper`、`nihonname`、`quake-school`、root/fallback HTML profile，並將 route 擴大為 `app.haotool.org/*`
+- `ratewise` 改為 nonce + HTMLRewriter 串流注入 inline script，保留 CSP report 與 HTML 跨域隔離；`csp-report` 端點加入 method / content-type / payload size 防護
+- `park-keeper` 的 `Permissions-Policy` 改為最小白名單：`geolocation=(self)`、`accelerometer=(self)`、`gyroscope=(self)`、`magnetometer=(self)`；`QuickEntry` 改成 `isVisible` 才啟用 `useDeviceOrientation`
+- 新增 `apps/ratewise/src/__tests__/securityHeadersWorker.test.ts`，並更新正式站 `cloudflare-cache.spec.ts`，修正 asset path regex 與 header 斷言
+- 更新 `docs/SECURITY_CSP_STRATEGY.md`、`docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md`、`security-headers/DEPLOY.md`、`docs/dev/040_cloudflare_security_headers_refactor_spec.md`，讓文件與邊緣真實行為保持 SSOT
+  prevention:
+
+- 固定站點級政策（如 HSTS）只留在 Edge；只有依路徑與 HTML 內容變化的 header 才交由 Worker 處理
+- 任何新增 app 或調整感測器能力時，必須同步更新 Worker profile、正式站 smoke test 與文件矩陣，不可只改其中一層
+- 正式站驗證必須同時包含 curl、瀏覽器 console 與 production Playwright smoke test，避免只看 preview 或單一工具
+- 對子路徑 app 的資產檢查必須使用真實 base path，避免 regex 截斷造成假陰性
+  verification:
+
+- `pnpm --filter @app/park-keeper exec vitest run src/hooks/__tests__/useDeviceOrientation.test.ts`
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/securityHeadersWorker.test.ts`
+- `pnpm --filter @app/park-keeper exec tsc --noEmit`
+- `pnpm --filter @app/ratewise exec tsc --noEmit`
+- `pnpm exec prettier --check security-headers/src/worker.js apps/park-keeper/src/hooks/useDeviceOrientation.ts apps/park-keeper/src/components/QuickEntry.tsx apps/park-keeper/src/hooks/__tests__/useDeviceOrientation.test.ts apps/ratewise/src/__tests__/securityHeadersWorker.test.ts apps/ratewise/tests/e2e/cloudflare-cache.spec.ts docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md docs/SECURITY_CSP_STRATEGY.md docs/dev/040_cloudflare_security_headers_refactor_spec.md`
+- `pnpm exec wrangler deploy`
+- `curl -s --compressed https://app.haotool.org/park-keeper/ -D - -o /dev/null`
+- `curl -sSI -X GET https://app.haotool.org/ratewise/csp-report`
+- `RUN_PRODUCTION_TESTS=true pnpm --filter @app/ratewise exec playwright test tests/e2e/cloudflare-cache.spec.ts`
+  references:
+
+- security-headers/src/worker.js
+- security-headers/wrangler.jsonc
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
+- apps/ratewise/tests/e2e/cloudflare-cache.spec.ts
+- apps/park-keeper/src/hooks/useDeviceOrientation.ts
+- apps/park-keeper/src/components/QuickEntry.tsx
+- docs/SECURITY_CSP_STRATEGY.md
+- docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md
+- docs/dev/040_cloudflare_security_headers_refactor_spec.md
+- Cloudflare Workers / Transform Rules / HSTS / CSP 官方文件
 
 ---
 

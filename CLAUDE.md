@@ -189,7 +189,7 @@ type(scope): 繁體中文標題
 ### Husky Hooks（實際執行內容）
 
 - `commit-msg`: commitlint
-- `pre-commit`: `lint-staged` → `typecheck` → `format` → 條件式 SSOT 驗證 → 條件式版本 SSOT 驗證
+- `pre-commit`: `lint-staged`（`eslint --fix --no-warn-ignored` + `prettier --write`）→ `typecheck` → `format` → 條件式 SSOT 驗證 → 條件式版本 SSOT 驗證
 - `pre-push`: `typecheck` → `test` → `build:ratewise`
 
 ### `gh` 合併主支 SOP（標準流程）
@@ -565,6 +565,7 @@ registerRoute(
 
 | 日期       | 版本 | 變更摘要                                                                                                                       |
 | ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-10 | v4.2 | 補充 lint-staged ignored file 治理：`eslint --fix --no-warn-ignored`，避免 e2e / ignored 檔誤擋 pre-commit                     |
 | 2026-03-10 | v4.1 | 新增 Troubleshooting #12-13（PWA COEP precache 失敗、版本撕裂 Load failed）與「程式碼註解風格」規範                            |
 | 2026-03-09 | v4.0 | 新增 Troubleshooting #9-11：generate-manifest 品牌覆蓋、commitlint body-bullets、sortedCurrencies TWD 未置頂三項常見錯誤與修法 |
 | 2026-03-08 | v3.9 | 新增「CF SEO 直通實踐」：MailtoLink 模式、squirrelscan 假陽性識別、CF API token 限制、noindex 頁面正確行為                     |
@@ -580,5 +581,5 @@ registerRoute(
 
 ---
 
-**最後更新**: 2026-03-10T00:00:00+0800
-**版本**: v4.1（新增 #12-13 PWA COEP precache 失敗、版本撕裂；程式碼註解風格規範）
+**最後更新**: 2026-03-10T03:28:42+0800
+**版本**: v4.2（補充 lint-staged ignored file 治理與 pre-commit 誤擋規則）
