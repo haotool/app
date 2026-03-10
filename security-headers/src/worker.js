@@ -1,13 +1,15 @@
 /* global HTMLRewriter */
 
 /**
- * 安全標頭 Worker v4.0
+ * 安全標頭 Worker v4.1
  *
  * 本 Worker 僅處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策（例如 HSTS）由 Cloudflare Edge 管理；
  * Worker 專注於路由分層 CSP、CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v4.1: 統一所有 HTML profile 的 Cache-Control（no-cache, must-revalidate）；
+ *         移除上游 Expires 雜訊；OG 圖片 Cache-Control 正規化，消除 Zeabur 上游重複 token
  * - v4.0: app.haotool.org/* 納入統一保護；RateWise 改為 nonce 型 CSP + 串流 HTMLRewriter；
  *         CSP report 端點加入 method/content-type 防護；分享圖白名單改為 SSOT 檔名
  * - v3.9: 修復 PWA 冷啟動失效：COEP/COOP 移至 isHTML 分支，非 HTML 的 ratewise 靜態資源僅保留 CORP
@@ -16,7 +18,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script，避免以 regex 掃描 HTML 觸發 CodeQL `js/bad-tag-filter`
  */
 
-const SECURITY_POLICY_VERSION = '4.0';
+const SECURITY_POLICY_VERSION = '4.1';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -63,7 +65,8 @@ function createHtmlProfile({
 	permissionsPolicy = DEFAULT_PERMISSIONS_POLICY,
 	enableCrossOriginIsolation = false,
 	enableRatewiseReporting = false,
-	htmlCacheControl = null,
+	// no-cache 允許 BFCache 存入；must-revalidate 確保 SW 更新後使用者取得最新 HTML。
+	htmlCacheControl = 'no-cache, must-revalidate',
 }) {
 	return {
 		scriptMode,
@@ -138,7 +141,6 @@ const RATEWISE_HTML_PROFILE = createHtmlProfile({
 	],
 	enableCrossOriginIsolation: true,
 	enableRatewiseReporting: true,
-	htmlCacheControl: 'no-cache, must-revalidate',
 });
 
 function joinSources(sources) {
@@ -241,8 +243,12 @@ function isImmutableHashedAsset(pathname) {
 }
 
 function applyHtmlSecurityHeaders(response, url, profile, nonce) {
+	// Expires 由上游產生，與 Cache-Control 語義重疊，依 RFC 7234 §5.3 應以 Cache-Control 為準。
+	response.headers.delete('Expires');
+
 	response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(profile, nonce));
 	response.headers.set('Permissions-Policy', profile.permissionsPolicy);
+	response.headers.set('Cache-Control', profile.htmlCacheControl);
 
 	Object.entries(BASE_RESPONSE_HEADERS).forEach(([name, value]) => {
 		response.headers.set(name, value);
@@ -251,10 +257,6 @@ function applyHtmlSecurityHeaders(response, url, profile, nonce) {
 	if (profile.enableRatewiseReporting) {
 		response.headers.set('Content-Security-Policy-Report-Only', RATEWISE_REPORT_ONLY);
 		response.headers.set('Reporting-Endpoints', `${RATEWISE_REPORTING_ENDPOINT}="https://${url.host}/ratewise/csp-report"`);
-	}
-
-	if (profile.htmlCacheControl !== null) {
-		response.headers.set('Cache-Control', profile.htmlCacheControl);
 	}
 
 	if (profile.enableCrossOriginIsolation) {
@@ -410,6 +412,8 @@ export default {
 		response.headers.set('X-Security-Policy-Version', SECURITY_POLICY_VERSION);
 
 		if (isPublicShareAsset) {
+			// 社群平台爬取需跨域存取，COEP/COOP 降為 unsafe-none 並開放 CORS。
+			response.headers.set('Cache-Control', 'max-age=86400, public');
 			response.headers.set('Access-Control-Allow-Origin', '*');
 			response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
 			response.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
