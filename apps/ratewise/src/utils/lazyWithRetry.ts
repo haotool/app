@@ -59,10 +59,10 @@ export function lazyWithRetry<T extends ComponentType<unknown>>(
       }
     }
 
-    // 所有重試都失敗後，檢查是否可以安全刷新
-    await recoverFromChunkLoadError();
+    // 所有重試都失敗後，嘗試簡單 reload（保留 precache）。
+    recoverFromChunkLoadError();
 
-    // 如果無法刷新（可能已經刷新過），拋出原始錯誤
+    // 如果無法刷新（cooldown 保護），拋出原始錯誤讓 ChunkErrorBoundary 顯示友善 UI。
     throw lastError;
   });
 }

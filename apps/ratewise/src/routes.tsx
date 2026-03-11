@@ -77,7 +77,7 @@ async function importWithRetry<T>(
     }
   }
 
-  await recoverFromChunkLoadError();
+  recoverFromChunkLoadError();
 
   throw lastError;
 }
