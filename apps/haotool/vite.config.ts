@@ -12,6 +12,18 @@ import dns from 'node:dns';
 dns.setDefaultResultOrder('verbatim');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const HAOTOOL_NAVIGATE_FALLBACK_ALLOWLIST = [
+  /^\/$/,
+  /^\/projects(?:\/.*)?$/,
+  /^\/about(?:\/.*)?$/,
+  /^\/contact(?:\/.*)?$/,
+];
+const SIBLING_APP_DENYLIST = [
+  /^\/ratewise(?:\/.*)?$/,
+  /^\/nihonname(?:\/.*)?$/,
+  /^\/park-keeper(?:\/.*)?$/,
+  /^\/quake-school(?:\/.*)?$/,
+];
 
 /**
  * 自動生成版本號
@@ -107,6 +119,9 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,json,ico,png,svg,woff,woff2,avif,webp}'],
           globIgnores: ['**/node_modules/**', 'rates/**/*.json'],
           ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
+          // root-scope SW 只能處理 haotool 自身路由，避免吞掉同網域子 app。
+          navigateFallbackAllowlist: HAOTOOL_NAVIGATE_FALLBACK_ALLOWLIST,
+          navigateFallbackDenylist: SIBLING_APP_DENYLIST,
           clientsClaim: true,
           skipWaiting: true,
           cleanupOutdatedCaches: true,
