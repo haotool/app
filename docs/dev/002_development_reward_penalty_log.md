@@ -44,6 +44,7 @@ root_cause:
   verification:
 
 - `pnpm --filter @app/ratewise exec vitest run src/bootstrap/pwa-recovery-bootstrap.test.ts build/version-utils.test.ts src/index.html.test.ts`
+- `pnpm --filter @app/ratewise exec vitest run src/bootstrap/pwa-recovery-bootstrap.test.ts src/utils/version-build-utils.test.ts src/config/__tests__/build-scripts.test.ts src/index.html.test.ts`
 - `pnpm --filter @app/ratewise build`
 - Playwright MCP 驗證 `http://127.0.0.1:4173/ratewise/` 與 `/settings` 可互動、console error = 0、主題切換正常。
 - 產出檢查：`dist/index.html` 含 `ratewise_pwa_recovery_epoch` bootstrap，`dist/sw.js` 僅在 `SKIP_WAITING` message 分支呼叫 `self.skipWaiting()`。
