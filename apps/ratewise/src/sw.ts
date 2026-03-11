@@ -3,9 +3,14 @@
 /// <reference lib="webworker" />
 
 import { clientsClaim } from 'workbox-core';
-import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching';
-import { registerRoute, setCatchHandler } from 'workbox-routing';
-import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
+import {
+  cleanupOutdatedCaches,
+  createHandlerBoundToURL,
+  matchPrecache,
+  precacheAndRoute,
+} from 'workbox-precaching';
+import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing';
+import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 
@@ -131,7 +136,7 @@ registerRoute(
   new NetworkOnly(),
 );
 
-// 導覽請求失敗離線回退：runtime cache → precache index.html → offline.html。
+// 網路失敗離線回退：JS/CSS 嘗試快取；導覽請求回退至 precache index.html。
 setCatchHandler(async ({ event, request }): Promise<Response> => {
   const fetchEvent = event as FetchEvent;
   const req = request ?? fetchEvent.request;
@@ -151,108 +156,15 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
     return Response.error();
   }
 
-  // 安全驗證：僅處理同源請求。
-  let requestOrigin: string;
-  let swOrigin: string;
-  try {
-    if (!req.url || typeof req.url !== 'string' || req.url.trim() === '') {
-      return Response.error();
-    }
-    const scope = self.registration?.scope;
-    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
-      return Response.error();
-    }
-
-    requestOrigin = new URL(req.url).origin;
-    swOrigin = new URL(scope).origin;
-  } catch (error) {
-    console.error('[SW] Origin validation failed:', error);
-    return Response.error();
-  }
-  if (requestOrigin !== swOrigin) {
-    return Response.error();
-  }
-
-  // 1) runtime cache 比對。
-  try {
-    if (!req.url || typeof req.url !== 'string' || req.url.trim() === '') {
-      throw new Error('Invalid URL');
-    }
-
-    const requestUrl = new URL(req.url);
-    if (!requestUrl.pathname.includes('..')) {
-      const cachedHtml = await caches.match(req.url);
-      if (cachedHtml) {
-        return cachedHtml;
-      }
-    }
-  } catch (error) {
-    console.error('[SW] Runtime cache match failed:', error);
-  }
-
-  // 2) precache index.html。
-  const indexHtml = await matchPrecache('index.html');
-  if (indexHtml) {
-    return indexHtml;
-  }
-
-  // 3) 完整 URL 比對 index.html。
-  try {
-    const scope = self.registration?.scope;
-    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
-      throw new Error('Invalid scope');
-    }
-
-    const indexUrl = new URL('index.html', scope).href;
-    const indexFromCache = await caches.match(indexUrl);
-    if (indexFromCache) {
-      return indexFromCache;
-    }
-  } catch (error) {
-    console.error('[SW] Index URL construction failed:', error);
-  }
-
-  // 4) precache offline.html。
-  const offlineResponse = await matchPrecache('offline.html');
-  if (offlineResponse) {
-    return offlineResponse;
-  }
-
-  // 5) 完整 URL 比對 offline.html。
-  try {
-    const scope = self.registration?.scope;
-    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
-      return Response.error();
-    }
-
-    const offlineUrl = new URL('offline.html', scope).href;
-    const fallbackResponse = await caches.match(offlineUrl);
-    if (fallbackResponse) {
-      return fallbackResponse;
-    }
-  } catch (error) {
-    console.error('[SW] Offline URL construction failed:', error);
-  }
-
-  return Response.error();
+  // SPA 導覽離線回退：直接從 precache 提供 index.html（Workbox 官方 SPA 模式）。
+  // NavigationRoute 已攔截所有正常導覽請求；setCatchHandler 僅在網路失敗時作為保險層。
+  return (await matchPrecache('index.html')) ?? Response.error();
 });
 
-// 導覽請求（HTML）：NetworkFirst，2 秒 timeout 後回落快取。
-// request.mode === 'navigate' 為 Workbox 官方建議，較 destination === 'document' 更精確。
-registerRoute(
-  ({ request }: { request: Request }) => request.mode === 'navigate',
-  new NetworkFirst({
-    cacheName: 'html-cache',
-    plugins: [
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-      new ExpirationPlugin({
-        maxEntries: 20,
-        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
-      }),
-    ],
-    networkTimeoutSeconds: 2,
-  }),
-);
+// SPA 導覽：所有導覽請求直接從 precache 提供 index.html（Workbox 官方 SPA 離線模式）。
+// NavigationRoute + createHandlerBoundToURL 是 Workbox 官方 SPA 最佳實踐，
+// 可確保冷啟動離線時 index.html 一定能從 precache 取得，無需依賴 NetworkFirst 與 html-cache。
+registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')));
 
 // 歷史匯率（CDN）：CacheFirst，不可變資料永久快取。
 registerRoute(
