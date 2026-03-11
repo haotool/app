@@ -2,7 +2,7 @@ name: SEO Production Validation
 
 # 生產環境 SEO 統一驗證工作流
 # 功能:
-# 1. 健康檢查: HTTP 200、sitemap.xml、robots.txt、llms.txt
+# 1. 健康檢查: 必要 SEO/圖片資源 200、sitemap.xml、robots.txt、llms.txt
 # 2. JSON-LD 驗證: Schema.org 結構化數據完整性與正確性
 # 3. E2E 測試: Meta Tags、Open Graph、圖片資源
 # 4. 支援所有 apps: ratewise + nihonname + haotool
@@ -66,6 +66,9 @@ jobs:
         run: |
           echo "⏳ 等待 Zeabur 部署完成..."
           sleep 180
+
+      - name: Run Required Resource Availability Check
+        run: node scripts/verify-production-resources.mjs
 
       - name: Run All Apps SEO Health Check
         run: node scripts/verify-all-apps.mjs

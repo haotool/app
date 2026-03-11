@@ -1,8 +1,56 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-11T22:57:00+08:00
-> **當前總分**: 1148（初始分: 100）
+> **最後更新**: 2026-03-12T00:23:00+08:00
+> **當前總分**: 1150（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: improvement-seo-production-resource-availability-ssot
+date: 2026-03-12
+title: SEO Production Validation 新增 SSOT 生產資源可用性檢查
+score: 2
+type: improvement
+content_type: how_to
+scope: monorepo
+topics: [seo, ci, ssot, testing, assets]
+keywords: [production-resource-check, app-config-ssot, seo-files, image-assets, auto-discovery]
+aliases: [SEO 200 自動探測, 生產資源可用性檢查, verify-production-resources]
+related_entries:
+[incident-production-verification-gap, incident-ratewise-stale-pwa-shell-recovery]
+summary: 新增 `scripts/verify-production-resources.mjs`，直接以每個 `app.config.mjs` 的 `resources.seoFiles` 與 `resources.images` 為 SSOT，自動發現所有 apps 並檢查正式站 URL 是否回傳 `200`；同時接入 `SEO Production Validation` workflow，使資源存活檢查與 sitemap/robots/llms 語義檢查分層。
+root_cause:
+
+- 既有 `verify-production-seo.mjs` 偏重 sitemap、robots、llms、404 與 canonical 語義驗證，缺少一個專責的「必要資源 availability」檢查層。
+- 先前人工用 `curl` 驗證雖可確認 200，但沒有正式進入 repo 與 CI，未來新增 app 或新增資源時容易回到手動補查。
+- 子路徑 app 若直接用 `new URL('/path', siteUrl)` 會洗掉 base path；測試先行揭露這個 bug，避免 CI 腳本上線後誤打錯誤 URL。
+  impact:
+
+- 未來新增 app 只要提供 `app.config.mjs` 與 `resources` 定義，即可自動納入生產檢查，無需再改 workflow app 名單。
+- CI 失敗時能明確區分「資源不存在 / timeout」與「SEO 語義錯誤」，縮短排障路徑。
+- SSOT 一致性提升，降低 `resources.images` 與實際部署資源脫鉤的風險。
+  actions:
+
+- 新增 `scripts/verify-production-resources.mjs`，以 `discoverApps()` 自動發現 apps，輸出 `200 / non200 / timeout`。
+- 新增 `scripts/__tests__/verify-production-resources.test.ts`，覆蓋 inventory 展開、HEAD→GET fallback、timeout 分類與 summary 彙總。
+- 在 `.github/workflows/seo-production.yml` 的 `health-check` 先執行 `verify-production-resources.mjs`，再執行 `verify-all-apps.mjs`。
+- 同步更新 `package.json`、`AGENTS.md`、`CLAUDE.md`，把這條 CI 與 SSOT 邏輯正式收斂。
+  prevention:
+
+- 之後任何必要 SEO 檔或圖片資源都必須只維護在 `app.config.mjs`，不得在腳本或 workflow 重複硬編碼。
+- production availability 檢查與語義檢查必須維持分層，避免單支腳本同時承擔過多責任。
+- 對子路徑 app 的 URL 組合必須保留 regression test，防止 base path 再次被洗掉。
+  verification:
+
+- `pnpm exec vitest run scripts/__tests__/verify-production-resources.test.ts`
+- `node scripts/verify-production-resources.mjs`
+- 結果：39/39 必要資源皆返回 `200`，`non200=0`，`timeout=0`。
+  references:
+
+- `scripts/verify-production-resources.mjs`
+- `scripts/__tests__/verify-production-resources.test.ts`
+- `.github/workflows/seo-production.yml`
+- `scripts/lib/workspace-utils.mjs`
 
 ---
 
