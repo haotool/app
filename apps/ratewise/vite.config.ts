@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import dns from 'node:dns';
+import { getVersionFromCommitCount as formatVersionFromCommitCount } from './src/utils/version-build-utils';
 
 // Node.js v17+ DNS 解析一致性修正
 dns.setDefaultResultOrder('verbatim');
@@ -111,14 +112,13 @@ function getVersionFromGitTag(baseVersion: string): string | null {
 }
 
 /** 使用 Git commit 數生成版本號（附加於 package.json semver） */
-function getVersionFromCommitCount(baseVersion: string): string | null {
+export function getVersionFromCommitCount(baseVersion: string): string | null {
   try {
     // 優先使用 Docker build args 傳入的環境變數
-    const commitCount =
+    const rawCommitCount =
       process.env.GIT_COMMIT_COUNT ??
       execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
-
-    return `${baseVersion}+build.${commitCount}`;
+    return formatVersionFromCommitCount(baseVersion, rawCommitCount);
   } catch {
     return null;
   }
@@ -184,6 +184,10 @@ export default defineConfig(({ mode }) => {
   // 自動生成版本號（語義化版本 + git metadata）
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
+  const pwaRecoveryBootstrap = readFileSync(
+    resolve(__dirname, 'src/bootstrap/pwa-recovery-bootstrap.js'),
+    'utf-8',
+  ).trim();
 
   // Base path：透過 VITE_RATEWISE_BASE_PATH 控制，預設 /ratewise/
   const rawEnvValue = process.env['VITE_RATEWISE_BASE_PATH'] || env.VITE_RATEWISE_BASE_PATH || '';
@@ -242,7 +246,10 @@ export default defineConfig(({ mode }) => {
       {
         name: 'inject-version-meta',
         transformIndexHtml(html) {
-          return html.replace(/__APP_VERSION__/g, appVersion).replace(/__BUILD_TIME__/g, buildTime);
+          return html
+            .replace('<!-- PWA Recovery Bootstrap -->', `<script>${pwaRecoveryBootstrap}</script>`)
+            .replace(/__APP_VERSION__/g, appVersion)
+            .replace(/__BUILD_TIME__/g, buildTime);
         },
       },
       // Brotli 壓縮

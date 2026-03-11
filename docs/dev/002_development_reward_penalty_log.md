@@ -6,6 +6,56 @@
 
 ---
 
+id: incident-ratewise-stale-pwa-shell-recovery
+date: 2026-03-11
+title: RateWise 舊版 PWA App Shell 卡骨架屏與 icon 回退修復
+score: 3
+type: incident
+content_type: troubleshooting
+scope: ratewise
+topics: [pwa, service-worker, cache-recovery, icon, ssot]
+keywords: [stale-shell, skeleton-stuck, skipWaiting, hotfix, apple-touch-icon, cache-reset]
+aliases: [舊版 PWA 卡骨架, RateWise 離線殼失效, PWA icon 去背回退]
+related_entries:
+[incident-production-verification-gap, incident-over-optimization-before-stability]
+summary: 正式站舊 PWA 使用者可能被舊版 auto-update service worker 與新資產版本撕裂卡在 SSR 骨架屏，React 恢復機制因主 bundle 未載入而完全失效；同時先前將 apple-touch-icon 與 legacy pwa-\*.png 改為透明去背，造成使用者感知到 icon 樣式改變。
+root_cause:
+
+- 正式站仍存在 top-level `self.skipWaiting()` 舊版 SW，與 repo 已改成 prompt 模式的 source 不一致。
+- 既有恢復邏輯位於 React 啟動後，對「HTML 已到、JS chunk 未成功 hydration」的使用者沒有任何救援能力。
+- `GIT_COMMIT_COUNT` 空值時版本字串可能生成異常 metadata，增加版本判斷與排障成本。
+- 2026-03-09 將 iOS / legacy icon 換成透明去背版本，偏離既有使用者辨識的實心 icon。
+  impact:
+
+- 舊版 PWA 使用者可能長時間停留在骨架屏，主題切換與功能按鈕看似禁用、實際上是 app shell 未完成 hydration。
+- 客戶端無法自動解除錯誤 SW 與 stale caches，必須靠使用者手動清快取才可能恢復。
+- iOS 主畫面 icon 與 push notification icon 視覺辨識退化。
+  actions:
+
+- 新增 pre-hydration `pwa-recovery-bootstrap`，在 HTML 階段就檢測版本落差 / 舊 SW 足跡，線上時一次性解除 ratewise scope 的 SW、清除 Workbox/runtime caches，然後重載。
+- 保持 `sw.ts` 的 prompt 模式，只允許 `SKIP_WAITING` message 觸發接管，不恢復 top-level auto update。
+- 抽出 `build/version-utils.ts`，避免空 commit count 產生無效 build metadata。
+- 將 `apple-touch-icon.png`、`optimized/apple-touch-icon-112w.*` 與 `pwa-192/384/512.png` 回退為 2026-03-09 之前的實心版資產。
+  prevention:
+
+- 所有 PWA 升級修復都必須提供 HTML 階段的逃生路徑，不能只依賴 React mount 後的恢復 UI。
+- 發版前必須同時驗證 source 與正式站 `sw.js` 的 lifecycle 行為，確認未出現意外的 top-level `skipWaiting()`。
+- Icon 變更需先核對實際使用面（apple-touch-icon、legacy pwa icon、manifest icon）再變更，避免以單一透明化決策覆蓋全部平台。
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/bootstrap/pwa-recovery-bootstrap.test.ts build/version-utils.test.ts src/index.html.test.ts`
+- `pnpm --filter @app/ratewise exec vitest run src/bootstrap/pwa-recovery-bootstrap.test.ts src/utils/version-build-utils.test.ts src/config/__tests__/build-scripts.test.ts src/index.html.test.ts`
+- `pnpm --filter @app/ratewise build`
+- Playwright MCP 驗證 `http://127.0.0.1:4173/ratewise/` 與 `/settings` 可互動、console error = 0、主題切換正常。
+- 產出檢查：`dist/index.html` 含 `ratewise_pwa_recovery_epoch` bootstrap，`dist/sw.js` 僅在 `SKIP_WAITING` message 分支呼叫 `self.skipWaiting()`。
+  references:
+
+- vite-plugin-pwa 官方 prompt / selfDestroying 指南
+- Workbox 官方 lifecycle / skipWaiting 說明
+- 2026-03-09 commit `2742d9e5` icon 透明化變更
+
+---
+
 ## 評分標準
 
 | 分數 | 觸發條件                               |

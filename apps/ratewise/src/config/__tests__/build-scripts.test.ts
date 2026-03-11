@@ -61,10 +61,15 @@ describe('ratewise build scripts', () => {
 
   it('should keep package.json semver as the version SSOT when git tags are stale', async () => {
     const viteConfig = await readViteConfig();
+    const versionUtilPath = path.resolve(__dirname, '../../../src/utils/version-build-utils.ts');
+    const versionUtil = await readFile(versionUtilPath, 'utf-8');
 
     expect(viteConfig).toContain('if (tagVersion !== baseVersion) {');
     expect(viteConfig).toContain('return null;');
-    expect(viteConfig).toContain('return `${baseVersion}+build.${commitCount}`;');
+    expect(viteConfig).toContain(
+      'return formatVersionFromCommitCount(baseVersion, rawCommitCount);',
+    );
+    expect(versionUtil).toContain('return `${baseVersion}+build.${commitCount}`;');
   });
 
   it('should not reference a removed optimized PNG logo in structured data', async () => {
