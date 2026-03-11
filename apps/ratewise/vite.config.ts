@@ -286,13 +286,26 @@ export default defineConfig(({ mode }) => {
         injectRegister: 'inline',
 
         injectManifest: {
-          // 含 json 以預快取 React Router data manifest（離線 SPA 導覽必要）
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,avif,webp,json}'],
+          // workbox-build v7.4.0 的花括號展開（**/*.{js,css,...}）與 globIgnores 並用時返回 0 結果，
+          // 必須逐一列舉，否則 JS/CSS chunk 不進入 precache → 飛航模式冷啟動黑屏。
+          globPatterns: [
+            'assets/**/*.js', // Vite 輸出的所有 JS chunk。
+            'assets/**/*.css', // Vite 輸出的所有 CSS。
+            '**/*.html', // SSG 預渲染頁面（含所有路由）。
+            '**/*.ico', // favicon。
+            '**/*.png', // PWA icon、logo。
+            '**/*.svg', // SVG 圖示。
+            '**/*.avif', // 最佳化圖片（<picture> srcset，含 logo、icon）。
+            '**/*.webp', // 最佳化圖片（<picture> srcset 備援格式）。
+            '**/*.json', // React Router data manifest；rates 與 openapi 另行排除。
+          ],
           globIgnores: [
             '**/og-image-old.png',
             '**/node_modules/**',
             '**/lighthouse-reports/**',
-            '**/rates/**/*.json',
+            '**/rates/**/*.json', // CDN 即時匯率，由 runtime 策略處理。
+            '**/api/**/*.json', // prebuild 匯率快照（api/latest.json），runtime 走 CDN。
+            '**/openapi.json', // 開發用 API spec，非離線必要。
             '**/offline.html',
             '**/sitemap.xml',
             '**/robots.txt',

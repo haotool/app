@@ -1,6 +1,6 @@
 {
   "name": "@app/ratewise",
-  "version": "2.9.0",
+  "version": "2.9.1",
   "private": true,
   "license": "GPL-3.0",
   "author": {
@@ -76,6 +76,7 @@
     "vite-react-ssg": "^0.8.9",
     "vitest": "^4.0.17",
     "web-vitals": "^5.1.0",
+    "workbox-build": "^7.4.0",
     "workbox-cacheable-response": "^7.4.0",
     "workbox-cli": "^7.4.0",
     "workbox-core": "^7.4.0",
