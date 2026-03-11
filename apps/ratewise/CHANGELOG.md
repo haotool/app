@@ -1,5 +1,13 @@
 # @app/ratewise
 
+## 2.9.1
+
+### Patch Changes
+
+- 5a50a39: 修復舊版 PWA 使用者卡在骨架屏的快取恢復流程，並回復 iOS / legacy PWA icon 為既有實心樣式。
+- 修復 workbox-build v7.4.0 花括號 glob pattern bug 導致 JS/CSS chunk 不進入 precache，解決飛航模式冷啟動黑屏問題。
+- 0640f43: 修復設定頁在 SSG hydration 後殘留 disabled 屬性，讓主題切換與重置按鈕恢復可互動。
+
 ## 2.9.0
 
 ### Minor Changes
