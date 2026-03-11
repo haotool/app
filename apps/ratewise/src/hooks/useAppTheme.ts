@@ -16,7 +16,7 @@
  * @version 3.0.0
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import {
   type ThemeConfig,
   type ThemeStyle,
@@ -26,6 +26,18 @@ import {
 
 // Storage key（必須與 index.html 中的腳本一致）
 const STORAGE_KEY = 'ratewise-theme';
+
+function subscribeHydrationReady(onStoreChange: () => void): () => void {
+  let isSubscribed = true;
+  queueMicrotask(() => {
+    if (isSubscribed) {
+      onStoreChange();
+    }
+  });
+  return () => {
+    isSubscribed = false;
+  };
+}
 
 /**
  * 從 localStorage 讀取主題配置
@@ -69,17 +81,19 @@ function saveThemeConfig(config: ThemeConfig): void {
  * @returns 主題配置與操作方法
  */
 export function useAppTheme() {
-  // 直接從 localStorage 初始化（index.html 中的腳本已經同步設置了 DOM）
-  // 這避免了 SSR hydration 後的重新渲染閃爍
+  // 直接從 localStorage 初始化（index.html 中的腳本已經同步設置了 DOM）。
   const [config, setConfig] = useState<ThemeConfig>(() => {
     if (typeof window === 'undefined') {
       return DEFAULT_THEME_CONFIG;
     }
     return loadThemeConfig();
   });
-  // isLoaded: 標記客戶端是否已載入（用於 SSR 期間禁用按鈕）
-  // 直接從環境判斷，無需在 effect 中更新
-  const isLoaded = typeof window !== 'undefined';
+  // useSyncExternalStore 讓 hydration 先匹配 server(false)，再於 client 自動翻轉為 true。
+  const isLoaded = useSyncExternalStore(
+    subscribeHydrationReady,
+    () => true,
+    () => false,
+  );
 
   // 追蹤是否是首次掛載（避免重複應用主題）
   const isFirstMount = useRef(true);
@@ -88,7 +102,6 @@ export function useAppTheme() {
   useEffect(() => {
     if (isFirstMount.current) {
       isFirstMount.current = false;
-      // 首次掛載：index.html 同步腳本已經設置了 DOM，跳過重複應用
       return;
     }
     // 後續更新：正常應用主題
