@@ -273,9 +273,9 @@ export default defineConfig(({ mode }) => {
         strategies: 'injectManifest',
         srcDir: 'src',
         filename: 'sw.ts',
-        // prompt：新 SW 等待使用者確認後才接管，避免 skipWaiting 版本撕裂導致 "Load failed"
-        // UpdatePrompt 元件的 needRefresh 回調在此模式下正確觸發
-        registerType: 'prompt',
+        // autoUpdate（救援模式）：強制新 SW 立即 skipWaiting，讓卡住的舊用戶自動拿到修復版。
+        // 待確認舊用戶全數更新後，回復 'prompt' 避免版本撕裂。
+        registerType: 'autoUpdate',
         injectRegister: 'inline',
 
         injectManifest: {
