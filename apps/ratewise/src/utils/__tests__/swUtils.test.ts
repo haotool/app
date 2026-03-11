@@ -237,9 +237,10 @@ describe('swUtils', () => {
       expect(updateStub).not.toHaveBeenCalled();
     });
 
-    it('在線且有 waiting SW 時送出 SKIP_WAITING，回傳 true', async () => {
+    it('在線且有 waiting SW 時送出 SKIP_WAITING 並設定 controllerchange 監聽器，回傳 true', async () => {
       setOnline(true);
       const postMessage = vi.fn();
+      const addEventListenerStub = vi.fn();
 
       Object.defineProperty(window.navigator, 'serviceWorker', {
         writable: true,
@@ -249,7 +250,7 @@ describe('swUtils', () => {
             waiting: { postMessage },
             installing: null,
           }),
-          addEventListener: vi.fn(),
+          addEventListener: addEventListenerStub,
           removeEventListener: vi.fn(),
         },
       });
@@ -257,6 +258,10 @@ describe('swUtils', () => {
       const result = await forceServiceWorkerUpdate();
 
       expect(result).toBe(true);
+      // controllerchange 監聽器必須在 SKIP_WAITING 之前設定，防止版本撕裂。
+      expect(addEventListenerStub).toHaveBeenCalledWith('controllerchange', expect.any(Function), {
+        once: true,
+      });
       expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
     });
 

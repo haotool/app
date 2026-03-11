@@ -69,33 +69,31 @@ describe('PWA 離線功能測試', () => {
     it('should have setCatchHandler for offline navigation fallback', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
       expect(swContent).toContain('setCatchHandler');
-      expect(swContent).toContain("destination === 'document'");
+      // 以排除法判斷 document：非 document 請求直接回傳 error，document 進入 precache 回退。
+      expect(swContent).toContain("destination !== 'document'");
     });
 
-    it('should try cache before offline.html fallback', () => {
+    it('should use NavigationRoute + createHandlerBoundToURL for SPA offline navigation', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      // 應該優先嘗試從 runtime cache 匹配當前頁面
-      expect(swContent).toContain('caches.match(req.url)');
-      // 然後嘗試預快取的 index.html（使用相對路徑與 manifest 一致）
-      expect(swContent).toContain("matchPrecache('index.html')");
+      // Workbox 官方 SPA 離線模式：NavigationRoute 直接從 precache 提供 index.html。
+      // 相比 NetworkFirst + setCatchHandler，此模式對冷啟動離線更可靠。
+      expect(swContent).toContain('createHandlerBoundToURL(');
+      expect(swContent).toContain('new NavigationRoute(');
     });
 
     it('should have offline-first strategy in setCatchHandler', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
       // 確保離線回退策略邏輯存在
       expect(swContent).toContain('離線回退');
-      // 確保 matchPrecache 使用相對路徑（與 manifest 一致）
+      // setCatchHandler 作為保險層：document 請求從 precache 取 index.html。
       expect(swContent).toContain("matchPrecache('index.html')");
-      expect(swContent).toContain("matchPrecache('offline.html')");
-      // 確保有 origin 驗證防止跨域攻擊
-      expect(swContent).toContain('requestOrigin !== swOrigin');
     });
 
-    it('should have cross-origin protection in setCatchHandler', () => {
+    it('should have NavigationRoute as scope-safe navigation handler', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      // 應該驗證請求 origin
-      expect(swContent).toContain('安全驗證');
-      expect(swContent).toContain('僅處理同源請求');
+      // NavigationRoute 只攔截 SW scope 內的導覽請求，天然同源保護。
+      expect(swContent).toContain('new NavigationRoute(');
+      expect(swContent).toContain('createHandlerBoundToURL(');
     });
   });
 
