@@ -1,8 +1,53 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-11T22:35:00+08:00
-> **當前總分**: 1145（初始分: 100）
+> **最後更新**: 2026-03-11T22:57:00+08:00
+> **當前總分**: 1148（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: incident-ratewise-settings-theme-hydration-disabled
+date: 2026-03-11
+title: RateWise 設定頁主題切換按鈕因 hydration 殘留 disabled 屬性而失效
+score: 3
+type: incident
+content_type: troubleshooting
+scope: ratewise
+topics: [hydration, ssg, settings, theme, production-verification]
+keywords: [disabled-theme-buttons, hydration-mismatch, ssg, settings-page, useAppTheme]
+aliases: [設定頁主題按鈕失效, RateWise theme switch disabled, hydration disabled attr]
+related_entries:
+[incident-ratewise-stale-pwa-shell-recovery, incident-haotool-root-sw-cross-app-contamination]
+summary: 在正式站 root-scope SW 汙染修正後重新驗證 `RateWise`，發現 `/ratewise/settings` 雖已可進入，但主題切換按鈕與重置按鈕仍維持 `disabled`，只有語言切換可用。最終確認不是資料載入失敗，而是 SSG/hydration 流程把 server 端的 disabled 屬性殘留在 DOM。
+root_cause:
+
+- `useAppTheme()` 以 `typeof window !== 'undefined'` 直接推導 `isLoaded`，缺少一個 client mount 後必定觸發的 state re-render。
+- `Settings` 頁面在 SSG HTML 階段會輸出 `disabled` 的主題按鈕；client hydration 雖可載入頁面內容，但沒有可靠的狀態翻轉去清除該屬性。
+- 正式驗證若只看首頁與主流程，會誤判「骨架修好了就一切正常」；實際上設定頁的 theme interaction 仍是壞的。
+  impact:
+
+- 正式站使用者可進入設定頁，但無法切換 6 種主題風格，也無法重置主題。
+- 使用者感知會接近「功能被鎖住」或「舊版壞狀態仍未修好」，削弱前一輪 PWA 熱修的可信度。
+  actions:
+
+- 新增 `src/pages/Settings.hydration.test.tsx`，以 server HTML + `hydrateRoot()` 重現並固定「主題按鈕在 hydration 後必須可點」。
+- 將 `useAppTheme()` 改為 SSR-safe 初始狀態：`config` 先用 `DEFAULT_THEME_CONFIG`，`isLoaded` 改為 state，client mount 後再同步 localStorage 並打開互動。
+- 以本地 production preview 驗證 `/ratewise/settings` 主題按鈕恢復可點，實際點擊 `Nitro` 成功，console error = 0。
+  prevention:
+
+- 任何 SSG 頁面若依賴 `disabled`、`aria-pressed`、主題狀態等 hydration-sensitive attribute，必須有專門的 hydration regression test。
+- 生產驗證不能只檢查首頁；設定頁、收藏頁、離線頁這類次要路徑也要納入 smoke check。
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/pages/Settings.hydration.test.tsx`
+- `pnpm --filter @app/ratewise exec vitest run src/pages/Settings.hydration.test.tsx src/bootstrap/pwa-recovery-bootstrap.test.ts src/utils/version-build-utils.test.ts`
+- `pnpm --filter @app/ratewise build`
+- Playwright MCP：`http://127.0.0.1:4191/ratewise/settings` 載入後主題按鈕可點，切換 `Nitro` 成功，console error = 0。
+  references:
+
+- `apps/ratewise/src/hooks/useAppTheme.ts`
+- `apps/ratewise/src/pages/Settings.tsx`
+- `apps/ratewise/src/pages/Settings.hydration.test.tsx`
 
 ---
 
