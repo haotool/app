@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-11T00:55:00+08:00
-> **當前總分**: 1142（初始分: 100）
+> **最後更新**: 2026-03-11T22:35:00+08:00
+> **當前總分**: 1145（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -53,6 +53,56 @@ root_cause:
 - vite-plugin-pwa 官方 prompt / selfDestroying 指南
 - Workbox 官方 lifecycle / skipWaiting 說明
 - 2026-03-09 commit `2742d9e5` icon 透明化變更
+
+---
+
+id: incident-haotool-root-sw-cross-app-contamination
+date: 2026-03-11
+title: haotool root-scope Service Worker 劫持 sibling apps 導致 RateWise 正式站被錯誤 app shell 接管
+score: 3
+type: incident
+content_type: troubleshooting
+scope: monorepo
+topics: [pwa, service-worker, deployment, routing, ssot]
+keywords: [root-scope-sw, sibling-apps, navigation-fallback, cross-app-contamination, same-origin]
+aliases: [haotool SW 汙染 RateWise, root scope service worker 劫持子路徑]
+related_entries:
+[incident-ratewise-stale-pwa-shell-recovery, incident-production-verification-gap]
+summary: 正式站 `curl` 已顯示 `RateWise` 新版 HTML 與 recovery bootstrap 上線，但 Browser MCP 造訪 `https://app.haotool.org/ratewise/` 時仍被 `haotool` 首頁接管。最終確認根因不是 RateWise bundle，而是同網域根目錄 `haotool` 的 root-scope Service Worker (`/sw.js`) 透過 `NavigationRoute(index.html)` 攔截所有子路徑，讓曾造訪首頁的使用者在 `/ratewise/` 也收到錯誤 app shell。
+root_cause:
+
+- `apps/haotool` 啟用了根 scope PWA，`vite-plugin-pwa` 預設會以 `navigator.serviceWorker.register('/sw.js', { scope: '/' })` 註冊。
+- `haotool` 生成的 `sw.js` 先前對 navigation fallback 沒有限定 allowlist / denylist，導致 `/ratewise/`、`/nihonname/`、`/park-keeper/`、`/quake-school/` 都在 root app 的控制範圍內。
+- 正式驗證若只用 `curl` 看 HTML，會誤以為站點正常；實際舊用戶瀏覽器仍可能被既有 root-scope SW 汙染，屬於真實使用者路徑的驗證缺口。
+  impact:
+
+- 既有使用者可能在 `/ratewise/` 看到 `haotool` 首頁，而非匯率工具本體。
+- `RateWise` 的 PWA recovery bootstrap 無法對「先被錯誤 root app shell 攔截」的情境生效，因為正確 HTML 根本沒進到瀏覽器。
+- 同網域多 app 的分層被破壞，後續任何 sibling app 都可能再次受影響。
+  actions:
+
+- 新增 `apps/haotool/src/pwa-config.test.ts`，先以紅燈測試固定「root-scope SW 只能處理 haotool 自身路由，且必須明確排除 sibling apps」。
+- 在 `apps/haotool/vite.config.ts` 新增 `HAOTOOL_NAVIGATE_FALLBACK_ALLOWLIST` 與 `SIBLING_APP_DENYLIST`，限制 `NavigationRoute(index.html)` 只處理 `/`、`/projects/`、`/about/`、`/contact/`。
+- 建置 `apps/haotool` 並直接檢查生成的 `dist/sw.js`，確認 Workbox 已輸出 `allowlist` / `denylist` 到正式產物。
+- 以正式站驗證 `https://app.haotool.org/sw.js` 目前確實仍是 root-scope worker，後續必須先部署這個修正，才能解除舊用戶跨 app 汙染。
+  prevention:
+
+- 同源多 app 架構下，根 scope Service Worker 不得再使用「全站 navigation fallback」預設值，必須先定義 allowlist / denylist。
+- 正式驗證 PWA 不能只看 `curl`；必須包含至少一個真瀏覽器 session，用來檢查既有 SW / caches 對實際使用者的影響。
+- `haotool`、`ratewise`、`nihonname`、`park-keeper` 共用 `app.haotool.org` 時，任何 `/` scope PWA 變更都要視為跨 app 高風險變更。
+  verification:
+
+- `pnpm --filter @app/haotool exec vitest run src/pwa-config.test.ts`
+- `pnpm --filter @app/haotool build`
+- `node -e "const fs=require('fs');const sw=fs.readFileSync('apps/haotool/dist/sw.js','utf8');console.log(sw.includes('allowlist'), sw.includes('ratewise'))"`
+- `curl -sL https://app.haotool.org/sw.js | rg 'NavigationRoute|ratewise|nihonname|park-keeper|quake-school'`
+- Browser MCP 造訪 `https://app.haotool.org/ratewise/`，驗證是否仍被 root app shell 汙染。
+  references:
+
+- Context7 `/vite-pwa/vite-plugin-pwa` register-service-worker 指南（root base 預設 register `/sw.js` + scope `/`）
+- vite-plugin-pwa / Workbox `navigateFallbackDenylist` 官方文件
+- apps/haotool/vite.config.ts
+- apps/haotool/src/pwa-config.test.ts
 
 ---
 
