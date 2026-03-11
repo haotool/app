@@ -208,6 +208,13 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **注意**：若 checks pending / failing，應先等待或修復，不應跳過審查控制。
 
+## SEO 生產資源可用性檢查（SSOT）
+
+- 使用 `node scripts/verify-production-resources.mjs` 驗證所有 app 的 `resources.seoFiles` 與 `resources.images`
+- app 清單 **必須**由 `discoverApps()` 自動發現；禁止在腳本或 workflow 硬編碼 app 名稱
+- 此腳本只負責 `200 / non200 / timeout` 資源可用性；`verify-all-apps.mjs` 保持 sitemap / robots / llms / 404 等語義驗證
+- `SEO Production Validation` workflow 的 `health-check` 應先跑資源可用性檢查，再跑語義檢查
+
 ## QA Artifacts & Screenshots（最佳實踐）
 
 ### 強制規則
@@ -565,6 +572,7 @@ registerRoute(
 
 | 日期       | 版本 | 變更摘要                                                                                                                       |
 | ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-12 | v4.3 | 新增 SEO 生產資源可用性檢查規範：以 `app.config.mjs` 的 `resources.seoFiles` / `resources.images` 為 SSOT，自動探測並接入 CI   |
 | 2026-03-10 | v4.2 | 補充 lint-staged ignored file 治理：`eslint --fix --no-warn-ignored`，避免 e2e / ignored 檔誤擋 pre-commit                     |
 | 2026-03-10 | v4.1 | 新增 Troubleshooting #12-13（PWA COEP precache 失敗、版本撕裂 Load failed）與「程式碼註解風格」規範                            |
 | 2026-03-09 | v4.0 | 新增 Troubleshooting #9-11：generate-manifest 品牌覆蓋、commitlint body-bullets、sortedCurrencies TWD 未置頂三項常見錯誤與修法 |
@@ -581,5 +589,5 @@ registerRoute(
 
 ---
 
-**最後更新**: 2026-03-10T03:28:42+0800
-**版本**: v4.2（補充 lint-staged ignored file 治理與 pre-commit 誤擋規則）
+**最後更新**: 2026-03-12T12:00:00+0800
+**版本**: v4.3（新增 SEO 生產資源可用性檢查與 CI 整合規範）
