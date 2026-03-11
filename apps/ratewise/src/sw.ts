@@ -104,11 +104,16 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
 
   event.waitUntil(
     (async () => {
-      console.warn('[SW] FORCE_HARD_RESET 收到，清除所有快取並通知 client 重載');
+      console.warn('[SW] FORCE_HARD_RESET 收到，清除 runtime 快取並通知 client 重載');
       try {
         const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map((name) => caches.delete(name)));
-        console.warn(`[SW] 已清除 ${String(cacheNames.length)} 個快取`);
+        // 保留 workbox precache，避免清除後冷啟動離線白屏。
+        // Workbox cleanupOutdatedCaches 負責清理舊版 precache，不需手動介入。
+        const runtimeCaches = cacheNames.filter((n) => !n.startsWith('workbox-precache-v2'));
+        await Promise.all(runtimeCaches.map((name) => caches.delete(name)));
+        console.warn(
+          `[SW] 已清除 ${String(runtimeCaches.length)} 個 runtime 快取（保留 precache）`,
+        );
       } catch (err) {
         console.error('[SW] 清除快取失敗:', err);
       }

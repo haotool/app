@@ -29,15 +29,18 @@ export async function clearAllServiceWorkerCaches(): Promise<number> {
 
   try {
     const cacheNames = await caches.keys();
-    const deletePromises = cacheNames.map((name) => caches.delete(name));
+    // 保留 workbox precache，避免清除後冷啟動離線白屏。
+    // Workbox cleanupOutdatedCaches 負責清理舊版 precache，不需手動介入。
+    const runtimeCacheNames = cacheNames.filter((n) => !n.startsWith('workbox-precache-v2'));
+    const deletePromises = runtimeCacheNames.map((name) => caches.delete(name));
     await Promise.all(deletePromises);
 
-    logger.info('All Service Worker caches cleared', {
-      count: cacheNames.length,
-      cacheNames,
+    logger.info('Runtime Service Worker caches cleared (precache preserved)', {
+      count: runtimeCacheNames.length,
+      cacheNames: runtimeCacheNames,
     });
 
-    return cacheNames.length;
+    return runtimeCacheNames.length;
   } catch (error) {
     logger.error('Failed to clear Service Worker caches', error as Error);
     return 0;

@@ -4,11 +4,10 @@
  * 用途:
  * - 統一判斷 chunk 載入錯誤訊息
  * - 避免無限刷新循環
- * - 觸發完整快取清理與更新流程
+ * - 簡單 reload 讓 SW 從 precache 提供新版本資源（不清除 precache）
  */
 
 import { logger } from './logger';
-import { performFullRefresh } from './swUtils';
 
 export const CHUNK_REFRESH_KEY = 'chunk_load_refresh_timestamp';
 export const CHUNK_REFRESH_COOLDOWN_MS = 30000;
@@ -85,14 +84,18 @@ export function markChunkRefreshed(): void {
 }
 
 /**
- * 觸發完整刷新流程
+ * Chunk 載入錯誤恢復：簡單重載，保留 precache 讓離線功能不中斷。
+ *
+ * 版本撕裂場景（最常見）：舊 HTML 引用舊 chunk URL，新 SW precache 只有新 chunk。
+ * 解法：reload → NetworkFirst 取新 HTML → 新 chunk URL 存在於 precache → 離線正常。
+ * 不應呼叫 performFullRefresh / clearAllServiceWorkerCaches，以免清除 precache 造成二次離線崩潰。
  */
-export async function recoverFromChunkLoadError(): Promise<boolean> {
+export function recoverFromChunkLoadError(): boolean {
   if (typeof window === 'undefined') return false;
   if (!canSafelyRefresh()) return false;
 
-  logger.warn('Chunk load retries exhausted, performing full refresh');
+  logger.warn('Chunk load retries exhausted, reloading page (precache preserved)');
   markChunkRefreshed();
-  await performFullRefresh();
+  window.location.reload();
   return true;
 }
