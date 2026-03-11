@@ -1,14 +1,5 @@
 # @app/ratewise
 
-## 2.9.1
-
-### Patch Changes
-
-- 修復 PWA 離線功能被 cache 清除破壞的嚴重 BUG
-  - `FORCE_HARD_RESET` SW 訊息處理器：保留 `workbox-precache-v2-*`，僅清除 runtime 快取
-  - `clearAllServiceWorkerCaches`：同步保留 precache，防止冷啟動離線白屏
-  - `recoverFromChunkLoadError`：改為直接 `window.location.reload()`，不再呼叫 `performFullRefresh`，防止 precache 被誤清除
-
 ## 2.9.0
 
 ### Minor Changes

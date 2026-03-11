@@ -92,7 +92,7 @@ describe('swUtils', () => {
       expect(keysStub).not.toHaveBeenCalled();
     });
 
-    it('在線時清除 runtime 快取並回傳數量', async () => {
+    it('在線時正常清除所有快取並回傳數量', async () => {
       setOnline(true);
       const { keysStub, deleteStub } = mockCaches(['cache-a', 'cache-b']);
 
@@ -101,22 +101,6 @@ describe('swUtils', () => {
       expect(result).toBe(2);
       expect(keysStub).toHaveBeenCalledOnce();
       expect(deleteStub).toHaveBeenCalledTimes(2);
-    });
-
-    it('在線時保留 workbox-precache-v2-* 快取，只清除 runtime', async () => {
-      setOnline(true);
-      const { keysStub, deleteStub } = mockCaches([
-        'workbox-precache-v2-main',
-        'static-resources',
-        'html-cache',
-      ]);
-
-      const result = await clearAllServiceWorkerCaches();
-
-      expect(result).toBe(2); // 只計算刪除的 runtime 快取
-      expect(keysStub).toHaveBeenCalledOnce();
-      expect(deleteStub).toHaveBeenCalledTimes(2);
-      expect(deleteStub).not.toHaveBeenCalledWith('workbox-precache-v2-main');
     });
 
     it('caches API 不存在時直接回傳 0', async () => {
