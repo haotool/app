@@ -29,18 +29,15 @@ export async function clearAllServiceWorkerCaches(): Promise<number> {
 
   try {
     const cacheNames = await caches.keys();
-    // 保留 workbox precache，避免清除後冷啟動離線白屏。
-    // Workbox cleanupOutdatedCaches 負責清理舊版 precache，不需手動介入。
-    const runtimeCacheNames = cacheNames.filter((n) => !n.startsWith('workbox-precache-v2'));
-    const deletePromises = runtimeCacheNames.map((name) => caches.delete(name));
+    const deletePromises = cacheNames.map((name) => caches.delete(name));
     await Promise.all(deletePromises);
 
-    logger.info('Runtime Service Worker caches cleared (precache preserved)', {
-      count: runtimeCacheNames.length,
-      cacheNames: runtimeCacheNames,
+    logger.info('All Service Worker caches cleared', {
+      count: cacheNames.length,
+      cacheNames,
     });
 
-    return runtimeCacheNames.length;
+    return cacheNames.length;
   } catch (error) {
     logger.error('Failed to clear Service Worker caches', error as Error);
     return 0;
@@ -109,19 +106,10 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
       return false;
     }
 
-    // prompt 模式：waiting SW 存在時發送 SKIP_WAITING 讓其接管。
-    // 必須先設定 controllerchange 監聽器再送訊息，確保新 SW 接管後頁面重載，
-    // 防止舊 HTML 引用舊 chunk URL 而新 SW precache 已清除 → 版本撕裂 → Load failed。
+    // prompt 模式：waiting SW 存在時發送 SKIP_WAITING 讓其接管（避免版本撕裂）
     if (registration.waiting) {
-      navigator.serviceWorker.addEventListener(
-        'controllerchange',
-        () => {
-          window.location.reload();
-        },
-        { once: true },
-      );
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      logger.info('SKIP_WAITING sent to waiting Service Worker (will reload on controllerchange)');
+      logger.info('SKIP_WAITING sent to waiting Service Worker');
       return true;
     }
 

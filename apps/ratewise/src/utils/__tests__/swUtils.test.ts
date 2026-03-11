@@ -92,7 +92,7 @@ describe('swUtils', () => {
       expect(keysStub).not.toHaveBeenCalled();
     });
 
-    it('在線時清除 runtime 快取並回傳數量', async () => {
+    it('在線時正常清除所有快取並回傳數量', async () => {
       setOnline(true);
       const { keysStub, deleteStub } = mockCaches(['cache-a', 'cache-b']);
 
@@ -101,22 +101,6 @@ describe('swUtils', () => {
       expect(result).toBe(2);
       expect(keysStub).toHaveBeenCalledOnce();
       expect(deleteStub).toHaveBeenCalledTimes(2);
-    });
-
-    it('在線時保留 workbox-precache-v2-* 快取，只清除 runtime', async () => {
-      setOnline(true);
-      const { keysStub, deleteStub } = mockCaches([
-        'workbox-precache-v2-main',
-        'static-resources',
-        'html-cache',
-      ]);
-
-      const result = await clearAllServiceWorkerCaches();
-
-      expect(result).toBe(2); // 只計算刪除的 runtime 快取
-      expect(keysStub).toHaveBeenCalledOnce();
-      expect(deleteStub).toHaveBeenCalledTimes(2);
-      expect(deleteStub).not.toHaveBeenCalledWith('workbox-precache-v2-main');
     });
 
     it('caches API 不存在時直接回傳 0', async () => {
@@ -237,10 +221,9 @@ describe('swUtils', () => {
       expect(updateStub).not.toHaveBeenCalled();
     });
 
-    it('在線且有 waiting SW 時送出 SKIP_WAITING 並設定 controllerchange 監聽器，回傳 true', async () => {
+    it('在線且有 waiting SW 時送出 SKIP_WAITING，回傳 true', async () => {
       setOnline(true);
       const postMessage = vi.fn();
-      const addEventListenerStub = vi.fn();
 
       Object.defineProperty(window.navigator, 'serviceWorker', {
         writable: true,
@@ -250,7 +233,7 @@ describe('swUtils', () => {
             waiting: { postMessage },
             installing: null,
           }),
-          addEventListener: addEventListenerStub,
+          addEventListener: vi.fn(),
           removeEventListener: vi.fn(),
         },
       });
@@ -258,10 +241,6 @@ describe('swUtils', () => {
       const result = await forceServiceWorkerUpdate();
 
       expect(result).toBe(true);
-      // controllerchange 監聽器必須在 SKIP_WAITING 之前設定，防止版本撕裂。
-      expect(addEventListenerStub).toHaveBeenCalledWith('controllerchange', expect.any(Function), {
-        once: true,
-      });
       expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
     });
 

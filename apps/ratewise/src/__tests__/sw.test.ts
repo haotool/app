@@ -217,17 +217,17 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).not.toContain("cacheName: 'offline-fallback'");
   });
 
-  // ✅ GREEN: NavigationRoute + createHandlerBoundToURL(index.html) 是 Workbox 官方 SPA 離線模式。
-  // index.html 一定在 precache（Vite build 產出），可安全使用此模式確保冷啟動離線可用。
-  it('should use NavigationRoute + createHandlerBoundToURL for SPA offline navigation', async () => {
+  // 🔴 RED: NavigationRoute + createHandlerBoundToURL(index.html) 會在 index.html
+  // 未進 precache 時讓 SW 初始化直接失敗
+  it('should NOT bind navigation handling to createHandlerBoundToURL(index.html)', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
 
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    expect(sourceCode).toContain('createHandlerBoundToURL(');
-    expect(sourceCode).toContain('new NavigationRoute(');
+    expect(sourceCode).not.toContain('createHandlerBoundToURL(');
+    expect(sourceCode).not.toContain('new NavigationRoute(');
   });
 });
 

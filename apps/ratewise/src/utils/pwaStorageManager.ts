@@ -160,9 +160,12 @@ export async function recacheCriticalResourcesOnLaunch(baseUrl: string): Promise
   try {
     logger.info('Starting critical resources pre-caching on launch');
 
-    // 使用獨立快取名稱，不污染 Workbox precache（workbox-precache-v2-*）。
-    // 寫入 workbox-precache-v2-* 會造成 cleanupOutdatedCaches() 干擾與 precache 污染。
-    const cache = await caches.open('critical-launch-cache');
+    // 取得 precache 名稱（Workbox 使用 workbox-precache-v2-https://... 格式）
+    const cacheNames = await caches.keys();
+    const precacheName =
+      cacheNames.find((name) => name.startsWith('workbox-precache')) ?? 'critical-cache';
+
+    const cache = await caches.open(precacheName);
     let successCount = 0;
 
     // 平行預熱所有關鍵資源

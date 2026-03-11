@@ -86,7 +86,7 @@ export const createRoot = ViteReactSSG(
             reason: errorMessage,
           });
           event.preventDefault();
-          recoverFromChunkLoadError();
+          void recoverFromChunkLoadError();
           return;
         }
 

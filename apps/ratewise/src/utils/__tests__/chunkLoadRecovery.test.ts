@@ -22,6 +22,11 @@ vi.mock('../logger', () => ({
   },
 }));
 
+const performFullRefresh = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+vi.mock('../swUtils', () => ({
+  performFullRefresh,
+}));
+
 describe('chunkLoadRecovery', () => {
   describe('isChunkLoadError', () => {
     it.each([
@@ -91,31 +96,24 @@ describe('chunkLoadRecovery', () => {
   });
 
   describe('recoverFromChunkLoadError', () => {
-    let reloadMock: ReturnType<typeof vi.fn>;
-
     beforeEach(() => {
-      sessionStorage.clear();
-      reloadMock = vi.fn();
-      Object.defineProperty(window, 'location', {
-        configurable: true,
-        value: { reload: reloadMock },
-      });
+      performFullRefresh.mockClear();
     });
 
-    it('should reload page when safe (preserves precache)', () => {
-      const result = recoverFromChunkLoadError();
+    it('should trigger full refresh when safe', async () => {
+      const result = await recoverFromChunkLoadError();
 
       expect(result).toBe(true);
-      expect(reloadMock).toHaveBeenCalledTimes(1);
+      expect(performFullRefresh).toHaveBeenCalledTimes(1);
     });
 
-    it('should block reload when cooldown active', () => {
+    it('should block refresh when cooldown active', async () => {
       markChunkRefreshed();
 
-      const result = recoverFromChunkLoadError();
+      const result = await recoverFromChunkLoadError();
 
       expect(result).toBe(false);
-      expect(reloadMock).not.toHaveBeenCalled();
+      expect(performFullRefresh).not.toHaveBeenCalled();
     });
   });
 });

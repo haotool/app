@@ -1,24 +1,5 @@
 # @app/ratewise
 
-## 2.9.2
-
-### Patch Changes
-
-- 修復 PWA 離線：舊用戶白屏（版本撕裂）與新用戶冷啟動離線失效
-  - swUtils：forceServiceWorkerUpdate() 發送 SKIP_WAITING 前先設定 controllerchange 重載監聽器，防止版本撕裂（舊 HTML + 新 SW = Load failed）
-  - sw：採用 NavigationRoute + createHandlerBoundToURL 替代 NetworkFirst，確保冷啟動離線直接從 precache 取 index.html（Workbox 官方 SPA 模式）
-  - sw：簡化 setCatchHandler，移除複雜 origin 驗證，document 請求直接 matchPrecache('index.html')
-  - pwaStorageManager：recacheCriticalResourcesOnLaunch 改用 critical-launch-cache，不再污染 workbox-precache-v2-\*
-
-## 2.9.1
-
-### Patch Changes
-
-- 修復 PWA 離線功能被 cache 清除破壞的嚴重 BUG
-  - `FORCE_HARD_RESET` SW 訊息處理器：保留 `workbox-precache-v2-*`，僅清除 runtime 快取
-  - `clearAllServiceWorkerCaches`：同步保留 precache，防止冷啟動離線白屏
-  - `recoverFromChunkLoadError`：改為直接 `window.location.reload()`，不再呼叫 `performFullRefresh`，防止 precache 被誤清除
-
 ## 2.9.0
 
 ### Minor Changes
