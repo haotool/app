@@ -81,8 +81,8 @@ async function verifyAndRepairPrecache(): Promise<void> {
 // 清除舊版快取。
 cleanupOutdatedCaches();
 
-// autoUpdate 救援模式：立即接管，讓卡住的舊用戶無需手動確認即可拿到修復版。
-void self.skipWaiting();
+// prompt 模式：新 SW 不主動呼叫 skipWaiting()，等待 UpdatePrompt 發送 SKIP_WAITING 後才接管。
+// clientsClaim() 確保啟動後立即控制所有已開啟頁面（首次安裝時適用）。
 clientsClaim();
 
 // 訊息處理：SKIP_WAITING（prompt 更新流程）/ FORCE_HARD_RESET（緊急清除快取）。

@@ -83,7 +83,7 @@ describe('pwa-recovery-bootstrap', () => {
     expect(reload).toHaveBeenCalledOnce();
     expect(localStorage.snapshot()).toEqual({
       favorites: '["USD"]',
-      ratewise_pwa_recovery_epoch: '2026-03-11-pwa-hotfix-1',
+      ratewise_pwa_recovery_epoch: '2.9.1', // RECOVERY_EPOCH = APP_VERSION（'2.9.1' = loadBootstrap 預設）
     });
   });
 

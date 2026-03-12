@@ -54,6 +54,20 @@ export const createRoot = ViteReactSSG(
       // 處理版本更新（檢測版本變更並清除快取）
       void handleVersionUpdate();
 
+      // SW 更新後自動重載：新 SW 取得控制權時重載頁面，防止舊 HTML 引用舊 chunk URL 導致版本撕裂。
+      // previousController：頁面載入時捕捉，用於區分「首次安裝」（null）與「版本更新」（有值）。
+      // 首次安裝不觸發 reload，避免新用戶第一次開啟應用程式時無故重載。
+      if ('serviceWorker' in navigator) {
+        const previousController = navigator.serviceWorker.controller;
+        let reloading = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (previousController && !reloading) {
+            reloading = true;
+            window.location.reload();
+          }
+        });
+      }
+
       // [fix:2026-02-08] iOS PWA Cache Persistence Strategy
       // iOS Safari 會在 PWA 關閉後清除 Cache Storage
       // 解決方案：應用啟動時重新快取關鍵資源 + 請求持久化儲存

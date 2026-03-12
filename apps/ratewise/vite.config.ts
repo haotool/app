@@ -280,9 +280,10 @@ export default defineConfig(({ mode }) => {
         strategies: 'injectManifest',
         srcDir: 'src',
         filename: 'sw.ts',
-        // autoUpdate（救援模式）：強制新 SW 立即 skipWaiting，讓卡住的舊用戶自動拿到修復版。
-        // 待確認舊用戶全數更新後，回復 'prompt' 避免版本撕裂。
-        registerType: 'autoUpdate',
+        // prompt 模式：新 SW 安裝後進入 waiting，由 UpdatePrompt 通知用戶並確認後才接管。
+        // 避免 autoUpdate + skipWaiting 導致版本撕裂（舊 HTML 引用舊 chunk URL → Load failed）。
+        // 舊用戶快取清理由 pwa-recovery-bootstrap.js（RECOVERY_EPOCH = APP_VERSION）負責。
+        registerType: 'prompt',
         injectRegister: 'inline',
 
         injectManifest: {

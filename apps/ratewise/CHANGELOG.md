@@ -1,5 +1,15 @@
 # @app/ratewise
 
+## 2.9.2
+
+### Patch Changes
+
+- fix(pwa): 修復冷啟動黑屏與確保舊用戶自動清除舊快取更新至最新版本
+  - 冷啟動失敗偵測：index.html 加入 12 秒 inline 計時器，skeleton 未消失時顯示錯誤 UI（支援線上重載、離線提示）
+  - 自動快取清理：RECOVERY_EPOCH 改為 APP_VERSION，每次部署自動觸發舊版用戶清除快取
+  - SW 接管後自動重載：controllerchange 事件配合 previousController 檢查，防止版本撕裂
+  - 版本更新模式：registerType 改為 'prompt'，搭配 UpdatePrompt 元件確認後才接管，避免 Load failed
+
 ## 2.9.1
 
 ### Patch Changes
