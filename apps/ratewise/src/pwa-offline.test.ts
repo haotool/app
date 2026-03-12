@@ -55,6 +55,10 @@ describe('PWA 離線功能測試', () => {
       expect(viteConfig).toContain("strategies: 'injectManifest'");
     });
 
+    it('should use prompt registerType to avoid autoUpdate version tearing', () => {
+      expect(viteConfig).toContain("registerType: 'prompt'");
+    });
+
     it('should have additionalManifestEntries for offline.html', () => {
       expect(viteConfig).toContain('additionalManifestEntries');
       expect(viteConfig).toContain('offline.html');
@@ -64,6 +68,7 @@ describe('PWA 離線功能測試', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
       expect(swContent).toContain('skipWaiting()');
       expect(swContent).toContain('clientsClaim()');
+      expect(swContent).toContain("data?.type === 'SKIP_WAITING'");
     });
 
     it('should have setCatchHandler for offline navigation fallback', () => {
@@ -74,9 +79,7 @@ describe('PWA 離線功能測試', () => {
 
     it('should try cache before offline.html fallback', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      // 應該優先嘗試從 runtime cache 匹配當前頁面
       expect(swContent).toContain('caches.match(req.url)');
-      // 然後嘗試預快取的 index.html（使用相對路徑與 manifest 一致）
       expect(swContent).toContain("matchPrecache('index.html')");
     });
 
@@ -87,15 +90,57 @@ describe('PWA 離線功能測試', () => {
       // 確保 matchPrecache 使用相對路徑（與 manifest 一致）
       expect(swContent).toContain("matchPrecache('index.html')");
       expect(swContent).toContain("matchPrecache('offline.html')");
-      // 確保有 origin 驗證防止跨域攻擊
       expect(swContent).toContain('requestOrigin !== swOrigin');
     });
 
     it('should have cross-origin protection in setCatchHandler', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      // 應該驗證請求 origin
       expect(swContent).toContain('安全驗證');
       expect(swContent).toContain('僅處理同源請求');
+    });
+
+    it('should not write launch-recache assets into workbox precache', () => {
+      const storageManager = readFileSync(
+        resolve(ROOT_PATH, 'src/utils/pwaStorageManager.ts'),
+        'utf-8',
+      );
+      expect(storageManager).toContain("caches.open('critical-launch-cache')");
+      expect(storageManager).not.toContain("name.startsWith('workbox-precache')");
+    });
+
+    it('should reload on controllerchange after activating a waiting worker', () => {
+      const swUtils = readFileSync(resolve(ROOT_PATH, 'src/utils/swUtils.ts'), 'utf-8');
+      expect(swUtils).toContain('controllerchange');
+      expect(swUtils).toContain('window.location.reload()');
+    });
+
+    it('should auto-apply a ready update when online', () => {
+      const updatePrompt = readFileSync(
+        resolve(ROOT_PATH, 'src/components/UpdatePrompt.tsx'),
+        'utf-8',
+      );
+      expect(updatePrompt).toContain('needRefresh');
+      expect(updatePrompt).toContain('navigator.onLine');
+      expect(updatePrompt).toContain('updateServiceWorker(true)');
+    });
+
+    it('should avoid brace-expansion-dependent glob syntax in injectManifest patterns', () => {
+      const viteConfig = readFileSync(resolve(ROOT_PATH, 'vite.config.ts'), 'utf-8');
+      expect(viteConfig).toContain("'assets/**/*.js'");
+      expect(viteConfig).toContain("'assets/**/*.css'");
+      expect(viteConfig).toContain("'**/*.html'");
+      expect(viteConfig).not.toContain('**/*.{js,css,html');
+    });
+
+    it('should verify index.html and shell assets exist in the generated precache manifest', () => {
+      const verifyScript = readFileSync(
+        resolve(ROOT_PATH, '../../scripts/verify-precache-assets.mjs'),
+        'utf-8',
+      );
+
+      expect(verifyScript).toContain('precache 缺少 index.html');
+      expect(verifyScript).toContain('首頁 shell 資產');
+      expect(verifyScript).toContain('MIN_PRECACHE_ENTRY_COUNT');
     });
   });
 

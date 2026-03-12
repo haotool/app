@@ -163,6 +163,13 @@ describe('UpdatePrompt - 5 個狀態', () => {
     expect(sourceCode).toContain('setUpdateFailed(true)');
     expect(sourceCode).toContain('setIsUpdating(false)');
   });
+
+  it('should auto-apply ready updates when online to keep users on the latest version', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('needRefresh');
+    expect(sourceCode).toContain('navigator.onLine');
+    expect(sourceCode).toContain('autoUpdateTriggeredRef');
+  });
 });
 
 describe('UpdatePrompt - ARIA 語義', () => {

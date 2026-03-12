@@ -106,10 +106,18 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
       return false;
     }
 
-    // prompt 模式：waiting SW 存在時發送 SKIP_WAITING 讓其接管（避免版本撕裂）
+    // prompt 模式：waiting SW 存在時，先監聽 controllerchange 再送 SKIP_WAITING。
+    // 新 SW 接管後立即重載，避免舊 HTML 繼續引用已淘汰的 chunk URL。
     if (registration.waiting) {
+      navigator.serviceWorker.addEventListener(
+        'controllerchange',
+        () => {
+          window.location.reload();
+        },
+        { once: true },
+      );
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      logger.info('SKIP_WAITING sent to waiting Service Worker');
+      logger.info('SKIP_WAITING sent to waiting Service Worker (reload on controllerchange)');
       return true;
     }
 

@@ -107,6 +107,23 @@ class OfflinePWAPage {
    * Wait for Service Worker to be registered and controlling the page
    */
   async waitForServiceWorkerControl(): Promise<void> {
+    await this.page.waitForFunction(() => 'serviceWorker' in navigator, null, {
+      timeout: SW_TIMEOUT,
+    });
+
+    await this.page.evaluate(async () => {
+      await navigator.serviceWorker?.ready;
+    });
+
+    const hasController = await this.page.evaluate(
+      () => navigator.serviceWorker?.controller !== null,
+    );
+    if (hasController) {
+      return;
+    }
+
+    // 首次載入安裝 SW 後，需重新導覽一次才會被 active worker 控制。
+    await this.page.reload({ waitUntil: 'domcontentloaded', timeout: SW_TIMEOUT });
     await this.page.waitForFunction(() => navigator.serviceWorker?.controller !== null, null, {
       timeout: SW_TIMEOUT,
     });

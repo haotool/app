@@ -217,8 +217,6 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).not.toContain("cacheName: 'offline-fallback'");
   });
 
-  // 🔴 RED: NavigationRoute + createHandlerBoundToURL(index.html) 會在 index.html
-  // 未進 precache 時讓 SW 初始化直接失敗
   it('should NOT bind navigation handling to createHandlerBoundToURL(index.html)', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');

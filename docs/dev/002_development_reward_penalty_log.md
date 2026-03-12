@@ -1,8 +1,72 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-12T00:23:00+08:00
-> **當前總分**: 1150（初始分: 100）
+> **最後更新**: 2026-03-12T22:20:56+08:00
+> **當前總分**: 1153（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: improvement-ratewise-pwa-update-offline-techdebt-cleanup
+date: 2026-03-12
+title: RateWise PWA 更新接管與離線驗證技術債清理
+score: 3
+type: improvement
+content_type: troubleshooting
+scope: ratewise
+topics: [pwa, service-worker, testing, ssot, deployment]
+keywords: [waiting-sw-reload, critical-launch-cache, precache-verifier, offline-e2e, version-sync]
+aliases: [PWA 技術債清理, 離線驗證收斂, waiting SW 自動重載]
+related_entries:
+[incident-ratewise-stale-pwa-shell-recovery, incident-production-verification-gap]
+summary: 以 `origin/main@v2.9.4` 為基線，收斂尚未正式進版的 PWA 技術債：waiting service worker 接管後自動重載、啟動補熱資源改用獨立 cache 避免污染 Workbox precache、precache 驗證器提升為硬性檢查 `index.html` 與 shell assets，並修正離線 E2E 對首次安裝 SW 的等待流程；最後以 Changesets 發布 `RateWise v2.9.5`。
+root_cause:
+
+- 既有更新流程在 waiting SW 接管後缺少 `controllerchange` reload，容易留下「新 SW 已接管、舊 HTML 仍引用舊 chunk」的技術債風險。
+- 啟動補熱資源沿用 Workbox precache 名稱寫入，模糊了 precache 與 runtime/launch cache 的責任邊界。
+- `verify-precache-assets.mjs` 先前只檢查 `assets/*` 是否可取回，無法及早擋下「`index.html` 未進 precache」或「shell JS/CSS 漏注入」這種冷啟動致命錯誤。
+- Playwright 離線測試先前假設首次載入後頁面一定已被 active SW 控制，對真實瀏覽器生命週期模型不夠貼近。
+
+impact:
+
+- 更新鏈路更一致：新版 ready 後在線使用者可自動完成接管與重載，降低 stale shell 殘留時間。
+- cache 邊界更清楚：啟動補熱與 Workbox precache 分離，後續排障與維護成本下降。
+- 離線 correctness gate 提升：precache 若缺 `index.html` 或首頁 shell assets，腳本會直接 fail，不再靜默流入正式版。
+- `v2.9.5` 版本與公開產物已同步，後續 PR / release 可直接沿用。
+
+actions:
+
+- `UpdatePrompt.tsx`：新增 ready update 在線自動套用邏輯。
+- `swUtils.ts`：waiting SW 發送 `SKIP_WAITING` 前先監聽 `controllerchange`，接管後立即 `window.location.reload()`。
+- `pwaStorageManager.ts`：啟動補熱資源改用 `critical-launch-cache`。
+- `verify-precache-assets.mjs`：新增最小 precache entry 數、`index.html`、首頁 shell JS/CSS 完整性檢查。
+- `offline-pwa.spec.ts`：首次安裝 SW 後若尚未控制頁面，先 reload 一次再等待 controller。
+- 建立 changeset 並發布 `@app/ratewise`、root `package.json` 版本到 `2.9.5`，同步 `CHANGELOG.md` 與公開產物。
+
+prevention:
+
+- 離線驗證不得只檢查「某些 assets 可下載」；必須明確驗證 app shell 與導覽入口已進 precache。
+- waiting SW 的更新流程若要保證「用戶永遠在最新版本」，必須把接管與 reload 視為同一個原子步驟。
+- 啟動補熱 cache 與 Workbox precache 必須維持獨立名稱與責任，避免未來再次誤清或誤寫。
+- E2E 對 Service Worker 的斷言需貼近真實生命週期，不得假設首次載入後立即有 controller。
+
+verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/pwa-offline.test.ts src/__tests__/sw.test.ts src/components/__tests__/UpdatePrompt.test.tsx src/utils/__tests__/swUtils.test.ts`
+- `pnpm --filter @app/ratewise exec playwright test tests/e2e/offline-pwa.spec.ts --project=offline-pwa-chromium -g "should load cached exchange rates when offline|should serve cached assets when offline|should display offline fallback page for uncached routes|should preload critical assets on install"`
+- `pnpm changeset version`
+- `pnpm run update:release-metadata`
+- `pnpm --filter @app/ratewise build`
+- `VERIFY_BASE_URL=http://127.0.0.1:4273/ratewise/ pnpm verify:precache`
+
+references:
+
+- `apps/ratewise/src/components/UpdatePrompt.tsx`
+- `apps/ratewise/src/utils/swUtils.ts`
+- `apps/ratewise/src/utils/pwaStorageManager.ts`
+- `scripts/verify-precache-assets.mjs`
+- `apps/ratewise/tests/e2e/offline-pwa.spec.ts`
+- vite-plugin-pwa 官方 prompt update 指南
+- Workbox precaching 與 update lifecycle 官方文件
 
 ---
 

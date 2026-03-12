@@ -7,7 +7,10 @@ import path from 'node:path';
 
 const BASE_URL = process.env.VERIFY_BASE_URL ?? 'https://app.haotool.org/';
 const PROJECT_ROOT = process.cwd();
+const DIST_DIR = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist');
 const SW_PATH = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist/sw.js');
+const INDEX_HTML_PATH = path.resolve(DIST_DIR, 'index.html');
+const MIN_PRECACHE_ENTRY_COUNT = 20;
 
 function normalizeBase(url) {
   if (!url.endsWith('/')) {
@@ -32,6 +35,20 @@ async function loadPrecacheEntries() {
       `解析 precache 清單失敗: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+async function loadShellAssetUrls() {
+  const indexHtml = await readFile(INDEX_HTML_PATH, 'utf-8');
+  const assets = new Set();
+
+  for (const match of indexHtml.matchAll(/(?:src|href)="[^"]*?(assets\/[^"]+\.(?:js|css))"/g)) {
+    const assetUrl = match[1];
+    if (assetUrl) {
+      assets.add(assetUrl.replace(/^\//, ''));
+    }
+  }
+
+  return Array.from(assets).sort();
 }
 
 function extractInjectedManifest(swContent) {
@@ -98,7 +115,30 @@ async function main() {
   const base = normalizeBase(BASE_URL);
   console.log(`🔍 VERIFY_BASE_URL = ${base}`);
   const entries = await loadPrecacheEntries();
+  const entryUrls = new Set(entries.map((entry) => entry.url).filter(Boolean));
   const assetEntries = entries.filter((entry) => entry.url && entry.url.startsWith('assets/'));
+  const shellAssets = await loadShellAssetUrls();
+
+  if (entries.length < MIN_PRECACHE_ENTRY_COUNT) {
+    throw new Error(
+      `precache 條目異常偏少：目前 ${entries.length} 筆，預期至少 ${MIN_PRECACHE_ENTRY_COUNT} 筆。這通常代表 Workbox glob 注入失敗。`,
+    );
+  }
+
+  if (!entryUrls.has('index.html')) {
+    throw new Error('precache 缺少 index.html，冷啟動離線導覽將直接失敗。');
+  }
+
+  if (assetEntries.length === 0) {
+    throw new Error('precache 未包含任何 assets/* JS/CSS，代表應用 shell 無法離線冷啟動。');
+  }
+
+  const missingShellAssets = shellAssets.filter((assetUrl) => !entryUrls.has(assetUrl));
+  if (missingShellAssets.length > 0) {
+    throw new Error(
+      `precache 缺少首頁 shell 資產：${missingShellAssets.join(', ')}。這會造成離線冷啟動缺 JS/CSS。`,
+    );
+  }
 
   let hasError = false;
   for (const entry of assetEntries) {

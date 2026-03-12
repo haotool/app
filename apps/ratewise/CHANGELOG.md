@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.9.5
+
+### Patch Changes
+
+- 清理 PWA 更新與離線驗證技術債：waiting SW 接管後自動重載、啟動補熱資源改用獨立 cache、強化 precache 驗證器，並修正離線 E2E 對首次安裝 SW 的等待流程。
+
 ## 2.9.4
 
 ### Patch Changes
