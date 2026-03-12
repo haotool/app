@@ -101,6 +101,7 @@ export default defineConfig(() => {
           'src/hooks/useAppTheme.ts', // SSR-safe theme hook, requires browser APIs
           'src/stores/converterStore.ts', // Zustand store, integration-tested via E2E
           // PWA runtime 模組 - 依賴 Cache API / Storage API / Service Worker context
+          'src/sw.ts', // Service Worker，需 SW context（Workbox / Cache API / clients）
           'src/utils/pwaStorageManager.ts', // iOS Cache Persistence，需 Cache API + SW
           'src/utils/workbox-window.ts', // ESM wrapper，純 re-export 無邏輯
           'src/utils/react-helmet-async.ts', // ESM wrapper，純 re-export 無邏輯
