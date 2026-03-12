@@ -4,15 +4,23 @@
 
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-const BASE_URL = process.env.VERIFY_BASE_URL ?? 'https://app.haotool.org/';
+const VERIFY_SOURCE = process.env.VERIFY_PRECACHE_SOURCE ?? 'local';
+const LIVE_RATEWISE_BASE_URL = 'https://app.haotool.org/ratewise/';
+const LOCAL_RATEWISE_BASE_URL = 'http://127.0.0.1:4173/ratewise/';
+const BASE_URL = process.env.VERIFY_BASE_URL ?? getDefaultBaseUrl(VERIFY_SOURCE);
 const PROJECT_ROOT = process.cwd();
 const DIST_DIR = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist');
 const SW_PATH = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist/sw.js');
 const INDEX_HTML_PATH = path.resolve(DIST_DIR, 'index.html');
 const MIN_PRECACHE_ENTRY_COUNT = 20;
 
-function normalizeBase(url) {
+export function getDefaultBaseUrl(verifySource) {
+  return verifySource === 'live' ? LIVE_RATEWISE_BASE_URL : LOCAL_RATEWISE_BASE_URL;
+}
+
+export function normalizeBase(url) {
   if (!url.endsWith('/')) {
     return `${url}/`;
   }
@@ -21,10 +29,14 @@ function normalizeBase(url) {
 
 async function loadPrecacheEntries() {
   const swContent = await readFile(SW_PATH, 'utf-8');
+  return parsePrecacheEntries(swContent);
+}
+
+function parsePrecacheEntries(swContent) {
   const match = swContent.match(/precacheAndRoute\((\[.*?\])\)/s);
   const manifestSource = match?.[1] ?? extractInjectedManifest(swContent);
   if (!manifestSource) {
-    throw new Error('無法在 dist/sw.js 中找到 precache 清單，請先執行 pnpm build:ratewise');
+    throw new Error('無法找到 precache 清單。');
   }
 
   try {
@@ -39,6 +51,10 @@ async function loadPrecacheEntries() {
 
 async function loadShellAssetUrls() {
   const indexHtml = await readFile(INDEX_HTML_PATH, 'utf-8');
+  return parseShellAssetUrls(indexHtml);
+}
+
+export function parseShellAssetUrls(indexHtml) {
   const assets = new Set();
 
   for (const match of indexHtml.matchAll(/(?:src|href)="[^"]*?(assets\/[^"]+\.(?:js|css))"/g)) {
@@ -49,6 +65,29 @@ async function loadShellAssetUrls() {
   }
 
   return Array.from(assets).sort();
+}
+
+export function resolvePrecacheAssetUrl(assetUrl, base) {
+  return new URL(assetUrl.replace(/^\//, ''), normalizeBase(base)).toString();
+}
+
+async function loadLivePrecacheEntries(base) {
+  const swUrl = new URL('sw.js', base);
+  const response = await fetch(swUrl);
+  if (!response.ok) {
+    throw new Error(`無法取得 live sw.js: ${swUrl} (status: ${response.status})`);
+  }
+
+  return parsePrecacheEntries(await response.text());
+}
+
+async function loadLiveShellAssetUrls(base) {
+  const response = await fetch(base);
+  if (!response.ok) {
+    throw new Error(`無法取得 live index HTML: ${base} (status: ${response.status})`);
+  }
+
+  return parseShellAssetUrls(await response.text());
 }
 
 function extractInjectedManifest(swContent) {
@@ -111,13 +150,23 @@ async function probe(url) {
   }
 }
 
-async function main() {
+async function probeWithCacheBust(url) {
+  const busted = new URL(url);
+  busted.searchParams.set('__edge_probe__', Date.now().toString(36));
+  return probe(busted.toString());
+}
+
+export async function main() {
   const base = normalizeBase(BASE_URL);
   console.log(`🔍 VERIFY_BASE_URL = ${base}`);
-  const entries = await loadPrecacheEntries();
+  console.log(`🔍 VERIFY_PRECACHE_SOURCE = ${VERIFY_SOURCE}`);
+
+  const entries =
+    VERIFY_SOURCE === 'live' ? await loadLivePrecacheEntries(base) : await loadPrecacheEntries();
   const entryUrls = new Set(entries.map((entry) => entry.url).filter(Boolean));
   const assetEntries = entries.filter((entry) => entry.url && entry.url.startsWith('assets/'));
-  const shellAssets = await loadShellAssetUrls();
+  const shellAssets =
+    VERIFY_SOURCE === 'live' ? await loadLiveShellAssetUrls(base) : await loadShellAssetUrls();
 
   if (entries.length < MIN_PRECACHE_ENTRY_COUNT) {
     throw new Error(
@@ -142,13 +191,18 @@ async function main() {
 
   let hasError = false;
   for (const entry of assetEntries) {
-    const target = new URL(entry.url.replace(/^\//, ''), base).toString();
+    const target = resolvePrecacheAssetUrl(entry.url, base);
     const result = await probe(target);
     if (!result.ok) {
       hasError = true;
+      const busted = await probeWithCacheBust(target);
+      const staleEdge404 = result.status === 404 && busted.ok;
       console.error(`❌ ${target} 無法擷取 (status: ${result.status})`);
       if (result.message) {
         console.error(`   ↳ ${result.message}`);
+      }
+      if (staleEdge404) {
+        console.error('   ↳ 偵測到 stale edge 404：加 querystring 後可取得 200，請立即 purge CDN');
       }
     } else {
       console.log(`✅ ${target} (status: ${result.status})`);
@@ -163,7 +217,14 @@ async function main() {
   console.log('\n🎉 所有 precache 資產皆可成功取得');
 }
 
-main().catch((error) => {
-  console.error(`檢查過程發生錯誤: ${error instanceof Error ? error.message : String(error)}`);
-  process.exit(1);
-});
+const entryScript = process.argv[1];
+const isDirectExecution = entryScript
+  ? import.meta.url === pathToFileURL(path.resolve(entryScript)).href
+  : false;
+
+if (isDirectExecution) {
+  main().catch((error) => {
+    console.error(`檢查過程發生錯誤: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  });
+}

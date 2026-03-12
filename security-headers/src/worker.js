@@ -1,13 +1,14 @@
 /* global HTMLRewriter */
 
 /**
- * 安全標頭 Worker v4.1
+ * 安全標頭 Worker v4.2
  *
  * 本 Worker 僅處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策（例如 HSTS）由 Cloudflare Edge 管理；
  * Worker 專注於路由分層 CSP、CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v4.2: 缺檔靜態資產改回 no-store，避免 Cloudflare 邊緣保留 stale 404 造成 SW precache 安裝失敗
  * - v4.1: 統一所有 HTML profile 的 Cache-Control（no-cache, must-revalidate）；
  *         移除上游 Expires 雜訊；OG 圖片 Cache-Control 正規化，消除 Zeabur 上游重複 token
  * - v4.0: app.haotool.org/* 納入統一保護；RateWise 改為 nonce 型 CSP + 串流 HTMLRewriter；
@@ -18,7 +19,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script，避免以 regex 掃描 HTML 觸發 CodeQL `js/bad-tag-filter`
  */
 
-const SECURITY_POLICY_VERSION = '4.1';
+const SECURITY_POLICY_VERSION = '4.2';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -244,6 +245,10 @@ function isImmutableHashedAsset(pathname) {
 	return HASHED_ASSET_PATH.test(pathname);
 }
 
+function isStaticAssetPath(pathname) {
+	return pathname.includes('/assets/') || isImmutableHashedAsset(pathname);
+}
+
 function applyHtmlSecurityHeaders(response, url, profile, nonce) {
 	// Expires 由上游產生，與 Cache-Control 語義重疊，依 RFC 7234 §5.3 應以 Cache-Control 為準。
 	response.headers.delete('Expires');
@@ -369,6 +374,7 @@ export default {
 	async fetch(request) {
 		const url = new URL(request.url);
 		const isRatewisePath = url.pathname.startsWith('/ratewise/');
+		const isStaticAsset = isStaticAssetPath(url.pathname);
 
 		if (url.host === WWW_HOST) {
 			url.host = CANONICAL_ROOT_HOST;
@@ -391,7 +397,7 @@ export default {
 
 		const upstreamResponse = await fetch(request);
 		const contentType = upstreamResponse.headers.get('content-type') || '';
-		const isHTML = contentType.startsWith('text/html');
+		const isHTML = contentType.startsWith('text/html') && !isStaticAsset;
 		const isPublicShareAsset = isPublicShareAssetPath(url.pathname);
 
 		let response;
@@ -425,6 +431,13 @@ export default {
 			response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
 			response.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
 			response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+		} else if (isStaticAsset && upstreamResponse.status >= 400) {
+			// 部署切換期間若短暫命中缺檔，禁止 Cloudflare/瀏覽器保留 stale 404。
+			response.headers.delete('Expires');
+			response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+			response.headers.set('CDN-Cache-Control', 'no-store');
+			response.headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+			response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 		} else if (isRatewisePath && !isHTML) {
 			// ratewise 靜態資源保留 same-origin，避免被第三方站點嵌入。
 			response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');

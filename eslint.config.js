@@ -1,5 +1,6 @@
 // @ts-check
 import eslint from '@eslint/js';
+import { globalIgnores } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
@@ -7,9 +8,9 @@ import reactRefreshPlugin from 'eslint-plugin-react-refresh';
 import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
-  // 全域忽略設定
-  {
-    ignores: [
+  // 全域忽略設定：避免 `eslint .` 被本機 QA 暫存與 vendor 目錄污染。
+  globalIgnores(
+    [
       '**/node_modules/**',
       '**/dist/**',
       '**/build/**',
@@ -20,8 +21,11 @@ export default tseslint.config(
       '**/.claude/**',
       '**/.codex/**',
       '**/.gemini/**',
+      '**/.playwright-mcp/**',
       '**/.next/**',
       '**/.turbo/**',
+      '**/vendor/**',
+      '**/screenshots/**',
       '**/public/**',
       '**/playwright-report/**',
       '**/*.config.js',
@@ -34,7 +38,8 @@ export default tseslint.config(
       '**/tests/e2e/**', // E2E 測試使用獨立的 Playwright TypeScript 配置
       '**/playwright.config.ts', // Playwright 配置文件
     ],
-  },
+    'Local Workspace Ignores',
+  ),
 
   // ESLint 推薦規則
   eslint.configs.recommended,

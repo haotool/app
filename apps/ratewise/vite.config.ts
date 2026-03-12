@@ -443,7 +443,7 @@ export default defineConfig(({ mode }) => {
             // 將 react-router、底層 @remix-run/router 與 vite-react-ssg 維持在同一個 chunk，
             // 避免 router runtime 與 SSG runtime 互相跨 chunk 引用造成循環依賴警告。
             if (ROUTER_ECOSYSTEM_PACKAGES.some((pkg) => id.includes(pkg))) {
-              return 'vendor-router';
+              return 'vendor-router-runtime';
             }
 
             // Charts（重量級視覺化庫）

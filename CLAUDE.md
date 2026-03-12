@@ -214,6 +214,10 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 - app 清單 **必須**由 `discoverApps()` 自動發現；禁止在腳本或 workflow 硬編碼 app 名稱
 - 此腳本只負責 `200 / non200 / timeout` 資源可用性；`verify-all-apps.mjs` 保持 sitemap / robots / llms / 404 等語義驗證
 - `SEO Production Validation` workflow 的 `health-check` 應先跑資源可用性檢查，再跑語義檢查
+- RateWise 發版後必須額外執行 `VERIFY_PRECACHE_SOURCE=live node scripts/verify-precache-assets.mjs`
+- 若 live precache 驗證出現「原 URL 404，但 querystring 後可 200」，應判定為 Cloudflare stale edge 404，先 purge CDN 再視為正式站可用
+- RateWise release 若涉及正式站資產更新，必須先用 cache-busting probe 確認 `/ratewise/` 的 `app-version` 已切到目標版本，再執行 Cloudflare purge
+- RateWise Cloudflare purge 必須使用目標 URL + prefix（至少涵蓋 `/ratewise/`、`sw.js`、`registerSW.js`、`manifest.webmanifest`、`offline.html`、`assets`、`workbox-`、`static-loader-data-manifest`），purge 後立即重跑 live precache 驗證
 
 ## QA Artifacts & Screenshots（最佳實踐）
 
@@ -572,6 +576,8 @@ registerRoute(
 
 | 日期       | 版本 | 變更摘要                                                                                                                       |
 | ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-13 | v4.5 | 補充 RateWise release 邊緣同步規範：正式版版本探測後才可做 Cloudflare 定點 purge，且 purge 後必須立刻做 live precache 驗證     |
+| 2026-03-12 | v4.4 | 新增 RateWise live precache 驗證與 stale edge 404 判定規範，要求生產檢查補跑 live PWA 驗證                                     |
 | 2026-03-12 | v4.3 | 新增 SEO 生產資源可用性檢查規範：以 `app.config.mjs` 的 `resources.seoFiles` / `resources.images` 為 SSOT，自動探測並接入 CI   |
 | 2026-03-10 | v4.2 | 補充 lint-staged ignored file 治理：`eslint --fix --no-warn-ignored`，避免 e2e / ignored 檔誤擋 pre-commit                     |
 | 2026-03-10 | v4.1 | 新增 Troubleshooting #12-13（PWA COEP precache 失敗、版本撕裂 Load failed）與「程式碼註解風格」規範                            |
@@ -589,5 +595,5 @@ registerRoute(
 
 ---
 
-**最後更新**: 2026-03-12T12:00:00+0800
-**版本**: v4.3（新增 SEO 生產資源可用性檢查與 CI 整合規範）
+**最後更新**: 2026-03-13T00:20:00+0800
+**版本**: v4.5（補充 RateWise release 邊緣同步與定點 purge 驗證規範）

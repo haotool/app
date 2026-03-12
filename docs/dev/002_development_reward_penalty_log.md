@@ -1,8 +1,117 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-12T22:20:56+08:00
-> **當前總分**: 1153（初始分: 100）
+> **最後更新**: 2026-03-13T00:25:00+08:00
+> **當前總分**: 1162（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: improvement-ratewise-release-edge-sync-guard
+date: 2026-03-13
+title: RateWise release 補上正式版版本探測、定點 purge 與 live precache gate
+score: 3
+type: improvement
+content_type: troubleshooting
+scope: ratewise
+topics: [release, cloudflare, pwa, deployment, testing]
+keywords: [release-timing, targeted-purge, app-version-probe, stale-edge-404, live-precache-gate]
+aliases: [RateWise release edge sync guard, 正式版版本探測 purge, live precache gate]
+related_entries:
+[improvement-ratewise-live-precache-verifier-subpath-release, success-ratewise-stale-edge-404-offline-hotfix]
+summary: 進一步追 production 後確認，`stale edge 404` 的再發主因不是 service worker 邏輯，而是 `Release` workflow 在正式站新資產尚未就緒前就先做 Cloudflare purge，讓 edge 有機會先回填 404 並長時間保留。這次改為以 `app-version` cache-busting probe 等待 `/ratewise/` 真正切到目標版本，再做 URL/prefix 定點 purge，最後立即跑 live precache 驗證，將 release、CDN purge 與 PWA correctness 收斂成同一條閉環。
+root_cause:
+
+- 既有 `Release` workflow 對 `main` push 後立即 purge CDN，但 app 真正上線時間由外部部署系統決定，兩者沒有同步保證。
+- Cloudflare purge 使用 `purge_everything` 雖然粗暴，但沒有等待新 bundle 可取回；在錯誤時序下，edge 仍可能先抓到 404。
+- 手動 `purge-cdn-cache.sh` 的 `prefixes` 也長期使用完整 URL，而非 Cloudflare API 要求的 `host/path`，增加人工 hotfix 不一致風險。
+
+impact:
+
+- 即使本地 build、離線 E2E 與 CI 都通過，正式站仍可能因 edge 先回填 404 而繼續黑屏。
+- 事故修復需要再次人工 purge，顯示 release pipeline 缺少「正式站已就緒」這個必要門檻。
+- 若不把 purge 規則與 probe 規則變成 SSOT，下次一樣可能在人工與 CI 之間再次分裂。
+
+actions:
+
+- 新增 `scripts/ratewise-production-release.mjs`：提供 `app-version` probe、Cloudflare purge payload 與定點 purge 執行邏輯。
+- `.github/workflows/release.yml`：新增 `Detect RateWise release target`、`Wait for RateWise production deployment`、`Purge RateWise Cloudflare Cache`、`Verify RateWise live precache`，把等待正式版上線與 purge 後 live gate 接進 release。
+- `apps/ratewise/src/config/__tests__/ratewise-production-release.test.ts`：先用 TDD 鎖定版本探測 URL、`app-version` 解析與 Cloudflare payload 結構。
+- `scripts/purge-cdn-cache.sh`：同步修正 RateWise 手動 purge 規則，改 purge `/ratewise/` 與 `offline.html`，並把 Cloudflare `prefixes` 改成正確的 `host/path` 形式。
+- `AGENTS.md`、`CLAUDE.md`：同步新增 release 邊緣同步規範，避免日後再依賴口頭記憶。
+
+prevention:
+
+- RateWise 發版流程必須明確區分「Git commit 已進 main」與「正式站新 bundle 已可讀」；只有後者成立後才能 purge。
+- Cloudflare purge 對單一 app 應優先採 URL/prefix 精準清除，不再把 `purge_everything` 當成唯一默認方案。
+- release workflow 必須在 purge 後立即做 live precache 驗證，讓 stale edge 404 直接在 pipeline 暴露，而不是留到使用者離線才發現。
+
+verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/config/__tests__/ratewise-production-release.test.ts src/config/__tests__/verify-precache-assets.test.ts`
+- `node scripts/ratewise-production-release.mjs print-payload`
+- `gh run rerun 23007725466`（針對 `main@5d42d66a` 再做一次正式 purge，驗證目前 production stale edge 404 可被即時清除）
+- `VERIFY_PRECACHE_SOURCE=live node scripts/verify-precache-assets.mjs`
+
+references:
+
+- `.github/workflows/release.yml`
+- `scripts/ratewise-production-release.mjs`
+- `scripts/purge-cdn-cache.sh`
+- `apps/ratewise/src/config/__tests__/ratewise-production-release.test.ts`
+- Cloudflare Cache Purge 官方文件
+- Workbox / vite-plugin-pwa 官方更新流程文件
+
+---
+
+id: improvement-ratewise-live-precache-verifier-subpath-release
+date: 2026-03-12
+title: RateWise live precache 驗證器對齊子路徑 SSOT 並升版至 v2.9.6
+score: 2
+type: improvement
+content_type: troubleshooting
+scope: ratewise
+topics: [pwa, release, testing, ssot, deployment]
+keywords: [verify-precache, ratewise-subpath, changeset-version, live-validation, v2.9.6]
+aliases: [RateWise live verifier 修正, precache 子路徑 SSOT, v2.9.6 發版準備]
+related_entries:
+[success-ratewise-stale-edge-404-offline-hotfix, improvement-ratewise-pwa-update-offline-techdebt-cleanup]
+summary: 在 `stale edge 404` 熱修後，再補一個小但必要的驗證層修正：`verify-precache-assets.mjs` 預設 base 改為真正的 `/ratewise/` 子路徑，並匯出純函式加上回歸測試，避免 root path 假警報；同時以 Changesets 將 hotfix 升版為 `RateWise v2.9.6`，讓後續 PR / release 能直接把新 `sw.js` 與新 chunk URL 發到 production。
+root_cause:
+
+- `verify-precache-assets.mjs` 先前的預設 base 不是 `RateWise` 子路徑，若操作時未帶環境變數，容易把 root path 的結果誤當成 `/ratewise/` live 狀態。
+- 既有 hotfix commit 雖已換掉 poisoned chunk URL，但尚未正式升版，production 仍會繼續 precache 舊的 `sw.js` manifest。
+
+impact:
+
+- live precache 驗證結果更可信，後續 CI / 人工排障不會再被錯誤 base path 污染。
+- `2.9.6` 已完成版本號與 changelog 準備，合併後可直接進入正式 release 流程，把新的 chunk URL 送上 production。
+
+actions:
+
+- `scripts/verify-precache-assets.mjs`：依 `VERIFY_PRECACHE_SOURCE` 預設 `RateWise` 專用 base URL，並匯出 `getDefaultBaseUrl`、`parseShellAssetUrls`、`resolvePrecacheAssetUrl` 供測試使用。
+- `apps/ratewise/src/config/__tests__/verify-precache-assets.test.ts`：新增子路徑 base、asset URL 解析與 shell asset 抽取回歸測試。
+- `pnpm changeset version`：將 root 與 `@app/ratewise` 版本升到 `2.9.6`，同步 `CHANGELOG.md`。
+
+prevention:
+
+- 任何 production 驗證腳本若專屬於子路徑 app，預設 base URL 必須直接對齊該 app scope，不得再依賴人工口頭約定。
+- 修掉 production edge 問題後，必須把「真正換掉 poisoned URL 的新版本發版」視為事故收斂的一部分，不可只停在 branch hotfix。
+
+verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/config/__tests__/verify-precache-assets.test.ts src/config/__tests__/build-scripts.test.ts src/pwa-offline.test.ts`
+- `pnpm --filter @app/ratewise build`
+- `VERIFY_BASE_URL=http://127.0.0.1:4173/ratewise/ node scripts/verify-precache-assets.mjs`
+- `pnpm --filter @app/ratewise exec playwright test tests/e2e/offline-cold-start.spec.ts --project=offline-pwa-chromium`
+- `VERIFY_PRECACHE_SOURCE=live node scripts/verify-precache-assets.mjs`（預期仍對 production 舊 `sw.js` 的 4 個 stale edge 404 報錯，待本次 release 上線後消失）
+
+references:
+
+- `scripts/verify-precache-assets.mjs`
+- `apps/ratewise/src/config/__tests__/verify-precache-assets.test.ts`
+- `apps/ratewise/CHANGELOG.md`
+- `package.json`
+- `apps/ratewise/package.json`
 
 ---
 
@@ -67,6 +176,68 @@ references:
 - `apps/ratewise/tests/e2e/offline-pwa.spec.ts`
 - vite-plugin-pwa 官方 prompt update 指南
 - Workbox precaching 與 update lifecycle 官方文件
+
+---
+
+id: success-ratewise-stale-edge-404-offline-hotfix
+date: 2026-03-12
+title: RateWise 生產環境 stale edge 404 與離線冷啟動熱修
+score: 4
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [pwa, cloudflare, offline, deployment, testing]
+keywords: [stale-edge-404, precache-install, cloudflare-worker, cold-start, playwright]
+aliases: [CDN stale 404 熱修, RateWise 離線黑屏熱修, production offline hotfix]
+related_entries:
+[improvement-ratewise-pwa-update-offline-techdebt-cleanup, incident-production-verification-gap, incident-over-optimization-before-stability]
+summary: 正式站離線黑屏的直接根因不是 `prompt` 更新流程，而是 Cloudflare 邊緣保留了 4 個 precache 資產的 stale 404，讓 `sw.js` install 在 production 持續失敗。這次熱修先把 `security-headers` worker 升到 `v4.2`，讓缺檔靜態資產 404 一律 `no-store`，再用最小且有價值的程式碼改動換掉受污染的 chunk URL，並修正離線冷啟動 E2E 對 Playwright browser context 與 `/ratewise/` scope 的錯誤假設。
+root_cause:
+
+- 正式站 `sw.js` precache manifest 中有 4 個 `assets/*.js` URL 在 Cloudflare 邊緣被保留為 stale 404；同 URL 加 querystring 後可回 `200`，證明源站檔案存在但 edge 狀態錯誤。
+- 舊版 `security-headers` worker 對缺檔資產 404 未強制 `no-store`，部署切換期間的短暫缺檔有機會被 CDN 放大成長期故障。
+- `offline-cold-start.spec.ts` 先前用 `browser.newContext()` 模擬冷啟動，但 Playwright 的新 context 是全新 profile，不共享已暖機的 SW / Cache Storage；同時預設又打到 `/` 而非 `/ratewise/` scope，造成假陰性。
+
+impact:
+
+- 正式站使用者在飛航模式或無網路時無法完成 SW 安裝，冷啟動直接黑屏且沒有可用功能。
+- 本地與 CI 即使綠燈，也無法即時指出 production precache install 是被 edge stale 404 擋下。
+- 若不修正 worker 404 快取策略，未來任何部署切換仍可能再次重演同類事故。
+
+actions:
+
+- `security-headers/src/worker.js`：對 `ratewise/assets/*` 的 4xx 回應一律改成 `Cache-Control: no-store, no-cache, must-revalidate`，同步部署 Cloudflare worker `v4.2`。
+- `apps/ratewise/vite.config.ts`：將 router 生態系 chunk 名稱改為 `vendor-router-runtime`，直接換掉目前 poisoned 的 `vendor-router` URL。
+- `apps/ratewise/src/pages/UpdatePromptTest.tsx`、`apps/ratewise/src/pages/ColorSchemeComparison.tsx`、`apps/ratewise/src/components/Breadcrumb.tsx`：補上 `type="button"`、`aria-hidden` 與更穩定的 key/title，作為有實際價值的原子改動，同步換掉另外 3 個被污染 chunk URL。
+- `apps/ratewise/tests/e2e/offline-cold-start.spec.ts`：改用同一個 browser profile 的新 page 模擬真實冷啟動，並將預設 base path 對齊 `/ratewise/`。
+- `scripts/verify-precache-assets.mjs`、`seo-production.yml`、`AGENTS.md`、`CLAUDE.md`、`docs/PRODUCTION_DEPLOYMENT_CHECKLIST.md`：把 live precache 驗證與 stale edge 404 判定納入正式流程。
+
+prevention:
+
+- PWA 發版完成條件必須包含 live precache 驗證，不得只看本地 build 或 CI 單元測試。
+- CDN / edge 對 hashed asset 的 404 不能快取；否則 Service Worker install 會因單一資產失敗而整體失效。
+- E2E 若要驗證「冷啟動」，必須明確區分「同 profile 重開頁面」與「全新 profile 首次安裝」兩種情境。
+
+verification:
+
+- `curl -s --compressed https://app.haotool.org/ratewise/ -D - -o /dev/null | grep -i 'x-security-policy-version\\|cross-origin-embedder-policy\\|cache-control'`
+- `curl -s --compressed https://app.haotool.org/ratewise/assets/vendor-router-D21zu8CL.js -D - -o /dev/null | grep -i 'http/\\|cache-control\\|cloudflare-cdn-cache-control'`
+- `VERIFY_PRECACHE_SOURCE=live VERIFY_BASE_URL=https://app.haotool.org/ratewise/ node scripts/verify-precache-assets.mjs`
+- `pnpm --filter @app/ratewise exec vitest run src/config/__tests__/build-scripts.test.ts src/components/__tests__/Breadcrumb.test.tsx src/__tests__/securityHeadersWorker.test.ts`
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise exec playwright test tests/e2e/offline-cold-start.spec.ts --project=offline-pwa-chromium`
+- `pnpm --filter @app/ratewise exec playwright test tests/e2e/offline-pwa.spec.ts tests/e2e/offline-cold-start.spec.ts --project=offline-pwa-chromium`
+- `VERIFY_BASE_URL=http://127.0.0.1:4173/ratewise/ node scripts/verify-precache-assets.mjs`
+
+references:
+
+- `security-headers/src/worker.js`
+- `apps/ratewise/vite.config.ts`
+- `apps/ratewise/tests/e2e/offline-cold-start.spec.ts`
+- `scripts/verify-precache-assets.mjs`
+- Cloudflare Cache Purge / cache behavior 官方文件
+- Workbox precaching 官方文件
+- vite-plugin-pwa prompt update 官方文件
 
 ---
 
