@@ -1,8 +1,60 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-12T23:36:00+08:00
-> **當前總分**: 1157（初始分: 100）
+> **最後更新**: 2026-03-12T23:52:00+08:00
+> **當前總分**: 1159（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: improvement-ratewise-live-precache-verifier-subpath-release
+date: 2026-03-12
+title: RateWise live precache 驗證器對齊子路徑 SSOT 並升版至 v2.9.6
+score: 2
+type: improvement
+content_type: troubleshooting
+scope: ratewise
+topics: [pwa, release, testing, ssot, deployment]
+keywords: [verify-precache, ratewise-subpath, changeset-version, live-validation, v2.9.6]
+aliases: [RateWise live verifier 修正, precache 子路徑 SSOT, v2.9.6 發版準備]
+related_entries:
+[success-ratewise-stale-edge-404-offline-hotfix, improvement-ratewise-pwa-update-offline-techdebt-cleanup]
+summary: 在 `stale edge 404` 熱修後，再補一個小但必要的驗證層修正：`verify-precache-assets.mjs` 預設 base 改為真正的 `/ratewise/` 子路徑，並匯出純函式加上回歸測試，避免 root path 假警報；同時以 Changesets 將 hotfix 升版為 `RateWise v2.9.6`，讓後續 PR / release 能直接把新 `sw.js` 與新 chunk URL 發到 production。
+root_cause:
+
+- `verify-precache-assets.mjs` 先前的預設 base 不是 `RateWise` 子路徑，若操作時未帶環境變數，容易把 root path 的結果誤當成 `/ratewise/` live 狀態。
+- 既有 hotfix commit 雖已換掉 poisoned chunk URL，但尚未正式升版，production 仍會繼續 precache 舊的 `sw.js` manifest。
+
+impact:
+
+- live precache 驗證結果更可信，後續 CI / 人工排障不會再被錯誤 base path 污染。
+- `2.9.6` 已完成版本號與 changelog 準備，合併後可直接進入正式 release 流程，把新的 chunk URL 送上 production。
+
+actions:
+
+- `scripts/verify-precache-assets.mjs`：依 `VERIFY_PRECACHE_SOURCE` 預設 `RateWise` 專用 base URL，並匯出 `getDefaultBaseUrl`、`parseShellAssetUrls`、`resolvePrecacheAssetUrl` 供測試使用。
+- `apps/ratewise/src/config/__tests__/verify-precache-assets.test.ts`：新增子路徑 base、asset URL 解析與 shell asset 抽取回歸測試。
+- `pnpm changeset version`：將 root 與 `@app/ratewise` 版本升到 `2.9.6`，同步 `CHANGELOG.md`。
+
+prevention:
+
+- 任何 production 驗證腳本若專屬於子路徑 app，預設 base URL 必須直接對齊該 app scope，不得再依賴人工口頭約定。
+- 修掉 production edge 問題後，必須把「真正換掉 poisoned URL 的新版本發版」視為事故收斂的一部分，不可只停在 branch hotfix。
+
+verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/config/__tests__/verify-precache-assets.test.ts src/config/__tests__/build-scripts.test.ts src/pwa-offline.test.ts`
+- `pnpm --filter @app/ratewise build`
+- `VERIFY_BASE_URL=http://127.0.0.1:4173/ratewise/ node scripts/verify-precache-assets.mjs`
+- `pnpm --filter @app/ratewise exec playwright test tests/e2e/offline-cold-start.spec.ts --project=offline-pwa-chromium`
+- `VERIFY_PRECACHE_SOURCE=live node scripts/verify-precache-assets.mjs`（預期仍對 production 舊 `sw.js` 的 4 個 stale edge 404 報錯，待本次 release 上線後消失）
+
+references:
+
+- `scripts/verify-precache-assets.mjs`
+- `apps/ratewise/src/config/__tests__/verify-precache-assets.test.ts`
+- `apps/ratewise/CHANGELOG.md`
+- `package.json`
+- `apps/ratewise/package.json`
 
 ---
 

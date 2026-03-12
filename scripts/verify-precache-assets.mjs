@@ -4,16 +4,23 @@
 
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-const BASE_URL = process.env.VERIFY_BASE_URL ?? 'https://app.haotool.org/';
 const VERIFY_SOURCE = process.env.VERIFY_PRECACHE_SOURCE ?? 'local';
+const LIVE_RATEWISE_BASE_URL = 'https://app.haotool.org/ratewise/';
+const LOCAL_RATEWISE_BASE_URL = 'http://127.0.0.1:4173/ratewise/';
+const BASE_URL = process.env.VERIFY_BASE_URL ?? getDefaultBaseUrl(VERIFY_SOURCE);
 const PROJECT_ROOT = process.cwd();
 const DIST_DIR = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist');
 const SW_PATH = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist/sw.js');
 const INDEX_HTML_PATH = path.resolve(DIST_DIR, 'index.html');
 const MIN_PRECACHE_ENTRY_COUNT = 20;
 
-function normalizeBase(url) {
+export function getDefaultBaseUrl(verifySource) {
+  return verifySource === 'live' ? LIVE_RATEWISE_BASE_URL : LOCAL_RATEWISE_BASE_URL;
+}
+
+export function normalizeBase(url) {
   if (!url.endsWith('/')) {
     return `${url}/`;
   }
@@ -47,7 +54,7 @@ async function loadShellAssetUrls() {
   return parseShellAssetUrls(indexHtml);
 }
 
-function parseShellAssetUrls(indexHtml) {
+export function parseShellAssetUrls(indexHtml) {
   const assets = new Set();
 
   for (const match of indexHtml.matchAll(/(?:src|href)="[^"]*?(assets\/[^"]+\.(?:js|css))"/g)) {
@@ -58,6 +65,10 @@ function parseShellAssetUrls(indexHtml) {
   }
 
   return Array.from(assets).sort();
+}
+
+export function resolvePrecacheAssetUrl(assetUrl, base) {
+  return new URL(assetUrl.replace(/^\//, ''), normalizeBase(base)).toString();
 }
 
 async function loadLivePrecacheEntries(base) {
@@ -145,7 +156,7 @@ async function probeWithCacheBust(url) {
   return probe(busted.toString());
 }
 
-async function main() {
+export async function main() {
   const base = normalizeBase(BASE_URL);
   console.log(`🔍 VERIFY_BASE_URL = ${base}`);
   console.log(`🔍 VERIFY_PRECACHE_SOURCE = ${VERIFY_SOURCE}`);
@@ -180,7 +191,7 @@ async function main() {
 
   let hasError = false;
   for (const entry of assetEntries) {
-    const target = new URL(entry.url.replace(/^\//, ''), base).toString();
+    const target = resolvePrecacheAssetUrl(entry.url, base);
     const result = await probe(target);
     if (!result.ok) {
       hasError = true;
@@ -206,7 +217,14 @@ async function main() {
   console.log('\n🎉 所有 precache 資產皆可成功取得');
 }
 
-main().catch((error) => {
-  console.error(`檢查過程發生錯誤: ${error instanceof Error ? error.message : String(error)}`);
-  process.exit(1);
-});
+const entryScript = process.argv[1];
+const isDirectExecution = entryScript
+  ? import.meta.url === pathToFileURL(path.resolve(entryScript)).href
+  : false;
+
+if (isDirectExecution) {
+  main().catch((error) => {
+    console.error(`檢查過程發生錯誤: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  });
+}
