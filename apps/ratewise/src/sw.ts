@@ -369,7 +369,7 @@ registerRoute(
         maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
       }),
     ],
-    networkTimeoutSeconds: 2,
+    networkTimeoutSeconds: 0.5,
   }),
 );
 

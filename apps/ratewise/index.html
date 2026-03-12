@@ -583,7 +583,7 @@
     <script>
       (function () {
         'use strict';
-        var TIMEOUT_MS = 12000;
+        var TIMEOUT_MS = 5000;
         var RETRY_KEY = 'ratewise_cold_start_retry';
         var MAX_RETRIES = 1;
 
@@ -864,6 +864,26 @@
           clearRetry();
           return;
         }
+
+        // JS chunk 載入失敗即時偵測（capture phase）。
+        // script src 載入 error 時立即顯示診斷 UI，無需等待計時器。
+        window.addEventListener(
+          'error',
+          function (e) {
+            if (!hasSkeleton()) return;
+            var t = e && e.target;
+            if (
+              t &&
+              t.tagName === 'SCRIPT' &&
+              t.src &&
+              (t.src.indexOf('/assets/') !== -1 || t.src.endsWith('.js'))
+            ) {
+              clearTimeout(coldStartTimer);
+              showColdStartError();
+            }
+          },
+          true,
+        );
 
         var coldStartTimer = setTimeout(function () {
           if (hasSkeleton()) showColdStartError();

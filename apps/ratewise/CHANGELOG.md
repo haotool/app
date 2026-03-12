@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.9.4
+
+### Patch Changes
+
+- 修復 PWA 冷啟動黑屏長達 10+ 秒：新增 JS chunk 載入失敗即時偵測（script error 事件），並縮短冷啟動 timeout 從 12s → 5s；SW 導覽 NetworkFirst timeout 從 2s → 0.5s，大幅縮短 PWA 啟動畫面停留時間。
+
 ## 2.9.3
 
 ### Patch Changes
