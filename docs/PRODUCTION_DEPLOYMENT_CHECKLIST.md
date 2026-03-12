@@ -52,8 +52,8 @@ curl -I https://app.haotool.org/ratewise/index.html | grep -i cache-control
 # 驗證 30 天歷史資料完整性
 pnpm verify:history
 
-# 驗證 precache 資產在 CDN 上是否存在
-VERIFY_BASE_URL=https://app.haotool.org/ratewise/ pnpm verify:precache
+# 驗證 live sw.js / app shell / precache 資產在正式站是否全部可達
+VERIFY_PRECACHE_SOURCE=live VERIFY_BASE_URL=https://app.haotool.org/ratewise/ pnpm verify:precache
 ```
 
 ### 5. 清除 CDN 快取（可選但推薦）
@@ -129,6 +129,7 @@ navigator.serviceWorker.register(swUrl, {
 - `pnpm purge:cdn` 需要 Zeabur CLI 或 Cloudflare API Token，若未設定會以非 0 終止並列出需手動清除的 URL，避免誤判成功。
 - Cloudflare 版本會同時清除 `sw.js`、`registerSW.js`、`manifest.webmanifest`、`index.html` 與 `workbox-*` / `assets/` 前綴，確保符合 [web.dev Service Worker Lifecycle][ref:web.dev-service-worker:2025-11-09] 的零快取要求。
 - 若無法使用 API，請在 CDN 控制台依指示逐一清除。
+- 若 `verify:precache` 顯示「原 URL 404，但 querystring 後可 200」，表示 Cloudflare 邊緣保留了 stale 404；此時必須先 purge CDN，否則 `sw.js` install 會直接失敗。
 
 ### 歷史資料完整性驗證
 

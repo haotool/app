@@ -24,9 +24,10 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
       <ol className="flex items-center gap-2 text-sm text-text-muted flex-wrap">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
+          const itemKey = `${item.href}::${item.label}`;
 
           return (
-            <li key={`${item.href}-${index}`} className="flex items-center gap-2">
+            <li key={itemKey} className="flex items-center gap-2">
               {/* Separator */}
               {index > 0 && (
                 <ChevronRight
@@ -38,13 +39,14 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
               {/* Breadcrumb Item */}
               {isLast ? (
                 // Current Page - Not a link
-                <span className="font-medium text-text" aria-current="page">
+                <span className="font-medium text-text" aria-current="page" title={item.label}>
                   {item.label}
                 </span>
               ) : (
                 // Parent Pages - Links
                 <Link
                   to={item.href}
+                  title={item.label}
                   className="hover:text-primary transition-colors duration-200 hover:underline"
                 >
                   {item.label}

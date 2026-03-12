@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-12T22:20:56+08:00
-> **當前總分**: 1153（初始分: 100）
+> **最後更新**: 2026-03-12T23:36:00+08:00
+> **當前總分**: 1157（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -67,6 +67,68 @@ references:
 - `apps/ratewise/tests/e2e/offline-pwa.spec.ts`
 - vite-plugin-pwa 官方 prompt update 指南
 - Workbox precaching 與 update lifecycle 官方文件
+
+---
+
+id: success-ratewise-stale-edge-404-offline-hotfix
+date: 2026-03-12
+title: RateWise 生產環境 stale edge 404 與離線冷啟動熱修
+score: 4
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [pwa, cloudflare, offline, deployment, testing]
+keywords: [stale-edge-404, precache-install, cloudflare-worker, cold-start, playwright]
+aliases: [CDN stale 404 熱修, RateWise 離線黑屏熱修, production offline hotfix]
+related_entries:
+[improvement-ratewise-pwa-update-offline-techdebt-cleanup, incident-production-verification-gap, incident-over-optimization-before-stability]
+summary: 正式站離線黑屏的直接根因不是 `prompt` 更新流程，而是 Cloudflare 邊緣保留了 4 個 precache 資產的 stale 404，讓 `sw.js` install 在 production 持續失敗。這次熱修先把 `security-headers` worker 升到 `v4.2`，讓缺檔靜態資產 404 一律 `no-store`，再用最小且有價值的程式碼改動換掉受污染的 chunk URL，並修正離線冷啟動 E2E 對 Playwright browser context 與 `/ratewise/` scope 的錯誤假設。
+root_cause:
+
+- 正式站 `sw.js` precache manifest 中有 4 個 `assets/*.js` URL 在 Cloudflare 邊緣被保留為 stale 404；同 URL 加 querystring 後可回 `200`，證明源站檔案存在但 edge 狀態錯誤。
+- 舊版 `security-headers` worker 對缺檔資產 404 未強制 `no-store`，部署切換期間的短暫缺檔有機會被 CDN 放大成長期故障。
+- `offline-cold-start.spec.ts` 先前用 `browser.newContext()` 模擬冷啟動，但 Playwright 的新 context 是全新 profile，不共享已暖機的 SW / Cache Storage；同時預設又打到 `/` 而非 `/ratewise/` scope，造成假陰性。
+
+impact:
+
+- 正式站使用者在飛航模式或無網路時無法完成 SW 安裝，冷啟動直接黑屏且沒有可用功能。
+- 本地與 CI 即使綠燈，也無法即時指出 production precache install 是被 edge stale 404 擋下。
+- 若不修正 worker 404 快取策略，未來任何部署切換仍可能再次重演同類事故。
+
+actions:
+
+- `security-headers/src/worker.js`：對 `ratewise/assets/*` 的 4xx 回應一律改成 `Cache-Control: no-store, no-cache, must-revalidate`，同步部署 Cloudflare worker `v4.2`。
+- `apps/ratewise/vite.config.ts`：將 router 生態系 chunk 名稱改為 `vendor-router-runtime`，直接換掉目前 poisoned 的 `vendor-router` URL。
+- `apps/ratewise/src/pages/UpdatePromptTest.tsx`、`apps/ratewise/src/pages/ColorSchemeComparison.tsx`、`apps/ratewise/src/components/Breadcrumb.tsx`：補上 `type="button"`、`aria-hidden` 與更穩定的 key/title，作為有實際價值的原子改動，同步換掉另外 3 個被污染 chunk URL。
+- `apps/ratewise/tests/e2e/offline-cold-start.spec.ts`：改用同一個 browser profile 的新 page 模擬真實冷啟動，並將預設 base path 對齊 `/ratewise/`。
+- `scripts/verify-precache-assets.mjs`、`seo-production.yml`、`AGENTS.md`、`CLAUDE.md`、`docs/PRODUCTION_DEPLOYMENT_CHECKLIST.md`：把 live precache 驗證與 stale edge 404 判定納入正式流程。
+
+prevention:
+
+- PWA 發版完成條件必須包含 live precache 驗證，不得只看本地 build 或 CI 單元測試。
+- CDN / edge 對 hashed asset 的 404 不能快取；否則 Service Worker install 會因單一資產失敗而整體失效。
+- E2E 若要驗證「冷啟動」，必須明確區分「同 profile 重開頁面」與「全新 profile 首次安裝」兩種情境。
+
+verification:
+
+- `curl -s --compressed https://app.haotool.org/ratewise/ -D - -o /dev/null | grep -i 'x-security-policy-version\\|cross-origin-embedder-policy\\|cache-control'`
+- `curl -s --compressed https://app.haotool.org/ratewise/assets/vendor-router-D21zu8CL.js -D - -o /dev/null | grep -i 'http/\\|cache-control\\|cloudflare-cdn-cache-control'`
+- `VERIFY_PRECACHE_SOURCE=live VERIFY_BASE_URL=https://app.haotool.org/ratewise/ node scripts/verify-precache-assets.mjs`
+- `pnpm --filter @app/ratewise exec vitest run src/config/__tests__/build-scripts.test.ts src/components/__tests__/Breadcrumb.test.tsx src/__tests__/securityHeadersWorker.test.ts`
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise exec playwright test tests/e2e/offline-cold-start.spec.ts --project=offline-pwa-chromium`
+- `pnpm --filter @app/ratewise exec playwright test tests/e2e/offline-pwa.spec.ts tests/e2e/offline-cold-start.spec.ts --project=offline-pwa-chromium`
+- `VERIFY_BASE_URL=http://127.0.0.1:4173/ratewise/ node scripts/verify-precache-assets.mjs`
+
+references:
+
+- `security-headers/src/worker.js`
+- `apps/ratewise/vite.config.ts`
+- `apps/ratewise/tests/e2e/offline-cold-start.spec.ts`
+- `scripts/verify-precache-assets.mjs`
+- Cloudflare Cache Purge / cache behavior 官方文件
+- Workbox precaching 官方文件
+- vite-plugin-pwa prompt update 官方文件
 
 ---
 

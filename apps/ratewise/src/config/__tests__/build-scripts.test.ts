@@ -48,6 +48,7 @@ describe('ratewise build scripts', () => {
       "if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';",
     );
     expect(viteConfig).not.toContain("return 'vendor-libs';");
+    expect(viteConfig).toContain("return 'vendor-router-runtime';");
   });
 
   it('should not globally pin brace-expansion to the legacy 2.x API', async () => {

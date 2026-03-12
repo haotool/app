@@ -227,6 +227,29 @@ describe('security-headers worker', () => {
     expect(assetResponse.headers.get('cache-control')).toBe('max-age=31536000, public, immutable');
   });
 
+  it('RateWise 缺檔資產回傳 404 時必須 no-store，避免邊緣快取 stale 404', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response('<!doctype html><html><body>Not Found</body></html>', {
+        status: 404,
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+        },
+      }),
+    );
+
+    const response = await worker.fetch(
+      new Request('https://app.haotool.org/ratewise/assets/vendor-router-D21zu8CL.js'),
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get('cache-control')).toBe('no-store, no-cache, must-revalidate');
+    expect(response.headers.get('cdn-cache-control')).toBe('no-store');
+    expect(response.headers.get('cloudflare-cdn-cache-control')).toBe('no-store');
+    expect(response.headers.get('cross-origin-embedder-policy')).toBeNull();
+    expect(response.headers.get('cross-origin-opener-policy')).toBeNull();
+    expect(response.headers.get('cross-origin-resource-policy')).toBe('same-origin');
+  });
+
   it('Wrangler route 必須覆蓋整個 app.haotool.org', () => {
     const wranglerConfig = readFileSync(
       resolve(process.cwd(), '../../security-headers/wrangler.jsonc'),

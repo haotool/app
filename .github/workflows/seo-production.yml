@@ -70,6 +70,12 @@ jobs:
       - name: Run Required Resource Availability Check
         run: node scripts/verify-production-resources.mjs
 
+      - name: Run RateWise Live Precache Validation
+        run: |
+          VERIFY_PRECACHE_SOURCE=live \
+          VERIFY_BASE_URL="${{ env.RATEWISE_BASE_URL }}/" \
+          node scripts/verify-precache-assets.mjs
+
       - name: Run All Apps SEO Health Check
         run: node scripts/verify-all-apps.mjs
 

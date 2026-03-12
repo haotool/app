@@ -5,9 +5,13 @@
  * 方法：
  *   Phase 1 - 線上暖機：新 context 訪問頁面，等待 SW 完成 precache install。
  *   Phase 2 - 快取審計：列出所有 cache storage 條目（特別是 JS/CSS chunk 數量）。
- *   Phase 3 - 冷啟動離線：全新 context（無 SW）切至離線，模擬飛航模式冷啟動。
+ *   Phase 3 - 冷啟動離線：同一個 browser profile 開新頁，模擬飛航模式重新打開 app。
  *
  * 測試使用 offline-pwa-chromium project（serviceWorkers: 'allow'）。
+ *
+ * 注意：
+ * - Playwright 的 browser.newContext() 會建立全新的隔離 profile，不會共享已暖機的 SW/Cache Storage。
+ * - 真實 PWA 冷啟動應該保留同一個 browser profile，只是重新開啟頁面，因此 Phase 3 改用同一個 context。
  *
  * @see apps/ratewise/src/sw.ts - setCatchHandler L131-234
  * @see apps/ratewise/vite.config.ts - globPatterns L290-304
@@ -17,7 +21,8 @@
 import { test, expect } from '@playwright/test';
 
 const BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:4173';
-const BASE_PATH = process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '';
+const BASE_PATH =
+  process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise';
 const BASE = `${BASE_URL}${BASE_PATH}/`.replace(/\/+$/, '/');
 
 // precache 暖機等待時間（ms）
@@ -91,20 +96,14 @@ test.describe('飛航模式冷啟動診斷', () => {
     ).toBeGreaterThan(0);
     expect(cssUrls.length, '❌ 快取中無 CSS files').toBeGreaterThan(0);
 
-    await onlineCtx.close();
-
     // ======================================================================
-    // Phase 3：飛航模式冷啟動 - 全新 context，直接離線訪問
+    // Phase 3：飛航模式冷啟動 - 同一個 profile 開新頁，直接離線訪問
     // ======================================================================
-    console.log('\n[Phase 3] 飛航模式冷啟動（全新 context + 離線）');
+    console.log('\n[Phase 3] 飛航模式冷啟動（同一 profile + 新頁面 + 離線）');
 
-    // 注意：全新 context 意味著 SW 需重新安裝，但快取資料來自 shared storage
-    // Chromium 的 Cache Storage 是 origin-scoped，跨 context 可用
-    const offlineCtx = await browser.newContext({
-      offline: true,
-      serviceWorkers: 'allow',
-    });
-    const offlinePage = await offlineCtx.newPage();
+    await warmPage.close();
+    await onlineCtx.setOffline(true);
+    const offlinePage = await onlineCtx.newPage();
     const offlineErrors: string[] = [];
     const offlineConsole: string[] = [];
 
@@ -215,7 +214,7 @@ test.describe('飛航模式冷啟動診斷', () => {
 
     expect(hasLoadFailed, `Load failed 錯誤：${offlineErrors.join(', ')}`).toBe(false);
 
-    await offlineCtx.close();
+    await onlineCtx.close();
   });
 
   /**

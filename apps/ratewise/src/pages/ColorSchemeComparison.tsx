@@ -154,6 +154,7 @@ export default function ColorSchemeComparison() {
                     active:scale-[0.98]
                     transition-all duration-200
                   `}
+                  type="button"
                 >
                   馬上更新
                 </button>
@@ -169,6 +170,7 @@ export default function ColorSchemeComparison() {
                     active:scale-[0.98]
                     transition-all duration-200
                   `}
+                  type="button"
                 >
                   等等再說
                 </button>
@@ -183,9 +185,16 @@ export default function ColorSchemeComparison() {
                 hover:bg-white
                 transition-colors
               `}
+              type="button"
               aria-label="關閉通知"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
