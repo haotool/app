@@ -101,6 +101,48 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
     return;
   }
 
+  // 診斷資訊查詢：回傳 SW 狀態與快取清單，供冷啟動偵測器顯示詳情。
+  if (data?.type === 'GET_DIAGNOSTICS') {
+    event.waitUntil(
+      (async () => {
+        interface CacheInfo {
+          name: string;
+          count: number;
+        }
+        const cacheInfoList: CacheInfo[] = [];
+        try {
+          const cacheNames = await caches.keys();
+          for (const name of cacheNames) {
+            const cache = await caches.open(name);
+            const keys = await cache.keys();
+            cacheInfoList.push({ name, count: keys.length });
+          }
+        } catch {
+          // ignore cache enumeration errors
+        }
+        const msg = {
+          type: 'SW_DIAGNOSTICS',
+          data: {
+            scope: self.registration?.scope ?? '',
+            state: self.registration?.active
+              ? 'active'
+              : self.registration?.waiting
+                ? 'waiting'
+                : self.registration?.installing
+                  ? 'installing'
+                  : 'none',
+            caches: cacheInfoList,
+          },
+        };
+        const clients = await self.clients.matchAll({ type: 'window' });
+        for (const client of clients) {
+          client.postMessage(msg);
+        }
+      })(),
+    );
+    return;
+  }
+
   if (data?.type !== 'FORCE_HARD_RESET') return;
 
   event.waitUntil(
@@ -126,6 +168,81 @@ registerRoute(
   ({ url }: { url: URL }) => url.pathname.endsWith('/__network_probe__'),
   new NetworkOnly(),
 );
+
+/**
+ * 最終導覽回退 HTML。
+ *
+ * 當所有快取查找均失敗時，回傳此 HTML 而非 Response.error()。
+ * Chrome PWA standalone 模式若收到 Response.error()，
+ * 會顯示原生「此連線並不安全」錯誤頁面，完全繞過應用程式 UI。
+ */
+function buildOfflineFallbackHtml(): string {
+  const css = [
+    'html,body{margin:0;min-height:100%;background:#f8fafc}',
+    'body{display:flex;align-items:center;justify-content:center;',
+    'font-family:system-ui,-apple-system,sans-serif;padding:2rem;text-align:center}',
+    '.c{max-width:18rem}',
+    'h1{font-size:1.125rem;font-weight:700;color:#1e293b;margin:0 0 .5rem}',
+    'p{font-size:.875rem;color:#64748b;line-height:1.6;margin:0 0 1.25rem}',
+    '.r{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}',
+    '.btn{padding:.625rem 1.5rem;border:none;border-radius:9999px;',
+    'font-size:.875rem;font-weight:600;cursor:pointer;margin:.125rem}',
+    '.p{background:#8B5CF6;color:#fff}',
+    '.s{background:transparent;color:#64748b;border:1px solid #cbd5e1;font-size:.8rem}',
+    'details{margin-top:.75rem;font-size:.75rem;color:#94a3b8;text-align:left}',
+    'summary{cursor:pointer;text-align:center;padding:.25rem;',
+    '-webkit-user-select:none;user-select:none}',
+    'pre{white-space:pre-wrap;word-break:break-all;background:#f1f5f9;',
+    'padding:.75rem;border-radius:.5rem;font-size:.7rem;color:#475569;margin:.5rem 0}',
+  ].join('');
+
+  // 診斷腳本（非同步收集 SW / cache 狀態並更新 pre#d）
+  const script = [
+    '(async function(){',
+    'var L=[];',
+    'L.push("\\u23f0 "+new Date().toLocaleTimeString("zh-TW"));',
+    'L.push("\\ud83c\\udf10 \\u7db2\\u8def: "+(navigator.onLine?"\\u5728\\u7dda":"\\u96e2\\u7dda"));',
+    'try{',
+    'var r=await navigator.serviceWorker.getRegistration();',
+    'L.push("\\u2699\\ufe0f SW: "+(r?(r.active?"active":r.waiting?"waiting":r.installing?"installing":"\\u7121 worker"):"\\u672a\\u8a3b\\u518a"));',
+    'if(r)L.push("\\ud83c\\udfae \\u63a7\\u5236: "+(navigator.serviceWorker.controller?"\\u6709":"\\u7121"));',
+    '}catch(e){L.push("\\u2699\\ufe0f SW: "+String(e));}',
+    'try{',
+    'var ks=await caches.keys();var tot=0;var det=[];',
+    'for(var i=0;i<ks.length;i++){var c=await caches.open(ks[i]);var en=await c.keys();tot+=en.length;det.push("  "+ks[i].replace("workbox-precache-v2-","pc-").slice(-42)+": "+en.length);}',
+    'L.push("\\ud83d\\udce6 \\u5feb\\u53d6: "+ks.length+" \\u500b / "+tot+" \\u9805");',
+    'for(var j=0;j<det.length;j++)L.push(det[j]);',
+    '}catch(e){L.push("\\ud83d\\udce6 \\u5feb\\u53d6: "+String(e));}',
+    'document.getElementById("d").textContent=L.join("\\n");',
+    '})();',
+    // 清除快取按鈕
+    'document.getElementById("cr").addEventListener("click",async function(){',
+    'this.disabled=true;this.textContent="\\u6e05\\u9664\\u4e2d\\u2026";',
+    'try{var ks=await caches.keys();await Promise.all(ks.map(function(n){return caches.delete(n);}));}catch(e){}',
+    'location.reload();',
+    '});',
+  ].join('');
+
+  return [
+    '<!doctype html><html lang="zh-TW"><head>',
+    '<meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width,initial-scale=1">',
+    '<title>RateWise \u2014 \u96e2\u7dda</title>',
+    `<style>${css}</style>`,
+    '</head><body><div class="c">',
+    '<p style="font-size:2.5rem;margin:0 0 1rem">\ud83d\udce1</p>',
+    '<h1>\u7121\u6cd5\u8f09\u5165\u61c9\u7528\u7a0b\u5f0f</h1>',
+    '<p>PWA \u5feb\u53d6\u8cc7\u6e90\u4e0d\u5b8c\u6574\u6216\u5df2\u904e\u671f\uff0c\u8acb\u9023\u7dda\u5f8c\u91cd\u65b0\u958b\u555f\u3002</p>',
+    '<div class="r">',
+    '<button class="btn p" onclick="location.reload()">\u91cd\u65b0\u8f09\u5165</button>',
+    '<button class="btn s" id="cr">\u6e05\u9664\u5feb\u53d6\u4e26\u91cd\u8f09</button>',
+    '</div>',
+    '<details><summary>\ud83d\udcca \u8a3a\u65b7\u8a73\u60c5</summary>',
+    '<pre id="d">\u6536\u96c6\u4e2d\u2026</pre></details>',
+    `<script>${script}</` + `script>`,
+    '</div></body></html>',
+  ].join('\n');
+}
 
 // 導覽請求失敗離線回退：runtime cache → precache index.html → offline.html。
 setCatchHandler(async ({ event, request }): Promise<Response> => {
@@ -218,7 +335,7 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   try {
     const scope = self.registration?.scope;
     if (!scope || typeof scope !== 'string' || scope.trim() === '') {
-      return Response.error();
+      throw new Error('Invalid scope');
     }
 
     const offlineUrl = new URL('offline.html', scope).href;
@@ -230,7 +347,13 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
     console.error('[SW] Offline URL construction failed:', error);
   }
 
-  return Response.error();
+  // 最終安全網：回傳內嵌離線提示 HTML，絕不對導覽請求回傳 Response.error()。
+  // Chrome PWA standalone 模式若收到 Response.error()，
+  // 會顯示原生「此連線並不安全」錯誤頁面，完全繞過應用程式 UI。
+  console.warn('[SW] All cache lookups failed; serving inline offline fallback HTML');
+  return new Response(buildOfflineFallbackHtml(), {
+    headers: { 'Content-Type': 'text/html;charset=utf-8' },
+  });
 });
 
 // 導覽請求（HTML）：NetworkFirst，2 秒 timeout 後回落快取。

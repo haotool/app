@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.9.3
+
+### Patch Changes
+
+- 修復 PWA 冷啟動導覽回退：SW setCatchHandler 對 navigate 請求改回傳 inline HTML（而非 Response.error()），防止 Chrome 顯示原生「此連線並不安全」錯誤頁；新增多層診斷資訊（網路、SW 狀態、快取清單）與「清除快取並重載」按鈕。
+
 ## 2.9.2
 
 ### Patch Changes

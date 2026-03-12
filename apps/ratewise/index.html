@@ -578,11 +578,11 @@
       </div>
     </div>
     <script type="module" data-cfasync="false" src="./src/main.tsx"></script>
-    <!-- 冷啟動失效偵測：JS 模組無法載入時（離線 + 快取損壞）顯示有意義的錯誤訊息。 -->
+    <!-- 冷啟動失效偵測：JS 模組無法載入時顯示多層診斷錯誤 UI。
+         診斷層：網路狀態、SW 狀態、快取數量；提供「清除快取並重載」功能。 -->
     <script>
       (function () {
         'use strict';
-        // 12 秒後若骨架屏仍存在，視為 React 掛載失敗（JS chunk 載入失敗）。
         var TIMEOUT_MS = 12000;
         var RETRY_KEY = 'ratewise_cold_start_retry';
         var MAX_RETRIES = 1;
@@ -604,10 +604,136 @@
             sessionStorage.removeItem(RETRY_KEY);
           } catch {}
         }
-
         function hasSkeleton() {
           var root = document.getElementById('root');
           return root ? !!root.querySelector('.skeleton-page') : false;
+        }
+
+        // 非同步收集診斷資訊：網路 / SW 狀態 / 快取數量。
+        function collectDiagnostics() {
+          var lines = ['\u23f0 ' + new Date().toLocaleTimeString('zh-TW')];
+          lines.push(
+            '\ud83c\udf10 \u7db2\u8def: ' + (navigator.onLine ? '\u5728\u7dda' : '\u96e2\u7dda'),
+          );
+
+          var swP =
+            'serviceWorker' in navigator
+              ? navigator.serviceWorker
+                  .getRegistration()
+                  .then(function (reg) {
+                    if (reg) {
+                      var st = reg.active
+                        ? 'active'
+                        : reg.waiting
+                          ? 'waiting'
+                          : reg.installing
+                            ? 'installing'
+                            : '\u7121 worker';
+                      lines.push('\u2699\ufe0f SW: ' + st);
+                      lines.push(
+                        '\ud83c\udfae \u63a7\u5236: ' +
+                          (navigator.serviceWorker.controller
+                            ? '\u6709'
+                            : '\u7121\uff08\u9801\u9762\u9700\u91cd\u8f09\uff09'),
+                      );
+                    } else {
+                      lines.push('\u2699\ufe0f SW: \u672a\u8a3b\u518a');
+                    }
+                  })
+                  .catch(function (e) {
+                    lines.push('\u2699\ufe0f SW: ' + String(e));
+                  })
+              : (lines.push('\u2699\ufe0f SW: \u4e0d\u652f\u63f4'), Promise.resolve());
+
+          var cacheP =
+            'caches' in window
+              ? caches
+                  .keys()
+                  .then(function (keys) {
+                    return Promise.all(
+                      keys.map(function (name) {
+                        return caches.open(name).then(function (c) {
+                          return c.keys().then(function (es) {
+                            return { name: name, count: es.length };
+                          });
+                        });
+                      }),
+                    );
+                  })
+                  .then(function (list) {
+                    var total = list.reduce(function (s, c) {
+                      return s + c.count;
+                    }, 0);
+                    lines.push(
+                      '\ud83d\udce6 \u5feb\u53d6: ' +
+                        list.length +
+                        ' \u500b / ' +
+                        total +
+                        ' \u9805',
+                    );
+                    list.forEach(function (c) {
+                      lines.push(
+                        '  ' +
+                          c.name.replace('workbox-precache-v2-', 'pc-').slice(-42) +
+                          ': ' +
+                          c.count,
+                      );
+                    });
+                  })
+                  .catch(function (e) {
+                    lines.push('\ud83d\udce6 \u5feb\u53d6: ' + String(e));
+                  })
+              : (lines.push('\ud83d\udce6 \u5feb\u53d6: \u4e0d\u652f\u63f4'), Promise.resolve());
+
+          return Promise.all([swP, cacheP]).then(function () {
+            return lines;
+          });
+        }
+
+        // 清除 SW 快取後重載（優先通知 SW；fallback 直接清除）。
+        function hardResetAndReload() {
+          var doReload = function () {
+            window.location.reload();
+          };
+          function directClear() {
+            if ('caches' in window) {
+              caches
+                .keys()
+                .then(function (k) {
+                  return Promise.all(
+                    k.map(function (n) {
+                      return caches.delete(n);
+                    }),
+                  );
+                })
+                .then(doReload)
+                .catch(doReload);
+            } else {
+              doReload();
+            }
+          }
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker
+              .getRegistration()
+              .then(function (reg) {
+                var sw = reg && (reg.active || reg.installing || reg.waiting);
+                if (sw) {
+                  navigator.serviceWorker.addEventListener('message', function onMsg(e) {
+                    if (e.data && e.data.type === 'SW_HARD_RESET_DONE') {
+                      navigator.serviceWorker.removeEventListener('message', onMsg);
+                      doReload();
+                    }
+                  });
+                  sw.postMessage({ type: 'FORCE_HARD_RESET' });
+                  setTimeout(doReload, 3000);
+                } else {
+                  directClear();
+                }
+              })
+              .catch(directClear);
+          } else {
+            directClear();
+          }
         }
 
         function showColdStartError() {
@@ -617,14 +743,15 @@
           var isOnline = navigator.onLine !== false;
           var canRetry = isOnline && getRetryCount() < MAX_RETRIES;
 
+          // 外層容器
           var wrap = document.createElement('div');
           wrap.setAttribute('role', 'alert');
           wrap.setAttribute('aria-live', 'assertive');
           wrap.style.cssText =
             'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;' +
-            'justify-content:center;background:var(--sk-bg,#f8fafc);' +
+            'justify-content:center;overflow-y:auto;background:var(--sk-bg,#f8fafc);' +
             'font-family:system-ui,-apple-system,sans-serif;' +
-            'padding:2rem 1.5rem;text-align:center;gap:1rem;z-index:9999;';
+            'padding:2rem 1.5rem;text-align:center;gap:0.625rem;z-index:9999;';
 
           var icon = document.createElement('div');
           icon.style.cssText = 'font-size:2.5rem;line-height:1';
@@ -640,24 +767,45 @@
           desc.style.cssText =
             'font-size:0.875rem;color:var(--sk-text-muted,#64748b);max-width:280px;line-height:1.6';
           desc.textContent = isOnline
-            ? 'PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u53ef\u80fd\u5df2\u640d\u58de\u6216\u4e0d\u5b8c\u6574\u3002\u5efa\u8b70\u91cd\u65b0\u8f09\u5165\u4ee5\u4fee\u5fa9\u3002'
-            : '\u96e2\u7dda\u6a21\u5f0f\u4e0b PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\u3002\u8acb\u9023\u7dda\u5f8c\u91cd\u65b0\u958b\u555f\u61c9\u7528\u7a0b\u5f0f\u3002';
+            ? 'PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u53ef\u80fd\u5df2\u640d\u58de\u6216\u4e0d\u5b8c\u6574\u3002\u5efa\u8b70\u6e05\u9664\u5feb\u53d6\u5f8c\u91cd\u8a66\u3002'
+            : '\u96e2\u7dda\u6a21\u5f0f\u4e0b PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u8acb\u9023\u7dda\u5f8c\u91cd\u65b0\u958b\u555f\u3002';
 
           wrap.appendChild(icon);
           wrap.appendChild(title);
           wrap.appendChild(desc);
 
+          // 按鈕列
+          var CTA =
+            'padding:.625rem 1.75rem;background:#8B5CF6;color:#fff;border:none;' +
+            'border-radius:9999px;font-size:.875rem;font-weight:600;cursor:pointer;';
+          var SEC =
+            'padding:.5rem 1.25rem;background:transparent;color:var(--sk-text-muted,#64748b);' +
+            'border:1px solid var(--sk-border,#cbd5e1);border-radius:9999px;font-size:.8rem;cursor:pointer;';
+          var btnRow = document.createElement('div');
+          btnRow.style.cssText =
+            'display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:0.25rem';
+
           if (canRetry) {
-            var btn = document.createElement('button');
-            btn.textContent = '\u91cd\u65b0\u8f09\u5165';
-            btn.style.cssText =
-              'margin-top:0.25rem;padding:0.625rem 1.75rem;background:#8B5CF6;color:#fff;' +
-              'border:none;border-radius:9999px;font-size:0.875rem;font-weight:600;cursor:pointer;';
-            btn.addEventListener('click', function () {
+            var btnReload = document.createElement('button');
+            btnReload.textContent = '\u91cd\u65b0\u8f09\u5165';
+            btnReload.style.cssText = CTA;
+            btnReload.addEventListener('click', function () {
               markRetried();
               window.location.reload();
             });
-            wrap.appendChild(btn);
+            btnRow.appendChild(btnReload);
+          }
+
+          if (isOnline) {
+            var btnClear = document.createElement('button');
+            btnClear.textContent = '\u6e05\u9664\u5feb\u53d6\u4e26\u91cd\u8f09';
+            btnClear.style.cssText = SEC;
+            btnClear.addEventListener('click', function () {
+              btnClear.disabled = true;
+              btnClear.textContent = '\u6e05\u9664\u4e2d\u2026';
+              hardResetAndReload();
+            });
+            btnRow.appendChild(btnClear);
           }
 
           if (!isOnline) {
@@ -665,20 +813,50 @@
             hintOffline.style.cssText = 'font-size:0.75rem;color:var(--sk-text-muted,#94a3b8)';
             hintOffline.textContent =
               '\u9023\u7dda\u5f8c\u8acb\u91cd\u65b0\u958b\u555f\u61c9\u7528\u7a0b\u5f0f';
-            wrap.appendChild(hintOffline);
+            btnRow.appendChild(hintOffline);
           }
 
           if (!canRetry && isOnline) {
-            var hintRetry = document.createElement('div');
-            hintRetry.style.cssText =
+            var hintFailed = document.createElement('div');
+            hintFailed.style.cssText =
               'font-size:0.75rem;color:var(--sk-text-muted,#94a3b8);max-width:260px';
-            hintRetry.textContent =
+            hintFailed.textContent =
               '\u82e5\u554f\u984c\u6301\u7e8c\uff0c\u8acb\u81f3\u700f\u89bd\u5668\u8a2d\u5b9a\u6e05\u9664\u7db2\u7ad9\u5feb\u53d6\u5f8c\u91cd\u8a66\u3002';
-            wrap.appendChild(hintRetry);
+            btnRow.appendChild(hintFailed);
           }
+
+          wrap.appendChild(btnRow);
+
+          // 診斷詳情（折疊）
+          var diagId = 'cs-diag';
+          var details = document.createElement('details');
+          details.style.cssText =
+            'margin-top:0.5rem;text-align:left;font-size:.75rem;max-width:320px;width:100%;';
+          var summary = document.createElement('summary');
+          summary.style.cssText =
+            'cursor:pointer;text-align:center;padding:.25rem;' +
+            'color:var(--sk-text-muted,#94a3b8);-webkit-user-select:none;user-select:none';
+          summary.textContent = '\ud83d\udcca \u8a3a\u65b7\u8a73\u60c5';
+          var diagPre = document.createElement('pre');
+          diagPre.id = diagId;
+          diagPre.style.cssText =
+            'white-space:pre-wrap;word-break:break-all;margin:.5rem 0;' +
+            'background:var(--sk-surface,#fff);border:1px solid var(--sk-border,#e2e8f0);' +
+            'padding:.75rem;border-radius:.5rem;font-size:.7rem;' +
+            'color:var(--sk-text,#475569);text-align:left;line-height:1.6;';
+          diagPre.textContent = '\u6536\u96c6\u4e2d\u2026';
+          details.appendChild(summary);
+          details.appendChild(diagPre);
+          wrap.appendChild(details);
 
           root.innerHTML = '';
           root.appendChild(wrap);
+
+          // 非同步更新診斷面板
+          collectDiagnostics().then(function (lines) {
+            var el = document.getElementById(diagId);
+            if (el) el.textContent = lines.join('\n');
+          });
         }
 
         // SSG 已渲染（無骨架屏）：直接清除 retry 標記並結束。
