@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.9.7
+
+### Patch Changes
+
+- c4b79be: 修復 PWA 冷啟動黑屏三項根因：SW 自毀邏輯、skipWaiting 缺失、導覽 timeout 過短
+
 ## 2.9.6
 
 ### Patch Changes
