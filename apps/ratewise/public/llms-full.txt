@@ -2,7 +2,7 @@
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。
 
-Version: v2.9.4 (2026-03-12)
+Version: v2.9.5 (2026-03-12)
 Compact index: https://app.haotool.org/ratewise/llms.txt
 
 ---
@@ -209,7 +209,7 @@ GET https://app.haotool.org/ratewise/api/latest.json
 
 ```json
 {
-  "version": "2.9.4",
+  "version": "2.9.5",
   "description": "RateWise Exchange Rate API",
   "rateTypes": ["cash_buy", "cash_sell", "spot_buy", "spot_sell"],
   "supportedCurrencies": ["TWD", "USD", "JPY", "EUR", "GBP", "HKD", "CNY",

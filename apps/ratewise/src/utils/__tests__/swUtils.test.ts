@@ -224,23 +224,27 @@ describe('swUtils', () => {
     it('在線且有 waiting SW 時送出 SKIP_WAITING，回傳 true', async () => {
       setOnline(true);
       const postMessage = vi.fn();
+      const addEventListener = vi.fn();
 
       Object.defineProperty(window.navigator, 'serviceWorker', {
         writable: true,
         configurable: true,
         value: {
+          addEventListener,
+          removeEventListener: vi.fn(),
           getRegistration: vi.fn().mockResolvedValue({
             waiting: { postMessage },
             installing: null,
           }),
-          addEventListener: vi.fn(),
-          removeEventListener: vi.fn(),
         },
       });
 
       const result = await forceServiceWorkerUpdate();
 
       expect(result).toBe(true);
+      expect(addEventListener).toHaveBeenCalledWith('controllerchange', expect.any(Function), {
+        once: true,
+      });
       expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
     });
 

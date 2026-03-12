@@ -46,6 +46,7 @@ function UpdatePromptClient() {
   const [registrationFailed, setRegistrationFailed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoUpdateTriggeredRef = useRef(false);
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
   const {
@@ -113,6 +114,36 @@ function UpdatePromptClient() {
       }
     };
   }, [offlineReady, setOfflineReady, setNeedRefresh]);
+
+  useEffect(() => {
+    if (!needRefresh) {
+      autoUpdateTriggeredRef.current = false;
+      return;
+    }
+
+    if (
+      autoUpdateTriggeredRef.current ||
+      isUpdating ||
+      typeof navigator === 'undefined' ||
+      !navigator.onLine
+    ) {
+      return;
+    }
+
+    autoUpdateTriggeredRef.current = true;
+    setIsUpdating(true);
+    setRegistrationFailed(false);
+    setUpdateFailed(false);
+
+    void updateServiceWorker(true)
+      .catch(() => {
+        autoUpdateTriggeredRef.current = false;
+        setUpdateFailed(true);
+      })
+      .finally(() => {
+        setIsUpdating(false);
+      });
+  }, [isUpdating, needRefresh, updateServiceWorker]);
 
   const handleUpdate = async () => {
     setIsUpdating(true);
