@@ -1,6 +1,8 @@
 (function (globalScope) {
   var APP_VERSION = '__APP_VERSION__';
-  var RECOVERY_EPOCH = '2026-03-11-pwa-hotfix-1';
+  // RECOVERY_EPOCH 使用 APP_VERSION：每次部署自動觸發舊版用戶的快取清理。
+  // 舊的硬編碼 epoch 只觸發一次；改用版本號後，任何新版本均視為新 epoch。
+  var RECOVERY_EPOCH = APP_VERSION;
   var APP_VERSION_KEY = 'app_version';
   var VERSION_HISTORY_KEY = 'version_history';
   var RECOVERY_KEY = 'ratewise_pwa_recovery_epoch';

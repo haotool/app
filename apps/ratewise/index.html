@@ -140,6 +140,8 @@
         --sk-shimmer: #cbd5e1;
         --sk-accent: rgba(139, 92, 246, 0.15);
         --sk-accent-shimmer: rgba(139, 92, 246, 0.25);
+        --sk-text: #1e293b;
+        --sk-text-muted: #64748b;
       }
       [data-style='nitro'] {
         --sk-bg: #020617;
@@ -148,6 +150,8 @@
         --sk-shimmer: #334155;
         --sk-accent: rgba(14, 165, 233, 0.2);
         --sk-accent-shimmer: rgba(14, 165, 233, 0.35);
+        --sk-text: #f1f5f9;
+        --sk-text-muted: #94a3b8;
       }
       [data-style='kawaii'] {
         --sk-bg: #fffaf4;
@@ -156,6 +160,8 @@
         --sk-shimmer: #fbcfe8;
         --sk-accent: rgba(244, 114, 182, 0.15);
         --sk-accent-shimmer: rgba(244, 114, 182, 0.25);
+        --sk-text: #1e293b;
+        --sk-text-muted: #64748b;
       }
       [data-style='classic'] {
         --sk-bg: #fffafb;
@@ -164,6 +170,8 @@
         --sk-shimmer: #d6d3d1;
         --sk-accent: rgba(180, 83, 9, 0.12);
         --sk-accent-shimmer: rgba(180, 83, 9, 0.2);
+        --sk-text: #1c1917;
+        --sk-text-muted: #78716c;
       }
       [data-style='ocean'] {
         --sk-bg: #f0f9ff;
@@ -172,6 +180,8 @@
         --sk-shimmer: #7dd3fc;
         --sk-accent: rgba(6, 182, 212, 0.15);
         --sk-accent-shimmer: rgba(6, 182, 212, 0.25);
+        --sk-text: #0c4a6e;
+        --sk-text-muted: #0369a1;
       }
       [data-style='forest'] {
         --sk-bg: #f0fdf4;
@@ -180,6 +190,8 @@
         --sk-shimmer: #86efac;
         --sk-accent: rgba(22, 163, 74, 0.15);
         --sk-accent-shimmer: rgba(22, 163, 74, 0.25);
+        --sk-text: #14532d;
+        --sk-text-muted: #166534;
       }
       /* Skeleton page container */
       .skeleton-page {
@@ -566,5 +578,134 @@
       </div>
     </div>
     <script type="module" data-cfasync="false" src="./src/main.tsx"></script>
+    <!-- 冷啟動失效偵測：JS 模組無法載入時（離線 + 快取損壞）顯示有意義的錯誤訊息。 -->
+    <script>
+      (function () {
+        'use strict';
+        // 12 秒後若骨架屏仍存在，視為 React 掛載失敗（JS chunk 載入失敗）。
+        var TIMEOUT_MS = 12000;
+        var RETRY_KEY = 'ratewise_cold_start_retry';
+        var MAX_RETRIES = 1;
+
+        function getRetryCount() {
+          try {
+            return parseInt(sessionStorage.getItem(RETRY_KEY) || '0', 10);
+          } catch {
+            return 0;
+          }
+        }
+        function markRetried() {
+          try {
+            sessionStorage.setItem(RETRY_KEY, String(getRetryCount() + 1));
+          } catch {}
+        }
+        function clearRetry() {
+          try {
+            sessionStorage.removeItem(RETRY_KEY);
+          } catch {}
+        }
+
+        function hasSkeleton() {
+          var root = document.getElementById('root');
+          return root ? !!root.querySelector('.skeleton-page') : false;
+        }
+
+        function showColdStartError() {
+          var root = document.getElementById('root');
+          if (!root || !hasSkeleton()) return;
+
+          var isOnline = navigator.onLine !== false;
+          var canRetry = isOnline && getRetryCount() < MAX_RETRIES;
+
+          var wrap = document.createElement('div');
+          wrap.setAttribute('role', 'alert');
+          wrap.setAttribute('aria-live', 'assertive');
+          wrap.style.cssText =
+            'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;' +
+            'justify-content:center;background:var(--sk-bg,#f8fafc);' +
+            'font-family:system-ui,-apple-system,sans-serif;' +
+            'padding:2rem 1.5rem;text-align:center;gap:1rem;z-index:9999;';
+
+          var icon = document.createElement('div');
+          icon.style.cssText = 'font-size:2.5rem;line-height:1';
+          icon.textContent = isOnline ? '\u26a0\ufe0f' : '\ud83d\udce1';
+
+          var title = document.createElement('div');
+          title.style.cssText = 'font-size:1.125rem;font-weight:700;color:var(--sk-text,#1e293b)';
+          title.textContent = isOnline
+            ? '\u61c9\u7528\u7a0b\u5f0f\u8f09\u5165\u5931\u6557'
+            : '\u76ee\u524d\u8655\u65bc\u96e2\u7dda\u6a21\u5f0f';
+
+          var desc = document.createElement('div');
+          desc.style.cssText =
+            'font-size:0.875rem;color:var(--sk-text-muted,#64748b);max-width:280px;line-height:1.6';
+          desc.textContent = isOnline
+            ? 'PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u53ef\u80fd\u5df2\u640d\u58de\u6216\u4e0d\u5b8c\u6574\u3002\u5efa\u8b70\u91cd\u65b0\u8f09\u5165\u4ee5\u4fee\u5fa9\u3002'
+            : '\u96e2\u7dda\u6a21\u5f0f\u4e0b PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\u3002\u8acb\u9023\u7dda\u5f8c\u91cd\u65b0\u958b\u555f\u61c9\u7528\u7a0b\u5f0f\u3002';
+
+          wrap.appendChild(icon);
+          wrap.appendChild(title);
+          wrap.appendChild(desc);
+
+          if (canRetry) {
+            var btn = document.createElement('button');
+            btn.textContent = '\u91cd\u65b0\u8f09\u5165';
+            btn.style.cssText =
+              'margin-top:0.25rem;padding:0.625rem 1.75rem;background:#8B5CF6;color:#fff;' +
+              'border:none;border-radius:9999px;font-size:0.875rem;font-weight:600;cursor:pointer;';
+            btn.addEventListener('click', function () {
+              markRetried();
+              window.location.reload();
+            });
+            wrap.appendChild(btn);
+          }
+
+          if (!isOnline) {
+            var hintOffline = document.createElement('div');
+            hintOffline.style.cssText = 'font-size:0.75rem;color:var(--sk-text-muted,#94a3b8)';
+            hintOffline.textContent =
+              '\u9023\u7dda\u5f8c\u8acb\u91cd\u65b0\u958b\u555f\u61c9\u7528\u7a0b\u5f0f';
+            wrap.appendChild(hintOffline);
+          }
+
+          if (!canRetry && isOnline) {
+            var hintRetry = document.createElement('div');
+            hintRetry.style.cssText =
+              'font-size:0.75rem;color:var(--sk-text-muted,#94a3b8);max-width:260px';
+            hintRetry.textContent =
+              '\u82e5\u554f\u984c\u6301\u7e8c\uff0c\u8acb\u81f3\u700f\u89bd\u5668\u8a2d\u5b9a\u6e05\u9664\u7db2\u7ad9\u5feb\u53d6\u5f8c\u91cd\u8a66\u3002';
+            wrap.appendChild(hintRetry);
+          }
+
+          root.innerHTML = '';
+          root.appendChild(wrap);
+        }
+
+        // SSG 已渲染（無骨架屏）：直接清除 retry 標記並結束。
+        if (!hasSkeleton()) {
+          clearRetry();
+          return;
+        }
+
+        var coldStartTimer = setTimeout(function () {
+          if (hasSkeleton()) showColdStartError();
+        }, TIMEOUT_MS);
+
+        // MutationObserver：React 移除骨架屏時取消計時器。
+        if (typeof MutationObserver !== 'undefined') {
+          var rootEl = document.getElementById('root');
+          if (rootEl) {
+            var obs = new MutationObserver(function () {
+              if (!hasSkeleton()) {
+                clearTimeout(coldStartTimer);
+                clearRetry();
+                obs.disconnect();
+              }
+            });
+            obs.observe(rootEl, { childList: true });
+          }
+        }
+      })();
+    </script>
   </body>
 </html>
