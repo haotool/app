@@ -11,16 +11,20 @@ import { ExpirationPlugin } from 'workbox-expiration';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
-// precache 安裝失敗自動修復：首次安裝失敗時登出以允許重試；已有 active worker 則保留。
+// 安裝時立即接管：跳過 waiting 狀態，確保 SW 在離線冷啟動前已啟用。
+// 復原後（SW 解除 → 重新安裝）SW 若停留 waiting，離線冷啟動無法攔截請求 → 黑屏。
+// controllerchange → reload（main.tsx）作為版本撕裂防護。
+self.addEventListener('install', () => {
+  void self.skipWaiting();
+});
+
+// precache 安裝失敗靜默處理：不自毀，讓 SW 保持啟用以維持離線功能。
+// 移除原本的 unregister() 呼叫：自毀後無任何離線保護，下次冷啟動離線 = 黑屏。
+// CDN stale 404 等暫時性錯誤在下次部署後自然解決，不需要 SW 自殺。
 self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
   if (String(event.reason).includes('bad-precaching-response')) {
     event.preventDefault();
-    if (!self.registration.active) {
-      console.warn('[SW] 首次 precache 安裝失敗，自動登出以允許重新安裝');
-      void self.registration.unregister();
-    } else {
-      console.warn('[SW] 新版 precache 安裝失敗，保留現有 active worker，瀏覽器將自動重試');
-    }
+    console.warn('[SW] precache 安裝失敗，下次載入時將重試（不自毀）');
   }
 });
 
@@ -356,8 +360,9 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   });
 });
 
-// 導覽請求（HTML）：NetworkFirst，2 秒 timeout 後回落快取。
+// 導覽請求（HTML）：NetworkFirst，3 秒 timeout 後回落快取。
 // request.mode === 'navigate' 為 Workbox 官方建議，較 destination === 'document' 更精確。
+// 3s：行動網路 RTT 約 200-500ms，0.5s 過短易誤觸離線回退造成版本不符。
 registerRoute(
   ({ request }: { request: Request }) => request.mode === 'navigate',
   new NetworkFirst({
@@ -369,7 +374,7 @@ registerRoute(
         maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
       }),
     ],
-    networkTimeoutSeconds: 0.5,
+    networkTimeoutSeconds: 3,
   }),
 );
 
