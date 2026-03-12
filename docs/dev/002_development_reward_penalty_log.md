@@ -1,8 +1,65 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-12T23:52:00+08:00
-> **當前總分**: 1159（初始分: 100）
+> **最後更新**: 2026-03-13T00:25:00+08:00
+> **當前總分**: 1162（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: improvement-ratewise-release-edge-sync-guard
+date: 2026-03-13
+title: RateWise release 補上正式版版本探測、定點 purge 與 live precache gate
+score: 3
+type: improvement
+content_type: troubleshooting
+scope: ratewise
+topics: [release, cloudflare, pwa, deployment, testing]
+keywords: [release-timing, targeted-purge, app-version-probe, stale-edge-404, live-precache-gate]
+aliases: [RateWise release edge sync guard, 正式版版本探測 purge, live precache gate]
+related_entries:
+[improvement-ratewise-live-precache-verifier-subpath-release, success-ratewise-stale-edge-404-offline-hotfix]
+summary: 進一步追 production 後確認，`stale edge 404` 的再發主因不是 service worker 邏輯，而是 `Release` workflow 在正式站新資產尚未就緒前就先做 Cloudflare purge，讓 edge 有機會先回填 404 並長時間保留。這次改為以 `app-version` cache-busting probe 等待 `/ratewise/` 真正切到目標版本，再做 URL/prefix 定點 purge，最後立即跑 live precache 驗證，將 release、CDN purge 與 PWA correctness 收斂成同一條閉環。
+root_cause:
+
+- 既有 `Release` workflow 對 `main` push 後立即 purge CDN，但 app 真正上線時間由外部部署系統決定，兩者沒有同步保證。
+- Cloudflare purge 使用 `purge_everything` 雖然粗暴，但沒有等待新 bundle 可取回；在錯誤時序下，edge 仍可能先抓到 404。
+- 手動 `purge-cdn-cache.sh` 的 `prefixes` 也長期使用完整 URL，而非 Cloudflare API 要求的 `host/path`，增加人工 hotfix 不一致風險。
+
+impact:
+
+- 即使本地 build、離線 E2E 與 CI 都通過，正式站仍可能因 edge 先回填 404 而繼續黑屏。
+- 事故修復需要再次人工 purge，顯示 release pipeline 缺少「正式站已就緒」這個必要門檻。
+- 若不把 purge 規則與 probe 規則變成 SSOT，下次一樣可能在人工與 CI 之間再次分裂。
+
+actions:
+
+- 新增 `scripts/ratewise-production-release.mjs`：提供 `app-version` probe、Cloudflare purge payload 與定點 purge 執行邏輯。
+- `.github/workflows/release.yml`：新增 `Detect RateWise release target`、`Wait for RateWise production deployment`、`Purge RateWise Cloudflare Cache`、`Verify RateWise live precache`，把等待正式版上線與 purge 後 live gate 接進 release。
+- `apps/ratewise/src/config/__tests__/ratewise-production-release.test.ts`：先用 TDD 鎖定版本探測 URL、`app-version` 解析與 Cloudflare payload 結構。
+- `scripts/purge-cdn-cache.sh`：同步修正 RateWise 手動 purge 規則，改 purge `/ratewise/` 與 `offline.html`，並把 Cloudflare `prefixes` 改成正確的 `host/path` 形式。
+- `AGENTS.md`、`CLAUDE.md`：同步新增 release 邊緣同步規範，避免日後再依賴口頭記憶。
+
+prevention:
+
+- RateWise 發版流程必須明確區分「Git commit 已進 main」與「正式站新 bundle 已可讀」；只有後者成立後才能 purge。
+- Cloudflare purge 對單一 app 應優先採 URL/prefix 精準清除，不再把 `purge_everything` 當成唯一默認方案。
+- release workflow 必須在 purge 後立即做 live precache 驗證，讓 stale edge 404 直接在 pipeline 暴露，而不是留到使用者離線才發現。
+
+verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/config/__tests__/ratewise-production-release.test.ts src/config/__tests__/verify-precache-assets.test.ts`
+- `node scripts/ratewise-production-release.mjs print-payload`
+- `gh run rerun 23007725466`（針對 `main@5d42d66a` 再做一次正式 purge，驗證目前 production stale edge 404 可被即時清除）
+- `VERIFY_PRECACHE_SOURCE=live node scripts/verify-precache-assets.mjs`
+
+references:
+
+- `.github/workflows/release.yml`
+- `scripts/ratewise-production-release.mjs`
+- `scripts/purge-cdn-cache.sh`
+- `apps/ratewise/src/config/__tests__/ratewise-production-release.test.ts`
+- Cloudflare Cache Purge 官方文件
+- Workbox / vite-plugin-pwa 官方更新流程文件
 
 ---
 

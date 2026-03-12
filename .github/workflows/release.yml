@@ -80,6 +80,24 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Detect RateWise release target
+        id: ratewise_release
+        if: steps.detect_version.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          RATEWISE_VERSION=$(echo '${{ steps.detect_version.outputs.changed_apps }}' | node -e "
+            const apps = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
+            const ratewise = apps.find((app) => app.name === 'ratewise');
+            process.stdout.write(ratewise?.version ?? '');
+          ")
+
+          if [ -n "$RATEWISE_VERSION" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "version=$RATEWISE_VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create Release Pull Request
         id: changesets
         if: steps.check_changesets.outputs.has_changesets == 'true'
@@ -163,10 +181,37 @@ jobs:
           npm ci --prefix security-headers
           npx --prefix security-headers wrangler deploy --config security-headers/wrangler.jsonc
 
+      - name: Wait for RateWise production deployment
+        if: success() && steps.ratewise_release.outputs.changed == 'true'
+        env:
+          RATEWISE_RELEASE_ACTION: wait
+          RATEWISE_EXPECTED_VERSION: ${{ steps.ratewise_release.outputs.version }}
+        run: node scripts/ratewise-production-release.mjs
+
+      # RateWise 的 hashed assets 若在正式站尚未就緒前被 purge，Cloudflare 會先回填 404 並保留 stale edge。
+      # 因此必須等到正式站版本已更新，再做定點 purge 與 live precache 驗證。
+      - name: Purge RateWise Cloudflare Cache
+        if: success() && steps.ratewise_release.outputs.changed == 'true'
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_ZONE_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "⚠️ Cloudflare secrets not configured, skipping RateWise cache purge"
+            echo "To enable: Add CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN to repository secrets"
+            exit 0
+          fi
+
+          RATEWISE_RELEASE_ACTION=purge node scripts/ratewise-production-release.mjs
+
+      - name: Verify RateWise live precache
+        if: success() && steps.ratewise_release.outputs.changed == 'true'
+        run: VERIFY_PRECACHE_SOURCE=live node scripts/verify-precache-assets.mjs
+
       # Cloudflare CDN 快取清除
       # 參考: Context7 /websites/developers_cloudflare - Cache Purge API
       - name: Purge Cloudflare Cache
-        if: success()
+        if: success() && steps.ratewise_release.outputs.changed != 'true'
         env:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
