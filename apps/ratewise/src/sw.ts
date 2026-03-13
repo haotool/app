@@ -54,7 +54,15 @@ async function verifyAndRepairPrecache(): Promise<void> {
       const relUrl = typeof entry === 'string' ? entry : entry.url;
       if (!relUrl.endsWith('.js') && !relUrl.endsWith('.css')) return false;
       const fullUrl = new URL(relUrl, scope).href;
-      return !cachedUrls.has(fullUrl);
+      // 支援兩種快取鍵格式：
+      // 1. 有 content hash 的資源（string entry）→ bare URL（無 revision suffix）。
+      // 2. 有 revision 的資源（object entry）→ URL?__WB_REVISION__=hash。
+      if (cachedUrls.has(fullUrl)) return false;
+      if (typeof entry !== 'string' && entry.revision) {
+        const revUrl = `${fullUrl}?__WB_REVISION__=${entry.revision}`;
+        if (cachedUrls.has(revUrl)) return false;
+      }
+      return true;
     });
 
     if (missing.length === 0) {
@@ -66,10 +74,15 @@ async function verifyAndRepairPrecache(): Promise<void> {
       missing.map(async (entry) => {
         const relUrl = typeof entry === 'string' ? entry : entry.url;
         const fullUrl = new URL(relUrl, scope).href;
+        // 使用與 workbox-precache 相同的快取鍵格式，確保後續查詢一致。
+        const cacheKey =
+          typeof entry !== 'string' && entry.revision
+            ? `${fullUrl}?__WB_REVISION__=${entry.revision}`
+            : fullUrl;
         try {
           const response = await fetch(fullUrl, { cache: 'no-cache' });
           if (response.ok) {
-            await cache.put(fullUrl, response);
+            await cache.put(cacheKey, response);
           }
         } catch (err) {
           console.warn(`[SW] 修復失敗: ${fullUrl}`, err);
@@ -253,11 +266,20 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   const fetchEvent = event as FetchEvent;
   const req = request ?? fetchEvent.request;
 
-  // JS/CSS 離線回退：iOS cache eviction 後先嘗試全快取比對，避免 "Load failed" 崩潰。
+  // JS/CSS 離線回退：依序嘗試三種策略，避免 Response.error() 觸發黑屏。
+  // 1) 精確 URL 比對（static-resources cache 和 workbox-precache bare-URL 條目）。
+  // 2) 忽略 query string（workbox-precache revision-keyed 條目：?__WB_REVISION__=hash）。
+  // 3) precache controller 查詢（處理 URL 正規化與 precache manifest 對應）。
   if (req.destination === 'script' || req.destination === 'style') {
     try {
       const cached = await caches.match(req);
       if (cached) return cached;
+      // ignoreSearch 覆蓋 workbox-precache 使用 ?__WB_REVISION__= 作為快取鍵的情境。
+      const cachedIgnoreSearch = await caches.match(req, { ignoreSearch: true });
+      if (cachedIgnoreSearch) return cachedIgnoreSearch;
+      // matchPrecache 透過 precache controller 查詢，處理 URL 正規化。
+      const precachedResponse = await matchPrecache(req.url);
+      if (precachedResponse) return precachedResponse;
     } catch {
       // 忽略快取存取錯誤。
     }

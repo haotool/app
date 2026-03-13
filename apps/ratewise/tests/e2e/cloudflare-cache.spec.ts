@@ -136,6 +136,67 @@ test.describe('Cloudflare Production Headers', () => {
     });
   });
 
+  test.describe('PWA Precache Compatibility (COEP/CORP)', () => {
+    /**
+     * COEP 設在 JS/CSS sub-resource 上會阻止 SW 將其寫入 Cache Storage，
+     * 導致 precache 不完整 → 離線冷啟動黑屏。
+     * security-headers Worker v3.9 起已將 COEP 限制在 HTML 回應。
+     * 此測試確保不退化。
+     */
+    test('RateWise JS assets must NOT have COEP (blocks SW precache if set)', async ({
+      request,
+    }) => {
+      const indexResponse = await request.get(`${RATEWISE_URL}/`);
+      const indexHtml = await indexResponse.text();
+      const jsPath = extractAssetPath(indexHtml, 'js');
+
+      expect(jsPath).not.toBeNull();
+
+      const jsResponse = await request.get(`https://app.haotool.org${jsPath}`);
+
+      // COEP 不能出現在 JS 資源上。
+      expect(
+        jsResponse.headers()['cross-origin-embedder-policy'],
+        'JS asset 不得有 COEP：會阻止 SW precache 寫入 Cache Storage',
+      ).toBeUndefined();
+
+      // CORP: same-origin 允許 SW 快取此資源。
+      expect(jsResponse.headers()['cross-origin-resource-policy']).toBe('same-origin');
+    });
+
+    test('RateWise CSS assets must NOT have COEP', async ({ request }) => {
+      const indexResponse = await request.get(`${RATEWISE_URL}/`);
+      const indexHtml = await indexResponse.text();
+      const cssPath = extractAssetPath(indexHtml, 'css');
+
+      expect(cssPath).not.toBeNull();
+
+      const cssResponse = await request.get(`https://app.haotool.org${cssPath}`);
+
+      expect(
+        cssResponse.headers()['cross-origin-embedder-policy'],
+        'CSS asset 不得有 COEP：會阻止 SW precache 寫入 Cache Storage',
+      ).toBeUndefined();
+    });
+
+    test('RateWise HTML has COEP but sub-resources do not (isolation isolation boundary)', async ({
+      request,
+    }) => {
+      const htmlResponse = await request.get(`${RATEWISE_URL}/`);
+
+      // HTML 必須有 COEP（cross-origin isolation 要求）。
+      expect(htmlResponse.headers()['cross-origin-embedder-policy']).toBe('require-corp');
+
+      // JS sub-resource 不得有 COEP。
+      const indexHtml = await htmlResponse.text();
+      const jsPath = extractAssetPath(indexHtml, 'js');
+      if (jsPath) {
+        const jsResponse = await request.get(`https://app.haotool.org${jsPath}`);
+        expect(jsResponse.headers()['cross-origin-embedder-policy']).toBeUndefined();
+      }
+    });
+  });
+
   test.describe('Special Endpoints', () => {
     test('CSP report endpoint rejects GET but accepts POST', async ({ request }) => {
       const getResponse = await request.fetch(`${RATEWISE_URL}/csp-report`, { method: 'GET' });
