@@ -1,13 +1,15 @@
 /* global HTMLRewriter */
 
 /**
- * 安全標頭 Worker v4.2
+ * 安全標頭 Worker v4.3
  *
  * 本 Worker 僅處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策（例如 HSTS）由 Cloudflare Edge 管理；
  * Worker 專注於路由分層 CSP、CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v4.3: 修正上游 .webmanifest 雙重 Content-Type（application/octet-stream, application/manifest+json）
+ *         → 強制設為 application/manifest+json，避免 Safari 觸發下載而非解析 PWA manifest
  * - v4.2: 缺檔靜態資產改回 no-store，避免 Cloudflare 邊緣保留 stale 404 造成 SW precache 安裝失敗
  * - v4.1: 統一所有 HTML profile 的 Cache-Control（no-cache, must-revalidate）；
  *         移除上游 Expires 雜訊；OG 圖片 Cache-Control 正規化，消除 Zeabur 上游重複 token
@@ -19,7 +21,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script，避免以 regex 掃描 HTML 觸發 CodeQL `js/bad-tag-filter`
  */
 
-const SECURITY_POLICY_VERSION = '4.2';
+const SECURITY_POLICY_VERSION = '4.3';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -419,6 +421,9 @@ export default {
 
 			if (isImmutableHashedAsset(url.pathname)) {
 				response.headers.set('Cache-Control', 'max-age=31536000, public, immutable');
+			} else if (url.pathname.endsWith('.webmanifest')) {
+				// 修正上游雙重 Content-Type，確保瀏覽器正確解析為 PWA manifest 而非觸發下載。
+				response.headers.set('Content-Type', 'application/manifest+json');
 			}
 		}
 
