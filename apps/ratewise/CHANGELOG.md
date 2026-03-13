@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.9.8
+
+### Patch Changes
+
+- 修復 E2E 離線測試生產環境 timeout 問題，驗證 SW 離線就緒能力與快取完整性
+
 ## 2.9.7
 
 ### Patch Changes
