@@ -389,6 +389,8 @@ test.describe('Offline Indicator Display/Hide', () => {
 
 test.describe('Offline Functionality', () => {
   test.use({ serviceWorkers: 'allow' });
+  // 生產環境頁面載入 + SW 暖機需要較長時間，覆蓋預設 15s 全局 timeout。
+  test.setTimeout(60_000);
 
   test('should load cached exchange rates when offline', async ({ page }) => {
     const offlinePage = new OfflinePWAPage(page);
@@ -524,6 +526,7 @@ test.describe('Offline Functionality', () => {
 
 test.describe('Network Recovery Behavior', () => {
   test.use({ serviceWorkers: 'allow' });
+  test.setTimeout(60_000);
 
   test('should automatically refresh data when back online', async ({ page }) => {
     const offlinePage = new OfflinePWAPage(page);
@@ -642,6 +645,7 @@ test.describe('Network Recovery Behavior', () => {
 
 test.describe('Service Worker Offline Cache', () => {
   test.use({ serviceWorkers: 'allow' });
+  test.setTimeout(60_000);
 
   test('should serve cached assets when offline', async ({ page }) => {
     const offlinePage = new OfflinePWAPage(page);
@@ -816,6 +820,7 @@ test.describe('Service Worker Offline Cache', () => {
 
 test.describe('Hybrid Offline Detection Accuracy', () => {
   test.use({ serviceWorkers: 'allow' });
+  test.setTimeout(60_000);
 
   test.skip('should accurately detect offline state (not just navigator.onLine)', async ({
     page,
@@ -934,6 +939,7 @@ test.describe('Hybrid Offline Detection Accuracy', () => {
 
 test.describe('Offline State Persistence', () => {
   test.use({ serviceWorkers: 'allow' });
+  test.setTimeout(60_000);
 
   test('should preserve localStorage data when offline', async ({ page }) => {
     const offlinePage = new OfflinePWAPage(page);
@@ -1012,6 +1018,7 @@ test.describe('Offline State Persistence', () => {
 
 test.describe('Offline Visual Verification', () => {
   test.use({ serviceWorkers: 'allow' });
+  test.setTimeout(60_000);
 
   test.skip('should capture screenshot of offline indicator', async ({ page }) => {
     const offlinePage = new OfflinePWAPage(page);

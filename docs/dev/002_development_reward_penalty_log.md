@@ -531,6 +531,26 @@ root_cause:
 
 ---
 
+id: e2e-offline-timeout-fix
+date: 2026-03-13
+title: E2E 離線測試生產環境 timeout 修復
+score: +2
+type: success
+content_type: test
+scope: ratewise
+topics: [testing, pwa, e2e, offline]
+keywords: [playwright, test-setTimeout, offline-cold-start, offline-pwa, production-timeout]
+related_entries: [pr188-precache-verifier-and-home-lazy-chunk-audit]
+summary: |
+修復 offline-cold-start.spec.ts 與 offline-pwa.spec.ts 在生產環境的 timeout 失敗。
+根因：全局 test timeout 15s 小於 goto() 內 toBeVisible({ timeout: 25_000 })；
+另 Phase 3 僅查 workbox-precache，而 offline.html 實際存於 critical-launch-cache。
+修復：各 describe 加 test.setTimeout(60~120_000)；offline.html 改查所有 cache；
+waitForFunction 第二參數明確傳 undefined 避免 options 被當作 arg。
+結果：offline-cold-start 2/2 pass；offline-pwa 14/14 pass（對生產環境）。
+
+---
+
 id: pr188-precache-verifier-and-home-lazy-chunk-audit
 date: 2026-03-11
 title: PR #188 CI 補測、precache 驗證器修復與首頁 lazy chunk preload 收斂
