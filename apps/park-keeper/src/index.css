@@ -1,5 +1,15 @@
 @import 'tailwindcss';
 
+/**
+ * [fix:2026-03-14] vite-react-ssg v0.8.9 + React 19 hydration 不相容修正。
+ * React 19 hydrateRoot 未辨識 vite-react-ssg 的 SSG HTML 標記，改以 createRoot 在 #root
+ * 內新增第二個 div；SSG 的 div:first-child（min-h-screen）成為孤兒並佔滿視窗高度。
+ * 使用 CSS :has() 選擇器：一旦 React 的 div 出現，立即隱藏孤兒 SSG div。
+ */
+#root > div:first-child:has(+ div) {
+  display: none !important;
+}
+
 :root {
   --color-primary: #1e293b;
   --color-primary-rgb: 30, 41, 59;

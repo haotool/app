@@ -1,5 +1,15 @@
 # @app/park-keeper
 
+## 1.0.14
+
+### Patch Changes
+
+- fix(park-keeper): 修正 vite-react-ssg v0.8.9 + React 19 雙重渲染導致畫面空白
+
+  React 19 hydrateRoot 無法辨識 vite-react-ssg 的 SSG HTML 標記，改以 createRoot 在 #root 內新增第二個 div，
+  孤兒 SSG div（min-h-screen）覆蓋整個視窗，導致 React app 不可見。
+  使用 CSS :has() 選擇器在 React div 出現後立即隱藏孤兒 SSG div。
+
 ## 1.0.13
 
 ### Patch Changes
