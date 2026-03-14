@@ -40,15 +40,17 @@ export const createRoot = ViteReactSSG(
     // Client-side initialization
     if (isClient) {
       // GA4 延後初始化：load 後再注入腳本，避免 152KB GA 腳本與 LCP 關鍵資源競爭頻寬。
+      // 防快取競態：若頁面已在 load 前完成（BFCache、快速快取頁），直接呼叫。
       const gaId = import.meta.env.VITE_GA_ID ?? '';
-      window.addEventListener(
-        'load',
-        () => {
-          initGA(gaId);
-          trackPageview(window.location.pathname + window.location.search);
-        },
-        { once: true },
-      );
+      const initAnalytics = (): void => {
+        initGA(gaId);
+        trackPageview(window.location.pathname + window.location.search);
+      };
+      if (document.readyState === 'complete') {
+        initAnalytics();
+      } else {
+        window.addEventListener('load', initAnalytics, { once: true });
+      }
 
       // Log application startup
       logger.info('Application starting', {
