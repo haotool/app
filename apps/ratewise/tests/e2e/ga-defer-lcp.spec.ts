@@ -22,11 +22,35 @@
 
 import type { Page } from '@playwright/test';
 import { test, expect } from '@playwright/test';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:4173';
 const BASE_PATH =
   process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise';
 const BASE = `${BASE_URL}${BASE_PATH}/`.replace(/\/+$/, '/');
+const APP_ROOT = fileURLToPath(new URL('../../', import.meta.url));
+
+function detectBuiltGaRuntime(): boolean {
+  try {
+    const assetDir = join(APP_ROOT, 'dist', 'assets');
+    return readdirSync(assetDir)
+      .filter((file) => file.endsWith('.js'))
+      .some((file) => {
+        const content = readFileSync(join(assetDir, file), 'utf-8');
+        return (
+          content.includes('googletagmanager.com/gtag/js?id=') ||
+          content.includes('send_page_view') ||
+          content.includes('transport_type')
+        );
+      });
+  } catch {
+    return false;
+  }
+}
+
+const HAS_BUILT_GA_RUNTIME = detectBuiltGaRuntime();
 
 /** 共用：mock 匯率 API，避免外部依賴影響測試穩定性。 */
 async function mockRatesApi(page: Page): Promise<void> {
@@ -152,9 +176,10 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
     const analyticsState = await page.evaluate(() => {
       const configCalls = !window.dataLayer
         ? 0
-        : (window.dataLayer as unknown[]).filter(
-            (item) => Array.isArray(item) && (item as unknown[])[0] === 'config',
-          ).length;
+        : (window.dataLayer as unknown[]).filter((item) => {
+            if (!item || typeof item !== 'object') return false;
+            return (item as Record<number, unknown>)[0] === 'config';
+          }).length;
 
       return {
         readyState: document.readyState,
@@ -163,10 +188,11 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
     });
 
     expect(analyticsState.readyState, '實頁面 load 後 readyState 應為 complete').toBe('complete');
-    expect(
-      analyticsState.configCalls,
-      '同一頁面 GA config 不應重複呼叫超過 1 次',
-    ).toBeLessThanOrEqual(1);
+    if (HAS_BUILT_GA_RUNTIME) {
+      expect(analyticsState.configCalls, '內含 GA runtime 的建置應恰好送出 1 次 config').toBe(1);
+    } else {
+      expect(analyticsState.configCalls, '未包含 GA runtime 的建置不應送出 config').toBe(0);
+    }
 
     console.log(`[GA E2E] readyState after load: ${analyticsState.readyState}`);
     console.log(`[GA E2E] gtag config calls: ${String(analyticsState.configCalls)}`);
@@ -208,13 +234,12 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
     console.log(`[manifest E2E] Content-Type: ${contentType}`);
   });
 
-  test('GA4 dataLayer 不應在 load 事件前被初始化', async ({ page }) => {
-    // 在頁面最早期注入 spy，追蹤 dataLayer 初始化時機
-    let dataLayerInitBeforeLoad = false;
-
+  test('GA4 dataLayer 不應在 load 事件前的任何時刻被初始化', async ({ page }) => {
     await page.addInitScript(() => {
-      // 使用 MutationObserver 監控 head 中 script 的加入時機
+      const win = window as unknown as Record<string, unknown>;
       let loadFired = false;
+      let dataLayerValue: unknown[] | undefined;
+
       window.addEventListener(
         'load',
         () => {
@@ -223,32 +248,59 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
         { once: true },
       );
 
-      // 監控 dataLayer 的初始化
-      Object.defineProperty(window, '__e2e_dataLayerCheck', {
+      const trackDataLayerAssignment = (value: unknown): unknown[] | undefined => {
+        if (!Array.isArray(value)) return undefined;
+
+        const originalPush = value.push.bind(value);
+        value.push = (...args: unknown[]): number => {
+          if (!loadFired && args.length > 0) {
+            win['__e2e_dataLayerBeforeLoad'] = true;
+          }
+          return originalPush(...args);
+        };
+
+        if (!loadFired && value.length > 0) {
+          win['__e2e_dataLayerBeforeLoad'] = true;
+        }
+
+        return value;
+      };
+
+      win['__e2e_dataLayerBeforeLoad'] = false;
+      Object.defineProperty(window, 'dataLayer', {
+        configurable: true,
+        get: () => dataLayerValue,
+        set: (value: unknown) => {
+          dataLayerValue = trackDataLayerAssignment(value);
+        },
+      });
+
+      Object.defineProperty(window, '__e2e_dataLayerLoadFired', {
         get: () => loadFired,
         configurable: true,
       });
     });
 
     await mockRatesApi(page);
-
-    // 在 DOMContentLoaded 前捕捉 dataLayer 狀態
-    page.on('domcontentloaded', async () => {
-      dataLayerInitBeforeLoad = await page.evaluate(
-        () => typeof window.dataLayer !== 'undefined' && window.dataLayer.length > 0,
-      );
-    });
-
     await page.goto(BASE, { waitUntil: 'load' });
 
-    // 斷言：DOMContentLoaded 時 dataLayer 不應有任何事件
-    // （GA 是 load 後才初始化，dataLayer 在 DOMContentLoaded 時應為空或未定義）
-    expect(
-      dataLayerInitBeforeLoad,
-      'DOMContentLoaded 前 dataLayer 不應被初始化（GA 應延後至 load 後）',
-    ).toBe(false);
+    const dataLayerState = await page.evaluate(() => ({
+      loadFired: Boolean(
+        (window as unknown as Record<string, unknown>)['__e2e_dataLayerLoadFired'],
+      ),
+      initializedBeforeLoad: Boolean(
+        (window as unknown as Record<string, unknown>)['__e2e_dataLayerBeforeLoad'],
+      ),
+    }));
 
-    console.log(`[GA E2E] dataLayer init before load: ${String(dataLayerInitBeforeLoad)}`);
+    expect(dataLayerState.loadFired, '測試結束時 load 事件應已觸發').toBe(true);
+    expect(dataLayerState.initializedBeforeLoad, 'GA 不應在 load 前任何時刻初始化 dataLayer').toBe(
+      false,
+    );
+
+    console.log(
+      `[GA E2E] dataLayer init before load: ${String(dataLayerState.initializedBeforeLoad)}`,
+    );
   });
 });
 

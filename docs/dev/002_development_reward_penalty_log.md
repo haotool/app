@@ -1896,7 +1896,7 @@ topics: [testing, ci, performance, security, ssot]
 keywords: [playwright, codex-review, codeql, readyState, ga4, project-matrix]
 aliases: [GA E2E 假陽性修正, Playwright project 去重, GTM URL host check]
 related_entries: [codeql-test-html-regex-removal, regression-docs-tests-routes-sync]
-summary: PR #204 的 review 同時暴露三個層面問題：`ga-defer-lcp.spec.ts` 在 `chromium-mobile` 與 `offline-pwa-chromium` 重複執行、E2E 用 `about:blank` 的 `document.readyState` 假裝覆蓋實頁面競態，以及以 `includes('googletagmanager.com')` 判斷 script URL 造成 CodeQL `js/incomplete-url-substring-sanitization` 告警。修正方式是把 GA 排程抽成 `scheduleAfterPageLoad()` 單元測試覆蓋、E2E 改回實頁面不變式驗證、Playwright project 規則抽成常數並以 parsed URL host/path 精準判定 GTM script。
+summary: PR #204 的 review 先後暴露五個層面問題：`ga-defer-lcp.spec.ts` 在 `chromium-mobile` 與 `offline-pwa-chromium` 重複執行、E2E 用 `about:blank` 的 `document.readyState` 假裝覆蓋實頁面競態、以 `includes('googletagmanager.com')` 判斷 script URL 造成 CodeQL `js/incomplete-url-substring-sanitization` 告警、以 `Array.isArray()` 錯判 GA `IArguments` 結構導致 `config` 次數永遠算成 0，以及只在 `DOMContentLoaded` 取樣一次而漏掉 `DOMContentLoaded → load` 之間的初始化時窗。修正方式是把 GA 排程抽成 `scheduleAfterPageLoad()` 單元測試覆蓋、E2E 改回實頁面不變式驗證、Playwright project 規則抽成常數，並以 parsed URL host/path、連續監測 `dataLayer` 與正確的 `IArguments` 判讀收斂 review。
 root_cause:
 
 - 將「實頁面不變式」與「readyState 分支覆蓋」混在同一個 E2E 測試，導致 about:blank 假陽性
@@ -1913,11 +1913,15 @@ root_cause:
 - 在 `apps/ratewise/src/__tests__/analytics/ga.test.ts` 補 2 個單元測試，精準覆蓋 immediate / deferred 兩條路徑
 - 將 `apps/ratewise/playwright.config.ts` 的 ignore / match regex 抽成共用常數，確保 `ga-defer-lcp.spec.ts` 只由 `offline-pwa-chromium` 專案處理
 - 重寫 `apps/ratewise/tests/e2e/ga-defer-lcp.spec.ts` 的第二個測試，只驗證實頁面 `load` 後 `config` 不重複；同時把 GTM 偵測改為 `new URL(src)` 後比對 `hostname` 與 `pathname`
+- 將 GA `config` 次數判讀改成支援 `IArguments` 結構，並以實際 build artifact 是否包含 GA runtime 決定 `config` 期望值
+- 將 `dataLayer` 監測改為在 `load` 前整段期間持續追蹤，不再只於 `DOMContentLoaded` 單點取樣
   prevention:
 
 - 需要覆蓋競態分支時，優先抽出可測 helper 再用單元測試驗證，不要讓 E2E 承擔不可控時序模擬
 - Playwright 多 project 規則若共享同一批測試邊界，應集中成常數或函式，避免單點修正遺漏
 - 即使是 `classifications: [test]` 的 CodeQL alert，也應把判斷邏輯修到與正式程式同等嚴謹
+- 若測試要讀第三方 SDK 事件佇列，必須先確認資料結構是否為 `Array`、`IArguments` 或自訂類陣列，避免統計永遠為 0 的假綠燈
+- 宣稱「load 前／後」的測試必須覆蓋整段時窗，而不是只取一個生命週期時間點
   verification:
 
 - `pnpm --filter @app/ratewise test -- --run src/__tests__/analytics/ga.test.ts`
