@@ -3,6 +3,7 @@ import {
   getDistance,
   getBearing,
   estimateMagneticDeclination,
+  getDirectionInfo,
   useNavigation,
 } from '@app/park-keeper/hooks/useNavigation';
 import type { ParkingRecord } from '@app/park-keeper/types';
@@ -321,5 +322,105 @@ describe('useNavigation hook', () => {
     });
 
     expect(result.current.heading).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getDirectionInfo – 5-direction logic
+// ---------------------------------------------------------------------------
+describe('getDirectionInfo', () => {
+  it('returns straight for 0°', () => {
+    expect(getDirectionInfo(0).key).toBe('straight');
+  });
+
+  it('returns straight for 15° (within ±25° dead-band)', () => {
+    expect(getDirectionInfo(15).key).toBe('straight');
+  });
+
+  it('returns straight for 355° (near 360, within dead-band)', () => {
+    expect(getDirectionInfo(355).key).toBe('straight');
+  });
+
+  it('returns straight exactly at boundary 25°', () => {
+    expect(getDirectionInfo(25).key).toBe('straight');
+  });
+
+  it('returns straight exactly at boundary 335°', () => {
+    expect(getDirectionInfo(335).key).toBe('straight');
+  });
+
+  it('returns slight_right for 26°', () => {
+    expect(getDirectionInfo(26).key).toBe('slight_right');
+  });
+
+  it('returns slight_right for 45°', () => {
+    expect(getDirectionInfo(45).key).toBe('slight_right');
+  });
+
+  it('returns slight_right for 70°', () => {
+    expect(getDirectionInfo(70).key).toBe('slight_right');
+  });
+
+  it('returns turn_right for 71°', () => {
+    expect(getDirectionInfo(71).key).toBe('turn_right');
+  });
+
+  it('returns turn_right for 120°', () => {
+    expect(getDirectionInfo(120).key).toBe('turn_right');
+  });
+
+  it('returns turn_right for 180°', () => {
+    expect(getDirectionInfo(180).key).toBe('turn_right');
+  });
+
+  it('returns turn_left for 181°', () => {
+    expect(getDirectionInfo(181).key).toBe('turn_left');
+  });
+
+  it('returns turn_left for 240°', () => {
+    expect(getDirectionInfo(240).key).toBe('turn_left');
+  });
+
+  it('returns turn_left for 290°', () => {
+    expect(getDirectionInfo(290).key).toBe('turn_left');
+  });
+
+  it('returns slight_left for 291°', () => {
+    expect(getDirectionInfo(291).key).toBe('slight_left');
+  });
+
+  it('returns slight_left for 310°', () => {
+    expect(getDirectionInfo(310).key).toBe('slight_left');
+  });
+
+  it('returns slight_left for 334°', () => {
+    expect(getDirectionInfo(334).key).toBe('slight_left');
+  });
+
+  it('normalizes values > 360°', () => {
+    expect(getDirectionInfo(360).key).toBe('straight');
+    expect(getDirectionInfo(375).key).toBe('straight'); // 375 % 360 = 15
+    expect(getDirectionInfo(390).key).toBe('slight_right'); // 390 % 360 = 30
+  });
+
+  it('normalizes negative values', () => {
+    expect(getDirectionInfo(-10).key).toBe('straight'); // -10 → 350
+    expect(getDirectionInfo(-45).key).toBe('slight_left'); // -45 → 315
+  });
+
+  it('returns correct i18nKey for each direction', () => {
+    expect(getDirectionInfo(0).i18nKey).toBe('nav.straight');
+    expect(getDirectionInfo(45).i18nKey).toBe('nav.slight_right');
+    expect(getDirectionInfo(120).i18nKey).toBe('nav.turn_right');
+    expect(getDirectionInfo(240).i18nKey).toBe('nav.turn_left');
+    expect(getDirectionInfo(310).i18nKey).toBe('nav.slight_left');
+  });
+
+  it('returns correct iconType for each direction', () => {
+    expect(getDirectionInfo(0).iconType).toBe('straight');
+    expect(getDirectionInfo(45).iconType).toBe('slight-right');
+    expect(getDirectionInfo(120).iconType).toBe('right');
+    expect(getDirectionInfo(240).iconType).toBe('left');
+    expect(getDirectionInfo(310).iconType).toBe('slight-left');
   });
 });

@@ -7,6 +7,10 @@ import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence, LayoutGroup, type Variants } from 'motion/react';
 import {
   ArrowUp,
+  ArrowUpRight,
+  ArrowRight,
+  ArrowLeft,
+  ArrowUpLeft,
   Plus,
   Settings as SettingsIcon,
   Car,
@@ -35,7 +39,8 @@ import QuickEntry from '@app/park-keeper/components/QuickEntry';
 import PhotoViewerModal from '@app/park-keeper/components/PhotoViewerModal';
 import RecordCard from '@app/park-keeper/components/RecordCard';
 import PhoneFlatPrompt from '@app/park-keeper/components/PhoneFlatPrompt';
-import { useNavigation } from '@app/park-keeper/hooks/useNavigation';
+import { useNavigation, getDirectionInfo } from '@app/park-keeper/hooks/useNavigation';
+import type { DirectionIconType } from '@app/park-keeper/hooks/useNavigation';
 
 const MiniMap = lazy(() => import('@app/park-keeper/components/MiniMap'));
 
@@ -172,6 +177,33 @@ function BrandLogo({ theme }: { theme: ThemeConfig }) {
 }
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// DirectionIcon – Lucide icon mapped from DirectionIconType
+// ---------------------------------------------------------------------------
+function DirectionIcon({
+  type,
+  size,
+  color,
+}: {
+  type: DirectionIconType;
+  size: number;
+  color: string;
+}) {
+  const props = { size, color, strokeWidth: 3 };
+  switch (type) {
+    case 'slight-right':
+      return <ArrowUpRight {...props} />;
+    case 'right':
+      return <ArrowRight {...props} />;
+    case 'left':
+      return <ArrowLeft {...props} />;
+    case 'slight-left':
+      return <ArrowUpLeft {...props} />;
+    default:
+      return <ArrowUp {...props} />;
+  }
+}
+
 // NAV OVERLAY – Full-screen compass navigation (original "liquid glass" design)
 // ---------------------------------------------------------------------------
 function NavOverlay({
@@ -230,18 +262,20 @@ function NavOverlay({
       };
 
   const arrived = arrivedState;
+  const [showArrivedCTA, setShowArrivedCTA] = useState(false);
 
-  // Symmetric ±30° threshold; dead-band at [0,30] ∪ [330,360) → straight
-  const TURN_DEG = 30;
-  let directionHint = t('nav.straight');
-  let directionArrow = '↑';
-  if (relativeRotation > TURN_DEG && relativeRotation < 180 - TURN_DEG) {
-    directionHint = t('nav.turn_right');
-    directionArrow = '→';
-  } else if (relativeRotation > 180 + TURN_DEG && relativeRotation < 360 - TURN_DEG) {
-    directionHint = t('nav.turn_left');
-    directionArrow = '←';
-  }
+  // 抵達後 1 秒顯示「關閉導航」按鈕；離開抵達狀態時由 cleanup 重置。
+  useEffect(() => {
+    if (!arrived) return;
+    const timer = setTimeout(() => setShowArrivedCTA(true), 1000);
+    return () => {
+      clearTimeout(timer);
+      setShowArrivedCTA(false);
+    };
+  }, [arrived]);
+
+  const direction = getDirectionInfo(relativeRotation);
+  const directionHint = t(direction.i18nKey);
 
   return (
     <motion.div
@@ -348,7 +382,7 @@ function NavOverlay({
                 </p>
                 {hasValidLocation && (
                   <span className={`text-xs font-bold uppercase ${glassStyle.subText}`}>
-                    {isIndoor ? t('nav.steps') : 'Meters'}
+                    {isIndoor ? t('nav.steps') : t('nav.unit_meters')}
                   </span>
                 )}
               </div>
@@ -583,15 +617,15 @@ function NavOverlay({
                   >
                     {isIndoor ? t('nav.steps') : 'm'}
                   </p>
+                  <div className="mt-1" aria-label={directionHint}>
+                    <DirectionIcon
+                      type={direction.iconType}
+                      size={22}
+                      color={theme.colors.primary}
+                    />
+                  </div>
                   <p
-                    className="mt-1 text-base font-black leading-none"
-                    style={{ color: theme.colors.primary }}
-                    aria-label={directionHint}
-                  >
-                    {directionArrow}
-                  </p>
-                  <p
-                    className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em]"
+                    className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
                     style={{ color: theme.colors.text, opacity: 0.55 }}
                   >
                     {isIndoor ? t('nav.indoor_mode') : directionHint}
@@ -600,6 +634,24 @@ function NavOverlay({
               )}
             </div>
           </div>
+
+          {/* 抵達後 CTA：1 秒後彈出「關閉導航」按鈕 */}
+          <AnimatePresence>
+            {showArrivedCTA && (
+              <motion.button
+                type="button"
+                initial={{ opacity: 0, y: 12, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                onClick={onClose}
+                className="mt-4 px-6 py-2.5 rounded-full font-black text-sm uppercase tracking-widest text-white shadow-lg active:scale-95 transition-transform"
+                style={{ backgroundColor: '#22c55e' }}
+              >
+                {t('nav.close_nav')}
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

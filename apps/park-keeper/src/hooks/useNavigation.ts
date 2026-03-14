@@ -7,6 +7,34 @@ import {
   type CompassOrientationEvent,
 } from '@app/park-keeper/services/deviceOrientation';
 
+// ---------------------------------------------------------------------------
+// Direction utilities
+// ---------------------------------------------------------------------------
+
+export type DirectionKey = 'straight' | 'slight_right' | 'turn_right' | 'turn_left' | 'slight_left';
+export type DirectionIconType = 'straight' | 'slight-right' | 'right' | 'left' | 'slight-left';
+
+export interface DirectionInfo {
+  key: DirectionKey;
+  i18nKey: string;
+  iconType: DirectionIconType;
+}
+
+/**
+ * 將相對旋轉角度（0–360°）對應為 5 段方向資訊。
+ * 邊界：直走 ±25°、稍右/稍左 25°–70°、右轉/左轉 70°–180°。
+ */
+export function getDirectionInfo(relativeRotation: number): DirectionInfo {
+  const r = ((relativeRotation % 360) + 360) % 360;
+  if (r <= 25 || r >= 335)
+    return { key: 'straight', i18nKey: 'nav.straight', iconType: 'straight' };
+  if (r <= 70)
+    return { key: 'slight_right', i18nKey: 'nav.slight_right', iconType: 'slight-right' };
+  if (r <= 180) return { key: 'turn_right', i18nKey: 'nav.turn_right', iconType: 'right' };
+  if (r <= 290) return { key: 'turn_left', i18nKey: 'nav.turn_left', iconType: 'left' };
+  return { key: 'slight_left', i18nKey: 'nav.slight_left', iconType: 'slight-left' };
+}
+
 export const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371e3;
   const p1 = (lat1 * Math.PI) / 180;

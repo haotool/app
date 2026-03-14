@@ -1,5 +1,17 @@
 # @app/park-keeper
 
+## 1.0.15
+
+### Patch Changes
+
+- feat(park-keeper): 羅盤導航 UX 改進 — 5 段方向、Lucide 圖示、i18n 單位、抵達 CTA
+  - 方向判斷從 3 段升級為 5 段（直走 / 稍右 / 右轉 / 稍左 / 左轉）
+  - 方向箭頭從 Unicode 字元（↑→←）換成 Lucide SVG 圖示（ArrowUp/UpRight/Right/Left/UpLeft）
+  - 距離單位 "Meters" 改為 i18n：公尺 / Meters / メートル
+  - 抵達後 1 秒彈出「關閉導航」CTA 按鈕，無需手動找關閉按鈕
+  - 新增 getDirectionInfo() 純函式並補齊單元測試（22 cases）
+  - 新增 i18n 完整性測試，確保 3 語言 4 新鍵一致
+
 ## 1.0.14
 
 ### Patch Changes
