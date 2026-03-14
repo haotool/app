@@ -1,5 +1,11 @@
 # @app/park-keeper
 
+## 1.0.13
+
+### Patch Changes
+
+- 修正 vite-react-ssg 雙重 Layout 渲染：將 \_\_staticRouterHydrationData script 從 #root 移出，確保 React hydrateRoot 正確工作
+
 ## 1.0.12
 
 ### Patch Changes
