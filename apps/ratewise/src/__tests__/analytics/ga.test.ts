@@ -104,6 +104,40 @@ describe('initGA', () => {
   });
 });
 
+describe('scheduleAfterPageLoad', () => {
+  it('readyState 為 complete 時應立即初始化且不註冊 load listener', async () => {
+    const { scheduleAfterPageLoad } = await importFresh();
+    const task = vi.fn();
+    const addEventListener = vi.fn();
+
+    const mode = scheduleAfterPageLoad(
+      task,
+      { readyState: 'complete' } as Document,
+      { addEventListener } as unknown as Window,
+    );
+
+    expect(mode).toBe('immediate');
+    expect(task).toHaveBeenCalledTimes(1);
+    expect(addEventListener).not.toHaveBeenCalled();
+  });
+
+  it('readyState 未 complete 時應延後到 load 事件執行', async () => {
+    const { scheduleAfterPageLoad } = await importFresh();
+    const task = vi.fn();
+    const addEventListener = vi.fn();
+
+    const mode = scheduleAfterPageLoad(
+      task,
+      { readyState: 'interactive' } as Document,
+      { addEventListener } as unknown as Window,
+    );
+
+    expect(mode).toBe('deferred');
+    expect(task).not.toHaveBeenCalled();
+    expect(addEventListener).toHaveBeenCalledWith('load', task, { once: true });
+  });
+});
+
 describe('trackPageview', () => {
   beforeEach(() => {
     delete (window as Partial<Window>).gtag;

@@ -16,6 +16,27 @@ declare global {
 
 let initialized = false;
 
+type LoadWindow = Pick<Window, 'addEventListener'>;
+type LoadDocument = Pick<Document, 'readyState'>;
+
+/**
+ * 頁面已 complete 時立即執行，否則延後到 load 事件。
+ * 回傳值供測試驗證實際採用的初始化路徑。
+ */
+export function scheduleAfterPageLoad(
+  task: () => void,
+  targetDocument: LoadDocument = document,
+  targetWindow: LoadWindow = window,
+): 'immediate' | 'deferred' {
+  if (targetDocument.readyState === 'complete') {
+    task();
+    return 'immediate';
+  }
+
+  targetWindow.addEventListener('load', task, { once: true });
+  return 'deferred';
+}
+
 /**
  * 初始化 GA4 並注入 gtag.js。
  * measurementId 為空時提早返回，dev 環境不啟用。

@@ -24,7 +24,7 @@ import { handleVersionUpdate } from './utils/versionManager';
 import { APP_VERSION, BUILD_TIME } from './config/version';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { initPWAStorageManager } from './utils/pwaStorageManager';
-import { initGA, trackPageview } from '@shared/analytics';
+import { initGA, scheduleAfterPageLoad, trackPageview } from '@shared/analytics';
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(
@@ -46,11 +46,7 @@ export const createRoot = ViteReactSSG(
         initGA(gaId);
         trackPageview(window.location.pathname + window.location.search);
       };
-      if (document.readyState === 'complete') {
-        initAnalytics();
-      } else {
-        window.addEventListener('load', initAnalytics, { once: true });
-      }
+      scheduleAfterPageLoad(initAnalytics);
 
       // Log application startup
       logger.info('Application starting', {
