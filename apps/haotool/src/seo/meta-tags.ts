@@ -3,7 +3,7 @@
  * [context7:/google/seo-starter-guide:2025-12-14]
  */
 
-const SITE_URL = 'https://app.haotool.org';
+const SITE_URL = 'https://haotool.org';
 const SITE_NAME = 'haotool.org';
 const DEFAULT_IMAGE = '/og-image.png';
 const TWITTER_HANDLE = '@azlife_1224';

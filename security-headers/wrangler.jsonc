@@ -1,9 +1,10 @@
 {
+	"$schema": "./node_modules/wrangler/config-schema.json",
 	"name": "security-headers",
 	"main": "src/worker.js",
 	"workers_dev": true,
 	"preview_urls": false,
-	"compatibility_date": "2025-11-26",
+	"compatibility_date": "2026-03-14",
 	"routes": [
 		{
 			"pattern": "app.haotool.org/*",

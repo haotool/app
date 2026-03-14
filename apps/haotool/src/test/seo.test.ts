@@ -6,6 +6,7 @@ import { getJsonLdForRoute, jsonLdToScriptTags } from '../seo/jsonld';
 import { getMetaTagsForRoute } from '../seo/meta-tags';
 
 const TEST_BUILD_TIME = '2025-12-13T12:00:00.000Z';
+const HAOTOOL_SITE_URL = 'https://haotool.org';
 
 describe('SEO - JSON-LD', () => {
   describe('getJsonLdForRoute', () => {
@@ -154,7 +155,7 @@ describe('SEO - Meta Tags', () => {
       const routes = ['/projects/', '/about/', '/contact/'];
       routes.forEach((route) => {
         const result = getMetaTagsForRoute(route, TEST_BUILD_TIME);
-        expect(result).toContain(`https://app.haotool.org${route}`);
+        expect(result).toContain(`${HAOTOOL_SITE_URL}${route}`);
       });
     });
 
