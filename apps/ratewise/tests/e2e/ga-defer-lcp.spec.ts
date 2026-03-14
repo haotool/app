@@ -55,65 +55,70 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
   test.setTimeout(60_000);
 
   test('GA4 script 應在 load 事件後才注入（不在 LCP 前競爭頻寬）', async ({ page }) => {
-    // 攔截所有網路請求，記錄 gtag.js 的請求時機
-    const gtagRequests: number[] = [];
-    let loadEventTime = -1;
-
-    // 監聽 gtag.js 請求
-    page.on('request', (req) => {
-      if (req.url().includes('googletagmanager.com/gtag/js')) {
-        gtagRequests.push(Date.now());
-      }
-    });
-
-    // 注入 JS 在 load 事件時記錄時間
+    // MutationObserver 追蹤 script 注入時機：在 load 前 vs 後
+    // 此方式不依賴外部 network 請求是否實際發出，在測試/生產環境皆有效。
     await page.addInitScript(() => {
+      let loadFired = false;
       window.addEventListener(
         'load',
         () => {
-          (window as unknown as Record<string, unknown>)['__e2e_loadTime'] = Date.now();
+          loadFired = true;
         },
         { once: true },
       );
+
+      const win = window as unknown as Record<string, unknown>;
+      win['__e2e_gtagInjected'] = false;
+      win['__e2e_gtagBeforeLoad'] = false;
+
+      // 觀察 <head> 子節點，偵測 gtag script 被插入的時機點。
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (node.nodeName === 'SCRIPT') {
+              const src = (node as HTMLScriptElement).src ?? '';
+              if (src.includes('googletagmanager.com')) {
+                win['__e2e_gtagInjected'] = true;
+                if (!loadFired) win['__e2e_gtagBeforeLoad'] = true;
+              }
+            }
+          }
+        }
+      });
+      observer.observe(document.documentElement, { childList: true, subtree: true });
     });
 
     await mockRatesApi(page);
-
     await page.goto(BASE, { waitUntil: 'load' });
-
-    // 取得 load 事件時間
-    loadEventTime = await page.evaluate(
-      () => (window as unknown as Record<string, unknown>)['__e2e_loadTime'] as number,
-    );
-
     // 等待 GA 有機會初始化（500ms 寬裕）
     await page.waitForTimeout(500);
 
-    // 斷言 1: VITE_GA_ID 未設定時（測試環境），GA script 不應被注入
-    // 生產環境：script 存在且應在 load 事件後請求
-    const gaScriptInDom = await page.evaluate(() => {
-      const scripts = Array.from(document.querySelectorAll('script[src]'));
-      return scripts.some((s) => (s as HTMLScriptElement).src.includes('googletagmanager.com'));
+    type GtagStatus = { injected: boolean; injectedBeforeLoad: boolean };
+    const gtagStatus = await page.evaluate<GtagStatus>(() => {
+      const win = window as unknown as Record<string, unknown>;
+      return {
+        injected: win['__e2e_gtagInjected'] as boolean,
+        injectedBeforeLoad: win['__e2e_gtagBeforeLoad'] as boolean,
+      };
     });
 
-    // 在測試環境（無 VITE_GA_ID），GA 不應注入任何 script
-    // 在生產環境，若有 gtag 請求，必須在 load 事件後發生
-    if (gtagRequests.length > 0) {
-      expect(loadEventTime).toBeGreaterThan(0);
-      // 所有 gtag 請求必須在 load 事件後 0ms（寬裕 100ms 給事件循環）
-      const allAfterLoad = gtagRequests.every((t) => t >= loadEventTime - 100);
-      expect(allAfterLoad, 'GA4 script 請求應發生在 load 事件後').toBe(true);
+    if (gtagStatus.injected) {
+      // 生產建置（VITE_GA_ID 已設定）：驗證 script 確實在 load 後才注入。
+      expect(
+        gtagStatus.injectedBeforeLoad,
+        'GA4 script 不得在 load 事件前注入（會與 LCP 關鍵資源競爭頻寬）',
+      ).toBe(false);
     } else {
-      // 測試環境沒有真實 GA_ID，不應有 gtag 請求
+      // 測試建置（VITE_GA_ID 未設定）：驗證 GA 完全不注入。
+      const gaScriptInDom = await page.evaluate(() => {
+        const scripts = Array.from(document.querySelectorAll('script[src]'));
+        return scripts.some((s) => (s as HTMLScriptElement).src.includes('googletagmanager.com'));
+      });
       expect(gaScriptInDom, '測試環境不應注入 GA script（無 VITE_GA_ID）').toBe(false);
     }
 
-    // 斷言 2: window.gtag 應只在 load 後才存在（或完全不存在於無 GA_ID 環境）
-    const gtagExists = await page.evaluate(() => typeof window.gtag === 'function');
-    // 有 GA_ID → gtag 存在；無 GA_ID → gtag 不存在。兩者皆為預期行為。
-    // 此測試只是記錄狀態，不強制失敗
     console.log(
-      `[GA E2E] gtag initialized: ${String(gtagExists)}, loadEventTime: ${String(loadEventTime)}`,
+      `[GA E2E] gtag injected: ${String(gtagStatus.injected)}, beforeLoad: ${String(gtagStatus.injectedBeforeLoad)}`,
     );
   });
 
@@ -163,6 +168,9 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
   });
 
   test('manifest.webmanifest 應回傳正確 Content-Type', async ({ page, request }) => {
+    // 本測試驗證本地 preview server 的 Content-Type 基準行為（application/manifest+json）。
+    // Cloudflare Worker 對 application/octet-stream 雙重類型的修正，
+    // 需另以 curl 或 production E2E 驗證（CI 目前在 PLAYWRIGHT_BASE_URL 指向正式站時有效）。
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 
     // 取得 manifest link href

@@ -77,7 +77,8 @@ export default defineConfig({
         ...devices['Pixel 5'],
         viewport: { width: 375, height: 667 },
       },
-      testIgnore: /pwa\.spec\.ts|offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts/,
+      testIgnore:
+        /pwa\.spec\.ts|offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/, // GA 測試由 offline-pwa-chromium 處理
     },
     // PWA 專用 project - 允許 Service Worker
     // 注意：使用正向前瞻確保不匹配 offline-pwa.spec.ts
