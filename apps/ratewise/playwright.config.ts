@@ -68,7 +68,8 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
       },
-      testIgnore: /pwa\.spec\.ts|offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts/, // PWA 測試由專用 project 處理
+      testIgnore:
+        /pwa\.spec\.ts|offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/, // PWA/GA 測試由專用 project 處理
     },
     {
       name: 'chromium-mobile',
@@ -101,7 +102,7 @@ export default defineConfig({
         actionTimeout: 15000,
         navigationTimeout: process.env['CI'] ? 90_000 : 60_000,
       },
-      testMatch: /offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts/,
+      testMatch: /offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/,
       // 離線測試可能需要重試
       retries: process.env['CI'] ? 2 : 1,
     },
