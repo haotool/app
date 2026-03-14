@@ -4,8 +4,7 @@
  * 目的：
  *   1. 驗證 GA4 script 不在 LCP 前（`load` 事件前）注入 DOM
  *   2. 驗證 `load` 事件後 GA4 script 確實存在
- *   3. 驗證 document.readyState === 'complete' 競態防衛：
- *      若頁面在監聽器掛載前已 complete，GA 仍能正確初始化
+ *   3. 驗證實際頁面 load 完成後，GA config 不會重複初始化
  *   4. 驗證 `manifest.webmanifest` Content-Type 為 `application/manifest+json`
  *   5. 驗證 GA4 不重複注入（initialized flag 防衛）
  *
@@ -15,7 +14,7 @@
  *   - 業界標準（constantsolutions.dk）：`window.gtmDidInit` flag 防重複
  *
  * @see apps/ratewise/src/main.tsx    - GA4 延後初始化邏輯
- *   apps/ratewise/src/utils/ga.ts   - initGA / trackPageview
+ *   apps/shared/analytics/ga.ts     - initGA / scheduleAfterPageLoad / trackPageview
  *   security-headers/src/worker.js  - manifest Content-Type 修正
  *
  * @created 2026-03-14
@@ -74,7 +73,11 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
       // hostname 精確匹配，避免 substring 誤判（如 example.com/googletagmanager.com/...）。
       const isGtag = (src: string): boolean => {
         try {
-          return new URL(src).hostname.endsWith('googletagmanager.com');
+          const { hostname, pathname } = new URL(src);
+          return (
+            (hostname === 'googletagmanager.com' || hostname === 'www.googletagmanager.com') &&
+            pathname === '/gtag/js'
+          );
         } catch {
           return false;
         }
@@ -123,7 +126,11 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
         const scripts = Array.from(document.querySelectorAll('script[src]'));
         return scripts.some((s) => {
           try {
-            return new URL((s as HTMLScriptElement).src).hostname.endsWith('googletagmanager.com');
+            const { hostname, pathname } = new URL((s as HTMLScriptElement).src);
+            return (
+              (hostname === 'googletagmanager.com' || hostname === 'www.googletagmanager.com') &&
+              pathname === '/gtag/js'
+            );
           } catch {
             return false;
           }
@@ -137,46 +144,32 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
     );
   });
 
-  test('GA 初始化不重複 & readyState 路徑覆蓋（load 事件或直接呼叫）', async ({ page }) => {
-    // 在頁面腳本最早期注入 spy，捕捉 GA 初始化時的 readyState。
-    // 驗證 main.tsx 正確處理兩條路徑：
-    //   路徑 A: readyState === 'complete' → 直接呼叫 initAnalytics（BFCache / 快取頁面）
-    //   路徑 B: readyState !== 'complete' → addEventListener('load', initAnalytics)（一般載入）
-    await page.addInitScript(() => {
-      const win = window as unknown as Record<string, unknown>;
-      // 記錄 addInitScript 執行時的 readyState（最早期，一般為 'loading'）。
-      win['__e2e_earlyReadyState'] = document.readyState;
-    });
-
+  test('實際應用頁面載入完成後 GA config 不應重複初始化', async ({ page }) => {
     await mockRatesApi(page);
     await page.goto(BASE, { waitUntil: 'load' });
     await page.waitForTimeout(300);
 
-    // 驗證頁面完整載入。
-    const finalReadyState = await page.evaluate(() => document.readyState);
-    expect(finalReadyState, 'load 後 readyState 應為 complete').toBe('complete');
+    const analyticsState = await page.evaluate(() => {
+      const configCalls = !window.dataLayer
+        ? 0
+        : (window.dataLayer as unknown[]).filter(
+            (item) => Array.isArray(item) && (item as unknown[])[0] === 'config',
+          ).length;
 
-    // 驗證無重複 GA 初始化（initialized flag 防衛）。
-    // 測試環境（無 GA_ID）：0 次；生產環境（有 GA_ID）：恰好 1 次。
-    const gtagCalledCount = await page.evaluate(() => {
-      if (!window.dataLayer) return 0;
-      return (window.dataLayer as unknown[]).filter(
-        (item) => Array.isArray(item) && (item as unknown[])[0] === 'config',
-      ).length;
+      return {
+        readyState: document.readyState,
+        configCalls,
+      };
     });
-    console.log(`[GA E2E] gtag config calls: ${String(gtagCalledCount)}`);
-    expect(gtagCalledCount, '同一頁面 GA config 不應重複呼叫超過 1 次').toBeLessThanOrEqual(1);
 
-    // 記錄頁面最早期的 readyState（供診斷用）。
-    // 正常頁面載入：應為 'loading'；BFCache 還原：可能為 'complete'。
-    const earlyReadyState = await page.evaluate(
-      () => (window as unknown as Record<string, unknown>)['__e2e_earlyReadyState'] as string,
-    );
-    console.log(`[GA E2E] readyState at early init: ${earlyReadyState}`);
+    expect(analyticsState.readyState, '實頁面 load 後 readyState 應為 complete').toBe('complete');
     expect(
-      (['loading', 'interactive', 'complete'] as string[]).includes(earlyReadyState),
-      `readyState 應為有效值，得到：${earlyReadyState}`,
-    ).toBe(true);
+      analyticsState.configCalls,
+      '同一頁面 GA config 不應重複呼叫超過 1 次',
+    ).toBeLessThanOrEqual(1);
+
+    console.log(`[GA E2E] readyState after load: ${analyticsState.readyState}`);
+    console.log(`[GA E2E] gtag config calls: ${String(analyticsState.configCalls)}`);
   });
 
   test('manifest.webmanifest 應回傳正確 Content-Type', async ({ page, request }) => {

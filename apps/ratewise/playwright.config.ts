@@ -1,5 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const DESKTOP_AND_MOBILE_TEST_IGNORE =
+  /pwa\.spec\.ts|offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/;
+const OFFLINE_PWA_TEST_MATCH =
+  /offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/;
+
 /**
  * Playwright 配置 - RateWise E2E 測試
  *
@@ -68,8 +73,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
       },
-      testIgnore:
-        /pwa\.spec\.ts|offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/, // PWA/GA 測試由專用 project 處理
+      testIgnore: DESKTOP_AND_MOBILE_TEST_IGNORE, // PWA/GA 測試由專用 project 處理
     },
     {
       name: 'chromium-mobile',
@@ -77,8 +81,7 @@ export default defineConfig({
         ...devices['Pixel 5'],
         viewport: { width: 375, height: 667 },
       },
-      testIgnore:
-        /pwa\.spec\.ts|offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/, // GA 測試由 offline-pwa-chromium 處理
+      testIgnore: DESKTOP_AND_MOBILE_TEST_IGNORE, // PWA/GA 測試由專用 project 處理
     },
     // PWA 專用 project - 允許 Service Worker
     // 注意：使用正向前瞻確保不匹配 offline-pwa.spec.ts
@@ -103,7 +106,7 @@ export default defineConfig({
         actionTimeout: 15000,
         navigationTimeout: process.env['CI'] ? 90_000 : 60_000,
       },
-      testMatch: /offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/,
+      testMatch: OFFLINE_PWA_TEST_MATCH,
       // 離線測試可能需要重試
       retries: process.env['CI'] ? 2 : 1,
     },

@@ -1883,6 +1883,55 @@ root_cause:
 
 大部分「莫名其妙的紅燈」都不是難 bug，而是同步責任漏掉了。
 
+---
+
+id: ga-e2e-review-fixes-and-scheduling-guard
+date: 2026-03-14
+title: PR review 驅動修復 GA E2E 假覆蓋、專案重複執行與 CodeQL URL 告警
+score: +2
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [testing, ci, performance, security, ssot]
+keywords: [playwright, codex-review, codeql, readyState, ga4, project-matrix]
+aliases: [GA E2E 假陽性修正, Playwright project 去重, GTM URL host check]
+related_entries: [codeql-test-html-regex-removal, regression-docs-tests-routes-sync]
+summary: PR #204 的 review 同時暴露三個層面問題：`ga-defer-lcp.spec.ts` 在 `chromium-mobile` 與 `offline-pwa-chromium` 重複執行、E2E 用 `about:blank` 的 `document.readyState` 假裝覆蓋實頁面競態，以及以 `includes('googletagmanager.com')` 判斷 script URL 造成 CodeQL `js/incomplete-url-substring-sanitization` 告警。修正方式是把 GA 排程抽成 `scheduleAfterPageLoad()` 單元測試覆蓋、E2E 改回實頁面不變式驗證、Playwright project 規則抽成常數並以 parsed URL host/path 精準判定 GTM script。
+root_cause:
+
+- 將「實頁面不變式」與「readyState 分支覆蓋」混在同一個 E2E 測試，導致 about:blank 假陽性
+- Playwright project 規則用重複 regex 散落定義，容易只修到一個 project
+- 測試程式把 URL 當字串做 substring 判斷，GitHub Advanced Security 仍會視為不安全模式
+  impact:
+
+- PR review 雖已有人嘗試修正，實際上評論指出的風險仍可殘留在最新 diff
+- `CodeQL` 顯示新增 security alert，干擾 PR 是否可合併的判讀
+- E2E matrix 多跑一份 mobile/offline 測試，增加 CI 時間與變因
+  actions:
+
+- 在 `apps/shared/analytics/ga.ts` 新增 `scheduleAfterPageLoad()`，把 `document.readyState === 'complete'` 與 `load` listener 分支抽成可單測 helper
+- 在 `apps/ratewise/src/__tests__/analytics/ga.test.ts` 補 2 個單元測試，精準覆蓋 immediate / deferred 兩條路徑
+- 將 `apps/ratewise/playwright.config.ts` 的 ignore / match regex 抽成共用常數，確保 `ga-defer-lcp.spec.ts` 只由 `offline-pwa-chromium` 專案處理
+- 重寫 `apps/ratewise/tests/e2e/ga-defer-lcp.spec.ts` 的第二個測試，只驗證實頁面 `load` 後 `config` 不重複；同時把 GTM 偵測改為 `new URL(src)` 後比對 `hostname` 與 `pathname`
+  prevention:
+
+- 需要覆蓋競態分支時，優先抽出可測 helper 再用單元測試驗證，不要讓 E2E 承擔不可控時序模擬
+- Playwright 多 project 規則若共享同一批測試邊界，應集中成常數或函式，避免單點修正遺漏
+- 即使是 `classifications: [test]` 的 CodeQL alert，也應把判斷邏輯修到與正式程式同等嚴謹
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/analytics/ga.test.ts`
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise test:e2e -- --project=offline-pwa-chromium tests/e2e/ga-defer-lcp.spec.ts`
+- `pnpm exec eslint apps/ratewise/src/main.tsx apps/ratewise/src/__tests__/analytics/ga.test.ts apps/ratewise/tests/e2e/ga-defer-lcp.spec.ts apps/ratewise/playwright.config.ts apps/shared/analytics/ga.ts apps/shared/analytics/index.ts --max-warnings 0 --no-warn-ignored`
+- `gh api 'repos/haotool/app/code-scanning/alerts?state=open&pr=204'`
+  references:
+
+- https://github.com/haotool/app/pull/204
+- apps/shared/analytics/ga.ts
+- apps/ratewise/tests/e2e/ga-defer-lcp.spec.ts
+- apps/ratewise/playwright.config.ts
+
 ## 歷史索引（精簡）
 
 > 2026-02-27 以前的舊資料已從巨型 table 改為精簡索引，保留日期 / 分數 / 標題，避免繼續維護不穩定欄位。若未來要補細節，再逐筆升級為上方 entry blocks。
