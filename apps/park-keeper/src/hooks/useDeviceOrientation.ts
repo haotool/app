@@ -90,9 +90,11 @@ export function useDeviceOrientation(
     };
 
     window.addEventListener('deviceorientation', handleOrientation);
+    window.addEventListener('deviceorientationabsolute', handleOrientation);
 
     return () => {
       window.removeEventListener('deviceorientation', handleOrientation);
+      window.removeEventListener('deviceorientationabsolute', handleOrientation);
     };
   }, [enabled, isSupported]);
 

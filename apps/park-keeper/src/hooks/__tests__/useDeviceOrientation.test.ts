@@ -21,12 +21,42 @@ describe('useDeviceOrientation', () => {
     expect(result.current.isSupported).toBe(true);
   });
 
-  it('應該在 DeviceOrientationEvent 觸發時更新 heading', () => {
+  it('應該在 DeviceOrientationEvent 觸發時更新 heading（absolute:true）', () => {
     const { result } = renderHook(() => useDeviceOrientation());
 
     act(() => {
       const event = new Event('deviceorientation') as DeviceOrientationEvent;
       Object.defineProperty(event, 'alpha', { value: 90, writable: false });
+      Object.defineProperty(event, 'absolute', { value: true, writable: false });
+      Object.defineProperty(event, 'webkitCompassHeading', { value: undefined, writable: false });
+      window.dispatchEvent(event);
+    });
+
+    expect(result.current.heading).toBe(270);
+  });
+
+  it('absolute:false の deviceorientation は heading を更新しない（Android 任意基準）', () => {
+    const { result } = renderHook(() => useDeviceOrientation());
+
+    act(() => {
+      const event = new Event('deviceorientation') as DeviceOrientationEvent;
+      Object.defineProperty(event, 'alpha', { value: 90, writable: false });
+      Object.defineProperty(event, 'absolute', { value: false, writable: false });
+      Object.defineProperty(event, 'webkitCompassHeading', { value: undefined, writable: false });
+      window.dispatchEvent(event);
+    });
+
+    // absolute でない alpha は磁北基準でないので heading は null のまま
+    expect(result.current.heading).toBeNull();
+  });
+
+  it('deviceorientationabsolute イベントでも heading が更新される', () => {
+    const { result } = renderHook(() => useDeviceOrientation());
+
+    act(() => {
+      const event = new Event('deviceorientationabsolute') as DeviceOrientationEvent;
+      Object.defineProperty(event, 'alpha', { value: 90, writable: false });
+      Object.defineProperty(event, 'absolute', { value: true, writable: false });
       Object.defineProperty(event, 'webkitCompassHeading', { value: undefined, writable: false });
       window.dispatchEvent(event);
     });
@@ -48,13 +78,14 @@ describe('useDeviceOrientation', () => {
     expect(result.current.heading).toBe(45);
   });
 
-  it('應該將 alpha 轉換為正北方向（0-360）', () => {
+  it('應該將 alpha 轉換為正北方向（0-360）— absolute:true', () => {
     const { result } = renderHook(() => useDeviceOrientation());
 
     act(() => {
       const event = new Event('deviceorientation') as DeviceOrientationEvent;
       // alpha: 0 = 正北, 90 = 正東, 180 = 正南, 270 = 正西
       Object.defineProperty(event, 'alpha', { value: 180, writable: false });
+      Object.defineProperty(event, 'absolute', { value: true, writable: false });
       Object.defineProperty(event, 'webkitCompassHeading', { value: undefined, writable: false });
       window.dispatchEvent(event);
     });
@@ -76,7 +107,7 @@ describe('useDeviceOrientation', () => {
     expect(result.current.isPhoneFlat).toBe(true);
   });
 
-  it('應該在 unmount 時移除事件監聽器', () => {
+  it('應該在 unmount 時移除事件監聽器（含 deviceorientationabsolute）', () => {
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
     const { unmount } = renderHook(() => useDeviceOrientation());
@@ -84,6 +115,10 @@ describe('useDeviceOrientation', () => {
     unmount();
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith('deviceorientation', expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      'deviceorientationabsolute',
+      expect.any(Function),
+    );
     removeEventListenerSpy.mockRestore();
   });
 

@@ -41,6 +41,14 @@ import PhotoViewerModal from '@app/park-keeper/components/PhotoViewerModal';
 import RecordCard from '@app/park-keeper/components/RecordCard';
 import { useNavigation, getDirectionInfo } from '@app/park-keeper/hooks/useNavigation';
 import type { DirectionIconType } from '@app/park-keeper/hooks/useNavigation';
+import {
+  cardinalLabelPosition,
+  isCardinalIndex,
+  isMajorIndex,
+  tickLength,
+  tickStrokeWidth,
+  tickOpacity,
+} from '@app/park-keeper/services/compassGeometry';
 
 const MiniMap = lazy(() => import('@app/park-keeper/components/MiniMap'));
 
@@ -474,47 +482,51 @@ function NavOverlay({
                   strokeWidth={arrived ? 2 : 1}
                   opacity={arrived ? 0.45 : 0.1}
                 />
+                {/* 刻度線群組 */}
                 {Array.from({ length: 36 }).map((_, i) => {
                   const angle = i * 10;
-                  const isCardinal = i % 9 === 0;
-                  const isMajor = i % 3 === 0 && !isCardinal;
-                  const tickLength = isCardinal ? 22 : isMajor ? 13 : 7;
-                  const strokeW = isCardinal ? 3 : isMajor ? 1.5 : 0.8;
-                  const opacity = isCardinal ? 1 : isMajor ? 0.45 : 0.18;
                   const isNorth = i === 0;
+                  const tLen = tickLength(i);
                   return (
                     <g key={i} transform={`rotate(${angle} 150 150)`}>
                       <line
                         x1="150"
                         y1="10"
                         x2="150"
-                        y2={10 + tickLength}
+                        y2={10 + tLen}
                         stroke={isNorth ? '#ef4444' : theme.colors.text}
-                        strokeWidth={strokeW}
-                        opacity={opacity}
+                        strokeWidth={tickStrokeWidth(i)}
+                        opacity={tickOpacity(i)}
                         strokeLinecap="round"
                       />
-                      {isCardinal && (
-                        <text
-                          x="150"
-                          y="68"
-                          textAnchor="middle"
-                          fill={isNorth ? '#ef4444' : theme.colors.text}
-                          fontSize="20"
-                          fontWeight="900"
-                          transform={`rotate(${-angle} 150 68)`}
-                          opacity={isNorth ? 1 : 0.85}
-                        >
-                          {i === 0
-                            ? t('compass.n')
-                            : i === 9
-                              ? t('compass.e')
-                              : i === 18
-                                ? t('compass.s')
-                                : t('compass.w')}
-                        </text>
-                      )}
                     </g>
+                  );
+                })}
+                {/* 方位角ラベル — 絕對座標渲染，不使用反向旋轉，排除定位偏移 bug */}
+                {[0, 9, 18, 27].map((i) => {
+                  if (!isCardinalIndex(i) || isMajorIndex(i)) return null;
+                  const { x, y } = cardinalLabelPosition(i);
+                  const isNorth = i === 0;
+                  return (
+                    <text
+                      key={`cardinal-${i}`}
+                      x={x}
+                      y={y}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fill={isNorth ? '#ef4444' : theme.colors.text}
+                      fontSize="20"
+                      fontWeight="900"
+                      opacity={isNorth ? 1 : 0.85}
+                    >
+                      {i === 0
+                        ? t('compass.n')
+                        : i === 9
+                          ? t('compass.e')
+                          : i === 18
+                            ? t('compass.s')
+                            : t('compass.w')}
+                    </text>
                   );
                 })}
               </svg>

@@ -185,17 +185,20 @@ export function useNavigation(record: ParkingRecord) {
       void requestPermission().then((res: string) => {
         if (res === 'granted') {
           window.addEventListener('deviceorientation', handleOrientation as EventListener);
+          window.addEventListener('deviceorientationabsolute', handleOrientation as EventListener);
           window.addEventListener('devicemotion', handleMotion);
         }
       });
     } else {
       window.addEventListener('deviceorientation', handleOrientation as EventListener);
+      window.addEventListener('deviceorientationabsolute', handleOrientation as EventListener);
       window.addEventListener('devicemotion', handleMotion);
     }
 
     return () => {
       if (watchId.current) navigator.geolocation.clearWatch(watchId.current);
       window.removeEventListener('deviceorientation', handleOrientation as EventListener);
+      window.removeEventListener('deviceorientationabsolute', handleOrientation as EventListener);
       window.removeEventListener('devicemotion', handleMotion);
     };
   }, [record, handleMotion]);

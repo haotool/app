@@ -189,7 +189,7 @@ describe('useNavigation hook', () => {
           alpha: 90,
           beta: 30,
           gamma: 0,
-          absolute: false,
+          absolute: true, // absolute:true → magnetic north 基準のみ heading に反映
         } as unknown as Event);
       });
     }
@@ -243,7 +243,7 @@ describe('useNavigation hook', () => {
           alpha: null,
           beta: 10,
           gamma: 0,
-          absolute: false,
+          absolute: false, // webkit branch は absolute を見ないので false でも正常動作
         } as unknown as Event);
       });
     }
