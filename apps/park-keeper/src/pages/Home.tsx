@@ -28,6 +28,7 @@ import {
   Navigation,
   Navigation2,
   Footprints,
+  Smartphone,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, ParkingRecord, AppSettings, LanguageType } from '@app/park-keeper/types';
@@ -38,7 +39,6 @@ import { getVersionInfo } from '@app/park-keeper/config/version';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
 import PhotoViewerModal from '@app/park-keeper/components/PhotoViewerModal';
 import RecordCard from '@app/park-keeper/components/RecordCard';
-import PhoneFlatRing from '@app/park-keeper/components/PhoneFlatRing';
 import { useNavigation, getDirectionInfo } from '@app/park-keeper/hooks/useNavigation';
 import type { DirectionIconType } from '@app/park-keeper/hooks/useNavigation';
 
@@ -554,98 +554,180 @@ function NavOverlay({
               </motion.div>
             </motion.div>
 
-            {/* PhoneFlatRing – 手機未平放時出現於 Hub 外圍，不遮擋中心資訊 */}
-            <PhoneFlatRing
-              visible={!isPhoneFlat && hasValidLocation && !arrived}
-              label={t('nav.hold_flat')}
-            />
-
-            {/* Center Hub – Distance + Direction / Arrived / GPS Waiting */}
-            <div
-              className="absolute w-32 h-32 rounded-full border-2 flex flex-col items-center justify-center z-10 backdrop-blur-sm transition-all duration-500 px-3 text-center"
-              style={{
-                borderColor: arrived ? 'rgba(34,197,94,0.5)' : `${theme.colors.text}12`,
-                backgroundColor: `${theme.colors.background}CC`,
+            {/* Center Hub – 所有導航資訊的唯一視覺中心 */}
+            <motion.div
+              className="absolute w-36 h-36 rounded-full border-2 flex flex-col items-center justify-center z-10 overflow-hidden"
+              animate={{
+                borderColor: arrived
+                  ? 'rgba(34,197,94,0.55)'
+                  : !isPhoneFlat && hasValidLocation
+                    ? 'rgba(239,68,68,0.45)'
+                    : `${theme.colors.text}10`,
                 boxShadow: arrived
-                  ? '0 0 0 6px rgba(34,197,94,0.12), 0 4px 24px rgba(0,0,0,0.12)'
-                  : '0 4px 24px rgba(0,0,0,0.12)',
+                  ? '0 0 0 8px rgba(34,197,94,0.1), 0 8px 32px rgba(0,0,0,0.14)'
+                  : !isPhoneFlat && hasValidLocation
+                    ? '0 0 0 5px rgba(239,68,68,0.08), 0 8px 32px rgba(0,0,0,0.14)'
+                    : '0 8px 32px rgba(0,0,0,0.12)',
+              }}
+              transition={{ duration: 0.45 }}
+              style={{
+                backgroundColor: `${theme.colors.background}D4`,
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
               }}
             >
-              {arrived ? (
+              {/* 手機未平放時的外圈脈衝提示 */}
+              {!isPhoneFlat && hasValidLocation && !arrived && (
                 <motion.div
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: 'spring', stiffness: 220, damping: 14 }}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <Check size={38} style={{ color: '#22c55e' }} strokeWidth={3} />
-                  <p className="text-[11px] font-black uppercase tracking-[0.24em] text-green-500">
-                    {t('nav.arrived')}
-                  </p>
-                </motion.div>
-              ) : !hasValidLocation ? (
-                <motion.div
-                  className="flex flex-col items-center gap-1"
-                  animate={{ opacity: [1, 0.4, 1] }}
-                  transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                >
-                  <Navigation size={24} style={{ color: theme.colors.primary }} />
-                  <p
-                    className="text-[8px] font-bold uppercase tracking-widest"
-                    style={{ color: theme.colors.text, opacity: 0.45 }}
-                  >
-                    GPS
-                  </p>
-                </motion.div>
-              ) : (
-                <>
-                  <p
-                    className="text-3xl font-black tracking-tight leading-none"
-                    style={{ color: theme.colors.text }}
-                  >
-                    {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
-                  </p>
-                  <p
-                    className="text-[10px] font-bold uppercase tracking-widest mt-0.5"
-                    style={{ color: theme.colors.text, opacity: 0.45 }}
-                  >
-                    {isIndoor ? t('nav.steps') : 'm'}
-                  </p>
-                  <div className="mt-1" aria-label={directionHint}>
-                    <DirectionIcon
-                      type={direction.iconType}
-                      size={22}
-                      color={theme.colors.primary}
-                    />
-                  </div>
-                  <p
-                    className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
-                    style={{ color: theme.colors.text, opacity: 0.55 }}
-                  >
-                    {isIndoor ? t('nav.indoor_mode') : directionHint}
-                  </p>
-                </>
+                  className="absolute inset-0 rounded-full border border-red-400 pointer-events-none"
+                  animate={{ scale: [1, 1.05, 1], opacity: [0.55, 0.1, 0.55] }}
+                  transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                />
               )}
-            </div>
-          </div>
 
-          {/* 抵達後 CTA：1 秒後彈出「關閉導航」按鈕 */}
-          <AnimatePresence>
-            {showArrivedCTA && (
-              <motion.button
-                type="button"
-                initial={{ opacity: 0, y: 12, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-                onClick={onClose}
-                className="mt-4 px-6 py-2.5 rounded-full font-black text-sm uppercase tracking-widest text-white shadow-lg active:scale-95 transition-transform"
-                style={{ backgroundColor: '#22c55e' }}
-              >
-                {t('nav.close_nav')}
-              </motion.button>
-            )}
-          </AnimatePresence>
+              <AnimatePresence mode="wait">
+                {arrived ? (
+                  /* ── 抵達狀態 ── */
+                  <motion.div
+                    key="arrived"
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 220, damping: 16 }}
+                    className="flex flex-col items-center gap-0.5 px-2"
+                  >
+                    <Check size={32} style={{ color: '#22c55e' }} strokeWidth={2.5} />
+                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-green-500">
+                      {t('nav.arrived')}
+                    </p>
+                    <AnimatePresence>
+                      {showArrivedCTA && (
+                        <motion.button
+                          key="cta"
+                          type="button"
+                          initial={{ opacity: 0, y: 6, scale: 0.88 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 4, scale: 0.92 }}
+                          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                          onClick={onClose}
+                          className="mt-1 px-3 py-1 rounded-full font-black text-[9px] uppercase tracking-widest text-white shadow-md active:scale-95 pointer-events-auto"
+                          style={{ backgroundColor: '#22c55e' }}
+                        >
+                          {t('nav.close_nav')}
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                ) : !hasValidLocation ? (
+                  /* ── GPS 等待狀態 ── */
+                  <motion.div
+                    key="no-gps"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center gap-0.5"
+                  >
+                    <motion.div
+                      animate={{ opacity: [1, 0.3, 1] }}
+                      transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                    >
+                      <Navigation size={22} style={{ color: theme.colors.primary }} />
+                    </motion.div>
+                    <p
+                      className="text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: theme.colors.primary }}
+                    >
+                      GPS
+                    </p>
+                    <p
+                      className="text-[7px] font-bold uppercase tracking-[0.18em]"
+                      style={{ color: theme.colors.text, opacity: 0.35 }}
+                    >
+                      {t('nav.gps_waiting')}
+                    </p>
+                  </motion.div>
+                ) : (
+                  /* ── 正常導航狀態 ── */
+                  <motion.div
+                    key="normal"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center w-full px-2"
+                  >
+                    {/* 距離 / 步數 */}
+                    <p
+                      className="text-3xl font-black tracking-tight leading-none"
+                      style={{ color: theme.colors.text }}
+                    >
+                      {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
+                    </p>
+                    <p
+                      className="text-[9px] font-bold uppercase tracking-widest mt-0.5"
+                      style={{ color: theme.colors.text, opacity: 0.4 }}
+                    >
+                      {isIndoor ? t('nav.steps') : t('nav.unit_meters')}
+                    </p>
+
+                    {/* 分隔線 */}
+                    <div
+                      className="w-8 h-px my-1.5"
+                      style={{ backgroundColor: `${theme.colors.text}15` }}
+                    />
+
+                    {/* 方向 or 手機平放提示（互斥） */}
+                    <AnimatePresence mode="wait">
+                      {!isPhoneFlat ? (
+                        <motion.div
+                          key="hold-flat"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.25 }}
+                          className="flex flex-col items-center gap-0.5"
+                        >
+                          <motion.div
+                            animate={{ rotate: [14, -14, 14] }}
+                            transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                          >
+                            <Smartphone size={16} color="#ef4444" />
+                          </motion.div>
+                          <p
+                            className="text-[7px] font-black uppercase tracking-[0.14em]"
+                            style={{ color: '#ef4444', opacity: 0.9 }}
+                          >
+                            {t('nav.hold_flat')}
+                          </p>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="direction"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.25 }}
+                          className="flex flex-col items-center gap-0"
+                          aria-label={directionHint}
+                        >
+                          <DirectionIcon
+                            type={direction.iconType}
+                            size={20}
+                            color={theme.colors.primary}
+                          />
+                          <p
+                            className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.15em]"
+                            style={{ color: theme.colors.text, opacity: 0.5 }}
+                          >
+                            {isIndoor ? t('nav.indoor_mode') : directionHint}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </div>
         </div>
       </div>
 
