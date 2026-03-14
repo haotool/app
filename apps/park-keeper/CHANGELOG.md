@@ -1,5 +1,11 @@
 # @app/park-keeper
 
+## 1.0.11
+
+### Patch Changes
+
+- 修正 Cloudflare Rocket Loader 造成骨架屏永久卡住的問題。
+
 ## 1.0.10
 
 ### Patch Changes
