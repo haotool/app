@@ -11,6 +11,12 @@ const distDir = join(__dirname, '../dist');
 /**
  * [fix:2025-12-24] 確保 charset 在 head 前 1024 bytes
  * [fix:2026-01-03] 修復 W3C Validator 錯誤：移除重複的 crossorigin 屬性
+ * [fix:2026-03-14] 注入 data-cfasync="false" 至 __VITE_REACT_SSG_HASH__ script，
+ *                  防止 Cloudflare Rocket Loader 修改 type 屬性，
+ *                  導致 window.__VITE_REACT_SSG_HASH__ 永遠是 undefined
+ *                  → 造成 static-loader-data-manifest-undefined.json 404 → 骨架屏卡死。
+ *                  必須在 origin HTML 就帶此屬性，否則 Rocket Loader 在 sub-request 時
+ *                  已先改完 type，Worker HTMLRewriter 的修補為時已晚。
  */
 const fixHtmlOutput = (htmlPath) => {
   if (!existsSync(htmlPath)) return;
@@ -27,9 +33,16 @@ const fixHtmlOutput = (htmlPath) => {
   // 2. 修復重複 crossorigin 屬性
   html = html.replace(/crossorigin\s+crossorigin/gi, 'crossorigin');
 
+  // 3. 注入 data-cfasync="false" 到 __VITE_REACT_SSG_HASH__ script。
+  //    Rocket Loader 在 CF Worker sub-request 時優先跑，data-cfasync="false" 需在 origin HTML 就存在。
+  html = html.replace(
+    /(<script)(\s*>window\.__VITE_REACT_SSG_HASH__)/g,
+    '$1 data-cfasync="false"$2',
+  );
+
   if (html !== original) {
     fs.writeFileSync(htmlPath, html, 'utf-8');
-    console.log(`✅ fixed HTML (charset first, dedup crossorigin): ${htmlPath}`);
+    console.log(`✅ fixed HTML (charset first, dedup crossorigin, cfasync): ${htmlPath}`);
   }
 };
 

@@ -1,5 +1,51 @@
 # @app/ratewise
 
+## 2.9.9
+
+### Patch Changes
+
+- 59d38e2: test(ratewise): 新增 GA4 延後初始化與 PWA 冷啟動 E2E 迴歸測試
+  - 驗證 GA4 script 不在 load 事件前注入 DOM（不影響 LCP）
+  - 驗證 document.readyState === 'complete' 競態防衛（readyState fix）
+  - 驗證 manifest.webmanifest Content-Type 為 application/manifest+json
+  - 驗證 dataLayer 不在 DOMContentLoaded 前初始化
+  - 驗證 precache 包含完整 JS/CSS/HTML（setCatchHandler 三層回退基礎）
+  - 驗證 precache 148 條目、45 JS chunks、offline.html、index.html 均存在
+  - 抽出 mockRatesApi 共用 helper 消除 DRY 違反
+  - 更新 playwright.config.ts 將 ga-defer-lcp.spec.ts 加入 offline-pwa-chromium testMatch
+
+- 56901e0: fix(ratewise): 修正 GA 延後初始化競態條件
+  - 新增 document.readyState === 'complete' 防衛判斷
+  - 避免 BFCache 還原或快取頁面 load 已完成時 GA 永遠不觸發
+
+- 59d38e2: fix(ratewise): 修正 GA review 回饋與 CodeQL 測試告警
+  - 抽出 scheduleAfterPageLoad 並補齊 readyState 競態單元測試
+  - 整理 Playwright project 規則，避免 ga-defer-lcp 測試重複執行
+  - 改用 parsed URL host/path 判斷 GTM script，清除 CodeQL URL substring 告警
+
+- 修正 Cloudflare Rocket Loader 造成骨架屏永久卡住的問題。
+
+  根本原因：Rocket Loader 在 CF Worker sub-request 時修改 vite-react-ssg 注入的
+  `<script>window.__VITE_REACT_SSG_HASH__</script>` 的 type 屬性，導致該腳本無法執行，
+  `window.__VITE_REACT_SSG_HASH__` 永遠是 `undefined`，進而觸發
+  `static-loader-data-manifest-undefined.json` 404，資料永遠無法載入。
+
+  修復方式：在 postbuild 階段將 `data-cfasync="false"` 燒入 origin HTML，
+  讓 Rocket Loader 在接觸 HTML 時就略過此腳本。
+  同步升級 security-headers Worker 至 v4.4（HTMLRewriter 也注入此屬性作為雙重保障）。
+
+- 44f68eb: fix(sw): 修復 setCatchHandler JS/CSS 三層快取回退策略防止新安裝冷啟動黑屏
+  - setCatchHandler script/style 回退：新增 ignoreSearch 與 matchPrecache 策略
+  - verifyAndRepairPrecache：修復 non-hashed 資源 revision-keyed URL 比對邏輯
+  - E2E：新增新安裝場景（precache-only）離線就緒驗證測試
+  - E2E：新增 setCatchHandler JS 回退命中驗證測試
+  - E2E：新增 Cloudflare COEP/CORP sub-resource 隔離驗證（防止 SW precache 被阻擋）
+
+- f3cbe61: perf(ratewise): 延後 GA 初始化至 load 事件後改善 LCP
+  - 將 initGA 與 trackPageview 移至 window.addEventListener('load', ..., { once: true })
+  - 避免 152KB GA 腳本與 LCP 關鍵資源（app bundle、CDN 匯率資料）競爭頻寬
+  - Lighthouse LCP 分數預期從 19 提升（目前 5.5s → 目標 <2.5s）
+
 ## 2.9.8
 
 ### Patch Changes
