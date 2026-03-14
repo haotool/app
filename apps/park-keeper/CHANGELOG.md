@@ -1,5 +1,11 @@
 # @app/park-keeper
 
+## 1.0.12
+
+### Patch Changes
+
+- 修正首頁卡住骨架屏問題：將 ClientOnly fallback 改為 null，避免 SSG 預渲染 min-h-screen 骨架屏疊在 React app 上方
+
 ## 1.0.11
 
 ### Patch Changes
