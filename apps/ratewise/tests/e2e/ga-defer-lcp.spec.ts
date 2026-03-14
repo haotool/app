@@ -30,7 +30,7 @@ const BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:4173';
 const BASE_PATH =
   process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise';
 const BASE = `${BASE_URL}${BASE_PATH}/`.replace(/\/+$/, '/');
-const APP_ROOT = fileURLToPath(new URL('../../', import.meta.url));
+const APP_ROOT = fileURLToPath(new URL('../..', new URL('.', import.meta.url)));
 
 function detectBuiltGaRuntime(): boolean {
   try {

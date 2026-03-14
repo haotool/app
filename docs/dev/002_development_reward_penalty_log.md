@@ -1896,17 +1896,19 @@ topics: [testing, ci, performance, security, ssot]
 keywords: [playwright, codex-review, codeql, readyState, ga4, project-matrix]
 aliases: [GA E2E 假陽性修正, Playwright project 去重, GTM URL host check]
 related_entries: [codeql-test-html-regex-removal, regression-docs-tests-routes-sync]
-summary: PR #204 的 review 先後暴露五個層面問題：`ga-defer-lcp.spec.ts` 在 `chromium-mobile` 與 `offline-pwa-chromium` 重複執行、E2E 用 `about:blank` 的 `document.readyState` 假裝覆蓋實頁面競態、以 `includes('googletagmanager.com')` 判斷 script URL 造成 CodeQL `js/incomplete-url-substring-sanitization` 告警、以 `Array.isArray()` 錯判 GA `IArguments` 結構導致 `config` 次數永遠算成 0，以及只在 `DOMContentLoaded` 取樣一次而漏掉 `DOMContentLoaded → load` 之間的初始化時窗。修正方式是把 GA 排程抽成 `scheduleAfterPageLoad()` 單元測試覆蓋、E2E 改回實頁面不變式驗證、Playwright project 規則抽成常數，並以 parsed URL host/path、連續監測 `dataLayer` 與正確的 `IArguments` 判讀收斂 review。
+summary: PR #204 的 review 先後暴露六個層面問題：`ga-defer-lcp.spec.ts` 在 `chromium-mobile` 與 `offline-pwa-chromium` 重複執行、E2E 用 `about:blank` 的 `document.readyState` 假裝覆蓋實頁面競態、以 `includes('googletagmanager.com')` 判斷 script URL 造成 CodeQL `js/incomplete-url-substring-sanitization` 告警、以 `Array.isArray()` 錯判 GA `IArguments` 結構導致 `config` 次數永遠算成 0、只在 `DOMContentLoaded` 取樣一次而漏掉 `DOMContentLoaded → load` 之間的初始化時窗，以及 `APP_ROOT` 目錄深度計算錯誤導致 E2E 永遠讀不到真正的 `dist/assets`。修正方式是把 GA 排程抽成 `scheduleAfterPageLoad()` 單元測試覆蓋、E2E 改回實頁面不變式驗證、Playwright project 規則抽成常數，並以 parsed URL host/path、連續監測 `dataLayer`、正確的 `IArguments` 判讀與穩定的 app root 解析收斂 review。
 root_cause:
 
 - 將「實頁面不變式」與「readyState 分支覆蓋」混在同一個 E2E 測試，導致 about:blank 假陽性
 - Playwright project 規則用重複 regex 散落定義，容易只修到一個 project
 - 測試程式把 URL 當字串做 substring 判斷，GitHub Advanced Security 仍會視為不安全模式
+- 直接用檔案 URL 做 `../../` 相對解析，容易把 `tests/e2e` 誤算成 app 根目錄
   impact:
 
 - PR review 雖已有人嘗試修正，實際上評論指出的風險仍可殘留在最新 diff
 - `CodeQL` 顯示新增 security alert，干擾 PR 是否可合併的判讀
 - E2E matrix 多跑一份 mobile/offline 測試，增加 CI 時間與變因
+- `HAS_BUILT_GA_RUNTIME` 會固定落在 `false`，讓 GA-enabled build 的 `config` 斷言失真
   actions:
 
 - 在 `apps/shared/analytics/ga.ts` 新增 `scheduleAfterPageLoad()`，把 `document.readyState === 'complete'` 與 `load` listener 分支抽成可單測 helper
@@ -1915,6 +1917,7 @@ root_cause:
 - 重寫 `apps/ratewise/tests/e2e/ga-defer-lcp.spec.ts` 的第二個測試，只驗證實頁面 `load` 後 `config` 不重複；同時把 GTM 偵測改為 `new URL(src)` 後比對 `hostname` 與 `pathname`
 - 將 GA `config` 次數判讀改成支援 `IArguments` 結構，並以實際 build artifact 是否包含 GA runtime 決定 `config` 期望值
 - 將 `dataLayer` 監測改為在 `load` 前整段期間持續追蹤，不再只於 `DOMContentLoaded` 單點取樣
+- 將 `APP_ROOT` 改為先取 `import.meta.url` 所在目錄，再穩定回推兩層至 `apps/ratewise`
   prevention:
 
 - 需要覆蓋競態分支時，優先抽出可測 helper 再用單元測試驗證，不要讓 E2E 承擔不可控時序模擬
@@ -1922,6 +1925,7 @@ root_cause:
 - 即使是 `classifications: [test]` 的 CodeQL alert，也應把判斷邏輯修到與正式程式同等嚴謹
 - 若測試要讀第三方 SDK 事件佇列，必須先確認資料結構是否為 `Array`、`IArguments` 或自訂類陣列，避免統計永遠為 0 的假綠燈
 - 宣稱「load 前／後」的測試必須覆蓋整段時窗，而不是只取一個生命週期時間點
+- 測試若要讀 build artifact，應避免把相對路徑直接掛在檔案 URL 上，改以「先取當前目錄，再回推層級」的方式降低目錄深度誤判
   verification:
 
 - `pnpm --filter @app/ratewise test -- --run src/__tests__/analytics/ga.test.ts`
