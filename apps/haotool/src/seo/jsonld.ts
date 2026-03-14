@@ -3,7 +3,8 @@
  * [context7:/google/structured-data:2025-12-14]
  */
 
-const SITE_URL = 'https://app.haotool.org';
+const SITE_URL = 'https://haotool.org';
+const APPS_HOST_URL = 'https://app.haotool.org';
 const SITE_NAME = 'haotool.org';
 const AUTHOR_NAME = '阿璋';
 
@@ -210,28 +211,28 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
             '@type': 'ListItem',
             position: 1,
             name: 'RateWise 匯率計算機',
-            url: `${SITE_URL}/ratewise/`,
+            url: `${APPS_HOST_URL}/ratewise/`,
             description: '即時匯率換算工具，整合台灣銀行牌告匯率與 30 天歷史數據視覺化。',
           },
           {
             '@type': 'ListItem',
             position: 2,
             name: '日本名字產生器',
-            url: `${SITE_URL}/nihonname/`,
+            url: `${APPS_HOST_URL}/nihonname/`,
             description: '輸入中文姓氏，瞬間產生道地日文名字與諧音梗，支援 100+ 漢姓對照。',
           },
           {
             '@type': 'ListItem',
             position: 3,
             name: '停車好工具 ParkKeeper',
-            url: `${SITE_URL}/park-keeper/`,
+            url: `${APPS_HOST_URL}/park-keeper/`,
             description: '台灣最好用的免費停車記錄 App，支援 GPS 定位、羅盤導航、離線使用。',
           },
           {
             '@type': 'ListItem',
             position: 4,
             name: '地震知識小學堂',
-            url: `${SITE_URL}/quake-school/`,
+            url: `${APPS_HOST_URL}/quake-school/`,
             description: '互動式地震衛教平台，18 道測驗題搭配 SVG 動畫深入淺出講解地震科學。',
           },
         ],

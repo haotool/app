@@ -27,6 +27,7 @@ export const SEO_FILES: string[];
 export const IMAGE_RESOURCES: string[];
 export const SITE_CONFIG: {
   url: string;
+  appsHostUrl: string;
   name: string;
   title: string;
   description: string;

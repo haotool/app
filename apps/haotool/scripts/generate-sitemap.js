@@ -30,10 +30,10 @@ const SOCIAL_BOTS = [
 
 const SITEMAP_URLS = [
   `${SITE_CONFIG.url}sitemap.xml`,
-  `${SITE_CONFIG.url}ratewise/sitemap.xml`,
-  `${SITE_CONFIG.url}nihonname/sitemap.xml`,
-  `${SITE_CONFIG.url}park-keeper/sitemap.xml`,
-  `${SITE_CONFIG.url}quake-school/sitemap.xml`,
+  `${SITE_CONFIG.appsHostUrl}ratewise/sitemap.xml`,
+  `${SITE_CONFIG.appsHostUrl}nihonname/sitemap.xml`,
+  `${SITE_CONFIG.appsHostUrl}park-keeper/sitemap.xml`,
+  `${SITE_CONFIG.appsHostUrl}quake-school/sitemap.xml`,
 ];
 
 function buildUrlXml(pathname) {

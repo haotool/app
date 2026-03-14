@@ -1,13 +1,13 @@
 # haotool.org — Robots Exclusion Protocol
-# https://app.haotool.org/
-# 最後更新：2026-03-11
+# https://haotool.org/
+# 最後更新：2026-03-14
 
 User-agent: *
 Allow: /
 Disallow: /sw.js
 Disallow: /workbox-*.js
 
-Sitemap: https://app.haotool.org/sitemap.xml
+Sitemap: https://haotool.org/sitemap.xml
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 Sitemap: https://app.haotool.org/nihonname/sitemap.xml
 Sitemap: https://app.haotool.org/park-keeper/sitemap.xml

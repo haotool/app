@@ -44,7 +44,8 @@ export const IMAGE_RESOURCES = [
  * 網站基本配置
  */
 export const SITE_CONFIG = {
-  url: 'https://app.haotool.org/',
+  url: 'https://haotool.org/',
+  appsHostUrl: 'https://app.haotool.org/',
   name: 'haotool.org',
   title: 'haotool.org — 阿璋的全端作品集 | React TypeScript 高品質數位工具',
   description:

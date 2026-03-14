@@ -1,7 +1,7 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-13T00:25:00+08:00
-> **當前總分**: 1162（初始分: 100）
+> **最後更新**: 2026-03-14T11:35:00+08:00
+> **當前總分**: 1164（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
 ---
@@ -1939,6 +1939,114 @@ root_cause:
 - apps/shared/analytics/ga.ts
 - apps/ratewise/tests/e2e/ga-defer-lcp.spec.ts
 - apps/ratewise/playwright.config.ts
+
+---
+
+id: haotool-root-url-ssot-contact-non200-fix
+date: 2026-03-14
+title: 修正 haotool 根站正式 URL SSOT 漂移，避免 /contact 被錯 host 驗證
+score: +2
+type: success
+content_type: troubleshooting
+scope: haotool
+topics: [seo, deployment, ssot, routing]
+keywords: [haotool, contact, canonical, sitemap, robots, jsonld]
+aliases: [haotool contact non200 修復, apex domain SSOT 修正]
+related_entries: [incident-production-verification-gap, regression-docs-tests-routes-sync]
+summary: `https://haotool.org/contact/` 在正式站當下雖回 `200`，但 live HTML、sitemap.xml、robots.txt、JSON-LD 與 canonical 全部仍指向 `https://app.haotool.org/contact/`。真正的根因不是 Contact route 缺頁，而是 `apps/haotool` 長期把 root site 正式網址綁在 `app.haotool.org`，導致 production 驗證、爬蟲收錄與 SEO 訊號都以錯 host 為準，進而把 `/contact/` 的健康狀態建立在錯誤站點上。
+root_cause:
+
+- `SITE_CONFIG.url` 同時承擔 root site canonical 與 sibling app sitemap host，導致根站網址責任混雜
+- `src/seo/meta-tags.ts`、`src/seo/jsonld.ts`、`index.html`、`public/llms.txt` 各自硬編碼 `app.haotool.org`
+- production smoke check 只看 `/contact/` HTTP 狀態，沒有同步檢查 canonical / JSON-LD / sitemap 是否仍指向錯 host
+
+impact:
+
+- `haotool.org/contact/` 對外雖可開啟，但搜尋引擎與驗證工具接收到的是 `app.haotool.org/contact/` 訊號
+- `verify-production-resources` 之類依 `app.config.mjs` 的檢查會持續以錯 host 當 SSOT，形成假異常或假正常
+- sitemap / robots / llms / structured data 對根站與子 app 的 host 邏輯混在一起，增加未來回歸風險
+
+actions:
+
+- 將 `apps/haotool/app.config.mjs` 的 root `SITE_CONFIG.url` 改為 `https://haotool.org/`
+- 新增 `SITE_CONFIG.appsHostUrl` 保留子 app sitemap 指向 `https://app.haotool.org/`
+- 修正 `apps/haotool/scripts/generate-sitemap.js`，讓 root sitemap 用 apex，子 app sitemap 用 apps host
+- 修正 `apps/haotool/index.html`、`src/seo/meta-tags.ts`、`src/seo/jsonld.ts`、`public/llms.txt`，讓 root 頁與 `/contact/` 的 canonical、OG、Twitter、JSON-LD 都回到 apex
+- 重新生成 `apps/haotool/public/sitemap.xml` 與 `apps/haotool/public/robots.txt`
+
+prevention:
+
+- root site 與 sibling apps 若不在同一 host，SSOT 必須分開表達，禁止用單一 `siteUrl` 兼任兩種責任
+- production 站點驗證不能只看 HTTP 200，必須同時檢查 canonical、JSON-LD、robots、sitemap 是否對齊正式 host
+- `index.html`、SEO helper、生成腳本若共同輸出正式網址，應視為高風險漂移點並一併驗證
+
+verification:
+
+- `curl -s https://haotool.org/contact/ | rg "canonical|og:url|application/ld\\+json|app\\.haotool\\.org"`
+- `pnpm --filter @app/haotool prebuild`
+- `pnpm --filter @app/haotool test -- --run src/test/seo.test.ts`
+- `pnpm --filter @app/haotool typecheck`
+- `pnpm --filter @app/haotool build`
+
+references:
+
+- apps/haotool/app.config.mjs
+- apps/haotool/scripts/generate-sitemap.js
+- apps/haotool/src/seo/meta-tags.ts
+- apps/haotool/src/seo/jsonld.ts
+- apps/haotool/index.html
+- apps/haotool/public/sitemap.xml
+- apps/haotool/public/robots.txt
+- apps/haotool/public/llms.txt
+
+---
+
+id: security-headers-wrangler-schema-compat-date-refresh
+date: 2026-03-14
+title: 對齊 Cloudflare Wrangler 最佳實踐並刷新 security-headers 相容日期
+score: +2
+type: improvement
+content_type: maintenance
+scope: cloudflare
+topics: [cloudflare, wrangler, worker, deployment, configuration]
+keywords: [wrangler-jsonc, schema, compatibility-date, security-headers, cli]
+aliases: [Wrangler 設定最佳實踐補齊, security-headers compatibility date 更新]
+related_entries: [cloudflare-security-headers-layered-refactor, haotool-root-url-ssot-contact-non200-fix]
+summary: 透過 `wrangler` CLI 與 Cloudflare 官方文件重新核對後，確認目前生產中的 `security-headers` Worker 雖正常運作，但 `wrangler.jsonc` 仍缺少 `$schema`，且 `compatibility_date` 停在 `2025-11-26`。這次將設定補齊到 Cloudflare 當前建議做法，讓後續配置校驗、IDE 提示與 runtime 行為基線都回到可維護狀態。
+root_cause:
+
+- `security-headers/wrangler.jsonc` 建立後長期未跟進 Cloudflare 近月最佳實踐，導致相容日期老化。
+- 設定檔缺少 `$schema`，本地編輯時少了結構提示與欄位校驗，容易讓配置漂移在 commit 前不被發現。
+- repo 先前重點多放在 Worker 程式邏輯與 route policy，設定層 hygiene 沒有被同等收斂。
+  impact:
+
+- 舊 `compatibility_date` 不會立刻讓 Worker 壞掉，但會延後取得新的 runtime 修正與文件預設行為，增加日後排障與升級成本。
+- `wrangler.jsonc` 沒有 schema 時，欄位打錯或結構偏差較難在本地被提早攔下。
+- Cloudflare CLI 與 repo 設定若長期脫節，後續部署會更依賴人工記憶而不是顯式規格。
+  actions:
+
+- 在 `security-headers/wrangler.jsonc` 加上 `\"$schema\": \"./node_modules/wrangler/config-schema.json\"`。
+- 將 `compatibility_date` 從 `2025-11-26` 更新為 `2026-03-14`，對齊官方「新專案設為當日、既有專案定期更新」指引。
+- 以 `pnpm exec wrangler whoami`、`deployments status --json`、`deploy --dry-run` 核對帳號、目前 production 部署與設定可打包性。
+  prevention:
+
+- Cloudflare Worker 每次做部署相關修正時，應一併檢查 `wrangler.jsonc` 的 `compatibility_date` 是否仍落在近期可接受範圍。
+- `wrangler.jsonc` 應固定帶 `$schema`，避免把設定正確性完全交給部署時才發現。
+- CLI 驗證應優先使用目前版本仍有效的指令，例如 `deploy --dry-run`，避免沿用舊版 `wrangler check` 習慣造成假驗證。
+  verification:
+
+- `cd security-headers && pnpm exec wrangler whoami`
+- `cd security-headers && pnpm exec wrangler deployments status --json`
+- `cd security-headers && pnpm exec wrangler deployments list --json`
+- `cd security-headers && pnpm exec wrangler versions list --json`
+- `cd security-headers && pnpm exec wrangler deploy --dry-run`
+- Cloudflare Workers Best Practices 官方文件
+- Cloudflare Compatibility Dates 官方文件
+  references:
+
+- security-headers/wrangler.jsonc
+- https://developers.cloudflare.com/workers/best-practices/workers-best-practices/
+- https://developers.cloudflare.com/workers/configuration/compatibility-dates/
 
 ## 歷史索引（精簡）
 
