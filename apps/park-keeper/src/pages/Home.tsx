@@ -38,7 +38,7 @@ import { getVersionInfo } from '@app/park-keeper/config/version';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
 import PhotoViewerModal from '@app/park-keeper/components/PhotoViewerModal';
 import RecordCard from '@app/park-keeper/components/RecordCard';
-import PhoneFlatPrompt from '@app/park-keeper/components/PhoneFlatPrompt';
+import PhoneFlatRing from '@app/park-keeper/components/PhoneFlatRing';
 import { useNavigation, getDirectionInfo } from '@app/park-keeper/hooks/useNavigation';
 import type { DirectionIconType } from '@app/park-keeper/hooks/useNavigation';
 
@@ -554,21 +554,21 @@ function NavOverlay({
               </motion.div>
             </motion.div>
 
-            {/* Center Hub – Distance + Direction / Arrived / GPS Waiting / Hold Flat */}
+            {/* PhoneFlatRing – 手機未平放時出現於 Hub 外圍，不遮擋中心資訊 */}
+            <PhoneFlatRing
+              visible={!isPhoneFlat && hasValidLocation && !arrived}
+              label={t('nav.hold_flat')}
+            />
+
+            {/* Center Hub – Distance + Direction / Arrived / GPS Waiting */}
             <div
               className="absolute w-32 h-32 rounded-full border-2 flex flex-col items-center justify-center z-10 backdrop-blur-sm transition-all duration-500 px-3 text-center"
               style={{
-                borderColor: arrived
-                  ? 'rgba(34,197,94,0.5)'
-                  : !isPhoneFlat && hasValidLocation
-                    ? 'rgba(239,68,68,0.35)'
-                    : `${theme.colors.text}12`,
+                borderColor: arrived ? 'rgba(34,197,94,0.5)' : `${theme.colors.text}12`,
                 backgroundColor: `${theme.colors.background}CC`,
                 boxShadow: arrived
                   ? '0 0 0 6px rgba(34,197,94,0.12), 0 4px 24px rgba(0,0,0,0.12)'
-                  : !isPhoneFlat && hasValidLocation
-                    ? '0 0 0 6px rgba(239,68,68,0.08), 0 4px 24px rgba(0,0,0,0.12)'
-                    : '0 4px 24px rgba(0,0,0,0.12)',
+                  : '0 4px 24px rgba(0,0,0,0.12)',
               }}
             >
               {arrived ? (
@@ -597,12 +597,6 @@ function NavOverlay({
                     GPS
                   </p>
                 </motion.div>
-              ) : !isPhoneFlat ? (
-                <PhoneFlatPrompt
-                  text={t('nav.hold_flat')}
-                  color={theme.colors.accent}
-                  orientation="portrait"
-                />
               ) : (
                 <>
                   <p
