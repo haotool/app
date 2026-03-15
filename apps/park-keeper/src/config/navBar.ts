@@ -6,13 +6,13 @@
  *
  * 高度架構（重要）：
  *   <nav>
- *     <div h=NAV_CONTENT_H>  ← 可見內容（固定 56px，與 safe area 無關）
+ *     <div h=NAV_CONTENT_H>  ← 可見內容（固定 48px，與 safe area 無關）
  *     <div pb-safe-bottom />  ← safe area spacer（獨立，避免吃掉內容高度）
  *   </nav>
  *
  * 參考規範：
  *   - iOS HIG Tab Bar: 49pt 可見高度 + safe-area-inset-bottom
- *   - Material Design 3 Navigation Bar: 56dp 可見高度
+ *   - Material Design 3 Navigation Bar: 56dp 可見高度（本設計取 48px 緊湊版）
  */
 
 // ---------------------------------------------------------------------------
@@ -20,14 +20,14 @@
 // ---------------------------------------------------------------------------
 
 /** 可見內容區高度 class（不含 safe-area-inset-bottom）。 */
-export const NAV_CONTENT_H = 'h-14'; // 56px — 業界標準
+export const NAV_CONTENT_H = 'h-12'; // 48px — 緊湊版（iOS HIG 最小值 49pt 附近）
 
 // ---------------------------------------------------------------------------
 // Icon
 // ---------------------------------------------------------------------------
 
 /** Icon 尺寸（px）。傳入 Lucide `size` prop。 */
-export const NAV_ICON_SIZE = 22;
+export const NAV_ICON_SIZE = 18;
 
 /** Icon strokeWidth（active 狀態）。 */
 export const NAV_ICON_STROKE_ACTIVE = 2.5;
@@ -66,7 +66,10 @@ export const NAV_INDICATOR_TRANSITION = {
 
 /** Tab 文字標籤 Tailwind class（active / inactive 共用基底）。 */
 export const NAV_LABEL_BASE_CLS =
-  'text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300' as const;
+  'text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-300' as const;
 
 /** Tab 文字標籤 inactive 附加 class。 */
 export const NAV_LABEL_INACTIVE_CLS = 'opacity-30' as const;
+
+/** Icon 與文字標籤之間的垂直間距 class。 */
+export const NAV_TAB_GAP_CLS = 'gap-0.5' as const;

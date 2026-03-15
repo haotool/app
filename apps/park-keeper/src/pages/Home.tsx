@@ -80,6 +80,7 @@ import {
   NAV_INDICATOR_TRANSITION,
   NAV_LABEL_BASE_CLS,
   NAV_LABEL_INACTIVE_CLS,
+  NAV_TAB_GAP_CLS,
 } from '@app/park-keeper/config/navBar';
 
 const MiniMap = lazy(() => import('@app/park-keeper/components/MiniMap'));
@@ -1314,7 +1315,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 type="button"
                 aria-label={t('tab.list')}
                 onClick={() => setCurrentTab('list')}
-                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group"
+                className={`w-full h-full flex flex-col items-center justify-center ${NAV_TAB_GAP_CLS} relative group`}
               >
                 <div
                   className={`transition-all duration-300 ${currentTab === 'list' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
@@ -1372,7 +1373,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 type="button"
                 aria-label={t('tab.settings')}
                 onClick={() => setCurrentTab('settings')}
-                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group"
+                className={`w-full h-full flex flex-col items-center justify-center ${NAV_TAB_GAP_CLS} relative group`}
               >
                 <div
                   className={`transition-all duration-300 ${currentTab === 'settings' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}

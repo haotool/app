@@ -1,8 +1,40 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-15T18:25:00+08:00
-> **當前總分**: 1168（初始分: 100）
+> **最後更新**: 2026-03-15T18:50:00+08:00
+> **當前總分**: 1170（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: park-keeper-nav-compact-48px-v1.0.24
+date: 2026-03-15
+title: park-keeper 導覽列縮高至 48px 並新增 NAV_TAB_GAP_CLS SSOT（v1.0.24）
+score: 2
+type: improvement
+content_type: feature
+scope: park-keeper
+topics: [ui, nav, design-token, ssot]
+keywords: [NAV_CONTENT_H, NAV_ICON_SIZE, NAV_LABEL_BASE_CLS, NAV_TAB_GAP_CLS, 48px, h-12, gap-0.5]
+aliases: [nav compact 48px, 導覽列緊湊版, v1.0.24]
+related_entries: [park-keeper-nav-label-restore-v1.0.22]
+summary: 將導覽列可見高度從 56px（h-14）縮減至 48px（h-12），icon 從 22px 縮至 18px，label 從 text-9px 縮至 text-8px，icon 與 label 間距從 gap-1 改為 gap-0.5。同時將 gap 納入 SSOT，新增 NAV_TAB_GAP_CLS 常數，Home.tsx 改為引用，消除最後一個 hardcoded gap 值。
+
+actions:
+
+- navBar.ts：NAV_CONTENT_H h-14 to h-12，NAV_ICON_SIZE 22 to 18
+- navBar.ts：NAV_LABEL_BASE_CLS text-9px to text-8px
+- navBar.ts：新增 NAV_TAB_GAP_CLS=gap-0.5
+- Home.tsx：import NAV_TAB_GAP_CLS，兩個 button gap-1 改為引用常數
+- package.json：版本 1.0.23 to 1.0.24
+
+verification:
+
+- pnpm typecheck 通過（無型別錯誤）
+
+references:
+
+- apps/park-keeper/src/config/navBar.ts
+- apps/park-keeper/src/pages/Home.tsx
 
 ---
 
