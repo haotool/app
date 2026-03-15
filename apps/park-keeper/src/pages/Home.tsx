@@ -70,6 +70,15 @@ import {
   WARNING_BORDER,
   WARNING_GLOW,
 } from '@app/park-keeper/config/colors';
+import {
+  NAV_CONTENT_H,
+  NAV_ICON_SIZE,
+  NAV_ICON_STROKE_ACTIVE,
+  NAV_ICON_STROKE_INACTIVE,
+  NAV_INDICATOR_CLS,
+  NAV_INDICATOR_LAYOUT_ID,
+  NAV_INDICATOR_TRANSITION,
+} from '@app/park-keeper/config/navBar';
 
 const MiniMap = lazy(() => import('@app/park-keeper/components/MiniMap'));
 
@@ -1288,38 +1297,41 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           )}
         </AnimatePresence>
 
-        {/* Bottom Navigation */}
+        {/* Bottom Navigation
+            高度架構：content div（56px 固定）+ safe-area spacer（分離），
+            避免 pb-safe-bottom 吃掉可見內容高度。 */}
         <nav
-          className="fixed bottom-0 inset-x-0 h-20 pb-safe-bottom z-30 backdrop-blur-xl border-t border-black/2"
+          className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl border-t border-black/5"
           style={{ backgroundColor: theme.colors.background + 'CC' }}
         >
-          <div className="flex h-full max-w-md mx-auto relative px-6">
+          {/* 可見內容區：固定 56px，與 safe area 無關 */}
+          <div className={`flex ${NAV_CONTENT_H} max-w-md mx-auto relative px-6`}>
             {/* List Tab */}
             <div className="flex-1 h-full">
               <button
                 type="button"
+                aria-label={t('tab.list')}
                 onClick={() => setCurrentTab('list')}
-                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group"
+                className="w-full h-full flex items-center justify-center relative group"
               >
                 <div
                   className={`transition-all duration-300 ${currentTab === 'list' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
                   style={{ color: currentTab === 'list' ? theme.colors.primary : undefined }}
                 >
-                  <ListIcon size={22} strokeWidth={currentTab === 'list' ? 2.5 : 2} />
+                  <ListIcon
+                    size={NAV_ICON_SIZE}
+                    strokeWidth={
+                      currentTab === 'list' ? NAV_ICON_STROKE_ACTIVE : NAV_ICON_STROKE_INACTIVE
+                    }
+                  />
                 </div>
-                <span
-                  className={`text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${currentTab === 'list' ? '' : 'opacity-30'}`}
-                  style={{ color: currentTab === 'list' ? theme.colors.primary : undefined }}
-                >
-                  {t('tab.list')}
-                </span>
 
                 {currentTab === 'list' && (
                   <motion.div
-                    layoutId="nav-indicator"
-                    className="absolute top-0 w-8 h-[3px] rounded-b-full"
+                    layoutId={NAV_INDICATOR_LAYOUT_ID}
+                    className={NAV_INDICATOR_CLS}
                     style={{ backgroundColor: theme.colors.primary }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    transition={NAV_INDICATOR_TRANSITION}
                   />
                 )}
               </button>
@@ -1350,33 +1362,36 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
             <div className="flex-1 h-full">
               <button
                 type="button"
+                aria-label={t('tab.settings')}
                 onClick={() => setCurrentTab('settings')}
-                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group"
+                className="w-full h-full flex items-center justify-center relative group"
               >
                 <div
                   className={`transition-all duration-300 ${currentTab === 'settings' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
                   style={{ color: currentTab === 'settings' ? theme.colors.primary : undefined }}
                 >
-                  <SettingsIcon size={22} strokeWidth={currentTab === 'settings' ? 2.5 : 2} />
+                  <SettingsIcon
+                    size={NAV_ICON_SIZE}
+                    strokeWidth={
+                      currentTab === 'settings' ? NAV_ICON_STROKE_ACTIVE : NAV_ICON_STROKE_INACTIVE
+                    }
+                  />
                 </div>
-                <span
-                  className={`text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${currentTab === 'settings' ? '' : 'opacity-30'}`}
-                  style={{ color: currentTab === 'settings' ? theme.colors.primary : undefined }}
-                >
-                  {t('tab.settings')}
-                </span>
 
                 {currentTab === 'settings' && (
                   <motion.div
-                    layoutId="nav-indicator"
-                    className="absolute top-0 w-8 h-[3px] rounded-b-full"
+                    layoutId={NAV_INDICATOR_LAYOUT_ID}
+                    className={NAV_INDICATOR_CLS}
                     style={{ backgroundColor: theme.colors.primary }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    transition={NAV_INDICATOR_TRANSITION}
                   />
                 )}
               </button>
             </div>
           </div>
+
+          {/* Safe area spacer：獨立元素，不影響內容高度計算 */}
+          <div className="pb-safe-bottom" />
         </nav>
 
         {/* Toast (centered pill) */}
