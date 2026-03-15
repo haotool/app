@@ -140,7 +140,7 @@ export default defineConfig(({ mode }) => {
       }),
       VitePWA({
         base,
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         injectRegister: 'auto',
         strategies: 'injectManifest',
         srcDir: 'src',

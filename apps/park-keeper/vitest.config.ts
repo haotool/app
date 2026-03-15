@@ -19,6 +19,7 @@ export default defineConfig({
     alias: {
       '@app/park-keeper': resolve(__dirname, 'src'),
       'vite-react-ssg': resolve(__dirname, 'src/__mocks__/vite-react-ssg.ts'),
+      'virtual:pwa-register/react': resolve(__dirname, 'src/__mocks__/pwa-register-react.ts'),
     },
   },
   test: {

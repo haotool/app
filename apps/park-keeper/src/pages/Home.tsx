@@ -37,6 +37,7 @@ import { dbService } from '@app/park-keeper/services/db';
 import { syncMapTileCacheConfig } from '@app/park-keeper/services/mapTileCache';
 import { getVersionInfo } from '@app/park-keeper/config/version';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
+import { UpdatePrompt } from '@app/park-keeper/components/UpdatePrompt';
 import PhotoViewerModal from '@app/park-keeper/components/PhotoViewerModal';
 import RecordCard from '@app/park-keeper/components/RecordCard';
 import { useNavigation, getDirectionInfo } from '@app/park-keeper/hooks/useNavigation';
@@ -1362,6 +1363,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           )}
         </AnimatePresence>
       </div>
+      <UpdatePrompt />
     </LayoutGroup>
   );
 }

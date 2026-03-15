@@ -63,6 +63,11 @@ const resources = {
       'map.aria_interactive_selection': 'Interactive map for parking location selection',
       'map.aria_interactive_tracking':
         'Interactive map showing current location and parked vehicle location',
+      'pwa.offlineReady': 'Ready for offline use',
+      'pwa.needRefresh': 'Updating to new version...',
+      'pwa.updateFailed': 'Update failed. Please retry.',
+      'pwa.actionRetry': 'Retry',
+      'pwa.actionDismiss': 'Dismiss',
     },
   },
   'zh-TW': {
@@ -124,6 +129,11 @@ const resources = {
       'map.aria_static': '顯示停車位置的靜態地圖',
       'map.aria_interactive_selection': '可互動的停車位置選擇地圖',
       'map.aria_interactive_tracking': '可互動地圖，顯示目前位置與已停車輛位置',
+      'pwa.offlineReady': '已可離線使用',
+      'pwa.needRefresh': '正在更新至新版本…',
+      'pwa.updateFailed': '更新失敗，請重試。',
+      'pwa.actionRetry': '重試',
+      'pwa.actionDismiss': '關閉',
     },
   },
   ja: {
@@ -185,6 +195,11 @@ const resources = {
       'map.aria_static': '駐車位置を表示する静的マップ',
       'map.aria_interactive_selection': '駐車位置を選択するインタラクティブマップ',
       'map.aria_interactive_tracking': '現在地と駐車した車の位置を表示するインタラクティブマップ',
+      'pwa.offlineReady': 'オフライン利用可能',
+      'pwa.needRefresh': '新バージョンに更新中…',
+      'pwa.updateFailed': '更新に失敗しました。再試行してください。',
+      'pwa.actionRetry': '再試行',
+      'pwa.actionDismiss': '閉じる',
     },
   },
 };

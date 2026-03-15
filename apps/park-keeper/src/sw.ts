@@ -34,7 +34,6 @@ let lastTilePruneAt = 0;
 
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
-void self.skipWaiting();
 
 const navigationHandler = createHandlerBoundToURL(`${import.meta.env.BASE_URL}index.html`);
 registerRoute(
@@ -233,6 +232,13 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('message', (event) => {
   const data = event.data as { type?: string; cacheDurationDays?: number } | undefined;
+
+  // prompt 更新流程：UpdatePrompt 元件確認後送出 SKIP_WAITING，觸發新 SW 接管並重載。
+  if (data?.type === 'SKIP_WAITING') {
+    void self.skipWaiting();
+    return;
+  }
+
   if (data?.type !== TILE_CACHE_CONFIG_MESSAGE || typeof data.cacheDurationDays !== 'number') {
     return;
   }
