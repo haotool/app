@@ -233,12 +233,19 @@ export default function RecordCard({
       <div className="flex gap-2.5 h-36 mb-4">
         <div className="flex-[1.2] rounded-2xl overflow-hidden bg-black/5 shadow-inner">
           {record.photoData ? (
-            <img
-              src={record.photoData}
-              alt=""
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
+            <button
+              type="button"
+              onClick={() => setShowPhotoModal(true)}
+              className="w-full h-full cursor-pointer"
+              aria-label="查看停車照片"
+            >
+              <img
+                src={record.photoData}
+                alt="停車照片"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </button>
           ) : (
             <div className="w-full h-full flex items-center justify-center opacity-20">
               <Car size={20} />
@@ -260,8 +267,6 @@ export default function RecordCard({
                 cacheDurationDays={cacheDurationDays}
                 text={miniMapText}
                 mapKey={record.id}
-                photoData={record.photoData}
-                onPhotoClick={() => setShowPhotoModal(true)}
                 parkedHeading={record.parkedHeading}
               />
             </Suspense>

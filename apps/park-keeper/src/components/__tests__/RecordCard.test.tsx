@@ -233,7 +233,7 @@ describe('RecordCard', () => {
     expect(screen.getByText(/靠近電梯口/)).toBeInTheDocument();
   });
 
-  it('應該在地圖照片被點擊後開啟並關閉照片 modal', async () => {
+  it('應該在列表照片面板被點擊後開啟並關閉照片 modal', async () => {
     vi.useRealTimers();
 
     renderRecordCard({
@@ -243,8 +243,8 @@ describe('RecordCard', () => {
       hasPhoto: true,
     });
 
-    const miniMap = await screen.findByTestId('mini-map');
-    fireEvent.click(miniMap);
+    const photoButton = await screen.findByRole('button', { name: '查看停車照片' });
+    fireEvent.click(photoButton);
     expect(screen.getByRole('dialog', { name: '照片檢視器' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '關閉照片預覽' }));

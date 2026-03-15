@@ -157,7 +157,7 @@ const createPremiumCarIcon = (
   markerLabel: string,
   photoData?: string,
   rotationDegrees = 0,
-  photoOffset = { x: 0, y: -80 },
+  photoOffset = { x: 0, y: 10 },
 ) => {
   const filterDef = isInteractive
     ? `<filter id="carGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -175,11 +175,11 @@ const createPremiumCarIcon = (
 
   const label = showLabel ? createMarkerLabelBadge(markerLabel, '#0f172ad9') : '';
 
-  // Photo thumbnail positioned relative to car marker (draggable)
-  // Constrain offset to ±50px range for reasonable positioning
+  // 照片縮圖定位於 140px 容器 div 的上半段（0–80px），car SVG 佔下半段（80–140px）。
+  // y=0: 緊貼頂部；y=80: 恰好在 car 上緣，實際可用範圍 0–20（照片 60px + 小間距）。
   const constrainedOffset = {
     x: Math.max(-50, Math.min(50, photoOffset.x)),
-    y: Math.max(-130, Math.min(-30, photoOffset.y)),
+    y: Math.max(0, Math.min(80, photoOffset.y)),
   };
 
   const photoThumbnail = photoData
@@ -562,7 +562,7 @@ function PhotoClickableMarker({
     let startX = 0;
     let startY = 0;
     let currentOffsetX = 0;
-    let currentOffsetY = -80; // Default offset
+    let currentOffsetY = 10; // 預設：照片置於 car 上方 10px 處
     let touchIdentifier: number | null = null;
 
     const handlePointerDown = (e: PointerEvent | TouchEvent) => {
@@ -587,7 +587,7 @@ function PhotoClickableMarker({
       const computedStyle = window.getComputedStyle(target);
       const matrix = new DOMMatrixReadOnly(computedStyle.transform);
       currentOffsetX = matrix.m41;
-      currentOffsetY = parseInt(target.style.top || '-80px', 10);
+      currentOffsetY = parseInt(target.style.top || '10px', 10);
     };
 
     const handlePointerMove = (e: PointerEvent | TouchEvent) => {
@@ -611,7 +611,7 @@ function PhotoClickableMarker({
       const deltaY = clientY - startY;
 
       const newOffsetX = Math.max(-50, Math.min(50, currentOffsetX + deltaX));
-      const newOffsetY = Math.max(-130, Math.min(-30, currentOffsetY + deltaY));
+      const newOffsetY = Math.max(0, Math.min(80, currentOffsetY + deltaY));
 
       const photoElement = markerElement?.querySelector('.draggable-photo');
       if (photoElement instanceof HTMLElement) {
@@ -630,7 +630,7 @@ function PhotoClickableMarker({
 
       const photoElement = markerElement?.querySelector('.draggable-photo');
       if (photoElement instanceof HTMLElement && onPhotoPositionChange) {
-        const finalY = parseInt(photoElement.style.top ?? '-80px', 10);
+        const finalY = parseInt(photoElement.style.top ?? '10px', 10);
         const leftValue = photoElement.style.left ?? '50%';
         const match = /calc\(50% \+ (-?\d+)px\)/.exec(leftValue);
         const finalX = match?.[1] ? parseInt(match[1], 10) : 0;
@@ -722,7 +722,7 @@ function DraggableMarker({
     let startX = 0;
     let startY = 0;
     let currentOffsetX = 0;
-    let currentOffsetY = -80; // Default offset
+    let currentOffsetY = 10; // 預設：照片置於 car 上方 10px 處
     let touchIdentifier: number | null = null;
 
     const handlePointerDown = (e: PointerEvent | TouchEvent) => {
@@ -747,7 +747,7 @@ function DraggableMarker({
       const computedStyle = window.getComputedStyle(target);
       const matrix = new DOMMatrixReadOnly(computedStyle.transform);
       currentOffsetX = matrix.m41;
-      currentOffsetY = parseInt(target.style.top || '-80px', 10);
+      currentOffsetY = parseInt(target.style.top || '10px', 10);
     };
 
     const handlePointerMove = (e: PointerEvent | TouchEvent) => {
@@ -771,7 +771,7 @@ function DraggableMarker({
       const deltaY = clientY - startY;
 
       const newOffsetX = Math.max(-50, Math.min(50, currentOffsetX + deltaX));
-      const newOffsetY = Math.max(-130, Math.min(-30, currentOffsetY + deltaY));
+      const newOffsetY = Math.max(0, Math.min(80, currentOffsetY + deltaY));
 
       const photoElement = markerElement?.querySelector('.draggable-photo');
       if (photoElement instanceof HTMLElement) {
@@ -790,7 +790,7 @@ function DraggableMarker({
 
       const photoElement = markerElement?.querySelector('.draggable-photo');
       if (photoElement instanceof HTMLElement && onPhotoPositionChange) {
-        const finalY = parseInt(photoElement.style.top ?? '-80px', 10);
+        const finalY = parseInt(photoElement.style.top ?? '10px', 10);
         const leftValue = photoElement.style.left ?? '50%';
         const match = /calc\(50% \+ (-?\d+)px\)/.exec(leftValue);
         const finalX = match?.[1] ? parseInt(match[1], 10) : 0;
@@ -879,7 +879,7 @@ export default function MiniMap({
   onPhotoClick,
   parkedHeading = 0,
   trackedViewportInsets,
-  photoOffset = { x: 0, y: -80 },
+  photoOffset = { x: 0, y: 10 },
   onPhotoPositionChange,
 }: MiniMapProps) {
   // Validate and normalize coordinates

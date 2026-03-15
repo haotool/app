@@ -1,8 +1,45 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-15T20:45:00+08:00
-> **當前總分**: 1173（初始分: 100）
+> **最後更新**: 2026-03-15T23:35:00+08:00
+> **當前總分**: 1177（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: park-keeper-photo-click-offset-fix-v1.0.26
+date: 2026-03-15
+title: park-keeper 修正地圖照片偏移過高、地圖照片點擊失效、列表照片無法點擊（v1.0.26）
+score: 4
+type: fix
+content_type: bugfix
+scope: park-keeper
+topics: [ui, map, photo, ux, leaflet, accessibility]
+keywords: [photoOffset, constrainedOffset, y-offset, createPremiumCarIcon, RecordCard, PhotoClickableMarker, DraggableMarker, overlay, z-index, onPhotoClick]
+aliases: [photo offset fix, 照片偏移修正, v1.0.26]
+related_entries: [park-keeper-user-beam-modern-svg-v1.0.25]
+summary: 修正三項照片相關問題。(1) 地圖照片縮圖偏移計算錯誤：y=-80 將照片定位於 140px div 頂部以上 80px，等於車牌上方 220px；正確範圍為 0-80px（div 內上半段，car SVG 佔下半段）。(2) 非互動地圖照片點擊失效：transparent overlay（z-[400]）攔截所有點擊，Leaflet 標記層在外層 stacking context 中位於其下；解法：RecordCard 靜態地圖不傳 photoData（列表頁照片已有獨立顯示區）。(3) 列表照片無法點擊：將 img 包入 button 並綁定 setShowPhotoModal(true)。
+
+actions:
+
+- MiniMap.tsx：photoOffset default y: -80 → 10
+- MiniMap.tsx：constrainedOffset.y Math.max(-130,-30) → Math.max(0,80)
+- MiniMap.tsx：PhotoClickableMarker drag handler y 初始值 -80→10，限制 (-130,-30)→(0,80)，fallback '-80px'→'10px'
+- MiniMap.tsx：DraggableMarker 同上（兩處重複邏輯均修正）
+- RecordCard.tsx：MiniMap 移除 photoData / onPhotoClick（靜態地圖不需縮圖）
+- RecordCard.tsx：photo panel img 改為 button，新增 onClick setShowPhotoModal、aria-label
+- RecordCard.test.tsx：舊測試「地圖照片被點擊後」改為「列表照片面板被點擊後」，使用 findByRole('button', {name:'查看停車照片'})
+
+verification:
+
+- 325 個測試全部通過（pnpm vitest run）
+- y 偏移驗算：div 高 140px，car 佔 y=80-140；y=10 → 照片 y=10-70，間距 10px ✓
+- 點擊路徑：列表照片 button → setShowPhotoModal(true) → PhotoViewerModal ✓
+
+references:
+
+- apps/park-keeper/src/components/MiniMap.tsx
+- apps/park-keeper/src/components/RecordCard.tsx
+- apps/park-keeper/src/components/**tests**/RecordCard.test.tsx
 
 ---
 
