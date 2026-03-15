@@ -35,6 +35,29 @@ interface RecordCardProps {
   };
 }
 
+/** 智慧時間顯示：今天→時間、昨天→「昨天 HH:mm」、本週→「星期X HH:mm」、更早→完整日期 */
+function formatSmartTime(timestamp: number): string {
+  const now = new Date();
+  const d = new Date(timestamp);
+
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayStart = todayStart - 86400000;
+  const weekStart = todayStart - 6 * 86400000;
+
+  const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  if (timestamp >= todayStart) {
+    return timeStr;
+  } else if (timestamp >= yesterdayStart) {
+    return `昨天 ${timeStr}`;
+  } else if (timestamp >= weekStart) {
+    const weekday = d.toLocaleDateString([], { weekday: 'short' });
+    return `${weekday} ${timeStr}`;
+  } else {
+    return d.toLocaleDateString([], { month: 'numeric', day: 'numeric' }) + ' ' + timeStr;
+  }
+}
+
 export default function RecordCard({
   record,
   theme,
@@ -211,10 +234,7 @@ export default function RecordCard({
               </span>
               <span className="flex items-center gap-1">
                 <Clock size={10} />
-                {new Date(record.timestamp).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                {formatSmartTime(record.timestamp)}
               </span>
             </div>
           </div>

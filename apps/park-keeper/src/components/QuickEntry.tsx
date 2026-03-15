@@ -359,11 +359,17 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
                       </button>
                     )}
                   </div>
-                  <input
+                  <textarea
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={(e) => {
+                      setNotes(e.target.value);
+                      // 自動展開高度。
+                      e.target.style.height = 'auto';
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
                     placeholder={t('record.notes_placeholder')}
-                    className="w-full h-12 px-6 rounded-2xl bg-[var(--color-surface)] border border-[color:var(--color-primary)]/5 outline-none text-[11px] font-bold placeholder:opacity-40"
+                    rows={1}
+                    className="w-full min-h-12 px-6 py-3.5 rounded-2xl bg-[var(--color-surface)] border border-[color:var(--color-primary)]/5 outline-none text-[11px] font-bold placeholder:opacity-40 resize-none overflow-hidden leading-relaxed"
                   />
                 </motion.div>
 

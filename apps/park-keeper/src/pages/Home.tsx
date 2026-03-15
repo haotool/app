@@ -1170,11 +1170,14 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     }
   }, []);
 
-  const filteredRecords = records.filter(
-    (r) =>
-      r.plateNumber.includes(search.toUpperCase()) ||
-      r.floor.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredRecords = records.filter((r) => {
+    const q = search.toLowerCase();
+    return (
+      r.plateNumber.toLowerCase().includes(q) ||
+      r.floor.toLowerCase().includes(q) ||
+      (r.notes ?? '').toLowerCase().includes(q)
+    );
+  });
 
   return (
     <LayoutGroup>

@@ -1,8 +1,41 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-15T23:35:00+08:00
-> **當前總分**: 1177（初始分: 100）
+> **最後更新**: 2026-03-16T00:46:00+08:00
+> **當前總分**: 1180（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: park-keeper-ux-improvements-v1.0.27
+date: 2026-03-16
+title: park-keeper 智慧時間戳、備註搜尋、textarea 展開（v1.0.27）
+score: 3
+type: improvement
+content_type: ux
+scope: park-keeper
+topics: [ux, search, timestamp, textarea, quickentry, recordcard]
+keywords: [formatSmartTime, filteredRecords, notes search, textarea, auto-expand, timestamp, relative date]
+aliases: [ux improvements, 時間戳備註搜尋, v1.0.27]
+related_entries: [park-keeper-photo-click-offset-fix-v1.0.26]
+summary: 三項 UX 改善。(1) RecordCard 時間戳智慧顯示：今天→時間、昨天→「昨天 HH:mm」、本週→「星期X HH:mm」、更早→「M/D HH:mm」，解決停車隔天後只見時間無法判斷日期的問題。(2) 搜尋欄擴展：filteredRecords 同時搜尋 plateNumber、floor、notes，讓使用者可以用備註關鍵字找到記錄。(3) QuickEntry 備註輸入改為 auto-expand textarea，輸入多行備註不再被截斷。
+
+actions:
+
+- RecordCard.tsx：新增 formatSmartTime(timestamp) 純函式，依時間距離返回對應格式字串
+- RecordCard.tsx：時間戳渲染從 toLocaleTimeString() 改用 formatSmartTime()
+- Home.tsx：filteredRecords 過濾條件加入 (r.notes ?? '').toLowerCase().includes(q)
+- QuickEntry.tsx：notes <input> 改為 <textarea rows={1} resize-none>，onChange 動態調整 scrollHeight
+
+verification:
+
+- typecheck 0 errors
+- 325 個測試全部通過（pnpm vitest run）
+
+references:
+
+- apps/park-keeper/src/components/RecordCard.tsx
+- apps/park-keeper/src/pages/Home.tsx
+- apps/park-keeper/src/components/QuickEntry.tsx
 
 ---
 
