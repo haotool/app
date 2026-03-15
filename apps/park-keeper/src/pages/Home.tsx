@@ -4,7 +4,13 @@
  * within the monorepo SSG architecture.
  */
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { motion, AnimatePresence, LayoutGroup, type Variants } from 'motion/react';
+import {
+  motion,
+  AnimatePresence,
+  LayoutGroup,
+  useReducedMotion,
+  type Variants,
+} from 'motion/react';
 import {
   ArrowUp,
   ArrowUpRight,
@@ -229,6 +235,7 @@ function NavOverlay({
   onPhotoOffsetChange?: (offset: { x: number; y: number }) => void;
 }) {
   const { t } = useTranslation();
+  const shouldReduceMotion = useReducedMotion();
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const miniMapText = {
     markerCarLabel: t('map.marker_car'),
@@ -288,9 +295,9 @@ function NavOverlay({
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
+      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.05 }}
       className="fixed inset-0 z-1000 flex flex-col overflow-hidden font-sans min-h-dvh"
       style={{ backgroundColor: theme.colors.background }}
     >
@@ -326,7 +333,8 @@ function NavOverlay({
         <button
           type="button"
           onClick={onClose}
-          className="pointer-events-auto w-10 h-10 mt-2 flex items-center justify-center backdrop-blur-2xl rounded-full transition-all active:scale-90 shadow-lg"
+          aria-label={t('nav.close_nav')}
+          className="pointer-events-auto w-11 h-11 mt-2 flex items-center justify-center backdrop-blur-2xl rounded-full transition-all active:scale-90 shadow-lg"
           style={{
             backgroundColor: `${theme.colors.surface}80`,
             color: theme.colors.text,
@@ -340,7 +348,7 @@ function NavOverlay({
       {/* 2. Liquid Glass HUD */}
       <div className="absolute top-28 left-4 right-4 z-30 pointer-events-none flex flex-col items-center">
         <motion.div
-          initial={{ y: -20, opacity: 0 }}
+          initial={shouldReduceMotion ? false : { y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className={`backdrop-blur-2xl saturate-150 border rounded-4xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.1)] flex items-center justify-between relative overflow-hidden w-full max-w-sm ${glassStyle.bg} ${glassStyle.border}`}
         >
@@ -358,7 +366,7 @@ function NavOverlay({
             >
               {!hasValidLocation ? (
                 <motion.div
-                  animate={{ opacity: [1, 0.35, 1] }}
+                  animate={shouldReduceMotion ? { opacity: 0.7 } : { opacity: [1, 0.35, 1] }}
                   transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
                 >
                   <Navigation size={24} />
@@ -593,7 +601,11 @@ function NavOverlay({
               {!isPhoneFlat && hasValidLocation && !arrived && (
                 <motion.div
                   className="absolute inset-0 rounded-full border border-red-400 pointer-events-none"
-                  animate={{ scale: [1, 1.05, 1], opacity: [0.55, 0.1, 0.55] }}
+                  animate={
+                    shouldReduceMotion
+                      ? { opacity: 0.35 }
+                      : { scale: [1, 1.05, 1], opacity: [0.55, 0.1, 0.55] }
+                  }
                   transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
                 />
               )}
@@ -641,7 +653,7 @@ function NavOverlay({
                     className="flex flex-col items-center gap-0.5"
                   >
                     <motion.div
-                      animate={{ opacity: [1, 0.3, 1] }}
+                      animate={shouldReduceMotion ? { opacity: 0.7 } : { opacity: [1, 0.3, 1] }}
                       transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
                     >
                       <Navigation size={22} style={{ color: theme.colors.primary }} />
@@ -700,7 +712,9 @@ function NavOverlay({
                           className="flex flex-col items-center gap-0.5"
                         >
                           <motion.div
-                            animate={{ rotate: [14, -14, 14] }}
+                            animate={
+                              shouldReduceMotion ? { rotate: 12 } : { rotate: [14, -14, 14] }
+                            }
                             transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
                           >
                             <Smartphone size={16} color="#ef4444" />
@@ -728,7 +742,7 @@ function NavOverlay({
                             color={theme.colors.primary}
                           />
                           <p
-                            className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.15em]"
+                            className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.15em]"
                             style={{ color: theme.colors.text, opacity: 0.5 }}
                           >
                             {isIndoor ? t('nav.indoor_mode') : directionHint}
