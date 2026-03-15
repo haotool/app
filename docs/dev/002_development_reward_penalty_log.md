@@ -1,8 +1,39 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-15T18:50:00+08:00
-> **當前總分**: 1170（初始分: 100）
+> **最後更新**: 2026-03-15T20:45:00+08:00
+> **當前總分**: 1173（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: park-keeper-user-beam-modern-svg-v1.0.25
+date: 2026-03-15
+title: park-keeper 使用者方向光束現代化：以 SVG 錐形取代 CSS border trick（v1.0.25）
+score: 3
+type: improvement
+content_type: feature
+scope: park-keeper
+topics: [ui, map, svg, leaflet, direction-beam, ux]
+keywords: [createUserIcon, SVG, radialGradient, rotate, beam, cone, direction, heading, accuracy-halo]
+aliases: [user beam modernization, 方向光束現代化, v1.0.25]
+related_entries: [park-keeper-nav-compact-48px-v1.0.24]
+summary: 以 SVG 錐形（sector path + radialGradient）取代舊有 CSS border trick 三角形，實現 Apple Maps / Google Maps / Naver Maps 業界標準方向光束設計。包含精度暈圈（裝飾）、半透明漸層錐形（中心不透明→末端透明）、白環主色圓點，旋轉邏輯以 SVG rotate(heading, cx, cy) 實現，方向語義正確（0°=北/上，90°=東/右）。
+
+actions:
+
+- MiniMap.tsx：createUserIcon 改為 SVG 實作，增加 labelHtml（top:-44px）、精度暈圈、錐形 path + radialGradient、分層圓點（陰影/白環/主色）
+- MiniMap.tsx：移除舊 CSS border trick 三角形，移除 opacity:0.5 inline div
+- package.json：版本 1.0.24 to 1.0.25
+
+verification:
+
+- 325 個測試全部通過（pnpm vitest run）
+- SVG 幾何驗算：半角 37.5°，長度 52px，L(28,19)/R(92,19) 均在 52px 半徑上 ✓
+- rotate(heading, 60, 60)：0°=北上，90°=東右，語義正確 ✓
+
+references:
+
+- apps/park-keeper/src/components/MiniMap.tsx (createUserIcon)
 
 ---
 

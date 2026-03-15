@@ -240,18 +240,63 @@ const createUserIcon = (
   color = '#3b82f6',
   showLabel = false,
   markerLabel = DEFAULT_MINI_MAP_TEXT.markerUserLabel,
-) =>
-  L.divIcon({
+) => {
+  // 標籤放在光束上方，偏移需大於光束高度（~29px + margin）。
+  const labelHtml = showLabel
+    ? `<div style="
+        position:absolute;
+        top:-44px;
+        left:50%;
+        transform:translateX(-50%);
+        padding:3px 8px;
+        border-radius:999px;
+        background:#2563ebeb;
+        color:#fff;
+        border:1px solid rgba(255,255,255,0.24);
+        box-shadow:0 2px 8px rgba(0,0,0,0.2);
+        font:700 10px/1 system-ui,-apple-system,sans-serif;
+        white-space:nowrap;
+        letter-spacing:0.02em;
+        pointer-events:none;
+        z-index:20;
+      ">${markerLabel}</div>`
+    : '';
+
+  // 光束錐形路徑（0°=正北朝上）：中心(60,60)，半角37.5°，長度52px。
+  // 計算：L(28,19) = 60-52*sin37.5°, 60-52*cos37.5° ≈ (28,19)
+  //       R(92,19) = 60+52*sin37.5°, 60-52*cos37.5° ≈ (92,19)
+  // SVG 以 rotate(heading, 60, 60) 旋轉整個錐形，0°→北，90°→東。
+  return L.divIcon({
     className: 'user-loc-marker',
     html: `
-      <div style="width:24px;height:24px;position:relative;display:flex;align-items:center;justify-content:center;overflow:visible">
-        ${showLabel ? createMarkerLabelBadge(markerLabel, '#2563ebeb') : ''}
-        <div style="position:absolute;top:50%;left:50%;width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-bottom:60px solid ${color}40;transform:translate(-50%,-50%) rotate(${heading}deg);transform-origin:center bottom;margin-top:-30px;pointer-events:none;z-index:0;opacity:0.5"></div>
-        <div style="width:16px;height:16px;background:${color};border:3px solid white;border-radius:50%;box-shadow:0 2px 5px rgba(0,0,0,0.3);z-index:10;position:relative"></div>
+      <div style="width:24px;height:24px;position:relative;overflow:visible;pointer-events:none">
+        ${labelHtml}
+        <svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg"
+          style="position:absolute;top:12px;left:12px;transform:translate(-50%,-50%);overflow:visible;pointer-events:none">
+          <defs>
+            <radialGradient id="ubg" cx="60" cy="60" r="52" gradientUnits="userSpaceOnUse">
+              <stop offset="0%"   stop-color="${color}" stop-opacity="0.52"/>
+              <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <!-- 精度暈圈（裝飾，固定半徑）-->
+          <circle cx="60" cy="60" r="28" fill="${color}" fill-opacity="0.10"/>
+          <!-- 方向光束錐形，依 heading 旋轉 -->
+          <g transform="rotate(${heading}, 60, 60)">
+            <path d="M 60 60 L 28 19 A 52 52 0 0 1 92 19 Z" fill="url(#ubg)"/>
+          </g>
+          <!-- 陰影層（深度感）-->
+          <circle cx="60" cy="61" r="9" fill="rgba(0,0,0,0.18)"/>
+          <!-- 白色環框 -->
+          <circle cx="60" cy="60" r="9" fill="white"/>
+          <!-- 主色圓點 -->
+          <circle cx="60" cy="60" r="7" fill="${color}"/>
+        </svg>
       </div>`,
     iconSize: [24, 24],
     iconAnchor: [12, 12],
   });
+};
 
 const fitMapToCarAndUser = (
   map: L.Map,
