@@ -93,18 +93,36 @@ describe('useDeviceOrientation', () => {
     expect(result.current.heading).toBe(180);
   });
 
-  it('應該同步回傳 tilt 與平放狀態', () => {
+  it('應該同步回傳 tilt 與平放狀態（含遲滯）', () => {
     const { result } = renderHook(() => useDeviceOrientation());
 
+    // beta=20：平放（20 < 遲滯閾值 55°，從初始 false→true）
     act(() => {
       const event = new Event('deviceorientation') as DeviceOrientationEvent;
       Object.defineProperty(event, 'alpha', { value: 180, writable: false });
       Object.defineProperty(event, 'beta', { value: 20, writable: false });
       window.dispatchEvent(event);
     });
-
     expect(result.current.tilt).toBe(20);
     expect(result.current.isPhoneFlat).toBe(true);
+
+    // beta=76：超過進入閾值 75° → 非平放
+    act(() => {
+      const event = new Event('deviceorientation') as DeviceOrientationEvent;
+      Object.defineProperty(event, 'alpha', { value: 180, writable: false });
+      Object.defineProperty(event, 'beta', { value: 76, writable: false });
+      window.dispatchEvent(event);
+    });
+    expect(result.current.isPhoneFlat).toBe(false);
+
+    // beta=60：在遲滯帶（55°–75°）→ 仍非平放（防抖）
+    act(() => {
+      const event = new Event('deviceorientation') as DeviceOrientationEvent;
+      Object.defineProperty(event, 'alpha', { value: 180, writable: false });
+      Object.defineProperty(event, 'beta', { value: 60, writable: false });
+      window.dispatchEvent(event);
+    });
+    expect(result.current.isPhoneFlat).toBe(false);
   });
 
   it('應該在 unmount 時移除事件監聽器（含 deviceorientationabsolute）', () => {

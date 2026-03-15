@@ -6,7 +6,7 @@
  * - 支援 iOS (webkitCompassHeading) 與 Android (alpha)
  * - 權限請求支援（iOS 13+）
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getCompassHeading,
   getDeviceTilt,
@@ -53,6 +53,8 @@ export function useDeviceOrientation(
   const { enabled = true } = options;
   const [heading, setHeading] = useState<number | null>(null);
   const [tilt, setTilt] = useState<number | null>(null);
+  const [isPhoneFlat, setIsPhoneFlat] = useState(false);
+  const isPhoneFlatRef = useRef(false);
   const [isSupported] = useState(
     () => typeof window !== 'undefined' && 'DeviceOrientationEvent' in window,
   );
@@ -86,6 +88,11 @@ export function useDeviceOrientation(
 
       if (deviceTilt !== null) {
         setTilt(deviceTilt);
+        const flat = isPhoneFlatFromTilt(deviceTilt, isPhoneFlatRef.current);
+        if (flat !== isPhoneFlatRef.current) {
+          isPhoneFlatRef.current = flat;
+          setIsPhoneFlat(flat);
+        }
       }
     };
 
@@ -101,7 +108,7 @@ export function useDeviceOrientation(
   return {
     heading,
     tilt,
-    isPhoneFlat: isPhoneFlatFromTilt(tilt),
+    isPhoneFlat,
     isSupported,
     requestPermission:
       enabled &&

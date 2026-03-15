@@ -113,6 +113,8 @@ export function useNavigation(record: ParkingRecord) {
   const virtualHeadingRef = useRef(0);
   const smoothedHeadingRef = useRef(0);
   const [deviceTilt, setDeviceTilt] = useState(0);
+  const [isPhoneFlat, setIsPhoneFlat] = useState(false);
+  const isPhoneFlatRef = useRef(false);
   const [distance, setDistance] = useState<number | null>(null);
   const distanceRef = useRef<number | null>(null);
   const [targetBearing, setTargetBearing] = useState(0);
@@ -197,7 +199,14 @@ export function useNavigation(record: ParkingRecord) {
         setHeading(smoothed);
         setAnimHeading(virtualHeadingRef.current);
       }
-      if (tilt !== null) setDeviceTilt(tilt);
+      if (tilt !== null) {
+        setDeviceTilt(tilt);
+        const flat = isPhoneFlatFromTilt(tilt, isPhoneFlatRef.current);
+        if (flat !== isPhoneFlatRef.current) {
+          isPhoneFlatRef.current = flat;
+          setIsPhoneFlat(flat);
+        }
+      }
     };
 
     const requestPermission = (
@@ -228,7 +237,6 @@ export function useNavigation(record: ParkingRecord) {
   const trueHeading = (heading + magneticDeclination + 360) % 360;
   const relativeRotation = (targetBearing - trueHeading + 360) % 360;
   const trueAnimHeading = animHeading + magneticDeclination;
-  const isPhoneFlat = isPhoneFlatFromTilt(deviceTilt);
   const hasValidLocation = userLoc !== null;
 
   return {

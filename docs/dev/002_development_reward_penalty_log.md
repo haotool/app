@@ -6,33 +6,39 @@
 
 ---
 
-id: park-keeper-phone-flat-threshold-80deg-v1.0.23
+id: park-keeper-phone-flat-threshold-hysteresis-v1.0.23
 date: 2026-03-15
-title: park-keeper 手機平放閾值從 45° 提高至 80°（v1.0.23）
-score: 2
+title: park-keeper 手機平放閾值調整至 75° 並加入遲滯（v1.0.23）
+score: 3
 type: improvement
 content_type: feature
 scope: park-keeper
-topics: [ux, sensor, deviceOrientation, ssot]
-keywords: [PHONE_FLAT_THRESHOLD_DEGREES, isPhoneFlat, beta, 80deg, 導航警告閾值]
-aliases: [phone flat threshold 80, 平放警告閾值調整, v1.0.23]
+topics: [ux, sensor, deviceOrientation, ssot, hysteresis]
+keywords: [PHONE_FLAT_THRESHOLD_DEGREES, PHONE_FLAT_HYSTERESIS_DEGREES, isPhoneFlatFromTilt, prevFlat, 75deg, 55deg, hysteresis]
+aliases: [phone flat threshold hysteresis, 平放警告遲滯, v1.0.23]
 related_entries: [park-keeper-nav-label-restore-v1.0.22]
-summary: 使用者走路持機自然仰角約 50–70°，舊閾值 45° 導致幾乎全程觸發「請平放手機」警告，干擾體驗。將 PHONE_FLAT_THRESHOLD_DEGREES 從 45° 提升至 80°，只有手機幾乎完全豎立（方向感測器確實無法可靠判向）時才顯示警告。同步更新 useNavigation 測試（beta=60 改為 beta=85 以反映新語意）。
+summary: 舊閾值 45° 導致走路自然持機（50–70°）幾乎全程觸發警告。改為 75° 進入閾值 + 55° 遲滯恢復閾值，僅手機幾乎完全豎立時觸發，且在遲滯帶（55–75°）手抖不會造成狀態反覆切換。isPhoneFlatFromTilt 加入 prevFlat 參數實現純函式遲滯邏輯，兩個 hook 均透過 useRef 追蹤前一狀態。
 
 actions:
 
-- deviceOrientation.ts：PHONE_FLAT_THRESHOLD_DEGREES 45 → 80，補充說明性 JSDoc 注解
-- useNavigation.test.ts：isPhoneFlat 測試案例 beta=60 改為 beta=85，加入中文說明
-- package.json：版本 1.0.22 → 1.0.23
+- deviceOrientation.ts：PHONE_FLAT_THRESHOLD_DEGREES 45 to 75，新增 PHONE_FLAT_HYSTERESIS_DEGREES=55
+- deviceOrientation.ts：isPhoneFlatFromTilt 加入 prevFlat 參數，tilt=null 保守回傳 false
+- useNavigation.ts：改用 isPhoneFlatRef+state 追蹤遲滯，移除末尾 inline 計算
+- useDeviceOrientation.ts：同上，移除 return 中 inline 計算
+- useNavigation.test.ts：改寫遲滯測試（進入，遲滯帶不切換，恢復）
+- useDeviceOrientation.test.ts：同步新增遲滯測試
+- package.json：版本 1.0.22 to 1.0.23
 
 verification:
 
-- pnpm vitest run：325 tests passed（全數通過）
+- pnpm typecheck 通過（無型別錯誤）
+- pnpm vitest run：325 tests passed
 
 references:
 
 - apps/park-keeper/src/services/deviceOrientation.ts
-- apps/park-keeper/src/hooks/**tests**/useNavigation.test.ts
+- apps/park-keeper/src/hooks/useNavigation.ts
+- apps/park-keeper/src/hooks/useDeviceOrientation.ts
 
 ---
 

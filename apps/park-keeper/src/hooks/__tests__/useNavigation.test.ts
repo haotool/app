@@ -199,10 +199,10 @@ describe('useNavigation hook', () => {
     expect(result.current.deviceTilt).toBe(30);
   });
 
-  it('should compute isPhoneFlat correctly', () => {
+  it('should compute isPhoneFlat with hysteresis correctly', () => {
     const { result } = renderHook(() => useNavigation(mockRecord));
 
-    // beta=20：幾乎平放 → isPhoneFlat=true（20 < 80）
+    // beta=20：幾乎平放 → isPhoneFlat=true（20 < 遲滯閾值 55°，從 false→true）
     act(() => {
       orientationHandler?.({
         alpha: 0,
@@ -211,20 +211,40 @@ describe('useNavigation hook', () => {
         absolute: false,
       } as unknown as Event);
     });
-
     expect(result.current.isPhoneFlat).toBe(true);
 
-    // beta=85：幾乎完全直立 → isPhoneFlat=false（85 >= 80，方向感測器不可靠）
+    // beta=76：超過進入閾值 75° → isPhoneFlat=false（76 >= 75，進入非平放警告）
     act(() => {
       orientationHandler?.({
         alpha: 0,
-        beta: 85,
+        beta: 76,
         gamma: 0,
         absolute: false,
       } as unknown as Event);
     });
-
     expect(result.current.isPhoneFlat).toBe(false);
+
+    // beta=60：在遲滯帶中（55°–75°）→ isPhoneFlat 仍為 false（遲滯防抖，不因手抖而恢復）
+    act(() => {
+      orientationHandler?.({
+        alpha: 0,
+        beta: 60,
+        gamma: 0,
+        absolute: false,
+      } as unknown as Event);
+    });
+    expect(result.current.isPhoneFlat).toBe(false);
+
+    // beta=50：低於恢復閾值 55° → isPhoneFlat=true（50 < 55，回到平放狀態）
+    act(() => {
+      orientationHandler?.({
+        alpha: 0,
+        beta: 50,
+        gamma: 0,
+        absolute: false,
+      } as unknown as Event);
+    });
+    expect(result.current.isPhoneFlat).toBe(true);
   });
 
   it('should cleanup listeners on unmount', () => {
