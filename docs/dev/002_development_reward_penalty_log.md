@@ -1,8 +1,38 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-15T00:00:00+08:00
-> **當前總分**: 1166（初始分: 100）
+> **最後更新**: 2026-03-15T18:25:00+08:00
+> **當前總分**: 1168（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: park-keeper-phone-flat-threshold-80deg-v1.0.23
+date: 2026-03-15
+title: park-keeper 手機平放閾值從 45° 提高至 80°（v1.0.23）
+score: 2
+type: improvement
+content_type: feature
+scope: park-keeper
+topics: [ux, sensor, deviceOrientation, ssot]
+keywords: [PHONE_FLAT_THRESHOLD_DEGREES, isPhoneFlat, beta, 80deg, 導航警告閾值]
+aliases: [phone flat threshold 80, 平放警告閾值調整, v1.0.23]
+related_entries: [park-keeper-nav-label-restore-v1.0.22]
+summary: 使用者走路持機自然仰角約 50–70°，舊閾值 45° 導致幾乎全程觸發「請平放手機」警告，干擾體驗。將 PHONE_FLAT_THRESHOLD_DEGREES 從 45° 提升至 80°，只有手機幾乎完全豎立（方向感測器確實無法可靠判向）時才顯示警告。同步更新 useNavigation 測試（beta=60 改為 beta=85 以反映新語意）。
+
+actions:
+
+- deviceOrientation.ts：PHONE_FLAT_THRESHOLD_DEGREES 45 → 80，補充說明性 JSDoc 注解
+- useNavigation.test.ts：isPhoneFlat 測試案例 beta=60 改為 beta=85，加入中文說明
+- package.json：版本 1.0.22 → 1.0.23
+
+verification:
+
+- pnpm vitest run：325 tests passed（全數通過）
+
+references:
+
+- apps/park-keeper/src/services/deviceOrientation.ts
+- apps/park-keeper/src/hooks/**tests**/useNavigation.test.ts
 
 ---
 

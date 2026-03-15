@@ -202,6 +202,7 @@ describe('useNavigation hook', () => {
   it('should compute isPhoneFlat correctly', () => {
     const { result } = renderHook(() => useNavigation(mockRecord));
 
+    // beta=20：幾乎平放 → isPhoneFlat=true（20 < 80）
     act(() => {
       orientationHandler?.({
         alpha: 0,
@@ -213,10 +214,11 @@ describe('useNavigation hook', () => {
 
     expect(result.current.isPhoneFlat).toBe(true);
 
+    // beta=85：幾乎完全直立 → isPhoneFlat=false（85 >= 80，方向感測器不可靠）
     act(() => {
       orientationHandler?.({
         alpha: 0,
-        beta: 60,
+        beta: 85,
         gamma: 0,
         absolute: false,
       } as unknown as Event);
