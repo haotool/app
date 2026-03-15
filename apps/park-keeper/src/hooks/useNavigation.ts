@@ -26,12 +26,13 @@ export interface DirectionInfo {
  */
 export function getDirectionInfo(relativeRotation: number): DirectionInfo {
   const r = ((relativeRotation % 360) + 360) % 360;
-  if (r <= 25 || r >= 335)
+  const t = DIRECTION_THRESHOLDS;
+  if (r <= t.straight || r >= 360 - t.straight)
     return { key: 'straight', i18nKey: 'nav.straight', iconType: 'straight' };
-  if (r <= 70)
+  if (r <= t.slightRight)
     return { key: 'slight_right', i18nKey: 'nav.slight_right', iconType: 'slight-right' };
-  if (r <= 180) return { key: 'turn_right', i18nKey: 'nav.turn_right', iconType: 'right' };
-  if (r <= 290) return { key: 'turn_left', i18nKey: 'nav.turn_left', iconType: 'left' };
+  if (r <= t.turnRight) return { key: 'turn_right', i18nKey: 'nav.turn_right', iconType: 'right' };
+  if (r <= t.turnLeft) return { key: 'turn_left', i18nKey: 'nav.turn_left', iconType: 'left' };
   return { key: 'slight_left', i18nKey: 'nav.slight_left', iconType: 'slight-left' };
 }
 
@@ -76,12 +77,33 @@ function smoothHeading(prev: number, raw: number, alpha = 0.3): number {
   return (((prev + alpha * diff) % 360) + 360) % 360;
 }
 
-const STEP_THRESHOLD = 11.5;
-const STEP_DEBOUNCE_MS = 400;
-const INDOOR_ACCURACY_THRESHOLD = 20;
+// ---------------------------------------------------------------------------
+// 導航閾值常數（SSOT：所有閾值在此定義並 export，外部可直接引用不重複硬編碼）
+// ---------------------------------------------------------------------------
+
+/** 步伐偵測加速度閾值（m/s²）。 */
+export const STEP_THRESHOLD_MS2 = 11.5;
+/** 步伐防抖間隔（ms）。 */
+export const STEP_DEBOUNCE_MS = 400;
+/** 室內模式 GPS 精度閾值（公尺；超過即判定為室內）。 */
+export const INDOOR_ACCURACY_THRESHOLD_M = 20;
+/** 每步距離估算（公尺）。 */
+export const STEP_DISTANCE_M = 0.7;
+/** 抵達判定閾值（公尺）。 */
+export const ARRIVAL_THRESHOLD_M = 8;
+/** 離開抵達狀態閾值（公尺；大於 ARRIVAL_THRESHOLD_M 形成遲滯）。 */
+export const DEPARTURE_THRESHOLD_M = 15;
+/** Geolocation watchPosition 逾時（ms）。 */
+export const GEO_TIMEOUT_MS = 15000;
+/** 方向分段邊界（度）。直走 ±straight°、稍轉 straight–slightRight°、轉彎 slightRight–turnRight/turnLeft°。 */
+export const DIRECTION_THRESHOLDS = {
+  straight: 25,
+  slightRight: 70,
+  turnRight: 180,
+  turnLeft: 290,
+} as const;
+
 const HEADING_SMOOTHING_ALPHA = 0.25;
-const ARRIVAL_THRESHOLD = 8; // metres – enter "arrived" state
-const DEPARTURE_THRESHOLD = 15; // metres – exit "arrived" state (hysteresis)
 
 export function useNavigation(record: ParkingRecord) {
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
@@ -111,11 +133,11 @@ export function useNavigation(record: ParkingRecord) {
     if (!acc) return;
     const mag = Math.sqrt((acc.x ?? 0) ** 2 + (acc.y ?? 0) ** 2 + (acc.z ?? 0) ** 2);
     const now = Date.now();
-    if (mag > STEP_THRESHOLD && now - lastStepTime.current > STEP_DEBOUNCE_MS) {
+    if (mag > STEP_THRESHOLD_MS2 && now - lastStepTime.current > STEP_DEBOUNCE_MS) {
       setStepCount((prev) => prev + 1);
       lastStepTime.current = now;
       if (distanceRef.current !== null) {
-        setDistance((d) => Math.max(0, (d ?? 0) - 0.7));
+        setDistance((d) => Math.max(0, (d ?? 0) - STEP_DISTANCE_M));
       }
     }
   }, []);
@@ -137,7 +159,7 @@ export function useNavigation(record: ParkingRecord) {
             setDistance(dist);
             distanceRef.current = dist;
             setArrivedState((prev) =>
-              prev ? dist <= DEPARTURE_THRESHOLD : dist < ARRIVAL_THRESHOLD,
+              prev ? dist <= DEPARTURE_THRESHOLD_M : dist < ARRIVAL_THRESHOLD_M,
             );
             const bearing = getBearing(uLat, uLng, record.latitude, record.longitude);
             let diff = bearing - prevTargetRef.current;
@@ -148,14 +170,14 @@ export function useNavigation(record: ParkingRecord) {
             setTargetBearing(bearing);
             setAnimTargetBearing(virtualTargetRef.current);
 
-            const indoor = accuracy > INDOOR_ACCURACY_THRESHOLD;
+            const indoor = accuracy > INDOOR_ACCURACY_THRESHOLD_M;
             setIsIndoor(indoor);
             isIndoorRef.current = indoor;
             if (!indoor) setStepCount(0);
           }
         },
         undefined,
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: GEO_TIMEOUT_MS },
       );
     }
 

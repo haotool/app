@@ -19,6 +19,12 @@ export const COMPASS_CY = 150;
 /** 外圈半徑（圓環邊界）。 */
 export const COMPASS_OUTER_R = 140;
 
+/** 北方向刻度索引（SSOT：i===0 唯一定義處）。 */
+export const COMPASS_NORTH_INDEX = 0;
+
+/** 刻度起始 y 座標（從外圈頂端向內延伸）。 */
+export const COMPASS_TICK_START_Y = 10;
+
 /** 刻度總數（每 10° 一格）。 */
 export const TICK_COUNT = 36;
 

@@ -531,6 +531,44 @@ root_cause:
 
 ---
 
+id: park-keeper-ssot-tdd-refactor-v1.0.21
+date: 2026-03-15
+title: park-keeper SSOT 稽核 + TDD 重構 v1.0.21
+score: +5
+type: success
+content_type: refactor
+scope: park-keeper
+topics: [ssot, tdd, refactor, colors, navigation, compass]
+keywords: [NORTH_COLOR, ARRIVED_COLOR, WARNING_COLOR, rgba-constants, DIRECTION_THRESHOLDS, COMPASS_NORTH_INDEX, COMPASS_TICK_START_Y, PhoneFlatRing, useNavigation, compassGeometry, prefers-reduced-motion, wcag]
+related_entries: [park-keeper-ux-v1.0.20]
+
+#### 背景
+
+v1.0.20 完成 UX 最佳實踐（`prefers-reduced-motion`、WCAG 44px touch target、aria-label）後，稽核全 app 中違反業界 SSOT 最佳實踐的項目，進行 TDD 紅綠重構循環並升版。
+
+#### 變更摘要
+
+- **`src/config/colors.ts`**（新建 → 擴充）：新增 7 個 rgba 衍生常數（`ARRIVED_BORDER`、`ARRIVED_GLOW`、`WARNING_BORDER`、`WARNING_GLOW`、`WARNING_RING_STROKE`、`WARNING_SCREEN_FILL`、`WARNING_LABEL`），對應所有動畫過渡與 SVG 半透明疊層使用場景。
+- **`src/config/__tests__/colors.test.ts`**：擴充至 17 個測試，涵蓋 rgba 格式驗證、channel 色系驗證、alpha 層級相對大小，並修正「三個色彩互不相同」錯誤斷言（`WARNING_COLOR === NORTH_COLOR` 為意圖性設計）。
+- **`src/components/PhoneFlatRing.tsx`**：3 個 `#ef4444` 純 hex → `{NORTH_COLOR}`；3 個 rgba 字串 → `{WARNING_RING_STROKE}`、`{WARNING_SCREEN_FILL}`、`{WARNING_LABEL}`。
+- **`src/pages/Home.tsx`**：Hub animate prop 4 個 rgba 字串 → `ARRIVED_BORDER`、`WARNING_BORDER`、`ARRIVED_GLOW`、`WARNING_GLOW`（template literal 組合 box-shadow）；新增 import。
+- **`src/hooks/useNavigation.ts`**（前回）：導覽閾值全數 export（`STEP_THRESHOLD_MS2`、`ARRIVAL_THRESHOLD_M`、`DEPARTURE_THRESHOLD_M`、`GEO_TIMEOUT_MS`、`DIRECTION_THRESHOLDS` 等），`getDirectionInfo` 改用 `DIRECTION_THRESHOLDS` 物件取代硬編碼數字。
+- **`src/services/compassGeometry.ts`**（前回）：新增 `COMPASS_NORTH_INDEX = 0`、`COMPASS_TICK_START_Y = 10` 作為 SSOT export。
+
+#### TDD 流程
+
+- 🔴 RED：`navigationConstants.test.ts`（17）、`compassGeometry.test.ts`（新增 5）、`colors.test.ts`（3 → 17）共 26 項測試先失敗
+- 🟢 GREEN：實作常數 export → 全部通過
+- 🔵 REFACTOR：callsite 替換（QuickEntry、Home.tsx、PhoneFlatRing）後再次確認 GREEN
+
+#### 驗證
+
+- 測試：325 passed (31 files)
+- Typecheck：0 errors
+- Build：成功
+
+---
+
 id: e2e-offline-timeout-fix
 date: 2026-03-13
 title: E2E 離線測試生產環境 timeout 修復

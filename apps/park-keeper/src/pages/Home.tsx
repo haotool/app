@@ -55,7 +55,21 @@ import {
   tickLength,
   tickStrokeWidth,
   tickOpacity,
+  COMPASS_CX,
+  COMPASS_CY,
+  COMPASS_OUTER_R,
+  COMPASS_NORTH_INDEX,
+  COMPASS_TICK_START_Y,
 } from '@app/park-keeper/services/compassGeometry';
+import {
+  NORTH_COLOR,
+  ARRIVED_COLOR,
+  WARNING_COLOR,
+  ARRIVED_BORDER,
+  ARRIVED_GLOW,
+  WARNING_BORDER,
+  WARNING_GLOW,
+} from '@app/park-keeper/config/colors';
 
 const MiniMap = lazy(() => import('@app/park-keeper/components/MiniMap'));
 
@@ -483,27 +497,27 @@ function NavOverlay({
               <svg viewBox="0 0 300 300" className="w-full h-full overflow-visible">
                 {/* Outer compass boundary ring – turns green on arrival */}
                 <circle
-                  cx="150"
-                  cy="150"
-                  r="140"
+                  cx={COMPASS_CX}
+                  cy={COMPASS_CY}
+                  r={COMPASS_OUTER_R}
                   fill="none"
-                  stroke={arrived ? '#22c55e' : theme.colors.text}
+                  stroke={arrived ? ARRIVED_COLOR : theme.colors.text}
                   strokeWidth={arrived ? 2 : 1}
                   opacity={arrived ? 0.45 : 0.1}
                 />
                 {/* 刻度線群組 */}
                 {Array.from({ length: 36 }).map((_, i) => {
                   const angle = i * 10;
-                  const isNorth = i === 0;
+                  const isNorth = i === COMPASS_NORTH_INDEX;
                   const tLen = tickLength(i);
                   return (
-                    <g key={i} transform={`rotate(${angle} 150 150)`}>
+                    <g key={i} transform={`rotate(${angle} ${COMPASS_CX} ${COMPASS_CY})`}>
                       <line
-                        x1="150"
-                        y1="10"
-                        x2="150"
-                        y2={10 + tLen}
-                        stroke={isNorth ? '#ef4444' : theme.colors.text}
+                        x1={COMPASS_CX}
+                        y1={COMPASS_TICK_START_Y}
+                        x2={COMPASS_CX}
+                        y2={COMPASS_TICK_START_Y + tLen}
+                        stroke={isNorth ? NORTH_COLOR : theme.colors.text}
                         strokeWidth={tickStrokeWidth(i)}
                         opacity={tickOpacity(i)}
                         strokeLinecap="round"
@@ -515,7 +529,7 @@ function NavOverlay({
                 {[0, 9, 18, 27].map((i) => {
                   if (!isCardinalIndex(i) || isMajorIndex(i)) return null;
                   const { x, y } = cardinalLabelPosition(i);
-                  const isNorth = i === 0;
+                  const isNorth = i === COMPASS_NORTH_INDEX;
                   return (
                     <text
                       key={`cardinal-${i}`}
@@ -523,12 +537,12 @@ function NavOverlay({
                       y={y}
                       textAnchor="middle"
                       dominantBaseline="central"
-                      fill={isNorth ? '#ef4444' : theme.colors.text}
+                      fill={isNorth ? NORTH_COLOR : theme.colors.text}
                       fontSize="20"
                       fontWeight="900"
                       opacity={isNorth ? 1 : 0.85}
                     >
-                      {i === 0
+                      {i === COMPASS_NORTH_INDEX
                         ? t('compass.n')
                         : i === 9
                           ? t('compass.e')
@@ -580,14 +594,14 @@ function NavOverlay({
               className="absolute w-36 h-36 rounded-full border-2 flex flex-col items-center justify-center z-10 overflow-hidden"
               animate={{
                 borderColor: arrived
-                  ? 'rgba(34,197,94,0.55)'
+                  ? ARRIVED_BORDER
                   : !isPhoneFlat && hasValidLocation
-                    ? 'rgba(239,68,68,0.45)'
+                    ? WARNING_BORDER
                     : `${theme.colors.text}10`,
                 boxShadow: arrived
-                  ? '0 0 0 8px rgba(34,197,94,0.1), 0 8px 32px rgba(0,0,0,0.14)'
+                  ? `0 0 0 8px ${ARRIVED_GLOW}, 0 8px 32px rgba(0,0,0,0.14)`
                   : !isPhoneFlat && hasValidLocation
-                    ? '0 0 0 5px rgba(239,68,68,0.08), 0 8px 32px rgba(0,0,0,0.14)'
+                    ? `0 0 0 5px ${WARNING_GLOW}, 0 8px 32px rgba(0,0,0,0.14)`
                     : '0 8px 32px rgba(0,0,0,0.12)',
               }}
               transition={{ duration: 0.45 }}
@@ -621,8 +635,11 @@ function NavOverlay({
                     transition={{ type: 'spring', stiffness: 220, damping: 16 }}
                     className="flex flex-col items-center gap-0.5 px-2"
                   >
-                    <Check size={32} style={{ color: '#22c55e' }} strokeWidth={2.5} />
-                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-green-500">
+                    <Check size={32} style={{ color: ARRIVED_COLOR }} strokeWidth={2.5} />
+                    <p
+                      className="text-[11px] font-black uppercase tracking-[0.22em]"
+                      style={{ color: ARRIVED_COLOR }}
+                    >
                       {t('nav.arrived')}
                     </p>
                     <AnimatePresence>
@@ -636,7 +653,7 @@ function NavOverlay({
                           transition={{ type: 'spring', stiffness: 260, damping: 20 }}
                           onClick={onClose}
                           className="mt-1 px-3 py-1 rounded-full font-black text-[9px] uppercase tracking-widest text-white shadow-md active:scale-95 pointer-events-auto"
-                          style={{ backgroundColor: '#22c55e' }}
+                          style={{ backgroundColor: ARRIVED_COLOR }}
                         >
                           {t('nav.close_nav')}
                         </motion.button>
@@ -717,11 +734,11 @@ function NavOverlay({
                             }
                             transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
                           >
-                            <Smartphone size={16} color="#ef4444" />
+                            <Smartphone size={16} color={WARNING_COLOR} />
                           </motion.div>
                           <p
                             className="text-[7px] font-black uppercase tracking-[0.14em]"
-                            style={{ color: '#ef4444', opacity: 0.9 }}
+                            style={{ color: WARNING_COLOR, opacity: 0.9 }}
                           >
                             {t('nav.hold_flat')}
                           </p>

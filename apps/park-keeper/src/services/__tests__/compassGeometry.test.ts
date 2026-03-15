@@ -8,6 +8,9 @@ import {
   cardinalLabelPosition,
   COMPASS_CX,
   COMPASS_CY,
+  COMPASS_OUTER_R,
+  COMPASS_NORTH_INDEX,
+  COMPASS_TICK_START_Y,
   CARDINAL_LABEL_RADIUS,
   TICK_STEP_DEG,
   TICK_COUNT,
@@ -93,6 +96,18 @@ describe('tickOpacity', () => {
 describe('定数', () => {
   it('TICK_COUNT は 36', () => expect(TICK_COUNT).toBe(36));
   it('TICK_STEP_DEG は 10', () => expect(TICK_STEP_DEG).toBe(10));
+  it('COMPASS_OUTER_R は 140', () => expect(COMPASS_OUTER_R).toBe(140));
+  it('COMPASS_NORTH_INDEX は 0（北方向インデックス SSOT）', () =>
+    expect(COMPASS_NORTH_INDEX).toBe(0));
+  it('COMPASS_TICK_START_Y は 10（刻度起始 y 座標 SSOT）', () =>
+    expect(COMPASS_TICK_START_Y).toBe(10));
+  it('COMPASS_NORTH_INDEX は isCardinalIndex で true', () =>
+    expect(isCardinalIndex(COMPASS_NORTH_INDEX)).toBe(true));
+  it('刻度尾端（COMPASS_TICK_START_Y + cardinal tick 長）は外圈內側', () => {
+    const cardinalTickEnd = COMPASS_TICK_START_Y + 22; // tickLength(cardinal) = 22
+    expect(cardinalTickEnd).toBeLessThan(COMPASS_OUTER_R + COMPASS_CY - 150 + 150); // sanity
+    expect(cardinalTickEnd).toBe(32); // 10 + 22
+  });
 });
 
 // ---------------------------------------------------------------------------

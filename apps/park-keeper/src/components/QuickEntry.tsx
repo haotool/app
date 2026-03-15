@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { compressImage } from '@app/park-keeper/services/imageUtils';
 import { useDeviceOrientation } from '@app/park-keeper/hooks/useDeviceOrientation';
+import { GEO_TIMEOUT_MS } from '@app/park-keeper/hooks/useNavigation';
 
 const MiniMap = lazy(() => import('./MiniMap'));
 
@@ -103,7 +104,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
         setIsLocating(false);
         setLocation((loc) => loc ?? { lat: 25.033, lng: 121.5654 });
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: GEO_TIMEOUT_MS, maximumAge: 0 },
     );
   }, []);
 

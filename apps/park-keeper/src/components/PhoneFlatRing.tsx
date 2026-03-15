@@ -1,4 +1,10 @@
 import { motion, AnimatePresence } from 'motion/react';
+import {
+  NORTH_COLOR,
+  WARNING_RING_STROKE,
+  WARNING_SCREEN_FILL,
+  WARNING_LABEL,
+} from '@app/park-keeper/config/colors';
 
 interface PhoneFlatRingProps {
   /** 是否顯示（手機未平放且已取得 GPS 位置時為 true） */
@@ -41,7 +47,7 @@ export default function PhoneFlatRing({ visible, label }: PhoneFlatRingProps) {
                 cy="88"
                 r="82"
                 fill="none"
-                stroke="rgba(239,68,68,0.5)"
+                stroke={WARNING_RING_STROKE}
                 strokeWidth="1.5"
                 strokeDasharray="9 6"
                 strokeLinecap="round"
@@ -70,15 +76,15 @@ export default function PhoneFlatRing({ visible, label }: PhoneFlatRingProps) {
                   width="25"
                   height="43"
                   rx="5"
-                  stroke="#ef4444"
+                  stroke={NORTH_COLOR}
                   strokeWidth="2"
                 />
                 {/* 螢幕區域 */}
-                <rect x="4" y="7" width="20" height="29" rx="2" fill="rgba(239,68,68,0.18)" />
+                <rect x="4" y="7" width="20" height="29" rx="2" fill={WARNING_SCREEN_FILL} />
                 {/* 頂部缺口 */}
-                <rect x="10" y="3.5" width="8" height="2" rx="1" fill="#ef4444" opacity="0.7" />
+                <rect x="10" y="3.5" width="8" height="2" rx="1" fill={NORTH_COLOR} opacity="0.7" />
                 {/* Home 鍵 */}
-                <circle cx="14" cy="39.5" r="2" fill="#ef4444" />
+                <circle cx="14" cy="39.5" r="2" fill={NORTH_COLOR} />
               </svg>
             </motion.div>
           </div>
@@ -86,7 +92,7 @@ export default function PhoneFlatRing({ visible, label }: PhoneFlatRingProps) {
           {/* 底部標籤 */}
           <p
             className="absolute text-[8px] font-black uppercase tracking-[0.22em] whitespace-nowrap"
-            style={{ bottom: 5, color: 'rgba(239,68,68,0.85)' }}
+            style={{ bottom: 5, color: WARNING_LABEL }}
           >
             {label}
           </p>
