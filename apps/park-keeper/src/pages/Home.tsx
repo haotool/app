@@ -1317,7 +1317,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 {currentTab === 'list' && (
                   <motion.div
                     layoutId="nav-indicator"
-                    className="absolute bottom-0 w-8 h-1 rounded-t-full"
+                    className="absolute top-0 w-8 h-0.5 rounded-b-full"
                     style={{ backgroundColor: theme.colors.primary }}
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
@@ -1369,7 +1369,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 {currentTab === 'settings' && (
                   <motion.div
                     layoutId="nav-indicator"
-                    className="absolute bottom-0 w-8 h-1 rounded-t-full"
+                    className="absolute top-0 w-8 h-0.5 rounded-b-full"
                     style={{ backgroundColor: theme.colors.primary }}
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
