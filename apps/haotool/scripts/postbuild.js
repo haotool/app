@@ -31,6 +31,14 @@ function fixHtmlFile(htmlPath) {
   // 修復重複的 crossorigin 屬性
   html = html.replace(/crossorigin\s+crossorigin/gi, 'crossorigin');
 
+  // [fix] 防止 Cloudflare Rocket Loader 修改 SSG hash inline script。
+  // Rocket Loader 會將 <script> type 改為自訂值，導致 __VITE_REACT_SSG_HASH__ 不執行，
+  // manifest URL 變成 undefined → 404 → Response.json() 拋出 "The string did not match the expected pattern."
+  html = html.replace(
+    /<script>(window\.__VITE_REACT_SSG_HASH__[^<]+)<\/script>/,
+    '<script data-cfasync="false">$1</script>',
+  );
+
   // 首頁 3D 與裝飾背景採 mount 後載入，避免 SSG HTML 預先 preload lazy chunk。
   if (htmlPath === resolve(distDir, 'index.html')) {
     html = html.replace(

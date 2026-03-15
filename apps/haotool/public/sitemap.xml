@@ -1,29 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset
-  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-  xmlns:xhtml="http://www.w3.org/1999/xhtml"
->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://haotool.org/</loc>
-    <lastmod>2026-03-14T03:34:18.142Z</lastmod>
+    <lastmod>2026-03-15T12:20:44.634Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://haotool.org/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://haotool.org/" />
   </url>
   <url>
     <loc>https://haotool.org/projects/</loc>
-    <lastmod>2026-03-14T03:34:18.142Z</lastmod>
+    <lastmod>2026-03-15T12:20:44.634Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://haotool.org/projects/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://haotool.org/projects/" />
   </url>
   <url>
     <loc>https://haotool.org/about/</loc>
-    <lastmod>2026-03-14T03:34:18.142Z</lastmod>
+    <lastmod>2026-03-15T12:20:44.634Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://haotool.org/about/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://haotool.org/about/" />
   </url>
   <url>
     <loc>https://haotool.org/contact/</loc>
-    <lastmod>2026-03-14T03:34:18.142Z</lastmod>
+    <lastmod>2026-03-15T12:20:44.634Z</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://haotool.org/contact/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://haotool.org/contact/" />
   </url>
