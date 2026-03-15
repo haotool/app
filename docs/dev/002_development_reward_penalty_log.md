@@ -1,8 +1,41 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-14T11:35:00+08:00
-> **當前總分**: 1164（初始分: 100）
+> **最後更新**: 2026-03-15T00:00:00+08:00
+> **當前總分**: 1166（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: park-keeper-nav-label-restore-v1.0.22
+date: 2026-03-15
+title: park-keeper 底部導覽列加回文字標籤並升版至 v1.0.22
+score: 2
+type: improvement
+content_type: feature
+scope: park-keeper
+topics: [ui, nav, design-token, ssot, a11y]
+keywords: [nav-label, NAV_LABEL_BASE_CLS, NAV_LABEL_INACTIVE_CLS, navBar.ts, tab, atomic-update]
+aliases: [park-keeper nav label restore, 導覽列文字標籤, v1.0.22]
+related_entries: [park-keeper-ssot-tdd-refactor-v1.0.21]
+summary: 上一版（v1.0.21）移除了底部導覽列文字標籤，改為純 icon-only 設計並以 aria-label 補齊無障礙。本次應使用者需求恢復文字標籤，並完成 SSOT 設計代幣的最後一哩：在 navBar.ts 新增 NAV_LABEL_BASE_CLS 與 NAV_LABEL_INACTIVE_CLS，Home.tsx 的 List 與 Settings 按鈕同步加回 <span> 文字標籤，button 佈局改回 flex-col gap-1，保留 aria-label 維持 WCAG 合規。
+
+actions:
+
+- navBar.ts：新增 NAV_LABEL_BASE_CLS（text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300）
+- navBar.ts：新增 NAV_LABEL_INACTIVE_CLS（opacity-30）
+- Home.tsx：import 新增 NAV_LABEL_BASE_CLS、NAV_LABEL_INACTIVE_CLS
+- Home.tsx（List tab）：button className 改回 flex-col gap-1，新增 <span> 文字標籤
+- Home.tsx（Settings tab）：button className 改回 flex-col gap-1，新增 <span> 文字標籤
+- package.json：版本 1.0.21 → 1.0.22
+
+verification:
+
+- pnpm typecheck 通過（無型別錯誤）
+
+references:
+
+- apps/park-keeper/src/config/navBar.ts
+- apps/park-keeper/src/pages/Home.tsx
 
 ---
 

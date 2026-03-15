@@ -78,6 +78,8 @@ import {
   NAV_INDICATOR_CLS,
   NAV_INDICATOR_LAYOUT_ID,
   NAV_INDICATOR_TRANSITION,
+  NAV_LABEL_BASE_CLS,
+  NAV_LABEL_INACTIVE_CLS,
 } from '@app/park-keeper/config/navBar';
 
 const MiniMap = lazy(() => import('@app/park-keeper/components/MiniMap'));
@@ -1312,7 +1314,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 type="button"
                 aria-label={t('tab.list')}
                 onClick={() => setCurrentTab('list')}
-                className="w-full h-full flex items-center justify-center relative group"
+                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group"
               >
                 <div
                   className={`transition-all duration-300 ${currentTab === 'list' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
@@ -1325,6 +1327,12 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                     }
                   />
                 </div>
+                <span
+                  className={`${NAV_LABEL_BASE_CLS} ${currentTab !== 'list' ? NAV_LABEL_INACTIVE_CLS : ''}`}
+                  style={{ color: currentTab === 'list' ? theme.colors.primary : undefined }}
+                >
+                  {t('tab.list')}
+                </span>
 
                 {currentTab === 'list' && (
                   <motion.div
@@ -1364,7 +1372,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 type="button"
                 aria-label={t('tab.settings')}
                 onClick={() => setCurrentTab('settings')}
-                className="w-full h-full flex items-center justify-center relative group"
+                className="w-full h-full flex flex-col items-center justify-center gap-1 relative group"
               >
                 <div
                   className={`transition-all duration-300 ${currentTab === 'settings' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
@@ -1377,6 +1385,12 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                     }
                   />
                 </div>
+                <span
+                  className={`${NAV_LABEL_BASE_CLS} ${currentTab !== 'settings' ? NAV_LABEL_INACTIVE_CLS : ''}`}
+                  style={{ color: currentTab === 'settings' ? theme.colors.primary : undefined }}
+                >
+                  {t('tab.settings')}
+                </span>
 
                 {currentTab === 'settings' && (
                   <motion.div

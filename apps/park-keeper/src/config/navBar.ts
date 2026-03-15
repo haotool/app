@@ -59,3 +59,14 @@ export const NAV_INDICATOR_TRANSITION = {
   stiffness: 500,
   damping: 30,
 } as const;
+
+// ---------------------------------------------------------------------------
+// Label
+// ---------------------------------------------------------------------------
+
+/** Tab 文字標籤 Tailwind class（active / inactive 共用基底）。 */
+export const NAV_LABEL_BASE_CLS =
+  'text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300' as const;
+
+/** Tab 文字標籤 inactive 附加 class。 */
+export const NAV_LABEL_INACTIVE_CLS = 'opacity-30' as const;
