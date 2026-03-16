@@ -1,16 +1,16 @@
 /* global HTMLRewriter */
 
 /**
- * 安全標頭 Worker v4.4
+ * 安全標頭 Worker v4.5
  *
  * 本 Worker 僅處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策（例如 HSTS）由 Cloudflare Edge 管理；
  * Worker 專注於路由分層 CSP、CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v4.5: 移除 Rocket Loader 繞過措施（data-cfasync="false"）；已在 Cloudflare Dashboard 關閉 Rocket Loader
  * - v4.4: 修正 Rocket Loader 干擾 vite-react-ssg 骨架屏卡死問題
  *         → InlineScriptNonceInjector 注入 data-cfasync="false"，防止 Rocket Loader 修改 type 屬性
- *         → 確保 window.__VITE_REACT_SSG_HASH__ 正常執行，消除 static-loader-data-manifest-undefined.json 404
  * - v4.3: 修正上游 .webmanifest 雙重 Content-Type（application/octet-stream, application/manifest+json）
  *         → 強制設為 application/manifest+json，避免 Safari 觸發下載而非解析 PWA manifest
  * - v4.2: 缺檔靜態資產改回 no-store，避免 Cloudflare 邊緣保留 stale 404 造成 SW precache 安裝失敗
@@ -24,7 +24,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script，避免以 regex 掃描 HTML 觸發 CodeQL `js/bad-tag-filter`
  */
 
-const SECURITY_POLICY_VERSION = '4.4';
+const SECURITY_POLICY_VERSION = '4.5';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -234,10 +234,6 @@ class InlineScriptNonceInjector {
 	element(element) {
 		if (element.getAttribute('src') === null) {
 			element.setAttribute('nonce', this.nonce);
-			// Rocket Loader 會將無 src script 的 type 改為亂碼延遲執行，
-			// 但其 restore inline script 被 CSP nonce 攔截，導致腳本永遠不執行（含 __VITE_REACT_SSG_HASH__）。
-			// data-cfasync="false" 告知 Rocket Loader 完全略過此腳本。
-			element.setAttribute('data-cfasync', 'false');
 		}
 	}
 }
