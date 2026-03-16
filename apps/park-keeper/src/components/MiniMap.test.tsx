@@ -6,6 +6,9 @@ import type { ThemeConfig } from '@app/park-keeper/types';
 
 import type { ReactNode } from 'react';
 
+// 穩定物件參照：避免 latLngToContainerPoint 每次回傳新物件觸發無限 setState 迴圈。
+const mockCarPoint = { x: 150, y: 200 };
+
 const mockMapInstance = {
   flyTo: vi.fn(),
   flyToBounds: vi.fn(),
@@ -14,6 +17,10 @@ const mockMapInstance = {
   setView: vi.fn(),
   getZoom: vi.fn(() => 17),
   invalidateSize: vi.fn(),
+  // CarPositionReader 需要這兩個方法讀取車輛像素座標
+  latLngToContainerPoint: vi.fn(() => mockCarPoint),
+  on: vi.fn(),
+  off: vi.fn(),
   dragging: { enable: vi.fn(), disable: vi.fn() },
   touchZoom: { enable: vi.fn(), disable: vi.fn() },
   doubleClickZoom: { enable: vi.fn(), disable: vi.fn() },
@@ -52,6 +59,10 @@ const MOTION_STRIP_PROPS = [
 
 // Mock motion/react so DraggablePhotoOverlay renders as a plain div (no animation engine)
 vi.mock('motion/react', () => ({
+  useMotionValue: (initial: number) => ({
+    get: () => initial,
+    set: vi.fn(),
+  }),
   motion: new Proxy(
     {},
     {
@@ -63,6 +74,13 @@ vi.mock('motion/react', () => ({
         }: { children?: ReactNode } & Record<string, unknown>) => {
           const domProps = { ...props };
           MOTION_STRIP_PROPS.forEach((k) => delete domProps[k]);
+          // Strip style motion values (x/y MotionValues aren't valid DOM style props)
+          if (domProps['style'] && typeof domProps['style'] === 'object') {
+            const style = { ...(domProps['style'] as Record<string, unknown>) };
+            if (style['x'] && typeof style['x'] === 'object') delete style['x'];
+            if (style['y'] && typeof style['y'] === 'object') delete style['y'];
+            domProps['style'] = style;
+          }
           return React.createElement(tag, domProps, children);
         };
         Component.displayName = `motion.${tag}`;
@@ -116,9 +134,7 @@ vi.mock('react-leaflet', () => ({
       data-zindex={String(zIndexOffset)}
     />
   ),
-  useMap: () => ({
-    ...mockMapInstance,
-  }),
+  useMap: () => mockMapInstance,
 }));
 
 vi.mock('leaflet', () => ({

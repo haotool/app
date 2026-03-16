@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { motion } from 'motion/react';
+import { motion, useMotionValue } from 'motion/react';
 import type { ThemeConfig } from '@app/park-keeper/types';
 import { useMapPerformance, calculateTileSettings } from '@app/park-keeper/hooks/useMapPerformance';
 
@@ -822,19 +822,69 @@ function DraggableMarker({
 }
 
 /**
- * 照片自由拖曳 overlay — 疊加在 MapContainer 上，使用 Framer Motion drag 讓使用者
+ * 從 Leaflet map 讀取車輛標記的像素座標，回傳給父層以定位照片 overlay。
+ * 監聽 move/zoom 事件，確保地圖平移縮放後座標同步。
+ */
+function CarPositionReader({
+  position,
+  onPositionUpdate,
+}: {
+  position: [number, number];
+  onPositionUpdate: (point: { x: number; y: number }) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    const update = () => {
+      const pt = map.latLngToContainerPoint(position as L.LatLngExpression);
+      onPositionUpdate({ x: pt.x, y: pt.y });
+    };
+    update();
+    map.on('move zoom viewreset', update);
+    return () => {
+      map.off('move zoom viewreset', update);
+    };
+  }, [map, position, onPositionUpdate]);
+
+  return null;
+}
+
+const PHOTO_OVERLAY_SIZE = 64; // w-16 h-16 = 64px
+const CAR_ICON_ANCHOR_Y = 30; // iconAnchor[1] — 車輛圖示中心點距底部距離
+
+/**
+ * 照片自由拖曳 overlay — 初始定位在車輛上方，使用 Framer Motion drag 讓使用者
  * 將照片拖曳到地圖任意位置，避免遮蓋重要路線。
  */
 function DraggablePhotoOverlay({
   src,
   onPhotoClick,
   containerRef,
+  carPixelPos,
 }: {
   src: string;
   onPhotoClick?: () => void;
   containerRef: React.RefObject<HTMLDivElement | null>;
+  carPixelPos: { x: number; y: number } | null;
 }) {
+  const hasBeenDragged = useRef(false);
   const dragOccurred = useRef(false);
+
+  // 以車輛像素座標計算初始位置：水平置中於車，垂直置於車頂上方 8px。
+  const initX = carPixelPos ? carPixelPos.x - PHOTO_OVERLAY_SIZE / 2 : 8;
+  const initY = carPixelPos
+    ? Math.max(4, carPixelPos.y - CAR_ICON_ANCHOR_Y - PHOTO_OVERLAY_SIZE - 8)
+    : 8;
+
+  const x = useMotionValue(initX);
+  const y = useMotionValue(initY);
+
+  // 地圖平移／縮放時同步更新位置（使用者拖曳後停止追蹤）。
+  useEffect(() => {
+    if (hasBeenDragged.current || !carPixelPos) return;
+    x.set(carPixelPos.x - PHOTO_OVERLAY_SIZE / 2);
+    y.set(Math.max(4, carPixelPos.y - CAR_ICON_ANCHOR_Y - PHOTO_OVERLAY_SIZE - 8));
+  }, [carPixelPos, x, y]);
 
   return (
     <motion.div
@@ -848,12 +898,13 @@ function DraggablePhotoOverlay({
       }}
       onDragStart={() => {
         dragOccurred.current = true;
+        hasBeenDragged.current = true;
       }}
       onClick={() => {
         if (!dragOccurred.current) onPhotoClick?.();
       }}
-      className="absolute top-2 left-2 z-[500] cursor-grab active:cursor-grabbing touch-none select-none"
-      style={{ touchAction: 'none' }}
+      style={{ x, y, position: 'absolute', top: 0, left: 0, touchAction: 'none' }}
+      className="z-[500] cursor-grab active:cursor-grabbing touch-none select-none"
     >
       <img
         src={src}
@@ -892,6 +943,7 @@ export default function MiniMap({
   onPhotoPositionChange: _onPhotoPositionChange,
 }: MiniMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [carPixelPos, setCarPixelPos] = useState<{ x: number; y: number } | null>(null);
 
   // Validate and normalize coordinates
   const validLat = clampLatitude(lat);
@@ -1042,6 +1094,9 @@ export default function MiniMap({
           cacheDurationDays={cacheDurationDays}
           trackedViewportInsets={effectiveTrackedViewportInsets}
         />
+        {photoData && (
+          <CarPositionReader position={centerPosition} onPositionUpdate={setCarPixelPos} />
+        )}
         {interactive && onLocationSelect ? (
           <DraggableMarker
             position={centerPosition}
@@ -1125,6 +1180,7 @@ export default function MiniMap({
           src={photoData}
           onPhotoClick={onPhotoClick}
           containerRef={containerRef}
+          carPixelPos={carPixelPos}
         />
       )}
     </div>
