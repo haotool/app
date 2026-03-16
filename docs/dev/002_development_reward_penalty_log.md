@@ -1,8 +1,46 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-16T00:46:00+08:00
-> **當前總分**: 1180（初始分: 100）
+> **最後更新**: 2026-03-16T14:55:00+08:00
+> **當前總分**: 1185（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: park-keeper-photo-ux-v1.0.28
+date: 2026-03-16
+title: park-keeper 修正三項照片 bug：列表照片、地圖照片自由拖曳、行動裝置縮放（v1.0.28）
+score: 5
+type: bugfix
+content_type: ux
+scope: park-keeper
+topics: [photo, drag, pinch-zoom, double-tap, createPortal, motion, framer-motion, mobile-ux]
+keywords: [PhotoViewerModal, DraggablePhotoOverlay, createPortal, pinch, double-tap, MAX_SCALE, lastTapRef, dragConstraints]
+aliases: [photo bugs, 照片點擊, 地圖照片拖曳, v1.0.28]
+related_entries: [park-keeper-photo-click-offset-fix-v1.0.26]
+summary: TDD 修正三項照片 bug。(1) 列表頁照片點擊修正：PhotoViewerModal 被 Framer Motion transform 容器截切，改用 createPortal 渲染到 document.body。(2) 地圖照片自由拖曳：原實作使用 Leaflet divIcon HTML 字串內嵌照片，受 ±50px/0-80px 限制；改為 React DraggablePhotoOverlay（motion.div + dragConstraints={containerRef}）疊加在地圖上，可自由拖曳到任意位置避免遮擋道路。(3) 行動裝置 UX：PhotoViewerModal 加入非被動 touchmove 雙指縮放（pinch-to-zoom）、雙擊切換縮放（1↔2.5）、MAX_SCALE 5、MIN_SCALE 0.5。同時修正測試 Proxy mock 每次 render 創建新函數導致 DOM 元素被 unmount 的問題（加入 cache Map），以及 lastTapRef 初始值 -Infinity 防止 t=0 誤判為雙擊。
+
+actions:
+
+- RecordCard.tsx：PhotoViewerModal 改用 createPortal(modal, document.body) 渲染，跳出 transform 容器
+- PhotoViewerModal.tsx：加入 imgRef/scaleRef/pinchRef/lastTapRef；useEffect 監聽非被動 touchmove 實作 pinch；handleTouchStart 實作雙擊切換；MAX_SCALE 3→5、MIN_SCALE 1→0.5；lastTapRef 初始值改為 -Infinity
+- MiniMap.tsx：新增 DraggablePhotoOverlay（motion.div + dragConstraints + dragOccurred ref 區分點擊/拖曳）；createPremiumCarIcon 移除照片嵌入；carIcon useMemo 移除 photoData/photoOffset 依賴；containerRef 綁定外層 div
+- **tests**/PhotoViewerModal.test.tsx：motion mock 加入 cache Map 防止 React unmount/remount；lastTapRef 修正後雙擊測試全通過
+- **tests**/RecordCard.test.tsx：新增 createPortal 測試（modal 應在 document.body 不在 card 容器內）
+- MiniMap.test.tsx：新增 motion/react mock + DraggablePhotoOverlay 四項測試
+
+verification:
+
+- typecheck 0 errors
+- 335 個測試全部通過（31 test files）
+
+references:
+
+- apps/park-keeper/src/components/PhotoViewerModal.tsx
+- apps/park-keeper/src/components/RecordCard.tsx
+- apps/park-keeper/src/components/MiniMap.tsx
+- apps/park-keeper/src/components/**tests**/PhotoViewerModal.test.tsx
+- apps/park-keeper/src/components/**tests**/RecordCard.test.tsx
+- apps/park-keeper/src/components/MiniMap.test.tsx
 
 ---
 

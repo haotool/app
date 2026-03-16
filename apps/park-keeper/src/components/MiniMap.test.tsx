@@ -1,5 +1,6 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import MiniMap from './MiniMap';
 import type { ThemeConfig } from '@app/park-keeper/types';
 
@@ -31,6 +32,45 @@ function serializeTestProp(value: unknown): string | undefined {
   if (typeof value === 'symbol') return value.description ?? 'symbol';
   return undefined;
 }
+
+const MOTION_STRIP_PROPS = [
+  'initial',
+  'animate',
+  'exit',
+  'transition',
+  'drag',
+  'dragMomentum',
+  'dragElastic',
+  'dragConstraints',
+  'onDragStart',
+  'onDrag',
+  'onDragEnd',
+  'onPointerDown',
+  'whileTap',
+  'whileHover',
+];
+
+// Mock motion/react so DraggablePhotoOverlay renders as a plain div (no animation engine)
+vi.mock('motion/react', () => ({
+  motion: new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        const tag = String(prop);
+        const Component = ({
+          children,
+          ...props
+        }: { children?: ReactNode } & Record<string, unknown>) => {
+          const domProps = { ...props };
+          MOTION_STRIP_PROPS.forEach((k) => delete domProps[k]);
+          return React.createElement(tag, domProps, children);
+        };
+        Component.displayName = `motion.${tag}`;
+        return Component;
+      },
+    },
+  ),
+}));
 
 // Mock react-leaflet to avoid DOM dependencies in tests
 vi.mock('react-leaflet', () => ({
@@ -826,6 +866,59 @@ describe('MiniMap Component - Leaflet Best Practices', () => {
       const url = tileLayer?.getAttribute('data-url') ?? '';
 
       expect(url).toContain('cartocdn.com/dark_all');
+    });
+  });
+
+  describe('DraggablePhotoOverlay', () => {
+    const photoData = 'data:image/png;base64,abc';
+
+    it('有 photoData 時應渲染照片 overlay 並顯示圖片', () => {
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} photoData={photoData} />,
+      );
+
+      const overlay = container.querySelector('[data-testid="photo-overlay"]');
+      expect(overlay).toBeInTheDocument();
+
+      const img = overlay?.querySelector('img');
+      expect(img).toHaveAttribute('src', photoData);
+      expect(img).toHaveAttribute('alt', 'Parking spot photo');
+    });
+
+    it('沒有 photoData 時不應渲染照片 overlay', () => {
+      const { container } = render(<MiniMap lat={25.033} lng={121.5654} theme={mockTheme} />);
+
+      expect(container.querySelector('[data-testid="photo-overlay"]')).toBeNull();
+    });
+
+    it('點擊照片 overlay 應呼叫 onPhotoClick', () => {
+      const onPhotoClick = vi.fn();
+      const { container } = render(
+        <MiniMap
+          lat={25.033}
+          lng={121.5654}
+          theme={mockTheme}
+          photoData={photoData}
+          onPhotoClick={onPhotoClick}
+        />,
+      );
+
+      const overlay = container.querySelector('[data-testid="photo-overlay"]');
+      fireEvent.click(overlay!);
+      expect(onPhotoClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('照片 overlay 不應嵌入在 Leaflet marker HTML 中', () => {
+      const { container } = render(
+        <MiniMap lat={25.033} lng={121.5654} theme={mockTheme} photoData={photoData} />,
+      );
+
+      // The overlay must be a direct React child, not inside a [data-testid="marker"]
+      const markerEl = container.querySelector('[data-testid="marker"]');
+      expect(markerEl?.querySelector('img')).toBeNull();
+
+      // But the overlay IS in the container
+      expect(container.querySelector('[data-testid="photo-overlay"] img')).toBeInTheDocument();
     });
   });
 });

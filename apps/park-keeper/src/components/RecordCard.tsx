@@ -8,6 +8,7 @@
  * - 視覺反饋與載入狀態
  */
 import { useCallback, useEffect, useRef, useState, Suspense, lazy } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { Car, Trash2, MapPin, Clock, Navigation, Loader2, Edit2 } from 'lucide-react';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
@@ -326,14 +327,17 @@ export default function RecordCard({
         </motion.div>
       )}
 
-      {/* Photo Modal */}
-      {showPhotoModal && record.photoData && (
-        <PhotoViewerModal
-          src={record.photoData}
-          alt="Parking spot"
-          onClose={() => setShowPhotoModal(false)}
-        />
-      )}
+      {/* Photo Modal — createPortal 確保在 Framer Motion transform 容器外渲染，fixed 定位才正確 */}
+      {showPhotoModal &&
+        record.photoData &&
+        createPortal(
+          <PhotoViewerModal
+            src={record.photoData}
+            alt="Parking spot"
+            onClose={() => setShowPhotoModal(false)}
+          />,
+          document.body,
+        )}
     </div>
   );
 }

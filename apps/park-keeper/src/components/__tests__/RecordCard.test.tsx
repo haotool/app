@@ -250,4 +250,27 @@ describe('RecordCard', () => {
     fireEvent.click(screen.getByRole('button', { name: '關閉照片預覽' }));
     expect(screen.queryByRole('dialog', { name: '照片檢視器' })).not.toBeInTheDocument();
   });
+
+  it('照片 modal 應透過 createPortal 渲染到 document.body，而非 card 容器內', async () => {
+    vi.useRealTimers();
+
+    const { container } = render(
+      <RecordCard
+        record={{ ...record, photoData: 'data:image/png;base64,abc', hasPhoto: true }}
+        theme={theme}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn().mockResolvedValue(undefined)}
+        onNavigate={vi.fn()}
+        miniMapText={miniMapText}
+      />,
+    );
+
+    const photoButton = await screen.findByRole('button', { name: '查看停車照片' });
+    fireEvent.click(photoButton);
+
+    // modal 不應在 card 容器內（createPortal 會跳出）
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    // modal 應在 document.body 中
+    expect(document.body.querySelector('[role="dialog"]')).not.toBeNull();
+  });
 });

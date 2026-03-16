@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { motion } from 'motion/react';
 import type { ThemeConfig } from '@app/park-keeper/types';
 import { useMapPerformance, calculateTileSettings } from '@app/park-keeper/hooks/useMapPerformance';
 
@@ -155,9 +156,7 @@ const createPremiumCarIcon = (
   isInteractive: boolean,
   showLabel: boolean,
   markerLabel: string,
-  photoData?: string,
   rotationDegrees = 0,
-  photoOffset = { x: 0, y: 10 },
 ) => {
   const filterDef = isInteractive
     ? `<filter id="carGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -175,44 +174,10 @@ const createPremiumCarIcon = (
 
   const label = showLabel ? createMarkerLabelBadge(markerLabel, '#0f172ad9') : '';
 
-  // 照片縮圖定位於 140px 容器 div 的上半段（0–80px），car SVG 佔下半段（80–140px）。
-  // y=0: 緊貼頂部；y=80: 恰好在 car 上緣，實際可用範圍 0–20（照片 60px + 小間距）。
-  const constrainedOffset = {
-    x: Math.max(-50, Math.min(50, photoOffset.x)),
-    y: Math.max(0, Math.min(80, photoOffset.y)),
-  };
-
-  const photoThumbnail = photoData
-    ? `<img
-        src="${photoData}"
-        alt="Parking spot photo"
-        style="
-          position:absolute;
-          top:${constrainedOffset.y}px;
-          left:calc(50% + ${constrainedOffset.x}px);
-          transform:translateX(-50%);
-          width:60px;
-          height:60px;
-          object-fit:cover;
-          border-radius:8px;
-          border:2px solid white;
-          box-shadow:0 4px 12px rgba(0,0,0,0.3);
-          cursor:move;
-          pointer-events:auto;
-          z-index:30;
-          transition:box-shadow 0.2s ease;
-          touch-action:none;
-        "
-        class="parking-photo-thumbnail draggable-photo"
-        data-draggable="true"
-      />`
-    : '';
-
   const svgString = `
-    <div style="width:40px;height:${photoData ? '140px' : '60px'};position:relative;overflow:visible">
-      ${photoThumbnail}
+    <div style="width:40px;height:60px;position:relative;overflow:visible">
       ${label}
-      <svg viewBox="0 0 40 60" width="40" height="60" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;position:absolute;${photoData ? 'bottom:0' : 'inset:0'}">
+      <svg viewBox="0 0 40 60" width="40" height="60" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;position:absolute;inset:0">
         <defs>${filterDef}</defs>
         <g transform="translate(20,30) rotate(${rotationDegrees})">
           ${pulse}
@@ -229,9 +194,9 @@ const createPremiumCarIcon = (
   return L.divIcon({
     className: 'premium-car-marker',
     html: svgString,
-    iconSize: [40, photoData ? 140 : 60],
-    iconAnchor: [20, photoData ? 140 : 30],
-    popupAnchor: [0, photoData ? -140 : -30],
+    iconSize: [40, 60],
+    iconAnchor: [20, 30],
+    popupAnchor: [0, -30],
   });
 };
 
@@ -856,6 +821,50 @@ function DraggableMarker({
   );
 }
 
+/**
+ * 照片自由拖曳 overlay — 疊加在 MapContainer 上，使用 Framer Motion drag 讓使用者
+ * 將照片拖曳到地圖任意位置，避免遮蓋重要路線。
+ */
+function DraggablePhotoOverlay({
+  src,
+  onPhotoClick,
+  containerRef,
+}: {
+  src: string;
+  onPhotoClick?: () => void;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const dragOccurred = useRef(false);
+
+  return (
+    <motion.div
+      data-testid="photo-overlay"
+      drag
+      dragConstraints={containerRef}
+      dragMomentum={false}
+      dragElastic={0.05}
+      onPointerDown={() => {
+        dragOccurred.current = false;
+      }}
+      onDragStart={() => {
+        dragOccurred.current = true;
+      }}
+      onClick={() => {
+        if (!dragOccurred.current) onPhotoClick?.();
+      }}
+      className="absolute top-2 left-2 z-[500] cursor-grab active:cursor-grabbing touch-none select-none"
+      style={{ touchAction: 'none' }}
+    >
+      <img
+        src={src}
+        alt="Parking spot photo"
+        draggable={false}
+        className="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-lg"
+      />
+    </motion.div>
+  );
+}
+
 export default function MiniMap({
   lat,
   lng,
@@ -879,9 +888,11 @@ export default function MiniMap({
   onPhotoClick,
   parkedHeading = 0,
   trackedViewportInsets,
-  photoOffset = { x: 0, y: 10 },
-  onPhotoPositionChange,
+  photoOffset: _photoOffset,
+  onPhotoPositionChange: _onPhotoPositionChange,
 }: MiniMapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Validate and normalize coordinates
   const validLat = clampLatitude(lat);
   const validLng = normalizeLongitude(lng);
@@ -950,19 +961,9 @@ export default function MiniMap({
         interactive,
         showPositionLabels,
         mapText.markerCarLabel,
-        photoData,
         parkedHeading,
-        photoOffset,
       ),
-    [
-      theme.colors.primary,
-      interactive,
-      mapText.markerCarLabel,
-      showPositionLabels,
-      photoData,
-      parkedHeading,
-      photoOffset,
-    ],
+    [theme.colors.primary, interactive, mapText.markerCarLabel, showPositionLabels, parkedHeading],
   );
   const userIcon = useMemo(
     () =>
@@ -985,6 +986,7 @@ export default function MiniMap({
 
   return (
     <div
+      ref={containerRef}
       className={`relative w-full h-full overflow-hidden bg-gray-100 ${className}`}
       style={{ borderRadius: 'inherit', isolation: 'isolate' }}
       role="region"
@@ -1046,14 +1048,12 @@ export default function MiniMap({
             onDragEnd={(newPos) => onLocationSelect(newPos.lat, newPos.lng)}
             icon={carIcon}
             onPhotoClick={onPhotoClick}
-            onPhotoPositionChange={onPhotoPositionChange}
           />
         ) : (
           <PhotoClickableMarker
             position={centerPosition}
             icon={carIcon}
             onPhotoClick={onPhotoClick}
-            onPhotoPositionChange={onPhotoPositionChange}
           />
         )}
         {userPosition && <Marker position={userPosition} icon={userIcon} zIndexOffset={900} />}
@@ -1119,6 +1119,13 @@ export default function MiniMap({
       )}
       {!interactive && (
         <div className="absolute inset-0 z-[400] pointer-events-auto cursor-pointer bg-transparent" />
+      )}
+      {photoData && (
+        <DraggablePhotoOverlay
+          src={photoData}
+          onPhotoClick={onPhotoClick}
+          containerRef={containerRef}
+        />
       )}
     </div>
   );
