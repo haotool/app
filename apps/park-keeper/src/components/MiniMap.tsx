@@ -850,11 +850,14 @@ function CarPositionReader({
 }
 
 const PHOTO_OVERLAY_SIZE = 64; // w-16 h-16 = 64px
-const CAR_ICON_ANCHOR_Y = 30; // iconAnchor[1] — 車輛圖示中心點距底部距離
+// 車輛圖示幾何：iconAnchor=[20,30]，車身寬半徑 12px。
+// 初始位置：車身右側 8px gap，垂直置中於車輛錨點。
+// 此位置不遮擋上方標籤 badge（在錨點 -48px 至 -30px）。
+const INIT_OFFSET = { dx: 12 + 8, dy: -(PHOTO_OVERLAY_SIZE / 2) };
 
 /**
- * 照片自由拖曳 overlay — 初始定位在車輛上方，使用 Framer Motion drag 讓使用者
- * 將照片拖曳到地圖任意位置，避免遮蓋重要路線。
+ * 照片 overlay — 初始定位在車輛右側，跟隨車輛在地圖平移／縮放時同步移動。
+ * 使用者拖曳後更新相對偏移，下次地圖移動仍從新偏移位置跟隨。
  */
 function DraggablePhotoOverlay({
   src,
@@ -867,23 +870,26 @@ function DraggablePhotoOverlay({
   containerRef: React.RefObject<HTMLDivElement | null>;
   carPixelPos: { x: number; y: number } | null;
 }) {
-  const hasBeenDragged = useRef(false);
+  // 記錄使用者選定的相對偏移（相對車輛錨點像素位置）。
+  const offsetRef = useRef(INIT_OFFSET);
+  // 穩定參照，讓 onDragEnd 讀取最新 carPixelPos 而不產生 stale closure。
+  const carPosRef = useRef(carPixelPos);
+  useEffect(() => {
+    carPosRef.current = carPixelPos;
+  }, [carPixelPos]);
+
   const dragOccurred = useRef(false);
 
-  // 以車輛像素座標計算初始位置：水平置中於車，垂直置於車頂上方 8px。
-  const initX = carPixelPos ? carPixelPos.x - PHOTO_OVERLAY_SIZE / 2 : 8;
-  const initY = carPixelPos
-    ? Math.max(4, carPixelPos.y - CAR_ICON_ANCHOR_Y - PHOTO_OVERLAY_SIZE - 8)
-    : 8;
-
+  const initX = carPixelPos ? carPixelPos.x + INIT_OFFSET.dx : INIT_OFFSET.dx;
+  const initY = carPixelPos ? carPixelPos.y + INIT_OFFSET.dy : INIT_OFFSET.dy;
   const x = useMotionValue(initX);
   const y = useMotionValue(initY);
 
-  // 地圖平移／縮放時同步更新位置（使用者拖曳後停止追蹤）。
+  // 地圖平移／縮放時，依儲存的相對偏移同步更新絕對像素位置。
   useEffect(() => {
-    if (hasBeenDragged.current || !carPixelPos) return;
-    x.set(carPixelPos.x - PHOTO_OVERLAY_SIZE / 2);
-    y.set(Math.max(4, carPixelPos.y - CAR_ICON_ANCHOR_Y - PHOTO_OVERLAY_SIZE - 8));
+    if (!carPixelPos) return;
+    x.set(carPixelPos.x + offsetRef.current.dx);
+    y.set(carPixelPos.y + offsetRef.current.dy);
   }, [carPixelPos, x, y]);
 
   return (
@@ -892,13 +898,19 @@ function DraggablePhotoOverlay({
       drag
       dragConstraints={containerRef}
       dragMomentum={false}
-      dragElastic={0.05}
+      dragElastic={0}
       onPointerDown={() => {
         dragOccurred.current = false;
       }}
       onDragStart={() => {
         dragOccurred.current = true;
-        hasBeenDragged.current = true;
+      }}
+      onDragEnd={() => {
+        // 拖曳結束後，計算新的相對偏移，供下次地圖移動時使用。
+        const pos = carPosRef.current;
+        if (pos) {
+          offsetRef.current = { dx: x.get() - pos.x, dy: y.get() - pos.y };
+        }
       }}
       onClick={() => {
         if (!dragOccurred.current) onPhotoClick?.();
