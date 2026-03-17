@@ -1,8 +1,50 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-18T02:06:00+08:00
-> **當前總分**: 1195（初始分: 100）
+> **最後更新**: 2026-03-18T02:14:00+08:00
+> **當前總分**: 1196（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-seo-audit-lastmod-contract-sync
+date: 2026-03-18
+title: RateWise 同步 SEO Audit sitemap 驗證契約到 W3C Datetime
+score: +1
+type: test
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, ci, sitemap, lastmod, github-actions]
+keywords: [verify-sitemap-2025, SEO audit, W3C Datetime, YYYY-MM-DD, CI failure]
+aliases: [SEO audit lastmod 同步, sitemap CI 契約修正]
+related_entries: [ratewise-sitemap-lastmod-date-granularity, ratewise-sitemap-lastmod-test-contract-sync]
+summary: GitHub Actions 的 `SEO 2025 Standards Audit` 仍把 `lastmod` 視為必須帶時間與時區的完整 timestamp，導致合法的 `YYYY-MM-DD` sitemap 被誤判失敗。此次將 CI 驗證腳本同步到 W3C Datetime 契約，接受 date-only 與完整 timestamp 兩種合法格式。
+root_cause:
+
+- `scripts/verify-sitemap-2025.mjs` 保留舊的 ISO 8601 + timezone regex，未跟上 sitemap 生成器改為 date-only 的設計
+- CI workflow 執行 `seo-full-audit.mjs` 時會 transitively 呼叫這支腳本，因此 PR checks 直接失敗
+  impact:
+
+- `SEO 2025 Standards Audit` 在 GitHub Actions 對全部 25 個 URL 報 `lastmod 格式錯誤`
+- 合法 sitemap 被 CI 誤擋，造成 reviewer 與作者對規格理解分裂
+  actions:
+
+- `verify-sitemap-2025.mjs` 改為接受 W3C Datetime，允許 `YYYY-MM-DD` 與完整 timestamp
+- 加入 date-only 解析正規化，統一用 `T00:00:00Z` 做時間合理性比較
+- 本地重跑 `verify-sitemap-2025.mjs` 與 `seo-full-audit.mjs` 確認轉綠
+  prevention:
+
+- 凡是 sitemap / structured data 契約調整，必須同步檢查 generator、unit test、audit script、CI workflow 四個層面
+- 對 protocol 驗證腳本，應以官方規格允許範圍為準，不要把單一實作格式誤升級成唯一標準
+  verification:
+
+- `node scripts/verify-sitemap-2025.mjs`
+- `node scripts/seo-full-audit.mjs`
+  references:
+
+- scripts/verify-sitemap-2025.mjs
+- scripts/seo-full-audit.mjs
+- https://www.sitemaps.org/protocol.html
+- https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
 
 ---
 

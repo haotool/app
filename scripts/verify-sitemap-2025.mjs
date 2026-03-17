@@ -10,7 +10,7 @@
  * 2025 標準驗證：
  * - ❌ 不得包含 <changefreq> 標籤 (Google 忽略)
  * - ❌ 不得包含 <priority> 標籤 (Google 和 Bing 都忽略)
- * - ✅ 必須包含 <lastmod> 且格式正確
+ * - ✅ 必須包含 <lastmod> 且格式符合 W3C Datetime
  * - ✅ 時間戳必須真實（≥3 個不同日期）
  * - ✅ 必須包含 Image Sitemap Extension
  * - ✅ 所有公開 sitemap 路徑必須存在
@@ -85,6 +85,23 @@ function extractLastmods(xml) {
 }
 
 /**
+ * 驗證 sitemap lastmod 是否符合 W3C Datetime。
+ * Sitemaps.org 明確允許省略時間部分，直接使用 YYYY-MM-DD。
+ */
+function isValidLastmod(lastmod) {
+  return /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:[+-]\d{2}:\d{2}|Z))?$/.test(lastmod);
+}
+
+/**
+ * 將 lastmod 解析為可比較的時間。
+ * date-only 形式固定轉成 UTC 午夜，避免不同執行環境的時區解析差異。
+ */
+function parseLastmod(lastmod) {
+  const normalized = lastmod.includes('T') ? lastmod : `${lastmod}T00:00:00Z`;
+  return new Date(normalized).getTime();
+}
+
+/**
  * 驗證測試套件
  */
 async function runTests() {
@@ -131,13 +148,12 @@ async function runTests() {
     log(colors.green, '✓', `PASSED: 所有 ${urls.length} 個 URL 都有 lastmod`);
   }
 
-  // Test 4: lastmod 格式驗證（ISO 8601 + 時區）
-  console.log('\n📋 測試 4: ISO 8601 格式 + 時區');
-  const iso8601Regex = /T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/;
+  // Test 4: lastmod 格式驗證（W3C Datetime，允許 YYYY-MM-DD）
+  console.log('\n📋 測試 4: W3C Datetime 格式（允許 YYYY-MM-DD）');
   let invalidFormats = [];
 
   lastmods.forEach((lastmod, index) => {
-    if (!iso8601Regex.test(lastmod)) {
+    if (!isValidLastmod(lastmod)) {
       invalidFormats.push(`${urls[index]}: ${lastmod}`);
     }
   });
@@ -147,7 +163,7 @@ async function runTests() {
     invalidFormats.forEach((msg) => console.log(`    ${msg}`));
     hasErrors = true;
   } else {
-    log(colors.green, '✓', 'PASSED: 所有 lastmod 格式正確（ISO 8601 + 時區）');
+    log(colors.green, '✓', 'PASSED: 所有 lastmod 格式正確（W3C Datetime）');
   }
 
   // Test 5: 時間戳真實性（至少 3 個不同日期）
@@ -168,7 +184,7 @@ async function runTests() {
   let invalidTimes = [];
 
   lastmods.forEach((lastmod, index) => {
-    const time = new Date(lastmod).getTime();
+    const time = parseLastmod(lastmod);
 
     if (isNaN(time)) {
       invalidTimes.push(`${urls[index]}: Invalid date - ${lastmod}`);
