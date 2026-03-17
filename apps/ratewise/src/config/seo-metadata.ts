@@ -293,6 +293,7 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
     },
     copyrightNotice: `© ${new Date(BUILD_TIME).getUTCFullYear() || 2026} ${APP_INFO.author}`,
     creditText: APP_INFO.author,
+    dateModified: BUILD_TIME,
   };
 }
 
@@ -1136,6 +1137,7 @@ export function getCurrencyLandingPageContent(
       availableLanguage: ['zh-TW', 'en', 'ja'],
     },
     termsOfService: buildCanonicalUrl('/privacy'),
+    sameAs: [...SEO_SOCIAL_LINKS],
     offers: {
       '@type': 'Offer',
       price: '0',
