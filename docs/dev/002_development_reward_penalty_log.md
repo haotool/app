@@ -1,8 +1,44 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-17T22:48:00+08:00
-> **當前總分**: 1189（初始分: 100）
+> **最後更新**: 2026-03-17T23:18:00+08:00
+> **當前總分**: 1190（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: park-keeper-use-debounce-test-flake
+date: 2026-03-17
+title: park-keeper 將 useDebounce 測試改為假時鐘，消除 pre-push flaky
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: park-keeper
+topics: [test, vitest, fake-timers, debounce, flaky]
+keywords: [useDebounce, waitFor, fake timers, pre-push, flaky test]
+aliases: [debounce flaky 修復, park-keeper 假時鐘測試]
+related_entries: [park-keeper-photo-ux-v1.0.28]
+summary: `apps/park-keeper` 的 `useDebounce.test.ts` 原本依賴真實計時器與 `waitFor`，在整包 workspace 測試併發時偶發超時，導致 `pre-push` 擋住與本次 SEO 任務無關的推送流程。改為 Vitest fake timers 後，測試可直接控制 300ms/500ms 邊界，行為更快也更穩定。
+root_cause:
+
+- debounce hook 測試使用真實時間與 400ms timeout，當機器負載或測試併發較高時會偶發未在期限內完成狀態更新
+- 失敗案例是測試不穩定，不是 `useDebounce` 實作邏輯錯誤
+  impact:
+
+- repo `pre-push` 會被 `@app/park-keeper` 既有 flaky test 擋住，連帶阻塞其他 workspace 的正常推送
+  actions:
+
+- `useDebounce.test.ts` 改為 `vi.useFakeTimers()` + `act(() => vi.advanceTimersByTime(...))`
+- 移除對真實 `waitFor` / `setTimeout` 的依賴，改為精準驗證 timer 邊界前後的 hook 輸出
+  prevention:
+
+- 涉及 debounce、throttle、polling 的 hook 測試，預設優先使用 fake timers，避免把 CI/本機負載波動誤判為功能退化
+  verification:
+
+- `pnpm --filter @app/park-keeper exec vitest run src/hooks/__tests__/useDebounce.test.ts`
+- `pnpm --filter @app/park-keeper test`
+  references:
+
+- apps/park-keeper/src/hooks/**tests**/useDebounce.test.ts
 
 ---
 
