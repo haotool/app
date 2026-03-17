@@ -1,7 +1,19 @@
 # SEO 匯差範例數據每週更新
 #
-# 職責：每週一抓取最新臺灣銀行牌告匯率，計算各幣別現金匯率與即期匯率差距，
-#        更新 apps/ratewise/src/config/generated/seo-rate-examples.ts 並提交。
+# 職責：每週一抓取最新臺灣銀行牌告匯率，計算各幣別現金匯率與市場中間價差距，
+#        更新 apps/ratewise/src/config/generated/seo-rate-examples.ts。
+#
+# 流程（業界最佳實踐 — PR-based，不直接 push main）：
+#   1. 執行腳本（雙重驗證：台銀牌告 + open.er-api.com）
+#   2. 若有變更，peter-evans/create-pull-request@v8 建立 PR 分支
+#   3. PR 通過 CI 後 auto-merge（squash）至 main
+#   4. 無變更時不建立 PR，靜默略過
+#
+# 為何不直接 push main：
+#   - 避免繞過 branch protection 與必要的 CI 檢查（typecheck/test/build）
+#   - PR 流程確保每次入 main 的資料均通過完整驗證
+#   - 可追溯：每次更新均有獨立 PR 紀錄與 CI 狀態
+#
 # 觸發：每週一 02:00 UTC（台灣時間週一 10:00）+ 手動觸發
 
 name: Update SEO Rate Examples
@@ -13,6 +25,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update:
@@ -35,32 +48,61 @@ jobs:
       - name: 安裝依賴
         run: pnpm install --frozen-lockfile
 
-      - name: 執行匯差範例更新腳本
+      - name: 執行匯差範例更新腳本（雙重驗證模式）
         run: node apps/ratewise/scripts/update-seo-rate-examples.mjs
 
-      - name: 確認檔案變更
-        id: check
-        run: |
-          if git diff --quiet apps/ratewise/src/config/generated/seo-rate-examples.ts; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
+      - name: 建立 PR（若有變更）
+        id: create-pr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          commit-message: |
+            chore(seo): 每週更新匯差範例數據
 
-      - name: 提交更新
-        if: steps.check.outputs.changed == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add apps/ratewise/src/config/generated/seo-rate-examples.ts
-          git commit -m "chore(seo): 每週更新匯差範例數據
+            - 自動更新各幣別現金賣出 vs 市場中間價差距（換 3 萬台幣情境）
+            - 雙重驗證：open.er-api.com 中間價 vs 台銀自身 (買入+賣出)/2 中間價
+            - 差距超過 2% 幣別已警告（東南亞幣別預期偏高）
 
-          - 自動更新各幣別現金賣出 vs 即期賣出差距
-          - 資料來源：臺灣銀行牌告匯率
+            測試：GitHub Actions 排程自動觸發
+          branch: chore/weekly-seo-rate-update
+          delete-branch: true
+          title: 'chore(seo): 每週更新匯差範例數據'
+          body: |
+            ## 自動更新：SEO 匯差範例數據
 
-          測試：GitHub Actions 自動觸發"
-          git push
+            由 GitHub Actions 排程每週一自動執行。腳本：[`update-seo-rate-examples.mjs`](apps/ratewise/scripts/update-seo-rate-examples.mjs)
+
+            ### 資料來源雙重驗證
+
+            | 來源 | 說明 |
+            |------|------|
+            | `cdn.jsdelivr.net` 台銀牌告 | 現金賣出價（臨櫃實際到手） |
+            | `open.er-api.com` | 市場中間價（Google / XE / Wise / Apple 基準） |
+            | 台銀 `(買入+賣出)/2` | 雙重驗證，差距 ≤ 2% 才通過 |
+
+            ### 生成欄位
+
+            `foreignAtCash` / `foreignAtMarketMid` / `diffForeign` / `diffTWD` / `diffPct` / `marketMid` / `bankMid`
+
+            ### 自動化
+
+            - CI 全部通過後 **自動 squash merge** 至 `main`
+            - 無變更時不建立 PR，靜默略過
+            - 幣別資料缺漏時腳本 `exit(1)`，工作流程明確失敗
+          labels: |
+            automated
+            seo
+          add-paths: |
+            apps/ratewise/src/config/generated/seo-rate-examples.ts
+
+      - name: 啟用 auto-merge
+        if: steps.create-pr.outputs.pull-request-number != ''
+        run: gh pr merge --auto --squash "${{ steps.create-pr.outputs.pull-request-number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 無變更
-        if: steps.check.outputs.changed == 'false'
-        run: echo "ℹ️ 匯差範例數據無變更，略過提交。"
+        if: steps.create-pr.outputs.pull-request-number == ''
+        run: echo "ℹ️ 匯差範例數據無變更，略過建立 PR。"
