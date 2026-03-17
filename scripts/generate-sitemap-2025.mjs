@@ -13,7 +13,7 @@
  * - ❌ 移除 <changefreq> (Google 忽略)
  * - ❌ 移除 <priority> (Google 和 Bing 都忽略)
  * - ✅ 新增 Image Sitemap Extension
- * - ✅ ISO 8601 格式 + 時區信息
+ * - ✅ W3C Datetime 日期格式（YYYY-MM-DD）
  *
  * 建立時間: 2025-12-20
  * BDD 階段: Stage 2 GREEN (實作階段)
@@ -229,7 +229,7 @@ CURRENCY_SEO_PATHS.forEach((path) => {
 });
 
 /**
- * 優先用 git commit time 代表重大內容更新時間，失敗時回退到檔案 mtime。
+ * 優先用 git commit 日期代表重大內容更新日期，失敗時回退到檔案 mtime。
  * @param {string} path - SEO 路徑
  * @returns {Date} 文件修改時間
  */

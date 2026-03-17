@@ -1,8 +1,51 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-18T00:00:00+08:00
-> **當前總分**: 1192（初始分: 100）
+> **最後更新**: 2026-03-18T02:02:00+08:00
+> **當前總分**: 1194（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-sitemap-lastmod-date-granularity
+date: 2026-03-18
+title: RateWise 將 sitemap lastmod 收斂到日期粒度，消除 commit 後產物漂移
+score: +2
+type: bugfix
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, sitemap, lastmod, build, git, tdd]
+keywords: [lastmod date only, W3C Datetime, commit drift, sitemap stability, tracked artifact]
+aliases: [sitemap 漂移修復, lastmod 日期粒度]
+related_entries: [ratewise-open-data-basename-lastmod-followup, ratewise-seo-title-truthfulness-lastmod-tdd]
+summary: 針對 `git commit time` 版 `lastmod` 在 commit 完成後會立刻讓 `public/sitemap.xml` 再次變髒的問題，改為輸出 W3C Datetime 的日期格式 `YYYY-MM-DD`。這仍符合 sitemap protocol 與 Google 文件，且對同日多次 commit 保持穩定，讓 repo 追蹤的 sitemap 產物與實際 HEAD 不再互相打架。
+root_cause:
+
+- 先前 `lastmod` 輸出到秒級時間，若同一個 commit 本身修改了依賴檔，commit 完成後最新 git commit time 會晚於 commit 前生成的 sitemap，造成產物立即漂移
+- repo 目前將 `public/sitemap.xml` 視為 tracked artifact，秒級 commit time 與這種流程天然衝突
+  impact:
+
+- 每次 build 或 pre-push 後都可能讓 `apps/ratewise/public/sitemap.xml` 再次變髒，降低可重現性並干擾 reviewer 判讀
+- `lastmod` 雖然語義正確，但對 repo 內追蹤產物不自洽
+  actions:
+
+- `generate-sitemap-2025.mjs` 的 `lastmod` 格式改為 W3C Datetime 日期 `YYYY-MM-DD`
+- 保留「重大依賴檔 → git 歷史」的策略，但把粒度從秒級縮到日期級，避免同日 commit time 漂移
+- `sitemap-2025.test.ts` 改為驗證日期格式，首頁 `lastmod` 也改比對 git 日期
+- 重建 `apps/ratewise/public/sitemap.xml`
+  prevention:
+
+- 對 repo tracked 的 SEO 產物，若資料源無法在 commit 前可靠取得最終秒級時間，優先選用日期粒度而不是偽精確 timestamp
+- `lastmod` 只在能持續準確維護時輸出；若流程無法保證秒級正確性，不應假裝有秒級精度
+  verification:
+
+- `node scripts/generate-sitemap-2025.mjs`
+- `pnpm exec vitest run scripts/__tests__/sitemap-2025.test.ts`
+- `pnpm --filter @app/ratewise build`
+  references:
+
+- scripts/generate-sitemap-2025.mjs
+- scripts/**tests**/sitemap-2025.test.ts
+- apps/ratewise/public/sitemap.xml
 
 ---
 
