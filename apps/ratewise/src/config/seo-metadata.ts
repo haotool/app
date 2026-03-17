@@ -225,8 +225,9 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       description: SITE_SEO.description,
       url: SITE_BASE_URL,
       applicationCategory: SITE_SEO.application.category,
-      operatingSystem: 'Any',
+      operatingSystem: ['Web', 'Android', 'iOS', 'Windows', 'macOS'],
       browserRequirements: SITE_SEO.application.browserRequirements,
+      installUrl: SITE_BASE_URL,
       datePublished: `${APP_INFO.copyrightStartYear}-01-01`,
       dateModified: BUILD_TIME,
       offers: {

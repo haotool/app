@@ -181,6 +181,7 @@ export function SEOHelmet({
   pathname,
   locale = DEFAULT_LOCALE,
   alternates,
+  keywords,
   updatedTime = SITE_SEO.updatedTime,
   howTo,
   breadcrumb,
@@ -235,6 +236,15 @@ export function SEOHelmet({
     upsertMeta('meta[name="description"]', { name: 'description', content: description });
     upsertMeta('meta[name="author"]', { name: 'author', content: APP_INFO.author });
     upsertMeta('meta[name="robots"]', { name: 'robots', content: robots });
+    if (keywords?.length) {
+      upsertMeta('meta[name="keywords"]', { name: 'keywords', content: keywords.join(', ') });
+    } else {
+      document.head
+        .querySelectorAll(
+          `meta[name="keywords"][${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_MANAGED_VALUE}"]`,
+        )
+        .forEach((n) => n.remove());
+    }
     upsertLink('link[rel="canonical"]', { rel: 'canonical', href: canonicalUrl });
 
     const alternateLinks = normalizedAlternates.map(({ href, hrefLang }) => {
@@ -323,6 +333,7 @@ export function SEOHelmet({
     canonicalUrl,
     description,
     fullTitle,
+    keywords,
     locale,
     normalizedAlternates,
     normalizedAlternatesSignature,
@@ -344,6 +355,7 @@ export function SEOHelmet({
       <meta name="description" content={description} />
       <meta name="author" content={APP_INFO.author} />
       <meta name="robots" content={robots} />
+      {keywords?.length ? <meta name="keywords" content={keywords.join(', ')} /> : null}
       <link rel="canonical" href={canonicalUrl} />
       {normalizedAlternates.map(({ href, hrefLang }) => (
         <link key={hrefLang} rel="alternate" hrefLang={hrefLang} href={href} />
