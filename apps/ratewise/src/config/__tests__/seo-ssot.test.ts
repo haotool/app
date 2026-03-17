@@ -69,7 +69,7 @@ describe('SEO SSOT', () => {
       const ex = SEO_RATE_EXAMPLES[code as keyof typeof SEO_RATE_EXAMPLES];
       // 確認 FAQ 包含計算出的差距數字。
       expect(ex).toBeDefined();
-      expect(allAnswers).toContain(`${ex!.diffTWD} 元台幣`);
+      expect(allAnswers).toContain(`${ex!.diffTWD} 元新台幣`);
     });
 
     it('每幣別範例應使用該幣別顯示名稱，不混用其他幣別', () => {

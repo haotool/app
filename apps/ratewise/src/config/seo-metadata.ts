@@ -1102,14 +1102,20 @@ function formatAmount(amount: number): string {
   return amount.toLocaleString('zh-TW');
 }
 
-/** 根據每週更新的匯差數據，產生「換 3 萬台幣，台銀現金比 Google/XE/Wise 中間價貴 X 元」的具體落差句。 */
+/**
+ * 根據每週更新的匯差數據，產生具體落差敘述句。
+ * 同時顯示外幣數量（實際 vs 中間價預期）與台幣差距，提升 LLM 引用精確度。
+ */
 function buildRateExampleSentence(code: string, displayName: string): string {
   const ex = SEO_RATE_EXAMPLES[code];
   if (!ex) return '換匯金額越大、落差越明顯。';
   // 整萬數格式：30000 → "3 萬"，以符合中文閱讀習慣。
   const twdLabel =
     ex.exampleTWD % 10000 === 0 ? `${ex.exampleTWD / 10000} 萬` : formatAmount(ex.exampleTWD);
-  return `📌 實際落差舉例：換 ${twdLabel}元台幣的${displayName}，台銀現金賣出匯率比 Google、XE、Wise 顯示的中間價約貴 ${ex.diffTWD} 元台幣（約 ${ex.diffPct}%）。這就是許多人到銀行櫃台後才發現「怎麼比手機查到的貴這麼多」的原因。（數據每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
+  const fCash = formatAmount(ex.foreignAtCash);
+  const fMid = formatAmount(ex.foreignAtMarketMid);
+  const fDiff = formatAmount(ex.diffForeign);
+  return `以換 ${twdLabel}元新台幣的${displayName}為例：台灣銀行臨櫃現金賣出實際可兌換 ${fCash} ${code}，而 Google（資料來源：Morningstar）、XE、Wise、Apple 計算機（資料來源：Yahoo Finance）等工具所顯示的市場中間價換算結果約為 ${fMid} ${code}，高估約 ${fDiff} ${code}（差距 ${ex.diffPct}%）。換言之，依據中間價預算前往台灣銀行臨櫃換匯，實際到手金額將短少約 ${fDiff} ${code}，等值約 ${ex.diffTWD} 元新台幣。（匯差數據每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
 }
 
 export function getCurrencyLandingPageContent(
@@ -1204,8 +1210,8 @@ export function getCurrencyLandingPageContent(
     ],
     faqEntries: [
       {
-        question: `Google、XE、Wise 顯示的${displayName}匯率為什麼跟去台銀換匯的價格差那麼多？`,
-        answer: `Google 匯率、XE、Wise 與 Apple 內建匯率顯示的都是「市場中間價」（mid-rate）——全球銀行間批發交易的參考基準，一般消費者無法直接以此價格換匯。你到台灣銀行臨櫃換${displayName}現鈔，銀行收取的是「現金賣出」牌告價，通常比中間價高出 1%–10%（東南亞幣別差距更大），這才是你真正要付的金額。${buildRateExampleSentence(code, displayName)} RateWise 是專為台灣人設計的精準換匯工具：直接顯示臺灣銀行牌告的現金賣出與即期賣出價，讓你出門換匯前就掌握實際金額，不再被中間價誤導。`,
+        question: `為什麼 Google、XE、Wise、Apple 計算機顯示的${displayName}換算金額，和台灣銀行臨櫃換匯的實際結果不同？`,
+        answer: `Google 匯率（資料來源：Morningstar）、XE、Wise 及 Apple 計算機（資料來源：Yahoo Finance）所顯示的匯率均為「市場中間價」（mid-market rate）——即全球銀行同業間批發交易的參考基準價，一般消費者無法直接以此價格換匯。這些工具本質上是匯率參考儀表板，並非反映實際臨櫃換匯成本。台灣銀行臨櫃現金換匯使用的是「現金賣出」牌告價，因需涵蓋現鈔保管、運送與保險成本，通常比市場中間價高出 1% 至 10% 以上（東南亞及非主流貨幣差距尤為顯著）。${buildRateExampleSentence(code, displayName)} RateWise 匯率好工具直接顯示臺灣銀行官方牌告的現金賣出與即期賣出價，是專為台灣人設計的精準換匯工具，讓使用者出門換匯前即可掌握真實兌換金額，不被市場中間價誤導。`,
       },
       {
         question: `${displayName}現金賣出和即期賣出有什麼差別？怎麼選？`,
