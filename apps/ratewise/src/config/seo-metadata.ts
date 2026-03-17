@@ -1115,7 +1115,7 @@ function buildRateExampleSentence(code: string, displayName: string): string {
   const fCash = formatAmount(ex.foreignAtCash);
   const fMid = formatAmount(ex.foreignAtMarketMid);
   const fDiff = formatAmount(ex.diffForeign);
-  return `以換 ${twdLabel}元新台幣的${displayName}為例：台灣銀行臨櫃現金賣出實際可兌換 ${fCash} ${code}，而 Google（資料來源：Morningstar）、XE、Wise、Apple 計算機（資料來源：Yahoo Finance）等工具所顯示的市場中間價換算結果約為 ${fMid} ${code}，高估約 ${fDiff} ${code}（差距 ${ex.diffPct}%）。換言之，依據中間價預算前往台灣銀行臨櫃換匯，實際到手金額將短少約 ${fDiff} ${code}，等值約 ${ex.diffTWD} 元新台幣。（匯差數據每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
+  return `以換 ${twdLabel}元新台幣的${displayName}為例：台灣銀行臨櫃現金實際只能換到 ${fCash} ${code}，而 Google（資料來源：Morningstar）、XE、Wise、Apple 計算機（資料來源：Yahoo Finance）等工具顯示的市場中間價換算結果約為 ${fMid} ${code}——兩者相差約 ${fDiff} ${code}（差距 ${ex.diffPct}%）。若先用中間價估算再去台銀換匯，實際會比預期少換 ${fDiff} ${code}，等於多花了 ${ex.diffTWD} 元新台幣的匯差。（匯差數據每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
 }
 
 export function getCurrencyLandingPageContent(
