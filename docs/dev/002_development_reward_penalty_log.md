@@ -1,8 +1,47 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-18T02:02:00+08:00
-> **當前總分**: 1194（初始分: 100）
+> **最後更新**: 2026-03-18T02:06:00+08:00
+> **當前總分**: 1195（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-sitemap-lastmod-test-contract-sync
+date: 2026-03-18
+title: RateWise 同步 SEO best practices 測試契約到 date-only lastmod
+score: +1
+type: test
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, sitemap, lastmod, vitest, contract-test]
+keywords: [seo-best-practices, lastmod regex, W3C date, contract sync, pre-push]
+aliases: [lastmod 測試契約同步, sitemap date-only test sync]
+related_entries: [ratewise-sitemap-lastmod-date-granularity]
+summary: `seo-best-practices.test.ts` 仍把 sitemap `lastmod` 寫死為完整 UTC timestamp，與新的 date-only sitemap 契約衝突，導致 pre-push 卡住。此次將測試同步收斂到 W3C 日期格式，讓最佳實踐、產物與測試三者一致。
+root_cause:
+
+- `scripts/__tests__/sitemap-2025.test.ts` 已更新，但 `apps/ratewise/src/seo-best-practices.test.ts` 仍保留舊的秒級 regex
+- 這類跨檔契約變更若只修單一測試，容易在完整 repo 驗證階段才暴露落差
+  impact:
+
+- `pnpm -r test` 在 `@app/ratewise` 會因 regex 過時而失敗，阻擋 push
+- 若未同步，會讓 reviewer 誤以為 date-only sitemap 違反 SEO best practice
+  actions:
+
+- 將 `seo-best-practices.test.ts` 的 `lastmod` 斷言改為 `YYYY-MM-DD`
+- 重新驗證 `seo-best-practices.test.ts` 與 `scripts/__tests__/sitemap-2025.test.ts`
+  prevention:
+
+- 對同一 SEO 契約若同時存在 unit test、script test、dist/assertion test，修改格式時必須用 `rg` 全域搜尋舊斷言
+- pre-push 前優先重跑受影響的最佳實踐測試，而不是只跑最近編輯的 script test
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/seo-best-practices.test.ts`
+- `pnpm exec vitest run scripts/__tests__/sitemap-2025.test.ts`
+  references:
+
+- apps/ratewise/src/seo-best-practices.test.ts
+- scripts/**tests**/sitemap-2025.test.ts
 
 ---
 
