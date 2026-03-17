@@ -327,7 +327,7 @@ export function CurrencyLandingPage({
           {/* Data Source Notice */}
           <footer className="text-center text-text-muted text-xs opacity-60">
             <p>資料來源：臺灣銀行牌告匯率 · 每 5 分鐘自動更新</p>
-            <p className="mt-1">© 2026 RateWise 匯率好工具</p>
+            <p className="mt-1">© {new Date().getFullYear()} RateWise 匯率好工具</p>
           </footer>
         </div>
       </div>

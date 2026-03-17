@@ -9,7 +9,7 @@
  * - [Google Image Sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/image-sitemaps)
  *
  * 2025 標準：
- * - ✅ 保留 <lastmod> (Bing 明確要求真實時間戳)
+ * - ✅ 保留 <lastmod>（使用頁面最後重大更新日期）
  * - ❌ 移除 <changefreq> (Google 忽略)
  * - ❌ 移除 <priority> (Google 和 Bing 都忽略)
  * - ✅ 新增 Image Sitemap Extension
@@ -30,6 +30,7 @@ const __dirname = dirname(__filename);
 // 從 SSOT 導入配置
 import {
   SEO_PATHS,
+  CURRENCY_SEO_PATHS,
   SITE_CONFIG,
   SHARE_IMAGE,
   IMAGE_RESOURCES,
@@ -56,7 +57,8 @@ const REPO_ROOT = resolve(__dirname, '..');
 
 /**
  * 每個公開 URL 對應一組「重大內容依賴」。
- * `lastmod` 優先取這組依賴檔最近一次 git commit 時間，避免 CI checkout 後 mtime 失真。
+ * `lastmod` 優先取這組依賴檔最近一次 git commit 日期，避免 CI checkout 後 mtime 失真，
+ * 並避免同日 commit time 讓追蹤中的 sitemap 產物在 commit 後再次漂移。
  */
 const PATH_DEPENDENCIES = {
   '/': [
@@ -212,6 +214,20 @@ const PAGE_IMAGES = {
   ],
 };
 
+// 動態補上 17 個幣別頁 image entries（共用 OG 圖，caption 帶幣別代碼）
+CURRENCY_SEO_PATHS.forEach((path) => {
+  const currency = path
+    .replace(/^\//, '')
+    .replace(/-twd\/$/, '')
+    .toUpperCase();
+  PAGE_IMAGES[path] = [
+    {
+      loc: OG_IMAGE_URL,
+      caption: `RateWise 匯率好工具 - ${currency}/TWD 即時匯率換算`,
+    },
+  ];
+});
+
 /**
  * 優先用 git commit time 代表重大內容更新時間，失敗時回退到檔案 mtime。
  * @param {string} path - SEO 路徑
@@ -245,14 +261,14 @@ function getLastModDate(path) {
 }
 
 /**
- * 格式化日期為 ISO 8601 + 時區 (UTC)
- * 範例：2025-12-20T02:30:45Z
+ * 格式化日期為 W3C Datetime 的日期格式。
+ * 範例：2025-12-20
  *
  * @param {Date} date - 日期對象
- * @returns {string} ISO 8601 格式字串（含時區）
+ * @returns {string} YYYY-MM-DD
  */
 function formatDateISO8601(date) {
-  return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
+  return date.toISOString().slice(0, 10);
 }
 
 /**
@@ -358,8 +374,8 @@ async function main() {
   console.log('\n✅ 2025 標準合規檢查:');
   console.log('  ✓ 已移除 <changefreq> 標籤');
   console.log('  ✓ 已移除 <priority> 標籤');
-  console.log('  ✓ lastmod 優先使用重大依賴檔的 git commit time');
-  console.log('  ✓ 時間格式：ISO 8601 + 時區 (+08:00)');
+  console.log('  ✓ lastmod 優先使用重大依賴檔的 git commit 日期');
+  console.log('  ✓ 時間格式：W3C Datetime 日期（YYYY-MM-DD）');
   console.log('  ✓ 已加入 Image Sitemap Extension');
   console.log('  ✓ hreflang 配置保留');
 

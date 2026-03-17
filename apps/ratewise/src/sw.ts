@@ -244,7 +244,7 @@ function buildOfflineFallbackHtml(): string {
     '<!doctype html><html lang="zh-TW"><head>',
     '<meta charset="UTF-8">',
     '<meta name="viewport" content="width=device-width,initial-scale=1">',
-    '<title>RateWise \u2014 \u96e2\u7dda</title>',
+    '<title>RateWise \u532f\u7387\u597d\u5de5\u5177 \u2014 \u96e2\u7dda</title>',
     `<style>${css}</style>`,
     '</head><body><div class="c">',
     '<p style="font-size:2.5rem;margin:0 0 1rem">\ud83d\udce1</p>',

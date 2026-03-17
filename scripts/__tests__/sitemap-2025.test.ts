@@ -54,7 +54,7 @@ async function parseSitemap(xml: string): Promise<ParsedSitemap> {
 }
 
 function formatDateISO8601(date: Date): string {
-  return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
+  return date.toISOString().slice(0, 10);
 }
 
 describe('Sitemap 2025 Standards', () => {
@@ -88,7 +88,7 @@ describe('Sitemap 2025 Standards', () => {
       });
     });
 
-    it('should use ISO 8601 format with timezone for lastmod', async () => {
+    it('should use W3C date format for lastmod', async () => {
       const xml = readSitemap();
       const parsed = await parseSitemap(xml);
 
@@ -97,10 +97,7 @@ describe('Sitemap 2025 Standards', () => {
       urls.forEach((url) => {
         const lastmod = url.lastmod[0]!;
 
-        // 必須包含時區信息（+08:00 或 Z）
-        expect(lastmod, `lastmod should use ISO 8601 with timezone: ${lastmod}`).toMatch(
-          /T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/,
-        );
+        expect(lastmod, `lastmod should use YYYY-MM-DD: ${lastmod}`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       });
     });
   });
@@ -155,7 +152,7 @@ describe('Sitemap 2025 Standards', () => {
       const urls = parsed.urlset.url;
 
       urls.forEach((url) => {
-        const lastmod = new Date(String(url.lastmod[0])).getTime();
+        const lastmod = new Date(`${String(url.lastmod[0])}T00:00:00Z`).getTime();
 
         // 時間戳應該在過去一年內且不是未來
         expect(lastmod, `lastmod should be between 1 year ago and now`).toBeGreaterThan(oneYearAgo);

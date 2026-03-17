@@ -22,7 +22,7 @@ describe('PWA 離線功能測試', () => {
       // 應該有正確的 HTML 結構
       expect(content).toContain('<!doctype html>');
       expect(content).toContain('lang="zh-TW"');
-      expect(content).toContain('<title>離線模式 - RateWise</title>');
+      expect(content).toContain('<title>離線模式 - RateWise 匯率好工具</title>');
     });
 
     it('should have retry functionality', () => {

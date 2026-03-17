@@ -131,7 +131,7 @@ const zhTW = {
     appVersion: '應用程式版本',
     designSystem: '設計系統',
     techStack: '技術棧',
-    copyright: '© 2025-2026 RateWise',
+    copyright: '© 2025-2026 RateWise 匯率好工具',
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
     // 支援與資訊區塊
