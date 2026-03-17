@@ -161,17 +161,12 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(robotsContent).toContain('Disallow: /ratewise/workbox-');
     });
 
-    it('should disallow parameterized home page URLs to prevent crawl budget waste', () => {
-      // GSC 問題：「替代頁面（有適當的標準標記）」—— Googlebot 爬取 deep-link
-      // 分享 URL（如 ?amount=500&from=USD&to=TWD），雖 canonical 正確但仍消耗
-      // crawl budget。業界最佳實踐：robots.txt Disallow 帶 query string 的首頁 URL。
-      // 參考：https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt
-      // Social bot（facebookexternalhit 等）有獨立 section，不受此 Disallow 影響。
-      expect(robotsContent).toContain('Disallow: /ratewise/?');
-
-      // 確認 social bots 不受影響（各自有獨立 Allow: / section）
-      expect(robotsContent).toMatch(/User-agent: facebookexternalhit[\s\S]*?Allow: \//);
-      expect(robotsContent).toMatch(/User-agent: Twitterbot[\s\S]*?Allow: \//);
+    it('should NOT disallow parameterized URLs (deep-links have SEO value)', () => {
+      // 業界最佳實踐：帶 query string 的 deep-link URL（如 ?amount=500&from=USD&to=TWD）
+      // 可讓 Googlebot 渲染並獲取動態 title/description/canonical，
+      // 提供「500 USD 換 TWD = 16,257」等長尾關鍵字搜尋結果。
+      // 因此不應 Disallow，讓爬蟲自由爬取並建立索引。
+      expect(robotsContent).not.toContain('Disallow: /ratewise/?');
     });
   });
 

@@ -192,6 +192,8 @@ export const SITE_SEO = {
 export function buildCanonicalUrl(pathname?: string): string {
   if (!pathname || pathname === '/') return SITE_BASE_URL;
   if (/^https?:\/\//i.test(pathname)) {
+    // query string 帶參數的 URL（如 deep-link）不加 trailing slash，保留原始格式。
+    if (pathname.includes('?')) return pathname;
     return ensureTrailingSlash(sanitizeBaseUrl(pathname));
   }
   const normalizedPath = `${ensureLeadingSlash(pathname).replace(/\/+$/, '')}/`;

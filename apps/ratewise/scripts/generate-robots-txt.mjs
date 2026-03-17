@@ -47,10 +47,6 @@ Disallow: /ratewise/theme-showcase/
 Disallow: /ratewise/color-scheme/
 Disallow: /ratewise/update-prompt-test/
 Disallow: /ratewise/ui-showcase/
-# 封鎖帶 query string 的首頁 deep-link URL（如 ?amount=500&from=USD&to=TWD）
-# 這些 URL 的 canonical 已正確指向 /ratewise/，但 Googlebot 仍會爬取浪費 crawl budget
-# Social bot（facebookexternalhit 等）在各自 section 有 Allow: /，不受此規則影響
-Disallow: /ratewise/?
 
 Sitemap: ${SITEMAP_URL}
 

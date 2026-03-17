@@ -27,19 +27,14 @@
 import type { RouteRecord } from 'vite-react-ssg';
 import type { ComponentType } from 'react';
 import { Suspense } from 'react';
-import { ClientOnly } from 'vite-react-ssg';
-import CurrencyConverter from './features/ratewise/RateWise';
-import { SEOHelmet } from './components/SEOHelmet';
-import { HomepageSEOSection } from './components/HomepageSEOSection';
+import { HomeRoute } from './features/ratewise/HomeRoute';
 import { Layout } from './components/Layout';
 import { AppLayout } from './components/AppLayout';
 import {
-  SkeletonLoader,
   MultiConverterSkeleton,
   FavoritesSkeleton,
   SettingsSkeleton,
 } from './components/SkeletonLoader';
-import { HOMEPAGE_SEO } from './config/seo-metadata';
 import { logger } from './utils/logger';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { lazyWithRetry } from './utils/lazyWithRetry';
@@ -128,18 +123,7 @@ export const routes: RouteRecord[] = [
       // 首頁可索引內容與 head metadata 都在 ClientOnly 外層，避免爬蟲只拿到互動骨架。
       {
         path: '',
-        element: (
-          <>
-            <SEOHelmet
-              pathname={HOMEPAGE_SEO.pathname}
-              description={HOMEPAGE_SEO.description}
-              howTo={HOMEPAGE_SEO.howTo}
-              jsonLd={HOMEPAGE_SEO.jsonLd}
-            />
-            <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
-            <HomepageSEOSection />
-          </>
-        ),
+        element: <HomeRoute />,
         entry: 'src/features/ratewise/RateWise',
       },
       // 多幣別轉換器
