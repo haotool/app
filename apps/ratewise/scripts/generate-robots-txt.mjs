@@ -47,6 +47,10 @@ Disallow: /ratewise/theme-showcase/
 Disallow: /ratewise/color-scheme/
 Disallow: /ratewise/update-prompt-test/
 Disallow: /ratewise/ui-showcase/
+# 封鎖帶 query string 的首頁 deep-link URL（如 ?amount=500&from=USD&to=TWD）
+# deep-link 僅作為 UX 分享入口；SEO 主資產為穩定幣對頁（/usd-twd/ 等），
+# 無限 query 組合若被大量爬取會消耗 crawl budget 並造成 GSC 替代頁面（重複 URL）問題。
+Disallow: /ratewise/?
 
 Sitemap: ${SITEMAP_URL}
 

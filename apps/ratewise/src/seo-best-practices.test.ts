@@ -161,12 +161,15 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(robotsContent).toContain('Disallow: /ratewise/workbox-');
     });
 
-    it('should NOT disallow parameterized URLs (deep-links have SEO value)', () => {
-      // 業界最佳實踐：帶 query string 的 deep-link URL（如 ?amount=500&from=USD&to=TWD）
-      // 可讓 Googlebot 渲染並獲取動態 title/description/canonical，
-      // 提供「500 USD 換 TWD = 16,257」等長尾關鍵字搜尋結果。
-      // 因此不應 Disallow，讓爬蟲自由爬取並建立索引。
-      expect(robotsContent).not.toContain('Disallow: /ratewise/?');
+    it('should disallow parameterized deep-link URLs to preserve crawl budget', () => {
+      // 業界最佳實踐：deep-link (?amount=X&from=Y&to=Z) 作為 UX 分享入口，
+      // SEO 主資產為穩定幣對頁（/usd-twd/ 等），無限 query 組合會消耗 crawl budget
+      // 並造成 GSC「替代頁面（有適當的標準標記）」重複問題。
+      // 參考：Google Faceted Navigation 最佳實踐 / URL 結構建議
+      expect(robotsContent).toContain('Disallow: /ratewise/?');
+      // Social bot 有獨立 section，不受此 Disallow 影響
+      expect(robotsContent).toMatch(/User-agent: facebookexternalhit[\s\S]*?Allow: \//);
+      expect(robotsContent).toMatch(/User-agent: Twitterbot[\s\S]*?Allow: \//);
     });
   });
 
@@ -624,5 +627,79 @@ describeIfApiGenerated('📡 Static API Endpoint (api/latest.json) (requires pre
     expect(content).not.toContain('?amount=50000&from=KRW&to=TWD');
     expect(content).not.toContain('?amount=10000&from=JPY&to=TWD');
     expect(content).not.toContain('?amount=100&from=USD&to=TWD');
+  });
+
+  it('should reference pair API base path in api/latest.json', () => {
+    const content = JSON.parse(readFile(apiPath));
+    // pairs 端點提供穩定幣對 JSON，供搜尋系統與 AI agent 讀取特定幣對最新匯率
+    expect(content.pairEndpoints).toBeDefined();
+    expect(content.pairEndpoints.template).toContain('{PAIR}');
+  });
+
+  it('should reference pair API in openapi.json paths', () => {
+    const content = JSON.parse(readFile(openapiPath)) as { paths?: Record<string, unknown> };
+    const paths = Object.keys(content.paths ?? {});
+    expect(paths.some((p) => p.includes('pairs'))).toBe(true);
+  });
+});
+
+const pairsDir = resolve(__dirname, '../public/api/pairs');
+const pairsDirExists = existsSync(pairsDir);
+const describeIfPairsGenerated = pairsDirExists ? describe : describe.skip;
+
+describeIfPairsGenerated('📦 Pair JSON API Endpoints (requires prebuild)', () => {
+  const REQUIRED_PAIRS = [
+    'usd-twd',
+    'jpy-twd',
+    'eur-twd',
+    'krw-twd',
+    'cny-twd',
+    'hkd-twd',
+    'gbp-twd',
+    'aud-twd',
+    'cad-twd',
+    'sgd-twd',
+    'thb-twd',
+    'chf-twd',
+    'nzd-twd',
+    'vnd-twd',
+    'php-twd',
+    'idr-twd',
+    'myr-twd',
+  ];
+
+  it('should have all 17 pair JSON files', () => {
+    for (const pair of REQUIRED_PAIRS) {
+      const filePath = resolve(pairsDir, `${pair}.json`);
+      expect(existsSync(filePath), `Missing ${pair}.json`).toBe(true);
+    }
+  });
+
+  it('each pair JSON should be valid JSON with required fields', () => {
+    for (const pair of REQUIRED_PAIRS) {
+      const content = JSON.parse(readFile(resolve(pairsDir, `${pair}.json`)));
+      expect(content.pair, `${pair}: missing pair`).toBeTruthy();
+      expect(content.from, `${pair}: missing from`).toBeTruthy();
+      expect(content.to, `${pair}: missing to`).toBe('TWD');
+      expect(content.slug, `${pair}: missing slug`).toBe(pair);
+      expect(content.pageUrl, `${pair}: missing pageUrl`).toContain(`/${pair}/`);
+      expect(content.liveRateUrl, `${pair}: missing liveRateUrl`).toContain('cdn.jsdelivr.net');
+      expect(content.source, `${pair}: missing source`).toContain('臺灣銀行');
+    }
+  });
+
+  it('pair JSON pageUrl should match sitemap canonical', () => {
+    const sitemapContent = readFile(resolve(PUBLIC_PATH, 'sitemap.xml'));
+    for (const pair of REQUIRED_PAIRS) {
+      const content = JSON.parse(readFile(resolve(pairsDir, `${pair}.json`)));
+      // pageUrl 應與 sitemap 中的 <loc> 一致
+      expect(sitemapContent).toContain(`/${pair}/</loc>`);
+      expect(content.pageUrl).toContain(`/${pair}/`);
+    }
+  });
+
+  it('pair JSON should include rateFieldPath for LLM function calling', () => {
+    const usdTwd = JSON.parse(readFile(resolve(pairsDir, 'usd-twd.json')));
+    expect(usdTwd.rateFieldPath).toContain('USD');
   });
 });

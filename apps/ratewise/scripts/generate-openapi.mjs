@@ -193,6 +193,96 @@ const openApiSpec = {
     },
   ],
   paths: {
+    '/ratewise/api/pairs/{pair}.json': {
+      get: {
+        summary: '取得指定幣對資訊',
+        description: [
+          '取得指定幣對（如 usd-twd）的靜態資訊，包含幣對代碼、即時匯率 CDN 端點、',
+          '匯率欄位路徑與對應落地頁 URL。適合搜尋系統與 AI agent 查詢特定幣對。',
+        ].join(''),
+        operationId: 'getPairInfo',
+        tags: ['幣對資訊'],
+        parameters: [
+          {
+            name: 'pair',
+            in: 'path',
+            required: true,
+            description: '幣對代碼，格式 {from}-twd（例如 usd-twd、jpy-twd）',
+            schema: {
+              type: 'string',
+              enum: [
+                'usd-twd',
+                'jpy-twd',
+                'eur-twd',
+                'gbp-twd',
+                'cny-twd',
+                'krw-twd',
+                'hkd-twd',
+                'aud-twd',
+                'cad-twd',
+                'sgd-twd',
+                'thb-twd',
+                'nzd-twd',
+                'chf-twd',
+                'vnd-twd',
+                'php-twd',
+                'idr-twd',
+                'myr-twd',
+              ],
+              example: 'usd-twd',
+            },
+          },
+        ],
+        servers: [{ url: 'https://app.haotool.org', description: 'RateWise 應用程式伺服器' }],
+        responses: {
+          200: {
+            description: '成功取得幣對資訊',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  description: '幣對靜態資訊（指向即時匯率 CDN 的入口）',
+                  properties: {
+                    pair: { type: 'string', example: 'USD/TWD' },
+                    from: { type: 'string', example: 'USD' },
+                    to: { type: 'string', example: 'TWD' },
+                    slug: { type: 'string', example: 'usd-twd' },
+                    pageUrl: {
+                      type: 'string',
+                      format: 'uri',
+                      example: `${SITE_CONFIG.url}usd-twd/`,
+                    },
+                    liveRateUrl: {
+                      type: 'string',
+                      format: 'uri',
+                      description: '即時匯率 JSON 來源（CDN）',
+                      example:
+                        'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
+                    },
+                    rateFieldPath: {
+                      type: 'string',
+                      description: '在 liveRateUrl 回應中定位此幣別資料的路徑',
+                      example: 'details.USD',
+                    },
+                    source: { type: 'string', example: '臺灣銀行牌告匯率' },
+                  },
+                  required: [
+                    'pair',
+                    'from',
+                    'to',
+                    'slug',
+                    'pageUrl',
+                    'liveRateUrl',
+                    'rateFieldPath',
+                    'source',
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/public/rates/latest.json': {
       get: {
         summary: '取得最新匯率',
@@ -257,6 +347,11 @@ const openApiSpec = {
       'x-displayName': '匯率資料',
     },
   ],
+  'x-pair-endpoints': {
+    description: '各幣對靜態 JSON 端點（供搜尋系統與 AI agent 查詢特定幣對匯率資訊）',
+    template: `${SITE_CONFIG.url}api/pairs/{PAIR}.json`,
+    example: `${SITE_CONFIG.url}api/pairs/usd-twd.json`,
+  },
   'x-deep-link': {
     description: '應用程式深層連結（帶入換算參數）',
     format: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,

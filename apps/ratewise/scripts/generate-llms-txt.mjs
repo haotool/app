@@ -155,6 +155,11 @@ Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
   - 匯率類型：cash_buy=現金買入, cash_sell=現金賣出, spot_buy=即期買入, spot_sell=即期賣出
   - 說明：賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價
 
+### 幣對靜態 JSON 端點（Per-Pair API，供 AI agent / 搜尋系統）
+- 格式：${BASE_URL}api/pairs/{pair}.json（例如：${BASE_URL}api/pairs/usd-twd.json）
+- 欄位：pair, from, to, slug, pageUrl, liveRateUrl（→ CDN latest.json）, rateFieldPath（例如 "details.USD"）, source
+- 用途：AI agent 可先查幣對端點取得 rateFieldPath，再讀 liveRateUrl 取得即時匯率
+
 ### 應用程式深層連結（帶入換算參數）
 - 格式：${BASE_URL}?amount={金額}&from={來源幣}&to={目標幣}
 - 說明：僅作為首頁換算器狀態模板，避免公開列出具體參數網址造成重複抓取
