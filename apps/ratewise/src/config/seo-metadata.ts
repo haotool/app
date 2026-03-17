@@ -1194,7 +1194,7 @@ export function getCurrencyLandingPageContent(
     faqEntries: [
       {
         question: `用其他 App 查${displayName}匯率為什麼跟 RateWise 不一樣？`,
-        answer: `多數匯率 App 顯示中間價（mid-rate），是買入與賣出的平均值，並非你實際換匯的價格。本工具顯示臺灣銀行牌告的「現金賣出」價——你拿台幣去銀行換${displayName}現鈔時，這才是真正要付的金額。中間價通常比實際賣出價優惠 1~3%，換 10 萬日圓大約差 1,500~3,000 元台幣，換匯金額越大差距越明顯。`,
+        answer: `多數匯率 App 顯示中間價（mid-rate），是買入與賣出的平均值，並非你實際換匯的價格。本工具顯示臺灣銀行牌告的「現金賣出」價——你拿台幣去銀行換${displayName}現鈔時，這才是真正要付的金額。中間價通常比實際賣出價優惠 1~3%，換匯金額越大差距越明顯。`,
       },
       {
         question: `${displayName}現金賣出和即期賣出有什麼差別？怎麼選？`,

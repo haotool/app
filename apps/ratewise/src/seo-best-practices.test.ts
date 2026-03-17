@@ -156,8 +156,9 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
     });
 
     it('should disallow service worker and internal files', () => {
-      expect(robotsContent).toContain('Disallow: /sw.js');
-      expect(robotsContent).toContain('Disallow: /workbox-');
+      // 部署於 /ratewise/ 子路徑，Disallow 必須含完整前綴。
+      expect(robotsContent).toContain('Disallow: /ratewise/sw.js');
+      expect(robotsContent).toContain('Disallow: /ratewise/workbox-');
     });
   });
 
@@ -422,8 +423,9 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
     });
 
     it('should have theme initialization script for FOUC prevention', () => {
-      expect(indexHtmlContent).toContain('STORAGE_KEY');
-      expect(indexHtmlContent).toContain('applyStyle');
+      // 壓縮後以 key 值與 localStorage 呼叫驗證行為，不依賴變數名稱。
+      expect(indexHtmlContent).toContain('ratewise-theme');
+      expect(indexHtmlContent).toContain('localStorage');
     });
   });
 

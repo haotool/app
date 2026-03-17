@@ -177,9 +177,14 @@ async function verifyRobotsTxt(mjsPath, robotsTxtPath) {
   const robotsTxt = readFileSync(robotsTxtPath, 'utf-8');
   const expectedSitemap = `Sitemap: ${siteUrl}sitemap.xml`;
 
-  // DEV_ONLY_PATHS 必須有 Disallow（含尾斜線）
+  // 從 SITE_CONFIG.url 提取生產環境 base path（例如 /ratewise）。
+  const siteUrlObj = new URL(siteUrl);
+  const basePath = siteUrlObj.pathname.replace(/\/$/, ''); // '/ratewise'
+
+  // DEV_ONLY_PATHS 必須有 Disallow（含 base path 前綴與尾斜線）
   for (const path of devOnlyPaths) {
-    const disallowEntry = `Disallow: ${path.endsWith('/') ? path : `${path}/`}`;
+    const normalized = path.endsWith('/') ? path : `${path}/`;
+    const disallowEntry = `Disallow: ${basePath}${normalized}`;
     if (!robotsTxt.includes(disallowEntry)) {
       errors.push(`[robots.txt] DEV_ONLY_PATHS "${path}" 缺少 "${disallowEntry}"`);
     }
@@ -187,8 +192,12 @@ async function verifyRobotsTxt(mjsPath, robotsTxtPath) {
 
   // APP_ONLY_NOINDEX_PATHS 不應有 Disallow（Google 需爬取才能讀 noindex）
   for (const path of noindexPaths) {
-    const bare = path.replace(/\/$/, '');
-    if (robotsTxt.includes(`Disallow: ${path}`) || robotsTxt.includes(`Disallow: ${bare}`)) {
+    const fullPath = `${basePath}${path}`;
+    const fullBare = fullPath.replace(/\/$/, '');
+    if (
+      robotsTxt.includes(`Disallow: ${fullPath}`) ||
+      robotsTxt.includes(`Disallow: ${fullBare}`)
+    ) {
       errors.push(
         `[robots.txt] noindex 頁面 "${path}" 有 Disallow（應移除，改由 SEOHelmet noindex 處理）`,
       );

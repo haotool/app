@@ -219,6 +219,14 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 - RateWise release 若涉及正式站資產更新，必須先用 cache-busting probe 確認 `/ratewise/` 的 `app-version` 已切到目標版本，再執行 Cloudflare purge
 - RateWise Cloudflare purge 必須使用目標 URL + prefix（至少涵蓋 `/ratewise/`、`sw.js`、`registerSW.js`、`manifest.webmanifest`、`offline.html`、`assets`、`workbox-`、`static-loader-data-manifest`），purge 後立即重跑 live precache 驗證
 
+## SEO 內容新鮮度與真實性（SSOT 規則）
+
+- SEO 文案（title / description / FAQ / JSON-LD）**必須**從 `src/config/seo-metadata.ts` 單一來源產生；禁止分散硬編碼。
+- 幣別頁模板不得含其他幣別的專有名詞（例如非 JPY 頁出現「日圓」）；修改模板後必須執行 `pnpm test` 確認 template-bleed 測試通過。
+- 技術設定（匯率來源域名、base path、版本號）若變更，**必須**同步更新 `seo-metadata.ts` 內相關 FAQ / JSON-LD 描述，避免 SEO 內容與實際行為不符。
+- `buildShareImageJsonLd` 的 `dateModified` 必須使用 `BUILD_TIME`（buildtime 常數），不可寫死日期。
+- 新增 FAQ 或 schema 時先確認無重複 `@type`（尤其 `FAQPage`、`BreadcrumbList`）；驗證指令：`grep -r "FAQPage" dist/ | wc -l`。
+
 ## QA Artifacts & Screenshots（最佳實踐）
 
 ### 強制規則
@@ -576,6 +584,7 @@ registerRoute(
 
 | 日期       | 版本 | 變更摘要                                                                                                                       |
 | ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-17 | v4.6 | 新增「SEO 內容新鮮度與真實性（SSOT 規則）」：文案 SSOT、template-bleed 防護、dateModified 規則、FAQPage 重複診斷指令           |
 | 2026-03-13 | v4.5 | 補充 RateWise release 邊緣同步規範：正式版版本探測後才可做 Cloudflare 定點 purge，且 purge 後必須立刻做 live precache 驗證     |
 | 2026-03-12 | v4.4 | 新增 RateWise live precache 驗證與 stale edge 404 判定規範，要求生產檢查補跑 live PWA 驗證                                     |
 | 2026-03-12 | v4.3 | 新增 SEO 生產資源可用性檢查規範：以 `app.config.mjs` 的 `resources.seoFiles` / `resources.images` 為 SSOT，自動探測並接入 CI   |
@@ -595,5 +604,5 @@ registerRoute(
 
 ---
 
-**最後更新**: 2026-03-13T00:20:00+0800
-**版本**: v4.5（補充 RateWise release 邊緣同步與定點 purge 驗證規範）
+**最後更新**: 2026-03-17T00:00:00+0800
+**版本**: v4.6（新增 SEO 內容新鮮度與真實性 SSOT 規則）
