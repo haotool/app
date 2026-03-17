@@ -1102,14 +1102,14 @@ function formatAmount(amount: number): string {
   return amount.toLocaleString('zh-TW');
 }
 
-/** 根據每週更新的匯差數據，產生「換 3 萬台幣，比 Google 中間價多付 X 元」的敘述句。 */
+/** 根據每週更新的匯差數據，產生「換 3 萬台幣，台銀現金比 Google/XE/Wise 中間價貴 X 元」的具體落差句。 */
 function buildRateExampleSentence(code: string, displayName: string): string {
   const ex = SEO_RATE_EXAMPLES[code];
-  if (!ex) return '換匯金額越大差距越明顯。';
+  if (!ex) return '換匯金額越大、落差越明顯。';
   // 整萬數格式：30000 → "3 萬"，以符合中文閱讀習慣。
   const twdLabel =
     ex.exampleTWD % 10000 === 0 ? `${ex.exampleTWD / 10000} 萬` : formatAmount(ex.exampleTWD);
-  return `以換 ${twdLabel}元台幣的${displayName}為例，透過銀行現金換匯比 Google 等 App 顯示的中間價約多付 ${ex.diffTWD} 元台幣（約 ${ex.diffPct}%）；換匯金額越大差距越明顯。（數據每週更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
+  return `📌 實際落差舉例：換 ${twdLabel}元台幣的${displayName}，台銀現金賣出匯率比 Google、XE、Wise 顯示的中間價約貴 ${ex.diffTWD} 元台幣（約 ${ex.diffPct}%）。這就是許多人到銀行櫃台後才發現「怎麼比手機查到的貴這麼多」的原因。（數據每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
 }
 
 export function getCurrencyLandingPageContent(
@@ -1204,8 +1204,8 @@ export function getCurrencyLandingPageContent(
     ],
     faqEntries: [
       {
-        question: `用其他 App 查${displayName}匯率為什麼跟 RateWise 不一樣？`,
-        answer: `多數匯率 App 顯示中間價（mid-rate），是買入與賣出的平均值，並非你實際換匯的價格。本工具顯示臺灣銀行牌告的「現金賣出」價——你拿台幣去銀行換${displayName}現鈔時，這才是真正要付的金額。${buildRateExampleSentence(code, displayName)}`,
+        question: `Google、XE、Wise 顯示的${displayName}匯率為什麼跟去台銀換匯的價格差那麼多？`,
+        answer: `Google 匯率、XE、Wise 與 Apple 內建匯率顯示的都是「市場中間價」（mid-rate）——全球銀行間批發交易的參考基準，一般消費者無法直接以此價格換匯。你到台灣銀行臨櫃換${displayName}現鈔，銀行收取的是「現金賣出」牌告價，通常比中間價高出 1%–10%（東南亞幣別差距更大），這才是你真正要付的金額。${buildRateExampleSentence(code, displayName)} RateWise 是專為台灣人設計的精準換匯工具：直接顯示臺灣銀行牌告的現金賣出與即期賣出價，讓你出門換匯前就掌握實際金額，不再被中間價誤導。`,
       },
       {
         question: `${displayName}現金賣出和即期賣出有什麼差別？怎麼選？`,
