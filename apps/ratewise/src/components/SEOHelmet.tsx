@@ -160,9 +160,14 @@ function upsertLink(selector: string, attributes: Record<string, string>) {
 }
 
 function replaceHeadCollection(selector: string, elements: HTMLElement[]) {
-  // 只清除 SEOHelmet 自行寫入的節點，避免移除外部注入的同名標籤。
+  // 清除兩類 SEOHelmet 自行寫入的節點，防止 SSR 與 CSR 節點並存（重複 hreflang / og:locale:alternate）：
+  //   - data-seo-helmet="managed"：client-side useEffect 寫入
+  //   - data-rh="true"：SSR <Head>（vite-react-ssg）輸出，hydration 後由 useEffect 接管
+  // 不含任一標記的節點視為外部注入，不予移除。
   document.head
-    .querySelectorAll(`${selector}[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_MANAGED_VALUE}"]`)
+    .querySelectorAll(
+      `${selector}[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_MANAGED_VALUE}"], ${selector}[data-rh="true"]`,
+    )
     .forEach((node) => node.remove());
   elements.forEach((element) => {
     element.setAttribute('data-rh', 'true');

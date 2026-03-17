@@ -185,9 +185,9 @@ async function main() {
   console.log('');
 
   if (errors.length > 0) {
-    console.warn('[警告] 跳過部分幣別：');
-    errors.forEach((e) => console.warn(`  ${e}`));
-    console.log('');
+    console.error('[中止] 以下幣別資料缺漏，終止生成以避免不完整資料污染生產 SEO 內容：');
+    errors.forEach((e) => console.error(`  ${e}`));
+    process.exit(1);
   }
 
   if (dualVerifyWarnings.length > 0) {
