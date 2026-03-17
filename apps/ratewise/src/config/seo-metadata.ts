@@ -296,11 +296,18 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
   };
 }
 
+interface ArticleOptions {
+  keywords?: string[];
+  articleSection?: string;
+  articleBody?: string;
+}
+
 export function buildArticleJsonLd(
   headline: string,
   description: string,
   url: string,
   datePublished: string,
+  options?: ArticleOptions,
 ): JsonLdBlock {
   return {
     '@context': 'https://schema.org',
@@ -310,6 +317,9 @@ export function buildArticleJsonLd(
     url: buildCanonicalUrl(url),
     datePublished,
     dateModified: BUILD_TIME,
+    ...(options?.articleSection ? { articleSection: options.articleSection } : {}),
+    ...(options?.keywords?.length ? { keywords: options.keywords } : {}),
+    ...(options?.articleBody ? { articleBody: options.articleBody } : {}),
     image: {
       '@type': 'ImageObject',
       contentUrl: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
@@ -556,6 +566,21 @@ export const FAQ_PAGE_SEO = {
     'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算。',
     '/faq/',
     `${APP_INFO.copyrightStartYear}-01-01`,
+    {
+      articleSection: 'FAQ',
+      keywords: [
+        '匯率',
+        '常見問題',
+        '臺灣銀行匯率',
+        '換匯',
+        '現金買賣',
+        '即期匯率',
+        'DCC',
+        '外幣匯率',
+      ],
+      articleBody:
+        'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
+    },
   ),
 } satisfies SEOPageMetadata;
 
@@ -632,6 +657,20 @@ export const GUIDE_PAGE_SEO = {
       '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。',
       '/guide/',
       `${APP_INFO.copyrightStartYear}-01-01`,
+      {
+        articleSection: '使用教學',
+        keywords: [
+          '匯率換算教學',
+          '使用指南',
+          '台幣換外幣',
+          '即期匯率',
+          '多幣別換算',
+          '收藏功能',
+          'PWA 安裝',
+        ],
+        articleBody:
+          '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。從開啟應用程式、選擇換算模式、選擇貨幣到輸入金額，每個步驟均有圖文說明。',
+      },
     ),
   ],
 } satisfies SEOPageMetadata;
@@ -673,6 +712,11 @@ export const ABOUT_PAGE_SEO = {
     `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。`,
     '/about/',
     `${APP_INFO.copyrightStartYear}-01-01`,
+    {
+      articleSection: '關於我們',
+      keywords: ['台灣銀行匯率', '即時匯率工具', 'PWA', '離線使用', '台幣換算', '免費匯率'],
+      articleBody: `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。`,
+    },
   ),
 } satisfies SEOPageMetadata;
 
