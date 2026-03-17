@@ -243,7 +243,12 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       name: APP_INFO.author,
       url: SITE_BASE_URL,
       foundingDate: String(APP_INFO.copyrightStartYear),
-      logo: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+      logo: {
+        '@type': 'ImageObject',
+        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+        width: 512,
+        height: 512,
+      },
       contactPoint: {
         '@type': 'ContactPoint',
         contactType: 'Customer Support',
@@ -269,8 +274,8 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
     '@type': 'ImageObject',
     contentUrl: imageUrl,
     url: imageUrl,
-    width: '1200',
-    height: '630',
+    width: 1200,
+    height: 630,
     encodingFormat: 'image/jpeg',
     name,
     description,
@@ -306,9 +311,10 @@ export function buildArticleJsonLd(
     dateModified: BUILD_TIME,
     image: {
       '@type': 'ImageObject',
+      contentUrl: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
       url: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
-      width: '1200',
-      height: '630',
+      width: 1200,
+      height: 630,
     },
     author: {
       '@type': 'Organization',
@@ -322,6 +328,8 @@ export function buildArticleJsonLd(
       logo: {
         '@type': 'ImageObject',
         url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+        width: 512,
+        height: 512,
       },
     },
     inLanguage: DEFAULT_LOCALE,
@@ -629,22 +637,22 @@ export const GUIDE_PAGE_SEO = {
 
 export const ABOUT_PAGE_FAQ = [
   {
-    question: 'RateWise 匯率數據來源是什麼？',
+    question: '匯率數據來源是什麼？',
     answer:
       '資料來源為臺灣銀行官方牌告匯率，每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。',
   },
   {
-    question: 'RateWise 是免費的嗎？需要帳號或有廣告嗎？',
+    question: '免費使用嗎？需要帳號或有廣告嗎？',
     answer:
       '完全免費、無廣告、無付費功能，不需要建立帳號。計算機、收藏、歷史記錄、主題風格等所有功能皆可直接使用。',
   },
   {
-    question: 'RateWise 和一般匯率 App 有什麼不同？',
+    question: '和一般匯率 App 有什麼不同？',
     answer:
-      '一般工具顯示中間價（買賣均值），RateWise 顯示臺灣銀行牌告的實際現金與即期四種報價，讓您換匯前就知道真正要付多少台幣。',
+      '一般工具顯示中間價（買賣均值），本工具顯示臺灣銀行牌告的實際現金與即期四種報價，讓您換匯前就知道真正要付多少台幣。',
   },
   {
-    question: '如何聯絡 RateWise 開發者？',
+    question: '如何聯絡開發者？',
     answer:
       '可透過 Email（haotool.org@gmail.com）聯繫，歡迎回饋意見或錯誤回報，也可在 GitHub（github.com/haotool/app）查看原始碼或提交 Issue。',
   },
@@ -1096,11 +1104,17 @@ export function getCurrencyLandingPageContent(
           '@type': 'Offer',
           name: `${displayName}現金賣出匯率`,
           description: `臺灣銀行牌告${displayName}（${code}）現金賣出匯率，適用臨櫃換外幣現鈔`,
+          price: '0',
+          priceCurrency: 'TWD',
+          availability: 'https://schema.org/InStock',
         },
         {
           '@type': 'Offer',
           name: `${displayName}即期賣出匯率`,
           description: `臺灣銀行牌告${displayName}（${code}）即期賣出匯率，適用網銀外幣帳戶`,
+          price: '0',
+          priceCurrency: 'TWD',
+          availability: 'https://schema.org/InStock',
         },
       ],
     },
@@ -1133,7 +1147,7 @@ export function getCurrencyLandingPageContent(
     faqEntries: [
       {
         question: `用其他 App 查${displayName}匯率為什麼跟 RateWise 不一樣？`,
-        answer: `多數匯率 App 顯示中間價（mid-rate），是買入與賣出的平均值，並非你實際換匯的價格。RateWise 顯示臺灣銀行牌告的「現金賣出」價——你拿台幣去銀行換${displayName}現鈔時，這才是真正要付的金額。中間價通常比實際賣出價優惠 1~3%，換 10 萬日圓大約差 1,500~3,000 元台幣，換匯金額越大差距越明顯。`,
+        answer: `多數匯率 App 顯示中間價（mid-rate），是買入與賣出的平均值，並非你實際換匯的價格。本工具顯示臺灣銀行牌告的「現金賣出」價——你拿台幣去銀行換${displayName}現鈔時，這才是真正要付的金額。中間價通常比實際賣出價優惠 1~3%，換 10 萬日圓大約差 1,500~3,000 元台幣，換匯金額越大差距越明顯。`,
       },
       {
         question: `${displayName}現金賣出和即期賣出有什麼差別？怎麼選？`,
@@ -1141,35 +1155,35 @@ export function getCurrencyLandingPageContent(
       },
       {
         question: override.question,
-        answer: `使用 RateWise 可即時查看 ${code} 兌 TWD 最新匯率，資料來源為臺灣銀行牌告匯率，每 5 分鐘自動更新。點擊「開始換算」即可輸入任意金額查看結果。`,
+        answer: `使用本工具可即時查看${displayName}最新匯率，資料來源為臺灣銀行牌告匯率，每 5 分鐘自動更新。點擊「開始換算」即可輸入任意金額查看結果。`,
       },
       {
         question: `${displayName}的現金匯率和即期匯率差多少？`,
-        answer: `${displayName}現金匯率與即期匯率的價差取決於銀行現鈔保管與運送成本。臨櫃換鈔看「現金」匯率，外幣帳戶匯款看「即期」匯率。RateWise 可一鍵切換 ${code}/TWD 的現金與即期報價，方便比較差異。`,
+        answer: `${displayName}現金匯率與即期匯率的價差取決於銀行現鈔保管與運送成本。臨櫃換鈔看「現金」匯率，外幣帳戶匯款看「即期」匯率。本工具可一鍵切換${displayName}的現金與即期報價，方便比較差異。`,
       },
       {
         question: `台幣買${displayName}和${displayName}換回台幣的匯率一樣嗎？`,
-        answer: `不一樣。台幣買${displayName}看銀行「賣出」價格，${displayName}換回台幣看銀行「買入」價格，兩者之間有價差。RateWise 會依照您選擇的 ${code}/TWD 換算方向自動套用正確報價。`,
+        answer: `不一樣。台幣買${displayName}看銀行「賣出」價格，${displayName}換回台幣看銀行「買入」價格，兩者之間有價差。本工具會依照您選擇的換算方向自動套用正確報價。`,
       },
       {
         question: `去${override.region.replace(/前.*$/, '')}前要準備多少${displayName}？`,
-        answer: `${override.travelTip}您可使用 RateWise 的快速金額按鈕（${override.popularAmounts.slice(0, 3).map(formatAmount).join('、')} ${code} 等常用金額）估算所需台幣，並在出發前觀察 7~30 天匯率趨勢選擇換匯時機。`,
+        answer: `${override.travelTip}您可使用快速金額按鈕（${override.popularAmounts.slice(0, 3).map(formatAmount).join('、')} ${displayName}等常用金額）估算所需台幣，並在出發前觀察 7~30 天匯率趨勢選擇換匯時機。`,
       },
       {
         question: `${displayName}匯率最近走勢如何？`,
-        answer: `在 RateWise 展開 ${code}/TWD 匯率卡片即可查看 7~30 天歷史趨勢圖，包含最高、最低與平均值，幫助您觀察${displayName}匯率波動並選擇較合適的換匯時機。`,
+        answer: `展開${displayName}匯率卡片即可查看 7~30 天歷史趨勢圖，包含最高、最低與平均值，幫助您觀察${displayName}匯率波動並選擇較合適的換匯時機。`,
       },
       {
         question: `${formatAmount(override.popularAmounts.at(-1) ?? 0)} ${displayName}大約等於多少台幣？`,
-        answer: `${formatAmount(override.popularAmounts.at(-1) ?? 0)} ${code} 的台幣金額會隨匯率浮動，請使用 RateWise 輸入金額即時查看最新換算結果。資料參考臺灣銀行牌告匯率，每 5 分鐘自動更新。`,
+        answer: `${formatAmount(override.popularAmounts.at(-1) ?? 0)} ${displayName}的台幣金額會隨匯率浮動，請輸入金額即時查看最新換算結果。資料參考臺灣銀行牌告匯率，每 5 分鐘自動更新。`,
       },
       {
         question: `在台灣哪裡可以換${displayName}？`,
-        answer: `臺灣銀行各分行可兌換${displayName}現鈔，也可透過外幣帳戶線上換匯。建議出發前先用 RateWise 比較 ${code}/TWD 現金與即期匯率，選擇最適合的換匯方式。`,
+        answer: `臺灣銀行各分行可兌換${displayName}現鈔，也可透過外幣帳戶線上換匯。建議出發前比較${displayName}現金與即期匯率，選擇最適合的換匯方式。`,
       },
       {
         question: `出國刷卡的匯率跟 RateWise 顯示的${displayName}台銀牌告匯率一樣嗎？`,
-        answer: `不一樣。出國刷卡使用的是發卡組織（Visa、Mastercard）的清算匯率，再加上發卡銀行的海外交易手續費（通常 1.5%），與臺灣銀行牌告匯率是不同體系。RateWise 顯示的台銀牌告匯率適用於臨櫃換鈔或外幣帳戶匯款，不代表你出國刷卡時的實際扣款匯率。若出國以刷卡為主，建議另行查詢發卡銀行的海外手續費規定。`,
+        answer: `不一樣。出國刷卡使用的是發卡組織（Visa、Mastercard）的清算匯率，再加上發卡銀行的海外交易手續費（通常 1.5%），與臺灣銀行牌告匯率是不同體系。本工具顯示的台銀牌告匯率適用於臨櫃換鈔或外幣帳戶匯款，不代表你出國刷卡時的實際扣款匯率。若出國以刷卡為主，建議另行查詢發卡銀行的海外手續費規定。`,
       },
     ],
     howToSteps: [

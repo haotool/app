@@ -41,12 +41,12 @@ const robotsTxt = `# RateWise — Robots Exclusion Protocol
 
 User-agent: *
 Allow: /
-Disallow: /sw.js
-Disallow: /workbox-*.js
-Disallow: /theme-showcase/
-Disallow: /color-scheme/
-Disallow: /update-prompt-test/
-Disallow: /ui-showcase/
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
 
 Sitemap: ${SITEMAP_URL}
 

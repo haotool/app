@@ -46,58 +46,25 @@
     <!-- Theme Initialization (防止 FOUC) -->
     <script>
       (function () {
-        var STORAGE_KEY = 'ratewise-theme';
-        var DEFAULT_STYLE = 'zen';
-        // Security: Whitelist of allowed theme styles to prevent injection
-        var ALLOWED_STYLES = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'];
-
-        /**
-         * Validates theme config structure and style value
-         * @param {unknown} config - Parsed config from localStorage
-         * @returns {string} - Validated style or DEFAULT_STYLE
-         */
-        function getValidatedStyle(config) {
-          // Security: Validate config is a plain object (not null, array, or prototype-polluted)
-          if (
-            config === null ||
-            typeof config !== 'object' ||
-            Array.isArray(config) ||
-            config.constructor !== Object
-          ) {
-            return DEFAULT_STYLE;
-          }
-
-          // Security: Validate style property exists and is a string
-          if (!Object.prototype.hasOwnProperty.call(config, 'style')) {
-            return DEFAULT_STYLE;
-          }
-
-          var style = config.style;
-          if (typeof style !== 'string') {
-            return DEFAULT_STYLE;
-          }
-
-          // Security: Whitelist validation - only allow predefined styles
-          return ALLOWED_STYLES.indexOf(style) !== -1 ? style : DEFAULT_STYLE;
+        var K = 'ratewise-theme',
+          D = 'zen',
+          A = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'];
+        function v(c) {
+          if (c === null || typeof c !== 'object' || Array.isArray(c) || c.constructor !== Object)
+            return D;
+          if (!Object.prototype.hasOwnProperty.call(c, 'style')) return D;
+          var s = c.style;
+          return typeof s === 'string' && A.indexOf(s) !== -1 ? s : D;
         }
-
-        function applyStyle(style) {
-          document.documentElement.dataset.style = style;
-          document.documentElement.classList.add(style === 'classic' ? 'font-serif' : 'font-sans');
+        function a(s) {
+          document.documentElement.dataset.style = s;
+          document.documentElement.classList.add(s === 'classic' ? 'font-serif' : 'font-sans');
         }
-
         try {
-          var stored = localStorage.getItem(STORAGE_KEY);
-          if (stored) {
-            var config = JSON.parse(stored);
-            var style = getValidatedStyle(config);
-            applyStyle(style);
-          } else {
-            applyStyle(DEFAULT_STYLE);
-          }
+          var t = localStorage.getItem(K);
+          a(t ? v(JSON.parse(t)) : D);
         } catch (e) {
-          // Fallback for JSON parse errors or localStorage access errors
-          applyStyle(DEFAULT_STYLE);
+          a(D);
         }
       })();
     </script>
@@ -586,7 +553,6 @@
         var TIMEOUT_MS = 5000;
         var RETRY_KEY = 'ratewise_cold_start_retry';
         var MAX_RETRIES = 1;
-
         function getRetryCount() {
           try {
             return parseInt(sessionStorage.getItem(RETRY_KEY) || '0', 10);
@@ -608,14 +574,11 @@
           var root = document.getElementById('root');
           return root ? !!root.querySelector('.skeleton-page') : false;
         }
-
-        // 非同步收集診斷資訊：網路 / SW 狀態 / 快取數量。
         function collectDiagnostics() {
           var lines = ['\u23f0 ' + new Date().toLocaleTimeString('zh-TW')];
           lines.push(
-            '\ud83c\udf10 \u7db2\u8def: ' + (navigator.onLine ? '\u5728\u7dda' : '\u96e2\u7dda'),
+            '\ud83c\udf10 \u7db2\u8def:' + (navigator.onLine ? '\u5728\u7dda' : '\u96e2\u7dda'),
           );
-
           var swP =
             'serviceWorker' in navigator
               ? navigator.serviceWorker
@@ -629,22 +592,21 @@
                           : reg.installing
                             ? 'installing'
                             : '\u7121 worker';
-                      lines.push('\u2699\ufe0f SW: ' + st);
+                      lines.push('\u2699\ufe0f SW:' + st);
                       lines.push(
-                        '\ud83c\udfae \u63a7\u5236: ' +
+                        '\ud83c\udfae \u63a7\u5236:' +
                           (navigator.serviceWorker.controller
                             ? '\u6709'
                             : '\u7121\uff08\u9801\u9762\u9700\u91cd\u8f09\uff09'),
                       );
                     } else {
-                      lines.push('\u2699\ufe0f SW: \u672a\u8a3b\u518a');
+                      lines.push('\u2699\ufe0f SW:\u672a\u8a3b\u518a');
                     }
                   })
                   .catch(function (e) {
-                    lines.push('\u2699\ufe0f SW: ' + String(e));
+                    lines.push('\u2699\ufe0f SW:' + String(e));
                   })
-              : (lines.push('\u2699\ufe0f SW: \u4e0d\u652f\u63f4'), Promise.resolve());
-
+              : (lines.push('\u2699\ufe0f SW:\u4e0d\u652f\u63f4'), Promise.resolve());
           var cacheP =
             'caches' in window
               ? caches
@@ -665,32 +627,25 @@
                       return s + c.count;
                     }, 0);
                     lines.push(
-                      '\ud83d\udce6 \u5feb\u53d6: ' +
-                        list.length +
-                        ' \u500b / ' +
-                        total +
-                        ' \u9805',
+                      '\ud83d\udce6 \u5feb\u53d6:' + list.length + ' \u500b / ' + total + ' \u9805',
                     );
                     list.forEach(function (c) {
                       lines.push(
-                        '  ' +
+                        ' ' +
                           c.name.replace('workbox-precache-v2-', 'pc-').slice(-42) +
-                          ': ' +
+                          ':' +
                           c.count,
                       );
                     });
                   })
                   .catch(function (e) {
-                    lines.push('\ud83d\udce6 \u5feb\u53d6: ' + String(e));
+                    lines.push('\ud83d\udce6 \u5feb\u53d6:' + String(e));
                   })
-              : (lines.push('\ud83d\udce6 \u5feb\u53d6: \u4e0d\u652f\u63f4'), Promise.resolve());
-
+              : (lines.push('\ud83d\udce6 \u5feb\u53d6:\u4e0d\u652f\u63f4'), Promise.resolve());
           return Promise.all([swP, cacheP]).then(function () {
             return lines;
           });
         }
-
-        // 清除 SW 快取後重載（優先通知 SW；fallback 直接清除）。
         function hardResetAndReload() {
           var doReload = function () {
             window.location.reload();
@@ -735,15 +690,11 @@
             directClear();
           }
         }
-
         function showColdStartError() {
           var root = document.getElementById('root');
           if (!root || !hasSkeleton()) return;
-
           var isOnline = navigator.onLine !== false;
           var canRetry = isOnline && getRetryCount() < MAX_RETRIES;
-
-          // 外層容器
           var wrap = document.createElement('div');
           wrap.setAttribute('role', 'alert');
           wrap.setAttribute('aria-live', 'assertive');
@@ -752,29 +703,23 @@
             'justify-content:center;overflow-y:auto;background:var(--sk-bg,#f8fafc);' +
             'font-family:system-ui,-apple-system,sans-serif;' +
             'padding:2rem 1.5rem;text-align:center;gap:0.625rem;z-index:9999;';
-
           var icon = document.createElement('div');
           icon.style.cssText = 'font-size:2.5rem;line-height:1';
           icon.textContent = isOnline ? '\u26a0\ufe0f' : '\ud83d\udce1';
-
           var title = document.createElement('div');
           title.style.cssText = 'font-size:1.125rem;font-weight:700;color:var(--sk-text,#1e293b)';
           title.textContent = isOnline
             ? '\u61c9\u7528\u7a0b\u5f0f\u8f09\u5165\u5931\u6557'
             : '\u76ee\u524d\u8655\u65bc\u96e2\u7dda\u6a21\u5f0f';
-
           var desc = document.createElement('div');
           desc.style.cssText =
             'font-size:0.875rem;color:var(--sk-text-muted,#64748b);max-width:280px;line-height:1.6';
           desc.textContent = isOnline
             ? 'PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u53ef\u80fd\u5df2\u640d\u58de\u6216\u4e0d\u5b8c\u6574\u3002\u5efa\u8b70\u6e05\u9664\u5feb\u53d6\u5f8c\u91cd\u8a66\u3002'
             : '\u96e2\u7dda\u6a21\u5f0f\u4e0b PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u8acb\u9023\u7dda\u5f8c\u91cd\u65b0\u958b\u555f\u3002';
-
           wrap.appendChild(icon);
           wrap.appendChild(title);
           wrap.appendChild(desc);
-
-          // 按鈕列
           var CTA =
             'padding:.625rem 1.75rem;background:#8B5CF6;color:#fff;border:none;' +
             'border-radius:9999px;font-size:.875rem;font-weight:600;cursor:pointer;';
@@ -784,7 +729,6 @@
           var btnRow = document.createElement('div');
           btnRow.style.cssText =
             'display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:0.25rem';
-
           if (canRetry) {
             var btnReload = document.createElement('button');
             btnReload.textContent = '\u91cd\u65b0\u8f09\u5165';
@@ -795,7 +739,6 @@
             });
             btnRow.appendChild(btnReload);
           }
-
           if (isOnline) {
             var btnClear = document.createElement('button');
             btnClear.textContent = '\u6e05\u9664\u5feb\u53d6\u4e26\u91cd\u8f09';
@@ -807,7 +750,6 @@
             });
             btnRow.appendChild(btnClear);
           }
-
           if (!isOnline) {
             var hintOffline = document.createElement('div');
             hintOffline.style.cssText = 'font-size:0.75rem;color:var(--sk-text-muted,#94a3b8)';
@@ -815,7 +757,6 @@
               '\u9023\u7dda\u5f8c\u8acb\u91cd\u65b0\u958b\u555f\u61c9\u7528\u7a0b\u5f0f';
             btnRow.appendChild(hintOffline);
           }
-
           if (!canRetry && isOnline) {
             var hintFailed = document.createElement('div');
             hintFailed.style.cssText =
@@ -824,10 +765,7 @@
               '\u82e5\u554f\u984c\u6301\u7e8c\uff0c\u8acb\u81f3\u700f\u89bd\u5668\u8a2d\u5b9a\u6e05\u9664\u7db2\u7ad9\u5feb\u53d6\u5f8c\u91cd\u8a66\u3002';
             btnRow.appendChild(hintFailed);
           }
-
           wrap.appendChild(btnRow);
-
-          // 診斷詳情（折疊）
           var diagId = 'cs-diag';
           var details = document.createElement('details');
           details.style.cssText =
@@ -848,25 +786,17 @@
           details.appendChild(summary);
           details.appendChild(diagPre);
           wrap.appendChild(details);
-
           root.innerHTML = '';
           root.appendChild(wrap);
-
-          // 非同步更新診斷面板
           collectDiagnostics().then(function (lines) {
             var el = document.getElementById(diagId);
             if (el) el.textContent = lines.join('\n');
           });
         }
-
-        // SSG 已渲染（無骨架屏）：直接清除 retry 標記並結束。
         if (!hasSkeleton()) {
           clearRetry();
           return;
         }
-
-        // JS chunk 載入失敗即時偵測（capture phase）。
-        // script src 載入 error 時立即顯示診斷 UI，無需等待計時器。
         window.addEventListener(
           'error',
           function (e) {
@@ -884,12 +814,9 @@
           },
           true,
         );
-
         var coldStartTimer = setTimeout(function () {
           if (hasSkeleton()) showColdStartError();
         }, TIMEOUT_MS);
-
-        // MutationObserver：React 移除骨架屏時取消計時器。
         if (typeof MutationObserver !== 'undefined') {
           var rootEl = document.getElementById('root');
           if (rootEl) {
