@@ -1102,14 +1102,14 @@ function formatAmount(amount: number): string {
   return amount.toLocaleString('zh-TW');
 }
 
-/** 根據每週更新的匯差數據，產生「換 N 單位多付 X 元台幣」的敘述句。 */
+/** 根據每週更新的匯差數據，產生「換 3 萬台幣，比 Google 中間價多付 X 元」的敘述句。 */
 function buildRateExampleSentence(code: string, displayName: string): string {
   const ex = SEO_RATE_EXAMPLES[code];
   if (!ex) return '換匯金額越大差距越明顯。';
-  const amtStr = formatAmount(ex.exampleAmount);
-  const refLabel = ex.refType === 'spot' ? '即期賣出價' : '中間參考價';
-  // 注意：數據每週更新（${SEO_RATE_EXAMPLES_DATE}），反映臺灣銀行最新牌告匯率。
-  return `以換 ${amtStr} ${displayName}為例，現金匯率比${refLabel}約貴 ${ex.diffTWD} 元台幣（約 ${ex.diffPct}%）；換匯金額越大差距越明顯。（數據每週依臺灣銀行牌告匯率更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
+  // 整萬數格式：30000 → "3 萬"，以符合中文閱讀習慣。
+  const twdLabel =
+    ex.exampleTWD % 10000 === 0 ? `${ex.exampleTWD / 10000} 萬` : formatAmount(ex.exampleTWD);
+  return `以換 ${twdLabel}元台幣的${displayName}為例，透過銀行現金換匯比 Google 等 App 顯示的中間價約多付 ${ex.diffTWD} 元台幣（約 ${ex.diffPct}%）；換匯金額越大差距越明顯。（數據每週更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
 }
 
 export function getCurrencyLandingPageContent(
