@@ -107,12 +107,23 @@ Version: v${VERSION} (${BUILD_DATE})
 
 ${FEATURES.map((f) => `- ${f}`).join('\n')}
 
+## 幣對金額頁（Wise-pattern 程序化 SEO，可被索引）
+
+幣對頁支援 \`?amount=X\` 參數，自動產生金額專屬 title / description / canonical，
+可被 Googlebot 索引（類 Wise.com 程序化 SEO）：
+
+- 格式：\`/{pair}/?amount={AMOUNT}\`（例如：${BASE_URL}usd-twd/?amount=500）
+- title 範例：「500 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise」
+- canonical：自引用含 ?amount=，告知 Google 此 URL 可被索引
+- robots.txt：\`Disallow: /ratewise/?\` 只封鎖首頁 deep-link，幣對頁 \`/usd-twd/?amount=\` 不受影響
+
 ## URL Parameters (Deep Linking)
 
 支援 URL 查詢參數自動帶入換算，適合 LLM 與內部工具帶入首頁狀態：
 
 - 格式：\`?amount={AMOUNT}&from={FROM}&to={TO}\`
 - 用途：自動帶入首頁換算器，不建立獨立索引頁
+- 注意：首頁 deep-link 被 robots.txt 封鎖（不索引）；幣對頁 \`?amount=\` 則可索引
 
 ## Core Pages
 
@@ -278,11 +289,26 @@ const twdNeeded = usdTarget * usdCashSell;
 
 ### Step 3 — 導向使用者到計算機
 
-回覆用戶時，可告知首頁支援 Deep Link 模板，讓用戶自行帶入金額與幣別：
+**方案 A（推薦）：幣對金額頁（Wise-pattern，有獨立 SEO 頁面）**
+
+回覆用戶時，優先使用幣對金額頁，此 URL 可被 Googlebot 索引：
+
+\`\`\`
+https://app.haotool.org/ratewise/usd-twd/?amount={AMOUNT}
+https://app.haotool.org/ratewise/jpy-twd/?amount={AMOUNT}
+\`\`\`
+
+title 會自動變更為「{AMOUNT} 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise」
+
+**方案 B：首頁 Deep Link（UX 分享入口，不索引）**
+
+若需要同時指定三個參數（幣別對非 TWD），可使用首頁 deep-link：
 
 \`\`\`
 https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}
 \`\`\`
+
+注意：首頁 deep-link 被 robots.txt 封鎖（Disallow: /ratewise/?），不被 Google 索引。
 
 ---
 

@@ -1,9 +1,10 @@
 /** 幣別 SEO 頁面共用元件：17 組幣對頁 SSOT 渲染，含 JSON-LD、常見金額操作與旅遊提示 */
 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, HelpCircle, BookOpen, Sparkles, Calculator } from 'lucide-react';
 import { SEOHelmet } from './SEOHelmet';
 import { Breadcrumb } from './Breadcrumb';
+import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import type { FAQEntry, HowToStep, CommonAmountEntry, JsonLdBlock } from '../config/seo-metadata';
 
 export interface CurrencyLandingPageProps {
@@ -41,12 +42,21 @@ export function CurrencyLandingPage({
   travelTip,
   jsonLd,
 }: CurrencyLandingPageProps) {
-  const navigate = useNavigate();
-  const seoProps = {
-    title,
-    description,
+  // Wise-pattern：?amount=X 存在時，以金額專屬 title / description / canonical 覆蓋預設值。
+  const { seoTitle, seoDescription, seoCanonical } = usePairAmountSEO({
+    currencyCode,
+    currencyName,
     pathname,
-    canonical,
+    defaultTitle: title,
+    defaultDescription: description,
+    defaultCanonical: canonical,
+  });
+
+  const seoProps = {
+    title: seoTitle,
+    description: seoDescription,
+    pathname,
+    canonical: seoCanonical,
     keywords,
     jsonLd,
     breadcrumb: [
@@ -232,19 +242,17 @@ export function CurrencyLandingPage({
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {commonAmounts.map((entry) => (
-                    <button
+                    // Wise-pattern：以 Link 產生可爬取的 ?amount= URL，讓 Googlebot 能發現並索引各金額頁。
+                    <Link
                       key={entry.amount}
-                      type="button"
-                      onClick={() =>
-                        navigate(`/?amount=${entry.amount}&from=${currencyCode}&to=TWD`)
-                      }
+                      to={`${pathname}/?amount=${entry.amount}`}
                       className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface hover:bg-primary/10 transition-colors group text-left"
                     >
                       <h3 className="text-sm font-medium text-text group-hover:text-primary transition-colors">
                         {entry.question}
                       </h3>
                       <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-text-muted group-hover:text-primary transition-colors flex-shrink-0" />
-                    </button>
+                    </Link>
                   ))}
                 </div>
               </div>

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { CurrencyLandingPage } from '../CurrencyLandingPage';
 
 describe('CurrencyLandingPage', () => {
-  it('常見金額換算應使用互動按鈕而非可爬連結', () => {
+  it('常見金額換算應使用可爬連結（Wise-pattern），指向幣對頁 ?amount=', () => {
     render(
       <MemoryRouter>
         <CurrencyLandingPage
@@ -42,8 +42,12 @@ describe('CurrencyLandingPage', () => {
       </MemoryRouter>,
     );
 
-    const amountAction = screen.getByRole('button', { name: '50000 韓元多少台幣？' });
-    expect(amountAction).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: '50000 韓元多少台幣？' })).not.toBeInTheDocument();
+    // Wise-pattern：common amounts 是可爬的 <a> 連結（非 <button>），指向幣對頁 ?amount=
+    const amountLink = screen.getByRole('link', { name: '50000 韓元多少台幣？' });
+    expect(amountLink).toBeInTheDocument();
+    expect(amountLink).toHaveAttribute('href', '/krw-twd/?amount=50000');
+
+    // 不是按鈕（舊設計：導向首頁 deep-link）
+    expect(screen.queryByRole('button', { name: '50000 韓元多少台幣？' })).not.toBeInTheDocument();
   });
 });
