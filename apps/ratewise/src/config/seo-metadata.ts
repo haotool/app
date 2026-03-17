@@ -2,7 +2,7 @@ import { CURRENCY_DEFINITIONS, SUPPORTED_CURRENCY_COUNT } from '../features/rate
 import { APP_INFO, SEO_SOCIAL_LINKS } from './app-info';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from './generated/seo-rate-examples';
 import { RATES_API } from './api-endpoints';
-import { SEO_PATHS, SHARE_IMAGE, TWITTER_IMAGE, normalizeSiteUrl } from './seo-paths';
+import { SHARE_IMAGE, TWITTER_IMAGE, normalizeSiteUrl } from './seo-paths';
 
 export interface AlternateLink {
   hrefLang: string;
@@ -695,7 +695,7 @@ export const OPEN_DATA_PAGE_FAQ = [
 ] as const satisfies readonly FAQEntry[];
 
 export const OPEN_DATA_PAGE_SEO = {
-  title: '開放資料 API — 台銀牌告匯率 JSON 端點 | RateWise 匯率好工具',
+  title: '開放資料 API — 台銀牌告匯率 JSON 端點',
   description:
     'RateWise 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。',
   pathname: '/open-data',
@@ -771,7 +771,7 @@ export const ABOUT_PAGE_FAQ = [
   },
   {
     question: '這個網站使用哪些結構化資料讓搜尋摘要顯示更豐富？',
-    answer: `各頁面均部署 schema.org JSON-LD 結構化標記：WebSite（全站識別）、SoftwareApplication（評分與定價）、Organization（聯絡資訊）、FAQPage（問答摘要，含具體匯差數字）、HowTo（使用步驟）、BreadcrumbList（麵包屑導覽）、Article（內容頁）與 FinancialService（幣別頁金融服務標記），均符合 Google Rich Results 規範。sitemap.xml 包含 ${SEO_PATHS.length} 個 URL、hreflang 多語系標記與 OG 圖片登記，每次建置自動更新 lastmod。`,
+    answer: `目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、HowTo（使用步驟）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、FinancialService（幣別頁金融服務標記）與 ImageObject（分享圖片授權資訊）。FAQ 內容保留為可讀 HTML 區塊，不額外輸出 FAQPage rich result 標記，以避免與目前搜尋引擎支援範圍不符。sitemap.xml 會只收錄公開可索引 URL，並同步 hreflang 與圖片資源資訊。`,
   },
   {
     question: 'RateWise 是否支援 AI 搜尋引擎與 LLM 引用？',

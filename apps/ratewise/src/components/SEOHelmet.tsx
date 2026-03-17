@@ -47,6 +47,18 @@ const SEO_HELMET_MANAGED_ATTR = 'data-seo-helmet';
 const SEO_HELMET_MANAGED_VALUE = 'managed';
 const SEO_HELMET_STRUCTURED_DATA_VALUE = 'structured-data';
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildDocumentTitle(title?: string) {
+  if (!title) return SITE_SEO.title;
+
+  const trailingBrandPattern = new RegExp(`\\s*\\|\\s*${escapeRegExp(APP_INFO.name)}$`);
+  const normalizedTitle = title.trim().replace(trailingBrandPattern, '').trim();
+  return `${normalizedTitle} | ${APP_INFO.name}`;
+}
+
 const buildHowToSchema = (howTo: HowToData, url: string): JsonLdBlock => ({
   '@context': 'https://schema.org',
   '@type': 'HowTo',
@@ -192,7 +204,7 @@ export function SEOHelmet({
   breadcrumb,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 }: SEOProps) {
-  const fullTitle = title ? `${title} | ${APP_INFO.name}` : SITE_SEO.title;
+  const fullTitle = buildDocumentTitle(title);
   const canonicalUrl = canonical ? buildCanonicalUrl(canonical) : buildCanonicalUrl(pathname);
   const ogImageUrl = buildAbsoluteAssetUrl(ogImage);
   const normalizedAlternates = useMemo(() => {

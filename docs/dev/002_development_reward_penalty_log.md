@@ -1,8 +1,60 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-16T14:55:00+08:00
-> **當前總分**: 1185（初始分: 100）
+> **最後更新**: 2026-03-17T22:48:00+08:00
+> **當前總分**: 1189（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-seo-title-truthfulness-lastmod-tdd
+date: 2026-03-17
+title: RateWise 以 TDD 修正 Open Data title、FAQPage 敘述漂移與 sitemap lastmod 真實性
+score: +4
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, ssot, sitemap, title, documentation, tdd]
+keywords: [open-data title, faqpage, rich-results, seo-truthfulness, lastmod, git commit time, prerender]
+aliases: [SEO 真實性修復, Open Data title 去重, sitemap lastmod SSOT]
+related_entries: [ratewise-seo-ssot-faq-best-practices, improvement-ratewise-release-edge-sync-guard]
+summary: 針對 PR #207 的深度 SEO 審核 findings，先以紅燈測試鎖定三個問題，再完成最小修正與重建產物：Open Data 頁 title 不再重複品牌、About/SEO 指南不再錯誤宣稱 FAQPage rich result 已實作、sitemap `lastmod` 改為重大依賴檔的 git commit time 優先，讓 SEO 說法、SSG 產物與測試重新對齊。
+root_cause:
+
+- Open Data 頁的 SSOT title 直接包含品牌，而 `SEOHelmet` 又會統一追加品牌，導致最終 prerender `<title>` 重複
+- About FAQ 與 `docs/SEO_GUIDE.md` 沿用舊版 FAQPage / Rich Results 敘述，但目前程式與測試其實明確禁止輸出 FAQPage JSON-LD
+- `generate-sitemap-2025.mjs` 僅依單一 source file `mtime` 生成 `lastmod`，在 CI/工作樹環境中容易產生缺乏差異的假真實時間戳
+  impact:
+
+- `open-data` 頁 title link 產物冗餘，降低 SERP 可讀性，也暴露 head 正規化缺口
+- SEO 透明度頁與指南文件若宣稱超出實際輸出能力，會削弱內容可信度與 reviewer 判斷基準
+- sitemap `lastmod` 日期差異不足，可能讓搜尋引擎把訊號視為低可信度
+  actions:
+
+- `SEOHelmet.tsx` 新增 title 正規化 helper，若頁面 title 已含品牌尾綴，會先去重再統一追加
+- `seo-metadata.ts` 將 `OPEN_DATA_PAGE_SEO.title` 改回純頁面主題，並重寫 About FAQ 的 schema 說明，改為只描述實際輸出的 JSON-LD 類型
+- `docs/SEO_GUIDE.md` 移除 FAQPage 已實作示意與範例，改為「保留 FAQ 可讀 HTML、不輸出 FAQPage JSON-LD」策略
+- `generate-sitemap-2025.mjs` 改為路由重大依賴檔映射；`lastmod` 優先取 `git log -1 --format=%cI -- <deps...>`，失敗時才 fallback 至最大 `mtime`
+- 新增/更新 `prerender.test.ts`、`seo-truthfulness.test.ts`，把 title 去重與 FAQPage 內容真實性納入回歸測試
+  prevention:
+
+- 頁面 SEO SSOT 的 `title` 不得直接硬編碼品牌尾綴，品牌只允許在 head 組裝層統一追加
+- 文件與 About 類透明度內容若提及 schema / rich results，必須以實際 prerender 產物與測試為準，不得引用歷史設計稿當現況
+- sitemap `lastmod` 必須綁定可驗證的重大依賴集合；取不到可信來源時寧可 fallback，不可假設所有頁面同日更新
+  verification:
+
+- `pnpm exec vitest run scripts/__tests__/sitemap-2025.test.ts`
+- `pnpm --filter @app/ratewise exec vitest run src/prerender.test.ts src/seo-truthfulness.test.ts`
+- `pnpm --filter @app/ratewise exec vitest run src/components/__tests__/SEOHelmet.test.tsx src/pages/OpenData.test.tsx src/config/__tests__/seo-ssot.test.ts src/seo-best-practices.test.ts src/jsonld.test.ts`
+- `pnpm --filter @app/ratewise build`
+- `git diff --check`
+  references:
+
+- apps/ratewise/src/components/SEOHelmet.tsx
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/prerender.test.ts
+- apps/ratewise/src/seo-truthfulness.test.ts
+- scripts/generate-sitemap-2025.mjs
+- docs/SEO_GUIDE.md
 
 ---
 

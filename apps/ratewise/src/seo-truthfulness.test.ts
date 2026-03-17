@@ -54,4 +54,15 @@ describe('SEO 內容真實性與 SSOT', () => {
     expect(privacyContent).toContain('Google Analytics');
     expect(privacyContent).not.toContain('不使用追蹤 Cookie');
   });
+
+  it('About 與 SEO 指南不應宣稱 FAQPage 已實作或可用於 Rich Results', () => {
+    const seoMetadata = read('src/config/seo-metadata.ts');
+    const seoGuide = read('../../docs/SEO_GUIDE.md');
+
+    expect(seoMetadata).not.toContain('FAQPage（問答摘要');
+    expect(seoMetadata).not.toContain('均符合 Google Rich Results 規範');
+
+    expect(seoGuide).not.toContain('FAQPage ✅');
+    expect(seoGuide).not.toContain('"@type": "FAQPage"');
+  });
 });

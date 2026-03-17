@@ -149,6 +149,30 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
     });
   });
 
+  describe('🟢 Open Data 頁面 SEO Meta Tags（由 SEOHelmet 注入）', () => {
+    const openDataHtml = resolve(distPath, 'open-data/index.html');
+
+    it('should have Open Data-specific title in static HTML', () => {
+      if (!existsSync(openDataHtml)) return;
+
+      const content = readFileSync(openDataHtml, 'utf-8');
+      expect(content).toMatch(/<title[^>]*>/);
+      expect(content).toMatch(/開放資料 API/);
+    });
+
+    it('should append brand only once for Open Data title', () => {
+      if (!existsSync(openDataHtml)) return;
+
+      const content = readFileSync(openDataHtml, 'utf-8');
+      const titleMatch = /<title[^>]*>([^<]+)<\/title>/.exec(content);
+      const titleText = titleMatch?.[1] ?? '';
+      expect(titleText).toBeTruthy();
+
+      const occurrences = (titleText.match(/RateWise 匯率好工具/g) ?? []).length;
+      expect(occurrences).toBe(1);
+    });
+  });
+
   describe('🟢 首頁 SEO Meta Tags（由 SEOHelmet 在 ClientOnly 外層注入）', () => {
     const indexHtml = resolve(distPath, 'index.html');
 

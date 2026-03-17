@@ -147,7 +147,7 @@ flowchart LR
         R1["WebSite ✅"]
         R2["SoftwareApplication ✅"]
         R3["Organization ✅"]
-        R4["FAQPage ✅<br/>含具體匯差數字"]
+        R4["FAQ 內容區塊 ✅<br/>保留可讀 HTML，不輸出 FAQPage"]
         R5["HowTo ✅"]
         R6["BreadcrumbList ✅"]
         R7["Article ✅"]
@@ -401,24 +401,21 @@ flowchart LR
 }
 ```
 
-#### 3. FAQPage Schema
+#### 3. FAQ 內容策略（不輸出 FAQPage JSON-LD）
 
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "如何使用 RateWise 進行匯率換算？",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "選擇貨幣、輸入金額，即可立即看到換算結果。支援單幣別和多幣別同時換算。"
-      }
-    }
-  ]
-}
-```
+RateWise 保留 FAQ 內容本身，讓使用者與爬蟲都能直接閱讀，但不額外輸出 `FAQPage` JSON-LD。
+
+原因：
+
+- Google 現行 FAQ rich result 僅限政府與醫療等高權威站點。
+- 本站 FAQ 主要服務搜尋意圖覆蓋與內容理解，不把 FAQPage rich result 當成通用加分手段。
+- 這可避免文件、測試與實際輸出的結構化資料失同步。
+
+實作原則：
+
+- FAQ 文字保留在頁面可見內容中。
+- 內容頁只輸出實際使用的 schema，如 `Article`、`HowTo`、`BreadcrumbList`、`FinancialService`。
+- 測試層持續驗證靜態 HTML 不應出現 `FAQPage` JSON-LD。
 
 ---
 
@@ -805,7 +802,7 @@ sips -z 630 1200 og-image.png --out og-image-optimized.png
 
 - [ ] WebApplication Schema 已實作
 - [ ] Organization Schema 已實作
-- [ ] FAQPage Schema 已實作 (如適用)
+- [ ] FAQ 內容與頁面可見文字同步，且未誤輸出 FAQPage JSON-LD
 - [ ] JSON-LD 語法通過驗證
 
 #### 技術 SEO
