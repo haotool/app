@@ -16,9 +16,15 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
+import { spawnSync } from 'child_process';
 import { parseStringPromise } from 'xml2js';
 
 const SITEMAP_PATH = resolve(__dirname, '../../apps/ratewise/public/sitemap.xml');
+const REPO_ROOT = resolve(__dirname, '../..');
+const HOMEPAGE_DEPENDENCIES = [
+  'apps/ratewise/src/features/ratewise/RateWise.tsx',
+  'apps/ratewise/src/config/seo-metadata.ts',
+];
 
 interface SitemapUrl {
   loc: string[];
@@ -45,6 +51,10 @@ function readSitemap(): string {
 
 async function parseSitemap(xml: string): Promise<ParsedSitemap> {
   return (await parseStringPromise(xml)) as ParsedSitemap;
+}
+
+function formatDateISO8601(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
 describe('Sitemap 2025 Standards', () => {
@@ -96,6 +106,28 @@ describe('Sitemap 2025 Standards', () => {
   });
 
   describe('Timestamp Authenticity', () => {
+    it('homepage lastmod should track homepage SEO metadata changes', async () => {
+      const xml = readSitemap();
+      const parsed = await parseSitemap(xml);
+
+      const homepage = parsed.urlset.url.find((url) => String(url.loc[0]).endsWith('/ratewise/'));
+      expect(homepage).toBeDefined();
+
+      const gitResult = spawnSync(
+        'git',
+        ['log', '-1', '--format=%cI', '--', ...HOMEPAGE_DEPENDENCIES],
+        {
+          cwd: REPO_ROOT,
+          encoding: 'utf-8',
+        },
+      );
+      expect(gitResult.status).toBe(0);
+
+      const gitTimestamp = String(gitResult.stdout).trim();
+      expect(gitTimestamp).toBeTruthy();
+      expect(homepage!.lastmod[0]).toBe(formatDateISO8601(new Date(gitTimestamp)));
+    });
+
     it('should have different lastmod timestamps for different pages', async () => {
       const xml = readSitemap();
       const parsed = await parseSitemap(xml);

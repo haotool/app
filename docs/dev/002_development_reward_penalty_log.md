@@ -1,8 +1,55 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-17T23:18:00+08:00
-> **當前總分**: 1190（初始分: 100）
+> **最後更新**: 2026-03-18T00:00:00+08:00
+> **當前總分**: 1192（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-open-data-basename-lastmod-followup
+date: 2026-03-18
+title: RateWise follow-up 修正 Open Data 內部連結 basename 與首頁 sitemap lastmod 依賴
+score: +2
+type: bugfix
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, router, basename, sitemap, lastmod, tdd]
+keywords: [OpenData, Link, basename, guide card, homepage lastmod, seo-metadata]
+aliases: [basename 連結修復, homepage lastmod 依賴補齊]
+related_entries: [ratewise-seo-title-truthfulness-lastmod-tdd]
+summary: 依 review comment 與官方最佳實踐，將 Open Data 頁「使用指南」資源卡從一般 `<a href>` 改為 React Router `Link`，避免 `/ratewise/` 子路徑部署時導到根目錄；同時把首頁 `seo-metadata.ts` 納入 sitemap 依賴，確保首頁 SEO 文案更新會反映在 `lastmod`。
+root_cause:
+
+- Open Data 相關資源卡以單一 `<a href>` 渲染，未區分 external 與 internal 導覽，導致 basename 部署時內部連結不會自動帶 `/ratewise/`
+- 首頁 sitemap `lastmod` 僅依賴 `RateWise.tsx`，忽略首頁實際 head/SEO 文案來自 `seo-metadata.ts`
+  impact:
+
+- `/open-data/` 頁內部導覽卡在正式站可能跳去網域根路徑 `/guide/` 而非 `/ratewise/guide/`
+- 首頁若只修改 SEO metadata，搜尋引擎看到的 sitemap `lastmod` 可能落後實際內容
+  actions:
+
+- `OpenData.tsx` 新增 `ResourceCard`，external 資源維持 `<a>`，internal 資源改用 router-aware `Link`
+- `OpenData.test.tsx` 新增 basename 測試，驗證 `/ratewise/guide/` href
+- `generate-sitemap-2025.mjs` 將首頁依賴補上 `apps/ratewise/src/config/seo-metadata.ts`
+- `sitemap-2025.test.ts` 新增首頁 `lastmod` 必須追到首頁 SEO metadata commit time 的驗證
+- 重建 `apps/ratewise/public/sitemap.xml`
+  prevention:
+
+- 凡是 SPA 內部導覽，預設使用 router 提供的 `Link` / `NavLink`，只有真正外站或靜態資源才使用 `<a>`
+- sitemap 依賴映射必須覆蓋頁面主內容與 head metadata 的 SSOT，不可只追 UI component
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/pages/OpenData.test.tsx`
+- `pnpm exec vitest run scripts/__tests__/sitemap-2025.test.ts`
+- `pnpm --filter @app/ratewise exec vitest run src/pages/OpenData.test.tsx src/prerender.test.ts src/seo-truthfulness.test.ts`
+- `pnpm --filter @app/ratewise build`
+  references:
+
+- apps/ratewise/src/pages/OpenData.tsx
+- apps/ratewise/src/pages/OpenData.test.tsx
+- scripts/generate-sitemap-2025.mjs
+- scripts/**tests**/sitemap-2025.test.ts
+- apps/ratewise/public/sitemap.xml
 
 ---
 

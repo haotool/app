@@ -182,6 +182,14 @@ interface CodeBlockProps {
   code: string;
 }
 
+interface ResourceCardItem {
+  title: string;
+  desc: string;
+  href: string;
+  label: string;
+  external: boolean;
+}
+
 function CodeBlock({ title, language, code }: CodeBlockProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-surface-border">
@@ -199,6 +207,32 @@ function CodeBlock({ title, language, code }: CodeBlockProps) {
         <code>{code}</code>
       </pre>
     </div>
+  );
+}
+
+function ResourceCard({ item }: { item: ResourceCardItem }) {
+  const className =
+    'group rounded-xl border border-surface-border bg-surface p-4 transition-colors hover:border-primary/40 hover:bg-surface-elevated';
+  const content = (
+    <>
+      <div className="mb-1 font-semibold text-text group-hover:text-primary">{item.title}</div>
+      <div className="mb-2 text-sm text-text-muted">{item.desc}</div>
+      <div className="font-mono text-xs text-primary">{item.label}</div>
+    </>
+  );
+
+  if (item.external) {
+    return (
+      <a href={item.href} target="_blank" rel="noopener noreferrer" className={className}>
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link to={item.href} className={className}>
+      {content}
+    </Link>
   );
 }
 
@@ -592,19 +626,7 @@ const OpenData = () => {
                   external: false,
                 },
               ].map((item) => (
-                <a
-                  key={item.title}
-                  href={item.href}
-                  target={item.external ? '_blank' : undefined}
-                  rel={item.external ? 'noopener noreferrer' : undefined}
-                  className="group rounded-xl border border-surface-border bg-surface p-4 transition-colors hover:border-primary/40 hover:bg-surface-elevated"
-                >
-                  <div className="mb-1 font-semibold text-text group-hover:text-primary">
-                    {item.title}
-                  </div>
-                  <div className="mb-2 text-sm text-text-muted">{item.desc}</div>
-                  <div className="font-mono text-xs text-primary">{item.label}</div>
-                </a>
+                <ResourceCard key={item.title} item={item} />
               ))}
             </div>
           </section>

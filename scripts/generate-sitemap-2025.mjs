@@ -59,7 +59,10 @@ const REPO_ROOT = resolve(__dirname, '..');
  * `lastmod` 優先取這組依賴檔最近一次 git commit 時間，避免 CI checkout 後 mtime 失真。
  */
 const PATH_DEPENDENCIES = {
-  '/': ['apps/ratewise/src/features/ratewise/RateWise.tsx'],
+  '/': [
+    'apps/ratewise/src/features/ratewise/RateWise.tsx',
+    'apps/ratewise/src/config/seo-metadata.ts',
+  ],
   '/faq/': ['apps/ratewise/src/pages/FAQ.tsx'],
   '/about/': ['apps/ratewise/src/pages/About.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
   '/guide/': ['apps/ratewise/src/pages/Guide.tsx'],

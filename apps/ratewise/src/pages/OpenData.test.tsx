@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import OpenData from './OpenData';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { RATES_API } from '../config/api-endpoints';
@@ -20,6 +20,15 @@ const renderOpenData = () =>
         <OpenData />
       </HelmetProvider>
     </BrowserRouter>,
+  );
+
+const renderOpenDataWithBasename = () =>
+  render(
+    <MemoryRouter basename="/ratewise" initialEntries={['/ratewise/open-data/']}>
+      <HelmetProvider>
+        <OpenData />
+      </HelmetProvider>
+    </MemoryRouter>,
   );
 
 describe('OpenData Page', () => {
@@ -137,6 +146,14 @@ describe('OpenData Page', () => {
     it('renders llms.txt link', () => {
       renderOpenData();
       expect(screen.getByText('llms.txt')).toBeInTheDocument();
+    });
+
+    it('renders internal guide card with basename-aware href', () => {
+      renderOpenDataWithBasename();
+      expect(screen.getByRole('link', { name: /使用指南/i })).toHaveAttribute(
+        'href',
+        '/ratewise/guide/',
+      );
     });
   });
 });
