@@ -63,6 +63,7 @@ const PATH_TO_SOURCE = {
   '/sell-rate-vs-mid-rate/': 'apps/ratewise/src/pages/SellRateVsMidRate.tsx',
   '/cash-vs-spot-rate/': 'apps/ratewise/src/pages/CashVsSpotRate.tsx',
   '/card-rate-guide/': 'apps/ratewise/src/pages/CardRateGuide.tsx',
+  '/open-data/': 'apps/ratewise/src/pages/OpenData.tsx',
   '/privacy/': 'apps/ratewise/src/pages/Privacy.tsx',
   '/usd-twd/': 'apps/ratewise/src/pages/USDToTWD.tsx',
   '/jpy-twd/': 'apps/ratewise/src/pages/JPYToTWD.tsx',
@@ -134,6 +135,12 @@ const PAGE_IMAGES = {
     {
       loc: OG_IMAGE_URL,
       caption: 'RateWise Guide - 刷卡匯率與 DCC',
+    },
+  ],
+  '/open-data/': [
+    {
+      loc: OG_IMAGE_URL,
+      caption: 'RateWise Open Data - 台銀匯率開放 API',
     },
   ],
   '/privacy/': [

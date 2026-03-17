@@ -59,6 +59,7 @@ Version: v2.9.9 (2026-03-17)
 - [常見問題](https://app.haotool.org/ratewise/faq/): 完整 FAQ（含現金/即期差別、買入賣出、刷卡匯率等）
 - [使用指南](https://app.haotool.org/ratewise/guide/): 8 步驟完整操作教學
 - [關於我們](https://app.haotool.org/ratewise/about/): 專案背景與作者資訊
+- [開放資料 API](https://app.haotool.org/ratewise/open-data/): 台銀匯率 JSON API 完整說明（雙端點、程式碼範例、欄位定義）
 
 ## Authority Guides
 

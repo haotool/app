@@ -120,6 +120,7 @@ ${FEATURES.map((f) => `- ${f}`).join('\n')}
 - [常見問題](${BASE_URL}faq/): 完整 FAQ（含現金/即期差別、買入賣出、刷卡匯率等）
 - [使用指南](${BASE_URL}guide/): 8 步驟完整操作教學
 - [關於我們](${BASE_URL}about/): 專案背景與作者資訊
+- [開放資料 API](${BASE_URL}open-data/): 台銀匯率 JSON API 完整說明（雙端點、程式碼範例、欄位定義）
 
 ## Authority Guides
 
@@ -406,7 +407,9 @@ GET ${BASE_URL}api/latest.json
   "supportedCurrencies": ["TWD", "USD", "JPY", "EUR", "GBP", "HKD", "CNY",
     "KRW", "AUD", "CAD", "SGD", "THB", "NZD", "CHF", "VND", "PHP", "IDR", "MYR"],
   "cdnEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/",
-  "openApiSpec": "${BASE_URL}openapi.json"
+  "documentation": "${BASE_URL}open-data/",
+  "openApiSpec": "${BASE_URL}openapi.json",
+  "llms": "${BASE_URL}llms.txt"
 }
 \`\`\`
 

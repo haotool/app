@@ -180,6 +180,7 @@ const openApiSpec = {
     'x-base-currency': 'TWD',
     'x-supported-currencies': SUPPORTED_CURRENCIES,
     'x-webapp': SITE_CONFIG.url,
+    'x-documentation': `${SITE_CONFIG.url}open-data/`,
   },
   servers: [
     {

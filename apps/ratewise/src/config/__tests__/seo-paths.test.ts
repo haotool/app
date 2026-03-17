@@ -62,8 +62,8 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO 與路由白名單', () => {
-    it('SEO_PATHS 應只包含 24 個公開可索引路徑（不含 noindex 的 privacy 頁）', () => {
-      expect(SEO_PATHS).toHaveLength(24);
+    it('SEO_PATHS 應只包含 25 個公開可索引路徑（不含 noindex 的 privacy 頁）', () => {
+      expect(SEO_PATHS).toHaveLength(25);
       expect(SEO_PATHS).toContain('/');
       expect(SEO_PATHS).toContain('/faq/');
       expect(SEO_PATHS).toContain('/about/');
@@ -72,6 +72,7 @@ describe('SEO Paths Configuration', () => {
       expect(SEO_PATHS).toContain('/sell-rate-vs-mid-rate/');
       expect(SEO_PATHS).toContain('/cash-vs-spot-rate/');
       expect(SEO_PATHS).toContain('/card-rate-guide/');
+      expect(SEO_PATHS).toContain('/open-data/');
       expect(SEO_PATHS).toContain('/usd-twd/');
       expect(SEO_PATHS).not.toContain('/multi/');
       expect(SEO_PATHS).not.toContain('/favorites/');
@@ -79,8 +80,8 @@ describe('SEO Paths Configuration', () => {
     });
 
     it('PRERENDER_PATHS 應包含公開 SEO 路徑、法律頁與 app-only noindex 頁面', () => {
-      expect(PRERENDER_PATHS).toHaveLength(32);
-      // PRERENDER_PATHS = SEO_PATHS(24) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(7) = 32
+      expect(PRERENDER_PATHS).toHaveLength(33);
+      // PRERENDER_PATHS = SEO_PATHS(25) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(7) = 33
       expect(PRERENDER_PATHS).toContain('/privacy/'); // 仍需預渲染，但不在 sitemap
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');

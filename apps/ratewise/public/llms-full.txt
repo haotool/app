@@ -215,7 +215,9 @@ GET https://app.haotool.org/ratewise/api/latest.json
   "supportedCurrencies": ["TWD", "USD", "JPY", "EUR", "GBP", "HKD", "CNY",
     "KRW", "AUD", "CAD", "SGD", "THB", "NZD", "CHF", "VND", "PHP", "IDR", "MYR"],
   "cdnEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/",
-  "openApiSpec": "https://app.haotool.org/ratewise/openapi.json"
+  "documentation": "https://app.haotool.org/ratewise/open-data/",
+  "openApiSpec": "https://app.haotool.org/ratewise/openapi.json",
+  "llms": "https://app.haotool.org/ratewise/llms.txt"
 }
 ```
 

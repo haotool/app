@@ -213,6 +213,7 @@ export const routes: RouteRecord[] = [
     () => import('./pages/CardRateGuide'),
     'src/pages/CardRateGuide.tsx',
   ),
+  createLazyRoute('/open-data', () => import('./pages/OpenData'), 'src/pages/OpenData.tsx'),
 
   // 17 個幣別落地頁（SEO 預渲染）
   createLazyRoute('/usd-twd', () => import('./pages/USDToTWD'), 'src/pages/USDToTWD.tsx'),

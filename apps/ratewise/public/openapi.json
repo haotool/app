@@ -37,7 +37,8 @@
       "NZD",
       "IDR"
     ],
-    "x-webapp": "https://app.haotool.org/ratewise/"
+    "x-webapp": "https://app.haotool.org/ratewise/",
+    "x-documentation": "https://app.haotool.org/ratewise/open-data/"
   },
   "servers": [
     {

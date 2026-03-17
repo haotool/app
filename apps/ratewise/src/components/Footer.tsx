@@ -28,8 +28,8 @@ import { FOOTER_SECTIONS, POPULAR_RATE_LINKS } from '../config/footer-links';
 import { getDisplayVersion, getFormattedBuildTime } from '../config/version';
 import { APP_INFO, AUTHOR_CONTACT_LINK_MAP } from '../config/app-info';
 
-/** 固定年份避免 SSG/hydration mismatch */
-const CURRENT_YEAR = 2025;
+/** 動態取得當前年份；suppressHydrationWarning 防止 SSG 與 runtime 年份不符。 */
+const CURRENT_YEAR = new Date().getFullYear();
 
 // 格式化時間為 MM/DD HH:mm
 const formatTime = (dateString: string | null) => {
@@ -323,25 +323,27 @@ export function Footer() {
         <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-8" />
 
         {/* Links Grid - SEO 內部連結 */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-          {FOOTER_SECTIONS.map((section) => (
-            <div key={section.title}>
-              <h3 className="text-white font-semibold mb-4 text-lg">{section.title}</h3>
-              <ul className="space-y-2">
-                {section.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      to={link.href}
-                      className="text-white/80 hover:text-white transition-colors duration-200 text-sm"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+        <nav aria-label="頁腳導航">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            {FOOTER_SECTIONS.map((section) => (
+              <div key={section.title}>
+                <h3 className="text-white font-semibold mb-4 text-lg">{section.title}</h3>
+                <ul className="space-y-2">
+                  {section.links.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        to={link.href}
+                        className="text-white/80 hover:text-white transition-colors duration-200 text-sm"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </nav>
 
         {/* Divider */}
         <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-8" />
@@ -350,7 +352,7 @@ export function Footer() {
         <div className="flex flex-row justify-between items-center gap-4">
           {/* Copyright */}
           <div className="text-sm text-white/80">
-            <p>
+            <p suppressHydrationWarning>
               © {CURRENT_YEAR}{' '}
               <a
                 href="https://app.haotool.org/"

@@ -1,7 +1,8 @@
 import { CURRENCY_DEFINITIONS, SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
 import { APP_INFO, SEO_SOCIAL_LINKS } from './app-info';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from './generated/seo-rate-examples';
-import { SHARE_IMAGE, TWITTER_IMAGE, normalizeSiteUrl } from './seo-paths';
+import { RATES_API } from './api-endpoints';
+import { SEO_PATHS, SHARE_IMAGE, TWITTER_IMAGE, normalizeSiteUrl } from './seo-paths';
 
 export interface AlternateLink {
   hrefLang: string;
@@ -119,7 +120,8 @@ export const SEO_INDEXABLE_LOCALES = [DEFAULT_LOCALE] as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
 export const DEFAULT_TITLE =
   'RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價';
-export const DEFAULT_DESCRIPTION = `RateWise 匯率好工具顯示臺灣銀行牌告的實際買入賣出價，而非中間價，讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏拖曳排序與 7~30 天趨勢圖，每 5 分鐘同步，離線也可使用。`;
+// dw ≈ 117（CJK×2）；符合 SERP ≤160 dw 截斷規範
+export const DEFAULT_DESCRIPTION = `RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），讓你換匯前知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，每 5 分鐘同步，免費無廣告。`;
 export const DEFAULT_KEYWORDS = [
   '匯率好工具',
   'RateWise',
@@ -556,7 +558,7 @@ export const FAQ_PAGE_ENTRIES = [
 export const FAQ_PAGE_SEO = {
   title: '常見問題 — RateWise 匯率好工具 FAQ 解答',
   description:
-    'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
+    'RateWise 常見問題解答：台銀匯率來源、現金與即期差異、買入賣出怎麼看、DCC 刷卡匯率、收藏排序、離線使用與 PWA 安裝教學。',
   pathname: '/faq',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -677,6 +679,71 @@ export const GUIDE_PAGE_SEO = {
   ],
 } satisfies SEOPageMetadata;
 
+export const OPEN_DATA_PAGE_FAQ = [
+  {
+    question: '如何取得最新匯率資料？',
+    answer: `直接 GET \`${RATES_API.latestCdn}\`，無需 API Key。回傳 JSON 包含 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金買入、現金賣出、即期買入、即期賣出四種報價。`,
+  },
+  {
+    question: '有備援端點嗎？',
+    answer: `有。GitHub Raw 端點 \`${RATES_API.latestRaw}\` 為備援，無快取，回傳最新資料，適合 CDN 不可用時。`,
+  },
+  {
+    question: '如何查詢歷史匯率？',
+    answer: `將日期代入路徑：\`${RATES_API.historyCdnExample}\`，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣歷史資料。若該日無資料（如假日），伺服器回傳 404。`,
+  },
+] as const satisfies readonly FAQEntry[];
+
+export const OPEN_DATA_PAGE_SEO = {
+  title: '開放資料 API — 台銀牌告匯率 JSON 端點 | RateWise 匯率好工具',
+  description:
+    'RateWise 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。',
+  pathname: '/open-data',
+  breadcrumb: [
+    { name: 'RateWise 首頁', item: '/' },
+    { name: '開放資料 API', item: '/open-data/' },
+  ],
+  faqContent: [...OPEN_DATA_PAGE_FAQ],
+  howTo: {
+    name: '如何呼叫 RateWise 開放匯率 API',
+    description: '透過 jsDelivr CDN 端點取得台銀牌告匯率 JSON 資料，免費、免 API Key。',
+    steps: [
+      {
+        position: 1,
+        name: '選擇端點',
+        text: '建議使用 jsDelivr CDN 主要端點，全球加速，適合生產環境。GitHub Raw 為備援。',
+      },
+      {
+        position: 2,
+        name: '呼叫最新匯率',
+        text: `使用 curl 或任何 HTTP 客戶端，GET ${RATES_API.latestCdn}，無需 API Key。`,
+      },
+      {
+        position: 3,
+        name: '解析 JSON',
+        text: '回傳 JSON 包含 details.{幣別}.cash.buy/sell 與 details.{幣別}.spot.buy/sell 四種報價。',
+      },
+    ],
+  },
+  jsonLd: [
+    buildShareImageJsonLd(
+      'RateWise 開放資料 API 分享圖片',
+      'RateWise 開放台灣銀行牌告匯率 JSON 資料',
+    ),
+    buildArticleJsonLd(
+      '開放資料 API — 台銀牌告匯率 JSON 端點',
+      'RateWise 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。',
+      '/open-data/',
+      `${APP_INFO.copyrightStartYear}-01-01`,
+      {
+        articleSection: '開放資料',
+        keywords: ['開放資料', '匯率API', '台銀匯率', 'JSON', 'jsDelivr', 'GitHub'],
+        articleBody: `RateWise 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（每 5 分鐘更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
+      },
+    ),
+  ],
+} satisfies SEOPageMetadata;
+
 export const ABOUT_PAGE_FAQ = [
   {
     question: '匯率數據來源是什麼？',
@@ -695,8 +762,7 @@ export const ABOUT_PAGE_FAQ = [
   },
   {
     question: '如何聯絡開發者？',
-    answer:
-      '可透過 Email（haotool.org@gmail.com）聯繫，歡迎回饋意見或錯誤回報，也可在 GitHub（github.com/haotool/app）查看原始碼或提交 Issue。',
+    answer: `可透過 Email（${APP_INFO.email}）聯繫，歡迎回饋意見或錯誤回報，也可在 GitHub（${APP_INFO.github}）查看原始碼或提交 Issue。`,
   },
   {
     question: '匯差數字如何保持最新且讓搜尋引擎正確讀取？',
@@ -705,8 +771,7 @@ export const ABOUT_PAGE_FAQ = [
   },
   {
     question: '這個網站使用哪些結構化資料讓搜尋摘要顯示更豐富？',
-    answer:
-      '各頁面均部署 schema.org JSON-LD 結構化標記：WebSite（全站識別）、SoftwareApplication（評分與定價）、Organization（聯絡資訊）、FAQPage（問答摘要，含具體匯差數字）、HowTo（使用步驟）、BreadcrumbList（麵包屑導覽）、Article（內容頁）與 FinancialService（幣別頁金融服務標記），均符合 Google Rich Results 規範。sitemap.xml 包含 24 個 URL、hreflang 多語系標記與 OG 圖片登記，每次建置自動更新 lastmod。',
+    answer: `各頁面均部署 schema.org JSON-LD 結構化標記：WebSite（全站識別）、SoftwareApplication（評分與定價）、Organization（聯絡資訊）、FAQPage（問答摘要，含具體匯差數字）、HowTo（使用步驟）、BreadcrumbList（麵包屑導覽）、Article（內容頁）與 FinancialService（幣別頁金融服務標記），均符合 Google Rich Results 規範。sitemap.xml 包含 ${SEO_PATHS.length} 個 URL、hreflang 多語系標記與 OG 圖片登記，每次建置自動更新 lastmod。`,
   },
   {
     question: 'RateWise 是否支援 AI 搜尋引擎與 LLM 引用？',
@@ -717,7 +782,7 @@ export const ABOUT_PAGE_FAQ = [
 
 export const ABOUT_PAGE_SEO = {
   title: '關於 RateWise 匯率好工具 - 資料來源、技術架構與 SEO 透明度',
-  description: `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。採用 SSG 靜態預渲染、schema.org JSON-LD 結構化資料與每週自動更新匯差數據。`,
+  description: `RateWise 顯示台銀牌告實際買賣價（非中間價），支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、PWA 離線使用、SSG 靜態預渲染與 JSON-LD 結構化資料。`,
   pathname: '/about',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -811,6 +876,18 @@ export const SELL_RATE_VS_MID_RATE_PAGE = {
   ctaTitle: '直接用實際賣出價換算',
   ctaDescription:
     '回到首頁輸入金額，即可用臺灣銀行牌告的現金賣出或即期賣出估算更接近實際的換匯成本。',
+  jsonLd: buildArticleJsonLd(
+    '賣出價與中間價差在哪？為什麼換匯不能只看中間價',
+    '解析賣出價、中間價與實際換匯成本差異。RateWise 聚焦臺灣銀行牌告賣出價，協助台灣用戶在買外幣前估算更接近實際支付的台幣金額。',
+    '/sell-rate-vs-mid-rate/',
+    `${APP_INFO.copyrightStartYear}-01-01`,
+    {
+      articleSection: '匯率知識',
+      keywords: ['中間價', '賣出價', '買入價', '換匯成本', '台銀牌告', '匯率差異', '台幣換外幣'],
+      articleBody:
+        '中間價是買入與賣出的平均值，不等於銀行實際賣給你的價格。你拿台幣買外幣時，要看銀行賣出價；把外幣換回台幣時，要看買入價。RateWise 聚焦臺灣銀行牌告的賣出價，讓台灣用戶在換匯前就能估算更接近實際支付的台幣金額，避免因誤看中間價而低估換匯成本。',
+    },
+  ),
 } as const satisfies AuthorityGuideContent;
 
 export const CASH_VS_SPOT_RATE_PAGE = {
@@ -870,6 +947,18 @@ export const CASH_VS_SPOT_RATE_PAGE = {
   ],
   ctaTitle: '依情境切換正確匯率類型',
   ctaDescription: '回到首頁後可直接切換現金與即期匯率，比較同一筆金額在不同換匯方式下的成本差異。',
+  jsonLd: buildArticleJsonLd(
+    '現金匯率 vs 即期匯率：什麼情境該看哪一種',
+    '說明現金匯率與即期匯率差異，整理臨櫃換鈔、外幣帳戶、匯款與旅遊換匯情境，幫助你在 RateWise 正確選擇報價類型。',
+    '/cash-vs-spot-rate/',
+    `${APP_INFO.copyrightStartYear}-01-01`,
+    {
+      articleSection: '匯率知識',
+      keywords: ['現金匯率', '即期匯率', '現金賣出', '即期賣出', '換鈔', '外幣帳戶', '銀行手續費'],
+      articleBody:
+        '現金匯率對應實體鈔券交易，適用臨櫃換鈔；即期匯率對應帳戶轉換與電匯，成本通常較低。兩者差異源自現鈔的保管、運送與防偽成本。RateWise 在首頁同時顯示現金與即期四種報價，讓用戶依換匯情境選擇正確類型，避免誤用即期價估算現鈔成本而低估實際支出。',
+    },
+  ),
 } as const satisfies AuthorityGuideContent;
 
 export const CARD_RATE_GUIDE_PAGE = {
@@ -932,6 +1021,26 @@ export const CARD_RATE_GUIDE_PAGE = {
   ctaTitle: '先用牌告賣出價估算，再留意刷卡費用',
   ctaDescription:
     '回到首頁輸入金額，可先用台銀牌告價格抓基準，再把發卡銀行海外手續費納入最終預算判斷。',
+  jsonLd: buildArticleJsonLd(
+    '刷卡匯率怎麼看？台銀牌告、卡組織匯率與 DCC 一次搞懂',
+    '整理海外刷卡匯率的組成方式，說明 Visa、Mastercard 清算匯率、銀行海外手續費與 DCC 差異，幫助你正確理解 RateWise 與刷卡成本的關係。',
+    '/card-rate-guide/',
+    `${APP_INFO.copyrightStartYear}-01-01`,
+    {
+      articleSection: '匯率知識',
+      keywords: [
+        '刷卡匯率',
+        'DCC',
+        '動態貨幣轉換',
+        'Visa',
+        'Mastercard',
+        '海外手續費',
+        '卡組織匯率',
+      ],
+      articleBody:
+        '海外刷卡費用由三段構成：卡組織清算匯率、發卡銀行海外手續費，以及選擇 DCC 時的額外匯差。DCC 讓商家直接換成台幣結帳，看似方便，但匯率通常較差。建議選擇當地貨幣結帳，讓卡組織與銀行清算，成本通常優於 DCC。RateWise 的台銀牌告賣出價可作為估算與比較刷卡成本的基準參考。',
+    },
+  ),
 } as const satisfies AuthorityGuideContent;
 
 export const PRIVACY_PAGE_SEO = {
@@ -1218,7 +1327,7 @@ export function getCurrencyLandingPageContent(
     currencyFlag: definition.flag,
     currencyName: displayName,
     title: `即時${displayName}匯率 — 台銀實際賣出價 | ${code}/TWD`,
-    description: `台銀實際${displayName}賣出價（非中間價），換匯前先知道要付多少台幣。${override.question}每 5 分鐘更新，支援現金與即期匯率切換、計算機快速輸入。適合${override.region}。`,
+    description: `台銀實際${displayName}賣出價（非中間價），換匯前先知道要付多少台幣。每 5 分鐘更新，支援現金與即期匯率切換、計算機快速輸入。適合${override.region}。`,
     pathname,
     canonical: canonicalUrl,
     keywords: [

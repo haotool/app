@@ -33,6 +33,7 @@ export const CONTENT_SEO_PATHS = [
   '/sell-rate-vs-mid-rate/',
   '/cash-vs-spot-rate/',
   '/card-rate-guide/',
+  '/open-data/',
 ];
 
 /**
@@ -64,7 +65,7 @@ export const CURRENCY_SEO_PATHS = [
 ];
 
 /**
- * 公開可索引 SEO 路徑（24 個）
+ * 公開可索引 SEO 路徑（25 個）
  * 注意：LEGAL_SSG_PATHS（privacy noindex）不納入 sitemap
  */
 export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS];
