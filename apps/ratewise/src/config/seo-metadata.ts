@@ -1,5 +1,6 @@
 import { CURRENCY_DEFINITIONS, SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
 import { APP_INFO, SEO_SOCIAL_LINKS } from './app-info';
+import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from './generated/seo-rate-examples';
 import { SHARE_IMAGE, TWITTER_IMAGE, normalizeSiteUrl } from './seo-paths';
 
 export interface AlternateLink {
@@ -1101,6 +1102,16 @@ function formatAmount(amount: number): string {
   return amount.toLocaleString('zh-TW');
 }
 
+/** 根據每週更新的匯差數據，產生「換 N 單位多付 X 元台幣」的敘述句。 */
+function buildRateExampleSentence(code: string, displayName: string): string {
+  const ex = SEO_RATE_EXAMPLES[code];
+  if (!ex) return '換匯金額越大差距越明顯。';
+  const amtStr = formatAmount(ex.exampleAmount);
+  const refLabel = ex.refType === 'spot' ? '即期賣出價' : '中間參考價';
+  // 注意：數據每週更新（${SEO_RATE_EXAMPLES_DATE}），反映臺灣銀行最新牌告匯率。
+  return `以換 ${amtStr} ${displayName}為例，現金匯率比${refLabel}約貴 ${ex.diffTWD} 元台幣（約 ${ex.diffPct}%）；換匯金額越大差距越明顯。（數據每週依臺灣銀行牌告匯率更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
+}
+
 export function getCurrencyLandingPageContent(
   code: CurrencyLandingCode,
 ): CurrencyLandingPageContent {
@@ -1194,7 +1205,7 @@ export function getCurrencyLandingPageContent(
     faqEntries: [
       {
         question: `用其他 App 查${displayName}匯率為什麼跟 RateWise 不一樣？`,
-        answer: `多數匯率 App 顯示中間價（mid-rate），是買入與賣出的平均值，並非你實際換匯的價格。本工具顯示臺灣銀行牌告的「現金賣出」價——你拿台幣去銀行換${displayName}現鈔時，這才是真正要付的金額。中間價通常比實際賣出價優惠 1~3%，換匯金額越大差距越明顯。`,
+        answer: `多數匯率 App 顯示中間價（mid-rate），是買入與賣出的平均值，並非你實際換匯的價格。本工具顯示臺灣銀行牌告的「現金賣出」價——你拿台幣去銀行換${displayName}現鈔時，這才是真正要付的金額。${buildRateExampleSentence(code, displayName)}`,
       },
       {
         question: `${displayName}現金賣出和即期賣出有什麼差別？怎麼選？`,

@@ -6,6 +6,7 @@ import {
   buildDefaultAlternates,
   getCurrencyLandingPageContent,
 } from '../seo-metadata';
+import { SEO_RATE_EXAMPLES } from '../generated/seo-rate-examples';
 
 describe('SEO SSOT', () => {
   it('should keep indexable locales limited to the default locale', () => {
@@ -55,6 +56,33 @@ describe('SEO SSOT', () => {
       const { faqEntries } = getCurrencyLandingPageContent('JPY');
       const allAnswers = faqEntries.map((e) => e.answer).join('\n');
       expect(allAnswers).toMatch(/日圓|日幣/);
+    });
+  });
+
+  // 幣別頁 FAQ 應含具體台幣差距數字（來自 SEO_RATE_EXAMPLES）。
+  describe('currency page rate example in FAQ', () => {
+    const codesWithExamples = ['USD', 'JPY', 'EUR', 'GBP', 'KRW', 'THB'] as const;
+
+    it.each(codesWithExamples)('%s 頁 FAQ 應含具體 TWD 差距數字', (code) => {
+      const { faqEntries } = getCurrencyLandingPageContent(code);
+      const allAnswers = faqEntries.map((e) => e.answer).join('\n');
+      const ex = SEO_RATE_EXAMPLES[code as keyof typeof SEO_RATE_EXAMPLES];
+      // 確認 FAQ 包含計算出的差距數字。
+      expect(ex).toBeDefined();
+      expect(allAnswers).toContain(`${ex!.diffTWD} 元台幣`);
+    });
+
+    it('每幣別範例應使用該幣別顯示名稱，不混用其他幣別', () => {
+      const { faqEntries } = getCurrencyLandingPageContent('USD');
+      const answer = faqEntries[0]?.answer ?? '';
+      // 換 100 美金 → 應出現「美金」而非「日圓」。
+      expect(answer).toContain('美金');
+      expect(answer).not.toMatch(/日圓|日幣/);
+    });
+
+    it('SEO_RATE_EXAMPLES 應包含全部 17 幣別', () => {
+      const codes = Object.keys(SEO_RATE_EXAMPLES);
+      expect(codes.length).toBe(17);
     });
   });
 });
