@@ -45,15 +45,13 @@ const FALLBACK_RATES: Record<string, number> = {
 
 // ExchangeRateData 類型從 offlineStorage.ts 導入，確保類型一致性
 
-// CDN URLs
-// 策略：只使用 GitHub raw，避免 CDN 快取延遲
-// jsdelivr CDN 快取時間可達 12-24 小時，不適合即時匯率數據
-// GitHub raw 直接從 data 分支讀取，無快取，永遠最新
+// CDN URLs — 依序嘗試，前者失敗才落到後者。
+// [1] GitHub raw：無快取，永遠取到最新（data 分支每 5 分鐘更新一次）。主要來源。
+// [2] jsDelivr CDN：有 12-24h 快取，匯率可能略舊，但作為 GitHub raw 故障時的備援
+//     優於直接回落到硬編碼 FALLBACK_RATES。僅在前者回傳錯誤時才啟用。
 const CDN_URLS = [
-  // GitHub raw (主要) - 使用 data 分支，無快取，永遠最新
   'https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json',
-  // 備援策略：如需添加，建議使用支援 cache-busting 的 CDN
-  // 或考慮自建 Cloudflare Workers/Pages Functions 作為中間層
+  'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
 ];
 
 // 單次 CDN fetch 逾時上限。行動網路平均 RTT 約 200-500ms，8 秒足以涵蓋 3G 網路，同時防止無限等待。

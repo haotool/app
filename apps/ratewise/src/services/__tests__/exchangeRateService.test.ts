@@ -258,6 +258,25 @@ describe('exchangeRateService', () => {
       );
     });
 
+    it('第一個 CDN 失敗時自動落到第二個 CDN（jsDelivr fallback）', async () => {
+      // CDN #1（GitHub raw）失敗
+      (global.fetch as any)
+        .mockRejectedValueOnce(new Error('GitHub raw unavailable'))
+        // CDN #2（jsDelivr）成功
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockRateData,
+        });
+
+      const result = await getExchangeRates();
+
+      expect(result).toEqual(mockRateData);
+      expect(logger.logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('CDN #1 failed'),
+        expect.any(Object),
+      );
+    });
+
     it('所有 CDN 失敗時拋出錯誤訊息', async () => {
       (global.fetch as any).mockRejectedValue(new Error('Network timeout'));
 
@@ -356,8 +375,13 @@ describe('exchangeRateService', () => {
       vi.useFakeTimers();
 
       (global.fetch as any).mockImplementation((_: unknown, init?: RequestInit) => {
-        // 當 signal abort 時 reject（模擬 AbortController 中斷）
+        // 當 signal abort 時 reject（模擬 AbortController 中斷）。
+        // 若 signal 已中止（CDN fallback 嘗試第二條時），立即 reject 避免 Promise 懸掛。
         return new Promise((_, reject) => {
+          if (init?.signal?.aborted) {
+            reject(new DOMException('The user aborted a request.', 'AbortError'));
+            return;
+          }
           init?.signal?.addEventListener('abort', () => {
             reject(new DOMException('The user aborted a request.', 'AbortError'));
           });
