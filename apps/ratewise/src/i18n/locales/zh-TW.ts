@@ -140,6 +140,8 @@ const zhTW = {
     usageGuide: '使用指南',
     aboutUs: '關於我們',
     openSource: '開放原始碼',
+    privacyPolicy: '隱私權政策',
+    openDataApi: '開放資料 API',
   },
 
   // Styles
