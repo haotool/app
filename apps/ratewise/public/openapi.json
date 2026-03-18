@@ -43,7 +43,7 @@
   "servers": [
     {
       "url": "https://cdn.jsdelivr.net/gh/haotool/app@data",
-      "description": "CDN（jsDelivr）— 建議端點，全球 PoP 節點加速，適合 SDK 整合與一般查詢。注意：CDN 快取約 12 小時，若需確保取得當下最新匯率請改用 GitHub Raw 端點。"
+      "description": "CDN（jsDelivr）— 建議端點，全球 PoP 節點加速，支援 ETag 條件式請求（If-None-Match）省流量。GitHub Actions 每次推送後自動呼叫 jsDelivr Purge API，CDN 快取立即失效，實際新鮮度約 5 分鐘。"
     },
     {
       "url": "https://raw.githubusercontent.com/haotool/app/data",
