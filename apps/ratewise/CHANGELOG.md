@@ -1,5 +1,16 @@
 # @app/ratewise
 
+## 2.10.1
+
+### Patch Changes
+
+- 補充 ETag 條件式請求單元測試（TDD）：5 個新測試涵蓋 If-None-Match 發送、304 命中日誌、GitHub Raw 不發送標頭、ETag 存入快取；修正 CDN fallback 測試描述（jsDelivr 為 CDN_URLS[0]）
+- 6035df2: 修正 ETag 條件式請求的測試相容性：response.headers 改用 optional chaining，修正 getCachedEntry() 例外傳播邏輯，確保快取損毀時正確觸發 logger.warn
+- f29222b: 修正 ETag CORS 說明：jsDelivr 支援瀏覽器 ETag（Access-Control-Expose-Headers: \*），GitHub Raw 不支援
+- 718a2a7: 整合 jsDelivr Purge + ETag：jsDelivr 改為主要端點（GitHub Actions 每次推送後自動 Purge，實際新鮮度約 5 分鐘），支援 ETag 條件式請求省頻寬，GitHub Raw 降為備援
+- e555e19: 開放資料 API 最佳實踐更新：OpenAPI servers 排序改為 jsDelivr 優先、補充 CDN 快取策略說明、ETag 瀏覽器限制說明、FAQ 新增端點差異說明
+- ec5e9ca: Settings 頁補上「隱私權政策」與「開放資料 API」連結，三個語系同步新增翻譯 key
+
 ## 2.10.0
 
 ### Minor Changes

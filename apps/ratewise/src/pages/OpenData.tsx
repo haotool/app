@@ -23,16 +23,16 @@ const DATA_SOURCES = [
     note: '自動抓取台銀最新牌告，寫入 data 分支 JSON 檔案，確保資料即時性',
   },
   {
-    label: '主要 CDN',
+    label: '建議端點（CDN）',
     name: 'jsDelivr 全球加速',
     url: 'https://cdn.jsdelivr.net',
-    note: '建議使用端點：全球 PoP 節點加速，適合生產環境呼叫',
+    note: '全球 PoP 節點加速，無明確請求上限，支援 ETag 條件式請求（省頻寬）。每次 data 分支推送後自動 Purge，實際新鮮度約 5 分鐘',
   },
   {
-    label: '備援端點',
+    label: '備援端點（即時）',
     name: 'GitHub Raw',
     url: 'https://raw.githubusercontent.com',
-    note: '無快取，即時反映最新資料，適合需要最新資料或 CDN 不可用時',
+    note: '無快取，每次請求直接取得最新資料。未認證 IP 每小時 60 次請求限制，CDN 不可用時自動切換',
   },
 ];
 
@@ -63,17 +63,22 @@ const RATE_LIMIT_ITEMS = [
   {
     source: 'jsDelivr CDN',
     limit: '無明確請求上限',
-    note: '遵守 jsDelivr 服務條款，禁止爬蟲式大量歷史批次抓取',
+    note: '遵守 jsDelivr 服務條款；data 分支推送後自動 Purge，新鮮度約 5 分鐘；禁止爬蟲式大量歷史批次抓取',
   },
   {
     source: 'GitHub Raw',
     limit: '60 requests/hour（未認證）',
-    note: '超出限制時 HTTP 429，建議優先使用 CDN 端點',
+    note: '超出限制返回 HTTP 429；jsDelivr CDN 為主要端點，GitHub Raw 僅作備援自動切換',
   },
   {
     source: '資料更新頻率',
     limit: '每 5 分鐘一次',
-    note: '超過此頻率請求 latest.json 無意義，建議 client 端自行快取 5 分鐘',
+    note: '資料每 5 分鐘同步一次，建議 client 端自行快取 5 分鐘，避免無意義重複請求',
+  },
+  {
+    source: 'Client 端建議快取',
+    limit: '5 分鐘（TTL）',
+    note: '以 localStorage 或記憶體快取比對 timestamp，超過 5 分鐘才重新 fetch，節省頻寬',
   },
 ] as const;
 
@@ -368,6 +373,34 @@ const OpenData = () => {
                   <p className="mt-1 text-sm text-text-muted">{src.note}</p>
                 </div>
               ))}
+            </div>
+
+            {/* 快取策略說明 */}
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/40 dark:bg-amber-900/10">
+              <p className="mb-2 text-sm font-semibold text-amber-800 dark:text-amber-300">
+                📌 端點選擇與快取建議
+              </p>
+              <ul className="space-y-1 text-sm text-amber-700 dark:text-amber-400">
+                <li>
+                  <strong>一般用途（推薦）</strong>：jsDelivr CDN；GitHub Actions 在每次 data
+                  分支推送後自動呼叫 jsDelivr Purge API，CDN 快取立即失效，實際新鮮度約 5 分鐘，與
+                  GitHub Raw 相同，同時享有全球加速與無請求上限優勢。
+                </li>
+                <li>
+                  <strong>備援</strong>：CDN 不可用時自動切換至 GitHub Raw（無快取、每小時 60
+                  次請求上限）。
+                </li>
+                <li>
+                  <strong>Client 端快取</strong>：建議以 localStorage 快取 5 分鐘（與 GitHub Actions
+                  更新頻率一致），超過才重新 fetch，節省頻寬並避免打到速率限制。
+                </li>
+                <li>
+                  <strong>ETag 條件式請求（jsDelivr 支援）</strong>：jsDelivr 回應包含{' '}
+                  <code>Access-Control-Expose-Headers: *</code>，瀏覽器 fetch 可讀取 ETag，實作{' '}
+                  <code>If-None-Match</code> 讓未變更時回傳 304（body 為零），節省約 5 KB／次。
+                  GitHub Raw 無此 CORS 設定，瀏覽器端 ETag 不可用。
+                </li>
+              </ul>
             </div>
           </section>
 
