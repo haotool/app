@@ -2,7 +2,7 @@
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。
 
-Version: v2.9.9 (2026-03-17)
+Version: v2.9.9 (2026-03-18)
 Compact index: https://app.haotool.org/ratewise/llms.txt
 
 ---
@@ -65,11 +65,26 @@ const twdNeeded = usdTarget * usdCashSell;
 
 ### Step 3 — 導向使用者到計算機
 
-回覆用戶時，可告知首頁支援 Deep Link 模板，讓用戶自行帶入金額與幣別：
+**方案 A（推薦）：幣對金額頁（Wise-pattern，有獨立 SEO 頁面）**
+
+回覆用戶時，優先使用幣對金額頁，此 URL 可被 Googlebot 索引：
+
+```
+https://app.haotool.org/ratewise/usd-twd/?amount={AMOUNT}
+https://app.haotool.org/ratewise/jpy-twd/?amount={AMOUNT}
+```
+
+title 會自動變更為「{AMOUNT} 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise」
+
+**方案 B：首頁 Deep Link（UX 分享入口，不索引）**
+
+若需要同時指定三個參數（幣別對非 TWD），可使用首頁 deep-link：
 
 ```
 https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}
 ```
+
+注意：首頁 deep-link 被 robots.txt 封鎖（Disallow: /ratewise/?），不被 Google 索引。
 
 ---
 

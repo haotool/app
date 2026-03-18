@@ -2,7 +2,7 @@
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 18 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、3 語言介面與 PWA 離線使用。
 
-Version: v2.9.9 (2026-03-17)
+Version: v2.9.9 (2026-03-18)
 
 ## Answer Capsule (Quick Q&A)
 
@@ -46,12 +46,23 @@ Version: v2.9.9 (2026-03-17)
 - PWA 離線使用：Service Worker 快取，無網路仍可換算
 - 6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林）
 
+## 幣對金額頁（Wise-pattern 程序化 SEO，可被索引）
+
+幣對頁支援 `?amount=X` 參數，自動產生金額專屬 title / description / canonical，
+可被 Googlebot 索引（類 Wise.com 程序化 SEO）：
+
+- 格式：`/{pair}/?amount={AMOUNT}`（例如：https://app.haotool.org/ratewise/usd-twd/?amount=500）
+- title 範例：「500 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise」
+- canonical：自引用含 ?amount=，告知 Google 此 URL 可被索引
+- robots.txt：`Disallow: /ratewise/?` 只封鎖首頁 deep-link，幣對頁 `/usd-twd/?amount=` 不受影響
+
 ## URL Parameters (Deep Linking)
 
 支援 URL 查詢參數自動帶入換算，適合 LLM 與內部工具帶入首頁狀態：
 
 - 格式：`?amount={AMOUNT}&from={FROM}&to={TO}`
 - 用途：自動帶入首頁換算器，不建立獨立索引頁
+- 注意：首頁 deep-link 被 robots.txt 封鎖（不索引）；幣對頁 `?amount=` 則可索引
 
 ## Core Pages
 
