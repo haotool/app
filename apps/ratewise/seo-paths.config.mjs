@@ -184,6 +184,25 @@ export const SITE_CONFIG = {
 };
 
 /**
+ * 匯率資料 CDN 端點 - 單一真實來源 (SSOT)
+ *
+ * 使用位置（.mjs scripts，無法 import TypeScript 的 api-endpoints.ts）：
+ * - scripts/generate-api-json.mjs
+ * - scripts/generate-pair-json.mjs
+ * - scripts/generate-openapi.mjs
+ *
+ * TypeScript src 使用 src/config/api-endpoints.ts（值相同，型別更完整）。
+ */
+const GITHUB_REPO = 'haotool/app';
+const DATA_BRANCH = 'data';
+
+/** GitHub Raw 資料根路徑（無快取，永遠最新）*/
+export const RAW_DATA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO}/${DATA_BRANCH}`;
+
+/** jsDelivr CDN 資料根路徑（12-24h 快取，備援用）*/
+export const CDN_DATA_BASE = `https://cdn.jsdelivr.net/gh/${GITHUB_REPO}@${DATA_BRANCH}`;
+
+/**
  * 統一應用配置 - 單一真實來源 (SSOT)
  */
 export const APP_CONFIG = {

@@ -58,7 +58,9 @@ const CDN_URLS = {
 const IS_LHCI_OFFLINE = import.meta.env['VITE_LHCI_OFFLINE'] === 'true';
 
 /**
- * 為 Lighthouse / CI 提供離線固定匯率，避免 404 造成 console error
+ * 為 Lighthouse / CI 提供離線固定匯率，避免 404 造成 console error。
+ * 數值取自 2025-01 台銀牌告，與 exchangeRateService.ts 的 FALLBACK_RATES 時間點不同（差異 ~1-2%）。
+ * 此為 CI/LH mock，不影響生產 fallback；若需同步請更新兩者並記錄日期。
  */
 const LHCI_BASE_RATES: RateSnapshot = {
   updateTime: '2025-01-01T00:00:00Z',

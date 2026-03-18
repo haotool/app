@@ -9,15 +9,15 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SITE_CONFIG } from '../seo-paths.config.mjs';
+import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 
-const DATA_BASE_URL = 'https://raw.githubusercontent.com/haotool/app/data/public/rates';
-const CDN_BASE_URL = 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates';
+const DATA_BASE_URL = `${RAW_DATA_BASE}/public/rates`;
+const CDN_BASE_URL = `${CDN_DATA_BASE}/public/rates`;
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');

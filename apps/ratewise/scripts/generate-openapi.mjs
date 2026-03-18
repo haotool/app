@@ -9,7 +9,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SITE_CONFIG } from '../seo-paths.config.mjs';
+import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -184,11 +184,11 @@ const openApiSpec = {
   },
   servers: [
     {
-      url: 'https://raw.githubusercontent.com/haotool/app/data',
+      url: RAW_DATA_BASE,
       description: 'GitHub Raw — 主要端點，無快取，每 5 分鐘同步最新匯率',
     },
     {
-      url: 'https://cdn.jsdelivr.net/gh/haotool/app@data',
+      url: CDN_DATA_BASE,
       description: 'CDN（jsDelivr）— 備援端點，注意：CDN 快取最長 24 小時，不適合即時匯率查詢',
     },
   ],
@@ -256,8 +256,7 @@ const openApiSpec = {
                       type: 'string',
                       format: 'uri',
                       description: '即時匯率 JSON 來源（CDN）',
-                      example:
-                        'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
+                      example: `${CDN_DATA_BASE}/public/rates/latest.json`,
                     },
                     rateFieldPath: {
                       type: 'string',

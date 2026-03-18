@@ -13,13 +13,13 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CURRENCY_SEO_PATHS, SITE_CONFIG } from '../seo-paths.config.mjs';
+import { CURRENCY_SEO_PATHS, SITE_CONFIG, RAW_DATA_BASE } from '../seo-paths.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
 // GitHub raw 無快取，確保 liveRateUrl 指向真正即時資料（jsdelivr 有 12-24h 快取延遲，不適合用於 liveRateUrl）
-const CDN_BASE_URL = 'https://raw.githubusercontent.com/haotool/app/data/public/rates';
+const CDN_BASE_URL = `${RAW_DATA_BASE}/public/rates`;
 
 const RATE_TYPE_DESCRIPTIONS = {
   cash_sell: '現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）',
