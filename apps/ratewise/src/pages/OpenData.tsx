@@ -394,8 +394,10 @@ const OpenData = () => {
                   更新頻率一致），超過才重新 fetch，節省頻寬並避免打到速率限制。
                 </li>
                 <li>
-                  <strong>ETag / 條件式請求</strong>：瀏覽器 fetch 無法使用 ETag 省流量，因 GitHub
-                  Raw 的 CORS 標頭未暴露 ETag，此功能在瀏覽器環境不可行。
+                  <strong>ETag 條件式請求（jsDelivr 支援）</strong>：jsDelivr 回應包含{' '}
+                  <code>Access-Control-Expose-Headers: *</code>，瀏覽器 fetch 可讀取 ETag， 實作{' '}
+                  <code>If-None-Match</code> 讓未變更時回傳 304（body 為零），節省約 5 KB／次。
+                  GitHub Raw 無此 CORS 設定，瀏覽器端 ETag 不可用。
                 </li>
               </ul>
             </div>

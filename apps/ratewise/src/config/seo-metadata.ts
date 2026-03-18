@@ -688,7 +688,7 @@ export const OPEN_DATA_PAGE_FAQ = [
   },
   {
     question: 'jsDelivr CDN 和 GitHub Raw 端點有何差異？',
-    answer: `jsDelivr CDN（建議）：全球 PoP 節點加速，快取約 12 小時，無明確請求上限，適合生產環境與 SDK 整合。GitHub Raw（進階）：無快取，每次請求直接取得最新版本，但未認證 IP 每小時限 60 次請求，適合需確保即時性的場景。`,
+    answer: `jsDelivr CDN（建議）：全球 PoP 節點加速，快取約 12 小時，無明確請求上限，且支援 ETag 條件式請求（瀏覽器可讀取 ETag，實作 If-None-Match 省流量）。GitHub Raw（進階）：無快取，每次請求直接取得最新版本，但每小時限 60 次請求，且 CORS 不暴露 ETag，瀏覽器端無法使用條件式請求。`,
   },
   {
     question: '有備援端點嗎？',
