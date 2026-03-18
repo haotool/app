@@ -83,16 +83,12 @@ interface FetchResult {
 }
 
 /**
- * 讀取完整快取條目（含 ETag）
+ * 讀取完整快取條目（含 ETag）；不捕獲例外，由呼叫端決定錯誤處理方式。
  */
 function getCachedEntry(): CachedData | null {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as CachedData;
-  } catch {
-    return null;
-  }
+  const raw = localStorage.getItem(CACHE_KEY);
+  if (!raw) return null;
+  return JSON.parse(raw) as CachedData; // 可能拋出 SyntaxError
 }
 
 /**
@@ -104,24 +100,29 @@ function getCachedEntry(): CachedData | null {
  * - 只有成功獲取新數據時才覆蓋舊快取
  */
 function getFromCache(): ExchangeRateData | null {
-  const entry = getCachedEntry();
-  if (!entry) {
-    logger.debug('No cache found');
+  try {
+    const entry = getCachedEntry();
+    if (!entry) {
+      logger.debug('No cache found');
+      return null;
+    }
+
+    const ageMs = Date.now() - entry.timestamp;
+    const ageMinutes = Math.floor(ageMs / (60 * 1000));
+
+    if (ageMs > CACHE_DURATION) {
+      logger.debug(
+        `Cache expired: ${ageMinutes} minutes old (limit: ${CACHE_DURATION / 60000} minutes)`,
+      );
+      return null;
+    }
+
+    logger.debug(`Cache valid: ${ageMinutes} minutes old, updateTime: ${entry.data.updateTime}`);
+    return entry.data;
+  } catch (error) {
+    logger.warn('Failed to read from cache', { error });
     return null;
   }
-
-  const ageMs = Date.now() - entry.timestamp;
-  const ageMinutes = Math.floor(ageMs / (60 * 1000));
-
-  if (ageMs > CACHE_DURATION) {
-    logger.debug(
-      `Cache expired: ${ageMinutes} minutes old (limit: ${CACHE_DURATION / 60000} minutes)`,
-    );
-    return null;
-  }
-
-  logger.debug(`Cache valid: ${ageMinutes} minutes old, updateTime: ${entry.data.updateTime}`);
-  return entry.data;
 }
 
 /**
@@ -209,7 +210,7 @@ async function fetchFromCDN(signal?: AbortSignal): Promise<FetchResult> {
       }
 
       // 讀取 ETag（jsDelivr 透過 Access-Control-Expose-Headers: * 暴露；GitHub Raw 回傳 null）。
-      const newETag = response.headers.get('etag') ?? undefined;
+      const newETag = response.headers?.get('etag') ?? undefined;
 
       const elapsed = Date.now() - startTime;
       logger.info(`Fetched rates from CDN #${i + 1}`, {
@@ -262,16 +263,20 @@ function isOnline(): boolean {
 /**
  * 嘗試讀取任何可用的快取（包括過期的）
  *
- * 用於離線模式或網路請求失敗時的備援
+ * 用於離線模式或網路請求失敗時的備援；靜默吞噬例外（損壞快取不影響備援流程）。
  */
 function getAnyCachedData(): ExchangeRateData | null {
-  const entry = getCachedEntry();
-  if (entry) {
-    const ageMinutes = Math.floor((Date.now() - entry.timestamp) / (60 * 1000));
-    logger.debug(`Found cached data (${ageMinutes} minutes old)`, {
-      updateTime: entry.data.updateTime,
-    });
-    return entry.data;
+  try {
+    const entry = getCachedEntry();
+    if (entry) {
+      const ageMinutes = Math.floor((Date.now() - entry.timestamp) / (60 * 1000));
+      logger.debug(`Found cached data (${ageMinutes} minutes old)`, {
+        updateTime: entry.data.updateTime,
+      });
+      return entry.data;
+    }
+  } catch {
+    // 損壞快取：靜默忽略，避免阻斷備援流程
   }
   return null;
 }
