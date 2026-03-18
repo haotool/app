@@ -9,6 +9,7 @@
 import { logger } from '../utils/logger';
 import { fetchWithRequestId } from '../utils/requestId';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
+import { RATES_API } from '../config/api-endpoints';
 import {
   saveExchangeRatesToIDB,
   getExchangeRatesFromIDBWithStaleness,
@@ -49,10 +50,8 @@ const FALLBACK_RATES: Record<string, number> = {
 // [1] GitHub raw：無快取，永遠取到最新（data 分支每 5 分鐘更新一次）。主要來源。
 // [2] jsDelivr CDN：有 12-24h 快取，匯率可能略舊，但作為 GitHub raw 故障時的備援
 //     優於直接回落到硬編碼 FALLBACK_RATES。僅在前者回傳錯誤時才啟用。
-const CDN_URLS = [
-  'https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json',
-  'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
-];
+// URL 從 api-endpoints.ts 統一管理，此處不硬編碼。
+const CDN_URLS = [RATES_API.latestRaw, RATES_API.latestCdn];
 
 // 單次 CDN fetch 逾時上限。行動網路平均 RTT 約 200-500ms，8 秒足以涵蓋 3G 網路，同時防止無限等待。
 export const FETCH_TIMEOUT_MS = 8_000;

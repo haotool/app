@@ -7,9 +7,9 @@
  * - 提供最多 30 天的歷史資料
  * - 支援未來趨勢圖功能
  *
- * CDN 來源：
- * - Latest: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
- * - History: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/YYYY-MM-DD.json
+ * CDN 來源（見 src/config/api-endpoints.ts）：
+ * - Latest: RAW_DATA_BASE（GitHub raw，無快取）
+ * - History: CDN_DATA_BASE（jsDelivr 優先） + RAW_DATA_BASE（備援）
  *
  * @author GitHub Actions Bot
  * @created 2025-10-13T22:59:32+08:00
@@ -19,11 +19,13 @@
 import { logger } from '../utils/logger';
 import { fetchWithRequestId } from '../utils/requestId';
 import type { CurrencyCode } from '../features/ratewise/types';
+import { CDN_DATA_BASE, RAW_DATA_BASE, RATES_API } from '../config/api-endpoints';
 
 /**
- * 匯率資料結構
+ * 歷史服務專用的精簡匯率快照型別。
+ * 只包含趨勢圖需要的欄位；完整型別請見 offlineStorage.ts 的 RateSnapshot。
  */
-export interface ExchangeRateData {
+export interface RateSnapshot {
   updateTime: string;
   source: string;
   rates: Record<CurrencyCode, number | null>;
@@ -34,7 +36,7 @@ export interface ExchangeRateData {
  */
 export interface HistoricalRateData {
   date: string;
-  data: ExchangeRateData;
+  data: RateSnapshot;
 }
 
 /**
@@ -43,16 +45,13 @@ export interface HistoricalRateData {
  * 策略:
  * - latest.json: 只使用 GitHub raw，確保匯率即時性（避免 CDN 快取延遲）
  * - history/*.json: CDN 優先，歷史數據不變，可安全快取
+ * URL 從 api-endpoints.ts 統一管理，此處不硬編碼。
  */
 const CDN_URLS = {
-  latest: [
-    // 只使用 GitHub raw，確保最新匯率即時性
-    'https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json',
-  ],
+  latest: [RATES_API.latestRaw],
   history: (date: string) => [
-    // 歷史數據使用 CDN 優先（快取合理，因為數據不變）
-    `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/${date}.json`,
-    `https://raw.githubusercontent.com/haotool/app/data/public/rates/history/${date}.json`,
+    `${CDN_DATA_BASE}/public/rates/history/${date}.json`,
+    `${RAW_DATA_BASE}/public/rates/history/${date}.json`,
   ],
 };
 
@@ -61,7 +60,7 @@ const IS_LHCI_OFFLINE = import.meta.env['VITE_LHCI_OFFLINE'] === 'true';
 /**
  * 為 Lighthouse / CI 提供離線固定匯率，避免 404 造成 console error
  */
-const LHCI_BASE_RATES: ExchangeRateData = {
+const LHCI_BASE_RATES: RateSnapshot = {
   updateTime: '2025-01-01T00:00:00Z',
   source: 'LHCI-MOCK',
   rates: {
@@ -86,7 +85,7 @@ const LHCI_BASE_RATES: ExchangeRateData = {
   },
 };
 
-function buildLhciMockRates(date: Date): ExchangeRateData {
+function buildLhciMockRates(date: Date): RateSnapshot {
   const dateStr = formatDate(date);
   return {
     ...LHCI_BASE_RATES,
@@ -121,7 +120,7 @@ const cache = new Map<string, { data: unknown; timestamp: number }>();
 interface StorageHistoryCache {
   version: number;
   lastUpdated: number;
-  rates: Record<string, { data: ExchangeRateData; timestamp: number }>;
+  rates: Record<string, { data: RateSnapshot; timestamp: number }>;
 }
 
 /** 從 localStorage 讀取歷史快取 */
@@ -137,7 +136,7 @@ function getStorageCache(): StorageHistoryCache | null {
 }
 
 /** 儲存歷史數據到 localStorage */
-function saveToStorageCache(dateKey: string, data: ExchangeRateData): void {
+function saveToStorageCache(dateKey: string, data: RateSnapshot): void {
   try {
     if (typeof localStorage === 'undefined') return;
 
@@ -168,7 +167,7 @@ function saveToStorageCache(dateKey: string, data: ExchangeRateData): void {
 }
 
 /** 從 localStorage 讀取指定日期的歷史數據 */
-function getFromStorageCache(dateKey: string): ExchangeRateData | null {
+function getFromStorageCache(dateKey: string): RateSnapshot | null {
   const cache = getStorageCache();
   if (!cache) return null;
 
@@ -294,7 +293,7 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
         continue;
       }
 
-      const data = (await response.json()) as ExchangeRateData;
+      const data = (await response.json()) as RateSnapshot;
 
       // 存入記憶體快取
       saveToCache(cacheKey, data);
@@ -327,14 +326,14 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
 /**
  * 獲取最新匯率
  */
-export async function fetchLatestRates(): Promise<ExchangeRateData> {
+export async function fetchLatestRates(): Promise<RateSnapshot> {
   if (IS_LHCI_OFFLINE) {
     // CI / Lighthouse 模式使用固定匯率，避免外部 404 造成 console error
     return buildLhciMockRates(new Date());
   }
 
   try {
-    const data = await fetchWithFallback<ExchangeRateData>(
+    const data = await fetchWithFallback<RateSnapshot>(
       CDN_URLS.latest,
       `${CACHE_KEY_PREFIX}-latest`,
     );
@@ -356,7 +355,7 @@ export async function fetchLatestRates(): Promise<ExchangeRateData> {
 /**
  * 獲取指定日期的歷史匯率
  */
-export async function fetchHistoricalRates(date: Date): Promise<ExchangeRateData> {
+export async function fetchHistoricalRates(date: Date): Promise<RateSnapshot> {
   if (IS_LHCI_OFFLINE) {
     return buildLhciMockRates(date);
   }
@@ -364,7 +363,7 @@ export async function fetchHistoricalRates(date: Date): Promise<ExchangeRateData
   const dateStr = formatDate(date);
 
   try {
-    const data = await fetchWithFallback<ExchangeRateData>(
+    const data = await fetchWithFallback<RateSnapshot>(
       CDN_URLS.history(dateStr),
       `${CACHE_KEY_PREFIX}-${dateStr}`,
     );
