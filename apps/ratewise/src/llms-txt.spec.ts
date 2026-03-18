@@ -64,6 +64,7 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
 
     const currencyUrlPattern = /https:\/\/app\.haotool\.org\/ratewise\/[a-z]{3}-twd\//g;
     const matches = content.match(currencyUrlPattern);
-    expect(matches).toHaveLength(17);
+    // 至少 17 個幣對頁 URL（Popular Rates）；llms.txt 範例段落可能含額外 usd-twd/ 實例。
+    expect(matches?.length ?? 0).toBeGreaterThanOrEqual(17);
   });
 });
