@@ -684,11 +684,15 @@ export const GUIDE_PAGE_SEO = {
 export const OPEN_DATA_PAGE_FAQ = [
   {
     question: '如何取得最新匯率資料？',
-    answer: `直接 GET \`${RATES_API.latestCdn}\`，無需 API Key。回傳 JSON 包含 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金買入、現金賣出、即期買入、即期賣出四種報價。`,
+    answer: `直接 GET \`${RATES_API.latestCdn}\`，無需 API Key。回傳 JSON 包含 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金買入、現金賣出、即期買入、即期賣出四種報價。建議 client 端自行快取 5 分鐘，與資料更新頻率一致，避免無意義重複請求。`,
+  },
+  {
+    question: 'jsDelivr CDN 和 GitHub Raw 端點有何差異？',
+    answer: `jsDelivr CDN（建議）：全球 PoP 節點加速，快取約 12 小時，無明確請求上限，適合生產環境與 SDK 整合。GitHub Raw（進階）：無快取，每次請求直接取得最新版本，但未認證 IP 每小時限 60 次請求，適合需確保即時性的場景。`,
   },
   {
     question: '有備援端點嗎？',
-    answer: `有。GitHub Raw 端點 \`${RATES_API.latestRaw}\` 為備援，無快取，回傳最新資料，適合 CDN 不可用時。`,
+    answer: `有。GitHub Raw 端點 \`${RATES_API.latestRaw}\` 為進階端點，無快取，每次請求直接取得最新資料，適合需要確保即時性或 CDN 不可用時。注意未認證 IP 每小時限 60 次請求。`,
   },
   {
     question: '如何查詢歷史匯率？',

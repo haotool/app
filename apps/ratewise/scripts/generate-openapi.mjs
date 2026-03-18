@@ -184,12 +184,16 @@ const openApiSpec = {
   },
   servers: [
     {
-      url: RAW_DATA_BASE,
-      description: 'GitHub Raw — 主要端點，無快取，每 5 分鐘同步最新匯率',
+      url: CDN_DATA_BASE,
+      description:
+        'CDN（jsDelivr）— 建議端點，全球 PoP 節點加速，適合 SDK 整合與一般查詢。' +
+        '注意：CDN 快取約 12 小時，若需確保取得當下最新匯率請改用 GitHub Raw 端點。',
     },
     {
-      url: CDN_DATA_BASE,
-      description: 'CDN（jsDelivr）— 備援端點，注意：CDN 快取最長 24 小時，不適合即時匯率查詢',
+      url: RAW_DATA_BASE,
+      description:
+        'GitHub Raw — 無快取端點，每次請求直接取得 data 分支最新版本（每 5 分鐘由 GitHub Actions 同步）。' +
+        '適合需要確保即時性的場景，但注意 GitHub 對未認證 IP 有速率限制（60 req/hr/IP）。',
     },
   ],
   paths: {
