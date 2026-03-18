@@ -140,6 +140,8 @@ const ja = {
     usageGuide: 'ご利用ガイド',
     aboutUs: '私たちについて',
     openSource: 'オープンソース',
+    privacyPolicy: 'プライバシーポリシー',
+    openDataApi: 'オープンデータ API',
   },
 
   // Styles

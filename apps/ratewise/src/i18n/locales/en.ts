@@ -141,6 +141,8 @@ const en = {
     usageGuide: 'Usage Guide',
     aboutUs: 'About Us',
     openSource: 'Open Source',
+    privacyPolicy: 'Privacy Policy',
+    openDataApi: 'Open Data API',
   },
 
   // Styles
