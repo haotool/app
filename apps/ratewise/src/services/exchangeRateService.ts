@@ -361,19 +361,3 @@ export function clearExchangeRateCache(): void {
   localStorage.removeItem(CACHE_KEY);
   logger.debug('Exchange rate cache cleared');
 }
-
-/**
- * 轉換匯率資料為應用程式使用的格式
- * 從台灣銀行的即期買入價轉換為應用需要的匯率
- */
-export function transformRates(data: ExchangeRateData): Record<string, number> {
-  const transformed: Record<string, number> = {};
-
-  // 台灣銀行的匯率是 1 外幣 = X 台幣
-  // 但我們的應用需要 1 台幣 = X 外幣
-  Object.entries(data.rates).forEach(([code, rate]) => {
-    transformed[code] = 1 / rate; // 轉換為 TWD 基準
-  });
-
-  return transformed;
-}

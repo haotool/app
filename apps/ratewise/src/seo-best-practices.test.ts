@@ -683,7 +683,10 @@ describeIfPairsGenerated('📦 Pair JSON API Endpoints (requires prebuild)', () 
       expect(content.to, `${pair}: missing to`).toBe('TWD');
       expect(content.slug, `${pair}: missing slug`).toBe(pair);
       expect(content.pageUrl, `${pair}: missing pageUrl`).toContain(`/${pair}/`);
-      expect(content.liveRateUrl, `${pair}: missing liveRateUrl`).toContain('cdn.jsdelivr.net');
+      // liveRateUrl 必須指向 GitHub raw（無快取），不使用 jsdelivr（12-24h 快取，不適合即時匯率）
+      expect(content.liveRateUrl, `${pair}: missing liveRateUrl`).toContain(
+        'raw.githubusercontent.com',
+      );
       expect(content.source, `${pair}: missing source`).toContain('臺灣銀行');
     }
   });

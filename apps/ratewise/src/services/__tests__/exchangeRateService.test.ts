@@ -14,12 +14,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  getExchangeRates,
-  clearExchangeRateCache,
-  transformRates,
-  FETCH_TIMEOUT_MS,
-} from '../exchangeRateService';
+import { getExchangeRates, clearExchangeRateCache, FETCH_TIMEOUT_MS } from '../exchangeRateService';
 import * as logger from '../../utils/logger';
 
 // ===== Mock Setup =====
@@ -394,59 +389,6 @@ describe('exchangeRateService', () => {
 
     it('快取不存在時也不拋出錯誤', () => {
       expect(() => clearExchangeRateCache()).not.toThrow();
-    });
-  });
-
-  describe('transformRates', () => {
-    it('轉換台灣銀行匯率為應用格式', () => {
-      const transformed = transformRates(mockRateData);
-
-      // ✅ 1 TWD = 1/30.5 USD
-      expect(transformed['USD']).toBeCloseTo(1 / 30.5, 5);
-      expect(transformed['EUR']).toBeCloseTo(1 / 33.2, 5);
-      expect(transformed['JPY']).toBeCloseTo(1 / 0.21, 5);
-    });
-
-    it('處理空的 rates 物件', () => {
-      const emptyData = { ...mockRateData, rates: {} };
-
-      const transformed = transformRates(emptyData);
-
-      expect(transformed).toEqual({});
-    });
-
-    it('處理單一貨幣', () => {
-      const singleRateData = {
-        ...mockRateData,
-        rates: { USD: 30.5 },
-      };
-
-      const transformed = transformRates(singleRateData);
-
-      expect(Object.keys(transformed)).toHaveLength(1);
-      expect(transformed['USD']).toBeCloseTo(1 / 30.5, 5);
-    });
-
-    it('處理極小匯率值', () => {
-      const smallRateData = {
-        ...mockRateData,
-        rates: { JPY: 0.001 },
-      };
-
-      const transformed = transformRates(smallRateData);
-
-      expect(transformed['JPY']).toBe(1000); // 1 / 0.001 = 1000
-    });
-
-    it('處理極大匯率值', () => {
-      const largeRateData = {
-        ...mockRateData,
-        rates: { ZAR: 1000 },
-      };
-
-      const transformed = transformRates(largeRateData);
-
-      expect(transformed['ZAR']).toBe(0.001); // 1 / 1000 = 0.001
     });
   });
 

@@ -4,7 +4,7 @@
   "to": "TWD",
   "slug": "gbp-twd",
   "pageUrl": "https://app.haotool.org/ratewise/gbp-twd/",
-  "liveRateUrl": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json",
+  "liveRateUrl": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
   "rateFieldPath": "details.GBP",
   "source": "臺灣銀行牌告匯率",
   "sourceUrl": "https://rate.bot.com.tw/xrt",

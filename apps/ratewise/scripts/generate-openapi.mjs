@@ -184,12 +184,12 @@ const openApiSpec = {
   },
   servers: [
     {
-      url: 'https://cdn.jsdelivr.net/gh/haotool/app@data',
-      description: 'CDN（jsDelivr）— 建議使用，全球加速，每 5 分鐘更新',
+      url: 'https://raw.githubusercontent.com/haotool/app/data',
+      description: 'GitHub Raw — 主要端點，無快取，每 5 分鐘同步最新匯率',
     },
     {
-      url: 'https://raw.githubusercontent.com/haotool/app/data',
-      description: 'GitHub Raw — 備援端點',
+      url: 'https://cdn.jsdelivr.net/gh/haotool/app@data',
+      description: 'CDN（jsDelivr）— 備援端點，注意：CDN 快取最長 24 小時，不適合即時匯率查詢',
     },
   ],
   paths: {
