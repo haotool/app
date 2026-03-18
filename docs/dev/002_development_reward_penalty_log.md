@@ -1,8 +1,267 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-16T14:55:00+08:00
-> **當前總分**: 1185（初始分: 100）
+> **最後更新**: 2026-03-18T02:14:00+08:00
+> **當前總分**: 1196（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-seo-audit-lastmod-contract-sync
+date: 2026-03-18
+title: RateWise 同步 SEO Audit sitemap 驗證契約到 W3C Datetime
+score: +1
+type: test
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, ci, sitemap, lastmod, github-actions]
+keywords: [verify-sitemap-2025, SEO audit, W3C Datetime, YYYY-MM-DD, CI failure]
+aliases: [SEO audit lastmod 同步, sitemap CI 契約修正]
+related_entries: [ratewise-sitemap-lastmod-date-granularity, ratewise-sitemap-lastmod-test-contract-sync]
+summary: GitHub Actions 的 `SEO 2025 Standards Audit` 仍把 `lastmod` 視為必須帶時間與時區的完整 timestamp，導致合法的 `YYYY-MM-DD` sitemap 被誤判失敗。此次將 CI 驗證腳本同步到 W3C Datetime 契約，接受 date-only 與完整 timestamp 兩種合法格式。
+root_cause:
+
+- `scripts/verify-sitemap-2025.mjs` 保留舊的 ISO 8601 + timezone regex，未跟上 sitemap 生成器改為 date-only 的設計
+- CI workflow 執行 `seo-full-audit.mjs` 時會 transitively 呼叫這支腳本，因此 PR checks 直接失敗
+  impact:
+
+- `SEO 2025 Standards Audit` 在 GitHub Actions 對全部 25 個 URL 報 `lastmod 格式錯誤`
+- 合法 sitemap 被 CI 誤擋，造成 reviewer 與作者對規格理解分裂
+  actions:
+
+- `verify-sitemap-2025.mjs` 改為接受 W3C Datetime，允許 `YYYY-MM-DD` 與完整 timestamp
+- 加入 date-only 解析正規化，統一用 `T00:00:00Z` 做時間合理性比較
+- 本地重跑 `verify-sitemap-2025.mjs` 與 `seo-full-audit.mjs` 確認轉綠
+  prevention:
+
+- 凡是 sitemap / structured data 契約調整，必須同步檢查 generator、unit test、audit script、CI workflow 四個層面
+- 對 protocol 驗證腳本，應以官方規格允許範圍為準，不要把單一實作格式誤升級成唯一標準
+  verification:
+
+- `node scripts/verify-sitemap-2025.mjs`
+- `node scripts/seo-full-audit.mjs`
+  references:
+
+- scripts/verify-sitemap-2025.mjs
+- scripts/seo-full-audit.mjs
+- https://www.sitemaps.org/protocol.html
+- https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
+
+---
+
+id: ratewise-sitemap-lastmod-test-contract-sync
+date: 2026-03-18
+title: RateWise 同步 SEO best practices 測試契約到 date-only lastmod
+score: +1
+type: test
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, sitemap, lastmod, vitest, contract-test]
+keywords: [seo-best-practices, lastmod regex, W3C date, contract sync, pre-push]
+aliases: [lastmod 測試契約同步, sitemap date-only test sync]
+related_entries: [ratewise-sitemap-lastmod-date-granularity]
+summary: `seo-best-practices.test.ts` 仍把 sitemap `lastmod` 寫死為完整 UTC timestamp，與新的 date-only sitemap 契約衝突，導致 pre-push 卡住。此次將測試同步收斂到 W3C 日期格式，讓最佳實踐、產物與測試三者一致。
+root_cause:
+
+- `scripts/__tests__/sitemap-2025.test.ts` 已更新，但 `apps/ratewise/src/seo-best-practices.test.ts` 仍保留舊的秒級 regex
+- 這類跨檔契約變更若只修單一測試，容易在完整 repo 驗證階段才暴露落差
+  impact:
+
+- `pnpm -r test` 在 `@app/ratewise` 會因 regex 過時而失敗，阻擋 push
+- 若未同步，會讓 reviewer 誤以為 date-only sitemap 違反 SEO best practice
+  actions:
+
+- 將 `seo-best-practices.test.ts` 的 `lastmod` 斷言改為 `YYYY-MM-DD`
+- 重新驗證 `seo-best-practices.test.ts` 與 `scripts/__tests__/sitemap-2025.test.ts`
+  prevention:
+
+- 對同一 SEO 契約若同時存在 unit test、script test、dist/assertion test，修改格式時必須用 `rg` 全域搜尋舊斷言
+- pre-push 前優先重跑受影響的最佳實踐測試，而不是只跑最近編輯的 script test
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/seo-best-practices.test.ts`
+- `pnpm exec vitest run scripts/__tests__/sitemap-2025.test.ts`
+  references:
+
+- apps/ratewise/src/seo-best-practices.test.ts
+- scripts/**tests**/sitemap-2025.test.ts
+
+---
+
+id: ratewise-sitemap-lastmod-date-granularity
+date: 2026-03-18
+title: RateWise 將 sitemap lastmod 收斂到日期粒度，消除 commit 後產物漂移
+score: +2
+type: bugfix
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, sitemap, lastmod, build, git, tdd]
+keywords: [lastmod date only, W3C Datetime, commit drift, sitemap stability, tracked artifact]
+aliases: [sitemap 漂移修復, lastmod 日期粒度]
+related_entries: [ratewise-open-data-basename-lastmod-followup, ratewise-seo-title-truthfulness-lastmod-tdd]
+summary: 針對 `git commit time` 版 `lastmod` 在 commit 完成後會立刻讓 `public/sitemap.xml` 再次變髒的問題，改為輸出 W3C Datetime 的日期格式 `YYYY-MM-DD`。這仍符合 sitemap protocol 與 Google 文件，且對同日多次 commit 保持穩定，讓 repo 追蹤的 sitemap 產物與實際 HEAD 不再互相打架。
+root_cause:
+
+- 先前 `lastmod` 輸出到秒級時間，若同一個 commit 本身修改了依賴檔，commit 完成後最新 git commit time 會晚於 commit 前生成的 sitemap，造成產物立即漂移
+- repo 目前將 `public/sitemap.xml` 視為 tracked artifact，秒級 commit time 與這種流程天然衝突
+  impact:
+
+- 每次 build 或 pre-push 後都可能讓 `apps/ratewise/public/sitemap.xml` 再次變髒，降低可重現性並干擾 reviewer 判讀
+- `lastmod` 雖然語義正確，但對 repo 內追蹤產物不自洽
+  actions:
+
+- `generate-sitemap-2025.mjs` 的 `lastmod` 格式改為 W3C Datetime 日期 `YYYY-MM-DD`
+- 保留「重大依賴檔 → git 歷史」的策略，但把粒度從秒級縮到日期級，避免同日 commit time 漂移
+- `sitemap-2025.test.ts` 改為驗證日期格式，首頁 `lastmod` 也改比對 git 日期
+- 重建 `apps/ratewise/public/sitemap.xml`
+  prevention:
+
+- 對 repo tracked 的 SEO 產物，若資料源無法在 commit 前可靠取得最終秒級時間，優先選用日期粒度而不是偽精確 timestamp
+- `lastmod` 只在能持續準確維護時輸出；若流程無法保證秒級正確性，不應假裝有秒級精度
+  verification:
+
+- `node scripts/generate-sitemap-2025.mjs`
+- `pnpm exec vitest run scripts/__tests__/sitemap-2025.test.ts`
+- `pnpm --filter @app/ratewise build`
+  references:
+
+- scripts/generate-sitemap-2025.mjs
+- scripts/**tests**/sitemap-2025.test.ts
+- apps/ratewise/public/sitemap.xml
+
+---
+
+id: ratewise-open-data-basename-lastmod-followup
+date: 2026-03-18
+title: RateWise follow-up 修正 Open Data 內部連結 basename 與首頁 sitemap lastmod 依賴
+score: +2
+type: bugfix
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, router, basename, sitemap, lastmod, tdd]
+keywords: [OpenData, Link, basename, guide card, homepage lastmod, seo-metadata]
+aliases: [basename 連結修復, homepage lastmod 依賴補齊]
+related_entries: [ratewise-seo-title-truthfulness-lastmod-tdd]
+summary: 依 review comment 與官方最佳實踐，將 Open Data 頁「使用指南」資源卡從一般 `<a href>` 改為 React Router `Link`，避免 `/ratewise/` 子路徑部署時導到根目錄；同時把首頁 `seo-metadata.ts` 納入 sitemap 依賴，確保首頁 SEO 文案更新會反映在 `lastmod`。
+root_cause:
+
+- Open Data 相關資源卡以單一 `<a href>` 渲染，未區分 external 與 internal 導覽，導致 basename 部署時內部連結不會自動帶 `/ratewise/`
+- 首頁 sitemap `lastmod` 僅依賴 `RateWise.tsx`，忽略首頁實際 head/SEO 文案來自 `seo-metadata.ts`
+  impact:
+
+- `/open-data/` 頁內部導覽卡在正式站可能跳去網域根路徑 `/guide/` 而非 `/ratewise/guide/`
+- 首頁若只修改 SEO metadata，搜尋引擎看到的 sitemap `lastmod` 可能落後實際內容
+  actions:
+
+- `OpenData.tsx` 新增 `ResourceCard`，external 資源維持 `<a>`，internal 資源改用 router-aware `Link`
+- `OpenData.test.tsx` 新增 basename 測試，驗證 `/ratewise/guide/` href
+- `generate-sitemap-2025.mjs` 將首頁依賴補上 `apps/ratewise/src/config/seo-metadata.ts`
+- `sitemap-2025.test.ts` 新增首頁 `lastmod` 必須追到首頁 SEO metadata commit time 的驗證
+- 重建 `apps/ratewise/public/sitemap.xml`
+  prevention:
+
+- 凡是 SPA 內部導覽，預設使用 router 提供的 `Link` / `NavLink`，只有真正外站或靜態資源才使用 `<a>`
+- sitemap 依賴映射必須覆蓋頁面主內容與 head metadata 的 SSOT，不可只追 UI component
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/pages/OpenData.test.tsx`
+- `pnpm exec vitest run scripts/__tests__/sitemap-2025.test.ts`
+- `pnpm --filter @app/ratewise exec vitest run src/pages/OpenData.test.tsx src/prerender.test.ts src/seo-truthfulness.test.ts`
+- `pnpm --filter @app/ratewise build`
+  references:
+
+- apps/ratewise/src/pages/OpenData.tsx
+- apps/ratewise/src/pages/OpenData.test.tsx
+- scripts/generate-sitemap-2025.mjs
+- scripts/**tests**/sitemap-2025.test.ts
+- apps/ratewise/public/sitemap.xml
+
+---
+
+id: park-keeper-use-debounce-test-flake
+date: 2026-03-17
+title: park-keeper 將 useDebounce 測試改為假時鐘，消除 pre-push flaky
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: park-keeper
+topics: [test, vitest, fake-timers, debounce, flaky]
+keywords: [useDebounce, waitFor, fake timers, pre-push, flaky test]
+aliases: [debounce flaky 修復, park-keeper 假時鐘測試]
+related_entries: [park-keeper-photo-ux-v1.0.28]
+summary: `apps/park-keeper` 的 `useDebounce.test.ts` 原本依賴真實計時器與 `waitFor`，在整包 workspace 測試併發時偶發超時，導致 `pre-push` 擋住與本次 SEO 任務無關的推送流程。改為 Vitest fake timers 後，測試可直接控制 300ms/500ms 邊界，行為更快也更穩定。
+root_cause:
+
+- debounce hook 測試使用真實時間與 400ms timeout，當機器負載或測試併發較高時會偶發未在期限內完成狀態更新
+- 失敗案例是測試不穩定，不是 `useDebounce` 實作邏輯錯誤
+  impact:
+
+- repo `pre-push` 會被 `@app/park-keeper` 既有 flaky test 擋住，連帶阻塞其他 workspace 的正常推送
+  actions:
+
+- `useDebounce.test.ts` 改為 `vi.useFakeTimers()` + `act(() => vi.advanceTimersByTime(...))`
+- 移除對真實 `waitFor` / `setTimeout` 的依賴，改為精準驗證 timer 邊界前後的 hook 輸出
+  prevention:
+
+- 涉及 debounce、throttle、polling 的 hook 測試，預設優先使用 fake timers，避免把 CI/本機負載波動誤判為功能退化
+  verification:
+
+- `pnpm --filter @app/park-keeper exec vitest run src/hooks/__tests__/useDebounce.test.ts`
+- `pnpm --filter @app/park-keeper test`
+  references:
+
+- apps/park-keeper/src/hooks/**tests**/useDebounce.test.ts
+
+---
+
+id: ratewise-seo-title-truthfulness-lastmod-tdd
+date: 2026-03-17
+title: RateWise 以 TDD 修正 Open Data title、FAQPage 敘述漂移與 sitemap lastmod 真實性
+score: +4
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, ssot, sitemap, title, documentation, tdd]
+keywords: [open-data title, faqpage, rich-results, seo-truthfulness, lastmod, git commit time, prerender]
+aliases: [SEO 真實性修復, Open Data title 去重, sitemap lastmod SSOT]
+related_entries: [ratewise-seo-ssot-faq-best-practices, improvement-ratewise-release-edge-sync-guard]
+summary: 針對 PR #207 的深度 SEO 審核 findings，先以紅燈測試鎖定三個問題，再完成最小修正與重建產物：Open Data 頁 title 不再重複品牌、About/SEO 指南不再錯誤宣稱 FAQPage rich result 已實作、sitemap `lastmod` 改為重大依賴檔的 git commit time 優先，讓 SEO 說法、SSG 產物與測試重新對齊。
+root_cause:
+
+- Open Data 頁的 SSOT title 直接包含品牌，而 `SEOHelmet` 又會統一追加品牌，導致最終 prerender `<title>` 重複
+- About FAQ 與 `docs/SEO_GUIDE.md` 沿用舊版 FAQPage / Rich Results 敘述，但目前程式與測試其實明確禁止輸出 FAQPage JSON-LD
+- `generate-sitemap-2025.mjs` 僅依單一 source file `mtime` 生成 `lastmod`，在 CI/工作樹環境中容易產生缺乏差異的假真實時間戳
+  impact:
+
+- `open-data` 頁 title link 產物冗餘，降低 SERP 可讀性，也暴露 head 正規化缺口
+- SEO 透明度頁與指南文件若宣稱超出實際輸出能力，會削弱內容可信度與 reviewer 判斷基準
+- sitemap `lastmod` 日期差異不足，可能讓搜尋引擎把訊號視為低可信度
+  actions:
+
+- `SEOHelmet.tsx` 新增 title 正規化 helper，若頁面 title 已含品牌尾綴，會先去重再統一追加
+- `seo-metadata.ts` 將 `OPEN_DATA_PAGE_SEO.title` 改回純頁面主題，並重寫 About FAQ 的 schema 說明，改為只描述實際輸出的 JSON-LD 類型
+- `docs/SEO_GUIDE.md` 移除 FAQPage 已實作示意與範例，改為「保留 FAQ 可讀 HTML、不輸出 FAQPage JSON-LD」策略
+- `generate-sitemap-2025.mjs` 改為路由重大依賴檔映射；`lastmod` 優先取 `git log -1 --format=%cI -- <deps...>`，失敗時才 fallback 至最大 `mtime`
+- 新增/更新 `prerender.test.ts`、`seo-truthfulness.test.ts`，把 title 去重與 FAQPage 內容真實性納入回歸測試
+  prevention:
+
+- 頁面 SEO SSOT 的 `title` 不得直接硬編碼品牌尾綴，品牌只允許在 head 組裝層統一追加
+- 文件與 About 類透明度內容若提及 schema / rich results，必須以實際 prerender 產物與測試為準，不得引用歷史設計稿當現況
+- sitemap `lastmod` 必須綁定可驗證的重大依賴集合；取不到可信來源時寧可 fallback，不可假設所有頁面同日更新
+  verification:
+
+- `pnpm exec vitest run scripts/__tests__/sitemap-2025.test.ts`
+- `pnpm --filter @app/ratewise exec vitest run src/prerender.test.ts src/seo-truthfulness.test.ts`
+- `pnpm --filter @app/ratewise exec vitest run src/components/__tests__/SEOHelmet.test.tsx src/pages/OpenData.test.tsx src/config/__tests__/seo-ssot.test.ts src/seo-best-practices.test.ts src/jsonld.test.ts`
+- `pnpm --filter @app/ratewise build`
+- `git diff --check`
+  references:
+
+- apps/ratewise/src/components/SEOHelmet.tsx
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/prerender.test.ts
+- apps/ratewise/src/seo-truthfulness.test.ts
+- scripts/generate-sitemap-2025.mjs
+- docs/SEO_GUIDE.md
 
 ---
 

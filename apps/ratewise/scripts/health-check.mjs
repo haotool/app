@@ -290,13 +290,13 @@ async function runHealthChecks(baseUrl) {
   console.log(`\n${colors.gray}[深層檢查] HTML 內容驗證${colors.reset}`);
 
   const homeResult = await deepCheck(baseUrl, [
-    validators.hasTitle('RateWise 匯率好工具 | 即時匯率換算 PWA'),
+    validators.hasTitle('RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價'),
     validators.hasMetaTag('google-site-verification'),
   ]);
   results.push({ url: '/ (home)', ...homeResult });
 
   const guideResult = await deepCheck(`${baseUrl}/guide`, [
-    validators.hasTitle('使用教學 | RateWise 匯率好工具'),
+    validators.hasTitle('使用指南 — 如何使用 RateWise 匯率好工具換算匯率'),
     validators.containsText('HowTo'),
   ]);
   results.push({ url: '/guide (HowTo)', ...guideResult });

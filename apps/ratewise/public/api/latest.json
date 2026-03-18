@@ -1,6 +1,6 @@
 {
   "name": "RateWise Exchange Rate API",
-  "version": "2.9.9",
+  "version": "2.10.0",
   "description": "臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步",
   "source": "臺灣銀行牌告匯率",
   "sourceUrl": "https://rate.bot.com.tw/xrt",
@@ -47,8 +47,15 @@
     "spot_sell": "即期賣出：電匯/帳戶轉出匯率（你從台灣匯款出去）"
   },
   "openapi": "https://app.haotool.org/ratewise/openapi.json",
-  "documentation": "https://app.haotool.org/ratewise/llms.txt",
+  "documentation": "https://app.haotool.org/ratewise/open-data/",
+  "llms": "https://app.haotool.org/ratewise/llms.txt",
   "webapp": "https://app.haotool.org/ratewise/",
+  "pairEndpoints": {
+    "template": "https://app.haotool.org/ratewise/api/pairs/{PAIR}.json",
+    "description": "各幣對靜態 JSON 端點，提供幣對資訊、即時匯率 CDN 連結、匯率欄位路徑與落地頁 URL",
+    "example": "https://app.haotool.org/ratewise/api/pairs/usd-twd.json",
+    "availablePairs": "usd-twd, jpy-twd, eur-twd, gbp-twd, cny-twd, krw-twd, hkd-twd, aud-twd, cad-twd, sgd-twd, thb-twd, nzd-twd, chf-twd, vnd-twd, php-twd, idr-twd, myr-twd"
+  },
   "deepLink": "https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}",
   "disclaimer": "匯率僅供參考，實際交易請以金融機構公告為準。",
   "license": "GPL-3.0",

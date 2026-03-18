@@ -144,35 +144,31 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
   });
 
   describe('🟢 Security: Theme Initialization Script', () => {
-    it('should have ALLOWED_STYLES whitelist for security', () => {
-      // [2026-01-29] Security fix: Whitelist validation prevents injection
-      expect(indexHtmlContent).toContain('ALLOWED_STYLES');
+    // 壓縮後以行為驗證，不依賴變數名稱（ALLOWED_STYLES→A、getValidatedStyle→v 等）。
+
+    it('should have theme whitelist for security', () => {
+      // [2026-01-29] 白名單防注入，壓縮後仍含完整主題名稱陣列。
       expect(indexHtmlContent).toContain("'zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'");
     });
 
-    it('should have getValidatedStyle function for structure validation', () => {
-      // [2026-01-29] Security fix: Validates config structure before use
-      expect(indexHtmlContent).toContain('getValidatedStyle');
-    });
-
     it('should check for prototype pollution prevention', () => {
-      // [2026-01-29] Security fix: Validates config is a plain object
-      expect(indexHtmlContent).toContain('config.constructor !== Object');
+      // [2026-01-29] 防 prototype pollution：config 為普通物件才繼續。
+      expect(indexHtmlContent).toContain('constructor !== Object');
     });
 
     it('should use hasOwnProperty for property check', () => {
-      // [2026-01-29] Security fix: Safe property access
+      // [2026-01-29] 安全屬性存取，壓縮後仍保留。
       expect(indexHtmlContent).toContain('Object.prototype.hasOwnProperty.call');
     });
 
     it('should validate style is a string type', () => {
-      // [2026-01-29] Security fix: Type validation
-      expect(indexHtmlContent).toContain("typeof style !== 'string'");
+      // [2026-01-29] 型別驗證，壓縮後仍含 typeof 與 string 檢查。
+      expect(indexHtmlContent).toMatch(/typeof\s+\w+\s*===\s*['"]string['"]/);
     });
 
     it('should use indexOf for whitelist validation (ES5 compatible)', () => {
-      // [2026-01-29] Security fix: Whitelist check with ES5 compatibility
-      expect(indexHtmlContent).toContain('ALLOWED_STYLES.indexOf(style) !== -1');
+      // [2026-01-29] indexOf 白名單查找，ES5 相容，壓縮後仍保留。
+      expect(indexHtmlContent).toContain('.indexOf(');
     });
   });
 });

@@ -2,7 +2,7 @@
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 18 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、3 語言介面與 PWA 離線使用。
 
-Version: v2.9.9 (2026-03-14)
+Version: v2.10.0 (2026-03-18)
 
 ## Answer Capsule (Quick Q&A)
 
@@ -46,12 +46,23 @@ Version: v2.9.9 (2026-03-14)
 - PWA 離線使用：Service Worker 快取，無網路仍可換算
 - 6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林）
 
+## 幣對金額頁（Wise-pattern 程序化 SEO，可被索引）
+
+幣對頁支援 `?amount=X` 參數，自動產生金額專屬 title / description / canonical，
+可被 Googlebot 索引（類 Wise.com 程序化 SEO）：
+
+- 格式：`/{pair}/?amount={AMOUNT}`（例如：https://app.haotool.org/ratewise/usd-twd/?amount=500）
+- title 範例：「500 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise」
+- canonical：自引用含 ?amount=，告知 Google 此 URL 可被索引
+- robots.txt：`Disallow: /ratewise/?` 只封鎖首頁 deep-link，幣對頁 `/usd-twd/?amount=` 不受影響
+
 ## URL Parameters (Deep Linking)
 
 支援 URL 查詢參數自動帶入換算，適合 LLM 與內部工具帶入首頁狀態：
 
 - 格式：`?amount={AMOUNT}&from={FROM}&to={TO}`
 - 用途：自動帶入首頁換算器，不建立獨立索引頁
+- 注意：首頁 deep-link 被 robots.txt 封鎖（不索引）；幣對頁 `?amount=` 則可索引
 
 ## Core Pages
 
@@ -59,6 +70,7 @@ Version: v2.9.9 (2026-03-14)
 - [常見問題](https://app.haotool.org/ratewise/faq/): 完整 FAQ（含現金/即期差別、買入賣出、刷卡匯率等）
 - [使用指南](https://app.haotool.org/ratewise/guide/): 8 步驟完整操作教學
 - [關於我們](https://app.haotool.org/ratewise/about/): 專案背景與作者資訊
+- [開放資料 API](https://app.haotool.org/ratewise/open-data/): 台銀匯率 JSON API 完整說明（雙端點、程式碼範例、欄位定義）
 
 ## Authority Guides
 
@@ -108,6 +120,11 @@ Contact: haotool.org@gmail.com
   - 欄位：timestamp, updateTime, source, rates{USD/JPY/EUR/...}, details{貨幣:{spot:{buy,sell}, cash:{buy,sell}}}
   - 匯率類型：cash_buy=現金買入, cash_sell=現金賣出, spot_buy=即期買入, spot_sell=即期賣出
   - 說明：賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價
+
+### 幣對靜態 JSON 端點（Per-Pair API，供 AI agent / 搜尋系統）
+- 格式：https://app.haotool.org/ratewise/api/pairs/{pair}.json（例如：https://app.haotool.org/ratewise/api/pairs/usd-twd.json）
+- 欄位：pair, from, to, slug, pageUrl, liveRateUrl（→ CDN latest.json）, rateFieldPath（例如 "details.USD"）, source
+- 用途：AI agent 可先查幣對端點取得 rateFieldPath，再讀 liveRateUrl 取得即時匯率
 
 ### 應用程式深層連結（帶入換算參數）
 - 格式：https://app.haotool.org/ratewise/?amount={金額}&from={來源幣}&to={目標幣}

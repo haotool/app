@@ -21,6 +21,7 @@ export const CONTENT_SEO_PATHS = [
   '/sell-rate-vs-mid-rate/',
   '/cash-vs-spot-rate/',
   '/card-rate-guide/',
+  '/open-data/',
 ] as const;
 
 export const LEGAL_SSG_PATHS = ['/privacy/'] as const;

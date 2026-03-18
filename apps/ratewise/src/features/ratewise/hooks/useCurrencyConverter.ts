@@ -355,11 +355,13 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   );
 
   const sortedCurrencies = useMemo((): CurrencyCode[] => {
-    // TWD 永遠固定在第一位（隱式基準幣，不存於 favorites 陣列）
-    const favWithoutTWD = sanitizeFavorites(favorites).filter((c) => c !== 'TWD');
-    const favSet = new Set(favWithoutTWD);
-    const remaining = CURRENCY_CODES.filter((code) => code !== 'TWD' && !favSet.has(code)).sort();
-    return ['TWD' as CurrencyCode, ...favWithoutTWD, ...remaining];
+    // 基準幣永遠固定在第一位（不存於 favorites 陣列）
+    const favWithoutBase = sanitizeFavorites(favorites).filter((c) => c !== DEFAULT_BASE_CURRENCY);
+    const favSet = new Set(favWithoutBase);
+    const remaining = CURRENCY_CODES.filter(
+      (code) => code !== DEFAULT_BASE_CURRENCY && !favSet.has(code),
+    ).sort();
+    return [DEFAULT_BASE_CURRENCY as CurrencyCode, ...favWithoutBase, ...remaining];
   }, [favorites]);
 
   return {

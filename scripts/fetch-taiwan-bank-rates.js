@@ -1,7 +1,7 @@
 /**
  * 台灣銀行牌告匯率抓取腳本
  * 資料來源: https://rate.bot.com.tw/xrt/flcsv/0/day
- * 更新頻率: 每30分鐘
+ * 更新頻率: 每5分鐘（由 GitHub Actions cron 觸發，見 .github/workflows/update-latest-rates.yml）
  */
 
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';

@@ -33,6 +33,7 @@ export const CONTENT_SEO_PATHS = [
   '/sell-rate-vs-mid-rate/',
   '/cash-vs-spot-rate/',
   '/card-rate-guide/',
+  '/open-data/',
 ];
 
 /**
@@ -64,7 +65,7 @@ export const CURRENCY_SEO_PATHS = [
 ];
 
 /**
- * 公開可索引 SEO 路徑（24 個）
+ * 公開可索引 SEO 路徑（25 個）
  * 注意：LEGAL_SSG_PATHS（privacy noindex）不納入 sitemap
  */
 export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS];
@@ -181,6 +182,25 @@ export const SITE_CONFIG = {
   description:
     'RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 18 種貨幣，讓你換匯前就知道真正要付多少台幣。',
 };
+
+/**
+ * 匯率資料 CDN 端點 - 單一真實來源 (SSOT)
+ *
+ * 使用位置（.mjs scripts，無法 import TypeScript 的 api-endpoints.ts）：
+ * - scripts/generate-api-json.mjs
+ * - scripts/generate-pair-json.mjs
+ * - scripts/generate-openapi.mjs
+ *
+ * TypeScript src 使用 src/config/api-endpoints.ts（值相同，型別更完整）。
+ */
+const GITHUB_REPO = 'haotool/app';
+const DATA_BRANCH = 'data';
+
+/** GitHub Raw 資料根路徑（無快取，永遠最新）*/
+export const RAW_DATA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO}/${DATA_BRANCH}`;
+
+/** jsDelivr CDN 資料根路徑（12-24h 快取，備援用）*/
+export const CDN_DATA_BASE = `https://cdn.jsdelivr.net/gh/${GITHUB_REPO}@${DATA_BRANCH}`;
 
 /**
  * 統一應用配置 - 單一真實來源 (SSOT)

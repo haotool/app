@@ -41,12 +41,18 @@ const robotsTxt = `# RateWise — Robots Exclusion Protocol
 
 User-agent: *
 Allow: /
-Disallow: /sw.js
-Disallow: /workbox-*.js
-Disallow: /theme-showcase/
-Disallow: /color-scheme/
-Disallow: /update-prompt-test/
-Disallow: /ui-showcase/
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+# 封鎖帶 query string 的首頁 deep-link URL（如 /ratewise/?amount=500&from=USD&to=TWD）
+# 首頁 deep-link 僅作為 UX 分享入口，三個自由變數組合無限，會消耗 crawl budget。
+# 注意：此規則不影響幣對金額頁（如 /ratewise/usd-twd/?amount=500）——
+# 幣對頁路徑為 /ratewise/usd-twd/，不匹配 /ratewise/? 前綴，Googlebot 可正常索引。
+# 幣對金額頁採 Wise-pattern（自引用 canonical + 動態 SEO title），單一自由變數，可索引。
+Disallow: /ratewise/?
 
 Sitemap: ${SITEMAP_URL}
 

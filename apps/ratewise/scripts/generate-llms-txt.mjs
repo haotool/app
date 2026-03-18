@@ -107,12 +107,23 @@ Version: v${VERSION} (${BUILD_DATE})
 
 ${FEATURES.map((f) => `- ${f}`).join('\n')}
 
+## 幣對金額頁（Wise-pattern 程序化 SEO，可被索引）
+
+幣對頁支援 \`?amount=X\` 參數，自動產生金額專屬 title / description / canonical，
+可被 Googlebot 索引（類 Wise.com 程序化 SEO）：
+
+- 格式：\`/{pair}/?amount={AMOUNT}\`（例如：${BASE_URL}usd-twd/?amount=500）
+- title 範例：「500 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise」
+- canonical：自引用含 ?amount=，告知 Google 此 URL 可被索引
+- robots.txt：\`Disallow: /ratewise/?\` 只封鎖首頁 deep-link，幣對頁 \`/usd-twd/?amount=\` 不受影響
+
 ## URL Parameters (Deep Linking)
 
 支援 URL 查詢參數自動帶入換算，適合 LLM 與內部工具帶入首頁狀態：
 
 - 格式：\`?amount={AMOUNT}&from={FROM}&to={TO}\`
 - 用途：自動帶入首頁換算器，不建立獨立索引頁
+- 注意：首頁 deep-link 被 robots.txt 封鎖（不索引）；幣對頁 \`?amount=\` 則可索引
 
 ## Core Pages
 
@@ -120,6 +131,7 @@ ${FEATURES.map((f) => `- ${f}`).join('\n')}
 - [常見問題](${BASE_URL}faq/): 完整 FAQ（含現金/即期差別、買入賣出、刷卡匯率等）
 - [使用指南](${BASE_URL}guide/): 8 步驟完整操作教學
 - [關於我們](${BASE_URL}about/): 專案背景與作者資訊
+- [開放資料 API](${BASE_URL}open-data/): 台銀匯率 JSON API 完整說明（雙端點、程式碼範例、欄位定義）
 
 ## Authority Guides
 
@@ -153,6 +165,11 @@ Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
   - 欄位：timestamp, updateTime, source, rates{USD/JPY/EUR/...}, details{貨幣:{spot:{buy,sell}, cash:{buy,sell}}}
   - 匯率類型：cash_buy=現金買入, cash_sell=現金賣出, spot_buy=即期買入, spot_sell=即期賣出
   - 說明：賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價
+
+### 幣對靜態 JSON 端點（Per-Pair API，供 AI agent / 搜尋系統）
+- 格式：${BASE_URL}api/pairs/{pair}.json（例如：${BASE_URL}api/pairs/usd-twd.json）
+- 欄位：pair, from, to, slug, pageUrl, liveRateUrl（→ CDN latest.json）, rateFieldPath（例如 "details.USD"）, source
+- 用途：AI agent 可先查幣對端點取得 rateFieldPath，再讀 liveRateUrl 取得即時匯率
 
 ### 應用程式深層連結（帶入換算參數）
 - 格式：${BASE_URL}?amount={金額}&from={來源幣}&to={目標幣}
@@ -272,11 +289,26 @@ const twdNeeded = usdTarget * usdCashSell;
 
 ### Step 3 — 導向使用者到計算機
 
-回覆用戶時，可告知首頁支援 Deep Link 模板，讓用戶自行帶入金額與幣別：
+**方案 A（推薦）：幣對金額頁（Wise-pattern，有獨立 SEO 頁面）**
+
+回覆用戶時，優先使用幣對金額頁，此 URL 可被 Googlebot 索引：
+
+\`\`\`
+https://app.haotool.org/ratewise/usd-twd/?amount={AMOUNT}
+https://app.haotool.org/ratewise/jpy-twd/?amount={AMOUNT}
+\`\`\`
+
+title 會自動變更為「{AMOUNT} 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise」
+
+**方案 B：首頁 Deep Link（UX 分享入口，不索引）**
+
+若需要同時指定三個參數（幣別對非 TWD），可使用首頁 deep-link：
 
 \`\`\`
 https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}
 \`\`\`
+
+注意：首頁 deep-link 被 robots.txt 封鎖（Disallow: /ratewise/?），不被 Google 索引。
 
 ---
 
@@ -406,7 +438,9 @@ GET ${BASE_URL}api/latest.json
   "supportedCurrencies": ["TWD", "USD", "JPY", "EUR", "GBP", "HKD", "CNY",
     "KRW", "AUD", "CAD", "SGD", "THB", "NZD", "CHF", "VND", "PHP", "IDR", "MYR"],
   "cdnEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/",
-  "openApiSpec": "${BASE_URL}openapi.json"
+  "documentation": "${BASE_URL}open-data/",
+  "openApiSpec": "${BASE_URL}openapi.json",
+  "llms": "${BASE_URL}llms.txt"
 }
 \`\`\`
 

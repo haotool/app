@@ -16,9 +16,15 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
+import { spawnSync } from 'child_process';
 import { parseStringPromise } from 'xml2js';
 
 const SITEMAP_PATH = resolve(__dirname, '../../apps/ratewise/public/sitemap.xml');
+const REPO_ROOT = resolve(__dirname, '../..');
+const HOMEPAGE_DEPENDENCIES = [
+  'apps/ratewise/src/features/ratewise/RateWise.tsx',
+  'apps/ratewise/src/config/seo-metadata.ts',
+];
 
 interface SitemapUrl {
   loc: string[];
@@ -45,6 +51,10 @@ function readSitemap(): string {
 
 async function parseSitemap(xml: string): Promise<ParsedSitemap> {
   return (await parseStringPromise(xml)) as ParsedSitemap;
+}
+
+function formatDateISO8601(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 describe('Sitemap 2025 Standards', () => {
@@ -78,7 +88,7 @@ describe('Sitemap 2025 Standards', () => {
       });
     });
 
-    it('should use ISO 8601 format with timezone for lastmod', async () => {
+    it('should use W3C date format for lastmod', async () => {
       const xml = readSitemap();
       const parsed = await parseSitemap(xml);
 
@@ -87,15 +97,34 @@ describe('Sitemap 2025 Standards', () => {
       urls.forEach((url) => {
         const lastmod = url.lastmod[0]!;
 
-        // 必須包含時區信息（+08:00 或 Z）
-        expect(lastmod, `lastmod should use ISO 8601 with timezone: ${lastmod}`).toMatch(
-          /T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/,
-        );
+        expect(lastmod, `lastmod should use YYYY-MM-DD: ${lastmod}`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       });
     });
   });
 
   describe('Timestamp Authenticity', () => {
+    it('homepage lastmod should track homepage SEO metadata changes', async () => {
+      const xml = readSitemap();
+      const parsed = await parseSitemap(xml);
+
+      const homepage = parsed.urlset.url.find((url) => String(url.loc[0]).endsWith('/ratewise/'));
+      expect(homepage).toBeDefined();
+
+      const gitResult = spawnSync(
+        'git',
+        ['log', '-1', '--format=%cI', '--', ...HOMEPAGE_DEPENDENCIES],
+        {
+          cwd: REPO_ROOT,
+          encoding: 'utf-8',
+        },
+      );
+      expect(gitResult.status).toBe(0);
+
+      const gitTimestamp = String(gitResult.stdout).trim();
+      expect(gitTimestamp).toBeTruthy();
+      expect(homepage!.lastmod[0]).toBe(formatDateISO8601(new Date(gitTimestamp)));
+    });
+
     it('should have different lastmod timestamps for different pages', async () => {
       const xml = readSitemap();
       const parsed = await parseSitemap(xml);
@@ -123,7 +152,7 @@ describe('Sitemap 2025 Standards', () => {
       const urls = parsed.urlset.url;
 
       urls.forEach((url) => {
-        const lastmod = new Date(String(url.lastmod[0])).getTime();
+        const lastmod = new Date(`${String(url.lastmod[0])}T00:00:00Z`).getTime();
 
         // 時間戳應該在過去一年內且不是未來
         expect(lastmod, `lastmod should be between 1 year ago and now`).toBeGreaterThan(oneYearAgo);

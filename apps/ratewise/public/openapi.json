@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RateWise 匯率 API",
-    "version": "2.9.8",
+    "version": "2.10.0",
     "description": "臺灣銀行牌告匯率靜態 JSON API，每 5 分鐘由 GitHub Actions 自動同步。\n\n**匯率類型說明：**\n- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）\n- `cash_sell`（現金賣出）：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）\n- `spot_buy`（即期買入）：電匯/帳戶轉入匯率（你匯款回台灣）\n- `spot_sell`（即期賣出）：電匯/帳戶轉出匯率（你從台灣匯款出去）\n\n**重要提示：** 賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；\n買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價。\n\n匯率僅供參考，實際交易請以金融機構公告為準。",
     "contact": {
       "name": "haotool",
@@ -37,19 +37,128 @@
       "NZD",
       "IDR"
     ],
-    "x-webapp": "https://app.haotool.org/ratewise/"
+    "x-webapp": "https://app.haotool.org/ratewise/",
+    "x-documentation": "https://app.haotool.org/ratewise/open-data/"
   },
   "servers": [
     {
-      "url": "https://cdn.jsdelivr.net/gh/haotool/app@data",
-      "description": "CDN（jsDelivr）— 建議使用，全球加速，每 5 分鐘更新"
+      "url": "https://raw.githubusercontent.com/haotool/app/data",
+      "description": "GitHub Raw — 主要端點，無快取，每 5 分鐘同步最新匯率"
     },
     {
-      "url": "https://raw.githubusercontent.com/haotool/app/data",
-      "description": "GitHub Raw — 備援端點"
+      "url": "https://cdn.jsdelivr.net/gh/haotool/app@data",
+      "description": "CDN（jsDelivr）— 備援端點，注意：CDN 快取最長 24 小時，不適合即時匯率查詢"
     }
   ],
   "paths": {
+    "/ratewise/api/pairs/{pair}.json": {
+      "get": {
+        "summary": "取得指定幣對資訊",
+        "description": "取得指定幣對（如 usd-twd）的靜態資訊，包含幣對代碼、即時匯率 CDN 端點、匯率欄位路徑與對應落地頁 URL。適合搜尋系統與 AI agent 查詢特定幣對。",
+        "operationId": "getPairInfo",
+        "tags": [
+          "幣對資訊"
+        ],
+        "parameters": [
+          {
+            "name": "pair",
+            "in": "path",
+            "required": true,
+            "description": "幣對代碼，格式 {from}-twd（例如 usd-twd、jpy-twd）",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "usd-twd",
+                "jpy-twd",
+                "eur-twd",
+                "gbp-twd",
+                "cny-twd",
+                "krw-twd",
+                "hkd-twd",
+                "aud-twd",
+                "cad-twd",
+                "sgd-twd",
+                "thb-twd",
+                "nzd-twd",
+                "chf-twd",
+                "vnd-twd",
+                "php-twd",
+                "idr-twd",
+                "myr-twd"
+              ],
+              "example": "usd-twd"
+            }
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://app.haotool.org",
+            "description": "RateWise 應用程式伺服器"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功取得幣對資訊",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "幣對靜態資訊（指向即時匯率 CDN 的入口）",
+                  "properties": {
+                    "pair": {
+                      "type": "string",
+                      "example": "USD/TWD"
+                    },
+                    "from": {
+                      "type": "string",
+                      "example": "USD"
+                    },
+                    "to": {
+                      "type": "string",
+                      "example": "TWD"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "example": "usd-twd"
+                    },
+                    "pageUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://app.haotool.org/ratewise/usd-twd/"
+                    },
+                    "liveRateUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "即時匯率 JSON 來源（CDN）",
+                      "example": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json"
+                    },
+                    "rateFieldPath": {
+                      "type": "string",
+                      "description": "在 liveRateUrl 回應中定位此幣別資料的路徑",
+                      "example": "details.USD"
+                    },
+                    "source": {
+                      "type": "string",
+                      "example": "臺灣銀行牌告匯率"
+                    }
+                  },
+                  "required": [
+                    "pair",
+                    "from",
+                    "to",
+                    "slug",
+                    "pageUrl",
+                    "liveRateUrl",
+                    "rateFieldPath",
+                    "source"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/public/rates/latest.json": {
       "get": {
         "summary": "取得最新匯率",
@@ -348,6 +457,11 @@
       "x-displayName": "匯率資料"
     }
   ],
+  "x-pair-endpoints": {
+    "description": "各幣對靜態 JSON 端點（供搜尋系統與 AI agent 查詢特定幣對匯率資訊）",
+    "template": "https://app.haotool.org/ratewise/api/pairs/{PAIR}.json",
+    "example": "https://app.haotool.org/ratewise/api/pairs/usd-twd.json"
+  },
   "x-deep-link": {
     "description": "應用程式深層連結（帶入換算參數）",
     "format": "https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}",

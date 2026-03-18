@@ -46,8 +46,18 @@ const STRUCTURED_DATA_SELECTOR =
 const SEO_HELMET_MANAGED_ATTR = 'data-seo-helmet';
 const SEO_HELMET_MANAGED_VALUE = 'managed';
 const SEO_HELMET_STRUCTURED_DATA_VALUE = 'structured-data';
-const SEO_HELMET_MANAGED_SELECTOR = `[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_MANAGED_VALUE}"]`;
-const SEO_HELMET_STRUCTURED_DATA_SELECTOR = `[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_STRUCTURED_DATA_VALUE}"]`;
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildDocumentTitle(title?: string) {
+  if (!title) return SITE_SEO.title;
+
+  const trailingBrandPattern = new RegExp(`\\s*\\|\\s*${escapeRegExp(APP_INFO.name)}$`);
+  const normalizedTitle = title.trim().replace(trailingBrandPattern, '').trim();
+  return `${normalizedTitle} | ${APP_INFO.name}`;
+}
 
 const buildHowToSchema = (howTo: HowToData, url: string): JsonLdBlock => ({
   '@context': 'https://schema.org',
@@ -162,19 +172,20 @@ function upsertLink(selector: string, attributes: Record<string, string>) {
 }
 
 function replaceHeadCollection(selector: string, elements: HTMLElement[]) {
-  document.head.querySelectorAll(selector).forEach((node) => node.remove());
+  // 清除兩類 SEOHelmet 自行寫入的節點，防止 SSR 與 CSR 節點並存（重複 hreflang / og:locale:alternate）：
+  //   - data-seo-helmet="managed"：client-side useEffect 寫入
+  //   - data-rh="true"：SSR <Head>（vite-react-ssg）輸出，hydration 後由 useEffect 接管
+  // 不含任一標記的節點視為外部注入，不予移除。
+  document.head
+    .querySelectorAll(
+      `${selector}[${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_MANAGED_VALUE}"], ${selector}[data-rh="true"]`,
+    )
+    .forEach((node) => node.remove());
   elements.forEach((element) => {
     element.setAttribute('data-rh', 'true');
     element.setAttribute(SEO_HELMET_MANAGED_ATTR, SEO_HELMET_MANAGED_VALUE);
     document.head.appendChild(element);
   });
-}
-
-function cleanupManagedHeadTags() {
-  document.head.querySelectorAll(SEO_HELMET_MANAGED_SELECTOR).forEach((node) => node.remove());
-  document.head
-    .querySelectorAll(SEO_HELMET_STRUCTURED_DATA_SELECTOR)
-    .forEach((node) => node.remove());
 }
 
 export function SEOHelmet({
@@ -187,12 +198,13 @@ export function SEOHelmet({
   pathname,
   locale = DEFAULT_LOCALE,
   alternates,
+  keywords,
   updatedTime = SITE_SEO.updatedTime,
   howTo,
   breadcrumb,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 }: SEOProps) {
-  const fullTitle = title ? `${title} | ${APP_INFO.name}` : SITE_SEO.title;
+  const fullTitle = buildDocumentTitle(title);
   const canonicalUrl = canonical ? buildCanonicalUrl(canonical) : buildCanonicalUrl(pathname);
   const ogImageUrl = buildAbsoluteAssetUrl(ogImage);
   const normalizedAlternates = useMemo(() => {
@@ -203,41 +215,36 @@ export function SEOHelmet({
       href: buildCanonicalUrl(href),
     }));
   }, [alternates, pathname]);
-  const normalizedAlternatesSignature = normalizedAlternates
-    .map(({ hrefLang, href }) => `${hrefLang}:${href}`)
-    .join('|');
+  const normalizedAlternatesSignature = useMemo(
+    () => normalizedAlternates.map(({ hrefLang, href }) => `${hrefLang}:${href}`).join('|'),
+    [normalizedAlternates],
+  );
   const ogLocale = locale.replace('-', '_');
-  const additionalJsonLd = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
-  const hasImageObject = additionalJsonLd.some((block) => block['@type'] === 'ImageObject');
-  const structuredData: JsonLdBlock[] = [
-    ...buildSiteJsonLd(),
-    ...additionalJsonLd,
-    ...(hasImageObject
-      ? []
-      : [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 匯率換算工具預覽圖`)]),
-  ];
+  const structuredDataJson = useMemo(() => {
+    if (!shouldRenderStructuredData(robots)) return null;
 
-  if (howTo) {
-    structuredData.push(buildHowToSchema(howTo, canonicalUrl));
-  }
+    const additionalJsonLd = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+    const hasImageObject = additionalJsonLd.some((block) => block['@type'] === 'ImageObject');
+    const data: JsonLdBlock[] = [
+      ...buildSiteJsonLd(),
+      ...additionalJsonLd,
+      ...(hasImageObject
+        ? []
+        : [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 匯率換算工具預覽圖`)]),
+      ...(howTo ? [buildHowToSchema(howTo, canonicalUrl)] : []),
+      ...(breadcrumb?.length
+        ? ([buildBreadcrumbSchema(breadcrumb)].filter(Boolean) as JsonLdBlock[])
+        : []),
+    ];
 
-  if (breadcrumb?.length) {
-    const breadcrumbSchema = buildBreadcrumbSchema(breadcrumb);
-    if (breadcrumbSchema) {
-      structuredData.push(breadcrumbSchema);
-    }
-  }
-
-  const renderStructuredData = shouldRenderStructuredData(robots);
-  const structuredDataJson = renderStructuredData
-    ? JSON.stringify({
-        '@context': 'https://schema.org',
-        '@graph': structuredData.map((item) => {
-          const { '@context': _, ...rest } = item as Record<string, unknown>;
-          return rest;
-        }),
-      })
-    : null;
+    return JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': data.map((item) => {
+        const { '@context': _, ...rest } = item as Record<string, unknown>;
+        return rest;
+      }),
+    });
+  }, [robots, jsonLd, howTo, breadcrumb, canonicalUrl]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -246,6 +253,15 @@ export function SEOHelmet({
     upsertMeta('meta[name="description"]', { name: 'description', content: description });
     upsertMeta('meta[name="author"]', { name: 'author', content: APP_INFO.author });
     upsertMeta('meta[name="robots"]', { name: 'robots', content: robots });
+    if (keywords?.length) {
+      upsertMeta('meta[name="keywords"]', { name: 'keywords', content: keywords.join(', ') });
+    } else {
+      document.head
+        .querySelectorAll(
+          `meta[name="keywords"][${SEO_HELMET_MANAGED_ATTR}="${SEO_HELMET_MANAGED_VALUE}"]`,
+        )
+        .forEach((n) => n.remove());
+    }
     upsertLink('link[rel="canonical"]', { rel: 'canonical', href: canonicalUrl });
 
     const alternateLinks = normalizedAlternates.map(({ href, hrefLang }) => {
@@ -328,20 +344,19 @@ export function SEOHelmet({
       document.head.appendChild(script);
     }
 
-    return () => {
-      cleanupManagedHeadTags();
-    };
+    // SPA 導覽：不在 unmount 時清除，避免新頁面掛載前短暫無 metadata 的閃爍。
+    // 所有標籤由 upsert* 與 replaceHeadCollection 負責覆寫或替換。
   }, [
     canonicalUrl,
     description,
     fullTitle,
+    keywords,
     locale,
     normalizedAlternates,
     normalizedAlternatesSignature,
     ogImageUrl,
     ogLocale,
     ogType,
-    renderStructuredData,
     robots,
     structuredDataJson,
     updatedTime,
@@ -357,6 +372,7 @@ export function SEOHelmet({
       <meta name="description" content={description} />
       <meta name="author" content={APP_INFO.author} />
       <meta name="robots" content={robots} />
+      {keywords?.length ? <meta name="keywords" content={keywords.join(', ')} /> : null}
       <link rel="canonical" href={canonicalUrl} />
       {normalizedAlternates.map(({ href, hrefLang }) => (
         <link key={hrefLang} rel="alternate" hrefLang={hrefLang} href={href} />

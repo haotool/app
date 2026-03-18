@@ -1,9 +1,18 @@
-import { renderHook, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useDebounce } from '../useDebounce';
 
 describe('useDebounce', () => {
-  it('應該在延遲後返回防抖值', async () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
+
+  it('應該在延遲後返回防抖值', () => {
     const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
       initialProps: { value: 'initial', delay: 300 },
     });
@@ -17,16 +26,18 @@ describe('useDebounce', () => {
     // 值應該還是舊的（還在防抖中）
     expect(result.current).toBe('initial');
 
-    // 等待防抖延遲後
-    await waitFor(
-      () => {
-        expect(result.current).toBe('updated');
-      },
-      { timeout: 400 },
-    );
+    act(() => {
+      vi.advanceTimersByTime(299);
+    });
+    expect(result.current).toBe('initial');
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(result.current).toBe('updated');
   });
 
-  it('應該在快速連續更新時只保留最後一個值', async () => {
+  it('應該在快速連續更新時只保留最後一個值', () => {
     const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
       initialProps: { value: 'v1', delay: 300 },
     });
@@ -39,13 +50,10 @@ describe('useDebounce', () => {
     // 在防抖期間應該還是初始值
     expect(result.current).toBe('v1');
 
-    // 等待防抖延遲後，應該是最後一個值
-    await waitFor(
-      () => {
-        expect(result.current).toBe('v4');
-      },
-      { timeout: 400 },
-    );
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(result.current).toBe('v4');
   });
 
   it('應該在組件卸載時清除定時器', () => {
@@ -61,7 +69,7 @@ describe('useDebounce', () => {
     clearTimeoutSpy.mockRestore();
   });
 
-  it('應該支援自定義延遲時間', async () => {
+  it('應該支援自定義延遲時間', () => {
     const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
       initialProps: { value: 'initial', delay: 500 },
     });
@@ -69,19 +77,19 @@ describe('useDebounce', () => {
     rerender({ value: 'updated', delay: 500 });
 
     // 300ms 後還不應該更新
-    await new Promise((r) => setTimeout(r, 300));
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
     expect(result.current).toBe('initial');
 
     // 500ms 後應該更新
-    await waitFor(
-      () => {
-        expect(result.current).toBe('updated');
-      },
-      { timeout: 600 },
-    );
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(result.current).toBe('updated');
   });
 
-  it('應該處理數字類型的防抖', async () => {
+  it('應該處理數字類型的防抖', () => {
     const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
       initialProps: { value: 0, delay: 300 },
     });
@@ -90,15 +98,13 @@ describe('useDebounce', () => {
 
     rerender({ value: 42, delay: 300 });
 
-    await waitFor(
-      () => {
-        expect(result.current).toBe(42);
-      },
-      { timeout: 400 },
-    );
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(result.current).toBe(42);
   });
 
-  it('應該處理對象類型的防抖', async () => {
+  it('應該處理對象類型的防抖', () => {
     const obj1 = { id: 1, name: 'test' };
     const obj2 = { id: 2, name: 'updated' };
 
@@ -110,11 +116,9 @@ describe('useDebounce', () => {
 
     rerender({ value: obj2, delay: 300 });
 
-    await waitFor(
-      () => {
-        expect(result.current).toBe(obj2);
-      },
-      { timeout: 400 },
-    );
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(result.current).toBe(obj2);
   });
 });

@@ -1,25 +1,182 @@
 # SEO 實作指南 (SEO Implementation Guide)
 
-> **版本**: 1.2.1  
-> **建立時間**: 2025-10-24T23:23:09+08:00  
-> **最後更新**: 2026-01-15T01:28:29+08:00  
-> **維護者**: Development Team  
-> **狀態**: ✅ 已完成
+> **版本**: 2.0.0
+> **建立時間**: 2025-10-24T23:23:09+08:00
+> **最後更新**: 2026-03-17
+> **維護者**: Development Team
+> **狀態**: ✅ 持續更新
 
 ---
 
 ## 📋 目錄
 
 1. [概述](#概述)
-2. [核心 SEO 元素](#核心-seo-元素)
-3. [Open Graph 與 Twitter Card](#open-graph-與-twitter-card)
-4. [結構化資料 (Schema.org)](#結構化資料-schemaorg)
-5. [技術 SEO](#技術-seo)
-6. [圖片最佳化](#圖片最佳化)
-7. [提交到搜尋引擎](#提交到搜尋引擎)
-8. [AI 搜尋優化](#ai-搜尋優化)
-9. [監控與維護](#監控與維護)
-10. [檢查清單](#檢查清單)
+2. [SEO 技術架構全覽](#seo-技術架構全覽)
+3. [匯差數據自動化流程（狀態機）](#匯差數據自動化流程狀態機)
+4. [Google 爬蟲索引流程驗證](#google-爬蟲索引流程驗證)
+5. [核心 SEO 元素](#核心-seo-元素)
+6. [Open Graph 與 Twitter Card](#open-graph-與-twitter-card)
+7. [結構化資料 (Schema.org)](#結構化資料-schemaorg)
+8. [技術 SEO](#技術-seo)
+9. [圖片最佳化](#圖片最佳化)
+10. [提交到搜尋引擎](#提交到搜尋引擎)
+11. [AI 搜尋優化](#ai-搜尋優化)
+12. [監控與維護](#監控與維護)
+13. [檢查清單](#檢查清單)
+
+---
+
+## SEO 技術架構全覽
+
+完整的 RateWise SEO 技術堆疊以 SSOT（單一真實來源）原則設計，所有 SEO 內容從一個設定檔向外輻射。
+
+```mermaid
+flowchart TD
+    subgraph DATA["資料層（每週自動更新）"]
+        TW["🏦 台銀牌告匯率<br/>cdn.jsdelivr.net"]
+        ER["🌐 市場中間價<br/>open.er-api.com<br/>（Google/XE/Wise/Apple 基準）"]
+        TW --> SCRIPT
+        ER --> SCRIPT
+        SCRIPT["⚙️ update-seo-rate-examples.mjs<br/>雙重驗證（差距 ≤ 2%）"]
+        SCRIPT -->|"errors > 0 → exit(1)"| FAIL["❌ CI 失敗<br/>不產生不完整資料"]
+        SCRIPT -->|"驗證通過"| GEN["📄 seo-rate-examples.ts<br/>靜態 TypeScript 常數"]
+    end
+
+    subgraph PR["PR 流程（不直接 push main）"]
+        GEN --> CPR["peter-evans/create-pull-request@v8<br/>建立 chore/weekly-seo-rate-update 分支"]
+        CPR --> CI["🔍 CI 檢查<br/>typecheck / test / build"]
+        CI -->|"通過"| MERGE["✅ auto squash merge → main"]
+        CI -->|"失敗"| BLOCK["🚫 封鎖入 main"]
+    end
+
+    subgraph BUILD["建置層（每次 deploy）"]
+        MERGE --> SSOT["📐 seo-metadata.ts<br/>SSOT：FAQ / title / description / JSON-LD"]
+        SSOT --> SSG["vite-react-ssg<br/>SSG 預渲染 32 routes → 靜態 HTML"]
+        SSOT --> PRE["prebuild scripts"]
+        PRE --> SITEMAP["sitemap.xml<br/>24 URLs + hreflang + lastmod + image"]
+        PRE --> ROBOTS["robots.txt<br/>18 AI bots Allow + Disallow dev pages"]
+        PRE --> LLMS["llms.txt / llms-full.txt<br/>AI 爬蟲結構化文件"]
+        PRE --> OPENAPI["openapi.json<br/>AI Agent 可呼叫 API"]
+    end
+
+    subgraph EDGE["邊緣層（Cloudflare）"]
+        SSG --> CF["☁️ Cloudflare Edge<br/>security-headers Worker<br/>CSP / HSTS / COEP"]
+    end
+
+    subgraph CRAWL["爬蟲層"]
+        CF --> GOOGLE["🔍 Googlebot<br/>讀靜態 HTML<br/>不需執行 JS"]
+        CF --> AI_BOT["🤖 AI 爬蟲<br/>GPTBot / ClaudeBot<br/>PerplexityBot / Google-Extended..."]
+        CF --> USER["👤 使用者瀏覽器<br/>React hydration"]
+    end
+```
+
+---
+
+## 匯差數據自動化流程（狀態機）
+
+週期性資料更新的完整狀態轉移，確保資料完整性與可追溯性。
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle : 初始 / 上週完成
+
+    Idle --> Fetching : 每週一 02:00 UTC<br/>GitHub Actions 觸發
+
+    Fetching --> DualVerify : 台銀牌告 + open.er-api.com 抓取成功
+    Fetching --> Aborted : HTTP 錯誤 / 網路逾時<br/>→ process.exit(1)
+
+    DualVerify --> Warning : 部分幣別兩中間價差距 > 2%<br/>（東南亞幣別預期偏高）
+    DualVerify --> Generating : 全部幣別差距 ≤ 2%
+    DualVerify --> Aborted : 任一幣別資料缺漏<br/>→ process.exit(1)
+
+    Warning --> Generating : 記錄警告後繼續<br/>（不中止，差距已揭露）
+
+    Generating --> NoChange : 資料與上週相同
+    Generating --> PRCreated : 偵測到變更<br/>create-pull-request@v8 建立 PR
+
+    NoChange --> Idle : 靜默略過，不建立 PR
+
+    PRCreated --> CIRunning : CI 自動觸發<br/>typecheck / test / build:ratewise
+
+    CIRunning --> MergeReady : 全部 CI 通過
+    CIRunning --> PRBlocked : CI 失敗<br/>阻擋 merge，通知維護者
+
+    MergeReady --> Merged : auto squash merge → main<br/>PR 分支自動刪除
+
+    PRBlocked --> Idle : 手動修復後重新觸發
+
+    Merged --> Idle : 週期結束，等待下次排程
+
+    Aborted --> [*] : workflow 標記為 failure<br/>GitHub Actions 通知
+```
+
+---
+
+## Google 爬蟲索引流程驗證
+
+RateWise 對照 Google 完整索引流程的實作覆蓋率。
+
+```mermaid
+flowchart LR
+    subgraph DISCOVERY["Stage 1: 發現"]
+        D1["robots.txt ✅<br/>Sitemap 指向正確"]
+        D2["sitemap.xml ✅<br/>24 URLs + lastmod + hreflang + image"]
+        D3["llms.txt ✅<br/>AI 爬蟲 discovery"]
+    end
+
+    subgraph CRAWL2["Stage 2: 抓取"]
+        C1["靜態 HTML ✅<br/>SSG 32 pages，爬蟲不需 JS"]
+        C2["HTTPS ✅<br/>Cloudflare 全站強制"]
+        C3["noindex 控制 ✅<br/>APP_ONLY_PATHS 精確隔離"]
+    end
+
+    subgraph PARSE["Stage 3: 解析 head"]
+        P1["title ✅<br/>每頁唯一，含主關鍵字"]
+        P2["meta description ✅<br/>每頁唯一"]
+        P3["canonical ✅<br/>每頁都有"]
+        P4["hreflang ✅<br/>zh-TW + x-default"]
+        P5["meta robots ✅<br/>index/noindex 精確控制"]
+    end
+
+    subgraph SOCIAL["Stage 4: 社交預覽"]
+        S1["Open Graph ✅<br/>og:title / description / image / type / locale"]
+        S2["Twitter Card ✅<br/>summary_large_image"]
+    end
+
+    subgraph SCHEMA["Stage 5: 結構化資料"]
+        R1["WebSite ✅"]
+        R2["SoftwareApplication ✅"]
+        R3["Organization ✅"]
+        R4["FAQ 內容區塊 ✅<br/>保留可讀 HTML，不輸出 FAQPage"]
+        R5["HowTo ✅"]
+        R6["BreadcrumbList ✅"]
+        R7["Article ✅"]
+        R8["FinancialService ✅"]
+        R9["SearchAction ⬜<br/>待評估 URL pattern"]
+    end
+
+    subgraph EXPERIENCE["Stage 6: 頁面體驗"]
+        E1["Mobile-Friendly ✅<br/>RWD + PWA manifest"]
+        E2["PWA ✅<br/>manifest + Service Worker"]
+        E3["Security Headers ✅<br/>CSP / HSTS via CF Worker"]
+        E4["Core Web Vitals ⚠️<br/>Lighthouse CI performance < 0.90（已知）"]
+    end
+
+    subgraph AI["Stage 7: AI 搜尋"]
+        A1["llms.txt / llms-full.txt ✅"]
+        A2["openapi.json ✅<br/>AI Agent 可呼叫"]
+        A3["18 AI Bots Allow ✅<br/>GPTBot / ClaudeBot / PerplexityBot..."]
+        A4["雙幣匯差標示 ✅<br/>外幣 + 台幣，LLM 引用語意設計"]
+    end
+
+    subgraph FRESHNESS["Stage 8: 內容新鮮度"]
+        F1["sitemap lastmod ✅<br/>每次 build 自動更新"]
+        F2["匯差數字每週更新 ✅<br/>GitHub Actions 自動化"]
+        F3["FAQ 含更新日期 ✅<br/>最後更新：YYYY-MM-DD"]
+    end
+
+    DISCOVERY --> CRAWL2 --> PARSE --> SOCIAL --> SCHEMA --> EXPERIENCE --> AI --> FRESHNESS
+```
 
 ---
 
@@ -244,24 +401,21 @@
 }
 ```
 
-#### 3. FAQPage Schema
+#### 3. FAQ 內容策略（不輸出 FAQPage JSON-LD）
 
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "如何使用 RateWise 進行匯率換算？",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "選擇貨幣、輸入金額，即可立即看到換算結果。支援單幣別和多幣別同時換算。"
-      }
-    }
-  ]
-}
-```
+RateWise 保留 FAQ 內容本身，讓使用者與爬蟲都能直接閱讀，但不額外輸出 `FAQPage` JSON-LD。
+
+原因：
+
+- Google 現行 FAQ rich result 僅限政府與醫療等高權威站點。
+- 本站 FAQ 主要服務搜尋意圖覆蓋與內容理解，不把 FAQPage rich result 當成通用加分手段。
+- 這可避免文件、測試與實際輸出的結構化資料失同步。
+
+實作原則：
+
+- FAQ 文字保留在頁面可見內容中。
+- 內容頁只輸出實際使用的 schema，如 `Article`、`HowTo`、`BreadcrumbList`、`FinancialService`。
+- 測試層持續驗證靜態 HTML 不應出現 `FAQPage` JSON-LD。
 
 ---
 
@@ -648,7 +802,7 @@ sips -z 630 1200 og-image.png --out og-image-optimized.png
 
 - [ ] WebApplication Schema 已實作
 - [ ] Organization Schema 已實作
-- [ ] FAQPage Schema 已實作 (如適用)
+- [ ] FAQ 內容與頁面可見文字同步，且未誤輸出 FAQPage JSON-LD
 - [ ] JSON-LD 語法通過驗證
 
 #### 技術 SEO
@@ -771,6 +925,14 @@ function HomePage() {
 ---
 
 ## 版本歷史
+
+### v2.0.0 (2026-03-17)
+
+- ✅ 新增「SEO 技術架構全覽」Mermaid flowchart（SSOT → SSG → Cloudflare → 爬蟲完整流程）
+- ✅ 新增「匯差數據自動化流程」Mermaid stateDiagram（狀態機，含錯誤中止路徑）
+- ✅ 新增「Google 爬蟲索引流程驗證」完整對照表 flowchart
+- ✅ 更新匯差腳本流程為 PR-based（peter-evans/create-pull-request@v8，不直接 push main）
+- ✅ About 頁面新增 SEO 技術透明度 FAQ（3 項）
 
 ### v1.0.0 (2025-10-24)
 

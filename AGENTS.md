@@ -445,6 +445,13 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 4. **型別安全**：移除所有 TypeScript 非空斷言，改用 `.at(-1) ?? 0` 模式
 5. **原子化提交**：每個邏輯變更獨立 commit（SEO 結構 → 測試修復 → 型別安全）
 
+### SEO 內容新鮮度與真實性（SSOT 同步規則）
+
+- SEO 文案 SSOT：`apps/ratewise/src/config/seo-metadata.ts`；技術路徑/域名 SSOT：`seo-paths.config.mjs`。
+- 幣別頁模板（`getCurrencyLandingPageContent`）禁止混入其他幣別專有名詞；修改後**必須**執行 `pnpm test` 確認 `seo-ssot.test.ts` template-bleed 測試通過。
+- 任何技術設定變更（匯率來源、base path、版本號）若影響 SEO 描述，**必須**同步更新 `seo-metadata.ts` 對應 FAQ / JSON-LD，否則視為 SEO debt。
+- `buildShareImageJsonLd` 的 `dateModified` 必須使用 `BUILD_TIME` 常數，不可寫死日期字串。
+
 ### RateWise SEO / Head 問題速解
 
 1. **FAQPage 重複**：預設只在真正 FAQ 頁輸出 `FAQPage`；首頁、幣別頁、About/Guide 保留可讀 FAQ 內容即可，避免重複 rich results 訊號

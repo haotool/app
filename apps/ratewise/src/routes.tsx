@@ -27,12 +27,12 @@
 import type { RouteRecord } from 'vite-react-ssg';
 import type { ComponentType } from 'react';
 import { Suspense } from 'react';
-import { ClientOnly } from 'vite-react-ssg';
 import CurrencyConverter from './features/ratewise/RateWise';
 import { SEOHelmet } from './components/SEOHelmet';
 import { HomepageSEOSection } from './components/HomepageSEOSection';
 import { Layout } from './components/Layout';
 import { AppLayout } from './components/AppLayout';
+import { ClientOnly } from 'vite-react-ssg';
 import {
   SkeletonLoader,
   MultiConverterSkeleton,
@@ -213,6 +213,7 @@ export const routes: RouteRecord[] = [
     () => import('./pages/CardRateGuide'),
     'src/pages/CardRateGuide.tsx',
   ),
+  createLazyRoute('/open-data', () => import('./pages/OpenData'), 'src/pages/OpenData.tsx'),
 
   // 17 個幣別落地頁（SEO 預渲染）
   createLazyRoute('/usd-twd', () => import('./pages/USDToTWD'), 'src/pages/USDToTWD.tsx'),

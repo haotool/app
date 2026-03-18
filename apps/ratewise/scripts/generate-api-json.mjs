@@ -9,15 +9,15 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SITE_CONFIG } from '../seo-paths.config.mjs';
+import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 
-const DATA_BASE_URL = 'https://raw.githubusercontent.com/haotool/app/data/public/rates';
-const CDN_BASE_URL = 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates';
+const DATA_BASE_URL = `${RAW_DATA_BASE}/public/rates`;
+const CDN_BASE_URL = `${CDN_DATA_BASE}/public/rates`;
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
@@ -48,8 +48,16 @@ const latestJson = {
     spot_sell: '即期賣出：電匯/帳戶轉出匯率（你從台灣匯款出去）',
   },
   openapi: `${SITE_CONFIG.url}openapi.json`,
-  documentation: `${SITE_CONFIG.url}llms.txt`,
+  documentation: `${SITE_CONFIG.url}open-data/`,
+  llms: `${SITE_CONFIG.url}llms.txt`,
   webapp: SITE_CONFIG.url,
+  pairEndpoints: {
+    template: `${SITE_CONFIG.url}api/pairs/{PAIR}.json`,
+    description: '各幣對靜態 JSON 端點，提供幣對資訊、即時匯率 CDN 連結、匯率欄位路徑與落地頁 URL',
+    example: `${SITE_CONFIG.url}api/pairs/usd-twd.json`,
+    availablePairs:
+      'usd-twd, jpy-twd, eur-twd, gbp-twd, cny-twd, krw-twd, hkd-twd, aud-twd, cad-twd, sgd-twd, thb-twd, nzd-twd, chf-twd, vnd-twd, php-twd, idr-twd, myr-twd',
+  },
   deepLink: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,
   disclaimer: '匯率僅供參考，實際交易請以金融機構公告為準。',
   license: pkg.license,

@@ -268,7 +268,9 @@ describe('SEOHelmet Component', () => {
       expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(0);
     });
 
-    it('should cleanup SEOHelmet-managed tags on unmount without removing unrelated head tags', () => {
+    it('should retain managed tags on unmount and not remove unrelated head tags (SPA no-cleanup design)', () => {
+      // SPA 導覽設計：unmount 不清除 metadata，避免新頁面掛載前短暫無標籤的閃爍。
+      // 所有標籤由下一頁的 upsert*/replaceHeadCollection 覆寫。
       document.head.innerHTML = `
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -277,13 +279,13 @@ describe('SEOHelmet Component', () => {
       const { unmount } = render(
         <HelmetProvider>
           <SEOHelmet
-            title="會被清掉的頁面"
-            description="這組 metadata 應該在卸載後消失"
-            canonical="/cleanup/"
+            title="SPA 測試頁面"
+            description="此 metadata 在 unmount 後應保留"
+            canonical="/spatest/"
             howTo={{
-              name: '清理流程',
-              description: '測試清理用',
-              steps: [{ position: 1, name: '步驟一', text: '清理' }],
+              name: '測試流程',
+              description: '測試用',
+              steps: [{ position: 1, name: '步驟一', text: '測試' }],
             }}
           />
         </HelmetProvider>,
@@ -293,12 +295,10 @@ describe('SEOHelmet Component', () => {
 
       unmount();
 
-      expect(document.head.querySelectorAll('title')).toHaveLength(0);
-      expect(document.head.querySelectorAll('meta[name="description"]')).toHaveLength(0);
-      expect(document.head.querySelectorAll('link[rel="canonical"]')).toHaveLength(0);
-      expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(0);
-      expect(document.head.querySelectorAll('[data-seo-helmet]')).toHaveLength(0);
+      // unmount 後標籤應保留（SPA no-cleanup 設計，由下一頁覆寫）。
+      expect(document.head.querySelectorAll('[data-seo-helmet]')).not.toHaveLength(0);
 
+      // 外部注入標籤（charset、viewport）不受影響。
       const charset = document.head.querySelector('meta[charset="UTF-8"]');
       const viewport = document.head.querySelector('meta[name="viewport"]');
       expect(charset).not.toBeNull();

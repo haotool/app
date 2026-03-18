@@ -1,5 +1,215 @@
 # @app/ratewise
 
+## 2.10.0
+
+### Minor Changes
+
+- 915b7e3: feat(seo): deep-link URL 動態 SEO — 允許 Googlebot 建立長尾關鍵字索引頁
+
+  新增 useDeepLinkSEO hook 及 HomeRoute 元件，讓帶 ?amount/from/to 參數的首頁 URL
+  （如 ?amount=500&from=USD&to=TWD）可獲得唯一 title/description/canonical，
+  提供「500 美元換新台幣」等長尾關鍵字的 SEO 索引頁機會。
+
+- 014b38f: feat(seo): 新增開放資料 API 頁面，完整揭露台銀匯率資料管線與 E-E-A-T 權威性
+  - 新增 `src/pages/OpenData.tsx`：完整 API 文件頁（`/open-data/`）
+    - 揭露資料管線：臺灣銀行 → GitHub Actions（每 5 分鐘）→ jsDelivr CDN / GitHub Raw
+    - 雙端點說明：latest.json（最新）、history/{YYYY-MM-DD}.json（歷史）
+    - 四語言程式碼範例：curl、JavaScript fetch、Python requests、深層連結模板
+    - 支援幣別列表（18 種）、欄位結構說明表、速率限制與授權條款（GPL-3.0）
+    - `HowTo` JSON-LD schema（4 步驟）、`Article` JSON-LD、`FAQPage` JSON-LD（5 題）
+    - `Breadcrumb`、`SEOHelmet` 整合，canonical URL 完整
+  - `seo-metadata.ts`：新增 `OPEN_DATA_PAGE_FAQ`（5 條）與 `OPEN_DATA_PAGE_SEO` 常數
+  - `seo-paths.ts`：`CONTENT_SEO_PATHS` 加入 `/open-data/`
+    - SEO_PATHS: 24 → 25；PRERENDER_PATHS: 32 → 33
+  - `seo-paths.config.mjs`：同步新增 `/open-data/` 至 Node.js SSOT
+  - `routes.tsx`：新增 `/open-data` lazy route
+  - `footer-links.ts`：核心頁面加入「開放資料 API」連結
+  - `public/api/latest.json`：`documentation` 指向 open-data 頁；新增 `llms` 欄位
+  - `scripts/generate-openapi.mjs`：`info` 新增 `x-documentation` 欄位
+  - `scripts/generate-llms-txt.mjs`：Core Pages 與 API 文件區段加入 open-data 連結
+  - `config/__tests__/seo-paths.test.ts`：更新長度斷言（25、33）並加入 `/open-data/` 測試
+
+- 4e5cddf: feat(seo): 新增幣對靜態 JSON API 端點 + 還原 robots.txt query 封鎖
+
+  新增 `public/api/pairs/{pair}.json`（17 個幣對端點），提供幣對資訊、
+  即時匯率 CDN 連結與 rateFieldPath，供 AI agent 與搜尋系統查詢。
+  還原 `Disallow: /ratewise/?` 封鎖無限 query 組合以保護 crawl budget。
+  更新 openapi.json 加入幣對路徑、llms.txt 加入 per-pair API 說明。
+
+- 8695784: feat(seo): 實作 Wise-pattern 幣對金額頁 SEO（?amount=X 動態 title/canonical）
+
+### Patch Changes
+
+- 7d4d21d: 修正品牌名稱一致性並補全幣別頁 sitemap image entries
+  - CurrencyLandingPage copyright 改用動態年份（`new Date().getFullYear()`）
+  - zh-TW 語系 copyright 補上「匯率好工具」完整品牌名
+  - offline.html 與 sw.ts 離線頁標題補上完整品牌名
+  - pwa-offline 測試同步更新
+  - health-check.mjs 更新首頁與指南頁 title 期望值（舊格式已廢）
+  - sitemap generate-sitemap-2025.mjs 新增 17 個幣別頁 OG image entries
+
+- 0f3bbf1: 統一 CDN URL SSOT 並消除 ExchangeRateData 型別衝突
+- 1685f67: 修正三項程式碼品質問題：liveRateUrl 改用 GitHub raw（無快取）、移除 transformRates 死碼、修正腳本文件說明頻率錯誤
+- 312da23: 加入 jsDelivr 作為第二 CDN 備援，避免 GitHub raw 故障時直接落到硬編碼匯率
+- f021376: 補齊 SSOT：scripts CDN URL 改從 seo-paths.config.mjs 導入，useCurrencyConverter 使用 DEFAULT_BASE_CURRENCY
+- 014b38f: fix(footer): 隱私政策連結、版權年份動態化、WCAG aria 修復、sitemap 更新
+  - `footer-links.ts`：核心頁面 grid section 加入「隱私政策」連結（`/privacy/`）
+    - 符合 CalOPPA / GDPR / CCPA 業界標準：Privacy Policy 必須出現在所有頁面 Footer 的 SEO 連結區
+  - `Footer.tsx`：版權年份 `CURRENT_YEAR = 2025` → `new Date().getFullYear()`
+    - 桌面版 `<p>` 加 `suppressHydrationWarning`，防止 SSG build year vs runtime year hydration mismatch
+  - `Footer.tsx`：WCAG 2.1 AA 修復
+    - 裝飾性 SVG（checkmark、external link、clock）加 `aria-hidden="true"`（行動版 + 桌面版）
+    - 桌面 Links Grid 改以 `<nav aria-label="頁腳導航">` 包裝，提供 landmark 語意
+  - `OpenData.tsx`：WCAG 2.1 AA 修復
+    - 回首頁箭頭、FAQ 手風琴展開箭頭、CTA 前進箭頭加 `aria-hidden="true"`
+    - `CodeBlock` 的 `<pre>` 加 `role="region" aria-label="程式碼範例：{language}"`
+  - `public/sitemap.xml`：重新生成，新增 `/open-data/`，URL 總數 24 → 25（含 hreflang）
+
+- 7599934: 修正 GSC「替代頁面（有適當的標準標記）」驗證失敗：robots.txt 封鎖 deep-link query params
+
+  Google Search Console 報告 19 個帶 query string 的 URL（如 ?amount=500&from=USD&to=TWD）
+  被 Googlebot 爬取，雖 canonical 正確但消耗 crawl budget 且驗證失敗。
+
+  新增 `Disallow: /ratewise/?` 至 User-agent: \* 區塊，封鎖所有帶 query string 的首頁
+  deep-link URL。Social bot（facebookexternalhit、Twitterbot、Meta-ExternalAgent、LinkedInBot）
+  在各自獨立 section 設有 `Allow: /`，不受此規則影響，仍可正常爬取以供 OG 預覽。
+
+  業界依據：https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt
+
+- 014b38f: fix(seo): 補 Article schema + 修首頁 DEFAULT_DESCRIPTION 截斷
+
+  Article JSON-LD 補完：
+  - `SELL_RATE_VS_MID_RATE_PAGE`：新增 `buildArticleJsonLd()`（articleSection: 匯率知識）
+  - `CASH_VS_SPOT_RATE_PAGE`：新增 `buildArticleJsonLd()`
+  - `CARD_RATE_GUIDE_PAGE`：新增 `buildArticleJsonLd()`
+  - 三頁均加 keywords、articleBody（符合 Google Featured Snippet 條件）
+
+  DEFAULT_DESCRIPTION 截斷修復：
+  - 舊版：200+ dw（遠超 SERP 160 dw 截斷上限）
+  - 新版：117 dw「RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），讓你換匯前知道真正要付多少台幣。支援 N 種貨幣，每 5 分鐘同步，免費無廣告。」
+
+- 0249f2d: fix(seo): Article schema 補 keywords、articleSection、articleBody 欄位
+- 014b38f: fix(seo): 修正 meta description 超出 160 display-width 截斷（SERP CTR 影響）
+  - `ABOUT_PAGE_SEO.description`：194 display-width → 149（重寫為更精準的品牌定位）
+  - `FAQ_PAGE_SEO.description`：183 display-width → 117（移除關鍵字堆疊，改為重點摘要）
+  - `OPEN_DATA_PAGE_SEO.description`：168 display-width → 124（精簡技術說明）
+  - 幣別頁 description template：移除 `${override.question}` 片段，最長從 169 降至 143（JPY/CNY/SEK/PHP/CAD/SGD 均通過）
+  - TypeScript：`footer-links.test.ts` 補 non-null assertion `FOOTER_SECTIONS[0]!` 消除 TS18048
+
+- b040c56: feat(seo): 匯差腳本雙重驗證、FAQ 去除 emoji 並顯示外幣實際數量
+  - 腳本加入雙重驗證：open.er-api.com 市場中間價 vs 台銀 (買入+賣出)/2 自身中間價
+  - RateExample 介面新增 foreignAtCash、foreignAtMarketMid、foreignAtBankMid、diffForeign 欄位
+  - FAQ 文案顯示外幣兩側數量（實際到手 vs 中間價預期），提升 LLM 引用精確度
+  - FAQ 問題改為「為什麼 Google/XE/Wise/Apple 計算機顯示的換算金額和台銀不同？」
+  - 明確標注各競品資料來源：Google(Morningstar)、Apple(Yahoo Finance)
+  - 去除所有 emoji，改為純文字專業語意
+
+- f4a4e9e: feat(seo): 幣別頁 FAQ 明確說明 Google/XE/Wise 中間價與台銀現金換匯的落差
+  - FAQ 第一題改為「Google、XE、Wise 顯示的 X 匯率為什麼跟去台銀換匯的價格差那麼多？」
+  - 回答點名 Google 匯率、XE、Wise、Apple 內建匯率均顯示市場中間價（mid-rate）
+  - 加入 RateWise 開發初衷說明：專為台灣人設計的精準換匯工具，直接顯示台銀現金賣出牌告價
+  - 差距舉例句強調「到銀行櫃台才發現比手機查到的貴」的使用者痛點
+
+- 9d098c4: fix(seo): FAQ 換匯用詞改為台灣人自然說法
+  - 「短少」改為「少換了」、「多花了」（台灣日常用語）
+  - 保持雙側數字顯示（外幣數量 + 台幣匯差）
+
+- 4f63ff3: fix(seo): 修正 hydration 後 alternate/og:locale:alternate 標籤重複問題
+  - replaceHeadCollection 改為同時清除 data-seo-helmet="managed"（CSR）與 data-rh="true"（SSR）兩類節點
+  - 防止 vite-react-ssg <Head> SSR 輸出的 hreflang link 在 useEffect 接管後殘留，造成頁面 head 同時存在重複或過時的 hreflang/og:locale:alternate metadata
+  - 不含任一標記的外部注入節點仍受保護，不會被移除
+
+- eb62d87: fix(seo): 補全 keywords meta 輸出與 PWA SoftwareApplication schema
+- dfee8db: fix(seo): FinancialService 補 sameAs 社群連結、ImageObject 補 dateModified
+- 7f118cb: feat(seo): PR-based 匯率更新流程、About 頁 SEO 透明度 FAQ、架構圖文件
+  - update-seo-rate-examples.yml：改用 peter-evans/create-pull-request@v8，不再直接 push main
+    - 每次更新建立 chore/weekly-seo-rate-update PR，通過 CI 後 auto squash merge
+    - 新增 pull-requests: write 權限
+    - 移除舊版手動 git commit + git push 步驟
+  - seo-metadata.ts：About 頁 ABOUT_PAGE_FAQ 新增 3 條 SEO 技術透明度 FAQ
+    - 「匯差數字如何保持最新且讓搜尋引擎正確讀取」（SSG + 雙重驗證機制）
+    - 「哪些結構化資料讓搜尋摘要顯示更豐富」（8 種 JSON-LD schema 揭露）
+    - 「是否支援 AI 搜尋引擎與 LLM 引用」（18 AI bots + llms.txt + openapi.json）
+  - ABOUT_PAGE_SEO：title/description/keywords 更新以涵蓋 SEO 技術特色
+  - docs/SEO_GUIDE.md：升至 v2.0.0，新增三張 Mermaid 圖
+    - 技術架構全覽 flowchart（資料層 → PR 層 → 建置層 → 邊緣層 → 爬蟲層）
+    - 匯差數據自動化狀態機 stateDiagram（含錯誤中止路徑）
+    - Google 爬蟲索引流程驗證 flowchart（Stage 1–8 完整對照）
+
+- 4f63ff3: fix(seo): 匯差腳本幣別缺漏時中止生成，防止不完整資料污染生產 SEO 內容
+  - errors > 0 時改為 console.error + process.exit(1)，確保 GitHub Actions 工作流程明確失敗
+  - 防止上游 API 暫時缺漏幣別時，腳本靜默提交不完整的 seo-rate-examples.ts 至主分支
+
+- 7fe7585: feat(seo): 幣別頁 FAQ 加入具體台幣差距範例，每週自動更新
+  - 新增 scripts/update-seo-rate-examples.mjs：雙 API 比對（臺灣銀行現金 + open.er-api.com 市場中間價）
+  - 改以「換 3 萬元台幣」為情境，顯示現金換匯比 Google/XE 中間價多付多少元台幣
+  - 新增 src/config/generated/seo-rate-examples.ts：17 幣別靜態常數（自動生成）
+  - 更新 seo-metadata.ts：FAQ 改用 buildRateExampleSentence() 顯示具體台幣差異
+  - 新增 .github/workflows/update-seo-rate-examples.yml：每週一自動更新並提交
+  - 新增 package.json script: update:seo-examples
+
+- f6b0c24: fix(seo): Schema.org 合規修正、關鍵字密度優化、inline script 壓縮
+  - P0 Schema.org: ImageObject width/height 改為 number、Organization.logo 改為 ImageObject、Article.image 補 contentUrl 與 publisher.logo 尺寸、FinancialService Offer 補完整欄位
+  - P0 SEOHelmet: structuredDataJson 與 normalizedAlternatesSignature 改用 useMemo、移除 unmount cleanup race condition、replaceHeadCollection 限制只清除 managed 節點
+  - P1 robots.txt: Disallow 路徑補 /ratewise/ 前綴（正確反映 sub-path 部署）
+  - P2 關鍵字密度: 幣別 FAQ 答案與 About FAQ 問題改用「本工具」取代重複品牌名稱
+  - P2 inline script: 移除 index.html 兩個 inline script 的 comments 並壓縮
+
+- 014b38f: fix(seo): MEDIUM + LOW 優先 SSOT 清理與 SEO 結構修復
+
+  MEDIUM — seo-metadata.ts SSOT 修復：
+  - `OPEN_DATA_PAGE_FAQ` 3 個答案：hardcode CDN/Raw URL → `RATES_API.latestCdn/latestRaw/historyCdnExample`
+  - `OPEN_DATA_PAGE_FAQ` 幣別數量：hardcode `18` → `${SUPPORTED_CURRENCY_COUNT}`
+  - HowTo step 2 text：hardcode CDN URL → `RATES_API.latestCdn`
+  - `ABOUT_PAGE_FAQ` 聯繫方式：hardcode email/GitHub → `APP_INFO.email/github`
+  - `ABOUT_PAGE_FAQ` sitemap 條目數：hardcode `24` → `${SEO_PATHS.length}`（現為 25）
+  - `OPEN_DATA_PAGE_SEO.jsonLd`：新增 `buildShareImageJsonLd()`（補 OG image JSON-LD）
+  - seo-metadata.ts imports：新增 `RATES_API`、`SEO_PATHS`
+
+  LOW — Footer 重複連結移除：
+  - 亞洲貨幣 section：移除與「熱門匯率」重複的 USD/JPY/HKD/CNY/KRW
+    → 替換為 SGD, THB, PHP, MYR, IDR, VND（6 個非重複亞洲幣別）
+  - 歐美貨幣 section：移除與「熱門匯率」重複的 EUR
+    → 保留 GBP, AUD, CAD, NZD, CHF（5 個非重複歐美幣別）
+  - `footer-links.test.ts`：新增跨 section 重複 href 驗證（`should have no duplicate hrefs across all sections`）
+
+  LOW — Sitemap OG image：
+  - `generate-sitemap-2025.mjs PAGE_IMAGES`：補 `/open-data/` OG image 條目（先前遺漏）
+  - 重新生成 `public/sitemap.xml`（25 個 URL，9 個頁面有圖片）
+  - `seo-paths.config.mjs` 注解：更正 `24 個` → `25 個`
+
+- de8eaa0: fix(seo): 修正測試假陽性、template bleed 防護、verify-ssot-sync base path
+  - seo-metadata.ts：移除幣別模板 FAQ 中硬編碼的「日圓」範例（template bleed 根因）
+  - seo-ssot.test.ts：新增 14 個非 JPY 幣別頁 FAQ 不含「日圓/日幣」測試
+  - SEOHelmet.test.tsx：SPA no-cleanup 設計 — unmount 後標籤應保留
+  - seo-best-practices.test.ts：修正 robots.txt 路徑前綴與主題腳本行為驗證
+  - index.html.test.ts：安全腳本測試改為驗證行為（白名單值、localStorage），不依賴壓縮後變數名
+  - scripts/verify-ssot-sync.mjs：DEV_ONLY_PATHS 路徑比對補上 base path 前綴（/ratewise）
+
+- dc7028e: fix(seo): 修正 Open Data title、FAQPage 透明度敘述與 sitemap lastmod 真實性
+  - Open Data 頁 title 改由 `SEOHelmet` 統一追加品牌，避免 prerender 產物出現重複品牌名稱
+  - Open Data 相關資源中的內部「使用指南」卡片改用 router-aware `Link`，確保 `/ratewise/` basename 部署下不會導到根路徑
+  - About FAQ 與 `docs/SEO_GUIDE.md` 移除 `FAQPage` 已實作 / Rich Results 已適用的過時敘述，回到實際 schema 輸出狀態
+  - sitemap `lastmod` 改為重大依賴檔的 git commit 日期優先，並將首頁 SEO metadata 納入依賴，以日期粒度消除同日 commit 後的 sitemap 漂移
+  - 新增 prerender 與 truthfulness 回歸測試，持續守住 title 去重與 SEO 透明度同步
+
+- 014b38f: refactor(ssot): 消除 OpenData 硬編碼 URL、建立 api-endpoints.ts SSOT 模組
+  - 新增 `src/config/api-endpoints.ts`：集中管理所有 jsDelivr CDN 與 GitHub Raw API 端點 URL
+    - `RATES_API`：latestCdn、latestRaw、historyCdnExample、historyRawExample、actionsUrl
+    - `CDN_DATA_BASE`、`RAW_DATA_BASE` 從 `APP_INFO.github` 動態解析，無任何 hardcode
+  - `OpenData.tsx` SSOT 修復（9 項 hardcode 消除）：
+    - CDN/GitHub API 端點 URL → 改用 `RATES_API.*`
+    - canonical URL → `SITE_CONFIG.url + 'open-data/'`
+    - 深層連結範例 → `SITE_CONFIG.url`
+    - GitHub 連結（Actions、原始碼）→ `APP_INFO.github`
+    - 授權連結 → `APP_INFO.licenseUrl`、`APP_INFO.license`
+    - 商業聯繫 email → `APP_INFO.email`（inline rules section）
+    - 支援幣別清單 → 從 `CURRENCY_DEFINITIONS` SSOT 動態導出，自動同步幣別數量
+  - `seo-metadata.ts`：OPEN_DATA_PAGE_FAQ email hardcode → `APP_INFO.email`（template literal）
+  - 新增測試：
+    - `src/config/__tests__/api-endpoints.test.ts`：14 項 SSOT 一致性測試
+    - `src/config/__tests__/footer-links.test.ts`：11 項 Footer 結構與合規性測試
+
 ## 2.9.9
 
 ### Patch Changes

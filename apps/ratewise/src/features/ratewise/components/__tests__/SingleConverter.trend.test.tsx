@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/vitest';
 import { SingleConverter } from '../SingleConverter';
 import type { CurrencyCode } from '../../types';
 import * as historyService from '../../../../services/exchangeRateHistoryService';
-import type { ExchangeRateData } from '../../../../services/exchangeRateHistoryService';
+import type { RateSnapshot } from '../../../../services/exchangeRateHistoryService';
 
 // Mock services with controllable responses
 vi.mock('../../../../services/exchangeRateHistoryService', () => ({
@@ -114,7 +114,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
 
   describe('歷史數據載入', () => {
     it('should load historical data and latest rates on mount', async () => {
-      const mockHistoricalData: { date: string; data: ExchangeRateData }[] = [
+      const mockHistoricalData: { date: string; data: RateSnapshot }[] = [
         {
           date: '2025-11-27',
           data: {
@@ -132,7 +132,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
           },
         },
       ];
-      const mockLatestRates: ExchangeRateData = {
+      const mockLatestRates: RateSnapshot = {
         updateTime: '2025/11/29 08:00:00',
         source: 'Taiwan Bank',
         rates: { TWD: 1, USD: 31.665 } as Record<CurrencyCode, number>,
@@ -153,7 +153,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
     });
 
     it('should handle fetchLatestRates failure gracefully', async () => {
-      const mockHistoricalData: { date: string; data: ExchangeRateData }[] = [
+      const mockHistoricalData: { date: string; data: RateSnapshot }[] = [
         {
           date: '2025-11-27',
           data: {
@@ -198,7 +198,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
     });
 
     it('should merge latest rates with historical data', async () => {
-      const mockHistoricalData: { date: string; data: ExchangeRateData }[] = [
+      const mockHistoricalData: { date: string; data: RateSnapshot }[] = [
         {
           date: '2025-11-27',
           data: {
@@ -216,7 +216,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
           },
         },
       ];
-      const mockLatestRates: ExchangeRateData = {
+      const mockLatestRates: RateSnapshot = {
         updateTime: '2025/11/29 08:00:00',
         source: 'Taiwan Bank',
         rates: { TWD: 1, USD: 31.665 } as Record<CurrencyCode, number>,
@@ -237,7 +237,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
     });
 
     it('should deduplicate data when latest date matches historical date', async () => {
-      const mockHistoricalData: { date: string; data: ExchangeRateData }[] = [
+      const mockHistoricalData: { date: string; data: RateSnapshot }[] = [
         {
           date: '2025-11-28',
           data: {
@@ -255,7 +255,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
           },
         }, // Same date as latest
       ];
-      const mockLatestRates: ExchangeRateData = {
+      const mockLatestRates: RateSnapshot = {
         updateTime: '2025/11/29 10:00:00', // Same date, later time
         source: 'Taiwan Bank',
         rates: { TWD: 1, USD: 31.665 } as Record<CurrencyCode, number>, // Updated rate
@@ -275,7 +275,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
     });
 
     it('should handle invalid latest rate (NaN or <= 0) gracefully', async () => {
-      const mockHistoricalData: { date: string; data: ExchangeRateData }[] = [
+      const mockHistoricalData: { date: string; data: RateSnapshot }[] = [
         {
           date: '2025-11-28',
           data: {
@@ -285,7 +285,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
           },
         },
       ];
-      const mockLatestRates: ExchangeRateData = {
+      const mockLatestRates: RateSnapshot = {
         updateTime: '2025/11/29 08:00:00',
         source: 'Taiwan Bank',
         rates: { TWD: 0, USD: 0 } as Record<CurrencyCode, number>, // Invalid rates (would result in 0/0 = NaN)
@@ -305,7 +305,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
     });
 
     it('should handle null rates in historical data', async () => {
-      const mockHistoricalData: { date: string; data: ExchangeRateData }[] = [
+      const mockHistoricalData: { date: string; data: RateSnapshot }[] = [
         {
           date: '2025-11-27',
           data: {

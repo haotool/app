@@ -9,6 +9,7 @@
 import { logger } from '../utils/logger';
 import { fetchWithRequestId } from '../utils/requestId';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
+import { RATES_API } from '../config/api-endpoints';
 import {
   saveExchangeRatesToIDB,
   getExchangeRatesFromIDBWithStaleness,
@@ -45,16 +46,12 @@ const FALLBACK_RATES: Record<string, number> = {
 
 // ExchangeRateData 類型從 offlineStorage.ts 導入，確保類型一致性
 
-// CDN URLs
-// 策略：只使用 GitHub raw，避免 CDN 快取延遲
-// jsdelivr CDN 快取時間可達 12-24 小時，不適合即時匯率數據
-// GitHub raw 直接從 data 分支讀取，無快取，永遠最新
-const CDN_URLS = [
-  // GitHub raw (主要) - 使用 data 分支，無快取，永遠最新
-  'https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json',
-  // 備援策略：如需添加，建議使用支援 cache-busting 的 CDN
-  // 或考慮自建 Cloudflare Workers/Pages Functions 作為中間層
-];
+// CDN URLs — 依序嘗試，前者失敗才落到後者。
+// [1] GitHub raw：無快取，永遠取到最新（data 分支每 5 分鐘更新一次）。主要來源。
+// [2] jsDelivr CDN：有 12-24h 快取，匯率可能略舊，但作為 GitHub raw 故障時的備援
+//     優於直接回落到硬編碼 FALLBACK_RATES。僅在前者回傳錯誤時才啟用。
+// URL 從 api-endpoints.ts 統一管理，此處不硬編碼。
+const CDN_URLS = [RATES_API.latestRaw, RATES_API.latestCdn];
 
 // 單次 CDN fetch 逾時上限。行動網路平均 RTT 約 200-500ms，8 秒足以涵蓋 3G 網路，同時防止無限等待。
 export const FETCH_TIMEOUT_MS = 8_000;
@@ -360,20 +357,4 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
 export function clearExchangeRateCache(): void {
   localStorage.removeItem(CACHE_KEY);
   logger.debug('Exchange rate cache cleared');
-}
-
-/**
- * 轉換匯率資料為應用程式使用的格式
- * 從台灣銀行的即期買入價轉換為應用需要的匯率
- */
-export function transformRates(data: ExchangeRateData): Record<string, number> {
-  const transformed: Record<string, number> = {};
-
-  // 台灣銀行的匯率是 1 外幣 = X 台幣
-  // 但我們的應用需要 1 台幣 = X 外幣
-  Object.entries(data.rates).forEach(([code, rate]) => {
-    transformed[code] = 1 / rate; // 轉換為 TWD 基準
-  });
-
-  return transformed;
 }
