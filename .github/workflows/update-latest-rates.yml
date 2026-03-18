@@ -121,6 +121,13 @@ jobs:
             done
           fi
 
+      - name: Purge jsDelivr CDN cache
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        uses: gacts/purge-jsdelivr-cache@v1
+        with:
+          urls: |
+            https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
+
       - name: Update workflow summary (success)
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         run: |
@@ -135,6 +142,9 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ⚡ CDN Purge" >> $GITHUB_STEP_SUMMARY
+          echo "jsDelivr cache purged — latest.json available on CDN within seconds." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📈 Sample Rates (TWD)" >> $GITHUB_STEP_SUMMARY
           echo "- **USD:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.USD")" >> $GITHUB_STEP_SUMMARY

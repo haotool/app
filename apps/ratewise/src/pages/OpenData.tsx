@@ -26,13 +26,13 @@ const DATA_SOURCES = [
     label: '建議端點（CDN）',
     name: 'jsDelivr 全球加速',
     url: 'https://cdn.jsdelivr.net',
-    note: '全球 PoP 節點加速，快取約 12 小時，無明確請求上限，適合生產環境與 SDK 整合',
+    note: '全球 PoP 節點加速，無明確請求上限，支援 ETag 條件式請求（省頻寬）。每次 data 分支推送後自動 Purge，實際新鮮度約 5 分鐘',
   },
   {
-    label: '進階端點（即時）',
+    label: '備援端點（即時）',
     name: 'GitHub Raw',
     url: 'https://raw.githubusercontent.com',
-    note: '無快取，每次請求直接取得最新資料。未認證 IP 每小時 60 次請求限制，適合需確保即時性或 CDN 不可用時',
+    note: '無快取，每次請求直接取得最新資料。未認證 IP 每小時 60 次請求限制，CDN 不可用時自動切換',
   },
 ];
 
@@ -63,12 +63,12 @@ const RATE_LIMIT_ITEMS = [
   {
     source: 'jsDelivr CDN',
     limit: '無明確請求上限',
-    note: '遵守 jsDelivr 服務條款；CDN 快取約 12 小時，禁止爬蟲式大量歷史批次抓取',
+    note: '遵守 jsDelivr 服務條款；data 分支推送後自動 Purge，新鮮度約 5 分鐘；禁止爬蟲式大量歷史批次抓取',
   },
   {
     source: 'GitHub Raw',
     limit: '60 requests/hour（未認證）',
-    note: '超出限制返回 HTTP 429；請優先使用 jsDelivr CDN，僅在需確保即時性時改用此端點',
+    note: '超出限制返回 HTTP 429；jsDelivr CDN 為主要端點，GitHub Raw 僅作備援自動切換',
   },
   {
     source: '資料更新頻率',
@@ -382,12 +382,13 @@ const OpenData = () => {
               </p>
               <ul className="space-y-1 text-sm text-amber-700 dark:text-amber-400">
                 <li>
-                  <strong>一般用途（推薦）</strong>：使用 jsDelivr CDN；快取約 12
-                  小時，全球加速，無請求上限，適合 SDK 整合與大多數應用程式。
+                  <strong>一般用途（推薦）</strong>：jsDelivr CDN；GitHub Actions 在每次 data
+                  分支推送後自動呼叫 jsDelivr Purge API，CDN 快取立即失效，實際新鮮度約 5 分鐘，與
+                  GitHub Raw 相同，同時享有全球加速與無請求上限優勢。
                 </li>
                 <li>
-                  <strong>需要最新資料</strong>：改用 GitHub
-                  Raw；無快取，每次取得最新版本，但注意每小時 60 次請求上限（未認證 IP）。
+                  <strong>備援</strong>：CDN 不可用時自動切換至 GitHub Raw（無快取、每小時 60
+                  次請求上限）。
                 </li>
                 <li>
                   <strong>Client 端快取</strong>：建議以 localStorage 快取 5 分鐘（與 GitHub Actions
@@ -395,7 +396,7 @@ const OpenData = () => {
                 </li>
                 <li>
                   <strong>ETag 條件式請求（jsDelivr 支援）</strong>：jsDelivr 回應包含{' '}
-                  <code>Access-Control-Expose-Headers: *</code>，瀏覽器 fetch 可讀取 ETag， 實作{' '}
+                  <code>Access-Control-Expose-Headers: *</code>，瀏覽器 fetch 可讀取 ETag，實作{' '}
                   <code>If-None-Match</code> 讓未變更時回傳 304（body 為零），節省約 5 KB／次。
                   GitHub Raw 無此 CORS 設定，瀏覽器端 ETag 不可用。
                 </li>
