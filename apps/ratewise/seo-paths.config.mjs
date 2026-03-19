@@ -100,7 +100,7 @@ export const SEO_PATHS = [
 /**
  * 需要回傳 app shell 的互動頁面（app-only）
  *
- * 排列順序：前 3 個為使用者功能頁（noindex 處理），後 4 個為開發展示頁（Disallow 處理）
+ * 排列順序：前 4 個為使用者功能頁（noindex 處理），後 4 個為開發展示頁（Disallow 處理）
  * ─ 使用者功能頁：允許爬取，由 SEOHelmet noindex 排除索引（Google 官方建議）
  * ─ 開發展示頁：直接 Disallow，無使用者價值，無需 noindex
  */
@@ -108,17 +108,18 @@ export const APP_ONLY_PATHS = [
   '/multi/',
   '/favorites/',
   '/settings/',
+  '/seo-tech/',
   '/theme-showcase/',
   '/color-scheme/',
   '/update-prompt-test/',
   '/ui-showcase/',
 ];
 
-/** 使用者功能頁子集（前 3）：允許爬取 + noindex meta */
-export const APP_ONLY_NOINDEX_PATHS = APP_ONLY_PATHS.slice(0, 3);
+/** 使用者功能頁子集（前 4）：允許爬取 + noindex meta */
+export const APP_ONLY_NOINDEX_PATHS = APP_ONLY_PATHS.slice(0, 4);
 
 /** 開發 / 展示頁子集（後 4）：Disallow 爬取 */
-export const DEV_ONLY_PATHS = APP_ONLY_PATHS.slice(3);
+export const DEV_ONLY_PATHS = APP_ONLY_PATHS.slice(4);
 
 /**
  * 需要預渲染的 app-only 路由

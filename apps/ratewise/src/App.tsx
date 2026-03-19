@@ -21,6 +21,7 @@ const Guide = lazyWithRetry(() => import('./pages/Guide'));
 const Privacy = lazyWithRetry(() => import('./pages/Privacy'));
 const OpenData = lazyWithRetry(() => import('./pages/OpenData'));
 const ColorSchemeComparison = lazyWithRetry(() => import('./pages/ColorSchemeComparison'));
+const SeoTech = lazyWithRetry(() => import('./pages/SeoTech'));
 const USDToTWD = lazyWithRetry(() => import('./pages/USDToTWD'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
@@ -106,6 +107,7 @@ function App() {
               <Route path="/open-data" element={<OpenData />} />
               <Route path="/usd-twd" element={<USDToTWD />} />
               <Route path="/color-scheme" element={<ColorSchemeComparison />} />
+              <Route path="/seo-tech" element={<SeoTech />} />
 
               {/* 404 catch-all route */}
               <Route path="*" element={<NotFound />} />

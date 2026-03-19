@@ -1083,6 +1083,13 @@ export const APP_ONLY_PAGE_SEO = {
     pathname: '/settings',
     robots: 'noindex, follow',
   },
+  seoTech: {
+    title: 'SEO 技術揭露 - RateWise 搜尋引擎最佳化架構完整說明',
+    description:
+      '完整揭露 RateWise 所採用的 SEO 技術：42 個索引路徑、8 種 JSON-LD Schema、50 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。',
+    pathname: '/seo-tech',
+    robots: 'noindex, follow',
+  },
 } as const satisfies Record<string, SEOPageMetadata>;
 
 const CURRENCY_PAGE_OVERRIDES = {

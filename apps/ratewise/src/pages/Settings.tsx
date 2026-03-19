@@ -275,6 +275,13 @@ export default function Settings() {
               <span className="text-sm font-medium">{t('settings.openDataApi')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
+            <Link
+              to="/seo-tech/"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+            >
+              <span className="text-sm font-medium">{t('settings.seoTech')}</span>
+              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+            </Link>
             <a
               href={APP_INFO.github}
               target="_blank"

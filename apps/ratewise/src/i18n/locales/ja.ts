@@ -142,6 +142,7 @@ const ja = {
     openSource: 'オープンソース',
     privacyPolicy: 'プライバシーポリシー',
     openDataApi: 'オープンデータ API',
+    seoTech: 'SEO 技術開示',
   },
 
   // Styles

@@ -142,6 +142,7 @@ const zhTW = {
     openSource: '開放原始碼',
     privacyPolicy: '隱私權政策',
     openDataApi: '開放資料 API',
+    seoTech: 'SEO 技術揭露',
   },
 
   // Styles

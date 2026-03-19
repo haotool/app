@@ -1,5 +1,12 @@
 # @app/ratewise
 
+## 2.11.2
+
+### Patch Changes
+
+- 7c4d6bb: 同步 prebuild 產出物版本至 v2.11.1（llms.txt / openapi.json / api/latest.json）
+- 新增 SEO 技術揭露頁面（/seo-tech/），完整展示 RateWise 所有 SEO 技術架構、資料管線與 JSON-LD Schema
+
 ## 2.11.1
 
 ### Patch Changes

@@ -143,6 +143,7 @@ const en = {
     openSource: 'Open Source',
     privacyPolicy: 'Privacy Policy',
     openDataApi: 'Open Data API',
+    seoTech: 'SEO Technology',
   },
 
   // Styles
