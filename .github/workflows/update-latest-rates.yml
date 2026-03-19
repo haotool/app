@@ -125,7 +125,7 @@ jobs:
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         uses: gacts/purge-jsdelivr-cache@v1
         with:
-          urls: |
+          url: |
             https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
       - name: Update workflow summary (success)
