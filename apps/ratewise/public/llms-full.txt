@@ -192,7 +192,7 @@ const history = await fetch(
 
 ---
 
-## 支援幣別完整清單
+## 支援幣別完整清單（外幣→TWD）
 
 | 幣別 | 來源幣 | 目標幣 | 說明 | 幣別頁 |
 |------|--------|--------|------|--------|
@@ -213,6 +213,28 @@ const history = await fetch(
 | THB/TWD 泰銖 | THB | TWD | 泰國旅遊換匯 | https://app.haotool.org/ratewise/thb-twd/ |
 | USD/TWD 美元 | USD | TWD | 美國旅遊與海外付款 | https://app.haotool.org/ratewise/usd-twd/ |
 | VND/TWD 越南盾 | VND | TWD | 越南旅遊換匯 | https://app.haotool.org/ratewise/vnd-twd/ |
+
+## 反向幣別頁完整清單（TWD→外幣，出國換匯場景）
+
+| 幣別 | 來源幣 | 目標幣 | 說明 | 幣別頁 |
+|------|--------|--------|------|--------|
+| 台幣換澳幣 TWD/AUD | TWD | AUD | 出國前台幣換澳幣 | https://app.haotool.org/ratewise/twd-aud/ |
+| 台幣換加幣 TWD/CAD | TWD | CAD | 出國前台幣換加幣 | https://app.haotool.org/ratewise/twd-cad/ |
+| 台幣換瑞士法郎 TWD/CHF | TWD | CHF | 出國前台幣換瑞士法郎 | https://app.haotool.org/ratewise/twd-chf/ |
+| 台幣換人民幣 TWD/CNY | TWD | CNY | 出國前台幣換人民幣 | https://app.haotool.org/ratewise/twd-cny/ |
+| 台幣換歐元 TWD/EUR | TWD | EUR | 出國前台幣換歐元 | https://app.haotool.org/ratewise/twd-eur/ |
+| 台幣換英鎊 TWD/GBP | TWD | GBP | 出國前台幣換英鎊 | https://app.haotool.org/ratewise/twd-gbp/ |
+| 台幣換港幣 TWD/HKD | TWD | HKD | 出國前台幣換港幣 | https://app.haotool.org/ratewise/twd-hkd/ |
+| 台幣換印尼盾 TWD/IDR | TWD | IDR | 出國前台幣換印尼盾 | https://app.haotool.org/ratewise/twd-idr/ |
+| 台幣換日圓 TWD/JPY | TWD | JPY | 出國前台幣換日圓 | https://app.haotool.org/ratewise/twd-jpy/ |
+| 台幣換韓元 TWD/KRW | TWD | KRW | 出國前台幣換韓元 | https://app.haotool.org/ratewise/twd-krw/ |
+| 台幣換馬來幣 TWD/MYR | TWD | MYR | 出國前台幣換馬來幣 | https://app.haotool.org/ratewise/twd-myr/ |
+| 台幣換紐元 TWD/NZD | TWD | NZD | 出國前台幣換紐元 | https://app.haotool.org/ratewise/twd-nzd/ |
+| 台幣換菲律賓披索 TWD/PHP | TWD | PHP | 出國前台幣換菲律賓披索 | https://app.haotool.org/ratewise/twd-php/ |
+| 台幣換新加坡幣 TWD/SGD | TWD | SGD | 出國前台幣換新加坡幣 | https://app.haotool.org/ratewise/twd-sgd/ |
+| 台幣換泰銖 TWD/THB | TWD | THB | 出國前台幣換泰銖 | https://app.haotool.org/ratewise/twd-thb/ |
+| 台幣換美元 TWD/USD | TWD | USD | 出國前台幣換美元 | https://app.haotool.org/ratewise/twd-usd/ |
+| 台幣換越南盾 TWD/VND | TWD | VND | 出國前台幣換越南盾 | https://app.haotool.org/ratewise/twd-vnd/ |
 
 ---
 
