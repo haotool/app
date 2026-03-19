@@ -123,10 +123,19 @@ jobs:
 
       - name: Purge jsDelivr CDN cache
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
-        uses: gacts/purge-jsdelivr-cache@v1
-        with:
-          url: |
-            https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
+        run: |
+          PURGE_URL="https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json"
+          echo "🧹 Purging jsDelivr CDN cache..."
+          for i in 1 2 3; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PURGE_URL")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "✅ CDN cache purged successfully (attempt $i)"
+              break
+            else
+              echo "⚠️ Purge attempt $i failed (HTTP $HTTP_STATUS)"
+              if [ $i -lt 3 ]; then sleep 5; fi
+            fi
+          done
 
       - name: Update workflow summary (success)
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
