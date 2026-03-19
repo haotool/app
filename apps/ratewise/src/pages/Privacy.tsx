@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { Breadcrumb } from '../components/Breadcrumb';
+import { PageNavHeader } from '../components/PageNavHeader';
 import { APP_INFO, getCopyrightYears } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
 import { PRIVACY_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
@@ -25,29 +25,14 @@ export default function Privacy() {
 
       <div className="min-h-screen">
         <div className="container mx-auto max-w-4xl px-4 py-8">
+          <PageNavHeader
+            breadcrumbItems={[
+              { label: '首頁', href: '/' },
+              { label: '隱私政策', href: '/privacy/' },
+            ]}
+          />
+
           <div className="mb-8">
-            <Link
-              to="/"
-              className="mb-4 inline-flex items-center text-primary transition-colors hover:text-primary-hover"
-            >
-              <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              回到首頁
-            </Link>
-
-            <Breadcrumb
-              items={[
-                { label: '首頁', href: '/' },
-                { label: '隱私政策', href: '/privacy/' },
-              ]}
-            />
-
             <h1 className="mb-2 text-3xl font-bold text-text">隱私政策</h1>
             <p className="text-text-muted">最後更新：{LAST_UPDATED}</p>
           </div>

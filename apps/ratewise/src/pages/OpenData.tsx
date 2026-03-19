@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { Breadcrumb } from '../components/Breadcrumb';
+import { PageNavHeader } from '../components/PageNavHeader';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
 import { RATES_API } from '../config/api-endpoints';
@@ -260,29 +260,8 @@ const OpenData = () => {
 
       <div className="min-h-screen bg-page-gradient">
         <div className="container mx-auto max-w-5xl px-4 py-8">
-          <Link
-            to="/"
-            className="mb-4 inline-flex items-center text-primary transition-colors hover:text-primary-hover"
-          >
-            <svg
-              aria-hidden="true"
-              className="mr-2 h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            回到首頁
-          </Link>
-
-          <Breadcrumb
-            items={[
+          <PageNavHeader
+            breadcrumbItems={[
               { label: '首頁', href: '/' },
               { label: '開放資料 API', href: '/open-data/' },
             ]}

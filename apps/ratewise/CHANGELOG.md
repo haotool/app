@@ -1,5 +1,15 @@
 # @app/ratewise
 
+## 2.10.2
+
+### Patch Changes
+
+- 916e2cb: Settings 頁補上「隱私權政策」與「開放資料 API」連結，三個語系同步新增翻譯 key
+- UX 導航修正：PageNavHeader SSOT 模組、WebView 視口高度修正、補齊缺失路由
+  - 新增 PageNavHeader 組件統一「返回 + 麵包屑」，改用 navigate(-1) 返回上一頁（從設定頁進入可正確返回設定頁）
+  - 修正 AppLayout 在 Threads/Instagram WebView 與瀏覽器中視口高度擠壓問題（改用 visualViewport.height + --app-height CSS 變量）
+  - 補上 /guide、/privacy、/open-data 三個 App.tsx 缺失路由（Settings 連結先前會觸發 404）
+
 ## 2.10.1
 
 ### Patch Changes

@@ -17,6 +17,9 @@ import { lazyWithRetry } from './utils/lazyWithRetry';
 // Lazy load pages with retry mechanism
 const FAQ = lazyWithRetry(() => import('./pages/FAQ'));
 const About = lazyWithRetry(() => import('./pages/About'));
+const Guide = lazyWithRetry(() => import('./pages/Guide'));
+const Privacy = lazyWithRetry(() => import('./pages/Privacy'));
+const OpenData = lazyWithRetry(() => import('./pages/OpenData'));
 const ColorSchemeComparison = lazyWithRetry(() => import('./pages/ColorSchemeComparison'));
 const USDToTWD = lazyWithRetry(() => import('./pages/USDToTWD'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
@@ -98,6 +101,9 @@ function App() {
               {/* SEO 落地頁 - 獨立佈局 */}
               <Route path="/faq" element={<FAQ />} />
               <Route path="/about" element={<About />} />
+              <Route path="/guide" element={<Guide />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/open-data" element={<OpenData />} />
               <Route path="/usd-twd" element={<USDToTWD />} />
               <Route path="/color-scheme" element={<ColorSchemeComparison />} />
 
