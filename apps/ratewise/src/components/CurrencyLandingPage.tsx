@@ -93,6 +93,7 @@ export function CurrencyLandingPage({
               { label: '首頁', href: '/' },
               { label: `${currencyCode} → TWD`, href: `${pathname}/` },
             ]}
+            className="mb-4"
           />
 
           {/* Header Section */}

@@ -2,10 +2,11 @@
  * PageNavHeader - 頁面返回導航 + 麵包屑（SSOT 模組）
  *
  * 統一 SEO 落地頁（FAQ、Guide、About、Privacy、OpenData 等）的頂部導航區塊。
+ * sticky top-0 固定於頁面頂部，下滑後仍可快速返回。
  * 使用 navigate(-1) 實現真正的「返回」行為，有瀏覽器歷史則返回上一頁，
  * 否則 fallback 到指定路徑（預設 '/'）。
  *
- * @design-token text-primary, hover:text-primary-hover（來自 design-tokens.ts）
+ * @design-token bg-background/90, border-border/50（來自 tailwind.config.ts）
  */
 
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +23,7 @@ export interface PageNavHeaderProps {
 
 /**
  * 頁面頂部導航區塊：返回按鈕 + 麵包屑。
- * 固定置於頁面頭部，提供一致的導航體驗。
+ * sticky top-0 固定置頂，下滑後仍可見；backdrop-blur 提供玻璃質感背景。
  */
 export function PageNavHeader({
   breadcrumbItems,
@@ -41,18 +42,29 @@ export function PageNavHeader({
   };
 
   return (
-    <div className={`mb-8 ${className}`}>
-      <button
-        type="button"
-        onClick={handleBack}
-        className="mb-4 inline-flex items-center gap-1 text-primary transition-colors hover:text-primary-hover cursor-pointer"
-        aria-label="返回上一頁"
-      >
-        <ChevronLeft className="w-5 h-5" aria-hidden="true" />
-        <span className="text-sm font-medium">返回</span>
-      </button>
+    <div
+      className={`sticky top-0 z-20 -mx-4 px-4 py-2.5 mb-6
+        bg-background/90 backdrop-blur-md
+        border-b border-border/50 ${className}`}
+    >
+      <div className="flex min-h-[44px] items-center gap-3">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex shrink-0 items-center gap-1 cursor-pointer
+            text-sm font-medium text-primary
+            transition-colors hover:text-primary-hover"
+          aria-label="返回上一頁"
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          <span>返回</span>
+        </button>
 
-      <Breadcrumb items={breadcrumbItems} />
+        {/* 垂直分隔線 */}
+        <span className="h-4 w-px bg-border/60 shrink-0" aria-hidden="true" />
+
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
     </div>
   );
 }

@@ -39,6 +39,7 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
               { label: '首頁', href: '/' },
               { label: page.heading, href: `${page.pathname}/` },
             ]}
+            className="mb-4"
           />
 
           <header className="mb-8">

@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.10.3
+
+### Patch Changes
+
+- feat(ux): PageNavHeader 改為 sticky 固定置頂，下滑可快速返回
+
 ## 2.10.2
 
 ### Patch Changes
