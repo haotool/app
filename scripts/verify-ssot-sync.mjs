@@ -54,17 +54,21 @@ function extractPathsFromTS(filePath) {
   const inlinePaths = extractNamedArray(content, 'SEO_PATHS', ' as const');
   if (inlinePaths.length > 0) return inlinePaths;
 
-  // 檢查 SEO_PATHS 的實際 spread 組成（是否包含 LEGAL_SSG_PATHS）
+  // 檢查 SEO_PATHS 的實際 spread 組成（是否包含 LEGAL_SSG_PATHS / REVERSE_CURRENCY_SEO_PATHS）
   const seoPathsSpread = content.match(/export const SEO_PATHS = \[([^\]]+)\]/)?.[1] ?? '';
   const includesLegal = seoPathsSpread.includes('LEGAL_SSG_PATHS');
+  const includesReverse = seoPathsSpread.includes('REVERSE_CURRENCY_SEO_PATHS');
 
   const contentPaths = extractNamedArray(content, 'CONTENT_SEO_PATHS', ' as const');
   const legalPaths = includesLegal
     ? extractNamedArray(content, 'LEGAL_SSG_PATHS', ' as const')
     : [];
   const currencyPaths = extractNamedArray(content, 'CURRENCY_SEO_PATHS', ' as const');
+  const reversePaths = includesReverse
+    ? extractNamedArray(content, 'REVERSE_CURRENCY_SEO_PATHS', ' as const')
+    : [];
   if (contentPaths.length > 0 || currencyPaths.length > 0) {
-    return [...contentPaths, ...legalPaths, ...currencyPaths];
+    return [...contentPaths, ...legalPaths, ...currencyPaths, ...reversePaths];
   }
 
   throw new Error('無法從 TypeScript 文件中提取 SEO_PATHS');
@@ -91,8 +95,9 @@ async function extractPathsFromMJS(filePath) {
   const contentPaths = extractNamedArray(content, 'CONTENT_SEO_PATHS');
   const legalPaths = extractNamedArray(content, 'LEGAL_SSG_PATHS');
   const currencyPaths = extractNamedArray(content, 'CURRENCY_SEO_PATHS');
+  const reversePaths = extractNamedArray(content, 'REVERSE_CURRENCY_SEO_PATHS');
   if (contentPaths.length > 0 || legalPaths.length > 0 || currencyPaths.length > 0) {
-    return [...contentPaths, ...legalPaths, ...currencyPaths];
+    return [...contentPaths, ...legalPaths, ...currencyPaths, ...reversePaths];
   }
 
   throw new Error('無法從 .mjs 文件中提取 SEO_PATHS');
@@ -272,6 +277,7 @@ async function main() {
     const groups = [
       'CONTENT_SEO_PATHS',
       'CURRENCY_SEO_PATHS',
+      'REVERSE_CURRENCY_SEO_PATHS',
       'APP_ONLY_PATHS',
       'LEGAL_SSG_PATHS',
       'SEO_FILES',

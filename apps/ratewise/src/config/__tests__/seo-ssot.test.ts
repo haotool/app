@@ -5,6 +5,7 @@ import {
   SEO_INDEXABLE_LOCALES,
   buildDefaultAlternates,
   getCurrencyLandingPageContent,
+  getReverseCurrencyLandingPageContent,
 } from '../seo-metadata';
 import { SEO_RATE_EXAMPLES } from '../generated/seo-rate-examples';
 
@@ -83,6 +84,53 @@ describe('SEO SSOT', () => {
     it('SEO_RATE_EXAMPLES 應包含全部 17 幣別', () => {
       const codes = Object.keys(SEO_RATE_EXAMPLES);
       expect(codes.length).toBe(17);
+    });
+  });
+
+  describe('反向幣別頁（TWD→外幣）內容 SSOT', () => {
+    it('getReverseCurrencyLandingPageContent("USD") 應回傳正確結構', () => {
+      const content = getReverseCurrencyLandingPageContent('USD');
+      expect(content.currencyCode).toBe('USD');
+      expect(content.pathname).toBe('/twd-usd');
+      expect(content.direction).toBe('twd-to-foreign');
+    });
+
+    it('反向頁 title 應包含「台幣換」而非只有「換台幣」', () => {
+      const content = getReverseCurrencyLandingPageContent('USD');
+      expect(content.title).toMatch(/台幣換/);
+    });
+
+    it('反向頁 keywords 應包含「台幣換X」方向關鍵字', () => {
+      const content = getReverseCurrencyLandingPageContent('USD');
+      const keywordsStr = content.keywords.join(' ');
+      expect(keywordsStr).toMatch(/台幣換美金|TWD.*USD/);
+    });
+
+    it('反向頁 FAQ 應包含出國換匯場景問題', () => {
+      const content = getReverseCurrencyLandingPageContent('USD');
+      const allQuestions = content.faqEntries.map((e) => e.question).join('\n');
+      expect(allQuestions).toMatch(/台幣換|換美金|出國/);
+    });
+
+    it('反向頁與正向頁 FAQ 不應完全相同（避免 thin content）', () => {
+      const forward = getCurrencyLandingPageContent('USD');
+      const reverse = getReverseCurrencyLandingPageContent('USD');
+      const forwardQ = forward.faqEntries.map((e) => e.question).join('|');
+      const reverseQ = reverse.faqEntries.map((e) => e.question).join('|');
+      expect(forwardQ).not.toBe(reverseQ);
+    });
+
+    it('反向頁 pathname 格式應為 /twd-{code}（無尾斜線，與正向頁對稱）', () => {
+      const usd = getReverseCurrencyLandingPageContent('USD');
+      const jpy = getReverseCurrencyLandingPageContent('JPY');
+      expect(usd.pathname).toBe('/twd-usd');
+      expect(jpy.pathname).toBe('/twd-jpy');
+    });
+
+    it('反向頁 template bleed：非 JPY 幣別不應出現「日圓」', () => {
+      const content = getReverseCurrencyLandingPageContent('USD');
+      const allAnswers = content.faqEntries.map((e) => e.answer).join('\n');
+      expect(allAnswers).not.toMatch(/日圓|日幣/);
     });
   });
 });

@@ -234,6 +234,25 @@ export const routes: RouteRecord[] = [
   createLazyRoute('/idr-twd', () => import('./pages/IDRToTWD'), 'src/pages/IDRToTWD.tsx'),
   createLazyRoute('/myr-twd', () => import('./pages/MYRToTWD'), 'src/pages/MYRToTWD.tsx'),
 
+  // 17 個反向幣別落地頁（TWD→外幣，出國換匯場景，SEO 預渲染）
+  createLazyRoute('/twd-usd', () => import('./pages/TWDToUSD'), 'src/pages/TWDToUSD.tsx'),
+  createLazyRoute('/twd-jpy', () => import('./pages/TWDToJPY'), 'src/pages/TWDToJPY.tsx'),
+  createLazyRoute('/twd-eur', () => import('./pages/TWDToEUR'), 'src/pages/TWDToEUR.tsx'),
+  createLazyRoute('/twd-gbp', () => import('./pages/TWDToGBP'), 'src/pages/TWDToGBP.tsx'),
+  createLazyRoute('/twd-aud', () => import('./pages/TWDToAUD'), 'src/pages/TWDToAUD.tsx'),
+  createLazyRoute('/twd-cad', () => import('./pages/TWDToCAD'), 'src/pages/TWDToCAD.tsx'),
+  createLazyRoute('/twd-cny', () => import('./pages/TWDToCNY'), 'src/pages/TWDToCNY.tsx'),
+  createLazyRoute('/twd-hkd', () => import('./pages/TWDToHKD'), 'src/pages/TWDToHKD.tsx'),
+  createLazyRoute('/twd-krw', () => import('./pages/TWDToKRW'), 'src/pages/TWDToKRW.tsx'),
+  createLazyRoute('/twd-sgd', () => import('./pages/TWDToSGD'), 'src/pages/TWDToSGD.tsx'),
+  createLazyRoute('/twd-thb', () => import('./pages/TWDToTHB'), 'src/pages/TWDToTHB.tsx'),
+  createLazyRoute('/twd-nzd', () => import('./pages/TWDToNZD'), 'src/pages/TWDToNZD.tsx'),
+  createLazyRoute('/twd-chf', () => import('./pages/TWDToCHF'), 'src/pages/TWDToCHF.tsx'),
+  createLazyRoute('/twd-vnd', () => import('./pages/TWDToVND'), 'src/pages/TWDToVND.tsx'),
+  createLazyRoute('/twd-php', () => import('./pages/TWDToPHP'), 'src/pages/TWDToPHP.tsx'),
+  createLazyRoute('/twd-idr', () => import('./pages/TWDToIDR'), 'src/pages/TWDToIDR.tsx'),
+  createLazyRoute('/twd-myr', () => import('./pages/TWDToMYR'), 'src/pages/TWDToMYR.tsx'),
+
   // 不預渲染內部工具頁面
   createLazyRoute(
     '/color-scheme',

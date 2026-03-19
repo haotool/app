@@ -20,7 +20,7 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label="麵包屑導航" className={`mb-4 ${className}`}>
+    <nav aria-label="麵包屑導航" className={className}>
       <ol className="flex items-center gap-2 text-sm text-text-muted flex-wrap">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
