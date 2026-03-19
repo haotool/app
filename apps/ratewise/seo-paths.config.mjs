@@ -42,7 +42,7 @@ export const CONTENT_SEO_PATHS = [
 export const LEGAL_SSG_PATHS = ['/privacy/'];
 
 /**
- * 匯率落地頁（17 個）
+ * 匯率落地頁（17 個，外幣→TWD）
  */
 export const CURRENCY_SEO_PATHS = [
   '/aud-twd/',
@@ -65,10 +65,37 @@ export const CURRENCY_SEO_PATHS = [
 ];
 
 /**
- * 公開可索引 SEO 路徑（25 個）
+ * 反向幣別落地頁（17 個，TWD→外幣，出國換匯場景）
+ */
+export const REVERSE_CURRENCY_SEO_PATHS = [
+  '/twd-aud/',
+  '/twd-cad/',
+  '/twd-chf/',
+  '/twd-cny/',
+  '/twd-eur/',
+  '/twd-gbp/',
+  '/twd-hkd/',
+  '/twd-idr/',
+  '/twd-jpy/',
+  '/twd-krw/',
+  '/twd-myr/',
+  '/twd-nzd/',
+  '/twd-php/',
+  '/twd-sgd/',
+  '/twd-thb/',
+  '/twd-usd/',
+  '/twd-vnd/',
+];
+
+/**
+ * 公開可索引 SEO 路徑（42 個）
  * 注意：LEGAL_SSG_PATHS（privacy noindex）不納入 sitemap
  */
-export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS];
+export const SEO_PATHS = [
+  ...CONTENT_SEO_PATHS,
+  ...CURRENCY_SEO_PATHS,
+  ...REVERSE_CURRENCY_SEO_PATHS,
+];
 
 /**
  * 需要回傳 app shell 的互動頁面（app-only）
