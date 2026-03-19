@@ -1,42 +1,43 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { PageNavHeader } from '../components/PageNavHeader';
+import { Breadcrumb } from '../components/Breadcrumb';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
 import { RATES_API } from '../config/api-endpoints';
 import { SITE_CONFIG } from '../config/seo-paths';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 
-// ─── 資料來源 ─────────────────────────────────────────────────────────────────
+// ─── 資料來源架構 ──────────────────────────────────────────────────────────────
 
 const DATA_SOURCES = [
   {
     label: '原始來源',
     name: '臺灣銀行牌告匯率',
     url: 'https://rate.bot.com.tw/xrt',
-    note: '官方每日公布，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價',
+    note: '官方每日公布，現金買入／賣出、即期買入／賣出四種報價',
   },
   {
     label: '同步機制',
-    name: 'GitHub Actions（每 5 分鐘）',
+    name: 'GitHub Actions',
     url: RATES_API.actionsUrl,
-    note: '自動抓取台銀最新牌告，寫入 data 分支 JSON 檔案，確保資料即時性',
+    note: '每 5 分鐘自動抓取台銀最新牌告，寫入 data 分支 JSON',
   },
   {
-    label: '建議端點（CDN）',
-    name: 'jsDelivr 全球加速',
+    label: '建議端點',
+    name: 'jsDelivr CDN',
     url: 'https://cdn.jsdelivr.net',
-    note: '全球 PoP 節點加速，無明確請求上限，支援 ETag 條件式請求（省頻寬）。每次 data 分支推送後自動 Purge，實際新鮮度約 5 分鐘',
+    note: '全球 PoP 加速，無請求上限，支援 ETag 條件式請求。data 分支推送後自動 Purge，新鮮度約 5 分鐘',
   },
   {
-    label: '備援端點（即時）',
+    label: '備援端點',
     name: 'GitHub Raw',
     url: 'https://raw.githubusercontent.com',
-    note: '無快取，每次請求直接取得最新資料。未認證 IP 每小時 60 次請求限制，CDN 不可用時自動切換',
+    note: '無快取，每次直接取最新資料。未認證 IP 每小時 60 次上限',
   },
-];
+] as const;
 
-// ─── API 端點 ─────────────────────────────────────────────────────────────────
+// ─── API 端點 ──────────────────────────────────────────────────────────────────
 
 const API_ENDPOINTS = [
   {
@@ -44,133 +45,129 @@ const API_ENDPOINTS = [
     path: '/public/rates/latest.json',
     cdnUrl: RATES_API.latestCdn,
     rawUrl: RATES_API.latestRaw,
-    description: '最新匯率（每 5 分鐘更新）',
-    note: '包含所有 18 幣別的現金與即期四種報價，以及簡化的即期賣出參考匯率。',
+    description: '最新匯率',
+    badge: '每 5 分鐘更新',
+    note: '包含全部 17 幣別的現金與即期四種報價，以及即期賣出參考匯率。',
   },
   {
     method: 'GET',
     path: '/public/rates/history/{YYYY-MM-DD}.json',
     cdnUrl: RATES_API.historyCdnExample,
     rawUrl: RATES_API.historyRawExample,
-    description: '歷史匯率（指定日期）',
-    note: '以日期取代 {YYYY-MM-DD}，例如 2025-02-20。若該日無資料（例如假日），伺服器回傳 404。',
+    description: '歷史匯率',
+    badge: '指定日期',
+    note: '以日期替換 {YYYY-MM-DD}。若該日無資料（如假日），回傳 404。',
   },
-];
+] as const;
 
 // ─── 速率限制 ──────────────────────────────────────────────────────────────────
 
 const RATE_LIMIT_ITEMS = [
   {
     source: 'jsDelivr CDN',
-    limit: '無明確請求上限',
-    note: '遵守 jsDelivr 服務條款；data 分支推送後自動 Purge，新鮮度約 5 分鐘；禁止爬蟲式大量歷史批次抓取',
+    limit: '無明確上限',
+    note: '遵守 jsDelivr 服務條款；禁止爬蟲式大量歷史批次抓取',
   },
   {
     source: 'GitHub Raw',
-    limit: '60 requests/hour（未認證）',
-    note: '超出限制返回 HTTP 429；jsDelivr CDN 為主要端點，GitHub Raw 僅作備援自動切換',
+    limit: '60 req/hr（未認證）',
+    note: '超出返回 HTTP 429；建議以 CDN 為主',
   },
   {
     source: '資料更新頻率',
-    limit: '每 5 分鐘一次',
-    note: '資料每 5 分鐘同步一次，建議 client 端自行快取 5 分鐘，避免無意義重複請求',
-  },
-  {
-    source: 'Client 端建議快取',
-    limit: '5 分鐘（TTL）',
-    note: '以 localStorage 或記憶體快取比對 timestamp，超過 5 分鐘才重新 fetch，節省頻寬',
+    limit: '每 5 分鐘',
+    note: '建議 client 端快取 5 分鐘（與 Actions 更新週期一致）',
   },
 ] as const;
 
 // ─── 使用範例 ──────────────────────────────────────────────────────────────────
 
-const CODE_CURL = `# 取得最新匯率
+const CODE_EXAMPLES = [
+  {
+    id: 'curl',
+    label: 'cURL',
+    language: 'bash',
+    code: `# 最新匯率
 curl -s "${RATES_API.latestCdn}" | python3 -m json.tool
 
-# 取得歷史匯率（以 2025-02-20 為例）
-curl -s "${RATES_API.historyCdnExample}"`;
-
-const CODE_JS = `// JavaScript / TypeScript（fetch API）
-const res = await fetch(
-  "${RATES_API.latestCdn}"
-);
+# 歷史匯率（2026-03-19）
+curl -s "${RATES_API.historyCdnExample}"`,
+  },
+  {
+    id: 'js',
+    label: 'JavaScript',
+    language: 'javascript',
+    code: `const res = await fetch("${RATES_API.latestCdn}");
 const data = await res.json();
 
-// 取得美元現金賣出匯率（台幣買美元時參考）
+// 美元現金賣出（台幣換美金現鈔）
 const usdCashSell = data.details.USD.cash.sell;
-console.log(\`1 USD = \${usdCashSell} TWD（現金賣出）\`);
+console.log(\`1 USD = \${usdCashSell} TWD\`);
+// → 1 USD = 32.11 TWD（2026-03-19 實際值）
 
-// 取得所有即期賣出匯率
+// 所有即期賣出匯率
 Object.entries(data.rates).forEach(([currency, rate]) => {
   console.log(\`\${currency}/TWD = \${rate}\`);
-});`;
+});`,
+  },
+  {
+    id: 'python',
+    label: 'Python',
+    language: 'python',
+    code: `import requests
 
-const CODE_PYTHON = `# Python（requests）
-import requests
-
-url = "${RATES_API.latestCdn}"
-data = requests.get(url).json()
-
-# 美元現金賣出匯率
+# 最新匯率
+data = requests.get("${RATES_API.latestCdn}").json()
 usd_cash_sell = data["details"]["USD"]["cash"]["sell"]
-print(f"1 USD = {usd_cash_sell} TWD（現金賣出）")
+print(f"1 USD = {usd_cash_sell} TWD")
+# → 1 USD = 32.11 TWD（2026-03-19 實際值）
 
-# 歷史匯率（指定日期）
-history_url = "${RATES_API.historyCdnExample}"
-history = requests.get(history_url).json()
-print(f"2025-02-20 USD/TWD 即期賣出：{history['details']['USD']['spot']['sell']}")`;
-
-const CODE_DEEPLINK = `<!-- 深層連結（帶入換算參數）-->
-<!-- 開啟 RateWise 並預填 1000 美元換台幣 -->
+# 歷史匯率（2026-03-19）
+history = requests.get("${RATES_API.historyCdnExample}").json()
+print(f"2026-03-19 USD 即期賣出：{history['details']['USD']['spot']['sell']}")
+# → 2026-03-19 USD 即期賣出：31.915`,
+  },
+  {
+    id: 'html',
+    label: 'Deep Link',
+    language: 'html',
+    code: `<!-- 開啟 RateWise 並預填換算參數 -->
 <a href="${SITE_CONFIG.url}?amount=1000&from=USD&to=TWD">
   查看 1000 USD 換多少台幣
 </a>
 
-<!-- URL 參數說明 -->
-<!-- amount: 換算金額（數字）        -->
-<!-- from:   來源幣別（三碼 ISO）     -->
-<!-- to:     目標幣別（預設 TWD）    -->`;
+<!-- URL 參數 -->
+<!-- amount  換算金額（數字）      -->
+<!-- from    來源幣別（ISO 三碼）   -->
+<!-- to      目標幣別（預設 TWD）   -->`,
+  },
+] as const;
 
 // ─── 資料欄位說明 ──────────────────────────────────────────────────────────────
 
 const SCHEMA_FIELDS = [
-  { field: 'timestamp', type: 'integer', description: 'Unix 時間戳（毫秒），資料最後同步時間' },
+  { field: 'timestamp', type: 'string (ISO 8601)', description: '資料最後同步時間（UTC）' },
   {
     field: 'updateTime',
-    type: 'string (ISO 8601)',
-    description: '資料更新時間，台灣時間（UTC+8），例如 2025-02-20T10:30:00+08:00',
+    type: 'string',
+    description: '更新時間，台灣時間（UTC+8），例如 2026-03-19T08:59:20+08:00',
   },
-  { field: 'source', type: 'string', description: '資料來源名稱，固定為「臺灣銀行牌告匯率」' },
-  {
-    field: 'rates',
-    type: 'object',
-    description: '各幣別對 TWD 的即期賣出參考匯率，key 為三碼 ISO 幣別代碼',
-  },
-  {
-    field: 'details',
-    type: 'object',
-    description: '各幣別完整四種報價（cash/spot × buy/sell）',
-  },
+  { field: 'source', type: 'string', description: '固定為「Taiwan Bank (臺灣銀行牌告匯率)」' },
+  { field: 'base', type: 'string', description: '基準幣，固定為 "TWD"' },
+  { field: 'rates', type: 'object', description: '各幣別對 TWD 即期賣出參考匯率，key 為 ISO 三碼' },
+  { field: 'details', type: 'object', description: '各幣別完整四種報價（cash/spot × buy/sell）' },
   {
     field: 'details.{CODE}.cash.buy',
     type: 'number',
-    description: '現金買入：銀行以此價收購外幣現鈔（你拿外幣換台幣）',
+    description: '現金買入：銀行收購外幣現鈔（你拿外幣換台幣）',
   },
   {
     field: 'details.{CODE}.cash.sell',
     type: 'number',
-    description: '現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）',
+    description: '現金賣出：銀行賣出外幣現鈔（你拿台幣換外幣現金）',
   },
-  {
-    field: 'details.{CODE}.spot.buy',
-    type: 'number',
-    description: '即期買入：電匯/帳戶轉入匯率（你匯款回台灣）',
-  },
-  {
-    field: 'details.{CODE}.spot.sell',
-    type: 'number',
-    description: '即期賣出：電匯/帳戶轉出匯率（你從台灣匯款出去）',
-  },
+  { field: 'details.{CODE}.spot.buy', type: 'number', description: '即期買入：電匯匯款回台灣' },
+  { field: 'details.{CODE}.spot.sell', type: 'number', description: '即期賣出：電匯從台灣匯出' },
 ] as const;
 
 // 從 CURRENCY_DEFINITIONS SSOT 導出，TWD 標示為基準幣。
@@ -179,12 +176,140 @@ const SUPPORTED_CURRENCIES = Object.entries(CURRENCY_DEFINITIONS).map(([code, de
   name: code === 'TWD' ? `${def.name}（基準幣）` : def.name,
 }));
 
-// ─── 元件 ─────────────────────────────────────────────────────────────────────
+// ─── 子元件 ────────────────────────────────────────────────────────────────────
 
-interface CodeBlockProps {
-  title: string;
-  language: string;
-  code: string;
+function CopyButton({ text, className = '' }: { text: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    void navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      aria-label={copied ? '已複製' : '複製'}
+      className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+        copied
+          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+          : 'bg-surface-elevated text-text-muted hover:text-text'
+      } ${className}`}
+    >
+      {copied ? (
+        <>
+          <svg
+            aria-hidden="true"
+            className="h-3 w-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+          已複製
+        </>
+      ) : (
+        <>
+          <svg
+            aria-hidden="true"
+            className="h-3 w-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+            />
+          </svg>
+          複製
+        </>
+      )}
+    </button>
+  );
+}
+
+function TabbedCodeExamples() {
+  const [activeId, setActiveId] = useState<string>(CODE_EXAMPLES[0].id);
+  const active = CODE_EXAMPLES.find((e) => e.id === activeId) ?? CODE_EXAMPLES[0];
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-surface-border">
+      {/* Tab bar */}
+      <div className="flex items-center gap-0 border-b border-surface-border bg-surface-elevated overflow-x-auto">
+        {CODE_EXAMPLES.map((ex) => (
+          <button
+            key={ex.id}
+            onClick={() => setActiveId(ex.id)}
+            className={`shrink-0 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+              activeId === ex.id
+                ? 'border-primary text-primary'
+                : 'border-transparent text-text-muted hover:text-text'
+            }`}
+          >
+            {ex.label}
+          </button>
+        ))}
+        <div className="ml-auto pr-3">
+          <CopyButton text={active.code} />
+        </div>
+      </div>
+      {/* Code content */}
+      <pre
+        role="region"
+        aria-label={`程式碼範例：${active.label}`}
+        className="overflow-x-auto bg-surface p-5 text-sm leading-relaxed text-text"
+      >
+        <code>{active.code}</code>
+      </pre>
+    </div>
+  );
+}
+
+function UrlCopyRow({
+  label,
+  url,
+  recommended = false,
+}: {
+  label: string;
+  url: string;
+  recommended?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+          {label}
+        </span>
+        {recommended && (
+          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+            建議
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2 rounded bg-surface-elevated px-3 py-2">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="min-w-0 flex-1 break-all font-mono text-sm text-primary hover:underline"
+        >
+          {url}
+        </a>
+        <CopyButton text={url} className="shrink-0" />
+      </div>
+    </div>
+  );
 }
 
 interface ResourceCardItem {
@@ -193,26 +318,6 @@ interface ResourceCardItem {
   href: string;
   label: string;
   external: boolean;
-}
-
-function CodeBlock({ title, language, code }: CodeBlockProps) {
-  return (
-    <div className="overflow-hidden rounded-lg border border-surface-border">
-      <div className="flex items-center justify-between bg-surface-elevated px-4 py-2">
-        <span className="text-sm font-medium text-text-muted">{title}</span>
-        <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-mono text-primary">
-          {language}
-        </span>
-      </div>
-      <pre
-        role="region"
-        aria-label={`程式碼範例：${language}`}
-        className="overflow-x-auto bg-surface p-4 text-sm leading-relaxed text-text"
-      >
-        <code>{code}</code>
-      </pre>
-    </div>
-  );
 }
 
 function ResourceCard({ item }: { item: ResourceCardItem }) {
@@ -260,31 +365,65 @@ const OpenData = () => {
 
       <div className="min-h-screen bg-page-gradient">
         <div className="container mx-auto max-w-5xl px-4 py-8">
-          <PageNavHeader
-            breadcrumbItems={[
+          {/* 返回 */}
+          <Link
+            to="/"
+            className="mb-4 inline-flex items-center text-primary transition-colors hover:text-primary-hover"
+          >
+            <svg
+              aria-hidden="true"
+              className="mr-2 h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            回到首頁
+          </Link>
+
+          <Breadcrumb
+            items={[
               { label: '首頁', href: '/' },
               { label: '開放資料 API', href: '/open-data/' },
             ]}
           />
 
-          {/* ── 標題 ── */}
+          {/* ── Hero ── */}
           <div className="mb-10">
             <h1 className="mb-3 text-4xl font-bold text-text">開放資料 API</h1>
-            <p className="max-w-3xl text-lg text-text-muted">
-              RateWise 匯率資料完全開放。本頁揭露資料管線架構、API 端點、資料格式與使用規範，
-              讓開發者、研究人員或任何需要台灣銀行牌告匯率資料的專案可自由接取，無需授權申請。
+            <p className="mb-4 max-w-2xl text-lg text-text-muted">
+              台灣銀行牌告匯率 JSON 端點，免費、免 API Key、免帳號。
             </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                `${SUPPORTED_CURRENCIES.length} 種幣別`,
+                '每 5 分鐘更新',
+                '無需 API Key',
+                'ETag 支援',
+                'CDN 全球加速',
+              ].map((badge) => (
+                <span
+                  key={badge}
+                  className="rounded-full border border-surface-border bg-surface-elevated px-3 py-1 text-xs font-medium text-text-muted"
+                >
+                  {badge}
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* ── 資料來源架構 ── */}
+          {/* ── 資料管線 ── */}
           <section className="mb-12">
-            <h2 className="mb-2 text-2xl font-semibold text-text">資料管線架構</h2>
-            <p className="mb-6 text-text-muted">
-              從官方來源到你的應用程式，資料流向完全透明可追溯。
-            </p>
+            <h2 className="mb-5 text-2xl font-semibold text-text">資料管線</h2>
 
-            {/* 架構示意圖 */}
-            <div className="mb-6 overflow-hidden rounded-xl border border-surface-border bg-surface p-5">
+            {/* 流程圖 */}
+            <div className="mb-5 overflow-hidden rounded-xl border border-surface-border bg-surface p-5">
               <div className="flex flex-col items-center gap-2 font-mono text-sm sm:flex-row sm:flex-wrap sm:justify-center sm:gap-0">
                 {[
                   {
@@ -300,7 +439,7 @@ const OpenData = () => {
                   },
                   null,
                   {
-                    label: 'GitHub data 分支',
+                    label: 'data 分支',
                     sub: 'latest.json / history/',
                     color:
                       'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
@@ -313,8 +452,8 @@ const OpenData = () => {
                   },
                   null,
                   {
-                    label: '你的應用程式',
-                    sub: 'fetch / curl / SDK',
+                    label: '你的應用',
+                    sub: 'fetch / curl',
                     color: 'bg-surface-elevated border border-surface-border text-text',
                   },
                 ].map((item, i) =>
@@ -325,7 +464,7 @@ const OpenData = () => {
                   ) : (
                     <div key={i} className={`rounded-lg px-3 py-2 text-center ${item.color}`}>
                       <div className="font-semibold">{item.label}</div>
-                      <div className="text-xs opacity-80">{item.sub}</div>
+                      <div className="text-xs opacity-75">{item.sub}</div>
                     </div>
                   ),
                 )}
@@ -338,8 +477,8 @@ const OpenData = () => {
                   key={src.label}
                   className="rounded-lg border border-surface-border bg-surface p-4"
                 >
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className="text-xs font-medium text-text-muted">{src.label}</span>
+                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    {src.label}
                   </div>
                   <a
                     href={src.url}
@@ -354,129 +493,81 @@ const OpenData = () => {
               ))}
             </div>
 
-            {/* 快取策略說明 */}
-            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/40 dark:bg-amber-900/10">
-              <p className="mb-2 text-sm font-semibold text-amber-800 dark:text-amber-300">
-                📌 端點選擇與快取建議
-              </p>
-              <ul className="space-y-1 text-sm text-amber-700 dark:text-amber-400">
-                <li>
-                  <strong>一般用途（推薦）</strong>：jsDelivr CDN；GitHub Actions 在每次 data
-                  分支推送後自動呼叫 jsDelivr Purge API，CDN 快取立即失效，實際新鮮度約 5 分鐘，與
-                  GitHub Raw 相同，同時享有全球加速與無請求上限優勢。
-                </li>
-                <li>
-                  <strong>備援</strong>：CDN 不可用時自動切換至 GitHub Raw（無快取、每小時 60
-                  次請求上限）。
-                </li>
-                <li>
-                  <strong>Client 端快取</strong>：建議以 localStorage 快取 5 分鐘（與 GitHub Actions
-                  更新頻率一致），超過才重新 fetch，節省頻寬並避免打到速率限制。
-                </li>
-                <li>
-                  <strong>ETag 條件式請求（jsDelivr 支援）</strong>：jsDelivr 回應包含{' '}
-                  <code>Access-Control-Expose-Headers: *</code>，瀏覽器 fetch 可讀取 ETag，實作{' '}
-                  <code>If-None-Match</code> 讓未變更時回傳 304（body 為零），節省約 5 KB／次。
-                  GitHub Raw 無此 CORS 設定，瀏覽器端 ETag 不可用。
-                </li>
-              </ul>
+            <div className="mt-4 rounded-lg border border-surface-border bg-surface-elevated p-4 text-sm text-text-muted">
+              <span className="font-semibold text-text">快取建議</span>
+              ：CDN 端點支援{' '}
+              <code className="rounded bg-surface px-1 font-mono text-xs">If-None-Match</code> ETag
+              條件式請求， 資料未變時回傳 304（零 body），可節省約 5 KB／次。建議 client 端快取 5
+              分鐘，避免無意義重複請求。
             </div>
           </section>
 
           {/* ── API 端點 ── */}
           <section className="mb-12">
             <h2 className="mb-2 text-2xl font-semibold text-text">API 端點</h2>
-            <p className="mb-6 text-text-muted">
-              無需認證、無需 API Key，直接以 HTTP GET 請求存取。建議優先使用 CDN 端點。
-            </p>
+            <p className="mb-5 text-text-muted">HTTP GET，無需認證，直接請求。</p>
 
-            <div className="space-y-6">
+            <div className="space-y-5">
               {API_ENDPOINTS.map((ep) => (
                 <div
                   key={ep.path}
                   className="rounded-xl border border-surface-border bg-surface p-5"
                 >
-                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
                     <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
                       {ep.method}
                     </span>
-                    <code className="rounded bg-surface-elevated px-2 py-0.5 text-sm font-mono text-text">
+                    <code className="rounded bg-surface-elevated px-2 py-0.5 font-mono text-sm text-text">
                       {ep.path}
                     </code>
-                    <span className="text-sm font-medium text-text">{ep.description}</span>
+                    <span className="font-medium text-text">{ep.description}</span>
+                    <span className="rounded-full border border-surface-border px-2 py-0.5 text-xs text-text-muted">
+                      {ep.badge}
+                    </span>
                   </div>
                   <p className="mb-4 text-sm text-text-muted">{ep.note}</p>
-
                   <div className="space-y-2">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                        CDN（建議）
-                      </span>
-                      <a
-                        href={ep.cdnUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="break-all rounded bg-surface-elevated px-3 py-2 font-mono text-sm text-primary hover:underline"
-                      >
-                        {ep.cdnUrl}
-                      </a>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                        GitHub Raw（備援）
-                      </span>
-                      <a
-                        href={ep.rawUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="break-all rounded bg-surface-elevated px-3 py-2 font-mono text-sm text-text-muted hover:text-primary hover:underline"
-                      >
-                        {ep.rawUrl}
-                      </a>
-                    </div>
+                    <UrlCopyRow label="CDN（jsDelivr）" url={ep.cdnUrl} recommended />
+                    <UrlCopyRow label="備援（GitHub Raw）" url={ep.rawUrl} />
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* OpenAPI spec link */}
-            <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
-              <p className="text-sm text-text">
-                完整 OpenAPI 3.1 規格（含 schema、範例值）：
-                <a
-                  href="/ratewise/openapi.json"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-1 font-mono text-primary hover:underline"
-                >
-                  /ratewise/openapi.json
-                </a>
-              </p>
+            <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+              完整 OpenAPI 3.1 規格：
+              <a
+                href="/ratewise/openapi.json"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-1 font-mono text-primary hover:underline"
+              >
+                /ratewise/openapi.json
+              </a>
             </div>
           </section>
 
           {/* ── 快速上手範例 ── */}
           <section className="mb-12">
-            <h2 className="mb-2 text-2xl font-semibold text-text">快速上手範例</h2>
-            <p className="mb-6 text-text-muted">複製貼上即可運行的程式碼範例。</p>
-
-            <div className="space-y-5">
-              <CodeBlock title="命令列" language="bash / curl" code={CODE_CURL} />
-              <CodeBlock title="瀏覽器 / Node.js" language="JavaScript" code={CODE_JS} />
-              <CodeBlock title="Python" language="Python 3" code={CODE_PYTHON} />
-              <CodeBlock title="深層連結" language="HTML" code={CODE_DEEPLINK} />
-            </div>
+            <h2 className="mb-2 text-2xl font-semibold text-text">快速上手</h2>
+            <p className="mb-5 text-text-muted">
+              選擇語言，直接複製執行。範例使用 2026-03-19 真實資料。
+            </p>
+            <TabbedCodeExamples />
           </section>
 
           {/* ── 資料格式 ── */}
           <section className="mb-12">
-            <h2 className="mb-2 text-2xl font-semibold text-text">資料格式說明</h2>
-            <p className="mb-6 text-text-muted">
-              所有端點均回傳 JSON，Content-Type: application/json。
+            <h2 className="mb-2 text-2xl font-semibold text-text">資料格式</h2>
+            <p className="mb-5 text-sm text-text-muted">
+              回應為 JSON，
+              <code className="rounded bg-surface-elevated px-1 font-mono">
+                Content-Type: application/json
+              </code>
+              。
             </p>
 
-            {/* 欄位表格 */}
-            <div className="overflow-x-auto rounded-xl border border-surface-border">
+            <div className="mb-6 overflow-x-auto rounded-xl border border-surface-border">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-surface-border bg-surface-elevated">
@@ -489,7 +580,9 @@ const OpenData = () => {
                   {SCHEMA_FIELDS.map((f) => (
                     <tr key={f.field}>
                       <td className="px-4 py-3 font-mono text-xs text-primary">{f.field}</td>
-                      <td className="px-4 py-3 text-text-muted">{f.type}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-xs text-text-muted">
+                        {f.type}
+                      </td>
                       <td className="px-4 py-3 text-text">{f.description}</td>
                     </tr>
                   ))}
@@ -498,8 +591,8 @@ const OpenData = () => {
             </div>
 
             {/* 支援幣別 */}
-            <div className="mt-6">
-              <h3 className="mb-3 text-lg font-semibold text-text">
+            <div>
+              <h3 className="mb-3 text-base font-semibold text-text">
                 支援幣別（{SUPPORTED_CURRENCIES.length} 種，基準幣 TWD）
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -516,14 +609,11 @@ const OpenData = () => {
             </div>
           </section>
 
-          {/* ── 速率限制與使用規則 ── */}
+          {/* ── 速率限制 ── */}
           <section className="mb-12">
-            <h2 className="mb-2 text-2xl font-semibold text-text">速率限制與使用規則</h2>
-            <p className="mb-6 text-text-muted">
-              API 免費開放，但請遵守以下使用準則以維護服務品質。
-            </p>
+            <h2 className="mb-5 text-2xl font-semibold text-text">速率限制</h2>
 
-            <div className="mb-6 overflow-x-auto rounded-xl border border-surface-border">
+            <div className="mb-5 overflow-x-auto rounded-xl border border-surface-border">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-surface-border bg-surface-elevated">
@@ -536,7 +626,9 @@ const OpenData = () => {
                   {RATE_LIMIT_ITEMS.map((r) => (
                     <tr key={r.source}>
                       <td className="px-4 py-3 font-medium text-text">{r.source}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-primary">{r.limit}</td>
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-primary">
+                        {r.limit}
+                      </td>
                       <td className="px-4 py-3 text-text-muted">{r.note}</td>
                     </tr>
                   ))}
@@ -544,18 +636,21 @@ const OpenData = () => {
               </table>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[
-                '✅ 允許：個人專案、學術研究、非商業 App、教學展示、媒體引用',
-                '✅ 允許：在顯示結果時標示「資料來源：臺灣銀行牌告匯率」',
-                `⚠️ 建議：商業用途請聯繫 ${APP_INFO.email} 說明使用情境`,
-                '❌ 禁止：大量爬取歷史資料（對 CDN 或 GitHub 造成異常流量）',
-                '❌ 禁止：冒充本服務或宣稱為官方臺灣銀行 API',
-                '⚠️ 免責：本 API 為非官方開源自動化同步，實際交易請以金融機構公告為準',
-              ].map((rule, i) => (
-                <p key={i} className="rounded-lg bg-surface px-4 py-2.5 text-sm text-text">
-                  {rule}
-                </p>
+                { icon: '✅', text: `允許：個人專案、學術研究、非商業 App、教學、媒體引用` },
+                { icon: '✅', text: `允許：標示「資料來源：臺灣銀行牌告匯率」` },
+                { icon: '⚠️', text: `商業用途建議聯繫 ${APP_INFO.email} 說明使用情境` },
+                { icon: '❌', text: `禁止：大量爬取歷史資料（對 CDN 或 GitHub 造成異常流量）` },
+                { icon: '❌', text: `禁止：宣稱為官方臺灣銀行 API` },
+              ].map(({ icon, text }, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 rounded-lg bg-surface px-4 py-2.5 text-sm text-text"
+                >
+                  <span className="mt-0.5 shrink-0">{icon}</span>
+                  <span>{text}</span>
+                </div>
               ))}
             </div>
           </section>
@@ -563,10 +658,10 @@ const OpenData = () => {
           {/* ── 授權聲明 ── */}
           <section className="mb-12">
             <h2 className="mb-4 text-2xl font-semibold text-text">授權聲明</h2>
-            <div className="rounded-xl border border-surface-border bg-surface p-5 text-sm leading-relaxed text-text-muted">
-              <p className="mb-3">
-                <span className="font-semibold text-text">程式碼授權：</span>
-                本專案原始碼以{' '}
+            <div className="space-y-3 rounded-xl border border-surface-border bg-surface p-5 text-sm leading-relaxed text-text-muted">
+              <p>
+                <span className="font-semibold text-text">程式碼</span>
+                ：以{' '}
                 <a
                   href={APP_INFO.licenseUrl}
                   target="_blank"
@@ -575,17 +670,15 @@ const OpenData = () => {
                 >
                   {APP_INFO.license}
                 </a>{' '}
-                授權釋出。你可自由使用、修改與散布，但衍生作品亦須以相同授權開源。
-              </p>
-              <p className="mb-3">
-                <span className="font-semibold text-text">資料版權：</span>
-                匯率數據原始版權屬臺灣銀行（Bank of Taiwan）。本專案以自動化方式公開抓取臺灣銀行網站
-                公告資料，資料使用請自行確認是否符合臺灣銀行相關使用規範。
+                授權釋出，可自由使用、修改，衍生作品須以相同授權開源。
               </p>
               <p>
-                <span className="font-semibold text-text">免責聲明：</span>
-                本工具與臺灣銀行無隸屬關係，資料可能因網路延遲或同步異常而與官方有短暫差異。
-                所有匯率僅供參考，實際交易請以金融機構公告為準。
+                <span className="font-semibold text-text">資料版權</span>
+                ：匯率數據原始版權屬臺灣銀行。本專案以自動化方式公開抓取官方牌告，使用前請自行確認是否符合臺灣銀行使用規範。
+              </p>
+              <p>
+                <span className="font-semibold text-text">免責聲明</span>
+                ：本工具與臺灣銀行無隸屬關係。資料可能因網路延遲或同步異常而短暫差異。所有匯率僅供參考，實際交易以金融機構公告為準。
               </p>
             </div>
           </section>
@@ -594,50 +687,52 @@ const OpenData = () => {
           <section className="mb-12">
             <h2 className="mb-4 text-2xl font-semibold text-text">相關資源</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  title: 'OpenAPI 3.1 規格',
-                  desc: '完整機器可讀 API schema（Swagger / Scalar 相容）',
-                  href: '/ratewise/openapi.json',
-                  label: 'openapi.json',
-                  external: true,
-                },
-                {
-                  title: 'API 中繼資料',
-                  desc: '端點清單、支援幣別與聯絡資訊（JSON）',
-                  href: '/ratewise/api/latest.json',
-                  label: 'api/latest.json',
-                  external: true,
-                },
-                {
-                  title: 'LLM 文件',
-                  desc: 'AI Agent / LLM 快速理解站點架構用途',
-                  href: '/ratewise/llms.txt',
-                  label: 'llms.txt',
-                  external: true,
-                },
-                {
-                  title: 'LLM 完整文件',
-                  desc: '含 JSON schema、程式碼範例、完整幣別表',
-                  href: '/ratewise/llms-full.txt',
-                  label: 'llms-full.txt',
-                  external: true,
-                },
-                {
-                  title: 'GitHub 原始碼',
-                  desc: '查看 GitHub Actions、服務端程式碼與 Issue 回報',
-                  href: APP_INFO.github,
-                  label: 'haotool/app',
-                  external: true,
-                },
-                {
-                  title: '使用指南',
-                  desc: '如何在 RateWise 網頁介面進行匯率換算',
-                  href: '/guide/',
-                  label: '查看指南',
-                  external: false,
-                },
-              ].map((item) => (
+              {(
+                [
+                  {
+                    title: 'OpenAPI 3.1 規格',
+                    desc: 'Swagger / Scalar 相容 API schema',
+                    href: '/ratewise/openapi.json',
+                    label: 'openapi.json',
+                    external: true,
+                  },
+                  {
+                    title: 'API 中繼資料',
+                    desc: '端點清單、支援幣別與聯絡資訊',
+                    href: '/ratewise/api/latest.json',
+                    label: 'api/latest.json',
+                    external: true,
+                  },
+                  {
+                    title: 'LLM 文件（精簡）',
+                    desc: 'AI Agent 快速理解站點架構',
+                    href: '/ratewise/llms.txt',
+                    label: 'llms.txt',
+                    external: true,
+                  },
+                  {
+                    title: 'LLM 文件（完整）',
+                    desc: '含 JSON schema、完整幣別表、程式碼範例',
+                    href: '/ratewise/llms-full.txt',
+                    label: 'llms-full.txt',
+                    external: true,
+                  },
+                  {
+                    title: 'GitHub 原始碼',
+                    desc: 'GitHub Actions、Issue 回報、原始碼',
+                    href: APP_INFO.github,
+                    label: 'haotool/app',
+                    external: true,
+                  },
+                  {
+                    title: '使用指南',
+                    desc: '網頁介面使用教學',
+                    href: '/guide/',
+                    label: '查看指南',
+                    external: false,
+                  },
+                ] satisfies ResourceCardItem[]
+              ).map((item) => (
                 <ResourceCard key={item.title} item={item} />
               ))}
             </div>
@@ -645,8 +740,8 @@ const OpenData = () => {
 
           {/* ── FAQ ── */}
           <section className="mb-12">
-            <h2 className="mb-6 text-2xl font-semibold text-text">常見問題</h2>
-            <div className="space-y-4">
+            <h2 className="mb-5 text-2xl font-semibold text-text">常見問題</h2>
+            <div className="space-y-3">
               {OPEN_DATA_PAGE_SEO.faqContent?.map((item) => (
                 <details
                   key={item.question}
@@ -656,7 +751,7 @@ const OpenData = () => {
                     {item.question}
                     <svg
                       aria-hidden="true"
-                      className="h-5 w-5 flex-shrink-0 text-text-muted transition-transform group-open:rotate-180"
+                      className="h-5 w-5 shrink-0 text-text-muted transition-transform group-open:rotate-180"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -679,10 +774,7 @@ const OpenData = () => {
 
           {/* ── CTA ── */}
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
-            <h2 className="mb-2 text-xl font-semibold text-text">立即試用換算工具</h2>
-            <p className="mb-4 text-text-muted">
-              不想直接呼叫 API？直接使用 RateWise 匯率換算介面，免安裝、免帳號。
-            </p>
+            <p className="mb-3 text-text-muted">不想呼叫 API？直接使用換算介面，免安裝、免帳號。</p>
             <Link
               to="/"
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-white transition-colors hover:bg-primary-hover"

@@ -55,12 +55,12 @@ describe('api-endpoints', () => {
   describe('RATES_API history endpoints', () => {
     it('historyCdnExample should contain example date and history path', () => {
       expect(RATES_API.historyCdnExample).toContain('/public/rates/history/');
-      expect(RATES_API.historyCdnExample).toContain('2025-02-20.json');
+      expect(RATES_API.historyCdnExample).toContain('2026-03-19.json');
     });
 
     it('historyRawExample should contain example date and history path', () => {
       expect(RATES_API.historyRawExample).toContain('/public/rates/history/');
-      expect(RATES_API.historyRawExample).toContain('2025-02-20.json');
+      expect(RATES_API.historyRawExample).toContain('2026-03-19.json');
     });
 
     it('CDN and Raw history examples should use the same date', () => {

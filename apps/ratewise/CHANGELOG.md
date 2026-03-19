@@ -1,5 +1,19 @@
 # @app/ratewise
 
+## 2.11.1
+
+### Patch Changes
+
+- 重構 OpenData 頁面：Tabbed 程式碼範例 + 複製按鈕 + 真實 2026 範例資料
+  - CodeBlock 改為 Tabbed UI（cURL / JavaScript / Python / Deep Link），切換不重新載入
+  - 每個程式碼區塊與 URL 行新增一鍵複製按鈕，點後顯示「✓ 已複製」綠色回饋 2 秒
+  - 修正 EXAMPLE_DATE：2025-02-20 → 2026-03-19（已驗證生產環境 HTTP 200）
+  - 範例程式碼加入 2026-03-19 真實匯率值作為行內註解（USD cash sell 32.11）
+  - Hero 區塊新增規格徽章（幣別數、更新頻率、無需認證、ETag 支援、CDN 加速）
+  - 精簡所有段落文字，移除冗餘說明
+  - 修正 timestamp 欄位型別：integer → string ISO 8601（對齊實際 API 回應）
+  - 對應更新 OpenData.test.tsx：補 fireEvent 互動測試、4 tab 按鈕測試、Deep Link tab 切換驗證
+
 ## 2.11.0
 
 ### Minor Changes

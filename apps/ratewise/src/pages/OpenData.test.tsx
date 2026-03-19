@@ -4,7 +4,7 @@
  * 驗證開放資料 API 頁面的核心渲染行為、無障礙設計與 SSOT 一致性。
  */
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
@@ -40,7 +40,7 @@ describe('OpenData Page', () => {
 
     it('renders data pipeline section heading', () => {
       renderOpenData();
-      expect(screen.getByText('資料管線架構')).toBeInTheDocument();
+      expect(screen.getByText('資料管線')).toBeInTheDocument();
     });
 
     it('renders API endpoints section heading', () => {
@@ -50,20 +50,26 @@ describe('OpenData Page', () => {
 
     it('renders data format section heading', () => {
       renderOpenData();
-      expect(screen.getByText('資料格式說明')).toBeInTheDocument();
+      expect(screen.getByText('資料格式')).toBeInTheDocument();
     });
 
-    it('renders back navigation button', () => {
+    it('renders back navigation link', () => {
       renderOpenData();
-      expect(screen.getByRole('button', { name: /返回/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /回到首頁/i })).toBeInTheDocument();
     });
   });
 
   describe('Accessibility (WCAG 2.1 AA)', () => {
-    it('renders 4 code blocks with role=region and aria-label', () => {
+    it('renders tabbed code examples with 4 tab buttons and 1 visible code region', () => {
       renderOpenData();
+      // 4 語言 tab 按鈕：cURL / JavaScript / Python / Deep Link
+      const tabButtons = screen.getAllByRole('button', {
+        name: /cURL|JavaScript|Python|Deep Link/i,
+      });
+      expect(tabButtons).toHaveLength(4);
+      // 同時只有 1 個 code region visible
       const codeRegions = screen.getAllByRole('region', { name: /程式碼範例/ });
-      expect(codeRegions).toHaveLength(4);
+      expect(codeRegions).toHaveLength(1);
     });
 
     it('all external links have rel=noopener noreferrer', () => {
@@ -91,11 +97,12 @@ describe('OpenData Page', () => {
   });
 
   describe('SSOT — Deep link uses SITE_CONFIG.url', () => {
-    it('deep link example contains SITE_CONFIG.url', () => {
+    it('deep link example contains SITE_CONFIG.url after clicking Deep Link tab', () => {
       renderOpenData();
-      // CODE_DEEPLINK block has language label "HTML" — find the sibling <code>
-      const htmlRegion = screen.getByRole('region', { name: /HTML/i });
-      expect(htmlRegion.querySelector('code')?.textContent).toContain(SITE_CONFIG.url);
+      // 點擊 Deep Link tab
+      fireEvent.click(screen.getByRole('button', { name: 'Deep Link' }));
+      const region = screen.getByRole('region', { name: /程式碼範例：Deep Link/i });
+      expect(region.querySelector('code')?.textContent).toContain(SITE_CONFIG.url);
     });
   });
 

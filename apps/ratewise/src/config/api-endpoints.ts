@@ -21,8 +21,8 @@ export const RAW_DATA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_PA
 const RATES_LATEST_PATH = '/public/rates/latest.json';
 const RATES_HISTORY_PATH = (date: string) => `/public/rates/history/${date}.json`;
 
-/** 範例歷史日期（文件用途）*/
-const EXAMPLE_DATE = '2025-02-20';
+/** 範例歷史日期（文件用途）— 已驗證生產環境 HTTP 200 */
+const EXAMPLE_DATE = '2026-03-19';
 
 /**
  * 匯率 API 端點清單
