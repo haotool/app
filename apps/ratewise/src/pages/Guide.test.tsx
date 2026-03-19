@@ -232,10 +232,9 @@ describe('Guide Page - HowTo Schema', () => {
       expect(h2s.length).toBeGreaterThanOrEqual(8);
     });
 
-    it('has navigation back to home', () => {
+    it('has navigation back button', () => {
       renderGuide();
-      const backLink = screen.getByRole('link', { name: /回到首頁/i });
-      expect(backLink).toHaveAttribute('href', expect.stringContaining('/'));
+      expect(screen.getByRole('button', { name: /返回/i })).toBeInTheDocument();
     });
 
     it('has anchor links for each step', () => {

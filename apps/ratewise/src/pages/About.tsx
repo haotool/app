@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { Breadcrumb } from '../components/Breadcrumb';
+import { PageNavHeader } from '../components/PageNavHeader';
 import { getDisplayVersion } from '../config/version';
 import { APP_INFO, getCopyrightYears } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
@@ -27,29 +27,14 @@ export default function About() {
 
       <div className="min-h-screen">
         <div className="container mx-auto max-w-4xl px-4 py-8">
+          <PageNavHeader
+            breadcrumbItems={[
+              { label: '首頁', href: '/' },
+              { label: '關於我們', href: '/about/' },
+            ]}
+          />
+
           <div className="mb-8">
-            <Link
-              to="/"
-              className="mb-4 inline-flex items-center text-primary transition-colors hover:text-primary-hover"
-            >
-              <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              回到首頁
-            </Link>
-
-            <Breadcrumb
-              items={[
-                { label: '首頁', href: '/' },
-                { label: '關於我們', href: '/about/' },
-              ]}
-            />
-
             <h1 className="mb-2 text-3xl font-bold text-text">關於 RateWise 匯率好工具</h1>
             <p className="text-text-muted">
               專注提供台灣用戶更接近實際換匯情境的匯率資訊，而不是只顯示中間價。

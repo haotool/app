@@ -105,6 +105,29 @@ export function AppLayout() {
     setHasMounted(true);
   }, []);
 
+  // 修正 WebView（Threads、Instagram 等）與一般瀏覽器的視口高度擠壓問題。
+  // `100dvh` 在 WebView 內可能包含宿主 App 的 UI（頂/底導覽列），
+  // 導致內容被壓縮。改用 `window.innerHeight`（JS 實際可用高度）寫入
+  // `--app-height` CSS 變量，確保所有環境顯示一致。
+  React.useEffect(() => {
+    const setAppHeight = () => {
+      // visualViewport.height 較 window.innerHeight 更精確（會扣除虛擬鍵盤）。
+      const h = window.visualViewport?.height ?? window.innerHeight;
+      document.documentElement.style.setProperty('--app-height', `${h}px`);
+    };
+
+    setAppHeight();
+
+    // visualViewport resize 事件捕捉鍵盤彈出/收起與 WebView 高度變化。
+    const vp = window.visualViewport;
+    if (vp) {
+      vp.addEventListener('resize', setAppHeight);
+      return () => vp.removeEventListener('resize', setAppHeight);
+    }
+    window.addEventListener('resize', setAppHeight);
+    return () => window.removeEventListener('resize', setAppHeight);
+  }, []);
+
   React.useEffect(() => {
     if (previousPathname !== location.pathname) {
       setPreviousPathname(location.pathname);
@@ -121,8 +144,13 @@ export function AppLayout() {
     <ToastProvider>
       {/* SPA 路由變更時送出 GA4 page_view */}
       <RouteAnalytics />
-      {/* 根容器：固定視口高度，啟用 flex 滾動 */}
-      <div className="h-dvh w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))] overflow-hidden">
+      {/* 根容器：固定視口高度，啟用 flex 滾動
+       * 使用 --app-height（由 JS 設定）而非 100dvh，確保 WebView 環境高度正確。
+       * Fallback：100dvh（JS 尚未執行時，或 SSG 初始渲染）。 */}
+      <div
+        className="w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))] overflow-hidden"
+        style={{ height: 'var(--app-height, 100dvh)' }}
+      >
         {/* Desktop sidebar (≥768px) */}
         <div className="flex flex-1 min-h-0 min-w-0">
           <SideNavigation className="hidden md:block" />
