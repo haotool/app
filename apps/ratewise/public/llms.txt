@@ -78,7 +78,7 @@ Version: v2.11.0 (2026-03-19)
 - [現金匯率與即期匯率差異](https://app.haotool.org/ratewise/cash-vs-spot-rate/): 判斷臨櫃換鈔、外幣帳戶與匯款該看哪種報價
 - [刷卡匯率與 DCC 指南](https://app.haotool.org/ratewise/card-rate-guide/): 釐清台銀牌告、卡組織匯率、海外手續費與 DCC 差異
 
-## Popular Rates（每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
+## Popular Rates（外幣→TWD，每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
 
 - [AUD/TWD 澳幣](https://app.haotool.org/ratewise/aud-twd/): 澳洲旅遊與留學
 - [CAD/TWD 加幣](https://app.haotool.org/ratewise/cad-twd/): 加拿大旅遊與留學
@@ -97,6 +97,26 @@ Version: v2.11.0 (2026-03-19)
 - [THB/TWD 泰銖](https://app.haotool.org/ratewise/thb-twd/): 泰國旅遊換匯
 - [USD/TWD 美元](https://app.haotool.org/ratewise/usd-twd/): 美國旅遊與海外付款
 - [VND/TWD 越南盾](https://app.haotool.org/ratewise/vnd-twd/): 越南旅遊換匯
+
+## TWD→外幣落地頁（出國換匯場景，台幣換外幣方向）
+
+- [台幣換澳幣 TWD/AUD](https://app.haotool.org/ratewise/twd-aud/): 出國前台幣換澳幣，澳洲旅遊與留學
+- [台幣換加幣 TWD/CAD](https://app.haotool.org/ratewise/twd-cad/): 出國前台幣換加幣，加拿大旅遊與留學
+- [台幣換瑞士法郎 TWD/CHF](https://app.haotool.org/ratewise/twd-chf/): 出國前台幣換瑞士法郎，瑞士旅遊與跨境付款
+- [台幣換人民幣 TWD/CNY](https://app.haotool.org/ratewise/twd-cny/): 出國前台幣換人民幣，人民幣付款與報價
+- [台幣換歐元 TWD/EUR](https://app.haotool.org/ratewise/twd-eur/): 出國前台幣換歐元，歐洲旅遊與跨境付款
+- [台幣換英鎊 TWD/GBP](https://app.haotool.org/ratewise/twd-gbp/): 出國前台幣換英鎊，英國旅遊換匯
+- [台幣換港幣 TWD/HKD](https://app.haotool.org/ratewise/twd-hkd/): 出國前台幣換港幣，香港旅遊換匯
+- [台幣換印尼盾 TWD/IDR](https://app.haotool.org/ratewise/twd-idr/): 出國前台幣換印尼盾，印尼旅遊換匯
+- [台幣換日圓 TWD/JPY](https://app.haotool.org/ratewise/twd-jpy/): 出國前台幣換日圓，日本旅遊換匯
+- [台幣換韓元 TWD/KRW](https://app.haotool.org/ratewise/twd-krw/): 出國前台幣換韓元，韓國旅遊換匯
+- [台幣換馬來幣 TWD/MYR](https://app.haotool.org/ratewise/twd-myr/): 出國前台幣換馬來幣，馬來西亞旅遊換匯
+- [台幣換紐元 TWD/NZD](https://app.haotool.org/ratewise/twd-nzd/): 出國前台幣換紐元，紐西蘭旅遊與留學
+- [台幣換菲律賓披索 TWD/PHP](https://app.haotool.org/ratewise/twd-php/): 出國前台幣換菲律賓披索，菲律賓旅遊換匯
+- [台幣換新加坡幣 TWD/SGD](https://app.haotool.org/ratewise/twd-sgd/): 出國前台幣換新加坡幣，新加坡旅遊與商務
+- [台幣換泰銖 TWD/THB](https://app.haotool.org/ratewise/twd-thb/): 出國前台幣換泰銖，泰國旅遊換匯
+- [台幣換美元 TWD/USD](https://app.haotool.org/ratewise/twd-usd/): 出國前台幣換美元，美國旅遊與海外付款
+- [台幣換越南盾 TWD/VND](https://app.haotool.org/ratewise/twd-vnd/): 出國前台幣換越南盾，越南旅遊換匯
 
 ## Data Source
 

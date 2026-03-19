@@ -12,7 +12,11 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CURRENCY_SEO_PATHS, SITE_CONFIG } from '../seo-paths.config.mjs';
+import {
+  CURRENCY_SEO_PATHS,
+  REVERSE_CURRENCY_SEO_PATHS,
+  SITE_CONFIG,
+} from '../seo-paths.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -52,6 +56,17 @@ function buildPopularRates() {
     const info = CURRENCY_DISPLAY[key];
     if (!info) return `- [${slug}](${BASE_URL}${slug}/): ${key.toUpperCase()}/TWD`;
     return `- [${info.code}/TWD ${info.name}](${BASE_URL}${slug}/): ${info.desc}`;
+  }).join('\n');
+}
+
+function buildReverseRates() {
+  return REVERSE_CURRENCY_SEO_PATHS.map((path) => {
+    const slug = path.replace(/\//g, '');
+    // slug 格式為 twd-xxx，取第二段為幣別 key
+    const key = slug.split('-')[1];
+    const info = CURRENCY_DISPLAY[key];
+    if (!info) return `- [${slug}](${BASE_URL}${slug}/): TWD/${key.toUpperCase()}`;
+    return `- [台幣換${info.name} TWD/${info.code}](${BASE_URL}${slug}/): 出國前台幣換${info.name}，${info.desc}`;
   }).join('\n');
 }
 
@@ -139,9 +154,13 @@ ${FEATURES.map((f) => `- ${f}`).join('\n')}
 - [現金匯率與即期匯率差異](${BASE_URL}cash-vs-spot-rate/): 判斷臨櫃換鈔、外幣帳戶與匯款該看哪種報價
 - [刷卡匯率與 DCC 指南](${BASE_URL}card-rate-guide/): 釐清台銀牌告、卡組織匯率、海外手續費與 DCC 差異
 
-## Popular Rates（每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
+## Popular Rates（外幣→TWD，每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
 
 ${buildPopularRates()}
+
+## TWD→外幣落地頁（出國換匯場景，台幣換外幣方向）
+
+${buildReverseRates()}
 
 ## Data Source
 
@@ -220,6 +239,15 @@ const CURRENCY_TABLE = CURRENCY_SEO_PATHS.map((path) => {
   if (!info)
     return `| ${key.toUpperCase()}/TWD | ${key.toUpperCase()} | 台幣 TWD | ${BASE_URL}${slug}/ |`;
   return `| ${info.code}/TWD ${info.name} | ${info.code} | TWD | ${info.desc} | ${BASE_URL}${slug}/ |`;
+}).join('\n');
+
+const REVERSE_CURRENCY_TABLE = REVERSE_CURRENCY_SEO_PATHS.map((path) => {
+  const slug = path.replace(/\//g, '');
+  const key = slug.split('-')[1];
+  const info = CURRENCY_DISPLAY[key];
+  if (!info)
+    return `| TWD/${key.toUpperCase()} | TWD | ${key.toUpperCase()} | 台幣換外幣 | ${BASE_URL}${slug}/ |`;
+  return `| 台幣換${info.name} TWD/${info.code} | TWD | ${info.code} | 出國前台幣換${info.name} | ${BASE_URL}${slug}/ |`;
 }).join('\n');
 
 const fullContent = `# RateWise 匯率好工具 — 完整 LLM 技術文件
@@ -416,11 +444,17 @@ const history = await fetch(
 
 ---
 
-## 支援幣別完整清單
+## 支援幣別完整清單（外幣→TWD）
 
 | 幣別 | 來源幣 | 目標幣 | 說明 | 幣別頁 |
 |------|--------|--------|------|--------|
 ${CURRENCY_TABLE}
+
+## 反向幣別頁完整清單（TWD→外幣，出國換匯場景）
+
+| 幣別 | 來源幣 | 目標幣 | 說明 | 幣別頁 |
+|------|--------|--------|------|--------|
+${REVERSE_CURRENCY_TABLE}
 
 ---
 
@@ -497,5 +531,5 @@ Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 writeFileSync(resolve(ROOT, 'public/llms.txt'), content.trimEnd() + '\n');
 writeFileSync(resolve(ROOT, 'public/llms-full.txt'), fullContent.trimEnd() + '\n');
 console.log(
-  `✅ llms.txt + llms-full.txt generated: v${VERSION} (${BUILD_DATE}), ${CURRENCY_SEO_PATHS.length} currency pages`,
+  `✅ llms.txt + llms-full.txt generated: v${VERSION} (${BUILD_DATE}), ${CURRENCY_SEO_PATHS.length + REVERSE_CURRENCY_SEO_PATHS.length} currency pages (${CURRENCY_SEO_PATHS.length} forward + ${REVERSE_CURRENCY_SEO_PATHS.length} reverse)`,
 );
