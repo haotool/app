@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.11.0
+
+### Minor Changes
+
+- 新增 17 個 TWD→外幣反向幣別 SEO 落地頁（/twd-usd/, /twd-jpy/ 等），針對「台幣換美金」等出國換匯場景關鍵字，與既有 17 個外幣→TWD 頁形成完整雙向覆蓋。
+
 ## 2.10.3
 
 ### Patch Changes

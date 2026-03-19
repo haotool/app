@@ -46,8 +46,33 @@ export const CURRENCY_SEO_PATHS = [
   '/vnd-twd/',
 ] as const;
 
+/** TWD→外幣方向的反向幣別 SEO 落地頁（出國換匯場景）。 */
+export const REVERSE_CURRENCY_SEO_PATHS = [
+  '/twd-aud/',
+  '/twd-cad/',
+  '/twd-chf/',
+  '/twd-cny/',
+  '/twd-eur/',
+  '/twd-gbp/',
+  '/twd-hkd/',
+  '/twd-idr/',
+  '/twd-jpy/',
+  '/twd-krw/',
+  '/twd-myr/',
+  '/twd-nzd/',
+  '/twd-php/',
+  '/twd-sgd/',
+  '/twd-thb/',
+  '/twd-usd/',
+  '/twd-vnd/',
+] as const;
+
 // 注意：LEGAL_SSG_PATHS（privacy noindex）不納入 sitemap
-export const SEO_PATHS = [...CONTENT_SEO_PATHS, ...CURRENCY_SEO_PATHS] as const;
+export const SEO_PATHS = [
+  ...CONTENT_SEO_PATHS,
+  ...CURRENCY_SEO_PATHS,
+  ...REVERSE_CURRENCY_SEO_PATHS,
+] as const;
 
 export const APP_ONLY_PATHS = [
   '/multi/',
@@ -154,6 +179,7 @@ export type ImageResource = (typeof IMAGE_RESOURCES)[number];
 export type SiteConfig = typeof SITE_CONFIG;
 export type CorePagePath = (typeof CONTENT_SEO_PATHS)[number];
 export type CurrencyPagePath = (typeof CURRENCY_SEO_PATHS)[number];
+export type ReverseCurrencyPagePath = (typeof REVERSE_CURRENCY_SEO_PATHS)[number];
 export type AppOnlyPath = (typeof APP_ONLY_PATHS)[number];
 
 export function isSEOPath(path: string): path is SEOPath {
@@ -166,6 +192,10 @@ export function isCorePagePath(path: string): path is CorePagePath {
 
 export function isCurrencyPagePath(path: string): path is CurrencyPagePath {
   return CURRENCY_SEO_PATHS.includes(path as CurrencyPagePath);
+}
+
+export function isReverseCurrencyPagePath(path: string): path is ReverseCurrencyPagePath {
+  return REVERSE_CURRENCY_SEO_PATHS.includes(path as ReverseCurrencyPagePath);
 }
 
 export function isAppOnlyPath(path: string): path is AppOnlyPath {

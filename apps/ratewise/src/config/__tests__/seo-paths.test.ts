@@ -3,6 +3,7 @@ import {
   APP_ONLY_PATHS,
   IMAGE_RESOURCES,
   PRERENDER_PATHS,
+  REVERSE_CURRENCY_SEO_PATHS,
   SEO_FILES,
   SEO_PATHS,
   SHARE_IMAGE,
@@ -12,6 +13,7 @@ import {
   isAppOnlyPath,
   isCorePagePath,
   isCurrencyPagePath,
+  isReverseCurrencyPagePath,
   isSEOPath,
   normalizePath,
   shouldPrerender,
@@ -37,6 +39,8 @@ describe('SEO Paths Configuration', () => {
       expect(shouldPrerender('/faq')).toBe(true);
       expect(shouldPrerender('/privacy')).toBe(true);
       expect(shouldPrerender('/usd-twd')).toBe(true);
+      expect(shouldPrerender('/twd-usd')).toBe(true);
+      expect(shouldPrerender('/twd-jpy')).toBe(true);
       expect(shouldPrerender('/multi')).toBe(true);
       expect(shouldPrerender('/favorites')).toBe(true);
       expect(shouldPrerender('/settings')).toBe(true);
@@ -62,8 +66,9 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO 與路由白名單', () => {
-    it('SEO_PATHS 應只包含 25 個公開可索引路徑（不含 noindex 的 privacy 頁）', () => {
-      expect(SEO_PATHS).toHaveLength(25);
+    it('SEO_PATHS 應只包含 42 個公開可索引路徑（不含 noindex 的 privacy 頁）', () => {
+      // SEO_PATHS = CONTENT_SEO_PATHS(8) + CURRENCY_SEO_PATHS(17) + REVERSE_CURRENCY_SEO_PATHS(17) = 42
+      expect(SEO_PATHS).toHaveLength(42);
       expect(SEO_PATHS).toContain('/');
       expect(SEO_PATHS).toContain('/faq/');
       expect(SEO_PATHS).toContain('/about/');
@@ -74,17 +79,27 @@ describe('SEO Paths Configuration', () => {
       expect(SEO_PATHS).toContain('/card-rate-guide/');
       expect(SEO_PATHS).toContain('/open-data/');
       expect(SEO_PATHS).toContain('/usd-twd/');
+      expect(SEO_PATHS).toContain('/twd-usd/');
+      expect(SEO_PATHS).toContain('/twd-jpy/');
       expect(SEO_PATHS).not.toContain('/multi/');
       expect(SEO_PATHS).not.toContain('/favorites/');
       expect(SEO_PATHS).not.toContain('/settings/');
     });
 
     it('PRERENDER_PATHS 應包含公開 SEO 路徑、法律頁與 app-only noindex 頁面', () => {
-      expect(PRERENDER_PATHS).toHaveLength(33);
-      // PRERENDER_PATHS = SEO_PATHS(25) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(7) = 33
+      expect(PRERENDER_PATHS).toHaveLength(50);
+      // PRERENDER_PATHS = SEO_PATHS(42) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(7) = 50
       expect(PRERENDER_PATHS).toContain('/privacy/'); // 仍需預渲染，但不在 sitemap
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');
+    });
+
+    it('REVERSE_CURRENCY_SEO_PATHS 應包含 17 個 TWD→外幣反向路徑', () => {
+      expect(REVERSE_CURRENCY_SEO_PATHS).toHaveLength(17);
+      expect(REVERSE_CURRENCY_SEO_PATHS).toContain('/twd-usd/');
+      expect(REVERSE_CURRENCY_SEO_PATHS).toContain('/twd-jpy/');
+      expect(REVERSE_CURRENCY_SEO_PATHS).toContain('/twd-eur/');
+      expect(REVERSE_CURRENCY_SEO_PATHS).not.toContain('/usd-twd/'); // 正向不在此陣列
     });
 
     it('APP_ONLY_PATHS 應與 SEO_PATHS 完全分離', () => {
@@ -134,10 +149,18 @@ describe('SEO Paths Configuration', () => {
       expect(isCorePagePath('/multi/')).toBe(false);
     });
 
-    it('isCurrencyPagePath 應只識別匯率落地頁', () => {
+    it('isCurrencyPagePath 應只識別 XXX→TWD 落地頁', () => {
       expect(isCurrencyPagePath('/usd-twd/')).toBe(true);
       expect(isCurrencyPagePath('/jpy-twd/')).toBe(true);
       expect(isCurrencyPagePath('/faq/')).toBe(false);
+      expect(isCurrencyPagePath('/twd-usd/')).toBe(false); // 反向路徑不屬此 guard
+    });
+
+    it('isReverseCurrencyPagePath 應只識別 TWD→XXX 落地頁', () => {
+      expect(isReverseCurrencyPagePath('/twd-usd/')).toBe(true);
+      expect(isReverseCurrencyPagePath('/twd-jpy/')).toBe(true);
+      expect(isReverseCurrencyPagePath('/usd-twd/')).toBe(false); // 正向不屬此 guard
+      expect(isReverseCurrencyPagePath('/faq/')).toBe(false);
     });
 
     it('isAppOnlyPath 應識別 app-only 頁面', () => {

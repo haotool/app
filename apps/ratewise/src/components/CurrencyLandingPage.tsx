@@ -23,6 +23,7 @@ export interface CurrencyLandingPageProps {
   commonAmounts?: CommonAmountEntry[];
   travelTip?: string;
   jsonLd?: JsonLdBlock[];
+  direction?: 'to-twd' | 'twd-to-foreign';
 }
 
 export function CurrencyLandingPage({
@@ -41,7 +42,9 @@ export function CurrencyLandingPage({
   commonAmounts = [],
   travelTip,
   jsonLd,
+  direction = 'to-twd',
 }: CurrencyLandingPageProps) {
+  const isTwdToForeign = direction === 'twd-to-foreign';
   // Wise-pattern：?amount=X 存在時，以金額專屬 title / description / canonical 覆蓋預設值。
   const { seoTitle, seoDescription, seoCanonical } = usePairAmountSEO({
     currencyCode,
@@ -61,10 +64,15 @@ export function CurrencyLandingPage({
     jsonLd,
     breadcrumb: [
       { name: 'RateWise 首頁', item: '/' },
-      { name: `${currencyCode} → TWD 匯率`, item: `${pathname}/` },
+      {
+        name: isTwdToForeign ? `TWD → ${currencyCode} 匯率` : `${currencyCode} → TWD 匯率`,
+        item: `${pathname}/`,
+      },
     ],
     howTo: {
-      name: `如何查看 ${currencyCode} 對 TWD 匯率`,
+      name: isTwdToForeign
+        ? `如何查看 TWD 對 ${currencyCode} 匯率`
+        : `如何查看 ${currencyCode} 對 TWD 匯率`,
       description: `使用 RateWise ${howToSteps.length} 步驟快速換算${currencyName}對台幣，並查看歷史趨勢與多幣別。`,
       steps: howToSteps,
       totalTime: 'PT30S',
@@ -91,7 +99,10 @@ export function CurrencyLandingPage({
           <Breadcrumb
             items={[
               { label: '首頁', href: '/' },
-              { label: `${currencyCode} → TWD`, href: `${pathname}/` },
+              {
+                label: isTwdToForeign ? `TWD → ${currencyCode}` : `${currencyCode} → TWD`,
+                href: `${pathname}/`,
+              },
             ]}
             className="mb-4"
           />
@@ -102,7 +113,9 @@ export function CurrencyLandingPage({
               <span className="text-4xl sm:text-5xl">{currencyFlag}</span>
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-text leading-tight">
-                  {currencyCode} 對 TWD 匯率換算器
+                  {isTwdToForeign
+                    ? `台幣換 ${currencyCode} 匯率換算器`
+                    : `${currencyCode} 對 TWD 匯率換算器`}
                 </h1>
                 <p className="text-text-muted text-sm sm:text-base mt-2 leading-relaxed">
                   {description}
@@ -169,7 +182,7 @@ export function CurrencyLandingPage({
               to="/"
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl font-semibold text-sm transition-colors"
             >
-              開始換算 {currencyCode} → TWD
+              {isTwdToForeign ? `開始換算 TWD → ${currencyCode}` : `開始換算 ${currencyCode} → TWD`}
               <ArrowLeft className="w-4 h-4 rotate-180" />
             </Link>
           </div>

@@ -104,6 +104,8 @@ export interface CurrencyLandingPageContent {
   commonAmounts: CommonAmountEntry[];
   travelTip: string;
   jsonLd: JsonLdBlock[];
+  /** 換算方向：to-twd（外幣→台幣）或 twd-to-foreign（台幣→外幣）。 */
+  direction: 'to-twd' | 'twd-to-foreign';
 }
 
 const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
@@ -1427,5 +1429,275 @@ export function getCurrencyLandingPageContent(
     commonAmounts,
     travelTip: override.travelTip,
     faqTitle: `${displayName}換匯常見問題`,
+    direction: 'to-twd' as const,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 反向幣別頁（TWD→外幣）：出國換匯場景 SSOT
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** 反向幣別頁的差異化覆寫：強調出國前換匯場景與台幣→外幣方向。 */
+const REVERSE_CURRENCY_PAGE_OVERRIDES = {
+  USD: {
+    keyword: '台幣換美金',
+    travelTip: '出國前在台灣市區銀行換美金現鈔，匯率通常優於機場；信用卡手續費另計。',
+    outboundTip: '赴美期間以刷卡為主，建議備少量現金備用。',
+    popularTwdAmounts: [10000, 30000, 50000, 100000, 200000, 300000],
+    searchQueries: ['台幣換美金', '30000台幣換多少美金', '美金匯率今日買入'],
+  },
+  JPY: {
+    keyword: '台幣換日圓',
+    travelTip: '日本許多餐廳與小店仍以現金為主，建議出發前換足日圓現鈔。',
+    outboundTip: '可在台灣銀行或兆豐銀行換日圓，機場匯率通常較差。',
+    popularTwdAmounts: [10000, 30000, 50000, 100000, 200000, 300000],
+    searchQueries: ['台幣換日圓', '50000台幣換多少日圓', '日圓匯率買入'],
+  },
+  EUR: {
+    keyword: '台幣換歐元',
+    travelTip: '歐洲多數商家接受刷卡，建議備少量歐元現金用於小攤或市集。',
+    outboundTip: '歐元在台灣市區銀行可換，建議提早預留 2~3 個工作天。',
+    popularTwdAmounts: [10000, 30000, 50000, 100000, 200000, 300000],
+    searchQueries: ['台幣換歐元', '30000台幣換多少歐元', '歐元匯率買入'],
+  },
+  GBP: {
+    keyword: '台幣換英鎊',
+    travelTip: '英國感應支付普及，現金需求少；建議少量備用即可。',
+    outboundTip: '英鎊在台灣大型銀行可換，非主要幣別建議提前詢問庫存。',
+    popularTwdAmounts: [10000, 30000, 50000, 100000, 200000, 300000],
+    searchQueries: ['台幣換英鎊', '30000台幣換多少英鎊', '英鎊匯率買入'],
+  },
+  CNY: {
+    keyword: '台幣換人民幣',
+    travelTip: '中國大陸以行動支付為主，少量人民幣備用即可應付小額付款。',
+    outboundTip: '赴中國大陸前可在台灣銀行換人民幣現鈔，建議確認各行庫存。',
+    popularTwdAmounts: [5000, 10000, 30000, 50000, 100000, 200000],
+    searchQueries: ['台幣換人民幣', '10000台幣換多少人民幣', '人民幣匯率買入'],
+  },
+  KRW: {
+    keyword: '台幣換韓元',
+    travelTip: '韓國多數店家接受刷卡，但夜市與路邊攤建議準備現金。',
+    outboundTip: '韓元在台灣部分銀行可換，或抵達首爾明洞換匯所匯率有時更優。',
+    popularTwdAmounts: [5000, 10000, 30000, 50000, 100000, 200000],
+    searchQueries: ['台幣換韓元', '10000台幣換多少韓元', '韓元匯率買入'],
+  },
+  HKD: {
+    keyword: '台幣換港幣',
+    travelTip: '香港八達通卡方便；其餘可刷卡或付港幣現金。',
+    outboundTip: '港幣在台灣市區銀行可換，匯率穩定且流動性佳。',
+    popularTwdAmounts: [5000, 10000, 30000, 50000, 100000, 200000],
+    searchQueries: ['台幣換港幣', '10000台幣換多少港幣', '港幣匯率買入'],
+  },
+  AUD: {
+    keyword: '台幣換澳幣',
+    travelTip: '澳洲刷卡普及，建議少量備用澳幣現金即可。',
+    outboundTip: '澳幣在台灣大型銀行可換，建議提前 2 天預約。',
+    popularTwdAmounts: [10000, 30000, 50000, 100000, 200000, 300000],
+    searchQueries: ['台幣換澳幣', '30000台幣換多少澳幣', '澳幣匯率買入'],
+  },
+  CAD: {
+    keyword: '台幣換加幣',
+    travelTip: '加拿大刷卡普及，備少量現金用於小費或緊急情況。',
+    outboundTip: '加幣在台灣大型銀行可換，非旺季建議提前確認庫存。',
+    popularTwdAmounts: [10000, 30000, 50000, 100000, 200000, 300000],
+    searchQueries: ['台幣換加幣', '30000台幣換多少加幣', '加幣匯率買入'],
+  },
+  SGD: {
+    keyword: '台幣換新加坡幣',
+    travelTip: '新加坡刷卡與行動支付普及，熟食中心建議備少量現金。',
+    outboundTip: '新幣在台灣銀行可換，或抵達後在機場/市區換匯所換。',
+    popularTwdAmounts: [5000, 10000, 30000, 50000, 100000, 200000],
+    searchQueries: ['台幣換新幣', '10000台幣換多少新加坡幣', '新幣匯率買入'],
+  },
+  THB: {
+    keyword: '台幣換泰銖',
+    travelTip: '泰國夜市、計程車以現金為主，建議攜帶充足泰銖。',
+    outboundTip: '泰銖在台灣部分銀行可換，或抵達曼谷後在蘇坤蔚路換匯所換。',
+    popularTwdAmounts: [5000, 10000, 30000, 50000, 100000, 200000],
+    searchQueries: ['台幣換泰銖', '10000台幣換多少泰銖', '泰銖匯率買入'],
+  },
+  NZD: {
+    keyword: '台幣換紐元',
+    travelTip: '紐西蘭刷卡普及，部分戶外活動建議備少量現金。',
+    outboundTip: '紐元在台灣大型銀行可換，建議提前確認庫存。',
+    popularTwdAmounts: [10000, 30000, 50000, 100000, 200000, 300000],
+    searchQueries: ['台幣換紐元', '30000台幣換多少紐元', '紐元匯率買入'],
+  },
+  CHF: {
+    keyword: '台幣換瑞士法郎',
+    travelTip: '瑞士消費水準高，刷卡普遍；備少量法郎現金備用即可。',
+    outboundTip: '瑞郎在台灣大型銀行可換，非主要幣別建議提前預約。',
+    popularTwdAmounts: [10000, 30000, 50000, 100000, 200000, 300000],
+    searchQueries: ['台幣換瑞郎', '30000台幣換多少瑞士法郎', '瑞郎匯率買入'],
+  },
+  VND: {
+    keyword: '台幣換越南盾',
+    travelTip: '越南以現金為主，建議攜帶充足越南盾，面額大鈔較受歡迎。',
+    outboundTip: '越南盾在台灣部分銀行可換，或抵達後在河內/胡志明市換匯。',
+    popularTwdAmounts: [3000, 5000, 10000, 30000, 50000, 100000],
+    searchQueries: ['台幣換越南盾', '10000台幣換多少越南盾', '越南盾匯率買入'],
+  },
+  PHP: {
+    keyword: '台幣換菲律賓披索',
+    travelTip: '菲律賓觀光區刷卡普及，偏遠地區建議準備披索現金。',
+    outboundTip: '披索在台灣銀行可換，或抵達馬尼拉/宿霧後在機場換匯。',
+    popularTwdAmounts: [3000, 5000, 10000, 30000, 50000, 100000],
+    searchQueries: ['台幣換菲律賓披索', '10000台幣換多少披索', '披索匯率買入'],
+  },
+  IDR: {
+    keyword: '台幣換印尼盾',
+    travelTip: '印尼（峇里島）以現金為主，建議在峇里島市區換匯所兌換，匯率通常優於機場。',
+    outboundTip: '印尼盾在台灣部分銀行可換，面額大，建議確認所需張數。',
+    popularTwdAmounts: [3000, 5000, 10000, 30000, 50000, 100000],
+    searchQueries: ['台幣換印尼盾', '10000台幣換多少印尼盾', '印尼盾匯率買入'],
+  },
+  MYR: {
+    keyword: '台幣換馬來幣',
+    travelTip: '吉隆坡市區刷卡普及，夜市和熟食中心建議準備現金。',
+    outboundTip: '馬來幣在台灣部分銀行可換，或抵達後在吉隆坡市區換匯。',
+    popularTwdAmounts: [3000, 5000, 10000, 30000, 50000, 100000],
+    searchQueries: ['台幣換馬來幣', '10000台幣換多少馬來幣', '馬來幣匯率買入'],
+  },
+} as const;
+
+export type ReverseCurrencyLandingCode = keyof typeof REVERSE_CURRENCY_PAGE_OVERRIDES;
+
+export function getReverseCurrencyLandingPageContent(
+  code: ReverseCurrencyLandingCode,
+): CurrencyLandingPageContent {
+  const override = REVERSE_CURRENCY_PAGE_OVERRIDES[code];
+  const forwardOverride = CURRENCY_PAGE_OVERRIDES[code];
+  const definition = CURRENCY_DEFINITIONS[code];
+  const pathname = `/twd-${code.toLowerCase()}`;
+  const displayName = forwardOverride.displayName;
+
+  const commonAmounts: CommonAmountEntry[] = override.popularTwdAmounts.map((amount) => ({
+    amount,
+    label: `${formatAmount(amount)} TWD`,
+    question: `${formatAmount(amount)} 台幣可以換多少${displayName}？`,
+  }));
+
+  const canonicalUrl = buildCanonicalUrl(pathname);
+
+  const financialServiceJsonLd: JsonLdBlock = {
+    '@context': 'https://schema.org',
+    '@type': 'FinancialService',
+    name: `台幣換${displayName}匯率換算 — ${APP_INFO.name}`,
+    description: `即時新台幣（TWD）兌${displayName}（${code}）匯率換算，資料來源為臺灣銀行官方牌告匯率，出國換匯前快速估算所需台幣。`,
+    url: canonicalUrl,
+    serviceType: 'CurrencyExchange',
+    dateModified: BUILD_TIME,
+    provider: {
+      '@type': 'Organization',
+      name: APP_INFO.author,
+      url: APP_INFO.organizationUrl,
+    },
+    areaServed: { '@type': 'Country', name: 'Taiwan' },
+    availableChannel: {
+      '@type': 'ServiceChannel',
+      serviceUrl: canonicalUrl,
+      availableLanguage: ['zh-TW', 'en', 'ja'],
+    },
+    termsOfService: buildCanonicalUrl('/privacy'),
+    sameAs: [...SEO_SOCIAL_LINKS],
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'TWD',
+    },
+  };
+
+  return {
+    currencyCode: code,
+    currencyFlag: definition.flag,
+    currencyName: displayName,
+    title: `台幣換${displayName}匯率 — 出國換匯實際費率 | TWD/${code}`,
+    description: `出國換${displayName}前，先查台銀實際現金賣出價（非中間價）。帶台幣去銀行換${displayName}現鈔，RateWise 精確顯示你要付多少台幣。每 5 分鐘更新，附 7～30 天趨勢。`,
+    pathname,
+    canonical: canonicalUrl,
+    keywords: [
+      override.keyword,
+      `TWD ${code} 匯率`,
+      `台幣換${displayName}`,
+      `${displayName}匯率今日`,
+      ...override.searchQueries,
+      '換匯計算',
+      APP_INFO.name,
+    ],
+    jsonLd: [
+      financialServiceJsonLd,
+      buildShareImageJsonLd(
+        `台幣換${displayName}匯率分享圖片`,
+        `${APP_INFO.name} TWD/${code} 出國換匯即時計算`,
+      ),
+    ],
+    faqEntries: [
+      {
+        question: `現在台幣換${displayName}划算嗎？什麼時候換比較好？`,
+        answer: `匯率每日波動，難以預測「最佳時機」。RateWise 提供 7～30 天歷史趨勢圖，讓你觀察近期走勢。建議分批換匯分散風險，而非等待所謂最低點。出發前 1～2 週開始觀察趨勢，視需求分 2～3 次換匯是常見策略。`,
+      },
+      {
+        question: `帶台幣去銀行換${displayName}，要看哪個匯率？`,
+        answer: `你帶台幣去銀行買${displayName}現鈔，銀行是在「賣出」外幣給你，需參考台銀牌告的「現金賣出」價。RateWise 直接顯示此數字——這才是你實際要付的台幣金額，而非 Google 或 XE 顯示的市場中間價。`,
+      },
+      {
+        question: `${formatAmount(override.popularTwdAmounts[2] ?? 30000)} 台幣可以換多少${displayName}？`,
+        answer: `實際金額依台銀牌告匯率每日浮動，請輸入台幣金額即時查看最新換算結果。資料每 5 分鐘自動更新，並顯示現金與即期兩種報價。`,
+      },
+      {
+        question: `去哪換${displayName}最省？`,
+        answer: `${override.outboundTip} 機場換匯匯率通常較差，建議出發前在台灣市區銀行換好。各行匯率略有差異，可多比較。臺灣銀行通常是參考基準。`,
+      },
+      {
+        question: `台幣換${displayName}和${displayName}換回台幣的匯率一樣嗎？`,
+        answer: `不一樣。台幣換${displayName}看銀行「賣出」價（你買外幣，銀行賣），${displayName}換回台幣看銀行「買入」價（你賣外幣，銀行買）。兩者之間有價差，通常賣出價高於買入價。`,
+      },
+      {
+        question: `出國刷卡跟換現金哪個比較省？`,
+        answer: `取決於發卡銀行的海外手續費。部分無手續費卡片搭配Visa/Mastercard清算匯率，整體成本可能低於現金換匯。但現金在特定地區（如泰國、日本）更實用。建議同時準備少量現金加信用卡。`,
+      },
+      {
+        question: `換${displayName}現金和外幣帳戶匯款哪種匯率較好？`,
+        answer: `外幣帳戶使用「即期賣出」匯率，通常優於「現金賣出」，因為銀行省去了現鈔保管與運送成本。如不急需現鈔，透過網銀外幣帳戶換匯通常可省下一些匯差。RateWise 可一鍵切換查看兩種報價。`,
+      },
+      {
+        question: `${override.travelTip}（如何善用 RateWise？）`,
+        answer: `出發前使用快速金額按鈕（${override.popularTwdAmounts.slice(0, 3).map(formatAmount).join('、')} 台幣等常用金額）估算所需${displayName}，並查看 7～30 天趨勢選擇較有利換匯時機。`,
+      },
+    ],
+    howToSteps: [
+      {
+        position: 1,
+        name: '選擇換算方向',
+        text: `進入 RateWise 首頁，設定來源貨幣為 TWD，目標貨幣選 ${code}。`,
+      },
+      {
+        position: 2,
+        name: '輸入台幣金額',
+        text: `輸入你想換出的台幣金額，或使用快速金額按鈕（如 ${override.popularTwdAmounts.slice(0, 3).map(formatAmount).join('、')} 台幣），系統即時顯示可換到的${displayName}。`,
+      },
+      {
+        position: 3,
+        name: '確認匯率類型',
+        text: '確認使用「現金匯率」（臨櫃換鈔）或「即期匯率」（網銀外幣帳戶）。兩者費率不同，請依換匯方式選擇。',
+      },
+      {
+        position: 4,
+        name: '觀察趨勢，決定換匯時機',
+        text: '展開匯率卡片查看 7～30 天歷史趨勢，了解近期匯率高低區間，協助判斷換匯時機。',
+      },
+    ],
+    highlights: [
+      `精準費率：顯示台銀現金賣出價——這是你帶台幣換${displayName}現鈔的實際費率，非中間價。`,
+      `資料來源：臺灣銀行牌告匯率，現金與即期買入賣出四種報價完整呈現。`,
+      `更新頻率：每 5 分鐘自動同步，顯示最近更新時間，可手動重新整理。`,
+      `換匯估算：輸入台幣金額即時計算可換到的${displayName}，並附 7～30 天趨勢。`,
+      `${override.travelTip}`,
+      `工具功能：計算機鍵盤快速輸入、快速金額按鈕、收藏管理、換算歷史紀錄。`,
+    ],
+    commonAmounts,
+    travelTip: override.travelTip,
+    faqTitle: `台幣換${displayName}常見問題`,
+    direction: 'twd-to-foreign' as const,
   };
 }
