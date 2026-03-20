@@ -253,6 +253,9 @@ export const routes: RouteRecord[] = [
   createLazyRoute('/twd-idr', () => import('./pages/TWDToIDR'), 'src/pages/TWDToIDR.tsx'),
   createLazyRoute('/twd-myr', () => import('./pages/TWDToMYR'), 'src/pages/TWDToMYR.tsx'),
 
+  // SEO 技術揭露頁面
+  createLazyRoute('/seo-tech', () => import('./pages/SeoTech'), 'src/pages/SeoTech.tsx'),
+
   // 不預渲染內部工具頁面
   createLazyRoute(
     '/color-scheme',
