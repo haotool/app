@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
 import { getDisplayVersion } from '../config/version';
@@ -15,6 +16,7 @@ const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', 
 });
 
 export default function About() {
+  const { t } = useTranslation();
   return (
     <>
       <SEOHelmet
@@ -29,8 +31,8 @@ export default function About() {
         <div className="container mx-auto max-w-4xl px-4 py-8">
           <PageNavHeader
             breadcrumbItems={[
-              { label: '首頁', href: '/' },
-              { label: '關於我們', href: '/about/' },
+              { label: t('nav.home'), href: '/' },
+              { label: t('settings.aboutUs'), href: '/about/' },
             ]}
           />
 

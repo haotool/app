@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
 import { APP_INFO, getCopyrightYears } from '../config/app-info';
@@ -13,6 +14,7 @@ const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', 
 });
 
 export default function Privacy() {
+  const { t } = useTranslation();
   return (
     <>
       <SEOHelmet
@@ -27,8 +29,8 @@ export default function Privacy() {
         <div className="container mx-auto max-w-4xl px-4 py-8">
           <PageNavHeader
             breadcrumbItems={[
-              { label: '首頁', href: '/' },
-              { label: '隱私政策', href: '/privacy/' },
+              { label: t('nav.home'), href: '/' },
+              { label: t('footer.privacyPolicy'), href: '/privacy/' },
             ]}
           />
 

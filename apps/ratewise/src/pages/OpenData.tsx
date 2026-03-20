@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { Breadcrumb } from '../components/Breadcrumb';
+import { PageNavHeader } from '../components/PageNavHeader';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
 import { RATES_API } from '../config/api-endpoints';
@@ -350,6 +351,7 @@ function ResourceCard({ item }: { item: ResourceCardItem }) {
 
 const OpenData = () => {
   const HOW_TO = OPEN_DATA_PAGE_SEO.howTo;
+  const { t } = useTranslation();
 
   return (
     <>
@@ -365,32 +367,11 @@ const OpenData = () => {
 
       <div className="min-h-screen bg-page-gradient">
         <div className="container mx-auto max-w-5xl px-4 py-8">
-          {/* 返回 */}
-          <Link
-            to="/"
-            className="mb-4 inline-flex items-center text-primary transition-colors hover:text-primary-hover"
-          >
-            <svg
-              aria-hidden="true"
-              className="mr-2 h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            回到首頁
-          </Link>
-
-          <Breadcrumb
-            items={[
-              { label: '首頁', href: '/' },
-              { label: '開放資料 API', href: '/open-data/' },
+          {/* 頁面頂部導航：返回 + 麵包屑（PageNavHeader SSOT 模組）。 */}
+          <PageNavHeader
+            breadcrumbItems={[
+              { label: t('nav.home'), href: '/' },
+              { label: t('settings.openDataApi'), href: '/open-data/' },
             ]}
           />
 

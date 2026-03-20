@@ -53,9 +53,9 @@ describe('OpenData Page', () => {
       expect(screen.getByText('資料格式')).toBeInTheDocument();
     });
 
-    it('renders back navigation link', () => {
+    it('renders back navigation button', () => {
       renderOpenData();
-      expect(screen.getByRole('link', { name: /回到首頁/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /返回/i })).toBeInTheDocument();
     });
   });
 

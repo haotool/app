@@ -44,15 +44,15 @@ describe('NotFound Component - 404 Page (BDD)', () => {
     it('should display 404 error message', () => {
       renderNotFound();
 
-      // 🔴 紅燈：應該包含 "404" 和 "找不到頁面" 文字
+      // 應該包含 "404" 標題文字
       expect(screen.getByText(/404/i)).toBeInTheDocument();
 
       // 使用 getByRole 找到 h2 標題元素，更精確
       const heading = screen.getByRole('heading', { level: 2 });
-      expect(heading).toHaveTextContent(/找不到頁面/i);
+      expect(heading).toHaveTextContent(/找不到頁面|頁面不存在/i);
 
-      // 確認有錯誤說明文字
-      expect(screen.getByText(/您訪問的頁面不存在/i)).toBeInTheDocument();
+      // 確認有錯誤說明文字（i18n：notFound.message）
+      expect(screen.getByText(/您.*頁面不存在|您訪問的頁面不存在/i)).toBeInTheDocument();
     });
 
     it('should have a "返回首頁" button', () => {
@@ -125,7 +125,7 @@ describe('NotFound Component - 404 Page (BDD)', () => {
       const container = screen.getByRole('main');
       const text = container.textContent;
 
-      expect(text).toMatch(/您訪問的頁面|這個頁面|網址|連結/i);
+      expect(text).toMatch(/您.*頁面|這個頁面|網址|連結|已被移除/i);
     });
 
     it('should be visually styled consistently with the app', () => {

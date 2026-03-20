@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, HelpCircle, BookOpen, Sparkles, Calculator } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from './SEOHelmet';
-import { Breadcrumb } from './Breadcrumb';
+import { PageNavHeader } from './PageNavHeader';
 import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import type { FAQEntry, HowToStep, CommonAmountEntry, JsonLdBlock } from '../config/seo-metadata';
 
@@ -88,25 +88,15 @@ export function CurrencyLandingPage({
       {/* Main container - PWA optimized with safe area handling */}
       <div className="min-h-full">
         <div className="px-4 sm:px-6 py-6 max-w-4xl mx-auto">
-          {/* Back Navigation */}
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-primary hover:text-primary-hover mb-4 transition-colors text-sm font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>{t('singleConverter.backToConverter')}</span>
-          </Link>
-
-          {/* Breadcrumb Navigation */}
-          <Breadcrumb
-            items={[
+          {/* 頁面頂部導航：返回 + 麵包屑（PageNavHeader SSOT 模組）。 */}
+          <PageNavHeader
+            breadcrumbItems={[
               { label: t('nav.home'), href: '/' },
               {
                 label: isTwdToForeign ? `TWD → ${currencyCode}` : `${currencyCode} → TWD`,
                 href: `${pathname}/`,
               },
             ]}
-            className="mb-4"
           />
 
           {/* Header Section */}

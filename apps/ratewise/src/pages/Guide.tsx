@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
 import { GUIDE_PAGE_SEO } from '../config/seo-metadata';
@@ -38,6 +39,7 @@ const FAQ_ITEMS = [
 ];
 
 const Guide = () => {
+  const { t } = useTranslation();
   return (
     <>
       <SEOHelmet
@@ -54,8 +56,8 @@ const Guide = () => {
         <div className="container mx-auto max-w-5xl px-4 py-8">
           <PageNavHeader
             breadcrumbItems={[
-              { label: '首頁', href: '/' },
-              { label: '使用指南', href: '/guide/' },
+              { label: t('nav.home'), href: '/' },
+              { label: t('settings.usageGuide'), href: '/guide/' },
             ]}
           />
 

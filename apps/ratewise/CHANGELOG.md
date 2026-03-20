@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.13.0
+
+### Minor Changes
+
+- a95750f: 修正 JSON-LD schema 驗證錯誤、補齊介面風格 i18n、改善無障礙存取、統一 breadcrumb/導航為 PageNavHeader 並套用 i18n
+
 ## 2.12.0
 
 ### Minor Changes
