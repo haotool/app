@@ -2,6 +2,7 @@
 
 import { Link } from 'react-router-dom';
 import { ArrowLeft, HelpCircle, BookOpen, Sparkles, Calculator } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from './SEOHelmet';
 import { Breadcrumb } from './Breadcrumb';
 import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
@@ -44,6 +45,7 @@ export function CurrencyLandingPage({
   jsonLd,
   direction = 'to-twd',
 }: CurrencyLandingPageProps) {
+  const { t } = useTranslation();
   const isTwdToForeign = direction === 'twd-to-foreign';
   // Wise-pattern：?amount=X 存在時，以金額專屬 title / description / canonical 覆蓋預設值。
   const { seoTitle, seoDescription, seoCanonical } = usePairAmountSEO({
@@ -92,13 +94,13 @@ export function CurrencyLandingPage({
             className="inline-flex items-center gap-2 text-primary hover:text-primary-hover mb-4 transition-colors text-sm font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>返回主換算器</span>
+            <span>{t('singleConverter.backToConverter')}</span>
           </Link>
 
           {/* Breadcrumb Navigation */}
           <Breadcrumb
             items={[
-              { label: '首頁', href: '/' },
+              { label: t('nav.home'), href: '/' },
               {
                 label: isTwdToForeign ? `TWD → ${currencyCode}` : `${currencyCode} → TWD`,
                 href: `${pathname}/`,

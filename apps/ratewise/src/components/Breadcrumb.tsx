@@ -5,6 +5,7 @@
 
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export interface BreadcrumbItem {
   label: string;
@@ -17,10 +18,12 @@ export interface BreadcrumbProps {
 }
 
 export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
+  const { t } = useTranslation();
+
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label="麵包屑導航" className={className}>
+    <nav aria-label={t('nav.breadcrumb')} className={className}>
       <ol className="flex items-center gap-2 text-sm text-text-muted flex-wrap">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

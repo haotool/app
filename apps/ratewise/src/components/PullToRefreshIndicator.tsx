@@ -1,4 +1,5 @@
 import { RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * PullToRefreshIndicator - Visual feedback component for pull-to-refresh
@@ -32,6 +33,8 @@ export function PullToRefreshIndicator({
   isRefreshing,
   canTrigger,
 }: PullToRefreshIndicatorProps) {
+  const { t } = useTranslation();
+
   // Calculate opacity based on pull distance (0-50px: 0-1)
   const opacity = Math.min(pullDistance / 50, 1);
 
@@ -40,10 +43,10 @@ export function PullToRefreshIndicator({
 
   // Determine status text (clean, professional)
   const statusText = isRefreshing
-    ? '重新整理中...'
+    ? t('pwa.refreshing')
     : canTrigger
-      ? '放開以重新整理'
-      : '下拉重新整理';
+      ? t('pwa.releaseToRefresh')
+      : t('pwa.pullToRefresh');
 
   // Color scheme using SSOT tokens
   const iconColor = isRefreshing ? 'text-primary' : canTrigger ? 'text-primary' : 'text-primary/70';

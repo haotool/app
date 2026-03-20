@@ -3,6 +3,7 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { logger } from '../utils/logger';
 import { APP_INFO } from '../config/app-info';
 import { MailtoLink } from './MailtoLink';
+import i18n from '../i18n';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -91,17 +92,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <div className="bg-surface rounded-2xl shadow-2xl p-8 max-w-md w-full">
             <div className="flex items-center gap-3 mb-4">
               <AlertCircle className="text-destructive" size={32} />
-              <h1 className="text-2xl font-bold text-text">哎呀！發生錯誤</h1>
+              <h1 className="text-2xl font-bold text-text">{i18n.t('errors.crashTitle')}</h1>
             </div>
 
-            <p className="text-text-muted mb-4">
-              抱歉，應用程式遇到了一些問題。請重新整理頁面試試。
-            </p>
+            <p className="text-text-muted mb-4">{i18n.t('errors.crashDescription')}</p>
 
             {import.meta.env.DEV && this.state.error && (
               <details className="mb-4">
                 <summary className="cursor-pointer text-sm font-semibold text-text mb-2">
-                  錯誤詳情（開發模式）
+                  {i18n.t('errors.errorDetails')}
                 </summary>
                 <div className="bg-danger-bg border border-danger-light rounded-lg p-3">
                   <p className="text-xs font-mono text-danger mb-2">
@@ -121,11 +120,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
             >
               <RefreshCw size={18} />
-              重新載入
+              {i18n.t('errors.reload')}
             </button>
 
             <p className="text-xs text-text-muted text-center mt-4">
-              若問題持續發生，請清除瀏覽器快取後重試，或透過以下方式聯繫作者：
+              {i18n.t('errors.clearCacheHint')}
             </p>
             <div className="flex justify-center gap-4 mt-2 flex-wrap">
               <a

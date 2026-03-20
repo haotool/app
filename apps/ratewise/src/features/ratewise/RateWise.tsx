@@ -10,6 +10,7 @@
  */
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
@@ -32,6 +33,7 @@ import {
 } from '../../utils/exchangeRateCalculation';
 
 const RateWise = () => {
+  const { t } = useTranslation();
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);
   const isTestEnv = import.meta.env.MODE === 'test';
@@ -161,16 +163,16 @@ const RateWise = () => {
       <div className="min-h-dvh bg-danger-bg flex items-center justify-center p-4">
         <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           <AlertCircle className="text-danger" size={48} />
-          <h1 className="text-2xl font-bold text-neutral-text mt-4">匯率載入失敗</h1>
-          <p className="text-neutral-text-secondary mt-2 mb-6">
-            抱歉，我們無法從網路獲取最新的匯率資料。請檢查您的網路連線，然後再試一次。
-          </p>
+          <h1 className="text-2xl font-bold text-neutral-text mt-4">
+            {t('errors.rateLoadFailed')}
+          </h1>
+          <p className="text-neutral-text-secondary mt-2 mb-6">{t('errors.rateLoadDescription')}</p>
           <button
             onClick={() => window.location.reload()}
             className="w-full flex items-center justify-center gap-2 py-3 bg-danger hover:bg-danger-hover text-white font-semibold rounded-xl shadow-lg transition"
           >
             <RefreshCw size={18} />
-            重新整理頁面
+            {t('errors.reloadPage')}
           </button>
         </div>
       </div>

@@ -24,6 +24,7 @@
 
 import { useEffect, useState } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { performFullRefresh } from '../utils/swUtils';
 import { APP_INFO } from '../config/app-info';
 import { MailtoLink } from './MailtoLink';
@@ -37,6 +38,7 @@ const SKELETON_TIMEOUT_MS = 10_000;
  * 提供強制重新載入按鈕與聯絡資訊，確保使用者永遠有出口。
  */
 function SkeletonTimeoutFallback() {
+  const { t } = useTranslation();
   const [isReloading, setIsReloading] = useState(false);
 
   const handleReload = () => {
@@ -49,10 +51,8 @@ function SkeletonTimeoutFallback() {
       <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-sm w-full space-y-5 text-center">
         <AlertCircle className="mx-auto text-warning" size={40} />
         <div>
-          <h2 className="text-lg font-bold text-text mb-2">應用程式載入逾時</h2>
-          <p className="text-sm text-text-muted">
-            載入時間超過預期，可能是快取過期或網路問題。請強制重新載入以取得最新版本。
-          </p>
+          <h2 className="text-lg font-bold text-text mb-2">{t('errors.appLoadTimeout')}</h2>
+          <p className="text-sm text-text-muted">{t('errors.appLoadTimeoutDesc')}</p>
         </div>
         <button
           onClick={handleReload}
@@ -60,12 +60,11 @@ function SkeletonTimeoutFallback() {
           className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white font-semibold rounded-xl shadow-lg transition"
         >
           <RefreshCw size={18} className={isReloading ? 'animate-spin' : ''} />
-          {isReloading ? '重新載入中...' : '強制重新載入（清除快取）'}
+          {isReloading ? t('errors.reloading') : t('errors.forceReload')}
         </button>
         <SupportContactLinks title="若問題持續發生，請聯絡作者：" description="" />
         <p className="text-xs text-text-muted">
-          也可嘗試：設定 → 清除瀏覽器快取，或聯絡{' '}
-          <MailtoLink email={APP_INFO.email} className="underline" />
+          {t('errors.cacheHint')} <MailtoLink email={APP_INFO.email} className="underline" />
         </p>
       </div>
     </div>

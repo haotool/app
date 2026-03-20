@@ -11,6 +11,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Breadcrumb, type BreadcrumbItem } from './Breadcrumb';
 
 export interface PageNavHeaderProps {
@@ -31,6 +32,7 @@ export function PageNavHeader({
   className = '',
 }: PageNavHeaderProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleBack = () => {
     // 有瀏覽器歷史則返回上一頁（例如：從設定頁進入則返回設定頁）。
@@ -54,10 +56,10 @@ export function PageNavHeader({
           className="inline-flex shrink-0 items-center gap-1 cursor-pointer
             text-sm font-medium text-primary
             transition-colors hover:text-primary-hover"
-          aria-label="返回上一頁"
+          aria-label={t('common.back')}
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-          <span>返回</span>
+          <span>{t('common.back')}</span>
         </button>
 
         {/* 垂直分隔線 */}

@@ -1,5 +1,15 @@
 # @app/ratewise
 
+## 2.12.0
+
+### Minor Changes
+
+- 新增韓文（한국어）語系支援，補齊 i18n 硬編碼缺漏
+
+### Patch Changes
+
+- 72c5d17: 修正 /seo-tech 路由遺漏於 routes.tsx 導致 404
+
 ## 2.11.2
 
 ### Patch Changes

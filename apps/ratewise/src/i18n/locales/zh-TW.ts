@@ -36,6 +36,8 @@ const zhTW = {
     multiCurrencyFull: '多幣別轉換',
     favoritesFull: '收藏與歷史',
     settingsFull: '應用程式設定',
+    breadcrumb: '麵包屑導航',
+    home: '首頁',
   },
 
   // App
@@ -69,6 +71,7 @@ const zhTW = {
     viewTrendChart: '查看趨勢圖',
     fromAmountLabel: '轉換金額 ({{code}})',
     toAmountLabel: '轉換結果 ({{code}})',
+    backToConverter: '返回主換算器',
   },
 
   // Multi Currency Converter
@@ -246,6 +249,19 @@ const zhTW = {
       '此頁面需要網路連線才能載入。恢復連線後將自動重試，或點擊下方按鈕手動重試。',
     routeLoadFailedTitle: '頁面載入失敗',
     routeLoadFailedDescription: '可能是最近版本更新造成資源不一致，請重新載入試試。',
+    crashTitle: '哎呀！發生錯誤',
+    crashDescription: '抱歉，應用程式遇到了一些問題。請重新整理頁面試試。',
+    errorDetails: '錯誤詳情（開發模式）',
+    clearCacheHint: '若問題持續發生，請清除瀏覽器快取後重試，或透過以下方式聯繫作者：',
+    appLoadTimeout: '應用程式載入逾時',
+    appLoadTimeoutDesc:
+      '載入時間超過預期，可能是快取過期或網路問題。請強制重新載入以取得最新版本。',
+    forceReload: '強制重新載入（清除快取）',
+    reloading: '重新載入中...',
+    cacheHint: '也可嘗試：設定 → 清除瀏覽器快取，或聯絡',
+    reloadPage: '重新整理頁面',
+    rateLoadDescription:
+      '抱歉，我們無法從網路獲取最新的匯率資料。請檢查您的網路連線，然後再試一次。',
   },
 
   // PWA
@@ -268,6 +284,8 @@ const zhTW = {
     registrationFailedDescription: '更新模組載入失敗，請重新載入；若仍持續發生，請直接聯繫作者。',
     actionRetry: '重試',
     actionReload: '重新載入',
+    releaseToRefresh: '放開以重新整理',
+    refreshing: '重新整理中...',
   },
 
   support: {
@@ -302,6 +320,8 @@ const zhTW = {
     by: 'By',
     builtWith: 'Built with React • Vite • Tailwind CSS • Progressive Web App (PWA)',
     openSourceOn: 'Open Source on',
+    footerNav: '頁腳導航',
+    privacyPolicy: '隱私政策',
   },
 };
 

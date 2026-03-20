@@ -36,6 +36,8 @@ const ja = {
     multiCurrencyFull: '複数通貨換算',
     favoritesFull: 'お気に入り・履歴',
     settingsFull: 'アプリ設定',
+    breadcrumb: 'パンくずナビゲーション',
+    home: 'ホーム',
   },
 
   // App
@@ -69,6 +71,7 @@ const ja = {
     viewTrendChart: 'トレンドチャートを見る',
     fromAmountLabel: '金額 ({{code}})',
     toAmountLabel: '結果 ({{code}})',
+    backToConverter: 'コンバーターに戻る',
   },
 
   // Multi Currency Converter
@@ -247,6 +250,21 @@ const ja = {
     routeLoadFailedTitle: 'ページの読み込みに失敗しました',
     routeLoadFailedDescription:
       '最近の更新でキャッシュ済みリソースが不整合になっている可能性があります。ページを再読み込みしてください。',
+    crashTitle: 'エラーが発生しました',
+    crashDescription:
+      '申し訳ありませんが、アプリにエラーが発生しました。ページを再読み込みしてください。',
+    errorDetails: 'エラー詳細（開発モード）',
+    clearCacheHint:
+      '問題が続く場合はブラウザキャッシュをクリアするか、以下からお問い合わせください：',
+    appLoadTimeout: 'アプリの読み込みタイムアウト',
+    appLoadTimeoutDesc:
+      '読み込みに予想以上の時間がかかっています。キャッシュ切れまたはネットワークの問題の可能性があります。強制再読み込みで最新版を取得してください。',
+    forceReload: '強制再読み込み（キャッシュ削除）',
+    reloading: '再読み込み中...',
+    cacheHint: 'または：設定 → ブラウザキャッシュを削除、もしくはご連絡ください',
+    reloadPage: 'ページを再読み込み',
+    rateLoadDescription:
+      '申し訳ありませんが、最新の為替レートを取得できませんでした。接続を確認してもう一度お試しください。',
   },
 
   // PWA
@@ -270,6 +288,8 @@ const ja = {
       '更新ワーカーを起動できませんでした。ページを再読み込みし、続く場合は作者へ連絡してください。',
     actionRetry: '再試行',
     actionReload: '再読み込み',
+    releaseToRefresh: '離して更新',
+    refreshing: '更新中...',
   },
 
   support: {
@@ -303,6 +323,8 @@ const ja = {
     by: 'By',
     builtWith: 'Built with React • Vite • Tailwind CSS • Progressive Web App (PWA)',
     openSourceOn: 'オープンソース',
+    footerNav: 'フッターナビゲーション',
+    privacyPolicy: 'プライバシーポリシー',
   },
 };
 

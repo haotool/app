@@ -36,6 +36,8 @@ const en = {
     multiCurrencyFull: 'Multi Currency',
     favoritesFull: 'Favorites & History',
     settingsFull: 'App Settings',
+    breadcrumb: 'Breadcrumb Navigation',
+    home: 'Home',
   },
 
   // App
@@ -69,6 +71,7 @@ const en = {
     viewTrendChart: 'View trend chart',
     fromAmountLabel: 'Amount ({{code}})',
     toAmountLabel: 'Result ({{code}})',
+    backToConverter: 'Back to Converter',
   },
 
   // Multi Currency Converter
@@ -249,6 +252,20 @@ const en = {
     routeLoadFailedTitle: 'Page Load Failed',
     routeLoadFailedDescription:
       'A recent update may have left cached assets out of sync. Please reload the page.',
+    crashTitle: 'Oops! An error occurred',
+    crashDescription: 'Sorry, the app has encountered an issue. Please try refreshing the page.',
+    errorDetails: 'Error Details (Dev Mode)',
+    clearCacheHint:
+      'If the problem persists, try clearing your browser cache or contact the author via:',
+    appLoadTimeout: 'App Load Timeout',
+    appLoadTimeoutDesc:
+      'Loading took longer than expected, possibly due to expired cache or a network issue. Please force reload to get the latest version.',
+    forceReload: 'Force Reload (Clear Cache)',
+    reloading: 'Reloading...',
+    cacheHint: 'Also try: Settings → Clear browser cache, or contact',
+    reloadPage: 'Reload Page',
+    rateLoadDescription:
+      "Sorry, we couldn't fetch the latest exchange rates. Please check your connection and try again.",
   },
 
   // PWA
@@ -272,6 +289,8 @@ const en = {
       'The update worker could not start. Reload the page, and contact the author if it keeps happening.',
     actionRetry: 'Retry',
     actionReload: 'Reload',
+    releaseToRefresh: 'Release to refresh',
+    refreshing: 'Refreshing...',
   },
 
   support: {
@@ -307,6 +326,8 @@ const en = {
     by: 'By',
     builtWith: 'Built with React • Vite • Tailwind CSS • Progressive Web App (PWA)',
     openSourceOn: 'Open Source on',
+    footerNav: 'Footer Navigation',
+    privacyPolicy: 'Privacy Policy',
   },
 };
 

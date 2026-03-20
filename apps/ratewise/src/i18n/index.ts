@@ -1,7 +1,7 @@
 /**
  * i18n Configuration
  *
- * 國際化配置，支援繁體中文、英文、日文
+ * 國際化配置，支援繁體中文、英文、日文、韓文
  *
  * 語系正規化策略：
  * - supportedLngs: 明確列出支援的語系代碼
@@ -23,14 +23,16 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import en from './locales/en';
 import zhTW from './locales/zh-TW';
 import ja from './locales/ja';
+import ko from './locales/ko';
 
-export const SUPPORTED_LANGUAGES = ['zh-TW', 'en', 'ja'] as const;
+export const SUPPORTED_LANGUAGES = ['zh-TW', 'en', 'ja', 'ko'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 export const LANGUAGE_OPTIONS: { value: SupportedLanguage; label: string; flag: string }[] = [
   { value: 'en', label: 'English', flag: '🇺🇸' },
   { value: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
   { value: 'ja', label: '日本語', flag: '🇯🇵' },
+  { value: 'ko', label: '한국어', flag: '🇰🇷' },
 ];
 
 /**
@@ -47,6 +49,7 @@ const resources = {
   'zh-TW': { translation: zhTW },
   'zh-Hant': { translation: zhTW }, // 映射 zh-Hant → zh-TW 翻譯
   ja: { translation: ja },
+  ko: { translation: ko },
 };
 
 /**
@@ -59,7 +62,7 @@ const resources = {
  * - zh (通用中文)
  *
  * @param lng - 原始語系代碼
- * @returns 正規化後的語系代碼（zh-TW | en | ja）
+ * @returns 正規化後的語系代碼（zh-TW | en | ja | ko）
  */
 export function normalizeLanguage(lng: string | undefined): SupportedLanguage {
   if (!lng) return 'zh-TW';
@@ -72,6 +75,11 @@ export function normalizeLanguage(lng: string | undefined): SupportedLanguage {
   // 日文變體正規化（ja-JP → ja）
   if (lng.startsWith('ja')) {
     return 'ja';
+  }
+
+  // 韓文變體正規化（ko-KR → ko）
+  if (lng.startsWith('ko')) {
+    return 'ko';
   }
 
   // 英文變體正規化（en-US, en-GB → en）
@@ -109,7 +117,7 @@ void i18n
   .init({
     resources,
     // 明確列出所有支援的語系代碼（包含 zh-Hant 因為 index.html lang="zh-Hant"）
-    supportedLngs: ['zh-TW', 'zh-Hant', 'en', 'ja'],
+    supportedLngs: ['zh-TW', 'zh-Hant', 'en', 'ja', 'ko'],
     // 語系 fallback 配置：zh-Hant → zh-TW
     fallbackLng: {
       'zh-Hant': ['zh-TW'],

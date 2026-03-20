@@ -161,7 +161,7 @@ export function Footer() {
             <span aria-hidden="true" className="text-white/50">
               🔒
             </span>
-            隱私政策
+            {t('footer.privacyPolicy')}
           </Link>
         </div>
 
@@ -315,7 +315,7 @@ export function Footer() {
             <span aria-hidden="true" className="text-white/50">
               🔒
             </span>
-            隱私政策
+            {t('footer.privacyPolicy')}
           </Link>
         </div>
 
@@ -323,7 +323,7 @@ export function Footer() {
         <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-8" />
 
         {/* Links Grid - SEO 內部連結 */}
-        <nav aria-label="頁腳導航">
+        <nav aria-label={t('footer.footerNav')}>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             {FOOTER_SECTIONS.map((section) => (
               <div key={section.title}>
