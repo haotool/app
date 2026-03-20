@@ -251,12 +251,7 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       name: APP_INFO.author,
       url: SITE_BASE_URL,
       foundingDate: String(APP_INFO.copyrightStartYear),
-      logo: {
-        '@type': 'ImageObject',
-        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
-        width: 512,
-        height: 512,
-      },
+      logo: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
       contactPoint: {
         '@type': 'ContactPoint',
         contactType: 'Customer Support',
@@ -328,13 +323,7 @@ export function buildArticleJsonLd(
     ...(options?.articleSection ? { articleSection: options.articleSection } : {}),
     ...(options?.keywords?.length ? { keywords: options.keywords } : {}),
     ...(options?.articleBody ? { articleBody: options.articleBody } : {}),
-    image: {
-      '@type': 'ImageObject',
-      contentUrl: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
-      url: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
-      width: 1200,
-      height: 630,
-    },
+    image: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
     author: {
       '@type': 'Organization',
       name: APP_INFO.author,
@@ -344,12 +333,7 @@ export function buildArticleJsonLd(
       '@type': 'Organization',
       name: APP_INFO.author,
       url: APP_INFO.organizationUrl,
-      logo: {
-        '@type': 'ImageObject',
-        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
-        width: 512,
-        height: 512,
-      },
+      logo: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
     },
     inLanguage: DEFAULT_LOCALE,
     mainEntityOfPage: {

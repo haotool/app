@@ -568,7 +568,7 @@ const OpenData = () => {
             </p>
 
             <div className="mb-6 overflow-x-auto rounded-xl border border-surface-border">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" aria-label="資料格式欄位說明">
                 <thead>
                   <tr className="border-b border-surface-border bg-surface-elevated">
                     <th className="px-4 py-3 text-left font-semibold text-text">欄位</th>
@@ -614,7 +614,7 @@ const OpenData = () => {
             <h2 className="mb-5 text-2xl font-semibold text-text">速率限制</h2>
 
             <div className="mb-5 overflow-x-auto rounded-xl border border-surface-border">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" aria-label="速率限制規則">
                 <thead>
                   <tr className="border-b border-surface-border bg-surface-elevated">
                     <th className="px-4 py-3 text-left font-semibold text-text">來源</th>

@@ -96,7 +96,7 @@ export default function Settings() {
                   } as React.CSSProperties
                 }
                 aria-pressed={style === option.value}
-                aria-label={`${option.label}${option.description}`}
+                aria-label={`${t(`styles.${option.value}` as Parameters<typeof t>[0])} ${t(`styles.${option.value}Desc` as Parameters<typeof t>[0])}`}
               >
                 {/* 裝飾圓形 */}
                 <motion.div
@@ -121,8 +121,12 @@ export default function Settings() {
 
                 {/* 內容 */}
                 <div className="flex flex-col items-start w-full relative z-10">
-                  <span className="font-bold text-sm leading-tight">{option.label}</span>
-                  <span className="text-[10px] opacity-60 leading-tight">{option.description}</span>
+                  <span className="font-bold text-sm leading-tight">
+                    {t(`styles.${option.value}` as Parameters<typeof t>[0])}
+                  </span>
+                  <span className="text-[10px] opacity-60 leading-tight">
+                    {t(`styles.${option.value}Desc` as Parameters<typeof t>[0])}
+                  </span>
                 </div>
               </motion.button>
             ))}
