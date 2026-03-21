@@ -156,6 +156,7 @@ jobs:
       - name: Build
         env:
           VITE_RATEWISE_BASE_PATH: '/'
+          RATING_API_URL: ${{ secrets.RATING_API_URL }}
         run: pnpm build:ratewise
 
       - name: Install Playwright browsers
