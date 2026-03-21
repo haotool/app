@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.14.1
+
+### Patch Changes
+
+- a335723: 修正星評提示 UX：觸發天數 3→7 天、✕ 按鈕改為 snooze（不永久關閉）
+
 ## 2.14.0
 
 ### Minor Changes
