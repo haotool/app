@@ -2,7 +2,7 @@
  * useRatingPrompt 單元測試
  *
  * 測試範圍：
- * - 使用日累積計算（3 天觸發）
+ * - 使用日累積計算（7 天觸發）
  * - markRated / snooze / dismiss 狀態轉換
  * - localStorage 讀寫
  */
@@ -36,6 +36,14 @@ function advanceTimerAndFlush(ms: number) {
   });
 }
 
+/** 產出 N 筆過去日期（從今天往回推）。 */
+function pastDays(n: number): string[] {
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000);
+    return d.toISOString().slice(0, 10);
+  });
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
 });
@@ -52,8 +60,8 @@ describe('useRatingPrompt', () => {
     });
 
     it('使用日不足時 3 秒後仍不顯示', () => {
-      // 1 筆歷史 + hook mount 記錄今日 = 2 天，仍不足 3 天。
-      setUseDays(['2026-01-01']);
+      // 5 筆歷史 + hook mount 記錄今日 = 6 天，仍不足 7 天。
+      setUseDays(pastDays(5));
 
       const { result } = renderHook(() => useRatingPrompt());
       advanceTimerAndFlush(3000);
@@ -61,8 +69,9 @@ describe('useRatingPrompt', () => {
       expect(result.current.isVisible).toBe(false);
     });
 
-    it('使用日達 3 天且無紀錄時，3 秒後顯示', () => {
-      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+    it('使用日達 7 天且無紀錄時，3 秒後顯示', () => {
+      // 6 筆歷史 + hook mount 記錄今日 = 7 天，達標。
+      setUseDays(pastDays(6));
 
       const { result } = renderHook(() => useRatingPrompt());
       advanceTimerAndFlush(3000);
@@ -74,7 +83,7 @@ describe('useRatingPrompt', () => {
   describe('已評分', () => {
     it('已評分時不顯示', () => {
       localStorage.setItem(KEYS.rated, '1');
-      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+      setUseDays(pastDays(6));
 
       const { result } = renderHook(() => useRatingPrompt());
       advanceTimerAndFlush(3000);
@@ -86,7 +95,7 @@ describe('useRatingPrompt', () => {
   describe('已永久關閉', () => {
     it('永久關閉後不顯示', () => {
       localStorage.setItem(KEYS.dismissed, '1');
-      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+      setUseDays(pastDays(6));
 
       const { result } = renderHook(() => useRatingPrompt());
       advanceTimerAndFlush(3000);
@@ -97,7 +106,7 @@ describe('useRatingPrompt', () => {
 
   describe('markRated', () => {
     it('呼叫 markRated 後 isVisible 變 false 且寫入 localStorage', () => {
-      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+      setUseDays(pastDays(6));
 
       const { result } = renderHook(() => useRatingPrompt());
       advanceTimerAndFlush(3000);
@@ -115,7 +124,7 @@ describe('useRatingPrompt', () => {
 
   describe('snooze', () => {
     it('呼叫 snooze 後 isVisible 變 false 且寫入 dismissedAt', () => {
-      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+      setUseDays(pastDays(6));
 
       const { result } = renderHook(() => useRatingPrompt());
       advanceTimerAndFlush(3000);
@@ -131,7 +140,7 @@ describe('useRatingPrompt', () => {
     });
 
     it('snooze 後 7 天內不再顯示', () => {
-      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+      setUseDays(pastDays(6));
       // 6 天前 snooze。
       const sixDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString();
       localStorage.setItem(KEYS.dismissedAt, sixDaysAgo);
@@ -143,7 +152,7 @@ describe('useRatingPrompt', () => {
     });
 
     it('snooze 後超過 7 天會再次顯示', () => {
-      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+      setUseDays(pastDays(6));
       // 8 天前 snooze。
       const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
       localStorage.setItem(KEYS.dismissedAt, eightDaysAgo);
@@ -157,7 +166,7 @@ describe('useRatingPrompt', () => {
 
   describe('dismiss', () => {
     it('呼叫 dismiss 後永久關閉', () => {
-      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+      setUseDays(pastDays(6));
 
       const { result } = renderHook(() => useRatingPrompt());
       advanceTimerAndFlush(3000);

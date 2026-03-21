@@ -2,7 +2,7 @@
  * useRatingPrompt — 控制星評 Modal 顯示時機。
  *
  * 觸發條件：
- *  - 使用者已累積 3 個「使用日」（每日首次開啟 app 計算一次）。
+ *  - 使用者已累積 7 個「使用日」（每日首次開啟 app 計算一次）。
  *  - 尚未評分且尚未永久關閉。
  *
  * localStorage 鍵值：
@@ -20,7 +20,7 @@ const KEYS = {
   dismissedAt: 'ratewise_dismissed_at',
 } as const;
 
-const REQUIRED_DAYS = 3;
+const REQUIRED_DAYS = 7;
 const SNOOZE_DAYS = 7;
 
 function getTodayIso(): string {

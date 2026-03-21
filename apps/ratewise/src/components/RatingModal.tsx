@@ -32,7 +32,7 @@ export function RatingModal(props: RatingModalProps) {
   return <RatingModalClient {...props} />;
 }
 
-function RatingModalClient({ isVisible, markRated, snooze, dismiss }: RatingModalProps) {
+function RatingModalClient({ isVisible, markRated, snooze }: RatingModalProps) {
   const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
   const [hoveredStar, setHoveredStar] = useState(0);
@@ -147,7 +147,7 @@ function RatingModalClient({ isVisible, markRated, snooze, dismiss }: RatingModa
                     {/* 關閉按鈕 */}
                     <button
                       ref={firstButtonRef}
-                      onClick={dismiss}
+                      onClick={snooze}
                       className="
                         p-1.5 rounded-full flex-shrink-0
                         bg-brand-icon-from/80 text-brand-text
