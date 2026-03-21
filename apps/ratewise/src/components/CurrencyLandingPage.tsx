@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from './SEOHelmet';
 import { PageNavHeader } from './PageNavHeader';
 import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
+import { SEO_RATE_EXAMPLES } from '../config/generated/seo-rate-examples';
 import type { FAQEntry, HowToStep, CommonAmountEntry, JsonLdBlock } from '../config/seo-metadata';
 
 export interface CurrencyLandingPageProps {
@@ -48,14 +49,37 @@ export function CurrencyLandingPage({
   const { t } = useTranslation();
   const isTwdToForeign = direction === 'twd-to-foreign';
   // Wise-pattern：?amount=X 存在時，以金額專屬 title / description / canonical 覆蓋預設值。
-  const { seoTitle, seoDescription, seoCanonical } = usePairAmountSEO({
+  const { seoTitle, seoDescription, seoCanonical, amount } = usePairAmountSEO({
     currencyCode,
     currencyName,
     pathname,
     defaultTitle: title,
     defaultDescription: description,
     defaultCanonical: canonical,
+    direction,
   });
+
+  // 靜態匯率（SSG 預渲染用）：供爬蟲在 ?amount= 頁讀取換算結果。
+  const rateExample = SEO_RATE_EXAMPLES[currencyCode];
+  const cashSell = rateExample?.cashSell ?? null;
+
+  // 計算換算結果：to-twd = amount * cashSell；twd-to-foreign = amount / cashSell。
+  const amountResult =
+    amount !== null && cashSell !== null
+      ? isTwdToForeign
+        ? Math.round((amount / cashSell) * 100) / 100
+        : Math.round(amount * cashSell)
+      : null;
+
+  const formatNum = (n: number) => n.toLocaleString('zh-TW');
+
+  // 換算器 CTA 深連結格式：/?amount=X&from=CODE&to=TWD（或反向）。
+  const converterHref =
+    amount !== null
+      ? isTwdToForeign
+        ? `/?amount=${amount}&from=TWD&to=${currencyCode}`
+        : `/?amount=${amount}&from=${currencyCode}&to=TWD`
+      : '/';
 
   const seoProps = {
     title: seoTitle,
@@ -117,6 +141,43 @@ export function CurrencyLandingPage({
             </div>
           </header>
 
+          {/* 金額換算結果卡（Wise-pattern）：?amount=X 存在時顯示靜態換算結果，爬蟲可索引。 */}
+          {amount !== null && amountResult !== null && cashSell !== null && (
+            <section className="mb-6 sm:mb-8">
+              <div className="card p-4 sm:p-5 bg-primary/5 border border-primary/30">
+                <div className="flex items-center gap-2 mb-3 text-xs font-black uppercase tracking-wider text-primary/60">
+                  <Calculator className="w-3.5 h-3.5" />
+                  <span>換算結果（台銀現金賣出參考）</span>
+                </div>
+                <div className="flex items-baseline gap-2 flex-wrap mb-1">
+                  <span className="text-[10px] text-text-muted">
+                    {isTwdToForeign
+                      ? `${formatNum(amount)} TWD`
+                      : `${formatNum(amount)} ${currencyCode}`}
+                  </span>
+                  <span className="text-text-muted text-sm">≈</span>
+                  <span className="text-2xl sm:text-3xl font-black text-primary">
+                    {isTwdToForeign
+                      ? `${formatNum(amountResult)} ${currencyCode}`
+                      : `${formatNum(amountResult)} TWD`}
+                  </span>
+                </div>
+                <p className="text-[10px] text-text-muted mb-4">
+                  {isTwdToForeign
+                    ? `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每週更新）。實際匯率以台銀牌告為準。`
+                    : `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每週更新）。實際匯率以台銀牌告為準。`}
+                </p>
+                <Link
+                  to={converterHref}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  在換算器查看最新匯率
+                  <ArrowLeft className="w-4 h-4 rotate-180" />
+                </Link>
+              </div>
+            </section>
+          )}
+
           {/* 精準換匯：為什麼看賣出價 */}
           <section className="mb-6 sm:mb-8">
             <div className="card p-4 sm:p-5 bg-surface border border-amber-500/30">
@@ -172,7 +233,7 @@ export function CurrencyLandingPage({
               賣出價——台銀實際牌告，非中間價，讓你換匯前就知道真正要付多少台幣。
             </p>
             <Link
-              to="/"
+              to={converterHref}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl font-semibold text-sm transition-colors"
             >
               {isTwdToForeign ? `開始換算 TWD → ${currencyCode}` : `開始換算 ${currencyCode} → TWD`}
@@ -245,7 +306,7 @@ export function CurrencyLandingPage({
 
               <div className="card p-4 sm:p-5">
                 <p className="text-text-muted text-xs sm:text-sm mb-4">
-                  以下為{currencyName}兌台幣的常見換算金額，點擊即可前往換算器查看最新匯率結果：
+                  點擊常見金額，即可在本頁查看台銀現金賣出參考換算結果，或前往換算器取得最新即時匯率：
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {commonAmounts.map((entry) => (

@@ -16,6 +16,7 @@ export interface UsePairAmountSEOProps {
   defaultTitle: string;
   defaultDescription: string;
   defaultCanonical: string;
+  direction?: 'to-twd' | 'twd-to-foreign';
 }
 
 export interface UsePairAmountSEOResult {
@@ -36,6 +37,7 @@ export function usePairAmountSEO({
   defaultTitle,
   defaultDescription,
   defaultCanonical,
+  direction = 'to-twd',
 }: UsePairAmountSEOProps): UsePairAmountSEOResult {
   const [searchParams] = useSearchParams();
   const raw = searchParams.get('amount');
@@ -56,11 +58,17 @@ export function usePairAmountSEO({
   const amount = parsed;
   const formatted = formatAmountLocale(amount);
 
-  // Wise-style title：「500 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise」
-  const seoTitle = `${formatted} ${currencyName}換新台幣（${currencyCode}/TWD）— 台銀實際賣出價 | RateWise`;
+  // Wise-style title：「500 美元換新台幣（USD/TWD）」或「台幣換 500 美元（TWD/USD）」
+  const seoTitle =
+    direction === 'twd-to-foreign'
+      ? `台幣換 ${formatted} ${currencyName}（TWD/${currencyCode}）— 台銀實際賣出價 | RateWise`
+      : `${formatted} ${currencyName}換新台幣（${currencyCode}/TWD）— 台銀實際賣出價 | RateWise`;
 
-  // 直接回答「X 幣換多少？」意圖，強調非中間價。
-  const seoDescription = `${formatted} ${currencyName}今日換新台幣要多少？查台銀牌告現金賣出價（非中間價），每 5 分鐘更新。適合出國換匯前快速估算。`;
+  // 直接回答「X 幣換多少？」意圖，強調非中間價，說明數據來源。
+  const seoDescription =
+    direction === 'twd-to-foreign'
+      ? `${formatted} 台幣今日可換多少${currencyName}？RateWise 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算可兌換的外幣金額，避免被中間價誤導。`
+      : `${formatted} ${currencyName}今日換新台幣要多少？RateWise 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算所需台幣金額，避免被中間價誤導。`;
 
   // canonical = 幣對頁路徑 + ?amount=（自引用，告知 Google 此 URL 可被索引）
   const base = defaultCanonical.endsWith('/') ? defaultCanonical.slice(0, -1) : defaultCanonical;

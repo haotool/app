@@ -1341,7 +1341,7 @@ export function getCurrencyLandingPageContent(
     currencyFlag: definition.flag,
     currencyName: displayName,
     title: `即時${displayName}匯率 — 台銀實際賣出價 | ${code}/TWD`,
-    description: `台銀實際${displayName}賣出價（非中間價），換匯前先知道要付多少台幣。每 5 分鐘更新，支援現金與即期匯率切換、計算機快速輸入。適合${override.region}。`,
+    description: `即時查看台銀${displayName}現金賣出價（非中間價），換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`,
     pathname,
     canonical: canonicalUrl,
     keywords: [
@@ -1618,7 +1618,7 @@ export function getReverseCurrencyLandingPageContent(
     currencyFlag: definition.flag,
     currencyName: displayName,
     title: `台幣換${displayName}匯率 — 出國換匯實際費率 | TWD/${code}`,
-    description: `出國換${displayName}前，先查台銀實際現金賣出價（非中間價）。帶台幣去銀行換${displayName}現鈔，RateWise 精確顯示你要付多少台幣。每 5 分鐘更新，附 7～30 天趨勢。`,
+    description: `出國換${displayName}前，先用台銀實際現金賣出價（非中間價）確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`,
     pathname,
     canonical: canonicalUrl,
     keywords: [
