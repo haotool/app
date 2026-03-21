@@ -64,6 +64,7 @@ export function CurrencyLandingPage({
     canonical: seoCanonical,
     keywords,
     jsonLd,
+    faqContent: faqEntries,
     breadcrumb: [
       { name: 'RateWise 首頁', item: '/' },
       {

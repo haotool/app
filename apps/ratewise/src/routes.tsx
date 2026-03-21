@@ -141,6 +141,7 @@ export const routes: RouteRecord[] = [
               description={HOMEPAGE_SEO.description}
               howTo={HOMEPAGE_SEO.howTo}
               jsonLd={HOMEPAGE_SEO.jsonLd}
+              faqContent={HOMEPAGE_SEO.faqContent}
             />
             <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
             <HomepageSEOSection />

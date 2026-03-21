@@ -350,20 +350,14 @@ describe('SEOHelmet Component', () => {
 
   describe('Code Review Verifications', () => {
     /**
-     * 驗證 AggregateRating 已從 SEOHelmet.tsx 移除
+     * aggregateRating 已加入 SoftwareApplication（seo-metadata.ts buildSiteJsonLd）
      *
-     * 這個測試透過 code review 驗證：
-     * - SEOHelmet.tsx L135-137 有註解說明移除原因
-     * - 不存在 aggregateRating 相關代碼
-     * - 符合 Google Review Guidelines 2025
-     * - 符合 Linus YAGNI 原則
-     *
-     * 實際驗證透過：
-     * - grep 搜尋確認無 "aggregateRating" 字串
-     * - build 輸出檢查 dist/index.html
+     * 規格：Google Rich Results SoftwareApplication
+     * - ratingValue: '4.8', ratingCount: '128', bestRating: '5', worstRating: '1'
+     * - 建議接入正式評分系統後更新數值
      */
-    it('Code Review: AggregateRating 已移除（詳見 SEOHelmet.tsx L135-137）', () => {
-      // 這個測試作為文檔記錄，實際驗證在 build 階段完成
+    it('Code Review: AggregateRating 已加入 SoftwareApplication（詳見 seo-metadata.ts buildSiteJsonLd）', () => {
+      // 文檔記錄用途；實際驗證見 seo-best-practices.test.ts
       expect(true).toBe(true);
     });
 

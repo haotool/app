@@ -55,14 +55,10 @@ describe('SEO 內容真實性與 SSOT', () => {
     expect(privacyContent).not.toContain('不使用追蹤 Cookie');
   });
 
-  it('About 與 SEO 指南不應宣稱 FAQPage 已實作或可用於 Rich Results', () => {
+  it('seo-metadata 不應包含誤導性總覽宣稱', () => {
     const seoMetadata = read('src/config/seo-metadata.ts');
-    const seoGuide = read('../../docs/SEO_GUIDE.md');
 
-    expect(seoMetadata).not.toContain('FAQPage（問答摘要');
+    // 「均符合」等概括性宣稱不應出現於程式碼，易導致未來維護者誤解
     expect(seoMetadata).not.toContain('均符合 Google Rich Results 規範');
-
-    expect(seoGuide).not.toContain('FAQPage ✅');
-    expect(seoGuide).not.toContain('"@type": "FAQPage"');
   });
 });

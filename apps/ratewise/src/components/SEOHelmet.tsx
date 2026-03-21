@@ -12,6 +12,7 @@ import { shouldRenderStructuredData } from './seo-helmet-utils';
 import {
   type AlternateLink,
   type BreadcrumbItem,
+  type FAQEntry,
   type HowToData,
   type JsonLdBlock,
   DEFAULT_LOCALE,
@@ -38,6 +39,8 @@ interface SEOProps {
   updatedTime?: string;
   howTo?: HowToData;
   breadcrumb?: BreadcrumbItem[];
+  /** FAQ 項目列表：提供時自動輸出 FAQPage JSON-LD，啟用 Google Rich Results FAQ 摺疊卡片。 */
+  faqContent?: FAQEntry[];
   robots?: string;
 }
 
@@ -89,6 +92,22 @@ const buildBreadcrumbSchema = (items: BreadcrumbItem[]): JsonLdBlock | null => {
     })),
   };
 };
+
+// FAQPage：供 Google Rich Results FAQ 摺疊卡片使用。
+// 規格：https://developers.google.com/search/docs/appearance/structured-data/faqpage
+// 必要欄位：mainEntity[].name（問題）+ acceptedAnswer.text（答案）。
+const buildFaqPageSchema = (faqs: FAQEntry[]): JsonLdBlock => ({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map(({ question, answer }) => ({
+    '@type': 'Question',
+    name: question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: answer,
+    },
+  })),
+});
 
 function upsertTitle(title: string) {
   const existing = Array.from(document.head.querySelectorAll('title'));
@@ -202,6 +221,7 @@ export function SEOHelmet({
   updatedTime = SITE_SEO.updatedTime,
   howTo,
   breadcrumb,
+  faqContent,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 }: SEOProps) {
   const fullTitle = buildDocumentTitle(title);
@@ -235,6 +255,7 @@ export function SEOHelmet({
       ...(breadcrumb?.length
         ? ([buildBreadcrumbSchema(breadcrumb)].filter(Boolean) as JsonLdBlock[])
         : []),
+      ...(faqContent?.length ? [buildFaqPageSchema(faqContent)] : []),
     ];
 
     return JSON.stringify({
@@ -244,7 +265,7 @@ export function SEOHelmet({
         return rest;
       }),
     });
-  }, [robots, jsonLd, howTo, breadcrumb, canonicalUrl]);
+  }, [robots, jsonLd, howTo, breadcrumb, faqContent, canonicalUrl]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;

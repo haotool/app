@@ -222,11 +222,11 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toMatch(/"@type":\s*"SoftwareApplication"/);
     });
 
-    it('should NOT have FAQPage JSON-LD on homepage', () => {
+    it('should have FAQPage JSON-LD on homepage', () => {
       if (!existsSync(indexHtml)) return;
 
       const content = readFileSync(indexHtml, 'utf-8');
-      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+      expect(content).toMatch(/"@type":\s*"FAQPage"/);
     });
 
     it('should have only ONE title tag (no duplicates from template)', () => {
@@ -297,11 +297,11 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(existsSync(usdHtml)).toBe(true);
     });
 
-    it('USD/TWD page should NOT include FAQPage JSON-LD', () => {
+    it('USD/TWD page should include FAQPage and FinancialService JSON-LD', () => {
       if (!existsSync(usdHtml)) return;
 
       const content = readFileSync(usdHtml, 'utf-8');
-      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+      expect(content).toMatch(/"@type":\s*"FAQPage"/);
       expect(content).toMatch(/"@type":\s*"FinancialService"/);
     });
   });
@@ -329,13 +329,13 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
     const aboutHtml = resolve(distPath, 'about/index.html');
     const indexHtml = resolve(distPath, 'index.html');
 
-    it('FAQ page should NOT have FAQPage JSON-LD in static HTML', () => {
+    it('FAQ page should have FAQPage JSON-LD in static HTML', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
       // vite-react-ssg Head adds data-rh="true" attribute
       expect(content).toMatch(/<script[^>]*type="application\/ld\+json"/);
-      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+      expect(content).toMatch(/"@type":\s*"FAQPage"/);
       expect(content).toMatch(/"@type":\s*"Article"/);
     });
 

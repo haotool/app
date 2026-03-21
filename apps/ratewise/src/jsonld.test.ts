@@ -26,7 +26,7 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
       expect(indexHtmlContent).not.toContain('<script type="application/ld+json">');
     });
 
-    it('should NOT include homepage-only schemas in index.html', () => {
+    it('should NOT include page-specific schemas in index.html (managed by SEOHelmet at runtime)', () => {
       expect(indexHtmlContent).not.toContain('"@type": "HowTo"');
       expect(indexHtmlContent).not.toContain('"@type": "FAQPage"');
       expect(indexHtmlContent).not.toContain('"@type": "Article"');
@@ -52,9 +52,9 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
       expect(combinedContent).toContain("'@type': 'WebSite'");
     });
 
-    it('should NOT define FAQPage schema builder in SEOHelmet', () => {
-      expect(seoHelmetContent).not.toContain('buildFaqSchema');
-      expect(seoHelmetContent).not.toContain("'@type': 'FAQPage'");
+    it('should define FAQPage schema builder in SEOHelmet', () => {
+      expect(seoHelmetContent).toContain('buildFaqPageSchema');
+      expect(seoHelmetContent).toContain("'@type': 'FAQPage'");
     });
   });
 
@@ -68,22 +68,22 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
       expect(seoMetadata).toContain("'@type': 'ImageObject'");
     });
 
-    it('should keep FAQ content out of FAQPage rich result builder', () => {
+    it('should have faqContent exported in seo-metadata for pages', () => {
       expect(seoMetadata).toContain('faqContent');
       expect(seoMetadata).not.toContain('faq: [...HOMEPAGE_FAQ_CONTENT]');
     });
   });
 
-  describe('🟢 FAQ prerender 不應輸出 FAQPage', () => {
+  describe('🟢 FAQ prerender 應輸出 FAQPage JSON-LD', () => {
     const faqHtmlPath = resolve(__dirname, '../dist/faq/index.html');
 
-    it('FAQ static HTML should not contain FAQPage JSON-LD after build', () => {
+    it('FAQ static HTML should contain FAQPage JSON-LD after build', () => {
       if (!existsSync(faqHtmlPath)) {
         return;
       }
 
       const faqHtml = readFileSync(faqHtmlPath, 'utf-8');
-      expect(faqHtml).not.toContain('"@type":"FAQPage"');
+      expect(faqHtml).toContain('"@type":"FAQPage"');
     });
   });
 
@@ -100,8 +100,8 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
       expect(faqContent).toContain('<SEOHelmet');
     });
 
-    it('FAQ page should not pass FAQ rich result prop', () => {
-      expect(faqContent).not.toContain('faq={');
+    it('FAQ page should pass faqContent prop for FAQPage rich result', () => {
+      expect(faqContent).toContain('faqContent={');
     });
 
     it('About page should use SEOHelmet', () => {
