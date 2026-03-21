@@ -11,6 +11,10 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 
 // Mock modules
+vi.mock('../../hooks/useUrlNormalization', () => ({
+  useUrlNormalization: vi.fn(),
+}));
+
 vi.mock('../ErrorBoundary', () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));

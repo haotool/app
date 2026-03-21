@@ -12,10 +12,14 @@ import { SkeletonLoader } from './SkeletonLoader';
 import { Footer } from './Footer';
 import { OfflineIndicator } from './OfflineIndicator';
 import { UpdatePrompt } from './UpdatePrompt';
+import { useUrlNormalization } from '../hooks/useUrlNormalization';
 
 const DecemberTheme = React.lazy(() => import('../features/calculator/easter-eggs/DecemberTheme'));
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  // 大寫 URL 自動正規化（SEO）。
+  useUrlNormalization();
+
   const isBrowser = typeof window !== 'undefined';
   const [showDecemberTheme, setShowDecemberTheme] = React.useState(false);
 

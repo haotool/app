@@ -18,6 +18,7 @@ import { getTopLevelTransitionDirection, pageTransition } from '../config/animat
 import { RouteAnalytics } from '@shared/analytics';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { performFullRefresh } from '../utils/swUtils';
+import { useUrlNormalization } from '../hooks/useUrlNormalization';
 
 /** Logo 組件 */
 function Logo() {
@@ -91,6 +92,9 @@ function Header() {
  * 此為 iOS/Android tab bar 切換的業界標準做法。
  */
 export function AppLayout() {
+  // 大寫 URL 自動正規化（SEO）。
+  useUrlNormalization();
+
   const location = useLocation();
   const [previousPathname, setPreviousPathname] = React.useState(location.pathname);
   const [hasMounted, setHasMounted] = React.useState(false);

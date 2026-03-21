@@ -1,12 +1,16 @@
 /**
- * Vite React SSG 路由設定
+ * Vite React SSG 路由設定（單一真實來源）
+ *
+ * ⚠️ 這是唯一有效的路由定義，由 main.tsx 的 ViteReactSSG({ routes }) 消費。
+ * App.tsx 已移除；所有路由必須在此定義。
  *
  * 路由策略：
  * - AppLayout 路由（底部導覽列 + 模組化架構）：
  *   - `/`: 首頁（單幣別轉換器）- 使用 ClientOnly 避免 Hydration 錯誤
- *   - `/multi`: 多幣別轉換器 - 佔位頁面
- *   - `/favorites`: 收藏與歷史 - 佔位頁面
- *   - `/settings`: 應用程式設定 - 佔位頁面
+ *   - `/multi`: 多幣別轉換器
+ *   - `/favorites`: 收藏與歷史
+ *   - `/settings`: 應用程式設定
+ *   - `/theme-showcase`: 主題展示
  *
  * - Layout 路由（SEO 落地頁，保留原有結構）：
  *   - `/faq`: FAQ 頁面 - 預渲染靜態 HTML
@@ -15,11 +19,13 @@
  *   - `/sell-rate-vs-mid-rate`: 賣出價與中間價差異指南
  *   - `/cash-vs-spot-rate`: 現金與即期匯率指南
  *   - `/card-rate-guide`: 刷卡匯率與 DCC 指南
- *   - `/xxx-twd`: 13 個幣別落地頁 - 預渲染靜態 HTML
+ *   - `/seo-tech`: SEO 技術揭露頁面
+ *   - `/xxx-twd` / `/twd-xxx`: 17+17 個幣別落地頁 - 預渲染靜態 HTML
  *
  * - 工具頁面（不預渲染）：
  *   - `/color-scheme`: 內部工具
  *   - `/update-prompt-test`: UpdatePrompt 測試
+ *   - `/ui-showcase`: UI 元件展示
  *   - `/*`: 404 頁面
  *
  */
