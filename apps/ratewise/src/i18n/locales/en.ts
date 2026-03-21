@@ -329,6 +329,18 @@ const en = {
     footerNav: 'Footer Navigation',
     privacyPolicy: 'Privacy Policy',
   },
+
+  // Rating Modal
+  rating: {
+    title: 'Enjoying RateWise?',
+    subtitle: 'Your rating helps others discover this tool ✨',
+    starsLabel: 'Star rating',
+    submit: 'Submit Rating',
+    submitting: 'Submitting...',
+    later: 'Maybe Later',
+    dismiss: 'Do Not Ask Again',
+    thankYou: 'Thank you for your rating!',
+  },
 };
 
 export default en;

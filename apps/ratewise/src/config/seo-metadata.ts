@@ -1,6 +1,7 @@
 import { CURRENCY_DEFINITIONS, SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
 import { APP_INFO, SEO_SOCIAL_LINKS } from './app-info';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from './generated/seo-rate-examples';
+import { RATING_SNAPSHOT } from './generated/rating-snapshot';
 import { RATES_API } from './api-endpoints';
 import { SHARE_IMAGE, TWITTER_IMAGE, normalizeSiteUrl } from './seo-paths';
 
@@ -243,14 +244,19 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
         priceCurrency: 'USD',
       },
       // aggregateRating 讓 Google 在搜尋結果顯示星評卡片（SoftwareApplication Rich Result）。
-      // 數值應反映真實評分來源；目前基於 GitHub Stars 等公開指標估算，建議接入正式評分系統後更新。
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: '4.8',
-        ratingCount: '128',
-        bestRating: '5',
-        worstRating: '1',
-      },
+      // 由 fetch-rating-snapshot.mjs 在 prebuild 時寫入 RATING_SNAPSHOT；
+      // ratingCount < 10 時省略，避免樣本過少被 Google 拒絕。
+      ...(RATING_SNAPSHOT.ratingCount >= 10 && RATING_SNAPSHOT.ratingValue !== null
+        ? {
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: String(RATING_SNAPSHOT.ratingValue),
+              ratingCount: String(RATING_SNAPSHOT.ratingCount),
+              bestRating: '5',
+              worstRating: '1',
+            },
+          }
+        : {}),
       featureList: SITE_SEO.application.featureList,
       inLanguage: SITE_SEO.locale,
     },

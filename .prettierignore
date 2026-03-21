@@ -61,6 +61,11 @@ apps/ratewise/public/llms.txt
 apps/ratewise/public/llms-full.txt
 apps/ratewise/public/manifest.webmanifest
 apps/ratewise/public/sitemap.xml
+apps/ratewise/src/config/generated/rating-snapshot.ts
+
+# Cloudflare Worker config (JSONC with trailing commas)
+rating-api/wrangler.jsonc
+security-headers/wrangler.jsonc
 
 # OS files
 .DS_Store

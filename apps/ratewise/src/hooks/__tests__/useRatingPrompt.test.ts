@@ -1,0 +1,198 @@
+/**
+ * useRatingPrompt 單元測試
+ *
+ * 測試範圍：
+ * - 使用日累積計算（3 天觸發）
+ * - markRated / snooze / dismiss 狀態轉換
+ * - localStorage 讀寫
+ */
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useRatingPrompt } from '../useRatingPrompt';
+
+const KEYS = {
+  useDays: 'ratewise_use_days',
+  rated: 'ratewise_rated',
+  dismissed: 'ratewise_rating_dismissed',
+  dismissedAt: 'ratewise_dismissed_at',
+};
+
+function setUseDays(days: string[]) {
+  localStorage.setItem(KEYS.useDays, JSON.stringify(days));
+}
+
+function getUseDays(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(KEYS.useDays) ?? '[]');
+  } catch {
+    return [];
+  }
+}
+
+/** 推進假計時器並沖刷 React 狀態更新。 */
+function advanceTimerAndFlush(ms: number) {
+  act(() => {
+    vi.advanceTimersByTime(ms);
+  });
+}
+
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+describe('useRatingPrompt', () => {
+  describe('初始狀態', () => {
+    it('預設 isVisible 為 false', () => {
+      const { result } = renderHook(() => useRatingPrompt());
+      expect(result.current.isVisible).toBe(false);
+    });
+
+    it('使用日不足時 3 秒後仍不顯示', () => {
+      // 1 筆歷史 + hook mount 記錄今日 = 2 天，仍不足 3 天。
+      setUseDays(['2026-01-01']);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(false);
+    });
+
+    it('使用日達 3 天且無紀錄時，3 秒後顯示', () => {
+      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(true);
+    });
+  });
+
+  describe('已評分', () => {
+    it('已評分時不顯示', () => {
+      localStorage.setItem(KEYS.rated, '1');
+      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(false);
+    });
+  });
+
+  describe('已永久關閉', () => {
+    it('永久關閉後不顯示', () => {
+      localStorage.setItem(KEYS.dismissed, '1');
+      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(false);
+    });
+  });
+
+  describe('markRated', () => {
+    it('呼叫 markRated 後 isVisible 變 false 且寫入 localStorage', () => {
+      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(true);
+
+      act(() => {
+        result.current.markRated();
+      });
+
+      expect(result.current.isVisible).toBe(false);
+      expect(localStorage.getItem(KEYS.rated)).toBe('1');
+    });
+  });
+
+  describe('snooze', () => {
+    it('呼叫 snooze 後 isVisible 變 false 且寫入 dismissedAt', () => {
+      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(true);
+
+      act(() => {
+        result.current.snooze();
+      });
+
+      expect(result.current.isVisible).toBe(false);
+      expect(localStorage.getItem(KEYS.dismissedAt)).not.toBeNull();
+    });
+
+    it('snooze 後 7 天內不再顯示', () => {
+      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+      // 6 天前 snooze。
+      const sixDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString();
+      localStorage.setItem(KEYS.dismissedAt, sixDaysAgo);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(false);
+    });
+
+    it('snooze 後超過 7 天會再次顯示', () => {
+      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+      // 8 天前 snooze。
+      const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+      localStorage.setItem(KEYS.dismissedAt, eightDaysAgo);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(true);
+    });
+  });
+
+  describe('dismiss', () => {
+    it('呼叫 dismiss 後永久關閉', () => {
+      setUseDays(['2026-01-01', '2026-01-02', '2026-01-03']);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(true);
+
+      act(() => {
+        result.current.dismiss();
+      });
+
+      expect(result.current.isVisible).toBe(false);
+      expect(localStorage.getItem(KEYS.dismissed)).toBe('1');
+    });
+  });
+
+  describe('使用日記錄', () => {
+    it('每天首次 mount 會記錄今日', () => {
+      const today = new Date().toISOString().slice(0, 10);
+      setUseDays(['2026-01-01']); // 先設一筆舊資料
+
+      renderHook(() => useRatingPrompt());
+
+      const days = getUseDays();
+      expect(days).toContain(today);
+    });
+
+    it('同一天多次 mount 不重複記錄', () => {
+      const today = new Date().toISOString().slice(0, 10);
+      setUseDays([today]);
+
+      renderHook(() => useRatingPrompt());
+      renderHook(() => useRatingPrompt());
+
+      const days = getUseDays();
+      expect(days.filter((d) => d === today)).toHaveLength(1);
+    });
+  });
+});

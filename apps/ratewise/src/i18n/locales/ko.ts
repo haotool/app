@@ -324,6 +324,18 @@ const ko = {
     footerNav: '푸터 내비게이션',
     privacyPolicy: '개인정보 처리방침',
   },
+
+  // Rating Modal
+  rating: {
+    title: 'RateWise가 마음에 드시나요?',
+    subtitle: '평가해 주시면 더 많은 분들이 이 도구를 발견할 수 있어요 ✨',
+    starsLabel: '별점',
+    submit: '평가 제출',
+    submitting: '제출 중...',
+    later: '나중에',
+    dismiss: '다시 표시 안 함',
+    thankYou: '평가해 주셔서 감사합니다!',
+  },
 };
 
 export default ko;

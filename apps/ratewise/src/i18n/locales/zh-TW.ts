@@ -323,6 +323,18 @@ const zhTW = {
     footerNav: '頁腳導航',
     privacyPolicy: '隱私政策',
   },
+
+  // Rating Modal
+  rating: {
+    title: '喜歡 RateWise 嗎？',
+    subtitle: '您的評分讓更多人找到這個工具 ✨',
+    starsLabel: '星評',
+    submit: '送出評分',
+    submitting: '送出中...',
+    later: '以後再說',
+    dismiss: '不再提醒',
+    thankYou: '感謝您的評分！',
+  },
 };
 
 export default zhTW;

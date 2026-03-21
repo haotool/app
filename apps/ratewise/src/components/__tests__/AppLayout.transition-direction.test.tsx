@@ -21,6 +21,10 @@ vi.mock('../UpdatePrompt', () => ({
   UpdatePrompt: () => null,
 }));
 
+vi.mock('../RatingModal', () => ({
+  RatingModal: () => null,
+}));
+
 vi.mock('../RouteErrorBoundary', () => ({
   RouteErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
@@ -65,6 +69,7 @@ vi.mock('motion/react', () => {
     motion: {
       div: MotionDiv,
     },
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   };
 });
 

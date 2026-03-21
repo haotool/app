@@ -10,7 +10,9 @@ import { ToastProvider } from './Toast';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
 import { OfflineIndicator } from './OfflineIndicator';
 import { UpdatePrompt } from './UpdatePrompt';
+import { RatingModal } from './RatingModal';
 import { PullToRefreshIndicator } from './PullToRefreshIndicator';
+import { useRatingPrompt } from '../hooks/useRatingPrompt';
 
 import { getResolvedLanguage } from '../i18n';
 import { navigationTokens } from '../config/design-tokens';
@@ -94,6 +96,8 @@ function Header() {
 export function AppLayout() {
   // 大寫 URL 自動正規化（SEO）。
   useUrlNormalization();
+
+  const ratingPrompt = useRatingPrompt();
 
   const location = useLocation();
   const [previousPathname, setPreviousPathname] = React.useState(location.pathname);
@@ -203,6 +207,7 @@ export function AppLayout() {
       {/* 全域 PWA/離線狀態提示 */}
       <OfflineIndicator />
       <UpdatePrompt />
+      <RatingModal {...ratingPrompt} />
     </ToastProvider>
   );
 }

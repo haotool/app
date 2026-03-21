@@ -326,6 +326,18 @@ const ja = {
     footerNav: 'フッターナビゲーション',
     privacyPolicy: 'プライバシーポリシー',
   },
+
+  // Rating Modal
+  rating: {
+    title: 'RateWiseを気に入っていただけましたか？',
+    subtitle: '評価することで、より多くの人にこのツールを届けられます ✨',
+    starsLabel: '星評価',
+    submit: '評価を送信',
+    submitting: '送信中...',
+    later: 'あとで',
+    dismiss: '二度と表示しない',
+    thankYou: '評価ありがとうございます！',
+  },
 };
 
 export default ja;
