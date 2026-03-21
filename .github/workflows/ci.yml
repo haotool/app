@@ -282,7 +282,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trivy file-system scan
-        uses: aquasecurity/trivy-action@0.34.2
+        uses: aquasecurity/trivy-action@0.35.0
         continue-on-error: true
         with:
           scan-type: 'fs'
@@ -301,7 +301,7 @@ jobs:
           category: 'trivy-fs'
 
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@0.34.2
+        uses: aquasecurity/trivy-action@0.35.0
         continue-on-error: true
         with:
           scan-type: 'image'
