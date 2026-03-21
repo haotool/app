@@ -1,5 +1,22 @@
 # @app/ratewise
 
+## 2.14.0
+
+### Minor Changes
+
+- ce532dc: 新增 PWA 星評系統：Cloudflare KV Worker、prebuild 評分快照、RatingModal 與使用觸發 hook
+- 8a6ff08: - 新增 FAQPage JSON-LD schema：首頁、FAQ 頁、34 個幣別落地頁（Google Rich Results FAQ 摺疊卡片）
+  - 新增 aggregateRating 至 SoftwareApplication（Google Rich Results 星評卡片）
+  - SEOHelmet 新增 faqContent prop，自動產出 FAQPage schema
+  - 更新對應測試：jsonld、seo-best-practices、prerender、seo-truthfulness、SEOHelmet
+
+### Patch Changes
+
+- 1e70b08: - OpenData 頁新增「資料新鮮度與時間戳記說明」：解釋 updateTime（來源）與刷新時間的差異、變動偵測機制、台銀牌告更新頻率與 Actions 排程延遲
+- fa9a377: - 移除 9 個 SW Playwright debug 腳本（開發期殘留）
+  - 移除未使用的 ThreadsIcon、VersionDisplay、pushNotifications、non-blocking-css
+- b5c8cf3: 移除 App.tsx 死碼，整合 useUrlNormalization 至 AppLayout 與 Layout
+
 ## 2.13.1
 
 ### Patch Changes

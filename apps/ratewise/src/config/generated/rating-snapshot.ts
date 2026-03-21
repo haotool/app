@@ -11,5 +11,5 @@ export const RATING_SNAPSHOT = {
   /** 評分人數。 */
   ratingCount: 0,
   /** 快照時間（ISO 8601）。 */
-  snapshotAt: '1970-01-01T00:00:00.000Z',
+  snapshotAt: '2026-03-21T16:22:14.167Z',
 } as const;
