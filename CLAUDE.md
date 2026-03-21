@@ -481,6 +481,24 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 - HEAD 請求 CSP 無 hash — 正確行為（無 body 可計算）
 - Playwright 顯示 `ERR_FAILED @ gtag/js` — `--disable-background-networking` 測試環境攔截，非 CSP 問題
 - Cloudflare Dashboard 程式碼與本地不同 — wrangler 用 esbuild 編譯，正常現象
+- `.webmanifest` 無明確 Cache-Control（Worker 未覆寫）— 正確行為；上游 Zeabur 回傳 `no-cache, must-revalidate`，符合 PWA 最佳實踐（filename 不含 hash，不可設 `immutable`）
+- `.webmanifest` 出現 `cf-cache-status: HIT` + 大 `age` 值 — 正常現象；CF edge 快取 manifest 屬預期，`no-cache` 確保瀏覽器仍做條件式請求（ETag）
+
+**資產快取驗證指令（快速查閱）**：
+
+```bash
+# HTML — 預期：no-cache + DYNAMIC（nonce 型 CSP 無法 edge 緩存）
+curl -sI https://app.haotool.org/ratewise/ | grep -i "cache-control\|cf-cache"
+
+# Hashed JS/CSS — 預期：max-age=31536000, public, immutable + HIT
+curl -sI "https://app.haotool.org/ratewise/assets/<hash>.js" | grep -i "cache-control\|cf-cache"
+
+# .webmanifest — 預期：no-cache, must-revalidate（可有 HIT，正常）
+curl -sI https://app.haotool.org/ratewise/manifest.webmanifest | grep -i "cache-control\|cf-cache\|etag"
+
+# OG 圖片 — 預期：max-age=86400 + CORS
+curl -sI https://app.haotool.org/ratewise/og-image.jpg | grep -i "cache-control\|access-control"
+```
 
 **esbuild 說明**：wrangler deploy 自動用 esbuild 打包，Cloudflare 上看到的是編譯輸出（含 `__defProp`、`__name()` 等 helper）— 只維護 `src/worker.js`，不直接編輯 Dashboard。
 
@@ -584,6 +602,7 @@ registerRoute(
 
 | 日期       | 版本 | 變更摘要                                                                                                                       |
 | ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-22 | v4.7 | 補充 Worker 假陽性：`.webmanifest` no-cache 為正確行為、CF HIT 屬正常；新增資產快取驗證 curl 指令快查表                        |
 | 2026-03-17 | v4.6 | 新增「SEO 內容新鮮度與真實性（SSOT 規則）」：文案 SSOT、template-bleed 防護、dateModified 規則、FAQPage 重複診斷指令           |
 | 2026-03-13 | v4.5 | 補充 RateWise release 邊緣同步規範：正式版版本探測後才可做 Cloudflare 定點 purge，且 purge 後必須立刻做 live precache 驗證     |
 | 2026-03-12 | v4.4 | 新增 RateWise live precache 驗證與 stale edge 404 判定規範，要求生產檢查補跑 live PWA 驗證                                     |
@@ -604,5 +623,5 @@ registerRoute(
 
 ---
 
-**最後更新**: 2026-03-17T00:00:00+0800
-**版本**: v4.6（新增 SEO 內容新鮮度與真實性 SSOT 規則）
+**最後更新**: 2026-03-22T00:00:00+0800
+**版本**: v4.7（補充 Worker 假陽性清單與資產快取驗證指令）
