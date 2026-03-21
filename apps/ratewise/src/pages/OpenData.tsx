@@ -678,6 +678,13 @@ const OpenData = () => {
                     external: true,
                   },
                   {
+                    title: 'Swagger Editor（線上預覽）',
+                    desc: '將 openapi.json 匯入後可互動式測試 API',
+                    href: 'https://editor.swagger.io/?url=https://app.haotool.org/ratewise/openapi.json',
+                    label: 'editor.swagger.io',
+                    external: true,
+                  },
+                  {
                     title: 'API 中繼資料',
                     desc: '端點清單、支援幣別與聯絡資訊',
                     href: '/ratewise/api/latest.json',
