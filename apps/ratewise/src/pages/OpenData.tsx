@@ -481,6 +481,105 @@ const OpenData = () => {
               條件式請求， 資料未變時回傳 304（零 body），可節省約 5 KB／次。建議 client 端快取 5
               分鐘，避免無意義重複請求。
             </div>
+
+            {/* ── 資料新鮮度與時間戳記說明 ── */}
+            <div className="mt-6">
+              <h3 className="mb-3 text-base font-semibold text-text">資料新鮮度與時間戳記說明</h3>
+
+              {/* 兩個時間欄位對照 */}
+              <div className="mb-4 overflow-hidden rounded-xl border border-surface-border">
+                <table className="w-full text-sm" aria-label="時間戳記欄位說明">
+                  <thead>
+                    <tr className="border-b border-surface-border bg-surface-elevated">
+                      <th className="px-4 py-3 text-left font-semibold text-text">欄位</th>
+                      <th className="px-4 py-3 text-left font-semibold text-text">意義</th>
+                      <th className="px-4 py-3 text-left font-semibold text-text">更新時機</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-border bg-surface">
+                    <tr>
+                      <td className="px-4 py-3 font-mono text-xs text-primary">updateTime</td>
+                      <td className="px-4 py-3 text-text">
+                        台銀匯率於本系統最後一次<strong>實際變動</strong>的時間（台灣時區）
+                      </td>
+                      <td className="px-4 py-3 text-text-muted">
+                        僅在 GitHub Actions 偵測到匯率數值與前次不同時才更新；台銀未發布新牌告時即使
+                        Actions 持續執行，此欄位也不會前進
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-3 font-mono text-xs text-primary">timestamp</td>
+                      <td className="px-4 py-3 text-text">同上，UTC ISO 8601 格式</td>
+                      <td className="px-4 py-3 text-text-muted">與 updateTime 同步更新</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* 核心說明 */}
+              <div className="space-y-3">
+                <div className="rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                      變動偵測機制
+                    </span>
+                  </div>
+                  <p className="text-text">
+                    GitHub Actions 每 5 分鐘抓取台銀 CSV 後，會將本次各幣別匯率與前次儲存的
+                    <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
+                      rates
+                    </code>
+                    物件進行 JSON 字串比對。若完全相同，腳本立即結束、不寫檔、不
+                    commit；只有在至少一個幣別數值發生變化時，才會寫入新的
+                    <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
+                      latest.json
+                    </code>
+                    並更新
+                    <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
+                      updateTime
+                    </code>
+                    。
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                      為何來源時間與刷新時間差距較大？
+                    </span>
+                  </div>
+                  <p className="text-text">
+                    應用介面顯示的「<strong>來源</strong>」時間對應
+                    <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
+                      updateTime
+                    </code>
+                    ，代表台銀牌告上次實際更新的時刻；「<strong>刷新</strong>
+                    」時間則是用戶端瀏覽器本次成功取得資料的時刻。臺灣銀行通常每個交易日更新牌告數次（多集中於開盤後），非交易時段、例假日或銀行內部尚未發布新牌告時，
+                    <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
+                      updateTime
+                    </code>
+                    不會變動，因此兩者之間出現數小時乃至跨日的落差屬預期行為，並非資料延遲或系統異常。
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                      Actions 排程說明
+                    </span>
+                  </div>
+                  <p className="text-text">
+                    排程使用標準 cron 語法{' '}
+                    <code className="rounded bg-surface-elevated px-1 font-mono text-xs">
+                      */5 * * * *
+                    </code>
+                    ，理論間隔 5 分鐘。受 GitHub Actions 公共執行器佇列影響，實際觸發可能有 1–10
+                    分鐘的不確定延遲，無法保證嚴格等時。若需高精度即時匯率，建議直接訂閱台銀官方牌告
+                    API 或金融數據服務商。
+                  </p>
+                </div>
+              </div>
+            </div>
           </section>
 
           {/* ── API 端點 ── */}
