@@ -140,95 +140,29 @@ AI 助手 **必須**：
 
 ### Phase 7. 版本發布與依賴管理（Release & Dependencies）
 
-#### 語意化版本（SemVer 2.0.0）決策指南
+**SemVer 決策**（破壞既有用法 → MAJOR；新增功能 → MINOR；只修 bug → PATCH）：
 
-格式：`MAJOR.MINOR.PATCH`（來源：[semver.org](https://semver.org/spec/v2.0.0.html)）
+| bump  | 適用情境                           |
+| ----- | ---------------------------------- |
+| MAJOR | 移除路由/功能、破壞性格式變更      |
+| MINOR | 新頁面、新幣別、新 API、新 UI 元件 |
+| PATCH | Bug 修復、安全依賴升級、效能改善   |
 
-| 類型      | 版號規則      | 適用情境（本 monorepo 前端應用）                                     |
-| --------- | ------------- | -------------------------------------------------------------------- |
-| **MAJOR** | x+1, y→0, z→0 | 移除既有路由、破壞性資料格式變更、移除 PWA 功能、棄用 API endpoint   |
-| **MINOR** | y+1, z→0      | 新功能頁面、新幣別、新 API endpoint、UI 新元件、SEO 新架構、棄用宣告 |
-| **PATCH** | z+1           | Bug 修復、文字修正、安全性相依套件升級、效能改善（不改 API）         |
+**Changeset 規範**（每個 PR 完成後 MUST 執行 `pnpm changeset`）：
 
-**決策流程（快速判斷）**：
+- bump 類型選正確；描述使用者看得到的影響，禁止描述實作細節
+- CHANGELOG 由 changeset 自動生成，禁止手動貼入 git log
 
-```
-既有使用者的使用方式會被破壞？
-  YES → MAJOR
-  NO  → 新增了功能或頁面？
-          YES → MINOR
-          NO  → PATCH（僅修復行為）
-```
+**版本發布流程**（`update-release-metadata.js` 已整合所有 SSOT）：
 
-**Pre-release 標籤**（`MAJOR.MINOR.PATCH-<tag>.N`）：
-
-- `alpha`：早期開發，API 仍可能大幅變動
-- `beta`：功能完整，收集外部測試回饋
-- `rc`：Release Candidate，僅修關鍵回歸
-- 使用方式：`pnpm changeset pre enter beta` → 開發 → `pnpm changeset pre exit`
-
-#### Changeset 撰寫規範（人工可讀變更日誌）
-
-每個 PR 或功能完成後 **必須**建立 changeset（`pnpm changeset`）：
-
-- 選擇正確的 bump 類型（major / minor / patch）
-- 描述「使用者看得到的變更」，不要描述實作細節
-- 格式：過去式、簡短、以使用者角度撰寫
-
-```markdown
-# 正確：使用者視角，清楚說明影響
-
-新增 /usd-twd/500/ 路徑型金額換算頁面，Googlebot 可直接從靜態 HTML 讀取換算結果
-
-# 錯誤：描述實作而非影響
-
-在 routes.tsx 新增 :amount 子路由並修改 usePairAmountSEO hook
+```bash
+pnpm changeset:version          # 升版 + CHANGELOG + 所有版本嵌入產出物一次完成
+git diff --stat                 # 確認 CHANGELOG / package.json / public/* 均已更新
+git add . && git commit         # chore(release): @app/ratewise vX.Y.Z
+git push origin main            # pre-push 自動跑 typecheck + test + build
 ```
 
-#### CHANGELOG.md 品質規範
-
-格式基準：[Keep a Changelog v1.1.0](https://keepachangelog.com/en/1.1.0/)
-
-- Changeset 自動生成 CHANGELOG 條目；**禁止**手動複製 git log 貼入
-- 每個版本條目 **必須**存在；禁止跳過空版本
-- 若發版後發現嚴重 bug 需撤銷，標記 `[YANKED]`：`## [1.2.0] - 2024-05-15 [YANKED]`
-
-#### 版本發布完整流程（SSOT 整合版）
-
-**版本發布流程**（`update-release-metadata.js` 已整合所有 SSOT 步驟）：
-
-1. 確認所有功能 PR 已合併，.changeset 目錄有待發布的 changeset 檔
-2. 執行一鍵發版指令：
-
-   ```bash
-   pnpm changeset:version
-   # 等同於：changeset version && node scripts/update-release-metadata.js
-   # 自動完成：版本號升級 + CHANGELOG 更新 + root package.json 同步
-   #           + api/latest.json + llms.txt + manifest.webmanifest
-   #           + openapi.json + robots.txt + sitemap.xml
-   ```
-
-3. 確認 `git diff` — 所有以下檔案應同步更新：
-   - `apps/ratewise/CHANGELOG.md`（新增版本條目）
-   - `apps/ratewise/package.json`（版本升級）
-   - `package.json`（root 版本同步）
-   - `apps/ratewise/public/api/latest.json`（版本嵌入）
-   - `apps/ratewise/public/llms.txt` + `llms-full.txt`（版本嵌入）
-   - `apps/ratewise/public/manifest.webmanifest`（版本嵌入）
-   - `apps/ratewise/public/openapi.json`（版本嵌入）
-   - `apps/ratewise/public/robots.txt`（重新生成）
-   - `apps/ratewise/public/sitemap.xml`（lastmod 更新）
-
-4. 提交版本更新（單一 commit）：
-
-   ```bash
-   git add -p   # 確認所有變更符合預期
-   git commit   # commit type: chore(release)，commitlint 已豁免此格式
-   # message 範例：chore(release): @app/ratewise v2.16.0
-   ```
-
-5. 推送 → pre-push 自動執行 typecheck + test + build:ratewise（應一次通過）
-6. 確認 CI checks 通過後合併至 `main`
+禁止：手動改版號、單獨跑 prebuild scripts、直接改 CHANGELOG 跳過 changeset。
 
 **依賴安全管理**（Dependabot 警告處理）：
 
@@ -682,29 +616,29 @@ registerRoute(
 
 ## 修訂紀錄（Revision History）
 
-| 日期       | 版本 | 變更摘要                                                                                                                                                    |
-| ---------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-03-22 | v4.8 | 新增 SemVer 決策指南（MAJOR/MINOR/PATCH 規則）、Changeset 撰寫規範、CHANGELOG 品質基準；Phase 7 發版流程改為 SSOT 整合版（pnpm changeset:version 一鍵完成） |
-| 2026-03-22 | v4.7 | 補充 Worker 假陽性：`.webmanifest` no-cache 為正確行為、CF HIT 屬正常；新增資產快取驗證 curl 指令快查表                                                     |
-| 2026-03-17 | v4.6 | 新增「SEO 內容新鮮度與真實性（SSOT 規則）」：文案 SSOT、template-bleed 防護、dateModified 規則、FAQPage 重複診斷指令                                        |
-| 2026-03-13 | v4.5 | 補充 RateWise release 邊緣同步規範：正式版版本探測後才可做 Cloudflare 定點 purge，且 purge 後必須立刻做 live precache 驗證                                  |
-| 2026-03-12 | v4.4 | 新增 RateWise live precache 驗證與 stale edge 404 判定規範，要求生產檢查補跑 live PWA 驗證                                                                  |
-| 2026-03-12 | v4.3 | 新增 SEO 生產資源可用性檢查規範：以 `app.config.mjs` 的 `resources.seoFiles` / `resources.images` 為 SSOT，自動探測並接入 CI                                |
-| 2026-03-10 | v4.2 | 補充 lint-staged ignored file 治理：`eslint --fix --no-warn-ignored`，避免 e2e / ignored 檔誤擋 pre-commit                                                  |
-| 2026-03-10 | v4.1 | 新增 Troubleshooting #12-13（PWA COEP precache 失敗、版本撕裂 Load failed）與「程式碼註解風格」規範                                                         |
-| 2026-03-09 | v4.0 | 新增 Troubleshooting #9-11：generate-manifest 品牌覆蓋、commitlint body-bullets、sortedCurrencies TWD 未置頂三項常見錯誤與修法                              |
-| 2026-03-08 | v3.9 | 新增「CF SEO 直通實踐」：MailtoLink 模式、squirrelscan 假陽性識別、CF API token 限制、noindex 頁面正確行為                                                  |
-| 2026-03-08 | v3.8 | 補充 002 v2 結構化索引規格與 FAQ/SEOHelmet Troubleshooting                                                                                                  |
-| 2026-03-08 | v3.7 | 補充 `002` 操作 / incident 規則：新紀錄使用 entry blocks，失敗紀錄必須寫出根因、影響、修復與預防                                                            |
-| 2026-03-08 | v3.6 | 新增 Troubleshooting #7-#8：FAQPage 重複與 `SEOHelmet` client head 重複/殘留的極簡解法                                                                      |
-| 2026-03-07 | v3.5 | 新增 Troubleshooting #6「Prettier 格式漂移」：prebuild 產出物應加入 `.prettierignore`，禁止 prebuild script 呼叫 Prettier API                               |
-| 2026-03-06 | v3.4 | 新增「security-headers Worker 部署 SOP」：wrangler 認證、esbuild 說明、版本號同步、假陽性清單、CSP connect-src 必要域名                                     |
-| 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史）                                        |
-| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口                                                         |
-| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP                                                           |
-| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                                                                                       |
+| 日期       | 版本 | 變更摘要                                                                                                                       |
+| ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-22 | v4.8 | Phase 7 精簡：SemVer 決策表 + Changeset 規範 + 一鍵發版流程（pnpm changeset:version SSOT 整合）                                |
+| 2026-03-22 | v4.7 | 補充 Worker 假陽性：`.webmanifest` no-cache 為正確行為、CF HIT 屬正常；新增資產快取驗證 curl 指令快查表                        |
+| 2026-03-17 | v4.6 | 新增「SEO 內容新鮮度與真實性（SSOT 規則）」：文案 SSOT、template-bleed 防護、dateModified 規則、FAQPage 重複診斷指令           |
+| 2026-03-13 | v4.5 | 補充 RateWise release 邊緣同步規範：正式版版本探測後才可做 Cloudflare 定點 purge，且 purge 後必須立刻做 live precache 驗證     |
+| 2026-03-12 | v4.4 | 新增 RateWise live precache 驗證與 stale edge 404 判定規範，要求生產檢查補跑 live PWA 驗證                                     |
+| 2026-03-12 | v4.3 | 新增 SEO 生產資源可用性檢查規範：以 `app.config.mjs` 的 `resources.seoFiles` / `resources.images` 為 SSOT，自動探測並接入 CI   |
+| 2026-03-10 | v4.2 | 補充 lint-staged ignored file 治理：`eslint --fix --no-warn-ignored`，避免 e2e / ignored 檔誤擋 pre-commit                     |
+| 2026-03-10 | v4.1 | 新增 Troubleshooting #12-13（PWA COEP precache 失敗、版本撕裂 Load failed）與「程式碼註解風格」規範                            |
+| 2026-03-09 | v4.0 | 新增 Troubleshooting #9-11：generate-manifest 品牌覆蓋、commitlint body-bullets、sortedCurrencies TWD 未置頂三項常見錯誤與修法 |
+| 2026-03-08 | v3.9 | 新增「CF SEO 直通實踐」：MailtoLink 模式、squirrelscan 假陽性識別、CF API token 限制、noindex 頁面正確行為                     |
+| 2026-03-08 | v3.8 | 補充 002 v2 結構化索引規格與 FAQ/SEOHelmet Troubleshooting                                                                     |
+| 2026-03-08 | v3.7 | 補充 `002` 操作 / incident 規則：新紀錄使用 entry blocks，失敗紀錄必須寫出根因、影響、修復與預防                               |
+| 2026-03-08 | v3.6 | 新增 Troubleshooting #7-#8：FAQPage 重複與 `SEOHelmet` client head 重複/殘留的極簡解法                                         |
+| 2026-03-07 | v3.5 | 新增 Troubleshooting #6「Prettier 格式漂移」：prebuild 產出物應加入 `.prettierignore`，禁止 prebuild script 呼叫 Prettier API  |
+| 2026-03-06 | v3.4 | 新增「security-headers Worker 部署 SOP」：wrangler 認證、esbuild 說明、版本號同步、假陽性清單、CSP connect-src 必要域名        |
+| 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史）           |
+| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口                            |
+| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP                              |
+| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                                                          |
 
 ---
 
 **最後更新**: 2026-03-22T00:00:00+0800
-**版本**: v4.8（SemVer 決策指南 + Changeset 規範 + Phase 7 SSOT 整合發版流程）
+**版本**: v4.8（Phase 7 精簡：SemVer + Changeset + 一鍵發版 SSOT）
