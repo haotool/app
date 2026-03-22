@@ -83,60 +83,15 @@ pnpm format:fix              # prettier --write .
 
 ## Execution SOP（AI 助手執行程序）
 
-### Phase 1. 任務受理與界定（Intake）
-
-AI 助手 **必須**：
-
-1. 確認使用者目標、輸出物與限制（是否要 commit / push / merge）
-2. 標示假設條件（例如：分支、遠端、測試範圍、可用工具）
-3. 確認是否屬高風險變更（CI/CD、部署、版本、PWA、資料遷移）
-
-### Phase 2. 上下文收集（Context Gathering）
-
-- 優先讀最小必要檔案（目標檔 + 相鄰檔）
-- 優先用 `rg` / `rg --files` 搜尋
-- 變更流程規範時，先讀 `package.json`、`.husky/*`、`commitlint.config.cjs`、`.gitignore`
-- 若要 merge 主支，先檢查 `gh auth status`、`gh pr status`
-
-### Phase 3. 依據查證（Evidence-First）
-
-以下情境 **必須**先查官方文件（Context7 或官方網站）：
-
-- build/test/lint 錯誤
-- 新 library / framework / 工具導入
-- CI/CD 或部署設定變更
-- major 版本升級
-- 不確定最佳實踐
-
-**建議輸出**：在回報中說明「採用哪個來源、採用了哪些原則」。
-
-### Phase 4. 實作（Execution）
-
-- 採最小必要變更原則，避免跨 app 無關修改
-- 文檔重寫任務需先核對 repo 實際設定再落字
-- 程式碼變更優先保持可回滾與原子化提交
-- 若發現使用者工作樹有未追蹤本地 assets/skills，避免誤刪
-
-### Phase 5. 驗證（Validation）
-
-按變更類型執行：
-
-- **文檔變更**：內容與 SSOT 一致性檢查
-- **程式碼變更**：依範圍執行 `pnpm typecheck` / `pnpm test` / `pnpm build:ratewise`
-- **UI/QA 變更**：截圖、console errors、必要時 E2E
-- **流程/規範變更**：核對 `.husky/*`, `commitlint.config.cjs`, `.gitignore`
-
-### Phase 6. 提交與合併（Commit & Merge）
-
-若使用者要求提交/合併，AI 助手 **必須**：
-
-1. 更新 `docs/dev/002_development_reward_penalty_log.md`
-2. 確認 002 新增紀錄使用 entry blocks；整理舊資料時僅能產出精簡索引，不得再新增巨型 table
-3. 確認 002 新條目使用 v2 結構化欄位：至少包含 `id`、`content_type`、`topics`、`keywords`、`related_entries`
-4. 若 002 屬 `incident` / `regression`，必須明確寫出根因、影響、修復與預防
-5. 以 commitlint 規則提交（繁中標題、條列 body、`測試：...`）
-6. 推送分支並確認 PR 狀態
-7. 使用 `gh` 合併 PR 至 `main`（在 checks 通過後）
+| Phase             | 核心動作                                                                            |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| **1. Intake**     | 確認目標、輸出物、風險等級（commit/push/merge？CI/PWA/版本？）                      |
+| **2. Context**    | 讀最小必要檔案；flow 變更先讀 `package.json` / `.husky/*`；合併前 `gh pr status`    |
+| **3. Evidence**   | build error / 新工具 / CI 變更 / major 升級 → **先查官方文件**（Context7）          |
+| **4. Execution**  | 最小必要變更；禁止跨 app 無關修改；保持可回滾；勿刪未追蹤 `.agents/skills/*`        |
+| **5. Validation** | 文檔→SSOT 一致；程式碼→typecheck/test/build:ratewise；UI→截圖+console errors        |
+| **6. Commit**     | 更新 `docs/dev/002...`（entry blocks，v2 欄位，incident 需寫根因）→ commitlint 提交 |
+| **7. Release**    | 見下方 Phase 7 版本發布流程                                                         |
 
 ### Phase 7. 版本發布與依賴管理（Release & Dependencies）
 
@@ -253,105 +208,35 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 4. 提供補償控制（例如額外人工檢查）
 5. 提出後續補正計畫
 
-## Troubleshooting（常見）
+## Troubleshooting
 
-### 1. 文檔 diff 很大但內容改動不多
+### Git / Commit
 
-- `lint-staged` 會對 `*.md` 執行 `prettier --write`
-- 表格與長段落常被重排（尤其 `docs/dev/002...`）
+**文檔 diff 很大但內容改動不多**：`lint-staged` 對 `*.md` 執行 `prettier --write`，表格與長段落常被重排。
 
-### 6. Search Console 報 `FAQPage` 欄位重複
+**commitlint body-bullets 失敗**：主體**第一個非空行**必須以 `- ` 開頭；全形條列無效；`#N` issue reference 會使 parser 把 body 置空（改用 `N.` 或 `N,`）；每行 ≤100 字元。
 
-- 預設只在真正 FAQ 頁輸出 `FAQPage`
-- 首頁、幣別頁、About/Guide 若只是 FAQ 文案，保留內容即可，不要再標 `FAQPage`
+### PWA
 
-### 9. `generate-manifest.mjs` 覆蓋品牌名稱（pre-push 回退）
+**冷啟動離線白屏（COEP 阻斷 precache）**：JS/CSS 資源帶 `COEP: require-corp` → SW 無法寫入 Cache Storage → precache 僅 5 項 → 白屏。修法：COEP/COOP 限定 `isRatewise && isHTML` 分支；JS/CSS 只保留 `CORP: same-origin`。診斷：`curl -sI <chunk.js> | grep -i cross-origin`；DevTools precache 應 50+ 項。
 
-**症狀**：`pnpm build:ratewise` 在 pre-push 時重新執行 `generate-manifest.mjs`，將 `manifest.webmanifest` 的 `name`/`short_name` 覆蓋回舊值（硬編碼）。
+**PWA 版本撕裂（非首頁 Load failed）**：`autoUpdate` + `skipWaiting()` → 新 SW 立即接管 → 舊 chunk URL 消失。修法：改 `registerType: 'prompt'`；`sw.ts` 監聽 `SKIP_WAITING` message；`swUtils.ts` 對 `registration.waiting` 發送 `{ type: 'SKIP_WAITING' }`。
 
-**根本原因**：`scripts/generate-manifest.mjs` 內有 hardcoded 品牌名稱字串，未改用 SSOT（constants/config）。
+### SEO
 
-**正確做法（MUST）**：修改 `generate-manifest.mjs`，從 `src/config/app-info.ts`（或等效 SSOT）讀取品牌名稱，不直接 hardcode。
+**Search Console 報 `FAQPage` 重複**：只在真正 FAQ 頁輸出 `FAQPage`；首頁/幣別頁/About 保留文案不標 schema。
 
-### 10. commitlint body-bullets 失敗
+**`SEOHelmet` head 在 client 端重複或殘留**：`vite-react-ssg` + shim 勿直接移除；改做 head reconciliation，手動節點加 managed 標記；`useEffect` 必須有 cleanup，依賴用穩定 primitive。
 
-**症狀**：`commit-msg` hook 報 `body-leading-bullet` 錯誤，commit 被阻擋。
+### Build / Deploy
 
-**根本原因**：commit 主體的**第一個非空行**未以 `- ` 開頭（例如寫成章節標題、空白行、或其他格式）。
+**`generate-manifest.mjs` 覆蓋品牌名稱**：hardcoded 品牌字串被 prebuild 覆蓋。修法：從 `src/config/app-info.ts`（SSOT）讀取，不直接 hardcode。
 
-**正確做法（MUST）**：主體第一個非空行必須以 `- ` 開頭（全形條列無效）；每行 ≤100 字元；必須有 `測試：...` 行。
+**`sortedCurrencies` 未將 TWD 置頂**：`useCurrencyConverter` 需與 `getAllCurrenciesSorted` 邏輯一致：TWD index 0 → 收藏幣依序 → 非收藏按字母。
 
-### 11. `sortedCurrencies` 未將 TWD 固定在首位（Multi 頁排序不一致）
+**Node engine warning**：Repo 宣告 `^24.0.0`；warning 不等於阻塞，以實際 hook 結果為準。
 
-**症狀**：多幣別頁（Multi）的貨幣列表不總是以 TWD 為首，且非收藏幣未按字母排序；與收藏頁（Favorites）的 `getAllCurrenciesSorted` 行為不一致。
-
-**根本原因**：`useCurrencyConverter` 的 `sortedCurrencies` 原始邏輯為 `[...orderedFavorites, ...remaining]`，未明確固定 TWD 在首位，也未對非收藏幣排序。
-
-**正確做法（MUST）**：`sortedCurrencies` 必須採用與 `getAllCurrenciesSorted` 完全相同的邏輯：
-
-1. TWD 固定在 index 0
-2. 其餘收藏幣按用戶偏好順序
-3. 非收藏幣按字母順序
-
-### 8. `SEOHelmet` / head metadata 在 client 端重複或殘留
-
-- `vite-react-ssg` + shim 若已驗證是 SSG 必要條件，**不要**直接移除 shim
-- 改在 client 端做 head reconciliation，並為手動寫入的節點加 managed 標記
-- `useEffect` 必須有 `cleanup`，依賴只能用穩定 primitive/signature，避免跨頁殘留與同 props 重跑
-
-### 12. PWA 冷啟動 / 離線失效（COEP 阻止 SW precache 寫入）
-
-**症狀**：冷啟動離線白屏；DevTools → Cache Storage → `workbox-precache-v2-…` 僅 5 項（HTML/icons），無 JS/CSS chunk。
-
-**根本原因**：`security-headers` Worker 對 JS/CSS 靜態資源設定 `COEP: require-corp`，Chrome 拒絕 SW 在安裝階段將其寫入 Cache Storage → precache 不完整 → 離線時 JS chunk 找不到 → 白屏。
-
-**正確做法（MUST）**：COEP/COOP 只能設在 HTML document 回應；JS/CSS sub-resource 設 COEP 無意義且有害。
-
-修法 `security-headers/src/worker.js`：
-
-- 將 COEP/COOP 移入 `isRatewise && isHTML` 分支
-- 非 HTML 的 ratewise 路徑僅保留 `CORP: same-origin`
-
-**診斷命令**：
-
-```bash
-# 確認 JS asset 是否帶 COEP（正確行為：不應有）
-curl -sI "https://app.haotool.org/ratewise/assets/<chunk>.js" | grep -i cross-origin
-# DevTools 確認：Cache Storage → workbox-precache-v2-… 應 50+ 項
-```
-
-### 13. PWA 版本撕裂（非首頁 Load failed）
-
-**症狀**：SW 更新後，非首頁（如 `/ratewise/favorites`）顯示 `Unexpected Application Error! Load failed`。
-
-**根本原因**：`registerType: 'autoUpdate'` 自動呼叫 `skipWaiting()`，新 SW 立即接管；`cleanupOutdatedCaches()` 清除舊 chunk URL；舊頁面 HTML 仍引用舊 URL → chunk 找不到。
-
-**正確做法（MUST）**：改用 `registerType: 'prompt'`，SW 進入 waiting 狀態，由 `UpdatePrompt` 元件發送 `SKIP_WAITING` 訊息後才接管（確保整頁刷新後使用新 chunk URL）。
-
-配套修改：
-
-- `sw.ts`：移除主動 `skipWaiting()`；改在 `message` handler 監聽 `SKIP_WAITING`
-- `swUtils.ts`：`forceServiceWorkerUpdate()` 對 waiting SW 發送 `{ type: 'SKIP_WAITING' }`
-
-### 2. `git status` 看不到 root 截圖
-
-- 很多 root QA 圖檔已被 `.gitignore` 忽略
-- 用 `git status --ignored --short` 才看得出來
-
-### 3. Node engine warning
-
-- Repo 宣告 Node `^24.0.0`
-- 是否阻塞以實際 hook / script 結果為準（warning 不一定失敗）
-
-### 4. Cloudflare 邊緣同步
-
-- RateWise release 不只看 app bundle；若正式站標頭由 `security-headers` worker 控制，必須一起確認 worker 是否已部署
-- 非互動 `wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` 與 `CLOUDFLARE_ACCOUNT_ID`
-- 若 secret 缺失，workflow 應明確 `skip` 並回報，不可把「release 綠燈」等同於「邊緣標頭已同步」
-
-### 5. security-headers Worker 部署 SOP
-
-部署流程、假陽性清單、資產快取驗證指令詳見 `AGENTS.md` § security-headers Worker 部署 SOP。
+**Cloudflare 邊緣同步**：release 需確認 `security-headers` worker 也已部署；`wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`；secret 缺失時明確 `skip` 並回報，不可假設 edge 已同步。完整 SOP 見 `AGENTS.md` § security-headers Worker 部署 SOP。
 
 ## Cloudflare SEO 直通實踐（CF SEO Straight-Path Patterns）
 
@@ -402,30 +287,16 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 ## 修訂紀錄（Revision History）
 
-| 日期       | 版本 | 變更摘要                                                                                                                       |
-| ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-03-22 | v4.9 | 移除 AGENTS.md 重複區塊（Git rules、QA rules、Skills、Prettier#6、Worker SOP、code comment）→ 改為單行參考，精簡約 ~180 行     |
-| 2026-03-22 | v4.8 | Phase 7 精簡：SemVer 決策表 + Changeset 規範 + 一鍵發版流程（pnpm changeset:version SSOT 整合）                                |
-| 2026-03-22 | v4.7 | 補充 Worker 假陽性：`.webmanifest` no-cache 為正確行為、CF HIT 屬正常；新增資產快取驗證 curl 指令快查表                        |
-| 2026-03-17 | v4.6 | 新增「SEO 內容新鮮度與真實性（SSOT 規則）」：文案 SSOT、template-bleed 防護、dateModified 規則、FAQPage 重複診斷指令           |
-| 2026-03-13 | v4.5 | 補充 RateWise release 邊緣同步規範：正式版版本探測後才可做 Cloudflare 定點 purge，且 purge 後必須立刻做 live precache 驗證     |
-| 2026-03-12 | v4.4 | 新增 RateWise live precache 驗證與 stale edge 404 判定規範，要求生產檢查補跑 live PWA 驗證                                     |
-| 2026-03-12 | v4.3 | 新增 SEO 生產資源可用性檢查規範：以 `app.config.mjs` 的 `resources.seoFiles` / `resources.images` 為 SSOT，自動探測並接入 CI   |
-| 2026-03-10 | v4.2 | 補充 lint-staged ignored file 治理：`eslint --fix --no-warn-ignored`，避免 e2e / ignored 檔誤擋 pre-commit                     |
-| 2026-03-10 | v4.1 | 新增 Troubleshooting #12-13（PWA COEP precache 失敗、版本撕裂 Load failed）與「程式碼註解風格」規範                            |
-| 2026-03-09 | v4.0 | 新增 Troubleshooting #9-11：generate-manifest 品牌覆蓋、commitlint body-bullets、sortedCurrencies TWD 未置頂三項常見錯誤與修法 |
-| 2026-03-08 | v3.9 | 新增「CF SEO 直通實踐」：MailtoLink 模式、squirrelscan 假陽性識別、CF API token 限制、noindex 頁面正確行為                     |
-| 2026-03-08 | v3.8 | 補充 002 v2 結構化索引規格與 FAQ/SEOHelmet Troubleshooting                                                                     |
-| 2026-03-08 | v3.7 | 補充 `002` 操作 / incident 規則：新紀錄使用 entry blocks，失敗紀錄必須寫出根因、影響、修復與預防                               |
-| 2026-03-08 | v3.6 | 新增 Troubleshooting #7-#8：FAQPage 重複與 `SEOHelmet` client head 重複/殘留的極簡解法                                         |
-| 2026-03-07 | v3.5 | 新增 Troubleshooting #6「Prettier 格式漂移」：prebuild 產出物應加入 `.prettierignore`，禁止 prebuild script 呼叫 Prettier API  |
-| 2026-03-06 | v3.4 | 新增「security-headers Worker 部署 SOP」：wrangler 認證、esbuild 說明、版本號同步、假陽性清單、CSP connect-src 必要域名        |
-| 2026-03-02 | v3.3 | 新增 Phase 7「版本發布與依賴管理」：changesets 流程、Dependabot 警告處理、PR Rebase 操作（基於 v2.6.0 發布執行歷史）           |
-| 2026-02-27 | v3.2 | 補充 Cloudflare 邊緣同步規則：release 需同時考慮 app bundle、security-headers worker 與 secret 缺口                            |
-| 2026-02-27 | v3.1 | 升級為企業 SOP / 稽核友善執行手冊：新增文件控制、執行程序、稽核證據要求、例外處理與 `gh` 合併 SOP                              |
-| 2026-02-27 | v3.0 | 依 `.example/config` 風格重寫並對齊 monorepo 實際規則                                                                          |
+| 日期       | 版本      | 變更摘要                                                                                                                   |
+| ---------- | --------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-22 | v4.9      | 移除 AGENTS.md 重複區塊（Git rules、QA rules、Skills、Prettier#6、Worker SOP、code comment）→ 改為單行參考，精簡約 ~180 行 |
+| 2026-03-22 | v4.8      | Phase 7 精簡：SemVer 決策表 + Changeset 規範 + 一鍵發版流程（pnpm changeset:version SSOT 整合）                            |
+| 2026-03-22 | v4.7      | 補充 Worker 假陽性清單；新增資產快取驗證 curl 快查表                                                                       |
+| 2026-03-17 | v4.6      | 新增 SEO 內容新鮮度 SSOT 規則（template-bleed、dateModified、FAQPage 重複）                                                |
+| 2026-03-13 | v4.5      | 補充 RateWise release 邊緣同步規範與 live precache 驗證 SOP                                                                |
+| 2026-02-27 | v3.0–v4.4 | 建立企業 SOP 執行手冊、CF SEO 直通實踐、PWA 防護、security-headers Worker 部署 SOP 等歷史迭代                              |
 
 ---
 
 **最後更新**: 2026-03-22T00:00:00+0800
-**版本**: v4.9（移除重複區塊，AGENTS.md 為控制規則 SSOT，CLAUDE.md 為操作 SOP）
+**版本**: v4.9（AGENTS.md 為控制規則 SSOT；CLAUDE.md 為操作 SOP）
