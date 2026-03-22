@@ -120,6 +120,8 @@ scripts/              # 驗證/SEO/版本/SSOT 腳本
 | `AGT-QA-01`  | QA 截圖管理  | 截圖集中於 `screenshots/`，不得污染 root                                                      | 檔案路徑、`git status --ignored --short` | `.gitignore`, 本 SOP                             |
 | `AGT-DOC-02` | 文件同步     | 流程/規則變更需同步更新 `AGENTS.md` / `CLAUDE.md`                                             | 文件 diff                                | 本 SOP、`CLAUDE.md`                              |
 | `AGT-MRG-01` | 主支合併     | 透過 PR 與 `gh` 進行合併；避免未審查直推主支                                                  | PR 編號、merge 記錄                      | GitHub / `gh`                                    |
+| `AGT-VER-01` | SemVer 決策  | 每個 PR/功能 **必須**以正確 bump 類型建立 changeset；發版前 CHANGELOG 條目必須存在            | `.changeset/*.md` 存在、CHANGELOG diff   | `CLAUDE.md` Phase 7、semver.org                  |
+| `AGT-VER-02` | 發版 SSOT    | 執行 `pnpm changeset:version` 完成版本升級；禁止手動修改版本號或個別執行 prebuild scripts     | `git diff` 包含全部版本嵌入產出物        | `scripts/update-release-metadata.js`             |
 
 ## Mandatory Workflow (Agent SOP)
 
@@ -393,15 +395,64 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 
 基於多次成功執行歷史，以下為經驗證的高效流程模式：
 
-### 版本發布完整流程（v2.6.0 實例）
+### 版本發布完整流程（SSOT 整合版）
 
-1. **Changesets 處理**：`pnpm changeset version` 自動生成 CHANGELOG 並同步版本號
-2. **版本 SSOT 驗證**：確認 root `package.json` 與 app `package.json` 版本一致
-3. **公開 API 同步**：執行 `pnpm --filter @app/<name> prebuild` 更新 `api/latest.json`、`llms.txt`、`openapi.json`
-4. **原子化提交**：
-   - Commit 1: `chore(release): <App> v<X.Y.Z>`（版本升級）
-   - Commit 2: `docs(<app>): 同步公開 API 文件版本至 v<X.Y.Z>`（API 檔案）
-5. **驗證推送**：所有 pre-push hooks 必須通過（typecheck + test + build）
+#### SemVer 決策（MUST 遵守 semver.org 規則）
+
+| bump                      | 何時使用                                                                 |
+| ------------------------- | ------------------------------------------------------------------------ |
+| **PATCH** `z+1`           | Bug 修復、安全依賴升級、效能改善（不改公開行為）                         |
+| **MINOR** `y+1, z→0`      | 新功能、新頁面、新幣別、新 API endpoint、棄用宣告（backward-compatible） |
+| **MAJOR** `x+1, y→0, z→0` | 移除既有路由/功能、破壞性資料格式變更、不相容升級                        |
+
+**決策快問**：「既有使用者的使用方式會被破壞？」YES → MAJOR；NO + 有新功能 → MINOR；NO + 只修 bug → PATCH。
+
+#### Changeset 建立規範（AGT-VER-01）
+
+每個 PR / 功能完成後 **必須**執行：
+
+```bash
+pnpm changeset
+# → 選擇 package（@app/ratewise）
+# → 選擇 bump 類型（major / minor / patch）
+# → 輸入變更描述（使用者視角，過去式，禁止描述實作細節）
+```
+
+**描述品質規則**：
+
+- ✅ `新增 /usd-twd/500/ 路徑型金額換算頁，Googlebot 可讀取靜態換算結果`
+- ✅ `修正 KRW 金額連結產生 /krw-twd50000/ 而非 /krw-twd/50000/ 的問題`
+- ❌ `在 routes.tsx 新增 :amount 子路由並修改 hook`（描述實作，非影響）
+
+#### 一鍵發版流程（AGT-VER-02）
+
+```bash
+# Step 1：確認 .changeset/ 有待發布的 changeset 檔
+ls .changeset/
+
+# Step 2：一鍵執行（涵蓋所有 SSOT 更新）
+pnpm changeset:version
+# 自動完成：版本升級 + CHANGELOG + root package.json sync
+#           + api/latest.json + llms.txt + llms-full.txt
+#           + manifest.webmanifest + openapi.json + robots.txt + sitemap.xml
+
+# Step 3：確認所有版本嵌入產出物均已更新
+git diff --stat
+
+# Step 4：原子化提交（單一 commit）
+git add .
+git commit  # message: chore(release): @app/ratewise v<X.Y.Z>
+            # commitlint 已豁免 chore(release): 格式
+
+# Step 5：推送 → pre-push 自動驗證（typecheck + test + build:ratewise）
+git push origin main
+```
+
+**禁止操作**：
+
+- 禁止手動修改 `package.json` 版本號（changeset 統一管理）
+- 禁止個別手動執行 prebuild scripts（`update-release-metadata` 統一執行）
+- 禁止跳過 `.changeset/` 直接改 CHANGELOG（SSOT 破壞）
 
 ### Dependabot 安全警告處理流程
 
