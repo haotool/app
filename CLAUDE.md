@@ -181,34 +181,11 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 5. 強制推送：`git push origin temp-rebase:<branch> --force-with-lease`
 6. 等待 CI 通過後使用 `gh pr merge <NUMBER> --squash` 合併
 
-## Git Workflow & Commit Rules（操作摘要）
+## Git Workflow & Commit Rules
 
-### Commit Message（SSOT: `commitlint.config.cjs`）
+Commit 格式、Husky hooks 規則詳見 `AGENTS.md` § Commit Format / Quality Gates。
 
-```text
-type(scope): 繁體中文標題
-
-- 條列變更 1
-- 條列變更 2
-
-測試：xxx
-```
-
-### Required Rules（摘要）
-
-- 標題需包含中文
-- 主體需存在且第一個非空行以 `- ` 開頭
-- 必須包含 `測試：...`
-- 禁止常見簡體字
-- type 限定：`feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`
-
-### Husky Hooks（實際執行內容）
-
-- `commit-msg`: commitlint
-- `pre-commit`: `lint-staged`（`eslint --fix --no-warn-ignored` + `prettier --write`）→ `typecheck` → `format` → 條件式 SSOT 驗證 → 條件式版本 SSOT 驗證
-- `pre-push`: `typecheck` → `test` → `build:ratewise`
-
-### `gh` 合併主支 SOP（標準流程）
+### `gh` 合併主支 SOP
 
 ```bash
 # 1. 檢查認證與 PR 狀態
@@ -243,86 +220,9 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 - `buildShareImageJsonLd` 的 `dateModified` 必須使用 `BUILD_TIME`（buildtime 常數），不可寫死日期。
 - 新增 FAQ 或 schema 時先確認無重複 `@type`（尤其 `FAQPage`、`BreadcrumbList`）；驗證指令：`grep -r "FAQPage" dist/ | wc -l`。
 
-## QA Artifacts & Screenshots（最佳實踐）
+## QA Artifacts & Root Hygiene
 
-### 強制規則
-
-- 截圖 **必須**存放於 `screenshots/`
-- QA 圖檔 **不得**放在 repo root（如 `*.png`, `*.jpg`）
-- Playwright / Puppeteer MCP **必須**顯式使用 `filename: "screenshots/<name>.png"`
-- `screenshots/` 為 QA 暫存目錄，除非任務明確要求，**不得**提交
-
-### 範例
-
-```bash
-browser_take_screenshot --filename "screenshots/ratewise-home.png"
-```
-
-### 截圖規範定位（索引）
-
-- `CLAUDE.md` → 本章（QA Artifacts & Screenshots）
-- `AGENTS.md` → `QA Artifact Rules（截圖與測試產物）`
-- `AGENTS.md` → `Root Hygiene（根目錄整潔控制）`
-
-## Root Hygiene（根目錄整潔）
-
-### 常見原因
-
-- `.playwright-mcp/` 大量暫存截圖
-- root-level QA 圖檔（通常已被 `.gitignore` 忽略）
-- AI 工具目錄（`.agents`, `.claude`, `.cursor`, `.agent`）
-- monorepo 共用設定集中於 root（正常）
-
-### 排查方式
-
-```bash
-git status --short
-git status --ignored --short
-ls -la
-```
-
-### 清理注意
-
-- 先區分正式資產與本機暫存再刪除
-- `.example/` 為參考模板目錄（已忽略），清理通常不會進入 commit
-- 不要誤刪未追蹤的 `.agents/skills/*`（本機技能庫）
-
-## Skills Strategy（本地 / 全域）
-
-### 優先順序
-
-1. `.agents/skills/*`（專案本地）
-2. `~/.agents/skills/*`（使用者全域）
-3. `~/.codex/skills/*`（Codex 全域備援）
-
-### 專案常用 Skills（建議預設納入思考）
-
-- `react`
-- `vite-react-best-practices`
-- `vitest`
-- `pwa-development`
-- `typescript`
-- `wcag-compliance`
-- `ui-ux-pro-max`
-- `framer-motion`
-- `tailwind-v4-shadcn`
-- `zod`
-- `tdd`
-
-### 全域補強（按任務啟用）
-
-- `seo-audit`, `audit-website`
-- `frontend-design`, `web-design-guidelines`
-- `vercel-react-best-practices`
-- `leaflet-mapping`
-- `security-review`
-- `find-skills`
-
-### 使用規則
-
-- 任務明確提到 skill 名稱或明顯符合 skill 描述時，先讀 `SKILL.md`
-- 同一任務使用最小必要 skill 集合，避免規則衝突
-- skill 不可用時要明確回報，並採次佳方案持續推進
+截圖存 `screenshots/<name>.png`，不得污染 root；詳見 `AGENTS.md` § QA Artifact Rules / Root Hygiene。
 
 ## Documentation Sync Map（文件同步地圖）
 
@@ -360,25 +260,7 @@ ls -la
 - `lint-staged` 會對 `*.md` 執行 `prettier --write`
 - 表格與長段落常被重排（尤其 `docs/dev/002...`）
 
-### 6. Prettier 格式漂移（prebuild 產出物）
-
-**症狀**：`prettier --check` 每次 pre-commit 報 `api/latest.json`、`openapi.json`、`llms.txt` 格式不一致。
-
-**根本原因**：`JSON.stringify(null, 2)` 總是多行展開；Prettier 依 `printWidth` 決定是否單行。每次 prebuild 重新生成 → 格式漂移。
-
-**正確做法（MUST）**：將 prebuild 產出物加入 `.prettierignore`；**禁止**在 prebuild script 內呼叫 Prettier API。
-
-```
-# .prettierignore — Generated files（prebuild 自動產出，非源碼）
-apps/ratewise/public/api/latest.json
-apps/ratewise/public/openapi.json
-apps/ratewise/public/llms.txt
-apps/ratewise/public/llms-full.txt
-```
-
-**業界依據**：Prettier 官方文件建議用 `.prettierignore` 排除非源碼檔案；Next.js、TypeScript 主流專案均採此做法。
-
-### 7. Search Console 報 `FAQPage` 欄位重複
+### 6. Search Console 報 `FAQPage` 欄位重複
 
 - 預設只在真正 FAQ 頁輸出 `FAQPage`
 - 首頁、幣別頁、About/Guide 若只是 FAQ 文案，保留內容即可，不要再標 `FAQPage`
@@ -469,56 +351,7 @@ curl -sI "https://app.haotool.org/ratewise/assets/<chunk>.js" | grep -i cross-or
 
 ### 5. security-headers Worker 部署 SOP
 
-**目錄**：`security-headers/`，唯一維護對象為 `src/worker.js`
-
-**認證**：wrangler OAuth token 會過期；部署前先確認：
-
-```bash
-npx wrangler whoami  # 若失敗改用 CLOUDFLARE_API_TOKEN env var 或 wrangler login
-```
-
-**部署**：
-
-```bash
-cd security-headers && npx wrangler deploy
-```
-
-**版本號**：修改時必須同步 4 處（JSDoc 標題、變更記錄、`__network_probe__` header、主回應 header）
-
-**部署後驗證**（必須用 GET，不能用 HEAD）：
-
-```bash
-curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy-version\|script-src'
-# 範例：curl -s --compressed https://app.haotool.org/ratewise/ -D - -o /dev/null | grep -i 'x-security-policy-version\|script-src'
-```
-
-**已知假陽性**：
-
-- HEAD 請求 CSP 無 hash — 正確行為（無 body 可計算）
-- Playwright 顯示 `ERR_FAILED @ gtag/js` — `--disable-background-networking` 測試環境攔截，非 CSP 問題
-- Cloudflare Dashboard 程式碼與本地不同 — wrangler 用 esbuild 編譯，正常現象
-- `.webmanifest` 無明確 Cache-Control（Worker 未覆寫）— 正確行為；上游 Zeabur 回傳 `no-cache, must-revalidate`，符合 PWA 最佳實踐（filename 不含 hash，不可設 `immutable`）
-- `.webmanifest` 出現 `cf-cache-status: HIT` + 大 `age` 值 — 正常現象；CF edge 快取 manifest 屬預期，`no-cache` 確保瀏覽器仍做條件式請求（ETag）
-
-**資產快取驗證指令（快速查閱）**：
-
-```bash
-# HTML — 預期：no-cache + DYNAMIC（nonce 型 CSP 無法 edge 緩存）
-curl -sI https://app.haotool.org/ratewise/ | grep -i "cache-control\|cf-cache"
-
-# Hashed JS/CSS — 預期：max-age=31536000, public, immutable + HIT
-curl -sI "https://app.haotool.org/ratewise/assets/<hash>.js" | grep -i "cache-control\|cf-cache"
-
-# .webmanifest — 預期：no-cache, must-revalidate（可有 HIT，正常）
-curl -sI https://app.haotool.org/ratewise/manifest.webmanifest | grep -i "cache-control\|cf-cache\|etag"
-
-# OG 圖片 — 預期：max-age=86400 + CORS
-curl -sI https://app.haotool.org/ratewise/og-image.jpg | grep -i "cache-control\|access-control"
-```
-
-**esbuild 說明**：wrangler deploy 自動用 esbuild 打包，Cloudflare 上看到的是編譯輸出（含 `__defProp`、`__name()` 等 helper）— 只維護 `src/worker.js`，不直接編輯 Dashboard。
-
-**ratewise CSP connect-src 必要域名**：`googletagmanager.com`（GA4 配置請求）、`google-analytics.com`、`region1.google-analytics.com`、`analytics.google.com`、`cdn.jsdelivr.net`
+部署流程、假陽性清單、資產快取驗證指令詳見 `AGENTS.md` § security-headers Worker 部署 SOP。
 
 ## Cloudflare SEO 直通實踐（CF SEO Straight-Path Patterns）
 
@@ -563,61 +396,15 @@ import { MailtoLink } from '../components/MailtoLink';
 
 squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不需修正。
 
-## 程式碼註解風格（繁體中文，簡短正式）
+## 程式碼註解風格
 
-### 原則（MUST）
-
-- 繁體中文撰寫，句末加句號
-- 一句話說明「目的」或「設計決策」；禁止翻譯變數名稱或重複敘述程式碼
-- 多行說明用連續 `//`，不用 `/* */`
-- 段落分隔用空行，不用分隔線
-
-### 範例（以 `sw.ts` 為標準）
-
-```typescript
-// 預快取 Vite 產出的靜態資源。
-precacheAndRoute(self.__WB_MANIFEST);
-
-// prompt 模式：新 SW 進入 waiting 狀態，由使用者確認後才接管，防止版本撕裂導致 Load failed。
-clientsClaim();
-
-// 訊息處理：SKIP_WAITING（prompt 更新流程）/ FORCE_HARD_RESET（緊急清除快取）。
-self.addEventListener('message', ...);
-
-// 導覽請求（HTML）：NetworkFirst，2 秒 timeout 後回落快取。
-// request.mode === 'navigate' 為 Workbox 官方建議，較 destination === 'document' 更精確。
-registerRoute(
-  ({ request }) => request.mode === 'navigate',
-  new NetworkFirst({ ... }),
-);
-```
-
-### 反模式（MUST NOT）
-
-```typescript
-// ❌ 翻譯程式碼（毫無資訊）
-// 呼叫 precacheAndRoute 函數
-
-// ❌ 過長敘述（拆短句或拆段落）
-// 這個 setCatchHandler 在導覽失敗時提供離線 fallback，依序嘗試 runtime cache、precache index.html、precache offline.html，並在過程中加入 origin 驗證防止跨域攻擊...
-
-// ✅ 簡短正式
-// 離線回退：runtime cache → precache index.html → offline.html。
-```
-
-## 外部寫作與 SOP 格式基準（2026-02-27 查詢）
-
-本文件格式與寫法結合 `.example/config/CLAUDE.md` 的簡潔風格，並參考：
-
-- Google Developer Documentation Style Guide / Best Practices: <https://developers.google.com/style> / <https://developers.google.com/style/documentation>
-- Microsoft Writing Style Guide: <https://learn.microsoft.com/en-us/style-guide/welcome/>
-- Diátaxis（文檔類型分工）: <https://diataxis.fr/start-here/>
-- University of Utah SOP template guidance（SOP 結構欄位）: <https://campusguides.lib.utah.edu/c.php?g=160840&p=1055382>
+詳見 `AGENTS.md` § 程式碼註解風格（繁體中文、簡短正式、禁止翻譯程式碼）。
 
 ## 修訂紀錄（Revision History）
 
 | 日期       | 版本 | 變更摘要                                                                                                                       |
 | ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-22 | v4.9 | 移除 AGENTS.md 重複區塊（Git rules、QA rules、Skills、Prettier#6、Worker SOP、code comment）→ 改為單行參考，精簡約 ~180 行     |
 | 2026-03-22 | v4.8 | Phase 7 精簡：SemVer 決策表 + Changeset 規範 + 一鍵發版流程（pnpm changeset:version SSOT 整合）                                |
 | 2026-03-22 | v4.7 | 補充 Worker 假陽性：`.webmanifest` no-cache 為正確行為、CF HIT 屬正常；新增資產快取驗證 curl 指令快查表                        |
 | 2026-03-17 | v4.6 | 新增「SEO 內容新鮮度與真實性（SSOT 規則）」：文案 SSOT、template-bleed 防護、dateModified 規則、FAQPage 重複診斷指令           |
@@ -641,4 +428,4 @@ registerRoute(
 ---
 
 **最後更新**: 2026-03-22T00:00:00+0800
-**版本**: v4.8（Phase 7 精簡：SemVer + Changeset + 一鍵發版 SSOT）
+**版本**: v4.9（移除重複區塊，AGENTS.md 為控制規則 SSOT，CLAUDE.md 為操作 SOP）

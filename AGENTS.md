@@ -374,6 +374,19 @@ curl -s --compressed <TARGET_URL> -D - -o /dev/null | grep -i 'x-security-policy
 
 **ratewise CSP connect-src 必要域名**：`googletagmanager.com`（GA4 配置請求）、`google-analytics.com`、`region1.google-analytics.com`、`analytics.google.com`、`cdn.jsdelivr.net`
 
+**資產快取驗證**（預期回應快查）：
+
+```bash
+# HTML：no-cache + DYNAMIC（nonce CSP 無法 edge 緩存）
+curl -sI https://app.haotool.org/ratewise/ | grep -i "cache-control\|cf-cache"
+# Hashed JS/CSS：max-age=31536000, immutable + HIT
+curl -sI "https://app.haotool.org/ratewise/assets/<hash>.js" | grep -i "cache-control\|cf-cache"
+# .webmanifest：no-cache, must-revalidate（HIT 正常）
+curl -sI https://app.haotool.org/ratewise/manifest.webmanifest | grep -i "cache-control\|cf-cache\|etag"
+# OG 圖片：max-age=86400 + CORS
+curl -sI https://app.haotool.org/ratewise/og-image.jpg | grep -i "cache-control\|access-control"
+```
+
 ## Prohibited Files / Actions
 
 ### 禁止建立或保留（除非任務明確要求）
