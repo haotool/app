@@ -1270,6 +1270,25 @@ function buildRateExampleSentence(code: string, displayName: string): string {
   return `以換 ${twdLabel}元新台幣的${displayName}為例：台灣銀行臨櫃現金實際只能換到 ${fCash} ${code}，而 Google（資料來源：Morningstar）、XE、Wise、Apple 計算機（資料來源：Yahoo Finance）等工具顯示的市場中間價換算結果約為 ${fMid} ${code}——兩者相差約 ${fDiff} ${code}（差距 ${ex.diffPct}%）。若先用中間價估算再去台銀換匯，實際會比預期少換 ${fDiff} ${code}，等於多花了 ${ex.diffTWD} 元新台幣的匯差。（匯差數據每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
 }
 
+/**
+ * 在 FAQ 答案中嵌入靜態匯率數字，讓 Googlebot 原始 HTML 層次即可讀到匯率。
+ * 數據來自 SEO_RATE_EXAMPLES（每週 GitHub Actions 自動更新）。
+ */
+function buildCashSellRateSentence(code: string, baseAmount: number): string {
+  const ex = SEO_RATE_EXAMPLES[code];
+  if (!ex) return '';
+  const result = Math.round(baseAmount * ex.cashSell);
+  return `以台銀現金賣出匯率換算，${formatAmount(baseAmount)} ${code} ≈ ${formatAmount(result)} 元台幣（台銀現金賣出 1 ${code} = ${ex.cashSell} TWD，匯率每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
+}
+
+/** 反向頁（TWD→外幣）FAQ：嵌入台幣換外幣的靜態換算結果。 */
+function buildTwdToForeignRateSentence(code: string, twdAmount: number): string {
+  const ex = SEO_RATE_EXAMPLES[code];
+  if (!ex) return '';
+  const result = Math.round(twdAmount / ex.cashSell);
+  return `以台銀現金賣出匯率換算，${formatAmount(twdAmount)} 台幣 ≈ ${formatAmount(result)} ${code}（台銀現金賣出 1 ${code} = ${ex.cashSell} TWD，匯率每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
+}
+
 export function getCurrencyLandingPageContent(
   code: CurrencyLandingCode,
 ): CurrencyLandingPageContent {
@@ -1371,7 +1390,7 @@ export function getCurrencyLandingPageContent(
       },
       {
         question: override.question,
-        answer: `使用本工具可即時查看${displayName}最新匯率，資料來源為臺灣銀行牌告匯率，每 5 分鐘自動更新。點擊「開始換算」即可輸入任意金額查看結果。`,
+        answer: `${buildCashSellRateSentence(code, override.popularAmounts[0])}使用本工具可查看 5 分鐘即時更新匯率，點擊「開始換算」輸入任意金額查看結果。`,
       },
       {
         question: `${displayName}的現金匯率和即期匯率差多少？`,
@@ -1391,7 +1410,7 @@ export function getCurrencyLandingPageContent(
       },
       {
         question: `${formatAmount(override.popularAmounts.at(-1) ?? 0)} ${displayName}大約等於多少台幣？`,
-        answer: `${formatAmount(override.popularAmounts.at(-1) ?? 0)} ${displayName}的台幣金額會隨匯率浮動，請輸入金額即時查看最新換算結果。資料參考臺灣銀行牌告匯率，每 5 分鐘自動更新。`,
+        answer: `${buildCashSellRateSentence(code, override.popularAmounts.at(-1) ?? 0)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
       },
       {
         question: `在台灣哪裡可以換${displayName}？`,
@@ -1648,7 +1667,7 @@ export function getReverseCurrencyLandingPageContent(
       },
       {
         question: `${formatAmount(override.popularTwdAmounts[2] ?? 30000)} 台幣可以換多少${displayName}？`,
-        answer: `實際金額依台銀牌告匯率每日浮動，請輸入台幣金額即時查看最新換算結果。資料每 5 分鐘自動更新，並顯示現金與即期兩種報價。`,
+        answer: `${buildTwdToForeignRateSentence(code, override.popularTwdAmounts[2] ?? 30000)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
       },
       {
         question: `去哪換${displayName}最省？`,
