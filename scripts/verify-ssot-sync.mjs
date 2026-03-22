@@ -81,6 +81,14 @@ function extractPathsFromTS(filePath) {
 async function extractPathsFromMJS(filePath) {
   try {
     const mod = await import(pathToFileURL(filePath).href);
+    // 僅比較靜態基礎路徑（SEO_PATHS 現在還包含動態生成的 amount 落地頁，不納入比較）。
+    if (mod.CONTENT_SEO_PATHS && mod.CURRENCY_SEO_PATHS && mod.REVERSE_CURRENCY_SEO_PATHS) {
+      return [
+        ...mod.CONTENT_SEO_PATHS,
+        ...mod.CURRENCY_SEO_PATHS,
+        ...mod.REVERSE_CURRENCY_SEO_PATHS,
+      ];
+    }
     if (mod.SEO_PATHS && Array.isArray(mod.SEO_PATHS) && mod.SEO_PATHS.length > 0) {
       return [...mod.SEO_PATHS];
     }

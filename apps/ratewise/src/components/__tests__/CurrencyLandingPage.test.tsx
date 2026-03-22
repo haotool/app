@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { CurrencyLandingPage } from '../CurrencyLandingPage';
 
 describe('CurrencyLandingPage', () => {
-  it('常見金額換算應使用可爬連結（Wise-pattern），指向幣對頁 ?amount=', () => {
+  it('常見金額換算應使用可爬連結（Wise-pattern），指向路徑型 URL（/krw-twd/50000/）', () => {
     render(
       <MemoryRouter>
         <CurrencyLandingPage
@@ -42,10 +42,10 @@ describe('CurrencyLandingPage', () => {
       </MemoryRouter>,
     );
 
-    // Wise-pattern：common amounts 是可爬的 <a> 連結（非 <button>），指向幣對頁 ?amount=
+    // Wise-pattern：common amounts 是可爬的 <a> 連結（非 <button>），指向路徑型 URL。
     const amountLink = screen.getByRole('link', { name: '50000 韓元多少台幣？' });
     expect(amountLink).toBeInTheDocument();
-    expect(amountLink).toHaveAttribute('href', '/krw-twd/?amount=50000');
+    expect(amountLink).toHaveAttribute('href', '/krw-twd/50000/');
 
     // 不是按鈕（舊設計：導向首頁 deep-link）
     expect(screen.queryByRole('button', { name: '50000 韓元多少台幣？' })).not.toBeInTheDocument();

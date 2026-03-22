@@ -310,10 +310,10 @@ export function CurrencyLandingPage({
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {commonAmounts.map((entry) => (
-                    // Wise-pattern：以 Link 產生可爬取的 ?amount= URL，讓 Googlebot 能發現並索引各金額頁。
+                    // Wise-pattern：路徑型 URL（/usd-twd/500/），可被 SSG 預渲染，Googlebot 直接索引靜態 HTML。
                     <Link
                       key={entry.amount}
-                      to={`${pathname}/?amount=${entry.amount}`}
+                      to={`${pathname.replace(/\/$/, '')}/${entry.amount}/`}
                       className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface hover:bg-primary/10 transition-colors group text-left"
                     >
                       <h3 className="text-sm font-medium text-text group-hover:text-primary transition-colors">

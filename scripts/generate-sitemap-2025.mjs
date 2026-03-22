@@ -31,6 +31,7 @@ const __dirname = dirname(__filename);
 import {
   SEO_PATHS,
   CURRENCY_SEO_PATHS,
+  REVERSE_CURRENCY_SEO_PATHS,
   SITE_CONFIG,
   SHARE_IMAGE,
   IMAGE_RESOURCES,
@@ -226,15 +227,51 @@ CURRENCY_SEO_PATHS.forEach((path) => {
       caption: `RateWise 匯率好工具 - ${currency}/TWD 即時匯率換算`,
     },
   ];
+
+  // 補上對應的 PATH_DEPENDENCIES（若尚未設定）
+  if (!PATH_DEPENDENCIES[path]) {
+    const pageFile = `apps/ratewise/src/pages/${currency}ToTWD.tsx`;
+    PATH_DEPENDENCIES[path] = [pageFile, 'apps/ratewise/src/config/generated/seo-rate-examples.ts'];
+  }
+});
+
+// 動態補上 17 個反向幣別頁 image entries 與 PATH_DEPENDENCIES
+REVERSE_CURRENCY_SEO_PATHS.forEach((path) => {
+  const currency = path.replace(/^\//, '').replace(/^twd-/, '').replace(/\/$/, '').toUpperCase();
+  PAGE_IMAGES[path] = [
+    {
+      loc: OG_IMAGE_URL,
+      caption: `RateWise 匯率好工具 - TWD/${currency} 出國換匯換算`,
+    },
+  ];
+  if (!PATH_DEPENDENCIES[path]) {
+    PATH_DEPENDENCIES[path] = [
+      `apps/ratewise/src/pages/TWDTo${currency}.tsx`,
+      'apps/ratewise/src/config/generated/seo-rate-examples.ts',
+    ];
+  }
 });
 
 /**
  * 優先用 git commit 日期代表重大內容更新日期，失敗時回退到檔案 mtime。
+ * 金額落地頁（/usd-twd/500/）繼承父幣別頁（/usd-twd/）的依賴設定。
  * @param {string} path - SEO 路徑
  * @returns {Date} 文件修改時間
  */
 function getLastModDate(path) {
-  const dependencyFiles = PATH_DEPENDENCIES[path];
+  // 金額落地頁：繼承父幣別頁依賴（/usd-twd/500/ → /usd-twd/）。
+  let lookupPath = path;
+  const isAmountPage =
+    CURRENCY_SEO_PATHS.some((p) => path.startsWith(p) && path !== p) ||
+    REVERSE_CURRENCY_SEO_PATHS.some((p) => path.startsWith(p) && path !== p);
+  if (isAmountPage) {
+    const parent =
+      CURRENCY_SEO_PATHS.find((p) => path.startsWith(p) && path !== p) ??
+      REVERSE_CURRENCY_SEO_PATHS.find((p) => path.startsWith(p) && path !== p);
+    if (parent) lookupPath = parent;
+  }
+
+  const dependencyFiles = PATH_DEPENDENCIES[lookupPath];
   if (!dependencyFiles?.length) {
     console.warn(`⚠️  No dependency mapping for ${path}, using current time`);
     return new Date();

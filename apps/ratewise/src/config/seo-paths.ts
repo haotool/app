@@ -67,7 +67,71 @@ export const REVERSE_CURRENCY_SEO_PATHS = [
   '/twd-vnd/',
 ] as const;
 
+/**
+ * 各幣別熱門金額（外幣→TWD 方向）
+ * 與 seo-paths.config.mjs FORWARD_AMOUNTS 同步。
+ */
+const FORWARD_AMOUNTS: Record<string, number[]> = {
+  aud: [1, 20, 50, 100, 500, 1000],
+  cad: [1, 20, 50, 100, 500, 1000],
+  chf: [1, 10, 50, 100, 500, 1000],
+  cny: [1, 100, 500, 1000, 5000, 10000],
+  eur: [1, 10, 50, 100, 500, 1000],
+  gbp: [1, 10, 50, 100, 500, 1000],
+  hkd: [1, 100, 500, 1000, 5000, 10000],
+  idr: [10000, 50000, 100000, 500000, 1000000, 5000000],
+  jpy: [1000, 3000, 5000, 10000, 30000, 50000, 100000],
+  krw: [1000, 5000, 10000, 50000, 100000, 300000, 500000],
+  myr: [1, 10, 50, 100, 500, 1000],
+  nzd: [1, 10, 50, 100, 500, 1000],
+  php: [100, 500, 1000, 3000, 5000, 10000],
+  sgd: [1, 10, 50, 100, 500, 1000],
+  thb: [100, 500, 1000, 3000, 5000, 10000],
+  usd: [1, 10, 50, 100, 500, 1000],
+  vnd: [10000, 50000, 100000, 500000, 1000000, 5000000],
+};
+
+/**
+ * 各幣別熱門台幣金額（TWD→外幣 方向）
+ * 與 seo-paths.config.mjs REVERSE_TWD_AMOUNTS 同步。
+ */
+const REVERSE_TWD_AMOUNTS: Record<string, number[]> = {
+  aud: [10000, 30000, 50000, 100000, 200000, 300000],
+  cad: [10000, 30000, 50000, 100000, 200000, 300000],
+  chf: [10000, 30000, 50000, 100000, 200000, 300000],
+  cny: [5000, 10000, 30000, 50000, 100000, 200000],
+  eur: [10000, 30000, 50000, 100000, 200000, 300000],
+  gbp: [10000, 30000, 50000, 100000, 200000, 300000],
+  hkd: [5000, 10000, 30000, 50000, 100000, 200000],
+  idr: [3000, 5000, 10000, 30000, 50000, 100000],
+  jpy: [10000, 30000, 50000, 100000, 200000, 300000],
+  krw: [5000, 10000, 30000, 50000, 100000, 200000],
+  myr: [3000, 5000, 10000, 30000, 50000, 100000],
+  nzd: [10000, 30000, 50000, 100000, 200000, 300000],
+  php: [3000, 5000, 10000, 30000, 50000, 100000],
+  sgd: [5000, 10000, 30000, 50000, 100000, 200000],
+  thb: [5000, 10000, 30000, 50000, 100000, 200000],
+  usd: [10000, 30000, 50000, 100000, 200000, 300000],
+  vnd: [3000, 5000, 10000, 30000, 50000, 100000],
+};
+
+/** 外幣→TWD 金額落地頁路徑（路徑型，/usd-twd/500/）。 */
+export const CURRENCY_AMOUNT_SEO_PATHS: string[] = CURRENCY_SEO_PATHS.flatMap((path) => {
+  const code = path.replace(/\//g, '').replace('-twd', '');
+  return (FORWARD_AMOUNTS[code] ?? []).map((a) => `${path}${a}/`);
+});
+
+/** TWD→外幣 金額落地頁路徑（路徑型，/twd-usd/50000/）。 */
+export const REVERSE_CURRENCY_AMOUNT_SEO_PATHS: string[] = REVERSE_CURRENCY_SEO_PATHS.flatMap(
+  (path) => {
+    const code = path.replace(/\//g, '').replace('twd-', '');
+    return (REVERSE_TWD_AMOUNTS[code] ?? []).map((a) => `${path}${a}/`);
+  },
+);
+
 // 注意：LEGAL_SSG_PATHS（privacy noindex）不納入 sitemap
+// 注意：amount 落地頁（CURRENCY_AMOUNT_SEO_PATHS / REVERSE_CURRENCY_AMOUNT_SEO_PATHS）不含於此 const，
+// 其路徑為動態生成（string[]），在 vite.config.ts 的 includedRoutes 中另行加入。
 export const SEO_PATHS = [
   ...CONTENT_SEO_PATHS,
   ...CURRENCY_SEO_PATHS,

@@ -507,10 +507,15 @@ export default defineConfig(({ mode }) => {
       concurrency: 10,
       async includedRoutes(paths) {
         // 從 TypeScript SSOT 動態引入 SEO 路徑配置
-        const { getIncludedRoutes } = await import('./src/config/seo-paths');
-        const includedPaths = getIncludedRoutes(paths);
-        console.log('🔍 Available paths:', paths);
-        console.log('✅ Including paths:', includedPaths);
+        const { getIncludedRoutes, CURRENCY_AMOUNT_SEO_PATHS, REVERSE_CURRENCY_AMOUNT_SEO_PATHS } =
+          await import('./src/config/seo-paths');
+        // 基礎 50 頁（靜態路由）+ ~204 頁金額落地頁（路徑型 /usd-twd/500/）
+        const includedPaths = [
+          ...getIncludedRoutes(paths),
+          ...CURRENCY_AMOUNT_SEO_PATHS,
+          ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
+        ];
+        console.log(`✅ Including ${includedPaths.length} paths (base + amount pages)`);
         return includedPaths;
       },
       // 預渲染前處理 HTML

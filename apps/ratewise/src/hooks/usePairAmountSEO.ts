@@ -1,13 +1,11 @@
 /**
  * Wise-pattern 幣對金額動態 SEO hook。
- * 當 URL 含有效 ?amount=X 時，產生金額專屬 title / description / canonical，
- * 使 /usd-twd/?amount=500 等 URL 可被 Googlebot 獨立索引（類 Wise 程序化 SEO）。
- *
- * canonical 固定指向幣對頁路徑 + ?amount=X（非首頁 deep-link），
- * 確保 Disallow: /ratewise/? 不會封鎖此類 URL。
+ * 支援路徑型（/usd-twd/500/）與 query string 型（?amount=500）兩種 URL。
+ * 路徑型優先：params.amount > searchParams.amount，canonical 一律指向路徑型。
+ * 路徑型 URL 可被 vite-react-ssg 預渲染為靜態 HTML，Googlebot 無需執行 JS 即可讀取。
  */
 
-import { useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 export interface UsePairAmountSEOProps {
   currencyCode: string;
@@ -39,8 +37,10 @@ export function usePairAmountSEO({
   defaultCanonical,
   direction = 'to-twd',
 }: UsePairAmountSEOProps): UsePairAmountSEOResult {
+  // 路徑型（/usd-twd/500/）優先；fallback 為 query string（?amount=500）。
+  const params = useParams<{ amount?: string }>();
   const [searchParams] = useSearchParams();
-  const raw = searchParams.get('amount');
+  const raw = params.amount ?? searchParams.get('amount');
   const parsed = raw !== null ? parseFloat(raw) : null;
 
   // 無效金額（null、0、負數、Infinity、NaN）→ 回傳預設 SEO。
@@ -70,9 +70,9 @@ export function usePairAmountSEO({
       ? `${formatted} 台幣今日可換多少${currencyName}？RateWise 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算可兌換的外幣金額，避免被中間價誤導。`
       : `${formatted} ${currencyName}今日換新台幣要多少？RateWise 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算所需台幣金額，避免被中間價誤導。`;
 
-  // canonical = 幣對頁路徑 + ?amount=（自引用，告知 Google 此 URL 可被索引）
+  // canonical：路徑型優先（可被 SSG 預渲染）；query string 型為 backward compat。
   const base = defaultCanonical.endsWith('/') ? defaultCanonical.slice(0, -1) : defaultCanonical;
-  const seoCanonical = `${base}/?amount=${amount}`;
+  const seoCanonical = params.amount ? `${base}/${amount}/` : `${base}/?amount=${amount}`;
 
   return { seoTitle, seoDescription, seoCanonical, amount };
 }

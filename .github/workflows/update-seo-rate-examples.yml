@@ -1,6 +1,6 @@
-# SEO 匯差範例數據每週更新
+# SEO 匯差範例數據每日更新
 #
-# 職責：每週一抓取最新臺灣銀行牌告匯率，計算各幣別現金匯率與市場中間價差距，
+# 職責：每日抓取最新臺灣銀行牌告匯率，計算各幣別現金匯率與市場中間價差距，
 #        更新 apps/ratewise/src/config/generated/seo-rate-examples.ts。
 #
 # 流程（業界最佳實踐 — PR-based，不直接 push main）：
@@ -14,13 +14,13 @@
 #   - PR 流程確保每次入 main 的資料均通過完整驗證
 #   - 可追溯：每次更新均有獨立 PR 紀錄與 CI 狀態
 #
-# 觸發：每週一 02:00 UTC（台灣時間週一 10:00）+ 手動觸發
+# 觸發：每日 02:00 UTC（台灣時間 10:00）+ 手動觸發
 
 name: Update SEO Rate Examples
 
 on:
   schedule:
-    - cron: '0 2 * * 1'
+    - cron: '0 2 * * *'
   workflow_dispatch:
 
 permissions:

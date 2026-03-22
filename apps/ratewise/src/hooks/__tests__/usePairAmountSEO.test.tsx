@@ -3,7 +3,7 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { usePairAmountSEO } from '../usePairAmountSEO';
 
 const DEFAULT_PROPS = {
@@ -31,6 +31,18 @@ function renderWithRoute(url: string, props = DEFAULT_PROPS) {
   return render(
     <MemoryRouter initialEntries={[url]}>
       <TestComponent {...props} />
+    </MemoryRouter>,
+  );
+}
+
+/** 使用路徑型路由（/:amount 參數），測試 path-based URL。 */
+function renderWithPathRoute(url: string, props = DEFAULT_PROPS) {
+  return render(
+    <MemoryRouter initialEntries={[url]}>
+      <Routes>
+        <Route path="/usd-twd/:amount" element={<TestComponent {...props} />} />
+        <Route path="/usd-twd" element={<TestComponent {...props} />} />
+      </Routes>
     </MemoryRouter>,
   );
 }
@@ -146,6 +158,27 @@ describe('usePairAmountSEO', () => {
       const title = screen.getByTestId('title').textContent ?? '';
       // Should contain the amount in some format (with or without comma separators)
       expect(/100[\s,.]?000|100000/.exec(title)).toBeTruthy();
+    });
+  });
+
+  describe('路徑型 URL（/usd-twd/500/）— Wise SSG pattern', () => {
+    it('path params.amount 優先於 searchParams', () => {
+      renderWithPathRoute('/usd-twd/500', DEFAULT_PROPS);
+      const title = screen.getByTestId('title').textContent ?? '';
+      expect(title).toContain('500');
+      expect(title).toContain('美元');
+    });
+
+    it('canonical 使用路徑型（/usd-twd/500/），非 ?amount=', () => {
+      renderWithPathRoute('/usd-twd/500', DEFAULT_PROPS);
+      const canonical = screen.getByTestId('canonical').textContent ?? '';
+      expect(canonical).toMatch(/usd-twd\/500\//);
+      expect(canonical).not.toContain('?amount=');
+    });
+
+    it('amount 值正確解析', () => {
+      renderWithPathRoute('/usd-twd/1000', DEFAULT_PROPS);
+      expect(screen.getByTestId('amount')).toHaveTextContent('1000');
     });
   });
 
