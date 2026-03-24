@@ -139,12 +139,13 @@ const ja = {
     reactTailwind: 'React + Tailwind',
     // 為替レートモードセクション
     rateMode: '為替レートモード',
-    rateModeAuto: '自動',
-    rateModeAutoDesc: 'FROM は売値・TO は買値を自動適用',
+    rateModeAuto: '自動方向',
+    rateModeAutoDesc:
+      '換算方向に応じて自動切替：外貨購入は銀行売値、外貨売却は銀行買値を使用（窓口換算に最も近い）',
     rateModeSell: '売値',
-    rateModeSellDesc: '台湾銀行の売出レートを基準に計算',
+    rateModeSellDesc: '全換算に銀行売値を適用。窓口で外貨現金・電信送金どちらも対応',
     rateModeMid: '中値',
-    rateModeMidDesc: '買値と売値の中間点（市場参考値）',
+    rateModeMidDesc: '売値と買値の中間レート。ネットバンク送金や外貨口座の参考レートに近い',
     // サポートと情報セクション
     supportInfo: 'サポートと情報',
     faq: 'よくある質問',

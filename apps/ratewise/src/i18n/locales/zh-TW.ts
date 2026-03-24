@@ -139,12 +139,13 @@ const zhTW = {
     reactTailwind: 'React + Tailwind',
     // 匯率模式區塊
     rateMode: '匯率模式',
-    rateModeAuto: '自動',
-    rateModeAutoDesc: '依換算方向：FROM 取賣出價、TO 取買入價',
+    rateModeAuto: '自動方向',
+    rateModeAutoDesc:
+      '依換算方向自動切換：買外幣用銀行賣出價，賣外幣用銀行買入價，最接近真實臨櫃換匯報價',
     rateModeSell: '賣出價',
-    rateModeSellDesc: '全程以台銀賣出牌告為準（銀行標準報價）',
+    rateModeSellDesc: '全程以銀行賣出牌告計算，等同到臨櫃買外幣現鈔的報價（現金即期皆適用）',
     rateModeMid: '中間價',
-    rateModeMidDesc: '買入與賣出的中點（市場參考）',
+    rateModeMidDesc: '買入與賣出的中間值，接近網銀電匯或外幣帳戶換匯的參考匯率',
     // 支援與資訊區塊
     supportInfo: '支援與資訊',
     faq: '常見問題',

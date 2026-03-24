@@ -29,6 +29,10 @@ import {
   ChevronRight,
   ExternalLink,
   TrendingUp,
+  Shuffle,
+  Landmark,
+  Scale,
+  type LucideIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -50,21 +54,29 @@ export default function Settings() {
   const pageSeo = APP_ONLY_PAGE_SEO.settings;
   const { rateMode, setRateMode } = useConverterStore();
 
-  const RATE_MODE_OPTIONS: { value: RateMode; labelKey: string; descKey: string }[] = [
+  const RATE_MODE_OPTIONS: {
+    value: RateMode;
+    labelKey: string;
+    descKey: string;
+    icon: LucideIcon;
+  }[] = [
     {
       value: 'auto',
       labelKey: 'settings.rateModeAuto',
       descKey: 'settings.rateModeAutoDesc',
+      icon: Shuffle,
     },
     {
       value: 'sell',
       labelKey: 'settings.rateModeSell',
       descKey: 'settings.rateModeSellDesc',
+      icon: Landmark,
     },
     {
       value: 'mid',
       labelKey: 'settings.rateModeMid',
       descKey: 'settings.rateModeMidDesc',
+      icon: Scale,
     },
   ];
 
@@ -232,7 +244,14 @@ export default function Settings() {
                       transition={segmentedSwitch.indicator}
                     />
                   )}
-                  <span className="text-[11px] font-bold relative z-10">
+                  <motion.span
+                    animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
+                    transition={transitions.default}
+                    className="mb-1 relative z-10"
+                  >
+                    <option.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />
+                  </motion.span>
+                  <span className="text-[10px] font-bold relative z-10">
                     {t(option.labelKey as Parameters<typeof t>[0])}
                   </span>
                 </motion.button>

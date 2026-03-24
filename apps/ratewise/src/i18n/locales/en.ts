@@ -140,12 +140,15 @@ const en = {
     reactTailwind: 'React + Tailwind',
     // Rate Mode section
     rateMode: 'Rate Mode',
-    rateModeAuto: 'Auto',
-    rateModeAutoDesc: 'FROM uses sell rate · TO uses buy rate',
+    rateModeAuto: 'Smart',
+    rateModeAutoDesc:
+      'Auto-switches by direction: buying foreign = bank sell rate, selling foreign = bank buy rate — closest to real counter FX',
     rateModeSell: 'Sell Rate',
-    rateModeSellDesc: 'Bank sell rate for all conversions',
+    rateModeSellDesc:
+      'Bank sell rate throughout — same price as buying foreign cash at the counter (cash or spot)',
     rateModeMid: 'Mid Rate',
-    rateModeMidDesc: 'Midpoint between buy & sell (market reference)',
+    rateModeMidDesc:
+      'Midpoint of buy & sell rates — close to online wire transfer or FX account reference rate',
     // Support & Info section
     supportInfo: 'Support & Info',
     faq: 'FAQ',

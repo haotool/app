@@ -139,12 +139,14 @@ const ko = {
     reactTailwind: 'React + Tailwind',
     // 환율 모드 섹션
     rateMode: '환율 모드',
-    rateModeAuto: '자동',
-    rateModeAutoDesc: 'FROM은 매도율 · TO는 매입율 자동 적용',
+    rateModeAuto: '자동 방향',
+    rateModeAutoDesc:
+      '환산 방향에 따라 자동 전환: 외화 매수는 은행 매도율, 외화 매도는 은행 매입율 적용 (실제 창구 환전에 가장 근접)',
     rateModeSell: '매도율',
-    rateModeSellDesc: '대만은행 매도 고시환율 기준',
+    rateModeSellDesc:
+      '전 구간 은행 매도율 적용. 창구에서 외화 현금 또는 전신환 매수 시와 동일한 기준',
     rateModeMid: '중간율',
-    rateModeMidDesc: '매입·매도율의 중간점 (시장 참고)',
+    rateModeMidDesc: '매도·매입율의 중간값. 인터넷뱅킹 송금이나 외화 계좌 환전 참고 환율에 근접',
     // 지원 및 정보 섹션
     supportInfo: '지원 및 정보',
     faq: '자주 묻는 질문',
