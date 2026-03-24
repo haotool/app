@@ -141,12 +141,11 @@ const ko = {
     rateMode: '환율 모드',
     rateModeAuto: '자동 방향',
     rateModeAutoDesc:
-      '환산 방향에 따라 자동 전환: 외화 매수는 은행 매도율, 외화 매도는 은행 매입율 적용 (실제 창구 환전에 가장 근접)',
+      '방향별 자동 전환: 인터넷뱅킹 송금은 전신환율, 창구 환전은 현금율 적용 — 실제 환전 비용에 가장 근접',
     rateModeSell: '매도율',
-    rateModeSellDesc:
-      '전 구간 은행 매도율 적용. 창구에서 외화 현금 또는 전신환 매수 시와 동일한 기준',
-    rateModeMid: '중간율',
-    rateModeMidDesc: '매도·매입율의 중간값. 인터넷뱅킹 송금이나 외화 계좌 환전 참고 환율에 근접',
+    rateModeSellDesc: '전 구간 은행 매도율 적용. 전신환(인터넷뱅킹)·창구 현금 매수 모두 동일 기준',
+    rateModeMid: '참고율',
+    rateModeMidDesc: '매도·매입 중간값. 정밀도가 낮아 외환 트레이더의 시장 참고용으로 적합',
     // 지원 및 정보 섹션
     supportInfo: '지원 및 정보',
     faq: '자주 묻는 질문',

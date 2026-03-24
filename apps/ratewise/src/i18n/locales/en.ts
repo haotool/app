@@ -142,13 +142,13 @@ const en = {
     rateMode: 'Rate Mode',
     rateModeAuto: 'Smart',
     rateModeAutoDesc:
-      'Auto-switches by direction: buying foreign = bank sell rate, selling foreign = bank buy rate — closest to real counter FX',
+      'Direction-aware: spot rate for online wire, cash rate for counter exchange — mirrors your real FX cost',
     rateModeSell: 'Sell Rate',
     rateModeSellDesc:
-      'Bank sell rate throughout — same price as buying foreign cash at the counter (cash or spot)',
-    rateModeMid: 'Mid Rate',
+      'Bank sell rate throughout: spot for online banking wire, cash for counter exchange',
+    rateModeMid: 'Ref Rate',
     rateModeMidDesc:
-      'Midpoint of buy & sell rates — close to online wire transfer or FX account reference rate',
+      'Buy/sell midpoint, less precise — useful as a forex market reference for traders',
     // Support & Info section
     supportInfo: 'Support & Info',
     faq: 'FAQ',

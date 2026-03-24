@@ -141,11 +141,11 @@ const zhTW = {
     rateMode: '匯率模式',
     rateModeAuto: '自動方向',
     rateModeAutoDesc:
-      '依換算方向自動切換：買外幣用銀行賣出價，賣外幣用銀行買入價，最接近真實臨櫃換匯報價',
+      '依換算方向切換：即期匯率用於網銀換匯，現金匯率用於臨櫃換外幣，最接近真實換匯成本',
     rateModeSell: '賣出價',
-    rateModeSellDesc: '全程以銀行賣出牌告計算，等同到臨櫃買外幣現鈔的報價（現金即期皆適用）',
-    rateModeMid: '中間價',
-    rateModeMidDesc: '買入與賣出的中間值，接近網銀電匯或外幣帳戶換匯的參考匯率',
+    rateModeSellDesc: '全程以銀行賣出牌告計算；即期適用網銀換匯，現金適用臨櫃買外幣現鈔',
+    rateModeMid: '參考價',
+    rateModeMidDesc: '買賣中間價，精準度相對較低，適合外匯交易者做市場行情參考',
     // 支援與資訊區塊
     supportInfo: '支援與資訊',
     faq: '常見問題',

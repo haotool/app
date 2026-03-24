@@ -141,11 +141,11 @@ const ja = {
     rateMode: '為替レートモード',
     rateModeAuto: '自動方向',
     rateModeAutoDesc:
-      '換算方向に応じて自動切替：外貨購入は銀行売値、外貨売却は銀行買値を使用（窓口換算に最も近い）',
+      '方向別に自動切替：電信送金は即時レート、窓口両替は現金レートを適用。実際の換金コストに最も近い',
     rateModeSell: '売値',
-    rateModeSellDesc: '全換算に銀行売値を適用。窓口で外貨現金・電信送金どちらも対応',
-    rateModeMid: '中値',
-    rateModeMidDesc: '売値と買値の中間レート。ネットバンク送金や外貨口座の参考レートに近い',
+    rateModeSellDesc: '全換算に銀行売値を適用。電信送金（即時）・窓口現金どちらも対応',
+    rateModeMid: '参考値',
+    rateModeMidDesc: '売値と買値の中間レート。精度はやや低め。外為トレーダーの市場参考値として活用',
     // サポートと情報セクション
     supportInfo: 'サポートと情報',
     faq: 'よくある質問',

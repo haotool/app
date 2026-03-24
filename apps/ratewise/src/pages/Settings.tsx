@@ -249,7 +249,10 @@ export default function Settings() {
                     transition={transitions.default}
                     className="mb-1 relative z-10"
                   >
-                    <option.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />
+                    <option.icon
+                      className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-primary' : ''}`}
+                      strokeWidth={isActive ? 2.5 : 1.8}
+                    />
                   </motion.span>
                   <span className="text-[10px] font-bold relative z-10">
                     {t(option.labelKey as Parameters<typeof t>[0])}
