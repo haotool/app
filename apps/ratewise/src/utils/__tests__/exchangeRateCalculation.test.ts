@@ -20,6 +20,9 @@ import {
   getCurrencyRateTypeAvailability,
   getPairRateTypeAvailability,
   resolveRateTypeByAvailability,
+  getBuyRate,
+  getMidRate,
+  convertCurrencyAmountWithMode,
 } from '../exchangeRateCalculation';
 import type { RateDetails } from '../../features/ratewise/hooks/useExchangeRates';
 import type { CurrencyCode, RateType } from '../../features/ratewise/types';
@@ -375,5 +378,208 @@ describe('匯率計算邏輯', () => {
       const availability = getPairRateTypeAvailability('TWD', 'KRW', mockRateDetails);
       expect(resolveRateTypeByAvailability('spot', availability)).toBe('cash');
     });
+  });
+});
+
+// ── RateMode 新功能測試 ───────────────────────────────────────────────────────
+
+describe('getBuyRate 函數', () => {
+  it('TWD 應返回 1', () => {
+    expect(getBuyRate('TWD', mockRateDetails, 'spot')).toBe(1);
+  });
+
+  it('應返回 USD 即期買入價', () => {
+    expect(getBuyRate('USD', mockRateDetails, 'spot')).toBe(30.87);
+  });
+
+  it('應返回 JPY 即期買入價', () => {
+    expect(getBuyRate('JPY', mockRateDetails, 'spot')).toBe(0.2);
+  });
+
+  it('KRW spot.buy=0 時應 fallback 到 cash.buy', () => {
+    // KRW: spot.buy=0 (invalid) → fallback to cash.buy=0.0226
+    expect(getBuyRate('KRW', mockRateDetails, 'spot')).toBe(0.0226);
+  });
+
+  it('JPY 無 cash 買入時應 fallback 到 spot 買入', () => {
+    // JPY: cash.buy=null → fallback to spot.buy=0.2
+    expect(getBuyRate('JPY', mockRateDetails, 'cash')).toBe(0.2);
+  });
+
+  it('不存在幣別應返回 null', () => {
+    expect(getBuyRate('XXX' as CurrencyCode, mockRateDetails, 'spot')).toBe(null);
+  });
+});
+
+describe('getMidRate 函數', () => {
+  it('TWD 應返回 1', () => {
+    expect(getMidRate('TWD', mockRateDetails, 'spot')).toBe(1);
+  });
+
+  it('應返回 USD 即期中間價 (30.87+30.97)/2=30.92', () => {
+    expect(getMidRate('USD', mockRateDetails, 'spot')).toBeCloseTo(30.92, 4);
+  });
+
+  it('應返回 JPY 即期中間價 (0.2+0.204)/2=0.202', () => {
+    expect(getMidRate('JPY', mockRateDetails, 'spot')).toBeCloseTo(0.202, 4);
+  });
+
+  it('EUR 現金中間價 (33.0+34.5)/2=33.75', () => {
+    expect(getMidRate('EUR', mockRateDetails, 'cash')).toBeCloseTo(33.75, 4);
+  });
+});
+
+describe('convertCurrencyAmountWithMode — sell 模式（與舊行為相同）', () => {
+  it('1000 USD→TWD sell 應等於現有行為', () => {
+    const legacy = convertCurrencyAmount(1000, 'USD', 'TWD', mockRateDetails, 'spot');
+    const mode = convertCurrencyAmountWithMode(1000, 'USD', 'TWD', mockRateDetails, 'spot', 'sell');
+    expect(mode).toBe(legacy);
+  });
+
+  it('1000 TWD→USD sell 應等於現有行為', () => {
+    const legacy = convertCurrencyAmount(1000, 'TWD', 'USD', mockRateDetails, 'spot');
+    const mode = convertCurrencyAmountWithMode(1000, 'TWD', 'USD', mockRateDetails, 'spot', 'sell');
+    expect(mode).toBe(legacy);
+  });
+
+  it('1000 USD→JPY sell 應等於現有行為', () => {
+    const legacy = convertCurrencyAmount(1000, 'USD', 'JPY', mockRateDetails, 'spot');
+    const mode = convertCurrencyAmountWithMode(1000, 'USD', 'JPY', mockRateDetails, 'spot', 'sell');
+    expect(mode).toBe(legacy);
+  });
+});
+
+describe('convertCurrencyAmountWithMode — auto 模式（FROM用賣出, TO用買入）', () => {
+  it('1000 USD→TWD auto：FROM=USD.sell=30.97, TO=TWD=1 → 30970', () => {
+    // A→TWD: amount * A.sell
+    const result = convertCurrencyAmountWithMode(
+      1000,
+      'USD',
+      'TWD',
+      mockRateDetails,
+      'spot',
+      'auto',
+    );
+    expect(result).toBeCloseTo(30970, 2);
+  });
+
+  it('1000 TWD→USD auto：FROM=TWD=1, TO=USD.buy=30.87 → 1000/30.87≈32.395', () => {
+    // TWD→B: amount / B.buy (不同於 sell 模式的 amount / B.sell)
+    const result = convertCurrencyAmountWithMode(
+      1000,
+      'TWD',
+      'USD',
+      mockRateDetails,
+      'spot',
+      'auto',
+    );
+    expect(result).toBeCloseTo(1000 / 30.87, 4);
+  });
+
+  it('1000 USD→JPY auto：FROM=USD.sell=30.97, TO=JPY.buy=0.2 → 154850', () => {
+    // Cross rate: amount * (USD.sell / JPY.buy) = 1000 * (30.97 / 0.2) = 154850
+    const result = convertCurrencyAmountWithMode(
+      1000,
+      'USD',
+      'JPY',
+      mockRateDetails,
+      'spot',
+      'auto',
+    );
+    expect(result).toBeCloseTo(154850, 1);
+  });
+
+  it('auto 模式 USD→JPY 應比 sell 模式給更多 JPY', () => {
+    const autoResult = convertCurrencyAmountWithMode(
+      1000,
+      'USD',
+      'JPY',
+      mockRateDetails,
+      'spot',
+      'auto',
+    );
+    const sellResult = convertCurrencyAmountWithMode(
+      1000,
+      'USD',
+      'JPY',
+      mockRateDetails,
+      'spot',
+      'sell',
+    );
+    // auto: 30.97/0.2=154.85 vs sell: 30.97/0.204=151.81
+    expect(autoResult).toBeGreaterThan(sellResult);
+  });
+
+  it('相同貨幣 auto 模式應返回原金額', () => {
+    expect(convertCurrencyAmountWithMode(500, 'USD', 'USD', mockRateDetails, 'spot', 'auto')).toBe(
+      500,
+    );
+  });
+});
+
+describe('convertCurrencyAmountWithMode — mid 模式（中間價）', () => {
+  it('1000 USD→TWD mid：USD.mid=(30.87+30.97)/2=30.92 → 30920', () => {
+    const result = convertCurrencyAmountWithMode(
+      1000,
+      'USD',
+      'TWD',
+      mockRateDetails,
+      'spot',
+      'mid',
+    );
+    expect(result).toBeCloseTo(30920, 1);
+  });
+
+  it('1000 TWD→USD mid：TWD.mid=1, USD.mid=30.92 → 1000/30.92≈32.341', () => {
+    const result = convertCurrencyAmountWithMode(
+      1000,
+      'TWD',
+      'USD',
+      mockRateDetails,
+      'spot',
+      'mid',
+    );
+    expect(result).toBeCloseTo(1000 / 30.92, 4);
+  });
+
+  it('1000 USD→JPY mid：USD.mid=30.92, JPY.mid=0.202 → 1000*(30.92/0.202)≈153069.3', () => {
+    const result = convertCurrencyAmountWithMode(
+      1000,
+      'USD',
+      'JPY',
+      mockRateDetails,
+      'spot',
+      'mid',
+    );
+    expect(result).toBeCloseTo((1000 * 30.92) / 0.202, 1);
+  });
+
+  it('mid 模式 USD→JPY 應介於 auto 和 sell 之間', () => {
+    const autoResult = convertCurrencyAmountWithMode(
+      1000,
+      'USD',
+      'JPY',
+      mockRateDetails,
+      'spot',
+      'auto',
+    );
+    const midResult = convertCurrencyAmountWithMode(
+      1000,
+      'USD',
+      'JPY',
+      mockRateDetails,
+      'spot',
+      'mid',
+    );
+    const sellResult = convertCurrencyAmountWithMode(
+      1000,
+      'USD',
+      'JPY',
+      mockRateDetails,
+      'spot',
+      'sell',
+    );
+    expect(midResult).toBeLessThan(autoResult);
+    expect(midResult).toBeGreaterThan(sellResult);
   });
 });

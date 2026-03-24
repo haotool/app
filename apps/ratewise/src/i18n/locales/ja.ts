@@ -137,6 +137,14 @@ const ja = {
     copyright: '© 2025-2026 RateWise',
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
+    // 為替レートモードセクション
+    rateMode: '為替レートモード',
+    rateModeAuto: '自動',
+    rateModeAutoDesc: 'FROM は売値・TO は買値を自動適用',
+    rateModeSell: '売値',
+    rateModeSellDesc: '台湾銀行の売出レートを基準に計算',
+    rateModeMid: '中値',
+    rateModeMidDesc: '買値と売値の中間点（市場参考値）',
     // サポートと情報セクション
     supportInfo: 'サポートと情報',
     faq: 'よくある質問',

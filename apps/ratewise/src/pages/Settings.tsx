@@ -28,6 +28,7 @@ import {
   HelpCircle,
   ChevronRight,
   ExternalLink,
+  TrendingUp,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -40,11 +41,32 @@ import { getDisplayVersion } from '../config/version';
 import { transitions, segmentedSwitch } from '../config/animations';
 import { APP_INFO } from '../config/app-info';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
+import type { RateMode } from '../features/ratewise/types';
+import { useConverterStore } from '../stores/converterStore';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { style, setStyle, resetTheme, isLoaded } = useAppTheme();
   const pageSeo = APP_ONLY_PAGE_SEO.settings;
+  const { rateMode, setRateMode } = useConverterStore();
+
+  const RATE_MODE_OPTIONS: { value: RateMode; labelKey: string; descKey: string }[] = [
+    {
+      value: 'auto',
+      labelKey: 'settings.rateModeAuto',
+      descKey: 'settings.rateModeAutoDesc',
+    },
+    {
+      value: 'sell',
+      labelKey: 'settings.rateModeSell',
+      descKey: 'settings.rateModeSellDesc',
+    },
+    {
+      value: 'mid',
+      labelKey: 'settings.rateModeMid',
+      descKey: 'settings.rateModeMidDesc',
+    },
+  ];
 
   // 使用正規化後的語系（zh-Hant → zh-TW）
   // @see i18n/index.ts - getResolvedLanguage()
@@ -178,6 +200,54 @@ export default function Settings() {
               );
             })}
           </div>
+        </section>
+
+        {/* 匯率模式區塊 */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <TrendingUp className="w-3.5 h-3.5" />
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {t('settings.rateMode')}
+            </h2>
+          </div>
+
+          <div className={segmentedSwitch.containerClass}>
+            {RATE_MODE_OPTIONS.map((option) => {
+              const isActive = rateMode === option.value;
+              return (
+                <motion.button
+                  key={option.value}
+                  onClick={() => setRateMode(option.value)}
+                  whileHover={{ ...segmentedSwitch.item.whileHover, opacity: 1 }}
+                  whileTap={segmentedSwitch.item.whileTap}
+                  animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
+                  transition={transitions.default}
+                  className={`${segmentedSwitch.itemBaseClass} flex-col`}
+                  aria-pressed={isActive}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="ratemode-indicator"
+                      className={segmentedSwitch.indicatorClass}
+                      transition={segmentedSwitch.indicator}
+                    />
+                  )}
+                  <span className="text-[11px] font-bold relative z-10">
+                    {t(option.labelKey as Parameters<typeof t>[0])}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {/* 說明文字 */}
+          <p className="text-[10px] opacity-50 mt-2 px-1 leading-relaxed">
+            {t(
+              RATE_MODE_OPTIONS.find((o) => o.value === rateMode)?.descKey as Parameters<
+                typeof t
+              >[0],
+            )}
+          </p>
         </section>
 
         {/* 儲存與快取區塊 */}

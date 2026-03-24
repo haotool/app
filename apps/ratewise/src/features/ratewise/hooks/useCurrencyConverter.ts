@@ -12,7 +12,7 @@ import { readJSON, writeJSON } from '../storage';
 import { STORAGE_KEYS } from '../storage-keys';
 import type { RateDetails } from './useExchangeRates';
 import { logger } from '../../../utils/logger';
-import { getExchangeRate, convertCurrencyAmount } from '../../../utils/exchangeRateCalculation';
+import { convertCurrencyAmountWithMode } from '../../../utils/exchangeRateCalculation';
 import { getRelativeTimeString } from '../../../utils/timeFormatter';
 import { INP_LONG_TASK_THRESHOLD_MS } from '../../../utils/interactionBudget';
 import { useToast } from '../../../components/Toast';
@@ -53,6 +53,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     fromCurrency,
     toCurrency,
     mode,
+    rateMode,
     favorites,
     setFromCurrency,
     setToCurrency,
@@ -109,16 +110,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   }, []);
   const [lastEdited, setLastEdited] = useState<AmountField>('from');
 
-  // Helper to get rate based on rateType (spot/cash)
-  // Returns null if the rate is not available or invalid.
-  const getRate = useCallback(
-    (code: CurrencyCode): number | null => {
-      return getExchangeRate(code, details, rateType, exchangeRates);
-    },
-    [exchangeRates, details, rateType],
-  );
-
-  // Conversion calculations using unified convertCurrencyAmount
+  // Conversion calculations using convertCurrencyAmountWithMode
   const recalcMultiAmounts = useCallback(
     (
       sourceCode: CurrencyCode,
@@ -145,12 +137,13 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
             return acc;
           }
 
-          const converted = convertCurrencyAmount(
+          const converted = convertCurrencyAmountWithMode(
             amount,
             sourceCode,
             code,
             details,
             rateType,
+            rateMode,
             exchangeRates,
           );
 
@@ -168,38 +161,51 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
         { ...prev },
       );
     },
-    [details, rateType, exchangeRates],
+    [details, rateType, rateMode, exchangeRates],
   );
 
   const calculateFromAmount = useCallback(() => {
     const amount = parseFloat(fromAmount);
-    const fromRate = getRate(fromCurrency);
-    const toRate = getRate(toCurrency);
-
-    if (Number.isNaN(amount) || fromRate === null || toRate === null) {
+    if (Number.isNaN(amount)) {
       setToAmount('');
       return;
     }
 
-    const converted = (amount * fromRate) / toRate;
+    const converted = convertCurrencyAmountWithMode(
+      amount,
+      fromCurrency,
+      toCurrency,
+      details,
+      rateType,
+      rateMode,
+      exchangeRates,
+    );
+
     const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
     setToAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
-  }, [fromAmount, fromCurrency, toCurrency, getRate]);
+  }, [fromAmount, fromCurrency, toCurrency, details, rateType, rateMode, exchangeRates]);
 
   const calculateToAmount = useCallback(() => {
     const amount = parseFloat(toAmount);
-    const fromRate = getRate(fromCurrency);
-    const toRate = getRate(toCurrency);
-
-    if (Number.isNaN(amount) || fromRate === null || toRate === null) {
+    if (Number.isNaN(amount)) {
       setFromAmount('');
       return;
     }
 
-    const converted = (amount * toRate) / fromRate;
+    // 反向換算：B→A，FROM/TO 互換且方向相反
+    const converted = convertCurrencyAmountWithMode(
+      amount,
+      toCurrency,
+      fromCurrency,
+      details,
+      rateType,
+      rateMode,
+      exchangeRates,
+    );
+
     const decimals = CURRENCY_DEFINITIONS[fromCurrency].decimals;
     setFromAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
-  }, [toAmount, fromCurrency, toCurrency, getRate]);
+  }, [toAmount, fromCurrency, toCurrency, details, rateType, rateMode, exchangeRates]);
 
   // 單幣別換算效果（路由決定顯示，無需依賴 mode 狀態）
   useEffect(() => {

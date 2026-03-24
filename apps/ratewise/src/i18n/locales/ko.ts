@@ -137,6 +137,14 @@ const ko = {
     copyright: '© 2025-2026 RateWise',
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
+    // 환율 모드 섹션
+    rateMode: '환율 모드',
+    rateModeAuto: '자동',
+    rateModeAutoDesc: 'FROM은 매도율 · TO는 매입율 자동 적용',
+    rateModeSell: '매도율',
+    rateModeSellDesc: '대만은행 매도 고시환율 기준',
+    rateModeMid: '중간율',
+    rateModeMidDesc: '매입·매도율의 중간점 (시장 참고)',
     // 지원 및 정보 섹션
     supportInfo: '지원 및 정보',
     faq: '자주 묻는 질문',

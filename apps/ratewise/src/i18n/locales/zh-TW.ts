@@ -137,6 +137,14 @@ const zhTW = {
     copyright: '© 2025-2026 RateWise 匯率好工具',
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
+    // 匯率模式區塊
+    rateMode: '匯率模式',
+    rateModeAuto: '自動',
+    rateModeAutoDesc: '依換算方向：FROM 取賣出價、TO 取買入價',
+    rateModeSell: '賣出價',
+    rateModeSellDesc: '全程以台銀賣出牌告為準（銀行標準報價）',
+    rateModeMid: '中間價',
+    rateModeMidDesc: '買入與賣出的中點（市場參考）',
     // 支援與資訊區塊
     supportInfo: '支援與資訊',
     faq: '常見問題',

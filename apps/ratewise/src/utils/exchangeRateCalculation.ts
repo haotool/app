@@ -8,7 +8,7 @@
  */
 
 import type { RateDetails } from '../features/ratewise/hooks/useExchangeRates';
-import type { CurrencyCode, RateType } from '../features/ratewise/types';
+import type { CurrencyCode, RateMode, RateType } from '../features/ratewise/types';
 import { logger } from './logger';
 
 export interface RateTypeAvailability {
@@ -243,6 +243,141 @@ export function convertCurrencyAmount(
 
   if (!fromRate || !toRate) return 0;
 
+  return amount * (fromRate / toRate);
+}
+
+// ── RateMode 擴充功能 ─────────────────────────────────────────────────────────
+
+const hasValidBuyRate = (value: number | null | undefined): value is number =>
+  value !== null && value !== undefined && value !== 0;
+
+/**
+ * 取得指定貨幣的「買入價」（帶 fallback 機制）
+ *
+ * Fallback 順序：
+ * 1. details[code][rateType].buy（有效且非零）
+ * 2. details[code][fallbackType].buy（有效且非零）
+ * 3. details[code] sell rate（最終兜底）
+ * 4. exchangeRates[code]（簡化匯率）
+ */
+export function getBuyRate(
+  code: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  exchangeRates?: Record<CurrencyCode, number | null> | null,
+): number | null {
+  if (code === 'TWD') return 1;
+
+  if (details?.[code]) {
+    const detail = details[code];
+    let rate = detail[rateType]?.buy;
+
+    if (!hasValidBuyRate(rate)) {
+      const fallbackType: RateType = rateType === 'spot' ? 'cash' : 'spot';
+      rate = detail[fallbackType]?.buy;
+    }
+
+    if (hasValidBuyRate(rate)) return rate;
+  }
+
+  // 最終 fallback：用 sell rate 或簡化匯率
+  return getExchangeRate(code, details, rateType, exchangeRates);
+}
+
+/**
+ * 取得指定貨幣的「中間價」= (買入 + 賣出) / 2
+ *
+ * 若任一側缺失，以可用的一側為準；若兩側均缺，回傳 null。
+ */
+export function getMidRate(
+  code: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  exchangeRates?: Record<CurrencyCode, number | null> | null,
+): number | null {
+  if (code === 'TWD') return 1;
+
+  const sellRate = getExchangeRate(code, details, rateType, exchangeRates);
+  const buyRate = getBuyRate(code, details, rateType, exchangeRates);
+
+  if (sellRate == null && buyRate == null) return null;
+  if (sellRate == null) return buyRate;
+  if (buyRate == null) return sellRate;
+
+  return (buyRate + sellRate) / 2;
+}
+
+/**
+ * 根據 RateMode 轉換金額
+ *
+ * | mode | FROM 幣別取值 | TO 幣別取值 | 說明 |
+ * |------|------------|-----------|------|
+ * | auto | 賣出價（sell）| 買入價（buy） | 依換算方向自動套用 |
+ * | sell | 賣出價（sell）| 賣出價（sell）| 台銀賣出牌告（現行預設）|
+ * | mid  | 中間價（mid） | 中間價（mid） | 市場參考中間價 |
+ *
+ * TWD 為基準幣，永遠視作 1。
+ *
+ * @example
+ * // auto: USD→JPY = amount * (USD.sell / JPY.buy) = 1000 * (30.97/0.2) = 154850
+ * convertCurrencyAmountWithMode(1000, 'USD', 'JPY', details, 'spot', 'auto')
+ */
+export function convertCurrencyAmountWithMode(
+  amount: number,
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  rateMode: RateMode,
+  exchangeRates?: Record<CurrencyCode, number | null> | null,
+): number {
+  if (fromCurrency === toCurrency) return amount;
+
+  // sell 模式：維持現有行為，直接委派
+  if (rateMode === 'sell') {
+    return convertCurrencyAmount(
+      amount,
+      fromCurrency,
+      toCurrency,
+      details,
+      rateType,
+      exchangeRates,
+    );
+  }
+
+  // 取得各幣別的匯率（依模式選擇函數）
+  const getRateFrom = (code: CurrencyCode): number | null => {
+    if (code === 'TWD') return 1;
+    return rateMode === 'mid'
+      ? getMidRate(code, details, rateType, exchangeRates)
+      : getExchangeRate(code, details, rateType, exchangeRates); // auto: FROM 用賣出
+  };
+
+  const getRateTo = (code: CurrencyCode): number | null => {
+    if (code === 'TWD') return 1;
+    return rateMode === 'mid'
+      ? getMidRate(code, details, rateType, exchangeRates)
+      : getBuyRate(code, details, rateType, exchangeRates); // auto: TO 用買入
+  };
+
+  // TWD → 外幣：amount / toRate
+  if (fromCurrency === 'TWD') {
+    const toRate = getRateTo(toCurrency);
+    if (!toRate) return 0;
+    return amount / toRate;
+  }
+
+  // 外幣 → TWD：amount * fromRate
+  if (toCurrency === 'TWD') {
+    const fromRate = getRateFrom(fromCurrency);
+    if (!fromRate) return 0;
+    return amount * fromRate;
+  }
+
+  // 外幣 → 外幣：交叉匯率（via TWD）
+  const fromRate = getRateFrom(fromCurrency);
+  const toRate = getRateTo(toCurrency);
+  if (!fromRate || !toRate) return 0;
   return amount * (fromRate / toRate);
 }
 

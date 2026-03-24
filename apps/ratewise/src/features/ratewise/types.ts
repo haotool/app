@@ -6,6 +6,8 @@ export type CurrencyMeta = (typeof CURRENCY_DEFINITIONS)[CurrencyCode];
 export type ConverterMode = 'single' | 'multi';
 export type AmountField = 'from' | 'to';
 export type RateType = 'spot' | 'cash';
+/** 匯率模式：自動方向 / 賣出價為主 / 中間價 */
+export type RateMode = 'auto' | 'sell' | 'mid';
 export type MultiAmountsState = Record<CurrencyCode, string>;
 
 export interface ConversionHistoryEntry {

@@ -16,7 +16,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ConverterMode, CurrencyCode } from '../features/ratewise/types';
+import type { ConverterMode, CurrencyCode, RateMode } from '../features/ratewise/types';
 import {
   CURRENCY_DEFINITIONS,
   DEFAULT_FAVORITES,
@@ -55,6 +55,7 @@ interface ConverterState {
   fromCurrency: CurrencyCode;
   toCurrency: CurrencyCode;
   mode: ConverterMode;
+  rateMode: RateMode;
   favorites: CurrencyCode[];
   history: ConversionRecord[];
 
@@ -62,6 +63,7 @@ interface ConverterState {
   setFromCurrency: (code: CurrencyCode) => void;
   setToCurrency: (code: CurrencyCode) => void;
   setMode: (mode: ConverterMode) => void;
+  setRateMode: (rateMode: RateMode) => void;
   swapCurrencies: () => void;
 
   /** 切換收藏狀態（immutable 更新） */
@@ -82,7 +84,12 @@ interface ConverterState {
 
 // ── Schema 驗證輔助函式 ───────────────────────────────────────────────────────
 
-type PersistentFields = Pick<ConverterState, 'fromCurrency' | 'toCurrency' | 'mode' | 'favorites'>;
+type PersistentFields = Pick<
+  ConverterState,
+  'fromCurrency' | 'toCurrency' | 'mode' | 'rateMode' | 'favorites'
+>;
+
+const VALID_RATE_MODES: RateMode[] = ['auto', 'sell', 'mid'];
 
 /**
  * 驗證 hydrate 後的狀態欄位是否符合當前 schema 契約。
@@ -103,6 +110,10 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
   }
   if (state.mode !== 'single' && state.mode !== 'multi') {
     patch.mode = 'single';
+    dirty = true;
+  }
+  if (!VALID_RATE_MODES.includes(state.rateMode)) {
+    patch.rateMode = 'auto';
     dirty = true;
   }
   if (!Array.isArray(state.favorites)) {
@@ -127,7 +138,7 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
 // ── 遷移輔助函式 ─────────────────────────────────────────────────────────────
 
 function buildMigrationPatch(): Partial<
-  Pick<ConverterState, 'fromCurrency' | 'toCurrency' | 'mode' | 'favorites'>
+  Pick<ConverterState, 'fromCurrency' | 'toCurrency' | 'mode' | 'rateMode' | 'favorites'>
 > | null {
   if (typeof window === 'undefined') return null;
 
@@ -182,6 +193,7 @@ export const useConverterStore = create<ConverterState>()(
       fromCurrency: DEFAULT_FROM_CURRENCY,
       toCurrency: DEFAULT_TO_CURRENCY,
       mode: 'single' as ConverterMode,
+      rateMode: 'auto' as RateMode,
       favorites: [...DEFAULT_FAVORITES] as CurrencyCode[],
       history: [],
 
@@ -191,6 +203,8 @@ export const useConverterStore = create<ConverterState>()(
       setToCurrency: (code) => set({ toCurrency: code }),
 
       setMode: (mode) => set({ mode }),
+
+      setRateMode: (rateMode) => set({ rateMode }),
 
       swapCurrencies: () =>
         set((state) => ({
@@ -240,6 +254,7 @@ export const useConverterStore = create<ConverterState>()(
         fromCurrency: state.fromCurrency,
         toCurrency: state.toCurrency,
         mode: state.mode,
+        rateMode: state.rateMode,
         favorites: state.favorites,
         history: state.history,
       }),

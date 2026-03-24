@@ -1,5 +1,15 @@
 # @app/ratewise
 
+## 2.15.1
+
+### Patch Changes
+
+- dd485b0: docs: 精簡 CLAUDE.md 修訂紀錄，同步 rating-snapshot 自動產出物
+- - 新增「匯率模式」設定：自動 / 賣出價為主 / 中間價，可於設定頁切換
+  - 自動模式：FROM 幣別取賣出價、TO 幣別取買入價，支援精準雙向 Cross Rate
+  - 新增 `getBuyRate`、`getMidRate`、`convertCurrencyAmountWithMode` 計算函數
+  - 多語系支援（zh-TW / en / ja / ko），設定即時生效並持久化
+
 ## 2.15.0
 
 ### Minor Changes

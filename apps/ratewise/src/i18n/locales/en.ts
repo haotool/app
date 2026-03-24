@@ -138,6 +138,14 @@ const en = {
     copyright: '© 2025-2026 RateWise',
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
+    // Rate Mode section
+    rateMode: 'Rate Mode',
+    rateModeAuto: 'Auto',
+    rateModeAutoDesc: 'FROM uses sell rate · TO uses buy rate',
+    rateModeSell: 'Sell Rate',
+    rateModeSellDesc: 'Bank sell rate for all conversions',
+    rateModeMid: 'Mid Rate',
+    rateModeMidDesc: 'Midpoint between buy & sell (market reference)',
     // Support & Info section
     supportInfo: 'Support & Info',
     faq: 'FAQ',
