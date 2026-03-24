@@ -26,6 +26,9 @@ export default defineConfig({
     },
     testTimeout: 10000,
     hookTimeout: 10000,
+    pool: 'vmForks',
+    maxWorkers: 1,
+    minWorkers: 1,
   },
   resolve: {
     alias: {
