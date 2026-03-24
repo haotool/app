@@ -17,6 +17,8 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
         description={page.description}
         pathname={page.pathname}
         breadcrumb={page.breadcrumb}
+        jsonLd={page.jsonLd}
+        faqContent={page.faqContent}
       />
 
       <div className="min-h-screen">
@@ -60,6 +62,20 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
               </section>
             ))}
           </div>
+
+          {page.faqContent && page.faqContent.length > 0 && (
+            <section className="card mt-8 p-6">
+              <h2 className="mb-6 text-2xl font-bold text-text">常見問題</h2>
+              <div className="space-y-4">
+                {page.faqContent.map((item) => (
+                  <div key={item.question}>
+                    <h3 className="mb-1 font-semibold text-text">{item.question}</h3>
+                    <p className="leading-7 text-text-muted">{item.answer}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="card mt-8 border-primary/20 bg-primary/5 p-6">
             <h2 className="mb-2 text-xl font-semibold text-text">{page.ctaTitle}</h2>
