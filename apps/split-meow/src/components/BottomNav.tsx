@@ -1,0 +1,41 @@
+import { useStore } from '../store/useStore';
+import { cn } from '../lib/utils';
+
+export function BottomNav() {
+  const { activeTab, setActiveTab } = useStore();
+
+  const navItems = [
+    { id: 'home', icon: 'home' },
+    { id: 'history', icon: 'history' },
+    { id: 'settings', icon: 'settings_heart' },
+  ] as const;
+
+  return (
+    <div className="fixed bottom-4 left-0 w-full px-6 z-50 flex justify-center pointer-events-none">
+      <nav className="flex items-center gap-2 px-2 py-1.5 bg-surface-bright/70 backdrop-blur-md rounded-full shadow-ambient border border-outline-variant/15 pointer-events-auto">
+        {navItems.map((item) => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={cn(
+                'flex items-center justify-center w-12 h-10 rounded-full transition-all active:scale-95 duration-200',
+                isActive
+                  ? 'bg-primary-container text-on-primary-container'
+                  : 'text-on-surface-variant hover:bg-surface-container',
+              )}
+            >
+              <span
+                className="material-symbols-outlined text-[22px]"
+                style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+              >
+                {item.icon}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+}

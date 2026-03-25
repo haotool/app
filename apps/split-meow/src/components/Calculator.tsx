@@ -1,0 +1,175 @@
+import { useStore } from '../store/useStore';
+import { cn } from '../lib/utils';
+import { evaluateExpression } from '../lib/evaluateExpression';
+
+export function Calculator() {
+  const {
+    splitMode,
+    calculatorValue,
+    itemizedValues,
+    focusedMemberId,
+    setCalculatorValue,
+    setItemizedValue,
+    saveExpense,
+  } = useStore();
+
+  const currentValue =
+    splitMode === 'split_evenly'
+      ? calculatorValue
+      : focusedMemberId
+        ? (itemizedValues[focusedMemberId] ?? '')
+        : '';
+
+  const handlePress = (key: string) => {
+    if (splitMode === 'itemized' && !focusedMemberId) return;
+
+    let newVal = currentValue;
+
+    if (key === 'AC') {
+      newVal = '';
+    } else if (key === '⌫') {
+      newVal = newVal.slice(0, -1);
+    } else if (key === '=') {
+      const res = evaluateExpression(newVal);
+      if (res !== 0 && Number.isFinite(res)) newVal = String(Number(res.toFixed(2)));
+    } else {
+      newVal += key;
+    }
+
+    if (splitMode === 'split_evenly') {
+      setCalculatorValue(newVal);
+    } else if (focusedMemberId) {
+      setItemizedValue(focusedMemberId, newVal);
+    }
+  };
+
+  const buttons = [
+    {
+      label: '⌫',
+      class:
+        'bg-surface-container-high text-on-surface hover:bg-surface-container-highest text-xl sm:text-2xl font-medium',
+      icon: 'backspace',
+    },
+    {
+      label: 'AC',
+      class:
+        'bg-error-container text-on-error-container hover:bg-error-container/80 text-lg sm:text-xl font-medium',
+    },
+    {
+      label: '%',
+      class:
+        'bg-surface-container-high text-on-surface hover:bg-surface-container-highest text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '÷',
+      class:
+        'bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80 text-2xl sm:text-3xl font-light',
+    },
+    {
+      label: '7',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '8',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '9',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '×',
+      class:
+        'bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80 text-2xl sm:text-3xl font-light',
+    },
+    {
+      label: '4',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '5',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '6',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '-',
+      class:
+        'bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80 text-2xl sm:text-3xl font-light',
+    },
+    {
+      label: '1',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '2',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '3',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '+',
+      class:
+        'bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80 text-2xl sm:text-3xl font-light',
+    },
+    {
+      label: '0',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '00',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+    {
+      label: '.',
+      class:
+        'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low text-xl sm:text-2xl font-medium',
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-4 gap-2 sm:gap-3">
+      {buttons.map((btn, i) => (
+        <button
+          key={i}
+          onClick={() => handlePress(btn.label)}
+          className={cn(
+            'h-12 sm:h-14 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
+            btn.class,
+          )}
+        >
+          {btn.icon ? <span className="material-symbols-outlined">{btn.icon}</span> : btn.label}
+        </button>
+      ))}
+      <button
+        onClick={saveExpense}
+        className="relative overflow-hidden bg-[image:var(--background-image-gradient-primary)] hover:opacity-90 text-white text-lg sm:text-xl font-medium rounded-full active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-ambient"
+      >
+        完成
+        <div className="absolute -right-2 -bottom-2 opacity-20">
+          <span
+            className="material-symbols-outlined text-5xl"
+            style={{ transform: 'rotate(15deg)' }}
+          >
+            pets
+          </span>
+        </div>
+      </button>
+    </div>
+  );
+}

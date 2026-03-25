@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Split Meow icon">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d6beff" />
+      <stop offset="1" stop-color="#bdefbe" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="44" fill="#fbf9f7" />
+  <path
+    d="M51 87c0-22 16-41 45-41s45 19 45 41c0 38-27 60-45 60S51 125 51 87Z"
+    fill="url(#g)"
+  />
+  <path d="M66 70 51 46l32 13Z" fill="#69558e" opacity="0.92" />
+  <path d="M126 70 141 46l-32 13Z" fill="#69558e" opacity="0.92" />
+  <circle cx="81" cy="95" r="6" fill="#313331" />
+  <circle cx="111" cy="95" r="6" fill="#313331" />
+  <path d="M90 108c4 4 8 4 12 0" fill="none" stroke="#313331" stroke-width="6" stroke-linecap="round" />
+  <path
+    d="M39 110c16-10 28-10 44 0M109 110c16-10 28-10 44 0"
+    fill="none"
+    stroke="#7a7b79"
+    stroke-width="4"
+    stroke-linecap="round"
+    opacity="0.9"
+  />
+</svg>
+

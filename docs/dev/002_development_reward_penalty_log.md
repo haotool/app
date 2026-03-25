@@ -1,8 +1,48 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-18T02:14:00+08:00
-> **當前總分**: 1196（初始分: 100）
+> **最後更新**: 2026-03-26T01:31:59+08:00
+> **當前總分**: 1197（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: split-meow-mvp-pwa-offline-release-001
+date: 2026-03-26
+title: Split-Meow 建立可上線 MVP（PWA/離線）並發版 v0.0.1
+score: +1
+type: feat
+content_type: release
+scope: split-meow
+topics: [pwa, offline, vite, react, monorepo, release]
+keywords: [vite-plugin-pwa, injectManifest, prompt, offline.html, basePath, app.config.mjs, pnpm-workspace]
+aliases: [split-meow MVP 發版, split-meow PWA 離線上線]
+related_entries: [61edf19e]
+summary: 將 split-meow 對齊 monorepo SSOT 與既有 PWA 實務模式，補齊 app.config.mjs、離線頁與本地資源，並以 prompt + injectManifest 設定避免版本撕裂，完成 v0.0.1 可上線版本。
+root_cause:
+
+- 新 app 初始匯入含 AI Studio 模板殘留（lockfile/依賴/外部資源），且未對齊 basePath 與 PWA 策略，若直接上線易造成離線失效與路徑錯誤
+  impact:
+
+- 子路徑部署（/split-meow/）若未處理 base 與資源路徑將 404/白屏
+- 外部圖示/頭像在離線情境下會破壞 UI 與可用性
+  actions:
+
+- 新增 split-meow `app.config.mjs`（SSOT），並對齊 `vite.config.ts` 的 basePath 與 PWA 設定
+- 新增 `public/offline.html`、本地 icons/avatars，確保離線可用
+- 將 PWA 改為 `registerType: 'prompt'` + `strategies: 'injectManifest'`，避免版本撕裂
+  prevention:
+
+- 新 app 匯入前先檢查：lockfile（pnpm-only）、basePath、PWA 策略、離線資源是否本地化
+  verification:
+
+- `pnpm --filter @app/split-meow typecheck`
+- `pnpm --filter @app/split-meow build`
+  references:
+
+- apps/split-meow/app.config.mjs
+- apps/split-meow/vite.config.ts
+- apps/split-meow/src/sw.ts
+- apps/split-meow/public/offline.html
 
 ---
 

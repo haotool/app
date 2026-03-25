@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>離線模式｜喵喵分帳</title>
+    <meta name="theme-color" content="#fbf9f7" />
+    <style>
+      :root {
+        --bg: #fbf9f7;
+        --fg: #313331;
+        --muted: #5e5f5d;
+        --card: #f5f3f1;
+        --border: #e2e3e0;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Arial;
+        display: grid;
+        place-items: center;
+      }
+      .card {
+        width: min(520px, calc(100vw - 32px));
+        border-radius: 24px;
+        padding: 24px;
+        background: var(--card);
+        border: 1px solid var(--border);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        letter-spacing: -0.01em;
+      }
+      p {
+        margin: 0 0 16px;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+      button {
+        appearance: none;
+        border: 0;
+        background: #69558e;
+        color: #fef7ff;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>你目前離線中</h1>
+      <p>已快取的內容仍可使用。請檢查網路連線後再試一次。</p>
+      <button type="button" onclick="location.reload()">重新整理</button>
+    </div>
+  </body>
+</html>
