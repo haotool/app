@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Cat avatar">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7fe8d8"/>
+      <stop offset="1" stop-color="#2ab8a0"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#fbf9f7"/>
+  <path d="M34 60c0-14 10-26 30-26s30 12 30 26c0 24-18 38-30 38S34 84 34 60Z" fill="url(#g)"/>
+  <path d="M44 48 34 32l20 8Z" fill="#0d7a66" opacity="0.9"/>
+  <path d="M84 48 94 32l-20 8Z" fill="#0d7a66" opacity="0.9"/>
+  <!-- crown / tiara on top -->
+  <path d="M46 38 l4-10 6 7 8-12 8 12 6-7 4 10Z" fill="#f5c518" opacity="0.95"/>
+  <circle cx="64" cy="26" r="2.5" fill="#e8365a"/>
+  <circle cx="56" cy="31" r="1.8" fill="#e8365a"/>
+  <circle cx="72" cy="31" r="1.8" fill="#e8365a"/>
+  <path d="M46 38 h36" stroke="#c8a200" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+  <!-- confident half-lidded eyes -->
+  <circle cx="54" cy="65" r="5" fill="#313331"/>
+  <circle cx="74" cy="65" r="5" fill="#313331"/>
+  <!-- eyelid overlay — top half masked -->
+  <rect x="49" y="59" width="11" height="6" fill="url(#g)" rx="2"/>
+  <rect x="69" y="59" width="11" height="6" fill="url(#g)" rx="2"/>
+  <path d="M49 62 q2.5-3.5 5.5 0" fill="none" stroke="#313331" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M69 62 q2.5-3.5 5.5 0" fill="none" stroke="#313331" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- shine -->
+  <circle cx="52" cy="65" r="1.5" fill="white" opacity="0.7"/>
+  <circle cx="72" cy="65" r="1.5" fill="white" opacity="0.7"/>
+  <!-- small nose -->
+  <ellipse cx="64" cy="72" rx="2" ry="1.5" fill="#0d7a66" opacity="0.85"/>
+  <!-- slight smirk -->
+  <path d="M60 76 q5 3 8 0" fill="none" stroke="#313331" stroke-width="3" stroke-linecap="round"/>
+</svg>

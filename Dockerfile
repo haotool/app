@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for haotool.org Portfolio
-# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), park-keeper (/park-keeper/)
+# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), park-keeper (/park-keeper/), split-meow (/split-meow/)
 # syntax=docker/dockerfile:1
 
 # Build stage
@@ -15,6 +15,7 @@ ARG VITE_RATEWISE_BASE_PATH=/ratewise/
 ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 ARG VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/
 ARG VITE_PARK_KEEPER_BASE_PATH=/park-keeper/
+ARG VITE_SPLIT_MEOW_BASE_PATH=/split-meow/
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
@@ -41,6 +42,7 @@ COPY apps/nihonname/package.json ./apps/nihonname/
 COPY apps/haotool/package.json ./apps/haotool/
 COPY apps/quake-school/package.json ./apps/quake-school/
 COPY apps/park-keeper/package.json ./apps/park-keeper/
+COPY apps/split-meow/package.json ./apps/split-meow/
 COPY apps/shared/package.json ./apps/shared/
 
 # [fix:2025-11-06] 安裝依賴時禁用 Husky 並清空 NODE_ENV
@@ -72,7 +74,8 @@ RUN set -eux; \
   VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname && \
   VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school && \
-  VITE_PARK_KEEPER_BASE_PATH=/park-keeper/ pnpm build:park-keeper
+  VITE_PARK_KEEPER_BASE_PATH=/park-keeper/ pnpm build:park-keeper && \
+  VITE_SPLIT_MEOW_BASE_PATH=/split-meow/ pnpm build:split-meow
 
 # [fix:2025-12-30] 驗證 sitemaps 已生成並包含在構建中
 # Sitemaps 應該在 dist/ 目錄（構建輸出）而非 public/
@@ -108,11 +111,15 @@ COPY --from=builder /app/apps/quake-school/dist /usr/share/nginx/html/quake-scho
 # Copy park-keeper static assets
 COPY --from=builder /app/apps/park-keeper/dist /usr/share/nginx/html/park-keeper-app
 
+# Copy split-meow static assets
+COPY --from=builder /app/apps/split-meow/dist /usr/share/nginx/html/split-meow-app
+
 # 創建符號連結以支援路由
 RUN ln -s /usr/share/nginx/html/ratewise-app /usr/share/nginx/html/ratewise && \
     ln -s /usr/share/nginx/html/nihonname-app /usr/share/nginx/html/nihonname && \
     ln -s /usr/share/nginx/html/quake-school-app /usr/share/nginx/html/quake-school && \
-    ln -s /usr/share/nginx/html/park-keeper-app /usr/share/nginx/html/park-keeper
+    ln -s /usr/share/nginx/html/park-keeper-app /usr/share/nginx/html/park-keeper && \
+    ln -s /usr/share/nginx/html/split-meow-app /usr/share/nginx/html/split-meow
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf

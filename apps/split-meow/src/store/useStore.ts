@@ -65,6 +65,11 @@ const AVATARS = [
   `${import.meta.env.BASE_URL || '/'}avatars/cat-3.svg`,
   `${import.meta.env.BASE_URL || '/'}avatars/cat-4.svg`,
   `${import.meta.env.BASE_URL || '/'}avatars/cat-5.svg`,
+  `${import.meta.env.BASE_URL || '/'}avatars/cat-6.svg`,
+  `${import.meta.env.BASE_URL || '/'}avatars/cat-7.svg`,
+  `${import.meta.env.BASE_URL || '/'}avatars/cat-8.svg`,
+  `${import.meta.env.BASE_URL || '/'}avatars/cat-9.svg`,
+  `${import.meta.env.BASE_URL || '/'}avatars/cat-10.svg`,
 ];
 
 const getAvatarOrFallback = (index: number) => AVATARS[index] ?? AVATARS[0] ?? '';

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Cat avatar">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd6e8"/>
+      <stop offset="1" stop-color="#ffabc0"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#fbf9f7"/>
+  <path d="M34 60c0-14 10-26 30-26s30 12 30 26c0 24-18 38-30 38S34 84 34 60Z" fill="url(#g)"/>
+  <path d="M44 48 34 32l20 8Z" fill="#c05a7a" opacity="0.9"/>
+  <path d="M84 48 94 32l-20 8Z" fill="#c05a7a" opacity="0.9"/>
+  <!-- bow ribbon on top of head -->
+  <path d="M51 34c-4-4-11-6-13-3s1 9 9 9z" fill="#f97386" opacity="0.9"/>
+  <path d="M77 34c4-4 11-6 13-3s-1 9-9 9z" fill="#f97386" opacity="0.9"/>
+  <circle cx="64" cy="34" r="5" fill="#e8365a" opacity="0.9"/>
+  <circle cx="64" cy="34" r="2.5" fill="#ffd6e8"/>
+  <!-- content closed eyes -->
+  <path d="M48 64c3-4.5 10-4.5 13 0" fill="none" stroke="#313331" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M67 64c3-4.5 10-4.5 13 0" fill="none" stroke="#313331" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- heart nose -->
+  <path d="M62 70 c0-2 2-2 2 0 c0-2 2-2 2 0 l-2 3z" fill="#e8365a" opacity="0.9"/>
+  <!-- gentle smile -->
+  <path d="M59 75c2.5 3 7.5 3 10 0" fill="none" stroke="#313331" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

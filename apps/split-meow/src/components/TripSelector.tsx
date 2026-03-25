@@ -21,15 +21,15 @@ export function TripSelector() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-4 py-2 bg-surface-container-low hover:bg-surface-container rounded-full transition-colors shadow-ambient"
+        className="w-full flex items-center gap-1 px-3 py-2 bg-surface-container-low hover:bg-surface-container rounded-full transition-colors shadow-ambient"
       >
-        <span className="font-medium text-sm truncate max-w-[120px]">
+        <span className="font-medium text-sm truncate min-w-0 flex-1 text-left">
           {currentTrip?.name || '選擇行程'}
         </span>
-        <span className="material-symbols-outlined text-sm text-on-surface-variant">
+        <span className="material-symbols-outlined text-sm text-on-surface-variant shrink-0">
           {isOpen ? 'expand_less' : 'expand_more'}
         </span>
       </button>

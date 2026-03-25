@@ -12,15 +12,15 @@ export function PayerSelector() {
     <div className="relative inline-block">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-surface-container-low hover:bg-surface-container rounded-full transition-colors text-sm shadow-ambient"
+        aria-label={`付款人：${payer?.name}`}
+        className="flex items-center gap-1.5 px-3 py-2 bg-surface-container-low hover:bg-surface-container rounded-full transition-colors text-sm shadow-ambient"
       >
-        <span className="text-on-surface-variant">付款人</span>
         <img
           src={payer?.avatarUrl}
           alt={payer?.name}
           className="w-6 h-6 rounded-full object-cover"
         />
-        <span className="font-medium text-on-surface">{payer?.name}</span>
+        <span className="font-medium text-on-surface max-w-[56px] truncate">{payer?.name}</span>
         <span className="material-symbols-outlined text-sm text-on-surface-variant">
           {isOpen ? 'expand_less' : 'expand_more'}
         </span>

@@ -35,42 +35,33 @@ export function HomeTab() {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-96">
-      {/* Tabs Section */}
-      <div className="flex p-1 bg-surface-container rounded-full mb-6">
-        <button
-          onClick={() => setSplitMode('split_evenly')}
-          className={cn(
-            'flex-1 py-3 text-sm font-medium rounded-full transition-all',
-            splitMode === 'split_evenly'
-              ? 'bg-surface-container-lowest text-primary shadow-ambient'
-              : 'text-on-surface-variant hover:bg-surface-container-high',
-          )}
+      {/* Amount Display Card */}
+      <div className="relative overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-ambient px-6 py-5 mb-4 text-center">
+        <div
+          className="absolute -right-4 -top-4 opacity-5 pointer-events-none select-none"
+          aria-hidden="true"
         >
-          平分
-        </button>
-        <button
-          onClick={() => setSplitMode('itemized')}
-          className={cn(
-            'flex-1 py-3 text-sm font-medium rounded-full transition-all',
-            splitMode === 'itemized'
-              ? 'bg-surface-container-lowest text-primary shadow-ambient'
-              : 'text-on-surface-variant hover:bg-surface-container-high',
-          )}
-        >
-          個別輸入
-        </button>
-      </div>
-
-      {/* Amount Display */}
-      <div className="text-center mb-6 flex flex-col items-center">
-        <span className="block text-on-surface-variant text-sm font-medium mb-1 mt-2">
-          {splitMode === 'split_evenly' ? '總金額' : '總計 (自動加總)'}
+          <span className="material-symbols-outlined text-9xl">pets</span>
+        </div>
+        <span className="block text-on-surface-variant text-xs font-medium uppercase tracking-widest mb-2">
+          {splitMode === 'split_evenly' ? '總金額' : '總計（自動加總）'}
         </span>
-        <h1 className="text-4xl sm:text-5xl md:text-6xl leading-none font-headline font-semibold tracking-tight text-on-surface break-all px-4">
+        <h1 className="text-4xl sm:text-5xl font-headline font-semibold tracking-tight text-on-surface leading-none break-all">
           NT$ {Math.round(totalAmount).toLocaleString('zh-TW')}
         </h1>
+        {splitMode === 'split_evenly' && activeMembers.length > 0 && totalAmount > 0 && (
+          <p className="text-sm text-on-surface-variant mt-2">
+            每人{' '}
+            <span className="font-semibold text-secondary">
+              NT$ {Math.round(splitAmount).toLocaleString('zh-TW')}
+            </span>{' '}
+            × {activeMembers.length} 人
+          </p>
+        )}
         {splitMode === 'split_evenly' && calculatorValue && (
-          <p className="text-sm text-on-surface-variant mt-2 font-mono h-5">{calculatorValue}</p>
+          <p className="text-xs text-on-surface-variant mt-1 font-mono opacity-70">
+            {calculatorValue}
+          </p>
         )}
       </div>
 
@@ -78,7 +69,7 @@ export function HomeTab() {
 
       {/* Itemized Inputs */}
       {splitMode === 'itemized' && (
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
           {activeMembers.map((m) => (
             <div
               key={m.id}
@@ -121,7 +112,32 @@ export function HomeTab() {
       />
 
       <div className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-6">
-        <div className="w-full max-w-lg bg-surface-bright/95 backdrop-blur-xl border border-outline-variant/15 shadow-ambient rounded-[2rem] px-4 pt-4 pb-3">
+        <div className="w-full max-w-lg bg-surface-bright/95 backdrop-blur-xl border border-outline-variant/15 shadow-ambient rounded-[2rem] px-4 pt-2.5 pb-2.5">
+          {/* Mode Toggle inside Dock */}
+          <div className="flex p-0.5 bg-surface-container rounded-full mb-2">
+            <button
+              onClick={() => setSplitMode('split_evenly')}
+              className={cn(
+                'flex-1 py-1.5 text-xs font-medium rounded-full transition-all',
+                splitMode === 'split_evenly'
+                  ? 'bg-surface-container-lowest text-primary shadow-ambient'
+                  : 'text-on-surface-variant hover:bg-surface-container-high',
+              )}
+            >
+              平分
+            </button>
+            <button
+              onClick={() => setSplitMode('itemized')}
+              className={cn(
+                'flex-1 py-1.5 text-xs font-medium rounded-full transition-all',
+                splitMode === 'itemized'
+                  ? 'bg-surface-container-lowest text-primary shadow-ambient'
+                  : 'text-on-surface-variant hover:bg-surface-container-high',
+              )}
+            >
+              個別輸入
+            </button>
+          </div>
           <DockInfo
             splitMode={splitMode}
             activeMembersCount={activeMembers.length}
@@ -160,7 +176,7 @@ function DockInfo(props: {
   if (splitMode === 'itemized') {
     if (!focusedMemberId) return null;
     return (
-      <div className="flex items-center justify-center gap-2 mb-3 animate-in fade-in slide-in-from-bottom-2">
+      <div className="flex items-center justify-center gap-2 mb-2 animate-in fade-in slide-in-from-bottom-2">
         <img
           src={focusedMemberAvatarUrl}
           alt=""
@@ -173,10 +189,16 @@ function DockInfo(props: {
     );
   }
 
-  if (activeMembersCount <= 0 || totalAmount <= 0) return null;
+  if (activeMembersCount <= 0 || totalAmount <= 0) {
+    return (
+      <p className="text-xs text-center text-on-surface-variant mb-2 opacity-60">
+        輸入金額後按完成儲存 🐾
+      </p>
+    );
+  }
 
   return (
-    <div className="relative mb-3 overflow-hidden rounded-[1.5rem] bg-surface-container-low px-4 py-3 shadow-ambient">
+    <div className="relative mb-2 overflow-hidden rounded-[1.5rem] bg-surface-container-low px-4 py-2.5 shadow-ambient">
       <div className="relative z-10 text-center">
         <p className="text-sm text-on-surface-variant leading-relaxed">
           由 <span className="font-semibold text-primary">{activeMembersCount} 位貓奴</span> 平分。

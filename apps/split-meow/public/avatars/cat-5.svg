@@ -1,16 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Cat avatar">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#bdefbe" />
-      <stop offset="1" stop-color="#efb1f9" />
+      <stop offset="0" stop-color="#a8e6d8"/>
+      <stop offset="1" stop-color="#d6beff"/>
     </linearGradient>
   </defs>
-  <rect width="128" height="128" rx="28" fill="#fbf9f7" />
-  <path d="M34 60c0-14 10-26 30-26s30 12 30 26c0 24-18 38-30 38S34 84 34 60Z" fill="url(#g)" />
-  <path d="M44 48 34 32l20 8Z" fill="#315c37" opacity="0.9" />
-  <path d="M84 48 94 32l-20 8Z" fill="#315c37" opacity="0.9" />
-  <circle cx="54" cy="64" r="4" fill="#313331" />
-  <circle cx="74" cy="64" r="4" fill="#313331" />
-  <path d="M60 72c2 2 6 2 8 0" fill="none" stroke="#313331" stroke-width="4" stroke-linecap="round" />
+  <rect width="128" height="128" rx="28" fill="#fbf9f7"/>
+  <path d="M34 60c0-14 10-26 30-26s30 12 30 26c0 24-18 38-30 38S34 84 34 60Z" fill="url(#g)"/>
+  <path d="M44 48 34 32l20 8Z" fill="#2d8a72" opacity="0.9"/>
+  <path d="M84 48 94 32l-20 8Z" fill="#2d8a72" opacity="0.9"/>
+  <!-- sleepy half-closed eyes (top line over half-circle) -->
+  <circle cx="54" cy="66" r="4.5" fill="#313331"/>
+  <rect x="49" y="60.5" width="11" height="5.5" fill="url(#g)" rx="2"/>
+  <circle cx="74" cy="66" r="4.5" fill="#313331"/>
+  <rect x="69" y="60.5" width="11" height="5.5" fill="url(#g)" rx="2"/>
+  <!-- eyelid lines -->
+  <path d="M49 63 q2.5-3 5.5 0" fill="none" stroke="#313331" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M69 63 q2.5-3 5.5 0" fill="none" stroke="#313331" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- zzz -->
+  <text x="82" y="46" font-size="11" font-family="sans-serif" fill="#2d8a72" opacity="0.55" font-weight="bold">z</text>
+  <text x="87" y="40" font-size="9" font-family="sans-serif" fill="#2d8a72" opacity="0.4" font-weight="bold">z</text>
+  <!-- small nose -->
+  <ellipse cx="64" cy="72" rx="2" ry="1.5" fill="#2d8a72" opacity="0.8"/>
+  <!-- slight smile -->
+  <path d="M60 75c1.5 2 6.5 2 8 0" fill="none" stroke="#313331" stroke-width="3" stroke-linecap="round"/>
 </svg>
-

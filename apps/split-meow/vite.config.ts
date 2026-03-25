@@ -1,10 +1,41 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react-swc';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 import { APP_CONFIG } from './app.config.mjs';
+
+const _require = createRequire(import.meta.url);
+
+// [fix] Vite 7 dev server plugin container does not invoke resolveId hooks that use the new
+// @rolldown/pluginutils filter syntax. vite-plugin-pwa only strips the filter when
+// devOptions.enabled=true, so virtual:pwa-register/* never resolves in dev mode.
+// Solution: intercept with a traditional (no-filter) resolveId hook BEFORE vite-plugin-pwa.
+function pwaVirtualDevFix(mode: string): Plugin | false {
+  if (mode === 'production') return false;
+  const stubs: Record<string, string> = {
+    '\0virtual:pwa-register': _require.resolve('vite-plugin-pwa/dist/client/dev/register.js'),
+    '\0virtual:pwa-register/react': _require.resolve('vite-plugin-pwa/dist/client/dev/react.js'),
+    '\0virtual:pwa-register/vue': _require.resolve('vite-plugin-pwa/dist/client/dev/vue.js'),
+    '\0virtual:pwa-register/svelte': _require.resolve('vite-plugin-pwa/dist/client/dev/svelte.js'),
+    '\0virtual:pwa-register/solid': _require.resolve('vite-plugin-pwa/dist/client/dev/solid.js'),
+    '\0virtual:pwa-register/preact': _require.resolve('vite-plugin-pwa/dist/client/dev/preact.js'),
+  };
+  return {
+    name: 'pwa-virtual-dev-fix',
+    enforce: 'pre',
+    resolveId(id) {
+      if (id.startsWith('virtual:pwa-register')) return '\0' + id;
+    },
+    load(id) {
+      const stubPath = stubs[id];
+      if (stubPath) return readFileSync(stubPath, 'utf-8');
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => {
   const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -16,6 +47,7 @@ export default defineConfig(({ mode }) => {
         : APP_CONFIG.basePath.development;
   return {
     plugins: [
+      pwaVirtualDevFix(mode),
       react(),
       tailwindcss(),
       VitePWA({
@@ -60,6 +92,9 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@app/split-meow': resolve(__dirname, './src'),
       },
+    },
+    optimizeDeps: {
+      exclude: ['virtual:pwa-register', 'virtual:pwa-register/react'],
     },
     base,
   };

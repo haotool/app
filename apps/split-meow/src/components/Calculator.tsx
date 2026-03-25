@@ -20,8 +20,14 @@ export function Calculator() {
         ? (itemizedValues[focusedMemberId] ?? '')
         : '';
 
+  const canSave =
+    splitMode === 'split_evenly'
+      ? evaluateExpression(currentValue) > 0
+      : Object.values(itemizedValues).some((v) => evaluateExpression(v) > 0);
+
   const handlePress = (key: string) => {
     if (splitMode === 'itemized' && !focusedMemberId) return;
+    if ('vibrate' in navigator) navigator.vibrate(8);
 
     let newVal = currentValue;
 
@@ -143,13 +149,13 @@ export function Calculator() {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-2 sm:gap-3">
+    <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
       {buttons.map((btn, i) => (
         <button
           key={i}
           onClick={() => handlePress(btn.label)}
           className={cn(
-            'h-12 sm:h-14 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
+            'h-12 sm:h-13 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
             btn.class,
           )}
         >
@@ -157,18 +163,26 @@ export function Calculator() {
         </button>
       ))}
       <button
-        onClick={saveExpense}
-        className="relative overflow-hidden bg-[image:var(--background-image-gradient-primary)] hover:opacity-90 text-white text-lg sm:text-xl font-medium rounded-full active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-ambient"
+        onClick={canSave ? saveExpense : undefined}
+        disabled={!canSave}
+        className={cn(
+          'relative overflow-hidden rounded-full transition-all flex items-center justify-center gap-2 shadow-ambient text-lg sm:text-xl font-medium',
+          canSave
+            ? 'bg-[image:var(--background-image-gradient-primary)] text-white hover:opacity-90 active:scale-[0.98]'
+            : 'bg-surface-container text-on-surface-variant opacity-50 cursor-not-allowed',
+        )}
       >
         完成
-        <div className="absolute -right-2 -bottom-2 opacity-20">
-          <span
-            className="material-symbols-outlined text-5xl"
-            style={{ transform: 'rotate(15deg)' }}
-          >
-            pets
-          </span>
-        </div>
+        {canSave && (
+          <div className="absolute -right-2 -bottom-2 opacity-20">
+            <span
+              className="material-symbols-outlined text-5xl"
+              style={{ transform: 'rotate(15deg)' }}
+            >
+              pets
+            </span>
+          </div>
+        )}
       </button>
     </div>
   );

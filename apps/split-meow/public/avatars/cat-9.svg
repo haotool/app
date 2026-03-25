@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Cat avatar">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb5a0"/>
+      <stop offset="1" stop-color="#ff8c6b"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#fbf9f7"/>
+  <path d="M34 60c0-14 10-26 30-26s30 12 30 26c0 24-18 38-30 38S34 84 34 60Z" fill="url(#g)"/>
+  <path d="M44 48 34 32l20 8Z" fill="#c04a2a" opacity="0.9"/>
+  <path d="M84 48 94 32l-20 8Z" fill="#c04a2a" opacity="0.9"/>
+  <!-- small fish charm on ear -->
+  <ellipse cx="91" cy="36" rx="5" ry="3" fill="#5ec8d8" opacity="0.85" transform="rotate(-20 91 36)"/>
+  <path d="M96 33 l3-2 0 5z" fill="#5ec8d8" opacity="0.85" transform="rotate(-20 91 36)"/>
+  <!-- round eyes with curiosity -->
+  <circle cx="54" cy="64" r="5" fill="#313331"/>
+  <circle cx="74" cy="64" r="5" fill="#313331"/>
+  <circle cx="52" cy="62" r="2" fill="white" opacity="0.8"/>
+  <circle cx="72" cy="62" r="2" fill="white" opacity="0.8"/>
+  <!-- tiny dot pupils extra shine -->
+  <circle cx="55" cy="65" r="0.8" fill="white" opacity="0.5"/>
+  <circle cx="75" cy="65" r="0.8" fill="white" opacity="0.5"/>
+  <!-- small triangle nose -->
+  <path d="M62 71l2-2.5 2 2.5z" fill="#c04a2a" opacity="0.85"/>
+  <!-- open happy mouth -->
+  <path d="M58 75c2 3.5 5 5 6 5s4-1.5 6-5" fill="none" stroke="#313331" stroke-width="3" stroke-linecap="round"/>
+  <!-- rosy cheeks -->
+  <ellipse cx="45" cy="73" rx="7" ry="4" fill="#ff7050" opacity="0.2"/>
+  <ellipse cx="83" cy="73" rx="7" ry="4" fill="#ff7050" opacity="0.2"/>
+</svg>
