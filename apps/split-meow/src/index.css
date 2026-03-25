@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0');
+
+@import 'tailwindcss';
+
+@theme {
+  --color-error: #a8364b;
+  --color-on-secondary-container: #2f5b36;
+  --color-on-tertiary-fixed-variant: #673573;
+  --color-outline: #7a7b79;
+  --color-tertiary-fixed-dim: #e0a4ea;
+  --color-on-primary-fixed-variant: #544178;
+  --color-tertiary: #7f4b8a;
+  --color-surface-container: #efeeeb;
+  --color-primary-fixed-dim: #c8b1f0;
+  --color-on-tertiary: #fff7fb;
+  --color-tertiary-fixed: #efb1f9;
+  --color-on-tertiary-fixed: #471653;
+  --color-on-background: #313331;
+  --color-secondary-fixed-dim: #afe1b1;
+  --color-on-error-container: #6e0523;
+  --color-error-container: #f97386;
+  --color-surface-variant: #e2e3e0;
+  --color-primary: #69558e;
+  --color-surface-dim: #dadad7;
+  --color-on-error: #fff7f7;
+  --color-tertiary-container: #efb1f9;
+  --color-tertiary-dim: #723f7d;
+  --color-on-tertiary-container: #5d2c69;
+  --color-on-surface-variant: #5e5f5d;
+  --color-on-primary: #fef7ff;
+  --color-on-surface: #313331;
+  --color-on-secondary-fixed: #1c4825;
+  --color-surface-container-high: #e9e8e6;
+  --color-primary-container: #d6beff;
+  --color-surface: #fbf9f7;
+  --color-inverse-surface: #0d0e0e;
+  --color-secondary-dim: #315c37;
+  --color-inverse-on-surface: #9d9d9b;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-bright: #fbf9f7;
+  --color-background: #fbf9f7;
+  --color-outline-variant: #b1b2b0;
+  --color-secondary-container: #bdefbe;
+  --color-on-primary-container: #4b386e;
+  --color-secondary-fixed: #bdefbe;
+  --color-on-secondary: #e9ffe6;
+  --color-primary-dim: #5c4981;
+  --color-secondary: #3c6942;
+  --color-error-dim: #6b0221;
+  --color-surface-container-low: #f5f3f1;
+  --color-on-primary-fixed: #362459;
+  --color-surface-container-highest: #e2e3e0;
+  --color-primary-fixed: #d6beff;
+  --color-surface-tint: #69558e;
+  --color-on-secondary-fixed-variant: #39653f;
+  --color-inverse-primary: #d6beff;
+
+  --shadow-ambient: 0 8px 40px rgba(49, 51, 49, 0.04);
+  --background-image-gradient-primary: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-primary-dim)
+  );
+
+  --font-headline: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-label: 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    /* Prevent pull-to-refresh on mobile */
+    overscroll-behavior-y: none;
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24;
+  }
+}
+
+/* Hide scrollbar for horizontal lists */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
