@@ -5,7 +5,21 @@ import { MemberList } from './MemberList';
 import { BottomSheet } from './BottomSheet';
 import { MemberAvatar } from './MemberAvatar';
 import { cn } from '../lib/utils';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+/** 根據視窗高度動態計算 BottomSheet 高度，避免在小螢幕上蓋住成員清單 */
+function useResponsiveSheetHeight() {
+  const [vh, setVh] = useState(() => window.innerHeight);
+  useEffect(() => {
+    const update = () => setVh(window.innerHeight);
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  // 保留 240px 給 header(64) + 金額卡(100) + 成員列(52) + 間距(24)
+  const peekHeight = Math.min(440, Math.max(300, vh - 72 - 240));
+  const expandedHeight = Math.min(520, vh - 72 - 80);
+  return { peekHeight, expandedHeight };
+}
 
 export function HomeTab() {
   const {
@@ -21,6 +35,7 @@ export function HomeTab() {
   } = useStore();
 
   const activeMembers = members.filter((m) => m.isActive);
+  const { peekHeight, expandedHeight } = useResponsiveSheetHeight();
 
   // Set default focused member for itemized mode if none is focused
   useEffect(() => {
@@ -38,7 +53,7 @@ export function HomeTab() {
   const splitAmount = activeMembers.length > 0 ? totalAmount / activeMembers.length : 0;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-[464px]">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-[520px]">
       {/* Amount Display Card */}
       <div className="relative overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-ambient px-6 py-5 mb-4 text-center">
         <div
@@ -109,8 +124,8 @@ export function HomeTab() {
       <BottomSheet
         isOpen={true}
         onClose={() => undefined}
-        peekHeight={390}
-        expandedHeight={450}
+        peekHeight={peekHeight}
+        expandedHeight={expandedHeight}
         className="bottom-[72px]"
       >
         {/* Note Input */}

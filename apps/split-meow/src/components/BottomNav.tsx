@@ -15,7 +15,7 @@ export function BottomNav() {
       className="fixed left-0 w-full px-6 z-50 flex justify-center pointer-events-none"
       style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
     >
-      <nav className="flex items-center gap-1 px-2 py-1.5 bg-surface-bright/70 backdrop-blur-md rounded-full shadow-ambient border border-outline-variant/15 pointer-events-auto">
+      <nav className="flex items-center gap-1 px-2 py-1.5 bg-surface-bright backdrop-blur-sm rounded-full shadow-ambient border border-outline-variant/20 pointer-events-auto">
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
           return (

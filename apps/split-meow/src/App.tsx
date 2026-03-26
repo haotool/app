@@ -42,6 +42,12 @@ export default function App() {
         {activeTab === 'settings' && <SettingsTab />}
       </main>
 
+      {/* Bottom gradient fade — masks scrolled content behind the floating BottomNav */}
+      <div
+        className="fixed inset-x-0 bottom-0 h-28 pointer-events-none z-40"
+        style={{ background: 'linear-gradient(to top, #fbf9f7 40%, transparent)' }}
+        aria-hidden="true"
+      />
       <BottomNav />
       <UpdatePrompt />
     </div>

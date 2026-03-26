@@ -16,18 +16,18 @@ export function SettingsTab() {
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-12 pb-8">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8 pb-28">
       <section className="flex flex-col items-center text-center space-y-6">
         <div className="relative group">
           <button
             onClick={() => me && randomizeAvatar(me.id)}
-            className="w-32 h-32 rounded-full overflow-hidden border-[6px] border-surface-container-lowest shadow-ambient relative block"
+            className="w-24 h-24 rounded-full overflow-hidden border-4 border-surface-container-lowest shadow-ambient relative block"
             title="更換頭像"
           >
             <MemberAvatar
               seed={me?.avatarUrl ?? 'split-meow-me'}
               alt="Profile"
-              size={128}
+              size={96}
               className="group-hover:opacity-80 transition-opacity"
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
@@ -50,7 +50,7 @@ export function SettingsTab() {
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="flex-1 bg-surface-container-high rounded-full px-4 py-3 text-center text-xl font-medium focus:outline-none focus:bg-primary-container transition-colors shadow-ambient"
+                className="flex-1 bg-surface-container-high rounded-full px-4 py-3 text-center text-[16px] sm:text-xl font-medium focus:outline-none focus:bg-primary-container transition-colors shadow-ambient"
                 autoFocus
                 onBlur={handleSave}
                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
@@ -95,14 +95,14 @@ export function SettingsTab() {
                   type="text"
                   value={member.name}
                   onChange={(e) => updateMember(member.id, e.target.value)}
-                  className="flex-1 bg-transparent border-b-2 border-transparent focus:border-primary focus:bg-surface-container-high focus:px-3 focus:py-2 focus:rounded-xl outline-none font-medium transition-all"
+                  className="flex-1 bg-transparent border-b-2 border-transparent focus:border-primary focus:bg-surface-container-high focus:px-3 focus:py-2 focus:rounded-xl outline-none font-medium text-[16px] transition-all"
                   placeholder="輸入名字"
                 />
               </div>
               {members.length > 1 && (
                 <button
                   onClick={() => deleteMember(member.id)}
-                  className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors cursor-pointer"
+                  className="shrink-0 w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors cursor-pointer"
                   title="刪除成員"
                 >
                   <span className="material-symbols-outlined text-[18px]">person_remove</span>

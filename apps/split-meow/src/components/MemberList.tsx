@@ -29,7 +29,7 @@ export function MemberList() {
       ))}
       <button
         onClick={addMember}
-        className="w-9 h-9 flex items-center justify-center bg-primary-container text-on-primary-container rounded-full active:scale-90 transition-transform shadow-ambient"
+        className="w-11 h-11 flex items-center justify-center bg-primary-container text-on-primary-container rounded-full active:scale-90 transition-transform shadow-ambient"
       >
         <span className="material-symbols-outlined">add</span>
       </button>

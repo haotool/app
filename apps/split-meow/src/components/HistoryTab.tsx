@@ -64,7 +64,7 @@ export function HistoryTab() {
   const settlements = calculateSettlements({ ...balances });
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-28">
       <div className="mb-8">
         <h1 className="text-3xl font-medium text-on-surface tracking-tight mb-2">行程紀錄</h1>
         <p className="text-on-surface-variant text-sm">記錄你們的貓咪探險</p>
