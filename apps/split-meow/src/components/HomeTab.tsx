@@ -2,6 +2,7 @@ import { useStore } from '../store/useStore';
 import { evaluateExpression } from '../lib/evaluateExpression';
 import { Calculator } from './Calculator';
 import { MemberList } from './MemberList';
+import { BottomSheet } from './BottomSheet';
 import { cn } from '../lib/utils';
 import { useEffect } from 'react';
 
@@ -29,12 +30,12 @@ export function HomeTab() {
   const totalAmount =
     splitMode === 'split_evenly'
       ? evaluateExpression(calculatorValue)
-      : activeMembers.reduce((sum, m) => sum + evaluateExpression(itemizedValues[m.id] || '0'), 0);
+      : activeMembers.reduce((sum, m) => sum + evaluateExpression(itemizedValues[m.id] ?? '0'), 0);
 
   const splitAmount = activeMembers.length > 0 ? totalAmount / activeMembers.length : 0;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-96">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-32">
       {/* Amount Display Card */}
       <div className="relative overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-ambient px-6 py-5 mb-4 text-center">
         <div
@@ -92,7 +93,7 @@ export function HomeTab() {
               <div className="text-right">
                 <span className="text-xl font-medium">
                   NT${' '}
-                  {Math.round(evaluateExpression(itemizedValues[m.id] || '0')).toLocaleString(
+                  {Math.round(evaluateExpression(itemizedValues[m.id] ?? '0')).toLocaleString(
                     'zh-TW',
                   )}
                 </span>
@@ -105,51 +106,48 @@ export function HomeTab() {
         </div>
       )}
 
-      {/* Fill bottom background behind sticky calculator (both modes) */}
-      <div
-        className="fixed inset-x-0 bottom-0 z-30 h-80 bg-surface-bright/95 backdrop-blur-xl pointer-events-none"
-        aria-hidden="true"
-      />
+      {/* Bottom Sheet: 計算機 + 模式切換 */}
+      <BottomSheet isOpen={true} onClose={() => undefined} peekHeight={216} expandedHeight={420}>
+        {/* Mode Toggle */}
+        <div className="flex p-0.5 mx-4 mt-1 bg-surface-container rounded-full mb-2">
+          <button
+            onClick={() => setSplitMode('split_evenly')}
+            className={cn(
+              'flex-1 py-1.5 text-xs font-medium rounded-full transition-all',
+              splitMode === 'split_evenly'
+                ? 'bg-surface-container-lowest text-primary shadow-ambient'
+                : 'text-on-surface-variant hover:bg-surface-container-high',
+            )}
+          >
+            平分
+          </button>
+          <button
+            onClick={() => setSplitMode('itemized')}
+            className={cn(
+              'flex-1 py-1.5 text-xs font-medium rounded-full transition-all',
+              splitMode === 'itemized'
+                ? 'bg-surface-container-lowest text-primary shadow-ambient'
+                : 'text-on-surface-variant hover:bg-surface-container-high',
+            )}
+          >
+            個別輸入
+          </button>
+        </div>
 
-      <div className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-6">
-        <div className="w-full max-w-lg bg-surface-bright/95 backdrop-blur-xl border border-outline-variant/15 shadow-ambient rounded-[2rem] px-4 pt-2.5 pb-2.5">
-          {/* Mode Toggle inside Dock */}
-          <div className="flex p-0.5 bg-surface-container rounded-full mb-2">
-            <button
-              onClick={() => setSplitMode('split_evenly')}
-              className={cn(
-                'flex-1 py-1.5 text-xs font-medium rounded-full transition-all',
-                splitMode === 'split_evenly'
-                  ? 'bg-surface-container-lowest text-primary shadow-ambient'
-                  : 'text-on-surface-variant hover:bg-surface-container-high',
-              )}
-            >
-              平分
-            </button>
-            <button
-              onClick={() => setSplitMode('itemized')}
-              className={cn(
-                'flex-1 py-1.5 text-xs font-medium rounded-full transition-all',
-                splitMode === 'itemized'
-                  ? 'bg-surface-container-lowest text-primary shadow-ambient'
-                  : 'text-on-surface-variant hover:bg-surface-container-high',
-              )}
-            >
-              個別輸入
-            </button>
-          </div>
-          <DockInfo
-            splitMode={splitMode}
-            activeMembersCount={activeMembers.length}
-            totalAmount={totalAmount}
-            splitAmount={splitAmount}
-            focusedMemberId={focusedMemberId}
-            focusedMemberAvatarUrl={members.find((m) => m.id === focusedMemberId)?.avatarUrl}
-            focusedMemberName={members.find((m) => m.id === focusedMemberId)?.name}
-          />
+        <DockInfo
+          splitMode={splitMode}
+          activeMembersCount={activeMembers.length}
+          totalAmount={totalAmount}
+          splitAmount={splitAmount}
+          focusedMemberId={focusedMemberId}
+          focusedMemberAvatarUrl={members.find((m) => m.id === focusedMemberId)?.avatarUrl}
+          focusedMemberName={members.find((m) => m.id === focusedMemberId)?.name}
+        />
+
+        <div className="px-1 pb-2">
           <Calculator />
         </div>
-      </div>
+      </BottomSheet>
     </div>
   );
 }
@@ -176,7 +174,7 @@ function DockInfo(props: {
   if (splitMode === 'itemized') {
     if (!focusedMemberId) return null;
     return (
-      <div className="flex items-center justify-center gap-2 mb-2 animate-in fade-in slide-in-from-bottom-2">
+      <div className="flex items-center justify-center gap-2 mb-2 mx-4 animate-in fade-in slide-in-from-bottom-2">
         <img
           src={focusedMemberAvatarUrl}
           alt=""
@@ -198,7 +196,7 @@ function DockInfo(props: {
   }
 
   return (
-    <div className="relative mb-2 overflow-hidden rounded-[1.5rem] bg-surface-container-low px-4 py-2.5 shadow-ambient">
+    <div className="relative mb-2 mx-4 overflow-hidden rounded-[1.5rem] bg-surface-container-low px-4 py-2.5 shadow-ambient">
       <div className="relative z-10 text-center">
         <p className="text-sm text-on-surface-variant leading-relaxed">
           由 <span className="font-semibold text-primary">{activeMembersCount} 位貓奴</span> 平分。

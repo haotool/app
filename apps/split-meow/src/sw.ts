@@ -10,17 +10,39 @@ import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
 declare const self: ServiceWorkerGlobalScope;
 
+// 版本化 runtime cache 名稱：新版本 SW activate 後舊 runtime cache 自動清除。
+const RUNTIME_CACHE_VERSION = 'v1';
+const CACHE_PAGES = `pages-${RUNTIME_CACHE_VERSION}`;
+const CACHE_ASSETS = `assets-${RUNTIME_CACHE_VERSION}`;
+const CACHE_IMAGES = `images-${RUNTIME_CACHE_VERSION}`;
+const KNOWN_CACHES = new Set([CACHE_PAGES, CACHE_ASSETS, CACHE_IMAGES]);
+
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
 // 首次安裝後立即控制所有已開啟頁面，避免頁面在 SW 啟動前發出的請求無法被攔截。
 clientsClaim();
 
+// activate：清除所有不在 KNOWN_CACHES 集合中的 runtime cache（workbox precache 由 cleanupOutdatedCaches 負責）。
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => !key.startsWith('workbox-precache') && !KNOWN_CACHES.has(key))
+            .map((key) => caches.delete(key)),
+        ),
+      ),
+  );
+});
+
 // 導覽請求：優先網路，離線回落到 offline.html。
 registerRoute(
   ({ request }) => request.mode === 'navigate',
   new NetworkFirst({
-    cacheName: 'pages',
+    cacheName: CACHE_PAGES,
     networkTimeoutSeconds: 2,
     plugins: [new CacheableResponsePlugin({ statuses: [200] })],
   }),
@@ -32,7 +54,7 @@ registerRoute(
     url.origin === self.location.origin &&
     (request.destination === 'script' || request.destination === 'style'),
   new StaleWhileRevalidate({
-    cacheName: 'assets',
+    cacheName: CACHE_ASSETS,
     plugins: [
       new CacheableResponsePlugin({ statuses: [200] }),
       new ExpirationPlugin({ maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 }),
@@ -44,7 +66,7 @@ registerRoute(
 registerRoute(
   ({ request, url }) => url.origin === self.location.origin && request.destination === 'image',
   new CacheFirst({
-    cacheName: 'images',
+    cacheName: CACHE_IMAGES,
     plugins: [
       new CacheableResponsePlugin({ statuses: [200] }),
       new ExpirationPlugin({ maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 }),

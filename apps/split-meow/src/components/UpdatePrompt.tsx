@@ -1,37 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
+import { useUpdatePrompt } from '../hooks/useUpdatePrompt';
 
 export function UpdatePrompt() {
   if (typeof window === 'undefined') return null;
-
   return <UpdatePromptClient />;
 }
 
 function UpdatePromptClient() {
-  const [dismissed, setDismissed] = useState(false);
-
-  const {
-    offlineReady: [offlineReady, setOfflineReady],
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    onRegisterError() {
-      // 失敗時不打擾使用者；仍可正常使用網頁版。
-      setOfflineReady(false);
-      setNeedRefresh(false);
-    },
-  });
-
-  useEffect(() => {
-    if (!offlineReady) return;
-    const t = window.setTimeout(() => setOfflineReady(false), 4000);
-    return () => window.clearTimeout(t);
-  }, [offlineReady, setOfflineReady]);
-
-  const visible = useMemo(() => {
-    if (dismissed) return false;
-    return offlineReady || needRefresh;
-  }, [dismissed, offlineReady, needRefresh]);
+  const { visible, needRefresh, handleUpdate, handleDismiss } = useUpdatePrompt();
 
   if (!visible) return null;
 
@@ -56,7 +31,7 @@ function UpdatePromptClient() {
             <button
               type="button"
               className="rounded-full bg-primary px-3 py-2 text-xs font-semibold text-on-primary shadow-ambient"
-              onClick={() => void updateServiceWorker(true)}
+              onClick={handleUpdate}
             >
               立即更新
             </button>
@@ -65,11 +40,7 @@ function UpdatePromptClient() {
           <button
             type="button"
             className="rounded-full bg-surface-container px-3 py-2 text-xs font-semibold text-on-surface"
-            onClick={() => {
-              setDismissed(true);
-              setOfflineReady(false);
-              setNeedRefresh(false);
-            }}
+            onClick={handleDismiss}
           >
             關閉
           </button>
