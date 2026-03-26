@@ -4,6 +4,47 @@ import { useState } from 'react';
 import { cn } from '../lib/utils';
 import { MemberAvatar } from './MemberAvatar';
 
+interface Settlement {
+  from: string;
+  to: string;
+  amount: number;
+}
+
+function calculateSettlements(balances: Record<string, number>): Settlement[] {
+  const creditors = Object.entries(balances)
+    .filter(([, b]) => b > 0.01)
+    .map(([id, amount]) => ({ id, amount }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const debtors = Object.entries(balances)
+    .filter(([, b]) => b < -0.01)
+    .map(([id, amount]) => ({ id, amount: -amount }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const settlements: Settlement[] = [];
+  let ci = 0;
+  let di = 0;
+
+  while (ci < creditors.length && di < debtors.length) {
+    const credit = creditors[ci];
+    const debt = debtors[di];
+    if (!credit || !debt) break;
+    const amount = Math.min(credit.amount, debt.amount);
+
+    if (amount > 0.01) {
+      settlements.push({ from: debt.id, to: credit.id, amount });
+    }
+
+    credit.amount -= amount;
+    debt.amount -= amount;
+
+    if (credit.amount < 0.01) ci++;
+    if (debt.amount < 0.01) di++;
+  }
+
+  return settlements;
+}
+
 export function HistoryTab() {
   const { expenses, members, currentTripId, deleteExpense } = useStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -14,14 +55,13 @@ export function HistoryTab() {
   // Calculate per-person balances
   const balances: Record<string, number> = {};
   tripExpenses.forEach((exp) => {
-    // Payer gets positive balance for the total amount
     balances[exp.paidBy] = (balances[exp.paidBy] || 0) + exp.totalAmount;
-
-    // Everyone owes their share (negative balance)
     Object.entries(exp.perPersonAmounts).forEach(([memberId, amount]) => {
       balances[memberId] = (balances[memberId] || 0) - amount;
     });
   });
+
+  const settlements = calculateSettlements({ ...balances });
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
@@ -70,11 +110,48 @@ export function HistoryTab() {
         </div>
       </section>
 
+      {/* Settlement Instructions */}
+      {settlements.length > 0 && (
+        <section className="mb-10">
+          <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
+            結清方式
+          </h3>
+          <div className="space-y-3">
+            {settlements.map((s, i) => {
+              const fromMember = members.find((m) => m.id === s.from);
+              const toMember = members.find((m) => m.id === s.to);
+              if (!fromMember || !toMember) return null;
+              return (
+                <div
+                  key={i}
+                  className="bg-surface-container-lowest p-4 rounded-[1.5rem] flex items-center gap-3 shadow-ambient"
+                >
+                  <MemberAvatar seed={fromMember.avatarUrl} alt={fromMember.name} size={36} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-on-surface-variant leading-snug">
+                      <span className="font-semibold text-on-surface">{fromMember.name}</span>
+                      {' 付給 '}
+                      <span className="font-semibold text-on-surface">{toMember.name}</span>
+                    </p>
+                  </div>
+                  <MemberAvatar seed={toMember.avatarUrl} alt={toMember.name} size={36} />
+                  <div className="bg-secondary-container text-on-secondary-container rounded-full px-3 py-1 shrink-0">
+                    <span className="text-sm font-bold">
+                      NT$ {Math.round(s.amount).toLocaleString('zh-TW')}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Member Balances */}
       {Object.keys(balances).length > 0 && (
         <section className="mb-10">
           <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
-            結算
+            各人結算
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Object.entries(balances).map(([memberId, amount]) => {
@@ -129,12 +206,16 @@ export function HistoryTab() {
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container shrink-0">
                         <span className="material-symbols-outlined">
-                          {exp.type === 'split_evenly' ? 'restaurant' : 'receipt'}
+                          {exp.note
+                            ? 'label'
+                            : exp.type === 'split_evenly'
+                              ? 'restaurant'
+                              : 'receipt'}
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-on-surface truncate">
-                          {exp.type === 'split_evenly' ? '平分' : '個別輸入'}
+                          {exp.note || (exp.type === 'split_evenly' ? '平分' : '個別輸入')}
                         </p>
                         <p className="text-xs text-on-surface-variant truncate">
                           {format(exp.createdAt, 'MMM d, h:mm a')} • 付款人：
@@ -179,7 +260,7 @@ export function HistoryTab() {
                             e.stopPropagation();
                             deleteExpense(exp.id);
                           }}
-                          className="text-xs text-error flex items-center gap-1 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors"
+                          className="text-xs text-error flex items-center gap-1 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
                           title="刪除紀錄"
                         >
                           <span className="material-symbols-outlined text-[14px]">delete</span> 刪除

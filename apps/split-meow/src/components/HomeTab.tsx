@@ -16,6 +16,8 @@ export function HomeTab() {
     itemizedValues,
     focusedMemberId,
     setFocusedMemberId,
+    expenseNote,
+    setExpenseNote,
   } = useStore();
 
   const activeMembers = members.filter((m) => m.isActive);
@@ -111,8 +113,33 @@ export function HomeTab() {
         expandedHeight={450}
         className="bottom-[72px]"
       >
+        {/* Note Input */}
+        <div className="mx-4 mt-1 mb-2">
+          <div className="flex items-center gap-2 bg-surface-container rounded-full px-4 py-2">
+            <span className="material-symbols-outlined text-[18px] text-on-surface-variant shrink-0">
+              label
+            </span>
+            <input
+              type="text"
+              value={expenseNote}
+              onChange={(e) => setExpenseNote(e.target.value)}
+              placeholder="備註（選填）"
+              maxLength={20}
+              className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant/50 outline-none"
+            />
+            {expenseNote && (
+              <button
+                onClick={() => setExpenseNote('')}
+                className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer shrink-0"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Mode Toggle */}
-        <div className="flex p-0.5 mx-4 mt-1 bg-surface-container rounded-full mb-2">
+        <div className="flex p-0.5 mx-4 bg-surface-container rounded-full mb-2">
           <button
             onClick={() => setSplitMode('split_evenly')}
             className={cn(

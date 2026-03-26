@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { MemberAvatar } from './MemberAvatar';
 
 export function SettingsTab() {
-  const { members, updateMember, randomizeAvatar } = useStore();
+  const { members, updateMember, randomizeAvatar, deleteMember } = useStore();
   const me = members.find((m) => m.id === 'me') ?? members[0] ?? null;
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(me?.name ?? '');
@@ -76,7 +76,7 @@ export function SettingsTab() {
               <div className="flex items-center gap-4 flex-1">
                 <button
                   onClick={() => randomizeAvatar(member.id)}
-                  className="relative group shrink-0"
+                  className="relative group shrink-0 cursor-pointer"
                   title="更換頭像"
                 >
                   <MemberAvatar
@@ -99,6 +99,15 @@ export function SettingsTab() {
                   placeholder="輸入名字"
                 />
               </div>
+              {members.length > 1 && (
+                <button
+                  onClick={() => deleteMember(member.id)}
+                  className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors cursor-pointer"
+                  title="刪除成員"
+                >
+                  <span className="material-symbols-outlined text-[18px]">person_remove</span>
+                </button>
+              )}
             </div>
           ))}
         </div>

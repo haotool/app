@@ -41,11 +41,13 @@ interface AppState {
   focusedMemberId: string | null;
   itemizedValues: Record<string, string>;
   payerId: string | null;
+  expenseNote: string;
 
   // Actions
   addTrip: (name: string) => void;
   setCurrentTrip: (id: string) => void;
   addMember: () => void;
+  deleteMember: (id: string) => void;
   toggleMemberActive: (id: string) => void;
   updateMember: (id: string, name: string) => void;
   randomizeAvatar: (id: string) => void;
@@ -54,6 +56,7 @@ interface AppState {
   setFocusedMemberId: (id: string | null) => void;
   setItemizedValue: (memberId: string, val: string) => void;
   setPayerId: (id: string) => void;
+  setExpenseNote: (note: string) => void;
   saveExpense: () => void;
   deleteExpense: (id: string) => void;
   setActiveTab: (tab: 'home' | 'history' | 'settings') => void;
@@ -93,6 +96,7 @@ export const useStore = create<AppState>()(
       focusedMemberId: null,
       itemizedValues: {},
       payerId: 'me',
+      expenseNote: '',
 
       addTrip: (name) =>
         set((state) => {
@@ -111,6 +115,16 @@ export const useStore = create<AppState>()(
             isActive: true,
           };
           return { members: [...state.members, newMember] };
+        }),
+
+      deleteMember: (id) =>
+        set((state) => {
+          if (state.members.length <= 1) return state;
+          const newMembers = state.members.filter((m) => m.id !== id);
+          return {
+            members: newMembers,
+            payerId: state.payerId === id ? (newMembers[0]?.id ?? null) : state.payerId,
+          };
         }),
 
       toggleMemberActive: (id) =>
@@ -143,7 +157,9 @@ export const useStore = create<AppState>()(
 
       setPayerId: (id) => set({ payerId: id }),
 
-      clearCalculator: () => set({ calculatorValue: '', itemizedValues: {} }),
+      setExpenseNote: (note) => set({ expenseNote: note }),
+
+      clearCalculator: () => set({ calculatorValue: '', itemizedValues: {}, expenseNote: '' }),
 
       saveExpense: () =>
         set((state) => {
@@ -180,7 +196,7 @@ export const useStore = create<AppState>()(
             paidBy: state.payerId || 'me',
             totalAmount,
             perPersonAmounts,
-            note: '',
+            note: state.expenseNote.trim(),
             createdAt: Date.now(),
           };
 
@@ -188,7 +204,8 @@ export const useStore = create<AppState>()(
             expenses: [newExpense, ...state.expenses],
             calculatorValue: '',
             itemizedValues: {},
-            activeTab: 'history', // Switch to history tab after saving
+            expenseNote: '',
+            activeTab: 'history',
           };
         }),
 
