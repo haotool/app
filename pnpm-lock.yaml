@@ -736,6 +736,9 @@ importers:
       workbox-cacheable-response:
         specifier: ^7.4.0
         version: 7.4.0
+      workbox-core:
+        specifier: ^7.4.0
+        version: 7.4.0
       workbox-expiration:
         specifier: ^7.4.0
         version: 7.4.0
