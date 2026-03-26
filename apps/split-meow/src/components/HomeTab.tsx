@@ -170,7 +170,6 @@ export function HomeTab() {
           splitMode={splitMode}
           activeMembersCount={activeMembers.length}
           totalAmount={totalAmount}
-          splitAmount={splitAmount}
           focusedMemberId={focusedMemberId}
           focusedMemberAvatarUrl={members.find((m) => m.id === focusedMemberId)?.avatarUrl}
           focusedMemberName={members.find((m) => m.id === focusedMemberId)?.name}
@@ -188,7 +187,6 @@ function DockInfo(props: {
   splitMode: 'split_evenly' | 'itemized';
   activeMembersCount: number;
   totalAmount: number;
-  splitAmount: number;
   focusedMemberId: string | null;
   focusedMemberAvatarUrl: string | undefined;
   focusedMemberName: string | undefined;
@@ -197,7 +195,6 @@ function DockInfo(props: {
     splitMode,
     activeMembersCount,
     totalAmount,
-    splitAmount,
     focusedMemberId,
     focusedMemberAvatarUrl,
     focusedMemberName,
@@ -223,22 +220,5 @@ function DockInfo(props: {
     );
   }
 
-  return (
-    <div className="relative mb-2 mx-4 overflow-hidden rounded-[1.5rem] bg-surface-container-low px-4 py-2.5 shadow-ambient">
-      <div className="relative z-10 text-center">
-        <p className="text-sm text-on-surface-variant leading-relaxed">
-          由 <span className="font-semibold text-primary">{activeMembersCount} 位貓奴</span> 平分。
-          <br />
-          每人需支付{' '}
-          <span className="font-semibold text-secondary">
-            NT$ {Math.round(splitAmount).toLocaleString('zh-TW')}
-          </span>
-          。
-        </p>
-      </div>
-      <div className="absolute -left-3 -bottom-6 text-surface-variant/35">
-        <span className="material-symbols-outlined text-7xl">pets</span>
-      </div>
-    </div>
-  );
+  return null;
 }
