@@ -1,5 +1,6 @@
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
+import { MemberAvatar } from './MemberAvatar';
 
 export function MemberList() {
   const { members, toggleMemberActive, addMember } = useStore();
@@ -17,10 +18,11 @@ export function MemberList() {
               : 'bg-surface-container-low text-on-surface-variant opacity-60 hover:opacity-100',
           )}
         >
-          <img
-            src={member.avatarUrl}
+          <MemberAvatar
+            seed={member.avatarUrl}
             alt={member.name}
-            className={cn('w-6 h-6 rounded-full object-cover', !member.isActive && 'grayscale')}
+            size={24}
+            className={cn(!member.isActive && 'grayscale')}
           />
           <span className="text-sm font-medium">{member.name}</span>
         </button>

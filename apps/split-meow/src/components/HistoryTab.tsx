@@ -2,6 +2,7 @@ import { useStore } from '../store/useStore';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { cn } from '../lib/utils';
+import { MemberAvatar } from './MemberAvatar';
 
 export function HistoryTab() {
   const { expenses, members, currentTripId, deleteExpense } = useStore();
@@ -53,11 +54,12 @@ export function HistoryTab() {
                 .filter((m) => m.isActive)
                 .slice(0, 3)
                 .map((m) => (
-                  <img
+                  <MemberAvatar
                     key={m.id}
-                    src={m.avatarUrl}
-                    className="w-8 h-8 rounded-full border-2 border-surface-container-lowest object-cover bg-surface-container"
+                    seed={m.avatarUrl}
                     alt={m.name}
+                    size={32}
+                    className="border-2 border-surface-container-lowest"
                   />
                 ))}
             </div>
@@ -84,11 +86,7 @@ export function HistoryTab() {
                   key={memberId}
                   className="bg-surface-container-lowest p-4 rounded-[1.5rem] flex items-center gap-3 shadow-ambient"
                 >
-                  <img
-                    src={member.avatarUrl}
-                    alt={member.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  <MemberAvatar seed={member.avatarUrl} alt={member.name} size={40} />
                   <div>
                     <p className="font-medium text-sm text-on-surface truncate max-w-[80px]">
                       {member.name}
@@ -197,10 +195,11 @@ export function HistoryTab() {
                               className="flex justify-between items-center text-sm bg-surface-container-low p-2.5 rounded-xl"
                             >
                               <div className="flex items-center gap-3">
-                                <img
-                                  src={m.avatarUrl}
+                                <MemberAvatar
+                                  seed={m.avatarUrl}
                                   alt={m.name}
-                                  className="w-6 h-6 rounded-full object-cover shadow-sm"
+                                  size={24}
+                                  className="shadow-sm"
                                 />
                                 <span className="font-medium text-on-surface">{m.name}</span>
                               </div>

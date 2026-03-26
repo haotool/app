@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
+import { MemberAvatar } from './MemberAvatar';
 
 export function PayerSelector() {
   const { members, payerId, setPayerId } = useStore();
@@ -15,11 +16,7 @@ export function PayerSelector() {
         aria-label={`付款人：${payer?.name}`}
         className="flex items-center gap-1.5 px-3 py-2 bg-surface-container-low hover:bg-surface-container rounded-full transition-colors text-sm shadow-ambient"
       >
-        <img
-          src={payer?.avatarUrl}
-          alt={payer?.name}
-          className="w-6 h-6 rounded-full object-cover"
-        />
+        <MemberAvatar seed={payer?.avatarUrl ?? ''} alt={payer?.name} size={24} />
         <span className="font-medium text-on-surface max-w-[56px] truncate">{payer?.name}</span>
         <span className="material-symbols-outlined text-sm text-on-surface-variant">
           {isOpen ? 'expand_less' : 'expand_more'}
@@ -45,11 +42,7 @@ export function PayerSelector() {
                       : 'hover:bg-surface-container-low text-on-surface',
                   )}
                 >
-                  <img
-                    src={member.avatarUrl}
-                    alt={member.name}
-                    className="w-6 h-6 rounded-full object-cover"
-                  />
+                  <MemberAvatar seed={member.avatarUrl} alt={member.name} size={24} />
                   <span className="truncate flex-1">{member.name}</span>
                   {payerId === member.id && (
                     <span className="material-symbols-outlined text-sm">check</span>

@@ -1,20 +1,15 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
+import { MemberAvatar } from './MemberAvatar';
 
 export function SettingsTab() {
   const { members, updateMember, randomizeAvatar } = useStore();
-  const fallbackMe = {
-    id: 'me',
-    name: '我',
-    avatarUrl: `${import.meta.env.BASE_URL || '/'}avatars/cat-1.svg`,
-    isActive: true,
-  };
-  const me = members.find((m) => m.id === 'me') ?? members[0] ?? fallbackMe;
+  const me = members.find((m) => m.id === 'me') ?? members[0] ?? null;
   const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(me?.name || '');
+  const [editName, setEditName] = useState(me?.name ?? '');
 
   const handleSave = () => {
-    if (editName.trim()) {
+    if (editName.trim() && me) {
       updateMember(me.id, editName.trim());
     }
     setIsEditing(false);
@@ -25,14 +20,15 @@ export function SettingsTab() {
       <section className="flex flex-col items-center text-center space-y-6">
         <div className="relative group">
           <button
-            onClick={() => randomizeAvatar(me.id)}
+            onClick={() => me && randomizeAvatar(me.id)}
             className="w-32 h-32 rounded-full overflow-hidden border-[6px] border-surface-container-lowest shadow-ambient relative block"
             title="更換頭像"
           >
-            <img
-              src={me?.avatarUrl}
+            <MemberAvatar
+              seed={me?.avatarUrl ?? 'split-meow-me'}
               alt="Profile"
-              className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+              size={128}
+              className="group-hover:opacity-80 transition-opacity"
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
               <span className="material-symbols-outlined text-white text-3xl drop-shadow-md">
@@ -83,10 +79,11 @@ export function SettingsTab() {
                   className="relative group shrink-0"
                   title="更換頭像"
                 >
-                  <img
-                    src={member.avatarUrl}
+                  <MemberAvatar
+                    seed={member.avatarUrl}
                     alt={member.name}
-                    className="w-12 h-12 rounded-full object-cover group-hover:opacity-80 transition-opacity"
+                    size={48}
+                    className="group-hover:opacity-80 transition-opacity"
                   />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-full">
                     <span className="material-symbols-outlined text-white text-sm drop-shadow-md">

@@ -3,6 +3,7 @@ import { evaluateExpression } from '../lib/evaluateExpression';
 import { Calculator } from './Calculator';
 import { MemberList } from './MemberList';
 import { BottomSheet } from './BottomSheet';
+import { MemberAvatar } from './MemberAvatar';
 import { cn } from '../lib/utils';
 import { useEffect } from 'react';
 
@@ -83,11 +84,7 @@ export function HomeTab() {
               )}
             >
               <div className="flex items-center gap-3">
-                <img
-                  src={m.avatarUrl}
-                  alt={m.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+                <MemberAvatar seed={m.avatarUrl} alt={m.name} size={40} />
                 <span className="font-medium truncate">{m.name}</span>
               </div>
               <div className="text-right">
@@ -181,11 +178,7 @@ function DockInfo(props: {
     if (!focusedMemberId) return null;
     return (
       <div className="flex items-center justify-center gap-2 mb-2 mx-4 animate-in fade-in slide-in-from-bottom-2">
-        <img
-          src={focusedMemberAvatarUrl}
-          alt=""
-          className="w-6 h-6 rounded-full shadow-sm object-cover"
-        />
+        <MemberAvatar seed={focusedMemberAvatarUrl ?? ''} size={24} className="shadow-sm" />
         <span className="text-sm font-medium text-on-surface-variant">
           正在輸入 <span className="text-primary font-bold">{focusedMemberName}</span> 的金額
         </span>
