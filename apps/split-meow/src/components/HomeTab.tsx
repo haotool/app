@@ -35,7 +35,7 @@ export function HomeTab() {
   const splitAmount = activeMembers.length > 0 ? totalAmount / activeMembers.length : 0;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-[420px]">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-[464px]">
       {/* Amount Display Card */}
       <div className="relative overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-ambient px-6 py-5 mb-4 text-center">
         <div
@@ -106,8 +106,14 @@ export function HomeTab() {
         </div>
       )}
 
-      {/* Bottom Sheet: 計算機 + 模式切換 */}
-      <BottomSheet isOpen={true} onClose={() => undefined} peekHeight={390} expandedHeight={450}>
+      {/* Bottom Sheet: 計算機 + 模式切換；bottom-[72px] 確保浮動 BottomNav（~68px）不遮蓋 */}
+      <BottomSheet
+        isOpen={true}
+        onClose={() => undefined}
+        peekHeight={390}
+        expandedHeight={450}
+        className="bottom-[72px]"
+      >
         {/* Mode Toggle */}
         <div className="flex p-0.5 mx-4 mt-1 bg-surface-container rounded-full mb-2">
           <button
@@ -144,7 +150,7 @@ export function HomeTab() {
           focusedMemberName={members.find((m) => m.id === focusedMemberId)?.name}
         />
 
-        <div className="px-1 pb-2">
+        <div className="px-1 pb-4 touch-manipulation">
           <Calculator />
         </div>
       </BottomSheet>
