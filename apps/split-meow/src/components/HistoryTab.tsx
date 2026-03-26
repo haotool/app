@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { format } from 'date-fns';
 import { useState } from 'react';
@@ -46,6 +47,7 @@ function calculateSettlements(balances: Record<string, number>): Settlement[] {
 }
 
 export function HistoryTab() {
+  const { t } = useTranslation();
   const { expenses, members, currentTripId, deleteExpense } = useStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -66,8 +68,10 @@ export function HistoryTab() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-28">
       <div className="mb-8">
-        <h1 className="text-3xl font-medium text-on-surface tracking-tight mb-2">行程紀錄</h1>
-        <p className="text-on-surface-variant text-sm">記錄你們的貓咪探險</p>
+        <h1 className="text-3xl font-medium text-on-surface tracking-tight mb-2">
+          {t('history.title')}
+        </h1>
+        <p className="text-on-surface-variant text-sm">{t('history.subtitle')}</p>
       </div>
 
       <section className="grid grid-cols-2 gap-4 mb-10">
@@ -82,7 +86,7 @@ export function HistoryTab() {
           </div>
           <div>
             <span className="text-xs font-medium uppercase tracking-widest text-primary mb-1 block">
-              總花費
+              {t('history.total_spent')}
             </span>
             <h2 className="text-4xl font-medium text-on-surface tracking-tight">
               NT$ {Math.round(totalSpent).toLocaleString('zh-TW')}
@@ -104,7 +108,7 @@ export function HistoryTab() {
                 ))}
             </div>
             <span className="text-xs text-on-surface-variant">
-              由 {members.filter((m) => m.isActive).length} 位探險家分攤
+              {t('history.members_count', { count: members.filter((m) => m.isActive).length })}
             </span>
           </div>
         </div>
@@ -114,7 +118,7 @@ export function HistoryTab() {
       {settlements.length > 0 && (
         <section className="mb-10">
           <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
-            結清方式
+            {t('history.settlements')}
           </h3>
           <div className="space-y-3">
             {settlements.map((s, i) => {
@@ -129,9 +133,10 @@ export function HistoryTab() {
                   <MemberAvatar seed={fromMember.avatarUrl} alt={fromMember.name} size={36} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-on-surface-variant leading-snug">
-                      <span className="font-semibold text-on-surface">{fromMember.name}</span>
-                      {' 付給 '}
-                      <span className="font-semibold text-on-surface">{toMember.name}</span>
+                      {t('history.pay_to', {
+                        from: fromMember.name,
+                        to: toMember.name,
+                      })}
                     </p>
                   </div>
                   <MemberAvatar seed={toMember.avatarUrl} alt={toMember.name} size={36} />
@@ -151,7 +156,7 @@ export function HistoryTab() {
       {Object.keys(balances).length > 0 && (
         <section className="mb-10">
           <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
-            各人結算
+            {t('history.balances')}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Object.entries(balances).map(([memberId, amount]) => {
@@ -171,8 +176,8 @@ export function HistoryTab() {
                     <p
                       className={`font-medium text-sm ${isOwed ? 'text-secondary' : 'text-error'}`}
                     >
-                      {isOwed ? '應收' : '應付'} <br /> NT${' '}
-                      {Math.round(Math.abs(amount)).toLocaleString('zh-TW')}
+                      {isOwed ? t('history.owed') : t('history.owing')} <br /> NT${' '}
+                      {Math.round(Math.abs(amount)).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -184,13 +189,13 @@ export function HistoryTab() {
 
       <section className="space-y-6">
         <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2">
-          近期活動
+          {t('history.recent')}
         </h3>
 
         {tripExpenses.length === 0 ? (
           <div className="text-center p-8 bg-surface-container-low rounded-[2rem] text-on-surface-variant">
             <span className="material-symbols-outlined text-4xl mb-2 opacity-50">receipt_long</span>
-            <p>尚無花費紀錄。開始記帳吧！</p>
+            <p>{t('history.no_expenses')}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -215,11 +220,18 @@ export function HistoryTab() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-on-surface truncate">
-                          {exp.note || (exp.type === 'split_evenly' ? '平分' : '個別輸入')}
+                          {exp.note ||
+                            (exp.type === 'split_evenly'
+                              ? t('history.split_evenly')
+                              : t('history.itemized'))}
                         </p>
                         <p className="text-xs text-on-surface-variant truncate">
-                          {format(exp.createdAt, 'MMM d, h:mm a')} • 付款人：
-                          {members.find((m) => m.id === exp.paidBy)?.name || '某人'}
+                          {format(exp.createdAt, 'MMM d, h:mm a')} •{' '}
+                          {t('history.payer', {
+                            name:
+                              members.find((m) => m.id === exp.paidBy)?.name ||
+                              t('history.unknown_payer'),
+                          })}
                         </p>
                       </div>
                     </div>
@@ -229,7 +241,7 @@ export function HistoryTab() {
                           NT$ {Math.round(exp.totalAmount).toLocaleString('zh-TW')}
                         </p>
                         <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
-                          {exp.participantIds.length} 人
+                          {t('history.participants', { count: exp.participantIds.length })}
                         </p>
                       </div>
                       <span
@@ -253,7 +265,7 @@ export function HistoryTab() {
                     <div className="overflow-hidden">
                       <div className="flex justify-between items-center mb-3">
                         <span className="text-xs font-medium text-on-surface-variant">
-                          分攤明細
+                          {t('history.breakdown')}
                         </span>
                         <button
                           onClick={(e) => {
@@ -261,9 +273,10 @@ export function HistoryTab() {
                             deleteExpense(exp.id);
                           }}
                           className="text-xs text-error flex items-center gap-1 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
-                          title="刪除紀錄"
+                          title={t('history.delete_title')}
                         >
-                          <span className="material-symbols-outlined text-[14px]">delete</span> 刪除
+                          <span className="material-symbols-outlined text-[14px]">delete</span>{' '}
+                          {t('history.delete')}
                         </button>
                       </div>
                       <div className="space-y-3">

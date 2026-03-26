@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { evaluateExpression } from '../lib/evaluateExpression';
 import { Calculator } from './Calculator';
@@ -22,6 +23,7 @@ function useResponsiveSheetHeight() {
 }
 
 export function HomeTab() {
+  const { t } = useTranslation();
   const {
     splitMode,
     setSplitMode,
@@ -63,18 +65,18 @@ export function HomeTab() {
           <span className="material-symbols-outlined text-9xl">pets</span>
         </div>
         <span className="block text-on-surface-variant text-xs font-medium uppercase tracking-widest mb-2">
-          {splitMode === 'split_evenly' ? '總金額' : '總計（自動加總）'}
+          {splitMode === 'split_evenly' ? t('home.totalAmount') : t('home.totalItemized')}
         </span>
         <h1 className="text-4xl sm:text-5xl font-headline font-semibold tracking-tight text-on-surface leading-none break-all">
-          NT$ {Math.round(totalAmount).toLocaleString('zh-TW')}
+          NT$ {Math.round(totalAmount).toLocaleString()}
         </h1>
         {splitMode === 'split_evenly' && activeMembers.length > 0 && totalAmount > 0 && (
           <p className="text-sm text-on-surface-variant mt-2">
-            每人{' '}
+            {t('home.perPerson')}{' '}
             <span className="font-semibold text-secondary">
-              NT$ {Math.round(splitAmount).toLocaleString('zh-TW')}
+              NT$ {Math.round(splitAmount).toLocaleString()}
             </span>{' '}
-            × {activeMembers.length} 人
+            × {activeMembers.length} {t('home.people')}
           </p>
         )}
         {splitMode === 'split_evenly' && calculatorValue && (
@@ -106,10 +108,7 @@ export function HomeTab() {
               </div>
               <div className="text-right">
                 <span className="text-xl font-medium">
-                  NT${' '}
-                  {Math.round(evaluateExpression(itemizedValues[m.id] ?? '0')).toLocaleString(
-                    'zh-TW',
-                  )}
+                  NT$ {Math.round(evaluateExpression(itemizedValues[m.id] ?? '0')).toLocaleString()}
                 </span>
                 {itemizedValues[m.id] && focusedMemberId === m.id && (
                   <p className="text-xs opacity-70 font-mono mt-1">{itemizedValues[m.id]}</p>
@@ -139,7 +138,7 @@ export function HomeTab() {
               value={expenseNote}
               onChange={(e) => setExpenseNote(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-              placeholder="備註（選填）"
+              placeholder={t('home.note_placeholder')}
               maxLength={20}
               enterKeyHint="done"
               className="flex-1 bg-transparent text-base text-on-surface placeholder:text-on-surface-variant/50 outline-none"
@@ -167,7 +166,7 @@ export function HomeTab() {
             )}
           >
             <span className="material-symbols-outlined text-[14px] leading-none">call_split</span>
-            平分
+            {t('home.split_evenly')}
           </button>
           <button
             onClick={() => setSplitMode('itemized')}
@@ -179,7 +178,7 @@ export function HomeTab() {
             )}
           >
             <span className="material-symbols-outlined text-[14px] leading-none">edit_note</span>
-            個別輸入
+            {t('home.itemized')}
           </button>
         </div>
 
@@ -208,6 +207,7 @@ function DockInfo(props: {
   focusedMemberAvatarUrl: string | undefined;
   focusedMemberName: string | undefined;
 }) {
+  const { t } = useTranslation();
   const {
     splitMode,
     activeMembersCount,
@@ -223,7 +223,7 @@ function DockInfo(props: {
       <div className="flex items-center justify-center gap-2 mb-2 mx-4 animate-in fade-in slide-in-from-bottom-2">
         <MemberAvatar seed={focusedMemberAvatarUrl ?? ''} size={24} className="shadow-sm" />
         <span className="text-sm font-medium text-on-surface-variant">
-          正在輸入 <span className="text-primary font-bold">{focusedMemberName}</span> 的金額
+          {t('home.inputting_for', { name: focusedMemberName })}
         </span>
       </div>
     );
@@ -232,7 +232,7 @@ function DockInfo(props: {
   if (activeMembersCount <= 0 || totalAmount <= 0) {
     return (
       <p className="text-xs text-center text-on-surface-variant mb-2 opacity-60">
-        輸入金額後按完成儲存 🐾
+        {t('home.save_hint')}
       </p>
     );
   }

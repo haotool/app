@@ -1,13 +1,15 @@
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
 
 export function BottomNav() {
   const { activeTab, setActiveTab } = useStore();
+  const { t } = useTranslation();
 
   const navItems = [
-    { id: 'home', icon: 'home', label: '分帳' },
-    { id: 'history', icon: 'history', label: '紀錄' },
-    { id: 'settings', icon: 'settings_heart', label: '設定' },
+    { id: 'home', icon: 'home', label: t('nav.home') },
+    { id: 'history', icon: 'history', label: t('nav.history') },
+    { id: 'settings', icon: 'settings_heart', label: t('nav.settings') },
   ] as const;
 
   return (

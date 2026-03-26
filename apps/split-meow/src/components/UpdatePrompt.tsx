@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useUpdatePrompt } from '../hooks/useUpdatePrompt';
 
 export function UpdatePrompt() {
@@ -6,6 +7,7 @@ export function UpdatePrompt() {
 }
 
 function UpdatePromptClient() {
+  const { t } = useTranslation();
   const { visible, needRefresh, handleUpdate, handleDismiss } = useUpdatePrompt();
 
   if (!visible) return null;
@@ -19,10 +21,10 @@ function UpdatePromptClient() {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-sm font-semibold text-on-surface">
-            {needRefresh ? '有新版本可更新' : '已可離線使用'}
+            {needRefresh ? t('update.new_version') : t('update.offline_ready')}
           </div>
           <div className="text-xs text-on-surface-variant">
-            {needRefresh ? '建議更新以套用最新修復。' : '網路中斷時仍可使用已快取內容。'}
+            {needRefresh ? t('update.new_version_desc') : t('update.offline_ready_desc')}
           </div>
         </div>
 
@@ -33,7 +35,7 @@ function UpdatePromptClient() {
               className="rounded-full bg-primary px-3 py-2 text-xs font-semibold text-on-primary shadow-ambient"
               onClick={handleUpdate}
             >
-              立即更新
+              {t('update.update_button')}
             </button>
           ) : null}
 
@@ -42,7 +44,7 @@ function UpdatePromptClient() {
             className="rounded-full bg-surface-container px-3 py-2 text-xs font-semibold text-on-surface"
             onClick={handleDismiss}
           >
-            關閉
+            {t('update.close')}
           </button>
         </div>
       </div>

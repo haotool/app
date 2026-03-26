@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
 import { MemberAvatar } from './MemberAvatar';
 
 export function PayerSelector() {
+  const { t } = useTranslation();
   const { members, payerId, setPayerId } = useStore();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -13,7 +15,7 @@ export function PayerSelector() {
     <div className="relative inline-block">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        aria-label={`付款人：${payer?.name}`}
+        aria-label={t('payer.label', { name: payer?.name })}
         className="flex items-center gap-1.5 px-3 py-2 bg-surface-container-low hover:bg-surface-container rounded-full transition-colors text-sm shadow-ambient"
       >
         <MemberAvatar seed={payer?.avatarUrl ?? ''} alt={payer?.name} size={24} />

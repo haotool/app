@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
 import { evaluateExpression } from '../lib/evaluateExpression';
 
 export function Calculator() {
+  const { t } = useTranslation();
   const {
     splitMode,
     calculatorValue,
@@ -172,7 +174,7 @@ export function Calculator() {
             : 'bg-surface-container text-on-surface-variant opacity-50 cursor-not-allowed',
         )}
       >
-        完成
+        {t('home.complete')}
         {canSave && (
           <div className="absolute -right-2 -bottom-2 opacity-20">
             <span
