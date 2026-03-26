@@ -1,27 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Split Meow icon">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#d6beff" />
-      <stop offset="1" stop-color="#bdefbe" />
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="120" fill="#fbf9f7" />
-  <path
-    d="M136 234c0-58 42-110 120-110s120 52 120 110c0 106-74 168-120 168s-120-62-120-168Z"
-    fill="url(#g)"
-  />
-  <path d="M176 188 136 124l86 36Z" fill="#69558e" opacity="0.92" />
-  <path d="M336 188 376 124l-86 36Z" fill="#69558e" opacity="0.92" />
-  <circle cx="216" cy="252" r="18" fill="#313331" />
-  <circle cx="296" cy="252" r="18" fill="#313331" />
-  <path d="M240 292c12 12 20 12 32 0" fill="none" stroke="#313331" stroke-width="18" stroke-linecap="round" />
-  <path
-    d="M104 294c44-26 78-26 122 0M286 294c44-26 78-26 122 0"
-    fill="none"
-    stroke="#7a7b79"
-    stroke-width="12"
-    stroke-linecap="round"
-    opacity="0.9"
-  />
+  <rect width="512" height="512" rx="120" fill="#fbf9f7"/>
+  <polygon points="112,208 160,96 224,200" fill="#C4B5FD"/>
+  <polygon points="400,208 352,96 288,200" fill="#C4B5FD"/>
+  <polygon points="136,192 164,128 206,190" fill="#FDE68A"/>
+  <polygon points="376,192 348,128 306,190" fill="#FDE68A"/>
+  <circle cx="256" cy="288" r="136" fill="#C4B5FD"/>
+  <circle cx="168" cy="316" r="36" fill="#FCA5A5" opacity="0.45"/>
+  <circle cx="344" cy="316" r="36" fill="#FCA5A5" opacity="0.45"/>
+  <circle cx="204" cy="264" r="20" fill="#2d2038"/>
+  <circle cx="308" cy="264" r="20" fill="#2d2038"/>
+  <circle cx="213" cy="256" r="8" fill="white"/>
+  <circle cx="317" cy="256" r="8" fill="white"/>
+  <ellipse cx="256" cy="299" rx="9" ry="8" fill="#2d2038" opacity="0.4"/>
+  <path d="M232 320 Q256 348 280 320" fill="none" stroke="#2d2038" stroke-width="10" stroke-linecap="round" opacity="0.8"/>
+  <line x1="112" y1="294" x2="200" y2="304" stroke="#a89abf" stroke-width="6" stroke-linecap="round"/>
+  <line x1="112" y1="322" x2="200" y2="320" stroke="#a89abf" stroke-width="6" stroke-linecap="round"/>
+  <line x1="400" y1="294" x2="312" y2="304" stroke="#a89abf" stroke-width="6" stroke-linecap="round"/>
+  <line x1="400" y1="322" x2="312" y2="320" stroke="#a89abf" stroke-width="6" stroke-linecap="round"/>
 </svg>
-
