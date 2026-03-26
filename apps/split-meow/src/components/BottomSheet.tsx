@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, type ReactNode } from 'react';
 import { cn } from '../lib/utils';
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ export function BottomSheet({
   const [expanded, setExpanded] = useState(false);
   const dragStartY = useRef<number | null>(null);
   const isDragging = useRef(false);
+  const keyboardHeight = useKeyboardHeight();
+  const keyboardOpen = keyboardHeight > 0;
 
   const toggleExpanded = useCallback(() => {
     setExpanded((prev) => !prev);
@@ -60,10 +63,13 @@ export function BottomSheet({
     <div
       data-testid="bottom-sheet"
       data-expanded={String(expanded)}
-      className={cn(
-        'fixed inset-x-0 bottom-16 z-40 flex justify-center px-4 transition-none',
-        className,
-      )}
+      className={cn('fixed inset-x-0 bottom-16 z-40 flex justify-center px-4', className)}
+      style={{
+        transform: `translateY(${keyboardOpen ? -keyboardHeight : 0}px)`,
+        transition: keyboardOpen
+          ? 'transform 120ms cubic-bezier(0.0, 0.0, 0.2, 1)'
+          : 'transform 280ms cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
     >
       <div
         className="w-full max-w-lg"

@@ -123,9 +123,11 @@ export function HomeTab() {
               type="text"
               value={expenseNote}
               onChange={(e) => setExpenseNote(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
               placeholder="備註（選填）"
               maxLength={20}
-              className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant/50 outline-none"
+              enterKeyHint="done"
+              className="flex-1 bg-transparent text-base text-on-surface placeholder:text-on-surface-variant/50 outline-none"
             />
             {expenseNote && (
               <button
