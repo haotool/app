@@ -143,23 +143,25 @@ export function HomeTab() {
           <button
             onClick={() => setSplitMode('split_evenly')}
             className={cn(
-              'flex-1 py-1.5 text-xs font-medium rounded-full transition-all',
+              'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer',
               splitMode === 'split_evenly'
                 ? 'bg-surface-container-lowest text-primary shadow-ambient'
                 : 'text-on-surface-variant hover:bg-surface-container-high',
             )}
           >
+            <span className="material-symbols-outlined text-[14px] leading-none">call_split</span>
             平分
           </button>
           <button
             onClick={() => setSplitMode('itemized')}
             className={cn(
-              'flex-1 py-1.5 text-xs font-medium rounded-full transition-all',
+              'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer',
               splitMode === 'itemized'
                 ? 'bg-surface-container-lowest text-primary shadow-ambient'
                 : 'text-on-surface-variant hover:bg-surface-container-high',
             )}
           >
+            <span className="material-symbols-outlined text-[14px] leading-none">edit_note</span>
             個別輸入
           </button>
         </div>
