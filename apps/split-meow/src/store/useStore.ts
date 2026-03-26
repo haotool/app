@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { evaluateExpression } from '../lib/evaluateExpression';
+import { generateAvatarDataUrl, randomAvatarSeed } from '../lib/avatar';
 
 export type SplitMode = 'split_evenly' | 'itemized';
 
@@ -59,20 +60,12 @@ interface AppState {
   clearCalculator: () => void;
 }
 
-const AVATARS = [
-  `${import.meta.env.BASE_URL || '/'}avatars/cat-1.svg`,
-  `${import.meta.env.BASE_URL || '/'}avatars/cat-2.svg`,
-  `${import.meta.env.BASE_URL || '/'}avatars/cat-3.svg`,
-  `${import.meta.env.BASE_URL || '/'}avatars/cat-4.svg`,
-  `${import.meta.env.BASE_URL || '/'}avatars/cat-5.svg`,
-  `${import.meta.env.BASE_URL || '/'}avatars/cat-6.svg`,
-  `${import.meta.env.BASE_URL || '/'}avatars/cat-7.svg`,
-  `${import.meta.env.BASE_URL || '/'}avatars/cat-8.svg`,
-  `${import.meta.env.BASE_URL || '/'}avatars/cat-9.svg`,
-  `${import.meta.env.BASE_URL || '/'}avatars/cat-10.svg`,
-];
-
-const getAvatarOrFallback = (index: number) => AVATARS[index] ?? AVATARS[0] ?? '';
+// 初始成員使用固定 seed，確保每次新安裝頭像一致
+const INITIAL_AVATARS = {
+  me: generateAvatarDataUrl('split-meow-me'),
+  m1: generateAvatarDataUrl('split-meow-oliver'),
+  m2: generateAvatarDataUrl('split-meow-luna'),
+};
 
 const PREFIXES = ['奶油', '布丁', '麻糬', '棉花', '糰子', '可可', '芝麻', '蜜桃', '焦糖', '雲朵'];
 const SUFFIXES = ['貓', '兔', '熊', '鴨', '狐', '鵝', '豹', '球', '丸', '寶'];
@@ -89,9 +82,9 @@ export const useStore = create<AppState>()(
       trips: [{ id: 'default-trip', name: '今天聚餐', createdAt: Date.now() }],
       currentTripId: 'default-trip',
       members: [
-        { id: 'me', name: '我', avatarUrl: getAvatarOrFallback(4), isActive: true },
-        { id: 'm1', name: 'Oliver', avatarUrl: getAvatarOrFallback(0), isActive: true },
-        { id: 'm2', name: 'Luna', avatarUrl: getAvatarOrFallback(1), isActive: true },
+        { id: 'me', name: '我', avatarUrl: INITIAL_AVATARS.me, isActive: true },
+        { id: 'm1', name: 'Oliver', avatarUrl: INITIAL_AVATARS.m1, isActive: true },
+        { id: 'm2', name: 'Luna', avatarUrl: INITIAL_AVATARS.m2, isActive: true },
       ],
       expenses: [],
       activeTab: 'home',
@@ -111,10 +104,11 @@ export const useStore = create<AppState>()(
 
       addMember: () =>
         set((state) => {
+          const seed = randomAvatarSeed();
           const newMember: Member = {
             id: Date.now().toString(),
             name: generateRandomName(),
-            avatarUrl: getAvatarOrFallback(Math.floor(Math.random() * AVATARS.length)),
+            avatarUrl: generateAvatarDataUrl(seed),
             isActive: true,
           };
           return { members: [...state.members, newMember] };
@@ -131,17 +125,11 @@ export const useStore = create<AppState>()(
         })),
 
       randomizeAvatar: (id) =>
-        set((state) => {
-          const currentAvatar = state.members.find((m) => m.id === id)?.avatarUrl;
-          const availableAvatars = AVATARS.filter((a) => a !== currentAvatar);
-          const newAvatar =
-            availableAvatars[Math.floor(Math.random() * availableAvatars.length)] ??
-            AVATARS[0] ??
-            '';
-          return {
-            members: state.members.map((m) => (m.id === id ? { ...m, avatarUrl: newAvatar } : m)),
-          };
-        }),
+        set((state) => ({
+          members: state.members.map((m) =>
+            m.id === id ? { ...m, avatarUrl: generateAvatarDataUrl(randomAvatarSeed()) } : m,
+          ),
+        })),
 
       setSplitMode: (mode) => set({ splitMode: mode, calculatorValue: '', itemizedValues: {} }),
 
