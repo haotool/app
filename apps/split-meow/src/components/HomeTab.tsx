@@ -65,8 +65,9 @@ function useResponsiveSheetHeight() {
    */
   const CALC_FULL_H = 424;
 
-  // peekHeight: 全計算機ボタンが必ず表示されるよう CALC_FULL_H を最小値に設定
-  const peekHeight = Math.min(460, Math.max(CALC_FULL_H, vh - navZone - 240));
+  // peekHeight: 計算機コンテンツと完全一致させ余白ゼロにする
+  // 小画面では viewport に合わせてクリップ、通常は CALC_FULL_H ぴったり
+  const peekHeight = Math.min(CALC_FULL_H, vh - navZone - 80);
   // expandedHeight: ヘッダー下 80px のバッファを確保して最大限展開
   const expandedHeight = Math.min(560, vh - navZone - 80);
   return { peekHeight, expandedHeight };
