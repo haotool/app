@@ -69,6 +69,14 @@
   --font-sans: 'Plus Jakarta Sans', sans-serif;
 }
 
+/**
+ * iOS safe-area-inset-bottom をJSから読めるようにCSS変数として公開
+ * BottomSheetの高さ計算に使用
+ */
+:root {
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', sans-serif;

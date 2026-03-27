@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useStore } from './store/useStore';
 import { HomeTab } from './components/HomeTab';
 import { HistoryTab } from './components/HistoryTab';
@@ -9,6 +10,7 @@ import { PayerSelector } from './components/PayerSelector';
 
 export default function App() {
   const { activeTab } = useStore();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-surface text-on-surface pb-24 font-sans">
@@ -23,7 +25,7 @@ export default function App() {
               >
                 pets
               </span>
-              <span>喵喵分帳</span>
+              <span>{t('app.title')}</span>
             </div>
             <div className="flex-1 min-w-0">
               <TripSelector />
@@ -44,8 +46,11 @@ export default function App() {
 
       {/* Bottom gradient fade — masks scrolled content behind the floating BottomNav */}
       <div
-        className="fixed inset-x-0 bottom-0 h-28 pointer-events-none z-40"
-        style={{ background: 'linear-gradient(to top, #fbf9f7 40%, transparent)' }}
+        className="fixed inset-x-0 bottom-0 pointer-events-none z-40"
+        style={{
+          height: 'calc(7rem + env(safe-area-inset-bottom, 0px))',
+          background: 'linear-gradient(to top, var(--color-surface) 40%, transparent)',
+        }}
         aria-hidden="true"
       />
       <BottomNav />

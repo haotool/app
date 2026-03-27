@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
 import { MemberAvatar } from './MemberAvatar';
 
 export function MemberList() {
+  const { t } = useTranslation();
   const { members, toggleMemberActive, addMember } = useStore();
 
   return (
@@ -29,6 +31,7 @@ export function MemberList() {
       ))}
       <button
         onClick={addMember}
+        aria-label={t('home.add_member')}
         className="w-11 h-11 flex items-center justify-center bg-primary-container text-on-primary-container rounded-full active:scale-90 transition-transform shadow-ambient"
       >
         <span className="material-symbols-outlined">add</span>

@@ -18,7 +18,8 @@ export function SettingsTab() {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(me?.name ?? '');
 
-  const currentLang = (i18n.language ?? 'zh-TW') as SupportedLanguage;
+  // resolvedLanguage は supportedLngs に一致した確定済みの言語コードを返す
+  const currentLang = (i18n.resolvedLanguage ?? 'zh-TW') as SupportedLanguage;
 
   const handleSave = () => {
     if (editName.trim() && me) {
@@ -28,8 +29,8 @@ export function SettingsTab() {
   };
 
   const handleLanguageChange = (lang: SupportedLanguage) => {
+    // i18next-browser-languagedetector が localStorage('split-meow-language') に自動保存するため手動不要
     void i18n.changeLanguage(lang);
-    localStorage.setItem('split-meow-language', lang);
   };
 
   return (
@@ -75,7 +76,7 @@ export function SettingsTab() {
             </div>
           ) : (
             <h1 className="text-3xl font-medium tracking-tight text-on-surface">
-              {me?.name || 'User'}
+              {me?.name || t('settings.default_name')}
             </h1>
           )}
           <p className="text-on-surface-variant text-sm">{t('settings.profile_subtitle')}</p>
@@ -141,8 +142,7 @@ export function SettingsTab() {
             </div>
             <div className="flex gap-1 bg-surface-container rounded-full p-1">
               {LANGUAGES.map((lang) => {
-                const isActive =
-                  currentLang === lang.id || (i18n.language ?? '').startsWith(lang.id);
+                const isActive = currentLang === lang.id;
                 return (
                   <button
                     key={lang.id}

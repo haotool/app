@@ -10,7 +10,7 @@ export function TripSelector() {
   const [isAdding, setIsAdding] = useState(false);
   const [newTripName, setNewTripName] = useState('');
 
-  const currentTrip = trips.find((t) => t.id === currentTripId);
+  const currentTrip = trips.find((trip) => trip.id === currentTripId);
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();

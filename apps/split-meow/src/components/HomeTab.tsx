@@ -8,17 +8,67 @@ import { MemberAvatar } from './MemberAvatar';
 import { cn } from '../lib/utils';
 import { useEffect, useState } from 'react';
 
-/** 根據視窗高度動態計算 BottomSheet 高度，避免在小螢幕上蓋住成員清單 */
+/**
+ * BottomSheet の peek/expanded 高さを動的計算する。
+ *
+ * 考慮事項：
+ * - iOS PWA では safe-area-inset-bottom（ホームバー）が追加される
+ * - BottomNav の実際の高さは CSS 変数 --nav-h で動的に取得
+ * - BottomNav ラッパーの bottom は 1rem(16px)
+ * - navZone = 16 + navH + safeArea → BottomSheet の bottom と一致させる
+ * - visualViewport.height を使うと iOS でキーボード表示時の高さも正確
+ */
 function useResponsiveSheetHeight() {
-  const [vh, setVh] = useState(() => window.innerHeight);
+  const [vh, setVh] = useState(() => window.visualViewport?.height ?? window.innerHeight);
+  const [navH, setNavH] = useState(62);
+  const [sab, setSab] = useState(0);
+
   useEffect(() => {
-    const update = () => setVh(window.innerHeight);
+    // safe-area-inset-bottom を CSS 変数経由で JS から読む
+    // :root { --sab: env(safe-area-inset-bottom, 0px); } が必要
+    const readSab = () => {
+      const val = getComputedStyle(document.documentElement).getPropertyValue('--sab').trim();
+      setSab(parseInt(val) || 0);
+    };
+
+    // --nav-h は BottomNav の ResizeObserver が inline style で設定する
+    const readNavH = () => {
+      const val = document.documentElement.style.getPropertyValue('--nav-h').trim();
+      const h = parseInt(val);
+      if (h > 0) setNavH(h);
+    };
+
+    const update = () => {
+      setVh(window.visualViewport?.height ?? window.innerHeight);
+      readNavH();
+    };
+
+    readSab();
+    readNavH();
+    update();
+
     window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    window.visualViewport?.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.visualViewport?.removeEventListener('resize', update);
+    };
   }, []);
-  // 保留 240px 給 header(64) + 金額卡(100) + 成員列(52) + 間距(24)
-  const peekHeight = Math.min(440, Math.max(300, vh - 72 - 240));
-  const expandedHeight = Math.min(520, vh - 72 - 80);
+
+  // BottomNav が占める底からの高さ = navWrapper.bottom(1rem=16px) + navHeight + safeArea
+  const navZone = 16 + navH + sab;
+
+  /**
+   * CALC_FULL_H: 計算機全行表示に必要な最低高さ
+   * 内訳: ドラッグハンドル(20) + メモ欄(48) + モード切替(44) + ヒント(28)
+   *      + 計算機5行 × (h-12=48px + gap-1.5=6px) - 最後のgap(6) + pb-4(16) = 424
+   */
+  const CALC_FULL_H = 424;
+
+  // peekHeight: 全計算機ボタンが必ず表示されるよう CALC_FULL_H を最小値に設定
+  const peekHeight = Math.min(460, Math.max(CALC_FULL_H, vh - navZone - 240));
+  // expandedHeight: ヘッダー下 80px のバッファを確保して最大限展開
+  const expandedHeight = Math.min(560, vh - navZone - 80);
   return { peekHeight, expandedHeight };
 }
 
@@ -55,7 +105,10 @@ export function HomeTab() {
   const splitAmount = activeMembers.length > 0 ? totalAmount / activeMembers.length : 0;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-[520px]">
+    <div
+      className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ paddingBottom: expandedHeight + 24 }}
+    >
       {/* Amount Display Card */}
       <div className="relative overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-ambient px-6 py-5 mb-4 text-center">
         <div
@@ -125,7 +178,6 @@ export function HomeTab() {
         onClose={() => undefined}
         peekHeight={peekHeight}
         expandedHeight={expandedHeight}
-        className="bottom-[72px]"
       >
         {/* Note Input */}
         <div className="mx-4 mt-1 mb-2">

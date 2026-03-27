@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
@@ -5,6 +6,20 @@ import { cn } from '../lib/utils';
 export function BottomNav() {
   const { activeTab, setActiveTab } = useStore();
   const { t } = useTranslation();
+  const navRef = useRef<HTMLElement>(null);
+
+  /** nav 實際高度 → CSS 變數 --nav-h，讓 BottomSheet 精準對齊 */
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const update = () => {
+      document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const navItems = [
     { id: 'home', icon: 'home', label: t('nav.home') },
@@ -17,7 +32,10 @@ export function BottomNav() {
       className="fixed left-0 w-full px-6 z-50 flex justify-center pointer-events-none"
       style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
     >
-      <nav className="flex items-center gap-1 px-2 py-1.5 bg-surface-bright backdrop-blur-sm rounded-full shadow-ambient border border-outline-variant/20 pointer-events-auto">
+      <nav
+        ref={navRef}
+        className="flex items-center gap-1 px-2 py-1.5 bg-surface-bright backdrop-blur-sm rounded-full shadow-ambient border border-outline-variant/20 pointer-events-auto"
+      >
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
           return (

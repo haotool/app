@@ -57,6 +57,7 @@ const resources = {
         default_currency: '預設幣別',
         cat_play_mode: '貓咪遊玩模式',
         language: '語言',
+        default_name: '使用者',
       },
       trip: {
         placeholder: '選擇行程',
@@ -72,6 +73,10 @@ const resources = {
         close: '關閉',
       },
       payer: { label: '付款人：{{name}}' },
+      defaults: {
+        trip_name: '今天聚餐',
+        my_name: '我',
+      },
     },
   },
   en: {
@@ -124,6 +129,7 @@ const resources = {
         default_currency: 'Default Currency',
         cat_play_mode: 'Cat Play Mode',
         language: 'Language',
+        default_name: 'User',
       },
       trip: {
         placeholder: 'Select Trip',
@@ -139,6 +145,10 @@ const resources = {
         close: 'Close',
       },
       payer: { label: 'Paid by: {{name}}' },
+      defaults: {
+        trip_name: "Today's Outing",
+        my_name: 'Me',
+      },
     },
   },
   ko: {
@@ -191,6 +201,7 @@ const resources = {
         default_currency: '기본 통화',
         cat_play_mode: '고양이 놀이 모드',
         language: '언어',
+        default_name: '사용자',
       },
       trip: {
         placeholder: '여행 선택',
@@ -206,6 +217,10 @@ const resources = {
         close: '닫기',
       },
       payer: { label: '결제자: {{name}}' },
+      defaults: {
+        trip_name: '오늘의 외출',
+        my_name: '나',
+      },
     },
   },
   ja: {
@@ -258,6 +273,7 @@ const resources = {
         default_currency: 'デフォルト通貨',
         cat_play_mode: 'にゃんこ遊びモード',
         language: '言語',
+        default_name: 'ユーザー',
       },
       trip: {
         placeholder: '旅行を選択',
@@ -273,11 +289,15 @@ const resources = {
         close: '閉じる',
       },
       payer: { label: '支払者：{{name}}' },
+      defaults: {
+        trip_name: '今日のお出かけ',
+        my_name: '私',
+      },
     },
   },
 };
 
-void i18n
+i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
@@ -290,6 +310,9 @@ void i18n
       lookupLocalStorage: 'split-meow-language',
     },
     interpolation: { escapeValue: false },
+  })
+  .catch((err: unknown) => {
+    console.error('i18n initialization failed:', err);
   });
 
 export default i18n;

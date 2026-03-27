@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { evaluateExpression } from '../lib/evaluateExpression';
 import { randomAvatarSeed } from '../lib/avatar';
+import i18n from '../i18n';
 
 export type SplitMode = 'split_evenly' | 'itemized';
 
@@ -70,22 +71,41 @@ const INITIAL_SEEDS = {
   m2: 'split-meow-luna',
 };
 
-const PREFIXES = ['奶油', '布丁', '麻糬', '棉花', '糰子', '可可', '芝麻', '蜜桃', '焦糖', '雲朵'];
-const SUFFIXES = ['貓', '兔', '熊', '鴨', '狐', '鵝', '豹', '球', '丸', '寶'];
+/** ロケール別のランダム名生成素材 */
+const NAME_PARTS: Record<string, { prefixes: string[]; suffixes: string[] }> = {
+  'zh-TW': {
+    prefixes: ['奶油', '布丁', '麻糬', '棉花', '糰子', '可可', '芝麻', '蜜桃', '焦糖', '雲朵'],
+    suffixes: ['貓', '兔', '熊', '鴨', '狐', '鵝', '豹', '球', '丸', '寶'],
+  },
+  en: {
+    prefixes: ['Fluffy', 'Cozy', 'Sunny', 'Misty', 'Buddy', 'Lucky', 'Zippy', 'Fuzzy'],
+    suffixes: ['Cat', 'Bear', 'Fox', 'Bun', 'Paw', 'Star', 'Moon', 'Sky'],
+  },
+  ko: {
+    prefixes: ['솜사탕', '버터', '꿀', '초코', '바닐라', '딸기', '민트', '카라멜'],
+    suffixes: ['냥', '곰', '토끼', '여우', '별', '달', '구름', '봄'],
+  },
+  ja: {
+    prefixes: ['ふわ', 'もち', 'ぷに', 'きな', 'みる', 'ゆき', 'はな', 'こむ'],
+    suffixes: ['にゃん', 'くま', 'うさ', 'きつね', 'ぼし', 'つき', 'かぜ', 'はる'],
+  },
+};
 
-const generateRandomName = () => {
-  const p = PREFIXES[Math.floor(Math.random() * PREFIXES.length)];
-  const s = SUFFIXES[Math.floor(Math.random() * SUFFIXES.length)];
+const generateRandomName = (): string => {
+  const lang = i18n.resolvedLanguage ?? 'zh-TW';
+  const parts = NAME_PARTS[lang] ?? NAME_PARTS['zh-TW'] ?? { prefixes: ['Friend'], suffixes: [''] };
+  const p = parts.prefixes[Math.floor(Math.random() * parts.prefixes.length)];
+  const s = parts.suffixes[Math.floor(Math.random() * parts.suffixes.length)];
   return `${p}${s}`;
 };
 
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
-      trips: [{ id: 'default-trip', name: '今天聚餐', createdAt: Date.now() }],
+      trips: [{ id: 'default-trip', name: i18n.t('defaults.trip_name'), createdAt: Date.now() }],
       currentTripId: 'default-trip',
       members: [
-        { id: 'me', name: '我', avatarUrl: INITIAL_SEEDS.me, isActive: true },
+        { id: 'me', name: i18n.t('defaults.my_name'), avatarUrl: INITIAL_SEEDS.me, isActive: true },
         { id: 'm1', name: 'Oliver', avatarUrl: INITIAL_SEEDS.m1, isActive: true },
         { id: 'm2', name: 'Luna', avatarUrl: INITIAL_SEEDS.m2, isActive: true },
       ],
