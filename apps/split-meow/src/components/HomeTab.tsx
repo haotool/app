@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
  * 考慮事項：
  * - iOS PWA では safe-area-inset-bottom（ホームバー）が追加される
  * - BottomNav の実際の高さは CSS 変数 --nav-h で動的に取得
- * - BottomNav ラッパーの bottom は 1rem(16px)
+ * - BottomNav ラッパーの bottom は 0.5rem(8px)
  * - navZone = 16 + navH + safeArea → BottomSheet の bottom と一致させる
  * - visualViewport.height を使うと iOS でキーボード表示時の高さも正確
  */
@@ -55,15 +55,15 @@ function useResponsiveSheetHeight() {
     };
   }, []);
 
-  // BottomNav が占める底からの高さ = navWrapper.bottom(1rem=16px) + navHeight + safeArea
-  const navZone = 16 + navH + sab;
+  // BottomNav が占める底からの高さ = navWrapper.bottom(0.5rem=8px) + navHeight + safeArea
+  const navZone = 8 + navH + sab;
 
   /**
    * CALC_FULL_H: 計算機全行表示に必要な最低高さ
    * 内訳: ドラッグハンドル(20) + メモ欄(48) + モード切替(44) + ヒント(28)
-   *      + 計算機5行 × (h-12=48px + gap-1.5=6px) - 最後のgap(6) + pb-4(16) = 424
+   *      + 計算機5行 × (h-12=48px + gap-1.5=6px) - 最後のgap(6) + pb-2(8) = 416
    */
-  const CALC_FULL_H = 424;
+  const CALC_FULL_H = 416;
 
   // peekHeight: 計算機コンテンツと完全一致させ余白ゼロにする
   // 小画面では viewport に合わせてクリップ、通常は CALC_FULL_H ぴったり
@@ -244,7 +244,7 @@ export function HomeTab() {
           focusedMemberName={members.find((m) => m.id === focusedMemberId)?.name}
         />
 
-        <div className="px-1 pb-4 touch-manipulation">
+        <div className="px-1 pb-2 touch-manipulation">
           <Calculator />
         </div>
       </BottomSheet>

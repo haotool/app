@@ -66,11 +66,11 @@ export function BottomSheet({
       className={cn('fixed inset-x-0 z-40 flex justify-center px-4', className)}
       style={{
         /**
-         * BottomNav ラッパーの bottom = 1rem + env(safe-area-inset-bottom)
+         * BottomNav ラッパーの bottom = 0.5rem + env(safe-area-inset-bottom)
          * BottomNav 高さ = --nav-h（ResizeObserver で動的設定、デフォルト 62px）
          * BottomSheet はこの合計分だけ底から離す → BottomNav と完全に接する
          */
-        bottom: 'calc(1rem + var(--nav-h, 62px) + env(safe-area-inset-bottom, 0px))',
+        bottom: 'calc(0.5rem + var(--nav-h, 62px) + env(safe-area-inset-bottom, 0px))',
         transform: `translateY(${keyboardOpen ? -keyboardHeight : 0}px)`,
         transition: keyboardOpen
           ? 'transform 120ms cubic-bezier(0.0, 0.0, 0.2, 1)'

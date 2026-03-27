@@ -30,7 +30,7 @@ export function BottomNav() {
   return (
     <div
       className="fixed left-0 w-full px-6 z-50 flex justify-center pointer-events-none"
-      style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+      style={{ bottom: 'calc(0.5rem + env(safe-area-inset-bottom, 0px))' }}
     >
       <nav
         ref={navRef}
