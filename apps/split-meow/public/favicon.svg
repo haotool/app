@@ -1,20 +1,84 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Split Meow">
-  <rect width="128" height="128" rx="28" fill="#fbf9f7"/>
-  <polygon points="28,52 40,24 56,50" fill="#C4B5FD"/>
-  <polygon points="100,52 88,24 72,50" fill="#C4B5FD"/>
-  <polygon points="34,48 41,32 51,47" fill="#FDE68A"/>
-  <polygon points="94,48 87,32 77,47" fill="#FDE68A"/>
-  <circle cx="64" cy="72" r="34" fill="#C4B5FD"/>
-  <circle cx="42" cy="79" r="9" fill="#FCA5A5" opacity="0.45"/>
-  <circle cx="86" cy="79" r="9" fill="#FCA5A5" opacity="0.45"/>
-  <circle cx="51" cy="66" r="5" fill="#2d2038"/>
-  <circle cx="77" cy="66" r="5" fill="#2d2038"/>
-  <circle cx="53" cy="64" r="2" fill="white"/>
-  <circle cx="79" cy="64" r="2" fill="white"/>
-  <ellipse cx="64" cy="75" rx="2.5" ry="2" fill="#2d2038" opacity="0.4"/>
-  <path d="M58 80 Q64 87 70 80" fill="none" stroke="#2d2038" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
-  <line x1="28" y1="74" x2="50" y2="76" stroke="#a89abf" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="28" y1="81" x2="50" y2="80" stroke="#a89abf" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="100" y1="74" x2="78" y2="76" stroke="#a89abf" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="100" y1="81" x2="78" y2="80" stroke="#a89abf" stroke-width="1.5" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Split Meow">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ece0ff"/>
+      <stop offset="100%" stop-color="#9b7fd4"/>
+    </linearGradient>
+    <radialGradient id="face" cx="42%" cy="38%" r="60%">
+      <stop offset="0%" stop-color="#faf5ff"/>
+      <stop offset="50%" stop-color="#ead9ff"/>
+      <stop offset="100%" stop-color="#c4a8f5"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Background ambient dots -->
+  <circle cx="80"  cy="88"  r="18" fill="white" opacity="0.18"/>
+  <circle cx="442" cy="78"  r="13" fill="white" opacity="0.14"/>
+  <circle cx="452" cy="434" r="16" fill="white" opacity="0.12"/>
+  <circle cx="68"  cy="424" r="11" fill="white" opacity="0.12"/>
+
+  <!-- LEFT EAR -->
+  <path d="M148 208 L100 68 L208 172 Z" fill="#7c5fa8"/>
+  <path d="M160 202 L126 102 L196 172 Z" fill="#ff99c0"/>
+  <circle cx="115" cy="83" r="12" fill="white" opacity="0.20"/>
+
+  <!-- RIGHT EAR (tip higher — adds personality) -->
+  <path d="M364 202 L414 54 L308 168 Z" fill="#7c5fa8"/>
+  <path d="M352 196 L388 86 L318 166 Z" fill="#ff99c0"/>
+  <circle cx="404" cy="67" r="12" fill="white" opacity="0.20"/>
+
+  <!-- Face depth shadow -->
+  <circle cx="258" cy="284" r="148" fill="#7c5fa8" opacity="0.10"/>
+
+  <!-- MAIN FACE -->
+  <circle cx="256" cy="280" r="144" fill="url(#face)"/>
+
+  <!-- BLUSH -->
+  <ellipse cx="163" cy="332" rx="46" ry="33" fill="#ff99c0" opacity="0.36"/>
+  <ellipse cx="349" cy="332" rx="46" ry="33" fill="#ff99c0" opacity="0.36"/>
+
+  <!-- LEFT EYE -->
+  <ellipse cx="198" cy="260" rx="28" ry="30" fill="#2d2038"/>
+  <ellipse cx="192" cy="250" rx="12" ry="14" fill="white" opacity="0.90"/>
+  <circle  cx="216" cy="268" r="6"           fill="white" opacity="0.72"/>
+  <circle  cx="190" cy="266" r="3"           fill="white" opacity="0.50"/>
+
+  <!-- RIGHT EYE -->
+  <ellipse cx="314" cy="260" rx="28" ry="30" fill="#2d2038"/>
+  <ellipse cx="308" cy="250" rx="12" ry="14" fill="white" opacity="0.90"/>
+  <circle  cx="332" cy="268" r="6"           fill="white" opacity="0.72"/>
+  <circle  cx="306" cy="266" r="3"           fill="white" opacity="0.50"/>
+
+  <!-- NOSE: diamond -->
+  <path d="M248 306 L256 297 L264 306 L256 317 Z" fill="#9b7fd4" opacity="0.90"/>
+
+  <!-- MOUTH: W-shape cat smile -->
+  <path d="M226 334 Q241 354 256 343 Q271 354 286 334"
+        fill="none" stroke="#7c5fa8" stroke-width="9"
+        stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+
+  <!-- WHISKERS LEFT -->
+  <line x1="86"  y1="308" x2="196" y2="318" stroke="#9b7fd4" stroke-width="5" stroke-linecap="round" opacity="0.38"/>
+  <line x1="82"  y1="332" x2="196" y2="332" stroke="#9b7fd4" stroke-width="5" stroke-linecap="round" opacity="0.38"/>
+  <line x1="86"  y1="356" x2="196" y2="346" stroke="#9b7fd4" stroke-width="5" stroke-linecap="round" opacity="0.38"/>
+
+  <!-- WHISKERS RIGHT -->
+  <line x1="426" y1="308" x2="316" y2="318" stroke="#9b7fd4" stroke-width="5" stroke-linecap="round" opacity="0.38"/>
+  <line x1="430" y1="332" x2="316" y2="332" stroke="#9b7fd4" stroke-width="5" stroke-linecap="round" opacity="0.38"/>
+  <line x1="426" y1="356" x2="316" y2="346" stroke="#9b7fd4" stroke-width="5" stroke-linecap="round" opacity="0.38"/>
+
+  <!-- SPARKLE STARS -->
+  <path d="M396 150 L399 140 L402 150 L412 153 L402 157 L399 167 L396 157 L386 153 Z"
+        fill="#fde68a" opacity="0.90"/>
+  <path d="M115 158 L118 148 L121 158 L131 161 L121 164 L118 174 L115 164 L105 161 Z"
+        fill="#fde68a" opacity="0.80"/>
+
+  <!-- Small sparkle dots -->
+  <circle cx="434" cy="190" r="5"   fill="#fde68a" opacity="0.70"/>
+  <circle cx="82"  cy="196" r="4"   fill="#fde68a" opacity="0.65"/>
+  <circle cx="138" cy="126" r="3.5" fill="white"   opacity="0.55"/>
+  <circle cx="388" cy="130" r="3.5" fill="white"   opacity="0.55"/>
 </svg>
