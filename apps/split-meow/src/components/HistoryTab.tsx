@@ -113,6 +113,7 @@ export function HistoryTab() {
   const { t } = useTranslation();
   const { expenses, members, currentTripId, deleteExpense, updateExpenseNote } = useStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteValue, setEditingNoteValue] = useState('');
   const noteInputRef = useRef<HTMLInputElement>(null);
@@ -237,27 +238,183 @@ export function HistoryTab() {
           <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
             {t('history.balances')}
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-3">
             {Object.entries(balances).map(([memberId, amount]) => {
               const member = members.find((m) => m.id === memberId);
-              if (!member || Math.abs(amount) < 0.01) return null;
+              if (!member) return null;
               const isOwed = amount > 0;
+              const isSettled = Math.abs(amount) < 0.01;
+              const isOpen = expandedMemberId === memberId;
+
+              // 與此成員相關的消費（有參與的）
+              const memberExpenses = tripExpenses.filter(
+                (e) => e.paidBy === memberId || memberId in e.perPersonAmounts,
+              );
+
               return (
                 <div
                   key={memberId}
-                  className="bg-surface-container-lowest p-4 rounded-[1.5rem] flex items-center gap-3 shadow-ambient"
+                  className={cn(
+                    'bg-surface-container-lowest rounded-[1.5rem] shadow-ambient overflow-hidden transition-all duration-300',
+                    !isSettled && 'cursor-pointer',
+                  )}
+                  onClick={() => {
+                    if (isSettled) return;
+                    setExpandedMemberId(isOpen ? null : memberId);
+                  }}
                 >
-                  <MemberAvatar seed={member.avatarUrl} alt={member.name} size={40} />
-                  <div>
-                    <p className="font-medium text-sm text-on-surface truncate max-w-[80px]">
-                      {member.name}
-                    </p>
-                    <p
-                      className={`font-medium text-sm ${isOwed ? 'text-secondary' : 'text-error'}`}
-                    >
-                      {isOwed ? t('history.owed') : t('history.owing')} <br /> NT${' '}
-                      {Math.round(Math.abs(amount)).toLocaleString()}
-                    </p>
+                  {/* 摘要列 */}
+                  <div className="p-4 flex items-center gap-3">
+                    <MemberAvatar seed={member.avatarUrl} alt={member.name} size={40} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-on-surface truncate">{member.name}</p>
+                      {isSettled ? (
+                        <p className="text-xs text-on-surface-variant/60">
+                          {t('history.balance_settled')}
+                        </p>
+                      ) : (
+                        <p
+                          className={cn(
+                            'text-xs font-medium',
+                            isOwed ? 'text-secondary' : 'text-error',
+                          )}
+                        >
+                          {isOwed ? t('history.owed') : t('history.owing')}
+                          {' · '}
+                          {t('history.tap_to_detail')}
+                        </p>
+                      )}
+                    </div>
+                    {!isSettled && (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className={cn(
+                            'text-sm font-bold px-3 py-1 rounded-full',
+                            isOwed
+                              ? 'bg-secondary-container text-on-secondary-container'
+                              : 'bg-error-container text-on-error-container',
+                          )}
+                        >
+                          {isOwed ? '+' : '-'}NT$ {Math.round(Math.abs(amount)).toLocaleString()}
+                        </span>
+                        <span
+                          className="material-symbols-outlined text-on-surface-variant text-lg transition-transform duration-300"
+                          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                        >
+                          expand_more
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 展開明細 */}
+                  <div
+                    className={cn(
+                      'grid transition-all duration-300 ease-in-out',
+                      isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+                    )}
+                  >
+                    <div className="overflow-hidden">
+                      <div
+                        className="px-4 pb-4 space-y-2 border-t border-outline-variant/15 pt-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {memberExpenses.map((exp, idx) => {
+                          const isPayer = exp.paidBy === memberId;
+                          const share = exp.perPersonAmounts[memberId] ?? 0;
+                          const net = (isPayer ? exp.totalAmount : 0) - share;
+                          const expLabel =
+                            exp.note ||
+                            (exp.type === 'split_evenly'
+                              ? t('history.split_evenly')
+                              : t('history.itemized'));
+
+                          return (
+                            <div
+                              key={exp.id}
+                              className={cn(
+                                'rounded-2xl bg-surface-container-low p-3 space-y-2',
+                                idx > 0 && '',
+                              )}
+                            >
+                              {/* 消費標題 */}
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-on-surface truncate max-w-[140px]">
+                                  {expLabel}
+                                </span>
+                                <span className="text-[10px] text-on-surface-variant/60 shrink-0">
+                                  {format(exp.createdAt, 'M/d HH:mm')}
+                                </span>
+                              </div>
+
+                              {/* 墊付行（只有付款人才有） */}
+                              {isPayer && (
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="flex items-center gap-1.5 text-secondary">
+                                    <span className="material-symbols-outlined text-[13px]">
+                                      payments
+                                    </span>
+                                    {t('history.balance_paid')}
+                                  </span>
+                                  <span className="font-semibold text-secondary">
+                                    +NT$ {Math.round(exp.totalAmount).toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* 分攤行 */}
+                              {share > 0.01 && (
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="flex items-center gap-1.5 text-on-surface-variant">
+                                    <span className="material-symbols-outlined text-[13px]">
+                                      group
+                                    </span>
+                                    {t('history.balance_share')}
+                                  </span>
+                                  <span className="font-semibold text-error">
+                                    -NT$ {Math.round(share).toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* 小計 */}
+                              <div className="flex items-center justify-between text-xs border-t border-outline-variant/20 pt-1.5">
+                                <span className="text-on-surface-variant/70">
+                                  {t('history.balance_net')}
+                                </span>
+                                <span
+                                  className={cn(
+                                    'font-bold',
+                                    net > 0.01
+                                      ? 'text-secondary'
+                                      : net < -0.01
+                                        ? 'text-error'
+                                        : 'text-on-surface-variant',
+                                  )}
+                                >
+                                  {net > 0.01 ? '+' : ''}NT$ {Math.round(net).toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {/* 合計 */}
+                        <div className="flex items-center justify-between pt-1 px-1">
+                          <span className="text-xs font-medium text-on-surface-variant uppercase tracking-wider">
+                            {t('history.balance_total')}
+                          </span>
+                          <span
+                            className={cn(
+                              'text-base font-bold',
+                              isOwed ? 'text-secondary' : 'text-error',
+                            )}
+                          >
+                            {isOwed ? '+' : ''}NT$ {Math.round(amount).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
