@@ -60,6 +60,7 @@ const resources = {
         cat_play_mode: '貓咪遊玩模式',
         language: '語言',
         default_name: '使用者',
+        version: '版本',
       },
       trip: {
         placeholder: '選擇行程',
@@ -134,6 +135,7 @@ const resources = {
         cat_play_mode: 'Cat Play Mode',
         language: 'Language',
         default_name: 'User',
+        version: 'Version',
       },
       trip: {
         placeholder: 'Select Trip',
@@ -208,6 +210,7 @@ const resources = {
         cat_play_mode: '고양이 놀이 모드',
         language: '언어',
         default_name: '사용자',
+        version: '버전',
       },
       trip: {
         placeholder: '여행 선택',
@@ -282,6 +285,7 @@ const resources = {
         cat_play_mode: 'にゃんこ遊びモード',
         language: '言語',
         default_name: 'ユーザー',
+        version: 'バージョン',
       },
       trip: {
         placeholder: '旅行を選択',

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { MemberAvatar } from './MemberAvatar';
 import i18n, { type SupportedLanguage } from '../i18n';
+import { getDisplayVersion } from '../config/version';
 
 const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
   { id: 'zh-TW', flag: '🇹🇼', name: '繁中' },
@@ -17,6 +18,7 @@ export function SettingsTab() {
   const me = members.find((m) => m.id === 'me') ?? members[0] ?? null;
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(me?.name ?? '');
+  const displayVersion = getDisplayVersion();
 
   // resolvedLanguage は supportedLngs に一致した確定済みの言語コードを返す
   const currentLang = (i18n.resolvedLanguage ?? 'zh-TW') as SupportedLanguage;
@@ -76,7 +78,7 @@ export function SettingsTab() {
             </div>
           ) : (
             <h1 className="text-3xl font-medium tracking-tight text-on-surface">
-              {me?.name || t('settings.default_name')}
+              {me?.name ?? t('settings.default_name')}
             </h1>
           )}
           <p className="text-on-surface-variant text-sm">{t('settings.profile_subtitle')}</p>
@@ -198,6 +200,15 @@ export function SettingsTab() {
           </div>
         </div>
       </section>
+
+      <footer className="pt-6 pb-2 flex justify-center">
+        <p
+          className="text-xs text-on-surface-variant/50 select-none tracking-wide"
+          data-testid="app-version"
+        >
+          {t('settings.version')}&nbsp;{displayVersion}
+        </p>
+      </footer>
     </div>
   );
 }

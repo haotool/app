@@ -9,6 +9,8 @@ import { readFileSync } from 'node:fs';
 import { APP_CONFIG } from './app.config.mjs';
 
 const _require = createRequire(import.meta.url);
+const { version: appVersion } = _require('./package.json') as { version: string };
+const buildTime = new Date().toISOString();
 
 // [fix] Vite 7 dev server plugin container does not invoke resolveId hooks that use the new
 // @rolldown/pluginutils filter syntax. vite-plugin-pwa only strips the filter when
@@ -45,6 +47,7 @@ export default defineConfig(({ mode }) => {
       : process.env['CI']
         ? APP_CONFIG.basePath.ci
         : APP_CONFIG.basePath.development;
+  const manifestScope = base.endsWith('/') ? base : `${base}/`;
   return {
     plugins: [
       pwaVirtualDevFix(mode),
@@ -58,42 +61,62 @@ export default defineConfig(({ mode }) => {
         srcDir: 'src',
         filename: 'sw.ts',
         injectManifest: {
-          globPatterns: ['**/*.js', '**/*.css', '**/*.html', '**/*.svg', '**/*.webmanifest'],
+          globPatterns: [
+            '**/*.js',
+            '**/*.css',
+            '**/*.html',
+            '**/*.png',
+            '**/*.svg',
+            '**/*.webmanifest',
+          ],
           globIgnores: ['**/node_modules/**', '**/sitemap.xml', '**/robots.txt', '**/llms.txt'],
         },
         manifest: {
+          id: manifestScope,
           name: 'Split Meow',
           short_name: 'SplitMeow',
           description: 'A cute and minimal bill splitting app',
           theme_color: '#fbf9f7',
           background_color: '#fbf9f7',
           display: 'standalone',
-          scope: base,
-          start_url: base,
+          scope: manifestScope,
+          start_url: manifestScope,
+          orientation: 'portrait',
+          categories: ['finance', 'utilities'],
           lang: 'zh-TW',
           icons: [
             {
-              src: 'icons/icon-192.svg',
+              src: 'icons/icon-192.png',
               sizes: '192x192',
-              type: 'image/svg+xml',
+              type: 'image/png',
               purpose: 'any',
+            },
+            {
+              src: 'icons/icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: 'icons/icon-512-maskable.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
             },
             {
               src: 'icons/icon-512.svg',
-              sizes: '512x512',
+              sizes: 'any',
               type: 'image/svg+xml',
               purpose: 'any',
-            },
-            {
-              src: 'icons/icon-512-maskable.svg',
-              sizes: '512x512',
-              type: 'image/svg+xml',
-              purpose: 'maskable',
             },
           ],
         },
       }),
     ],
+    define: {
+      __APP_VERSION__: JSON.stringify(appVersion),
+      __BUILD_TIME__: JSON.stringify(buildTime),
+    },
     resolve: {
       alias: {
         '@app/split-meow': resolve(__dirname, './src'),
