@@ -151,27 +151,30 @@ export function Calculator() {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
-      {buttons.map((btn, i) => (
-        <button
-          key={i}
-          onClick={() => handlePress(btn.label)}
-          className={cn(
-            'h-12 sm:h-13 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
-            btn.class,
-          )}
-        >
-          {btn.icon ? <span className="material-symbols-outlined">{btn.icon}</span> : btn.label}
-        </button>
-      ))}
+    <div className="flex flex-col gap-1.5 sm:gap-2">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+        {buttons.map((btn, i) => (
+          <button
+            key={i}
+            onClick={() => handlePress(btn.label)}
+            className={cn(
+              'h-12 sm:h-13 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
+              btn.label === '0' && 'col-span-2',
+              btn.class,
+            )}
+          >
+            {btn.icon ? <span className="material-symbols-outlined">{btn.icon}</span> : btn.label}
+          </button>
+        ))}
+      </div>
       <button
         onClick={canSave ? saveExpense : undefined}
         disabled={!canSave}
         className={cn(
-          'relative overflow-hidden rounded-full transition-all flex items-center justify-center gap-2 shadow-ambient text-lg sm:text-xl font-medium',
+          'relative overflow-hidden h-12 w-full rounded-full transition-all flex items-center justify-center gap-2 shadow-ambient text-lg sm:text-xl font-medium',
           canSave
             ? 'bg-[image:var(--background-image-gradient-primary)] text-white hover:opacity-90 active:scale-[0.98]'
-            : 'bg-surface-container text-on-surface-variant opacity-50 cursor-not-allowed',
+            : 'bg-surface-container text-on-surface-variant opacity-40 cursor-not-allowed',
         )}
       >
         {t('home.complete')}

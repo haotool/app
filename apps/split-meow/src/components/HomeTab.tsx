@@ -5,6 +5,7 @@ import { Calculator } from './Calculator';
 import { MemberList } from './MemberList';
 import { BottomSheet } from './BottomSheet';
 import { MemberAvatar } from './MemberAvatar';
+import { PayerSelector } from './PayerSelector';
 import { cn } from '../lib/utils';
 import { useEffect, useState } from 'react';
 
@@ -60,10 +61,10 @@ function useResponsiveSheetHeight() {
 
   /**
    * CALC_FULL_H: 計算機全行表示に必要な最低高さ
-   * 内訳: ドラッグハンドル(20) + メモ欄(48) + モード切替(44) + ヒント(28)
-   *      + 計算機5行 × (h-12=48px + gap-1.5=6px) - 最後のgap(6) + pb-2(8) = 416
+   * 内訳: ドラッグハンドル(20) + メモ欄(48) + モード切替(40) + 計算機5行(264)
+   *      + 完成ボタン(48+6gap) + pb-2(8) = 434（バッファ込み440）
    */
-  const CALC_FULL_H = 416;
+  const CALC_FULL_H = 440;
 
   // peekHeight: 計算機コンテンツと完全一致させ余白ゼロにする
   // 小画面では viewport に合わせてクリップ、通常は CALC_FULL_H ぴったり
@@ -124,6 +125,9 @@ export function HomeTab() {
         <h1 className="text-4xl sm:text-5xl font-headline font-semibold tracking-tight text-on-surface leading-none break-all">
           NT$ {Math.round(totalAmount).toLocaleString()}
         </h1>
+        <div className="flex justify-center mt-2">
+          <PayerSelector />
+        </div>
         {splitMode === 'split_evenly' && activeMembers.length > 0 && totalAmount > 0 && (
           <p className="text-sm text-on-surface-variant mt-2">
             {t('home.perPerson')}{' '}
@@ -131,11 +135,6 @@ export function HomeTab() {
               NT$ {Math.round(splitAmount).toLocaleString()}
             </span>{' '}
             × {activeMembers.length} {t('home.people')}
-          </p>
-        )}
-        {splitMode === 'split_evenly' && calculatorValue && (
-          <p className="text-xs text-on-surface-variant mt-1 font-mono opacity-70">
-            {calculatorValue}
           </p>
         )}
       </div>
@@ -164,9 +163,6 @@ export function HomeTab() {
                 <span className="text-xl font-medium">
                   NT$ {Math.round(evaluateExpression(itemizedValues[m.id] ?? '0')).toLocaleString()}
                 </span>
-                {itemizedValues[m.id] && focusedMemberId === m.id && (
-                  <p className="text-xs opacity-70 font-mono mt-1">{itemizedValues[m.id]}</p>
-                )}
               </div>
             </div>
           ))}
@@ -235,60 +231,10 @@ export function HomeTab() {
           </button>
         </div>
 
-        <DockInfo
-          splitMode={splitMode}
-          activeMembersCount={activeMembers.length}
-          totalAmount={totalAmount}
-          focusedMemberId={focusedMemberId}
-          focusedMemberAvatarUrl={members.find((m) => m.id === focusedMemberId)?.avatarUrl}
-          focusedMemberName={members.find((m) => m.id === focusedMemberId)?.name}
-        />
-
         <div className="px-1 pb-2 touch-manipulation">
           <Calculator />
         </div>
       </BottomSheet>
     </div>
   );
-}
-
-function DockInfo(props: {
-  splitMode: 'split_evenly' | 'itemized';
-  activeMembersCount: number;
-  totalAmount: number;
-  focusedMemberId: string | null;
-  focusedMemberAvatarUrl: string | undefined;
-  focusedMemberName: string | undefined;
-}) {
-  const { t } = useTranslation();
-  const {
-    splitMode,
-    activeMembersCount,
-    totalAmount,
-    focusedMemberId,
-    focusedMemberAvatarUrl,
-    focusedMemberName,
-  } = props;
-
-  if (splitMode === 'itemized') {
-    if (!focusedMemberId) return null;
-    return (
-      <div className="flex items-center justify-center gap-2 mb-2 mx-4 animate-in fade-in slide-in-from-bottom-2">
-        <MemberAvatar seed={focusedMemberAvatarUrl ?? ''} size={24} className="shadow-sm" />
-        <span className="text-sm font-medium text-on-surface-variant">
-          {t('home.inputting_for', { name: focusedMemberName })}
-        </span>
-      </div>
-    );
-  }
-
-  if (activeMembersCount <= 0 || totalAmount <= 0) {
-    return (
-      <p className="text-xs text-center text-on-surface-variant mb-2 opacity-60">
-        {t('home.save_hint')}
-      </p>
-    );
-  }
-
-  return null;
 }
