@@ -203,17 +203,24 @@ export const useStore = create<AppState>()(
           } else {
             activeMembers.forEach((m) => {
               const val = evaluateExpression(state.itemizedValues[m.id] || '0');
-              perPersonAmounts[m.id] = val;
+              // 個別輸入時只記錄金額 > 0 的成員，0 元成員不參與此筆費用
+              if (val > 0) perPersonAmounts[m.id] = val;
               totalAmount += val;
             });
             if (totalAmount <= 0) return state;
           }
 
+          // participantIds = 有實際金額的成員（個別輸入時排除 0 元成員）
+          const participantIds =
+            state.splitMode === 'split_evenly'
+              ? activeMembers.map((m) => m.id)
+              : Object.keys(perPersonAmounts);
+
           const newExpense: ExpenseRecord = {
             id: Date.now().toString(),
             tripId: state.currentTripId,
             type: state.splitMode,
-            participantIds: activeMembers.map((m) => m.id),
+            participantIds,
             paidBy: state.payerId || 'me',
             totalAmount,
             perPersonAmounts,
