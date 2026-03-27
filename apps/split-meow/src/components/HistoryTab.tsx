@@ -118,7 +118,19 @@ export function HistoryTab() {
   const [editingNoteValue, setEditingNoteValue] = useState('');
   const noteInputRef = useRef<HTMLInputElement>(null);
 
-  const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
+  // 向後相容：舊資料可能含 0 元成員，讀取時過濾
+  const tripExpenses = expenses
+    .filter((e) => e.tripId === currentTripId)
+    .map((e) => {
+      const perPersonAmounts = Object.fromEntries(
+        Object.entries(e.perPersonAmounts).filter(([, v]) => v > 0),
+      );
+      return {
+        ...e,
+        perPersonAmounts,
+        participantIds: e.participantIds.filter((id) => id in perPersonAmounts),
+      };
+    });
   const totalSpent = tripExpenses.reduce((sum, e) => sum + e.totalAmount, 0);
 
   // 計算各人餘額
