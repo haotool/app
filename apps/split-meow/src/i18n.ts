@@ -9,7 +9,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   'zh-TW': {
     translation: {
-      app: { title: '喵喵分帳' },
+      app: { title: '喵喵分帳', share: '分享', copied: '已複製連結！' },
       nav: { home: '分帳', history: '紀錄', settings: '設定' },
       home: {
         totalAmount: '總金額',
@@ -83,7 +83,7 @@ const resources = {
   },
   en: {
     translation: {
-      app: { title: 'Meow Split' },
+      app: { title: 'Meow Split', share: 'Share', copied: 'Link copied!' },
       nav: { home: 'Split', history: 'History', settings: 'Settings' },
       home: {
         totalAmount: 'Total Amount',
@@ -157,7 +157,7 @@ const resources = {
   },
   ko: {
     translation: {
-      app: { title: '냥냥 분할' },
+      app: { title: '냥냥 분할', share: '공유', copied: '링크 복사됨!' },
       nav: { home: '분할', history: '기록', settings: '설정' },
       home: {
         totalAmount: '총 금액',
@@ -231,7 +231,7 @@ const resources = {
   },
   ja: {
     translation: {
-      app: { title: 'にゃんこ割り勘' },
+      app: { title: 'にゃんこ割り勘', share: '共有', copied: 'リンクをコピーしました！' },
       nav: { home: '割り勘', history: '履歴', settings: '設定' },
       home: {
         totalAmount: '合計金額',
