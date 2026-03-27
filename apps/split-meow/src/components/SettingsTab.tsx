@@ -13,7 +13,7 @@ const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
 
 export function SettingsTab() {
   const { t } = useTranslation();
-  const { members, updateMember, randomizeAvatar, deleteMember } = useStore();
+  const { members, updateMember, randomizeAvatar, deleteMember, addMember } = useStore();
   const me = members.find((m) => m.id === 'me') ?? members[0] ?? null;
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(me?.name ?? '');
@@ -128,6 +128,13 @@ export function SettingsTab() {
               )}
             </div>
           ))}
+          <button
+            onClick={addMember}
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-[2rem] border-2 border-dashed border-outline-variant/40 text-on-surface-variant hover:border-primary hover:text-primary hover:bg-primary-container/20 transition-all cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[20px]">person_add</span>
+            <span className="font-medium text-sm">{t('home.add_member')}</span>
+          </button>
         </div>
       </section>
 
