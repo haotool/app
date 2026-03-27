@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { useStore } from '../store/useStore';
+import { useStore, type Member } from '../store/useStore';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { cn } from '../lib/utils';
 import { MemberAvatar } from './MemberAvatar';
 
@@ -46,15 +46,81 @@ function calculateSettlements(balances: Record<string, number>): Settlement[] {
   return settlements;
 }
 
+/** 最多顯示 MAX_AVATAR 個頭像，其餘以 +N 呈現 */
+const MAX_AVATAR = 3;
+
+function ParticipantAvatars({
+  participantIds,
+  members,
+  paidBy,
+}: {
+  participantIds: string[];
+  members: Member[];
+  paidBy: string;
+}) {
+  // 付款人排最前
+  const sorted = [
+    ...participantIds.filter((id) => id === paidBy),
+    ...participantIds.filter((id) => id !== paidBy),
+  ];
+  const visibleSorted = sorted.slice(0, MAX_AVATAR);
+  const overflowCount = sorted.length - MAX_AVATAR;
+
+  return (
+    <div className="flex -space-x-2 shrink-0">
+      {visibleSorted.map((pid) => {
+        const m = members.find((x: Member) => x.id === pid);
+        if (!m) return null;
+        const isPayer = pid === paidBy;
+        return (
+          <div key={pid} className="relative">
+            <MemberAvatar
+              seed={m.avatarUrl}
+              alt={m.name}
+              size={36}
+              className={cn(
+                'border-2',
+                isPayer
+                  ? 'border-primary ring-1 ring-primary/30'
+                  : 'border-surface-container-lowest',
+              )}
+            />
+            {isPayer && (
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center"
+                title="payer"
+              >
+                <span className="material-symbols-outlined text-[8px] text-on-primary leading-none">
+                  payments
+                </span>
+              </span>
+            )}
+          </div>
+        );
+      })}
+      {overflowCount > 0 && (
+        <div className="w-9 h-9 rounded-full bg-surface-container border-2 border-surface-container-lowest flex items-center justify-center shrink-0">
+          <span className="text-[10px] font-bold text-on-surface-variant leading-none">
+            +{overflowCount}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function HistoryTab() {
   const { t } = useTranslation();
-  const { expenses, members, currentTripId, deleteExpense } = useStore();
+  const { expenses, members, currentTripId, deleteExpense, updateExpenseNote } = useStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteValue, setEditingNoteValue] = useState('');
+  const noteInputRef = useRef<HTMLInputElement>(null);
 
   const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
   const totalSpent = tripExpenses.reduce((sum, e) => sum + e.totalAmount, 0);
 
-  // Calculate per-person balances
+  // 計算各人餘額
   const balances: Record<string, number> = {};
   tripExpenses.forEach((exp) => {
     balances[exp.paidBy] = (balances[exp.paidBy] || 0) + exp.totalAmount;
@@ -64,6 +130,19 @@ export function HistoryTab() {
   });
 
   const settlements = calculateSettlements({ ...balances });
+
+  const startEditNote = (expId: string, currentNote: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingNoteId(expId);
+    setEditingNoteValue(currentNote);
+    // 等 DOM 更新後 focus
+    setTimeout(() => noteInputRef.current?.focus(), 30);
+  };
+
+  const commitNote = (expId: string) => {
+    updateExpenseNote(expId, editingNoteValue);
+    setEditingNoteId(null);
+  };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-28">
@@ -114,7 +193,7 @@ export function HistoryTab() {
         </div>
       </section>
 
-      {/* Settlement Instructions */}
+      {/* 結清方式 */}
       {settlements.length > 0 && (
         <section className="mb-10">
           <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
@@ -152,7 +231,7 @@ export function HistoryTab() {
         </section>
       )}
 
-      {/* Member Balances */}
+      {/* 各人結算 */}
       {Object.keys(balances).length > 0 && (
         <section className="mb-10">
           <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
@@ -187,6 +266,7 @@ export function HistoryTab() {
         </section>
       )}
 
+      {/* 近期活動 */}
       <section className="space-y-6">
         <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2">
           {t('history.recent')}
@@ -201,40 +281,44 @@ export function HistoryTab() {
           <div className="space-y-4">
             {tripExpenses.map((exp) => {
               const isExpanded = expandedId === exp.id;
+              const isEditingNote = editingNoteId === exp.id;
+
               return (
                 <div
                   key={exp.id}
-                  onClick={() => setExpandedId(isExpanded ? null : exp.id)}
+                  onClick={() => {
+                    if (isEditingNote) return;
+                    setExpandedId(isExpanded ? null : exp.id);
+                  }}
                   className="bg-surface-container-lowest p-5 rounded-[2rem] flex flex-col group hover:bg-surface-container-low transition-all relative shadow-ambient cursor-pointer"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container shrink-0">
-                        <span className="material-symbols-outlined">
-                          {exp.note
-                            ? 'label'
-                            : exp.type === 'split_evenly'
-                              ? 'restaurant'
-                              : 'receipt'}
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-on-surface truncate">
-                          {exp.note ||
-                            (exp.type === 'split_evenly'
-                              ? t('history.split_evenly')
-                              : t('history.itemized'))}
-                        </p>
-                        <p className="text-xs text-on-surface-variant truncate">
-                          {format(exp.createdAt, 'MMM d, h:mm a')} •{' '}
-                          {t('history.payer', {
-                            name:
-                              members.find((m) => m.id === exp.paidBy)?.name ||
-                              t('history.unknown_payer'),
-                          })}
-                        </p>
-                      </div>
+                  <div className="flex items-center justify-between gap-3">
+                    {/* 左側：頭像堆疊 */}
+                    <ParticipantAvatars
+                      participantIds={exp.participantIds}
+                      members={members}
+                      paidBy={exp.paidBy}
+                    />
+
+                    {/* 中間：名稱 + 時間/付款人 */}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-on-surface truncate">
+                        {exp.note ||
+                          (exp.type === 'split_evenly'
+                            ? t('history.split_evenly')
+                            : t('history.itemized'))}
+                      </p>
+                      <p className="text-xs text-on-surface-variant truncate">
+                        {format(exp.createdAt, 'MMM d, h:mm a')} •{' '}
+                        {t('history.payer', {
+                          name:
+                            members.find((m) => m.id === exp.paidBy)?.name ||
+                            t('history.unknown_payer'),
+                        })}
+                      </p>
                     </div>
+
+                    {/* 右側：金額 + 人數 + 展開箭頭 */}
                     <div className="text-right flex items-center gap-2 sm:gap-3 shrink-0">
                       <div className="shrink-0">
                         <p className="font-bold text-on-surface whitespace-nowrap text-base sm:text-lg">
@@ -253,7 +337,7 @@ export function HistoryTab() {
                     </div>
                   </div>
 
-                  {/* Expanded Details */}
+                  {/* 展開詳情 */}
                   <div
                     className={cn(
                       'grid transition-all duration-300 ease-in-out',
@@ -263,6 +347,54 @@ export function HistoryTab() {
                     )}
                   >
                     <div className="overflow-hidden">
+                      {/* 備注編輯 */}
+                      <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+                        {isEditingNote ? (
+                          <div className="flex items-center gap-2 bg-surface-container rounded-full px-3 py-1.5">
+                            <span className="material-symbols-outlined text-[15px] text-on-surface-variant shrink-0">
+                              label
+                            </span>
+                            <input
+                              ref={noteInputRef}
+                              type="text"
+                              value={editingNoteValue}
+                              onChange={(e) => setEditingNoteValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') commitNote(exp.id);
+                                if (e.key === 'Escape') setEditingNoteId(null);
+                              }}
+                              onBlur={() => commitNote(exp.id)}
+                              maxLength={20}
+                              enterKeyHint="done"
+                              placeholder={t('history.note_placeholder')}
+                              className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant/50 outline-none"
+                            />
+                            <button
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                commitNote(exp.id);
+                              }}
+                              className="shrink-0 text-primary cursor-pointer"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">check</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={(e) => startEditNote(exp.id, exp.note, e)}
+                            className="flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group/note"
+                          >
+                            <span className="material-symbols-outlined text-[13px] group-hover/note:text-primary transition-colors">
+                              {exp.note ? 'edit' : 'add'}
+                            </span>
+                            <span className={cn(exp.note ? 'text-on-surface' : 'opacity-60')}>
+                              {exp.note || t('history.add_note')}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* 標題列：分攤明細 + 刪除 */}
                       <div className="flex justify-between items-center mb-3">
                         <span className="text-xs font-medium text-on-surface-variant">
                           {t('history.breakdown')}
@@ -279,6 +411,8 @@ export function HistoryTab() {
                           {t('history.delete')}
                         </button>
                       </div>
+
+                      {/* 分攤明細 */}
                       <div className="space-y-3">
                         {Object.entries(exp.perPersonAmounts).map(([mId, amt]) => {
                           const m = members.find((x) => x.id === mId);

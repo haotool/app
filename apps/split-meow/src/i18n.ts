@@ -45,6 +45,8 @@ const resources = {
         breakdown: '分攤明細',
         delete: '刪除',
         delete_title: '刪除紀錄',
+        add_note: '新增備注',
+        note_placeholder: '備注內容...',
       },
       settings: {
         profile_subtitle: '財務喵管家',
@@ -117,6 +119,8 @@ const resources = {
         breakdown: 'Breakdown',
         delete: 'Delete',
         delete_title: 'Delete record',
+        add_note: 'Add note',
+        note_placeholder: 'Note...',
       },
       settings: {
         profile_subtitle: 'Finance Purrmanager',
@@ -189,6 +193,8 @@ const resources = {
         breakdown: '분담 내역',
         delete: '삭제',
         delete_title: '기록 삭제',
+        add_note: '메모 추가',
+        note_placeholder: '메모...',
       },
       settings: {
         profile_subtitle: '재무 냥이 관리자',
@@ -261,6 +267,8 @@ const resources = {
         breakdown: '内訳',
         delete: '削除',
         delete_title: '記録を削除',
+        add_note: 'メモを追加',
+        note_placeholder: 'メモ...',
       },
       settings: {
         profile_subtitle: '財務にゃんこマネージャー',

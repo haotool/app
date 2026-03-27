@@ -60,6 +60,7 @@ interface AppState {
   setExpenseNote: (note: string) => void;
   saveExpense: () => void;
   deleteExpense: (id: string) => void;
+  updateExpenseNote: (id: string, note: string) => void;
   setActiveTab: (tab: 'home' | 'history' | 'settings') => void;
   clearCalculator: () => void;
 }
@@ -232,6 +233,11 @@ export const useStore = create<AppState>()(
       deleteExpense: (id) =>
         set((state) => ({
           expenses: state.expenses.filter((e) => e.id !== id),
+        })),
+
+      updateExpenseNote: (id, note) =>
+        set((state) => ({
+          expenses: state.expenses.map((e) => (e.id === id ? { ...e, note: note.trim() } : e)),
         })),
 
       setActiveTab: (tab) => set({ activeTab: tab }),
