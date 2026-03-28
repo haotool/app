@@ -124,10 +124,34 @@ export function HistoryTab() {
   const swipeActiveId = useRef<string | null>(null);
   const didSwipeRef = useRef(false);
   const SWIPE_REVEAL = 76;
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const pendingDeleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const softDelete = (id: string) => {
+    if (pendingDeleteId && pendingDeleteTimerRef.current) {
+      clearTimeout(pendingDeleteTimerRef.current);
+      deleteExpense(pendingDeleteId);
+    }
+    setPendingDeleteId(id);
+    pendingDeleteTimerRef.current = setTimeout(() => {
+      deleteExpense(id);
+      setPendingDeleteId(null);
+      pendingDeleteTimerRef.current = null;
+    }, 5000);
+  };
+
+  const undoDelete = () => {
+    if (pendingDeleteTimerRef.current) {
+      clearTimeout(pendingDeleteTimerRef.current);
+      pendingDeleteTimerRef.current = null;
+    }
+    setPendingDeleteId(null);
+    setSwipedId(null);
+  };
 
   // 向後相容：舊資料可能含 0 元成員，讀取時過濾
   const tripExpenses = expenses
-    .filter((e) => e.tripId === currentTripId)
+    .filter((e) => e.tripId === currentTripId && e.id !== pendingDeleteId)
     .map((e) => {
       const perPersonAmounts = Object.fromEntries(
         Object.entries(e.perPersonAmounts).filter(([, v]) => v > 0),
@@ -493,7 +517,7 @@ export function HistoryTab() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteExpense(exp.id);
+                        softDelete(exp.id);
                         setSwipedId(null);
                       }}
                       className="flex items-center justify-center text-on-error active:scale-90 transition-transform"
@@ -633,7 +657,7 @@ export function HistoryTab() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              deleteExpense(exp.id);
+                              softDelete(exp.id);
                             }}
                             className="text-xs text-error flex items-center gap-1 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
                             title={t('history.delete_title')}
@@ -678,6 +702,26 @@ export function HistoryTab() {
           </div>
         )}
       </section>
+
+      {pendingDeleteId && (
+        <div className="fixed bottom-24 left-4 right-4 z-50 flex items-center justify-between bg-on-surface text-surface rounded-2xl px-4 py-3 shadow-xl animate-in slide-in-from-bottom-4 duration-300">
+          <span className="text-sm">
+            {(() => {
+              const exp = expenses.find((e) => e.id === pendingDeleteId);
+              const label =
+                exp?.note ??
+                (exp?.type === 'split_evenly' ? t('history.split_evenly') : t('history.itemized'));
+              return `已刪除「${label}」`;
+            })()}
+          </span>
+          <button
+            onClick={undoDelete}
+            className="text-sm font-semibold text-primary ml-4 px-2 py-1 rounded-lg active:opacity-70 transition-opacity"
+          >
+            復原
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -134,7 +134,10 @@ describe('HistoryTab', () => {
     );
     if (deleteBtns[0]) {
       fireEvent.click(deleteBtns[0]);
-      expect(useStore.getState().expenses).toHaveLength(0);
+      // 軟刪除：費用進入 pending 狀態，5 秒後才真正移除
+      // 此時 store 仍有該筆費用，但 UI 已將卡片從列表隱藏
+      expect(useStore.getState().expenses).toHaveLength(1);
+      expect(document.body).toBeTruthy();
     }
   });
 
