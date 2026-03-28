@@ -5,6 +5,13 @@ import { randomAvatarSeed } from '../lib/avatar';
 import i18n from '../i18n';
 
 export type SplitMode = 'split_evenly' | 'itemized';
+export type ExpenseCategory =
+  | 'food'
+  | 'transport'
+  | 'accommodation'
+  | 'entertainment'
+  | 'shopping'
+  | 'other';
 
 export interface Member {
   id: string;
@@ -22,6 +29,7 @@ export interface ExpenseRecord {
   totalAmount: number;
   perPersonAmounts: Record<string, number>;
   note: string;
+  category?: ExpenseCategory;
   createdAt: number;
 }
 
@@ -43,6 +51,7 @@ interface AppState {
   itemizedValues: Record<string, string>;
   payerId: string | null;
   expenseNote: string;
+  expenseCategory: ExpenseCategory | null;
 
   // Actions
   addTrip: (name: string) => void;
@@ -58,6 +67,7 @@ interface AppState {
   setItemizedValue: (memberId: string, val: string) => void;
   setPayerId: (id: string) => void;
   setExpenseNote: (note: string) => void;
+  setExpenseCategory: (cat: ExpenseCategory | null) => void;
   saveExpense: () => void;
   deleteExpense: (id: string) => void;
   updateExpenseNote: (id: string, note: string) => void;
@@ -120,6 +130,7 @@ export const useStore = create<AppState>()(
       itemizedValues: {},
       payerId: 'me',
       expenseNote: '',
+      expenseCategory: null,
       settledPayments: [],
 
       addTrip: (name) =>
@@ -183,7 +194,10 @@ export const useStore = create<AppState>()(
 
       setExpenseNote: (note) => set({ expenseNote: note }),
 
-      clearCalculator: () => set({ calculatorValue: '', itemizedValues: {}, expenseNote: '' }),
+      setExpenseCategory: (cat) => set({ expenseCategory: cat }),
+
+      clearCalculator: () =>
+        set({ calculatorValue: '', itemizedValues: {}, expenseNote: '', expenseCategory: null }),
 
       saveExpense: () =>
         set((state) => {
@@ -224,10 +238,11 @@ export const useStore = create<AppState>()(
             tripId: state.currentTripId,
             type: state.splitMode,
             participantIds,
-            paidBy: state.payerId || 'me',
+            paidBy: state.payerId ?? 'me',
             totalAmount,
             perPersonAmounts,
             note: state.expenseNote.trim(),
+            ...(state.expenseCategory ? { category: state.expenseCategory } : {}),
             createdAt: Date.now(),
           };
 
@@ -236,6 +251,7 @@ export const useStore = create<AppState>()(
             calculatorValue: '',
             itemizedValues: {},
             expenseNote: '',
+            expenseCategory: null,
             activeTab: 'history',
           };
         }),

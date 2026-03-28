@@ -85,7 +85,18 @@ export function HomeTab() {
     setFocusedMemberId,
     expenseNote,
     setExpenseNote,
+    expenseCategory,
+    setExpenseCategory,
   } = useStore();
+
+  const CATEGORIES = [
+    { id: 'food' as const, emoji: '🍜' },
+    { id: 'transport' as const, emoji: '🚗' },
+    { id: 'accommodation' as const, emoji: '🏨' },
+    { id: 'entertainment' as const, emoji: '🎪' },
+    { id: 'shopping' as const, emoji: '🛍️' },
+    { id: 'other' as const, emoji: '✨' },
+  ];
 
   const activeMembers = members.filter((m) => m.isActive);
   const { peekHeight, expandedHeight } = useResponsiveSheetHeight();
@@ -223,6 +234,27 @@ export function HomeTab() {
               </button>
             )}
           </div>
+        </div>
+
+        {/* Category Picker */}
+        <div className="flex gap-1.5 mx-4 mb-2">
+          {CATEGORIES.map((cat) => {
+            const isActive = expenseCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setExpenseCategory(isActive ? null : cat.id)}
+                className={cn(
+                  'flex-1 py-1.5 rounded-full text-base transition-all active:scale-90 cursor-pointer',
+                  isActive
+                    ? 'bg-primary-container shadow-ambient'
+                    : 'bg-surface-container text-on-surface-variant/60 hover:bg-surface-container-high',
+                )}
+              >
+                {cat.emoji}
+              </button>
+            );
+          })}
         </div>
 
         {/* Mode Toggle */}

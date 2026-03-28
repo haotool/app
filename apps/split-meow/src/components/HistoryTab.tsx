@@ -597,7 +597,23 @@ export function HistoryTab() {
 
                       {/* 中間：名稱 + 時間/付款人 */}
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-on-surface truncate">
+                        <p className="font-medium text-on-surface truncate flex items-center gap-1">
+                          {exp.category && (
+                            <span className="text-sm shrink-0">
+                              {
+                                (
+                                  {
+                                    food: '🍜',
+                                    transport: '🚗',
+                                    accommodation: '🏨',
+                                    entertainment: '🎪',
+                                    shopping: '🛍️',
+                                    other: '✨',
+                                  } as Record<string, string>
+                                )[exp.category]
+                              }
+                            </span>
+                          )}
                           {exp.note ||
                             (exp.type === 'split_evenly'
                               ? t('history.split_evenly')
