@@ -58,9 +58,9 @@ export function SettingsTab() {
           </button>
           <button
             onClick={() => setIsEditing(true)}
-            className="absolute bottom-0 right-0 bg-[image:var(--background-image-gradient-primary)] p-3 rounded-full text-white shadow-ambient active:scale-90 duration-200 z-10"
+            className="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full border-2 border-outline-variant bg-surface-container-lowest text-on-surface-variant shadow-ambient active:scale-90 duration-200 z-10"
           >
-            <span className="material-symbols-outlined text-sm">edit</span>
+            <span className="material-symbols-outlined text-[16px]">edit</span>
           </button>
         </div>
         <div className="space-y-1 w-full max-w-xs">
