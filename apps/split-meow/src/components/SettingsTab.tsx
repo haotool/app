@@ -58,7 +58,7 @@ export function SettingsTab() {
           </button>
           <button
             onClick={() => setIsEditing(true)}
-            className="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full border-2 border-outline-variant bg-surface-container-lowest text-on-surface-variant shadow-ambient active:scale-90 duration-200 z-10"
+            className="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-primary text-on-primary border-2 border-surface-container-lowest shadow-ambient active:scale-90 duration-200 z-10"
           >
             <span className="material-symbols-outlined text-[16px]">edit</span>
           </button>
