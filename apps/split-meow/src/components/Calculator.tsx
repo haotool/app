@@ -41,7 +41,23 @@ export function Calculator() {
       const res = evaluateExpression(newVal);
       if (res !== 0 && Number.isFinite(res)) newVal = String(Number(res.toFixed(2)));
     } else {
-      newVal += key;
+      const INFIX_OPS = ['+', '-', '×', '÷'];
+      if (INFIX_OPS.includes(key)) {
+        const lastChar = newVal.slice(-1);
+        if (INFIX_OPS.includes(lastChar)) {
+          // 尾端已有運算子時直接替換，避免連按兩個運算子
+          newVal = newVal.slice(0, -1) + key;
+        } else {
+          // 先將完整算式 collapse 成結果，避免 "300+200×" 顯示 0
+          const res = evaluateExpression(newVal);
+          if (res > 0 && Number.isFinite(res)) {
+            newVal = String(Number(res.toFixed(2)));
+          }
+          newVal += key;
+        }
+      } else {
+        newVal += key;
+      }
     }
 
     if (splitMode === 'split_evenly') {
