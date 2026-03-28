@@ -71,6 +71,12 @@ interface AppState {
   saveExpense: () => void;
   deleteExpense: (id: string) => void;
   updateExpenseNote: (id: string, note: string) => void;
+  updateExpense: (
+    id: string,
+    patch: Partial<
+      Pick<ExpenseRecord, 'totalAmount' | 'perPersonAmounts' | 'participantIds' | 'paidBy'>
+    >,
+  ) => void;
   setActiveTab: (tab: 'home' | 'history' | 'settings') => void;
   clearCalculator: () => void;
   settledPayments: string[];
@@ -219,7 +225,7 @@ export const useStore = create<AppState>()(
             });
           } else {
             activeMembers.forEach((m) => {
-              const val = evaluateExpression(state.itemizedValues[m.id] || '0');
+              const val = evaluateExpression(state.itemizedValues[m.id] ?? '0');
               // 個別輸入時只記錄金額 > 0 的成員，0 元成員不參與此筆費用
               if (val > 0) perPersonAmounts[m.id] = val;
               totalAmount += val;
@@ -264,6 +270,11 @@ export const useStore = create<AppState>()(
       updateExpenseNote: (id, note) =>
         set((state) => ({
           expenses: state.expenses.map((e) => (e.id === id ? { ...e, note: note.trim() } : e)),
+        })),
+
+      updateExpense: (id, patch) =>
+        set((state) => ({
+          expenses: state.expenses.map((e) => (e.id === id ? { ...e, ...patch } : e)),
         })),
 
       setActiveTab: (tab) => set({ activeTab: tab }),

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useStore, type Member } from '../store/useStore';
+import { useStore, type Member, type ExpenseRecord } from '../store/useStore';
 import { format } from 'date-fns';
 import { useRef, useState } from 'react';
 import { cn } from '../lib/utils';
@@ -118,6 +118,7 @@ export function HistoryTab() {
     currentTripId,
     deleteExpense,
     updateExpenseNote,
+    updateExpense,
     settledPayments,
     toggleSettlement,
   } = useStore();
@@ -135,6 +136,7 @@ export function HistoryTab() {
   const SWIPE_REVEAL = 76;
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const pendingDeleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
   const softDelete = (id: string) => {
     if (pendingDeleteId && pendingDeleteTimerRef.current) {
@@ -769,22 +771,34 @@ export function HistoryTab() {
                           )}
                         </div>
 
-                        {/* 標題列：分攤明細 + 刪除 */}
+                        {/* 標題列：分攤明細 + 編輯 + 刪除 */}
                         <div className="flex justify-between items-center mb-3">
                           <span className="text-xs font-medium text-on-surface-variant">
                             {t('history.breakdown')}
                           </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              softDelete(exp.id);
-                            }}
-                            className="text-xs text-error flex items-center gap-1 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
-                            title={t('history.delete_title')}
-                          >
-                            <span className="material-symbols-outlined text-[14px]">delete</span>{' '}
-                            {t('history.delete')}
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingExpenseId(exp.id);
+                              }}
+                              className="text-xs text-primary flex items-center gap-1 hover:bg-primary-container/50 px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">edit</span>{' '}
+                              {t('history.edit')}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                softDelete(exp.id);
+                              }}
+                              className="text-xs text-error flex items-center gap-1 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+                              title={t('history.delete_title')}
+                            >
+                              <span className="material-symbols-outlined text-[14px]">delete</span>{' '}
+                              {t('history.delete')}
+                            </button>
+                          </div>
                         </div>
 
                         {/* 分攤明細 */}
@@ -823,6 +837,23 @@ export function HistoryTab() {
         )}
       </section>
 
+      {editingExpenseId &&
+        (() => {
+          const exp = expenses.find((e) => e.id === editingExpenseId);
+          if (!exp) return null;
+          return (
+            <EditExpenseSheet
+              expense={exp}
+              members={members}
+              onSave={(patch) => {
+                updateExpense(editingExpenseId, patch);
+                setEditingExpenseId(null);
+              }}
+              onClose={() => setEditingExpenseId(null)}
+            />
+          );
+        })()}
+
       {pendingDeleteId && (
         <div className="fixed bottom-24 left-4 right-4 z-50 flex items-center justify-between bg-on-surface text-surface rounded-2xl px-4 py-3 shadow-xl animate-in slide-in-from-bottom-4 duration-300">
           <span className="text-sm">
@@ -842,6 +873,169 @@ export function HistoryTab() {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── EditExpenseSheet ─────────────────────────────────────────────────────────
+
+interface EditExpenseSheetProps {
+  expense: ExpenseRecord;
+  members: Member[];
+  onSave: (
+    patch: Partial<
+      Pick<ExpenseRecord, 'totalAmount' | 'perPersonAmounts' | 'participantIds' | 'paidBy'>
+    >,
+  ) => void;
+  onClose: () => void;
+}
+
+function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseSheetProps) {
+  const { t } = useTranslation();
+  const isEvenly = expense.type === 'split_evenly';
+
+  const [totalInput, setTotalInput] = useState(
+    isEvenly ? String(Math.round(expense.totalAmount)) : '',
+  );
+
+  const [perPersonInputs, setPerPersonInputs] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    Object.entries(expense.perPersonAmounts).forEach(([id, amt]) => {
+      init[id] = String(Math.round(amt));
+    });
+    return init;
+  });
+
+  const [editPayerId, setEditPayerId] = useState(expense.paidBy);
+
+  const handleSave = () => {
+    if (isEvenly) {
+      const total = parseFloat(totalInput);
+      if (!Number.isFinite(total) || total <= 0) return;
+      const participantIds = expense.participantIds;
+      const split = total / participantIds.length;
+      const perPersonAmounts: Record<string, number> = {};
+      participantIds.forEach((id) => {
+        perPersonAmounts[id] = split;
+      });
+      onSave({ totalAmount: total, perPersonAmounts, paidBy: editPayerId });
+    } else {
+      const perPersonAmounts: Record<string, number> = {};
+      let total = 0;
+      Object.entries(perPersonInputs).forEach(([id, val]) => {
+        const n = parseFloat(val);
+        if (Number.isFinite(n) && n > 0) {
+          perPersonAmounts[id] = n;
+          total += n;
+        }
+      });
+      if (total <= 0) return;
+      const participantIds = Object.keys(perPersonAmounts);
+      onSave({ totalAmount: total, perPersonAmounts, participantIds, paidBy: editPayerId });
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="absolute inset-0 bg-scrim/40" onClick={onClose} />
+      <div className="relative w-full bg-surface-container-low rounded-t-[2rem] p-6 pb-10 animate-in slide-in-from-bottom-4 duration-300 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-on-surface">{t('history.edit_title')}</h2>
+          <button
+            onClick={onClose}
+            className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+
+        {isEvenly ? (
+          <div className="flex items-center gap-3 bg-surface-container rounded-2xl px-4 py-3">
+            <span className="text-on-surface-variant text-sm font-medium shrink-0">NT$</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={totalInput}
+              onChange={(e) => setTotalInput(e.target.value)}
+              className="flex-1 bg-transparent text-lg font-semibold text-on-surface outline-none"
+              autoFocus
+            />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {expense.participantIds.map((id) => {
+              const m = members.find((x) => x.id === id);
+              if (!m) return null;
+              return (
+                <div
+                  key={id}
+                  className="flex items-center gap-3 bg-surface-container rounded-2xl px-4 py-2.5"
+                >
+                  <MemberAvatar seed={m.avatarUrl} alt={m.name} size={28} />
+                  <span className="flex-1 text-sm font-medium text-on-surface truncate">
+                    {m.name}
+                  </span>
+                  <span className="text-on-surface-variant text-sm shrink-0">NT$</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={perPersonInputs[id] ?? ''}
+                    onChange={(e) =>
+                      setPerPersonInputs((prev) => ({ ...prev, [id]: e.target.value }))
+                    }
+                    className="w-20 bg-transparent text-sm font-semibold text-on-surface outline-none text-right"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div>
+          <p className="text-xs font-medium text-on-surface-variant mb-2">
+            {t('history.edit_payer')}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {members
+              .filter((m) => expense.participantIds.includes(m.id))
+              .map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setEditPayerId(m.id)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all cursor-pointer',
+                    editPayerId === m.id
+                      ? 'bg-primary text-on-primary shadow-sm'
+                      : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high',
+                  )}
+                >
+                  <MemberAvatar seed={m.avatarUrl} alt={m.name} size={20} />
+                  {m.name}
+                </button>
+              ))}
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-1">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-2xl bg-surface-container text-on-surface-variant text-sm font-medium transition-colors hover:bg-surface-container-high cursor-pointer"
+          >
+            {t('history.cancel')}
+          </button>
+          <button
+            onClick={handleSave}
+            className="flex-1 py-3 rounded-2xl bg-primary text-on-primary text-sm font-semibold transition-colors active:scale-95 cursor-pointer"
+          >
+            {t('history.save')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
