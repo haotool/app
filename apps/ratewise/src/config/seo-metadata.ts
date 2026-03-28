@@ -562,7 +562,7 @@ export const FAQ_PAGE_SEO = {
   title: '常見問題 — RateWise 匯率好工具 FAQ 解答',
   description:
     'RateWise 常見問題解答：台銀匯率來源、現金與即期差異、買入賣出怎麼看、DCC 刷卡匯率、收藏排序、離線使用與 PWA 安裝教學。',
-  pathname: '/faq',
+  pathname: '/faq/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
     { name: '常見問題', item: '/faq/' },

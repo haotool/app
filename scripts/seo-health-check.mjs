@@ -153,7 +153,8 @@ function checkLlmsTxt() {
         return;
       }
 
-      if (/[A-Z]/.test(pathname)) {
+      // decodeURIComponent 先還原 %XX，避免 percent-encoded 非 ASCII 字元的大寫 hex 誤判
+      if (/[A-Z]/.test(decodeURIComponent(pathname))) {
         log.error(`llms.txt URL 包含大寫字母: ${url}`);
         errorCount++;
       } else if (pathname !== '/' && !pathname.endsWith('/') && extname(pathname) === '') {
@@ -278,7 +279,7 @@ function checkCanonicalUrl() {
   if (!canonicalUrl.endsWith('/')) {
     log.error(`Canonical URL 缺少尾斜線: ${canonicalUrl}`);
     errorCount++;
-  } else if (/[A-Z]/.test(new URL(canonicalUrl).pathname)) {
+  } else if (/[A-Z]/.test(decodeURIComponent(new URL(canonicalUrl).pathname))) {
     log.error(`Canonical URL 包含大寫字母: ${canonicalUrl}`);
     errorCount++;
   } else {

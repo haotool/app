@@ -156,7 +156,7 @@ export const REVERSE_CURRENCY_AMOUNT_SEO_PATHS = REVERSE_CURRENCY_SEO_PATHS.flat
 });
 
 /**
- * 公開可索引 SEO 路徑（42 個基礎頁 + ~204 個金額頁）
+ * 公開可索引 SEO 路徑（42 個基礎頁 + 206 個金額頁）
  * 注意：LEGAL_SSG_PATHS（privacy noindex）不納入 sitemap
  */
 export const SEO_PATHS = [
