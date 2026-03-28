@@ -114,6 +114,7 @@ export function HistoryTab() {
   const {
     expenses,
     members,
+    trips,
     currentTripId,
     deleteExpense,
     updateExpenseNote,
@@ -175,9 +176,9 @@ export function HistoryTab() {
   // 計算各人餘額
   const balances: Record<string, number> = {};
   tripExpenses.forEach((exp) => {
-    balances[exp.paidBy] = (balances[exp.paidBy] || 0) + exp.totalAmount;
+    balances[exp.paidBy] = (balances[exp.paidBy] ?? 0) + exp.totalAmount;
     Object.entries(exp.perPersonAmounts).forEach(([memberId, amount]) => {
-      balances[memberId] = (balances[memberId] || 0) - amount;
+      balances[memberId] = (balances[memberId] ?? 0) - amount;
     });
   });
 
@@ -194,6 +195,56 @@ export function HistoryTab() {
   const commitNote = (expId: string) => {
     updateExpenseNote(expId, editingNoteValue);
     setEditingNoteId(null);
+  };
+
+  const CATEGORY_EMOJI: Record<string, string> = {
+    food: '🍜',
+    transport: '🚗',
+    accommodation: '🏨',
+    entertainment: '🎪',
+    shopping: '🛍️',
+    other: '✨',
+  };
+
+  const shareSummary = async () => {
+    const tripName = trips.find((tr) => tr.id === currentTripId)?.name ?? t('history.title');
+    const lines: string[] = [
+      `🐾 喵喵分帳 — ${tripName}`,
+      `${'─'.repeat(24)}`,
+      `💰 總花費：NT$ ${Math.round(totalSpent).toLocaleString('zh-TW')}`,
+      '',
+    ];
+    if (tripExpenses.length > 0) {
+      lines.push(`📋 費用明細（${tripExpenses.length} 筆）`);
+      tripExpenses.forEach((exp) => {
+        const payer = members.find((m) => m.id === exp.paidBy)?.name ?? t('history.unknown_payer');
+        const emoji = exp.category ? (CATEGORY_EMOJI[exp.category] ?? '') : '•';
+        const label =
+          exp.note ||
+          (exp.type === 'split_evenly' ? t('history.split_evenly') : t('history.itemized'));
+        lines.push(
+          `${emoji} ${label}  NT$ ${Math.round(exp.totalAmount).toLocaleString('zh-TW')}（${payer} 付）`,
+        );
+      });
+      lines.push('');
+    }
+    if (settlements.length > 0) {
+      lines.push(`💸 結清方式`);
+      settlements.forEach((s) => {
+        const from = members.find((m) => m.id === s.from)?.name ?? s.from;
+        const to = members.find((m) => m.id === s.to)?.name ?? s.to;
+        lines.push(`${from} → ${to}  NT$ ${Math.round(s.amount).toLocaleString('zh-TW')}`);
+      });
+      lines.push('');
+    }
+    lines.push('─'.repeat(24));
+    lines.push('用喵喵分帳輕鬆分帳 🐱');
+    const text = lines.join('\n');
+    if (navigator.share) {
+      await navigator.share({ title: `喵喵分帳 — ${tripName}`, text });
+    } else {
+      await navigator.clipboard.writeText(text);
+    }
   };
 
   return (
@@ -223,24 +274,37 @@ export function HistoryTab() {
               NT$ {Math.round(totalSpent).toLocaleString('zh-TW')}
             </h2>
           </div>
-          <div className="mt-6 flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {members
-                .filter((m) => m.isActive)
-                .slice(0, 3)
-                .map((m) => (
-                  <MemberAvatar
-                    key={m.id}
-                    seed={m.avatarUrl}
-                    alt={m.name}
-                    size={32}
-                    className="border-2 border-surface-container-lowest"
-                  />
-                ))}
+          <div className="mt-6 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2">
+                {members
+                  .filter((m) => m.isActive)
+                  .slice(0, 3)
+                  .map((m) => (
+                    <MemberAvatar
+                      key={m.id}
+                      seed={m.avatarUrl}
+                      alt={m.name}
+                      size={32}
+                      className="border-2 border-surface-container-lowest"
+                    />
+                  ))}
+              </div>
+              <span className="text-xs text-on-surface-variant">
+                {t('history.members_count', { count: members.filter((m) => m.isActive).length })}
+              </span>
             </div>
-            <span className="text-xs text-on-surface-variant">
-              {t('history.members_count', { count: members.filter((m) => m.isActive).length })}
-            </span>
+            {tripExpenses.length > 0 && (
+              <button
+                onClick={() => {
+                  void shareSummary();
+                }}
+                className="flex items-center gap-1 text-xs font-medium text-primary bg-primary-container/40 hover:bg-primary-container px-3 py-1.5 rounded-full transition-colors active:scale-95 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[14px]">share</span>
+                {t('app.share')}
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -623,7 +687,7 @@ export function HistoryTab() {
                           {format(exp.createdAt, 'MMM d, h:mm a')} •{' '}
                           {t('history.payer', {
                             name:
-                              members.find((m) => m.id === exp.paidBy)?.name ||
+                              members.find((m) => m.id === exp.paidBy)?.name ??
                               t('history.unknown_payer'),
                           })}
                         </p>
