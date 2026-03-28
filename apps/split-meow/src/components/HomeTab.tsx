@@ -6,7 +6,7 @@ import { MemberList } from './MemberList';
 import { BottomSheet } from './BottomSheet';
 import { MemberAvatar } from './MemberAvatar';
 import { cn } from '../lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * BottomSheet の peek/expanded 高さを動的計算する。
@@ -101,6 +101,9 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
     { id: 'shopping' as const, emoji: '🛍️' },
     { id: 'other' as const, emoji: '✨' },
   ];
+
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const noteInputRef = useRef<HTMLInputElement>(null);
 
   const activeMembers = members.filter((m) => m.isActive);
   const { peekHeight, expandedHeight } = useResponsiveSheetHeight();
@@ -216,14 +219,39 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
         {/* Note Input */}
         <div className="mx-4 mt-1 mb-2">
           <div className="flex items-center gap-2 bg-surface-container rounded-full px-4 py-2">
-            <span className="material-symbols-outlined text-[18px] text-on-surface-variant shrink-0">
-              label
-            </span>
+            <button
+              onClick={() => {
+                setShowCategoryPicker((prev) => !prev);
+                noteInputRef.current?.blur();
+              }}
+              className={cn(
+                'shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-all cursor-pointer active:scale-90',
+                showCategoryPicker ? 'bg-primary-container' : '',
+              )}
+              aria-label={t('home.note_placeholder')}
+            >
+              {expenseCategory ? (
+                <span className="text-base leading-none">
+                  {CATEGORIES.find((c) => c.id === expenseCategory)?.emoji}
+                </span>
+              ) : (
+                <span
+                  className={cn(
+                    'material-symbols-outlined text-[18px]',
+                    showCategoryPicker ? 'text-primary' : 'text-on-surface-variant',
+                  )}
+                >
+                  label
+                </span>
+              )}
+            </button>
             <input
+              ref={noteInputRef}
               type="text"
               value={expenseNote}
               onChange={(e) => setExpenseNote(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+              onFocus={() => setShowCategoryPicker(false)}
               placeholder={t('home.note_placeholder')}
               maxLength={20}
               enterKeyHint="done"
@@ -240,26 +268,31 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
           </div>
         </div>
 
-        {/* Category Picker */}
-        <div className="flex gap-1.5 mx-4 mb-2">
-          {CATEGORIES.map((cat) => {
-            const isActive = expenseCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setExpenseCategory(isActive ? null : cat.id)}
-                className={cn(
-                  'flex-1 py-1.5 rounded-full text-base transition-all active:scale-90 cursor-pointer',
-                  isActive
-                    ? 'bg-primary-container shadow-ambient'
-                    : 'bg-surface-container text-on-surface-variant/60 hover:bg-surface-container-high',
-                )}
-              >
-                {cat.emoji}
-              </button>
-            );
-          })}
-        </div>
+        {/* Category Picker — 點擊備註左側圖示才展開 */}
+        {showCategoryPicker && (
+          <div className="flex gap-1.5 mx-4 mb-2 animate-in fade-in slide-in-from-top-1 duration-150">
+            {CATEGORIES.map((cat) => {
+              const isActive = expenseCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setExpenseCategory(isActive ? null : cat.id);
+                    setShowCategoryPicker(false);
+                  }}
+                  className={cn(
+                    'flex-1 py-1.5 rounded-full text-base transition-all active:scale-90 cursor-pointer',
+                    isActive
+                      ? 'bg-primary-container shadow-ambient'
+                      : 'bg-surface-container text-on-surface-variant/60 hover:bg-surface-container-high',
+                  )}
+                >
+                  {cat.emoji}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Mode Toggle */}
         <div className="flex p-0.5 mx-4 bg-surface-container rounded-full mb-2">
