@@ -51,6 +51,7 @@ describe('HomeTab', () => {
   });
 
   it('顯示 NT$ 總金額', () => {
+    useStore.setState({ calculatorValue: '300' });
     renderWith(<HomeTab />);
     const el = document.querySelector('h1');
     expect(el?.textContent).toContain('NT$');

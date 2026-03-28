@@ -118,25 +118,43 @@ export function HomeTab() {
         >
           <span className="material-symbols-outlined text-9xl">pets</span>
         </div>
-        <span className="block text-on-surface-variant text-xs font-medium uppercase tracking-widest mb-2">
-          {splitMode === 'split_evenly' ? t('home.totalAmount') : t('home.totalItemized')}
-        </span>
-        <h1 className="text-4xl sm:text-5xl font-headline font-semibold tracking-tight text-on-surface leading-none break-all">
-          NT$ {Math.round(totalAmount).toLocaleString()}
-        </h1>
-        {splitMode === 'split_evenly' && activeMembers.length > 0 && totalAmount > 0 && (
-          <p className="text-sm text-on-surface-variant mt-2">
-            {t('home.perPerson')}{' '}
-            <span className="font-semibold text-secondary">
-              NT$ {Math.round(splitAmount).toLocaleString()}
-            </span>{' '}
-            × {activeMembers.length} {t('home.people')}
-          </p>
-        )}
-        {splitMode === 'split_evenly' && calculatorValue && (
-          <p className="text-xs text-on-surface-variant mt-1 font-mono opacity-70">
-            {calculatorValue}
-          </p>
+
+        {totalAmount === 0 ? (
+          <div className="py-2 flex flex-col items-center gap-2 animate-in fade-in duration-300">
+            <span className="material-symbols-outlined text-5xl text-on-surface-variant/25 select-none">
+              pets
+            </span>
+            <p className="text-sm text-on-surface-variant/60">
+              {t(
+                splitMode === 'split_evenly'
+                  ? 'home.empty_hint_evenly'
+                  : 'home.empty_hint_itemized',
+              )}
+            </p>
+          </div>
+        ) : (
+          <>
+            <span className="block text-on-surface-variant text-xs font-medium uppercase tracking-widest mb-2">
+              {splitMode === 'split_evenly' ? t('home.totalAmount') : t('home.totalItemized')}
+            </span>
+            <h1 className="text-4xl sm:text-5xl font-headline font-semibold tracking-tight text-on-surface leading-none break-all">
+              NT$ {Math.round(totalAmount).toLocaleString()}
+            </h1>
+            {splitMode === 'split_evenly' && activeMembers.length > 0 && (
+              <p className="text-sm text-on-surface-variant mt-2">
+                {t('home.perPerson')}{' '}
+                <span className="font-semibold text-secondary">
+                  NT$ {Math.round(splitAmount).toLocaleString()}
+                </span>{' '}
+                × {activeMembers.length} {t('home.people')}
+              </p>
+            )}
+            {splitMode === 'split_evenly' && calculatorValue && (
+              <p className="text-xs text-on-surface-variant mt-1 font-mono opacity-70">
+                {calculatorValue}
+              </p>
+            )}
+          </>
         )}
       </div>
 

@@ -24,6 +24,8 @@ const resources = {
         complete: '完成',
         per_person_line: '每人 NT$ {{amount}} × {{count}} 人',
         add_member: '新增成員',
+        empty_hint_evenly: '輸入金額，喵喵幫你算',
+        empty_hint_itemized: '點選成員輸入各自金額',
       },
       history: {
         title: '行程紀錄',
@@ -105,6 +107,8 @@ const resources = {
         complete: 'Done',
         per_person_line: 'NT$ {{amount}} × {{count}} ppl',
         add_member: 'Add Member',
+        empty_hint_evenly: 'Enter amount to split',
+        empty_hint_itemized: 'Tap a member to enter their amount',
       },
       history: {
         title: 'Trip History',
@@ -186,6 +190,8 @@ const resources = {
         complete: '완료',
         per_person_line: 'NT$ {{amount}} × {{count}}명',
         add_member: '멤버 추가',
+        empty_hint_evenly: '금액을 입력해주세요',
+        empty_hint_itemized: '멤버를 탭하여 금액 입력',
       },
       history: {
         title: '여행 기록',
@@ -267,6 +273,8 @@ const resources = {
         complete: '完了',
         per_person_line: 'NT$ {{amount}} × {{count}}人',
         add_member: 'メンバー追加',
+        empty_hint_evenly: '金額を入力してください',
+        empty_hint_itemized: 'メンバーをタップして金額を入力',
       },
       history: {
         title: '旅行記録',
