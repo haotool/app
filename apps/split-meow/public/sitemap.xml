@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://app.haotool.org/split-meow/</loc>
+    <lastmod>2026-03-28T00:00:00Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/split-meow/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/split-meow/" />
   </url>
 </urlset>
-

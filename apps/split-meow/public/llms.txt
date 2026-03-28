@@ -1,3 +1,29 @@
 # 喵喵分帳（Split Meow）
-本網站提供可離線使用的分帳工具（PWA）。
+# https://app.haotool.org/split-meow/
 
+> 喵喵分帳是一款免費的 PWA 分帳工具，支援離線使用，由 haotool.org 出品。
+
+## 功能
+
+- 平分模式：總金額自動平均分給所有成員
+- 個別輸入：每位成員輸入各自金額
+- 成員管理：可愛頭像、隨機名稱、快速切換參與者
+- 行程管理：多行程記帳，分開追蹤
+- 結算計算：自動計算應付應收、最優結清方案
+- 歷史紀錄：完整的費用明細與備注
+- 離線使用：資料儲存於本地，完全隱私
+- PWA 安裝：可新增至主畫面，像原生 App 一樣使用
+- 多語言：繁體中文、English、한국어、日本語
+
+## 頁面
+
+- [首頁](https://app.haotool.org/split-meow/): 分帳輸入、成員選擇、費用記錄
+
+## 技術
+
+- React 19 + TypeScript + Vite 7
+- Zustand 狀態管理
+- boring-avatars 頭像生成
+- i18next 國際化
+- VitePWA Service Worker
+- 完全離線可用
