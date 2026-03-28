@@ -111,7 +111,15 @@ function ParticipantAvatars({
 
 export function HistoryTab() {
   const { t } = useTranslation();
-  const { expenses, members, currentTripId, deleteExpense, updateExpenseNote } = useStore();
+  const {
+    expenses,
+    members,
+    currentTripId,
+    deleteExpense,
+    updateExpenseNote,
+    settledPayments,
+    toggleSettlement,
+  } = useStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -248,24 +256,56 @@ export function HistoryTab() {
               const fromMember = members.find((m) => m.id === s.from);
               const toMember = members.find((m) => m.id === s.to);
               if (!fromMember || !toMember) return null;
+              const settlementKey = `${currentTripId ?? ''}:${s.from}:${s.to}`;
+              const isSettled = settledPayments.includes(settlementKey);
               return (
                 <div
                   key={i}
-                  className="bg-surface-container-lowest p-4 rounded-[1.5rem] flex items-center gap-3 shadow-ambient"
+                  onClick={() => toggleSettlement(settlementKey)}
+                  className={cn(
+                    'bg-surface-container-lowest p-4 rounded-[1.5rem] flex items-center gap-3 shadow-ambient cursor-pointer transition-opacity active:scale-[0.98] transition-transform',
+                    isSettled && 'opacity-50',
+                  )}
                 >
                   <MemberAvatar seed={fromMember.avatarUrl} alt={fromMember.name} size={36} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-on-surface-variant leading-snug">
+                    <p
+                      className={cn(
+                        'text-sm text-on-surface-variant leading-snug',
+                        isSettled && 'line-through',
+                      )}
+                    >
                       {t('history.pay_to', {
                         from: fromMember.name,
                         to: toMember.name,
                       })}
                     </p>
+                    {isSettled && (
+                      <p className="text-xs text-tertiary font-medium mt-0.5">
+                        {t('history.balance_settled')}
+                      </p>
+                    )}
                   </div>
                   <MemberAvatar seed={toMember.avatarUrl} alt={toMember.name} size={36} />
-                  <div className="bg-secondary-container text-on-secondary-container rounded-full px-3 py-1 shrink-0">
+                  <div
+                    className={cn(
+                      'rounded-full px-3 py-1 shrink-0 transition-colors',
+                      isSettled
+                        ? 'bg-tertiary-container text-on-tertiary-container'
+                        : 'bg-secondary-container text-on-secondary-container',
+                    )}
+                  >
                     <span className="text-sm font-bold">
-                      NT$ {Math.round(s.amount).toLocaleString('zh-TW')}
+                      {isSettled ? (
+                        <span
+                          className="material-symbols-outlined text-[16px] leading-none"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          check_circle
+                        </span>
+                      ) : (
+                        `NT$ ${Math.round(s.amount).toLocaleString('zh-TW')}`
+                      )}
                     </span>
                   </div>
                 </div>

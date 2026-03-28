@@ -63,6 +63,8 @@ interface AppState {
   updateExpenseNote: (id: string, note: string) => void;
   setActiveTab: (tab: 'home' | 'history' | 'settings') => void;
   clearCalculator: () => void;
+  settledPayments: string[];
+  toggleSettlement: (key: string) => void;
 }
 
 // 初始成員使用固定 seed，確保每次新安裝頭像一致（boring-avatars deterministic）
@@ -118,6 +120,7 @@ export const useStore = create<AppState>()(
       itemizedValues: {},
       payerId: 'me',
       expenseNote: '',
+      settledPayments: [],
 
       addTrip: (name) =>
         set((state) => {
@@ -248,6 +251,13 @@ export const useStore = create<AppState>()(
         })),
 
       setActiveTab: (tab) => set({ activeTab: tab }),
+
+      toggleSettlement: (key) =>
+        set((state) => ({
+          settledPayments: state.settledPayments.includes(key)
+            ? state.settledPayments.filter((k) => k !== key)
+            : [...state.settledPayments, key],
+        })),
     }),
     {
       name: 'split-meow-storage',
