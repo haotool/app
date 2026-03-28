@@ -117,6 +117,13 @@ export function HistoryTab() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteValue, setEditingNoteValue] = useState('');
   const noteInputRef = useRef<HTMLInputElement>(null);
+  const [swipedId, setSwipedId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [liveDragOffset, setLiveDragOffset] = useState(0);
+  const swipeTouchStartX = useRef(0);
+  const swipeActiveId = useRef<string | null>(null);
+  const didSwipeRef = useRef(false);
+  const SWIPE_REVEAL = 76;
 
   // 向後相容：舊資料可能含 0 元成員，讀取時過濾
   const tripExpenses = expenses
@@ -451,161 +458,217 @@ export function HistoryTab() {
             {tripExpenses.map((exp) => {
               const isExpanded = expandedId === exp.id;
               const isEditingNote = editingNoteId === exp.id;
+              const isThisSwiped = swipedId === exp.id;
+              const isThisActive = draggingId === exp.id;
+              const offset = isThisActive ? liveDragOffset : isThisSwiped ? SWIPE_REVEAL : 0;
 
               return (
                 <div
                   key={exp.id}
-                  onClick={() => {
-                    if (isEditingNote) return;
-                    setExpandedId(isExpanded ? null : exp.id);
+                  className="relative overflow-hidden rounded-[2rem] shadow-ambient"
+                  onTouchStart={(e) => {
+                    if (swipedId && swipedId !== exp.id) setSwipedId(null);
+                    swipeActiveId.current = exp.id;
+                    swipeTouchStartX.current = e.touches[0]?.clientX ?? 0;
+                    didSwipeRef.current = false;
+                    setDraggingId(exp.id);
+                    setLiveDragOffset(isThisSwiped ? SWIPE_REVEAL : 0);
                   }}
-                  className="bg-surface-container-lowest p-5 rounded-[2rem] flex flex-col group hover:bg-surface-container-low transition-all relative shadow-ambient cursor-pointer"
+                  onTouchMove={(e) => {
+                    if (swipeActiveId.current !== exp.id) return;
+                    const base = isThisSwiped ? SWIPE_REVEAL : 0;
+                    const delta = swipeTouchStartX.current - (e.touches[0]?.clientX ?? 0);
+                    if (Math.abs(delta) > 8) didSwipeRef.current = true;
+                    setLiveDragOffset(Math.max(0, Math.min(SWIPE_REVEAL, base + delta)));
+                  }}
+                  onTouchEnd={() => {
+                    if (swipeActiveId.current !== exp.id) return;
+                    swipeActiveId.current = null;
+                    setDraggingId(null);
+                    if (liveDragOffset >= SWIPE_REVEAL / 2) setSwipedId(exp.id);
+                    else setSwipedId(null);
+                  }}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    {/* 左側：頭像堆疊 */}
-                    <ParticipantAvatars
-                      participantIds={exp.participantIds}
-                      members={members}
-                      paidBy={exp.paidBy}
-                    />
-
-                    {/* 中間：名稱 + 時間/付款人 */}
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-on-surface truncate">
-                        {exp.note ||
-                          (exp.type === 'split_evenly'
-                            ? t('history.split_evenly')
-                            : t('history.itemized'))}
-                      </p>
-                      <p className="text-xs text-on-surface-variant truncate">
-                        {format(exp.createdAt, 'MMM d, h:mm a')} •{' '}
-                        {t('history.payer', {
-                          name:
-                            members.find((m) => m.id === exp.paidBy)?.name ||
-                            t('history.unknown_payer'),
-                        })}
-                      </p>
-                    </div>
-
-                    {/* 右側：金額 + 人數 + 展開箭頭 */}
-                    <div className="text-right flex items-center gap-2 sm:gap-3 shrink-0">
-                      <div className="shrink-0">
-                        <p className="font-bold text-on-surface whitespace-nowrap text-base sm:text-lg">
-                          NT$ {Math.round(exp.totalAmount).toLocaleString('zh-TW')}
-                        </p>
-                        <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
-                          {t('history.participants', { count: exp.participantIds.length })}
-                        </p>
-                      </div>
-                      <span
-                        className="material-symbols-outlined text-on-surface-variant transition-transform duration-300 shrink-0"
-                        style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                      >
-                        expand_more
-                      </span>
-                    </div>
+                  <div className="absolute inset-y-0 right-0 w-[76px] bg-error flex items-center justify-center">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteExpense(exp.id);
+                        setSwipedId(null);
+                      }}
+                      className="flex items-center justify-center text-on-error active:scale-90 transition-transform"
+                    >
+                      <span className="material-symbols-outlined text-2xl">delete</span>
+                    </button>
                   </div>
-
-                  {/* 展開詳情 */}
                   <div
-                    className={cn(
-                      'grid transition-all duration-300 ease-in-out',
-                      isExpanded
-                        ? 'grid-rows-[1fr] opacity-100 mt-4 pt-4 border-t border-outline-variant/20'
-                        : 'grid-rows-[0fr] opacity-0',
-                    )}
+                    onClick={() => {
+                      if (isEditingNote) return;
+                      if (didSwipeRef.current) {
+                        didSwipeRef.current = false;
+                        return;
+                      }
+                      if (isThisSwiped) {
+                        setSwipedId(null);
+                        return;
+                      }
+                      setExpandedId(isExpanded ? null : exp.id);
+                    }}
+                    style={{
+                      transform: `translateX(-${offset}px)`,
+                      transition: isThisActive
+                        ? 'none'
+                        : 'transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                      willChange: isThisActive ? 'transform' : 'auto',
+                    }}
+                    className="bg-surface-container-lowest p-5 rounded-[2rem] flex flex-col group hover:bg-surface-container-low transition-colors relative cursor-pointer"
                   >
-                    <div className="overflow-hidden">
-                      {/* 備注編輯 */}
-                      <div className="mb-3" onClick={(e) => e.stopPropagation()}>
-                        {isEditingNote ? (
-                          <div className="flex items-center gap-2 bg-surface-container rounded-full px-3 py-1.5">
-                            <span className="material-symbols-outlined text-[15px] text-on-surface-variant shrink-0">
-                              label
-                            </span>
-                            <input
-                              ref={noteInputRef}
-                              type="text"
-                              value={editingNoteValue}
-                              onChange={(e) => setEditingNoteValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') commitNote(exp.id);
-                                if (e.key === 'Escape') setEditingNoteId(null);
-                              }}
-                              onBlur={() => commitNote(exp.id)}
-                              maxLength={20}
-                              enterKeyHint="done"
-                              placeholder={t('history.note_placeholder')}
-                              className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant/50 outline-none"
-                            />
-                            <button
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                commitNote(exp.id);
-                              }}
-                              className="shrink-0 text-primary cursor-pointer"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">check</span>
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={(e) => startEditNote(exp.id, exp.note, e)}
-                            className="flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group/note"
-                          >
-                            <span className="material-symbols-outlined text-[13px] group-hover/note:text-primary transition-colors">
-                              {exp.note ? 'edit' : 'add'}
-                            </span>
-                            <span className={cn(exp.note ? 'text-on-surface' : 'opacity-60')}>
-                              {exp.note || t('history.add_note')}
-                            </span>
-                          </button>
-                        )}
+                    <div className="flex items-center justify-between gap-3">
+                      {/* 左側：頭像堆疊 */}
+                      <ParticipantAvatars
+                        participantIds={exp.participantIds}
+                        members={members}
+                        paidBy={exp.paidBy}
+                      />
+
+                      {/* 中間：名稱 + 時間/付款人 */}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-on-surface truncate">
+                          {exp.note ||
+                            (exp.type === 'split_evenly'
+                              ? t('history.split_evenly')
+                              : t('history.itemized'))}
+                        </p>
+                        <p className="text-xs text-on-surface-variant truncate">
+                          {format(exp.createdAt, 'MMM d, h:mm a')} •{' '}
+                          {t('history.payer', {
+                            name:
+                              members.find((m) => m.id === exp.paidBy)?.name ||
+                              t('history.unknown_payer'),
+                          })}
+                        </p>
                       </div>
 
-                      {/* 標題列：分攤明細 + 刪除 */}
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="text-xs font-medium text-on-surface-variant">
-                          {t('history.breakdown')}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteExpense(exp.id);
-                          }}
-                          className="text-xs text-error flex items-center gap-1 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
-                          title={t('history.delete_title')}
+                      {/* 右側：金額 + 人數 + 展開箭頭 */}
+                      <div className="text-right flex items-center gap-2 sm:gap-3 shrink-0">
+                        <div className="shrink-0">
+                          <p className="font-bold text-on-surface whitespace-nowrap text-base sm:text-lg">
+                            NT$ {Math.round(exp.totalAmount).toLocaleString('zh-TW')}
+                          </p>
+                          <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
+                            {t('history.participants', { count: exp.participantIds.length })}
+                          </p>
+                        </div>
+                        <span
+                          className="material-symbols-outlined text-on-surface-variant transition-transform duration-300 shrink-0"
+                          style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
                         >
-                          <span className="material-symbols-outlined text-[14px]">delete</span>{' '}
-                          {t('history.delete')}
-                        </button>
+                          expand_more
+                        </span>
                       </div>
+                    </div>
 
-                      {/* 分攤明細 */}
-                      <div className="space-y-3">
-                        {Object.entries(exp.perPersonAmounts).map(([mId, amt]) => {
-                          const m = members.find((x) => x.id === mId);
-                          if (!m || amt === 0) return null;
-                          return (
-                            <div
-                              key={mId}
-                              className="flex justify-between items-center text-sm bg-surface-container-low p-2.5 rounded-xl"
-                            >
-                              <div className="flex items-center gap-3">
-                                <MemberAvatar
-                                  seed={m.avatarUrl}
-                                  alt={m.name}
-                                  size={24}
-                                  className="shadow-sm"
-                                />
-                                <span className="font-medium text-on-surface">{m.name}</span>
-                              </div>
-                              <span className="font-semibold text-on-surface">
-                                NT$ {Math.round(amt).toLocaleString('zh-TW')}
+                    {/* 展開詳情 */}
+                    <div
+                      className={cn(
+                        'grid transition-all duration-300 ease-in-out',
+                        isExpanded
+                          ? 'grid-rows-[1fr] opacity-100 mt-4 pt-4 border-t border-outline-variant/20'
+                          : 'grid-rows-[0fr] opacity-0',
+                      )}
+                    >
+                      <div className="overflow-hidden">
+                        {/* 備注編輯 */}
+                        <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+                          {isEditingNote ? (
+                            <div className="flex items-center gap-2 bg-surface-container rounded-full px-3 py-1.5">
+                              <span className="material-symbols-outlined text-[15px] text-on-surface-variant shrink-0">
+                                label
                               </span>
+                              <input
+                                ref={noteInputRef}
+                                type="text"
+                                value={editingNoteValue}
+                                onChange={(e) => setEditingNoteValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') commitNote(exp.id);
+                                  if (e.key === 'Escape') setEditingNoteId(null);
+                                }}
+                                onBlur={() => commitNote(exp.id)}
+                                maxLength={20}
+                                enterKeyHint="done"
+                                placeholder={t('history.note_placeholder')}
+                                className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant/50 outline-none"
+                              />
+                              <button
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  commitNote(exp.id);
+                                }}
+                                className="shrink-0 text-primary cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">check</span>
+                              </button>
                             </div>
-                          );
-                        })}
+                          ) : (
+                            <button
+                              onClick={(e) => startEditNote(exp.id, exp.note, e)}
+                              className="flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group/note"
+                            >
+                              <span className="material-symbols-outlined text-[13px] group-hover/note:text-primary transition-colors">
+                                {exp.note ? 'edit' : 'add'}
+                              </span>
+                              <span className={cn(exp.note ? 'text-on-surface' : 'opacity-60')}>
+                                {exp.note || t('history.add_note')}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* 標題列：分攤明細 + 刪除 */}
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-xs font-medium text-on-surface-variant">
+                            {t('history.breakdown')}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteExpense(exp.id);
+                            }}
+                            className="text-xs text-error flex items-center gap-1 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+                            title={t('history.delete_title')}
+                          >
+                            <span className="material-symbols-outlined text-[14px]">delete</span>{' '}
+                            {t('history.delete')}
+                          </button>
+                        </div>
+
+                        {/* 分攤明細 */}
+                        <div className="space-y-3">
+                          {Object.entries(exp.perPersonAmounts).map(([mId, amt]) => {
+                            const m = members.find((x) => x.id === mId);
+                            if (!m || amt === 0) return null;
+                            return (
+                              <div
+                                key={mId}
+                                className="flex justify-between items-center text-sm bg-surface-container-low p-2.5 rounded-xl"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <MemberAvatar
+                                    seed={m.avatarUrl}
+                                    alt={m.name}
+                                    size={24}
+                                    className="shadow-sm"
+                                  />
+                                  <span className="font-medium text-on-surface">{m.name}</span>
+                                </div>
+                                <span className="font-semibold text-on-surface">
+                                  NT$ {Math.round(amt).toLocaleString('zh-TW')}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
