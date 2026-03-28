@@ -3,7 +3,11 @@ import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
 import { evaluateExpression } from '../lib/evaluateExpression';
 
-export function Calculator() {
+interface CalculatorProps {
+  onPawParticle?: (x: number, y: number) => void;
+}
+
+export function Calculator({ onPawParticle }: CalculatorProps = {}) {
   const { t } = useTranslation();
   const {
     splitMode,
@@ -171,7 +175,13 @@ export function Calculator() {
       {buttons.map((btn, i) => (
         <button
           key={i}
-          onClick={() => handlePress(btn.label)}
+          onClick={(e) => {
+            handlePress(btn.label);
+            if (onPawParticle) {
+              const rect = e.currentTarget.getBoundingClientRect();
+              onPawParticle(rect.left + rect.width / 2 - 9, rect.top + rect.height / 2 - 9);
+            }
+          }}
           className={cn(
             'h-12 sm:h-13 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
             btn.class,

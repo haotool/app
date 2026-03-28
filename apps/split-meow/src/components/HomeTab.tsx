@@ -73,7 +73,11 @@ function useResponsiveSheetHeight() {
   return { peekHeight, expandedHeight };
 }
 
-export function HomeTab() {
+interface HomeTabProps {
+  onPawParticle?: (x: number, y: number) => void;
+}
+
+export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
   const { t } = useTranslation();
   const {
     splitMode,
@@ -295,7 +299,7 @@ export function HomeTab() {
         />
 
         <div className="px-1 pb-2 touch-manipulation">
-          <Calculator />
+          <Calculator onPawParticle={onPawParticle} />
         </div>
       </BottomSheet>
     </div>

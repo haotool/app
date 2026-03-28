@@ -81,6 +81,8 @@ interface AppState {
   clearCalculator: () => void;
   settledPayments: string[];
   toggleSettlement: (key: string) => void;
+  catPlayMode: boolean;
+  toggleCatPlayMode: () => void;
 }
 
 // 初始成員使用固定 seed，確保每次新安裝頭像一致（boring-avatars deterministic）
@@ -138,6 +140,7 @@ export const useStore = create<AppState>()(
       expenseNote: '',
       expenseCategory: null,
       settledPayments: [],
+      catPlayMode: false,
 
       addTrip: (name) =>
         set((state) => {
@@ -285,6 +288,8 @@ export const useStore = create<AppState>()(
             ? state.settledPayments.filter((k) => k !== key)
             : [...state.settledPayments, key],
         })),
+
+      toggleCatPlayMode: () => set((state) => ({ catPlayMode: !state.catPlayMode })),
     }),
     {
       name: 'split-meow-storage',

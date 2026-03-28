@@ -97,6 +97,39 @@
   }
 }
 
+/* Cat Play Mode animations */
+@keyframes paw-float {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-48px) scale(0.6);
+  }
+}
+@keyframes cat-celebrate {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-120px) rotate(var(--spin)) scale(0.5);
+  }
+}
+.paw-particle {
+  animation: paw-float 0.65s ease-out forwards;
+  pointer-events: none;
+}
+.cat-particle {
+  animation: cat-celebrate 1.2s ease-out forwards;
+  pointer-events: none;
+}
+
 /* Hide scrollbar for horizontal lists */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

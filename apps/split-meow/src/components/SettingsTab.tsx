@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore';
 import { MemberAvatar } from './MemberAvatar';
 import i18n, { type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
+import { cn } from '../lib/utils';
 
 const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
   { id: 'zh-TW', flag: '🇹🇼', name: '繁中' },
@@ -14,7 +15,15 @@ const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
 
 export function SettingsTab() {
   const { t } = useTranslation();
-  const { members, updateMember, randomizeAvatar, deleteMember, addMember } = useStore();
+  const {
+    members,
+    updateMember,
+    randomizeAvatar,
+    deleteMember,
+    addMember,
+    catPlayMode,
+    toggleCatPlayMode,
+  } = useStore();
   const me = members.find((m) => m.id === 'me') ?? members[0] ?? null;
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(me?.name ?? '');
@@ -189,15 +198,35 @@ export function SettingsTab() {
               <span className="material-symbols-outlined text-sm">chevron_right</span>
             </div>
           </div>
-          <div className="flex items-center justify-between p-5 bg-surface-container-low rounded-[2rem] hover:bg-surface-container transition-colors">
+          <button
+            onClick={toggleCatPlayMode}
+            className="flex items-center justify-between p-5 bg-surface-container-low rounded-[2rem] hover:bg-surface-container transition-colors w-full cursor-pointer"
+          >
             <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-primary">toys_fan</span>
+              <span
+                className={cn(
+                  'material-symbols-outlined transition-colors',
+                  catPlayMode ? 'text-primary' : 'text-on-surface-variant',
+                )}
+              >
+                toys_fan
+              </span>
               <span className="font-medium">{t('settings.cat_play_mode')}</span>
             </div>
-            <div className="w-12 h-6 bg-outline-variant/30 rounded-full relative p-1 cursor-pointer">
-              <div className="w-4 h-4 bg-surface-container-lowest rounded-full absolute left-1"></div>
+            <div
+              className={cn(
+                'w-12 h-6 rounded-full relative p-1 transition-colors duration-300',
+                catPlayMode ? 'bg-primary' : 'bg-outline-variant/30',
+              )}
+            >
+              <div
+                className={cn(
+                  'w-4 h-4 rounded-full absolute top-1 transition-all duration-300',
+                  catPlayMode ? 'left-7 bg-on-primary' : 'left-1 bg-surface-container-lowest',
+                )}
+              />
             </div>
-          </div>
+          </button>
         </div>
       </section>
 

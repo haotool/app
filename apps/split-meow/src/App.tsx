@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from './store/useStore';
 import { HomeTab } from './components/HomeTab';
 import { HistoryTab } from './components/HistoryTab';
@@ -8,6 +8,9 @@ import { BottomNav } from './components/BottomNav';
 import { TripSelector } from './components/TripSelector';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { PayerSelector } from './components/PayerSelector';
+import { CatCompanion } from './components/CatCompanion';
+import { CatPlayLayer, type Particle } from './components/CatPlayLayer';
+import { makePawParticle, makeCelebrateParticles } from './lib/catPlay';
 
 function ShareButton() {
   const { t } = useTranslation();
@@ -55,8 +58,27 @@ function ShareButton() {
 }
 
 export default function App() {
-  const { activeTab } = useStore();
+  const { activeTab, catPlayMode } = useStore();
   const { t } = useTranslation();
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const prevTabRef = useRef(activeTab);
+
+  // 儲存費用後 activeTab 切換到 history → 觸發慶祝動畫
+  useEffect(() => {
+    if (catPlayMode && prevTabRef.current !== 'history' && activeTab === 'history') {
+      const next = makeCelebrateParticles(10);
+      setTimeout(() => setParticles((prev) => [...prev, ...next]), 0);
+    }
+    prevTabRef.current = activeTab;
+  }, [activeTab, catPlayMode]);
+
+  const handlePawParticle = useCallback((x: number, y: number) => {
+    setParticles((prev) => [...prev, makePawParticle(x, y)]);
+  }, []);
+
+  const handleRemoveParticle = useCallback((id: number) => {
+    setParticles((prev) => prev.filter((p) => p.id !== id));
+  }, []);
 
   return (
     <div className="min-h-screen bg-surface text-on-surface pb-24 font-sans">
@@ -88,7 +110,9 @@ export default function App() {
 
       {/* Main Content Canvas */}
       <main className="pt-[64px] px-4 max-w-lg mx-auto">
-        {activeTab === 'home' && <HomeTab />}
+        {activeTab === 'home' && (
+          <HomeTab onPawParticle={catPlayMode ? handlePawParticle : undefined} />
+        )}
         {activeTab === 'history' && <HistoryTab />}
         {activeTab === 'settings' && <SettingsTab />}
       </main>
@@ -104,6 +128,12 @@ export default function App() {
       />
       <BottomNav />
       <UpdatePrompt />
+
+      {/* Cat Play Mode overlays */}
+      {catPlayMode && <CatCompanion />}
+      {particles.length > 0 && (
+        <CatPlayLayer particles={particles} onRemove={handleRemoveParticle} />
+      )}
     </div>
   );
 }
