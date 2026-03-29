@@ -236,8 +236,11 @@ const validators = {
     message: `Missing meta tag: ${name}`,
   }),
 
+  // <title> 可能帶有 data-rh="true" 等屬性，用 regex 寬鬆比對
   hasTitle: (title) => (body) => ({
-    valid: body.includes(`<title>${title}</title>`),
+    valid: new RegExp(`<title[^>]*>${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</title>`).test(
+      body,
+    ),
     message: `Missing title: ${title}`,
   }),
 
@@ -296,7 +299,7 @@ async function runHealthChecks(baseUrl) {
   results.push({ url: '/ (home)', ...homeResult });
 
   const guideResult = await deepCheck(`${baseUrl}/guide`, [
-    validators.hasTitle('使用指南 — 如何使用 RateWise 匯率好工具換算匯率'),
+    validators.hasTitle('使用指南 — 如何使用 RateWise 匯率好工具換算匯率 | RateWise 匯率好工具'),
     validators.containsText('HowTo'),
   ]);
   results.push({ url: '/guide (HowTo)', ...guideResult });
@@ -328,7 +331,7 @@ async function runHealthChecks(baseUrl) {
   const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(new URL(baseUrl).hostname);
   if (!isLocalhost) {
     console.log(`\n${colors.gray}[Worker 驗證] Cloudflare Security Headers Worker${colors.reset}`);
-    const workerResult = await workerDeployCheck(baseUrl, '3.7');
+    const workerResult = await workerDeployCheck(baseUrl, '4.5');
     results.push({ url: 'Worker deployment', ...workerResult });
     if (!workerResult.success) {
       log(colors.yellow, '⚠', '  → 修復：cd security-headers && npx wrangler deploy');
