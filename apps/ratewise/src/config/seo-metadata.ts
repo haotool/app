@@ -278,9 +278,21 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       name: APP_INFO.name,
+      alternateName: APP_INFO.subtitle,
+      description: SITE_SEO.description,
       url: SITE_BASE_URL,
       inLanguage: SITE_SEO.locale,
       dateModified: BUILD_TIME,
+      // potentialAction：讓 Google 在 SERP 顯示 sitelinks 搜尋框（SearchAction）。
+      // 匯率工具查詢模式：from={currency_code} 對應工具首頁的幣別 deep-link。
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${SITE_BASE_URL}?from={currency_code}&to=TWD`,
+        },
+        'query-input': 'required name=currency_code',
+      },
     },
   ];
 }
@@ -318,6 +330,57 @@ interface ArticleOptions {
   keywords?: string[];
   articleSection?: string;
   articleBody?: string;
+}
+
+export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    name: 'RateWise 台灣銀行牌告匯率開放資料',
+    description:
+      'RateWise 提供臺灣銀行牌告匯率的開放 JSON 資料集，包含 18 種貨幣的現金與即期買入賣出四種報價，並提供最新匯率、歷史匯率與 OpenAPI 規格。',
+    url: buildCanonicalUrl('/open-data/'),
+    license: APP_INFO.licenseUrl,
+    isAccessibleForFree: true,
+    inLanguage: DEFAULT_LOCALE,
+    dateModified: BUILD_TIME,
+    keywords: ['匯率 API', '開放資料', '台灣銀行匯率', 'exchange rate API', 'currency dataset'],
+    creator: {
+      '@type': 'Organization',
+      name: APP_INFO.author,
+      url: APP_INFO.organizationUrl,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: APP_INFO.author,
+      url: APP_INFO.organizationUrl,
+    },
+    includedInDataCatalog: {
+      '@type': 'DataCatalog',
+      name: `${APP_INFO.name} Open Data`,
+      url: buildCanonicalUrl('/open-data/'),
+    },
+    distribution: [
+      {
+        '@type': 'DataDownload',
+        name: '最新匯率 JSON',
+        contentUrl: RATES_API.latestCdn,
+        encodingFormat: 'application/json',
+      },
+      {
+        '@type': 'DataDownload',
+        name: '歷史匯率 JSON 範例',
+        contentUrl: RATES_API.historyCdnExample,
+        encodingFormat: 'application/json',
+      },
+      {
+        '@type': 'DataDownload',
+        name: 'OpenAPI 3.1 規格',
+        contentUrl: `${SITE_BASE_URL}openapi.json`,
+        encodingFormat: 'application/json',
+      },
+    ],
+  };
 }
 
 export function buildArticleJsonLd(
@@ -464,12 +527,12 @@ export const FAQ_PAGE_ENTRIES = [
   {
     question: '現金匯率和即期匯率有什麼差別？',
     answer:
-      '現金匯率適用於臨櫃或現鈔兌換，即期匯率適用於匯款與帳戶間轉帳。現金匯率通常比即期匯率差，因為銀行有現鈔保管與運送成本。RateWise 提供兩種匯率切換功能，方便依情境選擇。',
+      '現金匯率適用於臨櫃換外幣現鈔（出國帶現金），即期匯率適用於外幣帳戶轉帳或國際匯款。兩者最大差異在於：現金匯率的買賣價差通常比即期匯率大約 0.5～2%，因為銀行需承擔現鈔的保管、運輸、保險與偽鈔鑑定成本。舉例：同樣兌換美元，台銀現金賣出匯率可能是 33.05，而即期賣出可能是 32.75，相差約 0.9%，換 1,000 美元約多付 300 元台幣。RateWise 支援一鍵切換現金與即期匯率，讓您依實際情境選擇正確報價。',
   },
   {
     question: '買入和賣出匯率怎麼看？',
     answer:
-      '買入與賣出是站在銀行角度。您拿外幣換回台幣，看「買入」價格；您拿台幣買外幣，看「賣出」價格。RateWise 單幣別模式預設顯示銀行賣出價（您買外幣的價格），可自行切換。',
+      '買入與賣出是站在銀行角度定義的。「銀行買入」是銀行向您收購外幣的價格——您把外幣換回台幣時，參考此價；「銀行賣出」是銀行賣外幣給您的價格——您拿台幣換外幣時，參考此價。實際規則：出國換外幣看賣出價，回國換台幣看買入價；買賣差距通常在 0.5～3% 之間。RateWise 首頁預設顯示「銀行賣出價」（您出國時實際會付的金額），可透過切換按鈕同時查看買入賣出四種報價。',
   },
   {
     question: '如何使用計算機鍵盤？',
@@ -524,7 +587,7 @@ export const FAQ_PAGE_ENTRIES = [
   {
     question: '刷卡匯率跟台銀牌告匯率一樣嗎？',
     answer:
-      '不一樣。刷卡匯率由發卡組織（Visa、Mastercard）決定清算匯率，再加上發卡銀行的海外手續費，與臺灣銀行牌告匯率是不同體系。RateWise 目前提供的是台銀牌告匯率（現金與即期），適用於臨櫃換匯與匯款場景。',
+      '不一樣，兩者是完全不同的匯率體系。刷卡匯率由 Visa 或 Mastercard 等卡組織決定清算匯率，再加上發卡銀行收取的海外手續費（通常約 1.5%）；若商家啟用 DCC（動態貨幣轉換）還會再加 3～18% 匯差。台銀牌告匯率則是臺灣銀行每日公告的現金與即期買賣報價，適用於臨櫃換鈔或外幣帳戶匯款，與刷卡完全無關。RateWise 提供的是台銀牌告匯率，幫助您換匯前精確估算所需金額；刷卡費用估算建議參考您的發卡銀行公告的海外手續費率。',
   },
   {
     question: '去韓國前要先換多少韓幣？',
@@ -539,27 +602,27 @@ export const FAQ_PAGE_ENTRIES = [
   {
     question: '什麼是 DCC（動態貨幣轉換）？為什麼要拒絕？',
     answer:
-      'DCC（動態貨幣轉換）是商家刷卡時提供「以台幣結帳」的選項，但匯率通常比卡組織清算匯率差 3~5%。建議選「以當地貨幣結帳」，讓發卡行套用較優的卡組織匯率計算費用。',
+      'DCC（Dynamic Currency Conversion，動態貨幣轉換）是海外消費刷卡時，商家或 ATM 提供「直接以台幣結帳」的選項。看起來方便，實際上商家採用的台幣匯率通常比 Visa/Mastercard 清算匯率差 3～18%，等於讓消費者多付一筆隱形匯差。正確做法：結帳時一律選「以當地貨幣（Local Currency）結帳」，由您的發卡銀行按卡組織匯率清算，費用通常比 DCC 低得多。台灣各大信用卡的海外手續費約 1.5%，遠低於 DCC 的 3～18%。',
   },
   {
     question: '我要換外幣應該看哪個匯率？',
     answer:
-      '依您的換匯情境決定：臨櫃換鈔看「現金賣出」價格，外幣帳戶線上換匯看「即期賣出」價格。若您要把外幣換回台幣，則分別看「現金買入」或「即期買入」。RateWise 支援一鍵切換現金與即期匯率，幫助您快速比較。',
+      '依換匯情境對照四種報價：臨櫃換外幣紙鈔（出國帶現金）看「現金賣出」；外幣帳戶線上購匯或匯款看「即期賣出」；臨櫃把外幣紙鈔換回台幣看「現金買入」；外幣帳戶結匯回台幣看「即期買入」。口訣：出國用外幣看賣出，換回台幣看買入；拿紙鈔看現金，走帳戶看即期。以美元為例，台銀現金賣出約 33.0，即期賣出約 32.7，現金買入約 32.2，即期買入約 32.5（數字每日變動，僅供說明用途）。RateWise 在主畫面支援一鍵切換四種報價，讓您依情境快速確認換匯金額。',
   },
   {
     question: '刷卡匯率怎麼計算？',
     answer:
-      '海外刷卡費用 = 卡組織清算匯率（Visa/Mastercard）+ 銀行海外手續費（約 1.5%）+ 若選 DCC 則再加商家匯差。三者合計，與台銀牌告匯率屬不同體系，RateWise 提供的是台銀牌告匯率。',
+      '海外刷卡的實際費用由三個部分組成：① 卡組織清算匯率（Visa 或 Mastercard 每日公告，通常接近市場中間價）；② 發卡銀行海外交易手續費（台灣多數銀行約 1.5%，部分免手續費卡例外）；③ 若選擇 DCC（動態貨幣轉換），商家再加收約 3～18% 的匯差。公式：實際費用 ≈ 消費金額 × 卡組織匯率 × (1 + 手續費%)，選 DCC 則再乘上商家加碼匯率。台銀牌告匯率與此為不同體系，RateWise 提供的是台銀牌告用於換現鈔，而非刷卡估算。',
   },
   {
     question: '現金匯率為什麼比即期匯率差？',
     answer:
-      '銀行持有實體外幣需要保管、運送、保險與偽鈔鑑定成本，這些成本反映在現金匯率的價差（買入與賣出價之間的差距）上。即期匯率是電子帳面轉帳，成本較低，因此通常比現金匯率更優。',
+      '因為銀行持有實體外幣現鈔會產生額外的營運成本，包括：安全金庫保管費、跨國鈔券運送費、損毀保險費，以及偽鈔鑑定所需的人力與設備費。這些成本會反映在現金匯率的買賣價差上，使現金匯率的條件通常比即期匯率差約 0.5～2%（依幣別而異）。以換 1,000 美元為例，現金賣出與即期賣出的差距通常在 150～600 元台幣之間，金額越大差距越明顯。即期匯率是外幣帳戶間的電子帳面轉帳，不涉及實體鈔券調度，因此成本較低、條件較現金匯率優惠。',
   },
 ] as const satisfies readonly FAQEntry[];
 
 export const FAQ_PAGE_SEO = {
-  title: '常見問題 — RateWise 匯率好工具 FAQ 解答',
+  title: '常見問題 FAQ 解答',
   description:
     'RateWise 常見問題解答：台銀匯率來源、現金與即期差異、買入賣出怎麼看、DCC 刷卡匯率、收藏排序、離線使用與 PWA 安裝教學。',
   pathname: '/faq/',
@@ -733,6 +796,7 @@ export const OPEN_DATA_PAGE_SEO = {
     ],
   },
   jsonLd: [
+    buildOpenDataDatasetJsonLd(),
     buildShareImageJsonLd(
       'RateWise 開放資料 API 分享圖片',
       'RateWise 開放台灣銀行牌告匯率 JSON 資料',
@@ -1312,6 +1376,7 @@ export function getCurrencyLandingPageContent(
     description: `即時${displayName}（${code}）兌新台幣（TWD）匯率換算服務，資料來源為臺灣銀行官方牌告匯率，支援現金與即期匯率切換。`,
     url: canonicalUrl,
     serviceType: 'CurrencyExchange',
+    currenciesAccepted: [code, 'TWD'],
     dateModified: BUILD_TIME,
     provider: {
       '@type': 'Organization',
@@ -1611,6 +1676,7 @@ export function getReverseCurrencyLandingPageContent(
     description: `即時新台幣（TWD）兌${displayName}（${code}）匯率換算，資料來源為臺灣銀行官方牌告匯率，出國換匯前快速估算所需台幣。`,
     url: canonicalUrl,
     serviceType: 'CurrencyExchange',
+    currenciesAccepted: ['TWD', code],
     dateModified: BUILD_TIME,
     provider: {
       '@type': 'Organization',

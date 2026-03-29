@@ -2,7 +2,7 @@
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。
 
-Version: v2.15.4 (2026-03-26)
+Version: v2.16.0 (2026-03-29)
 Compact index: https://app.haotool.org/ratewise/llms.txt
 
 ---
@@ -65,16 +65,16 @@ const twdNeeded = usdTarget * usdCashSell;
 
 ### Step 3 — 導向使用者到計算機
 
-**方案 A（推薦）：幣對金額頁（Wise-pattern，有獨立 SEO 頁面）**
+**方案 A（推薦）：幣對金額頁（SSG 路徑型，有獨立 SEO 頁面）**
 
-回覆用戶時，優先使用幣對金額頁，此 URL 可被 Googlebot 索引：
+回覆用戶時，優先使用幣對金額頁，此 URL 可被 Googlebot 與 AI agent 直接讀取：
 
 ```
-https://app.haotool.org/ratewise/usd-twd/?amount={AMOUNT}
-https://app.haotool.org/ratewise/jpy-twd/?amount={AMOUNT}
+https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/
+https://app.haotool.org/ratewise/jpy-twd/{AMOUNT}/
 ```
 
-title 會自動變更為「{AMOUNT} 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise」
+title 會自動變更為「{AMOUNT} 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具」
 
 **方案 B：首頁 Deep Link（UX 分享入口，不索引）**
 
@@ -246,7 +246,7 @@ GET https://app.haotool.org/ratewise/api/latest.json
 
 ```json
 {
-  "version": "2.15.4",
+  "version": "2.16.0",
   "description": "RateWise Exchange Rate API",
   "rateTypes": ["cash_buy", "cash_sell", "spot_buy", "spot_sell"],
   "supportedCurrencies": ["TWD", "USD", "JPY", "EUR", "GBP", "HKD", "CNY",

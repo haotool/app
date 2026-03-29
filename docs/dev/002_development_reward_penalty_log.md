@@ -3042,3 +3042,55 @@ root_cause:
 - 未標記日期｜+2｜✅ 成功｜Toast 模組重構（react-refresh 規則）
 - 未標記日期｜+1｜✅ 成功｜Quake-School PageLoader 拆分
 - 未標記日期｜+1｜✅ 成功｜Quake-School README.md 新增
+
+---
+
+id: ratewise-prerender-canonical-amount-schema-sync
+date: 2026-03-30
+title: 修正 RateWise prerender amount 頁 canonical/schema 漂移與 FAQ title 重複品牌
+score: +4
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, aeo, prerender, canonical, schema, ssot, testing]
+keywords: [amount-pages, faq-title, financialservice, canonical, hreflang, prerender, faq, json-ld]
+aliases: [RateWise amount page self canonical 修復, FAQ title 品牌重複修正]
+related_entries: [ratewise-seo-ssot-faq-best-practices, improvement-ratewise-release-edge-sync-guard, incident-seo-public-path-ssot]
+summary: 針對 RateWise prerender SEO 做 production-grade 回歸審查後，補上三個會直接影響搜尋與 AI 抽取品質的缺陷：FAQ 頁 title 在 HTML 中重複品牌、`?amount=` 入口會自我 canonical 成 query URL、以及 amount 頁 `FinancialService` schema 仍指回幣對首頁。這次以 TDD 先補紅燈測試，再修正 SSOT 與 prerender 輸出，讓 amount 頁 metadata、hreflang、schema 與 self-canonical 完全一致。
+root_cause:
+
+- FAQ 頁的 SEO SSOT title 本身包含完整品牌字樣，經 `SEOHelmet` append brand 後造成 prerender HTML title 語意重複。
+- `usePairAmountSEO` 註解已要求 canonical 一律回路徑型，但 query-string fallback 仍實作成 `?amount=` 自身 canonical，造成設計與實作脫節。
+- 幣別頁 JSON-LD 以 base pair page 為 SSOT 建立 `FinancialService`，但金額頁在覆寫 canonical 後沒有同步覆寫 schema `url` 與 `availableChannel.serviceUrl`。
+  impact:
+
+- FAQ 頁 title 重複品牌會降低 SERP title 品質與可用字數，影響 snippet 清晰度。
+- `?amount=` 若持續自我 canonical，會放大量額查詢參數頁的重複索引風險，削弱 path-style amount page 的收斂效果。
+- amount 頁若 canonical / hreflang / schema URL 不一致，搜尋引擎與 AI agent 取得的主 URL 訊號會互相衝突，降低機器可讀可信度。
+  actions:
+
+- 將 `apps/ratewise/src/config/seo-metadata.ts` 的 FAQ 頁 title 回歸為不含完整品牌的 SSOT 文案。
+- 修正 `apps/ratewise/src/hooks/usePairAmountSEO.ts`，讓任何有效 amount 入口都 canonical 到可 prerender 的路徑型金額頁。
+- 在 `apps/ratewise/src/components/CurrencyLandingPage.tsx` 對 amount 頁動態覆寫 `FinancialService.url` 與 `availableChannel.serviceUrl`，確保 schema 跟著 self-canonical。
+- 補強 `apps/ratewise/src/prerender.test.ts`、`apps/ratewise/src/hooks/__tests__/usePairAmountSEO.test.tsx`、`apps/ratewise/src/components/__tests__/SEOHelmet.test.tsx`，用 red → green 驗證 FAQ title、query canonical 與 prerender schema URL。
+  prevention:
+
+- 任何 indexable 頁的 title SSOT 不得在主體內再嵌入完整品牌名稱，品牌 append 應交由 head 層統一收斂。
+- amount page 若覆寫 canonical，必須同步檢查 hreflang、BreadcrumbList、HowTo、FinancialService 等 machine-readable URL 是否全部跟進。
+- query-string 入口只能作 backward compatibility，不得保留自我 canonical；測試需直接驗證 prerender HTML 與 hook 回傳值。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/hooks/__tests__/usePairAmountSEO.test.tsx`
+- `pnpm --filter @app/ratewise test -- --run src/components/__tests__/SEOHelmet.test.tsx`
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise test -- --run src/prerender.test.ts`
+- `pnpm --filter @app/ratewise test -- --run src/seo-best-practices.test.ts src/llms-txt.spec.ts src/hreflang.test.ts src/config/__tests__/seo-paths.test.ts src/pages/OpenData.test.tsx`
+- `pnpm --filter @app/ratewise test -- --run src/jsonld.test.ts src/config/__tests__/ratewise-production-release.test.ts`
+  references:
+
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/hooks/usePairAmountSEO.ts
+- apps/ratewise/src/components/CurrencyLandingPage.tsx
+- apps/ratewise/src/prerender.test.ts
+- apps/ratewise/src/hooks/**tests**/usePairAmountSEO.test.tsx
+- apps/ratewise/src/components/**tests**/SEOHelmet.test.tsx

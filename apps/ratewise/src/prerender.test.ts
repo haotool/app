@@ -63,6 +63,18 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toMatch(/常見問題|FAQ/i);
     });
 
+    it('should append the RateWise brand only once for FAQ title', () => {
+      if (!existsSync(faqHtml)) return;
+
+      const content = readFileSync(faqHtml, 'utf-8');
+      const titleMatch = /<title[^>]*>([^<]+)<\/title>/.exec(content);
+      const titleText = titleMatch?.[1] ?? '';
+
+      expect(titleText).toBeTruthy();
+      expect((titleText.match(/RateWise 匯率好工具/g) ?? []).length).toBe(1);
+      expect(titleText).not.toContain('RateWise 匯率好工具 FAQ 解答 | RateWise 匯率好工具');
+    });
+
     it('should have FAQ-specific description meta tag', () => {
       if (!existsSync(faqHtml)) return;
 
@@ -222,11 +234,11 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toMatch(/"@type":\s*"SoftwareApplication"/);
     });
 
-    it('should have FAQPage JSON-LD on homepage', () => {
+    it('should NOT have FAQPage JSON-LD on homepage', () => {
       if (!existsSync(indexHtml)) return;
 
       const content = readFileSync(indexHtml, 'utf-8');
-      expect(content).toMatch(/"@type":\s*"FAQPage"/);
+      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
     });
 
     it('should have only ONE title tag (no duplicates from template)', () => {
@@ -292,17 +304,66 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
 
   describe('🟢 幣別落地頁 Rich Results 範圍控制', () => {
     const usdHtml = resolve(distPath, 'usd-twd/index.html');
+    const usdAmountHtml = resolve(distPath, 'usd-twd/500/index.html');
 
     it('USD/TWD page should exist as static HTML', () => {
       expect(existsSync(usdHtml)).toBe(true);
     });
 
-    it('USD/TWD page should include FAQPage and FinancialService JSON-LD', () => {
+    it('USD/TWD page should include FinancialService JSON-LD but NOT FAQPage', () => {
       if (!existsSync(usdHtml)) return;
 
       const content = readFileSync(usdHtml, 'utf-8');
-      expect(content).toMatch(/"@type":\s*"FAQPage"/);
       expect(content).toMatch(/"@type":\s*"FinancialService"/);
+      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+    });
+
+    it('USD/TWD amount page should use self canonical and self hreflang', () => {
+      if (!existsSync(usdAmountHtml)) return;
+
+      const content = readFileSync(usdAmountHtml, 'utf-8');
+      expect(content).toMatch(
+        /<link[^>]*rel="canonical"[^>]*href="https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
+      );
+      expect(content).toMatch(
+        /<link[^>]*rel="alternate"[^>]*hreflang="x-default"[^>]*href="https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
+      );
+      expect(content).toMatch(
+        /<link[^>]*rel="alternate"[^>]*hreflang="zh-TW"[^>]*href="https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
+      );
+    });
+
+    it('USD/TWD amount page should not duplicate the brand in title', () => {
+      if (!existsSync(usdAmountHtml)) return;
+
+      const content = readFileSync(usdAmountHtml, 'utf-8');
+      const titleMatch = /<title[^>]*>([^<]+)<\/title>/.exec(content);
+      const titleText = titleMatch?.[1] ?? '';
+
+      expect(titleText).toBeTruthy();
+      expect((titleText.match(/RateWise 匯率好工具/g) ?? []).length).toBe(1);
+      expect(titleText).not.toContain('| RateWise |');
+    });
+
+    it('USD/TWD amount page should prerender the direct answer block', () => {
+      if (!existsSync(usdAmountHtml)) return;
+
+      const content = readFileSync(usdAmountHtml, 'utf-8');
+      expect(content).toContain('換算結果（台銀現金賣出參考）');
+      expect(content).toContain('500 USD');
+      expect(content).toContain('在換算器查看最新匯率');
+    });
+
+    it('USD/TWD amount page FinancialService schema should use the self canonical URL', () => {
+      if (!existsSync(usdAmountHtml)) return;
+
+      const content = readFileSync(usdAmountHtml, 'utf-8');
+      expect(content).toMatch(
+        /"@type":"FinancialService"[\s\S]*"url":"https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
+      );
+      expect(content).toMatch(
+        /"availableChannel":\{"@type":"ServiceChannel","serviceUrl":"https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
+      );
     });
   });
 
@@ -329,14 +390,23 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
     const aboutHtml = resolve(distPath, 'about/index.html');
     const indexHtml = resolve(distPath, 'index.html');
 
-    it('FAQ page should have FAQPage JSON-LD in static HTML', () => {
+    it('FAQ page should have Article JSON-LD but NOT FAQPage in static HTML', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
       // vite-react-ssg Head adds data-rh="true" attribute
       expect(content).toMatch(/<script[^>]*type="application\/ld\+json"/);
-      expect(content).toMatch(/"@type":\s*"FAQPage"/);
       expect(content).toMatch(/"@type":\s*"Article"/);
+      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+    });
+
+    it('Open Data page should emit Dataset JSON-LD for machine-readable discovery', () => {
+      const openDataHtml = resolve(distPath, 'open-data/index.html');
+      if (!existsSync(openDataHtml)) return;
+
+      const content = readFileSync(openDataHtml, 'utf-8');
+      expect(content).toMatch(/"@type":\s*"Dataset"/);
+      expect(content).toMatch(/"@type":\s*"DataDownload"/);
     });
 
     it('About page should have Organization JSON-LD', () => {

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   APP_ONLY_PATHS,
+  CURRENCY_AMOUNT_SEO_PATHS,
   IMAGE_RESOURCES,
   PRERENDER_PATHS,
+  REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
   REVERSE_CURRENCY_SEO_PATHS,
   SEO_FILES,
   SEO_PATHS,
@@ -66,9 +68,12 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO 與路由白名單', () => {
-    it('SEO_PATHS 應只包含 42 個公開可索引路徑（不含 noindex 的 privacy 頁）', () => {
-      // SEO_PATHS = CONTENT_SEO_PATHS(8) + CURRENCY_SEO_PATHS(17) + REVERSE_CURRENCY_SEO_PATHS(17) = 42
-      expect(SEO_PATHS).toHaveLength(42);
+    it('SEO_PATHS 應包含全部公開可索引路徑，含金額落地頁', () => {
+      // SEO_PATHS = CONTENT_SEO_PATHS(8) + CURRENCY_SEO_PATHS(17) + REVERSE_CURRENCY_SEO_PATHS(17)
+      //          + CURRENCY_AMOUNT_SEO_PATHS(104) + REVERSE_CURRENCY_AMOUNT_SEO_PATHS(102) = 248
+      expect(SEO_PATHS).toHaveLength(
+        8 + 17 + 17 + CURRENCY_AMOUNT_SEO_PATHS.length + REVERSE_CURRENCY_AMOUNT_SEO_PATHS.length,
+      );
       expect(SEO_PATHS).toContain('/');
       expect(SEO_PATHS).toContain('/faq/');
       expect(SEO_PATHS).toContain('/about/');
@@ -79,6 +84,8 @@ describe('SEO Paths Configuration', () => {
       expect(SEO_PATHS).toContain('/card-rate-guide/');
       expect(SEO_PATHS).toContain('/open-data/');
       expect(SEO_PATHS).toContain('/usd-twd/');
+      expect(SEO_PATHS).toContain('/usd-twd/500/');
+      expect(SEO_PATHS).toContain('/twd-usd/10000/');
       expect(SEO_PATHS).toContain('/twd-usd/');
       expect(SEO_PATHS).toContain('/twd-jpy/');
       expect(SEO_PATHS).not.toContain('/multi/');
@@ -87,8 +94,8 @@ describe('SEO Paths Configuration', () => {
     });
 
     it('PRERENDER_PATHS 應包含公開 SEO 路徑、法律頁與 app-only noindex 頁面', () => {
-      expect(PRERENDER_PATHS).toHaveLength(51);
-      // PRERENDER_PATHS = SEO_PATHS(42) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(8) = 51
+      expect(PRERENDER_PATHS).toHaveLength(257);
+      // PRERENDER_PATHS = SEO_PATHS(248) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(8) = 257
       expect(PRERENDER_PATHS).toContain('/privacy/'); // 仍需預渲染，但不在 sitemap
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');
@@ -137,6 +144,8 @@ describe('SEO Paths Configuration', () => {
     it('isSEOPath 應正確識別公開 SEO 路徑', () => {
       expect(isSEOPath('/faq/')).toBe(true);
       expect(isSEOPath('/usd-twd/')).toBe(true);
+      expect(isSEOPath('/usd-twd/500/')).toBe(true);
+      expect(isSEOPath('/twd-usd/10000/')).toBe(true);
       expect(isSEOPath('/privacy/')).toBe(false); // noindex，不在 SEO_PATHS
       expect(isSEOPath('/multi/')).toBe(false);
     });

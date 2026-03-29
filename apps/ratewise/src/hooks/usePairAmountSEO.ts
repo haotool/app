@@ -70,9 +70,9 @@ export function usePairAmountSEO({
       ? `${formatted} 台幣今日可換多少${currencyName}？RateWise 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算可兌換的外幣金額，避免被中間價誤導。`
       : `${formatted} ${currencyName}今日換新台幣要多少？RateWise 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算所需台幣金額，避免被中間價誤導。`;
 
-  // canonical：路徑型優先（可被 SSG 預渲染）；query string 型為 backward compat。
+  // canonical 一律回到可預渲染的路徑型金額頁，避免 query-string 製造重複索引訊號。
   const base = defaultCanonical.endsWith('/') ? defaultCanonical.slice(0, -1) : defaultCanonical;
-  const seoCanonical = params.amount ? `${base}/${amount}/` : `${base}/?amount=${amount}`;
+  const seoCanonical = `${base}/${amount}/`;
 
   return { seoTitle, seoDescription, seoCanonical, amount };
 }

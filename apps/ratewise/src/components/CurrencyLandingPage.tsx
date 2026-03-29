@@ -81,20 +81,54 @@ export function CurrencyLandingPage({
         : `/?amount=${amount}&from=${currencyCode}&to=TWD`
       : '/';
 
+  // 金額頁必須讓 FinancialService schema 指向 self-canonical，避免 rich result 與 index URL 漂移。
+  const resolvedJsonLd =
+    amount === null || !jsonLd
+      ? jsonLd
+      : jsonLd.map((block) => {
+          if (block['@type'] !== 'FinancialService') return block;
+
+          const availableChannel =
+            block['availableChannel'] &&
+            typeof block['availableChannel'] === 'object' &&
+            !Array.isArray(block['availableChannel'])
+              ? {
+                  ...block['availableChannel'],
+                  serviceUrl: seoCanonical,
+                }
+              : block['availableChannel'];
+
+          return {
+            ...block,
+            url: seoCanonical,
+            availableChannel,
+          };
+        });
+
   const seoProps = {
     title: seoTitle,
     description: seoDescription,
     pathname,
     canonical: seoCanonical,
     keywords,
-    jsonLd,
-    faqContent: faqEntries,
+    jsonLd: resolvedJsonLd,
+    // 金額頁（/usd-twd/500/）加入第 3 層麵包屑，強化 Google 導覽面板顯示。
     breadcrumb: [
       { name: 'RateWise 首頁', item: '/' },
       {
         name: isTwdToForeign ? `TWD → ${currencyCode} 匯率` : `${currencyCode} → TWD 匯率`,
         item: `${pathname}/`,
       },
+      ...(amount !== null
+        ? [
+            {
+              name: isTwdToForeign
+                ? `${amount.toLocaleString('zh-TW')} TWD → ${currencyCode}`
+                : `${amount.toLocaleString('zh-TW')} ${currencyCode} → TWD`,
+              item: seoCanonical,
+            },
+          ]
+        : []),
     ],
     howTo: {
       name: isTwdToForeign

@@ -263,8 +263,8 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(combinedContent).toContain("'@type': 'WebSite'");
     });
 
-    it('should have FAQPage schema builder in SEO layer', () => {
-      expect(combinedContent).toContain("'@type': 'FAQPage'");
+    it('should NOT keep FAQPage schema builder in SEO layer', () => {
+      expect(combinedContent).not.toContain("'@type': 'FAQPage'");
     });
 
     it('should have HowTo schema builder', () => {
@@ -283,8 +283,15 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(combinedContent).toContain('copyrightNotice');
     });
 
-    it('should NOT have SearchAction (no search functionality)', () => {
-      expect(combinedContent).not.toContain("'@type': 'SearchAction'");
+    it('should have SearchAction on WebSite for sitelinks search box', () => {
+      expect(combinedContent).toContain("'@type': 'SearchAction'");
+      expect(combinedContent).toContain('potentialAction');
+      expect(combinedContent).toContain('currency_code');
+    });
+
+    it('should expose Dataset markup for the Open Data page', () => {
+      expect(combinedContent).toContain("'@type': 'Dataset'");
+      expect(combinedContent).toContain("'@type': 'DataDownload'");
     });
 
     it('should have aggregateRating on SoftwareApplication', () => {

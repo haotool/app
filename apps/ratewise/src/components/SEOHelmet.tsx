@@ -39,8 +39,10 @@ interface SEOProps {
   updatedTime?: string;
   howTo?: HowToData;
   breadcrumb?: BreadcrumbItem[];
-  /** FAQ 項目列表：提供時自動輸出 FAQPage JSON-LD，啟用 Google Rich Results FAQ 摺疊卡片。 */
+  /** FAQ 內容應以可見 HTML 呈現；SEOHelmet 不再輸出 FAQPage schema。 */
   faqContent?: FAQEntry[];
+  /** 保留未來顯式啟用 FAQPage rich result 的能力，預設停用。 */
+  faqStructuredData?: boolean;
   robots?: string;
 }
 
@@ -57,7 +59,9 @@ function escapeRegExp(value: string) {
 function buildDocumentTitle(title?: string) {
   if (!title) return SITE_SEO.title;
 
-  const trailingBrandPattern = new RegExp(`\\s*\\|\\s*${escapeRegExp(APP_INFO.name)}$`);
+  const trailingBrandPattern = new RegExp(
+    `\\s*\\|\\s*(?:${escapeRegExp(APP_INFO.name)}|${escapeRegExp(APP_INFO.name.split(' ')[0] ?? APP_INFO.name)})$`,
+  );
   const normalizedTitle = title.trim().replace(trailingBrandPattern, '').trim();
   return `${normalizedTitle} | ${APP_INFO.name}`;
 }
@@ -92,22 +96,6 @@ const buildBreadcrumbSchema = (items: BreadcrumbItem[]): JsonLdBlock | null => {
     })),
   };
 };
-
-// FAQPage：供 Google Rich Results FAQ 摺疊卡片使用。
-// 規格：https://developers.google.com/search/docs/appearance/structured-data/faqpage
-// 必要欄位：mainEntity[].name（問題）+ acceptedAnswer.text（答案）。
-const buildFaqPageSchema = (faqs: FAQEntry[]): JsonLdBlock => ({
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: faqs.map(({ question, answer }) => ({
-    '@type': 'Question',
-    name: question,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: answer,
-    },
-  })),
-});
 
 function upsertTitle(title: string) {
   const existing = Array.from(document.head.querySelectorAll('title'));
@@ -222,19 +210,22 @@ export function SEOHelmet({
   howTo,
   breadcrumb,
   faqContent,
+  faqStructuredData = false,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 }: SEOProps) {
   const fullTitle = buildDocumentTitle(title);
   const canonicalUrl = canonical ? buildCanonicalUrl(canonical) : buildCanonicalUrl(pathname);
   const ogImageUrl = buildAbsoluteAssetUrl(ogImage);
   const normalizedAlternates = useMemo(() => {
-    const alternatesToRender = alternates?.length ? alternates : buildDefaultAlternates(pathname);
+    const alternatesToRender = alternates?.length
+      ? alternates
+      : buildDefaultAlternates(canonicalUrl);
 
     return alternatesToRender.map(({ href, hrefLang }) => ({
       hrefLang,
       href: buildCanonicalUrl(href),
     }));
-  }, [alternates, pathname]);
+  }, [alternates, canonicalUrl]);
   const normalizedAlternatesSignature = useMemo(
     () => normalizedAlternates.map(({ hrefLang, href }) => `${hrefLang}:${href}`).join('|'),
     [normalizedAlternates],
@@ -255,7 +246,6 @@ export function SEOHelmet({
       ...(breadcrumb?.length
         ? ([buildBreadcrumbSchema(breadcrumb)].filter(Boolean) as JsonLdBlock[])
         : []),
-      ...(faqContent?.length ? [buildFaqPageSchema(faqContent)] : []),
     ];
 
     return JSON.stringify({
@@ -265,7 +255,7 @@ export function SEOHelmet({
         return rest;
       }),
     });
-  }, [robots, jsonLd, howTo, breadcrumb, faqContent, canonicalUrl]);
+  }, [robots, jsonLd, howTo, breadcrumb, faqContent, faqStructuredData, canonicalUrl]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;

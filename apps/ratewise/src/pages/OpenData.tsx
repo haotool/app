@@ -132,12 +132,17 @@ print(f"2026-03-19 USD 即期賣出：{history['details']['USD']['spot']['sell']
     id: 'html',
     label: 'Deep Link',
     language: 'html',
-    code: `<!-- 開啟 RateWise 並預填換算參數 -->
+    code: `<!-- 主要可索引 URL：金額落地頁（建議用於內容頁、SEO、AI 引用） -->
+<a href="${SITE_CONFIG.url}usd-twd/1000/">
+  查看 1000 USD 換多少台幣
+</a>
+
+<!-- 互動 deep link：首頁 query 參數（建議用於 App 內導流或分享當下狀態） -->
 <a href="${SITE_CONFIG.url}?amount=1000&from=USD&to=TWD">
   查看 1000 USD 換多少台幣
 </a>
 
-<!-- URL 參數 -->
+<!-- URL 參數（首頁互動模式） -->
 <!-- amount  換算金額（數字）      -->
 <!-- from    來源幣別（ISO 三碼）   -->
 <!-- to      目標幣別（預設 TWD）   -->`,
@@ -242,7 +247,6 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
 
 function TabbedCodeExamples() {
   const [activeId, setActiveId] = useState<string>(CODE_EXAMPLES[0].id);
-  const active = CODE_EXAMPLES.find((e) => e.id === activeId) ?? CODE_EXAMPLES[0];
 
   return (
     <div className="overflow-hidden rounded-xl border border-surface-border">
@@ -262,17 +266,28 @@ function TabbedCodeExamples() {
           </button>
         ))}
         <div className="ml-auto pr-3">
-          <CopyButton text={active.code} />
+          <CopyButton
+            text={
+              (CODE_EXAMPLES.find((example) => example.id === activeId) ?? CODE_EXAMPLES[0]).code
+            }
+          />
         </div>
       </div>
-      {/* Code content */}
-      <pre
-        role="region"
-        aria-label={`程式碼範例：${active.label}`}
-        className="overflow-x-auto bg-surface p-5 text-sm leading-relaxed text-text"
-      >
-        <code>{active.code}</code>
-      </pre>
+      {/* 所有 code panel 保留在 DOM，讓 prerender HTML 與輔助工具可讀取完整內容。 */}
+      {CODE_EXAMPLES.map((example) => {
+        const isActive = example.id === activeId;
+        return (
+          <pre
+            key={example.id}
+            role="region"
+            aria-label={`程式碼範例：${example.label}`}
+            hidden={!isActive}
+            className="overflow-x-auto bg-surface p-5 text-sm leading-relaxed text-text"
+          >
+            <code>{example.code}</code>
+          </pre>
+        );
+      })}
     </div>
   );
 }

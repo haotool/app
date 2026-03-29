@@ -1,5 +1,22 @@
 # @app/ratewise
 
+## 2.16.0
+
+### Minor Changes
+
+- 頂級 SEO 最佳化：Schema 富結果強化、金額頁麵包屑、FAQ 精選摘要優化
+  - WebSite schema 加入 potentialAction SearchAction（sitelinks 搜尋框）
+  - FinancialService schema 補充 currenciesAccepted（正向與反向幣對頁）
+  - 金額頁（/usd-twd/500/）加入第 3 層 BreadcrumbList（首頁 → 幣對 → 金額）
+  - 擴充 5 個關鍵 FAQ 答案為精選摘要友善格式（答案先行 + 具體數字 + 情境說明）
+  - llms.txt Answer Capsule 升級為 AI 引用最佳格式（self-contained 40-60 字段落）
+
+### Patch Changes
+
+- 9a173af: chore: 更新 rating-snapshot 快照
+- c44566c: 更新 rating-snapshot 時間戳
+- efb3e25: 修正 FAQ 頁 pathname trailing slash 與 SEO 健康檢查誤判問題
+
 ## 2.15.4
 
 ### Patch Changes

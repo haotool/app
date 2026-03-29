@@ -185,6 +185,20 @@ describe('SEOHelmet Component', () => {
 
       expect(container).toBeDefined();
     });
+
+    it('should deduplicate brand variants in the document title', () => {
+      render(
+        <HelmetProvider>
+          <SEOHelmet title="500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise" />
+        </HelmetProvider>,
+      );
+
+      expect(document.title).toBe(
+        '500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具',
+      );
+      expect((document.title.match(/RateWise 匯率好工具/g) ?? []).length).toBe(1);
+      expect(document.title).not.toContain('| RateWise |');
+    });
   });
 
   describe('Noindex 行為', () => {
@@ -195,6 +209,22 @@ describe('SEOHelmet Component', () => {
 
     it('可索引頁面應保留結構化資料', () => {
       expect(shouldRenderStructuredData('index, follow')).toBe(true);
+    });
+
+    it('faqContent 應只保留可見 FAQ HTML，不應再輸出 FAQPage schema', () => {
+      render(
+        <HelmetProvider>
+          <SEOHelmet
+            title="FAQ 測試頁"
+            faqContent={[{ question: '可以離線使用嗎？', answer: '可以。' }]}
+          />
+        </HelmetProvider>,
+      );
+
+      const structuredDataScript = document.head.querySelector(
+        'script[type="application/ld+json"]',
+      );
+      expect(structuredDataScript?.textContent).not.toContain('"@type":"FAQPage"');
     });
   });
 
@@ -377,6 +407,38 @@ describe('SEOHelmet Component', () => {
     it('Code Review: BreadcrumbList Schema 統一由 SEOHelmet 管理', () => {
       // 這個測試作為文檔記錄，實際驗證在 build 階段完成
       expect(true).toBe(true);
+    });
+
+    it('金額頁 alternate 應與 canonical 同步，避免 hreflang 指回基礎幣對頁', () => {
+      render(
+        <HelmetProvider>
+          <SEOHelmet
+            title="500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise"
+            canonical="https://app.haotool.org/ratewise/usd-twd/500/"
+            pathname="/usd-twd"
+          />
+        </HelmetProvider>,
+      );
+
+      const canonical = document.head.querySelector('link[rel="canonical"]');
+      const xDefault = document.head.querySelector('link[rel="alternate"][hreflang="x-default"]');
+      const zhTw = document.head.querySelector('link[rel="alternate"][hreflang="zh-TW"]');
+
+      expect(canonical).toHaveAttribute('href', 'https://app.haotool.org/ratewise/usd-twd/500/');
+      expect(xDefault).toHaveAttribute('href', 'https://app.haotool.org/ratewise/usd-twd/500/');
+      expect(zhTw).toHaveAttribute('href', 'https://app.haotool.org/ratewise/usd-twd/500/');
+    });
+
+    it('金額頁 title 不應出現 RateWise 品牌重複', () => {
+      render(
+        <HelmetProvider>
+          <SEOHelmet title="500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise" />
+        </HelmetProvider>,
+      );
+
+      expect(document.title).toBe(
+        '500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具',
+      );
     });
   });
 });

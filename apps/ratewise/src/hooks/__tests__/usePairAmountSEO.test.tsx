@@ -90,14 +90,12 @@ describe('usePairAmountSEO', () => {
       expect(desc).toContain('美元');
     });
 
-    it('canonical は幣對頁パス + ?amount= 形式', () => {
+    it('query-string amount 也必須 canonical 回路徑型金額頁', () => {
       renderWithRoute('/usd-twd?amount=500');
       const canonical = screen.getByTestId('canonical').textContent ?? '';
-      // Wise-pattern: pair page path with ?amount=
-      expect(canonical).toContain('usd-twd');
-      expect(canonical).toContain('?amount=500');
-      // 重要：ホームページ deep-link (?amount=X&from=Y&to=Z) ではない
+      expect(canonical).toBe('https://app.haotool.org/ratewise/usd-twd/500/');
       expect(canonical).not.toMatch(/\?amount=\d+&from=/);
+      expect(canonical).not.toContain('?amount=');
     });
 
     it('amount 値が正しく解析される', () => {

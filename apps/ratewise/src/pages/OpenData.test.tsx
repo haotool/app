@@ -60,16 +60,19 @@ describe('OpenData Page', () => {
   });
 
   describe('Accessibility (WCAG 2.1 AA)', () => {
-    it('renders tabbed code examples with 4 tab buttons and 1 visible code region', () => {
-      renderOpenData();
+    it('renders tabbed code examples with 4 tab buttons and all code regions in DOM', () => {
+      const { container } = renderOpenData();
       // 4 語言 tab 按鈕：cURL / JavaScript / Python / Deep Link
       const tabButtons = screen.getAllByRole('button', {
         name: /cURL|JavaScript|Python|Deep Link/i,
       });
       expect(tabButtons).toHaveLength(4);
-      // 同時只有 1 個 code region visible
-      const codeRegions = screen.getAllByRole('region', { name: /程式碼範例/ });
-      expect(codeRegions).toHaveLength(1);
+
+      // 所有 tab panel 應存在於 DOM，確保 prerender HTML 保留完整語意內容。
+      const codeRegions = container.querySelectorAll('pre[role="region"]');
+      expect(codeRegions).toHaveLength(4);
+      expect(codeRegions[0]).toBeVisible();
+      expect(codeRegions[3]).not.toBeVisible();
     });
 
     it('all external links have rel=noopener noreferrer', () => {
@@ -104,6 +107,17 @@ describe('OpenData Page', () => {
       const region = screen.getByRole('region', { name: /程式碼範例：Deep Link/i });
       expect(region.querySelector('code')?.textContent).toContain(SITE_CONFIG.url);
     });
+
+    it('應明確區分可索引金額頁與首頁 query deep link', () => {
+      renderOpenData();
+      fireEvent.click(screen.getByRole('button', { name: 'Deep Link' }));
+      const content = screen.getByRole('region', { name: /程式碼範例：Deep Link/i }).textContent;
+
+      expect(content).toContain(`${SITE_CONFIG.url}usd-twd/1000/`);
+      expect(content).toContain('主要可索引 URL');
+      expect(content).toContain(`${SITE_CONFIG.url}?amount=1000&from=USD&to=TWD`);
+      expect(content).toContain('互動 deep link');
+    });
   });
 
   describe('FAQ content from seo-metadata SSOT', () => {
@@ -115,6 +129,19 @@ describe('OpenData Page', () => {
       OPEN_DATA_PAGE_SEO.faqContent?.forEach((item) => {
         expect(screen.getByText(item.question)).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Structured data output', () => {
+    it('renders Dataset JSON-LD for machine-readable API discovery', () => {
+      renderOpenData();
+
+      const structuredDataScript = document.head.querySelector(
+        'script[type="application/ld+json"]',
+      );
+      expect(structuredDataScript?.textContent).toContain('"@type":"Dataset"');
+      expect(structuredDataScript?.textContent).toContain('"@type":"DataDownload"');
+      expect(structuredDataScript?.textContent).toContain('latest.json');
     });
   });
 

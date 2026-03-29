@@ -36,6 +36,13 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
     expect(content).toContain('api/latest.json');
   });
 
+  it('uses prerendered path-based amount landing pages as the indexable format', () => {
+    const content = readFileSync(llmsPath, 'utf-8');
+    expect(content).toContain('https://app.haotool.org/ratewise/usd-twd/500/');
+    expect(content).not.toContain('https://app.haotool.org/ratewise/usd-twd/?amount={AMOUNT}');
+    expect(content).not.toContain('canonical：自引用含 ?amount=');
+  });
+
   it('lists all 17 currency pages in Popular Rates', () => {
     const content = readFileSync(llmsPath, 'utf-8');
     const currencies = [

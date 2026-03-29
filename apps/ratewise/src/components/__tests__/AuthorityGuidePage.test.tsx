@@ -3,12 +3,12 @@
  *
  * 測試範圍：
  * 1. FAQ 內容正確渲染為可見 HTML（content quality + AEO）
- * 2. SEOHelmet 接收 jsonLd 與 faqContent props（Article + FAQPage schema）
- * 3. 回歸：確保 FAQ schema 不遺漏
+ * 2. SEOHelmet 接收 jsonLd props，FAQ 保持可見 HTML
+ * 3. 回歸：確保 FAQ 內容不遺漏
  *
  * 背景：[2026-03-25] 發現 AuthorityGuidePage 未將 jsonLd 與 faqContent 傳給 SEOHelmet，
  *       導致 sell-rate-vs-mid-rate、cash-vs-spot-rate、card-rate-guide 三個頁面
- *       缺少 Article 與 FAQPage JSON-LD，影響 Google Rich Results 與 AI 引用品質。
+ *       缺少 Article JSON-LD 與可見 FAQ 區塊，影響搜尋引擎與 AI 引用品質。
  */
 
 import { describe, it, expect } from 'vitest';
@@ -100,17 +100,16 @@ describe('AuthorityGuidePage', () => {
     });
   });
 
-  describe('SEOHelmet props（Article + FAQPage JSON-LD 生成）', () => {
+  describe('SEOHelmet props（Article JSON-LD）', () => {
     it('AuthorityGuidePage source code must pass jsonLd prop to SEOHelmet', () => {
       // 靜態分析：確認原始碼包含 jsonLd prop 傳遞
       const src = readFileSync(resolve(__dirname, '../AuthorityGuidePage.tsx'), 'utf-8');
       expect(src).toContain('jsonLd={page.jsonLd}');
     });
 
-    it('AuthorityGuidePage source code must pass faqContent prop to SEOHelmet', () => {
-      // 靜態分析：確認原始碼包含 faqContent prop 傳遞
+    it('AuthorityGuidePage source code should NOT pass faqContent prop to SEOHelmet', () => {
       const src = readFileSync(resolve(__dirname, '../AuthorityGuidePage.tsx'), 'utf-8');
-      expect(src).toContain('faqContent={page.faqContent}');
+      expect(src).not.toContain('faqContent={page.faqContent}');
     });
   });
 

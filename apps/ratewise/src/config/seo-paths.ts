@@ -136,6 +136,8 @@ export const SEO_PATHS = [
   ...CONTENT_SEO_PATHS,
   ...CURRENCY_SEO_PATHS,
   ...REVERSE_CURRENCY_SEO_PATHS,
+  ...CURRENCY_AMOUNT_SEO_PATHS,
+  ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
 ] as const;
 
 export const APP_ONLY_PATHS = [
@@ -231,7 +233,7 @@ export function normalizePath(path: string): string {
 
 export function shouldPrerender(path: string): boolean {
   const normalized = normalizePath(path);
-  return PRERENDER_PATHS.includes(normalized as (typeof PRERENDER_PATHS)[number]);
+  return PRERENDER_PATHS.includes(normalized);
 }
 
 export function getIncludedRoutes(paths: string[]): string[] {
@@ -248,7 +250,7 @@ export type ReverseCurrencyPagePath = (typeof REVERSE_CURRENCY_SEO_PATHS)[number
 export type AppOnlyPath = (typeof APP_ONLY_PATHS)[number];
 
 export function isSEOPath(path: string): path is SEOPath {
-  return SEO_PATHS.includes(path as SEOPath);
+  return SEO_PATHS.includes(path);
 }
 
 export function isCorePagePath(path: string): path is CorePagePath {
