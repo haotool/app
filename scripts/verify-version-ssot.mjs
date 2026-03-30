@@ -130,6 +130,9 @@ function isRuntimeChange(filePath) {
   if (filePath === 'apps/ratewise/vite.config.ts') return true;
   if (!filePath.startsWith('apps/ratewise/src/')) return false;
 
+  // 自動生成的資料檔（由 GitHub Actions / prebuild 定期更新），不視為需要 changeset 的版本變更
+  if (filePath.startsWith('apps/ratewise/src/config/generated/')) return false;
+
   const isTestFile =
     filePath.includes('/__tests__/') ||
     filePath.endsWith('.test.ts') ||
