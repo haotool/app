@@ -59,20 +59,20 @@ jobs:
           committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           commit-message: |
-            chore(seo): 每週更新匯差範例數據
+            chore(seo): 每日更新匯差範例數據
 
             - 自動更新各幣別現金賣出 vs 市場中間價差距（換 3 萬台幣情境）
             - 雙重驗證：open.er-api.com 中間價 vs 台銀自身 (買入+賣出)/2 中間價
             - 差距超過 2% 幣別已警告（東南亞幣別預期偏高）
 
             測試：GitHub Actions 排程自動觸發
-          branch: chore/weekly-seo-rate-update
+          branch: chore/daily-seo-rate-update
           delete-branch: true
-          title: 'chore(seo): 每週更新匯差範例數據'
+          title: 'chore(seo): 每日更新匯差範例數據'
           body: |
             ## 自動更新：SEO 匯差範例數據
 
-            由 GitHub Actions 排程每週一自動執行。腳本：[`update-seo-rate-examples.mjs`](apps/ratewise/scripts/update-seo-rate-examples.mjs)
+            由 GitHub Actions 排程每日自動執行。腳本：[`update-seo-rate-examples.mjs`](apps/ratewise/scripts/update-seo-rate-examples.mjs)
 
             ### 資料來源雙重驗證
 

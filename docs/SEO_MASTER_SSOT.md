@@ -91,7 +91,7 @@ src/config/seo-metadata.ts        ← 內容 SSOT（title/description/FAQ/JSON-L
   ├─ HOMEPAGE_SEO                  首頁 SEO 內容
   ├─ CURRENCY_PAGE_OVERRIDES       各幣別頁面覆寫
   ├─ REVERSE_CURRENCY_PAGE_OVERRIDES 各反向幣別頁面覆寫
-  └─ SEO_RATE_EXAMPLES             每週自動更新的匯率差距範例
+  └─ SEO_RATE_EXAMPLES             每日自動更新的匯率差距範例
 ```
 
 ### 2.2 生成層（Generation Layer，Prebuild Scripts）
@@ -756,7 +756,7 @@ node scripts/fetch-rating-snapshot.mjs          # 匯率快照更新
 | SEO Health Check（sitemap 可用、robots.txt 正確、OG 標籤） | 每日           | GitHub Actions                    |
 | Core Web Vitals 回報                                       | 實時           | `reportWebVitals.ts`              |
 | 匯率資料更新                                               | 每 5 分鐘      | GitHub Actions                    |
-| SEO Rate Examples 更新                                     | 每週一         | `update-seo-rate-examples.mjs`    |
+| SEO Rate Examples 更新                                     | 每日           | `update-seo-rate-examples.mjs`    |
 | 生產資源可用性                                             | 每次 Deploy 後 | `verify-production-resources.mjs` |
 | Live Precache 驗證                                         | Release 後     | `verify-precache-assets.mjs`      |
 

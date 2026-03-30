@@ -2,7 +2,7 @@
  * SEO 匯差範例數據（自動生成）
  *
  * 由 scripts/update-seo-rate-examples.mjs 生成，請勿手動編輯。
- * 每週一由 GitHub Actions 自動更新並提交。
+ * 每日由 GitHub Actions 自動更新並提交。
  *
  * 資料來源：
  *   - 台灣銀行牌告匯率（現金買入/賣出）

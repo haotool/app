@@ -838,7 +838,7 @@ export const ABOUT_PAGE_FAQ = [
   {
     question: '匯差數字如何保持最新且讓搜尋引擎正確讀取？',
     answer:
-      '匯差範例數據由 GitHub Actions 每週一自動執行：同時抓取台灣銀行牌告匯率與 open.er-api.com 市場中間價（Google、XE、Wise、Apple 計算機的共同基準），進行雙重驗證（兩個中間價差距須在 2% 以內），生成靜態 TypeScript 常數，透過 Pull Request 自動審核後進入主分支。最終數字直接嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取所有匯差數字。',
+      '匯差範例數據由 GitHub Actions 每日自動執行：同時抓取台灣銀行牌告匯率與 open.er-api.com 市場中間價（Google、XE、Wise、Apple 計算機的共同基準），進行雙重驗證（兩個中間價差距須在 2% 以內），生成靜態 TypeScript 常數，透過 Pull Request 自動審核後進入主分支。最終數字直接嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取所有匯差數字。',
   },
   {
     question: '這個網站使用哪些結構化資料讓搜尋摘要顯示更豐富？',
@@ -862,7 +862,7 @@ export const ABOUT_PAGE_SEO = {
   faqContent: [...ABOUT_PAGE_FAQ],
   jsonLd: buildArticleJsonLd(
     '關於 RateWise 匯率好工具 - 資料來源、技術架構與 SEO 透明度',
-    `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。採用 SSG 靜態預渲染、schema.org JSON-LD 結構化資料與每週自動更新匯差數據。`,
+    `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。採用 SSG 靜態預渲染、schema.org JSON-LD 結構化資料與每日自動更新匯差數據。`,
     '/about/',
     `${APP_INFO.copyrightStartYear}-01-01`,
     {
@@ -882,7 +882,7 @@ export const ABOUT_PAGE_SEO = {
         '匯差計算',
         'LLM 引用',
       ],
-      articleBody: `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每週自動雙重驗證更新。`,
+      articleBody: `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
     },
   ),
 } satisfies SEOPageMetadata;
@@ -1319,7 +1319,7 @@ function formatAmount(amount: number): string {
 }
 
 /**
- * 根據每週更新的匯差數據，產生具體落差敘述句。
+ * 根據每日更新的匯差數據，產生具體落差敘述句。
  * 同時顯示外幣數量（實際 vs 中間價預期）與台幣差距，提升 LLM 引用精確度。
  */
 function buildRateExampleSentence(code: string, displayName: string): string {
@@ -1331,18 +1331,18 @@ function buildRateExampleSentence(code: string, displayName: string): string {
   const fCash = formatAmount(ex.foreignAtCash);
   const fMid = formatAmount(ex.foreignAtMarketMid);
   const fDiff = formatAmount(ex.diffForeign);
-  return `以換 ${twdLabel}元新台幣的${displayName}為例：台灣銀行臨櫃現金實際只能換到 ${fCash} ${code}，而 Google（資料來源：Morningstar）、XE、Wise、Apple 計算機（資料來源：Yahoo Finance）等工具顯示的市場中間價換算結果約為 ${fMid} ${code}——兩者相差約 ${fDiff} ${code}（差距 ${ex.diffPct}%）。若先用中間價估算再去台銀換匯，實際會比預期少換 ${fDiff} ${code}，等於多花了 ${ex.diffTWD} 元新台幣的匯差。（匯差數據每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
+  return `以換 ${twdLabel}元新台幣的${displayName}為例：台灣銀行臨櫃現金實際只能換到 ${fCash} ${code}，而 Google（資料來源：Morningstar）、XE、Wise、Apple 計算機（資料來源：Yahoo Finance）等工具顯示的市場中間價換算結果約為 ${fMid} ${code}——兩者相差約 ${fDiff} ${code}（差距 ${ex.diffPct}%）。若先用中間價估算再去台銀換匯，實際會比預期少換 ${fDiff} ${code}，等於多花了 ${ex.diffTWD} 元新台幣的匯差。（匯差數據每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
 }
 
 /**
  * 在 FAQ 答案中嵌入靜態匯率數字，讓 Googlebot 原始 HTML 層次即可讀到匯率。
- * 數據來自 SEO_RATE_EXAMPLES（每週 GitHub Actions 自動更新）。
+ * 數據來自 SEO_RATE_EXAMPLES（每日 GitHub Actions 自動更新）。
  */
 function buildCashSellRateSentence(code: string, baseAmount: number): string {
   const ex = SEO_RATE_EXAMPLES[code];
   if (!ex) return '';
   const result = Math.round(baseAmount * ex.cashSell);
-  return `以台銀現金賣出匯率換算，${formatAmount(baseAmount)} ${code} ≈ ${formatAmount(result)} 元台幣（台銀現金賣出 1 ${code} = ${ex.cashSell} TWD，匯率每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
+  return `以台銀現金賣出匯率換算，${formatAmount(baseAmount)} ${code} ≈ ${formatAmount(result)} 元台幣（台銀現金賣出 1 ${code} = ${ex.cashSell} TWD，匯率每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
 }
 
 /** 反向頁（TWD→外幣）FAQ：嵌入台幣換外幣的靜態換算結果。 */
@@ -1350,7 +1350,7 @@ function buildTwdToForeignRateSentence(code: string, twdAmount: number): string 
   const ex = SEO_RATE_EXAMPLES[code];
   if (!ex) return '';
   const result = Math.round(twdAmount / ex.cashSell);
-  return `以台銀現金賣出匯率換算，${formatAmount(twdAmount)} 台幣 ≈ ${formatAmount(result)} ${code}（台銀現金賣出 1 ${code} = ${ex.cashSell} TWD，匯率每週自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
+  return `以台銀現金賣出匯率換算，${formatAmount(twdAmount)} 台幣 ≈ ${formatAmount(result)} ${code}（台銀現金賣出 1 ${code} = ${ex.cashSell} TWD，匯率每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
 }
 
 export function getCurrencyLandingPageContent(

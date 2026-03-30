@@ -198,8 +198,8 @@ export function CurrencyLandingPage({
                 </div>
                 <p className="text-[10px] text-text-muted mb-4">
                   {isTwdToForeign
-                    ? `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每週更新）。實際匯率以台銀牌告為準。`
-                    : `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每週更新）。實際匯率以台銀牌告為準。`}
+                    ? `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每日更新）。實際匯率以台銀牌告為準。`
+                    : `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每日更新）。實際匯率以台銀牌告為準。`}
                 </p>
                 <Link
                   to={converterHref}

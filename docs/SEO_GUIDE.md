@@ -32,7 +32,7 @@
 
 ```mermaid
 flowchart TD
-    subgraph DATA["資料層（每週自動更新）"]
+    subgraph DATA["資料層（每日自動更新）"]
         TW["🏦 台銀牌告匯率<br/>cdn.jsdelivr.net"]
         ER["🌐 市場中間價<br/>open.er-api.com<br/>（Google/XE/Wise/Apple 基準）"]
         TW --> SCRIPT
@@ -43,7 +43,7 @@ flowchart TD
     end
 
     subgraph PR["PR 流程（不直接 push main）"]
-        GEN --> CPR["peter-evans/create-pull-request@v8<br/>建立 chore/weekly-seo-rate-update 分支"]
+        GEN --> CPR["peter-evans/create-pull-request@v8<br/>建立 chore/daily-seo-rate-update 分支"]
         CPR --> CI["🔍 CI 檢查<br/>typecheck / test / build"]
         CI -->|"通過"| MERGE["✅ auto squash merge → main"]
         CI -->|"失敗"| BLOCK["🚫 封鎖入 main"]
@@ -80,7 +80,7 @@ flowchart TD
 stateDiagram-v2
     [*] --> Idle : 初始 / 上週完成
 
-    Idle --> Fetching : 每週一 02:00 UTC<br/>GitHub Actions 觸發
+    Idle --> Fetching : 每日 02:00 UTC<br/>GitHub Actions 觸發
 
     Fetching --> DualVerify : 台銀牌告 + open.er-api.com 抓取成功
     Fetching --> Aborted : HTTP 錯誤 / 網路逾時<br/>→ process.exit(1)
@@ -171,7 +171,7 @@ flowchart LR
 
     subgraph FRESHNESS["Stage 8: 內容新鮮度"]
         F1["sitemap lastmod ✅<br/>每次 build 自動更新"]
-        F2["匯差數字每週更新 ✅<br/>GitHub Actions 自動化"]
+        F2["匯差數字每日更新 ✅<br/>GitHub Actions 自動化"]
         F3["FAQ 含更新日期 ✅<br/>最後更新：YYYY-MM-DD"]
     end
 
