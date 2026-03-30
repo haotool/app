@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.16.4
+
+### Patch Changes
+
+- 收斂 RateWise SEO/AEO 的 SSOT 漂移，移除過時 `meta keywords` 輸出，將 amount 頁 SEO 文案與 PWA manifest 品牌資訊集中到設定來源，補強 authority guide 的 Answer Capsule，並改善 production SEO health check 對暫時性 5xx 的容錯能力。
+
 ## 2.16.3
 
 ### Patch Changes

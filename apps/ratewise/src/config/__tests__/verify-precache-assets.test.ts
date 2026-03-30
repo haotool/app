@@ -15,6 +15,17 @@ describe('verify-precache-assets script', () => {
     expect(script.getDefaultBaseUrl('live')).toBe('https://app.haotool.org/ratewise/');
   });
 
+  it('should normalize duplicated trailing slashes in the base URL', async () => {
+    const script = await loadVerifyPrecacheModule();
+
+    expect(script.normalizeBase('https://app.haotool.org/ratewise//')).toBe(
+      'https://app.haotool.org/ratewise/',
+    );
+    expect(script.normalizeBase('http://127.0.0.1:4173/ratewise')).toBe(
+      'http://127.0.0.1:4173/ratewise/',
+    );
+  });
+
   it('should keep the RateWise base path when resolving precache asset URLs', async () => {
     const script = await loadVerifyPrecacheModule();
 
@@ -37,5 +48,15 @@ describe('verify-precache-assets script', () => {
     ].join('\n');
 
     expect(script.parseShellAssetUrls(html)).toEqual(['assets/app.css', 'assets/app.js']);
+  });
+
+  it('should validate local precache assets from dist files instead of requiring a localhost preview server', async () => {
+    const script = await loadVerifyPrecacheModule();
+
+    expect(script.shouldProbePrecacheAssetsOverHttp('local')).toBe(false);
+    expect(script.shouldProbePrecacheAssetsOverHttp('live')).toBe(true);
+    expect(script.resolveLocalPrecacheAssetPath('assets/app.css', '/repo/apps/ratewise/dist')).toBe(
+      path.resolve('/repo/apps/ratewise/dist', 'assets/app.css'),
+    );
   });
 });

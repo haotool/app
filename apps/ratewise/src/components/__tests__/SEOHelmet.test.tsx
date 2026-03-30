@@ -199,6 +199,16 @@ describe('SEOHelmet Component', () => {
       expect((document.title.match(/RateWise 匯率好工具/g) ?? []).length).toBe(1);
       expect(document.title).not.toContain('| RateWise |');
     });
+
+    it('should keep keywords prop compatible but never emit deprecated meta keywords', () => {
+      render(
+        <HelmetProvider>
+          <SEOHelmet title="Test" keywords={['test', 'seo']} />
+        </HelmetProvider>,
+      );
+
+      expect(document.head.querySelector('meta[name="keywords"]')).toBeNull();
+    });
   });
 
   describe('Noindex 行為', () => {

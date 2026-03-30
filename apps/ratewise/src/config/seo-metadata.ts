@@ -3,7 +3,13 @@ import { APP_INFO, SEO_SOCIAL_LINKS } from './app-info';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from './generated/seo-rate-examples';
 import { RATING_SNAPSHOT } from './generated/rating-snapshot';
 import { RATES_API } from './api-endpoints';
-import { SHARE_IMAGE, TWITTER_IMAGE, normalizeSiteUrl } from './seo-paths';
+import {
+  PRERENDER_PATHS,
+  SEO_PATHS,
+  SHARE_IMAGE,
+  TWITTER_IMAGE,
+  normalizeSiteUrl,
+} from './seo-paths';
 
 export interface AlternateLink {
   hrefLang: string;
@@ -47,6 +53,7 @@ export interface SEOPageMetadata {
   keywords?: string[];
   updatedTime?: string;
   faqContent?: FAQEntry[];
+  answerCapsule?: FAQEntry[];
   howTo?: HowToData;
   breadcrumb?: BreadcrumbItem[];
   robots?: string;
@@ -714,6 +721,18 @@ export const GUIDE_PAGE_SEO = {
     { name: 'RateWise 首頁', item: '/' },
     { name: '使用教學', item: '/guide/' },
   ],
+  answerCapsule: [
+    {
+      question: '第一次換匯時，RateWise 最重要的用法是什麼？',
+      answer:
+        '第一次換匯時，通常先看銀行賣出價，再分辨你是臨櫃換現鈔還是走外幣帳戶／匯款。RateWise 會把這兩件事拆開顯示，避免只看中間價而低估實際成本。',
+    },
+    {
+      question: '什麼時候該看現金匯率，什麼時候該看即期匯率？',
+      answer:
+        '臨櫃換外幣現鈔看現金匯率，外幣帳戶轉換、網銀或匯款看即期匯率。現金匯率通常比即期差，因為包含現鈔保管與運送成本。',
+    },
+  ],
   howTo: {
     name: '如何使用 RateWise 進行匯率換算',
     description: '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別與多幣別匯率換算。',
@@ -772,6 +791,17 @@ export const OPEN_DATA_PAGE_SEO = {
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
     { name: '開放資料 API', item: '/open-data/' },
+  ],
+  answerCapsule: [
+    {
+      question: '要串接最新台銀牌告匯率，應該用哪個端點？',
+      answer: `最新台銀牌告匯率建議直接讀取 latest.json：${RATES_API.latestCdn}。這是免 API Key 的主要 CDN 端點，適合正式環境。`,
+    },
+    {
+      question: 'SEO 與 AI 引用應該連到哪種 RateWise URL？',
+      answer:
+        '可索引金額落地頁採用 /usd-twd/1000/ 這種 path-based URL，適合內容頁、搜尋引擎與 AI 引用；首頁 query deep link 則只建議用在互動導流與分享當下狀態。',
+    },
   ],
   faqContent: [...OPEN_DATA_PAGE_FAQ],
   howTo: {
@@ -859,6 +889,18 @@ export const ABOUT_PAGE_SEO = {
     { name: 'RateWise 首頁', item: '/' },
     { name: '關於我們', item: '/about/' },
   ],
+  answerCapsule: [
+    {
+      question: 'RateWise 是什麼樣的匯率工具？',
+      answer:
+        'RateWise 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台灣用戶看懂實際買入價、賣出價、現金價與即期價，不以市場中間價作為主要決策依據。',
+    },
+    {
+      question: '為什麼它和一般顯示中間價的匯率工具不同？',
+      answer:
+        '一般中間價工具適合觀察市場方向，但不等於實際換匯成本。RateWise 直接顯示台銀牌告四種報價，讓你在臨櫃換鈔、外幣帳戶或匯款前更接近真實金額。',
+    },
+  ],
   faqContent: [...ABOUT_PAGE_FAQ],
   jsonLd: buildArticleJsonLd(
     '關於 RateWise 匯率好工具 - 資料來源、技術架構與 SEO 透明度',
@@ -903,6 +945,18 @@ export const SELL_RATE_VS_MID_RATE_PAGE = {
     '中間價是買入與賣出的平均值，不是銀行實際成交價。',
     '你拿台幣買外幣時，通常要看銀行賣出價。',
     '換匯金額越大，中間價與實際賣出價的差距越明顯。',
+  ],
+  answerCapsule: [
+    {
+      question: '換匯時為什麼不能只看中間價？',
+      answer:
+        '因為中間價只是市場平均參考，不是銀行真正賣給你的價格。你拿台幣買外幣時，通常應該看銀行賣出價，尤其臨櫃換現鈔時更要看現金賣出。',
+    },
+    {
+      question: '對台灣使用者來說，什麼價格最接近真實成本？',
+      answer:
+        '如果目標是估算今天要付多少台幣，台銀牌告的現金賣出或即期賣出，通常都比中間價更接近實際換匯成本。',
+    },
   ],
   sections: [
     {
@@ -978,6 +1032,17 @@ export const CASH_VS_SPOT_RATE_PAGE = {
     '外幣帳戶轉換、網銀換匯或匯款時，通常看即期匯率。',
     '現金匯率常比即期匯率差，因為包含現鈔成本。',
   ],
+  answerCapsule: [
+    {
+      question: '什麼情境該看現金匯率？',
+      answer: '臨櫃換外幣現鈔時，通常看現金匯率，因為這反映了實體鈔券的保管與運送成本。',
+    },
+    {
+      question: '什麼情境該看即期匯率？',
+      answer:
+        '外幣帳戶轉換、網銀換匯與匯款時，通常看即期匯率。這類交易不涉及現鈔，所以價格通常會比現金匯率更好。',
+    },
+  ],
   sections: [
     {
       title: '現金匯率反映的是實體鈔券成本',
@@ -1048,6 +1113,18 @@ export const CARD_RATE_GUIDE_PAGE = {
     '海外刷卡主要看卡組織清算匯率與銀行手續費。',
     'DCC 以台幣結帳通常較差，常比當地貨幣結帳貴。',
     'RateWise 適合估算台銀牌告情境，也能作為刷卡成本的基準比較。',
+  ],
+  answerCapsule: [
+    {
+      question: '海外刷卡時應該選台幣還是當地貨幣？',
+      answer:
+        '多數情況下應選當地貨幣，避免 DCC 額外匯差。讓卡組織與發卡銀行清算，通常比商家端直接換成台幣更便宜。',
+    },
+    {
+      question: 'RateWise 在刷卡情境中的正確用途是什麼？',
+      answer:
+        'RateWise 顯示的是臺灣銀行牌告匯率，不能直接等同最終刷卡扣款，但可作為估算海外消費成本與比較 DCC 是否偏貴的基準參考。',
+    },
   ],
   sections: [
     {
@@ -1148,8 +1225,7 @@ export const APP_ONLY_PAGE_SEO = {
   },
   seoTech: {
     title: 'SEO 技術揭露 - RateWise 搜尋引擎最佳化架構完整說明',
-    description:
-      '完整揭露 RateWise 所採用的 SEO 技術：42 個索引路徑、8 種 JSON-LD Schema、50 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。',
+    description: `完整揭露 RateWise 所採用的 SEO 技術：${SEO_PATHS.length} 個索引路徑、8 種 JSON-LD Schema、${PRERENDER_PATHS.length} 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。`,
     pathname: '/seo-tech',
     robots: 'noindex, follow',
   },
@@ -1316,6 +1392,32 @@ export type CurrencyLandingCode = keyof typeof CURRENCY_PAGE_OVERRIDES;
 
 function formatAmount(amount: number): string {
   return amount.toLocaleString('zh-TW');
+}
+
+export interface PairAmountSeoCopy {
+  title: string;
+  description: string;
+}
+
+export function buildPairAmountSeo(
+  amount: number,
+  currencyCode: string,
+  currencyName: string,
+  direction: 'to-twd' | 'twd-to-foreign' = 'to-twd',
+): PairAmountSeoCopy {
+  const formatted = formatAmount(amount);
+
+  if (direction === 'twd-to-foreign') {
+    return {
+      title: `台幣換 ${formatted} ${currencyName}（TWD/${currencyCode}）— 台銀實際賣出價 | ${APP_INFO.shortName}`,
+      description: `${formatted} 台幣今日可換多少${currencyName}？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算可兌換的外幣金額，避免被中間價誤導。`,
+    };
+  }
+
+  return {
+    title: `${formatted} ${currencyName}換新台幣（${currencyCode}/TWD）— 台銀實際賣出價 | ${APP_INFO.shortName}`,
+    description: `${formatted} ${currencyName}今日換新台幣要多少？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算所需台幣金額，避免被中間價誤導。`,
+  };
 }
 
 /**

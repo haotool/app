@@ -3234,3 +3234,63 @@ root_cause:
 - apps/split-meow/src/components/CatCompanion.tsx
 - apps/split-meow/src/components/CatPlayLayer.tsx
 - apps/split-meow/src/lib/catPlay.ts
+
+---
+
+id: ratewise-seo-production-followup-ssot-hardening
+date: 2026-03-30
+title: 收斂 RateWise SEO SSOT 漂移，補強 production health check 與 Answer Capsule
+score: +2
+type: improvement
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, aeo, prerender, pwa, ssot, health-check, ci]
+keywords:
+[meta-keywords, answer-capsule, manifest-short-name, amount-page-seo, production-validation]
+aliases: [RateWise SEO follow-up 二次收斂, RateWise production SEO hardening]
+related_entries:
+[
+ratewise-seo-ssot-machine-readable-followup,
+ratewise-rating-snapshot-deterministic-placeholder,
+]
+summary: 續查正式站與 GitHub workflow 後，確認 `SEO Production Validation` 的最新失敗屬於 `/eur-twd/` 暫時性 502 假警報，同時本地仍殘留兩個會持續讓 SEO 漂移的硬編碼點：`usePairAmountSEO.ts` 直接寫死 amount 頁 title/description 模板，以及 `generate-manifest.mjs` 直接寫死 `short_name` 與 screenshot label。這次先以測試鎖定行為，再把 amount SEO 文案收斂到 `seo-metadata.ts`，把 manifest 品牌資訊收斂到 `app-info.ts` 的 manifest SSOT，並補上 authority guide 頁的 Answer Capsule 與 production health check 5xx retry。
+root_cause:
+
+- 前一輪修正雖已消除實際輸出的 canonical/schema 問題，但仍有部分 SEO/PWA 文案模板散落在 hook 與生成器內，長期會與品牌 SSOT 或頁面 metadata 漂移。
+- `SEO Production Validation` 對 live 路由使用單次 request，遇到 CDN / edge 的短暫 `502/503/504` 會誤判整體 SEO 健康失敗。
+- 幾個高意圖教學頁已有完整內容，但缺少靠近頁首、可直接被 agent 引用的 Answer Capsule 區塊。
+  impact:
+
+- 若繼續保留 hook / script 內硬編碼，後續品牌或 SEO 文案調整時會再次出現「頁面 metadata 已改、manifest 或 amount 頁文案沒改」的 drift。
+- production SEO workflow 會被偶發 edge 5xx 阻塞，降低 CI 對真正 SEO 問題的辨識力。
+- authority guide 頁缺少清楚的答案摘要，會降低 AEO / GEO 的擷取品質。
+  actions:
+
+- 先在 `apps/ratewise/src/config/__tests__/build-scripts.test.ts` 新增紅燈，要求 manifest 必須從 `APP_MANIFEST` 生成，且 amount-page SEO 模板必須來自 `seo-metadata.ts`。
+- 在 `apps/ratewise/src/config/app-info.ts` 新增 `APP_MANIFEST` SSOT，並更新 `apps/ratewise/scripts/generate-manifest.mjs` 使用 `APP_MANIFEST.shortName` 與 `APP_MANIFEST.screenshots`。
+- 在 `apps/ratewise/src/config/seo-metadata.ts` 新增 `buildPairAmountSeo()`，並更新 `apps/ratewise/src/hooks/usePairAmountSEO.ts` 改由該 builder 產生 title / description。
+- 在 `apps/ratewise/src/components/SEOHelmet.tsx` 停止輸出 deprecated `meta keywords`，並在 prerender / component 測試中補回歸。
+- 在 `apps/ratewise/src/components/AuthorityGuidePage.tsx` 與 guide metadata 補上 Answer Capsule，強化 `/sell-rate-vs-mid-rate/`、`/cash-vs-spot-rate/`、`/card-rate-guide/` 的可擷取摘要。
+- 在 `apps/ratewise/scripts/health-check.mjs` 加入 `502/503/504` retry 機制，降低 live SEO workflow 的假失敗。
+- 修正 `scripts/verify-precache-assets.mjs`，讓 local audit 走 filesystem 驗證，避免把本機完整審計綁死在 preview server。
+  prevention:
+
+- SEO / PWA 的品牌與文案模板只能從集中 SSOT 輸出；hook、生成器與頁面元件不得再各自維護一份字串模板。
+- 任何 production health check 若對外部網路或 CDN 有依賴，必須對短暫 5xx 做有限重試，避免把邊緣暫態誤當成真實 regressions。
+- 高意圖 SEO 頁面若主打 AEO / GEO，應在頁首附近提供可直接引用的 Answer Capsule，而不是只依賴長文段落。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts src/hooks/__tests__/usePairAmountSEO.test.tsx`
+- `pnpm --filter @app/ratewise test -- --run src/components/__tests__/AuthorityGuidePage.test.tsx src/pages/About.test.tsx src/pages/Guide.test.tsx src/pages/OpenData.test.tsx src/config/__tests__/verify-precache-assets.test.ts src/config/__tests__/build-scripts.test.ts src/components/__tests__/SEOHelmet.test.tsx src/hooks/__tests__/usePairAmountSEO.test.tsx src/prerender.test.ts src/seo-best-practices.test.ts`
+- `pnpm --filter @app/ratewise build`
+- `node scripts/seo-full-audit.mjs`
+- `gh run view 23748133016 --log`
+- `curl -sL 'https://app.haotool.org/ratewise/?__release_probe__=seo-followup'`
+  references:
+
+- apps/ratewise/src/config/app-info.ts
+- apps/ratewise/scripts/generate-manifest.mjs
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/hooks/usePairAmountSEO.ts
+- apps/ratewise/scripts/health-check.mjs
+- scripts/verify-precache-assets.mjs

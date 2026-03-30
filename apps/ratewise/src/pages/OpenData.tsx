@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
+import { AnswerCapsule } from '../components/AnswerCapsule';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
 import { RATES_API } from '../config/api-endpoints';
@@ -373,7 +374,6 @@ const OpenData = () => {
       <SEOHelmet
         title={OPEN_DATA_PAGE_SEO.title}
         description={OPEN_DATA_PAGE_SEO.description}
-        canonical={`${SITE_CONFIG.url}open-data/`}
         pathname={OPEN_DATA_PAGE_SEO.pathname}
         breadcrumb={OPEN_DATA_PAGE_SEO.breadcrumb}
         howTo={HOW_TO}
@@ -413,6 +413,8 @@ const OpenData = () => {
               ))}
             </div>
           </div>
+
+          <AnswerCapsule items={OPEN_DATA_PAGE_SEO.answerCapsule ?? []} />
 
           {/* ── 資料管線 ── */}
           <section className="mb-12">

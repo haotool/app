@@ -39,12 +39,47 @@ async function readManifestGenerator() {
   return readFile(manifestGeneratorPath, 'utf-8');
 }
 
+async function readPairAmountSeoHook() {
+  const pairAmountSeoHookPath = path.resolve(__dirname, '../../../src/hooks/usePairAmountSEO.ts');
+  return readFile(pairAmountSeoHookPath, 'utf-8');
+}
+
+async function readHealthCheckScript() {
+  const healthCheckPath = path.resolve(__dirname, '../../../scripts/health-check.mjs');
+  return readFile(healthCheckPath, 'utf-8');
+}
+
 async function readRatingSnapshotGenerator() {
   const ratingSnapshotGeneratorPath = path.resolve(
     __dirname,
     '../../../scripts/fetch-rating-snapshot.mjs',
   );
   return readFile(ratingSnapshotGeneratorPath, 'utf-8');
+}
+
+async function readSeoFullAuditScript() {
+  const seoAuditPath = path.resolve(__dirname, '../../../../../scripts/seo-full-audit.mjs');
+  return readFile(seoAuditPath, 'utf-8');
+}
+
+async function readGuidePageSource() {
+  const guidePagePath = path.resolve(__dirname, '../../../src/pages/Guide.tsx');
+  return readFile(guidePagePath, 'utf-8');
+}
+
+async function readOpenDataPageSource() {
+  const openDataPagePath = path.resolve(__dirname, '../../../src/pages/OpenData.tsx');
+  return readFile(openDataPagePath, 'utf-8');
+}
+
+async function readPostbuildMirrorScript() {
+  const postbuildMirrorPath = path.resolve(__dirname, '../../../scripts/postbuild-mirror-dist.js');
+  return readFile(postbuildMirrorPath, 'utf-8');
+}
+
+async function readSeoMetadataSource() {
+  const seoMetadataPath = path.resolve(__dirname, '../seo-metadata.ts');
+  return readFile(seoMetadataPath, 'utf-8');
 }
 
 describe('ratewise build scripts', () => {
@@ -69,6 +104,10 @@ describe('ratewise build scripts', () => {
     expect(viteConfig).not.toContain("name: 'RateWise - 即時匯率轉換器'");
     expect(manifestGenerator).toContain("from '../src/config/app-info.ts'");
     expect(manifestGenerator).toContain('name: APP_INFO.name');
+    expect(manifestGenerator).toContain('short_name: APP_MANIFEST.shortName');
+    expect(manifestGenerator).toContain('APP_MANIFEST.screenshots.map');
+    expect(manifestGenerator).not.toContain("short_name: 'RateWise'");
+    expect(manifestGenerator).not.toContain("'RateWise 首頁 - 即時匯率換算與趨勢圖'");
     expect(manifestGenerator).not.toContain("name: 'RateWise 匯率好工具'");
   });
 
@@ -144,5 +183,72 @@ describe('ratewise build scripts', () => {
       "const PLACEHOLDER_SNAPSHOT_AT = '1970-01-01T00:00:00.000Z';",
     );
     expect(ratingSnapshotGenerator).toContain('snapshotAt: PLACEHOLDER_SNAPSHOT_AT,');
+  });
+
+  it('should keep page-level canonical generation on SEOHelmet pathname SSOT instead of hardcoded page URLs', async () => {
+    const guidePageSource = await readGuidePageSource();
+    const openDataPageSource = await readOpenDataPageSource();
+
+    expect(guidePageSource).not.toContain('canonical="https://app.haotool.org/ratewise/guide/"');
+    expect(openDataPageSource).not.toContain('canonical={`${SITE_CONFIG.url}open-data/`}');
+  });
+
+  it('should not fabricate FAQ/About fallback HTML from the homepage template', async () => {
+    const postbuildMirrorScript = await readPostbuildMirrorScript();
+
+    expect(postbuildMirrorScript).not.toContain("ensureStaticPage('/faq'");
+    expect(postbuildMirrorScript).not.toContain("ensureStaticPage('/about'");
+    expect(postbuildMirrorScript).not.toContain('generated fallback static page');
+  });
+
+  it('should source health-check SEO titles from metadata SSOT instead of hardcoded strings', async () => {
+    const healthCheckScript = await readHealthCheckScript();
+
+    expect(healthCheckScript).toContain("from '../src/config/seo-metadata.ts'");
+    expect(healthCheckScript).toContain('DEFAULT_TITLE');
+    expect(healthCheckScript).toContain('GUIDE_PAGE_SEO.title');
+    expect(healthCheckScript).not.toContain(
+      "validators.hasTitle('RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價')",
+    );
+    expect(healthCheckScript).not.toContain(
+      "validators.hasTitle('使用指南 — 如何使用 RateWise 匯率好工具換算匯率 | RateWise 匯率好工具')",
+    );
+  });
+
+  it('should retry transient 502/503/504 responses in production health checks before failing', async () => {
+    const healthCheckScript = await readHealthCheckScript();
+
+    expect(healthCheckScript).toContain('RETRYABLE_STATUS_CODES');
+    expect(healthCheckScript).toContain('requestWithRetry');
+    expect(healthCheckScript).toContain('502');
+    expect(healthCheckScript).toContain('503');
+    expect(healthCheckScript).toContain('504');
+  });
+
+  it('should run all route-level SEO verifiers in the CI full audit instead of only three checks', async () => {
+    const seoFullAuditScript = await readSeoFullAuditScript();
+
+    expect(seoFullAuditScript).toContain('verify-history-data.mjs');
+    expect(seoFullAuditScript).toContain('verify-precache-assets.mjs');
+    expect(seoFullAuditScript).toContain('verify-sitemap-ssg.mjs');
+    expect(seoFullAuditScript).not.toContain('總計: 3 項自動驗證');
+  });
+
+  it('should keep seo-tech metadata counts synced with SEO route and prerender SSOT instead of stale literals', async () => {
+    const seoMetadataSource = await readSeoMetadataSource();
+
+    expect(seoMetadataSource).toContain('SEO_PATHS.length');
+    expect(seoMetadataSource).toContain('PRERENDER_PATHS.length');
+    expect(seoMetadataSource).not.toContain('42 個索引路徑');
+    expect(seoMetadataSource).not.toContain('50 頁 SSG 預渲染');
+  });
+
+  it('should source amount-page title and description templates from seo-metadata SSOT instead of hardcoded hook literals', async () => {
+    const pairAmountSeoHook = await readPairAmountSeoHook();
+
+    expect(pairAmountSeoHook).toContain("from '../config/seo-metadata'");
+    expect(pairAmountSeoHook).toContain('buildPairAmountSeo');
+    expect(pairAmountSeoHook).not.toContain('台幣換 ${formatted}');
+    expect(pairAmountSeoHook).not.toContain('今日可換多少');
   });
 });

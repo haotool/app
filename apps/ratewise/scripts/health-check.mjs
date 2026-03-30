@@ -16,8 +16,12 @@
 
 import https from 'node:https';
 import http from 'node:http';
+import { DEFAULT_TITLE, GUIDE_PAGE_SEO } from '../src/config/seo-metadata.ts';
 
 const TIMEOUT = 10000; // 10 秒超時
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRYABLE_STATUS_CODES = new Set([502, 503, 504]);
+const RETRY_DELAY_MS = 400;
 
 // 顏色輸出
 const colors = {
@@ -74,6 +78,33 @@ function request(url, options = {}) {
   });
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// 生產健康檢查允許對短暫 5xx / 網路抖動做有限重試，降低邊緣假警報。
+async function requestWithRetry(url, options = {}, maxAttempts = MAX_RETRY_ATTEMPTS) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const response = await request(url, options);
+      if (!RETRYABLE_STATUS_CODES.has(response.statusCode) || attempt === maxAttempts) {
+        return response;
+      }
+      await sleep(RETRY_DELAY_MS * attempt);
+    } catch (error) {
+      lastError = error;
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+      await sleep(RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  throw lastError ?? new Error('Request failed without response');
+}
+
 /**
  * 嚴格探測：不接受 3xx redirect（偵測 nginx alias trailing-slash 問題）
  * 成功條件：HTTP 2xx（含 204）
@@ -81,7 +112,7 @@ function request(url, options = {}) {
 async function strictProbe(url, method = 'GET') {
   const startTime = Date.now();
   try {
-    const res = await request(url, { method });
+    const res = await requestWithRetry(url, { method });
     const responseTime = Date.now() - startTime;
     const ok = res.statusCode >= 200 && res.statusCode < 300;
 
@@ -107,7 +138,7 @@ async function strictProbe(url, method = 'GET') {
  */
 async function workerDeployCheck(url, expectedVersion) {
   try {
-    const res = await request(url);
+    const res = await requestWithRetry(url);
     const version = res.headers['x-security-policy-version'];
 
     if (!version) {
@@ -140,7 +171,7 @@ async function workerDeployCheck(url, expectedVersion) {
 async function shallowCheck(url, expectedStatus = 200) {
   const startTime = Date.now();
   try {
-    const res = await request(url);
+    const res = await requestWithRetry(url);
     const responseTime = Date.now() - startTime;
 
     // 301 重定向到尾斜線版本是正常的（URL 標準化）
@@ -172,7 +203,7 @@ async function deepCheck(url, validators = [], maxRedirects = 5) {
 
   try {
     while (redirectCount < maxRedirects) {
-      const res = await request(currentUrl);
+      const res = await requestWithRetry(currentUrl);
 
       // 跟隨重定向
       if (res.statusCode === 301 || res.statusCode === 302) {
@@ -293,13 +324,13 @@ async function runHealthChecks(baseUrl) {
   console.log(`\n${colors.gray}[深層檢查] HTML 內容驗證${colors.reset}`);
 
   const homeResult = await deepCheck(baseUrl, [
-    validators.hasTitle('RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價'),
+    validators.hasTitle(DEFAULT_TITLE),
     validators.hasMetaTag('google-site-verification'),
   ]);
   results.push({ url: '/ (home)', ...homeResult });
 
   const guideResult = await deepCheck(`${baseUrl}/guide`, [
-    validators.hasTitle('使用指南 — 如何使用 RateWise 匯率好工具換算匯率 | RateWise 匯率好工具'),
+    validators.hasTitle(`${GUIDE_PAGE_SEO.title} | RateWise 匯率好工具`),
     validators.containsText('HowTo'),
   ]);
   results.push({ url: '/guide (HowTo)', ...guideResult });

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
+import { AnswerCapsule } from '../components/AnswerCapsule';
 import { GUIDE_PAGE_SEO } from '../config/seo-metadata';
 
 const HOW_TO = GUIDE_PAGE_SEO.howTo;
@@ -45,7 +46,6 @@ const Guide = () => {
       <SEOHelmet
         title={GUIDE_PAGE_SEO.title}
         description={GUIDE_PAGE_SEO.description}
-        canonical="https://app.haotool.org/ratewise/guide/"
         pathname={GUIDE_PAGE_SEO.pathname}
         breadcrumb={GUIDE_PAGE_SEO.breadcrumb}
         howTo={HOW_TO}
@@ -98,6 +98,8 @@ const Guide = () => {
             </aside>
 
             <div className="space-y-6">
+              <AnswerCapsule items={GUIDE_PAGE_SEO.answerCapsule ?? []} />
+
               {HOW_TO_STEPS.map((step) => (
                 <div
                   key={step.position}

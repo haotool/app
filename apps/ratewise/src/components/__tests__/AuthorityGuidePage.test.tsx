@@ -39,6 +39,12 @@ const MOCK_PAGE: AuthorityGuideContent = {
   ],
   ctaTitle: 'CTA 標題',
   ctaDescription: 'CTA 說明',
+  answerCapsule: [
+    {
+      question: '這頁最重要的答案是什麼？',
+      answer: '這是一段可供 AI 與使用者快速抽取的答案摘要。',
+    },
+  ],
   faqContent: [
     {
       question: '測試問題一？',
@@ -76,6 +82,12 @@ function renderPage(page: AuthorityGuideContent) {
 
 describe('AuthorityGuidePage', () => {
   describe('FAQ 內容渲染（可見 HTML，供搜尋引擎與用戶閱讀）', () => {
+    it('should render answer capsule near the top when provided', () => {
+      renderPage(MOCK_PAGE);
+      expect(screen.getByRole('heading', { level: 2, name: /快速答案/i })).toBeInTheDocument();
+      expect(screen.getByText('這是一段可供 AI 與使用者快速抽取的答案摘要。')).toBeInTheDocument();
+    });
+
     it('should render FAQ section heading when faqContent is provided', () => {
       renderPage(MOCK_PAGE);
       // FAQ section should be visible in the HTML
@@ -125,6 +137,12 @@ describe('AuthorityGuidePage', () => {
       expect(SELL_RATE_VS_MID_RATE_PAGE.faqContent!.length).toBeGreaterThanOrEqual(1);
     });
 
+    it('SELL_RATE_VS_MID_RATE_PAGE should have answer capsule content', async () => {
+      const { SELL_RATE_VS_MID_RATE_PAGE } = await import('../../config/seo-metadata');
+      expect(SELL_RATE_VS_MID_RATE_PAGE.answerCapsule).toBeDefined();
+      expect(SELL_RATE_VS_MID_RATE_PAGE.answerCapsule!.length).toBeGreaterThanOrEqual(1);
+    });
+
     it('CASH_VS_SPOT_RATE_PAGE should have jsonLd defined', async () => {
       const { CASH_VS_SPOT_RATE_PAGE } = await import('../../config/seo-metadata');
       expect(CASH_VS_SPOT_RATE_PAGE.jsonLd).toBeDefined();
@@ -136,6 +154,12 @@ describe('AuthorityGuidePage', () => {
       expect(CASH_VS_SPOT_RATE_PAGE.faqContent!.length).toBeGreaterThanOrEqual(1);
     });
 
+    it('CASH_VS_SPOT_RATE_PAGE should have answer capsule content', async () => {
+      const { CASH_VS_SPOT_RATE_PAGE } = await import('../../config/seo-metadata');
+      expect(CASH_VS_SPOT_RATE_PAGE.answerCapsule).toBeDefined();
+      expect(CASH_VS_SPOT_RATE_PAGE.answerCapsule!.length).toBeGreaterThanOrEqual(1);
+    });
+
     it('CARD_RATE_GUIDE_PAGE should have jsonLd defined', async () => {
       const { CARD_RATE_GUIDE_PAGE } = await import('../../config/seo-metadata');
       expect(CARD_RATE_GUIDE_PAGE.jsonLd).toBeDefined();
@@ -145,6 +169,12 @@ describe('AuthorityGuidePage', () => {
       const { CARD_RATE_GUIDE_PAGE } = await import('../../config/seo-metadata');
       expect(CARD_RATE_GUIDE_PAGE.faqContent).toBeDefined();
       expect(CARD_RATE_GUIDE_PAGE.faqContent!.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('CARD_RATE_GUIDE_PAGE should have answer capsule content', async () => {
+      const { CARD_RATE_GUIDE_PAGE } = await import('../../config/seo-metadata');
+      expect(CARD_RATE_GUIDE_PAGE.answerCapsule).toBeDefined();
+      expect(CARD_RATE_GUIDE_PAGE.answerCapsule!.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

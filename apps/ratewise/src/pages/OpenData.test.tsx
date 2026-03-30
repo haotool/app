@@ -57,6 +57,13 @@ describe('OpenData Page', () => {
       renderOpenData();
       expect(screen.getByRole('button', { name: /返回/i })).toBeInTheDocument();
     });
+
+    it('renders an answer capsule that explains the primary endpoint and crawlable landing-page pattern', () => {
+      renderOpenData();
+      expect(screen.getByRole('heading', { level: 2, name: /快速答案/i })).toBeInTheDocument();
+      expect(screen.getByText(/最新台銀牌告匯率建議直接讀取 latest\.json/i)).toBeInTheDocument();
+      expect(screen.getByText(/可索引金額落地頁採用 \/usd-twd\/1000\//i)).toBeInTheDocument();
+    });
   });
 
   describe('Accessibility (WCAG 2.1 AA)', () => {
