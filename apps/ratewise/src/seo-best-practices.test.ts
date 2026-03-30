@@ -630,9 +630,13 @@ describeIfApiGenerated('📡 Static API Endpoint (api/latest.json) (requires pre
     expect(content.supportedCurrencies.length).toBeGreaterThanOrEqual(18);
   });
 
-  it('should have deep link template', () => {
+  it('should expose both preferred landing-page and interactive deep-link templates', () => {
     const content = JSON.parse(readFile(apiPath));
-    expect(content.deepLink).toContain('?amount={AMOUNT}&from={FROM}&to={TO}');
+    expect(content.preferredLandingPageTemplate).toBe(
+      'https://app.haotool.org/ratewise/{pair}/{amount}/',
+    );
+    expect(content.interactiveDeepLinkTemplate).toContain('?amount={AMOUNT}&from={FROM}&to={TO}');
+    expect(content.deepLink).toBeUndefined();
   });
 
   it('should avoid concrete parameterized examples in OpenAPI deep-link metadata', () => {
@@ -653,6 +657,18 @@ describeIfApiGenerated('📡 Static API Endpoint (api/latest.json) (requires pre
     const content = JSON.parse(readFile(openapiPath)) as { paths?: Record<string, unknown> };
     const paths = Object.keys(content.paths ?? {});
     expect(paths.some((p) => p.includes('pairs'))).toBe(true);
+  });
+
+  it('should describe path-first landing pages and interactive deep links separately in openapi.json', () => {
+    const content = JSON.parse(readFile(openapiPath)) as {
+      'x-deep-link'?: Record<string, unknown>;
+    };
+    expect(content['x-deep-link']?.['preferredLandingPageTemplate']).toBe(
+      'https://app.haotool.org/ratewise/{pair}/{amount}/',
+    );
+    expect(content['x-deep-link']?.['interactiveDeepLinkTemplate']).toBe(
+      'https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}',
+    );
   });
 });
 

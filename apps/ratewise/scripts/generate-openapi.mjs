@@ -459,9 +459,13 @@ const openApiSpec = {
     example: `${SITE_CONFIG.url}api/pairs/usd-twd.json`,
   },
   'x-deep-link': {
-    description: '應用程式深層連結（帶入換算參數）',
-    format: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,
-    exampleTemplate: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,
+    description: '公開可索引的幣對金額頁與首頁互動 deep-link 模板。',
+    preferredLandingPageTemplate: `${SITE_CONFIG.url}{pair}/{amount}/`,
+    preferredLandingPageDescription:
+      '優先提供公開可索引的 path-based landing page，適合搜尋引擎與 AI agent 引用。',
+    interactiveDeepLinkTemplate: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,
+    interactiveDeepLinkDescription:
+      '僅在需要同時指定三個自由變數時使用，作為首頁換算器的互動狀態 URL。',
   },
 };
 

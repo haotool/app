@@ -134,7 +134,7 @@ describe('SEO Paths Configuration', () => {
   describe('SITE_CONFIG', () => {
     it('應該維持正確網站 URL 與基本資訊', () => {
       expect(SITE_CONFIG.url).toBe('https://app.haotool.org/ratewise/');
-      expect(SITE_CONFIG.name.length).toBeGreaterThan(0);
+      expect(SITE_CONFIG.name).toBe('RateWise 匯率好工具');
       expect(SITE_CONFIG.title.length).toBeGreaterThan(0);
       expect(SITE_CONFIG.description.length).toBeGreaterThan(0);
     });

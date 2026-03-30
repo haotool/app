@@ -3,6 +3,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const llmsPath = resolve(__dirname, '../public/llms.txt');
+const llmsFullPath = resolve(__dirname, '../public/llms-full.txt');
 const pkgPath = resolve(__dirname, '../package.json');
 
 const llmsExists = existsSync(llmsPath);
@@ -73,5 +74,15 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
     const matches = content.match(currencyUrlPattern);
     // 至少 17 個幣對頁 URL（Popular Rates）；llms.txt 範例段落可能含額外 usd-twd/ 實例。
     expect(matches?.length ?? 0).toBeGreaterThanOrEqual(17);
+  });
+
+  it('makes llms-full prefer path-based amount landing pages over query-only deep links', () => {
+    const content = readFileSync(llmsFullPath, 'utf-8');
+
+    expect(content).toContain('方案 A（推薦）：幣對金額頁（SSG 路徑型，有獨立 SEO 頁面）');
+    expect(content).toContain('https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/');
+    expect(content).not.toContain(
+      'Q: 如何讓用戶直接在 RateWise 查詢特定匯率？ A: 使用 Deep Link 模板：https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD',
+    );
   });
 });

@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.16.1
+
+### Patch Changes
+
+- 修正 RateWise SEO 與 PWA 的品牌 SSOT 漂移，並把 machine-readable 對外契約統一為 path-first amount landing page 與 interactive deep-link fallback 雙模板。
+
 ## 2.16.0
 
 ### Minor Changes

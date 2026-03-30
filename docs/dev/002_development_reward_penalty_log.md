@@ -3094,3 +3094,56 @@ root_cause:
 - apps/ratewise/src/prerender.test.ts
 - apps/ratewise/src/hooks/**tests**/usePairAmountSEO.test.tsx
 - apps/ratewise/src/components/**tests**/SEOHelmet.test.tsx
+
+---
+
+id: ratewise-seo-ssot-machine-readable-followup
+date: 2026-03-30
+title: 收斂 RateWise 品牌 SSOT、PWA manifest 與 machine-readable deep link 契約
+score: +3
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, aeo, geo, pwa, ssot, manifest, api, openapi, llms, testing]
+keywords: [brand-ssot, manifest, app-info, preferredLandingPageTemplate, interactiveDeepLinkTemplate, llms-full, openapi, api-latest]
+aliases: [RateWise 品牌 SSOT 收斂, RateWise path-first machine-readable 契約修正]
+related_entries: [ratewise-prerender-canonical-amount-schema-sync, incident-seo-public-path-ssot]
+summary: 針對前一輪 SEO/AEO 修正後的殘留漂移，再補齊三個會影響長期穩定性的 SSOT 缺口：PWA manifest 名稱仍使用舊品牌、`llms-full.txt` 的 Answer Capsule 對外仍殘留 query-first 心智模型，以及 `api/latest.json` / `openapi.json` 沒有把 path-style amount landing page 宣告為首選模板。這次以 TDD 補上紅燈測試後，統一由 `APP_INFO.name` 驅動 manifest 品牌，並把 machine-readable 契約改為 `preferredLandingPageTemplate` + `interactiveDeepLinkTemplate` 的雙模板模式。
+root_cause:
+
+- Vite PWA plugin config 與 Playwright PWA 測試仍沿用舊品牌字串，沒有跟 `APP_INFO.name` 與 public manifest generator 同步。
+- `generate-manifest.mjs` 雖然輸出正確品牌，但仍硬編品牌名稱，未真正落在品牌 SSOT。
+- `generate-api-json.mjs` 與 `generate-openapi.mjs` 仍只暴露 query deep-link，導致 AI agent 與機器可讀文件對首選 URL 的理解落後於實際 SEO 策略。
+- `llms-full.txt` 前段已改為 path-first，但 Answer Capsule 仍殘留 query-first 問答，形成文件內部自相矛盾。
+  impact:
+
+- PWA install prompt、manifest 驗證與自動化測試若持續使用舊品牌，會讓正式產物與品牌 SSOT 再次漂移。
+- AI agent 若從 `api/latest.json` 或 `openapi.json` 讀不到 path-first 模板，仍可能優先回傳不可索引的首頁 query URL，而不是可引用的 amount landing page。
+- `llms-full.txt` 前後規則不一致，會降低 agent 摘要與引用的一致性與可信度。
+  actions:
+
+- 更新 `apps/ratewise/src/config/__tests__/build-scripts.test.ts`、`apps/ratewise/src/seo-best-practices.test.ts`、`apps/ratewise/tests/e2e/pwa.spec.ts`，先建立 manifest SSOT 與雙模板 machine-readable 契約的失敗測試。
+- 在 `apps/ratewise/vite.config.ts` 與 `apps/ratewise/scripts/generate-manifest.mjs` 導入 `APP_INFO.name`，統一 PWA manifest 品牌來源。
+- 修正 `apps/ratewise/scripts/generate-llms-txt.mjs`，讓 `llms-full.txt` 的 Answer Capsule 改為 path-first、query-fallback。
+- 修正 `apps/ratewise/scripts/generate-api-json.mjs` 與 `apps/ratewise/scripts/generate-openapi.mjs`，新增 `preferredLandingPageTemplate` 與 `interactiveDeepLinkTemplate`，移除舊的單一 `deepLink` 心智模型。
+- 重新生成 `public/manifest.webmanifest`、`public/llms*.txt`、`public/api/latest.json`、`public/openapi.json` 與 `dist/manifest.webmanifest`，並用 Playwright 驗證實際 preview 輸出的 manifest 名稱。
+  prevention:
+
+- 品牌名稱必須只由 `APP_INFO.name` 提供，任何 manifest / PWA / SEO 生成器不得再硬編品牌字串。
+- 若 SEO 策略明確主推 path-style landing page，所有 machine-readable 對外契約都必須同步暴露首選模板與互動 fallback，禁止只更新單一文件出口。
+- 需要對 preview / dist 實際輸出做至少一個行為驗證，避免只改原始碼卻忘記重新生成產物。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts src/seo-best-practices.test.ts`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-paths.test.ts src/llms-txt.spec.ts`
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise exec playwright test tests/e2e/pwa.spec.ts --project=pwa-chromium --grep "should have valid manifest"`
+  references:
+
+- apps/ratewise/src/config/app-info.ts
+- apps/ratewise/vite.config.ts
+- apps/ratewise/scripts/generate-manifest.mjs
+- apps/ratewise/scripts/generate-llms-txt.mjs
+- apps/ratewise/scripts/generate-api-json.mjs
+- apps/ratewise/scripts/generate-openapi.mjs
+- apps/ratewise/tests/e2e/pwa.spec.ts
