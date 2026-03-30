@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SITE_CONFIG } from '../seo-paths.config.mjs';
+import { DEV_ONLY_PATHS, SITE_CONFIG } from '../seo-paths.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -35,6 +35,12 @@ function sectionForBots(bots) {
   return bots.map((bot) => `User-agent: ${bot}\nAllow: /`).join('\n\n');
 }
 
+function buildDisallowRules(paths) {
+  return paths
+    .map((path) => `Disallow: ${new URL(path.replace(/^\//, ''), SITE_CONFIG.url).pathname}`)
+    .join('\n');
+}
+
 const robotsTxt = `# RateWise — Robots Exclusion Protocol
 # ${SITE_CONFIG.url}
 # 最後更新：${BUILD_DATE}
@@ -43,10 +49,7 @@ User-agent: *
 Allow: /
 Disallow: /ratewise/sw.js
 Disallow: /ratewise/workbox-*.js
-Disallow: /ratewise/theme-showcase/
-Disallow: /ratewise/color-scheme/
-Disallow: /ratewise/update-prompt-test/
-Disallow: /ratewise/ui-showcase/
+${buildDisallowRules(DEV_ONLY_PATHS)}
 # 封鎖帶 query string 的首頁 deep-link URL（如 /ratewise/?amount=500&from=USD&to=TWD）
 # 首頁 deep-link 僅作為 UX 分享入口，三個自由變數組合無限，會消耗 crawl budget。
 # 注意：此規則不影響幣對金額頁（如 /ratewise/usd-twd/?amount=500）——

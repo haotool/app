@@ -1,5 +1,17 @@
 # @app/ratewise
 
+## 2.16.2
+
+### Patch Changes
+
+- 修正 rating snapshot placeholder 的非 deterministic 行為，避免在缺少 RATING_API_URL 時每次 build 都污染工作樹，並維持 RateWise 發版產物可重現。
+
+## 2.16.1
+
+### Patch Changes
+
+- 修正 RateWise SEO 與 PWA 的品牌 SSOT 漂移，並把 machine-readable 對外契約統一為 path-first amount landing page 與 interactive deep-link fallback 雙模板。
+
 ## 2.16.0
 
 ### Minor Changes

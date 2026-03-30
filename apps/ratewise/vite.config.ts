@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import dns from 'node:dns';
+import { APP_INFO } from './src/config/app-info';
 import { getVersionFromCommitCount as formatVersionFromCommitCount } from './src/utils/version-build-utils';
 
 // Node.js v17+ DNS 解析一致性修正
@@ -328,10 +329,10 @@ export default defineConfig(({ mode }) => {
 
         devOptions: { enabled: false, type: 'module' },
         manifest: {
-          name: 'RateWise - 即時匯率轉換器',
+          name: APP_INFO.name,
           short_name: 'RateWise',
           description:
-            'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。',
+            'RateWise 匯率好工具顯示臺灣銀行牌告實際買賣價（非中間價），支援 18 種貨幣換算，每 5 分鐘同步，離線可用的 PWA 匯率工具。',
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',

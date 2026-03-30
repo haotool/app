@@ -497,7 +497,7 @@ GET ${BASE_URL}openapi.json
 - Q: 為什麼韓元（KRW）即期匯率是 null？ A: 台灣銀行對韓元不提供即期（電匯）服務，僅提供現金兌換，因此 spot.buy 與 spot.sell 為 null，僅有 cash.buy 與 cash.sell。
 - Q: 匯率資料多久更新一次？ A: 每 5 分鐘由 GitHub Actions 自動從台銀官方網站抓取並同步至 CDN。
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。出國刷卡的匯率由 Visa/Mastercard 等發卡組織決定國際清算匯率，再加上發卡銀行收取的海外手續費（通常 1.5%），與台銀牌告是完全不同的體系。一般來說，台銀現金賣出 ≈ 出國刷卡的實際成本。
-- Q: 如何讓用戶直接在 RateWise 查詢特定匯率？ A: 使用 Deep Link 模板：https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD，由前端首頁帶入換算狀態。
+- Q: 如何讓用戶直接在 RateWise 查詢特定匯率？ A: 優先使用幣對金額頁，例如 https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/。這是公開可索引的 path-based landing page，適合搜尋引擎與 AI agent。首頁 deep-link 僅作為互動入口；只有在需要同時指定三個自由變數時，才退回 https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD。
 
 ---
 

@@ -40,13 +40,13 @@
     ],
     "x-webapp": "https://app.haotool.org/ratewise/",
     "x-documentation": "https://app.haotool.org/ratewise/open-data/",
-    "x-app-version": "2.16.0"
+    "x-app-version": "2.16.2"
   },
   "x-changelog": {
     "1.0.0": {
       "date": "2026-03-21",
       "summary": "初始 API 版本。包含最新匯率、歷史匯率、幣對資訊三個端點。",
-      "app-version": "2.16.0"
+      "app-version": "2.16.2"
     }
   },
   "servers": [
@@ -475,8 +475,10 @@
     "example": "https://app.haotool.org/ratewise/api/pairs/usd-twd.json"
   },
   "x-deep-link": {
-    "description": "應用程式深層連結（帶入換算參數）",
-    "format": "https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}",
-    "exampleTemplate": "https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}"
+    "description": "公開可索引的幣對金額頁與首頁互動 deep-link 模板。",
+    "preferredLandingPageTemplate": "https://app.haotool.org/ratewise/{pair}/{amount}/",
+    "preferredLandingPageDescription": "優先提供公開可索引的 path-based landing page，適合搜尋引擎與 AI agent 引用。",
+    "interactiveDeepLinkTemplate": "https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}",
+    "interactiveDeepLinkDescription": "僅在需要同時指定三個自由變數時使用，作為首頁換算器的互動狀態 URL。"
   }
 }

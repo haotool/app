@@ -42,7 +42,7 @@ test.describe('PWA Features', () => {
       display: string;
       icons: { sizes: string; purpose?: string }[];
     };
-    expect(manifest.name).toBe('RateWise - 即時匯率轉換器');
+    expect(manifest.name).toBe('RateWise 匯率好工具');
     expect(manifest.short_name).toBe('RateWise');
     expect(manifest.display).toBe('standalone');
     expect(manifest.icons.length).toBeGreaterThan(0);

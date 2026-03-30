@@ -29,6 +29,24 @@ async function readMainEntry() {
   return readFile(mainEntryPath, 'utf-8');
 }
 
+async function readRobotsGenerator() {
+  const robotsGeneratorPath = path.resolve(__dirname, '../../../scripts/generate-robots-txt.mjs');
+  return readFile(robotsGeneratorPath, 'utf-8');
+}
+
+async function readManifestGenerator() {
+  const manifestGeneratorPath = path.resolve(__dirname, '../../../scripts/generate-manifest.mjs');
+  return readFile(manifestGeneratorPath, 'utf-8');
+}
+
+async function readRatingSnapshotGenerator() {
+  const ratingSnapshotGeneratorPath = path.resolve(
+    __dirname,
+    '../../../scripts/fetch-rating-snapshot.mjs',
+  );
+  return readFile(ratingSnapshotGeneratorPath, 'utf-8');
+}
+
 describe('ratewise build scripts', () => {
   it('should not patch the generated service worker with a postbuild polyfill', async () => {
     const packageJson = await readPackageJson();
@@ -40,6 +58,18 @@ describe('ratewise build scripts', () => {
     expect(viteConfig).toContain(
       "'react-helmet-async': resolve(__dirname, './src/utils/react-helmet-async-shim.tsx')",
     );
+  });
+
+  it('should source PWA manifest branding from app-info SSOT instead of hardcoded fallback names', async () => {
+    const viteConfig = await readViteConfig();
+    const manifestGenerator = await readManifestGenerator();
+
+    expect(viteConfig).toContain("from './src/config/app-info'");
+    expect(viteConfig).toContain('name: APP_INFO.name');
+    expect(viteConfig).not.toContain("name: 'RateWise - 即時匯率轉換器'");
+    expect(manifestGenerator).toContain("from '../src/config/app-info.ts'");
+    expect(manifestGenerator).toContain('name: APP_INFO.name');
+    expect(manifestGenerator).not.toContain("name: 'RateWise 匯率好工具'");
   });
 
   it('should not force React ecosystem packages into manual chunks', async () => {
@@ -95,5 +125,24 @@ describe('ratewise build scripts', () => {
   it('should ship a real network probe asset for online checks', () => {
     const probePath = path.resolve(__dirname, '../../../public/__network_probe__');
     expect(existsSync(probePath)).toBe(true);
+  });
+
+  it('should source DEV-only robots disallow rules from SEO SSOT instead of hardcoding page names', async () => {
+    const robotsGenerator = await readRobotsGenerator();
+
+    expect(robotsGenerator).toContain('DEV_ONLY_PATHS');
+    expect(robotsGenerator).not.toContain("'/theme-showcase/'");
+    expect(robotsGenerator).not.toContain("'/color-scheme/'");
+    expect(robotsGenerator).not.toContain("'/update-prompt-test/'");
+    expect(robotsGenerator).not.toContain("'/ui-showcase/'");
+  });
+
+  it('should keep placeholder rating snapshots deterministic when RATING_API_URL is missing', async () => {
+    const ratingSnapshotGenerator = await readRatingSnapshotGenerator();
+
+    expect(ratingSnapshotGenerator).toContain(
+      "const PLACEHOLDER_SNAPSHOT_AT = '1970-01-01T00:00:00.000Z';",
+    );
+    expect(ratingSnapshotGenerator).toContain('snapshotAt: PLACEHOLDER_SNAPSHOT_AT,');
   });
 });

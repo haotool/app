@@ -51,6 +51,8 @@ const latestJson = {
   documentation: `${SITE_CONFIG.url}open-data/`,
   llms: `${SITE_CONFIG.url}llms.txt`,
   webapp: SITE_CONFIG.url,
+  preferredLandingPageTemplate: `${SITE_CONFIG.url}{pair}/{amount}/`,
+  interactiveDeepLinkTemplate: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,
   pairEndpoints: {
     template: `${SITE_CONFIG.url}api/pairs/{PAIR}.json`,
     description: '各幣對靜態 JSON 端點，提供幣對資訊、即時匯率 CDN 連結、匯率欄位路徑與落地頁 URL',
@@ -58,7 +60,6 @@ const latestJson = {
     availablePairs:
       'usd-twd, jpy-twd, eur-twd, gbp-twd, cny-twd, krw-twd, hkd-twd, aud-twd, cad-twd, sgd-twd, thb-twd, nzd-twd, chf-twd, vnd-twd, php-twd, idr-twd, myr-twd',
   },
-  deepLink: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,
   disclaimer: '匯率僅供參考，實際交易請以金融機構公告為準。',
   license: pkg.license,
   contact: pkg.author?.email || 'haotool.org@gmail.com',

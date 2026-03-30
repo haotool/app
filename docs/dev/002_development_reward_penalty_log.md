@@ -3094,3 +3094,143 @@ root_cause:
 - apps/ratewise/src/prerender.test.ts
 - apps/ratewise/src/hooks/**tests**/usePairAmountSEO.test.tsx
 - apps/ratewise/src/components/**tests**/SEOHelmet.test.tsx
+
+---
+
+id: ratewise-seo-ssot-machine-readable-followup
+date: 2026-03-30
+title: 收斂 RateWise 品牌 SSOT、PWA manifest 與 machine-readable deep link 契約
+score: +3
+type: success
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, aeo, geo, pwa, ssot, manifest, api, openapi, llms, testing]
+keywords: [brand-ssot, manifest, app-info, preferredLandingPageTemplate, interactiveDeepLinkTemplate, llms-full, openapi, api-latest]
+aliases: [RateWise 品牌 SSOT 收斂, RateWise path-first machine-readable 契約修正]
+related_entries: [ratewise-prerender-canonical-amount-schema-sync, incident-seo-public-path-ssot]
+summary: 針對前一輪 SEO/AEO 修正後的殘留漂移，再補齊三個會影響長期穩定性的 SSOT 缺口：PWA manifest 名稱仍使用舊品牌、`llms-full.txt` 的 Answer Capsule 對外仍殘留 query-first 心智模型，以及 `api/latest.json` / `openapi.json` 沒有把 path-style amount landing page 宣告為首選模板。這次以 TDD 補上紅燈測試後，統一由 `APP_INFO.name` 驅動 manifest 品牌，並把 machine-readable 契約改為 `preferredLandingPageTemplate` + `interactiveDeepLinkTemplate` 的雙模板模式。
+root_cause:
+
+- Vite PWA plugin config 與 Playwright PWA 測試仍沿用舊品牌字串，沒有跟 `APP_INFO.name` 與 public manifest generator 同步。
+- `generate-manifest.mjs` 雖然輸出正確品牌，但仍硬編品牌名稱，未真正落在品牌 SSOT。
+- `generate-api-json.mjs` 與 `generate-openapi.mjs` 仍只暴露 query deep-link，導致 AI agent 與機器可讀文件對首選 URL 的理解落後於實際 SEO 策略。
+- `llms-full.txt` 前段已改為 path-first，但 Answer Capsule 仍殘留 query-first 問答，形成文件內部自相矛盾。
+  impact:
+
+- PWA install prompt、manifest 驗證與自動化測試若持續使用舊品牌，會讓正式產物與品牌 SSOT 再次漂移。
+- AI agent 若從 `api/latest.json` 或 `openapi.json` 讀不到 path-first 模板，仍可能優先回傳不可索引的首頁 query URL，而不是可引用的 amount landing page。
+- `llms-full.txt` 前後規則不一致，會降低 agent 摘要與引用的一致性與可信度。
+  actions:
+
+- 更新 `apps/ratewise/src/config/__tests__/build-scripts.test.ts`、`apps/ratewise/src/seo-best-practices.test.ts`、`apps/ratewise/tests/e2e/pwa.spec.ts`，先建立 manifest SSOT 與雙模板 machine-readable 契約的失敗測試。
+- 在 `apps/ratewise/vite.config.ts` 與 `apps/ratewise/scripts/generate-manifest.mjs` 導入 `APP_INFO.name`，統一 PWA manifest 品牌來源。
+- 修正 `apps/ratewise/scripts/generate-llms-txt.mjs`，讓 `llms-full.txt` 的 Answer Capsule 改為 path-first、query-fallback。
+- 修正 `apps/ratewise/scripts/generate-api-json.mjs` 與 `apps/ratewise/scripts/generate-openapi.mjs`，新增 `preferredLandingPageTemplate` 與 `interactiveDeepLinkTemplate`，移除舊的單一 `deepLink` 心智模型。
+- 重新生成 `public/manifest.webmanifest`、`public/llms*.txt`、`public/api/latest.json`、`public/openapi.json` 與 `dist/manifest.webmanifest`，並用 Playwright 驗證實際 preview 輸出的 manifest 名稱。
+  prevention:
+
+- 品牌名稱必須只由 `APP_INFO.name` 提供，任何 manifest / PWA / SEO 生成器不得再硬編品牌字串。
+- 若 SEO 策略明確主推 path-style landing page，所有 machine-readable 對外契約都必須同步暴露首選模板與互動 fallback，禁止只更新單一文件出口。
+- 需要對 preview / dist 實際輸出做至少一個行為驗證，避免只改原始碼卻忘記重新生成產物。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts src/seo-best-practices.test.ts`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-paths.test.ts src/llms-txt.spec.ts`
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise exec playwright test tests/e2e/pwa.spec.ts --project=pwa-chromium --grep "should have valid manifest"`
+  references:
+
+- apps/ratewise/src/config/app-info.ts
+- apps/ratewise/vite.config.ts
+- apps/ratewise/scripts/generate-manifest.mjs
+- apps/ratewise/scripts/generate-llms-txt.mjs
+- apps/ratewise/scripts/generate-api-json.mjs
+- apps/ratewise/scripts/generate-openapi.mjs
+- apps/ratewise/tests/e2e/pwa.spec.ts
+
+---
+
+id: ratewise-rating-snapshot-deterministic-placeholder
+date: 2026-03-30
+title: 固定 rating snapshot placeholder，消除無 API build 的工作樹污染
+score: +2
+type: improvement
+content_type: troubleshooting
+scope: ratewise
+topics: [build, ssot, release, reproducibility, seo, testing]
+keywords: [rating-snapshot, placeholder, deterministic-build, prebuild, dirty-worktree]
+aliases: [RateWise rating snapshot 可重現性修正]
+related_entries: [ratewise-seo-ssot-machine-readable-followup]
+summary: 在推送 `codex/ratewise-seo-followup` 時發現 `pre-push` 的 `build:ratewise` 會讓 `apps/ratewise/src/config/generated/rating-snapshot.ts` 每次都變更，根因是 `fetch-rating-snapshot.mjs` 在 `RATING_API_URL` 未設定時仍以 `new Date().toISOString()` 產生 placeholder 快照時間。這會破壞 build 可重現性，讓本機與 CI 反覆留下髒工作樹。修正方式是先以測試鎖定 deterministic placeholder 規則，再把 placeholder 改為固定時間常數 `1970-01-01T00:00:00.000Z`。
+root_cause:
+
+- `fetch-rating-snapshot.mjs` 的 placeholder 路徑與成功拉取路徑共用「現在時間」心智模型，導致無 API 環境也會寫入新的 `snapshotAt`。
+- `pre-push` 會執行 `pnpm build:ratewise`，所以這個非 deterministic placeholder 會在每次 push 後污染工作樹。
+  impact:
+
+- branch push 後本地 tree 立刻變髒，降低 release 與 PR 驗證的可追溯性。
+- 若 CI 或本機不提供 `RATING_API_URL`，相同 commit 的產物無法穩定重現。
+  actions:
+
+- 在 `apps/ratewise/src/config/__tests__/build-scripts.test.ts` 先新增紅燈，要求 placeholder 快照時間必須使用固定常數。
+- 修正 `apps/ratewise/scripts/fetch-rating-snapshot.mjs`，引入 `PLACEHOLDER_SNAPSHOT_AT` 並讓 placeholder 明確走 deterministic 常數。
+- 重新執行 `node apps/ratewise/scripts/fetch-rating-snapshot.mjs` 與 `pnpm --filter @app/ratewise build`，確認 build 後不再新增額外髒檔，只留下本次修正本身。
+  prevention:
+
+- 任何 prebuild 生成器在缺少外部資料源時，都必須輸出 deterministic placeholder，不能依賴 wall-clock time。
+- 對會寫入 tracked file 的 script，必須補一條可重現性測試，避免 `pre-push` 或 CI 之後才暴露問題。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts`
+- `node apps/ratewise/scripts/fetch-rating-snapshot.mjs`
+- `pnpm --filter @app/ratewise build`
+  references:
+
+- apps/ratewise/scripts/fetch-rating-snapshot.mjs
+- apps/ratewise/src/config/generated/rating-snapshot.ts
+- apps/ratewise/src/config/**tests**/build-scripts.test.ts
+
+---
+
+id: split-meow-ci-coverage-unblock-for-ratewise-pr
+date: 2026-03-30
+title: 補齊 split-meow coverage 缺口，解除 RateWise PR 的 monorepo CI 阻塞
+score: +2
+type: improvement
+content_type: troubleshooting
+scope: monorepo
+topics: [ci, coverage, testing, split-meow, deviation-control]
+keywords: [quality-checks, coverage-threshold, split-meow, app-test, cat-play]
+aliases: [split-meow coverage 修補, RateWise PR CI unblock]
+related_entries:
+[ratewise-rating-snapshot-deterministic-placeholder, ratewise-seo-ssot-machine-readable-followup]
+summary: PR #221 的 `Quality Checks` 失敗不是來自 `apps/ratewise`，而是 monorepo 中 `apps/split-meow` 的 coverage functions 只有 `54.98%`，低於 workflow 要求的 `60%`。為了完成「CI 修復後才能合併主支」的控制目標，這次在 scope 外做最小必要修補：以測試補強 `App.tsx`、`CatCompanion.tsx`、`CatPlayLayer.tsx` 與 `lib/catPlay.ts`，把 `split-meow` coverage 拉升到 `63.46%`，不調降門檻。
+root_cause:
+
+- CI `Quality Checks` 對整個 monorepo 執行 `pnpm -r run test:coverage`，所以即使 RateWise 變更正確，也會被其他 workspace 的 coverage debt 阻塞。
+- `apps/split-meow` 有數個完全未覆蓋的檔案，特別是 `App.tsx` 與 cat play 相關元件，導致 functions coverage 明顯低於門檻。
+  impact:
+
+- 若不處理，PR #221 無法合併到 `main`，與使用者要求的「持續監控直到 CI 修復完成後合併」相衝突。
+- 這屬於必要的 compensating control，但也代表 monorepo 的 Quality Checks 對跨 app 債務高度敏感。
+  actions:
+
+- 先在本機重現 `pnpm --filter @app/split-meow test:coverage` 的失敗，確認 functions coverage 為 `54.98%`。
+- 新增 `apps/split-meow/src/App.test.tsx`、`src/components/__tests__/CatCompanion.test.tsx`、`src/components/__tests__/CatPlayLayer.test.tsx`、`src/lib/__tests__/catPlay.test.ts`。
+- 以最小 mock 補上分享按鈕 fallback、cat play overlay、粒子 factory 與 portal timer 移除等行為測試。
+- 再次執行 coverage，確認 `All files functions` 提升到 `63.46%`，高於 CI 門檻。
+  prevention:
+
+- monorepo PR 若受全域 coverage gate 影響，需在 CI 失敗後立即判斷是否為跨 workspace 債務，而不是只盯提交範圍。
+- 對存在全域 gate 的 repo，低覆蓋但常被 workflow 掃描的核心入口檔案（如 `App.tsx`）應優先維持基本 smoke coverage。
+  verification:
+
+- `pnpm --filter @app/split-meow test -- --run src/App.test.tsx src/components/__tests__/CatCompanion.test.tsx src/components/__tests__/CatPlayLayer.test.tsx src/lib/__tests__/catPlay.test.ts`
+- `pnpm --filter @app/split-meow test:coverage`
+  references:
+
+- apps/split-meow/src/App.tsx
+- apps/split-meow/src/App.test.tsx
+- apps/split-meow/src/components/CatCompanion.tsx
+- apps/split-meow/src/components/CatPlayLayer.tsx
+- apps/split-meow/src/lib/catPlay.ts
