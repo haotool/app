@@ -201,12 +201,16 @@ describe('ratewise build scripts', () => {
     expect(postbuildMirrorScript).not.toContain('generated fallback static page');
   });
 
-  it('should source health-check SEO titles from metadata SSOT instead of hardcoded strings', async () => {
+  it('should source health-check SEO titles from a plain-node TypeScript SSOT module instead of Vite runtime metadata or hardcoded strings', async () => {
     const healthCheckScript = await readHealthCheckScript();
+    const seoMetadataSource = await readSeoMetadataSource();
 
-    expect(healthCheckScript).toContain("from '../src/config/seo-metadata.ts'");
+    expect(healthCheckScript).toContain("from '../src/config/seo-static.ts'");
+    expect(healthCheckScript).not.toContain("from '../src/config/seo-metadata.ts'");
     expect(healthCheckScript).toContain('DEFAULT_TITLE');
-    expect(healthCheckScript).toContain('GUIDE_PAGE_SEO.title');
+    expect(healthCheckScript).toContain('GUIDE_PAGE_TITLE');
+    expect(seoMetadataSource).toContain("from './seo-static'");
+    expect(seoMetadataSource).toContain('title: GUIDE_PAGE_TITLE');
     expect(healthCheckScript).not.toContain(
       "validators.hasTitle('RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價')",
     );

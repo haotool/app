@@ -1,5 +1,6 @@
 import { CURRENCY_DEFINITIONS, SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
 import { APP_INFO, SEO_SOCIAL_LINKS } from './app-info';
+import { DEFAULT_TITLE, GUIDE_PAGE_TITLE } from './seo-static';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from './generated/seo-rate-examples';
 import { RATING_SNAPSHOT } from './generated/rating-snapshot';
 import { RATES_API } from './api-endpoints';
@@ -128,8 +129,6 @@ const ASSET_VERSION = `v=${BUILD_TIME.replace(/[-T:Z.]/g, '').slice(0, 8) || 'de
 export const DEFAULT_LOCALE = 'zh-TW' as const;
 export const SEO_INDEXABLE_LOCALES = [DEFAULT_LOCALE] as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
-export const DEFAULT_TITLE =
-  'RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價';
 // dw ≈ 117（CJK×2）；符合 SERP ≤160 dw 截斷規範
 export const DEFAULT_DESCRIPTION = `RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），讓你換匯前知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，每 5 分鐘同步，免費無廣告。`;
 export const DEFAULT_KEYWORDS = [
@@ -713,7 +712,7 @@ export const GUIDE_HOW_TO_STEPS = [
 ] as const satisfies readonly HowToStep[];
 
 export const GUIDE_PAGE_SEO = {
-  title: '使用指南 — 如何使用 RateWise 匯率好工具換算匯率',
+  title: GUIDE_PAGE_TITLE,
   description:
     '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。',
   pathname: '/guide',
@@ -742,7 +741,7 @@ export const GUIDE_PAGE_SEO = {
   jsonLd: [
     buildShareImageJsonLd('RateWise 使用指南分享圖片', 'RateWise 使用指南與換算步驟預覽'),
     buildArticleJsonLd(
-      '使用指南 — 如何使用 RateWise 匯率好工具換算匯率',
+      GUIDE_PAGE_TITLE,
       '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。',
       '/guide/',
       `${APP_INFO.copyrightStartYear}-01-01`,

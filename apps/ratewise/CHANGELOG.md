@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.16.5
+
+### Patch Changes
+
+- 修復 RateWise production health-check 在 plain Node 環境無法啟動的問題，改用可被 Node 與 Vite 共用的靜態 SEO SSOT。
+
 ## 2.16.4
 
 ### Patch Changes

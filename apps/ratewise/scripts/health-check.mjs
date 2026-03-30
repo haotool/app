@@ -16,7 +16,11 @@
 
 import https from 'node:https';
 import http from 'node:http';
-import { DEFAULT_TITLE, GUIDE_PAGE_SEO } from '../src/config/seo-metadata.ts';
+import {
+  DEFAULT_TITLE,
+  GUIDE_PAGE_DOCUMENT_TITLE,
+  GUIDE_PAGE_TITLE,
+} from '../src/config/seo-static.ts';
 
 const TIMEOUT = 10000; // 10 秒超時
 const MAX_RETRY_ATTEMPTS = 3;
@@ -330,7 +334,8 @@ async function runHealthChecks(baseUrl) {
   results.push({ url: '/ (home)', ...homeResult });
 
   const guideResult = await deepCheck(`${baseUrl}/guide`, [
-    validators.hasTitle(`${GUIDE_PAGE_SEO.title} | RateWise 匯率好工具`),
+    validators.hasTitle(GUIDE_PAGE_DOCUMENT_TITLE),
+    validators.containsText(GUIDE_PAGE_TITLE),
     validators.containsText('HowTo'),
   ]);
   results.push({ url: '/guide (HowTo)', ...guideResult });

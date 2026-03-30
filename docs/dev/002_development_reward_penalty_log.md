@@ -3294,3 +3294,51 @@ root_cause:
 - apps/ratewise/src/hooks/usePairAmountSEO.ts
 - apps/ratewise/scripts/health-check.mjs
 - scripts/verify-precache-assets.mjs
+
+---
+
+id: ratewise-health-check-plain-node-ssot-fix
+date: 2026-03-30
+title: 修復 health-check 直接引用 Vite runtime metadata 導致 plain Node 失效
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: ratewise
+topics: [seo, health-check, ssot, node-cli, ci]
+keywords:
+[health-check, plain-node, vite-runtime, seo-static, codex-review, build-integrity]
+aliases: [RateWise health-check P1 修復, plain Node SEO check fix]
+related_entries:
+[ratewise-seo-production-followup-ssot-hardening]
+summary: Codex review 指出 `apps/ratewise/scripts/health-check.mjs` 直接 import `seo-metadata.ts`，會在 plain Node 環境因 bundler-only import 與 `import.meta.env` 依賴而於啟動前崩潰。這次先用紅燈測試鎖定「health-check 只能依賴 plain-Node SSOT 模組」，再把首頁與 Guide 的預期 title 抽成 `seo-static.ts`，讓 health-check 與 `seo-metadata.ts` 共用同一份靜態來源，同時保留 build/typecheck 與直接 `node` 執行能力。
+root_cause:
+
+- `health-check.mjs` 先前為了避免硬編碼，直接 import `src/config/seo-metadata.ts`；但該模組依賴 extensionless TS imports 與 `import.meta.env`，不適合被 plain Node CLI 直接載入。
+- 我第一次收斂時把 shared title 抽到 `.mjs`，雖然修掉 Node 載入，但又讓 TS build 出現無 declaration 的型別缺口。
+  impact:
+
+- 任何直接執行 `node apps/ratewise/scripts/health-check.mjs` 的 CI 或手動維運流程，都會在真正檢查開始前就失敗，production health check 等於失效。
+- 若 shared title 模組無法同時被 Node 與 TypeScript 正常消費，後續又會回到「腳本能跑但 build 壞掉」的半修狀態。
+  actions:
+
+- 先更新 `apps/ratewise/src/config/__tests__/build-scripts.test.ts`，把期待改為 plain-Node 可載入的靜態 SSOT 模組，而不是 `seo-metadata.ts`。
+- 新增 `apps/ratewise/src/config/seo-static.ts`，集中定義 `DEFAULT_TITLE`、`GUIDE_PAGE_TITLE`、`GUIDE_PAGE_DOCUMENT_TITLE`。
+- 更新 `apps/ratewise/scripts/health-check.mjs` 改由 `seo-static.ts` 讀取預期 title，移除對 `seo-metadata.ts` 的直接依賴。
+- 更新 `apps/ratewise/src/config/seo-metadata.ts` 改用 `seo-static.ts` 的 title 常數，避免首頁與 Guide title 再分叉。
+- 重跑單測、plain Node 直接執行 prod health-check、以及完整 `pnpm --filter @app/ratewise build`。
+  prevention:
+
+- Node CLI 不得直接 import 含 bundler-only 依賴的 app runtime metadata；若需要共用字串，必須抽到 plain-Node 可載入的靜態 SSOT 模組。
+- shared SEO 常數若同時被 Node 與 TS 使用，優先使用 `.ts` 並保持零執行期依賴，避免再引入 `.mjs` typing 漏洞。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts`
+- `node apps/ratewise/scripts/health-check.mjs prod`
+- `pnpm --filter @app/ratewise build`
+- `curl -sL 'https://app.haotool.org/ratewise/?__release_probe__=p1-followup' | rg -o '<meta name="app-version" content="[^"]+"|<title[^>]*>[^<]+' -n`
+  references:
+
+- apps/ratewise/scripts/health-check.mjs
+- apps/ratewise/src/config/seo-static.ts
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/config/**tests**/build-scripts.test.ts
