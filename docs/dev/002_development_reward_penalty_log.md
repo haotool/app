@@ -3189,3 +3189,48 @@ root_cause:
 - apps/ratewise/scripts/fetch-rating-snapshot.mjs
 - apps/ratewise/src/config/generated/rating-snapshot.ts
 - apps/ratewise/src/config/**tests**/build-scripts.test.ts
+
+---
+
+id: split-meow-ci-coverage-unblock-for-ratewise-pr
+date: 2026-03-30
+title: 補齊 split-meow coverage 缺口，解除 RateWise PR 的 monorepo CI 阻塞
+score: +2
+type: improvement
+content_type: troubleshooting
+scope: monorepo
+topics: [ci, coverage, testing, split-meow, deviation-control]
+keywords: [quality-checks, coverage-threshold, split-meow, app-test, cat-play]
+aliases: [split-meow coverage 修補, RateWise PR CI unblock]
+related_entries:
+[ratewise-rating-snapshot-deterministic-placeholder, ratewise-seo-ssot-machine-readable-followup]
+summary: PR #221 的 `Quality Checks` 失敗不是來自 `apps/ratewise`，而是 monorepo 中 `apps/split-meow` 的 coverage functions 只有 `54.98%`，低於 workflow 要求的 `60%`。為了完成「CI 修復後才能合併主支」的控制目標，這次在 scope 外做最小必要修補：以測試補強 `App.tsx`、`CatCompanion.tsx`、`CatPlayLayer.tsx` 與 `lib/catPlay.ts`，把 `split-meow` coverage 拉升到 `63.46%`，不調降門檻。
+root_cause:
+
+- CI `Quality Checks` 對整個 monorepo 執行 `pnpm -r run test:coverage`，所以即使 RateWise 變更正確，也會被其他 workspace 的 coverage debt 阻塞。
+- `apps/split-meow` 有數個完全未覆蓋的檔案，特別是 `App.tsx` 與 cat play 相關元件，導致 functions coverage 明顯低於門檻。
+  impact:
+
+- 若不處理，PR #221 無法合併到 `main`，與使用者要求的「持續監控直到 CI 修復完成後合併」相衝突。
+- 這屬於必要的 compensating control，但也代表 monorepo 的 Quality Checks 對跨 app 債務高度敏感。
+  actions:
+
+- 先在本機重現 `pnpm --filter @app/split-meow test:coverage` 的失敗，確認 functions coverage 為 `54.98%`。
+- 新增 `apps/split-meow/src/App.test.tsx`、`src/components/__tests__/CatCompanion.test.tsx`、`src/components/__tests__/CatPlayLayer.test.tsx`、`src/lib/__tests__/catPlay.test.ts`。
+- 以最小 mock 補上分享按鈕 fallback、cat play overlay、粒子 factory 與 portal timer 移除等行為測試。
+- 再次執行 coverage，確認 `All files functions` 提升到 `63.46%`，高於 CI 門檻。
+  prevention:
+
+- monorepo PR 若受全域 coverage gate 影響，需在 CI 失敗後立即判斷是否為跨 workspace 債務，而不是只盯提交範圍。
+- 對存在全域 gate 的 repo，低覆蓋但常被 workflow 掃描的核心入口檔案（如 `App.tsx`）應優先維持基本 smoke coverage。
+  verification:
+
+- `pnpm --filter @app/split-meow test -- --run src/App.test.tsx src/components/__tests__/CatCompanion.test.tsx src/components/__tests__/CatPlayLayer.test.tsx src/lib/__tests__/catPlay.test.ts`
+- `pnpm --filter @app/split-meow test:coverage`
+  references:
+
+- apps/split-meow/src/App.tsx
+- apps/split-meow/src/App.test.tsx
+- apps/split-meow/src/components/CatCompanion.tsx
+- apps/split-meow/src/components/CatPlayLayer.tsx
+- apps/split-meow/src/lib/catPlay.ts
