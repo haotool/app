@@ -39,6 +39,14 @@ async function readManifestGenerator() {
   return readFile(manifestGeneratorPath, 'utf-8');
 }
 
+async function readRatingSnapshotGenerator() {
+  const ratingSnapshotGeneratorPath = path.resolve(
+    __dirname,
+    '../../../scripts/fetch-rating-snapshot.mjs',
+  );
+  return readFile(ratingSnapshotGeneratorPath, 'utf-8');
+}
+
 describe('ratewise build scripts', () => {
   it('should not patch the generated service worker with a postbuild polyfill', async () => {
     const packageJson = await readPackageJson();
@@ -127,5 +135,14 @@ describe('ratewise build scripts', () => {
     expect(robotsGenerator).not.toContain("'/color-scheme/'");
     expect(robotsGenerator).not.toContain("'/update-prompt-test/'");
     expect(robotsGenerator).not.toContain("'/ui-showcase/'");
+  });
+
+  it('should keep placeholder rating snapshots deterministic when RATING_API_URL is missing', async () => {
+    const ratingSnapshotGenerator = await readRatingSnapshotGenerator();
+
+    expect(ratingSnapshotGenerator).toContain(
+      "const PLACEHOLDER_SNAPSHOT_AT = '1970-01-01T00:00:00.000Z';",
+    );
+    expect(ratingSnapshotGenerator).toContain('snapshotAt: PLACEHOLDER_SNAPSHOT_AT,');
   });
 });

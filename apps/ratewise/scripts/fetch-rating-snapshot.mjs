@@ -17,11 +17,13 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = resolve(__dirname, '../src/config/generated/rating-snapshot.ts');
+const PLACEHOLDER_SNAPSHOT_AT = '1970-01-01T00:00:00.000Z';
 
 const PLACEHOLDER = {
   ratingValue: null,
   ratingCount: 0,
-  snapshotAt: new Date().toISOString(),
+  // placeholder 必須固定，否則每次無 API 的本機 build 都會污染工作樹。
+  snapshotAt: PLACEHOLDER_SNAPSHOT_AT,
 };
 
 function buildFileContent(snapshot) {

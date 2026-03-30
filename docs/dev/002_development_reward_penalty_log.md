@@ -3147,3 +3147,45 @@ root_cause:
 - apps/ratewise/scripts/generate-api-json.mjs
 - apps/ratewise/scripts/generate-openapi.mjs
 - apps/ratewise/tests/e2e/pwa.spec.ts
+
+---
+
+id: ratewise-rating-snapshot-deterministic-placeholder
+date: 2026-03-30
+title: 固定 rating snapshot placeholder，消除無 API build 的工作樹污染
+score: +2
+type: improvement
+content_type: troubleshooting
+scope: ratewise
+topics: [build, ssot, release, reproducibility, seo, testing]
+keywords: [rating-snapshot, placeholder, deterministic-build, prebuild, dirty-worktree]
+aliases: [RateWise rating snapshot 可重現性修正]
+related_entries: [ratewise-seo-ssot-machine-readable-followup]
+summary: 在推送 `codex/ratewise-seo-followup` 時發現 `pre-push` 的 `build:ratewise` 會讓 `apps/ratewise/src/config/generated/rating-snapshot.ts` 每次都變更，根因是 `fetch-rating-snapshot.mjs` 在 `RATING_API_URL` 未設定時仍以 `new Date().toISOString()` 產生 placeholder 快照時間。這會破壞 build 可重現性，讓本機與 CI 反覆留下髒工作樹。修正方式是先以測試鎖定 deterministic placeholder 規則，再把 placeholder 改為固定時間常數 `1970-01-01T00:00:00.000Z`。
+root_cause:
+
+- `fetch-rating-snapshot.mjs` 的 placeholder 路徑與成功拉取路徑共用「現在時間」心智模型，導致無 API 環境也會寫入新的 `snapshotAt`。
+- `pre-push` 會執行 `pnpm build:ratewise`，所以這個非 deterministic placeholder 會在每次 push 後污染工作樹。
+  impact:
+
+- branch push 後本地 tree 立刻變髒，降低 release 與 PR 驗證的可追溯性。
+- 若 CI 或本機不提供 `RATING_API_URL`，相同 commit 的產物無法穩定重現。
+  actions:
+
+- 在 `apps/ratewise/src/config/__tests__/build-scripts.test.ts` 先新增紅燈，要求 placeholder 快照時間必須使用固定常數。
+- 修正 `apps/ratewise/scripts/fetch-rating-snapshot.mjs`，引入 `PLACEHOLDER_SNAPSHOT_AT` 並讓 placeholder 明確走 deterministic 常數。
+- 重新執行 `node apps/ratewise/scripts/fetch-rating-snapshot.mjs` 與 `pnpm --filter @app/ratewise build`，確認 build 後不再新增額外髒檔，只留下本次修正本身。
+  prevention:
+
+- 任何 prebuild 生成器在缺少外部資料源時，都必須輸出 deterministic placeholder，不能依賴 wall-clock time。
+- 對會寫入 tracked file 的 script，必須補一條可重現性測試，避免 `pre-push` 或 CI 之後才暴露問題。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts`
+- `node apps/ratewise/scripts/fetch-rating-snapshot.mjs`
+- `pnpm --filter @app/ratewise build`
+  references:
+
+- apps/ratewise/scripts/fetch-rating-snapshot.mjs
+- apps/ratewise/src/config/generated/rating-snapshot.ts
+- apps/ratewise/src/config/**tests**/build-scripts.test.ts
