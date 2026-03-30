@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.16.3
+
+### Patch Changes
+
+- 7721755: 匯差範例更新頻率文案由「每週」改為「每日」，與 workflow 實際排程一致
+
 ## 2.16.2
 
 ### Patch Changes
