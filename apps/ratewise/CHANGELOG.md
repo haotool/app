@@ -1,5 +1,17 @@
 # @app/ratewise
 
+## 2.16.5
+
+### Patch Changes
+
+- 修復 RateWise production health-check 在 plain Node 環境無法啟動的問題，改用可被 Node 與 Vite 共用的靜態 SEO SSOT。
+
+## 2.16.4
+
+### Patch Changes
+
+- 收斂 RateWise SEO/AEO 的 SSOT 漂移，移除過時 `meta keywords` 輸出，將 amount 頁 SEO 文案與 PWA manifest 品牌資訊集中到設定來源，補強 authority guide 的 Answer Capsule，並改善 production SEO health check 對暫時性 5xx 的容錯能力。
+
 ## 2.16.3
 
 ### Patch Changes

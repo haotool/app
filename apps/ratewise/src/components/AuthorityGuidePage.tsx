@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { PageNavHeader } from './PageNavHeader';
 import { SEOHelmet } from './SEOHelmet';
+import { AnswerCapsule } from './AnswerCapsule';
 import type { AuthorityGuideContent } from '../config/seo-metadata';
 
 interface AuthorityGuidePageProps {
@@ -34,6 +35,8 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
             <h1 className="mb-3 text-4xl font-bold text-text">{page.heading}</h1>
             <p className="max-w-3xl text-base leading-7 text-text-muted">{page.intro}</p>
           </header>
+
+          <AnswerCapsule items={page.answerCapsule ?? []} />
 
           <section className="card mb-6 p-6">
             <h2 className="mb-4 text-2xl font-bold text-text">重點整理</h2>

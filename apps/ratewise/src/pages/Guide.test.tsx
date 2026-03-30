@@ -44,6 +44,12 @@ describe('Guide Page - HowTo Schema', () => {
       renderGuide();
       expect(screen.getByText(/預估完成時間：約 2 分鐘/i)).toBeInTheDocument();
     });
+
+    it('renders an answer capsule near the top for AI extractability', () => {
+      renderGuide();
+      expect(screen.getByRole('heading', { level: 2, name: /快速答案/i })).toBeInTheDocument();
+      expect(screen.getByText(/第一次換匯時，通常先看銀行賣出價/i)).toBeInTheDocument();
+    });
   });
 
   describe('HowTo Steps (8 Steps)', () => {

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
+import { AnswerCapsule } from '../components/AnswerCapsule';
 import { getDisplayVersion } from '../config/version';
 import { APP_INFO, getCopyrightYears } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
@@ -45,6 +46,8 @@ export default function About() {
               作者：{APP_INFO.author} ・ 版本：{getDisplayVersion()} ・ 最後更新：{LAST_UPDATED}
             </p>
           </div>
+
+          <AnswerCapsule items={ABOUT_PAGE_SEO.answerCapsule ?? []} />
 
           <section className="card mb-6 p-6">
             <h2 className="mb-4 text-2xl font-bold text-text">我們的定位</h2>

@@ -11,8 +11,9 @@
  * 1. Sitemap 2025 標準 (verify-sitemap-2025.mjs)
  * 2. Breadcrumb Schema (verify-breadcrumb-schema.mjs)
  * 3. JSON-LD 結構化數據 (verify-structured-data.mjs)
- * 4. 圖片優化（手動檢查）
- * 5. 內部連結結構（Footer）
+ * 4. 歷史資料與日期新鮮度 (verify-history-data.mjs)
+ * 5. 預快取資產與離線關鍵檔 (verify-precache-assets.mjs)
+ * 6. Sitemap 與 SSG route 對齊 (verify-sitemap-ssg.mjs)
  *
  * 使用時機：
  * - CI/CD pipeline (GitHub Actions)
@@ -130,8 +131,9 @@ async function main() {
   console.log('  1. Sitemap 2025 標準合規性');
   console.log('  2. Breadcrumb Schema 正確性');
   console.log('  3. JSON-LD 結構化數據完整性');
-  console.log('  4. 圖片優化狀態（手動檢查）');
-  console.log('  5. 內部連結結構（Footer）');
+  console.log('  4. 歷史資料與日期新鮮度');
+  console.log('  5. 預快取資產與離線關鍵檔');
+  console.log('  6. Sitemap 與 SSG route 對齊');
 
   // 檢查 dist 目錄
   if (!checkDistExists()) {
@@ -142,6 +144,9 @@ async function main() {
     sitemap: false,
     breadcrumb: false,
     structuredData: false,
+    historyData: false,
+    precache: false,
+    sitemapSsg: false,
     total: 0,
     passed: 0,
     failed: 0,
@@ -174,23 +179,35 @@ async function main() {
   if (results.structuredData) results.passed++;
   else results.failed++;
 
-  // 4. 圖片優化狀態（手動檢查）
-  header('4. 圖片優化狀態');
-  console.log('ℹ️  圖片優化需手動執行：');
-  console.log('  node scripts/optimize-images-2025.mjs');
-  console.log('\n目標：');
-  console.log('  - logo.avif < 50 KB');
-  console.log('  - og-image.avif < 100 KB');
-  console.log('  - 總大小減少 ≥70%');
-  log(colors.yellow, '⏭', '跳過（需手動執行）');
+  // 4. 歷史資料與日期新鮮度
+  header('4. 歷史資料與日期新鮮度');
+  results.historyData = runVerification(
+    resolve(__dirname, 'verify-history-data.mjs'),
+    '歷史資料與日期新鮮度',
+  );
+  results.total++;
+  if (results.historyData) results.passed++;
+  else results.failed++;
 
-  // 5. 內部連結結構（Footer）
-  header('5. 內部連結結構檢查');
-  console.log('ℹ️  檢查項目：');
-  console.log('  - Footer 組件包含所有 17 個 SEO 路徑');
-  console.log('  - Layout 組件已整合 Footer');
-  console.log('  - 所有頁面自動包含 Footer');
-  log(colors.green, '✅', 'Footer 組件已實作（請手動確認渲染）');
+  // 5. 預快取資產與離線關鍵檔
+  header('5. 預快取資產與離線關鍵檔');
+  results.precache = runVerification(
+    resolve(__dirname, 'verify-precache-assets.mjs'),
+    '預快取資產與離線關鍵檔',
+  );
+  results.total++;
+  if (results.precache) results.passed++;
+  else results.failed++;
+
+  // 6. Sitemap 與 SSG route 對齊
+  header('6. Sitemap 與 SSG route 對齊');
+  results.sitemapSsg = runVerification(
+    resolve(__dirname, 'verify-sitemap-ssg.mjs'),
+    'Sitemap 與 SSG route 對齊',
+  );
+  results.total++;
+  if (results.sitemapSsg) results.passed++;
+  else results.failed++;
 
   // 最終統計
   header('審計結果統計');
@@ -205,8 +222,6 @@ async function main() {
 
   // 手動檢查清單
   console.log('\n📋 手動檢查清單:');
-  console.log('  [ ] 執行圖片優化腳本');
-  console.log('  [ ] 確認 Footer 在所有頁面正確渲染');
   console.log('  [ ] 使用 Google Rich Results Test 線上驗證');
   console.log('  [ ] 使用 Google Search Console 提交 sitemap');
   console.log('  [ ] 檢查 Lighthouse SEO 評分 (目標 100/100)');
@@ -217,10 +232,10 @@ async function main() {
     console.log('  1. 修復失敗的驗證項目');
     console.log('  2. 重新執行審計腳本');
   } else {
-    console.log('  1. 執行圖片優化');
-    console.log('  2. 建置並部署到生產環境');
-    console.log('  3. 提交 sitemap 到 Google Search Console');
-    console.log('  4. 監控 Search Console 索引狀態');
+    console.log('  1. 建置並部署到生產環境');
+    console.log('  2. 提交 sitemap 到 Google Search Console');
+    console.log('  3. 監控 Search Console 索引狀態');
+    console.log('  4. 以正式站做一次 Rich Results / Lighthouse 抽驗');
   }
 
   // 退出碼

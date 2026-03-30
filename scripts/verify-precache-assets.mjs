@@ -2,7 +2,7 @@
 /* eslint-env node */
 /* eslint-disable no-undef */
 
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -21,10 +21,12 @@ export function getDefaultBaseUrl(verifySource) {
 }
 
 export function normalizeBase(url) {
-  if (!url.endsWith('/')) {
-    return `${url}/`;
-  }
-  return url;
+  const normalizedUrl = new URL(url);
+  const normalizedPathname = normalizedUrl.pathname.replace(/\/+$/, '');
+  normalizedUrl.pathname = normalizedPathname ? `${normalizedPathname}/` : '/';
+  normalizedUrl.search = '';
+  normalizedUrl.hash = '';
+  return normalizedUrl.toString();
 }
 
 async function loadPrecacheEntries() {
@@ -69,6 +71,14 @@ export function parseShellAssetUrls(indexHtml) {
 
 export function resolvePrecacheAssetUrl(assetUrl, base) {
   return new URL(assetUrl.replace(/^\//, ''), normalizeBase(base)).toString();
+}
+
+export function shouldProbePrecacheAssetsOverHttp(verifySource) {
+  return verifySource === 'live';
+}
+
+export function resolveLocalPrecacheAssetPath(assetUrl, distDir = DIST_DIR) {
+  return path.resolve(distDir, assetUrl.replace(/^\//, ''));
 }
 
 async function loadLivePrecacheEntries(base) {
@@ -150,6 +160,22 @@ async function probe(url) {
   }
 }
 
+async function probeLocalAsset(assetUrl, distDir = DIST_DIR) {
+  const filePath = resolveLocalPrecacheAssetPath(assetUrl, distDir);
+
+  try {
+    await access(filePath);
+    return { ok: true, status: 200, filePath };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 404,
+      filePath,
+      message: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 async function probeWithCacheBust(url) {
   const busted = new URL(url);
   busted.searchParams.set('__edge_probe__', Date.now().toString(36));
@@ -191,12 +217,19 @@ export async function main() {
 
   let hasError = false;
   for (const entry of assetEntries) {
-    const target = resolvePrecacheAssetUrl(entry.url, base);
-    const result = await probe(target);
+    const target = shouldProbePrecacheAssetsOverHttp(VERIFY_SOURCE)
+      ? resolvePrecacheAssetUrl(entry.url, base)
+      : resolveLocalPrecacheAssetPath(entry.url);
+    const result = shouldProbePrecacheAssetsOverHttp(VERIFY_SOURCE)
+      ? await probe(target)
+      : await probeLocalAsset(entry.url);
     if (!result.ok) {
       hasError = true;
-      const busted = await probeWithCacheBust(target);
-      const staleEdge404 = result.status === 404 && busted.ok;
+      const busted = shouldProbePrecacheAssetsOverHttp(VERIFY_SOURCE)
+        ? await probeWithCacheBust(target)
+        : null;
+      const staleEdge404 =
+        shouldProbePrecacheAssetsOverHttp(VERIFY_SOURCE) && result.status === 404 && busted?.ok;
       console.error(`❌ ${target} 無法擷取 (status: ${result.status})`);
       if (result.message) {
         console.error(`   ↳ ${result.message}`);

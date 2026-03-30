@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
@@ -56,99 +56,4 @@ if (!existsSync(distDir)) {
   process.exit(0);
 }
 
-/**
- * Fallback 靜態頁面生成（避免 SSG 未輸出時 FAQ/About 缺檔）
- * - 以 dist/index.html 為模板
- * - 覆寫 title/description/canonical/OG 欄位
- */
-const ensureStaticPage = (routePath, meta) => {
-  const normalizedRoute = routePath.replace(/\/+$/, '');
-  const outputDir = join(distDir, normalizedRoute.replace(/^\//, ''), '/');
-  const outputPath = join(outputDir, 'index.html');
-
-  // 如果 SSG 已經產出對應檔案，尊重現有內容（避免覆寫造成 Hydration mismatch）
-  if (existsSync(outputPath)) {
-    console.log(`ℹ️ 已存在 SSG 預渲染檔案，跳過 fallback 生成：${routePath}`);
-    return;
-  }
-
-  const templatePath = join(distDir, 'index.html');
-  if (!existsSync(templatePath)) {
-    console.warn('⚠️ 無法生成靜態頁面：缺少 dist/index.html');
-    return;
-  }
-
-  const html = fs.readFileSync(templatePath, 'utf-8');
-  mkdirSync(outputDir, { recursive: true });
-
-  const replaceTag = (source, regex, replacement, label) => {
-    const updated = source.replace(regex, replacement);
-    if (updated === source) {
-      console.warn(`⚠️ 未能覆寫 ${label}，請檢查模板結構`);
-    }
-    return updated;
-  };
-  const canonHref =
-    normalizedRoute === '/'
-      ? 'https://app.haotool.org/ratewise/'
-      : `https://app.haotool.org/ratewise${normalizedRoute}/`;
-
-  let result = html;
-  result = replaceTag(result, /<title>[\s\S]*?<\/title>/, `<title>${meta.title}</title>`, 'title');
-  result = replaceTag(
-    result,
-    /<meta[^>]*name=["']description["'][^>]*>/,
-    `<meta name="description" content="${meta.description}">`,
-    'description',
-  );
-  result = replaceTag(
-    result,
-    /<meta[^>]*name=["']keywords["'][^>]*>/,
-    `<meta name="keywords" content="${meta.keywords}">`,
-    'keywords',
-  );
-  result = replaceTag(
-    result,
-    /<meta[^>]*property=["']og:title["'][^>]*>/,
-    `<meta property="og:title" content="${meta.title}">`,
-    'og:title',
-  );
-  result = replaceTag(
-    result,
-    /<meta[^>]*property=["']og:description["'][^>]*>/,
-    `<meta property="og:description" content="${meta.description}">`,
-    'og:description',
-  );
-  result = replaceTag(
-    result,
-    /<meta[^>]*property=["']og:url["'][^>]*>/,
-    `<meta property="og:url" content="${canonHref}">`,
-    'og:url',
-  );
-  result = replaceTag(
-    result,
-    /<link[^>]*rel=["']canonical["'][^>]*>/,
-    `<link rel="canonical" href="${canonHref}">`,
-    'canonical',
-  );
-
-  fs.writeFileSync(join(outputDir, 'index.html'), result, 'utf-8');
-  console.log(`✅ generated fallback static page: ${routePath || '/'}`);
-};
-
-ensureStaticPage('/faq', {
-  title: '常見問題 | RateWise 匯率好工具',
-  description:
-    'RateWise 常見問題：匯率來源、支援貨幣、離線使用、更新頻率、安裝方式，幫助你快速上手。',
-  keywords:
-    'RateWise FAQ,匯率常見問題,匯率來源,離線使用,匯率更新頻率,匯率換算問題,臺灣銀行匯率,多幣別換算',
-});
-
-ensureStaticPage('/about', {
-  title: '關於我們 | RateWise 匯率好工具',
-  description:
-    'RateWise 是以臺灣銀行牌告匯率為基礎的即時匯率換算 PWA，專注提供快速、準確、離線可用的匯率工具。',
-  keywords: 'RateWise 關於我們,匯率換算工具,即時匯率,PWA 匯率,臺灣銀行匯率,多幣別換算,離線匯率',
-});
-
-console.log('🎯 完成 dist postbuild 處理（HTML 修復 + fallback 靜態頁）');
+console.log('🎯 完成 dist postbuild 處理（HTML 修復）');

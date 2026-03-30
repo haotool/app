@@ -83,6 +83,13 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toMatch(/<meta[^>]*name="description"/);
     });
 
+    it('should NOT emit deprecated meta keywords on FAQ page', () => {
+      if (!existsSync(faqHtml)) return;
+
+      const content = readFileSync(faqHtml, 'utf-8');
+      expect(content).not.toMatch(/<meta[^>]*name="keywords"/);
+    });
+
     it('should have correct canonical URL for FAQ page (SSG Head)', () => {
       if (!existsSync(faqHtml)) return;
 
@@ -183,6 +190,13 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       const occurrences = (titleText.match(/RateWise 匯率好工具/g) ?? []).length;
       expect(occurrences).toBe(1);
     });
+
+    it('should NOT emit deprecated meta keywords on Open Data page', () => {
+      if (!existsSync(openDataHtml)) return;
+
+      const content = readFileSync(openDataHtml, 'utf-8');
+      expect(content).not.toMatch(/<meta[^>]*name="keywords"/);
+    });
   });
 
   describe('🟢 首頁 SEO Meta Tags（由 SEOHelmet 在 ClientOnly 外層注入）', () => {
@@ -201,6 +215,13 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
 
       const content = readFileSync(indexHtml, 'utf-8');
       expect(content).toMatch(/<meta[^>]*name="description"/);
+    });
+
+    it('should NOT emit deprecated meta keywords on homepage', () => {
+      if (!existsSync(indexHtml)) return;
+
+      const content = readFileSync(indexHtml, 'utf-8');
+      expect(content).not.toMatch(/<meta[^>]*name="keywords"/);
     });
 
     it('should have correct canonical URL for homepage', () => {
@@ -364,6 +385,13 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toMatch(
         /"availableChannel":\{"@type":"ServiceChannel","serviceUrl":"https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
       );
+    });
+
+    it('USD/TWD amount page should NOT emit deprecated meta keywords', () => {
+      if (!existsSync(usdAmountHtml)) return;
+
+      const content = readFileSync(usdAmountHtml, 'utf-8');
+      expect(content).not.toMatch(/<meta[^>]*name="keywords"/);
     });
   });
 

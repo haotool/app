@@ -9,6 +9,9 @@ export const APP_INFO = {
   /** 應用程式名稱 */
   name: 'RateWise 匯率好工具',
 
+  /** 安裝後顯示的簡短名稱 */
+  shortName: 'RateWise',
+
   /** 應用程式副標題 */
   subtitle: '匯率好工具',
 
@@ -44,6 +47,47 @@ export const APP_INFO = {
 
   /** 取得圖片授權或使用許可的頁面 */
   imageLicenseContactUrl: 'https://app.haotool.org/ratewise/about/',
+} as const;
+
+export const APP_MANIFEST = {
+  shortName: APP_INFO.shortName,
+  screenshots: [
+    {
+      src: 'screenshots/mobile-home.png',
+      sizes: '1080x1920',
+      type: 'image/png',
+      formFactor: 'narrow',
+      label: `${APP_INFO.name} 首頁 - 即時匯率換算與趨勢圖`,
+    },
+    {
+      src: 'screenshots/mobile-converter-active.png',
+      sizes: '1080x1920',
+      type: 'image/png',
+      formFactor: 'narrow',
+      label: '貨幣轉換 - 輸入金額即時顯示匯率結果',
+    },
+    {
+      src: 'screenshots/mobile-features.png',
+      sizes: '1080x1920',
+      type: 'image/png',
+      formFactor: 'narrow',
+      label: '常見問題與功能介紹',
+    },
+    {
+      src: 'screenshots/desktop-converter.png',
+      sizes: '1920x1080',
+      type: 'image/png',
+      formFactor: 'wide',
+      label: '桌面版 - 完整匯率轉換介面與趨勢圖表',
+    },
+    {
+      src: 'screenshots/desktop-features.png',
+      sizes: '1920x1080',
+      type: 'image/png',
+      formFactor: 'wide',
+      label: `桌面版 - 關於 ${APP_INFO.shortName} 與功能說明`,
+    },
+  ],
 } as const;
 
 export const AUTHOR_CONTACT_LINK_MAP = {
