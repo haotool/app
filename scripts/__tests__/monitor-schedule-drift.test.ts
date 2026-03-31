@@ -36,6 +36,18 @@ describe('monitor-schedule-drift', () => {
     expect(expectedAt?.toISOString()).toBe('2026-03-31T16:39:00.000Z');
   });
 
+  it('step 語法（20/15）應展開為 20、35、50，而非僅 20', () => {
+    // 修復：20/15 * * * * 在分鐘欄的 expandFieldRange 原本回傳 end=20，
+    // 導致只有分鐘 20 被收錄，修正後應包含 20、35、50
+    const expectedAt = findLatestScheduledTime('20/15 * * * *', '2026-03-31T16:51:30Z');
+    expect(expectedAt?.toISOString()).toBe('2026-03-31T16:50:00.000Z');
+  });
+
+  it('step 語法（*/10）應展開為 0、10、20、…、50', () => {
+    const expectedAt = findLatestScheduledTime('*/10 * * * *', '2026-03-31T16:43:00Z');
+    expect(expectedAt?.toISOString()).toBe('2026-03-31T16:40:00.000Z');
+  });
+
   it('會統計 schedule run 的 drift 秒數與中間缺漏的排程次數', () => {
     const analysis = analyzeScheduledRuns({
       workflowName: 'Update Latest Exchange Rates',

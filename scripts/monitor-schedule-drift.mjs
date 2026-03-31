@@ -80,7 +80,10 @@ function parseCronField(field, min, max, names) {
       throw new Error(`無效的 cron step：${token}`);
     }
 
-    const { start, end } = expandFieldRange(base, min, max);
+    const { start, end: rawEnd } = expandFieldRange(base, min, max);
+    // step 語法（e.g. 20/15）：base 是純數字時，終點應延伸至欄位最大值
+    // 例：20/15 → 20、35、50；而非僅 20
+    const end = stepValue && !base.includes('-') && base !== '*' ? max : rawEnd;
     if (
       !Number.isFinite(start) ||
       !Number.isFinite(end) ||
@@ -390,6 +393,8 @@ function ghRunList(workflowName, limit) {
       'list',
       '--workflow',
       workflowName,
+      '--event',
+      'schedule',
       '--limit',
       String(limit),
       '--json',
