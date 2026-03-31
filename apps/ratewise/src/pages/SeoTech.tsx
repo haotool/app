@@ -28,7 +28,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
+import { APP_ONLY_PAGE_SEO, HOMEPAGE_HOW_TO } from '../config/seo-metadata';
 import {
   SEO_PATHS,
   PRERENDER_PATHS,
@@ -40,6 +40,59 @@ import {
 import { RATES_API } from '../config/api-endpoints';
 import { APP_INFO } from '../config/app-info';
 import { staggerContainerVariants, staggerItemVariants, transitions } from '../config/animations';
+
+// ─── JSON-LD Schema 類型 ────────────────────────────────────────────────────────
+
+const SCHEMA_TYPES = [
+  {
+    type: 'WebSite',
+    desc: '網站整體識別與 SearchAction 搜尋框',
+    pages: '首頁',
+    icon: Globe,
+  },
+  {
+    type: 'SoftwareApplication',
+    desc: '應用程式評分、平台、定價資訊',
+    pages: '首頁',
+    icon: Code2,
+  },
+  {
+    type: 'Organization',
+    desc: '組織聯絡資訊、社群連結、Logo',
+    pages: '全站',
+    icon: Shield,
+  },
+  {
+    type: 'HowTo',
+    desc: `匯率換算操作步驟說明（${HOMEPAGE_HOW_TO.steps.length} 步驟）`,
+    pages: '首頁',
+    icon: CheckCircle2,
+  },
+  {
+    type: 'BreadcrumbList',
+    desc: '頁面麵包屑路徑導覽結構',
+    pages: '所有頁面',
+    icon: Link2,
+  },
+  {
+    type: 'Article',
+    desc: '指南頁文章作者、發布日期、字數',
+    pages: 'Guide / FAQ',
+    icon: FileText,
+  },
+  {
+    type: 'FinancialService',
+    desc: '外匯換算金融服務描述',
+    pages: '幣別落地頁',
+    icon: Database,
+  },
+  {
+    type: 'ImageObject',
+    desc: 'OG 圖片授權、版權資訊',
+    pages: '全站',
+    icon: Layers,
+  },
+] as const;
 
 // ─── SSOT 計算數據 ──────────────────────────────────────────────────────────────
 
@@ -75,7 +128,7 @@ const STATS = [
     border: 'border-emerald-200',
   },
   {
-    value: 8,
+    value: SCHEMA_TYPES.length,
     unit: '種',
     label: 'JSON-LD Schema',
     sub: '結構化資料類型',
@@ -120,59 +173,6 @@ const PIPELINE_STEPS = [
     note: '可離線使用 · 即時更新',
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
-  },
-] as const;
-
-// ─── JSON-LD Schema 類型 ────────────────────────────────────────────────────────
-
-const SCHEMA_TYPES = [
-  {
-    type: 'WebSite',
-    desc: '網站整體識別與 SearchAction 搜尋框',
-    pages: '首頁',
-    icon: Globe,
-  },
-  {
-    type: 'SoftwareApplication',
-    desc: '應用程式評分、平台、定價資訊',
-    pages: '首頁',
-    icon: Code2,
-  },
-  {
-    type: 'Organization',
-    desc: '組織聯絡資訊、社群連結、Logo',
-    pages: '全站',
-    icon: Shield,
-  },
-  {
-    type: 'HowTo',
-    desc: '匯率換算操作步驟說明（10 步驟）',
-    pages: '首頁',
-    icon: CheckCircle2,
-  },
-  {
-    type: 'BreadcrumbList',
-    desc: '頁面麵包屑路徑導覽結構',
-    pages: '所有頁面',
-    icon: Link2,
-  },
-  {
-    type: 'Article',
-    desc: '指南頁文章作者、發布日期、字數',
-    pages: 'Guide / FAQ',
-    icon: FileText,
-  },
-  {
-    type: 'FinancialService',
-    desc: '外匯換算金融服務描述',
-    pages: '幣別落地頁',
-    icon: Database,
-  },
-  {
-    type: 'ImageObject',
-    desc: 'OG 圖片授權、版權資訊',
-    pages: '全站',
-    icon: Layers,
   },
 ] as const;
 

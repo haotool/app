@@ -35,39 +35,63 @@ function log(color, symbol, message) {
   console.log(`${color}${symbol}${colors.reset} ${message}`);
 }
 
+async function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function checkUrl(url, expectedStatus = 200, options = {}) {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+  const maxRetries = options.maxRetries ?? 3;
+  const retryOn5xx = options.retryOn5xx !== false;
+  let lastResult;
 
-    const response = await fetch(url, {
-      method: options.method ?? 'HEAD',
-      redirect: options.redirect ?? 'follow',
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'RateWise-SEO-HealthCheck/2.1',
-        ...(options.headers ?? {}),
-      },
-    });
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      await sleep(1000 * 2 ** (attempt - 1));
+    }
 
-    clearTimeout(timeout);
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
 
-    return {
-      url,
-      status: response.status,
-      ok: response.status === expectedStatus,
-      error: null,
-      body: options.method === 'GET' ? await response.text() : null,
-    };
-  } catch (error) {
-    return {
-      url,
-      status: null,
-      ok: false,
-      error: error.message,
-      body: null,
-    };
+      const response = await fetch(url, {
+        method: options.method ?? 'HEAD',
+        redirect: options.redirect ?? 'follow',
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'RateWise-SEO-HealthCheck/2.1',
+          ...(options.headers ?? {}),
+        },
+      });
+
+      clearTimeout(timeout);
+
+      const result = {
+        url,
+        status: response.status,
+        ok: response.status === expectedStatus,
+        error: null,
+        body: options.method === 'GET' ? await response.text() : null,
+      };
+
+      // 5xx 暫時性錯誤（502/503/504）：重試
+      if (retryOn5xx && response.status >= 500 && attempt < maxRetries) {
+        lastResult = result;
+        continue;
+      }
+
+      return result;
+    } catch (error) {
+      lastResult = {
+        url,
+        status: null,
+        ok: false,
+        error: error.message,
+        body: null,
+      };
+    }
   }
+
+  return lastResult;
 }
 
 async function checkRedirect(url, expectedLocation) {

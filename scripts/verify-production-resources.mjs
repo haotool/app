@@ -88,36 +88,73 @@ async function performRequest(url, method, timeoutMs, fetchImpl) {
   }
 }
 
+function sleepMs(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function probeResource(resource, options = {}) {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const maxRetries = options.maxRetries ?? 3;
   const startedAt = Date.now();
 
-  try {
-    let response = await performRequest(resource.url, 'HEAD', timeoutMs, fetchImpl);
+  let lastError = null;
+  let lastStatus = null;
 
-    // 少數資源端點不支援 HEAD，退回 GET 以取得真實可用性。
-    if (response.status === 405 || response.status === 501) {
-      response = await performRequest(resource.url, 'GET', timeoutMs, fetchImpl);
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      await sleepMs(1000 * 2 ** (attempt - 1));
     }
 
-    return {
-      ...resource,
-      httpStatus: response.status,
-      outcome: response.status === 200 ? '200' : 'non200',
-      durationMs: Date.now() - startedAt,
-      error: null,
-    };
-  } catch (error) {
-    const isTimeout = error?.name === 'AbortError';
-    return {
-      ...resource,
-      httpStatus: null,
-      outcome: isTimeout ? 'timeout' : 'non200',
-      durationMs: Date.now() - startedAt,
-      error: error instanceof Error ? error.message : String(error),
-    };
+    try {
+      let response = await performRequest(resource.url, 'HEAD', timeoutMs, fetchImpl);
+
+      // 少數資源端點不支援 HEAD，退回 GET 以取得真實可用性。
+      if (response.status === 405 || response.status === 501) {
+        response = await performRequest(resource.url, 'GET', timeoutMs, fetchImpl);
+      }
+
+      lastStatus = response.status;
+      lastError = null;
+
+      // 5xx 暫時性錯誤：重試
+      if (response.status >= 500 && attempt < maxRetries) {
+        continue;
+      }
+
+      return {
+        ...resource,
+        httpStatus: response.status,
+        outcome: response.status === 200 ? '200' : 'non200',
+        durationMs: Date.now() - startedAt,
+        error: null,
+      };
+    } catch (error) {
+      const isTimeout = error?.name === 'AbortError';
+      lastStatus = null;
+      lastError = error instanceof Error ? error.message : String(error);
+
+      if (!isTimeout && attempt < maxRetries) {
+        continue;
+      }
+
+      return {
+        ...resource,
+        httpStatus: null,
+        outcome: isTimeout ? 'timeout' : 'non200',
+        durationMs: Date.now() - startedAt,
+        error: lastError,
+      };
+    }
   }
+
+  return {
+    ...resource,
+    httpStatus: lastStatus,
+    outcome: lastStatus != null && lastStatus < 500 ? 'non200' : 'non200',
+    durationMs: Date.now() - startedAt,
+    error: lastError,
+  };
 }
 
 export function summarizeProbeResults(results) {
