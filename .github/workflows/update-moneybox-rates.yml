@@ -1,0 +1,188 @@
+# 明洞換匯所（MoneyBox）匯率更新（每 5 分鐘同步）
+#
+# 職責：定期更新 moneybox.json（TWD→KRW 及全貨幣匯率）
+# 容錯：外部 API 故障時優雅降級，指數退避重試（最多 3 次）
+# 成本：開源專案 GitHub Actions 免費
+
+name: Update MoneyBox Exchange Rates
+
+# 並發控制：與台灣銀行匯率共用同一 group，避免同時推送至 data 分支衝突
+concurrency:
+  group: data-branch-push
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  # 腳本變更時觸發測試
+  push:
+    paths:
+      - 'scripts/fetch-moneybox-rates.js'
+      - '.github/workflows/update-moneybox-rates.yml'
+
+jobs:
+  update-moneybox:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout data branch
+        uses: actions/checkout@v4
+        with:
+          ref: data
+          fetch-depth: 0
+        continue-on-error: true
+
+      - name: Create data branch if not exists
+        if: failure()
+        run: |
+          git checkout -b data main
+          git push -u origin data
+          git checkout data
+
+      - name: Ensure data branch is up to date with scripts
+        run: |
+          git fetch origin main
+          git checkout origin/main -- scripts/fetch-moneybox-rates.js
+          git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Fetch MoneyBox exchange rates
+        id: fetch-rates
+        continue-on-error: true
+        run: |
+          echo "🔄 Fetching latest exchange rates from MoneyBox (明洞換匯所)..."
+          node scripts/fetch-moneybox-rates.js
+
+      - name: Check for changes in moneybox.json
+        id: git-check
+        if: steps.fetch-rates.outcome == 'success'
+        run: |
+          git diff --quiet public/rates/moneybox.json || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push changes
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add public/rates/moneybox.json
+
+          # 取得更新資訊
+          UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).updateTime")
+          TWD_SELL=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.sell")
+
+          # 檢查上一個 commit 是否也是 MoneyBox 匯率更新
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
+
+          if [[ "$LAST_COMMIT_MSG" == *"chore(rates): update moneybox rates"* ]]; then
+            echo "📝 Amending previous commit on data branch..."
+            git commit --amend --reset-author -m "chore(rates): update moneybox rates - ${UPDATE_TIME}" \
+              -m "TWD sell: ${TWD_SELL} KRW/TWD (旅客持台幣現金換韓元到手匯率)" \
+              -m "🤖 Auto-updated every 5 minutes" \
+              -m "Source: https://cems.moneybox.or.kr/"
+
+            git pull --rebase origin data || true
+            git push --force-with-lease origin data
+          else
+            echo "📝 Creating new commit on data branch..."
+            git commit -m "chore(rates): update moneybox rates - ${UPDATE_TIME}" \
+              -m "TWD sell: ${TWD_SELL} KRW/TWD (旅客持台幣現金換韓元到手匯率)" \
+              -m "🤖 Auto-updated every 5 minutes" \
+              -m "Source: https://cems.moneybox.or.kr/"
+
+            echo "🔄 Pulling latest changes before push..."
+            git pull --rebase origin data || true
+
+            # 重試機制：最多重試 3 次
+            for i in 1 2 3; do
+              echo "📤 Attempting to push (try $i/3)..."
+              if git push origin data; then
+                echo "✅ Push successful"
+                break
+              else
+                if [ $i -lt 3 ]; then
+                  echo "⚠️ Push failed, retrying in 5 seconds..."
+                  sleep 5
+                  git pull --rebase origin data || true
+                else
+                  echo "❌ Push failed after 3 attempts"
+                  exit 1
+                fi
+              fi
+            done
+          fi
+
+      - name: Purge jsDelivr CDN cache
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        run: |
+          PURGE_URL="https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json"
+          echo "🧹 Purging jsDelivr CDN cache..."
+          for i in 1 2 3; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PURGE_URL")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "✅ CDN cache purged successfully (attempt $i)"
+              break
+            else
+              echo "⚠️ Purge attempt $i failed (HTTP $HTTP_STATUS)"
+              if [ $i -lt 3 ]; then sleep 5; fi
+            fi
+          done
+
+      - name: Update workflow summary (success)
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        run: |
+          echo "# ✅ MoneyBox exchange rates updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Update Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** \`data\` (isolated from main)" >> $GITHUB_STEP_SUMMARY
+          echo "- **TWD Sell Rate:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.sell") KRW/TWD" >> $GITHUB_STEP_SUMMARY
+          echo "- **TWD Buy Rate:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.buy") KRW/TWD" >> $GITHUB_STEP_SUMMARY
+          echo "- **Update Time (Seoul):** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).updateTime")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔗 CDN URL" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ⚡ CDN Purge" >> $GITHUB_STEP_SUMMARY
+          echo "jsDelivr cache purged — moneybox.json available on CDN within seconds." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 💡 Rate Meaning" >> $GITHUB_STEP_SUMMARY
+          echo "- **Sell rate**: 旅客持 TWD 現金換 KRW 的實際到手匯率（明洞換匯所賣出 KRW）" >> $GITHUB_STEP_SUMMARY
+          echo "- **Buy rate**: 換匯所買入 TWD 的匯率（高於 sell，包含手續費差價）" >> $GITHUB_STEP_SUMMARY
+
+      - name: No changes detected
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed != 'true'
+        run: |
+          echo "# ℹ️ No MoneyBox rate changes detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The MoneyBox exchange rates have not changed since the last update." >> $GITHUB_STEP_SUMMARY
+          echo "Next check: 5 minutes from now" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update workflow summary (API failure)
+        if: steps.fetch-rates.outcome == 'failure'
+        run: |
+          echo "# ⚠️ MoneyBox API temporarily unavailable" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Status" >> $GITHUB_STEP_SUMMARY
+          echo "- MoneyBox API is experiencing issues" >> $GITHUB_STEP_SUMMARY
+          echo "- Retry mechanism attempted with exponential backoff (3 retries)" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow continues successfully (graceful degradation)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Impact" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **No user impact**: SEO examples continue using cached MoneyBox rates" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Automatic recovery**: Next scheduled run in 5 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **No manual intervention required**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Technical Details" >> $GITHUB_STEP_SUMMARY
+          echo "- API URL: https://cems.moneybox.or.kr/api/cmd.php?cmd=C011" >> $GITHUB_STEP_SUMMARY
+          echo "- Retry strategy: Exponential backoff (1s, 2s, 4s)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_This is a transient API failure and does not indicate a problem with our system._" >> $GITHUB_STEP_SUMMARY
