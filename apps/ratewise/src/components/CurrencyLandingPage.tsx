@@ -7,6 +7,7 @@ import { SEOHelmet } from './SEOHelmet';
 import { PageNavHeader } from './PageNavHeader';
 import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES } from '../config/generated/seo-rate-examples';
+import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
 import type { FAQEntry, HowToStep, CommonAmountEntry, JsonLdBlock } from '../config/seo-metadata';
 
 export interface CurrencyLandingPageProps {
@@ -26,6 +27,7 @@ export interface CurrencyLandingPageProps {
   travelTip?: string;
   jsonLd?: JsonLdBlock[];
   direction?: 'to-twd' | 'twd-to-foreign';
+  alternativeProviders?: AlternativeProvider[];
 }
 
 export function CurrencyLandingPage({
@@ -45,6 +47,7 @@ export function CurrencyLandingPage({
   travelTip,
   jsonLd,
   direction = 'to-twd',
+  alternativeProviders,
 }: CurrencyLandingPageProps) {
   const { t } = useTranslation();
   const isTwdToForeign = direction === 'twd-to-foreign';
@@ -376,6 +379,69 @@ export function CurrencyLandingPage({
                     </p>
                   </div>
                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* 替代換匯管道比較卡（明洞換匯所等） */}
+          {alternativeProviders && alternativeProviders.length > 0 && (
+            <section className="mb-6 sm:mb-8" data-testid="provider-comparison-card">
+              <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+                <span className="text-xs">💱</span>
+                <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">換匯管道比較</h2>
+              </div>
+              <div className="card p-4 sm:p-5">
+                <h3 className="font-bold text-text text-sm sm:text-base mb-3">
+                  台銀 vs 現場換匯所比較
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  {/* 臺灣銀行欄 */}
+                  <div className="rounded-xl bg-surface border border-border p-3">
+                    <div className="text-xs font-bold text-text-muted mb-1">
+                      臺灣銀行（現金賣出）
+                    </div>
+                    <div className="text-lg font-black text-text">
+                      {(1 / (rateExample?.cashSell ?? 1)).toFixed(2)}{' '}
+                      <span className="text-xs font-normal text-text-muted">KRW / TWD</span>
+                    </div>
+                    <div className="text-xs text-text-muted mt-1">
+                      {rateExample?.exampleTWD.toLocaleString()} TWD ≈{' '}
+                      {rateExample?.foreignAtCash.toLocaleString()} KRW
+                    </div>
+                  </div>
+                  {/* 替代換匯管道欄 */}
+                  {alternativeProviders.map((provider) => {
+                    const providerKRW = rateExample
+                      ? Math.floor(rateExample.exampleTWD * provider.rate)
+                      : null;
+                    return (
+                      <div
+                        key={provider.source}
+                        className="rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200/30 p-3"
+                      >
+                        <div className="text-xs font-bold text-green-700 dark:text-green-400 mb-1">
+                          {provider.name}
+                        </div>
+                        <div className="text-lg font-black text-green-700 dark:text-green-400">
+                          {provider.rate.toFixed(2)}{' '}
+                          <span className="text-xs font-normal text-text-muted">KRW / TWD</span>
+                        </div>
+                        {providerKRW !== null && rateExample && (
+                          <div className="text-xs text-text-muted mt-1">
+                            {rateExample.exampleTWD.toLocaleString()} TWD ≈{' '}
+                            {providerKRW.toLocaleString()} KRW
+                          </div>
+                        )}
+                        <div className="text-[10px] text-text-muted mt-2">
+                          {provider.source} · {provider.rateDate}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-text-muted leading-relaxed">
+                  {alternativeProviders[0]?.note}
+                </p>
               </div>
             </section>
           )}

@@ -12,6 +12,26 @@
  * 生成日期：2026-03-31
  */
 
+/** 替代換匯管道資訊（如明洞換匯所） */
+export interface AlternativeProvider {
+  /** 換匯所名稱（繁體中文） */
+  name: string;
+  /** 換匯所英文名稱 */
+  nameEn: string;
+  /** 匯率：1 TWD 可換得多少外幣（以 KRW 為例：46.0 表示 1 TWD = 46 KRW） */
+  rate: number;
+  /** 反向匯率：1 單位外幣 = N TWD */
+  rateInverse: number;
+  /** 資料來源名稱 */
+  source: string;
+  /** 資料來源 URL */
+  sourceUrl: string;
+  /** 匯率更新日期（YYYY-MM-DD） */
+  rateDate: string;
+  /** 適用說明備注 */
+  note: string;
+}
+
 export interface RateExample {
   /** 換匯情境用的台幣金額（固定 30000） */
   exampleTWD: number;
@@ -33,6 +53,8 @@ export interface RateExample {
   marketMid: number;
   /** 台銀自身現金中間價（(買入+賣出)/2，雙重驗證用，null 代表無現金買入資料） */
   bankMid: number | null;
+  /** 替代換匯管道（如明洞換匯所），僅特定幣別有此欄位 */
+  alternativeProviders?: AlternativeProvider[];
 }
 
 /** 各幣別匯差範例：換 3 萬元新台幣，台銀現金賣出 vs 市場中間價（Google/XE/Wise/Apple）差距 */
@@ -108,6 +130,18 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 0.02314,
     marketMid: 0.021132,
     bankMid: 0.02119,
+    alternativeProviders: [
+      {
+        name: '明洞換匯所',
+        nameEn: 'Myeongdong Exchange',
+        rate: 46.0,
+        rateInverse: 0.021739,
+        source: 'MoneyBox',
+        sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+        rateDate: '2026-03-31',
+        note: '適用：現場持 TWD 現金換 KRW，需親自前往',
+      },
+    ],
   },
   HKD: {
     exampleTWD: 30000,

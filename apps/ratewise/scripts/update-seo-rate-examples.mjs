@@ -44,6 +44,20 @@ const EXAMPLE_TWD = 30000;
  */
 const DUAL_VERIFY_WARN_PCT = 2.0;
 
+/**
+ * 明洞換匯所（MoneyBox）TWD→KRW 匯率靜態後備值。
+ * 每日 CI 嘗試從 MoneyBox 取得最新匯率，失敗時用此值。
+ * 單位：1 TWD 可換多少 KRW（買入方向）。
+ */
+const MONEYBOX_FALLBACK = {
+  name: '明洞換匯所',
+  nameEn: 'Myeongdong Exchange',
+  rate: 46.0,
+  source: 'MoneyBox',
+  sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+  note: '適用：現場持 TWD 現金換 KRW，需親自前往',
+};
+
 /** 支援的幣別列表（17 個） */
 const CURRENCIES = [
   'USD',
@@ -67,6 +81,44 @@ const CURRENCIES = [
 
 function fmt(n) {
   return n.toLocaleString('zh-TW');
+}
+
+/**
+ * 嘗試從 MoneyBox API 取得最新 TWD→KRW 匯率。
+ * 成功時回傳匯率數字（1 TWD = N KRW），失敗時回傳 null（觸發後備值）。
+ * 優雅降級：任何網路或解析錯誤均視為暫時性問題，不中斷主流程。
+ */
+async function fetchMoneyBoxKrwRate() {
+  try {
+    // MoneyBox 公開 API：以 TWD 為來源查詢 KRW 匯率。
+    // 參數參考自 moneybox-exchange.com 前端 JS。
+    const url =
+      'https://cems.moneybox.or.kr/api/cmd.php?cmd=ExchangeList&nation=KR&currencyCode=TWD';
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'RateWise-SEO-Bot/1.0' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    // 嘗試解析買入匯率（MoneyBox 顯示「我們買入 TWD」，即客戶拿 TWD 換 KRW）。
+    const item = data?.list?.[0] ?? data?.data?.[0] ?? data?.[0];
+    const rate =
+      item?.buyRate ?? item?.buy_rate ?? item?.buyExchangeRate ?? item?.exchangeRate ?? null;
+
+    if (rate && typeof rate === 'number' && rate > 30 && rate < 100) {
+      console.log(`[MoneyBox] 成功取得 TWD→KRW 匯率：${rate} KRW/TWD`);
+      return rate;
+    }
+    // 解析成功但格式不符，記錄原始資料供除錯。
+    console.warn(
+      `[MoneyBox] 回應格式不符，使用後備值。原始：${JSON.stringify(data).slice(0, 200)}`,
+    );
+    return null;
+  } catch (e) {
+    console.warn(`[MoneyBox] 無法取得匯率（${e.message}），使用後備值 ${MONEYBOX_FALLBACK.rate}`);
+    return null;
+  }
 }
 
 async function main() {
@@ -100,6 +152,15 @@ async function main() {
 
   console.log(`台灣銀行牌告時間：${updateTime}`);
   console.log(`open.er-api.com 更新時間：${erData.time_last_update_utc ?? 'unknown'}\n`);
+
+  // 嘗試取得 MoneyBox 最新 TWD→KRW 匯率（優雅降級：失敗用後備值）。
+  const moneyBoxRate = await fetchMoneyBoxKrwRate();
+  const moneyBoxProvider = {
+    ...MONEYBOX_FALLBACK,
+    rate: moneyBoxRate ?? MONEYBOX_FALLBACK.rate,
+    rateInverse: +(1 / (moneyBoxRate ?? MONEYBOX_FALLBACK.rate)).toFixed(6),
+    rateDate: new Date().toISOString().slice(0, 10),
+  };
 
   const results = {};
   const errors = [];
@@ -215,6 +276,26 @@ async function main() {
     ` * 生成日期：${today}`,
     ` */`,
     ``,
+    `/** 替代換匯管道資訊（如明洞換匯所） */`,
+    `export interface AlternativeProvider {`,
+    `  /** 換匯所名稱（繁體中文） */`,
+    `  name: string;`,
+    `  /** 換匯所英文名稱 */`,
+    `  nameEn: string;`,
+    `  /** 匯率：1 TWD 可換得多少外幣（以 KRW 為例：46.0 表示 1 TWD = 46 KRW） */`,
+    `  rate: number;`,
+    `  /** 反向匯率：1 單位外幣 = N TWD */`,
+    `  rateInverse: number;`,
+    `  /** 資料來源名稱 */`,
+    `  source: string;`,
+    `  /** 資料來源 URL */`,
+    `  sourceUrl: string;`,
+    `  /** 匯率更新日期（YYYY-MM-DD） */`,
+    `  rateDate: string;`,
+    `  /** 適用說明備注 */`,
+    `  note: string;`,
+    `}`,
+    ``,
     `export interface RateExample {`,
     `  /** 換匯情境用的台幣金額（固定 30000） */`,
     `  exampleTWD: number;`,
@@ -236,6 +317,8 @@ async function main() {
     `  marketMid: number;`,
     `  /** 台銀自身現金中間價（(買入+賣出)/2，雙重驗證用，null 代表無現金買入資料） */`,
     `  bankMid: number | null;`,
+    `  /** 替代換匯管道（如明洞換匯所），僅特定幣別有此欄位 */`,
+    `  alternativeProviders?: AlternativeProvider[];`,
     `}`,
     ``,
     `/** 各幣別匯差範例：換 3 萬元新台幣，台銀現金賣出 vs 市場中間價（Google/XE/Wise/Apple）差距 */`,
@@ -254,6 +337,22 @@ async function main() {
     lines.push(`    cashSell: ${ex.cashSell},`);
     lines.push(`    marketMid: ${ex.marketMid},`);
     lines.push(`    bankMid: ${ex.bankMid ?? 'null'},`);
+    // KRW：注入明洞換匯所替代管道資料
+    if (code === 'KRW') {
+      const p = moneyBoxProvider;
+      lines.push(`    alternativeProviders: [`);
+      lines.push(`      {`);
+      lines.push(`        name: '${p.name}',`);
+      lines.push(`        nameEn: '${p.nameEn}',`);
+      lines.push(`        rate: ${p.rate},`);
+      lines.push(`        rateInverse: ${p.rateInverse},`);
+      lines.push(`        source: '${p.source}',`);
+      lines.push(`        sourceUrl: '${p.sourceUrl}',`);
+      lines.push(`        rateDate: '${p.rateDate}',`);
+      lines.push(`        note: '${p.note}',`);
+      lines.push(`      },`);
+      lines.push(`    ],`);
+    }
     lines.push(`  },`);
   }
 

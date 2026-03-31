@@ -1,7 +1,12 @@
 import { CURRENCY_DEFINITIONS, SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
 import { APP_INFO, SEO_SOCIAL_LINKS } from './app-info';
 import { DEFAULT_TITLE, GUIDE_PAGE_TITLE } from './seo-static';
-import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from './generated/seo-rate-examples';
+import {
+  SEO_RATE_EXAMPLES,
+  SEO_RATE_EXAMPLES_DATE,
+  type RateExample,
+  type AlternativeProvider,
+} from './generated/seo-rate-examples';
 import { RATING_SNAPSHOT } from './generated/rating-snapshot';
 import { RATES_API } from './api-endpoints';
 import {
@@ -115,6 +120,8 @@ export interface CurrencyLandingPageContent {
   jsonLd: JsonLdBlock[];
   /** 換算方向：to-twd（外幣→台幣）或 twd-to-foreign（台幣→外幣）。 */
   direction: 'to-twd' | 'twd-to-foreign';
+  /** 替代換匯管道（如明洞換匯所），僅特定幣別（KRW）有此欄位。 */
+  alternativeProviders?: AlternativeProvider[];
 }
 
 const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
@@ -425,6 +432,27 @@ export function buildArticleJsonLd(
       '@id': buildCanonicalUrl(url),
     },
   };
+}
+
+/**
+ * 生成替代換匯管道比較 FAQ 條目。
+ * 若該幣別無 alternativeProviders，回傳空陣列。
+ */
+export function buildAlternativeProviderFaq(_code: string, example: RateExample): FAQEntry[] {
+  if (!example.alternativeProviders?.length) return [];
+
+  return example.alternativeProviders.map((provider) => {
+    const exampleTWD = example.exampleTWD;
+    const taiwanBankKRW = example.foreignAtCash;
+    const providerKRW = Math.floor(exampleTWD * provider.rate);
+    const diffKRW = providerKRW - taiwanBankKRW;
+    const diffPct = ((diffKRW / taiwanBankKRW) * 100).toFixed(1);
+
+    return {
+      question: `去首爾前，換韓元可以去${provider.name}嗎？比台銀划算多少？`,
+      answer: `${provider.name}（${provider.nameEn}）提供現場現金換匯服務。以 ${exampleTWD.toLocaleString()} 元新台幣為例：台銀現金賣出約可換 ${taiwanBankKRW.toLocaleString()} 韓元，而在明洞現場換匯約可換 ${providerKRW.toLocaleString()} 韓元，多換約 ${diffKRW.toLocaleString()} 韓元（約多 ${diffPct}%）。需注意需現場親自前往，建議出發前確認最新匯率（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
+    };
+  });
 }
 
 export const HOMEPAGE_FAQ_CONTENT = [
@@ -1586,6 +1614,8 @@ export function getCurrencyLandingPageContent(
         question: `出國刷卡的匯率跟 RateWise 顯示的${displayName}台銀牌告匯率一樣嗎？`,
         answer: `不一樣。出國刷卡使用的是發卡組織（Visa、Mastercard）的清算匯率，再加上發卡銀行的海外交易手續費（通常 1.5%），與臺灣銀行牌告匯率是不同體系。本工具顯示的台銀牌告匯率適用於臨櫃換鈔或外幣帳戶匯款，不代表你出國刷卡時的實際扣款匯率。若出國以刷卡為主，建議另行查詢發卡銀行的海外手續費規定。`,
       },
+      // 替代換匯管道 FAQ（如明洞換匯所），僅有 alternativeProviders 的幣別（KRW）會產生條目
+      ...buildAlternativeProviderFaq(code, SEO_RATE_EXAMPLES[code] ?? ({} as RateExample)),
     ],
     howToSteps: [
       {
@@ -1621,6 +1651,9 @@ export function getCurrencyLandingPageContent(
     travelTip: override.travelTip,
     faqTitle: `${displayName}換匯常見問題`,
     direction: 'to-twd' as const,
+    ...(SEO_RATE_EXAMPLES[code]?.alternativeProviders
+      ? { alternativeProviders: SEO_RATE_EXAMPLES[code].alternativeProviders }
+      : {}),
   };
 }
 
@@ -1891,5 +1924,8 @@ export function getReverseCurrencyLandingPageContent(
     travelTip: override.travelTip,
     faqTitle: `台幣換${displayName}常見問題`,
     direction: 'twd-to-foreign' as const,
+    ...(SEO_RATE_EXAMPLES[code]?.alternativeProviders
+      ? { alternativeProviders: SEO_RATE_EXAMPLES[code].alternativeProviders }
+      : {}),
   };
 }
