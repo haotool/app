@@ -27,24 +27,28 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 
 ### 應用程式
 
-| 應用                                     | 描述                              | 狀態 | 連結                                                                  |
-| ---------------------------------------- | --------------------------------- | ---- | --------------------------------------------------------------------- |
-| **[RateWise](./apps/ratewise/)**         | 即時匯率換算工具，支援 30+ 種貨幣 | Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
-| **[NihonName](./apps/nihonname/)**       | 日本名字產生器，探索皇民化歷史    | Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
-| **[Quake-School](./apps/quake-school/)** | 互動式地震科學教育平台            | Live | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
-| **[haotool](./apps/haotool/)**           | 專案展示平台，3D 互動首頁         | Live | [app.haotool.org](https://app.haotool.org/)                           |
+| 應用                                     | 描述                                           | 狀態 | 連結                                                                  |
+| ---------------------------------------- | ---------------------------------------------- | ---- | --------------------------------------------------------------------- |
+| **[RateWise](./apps/ratewise/)**         | 台銀即時匯率換算 PWA，支援 18 種貨幣           | Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
+| **[NihonName](./apps/nihonname/)**       | 日本名字產生器，探索皇民化歷史                 | Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
+| **[Quake-School](./apps/quake-school/)** | 互動式地震科學教育平台                         | Live | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
+| **[Park Keeper](./apps/park-keeper/)**   | 停車場導航工具，GPS 指引 + 多語言（i18n）      | Live | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
+| **[Split Meow](./apps/split-meow/)**     | 貓咪主題旅遊帳單分攤計算機，支援費用分類與分享 | Live | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
+| **[haotool](./apps/haotool/)**           | 專案展示平台，3D 互動首頁                      | Live | [app.haotool.org](https://app.haotool.org/)                           |
 
 ### 應用特色
 
 #### RateWise - 匯率好工具
 
-基於臺灣銀行牌告匯率的即時匯率 PWA 應用
+基於臺灣銀行牌告匯率的即時匯率 PWA 應用，顯示實際買賣價（非中間價）
 
-- 雙模式換算：單幣別與多幣別同時換算
+- 台銀實際賣出價：顯示真正換匯成本，非市場中間價
+- 18 種貨幣、4 種匯率類型（現金/即期買入賣出）
 - 即時匯率：每 5 分鐘同步臺灣銀行牌告匯率
 - 趨勢圖表：30 天歷史匯率走勢視覺化
 - PWA 支援：可安裝至手機，支援離線使用
 - 收藏管理：自訂常用貨幣快速存取
+- 程序化 SEO：248 個可索引靜態頁面（幣對頁 + 金額頁）
 
 #### NihonName - 皇民化改姓生成器
 
@@ -64,6 +68,24 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 - 知識測驗：互動問答測驗，驗證學習成效
 - 震度視覺化：台灣震度分級圖表
 - 地震波動畫：P 波、S 波視覺化展示
+
+#### Park Keeper - 停車場導航
+
+GPS 輔助的停車場路徑指引工具
+
+- GPS 即時定位：指引回到停車位的方向與步數
+- 羅盤導航：設備方向感測器驅動的視覺化方向指示
+- 多語言支援：繁體中文、英文、日文（i18n）
+- Leaflet 地圖整合：停車紀錄與地圖標記
+
+#### Split Meow - 分帳計算機
+
+貓咪主題的旅遊帳單分攤工具
+
+- 費用分類標籤：Emoji 分類（餐飲、交通、住宿等）
+- 行程摘要分享：Web Share API + 剪貼簿備援
+- 貓咪互動夥伴：爪印粒子效果 + 慶祝動畫
+- 結清標記：追蹤已結算費用
 
 #### haotool - 專案平台
 
@@ -92,7 +114,7 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 
 | 指標           | 數值        |
 | -------------- | ----------- |
-| **測試數量**   | 1000+       |
+| **測試數量**   | 1700+       |
 | **測試覆蓋率** | 92%+        |
 | **TypeScript** | Strict Mode |
 | **ESLint**     | 0 警告      |
@@ -123,6 +145,8 @@ pnpm dev
 pnpm --filter @app/ratewise dev      # RateWise (http://localhost:4173)
 pnpm --filter @app/nihonname dev     # NihonName (http://localhost:3002)
 pnpm --filter @app/quake-school dev  # Quake-School (http://localhost:3003)
+pnpm --filter @app/park-keeper dev   # Park Keeper (http://localhost:3004)
+pnpm --filter @app/split-meow dev    # Split Meow (http://localhost:3005)
 pnpm --filter @app/haotool dev       # haotool (http://localhost:3000)
 ```
 
@@ -150,6 +174,8 @@ haotool-app/
 │   ├── ratewise/         # 匯率換算工具
 │   ├── nihonname/        # 日本名字產生器
 │   ├── quake-school/     # 地震知識小學堂
+│   ├── park-keeper/      # 停車場導航工具
+│   ├── split-meow/       # 貓咪分帳計算機
 │   ├── haotool/          # 專案展示平台
 │   └── shared/           # 共用模組
 ├── docs/                 # 文檔
@@ -204,12 +230,14 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 
 ### Applications
 
-| App                                      | Description                                     | Status | Link                                                                  |
-| ---------------------------------------- | ----------------------------------------------- | ------ | --------------------------------------------------------------------- |
-| **[RateWise](./apps/ratewise/)**         | Real-time currency converter, 30+ currencies    | Live   | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
-| **[NihonName](./apps/nihonname/)**       | Japanese name generator, historical exploration | Live   | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
-| **[Quake-School](./apps/quake-school/)** | Interactive earthquake science education        | Live   | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
-| **[haotool](./apps/haotool/)**           | Project showcase with 3D interactive homepage   | Live   | [app.haotool.org](https://app.haotool.org/)                           |
+| App                                      | Description                                         | Status | Link                                                                  |
+| ---------------------------------------- | --------------------------------------------------- | ------ | --------------------------------------------------------------------- |
+| **[RateWise](./apps/ratewise/)**         | Taiwan Bank exchange rate PWA, 18 currencies        | Live   | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
+| **[NihonName](./apps/nihonname/)**       | Japanese name generator, historical exploration     | Live   | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
+| **[Quake-School](./apps/quake-school/)** | Interactive earthquake science education            | Live   | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
+| **[Park Keeper](./apps/park-keeper/)**   | Parking lot navigator with GPS compass + i18n       | Live   | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
+| **[Split Meow](./apps/split-meow/)**     | Cat-themed trip expense splitter with share + emoji | Live   | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
+| **[haotool](./apps/haotool/)**           | Project showcase with 3D interactive homepage       | Live   | [app.haotool.org](https://app.haotool.org/)                           |
 
 ### Tech Stack
 
