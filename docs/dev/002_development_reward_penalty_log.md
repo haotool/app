@@ -1,8 +1,50 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-26T01:31:59+08:00
-> **當前總分**: 1197（初始分: 100）
+> **最後更新**: 2026-03-31T23:47:00+08:00
+> **當前總分**: 1198（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: rates-workflow-summary-cleanup-001
+date: 2026-03-31
+title: 修復匯率 workflow 在 rebase 衝突後以髒工作樹產生 summary 的流程缺陷
+score: +1
+type: fix
+content_type: incident
+scope: monorepo
+topics: [github-actions, ci, rates, data-branch, tdd]
+keywords: [workflow summary, rebase conflict, latest.json, moneybox.json, origin/data, github actions]
+aliases: [匯率 workflow summary 清理, data branch workflow 衝突修復]
+related_entries: [splitmeow-tdd-and-actions-schedule-reliability]
+summary: 合併後檢查主支 workflow log 時，發現 `Update Latest Exchange Rates` 在 `git pull --rebase` 衝突後，仍沿用帶 conflict markers 的本地工作樹執行 summary，導致成功 run 夾帶 JSON parse error。此次先以測試鎖定需求，再在兩條匯率 workflow 中加入 `origin/data` 刷新步驟，確保 summary 永遠讀取已提交的乾淨 JSON。
+root_cause:
+
+- `Commit and push changes` 步驟在 rebase 衝突時使用 `|| true` 吞掉錯誤，後續 summary 直接讀本地工作樹中的 `latest.json`
+- workflow 成功與資料推送成功不代表 log 乾淨；若不重置本地檔案，summary 會讀到 conflict markers 並輸出誤導性錯誤
+  impact:
+
+- GitHub Actions log 會出現多次 `SyntaxError: Expected property name or '}' in JSON`
+- reviewer 會誤判 workflow 成功但資料可能損壞，降低 CI 訊號可信度
+  actions:
+
+- 在 `build-scripts.test.ts` 新增紅燈測試，要求兩條匯率 workflow 在 summary 前先刷新遠端乾淨 JSON
+- 在 `update-latest-rates.yml` 與 `update-moneybox-rates.yml` 加入 `git rebase --abort 2>/dev/null || true` 與 `git checkout origin/data -- ...`
+- 重跑 targeted vitest 確認 workflow 契約轉綠
+  prevention:
+
+- 任何 data-branch workflow 若 summary 依賴剛推送的檔案，必須先從 `origin/data` 重新取回，不可直接讀可能帶衝突的工作樹
+- 遇到 GitHub Actions 成功但 log 有 parser error，必須視為流程缺陷而非單純噪音
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts`
+- `gh run view 23806185249 --log`
+- `gh run view 23806179558 --log`
+  references:
+
+- .github/workflows/update-latest-rates.yml
+- .github/workflows/update-moneybox-rates.yml
+- apps/ratewise/src/config/**tests**/build-scripts.test.ts
 
 ---
 

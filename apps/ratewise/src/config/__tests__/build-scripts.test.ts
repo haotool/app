@@ -295,4 +295,14 @@ describe('ratewise build scripts', () => {
     expect(moneyBoxWorkflow).toContain('Workflow event:');
     expect(moneyBoxWorkflow).toContain('Workflow schedule:');
   });
+
+  it('should refresh rate JSON from origin/data before summary generation so rebase-conflicted worktrees cannot leak into workflow logs', async () => {
+    const latestWorkflow = await readLatestRatesWorkflow();
+    const moneyBoxWorkflow = await readMoneyBoxWorkflow();
+
+    expect(latestWorkflow).toContain('git rebase --abort 2>/dev/null || true');
+    expect(latestWorkflow).toContain('git checkout origin/data -- public/rates/latest.json');
+    expect(moneyBoxWorkflow).toContain('git rebase --abort 2>/dev/null || true');
+    expect(moneyBoxWorkflow).toContain('git checkout origin/data -- public/rates/moneybox.json');
+  });
 });
