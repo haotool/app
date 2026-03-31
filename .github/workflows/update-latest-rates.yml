@@ -153,6 +153,13 @@ jobs:
             fi
           done
 
+      - name: Refresh latest.json from remote data branch
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        run: |
+          git rebase --abort 2>/dev/null || true
+          git fetch origin data
+          git checkout origin/data -- public/rates/latest.json
+
       - name: Update workflow summary (success)
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         run: |
