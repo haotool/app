@@ -1,8 +1,52 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-03-31T23:47:00+08:00
-> **當前總分**: 1198（初始分: 100）
+> **最後更新**: 2026-04-01T01:07:00+08:00
+> **當前總分**: 1199（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: github-actions-schedule-drift-monitor-001
+date: 2026-04-01
+title: 新增 GitHub Actions 排程延遲監測腳本，量化 cron 理論時間與實際 createdAt 漂移
+score: +1
+type: feat
+content_type: automation
+scope: monorepo
+topics: [github-actions, ci, schedule, observability, tdd]
+keywords: [schedule drift, createdAt, cron, gh run list, missed slots, monitor script]
+aliases: [排程延遲監測, GitHub Actions cron 漂移統計]
+related_entries: [splitmeow-tdd-and-actions-schedule-reliability, rates-workflow-summary-cleanup-001]
+summary: 針對 GitHub Actions `schedule` 只提供 best-effort 觸發、無法保證每 5 分鐘準點的現況，新增 repo 內監測腳本，自動掃描有 `schedule` 的 workflow、比對 cron 理論時間與實際 `createdAt`，並統計 drift 秒數與缺漏的 scheduled slots，讓後續 CI/維運判讀不再只看 YAML。
+root_cause:
+
+- 既有 repo 只有 workflow YAML 與人工 `gh run list` 觀察，無法系統化量化「理論應觸發時間」與「實際 run 建立時間」之間的落差
+- GitHub 官方明示 `schedule` 可能延遲甚至掉單，若沒有自動化統計，維運只能憑零散 log 猜測平台行為
+  impact:
+
+- 無法快速判斷特定 workflow 是 cron 配置錯誤、平台延遲，還是有中間 scheduled slots 被跳過
+- reviewer 與維運人員難以用一致格式比較 latest / moneybox 等高頻 workflow 的穩定度
+  actions:
+
+- 新增 `scripts/monitor-schedule-drift.mjs`，自動掃描 `.github/workflows/*.yml` 中的 scheduled workflows
+- 以 TDD 先新增 `scripts/__tests__/monitor-schedule-drift.test.ts`，鎖定 workflow 探測、理論排程時間對位、missed slots 統計
+- 在 root `package.json` 加入 `monitor:schedule-drift` script，方便本地與 CI 直接執行
+  prevention:
+
+- 未來若調整 cron minute lists 或想把監測接進 CI，只需重用同一支腳本與 `--fail-drift-seconds` / `--fail-missed-slots` 門檻，不應再手動比對 run list
+- 對高頻 GitHub Actions workflow，必須同時觀察 `cron` 與 `createdAt`，不能把 YAML 上的 `*/5` 或 minute list 當成實際 SLA
+  verification:
+
+- `pnpm exec vitest run scripts/__tests__/monitor-schedule-drift.test.ts`
+- `pnpm exec node scripts/monitor-schedule-drift.mjs --workflow "Update Latest Exchange Rates" --workflow "Update MoneyBox Exchange Rates" --limit 12`
+- `pnpm run monitor:schedule-drift -- --workflow "Update Latest Exchange Rates" --workflow "Update MoneyBox Exchange Rates" --limit 12`
+  references:
+
+- scripts/monitor-schedule-drift.mjs
+- scripts/**tests**/monitor-schedule-drift.test.ts
+- package.json
+- https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onschedule
+- https://docs.github.com/en/actions/how-tos/troubleshoot-workflows
 
 ---
 

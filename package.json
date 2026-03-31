@@ -41,6 +41,7 @@
     "test:a11y": "pnpm --filter @app/ratewise exec playwright test tests/e2e/accessibility.spec.ts --project=chromium-desktop",
     "seo:test": "pnpm lighthouse && pnpm test:a11y",
     "monitor:history": "node scripts/check-history-manifest.mjs",
+    "monitor:schedule-drift": "node scripts/monitor-schedule-drift.mjs",
     "verify:history": "node scripts/verify-history-data.mjs",
     "verify:precache": "node scripts/verify-precache-assets.mjs",
     "verify:sitemap": "node scripts/verify-sitemap-ssg.mjs",
