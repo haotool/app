@@ -3342,3 +3342,68 @@ root_cause:
 - apps/ratewise/src/config/seo-static.ts
 - apps/ratewise/src/config/seo-metadata.ts
 - apps/ratewise/src/config/**tests**/build-scripts.test.ts
+
+---
+
+id: splitmeow-tdd-and-actions-schedule-reliability
+date: 2026-03-31
+title: 用 TDD 修復 split-meow 焦點與更新提示，並收斂 GitHub Actions 高頻排程診斷
+score: +2
+type: improvement
+content_type: troubleshooting
+scope: split-meow, ratewise, ci
+topics: [tdd, pwa, github-actions, schedule, workflow, diagnostics, split-meow]
+keywords:
+[needRefresh, dismissed, focusedMemberId, moneybox, cron, github-actions, data-branch, diagnostics]
+aliases: [split-meow 焦點與更新提示修復, GitHub Actions 5 分鐘排程診斷]
+related_entries:
+[
+ratewise-health-check-plain-node-ssot-fix,
+ratewise-seo-production-followup-ssot-hardening,
+]
+summary: 針對近一個月 closed PR 的 Codex review 逐條回查後，確認 `split-meow` 還有兩個真實缺陷未修：`useUpdatePrompt` 在使用者 dismiss 離線提示後，不會在後續 `needRefresh=true` 時重新顯示更新提示；`HomeTab` 在 itemized 模式下若目前焦點成員被停用，鍵盤輸入仍可能寫入已停用對象。這次先用紅燈測試鎖定兩個互動問題，再做最小修正讓其轉綠。另在驗證 `4a26af8e` 的 MoneyBox 5 分鐘同步時，發現 workflow 雖成功抓到資料，但因用 `git diff --quiet` 檢查未 tracked 新檔案，導致 `moneybox.json` 第一次建立時被誤判為「無變更」而未 commit；同時 GitHub Actions 的 `*/5` schedule 在實測上並不準時，今天只跑出數次、實際間隔介於約 49 至 205 分鐘。為降低高負載時的延遲 / 掉單風險，將 latest 與 moneybox 兩個高頻 workflow 的 cron 改為錯開且避開整點，並加入 schedule diagnostics 輸出，讓後續可直接從 `gh run view --log` / summary 判讀平台延遲與資料新鮮度。
+root_cause:
+
+- `useUpdatePrompt.ts` 將 `visible` 永久綁在 `dismissed`，但沒有在新的 `needRefresh` 事件發生時重置 `dismissed`。
+- `HomeTab.tsx` 只在 `!focusedMemberId` 時補預設焦點，未處理「目前焦點成員已被停用」的失效狀態。
+- `update-moneybox-rates.yml` 用 `git diff --quiet public/rates/moneybox.json` 判斷變更，對初次建立但尚未 tracked 的檔案會回報無差異，導致 commit/push step 被跳過。
+- GitHub Actions 官方對 `schedule` 只有最佳努力，不保證精準執行；`*/5` 代表最短 5 分鐘頻率，不代表每 5 分鐘一定建立 run，且高負載時可能延遲或直接掉單。
+  impact:
+
+- split-meow 使用者可能看不到待更新提示，或在 itemized 模式對已停用成員誤輸入金額，造成 UI 與儲存結果不一致。
+- MoneyBox workflow 會顯示 success，但實際上 `moneybox.json` 不會進入 `data` branch，jsDelivr 端點持續 404。
+- RateWise / SEO pipeline 會基於過期或缺失的 MoneyBox 資料運作，降低匯率內容新鮮度與可信度。
+- 團隊若誤把 `*/5` 當成 GitHub 的硬 SLA，會低估排程延遲與資料 stale 的營運風險。
+  actions:
+
+- 在 `apps/split-meow/src/hooks/__tests__/useUpdatePrompt.test.ts` 先新增紅燈，要求 dismiss 後在新一輪 `needRefresh` 時必須重新顯示提示；再於 `apps/split-meow/src/hooks/useUpdatePrompt.ts` 加入 `needRefresh` 觸發時的 `dismissed` reset。
+- 在 `apps/split-meow/src/components/__tests__/HomeAndHistorySmoke.test.tsx` 新增紅燈，要求 itemized 模式停用目前焦點成員後，焦點必須自動切回仍有效的成員；再於 `apps/split-meow/src/components/HomeTab.tsx` 將焦點維持邏輯收斂為「只要不是 active member 就自動修正」。
+- 在 `apps/ratewise/src/config/__tests__/build-scripts.test.ts` 先新增紅燈，要求 `update-moneybox-rates.yml` 能偵測未 tracked 的新檔案，且高頻 workflow 不得再用 `*/5`、必須輸出 schedule diagnostics。
+- 將 `.github/workflows/update-moneybox-rates.yml` 的變更判斷改為 `git status --short --untracked-files=all -- public/rates/moneybox.json`，並加入 workflow event / schedule / sha / runner UTC time diagnostics。
+- 將 `.github/workflows/update-latest-rates.yml` 的 `*/5` 改成避開整點的明確 minute list，並加入相同 diagnostics；MoneyBox workflow 另再與 latest workflow 錯開 2 分鐘，減少 shared `data-branch-push` concurrency 的自我碰撞。
+- 用 `gh run list`、`gh run view --log`、`gh api repos/.../actions/workflows/.../runs` 與 live CDN probe 驗證：目前 latest workflow 的 schedule 並不準時，且 MoneyBox run 在修前有「抓到資料但未 commit」的明確證據。
+  prevention:
+
+- 任何使用者可見互動 bug 都應先由回歸測試鎖定，再修改 UI / state 邏輯；尤其是 `dismissed`、focus、active member 這類跨狀態互動。
+- data branch 上的自動產生新檔案，不得用 `git diff --quiet` 當唯一變更判斷；必須能涵蓋 untracked 檔案。
+- 對 GitHub Actions `schedule`，團隊應將其視為 best-effort cron，而非準時任務排程器；高頻任務至少要避開整點、錯開互相競爭的 workflow，並輸出足夠 diagnostics 供 `gh run view --log` 除錯。
+- 若未來真的需要嚴格 5 分鐘甚至 1 分鐘 SLA，應評估改用更適合的 scheduler，而不是繼續假設 GitHub schedule 具備準實時保證。
+  verification:
+
+- `pnpm --filter @app/split-meow test -- --run src/hooks/__tests__/useUpdatePrompt.test.ts src/components/__tests__/HomeAndHistorySmoke.test.tsx`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts`
+- `pnpm --filter @app/split-meow typecheck`
+- `gh run view 23803167543 --log`
+- `gh api 'repos/haotool/app/contents/public/rates?ref=data'`
+- `gh api 'repos/haotool/app/actions/workflows/198992787/runs?per_page=100'`
+- `curl -sL https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json`
+- `curl -sI https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json`
+  references:
+
+- apps/split-meow/src/hooks/useUpdatePrompt.ts
+- apps/split-meow/src/hooks/**tests**/useUpdatePrompt.test.ts
+- apps/split-meow/src/components/HomeTab.tsx
+- apps/split-meow/src/components/**tests**/HomeAndHistorySmoke.test.tsx
+- .github/workflows/update-latest-rates.yml
+- .github/workflows/update-moneybox-rates.yml
+- apps/ratewise/src/config/**tests**/build-scripts.test.ts

@@ -108,9 +108,17 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
   const activeMembers = members.filter((m) => m.isActive);
   const { peekHeight, expandedHeight } = useResponsiveSheetHeight();
 
-  // Set default focused member for itemized mode if none is focused
+  // 個別輸入模式必須始終把焦點維持在有效成員上，避免鍵盤輸入寫入已停用對象。
   useEffect(() => {
-    if (splitMode === 'itemized' && !focusedMemberId && activeMembers.length > 0) {
+    if (splitMode !== 'itemized') return;
+
+    if (activeMembers.length === 0) {
+      if (focusedMemberId) setFocusedMemberId(null);
+      return;
+    }
+
+    const focusedMemberIsActive = activeMembers.some((member) => member.id === focusedMemberId);
+    if (!focusedMemberIsActive) {
       const first = activeMembers[0];
       if (first) setFocusedMemberId(first.id);
     }

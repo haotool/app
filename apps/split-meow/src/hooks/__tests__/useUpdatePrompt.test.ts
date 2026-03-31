@@ -73,6 +73,26 @@ describe('useUpdatePrompt', () => {
     expect(result.current.visible).toBe(false);
   });
 
+  it('dismissed offline-ready prompt should reappear when a new update becomes available', () => {
+    mockOfflineReady = true;
+    const { result, rerender } = renderHook(() => useUpdatePrompt());
+
+    expect(result.current.visible).toBe(true);
+
+    act(() => {
+      result.current.handleDismiss();
+    });
+
+    expect(result.current.visible).toBe(false);
+
+    mockOfflineReady = false;
+    mockNeedRefresh = true;
+    rerender();
+
+    expect(result.current.needRefresh).toBe(true);
+    expect(result.current.visible).toBe(true);
+  });
+
   it('handleUpdate calls updateServiceWorker with true', () => {
     mockNeedRefresh = true;
     const { result } = renderHook(() => useUpdatePrompt());

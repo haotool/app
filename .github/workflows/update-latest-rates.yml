@@ -13,7 +13,8 @@ concurrency:
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    # GitHub 官方不保證 schedule 準點執行；避開整點可降低高負載延遲 / 掉單機率。
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
   workflow_dispatch:
   # 腳本變更時觸發測試
   push:
@@ -53,6 +54,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+
+      - name: Log schedule diagnostics
+        env:
+          WORKFLOW_EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_SCHEDULE: ${{ github.event.schedule }}
+          WORKFLOW_RUN_ATTEMPT: ${{ github.run_attempt }}
+          WORKFLOW_REF: ${{ github.ref }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          echo "🕒 Workflow event: ${WORKFLOW_EVENT_NAME}"
+          echo "🕒 Workflow schedule: ${WORKFLOW_SCHEDULE:-n/a}"
+          echo "🕒 Workflow ref: ${WORKFLOW_REF}"
+          echo "🕒 Workflow sha: ${WORKFLOW_SHA}"
+          echo "🕒 Workflow run attempt: ${WORKFLOW_RUN_ATTEMPT}"
+          echo "🕒 Runner time UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
       - name: Fetch Taiwan Bank exchange rates
         id: fetch-rates
@@ -144,6 +160,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📊 Update Information" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** \`data\` (isolated from main)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow schedule:** ${{ github.event.schedule || 'manual/push' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner time (UTC):** $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_STEP_SUMMARY
           echo "- **Currencies Updated:** $(node -p "Object.keys(JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates).length")" >> $GITHUB_STEP_SUMMARY
           echo "- **Update Time:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).updateTime")" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
