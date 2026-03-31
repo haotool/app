@@ -13,7 +13,8 @@ concurrency:
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    # 與台銀 latest workflow 錯開 2 分鐘，降低 GitHub schedule 高峰與同 repo concurrency 衝突。
+    - cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'
   workflow_dispatch:
   # 腳本變更時觸發測試
   push:
@@ -54,6 +55,21 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Log schedule diagnostics
+        env:
+          WORKFLOW_EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_SCHEDULE: ${{ github.event.schedule }}
+          WORKFLOW_RUN_ATTEMPT: ${{ github.run_attempt }}
+          WORKFLOW_REF: ${{ github.ref }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          echo "🕒 Workflow event: ${WORKFLOW_EVENT_NAME}"
+          echo "🕒 Workflow schedule: ${WORKFLOW_SCHEDULE:-n/a}"
+          echo "🕒 Workflow ref: ${WORKFLOW_REF}"
+          echo "🕒 Workflow sha: ${WORKFLOW_SHA}"
+          echo "🕒 Workflow run attempt: ${WORKFLOW_RUN_ATTEMPT}"
+          echo "🕒 Runner time UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
       - name: Fetch MoneyBox exchange rates
         id: fetch-rates
         continue-on-error: true
@@ -65,7 +81,9 @@ jobs:
         id: git-check
         if: steps.fetch-rates.outcome == 'success'
         run: |
-          git diff --quiet public/rates/moneybox.json || echo "changed=true" >> $GITHUB_OUTPUT
+          if [[ -n "$(git status --short --untracked-files=all -- public/rates/moneybox.json)" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Commit and push changes
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
@@ -142,6 +160,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📊 Update Information" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** \`data\` (isolated from main)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow schedule:** ${{ github.event.schedule || 'manual/push' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner time (UTC):** $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_STEP_SUMMARY
           echo "- **TWD Sell Rate:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.sell") KRW/TWD" >> $GITHUB_STEP_SUMMARY
           echo "- **TWD Buy Rate:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.buy") KRW/TWD" >> $GITHUB_STEP_SUMMARY
           echo "- **Update Time (Seoul):** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).updateTime")" >> $GITHUB_STEP_SUMMARY

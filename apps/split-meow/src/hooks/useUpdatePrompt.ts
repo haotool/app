@@ -25,8 +25,9 @@ export function useUpdatePrompt(): UpdatePromptState {
   });
 
   const visible = useMemo(() => {
+    if (needRefresh) return true;
     if (dismissed) return false;
-    return offlineReady || needRefresh;
+    return offlineReady;
   }, [dismissed, offlineReady, needRefresh]);
 
   const handleUpdate = () => {

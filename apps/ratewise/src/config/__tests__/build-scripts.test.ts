@@ -49,6 +49,22 @@ async function readHealthCheckScript() {
   return readFile(healthCheckPath, 'utf-8');
 }
 
+async function readMoneyBoxWorkflow() {
+  const workflowPath = path.resolve(
+    __dirname,
+    '../../../../../.github/workflows/update-moneybox-rates.yml',
+  );
+  return readFile(workflowPath, 'utf-8');
+}
+
+async function readLatestRatesWorkflow() {
+  const workflowPath = path.resolve(
+    __dirname,
+    '../../../../../.github/workflows/update-latest-rates.yml',
+  );
+  return readFile(workflowPath, 'utf-8');
+}
+
 async function readRatingSnapshotGenerator() {
   const ratingSnapshotGeneratorPath = path.resolve(
     __dirname,
@@ -254,5 +270,29 @@ describe('ratewise build scripts', () => {
     expect(pairAmountSeoHook).toContain('buildPairAmountSeo');
     expect(pairAmountSeoHook).not.toContain('台幣換 ${formatted}');
     expect(pairAmountSeoHook).not.toContain('今日可換多少');
+  });
+
+  it('should detect newly created moneybox.json files in the 5-minute workflow instead of relying on git diff for tracked files only', async () => {
+    const workflowSource = await readMoneyBoxWorkflow();
+
+    expect(workflowSource).toContain('public/rates/moneybox.json');
+    expect(workflowSource).not.toContain('git diff --quiet public/rates/moneybox.json');
+    expect(workflowSource).toContain(
+      'git status --short --untracked-files=all -- public/rates/moneybox.json',
+    );
+  });
+
+  it('should stagger the 5-minute rate workflows away from the top of the hour and emit schedule diagnostics for log triage', async () => {
+    const latestWorkflow = await readLatestRatesWorkflow();
+    const moneyBoxWorkflow = await readMoneyBoxWorkflow();
+
+    expect(latestWorkflow).not.toContain("cron: '*/5 * * * *'");
+    expect(moneyBoxWorkflow).not.toContain("cron: '*/5 * * * *'");
+    expect(latestWorkflow).toContain("cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'");
+    expect(moneyBoxWorkflow).toContain("cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'");
+    expect(latestWorkflow).toContain('Workflow event:');
+    expect(latestWorkflow).toContain('Workflow schedule:');
+    expect(moneyBoxWorkflow).toContain('Workflow event:');
+    expect(moneyBoxWorkflow).toContain('Workflow schedule:');
   });
 });

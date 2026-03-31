@@ -6,6 +6,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import { type ReactNode } from 'react';
+import { act } from 'react';
 import i18n from '../../i18n';
 import { useStore } from '../../store/useStore';
 import { HomeTab } from '../HomeTab';
@@ -73,6 +74,22 @@ describe('HomeTab', () => {
     useStore.setState({ splitMode: 'itemized', itemizedValues: { me: '100', m1: '200' } });
     const { container } = renderWith(<HomeTab />);
     expect(container).toBeTruthy();
+  });
+
+  it('itemized 模式停用目前焦點成員後會自動切換到仍有效的成員', () => {
+    useStore.setState({
+      splitMode: 'itemized',
+      focusedMemberId: 'm1',
+      itemizedValues: { me: '100', m1: '200' },
+    });
+    renderWith(<HomeTab />);
+
+    act(() => {
+      useStore.getState().toggleMemberActive('m1');
+    });
+
+    expect(useStore.getState().members.find((member) => member.id === 'm1')?.isActive).toBe(false);
+    expect(useStore.getState().focusedMemberId).toBe('me');
   });
 });
 
