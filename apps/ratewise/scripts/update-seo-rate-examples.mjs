@@ -48,14 +48,16 @@ const EXAMPLE_TWD = 30000;
 const DUAL_VERIFY_WARN_PCT = 2.0;
 
 /**
- * 明洞換匯所（MoneyBox）TWD→KRW 匯率靜態後備值。
+ * 明洞換匯所（MoneyBox）TWD↔KRW 匯率靜態後備值。
  * 每日 CI 嘗試從 MoneyBox 取得最新匯率，失敗時用此值。
- * 單位：1 TWD 可換多少 KRW（買入方向）。
+ * rate：1 TWD 可換多少 KRW（sell 方向，旅客持 TWD 換 KRW）。
+ * rateBuy：換匯所買入 KRW 的匯率（旅客持 KRW 換 TWD，每 rateBuy KRW = 1 TWD）。
  */
 const MONEYBOX_FALLBACK = {
   name: '明洞換匯所',
   nameEn: 'Myeongdong Exchange',
   rate: 46.0,
+  rateBuy: 46.7,
   source: 'MoneyBox',
   sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
   note: '適用：現場持 TWD 現金換 KRW，需親自前往',
@@ -87,12 +89,13 @@ function fmt(n) {
 }
 
 /**
- * 從 CDN 取得 MoneyBox 最新 TWD→KRW 匯率。
+ * 從 CDN 取得 MoneyBox 最新 TWD↔KRW 雙向匯率。
  * 資料由 GitHub Actions update-moneybox-rates.yml 每5分鐘更新至 data 分支。
  * CDN URL: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json
  *
- * 回傳 sell 欄位：換匯所「賣出 KRW」給旅客的匯率，即旅客持 TWD 現金換 KRW 的實際到手數。
- * 成功時回傳匯率數字（1 TWD = N KRW），失敗時回傳 null（觸發後備值）。
+ * sell：換匯所「賣出 KRW」給旅客（旅客持 TWD 換 KRW）的到手匯率。
+ * buy：換匯所「買入 KRW」（旅客持 KRW 換 TWD）的匯率，即每 N KRW = 1 TWD。
+ * 成功時回傳 { sell, buy }，失敗時回傳 null（觸發後備值）。
  */
 async function fetchMoneyBoxKrwRate() {
   try {
@@ -103,16 +106,19 @@ async function fetchMoneyBoxKrwRate() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // data.rates.TWD.sell = 旅客持 TWD 換 KRW 的到手匯率（換匯所賣出 KRW）
-    const rate = data?.rates?.TWD?.sell;
+    const sell = data?.rates?.TWD?.sell;
+    const buy = data?.rates?.TWD?.buy;
 
-    if (rate && typeof rate === 'number' && rate > 30 && rate < 100) {
+    const sellValid = sell && typeof sell === 'number' && sell > 30 && sell < 100;
+    const buyValid = buy && typeof buy === 'number' && buy > 30 && buy < 100;
+
+    if (sellValid) {
       console.log(
-        `[MoneyBox CDN] 成功取得 TWD→KRW 匯率：${rate} KRW/TWD（更新時間：${data.updateTime}）`,
+        `[MoneyBox CDN] 成功取得 TWD↔KRW 匯率：sell=${sell}, buy=${buyValid ? buy : '無效'}（更新時間：${data.updateTime}）`,
       );
-      return rate;
+      return { sell, buy: buyValid ? buy : null };
     }
-    console.warn(`[MoneyBox CDN] 回應格式不符，使用後備值。rates.TWD.sell=${rate}`);
+    console.warn(`[MoneyBox CDN] 回應格式不符，使用後備值。rates.TWD.sell=${sell}`);
     return null;
   } catch (e) {
     console.warn(
@@ -154,12 +160,15 @@ async function main() {
   console.log(`台灣銀行牌告時間：${updateTime}`);
   console.log(`open.er-api.com 更新時間：${erData.time_last_update_utc ?? 'unknown'}\n`);
 
-  // 嘗試取得 MoneyBox 最新 TWD→KRW 匯率（優雅降級：失敗用後備值）。
-  const moneyBoxRate = await fetchMoneyBoxKrwRate();
+  // 嘗試取得 MoneyBox 最新 TWD↔KRW 雙向匯率（優雅降級：失敗用後備值）。
+  const moneyBoxRates = await fetchMoneyBoxKrwRate();
+  const sell = moneyBoxRates?.sell ?? MONEYBOX_FALLBACK.rate;
+  const buy = moneyBoxRates?.buy ?? MONEYBOX_FALLBACK.rateBuy;
   const moneyBoxProvider = {
     ...MONEYBOX_FALLBACK,
-    rate: moneyBoxRate ?? MONEYBOX_FALLBACK.rate,
-    rateInverse: +(1 / (moneyBoxRate ?? MONEYBOX_FALLBACK.rate)).toFixed(6),
+    rate: sell,
+    rateBuy: buy,
+    rateInverse: +(1 / sell).toFixed(6),
     rateDate: new Date().toISOString().slice(0, 10),
   };
 
@@ -285,8 +294,10 @@ async function main() {
     `  nameEn: string;`,
     `  /** 匯率：1 TWD 可換得多少外幣（以 KRW 為例：46.0 表示 1 TWD = 46 KRW） */`,
     `  rate: number;`,
-    `  /** 反向匯率：1 單位外幣 = N TWD */`,
+    `  /** 反向匯率：1 單位外幣 = N TWD（= 1/rate，計算值，非換匯所實際買入報價） */`,
     `  rateInverse: number;`,
+    `  /** 換匯所實際買入報價：持外幣換 TWD 的到手匯率（KRW→TWD 方向使用此欄位） */`,
+    `  rateBuy?: number;`,
     `  /** 資料來源名稱 */`,
     `  source: string;`,
     `  /** 資料來源 URL */`,
@@ -346,6 +357,7 @@ async function main() {
       lines.push(`        name: '${p.name}',`);
       lines.push(`        nameEn: '${p.nameEn}',`);
       lines.push(`        rate: ${p.rate},`);
+      lines.push(`        rateBuy: ${p.rateBuy},`);
       lines.push(`        rateInverse: ${p.rateInverse},`);
       lines.push(`        source: '${p.source}',`);
       lines.push(`        sourceUrl: '${p.sourceUrl}',`);

@@ -411,8 +411,16 @@ export function CurrencyLandingPage({
                   </div>
                   {/* 替代換匯管道欄 */}
                   {alternativeProviders.map((provider) => {
-                    const providerKRW = rateExample
-                      ? Math.floor(rateExample.exampleTWD * provider.rate)
+                    // TWD→KRW: 使用 sell 率（provider.rate），KRW→TWD: 使用 buy 率（provider.rateBuy）
+                    // 兩者單位均為 KRW/TWD（46.0 = 1 TWD 換 46 KRW；46.7 = 需 46.7 KRW 換 1 TWD）
+                    const displayRate = isTwdToForeign
+                      ? provider.rate
+                      : (provider.rateBuy ?? provider.rate);
+                    const rateLabel = 'KRW / TWD';
+                    const exampleAmount = rateExample
+                      ? isTwdToForeign
+                        ? Math.floor(rateExample.exampleTWD * displayRate)
+                        : null // KRW→TWD 方向不顯示台幣換算範例
                       : null;
                     return (
                       <div
@@ -423,13 +431,13 @@ export function CurrencyLandingPage({
                           {provider.name}
                         </div>
                         <div className="text-lg font-black text-green-700 dark:text-green-400">
-                          {provider.rate.toFixed(2)}{' '}
-                          <span className="text-xs font-normal text-text-muted">KRW / TWD</span>
+                          {displayRate.toFixed(2)}{' '}
+                          <span className="text-xs font-normal text-text-muted">{rateLabel}</span>
                         </div>
-                        {providerKRW !== null && rateExample && (
+                        {exampleAmount !== null && rateExample && (
                           <div className="text-xs text-text-muted mt-1">
                             {rateExample.exampleTWD.toLocaleString()} TWD ≈{' '}
-                            {providerKRW.toLocaleString()} KRW
+                            {exampleAmount.toLocaleString()} KRW
                           </div>
                         )}
                         <div className="text-[10px] text-text-muted mt-2">

@@ -29,6 +29,7 @@ const mockProvider: AlternativeProvider = {
   name: '明洞換匯所',
   nameEn: 'Myeongdong Exchange',
   rate: 46.0,
+  rateBuy: 46.7,
   rateInverse: 0.02174,
   source: 'MoneyBox',
   sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
@@ -90,5 +91,51 @@ describe('CurrencyLandingPage ProviderComparisonCard', () => {
     renderPage({ alternativeProviders: [mockProvider] });
     // 應顯示日期資訊
     expect(screen.getByText(/2026-03-31|2026\/03\/31/)).toBeInTheDocument();
+  });
+});
+
+describe('ProviderComparisonCard 雙向匯率顯示', () => {
+  it('twd-to-foreign 方向應顯示 sell 率（provider.rate = 46.00）', () => {
+    renderPage({
+      direction: 'twd-to-foreign',
+      alternativeProviders: [mockProvider],
+    });
+    const card = screen.getByTestId('provider-comparison-card');
+    expect(card).toHaveTextContent('46.00');
+  });
+
+  it('to-twd 方向應顯示 buy 率（provider.rateBuy = 46.70）', () => {
+    renderPage({
+      direction: 'to-twd',
+      alternativeProviders: [mockProvider],
+    });
+    const card = screen.getByTestId('provider-comparison-card');
+    expect(card).toHaveTextContent('46.70');
+  });
+
+  it('to-twd 方向不應顯示 sell 率（46.00）', () => {
+    renderPage({
+      direction: 'to-twd',
+      alternativeProviders: [mockProvider],
+    });
+    const card = screen.getByTestId('provider-comparison-card');
+    // sell 率 46.00 不應出現在明洞換匯所欄（台銀欄的 1/cashSell 可能碰巧是 46.xx，但 46.00 精確值不會出現）
+    const providerCell = card.querySelector('.bg-green-50, .bg-green-950\\/20');
+    expect(providerCell?.textContent).not.toContain('46.00');
+  });
+
+  it('兩個方向的比較卡片標籤均應為 KRW / TWD', () => {
+    const { unmount } = renderPage({
+      direction: 'twd-to-foreign',
+      alternativeProviders: [mockProvider],
+    });
+    expect(screen.getByTestId('provider-comparison-card')).toHaveTextContent('KRW / TWD');
+    unmount();
+
+    renderPage({
+      direction: 'to-twd',
+      alternativeProviders: [mockProvider],
+    });
+    expect(screen.getByTestId('provider-comparison-card')).toHaveTextContent('KRW / TWD');
   });
 });

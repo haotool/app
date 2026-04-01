@@ -20,8 +20,11 @@ export interface AlternativeProvider {
   nameEn: string;
   /** 匯率：1 TWD 可換得多少外幣（以 KRW 為例：46.0 表示 1 TWD = 46 KRW） */
   rate: number;
-  /** 反向匯率：1 單位外幣 = N TWD */
+  /** 反向匯率：1 單位外幣 = N TWD（= 1/rate，計算值，非換匯所實際買入報價） */
   rateInverse: number;
+  /** 換匯所實際買入報價：持外幣換 TWD 的到手匯率（1 KRW 可換 N TWD）。
+   * 例：MoneyBox buy=46.7 表示旅客持 1 TWD 現金可兌 46.7 KRW（KRW→TWD 方向使用此欄位） */
+  rateBuy?: number;
   /** 資料來源名稱 */
   source: string;
   /** 資料來源 URL */
@@ -135,6 +138,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
         name: '明洞換匯所',
         nameEn: 'Myeongdong Exchange',
         rate: 46.5,
+        rateBuy: 46.7,
         rateInverse: 0.021505,
         source: 'MoneyBox',
         sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',

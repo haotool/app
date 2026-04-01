@@ -26,6 +26,25 @@ describe('AlternativeProvider interface', () => {
     expect(typeof provider!.note).toBe('string');
   });
 
+  it('明洞換匯所應有 rateBuy 欄位（KRW→TWD 方向的實際 buy 率）', () => {
+    const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
+    expect(provider.rateBuy).toBeDefined();
+    expect(typeof provider.rateBuy).toBe('number');
+    expect(provider.rateBuy!).toBeGreaterThan(0);
+  });
+
+  it('rateBuy 應大於 rate（換匯所買入 KRW 的門檻比賣出寬鬆）', () => {
+    const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
+    // sell=46.0（旅客持 TWD 換 KRW 得 46）; buy=46.7（旅客持 KRW 換 TWD 需付 46.7）
+    expect(provider.rateBuy!).toBeGreaterThan(provider.rate);
+  });
+
+  it('rateBuy 應與 rateInverse 不同（rateBuy 是實際 buy 報價，rateInverse 是 1/sell 計算值）', () => {
+    const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
+    // rateInverse = 1/sell ≈ 0.02174（TWD/KRW），rateBuy = 46.7（KRW/TWD），單位不同
+    expect(provider.rateBuy!).not.toBeCloseTo(provider.rateInverse, 3);
+  });
+
   it('rate 與 rateInverse 應互為倒數（誤差 < 0.5%）', () => {
     const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
     const product = provider.rate * provider.rateInverse;
