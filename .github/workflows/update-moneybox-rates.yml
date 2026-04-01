@@ -95,6 +95,7 @@ jobs:
           # 取得更新資訊
           UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).updateTime")
           TWD_SELL=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.sell")
+          TWD_BUY=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.buy")
 
           # 檢查上一個 commit 是否也是 MoneyBox 匯率更新
           LAST_COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
@@ -103,6 +104,7 @@ jobs:
             echo "📝 Amending previous commit on data branch..."
             git commit --amend --reset-author -m "chore(rates): update moneybox rates - ${UPDATE_TIME}" \
               -m "TWD sell: ${TWD_SELL} KRW/TWD (旅客持台幣現金換韓元到手匯率)" \
+              -m "TWD buy: ${TWD_BUY} KRW/TWD (旅客持韓元換台幣到手匯率)" \
               -m "🤖 Auto-updated every 5 minutes" \
               -m "Source: https://cems.moneybox.or.kr/"
 
@@ -112,6 +114,7 @@ jobs:
             echo "📝 Creating new commit on data branch..."
             git commit -m "chore(rates): update moneybox rates - ${UPDATE_TIME}" \
               -m "TWD sell: ${TWD_SELL} KRW/TWD (旅客持台幣現金換韓元到手匯率)" \
+              -m "TWD buy: ${TWD_BUY} KRW/TWD (旅客持韓元換台幣到手匯率)" \
               -m "🤖 Auto-updated every 5 minutes" \
               -m "Source: https://cems.moneybox.or.kr/"
 

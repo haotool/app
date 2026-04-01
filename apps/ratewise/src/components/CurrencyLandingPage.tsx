@@ -65,6 +65,18 @@ export function CurrencyLandingPage({
   // 靜態匯率（SSG 預渲染用）：供爬蟲在 ?amount= 頁讀取換算結果。
   const rateExample = SEO_RATE_EXAMPLES[currencyCode];
   const cashSell = rateExample?.cashSell ?? null;
+  // KRW→TWD 方向台銀比較：估算現金買入率（= 2×bankMid - cashSell）倒數，即 KRW/TWD
+  const taiwanBankKrwPerTwd = isTwdToForeign
+    ? cashSell !== null
+      ? 1 / cashSell
+      : null
+    : (() => {
+        const bankMid = rateExample?.bankMid ?? null;
+        const cs = rateExample?.cashSell ?? null;
+        if (bankMid === null || cs === null) return null;
+        const cashBuy = 2 * bankMid - cs;
+        return cashBuy > 0 ? 1 / cashBuy : null;
+      })();
 
   // 計算換算結果：to-twd = amount * cashSell；twd-to-foreign = amount / cashSell。
   const amountResult =
@@ -395,18 +407,19 @@ export function CurrencyLandingPage({
                   台銀 vs 現場換匯所比較
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                  {/* 臺灣銀行欄 */}
+                  {/* 臺灣銀行欄：TWD→KRW 顯示現金賣出；KRW→TWD 顯示估算買入率 */}
                   <div className="rounded-xl bg-surface border border-border p-3">
                     <div className="text-xs font-bold text-text-muted mb-1">
-                      臺灣銀行（現金賣出）
+                      {isTwdToForeign ? '臺灣銀行（現金賣出）' : '臺灣銀行（現金買入估算）'}
                     </div>
                     <div className="text-lg font-black text-text">
-                      {(1 / (rateExample?.cashSell ?? 1)).toFixed(2)}{' '}
+                      {taiwanBankKrwPerTwd !== null ? taiwanBankKrwPerTwd.toFixed(2) : '—'}{' '}
                       <span className="text-xs font-normal text-text-muted">KRW / TWD</span>
                     </div>
                     <div className="text-xs text-text-muted mt-1">
-                      {rateExample?.exampleTWD.toLocaleString()} TWD ≈{' '}
-                      {rateExample?.foreignAtCash.toLocaleString()} KRW
+                      {isTwdToForeign
+                        ? `${rateExample?.exampleTWD.toLocaleString()} TWD ≈ ${rateExample?.foreignAtCash.toLocaleString()} KRW`
+                        : '估算值；以台銀牌告現金買入率為準'}
                     </div>
                   </div>
                   {/* 替代換匯管道欄 */}
@@ -448,7 +461,9 @@ export function CurrencyLandingPage({
                   })}
                 </div>
                 <p className="text-[10px] text-text-muted leading-relaxed">
-                  {alternativeProviders[0]?.note}
+                  {isTwdToForeign
+                    ? alternativeProviders[0]?.note
+                    : `${alternativeProviders[0]?.name ?? '明洞換匯所'}亦提供韓元換台幣服務，現場持韓元現鈔可直接兌換。買入估算匯率，實際以換匯所現場報價為準。`}
                 </p>
               </div>
             </section>

@@ -437,17 +437,33 @@ export function buildArticleJsonLd(
 /**
  * 生成替代換匯管道比較 FAQ 條目。
  * 若該幣別無 alternativeProviders，回傳空陣列。
+ * @param direction 換匯方向：'twd-to-foreign'（預設，出境換外幣）或 'to-twd'（入境換回台幣）
  */
-export function buildAlternativeProviderFaq(_code: string, example: RateExample): FAQEntry[] {
+export function buildAlternativeProviderFaq(
+  _code: string,
+  example: RateExample,
+  direction: 'to-twd' | 'twd-to-foreign' = 'twd-to-foreign',
+): FAQEntry[] {
   if (!example.alternativeProviders?.length) return [];
 
   return example.alternativeProviders.map((provider) => {
+    if (direction === 'to-twd') {
+      // KRW→TWD 方向：旅客返台前在明洞換回台幣（使用 rateBuy）
+      const exampleKRW = 1_000_000;
+      const rateBuy = provider.rateBuy ?? provider.rate;
+      const providerTWD = Math.floor(exampleKRW / rateBuy);
+      return {
+        question: `帶韓元回台灣，可以在${provider.name}先換好台幣嗎？`,
+        answer: `${provider.name}（${provider.nameEn}）同時提供韓元換台幣的現場換匯服務。以 ${exampleKRW.toLocaleString()} 韓元為例，現場換匯約可換 ${providerTWD.toLocaleString()} 台幣（匯率 ${rateBuy.toFixed(1)} KRW/TWD）。返台前在首爾兌換通常比回台灣再換更划算，需現場持韓元現鈔親自前往（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
+      };
+    }
+
+    // twd-to-foreign 方向：出境前換韓元（使用 rate，即 sell 率）
     const exampleTWD = example.exampleTWD;
     const taiwanBankKRW = example.foreignAtCash;
     const providerKRW = Math.floor(exampleTWD * provider.rate);
     const diffKRW = providerKRW - taiwanBankKRW;
     const diffPct = ((diffKRW / taiwanBankKRW) * 100).toFixed(1);
-
     return {
       question: `去首爾前，換韓元可以去${provider.name}嗎？比台銀划算多少？`,
       answer: `${provider.name}（${provider.nameEn}）提供現場現金換匯服務。以 ${exampleTWD.toLocaleString()} 元新台幣為例：台銀現金賣出約可換 ${taiwanBankKRW.toLocaleString()} 韓元，而在明洞現場換匯約可換 ${providerKRW.toLocaleString()} 韓元，多換約 ${diffKRW.toLocaleString()} 韓元（約多 ${diffPct}%）。需注意需現場親自前往，建議出發前確認最新匯率（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
@@ -1615,7 +1631,12 @@ export function getCurrencyLandingPageContent(
         answer: `不一樣。出國刷卡使用的是發卡組織（Visa、Mastercard）的清算匯率，再加上發卡銀行的海外交易手續費（通常 1.5%），與臺灣銀行牌告匯率是不同體系。本工具顯示的台銀牌告匯率適用於臨櫃換鈔或外幣帳戶匯款，不代表你出國刷卡時的實際扣款匯率。若出國以刷卡為主，建議另行查詢發卡銀行的海外手續費規定。`,
       },
       // 替代換匯管道 FAQ（如明洞換匯所），僅有 alternativeProviders 的幣別（KRW）會產生條目
-      ...buildAlternativeProviderFaq(code, SEO_RATE_EXAMPLES[code] ?? ({} as RateExample)),
+      // /krw-twd/ 頁方向為 to-twd（旅客持 KRW 換 TWD），使用 rateBuy 版本 FAQ
+      ...buildAlternativeProviderFaq(
+        code,
+        SEO_RATE_EXAMPLES[code] ?? ({} as RateExample),
+        'to-twd',
+      ),
     ],
     howToSteps: [
       {
@@ -1889,6 +1910,13 @@ export function getReverseCurrencyLandingPageContent(
         question: `${override.travelTip}（如何善用 RateWise？）`,
         answer: `出發前使用快速金額按鈕（${override.popularTwdAmounts.slice(0, 3).map(formatAmount).join('、')} 台幣等常用金額）估算所需${displayName}，並查看 7～30 天趨勢選擇較有利換匯時機。`,
       },
+      // 替代換匯管道 FAQ（如明洞換匯所），僅 KRW 等有 alternativeProviders 的幣別會產生條目
+      // /twd-krw/ 頁方向為 twd-to-foreign（旅客持 TWD 換 KRW），使用 rate（sell 率）版本 FAQ
+      ...buildAlternativeProviderFaq(
+        code,
+        SEO_RATE_EXAMPLES[code] ?? ({} as RateExample),
+        'twd-to-foreign',
+      ),
     ],
     howToSteps: [
       {
