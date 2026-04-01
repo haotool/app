@@ -1,5 +1,24 @@
 # @app/ratewise
 
+## 2.17.0
+
+### Minor Changes
+
+- 744ba8b: - 韓元（KRW）頁面新增明洞換匯所（MoneyBox）現場匯率比較卡片，顯示台銀 vs 明洞換匯所差距
+  - 引入 AlternativeProvider 介面，支援未來多換匯管道擴充（VND/THB 等）
+  - update-seo-rate-examples.mjs 每日自動嘗試從 MoneyBox 取得最新匯率，失敗時優雅降級
+  - buildAlternativeProviderFaq() 自動為有替代管道的幣別生成 FAQ SEO 文案
+  - CurrencyLandingPage 新增 alternativeProviders prop，條件渲染 ProviderComparisonCard
+- 185a501: 明洞換匯所新增雙向匯率顯示（sell/buy）
+
+  KRW 比較卡片現在依頁面方向顯示正確匯率：台幣換韓元頁（/twd-krw/）顯示 sell 率，韓元換台幣頁（/krw-twd/）顯示 buy 率，解決原先 to-twd 方向顯示錯誤匯率與錯誤單位標籤的問題。
+
+### Patch Changes
+
+- 2ecbc62: - 修正 SEO CI 健康檢查對暫時性 502/5xx 錯誤缺乏重試機制，導致虛假失敗
+  - SeoTech 頁面 JSON-LD 種數與 HowTo 步驟數改從 SSOT 計算，消除硬編碼
+- 611b90b: 新增 GitHub Actions 排程延遲監測腳本，可自動比較 cron 理論時間與實際 workflow `createdAt`，統計 drift 與缺漏的 scheduled slots，方便持續追蹤高頻匯率 workflow 的穩定度。
+
 ## 2.16.5
 
 ### Patch Changes
