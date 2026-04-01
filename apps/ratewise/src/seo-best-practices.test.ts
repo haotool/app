@@ -6,6 +6,12 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import {
+  APP_ONLY_NOINDEX_PATHS,
+  DEV_ONLY_PATHS,
+  REVERSE_CURRENCY_SEO_PATHS,
+  SEO_PATHS,
+} from './config/seo-paths';
 
 const ROOT_PATH = resolve(__dirname, '..');
 const PUBLIC_PATH = resolve(ROOT_PATH, 'public');
@@ -171,6 +177,18 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(robotsContent).toMatch(/User-agent: facebookexternalhit[\s\S]*?Allow: \//);
       expect(robotsContent).toMatch(/User-agent: Twitterbot[\s\S]*?Allow: \//);
     });
+
+    it('should disallow all DEV_ONLY_PATHS', () => {
+      for (const path of DEV_ONLY_PATHS) {
+        expect(robotsContent).toContain(`Disallow: /ratewise${path}`);
+      }
+    });
+
+    it('should keep APP_ONLY_NOINDEX_PATHS crawlable for noindex handling', () => {
+      for (const path of APP_ONLY_NOINDEX_PATHS) {
+        expect(robotsContent).not.toContain(`Disallow: /ratewise${path}`);
+      }
+    });
   });
 
   describe('🗺️ sitemap.xml - Search Engine Optimization', () => {
@@ -240,6 +258,28 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       ];
       for (const currency of currencies) {
         expect(sitemapContent).toContain(`/${currency}-twd/</loc>`);
+      }
+    });
+
+    it('should include all reverse currency landing pages', () => {
+      for (const path of REVERSE_CURRENCY_SEO_PATHS) {
+        expect(sitemapContent).toContain(`/ratewise${path}</loc>`);
+      }
+    });
+
+    it('should keep sitemap URL count aligned with SEO_PATHS SSOT', () => {
+      const locCount = (sitemapContent.match(/<loc>/g) ?? []).length;
+      expect(locCount).toBe(SEO_PATHS.length);
+    });
+
+    it('should include representative amount landing pages', () => {
+      expect(sitemapContent).toContain('/ratewise/usd-twd/500/</loc>');
+      expect(sitemapContent).toContain('/ratewise/twd-usd/10000/</loc>');
+    });
+
+    it('should exclude APP_ONLY_NOINDEX_PATHS from sitemap', () => {
+      for (const path of APP_ONLY_NOINDEX_PATHS) {
+        expect(sitemapContent).not.toContain(`/ratewise${path}</loc>`);
       }
     });
   });

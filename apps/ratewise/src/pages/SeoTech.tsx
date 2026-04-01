@@ -286,7 +286,11 @@ const PATH_CATEGORIES = [
 // ─── 建置腳本 ──────────────────────────────────────────────────────────────────
 
 const BUILD_SCRIPTS = [
-  { name: 'generate-sitemap.mjs', output: 'sitemap.xml', desc: '42 個 SEO URL + lastmod' },
+  {
+    name: 'generate-sitemap.mjs',
+    output: 'sitemap.xml',
+    desc: '248 個 SEO URL（含金額頁）+ lastmod',
+  },
   { name: 'generate-robots-txt.mjs', output: 'robots.txt', desc: 'Crawl 規則 + Sitemap 連結' },
   { name: 'generate-llms-txt.mjs', output: 'llms.txt', desc: 'AI 爬蟲友善純文字索引' },
   { name: 'generate-llms-full-txt.mjs', output: 'llms-full.txt', desc: '完整頁面內容快照' },

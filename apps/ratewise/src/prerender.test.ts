@@ -4,6 +4,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { APP_ONLY_NOINDEX_PATHS } from './config/seo-paths';
 
 const distPath = resolve(__dirname, '../dist');
 const projectRoot = resolve(__dirname, '..');
@@ -392,6 +393,40 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
 
       const content = readFileSync(usdAmountHtml, 'utf-8');
       expect(content).not.toMatch(/<meta[^>]*name="keywords"/);
+    });
+  });
+
+  describe('🟢 noindex 功能頁 prerender 驗證', () => {
+    const sitemapPath = resolve(projectRoot, 'public/sitemap.xml');
+
+    it.each(APP_ONLY_NOINDEX_PATHS)(
+      '%s should include robots noindex in prerendered HTML',
+      (path) => {
+        const htmlPath = resolve(distPath, path.slice(1), 'index.html');
+        if (!existsSync(htmlPath)) return;
+
+        const content = readFileSync(htmlPath, 'utf-8');
+        expect(content).toMatch(/name="robots"[^>]*content="noindex/);
+      },
+    );
+
+    it.each(APP_ONLY_NOINDEX_PATHS)('%s should use self canonical URL', (path) => {
+      const htmlPath = resolve(distPath, path.slice(1), 'index.html');
+      if (!existsSync(htmlPath)) return;
+
+      const content = readFileSync(htmlPath, 'utf-8');
+      expect(content).toMatch(
+        new RegExp(
+          `<link[^>]*rel="canonical"[^>]*href="https://app\\.haotool\\.org/ratewise${path}"`,
+        ),
+      );
+    });
+
+    it.each(APP_ONLY_NOINDEX_PATHS)('%s should stay out of sitemap.xml', (path) => {
+      if (!existsSync(sitemapPath)) return;
+
+      const sitemap = readFileSync(sitemapPath, 'utf-8');
+      expect(sitemap).not.toContain(`/ratewise${path}</loc>`);
     });
   });
 

@@ -1,8 +1,100 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-01T01:07:00+08:00
-> **當前總分**: 1199（初始分: 100）
+> **最後更新**: 2026-04-02T02:00:00+08:00
+> **當前總分**: 1201（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-seo-audit-p1-p5-fix-001
+date: 2026-04-02
+title: SEO 稽核修正：H1 中文化、HowTo 圖片 404、dateModified 語意化、SeoTech 說明更新
+score: +1
+type: fix
+content_type: seo
+scope: ratewise
+topics: [seo, h1, howto-schema, dateModified, rich-results]
+keywords: [H1 標題, 貨幣代碼, 中文名稱, HowTo schema, 圖片 404, dateModified, SEO_RATE_EXAMPLES_DATE, SeoTech]
+aliases: [SEO 稽核修正, H1 中文化, HowTo 圖片修正]
+related_entries: [ratewise-worktree-cleanup-seo-guards-001]
+summary: 依據 SEO 稽核報告修正 P1（H1 標題）、P3（HowTo 圖片 404）、P5（dateModified 語意化）、P9（SeoTech 說明文字）四項高優先度問題。P4（測試衝突）確認為誤報。
+root_cause:
+
+- H1 標題使用貨幣代碼（USD、JPY）而非中文名稱（美金、日圓），與 title 不一致降低搜尋相關性
+- HowTo schema 引用的 step1-8 截圖不存在，導致 Rich Results 失效
+- 幣別頁 dateModified 使用 BUILD_TIME（建置時間），而非 SEO_RATE_EXAMPLES_DATE（匯率資料更新日）
+- SeoTech 頁說明文字顯示「42 個 SEO URL」，實際 sitemap 包含 248 個 URL（含金額頁）
+  impact:
+
+- H1 與 title 不一致降低 Google 主題判斷信號，台灣用戶搜尋「美金換台幣」時 H1 無中文關鍵字
+- HowTo schema 圖片 404 導致 Google Rich Results Test 標記無效，整體 schema 可能降級
+- dateModified 不反映實際內容更新時間，可能降低 Google 信任度
+  actions:
+
+- CurrencyLandingPage H1 改用 currencyName prop（如「美金」）取代 currencyCode（如「USD」）
+- GUIDE_HOW_TO_STEPS 圖片路徑更新為實際存在的截圖（mobile-home.png、desktop-features.png 等）
+- 幣別頁 FinancialService schema dateModified 改用 SEO_RATE_EXAMPLES_DATE
+- SeoTech BUILD_SCRIPTS 說明更新為「248 個 SEO URL（含金額頁）+ lastmod」
+  prevention:
+
+- HowTo schema 圖片路徑應與 public/screenshots/ 實際檔案同步，新增截圖時同步更新 seo-metadata.ts
+- dateModified 應使用語意化日期（資料更新日），而非建置時間
+  verification:
+
+- `pnpm --filter @app/ratewise typecheck`
+- `pnpm --filter @app/ratewise test -- --run`（1787 tests passing）
+- 目視確認 H1 顯示「美金對台幣匯率換算器」而非「USD 對 TWD 匯率換算器」
+  references:
+
+- apps/ratewise/src/components/CurrencyLandingPage.tsx（H1 修正）
+- apps/ratewise/src/config/seo-metadata.ts（HowTo 圖片、dateModified）
+- apps/ratewise/src/pages/SeoTech.tsx（說明文字）
+- .changeset/tiny-lies-design.md
+
+---
+
+id: ratewise-worktree-cleanup-seo-guards-001
+date: 2026-04-02
+title: 清理過期 git worktree，並將可驗證的 SEO 防呆測試與版權 SSOT 收斂回主支
+score: +1
+type: fix
+content_type: maintenance
+scope: monorepo
+topics: [git, worktree, ratewise, seo, prerender, ssot]
+keywords: [git worktree, patch backup, seo guards, noindex prerender, copyright notice]
+aliases: [worktree 清理, SEO 防呆測試回收]
+related_entries: [github-actions-schedule-drift-monitor-001, rates-workflow-summary-cleanup-001]
+summary: 盤點 repo 內殘留的 Claude worktree 後，先以主支為準判斷哪些內容已過時、哪些仍有保留價值。最終將兩份 dirty worktree 先備份 patch，再移除過期 worktree，只把不會回退主支現況的修補收斂回 `main`，包含版權文案 SSOT 與 sitemap / noindex prerender 防呆測試。
+root_cause:
+
+- 先前的 side worktree 建立在落後主支的基底上，未提交內容混有可用測試想法與已過時的 API / prerender 斷言
+- 若直接保留或粗暴合回主支，容易把既有 `alternativeProviders`、動態 SEO 文案等已在主支成立的內容回退
+  impact:
+
+- repo 根目錄與 `.claude/worktrees` 長期累積過期 worktree，增加後續判讀與誤合併風險
+- 缺少對 `APP_ONLY_NOINDEX_PATHS`、反向幣別頁與 representative amount 頁的測試保護，未來若 sitemap / robots / prerender 偏移，較難即時發現
+  actions:
+
+- 使用 `git worktree list --porcelain`、`git status`、`gh run list` 盤點 worktree 與近期 CI/CD 執行情況
+- 先將 `bold-dijkstra`、`upbeat-hugle` 的未提交內容備份到 `/tmp/*.patch`，再移除三個過期 worktree
+- 將 `CurrencyLandingPage` 頁尾版權改為 `getCopyrightNotice()`，並補上 SEO / prerender 測試，改以 `SEO_PATHS`、`APP_ONLY_NOINDEX_PATHS`、`DEV_ONLY_PATHS` 常數做 SSOT 驗證
+  prevention:
+
+- 清理 worktree 前必須先判斷相對 `main` 的 ahead/behind 與 dirty 狀態；有未提交內容時先備份 patch，不可直接刪除
+- 從舊 worktree 回收測試時，必須改寫成依賴當前主支 SSOT 的斷言，避免把硬編碼數字或已淘汰介面重新帶回 repo
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/seo-best-practices.test.ts`
+- `pnpm --filter @app/ratewise test -- --run src/prerender.test.ts`
+- `pnpm --filter @app/ratewise typecheck`
+  references:
+
+- apps/ratewise/src/components/CurrencyLandingPage.tsx
+- apps/ratewise/src/seo-best-practices.test.ts
+- apps/ratewise/src/prerender.test.ts
+- docs/dev/002_development_reward_penalty_log.md
+- /tmp/app-bold-dijkstra-20260401.patch
+- /tmp/app-upbeat-hugle-20260401.patch
 
 ---
 

@@ -8,6 +8,7 @@ import { PageNavHeader } from './PageNavHeader';
 import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
+import { getCopyrightNotice } from '../config/app-info';
 import type { FAQEntry, HowToStep, CommonAmountEntry, JsonLdBlock } from '../config/seo-metadata';
 
 export interface CurrencyLandingPageProps {
@@ -180,8 +181,8 @@ export function CurrencyLandingPage({
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-text leading-tight">
                   {isTwdToForeign
-                    ? `台幣換 ${currencyCode} 匯率換算器`
-                    : `${currencyCode} 對 TWD 匯率換算器`}
+                    ? `台幣換${currencyName}匯率換算器`
+                    : `${currencyName}對台幣匯率換算器`}
                 </h1>
                 <p className="text-text-muted text-sm sm:text-base mt-2 leading-relaxed">
                   {description}
@@ -526,7 +527,7 @@ export function CurrencyLandingPage({
           {/* Data Source Notice */}
           <footer className="text-center text-text-muted text-xs opacity-60">
             <p>資料來源：臺灣銀行牌告匯率 · 每 5 分鐘自動更新</p>
-            <p className="mt-1">© {new Date().getFullYear()} RateWise 匯率好工具</p>
+            <p className="mt-1">{getCopyrightNotice()}</p>
           </footer>
         </div>
       </div>
