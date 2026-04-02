@@ -39,6 +39,10 @@ const MOCK_PAGE: AuthorityGuideContent = {
   ],
   ctaTitle: 'CTA 標題',
   ctaDescription: 'CTA 說明',
+  relatedCurrencies: [
+    { href: '/jpy-twd/', label: '日圓匯率', code: 'JPY' },
+    { href: '/usd-twd/', label: '美金匯率', code: 'USD' },
+  ],
   answerCapsule: [
     {
       question: '這頁最重要的答案是什麼？',

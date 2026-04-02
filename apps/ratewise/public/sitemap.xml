@@ -4,7 +4,7 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://app.haotool.org/ratewise/</loc>
-    <lastmod>2026-04-01</lastmod>
+    <lastmod>2026-04-02</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/" />
     <image:image>
@@ -25,7 +25,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/about/</loc>
-    <lastmod>2026-04-01</lastmod>
+    <lastmod>2026-04-02</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/about/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/about/" />
     <image:image>
@@ -70,7 +70,7 @@
   </url>
   <url>
     <loc>https://app.haotool.org/ratewise/open-data/</loc>
-    <lastmod>2026-04-01</lastmod>
+    <lastmod>2026-04-02</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-TW" href="https://app.haotool.org/ratewise/open-data/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://app.haotool.org/ratewise/open-data/" />
     <image:image>
