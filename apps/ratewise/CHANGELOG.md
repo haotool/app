@@ -1,5 +1,13 @@
 # @app/ratewise
 
+## 2.20.0
+
+### Minor Changes
+
+- - 13 幣別信用卡/支付 FAQ 全面特化（USD/GBP/HKD/AUD/CAD/SGD/CNY/VND/CHF/NZD/PHP/IDR/MYR）
+  - 各幣別刷卡 FAQ 反映當地支付文化：美國小費/倫敦地鐵 NFC/香港八達通/峇里島 QRIS/馬來西亞 Touch 'n Go
+  - P2 測試 17 幣別刷卡 FAQ 唯一性（≥5 種不同答案）全數通過
+
 ## 2.19.0
 
 ### Minor Changes
