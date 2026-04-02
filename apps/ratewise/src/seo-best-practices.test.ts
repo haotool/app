@@ -303,8 +303,10 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(combinedContent).toContain("'@type': 'WebSite'");
     });
 
-    it('should NOT keep FAQPage schema builder in SEO layer', () => {
-      expect(combinedContent).not.toContain("'@type': 'FAQPage'");
+    it('should have FAQPage schema builder for AI/AEO optimization (P12)', () => {
+      // P12 決策：高流量幣別（USD/JPY/KRW/EUR/HKD）選擇性啟用 FAQPage JSON-LD
+      // 用途：ChatGPT / Perplexity / 語音搜尋等 AI 引擎摘要（非 Google Rich Results，金融頁已排除）
+      expect(combinedContent).toContain("'@type': 'FAQPage'");
     });
 
     it('should have HowTo schema builder', () => {

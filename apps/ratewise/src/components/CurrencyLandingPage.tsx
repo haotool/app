@@ -9,7 +9,13 @@ import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
 import { getCopyrightNotice } from '../config/app-info';
-import type { FAQEntry, HowToStep, CommonAmountEntry, JsonLdBlock } from '../config/seo-metadata';
+import type {
+  FAQEntry,
+  HowToStep,
+  CommonAmountEntry,
+  JsonLdBlock,
+  RelatedGuideLink,
+} from '../config/seo-metadata';
 
 export interface CurrencyLandingPageProps {
   currencyCode: string;
@@ -29,6 +35,8 @@ export interface CurrencyLandingPageProps {
   jsonLd?: JsonLdBlock[];
   direction?: 'to-twd' | 'twd-to-foreign';
   alternativeProviders?: AlternativeProvider[];
+  /** 相關攻略連結（hub-and-spoke 內部鏈接，提升主題叢集 SEO）。 */
+  relatedGuides?: RelatedGuideLink[];
 }
 
 export function CurrencyLandingPage({
@@ -49,6 +57,7 @@ export function CurrencyLandingPage({
   jsonLd,
   direction = 'to-twd',
   alternativeProviders,
+  relatedGuides = [],
 }: CurrencyLandingPageProps) {
   const { t } = useTranslation();
   const isTwdToForeign = direction === 'twd-to-foreign';
@@ -503,26 +512,37 @@ export function CurrencyLandingPage({
             </div>
           </section>
 
-          {/* Guide Link Section */}
-          <section className="mb-6">
-            <div className="card p-4 sm:p-5 bg-primary/5 border-primary/20">
-              <div className="flex items-center gap-3">
-                <BookOpen className="w-8 h-8 text-primary flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-text text-sm sm:text-base">需要更多幫助？</h3>
-                  <p className="text-text-muted text-xs sm:text-sm mt-1">
-                    查看完整使用指南，了解所有功能與技巧。
-                  </p>
-                </div>
-                <Link
-                  to="/guide/"
-                  className="px-3 py-2 bg-primary text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors flex-shrink-0"
-                >
-                  使用指南
-                </Link>
+          {/* 相關攻略（hub-and-spoke 內部鏈接）：依幣別方向提供匯率知識攻略連結 */}
+          {relatedGuides.length > 0 && (
+            <section className="mb-6">
+              <h2 className="text-sm font-bold text-text-muted uppercase tracking-wider px-2 mb-3 flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                相關攻略
+              </h2>
+              <div className="flex flex-col gap-2">
+                {relatedGuides.map((guide) => (
+                  <Link
+                    key={guide.href}
+                    to={guide.href}
+                    className="card p-4 sm:p-5 bg-surface border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <BookOpen className="w-5 h-5 text-primary/60 flex-shrink-0 group-hover:text-primary transition-colors" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-text text-sm sm:text-base group-hover:text-primary transition-colors">
+                          {guide.label}
+                        </p>
+                        <p className="text-text-muted text-xs sm:text-sm mt-0.5 leading-relaxed">
+                          {guide.description}
+                        </p>
+                      </div>
+                      <ArrowLeft className="w-4 h-4 text-text-muted rotate-180 flex-shrink-0 group-hover:text-primary transition-colors" />
+                    </div>
+                  </Link>
+                ))}
               </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Data Source Notice */}
           <footer className="text-center text-text-muted text-xs opacity-60">

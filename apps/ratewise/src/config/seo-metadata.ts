@@ -87,6 +87,13 @@ export interface AuthorityGuideSection {
   paragraphs: string[];
 }
 
+/** 相關幣別連結：用於攻略頁連結至熱門幣別頁，提升內部連結結構。 */
+export interface RelatedCurrencyLink {
+  href: string;
+  label: string;
+  code: string;
+}
+
 export interface AuthorityGuideContent extends SEOPageMetadata {
   heading: string;
   intro: string;
@@ -94,12 +101,21 @@ export interface AuthorityGuideContent extends SEOPageMetadata {
   sections: AuthorityGuideSection[];
   ctaTitle: string;
   ctaDescription: string;
+  /** 相關幣別連結：連結至熱門幣別頁，提升內部連結結構。 */
+  relatedCurrencies: RelatedCurrencyLink[];
 }
 
 export interface CommonAmountEntry {
   amount: number;
   label: string;
   question: string;
+}
+
+/** 相關攻略連結：用於幣別頁↔攻略頁內部連結，提升 SEO 內部連結結構。 */
+export interface RelatedGuideLink {
+  href: string;
+  label: string;
+  description: string;
 }
 
 export interface CurrencyLandingPageContent {
@@ -122,6 +138,8 @@ export interface CurrencyLandingPageContent {
   direction: 'to-twd' | 'twd-to-foreign';
   /** 替代換匯管道（如明洞換匯所），僅特定幣別（KRW）有此欄位。 */
   alternativeProviders?: AlternativeProvider[];
+  /** 相關攻略連結：連結至匯率知識攻略頁，提升內部連結結構。 */
+  relatedGuides: RelatedGuideLink[];
 }
 
 const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
@@ -471,6 +489,32 @@ export function buildAlternativeProviderFaq(
   });
 }
 
+/**
+ * 將 FAQEntry 陣列轉換為 schema.org FAQPage JSON-LD 格式。
+ * 僅對高流量幣別啟用（USD / JPY / KRW / EUR / HKD），用於 AI/AEO 引擎（ChatGPT、Perplexity、語音助理）。
+ * 注意：Google 自 2023 年 9 月起不再為金融/醫療等 YMYL 頁面顯示 FAQ Rich Results，
+ *       但結構化資料仍有助於 AI 理解與摘要。
+ * @param faqEntries FAQ 條目列表
+ * @param maxItems 最多取幾則（預設 5，避免 schema 過長）
+ */
+export function buildFaqPageJsonLd(faqEntries: FAQEntry[], maxItems = 5): JsonLdBlock {
+  const items = faqEntries.slice(0, maxItems).map((faq) => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      // 截斷過長答案（schema.org 業界建議 ≤ 300~500 字，含動態數據注入後容許略超）
+      text: faq.answer.length > 800 ? faq.answer.slice(0, 797) + '…' : faq.answer,
+    },
+  }));
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items,
+  };
+}
+
 export const HOMEPAGE_FAQ_CONTENT = [
   {
     question: 'RateWise 和其他匯率工具有什麼不同？',
@@ -563,6 +607,24 @@ export const HOMEPAGE_SEO = {
     ],
   },
 } as const satisfies HomepageSEOContent;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 攻略頁發布日期 SSOT：每個攻略頁的獨立 datePublished
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * 攻略頁發布日期：各頁面首次上線日期，用於 Article JSON-LD 的 datePublished。
+ * 格式：YYYY-MM-DD（ISO 8601 日期格式）
+ */
+const GUIDE_PUBLISH_DATES = {
+  sellRateVsMidRate: '2025-02-15',
+  cashVsSpotRate: '2025-02-20',
+  cardRateGuide: '2025-03-01',
+  faq: '2025-01-15',
+  guide: '2025-01-10',
+  openData: '2025-03-10',
+  about: '2025-01-01',
+} as const;
 
 export const FAQ_PAGE_ENTRIES = [
   {
@@ -685,7 +747,7 @@ export const FAQ_PAGE_SEO = {
     '常見問題 — RateWise 匯率好工具 FAQ 解答',
     'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算。',
     '/faq/',
-    `${APP_INFO.copyrightStartYear}-01-01`,
+    GUIDE_PUBLISH_DATES.faq,
     {
       articleSection: 'FAQ',
       keywords: [
@@ -759,7 +821,7 @@ export const GUIDE_PAGE_SEO = {
   title: GUIDE_PAGE_TITLE,
   description:
     '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。',
-  pathname: '/guide',
+  pathname: '/guide/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
     { name: '使用教學', item: '/guide/' },
@@ -788,7 +850,7 @@ export const GUIDE_PAGE_SEO = {
       GUIDE_PAGE_TITLE,
       '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。',
       '/guide/',
-      `${APP_INFO.copyrightStartYear}-01-01`,
+      GUIDE_PUBLISH_DATES.guide,
       {
         articleSection: '使用教學',
         keywords: [
@@ -830,7 +892,7 @@ export const OPEN_DATA_PAGE_SEO = {
   title: '開放資料 API — 台銀牌告匯率 JSON 端點',
   description:
     'RateWise 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。',
-  pathname: '/open-data',
+  pathname: '/open-data/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
     { name: '開放資料 API', item: '/open-data/' },
@@ -878,7 +940,7 @@ export const OPEN_DATA_PAGE_SEO = {
       '開放資料 API — 台銀牌告匯率 JSON 端點',
       'RateWise 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。',
       '/open-data/',
-      `${APP_INFO.copyrightStartYear}-01-01`,
+      GUIDE_PUBLISH_DATES.openData,
       {
         articleSection: '開放資料',
         keywords: ['開放資料', '匯率API', '台銀匯率', 'JSON', 'jsDelivr', 'GitHub'],
@@ -927,7 +989,7 @@ export const ABOUT_PAGE_FAQ = [
 export const ABOUT_PAGE_SEO = {
   title: '關於 RateWise 匯率好工具 - 資料來源、技術架構與 SEO 透明度',
   description: `RateWise 顯示台銀牌告實際買賣價（非中間價），支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、PWA 離線使用、SSG 靜態預渲染與 JSON-LD 結構化資料。`,
-  pathname: '/about',
+  pathname: '/about/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
     { name: '關於我們', item: '/about/' },
@@ -949,7 +1011,7 @@ export const ABOUT_PAGE_SEO = {
     '關於 RateWise 匯率好工具 - 資料來源、技術架構與 SEO 透明度',
     `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。採用 SSG 靜態預渲染、schema.org JSON-LD 結構化資料與每日自動更新匯差數據。`,
     '/about/',
-    `${APP_INFO.copyrightStartYear}-01-01`,
+    GUIDE_PUBLISH_DATES.about,
     {
       articleSection: '關於我們',
       keywords: [
@@ -972,11 +1034,25 @@ export const ABOUT_PAGE_SEO = {
   ),
 } satisfies SEOPageMetadata;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 相關幣別連結 SSOT：攻略頁連結至熱門幣別頁
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** 熱門幣別連結：攻略頁連結至最常用的幣別頁。 */
+const RELATED_CURRENCIES: RelatedCurrencyLink[] = [
+  { href: '/jpy-twd/', label: '日圓匯率', code: 'JPY' },
+  { href: '/usd-twd/', label: '美金匯率', code: 'USD' },
+  { href: '/krw-twd/', label: '韓元匯率', code: 'KRW' },
+  { href: '/eur-twd/', label: '歐元匯率', code: 'EUR' },
+  { href: '/cny-twd/', label: '人民幣匯率', code: 'CNY' },
+  { href: '/thb-twd/', label: '泰銖匯率', code: 'THB' },
+];
+
 export const SELL_RATE_VS_MID_RATE_PAGE = {
   title: '賣出價與中間價差在哪？為什麼換匯不能只看中間價',
   description:
     '解析賣出價、中間價與實際換匯成本差異。RateWise 聚焦臺灣銀行牌告賣出價，協助台灣用戶在買外幣前估算更接近實際支付的台幣金額。',
-  pathname: '/sell-rate-vs-mid-rate',
+  pathname: '/sell-rate-vs-mid-rate/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
     { name: '賣出價與中間價差異', item: '/sell-rate-vs-mid-rate/' },
@@ -1044,11 +1120,12 @@ export const SELL_RATE_VS_MID_RATE_PAGE = {
   ctaTitle: '直接用實際賣出價換算',
   ctaDescription:
     '回到首頁輸入金額，即可用臺灣銀行牌告的現金賣出或即期賣出估算更接近實際的換匯成本。',
+  relatedCurrencies: RELATED_CURRENCIES,
   jsonLd: buildArticleJsonLd(
     '賣出價與中間價差在哪？為什麼換匯不能只看中間價',
     '解析賣出價、中間價與實際換匯成本差異。RateWise 聚焦臺灣銀行牌告賣出價，協助台灣用戶在買外幣前估算更接近實際支付的台幣金額。',
     '/sell-rate-vs-mid-rate/',
-    `${APP_INFO.copyrightStartYear}-01-01`,
+    GUIDE_PUBLISH_DATES.sellRateVsMidRate,
     {
       articleSection: '匯率知識',
       keywords: ['中間價', '賣出價', '買入價', '換匯成本', '台銀牌告', '匯率差異', '台幣換外幣'],
@@ -1062,7 +1139,7 @@ export const CASH_VS_SPOT_RATE_PAGE = {
   title: '現金匯率 vs 即期匯率：什麼情境該看哪一種',
   description:
     '說明現金匯率與即期匯率差異，整理臨櫃換鈔、外幣帳戶、匯款與旅遊換匯情境，幫助你在 RateWise 正確選擇報價類型。',
-  pathname: '/cash-vs-spot-rate',
+  pathname: '/cash-vs-spot-rate/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
     { name: '現金匯率與即期匯率差異', item: '/cash-vs-spot-rate/' },
@@ -1126,11 +1203,12 @@ export const CASH_VS_SPOT_RATE_PAGE = {
   ],
   ctaTitle: '依情境切換正確匯率類型',
   ctaDescription: '回到首頁後可直接切換現金與即期匯率，比較同一筆金額在不同換匯方式下的成本差異。',
+  relatedCurrencies: RELATED_CURRENCIES,
   jsonLd: buildArticleJsonLd(
     '現金匯率 vs 即期匯率：什麼情境該看哪一種',
     '說明現金匯率與即期匯率差異，整理臨櫃換鈔、外幣帳戶、匯款與旅遊換匯情境，幫助你在 RateWise 正確選擇報價類型。',
     '/cash-vs-spot-rate/',
-    `${APP_INFO.copyrightStartYear}-01-01`,
+    GUIDE_PUBLISH_DATES.cashVsSpotRate,
     {
       articleSection: '匯率知識',
       keywords: ['現金匯率', '即期匯率', '現金賣出', '即期賣出', '換鈔', '外幣帳戶', '銀行手續費'],
@@ -1144,7 +1222,7 @@ export const CARD_RATE_GUIDE_PAGE = {
   title: '刷卡匯率怎麼看？台銀牌告、卡組織匯率與 DCC 一次搞懂',
   description:
     '整理海外刷卡匯率的組成方式，說明 Visa、Mastercard 清算匯率、銀行海外手續費與 DCC 差異，幫助你正確理解 RateWise 與刷卡成本的關係。',
-  pathname: '/card-rate-guide',
+  pathname: '/card-rate-guide/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
     { name: '刷卡匯率與 DCC 指南', item: '/card-rate-guide/' },
@@ -1212,11 +1290,12 @@ export const CARD_RATE_GUIDE_PAGE = {
   ctaTitle: '先用牌告賣出價估算，再留意刷卡費用',
   ctaDescription:
     '回到首頁輸入金額，可先用台銀牌告價格抓基準，再把發卡銀行海外手續費納入最終預算判斷。',
+  relatedCurrencies: RELATED_CURRENCIES,
   jsonLd: buildArticleJsonLd(
     '刷卡匯率怎麼看？台銀牌告、卡組織匯率與 DCC 一次搞懂',
     '整理海外刷卡匯率的組成方式，說明 Visa、Mastercard 清算匯率、銀行海外手續費與 DCC 差異，幫助你正確理解 RateWise 與刷卡成本的關係。',
     '/card-rate-guide/',
-    `${APP_INFO.copyrightStartYear}-01-01`,
+    GUIDE_PUBLISH_DATES.cardRateGuide,
     {
       articleSection: '匯率知識',
       keywords: [
@@ -1238,7 +1317,7 @@ export const PRIVACY_PAGE_SEO = {
   title: '隱私政策 - RateWise 個人資料保護說明',
   description:
     'RateWise 隱私政策說明：本服務不要求註冊，收藏、設定與歷史記錄保存在您的裝置本地；站點營運另使用第三方分析與安全服務處理匿名流量資料。',
-  pathname: '/privacy',
+  pathname: '/privacy/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
     { name: '隱私政策', item: '/privacy/' },
@@ -1273,6 +1352,43 @@ export const APP_ONLY_PAGE_SEO = {
     robots: 'noindex, follow',
   },
 } as const satisfies Record<string, SEOPageMetadata>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 相關連結 SSOT：幣別頁↔攻略頁雙向內部連結
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** 外幣→台幣方向的相關攻略連結（旅客回國換匯場景）。 */
+const RELATED_GUIDES_TO_TWD: RelatedGuideLink[] = [
+  {
+    href: '/sell-rate-vs-mid-rate/',
+    label: '賣出價 vs 中間價',
+    description: '了解為何 Google、XE 顯示的匯率與銀行臨櫃不同',
+  },
+  {
+    href: '/cash-vs-spot-rate/',
+    label: '現金 vs 即期匯率',
+    description: '臨櫃換鈔與外幣帳戶該看哪種匯率',
+  },
+];
+
+/** 台幣→外幣方向的相關攻略連結（出國換匯場景）。 */
+const RELATED_GUIDES_TWD_TO_FOREIGN: RelatedGuideLink[] = [
+  {
+    href: '/sell-rate-vs-mid-rate/',
+    label: '賣出價 vs 中間價',
+    description: '了解為何 Google、XE 顯示的匯率與銀行臨櫃不同',
+  },
+  {
+    href: '/cash-vs-spot-rate/',
+    label: '現金 vs 即期匯率',
+    description: '臨櫃換鈔與外幣帳戶該看哪種匯率',
+  },
+  {
+    href: '/card-rate-guide/',
+    label: '刷卡匯率指南',
+    description: '海外刷卡匯率、DCC 與手續費完整解析',
+  },
+];
 
 const CURRENCY_PAGE_OVERRIDES = {
   USD: {
@@ -1431,6 +1547,409 @@ const CURRENCY_PAGE_OVERRIDES = {
   },
 } as const;
 
+/**
+ * 幣別特化 FAQ：基於權威金融網站資訊，為每個幣別提供獨特的換匯知識。
+ * 資料來源：台灣銀行、兆豐銀行、Money101、Trip.com、各國旅遊換匯攻略（2026 年）。
+ * 每個幣別至少 2-3 則特化 FAQ，避免模板重複，提升 SEO 獨特性。
+ */
+const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
+  USD: [
+    {
+      question: '在台灣換美金，哪種方式最划算？',
+      answer:
+        '線上換匯（網銀 App）通常匯率最優，採用即期匯率且常有減分優惠；臨櫃換匯使用現金匯率，成本較高但可取得小面額鈔票；外幣 ATM 24 小時服務但僅提供大面額。大額換匯（超過 1 萬美元）時，匯差可達 30-50 美元（約 900-1,500 台幣），應優先比較匯率而非手續費。',
+    },
+    {
+      question: '美金換匯有什麼省錢技巧？',
+      answer:
+        '善用銀行線上匯率優惠（如減 3.5 分）、分批買入分散風險、比較各銀行牌告匯率。台銀、兆豐等主要銀行匯率存在差異，換匯前應多方比較。線上結匯可提前鎖定匯率，到機場或分行領取。',
+    },
+    {
+      question: '去美國旅遊需要換多少美金現金？',
+      answer:
+        '美國消費以刷卡為主，建議準備 200-500 美元現金用於小費、停車費、小型商家等場合。多數餐廳、商店、加油站皆接受信用卡，選擇海外回饋 ≥1.5% 的信用卡可抵消手續費。',
+    },
+  ],
+  JPY: [
+    {
+      question: '去日本旅遊，該換現金還是刷卡？',
+      answer:
+        '建議採用「高回饋信用卡為主 + 日圓現鈔備用」的組合。信用卡海外手續費約 1.5%，選擇回饋率 ≥3% 的卡片（如國泰 CUBE 卡日本 3.3%、台新 Richart 卡 3.3%）可抵消手續費並額外獲利。日本許多餐廳、便利商店與小店仍以現金為主，建議準備 3-5 萬日圓現鈔。',
+    },
+    {
+      question: '日圓雙幣卡值得辦嗎？',
+      answer:
+        '雙幣卡（如玉山熊本熊卡）可在匯率低點先換日圓存入外幣帳戶，未來刷卡直接扣日圓帳戶，避免匯率波動風險。若日圓匯率已夠甜、且有明確赴日計畫，雙幣卡是分散風險的好選擇。',
+    },
+    {
+      question: '在日本可以用台灣的電子支付嗎？',
+      answer:
+        '全支付、街口支付、玉山 Wallet 等台灣電子支付已串接日本 PayPay，免收 1.5% 海外交易手續費，適合小額消費（便利商店、藥妝店）。但多有回饋上限，大額消費仍建議用高回饋信用卡。',
+    },
+  ],
+  KRW: [
+    {
+      question: '去韓國換韓元，在台灣換還是到當地換？',
+      answer:
+        '強烈建議到韓國當地換。以 10,000 台幣為例，台灣銀行約換 419,639 韓元，明洞換錢所約換 452,000 韓元，相差約 32,361 韓元（約台幣 770 元）。帶台幣千元鈔到明洞 Money Plant、大使館、一品香等換錢所換最划算。',
+    },
+    {
+      question: '首爾明洞哪家換錢所匯率最好？',
+      answer:
+        'Money Plant（明洞 5 號出口）、大使館、一品香、SKY 匯率基本一致，差異僅 0.0X，不需執著比較。Money Box 提供台灣旅客專屬優惠（匯率 +0.1）。營業時間約 09:00-21:00，建議白天前往。',
+    },
+    {
+      question: '韓國旅遊信用卡回饋 ≥3.5% 是否比換現金划算？',
+      answer:
+        '是的。若信用卡海外回饋 ≥3.5%，刷卡比在明洞換現金更划算。韓國多數店家接受刷卡，但夜市、路邊攤、傳統市場仍需現金。建議現金 40%、刷卡 60% 的配置。',
+    },
+  ],
+  EUR: [
+    {
+      question: '去歐洲旅遊，現金和刷卡怎麼搭配？',
+      answer:
+        '歐洲大城市刷卡普及，建議以信用卡為主、現金為輔。出發前在台灣換 200-300 歐元小額鈔票（50 歐元以下），用於小餐廳、傳統市集、公共廁所等現金場合。避免在機場換錢，匯率最差。',
+    },
+    {
+      question: '在歐洲刷卡要注意什麼？',
+      answer:
+        '刷卡時務必選擇「歐元」或「當地貨幣」結算，拒絕「台幣」結算（DCC 動態貨幣轉換），否則會被收取 3-18% 額外匯差。部分無人機台需輸入 PIN 碼，建議出發前向銀行申請。',
+    },
+    {
+      question: '歐洲退稅怎麼操作？',
+      answer:
+        '歐洲各國退稅比率 19-25% 不等，門檻約 40-300 歐元。購物時向店家索取退稅單，離境前在機場海關蓋章，可選擇現金或信用卡退稅。建議選信用卡退稅，金額較完整但需等 1-2 個月入帳。',
+    },
+  ],
+  HKD: [
+    {
+      question: '港幣匯率為什麼很穩定？',
+      answer:
+        '港幣採聯繫匯率制度，與美元維持在 7.75-7.85 的固定區間。因此港幣對台幣的匯率主要隨美元走勢波動，相對其他貨幣更穩定可預測。',
+    },
+    {
+      question: '去香港需要換多少港幣？',
+      answer:
+        '香港八達通卡適用於交通、便利商店、部分餐廳，建議儲值 300-500 港幣。其餘消費可刷卡或付現，一般 3-5 天行程準備 2,000-3,000 港幣現金即可。',
+    },
+  ],
+  CNY: [
+    {
+      question: '台灣人攜帶人民幣出入境有限額嗎？',
+      answer:
+        '有。根據台灣法規，民眾攜帶人民幣進出境的限額為人民幣 2 萬元。超過需向海關申報，經許可的金融機構不受此限。',
+    },
+    {
+      question: '去中國大陸需要換多少人民幣現金？',
+      answer:
+        '中國大陸以微信支付、支付寶等行動支付為主，外國旅客可綁定國際信用卡使用。建議準備 500-1,000 人民幣小額現金備用，用於不支援行動支付的場合。',
+    },
+    {
+      question: '在台灣換人民幣有什麼注意事項？',
+      answer:
+        '等值新台幣 50 萬元以上的外幣兌換需事先預約，並可能需填寫申報書。線上結匯（如台銀 Easy 購）匯率最優惠、24 小時可下單，可選擇機場或分行領取。',
+    },
+  ],
+  THB: [
+    {
+      question: '去泰國換泰銖，在台灣換還是到當地換？',
+      answer:
+        '強烈建議到泰國當地換。台灣銀行匯率約 1 TWD = 0.89-1.07 THB，曼谷 Super Rich 約 1 TWD = 1.115-1.135 THB，價差超過 10%。帶台幣到曼谷 Super Rich（綠標或橘標）換最划算。',
+    },
+    {
+      question: '曼谷機場可以換泰銖嗎？',
+      answer:
+        '可以，但要選對地點。素萬那普機場地下室（B1 捷運站旁）有 Super Rich，匯率優良；行李轉盤區的換匯所匯率差 20% 以上，千萬不要在那裡換。廊曼機場無 Super Rich，建議到市區再換。',
+    },
+    {
+      question: '泰國旅遊現金和刷卡怎麼配置？',
+      answer:
+        '建議現金 40%、刷卡 60%。泰國數位支付漸普及，但嘟嘟車、路邊攤、夜市、小費仍需現金。準備新台幣現鈔時注意鈔票狀態，有皺摺、破洞、記號的舊鈔可能被拒收或匯率打折。',
+    },
+  ],
+  VND: [
+    {
+      question: '去越南換越南盾，在台灣換還是到當地換？',
+      answer:
+        '建議到越南當地換。台灣銀行匯率約 1:752 越南盾，越南當地銀樓約 1:854，每 1 萬台幣相差超過 100 萬越盾。在台灣先換 1,000-2,000 台幣的越南盾作為應急金，大筆金額到當地再換。',
+    },
+    {
+      question: '在越南可以用台幣直接換越南盾嗎？',
+      answer:
+        '可以。越南當地銀樓可直接用台幣換越南盾，不需先換美金。匯率參考：10,000 台幣 ≈ 750-830 萬越南盾。可查詢 CHỢ GIÁ（chogia.vn）網站了解當日匯率。',
+    },
+    {
+      question: '越南換匯有什麼注意事項？',
+      answer:
+        '2026 年越南實施外匯管理新制，政府對非法換匯查緝趨嚴格，建議選擇合法且有營業執照的銀樓或銀行兌換。越南以現金為主，信用卡僅在大城市飯店與餐廳可用。',
+    },
+  ],
+  SGD: [
+    {
+      question: '新加坡幣匯率大約多少？',
+      answer:
+        '1 新加坡幣約等於 24-25 台幣（2026 年）。新加坡幣相對穩定，與美元連動性高。各銀行匯率略有差異，星展銀行通常提供較優惠的新幣匯率。',
+    },
+    {
+      question: '去新加坡需要換多少新幣現金？',
+      answer:
+        '新加坡刷卡與行動支付非常普及，但熟食中心（Hawker Centre）多以現金為主。建議準備 200-300 新幣現金用於熟食中心、小販與交通，其餘可刷卡。',
+    },
+  ],
+  AUD: [
+    {
+      question: '澳幣匯率大約多少？',
+      answer:
+        '1 澳幣約等於 22-23 台幣（2026 年）。澳幣屬於商品貨幣，匯率受原物料價格影響較大。換澳幣最便宜的銀行為高雄銀行，換回台幣最划算的是台新銀行。',
+    },
+    {
+      question: '去澳洲需要換多少澳幣現金？',
+      answer:
+        '澳洲刷卡非常普遍，感應支付（tap-and-go）接受度極高，許多店家甚至不收現金。建議準備 100-200 澳幣現金備用即可，主要用於小費或緊急情況。',
+    },
+  ],
+  GBP: [
+    {
+      question: '英鎊匯率大約多少？',
+      answer:
+        '1 英鎊約等於 41-43 台幣（2026 年）。英鎊是主要貨幣中單位價值較高的，換匯時注意金額。玉山銀行通常提供較優惠的英鎊匯率。',
+    },
+    {
+      question: '去英國需要換多少英鎊現金？',
+      answer:
+        '英國感應支付極為普及，幾乎所有商家都接受 contactless payment。建議準備 50-100 英鎊現金備用，主要用於小費、市集或緊急情況。',
+    },
+  ],
+  CAD: [
+    {
+      question: '加幣匯率大約多少？',
+      answer:
+        '1 加幣約等於 23 台幣（2026 年）。加幣屬於商品貨幣，與油價有一定連動性。現金匯率通常比即期匯率差 0.2-0.5 元。',
+    },
+    {
+      question: '去加拿大需要換多少加幣現金？',
+      answer:
+        '加拿大刷卡普及，但小費文化盛行（餐廳 15-20%、計程車 10-15%）。建議準備 100-200 加幣現金用於小費，其餘可刷卡。',
+    },
+  ],
+  CHF: [
+    {
+      question: '瑞士法郎為什麼被稱為避險貨幣？',
+      answer:
+        '瑞士政治中立、經濟穩定、銀行體系健全，瑞士法郎在國際市場動盪時常被視為資金避風港，匯率易走強。這也使得瑞郎長期維持較高幣值。',
+    },
+    {
+      question: '去瑞士需要換多少瑞郎現金？',
+      answer:
+        '瑞士消費水準全球最高，但刷卡普遍。建議準備 100-200 瑞郎現金備用，主要用於小費或小型商家。瑞郎在台灣大型銀行可換，非主要幣別建議提前預約。',
+    },
+  ],
+  NZD: [
+    {
+      question: '紐元匯率大約多少？',
+      answer:
+        '1 紐元約等於 18-19 台幣（2026 年）。紐元與澳幣走勢相近，同屬商品貨幣。新光銀行通常提供較優惠的紐元即期匯率。',
+    },
+    {
+      question: '去紐西蘭需要換多少紐元現金？',
+      answer:
+        '紐西蘭刷卡普及，但部分戶外活動（如極限運動、農場體驗）可能需要現金。建議準備 100-200 紐元現金，其餘可刷卡。',
+    },
+  ],
+  PHP: [
+    {
+      question: '去菲律賓換披索，帶台幣還是美金？',
+      answer:
+        '建議在台灣先換美金，到菲律賓當地再換披索，比直接換披索更划算。要求銀行準備新版、大面額（100 元與 50 元）美金，舊版美金在菲律賓可能被拒收。',
+    },
+    {
+      question: '菲律賓換匯有什麼注意事項？',
+      answer:
+        '菲律賓規定不能帶超過 50,000 披索離境。換匯時需出示護照並填寫簡易表格，鈔票需新潔無摺痕。宿霧、長灘島觀光區刷卡較普及，偏遠地區建議準備現金。',
+    },
+  ],
+  IDR: [
+    {
+      question: '印尼盾面額很大，怎麼換算？',
+      answer:
+        '印尼盾面額大，1 台幣約等於 500-540 印尼盾。簡易換算：印尼盾去掉 3 個零再除以 2，約等於台幣金額。例如 100,000 印尼盾 ≈ 100 ÷ 2 = 50 台幣。',
+    },
+    {
+      question: '去峇里島換印尼盾要注意什麼？',
+      answer:
+        '峇里島以現金為主，建議在市區換匯所（如 Sanur、Ubud）兌換，匯率通常優於機場。面額大的紙鈔（50,000、100,000 盾）較受歡迎，小額鈔票可能被拒收或匯率打折。',
+    },
+  ],
+  MYR: [
+    {
+      question: '馬來幣匯率大約多少？',
+      answer:
+        '1 馬來幣約等於 7-8.5 台幣（2026 年），各銀行匯率差異較大。台灣銀行現金賣出約 8.52，兆豐銀行約 8.60，建議多方比較。',
+    },
+    {
+      question: '去馬來西亞需要換多少馬來幣現金？',
+      answer:
+        '吉隆坡市區刷卡普及，但夜市（如亞羅街）、熟食中心與小鎮以現金為主。建議準備 300-500 馬來幣現金，其餘可刷卡。馬來幣在台灣部分銀行可換，或抵達後在吉隆坡市區換匯。',
+    },
+  ],
+};
+
+/**
+ * 反向頁（TWD→外幣）特化 FAQ：強調出國前換匯場景的獨特知識。
+ * 與正向頁 FAQ 互補，避免重複內容。
+ */
+const REVERSE_CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
+  USD: [
+    {
+      question: '出國前換美金，線上換還是臨櫃換？',
+      answer:
+        '線上換匯（網銀 App）使用即期匯率，通常比臨櫃現金匯率優惠 0.5-1%。但線上換匯需轉入外幣帳戶，若要提領現鈔需另外預約。若急需現鈔，臨櫃換匯較方便但匯率稍差。',
+    },
+    {
+      question: '換美金要選哪家銀行？',
+      answer:
+        '台銀、兆豐、彰銀等大型銀行匯率差異不大，但部分銀行提供線上減分優惠（如減 3.5 分）。大額換匯（超過 1 萬美元）時，0.1% 的匯差就是 300-500 台幣，值得多方比較。',
+    },
+  ],
+  JPY: [
+    {
+      question: '什麼時候換日圓最划算？',
+      answer:
+        '日圓匯率受日本央行政策影響大，難以預測最低點。建議出發前 1-2 週開始觀察趨勢，分 2-3 次換匯分散風險。RateWise 提供 7-30 天趨勢圖，可觀察近期高低區間。',
+    },
+    {
+      question: '日圓現鈔要換多少面額？',
+      answer:
+        '日本自動販賣機、小店常不收萬元大鈔，建議換匯時要求部分千元鈔（1,000 日圓）。台銀臨櫃可指定面額，線上結匯則依銀行庫存配置。',
+    },
+  ],
+  KRW: [
+    {
+      question: '台幣換韓元，在台灣換還是到首爾換？',
+      answer:
+        '到首爾明洞換匯所換最划算，匯率比台灣銀行好 7-10%。但若不想帶大量台幣現鈔出國，可在台灣先換少量韓元（約 5 萬韓元）用於機場交通，抵達後再到明洞換足額。',
+    },
+    {
+      question: '去韓國要帶台幣還是美金去換？',
+      answer:
+        '帶台幣直接換最方便，明洞換錢所接受台幣千元鈔。帶美金換匯率有時略優，但需先在台灣換美金，兩次換匯較麻煩。除非已有美金現鈔，否則建議直接帶台幣。',
+    },
+  ],
+  EUR: [
+    {
+      question: '去歐洲要換多少歐元現金？',
+      answer:
+        '歐洲刷卡普及，建議準備 200-300 歐元現金即可，用於小餐廳、市集、公共廁所等現金場合。盡量換 50 歐元以下小額鈔票，部分商家不收 100、200 歐元大鈔。',
+    },
+    {
+      question: '歐元在台灣哪裡換最划算？',
+      answer:
+        '台銀、兆豐等大型銀行皆可換歐元，匯率差異不大。線上結匯通常比臨櫃優惠，可提前鎖定匯率，到機場或分行領取。建議提早 2-3 個工作天預約，確保有足夠庫存。',
+    },
+  ],
+  HKD: [
+    {
+      question: '港幣匯率很穩定，什麼時候換都一樣嗎？',
+      answer:
+        '港幣採聯繫匯率制度，與美元維持固定區間，因此匯率波動較小。但仍會隨美元對台幣走勢變動，若美元走弱時換港幣會稍划算。短期旅遊不需太在意時機，隨時換即可。',
+    },
+  ],
+  CNY: [
+    {
+      question: '去中國大陸要換多少人民幣？',
+      answer:
+        '中國大陸行動支付極為普及，外國旅客可用國際信用卡綁定微信支付或支付寶。建議準備 500-1,000 人民幣現金備用，用於不支援行動支付的小攤或緊急情況。',
+    },
+    {
+      question: '人民幣攜帶出境有限額嗎？',
+      answer:
+        '有。台灣法規規定攜帶人民幣進出境限額為 2 萬元人民幣。超過需向海關申報。建議大額資金透過外幣帳戶匯款，避免攜帶大量現金。',
+    },
+  ],
+  THB: [
+    {
+      question: '去泰國要在台灣先換泰銖嗎？',
+      answer:
+        '不建議在台灣換大量泰銖，台灣銀行匯率比曼谷 Super Rich 差 10% 以上。建議只在台灣換少量（約 1,000-2,000 泰銖）用於機場交通，抵達曼谷後再到 Super Rich 換足額。',
+    },
+    {
+      question: '帶台幣去泰國換泰銖要注意什麼？',
+      answer:
+        '準備新鈔、無摺痕的台幣千元鈔票。有皺摺、破損、塗鴉的舊鈔可能被拒收或匯率打折。換匯時需攜帶護照。',
+    },
+  ],
+  VND: [
+    {
+      question: '台幣換越南盾，在台灣換還是到當地換？',
+      answer:
+        '強烈建議到越南當地換。台灣銀行匯率約 1:752，越南銀樓約 1:854，每 1 萬台幣相差超過 100 萬越盾。在台灣只需換少量（約 50-100 萬越盾）應急金即可。',
+    },
+  ],
+  SGD: [
+    {
+      question: '新加坡幣在台灣好換嗎？',
+      answer:
+        '新加坡幣是主要貨幣，台灣大型銀行皆有提供。星展銀行（新加坡銀行）通常提供較優惠的新幣匯率，可優先比較。',
+    },
+  ],
+  AUD: [
+    {
+      question: '去澳洲需要換多少澳幣現金？',
+      answer:
+        '澳洲刷卡極為普及，許多店家甚至不收現金（cash-free）。建議只準備 100-200 澳幣現金備用，主要用於小費或緊急情況，其餘全程刷卡即可。',
+    },
+  ],
+  GBP: [
+    {
+      question: '英鎊在台灣好換嗎？',
+      answer:
+        '英鎊是主要貨幣，台灣大型銀行皆可換。玉山銀行通常提供較優惠的英鎊匯率。建議提前 1-2 天預約，確保有足夠庫存。',
+    },
+  ],
+  CAD: [
+    {
+      question: '去加拿大要準備多少加幣現金？',
+      answer:
+        '加拿大刷卡普及，但小費文化盛行（餐廳 15-20%）。建議準備 100-200 加幣現金用於小費，其餘可刷卡。部分餐廳會在帳單上直接加小費選項，可選擇刷卡支付。',
+    },
+  ],
+  CHF: [
+    {
+      question: '瑞士法郎在台灣好換嗎？',
+      answer:
+        '瑞士法郎非主要幣別，部分銀行可能庫存有限。建議提前 2-3 天向銀行預約，或選擇台銀、兆豐等大型銀行換匯。',
+    },
+  ],
+  NZD: [
+    {
+      question: '紐元在台灣好換嗎？',
+      answer:
+        '紐元是次要貨幣，部分銀行可能庫存有限。新光銀行通常提供較優惠的紐元匯率。建議提前預約，或選擇大型銀行換匯。',
+    },
+  ],
+  PHP: [
+    {
+      question: '去菲律賓要帶台幣還是美金？',
+      answer:
+        '建議帶美金到菲律賓換披索，匯率比直接換披索更好。在台灣先換新版、大面額美金（100 元與 50 元），舊版美金在菲律賓可能被拒收。',
+    },
+  ],
+  IDR: [
+    {
+      question: '去峇里島要在台灣先換印尼盾嗎？',
+      answer:
+        '不建議在台灣換大量印尼盾。台灣銀行匯率較差，且印尼盾面額大、張數多不便攜帶。建議只換少量應急金，抵達峇里島後在市區換匯所（如 Sanur、Ubud）換足額。',
+    },
+  ],
+  MYR: [
+    {
+      question: '馬來幣在台灣好換嗎？',
+      answer:
+        '馬來幣是次要貨幣，部分銀行可能庫存有限。台灣銀行、兆豐銀行通常有提供，建議提前預約。或抵達吉隆坡後在市區換匯所換，匯率可能更優。',
+    },
+  ],
+};
+
 export type CurrencyLandingCode = keyof typeof CURRENCY_PAGE_OVERRIDES;
 
 function formatAmount(amount: number): string {
@@ -1565,6 +2084,37 @@ export function getCurrencyLandingPageContent(
     },
   };
 
+  // 高流量幣別（USD/JPY/KRW/EUR/HKD）啟用 FAQPage JSON-LD（AI/AEO 優化）
+  const HIGH_TRAFFIC: readonly string[] = ['USD', 'JPY', 'KRW', 'EUR', 'HKD'];
+
+  const faqEntries: FAQEntry[] = [
+    {
+      question: `為什麼 Google、XE、Wise、Apple 計算機顯示的${displayName}換算金額，和台灣銀行臨櫃換匯的實際結果不同？`,
+      answer: `Google 匯率（資料來源：Morningstar）、XE、Wise 及 Apple 計算機（資料來源：Yahoo Finance）所顯示的匯率均為「市場中間價」（mid-market rate）——即全球銀行同業間批發交易的參考基準價，一般消費者無法直接以此價格換匯。這些工具本質上是匯率參考儀表板，並非反映實際臨櫃換匯成本。台灣銀行臨櫃現金換匯使用的是「現金賣出」牌告價，因需涵蓋現鈔保管、運送與保險成本，通常比市場中間價高出 1% 至 10% 以上（東南亞及非主流貨幣差距尤為顯著）。${buildRateExampleSentence(code, displayName)} RateWise 匯率好工具直接顯示臺灣銀行官方牌告的現金賣出與即期賣出價，是專為台灣人設計的精準換匯工具，讓使用者出門換匯前即可掌握真實兌換金額，不被市場中間價誤導。`,
+    },
+    // 幣別特化 FAQ：基於權威金融網站資訊，提供該幣別獨特的換匯知識
+    ...(CURRENCY_SPECIFIC_FAQ[code] ?? []),
+    {
+      question: `${displayName}現金賣出和即期賣出有什麼差別？怎麼選？`,
+      answer: `「現金賣出」適合臨櫃換外幣現鈔，「即期賣出」適合網銀外幣帳戶轉換或匯款。現金匯率通常比即期差，因為銀行需負擔現鈔的保管、運送與保險成本。出國旅遊前換現金看「現金賣出」，線上外幣轉換看「即期賣出」。`,
+    },
+    {
+      question: override.question,
+      answer: `${buildCashSellRateSentence(code, override.popularAmounts[0])}使用本工具可查看 5 分鐘即時更新匯率，點擊「開始換算」輸入任意金額查看結果。`,
+    },
+    {
+      question: `${formatAmount(override.popularAmounts.at(-1) ?? 0)} ${displayName}大約等於多少台幣？`,
+      answer: `${buildCashSellRateSentence(code, override.popularAmounts.at(-1) ?? 0)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
+    },
+    {
+      question: `出國刷卡的匯率跟 RateWise 顯示的${displayName}台銀牌告匯率一樣嗎？`,
+      answer: `不一樣。出國刷卡使用的是發卡組織（Visa、Mastercard）的清算匯率，再加上發卡銀行的海外交易手續費（通常 1.5%），與臺灣銀行牌告匯率是不同體系。本工具顯示的台銀牌告匯率適用於臨櫃換鈔或外幣帳戶匯款，不代表你出國刷卡時的實際扣款匯率。若出國以刷卡為主，建議另行查詢發卡銀行的海外手續費規定。`,
+    },
+    // 替代換匯管道 FAQ（如明洞換匯所），僅有 alternativeProviders 的幣別（KRW）會產生條目
+    // /krw-twd/ 頁方向為 to-twd（旅客持 KRW 換 TWD），使用 rateBuy 版本 FAQ
+    ...buildAlternativeProviderFaq(code, SEO_RATE_EXAMPLES[code] ?? ({} as RateExample), 'to-twd'),
+  ];
+
   return {
     currencyCode: code,
     currencyFlag: definition.flag,
@@ -1588,56 +2138,10 @@ export function getCurrencyLandingPageContent(
         `${displayName}兌台幣匯率分享圖片`,
         `${APP_INFO.name} ${code}/TWD 即時匯率換算與趨勢`,
       ),
+      // 高流量幣別選擇性加入 FAQPage JSON-LD，用於 AI/AEO 引擎摘要
+      ...(HIGH_TRAFFIC.includes(code) ? [buildFaqPageJsonLd(faqEntries)] : []),
     ],
-    faqEntries: [
-      {
-        question: `為什麼 Google、XE、Wise、Apple 計算機顯示的${displayName}換算金額，和台灣銀行臨櫃換匯的實際結果不同？`,
-        answer: `Google 匯率（資料來源：Morningstar）、XE、Wise 及 Apple 計算機（資料來源：Yahoo Finance）所顯示的匯率均為「市場中間價」（mid-market rate）——即全球銀行同業間批發交易的參考基準價，一般消費者無法直接以此價格換匯。這些工具本質上是匯率參考儀表板，並非反映實際臨櫃換匯成本。台灣銀行臨櫃現金換匯使用的是「現金賣出」牌告價，因需涵蓋現鈔保管、運送與保險成本，通常比市場中間價高出 1% 至 10% 以上（東南亞及非主流貨幣差距尤為顯著）。${buildRateExampleSentence(code, displayName)} RateWise 匯率好工具直接顯示臺灣銀行官方牌告的現金賣出與即期賣出價，是專為台灣人設計的精準換匯工具，讓使用者出門換匯前即可掌握真實兌換金額，不被市場中間價誤導。`,
-      },
-      {
-        question: `${displayName}現金賣出和即期賣出有什麼差別？怎麼選？`,
-        answer: `「現金賣出」適合臨櫃換外幣現鈔，「即期賣出」適合網銀外幣帳戶轉換或匯款。現金匯率通常比即期差，因為銀行需負擔現鈔的保管、運送與保險成本。出國旅遊前換現金看「現金賣出」，線上外幣轉換看「即期賣出」。`,
-      },
-      {
-        question: override.question,
-        answer: `${buildCashSellRateSentence(code, override.popularAmounts[0])}使用本工具可查看 5 分鐘即時更新匯率，點擊「開始換算」輸入任意金額查看結果。`,
-      },
-      {
-        question: `${displayName}的現金匯率和即期匯率差多少？`,
-        answer: `${displayName}現金匯率與即期匯率的價差取決於銀行現鈔保管與運送成本。臨櫃換鈔看「現金」匯率，外幣帳戶匯款看「即期」匯率。本工具可一鍵切換${displayName}的現金與即期報價，方便比較差異。`,
-      },
-      {
-        question: `台幣買${displayName}和${displayName}換回台幣的匯率一樣嗎？`,
-        answer: `不一樣。台幣買${displayName}看銀行「賣出」價格，${displayName}換回台幣看銀行「買入」價格，兩者之間有價差。本工具會依照您選擇的換算方向自動套用正確報價。`,
-      },
-      {
-        question: `去${override.region.replace(/前.*$/, '')}前要準備多少${displayName}？`,
-        answer: `${override.travelTip}您可使用快速金額按鈕（${override.popularAmounts.slice(0, 3).map(formatAmount).join('、')} ${displayName}等常用金額）估算所需台幣，並在出發前觀察 7~30 天匯率趨勢選擇換匯時機。`,
-      },
-      {
-        question: `${displayName}匯率最近走勢如何？`,
-        answer: `展開${displayName}匯率卡片即可查看 7~30 天歷史趨勢圖，包含最高、最低與平均值，幫助您觀察${displayName}匯率波動並選擇較合適的換匯時機。`,
-      },
-      {
-        question: `${formatAmount(override.popularAmounts.at(-1) ?? 0)} ${displayName}大約等於多少台幣？`,
-        answer: `${buildCashSellRateSentence(code, override.popularAmounts.at(-1) ?? 0)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
-      },
-      {
-        question: `在台灣哪裡可以換${displayName}？`,
-        answer: `臺灣銀行各分行可兌換${displayName}現鈔，也可透過外幣帳戶線上換匯。建議出發前比較${displayName}現金與即期匯率，選擇最適合的換匯方式。`,
-      },
-      {
-        question: `出國刷卡的匯率跟 RateWise 顯示的${displayName}台銀牌告匯率一樣嗎？`,
-        answer: `不一樣。出國刷卡使用的是發卡組織（Visa、Mastercard）的清算匯率，再加上發卡銀行的海外交易手續費（通常 1.5%），與臺灣銀行牌告匯率是不同體系。本工具顯示的台銀牌告匯率適用於臨櫃換鈔或外幣帳戶匯款，不代表你出國刷卡時的實際扣款匯率。若出國以刷卡為主，建議另行查詢發卡銀行的海外手續費規定。`,
-      },
-      // 替代換匯管道 FAQ（如明洞換匯所），僅有 alternativeProviders 的幣別（KRW）會產生條目
-      // /krw-twd/ 頁方向為 to-twd（旅客持 KRW 換 TWD），使用 rateBuy 版本 FAQ
-      ...buildAlternativeProviderFaq(
-        code,
-        SEO_RATE_EXAMPLES[code] ?? ({} as RateExample),
-        'to-twd',
-      ),
-    ],
+    faqEntries,
     howToSteps: [
       {
         position: 1,
@@ -1672,6 +2176,7 @@ export function getCurrencyLandingPageContent(
     travelTip: override.travelTip,
     faqTitle: `${displayName}換匯常見問題`,
     direction: 'to-twd' as const,
+    relatedGuides: RELATED_GUIDES_TO_TWD,
     ...(SEO_RATE_EXAMPLES[code]?.alternativeProviders
       ? { alternativeProviders: SEO_RATE_EXAMPLES[code].alternativeProviders }
       : {}),
@@ -1882,6 +2387,8 @@ export function getReverseCurrencyLandingPageContent(
         question: `現在台幣換${displayName}划算嗎？什麼時候換比較好？`,
         answer: `匯率每日波動，難以預測「最佳時機」。RateWise 提供 7～30 天歷史趨勢圖，讓你觀察近期走勢。建議分批換匯分散風險，而非等待所謂最低點。出發前 1～2 週開始觀察趨勢，視需求分 2～3 次換匯是常見策略。`,
       },
+      // 反向頁特化 FAQ：基於權威金融網站資訊，提供出國換匯場景的獨特知識
+      ...(REVERSE_CURRENCY_SPECIFIC_FAQ[code] ?? []),
       {
         question: `帶台幣去銀行換${displayName}，要看哪個匯率？`,
         answer: `你帶台幣去銀行買${displayName}現鈔，銀行是在「賣出」外幣給你，需參考台銀牌告的「現金賣出」價。RateWise 直接顯示此數字——這才是你實際要付的台幣金額，而非 Google 或 XE 顯示的市場中間價。`,
@@ -1891,24 +2398,12 @@ export function getReverseCurrencyLandingPageContent(
         answer: `${buildTwdToForeignRateSentence(code, override.popularTwdAmounts[2] ?? 30000)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
       },
       {
-        question: `去哪換${displayName}最省？`,
-        answer: `${override.outboundTip} 機場換匯匯率通常較差，建議出發前在台灣市區銀行換好。各行匯率略有差異，可多比較。臺灣銀行通常是參考基準。`,
-      },
-      {
-        question: `台幣換${displayName}和${displayName}換回台幣的匯率一樣嗎？`,
-        answer: `不一樣。台幣換${displayName}看銀行「賣出」價（你買外幣，銀行賣），${displayName}換回台幣看銀行「買入」價（你賣外幣，銀行買）。兩者之間有價差，通常賣出價高於買入價。`,
-      },
-      {
         question: `出國刷卡跟換現金哪個比較省？`,
         answer: `取決於發卡銀行的海外手續費。部分無手續費卡片搭配Visa/Mastercard清算匯率，整體成本可能低於現金換匯。但現金在特定地區（如泰國、日本）更實用。建議同時準備少量現金加信用卡。`,
       },
       {
         question: `換${displayName}現金和外幣帳戶匯款哪種匯率較好？`,
         answer: `外幣帳戶使用「即期賣出」匯率，通常優於「現金賣出」，因為銀行省去了現鈔保管與運送成本。如不急需現鈔，透過網銀外幣帳戶換匯通常可省下一些匯差。RateWise 可一鍵切換查看兩種報價。`,
-      },
-      {
-        question: `${override.travelTip}（如何善用 RateWise？）`,
-        answer: `出發前使用快速金額按鈕（${override.popularTwdAmounts.slice(0, 3).map(formatAmount).join('、')} 台幣等常用金額）估算所需${displayName}，並查看 7～30 天趨勢選擇較有利換匯時機。`,
       },
       // 替代換匯管道 FAQ（如明洞換匯所），僅 KRW 等有 alternativeProviders 的幣別會產生條目
       // /twd-krw/ 頁方向為 twd-to-foreign（旅客持 TWD 換 KRW），使用 rate（sell 率）版本 FAQ
@@ -1952,6 +2447,7 @@ export function getReverseCurrencyLandingPageContent(
     travelTip: override.travelTip,
     faqTitle: `台幣換${displayName}常見問題`,
     direction: 'twd-to-foreign' as const,
+    relatedGuides: RELATED_GUIDES_TWD_TO_FOREIGN,
     ...(SEO_RATE_EXAMPLES[code]?.alternativeProviders
       ? { alternativeProviders: SEO_RATE_EXAMPLES[code].alternativeProviders }
       : {}),
