@@ -332,12 +332,13 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(existsSync(usdHtml)).toBe(true);
     });
 
-    it('USD/TWD page should include FinancialService JSON-LD but NOT FAQPage', () => {
+    it('USD/TWD page should include FinancialService JSON-LD and FAQPage JSON-LD (P12)', () => {
       if (!existsSync(usdHtml)) return;
 
       const content = readFileSync(usdHtml, 'utf-8');
       expect(content).toMatch(/"@type":\s*"FinancialService"/);
-      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+      // P12：高流量幣別（USD）選擇性啟用 FAQPage JSON-LD（AI/AEO 優化）
+      expect(content).toMatch(/"@type":\s*"FAQPage"/);
     });
 
     it('USD/TWD amount page should use self canonical and self hreflang', () => {
