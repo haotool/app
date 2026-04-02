@@ -1,5 +1,5 @@
 import { CURRENCY_DEFINITIONS, SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
-import { APP_INFO, SEO_SOCIAL_LINKS } from './app-info';
+import { APP_INFO, AUTHOR_PERSON, SEO_SOCIAL_LINKS } from './app-info';
 import { DEFAULT_TITLE, GUIDE_PAGE_TITLE } from './seo-static';
 import {
   SEO_RATE_EXAMPLES,
@@ -414,6 +414,22 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
   };
 }
 
+/**
+ * 生成作者 Person JSON-LD。
+ * 用於 About 頁面（作者主頁）及 Article schema 的 author 欄位。
+ * Threads 帳號作為公開可驗證的社群身份，強化 YMYL E-E-A-T 信號。
+ */
+export function buildPersonJsonLd(): JsonLdBlock {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: AUTHOR_PERSON.name,
+    url: AUTHOR_PERSON.url,
+    email: AUTHOR_PERSON.email,
+    sameAs: [...AUTHOR_PERSON.sameAs],
+  };
+}
+
 export function buildArticleJsonLd(
   headline: string,
   description: string,
@@ -433,10 +449,12 @@ export function buildArticleJsonLd(
     ...(options?.keywords?.length ? { keywords: options.keywords } : {}),
     ...(options?.articleBody ? { articleBody: options.articleBody } : {}),
     image: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
+    // author: Person（個人作者身份），強化 YMYL E-E-A-T；publisher 仍為 Organization
     author: {
-      '@type': 'Organization',
-      name: APP_INFO.author,
-      url: APP_INFO.organizationUrl,
+      '@type': 'Person',
+      name: AUTHOR_PERSON.name,
+      url: AUTHOR_PERSON.url,
+      sameAs: [...AUTHOR_PERSON.sameAs],
     },
     publisher: {
       '@type': 'Organization',
@@ -1007,31 +1025,34 @@ export const ABOUT_PAGE_SEO = {
     },
   ],
   faqContent: [...ABOUT_PAGE_FAQ],
-  jsonLd: buildArticleJsonLd(
-    '關於 RateWise 匯率好工具 - 資料來源、技術架構與 SEO 透明度',
-    `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。採用 SSG 靜態預渲染、schema.org JSON-LD 結構化資料與每日自動更新匯差數據。`,
-    '/about/',
-    GUIDE_PUBLISH_DATES.about,
-    {
-      articleSection: '關於我們',
-      keywords: [
-        '台灣銀行匯率',
-        '即時匯率工具',
-        'PWA',
-        '離線使用',
-        '台幣換算',
-        '免費匯率',
-        'schema.org',
-        'JSON-LD',
-        '結構化資料',
-        'SSG',
-        '靜態預渲染',
-        '匯差計算',
-        'LLM 引用',
-      ],
-      articleBody: `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
-    },
-  ),
+  jsonLd: [
+    buildArticleJsonLd(
+      '關於 RateWise 匯率好工具 - 資料來源、技術架構與 SEO 透明度',
+      `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。採用 SSG 靜態預渲染、schema.org JSON-LD 結構化資料與每日自動更新匯差數據。`,
+      '/about/',
+      GUIDE_PUBLISH_DATES.about,
+      {
+        articleSection: '關於我們',
+        keywords: [
+          '台灣銀行匯率',
+          '即時匯率工具',
+          'PWA',
+          '離線使用',
+          '台幣換算',
+          '免費匯率',
+          'schema.org',
+          'JSON-LD',
+          '結構化資料',
+          'SSG',
+          '靜態預渲染',
+          '匯差計算',
+          'LLM 引用',
+        ],
+        articleBody: `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
+      },
+    ),
+    buildPersonJsonLd(),
+  ],
 } satisfies SEOPageMetadata;
 
 // ─────────────────────────────────────────────────────────────────────────────

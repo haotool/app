@@ -4,7 +4,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
 import { AnswerCapsule } from '../components/AnswerCapsule';
 import { getDisplayVersion } from '../config/version';
-import { APP_INFO, getCopyrightYears } from '../config/app-info';
+import { APP_INFO, AUTHOR_PERSON, getCopyrightYears } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
 import { ABOUT_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 import { SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
@@ -43,7 +43,16 @@ export default function About() {
               專注提供台灣用戶更接近實際換匯情境的匯率資訊，而不是只顯示中間價。
             </p>
             <p className="mt-2 text-sm text-text-muted">
-              作者：{APP_INFO.author} ・ 版本：{getDisplayVersion()} ・ 最後更新：{LAST_UPDATED}
+              作者：
+              <a
+                href={APP_INFO.threadsUrl}
+                target="_blank"
+                rel="noopener noreferrer me"
+                className="text-primary underline"
+              >
+                {AUTHOR_PERSON.name}
+              </a>
+              （{APP_INFO.author}）・ 版本：{getDisplayVersion()} ・ 最後更新：{LAST_UPDATED}
             </p>
           </div>
 
@@ -116,7 +125,40 @@ export default function About() {
           </section>
 
           <section className="card mb-6 p-6">
-            <h2 className="mb-4 text-2xl font-bold text-text">透明與聯絡方式</h2>
+            <h2 className="mb-4 text-2xl font-bold text-text">作者</h2>
+            <div className="space-y-3 text-text-muted">
+              <p>
+                <strong className="text-text">作者：</strong>
+                <a
+                  href={APP_INFO.threadsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer me"
+                  className="ml-1 text-primary underline"
+                >
+                  {AUTHOR_PERSON.name}
+                </a>
+                （個人開發者，{APP_INFO.author} 維護者）
+              </p>
+              <p>
+                <strong className="text-text">Threads：</strong>
+                <a
+                  href={APP_INFO.threadsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer me"
+                  className="ml-1 text-primary underline"
+                >
+                  {APP_INFO.socialHandle}
+                </a>
+              </p>
+              <p>
+                <strong className="text-text">聯絡信箱：</strong>
+                <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />
+              </p>
+            </div>
+          </section>
+
+          <section className="card mb-6 p-6">
+            <h2 className="mb-4 text-2xl font-bold text-text">透明與開放原始碼</h2>
             <div className="space-y-3 text-text-muted">
               <p>
                 <strong className="text-text">原始碼：</strong>
@@ -128,10 +170,6 @@ export default function About() {
                 >
                   {APP_INFO.github}
                 </a>
-              </p>
-              <p>
-                <strong className="text-text">聯絡信箱：</strong>
-                <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />
               </p>
               <p>
                 <strong className="text-text">延伸閱讀：</strong>

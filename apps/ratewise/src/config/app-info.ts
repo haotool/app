@@ -115,6 +115,17 @@ export const AUTHOR_CONTACT_LINKS = [
 export const SEO_SOCIAL_LINKS = [APP_INFO.threadsUrl, APP_INFO.github] as const;
 
 /**
+ * 作者 Person SSOT — 用於 schema.org Person JSON-LD 與 E-E-A-T 信號。
+ * About 頁是作者的「主頁」(url)，Threads 為公開社群身份佐證 (sameAs)。
+ */
+export const AUTHOR_PERSON = {
+  name: 'azlife',
+  url: APP_INFO.siteUrl + 'about/',
+  sameAs: [APP_INFO.threadsUrl, APP_INFO.github] as readonly string[],
+  email: APP_INFO.email,
+} as const;
+
+/**
  * 取得版權年份字串
  * @returns 格式化的版權年份，如 "2025-2026" 或 "2025"
  */
