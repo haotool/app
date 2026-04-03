@@ -472,8 +472,16 @@ export function buildArticleJsonLd(
       url: AUTHOR_PERSON.url,
       sameAs: [...AUTHOR_PERSON.sameAs],
     },
-    // publisher 引用 Organization @id，強化跨頁面實體連結。
-    publisher: { '@id': `${SITE_BASE_URL}#organization` },
+    // publisher：@id 引用 + 內聯 name/logo，同時滿足 linked data 與嚴格驗證器。
+    publisher: {
+      '@id': `${SITE_BASE_URL}#organization`,
+      '@type': 'Organization',
+      name: APP_INFO.author,
+      logo: {
+        '@type': 'ImageObject',
+        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+      },
+    },
     inLanguage: DEFAULT_LOCALE,
     mainEntityOfPage: {
       '@type': 'WebPage',

@@ -1,13 +1,14 @@
 /* global HTMLRewriter */
 
 /**
- * 安全標頭 Worker v4.5
+ * 安全標頭 Worker v4.6
  *
  * 本 Worker 僅處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策（例如 HSTS）由 Cloudflare Edge 管理；
  * Worker 專注於路由分層 CSP、CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v4.6: 新增 STABLE_PUBLIC_ASSET_PATHS：logo.png 等非雜湊穩定靜態資源設 7 天 public 快取，改善 LCP 重複載入
  * - v4.5: 移除 Rocket Loader 繞過措施（data-cfasync="false"）；已在 Cloudflare Dashboard 關閉 Rocket Loader
  * - v4.4: 修正 Rocket Loader 干擾 vite-react-ssg 骨架屏卡死問題
  *         → InlineScriptNonceInjector 注入 data-cfasync="false"，防止 Rocket Loader 修改 type 屬性
@@ -24,7 +25,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script，避免以 regex 掃描 HTML 觸發 CodeQL `js/bad-tag-filter`
  */
 
-const SECURITY_POLICY_VERSION = '4.5';
+const SECURITY_POLICY_VERSION = '4.6';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -62,6 +63,9 @@ const PUBLIC_SHARE_ASSET_PATHS = new Set([
 	'/park-keeper/og-image.svg',
 	'/quake-school/og-image.svg',
 ]);
+
+/** 穩定公開資產（無 hash，但極少變動），設 7 天快取供瀏覽器複用。 */
+const STABLE_PUBLIC_ASSET_PATHS = new Set(['/ratewise/logo.png']);
 
 function createHtmlProfile({
 	scriptMode,
@@ -246,6 +250,10 @@ function isPublicShareAssetPath(pathname) {
 	return PUBLIC_SHARE_ASSET_PATHS.has(pathname);
 }
 
+function isStablePublicAssetPath(pathname) {
+	return STABLE_PUBLIC_ASSET_PATHS.has(pathname);
+}
+
 function isImmutableHashedAsset(pathname) {
 	return HASHED_ASSET_PATH.test(pathname);
 }
@@ -404,6 +412,7 @@ export default {
 		const contentType = upstreamResponse.headers.get('content-type') || '';
 		const isHTML = contentType.startsWith('text/html') && !isStaticAsset;
 		const isPublicShareAsset = isPublicShareAssetPath(url.pathname);
+		const isStablePublicAsset = isStablePublicAssetPath(url.pathname);
 
 		let response;
 
@@ -439,6 +448,10 @@ export default {
 			response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
 			response.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
 			response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+		} else if (isStablePublicAsset) {
+			// 穩定公開資產（無 hash）設 7 天快取，降低重複下載開銷。
+			response.headers.set('Cache-Control', 'max-age=604800, public');
+			response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 		} else if (isStaticAsset && upstreamResponse.status >= 400) {
 			// 部署切換期間若短暫命中缺檔，禁止 Cloudflare/瀏覽器保留 stale 404。
 			response.headers.delete('Expires');

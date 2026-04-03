@@ -31,14 +31,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="RateWise" />
 
+    <!-- LCP 關鍵資源預載入：logo 是首頁 LCP 元素，preload 可提前請求避免 render-blocking 延遲。 -->
+    <link rel="preload" href="/ratewise/logo.png" as="image" fetchpriority="high" />
+
     <!-- Resource Hints（僅保留實際使用的來源） -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin />
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
 
     <!-- Performance Optimization: Preconnect to external resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://unpkg.com" crossorigin />
     <link rel="preconnect" href="https://static.cloudflareinsights.com" />
 
     <!-- PWA Recovery Bootstrap -->

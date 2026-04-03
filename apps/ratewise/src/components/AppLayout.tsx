@@ -35,6 +35,7 @@ function Logo() {
       className="w-7 h-7 shrink-0"
       loading="eager"
       decoding="async"
+      fetchPriority="high"
     />
   );
 }
