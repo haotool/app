@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- 78c8745: E-E-A-T 強化：新增 author byline、datePublished 可見標記、PrivacyPolicy 與 ContactPage schema
+
 All notable changes to NihonName will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

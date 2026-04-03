@@ -40,13 +40,13 @@
     ],
     "x-webapp": "https://app.haotool.org/ratewise/",
     "x-documentation": "https://app.haotool.org/ratewise/open-data/",
-    "x-app-version": "2.20.0"
+    "x-app-version": "2.21.0"
   },
   "x-changelog": {
     "1.0.0": {
       "date": "2026-03-21",
       "summary": "初始 API 版本。包含最新匯率、歷史匯率、幣對資訊三個端點。",
-      "app-version": "2.20.0"
+      "app-version": "2.21.0"
     }
   },
   "servers": [
