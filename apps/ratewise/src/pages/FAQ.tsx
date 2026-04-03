@@ -41,7 +41,10 @@ export default function FAQ() {
               集中整理台銀牌告匯率、買入賣出、現金與即期、刷卡匯率與 DCC 等核心問題。
             </p>
             <p className="mt-2 text-sm text-text-muted">
-              作者：{APP_INFO.author} ・ 最後更新：{LAST_UPDATED}
+              作者：<span itemProp="author">{APP_INFO.author}</span> ・ 最後更新：
+              <time dateTime={new Date(SITE_SEO.updatedTime).toISOString()} itemProp="dateModified">
+                {LAST_UPDATED}
+              </time>
             </p>
           </div>
 

@@ -3,10 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
 import { AnswerCapsule } from '../components/AnswerCapsule';
-import { GUIDE_PAGE_SEO } from '../config/seo-metadata';
+import { GUIDE_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
+import { APP_INFO } from '../config/app-info';
 
 const HOW_TO = GUIDE_PAGE_SEO.howTo;
 const HOW_TO_STEPS = HOW_TO?.steps ?? [];
+
+const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'Asia/Taipei',
+});
 
 const RATE_READING_TIPS = [
   {
@@ -77,6 +85,12 @@ const Guide = () => {
               </svg>
               預估完成時間：約 2 分鐘
             </div>
+            <p className="mt-2 text-sm text-text-muted">
+              作者：<span itemProp="author">{APP_INFO.author}</span> ・ 最後更新：
+              <time dateTime={new Date(SITE_SEO.updatedTime).toISOString()} itemProp="dateModified">
+                {LAST_UPDATED}
+              </time>
+            </p>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">

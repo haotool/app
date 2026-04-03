@@ -47,12 +47,14 @@ export default function About() {
               <a
                 href={APP_INFO.threadsUrl}
                 target="_blank"
-                rel="noopener noreferrer me"
+                rel="noopener noreferrer me author"
                 className="text-primary underline"
+                itemProp="author"
               >
                 {AUTHOR_PERSON.name}
               </a>
-              （{APP_INFO.author}）・ 版本：{getDisplayVersion()} ・ 最後更新：{LAST_UPDATED}
+              （{APP_INFO.author}）・ 版本：{getDisplayVersion()} ・ 最後更新：
+              <time dateTime={new Date(SITE_SEO.updatedTime).toISOString()}>{LAST_UPDATED}</time>
             </p>
           </div>
 

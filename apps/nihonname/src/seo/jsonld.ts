@@ -146,6 +146,7 @@ export function buildArticleSchema(article: ArticleData, url: string) {
     headline: article.headline,
     description: article.description,
     url,
+    image: buildAssetUrl('og-image.png'),
     datePublished: article.datePublished,
     dateModified: article.dateModified,
     author: {

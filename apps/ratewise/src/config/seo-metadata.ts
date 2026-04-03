@@ -1071,6 +1071,24 @@ export const ABOUT_PAGE_SEO = {
         articleBody: `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
       },
     ),
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ContactPage',
+      url: buildCanonicalUrl('/about/'),
+      name: '關於我們 - RateWise 匯率好工具',
+      description: 'RateWise 關於頁面提供聯繫方式、資料來源說明、技術架構與 SEO 透明度資訊。',
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'Customer Support',
+        email: APP_INFO.email ?? 'haotool.org@gmail.com',
+        url: buildCanonicalUrl('/about/'),
+      },
+      publisher: {
+        '@id': `${SITE_BASE_URL}#organization`,
+        '@type': 'Organization',
+        name: APP_INFO.author,
+      },
+    },
     buildPersonJsonLd(),
   ],
 } satisfies SEOPageMetadata;
@@ -1364,6 +1382,23 @@ export const PRIVACY_PAGE_SEO = {
     { name: '隱私政策', item: '/privacy/' },
   ],
   robots: 'noindex, follow',
+  jsonLd: [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'PrivacyPolicy',
+      url: buildCanonicalUrl('/privacy/'),
+      name: '隱私政策 - RateWise 個人資料保護說明',
+      description:
+        'RateWise 隱私政策說明：本服務不要求註冊，收藏、設定與歷史記錄保存在您的裝置本地；站點營運另使用第三方分析與安全服務處理匿名流量資料。',
+      publisher: {
+        '@id': `${SITE_BASE_URL}#organization`,
+        '@type': 'Organization',
+        name: APP_INFO.author,
+      },
+      dateModified: BUILD_TIME,
+      inLanguage: DEFAULT_LOCALE,
+    },
+  ],
 } as const satisfies SEOPageMetadata;
 
 export const APP_ONLY_PAGE_SEO = {
