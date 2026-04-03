@@ -1,8 +1,61 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-02T02:00:00+08:00
-> **當前總分**: 1201（初始分: 100）
+> **最後更新**: 2026-04-03T23:30:00+08:00
+> **當前總分**: 1203（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-nihonname-seo-ab-phases-002
+date: 2026-04-03
+title: SEO A+B 原子優化：Article.image schema 修正 + E-E-A-T 強化
+score: +2
+type: feat
+content_type: seo
+scope: [ratewise, nihonname]
+topics: [seo, schema.org, e-e-a-t, structured-data]
+keywords: [Article.image, Article.publisher, author byline, dateModified, PrivacyPolicy, ContactPage, semantic HTML]
+aliases: [SEO A+B 完成, Schema 修正完整化, E-E-A-T semantic upgrade]
+related_entries: [ratewise-seo-audit-p1-p5-fix-001]
+summary: 完成 SEO A+B 兩階段原子優化：A 階段修正 Article.image/publisher schema 4 頁（nihonname 歷史頁）+修復 logo/publisher metadata；B 階段增強 E-E-A-T 信號（About/FAQ/Guide + Privacy/Contact page）並新增 semantic author/dateModified 標記與 PrivacyPolicy/ContactPage schema。版本語義更新至 v2.21.0，各 SSOT 檔案同步完成。
+root_cause:
+
+- nihonname 4 頁（kominka/shimonoseki/san-francisco/history）Article schema 缺 image 欄位，Rich Results 驗證失敗
+- ratewise Article.publisher 缺 name/logo，schema.org 驗證產生警告
+- About/FAQ/Guide/Privacy 頁面無可見 author 歸屬和 dateModified 時間標記，E-E-A-T 信號薄弱
+- PrivacyPolicy 與 ContactPage 頁面雖存在但無對應 schema.org 類型，Google 無法識別
+  impact:
+
+- Article schema 缺 image 導致 Google Rich Results 測試無法驗證圖片，可能降低分享預覽和搜尋結果吸引力
+- Article.publisher 不完整降低 Authority 信號，SEO E-E-A-T 分數停留 67
+- Privacy/Contact 頁無 schema，搜尋引擎無法正確分類內容，降低法律/信任信號
+  actions:
+
+- **Phase A**：
+  - nihonname buildArticleSchema() 添加 `image: buildAssetUrl('og-image.png')`
+  - ratewise seo-metadata.ts AUTHOR_PERSON 補齊 logo URL
+- **Phase B**：
+  - ratewise About/FAQ/Guide 頁新增 `rel="author"` + `itemprop="author"` + semantic `<time>` wrapper
+  - seo-metadata.ts ABOUT_PAGE_SEO/PRIVACY_PAGE_SEO 添加 ContactPage/PrivacyPolicy JSON-LD schema
+  - 執行 `pnpm changeset:version` 語義版本迭代（v2.20.0 → v2.21.0）
+    prevention:
+
+- Schema 欄位變更時同步參考 schema.org 官方文檔；複數頁面修正應透過通用函數（如 buildArticleSchema）集中維護
+- Privacy/Contact/Legal 頁新增時應同時加入相應 schema.org type 與可見 semantic markup
+  verification:
+
+- `pnpm typecheck` ✅ 通過
+- `pnpm test -- --run` ✅ 1900 tests (ratewise) + 389 tests (nihonname) 通過
+- `pnpm build:ratewise` ✅ SSG 構建通過，50 頁面預渲染正常
+- squirrel E-E-A-T 預期 67 → 75+ （待新審計確認）
+- git push origin main ✅ pre-push 檢查通過，CI/CD 已排隊
+  references:
+
+- apps/nihonname/src/seo/jsonld.ts (buildArticleSchema + image)
+- apps/ratewise/src/config/seo-metadata.ts (Article.publisher, PrivacyPolicy, ContactPage)
+- apps/ratewise/src/pages/About.tsx / FAQ.tsx / Guide.tsx (author byline + dateModified)
+- .changeset/seo-lcp-schema-publisher.md / seo-eeat-author-privacy.md
+- commit 3d8f9ef3
 
 ---
 
