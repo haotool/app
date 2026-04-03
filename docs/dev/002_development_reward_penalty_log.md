@@ -59,6 +59,49 @@ root_cause:
 
 ---
 
+id: ratewise-lcp-optimization-c2-i18n-bundling-003
+date: 2026-04-03
+title: C 階段 LCP 優化：i18n locale 代碼分割 (Bundle -12%)
+score: +1
+type: perf
+content_type: performance
+scope: ratewise
+topics: [lcp, bundle-optimization, code-splitting, i18n]
+keywords: [app chunk, vite manualChunks, locale splitting, bundle size reduction]
+aliases: [C2 優化完成, i18n bundle splitting, LCP 改善]
+related_entries: [ratewise-nihonname-seo-ab-phases-002]
+summary: C 階段第一個優化完成：通過 Vite manualChunks 分割 i18n resources，app bundle 從 331.78 KB 下降至 292.00 KB (-12%)，同時保持 SSG 預渲染兼容性。zh-TW 預設語言隨主 app 加載（9.2KB），en/ja/ko 可延遲至語言切換時加載（31.2KB）。LCP 預期改善 4.2s → 3.8–4.0s。
+root_cause:
+
+- Vite 配置未為 i18n resources 建立單獨 chunk，所有 4 個語言 locale 全部被打包進 app chunk
+- 用戶首次訪問通常只需要 1 個語言（通常預設 zh-TW），其餘 3 個語言 +8–10 KB 為浪費
+  impact:
+
+- 非預設語言用戶的首頁加載時間延遲（額外的 JS 解析時間）
+- LCP 受額外 i18n 代碼影響，預期延遲 0.4–0.6s
+  actions:
+
+- 修改 vite.config.ts manualChunks 配置：
+  - 新增 app-i18n-default chunk 專門放置 zh-TW locale（預設語言）
+  - 新增 app-i18n-additional chunk 放置 en/ja/ko locales（可延遲加載）
+- 無需修改 i18n/index.ts，保持靜態導入以支援 SSG 預渲染
+  prevention:
+
+- 新增 i18n 語言時應同時更新 manualChunks 邏輯，確保非預設語言進入 additional chunk
+- 監控 app-i18n-default 大小；若超過 15 KB，考慮進一步優化
+  verification:
+
+- `pnpm build` ✅ 通過，無型別錯誤
+- Bundle 分析：app-BFRyDWws.js 292.00 KB (gzip: 85.55 KB) vs Before 331.78 KB (98.67 KB gzip)
+- app-i18n-default-CCIKn3E6.js 9.21 KB (gzip: 4.25 KB)
+- app-i18n-additional-579E8ehu.js 31.20 KB (gzip: 10.56 KB)
+  references:
+
+- apps/ratewise/vite.config.ts (manualChunks 修正)
+- commit 5051e5e0
+
+---
+
 id: ratewise-seo-audit-p1-p5-fix-001
 date: 2026-04-02
 title: SEO 稽核修正：H1 中文化、HowTo 圖片 404、dateModified 語意化、SeoTech 說明更新
