@@ -96,9 +96,13 @@ describe('buildArticleJsonLd() author 欄位', () => {
     expect(author.sameAs!.some((url) => url.includes('threads.net'))).toBe(true);
   });
 
-  it('publisher 仍應為 Organization（不變）', () => {
-    const publisher = article['publisher'] as { '@type': string };
-    expect(publisher['@type']).toBe('Organization');
+  it('publisher 應為 Organization @id 引用（linked data 模式）', () => {
+    // publisher 改為 @id 引用，讓 Google Knowledge Graph 跨頁面識別同一實體。
+    const publisher = article['publisher'] as { '@id'?: string; '@type'?: string };
+    const isIdRef =
+      typeof publisher['@id'] === 'string' && publisher['@id'].includes('#organization');
+    const isInline = publisher['@type'] === 'Organization';
+    expect(isIdRef || isInline).toBe(true);
   });
 });
 

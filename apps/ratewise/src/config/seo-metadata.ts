@@ -255,10 +255,16 @@ export function buildAbsoluteAssetUrl(pathname: string): string {
 }
 
 export function buildSiteJsonLd(): JsonLdBlock[] {
+  // @id 穩定 URI 讓 Google Knowledge Graph 跨頁面識別同一實體。
+  const orgId = `${SITE_BASE_URL}#organization`;
+  const siteId = `${SITE_BASE_URL}#website`;
+  const appId = `${SITE_BASE_URL}#softwareapplication`;
+
   return [
     {
       '@context': 'https://schema.org',
       '@type': 'SoftwareApplication',
+      '@id': appId,
       name: APP_INFO.name,
       alternateName: APP_INFO.subtitle,
       description: SITE_SEO.description,
@@ -269,6 +275,11 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       installUrl: SITE_BASE_URL,
       datePublished: `${APP_INFO.copyrightStartYear}-01-01`,
       dateModified: BUILD_TIME,
+      author: { '@id': orgId },
+      screenshot: [
+        buildAbsoluteAssetUrl('/screenshots/mobile-home.png'),
+        buildAbsoluteAssetUrl('/screenshots/desktop-features.png'),
+      ],
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -294,6 +305,7 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
     {
       '@context': 'https://schema.org',
       '@type': 'Organization',
+      '@id': orgId,
       name: APP_INFO.author,
       url: SITE_BASE_URL,
       foundingDate: String(APP_INFO.copyrightStartYear),
@@ -308,12 +320,14 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
     {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
+      '@id': siteId,
       name: APP_INFO.name,
       alternateName: APP_INFO.subtitle,
       description: SITE_SEO.description,
       url: SITE_BASE_URL,
       inLanguage: SITE_SEO.locale,
       dateModified: BUILD_TIME,
+      publisher: { '@id': orgId },
       // potentialAction：讓 Google 在 SERP 顯示 sitelinks 搜尋框（SearchAction）。
       // 匯率工具查詢模式：from={currency_code} 對應工具首頁的幣別 deep-link。
       potentialAction: {
@@ -456,12 +470,8 @@ export function buildArticleJsonLd(
       url: AUTHOR_PERSON.url,
       sameAs: [...AUTHOR_PERSON.sameAs],
     },
-    publisher: {
-      '@type': 'Organization',
-      name: APP_INFO.author,
-      url: APP_INFO.organizationUrl,
-      logo: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
-    },
+    // publisher 引用 Organization @id，強化跨頁面實體連結。
+    publisher: { '@id': `${SITE_BASE_URL}#organization` },
     inLanguage: DEFAULT_LOCALE,
     mainEntityOfPage: {
       '@type': 'WebPage',
