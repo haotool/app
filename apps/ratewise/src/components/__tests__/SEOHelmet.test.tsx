@@ -220,22 +220,6 @@ describe('SEOHelmet Component', () => {
     it('可索引頁面應保留結構化資料', () => {
       expect(shouldRenderStructuredData('index, follow')).toBe(true);
     });
-
-    it('faqContent 應只保留可見 FAQ HTML，不應再輸出 FAQPage schema', () => {
-      render(
-        <HelmetProvider>
-          <SEOHelmet
-            title="FAQ 測試頁"
-            faqContent={[{ question: '可以離線使用嗎？', answer: '可以。' }]}
-          />
-        </HelmetProvider>,
-      );
-
-      const structuredDataScript = document.head.querySelector(
-        'script[type="application/ld+json"]',
-      );
-      expect(structuredDataScript?.textContent).not.toContain('"@type":"FAQPage"');
-    });
   });
 
   describe('Client-side Head Reconciliation', () => {

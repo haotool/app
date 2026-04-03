@@ -12,7 +12,6 @@ import { shouldRenderStructuredData } from './seo-helmet-utils';
 import {
   type AlternateLink,
   type BreadcrumbItem,
-  type FAQEntry,
   type HowToData,
   type JsonLdBlock,
   DEFAULT_LOCALE,
@@ -39,10 +38,6 @@ interface SEOProps {
   updatedTime?: string;
   howTo?: HowToData;
   breadcrumb?: BreadcrumbItem[];
-  /** FAQ 內容應以可見 HTML 呈現；SEOHelmet 不再輸出 FAQPage schema。 */
-  faqContent?: FAQEntry[];
-  /** 保留未來顯式啟用 FAQPage rich result 的能力，預設停用。 */
-  faqStructuredData?: boolean;
   robots?: string;
 }
 
@@ -209,8 +204,6 @@ export function SEOHelmet({
   updatedTime = SITE_SEO.updatedTime,
   howTo,
   breadcrumb,
-  faqContent,
-  faqStructuredData = false,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 }: SEOProps) {
   const fullTitle = buildDocumentTitle(title);
@@ -255,7 +248,7 @@ export function SEOHelmet({
         return rest;
       }),
     });
-  }, [robots, jsonLd, howTo, breadcrumb, faqContent, faqStructuredData, canonicalUrl]);
+  }, [robots, jsonLd, howTo, breadcrumb, canonicalUrl]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
