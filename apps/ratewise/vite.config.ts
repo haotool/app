@@ -433,7 +433,17 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (!id.includes('node_modules')) return undefined;
+            if (!id.includes('node_modules')) {
+              // 應用層 code splitting：i18n resources 單獨 chunk
+              // zh-TW 是預設，其他語言延遲加載
+              if (id.includes('/locales/')) {
+                if (id.includes('zh-TW')) {
+                  return 'app-i18n-default'; // 預設語言隨主 app 加載
+                }
+                return 'app-i18n-additional'; // en/ja/ko 延遲加載
+              }
+              return undefined;
+            }
 
             // React 核心生態系統（基礎依賴）- 包含 scheduler 避免模組分裂
             if (id.includes('react/') || id.includes('react-dom/') || id.includes('scheduler/')) {
