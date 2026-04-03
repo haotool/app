@@ -28,6 +28,8 @@
     "verify": "node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs",
     "verify:ssot": "node ../../scripts/verify-ssot-sync.mjs",
     "verify:images": "node ../../scripts/verify-image-resources.mjs",
+    "verify:seo": "node scripts/verify-seo-ssot.mjs",
+    "verify:seo:prod": "node scripts/verify-seo-ssot.mjs prod",
     "update:seo-examples": "node scripts/update-seo-rate-examples.mjs",
     "optimize:images": "node scripts/optimize-images.js"
   },
