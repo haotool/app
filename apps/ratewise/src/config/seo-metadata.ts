@@ -347,6 +347,8 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
   return {
     '@context': 'https://schema.org',
     '@type': 'ImageObject',
+    // @id 讓 Google Knowledge Graph 將 OG 圖片與 SoftwareApplication 實體建立關聯。
+    '@id': `${imageUrl}#og-image`,
     contentUrl: imageUrl,
     url: imageUrl,
     width: 1200,
@@ -1906,7 +1908,7 @@ const REVERSE_CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     {
       question: '帶台幣去泰國換泰銖要注意什麼？',
       answer:
-        '準備新鈔、無摺痕的台幣千元鈔票。有皺摺、破損、塗鴉的舊鈔可能被拒收或匯率打折。換匯時需攜帶護照。',
+        '準備新鈔、無摺痕的台幣千元鈔票。有皺摺、破損、塗鴉的舊鈔可能被拒收或匯率打折。換匯時需攜帶護照，每人每次換匯無上限，但建議依行程需求分批換。',
     },
   ],
   VND: [
@@ -2067,6 +2069,8 @@ export function getCurrencyLandingPageContent(
   const financialServiceJsonLd: JsonLdBlock = {
     '@context': 'https://schema.org',
     '@type': 'FinancialService',
+    // @id 讓 Google Knowledge Graph 跨頁面識別同一金融服務實體。
+    '@id': `${canonicalUrl}#financial-service`,
     name: `${displayName}兌台幣匯率換算 — ${APP_INFO.name}`,
     description: `即時${displayName}（${code}）兌新台幣（TWD）匯率換算服務，資料來源為臺灣銀行官方牌告匯率，支援現金與即期匯率切換。`,
     url: canonicalUrl,
@@ -2115,8 +2119,7 @@ export function getCurrencyLandingPageContent(
     },
   };
 
-  // 高流量幣別（USD/JPY/KRW/EUR/HKD）啟用 FAQPage JSON-LD（AI/AEO 優化）
-  const HIGH_TRAFFIC: readonly string[] = ['USD', 'JPY', 'KRW', 'EUR', 'HKD'];
+  // 全幣別啟用 FAQPage JSON-LD，提升 AI/AEO 引擎覆蓋率與 Rich Result 曝光機會。
 
   const faqEntries: FAQEntry[] = [
     {
@@ -2169,8 +2172,7 @@ export function getCurrencyLandingPageContent(
         `${displayName}兌台幣匯率分享圖片`,
         `${APP_INFO.name} ${code}/TWD 即時匯率換算與趨勢`,
       ),
-      // 高流量幣別選擇性加入 FAQPage JSON-LD，用於 AI/AEO 引擎摘要
-      ...(HIGH_TRAFFIC.includes(code) ? [buildFaqPageJsonLd(faqEntries)] : []),
+      buildFaqPageJsonLd(faqEntries),
     ],
     faqEntries,
     howToSteps: [
@@ -2363,6 +2365,8 @@ export function getReverseCurrencyLandingPageContent(
   const financialServiceJsonLd: JsonLdBlock = {
     '@context': 'https://schema.org',
     '@type': 'FinancialService',
+    // @id 讓 Google Knowledge Graph 跨頁面識別同一金融服務實體。
+    '@id': `${canonicalUrl}#financial-service`,
     name: `台幣換${displayName}匯率換算 — ${APP_INFO.name}`,
     description: `即時新台幣（TWD）兌${displayName}（${code}）匯率換算，資料來源為臺灣銀行官方牌告匯率，出國換匯前快速估算所需台幣。`,
     url: canonicalUrl,
@@ -2389,6 +2393,39 @@ export function getReverseCurrencyLandingPageContent(
     },
   };
 
+  // 提前定義 faqEntries，讓 jsonLd（FAQPage schema）能引用同一份資料。
+  const faqEntries: FAQEntry[] = [
+    {
+      question: `現在台幣換${displayName}划算嗎？什麼時候換比較好？`,
+      answer: `匯率每日波動，難以預測「最佳時機」。RateWise 提供 7～30 天歷史趨勢圖，讓你觀察近期走勢。建議分批換匯分散風險，而非等待所謂最低點。出發前 1～2 週開始觀察趨勢，視需求分 2～3 次換匯是常見策略。`,
+    },
+    // 反向頁特化 FAQ：基於權威金融網站資訊，提供出國換匯場景的獨特知識
+    ...(REVERSE_CURRENCY_SPECIFIC_FAQ[code] ?? []),
+    {
+      question: `帶台幣去銀行換${displayName}，要看哪個匯率？`,
+      answer: `你帶台幣去銀行買${displayName}現鈔，銀行是在「賣出」外幣給你，需參考台銀牌告的「現金賣出」價。RateWise 直接顯示此數字——這才是你實際要付的台幣金額，而非 Google 或 XE 顯示的市場中間價。`,
+    },
+    {
+      question: `${formatAmount(override.popularTwdAmounts[2] ?? 30000)} 台幣可以換多少${displayName}？`,
+      answer: `${buildTwdToForeignRateSentence(code, override.popularTwdAmounts[2] ?? 30000)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
+    },
+    {
+      question: `出國刷卡跟換現金哪個比較省？`,
+      answer: `取決於發卡銀行的海外手續費。部分無手續費卡片搭配Visa/Mastercard清算匯率，整體成本可能低於現金換匯。但現金在特定地區（如泰國、日本）更實用。建議同時準備少量現金加信用卡。`,
+    },
+    {
+      question: `換${displayName}現金和外幣帳戶匯款哪種匯率較好？`,
+      answer: `外幣帳戶使用「即期賣出」匯率，通常優於「現金賣出」，因為銀行省去了現鈔保管與運送成本。如不急需現鈔，透過網銀外幣帳戶換匯通常可省下一些匯差。RateWise 可一鍵切換查看兩種報價。`,
+    },
+    // 替代換匯管道 FAQ（如明洞換匯所），僅 KRW 等有 alternativeProviders 的幣別會產生條目
+    // /twd-krw/ 頁方向為 twd-to-foreign（旅客持 TWD 換 KRW），使用 rate（sell 率）版本 FAQ
+    ...buildAlternativeProviderFaq(
+      code,
+      SEO_RATE_EXAMPLES[code] ?? ({} as RateExample),
+      'twd-to-foreign',
+    ),
+  ];
+
   return {
     currencyCode: code,
     currencyFlag: definition.flag,
@@ -2412,38 +2449,10 @@ export function getReverseCurrencyLandingPageContent(
         `台幣換${displayName}匯率分享圖片`,
         `${APP_INFO.name} TWD/${code} 出國換匯即時計算`,
       ),
+      // 全幣別啟用 FAQPage JSON-LD，提升 AI/AEO 引擎覆蓋率與 Rich Result 曝光機會。
+      buildFaqPageJsonLd(faqEntries),
     ],
-    faqEntries: [
-      {
-        question: `現在台幣換${displayName}划算嗎？什麼時候換比較好？`,
-        answer: `匯率每日波動，難以預測「最佳時機」。RateWise 提供 7～30 天歷史趨勢圖，讓你觀察近期走勢。建議分批換匯分散風險，而非等待所謂最低點。出發前 1～2 週開始觀察趨勢，視需求分 2～3 次換匯是常見策略。`,
-      },
-      // 反向頁特化 FAQ：基於權威金融網站資訊，提供出國換匯場景的獨特知識
-      ...(REVERSE_CURRENCY_SPECIFIC_FAQ[code] ?? []),
-      {
-        question: `帶台幣去銀行換${displayName}，要看哪個匯率？`,
-        answer: `你帶台幣去銀行買${displayName}現鈔，銀行是在「賣出」外幣給你，需參考台銀牌告的「現金賣出」價。RateWise 直接顯示此數字——這才是你實際要付的台幣金額，而非 Google 或 XE 顯示的市場中間價。`,
-      },
-      {
-        question: `${formatAmount(override.popularTwdAmounts[2] ?? 30000)} 台幣可以換多少${displayName}？`,
-        answer: `${buildTwdToForeignRateSentence(code, override.popularTwdAmounts[2] ?? 30000)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
-      },
-      {
-        question: `出國刷卡跟換現金哪個比較省？`,
-        answer: `取決於發卡銀行的海外手續費。部分無手續費卡片搭配Visa/Mastercard清算匯率，整體成本可能低於現金換匯。但現金在特定地區（如泰國、日本）更實用。建議同時準備少量現金加信用卡。`,
-      },
-      {
-        question: `換${displayName}現金和外幣帳戶匯款哪種匯率較好？`,
-        answer: `外幣帳戶使用「即期賣出」匯率，通常優於「現金賣出」，因為銀行省去了現鈔保管與運送成本。如不急需現鈔，透過網銀外幣帳戶換匯通常可省下一些匯差。RateWise 可一鍵切換查看兩種報價。`,
-      },
-      // 替代換匯管道 FAQ（如明洞換匯所），僅 KRW 等有 alternativeProviders 的幣別會產生條目
-      // /twd-krw/ 頁方向為 twd-to-foreign（旅客持 TWD 換 KRW），使用 rate（sell 率）版本 FAQ
-      ...buildAlternativeProviderFaq(
-        code,
-        SEO_RATE_EXAMPLES[code] ?? ({} as RateExample),
-        'twd-to-foreign',
-      ),
-    ],
+    faqEntries,
     howToSteps: [
       {
         position: 1,
