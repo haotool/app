@@ -23,6 +23,7 @@ jobs:
       contents: read
     env:
       TZ: 'Asia/Taipei'
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
     steps:
       - name: Checkout code

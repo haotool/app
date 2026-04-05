@@ -43,6 +43,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
     if: |
       github.event_name == 'workflow_dispatch' ||
@@ -86,6 +88,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
     steps:
       - name: Checkout code
@@ -177,6 +181,8 @@ jobs:
     if: always()
     permissions:
       contents: read
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
     steps:
       - name: Generate workflow summary
