@@ -23,7 +23,7 @@ const withTrailingSlash = (value) => {
 export const normalizeSiteUrl = withTrailingSlash;
 
 /**
- * 公開可索引內容頁（7 個）
+ * 公開可索引內容頁（8 個）- 含 /seo-tech/ 技術揭露頁（2026-04-06 新增）
  */
 export const CONTENT_SEO_PATHS = [
   '/',
@@ -34,6 +34,7 @@ export const CONTENT_SEO_PATHS = [
   '/cash-vs-spot-rate/',
   '/card-rate-guide/',
   '/open-data/',
+  '/seo-tech/',
 ];
 
 /**

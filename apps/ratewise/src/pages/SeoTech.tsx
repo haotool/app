@@ -5,6 +5,7 @@
  * 資料從 SSOT 配置模組自動計算，確保數字永遠與實際設定同步。
  *
  * @created 2026-03-20
+ * @updated 2026-04-06 - Core Web Vitals (FID→INP)、E-E-A-T 信號、PWA 快取統計
  */
 
 import { Link } from 'react-router-dom';
@@ -251,9 +252,21 @@ const TECH_FEATURES = [
   },
   {
     icon: Zap,
-    title: 'Core Web Vitals',
-    desc: 'LCP < 2.5s、FID < 100ms、CLS < 0.1；Lighthouse CI 在 PR 自動驗證分數。',
-    tech: 'Lighthouse CI',
+    title: 'Core Web Vitals (2026)',
+    desc: 'LCP < 2.5s、INP < 200ms、CLS < 0.1；Lighthouse CI 在 PR 自動驗證分數（FID 已轉換為 INP）。',
+    tech: 'Lighthouse CI + INP Metric',
+  },
+  {
+    icon: Shield,
+    title: 'E-E-A-T 信號',
+    desc: '作者身份 (Person schema)、發行日期 (Article schema)、發布者驗證 (Organization)，強化內容權威性與可信度。',
+    tech: 'Schema.org Person + Organization',
+  },
+  {
+    icon: Database,
+    title: 'PWA 離線快取統計',
+    desc: '50+ 項靜態資源預快取、最後一筆匯率儲存、Workbox 智慧更新策略，確保網路中斷時仍可查詢。',
+    tech: 'Workbox + Service Worker',
   },
 ] as const;
 
@@ -280,6 +293,44 @@ const PATH_CATEGORIES = [
     examples: ['/twd-usd/', '/twd-jpy/', '/twd-eur/', '/twd-hkd/', '…'],
     color: 'bg-emerald-100 text-emerald-800',
     bar: 'bg-emerald-500',
+  },
+] as const;
+
+// ─── E-E-A-T 信號（2026）────────────────────────────────────────────────────────
+
+const EEAT_SIGNALS = [
+  {
+    title: '專業性 (Expertise)',
+    items: [
+      '作者身份：獨立開發者 + 金融科技專業',
+      '內容深度：18 種貨幣、現金 & 即期雙套報價',
+      '技術透明：完整 SEO 技術揭露（本頁）',
+    ],
+    icon: Search,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+  },
+  {
+    title: '權威性 (Authoritativeness)',
+    items: [
+      '官方數據：台灣銀行牌告匯率（5 分鐘同步）',
+      '公開 API：OpenAPI 3.1 規範供開發者整合',
+      '機器可讀：sitemap.xml、robots.txt、llms.txt',
+    ],
+    icon: Shield,
+    color: 'text-purple-600',
+    bg: 'bg-purple-50',
+  },
+  {
+    title: '可信度 (Trustworthiness)',
+    items: [
+      '隱私第一：無帳號、本機存儲、無追蹤',
+      '安全傳輸：HTTPS、CSP 標頭、X-Frame-Options',
+      '透明營運：公開隱私政策、費用結構',
+    ],
+    icon: CheckCircle2,
+    color: 'text-green-600',
+    bg: 'bg-green-50',
   },
 ] as const;
 
@@ -657,6 +708,57 @@ export default function SeoTech() {
               );
             })}
           </motion.div>
+        </motion.section>
+
+        {/* ─── E-E-A-T 信號（2026）─────────────────────────────────────── */}
+        <motion.section
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-40px' }}
+          transition={sectionTransition}
+        >
+          <SectionHeader icon={Shield} title="E-E-A-T 信號強化（2026）" />
+          <motion.div
+            variants={staggerContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-3"
+          >
+            {EEAT_SIGNALS.map((signal) => {
+              const Icon = signal.icon;
+              return (
+                <motion.div
+                  key={signal.title}
+                  variants={staggerItemVariants}
+                  transition={transitions.smooth}
+                  className={`p-4 rounded-2xl border border-[rgb(var(--color-border))] ${signal.bg}`}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Icon className={`w-5 h-5 ${signal.color}`} />
+                    <h3 className="text-sm font-semibold">{signal.title}</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {signal.items.map((item, idx) => (
+                      <li
+                        key={idx}
+                        className="text-xs text-[rgb(var(--color-text-muted))] flex gap-2"
+                      >
+                        <span className="flex-shrink-0">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-3 pl-1">
+            Google 搜尋品質評估指南強調 E-E-A-T（專業性、權威性、可信度）為
+            YMYL（您的錢或生活）內容評分的關鍵。RateWise
+            透過透明化揭露、官方資料來源與隱私優先設計強化信號。
+          </p>
         </motion.section>
 
         {/* ─── 建置腳本 ───────────────────────────────────────────────────── */}

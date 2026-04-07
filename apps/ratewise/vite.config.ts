@@ -10,7 +10,6 @@ import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import dns from 'node:dns';
-import { APP_INFO } from './src/config/app-info';
 import { getVersionFromCommitCount as formatVersionFromCommitCount } from './src/utils/version-build-utils';
 
 // Node.js v17+ DNS 解析一致性修正
@@ -281,33 +280,30 @@ export default defineConfig(({ mode }) => {
         strategies: 'injectManifest',
         srcDir: 'src',
         filename: 'sw.ts',
-        // prompt 模式：新 SW 安裝後進入 waiting，由 UpdatePrompt 通知用戶並確認後才接管。
-        // 避免 autoUpdate + skipWaiting 導致版本撕裂（舊 HTML 引用舊 chunk URL → Load failed）。
-        // 舊用戶快取清理由 pwa-recovery-bootstrap.js（RECOVERY_EPOCH = APP_VERSION）負責。
+        // prompt：讓新 SW 完成安裝後先進入 waiting，再由 client 端於安全時機啟用。
+        // 這可避免舊 HTML 與新 precache chunk 發生版本撕裂，造成冷啟動黑屏。
         registerType: 'prompt',
         injectRegister: 'inline',
 
         injectManifest: {
-          // workbox-build v7.4.0 的花括號展開（**/*.{js,css,...}）與 globIgnores 並用時返回 0 結果，
-          // 必須逐一列舉，否則 JS/CSS chunk 不進入 precache → 飛航模式冷啟動黑屏。
+          // 避免 brace expansion 相依異常導致 glob 全數失效，明確列出副檔名。
+          // 含 json 以預快取 React Router data manifest（離線 SPA 導覽必要）。
           globPatterns: [
-            'assets/**/*.js', // Vite 輸出的所有 JS chunk。
-            'assets/**/*.css', // Vite 輸出的所有 CSS。
-            '**/*.html', // SSG 預渲染頁面（含所有路由）。
-            '**/*.ico', // favicon。
-            '**/*.png', // PWA icon、logo。
-            '**/*.svg', // SVG 圖示。
-            '**/*.avif', // 最佳化圖片（<picture> srcset，含 logo、icon）。
-            '**/*.webp', // 最佳化圖片（<picture> srcset 備援格式）。
-            '**/*.json', // React Router data manifest；rates 與 openapi 另行排除。
+            '**/*.js',
+            '**/*.css',
+            '**/*.html',
+            '**/*.ico',
+            '**/*.png',
+            '**/*.svg',
+            '**/*.avif',
+            '**/*.webp',
+            '**/*.json',
           ],
           globIgnores: [
             '**/og-image-old.png',
             '**/node_modules/**',
             '**/lighthouse-reports/**',
-            '**/rates/**/*.json', // CDN 即時匯率，由 runtime 策略處理。
-            '**/api/**/*.json', // prebuild 匯率快照（api/latest.json），runtime 走 CDN。
-            '**/openapi.json', // 開發用 API spec，非離線必要。
+            '**/rates/**/*.json',
             '**/offline.html',
             '**/sitemap.xml',
             '**/robots.txt',
@@ -329,10 +325,10 @@ export default defineConfig(({ mode }) => {
 
         devOptions: { enabled: false, type: 'module' },
         manifest: {
-          name: APP_INFO.name,
+          name: 'RateWise - 即時匯率轉換器',
           short_name: 'RateWise',
           description:
-            'RateWise 匯率好工具顯示臺灣銀行牌告實際買賣價（非中間價），支援 18 種貨幣換算，每 5 分鐘同步，離線可用的 PWA 匯率工具。',
+            'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。',
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',
@@ -433,17 +429,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (!id.includes('node_modules')) {
-              // 應用層 code splitting：i18n resources 單獨 chunk
-              // zh-TW 是預設，其他語言延遲加載
-              if (id.includes('/locales/')) {
-                if (id.includes('zh-TW')) {
-                  return 'app-i18n-default'; // 預設語言隨主 app 加載
-                }
-                return 'app-i18n-additional'; // en/ja/ko 延遲加載
-              }
-              return undefined;
-            }
+            if (!id.includes('node_modules')) return undefined;
 
             // React 核心生態系統（基礎依賴）- 包含 scheduler 避免模組分裂
             if (id.includes('react/') || id.includes('react-dom/') || id.includes('scheduler/')) {
@@ -454,7 +440,7 @@ export default defineConfig(({ mode }) => {
             // 將 react-router、底層 @remix-run/router 與 vite-react-ssg 維持在同一個 chunk，
             // 避免 router runtime 與 SSG runtime 互相跨 chunk 引用造成循環依賴警告。
             if (ROUTER_ECOSYSTEM_PACKAGES.some((pkg) => id.includes(pkg))) {
-              return 'vendor-router-runtime';
+              return 'vendor-router';
             }
 
             // Charts（重量級視覺化庫）
@@ -518,15 +504,10 @@ export default defineConfig(({ mode }) => {
       concurrency: 10,
       async includedRoutes(paths) {
         // 從 TypeScript SSOT 動態引入 SEO 路徑配置
-        const { getIncludedRoutes, CURRENCY_AMOUNT_SEO_PATHS, REVERSE_CURRENCY_AMOUNT_SEO_PATHS } =
-          await import('./src/config/seo-paths');
-        // 基礎 50 頁（靜態路由）+ ~204 頁金額落地頁（路徑型 /usd-twd/500/）
-        const includedPaths = [
-          ...getIncludedRoutes(paths),
-          ...CURRENCY_AMOUNT_SEO_PATHS,
-          ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
-        ];
-        console.log(`✅ Including ${includedPaths.length} paths (base + amount pages)`);
+        const { getIncludedRoutes } = await import('./src/config/seo-paths');
+        const includedPaths = getIncludedRoutes(paths);
+        console.log('🔍 Available paths:', paths);
+        console.log('✅ Including paths:', includedPaths);
         return includedPaths;
       },
       // 預渲染前處理 HTML

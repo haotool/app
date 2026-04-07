@@ -182,6 +182,10 @@ export default function About() {
                 <Link to="/guide/" className="text-primary underline">
                   使用指南
                 </Link>
+                <span className="mx-1">·</span>
+                <Link to="/seo-tech/" className="text-primary underline">
+                  SEO 技術揭露
+                </Link>
               </p>
             </div>
           </section>

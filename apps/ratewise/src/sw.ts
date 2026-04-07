@@ -3,28 +3,29 @@
 /// <reference lib="webworker" />
 
 import { clientsClaim } from 'workbox-core';
-import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching';
-import { registerRoute, setCatchHandler } from 'workbox-routing';
-import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
+import {
+  cleanupOutdatedCaches,
+  createHandlerBoundToURL,
+  matchPrecache,
+  precacheAndRoute,
+} from 'workbox-precaching';
+import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing';
+import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
-// 安裝時立即接管：跳過 waiting 狀態，確保 SW 在離線冷啟動前已啟用。
-// 復原後（SW 解除 → 重新安裝）SW 若停留 waiting，離線冷啟動無法攔截請求 → 黑屏。
-// controllerchange → reload（main.tsx）作為版本撕裂防護。
-self.addEventListener('install', () => {
-  void self.skipWaiting();
-});
-
-// precache 安裝失敗靜默處理：不自毀，讓 SW 保持啟用以維持離線功能。
-// 移除原本的 unregister() 呼叫：自毀後無任何離線保護，下次冷啟動離線 = 黑屏。
-// CDN stale 404 等暫時性錯誤在下次部署後自然解決，不需要 SW 自殺。
+// precache 安裝失敗自動修復：首次安裝失敗時登出以允許重試；已有 active worker 則保留。
 self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
   if (String(event.reason).includes('bad-precaching-response')) {
     event.preventDefault();
-    console.warn('[SW] precache 安裝失敗，下次載入時將重試（不自毀）');
+    if (!self.registration.active) {
+      console.warn('[SW] 首次 precache 安裝失敗，自動登出以允許重新安裝');
+      void self.registration.unregister();
+    } else {
+      console.warn('[SW] 新版 precache 安裝失敗，保留現有 active worker，瀏覽器將自動重試');
+    }
   }
 });
 
@@ -54,15 +55,7 @@ async function verifyAndRepairPrecache(): Promise<void> {
       const relUrl = typeof entry === 'string' ? entry : entry.url;
       if (!relUrl.endsWith('.js') && !relUrl.endsWith('.css')) return false;
       const fullUrl = new URL(relUrl, scope).href;
-      // 支援兩種快取鍵格式：
-      // 1. 有 content hash 的資源（string entry）→ bare URL（無 revision suffix）。
-      // 2. 有 revision 的資源（object entry）→ URL?__WB_REVISION__=hash。
-      if (cachedUrls.has(fullUrl)) return false;
-      if (typeof entry !== 'string' && entry.revision) {
-        const revUrl = `${fullUrl}?__WB_REVISION__=${entry.revision}`;
-        if (cachedUrls.has(revUrl)) return false;
-      }
-      return true;
+      return !cachedUrls.has(fullUrl);
     });
 
     if (missing.length === 0) {
@@ -74,15 +67,10 @@ async function verifyAndRepairPrecache(): Promise<void> {
       missing.map(async (entry) => {
         const relUrl = typeof entry === 'string' ? entry : entry.url;
         const fullUrl = new URL(relUrl, scope).href;
-        // 使用與 workbox-precache 相同的快取鍵格式，確保後續查詢一致。
-        const cacheKey =
-          typeof entry !== 'string' && entry.revision
-            ? `${fullUrl}?__WB_REVISION__=${entry.revision}`
-            : fullUrl;
         try {
           const response = await fetch(fullUrl, { cache: 'no-cache' });
           if (response.ok) {
-            await cache.put(cacheKey, response);
+            await cache.put(fullUrl, response);
           }
         } catch (err) {
           console.warn(`[SW] 修復失敗: ${fullUrl}`, err);
@@ -98,8 +86,7 @@ async function verifyAndRepairPrecache(): Promise<void> {
 // 清除舊版快取。
 cleanupOutdatedCaches();
 
-// prompt 模式：新 SW 不主動呼叫 skipWaiting()，等待 UpdatePrompt 發送 SKIP_WAITING 後才接管。
-// clientsClaim() 確保啟動後立即控制所有已開啟頁面（首次安裝時適用）。
+// prompt 模式：僅在 waiting SW 收到 SKIP_WAITING 訊息後才接管。
 clientsClaim();
 
 // 訊息處理：SKIP_WAITING（prompt 更新流程）/ FORCE_HARD_RESET（緊急清除快取）。
@@ -115,48 +102,6 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   // 啟動時驗證 precache 完整性，補回 iOS cache eviction 清除的 chunk。
   if (data?.type === 'VERIFY_AND_REPAIR_PRECACHE') {
     event.waitUntil(verifyAndRepairPrecache());
-    return;
-  }
-
-  // 診斷資訊查詢：回傳 SW 狀態與快取清單，供冷啟動偵測器顯示詳情。
-  if (data?.type === 'GET_DIAGNOSTICS') {
-    event.waitUntil(
-      (async () => {
-        interface CacheInfo {
-          name: string;
-          count: number;
-        }
-        const cacheInfoList: CacheInfo[] = [];
-        try {
-          const cacheNames = await caches.keys();
-          for (const name of cacheNames) {
-            const cache = await caches.open(name);
-            const keys = await cache.keys();
-            cacheInfoList.push({ name, count: keys.length });
-          }
-        } catch {
-          // ignore cache enumeration errors
-        }
-        const msg = {
-          type: 'SW_DIAGNOSTICS',
-          data: {
-            scope: self.registration?.scope ?? '',
-            state: self.registration?.active
-              ? 'active'
-              : self.registration?.waiting
-                ? 'waiting'
-                : self.registration?.installing
-                  ? 'installing'
-                  : 'none',
-            caches: cacheInfoList,
-          },
-        };
-        const clients = await self.clients.matchAll({ type: 'window' });
-        for (const client of clients) {
-          client.postMessage(msg);
-        }
-      })(),
-    );
     return;
   }
 
@@ -186,100 +131,16 @@ registerRoute(
   new NetworkOnly(),
 );
 
-/**
- * 最終導覽回退 HTML。
- *
- * 當所有快取查找均失敗時，回傳此 HTML 而非 Response.error()。
- * Chrome PWA standalone 模式若收到 Response.error()，
- * 會顯示原生「此連線並不安全」錯誤頁面，完全繞過應用程式 UI。
- */
-function buildOfflineFallbackHtml(): string {
-  const css = [
-    'html,body{margin:0;min-height:100%;background:#f8fafc}',
-    'body{display:flex;align-items:center;justify-content:center;',
-    'font-family:system-ui,-apple-system,sans-serif;padding:2rem;text-align:center}',
-    '.c{max-width:18rem}',
-    'h1{font-size:1.125rem;font-weight:700;color:#1e293b;margin:0 0 .5rem}',
-    'p{font-size:.875rem;color:#64748b;line-height:1.6;margin:0 0 1.25rem}',
-    '.r{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}',
-    '.btn{padding:.625rem 1.5rem;border:none;border-radius:9999px;',
-    'font-size:.875rem;font-weight:600;cursor:pointer;margin:.125rem}',
-    '.p{background:#8B5CF6;color:#fff}',
-    '.s{background:transparent;color:#64748b;border:1px solid #cbd5e1;font-size:.8rem}',
-    'details{margin-top:.75rem;font-size:.75rem;color:#94a3b8;text-align:left}',
-    'summary{cursor:pointer;text-align:center;padding:.25rem;',
-    '-webkit-user-select:none;user-select:none}',
-    'pre{white-space:pre-wrap;word-break:break-all;background:#f1f5f9;',
-    'padding:.75rem;border-radius:.5rem;font-size:.7rem;color:#475569;margin:.5rem 0}',
-  ].join('');
-
-  // 診斷腳本（非同步收集 SW / cache 狀態並更新 pre#d）
-  const script = [
-    '(async function(){',
-    'var L=[];',
-    'L.push("\\u23f0 "+new Date().toLocaleTimeString("zh-TW"));',
-    'L.push("\\ud83c\\udf10 \\u7db2\\u8def: "+(navigator.onLine?"\\u5728\\u7dda":"\\u96e2\\u7dda"));',
-    'try{',
-    'var r=await navigator.serviceWorker.getRegistration();',
-    'L.push("\\u2699\\ufe0f SW: "+(r?(r.active?"active":r.waiting?"waiting":r.installing?"installing":"\\u7121 worker"):"\\u672a\\u8a3b\\u518a"));',
-    'if(r)L.push("\\ud83c\\udfae \\u63a7\\u5236: "+(navigator.serviceWorker.controller?"\\u6709":"\\u7121"));',
-    '}catch(e){L.push("\\u2699\\ufe0f SW: "+String(e));}',
-    'try{',
-    'var ks=await caches.keys();var tot=0;var det=[];',
-    'for(var i=0;i<ks.length;i++){var c=await caches.open(ks[i]);var en=await c.keys();tot+=en.length;det.push("  "+ks[i].replace("workbox-precache-v2-","pc-").slice(-42)+": "+en.length);}',
-    'L.push("\\ud83d\\udce6 \\u5feb\\u53d6: "+ks.length+" \\u500b / "+tot+" \\u9805");',
-    'for(var j=0;j<det.length;j++)L.push(det[j]);',
-    '}catch(e){L.push("\\ud83d\\udce6 \\u5feb\\u53d6: "+String(e));}',
-    'document.getElementById("d").textContent=L.join("\\n");',
-    '})();',
-    // 清除快取按鈕
-    'document.getElementById("cr").addEventListener("click",async function(){',
-    'this.disabled=true;this.textContent="\\u6e05\\u9664\\u4e2d\\u2026";',
-    'try{var ks=await caches.keys();await Promise.all(ks.map(function(n){return caches.delete(n);}));}catch(e){}',
-    'location.reload();',
-    '});',
-  ].join('');
-
-  return [
-    '<!doctype html><html lang="zh-TW"><head>',
-    '<meta charset="UTF-8">',
-    '<meta name="viewport" content="width=device-width,initial-scale=1">',
-    '<title>RateWise \u532f\u7387\u597d\u5de5\u5177 \u2014 \u96e2\u7dda</title>',
-    `<style>${css}</style>`,
-    '</head><body><div class="c">',
-    '<p style="font-size:2.5rem;margin:0 0 1rem">\ud83d\udce1</p>',
-    '<h1>\u7121\u6cd5\u8f09\u5165\u61c9\u7528\u7a0b\u5f0f</h1>',
-    '<p>PWA \u5feb\u53d6\u8cc7\u6e90\u4e0d\u5b8c\u6574\u6216\u5df2\u904e\u671f\uff0c\u8acb\u9023\u7dda\u5f8c\u91cd\u65b0\u958b\u555f\u3002</p>',
-    '<div class="r">',
-    '<button class="btn p" onclick="location.reload()">\u91cd\u65b0\u8f09\u5165</button>',
-    '<button class="btn s" id="cr">\u6e05\u9664\u5feb\u53d6\u4e26\u91cd\u8f09</button>',
-    '</div>',
-    '<details><summary>\ud83d\udcca \u8a3a\u65b7\u8a73\u60c5</summary>',
-    '<pre id="d">\u6536\u96c6\u4e2d\u2026</pre></details>',
-    `<script>${script}</` + `script>`,
-    '</div></body></html>',
-  ].join('\n');
-}
-
-// 導覽請求失敗離線回退：runtime cache → precache index.html → offline.html。
+// 網路失敗離線回退：JS/CSS 嘗試快取；導覽請求回退至 precache index.html。
 setCatchHandler(async ({ event, request }): Promise<Response> => {
   const fetchEvent = event as FetchEvent;
   const req = request ?? fetchEvent.request;
 
-  // JS/CSS 離線回退：依序嘗試三種策略，避免 Response.error() 觸發黑屏。
-  // 1) 精確 URL 比對（static-resources cache 和 workbox-precache bare-URL 條目）。
-  // 2) 忽略 query string（workbox-precache revision-keyed 條目：?__WB_REVISION__=hash）。
-  // 3) precache controller 查詢（處理 URL 正規化與 precache manifest 對應）。
+  // JS/CSS 離線回退：iOS cache eviction 後先嘗試全快取比對，避免 "Load failed" 崩潰。
   if (req.destination === 'script' || req.destination === 'style') {
     try {
       const cached = await caches.match(req);
       if (cached) return cached;
-      // ignoreSearch 覆蓋 workbox-precache 使用 ?__WB_REVISION__= 作為快取鍵的情境。
-      const cachedIgnoreSearch = await caches.match(req, { ignoreSearch: true });
-      if (cachedIgnoreSearch) return cachedIgnoreSearch;
-      // matchPrecache 透過 precache controller 查詢，處理 URL 正規化。
-      const precachedResponse = await matchPrecache(req.url);
-      if (precachedResponse) return precachedResponse;
     } catch {
       // 忽略快取存取錯誤。
     }
@@ -290,115 +151,12 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
     return Response.error();
   }
 
-  // 安全驗證：僅處理同源請求。
-  let requestOrigin: string;
-  let swOrigin: string;
-  try {
-    if (!req.url || typeof req.url !== 'string' || req.url.trim() === '') {
-      return Response.error();
-    }
-    const scope = self.registration?.scope;
-    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
-      return Response.error();
-    }
-
-    requestOrigin = new URL(req.url).origin;
-    swOrigin = new URL(scope).origin;
-  } catch (error) {
-    console.error('[SW] Origin validation failed:', error);
-    return Response.error();
-  }
-  if (requestOrigin !== swOrigin) {
-    return Response.error();
-  }
-
-  // 1) runtime cache 比對。
-  try {
-    if (!req.url || typeof req.url !== 'string' || req.url.trim() === '') {
-      throw new Error('Invalid URL');
-    }
-
-    const requestUrl = new URL(req.url);
-    if (!requestUrl.pathname.includes('..')) {
-      const cachedHtml = await caches.match(req.url);
-      if (cachedHtml) {
-        return cachedHtml;
-      }
-    }
-  } catch (error) {
-    console.error('[SW] Runtime cache match failed:', error);
-  }
-
-  // 2) precache index.html。
-  const indexHtml = await matchPrecache('index.html');
-  if (indexHtml) {
-    return indexHtml;
-  }
-
-  // 3) 完整 URL 比對 index.html。
-  try {
-    const scope = self.registration?.scope;
-    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
-      throw new Error('Invalid scope');
-    }
-
-    const indexUrl = new URL('index.html', scope).href;
-    const indexFromCache = await caches.match(indexUrl);
-    if (indexFromCache) {
-      return indexFromCache;
-    }
-  } catch (error) {
-    console.error('[SW] Index URL construction failed:', error);
-  }
-
-  // 4) precache offline.html。
-  const offlineResponse = await matchPrecache('offline.html');
-  if (offlineResponse) {
-    return offlineResponse;
-  }
-
-  // 5) 完整 URL 比對 offline.html。
-  try {
-    const scope = self.registration?.scope;
-    if (!scope || typeof scope !== 'string' || scope.trim() === '') {
-      throw new Error('Invalid scope');
-    }
-
-    const offlineUrl = new URL('offline.html', scope).href;
-    const fallbackResponse = await caches.match(offlineUrl);
-    if (fallbackResponse) {
-      return fallbackResponse;
-    }
-  } catch (error) {
-    console.error('[SW] Offline URL construction failed:', error);
-  }
-
-  // 最終安全網：回傳內嵌離線提示 HTML，絕不對導覽請求回傳 Response.error()。
-  // Chrome PWA standalone 模式若收到 Response.error()，
-  // 會顯示原生「此連線並不安全」錯誤頁面，完全繞過應用程式 UI。
-  console.warn('[SW] All cache lookups failed; serving inline offline fallback HTML');
-  return new Response(buildOfflineFallbackHtml(), {
-    headers: { 'Content-Type': 'text/html;charset=utf-8' },
-  });
+  // NavigationRoute 已攔截正常導覽；setCatchHandler 僅在網路失敗時作保險層。
+  return (await matchPrecache('index.html')) ?? Response.error();
 });
 
-// 導覽請求（HTML）：NetworkFirst，3 秒 timeout 後回落快取。
-// request.mode === 'navigate' 為 Workbox 官方建議，較 destination === 'document' 更精確。
-// 3s：行動網路 RTT 約 200-500ms，0.5s 過短易誤觸離線回退造成版本不符。
-registerRoute(
-  ({ request }: { request: Request }) => request.mode === 'navigate',
-  new NetworkFirst({
-    cacheName: 'html-cache',
-    plugins: [
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-      new ExpirationPlugin({
-        maxEntries: 20,
-        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
-      }),
-    ],
-    networkTimeoutSeconds: 3,
-  }),
-);
+// SPA 導覽：直接從 precache 提供 index.html，避免冷啟動離線依賴 runtime html-cache。
+registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')));
 
 // 歷史匯率（CDN）：CacheFirst，不可變資料永久快取。
 registerRoute(

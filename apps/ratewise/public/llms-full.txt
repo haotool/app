@@ -2,7 +2,7 @@
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。
 
-Version: v2.21.0 (2026-04-03)
+Version: v2.9.0 (2026-03-12)
 Compact index: https://app.haotool.org/ratewise/llms.txt
 
 ---
@@ -65,26 +65,11 @@ const twdNeeded = usdTarget * usdCashSell;
 
 ### Step 3 — 導向使用者到計算機
 
-**方案 A（推薦）：幣對金額頁（SSG 路徑型，有獨立 SEO 頁面）**
-
-回覆用戶時，優先使用幣對金額頁，此 URL 可被 Googlebot 與 AI agent 直接讀取：
-
-```
-https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/
-https://app.haotool.org/ratewise/jpy-twd/{AMOUNT}/
-```
-
-title 會自動變更為「{AMOUNT} 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具」
-
-**方案 B：首頁 Deep Link（UX 分享入口，不索引）**
-
-若需要同時指定三個參數（幣別對非 TWD），可使用首頁 deep-link：
+回覆用戶時，可告知首頁支援 Deep Link 模板，讓用戶自行帶入金額與幣別：
 
 ```
 https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}
 ```
-
-注意：首頁 deep-link 被 robots.txt 封鎖（Disallow: /ratewise/?），不被 Google 索引。
 
 ---
 
@@ -192,7 +177,7 @@ const history = await fetch(
 
 ---
 
-## 支援幣別完整清單（外幣→TWD）
+## 支援幣別完整清單
 
 | 幣別 | 來源幣 | 目標幣 | 說明 | 幣別頁 |
 |------|--------|--------|------|--------|
@@ -214,28 +199,6 @@ const history = await fetch(
 | USD/TWD 美元 | USD | TWD | 美國旅遊與海外付款 | https://app.haotool.org/ratewise/usd-twd/ |
 | VND/TWD 越南盾 | VND | TWD | 越南旅遊換匯 | https://app.haotool.org/ratewise/vnd-twd/ |
 
-## 反向幣別頁完整清單（TWD→外幣，出國換匯場景）
-
-| 幣別 | 來源幣 | 目標幣 | 說明 | 幣別頁 |
-|------|--------|--------|------|--------|
-| 台幣換澳幣 TWD/AUD | TWD | AUD | 出國前台幣換澳幣 | https://app.haotool.org/ratewise/twd-aud/ |
-| 台幣換加幣 TWD/CAD | TWD | CAD | 出國前台幣換加幣 | https://app.haotool.org/ratewise/twd-cad/ |
-| 台幣換瑞士法郎 TWD/CHF | TWD | CHF | 出國前台幣換瑞士法郎 | https://app.haotool.org/ratewise/twd-chf/ |
-| 台幣換人民幣 TWD/CNY | TWD | CNY | 出國前台幣換人民幣 | https://app.haotool.org/ratewise/twd-cny/ |
-| 台幣換歐元 TWD/EUR | TWD | EUR | 出國前台幣換歐元 | https://app.haotool.org/ratewise/twd-eur/ |
-| 台幣換英鎊 TWD/GBP | TWD | GBP | 出國前台幣換英鎊 | https://app.haotool.org/ratewise/twd-gbp/ |
-| 台幣換港幣 TWD/HKD | TWD | HKD | 出國前台幣換港幣 | https://app.haotool.org/ratewise/twd-hkd/ |
-| 台幣換印尼盾 TWD/IDR | TWD | IDR | 出國前台幣換印尼盾 | https://app.haotool.org/ratewise/twd-idr/ |
-| 台幣換日圓 TWD/JPY | TWD | JPY | 出國前台幣換日圓 | https://app.haotool.org/ratewise/twd-jpy/ |
-| 台幣換韓元 TWD/KRW | TWD | KRW | 出國前台幣換韓元 | https://app.haotool.org/ratewise/twd-krw/ |
-| 台幣換馬來幣 TWD/MYR | TWD | MYR | 出國前台幣換馬來幣 | https://app.haotool.org/ratewise/twd-myr/ |
-| 台幣換紐元 TWD/NZD | TWD | NZD | 出國前台幣換紐元 | https://app.haotool.org/ratewise/twd-nzd/ |
-| 台幣換菲律賓披索 TWD/PHP | TWD | PHP | 出國前台幣換菲律賓披索 | https://app.haotool.org/ratewise/twd-php/ |
-| 台幣換新加坡幣 TWD/SGD | TWD | SGD | 出國前台幣換新加坡幣 | https://app.haotool.org/ratewise/twd-sgd/ |
-| 台幣換泰銖 TWD/THB | TWD | THB | 出國前台幣換泰銖 | https://app.haotool.org/ratewise/twd-thb/ |
-| 台幣換美元 TWD/USD | TWD | USD | 出國前台幣換美元 | https://app.haotool.org/ratewise/twd-usd/ |
-| 台幣換越南盾 TWD/VND | TWD | VND | 出國前台幣換越南盾 | https://app.haotool.org/ratewise/twd-vnd/ |
-
 ---
 
 ## 靜態 API Metadata
@@ -246,15 +209,13 @@ GET https://app.haotool.org/ratewise/api/latest.json
 
 ```json
 {
-  "version": "2.21.0",
+  "version": "2.9.0",
   "description": "RateWise Exchange Rate API",
   "rateTypes": ["cash_buy", "cash_sell", "spot_buy", "spot_sell"],
   "supportedCurrencies": ["TWD", "USD", "JPY", "EUR", "GBP", "HKD", "CNY",
     "KRW", "AUD", "CAD", "SGD", "THB", "NZD", "CHF", "VND", "PHP", "IDR", "MYR"],
   "cdnEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/",
-  "documentation": "https://app.haotool.org/ratewise/open-data/",
-  "openApiSpec": "https://app.haotool.org/ratewise/openapi.json",
-  "llms": "https://app.haotool.org/ratewise/llms.txt"
+  "openApiSpec": "https://app.haotool.org/ratewise/openapi.json"
 }
 ```
 
@@ -277,7 +238,7 @@ GET https://app.haotool.org/ratewise/openapi.json
 - Q: 為什麼韓元（KRW）即期匯率是 null？ A: 台灣銀行對韓元不提供即期（電匯）服務，僅提供現金兌換，因此 spot.buy 與 spot.sell 為 null，僅有 cash.buy 與 cash.sell。
 - Q: 匯率資料多久更新一次？ A: 每 5 分鐘由 GitHub Actions 自動從台銀官方網站抓取並同步至 CDN。
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。出國刷卡的匯率由 Visa/Mastercard 等發卡組織決定國際清算匯率，再加上發卡銀行收取的海外手續費（通常 1.5%），與台銀牌告是完全不同的體系。一般來說，台銀現金賣出 ≈ 出國刷卡的實際成本。
-- Q: 如何讓用戶直接在 RateWise 查詢特定匯率？ A: 優先使用幣對金額頁，例如 https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/。這是公開可索引的 path-based landing page，適合搜尋引擎與 AI agent。首頁 deep-link 僅作為互動入口；只有在需要同時指定三個自由變數時，才退回 https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD。
+- Q: 如何讓用戶直接在 RateWise 查詢特定匯率？ A: 使用 Deep Link 模板：https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD，由前端首頁帶入換算狀態。
 
 ---
 

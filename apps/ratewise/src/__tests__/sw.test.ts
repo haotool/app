@@ -144,7 +144,6 @@ describe('Service Worker Cache Strategies', () => {
    * 驗證快取策略配置（預期值 = 修復後的正確配置）
    */
   const expectedStrategies = {
-    'html-cache': { strategy: 'NetworkFirst', maxAge: 7 * 24 * 60 * 60 },
     'history-rates-cdn': { strategy: 'CacheFirst', maxAge: 365 * 24 * 60 * 60 },
     'latest-rate-cache': { strategy: 'StaleWhileRevalidate', maxAge: 7 * 24 * 60 * 60 },
     'image-cache': { strategy: 'CacheFirst', maxAge: 90 * 24 * 60 * 60 },
@@ -152,10 +151,15 @@ describe('Service Worker Cache Strategies', () => {
     'static-resources': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60 },
   };
 
-  it('should have correct HTML cache configuration', () => {
-    const config = expectedStrategies['html-cache'];
-    expect(config.strategy).toBe('NetworkFirst');
-    expect(config.maxAge).toBe(7 * 24 * 60 * 60); // 7 days
+  it('should use NavigationRoute + createHandlerBoundToURL for document navigation', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    expect(sourceCode).toContain('createHandlerBoundToURL(');
+    expect(sourceCode).toContain('new NavigationRoute(');
   });
 
   it('should have correct historical rates cache configuration', () => {
@@ -217,15 +221,15 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).not.toContain("cacheName: 'offline-fallback'");
   });
 
-  it('should NOT bind navigation handling to createHandlerBoundToURL(index.html)', async () => {
+  it('should bind navigation handling to createHandlerBoundToURL(index.html)', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
 
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    expect(sourceCode).not.toContain('createHandlerBoundToURL(');
-    expect(sourceCode).not.toContain('new NavigationRoute(');
+    expect(sourceCode).toContain('createHandlerBoundToURL(');
+    expect(sourceCode).toContain('new NavigationRoute(');
   });
 });
 

@@ -662,6 +662,7 @@ const GUIDE_PUBLISH_DATES = {
   guide: '2025-01-10',
   openData: '2025-03-10',
   about: '2025-01-01',
+  seoTech: '2026-04-06',
 } as const;
 
 export const FAQ_PAGE_ENTRIES = [
@@ -1425,7 +1426,46 @@ export const APP_ONLY_PAGE_SEO = {
     title: 'SEO 技術揭露 - RateWise 搜尋引擎最佳化架構完整說明',
     description: `完整揭露 RateWise 所採用的 SEO 技術：${SEO_PATHS.length} 個索引路徑、8 種 JSON-LD Schema、${PRERENDER_PATHS.length} 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。`,
     pathname: '/seo-tech',
-    robots: 'noindex, follow',
+    robots: 'index, follow',
+    breadcrumb: [
+      { name: 'RateWise 首頁', item: '/' },
+      { name: 'SEO 技術揭露', item: '/seo-tech' },
+    ],
+    keywords: [
+      'SEO 技術',
+      'JSON-LD Schema',
+      'SSG 預渲染',
+      '結構化資料',
+      'PWA 離線支援',
+      '搜尋引擎最佳化',
+      '技術 SEO',
+      '網站結構化標記',
+      '搜尋可見性',
+      'RateWise 技術架構',
+    ],
+    jsonLd: buildArticleJsonLd(
+      'SEO 技術揭露 - RateWise 搜尋引擎最佳化架構完整說明',
+      `完整揭露 RateWise 所採用的 SEO 技術：${SEO_PATHS.length} 個索引路徑、8 種 JSON-LD Schema、${PRERENDER_PATHS.length} 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。`,
+      '/seo-tech',
+      GUIDE_PUBLISH_DATES.seoTech,
+      {
+        articleSection: 'SEO 技術',
+        keywords: [
+          'SEO 技術',
+          'JSON-LD Schema',
+          'SSG 預渲染',
+          '結構化資料',
+          'PWA 離線支援',
+          '搜尋引擎最佳化',
+          '技術 SEO',
+          '網站結構化標記',
+          '搜尋可見性',
+          'RateWise 技術架構',
+        ],
+        articleBody:
+          'RateWise 採用現代化 SEO 最佳實踐，包括預先渲染靜態 HTML（SSG）以提升首頁效能與可爬性、完整的 JSON-LD Schema 標記（包括 Article、Organization、BreadcrumbList、FAQPage、SoftwareApplication 等 8 種類型）以強化搜尋結果展示、優化的網站結構（42 個索引路徑與 50 個預渲染頁面）、自動化資料管線（每 5 分鐘從台灣銀行同步即時匯率）、與 PWA 離線支援以確保使用者體驗。技術實現包括使用 Vite + React 進行高效打包、Tailwind CSS 的原子類樣式、Workbox 的靜態資源快取策略、Cloudflare Worker 的邊緣安全標頭注入，以及搜尋可見性的完整監測與驗證流程。',
+      },
+    ),
   },
 } as const satisfies Record<string, SEOPageMetadata>;
 

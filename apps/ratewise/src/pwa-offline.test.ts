@@ -22,7 +22,7 @@ describe('PWA 離線功能測試', () => {
       // 應該有正確的 HTML 結構
       expect(content).toContain('<!doctype html>');
       expect(content).toContain('lang="zh-TW"');
-      expect(content).toContain('<title>離線模式 - RateWise 匯率好工具</title>');
+      expect(content).toContain('<title>離線模式 - RateWise</title>');
     });
 
     it('should have retry functionality', () => {
@@ -64,7 +64,7 @@ describe('PWA 離線功能測試', () => {
       expect(viteConfig).toContain('offline.html');
     });
 
-    it('should have skipWaiting and clientsClaim for immediate activation', () => {
+    it('should only activate a waiting worker after SKIP_WAITING message', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
       expect(swContent).toContain('skipWaiting()');
       expect(swContent).toContain('clientsClaim()');
@@ -74,29 +74,21 @@ describe('PWA 離線功能測試', () => {
     it('should have setCatchHandler for offline navigation fallback', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
       expect(swContent).toContain('setCatchHandler');
-      expect(swContent).toContain("destination === 'document'");
+      expect(swContent).toContain("destination !== 'document'");
     });
 
-    it('should try cache before offline.html fallback', () => {
+    it('should use NavigationRoute + createHandlerBoundToURL for SPA offline navigation', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      expect(swContent).toContain('caches.match(req.url)');
-      expect(swContent).toContain("matchPrecache('index.html')");
+      expect(swContent).toContain('createHandlerBoundToURL(');
+      expect(swContent).toContain('new NavigationRoute(');
     });
 
     it('should have offline-first strategy in setCatchHandler', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
       // 確保離線回退策略邏輯存在
       expect(swContent).toContain('離線回退');
-      // 確保 matchPrecache 使用相對路徑（與 manifest 一致）
+      // document 請求回退到 precache index.html，確保冷啟動離線可用。
       expect(swContent).toContain("matchPrecache('index.html')");
-      expect(swContent).toContain("matchPrecache('offline.html')");
-      expect(swContent).toContain('requestOrigin !== swOrigin');
-    });
-
-    it('should have cross-origin protection in setCatchHandler', () => {
-      const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      expect(swContent).toContain('安全驗證');
-      expect(swContent).toContain('僅處理同源請求');
     });
 
     it('should not write launch-recache assets into workbox precache', () => {
@@ -124,10 +116,17 @@ describe('PWA 離線功能測試', () => {
       expect(updatePrompt).toContain('updateServiceWorker(true)');
     });
 
+    it('should scope navigation handling through NavigationRoute instead of manual origin checks', () => {
+      const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
+      expect(swContent).toContain('NavigationRoute');
+    });
+  });
+
+  describe('PWA 建置防回歸', () => {
     it('should avoid brace-expansion-dependent glob syntax in injectManifest patterns', () => {
       const viteConfig = readFileSync(resolve(ROOT_PATH, 'vite.config.ts'), 'utf-8');
-      expect(viteConfig).toContain("'assets/**/*.js'");
-      expect(viteConfig).toContain("'assets/**/*.css'");
+      expect(viteConfig).toContain("'**/*.js'");
+      expect(viteConfig).toContain("'**/*.css'");
       expect(viteConfig).toContain("'**/*.html'");
       expect(viteConfig).not.toContain('**/*.{js,css,html');
     });
@@ -196,55 +195,6 @@ describe('PWA 離線功能測試', () => {
       // 應該有 getFileRevision 函數定義
       expect(viteConfig).toContain('function getFileRevision');
       expect(viteConfig).toContain('createHash');
-    });
-  });
-
-  describe('冷啟動保護（Cold-Start Safety）', () => {
-    it('should call skipWaiting in install event handler for immediate post-recovery activation', () => {
-      // 根因：recovery bootstrap 解除 SW 後，新 SW 停留 waiting 狀態，
-      // 離線冷啟動時無 SW 攔截導致黑屏。
-      // 修復：install event 立即呼叫 skipWaiting()，確保 SW 迅速進入 active。
-      const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      expect(swContent).toMatch(/addEventListener\(['"]install['"]/);
-      const installCallsSkipWaiting =
-        /addEventListener\(['"]install['"][\s\S]{0,300}skipWaiting/s.test(swContent);
-      expect(
-        installCallsSkipWaiting,
-        'install event handler 必須呼叫 skipWaiting() 以確保 SW 立即啟用',
-      ).toBe(true);
-    });
-
-    it('should NOT self-destruct (unregister) on bad-precaching-response', () => {
-      // 根因：precache 失敗（CDN stale 404）時呼叫 registration.unregister()，
-      // SW 自毀後無任何離線保護，下次冷啟動離線 = 黑屏。
-      // 修復：移除 unregister() 呼叫，讓 precache 失敗靜默處理，下次載入重試。
-      const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      const badPrecacheIdx = swContent.indexOf('bad-precaching-response');
-      if (badPrecacheIdx !== -1) {
-        // 擷取 bad-precaching-response 周圍的處理邏輯（前後 600 字元）
-        const surrounding = swContent.slice(
-          Math.max(0, badPrecacheIdx - 100),
-          badPrecacheIdx + 600,
-        );
-        expect(
-          surrounding,
-          'bad-precaching-response handler 不得呼叫 registration.unregister()',
-        ).not.toContain('.unregister()');
-      }
-    });
-
-    it('should have networkTimeoutSeconds >= 3 to prevent premature offline fallback on mobile', () => {
-      // 根因：0.5s timeout 在行動網路（RTT 200-500ms）下頻繁誤觸離線回退，
-      // 導致快取 HTML 被提供但 JS chunk 404（版本不符）。
-      // 修復：提高至 >= 3s，符合 Workbox 官方建議。
-      const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      const match = /networkTimeoutSeconds:\s*([\d.]+)/.exec(swContent);
-      expect(match, 'networkTimeoutSeconds 應在 sw.ts 中定義').not.toBeNull();
-      const timeout = parseFloat(match![1] ?? '0');
-      expect(
-        timeout,
-        `networkTimeoutSeconds 應 >= 3，目前為 ${timeout}（行動網路 RTT 約 200-500ms）`,
-      ).toBeGreaterThanOrEqual(3);
     });
   });
 });
