@@ -13,10 +13,45 @@ const INDEX_HTML_PATH = path.resolve(DIST_DIR, 'index.html');
 const MIN_PRECACHE_ENTRY_COUNT = 20;
 
 function normalizeBase(url) {
-  if (!url.endsWith('/')) {
-    return `${url}/`;
+  // Remove trailing slashes first, then add a single slash
+  const trimmed = url.replace(/\/+$/, '');
+  return `${trimmed}/`;
+}
+
+function getDefaultBaseUrl(mode) {
+  if (mode === 'local') {
+    return 'http://127.0.0.1:4173/ratewise/';
   }
-  return url;
+  if (mode === 'live') {
+    return 'https://app.haotool.org/ratewise/';
+  }
+  throw new Error(`未知的模式: ${mode}`);
+}
+
+function resolvePrecacheAssetUrl(assetPath, baseUrl) {
+  const normalized = normalizeBase(baseUrl);
+  const cleanAsset = assetPath.replace(/^\//, '');
+  return `${normalized}${cleanAsset}`;
+}
+
+function parseShellAssetUrls(html) {
+  const assets = new Set();
+  for (const match of html.matchAll(/(?:src|href)="[^"]*?(assets\/[^"]+\.(?:js|css))"/g)) {
+    const assetUrl = match[1];
+    if (assetUrl) {
+      assets.add(assetUrl.replace(/^\/ratewise\//, '').replace(/^\//, ''));
+    }
+  }
+  return Array.from(assets).sort();
+}
+
+function shouldProbePrecacheAssetsOverHttp(mode) {
+  return mode === 'live';
+}
+
+function resolveLocalPrecacheAssetPath(assetPath, distDir) {
+  const cleanAsset = assetPath.replace(/^\//, '');
+  return path.resolve(distDir, cleanAsset);
 }
 
 async function loadPrecacheEntries() {
@@ -163,7 +198,20 @@ async function main() {
   console.log('\n🎉 所有 precache 資產皆可成功取得');
 }
 
-main().catch((error) => {
-  console.error(`檢查過程發生錯誤: ${error instanceof Error ? error.message : String(error)}`);
-  process.exit(1);
-});
+// Only run main if this script is executed directly, not when imported for testing
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    console.error(`檢查過程發生錯誤: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  });
+}
+
+// Export functions for testing
+export {
+  getDefaultBaseUrl,
+  normalizeBase,
+  resolvePrecacheAssetUrl,
+  parseShellAssetUrls,
+  shouldProbePrecacheAssetsOverHttp,
+  resolveLocalPrecacheAssetPath,
+};

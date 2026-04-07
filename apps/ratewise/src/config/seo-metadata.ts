@@ -1462,8 +1462,7 @@ export const APP_ONLY_PAGE_SEO = {
           '搜尋可見性',
           'RateWise 技術架構',
         ],
-        articleBody:
-          'RateWise 採用現代化 SEO 最佳實踐，包括預先渲染靜態 HTML（SSG）以提升首頁效能與可爬性、完整的 JSON-LD Schema 標記（包括 Article、Organization、BreadcrumbList、FAQPage、SoftwareApplication 等 8 種類型）以強化搜尋結果展示、優化的網站結構（42 個索引路徑與 50 個預渲染頁面）、自動化資料管線（每 5 分鐘從台灣銀行同步即時匯率）、與 PWA 離線支援以確保使用者體驗。技術實現包括使用 Vite + React 進行高效打包、Tailwind CSS 的原子類樣式、Workbox 的靜態資源快取策略、Cloudflare Worker 的邊緣安全標頭注入，以及搜尋可見性的完整監測與驗證流程。',
+        articleBody: `RateWise 採用現代化 SEO 最佳實踐，包括預先渲染靜態 HTML（SSG）以提升首頁效能與可爬性、完整的 JSON-LD Schema 標記（包括 Article、Organization、BreadcrumbList、FAQPage、SoftwareApplication 等 8 種類型）以強化搜尋結果展示、優化的網站結構（${SEO_PATHS.length} 個索引路徑與 ${PRERENDER_PATHS.length} 個預渲染頁面）、自動化資料管線（每 5 分鐘從台灣銀行同步即時匯率）、與 PWA 離線支援以確保使用者體驗。技術實現包括使用 Vite + React 進行高效打包、Tailwind CSS 的原子類樣式、Workbox 的靜態資源快取策略、Cloudflare Worker 的邊緣安全標頭注入，以及搜尋可見性的完整監測與驗證流程。`,
       },
     ),
   },

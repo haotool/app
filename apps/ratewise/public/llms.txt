@@ -2,7 +2,7 @@
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 18 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、3 語言介面與 PWA 離線使用。
 
-Version: v2.9.0 (2026-03-12)
+Version: v2.21.0 (2026-04-07)
 
 ## Answer Capsule (Quick Q&A)
 
@@ -11,9 +11,9 @@ Version: v2.9.0 (2026-03-12)
 - Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金買入/賣出、即期買入/賣出四種報價）。
 - Q: 更新頻率？ A: 每 5 分鐘自動同步。
 - Q: 建議用途？ A: 出國旅遊換匯、跨境購物匯率比較、日常外幣查詢。
-- Q: 現金匯率和即期匯率的差別？ A: 現金匯率適用臨櫃換鈔，即期匯率適用匯款與帳戶轉帳。現鈔通常比即期差，因為銀行有保管與運送成本。
-- Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行角度。您拿外幣換回台幣看「買入」價，您拿台幣買外幣看「賣出」價。
-- Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。刷卡匯率由發卡組織（Visa/Mastercard）決定清算匯率，再加上發卡銀行海外手續費，與台銀牌告是不同體系。
+- Q: 現金匯率和即期匯率的差別？ A: 現金匯率用於臨櫃換外幣紙鈔，即期匯率用於外幣帳戶轉帳或匯款。因銀行持有實鈔有保管、運送、偽鈔鑑定成本，現金匯率通常比即期差約 0.5～2%，換 1,000 美元現金比即期多付約 150～600 元台幣。
+- Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行視角：出國換外幣（你支付台幣）看「賣出」價；回國換台幣（你交出外幣）看「買入」價。台銀買賣價差通常為即期匯率 0.3～1%、現金匯率 1～2%。
+- Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣，是完全不同的體系。刷卡匯率 = 卡組織清算匯率（Visa/Mastercard）+ 發卡銀行海外手續費（台灣約 1.5%）；若選 DCC 再加 3～18% 匯差。台銀牌告匯率適用臨櫃換鈔和外幣帳戶匯款，與刷卡費用無關。
 - Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（Unix 時間戳）、updateTime（ISO 8601 更新時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。每 5 分鐘由 GitHub Actions 自動同步。完整規格見 https://app.haotool.org/ratewise/openapi.json。
 
 ## E-E-A-T Signals
@@ -46,12 +46,23 @@ Version: v2.9.0 (2026-03-12)
 - PWA 離線使用：Service Worker 快取，無網路仍可換算
 - 6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林）
 
+## 幣對金額頁（SSG 路徑型程序化 SEO，可被索引）
+
+幣對金額頁使用預渲染路徑型 URL，自帶金額專屬 title / description / canonical，
+Googlebot 與 AI agent 可直接讀取靜態 HTML：
+
+- 格式：`/{pair}/{amount}/`（例如：https://app.haotool.org/ratewise/usd-twd/500/）
+- title 範例：「500 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具」
+- canonical：自引用同一路徑型 URL（例如 `/usd-twd/500/`）
+- sitemap：收錄公開金額頁，提升可發現性與內部連結覆蓋
+
 ## URL Parameters (Deep Linking)
 
 支援 URL 查詢參數自動帶入換算，適合 LLM 與內部工具帶入首頁狀態：
 
 - 格式：`?amount={AMOUNT}&from={FROM}&to={TO}`
 - 用途：自動帶入首頁換算器，不建立獨立索引頁
+- 注意：首頁 deep-link 被 robots.txt 封鎖（不索引）；公開索引資產請使用路徑型幣對金額頁
 
 ## Core Pages
 
@@ -59,6 +70,7 @@ Version: v2.9.0 (2026-03-12)
 - [常見問題](https://app.haotool.org/ratewise/faq/): 完整 FAQ（含現金/即期差別、買入賣出、刷卡匯率等）
 - [使用指南](https://app.haotool.org/ratewise/guide/): 8 步驟完整操作教學
 - [關於我們](https://app.haotool.org/ratewise/about/): 專案背景與作者資訊
+- [開放資料 API](https://app.haotool.org/ratewise/open-data/): 台銀匯率 JSON API 完整說明（雙端點、程式碼範例、欄位定義）
 
 ## Authority Guides
 
@@ -66,7 +78,7 @@ Version: v2.9.0 (2026-03-12)
 - [現金匯率與即期匯率差異](https://app.haotool.org/ratewise/cash-vs-spot-rate/): 判斷臨櫃換鈔、外幣帳戶與匯款該看哪種報價
 - [刷卡匯率與 DCC 指南](https://app.haotool.org/ratewise/card-rate-guide/): 釐清台銀牌告、卡組織匯率、海外手續費與 DCC 差異
 
-## Popular Rates（每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
+## Popular Rates（外幣→TWD，每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
 
 - [AUD/TWD 澳幣](https://app.haotool.org/ratewise/aud-twd/): 澳洲旅遊與留學
 - [CAD/TWD 加幣](https://app.haotool.org/ratewise/cad-twd/): 加拿大旅遊與留學
@@ -85,6 +97,26 @@ Version: v2.9.0 (2026-03-12)
 - [THB/TWD 泰銖](https://app.haotool.org/ratewise/thb-twd/): 泰國旅遊換匯
 - [USD/TWD 美元](https://app.haotool.org/ratewise/usd-twd/): 美國旅遊與海外付款
 - [VND/TWD 越南盾](https://app.haotool.org/ratewise/vnd-twd/): 越南旅遊換匯
+
+## TWD→外幣落地頁（出國換匯場景，台幣換外幣方向）
+
+- [台幣換澳幣 TWD/AUD](https://app.haotool.org/ratewise/twd-aud/): 出國前台幣換澳幣，澳洲旅遊與留學
+- [台幣換加幣 TWD/CAD](https://app.haotool.org/ratewise/twd-cad/): 出國前台幣換加幣，加拿大旅遊與留學
+- [台幣換瑞士法郎 TWD/CHF](https://app.haotool.org/ratewise/twd-chf/): 出國前台幣換瑞士法郎，瑞士旅遊與跨境付款
+- [台幣換人民幣 TWD/CNY](https://app.haotool.org/ratewise/twd-cny/): 出國前台幣換人民幣，人民幣付款與報價
+- [台幣換歐元 TWD/EUR](https://app.haotool.org/ratewise/twd-eur/): 出國前台幣換歐元，歐洲旅遊與跨境付款
+- [台幣換英鎊 TWD/GBP](https://app.haotool.org/ratewise/twd-gbp/): 出國前台幣換英鎊，英國旅遊換匯
+- [台幣換港幣 TWD/HKD](https://app.haotool.org/ratewise/twd-hkd/): 出國前台幣換港幣，香港旅遊換匯
+- [台幣換印尼盾 TWD/IDR](https://app.haotool.org/ratewise/twd-idr/): 出國前台幣換印尼盾，印尼旅遊換匯
+- [台幣換日圓 TWD/JPY](https://app.haotool.org/ratewise/twd-jpy/): 出國前台幣換日圓，日本旅遊換匯
+- [台幣換韓元 TWD/KRW](https://app.haotool.org/ratewise/twd-krw/): 出國前台幣換韓元，韓國旅遊換匯
+- [台幣換馬來幣 TWD/MYR](https://app.haotool.org/ratewise/twd-myr/): 出國前台幣換馬來幣，馬來西亞旅遊換匯
+- [台幣換紐元 TWD/NZD](https://app.haotool.org/ratewise/twd-nzd/): 出國前台幣換紐元，紐西蘭旅遊與留學
+- [台幣換菲律賓披索 TWD/PHP](https://app.haotool.org/ratewise/twd-php/): 出國前台幣換菲律賓披索，菲律賓旅遊換匯
+- [台幣換新加坡幣 TWD/SGD](https://app.haotool.org/ratewise/twd-sgd/): 出國前台幣換新加坡幣，新加坡旅遊與商務
+- [台幣換泰銖 TWD/THB](https://app.haotool.org/ratewise/twd-thb/): 出國前台幣換泰銖，泰國旅遊換匯
+- [台幣換美元 TWD/USD](https://app.haotool.org/ratewise/twd-usd/): 出國前台幣換美元，美國旅遊與海外付款
+- [台幣換越南盾 TWD/VND](https://app.haotool.org/ratewise/twd-vnd/): 出國前台幣換越南盾，越南旅遊換匯
 
 ## Data Source
 
@@ -109,9 +141,14 @@ Contact: haotool.org@gmail.com
   - 匯率類型：cash_buy=現金買入, cash_sell=現金賣出, spot_buy=即期買入, spot_sell=即期賣出
   - 說明：賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價
 
+### 幣對靜態 JSON 端點（Per-Pair API，供 AI agent / 搜尋系統）
+- 格式：https://app.haotool.org/ratewise/api/pairs/{pair}.json（例如：https://app.haotool.org/ratewise/api/pairs/usd-twd.json）
+- 欄位：pair, from, to, slug, pageUrl, liveRateUrl（→ CDN latest.json）, rateFieldPath（例如 "details.USD"）, source
+- 用途：AI agent 可先查幣對端點取得 rateFieldPath，再讀 liveRateUrl 取得即時匯率
+
 ### 應用程式深層連結（帶入換算參數）
 - 格式：https://app.haotool.org/ratewise/?amount={金額}&from={來源幣}&to={目標幣}
-- 說明：僅作為首頁換算器狀態模板，避免公開列出具體參數網址造成重複抓取
+- 說明：僅作為首頁換算器狀態模板，不是主要索引頁格式
 
 ### API 規格文件
 - [API Metadata](https://app.haotool.org/ratewise/api/latest.json): 版本、來源、支援幣別清單（靜態 JSON metadata）

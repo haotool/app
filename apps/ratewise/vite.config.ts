@@ -11,6 +11,7 @@ import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import dns from 'node:dns';
 import { getVersionFromCommitCount as formatVersionFromCommitCount } from './src/utils/version-build-utils';
+import { APP_INFO } from './src/config/app-info';
 
 // Node.js v17+ DNS 解析一致性修正
 dns.setDefaultResultOrder('verbatim');
@@ -325,8 +326,8 @@ export default defineConfig(({ mode }) => {
 
         devOptions: { enabled: false, type: 'module' },
         manifest: {
-          name: 'RateWise - 即時匯率轉換器',
-          short_name: 'RateWise',
+          name: APP_INFO.name,
+          short_name: APP_INFO.displayName,
           description:
             'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。',
           theme_color: '#8B5CF6',
@@ -440,7 +441,7 @@ export default defineConfig(({ mode }) => {
             // 將 react-router、底層 @remix-run/router 與 vite-react-ssg 維持在同一個 chunk，
             // 避免 router runtime 與 SSG runtime 互相跨 chunk 引用造成循環依賴警告。
             if (ROUTER_ECOSYSTEM_PACKAGES.some((pkg) => id.includes(pkg))) {
-              return 'vendor-router';
+              return 'vendor-router-runtime';
             }
 
             // Charts（重量級視覺化庫）
