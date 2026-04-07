@@ -69,10 +69,11 @@ describe('SEO Paths Configuration', () => {
 
   describe('SEO 與路由白名單', () => {
     it('SEO_PATHS 應包含全部公開可索引路徑，含金額落地頁', () => {
-      // SEO_PATHS = CONTENT_SEO_PATHS(8) + CURRENCY_SEO_PATHS(17) + REVERSE_CURRENCY_SEO_PATHS(17)
-      //          + CURRENCY_AMOUNT_SEO_PATHS(104) + REVERSE_CURRENCY_AMOUNT_SEO_PATHS(102) = 248
+      // SEO_PATHS = CONTENT_SEO_PATHS(9) + CURRENCY_SEO_PATHS(17) + REVERSE_CURRENCY_SEO_PATHS(17)
+      //          + CURRENCY_AMOUNT_SEO_PATHS(104) + REVERSE_CURRENCY_AMOUNT_SEO_PATHS(102) = 249
+      // 注：CONTENT_SEO_PATHS 包含 /seo-tech/（2026-04-07 從 APP_ONLY_PATHS 移至可索引）
       expect(SEO_PATHS).toHaveLength(
-        8 + 17 + 17 + CURRENCY_AMOUNT_SEO_PATHS.length + REVERSE_CURRENCY_AMOUNT_SEO_PATHS.length,
+        9 + 17 + 17 + CURRENCY_AMOUNT_SEO_PATHS.length + REVERSE_CURRENCY_AMOUNT_SEO_PATHS.length,
       );
       expect(SEO_PATHS).toContain('/');
       expect(SEO_PATHS).toContain('/faq/');
@@ -95,7 +96,8 @@ describe('SEO Paths Configuration', () => {
 
     it('PRERENDER_PATHS 應包含公開 SEO 路徑、法律頁與 app-only noindex 頁面', () => {
       expect(PRERENDER_PATHS).toHaveLength(257);
-      // PRERENDER_PATHS = SEO_PATHS(248) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(8) = 257
+      // PRERENDER_PATHS = SEO_PATHS(249) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(7) = 257
+      // 注：SEO_PATHS +1（/seo-tech/ 移入），APP_ONLY_PRERENDER_PATHS -1（/seo-tech/ 移出），相消
       expect(PRERENDER_PATHS).toContain('/privacy/'); // 仍需預渲染，但不在 sitemap
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');
@@ -110,7 +112,8 @@ describe('SEO Paths Configuration', () => {
     });
 
     it('APP_ONLY_PATHS 應與 SEO_PATHS 完全分離', () => {
-      expect(APP_ONLY_PATHS).toHaveLength(8);
+      expect(APP_ONLY_PATHS).toHaveLength(7);
+      // 注：APP_ONLY_PATHS 移除 /seo-tech/（2026-04-07 改為可索引 SEO 路徑）
       APP_ONLY_PATHS.forEach((path) => {
         expect(SEO_PATHS).not.toContain(path as (typeof SEO_PATHS)[number]);
       });
