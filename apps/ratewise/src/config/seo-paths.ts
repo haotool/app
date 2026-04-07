@@ -145,18 +145,17 @@ export const APP_ONLY_PATHS = [
   '/multi/',
   '/favorites/',
   '/settings/',
-  '/seo-tech/',
   '/theme-showcase/',
   '/color-scheme/',
   '/update-prompt-test/',
   '/ui-showcase/',
 ] as const;
 
-/** 使用者功能頁子集（前 4）：允許爬取 + SEOHelmet noindex */
-export const APP_ONLY_NOINDEX_PATHS = APP_ONLY_PATHS.slice(0, 4);
+/** 使用者功能頁子集（前 3）：允許爬取 + SEOHelmet noindex */
+export const APP_ONLY_NOINDEX_PATHS = APP_ONLY_PATHS.slice(0, 3);
 
 /** 開發 / 展示頁子集（後 4）：直接 Disallow 爬取 */
-export const DEV_ONLY_PATHS = APP_ONLY_PATHS.slice(4);
+export const DEV_ONLY_PATHS = APP_ONLY_PATHS.slice(3);
 
 export const APP_ONLY_PRERENDER_PATHS = [...APP_ONLY_PATHS] as const;
 
