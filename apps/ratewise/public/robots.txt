@@ -1,6 +1,6 @@
 # RateWise — Robots Exclusion Protocol
 # https://app.haotool.org/ratewise/
-# 最後更新：2026-04-07
+# 最後更新：2026-04-08
 
 User-agent: *
 Allow: /

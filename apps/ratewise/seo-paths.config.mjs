@@ -160,12 +160,20 @@ export const REVERSE_CURRENCY_AMOUNT_SEO_PATHS = REVERSE_CURRENCY_SEO_PATHS.flat
  * 公開可索引 SEO 路徑（42 個基礎頁 + 206 個金額頁）
  * 注意：LEGAL_SSG_PATHS（privacy noindex）不納入 sitemap
  */
+/**
+ * 公開可索引的 SEO 路徑（已排除金額落地頁）
+ *
+ * 注意：金額特定路由（如 /aud-twd/1/、/usd-twd/100/ 等）由 React Router 動態處理
+ * 而非 SSG 預渲染，因為金額是使用者輸入值而非固定集合。
+ * 這些動態路由仍會被 sitemap 正確索引（由生成腳本創建），
+ * 但不需要預先生成靜態 HTML 文件。
+ */
 export const SEO_PATHS = [
   ...CONTENT_SEO_PATHS,
   ...CURRENCY_SEO_PATHS,
   ...REVERSE_CURRENCY_SEO_PATHS,
-  ...CURRENCY_AMOUNT_SEO_PATHS,
-  ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
+  // 注：排除 CURRENCY_AMOUNT_SEO_PATHS 和 REVERSE_CURRENCY_AMOUNT_SEO_PATHS
+  // 這些由動態路由 /currency/:amount 處理，無需預渲染
 ];
 
 /**

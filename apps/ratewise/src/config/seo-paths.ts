@@ -130,15 +130,21 @@ export const REVERSE_CURRENCY_AMOUNT_SEO_PATHS: string[] = REVERSE_CURRENCY_SEO_
   },
 );
 
-// 注意：LEGAL_SSG_PATHS（privacy noindex）不納入 sitemap
-// 注意：amount 落地頁（CURRENCY_AMOUNT_SEO_PATHS / REVERSE_CURRENCY_AMOUNT_SEO_PATHS）不含於此 const，
-// 其路徑為動態生成（string[]），在 vite.config.ts 的 includedRoutes 中另行加入。
+/**
+ * 公開可索引的 SEO 路徑（已排除金額落地頁）
+ *
+ * 注意：LEGAL_SSG_PATHS（/privacy/ noindex）不納入 sitemap
+ * 注意：金額特定落地頁（CURRENCY_AMOUNT_SEO_PATHS / REVERSE_CURRENCY_AMOUNT_SEO_PATHS）
+ * 由 React Router 動態路由處理（/usd-twd/:amount），無需預渲染為靜態 HTML。
+ * 這些動態路由仍會被 sitemap 正確索引（由 generate-sitemap.mjs 創建），
+ * 但不需要作為獨立的預渲染路徑。
+ */
 export const SEO_PATHS = [
   ...CONTENT_SEO_PATHS,
   ...CURRENCY_SEO_PATHS,
   ...REVERSE_CURRENCY_SEO_PATHS,
-  ...CURRENCY_AMOUNT_SEO_PATHS,
-  ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
+  // 注：排除 CURRENCY_AMOUNT_SEO_PATHS 和 REVERSE_CURRENCY_AMOUNT_SEO_PATHS
+  // 這些由動態路由 /currency/:amount 處理，無需預渲染
 ] as const;
 
 export const APP_ONLY_PATHS = [
@@ -233,7 +239,7 @@ export function normalizePath(path: string): string {
 
 export function shouldPrerender(path: string): boolean {
   const normalized = normalizePath(path);
-  return PRERENDER_PATHS.includes(normalized);
+  return PRERENDER_PATHS.includes(normalized as (typeof PRERENDER_PATHS)[number]);
 }
 
 export function getIncludedRoutes(paths: string[]): string[] {
@@ -250,7 +256,7 @@ export type ReverseCurrencyPagePath = (typeof REVERSE_CURRENCY_SEO_PATHS)[number
 export type AppOnlyPath = (typeof APP_ONLY_PATHS)[number];
 
 export function isSEOPath(path: string): path is SEOPath {
-  return SEO_PATHS.includes(path);
+  return SEO_PATHS.includes(path as (typeof SEO_PATHS)[number]);
 }
 
 export function isCorePagePath(path: string): path is CorePagePath {
