@@ -505,16 +505,61 @@ export default defineConfig(({ mode }) => {
       concurrency: 10,
       async includedRoutes(paths) {
         // 從 TypeScript SSOT 動態引入 SEO 路徑配置
-        const { getIncludedRoutes } = await import('./src/config/seo-paths');
-        const includedPaths = getIncludedRoutes(paths);
-        console.log('🔍 Available paths:', paths);
-        console.log('✅ Including paths:', includedPaths);
-        return includedPaths;
+        const { PRERENDER_PATHS, SEO_PATHS, LEGAL_SSG_PATHS, APP_ONLY_PRERENDER_PATHS } =
+          await import('./src/config/seo-paths');
+
+        console.log('🔍 Available paths from routes:', paths.slice(0, 5));
+        console.log(
+          `✅ Total prerender paths: ${PRERENDER_PATHS.length} (SEO: ${SEO_PATHS.length}, Legal: ${LEGAL_SSG_PATHS.length}, AppOnly: ${APP_ONLY_PRERENDER_PATHS.length})`,
+        );
+
+        return PRERENDER_PATHS;
       },
-      // 預渲染前處理 HTML
+      // 預渲染前處理 HTML：金額路由注入換算結果
       async onBeforePageRender(route, indexHTML) {
-        console.log(`🔄 Pre-rendering: ${route}`);
-        return indexHTML;
+        // 檢查是否為金額路由（例如：/usd-twd/500/）
+        const amountRouteMatch = route.match(/\/([a-z]{3})-([a-z]{3})\/(\d+(?:\.\d+)?)\/$/i);
+        if (amountRouteMatch) {
+          console.log(`✏️ Pre-rendering amount route: ${route}`);
+        }
+        if (!amountRouteMatch) return indexHTML;
+
+        const [, fromCode, toCode, amountStr] = amountRouteMatch;
+        const amount = parseFloat(amountStr);
+
+        // 讀取預生成的匯率數據
+        let rates: Record<string, any> = {};
+        try {
+          const ratesPath = resolve(__dirname, 'public/rates.json');
+          const ratesJson = readFileSync(ratesPath, 'utf-8');
+          rates = JSON.parse(ratesJson);
+        } catch (error) {
+          console.warn(`⚠️ 無法讀取 rates.json：${error}`);
+          return indexHTML;
+        }
+
+        // 判断方向：twd-xxx 为反向（出国），xxx-twd 为正向（进口）
+        const isTwdToForeign = fromCode.toUpperCase() === 'TWD';
+        // 始终获取外币的 cashSell（rates 中存储的是外币对 TWD 的价格）
+        const targetCode = isTwdToForeign ? toCode.toUpperCase() : fromCode.toUpperCase();
+        const cashSell = rates.details?.[targetCode]?.cash?.sell;
+
+        if (!cashSell || cashSell <= 0) {
+          console.warn(`⚠️ 無效匯率：${targetCode} cashSell=${cashSell}`);
+          return indexHTML;
+        }
+
+        // 計算換算結果
+        const result = isTwdToForeign
+          ? Math.round((amount / cashSell) * 100) / 100
+          : Math.round(amount * cashSell);
+
+        // 在 </head> 前注入轉換結果為 window 變數（供 JS 讀取）
+        const injectionScript = `<script type="application/json" id="ssg-amount-result">{"amount":${amount},"result":${result},"fromCode":"${fromCode.toUpperCase()}","toCode":"${toCode.toUpperCase()}","cashSell":${cashSell}}</script>`;
+        const modifiedHtml = indexHTML.replace('</head>', `${injectionScript}</head>`);
+        console.log(`✅ Injected amount data: ${fromCode}-${toCode} ${amount} → ${result}`);
+
+        return modifiedHtml;
       },
       // 預渲染完成後處理
       async onFinished(dir) {

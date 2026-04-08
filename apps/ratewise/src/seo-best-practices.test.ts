@@ -272,11 +272,13 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(locCount).toBe(SEO_PATHS.length);
     });
 
-    it('should NOT include amount-specific landing pages（handled dynamically by React Router）', () => {
-      // Amount pages like /usd-twd/500/ are dynamic routes, not pre-rendered
-      // They are indexed by generate-sitemap.mjs, but NOT in static sitemap.xml
-      expect(sitemapContent).not.toContain('/ratewise/usd-twd/500/</loc>');
-      expect(sitemapContent).not.toContain('/ratewise/twd-usd/10000/</loc>');
+    it('should include amount-specific landing pages（now pre-rendered as static HTML）', () => {
+      // 2026-04-08：金額頁現已完整預渲染為靜態 HTML，並包含在 sitemap 中
+      // 所有 206 個金額路由均在 SEO_PATHS 中，且已加入 sitemap
+      expect(sitemapContent).toContain('/ratewise/usd-twd/500/</loc>');
+      expect(sitemapContent).toContain('/ratewise/twd-usd/10000/</loc>');
+      expect(sitemapContent).toContain('/ratewise/jpy-twd/10000/</loc>');
+      expect(sitemapContent).toContain('/ratewise/vnd-twd/1000000/</loc>');
     });
 
     it('should exclude APP_ONLY_NOINDEX_PATHS from sitemap', () => {
