@@ -505,30 +505,15 @@ export default defineConfig(({ mode }) => {
       concurrency: 10,
       async includedRoutes(paths) {
         // 從 TypeScript SSOT 動態引入 SEO 路徑配置
-        const {
-          getIncludedRoutes,
-          CURRENCY_AMOUNT_SEO_PATHS,
-          REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
-          SEO_PATHS,
-          LEGAL_SSG_PATHS,
-          APP_ONLY_PRERENDER_PATHS,
-        } = await import('./src/config/seo-paths');
-
-        // 包含所有預渲染路徑（靜態 + 動態金額路由）
-        const allPrerenderedPaths = [
-          ...SEO_PATHS,
-          ...LEGAL_SSG_PATHS,
-          ...APP_ONLY_PRERENDER_PATHS,
-          ...CURRENCY_AMOUNT_SEO_PATHS,
-          ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
-        ];
+        const { PRERENDER_PATHS, SEO_PATHS, LEGAL_SSG_PATHS, APP_ONLY_PRERENDER_PATHS } =
+          await import('./src/config/seo-paths');
 
         console.log('🔍 Available paths from routes:', paths.slice(0, 5));
         console.log(
-          `✅ Total prerender paths: ${allPrerenderedPaths.length} (SEO: ${SEO_PATHS.length}, Legal: ${LEGAL_SSG_PATHS.length}, AppOnly: ${APP_ONLY_PRERENDER_PATHS.length}, Amounts: ${CURRENCY_AMOUNT_SEO_PATHS.length + REVERSE_CURRENCY_AMOUNT_SEO_PATHS.length})`,
+          `✅ Total prerender paths: ${PRERENDER_PATHS.length} (SEO: ${SEO_PATHS.length}, Legal: ${LEGAL_SSG_PATHS.length}, AppOnly: ${APP_ONLY_PRERENDER_PATHS.length})`,
         );
 
-        return allPrerenderedPaths;
+        return PRERENDER_PATHS;
       },
       // 預渲染前處理 HTML：金額路由注入換算結果
       async onBeforePageRender(route, indexHTML) {

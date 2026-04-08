@@ -69,27 +69,121 @@ function loadCachedRates() {
 }
 
 /**
- * 預設匯率（備用）
+ * 預設匯率（備用）- 與 public/rates.json 結構一致
  */
 function getDefaultRates() {
   return {
-    'usd-twd': 31.5,
-    'jpy-twd': 0.21,
-    'eur-twd': 34.8,
-    'gbp-twd': 40.2,
-    'cny-twd': 4.35,
-    'hkd-twd': 4.05,
-    'krw-twd': 0.024,
-    'thb-twd': 0.88,
-    'myr-twd': 6.8,
-    'sgd-twd': 23.5,
-    'php-twd': 0.56,
-    'idr-twd': 0.002,
-    'vnd-twd': 0.00123,
-    'aud-twd': 20.8,
-    'nzd-twd': 19.2,
-    'cad-twd': 22.5,
-    'chf-twd': 35.8,
+    timestamp: new Date().toISOString(),
+    updateTime: new Date().toLocaleString('zh-TW'),
+    source: 'Default fallback rates',
+    sourceUrl: 'https://rate.bot.com.tw/xrt',
+    base: 'TWD',
+    rates: {
+      USD: 31.5,
+      JPY: 0.21,
+      EUR: 34.8,
+      GBP: 40.2,
+      CNY: 4.35,
+      HKD: 4.05,
+      KRW: 0.024,
+      THB: 0.88,
+      MYR: 6.8,
+      SGD: 23.5,
+      PHP: 0.56,
+      IDR: 0.002,
+      VND: 0.00123,
+      AUD: 20.8,
+      NZD: 19.2,
+      CAD: 22.5,
+      CHF: 35.8,
+    },
+    details: {
+      USD: {
+        name: '美金',
+        spot: { buy: 31.0, sell: 31.5 },
+        cash: { buy: 31.2, sell: 31.5 },
+      },
+      EUR: {
+        name: '歐元',
+        spot: { buy: 34.0, sell: 34.8 },
+        cash: { buy: 34.3, sell: 34.8 },
+      },
+      GBP: {
+        name: '英鎊',
+        spot: { buy: 39.5, sell: 40.2 },
+        cash: { buy: 39.8, sell: 40.2 },
+      },
+      JPY: {
+        name: '日圓',
+        spot: { buy: 0.2, sell: 0.21 },
+        cash: { buy: 0.205, sell: 0.21 },
+      },
+      CNY: {
+        name: '人民幣',
+        spot: { buy: 4.28, sell: 4.35 },
+        cash: { buy: 4.31, sell: 4.35 },
+      },
+      HKD: {
+        name: '港幣',
+        spot: { buy: 3.98, sell: 4.05 },
+        cash: { buy: 4.01, sell: 4.05 },
+      },
+      KRW: {
+        name: '韓元',
+        spot: { buy: 0.023, sell: 0.024 },
+        cash: { buy: 0.0235, sell: 0.024 },
+      },
+      THB: {
+        name: '泰銖',
+        spot: { buy: 0.85, sell: 0.88 },
+        cash: { buy: 0.86, sell: 0.88 },
+      },
+      MYR: {
+        name: '馬來幣',
+        spot: { buy: 6.65, sell: 6.8 },
+        cash: { buy: 6.72, sell: 6.8 },
+      },
+      SGD: {
+        name: '新加坡幣',
+        spot: { buy: 23.0, sell: 23.5 },
+        cash: { buy: 23.2, sell: 23.5 },
+      },
+      PHP: {
+        name: '菲律賓披索',
+        spot: { buy: null, sell: null },
+        cash: { buy: 0.54, sell: 0.56 },
+      },
+      IDR: {
+        name: '印尼幣',
+        spot: { buy: null, sell: null },
+        cash: { buy: 0.0019, sell: 0.002 },
+      },
+      VND: {
+        name: '越南盾',
+        spot: { buy: null, sell: null },
+        cash: { buy: 0.00115, sell: 0.00123 },
+      },
+      AUD: {
+        name: '澳幣',
+        spot: { buy: 20.4, sell: 20.8 },
+        cash: { buy: 20.6, sell: 20.8 },
+      },
+      NZD: {
+        name: '紐元',
+        spot: { buy: 18.9, sell: 19.2 },
+        cash: { buy: 19.05, sell: 19.2 },
+      },
+      CAD: {
+        name: '加拿大幣',
+        spot: { buy: 22.1, sell: 22.5 },
+        cash: { buy: 22.3, sell: 22.5 },
+      },
+      CHF: {
+        name: '瑞士法郎',
+        spot: { buy: 35.2, sell: 35.8 },
+        cash: { buy: 35.5, sell: 35.8 },
+      },
+    },
   };
 }
 
