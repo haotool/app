@@ -162,3 +162,4 @@ skills-lock.json
 # AI Assistant Config (local only)
 .cursor/
 .mcp.json
+.dev/worktree/
