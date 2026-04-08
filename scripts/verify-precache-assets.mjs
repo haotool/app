@@ -7,6 +7,7 @@ import { readFile as readFileAsync } from 'node:fs/promises';
 import path from 'node:path';
 
 const BASE_URL = process.env.VERIFY_BASE_URL ?? 'https://app.haotool.org/';
+const VERIFY_SOURCE = process.env.VERIFY_PRECACHE_SOURCE ?? 'local';
 const PROJECT_ROOT = process.cwd();
 const DIST_DIR = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist');
 const SW_PATH = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist/sw.js');
@@ -56,26 +57,48 @@ function resolveLocalPrecacheAssetPath(assetPath, distDir) {
 }
 
 async function loadPrecacheEntries() {
-  // 檢查 dist 目錄是否存在
-  if (!existsSync(DIST_DIR)) {
-    throw new Error(
-      `dist 目錄不存在: ${DIST_DIR}\n` + `請確認已執行 pnpm build:ratewise 生成 build 產物`,
-    );
+  let swContent;
+
+  if (VERIFY_SOURCE === 'live') {
+    // 從遠端 URL 取得 sw.js（用於驗證已部署的 precache）
+    try {
+      const swUrl = new URL('sw.js', BASE_URL).toString();
+      console.log(`🌐 從遠端取得 Service Worker: ${swUrl}`);
+      const response = await fetch(swUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      swContent = await response.text();
+    } catch (error) {
+      throw new Error(
+        `無法從遠端取得 sw.js: ${error instanceof Error ? error.message : String(error)}\n` +
+          `請確認應用已正確部署至 ${BASE_URL}`,
+      );
+    }
+  } else {
+    // 從本地 dist 目錄讀取 sw.js（本地開發驗證）
+    // 檢查 dist 目錄是否存在
+    if (!existsSync(DIST_DIR)) {
+      throw new Error(
+        `dist 目錄不存在: ${DIST_DIR}\n` + `請確認已執行 pnpm build:ratewise 生成 build 產物`,
+      );
+    }
+
+    // 檢查 sw.js 文件是否存在
+    if (!existsSync(SW_PATH)) {
+      throw new Error(
+        `sw.js 文件不存在: ${SW_PATH}\n` +
+          `請確認 Service Worker 已正確生成。如持續失敗，請執行: pnpm build:ratewise --force`,
+      );
+    }
+
+    swContent = await readFileAsync(SW_PATH, 'utf-8');
   }
 
-  // 檢查 sw.js 文件是否存在
-  if (!existsSync(SW_PATH)) {
-    throw new Error(
-      `sw.js 文件不存在: ${SW_PATH}\n` +
-        `請確認 Service Worker 已正確生成。如持續失敗，請執行: pnpm build:ratewise --force`,
-    );
-  }
-
-  const swContent = await readFileAsync(SW_PATH, 'utf-8');
   const match = swContent.match(/precacheAndRoute\((\[.*?\])\)/s);
   const manifestSource = match?.[1] ?? extractInjectedManifest(swContent);
   if (!manifestSource) {
-    throw new Error('無法在 dist/sw.js 中找到 precache 清單，請先執行 pnpm build:ratewise');
+    throw new Error('無法在 sw.js 中找到 precache 清單');
   }
 
   try {
@@ -89,6 +112,12 @@ async function loadPrecacheEntries() {
 }
 
 async function loadShellAssetUrls() {
+  // 直播驗證時跳過 shell asset 檢查（因為沒有本地 dist 檔案）
+  if (VERIFY_SOURCE === 'live') {
+    console.log('ℹ️ 直播驗證模式：略過本地 shell asset 檢查');
+    return [];
+  }
+
   // 檢查 index.html 是否存在
   if (!existsSync(INDEX_HTML_PATH)) {
     throw new Error(
@@ -172,6 +201,7 @@ async function probe(url) {
 async function main() {
   const base = normalizeBase(BASE_URL);
   console.log(`🔍 VERIFY_BASE_URL = ${base}`);
+  console.log(`📋 驗證模式 = ${VERIFY_SOURCE}`);
   const entries = await loadPrecacheEntries();
   const entryUrls = new Set(entries.map((entry) => entry.url).filter(Boolean));
   const assetEntries = entries.filter((entry) => entry.url && entry.url.startsWith('assets/'));
@@ -191,11 +221,14 @@ async function main() {
     throw new Error('precache 未包含任何 assets/* JS/CSS，代表應用 shell 無法離線冷啟動。');
   }
 
-  const missingShellAssets = shellAssets.filter((assetUrl) => !entryUrls.has(assetUrl));
-  if (missingShellAssets.length > 0) {
-    throw new Error(
-      `precache 缺少首頁 shell 資產：${missingShellAssets.join(', ')}。這會造成離線冷啟動缺 JS/CSS。`,
-    );
+  // 只在本地模式驗證 shell asset（直播模式無法訪問本地檔案）
+  if (VERIFY_SOURCE === 'local' && shellAssets.length > 0) {
+    const missingShellAssets = shellAssets.filter((assetUrl) => !entryUrls.has(assetUrl));
+    if (missingShellAssets.length > 0) {
+      throw new Error(
+        `precache 缺少首頁 shell 資產：${missingShellAssets.join(', ')}。這會造成離線冷啟動缺 JS/CSS。`,
+      );
+    }
   }
 
   let hasError = false;
