@@ -66,11 +66,11 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO 與路由白名單', () => {
-    it('SEO_PATHS 應包含全部公開可索引路徑，動態金額頁由 React Router 處理', () => {
-      // SEO_PATHS = CONTENT_SEO_PATHS(9) + CURRENCY_SEO_PATHS(17) + REVERSE_CURRENCY_SEO_PATHS(17) = 43
-      // 注：金額特定路由（如 /usd-twd/500/）由 /usd-twd/:amount 動態路由處理，無需預渲染
-      // CONTENT_SEO_PATHS 包含 /seo-tech/（2026-04-07 從 APP_ONLY_PATHS 移至可索引）
-      expect(SEO_PATHS).toHaveLength(9 + 17 + 17);
+    it('SEO_PATHS 應包含全部公開可索引路徑（含 206 個預渲染金額路由）', () => {
+      // SEO_PATHS = CONTENT_SEO_PATHS(9) + CURRENCY_SEO_PATHS(17) + REVERSE_CURRENCY_SEO_PATHS(17)
+      //          + CURRENCY_AMOUNT_SEO_PATHS(104) + REVERSE_CURRENCY_AMOUNT_SEO_PATHS(102) = 249
+      // 2026-04-08：金額路由現已完整預渲染為靜態 HTML，並包含在 sitemap 中
+      expect(SEO_PATHS).toHaveLength(249);
       expect(SEO_PATHS).toContain('/');
       expect(SEO_PATHS).toContain('/faq/');
       expect(SEO_PATHS).toContain('/about/');
@@ -82,9 +82,9 @@ describe('SEO Paths Configuration', () => {
       expect(SEO_PATHS).toContain('/open-data/');
       expect(SEO_PATHS).toContain('/seo-tech/');
       expect(SEO_PATHS).toContain('/usd-twd/'); // 基礎貨幣頁
-      expect(SEO_PATHS).not.toContain('/usd-twd/500/'); // 金額頁由路由動態處理
+      expect(SEO_PATHS).toContain('/usd-twd/500/'); // 金額頁現已預渲染為靜態 HTML
       expect(SEO_PATHS).toContain('/twd-usd/'); // 基礎反向頁
-      expect(SEO_PATHS).not.toContain('/twd-usd/10000/'); // 金額頁由路由動態處理
+      expect(SEO_PATHS).toContain('/twd-usd/10000/'); // 金額頁現已預渲染為靜態 HTML
       expect(SEO_PATHS).toContain('/twd-jpy/');
       expect(SEO_PATHS).not.toContain('/multi/');
       expect(SEO_PATHS).not.toContain('/favorites/');
@@ -92,8 +92,8 @@ describe('SEO Paths Configuration', () => {
     });
 
     it('PRERENDER_PATHS 應包含公開 SEO 路徑、法律頁與 app-only noindex 頁面', () => {
-      expect(PRERENDER_PATHS).toHaveLength(51);
-      // PRERENDER_PATHS = SEO_PATHS(43) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(7) = 51
+      expect(PRERENDER_PATHS).toHaveLength(257);
+      // PRERENDER_PATHS = SEO_PATHS(249) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(7) = 257
       expect(PRERENDER_PATHS).toContain('/privacy/'); // 仍需預渲染，但不在 sitemap
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');
@@ -140,12 +140,12 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('Type guards', () => {
-    it('isSEOPath 應正確識別公開 SEO 路徑（不含金額特定頁）', () => {
+    it('isSEOPath 應正確識別公開 SEO 路徑（含預渲染金額頁）', () => {
       expect(isSEOPath('/faq/')).toBe(true);
       expect(isSEOPath('/usd-twd/')).toBe(true); // 基礎貨幣頁
-      expect(isSEOPath('/usd-twd/500/')).toBe(false); // 金額頁由動態路由處理
+      expect(isSEOPath('/usd-twd/500/')).toBe(true); // 金額頁現已預渲染為靜態 HTML
       expect(isSEOPath('/twd-usd/')).toBe(true); // 基礎反向頁
-      expect(isSEOPath('/twd-usd/10000/')).toBe(false); // 金額頁由動態路由處理
+      expect(isSEOPath('/twd-usd/10000/')).toBe(true); // 金額頁現已預渲染為靜態 HTML
       expect(isSEOPath('/privacy/')).toBe(false); // noindex，不在 SEO_PATHS
       expect(isSEOPath('/multi/')).toBe(false);
     });
