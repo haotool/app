@@ -2,7 +2,8 @@
 /* eslint-env node */
 /* eslint-disable no-undef */
 
-import { readFile } from 'node:fs/promises';
+import { readFile, existsSync } from 'node:fs';
+import { readFile as readFileAsync } from 'node:fs/promises';
 import path from 'node:path';
 
 const BASE_URL = process.env.VERIFY_BASE_URL ?? 'https://app.haotool.org/';
@@ -55,7 +56,22 @@ function resolveLocalPrecacheAssetPath(assetPath, distDir) {
 }
 
 async function loadPrecacheEntries() {
-  const swContent = await readFile(SW_PATH, 'utf-8');
+  // 檢查 dist 目錄是否存在
+  if (!existsSync(DIST_DIR)) {
+    throw new Error(
+      `dist 目錄不存在: ${DIST_DIR}\n` + `請確認已執行 pnpm build:ratewise 生成 build 產物`,
+    );
+  }
+
+  // 檢查 sw.js 文件是否存在
+  if (!existsSync(SW_PATH)) {
+    throw new Error(
+      `sw.js 文件不存在: ${SW_PATH}\n` +
+        `請確認 Service Worker 已正確生成。如持續失敗，請執行: pnpm build:ratewise --force`,
+    );
+  }
+
+  const swContent = await readFileAsync(SW_PATH, 'utf-8');
   const match = swContent.match(/precacheAndRoute\((\[.*?\])\)/s);
   const manifestSource = match?.[1] ?? extractInjectedManifest(swContent);
   if (!manifestSource) {
@@ -73,7 +89,14 @@ async function loadPrecacheEntries() {
 }
 
 async function loadShellAssetUrls() {
-  const indexHtml = await readFile(INDEX_HTML_PATH, 'utf-8');
+  // 檢查 index.html 是否存在
+  if (!existsSync(INDEX_HTML_PATH)) {
+    throw new Error(
+      `index.html 文件不存在: ${INDEX_HTML_PATH}\n` + `請確認 build 過程已完成並生成 index.html`,
+    );
+  }
+
+  const indexHtml = await readFileAsync(INDEX_HTML_PATH, 'utf-8');
   const assets = new Set();
 
   for (const match of indexHtml.matchAll(/(?:src|href)="[^"]*?(assets\/[^"]+\.(?:js|css))"/g)) {
