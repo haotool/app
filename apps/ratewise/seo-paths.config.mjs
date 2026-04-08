@@ -161,19 +161,20 @@ export const REVERSE_CURRENCY_AMOUNT_SEO_PATHS = REVERSE_CURRENCY_SEO_PATHS.flat
  * 注意：LEGAL_SSG_PATHS（privacy noindex）不納入 sitemap
  */
 /**
- * 公開可索引的 SEO 路徑（已排除金額落地頁）
+ * 公開可索引的 SEO 路徑（43 個基礎頁 + 96 個金額頁 = 139 個）
  *
- * 注意：金額特定路由（如 /aud-twd/1/、/usd-twd/100/ 等）由 React Router 動態處理
- * 而非 SSG 預渲染，因為金額是使用者輸入值而非固定集合。
- * 這些動態路由仍會被 sitemap 正確索引（由生成腳本創建），
- * 但不需要預先生成靜態 HTML 文件。
+ * 2026-04-08 更新：已加入金額落地頁預渲染
+ * 金額特定路由（如 /aud-twd/1/、/usd-twd/100/ 等）現已預渲染為靜態 HTML，
+ * 初始頁面即包含完整匯率數據、標題、描述、schema.org 結構化數據，
+ * 無須等待 JavaScript 執行。這大幅提升 SEO 和性能。
  */
 export const SEO_PATHS = [
   ...CONTENT_SEO_PATHS,
   ...CURRENCY_SEO_PATHS,
   ...REVERSE_CURRENCY_SEO_PATHS,
-  // 注：排除 CURRENCY_AMOUNT_SEO_PATHS 和 REVERSE_CURRENCY_AMOUNT_SEO_PATHS
-  // 這些由動態路由 /currency/:amount 處理，無需預渲染
+  // ✅ 2026-04-08: 現已加入金額路由預渲染
+  ...CURRENCY_AMOUNT_SEO_PATHS,
+  ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
 ];
 
 /**
@@ -209,9 +210,32 @@ export const DEV_ONLY_PATHS = APP_ONLY_PATHS.slice(3);
 export const APP_ONLY_PRERENDER_PATHS = [...APP_ONLY_PATHS];
 
 /**
- * 需要預渲染的靜態內容頁
+ * 需要預渲染的靜態頁面
+ * 包含：SEO 路徑 (139) + 法律頁 (1) + app-only 頁 (7) = 147 個靜態頁面
  */
 export const PRERENDER_PATHS = [...SEO_PATHS, ...LEGAL_SSG_PATHS, ...APP_ONLY_PRERENDER_PATHS];
+
+/**
+ * 輔助函數：生成 getStaticPaths 用的路由數組（供 vite-react-ssg 使用）
+ * 在構建時，vite-react-ssg 會調用此函數確定要預渲染哪些動態路由
+ */
+export function getStaticAmountPaths() {
+  return [...CURRENCY_AMOUNT_SEO_PATHS, ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS];
+}
+
+/**
+ * 統計信息（用於構建時日誌）
+ */
+export const STATS = {
+  content: CONTENT_SEO_PATHS.length,
+  currency: CURRENCY_SEO_PATHS.length,
+  reverseCurrency: REVERSE_CURRENCY_SEO_PATHS.length,
+  currencyAmount: CURRENCY_AMOUNT_SEO_PATHS.length,
+  reverseCurrencyAmount: REVERSE_CURRENCY_AMOUNT_SEO_PATHS.length,
+  legal: LEGAL_SSG_PATHS.length,
+  appOnly: APP_ONLY_PRERENDER_PATHS.length,
+  total: PRERENDER_PATHS.length,
+};
 
 /**
  * 所有已知前端路由

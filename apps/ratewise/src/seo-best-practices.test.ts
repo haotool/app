@@ -272,9 +272,11 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(locCount).toBe(SEO_PATHS.length);
     });
 
-    it('should include representative amount landing pages', () => {
-      expect(sitemapContent).toContain('/ratewise/usd-twd/500/</loc>');
-      expect(sitemapContent).toContain('/ratewise/twd-usd/10000/</loc>');
+    it('should NOT include amount-specific landing pages（handled dynamically by React Router）', () => {
+      // Amount pages like /usd-twd/500/ are dynamic routes, not pre-rendered
+      // They are indexed by generate-sitemap.mjs, but NOT in static sitemap.xml
+      expect(sitemapContent).not.toContain('/ratewise/usd-twd/500/</loc>');
+      expect(sitemapContent).not.toContain('/ratewise/twd-usd/10000/</loc>');
     });
 
     it('should exclude APP_ONLY_NOINDEX_PATHS from sitemap', () => {

@@ -71,6 +71,8 @@ export const REVERSE_CURRENCY_SEO_PATHS = [
 /**
  * 各幣別熱門金額（外幣→TWD 方向）
  * 與 seo-paths.config.mjs FORWARD_AMOUNTS 同步。
+ *
+ * 2026-04-08: 現已支援 SSG 預渲染所有金額組合
  */
 const FORWARD_AMOUNTS: Record<string, number[]> = {
   aud: [1, 20, 50, 100, 500, 1000],
@@ -95,6 +97,8 @@ const FORWARD_AMOUNTS: Record<string, number[]> = {
 /**
  * 各幣別熱門台幣金額（TWD→外幣 方向）
  * 與 seo-paths.config.mjs REVERSE_TWD_AMOUNTS 同步。
+ *
+ * 2026-04-08: 現已支援 SSG 預渲染所有金額組合
  */
 const REVERSE_TWD_AMOUNTS: Record<string, number[]> = {
   aud: [10000, 30000, 50000, 100000, 200000, 300000],
@@ -131,20 +135,24 @@ export const REVERSE_CURRENCY_AMOUNT_SEO_PATHS: string[] = REVERSE_CURRENCY_SEO_
 );
 
 /**
- * 公開可索引的 SEO 路徑（已排除金額落地頁）
+ * 公開可索引的 SEO 路徑（43 個基礎 + 206 個金額 = 249 個）
+ *
+ * 2026-04-08 更新：已加入金額落地頁預渲染
+ * - CURRENCY_AMOUNT_SEO_PATHS：104 個外幣→TWD 金額路由
+ * - REVERSE_CURRENCY_AMOUNT_SEO_PATHS：102 個 TWD→外幣 金額路由
+ *
+ * 這些金額路由現已預渲染為靜態 HTML，初始頁面即包含完整匯率數據、標題、描述、schema.org 結構化數據。
+ * 無須等待 JavaScript 執行。這大幅提升 SEO 和性能。
  *
  * 注意：LEGAL_SSG_PATHS（/privacy/ noindex）不納入 sitemap
- * 注意：金額特定落地頁（CURRENCY_AMOUNT_SEO_PATHS / REVERSE_CURRENCY_AMOUNT_SEO_PATHS）
- * 由 React Router 動態路由處理（/usd-twd/:amount），無需預渲染為靜態 HTML。
- * 這些動態路由仍會被 sitemap 正確索引（由 generate-sitemap.mjs 創建），
- * 但不需要作為獨立的預渲染路徑。
  */
 export const SEO_PATHS = [
   ...CONTENT_SEO_PATHS,
   ...CURRENCY_SEO_PATHS,
   ...REVERSE_CURRENCY_SEO_PATHS,
-  // 注：排除 CURRENCY_AMOUNT_SEO_PATHS 和 REVERSE_CURRENCY_AMOUNT_SEO_PATHS
-  // 這些由動態路由 /currency/:amount 處理，無需預渲染
+  // ✅ 2026-04-08: 現已加入金額路由預渲染
+  ...CURRENCY_AMOUNT_SEO_PATHS,
+  ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
 ] as const;
 
 export const APP_ONLY_PATHS = [
@@ -239,7 +247,7 @@ export function normalizePath(path: string): string {
 
 export function shouldPrerender(path: string): boolean {
   const normalized = normalizePath(path);
-  return PRERENDER_PATHS.includes(normalized as (typeof PRERENDER_PATHS)[number]);
+  return PRERENDER_PATHS.includes(normalized);
 }
 
 export function getIncludedRoutes(paths: string[]): string[] {
@@ -256,7 +264,7 @@ export type ReverseCurrencyPagePath = (typeof REVERSE_CURRENCY_SEO_PATHS)[number
 export type AppOnlyPath = (typeof APP_ONLY_PATHS)[number];
 
 export function isSEOPath(path: string): path is SEOPath {
-  return SEO_PATHS.includes(path as (typeof SEO_PATHS)[number]);
+  return SEO_PATHS.includes(path);
 }
 
 export function isCorePagePath(path: string): path is CorePagePath {
