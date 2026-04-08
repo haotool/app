@@ -505,11 +505,30 @@ export default defineConfig(({ mode }) => {
       concurrency: 10,
       async includedRoutes(paths) {
         // 從 TypeScript SSOT 動態引入 SEO 路徑配置
-        const { getIncludedRoutes } = await import('./src/config/seo-paths');
-        const includedPaths = getIncludedRoutes(paths);
-        console.log('🔍 Available paths:', paths);
-        console.log('✅ Including paths:', includedPaths);
-        return includedPaths;
+        const {
+          getIncludedRoutes,
+          CURRENCY_AMOUNT_SEO_PATHS,
+          REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
+          SEO_PATHS,
+          LEGAL_SSG_PATHS,
+          APP_ONLY_PRERENDER_PATHS,
+        } = await import('./src/config/seo-paths');
+
+        // 包含所有預渲染路徑（靜態 + 動態金額路由）
+        const allPrerenderedPaths = [
+          ...SEO_PATHS,
+          ...LEGAL_SSG_PATHS,
+          ...APP_ONLY_PRERENDER_PATHS,
+          ...CURRENCY_AMOUNT_SEO_PATHS,
+          ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
+        ];
+
+        console.log('🔍 Available paths from routes:', paths.slice(0, 5));
+        console.log(
+          `✅ Total prerender paths: ${allPrerenderedPaths.length} (SEO: ${SEO_PATHS.length}, Legal: ${LEGAL_SSG_PATHS.length}, AppOnly: ${APP_ONLY_PRERENDER_PATHS.length}, Amounts: ${CURRENCY_AMOUNT_SEO_PATHS.length + REVERSE_CURRENCY_AMOUNT_SEO_PATHS.length})`,
+        );
+
+        return allPrerenderedPaths;
       },
       // 預渲染前處理 HTML
       async onBeforePageRender(route, indexHTML) {
