@@ -278,6 +278,14 @@ export function SEOHelmet({
       content: description,
     });
     upsertMeta('meta[property="og:image"]', { property: 'og:image', content: ogImageUrl });
+    upsertMeta('meta[property="og:image:secure_url"]', {
+      property: 'og:image:secure_url',
+      content: ogImageUrl,
+    });
+    upsertMeta('meta[property="og:image:type"]', {
+      property: 'og:image:type',
+      content: 'image/jpeg',
+    });
     upsertMeta('meta[property="og:image:width"]', { property: 'og:image:width', content: '1200' });
     upsertMeta('meta[property="og:image:height"]', {
       property: 'og:image:height',
@@ -378,6 +386,8 @@ export function SEOHelmet({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImageUrl} />
+      <meta property="og:image:secure_url" content={ogImageUrl} />
+      <meta property="og:image:type" content="image/jpeg" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content={OG_IMAGE_ALT} />

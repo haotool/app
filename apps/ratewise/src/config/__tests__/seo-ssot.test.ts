@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_LOCALE,
+  FAQ_PAGE_SEO,
   HOMEPAGE_SEO,
   SEO_INDEXABLE_LOCALES,
   buildDefaultAlternates,
+  buildSpeakableJsonLd,
   getCurrencyLandingPageContent,
   getReverseCurrencyLandingPageContent,
 } from '../seo-metadata';
@@ -131,6 +133,50 @@ describe('SEO SSOT', () => {
       const content = getReverseCurrencyLandingPageContent('USD');
       const allAnswers = content.faqEntries.map((e) => e.answer).join('\n');
       expect(allAnswers).not.toMatch(/日圓|日幣/);
+    });
+  });
+
+  // ─── Speakable Schema ──────────────────────────────────────────────────────
+  describe('buildSpeakableJsonLd()', () => {
+    it('應回傳正確的 SpeakableSpecification schema', () => {
+      const schema = buildSpeakableJsonLd(['h1', 'details summary']);
+      expect(schema['@type']).toBe('SpeakableSpecification');
+      expect(schema['cssSelector']).toEqual(['h1', 'details summary']);
+    });
+
+    it('使用預設選擇器時應包含 h1', () => {
+      const schema = buildSpeakableJsonLd();
+      const selectors = schema['cssSelector'] as string[];
+      expect(selectors).toContain('h1');
+    });
+
+    it('不應包含 @context（由 @graph 統一注入）', () => {
+      const schema = buildSpeakableJsonLd();
+      expect('@context' in schema).toBe(false);
+    });
+  });
+
+  describe('首頁 Speakable Schema', () => {
+    it('HOMEPAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+      const jsonLdArray = Array.isArray(HOMEPAGE_SEO.jsonLd)
+        ? HOMEPAGE_SEO.jsonLd
+        : HOMEPAGE_SEO.jsonLd
+          ? [HOMEPAGE_SEO.jsonLd]
+          : [];
+      const hasSpeakable = jsonLdArray.some((block) => block['@type'] === 'SpeakableSpecification');
+      expect(hasSpeakable).toBe(true);
+    });
+  });
+
+  describe('FAQ 頁 Speakable Schema', () => {
+    it('FAQ_PAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+      const jsonLdArray = Array.isArray(FAQ_PAGE_SEO.jsonLd)
+        ? FAQ_PAGE_SEO.jsonLd
+        : FAQ_PAGE_SEO.jsonLd
+          ? [FAQ_PAGE_SEO.jsonLd]
+          : [];
+      const hasSpeakable = jsonLdArray.some((block) => block['@type'] === 'SpeakableSpecification');
+      expect(hasSpeakable).toBe(true);
     });
   });
 });

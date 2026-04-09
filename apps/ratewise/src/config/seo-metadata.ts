@@ -373,6 +373,24 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
   };
 }
 
+/**
+ * 生成 SpeakableSpecification JSON-LD（不含 @context，由 @graph 統一注入）。
+ * 用途：標記語音搜尋引擎與 AI 語音助理可朗讀的頁面區塊。
+ * - Google 語音搜尋、ChatGPT 語音模式、Perplexity 語音回答均支援此標記。
+ * - cssSelector 指向 DOM 中包含最重要可讀內容的元素。
+ *
+ * 預設選擇器：h1（頁面標題）與 details summary（FAQ 展開問題）。
+ * 可依頁面類型傳入不同選擇器覆蓋預設值。
+ */
+export function buildSpeakableJsonLd(
+  cssSelectors: string[] = ['h1', 'details summary'],
+): JsonLdBlock {
+  return {
+    '@type': 'SpeakableSpecification',
+    cssSelector: cssSelectors,
+  };
+}
+
 interface ArticleOptions {
   keywords?: string[];
   articleSection?: string;
@@ -627,7 +645,11 @@ export const HOMEPAGE_SEO = {
   keywords: [...SITE_SEO.keywords],
   faqContent: [...HOMEPAGE_FAQ_CONTENT],
   howTo: HOMEPAGE_HOW_TO,
-  jsonLd: [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`)],
+  jsonLd: [
+    buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`),
+    // SpeakableSpecification：標記首頁 h1 為語音搜尋主要可讀區塊。
+    buildSpeakableJsonLd(['h1']),
+  ],
   content: {
     eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步 · 顯示實際買賣價',
     heading: 'RateWise 匯率好工具 即時匯率換算',
@@ -782,27 +804,31 @@ export const FAQ_PAGE_SEO = {
     { name: '常見問題', item: '/faq/' },
   ],
   faqContent: [...FAQ_PAGE_ENTRIES],
-  jsonLd: buildArticleJsonLd(
-    '常見問題 — RateWise 匯率好工具 FAQ 解答',
-    'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算。',
-    '/faq/',
-    GUIDE_PUBLISH_DATES.faq,
-    {
-      articleSection: 'FAQ',
-      keywords: [
-        '匯率',
-        '常見問題',
-        '臺灣銀行匯率',
-        '換匯',
-        '現金買賣',
-        '即期匯率',
-        'DCC',
-        '外幣匯率',
-      ],
-      articleBody:
-        'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
-    },
-  ),
+  jsonLd: [
+    buildArticleJsonLd(
+      '常見問題 — RateWise 匯率好工具 FAQ 解答',
+      'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算。',
+      '/faq/',
+      GUIDE_PUBLISH_DATES.faq,
+      {
+        articleSection: 'FAQ',
+        keywords: [
+          '匯率',
+          '常見問題',
+          '臺灣銀行匯率',
+          '換匯',
+          '現金買賣',
+          '即期匯率',
+          'DCC',
+          '外幣匯率',
+        ],
+        articleBody:
+          'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
+      },
+    ),
+    // SpeakableSpecification：標記 FAQ 頁 h1 與問答項目為語音搜尋可朗讀區塊。
+    buildSpeakableJsonLd(['h1', 'details summary']),
+  ],
 } satisfies SEOPageMetadata;
 
 export const GUIDE_HOW_TO_STEPS = [
