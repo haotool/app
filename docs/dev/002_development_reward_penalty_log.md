@@ -6,6 +6,49 @@
 
 ---
 
+id: ratewise-followup-generated-artifacts-sync
+date: 2026-04-10
+title: 收斂 RateWise pre-push 後的 sitemap 與匯率快照生成物
+score: +1
+type: improvement
+content_type: maintenance
+scope: ratewise, seo, release
+topics: [ratewise, seo, sitemap, generated-assets, build-artifacts]
+keywords:
+[rates.json, seo-rate-examples, sitemap.xml, lastmod, generated-files, pre-push]
+aliases: [RateWise 生成物同步收斂, pre-push sitemap 與匯率快照同步]
+related_entries:
+[splitmeow-tdd-and-actions-schedule-reliability]
+summary: 完成 `fix(ratewise): 收斂金額頁 SEO 索引策略與環境提示` 推送後，工作樹仍留下 `rates.json`、`sitemap.xml` 與 `seo-rate-examples.ts` 三個生成檔差異。進一步比對後確認這不是噪音：`sitemap.xml` 的 `lastmod` 已反映本次 SEO 相關提交日期，而匯率快照與 SEO 範例則在 build 期間抓到較新的臺銀資料。為避免同一分支上的遠端提交與本地 SSOT 產物不同步，將這三個生成檔收斂為 follow-up 提交。
+root_cause:
+
+- `pnpm build:ratewise` 於 pre-push 期間重新生成 `sitemap.xml`，使 canonical URL 的 `lastmod` 反映最新 SEO 相關提交日期。
+- `prebuild-fetch-rates.mjs` 在 build 期間抓到較新的臺銀牌告匯率，進一步更新 `public/rates.json` 與 `seo-rate-examples.ts`。
+  impact:
+
+- 若不補提，遠端分支雖已包含 SEO 邏輯修正，但會遺留與當前 build 產物不一致的 sitemap 與匯率快照。
+- 團隊後續以該分支做 review、部署或比對時，會看到本地再次 build 才出現的生成檔漂移。
+  actions:
+
+- 針對三個生成檔做差異檢查，確認屬於 deterministic sitemap 更新與較新匯率快照，而非暫時性 QA 噪音。
+- 補記錄至 002，將生成檔同步收斂為 follow-up 提交。
+  prevention:
+
+- SEO / 匯率相關變更若會觸發 sitemap 或匯率快照生成，推送後應再做一次 `git status --short` 檢查，避免遠端分支遺留生成物漂移。
+- 對 `rates.json`、`seo-rate-examples.ts` 這類時間敏感生成檔，需明確判斷其為應提交產物或可忽略暫存，不可含糊帶過。
+  verification:
+
+- `git diff -- apps/ratewise/public/rates.json`
+- `git diff -- apps/ratewise/public/sitemap.xml`
+- `git diff -- apps/ratewise/src/config/generated/seo-rate-examples.ts`
+  references:
+
+- apps/ratewise/public/rates.json
+- apps/ratewise/public/sitemap.xml
+- apps/ratewise/src/config/generated/seo-rate-examples.ts
+
+---
+
 id: ratewise-amount-seo-ssot-alignment-004
 date: 2026-04-10
 title: 全金額可訪問 SEO 支援收斂：canonical 索引集、動態金額規則與 Node 環境提示對齊
