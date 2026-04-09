@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ABOUT_PAGE_SEO,
+  CARD_RATE_GUIDE_PAGE,
+  CASH_VS_SPOT_RATE_PAGE,
   DEFAULT_LOCALE,
   FAQ_PAGE_SEO,
+  GUIDE_PAGE_SEO,
   HOMEPAGE_SEO,
+  OPEN_DATA_PAGE_SEO,
   SEO_INDEXABLE_LOCALES,
+  SELL_RATE_VS_MID_RATE_PAGE,
   buildDefaultAlternates,
   buildSpeakableJsonLd,
   getCurrencyLandingPageContent,
@@ -177,6 +183,41 @@ describe('SEO SSOT', () => {
           : [];
       const hasSpeakable = jsonLdArray.some((block) => block['@type'] === 'SpeakableSpecification');
       expect(hasSpeakable).toBe(true);
+    });
+  });
+
+  // ─── 內容頁 Speakable Schema ───────────────────────────────────────────────
+  describe('內容頁 Speakable Schema 覆蓋', () => {
+    function hasSpeakable(jsonLd: unknown): boolean {
+      if (!jsonLd) return false;
+      const arr = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
+      return arr.some(
+        (block: Record<string, unknown>) => block['@type'] === 'SpeakableSpecification',
+      );
+    }
+
+    it('GUIDE_PAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(GUIDE_PAGE_SEO.jsonLd)).toBe(true);
+    });
+
+    it('OPEN_DATA_PAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(OPEN_DATA_PAGE_SEO.jsonLd)).toBe(true);
+    });
+
+    it('ABOUT_PAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(ABOUT_PAGE_SEO.jsonLd)).toBe(true);
+    });
+
+    it('SELL_RATE_VS_MID_RATE_PAGE.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(SELL_RATE_VS_MID_RATE_PAGE.jsonLd)).toBe(true);
+    });
+
+    it('CASH_VS_SPOT_RATE_PAGE.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(CASH_VS_SPOT_RATE_PAGE.jsonLd)).toBe(true);
+    });
+
+    it('CARD_RATE_GUIDE_PAGE.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(CARD_RATE_GUIDE_PAGE.jsonLd)).toBe(true);
     });
   });
 });
