@@ -1,3 +1,5 @@
+. "$(dirname "$0")/load-node-env.sh"
+
 echo "🔍 Running pre-push checks..."
 
 # [fix:2025-12-04] 優化 pre-push hook

@@ -1,1 +1,3 @@
+. "$(dirname "$0")/load-node-env.sh"
+
 npx --no -- commitlint --edit $1

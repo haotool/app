@@ -6,6 +6,50 @@
 
 ---
 
+id: husky-nvm-bootstrap-for-noninteractive-shell
+date: 2026-04-10
+title: 補齊 Husky 在非互動 shell 的 Node 24 載入流程
+score: +1
+type: improvement
+content_type: maintenance
+scope: tooling, ci, hooks
+topics: [husky, nvm, node, pnpm, hooks, environment]
+keywords:
+[pre-commit, pre-push, commit-msg, nvm, node24, non-interactive-shell, path]
+aliases: [Husky Node 24 bootstrap, Git hook NVM 載入]
+related_entries:
+[ratewise-followup-generated-artifacts-sync]
+summary: 雖然互動 shell 與 login shell 都已切到 Node 24，但 `git commit` / `git push` 觸發的 Husky hook 仍讀到 `/opt/homebrew/bin/node` 的 Node 25，導致每次 hook 都出現 engine warning。檢查後確認 hook 直接繼承外層 PATH，而不是穩定載入 NVM default。此次新增共用 `load-node-env.sh`，讓 `pre-commit`、`pre-push` 與 `commit-msg` 在非互動 shell 也會先切到 NVM 預設版本。
+root_cause:
+
+- Git hook 直接繼承當前 shell 的 PATH，非互動 shell 先命中 `/opt/homebrew/bin/node`，未自動切到 `~/.nvm`。
+- 先前只修了 `~/.zprofile` / `~/.zshrc`，但 repo 內 hook 本身沒有顯式載入 NVM default。
+  impact:
+
+- `pre-commit`、`pre-push` 與 `commit-msg` 會持續顯示 Node engine warning，降低環境一致性與除錯可預測性。
+- 若未來 Node 24 與系統 Node 差異擴大，hook 可能出現只在 Git 工作流中重現的問題。
+  actions:
+
+- 新增 `.husky/load-node-env.sh`，統一處理 NVM default 載入。
+- 在 `.husky/pre-commit`、`.husky/pre-push` 與 `.husky/commit-msg` 開頭先 source 該 helper。
+  prevention:
+
+- 任何 repo 層 Git hook 若依賴特定 Node / pnpm 版本，不應假設使用者 shell 啟動流程會自動準備完成。
+- 後續若切換版本管理器，應優先調整共用 helper，而不是分散修改每支 hook。
+  verification:
+
+- `sh -c '. .husky/load-node-env.sh; node -v; pnpm -v'`
+- `git commit --allow-empty -m ...`（經 pre-commit / commit-msg 驗證）
+- `git push origin <branch>`（經 pre-push 驗證）
+  references:
+
+- .husky/load-node-env.sh
+- .husky/pre-commit
+- .husky/pre-push
+- .husky/commit-msg
+
+---
+
 id: ratewise-followup-generated-artifacts-sync
 date: 2026-04-10
 title: 收斂 RateWise pre-push 後的 sitemap 與匯率快照生成物

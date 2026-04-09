@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. "$(dirname "$0")/load-node-env.sh"
+
 # RateWise Pre-commit Hook
 # [BDD:2025-12-01] 整合完整品質檢查到 Git workflow
 # [CI:2025-12-01] 防止 CI 失敗的根本原因
