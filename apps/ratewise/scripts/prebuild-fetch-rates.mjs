@@ -11,11 +11,46 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { STATS } from '../seo-paths.config.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = path.resolve(__dirname, '..');
 const PUBLIC_PATH = path.resolve(APP_ROOT, 'public');
 const RATES_CACHE_PATH = path.resolve(PUBLIC_PATH, 'rates.json');
+const MAX_CACHE_AGE_MS = 24 * 60 * 60 * 1000;
+
+function parseRateTimestamp(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value > 1_000_000_000_000 ? value : value * 1000;
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) {
+      return numeric > 1_000_000_000_000 ? numeric : numeric * 1000;
+    }
+
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function getCacheTimestamp(cached) {
+  return (
+    parseRateTimestamp(cached?.timestamp) ??
+    parseRateTimestamp(cached?.updateTime) ??
+    parseRateTimestamp(cached?.buildMeta?.fetchedAt) ??
+    null
+  );
+}
+
+function formatAgeHours(ageMs) {
+  return `${(ageMs / (60 * 60 * 1000)).toFixed(1)}h`;
+}
 
 /**
  * 獲取最新匯率
@@ -56,8 +91,23 @@ function loadCachedRates() {
   try {
     if (fs.existsSync(RATES_CACHE_PATH)) {
       const cached = JSON.parse(fs.readFileSync(RATES_CACHE_PATH, 'utf-8'));
-      console.log(`✅ 使用緩存匯率（${Object.keys(cached).length} 個幣別）`);
-      return cached;
+      const cacheTimestamp = getCacheTimestamp(cached);
+
+      if (cacheTimestamp === null) {
+        console.warn('⚠️  緩存缺少可解析時間戳，忽略 public/rates.json。');
+      } else {
+        const ageMs = Date.now() - cacheTimestamp;
+        if (ageMs <= MAX_CACHE_AGE_MS) {
+          console.log(
+            `✅ 使用緩存匯率（年齡 ${formatAgeHours(ageMs)}，${Object.keys(cached).length} 個頂層欄位）`,
+          );
+          return cached;
+        }
+
+        console.warn(
+          `⚠️  緩存匯率已過舊（年齡 ${formatAgeHours(ageMs)} > 24h），忽略 public/rates.json。`,
+        );
+      }
     }
   } catch (error) {
     console.error(`❌ 讀取緩存失敗：${error.message}`);
@@ -208,43 +258,6 @@ function saveRates(rates) {
 }
 
 /**
- * 生成所有金額組合的路由
- */
-function generateAmountPaths() {
-  const commonAmounts = {
-    usd: [1, 10, 100, 500, 1000, 5000],
-    jpy: [100, 1000, 10000, 100000],
-    eur: [10, 100, 500, 1000],
-    gbp: [10, 100, 500, 1000],
-    cny: [100, 1000, 10000],
-    hkd: [100, 1000, 10000],
-    krw: [1000, 10000, 100000],
-    thb: [100, 1000, 10000],
-    myr: [100, 1000],
-    sgd: [100, 1000],
-    php: [100, 1000],
-    idr: [10000, 100000],
-    vnd: [100000, 1000000],
-    aud: [100, 1000],
-    nzd: [100, 1000],
-    cad: [100, 1000],
-    chf: [100, 1000],
-  };
-
-  const paths = [];
-
-  // 生成正向和反向路由
-  for (const [currency, amounts] of Object.entries(commonAmounts)) {
-    amounts.forEach((amount) => {
-      paths.push(`/${currency}-twd/${amount}/`);
-      paths.push(`/twd-${currency}/${amount}/`);
-    });
-  }
-
-  return paths;
-}
-
-/**
  * 主函數
  */
 async function main() {
@@ -262,12 +275,13 @@ async function main() {
     process.exit(1);
   }
 
-  // 3. 生成路由信息
-  const amountPaths = generateAmountPaths();
-  console.log(`\n📈 預計生成 ${amountPaths.length} 個金額路由頁面`);
-  console.log(`   基礎路由：43 個`);
-  console.log(`   金額路由：${amountPaths.length} 個`);
-  console.log(`   總計：${43 + amountPaths.length} 個靜態頁面`);
+  // 3. 顯示當前 SSOT 統計
+  const indexableBasePages = STATS.content + STATS.currency + STATS.reverseCurrency;
+  const indexableAmountPages = STATS.currencyAmount + STATS.reverseCurrencyAmount;
+  console.log('\n📈 當前 SEO / SSG 統計（SSOT）');
+  console.log(`   canonical 基礎頁：${indexableBasePages} 個`);
+  console.log(`   canonical 金額頁：${indexableAmountPages} 個`);
+  console.log(`   預渲染靜態頁：${STATS.total} 個`);
 
   console.log('\n✅ 構建前準備完成！');
   console.log('═'.repeat(50) + '\n');

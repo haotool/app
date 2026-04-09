@@ -1,22 +1,35 @@
 import { describe, expect, it } from 'vitest';
 import {
   APP_ONLY_PATHS,
+  APP_CONFIG,
   IMAGE_RESOURCES,
+  INDEXABLE_CANONICAL_PATHS,
+  INDEXABLE_FORWARD_AMOUNTS,
+  INDEXABLE_REVERSE_TWD_AMOUNTS,
+  INDEXABLE_AMOUNT_SEO_PATHS,
+  INDEXABLE_REVERSE_AMOUNT_SEO_PATHS,
   PRERENDER_PATHS,
   REVERSE_CURRENCY_SEO_PATHS,
   SEO_FILES,
   SEO_PATHS,
   SHARE_IMAGE,
+  SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS,
   SITE_CONFIG,
   TWITTER_IMAGE,
   getIncludedRoutes,
   isAppOnlyPath,
   isCorePagePath,
   isCurrencyPagePath,
+  isIndexableAmount,
+  isIndexableAmountPath,
+  isNonIndexableAmountPath,
   isReverseCurrencyPagePath,
   isSEOPath,
   normalizePath,
   shouldPrerender,
+  DYNAMIC_AMOUNT_ROUTE_PATTERN,
+  parseDynamicAmountRoute,
+  getCurrencyPairBasePath,
 } from '../seo-paths';
 
 describe('SEO Paths Configuration', () => {
@@ -66,6 +79,11 @@ describe('SEO Paths Configuration', () => {
   });
 
   describe('SEO 與路由白名單', () => {
+    it('INDEXABLE_CANONICAL_PATHS 應作為 SEO_PATHS 的 SSOT', () => {
+      expect(INDEXABLE_CANONICAL_PATHS).toEqual(SEO_PATHS);
+      expect(APP_CONFIG.seoPaths).toEqual(INDEXABLE_CANONICAL_PATHS);
+    });
+
     it('SEO_PATHS 應包含全部公開可索引路徑（含 206 個預渲染金額路由）', () => {
       // SEO_PATHS = CONTENT_SEO_PATHS(9) + CURRENCY_SEO_PATHS(17) + REVERSE_CURRENCY_SEO_PATHS(17)
       //          + CURRENCY_AMOUNT_SEO_PATHS(104) + REVERSE_CURRENCY_AMOUNT_SEO_PATHS(102) = 249
@@ -97,6 +115,7 @@ describe('SEO Paths Configuration', () => {
       expect(PRERENDER_PATHS).toContain('/privacy/'); // 仍需預渲染，但不在 sitemap
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');
+      expect(APP_CONFIG.prerenderPaths).toEqual(PRERENDER_PATHS);
     });
 
     it('REVERSE_CURRENCY_SEO_PATHS 應包含 17 個 TWD→外幣反向路徑', () => {
@@ -177,6 +196,137 @@ describe('SEO Paths Configuration', () => {
       expect(isAppOnlyPath('/favorites/')).toBe(true);
       expect(isAppOnlyPath('/ui-showcase/')).toBe(true);
       expect(isAppOnlyPath('/faq/')).toBe(false);
+    });
+  });
+
+  describe('任意金額路由支援', () => {
+    it('應以規則而非列舉清單宣告支援的動態金額路由', () => {
+      expect(SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS).toHaveLength(1);
+      expect(APP_CONFIG.supportedDynamicRoutePatterns).toEqual(
+        SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS.map((pattern) => pattern.source),
+      );
+      expect(SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS[0]?.test('/usd-twd/999/')).toBe(true);
+      expect(SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS[0]?.test('/twd-jpy/12345/')).toBe(true);
+    });
+
+    describe('DYNAMIC_AMOUNT_ROUTE_PATTERN', () => {
+      it('應匹配有效的金額路由格式', () => {
+        expect(DYNAMIC_AMOUNT_ROUTE_PATTERN.test('/usd-twd/500/')).toBe(true);
+        expect(DYNAMIC_AMOUNT_ROUTE_PATTERN.test('/usd-twd/500')).toBe(true);
+        expect(DYNAMIC_AMOUNT_ROUTE_PATTERN.test('/twd-usd/10000/')).toBe(true);
+        expect(DYNAMIC_AMOUNT_ROUTE_PATTERN.test('/jpy-twd/100.5/')).toBe(true);
+      });
+
+      it('不應匹配無效格式', () => {
+        expect(DYNAMIC_AMOUNT_ROUTE_PATTERN.test('/usd-twd/')).toBe(false);
+        expect(DYNAMIC_AMOUNT_ROUTE_PATTERN.test('/usd-twd')).toBe(false);
+        expect(DYNAMIC_AMOUNT_ROUTE_PATTERN.test('/faq/')).toBe(false);
+        expect(DYNAMIC_AMOUNT_ROUTE_PATTERN.test('/usd-twd/abc/')).toBe(false);
+      });
+    });
+
+    describe('parseDynamicAmountRoute', () => {
+      it('應正確解析外幣→TWD 金額路由', () => {
+        const result = parseDynamicAmountRoute('/usd-twd/500/');
+        expect(result).toEqual({
+          fromCode: 'USD',
+          toCode: 'TWD',
+          amount: 500,
+          direction: 'to-twd',
+        });
+      });
+
+      it('應正確解析 TWD→外幣 金額路由', () => {
+        const result = parseDynamicAmountRoute('/twd-jpy/10000/');
+        expect(result).toEqual({
+          fromCode: 'TWD',
+          toCode: 'JPY',
+          amount: 10000,
+          direction: 'twd-to-foreign',
+        });
+      });
+
+      it('應支援小數金額', () => {
+        const result = parseDynamicAmountRoute('/eur-twd/99.5/');
+        expect(result?.amount).toBe(99.5);
+      });
+
+      it('無效路徑應返回 null', () => {
+        expect(parseDynamicAmountRoute('/faq/')).toBeNull();
+        expect(parseDynamicAmountRoute('/usd-twd/')).toBeNull();
+        expect(parseDynamicAmountRoute('/usd-twd/0/')).toBeNull();
+        expect(parseDynamicAmountRoute('/usd-twd/-100/')).toBeNull();
+      });
+    });
+
+    describe('isIndexableAmount', () => {
+      it('應識別 USD 的 canonical 金額', () => {
+        expect(isIndexableAmount('usd', 500, 'to-twd')).toBe(true);
+        expect(isIndexableAmount('USD', 1000, 'to-twd')).toBe(true);
+        expect(isIndexableAmount('usd', 999, 'to-twd')).toBe(false);
+        expect(isIndexableAmount('usd', 12345, 'to-twd')).toBe(false);
+      });
+
+      it('應識別 JPY 的 canonical 金額', () => {
+        expect(isIndexableAmount('jpy', 10000, 'to-twd')).toBe(true);
+        expect(isIndexableAmount('jpy', 50000, 'to-twd')).toBe(true);
+        expect(isIndexableAmount('jpy', 12345, 'to-twd')).toBe(false);
+      });
+
+      it('應識別反向（TWD→外幣）的 canonical 金額', () => {
+        expect(isIndexableAmount('usd', 50000, 'twd-to-foreign')).toBe(true);
+        expect(isIndexableAmount('usd', 12345, 'twd-to-foreign')).toBe(false);
+      });
+    });
+
+    describe('getCurrencyPairBasePath', () => {
+      it('應返回正確的基礎幣對路徑', () => {
+        expect(getCurrencyPairBasePath('usd', 'to-twd')).toBe('/usd-twd/');
+        expect(getCurrencyPairBasePath('USD', 'to-twd')).toBe('/usd-twd/');
+        expect(getCurrencyPairBasePath('jpy', 'twd-to-foreign')).toBe('/twd-jpy/');
+      });
+    });
+
+    describe('isIndexableAmountPath', () => {
+      it('應識別預渲染的金額頁', () => {
+        expect(isIndexableAmountPath('/usd-twd/500/')).toBe(true);
+        expect(isIndexableAmountPath('/twd-usd/10000/')).toBe(true);
+        expect(isIndexableAmountPath('/jpy-twd/10000/')).toBe(true);
+      });
+
+      it('不應識別非預渲染的金額頁', () => {
+        expect(isIndexableAmountPath('/usd-twd/999/')).toBe(false);
+        expect(isIndexableAmountPath('/usd-twd/12345/')).toBe(false);
+      });
+    });
+
+    describe('isNonIndexableAmountPath', () => {
+      it('應識別非索引金額路由', () => {
+        expect(isNonIndexableAmountPath('/usd-twd/999/')).toBe(true);
+        expect(isNonIndexableAmountPath('/usd-twd/12345/')).toBe(true);
+        expect(isNonIndexableAmountPath('/jpy-twd/12345/')).toBe(true);
+      });
+
+      it('不應將 canonical 金額識別為非索引路由', () => {
+        expect(isNonIndexableAmountPath('/usd-twd/500/')).toBe(false);
+        expect(isNonIndexableAmountPath('/jpy-twd/10000/')).toBe(false);
+      });
+
+      it('不應將基礎幣對頁識別為動態路由', () => {
+        expect(isNonIndexableAmountPath('/usd-twd/')).toBe(false);
+        expect(isNonIndexableAmountPath('/faq/')).toBe(false);
+      });
+    });
+
+    it('索引金額清單應由規則生成而非逐頁硬編碼', () => {
+      expect(INDEXABLE_FORWARD_AMOUNTS['usd']).toEqual([1, 10, 50, 100, 500, 1000]);
+      expect(INDEXABLE_REVERSE_TWD_AMOUNTS['usd']).toEqual([
+        10000, 30000, 50000, 100000, 200000, 300000,
+      ]);
+      expect(INDEXABLE_AMOUNT_SEO_PATHS).toContain('/usd-twd/500/');
+      expect(INDEXABLE_REVERSE_AMOUNT_SEO_PATHS).toContain('/twd-usd/10000/');
+      expect(INDEXABLE_AMOUNT_SEO_PATHS).not.toContain('/usd-twd/999/');
+      expect(INDEXABLE_REVERSE_AMOUNT_SEO_PATHS).not.toContain('/twd-usd/12345/');
     });
   });
 });

@@ -163,6 +163,13 @@ export function validateAppConfig(config) {
     }
   }
 
+  if (
+    config.supportedDynamicRoutePatterns &&
+    !Array.isArray(config.supportedDynamicRoutePatterns)
+  ) {
+    errors.push('supportedDynamicRoutePatterns must be an array when provided');
+  }
+
   return {
     valid: errors.length === 0,
     errors,

@@ -5,7 +5,10 @@
  * - `../../seo-paths.config.mjs` 供 Node 腳本與建置流程使用
  * - 本檔提供 app runtime 與 TypeScript 型別
  *
- * 兩者必須保持一致，避免 sitemap / prerender / noindex 白名單互相衝突。
+ * 兩者必須保持一致，避免 sitemap / prerender / noindex 規則漂移。
+ * seoPaths 僅包含 canonical 索引頁。
+ * prerenderPaths 僅包含建置期輸出頁。
+ * 任意金額路由可訪問，但不自動納入 sitemap。
  */
 
 export function normalizeSiteUrl(value: string): string {
@@ -68,13 +71,8 @@ export const REVERSE_CURRENCY_SEO_PATHS = [
   '/twd-vnd/',
 ] as const;
 
-/**
- * 各幣別熱門金額（外幣→TWD 方向）
- * 與 seo-paths.config.mjs FORWARD_AMOUNTS 同步。
- *
- * 2026-04-08: 現已支援 SSG 預渲染所有金額組合
- */
-const FORWARD_AMOUNTS: Record<string, number[]> = {
+/** 外幣→TWD 代表性 canonical 金額集合。 */
+export const INDEXABLE_FORWARD_AMOUNTS: Record<string, number[]> = {
   aud: [1, 20, 50, 100, 500, 1000],
   cad: [1, 20, 50, 100, 500, 1000],
   chf: [1, 10, 50, 100, 500, 1000],
@@ -94,13 +92,8 @@ const FORWARD_AMOUNTS: Record<string, number[]> = {
   vnd: [10000, 50000, 100000, 500000, 1000000, 5000000],
 };
 
-/**
- * 各幣別熱門台幣金額（TWD→外幣 方向）
- * 與 seo-paths.config.mjs REVERSE_TWD_AMOUNTS 同步。
- *
- * 2026-04-08: 現已支援 SSG 預渲染所有金額組合
- */
-const REVERSE_TWD_AMOUNTS: Record<string, number[]> = {
+/** TWD→外幣 代表性 canonical 金額集合。 */
+export const INDEXABLE_REVERSE_TWD_AMOUNTS: Record<string, number[]> = {
   aud: [10000, 30000, 50000, 100000, 200000, 300000],
   cad: [10000, 30000, 50000, 100000, 200000, 300000],
   chf: [10000, 30000, 50000, 100000, 200000, 300000],
@@ -121,39 +114,30 @@ const REVERSE_TWD_AMOUNTS: Record<string, number[]> = {
 };
 
 /** 外幣→TWD 金額落地頁路徑（路徑型，/usd-twd/500/）。 */
-export const CURRENCY_AMOUNT_SEO_PATHS: string[] = CURRENCY_SEO_PATHS.flatMap((path) => {
+export const INDEXABLE_AMOUNT_SEO_PATHS: string[] = CURRENCY_SEO_PATHS.flatMap((path) => {
   const code = path.replace(/\//g, '').replace('-twd', '');
-  return (FORWARD_AMOUNTS[code] ?? []).map((a) => `${path}${a}/`);
+  return (INDEXABLE_FORWARD_AMOUNTS[code] ?? []).map((a) => `${path}${a}/`);
 });
 
 /** TWD→外幣 金額落地頁路徑（路徑型，/twd-usd/50000/）。 */
-export const REVERSE_CURRENCY_AMOUNT_SEO_PATHS: string[] = REVERSE_CURRENCY_SEO_PATHS.flatMap(
+export const INDEXABLE_REVERSE_AMOUNT_SEO_PATHS: string[] = REVERSE_CURRENCY_SEO_PATHS.flatMap(
   (path) => {
     const code = path.replace(/\//g, '').replace('twd-', '');
-    return (REVERSE_TWD_AMOUNTS[code] ?? []).map((a) => `${path}${a}/`);
+    return (INDEXABLE_REVERSE_TWD_AMOUNTS[code] ?? []).map((a) => `${path}${a}/`);
   },
 );
 
-/**
- * 公開可索引的 SEO 路徑（43 個基礎 + 206 個金額 = 249 個）
- *
- * 2026-04-08 更新：已加入金額落地頁預渲染
- * - CURRENCY_AMOUNT_SEO_PATHS：104 個外幣→TWD 金額路由
- * - REVERSE_CURRENCY_AMOUNT_SEO_PATHS：102 個 TWD→外幣 金額路由
- *
- * 這些金額路由現已預渲染為靜態 HTML，初始頁面即包含完整匯率數據、標題、描述、schema.org 結構化數據。
- * 無須等待 JavaScript 執行。這大幅提升 SEO 和性能。
- *
- * 注意：LEGAL_SSG_PATHS（/privacy/ noindex）不納入 sitemap
- */
-export const SEO_PATHS = [
+/** canonical 索引頁。 */
+export const INDEXABLE_CANONICAL_PATHS = [
   ...CONTENT_SEO_PATHS,
   ...CURRENCY_SEO_PATHS,
   ...REVERSE_CURRENCY_SEO_PATHS,
-  // ✅ 2026-04-08: 現已加入金額路由預渲染
-  ...CURRENCY_AMOUNT_SEO_PATHS,
-  ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
+  ...INDEXABLE_AMOUNT_SEO_PATHS,
+  ...INDEXABLE_REVERSE_AMOUNT_SEO_PATHS,
 ] as const;
+
+/** 相容別名：公開可索引 SEO 路徑。 */
+export const SEO_PATHS = INDEXABLE_CANONICAL_PATHS;
 
 export const APP_ONLY_PATHS = [
   '/multi/',
@@ -214,6 +198,10 @@ export const SITE_CONFIG = {
   description: string;
 }>;
 
+/** 支援的動態金額路由規則。 */
+export const DYNAMIC_AMOUNT_ROUTE_PATTERN = /^\/([a-z]{3})-([a-z]{3})\/(\d+(?:\.\d+)?)\/?$/i;
+export const SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS = [DYNAMIC_AMOUNT_ROUTE_PATTERN] as const;
+
 export const APP_CONFIG = {
   name: 'ratewise',
   displayName: 'RateWise',
@@ -224,6 +212,9 @@ export const APP_CONFIG = {
   },
   seoPaths: SEO_PATHS,
   prerenderPaths: PRERENDER_PATHS,
+  supportedDynamicRoutePatterns: SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS.map(
+    (pattern) => pattern.source,
+  ),
   appShellPaths: APP_ONLY_PATHS,
   knownRoutes: KNOWN_ROUTE_PATHS,
   legacyAssetRedirects: LEGACY_ASSET_REDIRECTS,
@@ -282,3 +273,90 @@ export function isReverseCurrencyPagePath(path: string): path is ReverseCurrency
 export function isAppOnlyPath(path: string): path is AppOnlyPath {
   return APP_ONLY_PATHS.includes(path as AppOnlyPath);
 }
+
+// 動態金額路由支援。
+
+/** 解析動態金額路由。 */
+export function parseDynamicAmountRoute(path: string): {
+  fromCode: string;
+  toCode: string;
+  amount: number;
+  direction: 'to-twd' | 'twd-to-foreign';
+} | null {
+  const match = DYNAMIC_AMOUNT_ROUTE_PATTERN.exec(path);
+  if (!match) return null;
+
+  const fromCode = match[1];
+  const toCode = match[2];
+  const amountStr = match[3];
+
+  if (!fromCode || !toCode || !amountStr) return null;
+
+  const amount = parseFloat(amountStr);
+
+  if (!isFinite(amount) || amount <= 0) return null;
+
+  const direction = fromCode.toUpperCase() === 'TWD' ? 'twd-to-foreign' : 'to-twd';
+
+  return {
+    fromCode: fromCode.toUpperCase(),
+    toCode: toCode.toUpperCase(),
+    amount,
+    direction,
+  };
+}
+
+/** 檢查金額是否屬於 canonical 金額集合。 */
+export function isIndexableAmount(
+  currencyCode: string,
+  amount: number,
+  direction: 'to-twd' | 'twd-to-foreign',
+): boolean {
+  const code = currencyCode.toLowerCase();
+  const amounts =
+    direction === 'to-twd' ? INDEXABLE_FORWARD_AMOUNTS[code] : INDEXABLE_REVERSE_TWD_AMOUNTS[code];
+  return amounts?.includes(amount) ?? false;
+}
+
+/** 相容別名：保留舊名稱。 */
+export const isHotPathAmount = isIndexableAmount;
+
+/** 取得不含金額的基礎幣對路徑。 */
+export function getCurrencyPairBasePath(
+  currencyCode: string,
+  direction: 'to-twd' | 'twd-to-foreign',
+): string {
+  const code = currencyCode.toLowerCase();
+  return direction === 'to-twd' ? `/${code}-twd/` : `/twd-${code}/`;
+}
+
+/** 檢查路徑是否為 canonical 金額頁。 */
+export function isIndexableAmountPath(path: string): boolean {
+  const normalized = normalizePath(path);
+  return (
+    INDEXABLE_AMOUNT_SEO_PATHS.includes(normalized) ||
+    INDEXABLE_REVERSE_AMOUNT_SEO_PATHS.includes(normalized)
+  );
+}
+
+/** 相容別名：保留舊名稱。 */
+export const isPrerenderedAmountPath = isIndexableAmountPath;
+
+/** 檢查路徑是否為非索引金額路由。 */
+export function isNonIndexableAmountPath(path: string): boolean {
+  const parsed = parseDynamicAmountRoute(path);
+  if (!parsed) return false;
+
+  const currencyCode =
+    parsed.direction === 'to-twd' ? parsed.fromCode.toLowerCase() : parsed.toCode.toLowerCase();
+  return !isIndexableAmount(currencyCode, parsed.amount, parsed.direction);
+}
+
+/** 相容別名：保留舊名稱。 */
+export const isDynamicAmountPath = isNonIndexableAmountPath;
+
+/** 相容別名：保留舊常數名稱。 */
+export const FORWARD_AMOUNTS = INDEXABLE_FORWARD_AMOUNTS;
+export const REVERSE_TWD_AMOUNTS = INDEXABLE_REVERSE_TWD_AMOUNTS;
+export const CURRENCY_AMOUNT_SEO_PATHS = INDEXABLE_AMOUNT_SEO_PATHS;
+export const REVERSE_CURRENCY_AMOUNT_SEO_PATHS = INDEXABLE_REVERSE_AMOUNT_SEO_PATHS;

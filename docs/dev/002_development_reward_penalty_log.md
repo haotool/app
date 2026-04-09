@@ -1,8 +1,148 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-03T23:30:00+08:00
-> **當前總分**: 1203（初始分: 100）
+> **最後更新**: 2026-04-10T01:17:39+08:00
+> **當前總分**: 1205（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: husky-nvm-bootstrap-for-noninteractive-shell
+date: 2026-04-10
+title: 補齊 Husky 在非互動 shell 的 Node 24 載入流程
+score: +1
+type: improvement
+content_type: maintenance
+scope: tooling, ci, hooks
+topics: [husky, nvm, node, pnpm, hooks, environment]
+keywords:
+[pre-commit, pre-push, commit-msg, nvm, node24, non-interactive-shell, path]
+aliases: [Husky Node 24 bootstrap, Git hook NVM 載入]
+related_entries:
+[ratewise-followup-generated-artifacts-sync]
+summary: 雖然互動 shell 與 login shell 都已切到 Node 24，但 `git commit` / `git push` 觸發的 Husky hook 仍讀到 `/opt/homebrew/bin/node` 的 Node 25，導致每次 hook 都出現 engine warning。檢查後確認 hook 直接繼承外層 PATH，而不是穩定載入 NVM default。此次新增共用 `load-node-env.sh`，讓 `pre-commit`、`pre-push` 與 `commit-msg` 在非互動 shell 也會先切到 NVM 預設版本。
+root_cause:
+
+- Git hook 直接繼承當前 shell 的 PATH，非互動 shell 先命中 `/opt/homebrew/bin/node`，未自動切到 `~/.nvm`。
+- 先前只修了 `~/.zprofile` / `~/.zshrc`，但 repo 內 hook 本身沒有顯式載入 NVM default。
+  impact:
+
+- `pre-commit`、`pre-push` 與 `commit-msg` 會持續顯示 Node engine warning，降低環境一致性與除錯可預測性。
+- 若未來 Node 24 與系統 Node 差異擴大，hook 可能出現只在 Git 工作流中重現的問題。
+  actions:
+
+- 新增 `.husky/load-node-env.sh`，統一處理 NVM default 載入。
+- 在 `.husky/pre-commit`、`.husky/pre-push` 與 `.husky/commit-msg` 開頭先 source 該 helper。
+  prevention:
+
+- 任何 repo 層 Git hook 若依賴特定 Node / pnpm 版本，不應假設使用者 shell 啟動流程會自動準備完成。
+- 後續若切換版本管理器，應優先調整共用 helper，而不是分散修改每支 hook。
+  verification:
+
+- `sh -c '. .husky/load-node-env.sh; node -v; pnpm -v'`
+- `git commit --allow-empty -m ...`（經 pre-commit / commit-msg 驗證）
+- `git push origin <branch>`（經 pre-push 驗證）
+  references:
+
+- .husky/load-node-env.sh
+- .husky/pre-commit
+- .husky/pre-push
+- .husky/commit-msg
+
+---
+
+id: ratewise-followup-generated-artifacts-sync
+date: 2026-04-10
+title: 收斂 RateWise pre-push 後的 sitemap 與匯率快照生成物
+score: +1
+type: improvement
+content_type: maintenance
+scope: ratewise, seo, release
+topics: [ratewise, seo, sitemap, generated-assets, build-artifacts]
+keywords:
+[rates.json, seo-rate-examples, sitemap.xml, lastmod, generated-files, pre-push]
+aliases: [RateWise 生成物同步收斂, pre-push sitemap 與匯率快照同步]
+related_entries:
+[splitmeow-tdd-and-actions-schedule-reliability]
+summary: 完成 `fix(ratewise): 收斂金額頁 SEO 索引策略與環境提示` 推送後，工作樹仍留下 `rates.json`、`sitemap.xml` 與 `seo-rate-examples.ts` 三個生成檔差異。進一步比對後確認這不是噪音：`sitemap.xml` 的 `lastmod` 已反映本次 SEO 相關提交日期，而匯率快照與 SEO 範例則在 build 期間抓到較新的臺銀資料。為避免同一分支上的遠端提交與本地 SSOT 產物不同步，將這三個生成檔收斂為 follow-up 提交。
+root_cause:
+
+- `pnpm build:ratewise` 於 pre-push 期間重新生成 `sitemap.xml`，使 canonical URL 的 `lastmod` 反映最新 SEO 相關提交日期。
+- `prebuild-fetch-rates.mjs` 在 build 期間抓到較新的臺銀牌告匯率，進一步更新 `public/rates.json` 與 `seo-rate-examples.ts`。
+  impact:
+
+- 若不補提，遠端分支雖已包含 SEO 邏輯修正，但會遺留與當前 build 產物不一致的 sitemap 與匯率快照。
+- 團隊後續以該分支做 review、部署或比對時，會看到本地再次 build 才出現的生成檔漂移。
+  actions:
+
+- 針對三個生成檔做差異檢查，確認屬於 deterministic sitemap 更新與較新匯率快照，而非暫時性 QA 噪音。
+- 補記錄至 002，將生成檔同步收斂為 follow-up 提交。
+  prevention:
+
+- SEO / 匯率相關變更若會觸發 sitemap 或匯率快照生成，推送後應再做一次 `git status --short` 檢查，避免遠端分支遺留生成物漂移。
+- 對 `rates.json`、`seo-rate-examples.ts` 這類時間敏感生成檔，需明確判斷其為應提交產物或可忽略暫存，不可含糊帶過。
+  verification:
+
+- `git diff -- apps/ratewise/public/rates.json`
+- `git diff -- apps/ratewise/public/sitemap.xml`
+- `git diff -- apps/ratewise/src/config/generated/seo-rate-examples.ts`
+  references:
+
+- apps/ratewise/public/rates.json
+- apps/ratewise/public/sitemap.xml
+- apps/ratewise/src/config/generated/seo-rate-examples.ts
+
+---
+
+id: ratewise-amount-seo-ssot-alignment-004
+date: 2026-04-10
+title: 全金額可訪問 SEO 支援收斂：canonical 索引集、動態金額規則與 Node 環境提示對齊
+score: +2
+type: fix
+content_type: seo
+scope: [ratewise, monorepo]
+topics: [seo, ssot, canonical, sitemap, node-version, tdd]
+keywords: [indexable canonical paths, dynamic amount routes, noindex follow, .node-version, verify-ssot-sync, robots policy]
+aliases: [全金額 SEO 支援定義收斂, dynamic amount canonical policy, node24 env hint]
+related_entries: [ratewise-seo-audit-p1-p5-fix-001, ratewise-nihonname-seo-ab-phases-002]
+summary: 收斂 RateWise 金額頁 SEO 策略：明確區分 canonical 索引頁與任意金額可訪問頁，補齊 `supportedDynamicRoutePatterns` SSOT、修正 build 日誌與文件語意，並新增 `.node-version` 讓 Node 24 提示與 `engines` / `.nvmrc` 一致。
+root_cause:
+
+- 先前「全金額 SEO 支援」語意不夠精確，容易被誤解成「所有金額頁都應成為獨立可索引頁」
+- `prebuild-fetch-rates.mjs` 仍輸出過時的靜態頁數字，與現行 SSOT 不一致
+- repo 只有 `.nvmrc`，缺少 `.node-version`，不同工具鏈讀到的 Node 提示不一致
+  impact:
+
+- SEO 文件與註解容易誤導後續實作者，把 duplicate URL 集錯當成應全部納入索引
+- 建置日誌顯示過時統計，增加 reviewer 判讀成本
+- 開發環境可能持續以 Node 25 執行，偏離 repo `^24.0.0` 基線
+  actions:
+
+- 新增 `INDEXABLE_CANONICAL_PATHS` / `SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS` 對應測試與 SSOT 驗證
+- 將金額頁策略統一定義為「代表性 canonical 金額頁 + 任意金額可訪問頁」
+- `usePairAmountSEO`、`CurrencyLandingPage`、`seo-helmet-utils` 文字與註解改為 canonical / non-indexable 語意
+- `prebuild-fetch-rates.mjs` 改為直接讀取 `seo-paths.config.mjs` 的 `STATS`，移除過時硬編碼頁數
+- 新增 `.node-version`，並補測試驗證 `.node-version` / `.nvmrc` / `package.json engines.node` 三者一致
+- 新增 `docs/dev/043_ratewise_seo_gap_analysis.md`，明確寫出「不採用所有金額頁獨立可索引」的最終策略
+  prevention:
+
+- sitemap 僅能收錄 canonical 索引頁；任意金額可訪問不等於任意金額都可索引
+- 任何統計數字應由 SSOT 計算，不可在 build script 或說明文字中手寫固定值
+- Node 版本提示應至少同時覆蓋 `engines`、`.nvmrc`、`.node-version`
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/config/__tests__/seo-paths.test.ts src/hooks/__tests__/usePairAmountSEO.test.tsx src/config/__tests__/build-scripts.test.ts`
+- `node scripts/verify-ssot-sync.mjs`
+- `pnpm --filter @app/ratewise typecheck`
+- `pnpm build:ratewise`
+  references:
+
+- apps/ratewise/src/config/seo-paths.ts
+- apps/ratewise/seo-paths.config.mjs
+- apps/ratewise/src/hooks/usePairAmountSEO.ts
+- apps/ratewise/src/components/CurrencyLandingPage.tsx
+- apps/ratewise/scripts/prebuild-fetch-rates.mjs
+- docs/dev/043_ratewise_seo_gap_analysis.md
+- .node-version
 
 ---
 

@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const OUTPUT = resolve(ROOT, 'src/config/generated/seo-rate-examples.ts');
+const OPTIONAL_MODE = process.env.SEO_RATE_EXAMPLES_OPTIONAL === '1';
 
 const CDN_URL = 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json';
 /** MoneyBox CDN URL（每5分鐘由 GitHub Actions 更新，見 update-moneybox-rates.yml） */
@@ -84,6 +85,17 @@ const CURRENCIES = [
   'VND',
 ];
 
+function exitWithOptionalFallback(message, error) {
+  if (!OPTIONAL_MODE) {
+    console.error(`${message}：${error.message}`);
+    process.exit(1);
+  }
+
+  console.warn(`${message}：${error.message}`);
+  console.warn('⚠️  目前為 prebuild 優雅降級模式，保留既有 seo-rate-examples.ts 並繼續建置。');
+  process.exit(0);
+}
+
 function fmt(n) {
   return n.toLocaleString('zh-TW');
 }
@@ -138,8 +150,7 @@ async function main() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     twData = await res.json();
   } catch (e) {
-    console.error(`[錯誤] 無法取得台灣銀行匯率：${e.message}`);
-    process.exit(1);
+    exitWithOptionalFallback('[錯誤] 無法取得台灣銀行匯率', e);
   }
 
   // 取得市場中間匯率（open.er-api.com，以 TWD 為基準）。
@@ -149,8 +160,7 @@ async function main() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     erData = await res.json();
   } catch (e) {
-    console.error(`[錯誤] 無法取得市場中間匯率：${e.message}`);
-    process.exit(1);
+    exitWithOptionalFallback('[錯誤] 無法取得市場中間匯率', e);
   }
 
   const details = twData.details ?? {};

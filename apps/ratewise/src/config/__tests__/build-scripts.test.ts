@@ -13,10 +13,23 @@ async function readPackageJson() {
 async function readRootPackageJson() {
   const packageJsonPath = path.resolve(__dirname, '../../../../../package.json');
   return JSON.parse(await readFile(packageJsonPath, 'utf-8')) as {
+    engines?: {
+      node?: string;
+    };
     pnpm?: {
       overrides?: Record<string, string>;
     };
   };
+}
+
+async function readNvmrc() {
+  const filePath = path.resolve(__dirname, '../../../../../.nvmrc');
+  return (await readFile(filePath, 'utf-8')).trim();
+}
+
+async function readNodeVersionFile() {
+  const filePath = path.resolve(__dirname, '../../../../../.node-version');
+  return (await readFile(filePath, 'utf-8')).trim();
 }
 
 async function readViteConfig() {
@@ -73,9 +86,29 @@ async function readRatingSnapshotGenerator() {
   return readFile(ratingSnapshotGeneratorPath, 'utf-8');
 }
 
+async function readPrebuildFetchRatesScript() {
+  const scriptPath = path.resolve(__dirname, '../../../scripts/prebuild-fetch-rates.mjs');
+  return readFile(scriptPath, 'utf-8');
+}
+
+async function readSeoRateExamplesScript() {
+  const scriptPath = path.resolve(__dirname, '../../../scripts/update-seo-rate-examples.mjs');
+  return readFile(scriptPath, 'utf-8');
+}
+
+async function readSeoPathsConfig() {
+  const configPath = path.resolve(__dirname, '../../../seo-paths.config.mjs');
+  return readFile(configPath, 'utf-8');
+}
+
 async function readSeoFullAuditScript() {
   const seoAuditPath = path.resolve(__dirname, '../../../../../scripts/seo-full-audit.mjs');
   return readFile(seoAuditPath, 'utf-8');
+}
+
+async function readVerifySsotScript() {
+  const scriptPath = path.resolve(__dirname, '../../../../../scripts/verify-ssot-sync.mjs');
+  return readFile(scriptPath, 'utf-8');
 }
 
 async function readGuidePageSource() {
@@ -145,6 +178,16 @@ describe('ratewise build scripts', () => {
     expect(packageJson.pnpm?.overrides?.['brace-expansion@>=5.0.0 <5.0.5']).toBeDefined();
   });
 
+  it('should keep Node version hints aligned across engines, .nvmrc and .node-version', async () => {
+    const packageJson = await readRootPackageJson();
+    const nvmrc = await readNvmrc();
+    const nodeVersion = await readNodeVersionFile();
+
+    expect(packageJson.engines?.node).toBe('^24.0.0');
+    expect(nvmrc).toBe('24.0.0');
+    expect(nodeVersion).toBe('24.0.0');
+  });
+
   it('should keep package.json semver as the version SSOT when git tags are stale', async () => {
     const viteConfig = await readViteConfig();
     const versionUtilPath = path.resolve(__dirname, '../../../src/utils/version-build-utils.ts');
@@ -199,6 +242,46 @@ describe('ratewise build scripts', () => {
       "const PLACEHOLDER_SNAPSHOT_AT = '1970-01-01T00:00:00.000Z';",
     );
     expect(ratingSnapshotGenerator).toContain('snapshotAt: PLACEHOLDER_SNAPSHOT_AT,');
+  });
+
+  it('should tolerate transient SEO rate example API failures during prebuild while keeping scheduled refresh strict', async () => {
+    const packageJson = await readPackageJson();
+    const seoRateExamplesScript = await readSeoRateExamplesScript();
+
+    expect(packageJson.scripts?.['prebuild']).toContain('SEO_RATE_EXAMPLES_OPTIONAL=1');
+    expect(seoRateExamplesScript).toContain(
+      "const OPTIONAL_MODE = process.env.SEO_RATE_EXAMPLES_OPTIONAL === '1';",
+    );
+    expect(seoRateExamplesScript).toContain('prebuild 優雅降級模式');
+    expect(seoRateExamplesScript).toContain('process.exit(0);');
+  });
+
+  it('should validate cached rates freshness before reusing public/rates.json during prebuild fallback', async () => {
+    const prebuildFetchRatesScript = await readPrebuildFetchRatesScript();
+
+    expect(prebuildFetchRatesScript).toContain('const MAX_CACHE_AGE_MS = 24 * 60 * 60 * 1000;');
+    expect(prebuildFetchRatesScript).toContain('const cacheTimestamp = getCacheTimestamp(cached);');
+    expect(prebuildFetchRatesScript).toContain('緩存匯率已過舊');
+    expect(prebuildFetchRatesScript).toContain('忽略 public/rates.json');
+  });
+
+  it('should keep canonical index paths and supported dynamic amount route patterns as separate SSOT fields', async () => {
+    const seoPathsConfig = await readSeoPathsConfig();
+
+    expect(seoPathsConfig).toContain('export const INDEXABLE_CANONICAL_PATHS = [');
+    expect(seoPathsConfig).toContain('export const SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS = [');
+    expect(seoPathsConfig).toContain('seoPaths: SEO_PATHS');
+    expect(seoPathsConfig).toContain(
+      'supportedDynamicRoutePatterns: SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS.map',
+    );
+  });
+
+  it('should verify canonical paths and dynamic route pattern SSOT separately', async () => {
+    const verifySsotScript = await readVerifySsotScript();
+
+    expect(verifySsotScript).toContain('INDEXABLE_CANONICAL_PATHS');
+    expect(verifySsotScript).toContain('SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS');
+    expect(verifySsotScript).toContain('supportedDynamicRoutePatterns');
   });
 
   it('should keep page-level canonical generation on SEOHelmet pathname SSOT instead of hardcoded page URLs', async () => {

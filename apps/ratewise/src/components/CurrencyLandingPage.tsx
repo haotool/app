@@ -61,8 +61,8 @@ export function CurrencyLandingPage({
 }: CurrencyLandingPageProps) {
   const { t } = useTranslation();
   const isTwdToForeign = direction === 'twd-to-foreign';
-  // Wise-pattern：?amount=X 存在時，以金額專屬 title / description / canonical 覆蓋預設值。
-  const { seoTitle, seoDescription, seoCanonical, amount } = usePairAmountSEO({
+  // Wise-pattern：?amount=X 時覆蓋金額專屬 SEO。
+  const { seoTitle, seoDescription, seoCanonical, amount, isIndexableAmount } = usePairAmountSEO({
     currencyCode,
     currencyName,
     pathname,
@@ -130,6 +130,11 @@ export function CurrencyLandingPage({
           };
         });
 
+  const robotsDirective =
+    amount !== null && !isIndexableAmount
+      ? 'noindex, follow'
+      : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+
   const seoProps = {
     title: seoTitle,
     description: seoDescription,
@@ -137,14 +142,15 @@ export function CurrencyLandingPage({
     canonical: seoCanonical,
     keywords,
     jsonLd: resolvedJsonLd,
-    // 金額頁（/usd-twd/500/）加入第 3 層麵包屑，強化 Google 導覽面板顯示。
+    robots: robotsDirective,
+    // 僅索引金額頁加入金額層麵包屑。
     breadcrumb: [
       { name: 'RateWise 首頁', item: '/' },
       {
         name: isTwdToForeign ? `TWD → ${currencyCode} 匯率` : `${currencyCode} → TWD 匯率`,
         item: `${pathname}/`,
       },
-      ...(amount !== null
+      ...(amount !== null && isIndexableAmount
         ? [
             {
               name: isTwdToForeign

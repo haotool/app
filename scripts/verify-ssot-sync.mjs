@@ -44,6 +44,42 @@ function extractNamedArray(content, arrayName, asSuffix = '') {
   return allMatches.map((m) => m[1]);
 }
 
+function extractRegexSources(content, exportName) {
+  const pattern = new RegExp(`export const ${exportName} = \\[([\\s\\S]*?)\\](?: as const)?;`);
+  const match = content.match(pattern);
+  if (!match) return [];
+
+  const regexMatches = [...match[1].matchAll(/\/((?:\\\/|[^/])+)\/[a-z]*/g)];
+  return regexMatches.map((m) => m[1].replaceAll('\\/', '/'));
+}
+
+function extractNamedNumberMap(content, exportName) {
+  const pattern = new RegExp(`export const ${exportName}:[^=]*= \\{([\\s\\S]*?)\\n\\};`);
+  const fallbackPattern = new RegExp(`export const ${exportName} = \\{([\\s\\S]*?)\\n\\};`);
+  const match = content.match(pattern) ?? content.match(fallbackPattern);
+  if (!match) return {};
+
+  return Object.fromEntries(
+    [...match[1].matchAll(/([a-z]{3}):\s*\[([^\]]*)\]/g)].map(([, code, values]) => [
+      code,
+      values
+        .split(',')
+        .map((value) => Number(value.trim()))
+        .filter((value) => Number.isFinite(value)),
+    ]),
+  );
+}
+
+function buildIndexedAmountPaths(currencyPaths, amountMap, mode) {
+  return currencyPaths.flatMap((path) => {
+    const code =
+      mode === 'forward'
+        ? path.replace(/\//g, '').replace('-twd', '')
+        : path.replace(/\//g, '').replace('twd-', '');
+    return (amountMap[code] ?? []).map((amount) => `${path}${amount}/`);
+  });
+}
+
 /**
  * 從 TypeScript 文件中提取 SEO 路徑
  * 支援 inline 與 spread 語法
@@ -54,21 +90,20 @@ function extractPathsFromTS(filePath) {
   const inlinePaths = extractNamedArray(content, 'SEO_PATHS', ' as const');
   if (inlinePaths.length > 0) return inlinePaths;
 
-  // 檢查 SEO_PATHS 的實際 spread 組成（是否包含 LEGAL_SSG_PATHS / REVERSE_CURRENCY_SEO_PATHS）
-  const seoPathsSpread = content.match(/export const SEO_PATHS = \[([^\]]+)\]/)?.[1] ?? '';
-  const includesLegal = seoPathsSpread.includes('LEGAL_SSG_PATHS');
-  const includesReverse = seoPathsSpread.includes('REVERSE_CURRENCY_SEO_PATHS');
-
   const contentPaths = extractNamedArray(content, 'CONTENT_SEO_PATHS', ' as const');
-  const legalPaths = includesLegal
-    ? extractNamedArray(content, 'LEGAL_SSG_PATHS', ' as const')
-    : [];
   const currencyPaths = extractNamedArray(content, 'CURRENCY_SEO_PATHS', ' as const');
-  const reversePaths = includesReverse
-    ? extractNamedArray(content, 'REVERSE_CURRENCY_SEO_PATHS', ' as const')
-    : [];
-  if (contentPaths.length > 0 || currencyPaths.length > 0) {
-    return [...contentPaths, ...legalPaths, ...currencyPaths, ...reversePaths];
+  const reversePaths = extractNamedArray(content, 'REVERSE_CURRENCY_SEO_PATHS', ' as const');
+  const forwardAmounts = extractNamedNumberMap(content, 'INDEXABLE_FORWARD_AMOUNTS');
+  const reverseAmounts = extractNamedNumberMap(content, 'INDEXABLE_REVERSE_TWD_AMOUNTS');
+
+  if (contentPaths.length > 0 || currencyPaths.length > 0 || reversePaths.length > 0) {
+    return [
+      ...contentPaths,
+      ...currencyPaths,
+      ...reversePaths,
+      ...buildIndexedAmountPaths(currencyPaths, forwardAmounts, 'forward'),
+      ...buildIndexedAmountPaths(reversePaths, reverseAmounts, 'reverse'),
+    ];
   }
 
   throw new Error('無法從 TypeScript 文件中提取 SEO_PATHS');
@@ -81,6 +116,9 @@ function extractPathsFromTS(filePath) {
 async function extractPathsFromMJS(filePath) {
   try {
     const mod = await import(pathToFileURL(filePath).href);
+    if (mod.INDEXABLE_CANONICAL_PATHS && Array.isArray(mod.INDEXABLE_CANONICAL_PATHS)) {
+      return [...mod.INDEXABLE_CANONICAL_PATHS];
+    }
     // 僅比較靜態基礎路徑（SEO_PATHS 現在還包含動態生成的 amount 落地頁，不納入比較）。
     if (mod.CONTENT_SEO_PATHS && mod.CURRENCY_SEO_PATHS && mod.REVERSE_CURRENCY_SEO_PATHS) {
       return [
@@ -97,6 +135,8 @@ async function extractPathsFromMJS(filePath) {
   }
 
   const content = readFileSync(filePath, 'utf-8');
+  const canonicalPaths = extractNamedArray(content, 'INDEXABLE_CANONICAL_PATHS');
+  if (canonicalPaths.length > 0) return canonicalPaths;
   const inlinePaths = extractNamedArray(content, 'SEO_PATHS');
   if (inlinePaths.length > 0) return inlinePaths;
 
@@ -109,6 +149,39 @@ async function extractPathsFromMJS(filePath) {
   }
 
   throw new Error('無法從 .mjs 文件中提取 SEO_PATHS');
+}
+
+function extractDynamicPatternsFromTS(filePath) {
+  const content = readFileSync(filePath, 'utf-8');
+  const directPattern =
+    content.match(/export const DYNAMIC_AMOUNT_ROUTE_PATTERN = \/((?:\\\/|[^/])+)\/[a-z]*;/)?.[1] ??
+    null;
+  if (directPattern) return [directPattern.replaceAll('\\/', '/')];
+  return extractRegexSources(content, 'SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS');
+}
+
+async function extractDynamicPatternsFromMJS(filePath) {
+  try {
+    const mod = await import(pathToFileURL(filePath).href);
+    if (
+      mod.SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS &&
+      Array.isArray(mod.SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS)
+    ) {
+      return mod.SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS.map((pattern) =>
+        pattern.source.replaceAll('\\/', '/'),
+      );
+    }
+    if (Array.isArray(mod.APP_CONFIG?.supportedDynamicRoutePatterns)) {
+      return mod.APP_CONFIG.supportedDynamicRoutePatterns.map((pattern) =>
+        pattern.replaceAll('\\/', '/'),
+      );
+    }
+  } catch {
+    // dynamic import 失敗時 fallback 到 regex
+  }
+
+  const content = readFileSync(filePath, 'utf-8');
+  return extractRegexSources(content, 'SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS');
 }
 
 /**
@@ -247,6 +320,20 @@ function verifyGroup(groupName, tsContent, mjsContent, asSuffix) {
   return errors;
 }
 
+function verifyDynamicPatterns(tsPatterns, mjsPatterns) {
+  const errors = comparePaths(tsPatterns, mjsPatterns).map(
+    (error) => `[SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS] ${error}`,
+  );
+  if (errors.length === 0) {
+    log(
+      colors.green,
+      '✓',
+      `SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS: ${tsPatterns.length} 規則一致`,
+    );
+  }
+  return errors;
+}
+
 async function main() {
   console.log('\n🔍 SSOT 同步驗證');
   console.log('─'.repeat(50));
@@ -260,21 +347,30 @@ async function main() {
     console.log('\n📂 讀取配置文件:');
     log(colors.cyan, '→', 'TypeScript: src/config/seo-paths.ts');
     const tsPaths = extractPathsFromTS(tsPath);
-    log(colors.green, '✓', `提取 ${tsPaths.length} 個 SEO 路徑`);
+    log(colors.green, '✓', `提取 ${tsPaths.length} 個 canonical 路徑`);
 
     log(colors.cyan, '→', 'JavaScript: seo-paths.config.mjs');
     const mjsPaths = await extractPathsFromMJS(mjsPath);
-    log(colors.green, '✓', `提取 ${mjsPaths.length} 個 SEO 路徑`);
+    log(colors.green, '✓', `提取 ${mjsPaths.length} 個 canonical 路徑`);
 
-    console.log('\n🔄 比較 SEO_PATHS:');
+    console.log('\n🔄 比較 canonical paths:');
     const seoErrors = comparePaths(tsPaths, mjsPaths);
 
     if (seoErrors.length === 0) {
-      log(colors.green, '✅', 'SEO_PATHS 完全同步！');
+      log(colors.green, '✅', 'INDEXABLE_CANONICAL_PATHS 完全同步！');
       console.log(`   TypeScript: ${tsPaths.length} | JavaScript: ${mjsPaths.length}`);
     } else {
-      log(colors.red, '❌', 'SEO_PATHS 不同步:');
+      log(colors.red, '❌', 'INDEXABLE_CANONICAL_PATHS 不同步:');
       seoErrors.forEach((e) => log(colors.red, '  ✗', e));
+      hasErrors = true;
+    }
+
+    console.log('\n🔄 比較動態金額路由規則:');
+    const tsPatterns = extractDynamicPatternsFromTS(tsPath);
+    const mjsPatterns = await extractDynamicPatternsFromMJS(mjsPath);
+    const dynamicErrors = verifyDynamicPatterns(tsPatterns, mjsPatterns);
+    if (dynamicErrors.length > 0) {
+      dynamicErrors.forEach((e) => log(colors.red, '  ✗', e));
       hasErrors = true;
     }
 
@@ -308,9 +404,9 @@ async function main() {
 
     if (hasErrors) {
       console.log('\n📋 詳細路徑列表:');
-      console.log('\nTypeScript SEO_PATHS:');
+      console.log('\nTypeScript canonical paths:');
       tsPaths.forEach((p, i) => console.log(`  ${i + 1}. ${p}`));
-      console.log('\nJavaScript SEO_PATHS:');
+      console.log('\nJavaScript canonical paths:');
       mjsPaths.forEach((p, i) => console.log(`  ${i + 1}. ${p}`));
     }
   } catch (error) {
@@ -323,7 +419,9 @@ async function main() {
   if (hasErrors) {
     console.log('\n💡 修復建議:');
     console.log('  1. 檢查 src/config/seo-paths.ts 和 seo-paths.config.mjs');
-    console.log('  2. 確保所有路徑群組完全一致（SEO_PATHS, APP_ONLY_PATHS, SEO_FILES 等）');
+    console.log(
+      '  2. 確保所有路徑群組完全一致（INDEXABLE_CANONICAL_PATHS, APP_ONLY_PATHS, SEO_FILES 等）',
+    );
     console.log('  3. 路徑必須按照相同順序排列');
     console.log('  4. 路徑格式必須一致（包括尾斜線）');
     console.log(
