@@ -1,8 +1,61 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-03T23:30:00+08:00
-> **當前總分**: 1203（初始分: 100）
+> **最後更新**: 2026-04-10T01:17:39+08:00
+> **當前總分**: 1205（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-amount-seo-ssot-alignment-004
+date: 2026-04-10
+title: 全金額可訪問 SEO 支援收斂：canonical 索引集、動態金額規則與 Node 環境提示對齊
+score: +2
+type: fix
+content_type: seo
+scope: [ratewise, monorepo]
+topics: [seo, ssot, canonical, sitemap, node-version, tdd]
+keywords: [indexable canonical paths, dynamic amount routes, noindex follow, .node-version, verify-ssot-sync, robots policy]
+aliases: [全金額 SEO 支援定義收斂, dynamic amount canonical policy, node24 env hint]
+related_entries: [ratewise-seo-audit-p1-p5-fix-001, ratewise-nihonname-seo-ab-phases-002]
+summary: 收斂 RateWise 金額頁 SEO 策略：明確區分 canonical 索引頁與任意金額可訪問頁，補齊 `supportedDynamicRoutePatterns` SSOT、修正 build 日誌與文件語意，並新增 `.node-version` 讓 Node 24 提示與 `engines` / `.nvmrc` 一致。
+root_cause:
+
+- 先前「全金額 SEO 支援」語意不夠精確，容易被誤解成「所有金額頁都應成為獨立可索引頁」
+- `prebuild-fetch-rates.mjs` 仍輸出過時的靜態頁數字，與現行 SSOT 不一致
+- repo 只有 `.nvmrc`，缺少 `.node-version`，不同工具鏈讀到的 Node 提示不一致
+  impact:
+
+- SEO 文件與註解容易誤導後續實作者，把 duplicate URL 集錯當成應全部納入索引
+- 建置日誌顯示過時統計，增加 reviewer 判讀成本
+- 開發環境可能持續以 Node 25 執行，偏離 repo `^24.0.0` 基線
+  actions:
+
+- 新增 `INDEXABLE_CANONICAL_PATHS` / `SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS` 對應測試與 SSOT 驗證
+- 將金額頁策略統一定義為「代表性 canonical 金額頁 + 任意金額可訪問頁」
+- `usePairAmountSEO`、`CurrencyLandingPage`、`seo-helmet-utils` 文字與註解改為 canonical / non-indexable 語意
+- `prebuild-fetch-rates.mjs` 改為直接讀取 `seo-paths.config.mjs` 的 `STATS`，移除過時硬編碼頁數
+- 新增 `.node-version`，並補測試驗證 `.node-version` / `.nvmrc` / `package.json engines.node` 三者一致
+- 新增 `docs/dev/043_ratewise_seo_gap_analysis.md`，明確寫出「不採用所有金額頁獨立可索引」的最終策略
+  prevention:
+
+- sitemap 僅能收錄 canonical 索引頁；任意金額可訪問不等於任意金額都可索引
+- 任何統計數字應由 SSOT 計算，不可在 build script 或說明文字中手寫固定值
+- Node 版本提示應至少同時覆蓋 `engines`、`.nvmrc`、`.node-version`
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/config/__tests__/seo-paths.test.ts src/hooks/__tests__/usePairAmountSEO.test.tsx src/config/__tests__/build-scripts.test.ts`
+- `node scripts/verify-ssot-sync.mjs`
+- `pnpm --filter @app/ratewise typecheck`
+- `pnpm build:ratewise`
+  references:
+
+- apps/ratewise/src/config/seo-paths.ts
+- apps/ratewise/seo-paths.config.mjs
+- apps/ratewise/src/hooks/usePairAmountSEO.ts
+- apps/ratewise/src/components/CurrencyLandingPage.tsx
+- apps/ratewise/scripts/prebuild-fetch-rates.mjs
+- docs/dev/043_ratewise_seo_gap_analysis.md
+- .node-version
 
 ---
 

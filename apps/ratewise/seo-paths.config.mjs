@@ -9,10 +9,7 @@
  * - scripts/generate-sitemap.js (Sitemap 生成)
  * - scripts/verify-production-seo.mjs (生產環境檢測)
  *
- * 格式：統一使用尾斜線結尾（符合 SEO Best Practices 2025）
- *
- * 建立時間: 2025-12-14
- * 依據: [Linus: Single Source of Truth][SEO Best Practices 2025]
+ * 格式：統一使用尾斜線結尾。
  */
 
 const withTrailingSlash = (value) => {
@@ -88,11 +85,8 @@ export const REVERSE_CURRENCY_SEO_PATHS = [
   '/twd-vnd/',
 ];
 
-/**
- * 各幣別熱門金額（外幣→TWD 方向）
- * 與 src/config/seo-metadata.ts CURRENCY_PAGE_OVERRIDES.popularAmounts 同步。
- */
-const FORWARD_AMOUNTS = {
+/** 外幣→TWD 代表性 canonical 金額集合。 */
+export const INDEXABLE_FORWARD_AMOUNTS = {
   aud: [1, 20, 50, 100, 500, 1000],
   cad: [1, 20, 50, 100, 500, 1000],
   chf: [1, 10, 50, 100, 500, 1000],
@@ -112,11 +106,8 @@ const FORWARD_AMOUNTS = {
   vnd: [10000, 50000, 100000, 500000, 1000000, 5000000],
 };
 
-/**
- * 各幣別熱門台幣金額（TWD→外幣 方向）
- * 與 src/config/seo-metadata.ts REVERSE_CURRENCY_PAGE_OVERRIDES.popularTwdAmounts 同步。
- */
-const REVERSE_TWD_AMOUNTS = {
+/** TWD→外幣 代表性 canonical 金額集合。 */
+export const INDEXABLE_REVERSE_TWD_AMOUNTS = {
   aud: [10000, 30000, 50000, 100000, 200000, 300000],
   cad: [10000, 30000, 50000, 100000, 200000, 300000],
   chf: [10000, 30000, 50000, 100000, 200000, 300000],
@@ -140,42 +131,33 @@ const REVERSE_TWD_AMOUNTS = {
  * 外幣→TWD 金額落地頁路徑（路徑型，Wise pattern）
  * 例：/usd-twd/500/
  */
-export const CURRENCY_AMOUNT_SEO_PATHS = CURRENCY_SEO_PATHS.flatMap((path) => {
+export const INDEXABLE_AMOUNT_SEO_PATHS = CURRENCY_SEO_PATHS.flatMap((path) => {
   // path 格式：'/usd-twd/'
   const code = path.replace(/\//g, '').replace('-twd', '');
-  return (FORWARD_AMOUNTS[code] ?? []).map((a) => `${path}${a}/`);
+  return (INDEXABLE_FORWARD_AMOUNTS[code] ?? []).map((a) => `${path}${a}/`);
 });
 
 /**
  * TWD→外幣 金額落地頁路徑（路徑型）
  * 例：/twd-usd/50000/
  */
-export const REVERSE_CURRENCY_AMOUNT_SEO_PATHS = REVERSE_CURRENCY_SEO_PATHS.flatMap((path) => {
+export const INDEXABLE_REVERSE_AMOUNT_SEO_PATHS = REVERSE_CURRENCY_SEO_PATHS.flatMap((path) => {
   // path 格式：'/twd-usd/'
   const code = path.replace(/\//g, '').replace('twd-', '');
-  return (REVERSE_TWD_AMOUNTS[code] ?? []).map((a) => `${path}${a}/`);
+  return (INDEXABLE_REVERSE_TWD_AMOUNTS[code] ?? []).map((a) => `${path}${a}/`);
 });
 
-/**
- * 公開可索引 SEO 路徑（42 個基礎頁 + 206 個金額頁）
- * 注意：LEGAL_SSG_PATHS（privacy noindex）不納入 sitemap
- */
-/**
- * 公開可索引的 SEO 路徑（43 個基礎頁 + 96 個金額頁 = 139 個）
- *
- * 2026-04-08 更新：已加入金額落地頁預渲染
- * 金額特定路由（如 /aud-twd/1/、/usd-twd/100/ 等）現已預渲染為靜態 HTML，
- * 初始頁面即包含完整匯率數據、標題、描述、schema.org 結構化數據，
- * 無須等待 JavaScript 執行。這大幅提升 SEO 和性能。
- */
-export const SEO_PATHS = [
+/** canonical 索引頁。 */
+export const INDEXABLE_CANONICAL_PATHS = [
   ...CONTENT_SEO_PATHS,
   ...CURRENCY_SEO_PATHS,
   ...REVERSE_CURRENCY_SEO_PATHS,
-  // ✅ 2026-04-08: 現已加入金額路由預渲染
-  ...CURRENCY_AMOUNT_SEO_PATHS,
-  ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS,
+  ...INDEXABLE_AMOUNT_SEO_PATHS,
+  ...INDEXABLE_REVERSE_AMOUNT_SEO_PATHS,
 ];
+
+/** 相容別名：公開可索引 SEO 路徑。 */
+export const SEO_PATHS = INDEXABLE_CANONICAL_PATHS;
 
 /**
  * 需要回傳 app shell 的互動頁面（app-only）
@@ -209,29 +191,29 @@ export const DEV_ONLY_PATHS = APP_ONLY_PATHS.slice(3);
  */
 export const APP_ONLY_PRERENDER_PATHS = [...APP_ONLY_PATHS];
 
-/**
- * 需要預渲染的靜態頁面
- * 包含：SEO 路徑 (139) + 法律頁 (1) + app-only 頁 (7) = 147 個靜態頁面
- */
+/** 建置期輸出頁面。實際數量以 STATS 為準。 */
 export const PRERENDER_PATHS = [...SEO_PATHS, ...LEGAL_SSG_PATHS, ...APP_ONLY_PRERENDER_PATHS];
+
+/** 支援的動態金額路由規則。 */
+export const SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS = [
+  /^\/([a-z]{3})-([a-z]{3})\/(\d+(?:\.\d+)?)\/?$/i,
+];
 
 /**
  * 輔助函數：生成 getStaticPaths 用的路由數組（供 vite-react-ssg 使用）
  * 在構建時，vite-react-ssg 會調用此函數確定要預渲染哪些動態路由
  */
 export function getStaticAmountPaths() {
-  return [...CURRENCY_AMOUNT_SEO_PATHS, ...REVERSE_CURRENCY_AMOUNT_SEO_PATHS];
+  return [...INDEXABLE_AMOUNT_SEO_PATHS, ...INDEXABLE_REVERSE_AMOUNT_SEO_PATHS];
 }
 
-/**
- * 統計信息（用於構建時日誌）
- */
+/** 統計資訊。 */
 export const STATS = {
   content: CONTENT_SEO_PATHS.length,
   currency: CURRENCY_SEO_PATHS.length,
   reverseCurrency: REVERSE_CURRENCY_SEO_PATHS.length,
-  currencyAmount: CURRENCY_AMOUNT_SEO_PATHS.length,
-  reverseCurrencyAmount: REVERSE_CURRENCY_AMOUNT_SEO_PATHS.length,
+  currencyAmount: INDEXABLE_AMOUNT_SEO_PATHS.length,
+  reverseCurrencyAmount: INDEXABLE_REVERSE_AMOUNT_SEO_PATHS.length,
   legal: LEGAL_SSG_PATHS.length,
   appOnly: APP_ONLY_PRERENDER_PATHS.length,
   total: PRERENDER_PATHS.length,
@@ -347,6 +329,9 @@ export const APP_CONFIG = {
   },
   seoPaths: SEO_PATHS,
   prerenderPaths: PRERENDER_PATHS,
+  supportedDynamicRoutePatterns: SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS.map(
+    (pattern) => pattern.source,
+  ),
   appShellPaths: APP_ONLY_PATHS,
   knownRoutes: KNOWN_ROUTE_PATHS,
   legacyAssetRedirects: LEGACY_ASSET_REDIRECTS,
@@ -360,3 +345,9 @@ export const APP_CONFIG = {
     images: IMAGE_RESOURCES,
   },
 };
+
+/** 相容別名：保留舊常數名稱。 */
+export const FORWARD_AMOUNTS = INDEXABLE_FORWARD_AMOUNTS;
+export const REVERSE_TWD_AMOUNTS = INDEXABLE_REVERSE_TWD_AMOUNTS;
+export const CURRENCY_AMOUNT_SEO_PATHS = INDEXABLE_AMOUNT_SEO_PATHS;
+export const REVERSE_CURRENCY_AMOUNT_SEO_PATHS = INDEXABLE_REVERSE_AMOUNT_SEO_PATHS;
