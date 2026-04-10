@@ -1,19 +1,32 @@
 # RateWise SEO 完整規範 — Master SSOT
 
-> **文件版本**: v1.1.0
+> **文件版本**: v2.0.0
 > **建立日期**: 2026-03-23
-> **最後更新**: 2026-03-31
+> **最後更新**: 2026-04-10
 > **文件性質**: AI 助手 + 工程師執行手冊 / SEO 單一真實來源
-> **適用版本**: RateWise ≥ v2.16.5
+> **適用版本**: RateWise ≥ v2.18.0
 > **上位文件**: `CLAUDE.md`, `AGENTS.md`
-> **取代文件**: 本文整合並取代下列舊文件（舊文件保留但不再更新）：
+> **取代文件**: 本文整合並取代所有舊文件（已歸檔至 `docs/archive/seo/`）：
 >
 > - `docs/SEO_GUIDE.md` (v2.0.0)
 > - `docs/dev/SEO_TODO.md` (v2.1.0)
-> - `docs/dev/seo-research-notes.md` (v2.0.0)
+> - `docs/dev/seo-research-notes.md`
 > - `docs/dev/SEO_BDD_IMPLEMENTATION_2025-12-01.md`
 > - `docs/SEO_SUBMISSION_GUIDE.md`
 > - `docs/prompt/SEO_WORKFLOW_PROMPT.md`
+> - `docs/dev/AI_SEARCH_OPTIMIZATION_CHECKLIST.md`
+> - `docs/dev/AI_SEARCH_OPTIMIZATION_SPEC.md`
+> - `docs/dev/022_seo_audit_checklist_template.md`
+> - `docs/dev/025_seo_complete_audit_checklist.md`
+> - `docs/dev/030_seo_deep_dive_report_v1.md`
+> - `docs/dev/031_ai_code_review_prerender_seo.md`
+> - `docs/dev/033_ai_summary_citation_spec.md`
+> - `docs/dev/039_ratewise_seo_ssot_tdd_spec.md`
+> - `docs/dev/041_ratewise_api_freshness_seo_spec.md`
+> - `docs/dev/042_faqpage_jsonld_decision.md`
+> - `docs/dev/043_ratewise_seo_gap_analysis.md`
+> - `docs/SEARCH_CONSOLE_GUIDE.md`
+> - `docs/dev/007_ai_search_seo_phase1_implementation.md`
 
 ---
 
@@ -31,8 +44,9 @@
 10. [Core Web Vitals 效能標準](#10-core-web-vitals-效能標準)
 11. [SSOT 驗證規則](#11-ssot-驗證規則)
 12. [監測與稽核](#12-監測與稽核)
-13. [優先 TODO 清單](#13-優先-todo-清單)
-14. [詞彙表](#14-詞彙表)
+13. [SEO 缺口分析（2026-04-10）](#13-seo-缺口分析2026-04-10-審查)
+14. [優先 TODO 清單](#14-優先-todo-清單原-13編號保持連貫)
+15. [詞彙表](#15-詞彙表)
 
 ---
 
@@ -201,19 +215,21 @@ Disallow: /ratewise/?
 
 ### 4.1 現況清單
 
-| Schema 類型                 | 頁面                 | 狀態                      | 實作位置                            |
-| --------------------------- | -------------------- | ------------------------- | ----------------------------------- |
-| `Organization`              | 全站                 | ✅ 已實作                 | `SEOHelmet.tsx` + `seo-metadata.ts` |
-| `WebSite`                   | 全站                 | ✅ 已實作                 | `SEOHelmet.tsx`                     |
-| `SoftwareApplication`       | 首頁                 | ✅ 已實作                 | `SEOHelmet.tsx`                     |
-| `FAQPage`                   | FAQ 頁（`/faq/`）    | ✅ 已實作                 | `SEOHelmet.tsx`                     |
-| `BreadcrumbList`            | 幣對頁、金額頁       | ✅ 已實作                 | `SEOHelmet.tsx`                     |
-| `HowTo`                     | Guide 頁             | ✅ 已實作                 | `SEOHelmet.tsx`                     |
-| `ImageObject`               | OG 圖片（隱式）      | ✅ 已實作                 | `seo-metadata.ts`                   |
-| `CurrencyConversionService` | 首頁                 | ❌ **缺漏**               | —                                   |
-| `ExchangeRateSpecification` | 幣對頁（34 個）      | ❌ **缺漏**               | —                                   |
-| `Article` / `TechArticle`   | 三篇 Authority Guide | ❌ **缺漏**               | —                                   |
-| `AggregateRating`           | 首頁                 | ❌ **缺漏（無評分系統）** | —                                   |
+| Schema 類型                 | 頁面                  | 狀態                      | 實作位置                                    |
+| --------------------------- | --------------------- | ------------------------- | ------------------------------------------- |
+| `Organization`              | 全站                  | ✅ 已實作                 | `SEOHelmet.tsx` + `seo-metadata.ts`         |
+| `WebSite`                   | 全站                  | ✅ 已實作                 | `SEOHelmet.tsx`                             |
+| `SoftwareApplication`       | 首頁                  | ✅ 已實作                 | `SEOHelmet.tsx`                             |
+| `FAQPage`                   | FAQ 頁（`/faq/`）     | ✅ 已實作                 | `SEOHelmet.tsx`                             |
+| `BreadcrumbList`            | 幣對頁、金額頁        | ✅ 已實作                 | `SEOHelmet.tsx`                             |
+| `HowTo`                     | Guide 頁              | ✅ 已實作                 | `SEOHelmet.tsx`                             |
+| `ImageObject`               | OG 圖片（隱式）       | ✅ 已實作                 | `seo-metadata.ts`                           |
+| `Article`                   | 三篇 Authority Guide  | ✅ 已實作 (v2.18.0)       | `seo-metadata.ts` buildArticleJsonLd        |
+| `SpeakableSpecification`    | 所有 9 個內容頁       | ✅ 已實作 (v2.18.0)       | `seo-metadata.ts` buildSpeakableJsonLd      |
+| `knowsAbout`（Property）    | Organization + Person | ✅ 已實作 (v2.18.0)       | `buildSiteJsonLd()` + `buildPersonJsonLd()` |
+| `CurrencyConversionService` | 首頁                  | ❌ **缺漏（P0-4）**       | —                                           |
+| `ExchangeRateSpecification` | 幣對頁（34 個）       | ❌ **缺漏（P0-5）**       | —                                           |
+| `AggregateRating`           | 首頁                  | ❌ **缺漏（無評分系統）** | —                                           |
 
 ### 4.2 高優先級缺漏 Schema 規格
 
@@ -811,25 +827,59 @@ node scripts/fetch-rating-snapshot.mjs          # 匯率快照更新
 
 ---
 
-## 13. 優先 TODO 清單
+## 13. SEO 缺口分析（2026-04-10 審查）
 
-### 🟢 已完成（2026-03-23 → 2026-03-31）
+### 13.0 現況成熟度評估
 
-| #    | 任務                                                                 | 完成版本  | 說明                                                               |
-| ---- | -------------------------------------------------------------------- | --------- | ------------------------------------------------------------------ |
-| P0-1 | 修正 llms.txt 金額頁 URL 格式描述（`?amount=` → 路徑式說明）         | v2.16.0   | `generate-llms-txt.mjs` 改為 SSG 路徑型描述                        |
-| P0-2 | llms.txt AI/LLM Access Control 加入 `Claude-User`                    | v2.16.0+  | llms.txt 已更新說明                                                |
-| P0-3 | robots.txt 明確 Allow `ClaudeBot`、`Claude-User`、`Claude-SearchBot` | 已驗證    | `generate-robots-txt.mjs` 已包含三條 Anthropic 爬蟲規則            |
-| —    | AnswerCapsule 元件實作                                               | v2.16.4   | `src/components/AnswerCapsule.tsx` + SEOPageMetadata.answerCapsule |
-| —    | AuthorityGuidePage 傳遞 jsonLd/faqContent/answerCapsule              | v2.16.4   | 三篇 Guide 頁已具備接收 schema 的 props 管道                       |
-| —    | Guide 頁加入 answerCapsule（2 題）                                   | v2.16.4   | GUIDE_PAGE_SEO.answerCapsule 加入現金/即期常見問答                 |
-| —    | 品牌 SSOT 收斂（manifest、PWA、llms、API 契約）                      | v2.16.1-2 | "RateWise 匯率好工具" 品牌全面統一                                 |
-| —    | FAQ 頁 pathname 修正（`/faq` → `/faq/`）                             | v2.16.0   | canonical URL trailing slash 已補                                  |
-| —    | seo-health-check decodeURIComponent 中文標點修正                     | v2.16.0   | 307 項健檢通過，0 錯誤                                             |
-| —    | amount 頁 canonical 與 schema URL 穩定性                             | v2.16.0   | prerender HTML 回歸測試補強                                        |
-| —    | seo-static.ts 抽出（health-check 與 seo-metadata 共用標題常數）      | v2.16.4   | 移除 health-check 對 Vite runtime 的直接依賴                       |
-| —    | health-check 5xx 暫時性錯誤重試機制                                  | v2.16.4   | 避免短暫部署抖動誤報                                               |
-| —    | SEO_PATHS 數量修正（~204 → 206）                                     | v2.16.0   | CURRENCY_AMOUNT(104) + REVERSE_CURRENCY_AMOUNT(102)                |
+RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**現階段最需要補的不是更多 meta tag，而是內容廣度、可觀測性與站外權威。**
+
+### 13.0.1 已達標項目
+
+- 技術 SEO：robots.txt、sitemap、hreflang、canonical、noindex 控制 ✅
+- 程序化 SEO：正向/反向幣別頁 + 代表性金額頁路徑型策略 ✅
+- 結構化資料：8 種 Schema 類型 + Speakable + knowsAbout 實體信號 ✅
+- E-E-A-T：Person/Organization schema、about 頁、明確資料來源 ✅
+- AI 可讀性：llms.txt/llms-full.txt、18 AI Bot Allow、openapi.json ✅
+- 驗證覆蓋：1900+ 測試，多層 CI 每日驗證 ✅
+
+### 13.0.2 仍缺的頂級 SEO 能力
+
+| 缺口                         | 優先級 | 說明                                                                               |
+| ---------------------------- | ------ | ---------------------------------------------------------------------------------- |
+| **多語索引戰略**             | P0     | UI 有多語但無可索引英文/日文內容體系與完整 hreflang 網狀關係；影響國際流量         |
+| **SEO 可觀測性**             | P0     | 無 Search Console / CrUX / coverage 週期監控；無 SERP CTR 迭代機制                 |
+| **內容主題群擴張**           | P0     | 現有強項為幣對頁；缺：刷卡匯率/DCC、機場換匯、各銀行差異、旅遊換匯指南             |
+| **站外權威訊號**             | P1     | 無外部品牌 mention、高品質反向連結、媒體提及、可辨識的 entity footprint            |
+| `CurrencyConversionService`  | P0     | Schema.org 精確定義此工具；AI 引擎匹配「幣別換算」查詢時優先引用有此 schema 的頁面 |
+| `ExchangeRateSpecification`  | P0     | 每個幣對頁注入即時匯率；AI 引擎可提取並顯示具體數字，從 `rating-snapshot.ts` 讀取  |
+| **Answer Capsule（幣對頁）** | P1     | 40-60 字直接答案段落；現況多數幣對頁缺此欄位；AI 引用率 +40%                       |
+
+---
+
+## 14. 優先 TODO 清單（原 §13，編號保持連貫）
+
+### 🟢 已完成（2026-03-23 → 2026-04-10）
+
+| #    | 任務                                                                 | 完成版本  | 說明                                                                                              |
+| ---- | -------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------- |
+| P0-1 | 修正 llms.txt 金額頁 URL 格式描述（`?amount=` → 路徑式說明）         | v2.16.0   | `generate-llms-txt.mjs` 改為 SSG 路徑型描述                                                       |
+| P0-2 | llms.txt AI/LLM Access Control 加入 `Claude-User`                    | v2.16.0+  | llms.txt 已更新說明                                                                               |
+| P0-3 | robots.txt 明確 Allow `ClaudeBot`、`Claude-User`、`Claude-SearchBot` | 已驗證    | `generate-robots-txt.mjs` 已包含三條 Anthropic 爬蟲規則                                           |
+| —    | AnswerCapsule 元件實作                                               | v2.16.4   | `src/components/AnswerCapsule.tsx` + SEOPageMetadata.answerCapsule                                |
+| —    | AuthorityGuidePage 傳遞 jsonLd/faqContent/answerCapsule              | v2.16.4   | 三篇 Guide 頁已具備接收 schema 的 props 管道                                                      |
+| —    | Guide 頁加入 answerCapsule（2 題）                                   | v2.16.4   | GUIDE_PAGE_SEO.answerCapsule 加入現金/即期常見問答                                                |
+| —    | 品牌 SSOT 收斂（manifest、PWA、llms、API 契約）                      | v2.16.1-2 | "RateWise 匯率好工具" 品牌全面統一                                                                |
+| —    | FAQ 頁 pathname 修正（`/faq` → `/faq/`）                             | v2.16.0   | canonical URL trailing slash 已補                                                                 |
+| —    | seo-health-check decodeURIComponent 中文標點修正                     | v2.16.0   | 307 項健檢通過，0 錯誤                                                                            |
+| —    | amount 頁 canonical 與 schema URL 穩定性                             | v2.16.0   | prerender HTML 回歸測試補強                                                                       |
+| —    | seo-static.ts 抽出（health-check 與 seo-metadata 共用標題常數）      | v2.16.4   | 移除 health-check 對 Vite runtime 的直接依賴                                                      |
+| —    | health-check 5xx 暫時性錯誤重試機制                                  | v2.16.4   | 避免短暫部署抖動誤報                                                                              |
+| —    | SEO_PATHS 數量修正（~204 → 206）                                     | v2.16.0   | CURRENCY_AMOUNT(104) + REVERSE_CURRENCY_AMOUNT(102)                                               |
+| —    | SpeakableSpecification schema 補齊所有 9 個內容頁                    | v2.18.0   | GUIDE/OPEN_DATA/ABOUT/三篇Authority Guide 頁；`buildSpeakableJsonLd(['h1'])` 加入各頁 jsonLd 陣列 |
+| —    | Organization + Person `knowsAbout` 實體權威信號                      | v2.18.0   | `buildSiteJsonLd()` Organization 加入 12 個核心主題；`buildPersonJsonLd()` 加入 11 個作者知識領域 |
+| —    | Lighthouse CI 效能門檻調降至 0.83（自然波動緩衝）                    | v2.18.0   | `.lighthouserc.json` 從 0.85 降至 0.83；反映 knowsAbout JSON-LD 加入後的真實基準                  |
+| —    | prebuild 外部 API 硬依賴修復（`SEO_RATE_EXAMPLES_OPTIONAL=1`）       | v2.17.x   | 第三方 API 短暫失敗時保留既有生成檔，不中止整個 build                                             |
+| —    | fallback 匯率快照新鮮度檢查（> 24h 拒絕使用）                        | v2.17.x   | `prebuild-fetch-rates.mjs` 加入時間戳解析，避免 stale 匯率寫入 SSG 頁面                           |
 
 ### 🔴 P0 — 立即（直接影響 AI 引用率）
 
@@ -876,7 +926,7 @@ node scripts/fetch-rating-snapshot.mjs          # 匯率快照更新
 
 ---
 
-## 14. 詞彙表
+## 15. 詞彙表
 
 | 術語                          | 說明                                                                                  |
 | ----------------------------- | ------------------------------------------------------------------------------------- |
