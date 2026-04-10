@@ -1,8 +1,53 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-10T01:17:39+08:00
-> **當前總分**: 1205（初始分: 100）
+> **最後更新**: 2026-04-10T15:30:00+08:00
+> **當前總分**: 1207（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: fix-speakable-parent-types-howto-removal
+date: 2026-04-10
+title: 修正 SpeakableSpecification 父節點類型（移除 HowTo）
+score: +2
+type: fix
+content_type: seo
+scope: seo, schema, structured-data
+topics: [speakable, schema.org, json-ld, seo, voice-search]
+keywords:
+[SpeakableSpecification, WebPage, Article, HowTo, schema.org, speakable, voice-search, json-ld]
+aliases: [Speakable parent types fix, HowTo speakable removal]
+related_entries:
+[ratewise-speakable-jsonld-fix]
+summary: `SPEAKABLE_PARENT_TYPES` 錯誤包含 `HowTo`，導致首頁（有 HowTo + SpeakableSpecification、但無 Article/WebPage 節點）會把 speakable 掛載到 HowTo，跳過 WebPage fallback。依 schema.org 規範，speakable 僅適用於 Article/WebPage，掛載到 HowTo 會被結構化資料消費方忽略。
+root_cause:
+
+- `seo-helmet-utils.ts` 的 `SPEAKABLE_PARENT_TYPES` 陣列包含 `HowTo`，但 schema.org 規範明確限定 speakable 屬性僅適用於 `Article` 和 `WebPage` 類型。
+- 首頁 JSON-LD 有 HowTo 節點但無 Article 節點，導致 speakable 被錯誤掛載到 HowTo 而非建立 WebPage fallback。
+  impact:
+
+- 首頁的語音搜尋標記（speakable）實際上不生效，因為 Google/AI 搜尋引擎會忽略 HowTo 上的 speakable 屬性。
+- 影響語音助理（Google Assistant、ChatGPT 語音模式）對首頁內容的朗讀能力。
+  actions:
+
+- 從 `SPEAKABLE_PARENT_TYPES` 移除 `HowTo`，保留 `['Article', 'TechArticle', 'WebPage']`。
+- 更新註解說明 HowTo 不支援 speakable 的原因。
+- 新增測試案例驗證 HowTo 不會被視為 speakable 父節點。
+  prevention:
+
+- 任何 schema.org 屬性使用前，應先查詢官方文件確認支援的類型範圍。
+- 新增 schema 屬性支援時，應同步新增對應的單元測試。
+  verification:
+
+- `pnpm test` 通過（包含新增的 HowTo speakable 測試）
+- `pnpm build:ratewise` 成功
+- 驗證首頁 JSON-LD：WebPage 有 speakable，HowTo 無 speakable
+  references:
+
+- https://schema.org/speakable（speakable 僅適用於 Article/WebPage）
+- https://schema.org/SpeakableSpecification
+- apps/ratewise/src/components/seo-helmet-utils.ts
+- apps/ratewise/src/components/**tests**/SEOHelmet.test.tsx
 
 ---
 

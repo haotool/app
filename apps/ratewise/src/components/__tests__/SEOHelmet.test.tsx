@@ -574,4 +574,34 @@ describe('attachSpeakableToGraph()', () => {
     expect(article['speakable']).toBeDefined();
     expect(webPage['speakable']).toBeUndefined();
   });
+
+  it('HowTo 不應被視為 speakable 父節點（schema.org 僅限 Article/WebPage）', () => {
+    const nodes = [
+      { '@type': 'HowTo', name: '如何使用' },
+      { '@type': 'SpeakableSpecification', cssSelector: ['h1'] },
+    ];
+    const result = attachSpeakableToGraph(nodes, URL);
+
+    // HowTo 不支援 speakable，應建立 WebPage fallback
+    const howTo = result.find((b) => b['@type'] === 'HowTo')!;
+    const webPage = result.find((b) => b['@type'] === 'WebPage')!;
+    expect(howTo['speakable']).toBeUndefined();
+    expect(webPage).toBeDefined();
+    expect(webPage['speakable']).toBeDefined();
+  });
+
+  it('有 HowTo + WebPage 時，speakable 應掛載到 WebPage', () => {
+    const nodes = [
+      { '@type': 'HowTo', name: '如何使用' },
+      { '@type': 'WebPage', url: URL, name: '首頁' },
+      { '@type': 'SpeakableSpecification', cssSelector: ['h1'] },
+    ];
+    const result = attachSpeakableToGraph(nodes, URL);
+
+    const howTo = result.find((b) => b['@type'] === 'HowTo')!;
+    const webPage = result.find((b) => b['@type'] === 'WebPage')!;
+    expect(howTo['speakable']).toBeUndefined();
+    expect(webPage['speakable']).toBeDefined();
+    expect((webPage['speakable'] as Record<string, unknown>)['cssSelector']).toEqual(['h1']);
+  });
 });
