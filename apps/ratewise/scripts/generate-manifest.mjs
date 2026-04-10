@@ -1,5 +1,4 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APP_INFO, APP_MANIFEST } from '../src/config/app-info.ts';
@@ -8,16 +7,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 
-// 用 git commit hash 做 cache-busting（比日期精準：每次 commit 才更新）
-// 若 git 不可用（罕見）回退至版本號
-function getVersionToken() {
-  try {
-    return execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
-  } catch {
-    return pkg.version;
-  }
-}
-const VERSION_TOKEN = getVersionToken();
+// 用 semver 版本號做 cache-busting（只在 pnpm changeset:version 後才改變）
+// 注意：commit hash 會造成自引用問題（committed 檔案每次 build 都落後一個 commit）
+const VERSION_TOKEN = pkg.version;
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
@@ -95,5 +87,5 @@ writeFileSync(
   JSON.stringify(manifest, null, 2) + '\n',
 );
 console.log(
-  `✅ manifest.webmanifest 已由 SSOT 重新生成（${currencyCount} 種貨幣，cache token: ${VERSION_TOKEN}）`,
+  `✅ manifest.webmanifest 已由 SSOT 重新生成（${currencyCount} 種貨幣，v${VERSION_TOKEN}）`,
 );
