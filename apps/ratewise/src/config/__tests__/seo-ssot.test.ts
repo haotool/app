@@ -164,38 +164,65 @@ describe('SEO SSOT', () => {
     });
   });
 
+  // 根據 schema.org 規範，SpeakableSpecification 必須嵌套在 WebPage 的 speakable 屬性中。
   describe('首頁 Speakable Schema', () => {
-    it('HOMEPAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+    it('HOMEPAGE_SEO.jsonLd 應包含 SpeakableSpecification（嵌套在 WebPage 中）', () => {
       const jsonLdArray = Array.isArray(HOMEPAGE_SEO.jsonLd)
         ? HOMEPAGE_SEO.jsonLd
         : HOMEPAGE_SEO.jsonLd
           ? [HOMEPAGE_SEO.jsonLd]
           : [];
-      const hasSpeakable = jsonLdArray.some((block) => block['@type'] === 'SpeakableSpecification');
+      const hasSpeakable = jsonLdArray.some((block) => {
+        // 檢查頂層 SpeakableSpecification（舊格式）
+        if (block['@type'] === 'SpeakableSpecification') return true;
+        // 檢查嵌套在 WebPage 的 speakable 屬性中（正確格式）
+        const speakable = (block as Record<string, unknown>)['speakable'] as
+          | Record<string, unknown>
+          | undefined;
+        if (speakable?.['@type'] === 'SpeakableSpecification') return true;
+        return false;
+      });
       expect(hasSpeakable).toBe(true);
     });
   });
 
+  // 根據 schema.org 規範，SpeakableSpecification 必須嵌套在 Article/WebPage 的 speakable 屬性中。
   describe('FAQ 頁 Speakable Schema', () => {
-    it('FAQ_PAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+    it('FAQ_PAGE_SEO.jsonLd 應包含 SpeakableSpecification（嵌套在 Article 中）', () => {
       const jsonLdArray = Array.isArray(FAQ_PAGE_SEO.jsonLd)
         ? FAQ_PAGE_SEO.jsonLd
         : FAQ_PAGE_SEO.jsonLd
           ? [FAQ_PAGE_SEO.jsonLd]
           : [];
-      const hasSpeakable = jsonLdArray.some((block) => block['@type'] === 'SpeakableSpecification');
+      const hasSpeakable = jsonLdArray.some((block) => {
+        // 檢查頂層 SpeakableSpecification（舊格式）
+        if (block['@type'] === 'SpeakableSpecification') return true;
+        // 檢查嵌套在 Article 的 speakable 屬性中（正確格式）
+        const speakable = (block as Record<string, unknown>)['speakable'] as
+          | Record<string, unknown>
+          | undefined;
+        if (speakable?.['@type'] === 'SpeakableSpecification') return true;
+        return false;
+      });
       expect(hasSpeakable).toBe(true);
     });
   });
 
   // ─── 內容頁 Speakable Schema ───────────────────────────────────────────────
+  // 根據 schema.org 規範，SpeakableSpecification 必須嵌套在 Article/WebPage 的 speakable 屬性中。
+  // 參考：https://schema.org/speakable
   describe('內容頁 Speakable Schema 覆蓋', () => {
     function hasSpeakable(jsonLd: unknown): boolean {
       if (!jsonLd) return false;
       const arr = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
-      return arr.some(
-        (block: Record<string, unknown>) => block['@type'] === 'SpeakableSpecification',
-      );
+      return arr.some((block: Record<string, unknown>) => {
+        // 檢查頂層 SpeakableSpecification（舊格式，已棄用）
+        if (block['@type'] === 'SpeakableSpecification') return true;
+        // 檢查嵌套在 Article/WebPage 的 speakable 屬性中（正確格式）
+        const speakable = block['speakable'] as Record<string, unknown> | undefined;
+        if (speakable?.['@type'] === 'SpeakableSpecification') return true;
+        return false;
+      });
     }
 
     it('GUIDE_PAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {

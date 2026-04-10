@@ -22,6 +22,8 @@ jobs:
     timeout-minutes: 15
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+      # 使用本地檔案驗證 precache 資產，避免 CI 環境與生產環境資產 hash 不同導致 404
+      VERIFY_PRECACHE_SOURCE: 'local'
 
     steps:
       - name: Checkout code

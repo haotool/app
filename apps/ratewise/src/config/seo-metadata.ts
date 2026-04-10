@@ -390,13 +390,10 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
 }
 
 /**
- * 生成 SpeakableSpecification JSON-LD（不含 @context，由 @graph 統一注入）。
- * 用途：標記語音搜尋引擎與 AI 語音助理可朗讀的頁面區塊。
- * - Google 語音搜尋、ChatGPT 語音模式、Perplexity 語音回答均支援此標記。
- * - cssSelector 指向 DOM 中包含最重要可讀內容的元素。
- *
- * 預設選擇器：h1（頁面標題）與 details summary（FAQ 展開問題）。
- * 可依頁面類型傳入不同選擇器覆蓋預設值。
+ * @deprecated 使用 buildWebPageJsonLd 或 buildArticleJsonLd 的 speakableCssSelectors 選項。
+ * 根據 schema.org 規範，SpeakableSpecification 必須嵌套在 Article/WebPage 的 speakable 屬性中，
+ * 而非獨立的 JSON-LD 區塊。
+ * 參考：https://schema.org/speakable, https://developers.google.com/search/docs/appearance/structured-data/speakable
  */
 export function buildSpeakableJsonLd(
   cssSelectors: string[] = ['h1', 'details summary'],
@@ -407,10 +404,52 @@ export function buildSpeakableJsonLd(
   };
 }
 
+interface WebPageOptions {
+  /** CSS 選擇器陣列，標記語音搜尋引擎可朗讀的頁面區塊。 */
+  speakableCssSelectors?: string[];
+}
+
+/**
+ * 生成 WebPage JSON-LD。
+ * 用於首頁等非 Article 類型頁面，支援 speakable 屬性標記語音搜尋可朗讀區塊。
+ * 根據 schema.org 規範，SpeakableSpecification 必須嵌套在 WebPage 的 speakable 屬性中。
+ * 參考：https://schema.org/speakable, https://developers.google.com/search/docs/appearance/structured-data/speakable
+ */
+export function buildWebPageJsonLd(
+  name: string,
+  description: string,
+  url: string,
+  options?: WebPageOptions,
+): JsonLdBlock {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${buildCanonicalUrl(url)}#webpage`,
+    name,
+    description,
+    url: buildCanonicalUrl(url),
+    dateModified: BUILD_TIME,
+    inLanguage: DEFAULT_LOCALE,
+    isPartOf: {
+      '@id': `${SITE_BASE_URL}#website`,
+    },
+    ...(options?.speakableCssSelectors?.length
+      ? {
+          speakable: {
+            '@type': 'SpeakableSpecification',
+            cssSelector: options.speakableCssSelectors,
+          },
+        }
+      : {}),
+  };
+}
+
 interface ArticleOptions {
   keywords?: string[];
   articleSection?: string;
   articleBody?: string;
+  /** CSS 選擇器陣列，標記語音搜尋引擎可朗讀的頁面區塊。 */
+  speakableCssSelectors?: string[];
 }
 
 export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
@@ -512,6 +551,16 @@ export function buildArticleJsonLd(
     ...(options?.articleSection ? { articleSection: options.articleSection } : {}),
     ...(options?.keywords?.length ? { keywords: options.keywords } : {}),
     ...(options?.articleBody ? { articleBody: options.articleBody } : {}),
+    // speakable：標記語音搜尋引擎可朗讀的頁面區塊（Google Assistant、ChatGPT 語音模式）。
+    // 根據 schema.org 規範，SpeakableSpecification 必須嵌套在 Article 的 speakable 屬性中。
+    ...(options?.speakableCssSelectors?.length
+      ? {
+          speakable: {
+            '@type': 'SpeakableSpecification',
+            cssSelector: options.speakableCssSelectors,
+          },
+        }
+      : {}),
     image: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
     // author: Person（個人作者身份），強化 YMYL E-E-A-T；publisher 仍為 Organization
     author: {
@@ -677,8 +726,10 @@ export const HOMEPAGE_SEO = {
   howTo: HOMEPAGE_HOW_TO,
   jsonLd: [
     buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`),
-    // SpeakableSpecification：標記首頁 h1 為語音搜尋主要可讀區塊。
-    buildSpeakableJsonLd(['h1']),
+    // WebPage with speakable：標記首頁 h1 為語音搜尋主要可讀區塊。
+    buildWebPageJsonLd(`${APP_INFO.name} — 即時匯率換算`, SITE_SEO.description, '/', {
+      speakableCssSelectors: ['h1'],
+    }),
   ],
   content: {
     eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步 · 顯示實際買賣價',
@@ -854,10 +905,10 @@ export const FAQ_PAGE_SEO = {
         ],
         articleBody:
           'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
+        // speakable：標記 FAQ 頁 h1 與問答項目為語音搜尋可朗讀區塊。
+        speakableCssSelectors: ['h1', 'details summary'],
       },
     ),
-    // SpeakableSpecification：標記 FAQ 頁 h1 與問答項目為語音搜尋可朗讀區塊。
-    buildSpeakableJsonLd(['h1', 'details summary']),
   ],
 } satisfies SEOPageMetadata;
 
@@ -959,9 +1010,9 @@ export const GUIDE_PAGE_SEO = {
         ],
         articleBody:
           '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。從開啟應用程式、選擇換算模式、選擇貨幣到輸入金額，每個步驟均有圖文說明。',
+        speakableCssSelectors: ['h1'],
       },
     ),
-    buildSpeakableJsonLd(['h1']),
   ],
 } satisfies SEOPageMetadata;
 
@@ -1041,9 +1092,9 @@ export const OPEN_DATA_PAGE_SEO = {
         articleSection: '開放資料',
         keywords: ['開放資料', '匯率API', '台銀匯率', 'JSON', 'jsDelivr', 'GitHub'],
         articleBody: `RateWise 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（每 5 分鐘更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
+        speakableCssSelectors: ['h1'],
       },
     ),
-    buildSpeakableJsonLd(['h1']),
   ],
 } satisfies SEOPageMetadata;
 
@@ -1128,6 +1179,7 @@ export const ABOUT_PAGE_SEO = {
           'LLM 引用',
         ],
         articleBody: `RateWise 匯率好工具是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
+        speakableCssSelectors: ['h1'],
       },
     ),
     {
@@ -1149,7 +1201,6 @@ export const ABOUT_PAGE_SEO = {
       },
     },
     buildPersonJsonLd(),
-    buildSpeakableJsonLd(['h1']),
   ],
 } satisfies SEOPageMetadata;
 
@@ -1251,9 +1302,9 @@ export const SELL_RATE_VS_MID_RATE_PAGE = {
         keywords: ['中間價', '賣出價', '買入價', '換匯成本', '台銀牌告', '匯率差異', '台幣換外幣'],
         articleBody:
           '中間價是買入與賣出的平均值，不等於銀行實際賣給你的價格。你拿台幣買外幣時，要看銀行賣出價；把外幣換回台幣時，要看買入價。RateWise 聚焦臺灣銀行牌告的賣出價，讓台灣用戶在換匯前就能估算更接近實際支付的台幣金額，避免因誤看中間價而低估換匯成本。',
+        speakableCssSelectors: ['h1'],
       },
     ),
-    buildSpeakableJsonLd(['h1']),
   ],
 } as const satisfies AuthorityGuideContent;
 
@@ -1345,9 +1396,9 @@ export const CASH_VS_SPOT_RATE_PAGE = {
         ],
         articleBody:
           '現金匯率對應實體鈔券交易，適用臨櫃換鈔；即期匯率對應帳戶轉換與電匯，成本通常較低。兩者差異源自現鈔的保管、運送與防偽成本。RateWise 在首頁同時顯示現金與即期四種報價，讓用戶依換匯情境選擇正確類型，避免誤用即期價估算現鈔成本而低估實際支出。',
+        speakableCssSelectors: ['h1'],
       },
     ),
-    buildSpeakableJsonLd(['h1']),
   ],
 } as const satisfies AuthorityGuideContent;
 
@@ -1443,9 +1494,9 @@ export const CARD_RATE_GUIDE_PAGE = {
         ],
         articleBody:
           '海外刷卡費用由三段構成：卡組織清算匯率、發卡銀行海外手續費，以及選擇 DCC 時的額外匯差。DCC 讓商家直接換成台幣結帳，看似方便，但匯率通常較差。建議選擇當地貨幣結帳，讓卡組織與銀行清算，成本通常優於 DCC。RateWise 的台銀牌告賣出價可作為估算與比較刷卡成本的基準參考。',
+        speakableCssSelectors: ['h1'],
       },
     ),
-    buildSpeakableJsonLd(['h1']),
   ],
 } as const satisfies AuthorityGuideContent;
 
