@@ -278,23 +278,29 @@ export function HistoryTab() {
           </div>
           <div className="mt-6 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <div className="flex -space-x-2">
-                {members
-                  .filter((m) => m.isActive)
-                  .slice(0, 3)
-                  .map((m) => (
-                    <MemberAvatar
-                      key={m.id}
-                      seed={m.avatarUrl}
-                      alt={m.name}
-                      size={32}
-                      className="border-2 border-surface-container-lowest"
-                    />
-                  ))}
-              </div>
-              <span className="text-xs text-on-surface-variant">
-                {t('history.members_count', { count: members.filter((m) => m.isActive).length })}
-              </span>
+              {(() => {
+                // 計算行程中實際有參與消費的成員（而非當前活躍成員）
+                const participantIdsSet = new Set(tripExpenses.flatMap((e) => e.participantIds));
+                const tripParticipants = members.filter((m) => participantIdsSet.has(m.id));
+                return (
+                  <>
+                    <div className="flex -space-x-2">
+                      {tripParticipants.slice(0, 3).map((m) => (
+                        <MemberAvatar
+                          key={m.id}
+                          seed={m.avatarUrl}
+                          alt={m.name}
+                          size={32}
+                          className="border-2 border-surface-container-lowest"
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-on-surface-variant">
+                      {t('history.members_count', { count: tripParticipants.length })}
+                    </span>
+                  </>
+                );
+              })()}
             </div>
             {tripExpenses.length > 0 && (
               <button
