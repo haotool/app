@@ -195,7 +195,10 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
     const sitemapPath = resolve(PUBLIC_PATH, 'sitemap.xml');
     // sitemap.xml 由 prebuild 產生且 git-ignored（含 git 日期，每次 commit 後漂移）
     // 未執行 pnpm build 前跳過，CI build 後才驗證
-    if (!existsSync(sitemapPath)) return;
+    if (!existsSync(sitemapPath)) {
+      it.todo('sitemap.xml not present — run pnpm build first');
+      return;
+    }
     const sitemapContent = readFile(sitemapPath);
 
     it('should have valid sitemap.xml file', () => {
@@ -769,15 +772,18 @@ describeIfPairsGenerated('📦 Pair JSON API Endpoints (requires prebuild)', () 
     }
   });
 
-  it('pair JSON pageUrl should match sitemap canonical', () => {
-    const sitemapContent = readFile(resolve(PUBLIC_PATH, 'sitemap.xml'));
-    for (const pair of REQUIRED_PAIRS) {
-      const content = JSON.parse(readFile(resolve(pairsDir, `${pair}.json`)));
-      // pageUrl 應與 sitemap 中的 <loc> 一致
-      expect(sitemapContent).toContain(`/${pair}/</loc>`);
-      expect(content.pageUrl).toContain(`/${pair}/`);
-    }
-  });
+  it.skipIf(!existsSync(resolve(PUBLIC_PATH, 'sitemap.xml')))(
+    'pair JSON pageUrl should match sitemap canonical',
+    () => {
+      const sitemapContent = readFile(resolve(PUBLIC_PATH, 'sitemap.xml'));
+      for (const pair of REQUIRED_PAIRS) {
+        const content = JSON.parse(readFile(resolve(pairsDir, `${pair}.json`)));
+        // pageUrl 應與 sitemap 中的 <loc> 一致
+        expect(sitemapContent).toContain(`/${pair}/</loc>`);
+        expect(content.pageUrl).toContain(`/${pair}/`);
+      }
+    },
+  );
 
   it('pair JSON should include rateFieldPath for LLM function calling', () => {
     const usdTwd = JSON.parse(readFile(resolve(pairsDir, 'usd-twd.json')));
