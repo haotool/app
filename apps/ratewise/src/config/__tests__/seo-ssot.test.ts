@@ -1,9 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ABOUT_PAGE_SEO,
+  CARD_RATE_GUIDE_PAGE,
+  CASH_VS_SPOT_RATE_PAGE,
   DEFAULT_LOCALE,
+  FAQ_PAGE_SEO,
+  GUIDE_PAGE_SEO,
   HOMEPAGE_SEO,
+  OPEN_DATA_PAGE_SEO,
   SEO_INDEXABLE_LOCALES,
+  SELL_RATE_VS_MID_RATE_PAGE,
   buildDefaultAlternates,
+  buildPersonJsonLd,
+  buildSiteJsonLd,
+  buildSpeakableJsonLd,
   getCurrencyLandingPageContent,
   getReverseCurrencyLandingPageContent,
 } from '../seo-metadata';
@@ -131,6 +141,117 @@ describe('SEO SSOT', () => {
       const content = getReverseCurrencyLandingPageContent('USD');
       const allAnswers = content.faqEntries.map((e) => e.answer).join('\n');
       expect(allAnswers).not.toMatch(/日圓|日幣/);
+    });
+  });
+
+  // ─── Speakable Schema ──────────────────────────────────────────────────────
+  describe('buildSpeakableJsonLd()', () => {
+    it('應回傳正確的 SpeakableSpecification schema', () => {
+      const schema = buildSpeakableJsonLd(['h1', 'details summary']);
+      expect(schema['@type']).toBe('SpeakableSpecification');
+      expect(schema['cssSelector']).toEqual(['h1', 'details summary']);
+    });
+
+    it('使用預設選擇器時應包含 h1', () => {
+      const schema = buildSpeakableJsonLd();
+      const selectors = schema['cssSelector'] as string[];
+      expect(selectors).toContain('h1');
+    });
+
+    it('不應包含 @context（由 @graph 統一注入）', () => {
+      const schema = buildSpeakableJsonLd();
+      expect('@context' in schema).toBe(false);
+    });
+  });
+
+  describe('首頁 Speakable Schema', () => {
+    it('HOMEPAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+      const jsonLdArray = Array.isArray(HOMEPAGE_SEO.jsonLd)
+        ? HOMEPAGE_SEO.jsonLd
+        : HOMEPAGE_SEO.jsonLd
+          ? [HOMEPAGE_SEO.jsonLd]
+          : [];
+      const hasSpeakable = jsonLdArray.some((block) => block['@type'] === 'SpeakableSpecification');
+      expect(hasSpeakable).toBe(true);
+    });
+  });
+
+  describe('FAQ 頁 Speakable Schema', () => {
+    it('FAQ_PAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+      const jsonLdArray = Array.isArray(FAQ_PAGE_SEO.jsonLd)
+        ? FAQ_PAGE_SEO.jsonLd
+        : FAQ_PAGE_SEO.jsonLd
+          ? [FAQ_PAGE_SEO.jsonLd]
+          : [];
+      const hasSpeakable = jsonLdArray.some((block) => block['@type'] === 'SpeakableSpecification');
+      expect(hasSpeakable).toBe(true);
+    });
+  });
+
+  // ─── 內容頁 Speakable Schema ───────────────────────────────────────────────
+  describe('內容頁 Speakable Schema 覆蓋', () => {
+    function hasSpeakable(jsonLd: unknown): boolean {
+      if (!jsonLd) return false;
+      const arr = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
+      return arr.some(
+        (block: Record<string, unknown>) => block['@type'] === 'SpeakableSpecification',
+      );
+    }
+
+    it('GUIDE_PAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(GUIDE_PAGE_SEO.jsonLd)).toBe(true);
+    });
+
+    it('OPEN_DATA_PAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(OPEN_DATA_PAGE_SEO.jsonLd)).toBe(true);
+    });
+
+    it('ABOUT_PAGE_SEO.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(ABOUT_PAGE_SEO.jsonLd)).toBe(true);
+    });
+
+    it('SELL_RATE_VS_MID_RATE_PAGE.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(SELL_RATE_VS_MID_RATE_PAGE.jsonLd)).toBe(true);
+    });
+
+    it('CASH_VS_SPOT_RATE_PAGE.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(CASH_VS_SPOT_RATE_PAGE.jsonLd)).toBe(true);
+    });
+
+    it('CARD_RATE_GUIDE_PAGE.jsonLd 應包含 SpeakableSpecification', () => {
+      expect(hasSpeakable(CARD_RATE_GUIDE_PAGE.jsonLd)).toBe(true);
+    });
+  });
+
+  // ─── Entity Authority Signals（knowsAbout）─────────────────────────────────
+  describe('Entity knowsAbout 權威信號（2026 AI Mode 要求）', () => {
+    it('buildSiteJsonLd() Organization 應包含 knowsAbout 陣列', () => {
+      const blocks = buildSiteJsonLd();
+      const org = blocks.find((b) => b['@type'] === 'Organization');
+      expect(org).toBeDefined();
+      expect(Array.isArray(org!['knowsAbout'])).toBe(true);
+      expect((org!['knowsAbout'] as string[]).length).toBeGreaterThan(0);
+    });
+
+    it('Organization knowsAbout 應含台銀匯率與換匯相關核心主題', () => {
+      const blocks = buildSiteJsonLd();
+      const org = blocks.find((b) => b['@type'] === 'Organization');
+      const topics = (org!['knowsAbout'] as string[]).join(' ');
+      // 核心業務主題必須涵蓋
+      expect(topics).toMatch(/匯率|exchange rate/i);
+      expect(topics).toMatch(/台幣|TWD|台灣/i);
+    });
+
+    it('buildPersonJsonLd() 應包含 knowsAbout 陣列', () => {
+      const person = buildPersonJsonLd();
+      expect(Array.isArray(person['knowsAbout'])).toBe(true);
+      expect((person['knowsAbout'] as string[]).length).toBeGreaterThan(0);
+    });
+
+    it('Person knowsAbout 應含匯率與 Web 開發相關主題', () => {
+      const person = buildPersonJsonLd();
+      const topics = (person['knowsAbout'] as string[]).join(' ');
+      expect(topics).toMatch(/匯率|exchange rate/i);
     });
   });
 });

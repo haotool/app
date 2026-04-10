@@ -316,6 +316,22 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
         email: APP_INFO.email,
       },
       sameAs: SITE_SEO.socialLinks,
+      // knowsAbout：宣告組織的核心知識領域，供 Google AI Mode 識別引用來源。
+      // 2026 後是影響 AI 搜尋引擎引用率最高的單一 entity 標記。
+      knowsAbout: [
+        '台灣銀行牌告匯率',
+        '外幣換台幣',
+        '台幣換外幣',
+        '即期匯率',
+        '現金匯率',
+        '多幣別換算',
+        '匯率換算工具',
+        'exchange rate',
+        'currency exchange TWD',
+        'TWD exchange rate',
+        'Taiwan Bank exchange rate',
+        'PWA progressive web app',
+      ],
     },
     {
       '@context': 'https://schema.org',
@@ -370,6 +386,24 @@ export function buildShareImageJsonLd(name: string, description: string): JsonLd
     copyrightNotice: `© ${new Date(BUILD_TIME).getUTCFullYear() || 2026} ${APP_INFO.author}`,
     creditText: APP_INFO.author,
     dateModified: BUILD_TIME,
+  };
+}
+
+/**
+ * 生成 SpeakableSpecification JSON-LD（不含 @context，由 @graph 統一注入）。
+ * 用途：標記語音搜尋引擎與 AI 語音助理可朗讀的頁面區塊。
+ * - Google 語音搜尋、ChatGPT 語音模式、Perplexity 語音回答均支援此標記。
+ * - cssSelector 指向 DOM 中包含最重要可讀內容的元素。
+ *
+ * 預設選擇器：h1（頁面標題）與 details summary（FAQ 展開問題）。
+ * 可依頁面類型傳入不同選擇器覆蓋預設值。
+ */
+export function buildSpeakableJsonLd(
+  cssSelectors: string[] = ['h1', 'details summary'],
+): JsonLdBlock {
+  return {
+    '@type': 'SpeakableSpecification',
+    cssSelector: cssSelectors,
   };
 }
 
@@ -443,6 +477,20 @@ export function buildPersonJsonLd(): JsonLdBlock {
     url: AUTHOR_PERSON.url,
     email: AUTHOR_PERSON.email,
     sameAs: [...AUTHOR_PERSON.sameAs],
+    // knowsAbout：宣告作者個人知識領域，支持 E-E-A-T Expertise 信號。
+    knowsAbout: [
+      '台灣銀行牌告匯率',
+      '即期匯率',
+      '現金匯率',
+      '匯率換算工具開發',
+      'exchange rate',
+      'currency exchange',
+      'React',
+      'TypeScript',
+      'PWA',
+      'SEO',
+      'Web Performance',
+    ],
   };
 }
 
@@ -627,7 +675,11 @@ export const HOMEPAGE_SEO = {
   keywords: [...SITE_SEO.keywords],
   faqContent: [...HOMEPAGE_FAQ_CONTENT],
   howTo: HOMEPAGE_HOW_TO,
-  jsonLd: [buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`)],
+  jsonLd: [
+    buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`),
+    // SpeakableSpecification：標記首頁 h1 為語音搜尋主要可讀區塊。
+    buildSpeakableJsonLd(['h1']),
+  ],
   content: {
     eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步 · 顯示實際買賣價',
     heading: 'RateWise 匯率好工具 即時匯率換算',
@@ -782,27 +834,31 @@ export const FAQ_PAGE_SEO = {
     { name: '常見問題', item: '/faq/' },
   ],
   faqContent: [...FAQ_PAGE_ENTRIES],
-  jsonLd: buildArticleJsonLd(
-    '常見問題 — RateWise 匯率好工具 FAQ 解答',
-    'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算。',
-    '/faq/',
-    GUIDE_PUBLISH_DATES.faq,
-    {
-      articleSection: 'FAQ',
-      keywords: [
-        '匯率',
-        '常見問題',
-        '臺灣銀行匯率',
-        '換匯',
-        '現金買賣',
-        '即期匯率',
-        'DCC',
-        '外幣匯率',
-      ],
-      articleBody:
-        'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
-    },
-  ),
+  jsonLd: [
+    buildArticleJsonLd(
+      '常見問題 — RateWise 匯率好工具 FAQ 解答',
+      'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算。',
+      '/faq/',
+      GUIDE_PUBLISH_DATES.faq,
+      {
+        articleSection: 'FAQ',
+        keywords: [
+          '匯率',
+          '常見問題',
+          '臺灣銀行匯率',
+          '換匯',
+          '現金買賣',
+          '即期匯率',
+          'DCC',
+          '外幣匯率',
+        ],
+        articleBody:
+          'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
+      },
+    ),
+    // SpeakableSpecification：標記 FAQ 頁 h1 與問答項目為語音搜尋可朗讀區塊。
+    buildSpeakableJsonLd(['h1', 'details summary']),
+  ],
 } satisfies SEOPageMetadata;
 
 export const GUIDE_HOW_TO_STEPS = [
@@ -905,6 +961,7 @@ export const GUIDE_PAGE_SEO = {
           '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。從開啟應用程式、選擇換算模式、選擇貨幣到輸入金額，每個步驟均有圖文說明。',
       },
     ),
+    buildSpeakableJsonLd(['h1']),
   ],
 } satisfies SEOPageMetadata;
 
@@ -986,6 +1043,7 @@ export const OPEN_DATA_PAGE_SEO = {
         articleBody: `RateWise 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（每 5 分鐘更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
       },
     ),
+    buildSpeakableJsonLd(['h1']),
   ],
 } satisfies SEOPageMetadata;
 
@@ -1091,6 +1149,7 @@ export const ABOUT_PAGE_SEO = {
       },
     },
     buildPersonJsonLd(),
+    buildSpeakableJsonLd(['h1']),
   ],
 } satisfies SEOPageMetadata;
 
@@ -1181,18 +1240,21 @@ export const SELL_RATE_VS_MID_RATE_PAGE = {
   ctaDescription:
     '回到首頁輸入金額，即可用臺灣銀行牌告的現金賣出或即期賣出估算更接近實際的換匯成本。',
   relatedCurrencies: RELATED_CURRENCIES,
-  jsonLd: buildArticleJsonLd(
-    '賣出價與中間價差在哪？為什麼換匯不能只看中間價',
-    '解析賣出價、中間價與實際換匯成本差異。RateWise 聚焦臺灣銀行牌告賣出價，協助台灣用戶在買外幣前估算更接近實際支付的台幣金額。',
-    '/sell-rate-vs-mid-rate/',
-    GUIDE_PUBLISH_DATES.sellRateVsMidRate,
-    {
-      articleSection: '匯率知識',
-      keywords: ['中間價', '賣出價', '買入價', '換匯成本', '台銀牌告', '匯率差異', '台幣換外幣'],
-      articleBody:
-        '中間價是買入與賣出的平均值，不等於銀行實際賣給你的價格。你拿台幣買外幣時，要看銀行賣出價；把外幣換回台幣時，要看買入價。RateWise 聚焦臺灣銀行牌告的賣出價，讓台灣用戶在換匯前就能估算更接近實際支付的台幣金額，避免因誤看中間價而低估換匯成本。',
-    },
-  ),
+  jsonLd: [
+    buildArticleJsonLd(
+      '賣出價與中間價差在哪？為什麼換匯不能只看中間價',
+      '解析賣出價、中間價與實際換匯成本差異。RateWise 聚焦臺灣銀行牌告賣出價，協助台灣用戶在買外幣前估算更接近實際支付的台幣金額。',
+      '/sell-rate-vs-mid-rate/',
+      GUIDE_PUBLISH_DATES.sellRateVsMidRate,
+      {
+        articleSection: '匯率知識',
+        keywords: ['中間價', '賣出價', '買入價', '換匯成本', '台銀牌告', '匯率差異', '台幣換外幣'],
+        articleBody:
+          '中間價是買入與賣出的平均值，不等於銀行實際賣給你的價格。你拿台幣買外幣時，要看銀行賣出價；把外幣換回台幣時，要看買入價。RateWise 聚焦臺灣銀行牌告的賣出價，讓台灣用戶在換匯前就能估算更接近實際支付的台幣金額，避免因誤看中間價而低估換匯成本。',
+      },
+    ),
+    buildSpeakableJsonLd(['h1']),
+  ],
 } as const satisfies AuthorityGuideContent;
 
 export const CASH_VS_SPOT_RATE_PAGE = {
@@ -1264,18 +1326,29 @@ export const CASH_VS_SPOT_RATE_PAGE = {
   ctaTitle: '依情境切換正確匯率類型',
   ctaDescription: '回到首頁後可直接切換現金與即期匯率，比較同一筆金額在不同換匯方式下的成本差異。',
   relatedCurrencies: RELATED_CURRENCIES,
-  jsonLd: buildArticleJsonLd(
-    '現金匯率 vs 即期匯率：什麼情境該看哪一種',
-    '說明現金匯率與即期匯率差異，整理臨櫃換鈔、外幣帳戶、匯款與旅遊換匯情境，幫助你在 RateWise 正確選擇報價類型。',
-    '/cash-vs-spot-rate/',
-    GUIDE_PUBLISH_DATES.cashVsSpotRate,
-    {
-      articleSection: '匯率知識',
-      keywords: ['現金匯率', '即期匯率', '現金賣出', '即期賣出', '換鈔', '外幣帳戶', '銀行手續費'],
-      articleBody:
-        '現金匯率對應實體鈔券交易，適用臨櫃換鈔；即期匯率對應帳戶轉換與電匯，成本通常較低。兩者差異源自現鈔的保管、運送與防偽成本。RateWise 在首頁同時顯示現金與即期四種報價，讓用戶依換匯情境選擇正確類型，避免誤用即期價估算現鈔成本而低估實際支出。',
-    },
-  ),
+  jsonLd: [
+    buildArticleJsonLd(
+      '現金匯率 vs 即期匯率：什麼情境該看哪一種',
+      '說明現金匯率與即期匯率差異，整理臨櫃換鈔、外幣帳戶、匯款與旅遊換匯情境，幫助你在 RateWise 正確選擇報價類型。',
+      '/cash-vs-spot-rate/',
+      GUIDE_PUBLISH_DATES.cashVsSpotRate,
+      {
+        articleSection: '匯率知識',
+        keywords: [
+          '現金匯率',
+          '即期匯率',
+          '現金賣出',
+          '即期賣出',
+          '換鈔',
+          '外幣帳戶',
+          '銀行手續費',
+        ],
+        articleBody:
+          '現金匯率對應實體鈔券交易，適用臨櫃換鈔；即期匯率對應帳戶轉換與電匯，成本通常較低。兩者差異源自現鈔的保管、運送與防偽成本。RateWise 在首頁同時顯示現金與即期四種報價，讓用戶依換匯情境選擇正確類型，避免誤用即期價估算現鈔成本而低估實際支出。',
+      },
+    ),
+    buildSpeakableJsonLd(['h1']),
+  ],
 } as const satisfies AuthorityGuideContent;
 
 export const CARD_RATE_GUIDE_PAGE = {
@@ -1351,26 +1424,29 @@ export const CARD_RATE_GUIDE_PAGE = {
   ctaDescription:
     '回到首頁輸入金額，可先用台銀牌告價格抓基準，再把發卡銀行海外手續費納入最終預算判斷。',
   relatedCurrencies: RELATED_CURRENCIES,
-  jsonLd: buildArticleJsonLd(
-    '刷卡匯率怎麼看？台銀牌告、卡組織匯率與 DCC 一次搞懂',
-    '整理海外刷卡匯率的組成方式，說明 Visa、Mastercard 清算匯率、銀行海外手續費與 DCC 差異，幫助你正確理解 RateWise 與刷卡成本的關係。',
-    '/card-rate-guide/',
-    GUIDE_PUBLISH_DATES.cardRateGuide,
-    {
-      articleSection: '匯率知識',
-      keywords: [
-        '刷卡匯率',
-        'DCC',
-        '動態貨幣轉換',
-        'Visa',
-        'Mastercard',
-        '海外手續費',
-        '卡組織匯率',
-      ],
-      articleBody:
-        '海外刷卡費用由三段構成：卡組織清算匯率、發卡銀行海外手續費，以及選擇 DCC 時的額外匯差。DCC 讓商家直接換成台幣結帳，看似方便，但匯率通常較差。建議選擇當地貨幣結帳，讓卡組織與銀行清算，成本通常優於 DCC。RateWise 的台銀牌告賣出價可作為估算與比較刷卡成本的基準參考。',
-    },
-  ),
+  jsonLd: [
+    buildArticleJsonLd(
+      '刷卡匯率怎麼看？台銀牌告、卡組織匯率與 DCC 一次搞懂',
+      '整理海外刷卡匯率的組成方式，說明 Visa、Mastercard 清算匯率、銀行海外手續費與 DCC 差異，幫助你正確理解 RateWise 與刷卡成本的關係。',
+      '/card-rate-guide/',
+      GUIDE_PUBLISH_DATES.cardRateGuide,
+      {
+        articleSection: '匯率知識',
+        keywords: [
+          '刷卡匯率',
+          'DCC',
+          '動態貨幣轉換',
+          'Visa',
+          'Mastercard',
+          '海外手續費',
+          '卡組織匯率',
+        ],
+        articleBody:
+          '海外刷卡費用由三段構成：卡組織清算匯率、發卡銀行海外手續費，以及選擇 DCC 時的額外匯差。DCC 讓商家直接換成台幣結帳，看似方便，但匯率通常較差。建議選擇當地貨幣結帳，讓卡組織與銀行清算，成本通常優於 DCC。RateWise 的台銀牌告賣出價可作為估算與比較刷卡成本的基準參考。',
+      },
+    ),
+    buildSpeakableJsonLd(['h1']),
+  ],
 } as const satisfies AuthorityGuideContent;
 
 export const PRIVACY_PAGE_SEO = {

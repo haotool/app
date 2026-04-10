@@ -372,6 +372,61 @@ describe('SEOHelmet Component', () => {
     });
   });
 
+  describe('OG Image 完整標籤', () => {
+    it('應輸出 og:image:type = image/jpeg', () => {
+      render(
+        <HelmetProvider>
+          <SEOHelmet title="Test" />
+        </HelmetProvider>,
+      );
+
+      const ogImageType = document.head.querySelector('meta[property="og:image:type"]');
+      expect(ogImageType).not.toBeNull();
+      expect(ogImageType).toHaveAttribute('content', 'image/jpeg');
+    });
+
+    it('應輸出 og:image:secure_url 且值與 og:image 相同', () => {
+      render(
+        <HelmetProvider>
+          <SEOHelmet title="Test" />
+        </HelmetProvider>,
+      );
+
+      const ogImage = document.head.querySelector('meta[property="og:image"]');
+      const ogImageSecureUrl = document.head.querySelector('meta[property="og:image:secure_url"]');
+      expect(ogImageSecureUrl).not.toBeNull();
+      expect(ogImageSecureUrl?.getAttribute('content')).toBe(ogImage?.getAttribute('content'));
+    });
+
+    it('noindex 頁面也應保有 og:image:type（社群分享不受 noindex 影響）', () => {
+      render(
+        <HelmetProvider>
+          <SEOHelmet title="Test" robots="noindex, follow" />
+        </HelmetProvider>,
+      );
+
+      const ogImageType = document.head.querySelector('meta[property="og:image:type"]');
+      expect(ogImageType).not.toBeNull();
+      expect(ogImageType).toHaveAttribute('content', 'image/jpeg');
+    });
+
+    it('重新渲染相同 props 時 og:image:type 不應重複', () => {
+      const { rerender } = render(
+        <HelmetProvider>
+          <SEOHelmet title="Test" />
+        </HelmetProvider>,
+      );
+      rerender(
+        <HelmetProvider>
+          <SEOHelmet title="Test" />
+        </HelmetProvider>,
+      );
+
+      const ogImageTypes = document.head.querySelectorAll('meta[property="og:image:type"]');
+      expect(ogImageTypes).toHaveLength(1);
+    });
+  });
+
   describe('Code Review Verifications', () => {
     /**
      * aggregateRating 已加入 SoftwareApplication（seo-metadata.ts buildSiteJsonLd）
