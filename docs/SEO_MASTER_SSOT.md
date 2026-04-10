@@ -879,11 +879,25 @@ RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：*
 
 ## 15. 詞彙表
 
+### 15.1 AI 搜尋優化術語（2026 年最新）
+
+| 術語                    | 說明                                                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **AEO**                 | Answer Engine Optimization — 針對 AI 問答引擎（ChatGPT、Perplexity、Claude）的最佳化，重點在於提供可被直接引用的結構化答案            |
+| **GEO**                 | Generative Engine Optimization — 針對生成式 AI 搜尋（Google AI Overviews、Bing Copilot）的最佳化，強調多媒體信號與傳統 SEO 排名的結合 |
+| **LLMO**                | Large Language Model Optimization — LLM 可讀性與引用率最佳化，包含 llms.txt、結構化資料、Answer Capsule 等技術                        |
+| **AI Share of Voice**   | AI 引擎引用品牌的頻率與比例，是 2026 年衡量 AI SEO 成效的核心指標                                                                     |
+| **Citation Rate**       | AI 引擎在回答中引用特定來源的比率，Answer Capsule 可提升 40%+ 引用率                                                                  |
+| **Entity Density**      | 每頁連結實體（人、地、組織、概念）的數量，AI 引擎傾向引用 15+ 實體的頁面                                                              |
+| **Freshness Signal**    | 內容新鮮度信號，Perplexity 對 2-3 天內更新的內容有顯著偏好                                                                            |
+| **Structured Citation** | 結構化引用格式，讓 AI 引擎能準確歸因來源並顯示連結                                                                                    |
+| **Zero-Click Answer**   | AI 直接在搜尋結果中顯示完整答案，無需用戶點擊進入網站                                                                                 |
+| **AI Crawler**          | AI 平台的爬蟲（GPTBot、ClaudeBot、PerplexityBot 等），需在 robots.txt 明確允許                                                        |
+
+### 15.2 傳統 SEO 與技術術語
+
 | 術語                          | 說明                                                                                  |
 | ----------------------------- | ------------------------------------------------------------------------------------- |
-| **AEO**                       | Answer Engine Optimization — 針對 AI 問答引擎的最佳化                                 |
-| **GEO**                       | Generative Engine Optimization — 針對生成式 AI 搜尋的最佳化                           |
-| **LLMO**                      | Large Language Model Optimization — LLM 可讀性與引用率最佳化                          |
 | **YMYL**                      | Your Money Your Life — Google 對金融/健康類內容的最嚴格審核標準                       |
 | **E-E-A-T**                   | Experience, Expertise, Authoritativeness, Trustworthiness — Google 內容品質評估框架   |
 | **Answer Capsule**            | 40-60 字的自給自足答案段落，設計供 AI 引擎直接提取                                    |
@@ -897,6 +911,17 @@ RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：*
 | **llms.txt**                  | 放置於網站根目錄的 AI 友善索引文件，遵循 llmstxt.org 規範（Markdown 格式）            |
 | **INP**                       | Interaction to Next Paint — 2024 年取代 FID 的 Core Web Vitals 指標，測量所有互動延遲 |
 | **路徑式金額頁**              | 使用 URL 路徑而非 query string 的金額 SEO 頁面（`/usd-twd/100/`），可被索引           |
+
+### 15.3 2026 年 AI 搜尋平台特性
+
+| 平台                    | 主要引用信號                            | RateWise 對應策略                          |
+| ----------------------- | --------------------------------------- | ------------------------------------------ |
+| **ChatGPT**             | 權威清單提及（41%）、線上評論、教育內容 | Answer Capsule、Authority Guide 頁         |
+| **Google AI Overviews** | 傳統排名 + Schema + 多媒體（r=0.92）    | ExchangeRateSpecification、SpeakableSpec   |
+| **Perplexity**          | 內容新鮮度（2-3 天衰減）、Reddit 提及   | 可見更新時間戳、SEO_RATE_EXAMPLES 每日更新 |
+| **Claude**              | 資料庫/目錄收錄（68%）、長篇指南        | llms.txt、3000+ 字 Authority Guide         |
+| **Gemini**              | 評分 ≥ 3.5 星、權威清單                 | 待建立評分系統（P3）                       |
+| **Copilot (Bing)**      | 比較表格、步驟指南                      | Guide 頁 HowTo schema、FAQ 比較表          |
 
 ---
 
@@ -914,14 +939,15 @@ RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：*
 
 ---
 
-**最後更新**: 2026-03-31
-**版本**: v1.1.0
+**最後更新**: 2026-04-10
+**版本**: v1.2.0
 **維護者**: Development Team
-**下次審查日**: 2026-06-30（每季審查）
+**下次審查日**: 2026-07-10（每季審查）
 
 ### 修訂紀錄
 
 | 日期       | 版本   | 變更摘要                                                                                                 |
 | ---------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| 2026-04-10 | v1.2.0 | 新增 2026 年 AI 搜尋術語（AEO/GEO/LLMO 深度解析）、AI 平台特性對照表、更新 TODO 完成狀態                 |
 | 2026-03-31 | v1.1.0 | 同步 v2.16.x 實作：seo-static.ts、AnswerCapsule 元件、路徑數量修正（248）、健檢強化、TODO 已完成項目標記 |
 | 2026-03-23 | v1.0.0 | 初始版本，整合六份舊 SEO 文件                                                                            |
