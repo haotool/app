@@ -9,9 +9,6 @@ Disallow: /ratewise/theme-showcase/
 Disallow: /ratewise/color-scheme/
 Disallow: /ratewise/update-prompt-test/
 Disallow: /ratewise/ui-showcase/
-# 首頁 deep-link 僅供分享，不作為索引目標。
-# 幣對金額頁是否索引由頁面層 canonical 與 robots 決定。
-# robots.txt 僅控制 crawl 範圍。
 Disallow: /ratewise/?
 
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
@@ -46,6 +43,9 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
+User-agent: Google-CloudVertexBot
+Allow: /
+
 User-agent: GrokBot
 Allow: /
 
@@ -55,10 +55,16 @@ Allow: /
 User-agent: YouBot
 Allow: /
 
+User-agent: PhindBot
+Allow: /
+
 User-agent: DuckAssistBot
 Allow: /
 
 User-agent: Amazonbot
+Allow: /
+
+User-agent: Applebot
 Allow: /
 
 User-agent: Applebot-Extended
@@ -70,7 +76,22 @@ Allow: /
 User-agent: Bytespider
 Allow: /
 
+User-agent: PetalBot
+Allow: /
+
+User-agent: MistralAI-User
+Allow: /
+
+User-agent: Manus-User
+Allow: /
+
 User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+
+User-agent: FacebookBot
 Allow: /
 
 User-agent: facebookexternalhit
@@ -80,4 +101,25 @@ User-agent: Twitterbot
 Allow: /
 
 User-agent: LinkedInBot
+Allow: /
+
+User-agent: Cloudflare-AutoRAG
+Allow: /
+
+User-agent: Anchor Browser
+Allow: /
+
+User-agent: archive.org_bot
+Allow: /
+
+User-agent: Terracotta Bot
+Allow: /
+
+User-agent: Timpibot
+Allow: /
+
+User-agent: ProRataInc
+Allow: /
+
+User-agent: Novellum AI Crawl
 Allow: /

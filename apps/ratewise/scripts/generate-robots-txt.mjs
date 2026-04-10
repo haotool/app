@@ -7,7 +7,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const SITEMAP_URL = `${SITE_CONFIG.url}sitemap.xml`;
 
-const AI_BOTS = [
+// AI 爬蟲清單：遵循 SEO_MASTER_SSOT.md §8.2 規範
+// 注意：Googlebot 和 Bingbot 不需專門規則，它們應遵循 User-agent: * 的 Disallow 規則
+const AI_SEARCH_BOTS = [
   'GPTBot',
   'OAI-SearchBot',
   'ChatGPT-User',
@@ -18,17 +20,34 @@ const AI_BOTS = [
   'PerplexityBot',
   'Perplexity-User',
   'Google-Extended',
+  'Google-CloudVertexBot',
   'GrokBot',
   'cohere-ai',
   'YouBot',
+  'PhindBot',
   'DuckAssistBot',
   'Amazonbot',
+  'Applebot',
   'Applebot-Extended',
   'CCBot',
   'Bytespider',
+  'PetalBot',
+  'MistralAI-User',
+  'Manus-User',
+  'Meta-ExternalAgent',
+  'Meta-ExternalFetcher',
+  'FacebookBot',
+  'facebookexternalhit',
+  'Twitterbot',
+  'LinkedInBot',
+  'Cloudflare-AutoRAG',
+  'Anchor Browser',
+  'archive.org_bot',
+  'Terracotta Bot',
+  'Timpibot',
+  'ProRataInc',
+  'Novellum AI Crawl',
 ];
-
-const SOCIAL_BOTS = ['Meta-ExternalAgent', 'facebookexternalhit', 'Twitterbot', 'LinkedInBot'];
 
 function sectionForBots(bots) {
   return bots.map((bot) => `User-agent: ${bot}\nAllow: /`).join('\n\n');
@@ -48,17 +67,12 @@ Allow: /
 Disallow: /ratewise/sw.js
 Disallow: /ratewise/workbox-*.js
 ${buildDisallowRules(DEV_ONLY_PATHS)}
-# 首頁 deep-link 僅供分享，不作為索引目標。
-# 幣對金額頁是否索引由頁面層 canonical 與 robots 決定。
-# robots.txt 僅控制 crawl 範圍。
 Disallow: /ratewise/?
 
 Sitemap: ${SITEMAP_URL}
 
-${sectionForBots(AI_BOTS)}
-
-${sectionForBots(SOCIAL_BOTS)}
+${sectionForBots(AI_SEARCH_BOTS)}
 `;
 
 writeFileSync(resolve(ROOT, 'public/robots.txt'), robotsTxt.trimEnd() + '\n');
-console.log('✅ robots.txt 已由 SSOT 重新生成');
+console.log('✅ robots.txt generated');
