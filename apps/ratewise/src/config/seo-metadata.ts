@@ -316,6 +316,22 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
         email: APP_INFO.email,
       },
       sameAs: SITE_SEO.socialLinks,
+      // knowsAbout：宣告組織的核心知識領域，供 Google AI Mode 識別引用來源。
+      // 2026 後是影響 AI 搜尋引擎引用率最高的單一 entity 標記。
+      knowsAbout: [
+        '台灣銀行牌告匯率',
+        '外幣換台幣',
+        '台幣換外幣',
+        '即期匯率',
+        '現金匯率',
+        '多幣別換算',
+        '匯率換算工具',
+        'exchange rate',
+        'currency exchange TWD',
+        'TWD exchange rate',
+        'Taiwan Bank exchange rate',
+        'PWA progressive web app',
+      ],
     },
     {
       '@context': 'https://schema.org',
@@ -461,6 +477,20 @@ export function buildPersonJsonLd(): JsonLdBlock {
     url: AUTHOR_PERSON.url,
     email: AUTHOR_PERSON.email,
     sameAs: [...AUTHOR_PERSON.sameAs],
+    // knowsAbout：宣告作者個人知識領域，支持 E-E-A-T Expertise 信號。
+    knowsAbout: [
+      '台灣銀行牌告匯率',
+      '即期匯率',
+      '現金匯率',
+      '匯率換算工具開發',
+      'exchange rate',
+      'currency exchange',
+      'React',
+      'TypeScript',
+      'PWA',
+      'SEO',
+      'Web Performance',
+    ],
   };
 }
 

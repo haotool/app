@@ -11,6 +11,8 @@ import {
   SEO_INDEXABLE_LOCALES,
   SELL_RATE_VS_MID_RATE_PAGE,
   buildDefaultAlternates,
+  buildPersonJsonLd,
+  buildSiteJsonLd,
   buildSpeakableJsonLd,
   getCurrencyLandingPageContent,
   getReverseCurrencyLandingPageContent,
@@ -218,6 +220,38 @@ describe('SEO SSOT', () => {
 
     it('CARD_RATE_GUIDE_PAGE.jsonLd 應包含 SpeakableSpecification', () => {
       expect(hasSpeakable(CARD_RATE_GUIDE_PAGE.jsonLd)).toBe(true);
+    });
+  });
+
+  // ─── Entity Authority Signals（knowsAbout）─────────────────────────────────
+  describe('Entity knowsAbout 權威信號（2026 AI Mode 要求）', () => {
+    it('buildSiteJsonLd() Organization 應包含 knowsAbout 陣列', () => {
+      const blocks = buildSiteJsonLd();
+      const org = blocks.find((b) => b['@type'] === 'Organization');
+      expect(org).toBeDefined();
+      expect(Array.isArray(org!['knowsAbout'])).toBe(true);
+      expect((org!['knowsAbout'] as string[]).length).toBeGreaterThan(0);
+    });
+
+    it('Organization knowsAbout 應含台銀匯率與換匯相關核心主題', () => {
+      const blocks = buildSiteJsonLd();
+      const org = blocks.find((b) => b['@type'] === 'Organization');
+      const topics = (org!['knowsAbout'] as string[]).join(' ');
+      // 核心業務主題必須涵蓋
+      expect(topics).toMatch(/匯率|exchange rate/i);
+      expect(topics).toMatch(/台幣|TWD|台灣/i);
+    });
+
+    it('buildPersonJsonLd() 應包含 knowsAbout 陣列', () => {
+      const person = buildPersonJsonLd();
+      expect(Array.isArray(person['knowsAbout'])).toBe(true);
+      expect((person['knowsAbout'] as string[]).length).toBeGreaterThan(0);
+    });
+
+    it('Person knowsAbout 應含匯率與 Web 開發相關主題', () => {
+      const person = buildPersonJsonLd();
+      const topics = (person['knowsAbout'] as string[]).join(' ');
+      expect(topics).toMatch(/匯率|exchange rate/i);
     });
   });
 });
