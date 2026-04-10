@@ -140,6 +140,8 @@ export interface CurrencyLandingPageContent {
   alternativeProviders?: AlternativeProvider[];
   /** 相關攻略連結：連結至匯率知識攻略頁，提升內部連結結構。 */
   relatedGuides: RelatedGuideLink[];
+  /** Answer Capsule：40-60 字直接答案段落，供 AI 引擎直接引用。 */
+  answerCapsule?: FAQEntry[];
 }
 
 const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
@@ -2325,6 +2327,46 @@ function buildTwdToForeignRateSentence(code: string, twdAmount: number): string 
   return `以台銀現金賣出匯率換算，${formatAmount(twdAmount)} 台幣 ≈ ${formatAmount(result)} ${code}（台銀現金賣出 1 ${code} = ${ex.cashSell} TWD，匯率每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
 }
 
+/**
+ * 幣對頁 Answer Capsule：40-60 字直接答案段落，供 AI 引擎直接引用。
+ * P1-1 任務：在所有 34 幣對頁頂部加入 Answer Capsule，提升 AI 引用率 +40%。
+ */
+function buildCurrencyAnswerCapsule(
+  code: string,
+  displayName: string,
+  direction: 'to-twd' | 'twd-to-foreign',
+): FAQEntry[] {
+  const ex = SEO_RATE_EXAMPLES[code];
+  if (!ex) return [];
+
+  if (direction === 'to-twd') {
+    return [
+      {
+        question: `${displayName}換台幣今日匯率是多少？`,
+        answer: `台銀現金賣出價：1 ${code} = ${ex.cashSell} TWD（${SEO_RATE_EXAMPLES_DATE} 更新）。RateWise 直接顯示臺灣銀行牌告的實際賣出價，非中間價，換匯前可精準估算所需台幣。`,
+      },
+      {
+        question: `為什麼 RateWise 顯示的${displayName}匯率和 Google 不一樣？`,
+        answer: `Google 顯示的是市場中間價（批發參考價），一般人換不到。RateWise 顯示的是台銀牌告的現金賣出價，是你臨櫃換匯的實際匯率，兩者差距可達 ${ex.diffPct}%。`,
+      },
+    ];
+  }
+
+  // twd-to-foreign
+  const exampleTwd = ex.exampleTWD;
+  const foreignResult = Math.round(exampleTwd / ex.cashSell);
+  return [
+    {
+      question: `台幣換${displayName}今日匯率是多少？`,
+      answer: `台銀現金賣出價：1 ${code} = ${ex.cashSell} TWD（${SEO_RATE_EXAMPLES_DATE} 更新）。${formatAmount(exampleTwd)} 台幣約可換 ${formatAmount(foreignResult)} ${code}。RateWise 顯示臺灣銀行牌告實際賣出價，出國換匯前可精準估算。`,
+    },
+    {
+      question: `出國前換${displayName}，該用哪個匯率？`,
+      answer: `臨櫃換現鈔看「現金賣出」，網銀外幣帳戶看「即期賣出」。RateWise 同時顯示兩種匯率，讓你依換匯情境選擇正確報價。`,
+    },
+  ];
+}
+
 export function getCurrencyLandingPageContent(
   code: CurrencyLandingCode,
 ): CurrencyLandingPageContent {
@@ -2496,6 +2538,7 @@ export function getCurrencyLandingPageContent(
     faqTitle: `${displayName}換匯常見問題`,
     direction: 'to-twd' as const,
     relatedGuides: RELATED_GUIDES_TO_TWD,
+    answerCapsule: buildCurrencyAnswerCapsule(code, displayName, 'to-twd'),
     ...(SEO_RATE_EXAMPLES[code]?.alternativeProviders
       ? { alternativeProviders: SEO_RATE_EXAMPLES[code].alternativeProviders }
       : {}),
@@ -2786,6 +2829,7 @@ export function getReverseCurrencyLandingPageContent(
     faqTitle: `台幣換${displayName}常見問題`,
     direction: 'twd-to-foreign' as const,
     relatedGuides: RELATED_GUIDES_TWD_TO_FOREIGN,
+    answerCapsule: buildCurrencyAnswerCapsule(code, displayName, 'twd-to-foreign'),
     ...(SEO_RATE_EXAMPLES[code]?.alternativeProviders
       ? { alternativeProviders: SEO_RATE_EXAMPLES[code].alternativeProviders }
       : {}),

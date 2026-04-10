@@ -836,6 +836,10 @@ RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：*
 | P0-5 | 加入 `ExchangeRateSpecification` schema 至所有 34 幣對頁             | v2.22.0   | `seo-metadata.ts` buildExchangeRateSpecificationJsonLd；從 `seo-rate-examples.ts` 動態讀取匯率    |
 | P0-6 | 在所有幣對頁與金額頁加入可見更新時間戳                               | v2.22.0   | `CurrencyLandingPage.tsx` 加入 `<time>` 元素顯示 `SEO_RATE_EXAMPLES_DATE`；Perplexity 新鮮度信號  |
 | P1-7 | 擴充 `seo-best-practices.test.ts` 加入 Schema 測試                   | v2.22.0   | 新增 CurrencyConversionService + ExchangeRateSpecification 測試（10 個測試案例）                  |
+| P1-1 | 在所有 34 幣對頁加入 Answer Capsule                                  | v2.23.0   | `buildCurrencyAnswerCapsule()` 函數；正向/反向幣對頁各 2 題 Answer Capsule                        |
+| P1-2 | 幣對頁 FAQ 擴展至 5-7 題                                             | v2.22.0   | `CURRENCY_SPECIFIC_FAQ` 已為每個幣別提供 2-3 則特化 FAQ，加上通用 FAQ 共 5-7 題                   |
+| P1-3 | Authority Guide 頁 Answer Capsule                                    | v2.16.4   | `GUIDE_PAGE_SEO`、`OPEN_DATA_PAGE_SEO`、`ABOUT_PAGE_SEO` 已有 answerCapsule                       |
+| P1-4 | 匯率比較資訊（台銀 vs 中間價）                                       | v2.22.0   | `buildRateExampleSentence()` 在 FAQ 答案中嵌入具體差距數字                                        |
 
 ### 🔴 P0 — 立即（直接影響 AI 引用率）
 
@@ -843,14 +847,16 @@ RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：*
 
 ### 🟠 P1 — 短期（1 個月內，重大內容與 Schema 改善）
 
-| #    | 任務                                                                                    | 影響         | 檔案                                      |
-| ---- | --------------------------------------------------------------------------------------- | ------------ | ----------------------------------------- |
-| P1-1 | 在所有 34 幣對頁頂部加入 Answer Capsule（40-60 字 answerCapsule 欄位）                  | AI 引用 +40% | `seo-metadata.ts` CURRENCY_PAGE_OVERRIDES |
-| P1-2 | 將每個幣對頁的 FAQ 從 3-4 題擴展至 5-7 題（含旅遊場景、DCC 說明、趨勢圖使用）           | 引用深度     | `seo-metadata.ts`                         |
-| P1-3 | 在三篇 Authority Guide 頁加入 Answer Capsule（管道已就緒，補 `answerCapsule` 欄位即可） | AI 引用      | `seo-metadata.ts` AUTHORITY_GUIDE_PAGES   |
-| P1-4 | 加入匯率比較資訊（台銀賣出價 vs 中間價，含具體差距數字）至幣對頁                        | E-E-A-T      | `seo-metadata.ts` SEO_RATE_EXAMPLES       |
-| P1-5 | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                                  | AI 引用      | `CurrencyLandingPage.tsx`（amount 模式）  |
-| P1-6 | 更新 `sitemap.xml` 生成腳本加入 `<changefreq>` 和 `<priority>`（若未有）                | 爬蟲效率     | `generate-sitemap-2025.mjs`               |
+| #    | 任務                                                                                    | 影響         | 檔案                                      | 狀態 |
+| ---- | --------------------------------------------------------------------------------------- | ------------ | ----------------------------------------- | ---- |
+| P1-1 | 在所有 34 幣對頁頂部加入 Answer Capsule（40-60 字 answerCapsule 欄位）                  | AI 引用 +40% | `seo-metadata.ts` CURRENCY_PAGE_OVERRIDES | ✅   |
+| P1-2 | 將每個幣對頁的 FAQ 從 3-4 題擴展至 5-7 題（含旅遊場景、DCC 說明、趨勢圖使用）           | 引用深度     | `seo-metadata.ts`                         | ✅   |
+| P1-3 | 在三篇 Authority Guide 頁加入 Answer Capsule（管道已就緒，補 `answerCapsule` 欄位即可） | AI 引用      | `seo-metadata.ts` AUTHORITY_GUIDE_PAGES   | ✅   |
+| P1-4 | 加入匯率比較資訊（台銀賣出價 vs 中間價，含具體差距數字）至幣對頁                        | E-E-A-T      | `seo-metadata.ts` SEO_RATE_EXAMPLES       | ✅   |
+| P1-5 | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                                  | AI 引用      | `CurrencyLandingPage.tsx`（amount 模式）  |      |
+| P1-6 | ~~更新 `sitemap.xml` 生成腳本加入 `<changefreq>` 和 `<priority>`~~                      | ~~爬蟲效率~~ | `generate-sitemap-2025.mjs`               | N/A  |
+
+> **P1-6 說明**：根據 2025 年 SEO 標準，Google 和 Bing 都忽略 `<changefreq>` 和 `<priority>` 標籤。`generate-sitemap-2025.mjs` 已遵循此標準，移除這些過時標籤。
 
 ### 🟡 P2 — 中期（2-3 個月，GEO 與外部存在感）
 
