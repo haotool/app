@@ -5,7 +5,6 @@ import { DEV_ONLY_PATHS, SITE_CONFIG } from '../seo-paths.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
-const BUILD_DATE = new Date().toISOString().split('T')[0];
 const SITEMAP_URL = `${SITE_CONFIG.url}sitemap.xml`;
 
 const AI_BOTS = [
@@ -43,7 +42,6 @@ function buildDisallowRules(paths) {
 
 const robotsTxt = `# RateWise — Robots Exclusion Protocol
 # ${SITE_CONFIG.url}
-# 最後更新：${BUILD_DATE}
 
 User-agent: *
 Allow: /

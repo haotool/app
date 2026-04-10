@@ -1,17 +1,29 @@
 import { readFileSync, writeFileSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APP_INFO, APP_MANIFEST } from '../src/config/app-info.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
-const BUILD_DATE = new Date().toISOString().split('T')[0].replace(/-/g, '');
+const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
+
+// 用 git commit hash 做 cache-busting（比日期精準：每次 commit 才更新）
+// 若 git 不可用（罕見）回退至版本號
+function getVersionToken() {
+  try {
+    return execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
+  } catch {
+    return pkg.version;
+  }
+}
+const VERSION_TOKEN = getVersionToken();
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
 const currencyCount = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
 
-const versioned = (path) => `${path}?v=${BUILD_DATE}`;
+const versioned = (path) => `${path}?v=${VERSION_TOKEN}`;
 
 const manifest = {
   name: APP_INFO.name,
@@ -82,4 +94,6 @@ writeFileSync(
   resolve(ROOT, 'public/manifest.webmanifest'),
   JSON.stringify(manifest, null, 2) + '\n',
 );
-console.log(`✅ manifest.webmanifest 已由 SSOT 重新生成（${currencyCount} 種貨幣）`);
+console.log(
+  `✅ manifest.webmanifest 已由 SSOT 重新生成（${currencyCount} 種貨幣，cache token: ${VERSION_TOKEN}）`,
+);

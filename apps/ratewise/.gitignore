@@ -1,0 +1,12 @@
+# Build-time generated artifacts
+# 由 prebuild 腳本自動產生，不應 commit 至主支
+# 部署時 CI `pnpm build` 會重新生成，無需追蹤
+
+# 每次 build 從 CDN 抓取的匯率快照
+public/rates.json
+
+# 由 git commit 日期驅動，每次 commit 後都會漂移
+public/sitemap.xml
+
+# 純設定衍生，移除日期後仍不追蹤以保持 public/ 乾淨
+public/robots.txt
