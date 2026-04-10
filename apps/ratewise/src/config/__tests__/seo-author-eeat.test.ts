@@ -26,7 +26,15 @@ describe('AUTHOR_PERSON SSOT', () => {
 
   it('應有 sameAs 陣列包含 Threads URL', () => {
     expect(Array.isArray(AUTHOR_PERSON.sameAs)).toBe(true);
-    const hasThreads = AUTHOR_PERSON.sameAs.some((url) => url.includes('threads.net'));
+    // 使用 URL 解析確保 hostname 精確匹配，避免 CodeQL js/incomplete-url-substring-sanitization 警告
+    const hasThreads = AUTHOR_PERSON.sameAs.some((urlStr) => {
+      try {
+        const url = new URL(urlStr);
+        return url.hostname === 'www.threads.net' || url.hostname === 'threads.net';
+      } catch {
+        return false;
+      }
+    });
     expect(hasThreads).toBe(true);
   });
 
@@ -64,7 +72,16 @@ describe('buildPersonJsonLd()', () => {
     const schema = buildPersonJsonLd();
     const sameAs = schema['sameAs'] as string[];
     expect(Array.isArray(sameAs)).toBe(true);
-    expect(sameAs.some((url) => url.includes('threads.net'))).toBe(true);
+    // 使用 URL 解析確保 hostname 精確匹配
+    const hasThreads = sameAs.some((urlStr) => {
+      try {
+        const url = new URL(urlStr);
+        return url.hostname === 'www.threads.net' || url.hostname === 'threads.net';
+      } catch {
+        return false;
+      }
+    });
+    expect(hasThreads).toBe(true);
   });
 
   it('應包含 email', () => {
@@ -93,7 +110,16 @@ describe('buildArticleJsonLd() author 欄位', () => {
   it('author 應包含 sameAs（Threads）', () => {
     const author = article['author'] as { sameAs?: string[] };
     expect(Array.isArray(author.sameAs)).toBe(true);
-    expect(author.sameAs!.some((url) => url.includes('threads.net'))).toBe(true);
+    // 使用 URL 解析確保 hostname 精確匹配
+    const hasThreads = author.sameAs!.some((urlStr) => {
+      try {
+        const url = new URL(urlStr);
+        return url.hostname === 'www.threads.net' || url.hostname === 'threads.net';
+      } catch {
+        return false;
+      }
+    });
+    expect(hasThreads).toBe(true);
   });
 
   it('publisher 應為 Organization @id 引用（linked data 模式）', () => {
@@ -122,6 +148,15 @@ describe('ABOUT_PAGE_SEO.jsonLd', () => {
     const personSchema = jsonLd.find((s) => s['@type'] === 'Person');
     const sameAs = personSchema?.['sameAs'] as string[] | undefined;
     expect(Array.isArray(sameAs)).toBe(true);
-    expect(sameAs!.some((url) => url.includes('threads.net'))).toBe(true);
+    // 使用 URL 解析確保 hostname 精確匹配
+    const hasThreads = sameAs!.some((urlStr) => {
+      try {
+        const url = new URL(urlStr);
+        return url.hostname === 'www.threads.net' || url.hostname === 'threads.net';
+      } catch {
+        return false;
+      }
+    });
+    expect(hasThreads).toBe(true);
   });
 });
