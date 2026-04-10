@@ -92,6 +92,7 @@ function runVerification(scriptPath, name) {
     const result = spawnSync('node', [safeScriptPath], {
       stdio: 'inherit',
       cwd: resolve(__dirname, '..'),
+      env: { ...process.env },
     });
 
     if (result.error || result.status !== 0) {

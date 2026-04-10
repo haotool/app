@@ -91,7 +91,10 @@ RUN test -f /app/apps/ratewise/dist/sitemap.xml && \
 # 並只安裝 healthcheck 所需的 wget，避免額外擴大攻擊面。
 FROM nginx:stable
 
+# [fix:2026-04-10] 安裝安全更新以修復 CVE-2026-4775 (libtiff) 等漏洞
+# 參考: https://security-tracker.debian.org/tracker/CVE-2026-4775
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends wget && \
     rm -rf /var/lib/apt/lists/*
 

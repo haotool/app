@@ -232,17 +232,34 @@ async function main() {
   }
 
   let hasError = false;
-  for (const entry of assetEntries) {
-    const target = new URL(entry.url.replace(/^\//, ''), base).toString();
-    const result = await probe(target);
-    if (!result.ok) {
-      hasError = true;
-      console.error(`❌ ${target} 無法擷取 (status: ${result.status})`);
-      if (result.message) {
-        console.error(`   ↳ ${result.message}`);
+
+  // 本地模式：驗證本地檔案是否存在
+  // 直播模式：通過 HTTP 請求驗證資產是否可訪問
+  if (VERIFY_SOURCE === 'local') {
+    console.log('📂 本地模式：驗證 dist 目錄中的資產檔案');
+    for (const entry of assetEntries) {
+      const localPath = resolveLocalPrecacheAssetPath(entry.url, DIST_DIR);
+      if (existsSync(localPath)) {
+        console.log(`✅ ${entry.url} (本地檔案存在)`);
+      } else {
+        hasError = true;
+        console.error(`❌ ${entry.url} 本地檔案不存在: ${localPath}`);
       }
-    } else {
-      console.log(`✅ ${target} (status: ${result.status})`);
+    }
+  } else {
+    console.log('🌐 直播模式：通過 HTTP 請求驗證資產');
+    for (const entry of assetEntries) {
+      const target = new URL(entry.url.replace(/^\//, ''), base).toString();
+      const result = await probe(target);
+      if (!result.ok) {
+        hasError = true;
+        console.error(`❌ ${target} 無法擷取 (status: ${result.status})`);
+        if (result.message) {
+          console.error(`   ↳ ${result.message}`);
+        }
+      } else {
+        console.log(`✅ ${target} (status: ${result.status})`);
+      }
     }
   }
 
