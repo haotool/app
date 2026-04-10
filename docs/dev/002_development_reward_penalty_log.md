@@ -3866,3 +3866,55 @@ root_cause:
 - .github/workflows/update-latest-rates.yml
 - .github/workflows/update-moneybox-rates.yml
 - apps/ratewise/src/config/**tests**/build-scripts.test.ts
+
+---
+
+id: ratewise-p0-seo-schema-implementation
+date: 2026-04-09
+title: 實作 P0 SEO Schema：CurrencyConversionService + ExchangeRateSpecification + 可見更新時間戳
+score: +3
+type: improvement
+content_type: feature
+scope: ratewise, seo
+topics: [seo, schema.org, json-ld, ai-seo, aeo, geo]
+keywords:
+[CurrencyConversionService, ExchangeRateSpecification, SEO_RATE_EXAMPLES, freshness, timestamp, Perplexity, AI citation]
+aliases: [P0 SEO Schema 實作, 首頁 CurrencyConversionService, 幣對頁 ExchangeRateSpecification]
+related_entries:
+[ratewise-seo-production-followup-ssot-hardening, ratewise-health-check-plain-node-ssot-fix]
+summary: 依據 `SEO_MASTER_SSOT.md` 的 P0 優先級任務，完成三項關鍵 SEO 改善：(1) 首頁加入 `CurrencyConversionService` schema，讓 AI 引擎匹配「幣別換算工具」查詢時優先引用；(2) 34 個幣對頁加入 `ExchangeRateSpecification` schema，從 `seo-rate-examples.ts` 動態讀取現金賣出價，讓 AI 引擎可提取並顯示具體匯率數字；(3) 幣對頁加入可見更新時間戳（`<time>` 元素），作為 Perplexity 新鮮度信號。同時新增 10 個測試案例驗證 schema 正確性。
+root_cause:
+
+- `SEO_MASTER_SSOT.md` 已規劃 P0 任務但尚未實作，導致 AI 引擎無法從 RateWise 頁面提取結構化匯率資訊。
+- 幣對頁缺乏可見更新時間，Perplexity 等 AI 引擎無法判斷內容新鮮度。
+  impact:
+
+- AI 引擎（ChatGPT、Perplexity、Claude）在回答「台幣換美金匯率」等查詢時，無法從 RateWise 頁面提取具體數字。
+- 缺乏 `CurrencyConversionService` schema，AI 引擎無法識別 RateWise 為專業匯率換算工具。
+- 無可見更新時間，Perplexity 傾向引用有明確時間戳的競爭頁面。
+  actions:
+
+- 在 `seo-metadata.ts` 新增 `buildCurrencyConversionServiceJsonLd()` 函式，定義工具核心功能、支援語言、功能清單。
+- 在 `HOMEPAGE_SEO.jsonLd` 陣列加入 `CurrencyConversionService` schema。
+- 在 `seo-metadata.ts` 新增 `buildExchangeRateSpecificationJsonLd()` 函式，接受幣別代碼、匯率、描述參數。
+- 在 `getCurrencyLandingPageContent()` 和 `getReverseCurrencyLandingPageContent()` 的 `jsonLd` 陣列加入 `ExchangeRateSpecification`。
+- 在 `CurrencyLandingPage.tsx` header 區塊加入 `<time>` 元素顯示 `SEO_RATE_EXAMPLES_DATE`。
+- 在 `seo-best-practices.test.ts` 新增 10 個測試案例驗證兩個 schema 的結構與整合。
+- 更新 `SEO_MASTER_SSOT.md`，將 P0-4、P0-5、P0-6、P1-7 標記為已完成。
+  prevention:
+
+- 新增 SEO schema 時必須同步新增測試，確保 schema 結構符合 schema.org 規範。
+- 動態匯率資料必須從 SSOT（`seo-rate-examples.ts`）讀取，禁止硬編碼。
+- 可見時間戳必須使用 `<time>` 元素並帶 `dateTime` 屬性，確保機器可讀。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run seo-best-practices`（122 tests passed）
+- `pnpm typecheck`（全部通過）
+- 驗證首頁 JSON-LD 包含 `CurrencyConversionService`
+- 驗證幣對頁 JSON-LD 包含 `ExchangeRateSpecification` 且 `price` 為動態值
+  references:
+
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/components/CurrencyLandingPage.tsx
+- apps/ratewise/src/seo-best-practices.test.ts
+- docs/SEO_MASTER_SSOT.md

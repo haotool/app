@@ -410,6 +410,70 @@ interface WebPageOptions {
 }
 
 /**
+ * 生成 ExchangeRateSpecification JSON-LD。
+ * 每個幣對頁注入即時匯率，讓 AI 引擎可提取並顯示具體數字。
+ * 參考：https://schema.org/ExchangeRateSpecification
+ * @param fromCurrency 來源貨幣代碼（如 USD）
+ * @param toCurrency 目標貨幣代碼（如 TWD）
+ * @param rate 匯率數值（即期賣出價）
+ * @param rateDescription 匯率描述（如「臺灣銀行即期賣出價」）
+ */
+export function buildExchangeRateSpecificationJsonLd(
+  fromCurrency: string,
+  toCurrency: string,
+  rate: number,
+  rateDescription: string,
+): JsonLdBlock {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ExchangeRateSpecification',
+    currency: fromCurrency,
+    currentExchangeRate: {
+      '@type': 'UnitPriceSpecification',
+      price: String(rate),
+      priceCurrency: toCurrency,
+      description: rateDescription,
+      validFrom: SEO_RATE_EXAMPLES_DATE,
+    },
+  };
+}
+
+/**
+ * 生成 CurrencyConversionService JSON-LD。
+ * Schema.org 精確定義此工具的核心功能，AI 引擎在匹配「幣別換算」查詢時優先引用有此 schema 的頁面。
+ * 參考：https://schema.org/CurrencyConversionService
+ */
+export function buildCurrencyConversionServiceJsonLd(): JsonLdBlock {
+  const orgId = `${SITE_BASE_URL}#organization`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CurrencyConversionService',
+    '@id': `${SITE_BASE_URL}#currencyconversionservice`,
+    name: APP_INFO.name,
+    alternateName: APP_INFO.subtitle,
+    description: `顯示臺灣銀行牌告實際買入賣出價（非中間價）的即時匯率換算工具，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、PWA 離線使用。`,
+    provider: { '@id': orgId },
+    url: SITE_BASE_URL,
+    areaServed: 'TW',
+    availableLanguage: ['zh-TW', 'en', 'ja'],
+    inLanguage: DEFAULT_LOCALE,
+    serviceType: 'Currency Exchange Rate Information',
+    featureList: [
+      '台灣銀行牌告匯率（現金/即期四種報價）',
+      `${SUPPORTED_CURRENCY_COUNT} 種貨幣即時換算`,
+      '每 5 分鐘自動同步',
+      'PWA 離線使用',
+      '匯率歷史趨勢圖（7-30 天）',
+    ],
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'TWD',
+    },
+  };
+}
+
+/**
  * 生成 WebPage JSON-LD。
  * 用於首頁等非 Article 類型頁面，支援 speakable 屬性標記語音搜尋可朗讀區塊。
  * 根據 schema.org 規範，SpeakableSpecification 必須嵌套在 WebPage 的 speakable 屬性中。
@@ -730,6 +794,8 @@ export const HOMEPAGE_SEO = {
     buildWebPageJsonLd(`${APP_INFO.name} — 即時匯率換算`, SITE_SEO.description, '/', {
       speakableCssSelectors: ['h1'],
     }),
+    // CurrencyConversionService：精確定義此工具的核心功能，AI 引擎優先引用。
+    buildCurrencyConversionServiceJsonLd(),
   ],
   content: {
     eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步 · 顯示實際買賣價',
@@ -2382,6 +2448,17 @@ export function getCurrencyLandingPageContent(
         `${APP_INFO.name} ${code}/TWD 即時匯率換算與趨勢`,
       ),
       buildFaqPageJsonLd(faqEntries),
+      // ExchangeRateSpecification：注入即時匯率，讓 AI 引擎可提取並顯示具體數字。
+      ...(SEO_RATE_EXAMPLES[code]
+        ? [
+            buildExchangeRateSpecificationJsonLd(
+              code,
+              'TWD',
+              SEO_RATE_EXAMPLES[code].cashSell,
+              `臺灣銀行現金賣出價（${displayName}換台幣匯率）`,
+            ),
+          ]
+        : []),
     ],
     faqEntries,
     howToSteps: [
@@ -2660,6 +2737,18 @@ export function getReverseCurrencyLandingPageContent(
       ),
       // 全幣別啟用 FAQPage JSON-LD，提升 AI/AEO 引擎覆蓋率與 Rich Result 曝光機會。
       buildFaqPageJsonLd(faqEntries),
+      // ExchangeRateSpecification：注入即時匯率，讓 AI 引擎可提取並顯示具體數字。
+      // 反向頁（TWD→外幣）：currency 為 TWD，priceCurrency 為外幣代碼。
+      ...(SEO_RATE_EXAMPLES[code]
+        ? [
+            buildExchangeRateSpecificationJsonLd(
+              'TWD',
+              code,
+              Number((1 / SEO_RATE_EXAMPLES[code].cashSell).toFixed(6)),
+              `臺灣銀行現金賣出價（台幣換${displayName}匯率）`,
+            ),
+          ]
+        : []),
     ],
     faqEntries,
     howToSteps: [

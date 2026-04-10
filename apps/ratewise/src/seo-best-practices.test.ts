@@ -781,3 +781,119 @@ describeIfPairsGenerated('📦 Pair JSON API Endpoints (requires prebuild)', () 
     expect(usdTwd.rateFieldPath).toContain('USD');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P0 Schema 驗證：CurrencyConversionService + ExchangeRateSpecification
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('🏦 CurrencyConversionService Schema (P0-4)', () => {
+  // 動態 import 避免 Vite runtime 依賴
+  it('should export buildCurrencyConversionServiceJsonLd function', async () => {
+    const { buildCurrencyConversionServiceJsonLd } = await import('./config/seo-metadata');
+    expect(typeof buildCurrencyConversionServiceJsonLd).toBe('function');
+  });
+
+  it('should generate valid CurrencyConversionService schema', async () => {
+    const { buildCurrencyConversionServiceJsonLd } = await import('./config/seo-metadata');
+    const schema = buildCurrencyConversionServiceJsonLd();
+
+    expect(schema['@context']).toBe('https://schema.org');
+    expect(schema['@type']).toBe('CurrencyConversionService');
+    expect(schema['@id']).toContain('#currencyconversionservice');
+    expect(schema['name']).toBeTruthy();
+    expect(schema['description']).toContain('臺灣銀行');
+    expect(schema['url']).toContain('ratewise');
+    expect(schema['areaServed']).toBe('TW');
+    expect(schema['availableLanguage']).toContain('zh-TW');
+    expect(schema['featureList']).toBeInstanceOf(Array);
+    expect((schema['featureList'] as string[]).length).toBeGreaterThan(0);
+  });
+
+  it('should include CurrencyConversionService in homepage jsonLd', async () => {
+    const { HOMEPAGE_SEO } = await import('./config/seo-metadata');
+    const jsonLd = HOMEPAGE_SEO.jsonLd;
+
+    const currencyConversionService = jsonLd.find(
+      (block) => block['@type'] === 'CurrencyConversionService',
+    );
+    expect(currencyConversionService).toBeTruthy();
+  });
+});
+
+describe('💱 ExchangeRateSpecification Schema (P0-5)', () => {
+  it('should export buildExchangeRateSpecificationJsonLd function', async () => {
+    const { buildExchangeRateSpecificationJsonLd } = await import('./config/seo-metadata');
+    expect(typeof buildExchangeRateSpecificationJsonLd).toBe('function');
+  });
+
+  it('should generate valid ExchangeRateSpecification schema', async () => {
+    const { buildExchangeRateSpecificationJsonLd } = await import('./config/seo-metadata');
+    const schema = buildExchangeRateSpecificationJsonLd('USD', 'TWD', 32.01, '臺灣銀行現金賣出價');
+
+    expect(schema['@context']).toBe('https://schema.org');
+    expect(schema['@type']).toBe('ExchangeRateSpecification');
+    expect(schema['currency']).toBe('USD');
+    expect(schema['currentExchangeRate']).toBeTruthy();
+
+    const rate = schema['currentExchangeRate'] as Record<string, unknown>;
+    expect(rate['@type']).toBe('UnitPriceSpecification');
+    expect(rate['price']).toBe('32.01');
+    expect(rate['priceCurrency']).toBe('TWD');
+    expect(rate['description']).toContain('臺灣銀行');
+    expect(rate['validFrom']).toBeTruthy();
+  });
+
+  it('should include ExchangeRateSpecification in currency landing page jsonLd', async () => {
+    const { getCurrencyLandingPageContent } = await import('./config/seo-metadata');
+    const { jsonLd } = getCurrencyLandingPageContent('USD');
+
+    const exchangeRateSpec = jsonLd?.find(
+      (block) => block['@type'] === 'ExchangeRateSpecification',
+    );
+    expect(exchangeRateSpec).toBeTruthy();
+    expect(exchangeRateSpec?.['currency']).toBe('USD');
+  });
+
+  it('should include ExchangeRateSpecification in reverse currency landing page jsonLd', async () => {
+    const { getReverseCurrencyLandingPageContent } = await import('./config/seo-metadata');
+    const { jsonLd } = getReverseCurrencyLandingPageContent('USD');
+
+    const exchangeRateSpec = jsonLd?.find(
+      (block) => block['@type'] === 'ExchangeRateSpecification',
+    );
+    expect(exchangeRateSpec).toBeTruthy();
+    // 反向頁：TWD → USD，currency 應為 TWD
+    expect(exchangeRateSpec?.['currency']).toBe('TWD');
+  });
+
+  it('should have ExchangeRateSpecification for all 17 forward currency pages', async () => {
+    const { getCurrencyLandingPageContent } = await import('./config/seo-metadata');
+    const currencies = [
+      'USD',
+      'JPY',
+      'EUR',
+      'GBP',
+      'AUD',
+      'CAD',
+      'CHF',
+      'CNY',
+      'HKD',
+      'IDR',
+      'KRW',
+      'MYR',
+      'NZD',
+      'PHP',
+      'SGD',
+      'THB',
+      'VND',
+    ] as const;
+
+    for (const code of currencies) {
+      const { jsonLd } = getCurrencyLandingPageContent(code);
+      const exchangeRateSpec = jsonLd?.find(
+        (block) => block['@type'] === 'ExchangeRateSpecification',
+      );
+      expect(exchangeRateSpec, `${code} should have ExchangeRateSpecification`).toBeTruthy();
+    }
+  });
+});

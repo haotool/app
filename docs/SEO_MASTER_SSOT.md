@@ -215,92 +215,44 @@ Disallow: /ratewise/?
 
 ### 4.1 現況清單
 
-| Schema 類型                 | 頁面                  | 狀態                      | 實作位置                                    |
-| --------------------------- | --------------------- | ------------------------- | ------------------------------------------- |
-| `Organization`              | 全站                  | ✅ 已實作                 | `SEOHelmet.tsx` + `seo-metadata.ts`         |
-| `WebSite`                   | 全站                  | ✅ 已實作                 | `SEOHelmet.tsx`                             |
-| `SoftwareApplication`       | 首頁                  | ✅ 已實作                 | `SEOHelmet.tsx`                             |
-| `FAQPage`                   | FAQ 頁（`/faq/`）     | ✅ 已實作                 | `SEOHelmet.tsx`                             |
-| `BreadcrumbList`            | 幣對頁、金額頁        | ✅ 已實作                 | `SEOHelmet.tsx`                             |
-| `HowTo`                     | Guide 頁              | ✅ 已實作                 | `SEOHelmet.tsx`                             |
-| `ImageObject`               | OG 圖片（隱式）       | ✅ 已實作                 | `seo-metadata.ts`                           |
-| `Article`                   | 三篇 Authority Guide  | ✅ 已實作 (v2.18.0)       | `seo-metadata.ts` buildArticleJsonLd        |
-| `SpeakableSpecification`    | 所有 9 個內容頁       | ✅ 已實作 (v2.18.0)       | `seo-metadata.ts` buildSpeakableJsonLd      |
-| `knowsAbout`（Property）    | Organization + Person | ✅ 已實作 (v2.18.0)       | `buildSiteJsonLd()` + `buildPersonJsonLd()` |
-| `CurrencyConversionService` | 首頁                  | ❌ **缺漏（P0-4）**       | —                                           |
-| `ExchangeRateSpecification` | 幣對頁（34 個）       | ❌ **缺漏（P0-5）**       | —                                           |
-| `AggregateRating`           | 首頁                  | ❌ **缺漏（無評分系統）** | —                                           |
+| Schema 類型                 | 頁面                  | 狀態                      | 實作位置                                               |
+| --------------------------- | --------------------- | ------------------------- | ------------------------------------------------------ |
+| `Organization`              | 全站                  | ✅ 已實作                 | `SEOHelmet.tsx` + `seo-metadata.ts`                    |
+| `WebSite`                   | 全站                  | ✅ 已實作                 | `SEOHelmet.tsx`                                        |
+| `SoftwareApplication`       | 首頁                  | ✅ 已實作                 | `SEOHelmet.tsx`                                        |
+| `FAQPage`                   | FAQ 頁（`/faq/`）     | ✅ 已實作                 | `SEOHelmet.tsx`                                        |
+| `BreadcrumbList`            | 幣對頁、金額頁        | ✅ 已實作                 | `SEOHelmet.tsx`                                        |
+| `HowTo`                     | Guide 頁              | ✅ 已實作                 | `SEOHelmet.tsx`                                        |
+| `ImageObject`               | OG 圖片（隱式）       | ✅ 已實作                 | `seo-metadata.ts`                                      |
+| `Article`                   | 三篇 Authority Guide  | ✅ 已實作 (v2.18.0)       | `seo-metadata.ts` buildArticleJsonLd                   |
+| `SpeakableSpecification`    | 所有 9 個內容頁       | ✅ 已實作 (v2.18.0)       | `seo-metadata.ts` buildSpeakableJsonLd                 |
+| `knowsAbout`（Property）    | Organization + Person | ✅ 已實作 (v2.18.0)       | `buildSiteJsonLd()` + `buildPersonJsonLd()`            |
+| `CurrencyConversionService` | 首頁                  | ✅ 已實作 (v2.22.0)       | `seo-metadata.ts` buildCurrencyConversionServiceJsonLd |
+| `ExchangeRateSpecification` | 幣對頁（34 個）       | ✅ 已實作 (v2.22.0)       | `seo-metadata.ts` buildExchangeRateSpecificationJsonLd |
+| `AggregateRating`           | 首頁                  | ❌ **缺漏（無評分系統）** | —                                                      |
 
-### 4.2 高優先級缺漏 Schema 規格
+### 4.2 已完成 Schema 實作參考
 
-#### 4.2.1 `CurrencyConversionService`（P1 — 首頁）
+#### 4.2.1 `CurrencyConversionService`（✅ 已完成 v2.22.0）
+
+**實作位置**：`seo-metadata.ts` → `buildCurrencyConversionServiceJsonLd()`；在首頁 `HOMEPAGE_SEO.jsonLd` 注入。
 
 Schema.org 精確定義此工具的核心功能，AI 引擎在匹配「幣別換算工具」查詢時優先引用有此 schema 的頁面。
 
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "CurrencyConversionService",
-  "name": "RateWise 匯率好工具",
-  "alternateName": "RateWise",
-  "description": "顯示臺灣銀行牌告實際買入賣出價（非中間價）的即時匯率換算工具，支援 18 種貨幣、現金與即期匯率切換、PWA 離線使用。",
-  "provider": {
-    "@type": "Organization",
-    "name": "HaoTool",
-    "url": "https://app.haotool.org"
-  },
-  "url": "https://app.haotool.org/ratewise/",
-  "applicationCategory": "FinanceApplication",
-  "areaServed": "TW",
-  "availableLanguage": ["zh-TW", "en", "ja"],
-  "inLanguage": "zh-TW",
-  "featureList": [
-    "台灣銀行牌告匯率（現金/即期四種報價）",
-    "18 種貨幣即時換算",
-    "每 5 分鐘自動同步",
-    "PWA 離線使用",
-    "匯率歷史趨勢圖（7-30 天）"
-  ],
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "TWD"
-  }
-}
-```
+#### 4.2.2 `ExchangeRateSpecification`（✅ 已完成 v2.22.0）
 
-**實作位置**：`seo-metadata.ts` → `buildSiteJsonLd()` 或獨立 builder；在首頁注入。
+**實作位置**：`seo-metadata.ts` → `buildExchangeRateSpecificationJsonLd()`；在 34 個幣對頁 `getCurrencyLandingPageContent()` 和 `getReverseCurrencyLandingPageContent()` 注入。
 
-#### 4.2.2 `ExchangeRateSpecification`（P1 — 幣對頁 34 個）
+**實作細節**：
 
-每個幣對頁注入即時匯率，讓 AI 引擎可提取並顯示具體數字。**必須從 `rating-snapshot.ts` 動態注入**，禁止硬編碼。
-
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "ExchangeRateSpecification",
-  "currency": "USD",
-  "currentExchangeRate": {
-    "@type": "UnitPriceSpecification",
-    "price": "32.75",
-    "priceCurrency": "TWD",
-    "description": "臺灣銀行即期賣出價（台幣換美元匯率）",
-    "validFrom": "2026-03-23T10:00:00+08:00"
-  }
-}
-```
-
-**注意事項**：
-
-- `price` 使用 `spot.sell`（即期賣出價）作為代表性報價
-- `validFrom` 使用 `rating-snapshot.ts` 的 `updateTime` 欄位
+- `price` 使用 `seo-rate-examples.ts` 的 `cashSell`（現金賣出價）
+- `validFrom` 使用 `SEO_RATE_EXAMPLES_DATE`
 - 外幣→TWD 頁（如 `usd-twd`）：`currency: "USD"`，`priceCurrency: "TWD"`
-- TWD→外幣頁（如 `twd-usd`）：`currency: "TWD"`，`priceCurrency: "USD"`
-- 包裝在 `WebPage` 的 `mainEntity` 屬性中
+- TWD→外幣頁（如 `twd-usd`）：`currency: "TWD"`，`priceCurrency: "USD"`（匯率取倒數）
 
-**實作位置**：`src/pages/CurrencyLandingPage.tsx`（或獨立 builder）→ 從 `rating-snapshot.ts` 讀取。
+### 4.3 待實作 Schema 規格
 
-#### 4.2.3 `Article` / `TechArticle`（P2 — 三篇 Authority Guide）
+#### 4.3.1 `Article` / `TechArticle`（P2 — 三篇 Authority Guide）
 
 提升 AI 引擎對這三篇權威指南的引用率（AI 引用 Article 內容比普通頁面高 40%）。
 
@@ -880,26 +832,25 @@ RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：*
 | —    | Lighthouse CI 效能門檻調降至 0.83（自然波動緩衝）                    | v2.18.0   | `.lighthouserc.json` 從 0.85 降至 0.83；反映 knowsAbout JSON-LD 加入後的真實基準                  |
 | —    | prebuild 外部 API 硬依賴修復（`SEO_RATE_EXAMPLES_OPTIONAL=1`）       | v2.17.x   | 第三方 API 短暫失敗時保留既有生成檔，不中止整個 build                                             |
 | —    | fallback 匯率快照新鮮度檢查（> 24h 拒絕使用）                        | v2.17.x   | `prebuild-fetch-rates.mjs` 加入時間戳解析，避免 stale 匯率寫入 SSG 頁面                           |
+| P0-4 | 加入 `CurrencyConversionService` schema 至首頁 JSON-LD               | v2.22.0   | `seo-metadata.ts` buildCurrencyConversionServiceJsonLd；AI 引擎匹配「幣別換算」查詢時優先引用     |
+| P0-5 | 加入 `ExchangeRateSpecification` schema 至所有 34 幣對頁             | v2.22.0   | `seo-metadata.ts` buildExchangeRateSpecificationJsonLd；從 `seo-rate-examples.ts` 動態讀取匯率    |
+| P0-6 | 在所有幣對頁與金額頁加入可見更新時間戳                               | v2.22.0   | `CurrencyLandingPage.tsx` 加入 `<time>` 元素顯示 `SEO_RATE_EXAMPLES_DATE`；Perplexity 新鮮度信號  |
+| P1-7 | 擴充 `seo-best-practices.test.ts` 加入 Schema 測試                   | v2.22.0   | 新增 CurrencyConversionService + ExchangeRateSpecification 測試（10 個測試案例）                  |
 
 ### 🔴 P0 — 立即（直接影響 AI 引用率）
 
-| #    | 任務                                                                                         | 影響              | 檔案                                |
-| ---- | -------------------------------------------------------------------------------------------- | ----------------- | ----------------------------------- |
-| P0-4 | 加入 `CurrencyConversionService` schema 至首頁 JSON-LD                                       | AI 引用 +30%      | `seo-metadata.ts` → `SEOHelmet.tsx` |
-| P0-5 | 加入 `ExchangeRateSpecification` schema 至所有 34 幣對頁（從 `rating-snapshot.ts` 動態讀取） | AI 引用 +40%      | `CurrencyLandingPage.tsx`           |
-| P0-6 | 在所有幣對頁與金額頁加入可見更新時間戳（`<time>` 元素 + `BUILD_TIME`）                       | Perplexity 新鮮度 | 頁面元件                            |
+**全部完成** ✅
 
 ### 🟠 P1 — 短期（1 個月內，重大內容與 Schema 改善）
 
-| #    | 任務                                                                                               | 影響         | 檔案                                      |
-| ---- | -------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------- |
-| P1-1 | 在所有 34 幣對頁頂部加入 Answer Capsule（40-60 字 answerCapsule 欄位）                             | AI 引用 +40% | `seo-metadata.ts` CURRENCY_PAGE_OVERRIDES |
-| P1-2 | 將每個幣對頁的 FAQ 從 3-4 題擴展至 5-7 題（含旅遊場景、DCC 說明、趨勢圖使用）                      | 引用深度     | `seo-metadata.ts`                         |
-| P1-3 | 在三篇 Authority Guide 頁加入 Answer Capsule（管道已就緒，補 `answerCapsule` 欄位即可）            | AI 引用      | `seo-metadata.ts` AUTHORITY_GUIDE_PAGES   |
-| P1-4 | 加入匯率比較資訊（台銀賣出價 vs 中間價，含具體差距數字）至幣對頁                                   | E-E-A-T      | `seo-metadata.ts` SEO_RATE_EXAMPLES       |
-| P1-5 | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                                             | AI 引用      | `CurrencyLandingPage.tsx`（amount 模式）  |
-| P1-6 | 更新 `sitemap.xml` 生成腳本加入 `<changefreq>` 和 `<priority>`（若未有）                           | 爬蟲效率     | `generate-sitemap-2025.mjs`               |
-| P1-7 | 擴充 `seo-best-practices.test.ts`：加入 CurrencyConversionService + ExchangeRateSpecification 測試 | 測試防護     | `seo-best-practices.test.ts`              |
+| #    | 任務                                                                                    | 影響         | 檔案                                      |
+| ---- | --------------------------------------------------------------------------------------- | ------------ | ----------------------------------------- |
+| P1-1 | 在所有 34 幣對頁頂部加入 Answer Capsule（40-60 字 answerCapsule 欄位）                  | AI 引用 +40% | `seo-metadata.ts` CURRENCY_PAGE_OVERRIDES |
+| P1-2 | 將每個幣對頁的 FAQ 從 3-4 題擴展至 5-7 題（含旅遊場景、DCC 說明、趨勢圖使用）           | 引用深度     | `seo-metadata.ts`                         |
+| P1-3 | 在三篇 Authority Guide 頁加入 Answer Capsule（管道已就緒，補 `answerCapsule` 欄位即可） | AI 引用      | `seo-metadata.ts` AUTHORITY_GUIDE_PAGES   |
+| P1-4 | 加入匯率比較資訊（台銀賣出價 vs 中間價，含具體差距數字）至幣對頁                        | E-E-A-T      | `seo-metadata.ts` SEO_RATE_EXAMPLES       |
+| P1-5 | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                                  | AI 引用      | `CurrencyLandingPage.tsx`（amount 模式）  |
+| P1-6 | 更新 `sitemap.xml` 生成腳本加入 `<changefreq>` 和 `<priority>`（若未有）                | 爬蟲效率     | `generate-sitemap-2025.mjs`               |
 
 ### 🟡 P2 — 中期（2-3 個月，GEO 與外部存在感）
 

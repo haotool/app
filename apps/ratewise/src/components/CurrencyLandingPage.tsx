@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from './SEOHelmet';
 import { PageNavHeader } from './PageNavHeader';
 import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
-import { SEO_RATE_EXAMPLES } from '../config/generated/seo-rate-examples';
+import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
 import { getCopyrightNotice } from '../config/app-info';
 import type {
@@ -201,6 +201,12 @@ export function CurrencyLandingPage({
                 </h1>
                 <p className="text-text-muted text-sm sm:text-base mt-2 leading-relaxed">
                   {description}
+                </p>
+                {/* 更新時間戳：Perplexity 新鮮度信號，AI 引擎優先引用有明確更新時間的頁面。 */}
+                <p className="text-text-muted text-xs mt-2 flex items-center gap-1.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+                  最後更新：
+                  <time dateTime={SEO_RATE_EXAMPLES_DATE}>{SEO_RATE_EXAMPLES_DATE}</time>
                 </p>
               </div>
             </div>
