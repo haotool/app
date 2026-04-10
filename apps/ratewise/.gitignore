@@ -8,5 +8,5 @@ public/rates.json
 # 由 git commit 日期驅動，每次 commit 後都會漂移
 public/sitemap.xml
 
-# 純設定衍生，移除日期後仍不追蹤以保持 public/ 乾淨
-public/robots.txt
+# 注意：robots.txt 由 seo-best-practices.test.ts 直接讀取（無 existsSync 保護），
+# 必須 commit 至 repo 讓 CI 測試可通過。移除日期後內容穩定，不會造成 git 污染。

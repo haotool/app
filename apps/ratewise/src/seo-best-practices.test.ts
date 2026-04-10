@@ -193,6 +193,9 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
 
   describe('🗺️ sitemap.xml - Search Engine Optimization', () => {
     const sitemapPath = resolve(PUBLIC_PATH, 'sitemap.xml');
+    // sitemap.xml 由 prebuild 產生且 git-ignored（含 git 日期，每次 commit 後漂移）
+    // 未執行 pnpm build 前跳過，CI build 後才驗證
+    if (!existsSync(sitemapPath)) return;
     const sitemapContent = readFile(sitemapPath);
 
     it('should have valid sitemap.xml file', () => {

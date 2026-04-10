@@ -1,0 +1,83 @@
+# RateWise — Robots Exclusion Protocol
+# https://app.haotool.org/ratewise/
+
+User-agent: *
+Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+# 首頁 deep-link 僅供分享，不作為索引目標。
+# 幣對金額頁是否索引由頁面層 canonical 與 robots 決定。
+# robots.txt 僅控制 crawl 範圍。
+Disallow: /ratewise/?
+
+Sitemap: https://app.haotool.org/ratewise/sitemap.xml
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GrokBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: DuckAssistBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
