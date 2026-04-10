@@ -25,7 +25,7 @@ import { render } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
 import { SEOHelmet } from '../SEOHelmet';
-import { shouldRenderStructuredData } from '../seo-helmet-utils';
+import { attachSpeakableToGraph, shouldRenderStructuredData } from '../seo-helmet-utils';
 
 describe('SEOHelmet Component', () => {
   const originalHead = document.head.innerHTML;
@@ -489,5 +489,89 @@ describe('SEOHelmet Component', () => {
         '500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具',
       );
     });
+  });
+});
+
+// ─── attachSpeakableToGraph ────────────────────────────────────────────────
+// schema.org requires SpeakableSpecification to be the value of the `speakable`
+// property on a WebPage/Article — not a standalone @graph node.
+
+describe('attachSpeakableToGraph()', () => {
+  const URL = 'https://app.haotool.org/ratewise/test/';
+
+  it('SpeakableSpecification 應移入 Article 的 speakable 屬性', () => {
+    const nodes = [
+      { '@type': 'Article', headline: '標題' },
+      { '@type': 'SpeakableSpecification', cssSelector: ['h1'] },
+    ];
+    const result = attachSpeakableToGraph(nodes, URL);
+    const article = result[0]!;
+
+    expect(result).toHaveLength(1);
+    expect(article['@type']).toBe('Article');
+    expect((article['speakable'] as Record<string, unknown>)['@type']).toBe(
+      'SpeakableSpecification',
+    );
+    expect((article['speakable'] as Record<string, unknown>)['cssSelector']).toEqual(['h1']);
+  });
+
+  it('無相容父實體時應新增 WebPage 容器節點', () => {
+    const nodes = [
+      { '@type': 'ImageObject', url: 'img.jpg' },
+      { '@type': 'SpeakableSpecification', cssSelector: ['h1'] },
+    ];
+    const result = attachSpeakableToGraph(nodes, URL);
+
+    const webPage = result.find((b) => b['@type'] === 'WebPage');
+    expect(webPage).toBeDefined();
+    expect(webPage!['url']).toBe(URL);
+    expect((webPage!['speakable'] as Record<string, unknown>)['cssSelector']).toEqual(['h1']);
+    expect(result.find((b) => b['@type'] === 'SpeakableSpecification')).toBeUndefined();
+  });
+
+  it('獨立 SpeakableSpecification 節點不應留在 @graph 中', () => {
+    const nodes = [
+      { '@type': 'Article', headline: '標題' },
+      { '@type': 'SpeakableSpecification', cssSelector: ['h1'] },
+    ];
+    const result = attachSpeakableToGraph(nodes, URL);
+
+    expect(result.find((b) => b['@type'] === 'SpeakableSpecification')).toBeUndefined();
+  });
+
+  it('多個 SpeakableSpecification 的 cssSelector 應合併', () => {
+    const nodes = [
+      { '@type': 'Article', headline: '標題' },
+      { '@type': 'SpeakableSpecification', cssSelector: ['h1'] },
+      { '@type': 'SpeakableSpecification', cssSelector: ['details summary'] },
+    ];
+    const result = attachSpeakableToGraph(nodes, URL);
+    const article = result[0]!;
+    const selectors = (article['speakable'] as Record<string, unknown>)['cssSelector'] as string[];
+    expect(selectors).toContain('h1');
+    expect(selectors).toContain('details summary');
+  });
+
+  it('無 SpeakableSpecification 時應原樣回傳', () => {
+    const nodes = [
+      { '@type': 'Article', headline: '標題' },
+      { '@type': 'Organization', name: 'HaoTool' },
+    ];
+    const result = attachSpeakableToGraph(nodes, URL);
+    expect(result).toBe(nodes); // same reference — no allocation
+  });
+
+  it('父實體優先順序：Article > WebPage', () => {
+    const nodes = [
+      { '@type': 'WebPage', url: URL },
+      { '@type': 'Article', headline: '標題' },
+      { '@type': 'SpeakableSpecification', cssSelector: ['h1'] },
+    ];
+    const result = attachSpeakableToGraph(nodes, URL);
+
+    const webPage = result.find((b) => b['@type'] === 'WebPage')!;
+    const article = result.find((b) => b['@type'] === 'Article')!;
+    expect(article['speakable']).toBeDefined();
+    expect(webPage['speakable']).toBeUndefined();
   });
 });

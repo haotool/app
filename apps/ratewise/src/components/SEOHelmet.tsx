@@ -8,7 +8,7 @@
 import { Head } from 'vite-react-ssg';
 import { useEffect, useMemo } from 'react';
 import { APP_INFO } from '../config/app-info';
-import { shouldRenderStructuredData } from './seo-helmet-utils';
+import { attachSpeakableToGraph, shouldRenderStructuredData } from './seo-helmet-utils';
 import {
   type AlternateLink,
   type BreadcrumbItem,
@@ -241,9 +241,10 @@ export function SEOHelmet({
         : []),
     ];
 
+    const graphNodes = attachSpeakableToGraph(data, canonicalUrl);
     return JSON.stringify({
       '@context': 'https://schema.org',
-      '@graph': data.map((item) => {
+      '@graph': graphNodes.map((item) => {
         const { '@context': _, ...rest } = item as Record<string, unknown>;
         return rest;
       }),
