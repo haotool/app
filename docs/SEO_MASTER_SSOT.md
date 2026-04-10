@@ -592,57 +592,66 @@ Disallow: /ratewise/ui-showcase/
 Disallow: /ratewise/?
 ```
 
-### 8.2 AI 爬蟲規則（2026-04-10 完整清單，共 39 個）
+### 8.2 AI 爬蟲規則（2026-04-10 完整清單，共 37 個）
 
-robots.txt 明確 Allow 以下所有 AI 爬蟲，確保最大 AI 搜尋可見度：
+robots.txt 明確 Allow 以下 AI 爬蟲，確保最大 AI 搜尋可見度：
 
-| 爬蟲名稱                | 平台             | 用途                    |
-| ----------------------- | ---------------- | ----------------------- |
-| `GPTBot`                | OpenAI           | ChatGPT 訓練            |
-| `OAI-SearchBot`         | OpenAI           | ChatGPT 搜尋引用        |
-| `ChatGPT-User`          | OpenAI           | ChatGPT 用戶搜尋        |
-| `ClaudeBot`             | Anthropic        | Claude 訓練爬蟲         |
-| `Claude-User`           | Anthropic        | Claude 搜尋引用         |
-| `Claude-SearchBot`      | Anthropic        | Claude 搜尋索引         |
-| `anthropic-ai`          | Anthropic        | Anthropic 通用          |
-| `PerplexityBot`         | Perplexity       | Perplexity 引用         |
-| `Perplexity-User`       | Perplexity       | Perplexity 用戶搜尋     |
-| `Google-Extended`       | Google           | Gemini / AI Overviews   |
-| `Google-CloudVertexBot` | Google           | Vertex AI               |
-| `Googlebot`             | Google           | 傳統搜尋 + AI Overviews |
-| `Bingbot`               | Microsoft        | Copilot（透過 Bing）    |
-| `GrokBot`               | xAI              | Grok AI                 |
-| `cohere-ai`             | Cohere           | Cohere AI 產品          |
-| `YouBot`                | You.com          | You.com AI 搜尋         |
-| `PhindBot`              | Phind            | Phind 開發者 AI 搜尋    |
-| `DuckAssistBot`         | DuckDuckGo       | DuckDuckGo AI 助手      |
-| `Amazonbot`             | Amazon           | Alexa / AWS AI          |
-| `Applebot`              | Apple            | Apple 搜尋 + Siri       |
-| `Applebot-Extended`     | Apple            | Apple Intelligence      |
-| `CCBot`                 | Common Crawl     | 開放資料集              |
-| `Bytespider`            | ByteDance        | TikTok 系列 AI          |
-| `PetalBot`              | Huawei           | Huawei AI 搜尋          |
-| `MistralAI-User`        | Mistral          | Mistral AI 助手         |
-| `Manus-User`            | Manus            | Manus AI 助手           |
-| `Meta-ExternalAgent`    | Meta             | Meta AI 訓練（Llama）   |
-| `Meta-ExternalFetcher`  | Meta             | Meta AI 助手            |
-| `FacebookBot`           | Meta             | Facebook AI             |
-| `facebookexternalhit`   | Meta             | Facebook 連結預覽       |
-| `Twitterbot`            | X (Twitter)      | Twitter 連結預覽        |
-| `LinkedInBot`           | LinkedIn         | LinkedIn 連結預覽       |
-| `Cloudflare-AutoRAG`    | Cloudflare       | Cloudflare AI           |
-| `Anchor Browser`        | Anchor           | Anchor AI 爬蟲          |
-| `archive.org_bot`       | Internet Archive | 網路存檔                |
-| `Terracotta Bot`        | Ceramic          | 搜尋引擎爬蟲            |
-| `Timpibot`              | Timpi            | Timpi AI 爬蟲           |
-| `ProRataInc`            | ProRata.ai       | ProRata AI 爬蟲         |
-| `Novellum AI Crawl`     | Novellum         | Novellum AI 爬蟲        |
+| 爬蟲名稱                | 平台             | 用途                  |
+| ----------------------- | ---------------- | --------------------- |
+| `GPTBot`                | OpenAI           | ChatGPT 訓練          |
+| `OAI-SearchBot`         | OpenAI           | ChatGPT 搜尋引用      |
+| `ChatGPT-User`          | OpenAI           | ChatGPT 用戶搜尋      |
+| `ClaudeBot`             | Anthropic        | Claude 訓練爬蟲       |
+| `Claude-User`           | Anthropic        | Claude 搜尋引用       |
+| `Claude-SearchBot`      | Anthropic        | Claude 搜尋索引       |
+| `anthropic-ai`          | Anthropic        | Anthropic 通用        |
+| `PerplexityBot`         | Perplexity       | Perplexity 引用       |
+| `Perplexity-User`       | Perplexity       | Perplexity 用戶搜尋   |
+| `Google-Extended`       | Google           | Gemini / AI Overviews |
+| `Google-CloudVertexBot` | Google           | Vertex AI             |
+| `GrokBot`               | xAI              | Grok AI               |
+| `cohere-ai`             | Cohere           | Cohere AI 產品        |
+| `YouBot`                | You.com          | You.com AI 搜尋       |
+| `PhindBot`              | Phind            | Phind 開發者 AI 搜尋  |
+| `DuckAssistBot`         | DuckDuckGo       | DuckDuckGo AI 助手    |
+| `Amazonbot`             | Amazon           | Alexa / AWS AI        |
+| `Applebot`              | Apple            | Apple 搜尋 + Siri     |
+| `Applebot-Extended`     | Apple            | Apple Intelligence    |
+| `CCBot`                 | Common Crawl     | 開放資料集            |
+| `Bytespider`            | ByteDance        | TikTok 系列 AI        |
+| `PetalBot`              | Huawei           | Huawei AI 搜尋        |
+| `MistralAI-User`        | Mistral          | Mistral AI 助手       |
+| `Manus-User`            | Manus            | Manus AI 助手         |
+| `Meta-ExternalAgent`    | Meta             | Meta AI 訓練（Llama） |
+| `Meta-ExternalFetcher`  | Meta             | Meta AI 助手          |
+| `FacebookBot`           | Meta             | Facebook AI           |
+| `facebookexternalhit`   | Meta             | Facebook 連結預覽     |
+| `Twitterbot`            | X (Twitter)      | Twitter 連結預覽      |
+| `LinkedInBot`           | LinkedIn         | LinkedIn 連結預覽     |
+| `Cloudflare-AutoRAG`    | Cloudflare       | Cloudflare AI         |
+| `Anchor Browser`        | Anchor           | Anchor AI 爬蟲        |
+| `archive.org_bot`       | Internet Archive | 網路存檔              |
+| `Terracotta Bot`        | Ceramic          | 搜尋引擎爬蟲          |
+| `Timpibot`              | Timpi            | Timpi AI 爬蟲         |
+| `ProRataInc`            | ProRata.ai       | ProRata AI 爬蟲       |
+| `Novellum AI Crawl`     | Novellum         | Novellum AI 爬蟲      |
 
-### 8.3 策略說明
+### 8.3 不需專門規則的爬蟲
 
-- **全面開放策略**：允許所有 AI 爬蟲以最大化 AI 搜尋可見度
+以下爬蟲**不需要**專門的 `User-agent` 區塊，因為它們會遵循 `User-agent: *` 的規則：
+
+| 爬蟲名稱    | 平台      | 原因                                                 |
+| ----------- | --------- | ---------------------------------------------------- |
+| `Googlebot` | Google    | 主要搜尋爬蟲，需遵循 Disallow 規則以避免索引開發頁面 |
+| `Bingbot`   | Microsoft | 主要搜尋爬蟲，需遵循 Disallow 規則以避免索引開發頁面 |
+
+> **重要**：為這些爬蟲添加專門的 `User-agent` 區塊會覆蓋 `User-agent: *` 的 Disallow 規則，導致開發頁面被索引。
+
+### 8.4 策略說明
+
+- **選擇性開放策略**：AI 爬蟲明確允許，傳統搜尋爬蟲遵循通用規則
 - **訓練 vs 搜尋**：訓練爬蟲（GPTBot、ClaudeBot）增加品牌認知；搜尋爬蟲（OAI-SearchBot、Claude-SearchBot）直接影響引用
-- **無註解設計**：robots.txt 不包含任何註解，保持簡潔
+- **Disallow 保護**：`Googlebot` 和 `Bingbot` 遵循 `User-agent: *` 的 Disallow 規則，防止開發頁面被索引
 - **SSOT 管理**：由 `generate-robots-txt.mjs` 自動生成，禁止手動修改
 
 ---
