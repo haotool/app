@@ -95,17 +95,29 @@ pnpm format:fix              # prettier --write .
 
 ### Phase 7. 版本發布與依賴管理（Release & Dependencies）
 
-**SemVer 決策**（破壞既有用法 → MAJOR；新增功能 → MINOR；只修 bug → PATCH）：
+**SemVer 決策**（判斷基準：「不看 GSC / Search Console，使用者會直接感受到這個變更嗎？」）：
 
-| bump  | 適用情境                           |
-| ----- | ---------------------------------- |
-| MAJOR | 移除路由/功能、破壞性格式變更      |
-| MINOR | 新頁面、新幣別、新 API、新 UI 元件 |
-| PATCH | Bug 修復、安全依賴升級、效能改善   |
+| bump      | 判斷標準                                            | 範例                                           |
+| --------- | --------------------------------------------------- | ---------------------------------------------- |
+| **MAJOR** | 破壞既有 URL / 路由 / 功能，既有書籤/連結失效       | 移除 /usd-twd/ 路由、破壞 PWA 更新流程         |
+| **MINOR** | 使用者**直接可感知**的新功能或新頁面                | 新路由、新幣別、新互動 UI、LCP 改善 ≥50%       |
+| **PATCH** | 其他一切：bug fix、效能、SEO/schema、文案、內部重構 | JSON-LD 擴充、FAQ 特化、E-E-A-T 信號、樣式微調 |
+
+**bump 類型速查（常見誤判）**：
+
+- `feat` commit ≠ `minor` changeset。commit type 描述「做了什麼」，bump 描述「使用者感受」。
+- JSON-LD / schema 新增或擴充 → **patch**（Google 看得到，使用者直接看不到）
+- FAQ 內容特化、meta description 優化 → **patch**
+- E-E-A-T 信號（schema 層 knowsAbout / author / Organization）→ **patch**
+- 幣別頁新增可見 Answer Capsule 文字段落 → **patch**（內容改善，非新功能）
+- 新的可導航頁面（新路由，使用者可點擊進入）→ **minor**
+- 新幣別（使用者可選擇換算）→ **minor**
+- 新互動元件（MoneyBox 比較卡、星評 Modal）→ **minor**
+- Core Web Vitals 架構性改善（LCP ↓50%+，SSG 預渲染）→ **minor**
 
 **Changeset 規範**（每個 PR 完成後 MUST 執行 `pnpm changeset`）：
 
-- bump 類型選正確；描述使用者看得到的影響，禁止描述實作細節
+- bump 類型選正確（見上表）；描述使用者**看得到**的影響，禁止描述實作細節
 - CHANGELOG 由 changeset 自動生成，禁止手動貼入 git log
 
 **版本發布流程**（`update-release-metadata.js` 已整合所有 SSOT）：
@@ -289,6 +301,7 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 | 日期       | 版本      | 變更摘要                                                                                                                   |
 | ---------- | --------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-11 | v5.0      | SemVer 決策規則重寫：加入「使用者可感知」判斷標準，補充常見誤判速查（JSON-LD/schema/FAQ/E-E-A-T 均為 patch）               |
 | 2026-03-22 | v4.9      | 移除 AGENTS.md 重複區塊（Git rules、QA rules、Skills、Prettier#6、Worker SOP、code comment）→ 改為單行參考，精簡約 ~180 行 |
 | 2026-03-22 | v4.8      | Phase 7 精簡：SemVer 決策表 + Changeset 規範 + 一鍵發版流程（pnpm changeset:version SSOT 整合）                            |
 | 2026-03-22 | v4.7      | 補充 Worker 假陽性清單；新增資產快取驗證 curl 快查表                                                                       |

@@ -1,5 +1,5 @@
 ---
-'@app/ratewise': minor
+'@app/ratewise': patch
 ---
 
 新增 P0 SEO Schema 實作：CurrencyConversionService + ExchangeRateSpecification
