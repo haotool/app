@@ -44,6 +44,16 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
     expect(content).not.toContain('canonical：自引用含 ?amount=');
   });
 
+  it('keeps documented URLs free of trailing CJK punctuation that breaks parsers', () => {
+    const content = readFileSync(llmsPath, 'utf-8');
+    const urls = content.match(/https?:\/\/[^\s]+/g) ?? [];
+
+    expect(urls.length).toBeGreaterThan(0);
+    for (const url of urls) {
+      expect(url).not.toMatch(/[）】，。；：]$/u);
+    }
+  });
+
   it('lists all 17 currency pages in Popular Rates', () => {
     const content = readFileSync(llmsPath, 'utf-8');
     const currencies = [
@@ -74,6 +84,11 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
     const matches = content.match(currencyUrlPattern);
     // 至少 17 個幣對頁 URL（Popular Rates）；llms.txt 範例段落可能含額外 usd-twd/ 實例。
     expect(matches?.length ?? 0).toBeGreaterThanOrEqual(17);
+  });
+
+  it('lists seo-tech disclosure page in Optional section for AI/LLM discovery', () => {
+    const content = readFileSync(llmsPath, 'utf-8');
+    expect(content).toContain('https://app.haotool.org/ratewise/seo-tech/');
   });
 
   it('makes llms-full prefer path-based amount landing pages over query-only deep links', () => {

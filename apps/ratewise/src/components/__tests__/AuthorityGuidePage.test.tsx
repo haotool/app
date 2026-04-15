@@ -127,6 +127,39 @@ describe('AuthorityGuidePage', () => {
       const src = readFileSync(resolve(__dirname, '../AuthorityGuidePage.tsx'), 'utf-8');
       expect(src).not.toContain('faqContent={page.faqContent}');
     });
+
+    it('should keep breadcrumb href normalized instead of appending a duplicate slash', () => {
+      const src = readFileSync(resolve(__dirname, '../AuthorityGuidePage.tsx'), 'utf-8');
+      expect(src).toContain('href: page.pathname');
+      expect(src).not.toContain('href: `${page.pathname}/`');
+    });
+  });
+
+  describe('相關幣別連結（內部連結 guide→currency）', () => {
+    it('should render a related currencies section heading when relatedCurrencies is provided', () => {
+      renderPage(MOCK_PAGE);
+      expect(screen.getByRole('heading', { name: /相關幣別/i })).toBeInTheDocument();
+    });
+
+    it('should render all related currency links', () => {
+      renderPage(MOCK_PAGE);
+      expect(screen.getByRole('link', { name: /日圓匯率/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /美金匯率/i })).toBeInTheDocument();
+    });
+
+    it('should use the correct href for each related currency link', () => {
+      renderPage(MOCK_PAGE);
+      const jpyLink = screen.getByRole('link', { name: /日圓匯率/i });
+      const usdLink = screen.getByRole('link', { name: /美金匯率/i });
+      expect(jpyLink).toHaveAttribute('href', '/jpy-twd/');
+      expect(usdLink).toHaveAttribute('href', '/usd-twd/');
+    });
+
+    it('should NOT render related currencies section when relatedCurrencies is empty', () => {
+      const pageWithoutRelated = { ...MOCK_PAGE, relatedCurrencies: [] };
+      renderPage(pageWithoutRelated);
+      expect(screen.queryByRole('heading', { name: /相關幣別/i })).not.toBeInTheDocument();
+    });
   });
 
   describe('回歸：三個指南頁面必須提供 jsonLd 與 faqContent', () => {

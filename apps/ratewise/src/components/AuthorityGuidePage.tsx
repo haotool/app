@@ -27,7 +27,7 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
           <PageNavHeader
             breadcrumbItems={[
               { label: t('nav.home'), href: '/' },
-              { label: page.heading, href: `${page.pathname}/` },
+              { label: page.heading, href: page.pathname },
             ]}
           />
 
@@ -74,6 +74,23 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
                     <h3 className="mb-1 font-semibold text-text">{item.question}</h3>
                     <p className="leading-7 text-text-muted">{item.answer}</p>
                   </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {page.relatedCurrencies && page.relatedCurrencies.length > 0 && (
+            <section className="card mt-8 p-6">
+              <h2 className="mb-4 text-xl font-semibold text-text">相關幣別</h2>
+              <div className="flex flex-wrap gap-2">
+                {page.relatedCurrencies.map((currency) => (
+                  <Link
+                    key={currency.code}
+                    to={currency.href}
+                    className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
+                  >
+                    {currency.label}
+                  </Link>
                 ))}
               </div>
             </section>

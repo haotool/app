@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ABOUT_PAGE_SEO,
+  APP_ONLY_PAGE_SEO,
   CARD_RATE_GUIDE_PAGE,
   CASH_VS_SPOT_RATE_PAGE,
   DEFAULT_LOCALE,
@@ -34,6 +35,22 @@ describe('SEO SSOT', () => {
   it('should expose homepage FAQ as content SSOT instead of rich-result schema input', () => {
     expect(HOMEPAGE_SEO.faqContent.length).toBeGreaterThan(0);
     expect('faq' in HOMEPAGE_SEO).toBe(false);
+  });
+
+  it('核心內容頁的 title 與 description 應達到可索引且可點擊的最低品質門檻', () => {
+    const keyPages = [
+      FAQ_PAGE_SEO,
+      GUIDE_PAGE_SEO,
+      ABOUT_PAGE_SEO,
+      SELL_RATE_VS_MID_RATE_PAGE,
+      CASH_VS_SPOT_RATE_PAGE,
+      CARD_RATE_GUIDE_PAGE,
+    ];
+
+    for (const page of keyPages) {
+      expect(page.title.length).toBeGreaterThanOrEqual(24);
+      expect(page.description.length).toBeGreaterThanOrEqual(80);
+    }
   });
 
   // 幣別頁模板不得滲漏其他幣別名稱（template bleed 防護）。
@@ -279,6 +296,83 @@ describe('SEO SSOT', () => {
       const person = buildPersonJsonLd();
       const topics = (person['knowsAbout'] as string[]).join(' ');
       expect(topics).toMatch(/匯率|exchange rate/i);
+    });
+  });
+
+  // ─── AnswerCapsule 覆蓋率：AEO/GEO 快速答案區塊必須存在 ────────────────────
+  describe('AnswerCapsule 覆蓋率（AEO/GEO 必要信號）', () => {
+    const CURRENCY_CODES = [
+      'USD',
+      'JPY',
+      'EUR',
+      'GBP',
+      'CNY',
+      'KRW',
+      'HKD',
+      'AUD',
+      'CAD',
+      'SGD',
+      'THB',
+      'NZD',
+      'CHF',
+      'VND',
+      'PHP',
+      'IDR',
+      'MYR',
+    ] as const;
+
+    it('所有 17 個正向幣別頁（xxx-twd）應有非空 answerCapsule', () => {
+      for (const code of CURRENCY_CODES) {
+        const content = getCurrencyLandingPageContent(code);
+        expect(
+          content.answerCapsule,
+          `getCurrencyLandingPageContent('${code}').answerCapsule 不存在`,
+        ).toBeDefined();
+        expect(
+          content.answerCapsule!.length,
+          `getCurrencyLandingPageContent('${code}').answerCapsule 為空`,
+        ).toBeGreaterThan(0);
+      }
+    });
+
+    it('所有 17 個反向幣別頁（twd-xxx）應有非空 answerCapsule', () => {
+      for (const code of CURRENCY_CODES) {
+        const content = getReverseCurrencyLandingPageContent(code);
+        expect(
+          content.answerCapsule,
+          `getReverseCurrencyLandingPageContent('${code}').answerCapsule 不存在`,
+        ).toBeDefined();
+        expect(
+          content.answerCapsule!.length,
+          `getReverseCurrencyLandingPageContent('${code}').answerCapsule 為空`,
+        ).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  // ─── /seo-tech/ 可索引頁面 SEO metadata 正確性 ─────────────────────────────
+  describe('/seo-tech/ 可索引頁面 SEO metadata 正確性', () => {
+    it('APP_ONLY_PAGE_SEO.seoTech.pathname 應以尾斜線結尾（與 CONTENT_SEO_PATHS 對齊）', () => {
+      // 理由：/seo-tech/ 在 CONTENT_SEO_PATHS 有尾斜線；pathname 缺尾斜線會導致
+      // buildCanonicalUrl 產生的 canonical 與 sitemap URL 不一致。
+      expect(APP_ONLY_PAGE_SEO.seoTech.pathname).toMatch(/\/$/);
+    });
+
+    it('APP_ONLY_PAGE_SEO.seoTech.breadcrumb 第二項 item 應以尾斜線結尾', () => {
+      const breadcrumb = APP_ONLY_PAGE_SEO.seoTech.breadcrumb;
+      expect(breadcrumb).toBeDefined();
+      expect(breadcrumb).toHaveLength(2);
+      const secondItem = breadcrumb![1];
+      expect(secondItem!.item).toMatch(/\/$/);
+    });
+
+    it('APP_ONLY_PAGE_SEO.seoTech.jsonLd 應已定義（Article JSON-LD 必須存在）', () => {
+      expect(APP_ONLY_PAGE_SEO.seoTech.jsonLd).toBeDefined();
+    });
+
+    it('APP_ONLY_PAGE_SEO.seoTech robots 應為 index, follow（可索引頁面，不應含 noindex）', () => {
+      expect(APP_ONLY_PAGE_SEO.seoTech.robots).toMatch(/^index/);
+      expect(APP_ONLY_PAGE_SEO.seoTech.robots).not.toContain('noindex');
     });
   });
 });
