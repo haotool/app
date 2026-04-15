@@ -94,4 +94,42 @@ describe('CurrencyLandingPage', () => {
       ),
     ).not.toThrow();
   });
+
+  // ─── AnswerCapsule：AEO/GEO 快速答案區塊 ───
+  it('answerCapsule 有資料時應渲染快速答案區塊（AnswerCapsule，供 AI 引擎直接引用）', () => {
+    const answerCapsule = [
+      {
+        question: '韓元換台幣今日匯率是多少？',
+        answer: '台銀現金賣出價：1 KRW = 0.023 TWD（測試資料）。',
+      },
+    ];
+    render(
+      <MemoryRouter>
+        <CurrencyLandingPage {...BASE_PROPS} answerCapsule={answerCapsule} />
+      </MemoryRouter>,
+    );
+    // 快速答案標題
+    expect(screen.getByRole('heading', { name: '快速答案' })).toBeInTheDocument();
+    // 答案問題文字
+    expect(screen.getByText('韓元換台幣今日匯率是多少？')).toBeInTheDocument();
+  });
+
+  it('answerCapsule 為空或未傳時不渲染快速答案區塊', () => {
+    render(
+      <MemoryRouter>
+        <CurrencyLandingPage {...BASE_PROPS} answerCapsule={[]} />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('heading', { name: '快速答案' })).not.toBeInTheDocument();
+  });
+
+  it('answerCapsule 未傳入時不應崩潰（backward compatible）', () => {
+    expect(() =>
+      render(
+        <MemoryRouter>
+          <CurrencyLandingPage {...BASE_PROPS} />
+        </MemoryRouter>,
+      ),
+    ).not.toThrow();
+  });
 });

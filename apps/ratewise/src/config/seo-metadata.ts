@@ -87,7 +87,6 @@ export interface AuthorityGuideSection {
   paragraphs: string[];
 }
 
-/** 相關幣別連結：用於攻略頁連結至熱門幣別頁，提升內部連結結構。 */
 export interface RelatedCurrencyLink {
   href: string;
   label: string;
@@ -101,7 +100,6 @@ export interface AuthorityGuideContent extends SEOPageMetadata {
   sections: AuthorityGuideSection[];
   ctaTitle: string;
   ctaDescription: string;
-  /** 相關幣別連結：連結至熱門幣別頁，提升內部連結結構。 */
   relatedCurrencies: RelatedCurrencyLink[];
 }
 
@@ -111,7 +109,6 @@ export interface CommonAmountEntry {
   question: string;
 }
 
-/** 相關攻略連結：用於幣別頁↔攻略頁內部連結，提升 SEO 內部連結結構。 */
 export interface RelatedGuideLink {
   href: string;
   label: string;
@@ -134,13 +131,9 @@ export interface CurrencyLandingPageContent {
   commonAmounts: CommonAmountEntry[];
   travelTip: string;
   jsonLd: JsonLdBlock[];
-  /** 換算方向：to-twd（外幣→台幣）或 twd-to-foreign（台幣→外幣）。 */
   direction: 'to-twd' | 'twd-to-foreign';
-  /** 替代換匯管道（如明洞換匯所），僅特定幣別（KRW）有此欄位。 */
   alternativeProviders?: AlternativeProvider[];
-  /** 相關攻略連結：連結至匯率知識攻略頁，提升內部連結結構。 */
   relatedGuides: RelatedGuideLink[];
-  /** Answer Capsule：40-60 字直接答案段落，供 AI 引擎直接引用。 */
   answerCapsule?: FAQEntry[];
 }
 
@@ -156,7 +149,6 @@ const ASSET_VERSION = `v=${BUILD_TIME.replace(/[-T:Z.]/g, '').slice(0, 8) || 'de
 export const DEFAULT_LOCALE = 'zh-TW' as const;
 export const SEO_INDEXABLE_LOCALES = [DEFAULT_LOCALE] as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
-// dw ≈ 117（CJK×2）；符合 SERP ≤160 dw 截斷規範
 export const DEFAULT_DESCRIPTION = `RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），讓你換匯前知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，每 5 分鐘同步，免費無廣告。`;
 export const DEFAULT_KEYWORDS = [
   '匯率好工具',
@@ -944,9 +936,9 @@ export const FAQ_PAGE_ENTRIES = [
 ] as const satisfies readonly FAQEntry[];
 
 export const FAQ_PAGE_SEO = {
-  title: '常見問題 FAQ 解答',
+  title: 'RateWise 常見問題 FAQ：台銀匯率、DCC 與現金即期一次看懂',
   description:
-    'RateWise 常見問題解答：台銀匯率來源、現金與即期差異、買入賣出怎麼看、DCC 刷卡匯率、收藏排序、離線使用與 PWA 安裝教學。',
+    '整理 RateWise 最常被問的換匯問題，涵蓋台銀匯率來源、現金與即期差異、買入賣出判讀、DCC 刷卡匯率、收藏排序、歷史記錄、離線使用與 PWA 安裝重點，讓第一次換匯也能快速判斷並少踩錯價。',
   pathname: '/faq/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -973,7 +965,6 @@ export const FAQ_PAGE_SEO = {
         ],
         articleBody:
           'RateWise 匯率好工具完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算、計算機與快速金額、收藏排序、多幣別模式、歷史趨勢、主題切換、離線使用與安裝教學。',
-        // speakable：標記 FAQ 頁 h1 與問答項目為語音搜尋可朗讀區塊。
         speakableCssSelectors: ['h1', 'details summary'],
       },
     ),
@@ -1034,7 +1025,7 @@ export const GUIDE_HOW_TO_STEPS = [
 export const GUIDE_PAGE_SEO = {
   title: GUIDE_PAGE_TITLE,
   description:
-    '完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算，包含匯率類型切換、歷史趨勢查看與收藏功能。',
+    'RateWise 使用指南用 8 步驟帶你完成單幣別與多幣別匯率換算，並掌握現金與即期切換、快速金額按鈕、歷史趨勢、收藏管理、下拉更新與 PWA 安裝，快速建立正確換匯操作流程與判讀順序。',
   pathname: '/guide/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -1204,7 +1195,7 @@ export const ABOUT_PAGE_FAQ = [
 
 export const ABOUT_PAGE_SEO = {
   title: '關於 RateWise 匯率好工具 - 資料來源、技術架構與 SEO 透明度',
-  description: `RateWise 顯示台銀牌告實際買賣價（非中間價），支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、PWA 離線使用、SSG 靜態預渲染與 JSON-LD 結構化資料。`,
+  description: `了解 RateWise 的資料來源、更新機制、技術架構與 SEO 透明度。站點以台銀牌告實際買賣價為核心，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、PWA 離線使用、SSG 預渲染、JSON-LD 結構化資料與 AI 可讀文件輸出，所有公開資訊皆可追溯。`,
   pathname: '/about/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -1287,9 +1278,9 @@ const RELATED_CURRENCIES: RelatedCurrencyLink[] = [
 ];
 
 export const SELL_RATE_VS_MID_RATE_PAGE = {
-  title: '賣出價與中間價差在哪？為什麼換匯不能只看中間價',
+  title: '賣出價與中間價差在哪？為什麼換匯不能只看中間價 | RateWise',
   description:
-    '解析賣出價、中間價與實際換匯成本差異。RateWise 聚焦臺灣銀行牌告賣出價，協助台灣用戶在買外幣前估算更接近實際支付的台幣金額。',
+    '解析賣出價、中間價與實際換匯成本差異，說清楚為什麼 Google 或 XE 顯示的中間價不能直接拿來估算換匯預算。RateWise 聚焦臺灣銀行牌告賣出價，協助台灣用戶在買外幣前更接近真實支付金額與旅費規劃。',
   pathname: '/sell-rate-vs-mid-rate/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -1377,9 +1368,9 @@ export const SELL_RATE_VS_MID_RATE_PAGE = {
 } as const satisfies AuthorityGuideContent;
 
 export const CASH_VS_SPOT_RATE_PAGE = {
-  title: '現金匯率 vs 即期匯率：什麼情境該看哪一種',
+  title: '現金匯率 vs 即期匯率：什麼情境該看哪一種 | RateWise',
   description:
-    '說明現金匯率與即期匯率差異，整理臨櫃換鈔、外幣帳戶、匯款與旅遊換匯情境，幫助你在 RateWise 正確選擇報價類型。',
+    '說明現金匯率與即期匯率差異，整理臨櫃換鈔、外幣帳戶、匯款與旅遊換匯情境，幫助你在不同交易方式下選對報價欄位，避免高估或低估實際成本，也避免把中間價誤當成交價與預算基準。',
   pathname: '/cash-vs-spot-rate/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -1471,9 +1462,9 @@ export const CASH_VS_SPOT_RATE_PAGE = {
 } as const satisfies AuthorityGuideContent;
 
 export const CARD_RATE_GUIDE_PAGE = {
-  title: '刷卡匯率怎麼看？台銀牌告、卡組織匯率與 DCC 一次搞懂',
+  title: '刷卡匯率怎麼看？台銀牌告、卡組織匯率與 DCC 一次搞懂 | RateWise',
   description:
-    '整理海外刷卡匯率的組成方式，說明 Visa、Mastercard 清算匯率、銀行海外手續費與 DCC 差異，幫助你正確理解 RateWise 與刷卡成本的關係。',
+    '整理海外刷卡匯率的組成方式，說明 Visa、Mastercard 清算匯率、銀行海外手續費與 DCC 差異，幫助你分辨牌告換匯、海外刷卡與商家端台幣結帳三者的成本差別，避免把刷卡匯率和銀行牌告混為一談與誤估總成本。',
   pathname: '/card-rate-guide/',
   breadcrumb: [
     { name: 'RateWise 首頁', item: '/' },
@@ -1620,11 +1611,11 @@ export const APP_ONLY_PAGE_SEO = {
   seoTech: {
     title: 'SEO 技術揭露 - RateWise 搜尋引擎最佳化架構完整說明',
     description: `完整揭露 RateWise 所採用的 SEO 技術：${SEO_PATHS.length} 個索引路徑、8 種 JSON-LD Schema、${PRERENDER_PATHS.length} 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。`,
-    pathname: '/seo-tech',
+    pathname: '/seo-tech/',
     robots: 'index, follow',
     breadcrumb: [
       { name: 'RateWise 首頁', item: '/' },
-      { name: 'SEO 技術揭露', item: '/seo-tech' },
+      { name: 'SEO 技術揭露', item: '/seo-tech/' },
     ],
     keywords: [
       'SEO 技術',
@@ -1641,7 +1632,7 @@ export const APP_ONLY_PAGE_SEO = {
     jsonLd: buildArticleJsonLd(
       'SEO 技術揭露 - RateWise 搜尋引擎最佳化架構完整說明',
       `完整揭露 RateWise 所採用的 SEO 技術：${SEO_PATHS.length} 個索引路徑、8 種 JSON-LD Schema、${PRERENDER_PATHS.length} 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。`,
-      '/seo-tech',
+      '/seo-tech/',
       GUIDE_PUBLISH_DATES.seoTech,
       {
         articleSection: 'SEO 技術',

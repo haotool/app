@@ -370,6 +370,8 @@ export default function SeoTech() {
         description={pageSeo.description}
         pathname={pageSeo.pathname}
         robots={pageSeo.robots}
+        breadcrumb={pageSeo.breadcrumb}
+        jsonLd={pageSeo.jsonLd}
       />
 
       {/* ─── Hero ─────────────────────────────────────────────────────────── */}

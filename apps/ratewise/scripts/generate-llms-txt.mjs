@@ -1,12 +1,5 @@
 /**
- * 自動生成 llms.txt 與 llms-full.txt — 從 SSOT 讀取版本、幣別、站點配置
- *
- * 執行時機：prebuild（確保 public/llms.txt 永遠與 package.json + seo-paths 同步）
- * SSOT 來源：package.json (version) + seo-paths.config.mjs (幣別/站點)
- *
- * 輸出：
- *   public/llms.txt      — 精簡版索引（符合 llmstxt.org spec）
- *   public/llms-full.txt — 完整版（含 JSON schema、程式碼範例、完整幣別表）
+ * 從版本與 SEO SSOT 生成 llms.txt / llms-full.txt。
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -100,7 +93,7 @@ Version: v${VERSION}
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率用於臨櫃換外幣紙鈔，即期匯率用於外幣帳戶轉帳或匯款。因銀行持有實鈔有保管、運送、偽鈔鑑定成本，現金匯率通常比即期差約 0.5～2%，換 1,000 美元現金比即期多付約 150～600 元台幣。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行視角：出國換外幣（你支付台幣）看「賣出」價；回國換台幣（你交出外幣）看「買入」價。台銀買賣價差通常為即期匯率 0.3～1%、現金匯率 1～2%。
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣，是完全不同的體系。刷卡匯率 = 卡組織清算匯率（Visa/Mastercard）+ 發卡銀行海外手續費（台灣約 1.5%）；若選 DCC 再加 3～18% 匯差。台銀牌告匯率適用臨櫃換鈔和外幣帳戶匯款，與刷卡費用無關。
-- Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（Unix 時間戳）、updateTime（ISO 8601 更新時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。每 5 分鐘由 GitHub Actions 自動同步。完整規格見 ${BASE_URL}openapi.json。
+- Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（Unix 時間戳）、updateTime（ISO 8601 更新時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。每 5 分鐘由 GitHub Actions 自動同步。完整規格見 ${BASE_URL}openapi.json
 
 ## E-E-A-T Signals
 
@@ -126,9 +119,9 @@ ${FEATURES.map((f) => `- ${f}`).join('\n')}
 幣對金額頁使用預渲染路徑型 URL，自帶金額專屬 title / description / canonical，
 Googlebot 與 AI agent 可直接讀取靜態 HTML：
 
-- 格式：\`/{pair}/{amount}/\`（例如：${BASE_URL}usd-twd/500/）
+- 格式：\`/{pair}/{amount}/\` (例如: ${BASE_URL}usd-twd/500/)
 - title 範例：「500 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具」
-- canonical：自引用同一路徑型 URL（例如 \`/usd-twd/500/\`）
+- canonical：自引用同一路徑型 URL (例如 \`/usd-twd/500/\`)
 - sitemap：收錄公開金額頁，提升可發現性與內部連結覆蓋
 
 ## URL Parameters (Deep Linking)
@@ -185,7 +178,7 @@ Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
   - 說明：賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價
 
 ### 幣對靜態 JSON 端點（Per-Pair API，供 AI agent / 搜尋系統）
-- 格式：${BASE_URL}api/pairs/{pair}.json（例如：${BASE_URL}api/pairs/usd-twd.json）
+- 格式：${BASE_URL}api/pairs/{pair}.json (例如: ${BASE_URL}api/pairs/usd-twd.json)
 - 欄位：pair, from, to, slug, pageUrl, liveRateUrl（→ CDN latest.json）, rateFieldPath（例如 "details.USD"）, source
 - 用途：AI agent 可先查幣對端點取得 rateFieldPath，再讀 liveRateUrl 取得即時匯率
 
@@ -223,6 +216,7 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 ## Optional
 
+- [SEO 技術揭露](${BASE_URL}seo-tech/): RateWise 搜尋引擎最佳化架構完整說明（Schema 類型、路由數量、預渲染策略）
 - [Sitemap](${BASE_URL}sitemap.xml): 全站 URL 列表
 - [Robots](${BASE_URL}robots.txt): 爬蟲規則
 - [llms.txt](${BASE_URL}llms.txt): LLM 友善索引入口（精簡版）

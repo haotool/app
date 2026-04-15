@@ -20,7 +20,7 @@ const withTrailingSlash = (value) => {
 export const normalizeSiteUrl = withTrailingSlash;
 
 /**
- * 公開可索引內容頁（8 個）- 含 /seo-tech/ 技術揭露頁（2026-04-06 新增）
+ * 公開可索引內容頁（9 個）- 含 /seo-tech/ 技術揭露頁（2026-04-06 新增）
  */
 export const CONTENT_SEO_PATHS = [
   '/',
@@ -34,9 +34,7 @@ export const CONTENT_SEO_PATHS = [
   '/seo-tech/',
 ];
 
-/**
- * 公開法律頁面：保留獨立分組，並納入 sitemap
- */
+/** 法律頁：需預渲染，但維持 noindex，不納入 sitemap。 */
 export const LEGAL_SSG_PATHS = ['/privacy/'];
 
 /**

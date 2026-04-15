@@ -16,6 +16,7 @@ export function normalizeSiteUrl(value: string): string {
   return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
 }
 
+/** 公開可索引內容頁（9 個）— 含 /seo-tech/ 技術揭露頁（2026-04-06 新增） */
 export const CONTENT_SEO_PATHS = [
   '/',
   '/faq/',
@@ -28,6 +29,7 @@ export const CONTENT_SEO_PATHS = [
   '/seo-tech/',
 ] as const;
 
+/** 法律頁：需預渲染，但維持 noindex，不納入 sitemap。 */
 export const LEGAL_SSG_PATHS = ['/privacy/'] as const;
 
 export const CURRENCY_SEO_PATHS = [

@@ -106,6 +106,11 @@ async function readSeoFullAuditScript() {
   return readFile(seoAuditPath, 'utf-8');
 }
 
+async function readSeoHealthCheckScript() {
+  const scriptPath = path.resolve(__dirname, '../../../../../scripts/seo-health-check.mjs');
+  return readFile(scriptPath, 'utf-8');
+}
+
 async function readVerifySsotScript() {
   const scriptPath = path.resolve(__dirname, '../../../../../scripts/verify-ssot-sync.mjs');
   return readFile(scriptPath, 'utf-8');
@@ -121,6 +126,11 @@ async function readOpenDataPageSource() {
   return readFile(openDataPagePath, 'utf-8');
 }
 
+async function readSeoTechPageSource() {
+  const seoTechPagePath = path.resolve(__dirname, '../../../src/pages/SeoTech.tsx');
+  return readFile(seoTechPagePath, 'utf-8');
+}
+
 async function readPostbuildMirrorScript() {
   const postbuildMirrorPath = path.resolve(__dirname, '../../../scripts/postbuild-mirror-dist.js');
   return readFile(postbuildMirrorPath, 'utf-8');
@@ -129,6 +139,11 @@ async function readPostbuildMirrorScript() {
 async function readSeoMetadataSource() {
   const seoMetadataPath = path.resolve(__dirname, '../seo-metadata.ts');
   return readFile(seoMetadataPath, 'utf-8');
+}
+
+async function readCurrencyLandingPageSource() {
+  const componentPath = path.resolve(__dirname, '../../../src/components/CurrencyLandingPage.tsx');
+  return readFile(componentPath, 'utf-8');
 }
 
 describe('ratewise build scripts', () => {
@@ -346,6 +361,25 @@ describe('ratewise build scripts', () => {
     expect(seoMetadataSource).not.toContain('50 頁 SSG 預渲染');
   });
 
+  it('should source seo health-check route validation from seo-paths SSOT instead of regex-parsing routes.tsx', async () => {
+    const seoHealthCheckScript = await readSeoHealthCheckScript();
+
+    expect(seoHealthCheckScript).toContain("from '../apps/ratewise/seo-paths.config.mjs'");
+    expect(seoHealthCheckScript).toContain('INDEXABLE_CANONICAL_PATHS');
+    expect(seoHealthCheckScript).not.toContain(
+      "const routesPath = join(RATEWISE_DIR, 'src/routes.tsx');",
+    );
+    expect(seoHealthCheckScript).not.toContain('/getIncludedRoutes[^{]*{([^}]+)}/s');
+  });
+
+  it('should align seo health-check canonical validation with the SEOHelmet-managed head architecture', async () => {
+    const seoHealthCheckScript = await readSeoHealthCheckScript();
+
+    expect(seoHealthCheckScript).toContain('SEOHelmet');
+    expect(seoHealthCheckScript).toContain('由 SEOHelmet 動態管理 canonical');
+    expect(seoHealthCheckScript).not.toContain('index.html 缺少 canonical link');
+  });
+
   it('should source amount-page title and description templates from seo-metadata SSOT instead of hardcoded hook literals', async () => {
     const pairAmountSeoHook = await readPairAmountSeoHook();
 
@@ -387,5 +421,27 @@ describe('ratewise build scripts', () => {
     expect(latestWorkflow).toContain('git checkout origin/data -- public/rates/latest.json');
     expect(moneyBoxWorkflow).toContain('git rebase --abort 2>/dev/null || true');
     expect(moneyBoxWorkflow).toContain('git checkout origin/data -- public/rates/moneybox.json');
+  });
+
+  it('CurrencyLandingPage should import AnswerCapsule and accept answerCapsule prop (AEO/GEO readiness)', async () => {
+    const source = await readCurrencyLandingPageSource();
+
+    // AnswerCapsule インポート検証：34 幣對ページの AEO/GEO 覆盖率を保証する。
+    expect(source).toContain("import { AnswerCapsule } from './AnswerCapsule'");
+    // answerCapsule prop 定義
+    expect(source).toContain('answerCapsule?: FAQEntry[]');
+    // AnswerCapsule コンポーネントレンダリング
+    expect(source).toContain('<AnswerCapsule items={answerCapsule}');
+  });
+
+  it('should pass breadcrumb and jsonLd props to SEOHelmet in SeoTech page for proper structured data', async () => {
+    const seoTechSource = await readSeoTechPageSource();
+
+    // /seo-tech/ は CONTENT_SEO_PATHS 内の可索引ページ。
+    // BreadcrumbList と Article JSON-LD は SEOHelmet 経由で SSG HTML に出力される必要がある。
+    expect(seoTechSource).toContain('breadcrumb={pageSeo.breadcrumb}');
+    expect(seoTechSource).toContain('jsonLd={pageSeo.jsonLd}');
+    // pathname は CONTENT_SEO_PATHS と一致する尾斜線付き形式を使用すること。
+    expect(seoTechSource).not.toContain("pathname='/seo-tech'");
   });
 });

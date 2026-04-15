@@ -5,6 +5,7 @@ import { ArrowLeft, HelpCircle, BookOpen, Sparkles, Calculator } from 'lucide-re
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from './SEOHelmet';
 import { PageNavHeader } from './PageNavHeader';
+import { AnswerCapsule } from './AnswerCapsule';
 import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
@@ -37,6 +38,8 @@ export interface CurrencyLandingPageProps {
   alternativeProviders?: AlternativeProvider[];
   /** 相關攻略連結（hub-and-spoke 內部鏈接，提升主題叢集 SEO）。 */
   relatedGuides?: RelatedGuideLink[];
+  /** AEO/GEO 快速答案區塊：AI 引擎直接引用的問答對。 */
+  answerCapsule?: FAQEntry[];
 }
 
 export function CurrencyLandingPage({
@@ -58,6 +61,7 @@ export function CurrencyLandingPage({
   direction = 'to-twd',
   alternativeProviders,
   relatedGuides = [],
+  answerCapsule = [],
 }: CurrencyLandingPageProps) {
   const { t } = useTranslation();
   const isTwdToForeign = direction === 'twd-to-foreign';
@@ -211,6 +215,9 @@ export function CurrencyLandingPage({
               </div>
             </div>
           </header>
+
+          {/* AEO/GEO 快速答案：AI 引擎直接引用的問答對，顯示在頁面頂部提升引用率。 */}
+          <AnswerCapsule items={answerCapsule} />
 
           {/* 金額換算結果卡（Wise-pattern）：?amount=X 存在時顯示靜態換算結果，爬蟲可索引。 */}
           {amount !== null && amountResult !== null && cashSell !== null && (
