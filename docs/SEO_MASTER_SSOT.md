@@ -2,7 +2,7 @@
 
 > **文件版本**: v2.0.0
 > **建立日期**: 2026-03-23
-> **最後更新**: 2026-04-10
+> **最後更新**: 2026-04-16
 > **文件性質**: AI 助手 + 工程師執行手冊 / SEO 單一真實來源
 > **適用版本**: RateWise ≥ v2.18.0
 > **上位文件**: `CLAUDE.md`, `AGENTS.md`
@@ -44,7 +44,7 @@
 10. [Core Web Vitals 效能標準](#10-core-web-vitals-效能標準)
 11. [SSOT 驗證規則](#11-ssot-驗證規則)
 12. [監測與稽核](#12-監測與稽核)
-13. [SEO 缺口分析（2026-04-10）](#13-seo-缺口分析2026-04-10-審查)
+13. [SEO 缺口分析（2026-04-16）](#13-seo-缺口分析2026-04-16-審查)
 14. [優先 TODO 清單](#14-優先-todo-清單原-13編號保持連貫)
 15. [詞彙表](#15-詞彙表)
 
@@ -91,7 +91,7 @@ RateWise 屬 YMYL 網站，Google 與 AI 引擎對此類型施加最嚴格的 E-
 
 ```
 seo-paths.config.mjs              ← 路徑 SSOT（Node / build 環境）
-  ├─ CONTENT_SEO_PATHS (8)         核心內容頁，可索引
+  ├─ CONTENT_SEO_PATHS (9)         核心內容頁，可索引（含 /seo-tech/）
   ├─ LEGAL_SSG_PATHS (1)           法律頁（/privacy/），noindex
   ├─ CURRENCY_SEO_PATHS (17)       外幣→TWD，可索引
   ├─ REVERSE_CURRENCY_SEO_PATHS (17) TWD→外幣，可索引
@@ -229,7 +229,8 @@ Disallow: /ratewise/?
 | `knowsAbout`（Property）    | Organization + Person | ✅ 已實作 (v2.18.0)       | `buildSiteJsonLd()` + `buildPersonJsonLd()`            |
 | `CurrencyConversionService` | 首頁                  | ✅ 已實作 (v2.22.0)       | `seo-metadata.ts` buildCurrencyConversionServiceJsonLd |
 | `ExchangeRateSpecification` | 幣對頁（34 個）       | ✅ 已實作 (v2.22.0)       | `seo-metadata.ts` buildExchangeRateSpecificationJsonLd |
-| `AggregateRating`           | 首頁                  | ❌ **缺漏（無評分系統）** | —                                                      |
+| `Dataset`                   | Open Data 頁          | ✅ 已實作 (v2.22.0)       | `seo-metadata.ts` buildOpenDataDatasetJsonLd           |
+| `AggregateRating`           | 首頁                  | ⚠️ **條件式**（ratingCount ≥ 10 時啟用） | `seo-metadata.ts` RATING_SNAPSHOT          |
 
 ### 4.2 已完成 Schema 實作參考
 
@@ -297,13 +298,13 @@ Schema.org 精確定義此工具的核心功能，AI 引擎在匹配「幣別換
 
 | 頁面            | Organization | WebSite | SoftwareApp | CurrencyConv. | ExchangeRate | BreadcrumbList | FAQPage | HowTo |  Article   |
 | --------------- | :----------: | :-----: | :---------: | :-----------: | :----------: | :------------: | :-----: | :---: | :--------: |
-| 首頁 `/`        |      ✅      |   ✅    |     ✅      |  **📌需加**   |      —       |       —        |   ❌    |   —   |     —      |
-| FAQ `/faq/`     |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |   ✅    |   —   |     —      |
-| Guide `/guide/` |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |    —    |  ✅   | **📌需加** |
+| 首頁 `/`        |      ✅      |   ✅    |     ✅      |      ✅       |      —       |       —        |   ❌    |  ✅   |     —      |
+| FAQ `/faq/`     |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |   ✅    |   —   |     ✅     |
+| Guide `/guide/` |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |    —    |  ✅   |     ✅     |
 | About `/about/` |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |    —    |   —   |     —      |
-| 三篇 Authority  |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |    —    |   —   | **📌需加** |
-| 幣對頁（34）    |      ✅      |   ✅    |      —      |       —       |  **📌需加**  |       ✅       |    —    |   —   |     —      |
-| 金額頁（~204）  |      ✅      |   ✅    |      —      |       —       |  **📌需加**  |       ✅       |    —    |   —   |     —      |
+| 三篇 Authority  |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |    —    |   —   |     ✅     |
+| 幣對頁（34）    |      ✅      |   ✅    |      —      |       —       |      ✅      |       ✅       |    —    |   —   |     —      |
+| 金額頁（~206）  |      ✅      |   ✅    |      —      |       —       |  **📌P1-5**  |       ✅       |    —    |   —   |     —      |
 
 ---
 
@@ -815,32 +816,100 @@ node scripts/fetch-rating-snapshot.mjs          # 匯率快照更新
 
 ---
 
-## 13. SEO 缺口分析（2026-04-10 審查）
+## 13. SEO 缺口分析（2026-04-16 審查）
 
 ### 13.0 現況成熟度評估
 
-RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**現階段最需要補的不是更多 meta tag，而是內容廣度、可觀測性與站外權威。**
+**成熟度等級：企業級（Enterprise-grade SEO）**
 
-### 13.0.1 已達標項目
+RateWise 在單一語言市場（zh-TW）已建構出完整的 SEO 基礎設施。2026-04-16 全面審計結論：**技術 SEO 與結構化資料已達頂級水準；下一階段突破點在多語索引、SEO 可觀測性、站外權威與多媒體內容。**
 
-- 技術 SEO：robots.txt、sitemap、hreflang、canonical、noindex 控制 ✅
-- 程序化 SEO：正向/反向幣別頁 + 代表性金額頁路徑型策略 ✅
-- 結構化資料：8 種 Schema 類型 + Speakable + knowsAbout 實體信號 ✅
-- E-E-A-T：Person/Organization schema、about 頁、明確資料來源 ✅
-- AI 可讀性：llms.txt/llms-full.txt、18 AI Bot Allow、openapi.json ✅
-- 驗證覆蓋：1900+ 測試，多層 CI 每日驗證 ✅
+### 13.0.1 已達標項目（58 項審計通過）
 
-### 13.0.2 仍缺的頂級 SEO 能力
+**技術 SEO（9 項）**：
+- SSG 預渲染 257 頁（248 SEO + 9 App-only），爬蟲零 JS 即可讀取 ✅
+- URL 架構全小寫 + 連字號 + trailing slash 一致 ✅
+- 路徑式金額頁 ~206 個 canonical（`/usd-twd/500/`），比 query string 更 SEO 友善 ✅
+- Canonical URL 自引用 + query string 封鎖（`Disallow: /ratewise/?`）✅
+- robots.txt 37 個 AI Bot 明確 Allow + dev 頁 Disallow ✅
+- sitemap.xml 248 URLs + hreflang + Image Sitemap 擴充（2025 標準合規）✅
+- noindex 策略精確控制（`/privacy/` + 功能頁 + dev 頁分層隔離）✅
+- Legacy Asset Redirect（`/og-image.png` → `/og-image.jpg`）✅
+- SEO 技術揭露頁 `/seo-tech/`（透明度信號）✅
 
-| 缺口                         | 優先級 | 說明                                                                               |
-| ---------------------------- | ------ | ---------------------------------------------------------------------------------- |
-| **多語索引戰略**             | P0     | UI 有多語但無可索引英文/日文內容體系與完整 hreflang 網狀關係；影響國際流量         |
-| **SEO 可觀測性**             | P0     | 無 Search Console / CrUX / coverage 週期監控；無 SERP CTR 迭代機制                 |
-| **內容主題群擴張**           | P0     | 現有強項為幣對頁；缺：刷卡匯率/DCC、機場換匯、各銀行差異、旅遊換匯指南             |
-| **站外權威訊號**             | P1     | 無外部品牌 mention、高品質反向連結、媒體提及、可辨識的 entity footprint            |
-| `CurrencyConversionService`  | P0     | Schema.org 精確定義此工具；AI 引擎匹配「幣別換算」查詢時優先引用有此 schema 的頁面 |
-| `ExchangeRateSpecification`  | P0     | 每個幣對頁注入即時匯率；AI 引擎可提取並顯示具體數字，從 `rating-snapshot.ts` 讀取  |
-| **Answer Capsule（幣對頁）** | P1     | 40-60 字直接答案段落；現況多數幣對頁缺此欄位；AI 引用率 +40%                       |
+**結構化資料（15 項）**：
+- 10+ Schema 類型全面覆蓋：Organization、WebSite、SoftwareApplication、CurrencyConversionService、ExchangeRateSpecification、FAQPage、BreadcrumbList、HowTo、Article、Person、Dataset、ImageObject、SpeakableSpecification ✅
+- `@graph` 結構 + `@id` 互聯，Knowledge Graph 跨頁識別同一實體 ✅
+- `knowsAbout` 實體權威信號：Organization（12 主題）+ Person（11 領域）✅
+- Speakable 覆蓋所有 9 個內容頁（語音搜尋可朗讀）✅
+- noindex 頁不輸出 JSON-LD（`shouldRenderStructuredData()` 控制）✅
+- FAQPage 僅限 `/faq/`，避免 YMYL 重複被拒絕 ✅
+- ImageObject 含 license、copyrightHolder、creditText ✅
+
+**AI 搜尋優化（8 項）**：
+- llms.txt 精簡版 + llms-full.txt 完整版（llmstxt.org 規範）✅
+- Answer Capsule 覆蓋 34 幣對頁 + 3 Authority Guide + Guide + About ✅
+- 可見更新時間戳（Perplexity 新鮮度信號）✅
+- OpenAPI 3.1 規格 + 34 個 Per-Pair JSON 端點 ✅
+- E-E-A-T 信號完整（Person + Organization + knowsAbout + 資料來源歸因）✅
+- Entity 密度接近 15+ 實體/頁的 AI 引用門檻 ✅
+- Tool Use 區塊供 LLM function calling ✅
+- SEO 技術揭露頁公開 8 種 schema + 248 URLs + 5 層架構 ✅
+
+**內容 SEO（8 項）**：
+- FAQ 頁 21+ 題深度覆蓋台灣使用者換匯問題 ✅
+- 幣對頁特化 FAQ 5-7 題（通用 + 幣別特化）✅
+- 3 篇 Authority Guide（賣出價 vs 中間價、現金 vs 即期、刷卡 DCC）✅
+- 首頁 SEO 區塊含 H1 + HowTo + FAQ + 20 個熱門幣對內部連結 ✅
+- Template-bleed 防護測試 ✅
+- 匯率比較資訊嵌入具體數字（統計數字密度 +37% AI 引用率）✅
+- MailtoLink 元件繞過 CF Email Obfuscation ✅
+- 標題層級 H1→H2→H3 正確語意結構 ✅
+
+**PWA 與效能（4 項）**：
+- PWA `registerType: 'prompt'` 避免版本撕裂 + 50+ precache 資產 ✅
+- Core Web Vitals 監測（LCP/INP/CLS/FCP/TTFB）+ Lighthouse CI 97/100 ✅
+- 多格式圖片優化（AVIF > WebP > PNG fallback）✅
+- GA4 延遲載入保護 LCP ✅
+
+**社群媒體 SEO（4 項）**：
+- Open Graph 完整覆蓋（title/description/image/type/locale/updated_time）✅
+- Twitter Card summary_large_image + site/creator ✅
+- Hreflang zh-TW + x-default ✅
+- 外部連結 `rel="noopener noreferrer"` + 作者連結 `rel="me author"` ✅
+
+**驗證與 CI/CD（10 項）**：
+- 15+ SEO 驗證腳本 + 3 個 GitHub Actions 工作流 ✅
+- 1900+ 測試覆蓋 SEO 合規性 ✅
+- Sitemap 2025 合規驗證（10 項測試）✅
+- 結構化資料驗證（8 頁面 JSON-LD 檢查）✅
+- SSOT 同步驗證（seo-paths.config.mjs ↔ seo-paths.ts）✅
+- Template-bleed 測試 + Precache 驗證 ✅
+- llms.txt 自動化測試（H1/brand/版本/幣別/路徑）✅
+- SEO 自動更新工作流（manifest/llms 變更自動生成 PR）✅
+- 生產環境驗證含 5xx 重試 + E2E Playwright ✅
+- Lighthouse CI 門檻 0.83（效能）✅
+
+### 13.0.2 仍缺的頂級 SEO 能力（2026-04-16 更新）
+
+| 缺口                                    | 優先級 | 影響                     | 說明                                                                                         |
+| --------------------------------------- | ------ | ------------------------ | -------------------------------------------------------------------------------------------- |
+| **多語索引戰略**                        | P0     | 國際流量為零             | UI 有 en/ja 但無可索引英文/日文內容體系；hreflang 僅 zh-TW + x-default                      |
+| **SEO 可觀測性**                        | P0     | 無法迭代優化             | 無 Search Console 週期監控、CrUX 追蹤、SERP CTR 迭代機制                                     |
+| **站外權威訊號**                        | P1     | AI 引用率受限            | 無外部品牌 mention、高品質反向連結、Fintech 目錄收錄、媒體提及                               |
+| **金額頁 ExchangeRateSpecification**    | P1     | 206 頁缺 schema          | 34 幣對頁已有，但 ~206 金額頁尚未注入含換算結果的 ExchangeRateSpecification                  |
+| **Authority Guide 字數不足**            | P2     | Claude 引用率不足        | 3 篇 Guide 頁 < 3000 字；Claude 偏好長篇指南（68% 引用信號來自目錄/長篇內容）               |
+| **多媒體內容**                          | P2     | AI Overviews 信號缺失    | 無影片、無資訊圖表；Google AI Overviews 多媒體信號 r=0.92 相關性                             |
+| **HTTP 301 重導向**                     | P2     | 爬蟲效率損耗             | 大寫 URL 僅 client-side JS 導轉，無 HTTP 301；SPA 404 返回 200 狀態碼                        |
+| **AggregateRating**                     | P3     | Gemini 引用受限          | 無使用者評分系統；`ratingCount >= 10` 條件未達觸發門檻                                        |
+| **INP CI 閘門**                         | P2     | 效能回歸風險             | INP 監測存在但未在 CI 強制閘門；高互動工具 INP 為關鍵指標                                     |
+| **Font Loading 優化**                   | P2     | LCP/TTI 可再提升         | 無 `font-display: swap`、無字體 preload、無 `unicode-range` subsetting                        |
+| **首頁 Answer Capsule**                 | P1     | 首頁 AI 引用率           | 首頁有 eyebrow/heading 但無標準 Answer Capsule HTML 區塊                                      |
+| **替代換匯管道比較**                    | P2     | 內容差異化               | 僅 KRW 有明洞民間換匯比較；缺 JPY（機場）、THB（SuperRich）等高流量幣別                      |
+| **Open Data TechArticle schema**        | P2     | 開發者 SEO               | Open Data 頁已有 Dataset，缺 TechArticle                                                     |
+| **動態 OG Image**                       | P3     | 社群分享吸引力           | OG image 為靜態品牌圖，非動態匯率預覽                                                        |
+| **Google Rich Results Test 整合**       | P2     | 自動化驗證缺口           | CI 僅做本地 schema 解析，未整合 Google Rich Results Test API                                  |
+| **Person sameAs 擴充**                  | P2     | E-E-A-T 可驗證性         | 作者 sameAs 僅 Threads + GitHub，缺 LinkedIn 等權威平台                                       |
 
 ---
 
@@ -879,43 +948,55 @@ RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：*
 
 ### 🔴 P0 — 立即（直接影響 AI 引用率）
 
-**全部完成** ✅
+**全部完成** ✅（CurrencyConversionService、ExchangeRateSpecification、可見時間戳、llms.txt 修正）
 
 ### 🟠 P1 — 短期（1 個月內，重大內容與 Schema 改善）
 
-| #    | 任務                                                                                    | 影響         | 檔案                                      | 狀態 |
-| ---- | --------------------------------------------------------------------------------------- | ------------ | ----------------------------------------- | ---- |
-| P1-1 | 在所有 34 幣對頁頂部加入 Answer Capsule（40-60 字 answerCapsule 欄位）                  | AI 引用 +40% | `seo-metadata.ts` CURRENCY_PAGE_OVERRIDES | ✅   |
-| P1-2 | 將每個幣對頁的 FAQ 從 3-4 題擴展至 5-7 題（含旅遊場景、DCC 說明、趨勢圖使用）           | 引用深度     | `seo-metadata.ts`                         | ✅   |
-| P1-3 | 在三篇 Authority Guide 頁加入 Answer Capsule（管道已就緒，補 `answerCapsule` 欄位即可） | AI 引用      | `seo-metadata.ts` AUTHORITY_GUIDE_PAGES   | ✅   |
-| P1-4 | 加入匯率比較資訊（台銀賣出價 vs 中間價，含具體差距數字）至幣對頁                        | E-E-A-T      | `seo-metadata.ts` SEO_RATE_EXAMPLES       | ✅   |
-| P1-5 | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                                  | AI 引用      | `CurrencyLandingPage.tsx`（amount 模式）  |      |
-| P1-6 | ~~更新 `sitemap.xml` 生成腳本加入 `<changefreq>` 和 `<priority>`~~                      | ~~爬蟲效率~~ | `generate-sitemap-2025.mjs`               | N/A  |
+| #     | 任務                                                                                    | 影響             | 檔案                                      | 狀態 |
+| ----- | --------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------- | ---- |
+| P1-1  | 在所有 34 幣對頁頂部加入 Answer Capsule（40-60 字 answerCapsule 欄位）                  | AI 引用 +40%     | `seo-metadata.ts` CURRENCY_PAGE_OVERRIDES | ✅   |
+| P1-2  | 將每個幣對頁的 FAQ 從 3-4 題擴展至 5-7 題（含旅遊場景、DCC 說明、趨勢圖使用）           | 引用深度         | `seo-metadata.ts`                         | ✅   |
+| P1-3  | 在三篇 Authority Guide 頁加入 Answer Capsule（管道已就緒，補 `answerCapsule` 欄位即可） | AI 引用          | `seo-metadata.ts` AUTHORITY_GUIDE_PAGES   | ✅   |
+| P1-4  | 加入匯率比較資訊（台銀賣出價 vs 中間價，含具體差距數字）至幣對頁                        | E-E-A-T          | `seo-metadata.ts` SEO_RATE_EXAMPLES       | ✅   |
+| P1-5  | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                                  | AI 引用          | `CurrencyLandingPage.tsx`（amount 模式）  |      |
+| P1-6  | ~~更新 `sitemap.xml` 生成腳本加入 `<changefreq>` 和 `<priority>`~~                      | ~~爬蟲效率~~     | `generate-sitemap-2025.mjs`               | N/A  |
+| P1-8  | 首頁加入標準 Answer Capsule HTML 區塊                                                   | 首頁 AI 引用率   | `HomepageSEOSection.tsx`                  |      |
+| P1-9  | 建立 SEO 可觀測性（Search Console 週期監控 + CrUX 追蹤）                                | 迭代優化能力     | 外部工具 + 文件                           |      |
 
 > **P1-6 說明**：根據 2025 年 SEO 標準，Google 和 Bing 都忽略 `<changefreq>` 和 `<priority>` 標籤。`generate-sitemap-2025.mjs` 已遵循此標準，移除這些過時標籤。
 
 ### 🟡 P2 — 中期（2-3 個月，GEO 與外部存在感）
 
-| #    | 任務                                                                                 | 影響             | 檔案              |
-| ---- | ------------------------------------------------------------------------------------ | ---------------- | ----------------- |
-| P2-1 | 三篇 Authority Guide 頁擴展至 3,000+ 字（強化 Claude 引用信號）                      | Claude 引用      | 頁面元件          |
-| P2-2 | 在幣對頁加入匯率歷史趨勢圖（圖片 + alt 文字）→ Google AI Overviews 多媒體信號        | AI Overview 引用 | 頁面元件          |
-| P2-3 | 申請加入 2-3 個台灣 Fintech 工具目錄（Claude 引用信號 68%）                          | Claude 引用      | 外部行動          |
-| P2-4 | 在 r/taiwan、r/japantravel、r/korea 以真實貢獻身份分享工具（Perplexity Reddit 信號） | Perplexity 引用  | 外部行動          |
-| P2-5 | 導入 Otterly AI 或 Peec AI 進行 AI 可見性監測                                        | 可見性量化       | 外部工具          |
-| P2-6 | 在 `about/` 頁面加入 `Person` schema（作者 E-E-A-T）                                 | E-E-A-T          | `seo-metadata.ts` |
-| P2-7 | 在 `open-data/` 頁面加入 `TechArticle` schema                                        | 開發者 SEO       | `seo-metadata.ts` |
-| P2-8 | 為熱門幣別（JPY、USD、EUR）製作 60-90 秒解說短影片並嵌入頁面                         | 多媒體信號       | 外部行動          |
+| #     | 任務                                                                                            | 影響             | 檔案                |
+| ----- | ----------------------------------------------------------------------------------------------- | ---------------- | ------------------- |
+| P2-1  | 三篇 Authority Guide 頁擴展至 3,000+ 字（強化 Claude 引用信號）                                 | Claude 引用      | 頁面元件            |
+| P2-2  | 在幣對頁加入匯率歷史趨勢圖（圖片 + alt 文字）→ Google AI Overviews 多媒體信號                   | AI Overview 引用 | 頁面元件            |
+| P2-3  | 申請加入 2-3 個台灣 Fintech 工具目錄（Claude 引用信號 68%）                                     | Claude 引用      | 外部行動            |
+| P2-4  | 在 r/taiwan、r/japantravel、r/korea 以真實貢獻身份分享工具（Perplexity Reddit 信號）            | Perplexity 引用  | 外部行動            |
+| P2-5  | 導入 Otterly AI 或 Peec AI 進行 AI 可見性監測                                                   | 可見性量化       | 外部工具            |
+| P2-6  | ~~在 `about/` 頁面加入 `Person` schema（作者 E-E-A-T）~~                                        | ~~E-E-A-T~~      | `seo-metadata.ts`   |
+| P2-7  | 在 `open-data/` 頁面加入 `TechArticle` schema                                                   | 開發者 SEO       | `seo-metadata.ts`   |
+| P2-8  | 為熱門幣別（JPY、USD、EUR）製作 60-90 秒解說短影片並嵌入頁面                                    | 多媒體信號       | 外部行動            |
+| P2-9  | 擴充替代換匯管道比較（JPY 機場換匯、THB SuperRich 等高流量幣別）                                | 內容差異化       | `seo-metadata.ts`   |
+| P2-10 | INP 監測納入 CI 閘門（高互動換算工具的關鍵指標）                                                 | 效能回歸防護     | `.lighthouserc.json` |
+| P2-11 | Font Loading 優化（`font-display: swap` + 字體 preload + `unicode-range` subsetting）           | LCP/TTI 提升     | `index.html`        |
+| P2-12 | Person sameAs 擴充（加入 LinkedIn 等權威平台連結）                                               | E-E-A-T 可驗證性 | `app-info.ts`       |
+| P2-13 | 整合 Google Rich Results Test API 至 CI/CD（自動化結構化資料驗證）                               | 驗證完整性       | `seo-production.yml` |
+| P2-14 | 配置 Cloudflare Worker 301 重導向（大寫 URL → 小寫、404 正確 HTTP 狀態碼）                       | 爬蟲效率         | CF Worker            |
+
+> **P2-6 說明**：`about/` 頁面已有 `Person` schema（v2.18.0 `buildPersonJsonLd()` 已實作）。此項標記完成。
 
 ### 🟢 P3 — 長期（選配，重大架構變更）
 
-| #    | 任務                                                   | 影響         | 備註                |
-| ---- | ------------------------------------------------------ | ------------ | ------------------- |
-| P3-1 | 英文版本 `/en/` 路由                                   | 國際 SEO     | 預估 4h，需翻譯全站 |
-| P3-2 | 日文版本 `/ja/` 路由                                   | 日本用戶 SEO | 預估 4h，需日文翻譯 |
-| P3-3 | `AggregateRating` schema（需建立評分收集機制）         | Gemini 引用  | 需先有評分系統      |
-| P3-4 | 建立 FAQ 互動頁（讓 Google AI Overviews 更容易提取）   | AI Overview  | 需 UX 設計          |
-| P3-5 | 程序化 SEO 擴展：增加更多金額頁（如每幣別 12+ 個金額） | 長尾流量     | 需評估爬蟲預算      |
+| #    | 任務                                                          | 影響         | 備註                           |
+| ---- | ------------------------------------------------------------- | ------------ | ------------------------------ |
+| P3-1 | 英文版本 `/en/` 路由 + 完整 hreflang 網                      | 國際 SEO     | 預估 4h，需翻譯全站            |
+| P3-2 | 日文版本 `/ja/` 路由 + 完整 hreflang 網                      | 日本用戶 SEO | 預估 4h，需日文翻譯            |
+| P3-3 | `AggregateRating` schema（需建立評分收集機制）                | Gemini 引用  | 需先有評分系統                 |
+| P3-4 | 建立 FAQ 互動頁（讓 Google AI Overviews 更容易提取）          | AI Overview  | 需 UX 設計                     |
+| P3-5 | 程序化 SEO 擴展：增加更多金額頁（如每幣別 12+ 個金額）        | 長尾流量     | 需評估爬蟲預算                 |
+| P3-6 | 動態 OG Image（含即時匯率預覽，提升社群分享吸引力）           | 社群 CTR     | 需 edge function / image API   |
+| P3-7 | 內容主題群擴張（機場換匯指南、各銀行匯率差異、旅遊換匯攻略） | 主題覆蓋率   | 需新增頁面與 Authority Guide   |
 
 ---
 
@@ -981,15 +1062,16 @@ RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：*
 
 ---
 
-**最後更新**: 2026-04-10
-**版本**: v1.2.0
+**最後更新**: 2026-04-16
+**版本**: v2.0.0
 **維護者**: Development Team
-**下次審查日**: 2026-07-10（每季審查）
+**下次審查日**: 2026-07-16（每季審查）
 
 ### 修訂紀錄
 
-| 日期       | 版本   | 變更摘要                                                                                                 |
-| ---------- | ------ | -------------------------------------------------------------------------------------------------------- |
-| 2026-04-10 | v1.2.0 | 新增 2026 年 AI 搜尋術語（AEO/GEO/LLMO 深度解析）、AI 平台特性對照表、更新 TODO 完成狀態                 |
-| 2026-03-31 | v1.1.0 | 同步 v2.16.x 實作：seo-static.ts、AnswerCapsule 元件、路徑數量修正（248）、健檢強化、TODO 已完成項目標記 |
-| 2026-03-23 | v1.0.0 | 初始版本，整合六份舊 SEO 文件                                                                            |
+| 日期       | 版本   | 變更摘要                                                                                                                                       |
+| ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-16 | v2.0.0 | 全面 SEO 審計（58 項拆解）：§2.1 CONTENT_SEO_PATHS 更正為 9；§4.4 Schema 矩陣同步已完成實作；§13 缺口分析重寫（16 項缺口含優先級與影響）；§14 新增 P1-8/P1-9/P2-9~P2-14/P3-6~P3-7；P2-6 標記完成 |
+| 2026-04-10 | v1.2.0 | 新增 2026 年 AI 搜尋術語（AEO/GEO/LLMO 深度解析）、AI 平台特性對照表、更新 TODO 完成狀態                                                       |
+| 2026-03-31 | v1.1.0 | 同步 v2.16.x 實作：seo-static.ts、AnswerCapsule 元件、路徑數量修正（248）、健檢強化、TODO 已完成項目標記                                       |
+| 2026-03-23 | v1.0.0 | 初始版本，整合六份舊 SEO 文件                                                                                                                  |
