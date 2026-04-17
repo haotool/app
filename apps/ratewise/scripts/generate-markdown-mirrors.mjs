@@ -17,6 +17,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import prettier from 'prettier';
 import { SITE_CONFIG } from '../seo-paths.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -113,9 +114,15 @@ _本 Markdown 鏡像由 \`scripts/generate-markdown-mirrors.mjs\` 於 build 時�
 _正式人眼版本請見對應 HTML URL。_
 `;
 
-function writeMirror(slug, content) {
+// 寫檔前先經 prettier 正規化，避免 prebuild 與 lint-staged 之間產生反覆漂移。
+async function writeMirror(slug, content) {
   const out = resolve(ROOT, `public/${slug}.md`);
-  writeFileSync(out, content.trimEnd() + '\n');
+  const prettierConfig = await prettier.resolveConfig(out);
+  const formatted = await prettier.format(content.trimEnd() + '\n', {
+    ...prettierConfig,
+    filepath: out,
+  });
+  writeFileSync(out, formatted);
   console.log(`  ✅ public/${slug}.md`);
 }
 
@@ -366,9 +373,9 @@ ${COMMON_FOOTER}`;
 // Generate all mirrors
 // ---------------------------------------------------------------------------
 console.log('🪞 生成 Markdown 鏡像...');
-writeMirror('faq', buildFaqMd());
-writeMirror('about', buildAboutMd());
-writeMirror('privacy', buildPrivacyMd());
-writeMirror('guide', buildGuideMd());
-writeMirror('open-data', buildOpenDataMd());
+await writeMirror('faq', buildFaqMd());
+await writeMirror('about', buildAboutMd());
+await writeMirror('privacy', buildPrivacyMd());
+await writeMirror('guide', buildGuideMd());
+await writeMirror('open-data', buildOpenDataMd());
 console.log('✅ Markdown 鏡像生成完成（5 檔）');
