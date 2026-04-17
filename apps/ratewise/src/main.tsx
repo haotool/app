@@ -24,7 +24,7 @@ import { handleVersionUpdate } from './utils/versionManager';
 import { APP_VERSION, BUILD_TIME } from './config/version';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { initPWAStorageManager } from './utils/pwaStorageManager';
-import { initGA, scheduleAfterPageLoad, trackPageview } from '@shared/analytics';
+import { initGA, scheduleAfterPageLoad, trackPageview, trackAiReferral } from '@shared/analytics';
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(
@@ -45,6 +45,8 @@ export const createRoot = ViteReactSSG(
       const initAnalytics = (): void => {
         initGA(gaId);
         trackPageview(window.location.pathname + window.location.search);
+        // AI referral 偵測：首次 mount 後識別 chatgpt/perplexity/claude 等來源並送出自訂事件。
+        trackAiReferral();
       };
       scheduleAfterPageLoad(initAnalytics);
 

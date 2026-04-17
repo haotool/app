@@ -140,6 +140,16 @@ Googlebot 與 AI agent 可直接讀取靜態 HTML：
 - [關於我們](${BASE_URL}about/): 專案背景與作者資訊
 - [開放資料 API](${BASE_URL}open-data/): 台銀匯率 JSON API 完整說明（雙端點、程式碼範例、欄位定義）
 
+## Markdown Mirrors (LLM-friendly)
+
+與 HTML 頁語義一致的純 Markdown 版本，供 AI agent 直接讀取：
+
+- [faq.md](${BASE_URL}faq.md)
+- [guide.md](${BASE_URL}guide.md)
+- [about.md](${BASE_URL}about.md)
+- [privacy.md](${BASE_URL}privacy.md)
+- [open-data.md](${BASE_URL}open-data.md)
+
 ## Authority Guides
 
 - [賣出價與中間價差異](${BASE_URL}sell-rate-vs-mid-rate/): 解釋為什麼換匯估算不能只看中間價

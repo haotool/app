@@ -217,3 +217,102 @@ describe('trackEvent', () => {
     expect(gtagSpy).toHaveBeenCalledWith('event', 'pwa_install', undefined);
   });
 });
+
+describe('detectAiSource', () => {
+  it('utm_source=chatgpt.com 優先於 referrer', async () => {
+    const { detectAiSource } = await importFresh();
+    const result = detectAiSource(
+      'https://app.haotool.org/ratewise/?utm_source=chatgpt.com',
+      'https://www.google.com/',
+    );
+    expect(result).toEqual({ id: 'chatgpt', medium: 'utm', raw: 'chatgpt.com' });
+  });
+
+  it('referrer host 命中 perplexity.ai', async () => {
+    const { detectAiSource } = await importFresh();
+    const result = detectAiSource(
+      'https://app.haotool.org/ratewise/',
+      'https://www.perplexity.ai/search?q=twd',
+    );
+    expect(result?.id).toBe('perplexity');
+    expect(result?.medium).toBe('referrer');
+  });
+
+  it('referrer host claude.ai 命中 claude', async () => {
+    const { detectAiSource } = await importFresh();
+    const result = detectAiSource('https://app.haotool.org/', 'https://claude.ai/chat/abc');
+    expect(result?.id).toBe('claude');
+  });
+
+  it('非 AI referrer 回傳 null', async () => {
+    const { detectAiSource } = await importFresh();
+    expect(detectAiSource('https://app.haotool.org/', 'https://www.google.com/')).toBeNull();
+    expect(detectAiSource('https://app.haotool.org/', '')).toBeNull();
+  });
+
+  it('非法 URL 與 referrer 安全 fallback 回 null', async () => {
+    const { detectAiSource } = await importFresh();
+    expect(detectAiSource('not-a-url', 'also-not-a-url')).toBeNull();
+  });
+});
+
+describe('trackAiReferral', () => {
+  beforeEach(() => {
+    delete (window as Partial<Window>).gtag;
+    window.sessionStorage.clear();
+  });
+
+  it('gtag 未就緒時靜默略過（不拋出例外）', async () => {
+    const { trackAiReferral } = await importFresh();
+    expect(() => trackAiReferral()).not.toThrow();
+  });
+
+  it('非 AI referrer 不送事件', async () => {
+    const { initGA, trackAiReferral } = await importFresh();
+    initGA('G-TEST123456');
+    const gtagSpy = vi.fn();
+    window.gtag = gtagSpy;
+    Object.defineProperty(document, 'referrer', { value: '', configurable: true });
+
+    trackAiReferral();
+
+    expect(gtagSpy).not.toHaveBeenCalled();
+  });
+
+  it('命中 chatgpt referrer 送出 ai_referral 事件並設 user_property', async () => {
+    const { initGA, trackAiReferral } = await importFresh();
+    initGA('G-TEST123456');
+    const gtagSpy = vi.fn();
+    window.gtag = gtagSpy;
+    Object.defineProperty(document, 'referrer', {
+      value: 'https://chatgpt.com/share/abc',
+      configurable: true,
+    });
+
+    trackAiReferral();
+
+    expect(gtagSpy).toHaveBeenCalledWith('set', 'user_properties', { ai_source: 'chatgpt' });
+    const eventCall = gtagSpy.mock.calls.find((args) => args[0] === 'event');
+    expect(eventCall?.[1]).toBe('ai_referral');
+    const params = eventCall?.[2] as Record<string, unknown>;
+    expect(params?.['ai_source']).toBe('chatgpt');
+    expect(params?.['ai_medium']).toBe('referrer');
+  });
+
+  it('同 session 只送一次（sessionStorage 去重）', async () => {
+    const { initGA, trackAiReferral } = await importFresh();
+    initGA('G-TEST123456');
+    const gtagSpy = vi.fn();
+    window.gtag = gtagSpy;
+    Object.defineProperty(document, 'referrer', {
+      value: 'https://perplexity.ai/',
+      configurable: true,
+    });
+
+    trackAiReferral();
+    trackAiReferral();
+
+    const eventCalls = gtagSpy.mock.calls.filter((args) => args[0] === 'event');
+    expect(eventCalls).toHaveLength(1);
+  });
+});

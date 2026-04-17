@@ -20,6 +20,63 @@ type LoadWindow = Pick<Window, 'addEventListener'>;
 type LoadDocument = Pick<Document, 'readyState'>;
 
 /**
+ * AI referral 來源判別表（2026-04 SSOT）
+ *
+ * ChatGPT 會自動附上 `utm_source=chatgpt.com`；其他平台多半只給 referrer。
+ * key 為寫入 GA4 custom dimension 的 canonical 值，便於 channel group regex 比對。
+ */
+const AI_SOURCE_PATTERNS: readonly { id: string; pattern: RegExp }[] = [
+  { id: 'chatgpt', pattern: /(^|\.)chatgpt\.com$|(^|\.)chat\.openai\.com$/i },
+  { id: 'perplexity', pattern: /(^|\.)perplexity\.ai$/i },
+  { id: 'claude', pattern: /(^|\.)claude\.ai$|(^|\.)claude\.com$/i },
+  { id: 'gemini', pattern: /(^|\.)gemini\.google\.com$|(^|\.)bard\.google\.com$/i },
+  { id: 'copilot', pattern: /(^|\.)copilot\.microsoft\.com$|(^|\.)bing\.com$/i },
+  { id: 'grok', pattern: /(^|\.)grok\.com$|(^|\.)x\.ai$/i },
+  { id: 'mistral', pattern: /(^|\.)chat\.mistral\.ai$|(^|\.)mistral\.ai$/i },
+  { id: 'you', pattern: /(^|\.)you\.com$/i },
+  { id: 'phind', pattern: /(^|\.)phind\.com$/i },
+];
+
+/**
+ * 判別當前造訪是否來自 AI 助手。
+ * 優先採用 utm_source（ChatGPT 等會主動附加），其次 referrer host 比對。
+ * 無匹配時回傳 null，呼叫端應略過事件送出以避免雜訊。
+ */
+export function detectAiSource(
+  pageUrl: string,
+  referrer: string,
+): { id: string; medium: 'utm' | 'referrer'; raw: string } | null {
+  try {
+    const url = new URL(pageUrl);
+    const utmSource = url.searchParams.get('utm_source');
+    if (utmSource) {
+      for (const entry of AI_SOURCE_PATTERNS) {
+        if (entry.pattern.test(utmSource)) {
+          return { id: entry.id, medium: 'utm', raw: utmSource };
+        }
+      }
+    }
+  } catch {
+    // 非合法 URL，忽略
+  }
+
+  if (referrer) {
+    try {
+      const host = new URL(referrer).hostname;
+      for (const entry of AI_SOURCE_PATTERNS) {
+        if (entry.pattern.test(host)) {
+          return { id: entry.id, medium: 'referrer', raw: host };
+        }
+      }
+    } catch {
+      // referrer 非 URL，忽略
+    }
+  }
+
+  return null;
+}
+
+/**
  * 頁面已 complete 時立即執行，否則延後到 load 事件。
  * 回傳值供測試驗證實際採用的初始化路徑。
  */
@@ -84,4 +141,42 @@ export function trackPageview(path: string, title?: string): void {
 export function trackEvent(name: string, params?: Record<string, string | number | boolean>): void {
   if (typeof window === 'undefined' || !window.gtag) return;
   window.gtag('event', name, params);
+}
+
+const AI_REFERRAL_SESSION_KEY = '__ratewise_ai_referral_sent__';
+
+/**
+ * 若本次造訪來自 AI 助手，送出 `ai_referral` 事件並設定 user property。
+ * 同 session 內只送一次；gtag 未就緒時靜默略過。
+ *
+ * GA4 後台建議：
+ * - 於 Admin → Custom definitions 新增 user-scoped dimension `ai_source`
+ * - 於 Admin → Channel groups 建立 regex：
+ *   `chatgpt|perplexity|claude|gemini|copilot|grok|mistral|you|phind`
+ */
+export function trackAiReferral(): void {
+  if (typeof window === 'undefined' || !window.gtag) return;
+
+  try {
+    if (window.sessionStorage.getItem(AI_REFERRAL_SESSION_KEY) === '1') return;
+  } catch {
+    // sessionStorage 不可用（private mode / 權限），繼續送事件但無去重
+  }
+
+  const detected = detectAiSource(window.location.href, document.referrer);
+  if (!detected) return;
+
+  window.gtag('set', 'user_properties', { ai_source: detected.id });
+  window.gtag('event', 'ai_referral', {
+    ai_source: detected.id,
+    ai_medium: detected.medium,
+    ai_raw: detected.raw,
+    landing_page: window.location.pathname + window.location.search,
+  });
+
+  try {
+    window.sessionStorage.setItem(AI_REFERRAL_SESSION_KEY, '1');
+  } catch {
+    // 無法寫入則下次造訪可能重複送，屬可接受雜訊
+  }
 }

@@ -1,5 +1,9 @@
 # RateWise — Robots Exclusion Protocol
 # https://app.haotool.org/ratewise/
+#
+# AI Bot 三層治理：TRAINING / SEARCH / USER_AGENT
+# 當前策略：三層皆 Allow /（最大化 AI 搜尋曝光）。
+# 若未來需停止貢獻訓練語料，請將 TRAINING 區段改為 Disallow /。
 
 User-agent: *
 Allow: /
@@ -13,13 +17,8 @@ Disallow: /ratewise/?
 
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 
+# --- Tier 1: TRAINING (基礎模型訓練語料) ---
 User-agent: GPTBot
-Allow: /
-
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: ChatGPT-User
 Allow: /
 
 User-agent: ClaudeBot
@@ -28,91 +27,28 @@ Allow: /
 User-agent: anthropic-ai
 Allow: /
 
-User-agent: Claude-User
-Allow: /
-
-User-agent: Claude-SearchBot
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: Perplexity-User
-Allow: /
-
 User-agent: Google-Extended
-Allow: /
-
-User-agent: Google-CloudVertexBot
-Allow: /
-
-User-agent: GrokBot
-Allow: /
-
-User-agent: cohere-ai
-Allow: /
-
-User-agent: YouBot
-Allow: /
-
-User-agent: PhindBot
-Allow: /
-
-User-agent: DuckAssistBot
-Allow: /
-
-User-agent: Amazonbot
-Allow: /
-
-User-agent: Applebot
 Allow: /
 
 User-agent: Applebot-Extended
 Allow: /
 
-User-agent: CCBot
+User-agent: Amazonbot
 Allow: /
 
 User-agent: Bytespider
 Allow: /
 
-User-agent: PetalBot
+User-agent: CCBot
 Allow: /
 
-User-agent: MistralAI-User
-Allow: /
-
-User-agent: Manus-User
-Allow: /
-
-User-agent: Meta-ExternalAgent
-Allow: /
-
-User-agent: Meta-ExternalFetcher
+User-agent: cohere-ai
 Allow: /
 
 User-agent: FacebookBot
 Allow: /
 
-User-agent: facebookexternalhit
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: LinkedInBot
-Allow: /
-
-User-agent: Cloudflare-AutoRAG
-Allow: /
-
-User-agent: Anchor Browser
-Allow: /
-
-User-agent: archive.org_bot
-Allow: /
-
-User-agent: Terracotta Bot
+User-agent: Meta-ExternalAgent
 Allow: /
 
 User-agent: Timpibot
@@ -122,4 +58,76 @@ User-agent: ProRataInc
 Allow: /
 
 User-agent: Novellum AI Crawl
+Allow: /
+
+# --- Tier 2: SEARCH (AI 搜尋索引與引用) ---
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Google-CloudVertexBot
+Allow: /
+
+User-agent: DuckAssistBot
+Allow: /
+
+# --- Tier 3: USER_AGENT (使用者觸發即時抓取) ---
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: MistralAI-User
+Allow: /
+
+User-agent: Manus-User
+Allow: /
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+
+User-agent: Cloudflare-AutoRAG
+Allow: /
+
+User-agent: Anchor Browser
+Allow: /
+
+# --- Tier 4: PREVIEW / OTHER (社群預覽與其他) ---
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: archive.org_bot
+Allow: /
+
+User-agent: Terracotta Bot
+Allow: /
+
+User-agent: PhindBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: GrokBot
+Allow: /
+
+User-agent: PetalBot
 Allow: /

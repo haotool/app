@@ -72,6 +72,14 @@
   Cache-Control: public, max-age=86400
 /ratewise/llms.txt
   Cache-Control: public, max-age=86400
+
+# Markdown 鏡像（供 LLM agent 乾淨讀取；與 HTML 頁語義一致）
+/*.md
+  Cache-Control: public, max-age=3600, must-revalidate
+  Content-Type: text/markdown; charset=utf-8
+/ratewise/*.md
+  Cache-Control: public, max-age=3600, must-revalidate
+  Content-Type: text/markdown; charset=utf-8
 /*.css
   Cache-Control: public, max-age=86400
 /*.js
