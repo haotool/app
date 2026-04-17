@@ -90,5 +90,5 @@ jsDelivr CDN（建議）：全球 PoP 節點加速，無明確請求上限，支
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.21.0，2026-04-17T17:58:34.934Z），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.21.0），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_

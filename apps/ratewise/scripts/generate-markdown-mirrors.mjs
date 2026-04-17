@@ -106,10 +106,10 @@ function extractPageDescription(pageConst) {
   throw new Error(`無法擷取 ${pageConst}.description`);
 }
 
-const NOW_ISO = new Date().toISOString();
+// 不嵌入 build timestamp：避免 prebuild 每次重跑都造成 git diff；版本號由 changeset 驅動即為 SSOT。
 const COMMON_FOOTER = `---
 
-_本 Markdown 鏡像由 \`scripts/generate-markdown-mirrors.mjs\` 於 build 時自動產生（v${VERSION}，${NOW_ISO}），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 \`scripts/generate-markdown-mirrors.mjs\` 於 build 時自動產生（v${VERSION}），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_
 `;
 
