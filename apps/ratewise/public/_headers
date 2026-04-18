@@ -80,6 +80,19 @@
 /ratewise/*.md
   Cache-Control: public, max-age=3600, must-revalidate
   Content-Type: text/markdown; charset=utf-8
+
+# Link rel="alternate" type="text/markdown" — 供 AI 爬蟲從 HTML 頁自動發現 .md 鏡像
+# RFC 8288 Web Linking；AI bot 可解析 HTTP Link 標頭，無需解析 <head><link>
+/ratewise/faq/
+  Link: </ratewise/faq.md>; rel="alternate"; type="text/markdown"
+/ratewise/about/
+  Link: </ratewise/about.md>; rel="alternate"; type="text/markdown"
+/ratewise/privacy/
+  Link: </ratewise/privacy.md>; rel="alternate"; type="text/markdown"
+/ratewise/guide/
+  Link: </ratewise/guide.md>; rel="alternate"; type="text/markdown"
+/ratewise/open-data/
+  Link: </ratewise/open-data.md>; rel="alternate"; type="text/markdown"
 /*.css
   Cache-Control: public, max-age=86400
 /*.js
