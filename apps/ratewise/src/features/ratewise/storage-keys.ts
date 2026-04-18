@@ -5,6 +5,19 @@
  * 1. 快取數據：可定期清除，有過期時間
  * 2. 用戶數據：永久保存，不可自動清除
  *
+ * ⚠️ STABLE IDENTIFIER POLICY ⚠️
+ * 本檔案內所有字串值（包含 'ratewise-converter'、'ratewise-history-cache'、
+ * 'exchangeRates'、'app_version' 等）為 **永久穩定識別符**，刻在使用者瀏覽器中：
+ *
+ * - 改名 → 既有使用者的收藏 / 歷史 / 偏好設定全部消失
+ * - 與「品牌 shortName」完全解耦：即使未來把品牌改名，這裡的字串也 **不可** 跟著改
+ * - 視為與 URL path（/ratewise/）同等級的對外契約
+ *
+ * 若真的必須改名（例如資料結構不相容的破壞性升級），需要：
+ * 1. 寫遷移腳本（讀舊 key → 寫新 key → 刪舊 key）
+ * 2. major version bump
+ * 3. release notes 明確告知使用者
+ *
  * 參考：/home/user/app/CLAUDE.md
  */
 

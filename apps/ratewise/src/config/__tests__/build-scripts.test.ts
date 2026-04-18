@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -443,5 +443,84 @@ describe('ratewise build scripts', () => {
     expect(seoTechSource).toContain('jsonLd={pageSeo.jsonLd}');
     // pathname は CONTENT_SEO_PATHS と一致する尾斜線付き形式を使用すること。
     expect(seoTechSource).not.toContain("pathname='/seo-tech'");
+  });
+
+  /**
+   * Brand SSOT 哨兵：
+   * 防止有人在 components / pages / i18n 直接寫死 'RateWise' 或 '匯率好工具'。
+   * 改名時若新增的程式碼漏接 SSOT，這個測試會立刻紅。
+   *
+   * Allowlist 解釋：
+   * - src/config/app-info.ts — SSOT 本身（必含字面值）
+   * - src/config/__tests__/ — 包含 canary 與本測試自身
+   * - src/features/ratewise/ — `ratewise` 是 technical codename，permanent identifier
+   * - src/routes.tsx — 直接 import RateWise component（symbol，不是品牌字串）
+   * - src/services/exchangeRateService.ts — 註解引用 RateWise.tsx 檔名
+   * - src/jsonld.test.ts / urlNormalization.test.ts — 引用 RateWise.tsx 檔案路徑
+   * - src/llms-txt.spec.ts — 已收斂（白名單只是防守備）
+   * - src/utils/versionManager.ts — 註解引用 RateWise.tsx 為呼叫者
+   */
+  it('should not hardcode RateWise / 匯率好工具 outside SSOT and technical-identifier files', async () => {
+    const srcRoot = path.resolve(__dirname, '../..');
+    const allowList = new Set(
+      [
+        'config/app-info.ts',
+        'features/ratewise/RateWise.tsx',
+        'features/ratewise/RateWise.test.tsx',
+        'features/ratewise/storage-keys.ts',
+        'routes.tsx',
+        'services/exchangeRateService.ts',
+        'jsonld.test.ts',
+        'middleware/urlNormalization.test.ts',
+        'llms-txt.spec.ts',
+        'utils/versionManager.ts',
+      ].map((p) => path.normalize(p)),
+    );
+    const allowedDirs = [
+      path.normalize('config/__tests__'),
+      // bootstrap tests reference STORAGE_KEYS which lives under features/ratewise
+      path.normalize('bootstrap'),
+      // versionManager tests reference STORAGE_KEYS
+      path.normalize('utils/__tests__'),
+    ];
+    const skipExt = new Set(['.png', '.jpg', '.svg', '.webp', '.snap']);
+
+    function* walk(dir: string): Generator<string> {
+      for (const entry of readdirSync(dir)) {
+        const full = path.join(dir, entry);
+        const st = statSync(full);
+        if (st.isDirectory()) {
+          yield* walk(full);
+          continue;
+        }
+        if (skipExt.has(path.extname(entry))) continue;
+        yield full;
+      }
+    }
+
+    const offenders: { file: string; reason: string }[] = [];
+    const brandTokens = ['RateWise', '匯率好工具'];
+
+    for (const file of walk(srcRoot)) {
+      const rel = path.relative(srcRoot, file);
+      if (allowList.has(rel)) continue;
+      if (allowedDirs.some((d) => rel.startsWith(d + path.sep) || rel === d)) continue;
+
+      const content = await readFile(file, 'utf-8');
+      for (const token of brandTokens) {
+        if (content.includes(token)) {
+          offenders.push({ file: rel, reason: `contains literal "${token}"` });
+          break;
+        }
+      }
+    }
+
+    if (offenders.length > 0) {
+      const msg = offenders.map((o) => `  - ${o.file}: ${o.reason}`).join('\n');
+      throw new Error(
+        `發現新增的品牌字面值（請改用 APP_INFO.shortName / APP_INFO.name）：\n${msg}`,
+      );
+    }
+    expect(offenders).toEqual([]);
   });
 });

@@ -151,7 +151,7 @@ export const SEO_INDEXABLE_LOCALES = [DEFAULT_LOCALE] as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
 export const DEFAULT_DESCRIPTION = `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買賣價（非中間價），讓你換匯前知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，每 5 分鐘同步，免費無廣告。`;
 export const DEFAULT_KEYWORDS = [
-  '匯率好工具',
+  APP_INFO.subtitle,
   APP_INFO.shortName,
   '匯率工具',
   '匯率換算',
