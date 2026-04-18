@@ -18,6 +18,7 @@ import { readdir, mkdir } from 'node:fs/promises';
 import { join, extname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { APP_INFO } from '../src/config/app-info.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -152,7 +153,7 @@ async function main() {
   />
   <img
     src="/optimized/logo-192w.png"
-    alt="RateWise Logo"
+    alt="${APP_INFO.shortName} Logo"
     width="112"
     height="112"
     loading="lazy"

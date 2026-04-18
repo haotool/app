@@ -42,7 +42,8 @@ export default function Privacy() {
           <section className="card mb-6 p-6">
             <h2 className="mb-4 text-2xl font-bold text-text">概述</h2>
             <p className="mb-4 leading-relaxed text-text-muted">
-              RateWise 重視資料最小化原則。本服務不要求註冊帳號，也不建立可識別個人的會員資料。
+              {APP_INFO.shortName}{' '}
+              重視資料最小化原則。本服務不要求註冊帳號，也不建立可識別個人的會員資料。
             </p>
             <p className="leading-relaxed text-text-muted">
               收藏貨幣、介面設定與換算歷史會保存在您的裝置本地；站點營運另使用第三方分析與安全服務處理匿名流量與防護資訊。
@@ -58,7 +59,7 @@ export default function Privacy() {
               <li>最近一次匯率快取資料</li>
             </ul>
             <p className="mt-4 text-text-muted">
-              以上資料主要透過瀏覽器的 `localStorage` 與快取機制儲存，不會由 RateWise
+              以上資料主要透過瀏覽器的 `localStorage` 與快取機制儲存，不會由 {APP_INFO.shortName}{' '}
               自建伺服器集中保存。
             </p>
           </section>
@@ -102,7 +103,9 @@ export default function Privacy() {
           </section>
 
           <div className="text-center text-sm text-text-muted">
-            <p>© {getCopyrightYears()} RateWise 匯率好工具</p>
+            <p>
+              © {getCopyrightYears()} {APP_INFO.name}
+            </p>
           </div>
         </div>
       </div>

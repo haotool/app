@@ -15,6 +15,7 @@ import { PullToRefreshIndicator } from './PullToRefreshIndicator';
 import { useRatingPrompt } from '../hooks/useRatingPrompt';
 
 import { getResolvedLanguage } from '../i18n';
+import { APP_INFO } from '../config/app-info';
 import { navigationTokens } from '../config/design-tokens';
 import { getTopLevelTransitionDirection, pageTransition } from '../config/animations';
 import { RouteAnalytics } from '@shared/analytics';
@@ -29,7 +30,7 @@ function Logo() {
   return (
     <img
       src={`${basePath}logo.png`}
-      alt="RateWise 匯率好工具"
+      alt={APP_INFO.name}
       width={28}
       height={28}
       className="w-7 h-7 shrink-0"
@@ -80,7 +81,7 @@ function Header() {
               [-webkit-background-clip:text]
             "
           >
-            {isZhTW ? 'RateWise 匯率好工具' : t('app.title')}
+            {isZhTW ? APP_INFO.name : t('app.title')}
           </span>
         </div>
       </div>

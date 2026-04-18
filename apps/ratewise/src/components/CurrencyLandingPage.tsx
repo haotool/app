@@ -9,7 +9,7 @@ import { AnswerCapsule } from './AnswerCapsule';
 import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
-import { getCopyrightNotice } from '../config/app-info';
+import { APP_INFO, getCopyrightNotice } from '../config/app-info';
 import type {
   FAQEntry,
   HowToStep,
@@ -149,7 +149,7 @@ export function CurrencyLandingPage({
     robots: robotsDirective,
     // 僅索引金額頁加入金額層麵包屑。
     breadcrumb: [
-      { name: 'RateWise 首頁', item: '/' },
+      { name: `${APP_INFO.shortName} 首頁`, item: '/' },
       {
         name: isTwdToForeign ? `TWD → ${currencyCode} 匯率` : `${currencyCode} → TWD 匯率`,
         item: `${pathname}/`,
@@ -169,7 +169,7 @@ export function CurrencyLandingPage({
       name: isTwdToForeign
         ? `如何查看 TWD 對 ${currencyCode} 匯率`
         : `如何查看 ${currencyCode} 對 TWD 匯率`,
-      description: `使用 RateWise ${howToSteps.length} 步驟快速換算${currencyName}對台幣，並查看歷史趨勢與多幣別。`,
+      description: `使用 ${APP_INFO.shortName} ${howToSteps.length} 步驟快速換算${currencyName}對台幣，並查看歷史趨勢與多幣別。`,
       steps: howToSteps,
       totalTime: 'PT30S',
     },
@@ -265,11 +265,11 @@ export function CurrencyLandingPage({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="font-bold text-text text-sm sm:text-base mb-2">
-                    為什麼 RateWise 比其他工具更精準？
+                    為什麼 {APP_INFO.shortName} 比其他工具更精準？
                   </h2>
                   <p className="text-text-muted text-xs sm:text-sm leading-relaxed mb-3">
                     多數匯率工具顯示「中間價」（mid-rate），是買入與賣出的平均值，不是你實際換匯的價格。
-                    RateWise 直接顯示臺灣銀行牌告的「
+                    {APP_INFO.shortName} 直接顯示臺灣銀行牌告的「
                     <strong className="text-text font-semibold">現金賣出</strong>」價格—— 你去銀行換{' '}
                     {currencyName} 現鈔時實際要付的台幣金額。
                   </p>
@@ -283,7 +283,7 @@ export function CurrencyLandingPage({
                     </div>
                     <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200/30 p-2 text-center">
                       <div className="font-bold text-green-600 dark:text-green-400 mb-0.5">
-                        賣出價（RateWise）
+                        賣出價（{APP_INFO.shortName}）
                       </div>
                       <div className="text-text-muted">臺灣銀行牌告實際報價</div>
                       <div className="text-text-muted mt-0.5">= 銀行實際收你的台幣</div>

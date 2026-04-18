@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * verify-seo-ssot.mjs — RateWise SEO SSOT 驗證腳本
+ * verify-seo-ssot.mjs — SEO SSOT 驗證腳本（適用於本站所有頁面）
  *
  * 驗證範圍：
  * - JSON-LD 結構化資料（schema type 正確性）
@@ -21,6 +21,7 @@
 
 import https from 'node:https';
 import http from 'node:http';
+import { APP_INFO } from '../src/config/app-info.ts';
 
 // ─── 常數 ────────────────────────────────────────────────────────────────────
 
@@ -46,7 +47,7 @@ function fetch(url, method = 'GET') {
     const lib = parsed.protocol === 'https:' ? https : http;
     const req = lib.request(
       url,
-      { method, timeout: TIMEOUT, headers: { 'User-Agent': 'RateWise-SEO-SSOT/1.0' } },
+      { method, timeout: TIMEOUT, headers: { 'User-Agent': `${APP_INFO.shortName}-SEO-SSOT/1.0` } },
       (res) => {
         let body = '';
         res.on('data', (c) => (body += c));

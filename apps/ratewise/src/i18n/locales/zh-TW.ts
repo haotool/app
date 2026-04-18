@@ -2,6 +2,8 @@
  * 繁體中文翻譯
  */
 
+import { APP_INFO, getCopyrightYears } from '../../config/app-info';
+
 const zhTW = {
   // Common
   common: {
@@ -42,7 +44,7 @@ const zhTW = {
 
   // App
   app: {
-    title: 'RateWise',
+    title: APP_INFO.shortName,
     subtitle: '匯率換算工具',
     version: '版本',
   },
@@ -134,7 +136,7 @@ const zhTW = {
     appVersion: '應用程式版本',
     designSystem: '設計系統',
     techStack: '技術棧',
-    copyright: '© 2025-2026 RateWise 匯率好工具',
+    copyright: `© ${getCopyrightYears()} ${APP_INFO.name}`,
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
     // 匯率模式區塊
@@ -323,7 +325,7 @@ const zhTW = {
       '匯率數據參考臺灣銀行牌告匯率，每 5 分鐘更新。僅供參考，實際交易請以銀行公告為準。',
     faq: '常見問題',
     about: '關於我們',
-    appName: '匯率好工具',
+    appName: APP_INFO.subtitle,
     allRightsReserved: 'All rights reserved.',
     createdBy: 'Created by',
     by: 'By',
@@ -335,7 +337,7 @@ const zhTW = {
 
   // Rating Modal
   rating: {
-    title: '喜歡 RateWise 嗎？',
+    title: `喜歡 ${APP_INFO.shortName} 嗎？`,
     subtitle: '您的評分讓更多人找到這個工具 ✨',
     starsLabel: '星評',
     submit: '送出評分',

@@ -76,7 +76,7 @@ describe('security-headers worker', () => {
     vi.restoreAllMocks();
   });
 
-  it('為 RateWise HTML 產生 nonce 型 CSP，並只為 inline script 注入 nonce', async () => {
+  it('為 HTML 頁面產生 nonce 型 CSP，並只為 inline script 注入 nonce', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       createHtmlResponse(`<!doctype html>
 <html>
@@ -227,7 +227,7 @@ describe('security-headers worker', () => {
     expect(assetResponse.headers.get('cache-control')).toBe('max-age=31536000, public, immutable');
   });
 
-  it('RateWise 缺檔資產回傳 404 時必須 no-store，避免邊緣快取 stale 404', async () => {
+  it('缺檔資產回傳 404 時必須 no-store，避免邊緣快取 stale 404', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response('<!doctype html><html><body>Not Found</body></html>', {
         status: 404,

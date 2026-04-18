@@ -11,6 +11,8 @@
  * 任意金額路由可訪問，但不自動納入 sitemap。
  */
 
+import { APP_INFO } from './app-info';
+
 export function normalizeSiteUrl(value: string): string {
   const trimmed = value.trim();
   return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
@@ -189,10 +191,9 @@ export const IMAGE_RESOURCES = [
 
 export const SITE_CONFIG = {
   url: normalizeSiteUrl('https://app.haotool.org/ratewise/'),
-  name: 'RateWise 匯率好工具',
-  title: 'RateWise — 台灣最精準匯率換算器',
-  description:
-    'RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 18 種貨幣，讓你換匯前就知道真正要付多少台幣。',
+  name: APP_INFO.name,
+  title: `${APP_INFO.shortName} — 台灣最精準匯率換算器`,
+  description: `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 18 種貨幣，讓你換匯前就知道真正要付多少台幣。`,
 } as const satisfies Readonly<{
   url: string;
   name: string;
@@ -206,7 +207,7 @@ export const SUPPORTED_DYNAMIC_AMOUNT_ROUTE_PATTERNS = [DYNAMIC_AMOUNT_ROUTE_PAT
 
 export const APP_CONFIG = {
   name: 'ratewise',
-  displayName: 'RateWise',
+  displayName: APP_INFO.shortName,
   basePath: {
     development: '/',
     ci: '/',

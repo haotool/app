@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEV_ONLY_PATHS, SITE_CONFIG } from '../seo-paths.config.mjs';
+import { APP_INFO } from '../src/config/app-info.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -15,7 +16,7 @@ const SITEMAP_URL = `${SITE_CONFIG.url}sitemap.xml`;
  *  2. SEARCH     — 抓取內容用於 AI 搜尋結果索引與引用
  *  3. USER_AGENT — 使用者於對話中觸發的即時內容檢索
  *
- * RateWise 策略：三層皆 Allow /，換取 AI 搜尋最大化曝光。
+ * 本站策略：三層皆 Allow /，換取 AI 搜尋最大化曝光。
  * 若未來要封鎖訓練但保留搜尋能見度，只需將 TRAINING_BOTS 整段切成 Disallow /。
  *
  * 參考：
@@ -83,7 +84,7 @@ function buildDisallowRules(paths) {
     .join('\n');
 }
 
-const robotsTxt = `# RateWise — Robots Exclusion Protocol
+const robotsTxt = `# ${APP_INFO.shortName} — Robots Exclusion Protocol
 # ${SITE_CONFIG.url}
 #
 # AI Bot 三層治理：TRAINING / SEARCH / USER_AGENT

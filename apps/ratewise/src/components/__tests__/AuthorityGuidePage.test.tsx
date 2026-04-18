@@ -17,6 +17,7 @@ import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthorityGuidePage } from '../AuthorityGuidePage';
 import type { AuthorityGuideContent } from '../../config/seo-metadata';
+import { APP_INFO } from '../../config/app-info';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -25,7 +26,7 @@ const MOCK_PAGE: AuthorityGuideContent = {
   description: '測試描述',
   pathname: '/test-guide',
   breadcrumb: [
-    { name: 'RateWise 首頁', item: '/' },
+    { name: `${APP_INFO.shortName} 首頁`, item: '/' },
     { name: '測試', item: '/test-guide/' },
   ],
   heading: '測試指南標題',

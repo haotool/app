@@ -8,7 +8,7 @@ async function loadVerifyPrecacheModule() {
 }
 
 describe('verify-precache-assets script', () => {
-  it('should default to the RateWise subpath for local and live validation', async () => {
+  it('should default to the /ratewise/ subpath for local and live validation', async () => {
     const script = await loadVerifyPrecacheModule();
 
     expect(script.getDefaultBaseUrl('local')).toBe('http://127.0.0.1:4173/ratewise/');
@@ -26,7 +26,7 @@ describe('verify-precache-assets script', () => {
     );
   });
 
-  it('should keep the RateWise base path when resolving precache asset URLs', async () => {
+  it('should keep the /ratewise/ base path when resolving precache asset URLs', async () => {
     const script = await loadVerifyPrecacheModule();
 
     expect(

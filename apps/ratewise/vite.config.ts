@@ -243,14 +243,16 @@ export default defineConfig(({ mode }) => {
           return new URLSearchParams();
         },
       }),
-      // 版本號注入 HTML meta 標籤
+      // 版本號與品牌佔位符注入 HTML meta 標籤
       {
         name: 'inject-version-meta',
         transformIndexHtml(html) {
           return html
             .replace('<!-- PWA Recovery Bootstrap -->', `<script>${pwaRecoveryBootstrap}</script>`)
             .replace(/__APP_VERSION__/g, appVersion)
-            .replace(/__BUILD_TIME__/g, buildTime);
+            .replace(/__BUILD_TIME__/g, buildTime)
+            .replace(/__BRAND_FULL__/g, APP_INFO.name)
+            .replace(/__BRAND_SHORT__/g, APP_INFO.shortName);
         },
       },
       // Brotli 壓縮
@@ -327,9 +329,8 @@ export default defineConfig(({ mode }) => {
         devOptions: { enabled: false, type: 'module' },
         manifest: {
           name: APP_INFO.name,
-          short_name: APP_INFO.displayName,
-          description:
-            'RateWise 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。',
+          short_name: APP_INFO.shortName,
+          description: `${APP_INFO.shortName} 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。`,
           theme_color: '#8B5CF6',
           background_color: '#E8ECF4',
           display: 'standalone',
@@ -390,7 +391,7 @@ export default defineConfig(({ mode }) => {
               sizes: '1080x1920',
               type: 'image/png',
               form_factor: 'narrow',
-              label: 'RateWise 首頁 - 即時匯率換算與趨勢圖',
+              label: `${APP_INFO.shortName} 首頁 - 即時匯率換算與趨勢圖`,
             },
             {
               src: 'screenshots/mobile-converter-active.png',
@@ -418,7 +419,7 @@ export default defineConfig(({ mode }) => {
               sizes: '1920x1080',
               type: 'image/png',
               form_factor: 'wide',
-              label: '桌面版 - 關於 RateWise 與功能說明',
+              label: `桌面版 - 關於 ${APP_INFO.shortName} 與功能說明`,
             },
           ],
         },

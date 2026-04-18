@@ -1,7 +1,7 @@
 /**
  * SEO 技術揭露頁面
  *
- * 揭露 RateWise 所有 SEO 技術、架構與資料管線。
+ * 揭露本站所有 SEO 技術、架構與資料管線。
  * 資料從 SSOT 配置模組自動計算，確保數字永遠與實際設定同步。
  *
  * @created 2026-03-20
@@ -169,7 +169,7 @@ const PIPELINE_STEPS = [
   },
   {
     icon: Globe,
-    label: 'RateWise App',
+    label: `${APP_INFO.shortName} App`,
     sub: 'SSG 預渲染 + PWA',
     note: '可離線使用 · 即時更新',
     color: 'text-emerald-600',
@@ -411,9 +411,11 @@ export default function SeoTech() {
                 SEO 技術揭露
               </span>
             </div>
-            <h1 className="text-2xl font-bold mb-2 tracking-tight">RateWise SEO 架構</h1>
+            <h1 className="text-2xl font-bold mb-2 tracking-tight">
+              {APP_INFO.shortName} SEO 架構
+            </h1>
             <p className="text-sm text-[rgb(var(--color-text-muted))] leading-relaxed max-w-prose">
-              完整揭露 RateWise 所採用的所有搜尋引擎最佳化技術、資料架構與自動化流程。
+              完整揭露 {APP_INFO.shortName} 所採用的所有搜尋引擎最佳化技術、資料架構與自動化流程。
               所有數字均從設定檔即時計算，永遠與實際部署狀態同步。
             </p>
           </motion.div>
@@ -758,7 +760,7 @@ export default function SeoTech() {
           </motion.div>
           <p className="text-xs text-[rgb(var(--color-text-muted))] mt-3 pl-1">
             Google 搜尋品質評估指南強調 E-E-A-T（專業性、權威性、可信度）為
-            YMYL（您的錢或生活）內容評分的關鍵。RateWise
+            YMYL（您的錢或生活）內容評分的關鍵。{APP_INFO.shortName}{' '}
             透過透明化揭露、官方資料來源與隱私優先設計強化信號。
           </p>
         </motion.section>

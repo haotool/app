@@ -168,14 +168,14 @@ describe('trackPageview', () => {
     const { initGA, trackPageview } = await importFresh();
     initGA('G-TEST123456');
 
-    document.title = 'RateWise 測試頁';
+    document.title = '測試頁';
     const gtagSpy = vi.fn();
     window.gtag = gtagSpy;
 
     trackPageview('/');
 
     const callArgs = gtagSpy.mock.calls[0]?.[2] as Record<string, unknown>;
-    expect(callArgs?.['page_title']).toBe('RateWise 測試頁');
+    expect(callArgs?.['page_title']).toBe('測試頁');
   });
 });
 

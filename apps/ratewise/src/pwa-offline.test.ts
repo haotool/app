@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { APP_INFO } from './config/app-info';
 
 const ROOT_PATH = resolve(__dirname, '..');
 
@@ -22,7 +23,7 @@ describe('PWA 離線功能測試', () => {
       // 應該有正確的 HTML 結構
       expect(content).toContain('<!doctype html>');
       expect(content).toContain('lang="zh-TW"');
-      expect(content).toContain('<title>離線模式 - RateWise</title>');
+      expect(content).toContain(`<title>離線模式 - ${APP_INFO.shortName}</title>`);
     });
 
     it('should have retry functionality', () => {

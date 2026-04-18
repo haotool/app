@@ -1,10 +1,10 @@
 /**
- * UI Showcase Page - Complete RateWise Component Gallery
- * UI 展示頁面 - 完整的 RateWise 組件庫
+ * UI Showcase Page - Complete Component Gallery
+ * UI 展示頁面 - 完整的組件庫
  *
- * @description Comprehensive showcase of all RateWise UI components,
+ * @description Comprehensive showcase of all UI components,
  *              design tokens, and theme variations with live theme switching.
- *              完整展示所有 RateWise UI 組件、設計 Token 和主題變化，支援即時主題切換。
+ *              完整展示所有 UI 組件、設計 Token 和主題變化，支援即時主題切換。
  * @version 3.0.0
  */
 
@@ -49,6 +49,7 @@ import { ConversionHistory } from '../features/ratewise/components/ConversionHis
 import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_DEFINITIONS, type ThemeStyle } from '../config/themes';
 import { getDisplayVersion } from '../config/version';
+import { APP_INFO } from '../config/app-info';
 import type { ConversionHistoryEntry } from '../features/ratewise/types';
 
 /**
@@ -189,7 +190,7 @@ export default function UIShowcase() {
             </Link>
             <div>
               <h1 className="text-2xl font-black text-text">UI Showcase</h1>
-              <p className="text-sm text-text-muted">RateWise 組件庫展示</p>
+              <p className="text-sm text-text-muted">{APP_INFO.shortName} 組件庫展示</p>
             </div>
           </div>
         </header>
@@ -560,7 +561,9 @@ export default function UIShowcase() {
 
         {/* Footer */}
         <footer className="text-center py-6 text-sm text-text-muted">
-          <p>RateWise UI Showcase {getDisplayVersion()}</p>
+          <p>
+            {APP_INFO.shortName} UI Showcase {getDisplayVersion()}
+          </p>
           <p className="text-xs opacity-60 mt-1">使用 SSOT Design Token 系統 | 支援 6 種主題風格</p>
         </footer>
       </div>

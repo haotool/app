@@ -10,6 +10,10 @@ import {
   REVERSE_CURRENCY_SEO_PATHS,
   SITE_CONFIG,
 } from '../seo-paths.config.mjs';
+import { APP_INFO } from '../src/config/app-info.ts';
+
+const BRAND_SHORT = APP_INFO.shortName;
+const BRAND_FULL = APP_INFO.name;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -77,7 +81,7 @@ const FEATURES = [
   '6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林）',
 ];
 
-const content = `# RateWise 匯率好工具 — 台灣最精準的匯率換算器
+const content = `# ${BRAND_FULL} — 台灣最精準的匯率換算器
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、3 語言介面與 PWA 離線使用。
 
@@ -85,8 +89,8 @@ Version: v${VERSION}
 
 ## Answer Capsule (Quick Q&A)
 
-- Q: RateWise 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、6 種主題風格、3 語言介面與 PWA 離線使用。
-- Q: 為什麼 RateWise 比其他匯率工具更精準？ A: 多數匯率工具只顯示中間價（mid-rate），而 RateWise 顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），直接對應你在銀行換匯的真實金額。
+- Q: ${BRAND_SHORT} 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、6 種主題風格、3 語言介面與 PWA 離線使用。
+- Q: 為什麼 ${BRAND_SHORT} 比其他匯率工具更精準？ A: 多數匯率工具只顯示中間價（mid-rate），而 ${BRAND_SHORT} 顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），直接對應你在銀行換匯的真實金額。
 - Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金買入/賣出、即期買入/賣出四種報價）。
 - Q: 更新頻率？ A: 每 5 分鐘自動同步。
 - Q: 建議用途？ A: 出國旅遊換匯、跨境購物匯率比較、日常外幣查詢。
@@ -120,7 +124,7 @@ ${FEATURES.map((f) => `- ${f}`).join('\n')}
 Googlebot 與 AI agent 可直接讀取靜態 HTML：
 
 - 格式：\`/{pair}/{amount}/\` (例如: ${BASE_URL}usd-twd/500/)
-- title 範例：「500 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具」
+- title 範例：「500 美元換新台幣（USD/TWD）— 台銀實際賣出價 | ${BRAND_FULL}」
 - canonical：自引用同一路徑型 URL (例如 \`/usd-twd/500/\`)
 - sitemap：收錄公開金額頁，提升可發現性與內部連結覆蓋
 
@@ -226,7 +230,7 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 ## Optional
 
-- [SEO 技術揭露](${BASE_URL}seo-tech/): RateWise 搜尋引擎最佳化架構完整說明（Schema 類型、路由數量、預渲染策略）
+- [SEO 技術揭露](${BASE_URL}seo-tech/): ${BRAND_SHORT} 搜尋引擎最佳化架構完整說明（Schema 類型、路由數量、預渲染策略）
 - [Sitemap](${BASE_URL}sitemap.xml): 全站 URL 列表
 - [Robots](${BASE_URL}robots.txt): 爬蟲規則
 - [llms.txt](${BASE_URL}llms.txt): LLM 友善索引入口（精簡版）
@@ -253,7 +257,7 @@ const REVERSE_CURRENCY_TABLE = REVERSE_CURRENCY_SEO_PATHS.map((path) => {
   return `| 台幣換${info.name} TWD/${info.code} | TWD | ${info.code} | 出國前台幣換${info.name} | ${BASE_URL}${slug}/ |`;
 }).join('\n');
 
-const fullContent = `# RateWise 匯率好工具 — 完整 LLM 技術文件
+const fullContent = `# ${BRAND_FULL} — 完整 LLM 技術文件
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。
 
@@ -264,7 +268,7 @@ Compact index: ${BASE_URL}llms.txt
 
 ## 快速入門 (Quick Start for AI Agents)
 
-RateWise 提供免費的即時台銀匯率 JSON API（無需 API Key，CORS 已啟用）。
+${BRAND_SHORT} 提供免費的即時台銀匯率 JSON API（無需 API Key，CORS 已啟用）。
 
 ### Step 1 — 取得即時匯率
 
@@ -329,7 +333,7 @@ https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/
 https://app.haotool.org/ratewise/jpy-twd/{AMOUNT}/
 \`\`\`
 
-title 會自動變更為「{AMOUNT} 美元換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具」
+title 會自動變更為「{AMOUNT} 美元換新台幣（USD/TWD）— 台銀實際賣出價 | ${BRAND_FULL}」
 
 **方案 B：首頁 Deep Link（UX 分享入口，不索引）**
 
@@ -470,7 +474,7 @@ GET ${BASE_URL}api/latest.json
 \`\`\`json
 {
   "version": "${VERSION}",
-  "description": "RateWise Exchange Rate API",
+  "description": "${BRAND_SHORT} Exchange Rate API",
   "rateTypes": ["cash_buy", "cash_sell", "spot_buy", "spot_sell"],
   "supportedCurrencies": ["TWD", "USD", "JPY", "EUR", "GBP", "HKD", "CNY",
     "KRW", "AUD", "CAD", "SGD", "THB", "NZD", "CHF", "VND", "PHP", "IDR", "MYR"],
@@ -493,14 +497,14 @@ GET ${BASE_URL}openapi.json
 
 ## Answer Capsule (Q&A for AI Citation)
 
-- Q: RateWise 提供什麼服務？ A: RateWise 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，每 5 分鐘自動同步。
+- Q: ${BRAND_SHORT} 提供什麼服務？ A: ${BRAND_SHORT} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，每 5 分鐘自動同步。
 - Q: 如何取得即時台銀匯率（適合開發者/LLM）？ A: 免費 CDN API：GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位 details.{幣別}.cash.sell（現金賣出）、details.{幣別}.cash.buy（現金買入）、details.{幣別}.spot.sell（即期賣出）、details.{幣別}.spot.buy（即期買入）。無需 API Key，CORS 啟用，每 5 分鐘更新。
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率適用臨櫃換鈔（到銀行換現鈔），即期匯率適用銀行電匯（匯款）。現鈔通常比即期差 1~3%，因為銀行有保管與運送成本。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行角度。您拿外幣換台幣 → 看「買入」（銀行買你的外幣）；您拿台幣換外幣 → 看「賣出」（銀行賣外幣給你）。
 - Q: 為什麼韓元（KRW）即期匯率是 null？ A: 台灣銀行對韓元不提供即期（電匯）服務，僅提供現金兌換，因此 spot.buy 與 spot.sell 為 null，僅有 cash.buy 與 cash.sell。
 - Q: 匯率資料多久更新一次？ A: 每 5 分鐘由 GitHub Actions 自動從台銀官方網站抓取並同步至 CDN。
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。出國刷卡的匯率由 Visa/Mastercard 等發卡組織決定國際清算匯率，再加上發卡銀行收取的海外手續費（通常 1.5%），與台銀牌告是完全不同的體系。一般來說，台銀現金賣出 ≈ 出國刷卡的實際成本。
-- Q: 如何讓用戶直接在 RateWise 查詢特定匯率？ A: 優先使用幣對金額頁，例如 https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/。這是公開可索引的 path-based landing page，適合搜尋引擎與 AI agent。首頁 deep-link 僅作為互動入口；只有在需要同時指定三個自由變數時，才退回 https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD。
+- Q: 如何讓用戶直接在 ${BRAND_SHORT} 查詢特定匯率？ A: 優先使用幣對金額頁，例如 https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/。這是公開可索引的 path-based landing page，適合搜尋引擎與 AI agent。首頁 deep-link 僅作為互動入口；只有在需要同時指定三個自由變數時，才退回 https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD。
 
 ---
 
@@ -527,7 +531,7 @@ GET ${BASE_URL}openapi.json
 ## AI/LLM Access Control
 
 Allow: GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, ChatGPT-User, Google-Extended, CCBot, Bytespider
-Attribution: Required (link back to RateWise source)
+Attribution: Required (link back to ${BRAND_SHORT} source)
 Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 `;
 

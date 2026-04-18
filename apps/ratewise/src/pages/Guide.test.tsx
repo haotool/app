@@ -13,6 +13,9 @@ import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import Guide from './Guide';
+import { APP_INFO } from '../config/app-info';
+
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 describe('Guide Page - HowTo Schema', () => {
   const renderGuide = () => {
@@ -28,9 +31,8 @@ describe('Guide Page - HowTo Schema', () => {
   describe('Basic Rendering', () => {
     it('renders main heading', () => {
       renderGuide();
-      expect(
-        screen.getByRole('heading', { level: 1, name: /如何使用 RateWise/i }),
-      ).toBeInTheDocument();
+      const heading = new RegExp(`如何使用 ${escapeRegex(APP_INFO.shortName)}`, 'i');
+      expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
     });
 
     it('renders introduction section', () => {
@@ -53,10 +55,11 @@ describe('Guide Page - HowTo Schema', () => {
   });
 
   describe('HowTo Steps (8 Steps)', () => {
-    it('renders step 1: 開啟 RateWise', () => {
+    it('renders step 1: 開啟應用', () => {
       renderGuide();
+      const step1 = new RegExp(`開啟 ${escapeRegex(APP_INFO.shortName)}`, 'i');
       // 使用 getAllByText 因為快速導航和步驟內容都有
-      expect(screen.getAllByText(/開啟 RateWise/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(step1).length).toBeGreaterThanOrEqual(1);
     });
 
     it('renders step 2: 選擇換算模式', () => {
@@ -121,7 +124,7 @@ describe('Guide Page - HowTo Schema', () => {
       renderGuide();
       await new Promise((resolve) => setTimeout(resolve, 100));
       expect(document.title).toContain('使用指南');
-      expect(document.title).toContain('RateWise');
+      expect(document.title).toContain(APP_INFO.shortName);
     });
 
     it('sets correct canonical URL', async () => {
@@ -176,7 +179,7 @@ describe('Guide Page - HowTo Schema', () => {
         const data = graphData['@graph'].find((item) => item['@type'] === 'HowTo')!;
         expect(data).toMatchObject({
           '@type': 'HowTo',
-          name: expect.stringContaining('如何使用 RateWise'),
+          name: expect.stringContaining(`如何使用 ${APP_INFO.shortName}`),
           description: expect.any(String),
           totalTime: expect.stringMatching(/^PT\d+[SM]$/),
         });
@@ -192,7 +195,7 @@ describe('Guide Page - HowTo Schema', () => {
         const firstStep = steps[0] as Record<string, unknown>;
         expect(firstStep['@type']).toBe('HowToStep');
         expect(firstStep['position']).toBe(1);
-        expect(firstStep['name']).toContain('開啟 RateWise');
+        expect(firstStep['name']).toContain(`開啟 ${APP_INFO.shortName}`);
 
         const lastStep = steps[7] as Record<string, unknown>;
         expect(lastStep['@type']).toBe('HowToStep');

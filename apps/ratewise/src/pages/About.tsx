@@ -38,7 +38,7 @@ export default function About() {
           />
 
           <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-text">關於 RateWise 匯率好工具</h1>
+            <h1 className="mb-2 text-3xl font-bold text-text">關於 {APP_INFO.name}</h1>
             <p className="text-text-muted">
               專注提供台灣用戶更接近實際換匯情境的匯率資訊，而不是只顯示中間價。
             </p>

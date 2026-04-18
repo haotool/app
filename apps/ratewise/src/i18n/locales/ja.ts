@@ -2,6 +2,8 @@
  * 日本語翻訳
  */
 
+import { APP_INFO, getCopyrightYears } from '../../config/app-info';
+
 const ja = {
   // Common
   common: {
@@ -42,7 +44,7 @@ const ja = {
 
   // App
   app: {
-    title: 'RateWise',
+    title: APP_INFO.shortName,
     subtitle: '為替レートツール',
     version: 'バージョン',
   },
@@ -134,7 +136,7 @@ const ja = {
     appVersion: 'アプリバージョン',
     designSystem: 'デザインシステム',
     techStack: '技術スタック',
-    copyright: '© 2025-2026 RateWise',
+    copyright: `© ${getCopyrightYears()} ${APP_INFO.shortName}`,
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
     // 為替レートモードセクション
@@ -326,7 +328,7 @@ const ja = {
     disclaimerDesktop: '台湾銀行のレートを5分ごとに更新。参考用のみ。',
     faq: 'よくある質問',
     about: '私たちについて',
-    appName: 'RateWise',
+    appName: APP_INFO.shortName,
     allRightsReserved: 'All rights reserved.',
     createdBy: '作成者',
     by: 'By',
@@ -338,7 +340,7 @@ const ja = {
 
   // Rating Modal
   rating: {
-    title: 'RateWiseを気に入っていただけましたか？',
+    title: `${APP_INFO.shortName}を気に入っていただけましたか？`,
     subtitle: '評価することで、より多くの人にこのツールを届けられます ✨',
     starsLabel: '星評価',
     submit: '評価を送信',
