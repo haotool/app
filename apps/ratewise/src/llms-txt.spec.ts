@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { APP_INFO } from './config/app-info';
 
 const llmsPath = resolve(__dirname, '../public/llms.txt');
 const llmsFullPath = resolve(__dirname, '../public/llms-full.txt');
@@ -12,7 +13,7 @@ const describeIfGenerated = llmsExists ? describe : describe.skip;
 describeIfGenerated('llms.txt structure (requires prebuild)', () => {
   it('includes required headings and answer capsule', () => {
     const content = readFileSync(llmsPath, 'utf-8');
-    expect(content.startsWith('# RateWise 匯率好工具')).toBe(true);
+    expect(content.startsWith(`# ${APP_INFO.name}`)).toBe(true);
     expect(content).toContain('台灣最精準的匯率換算器');
     expect(content).toContain('Answer Capsule (Quick Q&A)');
   });

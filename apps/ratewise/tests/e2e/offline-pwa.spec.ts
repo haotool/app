@@ -25,6 +25,7 @@
 
 import type { Page, BrowserContext } from '@playwright/test';
 import { test, expect } from '@playwright/test';
+import { APP_INFO } from '../../src/config/app-info';
 
 // ============================================================================
 // Test Configuration
@@ -421,7 +422,7 @@ test.describe('Offline Functionality', () => {
         content.includes('離線') ||
           content.includes('offline') ||
           content.includes('Offline') ||
-          content.includes('RateWise'),
+          content.includes(APP_INFO.shortName),
       ).toBeTruthy();
     }
 
@@ -670,7 +671,7 @@ test.describe('Service Worker Offline Cache', () => {
       // App content should be present
       const bodyText = await page.textContent('body');
       expect(
-        bodyText?.includes('RateWise') ||
+        bodyText?.includes(APP_INFO.shortName) ||
           bodyText?.includes('匯率') ||
           bodyText?.includes('TWD') ||
           bodyText?.includes('USD'),

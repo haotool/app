@@ -16,6 +16,7 @@
  */
 import type { Page, BrowserContext } from '@playwright/test';
 import { test, expect } from './fixtures/test';
+import { APP_INFO } from '../../src/config/app-info';
 
 const getManifestBasePath = async (page: Page) => {
   const manifestLink = await page.locator('link[rel="manifest"]').getAttribute('href');
@@ -42,8 +43,8 @@ test.describe('PWA Features', () => {
       display: string;
       icons: { sizes: string; purpose?: string }[];
     };
-    expect(manifest.name).toBe('RateWise 匯率好工具');
-    expect(manifest.short_name).toBe('RateWise');
+    expect(manifest.name).toBe(APP_INFO.name);
+    expect(manifest.short_name).toBe(APP_INFO.shortName);
     expect(manifest.display).toBe('standalone');
     expect(manifest.icons.length).toBeGreaterThan(0);
 
@@ -393,18 +394,18 @@ test.describe('PWA Offline Capability', () => {
     await expect(page.locator('body')).toBeVisible();
 
     // 6. 驗證主要 UI 元素存在
-    // RateWise 首頁應該有貨幣相關的內容
-    const hasRateWiseContent = await page.evaluate(() => {
+    const brandShort = APP_INFO.shortName.toLowerCase();
+    const hasBrandContent = await page.evaluate((brand: string) => {
       const bodyText = document.body.innerText.toLowerCase();
       return (
         bodyText.includes('usd') ||
         bodyText.includes('twd') ||
         bodyText.includes('匯率') ||
-        bodyText.includes('ratewise')
+        bodyText.includes(brand)
       );
-    });
+    }, brandShort);
 
-    expect(hasRateWiseContent).toBeTruthy();
+    expect(hasBrandContent).toBeTruthy();
   });
 
   test('should have offline.html in precache', async ({ rateWisePage: page }) => {
