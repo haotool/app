@@ -20,114 +20,373 @@ Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 # --- Tier 1: TRAINING (基礎模型訓練語料) ---
 User-agent: GPTBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: anthropic-ai
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Applebot-Extended
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Amazonbot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Bytespider
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: CCBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: cohere-ai
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: FacebookBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Meta-ExternalAgent
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Timpibot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: ProRataInc
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Novellum AI Crawl
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 # --- Tier 2: SEARCH (AI 搜尋索引與引用) ---
 User-agent: OAI-SearchBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Claude-SearchBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Applebot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Google-CloudVertexBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: DuckAssistBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 # --- Tier 3: USER_AGENT (使用者觸發即時抓取) ---
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Claude-User
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Perplexity-User
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: MistralAI-User
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Manus-User
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Meta-ExternalFetcher
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Cloudflare-AutoRAG
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Anchor Browser
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 # --- Tier 4: PREVIEW / OTHER (社群預覽與其他) ---
 User-agent: facebookexternalhit
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Twitterbot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: LinkedInBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: archive.org_bot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: Terracotta Bot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: PhindBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: YouBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: GrokBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
 
 User-agent: PetalBot
 Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?

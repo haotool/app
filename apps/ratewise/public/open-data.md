@@ -7,12 +7,12 @@
 
 ## 端點
 
-| 類型                           | URL                                                                                   |
-| ------------------------------ | ------------------------------------------------------------------------------------- |
-| 最新匯率（主要，jsDelivr CDN） | `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json`               |
-| 最新匯率（備援，GitHub Raw）   | `https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json`         |
-| 歷史匯率                       | `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json` |
-| OpenAPI 規格                   | https://app.haotool.org/ratewise/openapi.json                                         |
+| 類型 | URL |
+|------|-----|
+| 最新匯率（主要，jsDelivr CDN） | `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json` |
+| 最新匯率（備援，GitHub Raw） | `https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json` |
+| 歷史匯率 | `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json` |
+| OpenAPI 規格 | https://app.haotool.org/ratewise/openapi.json |
 
 - **免 API Key**、**免費使用**、**CORS 已啟用**。
 - 更新頻率：每 5 分鐘自動同步臺灣銀行牌告。
@@ -52,8 +52,8 @@ print(data['details']['JPY']['cash']['buy'])
   "updateTime": "2026-04-17T08:00:00+08:00",
   "details": {
     "USD": {
-      "cash": { "buy": 32.2, "sell": 33.05 },
-      "spot": { "buy": 32.5, "sell": 32.75 }
+      "cash": { "buy": 32.20, "sell": 33.05 },
+      "spot": { "buy": 32.50, "sell": 32.75 }
     }
   }
 }

@@ -72,16 +72,24 @@ const PREVIEW_AND_OTHER_BOTS = [
   'PetalBot', // 華為花瓣搜尋
 ];
 
+/**
+ * RFC 9309：specific user-agent group 完全覆蓋 `User-agent: *`，不會繼承。
+ * 因此每個 AI bot 專屬群組必須一併輸出共用 Disallow，否則 GPTBot / ClaudeBot 等
+ * 會不受 `*` 區塊約束，反而可抓取原先封鎖的 sw.js / workbox-* / 開發專用頁面。
+ */
+const SHARED_DISALLOW = [
+  'Disallow: /ratewise/sw.js',
+  'Disallow: /ratewise/workbox-*.js',
+  ...DEV_ONLY_PATHS.map(
+    (path) => `Disallow: ${new URL(path.replace(/^\//, ''), SITE_CONFIG.url).pathname}`,
+  ),
+  'Disallow: /ratewise/?',
+].join('\n');
+
 function sectionForBots(bots, label) {
   const header = `# --- ${label} ---`;
-  const rules = bots.map((bot) => `User-agent: ${bot}\nAllow: /`).join('\n\n');
+  const rules = bots.map((bot) => `User-agent: ${bot}\nAllow: /\n${SHARED_DISALLOW}`).join('\n\n');
   return `${header}\n${rules}`;
-}
-
-function buildDisallowRules(paths) {
-  return paths
-    .map((path) => `Disallow: ${new URL(path.replace(/^\//, ''), SITE_CONFIG.url).pathname}`)
-    .join('\n');
 }
 
 const robotsTxt = `# ${APP_INFO.shortName} — Robots Exclusion Protocol
@@ -93,10 +101,7 @@ const robotsTxt = `# ${APP_INFO.shortName} — Robots Exclusion Protocol
 
 User-agent: *
 Allow: /
-Disallow: /ratewise/sw.js
-Disallow: /ratewise/workbox-*.js
-${buildDisallowRules(DEV_ONLY_PATHS)}
-Disallow: /ratewise/?
+${SHARED_DISALLOW}
 
 Sitemap: ${SITEMAP_URL}
 
