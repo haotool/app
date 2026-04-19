@@ -165,8 +165,13 @@ export function trackEvent(name: string, params?: Record<string, string | number
 const AI_REFERRAL_SESSION_KEY = '__ratewise_ai_referral_sent__';
 
 /**
- * 若本次造訪來自 AI 助手，送出 `ai_referral` 事件並設定 user property。
- * 同 session 內只送一次；gtag 未就緒時靜默略過。
+ * 若本次造訪來自 AI 助手，送出 `ai_referral` 事件並設定 user property；
+ * 非 AI 新 session 則主動 `ai_source = null` 清除前次殘留歸因。
+ * 同 session 內只處理一次；gtag 未就緒時靜默略過。
+ *
+ * 為何需要 reset：GA4 `user_properties` 是 user-scoped 且跨 session 持久化；
+ * 若使用者首次從 ChatGPT 到站後，下次直接開啟或從 Google 來，不清除 ai_source
+ * 會讓後續 direct / organic session 仍掛著 `ai_source=chatgpt`，污染 channel attribution。
  *
  * GA4 後台建議：
  * - 於 Admin → Custom definitions 新增 user-scoped dimension `ai_source`
@@ -176,14 +181,29 @@ const AI_REFERRAL_SESSION_KEY = '__ratewise_ai_referral_sent__';
 export function trackAiReferral(): void {
   if (typeof window === 'undefined' || !window.gtag) return;
 
+  // 同 tab session 已處理過（AI 命中或已清空）→ 保留現值避免 reload 覆寫當下歸因
   try {
     if (window.sessionStorage.getItem(AI_REFERRAL_SESSION_KEY) === '1') return;
   } catch {
-    // sessionStorage 不可用（private mode / 權限），繼續送事件但無去重
+    // sessionStorage 不可用（private mode / 權限），繼續處理但無去重
   }
 
+  const markSession = () => {
+    try {
+      window.sessionStorage.setItem(AI_REFERRAL_SESSION_KEY, '1');
+    } catch {
+      // 無法寫入則下次造訪可能重複處理，屬可接受雜訊
+    }
+  };
+
   const detected = detectAiSource(window.location.href, document.referrer);
-  if (!detected) return;
+
+  if (!detected) {
+    // 非 AI 新 session：主動清除可能殘留的 ai_source，避免跨 session 歸因污染。
+    window.gtag('set', 'user_properties', { ai_source: null });
+    markSession();
+    return;
+  }
 
   window.gtag('set', 'user_properties', { ai_source: detected.id });
   window.gtag('event', 'ai_referral', {
@@ -192,10 +212,5 @@ export function trackAiReferral(): void {
     ai_raw: detected.raw,
     landing_page: window.location.pathname + window.location.search,
   });
-
-  try {
-    window.sessionStorage.setItem(AI_REFERRAL_SESSION_KEY, '1');
-  } catch {
-    // 無法寫入則下次造訪可能重複送，屬可接受雜訊
-  }
+  markSession();
 }

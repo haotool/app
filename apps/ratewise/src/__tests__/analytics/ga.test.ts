@@ -307,7 +307,7 @@ describe('trackAiReferral', () => {
     expect(() => trackAiReferral()).not.toThrow();
   });
 
-  it('非 AI referrer 不送事件', async () => {
+  it('非 AI referrer 不送 ai_referral 事件，但主動清除 ai_source user property', async () => {
     const { initGA, trackAiReferral } = await importFresh();
     initGA('G-TEST123456');
     const gtagSpy = vi.fn();
@@ -316,7 +316,25 @@ describe('trackAiReferral', () => {
 
     trackAiReferral();
 
-    expect(gtagSpy).not.toHaveBeenCalled();
+    // 不送 ai_referral 事件
+    const eventCalls = gtagSpy.mock.calls.filter((args) => args[0] === 'event');
+    expect(eventCalls).toHaveLength(0);
+    // 主動 reset ai_source 為 null，避免跨 session 殘留前次歸因
+    expect(gtagSpy).toHaveBeenCalledWith('set', 'user_properties', { ai_source: null });
+  });
+
+  it('非 AI 同 session 第二次呼叫不再 reset（避免覆寫當下狀態）', async () => {
+    const { initGA, trackAiReferral } = await importFresh();
+    initGA('G-TEST123456');
+    const gtagSpy = vi.fn();
+    window.gtag = gtagSpy;
+    Object.defineProperty(document, 'referrer', { value: '', configurable: true });
+
+    trackAiReferral();
+    trackAiReferral();
+
+    const setCalls = gtagSpy.mock.calls.filter((args) => args[0] === 'set');
+    expect(setCalls).toHaveLength(1);
   });
 
   it('命中 chatgpt referrer 送出 ai_referral 事件並設 user_property', async () => {
