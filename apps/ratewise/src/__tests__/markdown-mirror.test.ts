@@ -94,4 +94,24 @@ describe('Markdown mirrors', () => {
     expect(content).toContain(RATES_API.latestRaw);
     expect(content).toContain(RATES_API.historyCdnExample);
   });
+
+  it('鏡像不得殘留 JS 字串 escape 字元（\\`、\\n）— 應反跳脫成字面值', () => {
+    for (const slug of slugs) {
+      const content = readMd(slug);
+      expect(
+        content,
+        `${slug}.md 含殘留 \\\` escape，inline code 不會被 Markdown 解析`,
+      ).not.toMatch(/\\`/);
+      expect(
+        content,
+        `${slug}.md 含殘留 \\n 字面值（backslash + 'n'），應在 generate-markdown-mirrors unescape 成真實換行`,
+      ).not.toMatch(/\\n(?![a-zA-Z])/);
+    }
+  });
+
+  it('open-data.md FAQ 內含實際 backtick 包住的 URL（inline code）', () => {
+    const content = readMd('open-data');
+    expect(content).toMatch(/`https:\/\/cdn\.jsdelivr\.net\/gh\/[^`]+@data[^`]+`/);
+    expect(content).toMatch(/`https:\/\/raw\.githubusercontent\.com\/[^`]+`/);
+  });
 });

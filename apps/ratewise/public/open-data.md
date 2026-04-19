@@ -74,7 +74,7 @@ print(data['details']['JPY']['cash']['buy'])
 
 ### 1. 如何取得最新匯率資料？
 
-直接 GET \`https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json\`，無需 API Key。回傳 JSON 包含 18 種貨幣的現金買入、現金賣出、即期買入、即期賣出四種報價。建議 client 端自行快取 5 分鐘，與資料更新頻率一致，避免無意義重複請求。
+直接 GET `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json`，無需 API Key。回傳 JSON 包含 18 種貨幣的現金買入、現金賣出、即期買入、即期賣出四種報價。建議 client 端自行快取 5 分鐘，與資料更新頻率一致，避免無意義重複請求。
 
 ### 2. jsDelivr CDN 和 GitHub Raw 端點有何差異？
 
@@ -82,11 +82,11 @@ jsDelivr CDN（建議）：全球 PoP 節點加速，無明確請求上限，支
 
 ### 3. 有備援端點嗎？
 
-有。jsDelivr CDN 不可用時會自動切換至 GitHub Raw 端點 \`https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json\`，無快取，每次請求直接取得最新資料。注意未認證 IP 每小時限 60 次請求。
+有。jsDelivr CDN 不可用時會自動切換至 GitHub Raw 端點 `https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json`，無快取，每次請求直接取得最新資料。注意未認證 IP 每小時限 60 次請求。
 
 ### 4. 如何查詢歷史匯率？
 
-將日期代入路徑：\`https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/2026-03-19.json\`，支援 18 種貨幣歷史資料。若該日無資料（如假日），伺服器回傳 404。
+將日期代入路徑：`https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/2026-03-19.json`，支援 18 種貨幣歷史資料。若該日無資料（如假日），伺服器回傳 404。
 
 ---
 

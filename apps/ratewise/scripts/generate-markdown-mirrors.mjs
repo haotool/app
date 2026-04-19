@@ -79,6 +79,23 @@ function substituteTemplate(raw) {
   });
 }
 
+/**
+ * JS string literal 反跳脫：把原始碼裡的 `\``、`\n`、`\\` 等 escape 字元還原成字面值字元。
+ *
+ * regex 擷取的是 seo-metadata.ts 原始碼片段，JS 尚未執行，因此像
+ * `` `直接 GET \`${RATES_API.latestCdn}\`` `` 會被擷取為 `直接 GET \`...\``（兩字元）。
+ * 若直接寫入鏡像檔，Markdown 解析器不會把它當成 inline code 區塊，也與對應 HTML 頁語義不一致。
+ * 在 `substituteTemplate` 之後執行，避免影響 `${...}` token 解析。
+ */
+function unescapeJsStringLiteral(raw) {
+  const SIMPLE_ESCAPES = { n: '\n', r: '\r', t: '\t' };
+  return raw.replace(/\\(.)/g, (_m, c) => SIMPLE_ESCAPES[c] ?? c);
+}
+
+function resolveLiteral(raw) {
+  return unescapeJsStringLiteral(substituteTemplate(raw));
+}
+
 function extractFaqArray(constName) {
   const startRe = new RegExp(`export const ${constName} = \\[`, 'm');
   const startMatch = startRe.exec(seoMetadataSrc);
@@ -99,8 +116,8 @@ function extractFaqArray(constName) {
   let m;
   while ((m = entryRe.exec(block)) !== null) {
     entries.push({
-      question: substituteTemplate(m[2]).trim(),
-      answer: substituteTemplate(m[4]).trim(),
+      question: resolveLiteral(m[2]).trim(),
+      answer: resolveLiteral(m[4]).trim(),
     });
   }
   if (entries.length === 0) throw new Error(`${constName} 未解析到任何 Q&A`);
@@ -126,9 +143,9 @@ function extractPageDescription(pageConst) {
   const block = tail.slice(0, endMatch.index);
 
   const descBacktick = /description:\s*`([\s\S]*?)`/.exec(block);
-  if (descBacktick) return substituteTemplate(descBacktick[1]).trim();
+  if (descBacktick) return resolveLiteral(descBacktick[1]).trim();
   const descSingle = /description:\s*'([\s\S]*?)'/.exec(block);
-  if (descSingle) return substituteTemplate(descSingle[1]).trim();
+  if (descSingle) return resolveLiteral(descSingle[1]).trim();
   throw new Error(`無法擷取 ${pageConst}.description`);
 }
 
