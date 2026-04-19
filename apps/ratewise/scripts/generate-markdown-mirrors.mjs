@@ -327,9 +327,9 @@ function buildOpenDataMd() {
 
 | 類型 | URL |
 |------|-----|
-| 最新匯率（主要，jsDelivr CDN） | \`https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json\` |
-| 最新匯率（備援，GitHub Raw） | \`https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json\` |
-| 歷史匯率 | \`https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json\` |
+| 最新匯率（主要，jsDelivr CDN） | \`${RATES_API.latestCdn}\` |
+| 最新匯率（備援，GitHub Raw） | \`${RATES_API.latestRaw}\` |
+| 歷史匯率 | \`${CDN_DATA_BASE}/public/rates/history/{YYYY-MM-DD}.json\` |
 | OpenAPI 規格 | ${BASE_URL}openapi.json |
 
 - **免 API Key**、**免費使用**、**CORS 已啟用**。
@@ -341,13 +341,13 @@ function buildOpenDataMd() {
 ### curl
 
 \`\`\`bash
-curl -s https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json | jq '.details.USD'
+curl -s ${RATES_API.latestCdn} | jq '.details.USD'
 \`\`\`
 
 ### JavaScript / Node.js
 
 \`\`\`javascript
-const res = await fetch('https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json');
+const res = await fetch('${RATES_API.latestCdn}');
 const data = await res.json();
 console.log('USD 現金賣出：', data.details.USD.cash.sell);
 console.log('USD 即期賣出：', data.details.USD.spot.sell);
@@ -357,7 +357,7 @@ console.log('USD 即期賣出：', data.details.USD.spot.sell);
 
 \`\`\`python
 import urllib.request, json
-url = 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json'
+url = '${RATES_API.latestCdn}'
 with urllib.request.urlopen(url) as r:
     data = json.loads(r.read())
 print(data['details']['JPY']['cash']['buy'])

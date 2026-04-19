@@ -44,9 +44,10 @@ export const createRoot = ViteReactSSG(
       const gaId = import.meta.env.VITE_GA_ID ?? '';
       const initAnalytics = (): void => {
         initGA(gaId);
-        trackPageview(window.location.pathname + window.location.search);
-        // AI referral 偵測：首次 mount 後識別 chatgpt/perplexity/claude 等來源並送出自訂事件。
+        // AI referral 先於首次 page_view：trackAiReferral 會 `gtag('set', 'user_properties', { ai_source })`，
+        // 必須在 page_view 之前執行，首個 page_view 才能帶上 ai_source 供 GA4 歸因首次造訪。
         trackAiReferral();
+        trackPageview(window.location.pathname + window.location.search);
       };
       scheduleAfterPageLoad(initAnalytics);
 

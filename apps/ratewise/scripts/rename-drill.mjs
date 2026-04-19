@@ -35,7 +35,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = resolve(__dirname, '..');
 const APP_INFO_PATH = resolve(APP_ROOT, 'src/config/app-info.ts');
 const SENTINEL = '__RENAME_DRILL_SENTINEL__';
-const ORIGINAL_SHORT_NAME = 'RateWise';
+// 動態從 SSOT 讀取當前品牌字面值，確保改名後 drill 仍可執行；
+// 若硬編碼 'RateWise'，一旦真的完成改名，此腳本會在啟動階段直接 fail。
+const BRAND_SHORT_NAME_RE = /const BRAND_SHORT_NAME = '([^']+)';/;
 
 const TARGET_DIRS = [
   // 只掃描 prebuild 產出的 public/
@@ -106,8 +108,13 @@ function main() {
   }
 
   const original = readFileSync(APP_INFO_PATH, 'utf-8');
-  if (!original.includes(`'${ORIGINAL_SHORT_NAME}'`)) {
-    fail(`SSOT 內找不到 BRAND_SHORT_NAME = '${ORIGINAL_SHORT_NAME}'，rename-drill 無法定位`, 2);
+  const brandMatch = BRAND_SHORT_NAME_RE.exec(original);
+  if (!brandMatch) {
+    fail(`SSOT 內找不到 const BRAND_SHORT_NAME = '...'，rename-drill 無法定位`, 2);
+  }
+  const currentShortName = brandMatch[1];
+  if (currentShortName === SENTINEL) {
+    fail(`SSOT 目前已被 sentinel 污染（上次 drill 未還原），請手動還原後重試`, 2);
   }
 
   if (dryRun) {
@@ -152,9 +159,9 @@ function main() {
   });
 
   try {
-    info(`Step 2/5：把 BRAND_SHORT_NAME 改為 sentinel '${SENTINEL}'...`);
+    info(`Step 2/5：把 BRAND_SHORT_NAME（'${currentShortName}'）改為 sentinel '${SENTINEL}'...`);
     const swapped = original.replace(
-      `const BRAND_SHORT_NAME = '${ORIGINAL_SHORT_NAME}';`,
+      `const BRAND_SHORT_NAME = '${currentShortName}';`,
       `const BRAND_SHORT_NAME = '${SENTINEL}';`,
     );
     if (swapped === original) {
@@ -170,7 +177,7 @@ function main() {
     });
 
     info('Step 4/5：grep 殘留舊品牌字面值...');
-    const leftover = grepFiles(ORIGINAL_SHORT_NAME, TARGET_DIRS);
+    const leftover = grepFiles(currentShortName, TARGET_DIRS);
     if (leftover.length > 0) {
       console.error('\n❌ SSOT 漏洞 — 改 shortName 後仍殘留舊品牌字面值：');
       for (const f of leftover) console.error(`   - ${f}`);
