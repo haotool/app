@@ -254,6 +254,46 @@ describe('detectAiSource', () => {
     const { detectAiSource } = await importFresh();
     expect(detectAiSource('not-a-url', 'also-not-a-url')).toBeNull();
   });
+
+  it('copilot.microsoft.com referrer 命中 copilot', async () => {
+    const { detectAiSource } = await importFresh();
+    const result = detectAiSource(
+      'https://app.haotool.org/ratewise/',
+      'https://copilot.microsoft.com/chats/abc',
+    );
+    expect(result?.id).toBe('copilot');
+    expect(result?.medium).toBe('referrer');
+  });
+
+  it('bing.com 一般搜尋不應被誤判為 copilot（避免污染 ai_source）', async () => {
+    const { detectAiSource } = await importFresh();
+    expect(
+      detectAiSource('https://app.haotool.org/ratewise/', 'https://www.bing.com/search?q=twd+usd'),
+    ).toBeNull();
+    expect(detectAiSource('https://app.haotool.org/ratewise/', 'https://www.bing.com/')).toBeNull();
+  });
+
+  it('bing.com/chat 或 /copilotsearch 路徑才視為 copilot referral', async () => {
+    const { detectAiSource } = await importFresh();
+    const chat = detectAiSource(
+      'https://app.haotool.org/ratewise/',
+      'https://www.bing.com/chat?q=twd',
+    );
+    expect(chat?.id).toBe('copilot');
+    expect(chat?.raw).toContain('/chat');
+
+    const copilotSearch = detectAiSource(
+      'https://app.haotool.org/ratewise/',
+      'https://www.bing.com/copilotsearch?q=twd',
+    );
+    expect(copilotSearch?.id).toBe('copilot');
+  });
+
+  it('utm_source=bing.com 一般搜尋不應觸發 copilot 分類', async () => {
+    const { detectAiSource } = await importFresh();
+    const result = detectAiSource('https://app.haotool.org/ratewise/?utm_source=bing.com', '');
+    expect(result).toBeNull();
+  });
 });
 
 describe('trackAiReferral', () => {

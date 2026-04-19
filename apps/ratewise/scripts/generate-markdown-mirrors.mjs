@@ -21,6 +21,24 @@ import prettier from 'prettier';
 import { SITE_CONFIG } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
 
+/**
+ * RATES_API 端點重建（與 src/config/api-endpoints.ts 同構）。
+ * Node 22 strip-types 不追蹤深層 .ts import，故在此以 APP_INFO 為 SSOT 原地組合；
+ * 若 api-endpoints.ts 端點規則變更，請同步更新此處並由 markdown-mirror.test.ts 驗證。
+ */
+const GITHUB_REPO_PATH = APP_INFO.github.replace('https://github.com/', '');
+const CDN_DATA_BASE = `https://cdn.jsdelivr.net/gh/${GITHUB_REPO_PATH}@data`;
+const RAW_DATA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_PATH}/data`;
+const RATES_LATEST_PATH = '/public/rates/latest.json';
+const RATES_HISTORY_EXAMPLE_DATE = '2026-03-19';
+const RATES_API = {
+  latestCdn: `${CDN_DATA_BASE}${RATES_LATEST_PATH}`,
+  latestRaw: `${RAW_DATA_BASE}${RATES_LATEST_PATH}`,
+  historyCdnExample: `${CDN_DATA_BASE}/public/rates/history/${RATES_HISTORY_EXAMPLE_DATE}.json`,
+  historyRawExample: `${RAW_DATA_BASE}/public/rates/history/${RATES_HISTORY_EXAMPLE_DATE}.json`,
+  actionsUrl: `${APP_INFO.github}/actions`,
+};
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
@@ -34,7 +52,8 @@ const SUPPORTED_CURRENCY_COUNT = [...constantsSrc.matchAll(/^\s+([A-Z]{3}):\s*\{
 
 /**
  * 擷取 seo-metadata.ts 內 `export const <name> = [...] as const` 陣列中的 question/answer 對。
- * 支援單引號、雙引號與 backtick；template literal 內 ${...} 會以 KNOWN_SUBSTITUTIONS 表展開。
+ * 支援單引號、雙引號與 backtick；template literal 內 ${...} 以 KNOWN_SUBSTITUTIONS 表展開。
+ * 未知 token 直接 throw，避免未解析變數（例如 ${RATES_API.latestCdn}）靜默發佈到鏡像內容。
  */
 const KNOWN_SUBSTITUTIONS = {
   'APP_INFO.email': APP_INFO.email,
@@ -42,13 +61,22 @@ const KNOWN_SUBSTITUTIONS = {
   'APP_INFO.shortName': APP_INFO.shortName,
   'APP_INFO.name': APP_INFO.name,
   'APP_INFO.subtitle': APP_INFO.subtitle,
+  ...Object.fromEntries(
+    Object.entries(RATES_API).map(([key, value]) => [`RATES_API.${key}`, String(value)]),
+  ),
   SUPPORTED_CURRENCY_COUNT: String(SUPPORTED_CURRENCY_COUNT),
 };
 
 function substituteTemplate(raw) {
   return raw.replace(/\$\{([^}]+)\}/g, (_m, expr) => {
     const key = expr.trim();
-    return KNOWN_SUBSTITUTIONS[key] ?? `{${key}}`;
+    if (!(key in KNOWN_SUBSTITUTIONS)) {
+      throw new Error(
+        `generate-markdown-mirrors: 未知 template token \`\${${key}}\`；` +
+          '請在 KNOWN_SUBSTITUTIONS 補上映射，避免錯誤字面值散播到 public/*.md 鏡像。',
+      );
+    }
+    return KNOWN_SUBSTITUTIONS[key];
   });
 }
 

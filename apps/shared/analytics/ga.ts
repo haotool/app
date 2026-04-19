@@ -24,22 +24,39 @@ type LoadDocument = Pick<Document, 'readyState'>;
  *
  * ChatGPT 會自動附上 `utm_source=chatgpt.com`；其他平台多半只給 referrer。
  * key 為寫入 GA4 custom dimension 的 canonical 值，便於 channel group regex 比對。
+ *
+ * 規則：
+ * - `hostname` 必填，用於 referrer host 比對；缺 `pathname` 時全主機命中
+ * - `pathname` 可選，限縮到 Copilot 在 Bing 的專屬路徑（`/chat`、`/copilotsearch`），
+ *   避免一般 Bing 搜尋被誤判為 AI referral 污染 GA4 ai_source
+ * - `pathname` 存在的項目不參與 utm_source 比對（utm 無路徑資訊，不足以判別）
  */
-const AI_SOURCE_PATTERNS: readonly { id: string; pattern: RegExp }[] = [
-  { id: 'chatgpt', pattern: /(^|\.)chatgpt\.com$|(^|\.)chat\.openai\.com$/i },
-  { id: 'perplexity', pattern: /(^|\.)perplexity\.ai$/i },
-  { id: 'claude', pattern: /(^|\.)claude\.ai$|(^|\.)claude\.com$/i },
-  { id: 'gemini', pattern: /(^|\.)gemini\.google\.com$|(^|\.)bard\.google\.com$/i },
-  { id: 'copilot', pattern: /(^|\.)copilot\.microsoft\.com$|(^|\.)bing\.com$/i },
-  { id: 'grok', pattern: /(^|\.)grok\.com$|(^|\.)x\.ai$/i },
-  { id: 'mistral', pattern: /(^|\.)chat\.mistral\.ai$|(^|\.)mistral\.ai$/i },
-  { id: 'you', pattern: /(^|\.)you\.com$/i },
-  { id: 'phind', pattern: /(^|\.)phind\.com$/i },
+interface AiSourceEntry {
+  id: string;
+  hostname: RegExp;
+  pathname?: RegExp;
+}
+
+const AI_SOURCE_PATTERNS: readonly AiSourceEntry[] = [
+  { id: 'chatgpt', hostname: /(^|\.)chatgpt\.com$|(^|\.)chat\.openai\.com$/i },
+  { id: 'perplexity', hostname: /(^|\.)perplexity\.ai$/i },
+  { id: 'claude', hostname: /(^|\.)claude\.ai$|(^|\.)claude\.com$/i },
+  { id: 'gemini', hostname: /(^|\.)gemini\.google\.com$|(^|\.)bard\.google\.com$/i },
+  { id: 'copilot', hostname: /(^|\.)copilot\.microsoft\.com$/i },
+  {
+    id: 'copilot',
+    hostname: /(^|\.)bing\.com$/i,
+    pathname: /^\/(chat|copilotsearch)(\/|$)/i,
+  },
+  { id: 'grok', hostname: /(^|\.)grok\.com$|(^|\.)x\.ai$/i },
+  { id: 'mistral', hostname: /(^|\.)chat\.mistral\.ai$|(^|\.)mistral\.ai$/i },
+  { id: 'you', hostname: /(^|\.)you\.com$/i },
+  { id: 'phind', hostname: /(^|\.)phind\.com$/i },
 ];
 
 /**
  * 判別當前造訪是否來自 AI 助手。
- * 優先採用 utm_source（ChatGPT 等會主動附加），其次 referrer host 比對。
+ * 優先採用 utm_source（ChatGPT 等會主動附加），其次 referrer host/path 比對。
  * 無匹配時回傳 null，呼叫端應略過事件送出以避免雜訊。
  */
 export function detectAiSource(
@@ -51,25 +68,27 @@ export function detectAiSource(
     const utmSource = url.searchParams.get('utm_source');
     if (utmSource) {
       for (const entry of AI_SOURCE_PATTERNS) {
-        if (entry.pattern.test(utmSource)) {
+        if (entry.pathname) continue;
+        if (entry.hostname.test(utmSource)) {
           return { id: entry.id, medium: 'utm', raw: utmSource };
         }
       }
     }
   } catch {
-    // 非合法 URL，忽略
+    // 非合法 URL,忽略
   }
 
   if (referrer) {
     try {
-      const host = new URL(referrer).hostname;
+      const refUrl = new URL(referrer);
       for (const entry of AI_SOURCE_PATTERNS) {
-        if (entry.pattern.test(host)) {
-          return { id: entry.id, medium: 'referrer', raw: host };
-        }
+        if (!entry.hostname.test(refUrl.hostname)) continue;
+        if (entry.pathname && !entry.pathname.test(refUrl.pathname)) continue;
+        const raw = entry.pathname ? `${refUrl.hostname}${refUrl.pathname}` : refUrl.hostname;
+        return { id: entry.id, medium: 'referrer', raw };
       }
     } catch {
-      // referrer 非 URL，忽略
+      // referrer 非 URL,忽略
     }
   }
 

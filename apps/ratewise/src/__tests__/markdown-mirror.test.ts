@@ -10,6 +10,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
+import { RATES_API } from '../config/api-endpoints';
 
 const PUBLIC_DIR = resolve(__dirname, '../../public');
 
@@ -65,5 +66,32 @@ describe('Markdown mirrors', () => {
       expect(content).toMatch(/Canonical:/);
       expect(content).toMatch(/Version: v\d+\.\d+\.\d+/);
     }
+  });
+
+  it('鏡像不得殘留未解析的 template token（${...} 或 {OBJECT.prop}）', () => {
+    for (const slug of slugs) {
+      const content = readMd(slug);
+      expect(
+        content,
+        `${slug}.md 殘留 \${...} 未展開 — 檢查 generate-markdown-mirrors.mjs KNOWN_SUBSTITUTIONS`,
+      ).not.toMatch(/\$\{[^}]+\}/);
+      expect(
+        content,
+        `${slug}.md 殘留 {OBJECT.prop} 占位符 — 未知 token 應 throw 而非降級輸出`,
+      ).not.toMatch(/\{(APP_INFO|RATES_API)\.[A-Za-z_]+\}/);
+    }
+  });
+
+  it('open-data.md 使用實際 jsDelivr / GitHub Raw 端點 URL', () => {
+    const content = readMd('open-data');
+    expect(content).toMatch(/cdn\.jsdelivr\.net\/gh\/[^/]+\/[^/]+@data/);
+    expect(content).toMatch(/raw\.githubusercontent\.com/);
+  });
+
+  it('open-data.md FAQ 端點與 RATES_API SSOT 一致（防止 generate 腳本與 api-endpoints.ts 漂移）', () => {
+    const content = readMd('open-data');
+    expect(content).toContain(RATES_API.latestCdn);
+    expect(content).toContain(RATES_API.latestRaw);
+    expect(content).toContain(RATES_API.historyCdnExample);
   });
 });
