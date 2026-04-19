@@ -98,7 +98,7 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
     expect(content).toContain('方案 A（推薦）：幣對金額頁（SSG 路徑型，有獨立 SEO 頁面）');
     expect(content).toContain('https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/');
     expect(content).not.toContain(
-      'Q: 如何讓用戶直接在 RateWise 查詢特定匯率？ A: 使用 Deep Link 模板：https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD',
+      'Q: 如何讓用戶直接在 HaoRate 查詢特定匯率？ A: 使用 Deep Link 模板：https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD',
     );
   });
 });

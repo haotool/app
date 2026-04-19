@@ -1,4 +1,4 @@
-# RateWise — Robots Exclusion Protocol
+# HaoRate — Robots Exclusion Protocol
 # https://app.haotool.org/ratewise/
 #
 # AI Bot 三層治理：TRAINING / SEARCH / USER_AGENT

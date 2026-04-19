@@ -216,7 +216,7 @@ async function verifyLlmsContent(requestBaseUrl, appDisplayName, siteUrl) {
   if (!content.includes(brandKeyword)) errors.push(`llms.txt 缺少品牌名稱: ${brandKeyword}`);
   if (!content.includes(siteUrl)) errors.push(`llms.txt 缺少網站 URL: ${siteUrl}`);
 
-  if (appDisplayName === 'RateWise') {
+  if (appDisplayName === 'HaoRate') {
     const popularRatePaths = [
       'usd-twd/',
       'jpy-twd/',

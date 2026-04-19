@@ -165,14 +165,14 @@ describe('ratewise build scripts', () => {
 
     expect(viteConfig).toContain("from './src/config/app-info'");
     expect(viteConfig).toContain('name: APP_INFO.name');
-    expect(viteConfig).not.toContain("name: 'RateWise - 即時匯率轉換器'");
+    expect(viteConfig).not.toContain("name: 'HaoRate - 即時匯率轉換器'");
     expect(manifestGenerator).toContain("from '../src/config/app-info.ts'");
     expect(manifestGenerator).toContain('name: APP_INFO.name');
     expect(manifestGenerator).toContain('short_name: APP_MANIFEST.shortName');
     expect(manifestGenerator).toContain('APP_MANIFEST.screenshots.map');
-    expect(manifestGenerator).not.toContain("short_name: 'RateWise'");
-    expect(manifestGenerator).not.toContain("'RateWise 首頁 - 即時匯率換算與趨勢圖'");
-    expect(manifestGenerator).not.toContain("name: 'RateWise 匯率好工具'");
+    expect(manifestGenerator).not.toContain("short_name: 'HaoRate'");
+    expect(manifestGenerator).not.toContain("'HaoRate 首頁 - 即時匯率換算與趨勢圖'");
+    expect(manifestGenerator).not.toContain("name: 'HaoRate 匯率好工具'");
   });
 
   it('should not force React ecosystem packages into manual chunks', async () => {
@@ -326,10 +326,10 @@ describe('ratewise build scripts', () => {
     expect(seoMetadataSource).toContain("from './seo-static'");
     expect(seoMetadataSource).toContain('title: GUIDE_PAGE_TITLE');
     expect(healthCheckScript).not.toContain(
-      "validators.hasTitle('RateWise 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價')",
+      "validators.hasTitle('HaoRate 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價')",
     );
     expect(healthCheckScript).not.toContain(
-      "validators.hasTitle('使用指南 — 如何使用 RateWise 匯率好工具換算匯率 | RateWise 匯率好工具')",
+      "validators.hasTitle('使用指南 — 如何使用 HaoRate 匯率好工具換算匯率 | HaoRate 匯率好工具')",
     );
   });
 
@@ -447,7 +447,7 @@ describe('ratewise build scripts', () => {
 
   /**
    * Brand SSOT 哨兵：
-   * 防止有人在 components / pages / i18n 直接寫死 'RateWise' 或 '匯率好工具'。
+   * 防止有人在 components / pages / i18n 直接寫死 'HaoRate' 或 '匯率好工具'。
    * 改名時若新增的程式碼漏接 SSOT，這個測試會立刻紅。
    *
    * Allowlist 解釋：
@@ -460,7 +460,7 @@ describe('ratewise build scripts', () => {
    * - src/llms-txt.spec.ts — 已收斂（白名單只是防守備）
    * - src/utils/versionManager.ts — 註解引用 RateWise.tsx 為呼叫者
    */
-  it('should not hardcode RateWise / 匯率好工具 outside SSOT and technical-identifier files', async () => {
+  it('should not hardcode HaoRate / 匯率好工具 outside SSOT and technical-identifier files', async () => {
     const srcRoot = path.resolve(__dirname, '../..');
     const allowList = new Set(
       [
@@ -499,7 +499,7 @@ describe('ratewise build scripts', () => {
     }
 
     const offenders: { file: string; reason: string }[] = [];
-    const brandTokens = ['RateWise', '匯率好工具'];
+    const brandTokens = ['HaoRate', '匯率好工具'];
 
     for (const file of walk(srcRoot)) {
       const rel = path.relative(srcRoot, file);

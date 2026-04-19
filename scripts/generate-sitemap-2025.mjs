@@ -37,6 +37,7 @@ import {
   IMAGE_RESOURCES,
   normalizeSiteUrl,
 } from '../apps/ratewise/seo-paths.config.mjs';
+import { APP_INFO } from '../apps/ratewise/src/config/app-info.ts';
 
 const SITE_URL = normalizeSiteUrl(SITE_CONFIG.url);
 const PUBLIC_SITEMAP_PATHS = [...new Set(SEO_PATHS)];
@@ -154,63 +155,66 @@ const PATH_DEPENDENCIES = {
  */
 const OG_IMAGE_URL = `${SITE_URL}${SHARE_IMAGE.replace(/^\//, '')}`;
 
+const BRAND_SHORT = APP_INFO.shortName;
+const BRAND_FULL = APP_INFO.name;
+
 const PAGE_IMAGES = {
   '/': [
     {
       loc: OG_IMAGE_URL,
-      caption: 'RateWise - 即時匯率轉換器 Open Graph 圖片',
+      caption: `${BRAND_SHORT} - 即時匯率轉換器 Open Graph 圖片`,
     },
     {
       loc: `${SITE_URL}icons/ratewise-icon-512x512.png`,
-      caption: 'RateWise Logo',
+      caption: `${BRAND_SHORT} Logo`,
     },
   ],
   '/faq/': [
     {
       loc: OG_IMAGE_URL,
-      caption: 'RateWise FAQ - 常見問題',
+      caption: `${BRAND_SHORT} FAQ - 常見問題`,
     },
   ],
   '/about/': [
     {
       loc: OG_IMAGE_URL,
-      caption: 'RateWise About - 關於我們',
+      caption: `${BRAND_SHORT} About - 關於我們`,
     },
   ],
   '/guide/': [
     {
       loc: OG_IMAGE_URL,
-      caption: 'RateWise Guide - 使用指南',
+      caption: `${BRAND_SHORT} Guide - 使用指南`,
     },
   ],
   '/sell-rate-vs-mid-rate/': [
     {
       loc: OG_IMAGE_URL,
-      caption: 'RateWise Guide - 賣出價與中間價差異',
+      caption: `${BRAND_SHORT} Guide - 賣出價與中間價差異`,
     },
   ],
   '/cash-vs-spot-rate/': [
     {
       loc: OG_IMAGE_URL,
-      caption: 'RateWise Guide - 現金與即期匯率差異',
+      caption: `${BRAND_SHORT} Guide - 現金與即期匯率差異`,
     },
   ],
   '/card-rate-guide/': [
     {
       loc: OG_IMAGE_URL,
-      caption: 'RateWise Guide - 刷卡匯率與 DCC',
+      caption: `${BRAND_SHORT} Guide - 刷卡匯率與 DCC`,
     },
   ],
   '/open-data/': [
     {
       loc: OG_IMAGE_URL,
-      caption: 'RateWise Open Data - 台銀匯率開放 API',
+      caption: `${BRAND_SHORT} Open Data - 台銀匯率開放 API`,
     },
   ],
   '/privacy/': [
     {
       loc: OG_IMAGE_URL,
-      caption: 'RateWise Privacy - 隱私政策',
+      caption: `${BRAND_SHORT} Privacy - 隱私政策`,
     },
   ],
 };
@@ -224,7 +228,7 @@ CURRENCY_SEO_PATHS.forEach((path) => {
   PAGE_IMAGES[path] = [
     {
       loc: OG_IMAGE_URL,
-      caption: `RateWise 匯率好工具 - ${currency}/TWD 即時匯率換算`,
+      caption: `${BRAND_FULL} - ${currency}/TWD 即時匯率換算`,
     },
   ];
 
@@ -241,7 +245,7 @@ REVERSE_CURRENCY_SEO_PATHS.forEach((path) => {
   PAGE_IMAGES[path] = [
     {
       loc: OG_IMAGE_URL,
-      caption: `RateWise 匯率好工具 - TWD/${currency} 出國換匯換算`,
+      caption: `${BRAND_FULL} - TWD/${currency} 出國換匯換算`,
     },
   ];
   if (!PATH_DEPENDENCIES[path]) {

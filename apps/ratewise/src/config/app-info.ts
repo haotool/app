@@ -9,7 +9,7 @@
  * 品牌原子（Brand Atoms）— 未來改名時只需改這兩個常數，
  * 其餘所有衍生值（name、page titles、描述等）會自動跟隨。
  */
-const BRAND_SHORT_NAME = 'RateWise';
+const BRAND_SHORT_NAME = 'HaoRate';
 const BRAND_SUBTITLE = '匯率好工具';
 
 export const APP_INFO = {

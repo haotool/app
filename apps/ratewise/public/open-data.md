@@ -1,6 +1,6 @@
-# RateWise 開放資料 API
+# HaoRate 開放資料 API
 
-> RateWise 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。
+> HaoRate 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。
 
 - Canonical: https://app.haotool.org/ratewise/open-data/
 - Version: v2.21.0
