@@ -31,6 +31,21 @@ vi.mock('../../utils/react-helmet-async', () => ({
   HelmetProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+// OfflineIndicator / UpdatePrompt 會觸發 SW 與 CDN 相依副作用；本檔只驗佈局結構，
+// 靜態 mock 空元件以避免拖慢首次 render 造成整體套件跑時 5s 逾時。
+vi.mock('../OfflineIndicator', () => ({
+  OfflineIndicator: () => null,
+}));
+
+vi.mock('../UpdatePrompt', () => ({
+  UpdatePrompt: () => null,
+}));
+
+// 改為靜態 import：原本每條測試各自 `await import('../Layout')` 會在 vitest
+// 全套件負載下觸發模組圖冷轉譯，首條 it 動輒 2s+、疊 timer 後逾時 5s。
+// 靜態 import 讓模組轉譯提前到檔案載入階段，不計入測試 timeout 預算。
+import { Layout } from '../Layout';
+
 describe('Layout Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,9 +56,7 @@ describe('Layout Component', () => {
   });
 
   describe('Client-side rendering (isBrowser = true)', () => {
-    it('應該渲染子組件', async () => {
-      const { Layout } = await import('../Layout');
-
+    it('應該渲染子組件', () => {
       render(
         <Layout>
           <div data-testid="child-content">Child Content</div>
@@ -53,9 +66,7 @@ describe('Layout Component', () => {
       expect(screen.getByTestId('child-content')).toBeInTheDocument();
     });
 
-    it('應該渲染內容區域', async () => {
-      const { Layout } = await import('../Layout');
-
+    it('應該渲染內容區域', () => {
       render(
         <Layout>
           <div data-testid="content">Content</div>
@@ -66,8 +77,6 @@ describe('Layout Component', () => {
     });
 
     it('應該設置 appReady 數據屬性', async () => {
-      const { Layout } = await import('../Layout');
-
       render(
         <Layout>
           <div>Content</div>
@@ -79,9 +88,7 @@ describe('Layout Component', () => {
       });
     });
 
-    it('應該包含 main 元素且有正確的 role', async () => {
-      const { Layout } = await import('../Layout');
-
+    it('應該包含 main 元素且有正確的 role', () => {
       render(
         <Layout>
           <div>Content</div>
@@ -93,9 +100,7 @@ describe('Layout Component', () => {
       expect(main).toHaveClass('min-h-full');
     });
 
-    it('應該提供可捲動容器以支援長內容頁面', async () => {
-      const { Layout } = await import('../Layout');
-
+    it('應該提供可捲動容器以支援長內容頁面', () => {
       const { container } = render(
         <Layout>
           <div>Content</div>
@@ -120,9 +125,7 @@ describe('Layout Component', () => {
   });
 
   describe('React.StrictMode 驗證', () => {
-    it('應該被 StrictMode 包裹且正確渲染', async () => {
-      const { Layout } = await import('../Layout');
-
+    it('應該被 StrictMode 包裹且正確渲染', () => {
       const { container } = render(
         <Layout>
           <div data-testid="content">Content</div>
@@ -135,9 +138,7 @@ describe('Layout Component', () => {
   });
 
   describe('多次渲染穩定性', () => {
-    it('應該在多次渲染後保持穩定', async () => {
-      const { Layout } = await import('../Layout');
-
+    it('應該在多次渲染後保持穩定', () => {
       const { rerender } = render(
         <Layout>
           <div data-testid="content-1">Content 1</div>
