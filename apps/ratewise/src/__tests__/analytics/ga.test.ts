@@ -337,6 +337,55 @@ describe('trackAiReferral', () => {
     expect(setCalls).toHaveLength(1);
   });
 
+  it('同 tab 先直接進站、後從 AI 來源再進站 → 仍應送 ai_referral 事件', async () => {
+    const { initGA, trackAiReferral } = await importFresh();
+    initGA('G-TEST123456');
+    const gtagSpy = vi.fn();
+    window.gtag = gtagSpy;
+
+    // 第一次：直接進站
+    Object.defineProperty(document, 'referrer', { value: '', configurable: true });
+    trackAiReferral();
+
+    // 第二次（同 tab reload / 新頁面）：從 ChatGPT 來
+    Object.defineProperty(document, 'referrer', {
+      value: 'https://chatgpt.com/share/abc',
+      configurable: true,
+    });
+    trackAiReferral();
+
+    const eventCalls = gtagSpy.mock.calls.filter((args) => args[0] === 'event');
+    expect(eventCalls).toHaveLength(1);
+    expect(eventCalls[0]?.[1]).toBe('ai_referral');
+    const params = eventCalls[0]?.[2] as Record<string, unknown>;
+    expect(params?.['ai_source']).toBe('chatgpt');
+  });
+
+  it('同 tab 從 ChatGPT 進站後，換到 Perplexity 應再次觸發 ai_referral', async () => {
+    const { initGA, trackAiReferral } = await importFresh();
+    initGA('G-TEST123456');
+    const gtagSpy = vi.fn();
+    window.gtag = gtagSpy;
+
+    Object.defineProperty(document, 'referrer', {
+      value: 'https://chatgpt.com/share/abc',
+      configurable: true,
+    });
+    trackAiReferral();
+
+    Object.defineProperty(document, 'referrer', {
+      value: 'https://www.perplexity.ai/',
+      configurable: true,
+    });
+    trackAiReferral();
+
+    const eventCalls = gtagSpy.mock.calls.filter((args) => args[0] === 'event');
+    expect(eventCalls.map((args) => (args[2] as { ai_source?: string })?.ai_source)).toEqual([
+      'chatgpt',
+      'perplexity',
+    ]);
+  });
+
   it('命中 chatgpt referrer 送出 ai_referral 事件並設 user_property', async () => {
     const { initGA, trackAiReferral } = await importFresh();
     initGA('G-TEST123456');
