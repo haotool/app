@@ -779,6 +779,23 @@ export const HOMEPAGE_SEO = {
   keywords: [...SITE_SEO.keywords],
   faqContent: [...HOMEPAGE_FAQ_CONTENT],
   howTo: HOMEPAGE_HOW_TO,
+  // AEO/GEO 快速答案：AI 引擎直接引用的核心問答，設計為自足式句子。
+  answerCapsule: [
+    {
+      question: `${APP_INFO.shortName} 顯示的是台銀哪種匯率？`,
+      answer: `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買入與賣出價（現金與即期各兩種），不是銀行間中間價。你拿台幣換外幣時看「銀行賣出價」，把外幣換回台幣時看「銀行買入價」，每 5 分鐘自動同步。`,
+    },
+    {
+      question: '換匯前為什麼要看賣出價，不看中間價？',
+      answer:
+        '中間價是銀行間批發報價，一般民眾換匯必須用「銀行賣出價」——即銀行賣外幣給你的價格。中間價與賣出價的差距通常 0.5～2%，換 1,000 美元可差 150～600 元新台幣，金額越大差距越明顯。',
+    },
+    {
+      question: '現金匯率和即期匯率怎麼選？',
+      answer:
+        '臨櫃換外幣現鈔（出國帶現金）看現金匯率；外幣帳戶轉換、網銀購匯或海外匯款看即期匯率。現金匯率因為包含鈔券保管與運送成本，條件通常比即期差約 0.5～1%。',
+    },
+  ],
   jsonLd: [
     buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`),
     // WebPage with speakable：標記首頁 h1 為語音搜尋主要可讀區塊。
@@ -929,6 +946,24 @@ export const FAQ_PAGE_SEO = {
   breadcrumb: [
     { name: `${APP_INFO.shortName} 首頁`, item: '/' },
     { name: '常見問題', item: '/faq/' },
+  ],
+  // AEO/GEO 快速答案：FAQ 頁頂部快速提取的核心答案，AI 引擎直接引用。
+  answerCapsule: [
+    {
+      question: '現金匯率和即期匯率有什麼差別？',
+      answer:
+        '現金匯率用於臨櫃換外幣現鈔（出國帶現金），即期匯率用於外幣帳戶轉帳或匯款。現金匯率買賣價差比即期大約 0.5～2%，因為銀行承擔現鈔的保管、運輸與保險成本。',
+    },
+    {
+      question: '買入匯率和賣出匯率怎麼分辨？',
+      answer:
+        '「銀行賣出」是銀行賣外幣給你的價格——你拿台幣換外幣出國時看此欄；「銀行買入」是銀行向你收購外幣的價格——你把外幣換回台幣時看此欄。口訣：出國換外幣看賣出，回台換台幣看買入。',
+    },
+    {
+      question: 'DCC 動態貨幣轉換是什麼？為什麼要拒絕？',
+      answer:
+        'DCC 是海外刷卡時商家提供「直接以台幣結帳」的選項，匯率通常比卡組織清算匯率差 3～18%。正確做法：一律選「當地貨幣（Local Currency）結帳」，由發卡銀行按卡組織匯率清算，手續費通常僅約 1.5%。',
+    },
   ],
   faqContent: [...FAQ_PAGE_ENTRIES],
   jsonLd: [

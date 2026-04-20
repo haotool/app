@@ -350,6 +350,45 @@ describe('SEO SSOT', () => {
     });
   });
 
+  // ─── AEO/GEO 快速答案覆蓋率（answerCapsule）──────────────────────────────
+  describe('AEO/GEO answerCapsule 覆蓋率', () => {
+    it('HOMEPAGE_SEO 應有非空 answerCapsule（首頁是 AI 引擎最常引用的頁面）', () => {
+      expect(HOMEPAGE_SEO).toHaveProperty('answerCapsule');
+      expect((HOMEPAGE_SEO as { answerCapsule?: unknown[] }).answerCapsule).toBeDefined();
+      expect(
+        (HOMEPAGE_SEO as { answerCapsule?: unknown[] }).answerCapsule!.length,
+      ).toBeGreaterThanOrEqual(2);
+    });
+
+    it('FAQ_PAGE_SEO 應有非空 answerCapsule（FAQ 頁是高頻搜尋落地頁）', () => {
+      expect(FAQ_PAGE_SEO).toHaveProperty('answerCapsule');
+      expect((FAQ_PAGE_SEO as { answerCapsule?: unknown[] }).answerCapsule).toBeDefined();
+      expect(
+        (FAQ_PAGE_SEO as { answerCapsule?: unknown[] }).answerCapsule!.length,
+      ).toBeGreaterThanOrEqual(2);
+    });
+
+    it('HOMEPAGE_SEO.answerCapsule 每項應有 question 與 non-empty answer', () => {
+      const capsule = (HOMEPAGE_SEO as { answerCapsule?: { question: string; answer: string }[] })
+        .answerCapsule;
+      if (!capsule) return;
+      for (const item of capsule) {
+        expect(item.question.length).toBeGreaterThan(0);
+        expect(item.answer.length).toBeGreaterThanOrEqual(20);
+      }
+    });
+
+    it('FAQ_PAGE_SEO.answerCapsule 每項應有 question 與 non-empty answer', () => {
+      const capsule = (FAQ_PAGE_SEO as { answerCapsule?: { question: string; answer: string }[] })
+        .answerCapsule;
+      if (!capsule) return;
+      for (const item of capsule) {
+        expect(item.question.length).toBeGreaterThan(0);
+        expect(item.answer.length).toBeGreaterThanOrEqual(20);
+      }
+    });
+  });
+
   // ─── /seo-tech/ 可索引頁面 SEO metadata 正確性 ─────────────────────────────
   describe('/seo-tech/ 可索引頁面 SEO metadata 正確性', () => {
     it('APP_ONLY_PAGE_SEO.seoTech.pathname 應以尾斜線結尾（與 CONTENT_SEO_PATHS 對齊）', () => {
