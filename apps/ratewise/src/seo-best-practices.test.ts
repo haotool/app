@@ -907,3 +907,82 @@ describe('💱 ExchangeRateSpecification Schema (P0-5)', () => {
     }
   });
 });
+
+describe('💵 Amount Page ExchangeRateSpecification Schema (P1-5)', () => {
+  it('should export buildAmountExchangeRateSpecificationJsonLd function', async () => {
+    const { buildAmountExchangeRateSpecificationJsonLd } = await import('./config/seo-metadata');
+    expect(typeof buildAmountExchangeRateSpecificationJsonLd).toBe('function');
+  });
+
+  it('should generate valid ExchangeRateSpecification for to-twd direction', async () => {
+    const { buildAmountExchangeRateSpecificationJsonLd } = await import('./config/seo-metadata');
+    const schema = buildAmountExchangeRateSpecificationJsonLd(
+      'USD',
+      'TWD',
+      32.5,
+      100,
+      3250,
+      'to-twd',
+    );
+
+    expect(schema['@context']).toBe('https://schema.org');
+    expect(schema['@type']).toBe('ExchangeRateSpecification');
+    expect(schema['currency']).toBe('USD');
+
+    const rate = schema['currentExchangeRate'] as Record<string, unknown>;
+    expect(rate['@type']).toBe('UnitPriceSpecification');
+    expect(rate['price']).toBe('32.5');
+    expect(rate['priceCurrency']).toBe('TWD');
+    expect(rate['description']).toContain('100');
+    expect(rate['description']).toContain('3,250');
+    expect(rate['description']).toContain('USD');
+    expect(rate['description']).toContain('TWD');
+    expect(rate['validFrom']).toBeTruthy();
+  });
+
+  it('should generate valid ExchangeRateSpecification for twd-to-foreign direction', async () => {
+    const { buildAmountExchangeRateSpecificationJsonLd } = await import('./config/seo-metadata');
+    const schema = buildAmountExchangeRateSpecificationJsonLd(
+      'TWD',
+      'JPY',
+      0.2165,
+      10000,
+      2165,
+      'twd-to-foreign',
+    );
+
+    expect(schema['@context']).toBe('https://schema.org');
+    expect(schema['@type']).toBe('ExchangeRateSpecification');
+    expect(schema['currency']).toBe('TWD');
+
+    const rate = schema['currentExchangeRate'] as Record<string, unknown>;
+    expect(rate['@type']).toBe('UnitPriceSpecification');
+    expect(rate['price']).toBe('0.2165');
+    expect(rate['priceCurrency']).toBe('JPY');
+    expect(rate['description']).toContain('10,000');
+    expect(rate['description']).toContain('2,165');
+    expect(rate['description']).toContain('TWD');
+    expect(rate['description']).toContain('JPY');
+  });
+
+  it('should include amount conversion details in description', async () => {
+    const { buildAmountExchangeRateSpecificationJsonLd } = await import('./config/seo-metadata');
+    const schema = buildAmountExchangeRateSpecificationJsonLd(
+      'KRW',
+      'TWD',
+      0.0237,
+      50000,
+      1185,
+      'to-twd',
+    );
+
+    const rate = schema['currentExchangeRate'] as Record<string, unknown>;
+    const description = rate['description'] as string;
+
+    expect(description).toContain('臺灣銀行現金賣出價');
+    expect(description).toContain('50,000');
+    expect(description).toContain('KRW');
+    expect(description).toContain('1,185');
+    expect(description).toContain('TWD');
+  });
+});
