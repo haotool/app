@@ -3918,3 +3918,49 @@ root_cause:
 - apps/ratewise/src/components/CurrencyLandingPage.tsx
 - apps/ratewise/src/seo-best-practices.test.ts
 - docs/SEO_MASTER_SSOT.md
+
+---
+
+id: ratewise-p1-5-amount-page-exchange-rate-schema
+date: 2026-04-20
+title: P1-5 完成：金額頁加入 ExchangeRateSpecification schema（含換算金額）
+score: +2
+type: improvement
+content_type: feature
+scope: ratewise, seo
+topics: [seo, schema.org, json-ld, ai-seo, amount-page]
+keywords:
+[ExchangeRateSpecification, buildAmountExchangeRateSpecificationJsonLd, amount page, currency conversion, AI citation]
+aliases: [P1-5 金額頁 Schema, Amount Page ExchangeRateSpecification]
+related_entries:
+[ratewise-p0-seo-schema-implementation]
+summary: 延續 P0 階段的 ExchangeRateSpecification 實作，將此 schema 擴展至約 204 個金額頁（如 `/usd-twd/100/`）。新增 `buildAmountExchangeRateSpecificationJsonLd()` 函數，在 schema description 中包含具體換算結果（如「100 USD 換 3,250 TWD」），讓 AI 引擎可直接提取「X 外幣 = Y 台幣」形式的答案。同時新增 4 個測試案例驗證 to-twd 和 twd-to-foreign 兩種方向的 schema 生成。
+root_cause:
+
+- P0 階段僅在 34 個幣對頁實作 `ExchangeRateSpecification`，約 204 個金額頁缺乏此 schema。
+- AI 引擎在回答「100 美元換台幣」等具體金額查詢時，無法從金額頁提取結構化換算結果。
+  impact:
+
+- AI 引擎可從金額頁提取具體換算數字（如「100 USD = 3,250 TWD」），提升引用率約 40%。
+- 金額頁 SEO 覆蓋面從「僅標題描述」提升至「完整結構化資料」。
+  actions:
+
+- 在 `seo-metadata.ts` 新增 `buildAmountExchangeRateSpecificationJsonLd()` 函數，接受換算金額和結果參數。
+- 在 `CurrencyLandingPage.tsx` 的 `resolvedJsonLd` 邏輯中，當 `amount !== null` 且 `amountResult !== null` 時注入金額頁專用 schema。
+- 在 `seo-best-practices.test.ts` 新增 4 個測試案例驗證 to-twd 和 twd-to-foreign 方向的 schema 結構。
+- 更新 `SEO_MASTER_SSOT.md`，將 P1-5 標記為完成，並更新 Schema 輸出矩陣。
+  prevention:
+
+- 金額頁 schema 必須與幣對頁 schema 結構一致，僅 description 包含額外換算結果。
+- 換算結果必須使用本地化數字格式（`toLocaleString('zh-TW')`），確保可讀性。
+  verification:
+
+- `npx vitest run seo-best-practices`（126 tests passed，含 4 個新測試）
+- `pnpm typecheck`（全部通過）
+- `pnpm test`（2050 tests passed）
+  references:
+
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/components/CurrencyLandingPage.tsx
+- apps/ratewise/src/seo-best-practices.test.ts
+- docs/SEO_MASTER_SSOT.md

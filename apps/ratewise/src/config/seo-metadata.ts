@@ -433,6 +433,44 @@ export function buildExchangeRateSpecificationJsonLd(
 }
 
 /**
+ * 生成金額頁專用 ExchangeRateSpecification JSON-LD。
+ * 除了基本匯率外，額外包含具體換算金額，讓 AI 引擎可提取「X 外幣 = Y 台幣」形式的答案。
+ * 參考：https://schema.org/ExchangeRateSpecification
+ * @param fromCurrency 來源貨幣代碼（如 USD）
+ * @param toCurrency 目標貨幣代碼（如 TWD）
+ * @param rate 匯率數值（現金賣出價）
+ * @param amount 換算金額（來源貨幣數量）
+ * @param result 換算結果（目標貨幣數量）
+ * @param direction 換算方向（to-twd: 外幣→台幣；twd-to-foreign: 台幣→外幣）
+ */
+export function buildAmountExchangeRateSpecificationJsonLd(
+  fromCurrency: string,
+  toCurrency: string,
+  rate: number,
+  amount: number,
+  result: number,
+  direction: 'to-twd' | 'twd-to-foreign',
+): JsonLdBlock {
+  const isTwdToForeign = direction === 'twd-to-foreign';
+  const rateDescription = isTwdToForeign
+    ? `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} TWD 換 ${result.toLocaleString('zh-TW')} ${toCurrency}）`
+    : `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} ${fromCurrency} 換 ${result.toLocaleString('zh-TW')} TWD）`;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ExchangeRateSpecification',
+    currency: fromCurrency,
+    currentExchangeRate: {
+      '@type': 'UnitPriceSpecification',
+      price: String(rate),
+      priceCurrency: toCurrency,
+      description: rateDescription,
+      validFrom: SEO_RATE_EXAMPLES_DATE,
+    },
+  };
+}
+
+/**
  * 生成 CurrencyConversionService JSON-LD。
  * Schema.org 精確定義此工具的核心功能，AI 引擎在匹配「幣別換算」查詢時優先引用有此 schema 的頁面。
  * 參考：https://schema.org/CurrencyConversionService

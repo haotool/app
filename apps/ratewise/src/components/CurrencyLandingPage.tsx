@@ -10,12 +10,13 @@ import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
 import { APP_INFO, getCopyrightNotice } from '../config/app-info';
-import type {
-  FAQEntry,
-  HowToStep,
-  CommonAmountEntry,
-  JsonLdBlock,
-  RelatedGuideLink,
+import {
+  buildAmountExchangeRateSpecificationJsonLd,
+  type FAQEntry,
+  type HowToStep,
+  type CommonAmountEntry,
+  type JsonLdBlock,
+  type RelatedGuideLink,
 } from '../config/seo-metadata';
 
 export interface CurrencyLandingPageProps {
@@ -111,28 +112,54 @@ export function CurrencyLandingPage({
       : '/';
 
   // 金額頁必須讓 FinancialService schema 指向 self-canonical，避免 rich result 與 index URL 漂移。
-  const resolvedJsonLd =
-    amount === null || !jsonLd
-      ? jsonLd
-      : jsonLd.map((block) => {
-          if (block['@type'] !== 'FinancialService') return block;
+  // 並加入金額專用 ExchangeRateSpecification schema，讓 AI 引擎可提取換算結果。
+  const resolvedJsonLd = (() => {
+    if (amount === null || !jsonLd) return jsonLd;
 
-          const availableChannel =
-            block['availableChannel'] &&
-            typeof block['availableChannel'] === 'object' &&
-            !Array.isArray(block['availableChannel'])
-              ? {
-                  ...block['availableChannel'],
-                  serviceUrl: seoCanonical,
-                }
-              : block['availableChannel'];
+    const updatedBlocks = jsonLd.map((block) => {
+      if (block['@type'] !== 'FinancialService') return block;
 
-          return {
-            ...block,
-            url: seoCanonical,
-            availableChannel,
-          };
-        });
+      const availableChannel =
+        block['availableChannel'] &&
+        typeof block['availableChannel'] === 'object' &&
+        !Array.isArray(block['availableChannel'])
+          ? {
+              ...block['availableChannel'],
+              serviceUrl: seoCanonical,
+            }
+          : block['availableChannel'];
+
+      return {
+        ...block,
+        url: seoCanonical,
+        availableChannel,
+      };
+    });
+
+    // 金額頁加入 ExchangeRateSpecification（含換算金額）。
+    if (amountResult !== null && cashSell !== null) {
+      const amountSchema = isTwdToForeign
+        ? buildAmountExchangeRateSpecificationJsonLd(
+            'TWD',
+            currencyCode,
+            Number((1 / cashSell).toFixed(6)),
+            amount,
+            amountResult,
+            'twd-to-foreign',
+          )
+        : buildAmountExchangeRateSpecificationJsonLd(
+            currencyCode,
+            'TWD',
+            cashSell,
+            amount,
+            amountResult,
+            'to-twd',
+          );
+      updatedBlocks.push(amountSchema);
+    }
+
+    return updatedBlocks;
+  })();
 
   const robotsDirective =
     amount !== null && !isIndexableAmount
