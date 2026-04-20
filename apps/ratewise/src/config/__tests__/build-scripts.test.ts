@@ -146,6 +146,16 @@ async function readCurrencyLandingPageSource() {
   return readFile(componentPath, 'utf-8');
 }
 
+async function readHomepageSEOSectionSource() {
+  const componentPath = path.resolve(__dirname, '../../../src/components/HomepageSEOSection.tsx');
+  return readFile(componentPath, 'utf-8');
+}
+
+async function readFaqPageSource() {
+  const pagePath = path.resolve(__dirname, '../../../src/pages/FAQ.tsx');
+  return readFile(pagePath, 'utf-8');
+}
+
 describe('ratewise build scripts', () => {
   it('should not patch the generated service worker with a postbuild polyfill', async () => {
     const packageJson = await readPackageJson();
@@ -164,7 +174,9 @@ describe('ratewise build scripts', () => {
     const manifestGenerator = await readManifestGenerator();
 
     expect(viteConfig).toContain("from './src/config/app-info'");
-    expect(viteConfig).toContain('name: APP_INFO.name');
+    expect(viteConfig).toContain('manifest: false');
+    expect(viteConfig).not.toContain('short_name: APP_INFO.shortName');
+    expect(viteConfig).not.toContain('name: APP_INFO.name');
     expect(viteConfig).not.toContain("name: 'HaoRate - 即時匯率轉換器'");
     expect(manifestGenerator).toContain("from '../src/config/app-info.ts'");
     expect(manifestGenerator).toContain('name: APP_INFO.name');
@@ -426,12 +438,34 @@ describe('ratewise build scripts', () => {
   it('CurrencyLandingPage should import AnswerCapsule and accept answerCapsule prop (AEO/GEO readiness)', async () => {
     const source = await readCurrencyLandingPageSource();
 
-    // AnswerCapsule インポート検証：34 幣對ページの AEO/GEO 覆盖率を保証する。
+    // 驗證匯入 AnswerCapsule，確保 34 個幣對頁都有 AEO/GEO 快速答案覆蓋。
     expect(source).toContain("import { AnswerCapsule } from './AnswerCapsule'");
-    // answerCapsule prop 定義
+    // 驗證 answerCapsule prop 定義存在。
     expect(source).toContain('answerCapsule?: FAQEntry[]');
-    // AnswerCapsule コンポーネントレンダリング
+    // 驗證 AnswerCapsule 元件有被實際渲染。
     expect(source).toContain('<AnswerCapsule items={answerCapsule}');
+  });
+
+  it('HomepageSEOSection should import and render AnswerCapsule (AEO/GEO readiness)', async () => {
+    const source = await readHomepageSEOSectionSource();
+
+    // 驗證匯入 AnswerCapsule，確保首頁有 AEO/GEO 快速答案覆蓋。
+    expect(source).toContain("import { AnswerCapsule } from './AnswerCapsule'");
+    // 驗證有讀取 answerCapsule 資料來源。
+    expect(source).toContain('answerCapsule');
+    // 驗證 AnswerCapsule 元件有被實際渲染。
+    expect(source).toContain('<AnswerCapsule items=');
+  });
+
+  it('FAQ page should import and render AnswerCapsule (AEO/GEO readiness)', async () => {
+    const source = await readFaqPageSource();
+
+    // 驗證匯入 AnswerCapsule，確保 FAQ 頁有 AEO/GEO 快速答案覆蓋。
+    expect(source).toContain("import { AnswerCapsule } from '../components/AnswerCapsule'");
+    // 驗證引用 FAQ_PAGE_SEO.answerCapsule。
+    expect(source).toContain('FAQ_PAGE_SEO.answerCapsule');
+    // 驗證 AnswerCapsule 元件有被實際渲染。
+    expect(source).toContain('<AnswerCapsule items=');
   });
 
   it('should pass breadcrumb and jsonLd props to SEOHelmet in SeoTech page for proper structured data', async () => {
