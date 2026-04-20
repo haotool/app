@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 import { HOMEPAGE_SEO } from '../config/seo-metadata';
-import { AnswerCapsule } from './AnswerCapsule';
 
 /** 熱門幣對：外幣換台幣（依台灣旅遊熱度排序）。 */
 const HOT_TO_TWD = ['JPY', 'KRW', 'USD', 'EUR', 'HKD', 'SGD', 'THB', 'VND', 'AUD', 'GBP'] as const;
@@ -21,7 +20,7 @@ const HOT_FROM_TWD = [
 ] as const;
 
 export function HomepageSEOSection() {
-  const { content, howTo, faqContent, answerCapsule } = HOMEPAGE_SEO;
+  const { content, howTo, faqContent } = HOMEPAGE_SEO;
 
   return (
     <section
@@ -63,11 +62,6 @@ export function HomepageSEOSection() {
             </Link>
           ))}
         </div>
-      </div>
-
-      {/* AEO/GEO 快速答案：AI 引擎直接引用的核心問答，提升首頁引用率。 */}
-      <div className="mt-4">
-        <AnswerCapsule items={answerCapsule ?? []} />
       </div>
 
       {/* 熱門幣別換算：內部連結區塊，提升幣對落地頁 PageRank 傳遞。 */}

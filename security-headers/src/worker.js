@@ -1,15 +1,13 @@
-/* global HTMLRewriter, performance */
+/* global HTMLRewriter */
 
 /**
- * 安全標頭 Worker v4.8
+ * 安全標頭 Worker v4.6
  *
  * 本 Worker 僅處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策（例如 HSTS）由 Cloudflare Edge 管理；
  * Worker 專注於路由分層 CSP、CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
- * - v4.8: 新增 AI 爬蟲存取記錄（P2-11）：追蹤 llms.txt/.md 鏡像的 AI 爬蟲存取頻率，輸出至 console.log
- * - v4.7: 新增 Server-Timing 診斷標頭（P1-8）：記錄 fetch/rewrite 耗時，供 AI 爬蟲與開發者偵錯
  * - v4.6: 新增 STABLE_PUBLIC_ASSET_PATHS：logo.png 等非雜湊穩定靜態資源設 7 天 public 快取，改善 LCP 重複載入
  * - v4.5: 移除 Rocket Loader 繞過措施（data-cfasync="false"）；已在 Cloudflare Dashboard 關閉 Rocket Loader
  * - v4.4: 修正 Rocket Loader 干擾 vite-react-ssg 骨架屏卡死問題
@@ -27,7 +25,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script，避免以 regex 掃描 HTML 觸發 CodeQL `js/bad-tag-filter`
  */
 
-const SECURITY_POLICY_VERSION = '4.8';
+const SECURITY_POLICY_VERSION = '4.6';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -68,56 +66,6 @@ const PUBLIC_SHARE_ASSET_PATHS = new Set([
 
 /** 穩定公開資產（無 hash，但極少變動），設 7 天快取供瀏覽器複用。 */
 const STABLE_PUBLIC_ASSET_PATHS = new Set(['/ratewise/logo.png']);
-
-/**
- * AI 爬蟲 User-Agent 關鍵字清單（P2-11）。
- * 與 robots.txt 允許清單一致，用於追蹤 AI 搜尋引擎的站點存取頻率。
- */
-const AI_CRAWLER_PATTERNS = [
-	'GPTBot',
-	'ClaudeBot',
-	'PerplexityBot',
-	'Google-Extended',
-	'GrokBot',
-	'Applebot-Extended',
-	'cohere-ai',
-	'AI2Bot',
-	'Amazonbot',
-	'anthropic-ai',
-	'Bytespider',
-	'CCBot',
-	'ChatGLMBot',
-	'Diffbot',
-	'FacebookBot',
-	'meta-externalagent',
-	'OAI-SearchBot',
-	'YouBot',
-];
-
-/** LLM 可讀文件路徑（llms.txt / Markdown 鏡像）。 */
-const LLM_DOC_PATHS = new Set([
-	'/ratewise/llms.txt',
-	'/ratewise/llms-full.txt',
-	'/nihonname/llms.txt',
-	'/park-keeper/llms.txt',
-	'/quake-school/llms.txt',
-]);
-
-/** 檢測 User-Agent 是否為已知 AI 爬蟲。 */
-function detectAiCrawler(userAgent) {
-	if (!userAgent) return null;
-	for (const pattern of AI_CRAWLER_PATTERNS) {
-		if (userAgent.includes(pattern)) {
-			return pattern;
-		}
-	}
-	return null;
-}
-
-/** 檢測路徑是否為 LLM 文件或 Markdown 鏡像。 */
-function isLlmDocPath(pathname) {
-	return LLM_DOC_PATHS.has(pathname) || pathname.endsWith('.md');
-}
 
 function createHtmlProfile({
 	scriptMode,
@@ -435,29 +383,8 @@ function stripOriginLeakHeaders(response) {
 	);
 }
 
-/**
- * 構建 Server-Timing 標頭值，用於診斷 Worker 處理耗時。
- * 格式遵循 RFC 8941（Structured Field Values），供 AI 爬蟲與開發者工具讀取。
- * @param {Object} timings - 各階段耗時（毫秒）
- * @returns {string} Server-Timing 標頭值
- */
-function buildServerTiming(timings) {
-	const entries = [];
-	if (timings.fetch != null) {
-		entries.push(`fetch;dur=${timings.fetch.toFixed(1)};desc="upstream fetch"`);
-	}
-	if (timings.rewrite != null) {
-		entries.push(`rewrite;dur=${timings.rewrite.toFixed(1)};desc="html nonce rewrite"`);
-	}
-	if (timings.total != null) {
-		entries.push(`total;dur=${timings.total.toFixed(1)};desc="worker total"`);
-	}
-	return entries.join(', ');
-}
-
 export default {
 	async fetch(request) {
-		const workerStart = performance.now();
 		const url = new URL(request.url);
 		const isRatewisePath = url.pathname.startsWith('/ratewise/');
 		const isStaticAsset = isStaticAssetPath(url.pathname);
@@ -473,7 +400,6 @@ export default {
 				headers: {
 					'Cache-Control': 'no-store',
 					'X-Security-Policy-Version': SECURITY_POLICY_VERSION,
-					'Server-Timing': buildServerTiming({ total: performance.now() - workerStart }),
 				},
 			});
 		}
@@ -482,31 +408,22 @@ export default {
 			return handleCspReport(request);
 		}
 
-		const fetchStart = performance.now();
 		const upstreamResponse = await fetch(request);
-		const fetchDuration = performance.now() - fetchStart;
-
 		const contentType = upstreamResponse.headers.get('content-type') || '';
 		const isHTML = contentType.startsWith('text/html') && !isStaticAsset;
 		const isPublicShareAsset = isPublicShareAssetPath(url.pathname);
 		const isStablePublicAsset = isStablePublicAssetPath(url.pathname);
 
 		let response;
-		let rewriteDuration = null;
 
 		if (isHTML) {
 			const profile = resolveHtmlProfile(url);
 			const nonce = profile.scriptMode === 'nonce' ? buildNonce() : null;
 			const htmlResponse = new Response(upstreamResponse.body, upstreamResponse);
-
-			let rewrittenResponse;
-			if (profile.scriptMode === 'nonce' && nonce !== null && request.method !== 'HEAD') {
-				const rewriteStart = performance.now();
-				rewrittenResponse = rewriteHtmlWithNonce(htmlResponse, nonce);
-				rewriteDuration = performance.now() - rewriteStart;
-			} else {
-				rewrittenResponse = htmlResponse;
-			}
+			const rewrittenResponse =
+				profile.scriptMode === 'nonce' && nonce !== null && request.method !== 'HEAD'
+					? rewriteHtmlWithNonce(htmlResponse, nonce)
+					: htmlResponse;
 
 			response = new Response(rewrittenResponse.body, rewrittenResponse);
 			response.headers.delete('Content-Length');
@@ -523,14 +440,6 @@ export default {
 		}
 
 		response.headers.set('X-Security-Policy-Version', SECURITY_POLICY_VERSION);
-
-		// Server-Timing：診斷各階段耗時，供 AI 爬蟲與開發者工具讀取。
-		const timings = {
-			fetch: fetchDuration,
-			rewrite: rewriteDuration,
-			total: performance.now() - workerStart,
-		};
-		response.headers.set('Server-Timing', buildServerTiming(timings));
 
 		if (isPublicShareAsset) {
 			// 社群平台爬取需跨域存取，COEP/COOP 降為 unsafe-none 並開放 CORS。
@@ -556,23 +465,6 @@ export default {
 		}
 
 		stripOriginLeakHeaders(response);
-
-		// AI 爬蟲存取記錄（P2-11）：追蹤 llms.txt/.md 的 AI 爬蟲存取頻率。
-		// 輸出至 Cloudflare Logs，可透過 Logpush 或 Workers Analytics 進一步分析。
-		const userAgent = request.headers.get('user-agent') || '';
-		const aiCrawler = detectAiCrawler(userAgent);
-		if (aiCrawler && isLlmDocPath(url.pathname)) {
-			globalThis.console.log(
-				JSON.stringify({
-					type: 'ai-crawler-access',
-					crawler: aiCrawler,
-					path: url.pathname,
-					status: response.status,
-					timestamp: new Date().toISOString(),
-				}),
-			);
-		}
-
 		return response;
 	},
 };

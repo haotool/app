@@ -433,44 +433,6 @@ export function buildExchangeRateSpecificationJsonLd(
 }
 
 /**
- * 生成金額頁專用 ExchangeRateSpecification JSON-LD。
- * 除了基本匯率外，額外包含具體換算金額，讓 AI 引擎可提取「X 外幣 = Y 台幣」形式的答案。
- * 參考：https://schema.org/ExchangeRateSpecification
- * @param fromCurrency 來源貨幣代碼（如 USD）
- * @param toCurrency 目標貨幣代碼（如 TWD）
- * @param rate 匯率數值（現金賣出價）
- * @param amount 換算金額（來源貨幣數量）
- * @param result 換算結果（目標貨幣數量）
- * @param direction 換算方向（to-twd: 外幣→台幣；twd-to-foreign: 台幣→外幣）
- */
-export function buildAmountExchangeRateSpecificationJsonLd(
-  fromCurrency: string,
-  toCurrency: string,
-  rate: number,
-  amount: number,
-  result: number,
-  direction: 'to-twd' | 'twd-to-foreign',
-): JsonLdBlock {
-  const isTwdToForeign = direction === 'twd-to-foreign';
-  const rateDescription = isTwdToForeign
-    ? `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} TWD 換 ${result.toLocaleString('zh-TW')} ${toCurrency}）`
-    : `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} ${fromCurrency} 換 ${result.toLocaleString('zh-TW')} TWD）`;
-
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'ExchangeRateSpecification',
-    currency: fromCurrency,
-    currentExchangeRate: {
-      '@type': 'UnitPriceSpecification',
-      price: String(rate),
-      priceCurrency: toCurrency,
-      description: rateDescription,
-      validFrom: SEO_RATE_EXAMPLES_DATE,
-    },
-  };
-}
-
-/**
  * 生成 CurrencyConversionService JSON-LD。
  * Schema.org 精確定義此工具的核心功能，AI 引擎在匹配「幣別換算」查詢時優先引用有此 schema 的頁面。
  * 參考：https://schema.org/CurrencyConversionService
@@ -682,70 +644,6 @@ export function buildArticleJsonLd(
   };
 }
 
-interface TechArticleOptions extends ArticleOptions {
-  /** 目標讀者技術程度：beginner / intermediate / expert。 */
-  proficiencyLevel?: 'Beginner' | 'Intermediate' | 'Expert';
-  /** 使用本文章所需的前置技術（例如 JSON、HTTP、curl）。 */
-  dependencies?: string[];
-}
-
-/**
- * 生成 TechArticle JSON-LD，適用於開發者文檔與 API 說明頁。
- * TechArticle 為 Article 子類型，能在搜尋結果中以技術文件的形式出現。
- * 參考：https://schema.org/TechArticle
- */
-export function buildTechArticleJsonLd(
-  headline: string,
-  description: string,
-  url: string,
-  datePublished: string,
-  options?: TechArticleOptions,
-): JsonLdBlock {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'TechArticle',
-    headline,
-    description,
-    url: buildCanonicalUrl(url),
-    datePublished,
-    dateModified: BUILD_TIME,
-    ...(options?.articleSection ? { articleSection: options.articleSection } : {}),
-    ...(options?.keywords?.length ? { keywords: options.keywords } : {}),
-    ...(options?.articleBody ? { articleBody: options.articleBody } : {}),
-    ...(options?.proficiencyLevel ? { proficiencyLevel: options.proficiencyLevel } : {}),
-    ...(options?.dependencies?.length ? { dependencies: options.dependencies.join(', ') } : {}),
-    ...(options?.speakableCssSelectors?.length
-      ? {
-          speakable: {
-            '@type': 'SpeakableSpecification',
-            cssSelector: options.speakableCssSelectors,
-          },
-        }
-      : {}),
-    image: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
-    author: {
-      '@type': 'Person',
-      name: AUTHOR_PERSON.name,
-      url: AUTHOR_PERSON.url,
-      sameAs: [...AUTHOR_PERSON.sameAs],
-    },
-    publisher: {
-      '@id': `${SITE_BASE_URL}#organization`,
-      '@type': 'Organization',
-      name: APP_INFO.author,
-      logo: {
-        '@type': 'ImageObject',
-        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
-      },
-    },
-    inLanguage: DEFAULT_LOCALE,
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': buildCanonicalUrl(url),
-    },
-  };
-}
-
 /**
  * 生成替代換匯管道比較 FAQ 條目。
  * 若該幣別無 alternativeProviders，回傳空陣列。
@@ -881,23 +779,6 @@ export const HOMEPAGE_SEO = {
   keywords: [...SITE_SEO.keywords],
   faqContent: [...HOMEPAGE_FAQ_CONTENT],
   howTo: HOMEPAGE_HOW_TO,
-  // AEO/GEO 快速答案：AI 引擎直接引用的核心問答，設計為自足式句子。
-  answerCapsule: [
-    {
-      question: `${APP_INFO.shortName} 顯示的是台銀哪種匯率？`,
-      answer: `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買入與賣出價（現金與即期各兩種），不是銀行間中間價。你拿台幣換外幣時看「銀行賣出價」，把外幣換回台幣時看「銀行買入價」，每 5 分鐘自動同步。`,
-    },
-    {
-      question: '換匯前為什麼要看賣出價，不看中間價？',
-      answer:
-        '中間價是銀行間批發報價，一般民眾換匯必須用「銀行賣出價」——即銀行賣外幣給你的價格。中間價與賣出價的差距通常 0.5～2%，換 1,000 美元可差 150～600 元新台幣，金額越大差距越明顯。',
-    },
-    {
-      question: '現金匯率和即期匯率怎麼選？',
-      answer:
-        '臨櫃換外幣現鈔（出國帶現金）看現金匯率；外幣帳戶轉換、網銀購匯或海外匯款看即期匯率。現金匯率因為包含鈔券保管與運送成本，條件通常比即期差約 0.5～1%。',
-    },
-  ],
   jsonLd: [
     buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`),
     // WebPage with speakable：標記首頁 h1 為語音搜尋主要可讀區塊。
@@ -1048,24 +929,6 @@ export const FAQ_PAGE_SEO = {
   breadcrumb: [
     { name: `${APP_INFO.shortName} 首頁`, item: '/' },
     { name: '常見問題', item: '/faq/' },
-  ],
-  // AEO/GEO 快速答案：FAQ 頁頂部快速提取的核心答案，AI 引擎直接引用。
-  answerCapsule: [
-    {
-      question: '現金匯率和即期匯率有什麼差別？',
-      answer:
-        '現金匯率用於臨櫃換外幣現鈔（出國帶現金），即期匯率用於外幣帳戶轉帳或匯款。現金匯率買賣價差比即期大約 0.5～2%，因為銀行承擔現鈔的保管、運輸與保險成本。',
-    },
-    {
-      question: '買入匯率和賣出匯率怎麼分辨？',
-      answer:
-        '「銀行賣出」是銀行賣外幣給你的價格——你拿台幣換外幣出國時看此欄；「銀行買入」是銀行向你收購外幣的價格——你把外幣換回台幣時看此欄。口訣：出國換外幣看賣出，回台換台幣看買入。',
-    },
-    {
-      question: 'DCC 動態貨幣轉換是什麼？為什麼要拒絕？',
-      answer:
-        'DCC 是海外刷卡時商家提供「直接以台幣結帳」的選項，匯率通常比卡組織清算匯率差 3～18%。正確做法：一律選「當地貨幣（Local Currency）結帳」，由發卡銀行按卡組織匯率清算，手續費通常僅約 1.5%。',
-    },
   ],
   faqContent: [...FAQ_PAGE_ENTRIES],
   jsonLd: [
@@ -1263,28 +1126,16 @@ export const OPEN_DATA_PAGE_SEO = {
       `${APP_INFO.shortName} 開放資料 API 分享圖片`,
       `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料`,
     ),
-    buildTechArticleJsonLd(
+    buildArticleJsonLd(
       '開放資料 API — 台銀牌告匯率 JSON 端點',
       `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。`,
       '/open-data/',
       GUIDE_PUBLISH_DATES.openData,
       {
         articleSection: '開放資料',
-        keywords: [
-          '開放資料',
-          '匯率API',
-          '台銀匯率',
-          'JSON',
-          'REST API',
-          'jsDelivr',
-          'GitHub',
-          'curl',
-          'fetch',
-        ],
+        keywords: ['開放資料', '匯率API', '台銀匯率', 'JSON', 'jsDelivr', 'GitHub'],
         articleBody: `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（每 5 分鐘更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
         speakableCssSelectors: ['h1'],
-        proficiencyLevel: 'Beginner',
-        dependencies: ['HTTP', 'JSON', 'curl 或 fetch'],
       },
     ),
   ],
