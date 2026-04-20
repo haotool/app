@@ -129,7 +129,8 @@ describe('Settings hydration', () => {
 
     const themeButtons = Array.from(container.querySelectorAll('button')).filter((button) => {
       const label = button.getAttribute('aria-label');
-      return label?.includes('styles.zen') || label?.includes('Zen');
+      if (!label) return false;
+      return label.includes('styles.zen') || label.includes('Zen');
     });
 
     expect(themeButtons).toHaveLength(1);

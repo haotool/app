@@ -139,7 +139,9 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
   describe('🟢 Noscript Fallback（保留）', () => {
     it('should have noscript content for SEO', () => {
       expect(indexHtmlContent).toContain('<noscript>');
-      expect(indexHtmlContent).toContain('RateWise 匯率好工具');
+      // Vite transformIndexHtml 會把 __BRAND_FULL__ 替換為 APP_INFO.name；
+      // 測試以靜態模板為對象，斷言 placeholder 而非最終品牌字串。
+      expect(indexHtmlContent).toContain('__BRAND_FULL__');
     });
   });
 

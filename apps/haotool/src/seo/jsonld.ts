@@ -30,7 +30,7 @@ const ROUTE_METADATA: Record<
   '/projects/': {
     title: '作品集 — haotool.org',
     description:
-      '精選作品：RateWise 匯率計算機、日本名字產生器、停車好工具 ParkKeeper、地震知識小學堂。每個專案 Lighthouse 90+ 分，全部開源免費。',
+      '精選作品：HaoRate 匯率計算機、日本名字產生器、停車好工具 ParkKeeper、地震知識小學堂。每個專案 Lighthouse 90+ 分，全部開源免費。',
     breadcrumbs: [
       { name: '首頁', url: '/' },
       { name: '作品集', url: '/projects/' },
@@ -137,7 +137,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
           name: 'haotool.org 是什麼？有哪些好用的工具？',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'haotool.org 是阿璋的全端作品集，「haotool」取自「好工具」的諧音。主要作品包括：RateWise 即時匯率計算機（支援 30+ 幣別、30 天歷史圖表）、日本名字產生器（100+ 漢姓對照）、停車好工具 ParkKeeper（GPS 停車記錄與導航）、地震知識小學堂（互動式防災教育）。全部免費開源，Lighthouse 90+ 分。',
+            text: 'haotool.org 是阿璋的全端作品集，「haotool」取自「好工具」的諧音。主要作品包括：HaoRate 即時匯率計算機（支援 30+ 幣別、30 天歷史圖表）、日本名字產生器（100+ 漢姓對照）、停車好工具 ParkKeeper（GPS 停車記錄與導航）、地震知識小學堂（互動式防災教育）。全部免費開源，Lighthouse 90+ 分。',
           },
         },
         {
@@ -210,7 +210,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
           {
             '@type': 'ListItem',
             position: 1,
-            name: 'RateWise 匯率計算機',
+            name: 'HaoRate 匯率計算機',
             url: `${APPS_HOST_URL}/ratewise/`,
             description: '即時匯率換算工具，整合台灣銀行牌告匯率與 30 天歷史數據視覺化。',
           },

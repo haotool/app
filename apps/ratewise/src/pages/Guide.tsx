@@ -43,7 +43,7 @@ const FAQ_ITEMS = [
   },
   {
     question: '離線時可以使用嗎？',
-    answer: '可以。RateWise 會快取最近一次更新的資料，離線時仍可進行換算。',
+    answer: `可以。${APP_INFO.shortName} 會快取最近一次更新的資料，離線時仍可進行換算。`,
   },
 ];
 
@@ -70,9 +70,11 @@ const Guide = () => {
           />
 
           <div className="mb-8">
-            <h1 className="mb-2 text-4xl font-bold text-text">如何使用 RateWise 進行匯率換算</h1>
+            <h1 className="mb-2 text-4xl font-bold text-text">
+              如何使用 {APP_INFO.shortName} 進行匯率換算
+            </h1>
             <p className="text-text-muted">
-              完整 8 步驟教學，快速學會使用 RateWise 進行單幣別和多幣別匯率換算。
+              完整 8 步驟教學，快速學會使用 {APP_INFO.shortName} 進行單幣別和多幣別匯率換算。
             </p>
             <div className="mt-2 flex items-center text-sm text-text-muted">
               <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,7 +225,7 @@ const Guide = () => {
                   to="/"
                   className="inline-flex items-center rounded-lg bg-primary px-6 py-3 font-semibold text-white shadow-md transition-colors hover:bg-primary/90 hover:shadow-lg"
                 >
-                  開始使用 RateWise
+                  開始使用 {APP_INFO.shortName}
                   <svg
                     className="ml-2 h-5 w-5"
                     fill="none"

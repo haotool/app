@@ -15,6 +15,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
+import { APP_INFO } from '../src/config/app-info.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -226,7 +227,7 @@ const openApiSpec = {
   // jsonSchemaDialect 宣告（P2）：明確指定 schema 使用 JSON Schema 2020-12。
   jsonSchemaDialect: 'https://json-schema.org/draft/2020-12/schema',
   info: {
-    title: 'RateWise 匯率 API',
+    title: `${APP_INFO.shortName} 匯率 API`,
     // API SemVer（P1）：獨立於 app 版本，API 合約不變時維持 1.0.0。
     version: API_VERSION,
     description: [
@@ -325,7 +326,9 @@ const openApiSpec = {
             },
           },
         ],
-        servers: [{ url: 'https://app.haotool.org', description: 'RateWise 應用程式伺服器' }],
+        servers: [
+          { url: 'https://app.haotool.org', description: `${APP_INFO.shortName} 應用程式伺服器` },
+        ],
         responses: {
           200: {
             description: '成功取得幣對資訊',

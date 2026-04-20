@@ -5,15 +5,22 @@
  * 所有作者、聯繫、授權資訊從此模組導入
  */
 
-export const APP_INFO = {
-  /** 應用程式名稱 */
-  name: 'RateWise 匯率好工具',
+/**
+ * 品牌原子（Brand Atoms）— 未來改名時只需改這兩個常數，
+ * 其餘所有衍生值（name、page titles、描述等）會自動跟隨。
+ */
+const BRAND_SHORT_NAME = 'HaoRate';
+const BRAND_SUBTITLE = '匯率好工具';
 
-  /** 安裝後顯示的簡短名稱 */
-  shortName: 'RateWise',
+export const APP_INFO = {
+  /** 應用程式完整名稱（shortName + subtitle 組合） */
+  name: `${BRAND_SHORT_NAME} ${BRAND_SUBTITLE}`,
+
+  /** 安裝後顯示的簡短名稱（純品牌） */
+  shortName: BRAND_SHORT_NAME,
 
   /** 應用程式副標題 */
-  subtitle: '匯率好工具',
+  subtitle: BRAND_SUBTITLE,
 
   /** 開發者/組織名稱 */
   author: 'HaoTool',

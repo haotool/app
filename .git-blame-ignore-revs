@@ -1,0 +1,19 @@
+# .git-blame-ignore-revs
+#
+# Lists commit SHAs that should be ignored by `git blame`.
+# 用於排除大量 mechanical refactor（rename / 自動格式化）對 blame 的干擾。
+#
+# 啟用方式（每位開發者本地一次性設定，不必加進共用 git config）：
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub 的 web blame 會自動讀取此檔案。
+#
+# 新增規則：
+# - 只放純機械式變更（檔案/符號 rename、prettier、import 排序等）
+# - 不可放含邏輯變動的 commit
+# - 每筆都加註解說明變更內容與日期
+#
+# Example：
+#   1234567890abcdef1234567890abcdef12345678  # 2026-XX-XX rename ratewise → newname
+
+# === 未來 rename commit 寫進這裡 ===

@@ -10,6 +10,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
+import { APP_INFO } from '../src/config/app-info.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -24,7 +25,7 @@ const constantsContent = readFileSync(constantsPath, 'utf-8');
 const currencyKeys = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].map((m) => m[1]);
 
 const latestJson = {
-  name: 'RateWise Exchange Rate API',
+  name: `${APP_INFO.shortName} Exchange Rate API`,
   version: pkg.version,
   description: '臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步',
   source: '臺灣銀行牌告匯率',

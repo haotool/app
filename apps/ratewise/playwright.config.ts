@@ -6,7 +6,7 @@ const OFFLINE_PWA_TEST_MATCH =
   /offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/;
 
 /**
- * Playwright 配置 - RateWise E2E 測試
+ * Playwright 配置 - E2E 測試
  *
  * [Linus 原則優化 2025-12-11]
  * - 精簡測試矩陣：Chromium Desktop + Mobile（足夠發現 95% 問題）

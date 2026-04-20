@@ -2,6 +2,8 @@
  * 한국어 번역
  */
 
+import { APP_INFO, getCopyrightYears } from '../../config/app-info';
+
 const ko = {
   // Common
   common: {
@@ -42,7 +44,7 @@ const ko = {
 
   // App
   app: {
-    title: 'RateWise',
+    title: APP_INFO.shortName,
     subtitle: '환율 계산 도구',
     version: '버전',
   },
@@ -134,7 +136,7 @@ const ko = {
     appVersion: '앱 버전',
     designSystem: '디자인 시스템',
     techStack: '기술 스택',
-    copyright: '© 2025-2026 RateWise',
+    copyright: `© ${getCopyrightYears()} ${APP_INFO.shortName}`,
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
     // 환율 모드 섹션
@@ -324,7 +326,7 @@ const ko = {
     disclaimerDesktop: '대만 은행 기준 환율, 5분마다 업데이트. 참고용으로만 사용하세요.',
     faq: '자주 묻는 질문',
     about: '소개',
-    appName: 'RateWise',
+    appName: APP_INFO.shortName,
     allRightsReserved: 'All rights reserved.',
     createdBy: '만든 이',
     by: 'By',
@@ -336,7 +338,7 @@ const ko = {
 
   // Rating Modal
   rating: {
-    title: 'RateWise가 마음에 드시나요?',
+    title: `${APP_INFO.shortName}가 마음에 드시나요?`,
     subtitle: '평가해 주시면 더 많은 분들이 이 도구를 발견할 수 있어요 ✨',
     starsLabel: '별점',
     submit: '평가 제출',

@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '../AppLayout';
+import { APP_INFO } from '../../config/app-info';
 
 vi.mock('../SideNavigation', () => ({
   SideNavigation: () => <div data-testid="side-navigation" />,
@@ -36,7 +37,7 @@ describe('AppLayout Logo', () => {
       </MemoryRouter>,
     );
 
-    const logo = screen.getByRole('img', { name: 'RateWise 匯率好工具' });
+    const logo = screen.getByRole('img', { name: APP_INFO.name });
     expect(logo).toHaveAttribute('src', '/logo.png');
     expect(logo).not.toHaveAttribute('srcset');
   });

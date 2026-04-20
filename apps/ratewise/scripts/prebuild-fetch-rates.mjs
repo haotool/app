@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { STATS } from '../seo-paths.config.mjs';
+import { APP_INFO } from '../src/config/app-info.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = path.resolve(__dirname, '..');
@@ -261,7 +262,7 @@ function saveRates(rates) {
  * 主函數
  */
 async function main() {
-  console.log('\n📊 RateWise 構建時匯率數據預處理');
+  console.log(`\n📊 ${APP_INFO.shortName} 構建時匯率數據預處理`);
   console.log('═'.repeat(50));
 
   // 1. 獲取匯率

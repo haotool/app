@@ -1,4 +1,4 @@
-/** RateWise Service Worker：離線導覽與快取策略。 */
+/** Service Worker：離線導覽與快取策略。 */
 
 /// <reference lib="webworker" />
 

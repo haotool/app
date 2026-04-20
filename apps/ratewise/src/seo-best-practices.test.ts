@@ -12,6 +12,7 @@ import {
   REVERSE_CURRENCY_SEO_PATHS,
   SEO_PATHS,
 } from './config/seo-paths';
+import { APP_INFO } from './config/app-info';
 
 const ROOT_PATH = resolve(__dirname, '..');
 const PUBLIC_PATH = resolve(ROOT_PATH, 'public');
@@ -33,7 +34,7 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
     });
 
     it('should start with site identity header', () => {
-      expect(llmsContent.startsWith('# RateWise')).toBe(true);
+      expect(llmsContent.startsWith(`# ${APP_INFO.shortName}`)).toBe(true);
     });
 
     it('should have Answer Capsule section for quick Q&A', () => {

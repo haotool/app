@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* globals console:readonly, process:readonly, URL:readonly */
 /**
- * RateWise 端點健康檢查腳本
+ * 端點健康檢查腳本
  *
  * 基於 2025 最佳實踐：
  * - 淺層檢查：HTTP 狀態碼、回應時間
@@ -21,6 +21,7 @@ import {
   GUIDE_PAGE_DOCUMENT_TITLE,
   GUIDE_PAGE_TITLE,
 } from '../src/config/seo-static.ts';
+import { APP_INFO } from '../src/config/app-info.ts';
 
 const TIMEOUT = 10000; // 10 秒超時
 const MAX_RETRY_ATTEMPTS = 3;
@@ -55,7 +56,7 @@ function request(url, options = {}) {
         method: options.method || 'GET',
         timeout: TIMEOUT,
         headers: {
-          'User-Agent': 'RateWise-HealthCheck/1.0',
+          'User-Agent': `${APP_INFO.shortName}-HealthCheck/1.0`,
           ...options.headers,
         },
       },

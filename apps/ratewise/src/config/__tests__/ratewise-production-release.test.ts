@@ -11,7 +11,7 @@ async function loadRatewiseProductionReleaseModule() {
 }
 
 describe('ratewise-production-release script', () => {
-  it('should extract the app version from the real RateWise HTML entry point', async () => {
+  it('should extract the app version from the real HTML entry point', async () => {
     const script = await loadRatewiseProductionReleaseModule();
     const html = [
       '<meta charset="UTF-8">',

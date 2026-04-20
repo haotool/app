@@ -12,6 +12,8 @@
  * 格式：統一使用尾斜線結尾。
  */
 
+import { APP_INFO } from './src/config/app-info.ts';
+
 const withTrailingSlash = (value) => {
   const trimmed = value.trim();
   return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
@@ -289,10 +291,9 @@ export function getIncludedRoutes(paths) {
  */
 export const SITE_CONFIG = {
   url: withTrailingSlash('https://app.haotool.org/ratewise/'),
-  name: 'RateWise 匯率好工具',
-  title: 'RateWise — 台灣最精準匯率換算器',
-  description:
-    'RateWise 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 18 種貨幣，讓你換匯前就知道真正要付多少台幣。',
+  name: APP_INFO.name,
+  title: `${APP_INFO.shortName} — 台灣最精準匯率換算器`,
+  description: `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 18 種貨幣，讓你換匯前就知道真正要付多少台幣。`,
 };
 
 /**
@@ -319,7 +320,7 @@ export const CDN_DATA_BASE = `https://cdn.jsdelivr.net/gh/${GITHUB_REPO}@${DATA_
  */
 export const APP_CONFIG = {
   name: 'ratewise',
-  displayName: 'RateWise',
+  displayName: APP_INFO.shortName,
   basePath: {
     development: '/',
     ci: '/',

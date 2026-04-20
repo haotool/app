@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { APP_ONLY_NOINDEX_PATHS } from './config/seo-paths';
+import { APP_INFO } from './config/app-info';
 
 const distPath = resolve(__dirname, '../dist');
 const projectRoot = resolve(__dirname, '..');
@@ -64,16 +65,17 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toMatch(/常見問題|FAQ/i);
     });
 
-    it('should append the RateWise brand only once for FAQ title', () => {
+    it('should append the brand only once for FAQ title', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
       const titleMatch = /<title[^>]*>([^<]+)<\/title>/.exec(content);
       const titleText = titleMatch?.[1] ?? '';
+      const brand = APP_INFO.name;
 
       expect(titleText).toBeTruthy();
-      expect((titleText.match(/RateWise 匯率好工具/g) ?? []).length).toBe(1);
-      expect(titleText).not.toContain('RateWise 匯率好工具 FAQ 解答 | RateWise 匯率好工具');
+      expect((titleText.match(new RegExp(brand, 'g')) ?? []).length).toBe(1);
+      expect(titleText).not.toContain(`${brand} FAQ 解答 | ${brand}`);
     });
 
     it('should have FAQ-specific description meta tag', () => {
@@ -188,7 +190,7 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       const titleText = titleMatch?.[1] ?? '';
       expect(titleText).toBeTruthy();
 
-      const occurrences = (titleText.match(/RateWise 匯率好工具/g) ?? []).length;
+      const occurrences = (titleText.match(new RegExp(APP_INFO.name, 'g')) ?? []).length;
       expect(occurrences).toBe(1);
     });
 
@@ -208,7 +210,7 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
 
       const content = readFileSync(indexHtml, 'utf-8');
       expect(content).toMatch(/<title[^>]*>/);
-      expect(content).toMatch(/RateWise/);
+      expect(content).toContain(APP_INFO.shortName);
     });
 
     it('should have homepage description meta tag', () => {
@@ -364,8 +366,8 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       const titleText = titleMatch?.[1] ?? '';
 
       expect(titleText).toBeTruthy();
-      expect((titleText.match(/RateWise 匯率好工具/g) ?? []).length).toBe(1);
-      expect(titleText).not.toContain('| RateWise |');
+      expect((titleText.match(new RegExp(APP_INFO.name, 'g')) ?? []).length).toBe(1);
+      expect(titleText).not.toContain(`| ${APP_INFO.shortName} |`);
     });
 
     it('USD/TWD amount page should prerender the direct answer block', () => {

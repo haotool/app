@@ -26,6 +26,7 @@ import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
 import { SEOHelmet } from '../SEOHelmet';
 import { attachSpeakableToGraph, shouldRenderStructuredData } from '../seo-helmet-utils';
+import { APP_INFO } from '../../config/app-info';
 
 describe('SEOHelmet Component', () => {
   const originalHead = document.head.innerHTML;
@@ -59,7 +60,7 @@ describe('SEOHelmet Component', () => {
             <SEOHelmet
               title="Test Page"
               breadcrumb={[
-                { name: 'RateWise 首頁', item: '/' },
+                { name: `${APP_INFO.shortName} 首頁`, item: '/' },
                 { name: 'Test Page', item: '/test/' },
               ]}
             />
@@ -72,7 +73,10 @@ describe('SEOHelmet Component', () => {
       expect(() => {
         render(
           <HelmetProvider>
-            <SEOHelmet title="Test Page" breadcrumb={[{ name: 'RateWise 首頁', item: '/' }]} />
+            <SEOHelmet
+              title="Test Page"
+              breadcrumb={[{ name: `${APP_INFO.shortName} 首頁`, item: '/' }]}
+            />
           </HelmetProvider>,
         );
       }).not.toThrow();
@@ -189,15 +193,15 @@ describe('SEOHelmet Component', () => {
     it('should deduplicate brand variants in the document title', () => {
       render(
         <HelmetProvider>
-          <SEOHelmet title="500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise" />
+          <SEOHelmet
+            title={`500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | ${APP_INFO.shortName}`}
+          />
         </HelmetProvider>,
       );
 
-      expect(document.title).toBe(
-        '500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具',
-      );
-      expect((document.title.match(/RateWise 匯率好工具/g) ?? []).length).toBe(1);
-      expect(document.title).not.toContain('| RateWise |');
+      expect(document.title).toBe(`500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | ${APP_INFO.name}`);
+      expect((document.title.match(new RegExp(APP_INFO.name, 'g')) ?? []).length).toBe(1);
+      expect(document.title).not.toContain(`| ${APP_INFO.shortName} |`);
     });
 
     it('should keep keywords prop compatible but never emit deprecated meta keywords', () => {
@@ -255,7 +259,7 @@ describe('SEOHelmet Component', () => {
       const jsonLdScripts = document.head.querySelectorAll('script[type="application/ld+json"]');
 
       expect(titles).toHaveLength(1);
-      expect(titles[0]).toHaveTextContent('測試頁 | RateWise');
+      expect(titles[0]).toHaveTextContent(`測試頁 | ${APP_INFO.shortName}`);
       expect(titles[0]).toHaveAttribute('data-rh', 'true');
       expect(titles[0]).toHaveAttribute('data-seo-helmet', 'managed');
 
@@ -462,7 +466,7 @@ describe('SEOHelmet Component', () => {
       render(
         <HelmetProvider>
           <SEOHelmet
-            title="500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise"
+            title={`500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | ${APP_INFO.shortName}`}
             canonical="https://app.haotool.org/ratewise/usd-twd/500/"
             pathname="/usd-twd"
           />
@@ -478,16 +482,16 @@ describe('SEOHelmet Component', () => {
       expect(zhTw).toHaveAttribute('href', 'https://app.haotool.org/ratewise/usd-twd/500/');
     });
 
-    it('金額頁 title 不應出現 RateWise 品牌重複', () => {
+    it('金額頁 title 不應出現品牌重複', () => {
       render(
         <HelmetProvider>
-          <SEOHelmet title="500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise" />
+          <SEOHelmet
+            title={`500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | ${APP_INFO.shortName}`}
+          />
         </HelmetProvider>,
       );
 
-      expect(document.title).toBe(
-        '500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | RateWise 匯率好工具',
-      );
+      expect(document.title).toBe(`500 美金換新台幣（USD/TWD）— 台銀實際賣出價 | ${APP_INFO.name}`);
     });
   });
 });

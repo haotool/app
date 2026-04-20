@@ -1,5 +1,5 @@
 {
-  "name": "RateWise Exchange Rate API",
+  "name": "HaoRate Exchange Rate API",
   "version": "2.21.0",
   "description": "臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步",
   "source": "臺灣銀行牌告匯率",

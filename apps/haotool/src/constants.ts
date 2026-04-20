@@ -49,7 +49,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'ratewise',
-    title: 'RateWise 匯率計算機',
+    title: 'HaoRate 匯率計算機',
     description:
       '即時匯率換算工具，整合 30 天歷史數據視覺化圖表。支援 13+ 幣別、離線使用 (PWA)、深色模式。技術棧：React 19, TypeScript, lightweight-charts, Service Worker。',
     tags: ['React 19', 'TypeScript', 'PWA', 'Charts', 'Tailwind CSS'],

@@ -2,6 +2,8 @@
  * English Translation
  */
 
+import { APP_INFO, getCopyrightYears } from '../../config/app-info';
+
 const en = {
   // Common
   common: {
@@ -42,7 +44,7 @@ const en = {
 
   // App
   app: {
-    title: 'RateWise',
+    title: APP_INFO.shortName,
     subtitle: 'Exchange Rate Tool',
     version: 'Version',
   },
@@ -135,7 +137,7 @@ const en = {
     appVersion: 'App Version',
     designSystem: 'Design System',
     techStack: 'Tech Stack',
-    copyright: '© 2025-2026 RateWise',
+    copyright: `© ${getCopyrightYears()} ${APP_INFO.shortName}`,
     sixStylesSST: '6 Styles SSOT',
     reactTailwind: 'React + Tailwind',
     // Rate Mode section
@@ -331,7 +333,7 @@ const en = {
       'Exchange rates from Taiwan Bank, updated every 5 minutes. For reference only.',
     faq: 'FAQ',
     about: 'About Us',
-    appName: 'RateWise',
+    appName: APP_INFO.shortName,
     allRightsReserved: 'All rights reserved.',
     createdBy: 'Created by',
     by: 'By',
@@ -343,7 +345,7 @@ const en = {
 
   // Rating Modal
   rating: {
-    title: 'Enjoying RateWise?',
+    title: `Enjoying ${APP_INFO.shortName}?`,
     subtitle: 'Your rating helps others discover this tool ✨',
     starsLabel: 'Star rating',
     submit: 'Submit Rating',
