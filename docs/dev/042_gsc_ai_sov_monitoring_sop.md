@@ -12,7 +12,7 @@
 
 ## 目的
 
-本文件定義 RateWise 站點的 AI 搜尋可見性（AI Share of Voice, AI SoV）監測標準作業程序，包含 Google Search Console AI Overviews 追蹤、第三方工具整合與可觀測性指標定義。
+本文件定義 HaoRate 站點的 AI 搜尋可見性（AI Share of Voice, AI SoV）監測標準作業程序，包含 Google Search Console AI Overviews 追蹤、第三方工具整合與可觀測性指標定義。
 
 ## 適用範圍
 
@@ -72,7 +72,7 @@ graph TD
 
 ### 2.1 已允許 AI 爬蟲（robots.txt）
 
-RateWise robots.txt 已明確允許以下 AI 爬蟲：
+HaoRate robots.txt 已明確允許以下 AI 爬蟲：
 
 - GPTBot（OpenAI）
 - ClaudeBot（Anthropic）
@@ -154,7 +154,7 @@ curl -sI https://app.haotool.org/ratewise/ | grep -i server-timing
 ### 4.1 週報格式
 
 ```markdown
-# RateWise AI SoV 週報
+# HaoRate AI SoV 週報
 
 **報告週期**：YYYY-MM-DD ~ YYYY-MM-DD
 **報告人**：[name]
