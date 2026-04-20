@@ -682,6 +682,70 @@ export function buildArticleJsonLd(
   };
 }
 
+interface TechArticleOptions extends ArticleOptions {
+  /** 目標讀者技術程度：beginner / intermediate / expert。 */
+  proficiencyLevel?: 'Beginner' | 'Intermediate' | 'Expert';
+  /** 使用本文章所需的前置技術（例如 JSON、HTTP、curl）。 */
+  dependencies?: string[];
+}
+
+/**
+ * 生成 TechArticle JSON-LD，適用於開發者文檔與 API 說明頁。
+ * TechArticle 為 Article 子類型，能在搜尋結果中以技術文件的形式出現。
+ * 參考：https://schema.org/TechArticle
+ */
+export function buildTechArticleJsonLd(
+  headline: string,
+  description: string,
+  url: string,
+  datePublished: string,
+  options?: TechArticleOptions,
+): JsonLdBlock {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline,
+    description,
+    url: buildCanonicalUrl(url),
+    datePublished,
+    dateModified: BUILD_TIME,
+    ...(options?.articleSection ? { articleSection: options.articleSection } : {}),
+    ...(options?.keywords?.length ? { keywords: options.keywords } : {}),
+    ...(options?.articleBody ? { articleBody: options.articleBody } : {}),
+    ...(options?.proficiencyLevel ? { proficiencyLevel: options.proficiencyLevel } : {}),
+    ...(options?.dependencies?.length ? { dependencies: options.dependencies.join(', ') } : {}),
+    ...(options?.speakableCssSelectors?.length
+      ? {
+          speakable: {
+            '@type': 'SpeakableSpecification',
+            cssSelector: options.speakableCssSelectors,
+          },
+        }
+      : {}),
+    image: buildAbsoluteAssetUrl(SITE_SEO.ogImage),
+    author: {
+      '@type': 'Person',
+      name: AUTHOR_PERSON.name,
+      url: AUTHOR_PERSON.url,
+      sameAs: [...AUTHOR_PERSON.sameAs],
+    },
+    publisher: {
+      '@id': `${SITE_BASE_URL}#organization`,
+      '@type': 'Organization',
+      name: APP_INFO.author,
+      logo: {
+        '@type': 'ImageObject',
+        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+      },
+    },
+    inLanguage: DEFAULT_LOCALE,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': buildCanonicalUrl(url),
+    },
+  };
+}
+
 /**
  * 生成替代換匯管道比較 FAQ 條目。
  * 若該幣別無 alternativeProviders，回傳空陣列。
@@ -1199,16 +1263,28 @@ export const OPEN_DATA_PAGE_SEO = {
       `${APP_INFO.shortName} 開放資料 API 分享圖片`,
       `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料`,
     ),
-    buildArticleJsonLd(
+    buildTechArticleJsonLd(
       '開放資料 API — 台銀牌告匯率 JSON 端點',
       `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。`,
       '/open-data/',
       GUIDE_PUBLISH_DATES.openData,
       {
         articleSection: '開放資料',
-        keywords: ['開放資料', '匯率API', '台銀匯率', 'JSON', 'jsDelivr', 'GitHub'],
+        keywords: [
+          '開放資料',
+          '匯率API',
+          '台銀匯率',
+          'JSON',
+          'REST API',
+          'jsDelivr',
+          'GitHub',
+          'curl',
+          'fetch',
+        ],
         articleBody: `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（每 5 分鐘更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
         speakableCssSelectors: ['h1'],
+        proficiencyLevel: 'Beginner',
+        dependencies: ['HTTP', 'JSON', 'curl 或 fetch'],
       },
     ),
   ],

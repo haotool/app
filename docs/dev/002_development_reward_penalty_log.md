@@ -3964,3 +3964,58 @@ root_cause:
 - apps/ratewise/src/components/CurrencyLandingPage.tsx
 - apps/ratewise/src/seo-best-practices.test.ts
 - docs/SEO_MASTER_SSOT.md
+
+---
+
+id: ratewise-seo-infrastructure-batch-2026-04
+date: 2026-04-20
+title: SEO 基礎建設批次完成：P1-8、P2-7、P2-10、P2-11
+score: +4
+type: improvement
+content_type: feature
+scope: ratewise, seo, cloudflare
+topics: [seo, cloudflare-worker, server-timing, techarticle, ai-crawler, monitoring]
+keywords:
+[Server-Timing, TechArticle, AI crawler tracking, GSC monitoring, llms.txt metrics]
+aliases: [SEO Infrastructure Batch, P1-8 P2-7 P2-10 P2-11]
+related_entries:
+[ratewise-p0-seo-schema-implementation, ratewise-p1-5-amount-page-exchange-rate-schema]
+summary: 批次完成四項 SEO 基礎建設任務：(1) P1-8 在 Cloudflare Worker 加入 Server-Timing 診斷標頭，記錄 fetch/rewrite 耗時；(2) P2-7 在 open-data 頁面使用 TechArticle schema 強化開發者 SEO；(3) P2-10 建立 GSC AI Overviews 監測 SOP 文件；(4) P2-11 在 Worker 中加入 AI 爬蟲存取記錄功能，追蹤 llms.txt/.md 鏡像的存取頻率。
+root_cause:
+
+- 開發者需要診斷 Worker 處理耗時，但缺乏 Server-Timing 標頭。
+- open-data 開發者文檔頁使用通用 Article schema，無法凸顯技術文件特性。
+- 缺乏 AI Overviews 監測標準作業程序，難以追蹤 AI 搜尋可見性。
+- 無法量化 AI 爬蟲對 llms.txt/Markdown 鏡像的存取頻率。
+  impact:
+
+- Server-Timing 標頭讓開發者與 AI 爬蟲可診斷響應時間。
+- TechArticle schema 提升開發者搜尋引擎（StackOverflow、GitHub）的可見性。
+- SOP 文件標準化 AI SoV 監測流程，可追蹤 Google AI Overviews 數據。
+- AI 爬蟲存取記錄可透過 Cloudflare Logs 分析 AI 引用來源。
+  actions:
+
+- 在 `security-headers/src/worker.js` 新增 `buildServerTiming()` 函數，記錄 fetch/rewrite/total 耗時。
+- 在 `seo-metadata.ts` 新增 `buildTechArticleJsonLd()` 函數，支援 proficiencyLevel 和 dependencies 屬性。
+- 將 `OPEN_DATA_PAGE_SEO.jsonLd` 中的 Article 替換為 TechArticle。
+- 建立 `docs/dev/042_gsc_ai_sov_monitoring_sop.md`，定義 GSC 監測流程與報表模板。
+- 在 Worker 新增 `detectAiCrawler()` 與 `isLlmDocPath()` 函數，記錄 AI 爬蟲存取事件。
+- 在 `seo-speakable.test.ts` 新增 TechArticle 至 SPEAKABLE_CAPABLE_TYPES。
+- 在 `seo-best-practices.test.ts` 新增 TechArticle schema 測試案例。
+  prevention:
+
+- Cloudflare Worker 版本號必須同步更新（JSDoc 標題、變更記錄、network_probe header、主回應 header）。
+- TechArticle 為 Article 子類型，speakable 相關測試須涵蓋 TechArticle。
+  verification:
+
+- `pnpm typecheck`（全部通過）
+- `pnpm test`（2053 tests passed，含新增測試）
+- `curl -sI https://app.haotool.org/ratewise/ | grep -i server-timing`（部署後驗證）
+  references:
+
+- security-headers/src/worker.js
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/seo-best-practices.test.ts
+- apps/ratewise/src/config/**tests**/seo-speakable.test.ts
+- docs/dev/042_gsc_ai_sov_monitoring_sop.md
+- docs/SEO_MASTER_SSOT.md
