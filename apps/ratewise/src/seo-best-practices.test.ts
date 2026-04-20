@@ -986,3 +986,46 @@ describe('💵 Amount Page ExchangeRateSpecification Schema (P1-5)', () => {
     expect(description).toContain('TWD');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 📚 TechArticle Schema (P2-7)：開發者文檔頁面使用 TechArticle 強化開發者 SEO
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('📚 TechArticle Schema (P2-7)', () => {
+  it('should export buildTechArticleJsonLd function', async () => {
+    const module = await import('./config/seo-metadata');
+    expect(typeof module.buildTechArticleJsonLd).toBe('function');
+  });
+
+  it('should generate valid TechArticle schema with @type TechArticle', async () => {
+    const { buildTechArticleJsonLd } = await import('./config/seo-metadata');
+    const schema = buildTechArticleJsonLd(
+      'Test Tech Article',
+      'Test description',
+      '/test/',
+      '2026-01-01',
+      { proficiencyLevel: 'Beginner', dependencies: ['HTTP', 'JSON'] },
+    );
+
+    expect(schema['@context']).toBe('https://schema.org');
+    expect(schema['@type']).toBe('TechArticle');
+    expect(schema['headline']).toBe('Test Tech Article');
+    expect(schema['description']).toBe('Test description');
+    expect(schema['proficiencyLevel']).toBe('Beginner');
+    expect(schema['dependencies']).toBe('HTTP, JSON');
+  });
+
+  it('should include TechArticle in OPEN_DATA_PAGE_SEO.jsonLd', async () => {
+    const { OPEN_DATA_PAGE_SEO } = await import('./config/seo-metadata');
+
+    expect(OPEN_DATA_PAGE_SEO.jsonLd).toBeDefined();
+    const techArticle = OPEN_DATA_PAGE_SEO.jsonLd?.find(
+      (block) => block['@type'] === 'TechArticle',
+    );
+
+    expect(techArticle).toBeDefined();
+    expect(techArticle?.['@context']).toBe('https://schema.org');
+    expect(techArticle?.['headline']).toContain('開放資料 API');
+    expect(techArticle?.['proficiencyLevel']).toBe('Beginner');
+  });
+});

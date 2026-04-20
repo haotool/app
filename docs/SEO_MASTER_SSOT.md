@@ -997,7 +997,7 @@ RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：*
 | P1-4 | 加入匯率比較資訊（台銀賣出價 vs 中間價，含具體差距數字）至幣對頁                         | E-E-A-T      | `seo-metadata.ts` SEO_RATE_EXAMPLES       | ✅   |
 | P1-5 | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                                   | AI 引用      | `CurrencyLandingPage.tsx`（amount 模式）  | ✅   |
 | P1-6 | ~~更新 `sitemap.xml` 生成腳本加入 `<changefreq>` 和 `<priority>`~~                       | ~~爬蟲效率~~ | `generate-sitemap-2025.mjs`               | N/A  |
-| P1-8 | Cloudflare Worker 加入 `Server-Timing` 診斷標頭（render/db 耗時）                        | AI 快取提示  | Cloudflare Worker                         |      |
+| P1-8 | Cloudflare Worker 加入 `Server-Timing` 診斷標頭（render/db 耗時）                        | AI 快取提示  | Cloudflare Worker                         | ✅   |
 | P1-9 | Accept-based content negotiation（Worker 層）：`Accept: text/markdown` 自動回傳 .md 版本 | AI 相容      | Cloudflare Worker（若升級 GA 時機）       |      |
 
 > **P1-6 說明**：根據 2025 年 SEO 標準，Google 和 Bing 都忽略 `<changefreq>` 和 `<priority>` 標籤。`generate-sitemap-2025.mjs` 已遵循此標準，移除這些過時標籤。
@@ -1006,18 +1006,18 @@ RateWise 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：*
 
 ### 🟡 P2 — 中期（2-3 個月，GEO 與外部存在感）
 
-| #     | 任務                                                                                 | 影響             | 檔案              |
-| ----- | ------------------------------------------------------------------------------------ | ---------------- | ----------------- |
-| P2-1  | 三篇 Authority Guide 頁擴展至 3,000+ 字（強化 Claude 引用信號）                      | Claude 引用      | 頁面元件          |
-| P2-2  | 在幣對頁加入匯率歷史趨勢圖（圖片 + alt 文字）→ Google AI Overviews 多媒體信號        | AI Overview 引用 | 頁面元件          |
-| P2-3  | 申請加入 2-3 個台灣 Fintech 工具目錄（Claude 引用信號 68%）                          | Claude 引用      | 外部行動          |
-| P2-4  | 在 r/taiwan、r/japantravel、r/korea 以真實貢獻身份分享工具（Perplexity Reddit 信號） | Perplexity 引用  | 外部行動          |
-| P2-5  | 導入 Otterly AI 或 Peec AI 進行 AI 可見性監測                                        | 可見性量化       | 外部工具          |
-| P2-6  | 在 `about/` 頁面加入 `Person` schema（作者 E-E-A-T）                                 | E-E-A-T          | `seo-metadata.ts` |
-| P2-7  | 在 `open-data/` 頁面加入 `TechArticle` schema                                        | 開發者 SEO       | `seo-metadata.ts` |
-| P2-8  | 為熱門幣別（JPY、USD、EUR）製作 60-90 秒解說短影片並嵌入頁面                         | 多媒體信號       | 外部行動          |
-| P2-10 | GSC AI Overviews / AI Share of Voice 監測 SOP 文件化                                 | AI 可觀測性      | `docs/dev/`       |
-| P2-11 | llms.txt referral metrics（Cloudflare Worker 記錄 User-Agent 擊中 .md 鏡像的頻率）   | AI 可觀測性      | Cloudflare Worker |
+| #     | 任務                                                                                 | 影響             | 檔案              | 狀態 |
+| ----- | ------------------------------------------------------------------------------------ | ---------------- | ----------------- | ---- |
+| P2-1  | 三篇 Authority Guide 頁擴展至 3,000+ 字（強化 Claude 引用信號）                      | Claude 引用      | 頁面元件          |      |
+| P2-2  | 在幣對頁加入匯率歷史趨勢圖（圖片 + alt 文字）→ Google AI Overviews 多媒體信號        | AI Overview 引用 | 頁面元件          |      |
+| P2-3  | 申請加入 2-3 個台灣 Fintech 工具目錄（Claude 引用信號 68%）                          | Claude 引用      | 外部行動          |      |
+| P2-4  | 在 r/taiwan、r/japantravel、r/korea 以真實貢獻身份分享工具（Perplexity Reddit 信號） | Perplexity 引用  | 外部行動          |      |
+| P2-5  | 導入 Otterly AI 或 Peec AI 進行 AI 可見性監測                                        | 可見性量化       | 外部工具          |      |
+| P2-6  | 在 `about/` 頁面加入 `Person` schema（作者 E-E-A-T）                                 | E-E-A-T          | `seo-metadata.ts` | ✅   |
+| P2-7  | 在 `open-data/` 頁面加入 `TechArticle` schema                                        | 開發者 SEO       | `seo-metadata.ts` | ✅   |
+| P2-8  | 為熱門幣別（JPY、USD、EUR）製作 60-90 秒解說短影片並嵌入頁面                         | 多媒體信號       | 外部行動          |      |
+| P2-10 | GSC AI Overviews / AI Share of Voice 監測 SOP 文件化                                 | AI 可觀測性      | `docs/dev/042`    | ✅   |
+| P2-11 | llms.txt referral metrics（Cloudflare Worker 記錄 User-Agent 擊中 .md 鏡像的頻率）   | AI 可觀測性      | Cloudflare Worker | ✅   |
 
 ### 🟢 P3 — 長期（選配，重大架構變更）
 
