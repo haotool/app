@@ -62,11 +62,26 @@ describe('PWA 離線功能測試', () => {
 
     // 因 vite.config.ts 設 manifest:false，vite-plugin-pwa 不會注入 <link rel="manifest">。
     // index.html 必須手動保留該連結，否則瀏覽器無法發現 manifest、PWA 安裝能力失效。
-    it('should contain static <link rel="manifest"> pointing to SSOT manifest in index.html', () => {
+    // href 必須使用 __BASE_PATH__ 佔位符（由 vite.config.ts 在 build 時依 base 替換），
+    // 避免寫死 /ratewise/ 在 base=/ 部署（CI E2E/Lighthouse）下 404 造成 PWA 失效。
+    it('should contain <link rel="manifest"> with __BASE_PATH__ placeholder in index.html', () => {
       const html = readFileSync(resolve(ROOT_PATH, 'index.html'), 'utf-8');
       expect(html).toMatch(
-        /<link\s+rel="manifest"\s+href="\/ratewise\/manifest\.webmanifest"\s*\/?>/,
+        /<link\s+rel="manifest"\s+href="__BASE_PATH__manifest\.webmanifest"\s*\/?>/,
       );
+    });
+
+    // inject-version-meta plugin 必須實際把 __BASE_PATH__ 替換為 base 值，
+    // 否則 build 產出的 HTML 會殘留佔位符導致資源 404。
+    it('should replace __BASE_PATH__ with base config in transformIndexHtml', () => {
+      expect(viteConfig).toMatch(/\.replace\(\s*\/__BASE_PATH__\/g\s*,\s*base\s*\)/);
+    });
+
+    // 防回歸：index.html 禁止硬編 /ratewise/ 絕對路徑於 <link>/preload；
+    // 必須透過 __BASE_PATH__ 佔位符以尊重 VITE_RATEWISE_BASE_PATH SSOT。
+    it('should not hardcode /ratewise/ prefix in index.html asset links', () => {
+      const html = readFileSync(resolve(ROOT_PATH, 'index.html'), 'utf-8');
+      expect(html).not.toMatch(/(?:href|src)="\/ratewise\//);
     });
 
     it('should use prompt registerType to avoid autoUpdate version tearing', () => {

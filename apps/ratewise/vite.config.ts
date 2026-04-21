@@ -239,7 +239,9 @@ export default defineConfig(({ mode }) => {
           return new URLSearchParams();
         },
       }),
-      // 版本號與品牌佔位符注入 HTML meta 標籤
+      // 版本號、品牌與 base path 佔位符注入 HTML
+      // __BASE_PATH__ 由此處以 vite config 的 base（SSOT: VITE_RATEWISE_BASE_PATH）替換，
+      // 支援 production（/ratewise/）與 CI E2E/Lighthouse（/）雙部署情境。
       {
         name: 'inject-version-meta',
         transformIndexHtml(html) {
@@ -248,7 +250,8 @@ export default defineConfig(({ mode }) => {
             .replace(/__APP_VERSION__/g, appVersion)
             .replace(/__BUILD_TIME__/g, buildTime)
             .replace(/__BRAND_FULL__/g, APP_INFO.name)
-            .replace(/__BRAND_SHORT__/g, APP_INFO.shortName);
+            .replace(/__BRAND_SHORT__/g, APP_INFO.shortName)
+            .replace(/__BASE_PATH__/g, base);
         },
       },
       // Brotli 壓縮

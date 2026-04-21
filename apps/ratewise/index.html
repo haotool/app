@@ -20,11 +20,13 @@
 
     <!-- PWA -->
     <!-- manifest 連結為靜態注入；檔案由 prebuild 的 generate-manifest.mjs（SSOT）產出。
-         vite.config.ts 設 manifest:false 禁用 vite-plugin-pwa 重複生成，故需在此手動維持 <link rel="manifest">。 -->
-    <link rel="manifest" href="/ratewise/manifest.webmanifest" />
-    <link rel="icon" href="/ratewise/favicon.ico?v=20251208" sizes="48x48" />
-    <link rel="icon" href="/ratewise/favicon.svg?v=20251208" sizes="any" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/ratewise/apple-touch-icon.png?v=20251208" />
+         vite.config.ts 設 manifest:false 禁用 vite-plugin-pwa 重複生成，故需在此手動維持 <link rel="manifest">。
+         路徑使用 __BASE_PATH__ 佔位符由 vite.config.ts 在 build 時注入（SSOT: VITE_RATEWISE_BASE_PATH），
+         避免 base=/ 時硬編 /ratewise/ 造成 404 與 PWA 安裝能力失效。 -->
+    <link rel="manifest" href="__BASE_PATH__manifest.webmanifest" />
+    <link rel="icon" href="__BASE_PATH__favicon.ico?v=20251208" sizes="48x48" />
+    <link rel="icon" href="__BASE_PATH__favicon.svg?v=20251208" sizes="any" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="__BASE_PATH__apple-touch-icon.png?v=20251208" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!-- iOS PWA Status Bar Configuration
@@ -35,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="__BRAND_SHORT__" />
 
     <!-- LCP 關鍵資源預載入：logo 是首頁 LCP 元素，preload 可提前請求避免 render-blocking 延遲。 -->
-    <link rel="preload" href="/ratewise/logo.png" as="image" fetchpriority="high" />
+    <link rel="preload" href="__BASE_PATH__logo.png" as="image" fetchpriority="high" />
 
     <!-- Resource Hints（僅保留實際使用的來源） -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
