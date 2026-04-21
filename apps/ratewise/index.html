@@ -19,6 +19,9 @@
     <!-- SEO Meta Tags 由 SEOHelmet 組件統一管理（所有頁面，包含首頁） -->
 
     <!-- PWA -->
+    <!-- manifest 連結為靜態注入；檔案由 prebuild 的 generate-manifest.mjs（SSOT）產出。
+         vite.config.ts 設 manifest:false 禁用 vite-plugin-pwa 重複生成，故需在此手動維持 <link rel="manifest">。 -->
+    <link rel="manifest" href="/ratewise/manifest.webmanifest" />
     <link rel="icon" href="/ratewise/favicon.ico?v=20251208" sizes="48x48" />
     <link rel="icon" href="/ratewise/favicon.svg?v=20251208" sizes="any" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/ratewise/apple-touch-icon.png?v=20251208" />

@@ -22,7 +22,13 @@ import { attachSpeakableToGraph } from '../../components/seo-helmet-utils';
 
 type JsonLdNode = Record<string, unknown>;
 
-const SPEAKABLE_CAPABLE_TYPES = new Set(['Article', 'WebPage', 'FAQPage', 'AboutPage']);
+const SPEAKABLE_CAPABLE_TYPES = new Set([
+  'Article',
+  'TechArticle',
+  'WebPage',
+  'FAQPage',
+  'AboutPage',
+]);
 
 function findSpeakableParent(nodes: JsonLdNode[]): JsonLdNode | undefined {
   return nodes.find(

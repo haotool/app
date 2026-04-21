@@ -4,6 +4,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
 import { APP_INFO } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
+import { AnswerCapsule } from '../components/AnswerCapsule';
 import { FAQ_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 
 const FAQ_ENTRIES = FAQ_PAGE_SEO.faqContent ?? [];
@@ -47,6 +48,9 @@ export default function FAQ() {
               </time>
             </p>
           </div>
+
+          {/* AEO/GEO 快速答案：AI 引擎直接引用的核心問答，放在 FAQ 頂部提升引用率。 */}
+          <AnswerCapsule items={FAQ_PAGE_SEO.answerCapsule ?? []} />
 
           <section className="card mb-6 p-6">
             <h2 className="mb-3 text-2xl font-bold text-text">先掌握三個重點</h2>

@@ -56,6 +56,19 @@ describe('PWA 離線功能測試', () => {
       expect(viteConfig).toContain("strategies: 'injectManifest'");
     });
 
+    it('should keep manifest:false to prevent plugin from overwriting SSOT manifest', () => {
+      expect(viteConfig).toContain('manifest: false');
+    });
+
+    // 因 vite.config.ts 設 manifest:false，vite-plugin-pwa 不會注入 <link rel="manifest">。
+    // index.html 必須手動保留該連結，否則瀏覽器無法發現 manifest、PWA 安裝能力失效。
+    it('should contain static <link rel="manifest"> pointing to SSOT manifest in index.html', () => {
+      const html = readFileSync(resolve(ROOT_PATH, 'index.html'), 'utf-8');
+      expect(html).toMatch(
+        /<link\s+rel="manifest"\s+href="\/ratewise\/manifest\.webmanifest"\s*\/?>/,
+      );
+    });
+
     it('should use prompt registerType to avoid autoUpdate version tearing', () => {
       expect(viteConfig).toContain("registerType: 'prompt'");
     });

@@ -198,10 +198,6 @@ export default defineConfig(({ mode }) => {
   // eslint-disable-next-line no-console
   console.log(`[vite.config.ts] Base path: ${base} (raw: "${rawEnvValue}", valid: ${isValidPath})`);
 
-  // PWA manifest 路徑（scope/start_url/id 皆需尾斜線）
-  const manifestScope = base.endsWith('/') ? base : `${base}/`;
-  const manifestStartUrl = manifestScope; // 與 scope 一致
-
   return {
     base,
     server: {
@@ -327,102 +323,10 @@ export default defineConfig(({ mode }) => {
         },
 
         devOptions: { enabled: false, type: 'module' },
-        manifest: {
-          name: APP_INFO.name,
-          short_name: APP_INFO.shortName,
-          description: `${APP_INFO.shortName} 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等 30+ 種貨幣。快速、準確、離線可用的 PWA 匯率工具。`,
-          theme_color: '#8B5CF6',
-          background_color: '#E8ECF4',
-          display: 'standalone',
-          scope: manifestScope,
-          start_url: manifestStartUrl,
-          id: manifestStartUrl,
-          orientation: 'portrait-primary',
-          categories: ['finance', 'utilities', 'productivity'],
-          // 完整的圖標配置（包含所有尺寸）
-          icons: [
-            {
-              src: 'icons/ratewise-icon-192x192.png',
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-256x256.png',
-              sizes: '256x256',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-384x384.png',
-              sizes: '384x384',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-512x512.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-1024x1024.png',
-              sizes: '1024x1024',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: 'icons/ratewise-icon-maskable-512x512.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'any maskable',
-            },
-            {
-              src: 'icons/ratewise-icon-maskable-1024x1024.png',
-              sizes: '1024x1024',
-              type: 'image/png',
-              purpose: 'any maskable',
-            },
-          ],
-          // 應用程式截圖（用於安裝提示）
-          screenshots: [
-            {
-              src: 'screenshots/mobile-home.png',
-              sizes: '1080x1920',
-              type: 'image/png',
-              form_factor: 'narrow',
-              label: `${APP_INFO.shortName} 首頁 - 即時匯率換算與趨勢圖`,
-            },
-            {
-              src: 'screenshots/mobile-converter-active.png',
-              sizes: '1080x1920',
-              type: 'image/png',
-              form_factor: 'narrow',
-              label: '貨幣轉換 - 輸入金額即時顯示匯率結果',
-            },
-            {
-              src: 'screenshots/mobile-features.png',
-              sizes: '1080x1920',
-              type: 'image/png',
-              form_factor: 'narrow',
-              label: '常見問題與功能說明',
-            },
-            {
-              src: 'screenshots/desktop-converter.png',
-              sizes: '1920x1080',
-              type: 'image/png',
-              form_factor: 'wide',
-              label: '桌面版 - 完整匯率轉換介面與趨勢圖表',
-            },
-            {
-              src: 'screenshots/desktop-features.png',
-              sizes: '1920x1080',
-              type: 'image/png',
-              form_factor: 'wide',
-              label: `桌面版 - 關於 ${APP_INFO.shortName} 與功能說明`,
-            },
-          ],
-        },
+        // manifest.webmanifest 由 prebuild 的 generate-manifest.mjs 作為唯一 SSOT 產出。
+        // 避免 vite-plugin-pwa 再生成第二份 manifest，造成品牌名稱與描述被舊設定覆蓋。
+        // injectRegister 亦停用 plugin 的 <link rel="manifest"> 注入；index.html 手動維持該連結。
+        manifest: false,
       }),
     ],
     build: {
