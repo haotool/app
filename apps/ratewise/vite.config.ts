@@ -325,6 +325,7 @@ export default defineConfig(({ mode }) => {
         devOptions: { enabled: false, type: 'module' },
         // manifest.webmanifest 由 prebuild 的 generate-manifest.mjs 作為唯一 SSOT 產出。
         // 避免 vite-plugin-pwa 再生成第二份 manifest，造成品牌名稱與描述被舊設定覆蓋。
+        // injectRegister 亦停用 plugin 的 <link rel="manifest"> 注入；index.html 手動維持該連結。
         manifest: false,
       }),
     ],
