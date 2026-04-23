@@ -70,6 +70,28 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(llmsContent).toContain('PerplexityBot');
     });
 
+    it('should distinguish training, search, and user-triggered crawler roles', () => {
+      // OpenAI / Anthropic 已將訓練、搜尋索引、使用者觸發抓取拆成不同 UA。
+      const requiredCrawlers = [
+        'GPTBot',
+        'OAI-SearchBot',
+        'ChatGPT-User',
+        'ClaudeBot',
+        'Claude-SearchBot',
+        'Claude-User',
+        'PerplexityBot',
+        'Perplexity-User',
+      ];
+
+      for (const crawler of requiredCrawlers) {
+        expect(llmsContent).toContain(crawler);
+      }
+
+      expect(llmsContent).toContain('Tier 1: TRAINING');
+      expect(llmsContent).toContain('Tier 2: SEARCH');
+      expect(llmsContent).toContain('Tier 3: USER_AGENT');
+    });
+
     it('should have Attribution requirement', () => {
       // 引用規範
       expect(llmsContent).toContain('Attribution');
@@ -142,6 +164,11 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
 
     it('should explicitly allow ClaudeBot', () => {
       expect(robotsContent).toContain('User-agent: ClaudeBot');
+    });
+
+    it('should explicitly allow Claude search and user-triggered agents', () => {
+      expect(robotsContent).toContain('User-agent: Claude-SearchBot');
+      expect(robotsContent).toContain('User-agent: Claude-User');
     });
 
     it('should explicitly allow PerplexityBot', () => {

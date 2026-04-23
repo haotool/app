@@ -47,6 +47,11 @@ async function readRobotsGenerator() {
   return readFile(robotsGeneratorPath, 'utf-8');
 }
 
+async function readLlmsGenerator() {
+  const llmsGeneratorPath = path.resolve(__dirname, '../../../scripts/generate-llms-txt.mjs');
+  return readFile(llmsGeneratorPath, 'utf-8');
+}
+
 async function readManifestGenerator() {
   const manifestGeneratorPath = path.resolve(__dirname, '../../../scripts/generate-manifest.mjs');
   return readFile(manifestGeneratorPath, 'utf-8');
@@ -260,6 +265,16 @@ describe('ratewise build scripts', () => {
     expect(robotsGenerator).not.toContain("'/color-scheme/'");
     expect(robotsGenerator).not.toContain("'/update-prompt-test/'");
     expect(robotsGenerator).not.toContain("'/ui-showcase/'");
+  });
+
+  it('should source AI crawler names from a shared scripts SSOT', async () => {
+    const robotsGenerator = await readRobotsGenerator();
+    const llmsGenerator = await readLlmsGenerator();
+
+    expect(robotsGenerator).toContain("from './lib/ai-crawlers.mjs'");
+    expect(llmsGenerator).toContain("from './lib/ai-crawlers.mjs'");
+    expect(robotsGenerator).not.toContain('const TRAINING_BOTS =');
+    expect(llmsGenerator).not.toContain('Allow: GPTBot, OAI-SearchBot');
   });
 
   it('should keep placeholder rating snapshots deterministic when RATING_API_URL is missing', async () => {

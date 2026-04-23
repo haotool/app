@@ -38,6 +38,25 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
     expect(content).toContain('api/latest.json');
   });
 
+  it('documents AI crawler access from the shared governance tiers', () => {
+    const content = readFileSync(llmsPath, 'utf-8');
+    const requiredCrawlers = [
+      'GPTBot',
+      'OAI-SearchBot',
+      'ChatGPT-User',
+      'ClaudeBot',
+      'Claude-SearchBot',
+      'Claude-User',
+      'PerplexityBot',
+      'Perplexity-User',
+    ];
+
+    expect(content).toContain('Policy tiers:');
+    for (const crawler of requiredCrawlers) {
+      expect(content).toContain(crawler);
+    }
+  });
+
   it('uses prerendered path-based amount landing pages as the indexable format', () => {
     const content = readFileSync(llmsPath, 'utf-8');
     expect(content).toContain('https://app.haotool.org/ratewise/usd-twd/500/');

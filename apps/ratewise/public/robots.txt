@@ -1,8 +1,8 @@
 # HaoRate — Robots Exclusion Protocol
 # https://app.haotool.org/ratewise/
 #
-# AI Bot 三層治理：TRAINING / SEARCH / USER_AGENT
-# 當前策略：三層皆 Allow /（最大化 AI 搜尋曝光）。
+# AI Bot 四層治理：TRAINING / SEARCH / USER_AGENT / PREVIEW
+# 當前策略：四層皆 Allow /（最大化 AI 搜尋曝光）。
 # 若未來需停止貢獻訓練語料，請將 TRAINING 區段改為 Disallow /。
 
 User-agent: *
