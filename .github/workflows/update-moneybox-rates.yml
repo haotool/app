@@ -209,7 +209,7 @@ jobs:
           echo "- **Buy rate**: 換匯所買入 TWD 的匯率（高於 sell，包含手續費差價）" >> $GITHUB_STEP_SUMMARY
 
       - name: Update workflow summary (remote refresh warning)
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true' && steps.refresh-remote.conclusion == 'failure'
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true' && steps.refresh-remote.outcome == 'failure'
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## ⚠️ Post-push verification warning" >> $GITHUB_STEP_SUMMARY

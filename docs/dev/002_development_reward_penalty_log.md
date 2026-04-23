@@ -4048,12 +4048,13 @@ root_cause:
   actions:
 
 - 在 `.github/workflows/update-latest-rates.yml` 與 `.github/workflows/update-moneybox-rates.yml` 的 refresh step 新增 `id: refresh-remote` 與 `continue-on-error: true`。
-- 將 `git fetch origin data && git checkout origin/data -- <file>` 改為最多 3 次重試，失敗時保留 non-zero exit 供 step conclusion 記錄。
-- 新增 `Update workflow summary (remote refresh warning)`，僅在 `steps.refresh-remote.conclusion == 'failure'` 時輸出 warning，明確標示 data branch push 已成功。
+- 將 `git fetch origin data && git checkout origin/data -- <file>` 改為最多 3 次重試，失敗時保留 non-zero exit 供 step outcome 記錄。
+- 新增 `Update workflow summary (remote refresh warning)`，並在 follow-up 修正為 `steps.refresh-remote.outcome == 'failure'`；`continue-on-error: true` 下若改看 `conclusion`，warning 會被誤判為 success 而靜默略過。
 - 更新 `AGENTS.md` 與 `CLAUDE.md`，把 GitHub 瞬時 5xx 的判定原則、重試與 warning 要求寫入文件。
   prevention:
 
 - post-push verification 只能作為摘要校對或觀測訊號，不得覆蓋已成功完成的核心資料寫入結果。
+- `continue-on-error: true` 的 step 若需要保留失敗訊號，必須以 `steps.<id>.outcome` 讀取原始結果；`conclusion` 僅適合判讀套用容錯後的最終狀態。
 - 對 GitHub API / git remote 這類平台依賴，若步驟非關鍵寫入，應先做有限重試，再以 warning 呈現，不應直接造成假紅燈。
 - 同型 workflow 修補必須同步套用，避免 latest 修好但 moneybox 仍保留同一缺陷。
   verification:

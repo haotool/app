@@ -248,7 +248,7 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **Node engine warning**：Repo 宣告 `^24.0.0`；warning 不等於阻塞，以實際 hook 結果為準。
 
-**排程資料 workflow 在 post-push refresh 報 GitHub 500**：若 `Commit and push changes` 已成功、失敗發生在 `Refresh ... from remote data branch`，視為 GitHub 瞬時錯誤。修法：post-push refresh 使用 3 次重試並設為 `continue-on-error: true`；summary 追加 warning，但不得將已成功的 `data` 分支推送誤判為整體失敗。
+**排程資料 workflow 在 post-push refresh 報 GitHub 500**：若 `Commit and push changes` 已成功、失敗發生在 `Refresh ... from remote data branch`，視為 GitHub 瞬時錯誤。修法：post-push refresh 使用 3 次重試並設為 `continue-on-error: true`；summary warning 必須看 `steps.<id>.outcome == 'failure'`，不得用 `conclusion`，否則會把失敗誤判成 success。
 
 **Cloudflare 邊緣同步**：release 需確認 `security-headers` worker 也已部署；`wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`；secret 缺失時明確 `skip` 並回報，不可假設 edge 已同步。完整 SOP 見 `AGENTS.md` § security-headers Worker 部署 SOP。
 

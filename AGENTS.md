@@ -471,7 +471,7 @@ git push origin main     # pre-push 自動驗證
 1. post-push refresh 僅作摘要校對，不得作為主要成功條件。
 2. `git fetch origin data` 與 `git checkout origin/data -- <file>` 必須使用最多 3 次重試。
 3. refresh step 必須設為 `continue-on-error: true`，避免 GitHub 瞬時 5xx 將已成功的 push 誤判為 workflow failure。
-4. workflow summary 必須追加 warning，明確區分「data 分支已成功推送」與「收尾同步暫時失敗」。
+4. workflow summary 必須以 `steps.<id>.outcome == 'failure'` 判定 warning；`continue-on-error: true` 下不得使用 `conclusion` 判斷失敗。
 5. 同型 workflow（至少 `update-latest-rates.yml`、`update-moneybox-rates.yml`）必須同步修正，避免行為漂移。
 
 ### SEO 最佳實踐遷移（Schema.org @graph）
