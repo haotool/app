@@ -160,11 +160,27 @@ jobs:
           done
 
       - name: Refresh moneybox.json from remote data branch
+        id: refresh-remote
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        continue-on-error: true
         run: |
+          # 收尾同步僅用於摘要校對，不得覆蓋已成功的資料推送結果。
           git rebase --abort 2>/dev/null || true
-          git fetch origin data
-          git checkout origin/data -- public/rates/moneybox.json
+          for i in 1 2 3; do
+            echo "🔄 Refreshing moneybox.json from remote data branch (try $i/3)..."
+            if git fetch origin data && git checkout origin/data -- public/rates/moneybox.json; then
+              echo "✅ Remote refresh successful"
+              exit 0
+            fi
+
+            if [ $i -lt 3 ]; then
+              echo "⚠️ Remote refresh failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
+
+          echo "❌ Remote refresh failed after 3 attempts"
+          exit 1
 
       - name: Update workflow summary (success)
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
@@ -191,6 +207,14 @@ jobs:
           echo "## 💡 Rate Meaning" >> $GITHUB_STEP_SUMMARY
           echo "- **Sell rate**: 旅客持 TWD 現金換 KRW 的實際到手匯率（明洞換匯所賣出 KRW）" >> $GITHUB_STEP_SUMMARY
           echo "- **Buy rate**: 換匯所買入 TWD 的匯率（高於 sell，包含手續費差價）" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update workflow summary (remote refresh warning)
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true' && steps.refresh-remote.conclusion == 'failure'
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ⚠️ Post-push verification warning" >> $GITHUB_STEP_SUMMARY
+          echo "- Data branch push succeeded, but GitHub returned a transient error during post-push refresh." >> $GITHUB_STEP_SUMMARY
+          echo "- The workflow kept the successful update and will verify again on the next scheduled run or manual rerun." >> $GITHUB_STEP_SUMMARY
 
       - name: No changes detected
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed != 'true'

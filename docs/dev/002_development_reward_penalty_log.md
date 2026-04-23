@@ -4019,3 +4019,54 @@ root_cause:
 - apps/ratewise/src/config/**tests**/seo-speakable.test.ts
 - docs/dev/042_gsc_ai_sov_monitoring_sop.md
 - docs/SEO_MASTER_SSOT.md
+
+---
+
+id: ci-data-branch-post-push-refresh-hardening
+date: 2026-04-24
+title: 修復排程匯率 workflow 在 post-push refresh 遇 GitHub 5xx 時誤報失敗
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: ci, github-actions, ratewise
+topics: [ci, github-actions, workflow, reliability, data-branch]
+keywords:
+[post-push-refresh, continue-on-error, retry, github-500, data-branch, schedule]
+aliases: [data branch post-push refresh 容錯, GitHub Actions 500 假失敗修復]
+related_entries:
+[splitmeow-tdd-and-actions-schedule-reliability]
+summary: 透過 `gh run view --log-failed` 追查 `Update Latest Exchange Rates` 最新失敗後，確認 `Commit and push changes` 與 jsDelivr purge 都已成功，真正失敗的是最後的 `Refresh ... from remote data branch`，原因為 GitHub 在 `git fetch origin data` 返回瞬時 `500`。這代表 workflow 把「收尾驗證失敗」誤判成「資料更新失敗」。本次將 latest 與 moneybox 兩支同型 workflow 的 post-push refresh 收斂為最多 3 次重試，並設為 `continue-on-error: true`；若仍失敗，只在 workflow summary 顯示 warning，不再覆蓋已成功的 data branch push 結果。同時同步更新 `AGENTS.md` 與 `CLAUDE.md`，把這個判定原則與修法納入 SOP。
+root_cause:
+
+- 排程 workflow 將 post-push refresh 視為一般必要步驟，導致 GitHub 瞬時 5xx 會把整個 job 標成 failure。
+- `Refresh ... from remote data branch` 的目的其實只是重新載入遠端檔案供 summary 使用，不應作為主要成功條件。
+- 同型 workflow（latest / moneybox）採相同模式，若不一起修正，之後只會在另一支 workflow 重演同一類假失敗。
+  impact:
+
+- GitHub Actions 會出現紅燈，但 `data` 分支與 CDN 上的資料其實已更新成功，增加誤判與不必要的人工介入。
+- 團隊若只看 workflow conclusion，會誤以為匯率同步失敗，降低對真正資料異常的辨識力。
+  actions:
+
+- 在 `.github/workflows/update-latest-rates.yml` 與 `.github/workflows/update-moneybox-rates.yml` 的 refresh step 新增 `id: refresh-remote` 與 `continue-on-error: true`。
+- 將 `git fetch origin data && git checkout origin/data -- <file>` 改為最多 3 次重試，失敗時保留 non-zero exit 供 step conclusion 記錄。
+- 新增 `Update workflow summary (remote refresh warning)`，僅在 `steps.refresh-remote.conclusion == 'failure'` 時輸出 warning，明確標示 data branch push 已成功。
+- 更新 `AGENTS.md` 與 `CLAUDE.md`，把 GitHub 瞬時 5xx 的判定原則、重試與 warning 要求寫入文件。
+  prevention:
+
+- post-push verification 只能作為摘要校對或觀測訊號，不得覆蓋已成功完成的核心資料寫入結果。
+- 對 GitHub API / git remote 這類平台依賴，若步驟非關鍵寫入，應先做有限重試，再以 warning 呈現，不應直接造成假紅燈。
+- 同型 workflow 修補必須同步套用，避免 latest 修好但 moneybox 仍保留同一缺陷。
+  verification:
+
+- `gh run view 24845901399 --log-failed`
+- `gh api 'repos/haotool/app/commits?sha=data&path=public/rates/latest.json&per_page=1'`
+- `gh api 'repos/haotool/app/contents/public/rates/latest.json?ref=data'`
+- `pnpm exec prettier --write .github/workflows/update-latest-rates.yml .github/workflows/update-moneybox-rates.yml AGENTS.md CLAUDE.md`
+- `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/update-latest-rates.yml'); YAML.load_file('.github/workflows/update-moneybox-rates.yml'); puts 'YAML OK'"`
+- `git diff --check`
+  references:
+
+- .github/workflows/update-latest-rates.yml
+- .github/workflows/update-moneybox-rates.yml
+- AGENTS.md
+- CLAUDE.md

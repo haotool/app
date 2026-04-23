@@ -157,11 +157,27 @@ jobs:
           done
 
       - name: Refresh latest.json from remote data branch
+        id: refresh-remote
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        continue-on-error: true
         run: |
+          # 收尾同步僅用於摘要校對，不得覆蓋已成功的資料推送結果。
           git rebase --abort 2>/dev/null || true
-          git fetch origin data
-          git checkout origin/data -- public/rates/latest.json
+          for i in 1 2 3; do
+            echo "🔄 Refreshing latest.json from remote data branch (try $i/3)..."
+            if git fetch origin data && git checkout origin/data -- public/rates/latest.json; then
+              echo "✅ Remote refresh successful"
+              exit 0
+            fi
+
+            if [ $i -lt 3 ]; then
+              echo "⚠️ Remote refresh failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
+
+          echo "❌ Remote refresh failed after 3 attempts"
+          exit 1
 
       - name: Update workflow summary (success)
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
@@ -189,6 +205,14 @@ jobs:
           echo "- **EUR:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.EUR")" >> $GITHUB_STEP_SUMMARY
           echo "- **JPY:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.JPY")" >> $GITHUB_STEP_SUMMARY
           echo "- **CNY:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.CNY")" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update workflow summary (remote refresh warning)
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true' && steps.refresh-remote.conclusion == 'failure'
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ⚠️ Post-push verification warning" >> $GITHUB_STEP_SUMMARY
+          echo "- Data branch push succeeded, but GitHub returned a transient error during post-push refresh." >> $GITHUB_STEP_SUMMARY
+          echo "- The workflow kept the successful update and will verify again on the next scheduled run or manual rerun." >> $GITHUB_STEP_SUMMARY
 
       - name: No changes detected
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed != 'true'
