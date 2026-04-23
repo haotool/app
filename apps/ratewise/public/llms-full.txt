@@ -303,6 +303,11 @@ GET https://app.haotool.org/ratewise/openapi.json
 
 ## AI/LLM Access Control
 
-Allow: GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, ChatGPT-User, Google-Extended, CCBot, Bytespider
+Allow: GPTBot, ClaudeBot, anthropic-ai, Google-Extended, Applebot-Extended, Amazonbot, Bytespider, CCBot, cohere-ai, FacebookBot, Meta-ExternalAgent, Timpibot, ProRataInc, Novellum AI Crawl, OAI-SearchBot, Claude-SearchBot, PerplexityBot, Applebot, Google-CloudVertexBot, DuckAssistBot, ChatGPT-User, Claude-User, Perplexity-User, MistralAI-User, Manus-User, Meta-ExternalFetcher, Cloudflare-AutoRAG, Anchor Browser, facebookexternalhit, Twitterbot, LinkedInBot, archive.org_bot, Terracotta Bot, PhindBot, YouBot, GrokBot, PetalBot
+Policy tiers:
+- Tier 1: TRAINING (基礎模型訓練語料): GPTBot, ClaudeBot, anthropic-ai, Google-Extended, Applebot-Extended, Amazonbot, Bytespider, CCBot, cohere-ai, FacebookBot, Meta-ExternalAgent, Timpibot, ProRataInc, Novellum AI Crawl
+- Tier 2: SEARCH (AI 搜尋索引與引用): OAI-SearchBot, Claude-SearchBot, PerplexityBot, Applebot, Google-CloudVertexBot, DuckAssistBot
+- Tier 3: USER_AGENT (使用者觸發即時抓取): ChatGPT-User, Claude-User, Perplexity-User, MistralAI-User, Manus-User, Meta-ExternalFetcher, Cloudflare-AutoRAG, Anchor Browser
+- Tier 4: PREVIEW / OTHER (社群預覽與其他): facebookexternalhit, Twitterbot, LinkedInBot, archive.org_bot, Terracotta Bot, PhindBot, YouBot, GrokBot, PetalBot
 Attribution: Required (link back to HaoRate source)
 Contact: haotool.org@gmail.com

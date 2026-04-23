@@ -11,6 +11,7 @@ import {
   SITE_CONFIG,
 } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
+import { AI_CRAWLER_TIERS, ALL_AI_CRAWLERS } from './lib/ai-crawlers.mjs';
 
 const BRAND_SHORT = APP_INFO.shortName;
 const BRAND_FULL = APP_INFO.name;
@@ -65,6 +66,12 @@ function buildReverseRates() {
     return `- [台幣換${info.name} TWD/${info.code}](${BASE_URL}${slug}/): 出國前台幣換${info.name}，${info.desc}`;
   }).join('\n');
 }
+
+function buildAiCrawlerTierSummary() {
+  return AI_CRAWLER_TIERS.map((tier) => `- ${tier.label}: ${tier.bots.join(', ')}`).join('\n');
+}
+
+const AI_CRAWLER_ALLOW_LIST = ALL_AI_CRAWLERS.join(', ');
 
 const FEATURES = [
   '單幣別精準換算：選擇來源/目標貨幣，即時計算換算結果',
@@ -179,7 +186,9 @@ ${buildReverseRates()}
 
 ## AI/LLM Access Control
 
-Allow: GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, ChatGPT-User, Google-Extended, CCBot, Bytespider
+Allow: ${AI_CRAWLER_ALLOW_LIST}
+Policy tiers:
+${buildAiCrawlerTierSummary()}
 Attribution: Required (link back to source)
 Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 
@@ -530,7 +539,9 @@ GET ${BASE_URL}openapi.json
 
 ## AI/LLM Access Control
 
-Allow: GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, ChatGPT-User, Google-Extended, CCBot, Bytespider
+Allow: ${AI_CRAWLER_ALLOW_LIST}
+Policy tiers:
+${buildAiCrawlerTierSummary()}
 Attribution: Required (link back to ${BRAND_SHORT} source)
 Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 `;
