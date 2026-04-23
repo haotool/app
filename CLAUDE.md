@@ -248,6 +248,8 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **Node engine warning**：Repo 宣告 `^24.0.0`；warning 不等於阻塞，以實際 hook 結果為準。
 
+**排程資料 workflow 在 post-push refresh 報 GitHub 500**：若 `Commit and push changes` 已成功、失敗發生在 `Refresh ... from remote data branch`，視為 GitHub 瞬時錯誤。修法：post-push refresh 使用 3 次重試並設為 `continue-on-error: true`；summary warning 必須看 `steps.<id>.outcome == 'failure'`，不得用 `conclusion`，否則會把失敗誤判成 success。
+
 **Cloudflare 邊緣同步**：release 需確認 `security-headers` worker 也已部署；`wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`；secret 缺失時明確 `skip` 並回報，不可假設 edge 已同步。完整 SOP 見 `AGENTS.md` § security-headers Worker 部署 SOP。
 
 ## Cloudflare SEO 直通實踐（CF SEO Straight-Path Patterns）
@@ -299,17 +301,18 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 ## 修訂紀錄（Revision History）
 
-| 日期       | 版本      | 變更摘要                                                                                                                   |
-| ---------- | --------- | -------------------------------------------------------------------------------------------------------------------------- |
-| 2026-04-11 | v5.0      | SemVer 決策規則重寫：加入「使用者可感知」判斷標準，補充常見誤判速查（JSON-LD/schema/FAQ/E-E-A-T 均為 patch）               |
-| 2026-03-22 | v4.9      | 移除 AGENTS.md 重複區塊（Git rules、QA rules、Skills、Prettier#6、Worker SOP、code comment）→ 改為單行參考，精簡約 ~180 行 |
-| 2026-03-22 | v4.8      | Phase 7 精簡：SemVer 決策表 + Changeset 規範 + 一鍵發版流程（pnpm changeset:version SSOT 整合）                            |
-| 2026-03-22 | v4.7      | 補充 Worker 假陽性清單；新增資產快取驗證 curl 快查表                                                                       |
-| 2026-03-17 | v4.6      | 新增 SEO 內容新鮮度 SSOT 規則（template-bleed、dateModified、FAQPage 重複）                                                |
-| 2026-03-13 | v4.5      | 補充 RateWise release 邊緣同步規範與 live precache 驗證 SOP                                                                |
-| 2026-02-27 | v3.0–v4.4 | 建立企業 SOP 執行手冊、CF SEO 直通實踐、PWA 防護、security-headers Worker 部署 SOP 等歷史迭代                              |
+| 日期       | 版本      | 變更摘要                                                                                                                     |
+| ---------- | --------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-24 | v5.1      | 補充排程資料 workflow 的 post-push refresh 容錯規範：GitHub 瞬時 5xx 需重試、保留 warning，禁止將已成功的 data push 誤判失敗 |
+| 2026-04-11 | v5.0      | SemVer 決策規則重寫：加入「使用者可感知」判斷標準，補充常見誤判速查（JSON-LD/schema/FAQ/E-E-A-T 均為 patch）                 |
+| 2026-03-22 | v4.9      | 移除 AGENTS.md 重複區塊（Git rules、QA rules、Skills、Prettier#6、Worker SOP、code comment）→ 改為單行參考，精簡約 ~180 行   |
+| 2026-03-22 | v4.8      | Phase 7 精簡：SemVer 決策表 + Changeset 規範 + 一鍵發版流程（pnpm changeset:version SSOT 整合）                              |
+| 2026-03-22 | v4.7      | 補充 Worker 假陽性清單；新增資產快取驗證 curl 快查表                                                                         |
+| 2026-03-17 | v4.6      | 新增 SEO 內容新鮮度 SSOT 規則（template-bleed、dateModified、FAQPage 重複）                                                  |
+| 2026-03-13 | v4.5      | 補充 RateWise release 邊緣同步規範與 live precache 驗證 SOP                                                                  |
+| 2026-02-27 | v3.0–v4.4 | 建立企業 SOP 執行手冊、CF SEO 直通實踐、PWA 防護、security-headers Worker 部署 SOP 等歷史迭代                                |
 
 ---
 
-**最後更新**: 2026-03-22T00:00:00+0800
-**版本**: v4.9（AGENTS.md 為控制規則 SSOT；CLAUDE.md 為操作 SOP）
+**最後更新**: 2026-04-24T00:00:00+0800
+**版本**: v5.1（補充排程資料 workflow 的 post-push refresh 容錯規範）
