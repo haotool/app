@@ -15,7 +15,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
-import type { CurrencyCode, RateType } from '../types';
+import type { CurrencyCode, RateMode, RateType } from '../types';
 // 直接 import 以確保離線冷啟動可用（消除 code-splitting 導致的 chunk 載入失敗）
 import { MiniTrendChart } from './MiniTrendChart';
 import type { MiniTrendDataPoint } from './MiniTrendChart';
@@ -33,7 +33,7 @@ import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
-import { getExchangeRate } from '../../../utils/exchangeRateCalculation';
+import { convertCurrencyAmountWithMode } from '../../../utils/exchangeRateCalculation';
 import type { RateTypeAvailability } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 
@@ -48,6 +48,7 @@ interface SingleConverterProps {
   exchangeRates: Record<CurrencyCode, number | null>;
   details?: Record<string, RateDetails>;
   rateType: RateType;
+  rateMode?: RateMode;
   rateTypeAvailability?: RateTypeAvailability;
   onFromCurrencyChange: (currency: CurrencyCode) => void;
   onToCurrencyChange: (currency: CurrencyCode) => void;
@@ -67,6 +68,7 @@ export const SingleConverter = ({
   exchangeRates,
   details,
   rateType,
+  rateMode = 'auto',
   rateTypeAvailability = { spot: true, cash: true },
   onFromCurrencyChange,
   onToCurrencyChange,
@@ -105,15 +107,25 @@ export const SingleConverter = ({
     },
   });
 
-  // 獲取指定貨幣的匯率（優先使用 details + rateType，有 fallback 機制）
-  const getRate = (currency: CurrencyCode): number => {
-    return getExchangeRate(currency, details, rateType, exchangeRates) ?? 1;
-  };
-
-  const fromRate = getRate(fromCurrency);
-  const toRate = getRate(toCurrency);
-  const exchangeRate = fromRate / toRate;
-  const reverseRate = toRate / fromRate;
+  // 匯率卡片與實際換算共用同一套核心。
+  const exchangeRate = convertCurrencyAmountWithMode(
+    1,
+    fromCurrency,
+    toCurrency,
+    details,
+    rateType,
+    rateMode,
+    exchangeRates,
+  );
+  const reverseRate = convertCurrencyAmountWithMode(
+    1,
+    toCurrency,
+    fromCurrency,
+    details,
+    rateType,
+    rateMode,
+    exchangeRates,
+  );
 
   const getRateTypeUnavailableMessage = (targetRateType: RateType): string => {
     const unavailableCurrencies = [fromCurrency, toCurrency].filter((code) => {

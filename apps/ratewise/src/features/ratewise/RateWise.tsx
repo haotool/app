@@ -93,6 +93,7 @@ const RateWise = () => {
   );
 
   const {
+    rateMode,
     fromCurrency,
     toCurrency,
     fromAmount,
@@ -221,6 +222,7 @@ const RateWise = () => {
                 exchangeRates={exchangeRates}
                 details={details}
                 rateType={rateType}
+                rateMode={rateMode}
                 rateTypeAvailability={rateTypeAvailability}
                 onFromCurrencyChange={setFromCurrency}
                 onToCurrencyChange={setToCurrency}

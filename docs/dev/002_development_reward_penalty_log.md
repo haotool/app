@@ -4071,3 +4071,48 @@ root_cause:
 - .github/workflows/update-moneybox-rates.yml
 - AGENTS.md
 - CLAUDE.md
+
+---
+
+id: ratewise-auto-rate-display-align-buy-sell
+date: 2026-04-24
+title: 修正自動方向模式未依買入賣出價顯示匯率卡片
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: ratewise, converter, ui
+topics: [ratewise, converter, rate-mode, exchange-rate, ui-consistency]
+keywords:
+[auto-rate-mode, buy-rate, sell-rate, single-converter, display-consistency]
+aliases: [自動方向匯率顯示修復, rateMode auto display fix]
+related_entries:
+[ci-data-branch-post-push-refresh-hardening]
+summary: 修正單幣別轉換器在 `自動方向` 模式下的匯率卡片顯示錯誤。實際換算早已透過 `convertCurrencyAmountWithMode()` 依方向套用買入/賣出價，但 `SingleConverter` 的卡片文字仍直接用 `getExchangeRate()` 計算，等同固定走 sell 邏輯，導致畫面上的「1 TWD = X USD / 1 USD = Y TWD」與實際換算結果不一致。本次將卡片顯示改為直接共用 `convertCurrencyAmountWithMode()`，讓 auto / sell / mid 三種模式的顯示與計算完全收斂，並新增測試鎖住 auto 模式下正反向不必互為倒數的行為。
+root_cause:
+
+- `SingleConverter` 的匯率卡片自行以 `fromRate / toRate` 組裝顯示值，沒有共用實際換算用的 `convertCurrencyAmountWithMode()`。
+- `rateMode=auto` 會依方向分別取 sell 與 buy，但卡片顯示仍只看 sell fallback，造成 UI 與換算核心分裂。
+- 正反向匯率在 auto 模式下本來就可能不互為倒數；若直接取單一比值，顯示必然失真。
+  impact:
+
+- 使用者在設定為 `自動方向` 時，看到的匯率卡片與實際輸入換算結果不一致，降低對買入/賣出價語意的信任。
+- 反向匯率文字可能錯把 `buy` 顯示成 `sell`，使「拿台幣換外幣」與「拿外幣換台幣」的成本判讀失真。
+  actions:
+
+- 在 `SingleConverter.tsx` 將匯率卡片改為用 `convertCurrencyAmountWithMode(1, from, to, ...)` 與反向呼叫產生顯示值。
+- 將 `rateMode` 從 store hook 回傳並傳入 `SingleConverter`，讓卡片顯示與畫面實際模式對齊。
+- 在 `SingleConverter.core.test.tsx` 新增 auto 模式測試，驗證 `1 TWD = 0.0324 USD` 與 `1 USD = 30.9700 TWD` 會依買入/賣出價正確顯示。
+  prevention:
+
+- 顯示層不得重寫匯率選擇規則；凡是涉及金額或匯率語意的 UI，必須直接共用換算核心或其封裝結果。
+- `auto` 模式的正反向匯率不可預設為互為倒數；測試需明確覆蓋這個非對稱特性。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/features/ratewise/components/__tests__/SingleConverter.core.test.tsx src/utils/__tests__/exchangeRateCalculation.test.ts`
+- `pnpm --filter @app/ratewise typecheck`
+  references:
+
+- apps/ratewise/src/features/ratewise/components/SingleConverter.tsx
+- apps/ratewise/src/features/ratewise/RateWise.tsx
+- apps/ratewise/src/features/ratewise/hooks/useCurrencyConverter.ts
+- apps/ratewise/src/features/ratewise/components/**tests**/SingleConverter.core.test.tsx

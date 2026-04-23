@@ -373,6 +373,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   return {
     // State
     mode,
+    rateMode,
     fromCurrency,
     toCurrency,
     fromAmount,
