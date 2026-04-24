@@ -785,9 +785,10 @@ export function buildAlternativeProviderFaq(
 
 /**
  * 將 FAQEntry 陣列轉換為 schema.org FAQPage JSON-LD 格式。
- * 僅對高流量幣別啟用（USD / JPY / KRW / EUR / HKD），用於 AI/AEO 引擎（ChatGPT、Perplexity、語音助理）。
- * 注意：Google 自 2023 年 9 月起不再為金融/醫療等 YMYL 頁面顯示 FAQ Rich Results，
- *       但結構化資料仍有助於 AI 理解與摘要。
+ * 全 34 個幣別頁（17 正向 xxx-twd + 17 反向 twd-xxx）均啟用，
+ * 用於 AI/AEO 引擎（ChatGPT、Perplexity、語音助理）快速摘要。
+ * 注意：Google FAQ rich result 目前主要限於政府與醫療權威站，
+ *       金融頁 FAQPage 應以機器可理解性與 AI 摘要為主要目標。
  * @param faqEntries FAQ 條目列表
  * @param maxItems 最多取幾則（預設 5，避免 schema 過長）
  */
@@ -1316,13 +1317,13 @@ export const ABOUT_PAGE_FAQ = [
       '匯差範例數據由 GitHub Actions 每日自動執行：同時抓取台灣銀行牌告匯率與 open.er-api.com 市場中間價（Google、XE、Wise、Apple 計算機的共同基準），進行雙重驗證（兩個中間價差距須在 2% 以內），生成靜態 TypeScript 常數，透過 Pull Request 自動審核後進入主分支。最終數字直接嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取所有匯差數字。',
   },
   {
-    question: '這個網站使用哪些結構化資料讓搜尋摘要顯示更豐富？',
-    answer: `目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、HowTo（使用步驟）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、FinancialService（幣別頁金融服務標記）與 ImageObject（分享圖片授權資訊）。FAQ 內容保留為可讀 HTML 區塊，不額外輸出 FAQPage rich result 標記，以避免與目前搜尋引擎支援範圍不符。sitemap.xml 會只收錄公開可索引 URL，並同步 hreflang 與圖片資源資訊。`,
+    question: '這個網站使用哪些結構化資料幫助搜尋引擎與 AI 系統理解內容？',
+    answer: `目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、HowTo（使用步驟）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、FinancialService（幣別頁金融服務）、ExchangeRateSpecification（全 34 個幣別頁，注入臺灣銀行現金賣出價供 AI 引擎提取具體匯率數字）、FAQPage（全 34 個幣別頁，提供 AI／語音助理快速摘要）、CurrencyConversionService（首頁）與 ImageObject（分享圖片授權）。內容頁（FAQ 頁、About 頁、指南頁）的 FAQ 以可讀 HTML 呈現，不額外重複輸出 FAQPage schema；幣別換算頁則全面啟用 FAQPage JSON-LD，提升 AEO 覆蓋率。Google 是否顯示 rich result 仍取決於頁面類型與搜尋引擎支援範圍，本站對金融頁 FAQPage 的定位以機器理解與 AI 摘要為主。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。`,
   },
   {
     question: `${APP_INFO.shortName} 是否支援 AI 搜尋引擎與 LLM 引用？`,
     answer:
-      'robots.txt 明確允許 18 種 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、Google-Extended、GrokBot、Applebot-Extended 等）全站讀取；另提供 llms.txt 與 llms-full.txt 供大型語言模型快速理解站點架構，openapi.json 供 AI Agent 呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。',
+      'robots.txt 明確允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、Google-Extended、GrokBot、Applebot-Extended 等）全站讀取；另提供 llms.txt 與 llms-full.txt 供大型語言模型快速理解站點架構，openapi.json 供 AI Agent 呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。',
   },
 ] as const satisfies readonly FAQEntry[];
 
@@ -1770,7 +1771,7 @@ export const APP_ONLY_PAGE_SEO = {
           '搜尋可見性',
           `${APP_INFO.shortName} 技術架構`,
         ],
-        articleBody: `${APP_INFO.shortName} 採用現代化 SEO 最佳實踐，包括預先渲染靜態 HTML（SSG）以提升首頁效能與可爬性、完整的 JSON-LD Schema 標記（包括 Article、Organization、BreadcrumbList、FAQPage、SoftwareApplication 等 8 種類型）以強化搜尋結果展示、優化的網站結構（${SEO_PATHS.length} 個索引路徑與 ${PRERENDER_PATHS.length} 個預渲染頁面）、自動化資料管線（每 5 分鐘從台灣銀行同步即時匯率）、與 PWA 離線支援以確保使用者體驗。技術實現包括使用 Vite + React 進行高效打包、Tailwind CSS 的原子類樣式、Workbox 的靜態資源快取策略、Cloudflare Worker 的邊緣安全標頭注入，以及搜尋可見性的完整監測與驗證流程。`,
+        articleBody: `${APP_INFO.shortName} 採用現代化 SEO 最佳實踐，包括預先渲染靜態 HTML（SSG）以提升首頁效能與可爬性、完整的 JSON-LD Schema 標記（涵蓋 Article、Organization、BreadcrumbList、FAQPage、SoftwareApplication 等多種類型）以強化搜尋引擎與 AI 系統的內容理解、優化的網站結構（${SEO_PATHS.length} 個索引路徑與 ${PRERENDER_PATHS.length} 個預渲染頁面）、自動化資料管線（每 5 分鐘從台灣銀行同步即時匯率）、與 PWA 離線支援以確保使用者體驗。技術實現包括使用 Vite + React 進行高效打包、Tailwind CSS 的原子類樣式、Workbox 的靜態資源快取策略、Cloudflare Worker 的邊緣安全標頭注入，以及搜尋可見性的完整監測與驗證流程。`,
       },
     ),
   },
@@ -2548,7 +2549,7 @@ export function getCurrencyLandingPageContent(
     },
   };
 
-  // 全幣別啟用 FAQPage JSON-LD，提升 AI/AEO 引擎覆蓋率與 Rich Result 曝光機會。
+  // 全幣別啟用 FAQPage JSON-LD，強化機器可理解性與 AI 摘要覆蓋。
 
   const faqEntries: FAQEntry[] = [
     {
@@ -2890,7 +2891,7 @@ export function getReverseCurrencyLandingPageContent(
         `台幣換${displayName}匯率分享圖片`,
         `${APP_INFO.name} TWD/${code} 出國換匯即時計算`,
       ),
-      // 全幣別啟用 FAQPage JSON-LD，提升 AI/AEO 引擎覆蓋率與 Rich Result 曝光機會。
+      // 全幣別啟用 FAQPage JSON-LD，強化機器可理解性與 AI 摘要覆蓋。
       buildFaqPageJsonLd(faqEntries),
       // ExchangeRateSpecification：注入即時匯率，讓 AI 引擎可提取並顯示具體數字。
       // 反向頁（TWD→外幣）：currency 為 TWD，priceCurrency 為外幣代碼。

@@ -1,8 +1,60 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-10T15:30:00+08:00
-> **當前總分**: 1207（初始分: 100）
+> **最後更新**: 2026-04-24T16:06:37+08:00
+> **當前總分**: 1208（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-about-faq-seo-truthfulness-refresh
+date: 2026-04-24
+title: 收斂 About FAQ 的 schema 與 AI crawler 說法，避免過時數字與 rich result 誤導
+score: +1
+type: improvement
+content_type: seo
+scope: ratewise, about, faq
+topics: [seo, faq, schema, ai-search, content-truthfulness]
+keywords:
+[about-page-faq, faqpage, exchangeratespecification, ai-crawlers, rich-result, truthfulness]
+aliases: [About FAQ SEO truthfulness refresh, FAQPage 語意校正]
+related_entries:
+[ratewise-seo-title-truthfulness-lastmod-tdd, ci-data-branch-post-push-refresh-hardening]
+summary: About 頁 FAQ 近期已更新為反映目前的 FAQPage、ExchangeRateSpecification 與 AI crawler 支援現況，但內容仍殘留兩個不穩定訊號：一是 AI crawler 數量若以固定數字描述，之後隨 robots.txt SSOT 擴充容易再次過時；二是金融頁 FAQPage 若被描述成以 rich result 為主要目標，會與 Google 現行 FAQ rich result 範圍產生語意偏差。本次將文案與守門測試一起收斂為「實際部署 + 不脆弱措辭 + 機器理解優先」三原則。
+root_cause:
+
+- `ABOUT_PAGE_FAQ` 先前的 AI 搜尋引擎答案使用固定數量描述 AI crawler，容易在 `robots.txt` / `llms.txt` SSOT 擴充後再次失真。
+- 結構化資料答案與內部註解雖已回到 FAQPage 實際有輸出的現況，但部分措辭仍容易被解讀為金融頁 FAQPage 以 Google rich result 為主要預期。
+- `seo-ssot.test.ts` 缺少對「避免硬編碼 bot 數量」與「金融頁 FAQPage 應以機器理解為主」的回歸守門。
+  impact:
+
+- About 頁屬於 SEO 透明度頁面，若文案再次落後於實際部署，AI 引擎與人工 reviewer 都可能引用到過時資訊。
+- 若把金融頁 FAQPage 說成 rich result 導向，會弱化內容真實性，並增加後續 SEO 審查的爭議成本。
+  actions:
+
+- 將 `ABOUT_PAGE_FAQ` 的 AI crawler 敘述改為「多種主流 AI 爬蟲」，保留 GPTBot、ClaudeBot、PerplexityBot 等代表名稱，不再硬編碼數量。
+- 將結構化資料問答改寫為「幫助搜尋引擎與 AI 系統理解內容」，並明確補上金融頁 FAQPage 以機器理解與 AI 摘要為主要定位。
+- 更新 `buildFaqPageJsonLd()` 與幣別頁註解，移除不精確的 Rich Result 曝光描述。
+- 同步收斂 `public/about.md` Markdown 鏡像，避免公開產物與 `seo-metadata.ts` 文字不同步。
+- 在 `seo-ssot.test.ts` 新增守門：禁止硬編碼 AI crawler 數量、要求保留主要 crawler 名稱、要求結構化資料答案提及 FAQPage / ExchangeRateSpecification 與機器理解定位。
+  prevention:
+
+- About / FAQ / Guide 這類透明度內容若提及 bot 數量、schema 支援範圍或 rich result，應優先使用不易漂移的敘述，必要時回指 SSOT，而不是手寫固定數字。
+- SEO 透明度文案每次調整後，應同步補對應的 truthfulness / SSOT 測試，避免只改內容不加守門。
+- 金融頁 FAQPage 的對外說法應固定為「幫助搜尋引擎與 AI 系統理解內容」，不得把 rich result 視為既定結果。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-ssot.test.ts`
+- `pnpm --filter @app/ratewise test -- --run src/seo-best-practices.test.ts src/seo-truthfulness.test.ts src/config/__tests__/seo-faq-quality.test.ts`
+- `pnpm --filter @app/ratewise typecheck`
+- `pnpm exec prettier --check apps/ratewise/src/config/seo-metadata.ts apps/ratewise/src/config/__tests__/seo-ssot.test.ts`
+  references:
+
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/public/about.md
+- apps/ratewise/src/config/**tests**/seo-ssot.test.ts
+- https://developers.google.com/search/docs/appearance/structured-data/faqpage
+- https://developers.google.com/search/blog/2023/08/howto-faq-changes
+- https://developers.google.com/search/docs/appearance/structured-data/sd-policies
 
 ---
 

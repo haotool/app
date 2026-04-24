@@ -52,13 +52,13 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 匯差範例數據由 GitHub Actions 每日自動執行：同時抓取台灣銀行牌告匯率與 open.er-api.com 市場中間價（Google、XE、Wise、Apple 計算機的共同基準），進行雙重驗證（兩個中間價差距須在 2% 以內），生成靜態 TypeScript 常數，透過 Pull Request 自動審核後進入主分支。最終數字直接嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取所有匯差數字。
 
-### 6. 這個網站使用哪些結構化資料讓搜尋摘要顯示更豐富？
+### 6. 這個網站使用哪些結構化資料幫助搜尋引擎與 AI 系統理解內容？
 
-目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、HowTo（使用步驟）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、FinancialService（幣別頁金融服務標記）與 ImageObject（分享圖片授權資訊）。FAQ 內容保留為可讀 HTML 區塊，不額外輸出 FAQPage rich result 標記，以避免與目前搜尋引擎支援範圍不符。sitemap.xml 會只收錄公開可索引 URL，並同步 hreflang 與圖片資源資訊。
+目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、HowTo（使用步驟）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、FinancialService（幣別頁金融服務）、ExchangeRateSpecification（全 34 個幣別頁，注入臺灣銀行現金賣出價供 AI 引擎提取具體匯率數字）、FAQPage（全 34 個幣別頁，提供 AI／語音助理快速摘要）、CurrencyConversionService（首頁）與 ImageObject（分享圖片授權）。內容頁（FAQ 頁、About 頁、指南頁）的 FAQ 以可讀 HTML 呈現，不額外重複輸出 FAQPage schema；幣別換算頁則全面啟用 FAQPage JSON-LD，提升 AEO 覆蓋率。Google 是否顯示 rich result 仍取決於頁面類型與搜尋引擎支援範圍，本站對金融頁 FAQPage 的定位以機器理解與 AI 摘要為主。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。
 
 ### 7. HaoRate 是否支援 AI 搜尋引擎與 LLM 引用？
 
-robots.txt 明確允許 18 種 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、Google-Extended、GrokBot、Applebot-Extended 等）全站讀取；另提供 llms.txt 與 llms-full.txt 供大型語言模型快速理解站點架構，openapi.json 供 AI Agent 呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。
+robots.txt 明確允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、Google-Extended、GrokBot、Applebot-Extended 等）全站讀取；另提供 llms.txt 與 llms-full.txt 供大型語言模型快速理解站點架構，openapi.json 供 AI Agent 呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。
 
 ---
 
