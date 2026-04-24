@@ -191,6 +191,13 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 截圖存 `screenshots/<name>.png`，不得污染 root；詳見 `AGENTS.md` § QA Artifact Rules / Root Hygiene。
 
+## GitHub Actions Node 20 過渡規則
+
+- GitHub Actions 出現 Node 20 deprecation warning 時，先查官方 changelog、release notes 或 `action.yml` 的 `runs.using`。
+- 官方 action 優先升到 Node 24 相容 major；目前 `actions/checkout@v6`、`actions/setup-node@v6` 可直接升級。
+- 若最新穩定版仍為 `node20`，受影響 job 保留 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'` 作為過渡控制。
+- 過渡控制應縮到最小範圍；上游一旦提供 Node 24 版，優先回到直接升版而非長期依賴 force flag。
+
 ## Documentation Sync Map（文件同步地圖）
 
 - **CI/CD / Hooks / commitlint** 變更 → 更新 `AGENTS.md`、`CLAUDE.md`
@@ -303,6 +310,7 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 | 日期       | 版本      | 變更摘要                                                                                                                     |
 | ---------- | --------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-24 | v5.2      | 新增 GitHub Actions Node 20 淘汰過渡規則：官方 action 優先升至 Node 24 major，僅對仍停留 Node 20 的 job 保留 force flag      |
 | 2026-04-24 | v5.1      | 補充排程資料 workflow 的 post-push refresh 容錯規範：GitHub 瞬時 5xx 需重試、保留 warning，禁止將已成功的 data push 誤判失敗 |
 | 2026-04-11 | v5.0      | SemVer 決策規則重寫：加入「使用者可感知」判斷標準，補充常見誤判速查（JSON-LD/schema/FAQ/E-E-A-T 均為 patch）                 |
 | 2026-03-22 | v4.9      | 移除 AGENTS.md 重複區塊（Git rules、QA rules、Skills、Prettier#6、Worker SOP、code comment）→ 改為單行參考，精簡約 ~180 行   |
@@ -314,5 +322,5 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 ---
 
-**最後更新**: 2026-04-24T00:00:00+0800
-**版本**: v5.1（補充排程資料 workflow 的 post-push refresh 容錯規範）
+**最後更新**: 2026-04-24T16:41:53+0800
+**版本**: v5.2（新增 GitHub Actions Node 20 淘汰過渡規則）

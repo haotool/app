@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout data branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: data
           fetch-depth: 0
@@ -54,7 +54,7 @@ jobs:
           git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '24'
 
