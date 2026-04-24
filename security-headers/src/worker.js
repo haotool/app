@@ -47,7 +47,7 @@ const RATEWISE_REPORTING_ENDPOINT = 'csp-endpoint';
 const CLOUDFLARE_INSIGHTS_SCRIPT = 'https://static.cloudflareinsights.com';
 
 const APP_HOST = 'app.haotool.org';
-const ROOT_SITE_HOSTS = new Set(['haotool.org', 'www.haotool.org']);
+const ROOT_SITE_HOSTS = new Set(['haotool.org', 'www.haotool.org', APP_HOST]);
 const HAOTOOL_ROOT_HTML_PATHS = new Set(['/', '/projects/', '/about/', '/contact/']);
 const RATEWISE_MARKDOWN_MIRROR = '/ratewise/index.md';
 const CONTENT_SIGNAL_HEADER = 'Content-Signal: ai-train=no, search=yes, ai-input=no';

@@ -1,8 +1,9 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.4.6
+> **文件版本**: v2.4.7
 > **建立日期**: 2026-03-23
 > **最後更新**: 2026-04-25
+> **v2.4.7 變更**: 新增 `security-headers` root-host 對齊修補（`app.haotool.org`）待部署驗證，將 `12.6.6` 生產差異補為「本輪修補待重測」欄位
 > **文件性質**: AI 助手 + 工程師執行手冊 / SEO 單一真實來源
 > **適用版本**: HaoRate / `apps/ratewise` ≥ v2.21.0
 > **上位文件**: `CLAUDE.md`, `AGENTS.md`
@@ -1241,6 +1242,7 @@ node scripts/fetch-rating-snapshot.mjs
   - 新增 `apps/ratewise/public/index.md`（與 `generate-markdown-mirrors.mjs` 管道同步）
   - 更新 `apps/ratewise/src/__tests__/markdown-mirror.test.ts` 覆蓋 `index.md`
 - 目前仍受限：
+  - 已於 `Security Worker` 將 `app.haotool.org` 加入 `ROOT_SITE_HOSTS`，等待生產部署後重跑，驗證 `root /` 與 `/ratewise/` 是否同步輸出 `Link` / `Content-Signal` / markdown negotiation
   - IsItAgentReady API 目前以 `https://app.haotool.org` 起算，root 生產端缺 `Link` header 與 `Content-Signal`，且無 markdown negotiation，導致 `Level 2` 未過
   - `https://app.haotool.org/ratewise/index.md` 目前回 404，導致外部建議的 markdown 鏡像入口還未在 prod 可直接對應
   - 發佈並讓 root 端同時套用 `/ratewise/` SEO header / negotiation 後再重跑，才可判斷 `Level 2` 是否過關
@@ -1448,7 +1450,7 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 ---
 
 **最後更新**: 2026-04-25
-**版本**: v2.4.6
+**版本**: v2.4.7
 **維護者**: Development Team
 **下次審查日**: 2026-07-10（每季審查）
 
@@ -1456,6 +1458,7 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 | 日期       | 版本   | 變更摘要                                                                                                                           |
 | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-25 | v2.4.7 | 新增 `ROOT_SITE_HOSTS` 加入 `app.haotool.org`，待生產重測 `/` 與 `/ratewise/` SEO header / negotiation 對齊                        |
 | 2026-04-25 | v2.4.6 | 新增 12.6.6 生產實測差異（root /ratewise/ header 差異），補齊 46 筆權威入口重測快照與 IsItAgentReady 生產端檢核入口 404 檢核       |
 | 2026-04-25 | v2.4.5 | 新增 12.6.7 外部檢測快照與 12.6.6 IsItAgentReady 重掃實測；補齊 12.6.5 重複掃描命令，文件版本與修訂欄位同步                        |
 | 2026-04-25 | v2.4.3 | 補齊首頁 AI 可發現性修正：`robots.txt` Content-Signal、首頁 Link header、markdown negotiation；更新 markdown 鏡像與驗證規格        |

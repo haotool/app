@@ -4737,3 +4737,45 @@ references:
 - apps/ratewise/public/_headers
 - apps/ratewise/public/robots.txt
 - security-headers/src/worker.js
+
+---
+
+id: ratewise-root-host-ai-discovery-alignment-2026-04-25
+date: 2026-04-25
+title: 補齊 app.haotool.org root-host 對齊，統一 `/ratewise/` AI 發現性行為
+score: 0
+type: improvement
+content_type: seo
+scope: ratewise, security-headers, root-host
+topics: [seo, ai-crawlers, markdown-negotiation, root-host, content-signal, link-header]
+keywords:
+[root-host, root-discovery, content-signal, markdown-negotiation, security-headers]
+aliases: [app.haotool.org root SEO 對齊]
+related_entries:
+[ratewise-seo-ssot-external-audit-2026-04-25]
+summary: 將 `security-headers/src/worker.js` 的 root-host 設定補上 `app.haotool.org`，使 root 與 `/ratewise/` 可共用同一套 `Content-Signal`、markdown negotiation 與 `Link` 導向邏輯；待生產部署後需重跑 IsItAgentReady 與 curl 驗證。
+root_cause:
+
+- `ROOT_SITE_HOSTS` 原先未包含 `app.haotool.org`，導致掃描器以 root 起算時看不到 `Content-Signal` 與 `Link` header 相容行為。
+impact:
+
+- `Level 2` 容易持續被判為未通過，且不利於 `docs/SEO_MASTER_SSOT.md` 生產基線的回歸判斷。
+actions:
+
+- 調整 `security-headers/src/worker.js`，將 `APP_HOST` 一併加入 `ROOT_SITE_HOSTS`。
+- 在 `docs/SEO_MASTER_SSOT.md` 更新 12.6.6 生產差異，補註待部署重測狀態與驗證步驟。
+prevention:
+
+- 每次 production 行為修正後，需在 SSOT 12.6 區塊同步待重測註記並指定最小重測命令。
+verification:
+
+- `node --check security-headers/src/worker.js`
+- `curl -I https://app.haotool.org/`
+- `curl -I -H 'Accept: text/markdown' https://app.haotool.org/`
+- `curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/json' -d '{"url":"https://app.haotool.org/ratewise/"}'`
+references:
+
+- security-headers/src/worker.js
+- docs/SEO_MASTER_SSOT.md
+- apps/ratewise/public/_headers
+- apps/ratewise/public/robots.txt
