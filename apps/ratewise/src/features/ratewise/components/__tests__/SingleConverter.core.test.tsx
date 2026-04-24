@@ -83,6 +83,7 @@ describe('SingleConverter - 核心功能測試', () => {
     toAmount: '31.58',
     exchangeRates: mockExchangeRates,
     rateType: 'spot' as const,
+    rateMode: 'sell' as const,
     onFromCurrencyChange: vi.fn(),
     onToCurrencyChange: vi.fn(),
     onFromAmountChange: vi.fn(),
@@ -462,6 +463,27 @@ describe('SingleConverter - 核心功能測試', () => {
       // 應該至少有一個反向匯率顯示
       expect(reverseRateDisplays.length).toBeGreaterThan(0);
       expect(reverseRateDisplays[0]).toBeInTheDocument();
+    });
+
+    it('auto 模式應依方向顯示買入與賣出價，且正反向不互為倒數', () => {
+      render(
+        <SingleConverter
+          {...mockProps}
+          rateMode="auto"
+          exchangeRates={{ ...mockExchangeRates, USD: 31.665 }}
+          details={{
+            USD: {
+              name: '美元',
+              spot: { buy: 30.87, sell: 30.97 },
+              cash: { buy: 30.4, sell: 31.4 },
+            },
+          }}
+        />,
+      );
+
+      expect(screen.getByText('1 TWD = 0.0324 USD')).toBeInTheDocument();
+      expect(screen.getByText('1 USD = 30.9700 TWD')).toBeInTheDocument();
+      expect(screen.queryByText('1 USD = 30.8700 TWD')).not.toBeInTheDocument();
     });
   });
 
