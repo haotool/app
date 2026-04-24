@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ABOUT_PAGE_FAQ,
   ABOUT_PAGE_SEO,
   APP_ONLY_PAGE_SEO,
   CARD_RATE_GUIDE_PAGE,
@@ -412,6 +413,61 @@ describe('SEO SSOT', () => {
     it('APP_ONLY_PAGE_SEO.seoTech robots 應為 index, follow（可索引頁面，不應含 noindex）', () => {
       expect(APP_ONLY_PAGE_SEO.seoTech.robots).toMatch(/^index/);
       expect(APP_ONLY_PAGE_SEO.seoTech.robots).not.toContain('noindex');
+    });
+  });
+
+  // ─── ABOUT_PAGE_FAQ AI 爬蟲說明準確性 ────────────────────────────────────────
+  // AI crawler 清單持續擴充，FAQ 不應硬編碼數量。
+  describe('ABOUT_PAGE_FAQ AI 爬蟲支援說明準確性', () => {
+    const aiAnswer = ABOUT_PAGE_FAQ.find((q) => q.question.includes('AI 搜尋引擎'));
+
+    it('應存在「AI 搜尋引擎」相關問答', () => {
+      expect(aiAnswer).toBeDefined();
+    });
+
+    it('答案不應硬編碼 AI 爬蟲數量', () => {
+      // 具體數字容易隨 robots.txt SSOT 漂移。
+      expect(aiAnswer!.answer).not.toMatch(/\d+\s*種(?:以上)?主流?\s*AI\s*爬蟲/);
+    });
+
+    it('答案應明確表達支援多種主流 AI 爬蟲', () => {
+      expect(aiAnswer!.answer).toContain('多種主流 AI 爬蟲');
+    });
+
+    it('答案應涵蓋 GPTBot、ClaudeBot、PerplexityBot 等主要 AI 爬蟲名稱', () => {
+      expect(aiAnswer!.answer).toContain('GPTBot');
+      expect(aiAnswer!.answer).toContain('ClaudeBot');
+      expect(aiAnswer!.answer).toContain('PerplexityBot');
+    });
+  });
+
+  // ─── ABOUT_PAGE_FAQ 結構化資料說明準確性 ──────────────────────────────────────
+  // 幣別頁（全 34 頁）實際部署 FAQPage 與 ExchangeRateSpecification JSON-LD。
+  // ABOUT_PAGE_FAQ 必須反映現況，避免 AI 引擎引用到過時資訊。
+  describe('ABOUT_PAGE_FAQ 結構化資料說明準確性', () => {
+    const schemaAnswer = ABOUT_PAGE_FAQ.find((q) => q.question.includes('結構化資料'));
+
+    it('應存在「結構化資料」相關問答', () => {
+      expect(schemaAnswer).toBeDefined();
+    });
+
+    it('答案應明確提及 FAQPage（幣別頁全面啟用，不應聲稱「不輸出」）', () => {
+      // 34 個幣別頁（17 正向 + 17 反向）均透過 buildFaqPageJsonLd() 輸出 FAQPage JSON-LD。
+      // 若 AI 引擎引用此 FAQ 答案，不得誤導使用者認為站內無 FAQPage schema。
+      expect(schemaAnswer!.answer).toContain('FAQPage');
+    });
+
+    it('答案不得聲稱「不額外輸出 FAQPage」（與實際幣別頁部署矛盾）', () => {
+      expect(schemaAnswer!.answer).not.toContain('不額外輸出 FAQPage');
+    });
+
+    it('答案應明確提及 ExchangeRateSpecification（幣別頁核心 YMYL schema）', () => {
+      // 每個幣對頁注入即時匯率，ExchangeRateSpecification 是金融頁面的關鍵信號。
+      expect(schemaAnswer!.answer).toContain('ExchangeRateSpecification');
+    });
+
+    it('答案不應把金融頁 FAQPage 描述成保證取得 rich result', () => {
+      expect(schemaAnswer!.answer).toContain('機器理解與 AI 摘要');
     });
   });
 });
