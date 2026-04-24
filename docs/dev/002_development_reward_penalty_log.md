@@ -1,8 +1,65 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-24T16:06:37+08:00
-> **當前總分**: 1208（初始分: 100）
+> **最後更新**: 2026-04-24T16:41:53+08:00
+> **當前總分**: 1209（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: github-actions-node24-transition-maintenance
+date: 2026-04-24
+title: 收斂 GitHub Actions Node 20 淘汰過渡，官方 actions 升至 Node 24 相容 major
+score: +1
+type: improvement
+content_type: maintenance
+scope: ci, github-actions, workflows
+topics: [ci, github-actions, node24, workflow-maintenance, release]
+keywords:
+[checkout-v6, setup-node-v6, dependency-review-action, node20-deprecation, force-javascript-actions-to-node24]
+aliases: [GitHub Actions Node24 過渡維護, workflow node20 淘汰升級]
+related_entries:
+[ci-data-branch-post-push-refresh-hardening, github-actions-schedule-drift-monitor-001]
+summary: GitHub 在 workflow annotation 中提示 JavaScript actions 的 Node 20 runtime 已進入淘汰過渡期。比對官方 changelog、release notes 與各 action 的 `action.yml` 後，確認 `actions/checkout@v6`、`actions/setup-node@v6` 已切到 `node24`，但 `actions/dependency-review-action@v4.9.0` 仍停留在 `node20`。本次將 repo 內所有 `checkout` / `setup-node` 升到 Node 24 相容 major，並只在 `dependency-review` job 保留 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'` 作為過渡控制，同步把判定原則寫回 `AGENTS.md` 與 `CLAUDE.md`，避免之後再次靠 warning 臨時補洞。
+root_cause:
+
+- 多支 workflow 仍固定使用 `actions/checkout@v4` 與 `actions/setup-node@v4`，雖然部分 job 已加上 Node 24 force flag，但版本本身仍停留在 Node 20 世代。
+- `dependency-review-action` 最新穩定版仍為 `v4.x`，其 `action.yml` 的 `runs.using` 仍是 `node20`，若不做例外處理，之後仍會持續出現淘汰警告。
+- repo 缺少一條明確規則說明何時該直接升官方 action major、何時該保留 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` 作為過渡控制。
+  impact:
+
+- CI / Release / SEO workflows 會持續出現 Node 20 deprecation warning，增加維運噪音，也降低真正異常的可辨識度。
+- 若官方 runner 預設切到 Node 24 前仍未收斂版本策略，未來 workflow 可能在無計畫的情況下同時承受升版與 runtime 切換風險。
+  actions:
+
+- 將 `.github/workflows/*.yml` 內所有 `actions/checkout@v4` 升為 `actions/checkout@v6`。
+- 將 repo 內所有 `actions/setup-node@v4` 升為 `actions/setup-node@v6`，保留既有 `node-version: '24'` 與 cache 設定。
+- 在 `ci.yml` 的 `dependency-review` job 補上 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'`，並以註解標記其為上游尚未釋出 Node 24 版前的過渡控制。
+- 更新 `AGENTS.md`、`CLAUDE.md`，新增 GitHub Actions Node 20 淘汰過渡規則：先查官方 `runs.using`，官方 action 優先升 major，force flag 僅保留在仍依賴 Node 20 action 的 job。
+  prevention:
+
+- 後續遇到 GitHub Actions runtime 淘汰時，需先查官方 changelog / release notes / `action.yml`，不得只依 annotation 猜測。
+- `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` 應縮到最小範圍，只作為上游尚未提供 Node 24 版時的短期控制，不得變成長期預設。
+- 官方 action 一旦有 Node 24 相容 major，優先直接升版，避免 workflow 長期維持舊 major 再靠環境變數硬撐。
+  verification:
+
+- `gh api 'repos/actions/checkout/contents/action.yml?ref=v6' --jq '.content' | base64 --decode | tail -n 6`
+- `gh api 'repos/actions/setup-node/contents/action.yml?ref=v6' --jq '.content' | base64 --decode | tail -n 8`
+- `gh api 'repos/actions/dependency-review-action/contents/action.yml?ref=v4.9.0' --jq '.content' | base64 --decode | tail -n 8`
+- `ruby -e "require 'yaml'; Dir['.github/workflows/*.yml'].each { |f| YAML.load_file(f) }; puts 'YAML OK'"`
+- `git diff --check`
+  references:
+
+- .github/workflows/ci.yml
+- .github/workflows/release.yml
+- .github/workflows/seo-audit.yml
+- .github/workflows/seo-production.yml
+- .github/workflows/update-latest-rates.yml
+- AGENTS.md
+- CLAUDE.md
+- https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+- https://github.com/actions/checkout/releases/tag/v6.0.2
+- https://github.com/actions/setup-node/releases/tag/v6.4.0
+- https://github.com/actions/dependency-review-action/releases/tag/v4.9.0
 
 ---
 
