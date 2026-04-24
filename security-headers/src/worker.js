@@ -49,6 +49,8 @@ const CLOUDFLARE_INSIGHTS_SCRIPT = 'https://static.cloudflareinsights.com';
 const APP_HOST = 'app.haotool.org';
 const ROOT_SITE_HOSTS = new Set(['haotool.org', 'www.haotool.org']);
 const HAOTOOL_ROOT_HTML_PATHS = new Set(['/', '/projects/', '/about/', '/contact/']);
+const RATEWISE_MARKDOWN_MIRROR = '/ratewise/index.md';
+const CONTENT_SIGNAL_HEADER = 'Content-Signal: ai-train=no, search=yes, ai-input=no';
 
 const PUBLIC_SHARE_ASSET_PATHS = new Set([
 	'/og-image.png',
@@ -110,6 +112,43 @@ function detectAiCrawler(userAgent) {
 /** 檢測是否為 LLM 文件或 Markdown 鏡像。 */
 function isLlmDocPath(pathname) {
 	return LLM_DOC_PATHS.has(pathname) || pathname.endsWith('.md');
+}
+
+function isMarkdownRequest(request) {
+	const accept = request.headers.get('accept') || '';
+	return accept.includes('text/markdown') || accept.includes('text/x-markdown');
+}
+
+function isRatewiseHomepage(pathname) {
+	return pathname === '/ratewise/' || pathname === '/ratewise';
+}
+
+function shouldServeRatewiseMarkdown(request, pathname, isRootHost) {
+	if (request.method !== 'GET') {
+		return false;
+	}
+
+	if (!isMarkdownRequest(request)) {
+		return false;
+	}
+
+	return isRatewiseHomepage(pathname) || (isRootHost && pathname === '/');
+}
+
+function shouldInjectRatewiseMarkdownLink(pathname, isRootHost) {
+	return isRatewiseHomepage(pathname) || (isRootHost && pathname === '/');
+}
+
+function addLinkHeader(response, headerValue) {
+	const existing = response.headers.get('Link');
+	if (existing == null || existing === '') {
+		response.headers.set('Link', headerValue);
+		return;
+	}
+
+	if (!existing.includes(headerValue)) {
+		response.headers.set('Link', `${existing}, ${headerValue}`);
+	}
 }
 
 function createHtmlProfile({
@@ -422,7 +461,11 @@ export default {
 		const workerStart = performance.now();
 		const url = new URL(request.url);
 		const isRatewisePath = url.pathname.startsWith('/ratewise/');
+		const isRootSiteHost = ROOT_SITE_HOSTS.has(url.host);
 		const isStaticAsset = isStaticAssetPath(url.pathname);
+		const isRatewiseHomeMarkdown = shouldServeRatewiseMarkdown(request, url.pathname, isRootSiteHost);
+		const markdownMirrorUrl = new URL(RATEWISE_MARKDOWN_MIRROR, request.url);
+		const upstreamUrl = isRatewiseHomeMarkdown ? new URL(RATEWISE_MARKDOWN_MIRROR, request.url) : url;
 
 		if (url.host === WWW_HOST) {
 			url.host = CANONICAL_ROOT_HOST;
@@ -445,7 +488,17 @@ export default {
 		}
 
 		const fetchStart = performance.now();
-		const upstreamResponse = await fetch(request);
+		const upstreamRequestInit = {
+			method: request.method,
+			headers: request.headers,
+			redirect: request.redirect,
+		};
+
+		if (request.method !== 'GET' && request.method !== 'HEAD' && request.body != null) {
+			upstreamRequestInit.body = request.body;
+		}
+
+		const upstreamResponse = await fetch(upstreamUrl.toString(), upstreamRequestInit);
 		const fetchDuration = performance.now() - fetchStart;
 
 		const contentType = upstreamResponse.headers.get('content-type') || '';
@@ -474,7 +527,19 @@ export default {
 			response.headers.delete('Content-Length');
 			applyHtmlSecurityHeaders(response, url, profile, nonce);
 		} else {
-			response = new Response(upstreamResponse.body, upstreamResponse);
+			if (isRootSiteHost && url.pathname === '/robots.txt') {
+				const robotsText = await upstreamResponse.text();
+				const robotsWithSignal = robotsText.includes('Content-Signal:') ? robotsText : `${robotsText}\n${CONTENT_SIGNAL_HEADER}\n`;
+
+				response = new Response(robotsWithSignal, {
+					status: upstreamResponse.status,
+					headers: upstreamResponse.headers,
+				});
+				response.headers.set('Content-Type', 'text/plain; charset=utf-8');
+				response.headers.delete('Content-Length');
+			} else {
+				response = new Response(upstreamResponse.body, upstreamResponse);
+			}
 
 			if (isImmutableHashedAsset(url.pathname)) {
 				response.headers.set('Cache-Control', 'max-age=31536000, public, immutable');
@@ -509,6 +574,10 @@ export default {
 			response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 		} else if (isRatewisePath && !isHTML) {
 			response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+		}
+
+		if (shouldInjectRatewiseMarkdownLink(url.pathname, isRootSiteHost) && isHTML) {
+			addLinkHeader(response, `<${markdownMirrorUrl.toString()}>; rel="alternate"; type="text/markdown"`);
 		}
 
 		stripOriginLeakHeaders(response);

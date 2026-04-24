@@ -85,6 +85,8 @@
 # RFC 8288 Web Linking；AI bot 可解析 HTTP Link 標頭，無需解析 <head><link>
 /ratewise/faq/
   Link: </ratewise/faq.md>; rel="alternate"; type="text/markdown"
+/ratewise/
+  Link: </ratewise/index.md>; rel="alternate"; type="text/markdown"
 /ratewise/about/
   Link: </ratewise/about.md>; rel="alternate"; type="text/markdown"
 /ratewise/privacy/

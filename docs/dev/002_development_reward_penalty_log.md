@@ -4644,3 +4644,96 @@ root_cause:
 
 - scripts/generate-sitemap-2025.mjs
 - apps/ratewise/src/config/seo-lastmod-policy.ts
+
+---
+
+id: ratewise-seo-ssot-external-audit-2026-04-25
+date: 2026-04-25
+title: 補齊 SEO_MASTER_SSOT 的 2026-04-25 外部檢測快照與權威入口對照
+score: 0
+type: improvement
+content_type: docs
+scope: ratewise, seo, docs
+topics: [seo, ssot, audit, authority-sites, ratewise]
+keywords:
+[SEO_MASTER_SSOT.md, 12.6.4, verify-production-seo.mjs, verify-structured-data.mjs, seo-full-audit.mjs, 外部檢測]
+aliases: [SEO SSOT 外部監測快照補充]
+related_entries:
+[ratewise-about-faq-seo-truthfulness-refresh]
+summary: 補充 `apps/ratewise` SEO SSOT 的外部檢測基線，新增 2026-04-25 外部檢測快照、權威來源對照與可重複執行命令，將網站回應狀態與第三方限制做分層紀錄，幫助後續發版快速區分站點退化與工具限制造成的異常。
+root_cause:
+
+- `SEO_MASTER_SSOT.md` 的 12.6 區塊缺少最新一次可追蹤的外部檢測迭代紀錄。
+- 部分外部入口回應改變未明確標記來源類型，容易與站點本體 SEO 退化混淆。
+impact:
+
+- 缺少週期性外部檢測對照時，後續 SEO 問題定位容易誤判為站內 regression。
+- 監控節點若未區分工具限制與站點異常，PR 風險分流容易失準。
+actions:
+
+- 在 `docs/SEO_MASTER_SSOT.md` 新增 2026-04-25 外部檢測快照與可重複執行命令。
+- 將 `node scripts/seo-full-audit.mjs` 明確保留為本地 `dist` 稽核，不再附不存在的 `--base-url` 參數。
+- 補齊公開端檢查、結構化資料檢查與權威入口對照說明。
+prevention:
+
+- 每次發版後固定更新 SSOT 的外部檢測區，並保留站點退化與第三方限制兩條判定路徑。
+- 任何證據命令寫入文件前都必須再次核對實際 CLI 介面。
+verification:
+
+- `node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+- `node scripts/verify-structured-data.mjs`
+- `node scripts/seo-full-audit.mjs`
+- `git diff -- docs/SEO_MASTER_SSOT.md`
+references:
+
+- docs/SEO_MASTER_SSOT.md
+- scripts/verify-production-seo.mjs
+- scripts/verify-structured-data.mjs
+- scripts/seo-full-audit.mjs
+
+---
+
+id: ratewise-seo-ssot-external-audit-2026-04-25-revision
+date: 2026-04-25
+title: 追加 46 入口外部檢測快照與 IsItAgentReady 實測結果，更新 SSOT 觀測節點
+score: 0
+type: improvement
+content_type: docs
+scope: ratewise, seo, audit
+topics: [seo, ssot, audit, external-check, ratewise]
+keywords:
+[seo-master-ssot, 12.6.4, 12.6.6, 12.6.7, 46-endpoints]
+aliases: [ratewise SEO SSOT 2026-04-25 update]
+related_entries:
+[ratewise-seo-ssot-external-audit-2026-04-25]
+summary: 同步 `docs/SEO_MASTER_SSOT.md` 的 12.5 / 12.6 區為 2026-04-25 生產基線，補齊 46 筆外部入口快照、`curl` 與 IsItAgentReady API 實測摘要，並修正檢測結果分佈紀錄。
+root_cause:
+
+- 先前 SSOT 監測節點缺少最新 46 入口抽樣與 prod/root 差異證據。
+impact:
+
+- SEO 監測工作流可能把第三方工具行為誤判為站點退化，影響排查順序與優先級。
+actions:
+
+- 將 `12.5`、`12.6` 區塊更新為 2026-04-25 版本，加入 `12.6.4`、`12.6.5`、`12.6.6`、`12.6.7`。
+- 補上 `root`、`/ratewise/`、`/ratewise/index.md` 的 `curl` 實測與 IsItAgentReady API 回應紀錄。
+- 將檢測命令與可重複快照腳本整理為固定流程，並同步相關實際修正到 ratewise / Cloudflare 設定文件。
+prevention:
+
+- 每週固定更新 SSOT 外部監測快照，並以站點退化與第三方限制分流維運。
+- 12.6 統計只保留實際測試可追溯入口，避免用過期網址混淆趨勢。
+verification:
+
+- `curl -I https://app.haotool.org/`
+- `curl -I https://app.haotool.org/ratewise/`
+- `curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/json' -d '{"url":"https://app.haotool.org/ratewise/"}'`
+- `node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+- `node scripts/verify-structured-data.mjs`
+references:
+
+- docs/SEO_MASTER_SSOT.md
+- scripts/verify-production-seo.mjs
+- scripts/verify-structured-data.mjs
+- apps/ratewise/public/_headers
+- apps/ratewise/public/robots.txt
+- security-headers/src/worker.js

@@ -9,6 +9,7 @@
  *   /ratewise/privacy.md    ↔ /ratewise/privacy/
  *   /ratewise/guide.md      ↔ /ratewise/guide/
  *   /ratewise/open-data.md  ↔ /ratewise/open-data/
+ *   /ratewise/index.md      ↔ /ratewise/
  *
  * Q&A 內容透過 regex 從 seo-metadata.ts 直接擷取，避免 drift；
  * 頁面章節文案因 JSX 硬編碼而於本檔維護，變更時需與對應 .tsx 同步。
@@ -162,6 +163,41 @@ function writeMirror(slug, content) {
   const out = resolve(ROOT, `public/${slug}.md`);
   writeFileSync(out, content.trimEnd() + '\n');
   console.log(`  ✅ public/${slug}.md`);
+}
+
+function buildHomeMd() {
+  const faq = extractFaqArray('HOMEPAGE_FAQ_CONTENT');
+  const description = extractPageDescription('HOMEPAGE_SEO');
+  return `# ${APP_INFO.name}
+
+> ${description}
+
+- Canonical: ${BASE_URL}
+- Version: v${VERSION}
+
+## 以台灣銀行牌告匯率做實務換算
+
+- 顯示臺灣銀行現金匯率與即期匯率的買入 / 賣出價。
+- 5 分鐘自動同步最新牌告匯率，主畫面可直接查即時換算結果。
+- 無廣告、無登入，提供收藏貨幣、歷史趨勢與多幣別模式。
+
+## 首頁核心功能
+
+1. 單幣別換算與多幣別同時換算。
+2. 計算機快速金額按鈕與下拉同步更新。
+3. PWA 離線快取，可暫時在無網路下查看既有匯率。
+
+## 常見問題
+
+${formatFaq(faq)}
+
+## 對應內容入口
+
+- ${APP_INFO.shortName} 常見問題：${BASE_URL}faq/
+- 使用指南：${BASE_URL}guide/
+- 開放資料 API：${BASE_URL}open-data/
+
+${COMMON_FOOTER}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -416,4 +452,5 @@ writeMirror('about', buildAboutMd());
 writeMirror('privacy', buildPrivacyMd());
 writeMirror('guide', buildGuideMd());
 writeMirror('open-data', buildOpenDataMd());
-console.log('✅ Markdown 鏡像生成完成（5 檔）');
+writeMirror('index', buildHomeMd());
+console.log('✅ Markdown 鏡像生成完成（6 檔）');
