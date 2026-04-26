@@ -1,8 +1,58 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-26T23:52:00+08:00
-> **當前總分**: 1214（初始分: 100）
+> **最後更新**: 2026-04-27T00:29:32+08:00
+> **當前總分**: 1215（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: pr275-codex-followup-csp-lastmod-fix-2026-04-27
+date: 2026-04-27
+title: 修正 PR275 的 root-host CSP 誤分類與 shallow sitemap lastmod 漂移
+score: +1
+type: regression
+content_type: troubleshooting
+scope: security-headers, ratewise, sitemap, github-pr
+topics: [security-headers, csp, sitemap, lastmod, shallow-checkout, pr-review]
+keywords:
+[PR275, split-meow, app.haotool.org, fallback CSP, actions-checkout, lastmod]
+aliases: [PR275 Codex follow-up fixes]
+related_entries:
+[pr281-sitemap-shallow-checkout-hardening, pr281-codex-review-cluster-fix-2026-04-26]
+summary: 依 PR275 新增的 Codex review threads，收斂兩個實際風險：其一是 `APP_HOST` 被直接納入 root HTML profile 判斷，導致 `/split-meow/` 之類未定義專屬 profile 的 app 路徑失去 fallback `img-src https:`；其二是 sitemap generator 在 shallow checkout 環境過早 early-return，讓沒有顯式 fallback 的內容頁退回 build-time `lastmod`。本次將 root-host 行為與 root HTML profile 拆開，並為 3 個 authority guide 頁補齊 semantic fallback date，同時把 shallow early-return 改為只對「有穩定 fallback」的路徑生效。
+root_cause:
+
+- `security-headers/src/worker.js` 將 `app.haotool.org` 與 apex root host 共用同一組 HTML profile 判斷，誤把未知 app 路徑套成 `HAOTOOL_HTML_PROFILE`。
+- `generate-sitemap-2025.mjs` 在 shallow repository 直接回傳 fallback date，但 `getFallbackLastModDate()` 對未定義 policy 的內容頁會退回 `new Date()`。
+- `seo-lastmod-policy.ts` 先前未為 `/sell-rate-vs-mid-rate/`、`/cash-vs-spot-rate/`、`/card-rate-guide/` 建立穩定 fallback。
+  impact:
+
+- `/split-meow/` 等未定義專屬 profile 的 app 路徑可能失去 fallback `img-src https:`，阻斷 legacy 遠端頭像。
+- GitHub Actions `actions/checkout@v6` 的 shallow checkout 會讓部分 sitemap `<lastmod>` 漂成每次 build 當日，削弱 Google 對 `lastmod` 的可信度。
+  actions:
+
+- 新增 `ROOT_SITE_HTML_HOSTS`，僅 apex / www 使用 `HAOTOOL_HTML_PROFILE`；`APP_HOST` 仍保留 root `/robots.txt` 與 Markdown mirror 判斷。
+- 為 3 個 authority guide 頁補上 `fallbackDate` 與對應 lastmod policy 測試。
+- 將 shallow checkout 的 early-return 改為 `hasStableFallbackLastMod(path)` 條件式判斷，避免無穩定 fallback 的路徑直接退回 current time。
+- 補上 worker integration test，驗證 `/split-meow/` 仍保留 fallback CSP 的 `img-src https:` 與 `unpkg.com`。
+  prevention:
+
+- host 集合若同時承擔「rewrite 行為」與「HTML profile 分流」，必須拆開建模，避免一個 app host 變更影響其他子應用 CSP。
+- 任何 sitemap `lastmod` 的 shallow CI fallback 必須先確認該路徑有明確 semantic date，否則不能直接回退到 current time。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/securityHeadersWorker.test.ts src/config/__tests__/seo-lastmod-policy.test.ts`
+- `pnpm typecheck`
+- `pnpm test`
+- `pnpm build:ratewise`
+- `gh pr checks 275 --watch`
+  references:
+
+- security-headers/src/worker.js
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
+- scripts/generate-sitemap-2025.mjs
+- apps/ratewise/src/config/seo-lastmod-policy.ts
+- apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
 
 ---
 

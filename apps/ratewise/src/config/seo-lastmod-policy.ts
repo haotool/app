@@ -30,6 +30,24 @@ export const CONTENT_LASTMOD_POLICY = {
     lastmodFiles: ['apps/ratewise/src/pages/Guide.tsx'],
     fallbackDate: '2026-04-20',
   },
+  '/sell-rate-vs-mid-rate/': {
+    type: 'authority-guide',
+    contentFiles: ['apps/ratewise/src/pages/SellRateVsMidRate.tsx'],
+    lastmodFiles: ['apps/ratewise/src/pages/SellRateVsMidRate.tsx'],
+    fallbackDate: '2026-04-20',
+  },
+  '/cash-vs-spot-rate/': {
+    type: 'authority-guide',
+    contentFiles: ['apps/ratewise/src/pages/CashVsSpotRate.tsx'],
+    lastmodFiles: ['apps/ratewise/src/pages/CashVsSpotRate.tsx'],
+    fallbackDate: '2026-04-20',
+  },
+  '/card-rate-guide/': {
+    type: 'authority-guide',
+    contentFiles: ['apps/ratewise/src/pages/CardRateGuide.tsx'],
+    lastmodFiles: ['apps/ratewise/src/pages/CardRateGuide.tsx'],
+    fallbackDate: '2026-04-20',
+  },
   '/open-data/': {
     type: 'developer-doc',
     contentFiles: [

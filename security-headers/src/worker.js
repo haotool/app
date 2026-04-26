@@ -48,6 +48,7 @@ const CLOUDFLARE_INSIGHTS_SCRIPT = 'https://static.cloudflareinsights.com';
 
 const APP_HOST = 'app.haotool.org';
 const ROOT_SITE_HOSTS = new Set(['haotool.org', 'www.haotool.org', APP_HOST]);
+const ROOT_SITE_HTML_HOSTS = new Set(['haotool.org', 'www.haotool.org']);
 const HAOTOOL_ROOT_HTML_PATHS = new Set(['/', '/projects/', '/about/', '/contact/']);
 const RATEWISE_MARKDOWN_MIRROR = '/ratewise/index.md';
 const CONTENT_SIGNAL_HEADER = 'Content-Signal: ai-train=no, search=yes, ai-input=no';
@@ -262,7 +263,7 @@ function resolveHtmlProfile(url) {
 	if (url.pathname.startsWith('/quake-school/')) {
 		return QUAKE_SCHOOL_HTML_PROFILE;
 	}
-	if (ROOT_SITE_HOSTS.has(url.host)) {
+	if (ROOT_SITE_HTML_HOSTS.has(url.host)) {
 		return HAOTOOL_HTML_PROFILE;
 	}
 	if (url.host === APP_HOST && HAOTOOL_ROOT_HTML_PATHS.has(normalizeHtmlPath(url.pathname))) {

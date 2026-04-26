@@ -196,6 +196,22 @@ describe('security-headers worker', () => {
     expect(csp).toContain('https://fonts.googleapis.com');
   });
 
+  it('未定義專屬 profile 的 app 路徑應保留 fallback CSP，避免 legacy 遠端頭像被誤擋', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        createHtmlResponse('<!doctype html><html><head></head><body></body></html>'),
+      );
+
+    const response = await worker.fetch(new Request('https://app.haotool.org/split-meow/'));
+    const csp = response.headers.get('content-security-policy') ?? '';
+
+    expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+    expect(csp).toContain('img-src');
+    expect(csp).toContain('https:');
+    expect(csp).toContain('https://unpkg.com');
+  });
+
   it('公開分享圖開放 CORS，所有 Vite hashed asset 一律 immutable', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response('image-bytes', {

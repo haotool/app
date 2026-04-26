@@ -276,7 +276,7 @@ REVERSE_CURRENCY_SEO_PATHS.forEach((path) => {
  * @returns {Date} 文件修改時間
  */
 function getLastModDate(path) {
-  if (IS_SHALLOW_REPOSITORY) {
+  if (IS_SHALLOW_REPOSITORY && hasStableFallbackLastMod(path)) {
     return getFallbackLastModDate(path);
   }
 
@@ -359,6 +359,14 @@ function getFallbackLastModDate(path) {
     return new Date(`${RATE_PAGE_LASTMOD_POLICY.fallbackDate}T00:00:00.000Z`);
   }
   return new Date();
+}
+
+function hasStableFallbackLastMod(path) {
+  const lookupPath = resolveLookupPath(path);
+  if (CONTENT_LASTMOD_POLICY[lookupPath]?.fallbackDate) {
+    return true;
+  }
+  return isRateContentPath(path) && Boolean(RATE_PAGE_LASTMOD_POLICY.fallbackDate);
 }
 
 /**
@@ -501,6 +509,7 @@ export {
   getDependencyFilesForPath,
   getFallbackLastModDate,
   getLastModDate,
+  hasStableFallbackLastMod,
   isRateContentPath,
   resolveLookupPath,
 };
