@@ -1,8 +1,53 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-27T01:13:00+08:00
-> **當前總分**: 1217（初始分: 100）
+> **最後更新**: 2026-04-27T02:56:05+08:00
+> **當前總分**: 1218（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: cicd-security-scan-lastmod-fallback-fix
+date: 2026-04-27
+title: 修復 Security Scan 在 Docker build 內因缺 git 歷史誤觸發 sitemap lastmod gate
+score: +1
+type: fix
+content_type: ci
+scope: ci, docker, sitemap, ratewise
+topics: [github-actions, docker-build, sitemap-lastmod, security-scan, ratewise]
+keywords:
+[security-scan, docker-build, shallow-history, lastmod-diversity, semantic-fallback]
+aliases: [Security Scan lastmod fallback fix, Docker build sitemap gate 修復]
+related_entries:
+[ratewise-sitemap-lastmod-policy, ratewise-seo-prepush-truthfulness-gate-fix]
+summary: 最近 `main` 上多個 CI run 不是壞在 Trivy 本身，而是 `Security Scan` 先用 root `Dockerfile` 建 image 時，容器內缺少完整 git 歷史，讓 `generate-sitemap-2025.mjs` 對 rate pages 退回到不具語義的單日時間戳，最後被 `lastmod` 多樣性 gate 擋下。本次改為在 git commit 日期不可得時，優先使用 content policy fallback 與 `seo-rate-examples.ts` 內可驗證的匯率日期，避免安全掃描因 SEO 驗證前置條件不足而誤 fail。
+root_cause:
+
+- `Security Scan` 的 Docker build context 受 `.dockerignore` 控制，不保證攜帶可用的 git 歷史。
+- 舊版 `generate-sitemap-2025.mjs` 在拿不到 git commit 日期後，對匯率頁仍回退到 checkout mtime，導致容器內 249 個 URL 很容易壓成同一天。
+- `lastmod` 多樣性 gate 本意是保護 SEO 真實性，但在缺歷史的非正式部署場景中，少了語義化 fallback 就會誤判。
+  impact:
+
+- `CI` workflow 的 `Security Scan` job 在 `Build Docker image for scan` 階段失敗，即使 `Quality Checks`、`E2E Tests`、`Lighthouse CI` 都已通過，整體 `CI` 仍為紅燈。
+- 合併到 `main` 的 PR 會看起來像部署失敗，實際上是容器內 sitemap gate 無法取得可驗證日期來源。
+  actions:
+
+- 在 `scripts/generate-sitemap-2025.mjs` 新增 rate content fallback 解析：優先讀取 `seo-rate-examples.ts` 的 `匯率時間`，其次使用 `生成日期`。
+- 將 sitemap generator 的語義 fallback 順序改為：git commit 日期 → policy / rate content fallback → 檔案 mtime。
+- 在 `seo-lastmod-policy.test.ts` 補上對 `/usd-twd/` 與金額頁 fallback 日期的直接測試，鎖住容器 / 無 git 歷史場景。
+  prevention:
+
+- 任何依賴 git history 的 SEO / build 驗證，都必須有「無 git 歷史」時的可驗證 fallback，不能退回 current time 或 checkout mtime 當作真實內容日期。
+- 安全掃描 workflow 若只為建 image 掃描，不能被與正式部署等級相同、但前置條件不同的時間戳來源假設誤擋。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts`
+- `pnpm build:ratewise`
+- GitHub Actions `CI` / `Security Scan`
+  references:
+
+- scripts/generate-sitemap-2025.mjs
+- apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
+- apps/ratewise/src/config/generated/seo-rate-examples.ts
 
 ---
 

@@ -19,7 +19,7 @@
  * BDD 階段: Stage 2 GREEN (實作階段)
  */
 
-import { statSync, writeFileSync, existsSync } from 'fs';
+import { statSync, writeFileSync, existsSync, readFileSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
@@ -69,6 +69,7 @@ const IS_SHALLOW_REPOSITORY = (() => {
   });
   return result.status === 0 && result.stdout.trim() === 'true';
 })();
+let cachedRatePageFallbackDate = undefined;
 
 /**
  * 每個公開 URL 對應一組「重大內容依賴」。
@@ -302,6 +303,9 @@ function getLastModDate(path) {
   );
   if (gitDate) return gitDate;
 
+  const semanticFallbackDate = getFallbackLastModDate(path);
+  if (semanticFallbackDate) return semanticFallbackDate;
+
   const mtimes = existingFiles.map((file) => statSync(resolve(REPO_ROOT, file)).mtime.getTime());
   return new Date(Math.max(...mtimes));
 }
@@ -319,6 +323,38 @@ function getGitCommitDate(files) {
 
   const gitDate = new Date(gitTimestamp);
   return Number.isNaN(gitDate.getTime()) ? null : gitDate;
+}
+
+function parseDateInTaipei(dateText) {
+  if (!dateText) return null;
+  const normalized = dateText.replace(/\//g, '-');
+  const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const [, year, month, day] = match;
+  return new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+}
+
+function getRatePageFallbackDate() {
+  if (cachedRatePageFallbackDate !== undefined) {
+    return cachedRatePageFallbackDate;
+  }
+
+  const rateSourcePath = resolve(REPO_ROOT, RATE_PAGE_LASTMOD_POLICY.source);
+  if (!existsSync(rateSourcePath)) {
+    cachedRatePageFallbackDate = null;
+    return cachedRatePageFallbackDate;
+  }
+
+  const sourceContent = readFileSync(rateSourcePath, 'utf-8');
+  const rateTimestampMatch = sourceContent.match(/匯率時間：(\d{4}\/\d{2}\/\d{2})/);
+  const generatedDateMatch = sourceContent.match(/生成日期：(\d{4}-\d{2}-\d{2})/);
+
+  cachedRatePageFallbackDate =
+    parseDateInTaipei(rateTimestampMatch?.[1] ?? '') ??
+    parseDateInTaipei(generatedDateMatch?.[1] ?? '') ??
+    null;
+
+  return cachedRatePageFallbackDate;
 }
 
 function resolveLookupPath(path) {
@@ -355,10 +391,10 @@ function getFallbackLastModDate(path) {
   const lookupPath = resolveLookupPath(path);
   const policyFallback = CONTENT_LASTMOD_POLICY[lookupPath]?.fallbackDate;
   if (policyFallback) return new Date(`${policyFallback}T00:00:00.000Z`);
-  if (isRateContentPath(path) && RATE_PAGE_LASTMOD_POLICY.fallbackDate) {
-    return new Date(`${RATE_PAGE_LASTMOD_POLICY.fallbackDate}T00:00:00.000Z`);
+  if (isRateContentPath(path)) {
+    return getRatePageFallbackDate();
   }
-  return new Date();
+  return null;
 }
 
 function hasStableFallbackLastMod(path) {
@@ -366,7 +402,7 @@ function hasStableFallbackLastMod(path) {
   if (CONTENT_LASTMOD_POLICY[lookupPath]?.fallbackDate) {
     return true;
   }
-  return isRateContentPath(path) && Boolean(RATE_PAGE_LASTMOD_POLICY.fallbackDate);
+  return isRateContentPath(path) && Boolean(getRatePageFallbackDate());
 }
 
 /**
