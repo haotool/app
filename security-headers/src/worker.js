@@ -488,9 +488,15 @@ export default {
 		}
 
 		const fetchStart = performance.now();
+		const shouldRewriteRobotsTxt = isRootSiteHost && url.pathname === '/robots.txt';
+		const upstreamHeaders = new globalThis.Headers(request.headers);
+		if (shouldRewriteRobotsTxt) {
+			upstreamHeaders.delete('if-none-match');
+			upstreamHeaders.delete('if-modified-since');
+		}
 		const upstreamRequestInit = {
 			method: request.method,
-			headers: request.headers,
+			headers: upstreamHeaders,
 			redirect: request.redirect,
 		};
 
@@ -527,7 +533,7 @@ export default {
 			response.headers.delete('Content-Length');
 			applyHtmlSecurityHeaders(response, url, profile, nonce);
 		} else {
-			if (isRootSiteHost && url.pathname === '/robots.txt') {
+			if (shouldRewriteRobotsTxt) {
 				const robotsText = await upstreamResponse.text();
 				const robotsWithSignal = robotsText.includes('Content-Signal:') ? robotsText : `${robotsText}\n${CONTENT_SIGNAL_HEADER}\n`;
 
@@ -537,6 +543,8 @@ export default {
 				});
 				response.headers.set('Content-Type', 'text/plain; charset=utf-8');
 				response.headers.delete('Content-Length');
+				response.headers.delete('ETag');
+				response.headers.delete('Last-Modified');
 			} else {
 				response = new Response(upstreamResponse.body, upstreamResponse);
 			}

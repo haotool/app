@@ -250,6 +250,40 @@ describe('security-headers worker', () => {
     expect(response.headers.get('cross-origin-resource-policy')).toBe('same-origin');
   });
 
+  it('改寫 root robots.txt 時必須移除條件式驗證 header 與過期 validators', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response('User-agent: *\nAllow: /\n', {
+        status: 200,
+        headers: {
+          'content-type': 'text/plain; charset=utf-8',
+          etag: 'W/"origin-robots"',
+          'last-modified': 'Sat, 25 Apr 2026 10:08:07 GMT',
+          'cache-control': 'public, max-age=0, must-revalidate',
+        },
+      }),
+    );
+    globalThis.fetch = fetchSpy;
+
+    const response = await worker.fetch(
+      new Request('https://app.haotool.org/robots.txt', {
+        headers: {
+          'If-None-Match': 'W/"origin-robots"',
+          'If-Modified-Since': 'Sat, 25 Apr 2026 10:08:07 GMT',
+        },
+      }),
+    );
+
+    const init = fetchSpy.mock.calls[0]?.[1] as RequestInit | undefined;
+    const forwardedHeaders = new Headers(init?.headers);
+
+    expect(forwardedHeaders.get('if-none-match')).toBeNull();
+    expect(forwardedHeaders.get('if-modified-since')).toBeNull();
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('Content-Signal: ai-train=no, search=yes, ai-input=no');
+    expect(response.headers.get('etag')).toBeNull();
+    expect(response.headers.get('last-modified')).toBeNull();
+  });
+
   it('Wrangler route 必須覆蓋整個 app.haotool.org', () => {
     const wranglerConfig = readFileSync(
       resolve(process.cwd(), '../../security-headers/wrangler.jsonc'),

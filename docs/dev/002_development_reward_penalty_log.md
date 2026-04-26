@@ -382,6 +382,46 @@ root_cause:
 
 ---
 
+id: robots-txt-validator-truthfulness-fix-2026-04-26
+date: 2026-04-26
+title: 修正 Worker 改寫 robots.txt 後仍沿用上游 validators 的快取語義漂移
+score: 0
+type: fix
+content_type: infra
+scope: security-headers, robots, cache
+topics: [cloudflare, robots, http-cache, etag, worker]
+keywords:
+[robots.txt, ETag, If-None-Match, Last-Modified, 304, Content-Signal]
+aliases: [robots validator truthfulness fix]
+related_entries:
+[ratewise-root-host-ai-discovery-alignment-2026-04-25]
+summary: 依 PR275 新增的 Codex review，修正 `security-headers` worker 在改寫 root `/robots.txt` 後仍沿用 upstream `ETag` / `Last-Modified` 與條件式 revalidation 的問題。現在 worker 會先移除 `If-None-Match` / `If-Modified-Since` 再抓 upstream，並在輸出改寫後的 robots 內容時清掉過期 validators，避免 `304` 與改寫 body 不一致。
+root_cause:
+
+- worker 會在 root `/robots.txt` 尾端附加 `Content-Signal`，但先前直接沿用 upstream request headers 與 upstream validators。
+- 一旦 crawler 帶 `If-None-Match` / `If-Modified-Since`，就可能拿到對 upstream body 成立、但對 worker 改寫 body 不成立的驗證語義。
+  impact:
+
+- 條件式請求可能錯誤命中 `304`，或在 `200` 響應上保留已不對應內容的 `ETag` / `Last-Modified`，拖慢 robots 更新被搜尋引擎看見的速度。
+  actions:
+
+- 對 root `/robots.txt` upstream fetch 改用複製後的 headers，主動移除 `If-None-Match` 與 `If-Modified-Since`。
+- 在改寫輸出後刪除 `ETag` 與 `Last-Modified`，避免將 upstream validators 套到已變更 body。
+- 新增整合測試，驗證 forwarded headers 與 response validators 都符合預期。
+  prevention:
+
+- 後續凡是 worker 會改寫 response body 的路徑，都不得直接保留 upstream validators 而不重新計算或移除。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/securityHeadersWorker.test.ts`
+- `git diff -- security-headers/src/worker.js apps/ratewise/src/__tests__/securityHeadersWorker.test.ts`
+  references:
+
+- security-headers/src/worker.js
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
+
+---
+
 id: github-actions-node24-transition-maintenance
 date: 2026-04-24
 title: 收斂 GitHub Actions Node 20 淘汰過渡，官方 actions 升至 Node 24 相容 major
