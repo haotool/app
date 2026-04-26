@@ -124,7 +124,7 @@ function isRatewiseHomepage(pathname) {
 	return pathname === '/ratewise/' || pathname === '/ratewise';
 }
 
-function shouldServeRatewiseMarkdown(request, pathname, isRootHost) {
+function shouldServeRatewiseMarkdown(request, pathname) {
 	if (request.method !== 'GET') {
 		return false;
 	}
@@ -133,11 +133,11 @@ function shouldServeRatewiseMarkdown(request, pathname, isRootHost) {
 		return false;
 	}
 
-	return isRatewiseHomepage(pathname) || (isRootHost && pathname === '/');
+	return isRatewiseHomepage(pathname);
 }
 
-function shouldInjectRatewiseMarkdownLink(pathname, isRootHost) {
-	return isRatewiseHomepage(pathname) || (isRootHost && pathname === '/');
+function shouldInjectRatewiseMarkdownLink(pathname) {
+	return isRatewiseHomepage(pathname);
 }
 
 function addLinkHeader(response, headerValue) {
@@ -464,7 +464,7 @@ export default {
 		const isRatewisePath = url.pathname.startsWith('/ratewise/');
 		const isRootSiteHost = ROOT_SITE_HOSTS.has(url.host);
 		const isStaticAsset = isStaticAssetPath(url.pathname);
-		const isRatewiseHomeMarkdown = shouldServeRatewiseMarkdown(request, url.pathname, isRootSiteHost);
+		const isRatewiseHomeMarkdown = shouldServeRatewiseMarkdown(request, url.pathname);
 		const markdownMirrorUrl = new URL(RATEWISE_MARKDOWN_MIRROR, request.url);
 		const upstreamUrl = isRatewiseHomeMarkdown ? new URL(RATEWISE_MARKDOWN_MIRROR, request.url) : url;
 
@@ -585,7 +585,7 @@ export default {
 			response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 		}
 
-		if (shouldInjectRatewiseMarkdownLink(url.pathname, isRootSiteHost) && isHTML) {
+		if (shouldInjectRatewiseMarkdownLink(url.pathname) && isHTML) {
 			addLinkHeader(response, `<${markdownMirrorUrl.toString()}>; rel="alternate"; type="text/markdown"`);
 		}
 

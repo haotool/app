@@ -212,6 +212,54 @@ describe('security-headers worker', () => {
     expect(csp).toContain('https://unpkg.com');
   });
 
+  it('root host 的首頁不得誤映射到 ratewise markdown mirror', async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(
+        createHtmlResponse('<!doctype html><html><head></head><body>haotool root</body></html>'),
+      );
+    globalThis.fetch = fetchSpy;
+
+    const response = await worker.fetch(
+      new Request('https://app.haotool.org/', {
+        headers: {
+          accept: 'text/markdown',
+        },
+      }),
+    );
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://app.haotool.org/',
+      expect.objectContaining({ method: 'GET' }),
+    );
+    expect(response.headers.get('link')).toBeNull();
+  });
+
+  it('ratewise 首頁接受 markdown negotiation 時應導向對應 mirror', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response('# HaoRate markdown mirror', {
+        headers: {
+          'content-type': 'text/markdown; charset=utf-8',
+        },
+      }),
+    );
+    globalThis.fetch = fetchSpy;
+
+    const response = await worker.fetch(
+      new Request('https://app.haotool.org/ratewise/', {
+        headers: {
+          accept: 'text/markdown',
+        },
+      }),
+    );
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://app.haotool.org/ratewise/index.md',
+      expect.objectContaining({ method: 'GET' }),
+    );
+    expect(response.headers.get('content-type')).toContain('text/markdown');
+  });
+
   it('公開分享圖開放 CORS，所有 Vite hashed asset 一律 immutable', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response('image-bytes', {

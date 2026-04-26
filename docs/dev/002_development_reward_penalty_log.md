@@ -1,8 +1,48 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-27T00:29:32+08:00
-> **當前總分**: 1215（初始分: 100）
+> **最後更新**: 2026-04-27T01:09:00+08:00
+> **當前總分**: 1216（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: pr275-markdown-mirror-root-mapping-fix-2026-04-27
+date: 2026-04-27
+title: 修正 PR275 的 root markdown mirror 誤映射
+score: +1
+type: regression
+content_type: troubleshooting
+scope: security-headers, markdown-mirror, github-pr
+topics: [security-headers, markdown, root-host, pr-review]
+keywords:
+[PR275, markdown mirror, app.haotool.org, ratewise index.md, alternate link]
+aliases: [PR275 markdown mirror fix]
+related_entries:
+[pr275-codex-followup-csp-lastmod-fix-2026-04-27]
+summary: 依 PR275 新增的 Codex review，再修正一個 root-host markdown negotiation 漂移：Worker 先前把所有 root host 的 `/` 都映射到 `/ratewise/index.md`，導致 `app.haotool.org/` 的 markdown negotiation 與 alternate `Link` 語義都被錯掛到 RateWise。此次將映射與 alternate link 條件縮回真正的 RateWise 首頁 `/ratewise/`，並補上 root host 不得誤映射的整合測試。
+root_cause:
+
+- `shouldServeRatewiseMarkdown()` 與 `shouldInjectRatewiseMarkdownLink()` 先前以 `isRootHost && pathname === '/'` 當條件，將所有 root host 首頁都視為 RateWise 首頁。
+- `app.haotool.org/` 與 `haotool.org/` 的首頁語義其實屬於 haotool portfolio，而不是 RateWise。
+  impact:
+
+- crawler 以 `Accept: text/markdown` 存取 root `/` 時，可能拿到與 HTML 主體不一致的 RateWise mirror。
+- root HTML 可能被注入錯誤的 `Link: </ratewise/index.md>; rel="alternate"; type="text/markdown"`。
+  actions:
+
+- 將 markdown negotiation 與 alternate link 條件縮回 `isRatewiseHomepage(pathname)`。
+- 新增 worker 測試，驗證 `https://app.haotool.org/` 不會被改寫到 `/ratewise/index.md`。
+- 新增 worker 測試，驗證 `https://app.haotool.org/ratewise/` 仍會導向正確 markdown mirror。
+  prevention:
+
+- 之後任何 mirror / alternate link 映射都必須綁定「頁面語義所屬 app 路徑」，不能僅依 host 是否屬 root host 判斷。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/securityHeadersWorker.test.ts`
+  references:
+
+- security-headers/src/worker.js
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
 
 ---
 
