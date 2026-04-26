@@ -138,6 +138,50 @@ root_cause:
 
 - scripts/generate-sitemap-2025.mjs
 - apps/ratewise/src/config/seo-lastmod-policy.ts
+
+---
+
+id: pr281-sitemap-shallow-checkout-hardening
+date: 2026-04-26
+title: 修正 PR281 在 GitHub Actions shallow checkout 下的 sitemap lastmod 失真
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: ratewise, seo, ci
+topics: [ratewise, seo, sitemap, github-actions, shallow-checkout]
+keywords:
+[lastmod-diversity, shallow-repository, actions-checkout, fallbackDate, ssot]
+aliases: [PR281 sitemap shallow checkout fix, lastmod CI shallow clone 修復]
+related_entries:
+[ratewise-sitemap-lastmod-diversity-followup]
+summary: PR281 在本地與 pre-push 全綠，但 GitHub Actions 的 `actions/checkout` 預設 `fetch-depth: 1`，導致 `git log -1 -- <files>` 幾乎所有頁面都只看到同一個 merge commit 日期，進而讓 sitemap `lastmod` 在 CI 中退化成單一日期並被 truthfulness gate 擋下。本次將 generator 補上 shallow repository 偵測，於淺層 clone 環境直接改走 semantic fallback date；同時補齊 content pages 與 rate pages 的 fallbackDate，讓 CI 在缺乏完整 git 歷史時仍輸出可驗證且具多樣性的 `lastmod`。
+root_cause:
+
+- `generate-sitemap-2025.mjs` 的 `lastmod` 主要依賴 git commit 日期，而 GitHub Actions PR workflow 預設 shallow checkout。
+- depth=1 的 merge ref 會把多數檔案的最近 commit 壓成同一天，使 `lastmod` 多樣性檢查在 CI 失去辨識力。
+- 原本 only-local 的 git-history 假設沒有明確處理 shallow repository 這個部署環境差異。
+  impact:
+
+- PR281 的 `SEO 2025 Standards Audit` 在 CI 失敗，即使本地與 pre-push 都已通過。
+- 若不處理，sitemap 會在不同執行環境輸出不同 truth surface，削弱 SSOT 與可維護性。
+  actions:
+
+- 在 `generate-sitemap-2025.mjs` 新增 shallow repository 偵測，淺層 clone 時直接改用 semantic fallback date。
+- 在 `seo-lastmod-policy.ts` 重新分配首頁、FAQ、About、Guide、Open Data 的 fallbackDate。
+- 為 `RATE_PAGE_LASTMOD_POLICY` 補上 fallbackDate，確保幣別頁與金額頁在 CI 也有穩定日期來源。
+  prevention:
+
+- 任何依賴 git history 的 build artifact，都必須先檢查 CI checkout 是否為 shallow clone。
+- `lastmod` 真相來源必須同時覆蓋完整 repo 與淺層 clone 兩種執行模型，否則不能視為 production-safe。
+  verification:
+
+- `node scripts/generate-sitemap-2025.mjs`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts src/seo-best-practices.test.ts`
+- `gh pr checks 281 --watch`
+  references:
+
+- scripts/generate-sitemap-2025.mjs
+- apps/ratewise/src/config/seo-lastmod-policy.ts
 - apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
 - apps/ratewise/src/seo-best-practices.test.ts
 

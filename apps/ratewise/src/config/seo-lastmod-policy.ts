@@ -10,25 +10,25 @@ export const CONTENT_LASTMOD_POLICY = {
       'apps/ratewise/src/features/ratewise/RateWise.tsx',
       'apps/ratewise/src/components/HomepageSEOSection.tsx',
     ],
-    fallbackDate: '2026-04-26',
+    fallbackDate: '2026-04-24',
   },
   '/faq/': {
     type: 'editorial',
     contentFiles: ['apps/ratewise/src/pages/FAQ.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
     lastmodFiles: ['apps/ratewise/src/pages/FAQ.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
-    fallbackDate: '2026-04-23',
+    fallbackDate: '2026-04-21',
   },
   '/about/': {
     type: 'trust',
     contentFiles: ['apps/ratewise/src/pages/About.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
     lastmodFiles: ['apps/ratewise/src/pages/About.tsx'],
-    fallbackDate: '2026-04-23',
+    fallbackDate: '2026-04-20',
   },
   '/guide/': {
     type: 'editorial',
     contentFiles: ['apps/ratewise/src/pages/Guide.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
     lastmodFiles: ['apps/ratewise/src/pages/Guide.tsx'],
-    fallbackDate: '2026-04-23',
+    fallbackDate: '2026-04-20',
   },
   '/open-data/': {
     type: 'developer-doc',
@@ -41,7 +41,7 @@ export const CONTENT_LASTMOD_POLICY = {
       'apps/ratewise/src/pages/OpenData.tsx',
       'apps/ratewise/src/config/api-endpoints.ts',
     ],
-    fallbackDate: '2026-04-23',
+    fallbackDate: '2026-03-31',
   },
   '/seo-tech/': {
     type: 'public-disclosure',
@@ -63,4 +63,5 @@ export const RATE_PAGE_LASTMOD_POLICY = {
   source: 'apps/ratewise/src/config/generated/seo-rate-examples.ts',
   appliesTo: ['currency', 'amount'] as const,
   reason: 'visible rate example + ExchangeRateSpecification schema',
+  fallbackDate: '2026-04-26',
 } as const;
