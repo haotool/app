@@ -1,8 +1,136 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-26T23:52:00+08:00
-> **當前總分**: 1214（初始分: 100）
+> **最後更新**: 2026-04-27T01:13:00+08:00
+> **當前總分**: 1217（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: pr275-brand-literal-gate-followup-2026-04-27
+date: 2026-04-27
+title: 修正 PR275 worker 測試的品牌字面值 gate
+score: +1
+type: correction
+content_type: troubleshooting
+scope: ratewise, tests, ssot, github-pr
+topics: [ssot, brand-literal, test-fixture, pr-review]
+keywords:
+[PR275, HaoRate literal, build-scripts test, securityHeadersWorker]
+aliases: [PR275 brand literal gate fix]
+related_entries:
+[pr275-markdown-mirror-root-mapping-fix-2026-04-27]
+summary: 修正 PR275 新增 worker 測試在 markdown fixture 內直接寫入 `HaoRate` 字面值，導致 repo 既有的品牌 SSOT gate 於 pre-push 階段失敗。此次只將 fixture 改為中性字串，不變更任何產品邏輯或對外輸出。
+root_cause:
+
+- `apps/ratewise/src/config/__tests__/build-scripts.test.ts` 會阻擋新增的品牌字面值，要求改由 SSOT 提供。
+- 新增測試時使用 `# HaoRate markdown mirror` 作為 fixture 文字，觸發品牌字面值檢查。
+  impact:
+
+- `pnpm test` 在 pre-push 階段失敗，導致無法推送修正後的 PR275 分支。
+  actions:
+
+- 將 markdown fixture 改為 `# ratewise markdown mirror` 的中性字串。
+- 保留原本新增的 root host / ratewise markdown negotiation 測試邏輯不變。
+  prevention:
+
+- 後續新增測試 fixture 時，若不是在驗證品牌文案本身，應優先使用中性字串，避免誤踩品牌 SSOT gate。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts src/__tests__/securityHeadersWorker.test.ts`
+  references:
+
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
+- apps/ratewise/src/config/**tests**/build-scripts.test.ts
+
+---
+
+id: pr275-markdown-mirror-root-mapping-fix-2026-04-27
+date: 2026-04-27
+title: 修正 PR275 的 root markdown mirror 誤映射
+score: +1
+type: regression
+content_type: troubleshooting
+scope: security-headers, markdown-mirror, github-pr
+topics: [security-headers, markdown, root-host, pr-review]
+keywords:
+[PR275, markdown mirror, app.haotool.org, ratewise index.md, alternate link]
+aliases: [PR275 markdown mirror fix]
+related_entries:
+[pr275-codex-followup-csp-lastmod-fix-2026-04-27]
+summary: 依 PR275 新增的 Codex review，再修正一個 root-host markdown negotiation 漂移：Worker 先前把所有 root host 的 `/` 都映射到 `/ratewise/index.md`，導致 `app.haotool.org/` 的 markdown negotiation 與 alternate `Link` 語義都被錯掛到 RateWise。此次將映射與 alternate link 條件縮回真正的 RateWise 首頁 `/ratewise/`，並補上 root host 不得誤映射的整合測試。
+root_cause:
+
+- `shouldServeRatewiseMarkdown()` 與 `shouldInjectRatewiseMarkdownLink()` 先前以 `isRootHost && pathname === '/'` 當條件，將所有 root host 首頁都視為 RateWise 首頁。
+- `app.haotool.org/` 與 `haotool.org/` 的首頁語義其實屬於 haotool portfolio，而不是 RateWise。
+  impact:
+
+- crawler 以 `Accept: text/markdown` 存取 root `/` 時，可能拿到與 HTML 主體不一致的 RateWise mirror。
+- root HTML 可能被注入錯誤的 `Link: </ratewise/index.md>; rel="alternate"; type="text/markdown"`。
+  actions:
+
+- 將 markdown negotiation 與 alternate link 條件縮回 `isRatewiseHomepage(pathname)`。
+- 新增 worker 測試，驗證 `https://app.haotool.org/` 不會被改寫到 `/ratewise/index.md`。
+- 新增 worker 測試，驗證 `https://app.haotool.org/ratewise/` 仍會導向正確 markdown mirror。
+  prevention:
+
+- 之後任何 mirror / alternate link 映射都必須綁定「頁面語義所屬 app 路徑」，不能僅依 host 是否屬 root host 判斷。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/securityHeadersWorker.test.ts`
+  references:
+
+- security-headers/src/worker.js
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
+
+---
+
+id: pr275-codex-followup-csp-lastmod-fix-2026-04-27
+date: 2026-04-27
+title: 修正 PR275 的 root-host CSP 誤分類與 shallow sitemap lastmod 漂移
+score: +1
+type: regression
+content_type: troubleshooting
+scope: security-headers, ratewise, sitemap, github-pr
+topics: [security-headers, csp, sitemap, lastmod, shallow-checkout, pr-review]
+keywords:
+[PR275, split-meow, app.haotool.org, fallback CSP, actions-checkout, lastmod]
+aliases: [PR275 Codex follow-up fixes]
+related_entries:
+[pr281-sitemap-shallow-checkout-hardening, pr281-codex-review-cluster-fix-2026-04-26]
+summary: 依 PR275 新增的 Codex review threads，收斂兩個實際風險：其一是 `APP_HOST` 被直接納入 root HTML profile 判斷，導致 `/split-meow/` 之類未定義專屬 profile 的 app 路徑失去 fallback `img-src https:`；其二是 sitemap generator 在 shallow checkout 環境過早 early-return，讓沒有顯式 fallback 的內容頁退回 build-time `lastmod`。本次將 root-host 行為與 root HTML profile 拆開，並為 3 個 authority guide 頁補齊 semantic fallback date，同時把 shallow early-return 改為只對「有穩定 fallback」的路徑生效。
+root_cause:
+
+- `security-headers/src/worker.js` 將 `app.haotool.org` 與 apex root host 共用同一組 HTML profile 判斷，誤把未知 app 路徑套成 `HAOTOOL_HTML_PROFILE`。
+- `generate-sitemap-2025.mjs` 在 shallow repository 直接回傳 fallback date，但 `getFallbackLastModDate()` 對未定義 policy 的內容頁會退回 `new Date()`。
+- `seo-lastmod-policy.ts` 先前未為 `/sell-rate-vs-mid-rate/`、`/cash-vs-spot-rate/`、`/card-rate-guide/` 建立穩定 fallback。
+  impact:
+
+- `/split-meow/` 等未定義專屬 profile 的 app 路徑可能失去 fallback `img-src https:`，阻斷 legacy 遠端頭像。
+- GitHub Actions `actions/checkout@v6` 的 shallow checkout 會讓部分 sitemap `<lastmod>` 漂成每次 build 當日，削弱 Google 對 `lastmod` 的可信度。
+  actions:
+
+- 新增 `ROOT_SITE_HTML_HOSTS`，僅 apex / www 使用 `HAOTOOL_HTML_PROFILE`；`APP_HOST` 仍保留 root `/robots.txt` 與 Markdown mirror 判斷。
+- 為 3 個 authority guide 頁補上 `fallbackDate` 與對應 lastmod policy 測試。
+- 將 shallow checkout 的 early-return 改為 `hasStableFallbackLastMod(path)` 條件式判斷，避免無穩定 fallback 的路徑直接退回 current time。
+- 補上 worker integration test，驗證 `/split-meow/` 仍保留 fallback CSP 的 `img-src https:` 與 `unpkg.com`。
+  prevention:
+
+- host 集合若同時承擔「rewrite 行為」與「HTML profile 分流」，必須拆開建模，避免一個 app host 變更影響其他子應用 CSP。
+- 任何 sitemap `lastmod` 的 shallow CI fallback 必須先確認該路徑有明確 semantic date，否則不能直接回退到 current time。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/securityHeadersWorker.test.ts src/config/__tests__/seo-lastmod-policy.test.ts`
+- `pnpm typecheck`
+- `pnpm test`
+- `pnpm build:ratewise`
+- `gh pr checks 275 --watch`
+  references:
+
+- security-headers/src/worker.js
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
+- scripts/generate-sitemap-2025.mjs
+- apps/ratewise/src/config/seo-lastmod-policy.ts
+- apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
 
 ---
 
@@ -134,6 +262,50 @@ root_cause:
 
 - `pnpm --filter @app/ratewise build`
 - `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts src/seo-best-practices.test.ts`
+  references:
+
+- scripts/generate-sitemap-2025.mjs
+- apps/ratewise/src/config/seo-lastmod-policy.ts
+
+---
+
+id: pr281-sitemap-shallow-checkout-hardening
+date: 2026-04-26
+title: 修正 PR281 在 GitHub Actions shallow checkout 下的 sitemap lastmod 失真
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: ratewise, seo, ci
+topics: [ratewise, seo, sitemap, github-actions, shallow-checkout]
+keywords:
+[lastmod-diversity, shallow-repository, actions-checkout, fallbackDate, ssot]
+aliases: [PR281 sitemap shallow checkout fix, lastmod CI shallow clone 修復]
+related_entries:
+[ratewise-sitemap-lastmod-diversity-followup]
+summary: PR281 在本地與 pre-push 全綠，但 GitHub Actions 的 `actions/checkout` 預設 `fetch-depth: 1`，導致 `git log -1 -- <files>` 幾乎所有頁面都只看到同一個 merge commit 日期，進而讓 sitemap `lastmod` 在 CI 中退化成單一日期並被 truthfulness gate 擋下。本次將 generator 補上 shallow repository 偵測，於淺層 clone 環境直接改走 semantic fallback date；同時補齊 content pages 與 rate pages 的 fallbackDate，讓 CI 在缺乏完整 git 歷史時仍輸出可驗證且具多樣性的 `lastmod`。
+root_cause:
+
+- `generate-sitemap-2025.mjs` 的 `lastmod` 主要依賴 git commit 日期，而 GitHub Actions PR workflow 預設 shallow checkout。
+- depth=1 的 merge ref 會把多數檔案的最近 commit 壓成同一天，使 `lastmod` 多樣性檢查在 CI 失去辨識力。
+- 原本 only-local 的 git-history 假設沒有明確處理 shallow repository 這個部署環境差異。
+  impact:
+
+- PR281 的 `SEO 2025 Standards Audit` 在 CI 失敗，即使本地與 pre-push 都已通過。
+- 若不處理，sitemap 會在不同執行環境輸出不同 truth surface，削弱 SSOT 與可維護性。
+  actions:
+
+- 在 `generate-sitemap-2025.mjs` 新增 shallow repository 偵測，淺層 clone 時直接改用 semantic fallback date。
+- 在 `seo-lastmod-policy.ts` 重新分配首頁、FAQ、About、Guide、Open Data 的 fallbackDate。
+- 為 `RATE_PAGE_LASTMOD_POLICY` 補上 fallbackDate，確保幣別頁與金額頁在 CI 也有穩定日期來源。
+  prevention:
+
+- 任何依賴 git history 的 build artifact，都必須先檢查 CI checkout 是否為 shallow clone。
+- `lastmod` 真相來源必須同時覆蓋完整 repo 與淺層 clone 兩種執行模型，否則不能視為 production-safe。
+  verification:
+
+- `node scripts/generate-sitemap-2025.mjs`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts src/seo-best-practices.test.ts`
+- `gh pr checks 281 --watch`
   references:
 
 - scripts/generate-sitemap-2025.mjs
@@ -335,6 +507,85 @@ root_cause:
 - apps/ratewise/src/config/seo-metadata.ts
 - apps/ratewise/src/**tests**/seo-surface-order.test.ts
 - apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
+
+---
+
+id: pr281-regex-end-tag-generalization-fix-2026-04-26
+date: 2026-04-26
+title: 將 SEO 測試 regex 擴充為可匹配 script/style end tag 的廣義變體
+score: 0
+type: fix
+content_type: test
+scope: ratewise, seo, codeql
+topics: [seo, codeql, regex, html-stripping, regression]
+keywords:
+[PR281, PR275, CodeQL, script end tag, style end tag, regex]
+aliases: [regex end tag generalization fix]
+related_entries:
+[pr281-regex-tail-whitespace-fix-2026-04-26]
+summary: 依 PR275 / PR281 合併後續的 CodeQL thread，將兩支 SEO HTML stripping 測試從 `</script\\s*>` / `</style\\s*>` 再擴為 `</script\\b[^>]*>` / `</style\\b[^>]*>`，覆蓋 tag name 後仍帶空白、換行或其他合法尾端片段的變體，避免再次留下腳本或樣式內容。
+root_cause:
+
+- 先前版本雖已處理大小寫與單純尾端空白，但仍假設 end tag 只會是 `</script>` 或 `</script >`。
+- CodeQL 進一步指出像 `</script\\t\\n bar>` 這種較寬鬆的尾端片段仍不會被舊 regex 吃掉。
+  impact:
+
+- 測試中的可見文字抽取仍可能殘留 script/style 內容，讓安全掃描持續報告不完整過濾 regex。
+  actions:
+
+- 將兩支測試的 `script` / `style` stripping regex 改為 `</script\\b[^>]*>` 與 `</style\\b[^>]*>`。
+- 保持其他文字抽取與斷言不變，將修復範圍限縮在 regex 邊界。
+  prevention:
+
+- 之後遇到 HTML stripping 類型的安全提示，直接用 `tagName + \\b + [^>]*>` 的較寬匹配策略，避免逐個變體追補。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/seo-surface-order.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+- `git diff -- apps/ratewise/src/__tests__/seo-surface-order.test.ts apps/ratewise/src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+  references:
+
+- apps/ratewise/src/**tests**/seo-surface-order.test.ts
+- apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
+
+---
+
+id: robots-txt-validator-truthfulness-fix-2026-04-26
+date: 2026-04-26
+title: 修正 Worker 改寫 robots.txt 後仍沿用上游 validators 的快取語義漂移
+score: 0
+type: fix
+content_type: infra
+scope: security-headers, robots, cache
+topics: [cloudflare, robots, http-cache, etag, worker]
+keywords:
+[robots.txt, ETag, If-None-Match, Last-Modified, 304, Content-Signal]
+aliases: [robots validator truthfulness fix]
+related_entries:
+[ratewise-root-host-ai-discovery-alignment-2026-04-25]
+summary: 依 PR275 新增的 Codex review，修正 `security-headers` worker 在改寫 root `/robots.txt` 後仍沿用 upstream `ETag` / `Last-Modified` 與條件式 revalidation 的問題。現在 worker 會先移除 `If-None-Match` / `If-Modified-Since` 再抓 upstream，並在輸出改寫後的 robots 內容時清掉過期 validators，避免 `304` 與改寫 body 不一致。
+root_cause:
+
+- worker 會在 root `/robots.txt` 尾端附加 `Content-Signal`，但先前直接沿用 upstream request headers 與 upstream validators。
+- 一旦 crawler 帶 `If-None-Match` / `If-Modified-Since`，就可能拿到對 upstream body 成立、但對 worker 改寫 body 不成立的驗證語義。
+  impact:
+
+- 條件式請求可能錯誤命中 `304`，或在 `200` 響應上保留已不對應內容的 `ETag` / `Last-Modified`，拖慢 robots 更新被搜尋引擎看見的速度。
+  actions:
+
+- 對 root `/robots.txt` upstream fetch 改用複製後的 headers，主動移除 `If-None-Match` 與 `If-Modified-Since`。
+- 在改寫輸出後刪除 `ETag` 與 `Last-Modified`，避免將 upstream validators 套到已變更 body。
+- 新增整合測試，驗證 forwarded headers 與 response validators 都符合預期。
+  prevention:
+
+- 後續凡是 worker 會改寫 response body 的路徑，都不得直接保留 upstream validators 而不重新計算或移除。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/securityHeadersWorker.test.ts`
+- `git diff -- security-headers/src/worker.js apps/ratewise/src/__tests__/securityHeadersWorker.test.ts`
+  references:
+
+- security-headers/src/worker.js
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
 
 ---
 
@@ -4644,3 +4895,219 @@ root_cause:
 
 - scripts/generate-sitemap-2025.mjs
 - apps/ratewise/src/config/seo-lastmod-policy.ts
+
+---
+
+id: ratewise-seo-ssot-external-audit-2026-04-25
+date: 2026-04-25
+title: 補齊 SEO_MASTER_SSOT 的 2026-04-25 外部檢測快照與權威入口對照
+score: 0
+type: improvement
+content_type: docs
+scope: ratewise, seo, docs
+topics: [seo, ssot, audit, authority-sites, ratewise]
+keywords:
+[SEO_MASTER_SSOT.md, 12.6.4, verify-production-seo.mjs, verify-structured-data.mjs, seo-full-audit.mjs, 外部檢測]
+aliases: [SEO SSOT 外部監測快照補充]
+related_entries:
+[ratewise-about-faq-seo-truthfulness-refresh]
+summary: 補充 `apps/ratewise` SEO SSOT 的外部檢測基線，新增 2026-04-25 外部檢測快照、權威來源對照與可重複執行命令，將網站回應狀態與第三方限制做分層紀錄，幫助後續發版快速區分站點退化與工具限制造成的異常。
+root_cause:
+
+- `SEO_MASTER_SSOT.md` 的 12.6 區塊缺少最新一次可追蹤的外部檢測迭代紀錄。
+- 部分外部入口回應改變未明確標記來源類型，容易與站點本體 SEO 退化混淆。
+  impact:
+
+- 缺少週期性外部檢測對照時，後續 SEO 問題定位容易誤判為站內 regression。
+- 監控節點若未區分工具限制與站點異常，PR 風險分流容易失準。
+  actions:
+
+- 在 `docs/SEO_MASTER_SSOT.md` 新增 2026-04-25 外部檢測快照與可重複執行命令。
+- 將 `node scripts/seo-full-audit.mjs` 明確保留為本地 `dist` 稽核，不再附不存在的 `--base-url` 參數。
+- 補齊公開端檢查、結構化資料檢查與權威入口對照說明。
+  prevention:
+
+- 每次發版後固定更新 SSOT 的外部檢測區，並保留站點退化與第三方限制兩條判定路徑。
+- 任何證據命令寫入文件前都必須再次核對實際 CLI 介面。
+  verification:
+
+- `node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+- `node scripts/verify-structured-data.mjs`
+- `node scripts/seo-full-audit.mjs`
+- `git diff -- docs/SEO_MASTER_SSOT.md`
+  references:
+
+- docs/SEO_MASTER_SSOT.md
+- scripts/verify-production-seo.mjs
+- scripts/verify-structured-data.mjs
+- scripts/seo-full-audit.mjs
+
+---
+
+id: ratewise-seo-ssot-external-audit-2026-04-25-revision
+date: 2026-04-25
+title: 追加 46 入口外部檢測快照與 IsItAgentReady 實測結果，更新 SSOT 觀測節點
+score: 0
+type: improvement
+content_type: docs
+scope: ratewise, seo, audit
+topics: [seo, ssot, audit, external-check, ratewise]
+keywords:
+[seo-master-ssot, 12.6.4, 12.6.6, 12.6.7, 46-endpoints]
+aliases: [ratewise SEO SSOT 2026-04-25 update]
+related_entries:
+[ratewise-seo-ssot-external-audit-2026-04-25]
+summary: 同步 `docs/SEO_MASTER_SSOT.md` 的 12.5 / 12.6 區為 2026-04-25 生產基線，補齊 46 筆外部入口快照、`curl` 與 IsItAgentReady API 實測摘要，並修正檢測結果分佈紀錄。
+root_cause:
+
+- 先前 SSOT 監測節點缺少最新 46 入口抽樣與 prod/root 差異證據。
+  impact:
+
+- SEO 監測工作流可能把第三方工具行為誤判為站點退化，影響排查順序與優先級。
+  actions:
+
+- 將 `12.5`、`12.6` 區塊更新為 2026-04-25 版本，加入 `12.6.4`、`12.6.5`、`12.6.6`、`12.6.7`。
+- 補上 `root`、`/ratewise/`、`/ratewise/index.md` 的 `curl` 實測與 IsItAgentReady API 回應紀錄。
+- 將檢測命令與可重複快照腳本整理為固定流程，並同步相關實際修正到 ratewise / Cloudflare 設定文件。
+  prevention:
+
+- 每週固定更新 SSOT 外部監測快照，並以站點退化與第三方限制分流維運。
+- 12.6 統計只保留實際測試可追溯入口，避免用過期網址混淆趨勢。
+  verification:
+
+- `curl -I https://app.haotool.org/`
+- `curl -I https://app.haotool.org/ratewise/`
+- `curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/json' -d '{"url":"https://app.haotool.org/ratewise/"}'`
+- `node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+- `node scripts/verify-structured-data.mjs`
+  references:
+
+- docs/SEO_MASTER_SSOT.md
+- scripts/verify-production-seo.mjs
+- scripts/verify-structured-data.mjs
+- apps/ratewise/public/\_headers
+- apps/ratewise/public/robots.txt
+- security-headers/src/worker.js
+
+---
+
+id: ratewise-root-host-ai-discovery-alignment-2026-04-25
+date: 2026-04-25
+title: 補齊 app.haotool.org root-host 對齊，統一 `/ratewise/` AI 發現性行為
+score: 0
+type: improvement
+content_type: seo
+scope: ratewise, security-headers, root-host
+topics: [seo, ai-crawlers, markdown-negotiation, root-host, content-signal, link-header]
+keywords:
+[root-host, root-discovery, content-signal, markdown-negotiation, security-headers]
+aliases: [app.haotool.org root SEO 對齊]
+related_entries:
+[ratewise-seo-ssot-external-audit-2026-04-25]
+summary: 將 `security-headers/src/worker.js` 的 root-host 設定補上 `app.haotool.org`，使 root 與 `/ratewise/` 可共用同一套 `Content-Signal`、markdown negotiation 與 `Link` 導向邏輯；待生產部署後需重跑 IsItAgentReady 與 curl 驗證。
+root_cause:
+
+- `ROOT_SITE_HOSTS` 原先未包含 `app.haotool.org`，導致掃描器以 root 起算時看不到 `Content-Signal` 與 `Link` header 相容行為。
+  impact:
+
+- `Level 2` 容易持續被判為未通過，且不利於 `docs/SEO_MASTER_SSOT.md` 生產基線的回歸判斷。
+  actions:
+
+- 調整 `security-headers/src/worker.js`，將 `APP_HOST` 一併加入 `ROOT_SITE_HOSTS`。
+- 在 `docs/SEO_MASTER_SSOT.md` 更新 12.6.6 生產差異，補註待部署重測狀態與驗證步驟。
+  prevention:
+
+- 每次 production 行為修正後，需在 SSOT 12.6 區塊同步待重測註記並指定最小重測命令。
+  verification:
+
+- `node --check security-headers/src/worker.js`
+- `curl -I https://app.haotool.org/`
+- `curl -I -H 'Accept: text/markdown' https://app.haotool.org/`
+- `curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/json' -d '{"url":"https://app.haotool.org/ratewise/"}'`
+  references:
+
+- security-headers/src/worker.js
+- docs/SEO_MASTER_SSOT.md
+- apps/ratewise/public/\_headers
+- apps/ratewise/public/robots.txt
+
+---
+
+id: pr275-codex-command-evidence-fix-2026-04-26
+date: 2026-04-26
+title: 修正 PR275 的 002 稽核證據命令，移除不存在的 seo-full-audit 參數
+score: 0
+type: improvement
+content_type: docs
+scope: ratewise, seo, audit, github-pr
+topics: [seo, ssot, audit, pr-review, reproducibility]
+keywords:
+[PR275, seo-full-audit.mjs, base-url, verification, reproducibility]
+aliases: [PR275 Codex comment resolution]
+related_entries:
+[ratewise-seo-ssot-external-audit-2026-04-25]
+summary: 依 PR275 的 Codex review，將 `docs/dev/002_development_reward_penalty_log.md` 內不可執行的 `node scripts/seo-full-audit.mjs --base-url=...` 證據命令改為實際支援的本地 `dist` 稽核命令，避免把不存在的 CLI 參數寫進可追溯證據鏈。
+root_cause:
+
+- 先前 002 條目沿用了文件草稿中的命令描述，未再次核對 `scripts/seo-full-audit.mjs` 的實際 CLI 介面。
+  impact:
+
+- 後續維護者若直接複製該命令，會得到失敗或誤解性的驗證流程，破壞 002 作為稽核證據的可重現性。
+  actions:
+
+- 更新 002 條目的 `verification` 區塊，移除不存在的 `--base-url` 參數。
+- 保留 `verify-production-seo.mjs` 作為公開端檢查，將 `seo-full-audit.mjs` 明確留在本地 `dist` 稽核用途。
+  prevention:
+
+- 之後凡是將腳本列入文件或 002 證據前，先用 `node <script> --help`、原始碼或實跑確認參數面。
+  verification:
+
+- `node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+- `node scripts/verify-structured-data.mjs`
+- `node scripts/seo-full-audit.mjs`
+- `git diff -- docs/dev/002_development_reward_penalty_log.md`
+  references:
+
+- docs/dev/002_development_reward_penalty_log.md
+- scripts/verify-production-seo.mjs
+- scripts/verify-structured-data.mjs
+- scripts/seo-full-audit.mjs
+
+---
+
+id: pr281-regex-tail-whitespace-fix-2026-04-26
+date: 2026-04-26
+title: 修正 PR281 SEO 測試的 script/style 結尾空白 regex 邊界
+score: 0
+type: improvement
+content_type: test
+scope: ratewise, seo, codeql
+topics: [seo, test, codeql, html-stripping, regression]
+keywords:
+[PR281, CodeQL, script regex, style regex, tail whitespace]
+aliases: [PR281 regex tail whitespace fix]
+related_entries:
+[pr275-codex-command-evidence-fix-2026-04-26]
+summary: 依 PR281 合併後新增的 CodeQL thread，將兩支 dist HTML 可見文字測試的 regex 從大小寫不敏感版本再補強為可接受 `</script >` 與 `</style >` 這類 end-tag 尾端空白，避免 HTML stripping 留下腳本或樣式內容造成假陽性。
+root_cause:
+
+- 先前修正只處理了大寫標籤，未覆蓋 end tag 在 `>` 前含空白的合法 HTML 變體。
+  impact:
+
+- CodeQL 持續將兩支測試標記為不完整過濾 regex，PR281 的安全 / 品質 thread 無法關閉。
+  actions:
+
+- 將 `seo-surface-order.test.ts` 與 `CurrencyLandingPage.truthfulness.test.tsx` 的 `script` / `style` stripping regex 改為 `</script\\s*>` 與 `</style\\s*>`。
+- 保持其餘文字抽取流程不變，避免擴大測試行為面。
+  prevention:
+
+- 後續若再引入 HTML stripping regex，先對大小寫、end-tag 空白與多行內容做靜態安全檢查。
+  verification:
+
+- `pnpm format`
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/seo-surface-order.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+- `git diff -- apps/ratewise/src/__tests__/seo-surface-order.test.ts apps/ratewise/src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+  references:
+
+- apps/ratewise/src/**tests**/seo-surface-order.test.ts
+- apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx

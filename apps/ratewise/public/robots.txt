@@ -15,6 +15,9 @@ Disallow: /ratewise/update-prompt-test/
 Disallow: /ratewise/ui-showcase/
 Disallow: /ratewise/?
 
+# AI內容信號：保留曝光，降低用於模型訓練與預覽的抓取風險。
+Content-Signal: ai-train=no, search=yes, ai-input=no
+
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 
 # --- Tier 1: TRAINING (基礎模型訓練語料) ---
