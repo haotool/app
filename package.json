@@ -44,6 +44,7 @@
     "monitor:schedule-drift": "node scripts/monitor-schedule-drift.mjs",
     "verify:history": "node scripts/verify-history-data.mjs",
     "verify:precache": "node scripts/verify-precache-assets.mjs",
+    "verify:seo-docs": "node apps/ratewise/scripts/verify-doc-ssot-drift.mjs",
     "verify:sitemap": "node scripts/verify-sitemap-ssg.mjs",
     "verify:sitemap-2025": "node scripts/verify-sitemap-2025.mjs",
     "verify:breadcrumb": "node scripts/verify-breadcrumb-schema.mjs",

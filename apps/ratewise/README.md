@@ -1,6 +1,6 @@
 # HaoRate 匯率好工具
 
-> 基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 30+ 種貨幣換算
+> 基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 18 種貨幣換算
 
 [![CI](https://github.com/haotool/app/actions/workflows/ci.yml/badge.svg)](https://github.com/haotool/app/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -12,7 +12,13 @@
 - **收藏管理**：自訂常用貨幣快速存取
 - **趨勢圖表**：30 天歷史匯率走勢
 - **離線使用**：PWA 技術支援離線存取
-- **極致效能**：Lighthouse Performance 95+
+- **極致效能**：Lighthouse 目標 Performance 95+（實際分數以 CI / PageSpeed 報告為準）
+
+<!-- SEO_STATUS_START -->
+
+支援 18 種貨幣；249 個可索引 SEO path；257 個 SSG prerender path。
+
+<!-- SEO_STATUS_END -->
 
 ## 📦 技術棧
 

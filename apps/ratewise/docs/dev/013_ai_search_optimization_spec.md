@@ -1,3 +1,12 @@
+> ⚠️ SUPERSEDED / 歷史文件
+>
+> 本文件保留作為 2025-12-02 當時的 SEO / AEO 規格紀錄。
+> 目前 RateWise SEO SSOT 請以 `docs/SEO_MASTER_SSOT.md`、
+> `apps/ratewise/seo-paths.config.mjs` 與
+> `apps/ratewise/src/config/seo-metadata.ts` 為準。
+>
+> 本文件中的 13 長尾頁、17 URLs、首頁 FAQPage / HowTo 等描述不代表目前實作。
+
 # RateWise AI 搜尋優化規格（重置版）
 
 **版本**: 2.0.0  

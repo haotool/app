@@ -374,184 +374,12 @@
   </head>
   <body class="bg-slate-50">
     <noscript>
-      <div class="noscript-container">
-        <p class="noscript-title">__BRAND_FULL__ - 即時匯率轉換器</p>
-        <p class="noscript-description">
-          __BRAND_SHORT__ 提供即時匯率換算服務,參考臺灣銀行牌告匯率，支援 TWD、USD、JPY、EUR、GBP 等
-          18 種貨幣。 快速、準確、離線可用的 PWA 匯率工具。
-        </p>
-        <h2 class="noscript-subtitle">主要功能</h2>
-        <ul class="noscript-list">
-          <li>即時匯率查詢 - 參考臺灣銀行牌告匯率</li>
-          <li>單幣別換算 - 快速換算兩種貨幣</li>
-          <li>多幣別同時換算 - 一次比較多種貨幣</li>
-          <li>歷史匯率趨勢 - 查看過去匯率變化</li>
-          <li>離線使用 - PWA 支援離線存取</li>
-          <li>支援 18 種主要貨幣</li>
-        </ul>
-        <p class="noscript-footer">
-          ⚠️ 本服務需要瀏覽器啟用 JavaScript 才能顯示即時匯率換算結果。若無法啟用，請改用
-          <a
-            href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
-            rel="noopener noreferrer"
-            class="noscript-link"
-          >
-            臺灣銀行牌告匯率
-          </a>
-          查詢最新資料。
-        </p>
-      </div>
+      <p>
+        __BRAND_FULL__ 需要 JavaScript
+        才能顯示即時匯率換算結果。若無法啟用，請改用臺灣銀行牌告匯率查詢最新資料。
+      </p>
     </noscript>
-    <div id="root">
-      <!-- Modern Skeleton matching SkeletonLoader.tsx -->
-      <div class="skeleton-page" role="status" aria-live="polite">
-        <header class="skeleton-header">
-          <div class="skeleton-header-inner">
-            <div class="skeleton-shimmer sk-rounded" style="height: 1.75rem; width: 1.75rem"></div>
-            <div class="skeleton-shimmer sk-rounded" style="height: 1rem; width: 9rem"></div>
-          </div>
-        </header>
-
-        <main class="skeleton-main">
-          <div class="inner sk-space-y-4">
-            <!-- 來源貨幣輸入骨架 -->
-            <div class="sk-space-y-3">
-              <div class="skeleton-shimmer sk-rounded" style="height: 1rem; width: 5rem"></div>
-              <div
-                class="skeleton-shimmer sk-rounded-2xl"
-                style="height: 3.5rem; width: 100%"
-              ></div>
-              <!-- 快速金額按鈕 -->
-              <div class="sk-flex sk-gap-2" style="overflow: hidden">
-                <div
-                  class="skeleton-shimmer sk-rounded-xl"
-                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-                ></div>
-                <div
-                  class="skeleton-shimmer sk-rounded-xl"
-                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-                ></div>
-                <div
-                  class="skeleton-shimmer sk-rounded-xl"
-                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-                ></div>
-                <div
-                  class="skeleton-shimmer sk-rounded-xl"
-                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-                ></div>
-                <div
-                  class="skeleton-shimmer sk-rounded-xl"
-                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-                ></div>
-              </div>
-            </div>
-
-            <!-- 匯率卡片骨架 -->
-            <div class="skeleton-card sk-space-y-3">
-              <div class="sk-flex sk-justify-center">
-                <div
-                  class="skeleton-shimmer sk-rounded-full"
-                  style="height: 1.75rem; width: 7rem"
-                ></div>
-              </div>
-              <div class="sk-text-center sk-space-y-2 sk-py-3">
-                <div
-                  class="skeleton-shimmer sk-rounded-xl sk-mx-auto"
-                  style="height: 1.75rem; width: 13rem"
-                ></div>
-                <div
-                  class="skeleton-shimmer sk-rounded sk-mx-auto"
-                  style="height: 1rem; width: 10rem"
-                ></div>
-              </div>
-              <div class="skeleton-bg" style="height: 5rem"></div>
-            </div>
-
-            <!-- 交換按鈕骨架 -->
-            <div class="sk-flex sk-justify-center">
-              <div
-                class="skeleton-shimmer-accent sk-rounded-full"
-                style="width: 2.75rem; height: 2.75rem"
-              ></div>
-            </div>
-
-            <!-- 目標貨幣輸入骨架 -->
-            <div class="sk-space-y-3">
-              <div class="skeleton-shimmer sk-rounded" style="height: 1rem; width: 5rem"></div>
-              <div
-                class="skeleton-shimmer-accent sk-rounded-2xl"
-                style="height: 3.5rem; width: 100%"
-              ></div>
-              <!-- 快速金額按鈕 -->
-              <div class="sk-flex sk-gap-2" style="overflow: hidden">
-                <div
-                  class="skeleton-shimmer sk-rounded-xl"
-                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-                ></div>
-                <div
-                  class="skeleton-shimmer sk-rounded-xl"
-                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-                ></div>
-                <div
-                  class="skeleton-shimmer sk-rounded-xl"
-                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-                ></div>
-                <div
-                  class="skeleton-shimmer sk-rounded-xl"
-                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-                ></div>
-                <div
-                  class="skeleton-shimmer sk-rounded-xl"
-                  style="height: 2rem; width: 3.5rem; flex-shrink: 0"
-                ></div>
-              </div>
-            </div>
-
-            <!-- 加入歷史記錄按鈕骨架 -->
-            <div class="skeleton-shimmer-accent sk-rounded-xl" style="height: 3rem"></div>
-
-            <!-- 資料來源骨架 -->
-            <div class="sk-flex sk-justify-center">
-              <div class="skeleton-shimmer sk-rounded" style="height: 0.75rem; width: 10rem"></div>
-            </div>
-          </div>
-          <span class="sr-only">載入匯率資料中...</span>
-        </main>
-
-        <nav class="skeleton-bottom-nav">
-          <div class="skeleton-bottom-nav-inner">
-            <div class="skeleton-nav-item">
-              <div
-                class="skeleton-shimmer sk-rounded"
-                style="height: 1.25rem; width: 1.25rem"
-              ></div>
-              <div class="skeleton-shimmer sk-rounded" style="height: 0.5rem; width: 2rem"></div>
-            </div>
-            <div class="skeleton-nav-item">
-              <div
-                class="skeleton-shimmer sk-rounded"
-                style="height: 1.25rem; width: 1.25rem"
-              ></div>
-              <div class="skeleton-shimmer sk-rounded" style="height: 0.5rem; width: 2rem"></div>
-            </div>
-            <div class="skeleton-nav-item">
-              <div
-                class="skeleton-shimmer sk-rounded"
-                style="height: 1.25rem; width: 1.25rem"
-              ></div>
-              <div class="skeleton-shimmer sk-rounded" style="height: 0.5rem; width: 2rem"></div>
-            </div>
-            <div class="skeleton-nav-item">
-              <div
-                class="skeleton-shimmer sk-rounded"
-                style="height: 1.25rem; width: 1.25rem"
-              ></div>
-              <div class="skeleton-shimmer sk-rounded" style="height: 0.5rem; width: 2rem"></div>
-            </div>
-          </div>
-        </nav>
-      </div>
-    </div>
+    <div id="root"></div>
     <script type="module" data-cfasync="false" src="./src/main.tsx"></script>
     <!-- 冷啟動失效偵測：JS 模組無法載入時顯示多層診斷錯誤 UI。
          診斷層：網路狀態、SW 狀態、快取數量；提供「清除快取並重載」功能。 -->
@@ -580,7 +408,7 @@
         }
         function hasSkeleton() {
           var root = document.getElementById('root');
-          return root ? !!root.querySelector('.skeleton-page') : false;
+          return root ? root.children.length === 0 : false;
         }
         function collectDiagnostics() {
           var lines = ['\u23f0 ' + new Date().toLocaleTimeString('zh-TW')];

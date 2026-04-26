@@ -32,12 +32,12 @@ export function HomepageSEOSection() {
         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary/80">
           {content.eyebrow}
         </p>
-        <h1
-          id="homepage-seo-heading"
+        <h2
+          id="homepage-seo-section-heading"
           className="mt-2 text-[28px] font-black tracking-tight text-text"
         >
           {content.heading}
-        </h1>
+        </h2>
         <p className="mt-3 text-sm leading-6 text-text-muted">{content.intro}</p>
 
         <ul className="mt-4 space-y-2 text-sm leading-6 text-text">

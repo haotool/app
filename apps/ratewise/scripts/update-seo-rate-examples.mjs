@@ -260,6 +260,7 @@ async function main() {
       cashSell,
       marketMid: +marketMid.toFixed(6),
       bankMid: bankMid ? +bankMid.toFixed(6) : null,
+      spotAvailable: !!d.spot?.sell,
     };
   }
 
@@ -339,6 +340,8 @@ async function main() {
     `  marketMid: number;`,
     `  /** 台銀自身現金中間價（(買入+賣出)/2，雙重驗證用，null 代表無現金買入資料） */`,
     `  bankMid: number | null;`,
+    `  /** 台灣銀行是否提供即期賣出匯率（true = 有即期報價；false = 現金專屬幣別） */`,
+    `  spotAvailable: boolean;`,
     `  /** 替代換匯管道（如明洞換匯所），僅特定幣別有此欄位 */`,
     `  alternativeProviders?: AlternativeProvider[];`,
     `}`,
@@ -359,6 +362,7 @@ async function main() {
     lines.push(`    cashSell: ${ex.cashSell},`);
     lines.push(`    marketMid: ${ex.marketMid},`);
     lines.push(`    bankMid: ${ex.bankMid ?? 'null'},`);
+    lines.push(`    spotAvailable: ${ex.spotAvailable},`);
     // KRW：注入明洞換匯所替代管道資料
     if (code === 'KRW') {
       const p = moneyBoxProvider;

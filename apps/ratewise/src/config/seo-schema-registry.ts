@@ -1,0 +1,83 @@
+import {
+  Globe,
+  Code2,
+  Shield,
+  Database,
+  Link2,
+  FileText,
+  Layers,
+  CheckCircle2,
+} from 'lucide-react';
+
+export const SEO_SCHEMA_REGISTRY = [
+  {
+    type: 'Organization',
+    desc: '組織聯絡資訊、社群連結、Logo',
+    pages: '全站',
+    icon: Shield,
+    enabled: true,
+  },
+  {
+    type: 'WebSite',
+    desc: '網站整體識別與 SearchAction 搜尋框',
+    pages: '首頁',
+    icon: Globe,
+    enabled: true,
+  },
+  {
+    type: 'SoftwareApplication',
+    desc: '平台、定價、功能資訊；評分僅在樣本數達門檻且可稽核時輸出',
+    pages: '首頁',
+    icon: Code2,
+    enabled: true,
+  },
+  {
+    type: 'CurrencyConversionService',
+    desc: '首頁匯率換算服務描述',
+    pages: '首頁',
+    icon: Database,
+    enabled: true,
+  },
+  {
+    type: 'ExchangeRateSpecification',
+    desc: '幣對頁 / 金額頁的匯率數值、來源與換算金額',
+    pages: '幣別落地頁 / 金額頁',
+    icon: Database,
+    enabled: true,
+  },
+  {
+    type: 'BreadcrumbList',
+    desc: '頁面麵包屑路徑導覽結構',
+    pages: '內容頁 / 幣別頁 / 金額頁',
+    icon: Link2,
+    enabled: true,
+  },
+  {
+    type: 'FAQPage',
+    desc: '常見問題結構化資料；僅在 /faq/ 輸出',
+    pages: '/faq/',
+    icon: FileText,
+    enabled: true,
+  },
+  {
+    type: 'HowTo',
+    desc: '操作步驟教學；用於 Guide / 指定教學頁',
+    pages: 'Guide / Authority Guide',
+    icon: CheckCircle2,
+    enabled: true,
+  },
+  {
+    type: 'Article',
+    desc: '指南頁文章作者、發布日期、字數',
+    pages: 'Guide / Authority Guide',
+    icon: FileText,
+    enabled: true,
+  },
+  {
+    type: 'ImageObject',
+    desc: 'OG 圖片授權、版權資訊',
+    pages: '全站',
+    icon: Layers,
+    enabled: true,
+  },
+] as const;

@@ -442,7 +442,7 @@ describe('SEO SSOT', () => {
   });
 
   // ─── ABOUT_PAGE_FAQ 結構化資料說明準確性 ──────────────────────────────────────
-  // 幣別頁（全 34 頁）實際部署 FAQPage 與 ExchangeRateSpecification JSON-LD。
+  // FAQPage 僅允許 /faq/ 頁輸出；幣別頁以 ExchangeRateSpecification 為主。
   // ABOUT_PAGE_FAQ 必須反映現況，避免 AI 引擎引用到過時資訊。
   describe('ABOUT_PAGE_FAQ 結構化資料說明準確性', () => {
     const schemaAnswer = ABOUT_PAGE_FAQ.find((q) => q.question.includes('結構化資料'));
@@ -451,23 +451,22 @@ describe('SEO SSOT', () => {
       expect(schemaAnswer).toBeDefined();
     });
 
-    it('答案應明確提及 FAQPage（幣別頁全面啟用，不應聲稱「不輸出」）', () => {
-      // 34 個幣別頁（17 正向 + 17 反向）均透過 buildFaqPageJsonLd() 輸出 FAQPage JSON-LD。
-      // 若 AI 引擎引用此 FAQ 答案，不得誤導使用者認為站內無 FAQPage schema。
+    it('答案應明確提及 FAQPage 僅限 /faq/ 主頁輸出', () => {
       expect(schemaAnswer!.answer).toContain('FAQPage');
+      expect(schemaAnswer!.answer).toContain('/faq/');
     });
 
-    it('答案不得聲稱「不額外輸出 FAQPage」（與實際幣別頁部署矛盾）', () => {
-      expect(schemaAnswer!.answer).not.toContain('不額外輸出 FAQPage');
+    it('答案不應再提及 FinancialService 舊 schema', () => {
+      expect(schemaAnswer!.answer).not.toContain('FinancialService');
     });
 
     it('答案應明確提及 ExchangeRateSpecification（幣別頁核心 YMYL schema）', () => {
-      // 每個幣對頁注入即時匯率，ExchangeRateSpecification 是金融頁面的關鍵信號。
       expect(schemaAnswer!.answer).toContain('ExchangeRateSpecification');
     });
 
-    it('答案不應把金融頁 FAQPage 描述成保證取得 rich result', () => {
-      expect(schemaAnswer!.answer).toContain('機器理解與 AI 摘要');
+    it('答案應表達幣別頁以可稽核匯率數值 schema 為主', () => {
+      expect(schemaAnswer!.answer).toContain('可稽核');
+      expect(schemaAnswer!.answer).toContain('匯率數值');
     });
   });
 });

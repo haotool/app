@@ -5,10 +5,9 @@
  *  - 每個幣別的 faqEntries 應包含幣別特化刷卡/支付提示
  *  - 刷卡匯率 FAQ 不應在所有 17 幣別中完全相同
  *
- * P12: FAQPage JSON-LD 全幣別啟用驗證
- *  - 全部 17 個正向幣對頁均應包含 FAQPage JSON-LD schema（AI/AEO Rich Result 覆蓋）
- *  - 全部 17 個反向幣對頁均應包含 FAQPage JSON-LD schema
- *  - FAQPage schema 應包含 mainEntity 陣列，每題具備 Question/Answer 結構
+ * P12: FAQPage JSON-LD 範圍控制
+ *  - FAQPage JSON-LD 僅允許 /faq/ 主 FAQ 頁輸出
+ *  - 幣別頁保留可讀 FAQ HTML，但不得輸出 FAQPage schema
  */
 
 import { describe, expect, it } from 'vitest';
@@ -114,105 +113,18 @@ describe('P2: FAQ 幣別特化去重（刷卡/支付提示唯一性）', () => {
   });
 });
 
-// ─── P12: FAQPage JSON-LD 全幣別啟用驗證 ────────────────────────────────────────
+// ─── P12: FAQPage JSON-LD 範圍控制 ────────────────────────────────────────────
 
-describe('P12: FAQPage JSON-LD 全幣別啟用（AI/AEO Rich Result 覆蓋）', () => {
-  it.each(ALL_CURRENCIES)('%s 正向頁應包含 FAQPage JSON-LD schema', (code) => {
+describe('P12: FAQPage JSON-LD 僅限主 FAQ 頁輸出', () => {
+  it.each(ALL_CURRENCIES)('%s 正向頁不應包含 FAQPage JSON-LD schema', (code) => {
     const { jsonLd } = getCurrencyLandingPageContent(code);
     const faqPageSchema = jsonLd?.find((schema) => schema['@type'] === 'FAQPage');
-    expect(faqPageSchema).toBeTruthy();
+    expect(faqPageSchema).toBeUndefined();
   });
 
-  it.each(ALL_CURRENCIES)(
-    '%s 正向頁 FAQPage 應有 mainEntity 陣列且每項包含 Question/Answer',
-    (code) => {
-      const { jsonLd } = getCurrencyLandingPageContent(code);
-      const faqPageSchema = jsonLd?.find((schema) => schema['@type'] === 'FAQPage');
-      expect(faqPageSchema).toBeTruthy();
-
-      const mainEntity = faqPageSchema!['mainEntity'] as unknown[];
-      expect(Array.isArray(mainEntity)).toBe(true);
-      expect(mainEntity.length).toBeGreaterThanOrEqual(3);
-
-      // 每個 Question 應有 @type: 'Question' + acceptedAnswer
-      for (const item of mainEntity as {
-        '@type': string;
-        name: string;
-        acceptedAnswer: { '@type': string; text: string };
-      }[]) {
-        expect(item['@type']).toBe('Question');
-        expect(typeof item.name).toBe('string');
-        expect(item.name.length).toBeGreaterThan(0);
-        expect(item.acceptedAnswer?.['@type']).toBe('Answer');
-        expect(typeof item.acceptedAnswer?.text).toBe('string');
-        // 答案文字不應過短（schema.org 建議至少 50 字符）
-        expect(item.acceptedAnswer.text.length).toBeGreaterThanOrEqual(50);
-      }
-    },
-  );
-
-  it.each(ALL_CURRENCIES)('%s 正向頁 FAQPage schema 應有 @context schema.org', (code) => {
-    const { jsonLd } = getCurrencyLandingPageContent(code);
-    const faqPageSchema = jsonLd?.find((schema) => schema['@type'] === 'FAQPage');
-    expect(faqPageSchema?.['@context']).toBe('https://schema.org');
-  });
-
-  it.each(ALL_CURRENCIES)('%s 反向頁應包含 FAQPage JSON-LD schema', (code) => {
+  it.each(ALL_CURRENCIES)('%s 反向頁不應包含 FAQPage JSON-LD schema', (code) => {
     const { jsonLd } = getReverseCurrencyLandingPageContent(code);
     const faqPageSchema = jsonLd?.find((schema) => schema['@type'] === 'FAQPage');
-    expect(faqPageSchema).toBeTruthy();
-  });
-
-  it.each(ALL_CURRENCIES)(
-    '%s 反向頁 FAQPage 應有 mainEntity 陣列且每項包含 Question/Answer',
-    (code) => {
-      const { jsonLd } = getReverseCurrencyLandingPageContent(code);
-      const faqPageSchema = jsonLd?.find((schema) => schema['@type'] === 'FAQPage');
-      expect(faqPageSchema).toBeTruthy();
-
-      const mainEntity = faqPageSchema!['mainEntity'] as unknown[];
-      expect(Array.isArray(mainEntity)).toBe(true);
-      expect(mainEntity.length).toBeGreaterThanOrEqual(3);
-
-      for (const item of mainEntity as {
-        '@type': string;
-        name: string;
-        acceptedAnswer: { '@type': string; text: string };
-      }[]) {
-        expect(item['@type']).toBe('Question');
-        expect(item.name.length).toBeGreaterThan(0);
-        expect(item.acceptedAnswer?.['@type']).toBe('Answer');
-        expect(item.acceptedAnswer.text.length).toBeGreaterThanOrEqual(50);
-      }
-    },
-  );
-
-  it('正向頁 FAQPage schema 答案長度應 ≤ 800 字符（合理 AI 上下文長度）', () => {
-    for (const code of ALL_CURRENCIES) {
-      const { jsonLd } = getCurrencyLandingPageContent(code);
-      const faqPageSchema = jsonLd?.find((schema) => schema['@type'] === 'FAQPage');
-      const mainEntity = faqPageSchema?.['mainEntity'] as
-        | { acceptedAnswer: { text: string } }[]
-        | undefined;
-      if (!mainEntity) continue;
-      for (const item of mainEntity) {
-        // 答案不應過長影響 AI 理解效率（業界建議 300-500，容許動態數據注入後略超）
-        expect(item.acceptedAnswer.text.length).toBeLessThanOrEqual(800);
-      }
-    }
-  });
-
-  it('反向頁 FAQPage schema 答案長度應 ≤ 800 字符（合理 AI 上下文長度）', () => {
-    for (const code of ALL_CURRENCIES) {
-      const { jsonLd } = getReverseCurrencyLandingPageContent(code);
-      const faqPageSchema = jsonLd?.find((schema) => schema['@type'] === 'FAQPage');
-      const mainEntity = faqPageSchema?.['mainEntity'] as
-        | { acceptedAnswer: { text: string } }[]
-        | undefined;
-      if (!mainEntity) continue;
-      for (const item of mainEntity) {
-        expect(item.acceptedAnswer.text.length).toBeLessThanOrEqual(800);
-      }
-    }
+    expect(faqPageSchema).toBeUndefined();
   });
 });

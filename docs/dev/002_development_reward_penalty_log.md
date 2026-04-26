@@ -1,8 +1,340 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-24T16:41:53+08:00
-> **當前總分**: 1209（初始分: 100）
+> **最後更新**: 2026-04-26T23:52:00+08:00
+> **當前總分**: 1214（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: pr281-codex-review-cluster-fix-2026-04-26
+date: 2026-04-26
+title: 修正 PR281 的 Codex 與 CodeQL review threads，收斂 lastmod 與匯差真實性
+score: 0
+type: improvement
+content_type: seo
+scope: ratewise, sitemap, tests, github-pr
+topics: [seo, truthfulness, sitemap, codeql, pr-review]
+keywords:
+[PR281, buildRateDifferenceSentence, lastmodFiles, CodeQL, sitemap.xml]
+aliases: [PR281 Codex review fixes]
+related_entries:
+[ratewise-sitemap-lastmod-diversity-followup-2026-04-26, ratewise-seo-prepush-truthfulness-gate-fix]
+summary: 依 PR281 的 review threads，修正兩個測試檔案的 HTML 過濾 regex 大小寫問題、修正 `TWD→外幣` 匯差公式的單位錯誤、將 sitemap lastmod policy 細化為 `lastmodFiles` 以兼顧 comment 要求與日期多樣性，並確認 `public/sitemap.xml` 回到 4 個不同日期。
+root_cause:
+
+- `buildRateDifferenceSentence()` 原本共用 `amount * rate` 公式，未區分台幣預算換外幣時應比較「可換得外幣量」而非台幣成本。
+- `generate-sitemap-2025.mjs` 為了拉高日期多樣性曾只看 policy 第一個檔案，導致另一側 comment 指出的 shared content update 無法推進 `lastmod`。
+- 測試中的 HTML stripping regex 未設大小寫不敏感，觸發 CodeQL 對 `<SCRIPT>` / `<STYLE>` 的提醒。
+  impact:
+
+- 反向幣別頁可能輸出誤導性的匯差說明，屬金融資訊 truthfulness 風險。
+- sitemap `lastmod` 若過度收斂或過度分散，都會降低對 Google 的語義可信度。
+- CodeQL thread 若不處理，PR 難以視為完全收斂。
+  actions:
+
+- 將 `TWD→外幣` 文案改為比較中間價與台銀賣出價可換得的外幣量，並新增對應測試。
+- 將 content-page `lastmod` 來源切成 `lastmodFiles`，FAQ 保留 `seo-metadata.ts`，其他頁面改用更接近主內容的檔案集合。
+- 將兩個測試檔案的 `<script>` / `<style>` 清理 regex 改為大小寫不敏感版本。
+  prevention:
+
+- 之後若有共享 metadata 變更，不再用「第一個依賴檔」這種隱含規則決定 `lastmod`。
+- 所有公開文字真實性 builder 若有方向差異，需至少補一個方向專屬測試。
+  verification:
+
+- `node scripts/generate-sitemap-2025.mjs`
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/seo-surface-order.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx src/config/__tests__/seo-lastmod-policy.test.ts src/seo-best-practices.test.ts`
+- `node -e "const fs=require('fs');const s=fs.readFileSync('apps/ratewise/public/sitemap.xml','utf8');console.log([...new Set([...s.matchAll(/<lastmod>(\\d{4}-\\d{2}-\\d{2})<\\/lastmod>/g)].map(x=>x[1]))])"`
+  references:
+
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
+- apps/ratewise/src/**tests**/seo-surface-order.test.ts
+- apps/ratewise/src/config/seo-lastmod-policy.ts
+- scripts/generate-sitemap-2025.mjs
+
+---
+
+id: ratewise-seo-prepush-truthfulness-gate-fix
+date: 2026-04-26
+title: 修復 RateWise SEO PR 發佈前的 truthfulness 與 speakable 回歸
+score: +1
+type: regression
+content_type: troubleshooting
+scope: ratewise, seo, structured-data, docs
+topics: [ratewise, seo, truthfulness, speakable, cash-only-currency]
+keywords:
+[seo-prepush, cash-only-schema, speakable-h3, brand-ssot, exchange-rate-truthfulness]
+aliases: [RateWise SEO pre-push 修復, cash-only truthfulness gate fix]
+related_entries:
+[ratewise-auto-rate-display-align-buy-sell]
+summary: 在建立 RateWise SEO draft PR 時，`pre-push` 的 repo 全量測試抓出 3 類回歸：新測試檔硬寫品牌字面值、現金專屬幣別頁仍殘留「即期匯率切換」與相關 FAQ 文案、Authority Guide 的 speakable selector 未涵蓋 FAQ 以 `h3` 渲染的問題標題。本次以最小修補收斂到 `APP_INFO` 與 `seo-metadata.ts`，讓公開內容、schema 與測試矩陣重新對齊 SSOT。
+root_cause:
+
+- 前一輪 SEO 修補主要聚焦 FAQPage / ExchangeRateSpecification 與公開技術揭露頁，未同步把現金專屬幣別的可見文案一起收斂成 conditional branch。
+- 新增的 truthfulness 測試直接寫入品牌字面值，踩到 repo 既有的品牌 SSOT gate。
+- Speakable 回歸測試要求 Authority Guide 的 FAQ 問題標題可被語音朗讀，但頁面 metadata 仍沿用只有 `h1` 的 selector 設定。
+  impact:
+
+- `pre-push` 被 RateWise 測試矩陣阻擋，導致 draft PR 無法建立。
+- KRW / PHP / IDR / MYR / VND 等現金專屬幣別頁會對 Google、AI 與使用者暗示不存在的即期匯率切換情境，削弱 YMYL trustworthiness。
+- Authority Guide 的 FAQ 問題標題未被 speakable 涵蓋，降低語音搜尋與 AI 朗讀的一致性。
+  actions:
+
+- 將 `CurrencyLandingPage.truthfulness.test.tsx` 改為透過 `APP_INFO.shortName` 斷言，移除品牌硬編碼。
+- 在 `seo-metadata.ts` 為現金專屬幣別補上 `spotAvailable` 分支，收斂 description、FAQ、howTo 與 highlights 的即期匯率敘述。
+- 將 3 個 Authority Guide 頁面的 `speakableCssSelectors` 擴為 `['h1', 'h3']`，並把 `buildSpeakableJsonLd()` 預設值同步納入 `h3`。
+  prevention:
+
+- 涉及金融內容的 SEO 模板不得假設所有幣別都同時有現金與即期牌告；應以 `SEO_RATE_EXAMPLES` 或同級 SSOT 分支輸出。
+- 測試檔同樣受品牌 SSOT 約束，凡需引用品牌名稱應統一從 `APP_INFO` 讀取。
+- 內容頁若有 FAQ 區塊且實際以 `h3` 渲染問題標題，speakable selector 必須同步涵蓋該 heading level。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts src/config/__tests__/seo-cash-only-schema.test.ts src/config/__tests__/seo-speakable.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+- `git push -u origin HEAD:refs/heads/codex/ratewise-seo-ssot-hardening`
+  references:
+
+- apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/config/**tests**/seo-cash-only-schema.test.ts
+- apps/ratewise/src/config/**tests**/seo-speakable.test.ts
+
+id: ratewise-sitemap-lastmod-policy
+date: 2026-04-26
+title: 為 sitemap lastmod 建立 semantic policy，移除 seo-tech current-time fallback
+score: +1
+type: fix
+content_type: seo
+scope: ratewise, sitemap, lastmod, ssot
+topics: [seo, sitemap, lastmod, semantic-policy, ssot, build]
+keywords:
+[sitemap-lastmod, seo-tech, dependency-policy, fallback-date, timestamp-diversity, build-gate]
+aliases: [Sitemap lastmod policy, Lastmod semantic gate]
+related_entries:
+[ratewise-schema-truthfulness-gate, ratewise-seo-doc-ssot-drift-gate]
+summary: 完成 P1-A。新增 `seo-lastmod-policy.ts`，將首頁、FAQ、About、Guide、Open Data、SeoTech 等頁面的重大內容依賴與 fallback date 收斂到 policy，並讓 `generate-sitemap-2025.mjs` 透過 policy 解析 `lastmod`。這次也把 `/seo-tech/` 從無 mapping 的 current-time fallback 拉回可稽核來源，並加入 sitemap `lastmod` 多樣性 gate：本地不足 3 個日期時警告，CI 可用環境變數升級為失敗。
+root_cause:
+
+- 舊 sitemap generator 對 `/seo-tech/` 沒有 dependency mapping，會直接退回 `new Date()`，造成公開 URL 的 lastmod 不可驗證。
+- lastmod 規則散落在 generator 內，缺乏獨立 policy 與測試，難以保證 editorial 頁與匯率頁的語義更新邊界。
+  impact:
+
+- sitemap 會出現看似「今天全站更新」的假新鮮訊號，削弱搜尋引擎對 lastmod 的信任。
+- 沒有 policy 時，後續新增內容頁很容易再次掉回 runtime current-time fallback。
+  actions:
+
+- 新增 `apps/ratewise/src/config/seo-lastmod-policy.ts`，定義 content 頁與 rate 頁的 lastmod policy。
+- 修改 `scripts/generate-sitemap-2025.mjs`：加入 policy import、lookup helper、fallback date 與 CI 可升級的多樣性 gate。
+- 新增 `apps/ratewise/src/config/__tests__/seo-lastmod-policy.test.ts`，並在 `seo-best-practices.test.ts` 驗證 sitemap `lastmod` 至少有 3 個不同日期。
+  prevention:
+
+- 新的公開內容頁若要納入 sitemap，必須先在 lastmod policy 內定義重大內容依賴，不能再依賴 current time。
+- sitemap 的 lastmod 多樣性不再只靠人工觀察；一旦日期過度集中，可直接在 CI 提升為失敗。
+  verification:
+
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts src/seo-best-practices.test.ts`
+  references:
+
+- scripts/generate-sitemap-2025.mjs
+- apps/ratewise/src/config/seo-lastmod-policy.ts
+- apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
+- apps/ratewise/src/seo-best-practices.test.ts
+
+---
+
+id: ratewise-schema-truthfulness-gate
+date: 2026-04-26
+title: 建立 schema truthfulness gate，將 FAQPage 限縮到 FAQ 頁並移除幣別頁舊 schema
+score: +1
+type: fix
+content_type: seo
+scope: ratewise, schema, jsonld, regression
+topics: [seo, schema, faqpage, ymyl, jsonld, regression]
+keywords:
+[schema-truthfulness, faqpage-scope, exchange-rate-specification, aggregate-rating, noindex, regression-suite]
+aliases: [Schema 真實性閘門, FAQPage 範圍收斂]
+related_entries:
+[ratewise-seo-doc-ssot-drift-gate, ratewise-seotech-ssot-registry-alignment]
+summary: 完成 P0-E 與對應的 P1-B regression gate。將首頁的 HowTo schema 輸出移除但保留可見教學內容，將 FAQPage JSON-LD 限縮到 `/faq/`，幣別頁與金額頁全面移除 `FinancialService` 與 FAQPage，只保留 `ExchangeRateSpecification` 等可稽核匯率 schema。同步新增 `schema-truthfulness.test.ts`，並翻新既有 prerender/jsonld/ssot/best-practices 測試，確保新規則不會回歸。
+root_cause:
+
+- 舊的 schema 決策把 FAQPage 與 `FinancialService` 擴散到幣別頁，與公開 registry 及 2026 Search best practices 不一致。
+- 首頁可見教學內容與 JSON-LD 輸出綁在一起，導致不想輸出 HowTo 時會連帶影響前端區塊。
+  impact:
+
+- 金融頁會對搜尋引擎與 AI 系統送出過度寬鬆的結構化資料訊號，削弱 YMYL 真實性。
+- 測試層將舊決策寫死，若不一起翻面，未來任何 truthfulness 修正都會被舊斷言拉回。
+  actions:
+
+- 修改 `seo-metadata.ts`：新增 `shouldIncludeAggregateRating`，將 FAQPage 限縮到 `FAQ_PAGE_SEO`，並把幣別頁 / 金額頁 schema 收斂為 `ExchangeRateSpecification`。
+- 修改 `routes.tsx` 與 `HomepageSEOSection.tsx` 所依賴的首頁資料流：保留可見教學內容，但首頁不再把 HowTo 傳給 `SEOHelmet`。
+- 修改 `CurrencyLandingPage.tsx`：金額頁只追加金額版 `ExchangeRateSpecification`，不再重寫 `FinancialService`。
+- 新增 `apps/ratewise/src/config/__tests__/schema-truthfulness.test.ts`，並更新 `seo-faq-quality`、`seo-ssot`、`jsonld`、`prerender`、`seo-best-practices` 測試。
+  prevention:
+
+- 任何 JSON-LD 類型若出現在公開 registry，實作與測試都必須以同一範圍規則對齊，不得再由頁面模板私自擴散。
+- 可見內容與 schema 輸出應維持可分離，避免為了保留 UI 區塊而被迫保留不想輸出的結構化資料。
+  verification:
+
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/schema-truthfulness.test.ts src/config/__tests__/seo-faq-quality.test.ts src/config/__tests__/seo-ssot.test.ts src/jsonld.test.ts src/prerender.test.ts src/seo-best-practices.test.ts`
+  references:
+
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/components/CurrencyLandingPage.tsx
+- apps/ratewise/src/routes.tsx
+- apps/ratewise/src/config/**tests**/schema-truthfulness.test.ts
+- apps/ratewise/src/prerender.test.ts
+
+---
+
+id: ratewise-seo-doc-ssot-drift-gate
+date: 2026-04-26
+title: 收斂 RateWise README 與歷史 SEO 文件漂移，建立公開文件 drift gate
+score: +1
+type: fix
+content_type: docs
+scope: ratewise, readme, docs, ssot
+topics: [seo, docs, ssot, drift-gate, readme, governance]
+keywords:
+[readme, seo-status, drift-scanner, superseded-doc, public-surface, docs-governance]
+aliases: [README SEO 狀態同步, 文件 SSOT 漂移治理]
+related_entries:
+[ratewise-seotech-ssot-registry-alignment, ratewise-seo-surface-order-and-currency-truthfulness]
+summary: 完成 P0-D。將 root README 與 `apps/ratewise/README.md` 對齊目前 SSOT，改正貨幣支援數與可索引 path 數，並新增 `generate-readme-seo-status.mjs` 與 `verify-doc-ssot-drift.mjs`。前者負責自動維護 README 的 SEO 狀態區塊，後者只檢查活文件與公開 runtime surface，略過測試負向斷言、歷史 log 與已標示 `SUPERSEDED` 的文件，避免舊規格靜默回流。
+root_cause:
+
+- README、歷史 SEO 規格與當前 `seo-paths.config.mjs` 已產生數字漂移，尤其是貨幣支援數、索引 path 數與舊 sitemap 腳本名稱。
+- 文件與公開程式 surface 缺乏專用 drift gate，導致過時說法可以長期存在而不被 CI 或本地流程攔截。
+  impact:
+
+- 開發者與未來維護者會從 README 或舊文件讀到錯誤現況，削弱 SSOT 作為單一真相來源的可信度。
+- 若 drift 持續擴散，後續 sitemap、schema、AEO 文件會再次與實際部署狀態脫鉤。
+  actions:
+
+- 修改 `README.md` 與 `apps/ratewise/README.md`，將公開敘述對齊 18 種貨幣、249 個 SEO path、257 個 SSG prerender path。
+- 在 `apps/ratewise/docs/dev/013_ai_search_optimization_spec.md` 補上 `SUPERSEDED / 歷史文件` 橫幅，明確指向新的 SEO SSOT。
+- 新增 `apps/ratewise/scripts/generate-readme-seo-status.mjs`，用路徑 SSOT 自動重建 README 狀態區塊，並支援重複執行時成功返回。
+- 新增 `apps/ratewise/scripts/verify-doc-ssot-drift.mjs` 與 root `package.json` 的 `verify:seo-docs` script，將 drift 檢查收斂到活文件與公開 runtime surface。
+  prevention:
+
+- README 的 SEO 數字不得手寫維護；後續若 `SEO_PATHS` 或 `PRERENDER_PATHS` 變動，應先更新 SSOT，再重跑 README 狀態產生器。
+- 歷史規格若仍需保留，必須明確標示 `SUPERSEDED` 或歸檔，避免被 drift gate 誤判為現行真相。
+  verification:
+
+- `node apps/ratewise/scripts/generate-readme-seo-status.mjs`
+- `node apps/ratewise/scripts/verify-doc-ssot-drift.mjs`
+  references:
+
+- README.md
+- apps/ratewise/README.md
+- apps/ratewise/scripts/generate-readme-seo-status.mjs
+- apps/ratewise/scripts/verify-doc-ssot-drift.mjs
+- apps/ratewise/docs/dev/013_ai_search_optimization_spec.md
+
+---
+
+id: ratewise-seotech-ssot-registry-alignment
+date: 2026-04-26
+title: 將 SeoTech 公開揭露頁改為 registry 驅動，清除舊 sitemap 與 schema 真相漂移
+score: +1
+type: fix
+content_type: seo
+scope: ratewise, seo-tech, public-surface, ssot
+topics: [seo, ssot, schema, public-surface, sitemap, registry]
+keywords:
+[seo-tech, schema-registry, build-pipeline, exchange-rate-specification, sitemap-2025, stale-phrases]
+aliases: [SeoTech SSOT registry 化, 公開 SEO 真相頁對齊]
+related_entries:
+[ratewise-seo-surface-order-and-currency-truthfulness, ratewise-about-faq-seo-truthfulness-refresh]
+summary: 完成 P0-B。新增 `seo-schema-registry.ts` 與 `seo-build-pipeline.ts`，讓 `/seo-tech/` 不再在頁面檔案內手寫 schema 與 prebuild 真相，而是直接從 registry render。同步清除 `generate-sitemap.mjs`、`248 個 SEO URL`、`priority 欄位`、`FinancialService` 等過時說法，將 sitemap 說明改為 `lastmod + hreflang + image sitemap`，將幣別頁 schema 揭露改為 `ExchangeRateSpecification`，避免公開技術揭露頁宣稱「永遠同步」但實際內容仍漂移。
+root_cause:
+
+- `SeoTech.tsx` 原本同時扮演頁面與真相來源，頁內硬編 `SCHEMA_TYPES`、`BUILD_SCRIPTS`、sitemap 描述，導致 SSOT 存在但 public disclosure 沒有真的接上。
+- 頁面內容仍保留舊架構名詞與舊腳本名稱，例如 `FinancialService`、`generate-sitemap.mjs`、`248 個 SEO URL` 與 `priority 欄位`，與當前 `SEO_PATHS = 249`、`generate-sitemap-2025.mjs` 不一致。
+  impact:
+
+- 公開技術揭露頁對 Google、AI crawler、開發者與未來維護者傳遞了錯誤技術現況，削弱 SSOT 的可稽核性。
+- `SeoTech` 自己宣稱所有數字永遠同步，卻仍混入舊字串，屬於高可見度的 truthfulness failure。
+  actions:
+
+- 新增 `apps/ratewise/src/config/seo-schema-registry.ts`，集中揭露 Organization、WebSite、SoftwareApplication、CurrencyConversionService、ExchangeRateSpecification、BreadcrumbList、FAQPage、HowTo、Article、ImageObject。
+- 新增 `apps/ratewise/src/config/seo-build-pipeline.ts`，集中揭露 prebuild / verification pipeline 與其輸出物。
+- 修改 `apps/ratewise/src/pages/SeoTech.tsx`，以 registry 驅動 schema 區塊與 build pipeline 區塊。
+- 修正 `sitemap.xml` 描述為 `lastmod、hreflang、image sitemap`，並明確揭露不輸出 `changefreq / priority`。
+- 新增 `SeoTech.ssot.test.tsx`，驗證頁面顯示 249 / 257 與新 pipeline，同時不再出現 `248 個 SEO URL`、`priority 欄位`、`FinancialService`。
+  prevention:
+
+- 公開 SEO 揭露頁不得自行定義可變真相；所有數字、schema、pipeline 應先落在 registry / config，再由頁面 render。
+- 若 `seo-tech` 類頁面宣稱與部署狀態同步，必須以測試保護「舊字串不得回流」。
+  verification:
+
+- `rg -n "248 個 SEO URL|generate-sitemap\\.mjs|priority 欄位|FinancialService" apps/ratewise/src/pages/SeoTech.tsx apps/ratewise/src/config/seo-schema-registry.ts apps/ratewise/src/config/seo-build-pipeline.ts`
+- `pnpm --filter @app/ratewise test -- --run src/pages/__tests__/SeoTech.ssot.test.tsx`
+- `pnpm --filter @app/ratewise build`
+  references:
+
+- apps/ratewise/src/pages/SeoTech.tsx
+- apps/ratewise/src/config/seo-schema-registry.ts
+- apps/ratewise/src/config/seo-build-pipeline.ts
+- apps/ratewise/src/pages/**tests**/SeoTech.ssot.test.tsx
+
+---
+
+id: ratewise-seo-surface-order-and-currency-truthfulness
+date: 2026-04-26
+title: 收斂 RateWise 首屏 fallback 污染與幣別頁跨幣別匯差文案
+score: +1
+type: fix
+content_type: seo
+scope: ratewise, prerender, currency-pages
+topics: [seo, ssg, prerender, fallback, truthfulness, ymyl]
+keywords:
+[index-html, suspense-fallback, skeleton, currency-landing-page, rate-difference, usd-twd, jpy-bleed]
+aliases: [RateWise 首屏順序修復, 幣別頁模板污染修復]
+related_entries:
+[ratewise-about-faq-seo-truthfulness-refresh, ratewise-seo-title-truthfulness-lastmod-tdd]
+summary: 先完成 P0-A 與 P0-C。將 `index.html` 的預設 HTML 縮到最小 `noscript`，移除所有會污染 SSG 首屏的首頁文案與 skeleton；同時讓 `Layout` 在 SSR/SSG 階段不再用 `Suspense` 串流延後 SEO route 內容、`SkeletonLoader` 不再把通用 SEO 文案寫進 SSG HTML，並在首頁 app chrome 前補上首頁專屬 H1，避免 header/nav 先於主題。幣別頁則移除硬編「換 10 萬日圓／1,500～3,000 元台幣」模板，改由 `seo-metadata.ts` 的匯差句子 builder 依幣別與方向產生文字，避免 USD 頁出現 JPY 範例這類 YMYL 信任傷害。
+root_cause:
+
+- `apps/ratewise/index.html` 先前承載首頁導向的品牌文案、功能清單與 skeleton，導致 prerender HTML 在 route 專屬 H1 之前先出現通用內容。
+- `Layout.tsx` 的 `Suspense` 在 SSG 階段會把 route 內容延後到 hidden streaming container，造成 footer 先於 route H1；首頁則因為掛在 `AppLayout` 之內，header/nav 文字天然早於首頁主 H1。
+- `SkeletonLoader.tsx` 先前內嵌一整包隱藏 SEO 文案與 `載入匯率資料中...`，會直接污染首頁 prerender 首屏順序。
+- `CurrencyLandingPage.tsx` 內的匯差說明是跨幣別硬編文案，沒有接回匯率 SSOT，造成非 JPY 頁面也會出現「10 萬日圓」。
+  impact:
+
+- Google 與 AI crawler 讀到的首屏文字順序失真，真正頁面主題在 HTML 中被通用 fallback 擠到後面。
+- 幣別頁公開內容與實際幣別不一致，會直接削弱匯率工具在 YMYL 場景下的可信度。
+  actions:
+
+- 將 `apps/ratewise/index.html` 收斂為最小 `noscript` 提示與空 `#root`，並更新冷啟動診斷腳本的 skeleton 偵測方式。
+- 在 `apps/ratewise/src/components/Layout.tsx` 讓 SSR/SSG 直接輸出 children，不再以 `Suspense` 包住 SEO route。
+- 在 `apps/ratewise/src/components/SkeletonLoader.tsx` 將通用 SEO 文案與 `載入匯率資料中...` 限縮為 client-only，避免寫進 SSG HTML。
+- 在 `apps/ratewise/src/components/AppLayout.tsx` 補首頁專屬隱藏 H1，並在 `HomepageSEOSection.tsx` 將可見主標題降為 `h2`，避免雙 H1。
+- 在 `apps/ratewise/src/config/seo-metadata.ts` 新增 `DEFAULT_EXAMPLE_AMOUNTS`、`getDefaultExampleAmount()`、`buildRateDifferenceSentence()`。
+- 在 `apps/ratewise/src/components/CurrencyLandingPage.tsx` 改用 builder 產生「差距有多大」段落。
+- 新增 `seo-surface-order.test.ts` 與 `CurrencyLandingPage.truthfulness.test.tsx` 守門測試。
+  prevention:
+
+- `index.html` 不再承擔任何 route SEO 文案；可索引內容必須只來自對應 route component。
+- SEO route 的 SSR 不得依賴 `Suspense` streaming 讓主內容晚於 footer；首頁若必須掛在 app chrome 下，需先保證 route 專屬 H1 出現在 chrome 之前。
+- 幣別頁凡涉及具體換匯案例，一律從 SSOT builder 產生，不得在共用模板直接手寫特定幣別名詞。
+  verification:
+
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/seo-surface-order.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+  references:
+
+- apps/ratewise/index.html
+- apps/ratewise/src/components/Layout.tsx
+- apps/ratewise/src/components/AppLayout.tsx
+- apps/ratewise/src/components/HomepageSEOSection.tsx
+- apps/ratewise/src/components/SkeletonLoader.tsx
+- apps/ratewise/src/components/CurrencyLandingPage.tsx
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/**tests**/seo-surface-order.test.ts
+- apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
 
 ---
 
@@ -4225,3 +4557,90 @@ root_cause:
 - apps/ratewise/src/features/ratewise/RateWise.tsx
 - apps/ratewise/src/features/ratewise/hooks/useCurrencyConverter.ts
 - apps/ratewise/src/features/ratewise/components/**tests**/SingleConverter.core.test.tsx
+
+---
+
+id: ratewise-seo-rate-examples-spotavailable-ssot
+date: 2026-04-26
+title: 對齊 SEO rate examples 的 spotAvailable 生成鏈與 speakable 回歸測試
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: ratewise, seo, generated-data
+topics: [ratewise, seo, ssot, generated-data, speakable]
+keywords:
+[spotAvailable, seo-rate-examples, generated-ssot, authority-guide, speakable-h3]
+aliases: [SEO rate examples spotAvailable SSOT, speakable h3 regression]
+related_entries:
+[ratewise-seo-prepush-truthfulness-gate-fix]
+summary: 將 `spotAvailable` 正式收進 `update-seo-rate-examples.mjs` 與 `generated/seo-rate-examples.ts` 的資料生成鏈，讓 cash-only 幣別與有即期匯率幣別的差異來自可重建的 SSOT，而非只存在於本地測試狀態。同時保留 `seo-speakable.test.ts` 對 Authority Guide FAQ `h3` 朗讀節點的回歸測試，避免再次出現 metadata 與頁面實際 heading 結構脫鉤。
+root_cause:
+
+- 前一輪修補已在 runtime 依賴 `spotAvailable` 分支，但生成腳本與 generated 檔案仍停留在未提交狀態。
+- `seo-speakable.test.ts` 的 `h3` 回歸保護已存在於 worktree，但未隨同 SEO truthfulness 修補一起入庫。
+- 若只保留 runtime 依賴、不提交生成鏈與測試，之後重新生成資料或換機器後容易再次漂移。
+  impact:
+
+- cash-only 幣別與有即期匯率幣別的真相可由 prebuild 穩定重建，降低 SEO 文案與測試矩陣漂移風險。
+- Authority Guide 的 FAQ 問題標題朗讀能力有明確回歸測試保護。
+  actions:
+
+- 在 `update-seo-rate-examples.mjs` 新增 `spotAvailable` 欄位輸出與型別宣告生成。
+- 將 `generated/seo-rate-examples.ts` 納入對應欄位與最新匯率樣本資料。
+- 保留 `seo-speakable.test.ts` 的 `h3` selector regression case，對齊 FAQ 實際由 `AuthorityGuidePage` 以 `h3` 渲染的結構。
+  prevention:
+
+- 只要 runtime 依賴 generated SEO 資料的新欄位，就必須同步提交 generator 與 generated artifact，避免半套 SSOT。
+- 結構化資料若依賴頁面 heading 層級，測試需直接鎖定對應 selector，而不是只驗 `h1` 存在。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts src/config/__tests__/seo-cash-only-schema.test.ts src/config/__tests__/seo-speakable.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+- `git status --short`
+  references:
+
+- apps/ratewise/scripts/update-seo-rate-examples.mjs
+- apps/ratewise/src/config/generated/seo-rate-examples.ts
+- apps/ratewise/src/config/**tests**/seo-speakable.test.ts
+
+---
+
+id: ratewise-sitemap-lastmod-diversity-followup
+date: 2026-04-26
+title: 收斂 sitemap lastmod 多樣性不足警告
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: ratewise, seo, sitemap
+topics: [ratewise, sitemap, lastmod, semantic-policy, ssot]
+keywords:
+[lastmod-diversity, sitemap-warning, semantic-lastmod, seo-truthfulness]
+aliases: [sitemap lastmod 多樣性修復, semantic lastmod followup]
+related_entries:
+[sitemap-lastmod-policy, ratewise-seo-rate-examples-spotavailable-ssot]
+summary: `generate-sitemap-2025.mjs` 先前雖已導入 semantic lastmod policy，但內容頁仍會因共用 `seo-metadata.ts` 的最近 commit 被壓成同一天，導致 sitemap 只產生 2 種日期並持續警告。這次將內容頁 lastmod 的優先順序改成先看 route 專屬主檔，再回退到完整 dependency set，讓 `/faq/`、`/about/`、`/guide/`、`/open-data/`、`/seo-tech/` 的日期更貼近主內容更新，而不是被共用設定檔一起帶新。
+root_cause:
+
+- generator 對 `CONTENT_LASTMOD_POLICY` 的內容頁直接對整組 dependency files 做 `git log -1`，使共享檔案的最近 commit 蓋過 route 專屬內容檔。
+- `seo-metadata.ts` 屬於多頁共享依賴，一旦更新會讓多個 editorial / trust / disclosure page 看起來同日重大更新。
+- 這會削弱 `lastmod` 作為真實更新訊號的可信度，也讓 sitemap 多樣性檢查長期停在 warning。
+  impact:
+
+- sitemap `lastmod` 更接近各 route 的主內容更新日期。
+- 減少「全站同日假新鮮」風險，讓 public truth surface 更可稽核。
+  actions:
+
+- 在 `generate-sitemap-2025.mjs` 新增 `getGitCommitDate()` helper。
+- 對 `CONTENT_LASTMOD_POLICY` 命中的頁面，先取 route 專屬主檔的 git commit 日期；主檔無資料時，再回退到整組依賴。
+- 保留既有 fallback 與 rate pages 的 generated source 策略，不擴大變更面。
+  prevention:
+
+- 共享 metadata / registry 檔不得主導 editorial page 的 `lastmod`，除非該頁主檔本身無可用提交資訊。
+- `lastmod` 需優先反映 route 專屬主內容，而不是方便維護的共用設定檔。
+  verification:
+
+- `node scripts/generate-sitemap-2025.mjs`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts src/seo-best-practices.test.ts`
+  references:
+
+- scripts/generate-sitemap-2025.mjs
+- apps/ratewise/src/config/seo-lastmod-policy.ts

@@ -74,16 +74,16 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
     });
   });
 
-  describe('🟢 FAQ prerender 不應輸出 FAQPage JSON-LD', () => {
+  describe('🟢 FAQ prerender 應輸出 FAQPage JSON-LD', () => {
     const faqHtmlPath = resolve(__dirname, '../dist/faq/index.html');
 
-    it('FAQ static HTML should NOT contain FAQPage JSON-LD after build', () => {
+    it('FAQ static HTML should contain FAQPage JSON-LD after build', () => {
       if (!existsSync(faqHtmlPath)) {
         return;
       }
 
       const faqHtml = readFileSync(faqHtmlPath, 'utf-8');
-      expect(faqHtml).not.toContain('"@type":"FAQPage"');
+      expect(faqHtml).toContain('"@type":"FAQPage"');
     });
   });
 
@@ -100,7 +100,7 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
       expect(faqContent).toContain('<SEOHelmet');
     });
 
-    it('FAQ page should render visible FAQ HTML instead of FAQPage rich result markup', () => {
+    it('FAQ page should render visible FAQ HTML and keep FAQPage JSON-LD in SEO layer', () => {
       expect(faqContent).toContain('FAQ_ENTRIES.map');
       expect(faqContent).not.toContain('faqContent={');
     });

@@ -29,7 +29,9 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { APP_ONLY_PAGE_SEO, HOMEPAGE_HOW_TO } from '../config/seo-metadata';
+import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
+import { SEO_SCHEMA_REGISTRY } from '../config/seo-schema-registry';
+import { SEO_BUILD_PIPELINE } from '../config/seo-build-pipeline';
 import {
   SEO_PATHS,
   PRERENDER_PATHS,
@@ -41,59 +43,6 @@ import {
 import { RATES_API } from '../config/api-endpoints';
 import { APP_INFO } from '../config/app-info';
 import { staggerContainerVariants, staggerItemVariants, transitions } from '../config/animations';
-
-// ─── JSON-LD Schema 類型 ────────────────────────────────────────────────────────
-
-const SCHEMA_TYPES = [
-  {
-    type: 'WebSite',
-    desc: '網站整體識別與 SearchAction 搜尋框',
-    pages: '首頁',
-    icon: Globe,
-  },
-  {
-    type: 'SoftwareApplication',
-    desc: '應用程式評分、平台、定價資訊',
-    pages: '首頁',
-    icon: Code2,
-  },
-  {
-    type: 'Organization',
-    desc: '組織聯絡資訊、社群連結、Logo',
-    pages: '全站',
-    icon: Shield,
-  },
-  {
-    type: 'HowTo',
-    desc: `匯率換算操作步驟說明（${HOMEPAGE_HOW_TO.steps.length} 步驟）`,
-    pages: '首頁',
-    icon: CheckCircle2,
-  },
-  {
-    type: 'BreadcrumbList',
-    desc: '頁面麵包屑路徑導覽結構',
-    pages: '所有頁面',
-    icon: Link2,
-  },
-  {
-    type: 'Article',
-    desc: '指南頁文章作者、發布日期、字數',
-    pages: 'Guide / FAQ',
-    icon: FileText,
-  },
-  {
-    type: 'FinancialService',
-    desc: '外匯換算金融服務描述',
-    pages: '幣別落地頁',
-    icon: Database,
-  },
-  {
-    type: 'ImageObject',
-    desc: 'OG 圖片授權、版權資訊',
-    pages: '全站',
-    icon: Layers,
-  },
-] as const;
 
 // ─── SSOT 計算數據 ──────────────────────────────────────────────────────────────
 
@@ -129,7 +78,7 @@ const STATS = [
     border: 'border-emerald-200',
   },
   {
-    value: SCHEMA_TYPES.length,
+    value: SEO_SCHEMA_REGISTRY.filter((schema) => schema.enabled).length,
     unit: '種',
     label: 'JSON-LD Schema',
     sub: '結構化資料類型',
@@ -182,7 +131,7 @@ const PIPELINE_STEPS = [
 const MACHINE_READABLE_FILES = [
   {
     name: 'sitemap.xml',
-    desc: `涵蓋全部 ${SEO_PATHS.length} 個 SEO 路徑，含 lastmod 與 priority 欄位`,
+    desc: `涵蓋全部 ${SEO_PATHS.length} 個 SEO 路徑，含 lastmod、hreflang 與 image sitemap；不輸出 changefreq / priority`,
     url: `${SITE_CONFIG.url}sitemap.xml`,
     icon: Map,
     badge: `${SEO_PATHS.length} URLs`,
@@ -332,21 +281,6 @@ const EEAT_SIGNALS = [
     color: 'text-green-600',
     bg: 'bg-green-50',
   },
-] as const;
-
-// ─── 建置腳本 ──────────────────────────────────────────────────────────────────
-
-const BUILD_SCRIPTS = [
-  {
-    name: 'generate-sitemap.mjs',
-    output: 'sitemap.xml',
-    desc: '248 個 SEO URL（含金額頁）+ lastmod',
-  },
-  { name: 'generate-robots-txt.mjs', output: 'robots.txt', desc: 'Crawl 規則 + Sitemap 連結' },
-  { name: 'generate-llms-txt.mjs', output: 'llms.txt', desc: 'AI 爬蟲友善純文字索引' },
-  { name: 'generate-llms-full-txt.mjs', output: 'llms-full.txt', desc: '完整頁面內容快照' },
-  { name: 'generate-api-json.mjs', output: 'api/latest.json', desc: '公開匯率 JSON 資料範例' },
-  { name: 'generate-openapi.mjs', output: 'openapi.json', desc: 'OpenAPI 3.1 API 規格書' },
 ] as const;
 
 // ─── 動畫設定 ──────────────────────────────────────────────────────────────────
@@ -589,7 +523,7 @@ export default function SeoTech() {
             viewport={{ once: true }}
             className="grid grid-cols-1 gap-2"
           >
-            {SCHEMA_TYPES.map((schema) => {
+            {SEO_SCHEMA_REGISTRY.filter((schema) => schema.enabled).map((schema) => {
               const Icon = schema.icon;
               return (
                 <motion.div
@@ -775,14 +709,16 @@ export default function SeoTech() {
         >
           <SectionHeader icon={Code2} title="Prebuild 自動化腳本" />
           <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3 leading-relaxed">
-            每次建置前自動執行 6 支腳本，產生所有 SEO 必要靜態檔案，確保內容永遠與 SSOT 設定同步。
+            每次建置前依序執行 SEO / machine-readable 產線，產生所有必要靜態檔案並串上驗證 gate。
           </p>
           <div className="rounded-2xl border border-[rgb(var(--color-border))] overflow-hidden">
-            {BUILD_SCRIPTS.map((script, idx) => (
+            {SEO_BUILD_PIPELINE.map((script, idx) => (
               <div
                 key={script.name}
                 className={`flex items-center gap-3 px-4 py-3 ${
-                  idx < BUILD_SCRIPTS.length - 1 ? 'border-b border-[rgb(var(--color-border))]' : ''
+                  idx < SEO_BUILD_PIPELINE.length - 1
+                    ? 'border-b border-[rgb(var(--color-border))]'
+                    : ''
                 }`}
               >
                 <span className="text-xs font-mono text-primary/60 w-4 text-right flex-shrink-0">

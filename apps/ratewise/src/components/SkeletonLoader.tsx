@@ -81,6 +81,7 @@ function SkeletonTimeoutFallback() {
  */
 export const SkeletonLoader = () => {
   const [isTimedOut, setIsTimedOut] = useState(false);
+  const isBrowser = typeof window !== 'undefined';
 
   useEffect(() => {
     // SSR 環境不執行（useEffect 僅在 client 執行）
@@ -96,53 +97,21 @@ export const SkeletonLoader = () => {
 
   return (
     <div className="p-4 md:p-6" role="status" aria-live="polite">
-      {/* SEO 靜態內容 - 對爬蟲可見，inline style 確保 CSS 載入前即隱藏，避免 CLS */}
-      <div
-        className="sr-only"
-        style={{
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
-          overflow: 'hidden',
-          clip: 'rect(0,0,0,0)',
-        }}
-      >
-        <p className="font-bold text-lg">{APP_INFO.name} - 即時匯率換算</p>
-        <p>
-          {APP_INFO.shortName} 提供即時匯率換算服務，參考臺灣銀行牌告匯率，支援 18
-          種貨幣。我們的匯率工具快速、準確、離線可用，是您出國旅遊、國際貿易與外幣兌換前的實用助手。
-        </p>
-
-        <h2>主要功能特色</h2>
-        <p>
-          {APP_INFO.shortName}{' '}
-          匯率換算器提供多種實用功能：單幣別快速換算讓您即時查詢兩種貨幣的匯率；多幣別同時比較功能可一次查看所有支援貨幣的匯率；
-          歷史匯率趨勢圖顯示過去 7 至 30 天的匯率變化，幫助您判斷最佳換匯時機。所有匯率數據每 5
-          分鐘自動更新，確保資訊即時準確。
-        </p>
-
-        <h2>支援貨幣列表</h2>
-        <p>
-          我們支援 18 種貨幣，包括：新台幣 TWD、美元 USD、日圓 JPY、歐元 EUR、英鎊 GBP、港幣
-          HKD、人民幣 CNY、韓元 KRW、澳幣 AUD、加幣 CAD、新加坡幣 SGD、瑞士法郎 CHF、紐幣 NZD、泰銖
-          THB、菲律賓披索 PHP、印尼盾 IDR、越南盾 VND、馬來幣 MYR 等。無論您需要換算哪種貨幣，
-          {APP_INFO.shortName} 都能滿足您的需求。
-        </p>
-
-        <h2>為什麼選擇 {APP_INFO.shortName}</h2>
-        <p>
-          {APP_INFO.shortName}{' '}
-          的匯率數據來源為臺灣銀行牌告匯率，提供現金和即期買入賣出價格，是台灣最具公信力的匯率參考來源。我們的應用程式採用
-          Progressive Web App (PWA)
-          技術開發，您可以將它安裝到手機桌面，享受原生應用般的使用體驗。即使在離線狀態下，您仍可使用上次更新的匯率數據進行換算。
-        </p>
-
-        <h2>使用方式</h2>
-        <p>
-          使用 {APP_INFO.shortName}{' '}
-          非常簡單：首先選擇您要換算的來源貨幣和目標貨幣，然後輸入金額，系統會立即顯示換算結果。您也可以使用快速金額按鈕快速輸入常用金額。點擊匯率卡片可展開歷史趨勢圖，查看匯率走勢。切換到多幣別模式可同時查看所有貨幣的匯率。
-        </p>
-      </div>
+      {/* 僅在 client 顯示輔助文案；SSG HTML 不注入通用 SEO 文字，避免壓過 route 主內容。 */}
+      {isBrowser && (
+        <div
+          className="sr-only"
+          style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            overflow: 'hidden',
+            clip: 'rect(0,0,0,0)',
+          }}
+        >
+          <p>{APP_INFO.name} 載入中。</p>
+        </div>
+      )}
 
       <div className="mx-auto max-w-md space-y-4">
         {/* 來源貨幣輸入骨架 - 對應 SingleConverter 上半部 */}
@@ -204,7 +173,7 @@ export const SkeletonLoader = () => {
         </div>
       </div>
 
-      <span className="sr-only">載入匯率資料中...</span>
+      {isBrowser ? <span className="sr-only">載入匯率資料中...</span> : null}
     </div>
   );
 };

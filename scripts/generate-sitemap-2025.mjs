@@ -38,6 +38,10 @@ import {
   normalizeSiteUrl,
 } from '../apps/ratewise/seo-paths.config.mjs';
 import { APP_INFO } from '../apps/ratewise/src/config/app-info.ts';
+import {
+  CONTENT_LASTMOD_POLICY,
+  RATE_PAGE_LASTMOD_POLICY,
+} from '../apps/ratewise/src/config/seo-lastmod-policy.ts';
 
 const SITE_URL = normalizeSiteUrl(SITE_CONFIG.url);
 const PUBLIC_SITEMAP_PATHS = [...new Set(SEO_PATHS)];
@@ -56,6 +60,8 @@ function log(color, symbol, message) {
 }
 
 const REPO_ROOT = resolve(__dirname, '..');
+const ENFORCE_LASTMOD_DIVERSITY =
+  process.env.CI === 'true' || process.env.SITEMAP_ENFORCE_LASTMOD_DIVERSITY === '1';
 
 /**
  * 每個公開 URL 對應一組「重大內容依賴」。
@@ -263,42 +269,82 @@ REVERSE_CURRENCY_SEO_PATHS.forEach((path) => {
  * @returns {Date} 文件修改時間
  */
 function getLastModDate(path) {
-  // 金額落地頁：繼承父幣別頁依賴（/usd-twd/500/ → /usd-twd/）。
-  let lookupPath = path;
-  const isAmountPage =
-    CURRENCY_SEO_PATHS.some((p) => path.startsWith(p) && path !== p) ||
-    REVERSE_CURRENCY_SEO_PATHS.some((p) => path.startsWith(p) && path !== p);
-  if (isAmountPage) {
-    const parent =
-      CURRENCY_SEO_PATHS.find((p) => path.startsWith(p) && path !== p) ??
-      REVERSE_CURRENCY_SEO_PATHS.find((p) => path.startsWith(p) && path !== p);
-    if (parent) lookupPath = parent;
-  }
-
-  const dependencyFiles = PATH_DEPENDENCIES[lookupPath];
+  const dependencyFiles = getDependencyFilesForPath(path);
   if (!dependencyFiles?.length) {
-    console.warn(`⚠️  No dependency mapping for ${path}, using current time`);
-    return new Date();
+    console.warn(`⚠️  No dependency mapping for ${path}, using fallback time`);
+    return getFallbackLastModDate(path);
   }
 
   const existingFiles = dependencyFiles.filter((file) => existsSync(resolve(REPO_ROOT, file)));
   if (existingFiles.length === 0) {
-    console.warn(`⚠️  Dependency files not found for ${path}, using current time`);
-    return new Date();
+    console.warn(`⚠️  Dependency files not found for ${path}, using fallback time`);
+    return getFallbackLastModDate(path);
   }
 
-  const gitResult = spawnSync('git', ['log', '-1', '--format=%cI', '--', ...existingFiles], {
+  const lookupPath = resolveLookupPath(path);
+  const contentPolicy = CONTENT_LASTMOD_POLICY[lookupPath];
+  const lastmodFiles = contentPolicy?.lastmodFiles?.filter((file) =>
+    existsSync(resolve(REPO_ROOT, file)),
+  );
+  const gitDate = getGitCommitDate(
+    lastmodFiles && lastmodFiles.length > 0 ? lastmodFiles : existingFiles,
+  );
+  if (gitDate) return gitDate;
+
+  const mtimes = existingFiles.map((file) => statSync(resolve(REPO_ROOT, file)).mtime.getTime());
+  return new Date(Math.max(...mtimes));
+}
+
+function getGitCommitDate(files) {
+  const normalizedFiles = files.filter(Boolean);
+  if (normalizedFiles.length === 0) return null;
+
+  const gitResult = spawnSync('git', ['log', '-1', '--format=%cI', '--', ...normalizedFiles], {
     cwd: REPO_ROOT,
     encoding: 'utf-8',
   });
   const gitTimestamp = gitResult.status === 0 ? gitResult.stdout.trim() : '';
-  if (gitTimestamp) {
-    const gitDate = new Date(gitTimestamp);
-    if (!Number.isNaN(gitDate.getTime())) return gitDate;
+  if (!gitTimestamp) return null;
+
+  const gitDate = new Date(gitTimestamp);
+  return Number.isNaN(gitDate.getTime()) ? null : gitDate;
+}
+
+function resolveLookupPath(path) {
+  const parent =
+    CURRENCY_SEO_PATHS.find((candidate) => path.startsWith(candidate) && path !== candidate) ??
+    REVERSE_CURRENCY_SEO_PATHS.find(
+      (candidate) => path.startsWith(candidate) && path !== candidate,
+    );
+
+  return parent ?? path;
+}
+
+function isRateContentPath(path) {
+  const lookupPath = resolveLookupPath(path);
+  return CURRENCY_SEO_PATHS.includes(lookupPath) || REVERSE_CURRENCY_SEO_PATHS.includes(lookupPath);
+}
+
+function getDependencyFilesForPath(path) {
+  const lookupPath = resolveLookupPath(path);
+  const contentPolicy = CONTENT_LASTMOD_POLICY[lookupPath];
+  if (contentPolicy) {
+    return [...contentPolicy.contentFiles];
   }
 
-  const mtimes = existingFiles.map((file) => statSync(resolve(REPO_ROOT, file)).mtime.getTime());
-  return new Date(Math.max(...mtimes));
+  const dependencyFiles = PATH_DEPENDENCIES[lookupPath] ?? [];
+  if (isRateContentPath(path)) {
+    return [...new Set([...dependencyFiles, RATE_PAGE_LASTMOD_POLICY.source])];
+  }
+
+  return dependencyFiles;
+}
+
+function getFallbackLastModDate(path) {
+  const lookupPath = resolveLookupPath(path);
+  const policyFallback = CONTENT_LASTMOD_POLICY[lookupPath]?.fallbackDate;
+  if (policyFallback) return new Date(`${policyFallback}T00:00:00.000Z`);
+  return new Date();
 }
 
 /**
@@ -377,8 +423,6 @@ function generateSitemap() {
   return xml;
 }
 
-export { generateSitemap };
-
 /**
  * 主函數
  */
@@ -408,7 +452,11 @@ async function main() {
   console.log(`  不同日期: ${uniqueDates.size} 個`);
 
   if (uniqueDates.size < 3) {
-    log(colors.yellow, '⚠️', '警告：時間戳多樣性不足（<3個不同日期），可能影響 SEO 真實性判斷');
+    const message = '時間戳多樣性不足（<3個不同日期），可能影響 SEO 真實性判斷';
+    if (ENFORCE_LASTMOD_DIVERSITY) {
+      throw new Error(message);
+    }
+    log(colors.yellow, '⚠️', `警告：${message}`);
   }
 
   // 2025 標準驗證
@@ -424,7 +472,21 @@ async function main() {
   log(colors.green, '\n🎉', 'Sitemap 生成完成！\n');
 }
 
-main().catch((error) => {
-  console.error('生成失敗:', error);
-  process.exit(1);
-});
+const isDirectExecution = process.argv[1] ? resolve(process.argv[1]) === __filename : false;
+
+if (isDirectExecution) {
+  main().catch((error) => {
+    console.error('生成失敗:', error);
+    process.exit(1);
+  });
+}
+
+export {
+  formatDateISO8601,
+  generateSitemap,
+  getDependencyFilesForPath,
+  getFallbackLastModDate,
+  getLastModDate,
+  isRateContentPath,
+  resolveLookupPath,
+};
