@@ -192,7 +192,7 @@ importers:
         version: 4.0.17(vitest@4.0.17(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(esbuild@0.27.2)(jiti@1.21.7)(jsdom@27.4.0)(terser@5.44.1)(yaml@2.8.3))
       autoprefixer:
         specifier: ^10.4.23
-        version: 10.4.23(postcss@8.5.9)
+        version: 10.4.23(postcss@8.5.10)
       beasties:
         specifier: 0.4.2
         version: 0.4.2
@@ -201,7 +201,7 @@ importers:
         version: 27.4.0
       postcss:
         specifier: ^8.5.6
-        version: 8.5.9
+        version: 8.5.10
       tailwindcss:
         specifier: ^3.4.14
         version: 3.4.18(yaml@2.8.3)
@@ -277,7 +277,7 @@ importers:
         version: 4.0.17(vitest@4.0.17(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.6.1)(jsdom@27.4.0)(terser@5.44.1)(yaml@2.8.3))
       autoprefixer:
         specifier: ^10.4.23
-        version: 10.4.23(postcss@8.5.9)
+        version: 10.4.23(postcss@8.5.10)
       beasties:
         specifier: 0.4.2
         version: 0.4.2
@@ -286,7 +286,7 @@ importers:
         version: 27.4.0
       postcss:
         specifier: ^8.5.6
-        version: 8.5.9
+        version: 8.5.10
       tailwindcss:
         specifier: ^3.4.14
         version: 3.4.18(yaml@2.8.3)
@@ -374,7 +374,7 @@ importers:
         version: 4.0.17(vitest@4.0.17(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.6.1)(jsdom@27.4.0)(terser@5.44.1)(yaml@2.8.3))
       autoprefixer:
         specifier: ^10.4.23
-        version: 10.4.23(postcss@8.5.9)
+        version: 10.4.23(postcss@8.5.10)
       fake-indexeddb:
         specifier: ^6.2.5
         version: 6.2.5
@@ -383,7 +383,7 @@ importers:
         version: 27.4.0
       postcss:
         specifier: ^8.5.6
-        version: 8.5.9
+        version: 8.5.10
       react-helmet-async:
         specifier: 1.3.0
         version: 1.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -471,7 +471,7 @@ importers:
         version: 4.0.17(vitest@4.0.17(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.6.1)(jsdom@27.4.0)(terser@5.44.1)(yaml@2.8.3))
       autoprefixer:
         specifier: ^10.4.23
-        version: 10.4.23(postcss@8.5.9)
+        version: 10.4.23(postcss@8.5.10)
       beasties:
         specifier: 0.4.2
         version: 0.4.2
@@ -480,7 +480,7 @@ importers:
         version: 27.4.0
       postcss:
         specifier: ^8.5.6
-        version: 8.5.9
+        version: 8.5.10
       react-helmet-async:
         specifier: 1.3.0
         version: 1.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -592,7 +592,7 @@ importers:
         version: 4.0.17(vitest@4.0.17(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.6.1)(jsdom@27.4.0)(terser@5.44.1)(yaml@2.8.3))
       autoprefixer:
         specifier: ^10.4.23
-        version: 10.4.23(postcss@8.5.9)
+        version: 10.4.23(postcss@8.5.10)
       jsdom:
         specifier: ^27.4.0
         version: 27.4.0
@@ -601,7 +601,7 @@ importers:
         version: 13.0.1
       postcss:
         specifier: ^8.4.47
-        version: 8.5.9
+        version: 8.5.10
       react-helmet-async:
         specifier: 1.3.0
         version: 1.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -752,7 +752,7 @@ importers:
         version: 4.0.17(vitest@4.0.17(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.6.1)(jsdom@27.4.0)(terser@5.44.1)(yaml@2.8.3))
       autoprefixer:
         specifier: ^10.4.23
-        version: 10.4.23(postcss@8.5.9)
+        version: 10.4.23(postcss@8.5.10)
       eslint:
         specifier: ^9.36.0
         version: 9.39.2(jiti@2.6.1)
@@ -761,7 +761,7 @@ importers:
         version: 27.4.0
       postcss:
         specifier: ^8.5.6
-        version: 8.5.9
+        version: 8.5.10
       tailwindcss:
         specifier: ^4.1.10
         version: 4.2.1
@@ -7359,8 +7359,8 @@ packages:
     resolution: {integrity: sha512-pMMHxBOZKFU6HgAZ4eyGnwXF/EvPGGqUr0MnZ5+99485wwW41kW91A4LOGxSHhgugZmSChL5AlElNdwlNgcnLQ==}
     engines: {node: ^10 || ^12 || >=14}
 
-  postcss@8.5.9:
-    resolution: {integrity: sha512-7a70Nsot+EMX9fFU3064K/kdHWZqGVY+BADLyXc8Dfv+mTLLVl6JzJpPaCZ2kQL9gIJvKXSLMHhqdRRjwQeFtw==}
+  postcss@8.5.12:
+    resolution: {integrity: sha512-W62t/Se6rA0Az3DfCL0AqJwXuKwBeYg6nOaIgzP+xZ7N5BFCI7DYi1qs6ygUYT6rvfi6t9k65UMLJC+PHZpDAA==}
     engines: {node: ^10 || ^12 || >=14}
 
   postgres-array@2.0.0:
@@ -12215,7 +12215,7 @@ snapshots:
       '@alloc/quick-lru': 5.2.0
       '@tailwindcss/node': 4.1.17
       '@tailwindcss/oxide': 4.1.17
-      postcss: 8.5.10
+      postcss: 8.5.12
       tailwindcss: 4.1.17
 
   '@tailwindcss/vite@4.2.1(vite@8.0.5(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.3))':
@@ -13067,7 +13067,7 @@ snapshots:
       '@vue/shared': 3.5.25
       estree-walker: 2.0.2
       magic-string: 0.30.21
-      postcss: 8.5.10
+      postcss: 8.5.12
       source-map-js: 1.2.1
 
   '@vue/compiler-ssr@3.5.25':
@@ -13351,13 +13351,13 @@ snapshots:
       stubborn-fs: 2.0.0
       when-exit: 2.1.5
 
-  autoprefixer@10.4.23(postcss@8.5.9):
+  autoprefixer@10.4.23(postcss@8.5.10):
     dependencies:
       browserslist: 4.28.1
       caniuse-lite: 1.0.30001763
       fraction.js: 5.3.4
       picocolors: 1.1.1
-      postcss: 8.5.9
+      postcss: 8.5.10
       postcss-value-parser: 4.2.0
 
   available-typed-arrays@1.0.7:
@@ -13455,7 +13455,7 @@ snapshots:
       domhandler: 5.0.3
       htmlparser2: 9.1.0
       picocolors: 1.1.1
-      postcss: 8.5.10
+      postcss: 8.5.12
       postcss-media-query-parser: 0.2.3
     optional: true
 
@@ -16932,31 +16932,31 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss-import@15.1.0(postcss@8.5.9):
+  postcss-import@15.1.0(postcss@8.5.10):
     dependencies:
-      postcss: 8.5.9
+      postcss: 8.5.10
       postcss-value-parser: 4.2.0
       read-cache: 1.0.0
       resolve: 1.22.11
 
-  postcss-js@4.1.0(postcss@8.5.9):
+  postcss-js@4.1.0(postcss@8.5.10):
     dependencies:
       camelcase-css: 2.0.1
-      postcss: 8.5.9
+      postcss: 8.5.10
 
-  postcss-load-config@6.0.1(jiti@1.21.7)(postcss@8.5.9)(yaml@2.8.3):
+  postcss-load-config@6.0.1(jiti@1.21.7)(postcss@8.5.10)(yaml@2.8.3):
     dependencies:
       lilconfig: 3.1.3
     optionalDependencies:
       jiti: 1.21.7
-      postcss: 8.5.9
+      postcss: 8.5.10
       yaml: 2.8.3
 
   postcss-media-query-parser@0.2.3: {}
 
-  postcss-nested@6.2.0(postcss@8.5.9):
+  postcss-nested@6.2.0(postcss@8.5.10):
     dependencies:
-      postcss: 8.5.9
+      postcss: 8.5.10
       postcss-selector-parser: 6.1.2
 
   postcss-safe-parser@7.0.1(postcss@8.5.10):
@@ -16976,7 +16976,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  postcss@8.5.9:
+  postcss@8.5.12:
     dependencies:
       nanoid: 3.3.11
       picocolors: 1.1.1
@@ -18025,11 +18025,11 @@ snapshots:
       normalize-path: 3.0.0
       object-hash: 3.0.0
       picocolors: 1.1.1
-      postcss: 8.5.9
-      postcss-import: 15.1.0(postcss@8.5.9)
-      postcss-js: 4.1.0(postcss@8.5.9)
-      postcss-load-config: 6.0.1(jiti@1.21.7)(postcss@8.5.9)(yaml@2.8.3)
-      postcss-nested: 6.2.0(postcss@8.5.9)
+      postcss: 8.5.10
+      postcss-import: 15.1.0(postcss@8.5.10)
+      postcss-js: 4.1.0(postcss@8.5.10)
+      postcss-load-config: 6.0.1(jiti@1.21.7)(postcss@8.5.10)(yaml@2.8.3)
+      postcss-nested: 6.2.0(postcss@8.5.10)
       postcss-selector-parser: 6.1.2
       resolve: 1.22.11
       sucrase: 3.35.1
@@ -18774,7 +18774,7 @@ snapshots:
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
-      postcss: 8.5.9
+      postcss: 8.5.10
       rolldown: 1.0.0-rc.12
       tinyglobby: 0.2.15
     optionalDependencies:
@@ -18789,7 +18789,7 @@ snapshots:
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
-      postcss: 8.5.9
+      postcss: 8.5.10
       rolldown: 1.0.0-rc.12
       tinyglobby: 0.2.15
     optionalDependencies:
@@ -18804,7 +18804,7 @@ snapshots:
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
-      postcss: 8.5.9
+      postcss: 8.5.10
       rolldown: 1.0.0-rc.12
       tinyglobby: 0.2.15
     optionalDependencies:
