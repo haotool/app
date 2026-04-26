@@ -251,6 +251,13 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(sitemapContent).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
     });
 
+    it('should keep lastmod diversity across sitemap URLs', () => {
+      const lastmods = Array.from(
+        sitemapContent.matchAll(/<lastmod>(\d{4}-\d{2}-\d{2})<\/lastmod>/g),
+      ).map(([, date]) => date);
+      expect(new Set(lastmods).size).toBeGreaterThanOrEqual(3);
+    });
+
     it('should include image sitemap for rich results', () => {
       expect(sitemapContent).toContain('xmlns:image');
       expect(sitemapContent).toContain('<image:loc>');

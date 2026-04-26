@@ -1,8 +1,52 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-26T21:40:00+08:00
-> **當前總分**: 1213（初始分: 100）
+> **最後更新**: 2026-04-26T21:45:00+08:00
+> **當前總分**: 1214（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-sitemap-lastmod-policy
+date: 2026-04-26
+title: 為 sitemap lastmod 建立 semantic policy，移除 seo-tech current-time fallback
+score: +1
+type: fix
+content_type: seo
+scope: ratewise, sitemap, lastmod, ssot
+topics: [seo, sitemap, lastmod, semantic-policy, ssot, build]
+keywords:
+[sitemap-lastmod, seo-tech, dependency-policy, fallback-date, timestamp-diversity, build-gate]
+aliases: [Sitemap lastmod policy, Lastmod semantic gate]
+related_entries:
+[ratewise-schema-truthfulness-gate, ratewise-seo-doc-ssot-drift-gate]
+summary: 完成 P1-A。新增 `seo-lastmod-policy.ts`，將首頁、FAQ、About、Guide、Open Data、SeoTech 等頁面的重大內容依賴與 fallback date 收斂到 policy，並讓 `generate-sitemap-2025.mjs` 透過 policy 解析 `lastmod`。這次也把 `/seo-tech/` 從無 mapping 的 current-time fallback 拉回可稽核來源，並加入 sitemap `lastmod` 多樣性 gate：本地不足 3 個日期時警告，CI 可用環境變數升級為失敗。
+root_cause:
+
+- 舊 sitemap generator 對 `/seo-tech/` 沒有 dependency mapping，會直接退回 `new Date()`，造成公開 URL 的 lastmod 不可驗證。
+- lastmod 規則散落在 generator 內，缺乏獨立 policy 與測試，難以保證 editorial 頁與匯率頁的語義更新邊界。
+  impact:
+
+- sitemap 會出現看似「今天全站更新」的假新鮮訊號，削弱搜尋引擎對 lastmod 的信任。
+- 沒有 policy 時，後續新增內容頁很容易再次掉回 runtime current-time fallback。
+  actions:
+
+- 新增 `apps/ratewise/src/config/seo-lastmod-policy.ts`，定義 content 頁與 rate 頁的 lastmod policy。
+- 修改 `scripts/generate-sitemap-2025.mjs`：加入 policy import、lookup helper、fallback date 與 CI 可升級的多樣性 gate。
+- 新增 `apps/ratewise/src/config/__tests__/seo-lastmod-policy.test.ts`，並在 `seo-best-practices.test.ts` 驗證 sitemap `lastmod` 至少有 3 個不同日期。
+  prevention:
+
+- 新的公開內容頁若要納入 sitemap，必須先在 lastmod policy 內定義重大內容依賴，不能再依賴 current time。
+- sitemap 的 lastmod 多樣性不再只靠人工觀察；一旦日期過度集中，可直接在 CI 提升為失敗。
+  verification:
+
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts src/seo-best-practices.test.ts`
+  references:
+
+- scripts/generate-sitemap-2025.mjs
+- apps/ratewise/src/config/seo-lastmod-policy.ts
+- apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
+- apps/ratewise/src/seo-best-practices.test.ts
 
 ---
 

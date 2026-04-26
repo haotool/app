@@ -1,0 +1,22 @@
+import { describe, expect, it } from 'vitest';
+import { CONTENT_LASTMOD_POLICY, RATE_PAGE_LASTMOD_POLICY } from '../seo-lastmod-policy';
+
+describe('seo lastmod policy', () => {
+  it('應為 /seo-tech/ 定義公開揭露頁的 content lastmod policy', () => {
+    expect(CONTENT_LASTMOD_POLICY['/seo-tech/']).toBeDefined();
+    expect(CONTENT_LASTMOD_POLICY['/seo-tech/'].contentFiles).toContain(
+      'apps/ratewise/src/pages/SeoTech.tsx',
+    );
+  });
+
+  it('幣別頁與金額頁應透過 rate policy 共享可見匯率內容來源', () => {
+    expect(RATE_PAGE_LASTMOD_POLICY.source).toBe(
+      'apps/ratewise/src/config/generated/seo-rate-examples.ts',
+    );
+    expect(RATE_PAGE_LASTMOD_POLICY.appliesTo).toEqual(['currency', 'amount']);
+  });
+
+  it('公開揭露頁 fallback date 應固定在 policy 中，避免退回 current time', () => {
+    expect(CONTENT_LASTMOD_POLICY['/seo-tech/'].fallbackDate).toBe('2026-04-26');
+  });
+});
