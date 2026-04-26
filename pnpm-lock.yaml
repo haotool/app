@@ -146,7 +146,7 @@ importers:
         version: 12.27.5(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       lenis:
         specifier: ^1.3.17
-        version: 1.3.17(@nuxt/kit@4.2.1(magicast@0.5.2))(react@19.2.4)(vue@3.5.25(typescript@5.9.3))
+        version: 1.3.23(@nuxt/kit@4.2.1(magicast@0.5.2))(react@19.2.4)(vue@3.5.25(typescript@5.9.3))
       lucide-react:
         specifier: ^0.563.0
         version: 0.563.0(react@19.2.4)
@@ -6246,8 +6246,8 @@ packages:
   legacy-javascript@0.0.1:
     resolution: {integrity: sha512-lPyntS4/aS7jpuvOlitZDFifBCb4W8L/3QU0PLbUTUj+zYah8rfVjYic88yG7ZKTxhS5h9iz7duT8oUXKszLhg==}
 
-  lenis@1.3.17:
-    resolution: {integrity: sha512-k9T9rgcxne49ggJOvXCraWn5dt7u2mO+BNkhyu6yxuEnm9c092kAW5Bus5SO211zUvx7aCCEtzy9UWr0RB+oJw==}
+  lenis@1.3.23:
+    resolution: {integrity: sha512-YxYq3TJqj9sJNv0V9SkyQHejt14xwyIwgDaaMK89Uf9SxQfIszu+gTQSSphh6BWlLTNVKvvXAGkg+Zf+oFIevg==}
     peerDependencies:
       '@nuxt/kit': '>=3.0.0'
       react: '>=17.0.0'
@@ -15859,7 +15859,7 @@ snapshots:
 
   legacy-javascript@0.0.1: {}
 
-  lenis@1.3.17(@nuxt/kit@4.2.1(magicast@0.5.2))(react@19.2.4)(vue@3.5.25(typescript@5.9.3)):
+  lenis@1.3.23(@nuxt/kit@4.2.1(magicast@0.5.2))(react@19.2.4)(vue@3.5.25(typescript@5.9.3)):
     optionalDependencies:
       '@nuxt/kit': 4.2.1(magicast@0.5.2)
       react: 19.2.4
