@@ -237,7 +237,7 @@ describe('security-headers worker', () => {
 
   it('ratewise 首頁接受 markdown negotiation 時應導向對應 mirror', async () => {
     const fetchSpy = vi.fn().mockResolvedValue(
-      new Response('# HaoRate markdown mirror', {
+      new Response('# ratewise markdown mirror', {
         headers: {
           'content-type': 'text/markdown; charset=utf-8',
         },

@@ -1,8 +1,46 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-27T01:09:00+08:00
-> **當前總分**: 1216（初始分: 100）
+> **最後更新**: 2026-04-27T01:13:00+08:00
+> **當前總分**: 1217（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: pr275-brand-literal-gate-followup-2026-04-27
+date: 2026-04-27
+title: 修正 PR275 worker 測試的品牌字面值 gate
+score: +1
+type: correction
+content_type: troubleshooting
+scope: ratewise, tests, ssot, github-pr
+topics: [ssot, brand-literal, test-fixture, pr-review]
+keywords:
+[PR275, HaoRate literal, build-scripts test, securityHeadersWorker]
+aliases: [PR275 brand literal gate fix]
+related_entries:
+[pr275-markdown-mirror-root-mapping-fix-2026-04-27]
+summary: 修正 PR275 新增 worker 測試在 markdown fixture 內直接寫入 `HaoRate` 字面值，導致 repo 既有的品牌 SSOT gate 於 pre-push 階段失敗。此次只將 fixture 改為中性字串，不變更任何產品邏輯或對外輸出。
+root_cause:
+
+- `apps/ratewise/src/config/__tests__/build-scripts.test.ts` 會阻擋新增的品牌字面值，要求改由 SSOT 提供。
+- 新增測試時使用 `# HaoRate markdown mirror` 作為 fixture 文字，觸發品牌字面值檢查。
+  impact:
+
+- `pnpm test` 在 pre-push 階段失敗，導致無法推送修正後的 PR275 分支。
+  actions:
+
+- 將 markdown fixture 改為 `# ratewise markdown mirror` 的中性字串。
+- 保留原本新增的 root host / ratewise markdown negotiation 測試邏輯不變。
+  prevention:
+
+- 後續新增測試 fixture 時，若不是在驗證品牌文案本身，應優先使用中性字串，避免誤踩品牌 SSOT gate。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts src/__tests__/securityHeadersWorker.test.ts`
+  references:
+
+- apps/ratewise/src/**tests**/securityHeadersWorker.test.ts
+- apps/ratewise/src/config/**tests**/build-scripts.test.ts
 
 ---
 
