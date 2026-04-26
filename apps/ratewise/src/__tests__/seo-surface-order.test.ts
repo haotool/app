@@ -25,8 +25,8 @@ const readDistHtml = (path: string): string => {
 
 const extractVisibleText = (html: string): string =>
   html
-    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style\s*>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
