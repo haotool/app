@@ -1,8 +1,54 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-26T21:18:30+08:00
-> **當前總分**: 1211（初始分: 100）
+> **最後更新**: 2026-04-26T21:36:00+08:00
+> **當前總分**: 1212（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-seo-doc-ssot-drift-gate
+date: 2026-04-26
+title: 收斂 RateWise README 與歷史 SEO 文件漂移，建立公開文件 drift gate
+score: +1
+type: fix
+content_type: docs
+scope: ratewise, readme, docs, ssot
+topics: [seo, docs, ssot, drift-gate, readme, governance]
+keywords:
+[readme, seo-status, drift-scanner, superseded-doc, public-surface, docs-governance]
+aliases: [README SEO 狀態同步, 文件 SSOT 漂移治理]
+related_entries:
+[ratewise-seotech-ssot-registry-alignment, ratewise-seo-surface-order-and-currency-truthfulness]
+summary: 完成 P0-D。將 root README 與 `apps/ratewise/README.md` 對齊目前 SSOT，改正貨幣支援數與可索引 path 數，並新增 `generate-readme-seo-status.mjs` 與 `verify-doc-ssot-drift.mjs`。前者負責自動維護 README 的 SEO 狀態區塊，後者只檢查活文件與公開 runtime surface，略過測試負向斷言、歷史 log 與已標示 `SUPERSEDED` 的文件，避免舊規格靜默回流。
+root_cause:
+
+- README、歷史 SEO 規格與當前 `seo-paths.config.mjs` 已產生數字漂移，尤其是貨幣支援數、索引 path 數與舊 sitemap 腳本名稱。
+- 文件與公開程式 surface 缺乏專用 drift gate，導致過時說法可以長期存在而不被 CI 或本地流程攔截。
+  impact:
+
+- 開發者與未來維護者會從 README 或舊文件讀到錯誤現況，削弱 SSOT 作為單一真相來源的可信度。
+- 若 drift 持續擴散，後續 sitemap、schema、AEO 文件會再次與實際部署狀態脫鉤。
+  actions:
+
+- 修改 `README.md` 與 `apps/ratewise/README.md`，將公開敘述對齊 18 種貨幣、249 個 SEO path、257 個 SSG prerender path。
+- 在 `apps/ratewise/docs/dev/013_ai_search_optimization_spec.md` 補上 `SUPERSEDED / 歷史文件` 橫幅，明確指向新的 SEO SSOT。
+- 新增 `apps/ratewise/scripts/generate-readme-seo-status.mjs`，用路徑 SSOT 自動重建 README 狀態區塊，並支援重複執行時成功返回。
+- 新增 `apps/ratewise/scripts/verify-doc-ssot-drift.mjs` 與 root `package.json` 的 `verify:seo-docs` script，將 drift 檢查收斂到活文件與公開 runtime surface。
+  prevention:
+
+- README 的 SEO 數字不得手寫維護；後續若 `SEO_PATHS` 或 `PRERENDER_PATHS` 變動，應先更新 SSOT，再重跑 README 狀態產生器。
+- 歷史規格若仍需保留，必須明確標示 `SUPERSEDED` 或歸檔，避免被 drift gate 誤判為現行真相。
+  verification:
+
+- `node apps/ratewise/scripts/generate-readme-seo-status.mjs`
+- `node apps/ratewise/scripts/verify-doc-ssot-drift.mjs`
+  references:
+
+- README.md
+- apps/ratewise/README.md
+- apps/ratewise/scripts/generate-readme-seo-status.mjs
+- apps/ratewise/scripts/verify-doc-ssot-drift.mjs
+- apps/ratewise/docs/dev/013_ai_search_optimization_spec.md
 
 ---
 
