@@ -19,4 +19,10 @@ describe('seo lastmod policy', () => {
   it('公開揭露頁 fallback date 應固定在 policy 中，避免退回 current time', () => {
     expect(CONTENT_LASTMOD_POLICY['/seo-tech/'].fallbackDate).toBe('2026-04-26');
   });
+
+  it('authority guide 類內容頁在 shallow checkout 也應有穩定 fallback date', () => {
+    expect(CONTENT_LASTMOD_POLICY['/sell-rate-vs-mid-rate/'].fallbackDate).toBe('2026-04-20');
+    expect(CONTENT_LASTMOD_POLICY['/cash-vs-spot-rate/'].fallbackDate).toBe('2026-04-20');
+    expect(CONTENT_LASTMOD_POLICY['/card-rate-guide/'].fallbackDate).toBe('2026-04-20');
+  });
 });

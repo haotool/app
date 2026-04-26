@@ -3,7 +3,7 @@
  *
  * 目的：防止 public/*.md 與 HTML SSG 頁面語義漂移（Google cloaking 紅線）。
  * 生成邏輯於 scripts/generate-markdown-mirrors.mjs；此測試驗證：
- * 1. 5 個鏡像檔存在且非空
+ * 1. 6 個鏡像檔存在且非空
  * 2. 內含與 seo-metadata.ts / 對應 .tsx 頁一致的關鍵錨點字串
  */
 
@@ -21,7 +21,7 @@ function readMd(slug: string): string {
 }
 
 describe('Markdown mirrors', () => {
-  const slugs = ['faq', 'about', 'privacy', 'guide', 'open-data'] as const;
+  const slugs = ['faq', 'about', 'privacy', 'guide', 'open-data', 'index'] as const;
 
   it.each(slugs)('%s.md 存在且非空', (slug) => {
     const content = readMd(slug);
@@ -51,6 +51,13 @@ describe('Markdown mirrors', () => {
     const content = readMd('guide');
     expect(content).toMatch(/快速金額按鈕/);
     expect(content).toMatch(/現金/);
+  });
+
+  it('index.md 含首頁核心文案與功能導引', () => {
+    const content = readMd('index');
+    expect(content).toMatch(/以台灣銀行牌告匯率做實務換算/);
+    expect(content).toMatch(/5 分鐘自動同步/);
+    expect(content).toMatch(/使用指南/);
   });
 
   it('open-data.md 含 API 端點與 curl 範例', () => {

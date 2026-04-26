@@ -1,11 +1,20 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.2.0
+> **文件版本**: v2.4.7
 > **建立日期**: 2026-03-23
-> **最後更新**: 2026-04-23
+> **最後更新**: 2026-04-25
+> **v2.4.7 變更**: 新增 `security-headers` root-host 對齊修補（`app.haotool.org`）待部署驗證，將 `12.6.6` 生產差異補為「本輪修補待重測」欄位
 > **文件性質**: AI 助手 + 工程師執行手冊 / SEO 單一真實來源
 > **適用版本**: HaoRate / `apps/ratewise` ≥ v2.21.0
 > **上位文件**: `CLAUDE.md`, `AGENTS.md`
+> **v2.4.6 變更**: 補齊 2026-04-25 外部入口重測（46 筆），補充 root/`/ratewise/` 實際 header 檢測、IsItAgentReady 掃描回應 404 入口與 Level 2 仍待 production 套用差異；更新 `12.5` 與 `12.6` 迭代紀錄為「權威參考＋可重複快照」版本
+> **v2.4.5 變更**: 新增 2026-04-25 外部入口快照（12.6.7）與 IsItAgentReady 實掃重播結果（root 正規化）；補齊 12.6.5 可重複外部掃描命令並保留重測證據欄位，12.6.6 改為現況真實 status（Link / Markdown / Content-Signal 仍待 production 生效）
+> **v2.4.4 變更**: 補齊 2026-04-25 擴充外部檢測快照（含 34+ 權威入口）與 IsItAgentReady 最新回報（root 正規化對照）；更新本地修正與發版驗證節點
+> **v2.4.3 變更**: 補齊 IsItAgentReady 級距修正（Content-Signal、首頁 Link header、首頁 markdown negotiation）與 Markdown 鏡像自動產生；增加驗證命令與待發版確認
+> **v2.4.2 變更**: 新增 IsItAgentReady 外部掃描報告（2026-04-24）與 BOT 進階建議
+> **v2.4.1 變更**: 補上 2026-04-25 外部檢測快照（34+6 個來源）、加入可持續迭代的外部驗證命令與人工補驗規範，明確標註失敗來源為工具限制非站點異常
+> **v2.3.0 變更**: 依 `apps/ratewise` 現行程式碼更新 SSOT：修正 `FAQPage` 現況為 34 個幣別頁啟用、FAQ 頁不輸出 FAQPage JSON-LD；補齊 `FinancialService`、`Dataset`、`Person`、`WebPage`、巢狀 `SpeakableSpecification`；同步 prebuild 管道、Markdown 鏡像與公開產物治理；修正 `ExchangeRateSpecification` 價格來源為 `seo-rate-examples.ts`
+> **v2.4.0 變更**: 新增「權威 SEO 參考與外部檢測」版本，整理 26 個權威網站與 24 個可貼入 Production URL 的檢測入口，並補充 2026-04-24 生產環境驗證報告（`verify-production-seo` + `verify-structured-data`）做為迭代基準
 > **v2.2.0 變更**: 同步目前程式碼 SSOT：`SEO_PATHS=249`、`CONTENT_SEO_PATHS=9`、`APP_ONLY_PATHS=7`；修正 schema / Answer Capsule 已完成狀態；更新 llms / robots AI crawler 共用 SSOT；移除 sitemap `changefreq` / `priority` 過時規格
 > **v2.1.0 變更**: §2.3 新增 Markdown 鏡像與 Link header；§6.5 新增 AI referral 追蹤規格；§8 重構為四層語意分組；§14 補記 B2/E1/A3 完成紀錄與 P1-7a/P1-8/P1-9/P2-9/P2-10/P2-11 新項目
 > **取代文件**: 本文整合並取代所有舊文件（已歸檔至 `docs/archive/seo/`）：
@@ -46,6 +55,12 @@
 10. [Core Web Vitals 效能標準](#10-core-web-vitals-效能標準)
 11. [SSOT 驗證規則](#11-ssot-驗證規則)
 12. [監測與稽核](#12-監測與稽核)
+    - [12.5 權威 SEO 參考與外部檢測入口](#125-權威-seo-參考與外部檢測入口)
+    - [12.6 生產網址外部檢測報告（2026-04-25）](#126-生產網址外部檢測報告2026-04-25)
+    - [12.6.4 2026-04-25 外部檢測快照](#1264-2026-04-25-外部檢測快照)
+    - [12.6.5 外部檢測命令（可重複執行）](#1265-外部檢測命令)
+    - [12.6.6 IsItAgentReady 掃描報告（2026-04-25）](#1266-isitagentready-掃描報告2026-04-25)
+    - [12.6.7 2026-04-25 外部檢測網站快照（可重複報告）](#1267-2026-04-25-外部檢測網站快照可重複報告)
 13. [SEO 缺口分析（2026-04-10）](#13-seo-缺口分析2026-04-10-審查)
 14. [優先 TODO 清單](#14-優先-todo-清單原-13編號保持連貫)
 15. [詞彙表](#15-詞彙表)
@@ -123,12 +138,15 @@ src/config/seo-metadata.ts        ← 內容 SSOT（title/description/FAQ/JSON-L
 scripts/generate-sitemap-2025.mjs       → public/sitemap.xml
 scripts/generate-robots-txt.mjs         → public/robots.txt
 scripts/generate-llms-txt.mjs           → public/llms.txt + public/llms-full.txt
+scripts/generate-markdown-mirrors.mjs   → public/{faq,about,privacy,guide,open-data}.md
 scripts/generate-api-json.mjs           → public/api/latest.json
 scripts/generate-pair-json.mjs          → public/api/pairs/{pair}.json (34 個)
 scripts/generate-openapi.mjs            → public/openapi.json
 scripts/generate-manifest.mjs           → public/manifest.webmanifest
+scripts/generate-offline-html.mjs       → public/offline.html
+scripts/prebuild-fetch-rates.mjs        → 建置前同步台銀匯率資料
 scripts/fetch-rating-snapshot.mjs       → src/config/generated/rating-snapshot.ts
-scripts/update-seo-rate-examples.mjs    → src/config/seo-rate-examples.ts（週更）
+scripts/update-seo-rate-examples.mjs    → src/config/generated/seo-rate-examples.ts（每日/建置時更新；可選保留既有檔）
 ```
 
 ### 2.3 公開 SEO 文件（Public SEO Artifacts）
@@ -152,10 +170,11 @@ public/
 
 **Markdown 鏡像策略（A3，Best Practice 2026）**：
 
-- 5 個 `.md` 檔由 `generate-markdown-mirrors.mjs` 於 prebuild 自動產生，內容從 `seo-metadata.ts` SSOT 擷取，避免 drift。
+- 5 個 `.md` 檔由 `generate-markdown-mirrors.mjs` 於 prebuild 自動產生，內容從 `seo-metadata.ts` 與頁面內容 SSOT 擷取，避免 drift。
 - `_headers` 對 `/ratewise/*.md` 設 `Content-Type: text/markdown; charset=utf-8`，並對 HTML 頁注入 `Link: <...md>; rel="alternate"; type="text/markdown"` RFC 8288 HTTP 標頭，供 AI 爬蟲自動發現純文字版本。
 - 內容與對應 HTML 頁語義一致（同 FAQ、同作者、同資料來源），符合 Google cloaking 紅線。
 - drift-guard 測試：`apps/ratewise/src/__tests__/markdown-mirror.test.ts`（11 個錨定字串斷言）。
+- 注意：`SEO_FILES` SSOT 目前僅列 `sitemap.xml`、`robots.txt`、`llms.txt`、`llms-full.txt` 四個核心 SEO 檔；Markdown 鏡像由 prebuild 與 `_headers` 管理，不屬於 `resources.seoFiles` 清單。
 
 ### 2.4 驗證層（Verification Layer）
 
@@ -230,21 +249,26 @@ Disallow: /ratewise/?
 
 ### 4.1 現況清單
 
-| Schema 類型                 | 頁面                  | 狀態                      | 實作位置                                                                                            |
-| --------------------------- | --------------------- | ------------------------- | --------------------------------------------------------------------------------------------------- |
-| `Organization`              | 全站                  | ✅ 已實作                 | `SEOHelmet.tsx` + `seo-metadata.ts`                                                                 |
-| `WebSite`                   | 全站                  | ✅ 已實作                 | `SEOHelmet.tsx`                                                                                     |
-| `SoftwareApplication`       | 首頁                  | ✅ 已實作                 | `SEOHelmet.tsx`                                                                                     |
-| `FAQPage`                   | FAQ 頁（`/faq/`）     | ✅ 已實作                 | `SEOHelmet.tsx`                                                                                     |
-| `BreadcrumbList`            | 幣對頁、金額頁        | ✅ 已實作                 | `SEOHelmet.tsx`                                                                                     |
-| `HowTo`                     | Guide 頁              | ✅ 已實作                 | `SEOHelmet.tsx`                                                                                     |
-| `ImageObject`               | OG 圖片（隱式）       | ✅ 已實作                 | `seo-metadata.ts`                                                                                   |
-| `Article`                   | 三篇 Authority Guide  | ✅ 已實作 (v2.18.0)       | `seo-metadata.ts` buildArticleJsonLd                                                                |
-| `SpeakableSpecification`    | 所有 9 個內容頁       | ✅ 已實作 (v2.18.0)       | `seo-metadata.ts` buildSpeakableJsonLd                                                              |
-| `knowsAbout`（Property）    | Organization + Person | ✅ 已實作 (v2.18.0)       | `buildSiteJsonLd()` + `buildPersonJsonLd()`                                                         |
-| `CurrencyConversionService` | 首頁                  | ✅ 已實作 (v2.22.0)       | `seo-metadata.ts` buildCurrencyConversionServiceJsonLd                                              |
-| `ExchangeRateSpecification` | 幣對頁 + 金額頁       | ✅ 已實作 (v2.24.0)       | `seo-metadata.ts` buildExchangeRateSpecificationJsonLd / buildAmountExchangeRateSpecificationJsonLd |
-| `AggregateRating`           | 首頁                  | ❌ **缺漏（無評分系統）** | —                                                                                                   |
+| Schema 類型                 | 頁面                  | 狀態                  | 實作位置                                                                                            |
+| --------------------------- | --------------------- | --------------------- | --------------------------------------------------------------------------------------------------- |
+| `Organization`              | 全站                  | ✅ 已實作             | `SEOHelmet.tsx` + `seo-metadata.ts`                                                                 |
+| `WebSite`                   | 全站                  | ✅ 已實作             | `SEOHelmet.tsx`                                                                                     |
+| `WebPage`                   | 首頁與內容頁          | ✅ 已實作             | `seo-metadata.ts` buildWebPageJsonLd / Article-like schema                                          |
+| `SoftwareApplication`       | 首頁                  | ✅ 已實作             | `SEOHelmet.tsx`                                                                                     |
+| `FAQPage`                   | 34 個幣別頁           | ✅ 已實作             | `seo-metadata.ts` buildFaqPageJsonLd（每頁最多 5 則 FAQ）                                           |
+| `BreadcrumbList`            | 幣對頁、金額頁        | ✅ 已實作             | `SEOHelmet.tsx`                                                                                     |
+| `HowTo`                     | Guide 頁              | ✅ 已實作             | `SEOHelmet.tsx`                                                                                     |
+| `ImageObject`               | OG 圖片（隱式）       | ✅ 已實作             | `seo-metadata.ts`                                                                                   |
+| `Article`                   | 三篇 Authority Guide  | ✅ 已實作 (v2.18.0)   | `seo-metadata.ts` buildArticleJsonLd                                                                |
+| `TechArticle`               | Open Data 頁          | ✅ 已實作             | `seo-metadata.ts` buildTechArticleJsonLd                                                            |
+| `Dataset`                   | Open Data 頁          | ✅ 已實作             | `seo-metadata.ts` buildOpenDataDatasetJsonLd                                                        |
+| `Person`                    | About / Article 作者  | ✅ 已實作             | `seo-metadata.ts` buildPersonJsonLd                                                                 |
+| `SpeakableSpecification`    | 內容頁                | ✅ 已實作（巢狀）     | `seo-metadata.ts` + `seo-helmet-utils.ts`                                                           |
+| `knowsAbout`（Property）    | Organization + Person | ✅ 已實作 (v2.18.0)   | `buildSiteJsonLd()` + `buildPersonJsonLd()`                                                         |
+| `FinancialService`          | 34 個幣別頁           | ✅ 已實作             | `seo-metadata.ts` getCurrencyLandingPageContent / getReverseCurrencyLandingPageContent              |
+| `CurrencyConversionService` | 首頁                  | ✅ 已實作 (v2.22.0)   | `seo-metadata.ts` buildCurrencyConversionServiceJsonLd                                              |
+| `ExchangeRateSpecification` | 幣對頁 + 金額頁       | ✅ 已實作 (v2.24.0)   | `seo-metadata.ts` buildExchangeRateSpecificationJsonLd / buildAmountExchangeRateSpecificationJsonLd |
+| `AggregateRating`           | 首頁                  | ✅ 已實作（snapshot） | `seo-metadata.ts` + `generated/rating-snapshot.ts`                                                  |
 
 ### 4.2 已完成 Schema 實作參考
 
@@ -267,6 +291,15 @@ Schema.org 精確定義此工具的核心功能，AI 引擎在匹配「幣別換
 - `validFrom` 使用 `SEO_RATE_EXAMPLES_DATE`
 - 外幣→TWD 頁（如 `usd-twd`）：`currency: "USD"`，`priceCurrency: "TWD"`
 - TWD→外幣頁（如 `twd-usd`）：`currency: "TWD"`，`priceCurrency: "USD"`（匯率取倒數）
+
+#### 4.2.3 `FinancialService` + `FAQPage`（✅ 已完成）
+
+**實作位置**：`seo-metadata.ts` → `getCurrencyLandingPageContent()` 與 `getReverseCurrencyLandingPageContent()`。
+
+- 34 個幣別頁均輸出 `FinancialService`，並以穩定 `@id` 指向該頁 `#financial-service`。
+- 34 個幣別頁均輸出 `FAQPage` JSON-LD，FAQ 來源與頁面 HTML 內容共用 `faqEntries`，每頁最多取 5 則，避免 schema 過長。
+- `/faq/` 頁保留可讀 FAQ 內容與 Article-like schema，但目前**不輸出** FAQPage JSON-LD；這是為避免與金融幣別頁的 AEO FAQ 策略混淆。
+- 首頁不輸出 FAQPage JSON-LD。
 
 ### 4.3 已實作 Article / TechArticle 規格
 
@@ -303,25 +336,26 @@ Schema.org 精確定義此工具的核心功能，AI 引擎在匹配「幣別換
 }
 ```
 
-### 4.3 Schema 重複防護規則
+### 4.4 Schema 重複防護規則
 
 - **絕對禁止**同一頁面出現兩個相同 `@type`（尤其 `FAQPage`、`BreadcrumbList`）
-- `FAQPage` 僅輸出於 `/faq/` 頁面；首頁和幣別頁保留 FAQ **HTML 內容**但不輸出 FAQPage JSON-LD
-- 驗證指令：`grep -r "FAQPage" dist/ | wc -l`（應只有 1）
+- `FAQPage` 僅由 34 個幣別頁輸出；首頁與 `/faq/` 頁不輸出 FAQPage JSON-LD
+- 驗證指令：`rg '"@type":\s*"FAQPage"' apps/ratewise/dist`
 - `seo-helmet-utils.ts` 的 `shouldRenderStructuredData()` 確保 noindex 頁不輸出任何 JSON-LD
 - `AuthorityGuidePage` 元件：透過 `jsonLd`、`faqContent`、`answerCapsule` props 接受已定義的 schema，禁止在元件內部硬編碼
 
-### 4.4 Schema 輸出矩陣
+### 4.5 Schema 輸出矩陣
 
-| 頁面            | Organization | WebSite | SoftwareApp | CurrencyConv. | ExchangeRate | BreadcrumbList | FAQPage | HowTo | Article |
-| --------------- | :----------: | :-----: | :---------: | :-----------: | :----------: | :------------: | :-----: | :---: | :-----: |
-| 首頁 `/`        |      ✅      |   ✅    |     ✅      |      ✅       |      —       |       —        |   ❌    |   —   |    —    |
-| FAQ `/faq/`     |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |   ✅    |   —   |    —    |
-| Guide `/guide/` |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |    —    |  ✅   |   ✅    |
-| About `/about/` |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |    —    |   —   |    —    |
-| 三篇 Authority  |      ✅      |   ✅    |      —      |       —       |      —       |       ✅       |    —    |   —   |   ✅    |
-| 幣對頁（34）    |      ✅      |   ✅    |      —      |       —       |      ✅      |       ✅       |    —    |   —   |    —    |
-| 金額頁（206）   |      ✅      |   ✅    |      —      |       —       |      ✅      |       ✅       |    —    |   —   |    —    |
+| 頁面            | Organization | WebSite | WebPage/Article | SoftwareApp | CurrencyConv. | FinancialService | ExchangeRate | BreadcrumbList | FAQPage | HowTo | Dataset |
+| --------------- | :----------: | :-----: | :-------------: | :---------: | :-----------: | :--------------: | :----------: | :------------: | :-----: | :---: | :-----: |
+| 首頁 `/`        |      ✅      |   ✅    |       ✅        |     ✅      |      ✅       |        —         |      —       |       —        |   ❌    |   —   |    —    |
+| FAQ `/faq/`     |      ✅      |   ✅    |       ✅        |      —      |       —       |        —         |      —       |       ✅       |   ❌    |   —   |    —    |
+| Guide `/guide/` |      ✅      |   ✅    |       ✅        |      —      |       —       |        —         |      —       |       ✅       |    —    |  ✅   |    —    |
+| About `/about/` |      ✅      |   ✅    |       ✅        |      —      |       —       |        —         |      —       |       ✅       |    —    |   —   |    —    |
+| Open Data       |      ✅      |   ✅    | ✅ TechArticle  |      —      |       —       |        —         |      —       |       ✅       |    —    |   —   |   ✅    |
+| 三篇 Authority  |      ✅      |   ✅    |   ✅ Article    |      —      |       —       |        —         |      —       |       ✅       |    —    |   —   |    —    |
+| 幣對頁（34）    |      ✅      |   ✅    |        —        |      —      |       —       |        ✅        |      ✅      |       ✅       |   ✅    |   —   |    —    |
+| 金額頁（206）   |      ✅      |   ✅    |        —        |      —      |       —       |        ✅        |      ✅      |       ✅       |   ✅    |   —   |    —    |
 
 ---
 
@@ -364,16 +398,16 @@ Schema.org 精確定義此工具的核心功能，AI 引擎在匹配「幣別換
 
 4. **匯率比較資訊**（文字或表格）：台銀賣出價 vs. 市場中間價，含具體差距範例（來自 `SEO_RATE_EXAMPLES`）
 
-5. **Schema**：`ExchangeRateSpecification` + `BreadcrumbList`
+5. **Schema**：`FinancialService` + `FAQPage` + `ExchangeRateSpecification` + `BreadcrumbList`
 
-| 元素        | 規格                                                                |
-| ----------- | ------------------------------------------------------------------- |
-| Title       | `{外幣名稱}換台幣匯率今日 ({CODE}/TWD) — 台銀實際賣出價 \| HaoRate` |
-| Description | 含具體應用場景（旅遊/海外購物）+ 強調台銀賣出價                     |
-| H1          | `{外幣名稱}換台幣（{CODE} to TWD）`                                 |
-| Canonical   | `https://app.haotool.org/ratewise/{code}-twd/`                      |
-| hreflang    | zh-TW + x-default                                                   |
-| Schema      | ExchangeRateSpecification + BreadcrumbList                          |
+| 元素        | 規格                                                                    |
+| ----------- | ----------------------------------------------------------------------- |
+| Title       | `{外幣名稱}換台幣匯率今日 ({CODE}/TWD) — 台銀實際賣出價 \| HaoRate`     |
+| Description | 含具體應用場景（旅遊/海外購物）+ 強調台銀賣出價                         |
+| H1          | `{外幣名稱}換台幣（{CODE} to TWD）`                                     |
+| Canonical   | `https://app.haotool.org/ratewise/{code}-twd/`                          |
+| hreflang    | zh-TW + x-default                                                       |
+| Schema      | FinancialService + FAQPage + ExchangeRateSpecification + BreadcrumbList |
 
 ### 5.3 幣對頁（TWD→外幣，共 17 頁，如 `/twd-jpy/`）
 
@@ -384,26 +418,28 @@ Schema.org 精確定義此工具的核心功能，AI 引擎在匹配「幣別換
 - H1 強調「出國前換匯」情境
 - Answer Capsule：「1 台幣（TWD）等於 X 日圓（JPY）...帶台幣換日圓，適用臨櫃換鈔的台銀現金賣出價」
 - `ExchangeRateSpecification` 的 currency/priceCurrency 方向對調
+- Schema 與正向幣對頁一致：`FinancialService` + `FAQPage` + `ExchangeRateSpecification` + `BreadcrumbList`
 
 ### 5.4 金額頁（路徑式，206 頁，如 `/usd-twd/100/`）
 
 **目標查詢**：「100 美元換台幣」「100 USD to TWD」
 
-| 元素        | 規格                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------- |
-| Title       | `{金額} {外幣名稱}換新台幣 ({CODE}/TWD) — 台銀實際賣出價 \| HaoRate`                  |
-| Description | 「{金額} 美元（USD）換台幣（TWD），依臺灣銀行即期賣出價計算約 NT$X。每 5 分鐘更新。」 |
-| Canonical   | 自引用（`/usd-twd/100/`），禁止指向父頁 `/usd-twd/`                                   |
-| Schema      | ExchangeRateSpecification（金額換算結果）+ BreadcrumbList                             |
-| FAQ         | 精簡版（2-3 題即可，避免重複父頁內容）                                                |
+| 元素        | 規格                                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------------- |
+| Title       | `{金額} {外幣名稱}換新台幣 ({CODE}/TWD) — 台銀實際賣出價 \| HaoRate`                                    |
+| Description | 「{金額} 美元（USD）換台幣（TWD），依臺灣銀行即期賣出價計算約 NT$X。每 5 分鐘更新。」                   |
+| Canonical   | 自引用（`/usd-twd/100/`），禁止指向父頁 `/usd-twd/`                                                     |
+| Schema      | FinancialService（self-canonical）+ FAQPage + ExchangeRateSpecification（金額換算結果）+ BreadcrumbList |
+| FAQ         | 精簡版（2-3 題即可，避免重複父頁內容）                                                                  |
 
 ### 5.5 FAQ 頁（`/faq/`）
 
 **目標查詢**：「台幣匯率 FAQ」「現金匯率 vs 即期匯率」「買入賣出怎麼看」
 
-- 唯一輸出 `FAQPage` JSON-LD 的頁面
+- 常見問題 HTML 內容頁；目前不輸出 `FAQPage` JSON-LD
 - 問題數量：≥ 10 題（現況已滿足）
 - 涵蓋：現金/即期差異、買入/賣出角度、台銀 vs 刷卡、DCC 解釋、匯率更新機制
+- 若未來要讓 `/faq/` 輸出 FAQPage，必須同步更新 `prerender.test.ts` 與 Schema 重複防護規則，避免與幣別頁策略衝突
 
 ### 5.6 三篇 Authority Guide 頁
 
@@ -835,16 +871,20 @@ INP 測量**所有互動**（非只有第一次），對高互動頻率的換算
 
 ```bash
 # 完整 prebuild 管道
-node ../../scripts/generate-sitemap-2025.mjs    # sitemap 生成
-node scripts/generate-robots-txt.mjs            # robots.txt 生成
-node scripts/generate-manifest.mjs              # PWA manifest 生成
-node scripts/generate-llms-txt.mjs              # llms.txt 生成
-node scripts/generate-api-json.mjs              # API metadata 生成
-node scripts/generate-pair-json.mjs             # 幣對端點生成
-node scripts/generate-openapi.mjs               # OpenAPI 規格生成
-node ../../scripts/verify-ssot-sync.mjs         # SSOT 一致性驗證
-node ../../scripts/verify-image-resources.mjs   # 圖片資源驗證
-node scripts/fetch-rating-snapshot.mjs          # 匯率快照更新
+node scripts/prebuild-fetch-rates.mjs
+SEO_RATE_EXAMPLES_OPTIONAL=1 node scripts/update-seo-rate-examples.mjs
+node ../../scripts/generate-sitemap-2025.mjs
+node scripts/generate-robots-txt.mjs
+node scripts/generate-manifest.mjs
+node scripts/generate-offline-html.mjs
+node scripts/generate-llms-txt.mjs
+node scripts/generate-markdown-mirrors.mjs
+node scripts/generate-api-json.mjs
+node scripts/generate-pair-json.mjs
+node scripts/generate-openapi.mjs
+node ../../scripts/verify-ssot-sync.mjs
+node ../../scripts/verify-image-resources.mjs
+node scripts/fetch-rating-snapshot.mjs
 ```
 
 ### 11.2 測試覆蓋規格
@@ -864,10 +904,11 @@ node scripts/fetch-rating-snapshot.mjs          # 匯率快照更新
 - ❌ 手動修改 `public/robots.txt`（由 `generate-robots-txt.mjs` 管理）
 - ❌ 手動修改 `public/sitemap.xml`（由 `generate-sitemap-2025.mjs` 管理）
 - ❌ 手動修改 `public/llms.txt`（由 `generate-llms-txt.mjs` 管理）
+- ❌ 手動修改 `public/{faq,about,privacy,guide,open-data}.md`（由 `generate-markdown-mirrors.mjs` 管理）
 - ❌ 在頁面元件中硬編碼 title/description（必須從 `seo-metadata.ts` 讀取）
 - ❌ 同一頁面輸出兩個相同 `@type` JSON-LD
-- ❌ `FAQPage` schema 出現在 `/faq/` 以外的頁面
-- ❌ `ExchangeRateSpecification` 的 price 欄位硬編碼（必須從 `rating-snapshot.ts` 讀取）
+- ❌ `FAQPage` schema 出現在首頁、`/faq/` 或 noindex 頁
+- ❌ `ExchangeRateSpecification` 的 price 欄位硬編碼（幣對頁必須從 `generated/seo-rate-examples.ts` 讀取；金額頁由頁面金額與同一匯率來源計算）
 - ❌ 在 noindex 頁面輸出任何 JSON-LD（`shouldRenderStructuredData()` 管控）
 
 ---
@@ -906,7 +947,326 @@ node scripts/fetch-rating-snapshot.mjs          # 匯率快照更新
 - **索引覆蓋**：確認 249 個 SEO 頁面均已索引（排除 noindex 頁）
 - **搜尋排名**：「日圓換台幣」「美元換台幣」等核心查詢在 Top 10
 - **Core Web Vitals**：分頁類型的 LCP/INP/CLS 狀態
-- **Rich Results**：FAQPage、BreadcrumbList rich snippets 是否正常顯示
+- **Rich Results / AI 摘要**：BreadcrumbList rich snippets、幣別頁 FAQPage 機器可理解性是否正常
+
+### 12.5 權威 SEO 參考與外部檢測入口（2026）
+
+#### 12.5.1 權威 SEO 參考網站（至少 20）
+
+以下清單以「可落地規範」優先排序，作為 SSOT 對齊來源。每次 SEO 迭代先確認該來源是否有更新後再調整文件：
+
+1. [Google Search Central](https://developers.google.com/search)
+2. [Google Sitemaps 文件](https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview)
+3. [Google Robots 與爬蟲行為](https://developers.google.com/search/docs/crawling-indexing/robots/intro)
+4. [Google Canonical 與 URL 申明](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls)
+5. [Google 結構化資料規範](https://developers.google.com/search/docs/appearance/structured-data)
+6. [Google Core Web Vitals](https://web.dev/vitals)
+7. [PageSpeed Insights](https://pagespeed.web.dev/analysis)
+8. [Google Rich Results 測試](https://search.google.com/test/rich-results)
+9. [Google Mobile Friendly 測試](https://search.google.com/test/mobile-friendly)
+10. [Bing Webmaster Docs](https://www.bing.com/webmasters/about)
+11. [Bing 來源與爬蟲檢核（提交／測試）](https://www.bing.com/webmasters/robots-txt-test)
+12. [Schema.org](https://schema.org/)
+13. [JSON-LD 規格](https://www.w3.org/TR/json-ld/)
+14. [JSON-LD.org](https://json-ld.org/)
+15. [OpenGraph Protocol](https://ogp.me/)
+16. [llmstxt.org](https://llmstxt.org/)
+17. [W3C 驗證服務](https://validator.w3.org/nu/)
+18. [Schema.org JSON-LD 驗證](https://validator.schema.org/)
+19. [MDN SEO 指引入口](https://developer.mozilla.org/en-US/docs/Web/SEO)
+20. [Cloudflare Pages Headers](https://developers.cloudflare.com/pages/configuration/headers/)
+21. [Cloudflare Pages Redirects](https://developers.cloudflare.com/pages/configuration/redirects/)
+22. [Cloudflare Pages 平台 headers](https://developers.cloudflare.com/pages/platform/headers/)
+23. [Cloudflare Cache-Control](https://developers.cloudflare.com/cache/concepts/cache-control/)
+24. [Cloudflare Workers Cache API](https://developers.cloudflare.com/workers/runtime-apis/cache/)
+25. [Cloudflare AI Search](https://developers.cloudflare.com/ai-search/)
+26. [Cloudflare AI Search 網站資料源設定](https://developers.cloudflare.com/ai-search/configuration/data-source/website/)
+27. [Cloudflare AI 訓練內容控制](https://blog.cloudflare.com/control-content-use-for-ai-training/)
+28. [Cloudflare Browser Rendering Crawl API](https://developers.cloudflare.com/browser-rendering/rest-api/crawl-endpoint/)
+29. [Google Search Console 入門](https://support.google.com/webmasters/answer/7451184)
+30. [Google Crawl 速率與重新擷取](https://developers.google.com/search/docs/crawling-indexing/ask-google-to-recrawl)
+31. [Bing Webmaster API 文件](https://learn.microsoft.com/en-us/bingwebmaster/)
+32. [Bing Webmaster 工具說明](https://support.microsoft.com/en-us/bing/help-with-bing-webmaster-tools)
+33. [Search Console 官方文件首頁](https://developers.google.com/search)
+34. [Content Signals 草案（IETF）](https://datatracker.ietf.org/doc/draft-romm-aipref-contentsignals/)
+35. [IsItAgentReady Content Signals Skill](https://isitagentready.com/.well-known/agent-skills/content-signals/SKILL.md)
+36. [Yandex Webmaster](https://yandex.com/support/webmaster/)
+37. [百度站長平台](https://ziyuan.baidu.com/)
+38. [Search Engine Journal Search SEO Guide](https://www.searchenginejournal.com/guide/what-is-seo/)
+
+> 目前同一輪實測共覆蓋 `46` 個入口（含 Cloudflare、Google、Bing、AI crawler 與驗證入口），作為 12.6 生產快照的固定抽樣池。
+
+#### 12.5.2 Cloudflare SEO 建議（實作對照）
+
+1. **保持 `canonical` 與 `noindex` 交界邏輯一致**：`seo-paths`、`seo-metadata.ts`、`robots.txt` 不可互相衝突。
+2. **快取分層一致化**：HTML 與靜態資源使用不同 `Cache-Control`，並以 `verify-production-seo.mjs` 對 `og-image.jpg`、`/icons/*` 等做固定檢核。
+3. **AI crawler 分群治理**：training/search/user-agent/preview 四層分群保持獨立可調，避免訓練封鎖波及即時引用。
+4. **避免 `Cross-Origin-Embedder-Policy` 汙染非 HTML 請求**：確保 JS/CSS 可由 `no-csp` path 正確回應，防止載入失敗。
+5. **`_headers` 與 Worker 回應邏輯分工**：`_headers` 僅保證靜態資產基礎標頭；有頁面邏輯（Markdown negotiation、Link header、server headers）時由 worker/SSG 流程補齊。
+6. **AI 發現機制的證據管理**：`/.well-known` 類目標建議明確列入 SSOT，若未提供該能力請保留「不提供」註記，避免掃描工具誤判為隱性缺失。
+7. **`/ratewise/` 與 `/` 的行為一致性**：`isRatewise` 路徑應同時套用 `Accept` 協商、markdown 鏡像 fallback 與 AI Header 注入；避免只在 `/ratewise/` 實作但 root 還是文字 HTML 的「半實施」狀態。
+
+### 12.6 生產網址外部檢測報告（2026-04-25）
+
+#### 12.6.1 檢測入口（含生產網址，已回填回應）
+
+> 測試目標：`https://app.haotool.org/ratewise/`
+
+| 類型           | 檢測網址                                                                                      | 回應                    |
+| -------------- | --------------------------------------------------------------------------------------------- | ----------------------- |
+| Docs           | `https://developers.google.com/search/docs/fundamentals/seo-starter-guide`                    | 200                     |
+| Docs           | `https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview`               | 200                     |
+| Docs           | `https://developers.google.com/search/docs/fundamentals/creating-helpful-content`             | 200                     |
+| Docs           | `https://developers.google.com/search/docs/crawling-indexing/robots/intro`                    | 200                     |
+| Docs           | `https://developers.google.com/search/docs/appearance/structured-data`                        | 200                     |
+| Docs           | `https://developers.google.com/search/docs/appearance/core-web-vitals`                        | 200                     |
+| Docs           | `https://developers.google.com/search/docs/monitor-debug/monitor-your-site-over-time`         | 404（頁面已重整）       |
+| Docs           | `https://developers.google.com/search/docs/appearance/mobile`                                 | 404（網址已重構）       |
+| Docs           | `https://developer.mozilla.org/en-US/docs/Web/SEO`                                            | 404（需另找鏡像）       |
+| 檢測工具       | `https://search.google.com/test/rich-results?url=https://app.haotool.org/ratewise/`           | 200                     |
+| 檢測工具       | `https://pagespeed.web.dev/analysis?url=https://app.haotool.org/ratewise/`                    | 200                     |
+| 檢測工具       | `https://search.google.com/test/mobile-friendly?url=https://app.haotool.org/ratewise/`        | 302（導向/互動流程）    |
+| 檢測工具       | `https://validator.schema.org/`                                                               | 200                     |
+| 檢測工具       | `https://validator.w3.org/nu/?doc=https://app.haotool.org/ratewise/`                          | 403（W3C 需授權或限制） |
+| 檢測工具       | `https://www.opengraph.xyz/url/https://app.haotool.org/ratewise/`                             | 429（速率限制）         |
+| 檢測工具       | `https://r.jina.ai/http://app.haotool.org/ratewise/`                                          | 200                     |
+| 社群與預覽     | `https://developers.facebook.com/tools/debug/?q=https://app.haotool.org/ratewise/`            | 200                     |
+| 社群與預覽     | `https://cards-dev.twitter.com/validator`                                                     | 403（第三方限流）       |
+| SEO 平台       | `https://www.bing.com/webmasters/about`                                                       | 200                     |
+| SEO 平台       | `https://www.bing.com/webmasters/robots-txt-test?url=https://app.haotool.org/ratewise/`       | 302                     |
+| SEO 平台       | `https://www.bing.com/webmasters/tools/submit-site-url?url=https://app.haotool.org/ratewise/` | 302                     |
+| SEO 平台       | `https://www.bing.com/webmasters/robots/submit?siteUrl=https://app.haotool.org/ratewise/`     | 302                     |
+| 標準/技術      | `https://schema.org/`                                                                         | 200                     |
+| 標準/技術      | `https://www.w3.org/TR/json-ld/`                                                              | 200                     |
+| 標準/技術      | `https://json-ld.org/`                                                                        | 200                     |
+| 標準/技術      | `https://ogp.me/`                                                                             | 200                     |
+| Cloudflare     | `https://developers.cloudflare.com/pages/configuration/headers/`                              | 200                     |
+| Cloudflare     | `https://developers.cloudflare.com/pages/configuration/redirects/`                            | 200                     |
+| Cloudflare     | `https://developers.cloudflare.com/pages/platform/headers/`                                   | 200                     |
+| Cloudflare     | `https://developers.cloudflare.com/cache/concepts/cache-control/`                             | 200                     |
+| Cloudflare     | `https://developers.cloudflare.com/workers/runtime-apis/cache/`                               | 200                     |
+| Cloudflare     | `https://developers.cloudflare.com/ai-search/`                                                | 200                     |
+| Cloudflare     | `https://developers.cloudflare.com/ai-search/configuration/data-source/website/`              | 200                     |
+| Cloudflare     | `https://developers.cloudflare.com/browser-rendering/rest-api/crawl-endpoint/`                | 200                     |
+| Cloudflare     | `https://blog.cloudflare.com/control-content-use-for-ai-training/`                            | 200                     |
+| Cloudflare     | `https://radar.cloudflare.com/robots/`                                                        | 403                     |
+| Cloudflare     | `https://developers.cloudflare.com/analytics/dashboard/`                                      | 404                     |
+| IsItAgentReady | `https://isitagentready.com/app.haotool.org/ratewise/`                                        | 404                     |
+
+#### 12.6.2 生產環境稽核結果（即時基線）
+
+- `node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+  - 回報 `✅ HaoRate SEO 健康檢查通過！`（公開頁面、sitemap、robots、llms、404/重導向全部通過）
+- `node scripts/verify-structured-data.mjs`
+  - 通過頁面：首頁、FAQ、About、Guide、USD→TWD、JPY→TWD、EUR→TWD（7/7）
+  - Schema 總數：`55`（包含 `SoftwareApplication`、`Organization`、`WebSite`、`FinancialService`、`ExchangeRateSpecification` 等）
+- 生產端 HTTP 證據（2026-04-25）：
+  - `curl -I https://app.haotool.org/`：200，`content-type: text/html`，無 `Link` header，無 `Content-Signal` 在 Response Header
+  - `curl -I -H 'Accept: text/markdown' https://app.haotool.org/`：200，仍回傳 `text/html`（未進行 markdown negotiation）
+  - `curl -I https://app.haotool.org/ratewise/`：200，`content-type: text/html`，無 `Link` header
+  - `curl -I https://app.haotool.org/ratewise/index.md`：404（`index.md` 尚未在 prod 可直接取到）
+
+#### 12.6.3 持續迭代指標（SLO）
+
+- 每日：腳本稽核通過 + 外部檢測入口 46 筆都保留回應碼，將 403/404/429/需登入轉址項目列為人工複核清單。
+- 每週：更新此節點中的 12.6.1 回應表與 12.6.2 基線，保留 `status` 演進紀錄。
+- 每次發版：若外部入口回應異常（403/404/5xx）列為變更風險，需新增 `P0` 記錄至 PR notes。
+
+#### 12.6.4 2026-04-25 外部檢測快照
+
+> 目的：將外部檢測結果標準化版本化，與 12.6.1 對照，便於識別「站點退化」與「第三方工具限制」。
+
+- 測試目標：`https://app.haotool.org/ratewise/`
+- 快照總量：`46` 筆，分佈為 `200:38`、`302:0`、`403:2`、`404:5`、`429:1`、`5xx:0`（2026-04-25）
+- 表格為該總池中的精選明細；完整 46 筆明細由 12.6.1/12.6.7 與腳本輸出做交叉比對。
+- 回應欄位以最終狀態為主（與 12.6.5 建議的 `curl -L` 行為一致）；表格中的「導向流程」僅作流程註記，不列入 `302/307` 統計。
+
+| 類型       | 檢測網址                                                                                      | 回應 | 備註                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------- | ---- | ---------------------------------------------------------------------- |
+| Docs       | `https://developers.google.com/search/docs/appearance/structured-data`                        | 200  | 指南頁可正常取得                                                       |
+| Docs       | `https://developers.google.com/search/docs/appearance/core-web-vitals`                        | 200  | 指南頁可正常取得                                                       |
+| Docs       | `https://developers.google.com/search/docs/crawling-indexing/robots/intro`                    | 200  | 指南頁可正常取得                                                       |
+| Docs       | `https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview`               | 200  | 指南頁可正常取得                                                       |
+| Docs       | `https://developers.google.com/search/docs/fundamentals/seo-starter-guide`                    | 200  | 指南頁可正常取得                                                       |
+| Docs       | `https://developers.google.com/search/docs/fundamentals/creating-helpful-content`             | 200  | 指南頁可正常取得                                                       |
+| Docs       | `https://developers.google.com/search/docs/appearance/mobile`                                 | 404  | Google 已重整該頁 URL（建議改以 `core-web-vitals` + 行動版教學頁替代） |
+| 檢測工具   | `https://pagespeed.web.dev/analysis?url=https://app.haotool.org/ratewise/`                    | 200  | 入口可回應                                                             |
+| 檢測工具   | `https://search.google.com/test/rich-results?url=https://app.haotool.org/ratewise/`           | 200  | 入口可回應                                                             |
+| 檢測工具   | `https://search.google.com/test/mobile-friendly?url=https://app.haotool.org/ratewise/`        | 200  | 先回應導向，最終可取到頁面                                             |
+| 檢測工具   | `https://validator.schema.org/`                                                               | 200  | 工具站可存取                                                           |
+| 檢測工具   | `https://validator.w3.org/nu/?doc=https://app.haotool.org/ratewise/`                          | 403  | W3C 取樣限制（非站點問題）                                             |
+| 檢測工具   | `https://www.opengraph.xyz/url/https://app.haotool.org/ratewise/`                             | 429  | 第三方短期防禦（速率限制）                                             |
+| 檢測工具   | `https://developers.facebook.com/tools/debug/?q=https://app.haotool.org/ratewise/`            | 200  | Meta 預覽工具可用                                                      |
+| 檢測工具   | `https://cards-dev.twitter.com/validator`                                                     | 403  | X 卡片工具目前封鎖外部直接存取                                         |
+| SEO 平台   | `https://www.bing.com/webmasters/about`                                                       | 200  | 正常                                                                   |
+| SEO 平台   | `https://www.bing.com/webmasters/robots-txt-test?url=https://app.haotool.org/ratewise/`       | 200  | 正常                                                                   |
+| SEO 平台   | `https://www.bing.com/webmasters/tools/submit-site-url?url=https://app.haotool.org/ratewise/` | 200  | 入口正常                                                               |
+| SEO 平台   | `https://www.bing.com/webmasters/robots/submit?siteUrl=https://app.haotool.org/ratewise/`     | 302  | 走導向流程                                                             |
+| SEO 平台   | `https://search.google.com/search-console/welcome`                                            | 200  | 需帳號登入後才有完整資料                                               |
+| SEO 平台   | `https://search.google.com/search/about`                                                      | 404  | 搜尋頁面入口已變更，返回 404                                           |
+| SEO 平台   | `https://www.bing.com/toolbox/webmaster`                                                      | 200  | 入口頁可達                                                             |
+| 標準/技術  | `https://schema.org/`                                                                         | 200  | 正常                                                                   |
+| 標準/技術  | `https://www.w3.org/TR/json-ld/`                                                              | 200  | 正常                                                                   |
+| 標準/技術  | `https://json-ld.org/`                                                                        | 200  | 正常                                                                   |
+| 標準/技術  | `https://ogp.me/`                                                                             | 200  | 正常                                                                   |
+| 標準/技術  | `https://developer.mozilla.org/en-US/docs/Web/SEO`                                            | 404  | MDN 文件頁有權限/路由差異（回應 404）                                  |
+| Cloudflare | `https://developers.cloudflare.com/pages/configuration/headers/`                              | 200  | 正常                                                                   |
+| Cloudflare | `https://developers.cloudflare.com/pages/configuration/redirects/`                            | 200  | 正常                                                                   |
+| Cloudflare | `https://developers.cloudflare.com/pages/platform/headers/`                                   | 200  | 先前 301 變 200，視為正常變更                                          |
+| Cloudflare | `https://developers.cloudflare.com/cache/concepts/cache-control/`                             | 200  | 正常                                                                   |
+| Cloudflare | `https://developers.cloudflare.com/workers/runtime-apis/cache/`                               | 200  | 正常                                                                   |
+| Cloudflare | `https://developers.cloudflare.com/ai-search/`                                                | 200  | 正常                                                                   |
+| Cloudflare | `https://developers.cloudflare.com/ai-search/configuration/data-source/website/`              | 200  | 正常                                                                   |
+| Cloudflare | `https://developers.cloudflare.com/browser-rendering/rest-api/crawl-endpoint/`                | 200  | 正常                                                                   |
+| Cloudflare | `https://blog.cloudflare.com/control-content-use-for-ai-training/`                            | 200  | 正常                                                                   |
+| Cloudflare | `https://radar.cloudflare.com/robots/`                                                        | 403  | 權限/機器人限制                                                        |
+| Cloudflare | `https://developers.cloudflare.com/analytics/dashboard/`                                      | 404  | 預期未公開頁                                                           |
+| 第三方監控 | `https://ziyuan.baidu.com/`                                                                   | 200  | 可達                                                                   |
+| 第三方監控 | `https://yandex.com/dev/webmaster/`                                                           | 200  | 可達（與舊 URL 導向差異已更新）                                        |
+| 驗證入口   | `https://isitagentready.com/app.haotool.org/ratewise/`                                        | 404  | 非 API/報告頁可直接讀取，需改用 API 端點重跑                           |
+
+#### 12.6.5 外部檢測命令（可重複執行）
+
+- 生產環境基線：`node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+- 結構化資料基線：`node scripts/verify-structured-data.mjs`
+- 生產資源基線：`node scripts/verify-production-resources.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+- 外部 46 入口狀態快照（建議每週）：`node scripts/seo-full-audit.mjs --base-url=https://app.haotool.org/ratewise --max-entries=46`
+- 可重複手動入口回應掃描（輸出 csv）：
+  ```bash
+  CHECK_URLS=$(cat <<'EOF'
+  https://developers.google.com/search/docs/fundamentals/seo-starter-guide
+  https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview
+  https://developers.google.com/search/docs/fundamentals/creating-helpful-content
+  https://developers.google.com/search/docs/crawling-indexing/robots/intro
+  https://developers.google.com/search/docs/appearance/structured-data
+  https://developers.google.com/search/docs/appearance/core-web-vitals
+  https://developers.google.com/search/docs/monitor-debug/monitor-your-site-over-time
+  https://developers.google.com/search/docs/crawling-indexing/ask-google-to-recrawl
+  https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls
+  https://support.google.com/webmasters/answer/7451184
+  https://pagespeed.web.dev/analysis?url=https://app.haotool.org/ratewise/
+  https://search.google.com/test/rich-results?url=https://app.haotool.org/ratewise/
+  https://search.google.com/test/mobile-friendly?url=https://app.haotool.org/ratewise/
+  https://validator.schema.org/
+  https://validator.w3.org/nu/?doc=https://app.haotool.org/ratewise/
+  https://www.opengraph.xyz/url/https://app.haotool.org/ratewise/
+  https://developers.facebook.com/tools/debug/?q=https://app.haotool.org/ratewise/
+  https://cards-dev.twitter.com/validator
+  https://www.bing.com/webmasters/about
+  https://www.bing.com/webmasters/robots-txt-test?url=https://app.haotool.org/ratewise/
+  https://www.bing.com/webmasters/tools/submit-site-url?url=https://app.haotool.org/ratewise/
+  https://www.bing.com/webmasters/robots/submit?siteUrl=https://app.haotool.org/ratewise/
+  https://search.google.com/search-console/welcome
+  https://search.google.com/search/about
+  https://www.bing.com/toolbox/webmaster
+  https://schema.org/
+  https://www.w3.org/TR/json-ld/
+  https://json-ld.org/
+  https://ogp.me/
+  https://developers.cloudflare.com/pages/configuration/headers/
+  https://developers.cloudflare.com/pages/configuration/redirects/
+  https://developers.cloudflare.com/pages/platform/headers/
+  https://developers.cloudflare.com/cache/concepts/cache-control/
+  https://developers.cloudflare.com/workers/runtime-apis/cache/
+  https://developers.cloudflare.com/ai-search/
+  https://developers.cloudflare.com/ai-search/configuration/data-source/website/
+  https://developers.cloudflare.com/browser-rendering/rest-api/crawl-endpoint/
+  https://blog.cloudflare.com/control-content-use-for-ai-training/
+  https://radar.cloudflare.com/robots/
+  https://developers.cloudflare.com/analytics/dashboard/
+  https://llmstxt.org/
+  https://developer.mozilla.org/en-US/docs/Web/SEO
+  https://r.jina.ai/http://app.haotool.org/ratewise/
+  https://yandex.com/dev/webmaster/
+  https://ziyuan.baidu.com/
+  https://isitagentready.com/app.haotool.org/ratewise/
+  EOF
+  )
+  for u in $CHECK_URLS; do
+    status=$(curl -L -s -o /dev/null -w "%{http_code}" "$u")
+    printf '%s,%s\n' "$status" "$u" >> /tmp/ratewise-external-endpoints-$(date +%F).csv
+  done
+  ```
+
+建議把 `12.6.4` 與 `12.6.2` 一起每週更新一次，任何 `非 200/403/404/429` 變更都要註明是否為 **站點退化** 或 **第三方限制**。
+
+#### 12.6.6 IsItAgentReady 掃描報告（2026-04-25）
+
+- 測試目標：`https://app.haotool.org/ratewise/`
+- 實際掃描 URL：`https://app.haotool.org`（服務會先正規化）
+- 入口頁快照補充：`https://isitagentready.com/app.haotool.org/ratewise/`（頁面回傳 404）
+- 取得時間（UTC）：`2026-04-24T16:28:05.815Z`
+- 呼叫方式：`curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/json' -d '{"url":"https://app.haotool.org/ratewise/"}'`
+- 目前等級：`Level 1 - Basic Web Presence`（目前未進入 Level 2）
+- 下一目標：`Level 2 - Bot-Aware`（需讓 root 層也滿足 Link + Markdown negotiation + Content-Signal）
+
+| 檢核區塊           | 項目                     | 狀態         | 摘要                                                                                     |
+| ------------------ | ------------------------ | ------------ | ---------------------------------------------------------------------------------------- |
+| 可發現性           | `robots.txt`             | pass         | robots.txt 有效且可解析                                                                  |
+| 可發現性           | `sitemap`                | pass         | Sitemap 存在且結構正確                                                                   |
+| 可發現性           | `Link header`            | fail         | 掃描器實測 root 端缺少 `Link` header；prod 端未覆蓋                                      |
+| 內容可存取         | `Markdown negotiation`   | pass（本地） | 本地修正：`Accept: text/markdown` 已導向 `/ratewise/index.md`（prod 端 `200 text/html`） |
+| 內容可存取         | `Markdown negotiation`   | fail（掃描） | 掃描器實測 root 返回 `text/html`（`Accept: text/markdown` 未被轉換）                     |
+| Bot Access Control | `Content-Signal`         | fail         | 掃描器實測 root robots 未回傳 `Content-Signal`（prod robots header 仍缺）                |
+| Bot Access Control | `Web Bot Auth`           | neutral      | `.well-known/http-message-signatures-directory` 無                                       |
+| 發現機制           | `apiCatalog`             | fail         | `/.well-known/api-catalog` 404                                                           |
+| 發現機制           | `oauthDiscovery`         | fail         | `/.well-known/openid-configuration` / `/.well-known/oauth-authorization-server` 404      |
+| 發現機制           | `oauthProtectedResource` | fail         | `/.well-known/oauth-protected-resource` 404                                              |
+| 發現機制           | `mcpServerCard`          | fail         | `/.well-known/mcp/server-card.json` 等候選路徑 404                                       |
+| 發現機制           | `a2aAgentCard`           | fail         | `/.well-known/agent-card.json` 404                                                       |
+| 發現機制           | `agentSkills`            | fail         | `/.well-known/agent-skills/index.json` 等候選路徑 404                                    |
+| 發現機制           | `webMcp`                 | fail         | 頁面載入未偵測到 WebMCP tools 註冊                                                       |
+
+#### 12.6.6.1 改善建議（對應 Level 2）
+
+- 先加入 `robots.txt` `Content-Signal` 宣告（建議值）：  
+  `Content-Signal: ai-train=no, search=yes, ai-input=no`（參考 `contentsignals.org`）
+- 加上首頁 `Link` header（可指向 markdown 鏡像）
+  - 例：`Link: <https://app.haotool.org/ratewise/index.md>; rel="alternate"; type="text/markdown"`
+- 若無法立即提供 MCP/A2A/Skills 能力，請在 SSOT 中明確註記「不提供」。若要達成更高分，逐步加入：
+  - `/.well-known/api-catalog`
+  - `/.well-known/openid-configuration` 或 `/.well-known/oauth-authorization-server`
+  - `/.well-known/oauth-protected-resource`
+  - `/.well-known/mcp/server-card.json`
+  - `/.well-known/agent-card.json`
+  - `/.well-known/agent-skills/index.json`
+- 重跑同一 API 後應更新 `12.6.6` 的 status 與 `12.6.3` 的風險策略（將此結果加入每週迭代紀錄）。
+
+#### 12.6.6.2 本輪修正結果（2026-04-25）
+
+- 已完成 3 項 `Level 2` 前置：
+  - `Content-Signal`（`robots.txt` 自動產生邏輯）
+  - 首頁 `Link` Header（`/ratewise/` 對應 `index.md`）
+  - 首頁 markdown negotiation（`Accept: text/markdown` → `index.md`）
+- 已完成首頁鏡像落地：
+  - 新增 `apps/ratewise/public/index.md`（與 `generate-markdown-mirrors.mjs` 管道同步）
+  - 更新 `apps/ratewise/src/__tests__/markdown-mirror.test.ts` 覆蓋 `index.md`
+- 目前仍受限：
+  - 已於 `Security Worker` 將 `app.haotool.org` 加入 `ROOT_SITE_HOSTS`，等待生產部署後重跑，驗證 `root /` 與 `/ratewise/` 是否同步輸出 `Link` / `Content-Signal` / markdown negotiation
+  - IsItAgentReady API 目前以 `https://app.haotool.org` 起算，root 生產端缺 `Link` header 與 `Content-Signal`，且無 markdown negotiation，導致 `Level 2` 未過
+  - `https://app.haotool.org/ratewise/index.md` 目前回 404，導致外部建議的 markdown 鏡像入口還未在 prod 可直接對應
+  - 發佈並讓 root 端同時套用 `/ratewise/` SEO header / negotiation 後再重跑，才可判斷 `Level 2` 是否過關
+
+#### 12.6.7 2026-04-25 外部檢測網站快照（可重複報告）
+
+- 測試目標：`https://app.haotool.org/ratewise/`
+- 生成時間（UTC）：`2026-04-25T16:00:00.000Z`（手動整理）
+- 快照來源：12.6.4 實測回應 + 本地腳本快照輸出
+
+| 項目   | 數值 |
+| ------ | ---- |
+| 總入口 | 46   |
+| 200    | 38   |
+| 302    | 0    |
+| 403    | 2    |
+| 404    | 5    |
+| 429    | 1    |
+| 5xx    | 0    |
+
+- 風險判讀：
+  - `5xx:0`，無可證明站端可用性風險。
+  - `404:5` 主要來自工具入口變更、W3C/社群限制與未發佈鏡像資源，需追蹤為平台限制或 prod 落地差距。
+  - IsItAgentReady 觀測上仍需以「root 正規化」行為為前提重新評估 Level 2，否則 `Link header` 與 `markdown negotiation` 的結果不會準確反映 `/ratewise/` 狀態。
 
 ---
 
@@ -1016,13 +1376,13 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 ### 🟢 P3 — 長期（選配，重大架構變更）
 
-| #    | 任務                                                   | 影響         | 備註                |
-| ---- | ------------------------------------------------------ | ------------ | ------------------- |
-| P3-1 | 英文版本 `/en/` 路由                                   | 國際 SEO     | 預估 4h，需翻譯全站 |
-| P3-2 | 日文版本 `/ja/` 路由                                   | 日本用戶 SEO | 預估 4h，需日文翻譯 |
-| P3-3 | `AggregateRating` schema（需建立評分收集機制）         | Gemini 引用  | 需先有評分系統      |
-| P3-4 | 建立 FAQ 互動頁（讓 Google AI Overviews 更容易提取）   | AI Overview  | 需 UX 設計          |
-| P3-5 | 程序化 SEO 擴展：增加更多金額頁（如每幣別 12+ 個金額） | 長尾流量     | 需評估爬蟲預算      |
+| #    | 任務                                                           | 影響         | 備註                  |
+| ---- | -------------------------------------------------------------- | ------------ | --------------------- |
+| P3-1 | 英文版本 `/en/` 路由                                           | 國際 SEO     | 預估 4h，需翻譯全站   |
+| P3-2 | 日文版本 `/ja/` 路由                                           | 日本用戶 SEO | 預估 4h，需日文翻譯   |
+| P3-3 | 外部評分來源擴充與穩定樣本數（`AggregateRating` 已條件式輸出） | Gemini 引用  | 需維持 10+ 筆有效評分 |
+| P3-4 | 建立 FAQ 互動頁（讓 Google AI Overviews 更容易提取）           | AI Overview  | 需 UX 設計            |
+| P3-5 | 程序化 SEO 擴展：增加更多金額頁（如每幣別 12+ 個金額）         | 長尾流量     | 需評估爬蟲預算        |
 
 ---
 
@@ -1055,7 +1415,8 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 | **台銀賣出價**                | 臺灣銀行牌告的實際賣出匯率（即期賣出或現金賣出）；HaoRate 的核心差異化數據            |
 | **中間價**                    | 買入與賣出均價（bid-ask midpoint）；多數匯率工具顯示的數字，不反映實際換匯成本        |
 | **SSG**                       | Static Site Generation — 在 Build 時生成靜態 HTML，讓爬蟲無需執行 JS 即可讀取完整內容 |
-| **rating-snapshot.ts**        | 預建置時抓取的台銀匯率快照，用於在 `ExchangeRateSpecification` 中注入即時價格         |
+| **seo-rate-examples.ts**      | 預建置/排程更新的台銀匯率範例，用於 FAQ 差距敘述與 `ExchangeRateSpecification` 價格   |
+| **rating-snapshot.ts**        | 預建置時抓取的台銀匯率快照，用於首頁評分 snapshot 與相關建置資料                      |
 | **SSOT**                      | Single Source of Truth — 單一真實來源，確保所有相關文件從同一個設定衍生               |
 | **llms.txt**                  | 放置於網站根目錄的 AI 友善索引文件，遵循 llmstxt.org 規範（Markdown 格式）            |
 | **INP**                       | Interaction to Next Paint — 2024 年取代 FID 的 Core Web Vitals 指標，測量所有互動延遲 |
@@ -1088,17 +1449,25 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 ---
 
-**最後更新**: 2026-04-23
-**版本**: v2.2.0
+**最後更新**: 2026-04-25
+**版本**: v2.4.7
 **維護者**: Development Team
 **下次審查日**: 2026-07-10（每季審查）
 
 ### 修訂紀錄
 
-| 日期       | 版本   | 變更摘要                                                                                                            |
-| ---------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
-| 2026-04-23 | v2.2.0 | 同步 SEO SSOT 現況：249 URL、HaoRate 品牌、已完成 schema/Answer Capsule、AI crawler 共用清單與 sitemap 過時標籤治理 |
-| 2026-04-20 | v1.3.0 | P1-5 完成：金額頁加入 ExchangeRateSpecification schema（含換算金額），4 個新測試案例                                |
-| 2026-04-10 | v1.2.0 | 新增 2026 年 AI 搜尋術語（AEO/GEO/LLMO 深度解析）、AI 平台特性對照表、更新 TODO 完成狀態                            |
-| 2026-03-31 | v1.1.0 | 同步 v2.16.x 實作：seo-static.ts、AnswerCapsule 元件、路徑數量修正、健檢強化、TODO 已完成項目標記                   |
-| 2026-03-23 | v1.0.0 | 初始版本，整合六份舊 SEO 文件                                                                                       |
+| 日期       | 版本   | 變更摘要                                                                                                                           |
+| ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-25 | v2.4.7 | 新增 `ROOT_SITE_HOSTS` 加入 `app.haotool.org`，待生產重測 `/` 與 `/ratewise/` SEO header / negotiation 對齊                        |
+| 2026-04-25 | v2.4.6 | 新增 12.6.6 生產實測差異（root /ratewise/ header 差異），補齊 46 筆權威入口重測快照與 IsItAgentReady 生產端檢核入口 404 檢核       |
+| 2026-04-25 | v2.4.5 | 新增 12.6.7 外部檢測快照與 12.6.6 IsItAgentReady 重掃實測；補齊 12.6.5 重複掃描命令，文件版本與修訂欄位同步                        |
+| 2026-04-25 | v2.4.3 | 補齊首頁 AI 可發現性修正：`robots.txt` Content-Signal、首頁 Link header、markdown negotiation；更新 markdown 鏡像與驗證規格        |
+| 2026-04-25 | v2.4.2 | 新增 IsItAgentReady 掃描報告節點（2026-04-24），補齊 Level 1 失敗項目清單與 BOT-Aware 升級建議                                     |
+| 2026-04-25 | v2.4.1 | 新增 2026-04-25 外部檢測快照、分層記錄第三方限制狀態，補齊外部可複用檢測命令與迭代規程                                             |
+| 2026-04-24 | v2.4.0 | 新增「權威 SEO 參考網站」與「生產網址外部檢測報告」節點；補充 26 個權威來源與 2026-04-24 外部回應紀錄                              |
+| 2026-04-24 | v2.3.0 | 對齊 apps/ratewise 現行 SEO 實作：FAQPage 改為 34 個幣別頁、補 FinancialService/Dataset/Person、同步 prebuild 與 Markdown 鏡像治理 |
+| 2026-04-23 | v2.2.0 | 同步 SEO SSOT 現況：249 URL、HaoRate 品牌、已完成 schema/Answer Capsule、AI crawler 共用清單與 sitemap 過時標籤治理                |
+| 2026-04-20 | v1.3.0 | P1-5 完成：金額頁加入 ExchangeRateSpecification schema（含換算金額），4 個新測試案例                                               |
+| 2026-04-10 | v1.2.0 | 新增 2026 年 AI 搜尋術語（AEO/GEO/LLMO 深度解析）、AI 平台特性對照表、更新 TODO 完成狀態                                           |
+| 2026-03-31 | v1.1.0 | 同步 v2.16.x 實作：seo-static.ts、AnswerCapsule 元件、路徑數量修正、健檢強化、TODO 已完成項目標記                                  |
+| 2026-03-23 | v1.0.0 | 初始版本，整合六份舊 SEO 文件                                                                                                      |
