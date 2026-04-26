@@ -281,18 +281,32 @@ function getLastModDate(path) {
     return getFallbackLastModDate(path);
   }
 
-  const gitResult = spawnSync('git', ['log', '-1', '--format=%cI', '--', ...existingFiles], {
+  const lookupPath = resolveLookupPath(path);
+  const contentPolicy = CONTENT_LASTMOD_POLICY[lookupPath];
+  const primaryFiles = contentPolicy ? [existingFiles[0]] : existingFiles;
+  const primaryGitDate = getGitCommitDate(primaryFiles);
+  if (primaryGitDate) return primaryGitDate;
+
+  const secondaryGitDate = getGitCommitDate(existingFiles);
+  if (secondaryGitDate) return secondaryGitDate;
+
+  const mtimes = existingFiles.map((file) => statSync(resolve(REPO_ROOT, file)).mtime.getTime());
+  return new Date(Math.max(...mtimes));
+}
+
+function getGitCommitDate(files) {
+  const normalizedFiles = files.filter(Boolean);
+  if (normalizedFiles.length === 0) return null;
+
+  const gitResult = spawnSync('git', ['log', '-1', '--format=%cI', '--', ...normalizedFiles], {
     cwd: REPO_ROOT,
     encoding: 'utf-8',
   });
   const gitTimestamp = gitResult.status === 0 ? gitResult.stdout.trim() : '';
-  if (gitTimestamp) {
-    const gitDate = new Date(gitTimestamp);
-    if (!Number.isNaN(gitDate.getTime())) return gitDate;
-  }
+  if (!gitTimestamp) return null;
 
-  const mtimes = existingFiles.map((file) => statSync(resolve(REPO_ROOT, file)).mtime.getTime());
-  return new Date(Math.max(...mtimes));
+  const gitDate = new Date(gitTimestamp);
+  return Number.isNaN(gitDate.getTime()) ? null : gitDate;
 }
 
 function resolveLookupPath(path) {

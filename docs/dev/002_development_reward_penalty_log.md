@@ -4553,3 +4553,46 @@ root_cause:
 - apps/ratewise/scripts/update-seo-rate-examples.mjs
 - apps/ratewise/src/config/generated/seo-rate-examples.ts
 - apps/ratewise/src/config/**tests**/seo-speakable.test.ts
+
+---
+
+id: ratewise-sitemap-lastmod-diversity-followup
+date: 2026-04-26
+title: 收斂 sitemap lastmod 多樣性不足警告
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: ratewise, seo, sitemap
+topics: [ratewise, sitemap, lastmod, semantic-policy, ssot]
+keywords:
+[lastmod-diversity, sitemap-warning, semantic-lastmod, seo-truthfulness]
+aliases: [sitemap lastmod 多樣性修復, semantic lastmod followup]
+related_entries:
+[sitemap-lastmod-policy, ratewise-seo-rate-examples-spotavailable-ssot]
+summary: `generate-sitemap-2025.mjs` 先前雖已導入 semantic lastmod policy，但內容頁仍會因共用 `seo-metadata.ts` 的最近 commit 被壓成同一天，導致 sitemap 只產生 2 種日期並持續警告。這次將內容頁 lastmod 的優先順序改成先看 route 專屬主檔，再回退到完整 dependency set，讓 `/faq/`、`/about/`、`/guide/`、`/open-data/`、`/seo-tech/` 的日期更貼近主內容更新，而不是被共用設定檔一起帶新。
+root_cause:
+
+- generator 對 `CONTENT_LASTMOD_POLICY` 的內容頁直接對整組 dependency files 做 `git log -1`，使共享檔案的最近 commit 蓋過 route 專屬內容檔。
+- `seo-metadata.ts` 屬於多頁共享依賴，一旦更新會讓多個 editorial / trust / disclosure page 看起來同日重大更新。
+- 這會削弱 `lastmod` 作為真實更新訊號的可信度，也讓 sitemap 多樣性檢查長期停在 warning。
+  impact:
+
+- sitemap `lastmod` 更接近各 route 的主內容更新日期。
+- 減少「全站同日假新鮮」風險，讓 public truth surface 更可稽核。
+  actions:
+
+- 在 `generate-sitemap-2025.mjs` 新增 `getGitCommitDate()` helper。
+- 對 `CONTENT_LASTMOD_POLICY` 命中的頁面，先取 route 專屬主檔的 git commit 日期；主檔無資料時，再回退到整組依賴。
+- 保留既有 fallback 與 rate pages 的 generated source 策略，不擴大變更面。
+  prevention:
+
+- 共享 metadata / registry 檔不得主導 editorial page 的 `lastmod`，除非該頁主檔本身無可用提交資訊。
+- `lastmod` 需優先反映 route 專屬主內容，而不是方便維護的共用設定檔。
+  verification:
+
+- `node scripts/generate-sitemap-2025.mjs`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts src/seo-best-practices.test.ts`
+  references:
+
+- scripts/generate-sitemap-2025.mjs
+- apps/ratewise/src/config/seo-lastmod-policy.ts
