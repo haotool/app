@@ -4779,3 +4779,45 @@ references:
 - docs/SEO_MASTER_SSOT.md
 - apps/ratewise/public/_headers
 - apps/ratewise/public/robots.txt
+
+---
+
+id: pr275-codex-command-evidence-fix-2026-04-26
+date: 2026-04-26
+title: 修正 PR275 的 002 稽核證據命令，移除不存在的 seo-full-audit 參數
+score: 0
+type: improvement
+content_type: docs
+scope: ratewise, seo, audit, github-pr
+topics: [seo, ssot, audit, pr-review, reproducibility]
+keywords:
+[PR275, seo-full-audit.mjs, base-url, verification, reproducibility]
+aliases: [PR275 Codex comment resolution]
+related_entries:
+[ratewise-seo-ssot-external-audit-2026-04-25]
+summary: 依 PR275 的 Codex review，將 `docs/dev/002_development_reward_penalty_log.md` 內不可執行的 `node scripts/seo-full-audit.mjs --base-url=...` 證據命令改為實際支援的本地 `dist` 稽核命令，避免把不存在的 CLI 參數寫進可追溯證據鏈。
+root_cause:
+
+- 先前 002 條目沿用了文件草稿中的命令描述，未再次核對 `scripts/seo-full-audit.mjs` 的實際 CLI 介面。
+impact:
+
+- 後續維護者若直接複製該命令，會得到失敗或誤解性的驗證流程，破壞 002 作為稽核證據的可重現性。
+actions:
+
+- 更新 002 條目的 `verification` 區塊，移除不存在的 `--base-url` 參數。
+- 保留 `verify-production-seo.mjs` 作為公開端檢查，將 `seo-full-audit.mjs` 明確留在本地 `dist` 稽核用途。
+prevention:
+
+- 之後凡是將腳本列入文件或 002 證據前，先用 `node <script> --help`、原始碼或實跑確認參數面。
+verification:
+
+- `node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+- `node scripts/verify-structured-data.mjs`
+- `node scripts/seo-full-audit.mjs`
+- `git diff -- docs/dev/002_development_reward_penalty_log.md`
+references:
+
+- docs/dev/002_development_reward_penalty_log.md
+- scripts/verify-production-seo.mjs
+- scripts/verify-structured-data.mjs
+- scripts/seo-full-audit.mjs
