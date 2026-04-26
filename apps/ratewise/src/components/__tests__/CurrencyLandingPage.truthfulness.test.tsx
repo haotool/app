@@ -9,6 +9,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { CurrencyLandingPage } from '../CurrencyLandingPage';
+import { APP_INFO } from '../../config/app-info';
 import { getCurrencyLandingPageContent } from '../../config/seo-metadata';
 import { CURRENCY_SEO_PATHS, REVERSE_CURRENCY_SEO_PATHS } from '../../config/seo-paths';
 
@@ -58,7 +59,7 @@ describe('CurrencyLandingPage template truthfulness', () => {
     '%s 禁止保留通用硬編污染文案',
     (path) => {
       const text = extractVisibleText(readDistHtml(path));
-      expect(text).toContain('為什麼 HaoRate 比其他工具更精準？');
+      expect(text).toContain(`為什麼 ${APP_INFO.shortName} 比其他工具更精準？`);
       expect(text).not.toContain('10 萬日圓');
 
       if (!path.includes('jpy') && !path.includes('krw')) {

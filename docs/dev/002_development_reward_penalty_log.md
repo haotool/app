@@ -6,6 +6,51 @@
 
 ---
 
+id: ratewise-seo-prepush-truthfulness-gate-fix
+date: 2026-04-26
+title: 修復 RateWise SEO PR 發佈前的 truthfulness 與 speakable 回歸
+score: +1
+type: regression
+content_type: troubleshooting
+scope: ratewise, seo, structured-data, docs
+topics: [ratewise, seo, truthfulness, speakable, cash-only-currency]
+keywords:
+[seo-prepush, cash-only-schema, speakable-h3, brand-ssot, exchange-rate-truthfulness]
+aliases: [RateWise SEO pre-push 修復, cash-only truthfulness gate fix]
+related_entries:
+[ratewise-auto-rate-display-align-buy-sell]
+summary: 在建立 RateWise SEO draft PR 時，`pre-push` 的 repo 全量測試抓出 3 類回歸：新測試檔硬寫品牌字面值、現金專屬幣別頁仍殘留「即期匯率切換」與相關 FAQ 文案、Authority Guide 的 speakable selector 未涵蓋 FAQ 以 `h3` 渲染的問題標題。本次以最小修補收斂到 `APP_INFO` 與 `seo-metadata.ts`，讓公開內容、schema 與測試矩陣重新對齊 SSOT。
+root_cause:
+
+- 前一輪 SEO 修補主要聚焦 FAQPage / ExchangeRateSpecification 與公開技術揭露頁，未同步把現金專屬幣別的可見文案一起收斂成 conditional branch。
+- 新增的 truthfulness 測試直接寫入品牌字面值，踩到 repo 既有的品牌 SSOT gate。
+- Speakable 回歸測試要求 Authority Guide 的 FAQ 問題標題可被語音朗讀，但頁面 metadata 仍沿用只有 `h1` 的 selector 設定。
+  impact:
+
+- `pre-push` 被 RateWise 測試矩陣阻擋，導致 draft PR 無法建立。
+- KRW / PHP / IDR / MYR / VND 等現金專屬幣別頁會對 Google、AI 與使用者暗示不存在的即期匯率切換情境，削弱 YMYL trustworthiness。
+- Authority Guide 的 FAQ 問題標題未被 speakable 涵蓋，降低語音搜尋與 AI 朗讀的一致性。
+  actions:
+
+- 將 `CurrencyLandingPage.truthfulness.test.tsx` 改為透過 `APP_INFO.shortName` 斷言，移除品牌硬編碼。
+- 在 `seo-metadata.ts` 為現金專屬幣別補上 `spotAvailable` 分支，收斂 description、FAQ、howTo 與 highlights 的即期匯率敘述。
+- 將 3 個 Authority Guide 頁面的 `speakableCssSelectors` 擴為 `['h1', 'h3']`，並把 `buildSpeakableJsonLd()` 預設值同步納入 `h3`。
+  prevention:
+
+- 涉及金融內容的 SEO 模板不得假設所有幣別都同時有現金與即期牌告；應以 `SEO_RATE_EXAMPLES` 或同級 SSOT 分支輸出。
+- 測試檔同樣受品牌 SSOT 約束，凡需引用品牌名稱應統一從 `APP_INFO` 讀取。
+- 內容頁若有 FAQ 區塊且實際以 `h3` 渲染問題標題，speakable selector 必須同步涵蓋該 heading level。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts src/config/__tests__/seo-cash-only-schema.test.ts src/config/__tests__/seo-speakable.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+- `git push -u origin HEAD:refs/heads/codex/ratewise-seo-ssot-hardening`
+  references:
+
+- apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/config/**tests**/seo-cash-only-schema.test.ts
+- apps/ratewise/src/config/**tests**/seo-speakable.test.ts
+
 id: ratewise-sitemap-lastmod-policy
 date: 2026-04-26
 title: 為 sitemap lastmod 建立 semantic policy，移除 seo-tech current-time fallback
