@@ -382,6 +382,45 @@ root_cause:
 
 ---
 
+id: pr281-regex-end-tag-generalization-fix-2026-04-26
+date: 2026-04-26
+title: 將 SEO 測試 regex 擴充為可匹配 script/style end tag 的廣義變體
+score: 0
+type: fix
+content_type: test
+scope: ratewise, seo, codeql
+topics: [seo, codeql, regex, html-stripping, regression]
+keywords:
+[PR281, PR275, CodeQL, script end tag, style end tag, regex]
+aliases: [regex end tag generalization fix]
+related_entries:
+[pr281-regex-tail-whitespace-fix-2026-04-26]
+summary: 依 PR275 / PR281 合併後續的 CodeQL thread，將兩支 SEO HTML stripping 測試從 `</script\\s*>` / `</style\\s*>` 再擴為 `</script\\b[^>]*>` / `</style\\b[^>]*>`，覆蓋 tag name 後仍帶空白、換行或其他合法尾端片段的變體，避免再次留下腳本或樣式內容。
+root_cause:
+
+- 先前版本雖已處理大小寫與單純尾端空白，但仍假設 end tag 只會是 `</script>` 或 `</script >`。
+- CodeQL 進一步指出像 `</script\\t\\n bar>` 這種較寬鬆的尾端片段仍不會被舊 regex 吃掉。
+  impact:
+
+- 測試中的可見文字抽取仍可能殘留 script/style 內容，讓安全掃描持續報告不完整過濾 regex。
+  actions:
+
+- 將兩支測試的 `script` / `style` stripping regex 改為 `</script\\b[^>]*>` 與 `</style\\b[^>]*>`。
+- 保持其他文字抽取與斷言不變，將修復範圍限縮在 regex 邊界。
+  prevention:
+
+- 之後遇到 HTML stripping 類型的安全提示，直接用 `tagName + \\b + [^>]*>` 的較寬匹配策略，避免逐個變體追補。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/seo-surface-order.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+- `git diff -- apps/ratewise/src/__tests__/seo-surface-order.test.ts apps/ratewise/src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+  references:
+
+- apps/ratewise/src/**tests**/seo-surface-order.test.ts
+- apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
+
+---
+
 id: robots-txt-validator-truthfulness-fix-2026-04-26
 date: 2026-04-26
 title: 修正 Worker 改寫 robots.txt 後仍沿用上游 validators 的快取語義漂移
