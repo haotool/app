@@ -62,6 +62,13 @@ function log(color, symbol, message) {
 const REPO_ROOT = resolve(__dirname, '..');
 const ENFORCE_LASTMOD_DIVERSITY =
   process.env.CI === 'true' || process.env.SITEMAP_ENFORCE_LASTMOD_DIVERSITY === '1';
+const IS_SHALLOW_REPOSITORY = (() => {
+  const result = spawnSync('git', ['rev-parse', '--is-shallow-repository'], {
+    cwd: REPO_ROOT,
+    encoding: 'utf-8',
+  });
+  return result.status === 0 && result.stdout.trim() === 'true';
+})();
 
 /**
  * 每個公開 URL 對應一組「重大內容依賴」。
@@ -269,6 +276,10 @@ REVERSE_CURRENCY_SEO_PATHS.forEach((path) => {
  * @returns {Date} 文件修改時間
  */
 function getLastModDate(path) {
+  if (IS_SHALLOW_REPOSITORY) {
+    return getFallbackLastModDate(path);
+  }
+
   const dependencyFiles = getDependencyFilesForPath(path);
   if (!dependencyFiles?.length) {
     console.warn(`⚠️  No dependency mapping for ${path}, using fallback time`);
@@ -344,6 +355,9 @@ function getFallbackLastModDate(path) {
   const lookupPath = resolveLookupPath(path);
   const policyFallback = CONTENT_LASTMOD_POLICY[lookupPath]?.fallbackDate;
   if (policyFallback) return new Date(`${policyFallback}T00:00:00.000Z`);
+  if (isRateContentPath(path) && RATE_PAGE_LASTMOD_POLICY.fallbackDate) {
+    return new Date(`${RATE_PAGE_LASTMOD_POLICY.fallbackDate}T00:00:00.000Z`);
+  }
   return new Date();
 }
 
