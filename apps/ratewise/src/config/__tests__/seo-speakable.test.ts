@@ -96,4 +96,23 @@ describe('Speakable schema 整合測試（所有核心內容頁）', () => {
     const selectors = parent ? getSpeakableSelectors(parent) : [];
     expect(selectors).toContain('details summary');
   });
+
+  it('有 faqContent 的指南頁 speakable 應涵蓋 h3（FAQ 問題標題由 AuthorityGuidePage 以 h3 渲染）', () => {
+    // AuthorityGuidePage.tsx 以 <h3> 渲染 faqContent 的每個問題，h3 是這些頁面中
+    // 唯一屬於 FAQ 問題的標籤，加入 speakable 可讓 AI 語音助手朗讀 FAQ 問答。
+    const GUIDE_PAGES_WITH_FAQ = [
+      { name: 'SELL_RATE_VS_MID_RATE_PAGE', page: SELL_RATE_VS_MID_RATE_PAGE },
+      { name: 'CASH_VS_SPOT_RATE_PAGE', page: CASH_VS_SPOT_RATE_PAGE },
+      { name: 'CARD_RATE_GUIDE_PAGE', page: CARD_RATE_GUIDE_PAGE },
+    ] as const;
+
+    GUIDE_PAGES_WITH_FAQ.forEach(({ name, page }) => {
+      const nodes = page.jsonLd as JsonLdNode[];
+      const url = `https://app.haotool.org/ratewise${page.pathname}`;
+      const processed = attachSpeakableToGraph([...nodes], url);
+      const parent = findSpeakableParent(processed);
+      const selectors = parent ? getSpeakableSelectors(parent) : [];
+      expect(selectors, `${name} 應包含 h3 以涵蓋 FAQ 問題標題`).toContain('h3');
+    });
+  });
 });

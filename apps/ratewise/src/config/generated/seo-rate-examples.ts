@@ -55,6 +55,8 @@ export interface RateExample {
   marketMid: number;
   /** 台銀自身現金中間價（(買入+賣出)/2，雙重驗證用，null 代表無現金買入資料） */
   bankMid: number | null;
+  /** 台灣銀行是否提供即期賣出匯率（true = 有即期報價；false = 現金專屬幣別） */
+  spotAvailable: boolean;
   /** 替代換匯管道（如明洞換匯所），僅特定幣別有此欄位 */
   alternativeProviders?: AlternativeProvider[];
 }
@@ -72,6 +74,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 31.77,
     marketMid: 31.525851,
     bankMid: 31.435,
+    spotAvailable: true,
   },
   JPY: {
     exampleTWD: 30000,
@@ -84,6 +87,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 0.2013,
     marketMid: 0.197486,
     bankMid: 0.1949,
+    spotAvailable: true,
   },
   EUR: {
     exampleTWD: 30000,
@@ -96,6 +100,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 37.45,
     marketMid: 36.889479,
     bankMid: 36.78,
+    spotAvailable: true,
   },
   GBP: {
     exampleTWD: 30000,
@@ -108,6 +113,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 43.56,
     marketMid: 42.564059,
     bankMid: 42.5,
+    spotAvailable: true,
   },
   CNY: {
     exampleTWD: 30000,
@@ -120,6 +126,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 4.676,
     marketMid: 4.616805,
     bankMid: 4.595,
+    spotAvailable: true,
   },
   KRW: {
     exampleTWD: 30000,
@@ -132,13 +139,14 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 0.0235,
     marketMid: 0.021336,
     bankMid: 0.02155,
+    spotAvailable: false,
     alternativeProviders: [
       {
         name: '明洞換匯所',
         nameEn: 'Myeongdong Exchange',
-        rate: 45.1,
-        rateBuy: 45.5,
-        rateInverse: 0.022173,
+        rate: 45.2,
+        rateBuy: 45.4,
+        rateInverse: 0.022124,
         source: 'MoneyBox',
         sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
         rateDate: '2026-04-26',
@@ -157,6 +165,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 4.069,
     marketMid: 4.019454,
     bankMid: 3.967,
+    spotAvailable: true,
   },
   AUD: {
     exampleTWD: 30000,
@@ -169,6 +178,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 22.93,
     marketMid: 22.519986,
     bankMid: 22.54,
+    spotAvailable: true,
   },
   CAD: {
     exampleTWD: 30000,
@@ -181,6 +191,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 23.47,
     marketMid: 23.033514,
     bankMid: 23.015,
+    spotAvailable: true,
   },
   SGD: {
     exampleTWD: 30000,
@@ -193,6 +204,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 25.02,
     marketMid: 24.668821,
     bankMid: 24.565,
+    spotAvailable: true,
   },
   CHF: {
     exampleTWD: 30000,
@@ -205,6 +217,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 40.51,
     marketMid: 40.07213,
     bankMid: 39.91,
+    spotAvailable: true,
   },
   NZD: {
     exampleTWD: 30000,
@@ -217,6 +230,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 18.89,
     marketMid: 18.514061,
     bankMid: 18.465,
+    spotAvailable: true,
   },
   THB: {
     exampleTWD: 30000,
@@ -229,6 +243,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 1.035,
     marketMid: 0.973604,
     bankMid: 0.94,
+    spotAvailable: true,
   },
   PHP: {
     exampleTWD: 30000,
@@ -241,6 +256,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 0.5851,
     marketMid: 0.519687,
     bankMid: 0.5191,
+    spotAvailable: false,
   },
   IDR: {
     exampleTWD: 30000,
@@ -253,6 +269,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 0.00218,
     marketMid: 0.001834,
     bankMid: 0.00183,
+    spotAvailable: false,
   },
   MYR: {
     exampleTWD: 30000,
@@ -265,6 +282,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 8.444,
     marketMid: 7.946851,
     bankMid: 7.6815,
+    spotAvailable: false,
   },
   VND: {
     exampleTWD: 30000,
@@ -277,6 +295,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     cashSell: 0.00136,
     marketMid: 0.001198,
     bankMid: 0.001155,
+    spotAvailable: false,
   },
 } as const;
 

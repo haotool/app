@@ -4509,3 +4509,47 @@ root_cause:
 - apps/ratewise/src/features/ratewise/RateWise.tsx
 - apps/ratewise/src/features/ratewise/hooks/useCurrencyConverter.ts
 - apps/ratewise/src/features/ratewise/components/**tests**/SingleConverter.core.test.tsx
+
+---
+
+id: ratewise-seo-rate-examples-spotavailable-ssot
+date: 2026-04-26
+title: 對齊 SEO rate examples 的 spotAvailable 生成鏈與 speakable 回歸測試
+score: +1
+type: improvement
+content_type: troubleshooting
+scope: ratewise, seo, generated-data
+topics: [ratewise, seo, ssot, generated-data, speakable]
+keywords:
+[spotAvailable, seo-rate-examples, generated-ssot, authority-guide, speakable-h3]
+aliases: [SEO rate examples spotAvailable SSOT, speakable h3 regression]
+related_entries:
+[ratewise-seo-prepush-truthfulness-gate-fix]
+summary: 將 `spotAvailable` 正式收進 `update-seo-rate-examples.mjs` 與 `generated/seo-rate-examples.ts` 的資料生成鏈，讓 cash-only 幣別與有即期匯率幣別的差異來自可重建的 SSOT，而非只存在於本地測試狀態。同時保留 `seo-speakable.test.ts` 對 Authority Guide FAQ `h3` 朗讀節點的回歸測試，避免再次出現 metadata 與頁面實際 heading 結構脫鉤。
+root_cause:
+
+- 前一輪修補已在 runtime 依賴 `spotAvailable` 分支，但生成腳本與 generated 檔案仍停留在未提交狀態。
+- `seo-speakable.test.ts` 的 `h3` 回歸保護已存在於 worktree，但未隨同 SEO truthfulness 修補一起入庫。
+- 若只保留 runtime 依賴、不提交生成鏈與測試，之後重新生成資料或換機器後容易再次漂移。
+  impact:
+
+- cash-only 幣別與有即期匯率幣別的真相可由 prebuild 穩定重建，降低 SEO 文案與測試矩陣漂移風險。
+- Authority Guide 的 FAQ 問題標題朗讀能力有明確回歸測試保護。
+  actions:
+
+- 在 `update-seo-rate-examples.mjs` 新增 `spotAvailable` 欄位輸出與型別宣告生成。
+- 將 `generated/seo-rate-examples.ts` 納入對應欄位與最新匯率樣本資料。
+- 保留 `seo-speakable.test.ts` 的 `h3` selector regression case，對齊 FAQ 實際由 `AuthorityGuidePage` 以 `h3` 渲染的結構。
+  prevention:
+
+- 只要 runtime 依賴 generated SEO 資料的新欄位，就必須同步提交 generator 與 generated artifact，避免半套 SSOT。
+- 結構化資料若依賴頁面 heading 層級，測試需直接鎖定對應 selector，而不是只驗 `h1` 存在。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/build-scripts.test.ts src/config/__tests__/seo-cash-only-schema.test.ts src/config/__tests__/seo-speakable.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+- `git status --short`
+  references:
+
+- apps/ratewise/scripts/update-seo-rate-examples.mjs
+- apps/ratewise/src/config/generated/seo-rate-examples.ts
+- apps/ratewise/src/config/**tests**/seo-speakable.test.ts
