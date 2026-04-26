@@ -21,6 +21,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useUrlNormalization();
 
   const isBrowser = typeof window !== 'undefined';
+  const isSsg = !isBrowser;
   const [showDecemberTheme, setShowDecemberTheme] = React.useState(false);
 
   // SSR 端需提供空 context 避免狀態洩漏；客戶端使用預設值
@@ -50,7 +51,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           >
             {/* 主要內容 */}
             <main className="min-h-full [overscroll-behavior-y:contain]">
-              <React.Suspense fallback={<SkeletonLoader />}>{children}</React.Suspense>
+              {isSsg ? (
+                children
+              ) : (
+                <React.Suspense fallback={<SkeletonLoader />}>{children}</React.Suspense>
+              )}
             </main>
 
             {/* 頁尾 - Stage 6：內部連結結構（僅桌面版顯示） */}

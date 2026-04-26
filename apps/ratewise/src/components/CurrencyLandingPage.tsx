@@ -12,6 +12,8 @@ import type { AlternativeProvider } from '../config/generated/seo-rate-examples'
 import { APP_INFO, getCopyrightNotice } from '../config/app-info';
 import {
   buildAmountExchangeRateSpecificationJsonLd,
+  buildRateDifferenceSentence,
+  getDefaultExampleAmount,
   type FAQEntry,
   type HowToStep,
   type CommonAmountEntry,
@@ -100,6 +102,14 @@ export function CurrencyLandingPage({
         ? Math.round((amount / cashSell) * 100) / 100
         : Math.round(amount * cashSell)
       : null;
+  const rateDifferenceSentence = buildRateDifferenceSentence({
+    currencyCode,
+    currencyName,
+    direction: isTwdToForeign ? 'twd-to-foreign' : 'to-twd',
+    exampleAmount: getDefaultExampleAmount(currencyCode),
+    bankMid: rateExample?.bankMid ?? null,
+    cashSell,
+  });
 
   const formatNum = (n: number) => n.toLocaleString('zh-TW');
 
@@ -317,10 +327,7 @@ export function CurrencyLandingPage({
                     </div>
                   </div>
                   <p className="text-text-muted text-xs leading-relaxed bg-amber-50 dark:bg-amber-950/20 rounded-lg px-3 py-2 border border-amber-200/30">
-                    <strong className="text-text">差距有多大？</strong> 換 10
-                    萬日圓，中間價與實際賣出價相差約{' '}
-                    <strong className="text-text">1,500～3,000 元台幣</strong>。
-                    換匯金額越大，差距越明顯。
+                    {rateDifferenceSentence}
                   </p>
                 </div>
               </div>

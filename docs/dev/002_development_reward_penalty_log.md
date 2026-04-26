@@ -1,8 +1,64 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-24T16:41:53+08:00
-> **當前總分**: 1209（初始分: 100）
+> **最後更新**: 2026-04-26T21:09:30+08:00
+> **當前總分**: 1210（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-seo-surface-order-and-currency-truthfulness
+date: 2026-04-26
+title: 收斂 RateWise 首屏 fallback 污染與幣別頁跨幣別匯差文案
+score: +1
+type: fix
+content_type: seo
+scope: ratewise, prerender, currency-pages
+topics: [seo, ssg, prerender, fallback, truthfulness, ymyl]
+keywords:
+[index-html, suspense-fallback, skeleton, currency-landing-page, rate-difference, usd-twd, jpy-bleed]
+aliases: [RateWise 首屏順序修復, 幣別頁模板污染修復]
+related_entries:
+[ratewise-about-faq-seo-truthfulness-refresh, ratewise-seo-title-truthfulness-lastmod-tdd]
+summary: 先完成 P0-A 與 P0-C。將 `index.html` 的預設 HTML 縮到最小 `noscript`，移除所有會污染 SSG 首屏的首頁文案與 skeleton；同時讓 `Layout` 在 SSR/SSG 階段不再用 `Suspense` 串流延後 SEO route 內容、`SkeletonLoader` 不再把通用 SEO 文案寫進 SSG HTML，並在首頁 app chrome 前補上首頁專屬 H1，避免 header/nav 先於主題。幣別頁則移除硬編「換 10 萬日圓／1,500～3,000 元台幣」模板，改由 `seo-metadata.ts` 的匯差句子 builder 依幣別與方向產生文字，避免 USD 頁出現 JPY 範例這類 YMYL 信任傷害。
+root_cause:
+
+- `apps/ratewise/index.html` 先前承載首頁導向的品牌文案、功能清單與 skeleton，導致 prerender HTML 在 route 專屬 H1 之前先出現通用內容。
+- `Layout.tsx` 的 `Suspense` 在 SSG 階段會把 route 內容延後到 hidden streaming container，造成 footer 先於 route H1；首頁則因為掛在 `AppLayout` 之內，header/nav 文字天然早於首頁主 H1。
+- `SkeletonLoader.tsx` 先前內嵌一整包隱藏 SEO 文案與 `載入匯率資料中...`，會直接污染首頁 prerender 首屏順序。
+- `CurrencyLandingPage.tsx` 內的匯差說明是跨幣別硬編文案，沒有接回匯率 SSOT，造成非 JPY 頁面也會出現「10 萬日圓」。
+  impact:
+
+- Google 與 AI crawler 讀到的首屏文字順序失真，真正頁面主題在 HTML 中被通用 fallback 擠到後面。
+- 幣別頁公開內容與實際幣別不一致，會直接削弱匯率工具在 YMYL 場景下的可信度。
+  actions:
+
+- 將 `apps/ratewise/index.html` 收斂為最小 `noscript` 提示與空 `#root`，並更新冷啟動診斷腳本的 skeleton 偵測方式。
+- 在 `apps/ratewise/src/components/Layout.tsx` 讓 SSR/SSG 直接輸出 children，不再以 `Suspense` 包住 SEO route。
+- 在 `apps/ratewise/src/components/SkeletonLoader.tsx` 將通用 SEO 文案與 `載入匯率資料中...` 限縮為 client-only，避免寫進 SSG HTML。
+- 在 `apps/ratewise/src/components/AppLayout.tsx` 補首頁專屬隱藏 H1，並在 `HomepageSEOSection.tsx` 將可見主標題降為 `h2`，避免雙 H1。
+- 在 `apps/ratewise/src/config/seo-metadata.ts` 新增 `DEFAULT_EXAMPLE_AMOUNTS`、`getDefaultExampleAmount()`、`buildRateDifferenceSentence()`。
+- 在 `apps/ratewise/src/components/CurrencyLandingPage.tsx` 改用 builder 產生「差距有多大」段落。
+- 新增 `seo-surface-order.test.ts` 與 `CurrencyLandingPage.truthfulness.test.tsx` 守門測試。
+  prevention:
+
+- `index.html` 不再承擔任何 route SEO 文案；可索引內容必須只來自對應 route component。
+- SEO route 的 SSR 不得依賴 `Suspense` streaming 讓主內容晚於 footer；首頁若必須掛在 app chrome 下，需先保證 route 專屬 H1 出現在 chrome 之前。
+- 幣別頁凡涉及具體換匯案例，一律從 SSOT builder 產生，不得在共用模板直接手寫特定幣別名詞。
+  verification:
+
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/seo-surface-order.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
+  references:
+
+- apps/ratewise/index.html
+- apps/ratewise/src/components/Layout.tsx
+- apps/ratewise/src/components/AppLayout.tsx
+- apps/ratewise/src/components/HomepageSEOSection.tsx
+- apps/ratewise/src/components/SkeletonLoader.tsx
+- apps/ratewise/src/components/CurrencyLandingPage.tsx
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/**tests**/seo-surface-order.test.ts
+- apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
 
 ---
 

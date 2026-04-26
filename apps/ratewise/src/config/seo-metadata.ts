@@ -2379,6 +2379,54 @@ function formatAmount(amount: number): string {
   return amount.toLocaleString('zh-TW');
 }
 
+export const DEFAULT_EXAMPLE_AMOUNTS = {
+  USD: 1000,
+  JPY: 100000,
+  EUR: 1000,
+  KRW: 100000,
+  HKD: 10000,
+  THB: 10000,
+  VND: 1000000,
+} as const;
+
+export function getDefaultExampleAmount(currencyCode: string): number {
+  return Object.prototype.hasOwnProperty.call(DEFAULT_EXAMPLE_AMOUNTS, currencyCode)
+    ? DEFAULT_EXAMPLE_AMOUNTS[currencyCode as keyof typeof DEFAULT_EXAMPLE_AMOUNTS]
+    : 1000;
+}
+
+export interface RateDifferenceSentenceInput {
+  currencyCode: string;
+  currencyName: string;
+  direction: 'to-twd' | 'twd-to-foreign';
+  exampleAmount?: number;
+  bankMid?: number | null;
+  cashSell?: number | null;
+}
+
+export function buildRateDifferenceSentence(input: RateDifferenceSentenceInput): string {
+  const { currencyCode, currencyName, direction, exampleAmount, bankMid, cashSell } = input;
+  const amount = exampleAmount && exampleAmount > 0 ? exampleAmount : 1000;
+
+  if (bankMid == null || cashSell == null) {
+    return '中間價只適合觀察市場方向，實際換匯仍應以銀行牌告買入價或賣出價為準。換匯金額越大，買賣價差的影響越明顯。';
+  }
+
+  const midCost = amount * bankMid;
+  const sellCost = amount * cashSell;
+  const diff = Math.abs(sellCost - midCost);
+
+  if (direction === 'twd-to-foreign') {
+    return `差距有多大？以 ${formatAmount(amount)} 台幣估算 TWD→${currencyCode}，中間價與實際台銀賣出價約相差 ${Math.round(
+      diff,
+    ).toLocaleString('zh-TW')} 元台幣。換匯金額越大，差距越明顯。`;
+  }
+
+  return `差距有多大？以 ${formatAmount(amount)} ${currencyName} 換台幣估算，中間價與台銀實際賣出價約相差 ${Math.round(
+    diff,
+  ).toLocaleString('zh-TW')} 元台幣；金額越大，差距越明顯。`;
+}
+
 export interface PairAmountSeoCopy {
   title: string;
   description: string;

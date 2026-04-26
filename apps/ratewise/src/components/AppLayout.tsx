@@ -16,6 +16,7 @@ import { useRatingPrompt } from '../hooks/useRatingPrompt';
 
 import { getResolvedLanguage } from '../i18n';
 import { APP_INFO } from '../config/app-info';
+import { HOMEPAGE_SEO } from '../config/seo-metadata';
 import { navigationTokens } from '../config/design-tokens';
 import { getTopLevelTransitionDirection, pageTransition } from '../config/animations';
 import { RouteAnalytics } from '@shared/analytics';
@@ -161,6 +162,12 @@ export function AppLayout() {
         className="w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))] overflow-hidden"
         style={{ height: 'var(--app-height, 100dvh)' }}
       >
+        {location.pathname === '/' ? (
+          <div className="sr-only">
+            <h1 id="homepage-seo-heading">{HOMEPAGE_SEO.content.heading}</h1>
+          </div>
+        ) : null}
+
         {/* Desktop sidebar (≥768px) */}
         <div className="flex flex-1 min-h-0 min-w-0">
           <SideNavigation className="hidden md:block" />
