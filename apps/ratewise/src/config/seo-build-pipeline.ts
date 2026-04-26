@@ -1,0 +1,86 @@
+export const SEO_BUILD_PIPELINE = [
+  {
+    name: 'prebuild-fetch-rates.mjs',
+    output: 'public/rates.json',
+    desc: '建置前抓取最新牌告匯率快照',
+    required: true,
+  },
+  {
+    name: 'update-seo-rate-examples.mjs',
+    output: 'src/config/generated/seo-rate-examples.ts',
+    desc: '更新幣別頁與金額頁的匯差範例資料',
+    required: false,
+  },
+  {
+    name: '../../scripts/generate-sitemap-2025.mjs',
+    output: 'public/sitemap.xml',
+    desc: '249 個 SEO URL + lastmod + hreflang + image sitemap',
+    required: true,
+  },
+  {
+    name: 'generate-robots-txt.mjs',
+    output: 'public/robots.txt',
+    desc: 'Crawl 規則 + Sitemap 連結',
+    required: true,
+  },
+  {
+    name: 'generate-manifest.mjs',
+    output: 'public/manifest.webmanifest',
+    desc: 'PWA manifest 與品牌資訊同步',
+    required: true,
+  },
+  {
+    name: 'generate-offline-html.mjs',
+    output: 'public/offline.html',
+    desc: '離線 fallback 頁面',
+    required: true,
+  },
+  {
+    name: 'generate-llms-txt.mjs',
+    output: 'public/llms.txt + public/llms-full.txt',
+    desc: 'AI crawler 可讀的站點索引與完整內容快照',
+    required: true,
+  },
+  {
+    name: 'generate-markdown-mirrors.mjs',
+    output: 'public/*.md mirrors',
+    desc: 'FAQ / About / Guide / Open Data 的純文字鏡像',
+    required: true,
+  },
+  {
+    name: 'generate-api-json.mjs',
+    output: 'public/api/latest.json',
+    desc: '公開匯率 API 最新資料',
+    required: true,
+  },
+  {
+    name: 'generate-pair-json.mjs',
+    output: 'public/api/pairs/*.json',
+    desc: '17 個幣對 JSON 端點',
+    required: true,
+  },
+  {
+    name: 'generate-openapi.mjs',
+    output: 'public/openapi.json',
+    desc: 'OpenAPI 3.1 規格',
+    required: true,
+  },
+  {
+    name: '../../scripts/verify-ssot-sync.mjs',
+    output: 'CI gate',
+    desc: '驗證 seo-paths.config.mjs 與 seo-paths.ts 完全同步',
+    required: true,
+  },
+  {
+    name: '../../scripts/verify-image-resources.mjs',
+    output: 'CI gate',
+    desc: '驗證 SEO 與社群圖片資源完整存在',
+    required: true,
+  },
+  {
+    name: 'fetch-rating-snapshot.mjs',
+    output: 'src/config/generated/rating-snapshot.ts',
+    desc: '抓取可稽核評分快照，供 aggregateRating gate 使用',
+    required: false,
+  },
+] as const;

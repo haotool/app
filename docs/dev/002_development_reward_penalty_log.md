@@ -1,8 +1,55 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-26T21:09:30+08:00
-> **當前總分**: 1210（初始分: 100）
+> **最後更新**: 2026-04-26T21:18:30+08:00
+> **當前總分**: 1211（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-seotech-ssot-registry-alignment
+date: 2026-04-26
+title: 將 SeoTech 公開揭露頁改為 registry 驅動，清除舊 sitemap 與 schema 真相漂移
+score: +1
+type: fix
+content_type: seo
+scope: ratewise, seo-tech, public-surface, ssot
+topics: [seo, ssot, schema, public-surface, sitemap, registry]
+keywords:
+[seo-tech, schema-registry, build-pipeline, exchange-rate-specification, sitemap-2025, stale-phrases]
+aliases: [SeoTech SSOT registry 化, 公開 SEO 真相頁對齊]
+related_entries:
+[ratewise-seo-surface-order-and-currency-truthfulness, ratewise-about-faq-seo-truthfulness-refresh]
+summary: 完成 P0-B。新增 `seo-schema-registry.ts` 與 `seo-build-pipeline.ts`，讓 `/seo-tech/` 不再在頁面檔案內手寫 schema 與 prebuild 真相，而是直接從 registry render。同步清除 `generate-sitemap.mjs`、`248 個 SEO URL`、`priority 欄位`、`FinancialService` 等過時說法，將 sitemap 說明改為 `lastmod + hreflang + image sitemap`，將幣別頁 schema 揭露改為 `ExchangeRateSpecification`，避免公開技術揭露頁宣稱「永遠同步」但實際內容仍漂移。
+root_cause:
+
+- `SeoTech.tsx` 原本同時扮演頁面與真相來源，頁內硬編 `SCHEMA_TYPES`、`BUILD_SCRIPTS`、sitemap 描述，導致 SSOT 存在但 public disclosure 沒有真的接上。
+- 頁面內容仍保留舊架構名詞與舊腳本名稱，例如 `FinancialService`、`generate-sitemap.mjs`、`248 個 SEO URL` 與 `priority 欄位`，與當前 `SEO_PATHS = 249`、`generate-sitemap-2025.mjs` 不一致。
+  impact:
+
+- 公開技術揭露頁對 Google、AI crawler、開發者與未來維護者傳遞了錯誤技術現況，削弱 SSOT 的可稽核性。
+- `SeoTech` 自己宣稱所有數字永遠同步，卻仍混入舊字串，屬於高可見度的 truthfulness failure。
+  actions:
+
+- 新增 `apps/ratewise/src/config/seo-schema-registry.ts`，集中揭露 Organization、WebSite、SoftwareApplication、CurrencyConversionService、ExchangeRateSpecification、BreadcrumbList、FAQPage、HowTo、Article、ImageObject。
+- 新增 `apps/ratewise/src/config/seo-build-pipeline.ts`，集中揭露 prebuild / verification pipeline 與其輸出物。
+- 修改 `apps/ratewise/src/pages/SeoTech.tsx`，以 registry 驅動 schema 區塊與 build pipeline 區塊。
+- 修正 `sitemap.xml` 描述為 `lastmod、hreflang、image sitemap`，並明確揭露不輸出 `changefreq / priority`。
+- 新增 `SeoTech.ssot.test.tsx`，驗證頁面顯示 249 / 257 與新 pipeline，同時不再出現 `248 個 SEO URL`、`priority 欄位`、`FinancialService`。
+  prevention:
+
+- 公開 SEO 揭露頁不得自行定義可變真相；所有數字、schema、pipeline 應先落在 registry / config，再由頁面 render。
+- 若 `seo-tech` 類頁面宣稱與部署狀態同步，必須以測試保護「舊字串不得回流」。
+  verification:
+
+- `rg -n "248 個 SEO URL|generate-sitemap\\.mjs|priority 欄位|FinancialService" apps/ratewise/src/pages/SeoTech.tsx apps/ratewise/src/config/seo-schema-registry.ts apps/ratewise/src/config/seo-build-pipeline.ts`
+- `pnpm --filter @app/ratewise test -- --run src/pages/__tests__/SeoTech.ssot.test.tsx`
+- `pnpm --filter @app/ratewise build`
+  references:
+
+- apps/ratewise/src/pages/SeoTech.tsx
+- apps/ratewise/src/config/seo-schema-registry.ts
+- apps/ratewise/src/config/seo-build-pipeline.ts
+- apps/ratewise/src/pages/**tests**/SeoTech.ssot.test.tsx
 
 ---
 
