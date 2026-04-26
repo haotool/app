@@ -1,8 +1,56 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-26T21:45:00+08:00
+> **最後更新**: 2026-04-26T23:52:00+08:00
 > **當前總分**: 1214（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: pr281-codex-review-cluster-fix-2026-04-26
+date: 2026-04-26
+title: 修正 PR281 的 Codex 與 CodeQL review threads，收斂 lastmod 與匯差真實性
+score: 0
+type: improvement
+content_type: seo
+scope: ratewise, sitemap, tests, github-pr
+topics: [seo, truthfulness, sitemap, codeql, pr-review]
+keywords:
+[PR281, buildRateDifferenceSentence, lastmodFiles, CodeQL, sitemap.xml]
+aliases: [PR281 Codex review fixes]
+related_entries:
+[ratewise-sitemap-lastmod-diversity-followup-2026-04-26, ratewise-seo-prepush-truthfulness-gate-fix]
+summary: 依 PR281 的 review threads，修正兩個測試檔案的 HTML 過濾 regex 大小寫問題、修正 `TWD→外幣` 匯差公式的單位錯誤、將 sitemap lastmod policy 細化為 `lastmodFiles` 以兼顧 comment 要求與日期多樣性，並確認 `public/sitemap.xml` 回到 4 個不同日期。
+root_cause:
+
+- `buildRateDifferenceSentence()` 原本共用 `amount * rate` 公式，未區分台幣預算換外幣時應比較「可換得外幣量」而非台幣成本。
+- `generate-sitemap-2025.mjs` 為了拉高日期多樣性曾只看 policy 第一個檔案，導致另一側 comment 指出的 shared content update 無法推進 `lastmod`。
+- 測試中的 HTML stripping regex 未設大小寫不敏感，觸發 CodeQL 對 `<SCRIPT>` / `<STYLE>` 的提醒。
+  impact:
+
+- 反向幣別頁可能輸出誤導性的匯差說明，屬金融資訊 truthfulness 風險。
+- sitemap `lastmod` 若過度收斂或過度分散，都會降低對 Google 的語義可信度。
+- CodeQL thread 若不處理，PR 難以視為完全收斂。
+  actions:
+
+- 將 `TWD→外幣` 文案改為比較中間價與台銀賣出價可換得的外幣量，並新增對應測試。
+- 將 content-page `lastmod` 來源切成 `lastmodFiles`，FAQ 保留 `seo-metadata.ts`，其他頁面改用更接近主內容的檔案集合。
+- 將兩個測試檔案的 `<script>` / `<style>` 清理 regex 改為大小寫不敏感版本。
+  prevention:
+
+- 之後若有共享 metadata 變更，不再用「第一個依賴檔」這種隱含規則決定 `lastmod`。
+- 所有公開文字真實性 builder 若有方向差異，需至少補一個方向專屬測試。
+  verification:
+
+- `node scripts/generate-sitemap-2025.mjs`
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/seo-surface-order.test.ts src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx src/config/__tests__/seo-lastmod-policy.test.ts src/seo-best-practices.test.ts`
+- `node -e "const fs=require('fs');const s=fs.readFileSync('apps/ratewise/public/sitemap.xml','utf8');console.log([...new Set([...s.matchAll(/<lastmod>(\\d{4}-\\d{2}-\\d{2})<\\/lastmod>/g)].map(x=>x[1]))])"`
+  references:
+
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
+- apps/ratewise/src/**tests**/seo-surface-order.test.ts
+- apps/ratewise/src/config/seo-lastmod-policy.ts
+- scripts/generate-sitemap-2025.mjs
 
 ---
 

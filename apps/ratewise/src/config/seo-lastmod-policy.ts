@@ -6,21 +6,28 @@ export const CONTENT_LASTMOD_POLICY = {
       'apps/ratewise/src/components/HomepageSEOSection.tsx',
       'apps/ratewise/src/config/seo-metadata.ts',
     ],
+    lastmodFiles: [
+      'apps/ratewise/src/features/ratewise/RateWise.tsx',
+      'apps/ratewise/src/components/HomepageSEOSection.tsx',
+    ],
     fallbackDate: '2026-04-26',
   },
   '/faq/': {
     type: 'editorial',
     contentFiles: ['apps/ratewise/src/pages/FAQ.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
+    lastmodFiles: ['apps/ratewise/src/pages/FAQ.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
     fallbackDate: '2026-04-23',
   },
   '/about/': {
     type: 'trust',
     contentFiles: ['apps/ratewise/src/pages/About.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
+    lastmodFiles: ['apps/ratewise/src/pages/About.tsx'],
     fallbackDate: '2026-04-23',
   },
   '/guide/': {
     type: 'editorial',
     contentFiles: ['apps/ratewise/src/pages/Guide.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
+    lastmodFiles: ['apps/ratewise/src/pages/Guide.tsx'],
     fallbackDate: '2026-04-23',
   },
   '/open-data/': {
@@ -30,11 +37,20 @@ export const CONTENT_LASTMOD_POLICY = {
       'apps/ratewise/src/config/api-endpoints.ts',
       'apps/ratewise/src/config/seo-metadata.ts',
     ],
+    lastmodFiles: [
+      'apps/ratewise/src/pages/OpenData.tsx',
+      'apps/ratewise/src/config/api-endpoints.ts',
+    ],
     fallbackDate: '2026-04-23',
   },
   '/seo-tech/': {
     type: 'public-disclosure',
     contentFiles: [
+      'apps/ratewise/src/pages/SeoTech.tsx',
+      'apps/ratewise/src/config/seo-schema-registry.ts',
+      'apps/ratewise/src/config/seo-build-pipeline.ts',
+    ],
+    lastmodFiles: [
       'apps/ratewise/src/pages/SeoTech.tsx',
       'apps/ratewise/src/config/seo-schema-registry.ts',
       'apps/ratewise/src/config/seo-build-pipeline.ts',

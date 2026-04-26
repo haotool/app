@@ -2420,15 +2420,20 @@ export function buildRateDifferenceSentence(input: RateDifferenceSentenceInput):
     return '中間價只適合觀察市場方向，實際換匯仍應以銀行牌告買入價或賣出價為準。換匯金額越大，買賣價差的影響越明顯。';
   }
 
+  if (direction === 'twd-to-foreign') {
+    const foreignAtMid = amount / bankMid;
+    const foreignAtSell = amount / cashSell;
+    const diffForeign = Math.abs(foreignAtMid - foreignAtSell);
+    return `差距有多大？以 ${formatAmount(amount)} 台幣估算 TWD→${currencyCode}，若用中間價推算約可換得 ${formatAmount(
+      foreignAtMid,
+    )} ${currencyCode}，實際台銀賣出價約可換得 ${formatAmount(
+      foreignAtSell,
+    )} ${currencyCode}，少換約 ${formatAmount(diffForeign)} ${currencyCode}。換匯金額越大，差距越明顯。`;
+  }
+
   const midCost = amount * bankMid;
   const sellCost = amount * cashSell;
   const diff = Math.abs(sellCost - midCost);
-
-  if (direction === 'twd-to-foreign') {
-    return `差距有多大？以 ${formatAmount(amount)} 台幣估算 TWD→${currencyCode}，中間價與實際台銀賣出價約相差 ${Math.round(
-      diff,
-    ).toLocaleString('zh-TW')} 元台幣。換匯金額越大，差距越明顯。`;
-  }
 
   return `差距有多大？以 ${formatAmount(amount)} ${currencyName} 換台幣估算，中間價與台銀實際賣出價約相差 ${Math.round(
     diff,

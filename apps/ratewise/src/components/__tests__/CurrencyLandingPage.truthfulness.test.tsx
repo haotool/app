@@ -10,7 +10,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { CurrencyLandingPage } from '../CurrencyLandingPage';
 import { APP_INFO } from '../../config/app-info';
-import { getCurrencyLandingPageContent } from '../../config/seo-metadata';
+import {
+  buildRateDifferenceSentence,
+  getCurrencyLandingPageContent,
+} from '../../config/seo-metadata';
 import { CURRENCY_SEO_PATHS, REVERSE_CURRENCY_SEO_PATHS } from '../../config/seo-paths';
 
 const distPath = resolve(__dirname, '../../../dist');
@@ -28,8 +31,8 @@ const readDistHtml = (path: string): string => {
 
 const extractVisibleText = (html: string): string =>
   html
-    .replace(/<script[\s\S]*?<\/script>/g, ' ')
-    .replace(/<style[\s\S]*?<\/style>/g, ' ')
+    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -53,6 +56,21 @@ describe('CurrencyLandingPage template truthfulness', () => {
 
     expect(screen.queryByText('10 萬日圓')).not.toBeInTheDocument();
     expect(screen.getAllByText(/USD|美金|美元/).length).toBeGreaterThan(0);
+  });
+
+  it('TWD→外幣文案應比較可換得外幣量，而非錯誤放大台幣差額', () => {
+    const sentence = buildRateDifferenceSentence({
+      currencyCode: 'USD',
+      currencyName: '美元',
+      direction: 'twd-to-foreign',
+      exampleAmount: 1000,
+      bankMid: 32,
+      cashSell: 33,
+    });
+
+    expect(sentence).toContain('約可換得');
+    expect(sentence).toContain('少換約');
+    expect(sentence).not.toContain('元台幣');
   });
 
   it.each([...CURRENCY_SEO_PATHS, ...REVERSE_CURRENCY_SEO_PATHS])(

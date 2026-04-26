@@ -283,12 +283,13 @@ function getLastModDate(path) {
 
   const lookupPath = resolveLookupPath(path);
   const contentPolicy = CONTENT_LASTMOD_POLICY[lookupPath];
-  const primaryFiles = contentPolicy ? [existingFiles[0]] : existingFiles;
-  const primaryGitDate = getGitCommitDate(primaryFiles);
-  if (primaryGitDate) return primaryGitDate;
-
-  const secondaryGitDate = getGitCommitDate(existingFiles);
-  if (secondaryGitDate) return secondaryGitDate;
+  const lastmodFiles = contentPolicy?.lastmodFiles?.filter((file) =>
+    existsSync(resolve(REPO_ROOT, file)),
+  );
+  const gitDate = getGitCommitDate(
+    lastmodFiles && lastmodFiles.length > 0 ? lastmodFiles : existingFiles,
+  );
+  if (gitDate) return gitDate;
 
   const mtimes = existingFiles.map((file) => statSync(resolve(REPO_ROOT, file)).mtime.getTime());
   return new Date(Math.max(...mtimes));
@@ -342,7 +343,7 @@ function getDependencyFilesForPath(path) {
 function getFallbackLastModDate(path) {
   const lookupPath = resolveLookupPath(path);
   const policyFallback = CONTENT_LASTMOD_POLICY[lookupPath]?.fallbackDate;
-  if (policyFallback) return new Date(`${policyFallback}T00:00:00.000+08:00`);
+  if (policyFallback) return new Date(`${policyFallback}T00:00:00.000Z`);
   return new Date();
 }
 
