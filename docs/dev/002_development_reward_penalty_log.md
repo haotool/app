@@ -1,8 +1,54 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-26T21:36:00+08:00
-> **當前總分**: 1212（初始分: 100）
+> **最後更新**: 2026-04-26T21:40:00+08:00
+> **當前總分**: 1213（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-schema-truthfulness-gate
+date: 2026-04-26
+title: 建立 schema truthfulness gate，將 FAQPage 限縮到 FAQ 頁並移除幣別頁舊 schema
+score: +1
+type: fix
+content_type: seo
+scope: ratewise, schema, jsonld, regression
+topics: [seo, schema, faqpage, ymyl, jsonld, regression]
+keywords:
+[schema-truthfulness, faqpage-scope, exchange-rate-specification, aggregate-rating, noindex, regression-suite]
+aliases: [Schema 真實性閘門, FAQPage 範圍收斂]
+related_entries:
+[ratewise-seo-doc-ssot-drift-gate, ratewise-seotech-ssot-registry-alignment]
+summary: 完成 P0-E 與對應的 P1-B regression gate。將首頁的 HowTo schema 輸出移除但保留可見教學內容，將 FAQPage JSON-LD 限縮到 `/faq/`，幣別頁與金額頁全面移除 `FinancialService` 與 FAQPage，只保留 `ExchangeRateSpecification` 等可稽核匯率 schema。同步新增 `schema-truthfulness.test.ts`，並翻新既有 prerender/jsonld/ssot/best-practices 測試，確保新規則不會回歸。
+root_cause:
+
+- 舊的 schema 決策把 FAQPage 與 `FinancialService` 擴散到幣別頁，與公開 registry 及 2026 Search best practices 不一致。
+- 首頁可見教學內容與 JSON-LD 輸出綁在一起，導致不想輸出 HowTo 時會連帶影響前端區塊。
+  impact:
+
+- 金融頁會對搜尋引擎與 AI 系統送出過度寬鬆的結構化資料訊號，削弱 YMYL 真實性。
+- 測試層將舊決策寫死，若不一起翻面，未來任何 truthfulness 修正都會被舊斷言拉回。
+  actions:
+
+- 修改 `seo-metadata.ts`：新增 `shouldIncludeAggregateRating`，將 FAQPage 限縮到 `FAQ_PAGE_SEO`，並把幣別頁 / 金額頁 schema 收斂為 `ExchangeRateSpecification`。
+- 修改 `routes.tsx` 與 `HomepageSEOSection.tsx` 所依賴的首頁資料流：保留可見教學內容，但首頁不再把 HowTo 傳給 `SEOHelmet`。
+- 修改 `CurrencyLandingPage.tsx`：金額頁只追加金額版 `ExchangeRateSpecification`，不再重寫 `FinancialService`。
+- 新增 `apps/ratewise/src/config/__tests__/schema-truthfulness.test.ts`，並更新 `seo-faq-quality`、`seo-ssot`、`jsonld`、`prerender`、`seo-best-practices` 測試。
+  prevention:
+
+- 任何 JSON-LD 類型若出現在公開 registry，實作與測試都必須以同一範圍規則對齊，不得再由頁面模板私自擴散。
+- 可見內容與 schema 輸出應維持可分離，避免為了保留 UI 區塊而被迫保留不想輸出的結構化資料。
+  verification:
+
+- `pnpm --filter @app/ratewise build`
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/schema-truthfulness.test.ts src/config/__tests__/seo-faq-quality.test.ts src/config/__tests__/seo-ssot.test.ts src/jsonld.test.ts src/prerender.test.ts src/seo-best-practices.test.ts`
+  references:
+
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/components/CurrencyLandingPage.tsx
+- apps/ratewise/src/routes.tsx
+- apps/ratewise/src/config/**tests**/schema-truthfulness.test.ts
+- apps/ratewise/src/prerender.test.ts
 
 ---
 

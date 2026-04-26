@@ -54,7 +54,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 ### 6. 這個網站使用哪些結構化資料幫助搜尋引擎與 AI 系統理解內容？
 
-目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、HowTo（使用步驟）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、FinancialService（幣別頁金融服務）、ExchangeRateSpecification（全 34 個幣別頁，注入臺灣銀行現金賣出價供 AI 引擎提取具體匯率數字）、FAQPage（全 34 個幣別頁，提供 AI／語音助理快速摘要）、CurrencyConversionService（首頁）與 ImageObject（分享圖片授權）。內容頁（FAQ 頁、About 頁、指南頁）的 FAQ 以可讀 HTML 呈現，不額外重複輸出 FAQPage schema；幣別換算頁則全面啟用 FAQPage JSON-LD，提升 AEO 覆蓋率。Google 是否顯示 rich result 仍取決於頁面類型與搜尋引擎支援範圍，本站對金融頁 FAQPage 的定位以機器理解與 AI 摘要為主。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。
+目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、CurrencyConversionService（首頁）、ExchangeRateSpecification（幣對頁與金額頁的匯率數值）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、HowTo（Guide 教學頁）、FAQPage（僅 /faq/ 主 FAQ 頁）與 ImageObject（分享圖片授權）。首頁與內容頁仍保留可讀 FAQ HTML，但不會在所有頁面重複輸出 FAQPage JSON-LD；幣別換算頁則以可稽核的匯率數值 schema 為主，避免把 FAQ rich result 訊號擴散到金融頁。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。
 
 ### 7. HaoRate 是否支援 AI 搜尋引擎與 LLM 引用？
 

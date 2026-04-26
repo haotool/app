@@ -403,19 +403,17 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(combinedContent).toContain('sameAs');
     });
 
-    it('should have FinancialService schema for currency pages', () => {
-      expect(seoMetadataContent).toContain("'@type': 'FinancialService'");
-      expect(seoMetadataContent).toContain("serviceType: 'CurrencyExchange'");
+    it('should have ExchangeRateSpecification schema for currency pages', () => {
+      expect(seoMetadataContent).toContain("'@type': 'ExchangeRateSpecification'");
     });
 
-    it('should have areaServed for financial service locality', () => {
-      expect(seoMetadataContent).toContain('areaServed');
-      expect(seoMetadataContent).toContain('Taiwan');
+    it('should keep FAQPage builder for /faq/ only', () => {
+      expect(seoMetadataContent).toContain('buildFaqPageJsonLd');
     });
 
-    it('should have availableChannel with multilingual support', () => {
-      expect(seoMetadataContent).toContain('availableChannel');
-      expect(seoMetadataContent).toContain("'zh-TW', 'en', 'ja'");
+    it('should expose currentExchangeRate via ExchangeRateSpecification', () => {
+      expect(seoMetadataContent).toContain('currentExchangeRate');
+      expect(seoMetadataContent).toContain("'@type': 'UnitPriceSpecification'");
     });
   });
 
@@ -666,8 +664,8 @@ describe('💰 Exchange Rate Knowledge Coverage', () => {
     expect(faqContent).toContain('我要換外幣應該看哪個匯率');
   });
 
-  it('should have FinancialService JSON-LD for currency pages', () => {
-    expect(faqContent).toContain("'@type': 'FinancialService'");
+  it('should describe ExchangeRateSpecification as the currency-page schema', () => {
+    expect(faqContent).toContain('ExchangeRateSpecification');
   });
 });
 

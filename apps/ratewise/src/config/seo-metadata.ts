@@ -248,6 +248,15 @@ export function buildAbsoluteAssetUrl(pathname: string): string {
   return withAssetVersion(absolute);
 }
 
+export interface RatingSnapshotLike {
+  ratingValue: number | null;
+  ratingCount: number;
+}
+
+export function shouldIncludeAggregateRating(snapshot: RatingSnapshotLike): boolean {
+  return snapshot.ratingCount >= 10 && snapshot.ratingValue !== null;
+}
+
 export function buildSiteJsonLd(): JsonLdBlock[] {
   // @id 穩定 URI 讓 Google Knowledge Graph 跨頁面識別同一實體。
   const orgId = `${SITE_BASE_URL}#organization`;
@@ -282,7 +291,7 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       // aggregateRating 讓 Google 在搜尋結果顯示星評卡片（SoftwareApplication Rich Result）。
       // 由 fetch-rating-snapshot.mjs 在 prebuild 時寫入 RATING_SNAPSHOT；
       // ratingCount < 10 時省略，避免樣本過少被 Google 拒絕。
-      ...(RATING_SNAPSHOT.ratingCount >= 10 && RATING_SNAPSHOT.ratingValue !== null
+      ...(shouldIncludeAggregateRating(RATING_SNAPSHOT)
         ? {
             aggregateRating: {
               '@type': 'AggregateRating',
@@ -785,14 +794,12 @@ export function buildAlternativeProviderFaq(
 
 /**
  * 將 FAQEntry 陣列轉換為 schema.org FAQPage JSON-LD 格式。
- * 全 34 個幣別頁（17 正向 xxx-twd + 17 反向 twd-xxx）均啟用，
- * 用於 AI/AEO 引擎（ChatGPT、Perplexity、語音助理）快速摘要。
- * 注意：Google FAQ rich result 目前主要限於政府與醫療權威站，
- *       金融頁 FAQPage 應以機器可理解性與 AI 摘要為主要目標。
+ * 僅供真正 FAQ 頁使用，避免把 FAQ rich result 訊號擴散到所有內容頁或金融頁。
+ * 注意：FAQPage 必須與頁面主要可見內容一致，且不應在非 FAQ 主頁面重複輸出。
  * @param faqEntries FAQ 條目列表
  * @param maxItems 最多取幾則（預設 5，避免 schema 過長）
  */
-export function buildFaqPageJsonLd(faqEntries: FAQEntry[], maxItems = 5): JsonLdBlock {
+export function buildFaqPageJsonLd(faqEntries: readonly FAQEntry[], maxItems = 5): JsonLdBlock {
   const items = faqEntries.slice(0, maxItems).map((faq) => ({
     '@type': 'Question',
     name: faq.question,
@@ -1070,6 +1077,7 @@ export const FAQ_PAGE_SEO = {
   ],
   faqContent: [...FAQ_PAGE_ENTRIES],
   jsonLd: [
+    buildFaqPageJsonLd(FAQ_PAGE_ENTRIES),
     buildArticleJsonLd(
       `常見問題 — ${APP_INFO.name} FAQ 解答`,
       `${APP_INFO.name}完整 FAQ：匯率來源、現金與即期差別、買入賣出怎麼看、DCC 動態貨幣轉換、刷卡匯率計算。`,
@@ -1318,7 +1326,7 @@ export const ABOUT_PAGE_FAQ = [
   },
   {
     question: '這個網站使用哪些結構化資料幫助搜尋引擎與 AI 系統理解內容？',
-    answer: `目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、HowTo（使用步驟）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、FinancialService（幣別頁金融服務）、ExchangeRateSpecification（全 34 個幣別頁，注入臺灣銀行現金賣出價供 AI 引擎提取具體匯率數字）、FAQPage（全 34 個幣別頁，提供 AI／語音助理快速摘要）、CurrencyConversionService（首頁）與 ImageObject（分享圖片授權）。內容頁（FAQ 頁、About 頁、指南頁）的 FAQ 以可讀 HTML 呈現，不額外重複輸出 FAQPage schema；幣別換算頁則全面啟用 FAQPage JSON-LD，提升 AEO 覆蓋率。Google 是否顯示 rich result 仍取決於頁面類型與搜尋引擎支援範圍，本站對金融頁 FAQPage 的定位以機器理解與 AI 摘要為主。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。`,
+    answer: `目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、CurrencyConversionService（首頁）、ExchangeRateSpecification（幣對頁與金額頁的匯率數值）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、HowTo（Guide 教學頁）、FAQPage（僅 /faq/ 主 FAQ 頁）與 ImageObject（分享圖片授權）。首頁與內容頁仍保留可讀 FAQ HTML，但不會在所有頁面重複輸出 FAQPage JSON-LD；幣別換算頁則以可稽核的匯率數值 schema 為主，避免把 FAQ rich result 訊號擴散到金融頁。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。`,
   },
   {
     question: `${APP_INFO.shortName} 是否支援 AI 搜尋引擎與 LLM 引用？`,
@@ -2544,61 +2552,6 @@ export function getCurrencyLandingPageContent(
 
   const canonicalUrl = buildCanonicalUrl(pathname);
 
-  const financialServiceJsonLd: JsonLdBlock = {
-    '@context': 'https://schema.org',
-    '@type': 'FinancialService',
-    // @id 讓 Google Knowledge Graph 跨頁面識別同一金融服務實體。
-    '@id': `${canonicalUrl}#financial-service`,
-    name: `${displayName}兌台幣匯率換算 — ${APP_INFO.name}`,
-    description: `即時${displayName}（${code}）兌新台幣（TWD）匯率換算服務，資料來源為臺灣銀行官方牌告匯率，支援現金與即期匯率切換。`,
-    url: canonicalUrl,
-    serviceType: 'CurrencyExchange',
-    currenciesAccepted: [code, 'TWD'],
-    dateModified: SEO_RATE_EXAMPLES_DATE,
-    provider: {
-      '@type': 'Organization',
-      name: APP_INFO.author,
-      url: APP_INFO.organizationUrl,
-    },
-    areaServed: { '@type': 'Country', name: 'Taiwan' },
-    availableChannel: {
-      '@type': 'ServiceChannel',
-      serviceUrl: canonicalUrl,
-      availableLanguage: ['zh-TW', 'en', 'ja'],
-    },
-    termsOfService: buildCanonicalUrl('/privacy'),
-    sameAs: [...SEO_SOCIAL_LINKS],
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'TWD',
-    },
-    hasOfferCatalog: {
-      '@type': 'OfferCatalog',
-      name: `${code}/TWD 匯率報價目錄`,
-      itemListElement: [
-        {
-          '@type': 'Offer',
-          name: `${displayName}現金賣出匯率`,
-          description: `臺灣銀行牌告${displayName}（${code}）現金賣出匯率，適用臨櫃換外幣現鈔`,
-          price: '0',
-          priceCurrency: 'TWD',
-          availability: 'https://schema.org/InStock',
-        },
-        {
-          '@type': 'Offer',
-          name: `${displayName}即期賣出匯率`,
-          description: `臺灣銀行牌告${displayName}（${code}）即期賣出匯率，適用網銀外幣帳戶`,
-          price: '0',
-          priceCurrency: 'TWD',
-          availability: 'https://schema.org/InStock',
-        },
-      ],
-    },
-  };
-
-  // 全幣別啟用 FAQPage JSON-LD，強化機器可理解性與 AI 摘要覆蓋。
-
   const faqEntries: FAQEntry[] = [
     {
       question: `為什麼 Google、XE、Wise、Apple 計算機顯示的${displayName}換算金額，和台灣銀行臨櫃換匯的實際結果不同？`,
@@ -2645,13 +2598,11 @@ export function getCurrencyLandingPageContent(
       APP_INFO.name,
     ],
     jsonLd: [
-      financialServiceJsonLd,
       buildShareImageJsonLd(
         `${displayName}兌台幣匯率分享圖片`,
         `${APP_INFO.name} ${code}/TWD 即時匯率換算與趨勢`,
       ),
-      buildFaqPageJsonLd(faqEntries),
-      // ExchangeRateSpecification：注入即時匯率，讓 AI 引擎可提取並顯示具體數字。
+      // 幣別頁只輸出可稽核的匯率數值 schema，避免把 FAQ rich result 訊號擴散到金融頁。
       ...(SEO_RATE_EXAMPLES[code]
         ? [
             buildExchangeRateSpecificationJsonLd(
@@ -2852,38 +2803,6 @@ export function getReverseCurrencyLandingPageContent(
 
   const canonicalUrl = buildCanonicalUrl(pathname);
 
-  const financialServiceJsonLd: JsonLdBlock = {
-    '@context': 'https://schema.org',
-    '@type': 'FinancialService',
-    // @id 讓 Google Knowledge Graph 跨頁面識別同一金融服務實體。
-    '@id': `${canonicalUrl}#financial-service`,
-    name: `台幣換${displayName}匯率換算 — ${APP_INFO.name}`,
-    description: `即時新台幣（TWD）兌${displayName}（${code}）匯率換算，資料來源為臺灣銀行官方牌告匯率，出國換匯前快速估算所需台幣。`,
-    url: canonicalUrl,
-    serviceType: 'CurrencyExchange',
-    currenciesAccepted: ['TWD', code],
-    dateModified: SEO_RATE_EXAMPLES_DATE,
-    provider: {
-      '@type': 'Organization',
-      name: APP_INFO.author,
-      url: APP_INFO.organizationUrl,
-    },
-    areaServed: { '@type': 'Country', name: 'Taiwan' },
-    availableChannel: {
-      '@type': 'ServiceChannel',
-      serviceUrl: canonicalUrl,
-      availableLanguage: ['zh-TW', 'en', 'ja'],
-    },
-    termsOfService: buildCanonicalUrl('/privacy'),
-    sameAs: [...SEO_SOCIAL_LINKS],
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'TWD',
-    },
-  };
-
-  // 提前定義 faqEntries，讓 jsonLd（FAQPage schema）能引用同一份資料。
   const faqEntries: FAQEntry[] = [
     {
       question: `現在台幣換${displayName}划算嗎？什麼時候換比較好？`,
@@ -2934,14 +2853,11 @@ export function getReverseCurrencyLandingPageContent(
       APP_INFO.name,
     ],
     jsonLd: [
-      financialServiceJsonLd,
       buildShareImageJsonLd(
         `台幣換${displayName}匯率分享圖片`,
         `${APP_INFO.name} TWD/${code} 出國換匯即時計算`,
       ),
-      // 全幣別啟用 FAQPage JSON-LD，強化機器可理解性與 AI 摘要覆蓋。
-      buildFaqPageJsonLd(faqEntries),
-      // ExchangeRateSpecification：注入即時匯率，讓 AI 引擎可提取並顯示具體數字。
+      // 反向幣別頁同樣只輸出可稽核的匯率數值 schema。
       // 反向頁（TWD→外幣）：currency 為 TWD，priceCurrency 為外幣代碼。
       ...(SEO_RATE_EXAMPLES[code]
         ? [

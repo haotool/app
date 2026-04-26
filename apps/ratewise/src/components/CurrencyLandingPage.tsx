@@ -121,30 +121,9 @@ export function CurrencyLandingPage({
         : `/?amount=${amount}&from=${currencyCode}&to=TWD`
       : '/';
 
-  // 金額頁必須讓 FinancialService schema 指向 self-canonical，避免 rich result 與 index URL 漂移。
-  // 並加入金額專用 ExchangeRateSpecification schema，讓 AI 引擎可提取換算結果。
+  // 金額頁沿用幣對頁 schema，並額外附上金額專用 ExchangeRateSpecification。
   const resolvedJsonLd = (() => {
     if (amount === null || !jsonLd) return jsonLd;
-
-    const updatedBlocks = jsonLd.map((block) => {
-      if (block['@type'] !== 'FinancialService') return block;
-
-      const availableChannel =
-        block['availableChannel'] &&
-        typeof block['availableChannel'] === 'object' &&
-        !Array.isArray(block['availableChannel'])
-          ? {
-              ...block['availableChannel'],
-              serviceUrl: seoCanonical,
-            }
-          : block['availableChannel'];
-
-      return {
-        ...block,
-        url: seoCanonical,
-        availableChannel,
-      };
-    });
 
     // 金額頁加入 ExchangeRateSpecification（含換算金額）。
     if (amountResult !== null && cashSell !== null) {
@@ -165,10 +144,10 @@ export function CurrencyLandingPage({
             amountResult,
             'to-twd',
           );
-      updatedBlocks.push(amountSchema);
+      return [...jsonLd, amountSchema];
     }
 
-    return updatedBlocks;
+    return jsonLd;
   })();
 
   const robotsDirective =

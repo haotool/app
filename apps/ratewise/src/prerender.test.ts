@@ -334,13 +334,13 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(existsSync(usdHtml)).toBe(true);
     });
 
-    it('USD/TWD page should include FinancialService JSON-LD and FAQPage JSON-LD (P12)', () => {
+    it('USD/TWD page should include ExchangeRateSpecification and exclude FAQPage / FinancialService', () => {
       if (!existsSync(usdHtml)) return;
 
       const content = readFileSync(usdHtml, 'utf-8');
-      expect(content).toMatch(/"@type":\s*"FinancialService"/);
-      // P12：高流量幣別（USD）選擇性啟用 FAQPage JSON-LD（AI/AEO 優化）
-      expect(content).toMatch(/"@type":\s*"FAQPage"/);
+      expect(content).toMatch(/"@type":\s*"ExchangeRateSpecification"/);
+      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+      expect(content).not.toMatch(/"@type":\s*"FinancialService"/);
     });
 
     it('USD/TWD amount page should use self canonical and self hreflang', () => {
@@ -379,15 +379,12 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toContain('在換算器查看最新匯率');
     });
 
-    it('USD/TWD amount page FinancialService schema should use the self canonical URL', () => {
+    it('USD/TWD amount page should expose self-canonical ExchangeRateSpecification', () => {
       if (!existsSync(usdAmountHtml)) return;
 
       const content = readFileSync(usdAmountHtml, 'utf-8');
       expect(content).toMatch(
-        /"@type":"FinancialService"[\s\S]*"url":"https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
-      );
-      expect(content).toMatch(
-        /"availableChannel":\{"@type":"ServiceChannel","serviceUrl":"https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
+        /"@type":"ExchangeRateSpecification"[\s\S]*"url":"https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
       );
     });
 
@@ -456,14 +453,14 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
     const aboutHtml = resolve(distPath, 'about/index.html');
     const indexHtml = resolve(distPath, 'index.html');
 
-    it('FAQ page should have Article JSON-LD but NOT FAQPage in static HTML', () => {
+    it('FAQ page should have Article JSON-LD and FAQPage in static HTML', () => {
       if (!existsSync(faqHtml)) return;
 
       const content = readFileSync(faqHtml, 'utf-8');
       // vite-react-ssg Head adds data-rh="true" attribute
       expect(content).toMatch(/<script[^>]*type="application\/ld\+json"/);
       expect(content).toMatch(/"@type":\s*"Article"/);
-      expect(content).not.toMatch(/"@type":\s*"FAQPage"/);
+      expect(content).toMatch(/"@type":\s*"FAQPage"/);
     });
 
     it('Open Data page should emit Dataset JSON-LD for machine-readable discovery', () => {
@@ -484,7 +481,7 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).toMatch(/"@type":\s*"Organization"/);
     });
 
-    it('Homepage should have SoftwareApplication and HowTo JSON-LD', () => {
+    it('Homepage should have SoftwareApplication JSON-LD', () => {
       if (!existsSync(indexHtml)) return;
 
       const content = readFileSync(indexHtml, 'utf-8');
@@ -492,6 +489,7 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       // SSG 時會渲染完整 JSON-LD
       expect(content).toContain('application/ld+json');
       expect(content).toMatch(/"@type":\s*"SoftwareApplication"/);
+      expect(content).not.toMatch(/"@type":\s*"HowTo"/);
     });
 
     it('FAQ page should have exactly ONE Organization schema in top-level', () => {
