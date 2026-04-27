@@ -1,8 +1,49 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-27T02:56:05+08:00
+> **最後更新**: 2026-04-27T21:47:00+08:00
 > **當前總分**: 1218（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-lastmod-fallback-test-ssot-alignment
+date: 2026-04-27
+title: 將 sitemap lastmod fallback 測試改為依附匯率 SSOT 日期，移除硬編日期回歸
+score: +1
+type: fix
+content_type: test
+scope: ratewise, seo, sitemap, lastmod
+topics: [ratewise, seo, sitemap-lastmod, ssot, vitest]
+keywords:
+[seo-rate-examples-date, lastmod-fallback, hardcoded-date, regression, ssot-alignment]
+aliases: [RateWise lastmod fallback 測試對齊, sitemap lastmod 日期硬編修復]
+related_entries:
+[ratewise-sitemap-lastmod-policy, cicd-security-scan-lastmod-fallback-fix]
+summary: 驗證 RateWise SEO 修復是否真正完成時，發現 `seo-lastmod-policy.test.ts` 仍將匯率頁 fallback 日期硬寫為 `2026-04-25`，但目前 `seo-rate-examples.ts` 已由 build 生成為 `2026-04-27`，導致 policy 與可驗證資料來源正確、測試卻誤報失敗。本次改為直接引用 `SEO_RATE_EXAMPLES_DATE`，讓測試跟隨 SSOT 的匯率日期來源，而不是跟隨某一次人工快照。
+root_cause:
+
+- `seo-lastmod-policy.test.ts` 將匯率頁 fallback 日期寫死在單一日期字串，沒有依附 `seo-rate-examples.ts` 的生成值。
+- `generate-sitemap-2025.mjs` 的 fallback 行為已改為讀取匯率內容日期，但測試沒有同步從同一來源取值。
+  impact:
+
+- 會在 RateWise SEO regression 驗證時產生假陰性，誤以為 sitemap lastmod policy 已退化。
+- 阻擋後續真實 SEO 修復的驗證節奏，讓測試結果失去判讀價值。
+  actions:
+
+- 在 `apps/ratewise/src/config/__tests__/seo-lastmod-policy.test.ts` 改為引用 `SEO_RATE_EXAMPLES_DATE`。
+- 保留對 `/usd-twd/` 與 `/usd-twd/100/` 的雙路徑斷言，確保幣別頁與金額頁都共用同一 fallback 真相來源。
+  prevention:
+
+- 只要驗證目標是由生成檔或 SSOT 輸出的日期、版本、路徑數，就不得在測試中硬編具時效性的常數。
+- sitemap / schema / README 類 SEO gate 一律優先引用對應 SSOT 常數或生成產物。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts`
+  references:
+
+- apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
+- apps/ratewise/src/config/generated/seo-rate-examples.ts
+- scripts/generate-sitemap-2025.mjs
 
 ---
 

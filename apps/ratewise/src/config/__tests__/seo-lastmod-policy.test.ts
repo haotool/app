@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT_LASTMOD_POLICY, RATE_PAGE_LASTMOD_POLICY } from '../seo-lastmod-policy';
+import { SEO_RATE_EXAMPLES_DATE } from '../generated/seo-rate-examples';
 // @ts-expect-error 直接驗證 root sitemap script 的 fallback 行為。
 import { getFallbackLastModDate } from '../../../../../scripts/generate-sitemap-2025.mjs';
 
@@ -29,7 +30,11 @@ describe('seo lastmod policy', () => {
   });
 
   it('幣別頁與金額頁 fallback 應採用可驗證的匯率內容日期', () => {
-    expect(getFallbackLastModDate('/usd-twd/')?.toISOString().slice(0, 10)).toBe('2026-04-25');
-    expect(getFallbackLastModDate('/usd-twd/100/')?.toISOString().slice(0, 10)).toBe('2026-04-25');
+    expect(getFallbackLastModDate('/usd-twd/')?.toISOString().slice(0, 10)).toBe(
+      SEO_RATE_EXAMPLES_DATE,
+    );
+    expect(getFallbackLastModDate('/usd-twd/100/')?.toISOString().slice(0, 10)).toBe(
+      SEO_RATE_EXAMPLES_DATE,
+    );
   });
 });
