@@ -1,8 +1,47 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-27T22:13:00+08:00
-> **當前總分**: 1219（初始分: 100）
+> **最後更新**: 2026-04-27T22:33:10+08:00
+> **當前總分**: 1220（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-review-thread-fix-script-end-tag-whitespace
+date: 2026-04-27
+title: 修復 CodeQL 對 `</script >` / `</style >` 結尾空白標籤的 HTML 過濾漏網
+score: +1
+type: fix
+content_type: review-followup
+scope: ratewise, seo, tests, github-review
+topics: [github-review, codeql, vitest, html-filtering, seo-public-surface]
+keywords:
+[script-end-tag-whitespace, style-end-tag-whitespace, regex-hardening, extract-visible-text]
+aliases: [PR286 CodeQL regex 修補, closing-tag whitespace fix]
+related_entries:
+[ratewise-review-thread-fixes-cwd-and-html-regex, ratewise-seo-public-surface-suite]
+summary: 在 follow-up PR #286 上，GitHub Advanced Security 再指出 `seo-public-surface.test.ts` 的 HTML 過濾仍未涵蓋 `</script >` 與 `</style >` 這類結尾標籤尾端帶空白的情況。這次將 regex 從精確匹配 `</script>` / `</style>`，收斂為允許 `\\s*` 後再閉合 `>`，讓 visible-text 抽取對鬆散 HTML 更具韌性，避免 CodeQL 持續報告相同類型缺口。
+root_cause:
+
+- closing tag regex 只接受緊貼的 `</script>` / `</style>`，未容忍 HTML 容錯常見的尾端空白。
+  impact:
+
+- CodeQL thread 在 PR #286 仍保持未解。
+- 可見文字抽取對非標準但瀏覽器可接受的 HTML 片段仍有漏網風險。
+  actions:
+
+- 將 `seo-public-surface.test.ts` 的 `<script>` / `<style>` closing tag regex 改為 `</script\\s*>` 與 `</style\\s*>`。
+- 執行對應 Vitest 單檔驗證，確認 suite 維持綠燈。
+  prevention:
+
+- HTML 過濾 regex 應預設容忍 tag name 大小寫與 closing tag 前的可忽略空白。
+- 遇到安全掃描提出字串解析問題時，優先用更寬容的語法層匹配，而非只補單一案例。
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/seo-public-surface.test.ts`
+  references:
+
+- apps/ratewise/src/**tests**/seo-public-surface.test.ts
+- https://github.com/haotool/app/pull/286
 
 ---
 
