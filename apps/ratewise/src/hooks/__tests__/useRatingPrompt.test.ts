@@ -1,11 +1,3 @@
-/**
- * useRatingPrompt 單元測試
- *
- * 測試範圍：
- * - 使用日累積計算（7 天觸發）
- * - markRated / snooze / dismiss 狀態轉換
- * - localStorage 讀寫
- */
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useRatingPrompt } from '../useRatingPrompt';
@@ -15,6 +7,7 @@ const KEYS = {
   rated: 'ratewise_rated',
   dismissed: 'ratewise_rating_dismissed',
   dismissedAt: 'ratewise_dismissed_at',
+  snoozedCount: 'ratewise_snooze_count',
 };
 
 function setUseDays(days: string[]) {
@@ -29,14 +22,12 @@ function getUseDays(): string[] {
   }
 }
 
-/** 推進假計時器並沖刷 React 狀態更新。 */
 function advanceTimerAndFlush(ms: number) {
   act(() => {
     vi.advanceTimersByTime(ms);
   });
 }
 
-/** 產出 N 筆過去日期（從今天往回推）。 */
 function pastDays(n: number): string[] {
   return Array.from({ length: n }, (_, i) => {
     const d = new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000);
@@ -50,6 +41,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  localStorage.clear();
 });
 
 describe('useRatingPrompt', () => {
@@ -59,8 +51,12 @@ describe('useRatingPrompt', () => {
       expect(result.current.isVisible).toBe(false);
     });
 
+    it('預設 isFinalChance 為 false', () => {
+      const { result } = renderHook(() => useRatingPrompt());
+      expect(result.current.isFinalChance).toBe(false);
+    });
+
     it('使用日不足時 3 秒後仍不顯示', () => {
-      // 5 筆歷史 + hook mount 記錄今日 = 6 天，仍不足 7 天。
       setUseDays(pastDays(5));
 
       const { result } = renderHook(() => useRatingPrompt());
@@ -70,7 +66,6 @@ describe('useRatingPrompt', () => {
     });
 
     it('使用日達 7 天且無紀錄時，3 秒後顯示', () => {
-      // 6 筆歷史 + hook mount 記錄今日 = 7 天，達標。
       setUseDays(pastDays(6));
 
       const { result } = renderHook(() => useRatingPrompt());
@@ -141,7 +136,6 @@ describe('useRatingPrompt', () => {
 
     it('snooze 後 7 天內不再顯示', () => {
       setUseDays(pastDays(6));
-      // 6 天前 snooze。
       const sixDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString();
       localStorage.setItem(KEYS.dismissedAt, sixDaysAgo);
 
@@ -153,7 +147,6 @@ describe('useRatingPrompt', () => {
 
     it('snooze 後超過 7 天會再次顯示', () => {
       setUseDays(pastDays(6));
-      // 8 天前 snooze。
       const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
       localStorage.setItem(KEYS.dismissedAt, eightDaysAgo);
 
@@ -161,6 +154,57 @@ describe('useRatingPrompt', () => {
       advanceTimerAndFlush(3000);
 
       expect(result.current.isVisible).toBe(true);
+    });
+
+    it('snooze 達上限後永久關閉且不再顯示', () => {
+      setUseDays(pastDays(6));
+      localStorage.setItem(KEYS.snoozedCount, '1');
+      const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+      localStorage.setItem(KEYS.dismissedAt, eightDaysAgo);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      act(() => {
+        result.current.snooze();
+      });
+
+      expect(result.current.isVisible).toBe(false);
+      expect(localStorage.getItem(KEYS.dismissed)).toBe('1');
+    });
+
+    it('snoozedCount 達上限時不再顯示', () => {
+      setUseDays(pastDays(6));
+      localStorage.setItem(KEYS.snoozedCount, '2');
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(false);
+    });
+  });
+
+  describe('isFinalChance', () => {
+    it('snoozedCount 為 0 時 isFinalChance 為 false', () => {
+      setUseDays(pastDays(6));
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isFinalChance).toBe(false);
+    });
+
+    it('snoozedCount 為 MAX_SNOOZES - 1 時 isFinalChance 為 true', () => {
+      setUseDays(pastDays(6));
+      localStorage.setItem(KEYS.snoozedCount, '1');
+      const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+      localStorage.setItem(KEYS.dismissedAt, eightDaysAgo);
+
+      const { result } = renderHook(() => useRatingPrompt());
+      advanceTimerAndFlush(3000);
+
+      expect(result.current.isVisible).toBe(true);
+      expect(result.current.isFinalChance).toBe(true);
     });
   });
 
@@ -185,7 +229,7 @@ describe('useRatingPrompt', () => {
   describe('使用日記錄', () => {
     it('每天首次 mount 會記錄今日', () => {
       const today = new Date().toISOString().slice(0, 10);
-      setUseDays(['2026-01-01']); // 先設一筆舊資料
+      setUseDays(['2026-01-01']);
 
       renderHook(() => useRatingPrompt());
 

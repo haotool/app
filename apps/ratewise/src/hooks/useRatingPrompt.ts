@@ -1,16 +1,3 @@
-/**
- * useRatingPrompt — 控制星評 Modal 顯示時機。
- *
- * 觸發條件：
- *  - 使用者已累積 7 個「使用日」（每日首次開啟 app 計算一次）。
- *  - 尚未評分且尚未永久關閉。
- *
- * localStorage 鍵值：
- *  - ratewise_use_days     — JSON 字串陣列（ISO 日期，去重後最多保留 60 天）
- *  - ratewise_rated        — '1' 代表已評分，不再顯示
- *  - ratewise_rating_dismissed — '1' 代表已永久關閉（最多 1 次「以後再說」機會）
- *  - ratewise_dismissed_at — 最後一次「以後再說」的 ISO 日期（7 天後重新顯示）
- */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const KEYS = {
@@ -18,10 +5,12 @@ const KEYS = {
   rated: 'ratewise_rated',
   dismissed: 'ratewise_rating_dismissed',
   dismissedAt: 'ratewise_dismissed_at',
+  snoozedCount: 'ratewise_snooze_count',
 } as const;
 
 const REQUIRED_DAYS = 7;
 const SNOOZE_DAYS = 7;
+const MAX_SNOOZES = 2;
 
 function getTodayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -44,22 +33,29 @@ function recordTodayUsage(): string[] {
   const days = readUseDays();
   if (days.includes(today)) return days;
 
-  // 新增今日；保留最近 60 天避免無限增長。
   const updated = [...days, today].slice(-60);
   try {
     localStorage.setItem(KEYS.useDays, JSON.stringify(updated));
   } catch {
-    // localStorage 不可用時靜默失敗。
+    //
   }
   return updated;
+}
+
+function getSnoozedCount(): number {
+  try {
+    return Number(localStorage.getItem(KEYS.snoozedCount) ?? '0');
+  } catch {
+    return 0;
+  }
 }
 
 function shouldShow(): boolean {
   try {
     if (localStorage.getItem(KEYS.rated) === '1') return false;
     if (localStorage.getItem(KEYS.dismissed) === '1') return false;
+    if (getSnoozedCount() >= MAX_SNOOZES) return false;
 
-    // 7 天暫緩（snooze）邏輯。
     const dismissedAt = localStorage.getItem(KEYS.dismissedAt);
     if (dismissedAt) {
       const dismissedDate = new Date(dismissedAt);
@@ -75,18 +71,16 @@ function shouldShow(): boolean {
 }
 
 export interface UseRatingPromptReturn {
-  /** Modal 是否應顯示。 */
   isVisible: boolean;
-  /** 使用者提交評分後呼叫。 */
+  isFinalChance: boolean;
   markRated: () => void;
-  /** 使用者點「以後再說」呼叫（7 天後重新顯示）。 */
   snooze: () => void;
-  /** 使用者點「不再提醒」呼叫。 */
   dismiss: () => void;
 }
 
 export function useRatingPrompt(): UseRatingPromptReturn {
   const [isVisible, setIsVisible] = useState(false);
+  const [isFinalChance, setIsFinalChance] = useState(false);
   const recorded = useRef(false);
 
   useEffect(() => {
@@ -96,9 +90,12 @@ export function useRatingPrompt(): UseRatingPromptReturn {
 
     recordTodayUsage();
 
-    // 延遲 3 秒再判斷是否顯示，避免影響首屏載入。
     const timer = setTimeout(() => {
-      setIsVisible(shouldShow());
+      const show = shouldShow();
+      if (show) {
+        setIsFinalChance(getSnoozedCount() >= MAX_SNOOZES - 1);
+      }
+      setIsVisible(show);
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -108,16 +105,22 @@ export function useRatingPrompt(): UseRatingPromptReturn {
     try {
       localStorage.setItem(KEYS.rated, '1');
     } catch {
-      // 靜默失敗。
+      //
     }
     setIsVisible(false);
   }, []);
 
   const snooze = useCallback(() => {
     try {
-      localStorage.setItem(KEYS.dismissedAt, new Date().toISOString());
+      const next = getSnoozedCount() + 1;
+      localStorage.setItem(KEYS.snoozedCount, String(next));
+      if (next >= MAX_SNOOZES) {
+        localStorage.setItem(KEYS.dismissed, '1');
+      } else {
+        localStorage.setItem(KEYS.dismissedAt, new Date().toISOString());
+      }
     } catch {
-      // 靜默失敗。
+      //
     }
     setIsVisible(false);
   }, []);
@@ -126,10 +129,10 @@ export function useRatingPrompt(): UseRatingPromptReturn {
     try {
       localStorage.setItem(KEYS.dismissed, '1');
     } catch {
-      // 靜默失敗。
+      //
     }
     setIsVisible(false);
   }, []);
 
-  return { isVisible, markRated, snooze, dismiss };
+  return { isVisible, isFinalChance, markRated, snooze, dismiss };
 }
