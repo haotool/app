@@ -6,6 +6,49 @@
 
 ---
 
+id: ratewise-seo-public-surface-suite
+date: 2026-04-27
+title: 新增集中式 SEO public surface regression suite，鎖住 route 順序與 sitemap 公開輸出
+score: +1
+type: fix
+content_type: test
+scope: ratewise, seo, regression, public-surface
+topics: [ratewise, seo, regression-suite, sitemap, public-surface, prerender]
+keywords:
+[seo-public-surface, route-h1-order, seotech-ssot, sitemap-truthfulness, vitest]
+aliases: [SEO public surface suite, 公開 SEO 表面回歸測試]
+related_entries:
+[ratewise-seotech-ssot-registry-alignment, ratewise-seo-doc-ssot-drift-gate, ratewise-schema-truthfulness-gate]
+summary: 雖然 P0 的修復已分散在多支測試中，但缺少一個能直接回答「公開 SEO 表面現在還乾不乾淨」的單一 regression suite。本次新增 `seo-public-surface.test.ts`，集中驗證 route 專屬 H1 是否早於 fallback、`/seo-tech/` 是否仍對齊當前 SSOT、以及 sitemap 是否重新長回 `priority` / `changefreq`。同步新增 `test:seo-surface` script，讓這組公開表面檢查可被單獨執行。
+root_cause:
+
+- 現有 SEO 測試分散在 route order、schema、truthfulness、best-practices 等檔案，沒有一個集中入口對公開表面做快速回歸。
+- `/seo-tech/`、SSG 首屏順序與 sitemap 標籤都是高可見度 surface，一旦回歸，影響會直接暴露給 Google 與使用者。
+  impact:
+
+- 維護者需要記住多支測試才能確認公開 SEO 輸出是否仍乾淨，容易漏跑。
+- 缺少集中 suite 時，公開表面回歸不容易在本地第一時間被發現。
+  actions:
+
+- 新增 `apps/ratewise/src/__tests__/seo-public-surface.test.ts`。
+- 將 route H1 順序、SeoTech SSOT 揭露與 sitemap `priority/changefreq` 禁止規則收斂進同一 suite。
+- 在 `apps/ratewise/package.json` 新增 `test:seo-surface` script。
+  prevention:
+
+- 之後只要動到 prerender、public disclosure、sitemap 或 head 輸出，可先跑 `pnpm --filter @app/ratewise test:seo-surface` 做快速回歸。
+- 高可見度 SEO surface 的規則應持續用單一 suite 鎖定，而不是只散落在個別單元測試中。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/seo-public-surface.test.ts`
+  references:
+
+- apps/ratewise/src/**tests**/seo-public-surface.test.ts
+- apps/ratewise/package.json
+- apps/ratewise/public/sitemap.xml
+- apps/ratewise/dist/seo-tech/index.html
+
+---
+
 id: ratewise-lastmod-fallback-test-ssot-alignment
 date: 2026-04-27
 title: 將 sitemap lastmod fallback 測試改為依附匯率 SSOT 日期，移除硬編日期回歸
