@@ -29,13 +29,15 @@ const readDistHtml = (path: string): string => {
   return readFileSync(htmlPath, 'utf-8');
 };
 
-const extractVisibleText = (html: string): string =>
-  html
-    .replace(/<script[\s\S]*?<\/script\s*>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style\s*>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+const extractVisibleText = (html: string): string => {
+  const document = new DOMParser().parseFromString(html, 'text/html');
+
+  document.querySelectorAll('script, style').forEach((element) => {
+    element.remove();
+  });
+
+  return (document.body.textContent ?? '').replace(/\s+/g, ' ').trim();
+};
 
 const textBefore = (text: string, marker: string): string => {
   const index = text.indexOf(marker);

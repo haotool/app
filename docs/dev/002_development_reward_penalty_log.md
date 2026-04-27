@@ -1,8 +1,48 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-27T22:33:10+08:00
-> **當前總分**: 1220（初始分: 100）
+> **最後更新**: 2026-04-27T23:14:39+08:00
+> **當前總分**: 1221（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-review-thread-replace-html-regex-with-domparser
+date: 2026-04-27
+title: 將 SEO public surface 可見文字抽取從 regex 改為 DOMParser，終結 script/style 邊界案例
+score: +1
+type: fix
+content_type: review-followup
+scope: ratewise, seo, tests, github-review
+topics: [github-review, codeql, domparser, html-parsing, seo-public-surface]
+keywords:
+[domparser, structured-html-parsing, script-style-removal, codeql-hardening, visible-text-extraction]
+aliases: [PR286 DOMParser 修補, HTML regex 收斂]
+related_entries:
+[ratewise-review-thread-fix-script-end-tag-whitespace, ratewise-review-thread-fixes-cwd-and-html-regex]
+summary: 在補完 `</script >` 後，GitHub Advanced Security 再指出 regex 仍可能漏掉 `</script\\t\\n bar>` 這類更鬆散的 closing tag 變體。這表示以 regex 維護 HTML 可見文字抽取會持續被邊界案例追著跑。本次直接將 `extractVisibleText()` 改為以 `DOMParser` 解析 HTML，移除 `script/style` 節點後讀取 `textContent`，把這條測試邏輯收斂到結構化解析，而不是再疊更多字串規則。
+root_cause:
+
+- 先前做法依賴 regex 移除 `script/style`，對非標準但解析器可容忍的 HTML 變體天然脆弱。
+  impact:
+
+- PR #286 持續出現新的 CodeQL thread，修補成本被迫綁在字串邊界案例上。
+- 公開 SEO surface 測試的文字抽取可靠度依賴 regex 覆蓋率，不易維護。
+  actions:
+
+- 將 `seo-public-surface.test.ts` 的 `extractVisibleText()` 改為 `DOMParser().parseFromString(..., 'text/html')`。
+- 解析後移除 `script` / `style` 節點，再讀取 `document.body.textContent`。
+- 執行單檔 Vitest 驗證回歸。
+  prevention:
+
+- 涉及 HTML 結構清理與文字抽取時，優先採用結構化 parser，而非擴寫 regex。
+- 安全掃描若反覆指出同類 regex 邊界問題，應提升抽象層級處理，不再逐案補洞。
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/seo-public-surface.test.ts`
+  references:
+
+- apps/ratewise/src/**tests**/seo-public-surface.test.ts
+- https://github.com/haotool/app/pull/286
 
 ---
 
