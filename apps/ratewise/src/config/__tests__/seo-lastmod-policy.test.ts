@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { CONTENT_LASTMOD_POLICY, RATE_PAGE_LASTMOD_POLICY } from '../seo-lastmod-policy';
 import { SEO_RATE_EXAMPLES_DATE } from '../generated/seo-rate-examples';
 // @ts-expect-error 直接驗證 root sitemap script 的 fallback 行為。
 import { getFallbackLastModDate } from '../../../../../scripts/generate-sitemap-2025.mjs';
 
-const repoRoot = resolve(process.cwd(), '../..');
+const currentDir = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(currentDir, '../../../../..');
 const rateSourcePath = resolve(repoRoot, RATE_PAGE_LASTMOD_POLICY.source);
 const sourceContent = readFileSync(rateSourcePath, 'utf-8');
 const rateTimestampMatch = /匯率時間：(\d{4})\/(\d{2})\/(\d{2})/.exec(sourceContent);

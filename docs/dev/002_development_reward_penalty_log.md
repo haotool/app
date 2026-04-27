@@ -1,8 +1,49 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-27T21:47:00+08:00
-> **當前總分**: 1218（初始分: 100）
+> **最後更新**: 2026-04-27T22:13:00+08:00
+> **當前總分**: 1219（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-review-thread-fixes-cwd-and-html-regex
+date: 2026-04-27
+title: 修復 PR review 兩條未解 thread，補齊大小寫 HTML 過濾與 CWD 無關測試路徑解析
+score: +1
+type: fix
+content_type: review-followup
+scope: ratewise, seo, tests, github-review
+topics: [github-review, codeql, vitest, seo-public-surface, lastmod-policy]
+keywords:
+[uppercase-script-tag, html-filtering, import-meta-url, cwd-independent, unresolved-thread]
+aliases: [PR285 review 修補, SEO 測試 review follow-up]
+related_entries:
+[ratewise-lastmod-fallback-test-precedence, ratewise-seo-public-surface-suite]
+summary: 針對 PR #285 的兩條未解 review thread 做原子修補。第一條來自 GitHub Advanced Security，指出 `seo-public-surface.test.ts` 的 HTML 過濾 regex 未涵蓋大寫 `<SCRIPT>` / `<STYLE>`；第二條來自 Codex review，指出 `seo-lastmod-policy.test.ts` 以 `process.cwd()` 推 repo root，從 monorepo root 或 IDE runner 執行時會產生 CWD 敏感的 `ENOENT`。本次分別改為大小寫不敏感 regex 與 `import.meta.url` 路徑推導，並以對應測試確認修補成立。
+root_cause:
+
+- HTML 過濾使用區分大小寫的 regex，未覆蓋大寫標籤輸入。
+- 測試直接依賴 `process.cwd()`，把執行位置誤當成 repo 結構的一部分。
+  impact:
+
+- CodeQL thread 持續未解，公開 surface 測試在異常 HTML 標記情境下可能誤判。
+- 在 IDE、monorepo root 或其他非 app 子目錄執行測試時，`seo-lastmod-policy.test.ts` 會直接讀檔失敗。
+  actions:
+
+- 將 `seo-public-surface.test.ts` 中的 `<script>` / `<style>` 過濾 regex 改為 `gi`。
+- 將 `seo-lastmod-policy.test.ts` 的 repo root 改為由 `import.meta.url` / `fileURLToPath()` 推導。
+  prevention:
+
+- 所有 HTML 片段清理 regex 預設應評估大小寫容忍度，尤其是安全或可見文字抽取類測試。
+- 測試若需讀 repo 檔案，應優先使用檔案自身位置而非 `process.cwd()`，避免 runner 差異造成脆弱性。
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/seo-public-surface.test.ts src/config/__tests__/seo-lastmod-policy.test.ts`
+  references:
+
+- apps/ratewise/src/**tests**/seo-public-surface.test.ts
+- apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
+- https://github.com/haotool/app/pull/285
 
 ---
 
