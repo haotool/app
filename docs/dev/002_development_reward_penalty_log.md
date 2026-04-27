@@ -1,8 +1,134 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-27T02:56:05+08:00
+> **最後更新**: 2026-04-27T21:47:00+08:00
 > **當前總分**: 1218（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-lastmod-fallback-test-precedence
+date: 2026-04-27
+title: 補強 lastmod fallback 測試，明確驗證匯率時間優先於生成日期
+score: +1
+type: fix
+content_type: test
+scope: ratewise, seo, sitemap, lastmod
+topics: [ratewise, seo, sitemap-lastmod, fallback-precedence, vitest]
+keywords:
+[rate-timestamp, generated-date, fallback-order, seo-rate-examples, lastmod]
+aliases: [Lastmod fallback 優先序測試, 匯率時間優先規則]
+related_entries:
+[ratewise-lastmod-fallback-test-ssot-alignment, ratewise-sitemap-lastmod-policy]
+summary: 第一輪把硬編日期改為 `SEO_RATE_EXAMPLES_DATE` 後，進一步驗證時發現 sitemap generator 的真實規則不是直接使用生成日期，而是優先解析 `seo-rate-examples.ts` 檔頭內的「匯率時間」，只有抓不到時才退回 `SEO_RATE_EXAMPLES_DATE`。本次將測試同步升級為驗證這個優先序，確保測試對齊 generator 的實際 fallback 邏輯，而不是對齊某個較弱的近似值。
+root_cause:
+
+- `generate-sitemap-2025.mjs` 的 `getRatePageFallbackDate()` 先讀 `匯率時間`，再讀 `生成日期`。
+- 前一輪修補只把測試從硬編常數換成 `SEO_RATE_EXAMPLES_DATE`，仍少了一層對 fallback precedence 的理解。
+  impact:
+
+- 當匯率時間與生成日期跨日時，測試仍會產生假陰性。
+- 使 `lastmod` policy regression 判讀不穩定，降低測試對真規則的保護力。
+  actions:
+
+- 在 `seo-lastmod-policy.test.ts` 直接從 `RATE_PAGE_LASTMOD_POLICY.source` 讀取檔頭註記。
+- 若存在 `匯率時間`，以其日期作為預期值；否則退回 `SEO_RATE_EXAMPLES_DATE`。
+  prevention:
+
+- 測試若要驗證 fallback precedence，應直接對齊產生 precedence 的來源格式，不得只驗較表層的導出常數。
+- 任何涉及 build 生成檔頭 metadata 的邏輯，都應考慮跨日與時區差異。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts`
+- `pnpm --filter @app/ratewise test:seo-surface`
+  references:
+
+- apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
+- apps/ratewise/src/config/generated/seo-rate-examples.ts
+- scripts/generate-sitemap-2025.mjs
+
+---
+
+id: ratewise-seo-public-surface-suite
+date: 2026-04-27
+title: 新增集中式 SEO public surface regression suite，鎖住 route 順序與 sitemap 公開輸出
+score: +1
+type: fix
+content_type: test
+scope: ratewise, seo, regression, public-surface
+topics: [ratewise, seo, regression-suite, sitemap, public-surface, prerender]
+keywords:
+[seo-public-surface, route-h1-order, seotech-ssot, sitemap-truthfulness, vitest]
+aliases: [SEO public surface suite, 公開 SEO 表面回歸測試]
+related_entries:
+[ratewise-seotech-ssot-registry-alignment, ratewise-seo-doc-ssot-drift-gate, ratewise-schema-truthfulness-gate]
+summary: 雖然 P0 的修復已分散在多支測試中，但缺少一個能直接回答「公開 SEO 表面現在還乾不乾淨」的單一 regression suite。本次新增 `seo-public-surface.test.ts`，集中驗證 route 專屬 H1 是否早於 fallback、`/seo-tech/` 是否仍對齊當前 SSOT、以及 sitemap 是否重新長回 `priority` / `changefreq`。同步新增 `test:seo-surface` script，讓這組公開表面檢查可被單獨執行。
+root_cause:
+
+- 現有 SEO 測試分散在 route order、schema、truthfulness、best-practices 等檔案，沒有一個集中入口對公開表面做快速回歸。
+- `/seo-tech/`、SSG 首屏順序與 sitemap 標籤都是高可見度 surface，一旦回歸，影響會直接暴露給 Google 與使用者。
+  impact:
+
+- 維護者需要記住多支測試才能確認公開 SEO 輸出是否仍乾淨，容易漏跑。
+- 缺少集中 suite 時，公開表面回歸不容易在本地第一時間被發現。
+  actions:
+
+- 新增 `apps/ratewise/src/__tests__/seo-public-surface.test.ts`。
+- 將 route H1 順序、SeoTech SSOT 揭露與 sitemap `priority/changefreq` 禁止規則收斂進同一 suite。
+- 在 `apps/ratewise/package.json` 新增 `test:seo-surface` script。
+  prevention:
+
+- 之後只要動到 prerender、public disclosure、sitemap 或 head 輸出，可先跑 `pnpm --filter @app/ratewise test:seo-surface` 做快速回歸。
+- 高可見度 SEO surface 的規則應持續用單一 suite 鎖定，而不是只散落在個別單元測試中。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/__tests__/seo-public-surface.test.ts`
+  references:
+
+- apps/ratewise/src/**tests**/seo-public-surface.test.ts
+- apps/ratewise/package.json
+- apps/ratewise/public/sitemap.xml
+- apps/ratewise/dist/seo-tech/index.html
+
+---
+
+id: ratewise-lastmod-fallback-test-ssot-alignment
+date: 2026-04-27
+title: 將 sitemap lastmod fallback 測試改為依附匯率 SSOT 日期，移除硬編日期回歸
+score: +1
+type: fix
+content_type: test
+scope: ratewise, seo, sitemap, lastmod
+topics: [ratewise, seo, sitemap-lastmod, ssot, vitest]
+keywords:
+[seo-rate-examples-date, lastmod-fallback, hardcoded-date, regression, ssot-alignment]
+aliases: [RateWise lastmod fallback 測試對齊, sitemap lastmod 日期硬編修復]
+related_entries:
+[ratewise-sitemap-lastmod-policy, cicd-security-scan-lastmod-fallback-fix]
+summary: 驗證 RateWise SEO 修復是否真正完成時，發現 `seo-lastmod-policy.test.ts` 仍將匯率頁 fallback 日期硬寫為 `2026-04-25`，但目前 `seo-rate-examples.ts` 已由 build 生成為 `2026-04-27`，導致 policy 與可驗證資料來源正確、測試卻誤報失敗。本次改為直接引用 `SEO_RATE_EXAMPLES_DATE`，讓測試跟隨 SSOT 的匯率日期來源，而不是跟隨某一次人工快照。
+root_cause:
+
+- `seo-lastmod-policy.test.ts` 將匯率頁 fallback 日期寫死在單一日期字串，沒有依附 `seo-rate-examples.ts` 的生成值。
+- `generate-sitemap-2025.mjs` 的 fallback 行為已改為讀取匯率內容日期，但測試沒有同步從同一來源取值。
+  impact:
+
+- 會在 RateWise SEO regression 驗證時產生假陰性，誤以為 sitemap lastmod policy 已退化。
+- 阻擋後續真實 SEO 修復的驗證節奏，讓測試結果失去判讀價值。
+  actions:
+
+- 在 `apps/ratewise/src/config/__tests__/seo-lastmod-policy.test.ts` 改為引用 `SEO_RATE_EXAMPLES_DATE`。
+- 保留對 `/usd-twd/` 與 `/usd-twd/100/` 的雙路徑斷言，確保幣別頁與金額頁都共用同一 fallback 真相來源。
+  prevention:
+
+- 只要驗證目標是由生成檔或 SSOT 輸出的日期、版本、路徑數，就不得在測試中硬編具時效性的常數。
+- sitemap / schema / README 類 SEO gate 一律優先引用對應 SSOT 常數或生成產物。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-lastmod-policy.test.ts`
+  references:
+
+- apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
+- apps/ratewise/src/config/generated/seo-rate-examples.ts
+- scripts/generate-sitemap-2025.mjs
 
 ---
 
