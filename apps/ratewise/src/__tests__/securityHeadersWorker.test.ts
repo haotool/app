@@ -212,12 +212,14 @@ describe('security-headers worker', () => {
     expect(csp).toContain('https://unpkg.com');
   });
 
-  it('root host 的首頁不得誤映射到 ratewise markdown mirror', async () => {
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValue(
-        createHtmlResponse('<!doctype html><html><head></head><body>haotool root</body></html>'),
-      );
+  it('root host 的首頁接受 markdown negotiation 時應導向 root markdown mirror', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response('# haotool markdown mirror', {
+        headers: {
+          'content-type': 'text/markdown; charset=utf-8',
+        },
+      }),
+    );
     globalThis.fetch = fetchSpy;
 
     const response = await worker.fetch(
@@ -229,10 +231,32 @@ describe('security-headers worker', () => {
     );
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      'https://app.haotool.org/',
+      'https://app.haotool.org/index.md',
       expect.objectContaining({ method: 'GET' }),
     );
-    expect(response.headers.get('link')).toBeNull();
+    expect(response.headers.get('content-type')).toContain('text/markdown');
+  });
+
+  it('root HTML 首頁應輸出 agent discovery Link headers 且不得誤指向 ratewise markdown', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        createHtmlResponse('<!doctype html><html><head></head><body>haotool root</body></html>'),
+      );
+
+    const response = await worker.fetch(new Request('https://app.haotool.org/'));
+    const link = response.headers.get('link') ?? '';
+
+    expect(link).toContain(
+      '<https://app.haotool.org/index.md>; rel="alternate"; type="text/markdown"',
+    );
+    expect(link).toContain(
+      '<https://app.haotool.org/.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
+    );
+    expect(link).toContain(
+      '<https://app.haotool.org/.well-known/agent-skills/index.json>; rel="service-desc"; type="application/json"',
+    );
+    expect(link).not.toContain('/ratewise/index.md');
   });
 
   it('ratewise 首頁接受 markdown negotiation 時應導向對應 mirror', async () => {
@@ -258,6 +282,87 @@ describe('security-headers worker', () => {
       expect.objectContaining({ method: 'GET' }),
     );
     expect(response.headers.get('content-type')).toContain('text/markdown');
+  });
+
+  it('root API catalog 應輸出 RFC 9727 linkset JSON', async () => {
+    globalThis.fetch = vi.fn();
+
+    const response = await worker.fetch(
+      new Request('https://app.haotool.org/.well-known/api-catalog', {
+        headers: {
+          accept: 'application/linkset+json, application/json',
+        },
+      }),
+    );
+    const catalog = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('application/linkset+json');
+    expect(catalog.linkset).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          anchor: 'https://app.haotool.org/ratewise/',
+          'service-desc': expect.arrayContaining([
+            expect.objectContaining({
+              href: 'https://app.haotool.org/ratewise/openapi.json',
+            }),
+          ]),
+          'service-doc': expect.arrayContaining([
+            expect.objectContaining({
+              href: 'https://app.haotool.org/ratewise/open-data/',
+            }),
+          ]),
+          status: expect.arrayContaining([
+            expect.objectContaining({
+              href: 'https://app.haotool.org/ratewise/__network_probe__',
+            }),
+          ]),
+        }),
+      ]),
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it('root Agent Skills index 應輸出 v0.2.0 schema 與 sha256 digest', async () => {
+    globalThis.fetch = vi.fn();
+
+    const response = await worker.fetch(
+      new Request('https://app.haotool.org/.well-known/agent-skills/index.json'),
+    );
+    const index = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(index.$schema).toBe('https://schemas.agentskills.io/discovery/0.2.0/schema.json');
+    expect(index.skills).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'haotool-discovery',
+          type: 'skill-md',
+          url: '/.well-known/agent-skills/haotool-discovery/SKILL.md',
+          digest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+        }),
+        expect.objectContaining({
+          name: 'ratewise-api',
+          type: 'skill-md',
+          url: '/.well-known/agent-skills/ratewise-api/SKILL.md',
+          digest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+        }),
+      ]),
+    );
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it('root Agent Skill artifact 應可直接讀取 Markdown', async () => {
+    globalThis.fetch = vi.fn();
+
+    const response = await worker.fetch(
+      new Request('https://app.haotool.org/.well-known/agent-skills/haotool-discovery/SKILL.md'),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/markdown');
+    expect(await response.text()).toContain('name: haotool-discovery');
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it('公開分享圖開放 CORS，所有 Vite hashed asset 一律 immutable', async () => {

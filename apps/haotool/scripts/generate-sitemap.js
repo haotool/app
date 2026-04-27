@@ -72,6 +72,7 @@ User-agent: *
 Allow: /
 Disallow: /sw.js
 Disallow: /workbox-*.js
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 ${SITEMAP_URLS.map((url) => `Sitemap: ${url}`).join('\n')}
 
