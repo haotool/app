@@ -32,7 +32,13 @@ export function RatingModal(props: RatingModalProps) {
   return <RatingModalClient {...props} />;
 }
 
-function RatingModalClient({ isVisible, markRated, snooze }: RatingModalProps) {
+function RatingModalClient({
+  isVisible,
+  markRated,
+  snooze,
+  dismiss,
+  isFinalChance,
+}: RatingModalProps) {
   const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
   const [hoveredStar, setHoveredStar] = useState(0);
@@ -147,7 +153,7 @@ function RatingModalClient({ isVisible, markRated, snooze }: RatingModalProps) {
                     {/* 關閉按鈕 */}
                     <button
                       ref={firstButtonRef}
-                      onClick={snooze}
+                      onClick={isFinalChance ? dismiss : snooze}
                       className="
                         p-1.5 rounded-full flex-shrink-0
                         bg-brand-icon-from/80 text-brand-text
@@ -198,7 +204,7 @@ function RatingModalClient({ isVisible, markRated, snooze }: RatingModalProps) {
                   {/* 操作按鈕 */}
                   <div className="flex items-center justify-between gap-2">
                     <button
-                      onClick={snooze}
+                      onClick={isFinalChance ? dismiss : snooze}
                       className="
                         text-xs text-brand-text/70 hover:text-brand-text
                         transition-colors duration-150
@@ -206,7 +212,7 @@ function RatingModalClient({ isVisible, markRated, snooze }: RatingModalProps) {
                         rounded
                       "
                     >
-                      {t('rating.later')}
+                      {isFinalChance ? t('rating.dismiss') : t('rating.later')}
                     </button>
 
                     <button

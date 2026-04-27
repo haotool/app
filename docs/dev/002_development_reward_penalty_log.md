@@ -1,8 +1,128 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-27T21:47:00+08:00
-> **當前總分**: 1218（初始分: 100）
+> **最後更新**: 2026-04-27T23:14:39+08:00
+> **當前總分**: 1221（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-review-thread-replace-html-regex-with-domparser
+date: 2026-04-27
+title: 將 SEO public surface 可見文字抽取從 regex 改為 DOMParser，終結 script/style 邊界案例
+score: +1
+type: fix
+content_type: review-followup
+scope: ratewise, seo, tests, github-review
+topics: [github-review, codeql, domparser, html-parsing, seo-public-surface]
+keywords:
+[domparser, structured-html-parsing, script-style-removal, codeql-hardening, visible-text-extraction]
+aliases: [PR286 DOMParser 修補, HTML regex 收斂]
+related_entries:
+[ratewise-review-thread-fix-script-end-tag-whitespace, ratewise-review-thread-fixes-cwd-and-html-regex]
+summary: 在補完 `</script >` 後，GitHub Advanced Security 再指出 regex 仍可能漏掉 `</script\\t\\n bar>` 這類更鬆散的 closing tag 變體。這表示以 regex 維護 HTML 可見文字抽取會持續被邊界案例追著跑。本次直接將 `extractVisibleText()` 改為以 `DOMParser` 解析 HTML，移除 `script/style` 節點後讀取 `textContent`，把這條測試邏輯收斂到結構化解析，而不是再疊更多字串規則。
+root_cause:
+
+- 先前做法依賴 regex 移除 `script/style`，對非標準但解析器可容忍的 HTML 變體天然脆弱。
+  impact:
+
+- PR #286 持續出現新的 CodeQL thread，修補成本被迫綁在字串邊界案例上。
+- 公開 SEO surface 測試的文字抽取可靠度依賴 regex 覆蓋率，不易維護。
+  actions:
+
+- 將 `seo-public-surface.test.ts` 的 `extractVisibleText()` 改為 `DOMParser().parseFromString(..., 'text/html')`。
+- 解析後移除 `script` / `style` 節點，再讀取 `document.body.textContent`。
+- 執行單檔 Vitest 驗證回歸。
+  prevention:
+
+- 涉及 HTML 結構清理與文字抽取時，優先採用結構化 parser，而非擴寫 regex。
+- 安全掃描若反覆指出同類 regex 邊界問題，應提升抽象層級處理，不再逐案補洞。
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/seo-public-surface.test.ts`
+  references:
+
+- apps/ratewise/src/**tests**/seo-public-surface.test.ts
+- https://github.com/haotool/app/pull/286
+
+---
+
+id: ratewise-review-thread-fix-script-end-tag-whitespace
+date: 2026-04-27
+title: 修復 CodeQL 對 `</script >` / `</style >` 結尾空白標籤的 HTML 過濾漏網
+score: +1
+type: fix
+content_type: review-followup
+scope: ratewise, seo, tests, github-review
+topics: [github-review, codeql, vitest, html-filtering, seo-public-surface]
+keywords:
+[script-end-tag-whitespace, style-end-tag-whitespace, regex-hardening, extract-visible-text]
+aliases: [PR286 CodeQL regex 修補, closing-tag whitespace fix]
+related_entries:
+[ratewise-review-thread-fixes-cwd-and-html-regex, ratewise-seo-public-surface-suite]
+summary: 在 follow-up PR #286 上，GitHub Advanced Security 再指出 `seo-public-surface.test.ts` 的 HTML 過濾仍未涵蓋 `</script >` 與 `</style >` 這類結尾標籤尾端帶空白的情況。這次將 regex 從精確匹配 `</script>` / `</style>`，收斂為允許 `\\s*` 後再閉合 `>`，讓 visible-text 抽取對鬆散 HTML 更具韌性，避免 CodeQL 持續報告相同類型缺口。
+root_cause:
+
+- closing tag regex 只接受緊貼的 `</script>` / `</style>`，未容忍 HTML 容錯常見的尾端空白。
+  impact:
+
+- CodeQL thread 在 PR #286 仍保持未解。
+- 可見文字抽取對非標準但瀏覽器可接受的 HTML 片段仍有漏網風險。
+  actions:
+
+- 將 `seo-public-surface.test.ts` 的 `<script>` / `<style>` closing tag regex 改為 `</script\\s*>` 與 `</style\\s*>`。
+- 執行對應 Vitest 單檔驗證，確認 suite 維持綠燈。
+  prevention:
+
+- HTML 過濾 regex 應預設容忍 tag name 大小寫與 closing tag 前的可忽略空白。
+- 遇到安全掃描提出字串解析問題時，優先用更寬容的語法層匹配，而非只補單一案例。
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/seo-public-surface.test.ts`
+  references:
+
+- apps/ratewise/src/**tests**/seo-public-surface.test.ts
+- https://github.com/haotool/app/pull/286
+
+---
+
+id: ratewise-review-thread-fixes-cwd-and-html-regex
+date: 2026-04-27
+title: 修復 PR review 兩條未解 thread，補齊大小寫 HTML 過濾與 CWD 無關測試路徑解析
+score: +1
+type: fix
+content_type: review-followup
+scope: ratewise, seo, tests, github-review
+topics: [github-review, codeql, vitest, seo-public-surface, lastmod-policy]
+keywords:
+[uppercase-script-tag, html-filtering, import-meta-url, cwd-independent, unresolved-thread]
+aliases: [PR285 review 修補, SEO 測試 review follow-up]
+related_entries:
+[ratewise-lastmod-fallback-test-precedence, ratewise-seo-public-surface-suite]
+summary: 針對 PR #285 的兩條未解 review thread 做原子修補。第一條來自 GitHub Advanced Security，指出 `seo-public-surface.test.ts` 的 HTML 過濾 regex 未涵蓋大寫 `<SCRIPT>` / `<STYLE>`；第二條來自 Codex review，指出 `seo-lastmod-policy.test.ts` 以 `process.cwd()` 推 repo root，從 monorepo root 或 IDE runner 執行時會產生 CWD 敏感的 `ENOENT`。本次分別改為大小寫不敏感 regex 與 `import.meta.url` 路徑推導，並以對應測試確認修補成立。
+root_cause:
+
+- HTML 過濾使用區分大小寫的 regex，未覆蓋大寫標籤輸入。
+- 測試直接依賴 `process.cwd()`，把執行位置誤當成 repo 結構的一部分。
+  impact:
+
+- CodeQL thread 持續未解，公開 surface 測試在異常 HTML 標記情境下可能誤判。
+- 在 IDE、monorepo root 或其他非 app 子目錄執行測試時，`seo-lastmod-policy.test.ts` 會直接讀檔失敗。
+  actions:
+
+- 將 `seo-public-surface.test.ts` 中的 `<script>` / `<style>` 過濾 regex 改為 `gi`。
+- 將 `seo-lastmod-policy.test.ts` 的 repo root 改為由 `import.meta.url` / `fileURLToPath()` 推導。
+  prevention:
+
+- 所有 HTML 片段清理 regex 預設應評估大小寫容忍度，尤其是安全或可見文字抽取類測試。
+- 測試若需讀 repo 檔案，應優先使用檔案自身位置而非 `process.cwd()`，避免 runner 差異造成脆弱性。
+  verification:
+
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/seo-public-surface.test.ts src/config/__tests__/seo-lastmod-policy.test.ts`
+  references:
+
+- apps/ratewise/src/**tests**/seo-public-surface.test.ts
+- apps/ratewise/src/config/**tests**/seo-lastmod-policy.test.ts
+- https://github.com/haotool/app/pull/285
 
 ---
 
