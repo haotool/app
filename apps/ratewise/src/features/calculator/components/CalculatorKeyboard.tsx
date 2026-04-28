@@ -15,7 +15,7 @@ import { useCalculatorKeyboard } from '../hooks/useCalculatorKeyboard';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { CalculatorKey } from './CalculatorKey';
 import { ExpressionDisplay } from './ExpressionDisplay';
-import { ChristmasEasterEgg } from '../easter-eggs';
+import { ChristmasEasterEgg } from '../easter-eggs/ChristmasEasterEgg';
 
 /**
  * 鍵盤佈局定義（iOS 標準 4×5 網格，20 按鈕）

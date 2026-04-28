@@ -4,9 +4,9 @@
 
 **探索 1940 年代台灣皇民化運動的歷史改姓對照**
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-6.4-646cff?logo=vite)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.0-646cff?logo=vite)](https://vite.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-green)](./LICENSE)
 
@@ -44,8 +44,8 @@
 
 ### 環境需求
 
-- Node.js 20+
-- pnpm 9+
+- Node.js 24
+- pnpm 9.10.0
 
 ### 本地開發
 
@@ -139,7 +139,7 @@ pnpm playwright test
 | 類別         | 技術                      |
 | ------------ | ------------------------- |
 | **框架**     | React 19 + TypeScript 5.7 |
-| **建置工具** | Vite 6.4 + esbuild        |
+| **建置工具** | Vite 8 + esbuild          |
 | **樣式**     | Tailwind CSS 3.4          |
 | **SSG**      | vite-react-ssg            |
 | **PWA**      | vite-plugin-pwa           |

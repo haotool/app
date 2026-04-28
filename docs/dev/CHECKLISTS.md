@@ -130,8 +130,8 @@ pnpm --filter @app/ratewise test:coverage  # ≥80%
 
 ### M2: 依賴升級 ✅ 完成
 
-- [x] Vite 7.3.1 (升級自 6.x)
-- [x] Vitest 4.0.17 (升級自 3.x)
+- [x] Vite 8.0.10 (升級自 6.x)
+- [x] Vitest 4.1.5 (升級自 3.x)
 - [x] React 19.2.3 (升級自 18.x)
 - [x] TypeScript 5.6.2
 - [x] Node.js 24+ 支援

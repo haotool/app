@@ -6,7 +6,7 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-7.3-646cff?logo=vite)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.0-646cff?logo=vite)](https://vite.dev/)
 [![Three.js](https://img.shields.io/badge/Three.js-0.182-black?logo=threedotjs)](https://threejs.org/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-green)](../../LICENSE)
 
@@ -26,7 +26,7 @@
 
 - **🎨 3D 互動首頁** - Three.js + React Three Fiber 打造的沉浸式視覺體驗
 - **📱 響應式設計** - 完美適配桌面與行動裝置
-- **⚡ 極致效能** - Vite 7 + React 19 + SWC 建置
+- **⚡ 極致效能** - Vite 8 + React 19 + Oxc / Rolldown 建置
 - **🎭 Framer Motion** - 流暢的頁面過渡動畫
 - **📊 專案展示** - 展示 HaoRate、NihonName 等應用
 
@@ -43,8 +43,8 @@
 
 ### 環境需求
 
-- Node.js 20+
-- pnpm 9+
+- Node.js 24
+- pnpm 9.10.0
 
 ### 本地開發
 
@@ -126,7 +126,7 @@ pnpm --filter @app/haotool test:e2e
 | 類別         | 技術                         |
 | ------------ | ---------------------------- |
 | **框架**     | React 19 + TypeScript 5.9    |
-| **建置工具** | Vite 7.3 + vite-react-ssg    |
+| **建置工具** | Vite 8 + vite-react-ssg      |
 | **3D 渲染**  | Three.js + React Three Fiber |
 | **動畫**     | Framer Motion 12             |
 | **樣式**     | Tailwind CSS 3.4             |

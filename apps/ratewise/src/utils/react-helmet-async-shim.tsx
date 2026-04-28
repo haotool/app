@@ -1,5 +1,7 @@
 import type { PropsWithChildren, ReactNode } from 'react';
 
+/* eslint-disable react-refresh/only-export-components -- shim 必須同時匯出 provider、component 與 HelmetData API。 */
+
 interface HelmetProviderProps extends PropsWithChildren {
   context?: unknown;
 }

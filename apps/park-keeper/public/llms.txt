@@ -22,7 +22,7 @@
 
 ## 技術
 
-- React 19 + TypeScript + Vite 7
+- React 19 + TypeScript + Vite 8
 - Leaflet 地圖 (Taiwan WMTS)
 - Framer Motion 動畫
 - i18next 國際化

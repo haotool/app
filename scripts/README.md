@@ -21,7 +21,7 @@
 ### 前置需求
 
 ```bash
-# 1. 安裝 Node.js (v20+)
+# 1. 安裝 Node.js 24
 node --version
 
 # 2. 安裝 Lighthouse CLI
@@ -199,12 +199,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install dependencies
         run: |
@@ -280,7 +280,7 @@ lighthouse "$url" --max-wait-for-load 60000 ...
 
 ## 📊 分數下降處理流程
 
-根據 `AI_SEARCH_OPTIMIZATION_SPEC.md` 定義的流程：
+根據 `docs/SEO_MASTER_SSOT.md` 與 `docs/dev/002_development_reward_penalty_log.md` 定義的流程：
 
 1. **記錄下降的 category 與分數**
    - 查看 HTML 報告詳細診斷
@@ -321,8 +321,8 @@ lighthouse "$url" --max-wait-for-load 60000 ...
 
 ## 📖 相關文檔
 
-- [AI_SEARCH_OPTIMIZATION_SPEC.md](../docs/dev/AI_SEARCH_OPTIMIZATION_SPEC.md) - SEO 優化規格
-- [SEO_TODO.md](../docs/dev/SEO_TODO.md) - SEO 任務清單
+- [SEO_MASTER_SSOT.md](../docs/SEO_MASTER_SSOT.md) - SEO 與 AI 搜尋策略 SSOT
+- [seo-production.yml](../.github/workflows/seo-production.yml) - 正式站 SEO 驗證 workflow
 - [002_development_reward_penalty_log.md](../docs/dev/002_development_reward_penalty_log.md) - 開發獎懲記錄
 
 ---
@@ -333,6 +333,6 @@ lighthouse "$url" --max-wait-for-load 60000 ...
 
 ---
 
-**最後更新**: 2025-12-02
-**維護者**: Claude Code
+**最後更新**: 2026-04-28
+**維護者**: haotool
 **授權**: GPL-3.0

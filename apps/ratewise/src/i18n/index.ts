@@ -52,6 +52,9 @@ const resources = {
   ko: { translation: ko },
 };
 
+const canUseBrowserLanguageStorage =
+  typeof window !== 'undefined' && import.meta.env.MODE !== 'test';
+
 /**
  * 正規化語系代碼
  *
@@ -129,8 +132,10 @@ void i18n
       escapeValue: false,
     },
     detection: {
-      order: ['localStorage', 'htmlTag', 'navigator'],
-      caches: ['localStorage'],
+      order: canUseBrowserLanguageStorage
+        ? ['localStorage', 'htmlTag', 'navigator']
+        : ['htmlTag', 'navigator'],
+      caches: canUseBrowserLanguageStorage ? ['localStorage'] : [],
       lookupLocalStorage: 'ratewise-language',
     },
     react: {

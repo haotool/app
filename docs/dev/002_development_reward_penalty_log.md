@@ -1,8 +1,87 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-27T23:14:39+08:00
-> **當前總分**: 1221（初始分: 100）
+> **最後更新**: 2026-04-28T14:21:09+08:00
+> **當前總分**: 1222（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: release-pr-commitlint-masked-success
+date: 2026-04-28
+title: 修正 Release workflow 偽成功並刷新文件基線，恢復 changeset 發版鏈路
+score: +1
+type: fix
+content_type: incident
+scope: release, changesets, ci, docs
+topics: [release-workflow, changesets, commitlint, readme-sync, semantic-versioning]
+keywords:
+[changesets-action, release-pr, commitlint-exemption, masked-success, readme-sync, root-hygiene]
+aliases: [Release PR 沒建立, changeset 未消化, 語意升版停滯, README 漂移]
+related_entries:
+[ratewise-review-thread-replace-html-regex-with-domparser, ratewise-seo-public-surface-suite]
+summary: 追查近期多個 PR 已合併但版本與 CHANGELOG 未更新的原因，確認 `.changeset/*.md` 已累積在 main，但 `Release` workflow 在 `changesets/action` 建立 release PR 時使用 `chore: Version Packages`，被 repo commitlint 規則擋下。由於 workflow 使用 `continue-on-error` 並只輸出 warning，GitHub Actions 顯示 success，造成發版失敗被掩蓋。本次改用 commitlint 豁免格式 `chore(release): 更新版本套件`，並讓 release PR 建立失敗時 `exit 1`。進一步盤點 workspace、workflow、scripts 與 README，刷新明顯漂移的 app README，將 Vite / Vitest / React plugin 對齊到目前 npm 最新基線。
+root_cause:
+
+- release workflow 的 changesets/action commit message 未對齊 `commitlint.config.cjs` 的繁體中文與 body 規則，也未命中既有 release 豁免。
+- `continue-on-error` 讓 release PR 建立失敗被標示為 success，維護者只看到 release run 綠燈。
+
+impact:
+
+- main 持續累積 changeset，但 package version、CHANGELOG 與 release metadata 沒有被消化。
+- README 與多個 app README 未對齊目前 workspace、Vite resolved 版本、Node 24、workflow 數量與實際功能。
+- 本機工具與 QA artifact 治理需另案處理，避免在公開 PR diff 顯示不必要的本機內容。
+
+actions:
+
+- 將 `.github/workflows/release.yml` 的 release commit / title 改為 `chore(release): 更新版本套件`。
+- release PR 建立失敗時輸出 error 並 `exit 1`，避免 workflow 偽成功。
+- 依 workspace package、workflow、scripts 與 app README 盤點文件漂移。
+- 修正 `park-keeper` / `split-meow` AI Studio 範本 README，並更新 RateWise / haotool / NihonName / Quake-School 的版本敘述。
+- 依 Vite 官方 v7 → v8 migration，將無自訂 SWC 設定的 workspace 由 `@vitejs/plugin-react-swc` 遷移至 `@vitejs/plugin-react`，並把 Vite / Vitest / coverage provider 對齊目前 npm 最新基線。
+- 將 RateWise `optimizeDeps.esbuildOptions` 改為 `optimizeDeps.rolldownOptions`，並移除 Vite 8 不接受的 `sourcemapFileNames` output key。
+- 修正 NihonName / Park-Keeper / RateWise 測試 setup 與 storage 存取讀到 Node WebStorage getter 造成的 `--localstorage-file` 警告；i18n 在 test/SSR 停用 localStorage detector。
+- 將 CalculatorKeyboard 從 easter-eggs barrel import 改為直接 import，避免 `DecemberTheme` 同時被 lazy import 與靜態 barrel export 拉進主 chunk。
+- 將 RateWise build 設定改用 Vite 8 / Rolldown 的 Oxc minifier，保留 `dropConsole` / `dropDebugger`，移除 `vite:terser` plugin timing 警告。
+- 依 sourcemap 拆分 Sentry / i18n / DnD / state / icons vendor chunks，並修正 `react/` 子字串誤判導致 `@sentry/react`、`lucide-react` 被歸入 `vendor-react` 的 chunk 分類問題。
+- 同步 AGENTS / CLAUDE 的 Release PR 故障排查與修訂紀錄。
+
+prevention:
+
+- 查「有 changeset 但沒有升版」時，先看 release PR 建立步驟與 commitlint log。
+- 自動發版流程的關鍵失敗不得被降級為 warning；只有可補償的 CDN / secret skip 可非阻塞。
+- 公開指令、workflow、部署或使用者可見行為變更時，README 必須同步更新。
+- root hygiene 檢查需包含 `git status --ignored --short` 與已追蹤本機產物快查。
+
+verification:
+
+- `gh run view 25005492805 --repo haotool/app --job 73226994267 --log | rg -n "Create Release Pull Request|commitlint|Version Packages|error"`
+- Node 24 環境下執行 `pnpm install --frozen-lockfile`（通過）
+- Node 24 環境下執行 `pnpm lint`（通過）
+- Node 24 環境下執行 `pnpm typecheck`（通過）
+- Node 24 環境下執行 `pnpm format`（通過）
+- Node 24 環境下執行 `pnpm test`（通過；7 workspaces / 3147 tests）
+- Node 24 環境下執行 `pnpm build:ratewise`（通過；無 chunk size、`vite:terser` plugin timing、`INEFFECTIVE_DYNAMIC_IMPORT` 警告；保留外部匯率雙重驗證差距 warning 供人工監控）
+- `git diff --check`（通過）
+- Node 24 環境下執行 `pnpm changeset:status`（通過；顯示本 PR 可消化 pending changeset）
+
+references:
+
+- .github/workflows/release.yml
+- .gitignore
+- README.md
+- apps/park-keeper/README.md
+- apps/split-meow/README.md
+- apps/ratewise/README.md
+- apps/haotool/README.md
+- apps/nihonname/README.md
+- apps/quake-school/README.md
+- AGENTS.md
+- CLAUDE.md
+- https://github.com/changesets/action
+- https://vite.dev/guide/migration.html
+- https://vite.dev/guide/rolldown
+- https://semver.org/
+- https://keepachangelog.com/en/1.0.0/
 
 ---
 

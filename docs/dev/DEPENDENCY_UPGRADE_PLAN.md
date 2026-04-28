@@ -1,9 +1,9 @@
 # pnpm 依賴升級與鎖版策略
 
-> **最後更新**: 2025-10-26T03:43:36+08:00  
-> **依據**: `pnpm -w outdated`（2025-10-26）、TECH_DEBT_AUDIT.md、Context7 官方文檔  
-> **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
-> **版本**: v2.0 (完整超級技術債掃描產出)
+> **最後更新**: 2026-04-28T01:51:43+08:00
+> **依據**: `pnpm info`（2026-04-28）、Vite 官方 v7 → v8 migration、TECH_DEBT_AUDIT.md、Context7 官方文檔
+> **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)
+> **版本**: v2.1 (Vite 8 / Vitest 4.1 現況對齊)
 
 ---
 
@@ -11,42 +11,36 @@
 
 在升級任何依賴前，先問自己：
 
-1. **"這是個真問題還是臆想出來的？"**  
+1. **"這是個真問題還是臆想出來的？"**
    → Patch 版本有安全修復嗎？Major 版本有破壞性變更嗎？
 
-2. **"有更簡單的方法嗎？"**  
+2. **"有更簡單的方法嗎？"**
    → 能用 `pnpm up --latest` 一次升級嗎？還是需要分批測試？
 
-3. **"會破壞什麼嗎？"**  
+3. **"會破壞什麼嗎？"**
    → 升級後 localStorage、API、測試會受影響嗎？
 
 ---
 
-## 1. 現況快照（2025-10-26）
+## 1. 現況快照（2026-04-28）
 
-### 1.1 Patch 安全升級 (P0 - 立即執行)
+### 1.1 已對齊基線
 
-| 套件                          | 目前版本 | 最新版本   | 類別 | 優先級 | 破壞性 | 備註            |
-| ----------------------------- | -------- | ---------- | ---- | ------ | ------ | --------------- |
-| `vite`                        | 7.1.9    | **7.1.12** | dev  | P0     | ✅ 否  | patch，安全升級 |
-| `@playwright/test`            | 1.56.0   | **1.56.1** | dev  | P0     | ✅ 否  | patch，安全升級 |
-| `typescript-eslint`           | 8.46.1   | **8.46.2** | dev  | P0     | ✅ 否  | patch，安全升級 |
-| `eslint-plugin-react-refresh` | 0.4.23   | **0.4.24** | dev  | P0     | ✅ 否  | patch，安全升級 |
+| 套件                   | 目前版本 | 最新確認 | 類別 | 狀態      | 備註                          |
+| ---------------------- | -------- | -------- | ---- | --------- | ----------------------------- |
+| `vite`                 | 8.0.10   | 8.0.10   | dev  | ✅ 已對齊 | 直接依賴與 override 同步      |
+| `@vitejs/plugin-react` | 6.0.1    | 6.0.1    | dev  | ✅ 已對齊 | 取代 `plugin-react-swc`       |
+| `vitest`               | 4.1.5    | 4.1.5    | dev  | ✅ 已對齊 | 與 coverage provider 同步     |
+| `@vitest/coverage-v8`  | 4.1.5    | 4.1.5    | dev  | ✅ 已對齊 | 避免 Vitest peer mismatch     |
+| `@playwright/test`     | 1.57.0   | 1.59.1   | dev  | 🔄 待評估 | 需另開 PR 跑 E2E / screenshot |
+| `typescript`           | 5.6/5.9  | 6.0.3    | dev  | 🔄 待評估 | TS 6 major，需獨立驗證        |
 
 **Context7 參考**：
 
-- [Vite 7 Release Notes](https://vitejs.dev/) [ref: #3]
+- [Vite v7 → v8 Migration](https://vite.dev/guide/migration.html) [官方]
 - [Playwright Best Practices](https://playwright.dev/docs/best-practices) [官方]
 
-### 1.2 Minor 版本升級 (P1 - 低風險)
-
-| 套件                       | 目前版本 | 最新版本   | 類別 | 優先級 | 破壞性 | 備註            |
-| -------------------------- | -------- | ---------- | ---- | ------ | ------ | --------------- |
-| `@eslint/js`               | 9.37.0   | **9.38.0** | dev  | P1     | ✅ 否  | minor，安全升級 |
-| `@vitejs/plugin-react-swc` | 4.1.0    | **4.2.0**  | dev  | P1     | ✅ 否  | minor，安全升級 |
-| `eslint`                   | 9.37.0   | **9.38.0** | dev  | P1     | ✅ 否  | minor，安全升級 |
-
-### 1.3 Major 版本升級 (P1/P2 - 需驗證)
+### 1.2 Major 版本升級 (P1/P2 - 需驗證)
 
 | 套件                              | 目前版本 | 最新版本   | 類別 | 優先級 | 破壞性 | 備註                    |
 | --------------------------------- | -------- | ---------- | ---- | ------ | ------ | ----------------------- |
@@ -96,10 +90,10 @@ pnpm lint
 - 若遇到新規則破壞，可暫時在 `.eslintrc.cjs` 內關閉並記錄 TODO。
 - **回滾**：`git revert` 或將版本鎖回 `^8`，在 `package.json` 記錄阻擋原因。
 
-### Step C — Vite 7 / Vitest 3（2d）
+### Step C — Vite 8 / Vitest 4（2d）
 
 ```bash
-pnpm --filter @app/ratewise up vite@latest vitest@latest @vitejs/plugin-react-swc@latest
+pnpm -r up vite@latest vitest@latest @vitest/coverage-v8@latest @vitejs/plugin-react@latest
 pnpm --filter @app/ratewise test:coverage
 pnpm --filter @app/ratewise build
 ```
@@ -107,7 +101,7 @@ pnpm --filter @app/ratewise build
 重點檢查：
 
 - `vite.config.ts` 是否需要調整 `defineConfig` 型別。
-- `vitest.config.ts` 是否需加入 `test.environmentOptions` 以相容 Vite 7。
+- `vite.config.ts` 不得保留 `@vitejs/plugin-react-swc`、`optimizeDeps.esbuildOptions` 或無效的 Rollup output key。
 - 若 `jsdom` 需升級到 27，記得同步調整。
 
 **回滾**：`git revert`；若 build 失敗，立即將版本鎖回 5.x，並在 `DEPENDENCY_UPGRADE_PLAN.md` 標註阻擋。
@@ -137,7 +131,7 @@ pnpm --filter @app/ratewise build
 - 若升級造成不可接受的破壞，立即建立 issue 記錄阻擋項並將版本鎖回原值：
 
 ```bash
-pnpm up vite@5.4.20 @vitejs/plugin-react-swc@3.11.0 --filter @app/ratewise
+pnpm up vite@8.0.10 @vitejs/plugin-react@6.0.1 --filter @app/ratewise
 ```
 
 ---

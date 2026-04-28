@@ -23,8 +23,8 @@
 ## 📦 技術棧
 
 - **框架**: React 19 + TypeScript
-- **建置**: Vite 7 + vite-react-ssg
-- **樣式**: Tailwind CSS 4
+- **建置**: Vite 8.0.10 + vite-react-ssg
+- **樣式**: Tailwind CSS 3.4
 - **測試**: Vitest + Playwright
 - **CI/CD**: GitHub Actions
 
@@ -74,4 +74,4 @@ GPL-3.0 © [haotool](https://app.haotool.org/)
 
 ---
 
-**最後更新**: 2025-12-24
+**最後更新**: 2026-04-28

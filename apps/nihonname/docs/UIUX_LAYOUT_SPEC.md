@@ -1,10 +1,10 @@
 # NihonName UI/UX 排版規格文檔
 
-> **版本**: 1.1.0  
-> **建立時間**: 2025-12-04  
-> **最後更新**: 2025-12-04  
-> **作者**: UI/UX 設計師兼前端工程師  
-> **技術棧**: React 19 + Tailwind CSS 3 + Vite 7  
+> **版本**: 1.1.0
+> **建立時間**: 2025-12-04
+> **最後更新**: 2025-12-04
+> **作者**: UI/UX 設計師兼前端工程師
+> **技術棧**: React 19 + Tailwind CSS 3 + Vite 8
 > **狀態**: ✅ 已實作
 
 ---
@@ -297,7 +297,7 @@
 
 ### 6.1 Main Container 修改
 
-**檔案**: `src/pages/Home.tsx`  
+**檔案**: `src/pages/Home.tsx`
 **位置**: Line 767-772
 
 ```tsx
@@ -318,7 +318,7 @@
 
 ### 6.2 Header 修改
 
-**檔案**: `src/pages/Home.tsx`  
+**檔案**: `src/pages/Home.tsx`
 **位置**: Line 775-780
 
 ```tsx
@@ -343,7 +343,7 @@
 
 ### 6.3 Footer 修改
 
-**檔案**: `src/pages/Home.tsx`  
+**檔案**: `src/pages/Home.tsx`
 **位置**: Line 1138-1140
 
 ```tsx

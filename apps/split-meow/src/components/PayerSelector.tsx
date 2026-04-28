@@ -9,7 +9,7 @@ export function PayerSelector() {
   const { members, payerId, setPayerId } = useStore();
   const [isOpen, setIsOpen] = useState(false);
 
-  const payer = members.find((m) => m.id === payerId) || members[0];
+  const payer = members.find((m) => m.id === payerId) ?? members[0];
 
   return (
     <div className="relative inline-block">

@@ -453,7 +453,7 @@ ENTER_ANIMATION (進入動畫，~200ms)
 pnpm build
     │
     ▼
-Vite 7 + vite-react-ssg
+Vite 8 + vite-react-ssg
     │
     ├── 1. 讀取 seo-paths.config.mjs (SSOT)
     │      ► 20 條 SEO 路徑
@@ -536,7 +536,7 @@ GitHub Actions
     │   ├── lint (ESLint 9)
     │   ├── typecheck (TypeScript 5.6)
     │   ├── test (Vitest 4 + Playwright)
-    │   └── build (Vite 7 SSG)
+    │   └── build (Vite 8 SSG)
     │         │
     │         ▼
     │   build artifacts
@@ -564,7 +564,7 @@ GitHub Actions
 | ------ | -------------------------------------- | ------------------------ | --------- |
 | M0     | 清理與基礎強化                         | 刪除死代碼、提升門檻     | ✅ 完成   |
 | M1     | 建立 logger + Request ID 追蹤          | 結構化日誌               | ✅ 完成   |
-| M2     | 依賴升級（Vite 7, Vitest 4, React 19） | 安全升級完成             | ✅ 完成   |
+| M2     | 依賴升級（Vite 8, Vitest 4, React 19） | 安全升級完成             | ✅ 完成   |
 | M3     | 測試強化與 BDD 流程                    | 覆蓋率 ≥80%，E2E 穩定    | ✅ 完成   |
 | M4     | 架構演進：多頁 SSG + 落地頁            | 20 頁 SSG 預渲染         | ✅ 完成   |
 | M5     | PWA 離線優化（Safari 雙重儲存）        | IndexedDB + localStorage | ✅ 完成   |

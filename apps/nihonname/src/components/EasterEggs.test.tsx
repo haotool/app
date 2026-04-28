@@ -1,5 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+const particleMocks = vi.hoisted(() => ({
+  confetti: vi.fn(),
+  fireworks: vi.fn(),
+}));
+
+vi.mock('@tsparticles/fireworks', () => ({
+  fireworks: particleMocks.fireworks,
+}));
+
+vi.mock('@tsparticles/confetti', () => ({
+  confetti: particleMocks.confetti,
+}));
+
 import { EasterEggs } from './EasterEggs';
 
 /**
@@ -17,6 +31,13 @@ describe('EasterEggs', () => {
     // Mock console methods to avoid noise in test output
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    particleMocks.fireworks.mockReset();
+    particleMocks.fireworks.mockResolvedValue({
+      stop: vi.fn(),
+    });
+    particleMocks.confetti.mockReset();
+    particleMocks.confetti.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -72,20 +93,7 @@ describe('EasterEggs', () => {
   });
 
   describe('Fireworks 組件清理邏輯測試', () => {
-    // Mock dynamic imports
     beforeEach(() => {
-      // Mock tsparticles/fireworks
-      vi.mock('@tsparticles/fireworks', () => ({
-        fireworks: vi.fn().mockResolvedValue({
-          stop: vi.fn(),
-        }),
-      }));
-
-      // Mock tsparticles/confetti
-      vi.mock('@tsparticles/confetti', () => ({
-        confetti: vi.fn().mockResolvedValue(undefined),
-      }));
-
       // Mock AudioContext
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (globalThis as any).AudioContext = vi.fn().mockImplementation(() => ({
@@ -124,10 +132,7 @@ describe('EasterEggs', () => {
     });
 
     it('should handle fireworks load failure gracefully', async () => {
-      // Mock import failure
-      vi.mock('@tsparticles/fireworks', () => ({
-        fireworks: vi.fn().mockRejectedValue(new Error('Load failed')),
-      }));
+      particleMocks.fireworks.mockRejectedValueOnce(new Error('Load failed'));
 
       const { container } = render(<EasterEggs activeEgg="fireworks" />);
 

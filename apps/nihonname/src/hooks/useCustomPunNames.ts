@@ -15,7 +15,7 @@ const loadCustomPunNames = (): CustomPunName[] => {
   if (typeof window === 'undefined') return [];
 
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = window.localStorage.getItem(STORAGE_KEY);
     if (!stored) return [];
 
     const parsed: unknown = JSON.parse(stored);
@@ -43,7 +43,7 @@ const saveCustomPunNames = (names: CustomPunName[]): void => {
   if (typeof window === 'undefined') return;
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
   } catch {
     // 忽略儲存錯誤 (例如 localStorage 已滿)
   }

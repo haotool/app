@@ -21,7 +21,7 @@
 
 ## 技術
 
-- React 19 + TypeScript + Vite 7
+- React 19 + TypeScript + Vite 8
 - Zustand 狀態管理
 - boring-avatars 頭像生成
 - i18next 國際化

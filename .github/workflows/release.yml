@@ -107,7 +107,8 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm changeset:version
-          commit: 'chore: Version Packages'
+          commit: 'chore(release): 更新版本套件'
+          title: 'chore(release): 更新版本套件'
         env:
           # NOTE: Requires org + repo Settings → Actions → General → Workflow permissions
           #       → "Allow GitHub Actions to create and approve pull requests" enabled
@@ -117,8 +118,9 @@ jobs:
       - name: Report Release PR status
         if: steps.changesets.outcome == 'failure'
         run: |
-          echo "::warning::Release PR creation failed. This is typically caused by org-level restrictions."
-          echo "::warning::Ask an org admin to enable: Organization Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests"
+          echo "::error::Release PR creation failed. Check the changesets/action logs for commitlint, branch, or permission failures."
+          echo "::error::If the error is HTTP 403, ask an org admin to enable: Organization Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests"
+          exit 1
 
       - name: Configure git for tagging
         if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'

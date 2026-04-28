@@ -6,7 +6,7 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-7.2-646cff?logo=vite)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.0-646cff?logo=vite)](https://vite.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-green)](./LICENSE)
 
@@ -43,8 +43,8 @@
 
 ### 環境需求
 
-- Node.js 20+
-- pnpm 9+
+- Node.js 24
+- pnpm 9.10.0
 
 ### 本地開發
 
@@ -142,7 +142,7 @@ pnpm lighthouse
 | 類別         | 技術                      |
 | ------------ | ------------------------- |
 | **框架**     | React 19 + TypeScript 5.9 |
-| **建置工具** | Vite 7.2 + esbuild        |
+| **建置工具** | Vite 8 + esbuild          |
 | **樣式**     | Tailwind CSS 3.4          |
 | **動畫**     | Motion (Framer Motion)    |
 | **SSG**      | vite-react-ssg            |

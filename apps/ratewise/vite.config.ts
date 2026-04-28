@@ -1,5 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
 import { visualizer } from 'rollup-plugin-visualizer';
@@ -335,13 +335,67 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'es2020',
       sourcemap: 'hidden',
-      rollupOptions: {
+      rolldownOptions: {
         output: {
+          minify: {
+            compress: {
+              dropConsole: true,
+              dropDebugger: true,
+              unused: true,
+            },
+            mangle: {
+              keepNames: {
+                class: true,
+                function: true,
+              },
+            },
+            codegen: {
+              removeWhitespace: true,
+            },
+          },
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
 
-            // React 核心生態系統（基礎依賴）- 包含 scheduler 避免模組分裂
-            if (id.includes('react/') || id.includes('react-dom/') || id.includes('scheduler/')) {
+            // Observability（錯誤追蹤）
+            if (id.includes('@sentry/core')) {
+              return 'vendor-sentry-core';
+            }
+            if (id.includes('@sentry/browser') || id.includes('@sentry-internal/browser-utils')) {
+              return 'vendor-sentry-browser';
+            }
+            if (id.includes('@sentry/react')) {
+              return 'vendor-sentry-react';
+            }
+            if (
+              id.includes('@sentry-internal/replay') ||
+              id.includes('@sentry-internal/feedback') ||
+              id.includes('@sentry-internal/replay-canvas')
+            ) {
+              return 'vendor-sentry-replay';
+            }
+
+            // i18n（語系偵測與翻譯 runtime）
+            if (id.includes('i18next') || id.includes('react-i18next')) {
+              return 'vendor-i18n';
+            }
+
+            // Interaction / state / icons（中型互動依賴）
+            if (id.includes('@hello-pangea/dnd')) {
+              return 'vendor-dnd';
+            }
+            if (id.includes('zustand') || id.includes('use-sync-external-store')) {
+              return 'vendor-state';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+
+            // React 核心生態系統（基礎依賴）- 精確比對套件路徑，避免 lucide-react / @sentry/react 誤分。
+            if (
+              id.includes('/node_modules/react/') ||
+              id.includes('/node_modules/react-dom/') ||
+              id.includes('/node_modules/scheduler/')
+            ) {
               return 'vendor-react';
             }
 
@@ -368,29 +422,11 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: 'assets/[name]-[hash].js',
           entryFileNames: 'assets/[name]-[hash].js',
           assetFileNames: 'assets/[name]-[hash].[ext]',
-          sourcemapFileNames: 'assets/[name]-[hash].js.map',
         },
       },
       chunkSizeWarningLimit: 500,
       cssCodeSplit: true,
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: true, // 生產環境移除 console
-          drop_debugger: true,
-          pure_funcs: ['console.log', 'console.debug', 'console.info', 'console.warn'],
-          passes: 3, // 增加壓縮次數以獲得更好的結果
-          dead_code: true,
-          unused: true,
-        },
-        format: {
-          comments: false, // 強制移除所有註解
-        },
-        mangle: {
-          safari10: true,
-        },
-        sourceMap: true,
-      },
+      minify: 'oxc',
     },
     // SSR 設定 - CommonJS 模組打包（ESM 相容）
     ssr: {
@@ -403,7 +439,11 @@ export default defineConfig(({ mode }) => {
     // 依賴預打包（CommonJS → ESM）
     optimizeDeps: {
       include: ['workbox-window'],
-      esbuildOptions: { mainFields: ['module', 'main'] },
+      rolldownOptions: {
+        resolve: {
+          mainFields: ['module', 'main'],
+        },
+      },
     },
     // SSG 預渲染（路徑從 SSOT 導入）
     ssgOptions: {
