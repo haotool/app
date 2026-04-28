@@ -144,6 +144,8 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 - secret scan 使用固定版本 Gitleaks CLI 並驗證 release checksum；組織 repo 不使用需要 license secret 的 `gitleaks/gitleaks-action@v2`
 - 若 main 累積 changeset 但版本未變，先查 `gh run view <RUN_ID> --log` 是否卡在 `Create Release Pull Request`
 - README 同步規則：公開指令、workflow、部署、版本流程或使用者可見行為變更時，必須更新 root `README.md` 與受影響 app README
+- 連續合併一般 PR 與 release PR 時，release PR 前先確認較早 main SHA 的 Zeabur production deployment 已完成；若舊 SHA 在 release SHA 之後 active，會讓正式站版本回退
+- `Wait for RateWise production deployment` 失敗時，先查 GitHub deployments 的 active SHA；若 release SHA 被較舊 SHA 覆蓋，以最小 PR 重新觸發最新 main 部署，再重跑 `app-version` 與 live precache 驗證
 
 **依賴安全管理**（Dependabot 警告處理）：
 
@@ -275,6 +277,8 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **Release workflow 卡在 Create release tags**：取消卡住 run 後檢查是否在 CI 內呼叫 `pnpm changeset tag`，或 tag push 是否觸發 `.husky/pre-push`。修法是移除互動式 changeset tag 呼叫，改由 `scripts/get-release-metadata.mjs --changed` 顯式輸出 package tag 與 app tag，先驗證 `git check-ref-format`，再用完整 refspec 一次推送全部 tag；CI tag push 必須設定 `HUSKY=0` 並為步驟設定 timeout。
 
+**Release workflow 版本已 tag 但正式站未切版**：先用 `gh api repos/haotool/app/deployments` 查 Zeabur production deployment 的 SHA 與 status。若 release SHA 已成功但較舊 SHA 隨後 active，表示 deployment race；以最小 PR 重新觸發最新 main 部署，不要手動改版本號或重跑 `changeset:version`。
+
 **Cloudflare 邊緣同步**：release 需確認 `security-headers` worker 也已部署；`wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`；secret 缺失時明確 `skip` 並回報，不可假設 edge 已同步。完整 SOP 見 `AGENTS.md` § security-headers Worker 部署 SOP。
 
 ## Cloudflare SEO 直通實踐（CF SEO Straight-Path Patterns）
@@ -328,6 +332,7 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 | 日期       | 版本      | 變更摘要                                                                                                                     |
 | ---------- | --------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-28 | v5.4      | 補充 Zeabur deployment race 診斷與修復規則，避免 release SHA 被較舊 main SHA 覆蓋                                            |
 | 2026-04-28 | v5.3      | 修正 release PR 建立失敗被 workflow success 掩蓋的診斷規則，補充 README 同步與 changeset 消化檢查                            |
 | 2026-04-24 | v5.2      | 新增 GitHub Actions Node 20 淘汰過渡規則：官方 action 優先升至 Node 24 major，僅對仍停留 Node 20 的 job 保留 force flag      |
 | 2026-04-24 | v5.1      | 補充排程資料 workflow 的 post-push refresh 容錯規範：GitHub 瞬時 5xx 需重試、保留 warning，禁止將已成功的 data push 誤判失敗 |
@@ -342,4 +347,4 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 ---
 
 **最後更新**: 2026-04-28T01:51:43+0800
-**版本**: v5.3（修正 release PR commitlint 與 README 同步規則）
+**版本**: v5.4（新增 Zeabur deployment race 診斷與修復規則）

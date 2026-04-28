@@ -182,6 +182,11 @@ release 清單。禁止手動修改版本號、手動編輯 CHANGELOG，或在 C
 `pnpm changeset tag` 建 tag；CI 內部 tag push 會以 `HUSKY=0` 單次推送，避免重複觸發
 pre-push hook。
 
+正式站部署由 Zeabur production deployment 接 GitHub main。合併一般 PR 後若會再合併
+changesets release PR，需先確認較早的 production deployment 已完成，避免舊 SHA 在 release
+SHA 之後才變成 active，造成正式站版本回退。Release 後以
+`app-version`、GitHub deployment status 與 live precache 驗證作為完成證據。
+
 ### 專案結構
 
 ```
@@ -288,6 +293,10 @@ pnpm dev
 Every PR must include a changeset. GitHub Actions creates the release PR with
 `pnpm changeset:version`; release tags and GitHub releases are generated from
 `scripts/get-release-metadata.mjs --changed`.
+
+Production is deployed by Zeabur from GitHub main. Before merging a release PR
+right after another main PR, confirm the earlier production deployment has
+finished so an older SHA cannot become active after the release SHA.
 
 ### License
 
