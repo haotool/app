@@ -204,12 +204,20 @@ const resources = {
   },
 };
 
+const canUseBrowserLanguageStorage =
+  typeof window !== 'undefined' && import.meta.env.MODE !== 'test';
+
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
     fallbackLng: 'zh-TW',
+    detection: {
+      order: canUseBrowserLanguageStorage ? ['localStorage', 'navigator'] : ['navigator'],
+      caches: canUseBrowserLanguageStorage ? ['localStorage'] : [],
+      lookupLocalStorage: 'park-keeper-language',
+    },
     interpolation: { escapeValue: false },
   });
 

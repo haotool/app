@@ -51,7 +51,7 @@ RateWise Monorepo -- Claude / Codex / AI 助手執行手冊（Enterprise SOP / A
 ### Stack（Monorepo 現況）
 
 - **Package manager**: `pnpm` workspace（`apps/*`）
-- **Frontend**: React 19 + TypeScript + Vite 7
+- **Frontend**: React 19 + TypeScript + Vite 8.0.10
 - **Routing/SSG**: `react-router-dom` + `vite-react-ssg`（部分 app）
 - **Testing**: Vitest + Testing Library + Playwright（部分 app）
 - **PWA**: `vite-plugin-pwa` + Workbox（`ratewise` 最完整）
@@ -119,6 +119,7 @@ pnpm format:fix              # prettier --write .
 
 - bump 類型選正確（見上表）；描述使用者**看得到**的影響，禁止描述實作細節
 - CHANGELOG 由 changeset 自動生成，禁止手動貼入 git log
+- commit 數量不等於升版次數；`.changeset/*.md` 是 release intent，`pnpm changeset:version` 才會消化成版本與 CHANGELOG
 
 **版本發布流程**（`update-release-metadata.js` 已整合所有 SSOT）：
 
@@ -130,6 +131,13 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 ```
 
 禁止：手動改版號、單獨跑 prebuild scripts、直接改 CHANGELOG 跳過 changeset。
+
+**Release PR 自動化控制**：
+
+- `changesets/action` 的 release commit 必須使用 commitlint 豁免格式：`chore(release): 更新版本套件`
+- release workflow 若建立 release PR 失敗，必須讓 workflow 失敗，不得用 `continue-on-error` 將失敗偽裝為 success
+- 若 main 累積 changeset 但版本未變，先查 `gh run view <RUN_ID> --log` 是否卡在 `Create Release Pull Request`
+- README 同步規則：公開指令、workflow、部署、版本流程或使用者可見行為變更時，必須更新 root `README.md` 與受影響 app README
 
 **依賴安全管理**（Dependabot 警告處理）：
 
@@ -257,6 +265,8 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **排程資料 workflow 在 post-push refresh 報 GitHub 500**：若 `Commit and push changes` 已成功、失敗發生在 `Refresh ... from remote data branch`，視為 GitHub 瞬時錯誤。修法：post-push refresh 使用 3 次重試並設為 `continue-on-error: true`；summary warning 必須看 `steps.<id>.outcome == 'failure'`，不得用 `conclusion`，否則會把失敗誤判成 success。
 
+**Release workflow 顯示 success 但沒有語意升版**：先查 `.changeset/*.md` 是否仍存在，再查 release run log。若 `Create Release Pull Request` 在 `git commit` 階段被 commitlint 擋下，將 `changesets/action` 的 `commit` / `title` 改為 `chore(release): 更新版本套件`，且失敗回報步驟必須 `exit 1`，避免 release PR 未建立卻顯示綠燈。
+
 **Cloudflare 邊緣同步**：release 需確認 `security-headers` worker 也已部署；`wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`；secret 缺失時明確 `skip` 並回報，不可假設 edge 已同步。完整 SOP 見 `AGENTS.md` § security-headers Worker 部署 SOP。
 
 ## Cloudflare SEO 直通實踐（CF SEO Straight-Path Patterns）
@@ -310,6 +320,7 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 | 日期       | 版本      | 變更摘要                                                                                                                     |
 | ---------- | --------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-28 | v5.3      | 修正 release PR 建立失敗被 workflow success 掩蓋的診斷規則，補充 README 同步與 changeset 消化檢查                            |
 | 2026-04-24 | v5.2      | 新增 GitHub Actions Node 20 淘汰過渡規則：官方 action 優先升至 Node 24 major，僅對仍停留 Node 20 的 job 保留 force flag      |
 | 2026-04-24 | v5.1      | 補充排程資料 workflow 的 post-push refresh 容錯規範：GitHub 瞬時 5xx 需重試、保留 warning，禁止將已成功的 data push 誤判失敗 |
 | 2026-04-11 | v5.0      | SemVer 決策規則重寫：加入「使用者可感知」判斷標準，補充常見誤判速查（JSON-LD/schema/FAQ/E-E-A-T 均為 patch）                 |
@@ -322,5 +333,5 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 ---
 
-**最後更新**: 2026-04-24T16:41:53+0800
-**版本**: v5.2（新增 GitHub Actions Node 20 淘汰過渡規則）
+**最後更新**: 2026-04-28T01:51:43+0800
+**版本**: v5.3（修正 release PR commitlint 與 README 同步規則）

@@ -127,11 +127,11 @@ interface MemoryStorage extends Storage {
   _store: Record<string, string>;
 }
 
+const storageMocks: Partial<Record<StorageTarget, MemoryStorage>> = {};
+
 const ensureStorage = (target: StorageTarget): Storage => {
-  const existing = (window as unknown as Record<string, unknown>)[target];
-  if (existing && typeof (existing as Storage).clear === 'function') {
-    return existing as Storage;
-  }
+  const existing = storageMocks[target];
+  if (existing) return existing;
 
   // Minimal in-memory implementation compatible with Web Storage API
   let store: Record<string, string> = {};
@@ -161,6 +161,7 @@ const ensureStorage = (target: StorageTarget): Storage => {
     enumerable: true,
   });
 
+  storageMocks[target] = memoryStorage;
   return memoryStorage;
 };
 

@@ -3,6 +3,7 @@
  * [context7:/daydreamer-riri/vite-react-ssg:2025-12-29]
  * [fix:2026-01-04] 將 PageLoader 移至 components/ 以符合 react-refresh 規則
  */
+/* eslint-disable react-refresh/only-export-components -- 路由設定需匯出 lazy route config 給 vite-react-ssg。 */
 import type { RouteRecord } from 'vite-react-ssg';
 import { Suspense, lazy } from 'react';
 import Layout from './components/Layout';

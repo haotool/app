@@ -32,9 +32,9 @@
 
 ### SEO 與優化
 
-- **[SEO_GUIDE.md](SEO_GUIDE.md)** - SEO 最佳實踐指南
-- **[SEARCH_CONSOLE_GUIDE.md](SEARCH_CONSOLE_GUIDE.md)** - Search Console 配置指南
-- **[SEO_SUBMISSION_GUIDE.md](SEO_SUBMISSION_GUIDE.md)** - SEO 提交指南
+- **[SEO_MASTER_SSOT.md](SEO_MASTER_SSOT.md)** - SEO 權威策略、AI 搜尋與公開 surface SSOT
+- **[SEO Production Validation](../.github/workflows/seo-production.yml)** - 正式站 SEO / resource health check
+- **[SEO Audit Workflow](../.github/workflows/seo-audit.yml)** - SEO 標準稽核 workflow
 
 ### 開發參考 (dev/)
 
@@ -42,7 +42,7 @@
 - **[CHECKLISTS.md](dev/CHECKLISTS.md)** - 品質檢查清單
 - **[CITATIONS.md](dev/CITATIONS.md)** - 權威來源清單與技術引用
 - **[DEPENDENCY_UPGRADE_PLAN.md](dev/DEPENDENCY_UPGRADE_PLAN.md)** - 依賴升級策略
-- **[AI_SEARCH_OPTIMIZATION_SPEC.md](dev/AI_SEARCH_OPTIMIZATION_SPEC.md)** - AI 搜尋優化規格
+- **[SEO_MASTER_SSOT.md](SEO_MASTER_SSOT.md)** - AI 搜尋與 SEO 策略 SSOT
 - **[002_development_reward_penalty_log.md](dev/002_development_reward_penalty_log.md)** - 開發獎懲記錄
 
 ## 📋 文檔類型說明
@@ -102,6 +102,6 @@
 
 ---
 
-**維護者**: DevOps Team  
-**最後更新**: 2025-12-24T22:42:00+08:00  
-**版本**: 1.1.0
+**維護者**: DevOps Team
+**最後更新**: 2026-04-28T01:51:43+08:00
+**版本**: 1.2.0

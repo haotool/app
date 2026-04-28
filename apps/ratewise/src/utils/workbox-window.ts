@@ -1,10 +1,10 @@
 /**
  * ESM Wrapper for workbox-window
  *
- * [SSR-fix:2025-11-26] Bridge CommonJS/ESM compatibility issue in Vite 7
+ * [SSR-fix:2025-11-26] Bridge CommonJS/ESM compatibility issue in Vite 8
  *
  * Problem:
- * - Dev mode SSR: Vite 7 module runner cannot handle CommonJS named exports
+ * - Dev mode SSR: Vite 8 module runner cannot handle CommonJS named exports
  * - Production build: Rollup requires proper ESM named exports
  *
  * Solution:

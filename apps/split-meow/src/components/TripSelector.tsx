@@ -29,7 +29,7 @@ export function TripSelector() {
         className="w-full flex items-center gap-1 px-3 py-2 bg-surface-container-low hover:bg-surface-container rounded-full transition-colors shadow-ambient"
       >
         <span className="font-medium text-sm truncate min-w-0 flex-1 text-left">
-          {currentTrip?.name || t('trip.placeholder')}
+          {currentTrip?.name ?? t('trip.placeholder')}
         </span>
         <span className="material-symbols-outlined text-sm text-on-surface-variant shrink-0">
           {isOpen ? 'expand_less' : 'expand_more'}

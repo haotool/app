@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-// ESM 封裝層：react-helmet-async 在 Vite 7 SSR 下需經相容處理
+// ESM 封裝層：react-helmet-async 在 Vite 8 SSR 下需經相容處理
 import { HelmetProvider } from '../utils/react-helmet-async';
 import { ErrorBoundary } from './ErrorBoundary';
 import { SkeletonLoader } from './SkeletonLoader';

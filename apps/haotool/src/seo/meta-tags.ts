@@ -24,7 +24,7 @@ const ROUTE_METADATA: Record<
   '/': {
     title: 'haotool.org — 阿璋的全端作品集 | React TypeScript 高品質數位工具',
     description:
-      '「haotool」取自「好工具」的諧音。阿璋以 React 19、TypeScript、Vite 7 打造高品質數位工具：HaoRate 匯率計算機、日本名字產生器、停車好工具 ParkKeeper、地震知識小學堂。融合 3D 互動與動態設計，全部開源、免費、Lighthouse 90+ 分。',
+      '「haotool」取自「好工具」的諧音。阿璋以 React 19、TypeScript、Vite 8 打造高品質數位工具：HaoRate 匯率計算機、日本名字產生器、停車好工具 ParkKeeper、地震知識小學堂。融合 3D 互動與動態設計，全部開源、免費、Lighthouse 90+ 分。',
     type: 'website',
     keywords: [
       '阿璋',

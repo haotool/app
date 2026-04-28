@@ -25,7 +25,7 @@ const ROUTE_METADATA: Record<
   '/': {
     title: 'haotool.org — 阿璋的全端作品集',
     description:
-      '「haotool」取自「好工具」的諧音。阿璋以 React 19、TypeScript、Vite 7 打造高品質數位工具，融合 3D 互動與動態設計，全部開源、免費。',
+      '「haotool」取自「好工具」的諧音。阿璋以 React 19、TypeScript、Vite 8 打造高品質數位工具，融合 3D 互動與動態設計，全部開源、免費。',
   },
   '/projects/': {
     title: '作品集 — haotool.org',
@@ -153,7 +153,7 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLd[] {
           name: 'haotool 使用什麼技術？',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: '主要技術棧：React 19、TypeScript、Vite 7、Tailwind CSS、Framer Motion、Three.js。採用 SSG 預渲染、PWA 離線支援、Workbox 快取策略，追求 Lighthouse 90+ 分的效能表現。',
+            text: '主要技術棧：React 19、TypeScript、Vite 8、Tailwind CSS、Framer Motion、Three.js。採用 SSG 預渲染、PWA 離線支援、Workbox 快取策略，追求 Lighthouse 90+ 分的效能表現。',
           },
         },
         {

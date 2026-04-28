@@ -361,6 +361,9 @@ const resources = {
   },
 };
 
+const canUseBrowserLanguageStorage =
+  typeof window !== 'undefined' && import.meta.env.MODE !== 'test';
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -369,8 +372,8 @@ i18n
     fallbackLng: 'zh-TW',
     supportedLngs: ['zh-TW', 'en', 'ko', 'ja'],
     detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
+      order: canUseBrowserLanguageStorage ? ['localStorage', 'navigator'] : ['navigator'],
+      caches: canUseBrowserLanguageStorage ? ['localStorage'] : [],
       lookupLocalStorage: 'split-meow-language',
     },
     interpolation: { escapeValue: false },

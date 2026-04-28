@@ -1,5 +1,5 @@
 import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath } from 'node:url';
@@ -12,7 +12,7 @@ const _require = createRequire(import.meta.url);
 const { version: appVersion } = _require('./package.json') as { version: string };
 const buildTime = new Date().toISOString();
 
-// [fix] Vite 7 dev server plugin container does not invoke resolveId hooks that use the new
+// [fix] Vite 8 dev server plugin container does not invoke resolveId hooks that use the new
 // @rolldown/pluginutils filter syntax. vite-plugin-pwa only strips the filter when
 // devOptions.enabled=true, so virtual:pwa-register/* never resolves in dev mode.
 // Solution: intercept with a traditional (no-filter) resolveId hook BEFORE vite-plugin-pwa.
