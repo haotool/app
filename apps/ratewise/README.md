@@ -68,6 +68,13 @@ src/
 | ESLint     | 0 警告      |
 | Lighthouse | 95+ 全類別  |
 
+## 🚢 發版驗證
+
+RateWise 正式站由 Zeabur production deployment 發布，Release 完成後需確認
+`https://app.haotool.org/ratewise/` 的 `app-version` 已切到目標版本，並再執行 live
+precache 驗證。若 GitHub Release 已建立但正式站仍回舊版，先查 GitHub deployments
+的 active SHA，再以 app 範圍 PR 重新觸發最新 main 部署。
+
 ## 📄 授權
 
 GPL-3.0 © [haotool](https://app.haotool.org/)
