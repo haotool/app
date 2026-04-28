@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.22.3
+
+### Patch Changes
+
+- 1c8bb45: 修正 Release workflow 的 live precache 驗證 base path，避免誤抓 root Service Worker。
+
 ## 2.22.2
 
 ### Patch Changes
