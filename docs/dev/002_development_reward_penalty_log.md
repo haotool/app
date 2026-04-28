@@ -1,8 +1,58 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-28T18:31:19+08:00
-> **當前總分**: 1225（初始分: 100）
+> **最後更新**: 2026-04-28T19:10:51+08:00
+> **當前總分**: 1226（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ratewise-225-zeabur-deployment-race
+date: 2026-04-28
+title: 修正 RateWise 2.22.5 發版後 Zeabur production deployment race
+score: +1
+type: fix
+content_type: incident
+scope: release, deployment, zeabur, ratewise
+topics: [release, zeabur, deployment-race, production-validation, ratewise]
+keywords:
+[RateWise 2.22.5, Zeabur, production deployment, app-version, release workflow]
+aliases: [RateWise 2.22.5 deployment race]
+related_entries: [dependabot-moderate-fast-xml-parser]
+summary: Release PR #299 合併後已建立 `@app/ratewise@2.22.5` tag 與 GitHub Release，但正式站 `/ratewise/` 仍回 `app-version=2.22.4`。GitHub deployments 顯示 release SHA `963fba3d` 已由 Zeabur production success，接著較舊的安全修復 SHA `dad91cda` 又被標成 production success / active，造成正式站版本回退。本次以最小文件 PR 重新觸發最新 main 部署，並補齊 README / AGENTS / CLAUDE 對 Zeabur deployment race 的治理規則。
+root_cause:
+
+- 一般 PR #298 與 release PR #299 連續合併，Zeabur 對兩個 main SHA 建立 production deployment。
+- 較舊 SHA `dad91cda` 的 deployment 在 release SHA `963fba3d` 之後成為 production active，覆蓋已升版的正式站內容。
+
+impact:
+
+- GitHub tag / release 已完成，但正式站仍停在 `2.22.4`，Release workflow 在 `Wait for RateWise production deployment` 正確失敗。
+- 若未查 deployment SHA，容易誤判為 Cloudflare cache 或 changeset 問題。
+
+actions:
+
+- 使用 GitHub deployments API 查出 Zeabur production deployment active SHA 順序。
+- 更新 README / AGENTS / CLAUDE，要求 release PR 前確認前一個 main deployment 完成，並記錄失敗時以最小 PR 重新觸發最新 main 部署。
+- 本 PR 作為最小 redeploy trigger，讓 Zeabur 重新部署包含 `@app/ratewise@2.22.5` 的最新 main。
+
+prevention:
+
+- 連續合併一般 PR 與 release PR 時，先等待一般 PR 的 production deployment 完成，再合併 release PR。
+- Release workflow 版本已 tag 但正式站未切版時，先查 GitHub deployment active SHA，再判斷是否需要重新觸發最新 main 部署。
+
+verification:
+
+- `gh api repos/haotool/app/deployments`
+- `gh api repos/haotool/app/deployments/<id>/statuses`
+- `curl -s --compressed https://app.haotool.org/ratewise/ ...`（確認失敗時仍為 2.22.4）
+- 本 PR 合併後待驗證：正式站 `app-version=2.22.5`、Release rerun / live precache、main CI。
+
+references:
+
+- README.md
+- AGENTS.md
+- CLAUDE.md
+- docs/dev/002_development_reward_penalty_log.md
 
 ---
 
