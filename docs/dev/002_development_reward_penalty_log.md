@@ -1,8 +1,62 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-28T17:45:08+08:00
-> **當前總分**: 1224（初始分: 100）
+> **最後更新**: 2026-04-28T18:31:19+08:00
+> **當前總分**: 1225（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: dependabot-moderate-fast-xml-parser
+date: 2026-04-28
+title: 修正 fast-xml-parser moderate Dependabot 警告並評估 uuid alert
+score: +1
+type: fix
+content_type: incident
+scope: dependency-security, dependabot, pnpm-overrides
+topics: [dependabot, fast-xml-parser, uuid, security-overrides, lhci]
+keywords:
+[GHSA-gh4j-gqv2-49f6, CVE-2026-41650, fast-xml-parser, GHSA-w5hq-g745-h8pq, uuid]
+aliases: [Dependabot moderate alerts, fast-xml-parser XMLBuilder, uuid buf bounds]
+related_entries: [ci-gitleaks-cli-node24]
+summary: Release 後 GitHub 回報 2 個 open moderate Dependabot alerts。`fast-xml-parser` 由 `unlighthouse -> sitemapper` 帶入，patched 版本為 5.7.0；本次將 pnpm override 從 `>=5.5.7` 提升到 `>=5.7.0` 並更新 lockfile。`uuid` 由 `@lhci/cli@0.15.1` 帶入，最新 `uuid@14` 為 ESM 且會破壞 `@lhci/cli` 的 CommonJS `require('uuid')`；實際使用點只呼叫 `uuid.v4()` 且未傳入 advisory 指出的 `buf` 參數，因此採「不安全強升級，另以 GitHub alert dismissal 記錄未使用 vulnerable code path」策略。
+root_cause:
+
+- 既有 override 只要求 `fast-xml-parser >=5.5.7`，低於 GHSA-gh4j-gqv2-49f6 / CVE-2026-41650 的 patched 版本 5.7.0。
+- `@lhci/cli@0.15.1` 最新版仍依賴 `uuid@^8.3.1`，而 patched `uuid@14` 改為 ESM，直接 override 會破壞 `node-runner.js` 的 `const uuid = require('uuid')`。
+
+impact:
+
+- Dependabot 仍顯示 open moderate alerts，降低 release 後安全狀態可信度。
+- 對 `uuid` 做不相容 major override 會讓 Lighthouse CI 有回歸風險，且無法以 patched version 安全替換。
+
+actions:
+
+- 更新 root `package.json` 的 `pnpm.overrides.fast-xml-parser` 到 `>=5.7.0`。
+- 執行 `pnpm install --no-frozen-lockfile` 更新 `pnpm-lock.yaml`，確認解析到 `fast-xml-parser@5.7.2`。
+- 保留 `uuid@8.3.2`，因 `@lhci/cli` 只使用 `uuid.v4()` 且未使用 advisory 影響的 v3/v5/v6 `buf` code path。
+- 將 Dependabot alert #85 以 `not_used` dismiss，comment 記錄 `uuid.v4()` 使用點與 `uuid@14` CommonJS 不相容風險。
+
+prevention:
+
+- 可相容升級的 transitive security alert 以 override + lockfile 收斂。
+- 不可相容升級的 dev-only transitive alert 必須先查實際使用點；只有確認 vulnerable code path 未使用時才可 dismiss。
+
+verification:
+
+- `gh api repos/haotool/app/dependabot/alerts`（確認 open alerts：fast-xml-parser #84、uuid #85）
+- `pnpm why fast-xml-parser`（確認已解析到 5.7.2）
+- `pnpm why uuid`（確認來源為 `@lhci/cli@0.15.1`）
+- `rg "require\\('uuid'\\)|uuid" node_modules/@lhci/cli`（確認使用點為 `uuid.v4()`）
+- `gh api --method PATCH repos/haotool/app/dependabot/alerts/85 ...`（以 `not_used` dismiss uuid alert）
+- 本 PR 待執行：format/typecheck/audit/PR checks。
+
+references:
+
+- package.json
+- pnpm-lock.yaml
+- https://github.com/advisories/GHSA-gh4j-gqv2-49f6
+- https://github.com/advisories/GHSA-w5hq-g745-h8pq
+- https://www.npmjs.com/package/@lhci/cli
 
 ---
 
