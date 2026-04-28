@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.22.4
+
+### Patch Changes
+
+- fbe65b5: 修正 CI secret scan，改用固定版本 Gitleaks CLI，移除 GitHub Action license 與 Node 20 註記。
+
 ## 2.22.3
 
 ### Patch Changes
