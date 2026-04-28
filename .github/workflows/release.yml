@@ -123,13 +123,16 @@ jobs:
           set -euo pipefail
           git fetch --tags --force origin
 
-          echo '${{ steps.detect_version.outputs.changed_apps }}' | node -e "
+          mapfile -t release_tags < <(echo '${{ steps.detect_version.outputs.changed_apps }}' | node -e "
             const apps = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
             for (const app of apps) {
               console.log(app.packageName + '@' + app.version);
               console.log(app.name + '-v' + app.version);
             }
-          " | sort -u | while IFS= read -r tag; do
+          " | sort -u)
+
+          tag_refspecs=()
+          for tag in "${release_tags[@]}"; do
             if [ -z "$tag" ]; then
               continue
             fi
@@ -151,9 +154,16 @@ jobs:
               echo "Tag ${tag} already exists locally"
             fi
 
-            echo "Pushing tag ${tag}"
-            git push origin "refs/tags/${tag}:refs/tags/${tag}"
+            tag_refspecs+=("refs/tags/${tag}:refs/tags/${tag}")
           done
+
+          if [ "${#tag_refspecs[@]}" -eq 0 ]; then
+            echo "No new release tags to push"
+            exit 0
+          fi
+
+          echo "Pushing ${#tag_refspecs[@]} release tags"
+          HUSKY=0 git push origin "${tag_refspecs[@]}"
 
       - name: Create GitHub releases
         if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'

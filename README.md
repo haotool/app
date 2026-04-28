@@ -179,7 +179,8 @@ pnpm changeset:status
 Release workflow 以 `pnpm changeset:version` 作為版本 SSOT，並由
 `scripts/get-release-metadata.mjs --changed` 產生 release tag 與 GitHub
 release 清單。禁止手動修改版本號、手動編輯 CHANGELOG，或在 CI 內直接呼叫
-`pnpm changeset tag` 建 tag。
+`pnpm changeset tag` 建 tag；CI 內部 tag push 會以 `HUSKY=0` 單次推送，避免重複觸發
+pre-push hook。
 
 ### 專案結構
 

@@ -443,9 +443,10 @@ git push origin main     # pre-push 自動驗證
 2. release PR 建立失敗時 workflow 必須 `exit 1`，不得讓 release run 顯示 success。
 3. release tag 建立必須使用 `scripts/get-release-metadata.mjs --changed` 的 SSOT 輸出；CI 內禁止直接呼叫 `pnpm changeset tag`。
 4. tag push 必須使用完整 refspec（`refs/tags/<tag>:refs/tags/<tag>`）並設定 timeout，避免模糊 ref 或互動式工具造成 workflow 卡住。
-5. GitHub release 建立必須先查既有 release；除「已存在」外，不得把 `gh release create` 失敗吞成 warning。
-6. root `README.md` 必須說明 changeset / release PR 流程；公開指令、workflow、部署或使用者可見行為變更時，必須同步更新 README。
-7. 發版前以 `pnpm changeset:status` 確認待發 changeset，並以 release PR 的 package / CHANGELOG diff 作為 AGT-VER-02 證據。
+5. CI 內部 tag push 必須一次推送全部 tag，且明確設定 `HUSKY=0`，避免 tag push 重複觸發 repo pre-push hook。
+6. GitHub release 建立必須先查既有 release；除「已存在」外，不得把 `gh release create` 失敗吞成 warning。
+7. root `README.md` 必須說明 changeset / release PR 流程；公開指令、workflow、部署或使用者可見行為變更時，必須同步更新 README。
+8. 發版前以 `pnpm changeset:status` 確認待發 changeset，並以 release PR 的 package / CHANGELOG diff 作為 AGT-VER-02 證據。
 
 **GitHub Actions Node 24 控制**：
 
