@@ -235,7 +235,10 @@ jobs:
 
       - name: Verify RateWise live precache
         if: success() && steps.ratewise_release.outputs.changed == 'true'
-        run: VERIFY_PRECACHE_SOURCE=live node scripts/verify-precache-assets.mjs
+        env:
+          VERIFY_PRECACHE_SOURCE: live
+          VERIFY_BASE_URL: https://app.haotool.org/ratewise/
+        run: node scripts/verify-precache-assets.mjs
 
       # Cloudflare CDN 快取清除
       # 參考: Context7 /websites/developers_cloudflare - Cache Purge API

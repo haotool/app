@@ -6,8 +6,8 @@ import { readFile, existsSync } from 'node:fs';
 import { readFile as readFileAsync } from 'node:fs/promises';
 import path from 'node:path';
 
-const BASE_URL = process.env.VERIFY_BASE_URL ?? 'https://app.haotool.org/';
 const VERIFY_SOURCE = process.env.VERIFY_PRECACHE_SOURCE ?? 'local';
+const BASE_URL = process.env.VERIFY_BASE_URL ?? getDefaultBaseUrl(VERIFY_SOURCE);
 const PROJECT_ROOT = process.cwd();
 const DIST_DIR = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist');
 const SW_PATH = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist/sw.js');

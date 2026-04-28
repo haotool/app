@@ -39,6 +39,7 @@ actions:
 - 為 `Create release tags` 設定 5 分鐘 timeout，避免 workflow 無限卡住。
 - CI 內部 tag push 使用 `HUSKY=0`，避免每個 tag push 重複觸發 `.husky/pre-push` 的 typecheck/test/build。
 - 將 GitHub release 建立改為先查 `gh release view`；只有 release 已存在才跳過，其他 `gh release create` 失敗維持阻塞。
+- 修正 live precache verifier 的預設 base URL，並在 release workflow 顯式設定 `VERIFY_BASE_URL=https://app.haotool.org/ratewise/`，避免誤抓 root `sw.js`。
 - 同步更新 root `README.md`、`AGENTS.md` 與 `CLAUDE.md` 的 release tag 與 Node 24 cache 控制規則。
 
 prevention:
@@ -46,6 +47,7 @@ prevention:
 - release tag 來源只能有一份 SSOT：`scripts/get-release-metadata.mjs --changed`。
 - CI 內不得呼叫會讀 tty 或會自行推導 workspace tag 的互動式 release 指令。
 - CI 內部 release tag push 必須 batch push 且停用 Husky；PR / main checks 已提供品質閘門，不應在 tag push 重複執行。
+- live precache 驗證必須明確指定 RateWise base path `/ratewise/`，不得依賴 root host 預設值。
 - GitHub release 建立失敗不得被廣義 catch 成 warning；只能明確處理已存在的 release。
 - Node 24 workflow 若已由官方 setup action 提供 cache，不再疊加舊版 cache action。
 - 之後查 release 狀態時，必須分別確認 release PR、tag、GitHub release 與部署驗證，不得只看其中一段成功。
@@ -54,6 +56,7 @@ verification:
 
 - `gh run cancel 25040677441 --repo haotool/app`（已取消卡住的 release run）
 - `gh run cancel 25042456742 --repo haotool/app`（取消會被 tag push pre-push hook 拖長的 release run）
+- `gh run view 25043744937 --repo haotool/app --job 73353304929 --log`（確認 tag/release/deploy 通過，live precache 誤用 root `sw.js`）
 - `node scripts/get-release-metadata.mjs --changed`（確認 changed app 清單為 haotool、nihonname、park-keeper、quake-school、ratewise、split-meow）
 - `git check-ref-format --allow-onelevel`（確認 package tag 與 app tag 格式可用）
 - `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/release.yml')"`（release workflow YAML 可解析）
