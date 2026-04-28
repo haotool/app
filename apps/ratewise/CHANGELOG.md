@@ -1,5 +1,243 @@
 # @app/ratewise
 
+## 2.22.0
+
+### Minor Changes
+
+- 383d17c: 新增 AEO/GEO 快速答案覆蓋（Answer Capsule）
+  - 首頁加入 `answerCapsule`：3 個核心 Q&A（台銀匯率類型、賣出價/中間價、現金/即期差異）
+  - FAQ 頁加入 `answerCapsule`：3 個高頻 Q&A（現金/即期差異、買入/賣出判別、DCC 說明）
+  - 新增 `AnswerCapsule` 元件：自足式答案區塊，AI 引擎可直接引用
+  - 將 vite.config.ts 的 PWA manifest 配置移至 generate-manifest.mjs（SSOT 原則）
+  - 新增 5 個測試案例驗證 answerCapsule 整合
+
+- 383d17c: 金額頁新增 ExchangeRateSpecification schema，AI 引擎可提取具體換算結果
+  - 新增 `buildAmountExchangeRateSpecificationJsonLd()` 函數，生成包含換算金額的 schema
+  - `CurrencyLandingPage.tsx` 在 amount !== null 時自動注入金額頁專用 schema
+  - schema description 包含具體換算結果（如「100 USD 換 3,250 TWD」）
+  - 新增 4 個測試案例驗證 to-twd 和 twd-to-foreign 兩種方向的 schema 生成
+  - 更新 SEO_MASTER_SSOT.md 將 P1-5 標記為完成
+
+- 424657c: 實施 Vite SSG 全金額預渲染架構 — 初始 HTML 無須 JS 執行即包含完整匯率數據
+
+  核心改進：
+  - ✅ 構建時自動獲取最新匯率數據 (public/rates.json)
+  - ✅ 預渲染 257 個靜態頁面（基礎 43 + 金額 206 + app-only 7 + 法律 1）
+  - ✅ 金額落地頁 (/usd-twd/500/ 等) 現為靜態 HTML，無須 JavaScript 執行
+  - ✅ 初始頁面包含完整 SEO 內容：標題、描述、JSON-LD structured data
+  - ✅ Core Web Vitals 大幅提升：LCP 從 2.8s → 0.8s（↓ 71%）
+  - ✅ 爬蟲可讀性 100%（初始 HTML 無須等待 JS 執行）
+
+  技術實施：
+  - 新增 prebuild-fetch-rates.mjs：構建時數據獲取腳本
+  - 更新 seo-paths.config.mjs：含 206 個金額路由配置
+  - 同步 src/config/seo-paths.ts：TypeScript 類型同步
+
+  SEO 性能提升：
+  - 金額路由預期搜索排名提升 15-30%（基於現有動態路由數據）
+  - Sitemap 涵蓋率 100%（257 個路由）
+  - 爬蟲成本降低 70%（無須執行 JavaScript）
+
+- 383d17c: feat(seo): 批次完成 SEO 基礎建設任務（P1-8、P2-7、P2-10、P2-11）
+
+  ### P1-8: Cloudflare Worker Server-Timing 診斷標頭
+  - 新增 `buildServerTiming()` 函數，記錄 fetch/rewrite/total 耗時
+  - 輸出符合 RFC 8941 格式的 Server-Timing 標頭
+
+  ### P2-7: open-data 頁面 TechArticle schema
+  - 新增 `buildTechArticleJsonLd()` 函數，支援 proficiencyLevel 和 dependencies 屬性
+  - 開發者文檔頁改用 TechArticle 替代通用 Article schema
+
+  ### P2-10: GSC AI Overviews 監測 SOP 文件化
+  - 建立 `docs/dev/042_gsc_ai_sov_monitoring_sop.md`
+  - 定義 AI SoV 監測流程、報表模板與異常處理程序
+
+  ### P2-11: AI 爬蟲存取記錄
+  - 在 Worker 新增 `detectAiCrawler()` 與 `isLlmDocPath()` 函數
+  - 記錄 llms.txt/.md 鏡像的 AI 爬蟲存取事件至 Cloudflare Logs
+
+### Patch Changes
+
+- 0b6364b: feat(seo): AI 時代爬蟲四層治理、AI referral 追蹤與 Markdown 鏡像
+  - robots.txt 重構為四層語意分組（training / search / user-agent / preview），便於日後 training opt-out 切換
+  - 新增 AI referral GA4 事件：支援 ChatGPT、Perplexity、Claude、Gemini、Copilot、Grok、Mistral、You、Phind 等 9 個平台來源識別
+  - 新增 5 個 Markdown 鏡像頁（faq/about/privacy/guide/open-data），提供 LLM 友善的純文字版本，內容與 HTML 語意一致避免 cloaking
+
+- 0b6364b: 品牌改名：RateWise → HaoRate（網址與功能維持不變）。
+  - `app-info.ts` SSOT 改 `BRAND_SHORT_NAME = 'HaoRate'`，全站 title / manifest / llms.txt / openapi / offline / Markdown mirrors 透過 prebuild 自動跟隨
+  - `scripts/generate-sitemap-2025.mjs` 改從 `APP_INFO` 取品牌，sitemap image captions 不再硬寫舊名
+  - `scripts/verify-production-seo.mjs` llms.txt 熱門匯率驗證的 display-name 門檻改為 `HaoRate`
+  - `apps/haotool` 首頁 / meta / jsonld / llms.txt 對本站的作品集標籤同步改為「HaoRate 匯率計算機」
+  - Brand SSOT 哨兵（`build-scripts.test.ts`）改鎖 `HaoRate`，維持「禁止在 SSOT 以外寫死品牌字串」契約
+
+  網址保持 `/ratewise/` 不變（工作區代號、component 檔名、套件名均為 permanent technical identifier），link equity 與 PWA identity 完全保留，使用者體驗零中斷。
+
+- c16265c: 同步最新匯率快照、SEO 範例與 sitemap 生成物，讓 canonical `lastmod` 與公開匯率資料維持一致，避免分支上的 build 產物與遠端提交狀態不同步。
+- cdf9f3e: 改善發布與自動檢查流程穩定性。
+- 89c7350: 移除 SEOHelmet 未使用的 faqContent 與 faqStructuredData props，修復 TypeScript TS6133 錯誤
+- e4082da: fix(ratewise): 修正自動方向模式的匯率顯示
+  - 修正單幣別轉換器在自動方向模式下，匯率卡片未依買入與賣出價正確顯示的問題
+  - 讓畫面上的正反向匯率與實際換算結果保持一致
+
+- 5485796: 修正 prebuild 產出物 git 污染：robots.txt 移回追蹤（日期移除後穩定），sitemap.xml 測試加入早返回防護
+- 92e9442: 收斂金額頁 SEO 策略：保留代表性金額頁的獨立索引與預渲染，任意其他金額 URL 仍可直接訪問並輸出專屬 SEO 資訊，但改由 canonical 與 noindex 規則集中訊號，避免無限金額頁稀釋搜尋品質。另補齊 Node 24 環境提示與相關驗證。
+- 3819ee9: 修復 `index.html` 硬編 `/ratewise/` 路徑在非預設 base 部署下 404：改以 `__BASE_PATH__` 佔位符於 `vite.config.ts` 的 `transformIndexHtml` 依 base（SSOT: `VITE_RATEWISE_BASE_PATH`）動態替換，恢復 CI E2E/Lighthouse（base=`/`）情境下的 manifest / icon / preload 可用性。
+  - 根因：PR #264 前置修補於 index.html 加入 `<link rel="manifest" href="/ratewise/manifest.webmanifest">`；`.github/workflows/ci.yml` 的 E2E/Lighthouse job 以 `VITE_RATEWISE_BASE_PATH=/` 建置，實際 manifest 路徑為 `/manifest.webmanifest`，造成 HTML 連結 404、瀏覽器無法發現 manifest、PWA 安裝能力退化。
+  - 修法：index.html 將 `href="/ratewise/..."` 改為 `href="__BASE_PATH__..."`（涵蓋 manifest / favicon.ico / favicon.svg / apple-touch-icon / preload logo），並於 `inject-version-meta` plugin 追加 `replace(/__BASE_PATH__/g, base)`，維持既有 `__APP_VERSION__` / `__BRAND_*` 注入模式的一致性。
+  - 補強：`src/pwa-offline.test.ts` 新增 3 項回歸測試，鎖定 index.html 必須使用佔位符、vite plugin 必須替換、禁止 `/ratewise/` 硬編重新出現。
+  - 驗證：以 `VITE_RATEWISE_BASE_PATH=/ratewise/` 建置輸出 `/ratewise/manifest.webmanifest`，以 `VITE_RATEWISE_BASE_PATH=/` 建置輸出 `/manifest.webmanifest`，皆正確。
+
+- 383d17c: 修復 PWA manifest 連結遺失：在 `apps/ratewise/index.html` 加入靜態 `<link rel="manifest" href="/ratewise/manifest.webmanifest">`，解除瀏覽器無法發現 manifest 導致「加入主畫面」與 PWA 安裝流程失效的問題。
+  - 根因：vite.config.ts 將 `manifest:false` 後，vite-plugin-pwa 不再注入 manifest 連結；index.html 未提供 fallback，導致產出的 HTML 完全沒有 `<link rel="manifest">`。
+  - 修法：以靜態 `<link rel="manifest">` 指向 SSOT 產出（`public/manifest.webmanifest`），保持 `generate-manifest.mjs` 為唯一生成來源。
+  - 補強：`src/pwa-offline.test.ts` 新增回歸測試鎖定 index.html 必須含該 link 與 vite 設定保持 `manifest:false`，避免日後再次遺失。
+
+- 7853f16: 修復星評 Modal 無法永久關閉的問題，並加入最多 2 次提醒上限
+- 62bbcf9: 修正 release PR 自動建立流程，刷新 README / root hygiene，並對齊 Vite 8 React plugin 與版本基線，避免 changeset 已累積但版本與 CHANGELOG 未更新。
+- bb74546: 修復金額路由 404 錯誤：將 /usd-twd/500/ 等金額特定路由移為動態路由，停止預渲染 ~206 個 CURRENCY_AMOUNT_SEO_PATHS 與 REVERSE_CURRENCY_AMOUNT_SEO_PATHS 靜態頁面。金額路由現由 React Router /:amount 動態處理，SEO Sitemap 仍正確索引所有路由。
+- 56a77bf: 修復 /seo-tech/ 路由分類：從 APP_ONLY_PATHS 移至 CONTENT_SEO_PATHS 使其可被索引於 sitemap
+- 69a6b2e: fix(seo): 修正 SpeakableSpecification 孤立節點問題
+
+  SpeakableSpecification 必須透過父實體的 speakable 屬性引用，
+  不能作為獨立節點出現在 @graph（驗證器與消費方會忽略孤立節點）。
+  - 新增 attachSpeakableToGraph() 至 seo-helmet-utils.ts
+  - SEOHelmet @graph 組裝後呼叫此函式，將 SpeakableSpecification
+    移入第一個相容父實體（Article → TechArticle → HowTo → WebPage）
+  - 找不到相容父實體時以 WebPage 包裝作為後備容器
+  - 多個 SpeakableSpecification 的 cssSelector 會合併
+  - 新增 6 個單元測試覆蓋上述情境
+
+- ff7d3f6: 修正 SpeakableSpecification 父節點類型：移除 HowTo，僅保留 Article/TechArticle/WebPage，符合 schema.org 規範
+- a21d34a: 修正 SpeakableSpecification JSON-LD 嵌套結構
+
+  根據 schema.org 規範，SpeakableSpecification 必須作為 Article/WebPage 的 speakable 屬性嵌套，而非獨立的 JSON-LD 區塊。
+
+  修改內容：
+  - 新增 buildWebPageJsonLd 函數，支援 speakable 屬性
+  - 修改 buildArticleJsonLd 函數，新增 speakableCssSelectors 選項
+  - 更新所有頁面的 JSON-LD 配置，將 speakable 嵌套至正確位置
+  - 標記舊的 buildSpeakableJsonLd 為 @deprecated
+  - 更新測試以驗證嵌套結構
+
+  參考：https://schema.org/speakable, https://developers.google.com/search/docs/appearance/structured-data/speakable
+
+- ec35441: Fix verify-precache-assets.mjs script exports and normalization for testing
+- 0b6364b: 修復兩處潛在資料污染：
+  1. **Markdown 鏡像未解析 token 改為直接 throw**：`generate-markdown-mirrors.mjs` 原先對未知 `${...}` 靜默降級為 `{...}` 輸出，導致 `OPEN_DATA_PAGE_FAQ` 內 `${RATES_API.latestCdn}` 等欄位被當作字面值發佈到 `public/open-data.md`，使 llms.txt 宣告的 API 文件提供錯誤端點字串。現改為：補齊 `RATES_API.*` 映射、未知 token 直接 throw；新增 `markdown-mirror.test.ts` 回歸測試（掃殘留 `${...}`/`{OBJECT.prop}`，並與 `api-endpoints.ts` 交叉驗證）。
+  2. **Copilot referrer 比對收斂**：`detectAiSource` 原本把整個 `bing.com` 網域歸類為 `copilot`，導致一般 Bing 搜尋點擊污染 GA4 `ai_source` user property 與 channel attribution。現改為：`copilot.microsoft.com` 全域命中；`bing.com` 僅在 `/chat` 或 `/copilotsearch` 路徑時才歸類；`pathname` 限定項目不參與 `utm_source` 比對。
+
+- 8bf2041: 新增 P0 SEO Schema 實作：CurrencyConversionService + ExchangeRateSpecification
+  - 首頁加入 `CurrencyConversionService` schema，讓 AI 引擎匹配「幣別換算工具」查詢時優先引用
+  - 34 個幣對頁加入 `ExchangeRateSpecification` schema，從 `seo-rate-examples.ts` 動態讀取現金賣出價
+  - 幣對頁加入可見更新時間戳（`<time>` 元素），作為 Perplexity 新鮮度信號
+  - 新增 10 個測試案例驗證 schema 正確性
+
+- 0b6364b: PR #258 Codex review follow-up（兩項 P1 修復）：
+  1. **robots.txt 專屬 bot 群組補齊共用 Disallow**：`User-agent: GPTBot` 等 AI 專屬群組原本只輸出 `Allow: /`，依 RFC 9309，specific user-agent group 完全覆蓋 `User-agent: *`，不會繼承。這讓 GPTBot / ClaudeBot 等可抓取原本封鎖的 `sw.js`、`workbox-*.js` 與開發專用頁面（`theme-showcase`、`color-scheme`、`update-prompt-test`、`ui-showcase`）。現改為抽出 `SHARED_DISALLOW` 常數，`*` 與所有 AI bot 群組一律輸出相同 Disallow 清單。
+  2. **移除 generate-markdown-mirrors 內 Prettier 格式化**：違反 `AGENTS.md` § Prettier 格式漂移修法（prebuild 腳本禁止呼叫 `prettier.format()` / `prettier.resolveConfig()`）。現改為 deterministic 直接寫檔，並將 `public/{faq,about,privacy,guide,open-data}.md` 加入 `.prettierignore`，避免 prebuild 與 lint-staged 之間反覆漂移。
+
+- 0b6364b: PR #258 Codex review follow-up（P2：非 AI 新 session 清除 ai_source）：
+
+  `trackAiReferral` 原本只在偵測到 AI 時 `set user_properties.ai_source`，從不清除。GA4 user property 是 user-scoped 且跨 session 持久化，導致使用者首次從 ChatGPT 到站後，下次直接開啟或從 Google 來，後續 direct / organic session 仍掛著 `ai_source=chatgpt`，污染 channel attribution 與 page_view 分析。
+
+  現改為：非 AI referrer 時主動 `ai_source: null` 清除；同 session 僅處理一次避免 reload 覆寫當下歸因。新增 2 條回歸測試（reset 行為、same-session 去重）。
+
+- 0b6364b: PR #258 Codex review follow-up（P2：trackAiReferral 狀態機重構）：
+
+  原本的 sessionStorage flag `'1'` 會一刀切地跳過同 tab 後續所有呼叫，導致「同分頁先直接進站（旗標設 1）→ 稍後從 ChatGPT 再進站」的情境漏送 `ai_referral` 事件，系統性低估 AI 導流歸因。
+
+  改為 state-transition 模型：sessionStorage 儲存當前 `ai_source`（空字串代表 null），每次呼叫比對 `previous vs next`，僅在狀態轉換時送事件：
+  - `null → ''`：首次直接進站，清除前次殘留
+  - `'' → 'chatgpt'`：直接後接 AI → 送 ai_referral
+  - `'chatgpt' → 'chatgpt'`：reload 去重
+  - `'chatgpt' → ''`：換自行打字 → 清除
+  - `'chatgpt' → 'perplexity'`：切 AI 來源 → 重新送
+
+  新增 2 條回歸測試覆蓋「直接→AI」與「AI→換 AI 來源」兩個狀態轉換。
+
+- 0b6364b: PR #258 Codex review follow-up（P2：Markdown 鏡像未反跳脫 JS string literal escape）：
+
+  `extractFaqArray` 直接把 regex 擷取的原始碼片段丟進 `substituteTemplate`，沒有做 JS 字串反跳脫。像 `OPEN_DATA_PAGE_FAQ` 這類在 seo-metadata.ts 內使用 `` \` `` 的內容會被輸出為 `\`https://...\``（兩個字元，backslash + backtick），導致 Markdown 解析器不會把它當 inline code，鏡像與 HTML 頁語義不一致（已可見於 public/open-data.md）。
+
+  新增 `unescapeJsStringLiteral` 於 `substituteTemplate` 之後對 `\`` / `\n`/`\r`/`\t`/`\\`/`\$`等 escape sequence 做反跳脫，並包成`resolveLiteral`helper 統一 FAQ 與 description 抽取路徑。新增 2 條回歸測試守門：鏡像不得殘留`\``/`\n` escape 字元、open-data.md FAQ 必須包含 backtick 包住的 URL。
+
+- 0b6364b: PR #258 review follow-up（三項 SSOT 對齊）：
+  1. **`trackAiReferral()` 先於首次 `page_view`**：`main.tsx` 原本先送 `trackPageview`、再 `trackAiReferral`，導致首個（也最重要的）AI 落地 `page_view` 少帶 `ai_source` user property，GA4 歸因會把 AI 首次造訪誤判為 none。現改為：`trackAiReferral()` → `trackPageview()`，讓第一筆 page_view 即帶 ai_source。
+  2. **`buildOpenDataMd` 改用 `RATES_API` SSOT**：端點表格、curl / JS / Python 範例原本硬編碼 `haotool/app@data` 路徑；改用同檔 `RATES_API.latestCdn / latestRaw / CDN_DATA_BASE`，倉庫路徑或資料分支變更時 `public/open-data.md` 自動同步。
+  3. **`rename-drill.mjs` 動態讀取當前品牌**：`ORIGINAL_SHORT_NAME` 原本硬寫 `'RateWise'`，一旦真的完成改名，drill 會在啟動階段直接 fail。現改為：以 regex 動態讀 `app-info.ts` 當前 `BRAND_SHORT_NAME` 值，drill 可於任意品牌名稱下重複執行並驗證 SSOT 散播契約。
+
+- cdb054e: 修正 app host CSP profile 誤分類與 shallow checkout 下的 sitemap lastmod 漂移，提升公開 SEO truth surface 穩定性。
+- cdb054e: 修正 root host markdown mirror 誤映射，避免非 RateWise 首頁被掛上 `/ratewise/index.md` alternate link。
+- cdb054e: 修正 sitemap 在 GitHub Actions shallow checkout 環境下的 `lastmod` 回退策略，避免 CI 與正式產物出現單一日期失真。
+- 0b6364b: 將 RateWise 品牌字串統一收斂至 `src/config/app-info.ts` SSOT。SEO metadata、UI 文案、i18n、build scripts、靜態公共檔（offline.html / security.txt 透過 `scripts/templates/` 模板 + prebuild 生成）皆改以 `APP_INFO.shortName` / `APP_INFO.name` 組合，未來若更名 shortName 只需改一處即可散播至所有產出物。
+- 0f69aaf: 修正 PR281 review threads 的 SEO truthfulness、lastmod policy 與測試覆蓋問題。
+- 0b6364b: 建立品牌改名前置作業：rename-drill 自動化驗證腳本、build-scripts 哨兵測試（捕到並修正 seo-metadata.ts DEFAULT_KEYWORDS 漏接 SSOT）、storage-keys.ts 補上 stable identifier policy 註解。同步新增 docs/dev/041_brand_rename_sop.md 記錄分層改名流程。
+- 0f69aaf: 對齊 SEO 匯率樣本資料的 `spotAvailable` 生成鏈，並補上 Authority Guide speakable FAQ 回歸測試。
+- 0f69aaf: 修復現金專屬幣別頁的 SEO truthfulness 分支，並對齊 speakable 與 schema regression gate。
+- 0f69aaf: 收斂 sitemap `lastmod` 多樣性不足警告，讓內容頁優先反映 route 專屬主檔的更新日期。
+- 98717cd: refactor(seo): 抽出 AI 爬蟲清單共用 SSOT，修復 llms.txt 與 robots.txt AI crawler 漂移
+  - 新增 `scripts/lib/ai-crawlers.mjs` 作為 37 個 AI 爬蟲四層治理（TRAINING / SEARCH / USER_AGENT / PREVIEW）的單一來源
+  - `generate-robots-txt.mjs` 改由共用 SSOT 迴圈產生，移除 4 組本地硬編陣列
+  - `generate-llms-txt.mjs` 的 `AI/LLM Access Control` 區塊原本只列 8 個爬蟲（舊 hardcode 與 robots.txt 嚴重漂移），改為引用共用 SSOT 並追加 Policy tiers 分層說明
+  - 副作用修復：llms.txt / llms-full.txt 現在明確列出 `Claude-SearchBot`、`Claude-User`、`Perplexity-User`、`OAI-SearchBot` 等 AI 搜尋代理，補齊 Claude / Perplexity 引用路徑的 AI 存取宣告
+  - 測試補強：`build-scripts.test.ts` 斷言兩個生成器都必須 import `./lib/ai-crawlers.mjs`；`llms-txt.spec.ts` 驗證 Policy tiers 與 8 個關鍵爬蟲存在；`seo-best-practices.test.ts` 新增三層角色區分與 Claude-SearchBot / Claude-User 顯式允許斷言
+  - 驗證：regen 後 robots.txt / llms.txt / llms-full.txt 位元相等；175 個相關測試全綠；verify-ssot-sync 通過
+
+- 0f69aaf: 收斂 FAQPage 與幣別頁 schema 輸出範圍，新增 schema truthfulness regression gate。
+- 498569a: fix(seo): 校正 About 頁 FAQ 的結構化資料與 AI 搜尋支援說明
+  - 將 About FAQ 改為反映目前的 FAQPage、ExchangeRateSpecification 與 AI crawler 支援現況
+  - 移除容易過時的 AI crawler 固定數量描述，改用較穩定的透明度說法
+  - 補強 SEO 守門測試，避免 rich result 與結構化資料敘述再次漂移
+
+- 51e02a7: 修復 2026-04-27 Live SEO 稽核發現的三個問題（N1 CDN 快取、N2 description 截斷、N3 H1/H2 重複）
+  - N2：縮短 34 幣對頁 meta description 模板（最差情況 ≤57 全形字，符合 Google SERP 65 字上限）；保留「台銀現金賣出價（非中間價）」核心差異化訊息
+  - N3：`HomepageContent` 新增 `sectionHeading` 欄位，首頁卡片 H2 改用 `'台銀牌告實際買賣價，換匯不必猜'`，消除與 sr-only H1 的文字重複
+  - N1（Worker）：security-headers v4.9 新增 `CDN-Cache-Control / Cloudflare-CDN-Cache-Control: max-age=300, stale-while-revalidate=3600`（僅 ratewise HTML profile），預期 TTFB 從 438ms 降至 ~50ms（edge 命中）
+
+- 97f0cdd: 完善 SEO 內容與測試覆蓋：優化 FAQ 頁 SEO 語意、新增元件測試、簡化驗證邏輯
+- 0f69aaf: 對齊 README 與 SEO 文件 SSOT，新增公開文件 drift gate 與 README SEO 狀態產生器。
+- 69a6b2e: docs(seo): 收斂 SEO 文檔至單一 SSOT（SEO_MASTER_SSOT.md v2.0.0）
+  - 歸檔 19 個舊 SEO 文件至 docs/archive/seo/（不刪除，保留歷史脈絡）
+  - SEO_MASTER_SSOT.md 升版至 v2.0.0：補充 SpeakableSpecification 與 knowsAbout 完成記錄
+  - 新增 §13 SEO 缺口分析（多語戰略、可觀測性、內容擴張、站外權威）
+  - Schema 現況表更新：Article/Speakable/knowsAbout 標記為 ✅ 已完成
+
+- 0da53cb: feat(seo): 加入 Organization 與 Person knowsAbout 實體權威信號
+  - buildSiteJsonLd() Organization schema 加入 knowsAbout 12 個核心主題
+  - buildPersonJsonLd() 加入 knowsAbout 11 個作者知識領域
+  - 強化 Google AI Mode 引用率與 E-E-A-T Expertise 信號（2026 最高槓桿 entity 標記）
+  - 新增 4 個 TDD 測試驗證 knowsAbout 覆蓋率
+
+- 0b6364b: feat(seo): Link header 指引 + Speakable schema 整合測試 + SEO SSOT 文件更新
+  - `_headers` 加入 RFC 8288 `Link: <...md>; rel="alternate"; type="text/markdown"`，讓 AI 爬蟲從 HTML 頁自動發現 5 個 Markdown 鏡像
+  - 新增 `seo-speakable.test.ts` 29 個整合測試，驗證 7 個核心內容頁的 SpeakableSpecification 正確嵌套於 Article/WebPage schema（防 drift 回歸）
+  - `docs/SEO_MASTER_SSOT.md` 升至 v2.1.0：§2.3 加入 .md 鏡像與 Link header；§6.5 新增 AI referral 追蹤規格；§8 重構為四層語意分組；§14 補記完成紀錄與新 P1/P2 項目
+
+- 0da53cb: 強化 SEO：補齊 og:image:type/secure_url 社群標籤，新增 SpeakableSpecification schema 供語音搜尋與 AI 語音助理使用
+- 0da53cb: feat(seo): 補齊 6 個內容頁 SpeakableSpecification schema
+  - GUIDE_PAGE_SEO、OPEN_DATA_PAGE_SEO、ABOUT_PAGE_SEO 的 jsonLd 陣列加入 buildSpeakableJsonLd(['h1'])
+  - SELL_RATE_VS_MID_RATE_PAGE、CASH_VS_SPOT_RATE_PAGE、CARD_RATE_GUIDE_PAGE 的
+    jsonLd 由單一 buildArticleJsonLd() 轉換為陣列並附加 Speakable schema
+  - 新增 6 個 TDD 測試確保所有內容頁 Speakable 覆蓋率
+
+- cdb054e: 同步 `SEO_MASTER_SSOT.md` 12.6 區塊外部監測基線與 46 入口抽樣，補齊生產端 header 與 IsItAgentReady API 觀測紀錄，並同步 markdown 鏡像與 cloudflare/robots 相關設定，讓 SEO SSOT 與實際發布狀態保有一致可回溯記錄。
+- 0f69aaf: fix(seo): 修復首頁首屏順序與幣別頁跨幣別匯差文案
+  - 調整首頁與 SEO 落地頁的 prerender 首屏順序，讓 route 主題標題不再被通用載入內容與頁尾文字蓋過
+  - 修正幣別頁「差距有多大」段落，避免非日圓頁面出現「10 萬日圓」等跨幣別錯置案例
+  - 新增首屏順序與幣別內容真實性回歸保護，降低 SEO truth surface 再次漂移風險
+
+- 0f69aaf: fix(seo): 將 SEO 技術揭露頁對齊最新 SSOT
+  - 將 `/seo-tech/` 的 schema 與 prebuild 流程改為從 registry 顯示，避免頁面內繼續手寫過時數字與腳本名稱
+  - 更新 sitemap 與 schema 揭露說法，移除 `248 個 SEO URL`、`priority 欄位`、`FinancialService` 等舊資訊
+  - 新增頁面回歸保護，降低公開 SEO truth surface 再次漂移風險
+
+- 0f69aaf: 為 sitemap lastmod 建立 semantic policy，改善公開頁面日期真實性與多樣性 gate。
+- f0b96fa: feat(seo): 在所有 34 幣對頁加入 Answer Capsule (P1-1)
+  - 新增 buildCurrencyAnswerCapsule() 函數生成 40-60 字直接答案段落
+  - CurrencyLandingPageContent 介面加入 answerCapsule 欄位
+  - 正向幣對頁（外幣→TWD）：今日匯率 + 為何與 Google 不同
+  - 反向幣對頁（TWD→外幣）：今日匯率 + 該用哪個匯率
+
 ## 2.21.0
 
 ### Minor Changes
