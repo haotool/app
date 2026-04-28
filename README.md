@@ -108,7 +108,7 @@ GPS 輔助的停車場路徑指引工具
 | **套件管理** | pnpm 9.10.0 (Monorepo)       |
 | **CI/CD**    | GitHub Actions (9 workflows) |
 | **部署**     | Docker + Zeabur / Vercel     |
-| **安全**     | Gitleaks + Trivy + SARIF     |
+| **安全**     | Gitleaks CLI + Trivy + SARIF |
 
 ### 品質指標
 
@@ -267,7 +267,7 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 - **Package Manager**: pnpm 9.10.0 (Monorepo)
 - **CI/CD**: GitHub Actions (9 workflows)
 - **Deployment**: Docker + Zeabur / Vercel
-- **Security**: Gitleaks + Trivy + SARIF
+- **Security**: Gitleaks CLI + Trivy + SARIF
 
 ### Quick Start
 

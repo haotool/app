@@ -1,8 +1,65 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-28T16:04:19+08:00
-> **當前總分**: 1223（初始分: 100）
+> **最後更新**: 2026-04-28T17:45:08+08:00
+> **當前總分**: 1224（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: ci-gitleaks-cli-node24
+date: 2026-04-28
+title: 移除 Gitleaks action license 與 Node 20 註記，改用固定版本 CLI 掃描
+score: +1
+type: fix
+content_type: incident
+scope: ci, security, github-actions, docs
+topics: [secret-scanning, gitleaks, node24-actions, ci-quality]
+keywords:
+[gitleaks-cli, checksum, gitleaks-license, node20-warning, secret-scan]
+aliases: [Gitleaks license warning, Node 20 action warning, secret scan CI]
+related_entries: [release-tag-timeout-ssot]
+summary: main CI 已通過，但 `Run Gitleaks` 留下 `gitleaks/gitleaks-action@v2` 的 Node 20 過渡警告與缺 `GITLEAKS_LICENSE` 註記。官方文件指出組織 repo 使用 v2 action 需 license；本次改為固定版本 Gitleaks CLI，下載官方 release tarball 與 checksum 後執行 `gitleaks detect`，保留 secret scan 並移除授權 secret 與 Node 20 action 依賴。
+root_cause:
+
+- `gitleaks/gitleaks-action@v2` 對組織 repo 需要 `GITLEAKS_LICENSE`，repo secrets 未設定時會在 CI annotation 留下 license 問題。
+- 該 action 仍觸發 GitHub Actions Node 20 deprecation 過渡警告，需要 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` 補償。
+- CI 的安全掃描需求只需要執行 Gitleaks 規則，並不依賴 action 的 PR comment / notification 功能。
+
+impact:
+
+- CI 雖然成功，但 release 後仍有可預防的安全掃描註記，降低生產監控訊號品質。
+- 長期依賴 Node 20 JavaScript action 會讓 GitHub Actions Node 24 遷移狀態不乾淨。
+
+actions:
+
+- 將 `.github/workflows/ci.yml` 的 `Run Gitleaks` 從 `gitleaks/gitleaks-action@v2` 改為固定版本 `gitleaks` CLI。
+- 下載官方 `gitleaks_8.30.1_linux_x64.tar.gz` 與 checksums，使用 `sha256sum -c` 驗證後安裝。
+- GitHub release 下載加入 `curl --retry 6 --retry-delay 2 --retry-all-errors`，避免暫時性 5xx 造成 CI 假失敗。
+- 執行 `gitleaks detect --source . --config .gitleaks.toml --redact --no-banner --verbose`，保留既有 `continue-on-error` 行為。
+- 同步更新 root `README.md`、`AGENTS.md` 與 `CLAUDE.md` 的安全掃描 / Node 24 控制規則。
+
+prevention:
+
+- 組織 repo 的 secret scan 優先使用固定版本 CLI + checksum 驗證，不依賴需要額外 license secret 的 action。
+- CI 從 GitHub release 下載工具時必須有重試與 checksum 驗證，避免網路暫時錯誤或供應鏈風險。
+- CI annotation 必須在 main release 後回看；即使 workflow success，也要處理可預防的安全與 Node 版本註記。
+
+verification:
+
+- `gh run watch 25045101606 --repo haotool/app --interval 20`（確認 main CI 全部成功，但存在 Gitleaks license / Node 20 annotation）
+- `gh api repos/gitleaks/gitleaks/releases/latest`（確認官方最新 release 為 v8.30.1）
+- `curl` 下載測試曾遇 GitHub 502，因此已補上 retry 控制。
+- 本 PR 待執行：YAML 解析、Gitleaks CLI 掃描、format/typecheck、PR checks。
+
+references:
+
+- .github/workflows/ci.yml
+- .gitleaks.toml
+- README.md
+- AGENTS.md
+- CLAUDE.md
+- https://github.com/gitleaks/gitleaks
+- https://github.com/gitleaks/gitleaks-action
 
 ---
 

@@ -141,6 +141,7 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 - CI 內部 tag push 必須一次推送全部 tag，且明確設定 `HUSKY=0`，避免 tag push 重複觸發 repo pre-push hook
 - GitHub release 建立必須先查既有 release；除「已存在」外，不得把 `gh release create` 失敗吞成 warning
 - Node 24 workflow 優先使用 `actions/setup-node@v6` 內建 pnpm cache；不要再額外加入 `actions/cache@v4` 造成 Node 20 action warning
+- secret scan 使用固定版本 Gitleaks CLI 並驗證 release checksum；組織 repo 不使用需要 license secret 的 `gitleaks/gitleaks-action@v2`
 - 若 main 累積 changeset 但版本未變，先查 `gh run view <RUN_ID> --log` 是否卡在 `Create Release Pull Request`
 - README 同步規則：公開指令、workflow、部署、版本流程或使用者可見行為變更時，必須更新 root `README.md` 與受影響 app README
 
