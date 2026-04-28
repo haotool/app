@@ -441,8 +441,16 @@ git push origin main     # pre-push 自動驗證
 
 1. `changesets/action` 的 `commit` / `title` 必須使用 commitlint 豁免格式：`chore(release): 更新版本套件`。
 2. release PR 建立失敗時 workflow 必須 `exit 1`，不得讓 release run 顯示 success。
-3. root `README.md` 必須說明 changeset / release PR 流程；公開指令、workflow、部署或使用者可見行為變更時，必須同步更新 README。
-4. 發版前以 `pnpm changeset:status` 確認待發 changeset，並以 release PR 的 package / CHANGELOG diff 作為 AGT-VER-02 證據。
+3. release tag 建立必須使用 `scripts/get-release-metadata.mjs --changed` 的 SSOT 輸出；CI 內禁止直接呼叫 `pnpm changeset tag`。
+4. tag push 必須使用完整 refspec（`refs/tags/<tag>:refs/tags/<tag>`）並設定 timeout，避免模糊 ref 或互動式工具造成 workflow 卡住。
+5. GitHub release 建立必須先查既有 release；除「已存在」外，不得把 `gh release create` 失敗吞成 warning。
+6. root `README.md` 必須說明 changeset / release PR 流程；公開指令、workflow、部署或使用者可見行為變更時，必須同步更新 README。
+7. 發版前以 `pnpm changeset:status` 確認待發 changeset，並以 release PR 的 package / CHANGELOG diff 作為 AGT-VER-02 證據。
+
+**GitHub Actions Node 24 控制**：
+
+- Node 24 workflow 優先使用官方 action 內建快取（例如 `actions/setup-node@v6` 的 `cache: pnpm`）。
+- 若 action 已被內建快取取代，禁止額外加入 `actions/cache@v4` 等 Node 20 JavaScript action，避免 release run 產生可預防的 deprecation warning。
 
 ### Dependabot 安全警告處理流程
 

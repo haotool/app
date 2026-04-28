@@ -8,7 +8,7 @@
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19.2-61dafb?logo=react)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-7.3-646cff?logo=vite)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.0-646cff?logo=vite)](https://vitejs.dev/)
 [![pnpm](https://img.shields.io/badge/pnpm-9.10.0-yellow?logo=pnpm)](https://pnpm.io/)
 
 [English](#english) · [繁體中文](#繁體中文)
@@ -102,24 +102,24 @@ GPS 輔助的停車場路徑指引工具
 | 類別         | 技術                         |
 | ------------ | ---------------------------- |
 | **框架**     | React 19.2 + TypeScript 5.9  |
-| **建置工具** | Vite 7.3 + vite-react-ssg    |
+| **建置工具** | Vite 8.0 + vite-react-ssg    |
 | **樣式**     | Tailwind CSS 3.4             |
-| **測試**     | Vitest 4.0 + Playwright 1.57 |
+| **測試**     | Vitest 4.1 + Playwright 1.57 |
 | **套件管理** | pnpm 9.10.0 (Monorepo)       |
-| **CI/CD**    | GitHub Actions (6 workflows) |
+| **CI/CD**    | GitHub Actions (9 workflows) |
 | **部署**     | Docker + Zeabur / Vercel     |
 | **安全**     | Gitleaks + Trivy + SARIF     |
 
 ### 品質指標
 
-| 指標           | 數值        |
-| -------------- | ----------- |
-| **測試數量**   | 1700+       |
-| **測試覆蓋率** | 92%+        |
-| **TypeScript** | Strict Mode |
-| **ESLint**     | 0 警告      |
-| **Lighthouse** | 95+ 全類別  |
-| **CI 管線**    | 6 個全通過  |
+| 指標           | 數值          |
+| -------------- | ------------- |
+| **測試數量**   | 1700+         |
+| **測試覆蓋率** | 92%+          |
+| **TypeScript** | Strict Mode   |
+| **ESLint**     | 0 警告        |
+| **Lighthouse** | 95+ 全類別    |
+| **CI 管線**    | 9 個 workflow |
 
 ### 快速開始
 
@@ -166,6 +166,21 @@ pnpm typecheck
 pnpm lint
 ```
 
+#### 版本與發版
+
+```bash
+# 每個 PR 都要建立 changeset，描述使用者可見影響
+pnpm changeset
+
+# release PR 由 GitHub Actions 自動建立
+pnpm changeset:status
+```
+
+Release workflow 以 `pnpm changeset:version` 作為版本 SSOT，並由
+`scripts/get-release-metadata.mjs --changed` 產生 release tag 與 GitHub
+release 清單。禁止手動修改版本號、手動編輯 CHANGELOG，或在 CI 內直接呼叫
+`pnpm changeset tag` 建 tag。
+
 ### 專案結構
 
 ```
@@ -186,8 +201,11 @@ haotool-app/
 │       ├── release.yml                 # 版本發布
 │       ├── seo-audit.yml               # SEO 審查
 │       ├── seo-production.yml          # 生產環境 SEO
+│       ├── update-committed-seo-files.yml # SEO 產出物同步
 │       ├── update-historical-rates.yml # 歷史匯率更新
-│       └── update-latest-rates.yml     # 最新匯率更新
+│       ├── update-latest-rates.yml     # 最新匯率更新
+│       ├── update-moneybox-rates.yml   # MoneyBox 匯率更新
+│       └── update-seo-rate-examples.yml # SEO 範例匯率更新
 ├── package.json          # Monorepo 根配置
 ├── pnpm-workspace.yaml   # pnpm workspace 配置
 └── tsconfig.base.json    # 共用 TypeScript 配置
@@ -242,11 +260,11 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 ### Tech Stack
 
 - **Framework**: React 19.2 + TypeScript 5.9
-- **Build**: Vite 7.3 + vite-react-ssg
+- **Build**: Vite 8.0 + vite-react-ssg
 - **Styling**: Tailwind CSS 3.4
-- **Testing**: Vitest 4.0 + Playwright 1.57
+- **Testing**: Vitest 4.1 + Playwright 1.57
 - **Package Manager**: pnpm 9.10.0 (Monorepo)
-- **CI/CD**: GitHub Actions (6 workflows)
+- **CI/CD**: GitHub Actions (9 workflows)
 - **Deployment**: Docker + Zeabur / Vercel
 - **Security**: Gitleaks + Trivy + SARIF
 
@@ -263,6 +281,12 @@ pnpm install
 # Start development
 pnpm dev
 ```
+
+### Release
+
+Every PR must include a changeset. GitHub Actions creates the release PR with
+`pnpm changeset:version`; release tags and GitHub releases are generated from
+`scripts/get-release-metadata.mjs --changed`.
 
 ### License
 
