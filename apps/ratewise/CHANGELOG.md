@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.22.5
+
+### Patch Changes
+
+- dad91cd: 修正 fast-xml-parser transitive security alert，將安全版本下限提升到 5.7.0 以上。
+
 ## 2.22.4
 
 ### Patch Changes
