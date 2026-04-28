@@ -136,6 +136,10 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 
 - `changesets/action` 的 release commit 必須使用 commitlint 豁免格式：`chore(release): 更新版本套件`
 - release workflow 若建立 release PR 失敗，必須讓 workflow 失敗，不得用 `continue-on-error` 將失敗偽裝為 success
+- release tag 建立必須使用 `scripts/get-release-metadata.mjs --changed` 的 SSOT 輸出；CI 內禁止直接呼叫 `pnpm changeset tag`
+- tag push 必須使用完整 refspec（`refs/tags/<tag>:refs/tags/<tag>`）並設定 timeout，避免模糊 ref 或互動式工具造成 workflow 卡住
+- GitHub release 建立必須先查既有 release；除「已存在」外，不得把 `gh release create` 失敗吞成 warning
+- Node 24 workflow 優先使用 `actions/setup-node@v6` 內建 pnpm cache；不要再額外加入 `actions/cache@v4` 造成 Node 20 action warning
 - 若 main 累積 changeset 但版本未變，先查 `gh run view <RUN_ID> --log` 是否卡在 `Create Release Pull Request`
 - README 同步規則：公開指令、workflow、部署、版本流程或使用者可見行為變更時，必須更新 root `README.md` 與受影響 app README
 
@@ -266,6 +270,8 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 **排程資料 workflow 在 post-push refresh 報 GitHub 500**：若 `Commit and push changes` 已成功、失敗發生在 `Refresh ... from remote data branch`，視為 GitHub 瞬時錯誤。修法：post-push refresh 使用 3 次重試並設為 `continue-on-error: true`；summary warning 必須看 `steps.<id>.outcome == 'failure'`，不得用 `conclusion`，否則會把失敗誤判成 success。
 
 **Release workflow 顯示 success 但沒有語意升版**：先查 `.changeset/*.md` 是否仍存在，再查 release run log。若 `Create Release Pull Request` 在 `git commit` 階段被 commitlint 擋下，將 `changesets/action` 的 `commit` / `title` 改為 `chore(release): 更新版本套件`，且失敗回報步驟必須 `exit 1`，避免 release PR 未建立卻顯示綠燈。
+
+**Release workflow 卡在 Create release tags**：取消卡住 run 後檢查是否在 CI 內呼叫 `pnpm changeset tag`。修法是移除該呼叫，改由 `scripts/get-release-metadata.mjs --changed` 顯式輸出 package tag 與 app tag，先驗證 `git check-ref-format`，再用完整 refspec 推送 tag，並為步驟設定 timeout。
 
 **Cloudflare 邊緣同步**：release 需確認 `security-headers` worker 也已部署；`wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`；secret 缺失時明確 `skip` 並回報，不可假設 edge 已同步。完整 SOP 見 `AGENTS.md` § security-headers Worker 部署 SOP。
 

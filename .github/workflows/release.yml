@@ -39,18 +39,6 @@ jobs:
           node-version: '24'
           cache: 'pnpm'
 
-      - name: Locate pnpm store
-        id: pnpm-store
-        run: echo "dir=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-store.outputs.dir }}
-          key: pnpm-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-${{ runner.os }}-
-
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
@@ -130,9 +118,10 @@ jobs:
 
       - name: Create release tags
         if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'
+        timeout-minutes: 5
         run: |
           set -euo pipefail
-          pnpm changeset tag 2>/dev/null || true
+          git fetch --tags --force origin
 
           echo '${{ steps.detect_version.outputs.changed_apps }}' | node -e "
             const apps = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
@@ -140,15 +129,35 @@ jobs:
               console.log(app.packageName + '@' + app.version);
               console.log(app.name + '-v' + app.version);
             }
-          " | while IFS= read -r tag; do
-            if ! git rev-parse "$tag" >/dev/null 2>&1; then
-              git tag "$tag"
+          " | sort -u | while IFS= read -r tag; do
+            if [ -z "$tag" ]; then
+              continue
             fi
-            git push origin "$tag" 2>/dev/null || echo "Tag $tag already pushed or failed"
+
+            if ! git check-ref-format --allow-onelevel "$tag"; then
+              echo "::error::Invalid release tag: $tag"
+              exit 1
+            fi
+
+            if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+              echo "Tag ${tag} already exists on origin"
+              continue
+            fi
+
+            if ! git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+              echo "Creating tag ${tag}"
+              git tag "$tag"
+            else
+              echo "Tag ${tag} already exists locally"
+            fi
+
+            echo "Pushing tag ${tag}"
+            git push origin "refs/tags/${tag}:refs/tags/${tag}"
           done
 
       - name: Create GitHub releases
         if: steps.check_changesets.outputs.has_changesets == 'false' && steps.detect_version.outputs.changed == 'true'
+        timeout-minutes: 10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -164,7 +173,13 @@ jobs:
           " | while IFS= read -r meta; do
             TAG=$(echo "$meta" | jq -r '.tag')
             TITLE=$(echo "$meta" | jq -r '.title')
-            gh release create "$TAG" --title "$TITLE" --notes "Automated release via Changesets workflow." --verify-tag 2>/dev/null || echo "Release for $TAG already exists or skipped"
+
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "Release for $TAG already exists"
+              continue
+            fi
+
+            gh release create "$TAG" --title "$TITLE" --notes "Automated release via Changesets workflow." --verify-tag
           done
 
       # Cloudflare Security Headers Worker 同步部署

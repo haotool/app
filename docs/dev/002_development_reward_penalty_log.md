@@ -1,8 +1,75 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-28T14:21:09+08:00
-> **當前總分**: 1222（初始分: 100）
+> **最後更新**: 2026-04-28T16:04:19+08:00
+> **當前總分**: 1223（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+---
+
+id: release-tag-timeout-ssot
+date: 2026-04-28
+title: 修正 Release tag 建立卡住，移除 Node 20 cache action warning
+score: +1
+type: fix
+content_type: incident
+scope: release, github-actions, changesets, docs
+topics: [release-workflow, release-tags, changesets, node24-actions, readme-sync]
+keywords:
+[release-tags, changeset-tag, refspec, timeout, setup-node-cache, node20-warning]
+aliases: [Release tag 卡住, Create release tags timeout, actions/cache Node20 warning]
+related_entries: [release-pr-commitlint-masked-success]
+summary: Release PR #289 合併後，main 的 `Release` workflow 已進入正式發版分支，但卡在 `Create release tags` 步驟。追查確認 workflow 仍在 CI 內呼叫 `pnpm changeset tag`，該指令會嘗試讀取 tty 並依 workspace 產生不完整且含非目標 package 的 tag；同時 workflow 已使用 `actions/setup-node@v6` 內建 pnpm cache，卻額外保留 `actions/cache@v4`，造成 Node 20 JavaScript action deprecation warning。本次改為只從 release metadata SSOT 顯式建立 package tag 與 app tag，並設定 timeout、tag 格式檢查與完整 refspec push。
+root_cause:
+
+- `pnpm changeset tag` 適合人工 release 流程，不適合在此 repo 的多 app release workflow 內當作 tag SSOT。
+- release workflow 已透過 `scripts/get-release-metadata.mjs --changed` 取得精準 app 清單，卻又額外呼叫 changesets tag 產生第二套 tag 行為。
+- `actions/setup-node@v6` 已提供 pnpm cache，額外使用 `actions/cache@v4` 只增加 Node 20 action warning 與維護成本。
+
+impact:
+
+- Release workflow 可建立 release PR，但正式發版階段可能卡住，導致 tag、GitHub release、Cloudflare purge 與 live precache 驗證無法收斂。
+- 卡住 run 需要人工取消，延長生產發布時間。
+- workflow warning 讓 Node 24 遷移狀態不乾淨，容易掩蓋真正需要處理的 release 訊號。
+
+actions:
+
+- 移除 `.github/workflows/release.yml` 內冗餘的 `actions/cache@v4` pnpm store cache，保留 `actions/setup-node@v6` 內建 cache。
+- 移除 `Create release tags` 中的 `pnpm changeset tag`，改由 `scripts/get-release-metadata.mjs --changed` 產生 tag 清單。
+- 對每個 tag 執行 `git check-ref-format --allow-onelevel`，並以 `refs/tags/<tag>:refs/tags/<tag>` 完整 refspec 推送。
+- 為 `Create release tags` 設定 5 分鐘 timeout，避免 workflow 無限卡住。
+- 將 GitHub release 建立改為先查 `gh release view`；只有 release 已存在才跳過，其他 `gh release create` 失敗維持阻塞。
+- 同步更新 root `README.md`、`AGENTS.md` 與 `CLAUDE.md` 的 release tag 與 Node 24 cache 控制規則。
+
+prevention:
+
+- release tag 來源只能有一份 SSOT：`scripts/get-release-metadata.mjs --changed`。
+- CI 內不得呼叫會讀 tty 或會自行推導 workspace tag 的互動式 release 指令。
+- GitHub release 建立失敗不得被廣義 catch 成 warning；只能明確處理已存在的 release。
+- Node 24 workflow 若已由官方 setup action 提供 cache，不再疊加舊版 cache action。
+- 之後查 release 狀態時，必須分別確認 release PR、tag、GitHub release 與部署驗證，不得只看其中一段成功。
+
+verification:
+
+- `gh run cancel 25040677441 --repo haotool/app`（已取消卡住的 release run）
+- `node scripts/get-release-metadata.mjs --changed`（確認 changed app 清單為 haotool、nihonname、park-keeper、quake-school、ratewise、split-meow）
+- `git check-ref-format --allow-onelevel`（確認 package tag 與 app tag 格式可用）
+- `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/release.yml')"`（release workflow YAML 可解析）
+- Node 24 環境下執行 `pnpm format`（通過）
+- Node 24 環境下執行 `pnpm typecheck`（通過）
+- Node 24 環境下執行 `pnpm changeset:status`（通過；確認 6 個 app 為 patch bump）
+- `git diff --check`（通過）
+- `git diff -- | rg -n "<PII patterns>"`（無輸出；PR diff 未新增本機路徑、帳號、email 或工具目錄）
+- 待本 PR CI 通過後，以 main release run 驗證 tag 建立、GitHub release 與 RateWise live precache
+
+references:
+
+- .github/workflows/release.yml
+- scripts/get-release-metadata.mjs
+- README.md
+- AGENTS.md
+- CLAUDE.md
+- https://github.com/changesets/action
+- https://github.com/actions/setup-node
 
 ---
 
