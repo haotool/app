@@ -1,5 +1,11 @@
 # @app/haotool
 
+## 1.0.6
+
+### Patch Changes
+
+- e11be87: 修正 Release workflow 的 tag 推送方式，避免 CI tag push 重複觸發 pre-push hook。
+
 ## 1.0.5
 
 ### Patch Changes
