@@ -603,7 +603,7 @@ git push origin main     # pre-push 自動驗證
 - 必須直接從 `resources.seoFiles` 與 `resources.images` 展開 URL；禁止重複維護第二份名單
 - 輸出必須明確分類為 `200`、`non200`、`timeout`
 - `SEO Production Validation` workflow 的 `health-check` 必須先跑此腳本，再跑 `verify-all-apps.mjs`
-- RateWise PWA 發版後，`health-check` 必須再跑 `VERIFY_PRECACHE_SOURCE=live node scripts/verify-precache-assets.mjs`
+- RateWise PWA 發版後，`health-check` 必須再跑 `VERIFY_PRECACHE_SOURCE=live VERIFY_BASE_URL=https://app.haotool.org/ratewise/ node scripts/verify-precache-assets.mjs`
 - live precache 驗證若出現「querystring 可 200、原 URL 為 404」，必須判定為 Cloudflare stale edge 404，先 purge CDN 再視為部署完成
 - RateWise release 若涉及正式站資產更新，必須先用 cache-busting probe 確認 `/ratewise/` 的 `app-version` 已切到目標版本，再執行 Cloudflare purge
 - RateWise Cloudflare purge 必須使用目標 URL + prefix（至少涵蓋 `/ratewise/`、`sw.js`、`registerSW.js`、`manifest.webmanifest`、`offline.html`、`assets`、`workbox-`、`static-loader-data-manifest`），purge 後立即重跑 live precache 驗證
