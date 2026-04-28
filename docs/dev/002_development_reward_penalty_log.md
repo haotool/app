@@ -1,6 +1,6 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-28T19:10:51+08:00
+> **最後更新**: 2026-04-28T19:32:57+08:00
 > **當前總分**: 1226（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
 
@@ -33,7 +33,8 @@ actions:
 
 - 使用 GitHub deployments API 查出 Zeabur production deployment active SHA 順序。
 - 更新 README / AGENTS / CLAUDE，要求 release PR 前確認前一個 main deployment 完成，並記錄失敗時以最小 PR 重新觸發最新 main 部署。
-- 本 PR 作為最小 redeploy trigger，讓 Zeabur 重新部署包含 `@app/ratewise@2.22.5` 的最新 main。
+- root docs / empty changeset PR #300 合併後未產生新的 Zeabur deployment，推定 Zeabur 只監看 app 範圍路徑。
+- 追加 app-scoped README PR 作為最小 redeploy trigger，讓 Zeabur 重新部署包含 `@app/ratewise@2.22.5` 的最新 main。
 
 prevention:
 
@@ -45,11 +46,12 @@ verification:
 - `gh api repos/haotool/app/deployments`
 - `gh api repos/haotool/app/deployments/<id>/statuses`
 - `curl -s --compressed https://app.haotool.org/ratewise/ ...`（確認失敗時仍為 2.22.4）
-- 本 PR 合併後待驗證：正式站 `app-version=2.22.5`、Release rerun / live precache、main CI。
+- app-scoped PR 合併後待驗證：正式站 `app-version=2.22.5`、Zeabur deployment active SHA、live precache、main CI。
 
 references:
 
 - README.md
+- apps/ratewise/README.md
 - AGENTS.md
 - CLAUDE.md
 - docs/dev/002_development_reward_penalty_log.md
