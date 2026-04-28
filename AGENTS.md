@@ -452,6 +452,7 @@ git push origin main     # pre-push 自動驗證
 
 - Node 24 workflow 優先使用官方 action 內建快取（例如 `actions/setup-node@v6` 的 `cache: pnpm`）。
 - 若 action 已被內建快取取代，禁止額外加入 `actions/cache@v4` 等 Node 20 JavaScript action，避免 release run 產生可預防的 deprecation warning。
+- secret scan 使用固定版本 Gitleaks CLI + checksum 驗證；組織 repo 不使用 `gitleaks/gitleaks-action@v2`，避免 license secret 缺失與 Node 20 action warning。
 
 ### Dependabot 安全警告處理流程
 
@@ -508,9 +509,10 @@ git push origin main     # pre-push 自動驗證
 
 1. 官方 action 需優先升到最新的 Node 24 相容 major（目前 `actions/checkout@v6`、`actions/setup-node@v6`）。
 2. 升版前必須查官方 release 或 `action.yml` 的 `runs.using`，不得只靠 warning 文字猜測。
-3. 若官方 action 最新穩定版仍停留在 `node20`，受影響 job 必須加上 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'` 作為過渡控制。
-4. 過渡控制只保留在仍依賴 Node 20 action 的 job；上游提供 Node 24 版本後應回到直接升版。
-5. workflow 版本升級後，必須至少做 YAML 解析與相關 workflow / `gh` checks 驗證，確認未引入語意漂移。
+3. 若官方 action 可被 CLI 安全替代，優先使用固定版本 CLI + checksum 驗證，移除 action deprecation 與授權 secret 依賴。
+4. 若官方 action 最新穩定版仍停留在 `node20` 且不可替代，受影響 job 必須加上 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'` 作為過渡控制。
+5. 過渡控制只保留在仍依賴 Node 20 action 的 job；上游提供 Node 24 版本後應回到直接升版。
+6. workflow 版本升級後，必須至少做 YAML 解析與相關 workflow / `gh` checks 驗證，確認未引入語意漂移。
 
 ### SEO 最佳實踐遷移（Schema.org @graph）
 
