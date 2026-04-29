@@ -178,9 +178,13 @@ async function runTests() {
   }
 
   // Test 6: lastmod 時間合理性（過去一年內，不在未來）
+  // date-only lastmod 在 TZ 邊界有固有歧義：產生器可能依 Asia/Taipei 把 `匯率時間：2026/04/29`
+  // 寫成 `<lastmod>2026-04-29</lastmod>`，但驗證器在 UTC 2026-04-28 跑時會把它視為「未來」。
+  // 容許未來日期最多 36 小時，覆蓋 UTC±14 所有 TZ 與當日邊界，仍能擋掉真正寫錯的年份/月份。
   console.log('\n📋 測試 6: lastmod 時間合理性');
   const now = Date.now();
   const oneYearAgo = now - 365 * 24 * 60 * 60 * 1000;
+  const FUTURE_DATE_TOLERANCE_MS = 36 * 60 * 60 * 1000;
   let invalidTimes = [];
 
   lastmods.forEach((lastmod, index) => {
@@ -188,7 +192,7 @@ async function runTests() {
 
     if (isNaN(time)) {
       invalidTimes.push(`${urls[index]}: Invalid date - ${lastmod}`);
-    } else if (time > now) {
+    } else if (time > now + FUTURE_DATE_TOLERANCE_MS) {
       invalidTimes.push(`${urls[index]}: Future date - ${lastmod}`);
     } else if (time < oneYearAgo) {
       invalidTimes.push(`${urls[index]}: Too old (>1 year) - ${lastmod}`);

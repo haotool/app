@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v4.8
+ * 安全標頭 Worker v4.9
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v4.9: 補齊 root agent discovery、Markdown negotiation、API catalog 與 Agent Skills index
  * - v4.8: 新增 AI 爬蟲存取記錄，追蹤 llms.txt 與 Markdown 鏡像存取頻率
  * - v4.7: 新增 Server-Timing 診斷標頭，記錄 fetch 與 rewrite 耗時
  * - v4.6: 新增穩定公開資產快取，logo.png 等設 7 天 public 快取
@@ -23,7 +24,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '4.8';
+const SECURITY_POLICY_VERSION = '4.9';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -50,8 +51,68 @@ const APP_HOST = 'app.haotool.org';
 const ROOT_SITE_HOSTS = new Set(['haotool.org', 'www.haotool.org', APP_HOST]);
 const ROOT_SITE_HTML_HOSTS = new Set(['haotool.org', 'www.haotool.org']);
 const HAOTOOL_ROOT_HTML_PATHS = new Set(['/', '/projects/', '/about/', '/contact/']);
+const HAOTOOL_ROOT_MARKDOWN_MIRROR = '/index.md';
 const RATEWISE_MARKDOWN_MIRROR = '/ratewise/index.md';
 const CONTENT_SIGNAL_HEADER = 'Content-Signal: ai-train=no, search=yes, ai-input=no';
+const AGENT_SKILLS_SCHEMA = 'https://schemas.agentskills.io/discovery/0.2.0/schema.json';
+const API_CATALOG_PATH = '/.well-known/api-catalog';
+const AGENT_SKILLS_INDEX_PATH = '/.well-known/agent-skills/index.json';
+const LEGACY_AGENT_SKILLS_INDEX_PATH = '/.well-known/skills/index.json';
+
+const AGENT_SKILL_ARTIFACTS = [
+	{
+		name: 'haotool-discovery',
+		description: 'Discover haotool.org public tools, Markdown mirrors, and agent-readable resources.',
+		content: `---
+name: haotool-discovery
+description: Discover haotool.org public tools, Markdown mirrors, and agent-readable resources.
+---
+
+# haotool Discovery
+
+Use this skill when an agent needs to understand the public haotool.org tool portfolio.
+
+## Canonical Entry Points
+
+- Portfolio home: https://app.haotool.org/
+- Markdown mirror: https://app.haotool.org/index.md
+- API catalog: https://app.haotool.org/.well-known/api-catalog
+- Agent skills index: https://app.haotool.org/.well-known/agent-skills/index.json
+
+## Available Tools
+
+- HaoRate: https://app.haotool.org/ratewise/
+- NihonName: https://app.haotool.org/nihonname/
+- ParkKeeper: https://app.haotool.org/park-keeper/
+- Quake School: https://app.haotool.org/quake-school/
+`,
+	},
+	{
+		name: 'ratewise-api',
+		description: 'Use HaoRate public exchange-rate resources, OpenAPI metadata, and Markdown mirrors.',
+		content: `---
+name: ratewise-api
+description: Use HaoRate public exchange-rate resources, OpenAPI metadata, and Markdown mirrors.
+---
+
+# HaoRate Public API Discovery
+
+Use this skill when an agent needs to discover public HaoRate exchange-rate resources.
+
+## Discovery
+
+- Application: https://app.haotool.org/ratewise/
+- OpenAPI: https://app.haotool.org/ratewise/openapi.json
+- Documentation: https://app.haotool.org/ratewise/open-data/
+- Markdown mirror: https://app.haotool.org/ratewise/index.md
+- Health probe: https://app.haotool.org/ratewise/__network_probe__
+
+## Guidance
+
+Use the OpenAPI document before calling data endpoints. Treat all rates as reference values; actual transactions depend on the financial institution.
+`,
+	},
+];
 
 const PUBLIC_SHARE_ASSET_PATHS = new Set([
 	'/og-image.png',
@@ -124,20 +185,78 @@ function isRatewiseHomepage(pathname) {
 	return pathname === '/ratewise/' || pathname === '/ratewise';
 }
 
-function shouldServeRatewiseMarkdown(request, pathname) {
+function isHaotoolRootHomepage(url) {
+	return ROOT_SITE_HOSTS.has(url.host) && normalizeHtmlPath(url.pathname) === '/';
+}
+
+function resolveMarkdownMirrorPath(request, url) {
 	if (request.method !== 'GET') {
-		return false;
+		return null;
 	}
 
 	if (!isMarkdownRequest(request)) {
-		return false;
+		return null;
 	}
 
-	return isRatewiseHomepage(pathname);
+	if (isRatewiseHomepage(url.pathname)) {
+		return RATEWISE_MARKDOWN_MIRROR;
+	}
+
+	if (isHaotoolRootHomepage(url)) {
+		return HAOTOOL_ROOT_MARKDOWN_MIRROR;
+	}
+
+	return null;
 }
 
-function shouldInjectRatewiseMarkdownLink(pathname) {
-	return isRatewiseHomepage(pathname);
+function isMarkdownNegotiablePath(url) {
+	return isRatewiseHomepage(url.pathname) || isHaotoolRootHomepage(url);
+}
+
+function ensureVaryToken(response, token) {
+	const existing = response.headers.get('Vary') || '';
+	const tokens = existing
+		.split(',')
+		.map((value) => value.trim())
+		.filter(Boolean);
+	if (tokens.some((value) => value.toLowerCase() === token.toLowerCase())) {
+		return;
+	}
+	tokens.push(token);
+	response.headers.set('Vary', tokens.join(', '));
+}
+
+function buildAbsoluteUrl(url, pathname) {
+	return new URL(pathname, `${url.protocol}//${url.host}`).toString();
+}
+
+function buildRootAgentDiscoveryLinks(url) {
+	return [
+		`<${buildAbsoluteUrl(url, HAOTOOL_ROOT_MARKDOWN_MIRROR)}>; rel="alternate"; type="text/markdown"`,
+		`<${buildAbsoluteUrl(url, API_CATALOG_PATH)}>; rel="api-catalog"; type="application/linkset+json"`,
+		`<${buildAbsoluteUrl(url, AGENT_SKILLS_INDEX_PATH)}>; rel="service-desc"; type="application/json"`,
+	];
+}
+
+function buildRatewiseAgentDiscoveryLinks(url) {
+	return [
+		`<${buildAbsoluteUrl(url, RATEWISE_MARKDOWN_MIRROR)}>; rel="alternate"; type="text/markdown"`,
+		`<${buildAbsoluteUrl(url, API_CATALOG_PATH)}>; rel="api-catalog"; type="application/linkset+json"`,
+		`<${buildAbsoluteUrl(url, '/ratewise/openapi.json')}>; rel="service-desc"; type="application/vnd.oai.openapi+json"`,
+		`<${buildAbsoluteUrl(url, '/ratewise/open-data/')}>; rel="service-doc"; type="text/html"`,
+	];
+}
+
+function resolveAgentDiscoveryLinks(url) {
+	if (isRatewiseHomepage(url.pathname)) {
+		return buildRatewiseAgentDiscoveryLinks(url);
+	}
+
+	if (isHaotoolRootHomepage(url)) {
+		return buildRootAgentDiscoveryLinks(url);
+	}
+
+	return [];
 }
 
 function addLinkHeader(response, headerValue) {
@@ -150,6 +269,126 @@ function addLinkHeader(response, headerValue) {
 	if (!existing.includes(headerValue)) {
 		response.headers.set('Link', `${existing}, ${headerValue}`);
 	}
+}
+
+function addLinkHeaders(response, headerValues) {
+	headerValues.forEach((headerValue) => addLinkHeader(response, headerValue));
+}
+
+function createDiscoveryHeaders(workerStart, contentType) {
+	return {
+		'Access-Control-Allow-Origin': '*',
+		'Cache-Control': 'public, max-age=3600, must-revalidate',
+		'Content-Type': contentType,
+		'X-Content-Type-Options': 'nosniff',
+		'X-Security-Policy-Version': SECURITY_POLICY_VERSION,
+		'Server-Timing': buildServerTiming({ total: performance.now() - workerStart }),
+	};
+}
+
+function jsonDiscoveryResponse(payload, workerStart, contentType = 'application/json; charset=utf-8') {
+	return new Response(`${JSON.stringify(payload, null, 2)}\n`, {
+		headers: createDiscoveryHeaders(workerStart, contentType),
+	});
+}
+
+function createApiCatalogResponse(url, workerStart) {
+	const rootOrigin = `${url.protocol}//${url.host}`;
+	const appOrigin = `https://${APP_HOST}`;
+	const ratewiseBase = `${appOrigin}/ratewise/`;
+	const linkset = {
+		linkset: [
+			{
+				anchor: rootOrigin,
+				alternate: [
+					{
+						href: `${rootOrigin}${HAOTOOL_ROOT_MARKDOWN_MIRROR}`,
+						type: 'text/markdown',
+					},
+				],
+				'api-catalog': [
+					{
+						href: `${rootOrigin}${API_CATALOG_PATH}`,
+						type: 'application/linkset+json',
+					},
+				],
+				'service-doc': [
+					{
+						href: `${rootOrigin}/projects/`,
+						type: 'text/html',
+					},
+				],
+			},
+			{
+				anchor: ratewiseBase,
+				'service-desc': [
+					{
+						href: `${ratewiseBase}openapi.json`,
+						type: 'application/vnd.oai.openapi+json',
+					},
+				],
+				'service-doc': [
+					{
+						href: `${ratewiseBase}open-data/`,
+						type: 'text/html',
+					},
+				],
+				status: [
+					{
+						href: `${ratewiseBase}__network_probe__`,
+					},
+				],
+				alternate: [
+					{
+						href: `${ratewiseBase}index.md`,
+						type: 'text/markdown',
+					},
+				],
+			},
+		],
+	};
+
+	return jsonDiscoveryResponse(
+		linkset,
+		workerStart,
+		'application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"; charset=utf-8',
+	);
+}
+
+function resolveAgentSkillArtifact(pathname) {
+	const match = pathname.match(/^\/\.well-known\/agent-skills\/([^/]+)\/SKILL\.md$/);
+	if (!match) {
+		return null;
+	}
+
+	return AGENT_SKILL_ARTIFACTS.find((skill) => skill.name === match[1]) ?? null;
+}
+
+async function sha256Digest(content) {
+	const bytes = new TextEncoder().encode(content);
+	const hash = await crypto.subtle.digest('SHA-256', bytes);
+	const hex = [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+	return `sha256:${hex}`;
+}
+
+async function createAgentSkillsIndexResponse(workerStart) {
+	const skills = await Promise.all(
+		AGENT_SKILL_ARTIFACTS.map(async (skill) => ({
+			name: skill.name,
+			type: 'skill-md',
+			description: skill.description,
+			url: `/.well-known/agent-skills/${skill.name}/SKILL.md`,
+			digest: await sha256Digest(skill.content),
+		})),
+	);
+
+	return jsonDiscoveryResponse({ $schema: AGENT_SKILLS_SCHEMA, skills }, workerStart);
+}
+
+function createAgentSkillResponse(skill, workerStart) {
+	return new Response(skill.content, {
+		headers: createDiscoveryHeaders(workerStart, 'text/markdown; charset=utf-8'),
+	});
 }
 
 function createHtmlProfile({
@@ -464,13 +703,26 @@ export default {
 		const isRatewisePath = url.pathname.startsWith('/ratewise/');
 		const isRootSiteHost = ROOT_SITE_HOSTS.has(url.host);
 		const isStaticAsset = isStaticAssetPath(url.pathname);
-		const isRatewiseHomeMarkdown = shouldServeRatewiseMarkdown(request, url.pathname);
-		const markdownMirrorUrl = new URL(RATEWISE_MARKDOWN_MIRROR, request.url);
-		const upstreamUrl = isRatewiseHomeMarkdown ? new URL(RATEWISE_MARKDOWN_MIRROR, request.url) : url;
+		const markdownMirrorPath = resolveMarkdownMirrorPath(request, url);
+		const isMarkdownNegotiation = markdownMirrorPath !== null;
+		const upstreamUrl = isMarkdownNegotiation ? new URL(markdownMirrorPath, request.url) : url;
 
 		if (url.host === WWW_HOST) {
 			url.host = CANONICAL_ROOT_HOST;
 			return Response.redirect(url.toString(), 308);
+		}
+
+		if (isRootSiteHost && url.pathname === API_CATALOG_PATH) {
+			return createApiCatalogResponse(url, workerStart);
+		}
+
+		if (isRootSiteHost && [AGENT_SKILLS_INDEX_PATH, LEGACY_AGENT_SKILLS_INDEX_PATH].includes(url.pathname)) {
+			return createAgentSkillsIndexResponse(workerStart);
+		}
+
+		const agentSkill = isRootSiteHost ? resolveAgentSkillArtifact(url.pathname) : null;
+		if (agentSkill !== null) {
+			return createAgentSkillResponse(agentSkill, workerStart);
 		}
 
 		if (url.pathname === '/ratewise/__network_probe__') {
@@ -550,11 +802,21 @@ export default {
 				response = new Response(upstreamResponse.body, upstreamResponse);
 			}
 
+			if (isMarkdownNegotiation) {
+				response.headers.set('Content-Type', 'text/markdown; charset=utf-8');
+			}
+
 			if (isImmutableHashedAsset(url.pathname)) {
 				response.headers.set('Cache-Control', 'max-age=31536000, public, immutable');
 			} else if (url.pathname.endsWith('.webmanifest')) {
 				response.headers.set('Content-Type', 'application/manifest+json');
 			}
+		}
+
+		// 對 markdown-negotiable 路徑（root `/` 與 `/ratewise/`）一律 `Vary: Accept`，
+		// 確保瀏覽器/CDN 不會以 `Accept` 之外的維度共用 HTML 與 Markdown 變體。
+		if (isMarkdownNegotiablePath(url)) {
+			ensureVaryToken(response, 'Accept');
 		}
 
 		response.headers.set('X-Security-Policy-Version', SECURITY_POLICY_VERSION);
@@ -585,8 +847,8 @@ export default {
 			response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 		}
 
-		if (shouldInjectRatewiseMarkdownLink(url.pathname) && isHTML) {
-			addLinkHeader(response, `<${markdownMirrorUrl.toString()}>; rel="alternate"; type="text/markdown"`);
+		if (isHTML) {
+			addLinkHeaders(response, resolveAgentDiscoveryLinks(url));
 		}
 
 		stripOriginLeakHeaders(response);

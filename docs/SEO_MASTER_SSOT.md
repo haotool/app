@@ -1,8 +1,9 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.5.0
+> **文件版本**: v2.6.0
 > **建立日期**: 2026-03-23
-> **最後更新**: 2026-04-27
+> **最後更新**: 2026-04-28
+> **v2.6.0 變更**: 補齊 root agent readiness SSOT：`app.haotool.org/` 首頁 Link headers、Markdown negotiation、robots Content-Signal、RFC 9727 API catalog 與 Agent Skills Discovery v0.2.0；OAuth / MCP / WebMCP 依真實產品能力標註為暫不發布假 metadata
 > **v2.5.0 變更**: 對齊 2026-04-27 程式現況與權威文件：`FAQPage` 收斂為 `/faq/` 專用、幣別頁移除 `FinancialService`、補入 `seo-public-surface` / `schema-truthfulness` / `seo-surface-order` 等公開真相閘門；同步修正文檔中 Markdown 鏡像、pair JSON、`lastmod` policy 與公開 SSOT 揭露規格
 > **文件性質**: AI 助手 + 工程師執行手冊 / SEO 單一真實來源
 > **適用版本**: HaoRate / `apps/ratewise` ≥ v2.21.0
@@ -124,6 +125,18 @@ RateWise 屬 YMYL 網站，Google 與 AI 引擎對此類型施加最嚴格的 E-
 6. **llmstxt.org**
    - `llms.txt` 應作為 AI 代理可快速擷取的索引入口，但不得與 HTML 內容語義漂移。
    - 來源：<https://llmstxt.org/index.html>
+7. **Cloudflare Markdown for Agents**
+   - Agent 以 `Accept: text/markdown` 請求 HTML 頁時，可回傳 Markdown 版本；瀏覽器預設仍維持 HTML。
+   - 來源：<https://developers.cloudflare.com/fundamentals/reference/markdown-for-agents/>
+8. **RFC 9727 / RFC 9264 API Catalog**
+   - `/.well-known/api-catalog` 必須支援 `application/linkset+json`，用 Linkset 揭露 API endpoint、OpenAPI、文件與狀態入口。
+   - 來源：<https://www.rfc-editor.org/rfc/rfc9727>, <https://www.rfc-editor.org/rfc/rfc9264>
+9. **Agent Skills Discovery v0.2.0**
+   - `/.well-known/agent-skills/index.json` 必須包含 `$schema`、`skills[]`、`type`、`url` 與 `digest: sha256:<hex>`。
+   - 來源：<https://github.com/cloudflare/agent-skills-discovery-rfc>
+10. **Content Signals / AIPREF draft**
+    - root robots 可用 `Content-Signal: ai-train=no, search=yes, ai-input=no` 宣告 AI 訓練、搜尋與 AI 輸入偏好。
+    - 來源：<https://contentsignals.org/>, <https://datatracker.ietf.org/doc/draft-romm-aipref-contentsignals/>
 
 ---
 
@@ -1257,62 +1270,53 @@ node scripts/fetch-rating-snapshot.mjs
 
 建議把 `12.6.4` 與 `12.6.2` 一起每週更新一次，任何 `非 200/403/404/429` 變更都要註明是否為 **站點退化** 或 **第三方限制**。
 
-#### 12.6.6 IsItAgentReady 掃描報告（2026-04-25）
+#### 12.6.6 IsItAgentReady 掃描報告（2026-04-28）
 
-- 測試目標：`https://app.haotool.org/ratewise/`
-- 實際掃描 URL：`https://app.haotool.org`（服務會先正規化）
-- 入口頁快照補充：`https://isitagentready.com/app.haotool.org/ratewise/`（頁面回傳 404）
-- 取得時間（UTC）：`2026-04-24T16:28:05.815Z`
-- 呼叫方式：`curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/json' -d '{"url":"https://app.haotool.org/ratewise/"}'`
-- 目前等級：`Level 1 - Basic Web Presence`（目前未進入 Level 2）
-- 下一目標：`Level 2 - Bot-Aware`（需讓 root 層也滿足 Link + Markdown negotiation + Content-Signal）
+- 測試目標：`https://app.haotool.org/`
+- 掃描頁：`https://isitagentready.com/app.haotool.org`
+- 取得時間（Asia/Taipei）：`2026-04-27 23:58:37`
+- 目前等級：`Level 1 - Basic Web Presence`
+- 總分：`25/100`
+- 分類分數：Discoverability `2/3`、Content `0/1`、Bot Access Control `1/2`、API/Auth/MCP/Skill Discovery `0/6`
 
-| 檢核區塊           | 項目                     | 狀態         | 摘要                                                                                     |
-| ------------------ | ------------------------ | ------------ | ---------------------------------------------------------------------------------------- |
-| 可發現性           | `robots.txt`             | pass         | robots.txt 有效且可解析                                                                  |
-| 可發現性           | `sitemap`                | pass         | Sitemap 存在且結構正確                                                                   |
-| 可發現性           | `Link header`            | fail         | 掃描器實測 root 端缺少 `Link` header；prod 端未覆蓋                                      |
-| 內容可存取         | `Markdown negotiation`   | pass（本地） | 本地修正：`Accept: text/markdown` 已導向 `/ratewise/index.md`（prod 端 `200 text/html`） |
-| 內容可存取         | `Markdown negotiation`   | fail（掃描） | 掃描器實測 root 返回 `text/html`（`Accept: text/markdown` 未被轉換）                     |
-| Bot Access Control | `Content-Signal`         | fail         | 掃描器實測 root robots 未回傳 `Content-Signal`（prod robots header 仍缺）                |
-| Bot Access Control | `Web Bot Auth`           | neutral      | `.well-known/http-message-signatures-directory` 無                                       |
-| 發現機制           | `apiCatalog`             | fail         | `/.well-known/api-catalog` 404                                                           |
-| 發現機制           | `oauthDiscovery`         | fail         | `/.well-known/openid-configuration` / `/.well-known/oauth-authorization-server` 404      |
-| 發現機制           | `oauthProtectedResource` | fail         | `/.well-known/oauth-protected-resource` 404                                              |
-| 發現機制           | `mcpServerCard`          | fail         | `/.well-known/mcp/server-card.json` 等候選路徑 404                                       |
-| 發現機制           | `a2aAgentCard`           | fail         | `/.well-known/agent-card.json` 404                                                       |
-| 發現機制           | `agentSkills`            | fail         | `/.well-known/agent-skills/index.json` 等候選路徑 404                                    |
-| 發現機制           | `webMcp`                 | fail         | 頁面載入未偵測到 WebMCP tools 註冊                                                       |
+| 檢核區塊           | 項目                     | 掃描狀態 | 本輪 SSOT 決策                                                                                                 |
+| ------------------ | ------------------------ | -------- | -------------------------------------------------------------------------------------------------------------- |
+| 可發現性           | `robots.txt`             | pass     | 保持 root robots 可讀，並由 Worker 移除 stale validators 後補 `Content-Signal`                                 |
+| 可發現性           | `sitemap`                | pass     | 保持 root sitemap 與各 app sitemap 指令                                                                        |
+| 可發現性           | `Link header`            | fail     | `security-headers` Worker v4.9 對 root HTML 加入 Markdown、API catalog、Agent Skills discovery Link headers    |
+| 內容可存取         | `Markdown negotiation`   | fail     | root `Accept: text/markdown` 改導向 `apps/haotool/public/index.md`；RateWise 仍導向 `/ratewise/index.md`       |
+| Bot Access Control | `Content-Signal`         | fail     | `apps/haotool/public/robots.txt` 與 Worker root robots rewrite 同步輸出 `ai-train=no, search=yes, ai-input=no` |
+| Bot Access Control | `Web Bot Auth`           | neutral  | 目前不是對外發送 signed bot request 的服務，暫不發布 JWKS directory                                            |
+| 發現機制           | `apiCatalog`             | fail     | 新增 `/.well-known/api-catalog`，回 `application/linkset+json`，揭露 HaoRate OpenAPI、文件與 health probe      |
+| 發現機制           | `oauthDiscovery`         | fail     | 目前沒有登入或授權伺服器，暫不發布假的 OAuth/OIDC issuer metadata                                              |
+| 發現機制           | `oauthProtectedResource` | fail     | 目前沒有受 OAuth 保護的 public API，暫不發布假的 protected-resource metadata                                   |
+| 發現機制           | `mcpServerCard`          | fail     | 目前沒有公開 MCP server，暫不發布假的 MCP Server Card                                                          |
+| 發現機制           | `a2aAgentCard`           | 未處理   | 本輪需求未納入 A2A；若未來有 agent endpoint，再建立 `.well-known/agent-card.json`                              |
+| 發現機制           | `agentSkills`            | fail     | 新增 `/.well-known/agent-skills/index.json`，採 v0.2.0 `$schema`、`skill-md` 與 `sha256:<hex>` digest          |
+| 發現機制           | `webMcp`                 | fail     | 目前沒有瀏覽器內工具執行面，暫不用 `navigator.modelContext.provideContext()` 註冊空工具                        |
 
-#### 12.6.6.1 改善建議（對應 Level 2）
+#### 12.6.6.1 本輪落地範圍（2026-04-28）
 
-- 先加入 `robots.txt` `Content-Signal` 宣告（建議值）：  
-  `Content-Signal: ai-train=no, search=yes, ai-input=no`（參考 `contentsignals.org`）
-- 加上首頁 `Link` header（可指向 markdown 鏡像）
-  - 例：`Link: <https://app.haotool.org/ratewise/index.md>; rel="alternate"; type="text/markdown"`
-- 若無法立即提供 MCP/A2A/Skills 能力，請在 SSOT 中明確註記「不提供」。若要達成更高分，逐步加入：
-  - `/.well-known/api-catalog`
-  - `/.well-known/openid-configuration` 或 `/.well-known/oauth-authorization-server`
-  - `/.well-known/oauth-protected-resource`
-  - `/.well-known/mcp/server-card.json`
-  - `/.well-known/agent-card.json`
-  - `/.well-known/agent-skills/index.json`
-- 重跑同一 API 後應更新 `12.6.6` 的 status 與 `12.6.3` 的風險策略（將此結果加入每週迭代紀錄）。
+- Edge SSOT：`security-headers/src/worker.js`
+  - root `/` HTML：加入 RFC 8288 `Link` headers，指向 `/index.md`、`/.well-known/api-catalog`、`/.well-known/agent-skills/index.json`
+  - root `/` Markdown negotiation：`Accept: text/markdown` 時回 `text/markdown` 的 `/index.md`
+  - `/.well-known/api-catalog`：回 RFC 9727 / RFC 9264 `application/linkset+json`
+  - `/.well-known/agent-skills/index.json`：回 Agent Skills Discovery v0.2.0 index
+  - `/.well-known/agent-skills/{name}/SKILL.md`：回可驗證 digest 對應的 Markdown skill artifact
+- Static fallback：`apps/haotool/public/index.md`、`apps/haotool/public/robots.txt`
+- Truthfulness gate：OAuth / MCP / WebMCP 只在產品實際提供能力時發布 metadata；禁止為了分數建立無法使用的發現文件。
 
-#### 12.6.6.2 本輪修正結果（2026-04-25）
+#### 12.6.6.2 生產驗證命令（發佈 Worker 後必跑）
 
-- 已完成 3 項 `Level 2` 前置：
-  - `Content-Signal`（`robots.txt` 自動產生邏輯）
-  - 首頁 `Link` Header（`/ratewise/` 對應 `index.md`）
-  - 首頁 markdown negotiation（`Accept: text/markdown` → `index.md`）
-- 已完成首頁鏡像落地：
-  - 新增 `apps/ratewise/public/index.md`（與 `generate-markdown-mirrors.mjs` 管道同步）
-  - 更新 `apps/ratewise/src/__tests__/markdown-mirror.test.ts` 覆蓋 `index.md`
-- 目前仍受限：
-  - 已於 `Security Worker` 將 `app.haotool.org` 加入 `ROOT_SITE_HOSTS`，等待生產部署後重跑，驗證 `root /` 與 `/ratewise/` 是否同步輸出 `Link` / `Content-Signal` / markdown negotiation
-  - IsItAgentReady API 目前以 `https://app.haotool.org` 起算，root 生產端缺 `Link` header 與 `Content-Signal`，且無 markdown negotiation，導致 `Level 2` 未過
-  - `https://app.haotool.org/ratewise/index.md` 目前回 404，導致外部建議的 markdown 鏡像入口還未在 prod 可直接對應
-  - 發佈並讓 root 端同時套用 `/ratewise/` SEO header / negotiation 後再重跑，才可判斷 `Level 2` 是否過關
+```bash
+curl -s --compressed https://app.haotool.org/ -D - -o /dev/null | grep -i '^link:'
+curl -s --compressed -H 'Accept: text/markdown' https://app.haotool.org/ -D - | head -40
+curl -s --compressed https://app.haotool.org/robots.txt | grep -i '^Content-Signal:'
+curl -s --compressed https://app.haotool.org/.well-known/api-catalog -D - | head -80
+curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json -D - | head -80
+```
+
+發佈前不得把 IsItAgentReady 等級標成已提升；此節只代表 repo 端已完成可部署變更。
 
 #### 12.6.7 2026-04-25 外部檢測網站快照（可重複報告）
 
@@ -1516,26 +1520,27 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 ---
 
-**最後更新**: 2026-04-27
-**版本**: v2.5.0
+**最後更新**: 2026-04-28
+**版本**: v2.6.0
 **維護者**: Development Team
 **下次審查日**: 2026-07-10（每季審查）
 
 ### 修訂紀錄
 
-| 日期       | 版本   | 變更摘要                                                                                                                             |
-| ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-04-27 | v2.5.0 | 對齊 2026 權威文件與現行程式：FAQPage 收斂為 `/faq/` only、幣別頁移除 FinancialService、補入 public truth surface / schema gate 規格 |
-| 2026-04-25 | v2.4.7 | 新增 `ROOT_SITE_HOSTS` 加入 `app.haotool.org`，待生產重測 `/` 與 `/ratewise/` SEO header / negotiation 對齊                          |
-| 2026-04-25 | v2.4.6 | 新增 12.6.6 生產實測差異（root /ratewise/ header 差異），補齊 46 筆權威入口重測快照與 IsItAgentReady 生產端檢核入口 404 檢核         |
-| 2026-04-25 | v2.4.5 | 新增 12.6.7 外部檢測快照與 12.6.6 IsItAgentReady 重掃實測；補齊 12.6.5 重複掃描命令，文件版本與修訂欄位同步                          |
-| 2026-04-25 | v2.4.3 | 補齊首頁 AI 可發現性修正：`robots.txt` Content-Signal、首頁 Link header、markdown negotiation；更新 markdown 鏡像與驗證規格          |
-| 2026-04-25 | v2.4.2 | 新增 IsItAgentReady 掃描報告節點（2026-04-24），補齊 Level 1 失敗項目清單與 BOT-Aware 升級建議                                       |
-| 2026-04-25 | v2.4.1 | 新增 2026-04-25 外部檢測快照、分層記錄第三方限制狀態，補齊外部可複用檢測命令與迭代規程                                               |
-| 2026-04-24 | v2.4.0 | 新增「權威 SEO 參考網站」與「生產網址外部檢測報告」節點；補充 26 個權威來源與 2026-04-24 外部回應紀錄                                |
-| 2026-04-24 | v2.3.0 | 對齊 apps/ratewise 現行 SEO 實作：FAQPage 改為 34 個幣別頁、補 FinancialService/Dataset/Person、同步 prebuild 與 Markdown 鏡像治理   |
-| 2026-04-23 | v2.2.0 | 同步 SEO SSOT 現況：249 URL、HaoRate 品牌、已完成 schema/Answer Capsule、AI crawler 共用清單與 sitemap 過時標籤治理                  |
-| 2026-04-20 | v1.3.0 | P1-5 完成：金額頁加入 ExchangeRateSpecification schema（含換算金額），4 個新測試案例                                                 |
-| 2026-04-10 | v1.2.0 | 新增 2026 年 AI 搜尋術語（AEO/GEO/LLMO 深度解析）、AI 平台特性對照表、更新 TODO 完成狀態                                             |
-| 2026-03-31 | v1.1.0 | 同步 v2.16.x 實作：seo-static.ts、AnswerCapsule 元件、路徑數量修正、健檢強化、TODO 已完成項目標記                                    |
-| 2026-03-23 | v1.0.0 | 初始版本，整合六份舊 SEO 文件                                                                                                        |
+| 日期       | 版本   | 變更摘要                                                                                                                                     |
+| ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-28 | v2.6.0 | 補齊 root Link headers、Markdown negotiation、Content-Signal、API catalog 與 Agent Skills index；明確標註 OAuth/MCP/WebMCP 不發布假 metadata |
+| 2026-04-27 | v2.5.0 | 對齊 2026 權威文件與現行程式：FAQPage 收斂為 `/faq/` only、幣別頁移除 FinancialService、補入 public truth surface / schema gate 規格         |
+| 2026-04-25 | v2.4.7 | 新增 `ROOT_SITE_HOSTS` 加入 `app.haotool.org`，待生產重測 `/` 與 `/ratewise/` SEO header / negotiation 對齊                                  |
+| 2026-04-25 | v2.4.6 | 新增 12.6.6 生產實測差異（root /ratewise/ header 差異），補齊 46 筆權威入口重測快照與 IsItAgentReady 生產端檢核入口 404 檢核                 |
+| 2026-04-25 | v2.4.5 | 新增 12.6.7 外部檢測快照與 12.6.6 IsItAgentReady 重掃實測；補齊 12.6.5 重複掃描命令，文件版本與修訂欄位同步                                  |
+| 2026-04-25 | v2.4.3 | 補齊首頁 AI 可發現性修正：`robots.txt` Content-Signal、首頁 Link header、markdown negotiation；更新 markdown 鏡像與驗證規格                  |
+| 2026-04-25 | v2.4.2 | 新增 IsItAgentReady 掃描報告節點（2026-04-24），補齊 Level 1 失敗項目清單與 BOT-Aware 升級建議                                               |
+| 2026-04-25 | v2.4.1 | 新增 2026-04-25 外部檢測快照、分層記錄第三方限制狀態，補齊外部可複用檢測命令與迭代規程                                                       |
+| 2026-04-24 | v2.4.0 | 新增「權威 SEO 參考網站」與「生產網址外部檢測報告」節點；補充 26 個權威來源與 2026-04-24 外部回應紀錄                                        |
+| 2026-04-24 | v2.3.0 | 對齊 apps/ratewise 現行 SEO 實作：FAQPage 改為 34 個幣別頁、補 FinancialService/Dataset/Person、同步 prebuild 與 Markdown 鏡像治理           |
+| 2026-04-23 | v2.2.0 | 同步 SEO SSOT 現況：249 URL、HaoRate 品牌、已完成 schema/Answer Capsule、AI crawler 共用清單與 sitemap 過時標籤治理                          |
+| 2026-04-20 | v1.3.0 | P1-5 完成：金額頁加入 ExchangeRateSpecification schema（含換算金額），4 個新測試案例                                                         |
+| 2026-04-10 | v1.2.0 | 新增 2026 年 AI 搜尋術語（AEO/GEO/LLMO 深度解析）、AI 平台特性對照表、更新 TODO 完成狀態                                                     |
+| 2026-03-31 | v1.1.0 | 同步 v2.16.x 實作：seo-static.ts、AnswerCapsule 元件、路徑數量修正、健檢強化、TODO 已完成項目標記                                            |
+| 2026-03-23 | v1.0.0 | 初始版本，整合六份舊 SEO 文件                                                                                                                |
