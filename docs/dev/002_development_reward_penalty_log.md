@@ -1,8 +1,130 @@
 # 開發獎懲與決策記錄 (2025-2026)
 
-> **最後更新**: 2026-04-28T19:32:57+08:00
+> **最後更新**: 2026-04-30T03:05:00+08:00
 > **當前總分**: 1226（初始分: 100）
 > **目標**: >120（優秀）| <80（警示）
+
+## 使用與格式規範（v3）
+
+- 採 **entry blocks**，每筆記錄以 `---` 分隔，禁止回退成巨型 table（對齊 `AGENTS.md / AGT-LOG-02`）。
+- 內容採 **人類可讀、可追溯** 原則，避免貼純 commit log（對齊 Keep a Changelog 的「for humans」原則）。
+- 條目順序以 **新到舊（reverse chronological）** 維護；補記歷史資料需在 `summary` 註明補登原因。
+- 事故類條目（`content_type: incident`）必須包含：`root_cause`、`impact`、`actions`、`prevention`、`verification`。
+- 時間欄位規範：
+  - 文件頂部 `最後更新`：ISO 8601（含時區）
+  - 每筆 `date`：`YYYY-MM-DD`
+- 建議維持固定欄位順序：`id/date/title/score/type/content_type/scope/topics/keywords/aliases/related_entries/summary/root_cause/impact/actions/prevention/verification/references`。
+
+## 格式依據（外部最佳實踐）
+
+- Keep a Changelog：強調變更紀錄應「給人讀」且採精選內容，不應直接傾倒 commit log。  
+  <https://keepachangelog.com/en/1.1.0/>
+- Google SRE Postmortem Culture：強調 root cause、預防行動、可驗證 action items 與無責文化。  
+  <https://sre.google/sre-book/postmortem-culture/>  
+  <https://sre.google/workbook/postmortem-culture/>
+- Atlassian Post-incident review best practices：建議固定模板、時間線、角色責任與可追蹤後續行動。  
+  <https://support.atlassian.com/jira-service-management-cloud/docs/post-incident-review-best-practices/>  
+  <https://www.atlassian.com/incident-management/postmortem/templates>
+
+## 近期索引（最近 12 筆）
+
+1. `2026-04-30`｜`pr303-seo-ssot-rerun-and-audit-trace-2026-04-30`｜PR303 補齊 AGT-LOG-01 並完成 ratewise SEO 例行重跑基線
+2. `2026-04-30`｜`pr303-seo-rate-examples-refresh-2026-04-30`｜對齊 pre-push 重新生成的 SEO 匯率範例輸出
+3. `2026-04-28`｜`ratewise-225-zeabur-deployment-race`｜修正 RateWise 2.22.5 發版後 Zeabur production deployment race
+4. `2026-04-28`｜`dependabot-moderate-fast-xml-parser`｜修正 fast-xml-parser moderate Dependabot 警告並評估 uuid alert
+5. `2026-04-28`｜`ci-gitleaks-cli-node24`｜移除 Gitleaks action license 與 Node 20 註記，改用固定版本 CLI 掃描
+6. `2026-04-28`｜`release-tag-timeout-ssot`｜修正 Release tag 建立卡住，移除 Node 20 cache action warning
+7. `2026-04-28`｜`release-pr-commitlint-masked-success`｜修正 Release workflow 偽成功並刷新文件基線，恢復 changeset 發版鏈路
+8. `2026-04-27`｜`ratewise-review-thread-replace-html-regex-with-domparser`｜將 SEO public surface 可見文字抽取從 regex 改為 DOMParser，終結 script/style 邊界案例
+9. `2026-04-27`｜`ratewise-review-thread-fix-script-end-tag-whitespace`｜修復 CodeQL 對 `</script >` / `</style >` 結尾空白標籤的 HTML 過濾漏網
+10. `2026-04-27`｜`ratewise-review-thread-fixes-cwd-and-html-regex`｜修復 PR review 兩條未解 thread，補齊大小寫 HTML 過濾與 CWD 無關測試路徑解析
+11. `2026-04-27`｜`ratewise-lastmod-fallback-test-precedence`｜補強 lastmod fallback 測試，明確驗證匯率時間優先於生成日期
+12. `2026-04-27`｜`ratewise-seo-public-surface-suite`｜新增集中式 SEO public surface regression suite，鎖住 route 順序與 sitemap 公開輸出
+
+---
+
+id: pr303-seo-ssot-rerun-and-audit-trace-2026-04-30
+date: 2026-04-30
+title: PR303 補齊 AGT-LOG-01 並完成 ratewise SEO 例行重跑基線
+score: 0
+type: improvement
+content_type: seo
+scope: ratewise, seo, ssot, github-pr
+topics: [seo, ssot, audit, codex-review, compliance]
+keywords:
+[PR303, AGT-LOG-01, SEO_MASTER_SSOT, verify-production-seo, verify-production-resources, verify-structured-data]
+aliases: [PR303 codex review resolution]
+related_entries:
+[ratewise-seo-ssot-external-audit-2026-04-25, pr275-codex-command-evidence-fix-2026-04-26]
+summary: 依 PR303 Codex review（P1）補齊 `docs/dev/002_development_reward_penalty_log.md` 的稽核證據鏈，並同步執行 ratewise SEO 例行重跑，將結果更新到 `docs/SEO_MASTER_SSOT.md` v2.7.1（新增 12.7.8 狀態快照）。
+root_cause:
+
+- `docs/SEO_MASTER_SSOT.md` 連續多次提交未同步新增 002 條目，違反 `AGENTS.md` 的 AGT-LOG-01「每次 commit 前更新 002」要求。
+  impact:
+
+- PR 審查可讀，但稽核可追溯鏈中斷，無法由 002 直接回放本次 SEO SSOT 更新的驗證證據與狀態判定。
+  actions:
+
+- 更新 `docs/SEO_MASTER_SSOT.md` 至 v2.7.1，新增 `12.7.8` 記錄 2026-04-30 的例行重跑結果。
+- 執行並記錄 `verify-production-seo`、`verify-production-resources`、`verify-structured-data`、`seo-public-surface` 與補充 smoke probe（11 端點）。
+- 補寫本條 002 entry（含 id/content_type/topics/keywords/related_entries）恢復 AGT-LOG-01 合規。
+  prevention:
+
+- 後續每次 SEO SSOT 版號更新時，將「新增 002 entry」列為 commit 前固定檢查點。
+- PR 回覆 Codex comment 前先確認 002 是否已包含對應變更紀錄與驗證命令。
+  verification:
+
+- `node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+- `node scripts/verify-production-resources.mjs ratewise`
+- `node scripts/verify-structured-data.mjs`
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/seo-public-surface.test.ts`
+- `for url in ...; curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$url"`（11 端點 smoke probe）
+  references:
+
+- docs/SEO_MASTER_SSOT.md
+- docs/dev/002_development_reward_penalty_log.md
+- scripts/verify-production-seo.mjs
+- scripts/verify-production-resources.mjs
+- scripts/verify-structured-data.mjs
+- apps/ratewise/src/**tests**/seo-public-surface.test.ts
+
+---
+
+id: pr303-seo-rate-examples-refresh-2026-04-30
+date: 2026-04-30
+title: 對齊 pre-push 重新生成的 SEO 匯率範例輸出
+score: 0
+type: improvement
+content_type: seo
+scope: ratewise, generated-data
+topics: [seo, ssot, generated-artifact, pre-push]
+keywords:
+[seo-rate-examples, prebuild-fetch-rates, generated-sync]
+aliases: [ratewise seo-rate-examples refresh]
+related_entries:
+[pr303-seo-ssot-rerun-and-audit-trace-2026-04-30]
+summary: pre-push 的 `build:ratewise` 重新抓取即時匯率後，`seo-rate-examples.ts` 產生時間戳與範例值更新；本次補提交該 generated 漂移，確保 PR head 與可重現輸出一致。
+root_cause:
+
+- `prebuild-fetch-rates` 與 `update-seo-rate-examples` 依即時資料重建輸出，推送後仍產生未提交 diff。
+  impact:
+
+- 若不補提交，會阻擋 `gh pr merge`，也使 PR 狀態與本地生成結果不一致。
+  actions:
+
+- 提交 `apps/ratewise/src/config/generated/seo-rate-examples.ts` 最新生成內容。
+- 補寫 002 條目以維持 AGT-LOG-01 合規。
+  prevention:
+
+- 推送後固定執行 `git status --short`，若僅有 generated 漂移即即時補提交。
+  verification:
+
+- `pnpm build:ratewise`（由 pre-push 自動執行）
+- `git diff -- apps/ratewise/src/config/generated/seo-rate-examples.ts`
+  references:
+
+- apps/ratewise/src/config/generated/seo-rate-examples.ts
+- docs/dev/002_development_reward_penalty_log.md
 
 ---
 
@@ -1113,93 +1235,6 @@ root_cause:
 - apps/ratewise/src/config/seo-metadata.ts
 - apps/ratewise/src/**tests**/seo-surface-order.test.ts
 - apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
-
----
-
-id: pr303-seo-ssot-rerun-and-audit-trace-2026-04-30
-date: 2026-04-30
-title: PR303 補齊 AGT-LOG-01 並完成 ratewise SEO 例行重跑基線
-score: 0
-type: improvement
-content_type: seo
-scope: ratewise, seo, ssot, github-pr
-topics: [seo, ssot, audit, codex-review, compliance]
-keywords:
-[PR303, AGT-LOG-01, SEO_MASTER_SSOT, verify-production-seo, verify-production-resources, verify-structured-data]
-aliases: [PR303 codex review resolution]
-related_entries:
-[ratewise-seo-ssot-external-audit-2026-04-25, pr275-codex-command-evidence-fix-2026-04-26]
-summary: 依 PR303 Codex review（P1）補齊 `docs/dev/002_development_reward_penalty_log.md` 的稽核證據鏈，並同步執行 ratewise SEO 例行重跑，將結果更新到 `docs/SEO_MASTER_SSOT.md` v2.7.1（新增 12.7.8 狀態快照）。
-root_cause:
-
-- `docs/SEO_MASTER_SSOT.md` 連續多次提交未同步新增 002 條目，違反 `AGENTS.md` 的 AGT-LOG-01「每次 commit 前更新 002」要求。
-  impact:
-
-- PR 審查可讀，但稽核可追溯鏈中斷，無法由 002 直接回放本次 SEO SSOT 更新的驗證證據與狀態判定。
-  actions:
-
-- 更新 `docs/SEO_MASTER_SSOT.md` 至 v2.7.1，新增 `12.7.8` 記錄 2026-04-30 的例行重跑結果。
-- 執行並記錄 `verify-production-seo`、`verify-production-resources`、`verify-structured-data`、`seo-public-surface` 與補充 smoke probe（11 端點）。
-- 補寫本條 002 entry（含 id/content_type/topics/keywords/related_entries）恢復 AGT-LOG-01 合規。
-  prevention:
-
-- 後續每次 SEO SSOT 版號更新時，將「新增 002 entry」列為 commit 前固定檢查點。
-- PR 回覆 Codex comment 前先確認 002 是否已包含對應變更紀錄與驗證命令。
-  verification:
-
-- `node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
-- `node scripts/verify-production-resources.mjs ratewise`
-- `node scripts/verify-structured-data.mjs`
-- `pnpm --filter @app/ratewise exec vitest run src/__tests__/seo-public-surface.test.ts`
-- `for url in ...; curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$url"`（11 端點 smoke probe）
-  references:
-
-- docs/SEO_MASTER_SSOT.md
-- docs/dev/002_development_reward_penalty_log.md
-- scripts/verify-production-seo.mjs
-- scripts/verify-production-resources.mjs
-- scripts/verify-structured-data.mjs
-- apps/ratewise/src/**tests**/seo-public-surface.test.ts
-
----
-
-id: pr303-seo-rate-examples-refresh-2026-04-30
-date: 2026-04-30
-title: 對齊 pre-push 重新生成的 SEO 匯率範例輸出
-score: 0
-type: improvement
-content_type: seo
-scope: ratewise, generated-data
-topics: [seo, ssot, generated-artifact, pre-push]
-keywords:
-[seo-rate-examples, prebuild-fetch-rates, generated-sync]
-aliases: [ratewise seo-rate-examples refresh]
-related_entries:
-[pr303-seo-ssot-rerun-and-audit-trace-2026-04-30]
-summary: pre-push 的 `build:ratewise` 重新抓取即時匯率後，`seo-rate-examples.ts` 產生時間戳與範例值更新；本次補提交該 generated 漂移，確保 PR head 與可重現輸出一致。
-root_cause:
-
-- `prebuild-fetch-rates` 與 `update-seo-rate-examples` 依即時資料重建輸出，推送後仍產生未提交 diff。
-  impact:
-
-- 若不補提交，會阻擋 `gh pr merge`，也使 PR 狀態與本地生成結果不一致。
-  actions:
-
-- 提交 `apps/ratewise/src/config/generated/seo-rate-examples.ts` 最新生成內容。
-- 補寫 002 條目以維持 AGT-LOG-01 合規。
-  prevention:
-
-- 推送後固定執行 `git status --short`，若僅有 generated 漂移即即時補提交。
-  verification:
-
-- `pnpm build:ratewise`（由 pre-push 自動執行）
-- `git diff -- apps/ratewise/src/config/generated/seo-rate-examples.ts`
-  references:
-
-- apps/ratewise/src/config/generated/seo-rate-examples.ts
-- docs/dev/002_development_reward_penalty_log.md
-
----
 
 id: pr281-regex-end-tag-generalization-fix-2026-04-26
 date: 2026-04-26
