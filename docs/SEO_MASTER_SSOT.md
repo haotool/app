@@ -1,8 +1,10 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.6.0
+> **文件版本**: v2.7.1
 > **建立日期**: 2026-03-23
-> **最後更新**: 2026-04-28
+> **最後更新**: 2026-04-30
+> **v2.7.1 變更**: 依 PR #303 Codex review 補齊 AGT-LOG-01 稽核鏈；完成 2026-04-30 ratewise SEO 例行重跑（`verify-production-seo`、`verify-production-resources`、`verify-structured-data`、`seo-public-surface`、§12.7.7 命令 #5 補充探針）並記錄最新狀態，全數通過。
+> **v2.7.0 變更**: 新增 §12.7「2026-04-29 SEO 深度審查報告（部署前快照）」— 12 構面評分（總分 88/100）、26 端點生產驗證、Worker v4.9 prod-source drift 證據、待補項與優先級。本快照定格在審查時點，作為 incident 學習與 monthly check baseline；§12.7.3 / §12.7.4 / §12.7.6 已逐項標註各 P0 項目實際解決日期與 Cloudflare version ID。本次發版同步執行 PR #302 merge（commit `dbe4c15b`）+ Worker v4.9 部署（version `7d094658-55a0-4e99-b478-67006d2fce69`）+ Zeabur production 跟進（`dbe4c15b09` @ 2026-04-29 12:29 UTC）+ IsItAgentReady Level 2 達成驗證。值班人員月檢時請以 §12.7.3 表格右側「現況」欄與 §12.7.6 P0 列的解決狀態為準，不要以審查日的初始描述判斷待辦。
 > **v2.6.0 變更**: 補齊 root agent readiness SSOT：`app.haotool.org/` 首頁 Link headers、Markdown negotiation、robots Content-Signal、RFC 9727 API catalog 與 Agent Skills Discovery v0.2.0；OAuth / MCP / WebMCP 依真實產品能力標註為暫不發布假 metadata
 > **v2.5.0 變更**: 對齊 2026-04-27 程式現況與權威文件：`FAQPage` 收斂為 `/faq/` 專用、幣別頁移除 `FinancialService`、補入 `seo-public-surface` / `schema-truthfulness` / `seo-surface-order` 等公開真相閘門；同步修正文檔中 Markdown 鏡像、pair JSON、`lastmod` policy 與公開 SSOT 揭露規格
 > **文件性質**: AI 助手 + 工程師執行手冊 / SEO 單一真實來源
@@ -62,6 +64,8 @@
     - [12.6.5 外部檢測命令（可重複執行）](#1265-外部檢測命令)
     - [12.6.6 IsItAgentReady 掃描報告（2026-04-25）](#1266-isitagentready-掃描報告2026-04-25)
     - [12.6.7 2026-04-25 外部檢測網站快照（可重複報告）](#1267-2026-04-25-外部檢測網站快照可重複報告)
+    - [12.7 2026-04-29 SEO 深度審查報告](#127-2026-04-29-seo-深度審查報告)
+    - [12.7.8 2026-04-30 例行重跑狀態](#1278-2026-04-30-例行重跑狀態)
 13. [SEO 缺口分析（2026-04-10）](#13-seo-缺口分析2026-04-10-審查)
 14. [優先 TODO 清單](#14-優先-todo-清單原-13編號保持連貫)
 15. [詞彙表](#15-詞彙表)
@@ -1339,6 +1343,178 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
   - `404:5` 主要來自工具入口變更、W3C/社群限制與未發佈鏡像資源，需追蹤為平台限制或 prod 落地差距。
   - IsItAgentReady 觀測上仍需以「root 正規化」行為為前提重新評估 Level 2，否則 `Link header` 與 `markdown negotiation` 的結果不會準確反映 `/ratewise/` 狀態。
 
+### 12.7 2026-04-29 SEO 深度審查報告
+
+> **稽核範圍**: `apps/ratewise` @ `https://app.haotool.org/ratewise/`
+> **稽核時間**: 2026-04-29（Asia/Taipei）
+> **方法**: 平行 26 端點 `curl` 探測 + HTML 內聯結構解析 + JSON-LD `@type` 抽樣 + Cache-Control / Server-Timing 表頭驗證；PageSpeed Insights API 當日 quota 用盡，效能維度改用 TTFB/HTML 大小/Cache 表頭客觀指標近似（不替代 Lighthouse）
+> **執行者**: Claude（基於 `seo-audit` skill）
+> **總分**: **88 / 100**（高成熟度技術 SEO，主要扣分集中在 Worker v4.9 待部署、子頁 Markdown 鏡像缺失、404 頁無 SEO 友善設計）
+
+#### 12.7.1 構面評分總覽
+
+| #   | 構面                      | 分數 | 主要依據                                                                                                                                                                                                                                                                                                                    |
+| --- | ------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Crawlability              | 95   | sitemap 249 URL、robots 四層分群完整、AI bot allowlist；扣分項：4/5 子頁 `index.md` 鏡像 prod 404                                                                                                                                                                                                                           |
+| 2   | Indexation                | 95   | canonical 全頁正確、hreflang `zh-TW`+`x-default`、`/privacy/` `noindex,follow` 正確                                                                                                                                                                                                                                         |
+| 3   | Site Speed (近似)         | 80   | HTML TTFB 1.0–1.6s（首頁最慢 1.612s）、HTML 60–110KB；CDN `max-age=300, swr=3600` ✅；瀏覽器 `no-cache, must-revalidate`（BFCache 安全）；缺 PSI 客觀分                                                                                                                                                                     |
+| 4   | Mobile-friendly           | 90   | manifest 完整（7 icons、5 screenshots、`display: standalone`）、PWA、SSG 預渲染；缺 PSI 行動效能分                                                                                                                                                                                                                          |
+| 5   | Security/HTTPS            | 95   | HSTS（Cloudflare edge）、CSP nonce（`/ratewise/`）、Worker `x-security-policy-version: 4.9`；扣分項：Worker v4.9 為 orphan deploy，缺 Level 2 邏輯（PR #302 未 merge）                                                                                                                                                      |
+| 6   | Schema markup             | 95   | 11+ schema types（`SoftwareApplication`、`Organization`、`WebSite`、`CurrencyConversionService`、`ExchangeRateSpecification`、`FAQPage` 限 `/faq/`、`HowTo`、`Article`、`BreadcrumbList`、`Dataset`、`Person`、`ContactPage`、`SpeakableSpecification`）；`knowsAbout` 12 個主題                                            |
+| 7   | On-page (Title/Desc/H1)   | 85   | H1 唯一、結構正確；title 偏長（首頁 100 chars、`/about/` 103 chars，Google SERP 截斷在 50–60）、description 偏長（`/about/` 269、`/faq/` 255、`/guide/` 247、首頁 180，SERP 截斷在 ~160）                                                                                                                                   |
+| 8   | Content quality / E-E-A-T | 90   | E-E-A-T 完整（資料來源、`Person` schema、`knowsAbout`、Authority Guide 三篇）、Answer Capsule、FAQ 5–7 題 / 幣別、可見更新時間戳                                                                                                                                                                                            |
+| 9   | AI/LLM readiness          | 80   | `llms.txt`（12 H1 / 16 H2 / 55 連結）、`llms-full.txt`（313 行）、`openapi.json` 3.1.0、`api/latest.json` metadata 完整；扣分項：root `/index.md` 200 ✅ 但 `Content-Type: application/octet-stream`、4/5 子頁 `index.md` 404、`/.well-known/api-catalog` 與 `/.well-known/agent-skills/index.json` 404（PR #302 未 merge） |
+| 10  | Internal linking          | 90   | 249 URL sitemap、reverse pair（`twd-xxx/`）、`BreadcrumbList` schema、Authority Guide 內部連結                                                                                                                                                                                                                              |
+| 11  | 404 handling              | 60   | nginx default 404（純文字 `404 Not Found`），無品牌、無導引、無 SEO 友善文案；建議改 SSG `/404.html` 由 Cloudflare/Zeabur 接管                                                                                                                                                                                              |
+| 12  | Image optimization        | 85   | `og-image.jpg` 126 KB（可降至 < 100 KB 或改 WebP）、5 個 manifest screenshots；建議 `<img loading="lazy">` 普查                                                                                                                                                                                                             |
+
+> 公式：12 構面算術平均（每構面權重相同），總分 88/100；若以「對 Google/AI 排名實際影響」加權，Crawlability/Indexation/Schema/AI readiness 為高權重，這些構面表現均 ≥ 80，整體仍屬 A 等級。
+
+#### 12.7.2 平行端點稽核結果（2026-04-29）
+
+| 類別 | 端點                                       | HTTP | Content-Type                | Size   | TTFB   | 備註                                                                  |
+| ---- | ------------------------------------------ | ---- | --------------------------- | ------ | ------ | --------------------------------------------------------------------- |
+| HTML | `/ratewise/`                               | 200  | `text/html`                 | 79 KB  | 1.612s | JSON-LD 1 block / 9 schema types                                      |
+| HTML | `/ratewise/faq/`                           | 200  | `text/html`                 | 90 KB  | 1.306s | `FAQPage` schema ✅                                                   |
+| HTML | `/ratewise/about/`                         | 200  | `text/html`                 | 71 KB  | 1.246s | `ContactPage` + `Person` ✅                                           |
+| HTML | `/ratewise/guide/`                         | 200  | `text/html`                 | 79 KB  | 1.365s | `HowTo` schema ✅                                                     |
+| HTML | `/ratewise/open-data/`                     | 200  | `text/html`                 | 107 KB | 1.390s | `Dataset` + `DataCatalog` + `DataDownload` ✅                         |
+| HTML | `/ratewise/privacy/`                       | 200  | `text/html`                 | 60 KB  | 1.385s | `noindex,follow` ✅、無 JSON-LD ✅                                    |
+| HTML | `/ratewise/usd-twd/`                       | 200  | `text/html`                 | 100 KB | 1.348s | `ExchangeRateSpecification` ✅                                        |
+| HTML | `/ratewise/jpy-twd/`                       | 200  | `text/html`                 | 100 KB | 1.147s | 同上                                                                  |
+| HTML | `/ratewise/eur-twd/`                       | 200  | `text/html`                 | 100 KB | 1.356s | 同上                                                                  |
+| HTML | `/ratewise/twd-usd/`                       | 200  | `text/html`                 | 99 KB  | 1.324s | reverse pair `twd-xxx/` ✅                                            |
+| HTML | `/ratewise/usd-twd/100/`                   | 200  | `text/html`                 | 102 KB | 1.323s | amount 模式 `ExchangeRateSpecification`（含 `100 USD → TWD`）✅       |
+| HTML | `/ratewise/jpy-twd/10000/`                 | 200  | `text/html`                 | 103 KB | 1.012s | 同上                                                                  |
+| XML  | `/ratewise/sitemap.xml`                    | 200  | `text/xml, application/xml` | 86 KB  | —      | 249 URL ✅                                                            |
+| TXT  | `/ratewise/robots.txt`                     | 200  | `text/plain, text/plain`    | 10 KB  | —      | 四層分群 + Content-Signal ✅；⚠️ Content-Type 重複 token              |
+| TXT  | `/ratewise/llms.txt`                       | 200  | `text/plain, text/plain`    | 15 KB  | —      | 12 H1 / 16 H2 / 55 連結；⚠️ Content-Type 重複                         |
+| TXT  | `/ratewise/llms-full.txt`                  | 200  | `text/plain`                | 15 KB  | —      | 313 行；Content-Type 正常                                             |
+| JSON | `/ratewise/api/latest.json`                | 200  | `application/json`          | 2.5 KB | —      | metadata SSOT（含 `endpoints` / `cdnEndpoints` / `pairEndpoints`）    |
+| JSON | `/ratewise/openapi.json`                   | 200  | `application/json`          | 17 KB  | —      | OpenAPI 3.1.0、3 paths                                                |
+| JSON | `/ratewise/manifest.webmanifest`           | 200  | `application/manifest+json` | 2.7 KB | —      | 7 icons、5 screenshots、`standalone`                                  |
+| IMG  | `/ratewise/og-image.jpg`                   | 200  | `image/jpeg`                | 126 KB | —      | 1200×630；建議降至 < 100 KB 或 WebP                                   |
+| MD   | `/ratewise/index.md`                       | 200  | `application/octet-stream`  | 3 KB   | —      | ⚠️ Content-Type 應為 `text/markdown`（root 鏡像，由 worker 額外處理） |
+| MD   | `/ratewise/faq.md`                         | 200  | `application/octet-stream`  | 8.6 KB | —      | A3 子頁鏡像（per `_headers` + `generate-markdown-mirrors.mjs` SSOT）  |
+| MD   | `/ratewise/about.md`                       | 200  | `application/octet-stream`  | 4.8 KB | —      | A3 子頁鏡像                                                           |
+| MD   | `/ratewise/guide.md`                       | 200  | `application/octet-stream`  | 2.3 KB | —      | A3 子頁鏡像                                                           |
+| MD   | `/ratewise/open-data.md`                   | 200  | `application/octet-stream`  | 3.9 KB | —      | A3 子頁鏡像                                                           |
+| MD   | `/ratewise/privacy.md`                     | 200  | `application/octet-stream`  | 1.7 KB | —      | A3 子頁鏡像（noindex 頁亦提供 markdown 鏡像）                         |
+| 404  | `/ratewise/this-page-does-not-exist-12345` | 404  | `text/html`                 | 153 B  | —      | nginx default，無 SEO 友善設計                                        |
+
+#### 12.7.3 對比 SSOT 既有規範的差距
+
+| SSOT 標                                                                             | 程式碼狀態                                                                                                           | 生產實況                                                                                                     | 結論                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §14 A3「5 個 SSG 頁產生 `.md` 鏡像」✅                                              | `apps/ratewise/public/{index,faq,about,guide,open-data,privacy}.md` 已建立、`generate-markdown-mirrors.mjs` 管線存在 | `/ratewise/index.md`、`/ratewise/{faq,about,guide,open-data,privacy}.md` 全 200 ✅                           | ✅ **無 drift**：本次審查初版誤把鏡像路徑寫成 `/ratewise/{slug}/index.md`，但 repo SSOT（per `_headers` `Link: </ratewise/{slug}.md>; rel=alternate` + `generate-markdown-mirrors.mjs` 輸出 `public/{slug}.md`）的設計就是 `/ratewise/{slug}.md`；以該路徑重測，5 個子頁 + 1 個首頁鏡像全部 200。Round-5 review 已修正                                            |
+| §14 P1-7a「`_headers` 加入 `Link: <…md>; rel=alternate`」✅                         | Worker `shouldInjectRatewiseMarkdownLink` 邏輯 main 已具                                                             | `/ratewise/` GET response 無 `Link:` header                                                                  | ✅ **已解決 2026-04-29 12:25 UTC**：PR #302 squash-merge 進 main（`dbe4c15b`），`cd security-headers && npx wrangler deploy` 部署 Cloudflare version `7d094658-55a0-4e99-b478-67006d2fce69`；live 驗證 `/ratewise/` GET response 已含 4 個 Link entries（markdown alternate + api-catalog + openapi service-desc + open-data service-doc）                        |
+| §12.6.6 IsItAgentReady Level 2「root markdown negotiation / Link / Content-Signal」 | main worker 已具 root 邏輯（`isHaotoolRootHomepage`、`buildRootAgentDiscoveryLinks`）                                | root `/` GET `Accept: text/markdown` 仍回 `text/html`；無 `Link:`；root `/robots.txt` body 無 Content-Signal | ✅ **已達成 Level 2 (Bot-Aware) 2026-04-29 12:29 UTC**：IsItAgentReady API 重掃確認 `level=2`；live 驗證 root `/` GET `Accept: text/markdown` → 200 `text/markdown; charset=utf-8`、3 個 Link entries、`/robots.txt` body 含 `Content-Signal: ai-train=no, search=yes, ai-input=no`、`/.well-known/api-catalog` + `/.well-known/agent-skills/index.json` 全部 200 |
+| `index.md` Content-Type                                                             | `_headers` 應指定 `text/markdown`                                                                                    | prod 回 `application/octet-stream`                                                                           | **未生效**：Zeabur 上游或 worker 未設正確 MIME；建議 worker 在 `/index.md` `.endsWith` 時補 `text/markdown; charset=utf-8`                                                                                                                                                                                                                                        |
+| robots.txt / llms.txt Content-Type                                                  | 應為 `text/plain; charset=utf-8`                                                                                     | prod 回 `text/plain, text/plain`（重複 token）                                                               | 上游 Zeabur 與 Cloudflare worker 各加一次；輕微噪音不影響爬蟲解析，但 squirrelscan 等工具可能回報 false positive                                                                                                                                                                                                                                                  |
+
+#### 12.7.4 Worker v4.9 prod-source drift 證據（與 §12.6.6.2 互相補位）
+
+> ✅ **已解決 2026-04-29 12:25 UTC**：本節三個觀察均為**部署前的歷史紀錄**，留作 incident 學習。PR #302 squash-merge 進 main（commit `dbe4c15b`）後立即執行 `cd security-headers && npx wrangler deploy` 切換到 production，新 Cloudflare worker version 為 `7d094658-55a0-4e99-b478-67006d2fce69`；orphan `55a79a46` 已被覆寫，main HEAD 與 production source 對齊。
+
+- **Production 跑的不是 main**（部署前現象）：production worker `x-security-policy-version: 4.9` 來自一個 unmerged 本地 orphan commit `55a79a46`（2026-04-27 部署），該 commit 完全沒有 `Link` / markdown / `Content-Signal` 程式碼（grep `Link` = 0）
+- **Main HEAD 已具 Level 2 邏輯**（`shouldServeRatewiseMarkdown`、`shouldRewriteRobotsTxt`、`shouldInjectRatewiseMarkdownLink`）但**截至部署前從未 `npx wrangler deploy`**
+- **PR #302（`codex/agent-readiness-worker-v49`）** 已 cherry-pick `1f226b82` 上 main，含完整 v4.9 root agent readiness（`/.well-known/api-catalog`、`/.well-known/agent-skills/index.json`、root markdown negotiation、`Link` headers）；merge + `cd security-headers && npx wrangler deploy` 後本節所列「未部署」項已於 2026-04-29 12:25 UTC 一次解套
+- 完整時間線、證據與修復路徑見 `docs/dev/` 的對應紀錄與 PR #302 description
+
+#### 12.7.5 已驗證的強項（不再是缺口）
+
+- ✅ Sitemap.xml 249 URL，含 17 forward + 17 reverse 幣別頁、9 內容頁、206 amount 頁；無 `changefreq` / `priority` 過時標籤
+- ✅ robots.txt 四層分群（TRAINING / SEARCH / USER_AGENT / PREVIEW）+ `Content-Signal: ai-train=no, search=yes, ai-input=no` body directive
+- ✅ JSON-LD schema graph：`SoftwareApplication`、`Organization`（`knowsAbout` 12 主題）、`WebSite`、`CurrencyConversionService`、`ExchangeRateSpecification`（首頁 + 17 幣對 + 反向 + amount）、`FAQPage`（限 `/faq/`）、`HowTo`（Guide）、`Article`、`BreadcrumbList`、`Dataset` + `DataCatalog` + `DataDownload`（open-data）、`Person`（about）、`ContactPage`、`SpeakableSpecification`
+- ✅ Hreflang 全頁 `zh-TW` + `x-default`，與 canonical 對齊
+- ✅ `manifest.webmanifest` 完整（7 icons、5 screenshots、`standalone` display、正確 `start_url`）
+- ✅ `openapi.json` OpenAPI 3.1.0，`info.title` / `info.version` / `paths[3]` / `servers[2]` 完整
+- ✅ `api/latest.json` 結構含 `endpoints` / `cdnEndpoints` / `pairEndpoints` / `preferredLandingPageTemplate` / `interactiveDeepLinkTemplate`
+- ✅ `llms.txt` 結構符合 llmstxt.org（H1 站點 + `>` blockquote 摘要 + Answer Capsule + E-E-A-T + 連結列表）
+- ✅ Cache-Control 分層：HTML `no-cache, must-revalidate`（BFCache 友善）、CDN `max-age=300, stale-while-revalidate=3600`、static hashed assets `max-age=31536000, immutable`
+- ✅ Privacy 頁正確 `noindex,follow`，且不輸出 JSON-LD（避免噪音）
+
+#### 12.7.6 待補項與優先級（與 §14 對齊）
+
+| 優先級  | 項目                                      | 動作                                                                                                                                                                                                                                                                                                                | 對應 §14                |
+| ------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| ✅ 完成 | ~~Worker v4.9 root agent readiness 部署~~ | ✅ **2026-04-29 12:25 UTC 完成**：PR #302 merge（`dbe4c15b`）+ `cd security-headers && npx wrangler deploy`（version `7d094658-55a0-4e99-b478-67006d2fce69`）；IsItAgentReady 12:29 UTC 重掃 → Level 2                                                                                                              | P1-7a / P1-9 / B-Worker |
+| ✅ 撤銷 | ~~4 個子頁 `/index.md` 鏡像 404 修復~~    | ✅ **Round-5 review 校正撤銷**：原列為 P0 起因於 audit 初版誤把鏡像路徑寫成 `/ratewise/{slug}/index.md`，但 repo 設計是 `public/{slug}.md`（per `_headers` `Link: </ratewise/{slug}.md>; rel=alternate` + `generate-markdown-mirrors.mjs` 輸出 `public/{slug}.md`）；以正確路徑重測 5 個子頁 + 1 個首頁鏡像全部 200 | A3（保留 ✅ 不變更）    |
+| 🟠 P1   | `/index.md` Content-Type 修正             | Worker 對 `pathname.endsWith('.md')` 補 `Content-Type: text/markdown; charset=utf-8`                                                                                                                                                                                                                                | B-Worker                |
+| 🟠 P1   | 404 頁 SEO 化                             | SSG 產出 `/ratewise/404.html`（含 H1、品牌、回首頁連結、相關幣別頁推薦）；Cloudflare/Zeabur 將未匹配路徑 fallback 到此                                                                                                                                                                                              | （新增）                |
+| 🟠 P1   | Title/Description 長度收斂                | 首頁 title 100 → 60 chars、`/about/` 103 → 60；description 全頁壓縮至 ≤ 160 chars 同時保留差異化關鍵字「台銀現金賣出價」                                                                                                                                                                                            | （新增）                |
+| 🟡 P2   | Content-Type 重複 token 清除              | Worker 在輸出 `robots.txt` / `llms.txt` 前 `headers.delete('Content-Type')` 後再 `set` 一次，避免上游 + worker 重複                                                                                                                                                                                                 | B-Worker                |
+| 🟡 P2   | `og-image.jpg` 體積優化                   | 126 KB → ≤ 100 KB（mozjpeg / WebP fallback），保留 1200×630                                                                                                                                                                                                                                                         | （新增）                |
+| 🟡 P2   | TTFB 改善                                 | 首頁 1.612s 偏慢；確認 Zeabur upstream 與 Cloudflare cold-start；可考慮在 worker 對 `/ratewise/` HTML 啟用 KV cache 或 Cloudflare Cache API                                                                                                                                                                         | （新增）                |
+| 🟢 P3   | PageSpeed 客觀分數補拍                    | 隔日 PSI quota 重置後跑 mobile + desktop，補入此節                                                                                                                                                                                                                                                                  | §12.4                   |
+
+#### 12.7.7 重複執行命令（每月 / 每次發版）
+
+```bash
+# 1. 生產 SEO 健康檢查（覆蓋 SEO_PATHS 公開路徑 200、APP_ONLY_PATHS app-shell 路由、
+#    SEO_FILES = sitemap/robots/llms/llms-full、sitemap 與 hreflang 內容、404 真實性、舊資產 301）
+#    --base-url 可指向 staging
+node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise
+
+# 2. 生產資源可用性（OG/Twitter 圖片 + favicon + apple-touch-icon + 3 個 PWA icon + SEO_FILES）
+#    實際覆蓋僅 IMAGE_RESOURCES（7 個檔）+ SEO_FILES（4 個檔）；不含 manifest.webmanifest、screenshots
+node scripts/verify-production-resources.mjs ratewise
+
+# 3. 結構化資料驗證（schema 種類 / Speakable / aggregateRating gate）
+node scripts/verify-structured-data.mjs
+
+# 4. 公開 SEO 真相 surface 檢查（H1 順序、SeoTech、sitemap 舊標籤）
+pnpm --filter @app/ratewise vitest run src/__tests__/seo-public-surface.test.ts
+
+# 5. §12.7.2 表格剩餘端點補充探針（命令 #1/#2 不涵蓋的 JSON/manifest/noindex 頁、Markdown 鏡像）
+#    這些端點故意不在 SEO_PATHS / SEO_FILES：/api/latest.json、/openapi.json 屬 API、
+#    /manifest.webmanifest 屬 PWA、/privacy/ 屬 noindex；故額外列出做 smoke probe
+#    Markdown 鏡像 path 對齊 _headers 與 generate-markdown-mirrors.mjs SSOT：
+#      /ratewise/index.md      ↔ /ratewise/
+#      /ratewise/{slug}.md     ↔ /ratewise/{slug}/    （faq、about、guide、open-data、privacy）
+for url in \
+  https://app.haotool.org/ratewise/api/latest.json \
+  https://app.haotool.org/ratewise/openapi.json \
+  https://app.haotool.org/ratewise/manifest.webmanifest \
+  https://app.haotool.org/ratewise/privacy/ \
+  https://app.haotool.org/ratewise/og-image.jpg \
+  https://app.haotool.org/ratewise/index.md \
+  https://app.haotool.org/ratewise/faq.md \
+  https://app.haotool.org/ratewise/about.md \
+  https://app.haotool.org/ratewise/guide.md \
+  https://app.haotool.org/ratewise/open-data.md \
+  https://app.haotool.org/ratewise/privacy.md; do
+  # 不加 -L：若端點意外退化成 301/302（例如重導到 /ratewise/），需保留原始狀態碼以察覺回歸
+  printf '%s %s\n' "$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$url")" "$url"
+done
+
+# 6. PageSpeed Insights mobile + desktop（PSI quota 充足時）
+curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https%3A%2F%2Fapp.haotool.org%2Fratewise%2F&strategy=mobile"
+curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https%3A%2F%2Fapp.haotool.org%2Fratewise%2F&strategy=desktop"
+
+# 7. IsItAgentReady（PR #302 部署後）
+curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/json' -d '{"url":"https://app.haotool.org/"}'
+```
+
+> **覆蓋說明**：
+>
+> - 命令 #1 (`verify-production-seo.mjs`) 覆蓋 `apps/ratewise/seo-paths.config.mjs` 的 `seoPaths`（249 URL）+ `appShellPaths` + `resources.seoFiles`（`/sitemap.xml`、`/robots.txt`、`/llms.txt`、`/llms-full.txt`），對齊 §12.6.5 與 CI 實作。
+> - 命令 #2 (`verify-production-resources.mjs`) 實際只覆蓋 `IMAGE_RESOURCES`（`/og-image.jpg`、`/twitter-image.jpg`、`/favicon.ico`、`/apple-touch-icon.png`、3 個 PWA icon — 共 7 檔）+ `SEO_FILES`（4 檔）；**不含** `/manifest.webmanifest` 與 `screenshots/*`。
+> - **§12.7.2 表格中**：`/api/latest.json`、`/openapi.json`、`/manifest.webmanifest` 不在 `SEO_FILES`（屬 API/PWA 類），`/privacy/` 不在 `seoPaths`（noindex），`/ratewise/{slug}.md` Markdown 鏡像也不在現有探針集合，**因此命令 #5 對這些端點獨立做 smoke probe**，避免「命令 #1/#2 通過但實際漏檢」。
+> - v2.7.0 初版誤把命令 #1 寫成 `verify-production-resources.mjs --base-url=...`，但該腳本只讀 `resources.seoFiles/images` 且不接受 `--base-url`；已於本次修正為 `verify-production-seo.mjs` 並補上 #5 探針。
+
+#### 12.7.8 2026-04-30 例行重跑狀態
+
+| 項目                                                             | 結果    | 摘要                                                                                             |
+| ---------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `node scripts/verify-production-seo.mjs ratewise --base-url=...` | ✅ 通過 | 公開 SEO 路徑 / app-only 路由 / SEO files / 404 真實性 / 舊資產 301 全部通過                     |
+| `node scripts/verify-production-resources.mjs ratewise`          | ✅ 通過 | 11/11（200=11 / non200=0 / timeout=0）                                                           |
+| `node scripts/verify-structured-data.mjs`                        | ✅ 通過 | 7 頁通過、49 個 schema；包含 `ExchangeRateSpecification` / `FAQPage` / `SoftwareApplication`     |
+| `pnpm --filter @app/ratewise exec vitest run ...seo-public...`   | ✅ 通過 | 1 file / 6 tests 全綠                                                                            |
+| §12.7.7 命令 #5 補充端點 smoke probe                             | ✅ 通過 | `/api/latest.json`、`/openapi.json`、`/manifest.webmanifest`、`/privacy/`、6 個 `.md` 端點全 200 |
+
+> 註：`verify-structured-data` 輸出中的 `Could not parse CSS stylesheet` 為 JSDOM 已知雜訊，不影響 JSON-LD 驗證結果。
+
 ---
 
 ## 13. SEO 缺口分析（2026-04-10 審查）
@@ -1520,27 +1696,28 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 ---
 
-**最後更新**: 2026-04-28
-**版本**: v2.6.0
+**最後更新**: 2026-04-29
+**版本**: v2.7.0
 **維護者**: Development Team
 **下次審查日**: 2026-07-10（每季審查）
 
 ### 修訂紀錄
 
-| 日期       | 版本   | 變更摘要                                                                                                                                     |
-| ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-04-28 | v2.6.0 | 補齊 root Link headers、Markdown negotiation、Content-Signal、API catalog 與 Agent Skills index；明確標註 OAuth/MCP/WebMCP 不發布假 metadata |
-| 2026-04-27 | v2.5.0 | 對齊 2026 權威文件與現行程式：FAQPage 收斂為 `/faq/` only、幣別頁移除 FinancialService、補入 public truth surface / schema gate 規格         |
-| 2026-04-25 | v2.4.7 | 新增 `ROOT_SITE_HOSTS` 加入 `app.haotool.org`，待生產重測 `/` 與 `/ratewise/` SEO header / negotiation 對齊                                  |
-| 2026-04-25 | v2.4.6 | 新增 12.6.6 生產實測差異（root /ratewise/ header 差異），補齊 46 筆權威入口重測快照與 IsItAgentReady 生產端檢核入口 404 檢核                 |
-| 2026-04-25 | v2.4.5 | 新增 12.6.7 外部檢測快照與 12.6.6 IsItAgentReady 重掃實測；補齊 12.6.5 重複掃描命令，文件版本與修訂欄位同步                                  |
-| 2026-04-25 | v2.4.3 | 補齊首頁 AI 可發現性修正：`robots.txt` Content-Signal、首頁 Link header、markdown negotiation；更新 markdown 鏡像與驗證規格                  |
-| 2026-04-25 | v2.4.2 | 新增 IsItAgentReady 掃描報告節點（2026-04-24），補齊 Level 1 失敗項目清單與 BOT-Aware 升級建議                                               |
-| 2026-04-25 | v2.4.1 | 新增 2026-04-25 外部檢測快照、分層記錄第三方限制狀態，補齊外部可複用檢測命令與迭代規程                                                       |
-| 2026-04-24 | v2.4.0 | 新增「權威 SEO 參考網站」與「生產網址外部檢測報告」節點；補充 26 個權威來源與 2026-04-24 外部回應紀錄                                        |
-| 2026-04-24 | v2.3.0 | 對齊 apps/ratewise 現行 SEO 實作：FAQPage 改為 34 個幣別頁、補 FinancialService/Dataset/Person、同步 prebuild 與 Markdown 鏡像治理           |
-| 2026-04-23 | v2.2.0 | 同步 SEO SSOT 現況：249 URL、HaoRate 品牌、已完成 schema/Answer Capsule、AI crawler 共用清單與 sitemap 過時標籤治理                          |
-| 2026-04-20 | v1.3.0 | P1-5 完成：金額頁加入 ExchangeRateSpecification schema（含換算金額），4 個新測試案例                                                         |
-| 2026-04-10 | v1.2.0 | 新增 2026 年 AI 搜尋術語（AEO/GEO/LLMO 深度解析）、AI 平台特性對照表、更新 TODO 完成狀態                                                     |
-| 2026-03-31 | v1.1.0 | 同步 v2.16.x 實作：seo-static.ts、AnswerCapsule 元件、路徑數量修正、健檢強化、TODO 已完成項目標記                                            |
-| 2026-03-23 | v1.0.0 | 初始版本，整合六份舊 SEO 文件                                                                                                                |
+| 日期       | 版本   | 變更摘要                                                                                                                                                                                                                                                                                                                                                            |
+| ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-29 | v2.7.0 | 新增 §12.7「2026-04-29 SEO 深度審查報告（部署前快照）」：12 構面評分（總分 88/100）、26 端點生產驗證、Worker v4.9 prod-source drift 證據、待補項與優先級；發版同步執行 PR #302 merge + Worker v4.9 部署 + IsItAgentReady Level 2 達成；Round-5 review 校正子頁 Markdown 鏡像 path 為 `/ratewise/{slug}.md`（per `_headers` + `generate-markdown-mirrors.mjs` SSOT） |
+| 2026-04-28 | v2.6.0 | 補齊 root Link headers、Markdown negotiation、Content-Signal、API catalog 與 Agent Skills index；明確標註 OAuth/MCP/WebMCP 不發布假 metadata                                                                                                                                                                                                                        |
+| 2026-04-27 | v2.5.0 | 對齊 2026 權威文件與現行程式：FAQPage 收斂為 `/faq/` only、幣別頁移除 FinancialService、補入 public truth surface / schema gate 規格                                                                                                                                                                                                                                |
+| 2026-04-25 | v2.4.7 | 新增 `ROOT_SITE_HOSTS` 加入 `app.haotool.org`，待生產重測 `/` 與 `/ratewise/` SEO header / negotiation 對齊                                                                                                                                                                                                                                                         |
+| 2026-04-25 | v2.4.6 | 新增 12.6.6 生產實測差異（root /ratewise/ header 差異），補齊 46 筆權威入口重測快照與 IsItAgentReady 生產端檢核入口 404 檢核                                                                                                                                                                                                                                        |
+| 2026-04-25 | v2.4.5 | 新增 12.6.7 外部檢測快照與 12.6.6 IsItAgentReady 重掃實測；補齊 12.6.5 重複掃描命令，文件版本與修訂欄位同步                                                                                                                                                                                                                                                         |
+| 2026-04-25 | v2.4.3 | 補齊首頁 AI 可發現性修正：`robots.txt` Content-Signal、首頁 Link header、markdown negotiation；更新 markdown 鏡像與驗證規格                                                                                                                                                                                                                                         |
+| 2026-04-25 | v2.4.2 | 新增 IsItAgentReady 掃描報告節點（2026-04-24），補齊 Level 1 失敗項目清單與 BOT-Aware 升級建議                                                                                                                                                                                                                                                                      |
+| 2026-04-25 | v2.4.1 | 新增 2026-04-25 外部檢測快照、分層記錄第三方限制狀態，補齊外部可複用檢測命令與迭代規程                                                                                                                                                                                                                                                                              |
+| 2026-04-24 | v2.4.0 | 新增「權威 SEO 參考網站」與「生產網址外部檢測報告」節點；補充 26 個權威來源與 2026-04-24 外部回應紀錄                                                                                                                                                                                                                                                               |
+| 2026-04-24 | v2.3.0 | 對齊 apps/ratewise 現行 SEO 實作：FAQPage 改為 34 個幣別頁、補 FinancialService/Dataset/Person、同步 prebuild 與 Markdown 鏡像治理                                                                                                                                                                                                                                  |
+| 2026-04-23 | v2.2.0 | 同步 SEO SSOT 現況：249 URL、HaoRate 品牌、已完成 schema/Answer Capsule、AI crawler 共用清單與 sitemap 過時標籤治理                                                                                                                                                                                                                                                 |
+| 2026-04-20 | v1.3.0 | P1-5 完成：金額頁加入 ExchangeRateSpecification schema（含換算金額），4 個新測試案例                                                                                                                                                                                                                                                                                |
+| 2026-04-10 | v1.2.0 | 新增 2026 年 AI 搜尋術語（AEO/GEO/LLMO 深度解析）、AI 平台特性對照表、更新 TODO 完成狀態                                                                                                                                                                                                                                                                            |
+| 2026-03-31 | v1.1.0 | 同步 v2.16.x 實作：seo-static.ts、AnswerCapsule 元件、路徑數量修正、健檢強化、TODO 已完成項目標記                                                                                                                                                                                                                                                                   |
+| 2026-03-23 | v1.0.0 | 初始版本，整合六份舊 SEO 文件                                                                                                                                                                                                                                                                                                                                       |

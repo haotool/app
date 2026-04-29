@@ -3,7 +3,7 @@
 > 了解 HaoRate 的資料來源、更新機制、技術架構與 SEO 透明度。站點以台銀牌告實際買賣價為核心，支援 18 種貨幣、PWA 離線使用、SSG 預渲染、JSON-LD 結構化資料與 AI 可讀文件輸出，所有公開資訊皆可追溯。
 
 - Canonical: https://app.haotool.org/ratewise/about/
-- Version: v2.21.0
+- Version: v2.22.5
 
 ## 定位
 
@@ -62,5 +62,5 @@ robots.txt 明確允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityB
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.21.0），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.5），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_
