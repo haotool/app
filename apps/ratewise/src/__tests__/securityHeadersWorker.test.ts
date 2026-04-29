@@ -235,6 +235,7 @@ describe('security-headers worker', () => {
       expect.objectContaining({ method: 'GET' }),
     );
     expect(response.headers.get('content-type')).toContain('text/markdown');
+    expect(response.headers.get('vary')).toMatch(/(?:^|,\s*)accept(?:\s*,|$)/i);
   });
 
   it('root HTML 首頁應輸出 agent discovery Link headers 且不得誤指向 ratewise markdown', async () => {
@@ -257,6 +258,7 @@ describe('security-headers worker', () => {
       '<https://app.haotool.org/.well-known/agent-skills/index.json>; rel="service-desc"; type="application/json"',
     );
     expect(link).not.toContain('/ratewise/index.md');
+    expect(response.headers.get('vary')).toMatch(/(?:^|,\s*)accept(?:\s*,|$)/i);
   });
 
   it('ratewise 首頁接受 markdown negotiation 時應導向對應 mirror', async () => {
@@ -282,6 +284,30 @@ describe('security-headers worker', () => {
       expect.objectContaining({ method: 'GET' }),
     );
     expect(response.headers.get('content-type')).toContain('text/markdown');
+    expect(response.headers.get('vary')).toMatch(/(?:^|,\s*)accept(?:\s*,|$)/i);
+  });
+
+  it('既有 Vary 標頭存在時，Markdown negotiable 路徑只會 append Accept、不重複', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        '<!doctype html><html><head></head><body>haotool root with upstream vary</body></html>',
+        {
+          headers: {
+            'content-type': 'text/html; charset=utf-8',
+            // 模擬上游/CDN 已寫入 Accept-Encoding（gzip 協商）
+            vary: 'Accept-Encoding',
+          },
+        },
+      ),
+    );
+
+    const response = await worker.fetch(new Request('https://app.haotool.org/'));
+    const vary = response.headers.get('vary') ?? '';
+    const tokens = vary.split(',').map((token: string) => token.trim().toLowerCase());
+
+    expect(tokens).toContain('accept');
+    expect(tokens).toContain('accept-encoding');
+    expect(tokens.filter((token: string) => token === 'accept')).toHaveLength(1);
   });
 
   it('root API catalog 應輸出 RFC 9727 linkset JSON', async () => {

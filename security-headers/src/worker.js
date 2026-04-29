@@ -209,6 +209,23 @@ function resolveMarkdownMirrorPath(request, url) {
 	return null;
 }
 
+function isMarkdownNegotiablePath(url) {
+	return isRatewiseHomepage(url.pathname) || isHaotoolRootHomepage(url);
+}
+
+function ensureVaryToken(response, token) {
+	const existing = response.headers.get('Vary') || '';
+	const tokens = existing
+		.split(',')
+		.map((value) => value.trim())
+		.filter(Boolean);
+	if (tokens.some((value) => value.toLowerCase() === token.toLowerCase())) {
+		return;
+	}
+	tokens.push(token);
+	response.headers.set('Vary', tokens.join(', '));
+}
+
 function buildAbsoluteUrl(url, pathname) {
 	return new URL(pathname, `${url.protocol}//${url.host}`).toString();
 }
@@ -794,6 +811,12 @@ export default {
 			} else if (url.pathname.endsWith('.webmanifest')) {
 				response.headers.set('Content-Type', 'application/manifest+json');
 			}
+		}
+
+		// 對 markdown-negotiable 路徑（root `/` 與 `/ratewise/`）一律 `Vary: Accept`，
+		// 確保瀏覽器/CDN 不會以 `Accept` 之外的維度共用 HTML 與 Markdown 變體。
+		if (isMarkdownNegotiablePath(url)) {
+			ensureVaryToken(response, 'Accept');
 		}
 
 		response.headers.set('X-Security-Policy-Version', SECURITY_POLICY_VERSION);
