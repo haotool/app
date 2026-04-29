@@ -1446,18 +1446,34 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 #### 12.7.7 重複執行命令（每月 / 每次發版）
 
 ```bash
-# 1. 平行 26 端點探測（生產健檢，含 sub-page index.md 鏡像可用性）
-node scripts/verify-production-resources.mjs ratewise --base-url=https://app.haotool.org/ratewise
-# 2. 結構化資料驗證（schema 種類 / Speakable / aggregateRating gate）
+# 1. 生產 SEO 健康檢查（公開路徑 200、app-only 路由、robots/llms/sitemap 內容、404 真實性、舊資產 301）
+#    覆蓋 §12.7.2 表格中所有 HTML / TXT / JSON / XML 端點；--base-url 可指向 staging
+node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise
+
+# 2. 生產資源可用性（OG 圖片 / icons / manifest 等 seoFiles + images）
+node scripts/verify-production-resources.mjs ratewise
+
+# 3. 結構化資料驗證（schema 種類 / Speakable / aggregateRating gate）
 node scripts/verify-structured-data.mjs
-# 3. 公開 SEO 真相 surface 檢查（H1 順序、SeoTech、sitemap 舊標籤）
+
+# 4. 公開 SEO 真相 surface 檢查（H1 順序、SeoTech、sitemap 舊標籤）
 pnpm --filter @app/ratewise vitest run src/__tests__/seo-public-surface.test.ts
-# 4. PageSpeed Insights mobile + desktop（PSI quota 充足時）
+
+# 5. Sub-page Markdown 鏡像可用性（§12.7.6 P0「子頁 index.md 404」修復差異化探針）
+for slug in "" faq about guide open-data; do
+  url="https://app.haotool.org/ratewise/${slug:+$slug/}index.md"
+  printf '%s %s\n' "$(curl -L -s -o /dev/null -w '%{http_code}' --max-time 30 "$url")" "$url"
+done
+
+# 6. PageSpeed Insights mobile + desktop（PSI quota 充足時）
 curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https%3A%2F%2Fapp.haotool.org%2Fratewise%2F&strategy=mobile"
 curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https%3A%2F%2Fapp.haotool.org%2Fratewise%2F&strategy=desktop"
-# 5. IsItAgentReady（PR #302 部署後）
+
+# 7. IsItAgentReady（PR #302 部署後）
 curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/json' -d '{"url":"https://app.haotool.org/"}'
 ```
+
+> **說明**：v2.7.0 初版誤把命令 #1 寫成 `verify-production-resources.mjs --base-url=...`，但該腳本只讀 `app.config.resources.seoFiles/images` 且不接受 `--base-url`，無法達成 §12.7.2 表格的覆蓋。已改用 `verify-production-seo.mjs` 對齊既有 §12.6.5 與 CI 實作；資源可用性由獨立的命令 #2 處理；子頁 Markdown 鏡像作為 §12.7.6 P0 修復前後的差異化探針獨立列為命令 #5。
 
 ---
 
