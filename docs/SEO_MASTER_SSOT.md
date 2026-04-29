@@ -1454,7 +1454,8 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 #    --base-url 可指向 staging
 node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise
 
-# 2. 生產資源可用性（OG 圖片 / icons / manifest 等 IMAGE_RESOURCES + SEO_FILES）
+# 2. 生產資源可用性（OG/Twitter 圖片 + favicon + apple-touch-icon + 3 個 PWA icon + SEO_FILES）
+#    實際覆蓋僅 IMAGE_RESOURCES（7 個檔）+ SEO_FILES（4 個檔）；不含 manifest.webmanifest、screenshots
 node scripts/verify-production-resources.mjs ratewise
 
 # 3. 結構化資料驗證（schema 種類 / Speakable / aggregateRating gate）
@@ -1496,8 +1497,8 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 > **覆蓋說明**：
 >
 > - 命令 #1 (`verify-production-seo.mjs`) 覆蓋 `apps/ratewise/seo-paths.config.mjs` 的 `seoPaths`（249 URL）+ `appShellPaths` + `resources.seoFiles`（`/sitemap.xml`、`/robots.txt`、`/llms.txt`、`/llms-full.txt`），對齊 §12.6.5 與 CI 實作。
-> - 命令 #2 (`verify-production-resources.mjs`) 覆蓋 `IMAGE_RESOURCES`（OG 圖片、icons、screenshots）+ `SEO_FILES`。
-> - **§12.7.2 表格中**：`/api/latest.json`、`/openapi.json`、`/manifest.webmanifest` 不在 `SEO_FILES`（屬 API/PWA 類），`/privacy/` 不在 `seoPaths`（noindex），子頁 `*/index.md` 也不在現有探針集合，**因此命令 #5 對這些端點獨立做 smoke probe**，避免「命令 #1 通過但實際漏檢」。
+> - 命令 #2 (`verify-production-resources.mjs`) 實際只覆蓋 `IMAGE_RESOURCES`（`/og-image.jpg`、`/twitter-image.jpg`、`/favicon.ico`、`/apple-touch-icon.png`、3 個 PWA icon — 共 7 檔）+ `SEO_FILES`（4 檔）；**不含** `/manifest.webmanifest` 與 `screenshots/*`。
+> - **§12.7.2 表格中**：`/api/latest.json`、`/openapi.json`、`/manifest.webmanifest` 不在 `SEO_FILES`（屬 API/PWA 類），`/privacy/` 不在 `seoPaths`（noindex），`/ratewise/{slug}.md` Markdown 鏡像也不在現有探針集合，**因此命令 #5 對這些端點獨立做 smoke probe**，避免「命令 #1/#2 通過但實際漏檢」。
 > - v2.7.0 初版誤把命令 #1 寫成 `verify-production-resources.mjs --base-url=...`，但該腳本只讀 `resources.seoFiles/images` 且不接受 `--base-url`；已於本次修正為 `verify-production-seo.mjs` 並補上 #5 探針。
 
 ---
