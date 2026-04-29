@@ -1412,8 +1412,8 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 #### 12.7.4 Worker v4.9 prod-source drift 證據（與 §12.6.6.2 互相補位）
 
 - **Production 跑的不是 main**：production worker `x-security-policy-version: 4.9` 來自一個 unmerged 本地 orphan commit `55a79a46`（2026-04-27 部署），該 commit 完全沒有 `Link` / markdown / `Content-Signal` 程式碼（grep `Link` = 0）
-- **Main HEAD 已具 Level 2 邏輯**（`shouldServeRatewiseMarkdown`、`shouldRewriteRobotsTxt`、`shouldInjectRatewiseMarkdownLink`）但**從未 `wrangler deploy`**
-- **PR #302（`codex/agent-readiness-worker-v49`）** 已 cherry-pick `1f226b82` 上 main 並開啟，含完整 v4.9 root agent readiness（`/.well-known/api-catalog`、`/.well-known/agent-skills/index.json`、root markdown negotiation、`Link` headers）；merge + `wrangler deploy` 後本節所列「未部署」項可一次解套
+- **Main HEAD 已具 Level 2 邏輯**（`shouldServeRatewiseMarkdown`、`shouldRewriteRobotsTxt`、`shouldInjectRatewiseMarkdownLink`）但**從未 `npx wrangler deploy`**
+- **PR #302（`codex/agent-readiness-worker-v49`）** 已 cherry-pick `1f226b82` 上 main 並開啟，含完整 v4.9 root agent readiness（`/.well-known/api-catalog`、`/.well-known/agent-skills/index.json`、root markdown negotiation、`Link` headers）；merge + `cd security-headers && npx wrangler deploy` 後本節所列「未部署」項可一次解套
 - 完整時間線、證據與修復路徑見 `docs/dev/` 的對應紀錄與 PR #302 description
 
 #### 12.7.5 已驗證的強項（不再是缺口）
@@ -1433,7 +1433,7 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 
 | 優先級 | 項目                                  | 動作                                                                                                                                                             | 對應 §14                   |
 | ------ | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| 🔴 P0  | Worker v4.9 root agent readiness 部署 | merge PR #302 + `cd security-headers && wrangler deploy`                                                                                                         | P1-7a / P1-9 / B-Worker    |
+| 🔴 P0  | Worker v4.9 root agent readiness 部署 | merge PR #302 + `cd security-headers && npx wrangler deploy`（per `AGENTS.md` § Worker 部署 SOP）                                                                | P1-7a / P1-9 / B-Worker    |
 | 🔴 P0  | 4 個子頁 `/index.md` 鏡像 404 修復    | 檢查 `generate-markdown-mirrors.mjs` 是否寫入 `dist/{slug}/index.md` 或 `_headers` rewrite；如為 `public/{slug}.md` 則需 SSG routing 指向 `dist/{slug}/index.md` | A3（標 ✅ 需降回 🟠 待補） |
 | 🟠 P1  | `/index.md` Content-Type 修正         | Worker 對 `pathname.endsWith('.md')` 補 `Content-Type: text/markdown; charset=utf-8`                                                                             | B-Worker                   |
 | 🟠 P1  | 404 頁 SEO 化                         | SSG 產出 `/ratewise/404.html`（含 H1、品牌、回首頁連結、相關幣別頁推薦）；Cloudflare/Zeabur 將未匹配路徑 fallback 到此                                           | （新增）                   |
@@ -1474,7 +1474,8 @@ for url in \
   https://app.haotool.org/ratewise/about/index.md \
   https://app.haotool.org/ratewise/guide/index.md \
   https://app.haotool.org/ratewise/open-data/index.md; do
-  printf '%s %s\n' "$(curl -L -s -o /dev/null -w '%{http_code}' --max-time 30 "$url")" "$url"
+  # 不加 -L：若端點意外退化成 301/302（例如重導到 /ratewise/），需保留原始狀態碼以察覺回歸
+  printf '%s %s\n' "$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$url")" "$url"
 done
 
 # 6. PageSpeed Insights mobile + desktop（PSI quota 充足時）
