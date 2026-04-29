@@ -1,8 +1,9 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.7.0
+> **文件版本**: v2.7.1
 > **建立日期**: 2026-03-23
-> **最後更新**: 2026-04-29
+> **最後更新**: 2026-04-30
+> **v2.7.1 變更**: 依 PR #303 Codex review 補齊 AGT-LOG-01 稽核鏈；完成 2026-04-30 ratewise SEO 例行重跑（`verify-production-seo`、`verify-production-resources`、`verify-structured-data`、`seo-public-surface`、§12.7.7 命令 #5 補充探針）並記錄最新狀態，全數通過。
 > **v2.7.0 變更**: 新增 §12.7「2026-04-29 SEO 深度審查報告（部署前快照）」— 12 構面評分（總分 88/100）、26 端點生產驗證、Worker v4.9 prod-source drift 證據、待補項與優先級。本快照定格在審查時點，作為 incident 學習與 monthly check baseline；§12.7.3 / §12.7.4 / §12.7.6 已逐項標註各 P0 項目實際解決日期與 Cloudflare version ID。本次發版同步執行 PR #302 merge（commit `dbe4c15b`）+ Worker v4.9 部署（version `7d094658-55a0-4e99-b478-67006d2fce69`）+ Zeabur production 跟進（`dbe4c15b09` @ 2026-04-29 12:29 UTC）+ IsItAgentReady Level 2 達成驗證。值班人員月檢時請以 §12.7.3 表格右側「現況」欄與 §12.7.6 P0 列的解決狀態為準，不要以審查日的初始描述判斷待辦。
 > **v2.6.0 變更**: 補齊 root agent readiness SSOT：`app.haotool.org/` 首頁 Link headers、Markdown negotiation、robots Content-Signal、RFC 9727 API catalog 與 Agent Skills Discovery v0.2.0；OAuth / MCP / WebMCP 依真實產品能力標註為暫不發布假 metadata
 > **v2.5.0 變更**: 對齊 2026-04-27 程式現況與權威文件：`FAQPage` 收斂為 `/faq/` 專用、幣別頁移除 `FinancialService`、補入 `seo-public-surface` / `schema-truthfulness` / `seo-surface-order` 等公開真相閘門；同步修正文檔中 Markdown 鏡像、pair JSON、`lastmod` policy 與公開 SSOT 揭露規格
@@ -64,6 +65,7 @@
     - [12.6.6 IsItAgentReady 掃描報告（2026-04-25）](#1266-isitagentready-掃描報告2026-04-25)
     - [12.6.7 2026-04-25 外部檢測網站快照（可重複報告）](#1267-2026-04-25-外部檢測網站快照可重複報告)
     - [12.7 2026-04-29 SEO 深度審查報告](#127-2026-04-29-seo-深度審查報告)
+    - [12.7.8 2026-04-30 例行重跑狀態](#1278-2026-04-30-例行重跑狀態)
 13. [SEO 缺口分析（2026-04-10）](#13-seo-缺口分析2026-04-10-審查)
 14. [優先 TODO 清單](#14-優先-todo-清單原-13編號保持連貫)
 15. [詞彙表](#15-詞彙表)
@@ -1500,6 +1502,18 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 > - 命令 #2 (`verify-production-resources.mjs`) 實際只覆蓋 `IMAGE_RESOURCES`（`/og-image.jpg`、`/twitter-image.jpg`、`/favicon.ico`、`/apple-touch-icon.png`、3 個 PWA icon — 共 7 檔）+ `SEO_FILES`（4 檔）；**不含** `/manifest.webmanifest` 與 `screenshots/*`。
 > - **§12.7.2 表格中**：`/api/latest.json`、`/openapi.json`、`/manifest.webmanifest` 不在 `SEO_FILES`（屬 API/PWA 類），`/privacy/` 不在 `seoPaths`（noindex），`/ratewise/{slug}.md` Markdown 鏡像也不在現有探針集合，**因此命令 #5 對這些端點獨立做 smoke probe**，避免「命令 #1/#2 通過但實際漏檢」。
 > - v2.7.0 初版誤把命令 #1 寫成 `verify-production-resources.mjs --base-url=...`，但該腳本只讀 `resources.seoFiles/images` 且不接受 `--base-url`；已於本次修正為 `verify-production-seo.mjs` 並補上 #5 探針。
+
+#### 12.7.8 2026-04-30 例行重跑狀態
+
+| 項目                                                             | 結果    | 摘要                                                                                             |
+| ---------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `node scripts/verify-production-seo.mjs ratewise --base-url=...` | ✅ 通過 | 公開 SEO 路徑 / app-only 路由 / SEO files / 404 真實性 / 舊資產 301 全部通過                     |
+| `node scripts/verify-production-resources.mjs ratewise`          | ✅ 通過 | 11/11（200=11 / non200=0 / timeout=0）                                                           |
+| `node scripts/verify-structured-data.mjs`                        | ✅ 通過 | 7 頁通過、49 個 schema；包含 `ExchangeRateSpecification` / `FAQPage` / `SoftwareApplication`     |
+| `pnpm --filter @app/ratewise exec vitest run ...seo-public...`   | ✅ 通過 | 1 file / 6 tests 全綠                                                                            |
+| §12.7.7 命令 #5 補充端點 smoke probe                             | ✅ 通過 | `/api/latest.json`、`/openapi.json`、`/manifest.webmanifest`、`/privacy/`、6 個 `.md` 端點全 200 |
+
+> 註：`verify-structured-data` 輸出中的 `Could not parse CSS stylesheet` 為 JSDOM 已知雜訊，不影響 JSON-LD 驗證結果。
 
 ---
 

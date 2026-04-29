@@ -1116,6 +1116,53 @@ root_cause:
 
 ---
 
+id: pr303-seo-ssot-rerun-and-audit-trace-2026-04-30
+date: 2026-04-30
+title: PR303 補齊 AGT-LOG-01 並完成 ratewise SEO 例行重跑基線
+score: 0
+type: improvement
+content_type: seo
+scope: ratewise, seo, ssot, github-pr
+topics: [seo, ssot, audit, codex-review, compliance]
+keywords:
+[PR303, AGT-LOG-01, SEO_MASTER_SSOT, verify-production-seo, verify-production-resources, verify-structured-data]
+aliases: [PR303 codex review resolution]
+related_entries:
+[ratewise-seo-ssot-external-audit-2026-04-25, pr275-codex-command-evidence-fix-2026-04-26]
+summary: 依 PR303 Codex review（P1）補齊 `docs/dev/002_development_reward_penalty_log.md` 的稽核證據鏈，並同步執行 ratewise SEO 例行重跑，將結果更新到 `docs/SEO_MASTER_SSOT.md` v2.7.1（新增 12.7.8 狀態快照）。
+root_cause:
+
+- `docs/SEO_MASTER_SSOT.md` 連續多次提交未同步新增 002 條目，違反 `AGENTS.md` 的 AGT-LOG-01「每次 commit 前更新 002」要求。
+  impact:
+
+- PR 審查可讀，但稽核可追溯鏈中斷，無法由 002 直接回放本次 SEO SSOT 更新的驗證證據與狀態判定。
+  actions:
+
+- 更新 `docs/SEO_MASTER_SSOT.md` 至 v2.7.1，新增 `12.7.8` 記錄 2026-04-30 的例行重跑結果。
+- 執行並記錄 `verify-production-seo`、`verify-production-resources`、`verify-structured-data`、`seo-public-surface` 與補充 smoke probe（11 端點）。
+- 補寫本條 002 entry（含 id/content_type/topics/keywords/related_entries）恢復 AGT-LOG-01 合規。
+  prevention:
+
+- 後續每次 SEO SSOT 版號更新時，將「新增 002 entry」列為 commit 前固定檢查點。
+- PR 回覆 Codex comment 前先確認 002 是否已包含對應變更紀錄與驗證命令。
+  verification:
+
+- `node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise`
+- `node scripts/verify-production-resources.mjs ratewise`
+- `node scripts/verify-structured-data.mjs`
+- `pnpm --filter @app/ratewise exec vitest run src/__tests__/seo-public-surface.test.ts`
+- `for url in ...; curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$url"`（11 端點 smoke probe）
+  references:
+
+- docs/SEO_MASTER_SSOT.md
+- docs/dev/002_development_reward_penalty_log.md
+- scripts/verify-production-seo.mjs
+- scripts/verify-production-resources.mjs
+- scripts/verify-structured-data.mjs
+- apps/ratewise/src/**tests**/seo-public-surface.test.ts
+
+---
+
 id: pr281-regex-end-tag-generalization-fix-2026-04-26
 date: 2026-04-26
 title: 將 SEO 測試 regex 擴充為可匹配 script/style end tag 的廣義變體
