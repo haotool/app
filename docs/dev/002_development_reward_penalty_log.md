@@ -1163,6 +1163,44 @@ root_cause:
 
 ---
 
+id: pr303-seo-rate-examples-refresh-2026-04-30
+date: 2026-04-30
+title: 對齊 pre-push 重新生成的 SEO 匯率範例輸出
+score: 0
+type: improvement
+content_type: seo
+scope: ratewise, generated-data
+topics: [seo, ssot, generated-artifact, pre-push]
+keywords:
+[seo-rate-examples, prebuild-fetch-rates, generated-sync]
+aliases: [ratewise seo-rate-examples refresh]
+related_entries:
+[pr303-seo-ssot-rerun-and-audit-trace-2026-04-30]
+summary: pre-push 的 `build:ratewise` 重新抓取即時匯率後，`seo-rate-examples.ts` 產生時間戳與範例值更新；本次補提交該 generated 漂移，確保 PR head 與可重現輸出一致。
+root_cause:
+
+- `prebuild-fetch-rates` 與 `update-seo-rate-examples` 依即時資料重建輸出，推送後仍產生未提交 diff。
+  impact:
+
+- 若不補提交，會阻擋 `gh pr merge`，也使 PR 狀態與本地生成結果不一致。
+  actions:
+
+- 提交 `apps/ratewise/src/config/generated/seo-rate-examples.ts` 最新生成內容。
+- 補寫 002 條目以維持 AGT-LOG-01 合規。
+  prevention:
+
+- 推送後固定執行 `git status --short`，若僅有 generated 漂移即即時補提交。
+  verification:
+
+- `pnpm build:ratewise`（由 pre-push 自動執行）
+- `git diff -- apps/ratewise/src/config/generated/seo-rate-examples.ts`
+  references:
+
+- apps/ratewise/src/config/generated/seo-rate-examples.ts
+- docs/dev/002_development_reward_penalty_log.md
+
+---
+
 id: pr281-regex-end-tag-generalization-fix-2026-04-26
 date: 2026-04-26
 title: 將 SEO 測試 regex 擴充為可匹配 script/style end tag 的廣義變體
