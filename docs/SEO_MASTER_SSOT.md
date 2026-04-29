@@ -1446,11 +1446,12 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 #### 12.7.7 重複執行命令（每月 / 每次發版）
 
 ```bash
-# 1. 生產 SEO 健康檢查（公開路徑 200、app-only 路由、robots/llms/sitemap 內容、404 真實性、舊資產 301）
-#    覆蓋 §12.7.2 表格中所有 HTML / TXT / JSON / XML 端點；--base-url 可指向 staging
+# 1. 生產 SEO 健康檢查（覆蓋 SEO_PATHS 公開路徑 200、APP_ONLY_PATHS app-shell 路由、
+#    SEO_FILES = sitemap/robots/llms/llms-full、sitemap 與 hreflang 內容、404 真實性、舊資產 301）
+#    --base-url 可指向 staging
 node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise
 
-# 2. 生產資源可用性（OG 圖片 / icons / manifest 等 seoFiles + images）
+# 2. 生產資源可用性（OG 圖片 / icons / manifest 等 IMAGE_RESOURCES + SEO_FILES）
 node scripts/verify-production-resources.mjs ratewise
 
 # 3. 結構化資料驗證（schema 種類 / Speakable / aggregateRating gate）
@@ -1459,9 +1460,20 @@ node scripts/verify-structured-data.mjs
 # 4. 公開 SEO 真相 surface 檢查（H1 順序、SeoTech、sitemap 舊標籤）
 pnpm --filter @app/ratewise vitest run src/__tests__/seo-public-surface.test.ts
 
-# 5. Sub-page Markdown 鏡像可用性（§12.7.6 P0「子頁 index.md 404」修復差異化探針）
-for slug in "" faq about guide open-data; do
-  url="https://app.haotool.org/ratewise/${slug:+$slug/}index.md"
+# 5. §12.7.2 表格剩餘端點補充探針（命令 #1/#2 不涵蓋的 JSON/manifest/noindex 頁、Markdown 鏡像）
+#    這些端點故意不在 SEO_PATHS / SEO_FILES：/api/latest.json、/openapi.json 屬 API、
+#    /manifest.webmanifest 屬 PWA、/privacy/ 屬 noindex；故額外列出做 smoke probe
+for url in \
+  https://app.haotool.org/ratewise/api/latest.json \
+  https://app.haotool.org/ratewise/openapi.json \
+  https://app.haotool.org/ratewise/manifest.webmanifest \
+  https://app.haotool.org/ratewise/privacy/ \
+  https://app.haotool.org/ratewise/og-image.jpg \
+  https://app.haotool.org/ratewise/index.md \
+  https://app.haotool.org/ratewise/faq/index.md \
+  https://app.haotool.org/ratewise/about/index.md \
+  https://app.haotool.org/ratewise/guide/index.md \
+  https://app.haotool.org/ratewise/open-data/index.md; do
   printf '%s %s\n' "$(curl -L -s -o /dev/null -w '%{http_code}' --max-time 30 "$url")" "$url"
 done
 
@@ -1473,7 +1485,12 @@ curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https%3A
 curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/json' -d '{"url":"https://app.haotool.org/"}'
 ```
 
-> **說明**：v2.7.0 初版誤把命令 #1 寫成 `verify-production-resources.mjs --base-url=...`，但該腳本只讀 `app.config.resources.seoFiles/images` 且不接受 `--base-url`，無法達成 §12.7.2 表格的覆蓋。已改用 `verify-production-seo.mjs` 對齊既有 §12.6.5 與 CI 實作；資源可用性由獨立的命令 #2 處理；子頁 Markdown 鏡像作為 §12.7.6 P0 修復前後的差異化探針獨立列為命令 #5。
+> **覆蓋說明**：
+>
+> - 命令 #1 (`verify-production-seo.mjs`) 覆蓋 `apps/ratewise/seo-paths.config.mjs` 的 `seoPaths`（249 URL）+ `appShellPaths` + `resources.seoFiles`（`/sitemap.xml`、`/robots.txt`、`/llms.txt`、`/llms-full.txt`），對齊 §12.6.5 與 CI 實作。
+> - 命令 #2 (`verify-production-resources.mjs`) 覆蓋 `IMAGE_RESOURCES`（OG 圖片、icons、screenshots）+ `SEO_FILES`。
+> - **§12.7.2 表格中**：`/api/latest.json`、`/openapi.json`、`/manifest.webmanifest` 不在 `SEO_FILES`（屬 API/PWA 類），`/privacy/` 不在 `seoPaths`（noindex），子頁 `*/index.md` 也不在現有探針集合，**因此命令 #5 對這些端點獨立做 smoke probe**，避免「命令 #1 通過但實際漏檢」。
+> - v2.7.0 初版誤把命令 #1 寫成 `verify-production-resources.mjs --base-url=...`，但該腳本只讀 `resources.seoFiles/images` 且不接受 `--base-url`；已於本次修正為 `verify-production-seo.mjs` 並補上 #5 探針。
 
 ---
 
