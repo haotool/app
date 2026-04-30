@@ -29,7 +29,7 @@ export function HomepageSEOSection() {
       className="px-5 pt-5 pb-3 max-w-md mx-auto w-full"
     >
       <div className="rounded-[28px] border border-black/5 bg-surface shadow-card p-5">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary/80">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
           {content.eyebrow}
         </p>
         <h2

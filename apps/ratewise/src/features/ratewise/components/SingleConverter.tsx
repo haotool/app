@@ -86,9 +86,7 @@ export const SingleConverter = ({
   const [_loadingTrend, setLoadingTrend] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
-  const [isTrendVisible, setIsTrendVisible] = useState(false);
   const swapButtonRef = useRef<HTMLButtonElement>(null);
-  const trendChartContainerRef = useRef<HTMLDivElement>(null);
 
   // 輸入框 refs（用於焦點管理）
   const fromInputRef = useRef<HTMLDivElement>(null);
@@ -163,30 +161,6 @@ export const SingleConverter = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // IntersectionObserver：趨勢圖進入視口後才觸發資料載入，避免佔用首屏關鍵資源
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      setIsTrendVisible(true);
-      return;
-    }
-    const el = trendChartContainerRef.current;
-    if (!el || !('IntersectionObserver' in window)) {
-      setIsTrendVisible(true);
-      return;
-    }
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setIsTrendVisible(true);
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.01, rootMargin: '100px' },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
   // 處理交換按鈕點擊
   const handleSwap = () => {
     setIsSwapping(true);
@@ -209,15 +183,10 @@ export const SingleConverter = ({
   // 獲取當前目標貨幣的快速金額選項
   const quickAmounts = CURRENCY_QUICK_AMOUNTS[toCurrency] || CURRENCY_QUICK_AMOUNTS.TWD;
 
-  // Load historical data for trend chart (並行獲取優化)
-  // isTrendVisible 由 IntersectionObserver 設定，確保趨勢圖進入視口才開始載入資料
+  // Load historical data for trend chart（使用 requestIdleCallback 等瀏覽器空閒後才載入）
+  // 避免 30 筆 JSON 請求在首屏關鍵路徑期間與主要 JS bundle 競爭頻寬
   useEffect(() => {
-    // Skip in test environment (avoid window is not defined error)
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    if (!isTrendVisible) return;
+    if (typeof window === 'undefined') return;
 
     let isMounted = true;
 
@@ -281,12 +250,28 @@ export const SingleConverter = ({
       }
     }
 
-    void loadTrend();
+    // requestIdleCallback：等瀏覽器空閒再啟動（最多等 4 秒）
+    // Safari < 16.4 不支援，降級為 setTimeout(2000)
+    type RicHandle = number | ReturnType<typeof setTimeout>;
+    let handle: RicHandle;
+    const start = () => {
+      if (isMounted) void loadTrend();
+    };
+    if (typeof requestIdleCallback === 'function') {
+      handle = requestIdleCallback(start, { timeout: 4000 });
+    } else {
+      handle = setTimeout(start, 2000);
+    }
 
     return () => {
       isMounted = false;
+      if (typeof cancelIdleCallback === 'function') {
+        cancelIdleCallback(handle as number);
+      } else {
+        clearTimeout(handle as ReturnType<typeof setTimeout>);
+      }
     };
-  }, [fromCurrency, toCurrency, isTrendVisible]);
+  }, [fromCurrency, toCurrency]);
 
   // 開發工具：強制觸發骨架屏效果（僅開發模式）
   /* v8 ignore next 22 */
@@ -517,7 +502,6 @@ export const SingleConverter = ({
 
           {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
           <div
-            ref={trendChartContainerRef}
             data-testid="trend-chart"
             className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] overflow-hidden rounded-b-xl ${
               showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
