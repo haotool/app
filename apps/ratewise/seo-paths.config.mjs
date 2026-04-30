@@ -293,7 +293,7 @@ export const SITE_CONFIG = {
   url: withTrailingSlash('https://app.haotool.org/ratewise/'),
   name: APP_INFO.name,
   title: `${APP_INFO.shortName} — 台灣最精準匯率換算器`,
-  description: `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 18 種貨幣，讓你換匯前就知道真正要付多少台幣。`,
+  description: `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買賣價（非中間價），讓你換匯前知道真正要付多少台幣。支援 18 種貨幣，每 5 分鐘同步，免費無廣告。`,
 };
 
 /**
