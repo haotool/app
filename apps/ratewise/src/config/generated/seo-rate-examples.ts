@@ -8,7 +8,7 @@
  *   - 台灣銀行牌告匯率（現金買入/賣出）
  *   - open.er-api.com 市場中間價（與 Google Morningstar / XE / Wise / Apple Yahoo Finance 基準一致）
  * 雙重驗證：open.er-api.com 中間價 vs 台銀自身 (買入+賣出)/2 中間價，差距須在 2% 以內。
- * 匯率時間：2026/04/30 00:18:32
+ * 匯率時間：2026/04/30 01:53:44
  * 生成日期：2026-04-29
  */
 
@@ -78,15 +78,15 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
   },
   JPY: {
     exampleTWD: 30000,
-    foreignAtCash: 149477,
+    foreignAtCash: 149626,
     foreignAtMarketMid: 151815,
-    foreignAtBankMid: 154400,
-    diffForeign: 2338,
-    diffTWD: 462,
-    diffPct: 1.6,
-    cashSell: 0.2007,
+    foreignAtBankMid: 154560,
+    diffForeign: 2189,
+    diffTWD: 433,
+    diffPct: 1.5,
+    cashSell: 0.2005,
     marketMid: 0.197609,
-    bankMid: 0.1943,
+    bankMid: 0.1941,
     spotAvailable: true,
   },
   EUR: {
@@ -169,15 +169,15 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
   },
   AUD: {
     exampleTWD: 30000,
-    foreignAtCash: 1309,
+    foreignAtCash: 1310,
     foreignAtMarketMid: 1324,
-    foreignAtBankMid: 1332,
-    diffForeign: 15,
-    diffTWD: 330,
+    foreignAtBankMid: 1333,
+    diffForeign: 14,
+    diffTWD: 317,
     diffPct: 1.1,
-    cashSell: 22.91,
+    cashSell: 22.9,
     marketMid: 22.657755,
-    bankMid: 22.52,
+    bankMid: 22.51,
     spotAvailable: true,
   },
   CAD: {
@@ -186,24 +186,24 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     foreignAtMarketMid: 1301,
     foreignAtBankMid: 1302,
     diffForeign: 24,
-    diffTWD: 560,
+    diffTWD: 548,
     diffPct: 1.9,
-    cashSell: 23.5,
+    cashSell: 23.49,
     marketMid: 23.061135,
-    bankMid: 23.045,
+    bankMid: 23.035,
     spotAvailable: true,
   },
   SGD: {
     exampleTWD: 30000,
-    foreignAtCash: 1199,
+    foreignAtCash: 1200,
     foreignAtMarketMid: 1215,
-    foreignAtBankMid: 1221,
-    diffForeign: 16,
-    diffTWD: 383,
+    foreignAtBankMid: 1222,
+    diffForeign: 15,
+    diffTWD: 371,
     diffPct: 1.3,
-    cashSell: 25.02,
+    cashSell: 25.01,
     marketMid: 24.700506,
-    bankMid: 24.565,
+    bankMid: 24.555,
     spotAvailable: true,
   },
   CHF: {
@@ -300,7 +300,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
 } as const;
 
 /** 資料更新時間（台灣銀行） */
-export const SEO_RATE_EXAMPLES_UPDATE_TIME = '2026/04/30 00:18:32';
+export const SEO_RATE_EXAMPLES_UPDATE_TIME = '2026/04/30 01:53:44';
 
 /** 生成日期 */
 export const SEO_RATE_EXAMPLES_DATE = '2026-04-29';
