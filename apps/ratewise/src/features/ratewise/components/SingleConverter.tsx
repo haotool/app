@@ -10,14 +10,16 @@
  * @version 2.0.0
  */
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
 import type { CurrencyCode, RateMode, RateType } from '../types';
-// 直接 import 以確保離線冷啟動可用（消除 code-splitting 導致的 chunk 載入失敗）
-import { MiniTrendChart } from './MiniTrendChart';
+// lazy import：ErrorBoundary 已涵蓋載入失敗；chunk 已在 PWA precache manifest 內，離線可用
+const MiniTrendChart = lazy(() =>
+  import('./MiniTrendChart').then((m) => ({ default: m.MiniTrendChart })),
+);
 import type { MiniTrendDataPoint } from './MiniTrendChart';
 import { TrendChartSkeleton } from './TrendChartSkeleton';
 import type { RateDetails } from '../hooks/useExchangeRates';
@@ -84,7 +86,9 @@ export const SingleConverter = ({
   const [_loadingTrend, setLoadingTrend] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
+  const [isTrendVisible, setIsTrendVisible] = useState(false);
   const swapButtonRef = useRef<HTMLButtonElement>(null);
+  const trendChartContainerRef = useRef<HTMLDivElement>(null);
 
   // 輸入框 refs（用於焦點管理）
   const fromInputRef = useRef<HTMLDivElement>(null);
@@ -159,6 +163,30 @@ export const SingleConverter = ({
     return () => clearTimeout(timer);
   }, []);
 
+  // IntersectionObserver：趨勢圖進入視口後才觸發資料載入，避免佔用首屏關鍵資源
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setIsTrendVisible(true);
+      return;
+    }
+    const el = trendChartContainerRef.current;
+    if (!el || !('IntersectionObserver' in window)) {
+      setIsTrendVisible(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setIsTrendVisible(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.01, rootMargin: '100px' },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   // 處理交換按鈕點擊
   const handleSwap = () => {
     setIsSwapping(true);
@@ -182,11 +210,14 @@ export const SingleConverter = ({
   const quickAmounts = CURRENCY_QUICK_AMOUNTS[toCurrency] || CURRENCY_QUICK_AMOUNTS.TWD;
 
   // Load historical data for trend chart (並行獲取優化)
+  // isTrendVisible 由 IntersectionObserver 設定，確保趨勢圖進入視口才開始載入資料
   useEffect(() => {
     // Skip in test environment (avoid window is not defined error)
     if (typeof window === 'undefined') {
       return;
     }
+
+    if (!isTrendVisible) return;
 
     let isMounted = true;
 
@@ -255,7 +286,7 @@ export const SingleConverter = ({
     return () => {
       isMounted = false;
     };
-  }, [fromCurrency, toCurrency]);
+  }, [fromCurrency, toCurrency, isTrendVisible]);
 
   // 開發工具：強制觸發骨架屏效果（僅開發模式）
   /* v8 ignore next 22 */
@@ -486,6 +517,7 @@ export const SingleConverter = ({
 
           {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
           <div
+            ref={trendChartContainerRef}
             data-testid="trend-chart"
             className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] overflow-hidden rounded-b-xl ${
               showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'

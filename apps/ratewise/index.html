@@ -77,6 +77,15 @@
       })();
     </script>
 
+    <!-- App Height: 在 React hydration 前設定 --app-height，避免 useEffect 導致的 CLS -->
+    <script>
+      (function () {
+        var vp = window.visualViewport;
+        var h = vp ? vp.height : window.innerHeight;
+        document.documentElement.style.setProperty('--app-height', h + 'px');
+      })();
+    </script>
+
     <!-- Critical CSS (iOS PWA Optimized + Modern Skeleton) -->
     <style>
       /**
