@@ -1,5 +1,12 @@
 # @app/ratewise
 
+## 2.22.8
+
+### Patch Changes
+
+- 55006a8: 修復 RateWise SEO 內部 404、OpenData email obfuscation 與 Markdown mirror 漂移。
+- eb31693: 修正 SITE_CONFIG.description SSOT 漂移與 FAQ 頁 email Cloudflare obfuscation。
+
 ## 2.22.7
 
 ### Patch Changes
