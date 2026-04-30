@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v4.9
+ * 安全標頭 Worker v5.0
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v5.0: 移除 robots Content-Signal 注入，直連 Markdown mirror 強制 text/markdown
  * - v4.9: 補齊 root agent discovery、Markdown negotiation、API catalog 與 Agent Skills index
  * - v4.8: 新增 AI 爬蟲存取記錄，追蹤 llms.txt 與 Markdown 鏡像存取頻率
  * - v4.7: 新增 Server-Timing 診斷標頭，記錄 fetch 與 rewrite 耗時
@@ -24,7 +25,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '4.9';
+const SECURITY_POLICY_VERSION = '5.0';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -53,7 +54,6 @@ const ROOT_SITE_HTML_HOSTS = new Set(['haotool.org', 'www.haotool.org']);
 const HAOTOOL_ROOT_HTML_PATHS = new Set(['/', '/projects/', '/about/', '/contact/']);
 const HAOTOOL_ROOT_MARKDOWN_MIRROR = '/index.md';
 const RATEWISE_MARKDOWN_MIRROR = '/ratewise/index.md';
-const CONTENT_SIGNAL_HEADER = 'Content-Signal: ai-train=no, search=yes, ai-input=no';
 const AGENT_SKILLS_SCHEMA = 'https://schemas.agentskills.io/discovery/0.2.0/schema.json';
 const API_CATALOG_PATH = '/.well-known/api-catalog';
 const AGENT_SKILLS_INDEX_PATH = '/.well-known/agent-skills/index.json';
@@ -787,10 +787,7 @@ export default {
 			applyHtmlSecurityHeaders(response, url, profile, nonce);
 		} else {
 			if (shouldRewriteRobotsTxt) {
-				const robotsText = await upstreamResponse.text();
-				const robotsWithSignal = robotsText.includes('Content-Signal:') ? robotsText : `${robotsText}\n${CONTENT_SIGNAL_HEADER}\n`;
-
-				response = new Response(robotsWithSignal, {
+				response = new Response(upstreamResponse.body, {
 					status: upstreamResponse.status,
 					headers: upstreamResponse.headers,
 				});
@@ -802,7 +799,7 @@ export default {
 				response = new Response(upstreamResponse.body, upstreamResponse);
 			}
 
-			if (isMarkdownNegotiation) {
+			if (isMarkdownNegotiation || url.pathname.endsWith('.md')) {
 				response.headers.set('Content-Type', 'text/markdown; charset=utf-8');
 			}
 

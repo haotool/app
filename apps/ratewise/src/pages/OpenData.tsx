@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
 import { AnswerCapsule } from '../components/AnswerCapsule';
+import { MailtoLink } from '../components/MailtoLink';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
 import { RATES_API } from '../config/api-endpoints';
@@ -735,18 +736,27 @@ const OpenData = () => {
 
             <div className="space-y-2">
               {[
-                { icon: '✅', text: `允許：個人專案、學術研究、非商業 App、教學、媒體引用` },
-                { icon: '✅', text: `允許：標示「資料來源：臺灣銀行牌告匯率」` },
-                { icon: '⚠️', text: `商業用途建議聯繫 ${APP_INFO.email} 說明使用情境` },
-                { icon: '❌', text: `禁止：大量爬取歷史資料（對 CDN 或 GitHub 造成異常流量）` },
-                { icon: '❌', text: `禁止：宣稱為官方臺灣銀行 API` },
-              ].map(({ icon, text }, i) => (
+                { icon: '✅', content: '允許：個人專案、學術研究、非商業 App、教學、媒體引用' },
+                { icon: '✅', content: '允許：標示「資料來源：臺灣銀行牌告匯率」' },
+                {
+                  icon: '⚠️',
+                  content: (
+                    <>
+                      商業用途建議聯繫{' '}
+                      <MailtoLink email={APP_INFO.email} className="text-primary underline" />{' '}
+                      說明使用情境
+                    </>
+                  ),
+                },
+                { icon: '❌', content: '禁止：大量爬取歷史資料（對 CDN 或 GitHub 造成異常流量）' },
+                { icon: '❌', content: '禁止：宣稱為官方臺灣銀行 API' },
+              ].map(({ icon, content }, i) => (
                 <div
                   key={i}
                   className="flex items-start gap-3 rounded-lg bg-surface px-4 py-2.5 text-sm text-text"
                 >
                   <span className="mt-0.5 shrink-0">{icon}</span>
-                  <span>{text}</span>
+                  <span>{content}</span>
                 </div>
               ))}
             </div>

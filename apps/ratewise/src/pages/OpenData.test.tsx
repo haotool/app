@@ -5,6 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import '@testing-library/jest-dom/vitest';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
@@ -12,6 +13,7 @@ import OpenData from './OpenData';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { RATES_API } from '../config/api-endpoints';
 import { SITE_CONFIG } from '../config/seo-paths';
+import { APP_INFO } from '../config/app-info';
 
 const renderOpenData = () =>
   render(
@@ -89,6 +91,20 @@ describe('OpenData Page', () => {
         expect(link.getAttribute('rel')).toContain('noopener');
         expect(link.getAttribute('rel')).toContain('noreferrer');
       });
+    });
+
+    it('初始 SSG HTML 不應輸出原始 email 或 mailto，避免 Cloudflare email obfuscation 產生 broken link', () => {
+      const html = renderToString(
+        <MemoryRouter basename="/ratewise" initialEntries={['/ratewise/open-data/']}>
+          <HelmetProvider>
+            <OpenData />
+          </HelmetProvider>
+        </MemoryRouter>,
+      );
+
+      expect(html).not.toContain('href="mailto:');
+      expect(html).not.toContain(APP_INFO.email);
+      expect(html).not.toContain('/cdn-cgi/l/email-protection');
     });
   });
 

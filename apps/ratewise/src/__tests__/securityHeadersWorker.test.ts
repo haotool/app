@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // @ts-expect-error Worker 由 Cloudflare runtime 執行，這裡以整合測試方式直接匯入 JS 檔。
 import worker from '../../../../security-headers/src/worker.js';
+import { APP_INFO } from '../config/app-info';
 
 class MockElement {
   constructor(private readonly element: Element) {}
@@ -391,6 +392,21 @@ describe('security-headers worker', () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
+  it('直連 Markdown mirror 應強制回 text/markdown，避免上游 octet-stream 影響 AI crawler', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(`# ${APP_INFO.shortName} markdown mirror`, {
+        headers: {
+          'content-type': 'application/octet-stream',
+        },
+      }),
+    );
+
+    const response = await worker.fetch(new Request('https://app.haotool.org/ratewise/index.md'));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/markdown');
+  });
+
   it('公開分享圖開放 CORS，所有 Vite hashed asset 一律 immutable', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response('image-bytes', {
@@ -474,7 +490,7 @@ describe('security-headers worker', () => {
     expect(forwardedHeaders.get('if-none-match')).toBeNull();
     expect(forwardedHeaders.get('if-modified-since')).toBeNull();
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain('Content-Signal: ai-train=no, search=yes, ai-input=no');
+    expect(await response.text()).not.toContain('Content-Signal:');
     expect(response.headers.get('etag')).toBeNull();
     expect(response.headers.get('last-modified')).toBeNull();
   });

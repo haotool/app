@@ -370,10 +370,10 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(combinedContent).toContain('copyrightNotice');
     });
 
-    it('should have SearchAction on WebSite for sitelinks search box', () => {
-      expect(combinedContent).toContain("'@type': 'SearchAction'");
-      expect(combinedContent).toContain('potentialAction');
-      expect(combinedContent).toContain('currency_code');
+    it('should not expose deprecated SearchAction without a real site search endpoint', () => {
+      expect(combinedContent).not.toContain("'@type': 'SearchAction'");
+      expect(combinedContent).not.toContain('potentialAction');
+      expect(combinedContent).not.toContain('currency_code');
     });
 
     it('should expose Dataset markup for the Open Data page', () => {
