@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
@@ -6,6 +7,18 @@ import { APP_INFO } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
 import { AnswerCapsule } from '../components/AnswerCapsule';
 import { FAQ_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
+
+// 將 FAQ 答案中的 email 位址替換為 MailtoLink，防止 CF Email Obfuscation 將其改寫為爬蟲不可讀的 /cdn-cgi/... 連結。
+const EMAIL_RE = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
+function renderFaqAnswer(answer: string): React.ReactNode {
+  const parts = answer.split(EMAIL_RE);
+  if (parts.length === 1) return answer;
+  return (
+    <>
+      {parts.map((part, i) => (EMAIL_RE.test(part) ? <MailtoLink key={i} email={part} /> : part))}
+    </>
+  );
+}
 
 const FAQ_ENTRIES = FAQ_PAGE_SEO.faqContent ?? [];
 const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
@@ -95,7 +108,7 @@ export default function FAQ() {
                   </svg>
                 </summary>
                 <div className="border-t border-border px-6 pb-6 pt-4 leading-relaxed text-text-muted">
-                  {entry.answer}
+                  {renderFaqAnswer(entry.answer)}
                 </div>
               </details>
             ))}
