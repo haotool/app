@@ -1,9 +1,9 @@
 # HaoRate 匯率好工具
 
-> 整理 HaoRate 最常被問的換匯問題，涵蓋台銀匯率來源、現金與即期差異、買入賣出判讀、DCC 刷卡匯率、收藏排序、歷史記錄、離線使用與 PWA 安裝重點，讓第一次換匯也能快速判斷並少踩錯價。
+> HaoRate 顯示臺灣銀行牌告的實際買賣價（非中間價），支援 TWD、USD、JPY、EUR 等 18 種貨幣，讓你換匯前就知道真正要付多少台幣。
 
 - Canonical: https://app.haotool.org/ratewise/
-- Version: v2.22.6
+- Version: v2.22.7
 
 ## 以台灣銀行牌告匯率做實務換算
 
@@ -59,5 +59,5 @@
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.6），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.7），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_

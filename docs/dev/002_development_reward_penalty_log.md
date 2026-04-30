@@ -5801,6 +5801,58 @@ root_cause:
 
 ---
 
+id: ratewise-seo-ab-test-production-fixes-2026-04-30
+date: 2026-04-30
+title: 修復 RateWise SEO A/B 審查確認的內部 404、email obfuscation 與 Markdown 漂移
+score: 0
+type: improvement
+content_type: seo
+scope: ratewise, security-headers, markdown-mirrors
+topics: [seo, ai-seo, internal-links, cloudflare, markdown, structured-data]
+keywords:
+[ratewise, seo-ab-test, common-amounts, mailtolink, markdown-mirror, searchaction, robots]
+aliases: [RateWise SEO A/B production fixes]
+related_entries:
+[ratewise-seo-ssot-external-audit-2026-04-25]
+summary: 依 Squirrel、正式站抽樣與多 agent 複核結果，修正幣別頁常見金額連結與 SSG 金額白名單漂移、OpenData 頁 raw email 觸發 Cloudflare email obfuscation、首頁 Markdown mirror 描述錯抓 FAQ 文案、robots 非標準 Content-Signal 註解與過時 WebSite SearchAction。
+root_cause:
+
+- 常見金額連結使用 `popularAmounts`，但 SSG 可索引金額由 `INDEXABLE_FORWARD_AMOUNTS` 維護，兩份資料源漂移後產生 `/myr-twd/5000/`、`/nzd-twd/20/`、`/php-twd/50000/` 站內 404。
+- OpenData 頁直接輸出原始 email，Cloudflare Email Obfuscation 在正式站注入 `/cdn-cgi/l/email-protection`，爬蟲存取會得到 404。
+- Markdown mirror 生成器只以 `satisfies SEOPageMetadata` 判斷 block 結尾，遇到 `HOMEPAGE_SEO satisfies HomepageSEOContent` 時跨 block 抓到 FAQ description。
+- WebSite `SearchAction` 已無 sitelinks search box 實質效果，且 RateWise 並無真正站內搜尋頁。
+  impact:
+
+- 正式站存在可重現 broken internal links，影響 crawler 品質與使用者導覽。
+- AI crawler 讀取 OpenData 與 Markdown mirror 時可能遇到錯誤連結或錯誤摘要，降低 AI citation readiness。
+- Lighthouse / crawler 可能持續回報 robots 或 structured data 品質問題，造成 SEO 分數與維運判斷漂移。
+  actions:
+
+- 讓正向幣別頁 commonAmounts 改由 `INDEXABLE_FORWARD_AMOUNTS` 衍生，並新增測試確保每個 common amount 都對應可索引金額頁。
+- 調整 `MailtoLink` SSG 輸出為無 raw email、無 `mailto:`，hydration 後才注入可點擊 email；OpenData 改用此元件。
+- 修正 Markdown mirror description 擷取邏輯，支援不同 `satisfies` 型別與 `SITE_SEO.description` identifier。
+- 移除 WebSite `SearchAction`，更新 schema registry 與測試。
+- 移除 robots Content-Signal 註解與 Worker 注入，並讓 Worker 對直連 `.md` 回應強制 `text/markdown`。
+  prevention:
+
+- 新增 regression tests 鎖定 common amount path、Markdown 首頁描述、OpenData SSG email、SearchAction 與 Markdown MIME。
+- 後續 SEO 掃描若出現 broken link，需先比對本機 SSG 白名單與實際產物，避免只依 robots.txt 或 sitemap 判斷。
+  verification:
+
+- `pnpm --filter @app/ratewise test -- --run src/config/__tests__/seo-paths.test.ts src/__tests__/markdown-mirror.test.ts src/pages/OpenData.test.tsx src/seo-best-practices.test.ts src/__tests__/securityHeadersWorker.test.ts`
+- `pnpm --filter @app/ratewise test -- --run src/seo-best-practices.test.ts src/seo-truthfulness.test.ts src/jsonld.test.ts src/hreflang.test.ts src/prerender.test.ts src/__tests__/seo-public-surface.test.ts src/__tests__/seo-surface-order.test.ts src/config/__tests__/seo-ssot.test.ts src/config/__tests__/schema-truthfulness.test.ts src/config/__tests__/seo-lastmod-policy.test.ts src/components/__tests__/SEOHelmet.test.tsx src/__tests__/markdown-mirror.test.ts src/config/__tests__/seo-paths.test.ts src/pages/OpenData.test.tsx src/__tests__/securityHeadersWorker.test.ts`
+- `pnpm build:ratewise`
+  references:
+
+- apps/ratewise/src/config/seo-metadata.ts
+- apps/ratewise/src/components/MailtoLink.tsx
+- apps/ratewise/src/pages/OpenData.tsx
+- apps/ratewise/scripts/generate-markdown-mirrors.mjs
+- apps/ratewise/scripts/generate-robots-txt.mjs
+- security-headers/src/worker.js
+
+---
+
 id: pr281-regex-tail-whitespace-fix-2026-04-26
 date: 2026-04-26
 title: 修正 PR281 SEO 測試的 script/style 結尾空白 regex 邊界

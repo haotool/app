@@ -12,21 +12,23 @@ interface MailtoLinkProps {
  * Without this, Cloudflare rewrites `mailto:` hrefs into
  * `/cdn-cgi/l/email-protection#…` which returns 404 for crawlers without JS.
  *
- * SSG output  → <a>email@example.com</a>            (no href, no obfuscation)
+ * SSG output  → <a>email [at] example.com</a>      (no href, no raw email)
  * After hydration → <a href="mailto:…">email@example.com</a>  (works for users)
  */
 export function MailtoLink({ email, className }: MailtoLinkProps) {
   const ref = useRef<HTMLAnchorElement>(null);
+  const safeLabel = email.replace('@', ' [at] ');
 
   useEffect(() => {
     if (ref.current) {
       ref.current.setAttribute('href', `mailto:${email}`);
+      ref.current.textContent = email;
     }
   }, [email]);
 
   return (
     <a ref={ref} className={className}>
-      {email}
+      {safeLabel}
     </a>
   );
 }
