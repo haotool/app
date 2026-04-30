@@ -59,7 +59,7 @@ Allow: /
 ${SHARED_DISALLOW}
 
 # AI內容信號：保留曝光，降低用於模型訓練與預覽的抓取風險。
-Content-Signal: ai-train=no, search=yes, ai-input=no
+# X-Content-Signal: ai-train=no, search=yes, ai-input=no
 
 Sitemap: ${SITEMAP_URL}
 

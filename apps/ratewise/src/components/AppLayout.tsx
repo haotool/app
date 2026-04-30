@@ -29,16 +29,19 @@ function Logo() {
   const basePath = import.meta.env.BASE_URL || '/';
 
   return (
-    <img
-      src={`${basePath}logo.png`}
-      alt={APP_INFO.name}
-      width={28}
-      height={28}
-      className="w-7 h-7 shrink-0"
-      loading="eager"
-      decoding="async"
-      fetchPriority="high"
-    />
+    <picture>
+      <source srcSet={`${basePath}logo.webp`} type="image/webp" />
+      <img
+        src={`${basePath}logo.png`}
+        alt={APP_INFO.name}
+        width={28}
+        height={28}
+        className="w-7 h-7 shrink-0"
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
+      />
+    </picture>
   );
 }
 

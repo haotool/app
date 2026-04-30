@@ -46,6 +46,16 @@ vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
 );
 vi.stubGlobal('cancelAnimationFrame', (handle: number) => window.clearTimeout(handle));
 
+// Mock requestIdleCallback to run immediately in jsdom（jsdom 不支援此 API）
+// 確保依賴 requestIdleCallback 的元件在測試環境中同步觸發回調
+vi.stubGlobal(
+  'requestIdleCallback',
+  (callback: IdleRequestCallback, _options?: IdleRequestOptions): number => {
+    return window.setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 50 }), 0);
+  },
+);
+vi.stubGlobal('cancelIdleCallback', (handle: number) => window.clearTimeout(handle));
+
 // Mock HTMLCanvasElement for lightweight-charts tests
 // Based on Vitest best practices: https://vitest.dev/guide/mocking.html#globals
 const mockCanvasRenderingContext2D = {
