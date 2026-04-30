@@ -14,6 +14,7 @@ import {
   SEO_PATHS,
   SHARE_IMAGE,
   TWITTER_IMAGE,
+  INDEXABLE_FORWARD_AMOUNTS,
   normalizeSiteUrl,
 } from './seo-paths';
 
@@ -347,16 +348,6 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       inLanguage: SITE_SEO.locale,
       dateModified: BUILD_TIME,
       publisher: { '@id': orgId },
-      // potentialAction：讓 Google 在 SERP 顯示 sitelinks 搜尋框（SearchAction）。
-      // 匯率工具查詢模式：from={currency_code} 對應工具首頁的幣別 deep-link。
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: {
-          '@type': 'EntryPoint',
-          urlTemplate: `${SITE_BASE_URL}?from={currency_code}&to=TWD`,
-        },
-        'query-input': 'required name=currency_code',
-      },
     },
   ];
 }
@@ -2549,7 +2540,10 @@ export function getCurrencyLandingPageContent(
   const pathname = `/${code.toLowerCase()}-twd`;
   const displayName = override.displayName;
 
-  const commonAmounts: CommonAmountEntry[] = override.popularAmounts.map((amount) => ({
+  const indexablePopularAmounts =
+    INDEXABLE_FORWARD_AMOUNTS[code.toLowerCase()] ?? override.popularAmounts;
+
+  const commonAmounts: CommonAmountEntry[] = indexablePopularAmounts.map((amount) => ({
     amount,
     label: `${formatAmount(amount)} ${code}`,
     question: `${formatAmount(amount)} ${displayName}等於多少台幣？`,
@@ -2576,11 +2570,11 @@ export function getCurrencyLandingPageContent(
       : []),
     {
       question: override.question,
-      answer: `${buildCashSellRateSentence(code, override.popularAmounts[0])}使用本工具可查看 5 分鐘即時更新匯率，點擊「開始換算」輸入任意金額查看結果。`,
+      answer: `${buildCashSellRateSentence(code, indexablePopularAmounts[0])}使用本工具可查看 5 分鐘即時更新匯率，點擊「開始換算」輸入任意金額查看結果。`,
     },
     {
-      question: `${formatAmount(override.popularAmounts.at(-1) ?? 0)} ${displayName}大約等於多少台幣？`,
-      answer: `${buildCashSellRateSentence(code, override.popularAmounts.at(-1) ?? 0)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
+      question: `${formatAmount(indexablePopularAmounts.at(-1) ?? 0)} ${displayName}大約等於多少台幣？`,
+      answer: `${buildCashSellRateSentence(code, indexablePopularAmounts.at(-1) ?? 0)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
     },
     {
       question: `出國刷卡的匯率跟 ${APP_INFO.shortName} 顯示的${displayName}台銀牌告匯率一樣嗎？`,
@@ -2637,7 +2631,7 @@ export function getCurrencyLandingPageContent(
       {
         position: 2,
         name: '輸入金額',
-        text: `輸入 ${code} 金額、使用計算機鍵盤或點擊快速金額按鈕（如 ${override.popularAmounts.slice(0, 3).map(formatAmount).join('、')}），系統即時計算換算結果。`,
+        text: `輸入 ${code} 金額、使用計算機鍵盤或點擊快速金額按鈕（如 ${indexablePopularAmounts.slice(0, 3).map(formatAmount).join('、')}），系統即時計算換算結果。`,
       },
       {
         position: 3,

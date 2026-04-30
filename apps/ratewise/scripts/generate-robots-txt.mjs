@@ -58,9 +58,6 @@ User-agent: *
 Allow: /
 ${SHARED_DISALLOW}
 
-# AI內容信號：保留曝光，降低用於模型訓練與預覽的抓取風險。
-# X-Content-Signal: ai-train=no, search=yes, ai-input=no
-
 Sitemap: ${SITEMAP_URL}
 
 ${AI_CRAWLER_TIERS.map((tier) => sectionForBots(tier.bots, tier.label)).join('\n\n')}

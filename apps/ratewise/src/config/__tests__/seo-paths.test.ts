@@ -32,6 +32,7 @@ import {
   getCurrencyPairBasePath,
 } from '../seo-paths';
 import { APP_INFO } from '../app-info';
+import { getCurrencyLandingPageContent, type CurrencyLandingCode } from '../seo-metadata';
 
 describe('SEO Paths Configuration', () => {
   describe('normalizePath', () => {
@@ -328,6 +329,21 @@ describe('SEO Paths Configuration', () => {
       expect(INDEXABLE_REVERSE_AMOUNT_SEO_PATHS).toContain('/twd-usd/10000/');
       expect(INDEXABLE_AMOUNT_SEO_PATHS).not.toContain('/usd-twd/999/');
       expect(INDEXABLE_REVERSE_AMOUNT_SEO_PATHS).not.toContain('/twd-usd/12345/');
+    });
+
+    it('幣別頁常見金額連結必須全部對應可索引金額頁，避免站內 404', () => {
+      for (const code of Object.keys(INDEXABLE_FORWARD_AMOUNTS)) {
+        const upperCode = code.toUpperCase() as CurrencyLandingCode;
+        const page = getCurrencyLandingPageContent(upperCode);
+
+        for (const entry of page.commonAmounts) {
+          const path = `/${code}-twd/${entry.amount}/`;
+          expect(
+            INDEXABLE_AMOUNT_SEO_PATHS,
+            `${upperCode} common amount ${entry.amount} must be prerendered/indexable`,
+          ).toContain(path);
+        }
+      }
     });
   });
 });

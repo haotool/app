@@ -61,6 +61,7 @@ const KNOWN_SUBSTITUTIONS = {
   'APP_INFO.shortName': APP_INFO.shortName,
   'APP_INFO.name': APP_INFO.name,
   'APP_INFO.subtitle': APP_INFO.subtitle,
+  'SITE_SEO.description': SITE_CONFIG.description,
   ...Object.fromEntries(
     Object.entries(RATES_API).map(([key, value]) => [`RATES_API.${key}`, String(value)]),
   ),
@@ -138,7 +139,7 @@ function extractPageDescription(pageConst) {
   const startMatch = startRe.exec(seoMetadataSrc);
   if (!startMatch) throw new Error(`找不到 export const ${pageConst}`);
   const tail = seoMetadataSrc.slice(startMatch.index);
-  const endRe = /\}\s*(?:as const\s+)?satisfies\s+SEOPageMetadata/;
+  const endRe = /\}\s*(?:as const\s+)?satisfies\s+\w+/;
   const endMatch = endRe.exec(tail);
   if (!endMatch) throw new Error(`找不到 ${pageConst} 的結束標記`);
   const block = tail.slice(0, endMatch.index);
@@ -147,6 +148,13 @@ function extractPageDescription(pageConst) {
   if (descBacktick) return resolveLiteral(descBacktick[1]).trim();
   const descSingle = /description:\s*'([\s\S]*?)'/.exec(block);
   if (descSingle) return resolveLiteral(descSingle[1]).trim();
+  const descIdentifier = /description:\s*([A-Z_][A-Z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?)/.exec(
+    block,
+  );
+  if (descIdentifier) {
+    const key = descIdentifier[1];
+    if (key in KNOWN_SUBSTITUTIONS) return KNOWN_SUBSTITUTIONS[key].trim();
+  }
   throw new Error(`無法擷取 ${pageConst}.description`);
 }
 

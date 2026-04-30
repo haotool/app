@@ -11,6 +11,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { RATES_API } from '../config/api-endpoints';
+import { SITE_CONFIG } from '../config/seo-paths';
+import { APP_INFO } from '../config/app-info';
 
 const PUBLIC_DIR = resolve(__dirname, '../../public');
 
@@ -58,6 +60,12 @@ describe('Markdown mirrors', () => {
     expect(content).toMatch(/以台灣銀行牌告匯率做實務換算/);
     expect(content).toMatch(/5 分鐘自動同步/);
     expect(content).toMatch(/使用指南/);
+  });
+
+  it('index.md 首段描述必須使用首頁 SSOT，不能漂移成 FAQ 頁描述', () => {
+    const content = readMd('index');
+    expect(content).toContain(`> ${SITE_CONFIG.description}`);
+    expect(content).not.toContain(`整理 ${APP_INFO.shortName} 最常被問的換匯問題`);
   });
 
   it('open-data.md 含 API 端點與 curl 範例', () => {

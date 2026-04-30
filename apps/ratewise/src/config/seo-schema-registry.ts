@@ -19,7 +19,7 @@ export const SEO_SCHEMA_REGISTRY = [
   },
   {
     type: 'WebSite',
-    desc: '網站整體識別與 SearchAction 搜尋框',
+    desc: '網站整體識別、站名與發布者資訊',
     pages: '首頁',
     icon: Globe,
     enabled: true,
