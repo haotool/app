@@ -1,5 +1,12 @@
 # @app/ratewise
 
+## 2.22.6
+
+### Patch Changes
+
+- f85e760: 同步 2026-04-30 SEO SSOT 與 Markdown 鏡像內容更新
+- dbe4c15: 補齊 root agent readiness 測試閘門（security-headers Worker v4.9）
+
 ## 2.22.5
 
 ### Patch Changes
