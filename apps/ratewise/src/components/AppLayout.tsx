@@ -30,6 +30,22 @@ const LazyRatingModal = React.lazy(() =>
   import('./RatingModal').then((m) => ({ default: m.RatingModal })),
 );
 
+class NonCriticalLazyBoundary extends React.Component<
+  React.PropsWithChildren,
+  { hasError: boolean }
+> {
+  override state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  override render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
 /** Logo 組件 */
 function Logo() {
   const basePath = import.meta.env.BASE_URL || '/';
@@ -114,7 +130,8 @@ export function AppLayout() {
   const location = useLocation();
   const [hasMounted, setHasMounted] = React.useState(false);
   const [pageTransitionState, setPageTransitionState] = React.useState({
-    pathname: location.pathname,
+    currentPathname: location.pathname,
+    previousPathname: location.pathname,
     direction: 0,
   });
   const mainRef = React.useRef<HTMLElement>(null);
@@ -151,18 +168,20 @@ export function AppLayout() {
     return () => window.removeEventListener('resize', setAppHeight);
   }, []);
 
-  React.useEffect(() => {
-    setPageTransitionState((previous) =>
-      previous.pathname === location.pathname
-        ? previous
-        : {
-            pathname: location.pathname,
-            direction: getTopLevelTransitionDirection(previous.pathname, location.pathname),
-          },
-    );
-  }, [location.pathname]);
+  let transitionForRender = pageTransitionState;
+  if (pageTransitionState.currentPathname !== location.pathname) {
+    transitionForRender = {
+      currentPathname: location.pathname,
+      previousPathname: pageTransitionState.currentPathname,
+      direction: getTopLevelTransitionDirection(
+        pageTransitionState.currentPathname,
+        location.pathname,
+      ),
+    };
+    setPageTransitionState(transitionForRender);
+  }
 
-  const direction = pageTransitionState.direction;
+  const direction = transitionForRender.direction;
   const disableInitialAnimation = prefersReducedMotion || !hasMounted;
   const shouldAnimatePageEnter = !disableInitialAnimation && direction !== 0;
 
@@ -230,11 +249,13 @@ export function AppLayout() {
       </div>
 
       {/* 全域 PWA/離線狀態提示：延遲載入，不影響首次 LCP */}
-      <React.Suspense fallback={null}>
-        <LazyOfflineIndicator />
-        <LazyUpdatePrompt />
-        <LazyRatingModal {...ratingPrompt} />
-      </React.Suspense>
+      <NonCriticalLazyBoundary>
+        <React.Suspense fallback={null}>
+          <LazyOfflineIndicator />
+          <LazyUpdatePrompt />
+          <LazyRatingModal {...ratingPrompt} />
+        </React.Suspense>
+      </NonCriticalLazyBoundary>
     </ToastProvider>
   );
 }

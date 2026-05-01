@@ -541,3 +541,12 @@
 - ID：ratewise-performance-followup-shell-split
 - 原因：首頁 app shell 仍直接載入互動換算器與 motion 相關提示元件，release 後 Markdown mirror 版本也停在舊版。
 - 解法：延續已隔離 stash 並經多 agent 複核，保留 logo LCP preload，移除未使用 Google Fonts resource hint，將首頁換算器與非首屏 PWA/評分提示延遲載入，底部導覽改用 CSS transition，並同步 Markdown mirror 至 v2.22.8。
+
+- 日期：2026-05-01
+- ID：pr315-ratewise-lazy-boundary-direction-review-fix
+- content_type：review-fix
+- topics：ratewise, performance, pwa, route-transition
+- keywords：React.lazy, Suspense, error boundary, route animation, chunk load
+- related_entries：ratewise-performance-followup-shell-split
+- 原因：PR #315 review 指出兩個真問題：route direction 透過 effect 更新會在反向連續切換時慢一拍；全域非首屏 lazy 提示若 chunk 載入失敗，缺少錯誤邊界會把非關鍵提示故障升級成整體路由錯誤。
+- 解法：將 AppLayout 的上一個 pathname 記錄改為 render-time guarded state，讓當次 render 直接取得正確 previous/current path；另以非關鍵 error boundary 包住 OfflineIndicator、UpdatePrompt、RatingModal 的 Suspense，chunk 失敗時只隱藏提示元件，不影響主要內容與導覽。
