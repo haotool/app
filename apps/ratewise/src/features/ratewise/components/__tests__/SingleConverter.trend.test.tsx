@@ -375,6 +375,32 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
   });
 
   describe('貨幣變更時重新載入', () => {
+    it('should reload trend data when a background tab returns after local date changes', async () => {
+      vi.setSystemTime(new Date('2026-04-29T12:00:00'));
+      vi.mocked(historyService.fetchHistoricalRatesRange).mockResolvedValue([]);
+      vi.mocked(historyService.fetchLatestRates).mockRejectedValue(new Error('No data'));
+
+      render(<SingleConverter {...mockProps} />);
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      const initialCallCount = vi.mocked(historyService.fetchHistoricalRatesRange).mock.calls
+        .length;
+
+      vi.setSystemTime(new Date('2026-05-01T12:00:00'));
+
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'));
+        await vi.runAllTimersAsync();
+      });
+
+      expect(vi.mocked(historyService.fetchHistoricalRatesRange).mock.calls.length).toBeGreaterThan(
+        initialCallCount,
+      );
+    });
+
     it('should reload trend data when fromCurrency changes', async () => {
       vi.mocked(historyService.fetchHistoricalRatesRange).mockResolvedValue([]);
       vi.mocked(historyService.fetchLatestRates).mockRejectedValue(new Error('No data'));

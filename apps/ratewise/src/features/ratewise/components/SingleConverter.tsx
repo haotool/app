@@ -43,6 +43,13 @@ import { TREND_CHART_DEFER_MS, TREND_CHART_IDLE_TIMEOUT_MS } from '../../../conf
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
 
+function getLocalDateKey(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 interface SingleConverterProps {
   fromCurrency: CurrencyCode;
   toCurrency: CurrencyCode;
@@ -87,6 +94,7 @@ export const SingleConverter = ({
   const [_loadingTrend, setLoadingTrend] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
+  const [trendDateKey, setTrendDateKey] = useState(() => getLocalDateKey());
   const swapButtonRef = useRef<HTMLButtonElement>(null);
 
   // 輸入框 refs（用於焦點管理）
@@ -184,6 +192,30 @@ export const SingleConverter = ({
   // 獲取當前目標貨幣的快速金額選項
   const quickAmounts = CURRENCY_QUICK_AMOUNTS[toCurrency] || CURRENCY_QUICK_AMOUNTS.TWD;
 
+  // 長時間背景分頁回前景時，重新載入趨勢資料，避免停在舊日期。
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const refreshTrendDateKey = () => {
+      const currentDateKey = getLocalDateKey();
+      setTrendDateKey((previousDateKey) =>
+        previousDateKey === currentDateKey ? previousDateKey : currentDateKey,
+      );
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) refreshTrendDateKey();
+    };
+
+    window.addEventListener('focus', refreshTrendDateKey);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshTrendDateKey);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   // Load historical data for trend chart（使用 requestIdleCallback 等瀏覽器空閒後才載入）
   // 避免 30 筆 JSON 請求在首屏關鍵路徑期間與主要 JS bundle 競爭頻寬
   useEffect(() => {
@@ -280,7 +312,7 @@ export const SingleConverter = ({
         clearTimeout(idleHandle as TimerHandle);
       }
     };
-  }, [fromCurrency, toCurrency]);
+  }, [fromCurrency, toCurrency, trendDateKey]);
 
   // 開發工具：強制觸發骨架屏效果（僅開發模式）
   /* v8 ignore next 22 */

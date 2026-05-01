@@ -43,6 +43,11 @@
 - 解法：補齊 `Dataset` registry、移除 schema/URL 硬編碼、同步 2026 sitemap 名稱，並讓 Open Data mirror 揭露使用限制與授權。
 
 - 日期：2026-05-02
+- ID：ratewise-trend-date-refresh-stale-2026-05-02
+- 原因：趨勢圖在 #310 後改為頁面空閒即載入一次，長時間開啟的分頁跨日時不會重新查詢歷史匯率，可能停在 2026-04-28。
+- 解法：分頁 focus / visibility 回前景時檢查本地日期 key，跨日即重新載入趨勢資料，並新增 regression test。
+
+- 日期：2026-05-02
 - ID：pr317-superpowers-review-format-and-seo-signal-fix
 - 原因：Superpowers 分支 review 發現本 PR 新增 002 條目混入非四行欄位，且 SEO Master GSC 指標仍殘留幣別頁 FAQPage 舊語意。
 - 解法：將新增 002 條目收斂回四行模板，並把 Rich Results / AI 摘要指標改為 FAQ 主頁 FAQPage 與幣別頁 ExchangeRateSpecification。
