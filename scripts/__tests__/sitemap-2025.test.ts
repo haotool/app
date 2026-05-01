@@ -1,12 +1,12 @@
 /**
- * Sitemap 2025 標準測試
+ * Sitemap 2026 標準測試
  *
  * 依據：
  * - [Bing Webmaster](https://blogs.bing.com/webmaster/february-2023/The-Importance-of-Setting-the-lastmod-Tag-in-Your-Sitemap)
  * - [Spotibo SEO Guide](https://spotibo.com/sitemap-guide/)
  * - [Sitemaps.org Protocol](https://www.sitemaps.org/protocol.html)
  *
- * 2025 標準：
+ * 2026 標準：
  * - ✅ 保留 <lastmod> (Bing 明確要求真實時間戳)
  * - ❌ 移除 <changefreq> (Google 忽略)
  * - ❌ 移除 <priority> (Google 和 Bing 都忽略)
@@ -57,7 +57,7 @@ function formatDateISO8601(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-describe('Sitemap 2025 Standards', () => {
+describe('Sitemap 2026 Standards', () => {
   describe('Deprecated Tags Removal', () => {
     it('should NOT contain <changefreq> tags', () => {
       const xml = readSitemap();

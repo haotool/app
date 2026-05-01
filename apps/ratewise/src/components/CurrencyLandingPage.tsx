@@ -121,7 +121,7 @@ export function CurrencyLandingPage({
         : `/?amount=${amount}&from=${currencyCode}&to=TWD`
       : '/';
 
-  // 金額頁沿用幣對頁 schema，並額外附上金額專用 ExchangeRateSpecification。
+  // 金額頁以金額專用 ExchangeRateSpecification 取代幣對頁基礎匯率 schema，避免同頁重複同型節點。
   const resolvedJsonLd = (() => {
     if (amount === null || !jsonLd) return jsonLd;
 
@@ -144,7 +144,10 @@ export function CurrencyLandingPage({
             amountResult,
             'to-twd',
           );
-      return [...jsonLd, amountSchema];
+      const nonExchangeRateSchemas = jsonLd.filter(
+        (schema) => schema['@type'] !== 'ExchangeRateSpecification',
+      );
+      return [...nonExchangeRateSchemas, amountSchema];
     }
 
     return jsonLd;

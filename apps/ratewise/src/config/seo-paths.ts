@@ -169,7 +169,20 @@ export const PRERENDER_PATHS = [
 
 export const KNOWN_ROUTE_PATHS = [...PRERENDER_PATHS] as const;
 
-export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt', '/llms-full.txt'] as const;
+export const SEO_FILES = [
+  '/sitemap.xml',
+  '/robots.txt',
+  '/llms.txt',
+  '/llms-full.txt',
+  '/openapi.json',
+  '/api/latest.json',
+  '/index.md',
+  '/faq.md',
+  '/guide.md',
+  '/about.md',
+  '/privacy.md',
+  '/open-data.md',
+] as const;
 
 export const SHARE_IMAGE = '/og-image.jpg' as const;
 export const TWITTER_IMAGE = '/twitter-image.jpg' as const;

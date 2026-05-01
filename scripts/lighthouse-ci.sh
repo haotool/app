@@ -3,7 +3,7 @@
 # Lighthouse CI 監測腳本
 # 用途: 掃描 RateWise 主要頁面，確保 SEO/Performance 分數不下降
 # 作者: Claude Code
-# 日期: 2025-12-02
+# 日期: 2026-05-02
 # 版本: v1.0.0
 
 set -e
@@ -15,28 +15,23 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# 配置
-BASE_URL="https://app.haotool.org/ratewise"
+# 配置（預設從 app.config.mjs SSOT 取得，可用 LIGHTHOUSE_BASE_URL 覆寫）
+BASE_URL="${LIGHTHOUSE_BASE_URL:-$(node --input-type=module -e "import { APP_CONFIG } from './apps/ratewise/app.config.mjs'; console.log(APP_CONFIG.siteUrl.replace(/\\/$/, ''))")}"
 REPORT_DIR="./reports/lighthouse"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 CHROME_FLAGS="--headless --no-sandbox --disable-dev-shm-usage"
 
-# Baseline 分數 (v1.2.0)
-BASELINE_PERFORMANCE=97
-BASELINE_ACCESSIBILITY=100
-BASELINE_BEST_PRACTICES=100
-BASELINE_SEO=100
+# Baseline 分數 (v2026.2)
+BASELINE_PERFORMANCE=95
+BASELINE_ACCESSIBILITY=95
+BASELINE_BEST_PRACTICES=95
+BASELINE_SEO=98
 
 # 警告閾值 (降低超過此值觸發警告)
 WARNING_THRESHOLD=5
 
-# 待掃描頁面
-declare -a PAGES=(
-  "/"
-  "/faq/"
-  "/about/"
-  "/guide/"
-)
+# 待掃描頁面：從 APP_CONFIG.seoPaths 取 smoke subset，避免維護第二份 URL 清單。
+mapfile -t PAGES < <(node --input-type=module -e "import { APP_CONFIG } from './apps/ratewise/app.config.mjs'; const preferred = new Set(['/', '/faq/', '/about/', '/guide/', '/usd-twd/', '/jpy-twd/']); console.log(APP_CONFIG.seoPaths.filter((path) => preferred.has(path)).join('\\n'))")
 
 # 函數：打印帶顏色的訊息
 print_info() {

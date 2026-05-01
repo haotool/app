@@ -210,7 +210,7 @@ export const SITE_SEO = {
       '換算歷史記錄',
       '7~30 天歷史匯率趨勢圖',
       '6 種主題風格',
-      '3 語言支援（繁中／英／日）',
+      '4 語言支援（繁中／英／日／韓）',
       '下拉更新即時同步',
       '離線使用（PWA）',
       `${SUPPORTED_CURRENCY_COUNT} 種貨幣支援`,
@@ -453,8 +453,8 @@ export function buildAmountExchangeRateSpecificationJsonLd(
 ): JsonLdBlock {
   const isTwdToForeign = direction === 'twd-to-foreign';
   const rateDescription = isTwdToForeign
-    ? `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} TWD 換 ${result.toLocaleString('zh-TW')} ${toCurrency}）`
-    : `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} ${fromCurrency} 換 ${result.toLocaleString('zh-TW')} TWD）`;
+    ? `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} TWD 可買 ${result.toLocaleString('zh-TW')} ${toCurrency}）`
+    : `臺灣銀行現金賣出價（買 ${amount.toLocaleString('zh-TW')} ${fromCurrency} 所需 ${result.toLocaleString('zh-TW')} TWD）`;
 
   return {
     '@context': 'https://schema.org',
@@ -555,6 +555,18 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
     name: `${APP_INFO.shortName} 台灣銀行牌告匯率開放資料`,
     description: `${APP_INFO.shortName} 提供臺灣銀行牌告匯率的開放 JSON 資料集，包含 18 種貨幣的現金與即期買入賣出四種報價，並提供最新匯率、歷史匯率與 OpenAPI 規格。`,
     url: buildCanonicalUrl('/open-data/'),
+    sameAs: 'https://rate.bot.com.tw/xrt',
+    isBasedOn: {
+      '@type': 'Dataset',
+      name: '臺灣銀行牌告匯率',
+      url: 'https://rate.bot.com.tw/xrt',
+      publisher: {
+        '@type': 'Organization',
+        name: '臺灣銀行',
+        url: 'https://www.bot.com.tw/',
+      },
+    },
+    identifier: `${SITE_BASE_URL}open-data/#bank-of-taiwan-exchange-rate-dataset`,
     license: APP_INFO.licenseUrl,
     isAccessibleForFree: true,
     inLanguage: DEFAULT_LOCALE,
@@ -913,7 +925,7 @@ export const HOMEPAGE_SEO = {
     highlights: [
       '顯示實際買賣價：臺灣銀行牌告匯率的現金與即期買入賣出四種報價，不是中間價——換匯金額更精準。',
       `支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，提供計算機快速輸入、收藏管理、拖曳排序與換算歷史。`,
-      '6 種主題風格、3 語言介面（繁中／英／日），PWA 可離線使用，重新連線自動同步。',
+      '6 種主題風格、4 語言介面（繁中／英／日／韓），PWA 可離線使用，重新連線自動同步。',
     ],
     quickLinks: [
       { href: '/usd-twd/', label: 'USD/TWD 匯率' },
@@ -1322,7 +1334,7 @@ export const ABOUT_PAGE_FAQ = [
   {
     question: `${APP_INFO.shortName} 是否支援 AI 搜尋引擎與 LLM 引用？`,
     answer:
-      'robots.txt 明確允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、Google-Extended、GrokBot、Applebot-Extended 等）全站讀取；另提供 llms.txt 與 llms-full.txt 供大型語言模型快速理解站點架構，openapi.json 供 AI Agent 呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。',
+      'robots.txt 明確允許 Googlebot 讀取；Googlebot 是 Google Search 與 AI Overviews 的主要爬取控制。AI crawler 分層另允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、GrokBot、Applebot-Extended 等）；Google-Extended 則作為 Gemini / Vertex 訓練與 grounding 的控制 token。站點另提供 llms.txt、llms-full.txt 與 openapi.json，讓 AI Agent 可理解頁面架構並呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。',
   },
 ] as const satisfies readonly FAQEntry[];
 
@@ -2426,7 +2438,7 @@ export function buildRateDifferenceSentence(input: RateDifferenceSentenceInput):
   const sellCost = amount * cashSell;
   const diff = Math.abs(sellCost - midCost);
 
-  return `差距有多大？以 ${formatAmount(amount)} ${currencyName} 換台幣估算，中間價與台銀實際賣出價約相差 ${Math.round(
+  return `差距有多大？以買 ${formatAmount(amount)} ${currencyName} 所需台幣估算，中間價與台銀實際賣出價約相差 ${Math.round(
     diff,
   ).toLocaleString('zh-TW')} 元台幣；金額越大，差距越明顯。`;
 }
@@ -2446,14 +2458,14 @@ export function buildPairAmountSeo(
 
   if (direction === 'twd-to-foreign') {
     return {
-      title: `台幣換 ${formatted} ${currencyName}（TWD/${currencyCode}）— 台銀實際賣出價 | ${APP_INFO.shortName}`,
+      title: `${formatted} 台幣換${currencyName}（TWD/${currencyCode}）— 台銀實際賣出價 | ${APP_INFO.shortName}`,
       description: `${formatted} 台幣今日可換多少${currencyName}？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算可兌換的外幣金額，避免被中間價誤導。`,
     };
   }
 
   return {
-    title: `${formatted} ${currencyName}換新台幣（${currencyCode}/TWD）— 台銀實際賣出價 | ${APP_INFO.shortName}`,
-    description: `${formatted} ${currencyName}今日換新台幣要多少？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算所需台幣金額，避免被中間價誤導。`,
+    title: `買 ${formatted} ${currencyName}要多少新台幣（${currencyCode}/TWD）— 台銀實際賣出價 | ${APP_INFO.shortName}`,
+    description: `買 ${formatted} ${currencyName}今日要多少新台幣？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算所需台幣金額，避免被中間價誤導。`,
   };
 }
 
@@ -2507,7 +2519,7 @@ function buildCurrencyAnswerCapsule(
   if (direction === 'to-twd') {
     return [
       {
-        question: `${displayName}換台幣今日匯率是多少？`,
+        question: `買${displayName}今日台銀賣出價是多少？`,
         answer: `台銀現金賣出價：1 ${code} = ${ex.cashSell} TWD（${SEO_RATE_EXAMPLES_DATE} 更新）。${APP_INFO.shortName} 直接顯示臺灣銀行牌告的實際賣出價，非中間價，換匯前可精準估算所需台幣。`,
       },
       {
@@ -2546,7 +2558,7 @@ export function getCurrencyLandingPageContent(
   const commonAmounts: CommonAmountEntry[] = indexablePopularAmounts.map((amount) => ({
     amount,
     label: `${formatAmount(amount)} ${code}`,
-    question: `${formatAmount(amount)} ${displayName}等於多少台幣？`,
+    question: `買 ${formatAmount(amount)} ${displayName}要多少台幣？`,
   }));
 
   const canonicalUrl = buildCanonicalUrl(pathname);
@@ -2569,7 +2581,7 @@ export function getCurrencyLandingPageContent(
         ]
       : []),
     {
-      question: override.question,
+      question: `買${displayName}今日台銀賣出價是多少？`,
       answer: `${buildCashSellRateSentence(code, indexablePopularAmounts[0])}使用本工具可查看 5 分鐘即時更新匯率，點擊「開始換算」輸入任意金額查看結果。`,
     },
     {
@@ -2616,7 +2628,7 @@ export function getCurrencyLandingPageContent(
               code,
               'TWD',
               rateExample.cashSell,
-              `臺灣銀行現金賣出價（${displayName}換台幣匯率）`,
+              `臺灣銀行現金賣出價（買${displayName}所需台幣匯率）`,
             ),
           ]
         : []),

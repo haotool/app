@@ -1,8 +1,10 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.9.0
+> **文件版本**: v2.9.2
 > **建立日期**: 2026-03-23
-> **最後更新**: 2026-05-01
+> **最後更新**: 2026-05-02
+> **v2.9.2 變更**: 2026-05-02 依 Superpowers 平行 SEO 審查修正頂級 SEO 漂移：① `verify-seo-ssot.mjs` schema 口徑對齊 `/faq/ only` FAQPage 與幣別頁 `ExchangeRateSpecification`；② 正向金額頁文案改為「買外幣所需台幣」，反向金額頁明確標示台幣金額，避免 AI 摘要誤讀；③ `/seo-tech/` E-E-A-T 信任訊號移除「無追蹤」並對齊 Google Analytics 隱私揭露；④ Googlebot / Google-Extended 角色依 Google 官方文件校正；⑤ 新增 `seo-truthfulness` / `seo-ssot` / `build-scripts` 守門測試。
+> **v2.9.1 變更**: 2026-05-02 校正已完成但仍被列為 fail / 待補的 SEO / AI readiness 項目：root / RateWise Markdown negotiation、Link headers、`.md` `text/markdown`、RFC 9727 API catalog、Agent Skills Discovery v0.2.0 與 P1-9 均依 `security-headers/src/worker.js` v5.0 和 `securityHeadersWorker.test.ts` 標記為完成；OAuth / MCP / WebMCP / A2A 明確改為「不適用 / 未提供產品能力」而非 fail；補上文檔漂移守門測試，避免已完成 Worker 能力回寫成 pending。
 > **v2.9.0 變更**: 2026-05-01 同步 v2.22.7–v2.22.8 批次修復：① robots.txt 移除非標準 `Content-Signal` 指令（改為完全刪除，包含 Worker 注入邏輯）→ Lighthouse SEO 92→100；② WebSite schema 移除無實際效果的 `SearchAction`/`potentialAction`；③ 幣別頁 `commonAmounts` 改從 `INDEXABLE_FORWARD_AMOUNTS` 衍生，消除 SSG 白名單漂移產生的站內 404；④ OpenData 頁與 FAQ 頁 raw email 改用 `MailtoLink` 元件渲染，防止 CF Email Obfuscation 改寫 `/cdn-cgi/l/email-protection`；⑤ `SITE_CONFIG.description`（`seo-paths.config.mjs` + `seo-paths.ts`）對齊 `DEFAULT_DESCRIPTION` 文字，消除 Markdown mirror 與 HTML meta description 的 SSOT 漂移；⑥ Worker v5.0 部署（移除 Content-Signal 注入，直連 `.md` 強制回 `text/markdown`）；⑦ §12 新增 §12.8 v2.22.7–v2.22.8 批次修復稽核紀錄。
 > **v2.8.0 變更**: 2026-04-30 完整重評分：新增 §12.7.9 全站 33 端點生產審查、Lighthouse 生產實測（Desktop: P85/A100/BP100/SEO92、Mobile: P79/A100/BP100/SEO92）、12 構面重新評分（總分 90/100，+2）；§12.7.1 補齊 04-30 分欄與 Δ；§12.7.6 標記 Title/Desc ✅ 完成、TTFB ✅ 改善，並加入 CLS、Mobile LCP、og-image、.well-known 新待補項；§12.7.8 補入 Lighthouse 實測結果。
 > **v2.7.1 變更**: 依 PR #303 Codex review 補齊 AGT-LOG-01 稽核鏈；完成 2026-04-30 ratewise SEO 例行重跑（`verify-production-seo`、`verify-production-resources`、`verify-structured-data`、`seo-public-surface`、§12.7.7 命令 #5 補充探針）並記錄最新狀態，全數通過。
@@ -620,6 +622,7 @@ HaoRate 顯示臺灣銀行牌告的實際賣出價（非中間價），支援 18
 **行動項目**：
 
 - **立即**：加入缺漏的 schema（`CurrencyConversionService`、`ExchangeRateSpecification`）
+- **已完成**：`CurrencyConversionService` 與 `ExchangeRateSpecification` 已納入首頁、幣對頁與金額頁 JSON-LD（詳 §4.3.1 / §4.3.2）；此項不得再列為待補。
 - **中期**：在幣對頁加入匯率歷史趨勢圖（圖片 + alt 文字，多媒體信號）
 
 ### 6.4 Entity 知識圖譜密度
@@ -807,45 +810,47 @@ Disallow: /ratewise/?
 
 robots.txt 與 llms.txt 明確 Allow 以下 AI 爬蟲，確保最大 AI 搜尋可見度。清單 SSOT 為 `apps/ratewise/scripts/lib/ai-crawlers.mjs`：
 
-| 爬蟲名稱                | 平台             | 用途                  |
-| ----------------------- | ---------------- | --------------------- |
-| `GPTBot`                | OpenAI           | ChatGPT 訓練          |
-| `OAI-SearchBot`         | OpenAI           | ChatGPT 搜尋引用      |
-| `ChatGPT-User`          | OpenAI           | ChatGPT 用戶搜尋      |
-| `ClaudeBot`             | Anthropic        | Claude 訓練爬蟲       |
-| `Claude-User`           | Anthropic        | Claude 搜尋引用       |
-| `Claude-SearchBot`      | Anthropic        | Claude 搜尋索引       |
-| `anthropic-ai`          | Anthropic        | Anthropic 通用        |
-| `PerplexityBot`         | Perplexity       | Perplexity 引用       |
-| `Perplexity-User`       | Perplexity       | Perplexity 用戶搜尋   |
-| `Google-Extended`       | Google           | Gemini / AI Overviews |
-| `Google-CloudVertexBot` | Google           | Vertex AI             |
-| `GrokBot`               | xAI              | Grok AI               |
-| `cohere-ai`             | Cohere           | Cohere AI 產品        |
-| `YouBot`                | You.com          | You.com AI 搜尋       |
-| `PhindBot`              | Phind            | Phind 開發者 AI 搜尋  |
-| `DuckAssistBot`         | DuckDuckGo       | DuckDuckGo AI 助手    |
-| `Amazonbot`             | Amazon           | Alexa / AWS AI        |
-| `Applebot`              | Apple            | Apple 搜尋 + Siri     |
-| `Applebot-Extended`     | Apple            | Apple Intelligence    |
-| `CCBot`                 | Common Crawl     | 開放資料集            |
-| `Bytespider`            | ByteDance        | TikTok 系列 AI        |
-| `PetalBot`              | Huawei           | Huawei AI 搜尋        |
-| `MistralAI-User`        | Mistral          | Mistral AI 助手       |
-| `Manus-User`            | Manus            | Manus AI 助手         |
-| `Meta-ExternalAgent`    | Meta             | Meta AI 訓練（Llama） |
-| `Meta-ExternalFetcher`  | Meta             | Meta AI 助手          |
-| `FacebookBot`           | Meta             | Facebook AI           |
-| `facebookexternalhit`   | Meta             | Facebook 連結預覽     |
-| `Twitterbot`            | X (Twitter)      | Twitter 連結預覽      |
-| `LinkedInBot`           | LinkedIn         | LinkedIn 連結預覽     |
-| `Cloudflare-AutoRAG`    | Cloudflare       | Cloudflare AI         |
-| `Anchor Browser`        | Anchor           | Anchor AI 爬蟲        |
-| `archive.org_bot`       | Internet Archive | 網路存檔              |
-| `Terracotta Bot`        | Ceramic          | 搜尋引擎爬蟲          |
-| `Timpibot`              | Timpi            | Timpi AI 爬蟲         |
-| `ProRataInc`            | ProRata.ai       | ProRata AI 爬蟲       |
-| `Novellum AI Crawl`     | Novellum         | Novellum AI 爬蟲      |
+| 爬蟲名稱                | 平台             | 用途                                                                                |
+| ----------------------- | ---------------- | ----------------------------------------------------------------------------------- |
+| `GPTBot`                | OpenAI           | ChatGPT 訓練                                                                        |
+| `OAI-SearchBot`         | OpenAI           | ChatGPT 搜尋引用                                                                    |
+| `ChatGPT-User`          | OpenAI           | ChatGPT 用戶搜尋                                                                    |
+| `ClaudeBot`             | Anthropic        | Claude 訓練爬蟲                                                                     |
+| `Claude-User`           | Anthropic        | Claude 搜尋引用                                                                     |
+| `Claude-SearchBot`      | Anthropic        | Claude 搜尋索引                                                                     |
+| `anthropic-ai`          | Anthropic        | Anthropic 通用                                                                      |
+| `PerplexityBot`         | Perplexity       | Perplexity 引用                                                                     |
+| `Perplexity-User`       | Perplexity       | Perplexity 用戶搜尋                                                                 |
+| `Google-Extended`       | Google           | Gemini / Vertex 訓練與 grounding 控制；**非** Google Search / AI Overviews 索引控制 |
+| `Google-CloudVertexBot` | Google           | Vertex AI                                                                           |
+| `GrokBot`               | xAI              | Grok AI                                                                             |
+| `cohere-ai`             | Cohere           | Cohere AI 產品                                                                      |
+| `YouBot`                | You.com          | You.com AI 搜尋                                                                     |
+| `PhindBot`              | Phind            | Phind 開發者 AI 搜尋                                                                |
+| `DuckAssistBot`         | DuckDuckGo       | DuckDuckGo AI 助手                                                                  |
+| `Amazonbot`             | Amazon           | Alexa / AWS AI                                                                      |
+| `Applebot`              | Apple            | Apple 搜尋 + Siri                                                                   |
+| `Applebot-Extended`     | Apple            | Apple Intelligence                                                                  |
+| `CCBot`                 | Common Crawl     | 開放資料集                                                                          |
+| `Bytespider`            | ByteDance        | TikTok 系列 AI                                                                      |
+| `PetalBot`              | Huawei           | Huawei AI 搜尋                                                                      |
+| `MistralAI-User`        | Mistral          | Mistral AI 助手                                                                     |
+| `Manus-User`            | Manus            | Manus AI 助手                                                                       |
+| `Meta-ExternalAgent`    | Meta             | Meta AI 訓練（Llama）                                                               |
+| `Meta-ExternalFetcher`  | Meta             | Meta AI 助手                                                                        |
+| `FacebookBot`           | Meta             | Facebook AI                                                                         |
+| `facebookexternalhit`   | Meta             | Facebook 連結預覽                                                                   |
+| `Twitterbot`            | X (Twitter)      | Twitter 連結預覽                                                                    |
+| `LinkedInBot`           | LinkedIn         | LinkedIn 連結預覽                                                                   |
+| `Cloudflare-AutoRAG`    | Cloudflare       | Cloudflare AI                                                                       |
+| `Anchor Browser`        | Anchor           | Anchor AI 爬蟲                                                                      |
+| `archive.org_bot`       | Internet Archive | 網路存檔                                                                            |
+| `Terracotta Bot`        | Ceramic          | 搜尋引擎爬蟲                                                                        |
+| `Timpibot`              | Timpi            | Timpi AI 爬蟲                                                                       |
+| `ProRataInc`            | ProRata.ai       | ProRata AI 爬蟲                                                                     |
+| `Novellum AI Crawl`     | Novellum         | Novellum AI 爬蟲                                                                    |
+
+> **Google 官方角色分工（v2.9.2 校正）**：Google Search 與 AI Overviews / AI Mode 的爬取控制點是 `Googlebot` 與一般 Search snippet controls（`noindex`、`nosnippet`、`max-snippet` 等）；`Google-Extended` 是 Gemini Apps / Vertex AI API for Gemini 與 Grounding with Google Search 的訓練 / grounding 控制 token，不應在文件中寫成 AI Overviews 的索引或排名訊號。
 
 ### 8.3 不需專門規則的爬蟲
 
@@ -964,21 +969,22 @@ node scripts/fetch-rating-snapshot.mjs
 
 ### 11.2 測試覆蓋規格
 
-| 測試檔案                                    | 涵蓋面                                                             | 最低測試數 |
-| ------------------------------------------- | ------------------------------------------------------------------ | ---------- |
-| `seo-ssot.test.ts`                          | SSOT 一致性、template-bleed、rate examples                         | ≥ 40       |
-| `seo-paths.test.ts`                         | 路徑正規化、prerender 判斷                                         | ≥ 20       |
-| `schema-truthfulness.test.ts`               | `FAQPage` 範圍、aggregateRating gate、noindex schema 防護          | ≥ 4        |
-| `seo-faq-quality.test.ts`                   | FAQPage 僅限 `/faq/`、幣別頁保留 FAQ HTML 不保留 FAQ schema        | ≥ 5        |
-| `seo-best-practices.test.ts`                | LLMO/GEO 合規（llms.txt、robots.txt、sitemap、JSON-LD）            | ≥ 30       |
-| `build-scripts.test.ts`                     | 建置腳本回歸（health-check 使用 seo-static.ts、generate-manifest） | ≥ 20       |
-| `SEOHelmet.test.tsx`                        | answerCapsule 欄位渲染、noindex 防護                               | ≥ 15       |
-| `CurrencyLandingPage.truthfulness.test.tsx` | 幣別頁不得殘留錯幣別範例文字                                       | ≥ 2        |
-| `AuthorityGuidePage.test.tsx`               | jsonLd/faqContent/answerCapsule props 傳遞                         | ≥ 10       |
-| `SeoTech.ssot.test.tsx`                     | 公開技術揭露頁不得出現 stale phrase / 舊 script 名稱               | ≥ 5        |
-| `seo-surface-order.test.ts`                 | SSG 頁首 H1 必須先於 app-shell / fallback                          | ≥ 4        |
-| `seo-public-surface.test.ts`                | H1 順序、SeoTech SSOT、sitemap 舊標籤、公開 surface 漂移           | ≥ 4        |
-| `prerender.test.ts`                         | FAQ/amount 頁 canonical、schema URL 穩定性                         | ≥ 15       |
+| 測試檔案                                    | 涵蓋面                                                      | 最低測試數 |
+| ------------------------------------------- | ----------------------------------------------------------- | ---------- |
+| `seo-ssot.test.ts`                          | SSOT 一致性、template-bleed、rate examples                  | ≥ 40       |
+| `seo-paths.test.ts`                         | 路徑正規化、prerender 判斷                                  | ≥ 20       |
+| `schema-truthfulness.test.ts`               | `FAQPage` 範圍、aggregateRating gate、noindex schema 防護   | ≥ 4        |
+| `seo-faq-quality.test.ts`                   | FAQPage 僅限 `/faq/`、幣別頁保留 FAQ HTML 不保留 FAQ schema | ≥ 5        |
+| `seo-best-practices.test.ts`                | LLMO/GEO 合規（llms.txt、robots.txt、sitemap、JSON-LD）     | ≥ 30       |
+| `build-scripts.test.ts`                     | 建置腳本回歸、production SEO SSOT schema 驗證口徑           | ≥ 20       |
+| `SEOHelmet.test.tsx`                        | answerCapsule 欄位渲染、noindex 防護                        | ≥ 15       |
+| `CurrencyLandingPage.truthfulness.test.tsx` | 幣別頁不得殘留錯幣別範例文字                                | ≥ 2        |
+| `seo-truthfulness.test.ts`                  | 隱私 / analytics / Google crawler 角色與公開文件真實性      | ≥ 6        |
+| `AuthorityGuidePage.test.tsx`               | jsonLd/faqContent/answerCapsule props 傳遞                  | ≥ 10       |
+| `SeoTech.ssot.test.tsx`                     | 公開技術揭露頁不得出現 stale phrase / 舊 script 名稱        | ≥ 5        |
+| `seo-surface-order.test.ts`                 | SSG 頁首 H1 必須先於 app-shell / fallback                   | ≥ 4        |
+| `seo-public-surface.test.ts`                | H1 順序、SeoTech SSOT、sitemap 舊標籤、公開 surface 漂移    | ≥ 4        |
+| `prerender.test.ts`                         | FAQ/amount 頁 canonical、schema URL 穩定性                  | ≥ 15       |
 
 ### 11.3 禁止行為清單
 
@@ -991,6 +997,9 @@ node scripts/fetch-rating-snapshot.mjs
 - ❌ `FAQPage` schema 出現在首頁、幣別頁、金額頁或 noindex 頁
 - ❌ `ExchangeRateSpecification` 的 price 欄位硬編碼（幣對頁必須從 `generated/seo-rate-examples.ts` 讀取；金額頁由頁面金額與同一匯率來源計算）
 - ❌ 在 noindex 頁面輸出任何 JSON-LD（`shouldRenderStructuredData()` 管控）
+- ❌ 使用台銀 `cashSell` 時把「買外幣所需台幣」寫成「外幣換回台幣」語意
+- ❌ 在 `/seo-tech/` 或公開 E-E-A-T 文案宣稱「無追蹤」（站點實際使用 Google Analytics，需揭露為匿名流量分析）
+- ❌ 將 `Google-Extended` 描述成 Google Search / AI Overviews 的索引控制或排名訊號
 
 ### 11.4 公開 Truth Surface Gate
 
@@ -1005,10 +1014,17 @@ node scripts/fetch-rating-snapshot.mjs
 3. **幣別頁不得有跨幣別模板污染**
    - `/usd-twd/` 不得殘留「10 萬日圓」等錯幣別敘述。
    - 守門測試：`src/components/__tests__/CurrencyLandingPage.truthfulness.test.tsx`
-4. **Sitemap 僅保留被 Google 真正使用的訊號**
+4. **匯率方向語意必須對齊報價類型**
+   - `cashSell` 對應「銀行賣外幣給使用者」；正向金額頁需寫「買 100 美金要多少新台幣」，不得寫成「100 美金換新台幣」。
+   - 反向金額頁需寫「30,000 台幣換美金」，不得寫成「台幣換 30,000 美金」。
+   - 守門測試：`src/config/__tests__/seo-ssot.test.ts`
+5. **AI crawler 說明不得混淆 Googlebot / Google-Extended**
+   - Googlebot 是 Google Search 與 AI Overviews 的主要爬取控制；Google-Extended 僅作 Gemini / Vertex 訓練與 grounding 控制。
+   - 守門測試：`src/seo-truthfulness.test.ts`
+6. **Sitemap 僅保留被 Google 真正使用的訊號**
    - `public/sitemap.xml` 禁止重新出現 `<priority>` / `<changefreq>`。
    - 守門測試：`src/__tests__/seo-public-surface.test.ts`
-5. **README / docs / src 公開敘述不得殘留 stale phrase**
+7. **README / docs / src 公開敘述不得殘留 stale phrase**
    - 例如舊的 URL 計數、舊 sitemap script 名稱或舊貨幣支援數量描述。
    - 守門腳本：`apps/ratewise/scripts/verify-doc-ssot-drift.mjs`
 
@@ -1048,7 +1064,7 @@ node scripts/fetch-rating-snapshot.mjs
 - **索引覆蓋**：確認 249 個 SEO 頁面均已索引（排除 noindex 頁）
 - **搜尋排名**：「日圓換台幣」「美元換台幣」等核心查詢在 Top 10
 - **Core Web Vitals**：分頁類型的 LCP/INP/CLS 狀態
-- **Rich Results / AI 摘要**：BreadcrumbList rich snippets、幣別頁 FAQPage 機器可理解性是否正常
+- **Rich Results / AI 摘要**：FAQ 主頁 FAQPage、幣別頁 `ExchangeRateSpecification` 與 BreadcrumbList 機器可理解性是否正常
 
 ### 12.5 權威 SEO 參考與外部檢測入口（2026）
 
@@ -1161,7 +1177,7 @@ node scripts/fetch-rating-snapshot.mjs
 - `node scripts/verify-structured-data.mjs`
   - 通過頁面：首頁、FAQ、About、Guide、USD→TWD、JPY→TWD、EUR→TWD（7/7）
   - Schema 總數：`55`（該輪快照包含 `SoftwareApplication`、`Organization`、`WebSite`、`ExchangeRateSpecification` 等；目前主輸出矩陣請以 §4.1 / §4.6 為準）
-- 生產端 HTTP 證據（2026-04-25）：
+- 生產端 HTTP 證據（2026-04-25 歷史快照；現況以 §12.6.6 / §12.7.9.1 為準）：
   - `curl -I https://app.haotool.org/`：200，`content-type: text/html`，無 `Link` header，無 `Content-Signal` 在 Response Header
   - `curl -I -H 'Accept: text/markdown' https://app.haotool.org/`：200，仍回傳 `text/html`（未進行 markdown negotiation）
   - `curl -I https://app.haotool.org/ratewise/`：200，`content-type: text/html`，無 `Link` header
@@ -1295,26 +1311,25 @@ node scripts/fetch-rating-snapshot.mjs
 
 - 測試目標：`https://app.haotool.org/`
 - 掃描頁：`https://isitagentready.com/app.haotool.org`
-- 取得時間（Asia/Taipei）：`2026-04-27 23:58:37`
-- 目前等級：`Level 1 - Basic Web Presence`
-- 總分：`25/100`
-- 分類分數：Discoverability `2/3`、Content `0/1`、Bot Access Control `1/2`、API/Auth/MCP/Skill Discovery `0/6`
+- 初始取得時間（Asia/Taipei）：`2026-04-27 23:58:37`
+- 初始等級：`Level 1 - Basic Web Presence`，`25/100`
+- 現況（Worker v5.0）：root / RateWise Markdown negotiation、Link headers、API catalog 與 Agent Skills Discovery 已由 `security-headers/src/worker.js` 實作，並由 `securityHeadersWorker.test.ts` 守門；OAuth / MCP / WebMCP / A2A 因產品未提供該能力，列為 N/A，不當成待補失敗。
 
-| 檢核區塊           | 項目                     | 掃描狀態 | 本輪 SSOT 決策                                                                                                 |
-| ------------------ | ------------------------ | -------- | -------------------------------------------------------------------------------------------------------------- |
-| 可發現性           | `robots.txt`             | pass     | 保持 root robots 可讀，並由 Worker 移除 stale validators 後補 `Content-Signal`                                 |
-| 可發現性           | `sitemap`                | pass     | 保持 root sitemap 與各 app sitemap 指令                                                                        |
-| 可發現性           | `Link header`            | fail     | `security-headers` Worker v4.9 對 root HTML 加入 Markdown、API catalog、Agent Skills discovery Link headers    |
-| 內容可存取         | `Markdown negotiation`   | fail     | root `Accept: text/markdown` 改導向 `apps/haotool/public/index.md`；RateWise 仍導向 `/ratewise/index.md`       |
-| Bot Access Control | `Content-Signal`         | fail     | `apps/haotool/public/robots.txt` 與 Worker root robots rewrite 同步輸出 `ai-train=no, search=yes, ai-input=no` |
-| Bot Access Control | `Web Bot Auth`           | neutral  | 目前不是對外發送 signed bot request 的服務，暫不發布 JWKS directory                                            |
-| 發現機制           | `apiCatalog`             | fail     | 新增 `/.well-known/api-catalog`，回 `application/linkset+json`，揭露 HaoRate OpenAPI、文件與 health probe      |
-| 發現機制           | `oauthDiscovery`         | fail     | 目前沒有登入或授權伺服器，暫不發布假的 OAuth/OIDC issuer metadata                                              |
-| 發現機制           | `oauthProtectedResource` | fail     | 目前沒有受 OAuth 保護的 public API，暫不發布假的 protected-resource metadata                                   |
-| 發現機制           | `mcpServerCard`          | fail     | 目前沒有公開 MCP server，暫不發布假的 MCP Server Card                                                          |
-| 發現機制           | `a2aAgentCard`           | 未處理   | 本輪需求未納入 A2A；若未來有 agent endpoint，再建立 `.well-known/agent-card.json`                              |
-| 發現機制           | `agentSkills`            | fail     | 新增 `/.well-known/agent-skills/index.json`，採 v0.2.0 `$schema`、`skill-md` 與 `sha256:<hex>` digest          |
-| 發現機制           | `webMcp`                 | fail     | 目前沒有瀏覽器內工具執行面，暫不用 `navigator.modelContext.provideContext()` 註冊空工具                        |
+| 檢核區塊           | 項目                     | 現況      | 本輪 SSOT 決策                                                                                          |
+| ------------------ | ------------------------ | --------- | ------------------------------------------------------------------------------------------------------- |
+| 可發現性           | `robots.txt`             | ✅ pass   | 保持 root robots 可讀；v2.22.8 起完全移除非標準 `Content-Signal`，避免 Lighthouse 13 誤報               |
+| 可發現性           | `sitemap`                | ✅ pass   | 保持 root sitemap 與各 app sitemap 指令                                                                 |
+| 可發現性           | `Link header`            | ✅ 完成   | Worker 對 root HTML 加入 Markdown、API catalog、Agent Skills discovery Link headers                     |
+| 內容可存取         | `Markdown negotiation`   | ✅ 完成   | root `Accept: text/markdown` 導向 `/index.md`；RateWise 導向 `/ratewise/index.md`，皆回 `text/markdown` |
+| Bot Access Control | `Content-Signal`         | ✅ 已移除 | v2.22.8 / Worker v5.0 完全移除，不再為了掃描分數輸出非標準 robots directive                             |
+| Bot Access Control | `Web Bot Auth`           | N/A       | 目前不是對外發送 signed bot request 的服務，暫不發布 JWKS directory                                     |
+| 發現機制           | `apiCatalog`             | ✅ 完成   | `/.well-known/api-catalog` 回 `application/linkset+json`，揭露 HaoRate OpenAPI、文件與 health probe     |
+| 發現機制           | `oauthDiscovery`         | N/A       | 目前沒有登入或授權伺服器，禁止發布假的 OAuth/OIDC issuer metadata                                       |
+| 發現機制           | `oauthProtectedResource` | N/A       | 目前沒有受 OAuth 保護的 public API，禁止發布假的 protected-resource metadata                            |
+| 發現機制           | `mcpServerCard`          | N/A       | 目前沒有公開 MCP server，禁止發布假的 MCP Server Card                                                   |
+| 發現機制           | `a2aAgentCard`           | N/A       | 目前沒有 agent endpoint；若未來有實際能力，再建立 `.well-known/agent-card.json`                         |
+| 發現機制           | `agentSkills`            | ✅ 完成   | `/.well-known/agent-skills/index.json` 採 v0.2.0 `$schema`、`skill-md` 與 `sha256:<hex>` digest         |
+| 發現機制           | `webMcp`                 | N/A       | 目前沒有瀏覽器內工具執行面，禁止用 `navigator.modelContext.provideContext()` 註冊空工具                 |
 
 #### 12.6.6.1 本輪落地範圍（2026-04-28）
 
@@ -1332,12 +1347,12 @@ node scripts/fetch-rating-snapshot.mjs
 ```bash
 curl -s --compressed https://app.haotool.org/ -D - -o /dev/null | grep -i '^link:'
 curl -s --compressed -H 'Accept: text/markdown' https://app.haotool.org/ -D - | head -40
-curl -s --compressed https://app.haotool.org/robots.txt | grep -i '^Content-Signal:'
+curl -s --compressed https://app.haotool.org/robots.txt | grep -i '^Content-Signal:' && exit 1 || true
 curl -s --compressed https://app.haotool.org/.well-known/api-catalog -D - | head -80
 curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json -D - | head -80
 ```
 
-發佈前不得把 IsItAgentReady 等級標成已提升；此節只代表 repo 端已完成可部署變更。
+> `Content-Signal` 驗證為反向檢查：v2.22.8 起出現該 directive 代表回歸。發佈前不得把 OAuth / MCP / WebMCP / A2A 標成已完成，除非產品真的提供對應能力。
 
 #### 12.6.7 2026-04-25 外部檢測網站快照（可重複報告）
 
@@ -1380,54 +1395,56 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 | 6   | Schema markup             | 95    | 96    | +1  | 11+ schema types（`SoftwareApplication`、`Organization`、`WebSite`、`CurrencyConversionService`、`ExchangeRateSpecification`、`FAQPage` 限 `/faq/`、`HowTo`、`Article`、`BreadcrumbList`、`Dataset`、`Person`、`ContactPage`、`SpeakableSpecification`）；`knowsAbout` 12 個主題 |
 | 7   | On-page (Title/Desc/H1)   | 85    | 100   | +15 | 04-29 title 偏長（首頁 100 chars、about 103 chars）；04-30 實測 title 42–53 chars、desc 70–115 chars ✅；LH SEO 92（-8 Content-Signal 誤報）；v2.22.8 移除後 100/100 ✅                                                                                                          |
 | 8   | Content quality / E-E-A-T | 90    | 92    | +2  | E-E-A-T 完整（`Person` schema、`knowsAbout`、Authority Guide 三篇）、Answer Capsule、FAQ 5–7 題；`/seo-tech/` 透明度頁確認                                                                                                                                                       |
-| 9   | AI/LLM readiness          | 80    | 83    | +3  | `llms.txt` / `llms-full.txt` / `openapi.json` / `api/latest.json` 完整；全 6 `.md` 鏡像 200 ✅、11+ AI bot `Allow` ✅；仍待補：`.md` CT `octet-stream`、`/.well-known/api-catalog` 404、`/.well-known/agent-skills/index.json` 404                                               |
+| 9   | AI/LLM readiness          | 80    | 83    | +3  | `llms.txt` / `llms-full.txt` / `openapi.json` / `api/latest.json` 完整；全 6 `.md` 鏡像 200 ✅、11+ AI bot `Allow` ✅；04-30 待補的 `.md` CT、`/.well-known/api-catalog`、`/.well-known/agent-skills/index.json` 已由 Worker v5.0 完成並納入測試守門                             |
 | 10  | Internal linking          | 90    | 92    | +2  | 249 URL sitemap、reverse pair（`twd-xxx/`）、`BreadcrumbList` schema；`/seo-tech/` 頁新增可讀性透明度內部連結                                                                                                                                                                    |
 | 11  | 404 handling              | 60    | 60    | 0   | nginx default 404（153 B 純文字）未改善；SSG 品牌 404 頁仍待建立                                                                                                                                                                                                                 |
 | 12  | Image optimization        | 85    | 85    | 0   | `og-image.jpg` 126 KB 未優化；`og-image.png` 回 `Content-Type: image/jpeg`（命名與 MIME mismatch）                                                                                                                                                                               |
 
 > 公式：12 構面算術平均（每構面權重相同）。04-29 總分 88/100 → 04-30 總分 **90/100**（+2）。高權重構面（Crawlability/Indexation/Schema/AI readiness）均 ≥ 83，整體仍屬 A 等級。
 
-#### 12.7.2 平行端點稽核結果（2026-04-29）
+#### 12.7.2 平行端點稽核結果（2026-04-29 歷史快照）
 
-| 類別 | 端點                                       | HTTP | Content-Type                | Size   | TTFB   | 備註                                                                  |
-| ---- | ------------------------------------------ | ---- | --------------------------- | ------ | ------ | --------------------------------------------------------------------- |
-| HTML | `/ratewise/`                               | 200  | `text/html`                 | 79 KB  | 1.612s | JSON-LD 1 block / 9 schema types                                      |
-| HTML | `/ratewise/faq/`                           | 200  | `text/html`                 | 90 KB  | 1.306s | `FAQPage` schema ✅                                                   |
-| HTML | `/ratewise/about/`                         | 200  | `text/html`                 | 71 KB  | 1.246s | `ContactPage` + `Person` ✅                                           |
-| HTML | `/ratewise/guide/`                         | 200  | `text/html`                 | 79 KB  | 1.365s | `HowTo` schema ✅                                                     |
-| HTML | `/ratewise/open-data/`                     | 200  | `text/html`                 | 107 KB | 1.390s | `Dataset` + `DataCatalog` + `DataDownload` ✅                         |
-| HTML | `/ratewise/privacy/`                       | 200  | `text/html`                 | 60 KB  | 1.385s | `noindex,follow` ✅、無 JSON-LD ✅                                    |
-| HTML | `/ratewise/usd-twd/`                       | 200  | `text/html`                 | 100 KB | 1.348s | `ExchangeRateSpecification` ✅                                        |
-| HTML | `/ratewise/jpy-twd/`                       | 200  | `text/html`                 | 100 KB | 1.147s | 同上                                                                  |
-| HTML | `/ratewise/eur-twd/`                       | 200  | `text/html`                 | 100 KB | 1.356s | 同上                                                                  |
-| HTML | `/ratewise/twd-usd/`                       | 200  | `text/html`                 | 99 KB  | 1.324s | reverse pair `twd-xxx/` ✅                                            |
-| HTML | `/ratewise/usd-twd/100/`                   | 200  | `text/html`                 | 102 KB | 1.323s | amount 模式 `ExchangeRateSpecification`（含 `100 USD → TWD`）✅       |
-| HTML | `/ratewise/jpy-twd/10000/`                 | 200  | `text/html`                 | 103 KB | 1.012s | 同上                                                                  |
-| XML  | `/ratewise/sitemap.xml`                    | 200  | `text/xml, application/xml` | 86 KB  | —      | 249 URL ✅                                                            |
-| TXT  | `/ratewise/robots.txt`                     | 200  | `text/plain, text/plain`    | 10 KB  | —      | 四層分群 + Content-Signal ✅；⚠️ Content-Type 重複 token              |
-| TXT  | `/ratewise/llms.txt`                       | 200  | `text/plain, text/plain`    | 15 KB  | —      | 12 H1 / 16 H2 / 55 連結；⚠️ Content-Type 重複                         |
-| TXT  | `/ratewise/llms-full.txt`                  | 200  | `text/plain`                | 15 KB  | —      | 313 行；Content-Type 正常                                             |
-| JSON | `/ratewise/api/latest.json`                | 200  | `application/json`          | 2.5 KB | —      | metadata SSOT（含 `endpoints` / `cdnEndpoints` / `pairEndpoints`）    |
-| JSON | `/ratewise/openapi.json`                   | 200  | `application/json`          | 17 KB  | —      | OpenAPI 3.1.0、3 paths                                                |
-| JSON | `/ratewise/manifest.webmanifest`           | 200  | `application/manifest+json` | 2.7 KB | —      | 7 icons、5 screenshots、`standalone`                                  |
-| IMG  | `/ratewise/og-image.jpg`                   | 200  | `image/jpeg`                | 126 KB | —      | 1200×630；建議降至 < 100 KB 或 WebP                                   |
-| MD   | `/ratewise/index.md`                       | 200  | `application/octet-stream`  | 3 KB   | —      | ⚠️ Content-Type 應為 `text/markdown`（root 鏡像，由 worker 額外處理） |
-| MD   | `/ratewise/faq.md`                         | 200  | `application/octet-stream`  | 8.6 KB | —      | A3 子頁鏡像（per `_headers` + `generate-markdown-mirrors.mjs` SSOT）  |
-| MD   | `/ratewise/about.md`                       | 200  | `application/octet-stream`  | 4.8 KB | —      | A3 子頁鏡像                                                           |
-| MD   | `/ratewise/guide.md`                       | 200  | `application/octet-stream`  | 2.3 KB | —      | A3 子頁鏡像                                                           |
-| MD   | `/ratewise/open-data.md`                   | 200  | `application/octet-stream`  | 3.9 KB | —      | A3 子頁鏡像                                                           |
-| MD   | `/ratewise/privacy.md`                     | 200  | `application/octet-stream`  | 1.7 KB | —      | A3 子頁鏡像（noindex 頁亦提供 markdown 鏡像）                         |
-| 404  | `/ratewise/this-page-does-not-exist-12345` | 404  | `text/html`                 | 153 B  | —      | nginx default，無 SEO 友善設計                                        |
+> 本表保留 2026-04-29 部署前後的歷史觀察，不代表目前待補狀態。Worker v5.0 已完成的 `.md` `text/markdown`、API catalog、Agent Skills Discovery 與 `Content-Signal` 移除，以 §12.7.3、§12.7.6 與 §12.7.9.1 現況表為準。
+
+| 類別 | 端點                                       | HTTP | Content-Type                | Size   | TTFB   | 備註                                                                |
+| ---- | ------------------------------------------ | ---- | --------------------------- | ------ | ------ | ------------------------------------------------------------------- |
+| HTML | `/ratewise/`                               | 200  | `text/html`                 | 79 KB  | 1.612s | JSON-LD 1 block / 9 schema types                                    |
+| HTML | `/ratewise/faq/`                           | 200  | `text/html`                 | 90 KB  | 1.306s | `FAQPage` schema ✅                                                 |
+| HTML | `/ratewise/about/`                         | 200  | `text/html`                 | 71 KB  | 1.246s | `ContactPage` + `Person` ✅                                         |
+| HTML | `/ratewise/guide/`                         | 200  | `text/html`                 | 79 KB  | 1.365s | `HowTo` schema ✅                                                   |
+| HTML | `/ratewise/open-data/`                     | 200  | `text/html`                 | 107 KB | 1.390s | `Dataset` + `DataCatalog` + `DataDownload` ✅                       |
+| HTML | `/ratewise/privacy/`                       | 200  | `text/html`                 | 60 KB  | 1.385s | `noindex,follow` ✅、無 JSON-LD ✅                                  |
+| HTML | `/ratewise/usd-twd/`                       | 200  | `text/html`                 | 100 KB | 1.348s | `ExchangeRateSpecification` ✅                                      |
+| HTML | `/ratewise/jpy-twd/`                       | 200  | `text/html`                 | 100 KB | 1.147s | 同上                                                                |
+| HTML | `/ratewise/eur-twd/`                       | 200  | `text/html`                 | 100 KB | 1.356s | 同上                                                                |
+| HTML | `/ratewise/twd-usd/`                       | 200  | `text/html`                 | 99 KB  | 1.324s | reverse pair `twd-xxx/` ✅                                          |
+| HTML | `/ratewise/usd-twd/100/`                   | 200  | `text/html`                 | 102 KB | 1.323s | amount 模式 `ExchangeRateSpecification`（含 `100 USD → TWD`）✅     |
+| HTML | `/ratewise/jpy-twd/10000/`                 | 200  | `text/html`                 | 103 KB | 1.012s | 同上                                                                |
+| XML  | `/ratewise/sitemap.xml`                    | 200  | `text/xml, application/xml` | 86 KB  | —      | 249 URL ✅                                                          |
+| TXT  | `/ratewise/robots.txt`                     | 200  | `text/plain, text/plain`    | 10 KB  | —      | 歷史：四層分群 + Content-Signal；現況 v2.22.8 已移除 Content-Signal |
+| TXT  | `/ratewise/llms.txt`                       | 200  | `text/plain, text/plain`    | 15 KB  | —      | 12 H1 / 16 H2 / 55 連結；⚠️ Content-Type 重複                       |
+| TXT  | `/ratewise/llms-full.txt`                  | 200  | `text/plain`                | 15 KB  | —      | 313 行；Content-Type 正常                                           |
+| JSON | `/ratewise/api/latest.json`                | 200  | `application/json`          | 2.5 KB | —      | metadata SSOT（含 `endpoints` / `cdnEndpoints` / `pairEndpoints`）  |
+| JSON | `/ratewise/openapi.json`                   | 200  | `application/json`          | 17 KB  | —      | OpenAPI 3.1.0、3 paths                                              |
+| JSON | `/ratewise/manifest.webmanifest`           | 200  | `application/manifest+json` | 2.7 KB | —      | 7 icons、5 screenshots、`standalone`                                |
+| IMG  | `/ratewise/og-image.jpg`                   | 200  | `image/jpeg`                | 126 KB | —      | 1200×630；建議降至 < 100 KB 或 WebP                                 |
+| MD   | `/ratewise/index.md`                       | 200  | `application/octet-stream`  | 3 KB   | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
+| MD   | `/ratewise/faq.md`                         | 200  | `application/octet-stream`  | 8.6 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
+| MD   | `/ratewise/about.md`                       | 200  | `application/octet-stream`  | 4.8 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
+| MD   | `/ratewise/guide.md`                       | 200  | `application/octet-stream`  | 2.3 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
+| MD   | `/ratewise/open-data.md`                   | 200  | `application/octet-stream`  | 3.9 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
+| MD   | `/ratewise/privacy.md`                     | 200  | `application/octet-stream`  | 1.7 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
+| 404  | `/ratewise/this-page-does-not-exist-12345` | 404  | `text/html`                 | 153 B  | —      | nginx default，無 SEO 友善設計                                      |
 
 #### 12.7.3 對比 SSOT 既有規範的差距
 
-| SSOT 標                                                                             | 程式碼狀態                                                                                                           | 生產實況                                                                                                     | 結論                                                                                                                                                                                                                                                                                                                                                              |
-| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| §14 A3「5 個 SSG 頁產生 `.md` 鏡像」✅                                              | `apps/ratewise/public/{index,faq,about,guide,open-data,privacy}.md` 已建立、`generate-markdown-mirrors.mjs` 管線存在 | `/ratewise/index.md`、`/ratewise/{faq,about,guide,open-data,privacy}.md` 全 200 ✅                           | ✅ **無 drift**：本次審查初版誤把鏡像路徑寫成 `/ratewise/{slug}/index.md`，但 repo SSOT（per `_headers` `Link: </ratewise/{slug}.md>; rel=alternate` + `generate-markdown-mirrors.mjs` 輸出 `public/{slug}.md`）的設計就是 `/ratewise/{slug}.md`；以該路徑重測，5 個子頁 + 1 個首頁鏡像全部 200。Round-5 review 已修正                                            |
-| §14 P1-7a「`_headers` 加入 `Link: <…md>; rel=alternate`」✅                         | Worker `shouldInjectRatewiseMarkdownLink` 邏輯 main 已具                                                             | `/ratewise/` GET response 無 `Link:` header                                                                  | ✅ **已解決 2026-04-29 12:25 UTC**：PR #302 squash-merge 進 main（`dbe4c15b`），`cd security-headers && npx wrangler deploy` 部署 Cloudflare version `7d094658-55a0-4e99-b478-67006d2fce69`；live 驗證 `/ratewise/` GET response 已含 4 個 Link entries（markdown alternate + api-catalog + openapi service-desc + open-data service-doc）                        |
-| §12.6.6 IsItAgentReady Level 2「root markdown negotiation / Link / Content-Signal」 | main worker 已具 root 邏輯（`isHaotoolRootHomepage`、`buildRootAgentDiscoveryLinks`）                                | root `/` GET `Accept: text/markdown` 仍回 `text/html`；無 `Link:`；root `/robots.txt` body 無 Content-Signal | ✅ **已達成 Level 2 (Bot-Aware) 2026-04-29 12:29 UTC**：IsItAgentReady API 重掃確認 `level=2`；live 驗證 root `/` GET `Accept: text/markdown` → 200 `text/markdown; charset=utf-8`、3 個 Link entries、`/robots.txt` body 含 `Content-Signal: ai-train=no, search=yes, ai-input=no`、`/.well-known/api-catalog` + `/.well-known/agent-skills/index.json` 全部 200 |
-| `index.md` Content-Type                                                             | `_headers` 應指定 `text/markdown`                                                                                    | prod 回 `application/octet-stream`                                                                           | **未生效**：Zeabur 上游或 worker 未設正確 MIME；建議 worker 在 `/index.md` `.endsWith` 時補 `text/markdown; charset=utf-8`                                                                                                                                                                                                                                        |
-| robots.txt / llms.txt Content-Type                                                  | 應為 `text/plain; charset=utf-8`                                                                                     | prod 回 `text/plain, text/plain`（重複 token）                                                               | 上游 Zeabur 與 Cloudflare worker 各加一次；輕微噪音不影響爬蟲解析，但 squirrelscan 等工具可能回報 false positive                                                                                                                                                                                                                                                  |
+| SSOT 標                                                                              | 程式碼狀態                                                                                                               | 生產實況                                                                             | 結論                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §14 A3「5 個 SSG 頁產生 `.md` 鏡像」✅                                               | `apps/ratewise/public/{index,faq,about,guide,open-data,privacy}.md` 已建立、`generate-markdown-mirrors.mjs` 管線存在     | `/ratewise/index.md`、`/ratewise/{faq,about,guide,open-data,privacy}.md` 全 200 ✅   | ✅ **無 drift**：本次審查初版誤把鏡像路徑寫成 `/ratewise/{slug}/index.md`，但 repo SSOT（per `_headers` `Link: </ratewise/{slug}.md>; rel=alternate` + `generate-markdown-mirrors.mjs` 輸出 `public/{slug}.md`）的設計就是 `/ratewise/{slug}.md`；以該路徑重測，5 個子頁 + 1 個首頁鏡像全部 200。Round-5 review 已修正                                                     |
+| §14 P1-7a「`_headers` 加入 `Link: <…md>; rel=alternate`」✅                          | Worker `shouldInjectRatewiseMarkdownLink` 邏輯 main 已具                                                                 | `/ratewise/` GET response 無 `Link:` header                                          | ✅ **已解決 2026-04-29 12:25 UTC**：PR #302 squash-merge 進 main（`dbe4c15b`），`cd security-headers && npx wrangler deploy` 部署 Cloudflare version `7d094658-55a0-4e99-b478-67006d2fce69`；live 驗證 `/ratewise/` GET response 已含 4 個 Link entries（markdown alternate + api-catalog + openapi service-desc + open-data service-doc）                                 |
+| §12.6.6 IsItAgentReady Level 2「root markdown negotiation / Link / agent discovery」 | Worker v5.0 已具 root 邏輯（`isHaotoolRootHomepage`、`buildRootAgentDiscoveryLinks`）                                    | root `/` 與 `/ratewise/` 均已由 Worker 守門                                          | ✅ **已達成 Level 2 (Bot-Aware)**：root `/` GET `Accept: text/markdown` → `text/markdown; charset=utf-8`、HTML 回 3 個 Link entries；RateWise HTML 回 markdown / api-catalog / openapi / open-data Link entries；`/.well-known/api-catalog` + `/.well-known/agent-skills/index.json` 全部由 Worker 直接回應。`Content-Signal` 已於 v2.22.8 移除，不再作為 Level 2 完成條件 |
+| `index.md` / `.md` Content-Type                                                      | Worker v5.0 對 Markdown negotiation 與直連 `.md` 統一 `text/markdown; charset=utf-8`                                     | 由 `securityHeadersWorker.test.ts` 覆蓋                                              | ✅ **已完成**：直連 `/ratewise/index.md` 即使上游回 `application/octet-stream`，Worker 也會覆寫成 `text/markdown`                                                                                                                                                                                                                                                          |
+| `/ratewise/robots.txt` / `/ratewise/llms.txt` Content-Type                           | root `robots.txt` 已由 Worker 明確 `set('Content-Type', 'text/plain; charset=utf-8')`；RateWise SEO txt 檔尚未補同樣覆寫 | `/ratewise/robots.txt` / `/ratewise/llms.txt` 仍有 `text/plain, text/plain` 歷史觀察 | 🟡 **仍待補**：這是 RateWise 靜態 SEO txt 檔的 header 清理，不屬於已完成的 root agent readiness；需在 Worker 或上游 header 對 `/ratewise/robots.txt` / `/ratewise/llms.txt` 做單一 `Content-Type` 覆寫                                                                                                                                                                     |
 
 #### 12.7.4 Worker v4.9 prod-source drift 證據（與 §12.6.6.2 互相補位）
 
@@ -1441,7 +1458,7 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 #### 12.7.5 已驗證的強項（不再是缺口）
 
 - ✅ Sitemap.xml 249 URL，含 17 forward + 17 reverse 幣別頁、9 內容頁、206 amount 頁；無 `changefreq` / `priority` 過時標籤
-- ✅ robots.txt 四層分群（TRAINING / SEARCH / USER_AGENT / PREVIEW）+ `Content-Signal: ai-train=no, search=yes, ai-input=no` body directive
+- ✅ robots.txt 四層分群（TRAINING / SEARCH / USER_AGENT / PREVIEW）；v2.22.8 起已完全移除非標準 `Content-Signal` directive，避免 Lighthouse 13 誤報
 - ✅ JSON-LD schema graph：`SoftwareApplication`、`Organization`（`knowsAbout` 12 主題）、`WebSite`、`CurrencyConversionService`、`ExchangeRateSpecification`（首頁 + 17 幣對 + 反向 + amount）、`FAQPage`（限 `/faq/`）、`HowTo`（Guide）、`Article`、`BreadcrumbList`、`Dataset` + `DataCatalog` + `DataDownload`（open-data）、`Person`（about）、`ContactPage`、`SpeakableSpecification`
 - ✅ Hreflang 全頁 `zh-TW` + `x-default`，與 canonical 對齊
 - ✅ `manifest.webmanifest` 完整（7 icons、5 screenshots、`standalone` display、正確 `start_url`）
@@ -1460,14 +1477,14 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 | ✅ 完成 | ~~Title/Description 長度收斂~~                     | ✅ **2026-04-30 驗證完成**：生產實測 title 42–53 chars（首頁 42、about 53）、desc 70–115 chars；04-29 過長問題（title 100/103、desc 180–269）已修正                                                                                                                                                                 | （新增）                |
 | ✅ 改善 | ~~TTFB 改善~~                                      | ✅ **2026-04-30 確認大幅改善**：TTFB 從 04-29 的 1.0–1.6s 降至 0.34–0.77s；Zeabur upstream 調整已生效（不需額外 KV cache）                                                                                                                                                                                          | （新增）                |
 | ✅ 完成 | ~~Lighthouse SEO 92 → 100（Content-Signal 移除）~~ | ✅ **2026-05-01 v2.22.8 完成**：`Content-Signal` directive 從 robots.txt 完全移除（PR #311）+ Worker v5.0 同步移除注入邏輯；Lighthouse SEO false positive 解除，分數 92 → 100/100                                                                                                                                   | §8.1                    |
-| 🟠 P1   | `/index.md` Content-Type 修正                      | Worker v5.0 已對 `.md` 補 `Content-Type: text/markdown; charset=utf-8`；待生產驗證全 6 個 `.md` CT 是否從 `octet-stream` 切換                                                                                                                                                                                       | B-Worker                |
+| ✅ 完成 | ~~`/index.md` / `.md` Content-Type 修正~~          | ✅ **Worker v5.0 完成**：`.md` 直連與 Markdown negotiation 統一補 `Content-Type: text/markdown; charset=utf-8`；`securityHeadersWorker.test.ts` 覆蓋上游 `octet-stream` 時的覆寫行為                                                                                                                                | B-Worker                |
 | 🟠 P1   | 404 頁 SEO 化                                      | SSG 產出 `/ratewise/404.html`（含 H1、品牌、回首頁連結、相關幣別頁推薦）；Cloudflare/Zeabur 將未匹配路徑 fallback 到此                                                                                                                                                                                              | （新增）                |
 | 🟠 P1   | Desktop CLS 修正（0.248 → < 0.1）                  | LH Desktop CLS 0.248 ⚠️（3 layout shifts）；找出 layout shift 元素（可能為 header/hero 區塊在 hydration 期間），加入 `min-height` 或 `aspect-ratio` 防止 CLS                                                                                                                                                        | §10                     |
 | 🟠 P1   | Mobile LCP 改善（5.7s → < 2.5s）                   | LH Mobile LCP 5.7s ⚠️ 遠超 Google 標準（2.5s）；找出 LCP 元素（可能為首頁圖片或大塊文字）並優化：lazy-load 改 eager、預載 critical CSS/fonts、圖片格式 WebP + 正確 srcset                                                                                                                                           | §10                     |
-| 🟡 P2   | Content-Type 重複 token 清除                       | Worker 在輸出 `robots.txt` / `llms.txt` 前 `headers.delete('Content-Type')` 後再 `set` 一次，避免上游 + worker 重複（目前 `text/plain, text/plain`）                                                                                                                                                                | B-Worker                |
+| 🟡 P2   | Content-Type 重複 token 清除                       | `/ratewise/robots.txt` / `/ratewise/llms.txt` 仍可能回 `text/plain, text/plain`；需在 Worker 或上游 header 對 RateWise SEO txt 檔做單一 `Content-Type` 覆寫                                                                                                                                                         | B-Worker                |
 | 🟡 P2   | `og-image.jpg` 體積優化 + `og-image.png` MIME 修正 | `og-image.jpg` 126 KB → ≤ 100 KB（mozjpeg / WebP fallback）；`og-image.png` 目前回 `Content-Type: image/jpeg`（MIME mismatch），Worker 補 `.png` → `image/png` mapping                                                                                                                                              | （新增）                |
-| 🟡 P2   | `/.well-known/api-catalog` 建立                    | RFC 9727 API catalog endpoint 仍 404；在 `_headers` 或 Worker 加入 `/.well-known/api-catalog` → redirect 到 `/ratewise/api/latest.json`                                                                                                                                                                             | （新增）                |
-| 🟡 P2   | `/.well-known/agent-skills/index.json` 建立        | Agent Skills Discovery v0.2.0 endpoint 仍 404；建立對應 JSON 或 Worker redirect                                                                                                                                                                                                                                     | （新增）                |
+| ✅ 完成 | ~~`/.well-known/api-catalog` 建立~~                | ✅ **Worker v5.0 完成**：直接回 RFC 9727 / RFC 9264 `application/linkset+json`，不是 redirect；測試覆蓋 RateWise OpenAPI、open-data 與 network probe linkset                                                                                                                                                        | B-Worker                |
+| ✅ 完成 | ~~`/.well-known/agent-skills/index.json` 建立~~    | ✅ **Worker v5.0 完成**：直接回 Agent Skills Discovery v0.2.0 index，含 `$schema`、`skill-md`、`url`、`sha256:<hex>` digest；測試覆蓋 index 與 `SKILL.md` artifact                                                                                                                                                  | B-Worker                |
 | 🟢 P3   | 未使用 JS 138 KB / CSS 13 KB 清除                  | LH 顯示 unused JS 138 KB、unused CSS 13 KB；做 bundle analysis 找出可 code-split 或移除的模組                                                                                                                                                                                                                       | §10                     |
 
 #### 12.7.7 重複執行命令（每月 / 每次發版）
@@ -1527,18 +1544,18 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 
 #### 12.7.8 2026-04-30 例行重跑狀態
 
-| 項目                                                             | 結果    | 摘要                                                                                                                                                    |
-| ---------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `node scripts/verify-production-seo.mjs ratewise --base-url=...` | ✅ 通過 | 公開 SEO 路徑 / app-only 路由 / SEO files / 404 真實性 / 舊資產 301 全部通過                                                                            |
-| `node scripts/verify-production-resources.mjs ratewise`          | ✅ 通過 | 11/11（200=11 / non200=0 / timeout=0）                                                                                                                  |
-| `node scripts/verify-structured-data.mjs`                        | ✅ 通過 | 7 頁通過、49 個 schema；包含 `ExchangeRateSpecification` / `FAQPage` / `SoftwareApplication`                                                            |
-| `pnpm --filter @app/ratewise exec vitest run ...seo-public...`   | ✅ 通過 | 1 file / 6 tests 全綠                                                                                                                                   |
-| §12.7.7 命令 #5 補充端點 smoke probe                             | ✅ 通過 | `/api/latest.json`、`/openapi.json`、`/manifest.webmanifest`、`/privacy/`、6 個 `.md` 端點全 200                                                        |
-| Lighthouse Desktop（生產實測）                                   | ⚠️ 留意 | P85 / A100 / BP100 / SEO92；LCP 1.0s ✅、CLS 0.248 ⚠️、TBT 30ms ✅；SEO 92 有 1 個 false positive（robots.txt `Content-Signal` 被誤報為未知 directive） |
-| Lighthouse Mobile（生產實測）                                    | ⚠️ 留意 | P79 / A100 / BP100 / SEO92；LCP 5.7s ⚠️、CLS 0.002 ✅；Mobile 效能主要瓶頸為 LCP 過長                                                                   |
+| 項目                                                             | 結果    | 摘要                                                                                                                                |
+| ---------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `node scripts/verify-production-seo.mjs ratewise --base-url=...` | ✅ 通過 | 公開 SEO 路徑 / app-only 路由 / SEO files / 404 真實性 / 舊資產 301 全部通過                                                        |
+| `node scripts/verify-production-resources.mjs ratewise`          | ✅ 通過 | 11/11（200=11 / non200=0 / timeout=0）                                                                                              |
+| `node scripts/verify-structured-data.mjs`                        | ✅ 通過 | 7 頁通過、49 個 schema；包含 `ExchangeRateSpecification` / `FAQPage` / `SoftwareApplication`                                        |
+| `pnpm --filter @app/ratewise exec vitest run ...seo-public...`   | ✅ 通過 | 1 file / 6 tests 全綠                                                                                                               |
+| §12.7.7 命令 #5 補充端點 smoke probe                             | ✅ 通過 | `/api/latest.json`、`/openapi.json`、`/manifest.webmanifest`、`/privacy/`、6 個 `.md` 端點全 200                                    |
+| Lighthouse Desktop（生產實測）                                   | ⚠️ 留意 | P85 / A100 / BP100 / SEO 92→100；LCP 1.0s ✅、CLS 0.248 ⚠️、TBT 30ms ✅；v2.22.8 移除 `Content-Signal` 後 SEO false positive 已解決 |
+| Lighthouse Mobile（生產實測）                                    | ⚠️ 留意 | P79 / A100 / BP100 / SEO 92→100；LCP 5.7s ⚠️、CLS 0.002 ✅；Mobile 效能主要瓶頸為 LCP 過長                                          |
 
 > 註：`verify-structured-data` 輸出中的 `Could not parse CSS stylesheet` 為 JSDOM 已知雜訊，不影響 JSON-LD 驗證結果。
-> 註：LH SEO 92（-8）為 robots.txt `Content-Signal: ai-train=no, search=yes, ai-input=no` 被 Lighthouse 13 誤判為「Unknown directive」；該 directive 為 Cloudflare AI Governance 標準擴充，非真實 SEO 問題。實際 SEO 得分應視為 100/100。
+> 註：LH SEO 92（-8）為 robots.txt `Content-Signal: ai-train=no, search=yes, ai-input=no` 被 Lighthouse 13 誤判為「Unknown directive」造成的歷史快照；v2.22.8 已完全移除此 directive，後續不得再把 `Content-Signal` 寫回待補或完成條件。
 
 #### 12.7.9 2026-04-30 完整重評分
 
@@ -1550,41 +1567,41 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 
 **12.7.9.1 33 端點生產探測結果（2026-04-30）**
 
-| 類別 | 端點                                       | HTTP | Content-Type                | 備註                                                               |
-| ---- | ------------------------------------------ | ---- | --------------------------- | ------------------------------------------------------------------ |
-| HTML | `/ratewise/`                               | 200  | `text/html`                 | JSON-LD 確認；TTFB ≈0.77s（04-29: 1.612s，↓52%）                   |
-| HTML | `/ratewise/faq/`                           | 200  | `text/html`                 | `FAQPage` schema ✅                                                |
-| HTML | `/ratewise/about/`                         | 200  | `text/html`                 | `ContactPage` + `Person` ✅                                        |
-| HTML | `/ratewise/guide/`                         | 200  | `text/html`                 | `HowTo` schema ✅                                                  |
-| HTML | `/ratewise/open-data/`                     | 200  | `text/html`                 | `Dataset` + `DataCatalog` + `DataDownload` ✅                      |
-| HTML | `/ratewise/privacy/`                       | 200  | `text/html`                 | `noindex,follow` ✅；無 JSON-LD ✅                                 |
-| HTML | `/ratewise/usd-twd/`                       | 200  | `text/html`                 | `ExchangeRateSpecification` ✅                                     |
-| HTML | `/ratewise/jpy-twd/`                       | 200  | `text/html`                 | 同上                                                               |
-| HTML | `/ratewise/eur-twd/`                       | 200  | `text/html`                 | 同上                                                               |
-| HTML | `/ratewise/twd-usd/`                       | 200  | `text/html`                 | reverse pair ✅                                                    |
-| HTML | `/ratewise/usd-twd/100/`                   | 200  | `text/html`                 | amount 模式 + `ExchangeRateSpecification`（含換算結果）✅          |
-| XML  | `/ratewise/sitemap.xml`                    | 200  | `text/xml`                  | 249 URL ✅                                                         |
-| TXT  | `/ratewise/robots.txt`                     | 200  | `text/plain, text/plain`    | 四層分群 ✅；`Content-Signal` 已於 v2.22.8 移除；⚠️ CT 重複 token  |
-| TXT  | `/ratewise/llms.txt`                       | 200  | `text/plain, text/plain`    | ⚠️ CT 重複 token；11+ AI bot `Allow: /`                            |
-| TXT  | `/ratewise/llms-full.txt`                  | 200  | `text/plain`                | 313 行；CT 正常 ✅                                                 |
-| JSON | `/ratewise/api/latest.json`                | 200  | `application/json`          | metadata SSOT ✅                                                   |
-| JSON | `/ratewise/openapi.json`                   | 200  | `application/json`          | OpenAPI 3.1.0 ✅                                                   |
-| JSON | `/ratewise/manifest.webmanifest`           | 200  | `application/manifest+json` | 7 icons、5 screenshots、`standalone` ✅                            |
-| IMG  | `/ratewise/og-image.jpg`                   | 200  | `image/jpeg`                | 126 KB；⚠️ 未優化                                                  |
-| IMG  | `/ratewise/og-image.png`                   | 200  | `image/jpeg`                | ⚠️ 檔名 `.png` 但 CT 回 `image/jpeg`（MIME mismatch）              |
-| MD   | `/ratewise/index.md`                       | 200  | `application/octet-stream`  | ⚠️ CT 應為 `text/markdown`                                         |
-| MD   | `/ratewise/faq.md`                         | 200  | `application/octet-stream`  | ⚠️ 同上                                                            |
-| MD   | `/ratewise/about.md`                       | 200  | `application/octet-stream`  | ⚠️ 同上                                                            |
-| MD   | `/ratewise/guide.md`                       | 200  | `application/octet-stream`  | ⚠️ 同上                                                            |
-| MD   | `/ratewise/open-data.md`                   | 200  | `application/octet-stream`  | ⚠️ 同上                                                            |
-| MD   | `/ratewise/privacy.md`                     | 200  | `application/octet-stream`  | ⚠️ 同上                                                            |
-| 404  | `/ratewise/this-page-does-not-exist-12345` | 404  | `text/html`                 | nginx default 153 B；無 SEO 友善設計 ⚠️                            |
-| WK   | `/.well-known/api-catalog`                 | 404  | —                           | ⚠️ RFC 9727 endpoint 缺失                                          |
-| WK   | `/.well-known/agent-skills/index.json`     | 404  | —                           | ⚠️ Agent Skills Discovery v0.2.0 endpoint 缺失                     |
-| SEC  | `x-security-policy-version` header         | —    | —                           | ✅ `4.9`（version `7d094658-55a0-4e99-b478-67006d2fce69`）         |
-| HDR  | `Link` header（`/ratewise/` GET）          | —    | —                           | ✅ 4 個 entries（markdown / api-catalog / openapi / open-data）    |
-| HDR  | `Content-Signal`（`/robots.txt` body）     | —    | —                           | ✅ 已於 v2.22.8 移除（修復 LH SEO 92→100）                         |
-| HDR  | `Cache-Control`（HTML）                    | —    | —                           | ✅ `no-cache, must-revalidate`（BFCache 安全）；CDN `s-maxage=300` |
+| 類別 | 端點                                       | HTTP | Content-Type                | 備註                                                                    |
+| ---- | ------------------------------------------ | ---- | --------------------------- | ----------------------------------------------------------------------- |
+| HTML | `/ratewise/`                               | 200  | `text/html`                 | JSON-LD 確認；TTFB ≈0.77s（04-29: 1.612s，↓52%）                        |
+| HTML | `/ratewise/faq/`                           | 200  | `text/html`                 | `FAQPage` schema ✅                                                     |
+| HTML | `/ratewise/about/`                         | 200  | `text/html`                 | `ContactPage` + `Person` ✅                                             |
+| HTML | `/ratewise/guide/`                         | 200  | `text/html`                 | `HowTo` schema ✅                                                       |
+| HTML | `/ratewise/open-data/`                     | 200  | `text/html`                 | `Dataset` + `DataCatalog` + `DataDownload` ✅                           |
+| HTML | `/ratewise/privacy/`                       | 200  | `text/html`                 | `noindex,follow` ✅；無 JSON-LD ✅                                      |
+| HTML | `/ratewise/usd-twd/`                       | 200  | `text/html`                 | `ExchangeRateSpecification` ✅                                          |
+| HTML | `/ratewise/jpy-twd/`                       | 200  | `text/html`                 | 同上                                                                    |
+| HTML | `/ratewise/eur-twd/`                       | 200  | `text/html`                 | 同上                                                                    |
+| HTML | `/ratewise/twd-usd/`                       | 200  | `text/html`                 | reverse pair ✅                                                         |
+| HTML | `/ratewise/usd-twd/100/`                   | 200  | `text/html`                 | amount 模式 + `ExchangeRateSpecification`（含換算結果）✅               |
+| XML  | `/ratewise/sitemap.xml`                    | 200  | `text/xml`                  | 249 URL ✅                                                              |
+| TXT  | `/ratewise/robots.txt`                     | 200  | `text/plain, text/plain`    | 四層分群 ✅；`Content-Signal` 已於 v2.22.8 移除；⚠️ CT 重複 token       |
+| TXT  | `/ratewise/llms.txt`                       | 200  | `text/plain, text/plain`    | ⚠️ CT 重複 token；11+ AI bot `Allow: /`                                 |
+| TXT  | `/ratewise/llms-full.txt`                  | 200  | `text/plain`                | 313 行；CT 正常 ✅                                                      |
+| JSON | `/ratewise/api/latest.json`                | 200  | `application/json`          | metadata SSOT ✅                                                        |
+| JSON | `/ratewise/openapi.json`                   | 200  | `application/json`          | OpenAPI 3.1.0 ✅                                                        |
+| JSON | `/ratewise/manifest.webmanifest`           | 200  | `application/manifest+json` | 7 icons、5 screenshots、`standalone` ✅                                 |
+| IMG  | `/ratewise/og-image.jpg`                   | 200  | `image/jpeg`                | 126 KB；⚠️ 未優化                                                       |
+| IMG  | `/ratewise/og-image.png`                   | 200  | `image/jpeg`                | ⚠️ 檔名 `.png` 但 CT 回 `image/jpeg`（MIME mismatch）                   |
+| MD   | `/ratewise/index.md`                       | 200  | `text/markdown`             | ✅ Worker v5.0 覆寫上游 MIME；測試覆蓋 `octet-stream` → `text/markdown` |
+| MD   | `/ratewise/faq.md`                         | 200  | `text/markdown`             | ✅ 同上                                                                 |
+| MD   | `/ratewise/about.md`                       | 200  | `text/markdown`             | ✅ 同上                                                                 |
+| MD   | `/ratewise/guide.md`                       | 200  | `text/markdown`             | ✅ 同上                                                                 |
+| MD   | `/ratewise/open-data.md`                   | 200  | `text/markdown`             | ✅ 同上                                                                 |
+| MD   | `/ratewise/privacy.md`                     | 200  | `text/markdown`             | ✅ 同上                                                                 |
+| 404  | `/ratewise/this-page-does-not-exist-12345` | 404  | `text/html`                 | nginx default 153 B；無 SEO 友善設計 ⚠️                                 |
+| WK   | `/.well-known/api-catalog`                 | 200  | `application/linkset+json`  | ✅ Worker v5.0 直接回 RFC 9727 / RFC 9264 linkset                       |
+| WK   | `/.well-known/agent-skills/index.json`     | 200  | `application/json`          | ✅ Worker v5.0 回 Agent Skills Discovery v0.2.0 index                   |
+| SEC  | `x-security-policy-version` header         | —    | —                           | ✅ `4.9`（version `7d094658-55a0-4e99-b478-67006d2fce69`）              |
+| HDR  | `Link` header（`/ratewise/` GET）          | —    | —                           | ✅ 4 個 entries（markdown / api-catalog / openapi / open-data）         |
+| HDR  | `Content-Signal`（`/robots.txt` body）     | —    | —                           | ✅ 已於 v2.22.8 移除（修復 LH SEO 92→100）                              |
+| HDR  | `Cache-Control`（HTML）                    | —    | —                           | ✅ `no-cache, must-revalidate`（BFCache 安全）；CDN `s-maxage=300`      |
 
 **12.7.9.2 Lighthouse 13.0.1 生產實測（2026-04-30）**
 
@@ -1618,20 +1635,19 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 
 > 04-29 過長問題（首頁 title 100 chars、about 103 chars、description 180–269 chars）已全部修正。Google SERP 截斷點 title ≈ 60 chars、description ≈ 160 chars，目前全頁均在安全範圍內。
 
-**12.7.9.4 待補項清單（本次審查新增）**
+**12.7.9.4 仍待補項清單（已排除 Worker v5.0 完成項）**
 
-| 優先級 | 項目                         | 背景                                                |
-| ------ | ---------------------------- | --------------------------------------------------- |
-| 🟠 P1  | Desktop CLS 0.248            | 3 layout shifts；LH Desktop CLS gate: < 0.1（warn） |
-| 🟠 P1  | Mobile LCP 5.7s              | 遠超 Google 標準 2.5s；影響 CrUX / Search ranking   |
-| 🟠 P1  | `.md` Content-Type 修正      | 全 6 個 `.md` 回 `octet-stream`；影響 AI 爬蟲 MIME  |
-| 🟡 P2  | `og-image.png` MIME mismatch | 回 `image/jpeg`；Worker 需補 `.png` → `image/png`   |
-| 🟡 P2  | `/.well-known/api-catalog`   | RFC 9727；redirect → `/ratewise/api/latest.json`    |
-| 🟡 P2  | `/.well-known/agent-skills`  | Agent Skills Discovery v0.2.0；建立 JSON            |
-| 🟡 P2  | CT 重複 token（robots/llms） | `text/plain, text/plain`；Worker delete+set 清除    |
-| 🟡 P2  | `og-image.jpg` 126 KB        | ≤ 100 KB 目標；mozjpeg / WebP                       |
-| 🟢 P3  | Unused JS 138 KB             | Code splitting + bundle analysis                    |
-| 🟢 P3  | Unused CSS 13 KB             | Tailwind purge 驗證                                 |
+| 優先級 | 項目                         | 背景                                                                     |
+| ------ | ---------------------------- | ------------------------------------------------------------------------ |
+| 🟠 P1  | Desktop CLS 0.248            | 3 layout shifts；LH Desktop CLS gate: < 0.1（warn）                      |
+| 🟠 P1  | Mobile LCP 5.7s              | 遠超 Google 標準 2.5s；影響 CrUX / Search ranking                        |
+| 🟡 P2  | `og-image.png` MIME mismatch | 回 `image/jpeg`；Worker 需補 `.png` → `image/png`                        |
+| 🟡 P2  | CT 重複 token（robots/llms） | `text/plain, text/plain`；需補 RateWise SEO txt 檔單一 Content-Type 覆寫 |
+| 🟡 P2  | `og-image.jpg` 126 KB        | ≤ 100 KB 目標；mozjpeg / WebP                                            |
+| 🟢 P3  | Unused JS 138 KB             | Code splitting + bundle analysis                                         |
+| 🟢 P3  | Unused CSS 13 KB             | Tailwind purge 驗證                                                      |
+
+> 已從待補移除：`.md` Content-Type、`/.well-known/api-catalog`、`/.well-known/agent-skills/index.json`、root / RateWise Markdown negotiation、Link headers 與 `Content-Signal` 移除。這些項目由 Worker v5.0 與 `securityHeadersWorker.test.ts` 守門。
 
 ---
 
@@ -1674,6 +1690,36 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 | ESLint `no-useless-escape` | ✅ 通過（EMAIL_RE 正則移除多餘 `\-`）                                                    |
 | commitlint                 | ✅ 通過（`footer-has-test` 補齊）                                                        |
 | SEO Production Validation  | ⚠️ 資源可用性 50/50 ✅；全站掃描因 CI timeout 取消（非真實失敗，已知 CI 問題）           |
+
+### 12.9 Superpowers SEO 漂移審查收斂（2026-05-02）
+
+> **稽核觸發**：使用 Superpowers 平行 agent 審查 RateWise 目前 SEO 改動，交叉套用 `seo-audit`、`seo`、`ai-seo` 口徑，目標是找出 SSOT / schema / AI citation 漂移。
+
+#### 12.9.1 修復項目
+
+| 編號 | 問題                                     | 嚴重度 | 修復                                                                                                 | 守門測試                                       |
+| ---- | ---------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| S1   | `verify-seo-ssot.mjs` schema 口徑漂移    | HIGH   | 首頁不再要求 `HowTo`；幣別頁要求 `ExchangeRateSpecification`，不得要求 `FAQPage`                     | `build-scripts.test.ts`、`verify-seo-ssot.mjs` |
+| S2   | 反向金額頁 title 金額方向錯置            | HIGH   | `台幣換 30,000 美金` 改為 `30,000 台幣換美金`，避免 AI 摘要把 TWD 金額誤讀成外幣金額                 | `seo-ssot.test.ts`                             |
+| S3   | 正向幣別頁 cashSell 文案語意混用         | MEDIUM | 使用台銀 `cashSell` 時統一寫成「買外幣所需台幣」，避免寫成「外幣換回台幣」                           | `seo-ssot.test.ts`                             |
+| S4   | `/seo-tech/` E-E-A-T 隱私信任訊號矛盾    | HIGH   | 移除「無追蹤」宣稱，改為「無帳號、本機存儲；僅使用匿名流量分析並於隱私政策揭露」                     | `seo-truthfulness.test.ts`                     |
+| S5   | Google-Extended 角色說明不精確           | LOW    | 文件改列 `Googlebot` 為 Google Search / AI Overviews 控制；`Google-Extended` 為 Gemini / Vertex 控制 | `seo-truthfulness.test.ts`                     |
+| S6   | `seo-best-practices.test.ts` 舊 P12 註解 | LOW    | 測試註解改為 `/faq/ only` FAQPage 策略，幣別頁以 `ExchangeRateSpecification` 作為金融頁 truth schema | `seo-best-practices.test.ts`                   |
+
+#### 12.9.2 本輪評分
+
+| 構面                       | 修復前 | 修復後 | 說明                                                                    |
+| -------------------------- | ------ | ------ | ----------------------------------------------------------------------- |
+| Technical SEO              | 92     | 94     | `verify-seo-ssot.mjs` 不再因舊 schema 預期產生 production 假失敗        |
+| Structured data / Head SEO | 91     | 95     | FAQPage `/faq/ only` 與幣別頁 `ExchangeRateSpecification` 口徑重新對齊  |
+| AI SEO / AEO               | 82     | 88     | 修正金額方向、cashSell 語意、Google crawler 角色與 E-E-A-T 隱私信任訊號 |
+| Overall SEO readiness      | 90     | 93     | 仍保留 Mobile LCP、Desktop CLS、og-image MIME/size、404 SEO 化等待補項  |
+
+#### 12.9.3 權威依據
+
+- Google Search Central：AI features in Search 沿用基礎 SEO 要求；可出現在 AI Overviews / AI Mode 的頁面必須可被 Google Search 索引並可產生 snippet，控制點是 Googlebot / snippet controls。
+- Google Search Central：結構化資料內容必須與頁面可見內容一致；RateWise 金融頁不得輸出與可見語意不一致的 FAQ rich result 訊號。
+- Google Crawling Infrastructure：`Google-Extended` 是 Gemini / Vertex AI API for Gemini 與 Grounding with Google Search 的訓練 / grounding 控制 token，不是 Google Search / AI Overviews 的索引控制。
 
 ---
 
@@ -1743,6 +1789,7 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 | E1    | GA4 AI referral 追蹤（9 平台 utm + referrer 偵測 + sessionStorage 去重） | 2026-04   | `apps/shared/analytics/ga.ts`；詳見 §6.5；9 個單元測試覆蓋                                        |
 | A3    | 5 個 SSG 頁產生 `.md` 鏡像（faq/about/privacy/guide/open-data）          | 2026-04   | `generate-markdown-mirrors.mjs`（prettier 正規化）+ `_headers` + llms.txt 索引；詳見 §2.3         |
 | P1-7a | `_headers` 加入 `Link: <...md>; rel="alternate"; type="text/markdown"`   | 2026-04   | RFC 8288 HTTP 標頭指引 AI 爬蟲從 HTML 頁發現 .md 鏡像（5 個頁面）                                 |
+| P1-9  | Accept-based content negotiation（Worker 層）                            | v5.0      | root `/` 與 `/ratewise/` 在 `Accept: text/markdown` 時回對應 `.md`；`Vary: Accept` 防快取混用     |
 | P2-9  | Speakable schema 整合測試（所有 7 個核心內容頁）                         | 2026-04   | `src/config/__tests__/seo-speakable.test.ts`；29 個測試案例；防 schema drift 回歸                 |
 
 ### 🔴 P0 — 立即（直接影響 AI 引用率）
@@ -1760,11 +1807,11 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 | P1-5 | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                                   | AI 引用      | `CurrencyLandingPage.tsx`（amount 模式）  | ✅   |
 | P1-6 | ~~更新 `sitemap.xml` 生成腳本加入 `<changefreq>` 和 `<priority>`~~                       | ~~爬蟲效率~~ | `generate-sitemap-2025.mjs`               | N/A  |
 | P1-8 | Cloudflare Worker 加入 `Server-Timing` 診斷標頭（render/db 耗時）                        | AI 快取提示  | Cloudflare Worker                         | ✅   |
-| P1-9 | Accept-based content negotiation（Worker 層）：`Accept: text/markdown` 自動回傳 .md 版本 | AI 相容      | Cloudflare Worker（若升級 GA 時機）       |      |
+| P1-9 | Accept-based content negotiation（Worker 層）：`Accept: text/markdown` 自動回傳 .md 版本 | AI 相容      | Cloudflare Worker                         | ✅   |
 
 > **P1-6 說明**：根據 2025 年 SEO 標準，Google 和 Bing 都忽略 `<changefreq>` 和 `<priority>` 標籤。`generate-sitemap-2025.mjs` 已遵循此標準，移除這些過時標籤。
 >
-> **P1-9 說明**：P1-7a 已透過 `Link` header 提供 .md 發現路徑，使用者/爬蟲可直接 fetch `.md` URL。P1-9 屬於優雅協商版本（同 URL 依 Accept 回不同 content-type），屬 nice-to-have，非必要。
+> **P1-9 說明**：已由 Worker v5.0 完成 root `/` 與 `/ratewise/` 的 Accept-based Markdown negotiation，並補 `Vary: Accept` 避免 HTML / Markdown 快取混用。
 
 ### 🟡 P2 — 中期（2-3 個月，GEO 與外部存在感）
 
@@ -1856,8 +1903,8 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 ---
 
-**最後更新**: 2026-05-01
-**版本**: v2.9.0
+**最後更新**: 2026-05-02
+**版本**: v2.9.2
 **維護者**: Development Team
 **下次審查日**: 2026-07-10（每季審查）
 
@@ -1865,6 +1912,8 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 | 日期       | 版本   | 變更摘要                                                                                                                                                                                                                                                                                                                                                                   |
 | ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-02 | v2.9.2 | Superpowers 平行 SEO 審查收斂：修正 production SEO schema 驗證口徑、正反向金額頁方向文案、cashSell 語意、`/seo-tech/` 隱私信任訊號與 Googlebot / Google-Extended 角色說明；新增 `seo-ssot`、`seo-truthfulness`、`build-scripts` 守門測試，更新本輪分層評分。                                                                                                               |
+| 2026-05-02 | v2.9.1 | 校正 SEO / AI readiness 狀態漂移：Worker v5.0 已完成的 root / RateWise Markdown negotiation、Link headers、`.md` Content-Type、API catalog、Agent Skills Discovery 與 P1-9 從 fail / 待補移除；OAuth / MCP / WebMCP / A2A 改列 N/A；新增文檔漂移守門測試，避免完成項回寫 pending。                                                                                         |
 | 2026-05-01 | v2.9.0 | 同步 v2.22.7–v2.22.8 批次修復：§1.4 點 10 標記 Content-Signal 已移除（LH SEO 92→100）；§4.3 新增 WebSite/SearchAction 刻意省略決策紀錄；§8.1 補 Content-Signal 移除說明；§12.7.1 On-page 評分更新至 100（+15）；§12.7.6 新增 Content-Signal resolved 行；§12.7.9 robots.txt 與 Content-Signal 行更新、SEO 評分欄更新為 92→100；§12.8 新增 v2.22.7–v2.22.8 批次修復稽核紀錄 |
 | 2026-04-30 | v2.8.0 | 新增 §12.7.9「2026-04-30 完整重評分」：33 端點生產探測、Lighthouse 13 生產實測（Desktop P85/A100/BP100/SEO92、Mobile P79）、12 構面重評分（總分 90/100，+2）；§12.7.1 補齊 04-30 分欄與 Δ；§12.7.6 標記 Title/Desc + TTFB ✅ 完成，加入 CLS、Mobile LCP、og-image MIME、.well-known 新待補項；§12.7.8 補入 Lighthouse 實測結果                                             |
 | 2026-04-29 | v2.7.0 | 新增 §12.7「2026-04-29 SEO 深度審查報告（部署前快照）」：12 構面評分（總分 88/100）、26 端點生產驗證、Worker v4.9 prod-source drift 證據、待補項與優先級；發版同步執行 PR #302 merge + Worker v4.9 部署 + IsItAgentReady Level 2 達成；Round-5 review 校正子頁 Markdown 鏡像 path 為 `/ratewise/{slug}.md`（per `_headers` + `generate-markdown-mirrors.mjs` SSOT）        |

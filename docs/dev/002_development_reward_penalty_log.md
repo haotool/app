@@ -12,6 +12,26 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-02
+- ID：pr317-superpowers-review-format-and-seo-signal-fix
+- 原因：Superpowers 分支 review 發現本 PR 新增 002 條目混入非四行欄位，且 SEO Master GSC 指標仍殘留幣別頁 FAQPage 舊語意。
+- 解法：將新增 002 條目收斂回四行模板，並把 Rich Results / AI 摘要指標改為 FAQ 主頁 FAQPage 與幣別頁 ExchangeRateSpecification。
+
+- 日期：2026-05-02
+- ID：ratewise-superpowers-seo-ssot-drift-2026-05-02
+- 原因：Superpowers 多 agent SEO 審查發現 production SEO 驗證腳本、匯率方向文案、AI crawler 說明與公開 E-E-A-T 信任揭露存在漂移。
+- 解法：對齊 FAQPage only / ExchangeRateSpecification schema 策略、修正買外幣語意與 Googlebot / Google-Extended 角色，並以 truthfulness、SSOT、build-script regression tests 守門。
+
+- 日期：2026-05-02
+- ID：ratewise-lcp-deferred-vendors-motion-dnd
+- 原因：vendor-motion（138KB）與 vendor-dnd（95KB）因 CJS factory rolldown 置入首個使用者 chunk，被 vendor-router-runtime / app chunk 靜態依賴，拖入初始 modulepreload 阻塞首次 LCP。
+- 解法：manualChunks 將 react-dom 主命名空間與 jsx-runtime CJS factory 前置至 vendor-commons，搭配 resolve.dedupe 切斷靜態依賴鏈，兩個重量 vendor 改為按需延遲載入（初始減約 60KB brotli）。
+
+- 日期：2026-05-02
+- ID：ratewise-seo-rate-example-taipei-date-2026-05-02
+- 原因：`update-seo-rate-examples.mjs` 使用 UTC 日期產生 `SEO_RATE_EXAMPLES_DATE`，台北午夜後會讓匯率時間與 SEO 可見日期落差一天。
+- 解法：改用 `Intl.DateTimeFormat` 的 `Asia/Taipei` 日期作為 SEO 匯率範例、MoneyBox `rateDate` 與產生檔日期，並新增 build script regression test。
+
 - 日期：2026-04-30
 - ID：pr303-seo-ssot-rerun-and-audit-trace-2026-04-30
 - 原因：`docs/SEO_MASTER_SSOT.md` 連續多次提交未同步新增 002 條目，違反 `AGENTS.md` 的 AGT-LOG-01「每次 commit 前更新 002」要求。

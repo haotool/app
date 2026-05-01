@@ -100,6 +100,15 @@ function fmt(n) {
   return n.toLocaleString('zh-TW');
 }
 
+function formatDateInTaipei(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
 /**
  * 從 CDN 取得 MoneyBox 最新 TWD↔KRW 雙向匯率。
  * 資料由 GitHub Actions update-moneybox-rates.yml 每5分鐘更新至 data 分支。
@@ -179,7 +188,7 @@ async function main() {
     rate: sell,
     rateBuy: buy,
     rateInverse: +(1 / sell).toFixed(6),
-    rateDate: new Date().toISOString().slice(0, 10),
+    rateDate: formatDateInTaipei(),
   };
 
   const results = {};
@@ -281,7 +290,7 @@ async function main() {
   }
 
   // 生成 TypeScript 常數檔案。
-  const today = new Date().toISOString().slice(0, 10);
+  const today = formatDateInTaipei();
   const lines = [
     `/**`,
     ` * SEO 匯差範例數據（自動生成）`,

@@ -60,8 +60,16 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
   it('uses prerendered path-based amount landing pages as the indexable format', () => {
     const content = readFileSync(llmsPath, 'utf-8');
     expect(content).toContain('https://app.haotool.org/ratewise/usd-twd/500/');
+    expect(content).toContain('買 500 美元要多少新台幣');
     expect(content).not.toContain('https://app.haotool.org/ratewise/usd-twd/?amount={AMOUNT}');
     expect(content).not.toContain('canonical：自引用含 ?amount=');
+    expect(content).not.toContain('500 美元換新台幣（USD/TWD）— 台銀實際賣出價');
+  });
+
+  it('keeps card-rate guidance separate from Bank of Taiwan cash sell rates', () => {
+    const content = readFileSync(llmsFullPath, 'utf-8');
+    expect(content).not.toContain('台銀現金賣出 ≈ 出國刷卡的實際成本');
+    expect(content).toContain('不應拿來當刷卡成本');
   });
 
   it('keeps documented URLs free of trailing CJK punctuation that breaks parsers', () => {

@@ -216,6 +216,9 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
     },
     resolve: {
+      // 確保 react 與 jsx-runtime 使用單一實例，避免 CJS factory 被 rolldown
+      // 置入不同 chunk（vendor-motion / vendor-dnd）造成初始 LCP 阻塞。
+      dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
       alias: {
         // React 19 shim: react-is AsyncMode 相容性
         'react-is': resolve(__dirname, './src/utils/react-is-shim.ts'),
@@ -355,6 +358,27 @@ export default defineConfig(({ mode }) => {
           },
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
+
+            // jsx-runtime CJS factory 必須在 vendor-commons（初始 bundle），
+            // 避免 rolldown 將 factory 置入 vendor-motion（首個使用者），
+            // 導致 app chunk 靜態依賴 vendor-motion 拖慢首次 LCP。
+            if (
+              id.includes('/node_modules/react/jsx-runtime') ||
+              id.includes('/node_modules/react/cjs/react-jsx-runtime')
+            ) {
+              return 'vendor-commons';
+            }
+
+            // react-dom 主命名空間 CJS factory 必須在 vendor-commons，
+            // 避免 rolldown 將 factory 置入 vendor-dnd（@hello-pangea/dnd 首個匯入），
+            // 導致 vendor-router-runtime 靜態依賴 vendor-dnd 拖慢首次 LCP。
+            if (
+              id.includes('/node_modules/react-dom/') &&
+              !id.includes('react-dom-client') &&
+              !id.includes('/react-dom/client.')
+            ) {
+              return 'vendor-commons';
+            }
 
             // Observability（錯誤追蹤）
             if (id.includes('@sentry/core')) {

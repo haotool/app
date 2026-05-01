@@ -225,9 +225,22 @@ export const STATS = {
 export const KNOWN_ROUTE_PATHS = [...PRERENDER_PATHS];
 
 /**
- * SEO 配置文件路徑
+ * SEO / AI crawler 可讀資源路徑（用於生產環境驗證）
  */
-export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt', '/llms-full.txt'];
+export const SEO_FILES = [
+  '/sitemap.xml',
+  '/robots.txt',
+  '/llms.txt',
+  '/llms-full.txt',
+  '/openapi.json',
+  '/api/latest.json',
+  '/index.md',
+  '/faq.md',
+  '/guide.md',
+  '/about.md',
+  '/privacy.md',
+  '/open-data.md',
+];
 
 /**
  * 社交分享圖片與舊資源相容重定向

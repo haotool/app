@@ -400,7 +400,7 @@ async function validateRobots(r, baseUrl) {
 
 const PAGE_RULES = {
   home: {
-    requiredSchemas: ['SoftwareApplication', 'Organization', 'WebSite', 'HowTo', 'ImageObject'],
+    requiredSchemas: ['SoftwareApplication', 'Organization', 'WebSite', 'ImageObject'],
   },
   faq: {
     requiredSchemas: [
@@ -429,7 +429,7 @@ const PAGE_RULES = {
       'SoftwareApplication',
       'Organization',
       'WebSite',
-      'FAQPage',
+      'ExchangeRateSpecification',
       'HowTo',
       'BreadcrumbList',
     ],
@@ -439,7 +439,7 @@ const PAGE_RULES = {
       'SoftwareApplication',
       'Organization',
       'WebSite',
-      'FAQPage',
+      'ExchangeRateSpecification',
       'HowTo',
       'BreadcrumbList',
     ],

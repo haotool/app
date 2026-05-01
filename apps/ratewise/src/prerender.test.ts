@@ -383,6 +383,8 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       if (!existsSync(usdAmountHtml)) return;
 
       const content = readFileSync(usdAmountHtml, 'utf-8');
+      const exchangeRateMatches = content.match(/"@type":"ExchangeRateSpecification"/g) ?? [];
+      expect(exchangeRateMatches).toHaveLength(1);
       expect(content).toMatch(
         /"@type":"ExchangeRateSpecification"[\s\S]*"url":"https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
       );

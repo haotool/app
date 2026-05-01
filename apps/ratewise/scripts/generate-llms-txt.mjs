@@ -25,6 +25,13 @@ const BASE_URL = SITE_CONFIG.url;
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
+const i18nPath = resolve(ROOT, 'src/i18n/index.ts');
+const i18nContent = readFileSync(i18nPath, 'utf-8');
+const SUPPORTED_LANGUAGE_LABELS = [...i18nContent.matchAll(/label:\s*'([^']+)'/g)].map(
+  (match) => match[1],
+);
+const SUPPORTED_LANGUAGE_COUNT = SUPPORTED_LANGUAGE_LABELS.length;
+const SUPPORTED_LANGUAGE_LABEL_TEXT = SUPPORTED_LANGUAGE_LABELS.join('/');
 
 const CURRENCY_DISPLAY = {
   usd: { code: 'USD', name: '美元', desc: '美國旅遊與海外付款' },
@@ -90,13 +97,13 @@ const FEATURES = [
 
 const content = `# ${BRAND_FULL} — 台灣最精準的匯率換算器
 
-> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、3 語言介面與 PWA 離線使用。
+> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
 
 Version: v${VERSION}
 
 ## Answer Capsule (Quick Q&A)
 
-- Q: ${BRAND_SHORT} 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、6 種主題風格、3 語言介面與 PWA 離線使用。
+- Q: ${BRAND_SHORT} 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、6 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
 - Q: 為什麼 ${BRAND_SHORT} 比其他匯率工具更精準？ A: 多數匯率工具只顯示中間價（mid-rate），而 ${BRAND_SHORT} 顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），直接對應你在銀行換匯的真實金額。
 - Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金買入/賣出、即期買入/賣出四種報價）。
 - Q: 更新頻率？ A: 每 5 分鐘自動同步。
@@ -119,7 +126,7 @@ Version: v${VERSION}
 - 更新頻率：每 5 分鐘自動同步
 - 匯率類型：現金買入、現金賣出、即期買入、即期賣出
 - 6 種主題風格（Zen/Nitro/Kawaii/Classic/Ocean/Forest）
-- i18n 三語言支援（繁體中文/English/日本語）
+- i18n ${SUPPORTED_LANGUAGE_COUNT} 語言支援（${SUPPORTED_LANGUAGE_LABEL_TEXT}）
 
 ## Features
 
@@ -131,7 +138,7 @@ ${FEATURES.map((f) => `- ${f}`).join('\n')}
 Googlebot 與 AI agent 可直接讀取靜態 HTML：
 
 - 格式：\`/{pair}/{amount}/\` (例如: ${BASE_URL}usd-twd/500/)
-- title 範例：「500 美元換新台幣（USD/TWD）— 台銀實際賣出價 | ${BRAND_FULL}」
+- title 範例：「買 500 美元要多少新台幣（USD/TWD）— 台銀實際賣出價 | ${BRAND_FULL}」
 - canonical：自引用同一路徑型 URL (例如 \`/usd-twd/500/\`)
 - sitemap：收錄公開金額頁，提升可發現性與內部連結覆蓋
 
@@ -342,7 +349,7 @@ https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/
 https://app.haotool.org/ratewise/jpy-twd/{AMOUNT}/
 \`\`\`
 
-title 會自動變更為「{AMOUNT} 美元換新台幣（USD/TWD）— 台銀實際賣出價 | ${BRAND_FULL}」
+title 會自動變更為「買 {AMOUNT} 美元要多少新台幣（USD/TWD）— 台銀實際賣出價 | ${BRAND_FULL}」
 
 **方案 B：首頁 Deep Link（UX 分享入口，不索引）**
 
@@ -512,7 +519,7 @@ GET ${BASE_URL}openapi.json
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行角度。您拿外幣換台幣 → 看「買入」（銀行買你的外幣）；您拿台幣換外幣 → 看「賣出」（銀行賣外幣給你）。
 - Q: 為什麼韓元（KRW）即期匯率是 null？ A: 台灣銀行對韓元不提供即期（電匯）服務，僅提供現金兌換，因此 spot.buy 與 spot.sell 為 null，僅有 cash.buy 與 cash.sell。
 - Q: 匯率資料多久更新一次？ A: 每 5 分鐘由 GitHub Actions 自動從台銀官方網站抓取並同步至 CDN。
-- Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。出國刷卡的匯率由 Visa/Mastercard 等發卡組織決定國際清算匯率，再加上發卡銀行收取的海外手續費（通常 1.5%），與台銀牌告是完全不同的體系。一般來說，台銀現金賣出 ≈ 出國刷卡的實際成本。
+- Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。出國刷卡的匯率由 Visa/Mastercard 等發卡組織決定國際清算匯率，再加上發卡銀行收取的海外手續費（通常 1.5%），與台銀牌告是完全不同的體系。台銀現金賣出只適合估算臨櫃用台幣買外幣現鈔的成本，不應拿來當刷卡成本。
 - Q: 如何讓用戶直接在 ${BRAND_SHORT} 查詢特定匯率？ A: 優先使用幣對金額頁，例如 https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/。這是公開可索引的 path-based landing page，適合搜尋引擎與 AI agent。首頁 deep-link 僅作為互動入口；只有在需要同時指定三個自由變數時，才退回 https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD。
 
 ---

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Sitemap 2025 標準生成器
+ * Sitemap 2026 標準生成器
  *
  * 依據：
  * - [Bing Webmaster](https://blogs.bing.com/webmaster/february-2023/The-Importance-of-Setting-the-lastmod-Tag-in-Your-Sitemap)
@@ -8,21 +8,21 @@
  * - [Sitemaps.org Protocol](https://www.sitemaps.org/protocol.html)
  * - [Google Image Sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/image-sitemaps)
  *
- * 2025 標準：
+ * 2026 標準：
  * - ✅ 保留 <lastmod>（使用頁面最後重大更新日期）
  * - ❌ 移除 <changefreq> (Google 忽略)
  * - ❌ 移除 <priority> (Google 和 Bing 都忽略)
  * - ✅ 新增 Image Sitemap Extension
  * - ✅ W3C Datetime 日期格式（YYYY-MM-DD）
  *
- * 建立時間: 2025-12-20
+ * 建立時間: 2026-05-02
  * BDD 階段: Stage 2 GREEN (實作階段)
  */
 
 import { statSync, writeFileSync, existsSync, readFileSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
-import { dirname, join, resolve } from 'path';
+import { dirname, resolve } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -37,6 +37,7 @@ import {
   IMAGE_RESOURCES,
   normalizeSiteUrl,
 } from '../apps/ratewise/seo-paths.config.mjs';
+import { SEO_STANDARD_LABEL } from './lib/seo-year-metadata.mjs';
 import { APP_INFO } from '../apps/ratewise/src/config/app-info.ts';
 import {
   CONTENT_LASTMOD_POLICY,
@@ -407,7 +408,7 @@ function hasStableFallbackLastMod(path) {
 
 /**
  * 格式化日期為 W3C Datetime 的日期格式。
- * 範例：2025-12-20
+ * 範例：2026-12-20
  *
  * @param {Date} date - 日期對象
  * @returns {string} YYYY-MM-DD
@@ -484,8 +485,8 @@ function generateSitemap() {
 /**
  * 主函數
  */
-async function main() {
-  console.log('\n🗺️  Sitemap 2025 標準生成器');
+export async function main() {
+  console.log(`\n🗺️  ${SEO_STANDARD_LABEL} 生成器`);
   console.log('─'.repeat(60));
 
   // 生成 sitemap
@@ -517,8 +518,8 @@ async function main() {
     log(colors.yellow, '⚠️', `警告：${message}`);
   }
 
-  // 2025 標準驗證
-  console.log('\n✅ 2025 標準合規檢查:');
+  // 2026 標準驗證
+  console.log(`\n✅ ${SEO_STANDARD_LABEL} 合規檢查:`);
   console.log('  ✓ 已移除 <changefreq> 標籤');
   console.log('  ✓ 已移除 <priority> 標籤');
   console.log('  ✓ lastmod 優先使用重大依賴檔的 git commit 日期');

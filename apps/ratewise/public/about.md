@@ -3,7 +3,7 @@
 > 了解 HaoRate 的資料來源、更新機制、技術架構與 SEO 透明度。站點以台銀牌告實際買賣價為核心，支援 18 種貨幣、PWA 離線使用、SSG 預渲染、JSON-LD 結構化資料與 AI 可讀文件輸出，所有公開資訊皆可追溯。
 
 - Canonical: https://app.haotool.org/ratewise/about/
-- Version: v2.22.8
+- Version: v2.22.9
 
 ## 定位
 
@@ -58,9 +58,9 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 ### 7. HaoRate 是否支援 AI 搜尋引擎與 LLM 引用？
 
-robots.txt 明確允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、Google-Extended、GrokBot、Applebot-Extended 等）全站讀取；另提供 llms.txt 與 llms-full.txt 供大型語言模型快速理解站點架構，openapi.json 供 AI Agent 呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。
+robots.txt 明確允許 Googlebot 讀取；Googlebot 是 Google Search 與 AI Overviews 的主要爬取控制。AI crawler 分層另允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、GrokBot、Applebot-Extended 等）；Google-Extended 則作為 Gemini / Vertex 訓練與 grounding 的控制 token。站點另提供 llms.txt、llms-full.txt 與 openapi.json，讓 AI Agent 可理解頁面架構並呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.8），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.9），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_

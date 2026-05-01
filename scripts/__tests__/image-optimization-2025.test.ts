@@ -1,10 +1,10 @@
 /**
- * 圖片優化 2025 標準測試
+ * 圖片優化 2026 標準測試
  *
  * 測試目標：
  * 1. 所有主要圖片都有 AVIF 版本
  * 2. 所有主要圖片都有 WebP Fallback
- * 3. 檔案大小符合 2025 標準
+ * 3. 檔案大小符合 2026 標準
  *
  * 依據：
  * - [AI Bud WP](https://aibudwp.com/image-optimization-in-2025-webp-avif-srcset-and-preload/)
@@ -17,7 +17,7 @@ import { resolve } from 'path';
 
 const PUBLIC_DIR = resolve(__dirname, '../../apps/ratewise/public');
 
-// 2025 圖片大小標準
+// 2026 圖片大小標準
 const MAX_SIZES = {
   'logo.avif': 50 * 1024, // 50 KB
   'logo.webp': 70 * 1024, // 70 KB
@@ -39,7 +39,7 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-describe('Image Optimization 2025 Standards', () => {
+describe('Image Optimization 2026 Standards', () => {
   describe('Modern Format Support', () => {
     it('should have AVIF version of logo', () => {
       const path = resolve(PUBLIC_DIR, 'logo.avif');
