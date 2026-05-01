@@ -536,3 +536,8 @@
 - ID：pr281-regex-tail-whitespace-fix-2026-04-26
 - 原因：先前修正只處理了大寫標籤，未覆蓋 end tag 在 `>` 前含空白的合法 HTML 變體。
 - 解法：依 PR281 合併後新增的 CodeQL thread，將兩支 dist HTML 可見文字測試的 regex 從大小寫不敏感版本再補強為可接受 `</script >` 與 `</style >` 這類 end-tag 尾端空白，避免 HTML stripping 留下腳本或樣式內容造成假陽性。
+
+- 日期：2026-05-01
+- ID：ratewise-performance-followup-shell-split
+- 原因：首頁 app shell 仍直接載入互動換算器與 motion 相關提示元件，release 後 Markdown mirror 版本也停在舊版。
+- 解法：延續已隔離 stash 並經多 agent 複核，保留 logo LCP preload，移除未使用 Google Fonts resource hint，將首頁換算器與非首屏 PWA/評分提示延遲載入，底部導覽改用 CSS transition，並同步 Markdown mirror 至 v2.22.8。

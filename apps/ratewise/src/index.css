@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 路由切換進場動畫（AppLayout.tsx 使用，替代 motion.div） */
+@keyframes ratewise-page-enter {
+  from {
+    opacity: 0;
+    transform: translateX(var(--enter-x, 0px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ratewise-page-enter {
+  animation: ratewise-page-enter 0.15s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
 /**
  * Modern Design System - ParkKeeper Style (SSOT)
  *

@@ -10,9 +10,14 @@ import { HelmetProvider } from '../utils/react-helmet-async';
 import { ErrorBoundary } from './ErrorBoundary';
 import { SkeletonLoader } from './SkeletonLoader';
 import { Footer } from './Footer';
-import { OfflineIndicator } from './OfflineIndicator';
-import { UpdatePrompt } from './UpdatePrompt';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
+
+const LazyOfflineIndicator = React.lazy(() =>
+  import('./OfflineIndicator').then((m) => ({ default: m.OfflineIndicator })),
+);
+const LazyUpdatePrompt = React.lazy(() =>
+  import('./UpdatePrompt').then((m) => ({ default: m.UpdatePrompt })),
+);
 
 const DecemberTheme = React.lazy(() => import('../features/calculator/easter-eggs/DecemberTheme'));
 
@@ -65,9 +70,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </ErrorBoundary>
 
-        {/* 全域 PWA/離線狀態提示 */}
-        <OfflineIndicator />
-        <UpdatePrompt />
+        {/* 全域 PWA/離線狀態提示：延遲載入，不影響首次 LCP */}
+        <React.Suspense fallback={null}>
+          <LazyOfflineIndicator />
+          <LazyUpdatePrompt />
+        </React.Suspense>
 
         {/* 12 月聖誕主題（動態載入） */}
         {showDecemberTheme && (
