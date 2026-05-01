@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   seo-audit:
-    name: SEO 2025 Standards Audit
+    name: SEO 2026 Standards Audit
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -71,7 +71,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '❌ SEO 審計失敗！請檢查以下項目：\n\n' +
-                    '- Sitemap 2025 標準合規性\n' +
+                    '- Sitemap 2026 標準合規性\n' +
                     '- Breadcrumb Schema 正確性\n' +
                     '- JSON-LD 結構化數據完整性\n\n' +
                     '詳細資訊請查看 [Actions 日誌](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
@@ -86,8 +86,8 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ SEO 審計通過！所有 2025 標準驗證項目都符合要求。\n\n' +
-                    '- ✅ Sitemap 2025 標準\n' +
+              body: '✅ SEO 審計通過！所有 2026 標準驗證項目都符合要求。\n\n' +
+                    '- ✅ Sitemap 2026 標準\n' +
                     '- ✅ Breadcrumb Schema\n' +
                     '- ✅ JSON-LD 結構化數據\n' +
                     '- ✅ 內部連結結構'

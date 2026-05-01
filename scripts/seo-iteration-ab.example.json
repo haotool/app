@@ -1,0 +1,14 @@
+{
+  "description": "SEO AB 測試範例（可依據實際情境複製修改）",
+  "steps": [
+    {
+      "name": "sitemap_strategy",
+      "control": {
+        "command": "SEO_ITERATION=control pnpm seo:health-check"
+      },
+      "variant": {
+        "command": "SEO_ITERATION=variant pnpm seo:health-check"
+      }
+    }
+  ]
+}

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Sitemap 2025 標準驗證腳本
+ * Sitemap 2026 標準驗證腳本
  *
  * 依據：
  * - [Bing Webmaster](https://blogs.bing.com/webmaster/february-2023/The-Importance-of-Setting-the-lastmod-Tag-in-Your-Sitemap)
  * - [Spotibo SEO Guide](https://spotibo.com/sitemap-guide/)
  * - [Sitemaps.org Protocol](https://www.sitemaps.org/protocol.html)
  *
- * 2025 標準驗證：
+ * 2026 標準驗證：
  * - ❌ 不得包含 <changefreq> 標籤 (Google 忽略)
  * - ❌ 不得包含 <priority> 標籤 (Google 和 Bing 都忽略)
  * - ✅ 必須包含 <lastmod> 且格式符合 W3C Datetime
@@ -16,13 +16,14 @@
  * - ✅ 所有公開 sitemap 路徑必須存在
  * - ✅ Hreflang 配置完整
  *
- * 建立時間: 2025-12-20
+ * 建立時間: 2026-05-02
  * BDD 階段: Stage 2 RED → GREEN 驗證
  */
 
 import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
+import { SEO_STANDARD_LABEL } from './lib/seo-year-metadata.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -108,7 +109,7 @@ async function runTests() {
   let hasErrors = false;
   const xml = readSitemap();
 
-  console.log('\n🔍 Sitemap 2025 標準驗證');
+  console.log(`\n🔍 ${SEO_STANDARD_LABEL} 驗證`);
   console.log('─'.repeat(60));
 
   // Test 1: 不得包含 <changefreq>
@@ -267,10 +268,10 @@ async function runTests() {
   // 最終結果
   console.log('\n' + '─'.repeat(60));
   if (hasErrors) {
-    log(colors.red, '❌', 'Sitemap 2025 標準驗證失敗！');
+    log(colors.red, '❌', `${SEO_STANDARD_LABEL}驗證失敗！`);
     process.exit(1);
   } else {
-    log(colors.green, '✅', 'Sitemap 2025 標準驗證通過！');
+    log(colors.green, '✅', `${SEO_STANDARD_LABEL}驗證通過！`);
     process.exit(0);
   }
 }

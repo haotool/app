@@ -8,7 +8,7 @@
  * - [Lighthouse] SEO 審計標準
  *
  * 整合驗證項目：
- * 1. Sitemap 2025 標準 (verify-sitemap-2025.mjs)
+ * 1. Sitemap 2026 標準 (verify-sitemap-2025.mjs)
  * 2. Breadcrumb Schema (verify-breadcrumb-schema.mjs)
  * 3. JSON-LD 結構化數據 (verify-structured-data.mjs)
  * 4. 歷史資料與日期新鮮度 (verify-history-data.mjs)
@@ -21,7 +21,7 @@
  * - 手動審計 (pnpm seo:audit)
  * - 生產環境部署前驗證
  *
- * 建立時間: 2025-12-20
+ * 建立時間: 2026-05-02
  * BDD 階段: Stage 7 GREEN
  */
 
@@ -29,6 +29,7 @@ import { spawnSync } from 'child_process';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, resolve, basename } from 'path';
+import { SEO_STANDARD_LABEL } from './lib/seo-year-metadata.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -126,10 +127,10 @@ function checkDistExists() {
  * 主函數
  */
 async function main() {
-  header('RateWise SEO 完整審計 - 2025 標準');
+  header(`RateWise SEO 完整審計 - ${SEO_STANDARD_LABEL}`);
 
   console.log('📋 審計範圍:');
-  console.log('  1. Sitemap 2025 標準合規性');
+  console.log(`  1. ${SEO_STANDARD_LABEL} 合規性`);
   console.log('  2. Breadcrumb Schema 正確性');
   console.log('  3. JSON-LD 結構化數據完整性');
   console.log('  4. 歷史資料與日期新鮮度');
@@ -153,9 +154,12 @@ async function main() {
     failed: 0,
   };
 
-  // 1. Sitemap 2025 驗證
-  header('1. Sitemap 2025 標準驗證');
-  results.sitemap = runVerification(resolve(__dirname, 'verify-sitemap-2025.mjs'), 'Sitemap 2025');
+  // 1. Sitemap 標準驗證
+  header(`1. ${SEO_STANDARD_LABEL} 驗證`);
+  results.sitemap = runVerification(
+    resolve(__dirname, 'verify-sitemap-2025.mjs'),
+    SEO_STANDARD_LABEL,
+  );
   results.total++;
   if (results.sitemap) results.passed++;
   else results.failed++;
