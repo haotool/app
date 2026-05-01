@@ -11,6 +11,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { SkeletonLoader } from './SkeletonLoader';
 import { Footer } from './Footer';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
+import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 
 const LazyOfflineIndicator = React.lazy(() =>
   import('./OfflineIndicator').then((m) => ({ default: m.OfflineIndicator })),
@@ -71,10 +72,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </ErrorBoundary>
 
         {/* 全域 PWA/離線狀態提示：延遲載入，不影響首次 LCP */}
-        <React.Suspense fallback={null}>
-          <LazyOfflineIndicator />
-          <LazyUpdatePrompt />
-        </React.Suspense>
+        <NonCriticalLazyBoundary>
+          <React.Suspense fallback={null}>
+            <LazyOfflineIndicator />
+            <LazyUpdatePrompt />
+          </React.Suspense>
+        </NonCriticalLazyBoundary>
 
         {/* 12 月聖誕主題（動態載入） */}
         {showDecemberTheme && (

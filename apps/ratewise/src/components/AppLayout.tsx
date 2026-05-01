@@ -18,6 +18,7 @@ import { RouteAnalytics } from '@shared/analytics';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { performFullRefresh } from '../utils/swUtils';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
+import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 
 // 延遲載入非首屏提示元件，避免把 motion/react 提前拉進 app shell。
 const LazyOfflineIndicator = React.lazy(() =>
@@ -29,22 +30,6 @@ const LazyUpdatePrompt = React.lazy(() =>
 const LazyRatingModal = React.lazy(() =>
   import('./RatingModal').then((m) => ({ default: m.RatingModal })),
 );
-
-class NonCriticalLazyBoundary extends React.Component<
-  React.PropsWithChildren,
-  { hasError: boolean }
-> {
-  override state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  override render() {
-    if (this.state.hasError) return null;
-    return this.props.children;
-  }
-}
 
 /** Logo 組件 */
 function Logo() {
@@ -249,7 +234,7 @@ export function AppLayout() {
       </div>
 
       {/* 全域 PWA/離線狀態提示：延遲載入，不影響首次 LCP */}
-      <NonCriticalLazyBoundary>
+      <NonCriticalLazyBoundary resetKey={location.pathname}>
         <React.Suspense fallback={null}>
           <LazyOfflineIndicator />
           <LazyUpdatePrompt />
