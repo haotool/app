@@ -11,6 +11,7 @@ import {
   HOMEPAGE_SEO,
   OPEN_DATA_PAGE_SEO,
   SEO_INDEXABLE_LOCALES,
+  buildPairAmountSeo,
   SELL_RATE_VS_MID_RATE_PAGE,
   buildDefaultAlternates,
   buildPersonJsonLd,
@@ -159,6 +160,38 @@ describe('SEO SSOT', () => {
       const content = getReverseCurrencyLandingPageContent('USD');
       const allAnswers = content.faqEntries.map((e) => e.answer).join('\n');
       expect(allAnswers).not.toMatch(/日圓|日幣/);
+    });
+
+    it('反向金額頁 title 應把金額標示為台幣，避免誤讀成外幣金額', () => {
+      const copy = buildPairAmountSeo(30000, 'USD', '美金', 'twd-to-foreign');
+
+      expect(copy.title).toContain('30,000 台幣換美金');
+      expect(copy.title).not.toContain('台幣換 30,000 美金');
+      expect(copy.description).toContain('30,000 台幣');
+    });
+  });
+
+  describe('正向幣別頁（外幣→TWD URL）台銀賣出價語意', () => {
+    it('金額頁 SEO 文案應描述買外幣所需台幣，避免誤導為持外幣換回台幣', () => {
+      const copy = buildPairAmountSeo(100, 'USD', '美金', 'to-twd');
+
+      expect(copy.title).toContain('買 100 美金要多少新台幣');
+      expect(copy.title).not.toContain('100 美金換新台幣');
+      expect(copy.description).toContain('買 100 美金');
+      expect(copy.description).toContain('所需台幣金額');
+    });
+
+    it('幣別頁 FAQ 與 schema 名稱應使用買外幣語意對齊 cashSell', () => {
+      const content = getCurrencyLandingPageContent('USD');
+      const questions = content.faqEntries.map((entry) => entry.question).join('\n');
+      const commonAmountQuestions = content.commonAmounts.map((entry) => entry.question).join('\n');
+      const schema = JSON.stringify(content.jsonLd);
+
+      expect(questions).toContain('買美金今日台銀賣出價是多少？');
+      expect(commonAmountQuestions).toContain('買 1 美金要多少台幣？');
+      expect(questions).not.toContain('美金換台幣今日匯率是多少？');
+      expect(schema).toContain('買美金所需台幣匯率');
+      expect(schema).not.toContain('美金換台幣匯率');
     });
   });
 

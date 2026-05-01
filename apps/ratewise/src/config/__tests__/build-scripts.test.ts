@@ -37,6 +37,11 @@ async function readViteConfig() {
   return readFile(viteConfigPath, 'utf-8');
 }
 
+async function readAppLayoutSource() {
+  const appLayoutPath = path.resolve(__dirname, '../../../src/components/AppLayout.tsx');
+  return readFile(appLayoutPath, 'utf-8');
+}
+
 async function readMainEntry() {
   const mainEntryPath = path.resolve(__dirname, '../../../src/main.tsx');
   return readFile(mainEntryPath, 'utf-8');
@@ -201,6 +206,39 @@ describe('ratewise build scripts', () => {
     expect(viteConfig).toContain("return 'vendor-router-runtime';");
   });
 
+  it('should keep motion and dnd vendor chunks out of homepage modulepreload dependencies', async () => {
+    const viteConfig = await readViteConfig();
+    const jsxRuntimeRuleIndex = viteConfig.indexOf(
+      "id.includes('/node_modules/react/jsx-runtime')",
+    );
+    const reactDomFactoryRuleIndex = viteConfig.indexOf("id.includes('/node_modules/react-dom/')");
+    const dndRuleIndex = viteConfig.indexOf("id.includes('@hello-pangea/dnd')");
+    const motionRuleIndex = viteConfig.indexOf("id.includes('motion')");
+
+    expect(viteConfig).toContain("dedupe: ['react', 'react-dom', 'react/jsx-runtime']");
+    expect(jsxRuntimeRuleIndex).toBeGreaterThan(-1);
+    expect(reactDomFactoryRuleIndex).toBeGreaterThan(-1);
+    expect(dndRuleIndex).toBeGreaterThan(-1);
+    expect(motionRuleIndex).toBeGreaterThan(-1);
+    expect(jsxRuntimeRuleIndex).toBeLessThan(motionRuleIndex);
+    expect(reactDomFactoryRuleIndex).toBeLessThan(dndRuleIndex);
+    expect(viteConfig).toContain("return 'vendor-commons';");
+    expect(viteConfig).toContain("return 'vendor-dnd';");
+    expect(viteConfig).toContain("return 'vendor-motion';");
+  });
+
+  it('should keep AppLayout shell free of direct motion imports and lazy-load non-critical prompts', async () => {
+    const appLayout = await readAppLayoutSource();
+
+    expect(appLayout).not.toContain("from 'motion/react'");
+    expect(appLayout).not.toContain('from "motion/react"');
+    expect(appLayout).toContain('React.lazy(() =>');
+    expect(appLayout).toContain("import('./OfflineIndicator')");
+    expect(appLayout).toContain("import('./UpdatePrompt')");
+    expect(appLayout).toContain("import('./RatingModal')");
+    expect(appLayout).toContain('<NonCriticalLazyBoundary resetKey={location.pathname}>');
+  });
+
   it('should not globally pin brace-expansion to the legacy 2.x API', async () => {
     const packageJson = await readRootPackageJson();
 
@@ -296,6 +334,33 @@ describe('ratewise build scripts', () => {
     );
     expect(seoRateExamplesScript).toContain('prebuild 優雅降級模式');
     expect(seoRateExamplesScript).toContain('process.exit(0);');
+  });
+
+  it('should generate SEO rate example dates in Asia/Taipei instead of UTC', async () => {
+    const seoRateExamplesScript = await readSeoRateExamplesScript();
+
+    expect(seoRateExamplesScript).toContain("timeZone: 'Asia/Taipei'");
+    expect(seoRateExamplesScript).toContain('formatDateInTaipei');
+    expect(seoRateExamplesScript).not.toContain('new Date().toISOString().slice(0, 10)');
+  });
+
+  it('should keep production SEO SSOT schema validation aligned with /faq/ only FAQPage policy', async () => {
+    const verifySeoSsotScript = await readFile(
+      path.resolve(__dirname, '../../../scripts/verify-seo-ssot.mjs'),
+      'utf-8',
+    );
+
+    expect(verifySeoSsotScript).toContain(
+      "home: {\n    requiredSchemas: ['SoftwareApplication', 'Organization', 'WebSite', 'ImageObject']",
+    );
+    expect(verifySeoSsotScript).toContain(
+      "'usd-twd': {\n    requiredSchemas: [\n      'SoftwareApplication',\n      'Organization',\n      'WebSite',\n      'ExchangeRateSpecification'",
+    );
+    expect(verifySeoSsotScript).not.toContain(
+      "home: {\n    requiredSchemas: ['SoftwareApplication', 'Organization', 'WebSite', 'HowTo'",
+    );
+    expect(verifySeoSsotScript).not.toMatch(/'usd-twd':[\s\S]*?'FAQPage'/);
+    expect(verifySeoSsotScript).not.toMatch(/'jpy-twd':[\s\S]*?'FAQPage'/);
   });
 
   it('should validate cached rates freshness before reusing public/rates.json during prebuild fallback', async () => {

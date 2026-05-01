@@ -407,6 +407,37 @@ describe('security-headers worker', () => {
     expect(response.headers.get('content-type')).toContain('text/markdown');
   });
 
+  it('SEO Master SSOT 不得把 Worker 已完成的 AI readiness 能力回寫成 fail 或待補', () => {
+    const seoMaster = readFileSync(
+      resolve(process.cwd(), '../../docs/SEO_MASTER_SSOT.md'),
+      'utf-8',
+    );
+    const section = (start: string, end: string) => {
+      const startIndex = seoMaster.indexOf(start);
+      const endIndex = seoMaster.indexOf(end, startIndex + start.length);
+      expect(startIndex).toBeGreaterThanOrEqual(0);
+      expect(endIndex).toBeGreaterThan(startIndex);
+      return seoMaster.slice(startIndex, endIndex);
+    };
+
+    const agentReadinessSection = section('#### 12.6.6 IsItAgentReady', '#### 12.6.7');
+    const remediationSection = section('#### 12.7.6 待補項與優先級', '#### 12.7.7');
+    const latestTodoSection = section('**12.7.9.4 仍待補項清單', '---\n\n### 12.8');
+    const p1TodoSection = section('### 🟠 P1', '### 🟡 P2');
+
+    expect(agentReadinessSection).not.toMatch(
+      /\|\s*(Link header|Markdown negotiation|apiCatalog|agentSkills)\s*\|\s*fail\s*\|/,
+    );
+    expect(agentReadinessSection).not.toMatch(
+      /\|\s*(oauthDiscovery|oauthProtectedResource|mcpServerCard|a2aAgentCard|webMcp)\s*\|\s*fail\s*\|/,
+    );
+    expect(remediationSection).not.toMatch(/\/\.well-known\/(?:api-catalog|agent-skills).*仍 404/);
+    expect(latestTodoSection).not.toMatch(
+      /^\|.*(\.md Content-Type|\/\.well-known\/api-catalog|\/\.well-known\/agent-skills)/m,
+    );
+    expect(p1TodoSection).toMatch(/\| P1-9 \|[^|]+\|[^|]+\| Cloudflare Worker\s+\| ✅\s+\|/);
+  });
+
   it('公開分享圖開放 CORS，所有 Vite hashed asset 一律 immutable', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response('image-bytes', {

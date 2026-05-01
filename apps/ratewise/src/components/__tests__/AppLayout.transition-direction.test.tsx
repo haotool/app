@@ -29,50 +29,6 @@ vi.mock('../RouteErrorBoundary', () => ({
   RouteErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('motion/react', () => {
-  /* 模擬 motion 元件：掛載時鎖定 initial */
-  function MotionDiv({
-    children,
-    initial,
-    animate: _animate,
-    transition: _transition,
-    ...rest
-  }: React.HTMLAttributes<HTMLDivElement> & {
-    children?: React.ReactNode;
-    initial?: unknown;
-    animate?: unknown;
-    transition?: unknown;
-  }) {
-    const [mountedInitial] = React.useState(initial);
-
-    let direction = 0;
-    if (mountedInitial && typeof mountedInitial === 'object' && 'x' in mountedInitial) {
-      const x = (mountedInitial as { x?: string | number }).x;
-      if (typeof x === 'string') {
-        direction = parseFloat(x) > 0 ? 1 : parseFloat(x) < 0 ? -1 : 0;
-      }
-    }
-
-    return (
-      <div
-        data-testid="page-transition"
-        data-transition-direction={direction}
-        data-initial-disabled={mountedInitial === false ? 'true' : 'false'}
-        {...rest}
-      >
-        {children}
-      </div>
-    );
-  }
-
-  return {
-    motion: {
-      div: MotionDiv,
-    },
-    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-  };
-});
-
 function RouteContent() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -119,10 +75,12 @@ describe('AppLayout 頁面切換', () => {
 
     expect(screen.getByTestId('current-path')).toHaveTextContent('/');
     expect(screen.getByTestId('page-transition')).toBeInTheDocument();
+    expect(screen.getByTestId('bottom-navigation')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'to-multi' }));
     expect(screen.getByTestId('current-path')).toHaveTextContent('/multi');
     expect(screen.getByTestId('page-transition')).toHaveAttribute('data-transition-direction', '1');
+    expect(screen.getByTestId('bottom-navigation')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'to-home' }));
     expect(screen.getByTestId('current-path')).toHaveTextContent('/');
@@ -130,5 +88,6 @@ describe('AppLayout 頁面切換', () => {
       'data-transition-direction',
       '-1',
     );
+    expect(screen.getByTestId('bottom-navigation')).toBeInTheDocument();
   });
 });

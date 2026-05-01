@@ -273,7 +273,7 @@ const EEAT_SIGNALS = [
   {
     title: '可信度 (Trustworthiness)',
     items: [
-      '隱私第一：無帳號、本機存儲、無追蹤',
+      '隱私第一：無帳號、本機存儲；僅使用匿名流量分析並於隱私政策揭露',
       '安全傳輸：HTTPS、CSP 標頭、X-Frame-Options',
       '透明營運：公開隱私政策、費用結構',
     ],

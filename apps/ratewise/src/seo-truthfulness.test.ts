@@ -55,10 +55,29 @@ describe('SEO 內容真實性與 SSOT', () => {
     expect(privacyContent).not.toContain('不使用追蹤 Cookie');
   });
 
+  it('SEO 技術揭露頁的 E-E-A-T 信任訊號不得宣稱無追蹤', () => {
+    const seoTechContent = read('src/pages/SeoTech.tsx');
+
+    expect(seoTechContent).toContain('匿名流量分析');
+    expect(seoTechContent).not.toContain('無追蹤');
+  });
+
   it('seo-metadata 不應包含誤導性總覽宣稱', () => {
     const seoMetadata = read('src/config/seo-metadata.ts');
 
     // 「均符合」等概括性宣稱不應出現於程式碼，易導致未來維護者誤解
     expect(seoMetadata).not.toContain('均符合 Google Rich Results 規範');
+  });
+
+  it('Google-Extended 說明應與 Google 官方 crawler 角色一致', () => {
+    const seoMetadata = read('src/config/seo-metadata.ts');
+    const aboutMarkdown = read('public/about.md');
+
+    for (const content of [seoMetadata, aboutMarkdown]) {
+      expect(content).toContain('Googlebot 是 Google Search 與 AI Overviews 的主要爬取控制');
+      expect(content).toContain('Google-Extended');
+      expect(content).toContain('Gemini / Vertex');
+      expect(content).not.toContain('Google-Extended、GrokBot、Applebot-Extended 等）全站讀取');
+    }
   });
 });

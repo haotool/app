@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-02
+- ID：ratewise-superpowers-seo-ssot-drift-2026-05-02
+- 原因：Superpowers 多 agent SEO 審查發現 production SEO 驗證腳本、匯率方向文案、AI crawler 說明與公開 E-E-A-T 信任揭露存在漂移。
+- 解法：對齊 FAQPage only / ExchangeRateSpecification schema 策略、修正買外幣語意與 Googlebot / Google-Extended 角色，並以 truthfulness、SSOT、build-script regression tests 守門。
+
+- 日期：2026-05-02
 - ID：ratewise-lcp-deferred-vendors-motion-dnd
 - 原因：vendor-motion（138KB）與 vendor-dnd（95KB）因 CJS factory rolldown 置入首個使用者 chunk，被 vendor-router-runtime / app chunk 靜態依賴，拖入初始 modulepreload 阻塞首次 LCP。
 - 解法：manualChunks 將 react-dom 主命名空間與 jsx-runtime CJS factory 前置至 vendor-commons，搭配 resolve.dedupe 切斷靜態依賴鏈，兩個重量 vendor 改為按需延遲載入（初始減約 60KB brotli）。
