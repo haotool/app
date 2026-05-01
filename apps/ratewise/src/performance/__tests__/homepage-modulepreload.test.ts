@@ -1,3 +1,12 @@
+/**
+ * 首屏 bundle 預算守門測試
+ *
+ * 只有在以下條件下才會執行：
+ * 1. RATEWISE_RUN_BUNDLE_BUDGET=1 環境變數設定
+ * 2. 或透過 pnpm --filter @app/ratewise test:perf:bundle 執行
+ *
+ * CI 常規測試 (test:coverage) 不會執行這些測試。
+ */
 import { describe, expect, it } from 'vitest';
 import { readFileSync, statSync, existsSync } from 'node:fs';
 import { brotliCompressSync } from 'node:zlib';
@@ -6,9 +15,15 @@ import { join } from 'node:path';
 const distDir = join(__dirname, '../../../dist');
 const distExists = existsSync(join(distDir, 'index.html'));
 
-// 這些測試需要 production build 才能執行
-// 在 CI 中，建議在 build 後單獨執行 test:perf:bundle
-describe.skipIf(!distExists)('homepage modulepreload budget', () => {
+// 只有明確指定時才執行 bundle 預算測試
+// npm_lifecycle_event 在 vitest run 時會是 undefined 或 vitest
+// npm_lifecycle_script 會包含完整的命令
+const isExplicitBundleTest =
+  process.env['RATEWISE_RUN_BUNDLE_BUDGET'] === '1' ||
+  process.env['npm_lifecycle_script']?.includes('test:perf:bundle');
+
+// 必須同時滿足：1) dist 存在 2) 明確要求執行
+describe.skipIf(!distExists || !isExplicitBundleTest)('homepage modulepreload budget', () => {
   it('keeps motion and dnd out of homepage modulepreload', () => {
     const html = readFileSync(join(distDir, 'index.html'), 'utf-8');
 
