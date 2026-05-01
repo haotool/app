@@ -108,20 +108,20 @@ scripts/              # 驗證/SEO/版本/SSOT 腳本
 
 ## 控制矩陣（Audit Control Matrix）
 
-| 控制 ID      | 控制項       | 必須要求                                                                                  | 證據                                     | SSOT / 來源                                      |
-| ------------ | ------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------ |
-| `AGT-CTX-01` | 官方文件查證 | 遇 build/test/lint 錯誤、新工具、CI/CD 變更、major 升級時，先查官方文件                   | Context7 / Web 查詢紀錄、引用來源        | 本 SOP、`CLAUDE.md`                              |
-| `AGT-DOC-01` | 開發文檔編號 | `docs/dev/` 新檔名必須 `00X_*.md`                                                         | `git diff`, 檔名紀錄                     | `docs/dev/` 結構                                 |
-| `AGT-LOG-01` | 獎懲記錄更新 | 每次 `git commit` 前更新 `docs/dev/002...`（含本次分數變化與累計總分）                    | 002 檔案 diff、總分更新                  | `docs/dev/002_development_reward_penalty_log.md` |
-| `AGT-LOG-02` | 002 格式治理 | `docs/dev/002...` 新增紀錄必須使用 `outline-v2-ultra` 四行模板；禁止回退巨型 table        | 002 檔案 diff、格式區塊一致性            | `docs/dev/002_development_reward_penalty_log.md` |
-| `AGT-CMT-01` | 提交格式     | commit message 通過 commitlint 硬規則                                                     | `commit-msg` hook / commitlint 結果      | `commitlint.config.cjs`                          |
-| `AGT-PC-01`  | 提交前檢查   | `pre-commit` 5 步驟通過                                                                   | hook log                                 | `.husky/pre-commit`                              |
-| `AGT-PP-01`  | 推送前檢查   | `typecheck` + `test` + `build:ratewise` 通過                                              | hook log / CI                            | `.husky/pre-push`                                |
-| `AGT-QA-01`  | QA 截圖管理  | 截圖集中於 `screenshots/`，不得污染 root                                                  | 檔案路徑、`git status --ignored --short` | `.gitignore`, 本 SOP                             |
-| `AGT-DOC-02` | 文件同步     | 流程/規則變更需同步更新 `AGENTS.md` / `CLAUDE.md`                                         | 文件 diff                                | 本 SOP、`CLAUDE.md`                              |
-| `AGT-MRG-01` | 主支合併     | 透過 PR 與 `gh` 進行合併；避免未審查直推主支                                              | PR 編號、merge 記錄                      | GitHub / `gh`                                    |
-| `AGT-VER-01` | SemVer 決策  | 每個 PR/功能 **必須**以正確 bump 類型建立 changeset；發版前 CHANGELOG 條目必須存在        | `.changeset/*.md` 存在、CHANGELOG diff   | `CLAUDE.md` Phase 7、semver.org                  |
-| `AGT-VER-02` | 發版 SSOT    | 執行 `pnpm changeset:version` 完成版本升級；禁止手動修改版本號或個別執行 prebuild scripts | `git diff` 包含全部版本嵌入產出物        | `scripts/update-release-metadata.js`             |
+| 控制 ID      | 控制項       | 必須要求                                                                                                | 證據                                     | SSOT / 來源                                      |
+| ------------ | ------------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------ |
+| `AGT-CTX-01` | 官方文件查證 | 遇 build/test/lint 錯誤、新工具、CI/CD 變更、major 升級時，先查官方文件                                 | Context7 / Web 查詢紀錄、引用來源        | 本 SOP、`CLAUDE.md`                              |
+| `AGT-DOC-01` | 開發文檔編號 | `docs/dev/` 新檔名必須 `00X_*.md`                                                                       | `git diff`, 檔名紀錄                     | `docs/dev/` 結構                                 |
+| `AGT-LOG-01` | 獎懲記錄更新 | 每次 `git commit` 前更新 `docs/dev/002...`（含本次分數變化與累計總分）                                  | 002 檔案 diff、總分更新                  | `docs/dev/002_development_reward_penalty_log.md` |
+| `AGT-LOG-02` | 002 格式治理 | `docs/dev/002...` 新增紀錄格式必須與該檔案當前檔頭規範一致；若調整檔頭格式，必須同 PR 同步更新 002 本體 | 002 檔案 diff、格式區塊一致性            | `docs/dev/002_development_reward_penalty_log.md` |
+| `AGT-CMT-01` | 提交格式     | commit message 通過 commitlint 硬規則                                                                   | `commit-msg` hook / commitlint 結果      | `commitlint.config.cjs`                          |
+| `AGT-PC-01`  | 提交前檢查   | `pre-commit` 5 步驟通過                                                                                 | hook log                                 | `.husky/pre-commit`                              |
+| `AGT-PP-01`  | 推送前檢查   | `typecheck` + `test` + `build:ratewise` 通過                                                            | hook log / CI                            | `.husky/pre-push`                                |
+| `AGT-QA-01`  | QA 截圖管理  | 截圖集中於 `screenshots/`，不得污染 root                                                                | 檔案路徑、`git status --ignored --short` | `.gitignore`, 本 SOP                             |
+| `AGT-DOC-02` | 文件同步     | 流程/規則變更需同步更新 `AGENTS.md` / `CLAUDE.md`                                                       | 文件 diff                                | 本 SOP、`CLAUDE.md`                              |
+| `AGT-MRG-01` | 主支合併     | 透過 PR 與 `gh` 進行合併；避免未審查直推主支                                                            | PR 編號、merge 記錄                      | GitHub / `gh`                                    |
+| `AGT-VER-01` | SemVer 決策  | 每個 PR/功能 **必須**以正確 bump 類型建立 changeset；發版前 CHANGELOG 條目必須存在                      | `.changeset/*.md` 存在、CHANGELOG diff   | `CLAUDE.md` Phase 7、semver.org                  |
+| `AGT-VER-02` | 發版 SSOT    | 執行 `pnpm changeset:version` 完成版本升級；禁止手動修改版本號或個別執行 prebuild scripts               | `git diff` 包含全部版本嵌入產出物        | `scripts/update-release-metadata.js`             |
 
 ## Mandatory Workflow (Agent SOP)
 
@@ -156,8 +156,8 @@ Agent **必須**先完成：
 提交前 Agent **必須**：
 
 1. 更新 `docs/dev/002_development_reward_penalty_log.md`
-2. 確認 002 新增內容使用 `outline-v2-ultra` 四行模板；歷史整理僅能寫入精簡索引，不得新增巨型 table
-3. 確認 002 新增條目符合 `outline-v2-ultra`：`日期`、`ID`、`原因`、`解法` 四行
+2. 確認 002 新增內容符合 002 檔頭當前規範；歷史整理僅能寫入精簡索引，不得新增巨型 table
+3. 若本次調整 002 格式規範，必須同步更新 002 本體並在同 PR 提供遷移差異
 4. 依「獎懲分數計算 SSOT」更新本次分數與累計總分
 5. 檢查 QA 截圖與暫存檔未污染 root
 6. 確認受影響文件同步（至少 `AGENTS.md` / `CLAUDE.md`）
@@ -168,11 +168,12 @@ Agent **必須**先完成：
 ### 002 檔案格式（MUST）
 
 - 檔名固定：`docs/dev/002_development_reward_penalty_log.md`
-- 文件頂部必須保留：
-  - `# 開發獎懲與決策記錄（超短版）`
-  - `> 版本：outline-v2-ultra`
-  - `> 原則：每筆只保留日期、ID、原因、解法。`
-- 每筆新紀錄必須使用四行大綱：
+- 文件頂部與條目模板，必須以 `docs/dev/002_development_reward_penalty_log.md` 當前內容為 SSOT。
+- 若要調整檔頭版本或模板，必須同 PR 同步更新：
+  - `AGENTS.md`
+  - `CLAUDE.md`
+  - `docs/dev/002_development_reward_penalty_log.md`
+- 當前 002 模板為四行大綱：
   - `- 日期：YYYY-MM-DD`
   - `- ID：<唯一識別>`
   - `- 原因：<一句話 root cause>`
