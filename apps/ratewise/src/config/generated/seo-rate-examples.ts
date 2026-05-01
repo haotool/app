@@ -8,7 +8,7 @@
  *   - 台灣銀行牌告匯率（現金買入/賣出）
  *   - open.er-api.com 市場中間價（與 Google Morningstar / XE / Wise / Apple Yahoo Finance 基準一致）
  * 雙重驗證：open.er-api.com 中間價 vs 台銀自身 (買入+賣出)/2 中間價，差距須在 2% 以內。
- * 匯率時間：2026/05/02 02:47:18
+ * 匯率時間：2026/05/02 03:56:35
  * 生成日期：2026-05-02
  */
 
@@ -173,11 +173,11 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
     foreignAtMarketMid: 1320,
     foreignAtBankMid: 1315,
     diffForeign: 27,
-    diffTWD: 613,
+    diffTWD: 626,
     diffPct: 2.1,
-    cashSell: 23.2,
+    cashSell: 23.21,
     marketMid: 22.725723,
-    bankMid: 22.81,
+    bankMid: 22.82,
     spotAvailable: true,
   },
   CAD: {
@@ -247,15 +247,15 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
   },
   PHP: {
     exampleTWD: 30000,
-    foreignAtCash: 51617,
+    foreignAtCash: 51546,
     foreignAtMarketMid: 58158,
-    foreignAtBankMid: 58230,
-    diffForeign: 6541,
-    diffTWD: 3374,
-    diffPct: 12.7,
-    cashSell: 0.5812,
+    foreignAtBankMid: 58140,
+    diffForeign: 6612,
+    diffTWD: 3411,
+    diffPct: 12.8,
+    cashSell: 0.582,
     marketMid: 0.515834,
-    bankMid: 0.5152,
+    bankMid: 0.516,
     spotAvailable: false,
   },
   IDR: {
@@ -300,7 +300,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
 } as const;
 
 /** 資料更新時間（台灣銀行） */
-export const SEO_RATE_EXAMPLES_UPDATE_TIME = '2026/05/02 02:47:18';
+export const SEO_RATE_EXAMPLES_UPDATE_TIME = '2026/05/02 03:56:35';
 
 /** 生成日期 */
 export const SEO_RATE_EXAMPLES_DATE = '2026-05-02';

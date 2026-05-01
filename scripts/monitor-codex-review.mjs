@@ -45,7 +45,7 @@ function parseArgs() {
     follow: false,
     once: false,
     pr: null,
-    stateFile: '.cache/pr-codex-monitor.json',
+    stateFile: null,
   };
 
   for (let i = 0; i < args.length; i += 1) {
@@ -65,8 +65,17 @@ function parseArgs() {
   }
 
   if (!opts.pr) {
-    const current = ghJson('pr view --json number');
-    opts.pr = current.number;
+    const fallback = ghJson('pr view --json number');
+    opts.pr = Number(fallback.number) || null;
+    if (!opts.pr) {
+      console.error(
+        '[error] 缺少 --pr，且目前無法自動判斷 active PR。請使用 --pr <number> 在此環境明確指定 PR。',
+      );
+      process.exit(1);
+    }
+  }
+  if (!opts.stateFile) {
+    opts.stateFile = `.cache/pr-${opts.pr}-codex-monitor.json`;
   }
 
   return opts;
@@ -309,9 +318,9 @@ function diffAndPrint(pr, next, prev) {
 }
 
 function runOnce(cfg) {
+  const checks = fetchCheckSummary(cfg.pr);
   const threads = fetchReviewThreads(cfg.pr);
   const issueComments = fetchCodexIssueComments(cfg.pr);
-  const checks = fetchCheckSummary(cfg.pr);
   const nextState = {
     checksByName: Object.fromEntries(checks.all.map((c) => [c.name, c.state])),
     threads: Object.fromEntries(

@@ -54,6 +54,7 @@
     "verify:seo-docs": "node apps/ratewise/scripts/verify-doc-ssot-drift.mjs",
     "verify:sitemap": "node scripts/verify-sitemap-ssg.mjs",
     "verify:sitemap-2025": "node scripts/verify-sitemap-2025.mjs",
+    "verify:sitemap-2026": "node scripts/verify-sitemap-2026.mjs",
     "verify:breadcrumb": "node scripts/verify-breadcrumb-schema.mjs",
     "verify:structured-data": "node scripts/verify-structured-data.mjs",
     "verify:production-seo": "node scripts/verify-production-seo.mjs",

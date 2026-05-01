@@ -22,7 +22,7 @@
 import { statSync, writeFileSync, existsSync, readFileSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
-import { dirname, join, resolve } from 'path';
+import { dirname, resolve } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -408,7 +408,7 @@ function hasStableFallbackLastMod(path) {
 
 /**
  * 格式化日期為 W3C Datetime 的日期格式。
- * 範例：2025-12-20
+ * 範例：2026-12-20
  *
  * @param {Date} date - 日期對象
  * @returns {string} YYYY-MM-DD
@@ -485,7 +485,7 @@ function generateSitemap() {
 /**
  * 主函數
  */
-async function main() {
+export async function main() {
   console.log(`\n🗺️  ${SEO_STANDARD_LABEL} 生成器`);
   console.log('─'.repeat(60));
 

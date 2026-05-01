@@ -216,6 +216,12 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 - `buildShareImageJsonLd` 的 `dateModified` 必須使用 `BUILD_TIME`（buildtime 常數），不可寫死日期。
 - 新增 FAQ 或 schema 時先確認無重複 `@type`（尤其 `FAQPage`、`BreadcrumbList`）；驗證指令：`grep -r "FAQPage" dist/ | wc -l`。
 
+## SEO 迭代治理 SOP（進階）
+
+- SEO 持續優化任務請同步參照 `docs/dev/036_seo_iterative_execution_protocol.md`，預設至少 20 輪、可選 A/B 對照。
+- 每一輪至少紀錄 `seoScore`、`passRate`、`sitemap missingExpectedCount`，未達門檻可觸發回退。
+- Codex 回饋與 checks 變化請由 `review:codex:once` / `review:codex:watch` 管控，保留 traceability。
+
 ## QA Artifacts & Root Hygiene
 
 截圖存 `screenshots/<name>.png`，不得污染 root；詳見 `AGENTS.md` § QA Artifact Rules / Root Hygiene。
@@ -345,6 +351,7 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 | 日期       | 版本      | 變更摘要                                                                                                                     |
 | ---------- | --------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-02 | v5.5      | 加入 SEO 迭代治理 SOP 與監控指引，補齊 `docs/dev/036_seo_iterative_execution_protocol.md` 同步點位                           |
 | 2026-04-28 | v5.4      | 補充 Zeabur deployment race 診斷與修復規則，避免 release SHA 被較舊 main SHA 覆蓋                                            |
 | 2026-04-28 | v5.3      | 修正 release PR 建立失敗被 workflow success 掩蓋的診斷規則，補充 README 同步與 changeset 消化檢查                            |
 | 2026-04-24 | v5.2      | 新增 GitHub Actions Node 20 淘汰過渡規則：官方 action 優先升至 Node 24 major，僅對仍停留 Node 20 的 job 保留 force flag      |
@@ -359,5 +366,5 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 ---
 
-**最後更新**: 2026-04-28T01:51:43+0800
-**版本**: v5.4（新增 Zeabur deployment race 診斷與修復規則）
+**最後更新**: 2026-05-02T09:00:00+0800
+**版本**: v5.5（納入 SEO 迭代治理與監控 SOP）

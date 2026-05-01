@@ -11,7 +11,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/prebuild-fetch-rates.mjs && SEO_RATE_EXAMPLES_OPTIONAL=1 node scripts/update-seo-rate-examples.mjs && node ../../scripts/generate-sitemap-2025.mjs && node scripts/generate-robots-txt.mjs && node scripts/generate-manifest.mjs && node scripts/generate-offline-html.mjs && node scripts/generate-llms-txt.mjs && node scripts/generate-markdown-mirrors.mjs && node scripts/generate-api-json.mjs && node scripts/generate-pair-json.mjs && node scripts/generate-openapi.mjs && node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs && node scripts/fetch-rating-snapshot.mjs",
+    "prebuild": "node scripts/prebuild-fetch-rates.mjs && SEO_RATE_EXAMPLES_OPTIONAL=1 node scripts/update-seo-rate-examples.mjs && node ../../scripts/generate-sitemap-2026.mjs && node scripts/generate-robots-txt.mjs && node scripts/generate-manifest.mjs && node scripts/generate-offline-html.mjs && node scripts/generate-llms-txt.mjs && node scripts/generate-markdown-mirrors.mjs && node scripts/generate-api-json.mjs && node scripts/generate-pair-json.mjs && node scripts/generate-openapi.mjs && node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs && node scripts/fetch-rating-snapshot.mjs",
     "build": "tsc --noEmit && vite-react-ssg build --config vite.config.ts",
     "postbuild": "node scripts/postbuild-mirror-dist.js",
     "preview": "vite preview",
@@ -25,7 +25,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
     "typecheck": "tsc --noEmit",
-    "generate:sitemap": "node ../../scripts/generate-sitemap-2025.mjs",
+    "generate:sitemap": "node ../../scripts/generate-sitemap-2026.mjs",
     "verify": "node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs",
     "verify:ssot": "node ../../scripts/verify-ssot-sync.mjs",
     "verify:images": "node ../../scripts/verify-image-resources.mjs",

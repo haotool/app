@@ -30,9 +30,38 @@ const RESOURCE_GROUPS = [
 ];
 
 const DEFAULT_TIMEOUT_MS = 15000;
+const EXPECTED_CONTENT_TYPES = {
+  '.xml': ['application/xml', 'text/xml'],
+  '.txt': ['text/plain'],
+  '.json': ['application/json'],
+  '.md': ['text/markdown', 'text/plain'],
+  '.jpg': ['image/jpeg'],
+  '.jpeg': ['image/jpeg'],
+  '.png': ['image/png'],
+  '.ico': ['image/x-icon', 'image/vnd.microsoft.icon', 'image/png'],
+  '.webp': ['image/webp'],
+  '.avif': ['image/avif'],
+};
 
 function ensureTrailingSlash(url) {
   return url.endsWith('/') ? url : `${url}/`;
+}
+
+function getPathExtension(path) {
+  const match = path.toLowerCase().match(/\.[a-z0-9]+$/);
+  return match?.[0] ?? '';
+}
+
+export function getExpectedContentTypes(resource) {
+  const ext = getPathExtension(resource.path);
+  if (resource.type === 'image') return EXPECTED_CONTENT_TYPES[ext] ?? ['image/'];
+  return EXPECTED_CONTENT_TYPES[ext] ?? [];
+}
+
+export function isExpectedContentType(contentType, expectedTypes) {
+  if (expectedTypes.length === 0) return true;
+  const normalized = String(contentType ?? '').toLowerCase();
+  return expectedTypes.some((expected) => normalized.startsWith(expected));
 }
 
 export function buildResourceInventory(apps) {
@@ -61,6 +90,7 @@ export function buildResourceInventory(apps) {
           type,
           path,
           url: new URL(path.replace(/^\//, ''), ensureTrailingSlash(siteUrl)).toString(),
+          expectedContentTypes: getExpectedContentTypes({ type, path }),
         });
       }
     }
@@ -116,6 +146,11 @@ export async function probeResource(resource, options = {}) {
 
       lastStatus = response.status;
       lastError = null;
+      const contentType = response.headers?.get?.('content-type') ?? '';
+      const contentTypeOk = isExpectedContentType(
+        contentType,
+        resource.expectedContentTypes ?? getExpectedContentTypes(resource),
+      );
 
       // 5xx 暫時性錯誤：重試
       if (response.status >= 500 && attempt < maxRetries) {
@@ -125,7 +160,9 @@ export async function probeResource(resource, options = {}) {
       return {
         ...resource,
         httpStatus: response.status,
-        outcome: response.status === 200 ? '200' : 'non200',
+        contentType,
+        contentTypeOk,
+        outcome: response.status === 200 && contentTypeOk ? '200' : 'non200',
         durationMs: Date.now() - startedAt,
         error: null,
       };
@@ -182,7 +219,14 @@ function formatStatus(httpStatus, error) {
 function printResults(results, summary) {
   console.log(`\n${colors.cyan}🔎 生產環境必要資源可用性驗證${colors.reset}`);
   console.log('─'.repeat(110));
-  console.log('APP'.padEnd(14) + 'TYPE'.padEnd(8) + 'RESULT'.padEnd(16) + 'HTTP'.padEnd(8) + 'URL');
+  console.log(
+    'APP'.padEnd(14) +
+      'TYPE'.padEnd(8) +
+      'RESULT'.padEnd(16) +
+      'HTTP'.padEnd(8) +
+      'CONTENT-TYPE'.padEnd(28) +
+      'URL',
+  );
   console.log('─'.repeat(110));
 
   for (const result of results) {
@@ -191,6 +235,9 @@ function printResults(results, summary) {
         result.type.padEnd(8) +
         `${formatOutcome(result.outcome)}`.padEnd(25) +
         formatStatus(result.httpStatus, result.error).padEnd(8) +
+        String(result.contentType ?? '')
+          .slice(0, 26)
+          .padEnd(28) +
         result.url,
     );
   }
@@ -208,11 +255,11 @@ function writeStepSummary(results, summary) {
   const lines = [
     '## SEO Required Resource Availability',
     '',
-    '| App | Type | Result | HTTP | URL |',
-    '| --- | --- | --- | --- | --- |',
+    '| App | Type | Result | HTTP | Content-Type | URL |',
+    '| --- | --- | --- | --- | --- | --- |',
     ...results.map((result) => {
       const http = result.httpStatus ?? (result.error ? 'ERR' : 'N/A');
-      return `| ${result.app} | ${result.type} | ${result.outcome} | ${http} | ${result.url} |`;
+      return `| ${result.app} | ${result.type} | ${result.outcome} | ${http} | ${result.contentType ?? ''} | ${result.url} |`;
     }),
     '',
     `總計 ${summary.total} 項：200=${summary['200']} / non200=${summary.non200} / timeout=${summary.timeout}`,

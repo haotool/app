@@ -29,7 +29,7 @@ const DEFAULT_STEPS = [
   { name: 'integration_test', command: 'pnpm test:integration', failFast: false },
   { name: 'seo_health', command: 'pnpm seo:health-check', failFast: false },
   { name: 'verify_sitemap', command: 'pnpm verify:sitemap', failFast: false },
-  { name: 'verify_sitemap_2025', command: 'pnpm verify:sitemap-2025', failFast: false },
+  { name: 'verify_sitemap_2026', command: 'pnpm verify:sitemap-2026', failFast: false },
   { name: 'verify_breadcrumb', command: 'pnpm verify:breadcrumb', failFast: false },
   { name: 'verify_structured_data', command: 'pnpm verify:structured-data', failFast: false },
   {
@@ -67,6 +67,8 @@ function parseArgs() {
     minSeoDelta: 0,
     minPassRateDelta: 0,
     metricsApp: 'ratewise',
+    autoRollback: false,
+    rollbackCommand: '',
   };
 
   for (let i = 0; i < args.length; i += 1) {
@@ -82,6 +84,8 @@ function parseArgs() {
     else if (args[i] === '--min-pass-rate-delta' && args[i + 1])
       opts.minPassRateDelta = Number(args[++i]);
     else if (args[i] === '--metrics-app' && args[i + 1]) opts.metricsApp = args[++i];
+    else if (args[i] === '--auto-rollback') opts.autoRollback = true;
+    else if (args[i] === '--rollback-command' && args[i + 1]) opts.rollbackCommand = args[++i];
   }
 
   return opts;
@@ -89,9 +93,32 @@ function parseArgs() {
 
 function readAbConfig(configPath) {
   if (!configPath) return null;
-  const resolved = path.resolve(configPath);
-  const raw = fs.readFileSync(resolved, 'utf8');
-  return JSON.parse(raw);
+  try {
+    const resolved = path.resolve(configPath);
+    const raw = fs.readFileSync(resolved, 'utf8');
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error(`讀取 AB config 失敗: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+}
+
+function runRollback(cfg) {
+  if (!cfg.autoRollback || !cfg.rollbackCommand) {
+    return {
+      status: 0,
+      skipped: true,
+      message: '未設定回退 command，僅標示為失敗',
+    };
+  }
+  console.log(`[rollback] 執行回退: ${cfg.rollbackCommand}`);
+  const result = runShell(cfg.rollbackCommand, { dryRun: false });
+  return {
+    status: result.status,
+    skipped: false,
+    stdout: result.stdout.slice(0, 1200),
+    stderr: result.stderr.slice(0, 1200),
+  };
 }
 
 function runShell(command, options = {}) {
@@ -106,6 +133,7 @@ function runShell(command, options = {}) {
     shell: true,
     encoding: 'utf8',
     env: process.env,
+    maxBuffer: 50 * 1024 * 1024, // 50MB 避免 ENOBUFS
   });
 
   return {
@@ -176,6 +204,7 @@ function appendLog(logFile, payload) {
 
 function runStep(step, cfg) {
   const timestamp = new Date().toISOString();
+  const failFast = step.failFast !== false;
   if (step.control && step.variant) {
     console.log(`\n[AB] ${step.name}: control`);
     const controlResult = runShell(step.control.command, cfg);
@@ -188,6 +217,7 @@ function runStep(step, cfg) {
       variant: variantResult.status,
       controlElapsedMs: controlResult.elapsedMs,
       variantElapsedMs: variantResult.elapsedMs,
+      failFast,
     };
   }
 
@@ -200,10 +230,31 @@ function runStep(step, cfg) {
     elapsedMs: result.elapsedMs,
     output: result.stdout.slice(0, 2000),
     error: result.stderr.slice(0, 1200),
+    failFast,
   };
 }
 
 function runMetricsRound(round, cfg) {
+  if (cfg.dryRun) {
+    const metricsPath = path.resolve(cfg.metricsDir, `round-${round}.json`);
+    return {
+      name: 'collect_seo_metrics',
+      type: 'single',
+      status: 0,
+      timestamp: new Date().toISOString(),
+      elapsedMs: 0,
+      outputPath: metricsPath,
+      metrics: null,
+      improvement: {
+        improved: true,
+        reason: 'dry-run',
+        deltas: { seoScore: 0, passRate: 0 },
+      },
+      rawOutput: '',
+      rawError: '',
+    };
+  }
+
   const metricsPath = path.resolve(cfg.metricsDir, `round-${round}.json`);
   const command = `${METRICS_CMD} -- --round ${round} --tag r${round} --output ${JSON.stringify(metricsPath)} --app ${cfg.metricsApp}`;
   const result = runShell(command, cfg);
@@ -284,16 +335,17 @@ function main() {
       const stepResult = runStep(step, cfg);
       roundResult.steps.push(stepResult);
 
+      const shouldFailFast = stepResult.failFast !== false;
       if (stepResult.type === 'single' && stepResult.status !== 0) {
         roundResult.failed = true;
-        if (!cfg.continueOnFailure) {
+        if (shouldFailFast && !cfg.continueOnFailure) {
           console.log(`[stop] ${step.name} failed (${stepResult.status})`);
           break;
         }
       }
       if (stepResult.type === 'ab' && (stepResult.control !== 0 || stepResult.variant !== 0)) {
         roundResult.failed = true;
-        if (!cfg.continueOnFailure) {
+        if (shouldFailFast && !cfg.continueOnFailure) {
           console.log(
             `[stop] ${step.name} AB step failed (control=${stepResult.control}, variant=${stepResult.variant})`,
           );
@@ -311,7 +363,14 @@ function main() {
       console.log(
         `- 變化: SEOScore=${metricsResult.improvement.deltas.seoScore}, PassRate=${metricsResult.improvement.deltas.passRate}`,
       );
+      const rollbackResult = runRollback(cfg);
+      roundResult.rollback = rollbackResult;
       roundResult.failed = true;
+      if (rollbackResult.skipped) {
+        console.log('[rollback] 未設定 rollback command，請人工處理');
+      } else if (rollbackResult.status !== 0) {
+        console.log('[rollback] 回退指令執行失敗，請檢查後手動回退');
+      }
       if (!cfg.continueOnFailure) {
         break;
       }

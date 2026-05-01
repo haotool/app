@@ -210,7 +210,7 @@ export const SITE_SEO = {
       '換算歷史記錄',
       '7~30 天歷史匯率趨勢圖',
       '6 種主題風格',
-      '3 語言支援（繁中／英／日）',
+      '4 語言支援（繁中／英／日／韓）',
       '下拉更新即時同步',
       '離線使用（PWA）',
       `${SUPPORTED_CURRENCY_COUNT} 種貨幣支援`,
@@ -453,8 +453,8 @@ export function buildAmountExchangeRateSpecificationJsonLd(
 ): JsonLdBlock {
   const isTwdToForeign = direction === 'twd-to-foreign';
   const rateDescription = isTwdToForeign
-    ? `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} TWD 換 ${result.toLocaleString('zh-TW')} ${toCurrency}）`
-    : `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} ${fromCurrency} 換 ${result.toLocaleString('zh-TW')} TWD）`;
+    ? `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} TWD 可買 ${result.toLocaleString('zh-TW')} ${toCurrency}）`
+    : `臺灣銀行現金賣出價（買 ${amount.toLocaleString('zh-TW')} ${fromCurrency} 所需 ${result.toLocaleString('zh-TW')} TWD）`;
 
   return {
     '@context': 'https://schema.org',
@@ -555,6 +555,18 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
     name: `${APP_INFO.shortName} 台灣銀行牌告匯率開放資料`,
     description: `${APP_INFO.shortName} 提供臺灣銀行牌告匯率的開放 JSON 資料集，包含 18 種貨幣的現金與即期買入賣出四種報價，並提供最新匯率、歷史匯率與 OpenAPI 規格。`,
     url: buildCanonicalUrl('/open-data/'),
+    sameAs: 'https://rate.bot.com.tw/xrt',
+    isBasedOn: {
+      '@type': 'Dataset',
+      name: '臺灣銀行牌告匯率',
+      url: 'https://rate.bot.com.tw/xrt',
+      publisher: {
+        '@type': 'Organization',
+        name: '臺灣銀行',
+        url: 'https://www.bot.com.tw/',
+      },
+    },
+    identifier: `${SITE_BASE_URL}open-data/#bank-of-taiwan-exchange-rate-dataset`,
     license: APP_INFO.licenseUrl,
     isAccessibleForFree: true,
     inLanguage: DEFAULT_LOCALE,
@@ -913,7 +925,7 @@ export const HOMEPAGE_SEO = {
     highlights: [
       '顯示實際買賣價：臺灣銀行牌告匯率的現金與即期買入賣出四種報價，不是中間價——換匯金額更精準。',
       `支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，提供計算機快速輸入、收藏管理、拖曳排序與換算歷史。`,
-      '6 種主題風格、3 語言介面（繁中／英／日），PWA 可離線使用，重新連線自動同步。',
+      '6 種主題風格、4 語言介面（繁中／英／日／韓），PWA 可離線使用，重新連線自動同步。',
     ],
     quickLinks: [
       { href: '/usd-twd/', label: 'USD/TWD 匯率' },

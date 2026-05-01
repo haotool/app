@@ -47,6 +47,10 @@ function parseArgs() {
     exitOnNon200: false,
   };
 
+  out.targetSeoMin = Number(process.env.SEO_TARGET_SEO_MIN || 90);
+  out.targetPerformanceMin = Number(process.env.SEO_TARGET_PERFORMANCE_MIN || 95);
+  out.targetPassRateMin = Number(process.env.SEO_TARGET_PASS_RATE_MIN || 95);
+
   for (let i = 0; i < args.length; i += 1) {
     if (args[i] === '--manifest' && args[i + 1]) out.manifestPath = path.resolve(args[++i]);
     else if (args[i] === '--sitemap' && args[i + 1]) out.sitemapPath = path.resolve(args[++i]);
@@ -114,6 +118,11 @@ function parseLighthouse(manifestPath) {
   };
 }
 
+function normalizeNumber(value, fallback) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
 function parseSitemap(sitemapPath) {
   if (!fs.existsSync(sitemapPath)) {
     return { found: false, message: `Sitemap not found: ${sitemapPath}` };
@@ -128,10 +137,13 @@ function parseSitemap(sitemapPath) {
     'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"',
   );
 
-  const siteUrl = normalizeSiteUrl(SITE_CONFIG.url);
-  const expectedUrls = SEO_PATHS.map((p) =>
-    p === '/' ? siteUrl : `${siteUrl}${p.replace(/^\//, '')}`,
-  );
+  const siteUrl = normalizeSiteUrl(SITE_CONFIG.url).replace(/\/$/, '');
+  const toAbsoluteUrl = (pathname) => {
+    const normalized = pathname === '/' ? '' : pathname.replace(/^\//, '');
+    return `${siteUrl}/${normalized}`;
+  };
+
+  const expectedUrls = SEO_PATHS.map(toAbsoluteUrl);
   const locSet = new Set(urls);
   const missingPaths = expectedUrls.filter((expected) => !locSet.has(expected));
 
@@ -215,24 +227,31 @@ async function run(args) {
   };
 
   const seoScore = Number((lighthouse.avgScores100?.seo || 0).toFixed(1));
+  const performanceScore = Number((lighthouse.avgScores100?.performance || 0).toFixed(1));
   const passRate = productionResources.found ? productionResources.passRate : 0;
+  const targetSeoMin = normalizeNumber(args.targetSeoMin, 90);
+  const targetPerformanceMin = normalizeNumber(args.targetPerformanceMin, 95);
+  const targetPassRateMin = normalizeNumber(args.targetPassRateMin, 95);
   const urlCoverageOk = sitemap.found
     ? sitemap.missingExpectedCount === 0 && !sitemap.hasChangefreq && !sitemap.hasPriority
     : false;
   const imageSitemapOk = sitemap.found
     ? sitemap.hasImageNamespace && sitemap.imageNodes > 0
     : false;
+  const seoFileHealthOk = sitemap.found && urlCoverageOk && imageSitemapOk;
 
   record.health = {
     seoScore,
+    performanceScore,
     passRate,
     urlCoverageOk,
     imageSitemapOk,
     allGreen: Boolean(
       record.workspace?.branch &&
-      (!lighthouse.found || seoScore >= 90) &&
-      (!productionResources.found || productionResources.passRate >= 95) &&
-      (!sitemap.found || urlCoverageOk),
+      (!productionResources.found || productionResources.passRate >= targetPassRateMin) &&
+      (!lighthouse.found || seoScore >= targetSeoMin) &&
+      (!lighthouse.found || performanceScore >= targetPerformanceMin) &&
+      seoFileHealthOk,
     ),
   };
 

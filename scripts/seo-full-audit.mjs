@@ -8,7 +8,7 @@
  * - [Lighthouse] SEO 審計標準
  *
  * 整合驗證項目：
- * 1. Sitemap 2026 標準 (verify-sitemap-2025.mjs)
+ * 1. Sitemap 2026 標準 (verify-sitemap-2026.mjs)
  * 2. Breadcrumb Schema (verify-breadcrumb-schema.mjs)
  * 3. JSON-LD 結構化數據 (verify-structured-data.mjs)
  * 4. 歷史資料與日期新鮮度 (verify-history-data.mjs)
@@ -67,7 +67,7 @@ function runVerification(scriptPath, name) {
 
   // 安全性：白名單驗證腳本名稱
   const allowedScripts = [
-    'verify-sitemap-2025.mjs',
+    'verify-sitemap-2026.mjs',
     'verify-breadcrumb-schema.mjs',
     'verify-structured-data.mjs',
     'verify-history-data.mjs',
@@ -157,7 +157,7 @@ async function main() {
   // 1. Sitemap 標準驗證
   header(`1. ${SEO_STANDARD_LABEL} 驗證`);
   results.sitemap = runVerification(
-    resolve(__dirname, 'verify-sitemap-2025.mjs'),
+    resolve(__dirname, 'verify-sitemap-2026.mjs'),
     SEO_STANDARD_LABEL,
   );
   results.total++;
@@ -229,7 +229,7 @@ async function main() {
   console.log('\n📋 手動檢查清單:');
   console.log('  [ ] 使用 Google Rich Results Test 線上驗證');
   console.log('  [ ] 使用 Google Search Console 提交 sitemap');
-  console.log('  [ ] 檢查 Lighthouse SEO 評分 (目標 100/100)');
+  console.log('  [ ] 檢查 Lighthouse SEO 評分 (目標 >= 98/100)');
 
   // 建議下一步
   console.log('\n🚀 建議下一步:');

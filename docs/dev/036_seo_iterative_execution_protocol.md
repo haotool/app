@@ -63,7 +63,18 @@
 - 每個 AB step 定義 control / variant command。
 - 預設僅做「成功率與時間」比較；若要做效益比較，需補上外部 score 解析步驟（例如 Lighthouse JSON diff），再把結果接到分析腳本。
 
+## 最近實際執行紀錄
+
+- 2026-05-02：以 `--ab-config scripts/seo-iteration-ab.example.json --iterations 20` 完成 20 輪測試（搭配 `--require-improvement --min-seo-delta 1 --min-pass-rate-delta 1 --auto-rollback --rollback-command "echo ..."`，並啟用 `--continue-on-failure`）。
+- KPI 狀態：每輪 `seoScore=100`、`passRate=100`，故從第 2 輪起皆判定未達「明確改善」門檻，觸發回退 hook（本次僅 noop）。
+- 結論：基線已為 100/100，未見可持續提升空間，下一步須先引入實質 SEO 變更/實驗項目再啟動新一輪 `require-improvement` 門檻。
+
 ## 2026 年標準化調整
 
 - 相關腳本訊息改以 `SEO_STANDARD_YEAR=2026` 集中管理（`scripts/lib/seo-year-metadata.mjs`）
-- 既有腳本檔名維持不變，避免影響既有 CI 與其他工作流引用
+- 既有腳本檔名維持不變（含 `verify-sitemap-2025.mjs`），避免影響既有 CI 與其他工作流引用；年度由內容與 SSOT 決定，不由檔名決定。
+
+## Skills 與資源載入（持續優化）
+
+- 此流程搭配 `seo` / `verification-loop` / `playwright-e2e-testing` / `requesting-code-review` / `receiving-code-review` 系列技能可加速規劃與回歸。
+- 若需要跨域資安與可及性驗證，可按需載入 `security-review`, `wcag-compliance`, `web-design-guidelines` 等技能。

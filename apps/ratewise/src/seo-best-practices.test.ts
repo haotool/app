@@ -969,6 +969,8 @@ describe('💵 Amount Page ExchangeRateSpecification Schema (P1-5)', () => {
     expect(rate['description']).toContain('3,250');
     expect(rate['description']).toContain('USD');
     expect(rate['description']).toContain('TWD');
+    expect(rate['description']).toContain('買 100 USD 所需 3,250 TWD');
+    expect(rate['description']).not.toContain('100 USD 換 3,250 TWD');
     expect(rate['validFrom']).toBeTruthy();
   });
 
@@ -995,6 +997,7 @@ describe('💵 Amount Page ExchangeRateSpecification Schema (P1-5)', () => {
     expect(rate['description']).toContain('2,165');
     expect(rate['description']).toContain('TWD');
     expect(rate['description']).toContain('JPY');
+    expect(rate['description']).toContain('10,000 TWD 可買 2,165 JPY');
   });
 
   it('should include amount conversion details in description', async () => {
@@ -1016,6 +1019,21 @@ describe('💵 Amount Page ExchangeRateSpecification Schema (P1-5)', () => {
     expect(description).toContain('KRW');
     expect(description).toContain('1,185');
     expect(description).toContain('TWD');
+    expect(description).toContain('買 50,000 KRW 所需 1,185 TWD');
+  });
+
+  it('should include Dataset provenance for Bank of Taiwan source', async () => {
+    const { buildOpenDataDatasetJsonLd } = await import('./config/seo-metadata');
+    const schema = buildOpenDataDatasetJsonLd();
+
+    expect(schema['@type']).toBe('Dataset');
+    expect(schema['sameAs']).toBe('https://rate.bot.com.tw/xrt');
+    expect(schema['identifier']).toBeTruthy();
+    expect(schema['isBasedOn']).toMatchObject({
+      '@type': 'Dataset',
+      name: '臺灣銀行牌告匯率',
+      url: 'https://rate.bot.com.tw/xrt',
+    });
   });
 });
 

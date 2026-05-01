@@ -28,6 +28,7 @@ describe('verify-production-resources', () => {
         type: 'seo',
         path: '/sitemap.xml',
         url: 'https://example.com/demo/sitemap.xml',
+        expectedContentTypes: ['application/xml', 'text/xml'],
       },
       {
         app: 'demo-app',
@@ -35,6 +36,7 @@ describe('verify-production-resources', () => {
         type: 'seo',
         path: '/robots.txt',
         url: 'https://example.com/demo/robots.txt',
+        expectedContentTypes: ['text/plain'],
       },
       {
         app: 'demo-app',
@@ -42,6 +44,7 @@ describe('verify-production-resources', () => {
         type: 'image',
         path: '/og-image.png',
         url: 'https://example.com/demo/og-image.png',
+        expectedContentTypes: ['image/png'],
       },
     ]);
   });
@@ -61,6 +64,7 @@ describe('verify-production-resources', () => {
         calls.push(init?.method ?? 'GET');
         return Promise.resolve({
           status: init?.method === 'HEAD' ? 405 : 200,
+          headers: new Headers({ 'content-type': 'text/plain; charset=utf-8' }),
         } as Response);
       },
     });
@@ -68,6 +72,29 @@ describe('verify-production-resources', () => {
     expect(calls).toEqual(['HEAD', 'GET']);
     expect(result.outcome).toBe('200');
     expect(result.httpStatus).toBe(200);
+  });
+
+  it('200 但 Content-Type 不符時會分類為 non200', async () => {
+    const resource = {
+      app: 'demo-app',
+      displayName: 'Demo App',
+      type: 'image',
+      path: '/og-image.png',
+      url: 'https://example.com/demo/og-image.png',
+      expectedContentTypes: ['image/png'],
+    };
+
+    const result = await probeResource(resource, {
+      fetchImpl: () =>
+        Promise.resolve({
+          status: 200,
+          headers: new Headers({ 'content-type': 'text/html; charset=utf-8' }),
+        } as Response),
+    });
+
+    expect(result.outcome).toBe('non200');
+    expect(result.httpStatus).toBe(200);
+    expect(result.contentTypeOk).toBe(false);
   });
 
   it('逾時會分類為 timeout', async () => {

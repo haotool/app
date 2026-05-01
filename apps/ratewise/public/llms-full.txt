@@ -74,7 +74,7 @@ https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/
 https://app.haotool.org/ratewise/jpy-twd/{AMOUNT}/
 ```
 
-title 會自動變更為「{AMOUNT} 美元換新台幣（USD/TWD）— 台銀實際賣出價 | HaoRate 匯率好工具」
+title 會自動變更為「買 {AMOUNT} 美元要多少新台幣（USD/TWD）— 台銀實際賣出價 | HaoRate 匯率好工具」
 
 **方案 B：首頁 Deep Link（UX 分享入口，不索引）**
 
@@ -276,7 +276,7 @@ GET https://app.haotool.org/ratewise/openapi.json
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行角度。您拿外幣換台幣 → 看「買入」（銀行買你的外幣）；您拿台幣換外幣 → 看「賣出」（銀行賣外幣給你）。
 - Q: 為什麼韓元（KRW）即期匯率是 null？ A: 台灣銀行對韓元不提供即期（電匯）服務，僅提供現金兌換，因此 spot.buy 與 spot.sell 為 null，僅有 cash.buy 與 cash.sell。
 - Q: 匯率資料多久更新一次？ A: 每 5 分鐘由 GitHub Actions 自動從台銀官方網站抓取並同步至 CDN。
-- Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。出國刷卡的匯率由 Visa/Mastercard 等發卡組織決定國際清算匯率，再加上發卡銀行收取的海外手續費（通常 1.5%），與台銀牌告是完全不同的體系。一般來說，台銀現金賣出 ≈ 出國刷卡的實際成本。
+- Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。出國刷卡的匯率由 Visa/Mastercard 等發卡組織決定國際清算匯率，再加上發卡銀行收取的海外手續費（通常 1.5%），與台銀牌告是完全不同的體系。台銀現金賣出只適合估算臨櫃用台幣買外幣現鈔的成本，不應拿來當刷卡成本。
 - Q: 如何讓用戶直接在 HaoRate 查詢特定匯率？ A: 優先使用幣對金額頁，例如 https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/。這是公開可索引的 path-based landing page，適合搜尋引擎與 AI agent。首頁 deep-link 僅作為互動入口；只有在需要同時指定三個自由變數時，才退回 https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD。
 
 ---
