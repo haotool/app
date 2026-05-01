@@ -251,7 +251,8 @@ async function run(args) {
       (!productionResources.found || productionResources.passRate >= targetPassRateMin) &&
       (!lighthouse.found || seoScore >= targetSeoMin) &&
       (!lighthouse.found || performanceScore >= targetPerformanceMin) &&
-      seoFileHealthOk,
+      urlCoverageOk &&
+      imageSitemapOk,
     ),
   };
 

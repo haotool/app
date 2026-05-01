@@ -139,7 +139,20 @@ describe('SEO Paths Configuration', () => {
 
   describe('Static resources', () => {
     it('應該包含必要 SEO 檔案', () => {
-      expect(SEO_FILES).toEqual(['/sitemap.xml', '/robots.txt', '/llms.txt', '/llms-full.txt']);
+      expect(SEO_FILES).toEqual([
+        '/sitemap.xml',
+        '/robots.txt',
+        '/llms.txt',
+        '/llms-full.txt',
+        '/openapi.json',
+        '/api/latest.json',
+        '/index.md',
+        '/faq.md',
+        '/guide.md',
+        '/about.md',
+        '/privacy.md',
+        '/open-data.md',
+      ]);
     });
 
     it('應該包含最新分享圖片 SSOT', () => {
