@@ -8,7 +8,6 @@ import React from 'react';
 // ESM 封裝層：react-helmet-async 在 Vite 8 SSR 下需經相容處理
 import { HelmetProvider } from '../utils/react-helmet-async';
 import { ErrorBoundary } from './ErrorBoundary';
-import { SkeletonLoader } from './SkeletonLoader';
 import { Footer } from './Footer';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
 import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
@@ -40,7 +39,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useUrlNormalization();
 
   const isBrowser = typeof window !== 'undefined';
-  const isSsg = !isBrowser;
   const [showDecemberTheme, setShowDecemberTheme] = React.useState(false);
 
   // SSR 端需提供空 context 避免狀態洩漏；客戶端使用預設值
@@ -69,13 +67,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             className="h-dvh min-h-0 overflow-y-auto overflow-x-hidden"
           >
             {/* 主要內容 */}
-            <main className="min-h-full [overscroll-behavior-y:contain]">
-              {isSsg ? (
-                children
-              ) : (
-                <React.Suspense fallback={<SkeletonLoader />}>{children}</React.Suspense>
-              )}
-            </main>
+            <main className="min-h-full [overscroll-behavior-y:contain]">{children}</main>
 
             {/* 頁尾 - Stage 6：內部連結結構（僅桌面版顯示） */}
             <div className="hidden md:block">

@@ -399,6 +399,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
       expect(vi.mocked(historyService.fetchHistoricalRatesRange).mock.calls.length).toBeGreaterThan(
         initialCallCount,
       );
+      expect(vi.mocked(historyService.fetchHistoricalRatesRange).mock.calls.at(-1)?.[0]).toBe(30);
     });
 
     it('should reload trend data when fromCurrency changes', async () => {

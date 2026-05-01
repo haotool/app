@@ -3,26 +3,18 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { APP_ONLY_NOINDEX_PATHS } from './config/seo-paths';
 import { APP_INFO } from './config/app-info';
+import { ensurePrerenderDist } from './__tests__/helpers/ensurePrerenderDist';
 
 const distPath = resolve(__dirname, '../dist');
 const projectRoot = resolve(__dirname, '..');
 
-beforeAll(() => {
-  const indexHtml = resolve(distPath, 'index.html');
-  if (existsSync(indexHtml)) return;
-
-  const result = spawnSync('pnpm', ['build'], {
-    cwd: projectRoot,
-    stdio: 'inherit',
-    shell: true,
+beforeAll(async () => {
+  await ensurePrerenderDist({
+    projectRoot,
+    distRoot: distPath,
   });
-
-  if (result.status !== 0) {
-    throw new Error(`pnpm build failed with exit code ${result.status ?? 'unknown'}`);
-  }
 }, 120000);
 
 describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {

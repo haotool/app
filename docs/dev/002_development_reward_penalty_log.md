@@ -43,6 +43,21 @@
 - 解法：補齊 `Dataset` registry、移除 schema/URL 硬編碼、同步 2026 sitemap 名稱，並讓 Open Data mirror 揭露使用限制與授權。
 
 - 日期：2026-05-02
+- ID：ratewise-seo-dist-test-helper-2026-05-02
+- 原因：Codex review 指出 `describe.skipIf` 在 Vitest collection 階段計算，乾淨 checkout 會讓 SEO 靜態 HTML regression gate 被永久略過。
+- 解法：抽出 `ensurePrerenderDist` 測試 helper，在缺少 `dist` 時以 lock 保護的單次 build 準備產物，三組 SEO gate 繼續完整執行。
+
+- 日期：2026-05-02
+- ID：ratewise-seo-layout-hydration-cls-2026-05-02
+- 原因：SEO/SSG layout 在瀏覽器端以 Suspense skeleton 包住已預渲染內容，且 PWA offline-ready 成功提示會在 Lighthouse 首次載入時入場，造成 FAQ CLS 0.19、Performance 89。
+- 解法：SEO layout 直接保留 children，並讓低優先級 offline-ready 狀態靜默化；只保留更新/失敗等需使用者注意的提示。
+
+- 日期：2026-05-02
+- ID：ratewise-dist-dependent-tests-order-race-2026-05-02
+- 原因：部分 SEO / SSG 測試在 coverage 階段直接要求 `dist` 已存在，與 `prerender.test.ts` 的 build 副作用形成平行測試順序耦合。
+- 解法：改由共用 build helper 在缺少 `dist` 時準備 SSG 產物，避免測試順序與 coverage pipeline 繼續耦合。
+
+- 日期：2026-05-02
 - ID：ratewise-trend-date-refresh-stale-2026-05-02
 - 原因：趨勢圖在 #310 後改為頁面空閒即載入一次，長時間開啟的分頁跨日時不會重新查詢歷史匯率，可能停在 2026-04-28。
 - 解法：分頁 focus / visibility 回前景時檢查本地日期 key，跨日即重新載入趨勢資料，並新增 regression test。

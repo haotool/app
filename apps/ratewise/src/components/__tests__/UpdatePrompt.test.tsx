@@ -6,7 +6,8 @@
  * - SSOT tokens 引用
  * - i18n 多語系支援
  * - useReducedMotion 支援
- * - 5 個狀態（offlineReady / needRefresh / isUpdating / updateFailed / registrationFailed）
+ * - 5 個狀態追蹤（offlineReady / needRefresh / isUpdating / updateFailed / registrationFailed）
+ * - offlineReady 首次安裝成功狀態保持靜默，避免 Lighthouse CLS
  * - ARIA 語義化
  * - SSR 安全
  * - 單一實例渲染
@@ -173,7 +174,17 @@ describe('UpdatePrompt - 5 個狀態', () => {
 });
 
 describe('UpdatePrompt - ARIA 語義', () => {
-  it('should use role="status" for offlineReady (low urgency)', async () => {
+  it('should keep offlineReady silent to avoid first-load CLS', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain(
+      'const shouldRender = needRefresh || isUpdating || updateFailed || registrationFailed;',
+    );
+    expect(sourceCode).not.toContain(
+      'const shouldRender = offlineReady || needRefresh || isUpdating || updateFailed || registrationFailed;',
+    );
+  });
+
+  it('should keep role="status" fallback for non-urgent rendered states', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain("role={isUrgent ? 'alert' : 'status'}");
   });
@@ -231,8 +242,8 @@ describe('UpdatePrompt - Design token 品牌配色', () => {
   });
 });
 
-describe('UpdatePrompt - offlineReady 自動消失', () => {
-  it('should have autoDismiss timer for offlineReady', async () => {
+describe('UpdatePrompt - offlineReady 靜默自動消失', () => {
+  it('should have autoDismiss timer for silent offlineReady state', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('autoDismissRef');
     expect(sourceCode).toContain('notificationTokens.timing.autoDismiss');
