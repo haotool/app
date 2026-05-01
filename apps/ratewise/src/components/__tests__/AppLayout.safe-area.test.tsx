@@ -13,6 +13,18 @@ vi.mock('../BottomNavigation', () => ({
   BottomNavigation: () => <div data-testid="bottom-navigation" />,
 }));
 
+vi.mock('../OfflineIndicator', () => ({
+  OfflineIndicator: () => null,
+}));
+
+vi.mock('../UpdatePrompt', () => ({
+  UpdatePrompt: () => null,
+}));
+
+vi.mock('../RatingModal', () => ({
+  RatingModal: () => null,
+}));
+
 describe('AppLayout Safe Area', () => {
   it('標題列應該保留安全區並使用設計 Token 高度', () => {
     render(

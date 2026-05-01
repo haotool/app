@@ -550,3 +550,12 @@
 - related_entries：ratewise-performance-followup-shell-split
 - 原因：PR #315 review 指出兩個真問題：route direction 透過 effect 更新會在反向連續切換時慢一拍；全域非首屏 lazy 提示若 chunk 載入失敗，缺少錯誤邊界會把非關鍵提示故障升級成整體路由錯誤。
 - 解法：將 AppLayout 的上一個 pathname 記錄改為 render-time guarded state，讓當次 render 直接取得正確 previous/current path；另以非關鍵 error boundary 包住 OfflineIndicator、UpdatePrompt、RatingModal 的 Suspense，chunk 失敗時只隱藏提示元件，不影響主要內容與導覽。
+
+- 日期：2026-05-01
+- ID：pr315-ci-coverage-lazy-mock-fix
+- content_type：ci-fix
+- topics：ratewise, vitest, coverage, lazy-loading
+- keywords：test:coverage, React.lazy, AppLayout, CI teardown
+- related_entries：pr315-ratewise-lazy-boundary-direction-review-fix
+- 原因：GitHub Quality Checks 的 `pnpm test:coverage` 在 `AppLayout.safe-area.test.tsx` 結束後出現 Vitest teardown unhandled rejection；該測試只驗證 header safe-area，卻未 mock AppLayout 新增的 lazy 全域提示。
+- 解法：在 safe-area layout 測試中補齊 OfflineIndicator、UpdatePrompt、RatingModal mock，讓測試隔離非目標 lazy 元件，避免 coverage 全量併發時留下未收斂的 lazy 任務。
