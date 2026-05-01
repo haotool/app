@@ -20,16 +20,37 @@ import { performFullRefresh } from '../utils/swUtils';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
 import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 
-// 延遲載入非首屏提示元件，避免把 motion/react 提前拉進 app shell。
-const LazyOfflineIndicator = React.lazy(() =>
-  import('./OfflineIndicator').then((m) => ({ default: m.OfflineIndicator })),
-);
-const LazyUpdatePrompt = React.lazy(() =>
-  import('./UpdatePrompt').then((m) => ({ default: m.UpdatePrompt })),
-);
-const LazyRatingModal = React.lazy(() =>
-  import('./RatingModal').then((m) => ({ default: m.RatingModal })),
-);
+function AppLazyGlobalPrompts({
+  attempt,
+  ratingPrompt,
+}: {
+  attempt: number;
+  ratingPrompt: ReturnType<typeof useRatingPrompt>;
+}) {
+  // 延遲載入非首屏提示元件，避免把 motion/react 提前拉進 app shell。
+  const LazyOfflineIndicator = React.useMemo(() => {
+    void attempt;
+    return React.lazy(() =>
+      import('./OfflineIndicator').then((m) => ({ default: m.OfflineIndicator })),
+    );
+  }, [attempt]);
+  const LazyUpdatePrompt = React.useMemo(() => {
+    void attempt;
+    return React.lazy(() => import('./UpdatePrompt').then((m) => ({ default: m.UpdatePrompt })));
+  }, [attempt]);
+  const LazyRatingModal = React.useMemo(() => {
+    void attempt;
+    return React.lazy(() => import('./RatingModal').then((m) => ({ default: m.RatingModal })));
+  }, [attempt]);
+
+  return (
+    <React.Suspense fallback={null}>
+      <LazyOfflineIndicator />
+      <LazyUpdatePrompt />
+      <LazyRatingModal {...ratingPrompt} />
+    </React.Suspense>
+  );
+}
 
 /** Logo 組件 */
 function Logo() {
@@ -235,11 +256,7 @@ export function AppLayout() {
 
       {/* 全域 PWA/離線狀態提示：延遲載入，不影響首次 LCP */}
       <NonCriticalLazyBoundary resetKey={location.pathname}>
-        <React.Suspense fallback={null}>
-          <LazyOfflineIndicator />
-          <LazyUpdatePrompt />
-          <LazyRatingModal {...ratingPrompt} />
-        </React.Suspense>
+        {(attempt) => <AppLazyGlobalPrompts attempt={attempt} ratingPrompt={ratingPrompt} />}
       </NonCriticalLazyBoundary>
     </ToastProvider>
   );

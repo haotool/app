@@ -1,12 +1,13 @@
 import React from 'react';
 
 interface NonCriticalLazyBoundaryProps {
-  children?: React.ReactNode;
+  children?: React.ReactNode | ((attempt: number) => React.ReactNode);
   resetKey?: string | number | boolean;
 }
 
 interface NonCriticalLazyBoundaryState {
   hasError: boolean;
+  attempt: number;
   lastResetKey: NonCriticalLazyBoundaryProps['resetKey'];
 }
 
@@ -16,6 +17,7 @@ export class NonCriticalLazyBoundary extends React.Component<
 > {
   override state: NonCriticalLazyBoundaryState = {
     hasError: false,
+    attempt: 0,
     lastResetKey: this.props.resetKey,
   };
 
@@ -31,6 +33,7 @@ export class NonCriticalLazyBoundary extends React.Component<
 
     return {
       hasError: false,
+      attempt: state.hasError ? state.attempt + 1 : state.attempt,
       lastResetKey: props.resetKey,
     };
   }
@@ -47,11 +50,17 @@ export class NonCriticalLazyBoundary extends React.Component<
 
   private handleOnline = () => {
     if (!this.state.hasError) return;
-    this.setState({ hasError: false });
+    this.setState((state) => ({
+      hasError: false,
+      attempt: state.attempt + 1,
+    }));
   };
 
   override render() {
     if (this.state.hasError) return null;
+    if (typeof this.props.children === 'function') {
+      return this.props.children(this.state.attempt);
+    }
     return this.props.children;
   }
 }

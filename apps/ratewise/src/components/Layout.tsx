@@ -13,14 +13,27 @@ import { Footer } from './Footer';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
 import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 
-const LazyOfflineIndicator = React.lazy(() =>
-  import('./OfflineIndicator').then((m) => ({ default: m.OfflineIndicator })),
-);
-const LazyUpdatePrompt = React.lazy(() =>
-  import('./UpdatePrompt').then((m) => ({ default: m.UpdatePrompt })),
-);
-
 const DecemberTheme = React.lazy(() => import('../features/calculator/easter-eggs/DecemberTheme'));
+
+function LayoutLazyGlobalPrompts({ attempt }: { attempt: number }) {
+  const LazyOfflineIndicator = React.useMemo(() => {
+    void attempt;
+    return React.lazy(() =>
+      import('./OfflineIndicator').then((m) => ({ default: m.OfflineIndicator })),
+    );
+  }, [attempt]);
+  const LazyUpdatePrompt = React.useMemo(() => {
+    void attempt;
+    return React.lazy(() => import('./UpdatePrompt').then((m) => ({ default: m.UpdatePrompt })));
+  }, [attempt]);
+
+  return (
+    <React.Suspense fallback={null}>
+      <LazyOfflineIndicator />
+      <LazyUpdatePrompt />
+    </React.Suspense>
+  );
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   // 大寫 URL 自動正規化（SEO）。
@@ -73,10 +86,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* 全域 PWA/離線狀態提示：延遲載入，不影響首次 LCP */}
         <NonCriticalLazyBoundary>
-          <React.Suspense fallback={null}>
-            <LazyOfflineIndicator />
-            <LazyUpdatePrompt />
-          </React.Suspense>
+          {(attempt) => <LayoutLazyGlobalPrompts attempt={attempt} />}
         </NonCriticalLazyBoundary>
 
         {/* 12 月聖誕主題（動態載入） */}

@@ -567,4 +567,4 @@
 - keywords：React.lazy, error boundary, retry, online event, Layout
 - related_entries：pr315-ratewise-lazy-boundary-direction-review-fix, pr315-ci-coverage-lazy-mock-fix
 - 原因：PR #315 最新 review 指出兩個真問題：`Layout` 的 lazy 全域提示位於主要 `ErrorBoundary` 之外，chunk 載入失敗仍會升級成整頁錯誤；`AppLayout` 新增的非關鍵 lazy 邊界捕捉錯誤後沒有重置機制，暫時性離線或弱網會讓提示元件整個 session 永久消失。
-- 解法：將非關鍵 lazy 錯誤邊界抽成共用元件，提供 `resetKey` 與 `online` 事件重試能力；`AppLayout` 以目前路徑作為 reset key，`Layout` 也用同一邊界包住 PWA/離線提示，並補上單元測試鎖定正常渲染、錯誤隔離、resetKey 重試與網路恢復重試。
+- 解法：將非關鍵 lazy 錯誤邊界抽成共用元件，提供 `resetKey`、`online` 事件與 `attempt` render prop；重置時讓 `AppLayout` / `Layout` 重新建立 lazy component type，避免 React.lazy 快取已 reject 的 loader，並補上單元測試鎖定正常渲染、錯誤隔離、resetKey 重試與網路恢復重試。

@@ -43,9 +43,14 @@ describe('NonCriticalLazyBoundary', () => {
   });
 
   it('resetKey 變更後應重新嘗試渲染', () => {
+    const attempts: number[] = [];
+
     const { rerender } = render(
       <NonCriticalLazyBoundary resetKey="first">
-        <MaybeThrow shouldThrow />
+        {(attempt) => {
+          attempts.push(attempt);
+          return <MaybeThrow shouldThrow />;
+        }}
       </NonCriticalLazyBoundary>,
     );
 
@@ -53,17 +58,26 @@ describe('NonCriticalLazyBoundary', () => {
 
     rerender(
       <NonCriticalLazyBoundary resetKey="second">
-        <MaybeThrow shouldThrow={false} />
+        {(attempt) => {
+          attempts.push(attempt);
+          return <MaybeThrow shouldThrow={false} />;
+        }}
       </NonCriticalLazyBoundary>,
     );
 
     expect(screen.getByTestId('non-critical-child')).toBeInTheDocument();
+    expect(attempts).toContain(1);
   });
 
   it('網路恢復事件後應重新嘗試渲染', () => {
+    const attempts: number[] = [];
+
     const { rerender } = render(
       <NonCriticalLazyBoundary>
-        <MaybeThrow shouldThrow />
+        {(attempt) => {
+          attempts.push(attempt);
+          return <MaybeThrow shouldThrow />;
+        }}
       </NonCriticalLazyBoundary>,
     );
 
@@ -71,7 +85,10 @@ describe('NonCriticalLazyBoundary', () => {
 
     rerender(
       <NonCriticalLazyBoundary>
-        <MaybeThrow shouldThrow={false} />
+        {(attempt) => {
+          attempts.push(attempt);
+          return <MaybeThrow shouldThrow={false} />;
+        }}
       </NonCriticalLazyBoundary>,
     );
 
@@ -80,5 +97,6 @@ describe('NonCriticalLazyBoundary', () => {
     });
 
     expect(screen.getByTestId('non-critical-child')).toBeInTheDocument();
+    expect(attempts).toContain(1);
   });
 });
