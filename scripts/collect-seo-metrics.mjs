@@ -103,7 +103,14 @@ function parseLighthouse(manifestPath) {
 
   const avgScores = {};
   const avgScores100 = {};
+  const missingCategories = [];
   for (const category of categories) {
+    const validScores = representative
+      .map((entry) => Number(entry?.summary?.[category]))
+      .filter((score) => Number.isFinite(score));
+    if (validScores.length !== representative.length) {
+      missingCategories.push(category);
+    }
     avgScores[category] = Number((sums[category] / totals.samples).toFixed(4));
     avgScores100[category] = Number((avgScores[category] * 100).toFixed(1));
   }
@@ -113,6 +120,8 @@ function parseLighthouse(manifestPath) {
     samples: totals.samples,
     avgScores,
     avgScores100,
+    missingCoreMetrics: missingCategories.length > 0,
+    missingCategories,
     representativeUrls: representative.map((x) => x.url),
     latest: representative.at(-1)?.url ?? null,
   };
@@ -232,6 +241,13 @@ async function run(args) {
   const targetSeoMin = normalizeNumber(args.targetSeoMin, 90);
   const targetPerformanceMin = normalizeNumber(args.targetPerformanceMin, 95);
   const targetPassRateMin = normalizeNumber(args.targetPassRateMin, 95);
+  const lighthouseHealthOk =
+    lighthouse.found &&
+    !lighthouse.missingCoreMetrics &&
+    seoScore >= targetSeoMin &&
+    performanceScore >= targetPerformanceMin;
+  const productionResourcesHealthOk =
+    productionResources.found && productionResources.passRate >= targetPassRateMin;
   const urlCoverageOk = sitemap.found
     ? sitemap.missingExpectedCount === 0 && !sitemap.hasChangefreq && !sitemap.hasPriority
     : false;
@@ -248,9 +264,8 @@ async function run(args) {
     imageSitemapOk,
     allGreen: Boolean(
       record.workspace?.branch &&
-      (!productionResources.found || productionResources.passRate >= targetPassRateMin) &&
-      (!lighthouse.found || seoScore >= targetSeoMin) &&
-      (!lighthouse.found || performanceScore >= targetPerformanceMin) &&
+      productionResourcesHealthOk &&
+      lighthouseHealthOk &&
       urlCoverageOk &&
       imageSitemapOk,
     ),

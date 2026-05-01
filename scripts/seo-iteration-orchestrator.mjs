@@ -321,6 +321,7 @@ function main() {
     );
   }
 
+  let shouldStopRun = false;
   for (let round = 1; round <= maxRound; round += 1) {
     console.log(`\n================ Round ${round} / ${maxRound} ================`);
     const roundResult = {
@@ -340,6 +341,8 @@ function main() {
         roundResult.failed = true;
         if (shouldFailFast && !cfg.continueOnFailure) {
           console.log(`[stop] ${step.name} failed (${stepResult.status})`);
+          roundResult.stopReason = `${step.name} failed`;
+          shouldStopRun = true;
           break;
         }
       }
@@ -349,36 +352,46 @@ function main() {
           console.log(
             `[stop] ${step.name} AB step failed (control=${stepResult.control}, variant=${stepResult.variant})`,
           );
+          roundResult.stopReason = `${step.name} AB step failed`;
+          shouldStopRun = true;
           break;
         }
       }
     }
 
-    const metricsResult = runMetricsRound(round, cfg);
-    roundResult.steps.push(metricsResult);
-    roundResult.metrics = metricsResult.metrics;
+    if (!shouldStopRun) {
+      const metricsResult = runMetricsRound(round, cfg);
+      roundResult.steps.push(metricsResult);
+      roundResult.metrics = metricsResult.metrics;
 
-    if (cfg.requireImprovement && !metricsResult.improvement.improved) {
-      console.log(`[rollback] 警示：Round ${round} 未達 KPI 改善門檻`);
-      console.log(
-        `- 變化: SEOScore=${metricsResult.improvement.deltas.seoScore}, PassRate=${metricsResult.improvement.deltas.passRate}`,
-      );
-      const rollbackResult = runRollback(cfg);
-      roundResult.rollback = rollbackResult;
-      roundResult.failed = true;
-      if (rollbackResult.skipped) {
-        console.log('[rollback] 未設定 rollback command，請人工處理');
-      } else if (rollbackResult.status !== 0) {
-        console.log('[rollback] 回退指令執行失敗，請檢查後手動回退');
+      if (cfg.requireImprovement && !metricsResult.improvement.improved) {
+        console.log(`[rollback] 警示：Round ${round} 未達 KPI 改善門檻`);
+        console.log(
+          `- 變化: SEOScore=${metricsResult.improvement.deltas.seoScore}, PassRate=${metricsResult.improvement.deltas.passRate}`,
+        );
+        const rollbackResult = runRollback(cfg);
+        roundResult.rollback = rollbackResult;
+        roundResult.failed = true;
+        if (rollbackResult.skipped) {
+          console.log('[rollback] 未設定 rollback command，請人工處理');
+        } else if (rollbackResult.status !== 0) {
+          console.log('[rollback] 回退指令執行失敗，請檢查後手動回退');
+        }
+        if (!cfg.continueOnFailure) {
+          break;
+        }
       }
-      if (!cfg.continueOnFailure) {
-        break;
-      }
+    } else {
+      roundResult.metricsSkipped = true;
     }
 
     roundResult.finishedAt = new Date().toISOString();
     result.rounds.push(roundResult);
     appendLog(cfg.logFile, roundResult);
+
+    if (shouldStopRun) {
+      break;
+    }
   }
 
   result.finishedAt = new Date().toISOString();
