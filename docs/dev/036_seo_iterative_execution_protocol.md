@@ -29,7 +29,7 @@
 6. `pnpm test:integration`
 7. `pnpm seo:health-check`
 8. `pnpm verify:sitemap`
-9. `pnpm verify:sitemap-2025`
+9. `pnpm verify:sitemap-2026`
 10. `pnpm verify:breadcrumb`
 11. `pnpm verify:structured-data`
 12. `pnpm verify:production-resources`
@@ -68,11 +68,25 @@
 - 2026-05-02：以 `--ab-config scripts/seo-iteration-ab.example.json --iterations 20` 完成 20 輪測試（搭配 `--require-improvement --min-seo-delta 1 --min-pass-rate-delta 1 --auto-rollback --rollback-command "echo ..."`，並啟用 `--continue-on-failure`）。
 - KPI 狀態：每輪 `seoScore=100`、`passRate=100`，故從第 2 輪起皆判定未達「明確改善」門檻，觸發回退 hook（本次僅 noop）。
 - 結論：基線已為 100/100，未見可持續提升空間，下一步須先引入實質 SEO 變更/實驗項目再啟動新一輪 `require-improvement` 門檻。
+- 2026-05-02（續）：補做 `pnpm seo:collect-metrics --app ratewise --output .cache/seo-metrics-final-2.json`。
+- KPI 狀態：`SEO=100, 200=100%`、`performance=100`、`accessibility=100`、`best-practices=96`。
+- 結論：在既有規則下，SEO 健康度不變（無法由 AB 假設量測到改善），繼續以新優化假設前提下迭代。
+
+## SEO 相關 Skills 補齊（本輪）
+
+- 已透過 `npx skills find seo` 查到可用 SEO 方向技能，並全數補裝：
+  - `~/.agents/skills/search-engine-optimization-seo`
+  - `~/.agents/skills/seo-strategy`
+  - `~/.agents/skills/content-strategy`
+  - `~/.agents/skills/copywriting`
+  - `~/.agents/skills/backlink-analyzer`
+- 既有技能（repo 內建）已在規劃中啟用並覆蓋：`seo`, `seo-audit`, `programmatic-seo`, `seo-geo`, `ai-seo`, `search-engine-optimization-seo`。
+- `pnpm review:codex:once` 顯示 `unresolvedThreads=0`（已解決 `PRRT_kwDOQBI8k85_C1fN`）。
 
 ## 2026 年標準化調整
 
-- 相關腳本訊息改以 `SEO_STANDARD_YEAR=2026` 集中管理（`scripts/lib/seo-year-metadata.mjs`）
-- 既有腳本檔名維持不變（含 `verify-sitemap-2025.mjs`），避免影響既有 CI 與其他工作流引用；年度由內容與 SSOT 決定，不由檔名決定。
+- 相關腳本訊息改以 `SEO_STANDARD_YEAR=2026` 集中管理（`scripts/lib/seo-year-metadata.mjs`）。
+- 對外命令統一使用 `pnpm verify:sitemap-2026` / `scripts/verify-sitemap-2026.mjs`；`verify-sitemap-2025.mjs` 與 `generate-sitemap-2025.mjs` 僅作相容入口，避免破壞既有 CI 與歷史引用。
 
 ## Skills 與資源載入（持續優化）
 

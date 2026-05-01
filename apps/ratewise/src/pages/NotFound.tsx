@@ -24,7 +24,7 @@ export default function NotFound() {
       {/* SEO Configuration: noindex to prevent 404 pages from being indexed */}
       <SEOHelmet
         title="404 - 找不到頁面"
-        description="很抱歉，您訪問的頁面不存在。請返回首頁或瀏覽其他頁面。"
+        description="您訪問的頁面不存在。若要繼續使用即時匯率服務，請返回首頁並重新搜尋。"
         pathname="/404"
         robots="noindex, follow"
       />
@@ -37,6 +37,9 @@ export default function NotFound() {
           </h1>
           <h2 className="text-2xl font-semibold text-text mb-2">{t('notFound.title')}</h2>
           <p className="text-text-muted mb-6">{t('notFound.message')}</p>
+          <p className="text-sm text-text-muted">
+            如果想繼續匯率換算，建議先回首頁並使用「匯率計算機」。
+          </p>
         </div>
 
         {/* Primary Action: Return to Home */}
@@ -53,6 +56,12 @@ export default function NotFound() {
         <div className="space-y-3">
           <p className="text-sm text-text-muted mb-3">或許您想前往：</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              to="/"
+              className="px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
+            >
+              首頁匯率換算
+            </Link>
             <Link
               to="/faq/"
               className="px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"

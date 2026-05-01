@@ -108,7 +108,7 @@ function fetchReviewThreads(prNumber) {
                 startLine
                 originalLine
                 originalStartLine
-                comments(first: 30) {
+                comments(first: 100) {
                   nodes {
                     id
                     body

@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-02
+- ID：ratewise-seo-automation-gate-noise-and-monitoring-fix
+- 原因：2026 SEO 迭代 gate 仍有 `verify-structured-data` CSS parser 雜訊、公開 sitemap 指令與 2026 wrapper 文件漂移，以及 Codex review thread 留言覆蓋不足；404 頁也缺少明確回首頁換算的可見導引，且版本 SSOT 要求使用者可見變更必須附 changeset。
+- 解法：讓 structured-data 驗證讀取年份 SSOT 並靜音非 JSON-LD CSS parser 訊號，更新 SEO Master / 036 協議為 `verify:sitemap-2026`，提高 Codex review thread comment 上限，補強 404 頁導流文案並新增 patch changeset。
+
+- 日期：2026-05-02
 - ID：pr317-superpowers-review-format-and-seo-signal-fix
 - 原因：Superpowers 分支 review 發現本 PR 新增 002 條目混入非四行欄位，且 SEO Master GSC 指標仍殘留幣別頁 FAQPage 舊語意。
 - 解法：將新增 002 條目收斂回四行模板，並把 Rich Results / AI 摘要指標改為 FAQ 主頁 FAQPage 與幣別頁 ExchangeRateSpecification。

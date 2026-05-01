@@ -4,7 +4,7 @@
  *
  * 依據：
  * - [Schema.org] 結構化數據規範
- * - [Google Search Central] 結構化數據指南 2025
+ * - [Google Search Central] 結構化數據指南（依 scripts/lib/seo-year-metadata.mjs）
  * - [Google Rich Results Test] 驗證工具標準
  *
  * 驗證項目：
@@ -15,7 +15,7 @@
  * - 日期格式符合 ISO 8601
  * - FAQPage 與 HowTo Schema 正確性
  *
- * 2025 已廢棄 Schema 類型：
+ * 目前不推薦的 Schema 類型：
  * - Speakable (已移除)
  * - SiteNavigationElement (不再推薦)
  * - 某些 Event 屬性已變更
@@ -27,7 +27,9 @@
 import { readFileSync, existsSync, readdirSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, resolve, join } from 'path';
-import { JSDOM } from 'jsdom';
+import { JSDOM, VirtualConsole } from 'jsdom';
+
+import { SEO_STANDARD_YEAR } from './lib/seo-year-metadata.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -48,7 +50,7 @@ function log(color, symbol, message) {
 const SITE_URL = 'https://app.haotool.org/ratewise/';
 
 /**
- * 2025 已廢棄或不推薦的 Schema 類型
+ * 目前已廢棄或不推薦的 Schema 類型
  */
 const DEPRECATED_SCHEMAS = [
   'Speakable', // Google 已移除支持
@@ -103,7 +105,9 @@ function validateSchema(schema, pagePath) {
 
     // 3. 檢查是否使用已廢棄的 Schema
     if (DEPRECATED_SCHEMAS.includes(schemaType)) {
-      errors.push(`${prefix}Using deprecated schema type "${schemaType}" (not supported in 2025)`);
+      errors.push(
+        `${prefix}Using deprecated schema type "${schemaType}" (not supported in ${SEO_STANDARD_YEAR})`,
+      );
     }
 
     // 4. 檢查必要屬性
@@ -201,7 +205,13 @@ function validateSchema(schema, pagePath) {
  * @returns {object[]} JSON-LD 物件陣列
  */
 function extractJsonLd(html) {
-  const dom = new JSDOM(html);
+  const virtualConsole = new VirtualConsole();
+  virtualConsole.on('jsdomError', (error) => {
+    if (error.type === 'css-parsing') return;
+    console.warn(error.message);
+  });
+
+  const dom = new JSDOM(html, { virtualConsole });
   const document = dom.window.document;
   const scripts = document.querySelectorAll('script[type="application/ld+json"]');
   const jsonLdList = [];
@@ -276,7 +286,7 @@ function verifyPage(htmlPath, pagePath) {
  * 主函數
  */
 async function main() {
-  console.log('\n🔍 JSON-LD 結構化數據驗證');
+  console.log(`\n🔍 JSON-LD 結構化數據驗證（${SEO_STANDARD_YEAR}）`);
   console.log('─'.repeat(60));
 
   const distPath = resolve(__dirname, '../apps/ratewise/dist');

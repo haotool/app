@@ -1,8 +1,9 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.9.2
+> **文件版本**: v2.9.3
 > **建立日期**: 2026-03-23
 > **最後更新**: 2026-05-02
+> **v2.9.3 變更**: 2026-05-02 追加 2026 SEO 自動化收斂：公開 sitemap 驗證入口改為 `verify:sitemap-2026`，生產資源驗證擴充到 12 個 SEO files + 7 個 image resources 並阻擋 Content-Type 漂移，`verify-structured-data` 改用 `SEO_STANDARD_YEAR` 並移除 JSDOM CSS 解析雜訊；Codex review 監控 thread comments 上限提高到 100。
 > **v2.9.2 變更**: 2026-05-02 依 Superpowers 平行 SEO 審查修正頂級 SEO 漂移：① `verify-seo-ssot.mjs` schema 口徑對齊 `/faq/ only` FAQPage 與幣別頁 `ExchangeRateSpecification`；② 正向金額頁文案改為「買外幣所需台幣」，反向金額頁明確標示台幣金額，避免 AI 摘要誤讀；③ `/seo-tech/` E-E-A-T 信任訊號移除「無追蹤」並對齊 Google Analytics 隱私揭露；④ Googlebot / Google-Extended 角色依 Google 官方文件校正；⑤ 新增 `seo-truthfulness` / `seo-ssot` / `build-scripts` 守門測試。
 > **v2.9.1 變更**: 2026-05-02 校正已完成但仍被列為 fail / 待補的 SEO / AI readiness 項目：root / RateWise Markdown negotiation、Link headers、`.md` `text/markdown`、RFC 9727 API catalog、Agent Skills Discovery v0.2.0 與 P1-9 均依 `security-headers/src/worker.js` v5.0 和 `securityHeadersWorker.test.ts` 標記為完成；OAuth / MCP / WebMCP / A2A 明確改為「不適用 / 未提供產品能力」而非 fail；補上文檔漂移守門測試，避免已完成 Worker 能力回寫成 pending。
 > **v2.9.0 變更**: 2026-05-01 同步 v2.22.7–v2.22.8 批次修復：① robots.txt 移除非標準 `Content-Signal` 指令（改為完全刪除，包含 Worker 注入邏輯）→ Lighthouse SEO 92→100；② WebSite schema 移除無實際效果的 `SearchAction`/`potentialAction`；③ 幣別頁 `commonAmounts` 改從 `INDEXABLE_FORWARD_AMOUNTS` 衍生，消除 SSG 白名單漂移產生的站內 404；④ OpenData 頁與 FAQ 頁 raw email 改用 `MailtoLink` 元件渲染，防止 CF Email Obfuscation 改寫 `/cdn-cgi/l/email-protection`；⑤ `SITE_CONFIG.description`（`seo-paths.config.mjs` + `seo-paths.ts`）對齊 `DEFAULT_DESCRIPTION` 文字，消除 Markdown mirror 與 HTML meta description 的 SSOT 漂移；⑥ Worker v5.0 部署（移除 Content-Signal 注入，直連 `.md` 強制回 `text/markdown`）；⑦ §12 新增 §12.8 v2.22.7–v2.22.8 批次修復稽核紀錄。
@@ -1554,7 +1555,7 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 | Lighthouse Desktop（生產實測）                                   | ⚠️ 留意 | P85 / A100 / BP100 / SEO 92→100；LCP 1.0s ✅、CLS 0.248 ⚠️、TBT 30ms ✅；v2.22.8 移除 `Content-Signal` 後 SEO false positive 已解決 |
 | Lighthouse Mobile（生產實測）                                    | ⚠️ 留意 | P79 / A100 / BP100 / SEO 92→100；LCP 5.7s ⚠️、CLS 0.002 ✅；Mobile 效能主要瓶頸為 LCP 過長                                          |
 
-> 註：`verify-structured-data` 輸出中的 `Could not parse CSS stylesheet` 為 JSDOM 已知雜訊，不影響 JSON-LD 驗證結果。
+> 註：此歷史快照曾出現 JSDOM CSS parser 雜訊；v2.9.3 起 `verify-structured-data` 已在腳本內靜音該類非 JSON-LD 訊號，正式驗證輸出不得再含此雜訊。
 > 註：LH SEO 92（-8）為 robots.txt `Content-Signal: ai-train=no, search=yes, ai-input=no` 被 Lighthouse 13 誤判為「Unknown directive」造成的歷史快照；v2.22.8 已完全移除此 directive，後續不得再把 `Content-Signal` 寫回待補或完成條件。
 
 #### 12.7.9 2026-04-30 完整重評分
@@ -1720,6 +1721,23 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 - Google Search Central：AI features in Search 沿用基礎 SEO 要求；可出現在 AI Overviews / AI Mode 的頁面必須可被 Google Search 索引並可產生 snippet，控制點是 Googlebot / snippet controls。
 - Google Search Central：結構化資料內容必須與頁面可見內容一致；RateWise 金融頁不得輸出與可見語意不一致的 FAQ rich result 訊號。
 - Google Crawling Infrastructure：`Google-Extended` 是 Gemini / Vertex AI API for Gemini 與 Grounding with Google Search 的訓練 / grounding 控制 token，不是 Google Search / AI Overviews 的索引控制。
+
+### 12.10 2026 自動化閘門收斂（2026-05-02）
+
+> **目的**：把本輪 Superpowers 迭代中證明有效的 production gate 固化為 SSOT，避免只靠人工 smoke probe。
+
+| 閘門                         | 現況                                                                                                                                     | 失敗條件                                                    |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Sitemap 2026                 | 公開命令為 `pnpm verify:sitemap-2026`；舊 `verify-sitemap-2025.mjs` 僅作相容入口                                                         | `<priority>` / `<changefreq>` 回歸、lastmod / hreflang 失真 |
+| 生產 SEO resources           | `verify-production-resources.mjs` 從 `app.config.mjs` / `seo-paths.config.mjs` 展開資源清單；RateWise 覆蓋 12 個 SEO files + 7 個 images | 任一資源非 200，或 Content-Type 與資源類型不符              |
+| 結構化資料                   | `verify-structured-data.mjs` 讀 `SEO_STANDARD_YEAR=2026`，且不再輸出 JSDOM CSS parser 雜訊                                               | JSON-LD 缺漏、deprecated schema、必要欄位缺失或驗證 warning |
+| Codex review / PR monitoring | `monitor-codex-review.mjs` 讀取每個 review thread 最多 100 則 comment，並持續追蹤 resolved 狀態                                          | 新增 Codex thread、unresolved thread 未清、checks 退化      |
+
+本輪生產驗證結果：
+
+- `node scripts/verify-production-resources.mjs ratewise`：RateWise 19/19 全 200，Markdown 鏡像皆為 `text/markdown; charset=utf-8`。
+- `pnpm verify:structured-data`：7 頁 / 49 個 JSON-LD schema 通過，無 CSS parser 雜訊。
+- `VERIFY_PRECACHE_SOURCE=live VERIFY_BASE_URL=https://app.haotool.org/ratewise/ node scripts/verify-precache-assets.mjs`：live precache 全部 200。
 
 ---
 
@@ -1904,7 +1922,7 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 ---
 
 **最後更新**: 2026-05-02
-**版本**: v2.9.2
+**版本**: v2.9.3
 **維護者**: Development Team
 **下次審查日**: 2026-07-10（每季審查）
 
@@ -1912,6 +1930,7 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 | 日期       | 版本   | 變更摘要                                                                                                                                                                                                                                                                                                                                                                   |
 | ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-02 | v2.9.3 | 追加 2026 SEO 自動化閘門收斂：公開 sitemap 驗證入口改為 `verify:sitemap-2026`；production resources gate 擴充 SEO files / images 與 Content-Type 驗證；`verify-structured-data` 改用年份 SSOT 並移除 JSDOM CSS parser 雜訊；Codex review 監控提升 thread comment 覆蓋。                                                                                                    |
 | 2026-05-02 | v2.9.2 | Superpowers 平行 SEO 審查收斂：修正 production SEO schema 驗證口徑、正反向金額頁方向文案、cashSell 語意、`/seo-tech/` 隱私信任訊號與 Googlebot / Google-Extended 角色說明；新增 `seo-ssot`、`seo-truthfulness`、`build-scripts` 守門測試，更新本輪分層評分。                                                                                                               |
 | 2026-05-02 | v2.9.1 | 校正 SEO / AI readiness 狀態漂移：Worker v5.0 已完成的 root / RateWise Markdown negotiation、Link headers、`.md` Content-Type、API catalog、Agent Skills Discovery 與 P1-9 從 fail / 待補移除；OAuth / MCP / WebMCP / A2A 改列 N/A；新增文檔漂移守門測試，避免完成項回寫 pending。                                                                                         |
 | 2026-05-01 | v2.9.0 | 同步 v2.22.7–v2.22.8 批次修復：§1.4 點 10 標記 Content-Signal 已移除（LH SEO 92→100）；§4.3 新增 WebSite/SearchAction 刻意省略決策紀錄；§8.1 補 Content-Signal 移除說明；§12.7.1 On-page 評分更新至 100（+15）；§12.7.6 新增 Content-Signal resolved 行；§12.7.9 robots.txt 與 Content-Signal 行更新、SEO 評分欄更新為 92→100；§12.8 新增 v2.22.7–v2.22.8 批次修復稽核紀錄 |
