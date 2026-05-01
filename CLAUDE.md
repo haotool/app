@@ -44,7 +44,7 @@ RateWise Monorepo -- Claude / Codex / AI 助手執行手冊（Enterprise SOP / A
 - 程序步驟使用動詞開頭（例如：檢查、執行、驗證、記錄）
 - 區分「強制規則」與「建議作法」
 - 流程文件優先使用範例命令與具體路徑，避免抽象敘述
-- `docs/dev/002_development_reward_penalty_log.md` 新增內容一律使用 entry blocks；歷史資料僅整理為精簡索引
+- `docs/dev/002_development_reward_penalty_log.md` 新增內容一律對齊該檔案當前 SSOT 模板；若調整模板，需同 PR 同步更新 002 本體與 SOP 文件
 
 ## Project Snapshot
 
@@ -90,8 +90,21 @@ pnpm format:fix              # prettier --write .
 | **3. Evidence**   | build error / 新工具 / CI 變更 / major 升級 → **先查官方文件**（Context7）          |
 | **4. Execution**  | 最小必要變更；禁止跨 app 無關修改；保持可回滾；勿刪未追蹤 `.agents/skills/*`        |
 | **5. Validation** | 文檔→SSOT 一致；程式碼→typecheck/test/build:ratewise；UI→截圖+console errors        |
-| **6. Commit**     | 更新 `docs/dev/002...`（entry blocks，v2 欄位，incident 需寫根因）→ commitlint 提交 |
+| **6. Commit**     | 更新 `docs/dev/002...`（對齊當前 SSOT 模板 + 分數變化 + 累計總分）→ commitlint 提交 |
 | **7. Release**    | 見下方 Phase 7 版本發布流程                                                         |
+
+### 002 格式與獎懲分數 SSOT（對齊 `AGENTS.md`）
+
+- 002 新增內容必須符合 `docs/dev/002_development_reward_penalty_log.md` 當前 SSOT 模板。
+- 若調整 002 檔頭版本或條目模板，必須同 PR 同步更新 `AGENTS.md`、`CLAUDE.md` 與 002 本體。
+- 當前模板為四行：`日期`、`ID`、`原因`、`解法`。
+- 分數計算固定使用：
+  - `reward = +1`
+  - `penalty = -1`
+  - `neutral = 0`
+  - `本次分數變化 = reward_count - penalty_count`
+  - `最新總分 = 前次總分 + 本次分數變化`
+- 每次 commit 前新增 002 紀錄時，必須同步更新「本次分數變化」與「累計總分」。
 
 ### Phase 7. 版本發布與依賴管理（Release & Dependencies）
 
