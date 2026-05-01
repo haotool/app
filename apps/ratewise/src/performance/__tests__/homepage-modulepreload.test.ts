@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync, statSync, existsSync } from 'node:fs';
 import { brotliCompressSync } from 'node:zlib';
 import { join } from 'node:path';
 
 const distDir = join(__dirname, '../../../dist');
+const distExists = existsSync(join(distDir, 'index.html'));
 
-describe('homepage modulepreload budget', () => {
+// 這些測試需要 production build 才能執行
+// 在 CI 中，建議在 build 後單獨執行 test:perf:bundle
+describe.skipIf(!distExists)('homepage modulepreload budget', () => {
   it('keeps motion and dnd out of homepage modulepreload', () => {
     const html = readFileSync(join(distDir, 'index.html'), 'utf-8');
 
