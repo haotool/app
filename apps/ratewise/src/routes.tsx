@@ -33,7 +33,6 @@
 import type { RouteRecord } from 'vite-react-ssg';
 import type { ComponentType } from 'react';
 import { Suspense } from 'react';
-import CurrencyConverter from './features/ratewise/RateWise';
 import { SEOHelmet } from './components/SEOHelmet';
 import { HomepageSEOSection } from './components/HomepageSEOSection';
 import { Layout } from './components/Layout';
@@ -51,6 +50,7 @@ import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRe
 import { lazyWithRetry } from './utils/lazyWithRetry';
 import { ChunkErrorBoundary, OfflineAwareFallback } from './components/OfflineAwareError';
 
+const CurrencyConverter = lazyWithRetry(() => import('./features/ratewise/RateWise'));
 const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
 const Favorites = lazyWithRetry(() => import('./pages/Favorites'));
 const Settings = lazyWithRetry(() => import('./pages/Settings'));
@@ -141,7 +141,13 @@ export const routes: RouteRecord[] = [
               description={HOMEPAGE_SEO.description}
               jsonLd={HOMEPAGE_SEO.jsonLd}
             />
-            <ClientOnly fallback={<SkeletonLoader />}>{() => <CurrencyConverter />}</ClientOnly>
+            <ClientOnly fallback={<SkeletonLoader />}>
+              {() => (
+                <Suspense fallback={<SkeletonLoader />}>
+                  <CurrencyConverter />
+                </Suspense>
+              )}
+            </ClientOnly>
             <HomepageSEOSection />
           </>
         ),

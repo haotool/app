@@ -2,10 +2,8 @@
 
 import React, { useTransition } from 'react';
 import { useNavigate, useLocation, useHref } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { transitions } from '../config/animations';
 
 /** 導覽項目型別。 */
 interface NavItem {
@@ -79,17 +77,11 @@ function BottomNavigationItem({
         "
       />
 
-      {/* 圖標動畫（僅使用 animate，避免 tabindex 問題）。 */}
-      <motion.div
-        animate={{
-          scale: isActive ? 1.1 : 1,
-          opacity: isActive ? 1 : isPending ? 0.7 : 0.35,
-        }}
-        transition={transitions.spring}
+      {/* 圖標（CSS transition 替代 motion，去除 vendor-motion 依賴） */}
+      <div
         className={`
-          relative
-          ${isActive ? 'text-primary' : ''}
-          transition-transform duration-75
+          relative transition-all duration-200
+          ${isActive ? 'scale-110 opacity-100 text-primary' : isPending ? 'opacity-70 scale-100' : 'opacity-[0.35] scale-100'}
           group-active:scale-90
         `}
       >
@@ -105,30 +97,21 @@ function BottomNavigationItem({
             aria-hidden="true"
           />
         )}
-      </motion.div>
+      </div>
 
       {/* 標籤 - 8px */}
-      <motion.span
-        animate={{
-          opacity: isActive ? 1 : isPending ? 0.7 : 0.35,
-          y: isActive ? 0 : 1,
-        }}
-        transition={transitions.default}
+      <span
         className={`
-          text-[8px] font-black uppercase tracking-[0.15em]
-          ${isActive ? 'text-primary' : ''}
+          text-[8px] font-black uppercase tracking-[0.15em] transition-all duration-200
+          ${isActive ? 'text-primary opacity-100 translate-y-0' : isPending ? 'opacity-70 translate-y-px' : 'opacity-[0.35] translate-y-px'}
         `}
       >
         {t(item.labelKey)}
-      </motion.span>
+      </span>
 
-      {/* 選中指示條 - layoutId 滑動動畫 */}
+      {/* 選中指示條（靜態，無滑動動畫） */}
       {isActive && (
-        <motion.div
-          layoutId="nav-indicator"
-          className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]"
-          transition={transitions.spring}
-        />
+        <div className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]" />
       )}
     </a>
   );

@@ -536,3 +536,35 @@
 - ID：pr281-regex-tail-whitespace-fix-2026-04-26
 - 原因：先前修正只處理了大寫標籤，未覆蓋 end tag 在 `>` 前含空白的合法 HTML 變體。
 - 解法：依 PR281 合併後新增的 CodeQL thread，將兩支 dist HTML 可見文字測試的 regex 從大小寫不敏感版本再補強為可接受 `</script >` 與 `</style >` 這類 end-tag 尾端空白，避免 HTML stripping 留下腳本或樣式內容造成假陽性。
+
+- 日期：2026-05-01
+- ID：ratewise-performance-followup-shell-split
+- 原因：首頁 app shell 仍直接載入互動換算器與 motion 相關提示元件，release 後 Markdown mirror 版本也停在舊版。
+- 解法：延續已隔離 stash 並經多 agent 複核，保留 logo LCP preload，移除未使用 Google Fonts resource hint，將首頁換算器與非首屏 PWA/評分提示延遲載入，底部導覽改用 CSS transition，並同步 Markdown mirror 至 v2.22.8。
+
+- 日期：2026-05-01
+- ID：pr315-ratewise-lazy-boundary-direction-review-fix
+- content_type：review-fix
+- topics：ratewise, performance, pwa, route-transition
+- keywords：React.lazy, Suspense, error boundary, route animation, chunk load
+- related_entries：ratewise-performance-followup-shell-split
+- 原因：PR #315 review 指出兩個真問題：route direction 透過 effect 更新會在反向連續切換時慢一拍；全域非首屏 lazy 提示若 chunk 載入失敗，缺少錯誤邊界會把非關鍵提示故障升級成整體路由錯誤。
+- 解法：將 AppLayout 的上一個 pathname 記錄改為 render-time guarded state，讓當次 render 直接取得正確 previous/current path；另以非關鍵 error boundary 包住 OfflineIndicator、UpdatePrompt、RatingModal 的 Suspense，chunk 失敗時只隱藏提示元件，不影響主要內容與導覽。
+
+- 日期：2026-05-01
+- ID：pr315-ci-coverage-lazy-mock-fix
+- content_type：ci-fix
+- topics：ratewise, vitest, coverage, lazy-loading
+- keywords：test:coverage, React.lazy, AppLayout, CI teardown
+- related_entries：pr315-ratewise-lazy-boundary-direction-review-fix
+- 原因：GitHub Quality Checks 的 `pnpm test:coverage` 在 `AppLayout.safe-area.test.tsx` 結束後出現 Vitest teardown unhandled rejection；該測試只驗證 header safe-area，卻未 mock AppLayout 新增的 lazy 全域提示。
+- 解法：在 safe-area layout 測試中補齊 OfflineIndicator、UpdatePrompt、RatingModal mock，讓測試隔離非目標 lazy 元件，避免 coverage 全量併發時留下未收斂的 lazy 任務。
+
+- 日期：2026-05-01
+- ID：pr315-noncritical-lazy-boundary-retry-fix
+- content_type：review-fix
+- topics：ratewise, pwa, lazy-loading, reliability
+- keywords：React.lazy, error boundary, retry, online event, Layout
+- related_entries：pr315-ratewise-lazy-boundary-direction-review-fix, pr315-ci-coverage-lazy-mock-fix
+- 原因：PR #315 最新 review 指出兩個真問題：`Layout` 的 lazy 全域提示位於主要 `ErrorBoundary` 之外，chunk 載入失敗仍會升級成整頁錯誤；`AppLayout` 新增的非關鍵 lazy 邊界捕捉錯誤後沒有重置機制，暫時性離線或弱網會讓提示元件整個 session 永久消失。
+- 解法：將非關鍵 lazy 錯誤邊界抽成共用元件，提供 `resetKey`、`online` 事件與 `attempt` render prop；重置時讓 `AppLayout` / `Layout` 重新建立 lazy component type，避免 React.lazy 快取已 reject 的 loader，並補上單元測試鎖定正常渲染、錯誤隔離、resetKey 重試與網路恢復重試。

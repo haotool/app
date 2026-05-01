@@ -3,26 +3,54 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'motion/react';
 import { BottomNavigation } from './BottomNavigation';
 import { SideNavigation } from './SideNavigation';
 import { ToastProvider } from './Toast';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
-import { OfflineIndicator } from './OfflineIndicator';
-import { UpdatePrompt } from './UpdatePrompt';
-import { RatingModal } from './RatingModal';
 import { PullToRefreshIndicator } from './PullToRefreshIndicator';
 import { useRatingPrompt } from '../hooks/useRatingPrompt';
-
 import { getResolvedLanguage } from '../i18n';
 import { APP_INFO } from '../config/app-info';
 import { HOMEPAGE_SEO } from '../config/seo-metadata';
 import { navigationTokens } from '../config/design-tokens';
-import { getTopLevelTransitionDirection, pageTransition } from '../config/animations';
+import { getTopLevelTransitionDirection } from '../config/animations';
 import { RouteAnalytics } from '@shared/analytics';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { performFullRefresh } from '../utils/swUtils';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
+import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
+
+function AppLazyGlobalPrompts({
+  attempt,
+  ratingPrompt,
+}: {
+  attempt: number;
+  ratingPrompt: ReturnType<typeof useRatingPrompt>;
+}) {
+  // 延遲載入非首屏提示元件，避免把 motion/react 提前拉進 app shell。
+  const LazyOfflineIndicator = React.useMemo(() => {
+    void attempt;
+    return React.lazy(() =>
+      import('./OfflineIndicator').then((m) => ({ default: m.OfflineIndicator })),
+    );
+  }, [attempt]);
+  const LazyUpdatePrompt = React.useMemo(() => {
+    void attempt;
+    return React.lazy(() => import('./UpdatePrompt').then((m) => ({ default: m.UpdatePrompt })));
+  }, [attempt]);
+  const LazyRatingModal = React.useMemo(() => {
+    void attempt;
+    return React.lazy(() => import('./RatingModal').then((m) => ({ default: m.RatingModal })));
+  }, [attempt]);
+
+  return (
+    <React.Suspense fallback={null}>
+      <LazyOfflineIndicator />
+      <LazyUpdatePrompt />
+      <LazyRatingModal {...ratingPrompt} />
+    </React.Suspense>
+  );
+}
 
 /** Logo 組件 */
 function Logo() {
@@ -106,8 +134,12 @@ export function AppLayout() {
   const ratingPrompt = useRatingPrompt();
 
   const location = useLocation();
-  const [previousPathname, setPreviousPathname] = React.useState(location.pathname);
   const [hasMounted, setHasMounted] = React.useState(false);
+  const [pageTransitionState, setPageTransitionState] = React.useState({
+    currentPathname: location.pathname,
+    previousPathname: location.pathname,
+    direction: 0,
+  });
   const mainRef = React.useRef<HTMLElement>(null);
 
   const prefersReducedMotion =
@@ -142,17 +174,22 @@ export function AppLayout() {
     return () => window.removeEventListener('resize', setAppHeight);
   }, []);
 
-  React.useEffect(() => {
-    if (previousPathname !== location.pathname) {
-      setPreviousPathname(location.pathname);
-    }
-  }, [location.pathname, previousPathname]);
+  let transitionForRender = pageTransitionState;
+  if (pageTransitionState.currentPathname !== location.pathname) {
+    transitionForRender = {
+      currentPathname: location.pathname,
+      previousPathname: pageTransitionState.currentPathname,
+      direction: getTopLevelTransitionDirection(
+        pageTransitionState.currentPathname,
+        location.pathname,
+      ),
+    };
+    setPageTransitionState(transitionForRender);
+  }
 
-  const direction =
-    previousPathname === location.pathname
-      ? 0
-      : getTopLevelTransitionDirection(previousPathname, location.pathname);
+  const direction = transitionForRender.direction;
   const disableInitialAnimation = prefersReducedMotion || !hasMounted;
+  const shouldAnimatePageEnter = !disableInitialAnimation && direction !== 0;
 
   return (
     <ToastProvider>
@@ -193,20 +230,21 @@ export function AppLayout() {
                 canTrigger={canTrigger}
               />
               <RouteErrorBoundary>
-                {/* enter-only：key 變化觸發 remount，新頁面從方向滑入淡入 */}
-                <motion.div
+                {/* enter-only：key 變化觸發 remount，新頁面從方向滑入淡入（CSS @keyframes） */}
+                <div
                   key={location.pathname}
-                  initial={
-                    disableInitialAnimation
-                      ? false
-                      : { opacity: 0, x: direction === 0 ? 0 : `${direction * 8}%` }
+                  data-testid="page-transition"
+                  data-transition-direction={direction}
+                  data-initial-disabled={shouldAnimatePageEnter ? 'false' : 'true'}
+                  className={`min-h-full${shouldAnimatePageEnter ? ' ratewise-page-enter' : ''}`}
+                  style={
+                    !shouldAnimatePageEnter
+                      ? undefined
+                      : ({ '--enter-x': `${direction * 8}%` } as React.CSSProperties)
                   }
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={prefersReducedMotion ? { duration: 0 } : pageTransition.transition}
-                  className="min-h-full"
                 >
                   <Outlet />
-                </motion.div>
+                </div>
               </RouteErrorBoundary>
             </main>
 
@@ -216,10 +254,10 @@ export function AppLayout() {
         </div>
       </div>
 
-      {/* 全域 PWA/離線狀態提示 */}
-      <OfflineIndicator />
-      <UpdatePrompt />
-      <RatingModal {...ratingPrompt} />
+      {/* 全域 PWA/離線狀態提示：延遲載入，不影響首次 LCP */}
+      <NonCriticalLazyBoundary resetKey={location.pathname}>
+        {(attempt) => <AppLazyGlobalPrompts attempt={attempt} ratingPrompt={ratingPrompt} />}
+      </NonCriticalLazyBoundary>
     </ToastProvider>
   );
 }

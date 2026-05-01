@@ -3,7 +3,7 @@
 > HaoRate 顯示臺灣銀行牌告的實際買賣價（非中間價），讓你換匯前知道真正要付多少台幣。支援 18 種貨幣，每 5 分鐘同步，免費無廣告。
 
 - Canonical: https://app.haotool.org/ratewise/
-- Version: v2.22.7
+- Version: v2.22.8
 
 ## 以台灣銀行牌告匯率做實務換算
 
@@ -59,5 +59,5 @@
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.7），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.8），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_
