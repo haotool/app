@@ -1064,7 +1064,7 @@ node scripts/fetch-rating-snapshot.mjs
 - **索引覆蓋**：確認 249 個 SEO 頁面均已索引（排除 noindex 頁）
 - **搜尋排名**：「日圓換台幣」「美元換台幣」等核心查詢在 Top 10
 - **Core Web Vitals**：分頁類型的 LCP/INP/CLS 狀態
-- **Rich Results / AI 摘要**：BreadcrumbList rich snippets、幣別頁 FAQPage 機器可理解性是否正常
+- **Rich Results / AI 摘要**：FAQ 主頁 FAQPage、幣別頁 `ExchangeRateSpecification` 與 BreadcrumbList 機器可理解性是否正常
 
 ### 12.5 權威 SEO 參考與外部檢測入口（2026）
 
