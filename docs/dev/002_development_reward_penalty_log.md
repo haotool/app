@@ -1236,6 +1236,8 @@ root_cause:
 - apps/ratewise/src/**tests**/seo-surface-order.test.ts
 - apps/ratewise/src/components/**tests**/CurrencyLandingPage.truthfulness.test.tsx
 
+---
+
 id: pr281-regex-end-tag-generalization-fix-2026-04-26
 date: 2026-04-26
 title: 將 SEO 測試 regex 擴充為可匹配 script/style end tag 的廣義變體
