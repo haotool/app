@@ -32,7 +32,8 @@
     "verify:seo": "node scripts/verify-seo-ssot.mjs",
     "verify:seo:prod": "node scripts/verify-seo-ssot.mjs prod",
     "update:seo-examples": "node scripts/update-seo-rate-examples.mjs",
-    "optimize:images": "node scripts/optimize-images.js"
+    "optimize:images": "node scripts/optimize-images.js",
+    "test:perf:bundle": "vitest run src/performance/__tests__/homepage-modulepreload.test.ts"
   },
   "dependencies": {
     "@app/shared": "workspace:*",
