@@ -37,13 +37,6 @@ const RateWise = () => {
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);
   const isTestEnv = import.meta.env.MODE === 'test';
-  const [isHydrated, setIsHydrated] = useState(isTestEnv);
-
-  // 確保伺服端與客戶端初始渲染內容一致，避免 hydration 警告
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration 標記，必須在 effect 中設置
-    setIsHydrated(true);
-  }, []);
 
   // 使用固定初始值避免 SSR hydration mismatch，在 useEffect 中從 localStorage 恢復
   const [rateType, setRateType] = useState<RateType>('spot');
@@ -68,6 +61,7 @@ const RateWise = () => {
     details,
     isLoading: ratesLoading,
     error: ratesError,
+    warning: ratesWarning,
     lastUpdate,
     lastFetchedAt,
   } = useExchangeRates();
@@ -79,7 +73,7 @@ const RateWise = () => {
   }, []);
 
   // Pull-to-refresh functionality
-  const isPullToRefreshEnabled = isHydrated && !ratesLoading && !ratesError && !isTestEnv;
+  const isPullToRefreshEnabled = !ratesLoading && !ratesError && !isTestEnv;
   const { pullDistance, isRefreshing, canTrigger } = usePullToRefresh(
     mainRef,
     handlePullToRefresh,
@@ -146,12 +140,7 @@ const RateWise = () => {
     [rateTypeAvailability],
   );
 
-  // 在 hydration 完成前，永遠返回 SkeletonLoader（與 SSG 一致）
-  if (!isHydrated) {
-    return <SkeletonLoader />;
-  }
-
-  // hydration 完成後，只有在載入中才顯示 skeleton
+  // 首屏使用 build-time rates 直接渲染；只有完全沒有可用資料時才顯示 skeleton。
   const shouldShowSkeleton = ratesLoading && !isTestEnv;
 
   if (shouldShowSkeleton) {
@@ -208,6 +197,17 @@ const RateWise = () => {
           {ratesLoading && (
             <div className="text-center text-sm text-neutral-text-secondary py-2">
               載入即時匯率中...
+            </div>
+          )}
+
+          {ratesWarning && (
+            <div
+              role="status"
+              data-testid="ratewise-stale-rates-warning"
+              className="mb-3 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-text"
+            >
+              <AlertCircle size={14} aria-hidden="true" />
+              <span>{t('errors.rateStaleWarning')}</span>
             </div>
           )}
 

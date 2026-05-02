@@ -7,7 +7,7 @@
  * Linus 原則：消除特殊情況，一個函數處理所有情況
  */
 
-import type { RateDetails } from '../features/ratewise/hooks/useExchangeRates';
+import type { RateDetails } from './offlineStorage';
 import type { CurrencyCode, RateMode, RateType } from '../features/ratewise/types';
 import { logger } from './logger';
 

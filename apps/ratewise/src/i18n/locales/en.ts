@@ -277,6 +277,8 @@ const en = {
     reloading: 'Reloading...',
     cacheHint: 'Also try: Settings → Clear browser cache, or contact',
     reloadPage: 'Reload Page',
+    rateStaleWarning:
+      'Using the last available exchange rates for now. Rates will update automatically when the connection recovers.',
     rateLoadDescription:
       "Sorry, we couldn't fetch the latest exchange rates. Please check your connection and try again.",
   },

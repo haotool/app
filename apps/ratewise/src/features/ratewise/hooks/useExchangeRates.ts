@@ -1,41 +1,81 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getExchangeRates } from '../../../services/exchangeRateService';
+import { getBuildTimeExchangeRates, getExchangeRates } from '../../../services/exchangeRateService';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode } from '../types';
 import { logger } from '../../../utils/logger';
-
-export interface RateDetails {
-  name: string;
-  spot: { buy: number; sell: number | null };
-  cash: { buy: number | null; sell: number | null };
-}
+import type { ExchangeRateData, RateDetails } from '../../../utils/offlineStorage';
+export type { RateDetails } from '../../../utils/offlineStorage';
 
 export interface ExchangeRatesState {
   rates: Record<CurrencyCode, number | null>;
   details: Record<string, RateDetails>;
   isLoading: boolean;
   error: Error | null;
+  warning: Error | null;
   lastUpdate: string | null;
   lastFetchedAt: string | null;
   source: string | null;
   isRefreshing: boolean;
 }
 
-const INITIAL_STATE: ExchangeRatesState = {
-  rates: Object.fromEntries(
-    Object.keys(CURRENCY_DEFINITIONS).map((code) => [code, null]),
-  ) as Record<CurrencyCode, number | null>,
+const createEmptyRates = (): Record<CurrencyCode, number | null> =>
+  Object.fromEntries(Object.keys(CURRENCY_DEFINITIONS).map((code) => [code, null])) as Record<
+    CurrencyCode,
+    number | null
+  >;
+
+const buildStateFromData = (
+  data: ExchangeRateData,
+  options: { isLoading: boolean; lastFetchedAt: string | null },
+): ExchangeRatesState => {
+  const rates = createEmptyRates();
+  rates.TWD = 1;
+
+  Object.keys(data.rates).forEach((code) => {
+    if (code in rates) {
+      rates[code as CurrencyCode] = data.rates[code] ?? null;
+    }
+  });
+
+  return {
+    rates,
+    details: data.details || {},
+    isLoading: options.isLoading,
+    error: null,
+    warning: null,
+    lastUpdate: data.updateTime?.trim() || null,
+    lastFetchedAt: options.lastFetchedAt,
+    source: data.source,
+    isRefreshing: false,
+  };
+};
+
+const createEmptyState = (): ExchangeRatesState => ({
+  rates: createEmptyRates(),
   details: {},
   isLoading: true,
   error: null,
+  warning: null,
   lastUpdate: null,
   lastFetchedAt: null,
   source: null,
   isRefreshing: false,
+});
+
+const createInitialState = (): ExchangeRatesState => {
+  try {
+    return buildStateFromData(getBuildTimeExchangeRates(), {
+      isLoading: false,
+      lastFetchedAt: null,
+    });
+  } catch (error) {
+    logger.warn('Build-time exchange rates unavailable, falling back to runtime fetch', { error });
+    return createEmptyState();
+  }
 };
 
 export function useExchangeRates() {
-  const [state, setState] = useState<ExchangeRatesState>(INITIAL_STATE);
+  const [state, setState] = useState<ExchangeRatesState>(() => createInitialState());
   const loadRatesRef = useRef<((isAutoRefresh?: boolean) => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -57,48 +97,35 @@ export function useExchangeRates() {
         const data = await getExchangeRates();
         if (!isMounted) return;
 
-        const newRates = { ...INITIAL_STATE.rates };
-
-        newRates.TWD = 1;
-
-        Object.keys(data.rates).forEach((code) => {
-          if (code in newRates) {
-            const rate = data.rates[code];
-            newRates[code as CurrencyCode] = rate ?? null;
-          }
-        });
-
         const fetchedAt = new Date().toISOString();
 
-        setState((prev) => {
+        setState(() => {
           const sourceUpdate = data.updateTime?.trim() ?? null;
-          const normalizedUpdate =
-            sourceUpdate && sourceUpdate !== prev.lastUpdate ? sourceUpdate : fetchedAt;
+          const nextState = buildStateFromData(
+            { ...data, updateTime: sourceUpdate ?? fetchedAt },
+            { isLoading: false, lastFetchedAt: fetchedAt },
+          );
 
           return {
-            rates: newRates,
-            details: data.details || {},
-            isLoading: false,
-            error: null,
-            lastUpdate: normalizedUpdate,
-            lastFetchedAt: fetchedAt,
+            ...nextState,
             source: data.source,
-            isRefreshing: false,
           };
         });
 
         logger.info(`Exchange rates ${isAutoRefresh ? 'refreshed' : 'loaded'}`, {
-          currencies: Object.values(newRates).filter((r) => r !== null).length,
+          currencies: Object.keys(data.rates).length + 1,
           source: data.source,
           updateTime: data.updateTime,
         });
       } catch (error) {
         if (!isMounted) return;
         logger.error('Failed to load exchange rates', error instanceof Error ? error : undefined);
+        const normalizedError = error instanceof Error ? error : new Error(String(error));
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: error instanceof Error ? error : new Error(String(error)),
+          error: prev.lastUpdate ? null : normalizedError,
+          warning: prev.lastUpdate ? normalizedError : null,
           lastFetchedAt: new Date().toISOString(),
           isRefreshing: false,
         }));

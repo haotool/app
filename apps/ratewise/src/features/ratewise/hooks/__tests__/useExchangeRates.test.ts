@@ -46,6 +46,7 @@ const mockRateData = {
 describe('useExchangeRates', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(exchangeRateService.getBuildTimeExchangeRates).mockReturnValue(mockRateData);
   });
 
   afterEach(() => {
@@ -53,24 +54,56 @@ describe('useExchangeRates', () => {
   });
 
   describe('初始化載入', () => {
+    it('使用 build-time 匯率作為首屏初始狀態', () => {
+      vi.mocked(exchangeRateService.getExchangeRates).mockResolvedValue(mockRateData);
+
+      const { result } = renderHook(() => useExchangeRates());
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBeNull();
+      expect(result.current.warning).toBeNull();
+      expect(result.current.rates.USD).toBe(30.5);
+      expect(result.current.lastUpdate).toBe('2025-10-31 01:00');
+    });
+
     it('成功載入匯率資料', async () => {
       vi.mocked(exchangeRateService.getExchangeRates).mockResolvedValue(mockRateData);
 
       const { result } = renderHook(() => useExchangeRates());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.lastFetchedAt).not.toBeNull();
       });
 
       expect(result.current.error).toBeNull();
+      expect(result.current.warning).toBeNull();
       expect(result.current.rates.USD).toBe(30.5);
       expect(result.current.rates.TWD).toBe(1);
-      expect(result.current.lastUpdate).toBe('2025-10-31 01:00');
+      expect(result.current.lastUpdate).not.toBeNull();
       expect(result.current.lastFetchedAt).not.toBeNull();
+    });
+
+    it('網路載入失敗時保留 build-time 匯率且不顯示致命錯誤', async () => {
+      vi.mocked(exchangeRateService.getExchangeRates).mockRejectedValue(new Error('Network error'));
+
+      const { result } = renderHook(() => useExchangeRates());
+
+      await waitFor(() => {
+        expect(result.current.warning).toBeInstanceOf(Error);
+      });
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBeNull();
+      expect(result.current.warning?.message).toBe('Network error');
+      expect(result.current.rates.USD).toBe(30.5);
+      expect(result.current.lastUpdate).toBe('2025-10-31 01:00');
     });
 
     it('載入失敗時設置錯誤狀態', async () => {
       const error = new Error('Network error');
+      vi.mocked(exchangeRateService.getBuildTimeExchangeRates).mockImplementation(() => {
+        throw new Error('Build-time rates unavailable');
+      });
       vi.mocked(exchangeRateService.getExchangeRates).mockRejectedValue(error);
 
       const { result } = renderHook(() => useExchangeRates());
@@ -80,9 +113,13 @@ describe('useExchangeRates', () => {
       });
 
       expect(result.current.error).toEqual(error);
+      expect(result.current.warning).toBeNull();
     });
 
     it('處理非 Error 物件的錯誤', async () => {
+      vi.mocked(exchangeRateService.getBuildTimeExchangeRates).mockImplementation(() => {
+        throw new Error('Build-time rates unavailable');
+      });
       vi.mocked(exchangeRateService.getExchangeRates).mockRejectedValue('String error');
 
       const { result } = renderHook(() => useExchangeRates());
@@ -163,7 +200,12 @@ describe('useExchangeRates', () => {
 
   describe('手動刷新 (未覆蓋路徑)', () => {
     it('調用 refresh() 手動刷新匯率', async () => {
-      vi.mocked(exchangeRateService.getExchangeRates).mockResolvedValue(mockRateData);
+      vi.mocked(exchangeRateService.getExchangeRates)
+        .mockResolvedValueOnce(mockRateData)
+        .mockResolvedValueOnce({
+          ...mockRateData,
+          updateTime: '2025-10-31 01:05',
+        });
 
       const { result } = renderHook(() => useExchangeRates());
 

@@ -1,9 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { SingleConverter } from '../SingleConverter';
 import type { CurrencyCode } from '../../types';
 import * as exchangeRateHistoryService from '../../../../services/exchangeRateHistoryService';
+
+vi.mock('../../../../config/performance', () => ({
+  TREND_CHART_DEFER_MS: 1,
+  TREND_CHART_IDLE_TIMEOUT_MS: 1,
+  ANALYTICS_INIT_DELAY_MS: 1,
+  ANALYTICS_IDLE_TIMEOUT_MS: 1,
+  PWA_STORAGE_INIT_DELAY_MS: 1,
+  PWA_STORAGE_IDLE_TIMEOUT_MS: 1,
+}));
 
 // Mock exchangeRateHistoryService
 vi.mock('../../../../services/exchangeRateHistoryService', () => ({
@@ -52,6 +61,12 @@ vi.mock('lightweight-charts', () => ({
 }));
 
 describe('SingleConverter - 趨勢圖整合測試', () => {
+  const flushDeferredTrendLoad = async () => {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+  };
+
   const mockExchangeRates: Record<CurrencyCode, number | null> = {
     TWD: 1,
     USD: 31.025,
@@ -142,6 +157,8 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       render(<SingleConverter {...mockProps} />);
 
+      await flushDeferredTrendLoad();
+
       // 驗證自動呼叫歷史匯率服務（30 天上限）
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledWith(30);
@@ -158,6 +175,8 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
       );
 
       expect(() => render(<SingleConverter {...mockProps} />)).not.toThrow();
+
+      await flushDeferredTrendLoad();
 
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalled();
@@ -192,6 +211,8 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
       );
 
       render(<SingleConverter {...mockProps} />);
+
+      await flushDeferredTrendLoad();
 
       // Wait for lazy loaded MiniTrendChart with extended timeout for CI environments
       await waitFor(() => expect(screen.getByTestId('mini-trend-chart')).toBeInTheDocument(), {
@@ -244,6 +265,8 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
         <SingleConverter {...mockProps} onSwapCurrencies={onSwapCurrencies} />,
       );
 
+      await flushDeferredTrendLoad();
+
       // 初始載入
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledTimes(1);
@@ -265,6 +288,8 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
           onSwapCurrencies={onSwapCurrencies}
         />,
       );
+
+      await flushDeferredTrendLoad();
 
       // 驗證因為 fromCurrency 和 toCurrency 改變，useEffect 重新執行
       await waitFor(() => {
@@ -299,6 +324,8 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       const { rerender } = render(<SingleConverter {...mockProps} />);
 
+      await flushDeferredTrendLoad();
+
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalledTimes(1);
         expect(exchangeRateHistoryService.fetchLatestRates).toHaveBeenCalledTimes(1);
@@ -309,6 +336,8 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
 
       // 改變目標幣別為 EUR
       rerender(<SingleConverter {...mockProps} toCurrency="EUR" />);
+
+      await flushDeferredTrendLoad();
 
       // 驗證匯率顯示更新為 EUR
       await waitFor(() => {
@@ -347,6 +376,8 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
       );
 
       const { rerender } = render(<SingleConverter {...mockProps} />);
+
+      await flushDeferredTrendLoad();
 
       // 初始載入
       await waitFor(() => {
@@ -397,6 +428,8 @@ describe('SingleConverter - 趨勢圖整合測試', () => {
       );
 
       render(<SingleConverter {...mockProps} fromCurrency="USD" toCurrency="EUR" />);
+
+      await flushDeferredTrendLoad();
 
       await waitFor(() => {
         expect(exchangeRateHistoryService.fetchHistoricalRatesRange).toHaveBeenCalled();

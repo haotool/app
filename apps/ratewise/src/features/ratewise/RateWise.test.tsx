@@ -380,7 +380,7 @@ describe('RateWise Component', () => {
   });
 
   describe('Error State', () => {
-    it('renders error UI when rates fail to load', async () => {
+    it('keeps the converter usable when latest rates fail but build-time rates exist', async () => {
       // Mock fetch to fail
       vi.stubGlobal(
         'fetch',
@@ -393,20 +393,22 @@ describe('RateWise Component', () => {
 
       renderWithProviders(<RateWise />);
 
-      // Wait for error state to appear
       await waitFor(
         () => {
-          expect(screen.getByText('匯率載入失敗')).toBeInTheDocument();
+          expect(fetch).toHaveBeenCalled();
         },
         { timeout: 3000 },
       );
 
-      // Verify error UI elements
-      expect(screen.getByText(/抱歉，我們無法從網路獲取最新的匯率資料/)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /重新整理頁面/i })).toBeInTheDocument();
+      expect(screen.queryByText('匯率載入失敗')).not.toBeInTheDocument();
+      expect(screen.getByTestId('ratewise-stale-rates-warning')).toHaveTextContent(
+        '目前使用上次可用的匯率資料',
+      );
+      expect(screen.queryByRole('button', { name: /重新整理頁面/i })).not.toBeInTheDocument();
+      expect(screen.getByTestId('amount-output')).toBeInTheDocument();
     });
 
-    it('reloads page when refresh button is clicked in error state', async () => {
+    it('does not expose a fatal reload CTA when build-time rates cover a fetch failure', async () => {
       // Mock window.location.reload
       const reloadMock = vi.fn();
       Object.defineProperty(window, 'location', {
@@ -426,20 +428,15 @@ describe('RateWise Component', () => {
 
       renderWithProviders(<RateWise />);
 
-      // Wait for error state
       await waitFor(
         () => {
-          expect(screen.getByText('匯率載入失敗')).toBeInTheDocument();
+          expect(fetch).toHaveBeenCalled();
         },
         { timeout: 3000 },
       );
 
-      // Click refresh button
-      const refreshButton = screen.getByRole('button', { name: /重新整理頁面/i });
-      fireEvent.click(refreshButton);
-
-      // Verify reload was called
-      expect(reloadMock).toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: /重新整理頁面/i })).not.toBeInTheDocument();
+      expect(reloadMock).not.toHaveBeenCalled();
     });
   });
 
