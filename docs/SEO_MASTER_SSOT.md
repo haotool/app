@@ -1,8 +1,9 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.9.2
+> **文件版本**: v2.10.0
 > **建立日期**: 2026-03-23
 > **最後更新**: 2026-05-02
+> **v2.10.0 變更**: 2026-05-02 PR #322 SEO 迭代修正批次：① 新增 DeepSeekBot / MistralBot 至 Tier 1 TRAINING（AI 爬蟲總數 37→39）；② `CurrencyConversionService.availableLanguage` 補入 `'ko'`（繁、英、日、韓四語）；③ `Organization.knowsAbout` 擴充 DCC 動態貨幣轉換、海外刷卡匯率、換匯成本試算、bank sell rate vs mid rate（12→16 主題）；④ 首頁 `HOMEPAGE_FAQ_CONTENT` Q6 文案更正三→四種介面語言，`HOMEPAGE_HOW_TO` step 4 同步對齊；⑤ `Dataset` schema 描述改用 `SUPPORTED_CURRENCY_COUNT` 動態常數，消除硬編碼 "18"；⑥ 首頁 speakable cssSelector 新增 `#homepage-seo-section-heading`；⑦ `ABOUT_PAGE_FAQ` schema 說明補入 `Dataset（開放資料）`；⑧ 修正 Codex P1：bundle test 遞迴計入 manifest imports、觸發條件改用 `npm_lifecycle_event`；§8.2 更新為共 39 個。
 > **v2.9.2 變更**: 2026-05-02 依 Superpowers 平行 SEO 審查修正頂級 SEO 漂移：① `verify-seo-ssot.mjs` schema 口徑對齊 `/faq/ only` FAQPage 與幣別頁 `ExchangeRateSpecification`；② 正向金額頁文案改為「買外幣所需台幣」，反向金額頁明確標示台幣金額，避免 AI 摘要誤讀；③ `/seo-tech/` E-E-A-T 信任訊號移除「無追蹤」並對齊 Google Analytics 隱私揭露；④ Googlebot / Google-Extended 角色依 Google 官方文件校正；⑤ 新增 `seo-truthfulness` / `seo-ssot` / `build-scripts` 守門測試。
 > **v2.9.1 變更**: 2026-05-02 校正已完成但仍被列為 fail / 待補的 SEO / AI readiness 項目：root / RateWise Markdown negotiation、Link headers、`.md` `text/markdown`、RFC 9727 API catalog、Agent Skills Discovery v0.2.0 與 P1-9 均依 `security-headers/src/worker.js` v5.0 和 `securityHeadersWorker.test.ts` 標記為完成；OAuth / MCP / WebMCP / A2A 明確改為「不適用 / 未提供產品能力」而非 fail；補上文檔漂移守門測試，避免已完成 Worker 能力回寫成 pending。
 > **v2.9.0 變更**: 2026-05-01 同步 v2.22.7–v2.22.8 批次修復：① robots.txt 移除非標準 `Content-Signal` 指令（改為完全刪除，包含 Worker 注入邏輯）→ Lighthouse SEO 92→100；② WebSite schema 移除無實際效果的 `SearchAction`/`potentialAction`；③ 幣別頁 `commonAmounts` 改從 `INDEXABLE_FORWARD_AMOUNTS` 衍生，消除 SSG 白名單漂移產生的站內 404；④ OpenData 頁與 FAQ 頁 raw email 改用 `MailtoLink` 元件渲染，防止 CF Email Obfuscation 改寫 `/cdn-cgi/l/email-protection`；⑤ `SITE_CONFIG.description`（`seo-paths.config.mjs` + `seo-paths.ts`）對齊 `DEFAULT_DESCRIPTION` 文字，消除 Markdown mirror 與 HTML meta description 的 SSOT 漂移；⑥ Worker v5.0 部署（移除 Content-Signal 注入，直連 `.md` 強制回 `text/markdown`）；⑦ §12 新增 §12.8 v2.22.7–v2.22.8 批次修復稽核紀錄。
@@ -806,7 +807,7 @@ Disallow: /ratewise/?
 - **User Agent**：使用者即時發問時，AI 助手代理使用者抓取網頁；opt-out 意味阻止使用者即時查詢
 - **Preview/Other**：社群預覽、網路存檔、其他雜項爬蟲
 
-### 8.2 AI 爬蟲規則（2026-04-10 完整清單，共 37 個）
+### 8.2 AI 爬蟲規則（2026-05-02 完整清單，共 39 個）
 
 robots.txt 與 llms.txt 明確 Allow 以下 AI 爬蟲，確保最大 AI 搜尋可見度。清單 SSOT 為 `apps/ratewise/scripts/lib/ai-crawlers.mjs`：
 
@@ -1392,7 +1393,7 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 | 3   | Site Speed (近似)         | 80    | 83    | +3  | HTML TTFB 1.0–1.6s（04-29）→ 0.34–0.77s（04-30，大幅改善）；LH Desktop P85 LCP 1.0s ✅；LH Mobile P79 LCP 5.7s ⚠️ 待改善                                                                                                                                                         |
 | 4   | Mobile-friendly           | 90    | 93    | +3  | manifest 完整（7 icons、5 screenshots、`standalone`）、PWA、SSG；LH A11y 100、BP 100；Desktop CLS 0.248 ⚠️                                                                                                                                                                       |
 | 5   | Security/HTTPS            | 95    | 100   | +5  | HSTS（Cloudflare edge）、CSP nonce；04-29 扣分：Worker v4.9 orphan deploy；04-30 version `7d094658` 生產確認 ✅                                                                                                                                                                  |
-| 6   | Schema markup             | 95    | 96    | +1  | 11+ schema types（`SoftwareApplication`、`Organization`、`WebSite`、`CurrencyConversionService`、`ExchangeRateSpecification`、`FAQPage` 限 `/faq/`、`HowTo`、`Article`、`BreadcrumbList`、`Dataset`、`Person`、`ContactPage`、`SpeakableSpecification`）；`knowsAbout` 12 個主題 |
+| 6   | Schema markup             | 95    | 96    | +1  | 11+ schema types（`SoftwareApplication`、`Organization`、`WebSite`、`CurrencyConversionService`、`ExchangeRateSpecification`、`FAQPage` 限 `/faq/`、`HowTo`、`Article`、`BreadcrumbList`、`Dataset`、`Person`、`ContactPage`、`SpeakableSpecification`）；`knowsAbout` 16 個主題 |
 | 7   | On-page (Title/Desc/H1)   | 85    | 100   | +15 | 04-29 title 偏長（首頁 100 chars、about 103 chars）；04-30 實測 title 42–53 chars、desc 70–115 chars ✅；LH SEO 92（-8 Content-Signal 誤報）；v2.22.8 移除後 100/100 ✅                                                                                                          |
 | 8   | Content quality / E-E-A-T | 90    | 92    | +2  | E-E-A-T 完整（`Person` schema、`knowsAbout`、Authority Guide 三篇）、Answer Capsule、FAQ 5–7 題；`/seo-tech/` 透明度頁確認                                                                                                                                                       |
 | 9   | AI/LLM readiness          | 80    | 83    | +3  | `llms.txt` / `llms-full.txt` / `openapi.json` / `api/latest.json` 完整；全 6 `.md` 鏡像 200 ✅、11+ AI bot `Allow` ✅；04-30 待補的 `.md` CT、`/.well-known/api-catalog`、`/.well-known/agent-skills/index.json` 已由 Worker v5.0 完成並納入測試守門                             |
@@ -1459,7 +1460,7 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 
 - ✅ Sitemap.xml 249 URL，含 17 forward + 17 reverse 幣別頁、9 內容頁、206 amount 頁；無 `changefreq` / `priority` 過時標籤
 - ✅ robots.txt 四層分群（TRAINING / SEARCH / USER_AGENT / PREVIEW）；v2.22.8 起已完全移除非標準 `Content-Signal` directive，避免 Lighthouse 13 誤報
-- ✅ JSON-LD schema graph：`SoftwareApplication`、`Organization`（`knowsAbout` 12 主題）、`WebSite`、`CurrencyConversionService`、`ExchangeRateSpecification`（首頁 + 17 幣對 + 反向 + amount）、`FAQPage`（限 `/faq/`）、`HowTo`（Guide）、`Article`、`BreadcrumbList`、`Dataset` + `DataCatalog` + `DataDownload`（open-data）、`Person`（about）、`ContactPage`、`SpeakableSpecification`
+- ✅ JSON-LD schema graph：`SoftwareApplication`、`Organization`（`knowsAbout` 16 主題）、`WebSite`、`CurrencyConversionService`、`ExchangeRateSpecification`（首頁 + 17 幣對 + 反向 + amount）、`FAQPage`（限 `/faq/`）、`HowTo`（Guide）、`Article`、`BreadcrumbList`、`Dataset` + `DataCatalog` + `DataDownload`（open-data）、`Person`（about）、`ContactPage`、`SpeakableSpecification`
 - ✅ Hreflang 全頁 `zh-TW` + `x-default`，與 canonical 對齊
 - ✅ `manifest.webmanifest` 完整（7 icons、5 screenshots、`standalone` display、正確 `start_url`）
 - ✅ `openapi.json` OpenAPI 3.1.0，`info.title` / `info.version` / `paths[3]` / `servers[2]` 完整
@@ -1735,7 +1736,7 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 - 程序化 SEO：正向/反向幣別頁 + 代表性金額頁路徑型策略 ✅
 - 結構化資料：8 種 Schema 類型 + Speakable + knowsAbout 實體信號 ✅
 - E-E-A-T：Person/Organization schema、about 頁、明確資料來源 ✅
-- AI 可讀性：llms.txt/llms-full.txt、37 個 AI crawler Allow、openapi.json ✅
+- AI 可讀性：llms.txt/llms-full.txt、39 個 AI crawler Allow、openapi.json ✅
 - 驗證覆蓋：1900+ 測試，多層 CI 每日驗證 ✅
 
 ### 13.0.2 仍缺的頂級 SEO 能力
@@ -1771,7 +1772,7 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 | —     | health-check 5xx 暫時性錯誤重試機制                                      | v2.16.4   | 避免短暫部署抖動誤報                                                                                                           |
 | —     | 金額頁數量修正（204 → 206）                                              | v2.16.0   | CURRENCY_AMOUNT(104) + REVERSE_CURRENCY_AMOUNT(102)                                                                            |
 | —     | SpeakableSpecification schema 補齊所有 9 個內容頁                        | v2.18.0   | GUIDE/OPEN_DATA/ABOUT/三篇Authority Guide 頁；`buildSpeakableJsonLd(['h1'])` 加入各頁 jsonLd 陣列                              |
-| —     | Organization + Person `knowsAbout` 實體權威信號                          | v2.18.0   | `buildSiteJsonLd()` Organization 加入 12 個核心主題；`buildPersonJsonLd()` 加入 11 個作者知識領域                              |
+| —     | Organization + Person `knowsAbout` 實體權威信號                          | v2.18.0   | `buildSiteJsonLd()` Organization 加入 16 個核心主題；`buildPersonJsonLd()` 加入 11 個作者知識領域                              |
 | —     | Lighthouse CI 效能門檻調降至 0.83（自然波動緩衝）                        | v2.18.0   | `.lighthouserc.json` 從 0.85 降至 0.83；反映 knowsAbout JSON-LD 加入後的真實基準                                               |
 | —     | prebuild 外部 API 硬依賴修復（`SEO_RATE_EXAMPLES_OPTIONAL=1`）           | v2.17.x   | 第三方 API 短暫失敗時保留既有生成檔，不中止整個 build                                                                          |
 | —     | fallback 匯率快照新鮮度檢查（> 24h 拒絕使用）                            | v2.17.x   | `prebuild-fetch-rates.mjs` 加入時間戳解析，避免 stale 匯率寫入 SSG 頁面                                                        |
