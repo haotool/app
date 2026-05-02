@@ -4,12 +4,14 @@
  * 目標：確保每個公開 SEO 路由的第一個 H1 之前，沒有通用預設文案覆蓋。
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { APP_INFO } from '../config/app-info';
 import { getCurrencyLandingPageContent } from '../config/seo-metadata';
+import { ensurePrerenderDist } from './helpers/ensurePrerenderDist';
 
+const appRoot = resolve(__dirname, '../..');
 const distPath = resolve(__dirname, '../../dist');
 
 const readDistHtml = (path: string): string => {
@@ -36,14 +38,12 @@ const textBefore = (text: string, marker: string): string => {
   return index >= 0 ? text.slice(0, index) : text;
 };
 
-beforeAll(() => {
-  const indexHtml = resolve(distPath, 'index.html');
-  if (existsSync(indexHtml)) return;
-
-  throw new Error(
-    'prerender dist is missing. please run pnpm --filter @app/ratewise build before this test.',
-  );
-});
+beforeAll(async () => {
+  await ensurePrerenderDist({
+    projectRoot: appRoot,
+    distRoot: distPath,
+  });
+}, 120000);
 
 describe('SEO 首屏文字順序檢查（route order gate）', () => {
   const samples = [

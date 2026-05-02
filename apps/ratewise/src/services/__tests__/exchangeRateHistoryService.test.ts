@@ -156,6 +156,44 @@ describe('exchangeRateHistoryService', () => {
       }
     });
 
+    it('跨日後應以前一天作為最新歷史日期，避免停在 4/28', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-05-01T12:00:00'));
+
+      vi.mocked(fetch).mockImplementation((url: string | URL | Request) => {
+        const urlString = typeof url === 'string' ? url : url instanceof URL ? url.href : url.url;
+        const match = /history\/(\d{4}-\d{2}-\d{2})/.exec(urlString);
+        const date = match?.[1] ?? 'unknown';
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              updateTime: `${date} 23:39:59`,
+              source: 'Taiwan Bank',
+              rates: { USD: 31.025 },
+            }),
+        } as Response);
+      });
+
+      try {
+        const result = await fetchHistoricalRatesRange(3);
+        const requestedDates = vi
+          .mocked(fetch)
+          .mock.calls.map(([url]) => {
+            const urlString =
+              typeof url === 'string' ? url : url instanceof URL ? url.href : url.url;
+            return /history\/(\d{4}-\d{2}-\d{2})/.exec(urlString)?.[1];
+          })
+          .filter(Boolean);
+
+        expect(result[0]?.date).toBe('2026-04-30');
+        expect(requestedDates).toEqual(['2026-04-30', '2026-04-29', '2026-04-28']);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it('應該在部分日期 404 時跳過並持續抓取', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-10-17T00:00:00Z'));

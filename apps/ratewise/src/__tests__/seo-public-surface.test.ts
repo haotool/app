@@ -11,6 +11,7 @@ import { APP_INFO } from '../config/app-info';
 import { SEO_PATHS, PRERENDER_PATHS } from '../config/seo-paths';
 import { getCurrencyLandingPageContent } from '../config/seo-metadata';
 import { SEO_SCHEMA_REGISTRY } from '../config/seo-schema-registry';
+import { ensurePrerenderDist } from './helpers/ensurePrerenderDist';
 
 const appRoot = resolve(__dirname, '../..');
 const distRoot = resolve(appRoot, 'dist');
@@ -44,18 +45,19 @@ const textBefore = (text: string, marker: string): string => {
   return index >= 0 ? text.slice(0, index) : text;
 };
 
-beforeAll(() => {
-  const indexHtml = resolve(distRoot, 'index.html');
-  if (!existsSync(indexHtml)) {
-    throw new Error(
-      'prerender dist is missing. please run pnpm --filter @app/ratewise build before this test.',
-    );
-  }
-
-  if (!existsSync(sitemapPath)) {
-    throw new Error(`sitemap missing: ${sitemapPath}`);
-  }
-});
+beforeAll(async () => {
+  await ensurePrerenderDist({
+    projectRoot: appRoot,
+    distRoot,
+    requiredPaths: [sitemapPath],
+    sourcePaths: [
+      resolve(appRoot, 'src/pages/SeoTech.tsx'),
+      resolve(appRoot, 'src/config/seo-build-pipeline.ts'),
+      resolve(appRoot, 'src/config/seo-paths.ts'),
+      resolve(appRoot, 'src/config/seo-schema-registry.ts'),
+    ],
+  });
+}, 120000);
 
 describe('SEO public surface regression suite', () => {
   it.each([

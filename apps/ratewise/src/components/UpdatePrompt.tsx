@@ -10,8 +10,8 @@
  * - motion/react 入場／退場動畫與按鈕微互動
  * - i18n 國際化
  * - prefers-reduced-motion 無障礙支援
- * - 五狀態：offlineReady / needRefresh / isUpdating / updateFailed / registrationFailed
- * - offlineReady 5 秒自動消失
+ * - 五狀態追蹤：offlineReady / needRefresh / isUpdating / updateFailed / registrationFailed
+ * - offlineReady 僅自動消失，不顯示成功提示以避免首屏 CLS
  * - ARIA role 依緊急程度切換（status / alert）
  * - 定時器清理，防止記憶體洩漏
  *
@@ -169,8 +169,9 @@ function UpdatePromptClient() {
     setRegistrationFailed(false);
   };
 
-  const shouldRender =
-    offlineReady || needRefresh || isUpdating || updateFailed || registrationFailed;
+  // `offlineReady` 是首次安裝 SW 的低優先級成功狀態；若以 toast 顯示，Lighthouse
+  // 會把通知入場視為 CLS。需要使用者注意的更新/失敗狀態仍保留提示。
+  const shouldRender = needRefresh || isUpdating || updateFailed || registrationFailed;
   const isUrgent = needRefresh || updateFailed || isUpdating || registrationFailed;
   const mobilePositionStyle = {
     '--notification-mobile-top-offset': notificationTokens.mobileTopOffset,
