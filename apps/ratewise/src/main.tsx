@@ -25,6 +25,27 @@ import { APP_VERSION, BUILD_TIME } from './config/version';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { initPWAStorageManager } from './utils/pwaStorageManager';
 import { initGA, scheduleAfterPageLoad, trackPageview, trackAiReferral } from '@shared/analytics';
+import {
+  ANALYTICS_IDLE_TIMEOUT_MS,
+  ANALYTICS_INIT_DELAY_MS,
+  PWA_STORAGE_IDLE_TIMEOUT_MS,
+  PWA_STORAGE_INIT_DELAY_MS,
+} from './config/performance';
+
+const schedulePostLoadIdleTask = (
+  task: () => void,
+  delayMs: number,
+  idleTimeoutMs: number,
+): void => {
+  window.setTimeout(() => {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(task, { timeout: idleTimeoutMs });
+      return;
+    }
+
+    window.setTimeout(task, 0);
+  }, delayMs);
+};
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(
@@ -49,7 +70,9 @@ export const createRoot = ViteReactSSG(
         trackAiReferral();
         trackPageview(window.location.pathname + window.location.search);
       };
-      scheduleAfterPageLoad(initAnalytics);
+      scheduleAfterPageLoad(() => {
+        schedulePostLoadIdleTask(initAnalytics, ANALYTICS_INIT_DELAY_MS, ANALYTICS_IDLE_TIMEOUT_MS);
+      });
 
       // Log application startup
       logger.info('Application starting', {
@@ -79,7 +102,15 @@ export const createRoot = ViteReactSSG(
       // iOS Safari 會在 PWA 關閉後清除 Cache Storage
       // 解決方案：應用啟動時重新快取關鍵資源 + 請求持久化儲存
       // Reference: [GitHub:PWA-POLICE/pwa-bugs] [GitHub:Workbox#1494]
-      void initPWAStorageManager(import.meta.env.BASE_URL || '/');
+      scheduleAfterPageLoad(() => {
+        schedulePostLoadIdleTask(
+          () => {
+            void initPWAStorageManager(import.meta.env.BASE_URL || '/');
+          },
+          PWA_STORAGE_INIT_DELAY_MS,
+          PWA_STORAGE_IDLE_TIMEOUT_MS,
+        );
+      });
 
       // 全域錯誤處理器 - 捕捉網路請求錯誤
       // [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]

@@ -17,7 +17,9 @@ import { APP_INFO } from '../src/config/app-info.ts';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = path.resolve(__dirname, '..');
 const PUBLIC_PATH = path.resolve(APP_ROOT, 'public');
+const GENERATED_CONFIG_PATH = path.resolve(APP_ROOT, 'src/config/generated');
 const RATES_CACHE_PATH = path.resolve(PUBLIC_PATH, 'rates.json');
+const BUILD_TIME_RATES_PATH = path.resolve(GENERATED_CONFIG_PATH, 'build-time-rates.json');
 const MAX_CACHE_AGE_MS = 24 * 60 * 60 * 1000;
 
 function parseRateTimestamp(value) {
@@ -239,7 +241,10 @@ function getDefaultRates() {
 }
 
 /**
- * 保存匯率到 public/rates.json
+ * 保存匯率到 public/rates.json 與可追蹤的 src/config/generated snapshot。
+ *
+ * public/rates.json 是 build 暫存快取且被 .gitignore 忽略；app runtime 的首屏 fallback
+ * 必須讀取已 commit 的 generated snapshot，避免 clean checkout 在 typecheck/dev 前缺檔。
  */
 function saveRates(rates) {
   try {
@@ -247,10 +252,16 @@ function saveRates(rates) {
     if (!fs.existsSync(PUBLIC_PATH)) {
       fs.mkdirSync(PUBLIC_PATH, { recursive: true });
     }
+    if (!fs.existsSync(GENERATED_CONFIG_PATH)) {
+      fs.mkdirSync(GENERATED_CONFIG_PATH, { recursive: true });
+    }
 
-    fs.writeFileSync(RATES_CACHE_PATH, JSON.stringify(rates, null, 2), 'utf-8');
+    const payload = `${JSON.stringify(rates, null, 2)}\n`;
+    fs.writeFileSync(RATES_CACHE_PATH, payload, 'utf-8');
+    fs.writeFileSync(BUILD_TIME_RATES_PATH, payload, 'utf-8');
 
     console.log(`✅ 匯率已保存到：${RATES_CACHE_PATH}`);
+    console.log(`✅ build-time 匯率 snapshot 已保存到：${BUILD_TIME_RATES_PATH}`);
     return true;
   } catch (error) {
     console.error(`❌ 保存匯率失敗：${error.message}`);

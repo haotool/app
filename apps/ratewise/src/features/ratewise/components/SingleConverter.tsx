@@ -22,7 +22,7 @@ const MiniTrendChart = lazy(() =>
 );
 import type { MiniTrendDataPoint } from './MiniTrendChart';
 import { TrendChartSkeleton } from './TrendChartSkeleton';
-import type { RateDetails } from '../hooks/useExchangeRates';
+import type { RateDetails } from '../../../utils/offlineStorage';
 import {
   fetchHistoricalRatesRange,
   fetchLatestRates,
@@ -38,6 +38,7 @@ import { logger } from '../../../utils/logger';
 import { convertCurrencyAmountWithMode } from '../../../utils/exchangeRateCalculation';
 import type { RateTypeAvailability } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
+import { TREND_CHART_DEFER_MS, TREND_CHART_IDLE_TIMEOUT_MS } from '../../../config/performance';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
@@ -250,25 +251,33 @@ export const SingleConverter = ({
       }
     }
 
-    // requestIdleCallback：等瀏覽器空閒再啟動（最多等 4 秒）
-    // Safari < 16.4 不支援，降級為 setTimeout(2000)
-    type RicHandle = number | ReturnType<typeof setTimeout>;
-    let handle: RicHandle;
+    // 趨勢圖不是首屏必要內容：先讓 LCP/TTI 完成，再進 idle 排程載入歷史資料。
+    // 數值由 performance config 統一管理，可用 VITE_TREND_CHART_* 覆寫。
+    type TimerHandle = ReturnType<typeof setTimeout>;
+    type IdleHandle = number | TimerHandle;
+    let deferHandle: TimerHandle | null = null;
+    let idleHandle: IdleHandle | null = null;
     const start = () => {
       if (isMounted) void loadTrend();
     };
-    if (typeof requestIdleCallback === 'function') {
-      handle = requestIdleCallback(start, { timeout: 4000 });
-    } else {
-      handle = setTimeout(start, 2000);
-    }
+
+    deferHandle = setTimeout(() => {
+      if (typeof requestIdleCallback === 'function') {
+        idleHandle = requestIdleCallback(start, { timeout: TREND_CHART_IDLE_TIMEOUT_MS });
+      } else {
+        idleHandle = setTimeout(start, TREND_CHART_IDLE_TIMEOUT_MS);
+      }
+    }, TREND_CHART_DEFER_MS);
 
     return () => {
       isMounted = false;
+      if (deferHandle !== null) {
+        clearTimeout(deferHandle);
+      }
       if (typeof cancelIdleCallback === 'function') {
-        cancelIdleCallback(handle as number);
-      } else {
-        clearTimeout(handle as ReturnType<typeof setTimeout>);
+        if (idleHandle !== null) cancelIdleCallback(idleHandle as number);
+      } else if (idleHandle !== null) {
+        clearTimeout(idleHandle as TimerHandle);
       }
     };
   }, [fromCurrency, toCurrency]);

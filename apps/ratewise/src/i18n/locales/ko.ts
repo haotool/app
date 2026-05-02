@@ -272,6 +272,8 @@ const ko = {
     reloading: '새로고침 중...',
     cacheHint: '또는: 설정 → 브라우저 캐시 삭제, 혹은 문의하기',
     reloadPage: '페이지 새로고침',
+    rateStaleWarning:
+      '현재 마지막으로 사용 가능한 환율을 표시합니다. 연결이 복구되면 자동으로 업데이트됩니다.',
     rateLoadDescription:
       '죄송합니다. 최신 환율을 가져올 수 없습니다. 연결 상태를 확인하고 다시 시도해 주세요.',
   },

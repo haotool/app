@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-02
+- ID：ratewise-homepage-lcp-build-time-rates
+- 原因：首頁首屏仍同步觸發趨勢圖歷史資料、GA 與 PWA icon 暖機，Lighthouse Performance 停在 73-74 且 LCP 超過 7 秒。
+- 解法：以 build-time rates 移除首屏匯率空窗，延後非關鍵趨勢圖/分析/PWA 暖機，A/B 後 Performance 80、SEO 100。
+
+- 日期：2026-05-02
 - ID：root-robots-content-signal-production-drift
 - 原因：正式站 root `robots.txt` 上游仍殘留非標準 `Content-Signal`，Lighthouse 將三個 RateWise canonical URL 的 SEO 扣到 92。
 - 解法：讓 security-headers Worker v5.1 在 root robots rewrite 時清洗 `Content-Signal` body 行，並以 regression test 守門。

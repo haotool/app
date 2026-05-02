@@ -14,6 +14,7 @@ import {
   getExchangeRatesFromIDBWithStaleness,
   type ExchangeRateData,
 } from '../utils/offlineStorage';
+import buildTimeRates from '../config/generated/build-time-rates.json';
 
 /**
  * 離線 fallback 預設匯率
@@ -80,6 +81,10 @@ interface CachedData {
 interface FetchResult {
   data: ExchangeRateData;
   etag?: string;
+}
+
+export function getBuildTimeExchangeRates(): ExchangeRateData {
+  return buildTimeRates as ExchangeRateData;
 }
 
 /**

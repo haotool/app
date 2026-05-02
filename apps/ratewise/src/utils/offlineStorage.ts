@@ -329,6 +329,12 @@ export function calculateStaleness(timestamp: number | null): StalenessInfo {
 /**
  * 匯率資料結構（與 exchangeRateService.ts 相同）
  */
+export interface RateDetails {
+  name: string;
+  spot: { buy: number | null; sell: number | null };
+  cash: { buy: number | null; sell: number | null };
+}
+
 export interface ExchangeRateData {
   timestamp: string;
   updateTime: string;
@@ -336,14 +342,7 @@ export interface ExchangeRateData {
   sourceUrl: string;
   base: string;
   rates: Record<string, number>;
-  details: Record<
-    string,
-    {
-      name: string;
-      spot: { buy: number; sell: number | null };
-      cash: { buy: number | null; sell: number | null };
-    }
-  >;
+  details: Record<string, RateDetails>;
 }
 
 /**

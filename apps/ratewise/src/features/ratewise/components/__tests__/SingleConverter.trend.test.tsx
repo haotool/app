@@ -5,6 +5,7 @@ import { SingleConverter } from '../SingleConverter';
 import type { CurrencyCode } from '../../types';
 import * as historyService from '../../../../services/exchangeRateHistoryService';
 import type { RateSnapshot } from '../../../../services/exchangeRateHistoryService';
+import { TREND_CHART_DEFER_MS } from '../../../../config/performance';
 
 // Mock services with controllable responses
 vi.mock('../../../../services/exchangeRateHistoryService', () => ({
@@ -150,6 +151,24 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
 
       expect(historyService.fetchHistoricalRatesRange).toHaveBeenCalledWith(30);
       expect(historyService.fetchLatestRates).toHaveBeenCalled();
+    });
+
+    it('defers trend history requests beyond the initial render budget', async () => {
+      vi.mocked(historyService.fetchHistoricalRatesRange).mockResolvedValue([]);
+      vi.mocked(historyService.fetchLatestRates).mockResolvedValue({
+        updateTime: '2025/11/29 08:00:00',
+        source: 'Taiwan Bank',
+        rates: { TWD: 1, USD: 31.665 } as Record<CurrencyCode, number>,
+      });
+
+      render(<SingleConverter {...mockProps} />);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(TREND_CHART_DEFER_MS - 1);
+      });
+
+      expect(historyService.fetchHistoricalRatesRange).not.toHaveBeenCalled();
+      expect(historyService.fetchLatestRates).not.toHaveBeenCalled();
     });
 
     it('should handle fetchLatestRates failure gracefully', async () => {

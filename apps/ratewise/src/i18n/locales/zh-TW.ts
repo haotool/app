@@ -271,6 +271,7 @@ const zhTW = {
     reloading: '重新載入中...',
     cacheHint: '也可嘗試：設定 → 清除瀏覽器快取，或聯絡',
     reloadPage: '重新整理頁面',
+    rateStaleWarning: '目前使用上次可用的匯率資料；恢復連線後會自動更新。',
     rateLoadDescription:
       '抱歉，我們無法從網路獲取最新的匯率資料。請檢查您的網路連線，然後再試一次。',
   },
