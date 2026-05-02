@@ -12,6 +12,26 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-03
+- ID：codex-review-audit-unknown-author-guard
+- 原因：PR #330 後續 Codex review 指出 `author: null` 的留言會先被轉成字串，再被誤判為人類回覆，讓 `no-reply` 分類失真。
+- 解法：將未知作者保留為 `null`，並要求 comment 必須有明確 login 才能算人類回覆，避免刪帳或停用帳號留言清掉待處理 thread。
+
+- 日期：2026-05-03
+- ID：codex-review-audit-thread-classification-followup
+- 原因：PR #330 的 Codex review 指出新稽核腳本將 bot 視為人類回覆、僅看第一則 Codex 評論判定 no-reply，且未補抓超過 100 筆的 thread comments。
+- 解法：補上 thread comments 分頁抓取，將 no-reply 基準改為最後一則 Codex 評論，並排除 `github-actions` 與 `[bot]` 類非人類回覆。
+
+- 日期：2026-05-03
+- ID：pr-review-script-enforcement-doc-sync
+- 原因：PR / review 事件的回覆與 resolved 收斂責任先前只分散在口頭流程，未明確要求優先使用 repo 既有稽核腳本盤點 threads。
+- 解法：在 `AGENTS.md` 與 `CLAUDE.md` 補上強制規則，要求先執行 `pnpm review:codex:audit` 類腳本盤點，再配合 `gh` 逐條回覆並轉為 resolved。
+
+- 日期：2026-05-03
+- ID：repo-codex-review-thread-audit-automation
+- 原因：既有 Codex review 腳本只覆蓋單 PR 或近幾天留言，無法對整個 repo 穩定盤點 unresolved / no-reply review threads。
+- 解法：新增全 repo GraphQL 分頁稽核腳本與 `pnpm review:codex:audit` 入口，自動依 thread 狀態與人類回覆情況分類，並輸出可供後續自動回覆與清掃流程重用的文字/JSON 結果。
+
 - 日期：2026-05-02
 - ID：ratewise-homepage-lcp-build-time-rates
 - 原因：首頁首屏仍同步觸發趨勢圖歷史資料、GA 與 PWA icon 暖機，Lighthouse Performance 停在 73-74 且 LCP 超過 7 秒。
@@ -658,3 +678,8 @@
 - ID：pr325-markdown-negotiation-noindex-inheritance-fix
 - 原因：Codex P1 指出 markdown negotiation 會繼承上游 `.md` 的 `X-Robots-Tag: noindex`，導致 canonical URL 的 markdown 變體誤帶 noindex。
 - 解法：在 Worker 的 markdown negotiation 分支明確刪除繼承而來的 `X-Robots-Tag`，並把測試改成模擬上游實際帶 `noindex` 的情況，鎖住這個回歸。
+
+- 日期：2026-05-02
+- ID：ratewise-mailto-crawlable-anchor-seo-fix
+- 原因：第 2 輪 SEO iteration 發現 `/about/`、`/faq/` Lighthouse SEO 從 100→92，根因為 `MailtoLink` SSG 輸出 `<a>` 無 `href`（為避開 Cloudflare Email Obfuscation），觸發 `crawlable-anchors` 扣分。
+- 解法：將 `MailtoLink` 改用 `<button type="button">` 取代 `<a>`，繼續無 `mailto:`/raw email SSG 輸出避開 CF 與 scraper，並補上 5 個 vitest 守門 button-only / 無 mailto / SSG label 等不變式。
