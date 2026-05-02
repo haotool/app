@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-03
+- ID：pr-review-script-enforcement-doc-sync
+- 原因：PR / review 事件的回覆與 resolved 收斂責任先前只分散在口頭流程，未明確要求優先使用 repo 既有稽核腳本盤點 threads。
+- 解法：在 `AGENTS.md` 與 `CLAUDE.md` 補上強制規則，要求先執行 `pnpm review:codex:audit` 類腳本盤點，再配合 `gh` 逐條回覆並轉為 resolved。
+
+- 日期：2026-05-03
 - ID：repo-codex-review-thread-audit-automation
 - 原因：既有 Codex review 腳本只覆蓋單 PR 或近幾天留言，無法對整個 repo 穩定盤點 unresolved / no-reply review threads。
 - 解法：新增全 repo GraphQL 分頁稽核腳本與 `pnpm review:codex:audit` 入口，自動依 thread 狀態與人類回覆情況分類，並輸出可供後續自動回覆與清掃流程重用的文字/JSON 結果。

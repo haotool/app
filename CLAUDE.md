@@ -197,6 +197,8 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **注意**：若 checks pending / failing，應先等待或修復，不應跳過審查控制。
 
+- 發生 PR / review / checks 事件時，必須先使用 repo 既有 review 稽核腳本（如 `pnpm review:codex:audit`）盤點 review threads，再配合 `gh` 逐條回覆處理證據並標記 `resolved`；不得只改碼不收斂 thread 狀態。
+
 ## SEO 生產資源可用性檢查（SSOT）
 
 - 使用 `node scripts/verify-production-resources.mjs` 驗證所有 app 的 `resources.seoFiles` 與 `resources.images`

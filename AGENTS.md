@@ -194,6 +194,7 @@ Agent **必須**先完成：
 
 - 推送前 **必須**通過 `pre-push` hook
 - 合併主支 **必須**透過 PR 與 `gh`（避免本地未審查直推 `main`）
+- 發生 PR / review / checks 事件時，**必須**先使用 repo 既有 review 稽核腳本（如 `pnpm review:codex:audit`）盤點 review threads，再配合 `gh` 逐條回覆並轉為 `resolved`；不得留下未回覆或未關閉的審查狀態
 - 若 PR checks 未完成或失敗，**不得**強制合併（除非維護者批准例外）
 
 ## Quality Gates (Repo SSOT)
