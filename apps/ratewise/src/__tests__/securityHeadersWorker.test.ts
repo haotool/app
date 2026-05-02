@@ -494,15 +494,24 @@ describe('security-headers worker', () => {
 
   it('改寫 root robots.txt 時必須移除條件式驗證 header 與過期 validators', async () => {
     const fetchSpy = vi.fn().mockResolvedValue(
-      new Response('User-agent: *\nAllow: /\n', {
-        status: 200,
-        headers: {
-          'content-type': 'text/plain; charset=utf-8',
-          etag: 'W/"origin-robots"',
-          'last-modified': 'Sat, 25 Apr 2026 10:08:07 GMT',
-          'cache-control': 'public, max-age=0, must-revalidate',
+      new Response(
+        [
+          'User-agent: *',
+          'Allow: /',
+          'Content-Signal: ai-train=no, search=yes, ai-input=no',
+          'Sitemap: https://app.haotool.org/ratewise/sitemap.xml',
+          '',
+        ].join('\n'),
+        {
+          status: 200,
+          headers: {
+            'content-type': 'text/plain; charset=utf-8',
+            etag: 'W/"origin-robots"',
+            'last-modified': 'Sat, 25 Apr 2026 10:08:07 GMT',
+            'cache-control': 'public, max-age=0, must-revalidate',
+          },
         },
-      }),
+      ),
     );
     globalThis.fetch = fetchSpy;
 

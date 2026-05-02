@@ -1,8 +1,9 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.9.2
+> **文件版本**: v2.9.3
 > **建立日期**: 2026-03-23
 > **最後更新**: 2026-05-02
+> **v2.9.3 變更**: 2026-05-02 正式站 Lighthouse 抽樣發現 `app.haotool.org/robots.txt` 上游仍殘留非標準 `Content-Signal`，導致 RateWise 三個 canonical URL SEO 92；Worker v5.1 改為在 root robots rewrite 時清洗 body，並以 `securityHeadersWorker.test.ts` regression test 守門，避免文件宣稱已移除但 production root robots 回歸。
 > **v2.9.2 變更**: 2026-05-02 依 Superpowers 平行 SEO 審查修正頂級 SEO 漂移：① `verify-seo-ssot.mjs` schema 口徑對齊 `/faq/ only` FAQPage 與幣別頁 `ExchangeRateSpecification`；② 正向金額頁文案改為「買外幣所需台幣」，反向金額頁明確標示台幣金額，避免 AI 摘要誤讀；③ `/seo-tech/` E-E-A-T 信任訊號移除「無追蹤」並對齊 Google Analytics 隱私揭露；④ Googlebot / Google-Extended 角色依 Google 官方文件校正；⑤ 新增 `seo-truthfulness` / `seo-ssot` / `build-scripts` 守門測試。
 > **v2.9.1 變更**: 2026-05-02 校正已完成但仍被列為 fail / 待補的 SEO / AI readiness 項目：root / RateWise Markdown negotiation、Link headers、`.md` `text/markdown`、RFC 9727 API catalog、Agent Skills Discovery v0.2.0 與 P1-9 均依 `security-headers/src/worker.js` v5.0 和 `securityHeadersWorker.test.ts` 標記為完成；OAuth / MCP / WebMCP / A2A 明確改為「不適用 / 未提供產品能力」而非 fail；補上文檔漂移守門測試，避免已完成 Worker 能力回寫成 pending。
 > **v2.9.0 變更**: 2026-05-01 同步 v2.22.7–v2.22.8 批次修復：① robots.txt 移除非標準 `Content-Signal` 指令（改為完全刪除，包含 Worker 注入邏輯）→ Lighthouse SEO 92→100；② WebSite schema 移除無實際效果的 `SearchAction`/`potentialAction`；③ 幣別頁 `commonAmounts` 改從 `INDEXABLE_FORWARD_AMOUNTS` 衍生，消除 SSG 白名單漂移產生的站內 404；④ OpenData 頁與 FAQ 頁 raw email 改用 `MailtoLink` 元件渲染，防止 CF Email Obfuscation 改寫 `/cdn-cgi/l/email-protection`；⑤ `SITE_CONFIG.description`（`seo-paths.config.mjs` + `seo-paths.ts`）對齊 `DEFAULT_DESCRIPTION` 文字，消除 Markdown mirror 與 HTML meta description 的 SSOT 漂移；⑥ Worker v5.0 部署（移除 Content-Signal 注入，直連 `.md` 強制回 `text/markdown`）；⑦ §12 新增 §12.8 v2.22.7–v2.22.8 批次修復稽核紀錄。
@@ -797,7 +798,7 @@ Disallow: /ratewise/ui-showcase/
 Disallow: /ratewise/?
 ```
 
-> **v2.22.8 變更**：robots.txt 已**完全移除** `Content-Signal: ai-train=no, search=yes, ai-input=no` directive（v2.22.7 轉注釋，v2.22.8 刪除，Worker v5.0 移除注入邏輯）。原因：Lighthouse 13 將此 RFC 草案 directive 誤判為「Unknown directive」扣 8 分（SEO 92），移除後 SEO 恢復 100/100。相關外部規格見 §1.4 點 10。
+> **v2.22.8 / Worker v5.1 變更**：robots.txt 已**完全移除** `Content-Signal: ai-train=no, search=yes, ai-input=no` directive（v2.22.7 轉注釋，v2.22.8 刪除，Worker v5.0 移除注入邏輯；Worker v5.1 進一步清洗 root robots 上游殘留 body 行）。原因：Lighthouse 13 將此 RFC 草案 directive 誤判為「Unknown directive」扣 8 分（SEO 92），移除後 SEO 恢復 100/100。相關外部規格見 §1.4 點 10。
 
 **四層分組設計原則**（參考 OpenAI、Anthropic、Google 2026 最新官方文件）：
 
@@ -1705,15 +1706,16 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 | S4   | `/seo-tech/` E-E-A-T 隱私信任訊號矛盾    | HIGH   | 移除「無追蹤」宣稱，改為「無帳號、本機存儲；僅使用匿名流量分析並於隱私政策揭露」                     | `seo-truthfulness.test.ts`                     |
 | S5   | Google-Extended 角色說明不精確           | LOW    | 文件改列 `Googlebot` 為 Google Search / AI Overviews 控制；`Google-Extended` 為 Gemini / Vertex 控制 | `seo-truthfulness.test.ts`                     |
 | S6   | `seo-best-practices.test.ts` 舊 P12 註解 | LOW    | 測試註解改為 `/faq/ only` FAQPage 策略，幣別頁以 `ExchangeRateSpecification` 作為金融頁 truth schema | `seo-best-practices.test.ts`                   |
+| S7   | root robots 上游殘留 `Content-Signal`    | HIGH   | Worker v5.1 在 root robots rewrite 時清洗非標準 directive body 行，避免 Lighthouse SEO 92 回歸       | `securityHeadersWorker.test.ts`                |
 
 #### 12.9.2 本輪評分
 
-| 構面                       | 修復前 | 修復後 | 說明                                                                    |
-| -------------------------- | ------ | ------ | ----------------------------------------------------------------------- |
-| Technical SEO              | 92     | 94     | `verify-seo-ssot.mjs` 不再因舊 schema 預期產生 production 假失敗        |
-| Structured data / Head SEO | 91     | 95     | FAQPage `/faq/ only` 與幣別頁 `ExchangeRateSpecification` 口徑重新對齊  |
-| AI SEO / AEO               | 82     | 88     | 修正金額方向、cashSell 語意、Google crawler 角色與 E-E-A-T 隱私信任訊號 |
-| Overall SEO readiness      | 90     | 93     | 仍保留 Mobile LCP、Desktop CLS、og-image MIME/size、404 SEO 化等待補項  |
+| 構面                       | 修復前 | 修復後 | 說明                                                                                    |
+| -------------------------- | ------ | ------ | --------------------------------------------------------------------------------------- |
+| Technical SEO              | 92     | 98     | `verify-seo-ssot.mjs` 口徑對齊，且 root robots `Content-Signal` 回歸由 Worker v5.1 清洗 |
+| Structured data / Head SEO | 91     | 95     | FAQPage `/faq/ only` 與幣別頁 `ExchangeRateSpecification` 口徑重新對齊                  |
+| AI SEO / AEO               | 82     | 88     | 修正金額方向、cashSell 語意、Google crawler 角色與 E-E-A-T 隱私信任訊號                 |
+| Overall SEO readiness      | 90     | 95     | 技術 SEO 回歸已收斂；仍保留 Mobile LCP、Desktop CLS、og-image MIME/size 等等待補項      |
 
 #### 12.9.3 權威依據
 
@@ -1913,6 +1915,7 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 | 日期       | 版本   | 變更摘要                                                                                                                                                                                                                                                                                                                                                                   |
 | ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-02 | v2.9.3 | 正式站 Lighthouse 抽樣確認 root `app.haotool.org/robots.txt` 上游仍含非標準 `Content-Signal`，造成 RateWise 首頁 / FAQ / About SEO 92；Worker v5.1 新增 root robots body sanitizer 並以 regression test 守門，將文件宣稱、worker 行為與 production SEO gate 重新對齊。                                                                                                     |
 | 2026-05-02 | v2.9.2 | Superpowers 平行 SEO 審查收斂：修正 production SEO schema 驗證口徑、正反向金額頁方向文案、cashSell 語意、`/seo-tech/` 隱私信任訊號與 Googlebot / Google-Extended 角色說明；新增 `seo-ssot`、`seo-truthfulness`、`build-scripts` 守門測試，更新本輪分層評分。                                                                                                               |
 | 2026-05-02 | v2.9.1 | 校正 SEO / AI readiness 狀態漂移：Worker v5.0 已完成的 root / RateWise Markdown negotiation、Link headers、`.md` Content-Type、API catalog、Agent Skills Discovery 與 P1-9 從 fail / 待補移除；OAuth / MCP / WebMCP / A2A 改列 N/A；新增文檔漂移守門測試，避免完成項回寫 pending。                                                                                         |
 | 2026-05-01 | v2.9.0 | 同步 v2.22.7–v2.22.8 批次修復：§1.4 點 10 標記 Content-Signal 已移除（LH SEO 92→100）；§4.3 新增 WebSite/SearchAction 刻意省略決策紀錄；§8.1 補 Content-Signal 移除說明；§12.7.1 On-page 評分更新至 100（+15）；§12.7.6 新增 Content-Signal resolved 行；§12.7.9 robots.txt 與 Content-Signal 行更新、SEO 評分欄更新為 92→100；§12.8 新增 v2.22.7–v2.22.8 批次修復稽核紀錄 |
