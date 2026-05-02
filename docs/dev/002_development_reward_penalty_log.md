@@ -653,3 +653,8 @@
 - ID：ratewise-markdown-mirror-noindex-guard-2026-05-02
 - 原因：正式站 `.md` mirrors 雖已正確回 `text/markdown` 並供 AI crawler 讀取，但未明確宣告 `noindex`，存在 mirror 與 canonical HTML 重複索引風險。
 - 解法：依 Google Search Central 非 HTML `X-Robots-Tag` 規範，於 Cloudflare Worker v5.1 與 `_headers` 對直連 `.md` 補 `X-Robots-Tag: noindex`，同時以測試鎖定 markdown negotiation 不得誤傷 canonical URL 索引。
+
+- 日期：2026-05-02
+- ID：pr325-markdown-negotiation-noindex-inheritance-fix
+- 原因：Codex P1 指出 markdown negotiation 會繼承上游 `.md` 的 `X-Robots-Tag: noindex`，導致 canonical URL 的 markdown 變體誤帶 noindex。
+- 解法：在 Worker 的 markdown negotiation 分支明確刪除繼承而來的 `X-Robots-Tag`，並把測試改成模擬上游實際帶 `noindex` 的情況，鎖住這個回歸。
