@@ -18,6 +18,11 @@
 - 解法：以 build-time rates 移除首屏匯率空窗，延後非關鍵趨勢圖/分析/PWA 暖機，A/B 後 Performance 80、SEO 100。
 
 - 日期：2026-05-02
+- ID：ratewise-footer-time-slot-cls-2026-05-02
+- 原因：`#320` 雖已移除 SEO layout skeleton，但 Footer 更新時間仍會在 hydration 後以不同字寬文字替換，導致 `/about` Lighthouse 保持 0.89。
+- 解法：將 Footer 的來源時間與刷新時間改為固定寬度等寬數字槽位，消除 hydration 後的殘餘版面位移並補上回歸測試。
+
+- 日期：2026-05-02
 - ID：root-robots-content-signal-production-drift
 - 原因：正式站 root `robots.txt` 上游仍殘留非標準 `Content-Signal`，Lighthouse 將三個 RateWise canonical URL 的 SEO 扣到 92。
 - 解法：讓 security-headers Worker v5.1 在 root robots rewrite 時清洗 `Content-Signal` body 行，並以 regression test 守門。
