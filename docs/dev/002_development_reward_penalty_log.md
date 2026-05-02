@@ -18,6 +18,11 @@
 - 解法：以 build-time rates 移除首屏匯率空窗，延後非關鍵趨勢圖/分析/PWA 暖機，A/B 後 Performance 80、SEO 100。
 
 - 日期：2026-05-02
+- ID：ratewise-prerender-dist-stale-rebuild-guard
+- 原因：SEO public surface 測試只檢查 `dist` 是否存在，rebase 後會沿用過期 HTML，讓 `/seo-tech/` 對外揭露頁被舊快照誤判為 SSOT 漂移。
+- 解法：讓 `ensurePrerenderDist` 支援 source freshness 檢查，當監看檔案比 `dist` 新時自動重建 prerender 產物，再由 `seo-public-surface.test.ts` 明確宣告監看路徑。
+
+- 日期：2026-05-02
 - ID：ratewise-footer-time-slot-cls-2026-05-02
 - 原因：`#320` 雖已移除 SEO layout skeleton，但 Footer 更新時間仍會在 hydration 後以不同字寬文字替換，導致 `/about` Lighthouse 保持 0.89。
 - 解法：將 Footer 的來源時間與刷新時間改為固定寬度等寬數字槽位，消除 hydration 後的殘餘版面位移並補上回歸測試。

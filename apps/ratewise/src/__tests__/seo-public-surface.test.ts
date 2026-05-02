@@ -50,6 +50,12 @@ beforeAll(async () => {
     projectRoot: appRoot,
     distRoot,
     requiredPaths: [sitemapPath],
+    sourcePaths: [
+      resolve(appRoot, 'src/pages/SeoTech.tsx'),
+      resolve(appRoot, 'src/config/seo-build-pipeline.ts'),
+      resolve(appRoot, 'src/config/seo-paths.ts'),
+      resolve(appRoot, 'src/config/seo-schema-registry.ts'),
+    ],
   });
 }, 120000);
 
