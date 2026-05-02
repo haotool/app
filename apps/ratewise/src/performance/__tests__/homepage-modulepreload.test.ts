@@ -39,10 +39,17 @@ describe.skipIf(!distExists || !isExplicitBundleTest)('homepage modulepreload bu
     if (!entry) {
       throw new Error('index.html entry not found in manifest');
     }
-    const files = [
-      entry.file,
-      ...(entry.imports ?? []).map((key) => manifest[key]?.file).filter((f): f is string => !!f),
-    ];
+    const fileSet = new Set<string>();
+    const collectFiles = (key: string) => {
+      const chunk = manifest[key];
+      if (!chunk) return;
+      if (chunk.file) fileSet.add(chunk.file);
+      for (const dep of chunk.imports ?? []) {
+        if (!fileSet.has(manifest[dep]?.file ?? '')) collectFiles(dep);
+      }
+    };
+    collectFiles('index.html');
+    const files = Array.from(fileSet);
     const brotliBytes = files.reduce((total, file) => {
       const abs = join(distDir, file);
       statSync(abs);
