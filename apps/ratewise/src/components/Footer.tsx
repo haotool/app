@@ -46,27 +46,53 @@ const formatTime = (dateString: string | null) => {
   }
 };
 
+function TimeSlot({ value }: { value: string }) {
+  return (
+    <span
+      data-testid="footer-time-slot"
+      className="inline-block min-w-[11ch] whitespace-nowrap text-left font-mono tabular-nums"
+    >
+      {value}
+    </span>
+  );
+}
+
+function FooterUpdateTimeText({
+  sourceTime,
+  refreshTime,
+}: {
+  sourceTime: string;
+  refreshTime: string;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      <span>{t('footer.updateTime')}</span>
+      <span>{t('footer.source')}</span>
+      <TimeSlot value={sourceTime} />
+      <span aria-hidden="true">·</span>
+      <span>{t('footer.refresh')}</span>
+      <TimeSlot value={refreshTime} />
+    </span>
+  );
+}
+
 /** 獨立的時間顯示組件，用於 ClientOnly 渲染以避免 hydration mismatch */
 function UpdateTimeDisplay() {
-  const { t } = useTranslation();
   const { lastUpdate, lastFetchedAt } = useExchangeRates();
 
   return (
-    <span>
-      {t('footer.updateTime')} {t('footer.source')} {formatTime(lastUpdate)} · {t('footer.refresh')}{' '}
-      {formatTime(lastFetchedAt)}
-    </span>
+    <FooterUpdateTimeText
+      sourceTime={formatTime(lastUpdate)}
+      refreshTime={formatTime(lastFetchedAt)}
+    />
   );
 }
 
 /** 時間顯示的 Fallback (SSG 時顯示的靜態內容) */
 function UpdateTimeFallback() {
-  const { t } = useTranslation();
-  return (
-    <span>
-      {t('footer.updateTime')} {t('footer.source')} --/-- --:-- · {t('footer.refresh')} --/-- --:--
-    </span>
-  );
+  return <FooterUpdateTimeText sourceTime="--/-- --:--" refreshTime="--/-- --:--" />;
 }
 
 export function Footer() {

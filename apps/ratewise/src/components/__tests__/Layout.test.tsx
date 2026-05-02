@@ -122,6 +122,14 @@ describe('Layout Component', () => {
       const sourceCode = await fs.readFile(layoutPath, 'utf-8');
       expect(sourceCode).not.toContain('UpdatePromptLoader');
     });
+
+    it('SEO Layout 不應以 SkeletonLoader 包住 children，避免 hydration CLS', async () => {
+      const fs = await import('node:fs/promises');
+      const path = await import('node:path');
+      const layoutPath = path.resolve(__dirname, '../Layout.tsx');
+      const sourceCode = await fs.readFile(layoutPath, 'utf-8');
+      expect(sourceCode).not.toContain('fallback={<SkeletonLoader />}');
+    });
   });
 
   describe('React.StrictMode 驗證', () => {

@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-02
+- ID：ratewise-about-lighthouse-cls-hydration-layout
+- 原因：SEO Layout 在 client hydration 期間先顯示 `SkeletonLoader` 再切換為真實內容，導致 `/about/` Lighthouse 隨機出現 CLS 0.18963。
+- 解法：移除 SEO Layout 對 lazy children 的骨架 fallback，並固定 Footer 時間槽寬度與字體度量，將 `/about/` 桌面 Lighthouse CLS 收斂為 0。
+
+- 日期：2026-05-02
 - ID：ratewise-lhci-canonical-smoke-paths
 - 原因：Lighthouse CI 掃描 `/about` 無尾斜線 URL，本地 preview 先回首頁 app shell，造成 hydration 後 CLS 誤判。
 - 解法：將 LHCI smoke paths 收斂到 `APP_CONFIG.lighthouseSmokePaths`，統一掃描 canonical trailing slash URL。

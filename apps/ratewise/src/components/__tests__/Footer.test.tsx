@@ -45,4 +45,17 @@ describe('Footer', () => {
     );
     expect(matches.length).toBeGreaterThan(0);
   });
+
+  it('reserves stable width for update timestamps to avoid hydration CLS', () => {
+    renderFooter();
+    const timeSlots = screen.getAllByTestId('footer-time-slot');
+
+    expect(timeSlots).toHaveLength(4);
+    for (const slot of timeSlots) {
+      expect(slot).toHaveClass('inline-block');
+      expect(slot).toHaveClass('min-w-[11ch]');
+      expect(slot).toHaveClass('font-mono');
+      expect(slot).toHaveClass('tabular-nums');
+    }
+  });
 });
