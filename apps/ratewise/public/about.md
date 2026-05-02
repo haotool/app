@@ -3,7 +3,7 @@
 > 了解 HaoRate 的資料來源、更新機制、技術架構與 SEO 透明度。站點以台銀牌告實際買賣價為核心，支援 18 種貨幣、PWA 離線使用、SSG 預渲染、JSON-LD 結構化資料與 AI 可讀文件輸出，所有公開資訊皆可追溯。
 
 - Canonical: https://app.haotool.org/ratewise/about/
-- Version: v2.22.9
+- Version: v2.22.10
 
 ## 定位
 
@@ -20,8 +20,8 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 - **PWA 離線使用**：Service Worker 預快取，無網路仍可換算。
 - **SSG 預渲染**：所有 SEO 頁面於 build 期產生靜態 HTML。
-- **結構化資料**：JSON-LD 包含 WebSite、Organization、SoftwareApplication、HowTo、BreadcrumbList、Article、FinancialService、ImageObject。
-- **AI 友善**：robots.txt 允許 OpenAI / Anthropic / Perplexity / Google / Apple 等主流 AI 爬蟲；提供 llms.txt、llms-full.txt、openapi.json 供 LLM 引用。
+- **結構化資料**：JSON-LD 包含 WebSite、Organization、SoftwareApplication、CurrencyConversionService（首頁）、ExchangeRateSpecification（幣別頁）、HowTo、BreadcrumbList、Article、FAQPage（限 /faq/）、Dataset（開放資料）與 ImageObject。
+- **AI 友善**：robots.txt 允許 OpenAI / Anthropic / Perplexity / Google / Apple / DeepSeek / Mistral 等 39+ 主流 AI 爬蟲（四層治理）；提供 llms.txt、llms-full.txt、openapi.json 供 LLM 引用。
 - **開放原始碼**：所有程式碼公開於 GitHub（https://github.com/haotool/app）。
 
 ## 作者
@@ -62,5 +62,5 @@ robots.txt 明確允許 Googlebot 讀取；Googlebot 是 Google Search 與 AI Ov
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.9），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.10），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_

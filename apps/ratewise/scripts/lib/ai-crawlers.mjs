@@ -24,6 +24,8 @@ export const AI_CRAWLER_TIERS = [
       'Timpibot',
       'ProRataInc',
       'Novellum AI Crawl',
+      'DeepSeekBot',
+      'MistralBot',
     ],
   },
   {

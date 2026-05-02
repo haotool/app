@@ -3,7 +3,7 @@
 > HaoRate 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。
 
 - Canonical: https://app.haotool.org/ratewise/open-data/
-- Version: v2.22.9
+- Version: v2.22.10
 
 ## 端點
 
@@ -90,5 +90,5 @@ jsDelivr CDN（建議）：全球 PoP 節點加速，無明確請求上限，支
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.9），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.10），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_
