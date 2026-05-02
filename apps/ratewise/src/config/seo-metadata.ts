@@ -330,10 +330,14 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
         '現金匯率',
         '多幣別換算',
         '匯率換算工具',
+        'DCC 動態貨幣轉換',
+        '海外刷卡匯率',
+        '換匯成本試算',
         'exchange rate',
         'currency exchange TWD',
         'TWD exchange rate',
         'Taiwan Bank exchange rate',
+        'bank sell rate vs mid rate',
         'PWA progressive web app',
       ],
     },
@@ -487,7 +491,7 @@ export function buildCurrencyConversionServiceJsonLd(): JsonLdBlock {
     provider: { '@id': orgId },
     url: SITE_BASE_URL,
     areaServed: 'TW',
-    availableLanguage: ['zh-TW', 'en', 'ja'],
+    availableLanguage: ['zh-TW', 'en', 'ja', 'ko'],
     inLanguage: DEFAULT_LOCALE,
     serviceType: 'Currency Exchange Rate Information',
     featureList: [
@@ -913,7 +917,7 @@ export const HOMEPAGE_SEO = {
     buildShareImageJsonLd(OG_IMAGE_ALT, `${APP_INFO.name} 首頁匯率換算與趨勢功能預覽`),
     // WebPage with speakable：標記首頁 h1 為語音搜尋主要可讀區塊。
     buildWebPageJsonLd(`${APP_INFO.name} — 即時匯率換算`, SITE_SEO.description, '/', {
-      speakableCssSelectors: ['h1'],
+      speakableCssSelectors: ['h1', '#homepage-seo-section-heading'],
     }),
     // CurrencyConversionService：精確定義此工具的核心功能，AI 引擎優先引用。
     buildCurrencyConversionServiceJsonLd(),
