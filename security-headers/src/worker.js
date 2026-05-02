@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v5.0
+ * 安全標頭 Worker v5.1
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v5.1: 清洗 root robots.txt 上游殘留 Content-Signal，避免 Lighthouse SEO 92 回歸
  * - v5.0: 移除 robots Content-Signal 注入，直連 Markdown mirror 強制 text/markdown
  * - v4.9: 補齊 root agent discovery、Markdown negotiation、API catalog 與 Agent Skills index
  * - v4.8: 新增 AI 爬蟲存取記錄，追蹤 llms.txt 與 Markdown 鏡像存取頻率
@@ -25,7 +26,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '5.0';
+const SECURITY_POLICY_VERSION = '5.1';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -58,6 +59,13 @@ const AGENT_SKILLS_SCHEMA = 'https://schemas.agentskills.io/discovery/0.2.0/sche
 const API_CATALOG_PATH = '/.well-known/api-catalog';
 const AGENT_SKILLS_INDEX_PATH = '/.well-known/agent-skills/index.json';
 const LEGACY_AGENT_SKILLS_INDEX_PATH = '/.well-known/skills/index.json';
+
+function sanitizeRobotsTxt(body) {
+	return body
+		.split(/\r?\n/)
+		.filter((line) => !/^\s*Content-Signal\s*:/i.test(line))
+		.join('\n');
+}
 
 const AGENT_SKILL_ARTIFACTS = [
 	{
@@ -787,7 +795,8 @@ export default {
 			applyHtmlSecurityHeaders(response, url, profile, nonce);
 		} else {
 			if (shouldRewriteRobotsTxt) {
-				response = new Response(upstreamResponse.body, {
+				const robotsBody = request.method === 'HEAD' ? null : sanitizeRobotsTxt(await upstreamResponse.text());
+				response = new Response(robotsBody, {
 					status: upstreamResponse.status,
 					headers: upstreamResponse.headers,
 				});

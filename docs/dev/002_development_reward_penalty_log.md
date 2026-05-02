@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-02
+- ID：root-robots-content-signal-production-drift
+- 原因：正式站 root `robots.txt` 上游仍殘留非標準 `Content-Signal`，Lighthouse 將三個 RateWise canonical URL 的 SEO 扣到 92。
+- 解法：讓 security-headers Worker v5.1 在 root robots rewrite 時清洗 `Content-Signal` body 行，並以 regression test 守門。
+
+- 日期：2026-05-02
 - ID：ratewise-lhci-canonical-smoke-paths
 - 原因：Lighthouse CI 掃描 `/about` 無尾斜線 URL，本地 preview 先回首頁 app shell，造成 hydration 後 CLS 誤判。
 - 解法：將 LHCI smoke paths 收斂到 `APP_CONFIG.lighthouseSmokePaths`，統一掃描 canonical trailing slash URL。
