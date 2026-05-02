@@ -16,15 +16,14 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
+import { pathToFileURL } from 'url';
 import { spawnSync } from 'child_process';
 import { parseStringPromise } from 'xml2js';
+import { CONTENT_LASTMOD_POLICY } from '../../apps/ratewise/src/config/seo-lastmod-policy';
 
 const SITEMAP_PATH = resolve(__dirname, '../../apps/ratewise/public/sitemap.xml');
 const REPO_ROOT = resolve(__dirname, '../..');
-const HOMEPAGE_DEPENDENCIES = [
-  'apps/ratewise/src/features/ratewise/RateWise.tsx',
-  'apps/ratewise/src/config/seo-metadata.ts',
-];
+const HOMEPAGE_DEPENDENCIES = [...CONTENT_LASTMOD_POLICY['/'].lastmodFiles];
 
 interface SitemapUrl {
   loc: string[];
@@ -55,6 +54,13 @@ async function parseSitemap(xml: string): Promise<ParsedSitemap> {
 
 function formatDateISO8601(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+async function getExpectedSitemapPathCount(): Promise<number> {
+  const configUrl = pathToFileURL(resolve(REPO_ROOT, 'apps/ratewise/seo-paths.config.mjs')).href;
+  const { SEO_PATHS } = (await import(configUrl)) as { SEO_PATHS: string[] };
+
+  return SEO_PATHS.length;
 }
 
 describe('Sitemap 2026 Standards', () => {
@@ -103,7 +109,7 @@ describe('Sitemap 2026 Standards', () => {
   });
 
   describe('Timestamp Authenticity', () => {
-    it('homepage lastmod should track homepage SEO metadata changes', async () => {
+    it('homepage lastmod should track homepage lastmod policy files', async () => {
       const xml = readSitemap();
       const parsed = await parseSitemap(xml);
 
@@ -225,11 +231,12 @@ describe('Sitemap 2026 Standards', () => {
       const parsed = await parseSitemap(xml);
 
       const urls = parsed.urlset.url;
+      const expectedCount = await getExpectedSitemapPathCount();
 
       expect(
         urls.length,
-        'Should have 25 public sitemap paths (7 content + 1 legal + 17 currency pages)',
-      ).toBe(25);
+        `Should have ${expectedCount} public sitemap paths from seo-paths.config.mjs`,
+      ).toBe(expectedCount);
     });
   });
 });

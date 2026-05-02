@@ -1333,7 +1333,7 @@ export const ABOUT_PAGE_FAQ = [
   },
   {
     question: '這個網站使用哪些結構化資料幫助搜尋引擎與 AI 系統理解內容？',
-    answer: `目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、CurrencyConversionService（首頁）、ExchangeRateSpecification（幣對頁與金額頁的匯率數值）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、HowTo（Guide 教學頁）、FAQPage（僅 /faq/ 主 FAQ 頁）與 ImageObject（分享圖片授權）。首頁與內容頁仍保留可讀 FAQ HTML，但不會在所有頁面重複輸出 FAQPage JSON-LD；幣別換算頁則以可稽核的匯率數值 schema 為主，避免把 FAQ rich result 訊號擴散到金融頁。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。`,
+    answer: `目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、CurrencyConversionService（首頁）、ExchangeRateSpecification（幣對頁與金額頁的匯率數值）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、HowTo（Guide 教學頁）、FAQPage（僅 /faq/ 主 FAQ 頁）、Dataset（開放資料）與 ImageObject（分享圖片授權）。首頁與內容頁仍保留可讀 FAQ HTML，但不會在所有頁面重複輸出 FAQPage JSON-LD；幣別換算頁則以可稽核的匯率數值 schema 為主，避免把 FAQ rich result 訊號擴散到金融頁。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。`,
   },
   {
     question: `${APP_INFO.shortName} 是否支援 AI 搜尋引擎與 LLM 引用？`,
@@ -1748,7 +1748,7 @@ export const APP_ONLY_PAGE_SEO = {
   },
   seoTech: {
     title: `SEO 技術揭露 - ${APP_INFO.shortName} 搜尋引擎最佳化架構完整說明`,
-    description: `完整揭露 ${APP_INFO.shortName} 所採用的 SEO 技術：${SEO_PATHS.length} 個索引路徑、8 種 JSON-LD Schema、${PRERENDER_PATHS.length} 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。`,
+    description: `完整揭露 ${APP_INFO.shortName} 所採用的 SEO 技術：${SEO_PATHS.length} 個索引路徑、多種 JSON-LD Schema、${PRERENDER_PATHS.length} 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。`,
     pathname: '/seo-tech/',
     robots: 'index, follow',
     breadcrumb: [
@@ -1769,7 +1769,7 @@ export const APP_ONLY_PAGE_SEO = {
     ],
     jsonLd: buildArticleJsonLd(
       `SEO 技術揭露 - ${APP_INFO.shortName} 搜尋引擎最佳化架構完整說明`,
-      `完整揭露 ${APP_INFO.shortName} 所採用的 SEO 技術：${SEO_PATHS.length} 個索引路徑、8 種 JSON-LD Schema、${PRERENDER_PATHS.length} 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。`,
+      `完整揭露 ${APP_INFO.shortName} 所採用的 SEO 技術：${SEO_PATHS.length} 個索引路徑、多種 JSON-LD Schema、${PRERENDER_PATHS.length} 頁 SSG 預渲染、自動化資料管線與 PWA 離線支援。`,
       '/seo-tech/',
       GUIDE_PUBLISH_DATES.seoTech,
       {

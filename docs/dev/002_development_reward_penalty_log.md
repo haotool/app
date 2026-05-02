@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-02
+- ID：pr322-about-dataset-schema-disclosure
+- 原因：About FAQ、`/seo-tech/` registry、Open Data Markdown 與 sitemap 測試仍有公開 SEO truth surface 漂移。
+- 解法：補齊 `Dataset` registry、移除 schema/URL 硬編碼、同步 2026 sitemap 名稱，並讓 Open Data mirror 揭露使用限制與授權。
+
+- 日期：2026-05-02
 - ID：pr317-superpowers-review-format-and-seo-signal-fix
 - 原因：Superpowers 分支 review 發現本 PR 新增 002 條目混入非四行欄位，且 SEO Master GSC 指標仍殘留幣別頁 FAQPage 舊語意。
 - 解法：將新增 002 條目收斂回四行模板，並把 Rich Results / AI 摘要指標改為 FAQ 主頁 FAQPage 與幣別頁 ExchangeRateSpecification。

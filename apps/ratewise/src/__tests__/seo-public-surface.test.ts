@@ -84,7 +84,7 @@ describe('SEO public surface regression suite', () => {
     expect(text).toContain(String(SEO_PATHS.length));
     expect(text).toContain(String(PRERENDER_PATHS.length));
     expect(text).toContain(String(SEO_SCHEMA_REGISTRY.filter((schema) => schema.enabled).length));
-    expect(text).toContain('generate-sitemap-2025.mjs');
+    expect(text).toContain('generate-sitemap-2026.mjs');
     expect(text).not.toContain('248 個 SEO URL');
     expect(text).not.toContain('priority 欄位');
     expect(text).not.toContain('FinancialService');

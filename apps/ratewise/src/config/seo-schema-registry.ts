@@ -20,14 +20,14 @@ export const SEO_SCHEMA_REGISTRY = [
   {
     type: 'WebSite',
     desc: '網站整體識別、站名與發布者資訊',
-    pages: '首頁',
+    pages: '全站可索引頁',
     icon: Globe,
     enabled: true,
   },
   {
     type: 'SoftwareApplication',
     desc: '平台、定價、功能資訊；評分僅在樣本數達門檻且可稽核時輸出',
-    pages: '首頁',
+    pages: '全站可索引頁',
     icon: Code2,
     enabled: true,
   },
@@ -71,6 +71,13 @@ export const SEO_SCHEMA_REGISTRY = [
     desc: '指南頁文章作者、發布日期、字數',
     pages: 'Guide / Authority Guide',
     icon: FileText,
+    enabled: true,
+  },
+  {
+    type: 'Dataset',
+    desc: '開放匯率資料集、DataDownload 與資料授權資訊',
+    pages: '/open-data/',
+    icon: Database,
     enabled: true,
   },
   {

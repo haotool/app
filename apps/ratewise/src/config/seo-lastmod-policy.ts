@@ -9,6 +9,7 @@ export const CONTENT_LASTMOD_POLICY = {
     lastmodFiles: [
       'apps/ratewise/src/features/ratewise/RateWise.tsx',
       'apps/ratewise/src/components/HomepageSEOSection.tsx',
+      'apps/ratewise/src/config/seo-metadata.ts',
     ],
     fallbackDate: '2026-04-24',
   },
@@ -21,13 +22,13 @@ export const CONTENT_LASTMOD_POLICY = {
   '/about/': {
     type: 'trust',
     contentFiles: ['apps/ratewise/src/pages/About.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
-    lastmodFiles: ['apps/ratewise/src/pages/About.tsx'],
+    lastmodFiles: ['apps/ratewise/src/pages/About.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
     fallbackDate: '2026-04-20',
   },
   '/guide/': {
     type: 'editorial',
     contentFiles: ['apps/ratewise/src/pages/Guide.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
-    lastmodFiles: ['apps/ratewise/src/pages/Guide.tsx'],
+    lastmodFiles: ['apps/ratewise/src/pages/Guide.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
     fallbackDate: '2026-04-20',
   },
   '/sell-rate-vs-mid-rate/': {
@@ -58,6 +59,7 @@ export const CONTENT_LASTMOD_POLICY = {
     lastmodFiles: [
       'apps/ratewise/src/pages/OpenData.tsx',
       'apps/ratewise/src/config/api-endpoints.ts',
+      'apps/ratewise/src/config/seo-metadata.ts',
     ],
     fallbackDate: '2026-03-31',
   },

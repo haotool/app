@@ -9,7 +9,7 @@ const FORBIDDEN = [
   { phrase: '248 個 SEO URL', replacement: '249 個 SEO URL' },
   { phrase: '17 URLs', replacement: '249 SEO paths / historical only' },
   { phrase: '13 個長尾頁', replacement: 'historical only' },
-  { phrase: 'generate-sitemap.mjs', replacement: 'generate-sitemap-2025.mjs' },
+  { phrase: 'generate-sitemap.mjs', replacement: 'generate-sitemap-2026.mjs' },
   { phrase: 'priority 欄位', replacement: 'lastmod / hreflang / image sitemap' },
 ];
 

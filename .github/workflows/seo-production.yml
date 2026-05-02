@@ -13,7 +13,7 @@ name: SEO Production Validation
 # - 每日定時檢查 (UTC 00:00 = 台北 08:00)
 #
 # 更新時間: 2026-03-05
-# 依據: [SEO Best Practices 2025][Schema.org Guidelines 2025][Linus: 消除特殊情況]
+# 依據: [Google Search Central][Schema.org 官方文件][Linus: 消除特殊情況]
 
 on:
   workflow_run:

@@ -12,7 +12,7 @@ export const SEO_BUILD_PIPELINE = [
     required: false,
   },
   {
-    name: '../../scripts/generate-sitemap-2025.mjs',
+    name: '../../scripts/generate-sitemap-2026.mjs',
     output: 'public/sitemap.xml',
     desc: '249 個 SEO URL + lastmod + hreflang + image sitemap',
     required: true,
