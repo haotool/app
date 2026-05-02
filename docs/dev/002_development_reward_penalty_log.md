@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-02
+- ID：ratewise-ssg-serial-prerender-enoent-fix
+- 原因：`vite-react-ssg` 高並行渲染巢狀金額頁時，pre-push build 偶發讀取尚未寫出的 `index.html`。
+- 解法：將 SSG prerender concurrency 收斂為 1，優先確保 CI / pre-push 產物可重現，再由測試與 build 守門。
+
+- 日期：2026-05-02
 - ID：pr322-about-dataset-schema-disclosure
 - 原因：About FAQ、`/seo-tech/` registry、Open Data Markdown 與 sitemap 測試仍有公開 SEO truth surface 漂移。
 - 解法：補齊 `Dataset` registry、移除 schema/URL 硬編碼、同步 2026 sitemap 名稱，並讓 Open Data mirror 揭露使用限制與授權。
