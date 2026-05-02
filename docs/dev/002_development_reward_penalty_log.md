@@ -658,3 +658,8 @@
 - ID：pr325-markdown-negotiation-noindex-inheritance-fix
 - 原因：Codex P1 指出 markdown negotiation 會繼承上游 `.md` 的 `X-Robots-Tag: noindex`，導致 canonical URL 的 markdown 變體誤帶 noindex。
 - 解法：在 Worker 的 markdown negotiation 分支明確刪除繼承而來的 `X-Robots-Tag`，並把測試改成模擬上游實際帶 `noindex` 的情況，鎖住這個回歸。
+
+- 日期：2026-05-02
+- ID：ratewise-mailto-crawlable-anchor-seo-fix
+- 原因：第 2 輪 SEO iteration 發現 `/about/`、`/faq/` Lighthouse SEO 從 100→92，根因為 `MailtoLink` SSG 輸出 `<a>` 無 `href`（為避開 Cloudflare Email Obfuscation），觸發 `crawlable-anchors` 扣分。
+- 解法：將 `MailtoLink` 改用 `<button type="button">` 取代 `<a>`，繼續無 `mailto:`/raw email SSG 輸出避開 CF 與 scraper，並補上 5 個 vitest 守門 button-only / 無 mailto / SSG label 等不變式。
