@@ -8,6 +8,7 @@ import {
   INDEXABLE_REVERSE_TWD_AMOUNTS,
   INDEXABLE_AMOUNT_SEO_PATHS,
   INDEXABLE_REVERSE_AMOUNT_SEO_PATHS,
+  LIGHTHOUSE_CI_SMOKE_PATHS,
   PRERENDER_PATHS,
   REVERSE_CURRENCY_SEO_PATHS,
   SEO_FILES,
@@ -118,6 +119,16 @@ describe('SEO Paths Configuration', () => {
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');
       expect(APP_CONFIG.prerenderPaths).toEqual(PRERENDER_PATHS);
+    });
+
+    it('Lighthouse CI smoke paths 應使用 canonical trailing slash 路徑', () => {
+      expect(APP_CONFIG.lighthouseSmokePaths).toEqual(LIGHTHOUSE_CI_SMOKE_PATHS);
+      expect(LIGHTHOUSE_CI_SMOKE_PATHS).toEqual(['/', '/faq/', '/about/']);
+
+      LIGHTHOUSE_CI_SMOKE_PATHS.forEach((path) => {
+        expect(SEO_PATHS).toContain(path);
+        expect(normalizePath(path)).toBe(path);
+      });
     });
 
     it('REVERSE_CURRENCY_SEO_PATHS 應包含 17 個 TWD→外幣反向路徑', () => {

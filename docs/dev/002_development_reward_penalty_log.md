@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-02
+- ID：ratewise-lhci-canonical-smoke-paths
+- 原因：Lighthouse CI 掃描 `/about` 無尾斜線 URL，本地 preview 先回首頁 app shell，造成 hydration 後 CLS 誤判。
+- 解法：將 LHCI smoke paths 收斂到 `APP_CONFIG.lighthouseSmokePaths`，統一掃描 canonical trailing slash URL。
+
+- 日期：2026-05-02
 - ID：ratewise-sitemap-lastmod-section-policy
 - 原因：`seo-metadata.ts` 大型 SSOT 被整檔納入 lastmod 依賴，導致 sitemap 日期多樣性退化到 2。
 - 解法：改由 lastmod policy 宣告頁面對應 metadata 區段，讓 sitemap 只追蹤真正影響該頁的內容段落。

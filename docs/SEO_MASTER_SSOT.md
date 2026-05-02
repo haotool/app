@@ -1755,42 +1755,43 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 ### 🟢 已完成（2026-03-23 → 2026-04-10）
 
-| #     | 任務                                                                     | 完成版本  | 說明                                                                                              |
-| ----- | ------------------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------- |
-| P0-1  | 修正 llms.txt 金額頁 URL 格式描述（`?amount=` → 路徑式說明）             | v2.16.0   | `generate-llms-txt.mjs` 改為 SSG 路徑型描述                                                       |
-| P0-2  | llms.txt AI/LLM Access Control 加入 `Claude-User`                        | v2.16.0+  | llms.txt 已更新說明                                                                               |
-| P0-3  | robots.txt 明確 Allow `ClaudeBot`、`Claude-User`、`Claude-SearchBot`     | 已驗證    | `generate-robots-txt.mjs` 已包含三條 Anthropic 爬蟲規則                                           |
-| —     | AnswerCapsule 元件實作                                                   | v2.16.4   | `src/components/AnswerCapsule.tsx` + SEOPageMetadata.answerCapsule                                |
-| —     | AuthorityGuidePage 傳遞 jsonLd/faqContent/answerCapsule                  | v2.16.4   | 三篇 Guide 頁已具備接收 schema 的 props 管道                                                      |
-| —     | Guide 頁加入 answerCapsule（2 題）                                       | v2.16.4   | GUIDE_PAGE_SEO.answerCapsule 加入現金/即期常見問答                                                |
-| —     | 品牌 SSOT 收斂（manifest、PWA、llms、API 契約）                          | v2.16.1-2 | "HaoRate 匯率好工具" 品牌全面統一                                                                 |
-| —     | FAQ 頁 pathname 修正（`/faq` → `/faq/`）                                 | v2.16.0   | canonical URL trailing slash 已補                                                                 |
-| —     | seo-health-check decodeURIComponent 中文標點修正                         | v2.16.0   | 307 項健檢通過，0 錯誤                                                                            |
-| —     | amount 頁 canonical 與 schema URL 穩定性                                 | v2.16.0   | prerender HTML 回歸測試補強                                                                       |
-| —     | seo-static.ts 抽出（health-check 與 seo-metadata 共用標題常數）          | v2.16.4   | 移除 health-check 對 Vite runtime 的直接依賴                                                      |
-| —     | health-check 5xx 暫時性錯誤重試機制                                      | v2.16.4   | 避免短暫部署抖動誤報                                                                              |
-| —     | 金額頁數量修正（204 → 206）                                              | v2.16.0   | CURRENCY_AMOUNT(104) + REVERSE_CURRENCY_AMOUNT(102)                                               |
-| —     | SpeakableSpecification schema 補齊所有 9 個內容頁                        | v2.18.0   | GUIDE/OPEN_DATA/ABOUT/三篇Authority Guide 頁；`buildSpeakableJsonLd(['h1'])` 加入各頁 jsonLd 陣列 |
-| —     | Organization + Person `knowsAbout` 實體權威信號                          | v2.18.0   | `buildSiteJsonLd()` Organization 加入 12 個核心主題；`buildPersonJsonLd()` 加入 11 個作者知識領域 |
-| —     | Lighthouse CI 效能門檻調降至 0.83（自然波動緩衝）                        | v2.18.0   | `.lighthouserc.json` 從 0.85 降至 0.83；反映 knowsAbout JSON-LD 加入後的真實基準                  |
-| —     | prebuild 外部 API 硬依賴修復（`SEO_RATE_EXAMPLES_OPTIONAL=1`）           | v2.17.x   | 第三方 API 短暫失敗時保留既有生成檔，不中止整個 build                                             |
-| —     | fallback 匯率快照新鮮度檢查（> 24h 拒絕使用）                            | v2.17.x   | `prebuild-fetch-rates.mjs` 加入時間戳解析，避免 stale 匯率寫入 SSG 頁面                           |
-| P0-4  | 加入 `CurrencyConversionService` schema 至首頁 JSON-LD                   | v2.22.0   | `seo-metadata.ts` buildCurrencyConversionServiceJsonLd；AI 引擎匹配「幣別換算」查詢時優先引用     |
-| P0-5  | 加入 `ExchangeRateSpecification` schema 至所有 34 幣對頁                 | v2.22.0   | `seo-metadata.ts` buildExchangeRateSpecificationJsonLd；從 `seo-rate-examples.ts` 動態讀取匯率    |
-| P0-6  | 在所有幣對頁與金額頁加入可見更新時間戳                                   | v2.22.0   | `CurrencyLandingPage.tsx` 加入 `<time>` 元素顯示 `SEO_RATE_EXAMPLES_DATE`；Perplexity 新鮮度信號  |
-| P1-7  | 擴充 `seo-best-practices.test.ts` 加入 Schema 測試                       | v2.22.0   | 新增 CurrencyConversionService + ExchangeRateSpecification 測試（10 個測試案例）                  |
-| P1-1  | 在所有 34 幣對頁加入 Answer Capsule                                      | v2.23.0   | `buildCurrencyAnswerCapsule()` 函數；正向/反向幣對頁各 2 題 Answer Capsule                        |
-| P1-2  | 幣對頁 FAQ 擴展至 5-7 題                                                 | v2.22.0   | `CURRENCY_SPECIFIC_FAQ` 已為每個幣別提供 2-3 則特化 FAQ，加上通用 FAQ 共 5-7 題                   |
-| P1-3  | Authority Guide 頁 Answer Capsule                                        | v2.16.4   | `GUIDE_PAGE_SEO`、`OPEN_DATA_PAGE_SEO`、`ABOUT_PAGE_SEO` 已有 answerCapsule                       |
-| P1-4  | 匯率比較資訊（台銀 vs 中間價）                                           | v2.22.0   | `buildRateExampleSentence()` 在 FAQ 答案中嵌入具體差距數字                                        |
-| P1-5  | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                   | v2.24.0   | `buildAmountExchangeRateSpecificationJsonLd()` 函數；金額頁自動注入含換算結果的 schema            |
-| B2    | robots.txt 四層語意分組（training/search/user-agent/preview）            | 2026-04   | `generate-robots-txt.mjs` 重構；便於 opt-out 切換；詳見 §8                                        |
-| B3    | AI crawler 清單抽出共用 SSOT                                             | 2026-04   | `scripts/lib/ai-crawlers.mjs` 供 robots.txt 與 llms.txt 共用；測試覆蓋 Claude/User/Search 角色    |
-| E1    | GA4 AI referral 追蹤（9 平台 utm + referrer 偵測 + sessionStorage 去重） | 2026-04   | `apps/shared/analytics/ga.ts`；詳見 §6.5；9 個單元測試覆蓋                                        |
-| A3    | 5 個 SSG 頁產生 `.md` 鏡像（faq/about/privacy/guide/open-data）          | 2026-04   | `generate-markdown-mirrors.mjs`（prettier 正規化）+ `_headers` + llms.txt 索引；詳見 §2.3         |
-| P1-7a | `_headers` 加入 `Link: <...md>; rel="alternate"; type="text/markdown"`   | 2026-04   | RFC 8288 HTTP 標頭指引 AI 爬蟲從 HTML 頁發現 .md 鏡像（5 個頁面）                                 |
-| P1-9  | Accept-based content negotiation（Worker 層）                            | v5.0      | root `/` 與 `/ratewise/` 在 `Accept: text/markdown` 時回對應 `.md`；`Vary: Accept` 防快取混用     |
-| P2-9  | Speakable schema 整合測試（所有 7 個核心內容頁）                         | 2026-04   | `src/config/__tests__/seo-speakable.test.ts`；29 個測試案例；防 schema drift 回歸                 |
+| #     | 任務                                                                     | 完成版本  | 說明                                                                                                                           |
+| ----- | ------------------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| P0-1  | 修正 llms.txt 金額頁 URL 格式描述（`?amount=` → 路徑式說明）             | v2.16.0   | `generate-llms-txt.mjs` 改為 SSG 路徑型描述                                                                                    |
+| P0-2  | llms.txt AI/LLM Access Control 加入 `Claude-User`                        | v2.16.0+  | llms.txt 已更新說明                                                                                                            |
+| P0-3  | robots.txt 明確 Allow `ClaudeBot`、`Claude-User`、`Claude-SearchBot`     | 已驗證    | `generate-robots-txt.mjs` 已包含三條 Anthropic 爬蟲規則                                                                        |
+| —     | AnswerCapsule 元件實作                                                   | v2.16.4   | `src/components/AnswerCapsule.tsx` + SEOPageMetadata.answerCapsule                                                             |
+| —     | AuthorityGuidePage 傳遞 jsonLd/faqContent/answerCapsule                  | v2.16.4   | 三篇 Guide 頁已具備接收 schema 的 props 管道                                                                                   |
+| —     | Guide 頁加入 answerCapsule（2 題）                                       | v2.16.4   | GUIDE_PAGE_SEO.answerCapsule 加入現金/即期常見問答                                                                             |
+| —     | 品牌 SSOT 收斂（manifest、PWA、llms、API 契約）                          | v2.16.1-2 | "HaoRate 匯率好工具" 品牌全面統一                                                                                              |
+| —     | FAQ 頁 pathname 修正（`/faq` → `/faq/`）                                 | v2.16.0   | canonical URL trailing slash 已補                                                                                              |
+| —     | seo-health-check decodeURIComponent 中文標點修正                         | v2.16.0   | 307 項健檢通過，0 錯誤                                                                                                         |
+| —     | amount 頁 canonical 與 schema URL 穩定性                                 | v2.16.0   | prerender HTML 回歸測試補強                                                                                                    |
+| —     | seo-static.ts 抽出（health-check 與 seo-metadata 共用標題常數）          | v2.16.4   | 移除 health-check 對 Vite runtime 的直接依賴                                                                                   |
+| —     | health-check 5xx 暫時性錯誤重試機制                                      | v2.16.4   | 避免短暫部署抖動誤報                                                                                                           |
+| —     | 金額頁數量修正（204 → 206）                                              | v2.16.0   | CURRENCY_AMOUNT(104) + REVERSE_CURRENCY_AMOUNT(102)                                                                            |
+| —     | SpeakableSpecification schema 補齊所有 9 個內容頁                        | v2.18.0   | GUIDE/OPEN_DATA/ABOUT/三篇Authority Guide 頁；`buildSpeakableJsonLd(['h1'])` 加入各頁 jsonLd 陣列                              |
+| —     | Organization + Person `knowsAbout` 實體權威信號                          | v2.18.0   | `buildSiteJsonLd()` Organization 加入 12 個核心主題；`buildPersonJsonLd()` 加入 11 個作者知識領域                              |
+| —     | Lighthouse CI 效能門檻調降至 0.83（自然波動緩衝）                        | v2.18.0   | `.lighthouserc.json` 從 0.85 降至 0.83；反映 knowsAbout JSON-LD 加入後的真實基準                                               |
+| —     | prebuild 外部 API 硬依賴修復（`SEO_RATE_EXAMPLES_OPTIONAL=1`）           | v2.17.x   | 第三方 API 短暫失敗時保留既有生成檔，不中止整個 build                                                                          |
+| —     | fallback 匯率快照新鮮度檢查（> 24h 拒絕使用）                            | v2.17.x   | `prebuild-fetch-rates.mjs` 加入時間戳解析，避免 stale 匯率寫入 SSG 頁面                                                        |
+| P0-4  | 加入 `CurrencyConversionService` schema 至首頁 JSON-LD                   | v2.22.0   | `seo-metadata.ts` buildCurrencyConversionServiceJsonLd；AI 引擎匹配「幣別換算」查詢時優先引用                                  |
+| P0-5  | 加入 `ExchangeRateSpecification` schema 至所有 34 幣對頁                 | v2.22.0   | `seo-metadata.ts` buildExchangeRateSpecificationJsonLd；從 `seo-rate-examples.ts` 動態讀取匯率                                 |
+| P0-6  | 在所有幣對頁與金額頁加入可見更新時間戳                                   | v2.22.0   | `CurrencyLandingPage.tsx` 加入 `<time>` 元素顯示 `SEO_RATE_EXAMPLES_DATE`；Perplexity 新鮮度信號                               |
+| P1-7  | 擴充 `seo-best-practices.test.ts` 加入 Schema 測試                       | v2.22.0   | 新增 CurrencyConversionService + ExchangeRateSpecification 測試（10 個測試案例）                                               |
+| P1-1  | 在所有 34 幣對頁加入 Answer Capsule                                      | v2.23.0   | `buildCurrencyAnswerCapsule()` 函數；正向/反向幣對頁各 2 題 Answer Capsule                                                     |
+| P1-2  | 幣對頁 FAQ 擴展至 5-7 題                                                 | v2.22.0   | `CURRENCY_SPECIFIC_FAQ` 已為每個幣別提供 2-3 則特化 FAQ，加上通用 FAQ 共 5-7 題                                                |
+| P1-3  | Authority Guide 頁 Answer Capsule                                        | v2.16.4   | `GUIDE_PAGE_SEO`、`OPEN_DATA_PAGE_SEO`、`ABOUT_PAGE_SEO` 已有 answerCapsule                                                    |
+| P1-4  | 匯率比較資訊（台銀 vs 中間價）                                           | v2.22.0   | `buildRateExampleSentence()` 在 FAQ 答案中嵌入具體差距數字                                                                     |
+| P1-5  | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                   | v2.24.0   | `buildAmountExchangeRateSpecificationJsonLd()` 函數；金額頁自動注入含換算結果的 schema                                         |
+| B2    | robots.txt 四層語意分組（training/search/user-agent/preview）            | 2026-04   | `generate-robots-txt.mjs` 重構；便於 opt-out 切換；詳見 §8                                                                     |
+| B3    | AI crawler 清單抽出共用 SSOT                                             | 2026-04   | `scripts/lib/ai-crawlers.mjs` 供 robots.txt 與 llms.txt 共用；測試覆蓋 Claude/User/Search 角色                                 |
+| B4    | Lighthouse CI canonical smoke paths                                      | 2026-05   | `.lighthouserc.cjs` 從 `APP_CONFIG.lighthouseSmokePaths` 讀取 `/`、`/faq/`、`/about/`，避免無尾斜線 URL fallback 造成 CLS 誤判 |
+| E1    | GA4 AI referral 追蹤（9 平台 utm + referrer 偵測 + sessionStorage 去重） | 2026-04   | `apps/shared/analytics/ga.ts`；詳見 §6.5；9 個單元測試覆蓋                                                                     |
+| A3    | 5 個 SSG 頁產生 `.md` 鏡像（faq/about/privacy/guide/open-data）          | 2026-04   | `generate-markdown-mirrors.mjs`（prettier 正規化）+ `_headers` + llms.txt 索引；詳見 §2.3                                      |
+| P1-7a | `_headers` 加入 `Link: <...md>; rel="alternate"; type="text/markdown"`   | 2026-04   | RFC 8288 HTTP 標頭指引 AI 爬蟲從 HTML 頁發現 .md 鏡像（5 個頁面）                                                              |
+| P1-9  | Accept-based content negotiation（Worker 層）                            | v5.0      | root `/` 與 `/ratewise/` 在 `Accept: text/markdown` 時回對應 `.md`；`Vary: Accept` 防快取混用                                  |
+| P2-9  | Speakable schema 整合測試（所有 7 個核心內容頁）                         | 2026-04   | `src/config/__tests__/seo-speakable.test.ts`；29 個測試案例；防 schema drift 回歸                                              |
 
 ### 🔴 P0 — 立即（直接影響 AI 引用率）
 

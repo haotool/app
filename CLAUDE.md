@@ -220,6 +220,7 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 - SEO 持續優化任務請同步參照 `docs/dev/036_seo_iterative_execution_protocol.md`，預設至少 20 輪、可選 A/B 對照。
 - 每一輪至少紀錄 `seoScore`、`passRate`、`sitemap missingExpectedCount`，未達門檻可觸發回退。
+- Lighthouse CI smoke URL 必須由 `APP_CONFIG.lighthouseSmokePaths` 取得，且一律使用 canonical trailing slash；不得在 workflow 或腳本維護第二份非 canonical URL 清單。
 - Codex 回饋與 checks 變化請由 `review:codex:once` / `review:codex:watch` 管控，保留 traceability。
 
 ## QA Artifacts & Root Hygiene
