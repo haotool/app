@@ -9,6 +9,7 @@
  *
  * 變更記錄：
  * - v5.1: 清洗 root robots.txt 上游殘留 Content-Signal，避免 Lighthouse SEO 92 回歸
+ * - v5.1: Markdown mirror 補 X-Robots-Tag noindex，避免 .md 與 canonical HTML 重複索引
  * - v5.0: 移除 robots Content-Signal 注入，直連 Markdown mirror 強制 text/markdown
  * - v4.9: 補齊 root agent discovery、Markdown negotiation、API catalog 與 Agent Skills index
  * - v4.8: 新增 AI 爬蟲存取記錄，追蹤 llms.txt 與 Markdown 鏡像存取頻率
@@ -810,6 +811,10 @@ export default {
 
 			if (isMarkdownNegotiation || url.pathname.endsWith('.md')) {
 				response.headers.set('Content-Type', 'text/markdown; charset=utf-8');
+			}
+
+			if (url.pathname.endsWith('.md')) {
+				response.headers.set('X-Robots-Tag', 'noindex');
 			}
 
 			if (isImmutableHashedAsset(url.pathname)) {

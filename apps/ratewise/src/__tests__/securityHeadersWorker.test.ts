@@ -405,6 +405,29 @@ describe('security-headers worker', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('text/markdown');
+    expect(response.headers.get('x-robots-tag')).toBe('noindex');
+  });
+
+  it('markdown negotiation 應保留 canonical HTML URL 可索引性，不得誤設 noindex', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response('# ratewise markdown mirror', {
+        headers: {
+          'content-type': 'text/markdown; charset=utf-8',
+        },
+      }),
+    );
+
+    const response = await worker.fetch(
+      new Request('https://app.haotool.org/ratewise/', {
+        headers: {
+          accept: 'text/markdown',
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/markdown');
+    expect(response.headers.get('x-robots-tag')).toBeNull();
   });
 
   it('SEO Master SSOT 不得把 Worker 已完成的 AI readiness 能力回寫成 fail 或待補', () => {
