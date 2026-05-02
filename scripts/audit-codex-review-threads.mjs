@@ -11,6 +11,7 @@ const DEFAULT_THREAD_BATCH = 100;
 const DEFAULT_COMMENT_BATCH = 100;
 const DEFAULT_STATES = ['OPEN', 'MERGED'];
 const CODEX_BOT_PATTERNS = ['chatgpt-codex-connector', 'codex', 'openai-codex'];
+const NON_HUMAN_REPLY_PATTERNS = ['github-actions', '[bot]'];
 
 function parseArgs(argv) {
   const opts = {
@@ -97,6 +98,11 @@ function isCodexLogin(login = '') {
   return CODEX_BOT_PATTERNS.some((pattern) => normalized.includes(pattern));
 }
 
+function isNonHumanReplyLogin(login = '') {
+  const normalized = String(login).toLowerCase();
+  return NON_HUMAN_REPLY_PATTERNS.some((pattern) => normalized.includes(pattern));
+}
+
 function buildPrListQuery(states) {
   const statesLiteral = states.join(', ');
   return `
@@ -144,7 +150,36 @@ function buildThreadQuery() {
                   url
                   author { login }
                 }
+                pageInfo {
+                  hasNextPage
+                  endCursor
+                }
               }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      }
+    }
+  `;
+}
+
+function buildThreadCommentsQuery() {
+  return `
+    query($threadId: ID!, $first: Int!, $after: String) {
+      node(id: $threadId) {
+        ... on PullRequestReviewThread {
+          comments(first: $first, after: $after) {
+            nodes {
+              id
+              body
+              createdAt
+              updatedAt
+              url
+              author { login }
             }
             pageInfo {
               hasNextPage
@@ -228,8 +263,40 @@ function fetchReviewThreads(repo, prNumber) {
   return threads;
 }
 
+function fetchAllThreadComments(threadId, initialComments) {
+  const commentQuery = buildThreadCommentsQuery();
+  const nodes = [...(initialComments?.nodes ?? [])];
+  let pageInfo = initialComments?.pageInfo ?? { hasNextPage: false, endCursor: null };
+
+  while (pageInfo.hasNextPage) {
+    const payload = ghJson(
+      [
+        'api',
+        'graphql',
+        '-F',
+        `threadId=${threadId}`,
+        '-F',
+        `first=${DEFAULT_COMMENT_BATCH}`,
+        '-F',
+        `after=${pageInfo.endCursor ?? ''}`,
+        '-F',
+        'query=@-',
+      ],
+      commentQuery,
+    );
+
+    const group = payload.data?.node?.comments;
+    if (!group) break;
+    nodes.push(...group.nodes);
+    pageInfo = group.pageInfo ?? { hasNextPage: false, endCursor: null };
+  }
+
+  return nodes;
+}
+
 function classifyThread(pr, thread) {
-  const comments = thread.comments.nodes.map((comment) => ({
+  const allComments = fetchAllThreadComments(thread.id, thread.comments);
+  const comments = allComments.map((comment) => ({
     id: comment.id,
     author: comment.author?.login ?? '(unknown)',
     body: comment.body,
@@ -241,9 +308,13 @@ function classifyThread(pr, thread) {
   if (codexComments.length === 0) return null;
 
   const firstCodex = codexComments[0];
+  const latestCodex = codexComments.at(-1) ?? firstCodex;
   const lastComment = comments.at(-1) ?? null;
   const hasHumanReplyAfterCodex = comments.some(
-    (comment) => comment.createdAt > firstCodex.createdAt && !isCodexLogin(comment.author),
+    (comment) =>
+      comment.createdAt > latestCodex.createdAt &&
+      !isCodexLogin(comment.author) &&
+      !isNonHumanReplyLogin(comment.author),
   );
   const classes = [];
   if (!thread.isResolved) classes.push('unresolved');
@@ -265,15 +336,16 @@ function classifyThread(pr, thread) {
     isOutdated: thread.isOutdated,
     hasHumanReplyAfterCodex,
     firstCodexAt: firstCodex.createdAt,
+    latestCodexAt: latestCodex.createdAt,
     lastCommentAuthor: lastComment?.author ?? null,
     lastCommentAt: lastComment?.createdAt ?? null,
     lastCommentUrl: lastComment?.url ?? null,
     codexCommentCount: codexComments.length,
     latestCodexComment: {
-      author: codexComments.at(-1)?.author ?? null,
-      createdAt: codexComments.at(-1)?.createdAt ?? null,
-      url: codexComments.at(-1)?.url ?? null,
-      body: codexComments.at(-1)?.body ?? '',
+      author: latestCodex.author ?? null,
+      createdAt: latestCodex.createdAt ?? null,
+      url: latestCodex.url ?? null,
+      body: latestCodex.body ?? '',
     },
     classes,
   };
