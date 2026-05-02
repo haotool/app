@@ -1,5 +1,23 @@
 # @app/ratewise
 
+## 2.22.11
+
+### Patch Changes
+
+- 76c2e6f: 穩定 Footer 更新時間欄位的版面寬度，降低 SEO 內容頁在 hydration 後的 Lighthouse CLS 波動。
+- 4b78667: 改善首頁首屏載入：以建置時匯率作為初始狀態，並將趨勢圖、GA 與 PWA 儲存暖機延後到非首屏時段。
+- 0a75ae0: 修正 Lighthouse CI smoke audit 使用 canonical trailing slash URL，避免本地 preview fallback 造成非內容頁 CLS 誤判。
+- 421e99f: 新增首屏 bundle 預算守門測試，驗證 modulepreload 不含非必要 vendor（motion/dnd）且初始 JS brotli 維持在 135KB 內
+- 6d4f855: 修正 root robots.txt 殘留 Content-Signal 造成 Lighthouse SEO 扣分的生產環境漂移。
+- 0a75ae0: 新增 DeepSeekBot / MistralBot 至 AI 爬蟲四層治理 SSOT；修正 about.md 過期的 FinancialService schema 描述；統一爬蟲總數為動態 SSOT 計算（39+）
+- 0a75ae0: 修正 SEO 內容精確度：語言支援數量（三→四種）與 AI 爬蟲清單更新至 39+ 個，消除 HOMEPAGE_FAQ_CONTENT / HowTo 的內容漂移
+- 0a75ae0: 修正 Dataset schema 描述硬編碼 "18 種貨幣" 改用 SUPPORTED_CURRENCY_COUNT 動態 SSOT
+- 0a75ae0: 強化 SEO schema E-E-A-T 信號：修正 CurrencyConversionService 缺少韓文語系、擴充 Organization.knowsAbout（DCC / 海外刷卡 / 換匯成本）、首頁 speakable 加入 section heading
+- 0a75ae0: 修正 SEO 公開真相揭露與 AI 可讀鏡像同步，補齊 Dataset schema registry、Open Data 使用限制與 2026 sitemap 管線說明。
+- 0a75ae0: 讓 sitemap lastmod 追蹤頁面對應的 SEO metadata 段落，避免大型 SSOT 檔單次更新造成多頁時間戳漂移。
+- 0a75ae0: 讓 SSG 預渲染改為穩定序列輸出，避免大量巢狀金額頁在 CI 或 pre-push 中偶發產物讀取失敗。
+- 76c2e6f: fix: 長時間開啟的 RateWise 分頁回前景時會重新檢查本地日期，避免趨勢圖停在舊歷史匯率日期；同時移除 SEO 頁面 hydration 初期的骨架替換、讓低優先級 PWA offline-ready 提示靜默化，並補強 SSG SEO regression gate，避免 Lighthouse CLS 與 SEO 測試被乾淨 checkout 略過。
+
 ## 2.22.10
 
 ### Patch Changes
