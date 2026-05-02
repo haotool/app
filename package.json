@@ -43,6 +43,7 @@
     "monitor:history": "node scripts/check-history-manifest.mjs",
     "monitor:schedule-drift": "node scripts/monitor-schedule-drift.mjs",
     "review:codex": "node scripts/codex-review.mjs",
+    "review:codex:audit": "node scripts/audit-codex-review-threads.mjs",
     "review:codex:once": "node scripts/monitor-codex-review.mjs --once",
     "review:codex:watch": "node scripts/monitor-codex-review.mjs --follow --interval 30",
     "seo:collect-metrics": "node scripts/collect-seo-metrics.mjs",

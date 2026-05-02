@@ -12,6 +12,11 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-03
+- ID：repo-codex-review-thread-audit-automation
+- 原因：既有 Codex review 腳本只覆蓋單 PR 或近幾天留言，無法對整個 repo 穩定盤點 unresolved / no-reply review threads。
+- 解法：新增全 repo GraphQL 分頁稽核腳本與 `pnpm review:codex:audit` 入口，自動依 thread 狀態與人類回覆情況分類，並輸出可供後續自動回覆與清掃流程重用的文字/JSON 結果。
+
 - 日期：2026-05-02
 - ID：ratewise-homepage-lcp-build-time-rates
 - 原因：首頁首屏仍同步觸發趨勢圖歷史資料、GA 與 PWA icon 暖機，Lighthouse Performance 停在 73-74 且 LCP 超過 7 秒。
