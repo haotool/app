@@ -16,11 +16,11 @@ const distDir = join(__dirname, '../../../dist');
 const distExists = existsSync(join(distDir, 'index.html'));
 
 // 只有明確指定時才執行 bundle 預算測試
-// npm_lifecycle_event 在 vitest run 時會是 undefined 或 vitest
-// npm_lifecycle_script 會包含完整的命令
+// npm_lifecycle_event = 執行的 npm script 名稱（如 test:perf:bundle），pnpm 也適用
+// npm_lifecycle_script = 實際 shell 命令（vitest run...），不可靠作為腳本名稱識別
 const isExplicitBundleTest =
   process.env['RATEWISE_RUN_BUNDLE_BUDGET'] === '1' ||
-  process.env['npm_lifecycle_script']?.includes('test:perf:bundle');
+  process.env['npm_lifecycle_event'] === 'test:perf:bundle';
 
 // 必須同時滿足：1) dist 存在 2) 明確要求執行
 describe.skipIf(!distExists || !isExplicitBundleTest)('homepage modulepreload budget', () => {
@@ -39,10 +39,17 @@ describe.skipIf(!distExists || !isExplicitBundleTest)('homepage modulepreload bu
     if (!entry) {
       throw new Error('index.html entry not found in manifest');
     }
-    const files = [
-      entry.file,
-      ...(entry.imports ?? []).map((key) => manifest[key]?.file).filter((f): f is string => !!f),
-    ];
+    const fileSet = new Set<string>();
+    const collectFiles = (key: string) => {
+      const chunk = manifest[key];
+      if (!chunk) return;
+      if (chunk.file) fileSet.add(chunk.file);
+      for (const dep of chunk.imports ?? []) {
+        if (!fileSet.has(manifest[dep]?.file ?? '')) collectFiles(dep);
+      }
+    };
+    collectFiles('index.html');
+    const files = Array.from(fileSet);
     const brotliBytes = files.reduce((total, file) => {
       const abs = join(distDir, file);
       statSync(abs);

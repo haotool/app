@@ -30,8 +30,8 @@ BASELINE_SEO=98
 # 警告閾值 (降低超過此值觸發警告)
 WARNING_THRESHOLD=5
 
-# 待掃描頁面：從 APP_CONFIG.seoPaths 取 smoke subset，避免維護第二份 URL 清單。
-mapfile -t PAGES < <(node --input-type=module -e "import { APP_CONFIG } from './apps/ratewise/app.config.mjs'; const preferred = new Set(['/', '/faq/', '/about/', '/guide/', '/usd-twd/', '/jpy-twd/']); console.log(APP_CONFIG.seoPaths.filter((path) => preferred.has(path)).join('\\n'))")
+# 待掃描頁面：從 APP_CONFIG.lighthouseSmokePaths 取 canonical smoke subset，避免維護第二份 URL 清單。
+mapfile -t PAGES < <(node --input-type=module -e "import { APP_CONFIG } from './apps/ratewise/app.config.mjs'; console.log(APP_CONFIG.lighthouseSmokePaths.join('\\n'))")
 
 # 函數：打印帶顏色的訊息
 print_info() {

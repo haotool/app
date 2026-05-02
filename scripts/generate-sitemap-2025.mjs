@@ -299,7 +299,8 @@ function getLastModDate(path) {
   const lastmodFiles = contentPolicy?.lastmodFiles?.filter((file) =>
     existsSync(resolve(REPO_ROOT, file)),
   );
-  const gitDate = getGitCommitDate(
+  const gitDate = getPolicyLastModGitDate(
+    contentPolicy,
     lastmodFiles && lastmodFiles.length > 0 ? lastmodFiles : existingFiles,
   );
   if (gitDate) return gitDate;
@@ -324,6 +325,31 @@ function getGitCommitDate(files) {
 
   const gitDate = new Date(gitTimestamp);
   return Number.isNaN(gitDate.getTime()) ? null : gitDate;
+}
+
+function getGitLineRangeCommitDate(section) {
+  if (!section?.file || !section.start || !section.end) return null;
+
+  const rangeSpec = `${section.start},${section.end}:${section.file}`;
+  const gitResult = spawnSync('git', ['log', '-1', '-s', '--format=%cI', '-L', rangeSpec], {
+    cwd: REPO_ROOT,
+    encoding: 'utf-8',
+  });
+  const gitTimestamp = gitResult.status === 0 ? gitResult.stdout.trim() : '';
+  if (!gitTimestamp) return null;
+
+  const gitDate = new Date(gitTimestamp);
+  return Number.isNaN(gitDate.getTime()) ? null : gitDate;
+}
+
+function getPolicyLastModGitDate(contentPolicy, files) {
+  const dates = [
+    getGitCommitDate(files),
+    ...(contentPolicy?.metadataSections ?? []).map(getGitLineRangeCommitDate),
+  ].filter(Boolean);
+
+  if (dates.length === 0) return null;
+  return new Date(Math.max(...dates.map((date) => date.getTime())));
 }
 
 function parseDateInTaipei(dateText) {

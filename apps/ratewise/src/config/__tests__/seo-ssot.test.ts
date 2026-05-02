@@ -21,6 +21,7 @@ import {
   getReverseCurrencyLandingPageContent,
 } from '../seo-metadata';
 import { SEO_RATE_EXAMPLES } from '../generated/seo-rate-examples';
+import { SEO_SCHEMA_REGISTRY } from '../seo-schema-registry';
 
 describe('SEO SSOT', () => {
   it('should keep indexable locales limited to the default locale', () => {
@@ -495,6 +496,16 @@ describe('SEO SSOT', () => {
 
     it('答案應明確提及 ExchangeRateSpecification（幣別頁核心 YMYL schema）', () => {
       expect(schemaAnswer!.answer).toContain('ExchangeRateSpecification');
+    });
+
+    it('答案宣稱的 schema 類型應覆蓋 SEO schema registry 啟用清單', () => {
+      const enabledSchemaTypes = SEO_SCHEMA_REGISTRY.filter((schema) => schema.enabled).map(
+        (schema) => schema.type,
+      );
+
+      for (const schemaType of enabledSchemaTypes) {
+        expect(schemaAnswer!.answer).toContain(schemaType);
+      }
     });
 
     it('答案應表達幣別頁以可稽核匯率數值 schema 為主', () => {

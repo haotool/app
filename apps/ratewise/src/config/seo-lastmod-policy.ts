@@ -10,24 +10,57 @@ export const CONTENT_LASTMOD_POLICY = {
       'apps/ratewise/src/features/ratewise/RateWise.tsx',
       'apps/ratewise/src/components/HomepageSEOSection.tsx',
     ],
+    metadataSections: [
+      {
+        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        start: '/export function buildCurrencyConversionServiceJsonLd/',
+        end: '/export function buildWebPageJsonLd/',
+      },
+      {
+        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        start: '/export const HOMEPAGE_FAQ_CONTENT/',
+        end: '/export const FAQ_PAGE_ENTRIES/',
+      },
+    ],
     fallbackDate: '2026-04-24',
   },
   '/faq/': {
     type: 'editorial',
     contentFiles: ['apps/ratewise/src/pages/FAQ.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
-    lastmodFiles: ['apps/ratewise/src/pages/FAQ.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
+    lastmodFiles: ['apps/ratewise/src/pages/FAQ.tsx'],
+    metadataSections: [
+      {
+        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        start: '/export const FAQ_PAGE_ENTRIES/',
+        end: '/export const GUIDE_HOW_TO_STEPS/',
+      },
+    ],
     fallbackDate: '2026-04-21',
   },
   '/about/': {
     type: 'trust',
     contentFiles: ['apps/ratewise/src/pages/About.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
     lastmodFiles: ['apps/ratewise/src/pages/About.tsx'],
+    metadataSections: [
+      {
+        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        start: '/export const ABOUT_PAGE_FAQ/',
+        end: '/export const PRIVACY_PAGE_SEO/',
+      },
+    ],
     fallbackDate: '2026-04-20',
   },
   '/guide/': {
     type: 'editorial',
     contentFiles: ['apps/ratewise/src/pages/Guide.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
     lastmodFiles: ['apps/ratewise/src/pages/Guide.tsx'],
+    metadataSections: [
+      {
+        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        start: '/export const GUIDE_HOW_TO_STEPS/',
+        end: '/export const OPEN_DATA_PAGE_FAQ/',
+      },
+    ],
     fallbackDate: '2026-04-20',
   },
   '/sell-rate-vs-mid-rate/': {
@@ -58,6 +91,18 @@ export const CONTENT_LASTMOD_POLICY = {
     lastmodFiles: [
       'apps/ratewise/src/pages/OpenData.tsx',
       'apps/ratewise/src/config/api-endpoints.ts',
+    ],
+    metadataSections: [
+      {
+        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        start: '/export function buildOpenDataDatasetJsonLd/',
+        end: '/export function buildPersonJsonLd/',
+      },
+      {
+        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        start: '/export const OPEN_DATA_PAGE_FAQ/',
+        end: '/export const ABOUT_PAGE_FAQ/',
+      },
     ],
     fallbackDate: '2026-03-31',
   },

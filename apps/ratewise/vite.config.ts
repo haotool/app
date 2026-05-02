@@ -474,7 +474,9 @@ export default defineConfig(({ mode }) => {
       script: 'async',
       formatting: 'beautify',
       dirStyle: 'nested',
-      concurrency: 10,
+      // vite-react-ssg + Beasties may read freshly rendered nested amount pages during
+      // writeout. Serial rendering avoids intermittent ENOENT on CI/pre-push.
+      concurrency: 1,
       async includedRoutes(paths) {
         // 從 TypeScript SSOT 動態引入 SEO 路徑配置
         const { PRERENDER_PATHS, SEO_PATHS, LEGAL_SSG_PATHS, APP_ONLY_PRERENDER_PATHS } =

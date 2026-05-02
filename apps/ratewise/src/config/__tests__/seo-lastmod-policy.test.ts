@@ -35,6 +35,22 @@ describe('seo lastmod policy', () => {
     expect(CONTENT_LASTMOD_POLICY['/seo-tech/'].fallbackDate).toBe('2026-04-26');
   });
 
+  it('內容頁 lastmod 應追蹤 seo-metadata 的頁面段落而非整個大型 SSOT 檔', () => {
+    expect(CONTENT_LASTMOD_POLICY['/about/'].lastmodFiles).not.toContain(
+      'apps/ratewise/src/config/seo-metadata.ts',
+    );
+    expect(CONTENT_LASTMOD_POLICY['/about/'].metadataSections).toContainEqual({
+      file: 'apps/ratewise/src/config/seo-metadata.ts',
+      start: '/export const ABOUT_PAGE_FAQ/',
+      end: '/export const PRIVACY_PAGE_SEO/',
+    });
+    expect(CONTENT_LASTMOD_POLICY['/open-data/'].metadataSections).toContainEqual({
+      file: 'apps/ratewise/src/config/seo-metadata.ts',
+      start: '/export const OPEN_DATA_PAGE_FAQ/',
+      end: '/export const ABOUT_PAGE_FAQ/',
+    });
+  });
+
   it('authority guide 類內容頁在 shallow checkout 也應有穩定 fallback date', () => {
     expect(CONTENT_LASTMOD_POLICY['/sell-rate-vs-mid-rate/'].fallbackDate).toBe('2026-04-20');
     expect(CONTENT_LASTMOD_POLICY['/cash-vs-spot-rate/'].fallbackDate).toBe('2026-04-20');

@@ -3,7 +3,7 @@
 > HaoRate 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。
 
 - Canonical: https://app.haotool.org/ratewise/open-data/
-- Version: v2.22.9
+- Version: v2.22.10
 
 ## 端點
 
@@ -70,6 +70,15 @@ print(data['details']['JPY']['cash']['buy'])
 - GitHub Raw：備援用，建議不要高頻輪詢。
 - 建議同一客戶端同一資料集 5 分鐘 ≤ 1 次輪詢。
 
+## 使用限制與授權聲明
+
+- 允許個人專案、學術研究、非商業 App、教學與媒體引用。
+- 引用時請標示「資料來源：臺灣銀行牌告匯率」。
+- 禁止大量爬取歷史資料，避免對 CDN 或 GitHub 造成異常流量。
+- 禁止宣稱本資料為官方臺灣銀行 API；HaoRate 與臺灣銀行無隸屬關係。
+- 程式碼以 GPL-3.0 授權釋出；資料原始版權屬臺灣銀行。
+- 匯率僅供參考，實際交易以金融機構公告為準。
+
 ## 常見問題
 
 ### 1. 如何取得最新匯率資料？
@@ -90,5 +99,5 @@ jsDelivr CDN（建議）：全球 PoP 節點加速，無明確請求上限，支
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.9），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.10），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_

@@ -13,6 +13,26 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-02
+- ID：ratewise-lhci-canonical-smoke-paths
+- 原因：Lighthouse CI 掃描 `/about` 無尾斜線 URL，本地 preview 先回首頁 app shell，造成 hydration 後 CLS 誤判。
+- 解法：將 LHCI smoke paths 收斂到 `APP_CONFIG.lighthouseSmokePaths`，統一掃描 canonical trailing slash URL。
+
+- 日期：2026-05-02
+- ID：ratewise-sitemap-lastmod-section-policy
+- 原因：`seo-metadata.ts` 大型 SSOT 被整檔納入 lastmod 依賴，導致 sitemap 日期多樣性退化到 2。
+- 解法：改由 lastmod policy 宣告頁面對應 metadata 區段，讓 sitemap 只追蹤真正影響該頁的內容段落。
+
+- 日期：2026-05-02
+- ID：ratewise-ssg-serial-prerender-enoent-fix
+- 原因：`vite-react-ssg` 高並行渲染巢狀金額頁時，pre-push build 偶發讀取尚未寫出的 `index.html`。
+- 解法：將 SSG prerender concurrency 收斂為 1，優先確保 CI / pre-push 產物可重現，再由測試與 build 守門。
+
+- 日期：2026-05-02
+- ID：pr322-about-dataset-schema-disclosure
+- 原因：About FAQ、`/seo-tech/` registry、Open Data Markdown 與 sitemap 測試仍有公開 SEO truth surface 漂移。
+- 解法：補齊 `Dataset` registry、移除 schema/URL 硬編碼、同步 2026 sitemap 名稱，並讓 Open Data mirror 揭露使用限制與授權。
+
+- 日期：2026-05-02
 - ID：pr317-superpowers-review-format-and-seo-signal-fix
 - 原因：Superpowers 分支 review 發現本 PR 新增 002 條目混入非四行欄位，且 SEO Master GSC 指標仍殘留幣別頁 FAQPage 舊語意。
 - 解法：將新增 002 條目收斂回四行模板，並把 Rich Results / AI 摘要指標改為 FAQ 主頁 FAQPage 與幣別頁 ExchangeRateSpecification。

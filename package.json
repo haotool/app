@@ -36,7 +36,7 @@
     "test:e2e": "pnpm --filter @app/ratewise exec playwright test && pnpm --filter @app/nihonname exec playwright test",
     "test:coverage": "pnpm -r run test:coverage",
     "lighthouse": "lighthouse http://localhost:4174 --view",
-    "lighthouse:ci": "lhci autorun --config=.lighthouserc.json",
+    "lighthouse:ci": "lhci autorun --config=.lighthouserc.cjs",
     "unlighthouse": "unlighthouse --site http://localhost:4174",
     "test:a11y": "pnpm --filter @app/ratewise exec playwright test tests/e2e/accessibility.spec.ts --project=chromium-desktop",
     "seo:test": "pnpm lighthouse && pnpm test:a11y",

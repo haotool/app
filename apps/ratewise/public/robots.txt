@@ -158,6 +158,26 @@ Disallow: /ratewise/update-prompt-test/
 Disallow: /ratewise/ui-showcase/
 Disallow: /ratewise/?
 
+User-agent: DeepSeekBot
+Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
+
+User-agent: MistralBot
+Allow: /
+Disallow: /ratewise/sw.js
+Disallow: /ratewise/workbox-*.js
+Disallow: /ratewise/theme-showcase/
+Disallow: /ratewise/color-scheme/
+Disallow: /ratewise/update-prompt-test/
+Disallow: /ratewise/ui-showcase/
+Disallow: /ratewise/?
+
 # --- Tier 2: SEARCH (AI 搜尋索引與引用) ---
 User-agent: OAI-SearchBot
 Allow: /

@@ -557,6 +557,7 @@ git push origin main     # pre-push 自動驗證
 ### SEO 迭代執行（進階）
 
 - SEO 逐步優化採 `docs/dev/036_seo_iterative_execution_protocol.md` 規範：至少 20 輪迭代、A/B 對照、指標比較、未達門檻需回退。
+- Lighthouse CI smoke URL 必須由 `APP_CONFIG.lighthouseSmokePaths` 取得，且一律使用 canonical trailing slash；不得在 workflow 或腳本維護第二份非 canonical URL 清單。
 
 ### SEO 內容新鮮度與真實性（SSOT 同步規則）
 

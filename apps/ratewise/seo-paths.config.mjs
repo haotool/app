@@ -36,6 +36,14 @@ export const CONTENT_SEO_PATHS = [
   '/seo-tech/',
 ];
 
+/**
+ * Lighthouse CI smoke audit paths.
+ *
+ * Keep this list small enough for PR latency, but canonical and representative:
+ * homepage app shell, FAQ structured-data page, and About E-E-A-T page.
+ */
+export const LIGHTHOUSE_CI_SMOKE_PATHS = ['/', '/faq/', '/about/'];
+
 /** 法律頁：需預渲染，但維持 noindex，不納入 sitemap。 */
 export const LEGAL_SSG_PATHS = ['/privacy/'];
 
@@ -346,6 +354,7 @@ export const APP_CONFIG = {
   ),
   appShellPaths: APP_ONLY_PATHS,
   knownRoutes: KNOWN_ROUTE_PATHS,
+  lighthouseSmokePaths: LIGHTHOUSE_CI_SMOKE_PATHS,
   legacyAssetRedirects: LEGACY_ASSET_REDIRECTS,
   siteUrl: SITE_CONFIG.url,
   build: {
