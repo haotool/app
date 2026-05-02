@@ -43,6 +43,11 @@
 - 解法：將新增 002 條目收斂回四行模板，並把 Rich Results / AI 摘要指標改為 FAQ 主頁 FAQPage 與幣別頁 ExchangeRateSpecification。
 
 - 日期：2026-05-02
+- ID：pr322-seo-ai-crawler-schema-accuracy-convergence
+- 原因：PR #322 審查指出 AI 爬蟲清單（37→39）、語言宣告（三→四種）、knowsAbout 主題（12→16）與 Dataset schema 描述存在 SSOT 漂移，Codex P1 bundle test 邏輯也有 flat-import 與 pnpm 相容性問題。
+- 解法：新增 DeepSeekBot / MistralBot，補 availableLanguage 'ko'，擴充 knowsAbout，修正 collectFiles 遞迴與 npm_lifecycle_event，更新 SEO_MASTER_SSOT.md v2.10.0，CI 11/11 通過後 squash 合併。
+
+- 日期：2026-05-02
 - ID：ratewise-superpowers-seo-ssot-drift-2026-05-02
 - 原因：Superpowers 多 agent SEO 審查發現 production SEO 驗證腳本、匯率方向文案、AI crawler 說明與公開 E-E-A-T 信任揭露存在漂移。
 - 解法：對齊 FAQPage only / ExchangeRateSpecification schema 策略、修正買外幣語意與 Googlebot / Google-Extended 角色，並以 truthfulness、SSOT、build-script regression tests 守門。
