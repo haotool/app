@@ -77,9 +77,11 @@
 /*.md
   Cache-Control: public, max-age=3600, must-revalidate
   Content-Type: text/markdown; charset=utf-8
+  X-Robots-Tag: noindex
 /ratewise/*.md
   Cache-Control: public, max-age=3600, must-revalidate
   Content-Type: text/markdown; charset=utf-8
+  X-Robots-Tag: noindex
 
 # Link rel="alternate" type="text/markdown" — 供 AI 爬蟲從 HTML 頁自動發現 .md 鏡像
 # RFC 8288 Web Linking；AI bot 可解析 HTTP Link 標頭，無需解析 <head><link>

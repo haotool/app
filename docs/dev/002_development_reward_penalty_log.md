@@ -648,3 +648,8 @@
 - related_entries：pr315-ratewise-lazy-boundary-direction-review-fix, pr315-ci-coverage-lazy-mock-fix
 - 原因：PR #315 最新 review 指出兩個真問題：`Layout` 的 lazy 全域提示位於主要 `ErrorBoundary` 之外，chunk 載入失敗仍會升級成整頁錯誤；`AppLayout` 新增的非關鍵 lazy 邊界捕捉錯誤後沒有重置機制，暫時性離線或弱網會讓提示元件整個 session 永久消失。
 - 解法：將非關鍵 lazy 錯誤邊界抽成共用元件，提供 `resetKey`、`online` 事件與 `attempt` render prop；重置時讓 `AppLayout` / `Layout` 重新建立 lazy component type，避免 React.lazy 快取已 reject 的 loader，並補上單元測試鎖定正常渲染、錯誤隔離、resetKey 重試與網路恢復重試。
+
+- 日期：2026-05-02
+- ID：ratewise-markdown-mirror-noindex-guard-2026-05-02
+- 原因：正式站 `.md` mirrors 雖已正確回 `text/markdown` 並供 AI crawler 讀取，但未明確宣告 `noindex`，存在 mirror 與 canonical HTML 重複索引風險。
+- 解法：依 Google Search Central 非 HTML `X-Robots-Tag` 規範，於 Cloudflare Worker v5.1 與 `_headers` 對直連 `.md` 補 `X-Robots-Tag: noindex`，同時以測試鎖定 markdown negotiation 不得誤傷 canonical URL 索引。
