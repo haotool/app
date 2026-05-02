@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-02
+- ID：ratewise-sitemap-lastmod-section-policy
+- 原因：`seo-metadata.ts` 大型 SSOT 被整檔納入 lastmod 依賴，導致 sitemap 日期多樣性退化到 2。
+- 解法：改由 lastmod policy 宣告頁面對應 metadata 區段，讓 sitemap 只追蹤真正影響該頁的內容段落。
+
+- 日期：2026-05-02
 - ID：ratewise-ssg-serial-prerender-enoent-fix
 - 原因：`vite-react-ssg` 高並行渲染巢狀金額頁時，pre-push build 偶發讀取尚未寫出的 `index.html`。
 - 解法：將 SSG prerender concurrency 收斂為 1，優先確保 CI / pre-push 產物可重現，再由測試與 build 守門。
