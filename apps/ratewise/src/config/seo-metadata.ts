@@ -557,7 +557,7 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
     name: `${APP_INFO.shortName} 台灣銀行牌告匯率開放資料`,
-    description: `${APP_INFO.shortName} 提供臺灣銀行牌告匯率的開放 JSON 資料集，包含 18 種貨幣的現金與即期買入賣出四種報價，並提供最新匯率、歷史匯率與 OpenAPI 規格。`,
+    description: `${APP_INFO.shortName} 提供臺灣銀行牌告匯率的開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期買入賣出四種報價，並提供最新匯率、歷史匯率與 OpenAPI 規格。`,
     url: buildCanonicalUrl('/open-data/'),
     sameAs: 'https://rate.bot.com.tw/xrt',
     isBasedOn: {
