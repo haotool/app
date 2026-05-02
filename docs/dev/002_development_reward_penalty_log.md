@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-03
+- ID：codex-review-audit-unknown-author-guard
+- 原因：PR #330 後續 Codex review 指出 `author: null` 的留言會先被轉成字串，再被誤判為人類回覆，讓 `no-reply` 分類失真。
+- 解法：將未知作者保留為 `null`，並要求 comment 必須有明確 login 才能算人類回覆，避免刪帳或停用帳號留言清掉待處理 thread。
+
+- 日期：2026-05-03
 - ID：codex-review-audit-thread-classification-followup
 - 原因：PR #330 的 Codex review 指出新稽核腳本將 bot 視為人類回覆、僅看第一則 Codex 評論判定 no-reply，且未補抓超過 100 筆的 thread comments。
 - 解法：補上 thread comments 分頁抓取，將 no-reply 基準改為最後一則 Codex 評論，並排除 `github-actions` 與 `[bot]` 類非人類回覆。

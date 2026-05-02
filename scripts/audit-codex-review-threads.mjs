@@ -298,7 +298,7 @@ function classifyThread(pr, thread) {
   const allComments = fetchAllThreadComments(thread.id, thread.comments);
   const comments = allComments.map((comment) => ({
     id: comment.id,
-    author: comment.author?.login ?? '(unknown)',
+    author: comment.author?.login ?? null,
     body: comment.body,
     createdAt: comment.createdAt,
     updatedAt: comment.updatedAt,
@@ -313,6 +313,7 @@ function classifyThread(pr, thread) {
   const hasHumanReplyAfterCodex = comments.some(
     (comment) =>
       comment.createdAt > latestCodex.createdAt &&
+      Boolean(comment.author) &&
       !isCodexLogin(comment.author) &&
       !isNonHumanReplyLogin(comment.author),
   );
