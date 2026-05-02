@@ -413,6 +413,7 @@ describe('security-headers worker', () => {
       new Response('# ratewise markdown mirror', {
         headers: {
           'content-type': 'text/markdown; charset=utf-8',
+          'x-robots-tag': 'noindex',
         },
       }),
     );

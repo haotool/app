@@ -813,6 +813,10 @@ export default {
 				response.headers.set('Content-Type', 'text/markdown; charset=utf-8');
 			}
 
+			if (isMarkdownNegotiation) {
+				response.headers.delete('X-Robots-Tag');
+			}
+
 			if (url.pathname.endsWith('.md')) {
 				response.headers.set('X-Robots-Tag', 'noindex');
 			}
