@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-04
+- ID：mini-trend-chart-flaky-timeout-guard
+- 原因：`pre-push` 全量 Vitest 並行執行時，`MiniTrendChart.test.tsx` 首個 render 案例偶發超過 5 秒 timeout，形成非功能型 flaky 阻塞。
+- 解法：維持組件邏輯不變，只對該案例補明確 timeout 餘裕，讓全量測試在高負載下仍可穩定收斂。
+
+- 日期：2026-05-04
 - ID：ratewise-seo-txt-content-type-canonicalization
 - 原因：正式站 `/ratewise/robots.txt` 與 `/ratewise/llms.txt` 仍會回 `Content-Type: text/plain, text/plain`，屬於 SEO txt 端點的 header hygiene 漂移。
 - 解法：在 `security-headers` Worker v5.2 對 RateWise SEO txt 端點先刪除上游殘留 `Content-Type`，再統一覆寫為單一 `text/plain; charset=utf-8`，並補 `securityHeadersWorker` 回歸測試與 SSOT 文件同步。

@@ -82,7 +82,7 @@ describe('MiniTrendChart', () => {
 
       // 驗證圖表容器存在（數據 >= 2 筆時應顯示）
       expect(chartContainer).toBeTruthy();
-    });
+    }, 15000);
 
     it('應該拒絕假數據（驗證沒有硬編碼的 mockData）', () => {
       const mockData: MiniTrendDataPoint[] = [
