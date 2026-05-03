@@ -97,6 +97,12 @@
   Link: </ratewise/guide.md>; rel="alternate"; type="text/markdown"
 /ratewise/open-data/
   Link: </ratewise/open-data.md>; rel="alternate"; type="text/markdown"
+/ratewise/sell-rate-vs-mid-rate/
+  Link: </ratewise/sell-rate-vs-mid-rate.md>; rel="alternate"; type="text/markdown"
+/ratewise/cash-vs-spot-rate/
+  Link: </ratewise/cash-vs-spot-rate.md>; rel="alternate"; type="text/markdown"
+/ratewise/card-rate-guide/
+  Link: </ratewise/card-rate-guide.md>; rel="alternate"; type="text/markdown"
 /*.css
   Cache-Control: public, max-age=86400
 /*.js

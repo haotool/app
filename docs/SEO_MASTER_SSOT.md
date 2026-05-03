@@ -233,7 +233,7 @@ public/
 - 內容與對應 HTML 頁語義一致（同 FAQ、同作者、同資料來源），符合 Google cloaking 紅線。
 - Authority Guide mirrors（`sell-rate-vs-mid-rate.md`、`cash-vs-spot-rate.md`、`card-rate-guide.md`）已納入 `llms.txt`，讓 AI crawler 可直接發現長篇主題頁的純文字版本。
 - drift-guard 測試：`apps/ratewise/src/__tests__/markdown-mirror.test.ts`（含 Authority Guide mirrors 與 `llms.txt` 收錄斷言）。
-- 注意：`SEO_FILES` SSOT 已擴充為 12 個公開 SEO / AI 資源：`sitemap.xml`、`robots.txt`、`llms.txt`、`llms-full.txt`、`openapi.json`、`api/latest.json` 與 6 個核心 Markdown mirrors（`index.md`、`faq.md`、`guide.md`、`about.md`、`privacy.md`、`open-data.md`）。3 篇 Authority Guide mirrors 目前仍由 prebuild、`_headers`、`llms.txt` 與手動 smoke probe 管理，尚未納入 `resources.seoFiles` 驗證清單。
+- 注意：`SEO_FILES` SSOT 已擴充為 15 個公開 SEO / AI 資源：`sitemap.xml`、`robots.txt`、`llms.txt`、`llms-full.txt`、`openapi.json`、`api/latest.json`，以及 9 個 Markdown mirrors（`index.md`、`faq.md`、`guide.md`、`about.md`、`privacy.md`、`open-data.md`、`sell-rate-vs-mid-rate.md`、`cash-vs-spot-rate.md`、`card-rate-guide.md`）。Authority Guide mirrors 現已納入 `resources.seoFiles` 正式驗證清單，與 `_headers`、Worker alternate Link、`llms.txt` 共同構成單一治理閉環。
 
 ### 2.4 驗證層（Verification Layer）
 
@@ -1501,13 +1501,13 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 
 ```bash
 # 1. 生產 SEO 健康檢查（覆蓋 SEO_PATHS 公開路徑 200、APP_ONLY_PATHS app-shell 路由、
-#    SEO_FILES = sitemap/robots/llms/llms-full/openapi/api/latest + 6 個核心 Markdown mirrors、
+#    SEO_FILES = sitemap/robots/llms/llms-full/openapi/api/latest + 9 個 Markdown mirrors、
 #    sitemap 與 hreflang 內容、404 真實性、舊資產 301）
 #    --base-url 可指向 staging
 node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise
 
 # 2. 生產資源可用性（OG/Twitter 圖片 + favicon + apple-touch-icon + 3 個 PWA icon + SEO_FILES）
-#    實際覆蓋為 IMAGE_RESOURCES（7 個檔）+ SEO_FILES（12 個檔）；不含 manifest.webmanifest、screenshots
+#    實際覆蓋為 IMAGE_RESOURCES（7 個檔）+ SEO_FILES（15 個檔）；不含 manifest.webmanifest、screenshots
 node scripts/verify-production-resources.mjs ratewise
 
 # 3. 結構化資料驗證（schema 種類 / Speakable / aggregateRating gate）
@@ -1516,9 +1516,9 @@ node scripts/verify-structured-data.mjs
 # 4. 公開 SEO 真相 surface 檢查（H1 順序、SeoTech、sitemap 舊標籤）
 pnpm --filter @app/ratewise vitest run src/__tests__/seo-public-surface.test.ts
 
-# 5. §12.7.2 表格剩餘端點補充探針（命令 #1/#2 不涵蓋的 PWA/noindex 頁與 3 篇 Authority Guide Markdown mirrors）
+# 5. §12.7.2 表格剩餘端點補充探針（命令 #1/#2 不涵蓋的 PWA/noindex 頁）
 #    這些端點故意不在 SEO_PATHS / SEO_FILES：/manifest.webmanifest 屬 PWA、/privacy/ 屬 noindex；
-#    3 篇 Authority Guide mirrors 目前尚未納入 `resources.seoFiles`，故額外列出做 smoke probe
+#    其餘 9 個 Markdown mirrors 已由 `resources.seoFiles` 正式覆蓋
 #    Markdown 鏡像 path 對齊 _headers 與 generate-markdown-mirrors.mjs SSOT：
 #      /ratewise/index.md      ↔ /ratewise/
 #      /ratewise/{slug}.md     ↔ /ratewise/{slug}/    （faq、about、guide、open-data、privacy、sell-rate-vs-mid-rate、cash-vs-spot-rate、card-rate-guide）
@@ -1549,9 +1549,9 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 
 > **覆蓋說明**：
 >
-> - 命令 #1 (`verify-production-seo.mjs`) 覆蓋 `apps/ratewise/seo-paths.config.mjs` 的 `seoPaths`（249 URL）+ `appShellPaths` + `resources.seoFiles`（目前為 12 檔：`/sitemap.xml`、`/robots.txt`、`/llms.txt`、`/llms-full.txt`、`/openapi.json`、`/api/latest.json` 與 6 個核心 Markdown mirrors），對齊 §12.6.5 與 CI 實作。
-> - 命令 #2 (`verify-production-resources.mjs`) 實際覆蓋 `IMAGE_RESOURCES`（`/og-image.jpg`、`/twitter-image.jpg`、`/favicon.ico`、`/apple-touch-icon.png`、3 個 PWA icon — 共 7 檔）+ `SEO_FILES`（12 檔）；**不含** `/manifest.webmanifest` 與 `screenshots/*`。
-> - **§12.7.2 表格中**：`/manifest.webmanifest` 不在 `SEO_FILES`（屬 PWA 類），`/privacy/` 不在 `seoPaths`（noindex），3 篇 Authority Guide Markdown mirrors 目前也不在 `resources.seoFiles` 驗證集合，**因此命令 #5 對這些端點獨立做 smoke probe**，避免「命令 #1/#2 通過但實際漏檢」。
+> - 命令 #1 (`verify-production-seo.mjs`) 覆蓋 `apps/ratewise/seo-paths.config.mjs` 的 `seoPaths`（249 URL）+ `appShellPaths` + `resources.seoFiles`（目前為 15 檔：`/sitemap.xml`、`/robots.txt`、`/llms.txt`、`/llms-full.txt`、`/openapi.json`、`/api/latest.json` 與 9 個 Markdown mirrors），對齊 §12.6.5 與 CI 實作。
+> - 命令 #2 (`verify-production-resources.mjs`) 實際覆蓋 `IMAGE_RESOURCES`（`/og-image.jpg`、`/twitter-image.jpg`、`/favicon.ico`、`/apple-touch-icon.png`、3 個 PWA icon — 共 7 檔）+ `SEO_FILES`（15 檔）；**不含** `/manifest.webmanifest` 與 `screenshots/*`。
+> - **§12.7.2 表格中**：`/manifest.webmanifest` 不在 `SEO_FILES`（屬 PWA 類），`/privacy/` 不在 `seoPaths`（noindex）；其餘 9 個 Markdown mirrors 已由 `resources.seoFiles` 與 production verification 正式覆蓋，避免「命令 #1/#2 通過但實際漏檢」。
 > - v2.7.0 初版誤把命令 #1 寫成 `verify-production-resources.mjs --base-url=...`，但該腳本只讀 `resources.seoFiles/images` 且不接受 `--base-url`；已於本次修正為 `verify-production-seo.mjs` 並補上 #5 探針。
 
 #### 12.7.8 2026-04-30 例行重跑狀態

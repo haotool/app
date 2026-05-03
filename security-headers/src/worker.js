@@ -56,6 +56,17 @@ const ROOT_SITE_HTML_HOSTS = new Set(['haotool.org', 'www.haotool.org']);
 const HAOTOOL_ROOT_HTML_PATHS = new Set(['/', '/projects/', '/about/', '/contact/']);
 const HAOTOOL_ROOT_MARKDOWN_MIRROR = '/index.md';
 const RATEWISE_MARKDOWN_MIRROR = '/ratewise/index.md';
+const RATEWISE_PAGE_MARKDOWN_MIRRORS = new Map([
+	['/ratewise/', '/ratewise/index.md'],
+	['/ratewise/faq/', '/ratewise/faq.md'],
+	['/ratewise/about/', '/ratewise/about.md'],
+	['/ratewise/privacy/', '/ratewise/privacy.md'],
+	['/ratewise/guide/', '/ratewise/guide.md'],
+	['/ratewise/open-data/', '/ratewise/open-data.md'],
+	['/ratewise/sell-rate-vs-mid-rate/', '/ratewise/sell-rate-vs-mid-rate.md'],
+	['/ratewise/cash-vs-spot-rate/', '/ratewise/cash-vs-spot-rate.md'],
+	['/ratewise/card-rate-guide/', '/ratewise/card-rate-guide.md'],
+]);
 const AGENT_SKILLS_SCHEMA = 'https://schemas.agentskills.io/discovery/0.2.0/schema.json';
 const API_CATALOG_PATH = '/.well-known/api-catalog';
 const AGENT_SKILLS_INDEX_PATH = '/.well-known/agent-skills/index.json';
@@ -254,6 +265,15 @@ function buildRatewiseAgentDiscoveryLinks(url) {
 		`<${buildAbsoluteUrl(url, '/ratewise/openapi.json')}>; rel="service-desc"; type="application/vnd.oai.openapi+json"`,
 		`<${buildAbsoluteUrl(url, '/ratewise/open-data/')}>; rel="service-doc"; type="text/html"`,
 	];
+}
+
+function resolveRatewiseMarkdownAlternate(url) {
+	const normalizedPath = normalizeHtmlPath(url.pathname);
+	const mirrorPath = RATEWISE_PAGE_MARKDOWN_MIRRORS.get(normalizedPath);
+	if (!mirrorPath) {
+		return null;
+	}
+	return `<${buildAbsoluteUrl(url, mirrorPath)}>; rel="alternate"; type="text/markdown"`;
 }
 
 function resolveAgentDiscoveryLinks(url) {
@@ -864,6 +884,10 @@ export default {
 
 		if (isHTML) {
 			addLinkHeaders(response, resolveAgentDiscoveryLinks(url));
+			const markdownAlternate = resolveRatewiseMarkdownAlternate(url);
+			if (markdownAlternate !== null) {
+				addLinkHeader(response, markdownAlternate);
+			}
 		}
 
 		stripOriginLeakHeaders(response);
