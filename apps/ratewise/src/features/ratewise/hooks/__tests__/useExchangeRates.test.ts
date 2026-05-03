@@ -44,16 +44,36 @@ const mockRateData = {
 
 // ===== Test Suite =====
 describe('useExchangeRates', () => {
+  const originalLhciOffline = import.meta.env['VITE_LHCI_OFFLINE'];
+
   beforeEach(() => {
     vi.clearAllMocks();
+    import.meta.env['VITE_LHCI_OFFLINE'] = originalLhciOffline;
     vi.mocked(exchangeRateService.getBuildTimeExchangeRates).mockReturnValue(mockRateData);
   });
 
   afterEach(() => {
+    import.meta.env['VITE_LHCI_OFFLINE'] = originalLhciOffline;
     vi.clearAllMocks();
   });
 
   describe('初始化載入', () => {
+    it('LHCI 離線模式下保留 build-time 匯率並跳過 runtime refresh', async () => {
+      import.meta.env['VITE_LHCI_OFFLINE'] = 'true';
+      vi.resetModules();
+
+      const { useExchangeRates: useExchangeRatesLhci } = await import('../useExchangeRates');
+      const { result } = renderHook(() => useExchangeRatesLhci());
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.warning).toBeNull();
+      expect(result.current.error).toBeNull();
+      expect(result.current.rates.USD).toBe(30.5);
+      expect(logger.logger.debug).toHaveBeenCalledWith(
+        'Skipping exchange rate runtime refresh in LHCI offline mode',
+      );
+    });
+
     it('使用 build-time 匯率作為首屏初始狀態', () => {
       vi.mocked(exchangeRateService.getExchangeRates).mockResolvedValue(mockRateData);
 
@@ -145,7 +165,6 @@ describe('useExchangeRates', () => {
 
       const initialCallCount = vi.mocked(exchangeRateService.getExchangeRates).mock.calls.length;
 
-      // ✅ 模擬頁面變為可見
       Object.defineProperty(document, 'hidden', {
         writable: true,
         configurable: true,
@@ -175,7 +194,6 @@ describe('useExchangeRates', () => {
 
       const initialCallCount = vi.mocked(exchangeRateService.getExchangeRates).mock.calls.length;
 
-      // ✅ 模擬頁面變為隱藏
       Object.defineProperty(document, 'hidden', {
         writable: true,
         configurable: true,
@@ -184,14 +202,11 @@ describe('useExchangeRates', () => {
 
       await act(async () => {
         document.dispatchEvent(new Event('visibilitychange'));
-        // 等待一小段時間
         await new Promise((resolve) => setTimeout(resolve, 100));
       });
 
-      // ✅ 確認沒有新的調用
       expect(exchangeRateService.getExchangeRates).toHaveBeenCalledTimes(initialCallCount);
 
-      // Cleanup
       Object.defineProperty(document, 'hidden', {
         value: false,
       });
@@ -216,7 +231,6 @@ describe('useExchangeRates', () => {
       const initialCallCount = vi.mocked(exchangeRateService.getExchangeRates).mock.calls.length;
       const initialLastUpdate = result.current.lastUpdate;
 
-      // ✅ 手動刷新
       await act(async () => {
         await result.current.refresh();
       });

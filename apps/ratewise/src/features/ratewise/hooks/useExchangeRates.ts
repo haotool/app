@@ -6,6 +6,8 @@ import { logger } from '../../../utils/logger';
 import type { ExchangeRateData, RateDetails } from '../../../utils/offlineStorage';
 export type { RateDetails } from '../../../utils/offlineStorage';
 
+const IS_LHCI_OFFLINE = import.meta.env['VITE_LHCI_OFFLINE'] === 'true';
+
 export interface ExchangeRatesState {
   rates: Record<CurrencyCode, number | null>;
   details: Record<string, RateDetails>;
@@ -79,6 +81,11 @@ export function useExchangeRates() {
   const loadRatesRef = useRef<((isAutoRefresh?: boolean) => Promise<void>) | null>(null);
 
   useEffect(() => {
+    if (IS_LHCI_OFFLINE) {
+      logger.debug('Skipping exchange rate runtime refresh in LHCI offline mode');
+      return;
+    }
+
     let isMounted = true;
 
     async function loadRates(isAutoRefresh = false) {
