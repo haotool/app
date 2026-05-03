@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v5.1
+ * 安全標頭 Worker v5.2
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v5.2: 收斂 ratewise robots.txt / llms.txt 重複 Content-Type，統一為單一 text/plain; charset=utf-8
  * - v5.1: 清洗 root robots.txt 上游殘留 Content-Signal，避免 Lighthouse SEO 92 回歸
  * - v5.1: Markdown mirror 補 X-Robots-Tag noindex，避免 .md 與 canonical HTML 重複索引
  * - v5.0: 移除 robots Content-Signal 注入，直連 Markdown mirror 強制 text/markdown
@@ -27,7 +28,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '5.1';
+const SECURITY_POLICY_VERSION = '5.2';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -67,6 +68,11 @@ const RATEWISE_PAGE_MARKDOWN_MIRRORS = new Map([
 	['/ratewise/cash-vs-spot-rate/', '/ratewise/cash-vs-spot-rate.md'],
 	['/ratewise/card-rate-guide/', '/ratewise/card-rate-guide.md'],
 ]);
+const PLAIN_TEXT_SEO_PATHS = new Set(['/robots.txt', '/ratewise/robots.txt', '/ratewise/llms.txt']);
+
+function shouldCanonicalizePlainTextSeoContentType(pathname) {
+	return PLAIN_TEXT_SEO_PATHS.has(pathname);
+}
 const AGENT_SKILLS_SCHEMA = 'https://schemas.agentskills.io/discovery/0.2.0/schema.json';
 const API_CATALOG_PATH = '/.well-known/api-catalog';
 const AGENT_SKILLS_INDEX_PATH = '/.well-known/agent-skills/index.json';
@@ -821,12 +827,18 @@ export default {
 					status: upstreamResponse.status,
 					headers: upstreamResponse.headers,
 				});
+				response.headers.delete('Content-Type');
 				response.headers.set('Content-Type', 'text/plain; charset=utf-8');
 				response.headers.delete('Content-Length');
 				response.headers.delete('ETag');
 				response.headers.delete('Last-Modified');
 			} else {
 				response = new Response(upstreamResponse.body, upstreamResponse);
+			}
+
+			if (shouldCanonicalizePlainTextSeoContentType(url.pathname)) {
+				response.headers.delete('Content-Type');
+				response.headers.set('Content-Type', 'text/plain; charset=utf-8');
 			}
 
 			if (isMarkdownNegotiation || url.pathname.endsWith('.md')) {

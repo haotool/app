@@ -1,8 +1,9 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.10.3
+> **文件版本**: v2.10.4
 > **建立日期**: 2026-03-23
-> **最後更新**: 2026-05-03
+> **最後更新**: 2026-05-04
+> **v2.10.4 變更**: 2026-05-04 收斂 RateWise SEO txt header hygiene：Worker v5.2 對 `/ratewise/robots.txt` 與 `/ratewise/llms.txt` 先刪除上游殘留 `Content-Type` 再統一覆寫為單一 `text/plain; charset=utf-8`，消除正式站歷史上的 `text/plain, text/plain` 重複 token；同步補回歸測試與文件待辦狀態。
 > **v2.10.3 變更**: 2026-05-03 對齊 `main` 最新 SEO / release 現況（`@app/ratewise` v2.22.15）：① PR #336 補齊 3 篇 Authority Guide Markdown mirrors（全站 mirrors 由 6 擴至 9），同步收錄至 `llms.txt`；② About、FAQ、Guide、Open Data 與 3 篇 Authority Guide 統一輸出 `og:type=article` 與 `article:modified_time`，使內容頁分享語意與 Article schema 對齊；③ PR #338 擴充 `/ratewise/` meta description 語意密度，改善 Google snippet 可理解性；④ PR #339 release 產出物（`llms.txt`、`llms-full.txt`、`openapi.json`、`api/latest.json`、manifest、版本號）已完成同步。
 > **v2.10.2 變更**: 2026-05-02 收斂 Worker v5.1 正式站行為：保留 root robots `Content-Signal` 清洗以守住 Lighthouse SEO，同步為直連 markdown mirrors 補 `X-Robots-Tag: noindex`，避免 mirror 與 canonical HTML 重複索引；兩者皆以正式站 header 驗證與 `securityHeadersWorker.test.ts` 守門。
 > **v2.10.1 變更**: 2026-05-02 PR #322 合併後正式站驗證與 markdown mirror indexation 收斂：① 記錄正式站 58/58 SEO/公開資源 `HTTP 200`、`verify:production-seo` 全綠、Lighthouse CI 通過；② Cloudflare Worker v5.1 與 `_headers` 對直連 `.md` mirror 統一補 `X-Robots-Tag: noindex`，避免 mirror 與 canonical HTML 重複索引；③ 明確保留 `Accept: text/markdown` 協商版不加 `noindex`，避免誤傷 `/` 與 `/ratewise/` canonical URL。
@@ -1416,35 +1417,35 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 
 > 本表保留 2026-04-29 部署前後的歷史觀察，不代表目前待補狀態。Worker v5.0 已完成的 `.md` `text/markdown`、API catalog、Agent Skills Discovery 與 `Content-Signal` 移除，以 §12.7.3、§12.7.6 與 §12.7.9.1 現況表為準。
 
-| 類別 | 端點                                       | HTTP | Content-Type                | Size   | TTFB   | 備註                                                                |
-| ---- | ------------------------------------------ | ---- | --------------------------- | ------ | ------ | ------------------------------------------------------------------- |
-| HTML | `/ratewise/`                               | 200  | `text/html`                 | 79 KB  | 1.612s | JSON-LD 1 block / 9 schema types                                    |
-| HTML | `/ratewise/faq/`                           | 200  | `text/html`                 | 90 KB  | 1.306s | `FAQPage` schema ✅                                                 |
-| HTML | `/ratewise/about/`                         | 200  | `text/html`                 | 71 KB  | 1.246s | `ContactPage` + `Person` ✅                                         |
-| HTML | `/ratewise/guide/`                         | 200  | `text/html`                 | 79 KB  | 1.365s | `HowTo` schema ✅                                                   |
-| HTML | `/ratewise/open-data/`                     | 200  | `text/html`                 | 107 KB | 1.390s | `Dataset` + `DataCatalog` + `DataDownload` ✅                       |
-| HTML | `/ratewise/privacy/`                       | 200  | `text/html`                 | 60 KB  | 1.385s | `noindex,follow` ✅、無 JSON-LD ✅                                  |
-| HTML | `/ratewise/usd-twd/`                       | 200  | `text/html`                 | 100 KB | 1.348s | `ExchangeRateSpecification` ✅                                      |
-| HTML | `/ratewise/jpy-twd/`                       | 200  | `text/html`                 | 100 KB | 1.147s | 同上                                                                |
-| HTML | `/ratewise/eur-twd/`                       | 200  | `text/html`                 | 100 KB | 1.356s | 同上                                                                |
-| HTML | `/ratewise/twd-usd/`                       | 200  | `text/html`                 | 99 KB  | 1.324s | reverse pair `twd-xxx/` ✅                                          |
-| HTML | `/ratewise/usd-twd/100/`                   | 200  | `text/html`                 | 102 KB | 1.323s | amount 模式 `ExchangeRateSpecification`（含 `100 USD → TWD`）✅     |
-| HTML | `/ratewise/jpy-twd/10000/`                 | 200  | `text/html`                 | 103 KB | 1.012s | 同上                                                                |
-| XML  | `/ratewise/sitemap.xml`                    | 200  | `text/xml, application/xml` | 86 KB  | —      | 249 URL ✅                                                          |
-| TXT  | `/ratewise/robots.txt`                     | 200  | `text/plain, text/plain`    | 10 KB  | —      | 歷史：四層分群 + Content-Signal；現況 v2.22.8 已移除 Content-Signal |
-| TXT  | `/ratewise/llms.txt`                       | 200  | `text/plain, text/plain`    | 15 KB  | —      | 12 H1 / 16 H2 / 55 連結；⚠️ Content-Type 重複                       |
-| TXT  | `/ratewise/llms-full.txt`                  | 200  | `text/plain`                | 15 KB  | —      | 313 行；Content-Type 正常                                           |
-| JSON | `/ratewise/api/latest.json`                | 200  | `application/json`          | 2.5 KB | —      | metadata SSOT（含 `endpoints` / `cdnEndpoints` / `pairEndpoints`）  |
-| JSON | `/ratewise/openapi.json`                   | 200  | `application/json`          | 17 KB  | —      | OpenAPI 3.1.0、3 paths                                              |
-| JSON | `/ratewise/manifest.webmanifest`           | 200  | `application/manifest+json` | 2.7 KB | —      | 7 icons、5 screenshots、`standalone`                                |
-| IMG  | `/ratewise/og-image.jpg`                   | 200  | `image/jpeg`                | 126 KB | —      | 1200×630；建議降至 < 100 KB 或 WebP                                 |
-| MD   | `/ratewise/index.md`                       | 200  | `application/octet-stream`  | 3 KB   | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
-| MD   | `/ratewise/faq.md`                         | 200  | `application/octet-stream`  | 8.6 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
-| MD   | `/ratewise/about.md`                       | 200  | `application/octet-stream`  | 4.8 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
-| MD   | `/ratewise/guide.md`                       | 200  | `application/octet-stream`  | 2.3 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
-| MD   | `/ratewise/open-data.md`                   | 200  | `application/octet-stream`  | 3.9 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
-| MD   | `/ratewise/privacy.md`                     | 200  | `application/octet-stream`  | 1.7 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`        |
-| 404  | `/ratewise/this-page-does-not-exist-12345` | 404  | `text/html`                 | 153 B  | —      | nginx default，無 SEO 友善設計                                      |
+| 類別 | 端點                                       | HTTP | Content-Type                | Size   | TTFB   | 備註                                                               |
+| ---- | ------------------------------------------ | ---- | --------------------------- | ------ | ------ | ------------------------------------------------------------------ |
+| HTML | `/ratewise/`                               | 200  | `text/html`                 | 79 KB  | 1.612s | JSON-LD 1 block / 9 schema types                                   |
+| HTML | `/ratewise/faq/`                           | 200  | `text/html`                 | 90 KB  | 1.306s | `FAQPage` schema ✅                                                |
+| HTML | `/ratewise/about/`                         | 200  | `text/html`                 | 71 KB  | 1.246s | `ContactPage` + `Person` ✅                                        |
+| HTML | `/ratewise/guide/`                         | 200  | `text/html`                 | 79 KB  | 1.365s | `HowTo` schema ✅                                                  |
+| HTML | `/ratewise/open-data/`                     | 200  | `text/html`                 | 107 KB | 1.390s | `Dataset` + `DataCatalog` + `DataDownload` ✅                      |
+| HTML | `/ratewise/privacy/`                       | 200  | `text/html`                 | 60 KB  | 1.385s | `noindex,follow` ✅、無 JSON-LD ✅                                 |
+| HTML | `/ratewise/usd-twd/`                       | 200  | `text/html`                 | 100 KB | 1.348s | `ExchangeRateSpecification` ✅                                     |
+| HTML | `/ratewise/jpy-twd/`                       | 200  | `text/html`                 | 100 KB | 1.147s | 同上                                                               |
+| HTML | `/ratewise/eur-twd/`                       | 200  | `text/html`                 | 100 KB | 1.356s | 同上                                                               |
+| HTML | `/ratewise/twd-usd/`                       | 200  | `text/html`                 | 99 KB  | 1.324s | reverse pair `twd-xxx/` ✅                                         |
+| HTML | `/ratewise/usd-twd/100/`                   | 200  | `text/html`                 | 102 KB | 1.323s | amount 模式 `ExchangeRateSpecification`（含 `100 USD → TWD`）✅    |
+| HTML | `/ratewise/jpy-twd/10000/`                 | 200  | `text/html`                 | 103 KB | 1.012s | 同上                                                               |
+| XML  | `/ratewise/sitemap.xml`                    | 200  | `text/xml, application/xml` | 86 KB  | —      | 249 URL ✅                                                         |
+| TXT  | `/ratewise/robots.txt`                     | 200  | `text/plain; charset=utf-8` | 10 KB  | —      | Worker v5.2 統一單一 Content-Type；`Content-Signal` 已移除         |
+| TXT  | `/ratewise/llms.txt`                       | 200  | `text/plain; charset=utf-8` | 15 KB  | —      | 12 H1 / 16 H2 / 55 連結；Worker v5.2 已清除重複 token              |
+| TXT  | `/ratewise/llms-full.txt`                  | 200  | `text/plain`                | 15 KB  | —      | 313 行；Content-Type 正常                                          |
+| JSON | `/ratewise/api/latest.json`                | 200  | `application/json`          | 2.5 KB | —      | metadata SSOT（含 `endpoints` / `cdnEndpoints` / `pairEndpoints`） |
+| JSON | `/ratewise/openapi.json`                   | 200  | `application/json`          | 17 KB  | —      | OpenAPI 3.1.0、3 paths                                             |
+| JSON | `/ratewise/manifest.webmanifest`           | 200  | `application/manifest+json` | 2.7 KB | —      | 7 icons、5 screenshots、`standalone`                               |
+| IMG  | `/ratewise/og-image.jpg`                   | 200  | `image/jpeg`                | 126 KB | —      | 1200×630；建議降至 < 100 KB 或 WebP                                |
+| MD   | `/ratewise/index.md`                       | 200  | `application/octet-stream`  | 3 KB   | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`       |
+| MD   | `/ratewise/faq.md`                         | 200  | `application/octet-stream`  | 8.6 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`       |
+| MD   | `/ratewise/about.md`                       | 200  | `application/octet-stream`  | 4.8 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`       |
+| MD   | `/ratewise/guide.md`                       | 200  | `application/octet-stream`  | 2.3 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`       |
+| MD   | `/ratewise/open-data.md`                   | 200  | `application/octet-stream`  | 3.9 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`       |
+| MD   | `/ratewise/privacy.md`                     | 200  | `application/octet-stream`  | 1.7 KB | —      | 歷史：v5.0 前上游 MIME；現況由 Worker 強制回 `text/markdown`       |
+| 404  | `/ratewise/this-page-does-not-exist-12345` | 404  | `text/html`                 | 153 B  | —      | nginx default，無 SEO 友善設計                                     |
 
 #### 12.7.3 對比 SSOT 既有規範的差距
 
@@ -1454,7 +1455,7 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 | §14 P1-7a「`_headers` 加入 `Link: <…md>; rel=alternate`」✅                          | Worker `shouldInjectRatewiseMarkdownLink` 邏輯 main 已具                                                                                                                     | `/ratewise/` GET response 無 `Link:` header                                                                                                           | ✅ **已解決 2026-04-29 12:25 UTC**：PR #302 squash-merge 進 main（`dbe4c15b`），`cd security-headers && npx wrangler deploy` 部署 Cloudflare version `7d094658-55a0-4e99-b478-67006d2fce69`；live 驗證 `/ratewise/` GET response 已含 4 個 Link entries（markdown alternate + api-catalog + openapi service-desc + open-data service-doc）                                 |
 | §12.6.6 IsItAgentReady Level 2「root markdown negotiation / Link / agent discovery」 | Worker v5.0 已具 root 邏輯（`isHaotoolRootHomepage`、`buildRootAgentDiscoveryLinks`）                                                                                        | root `/` 與 `/ratewise/` 均已由 Worker 守門                                                                                                           | ✅ **已達成 Level 2 (Bot-Aware)**：root `/` GET `Accept: text/markdown` → `text/markdown; charset=utf-8`、HTML 回 3 個 Link entries；RateWise HTML 回 markdown / api-catalog / openapi / open-data Link entries；`/.well-known/api-catalog` + `/.well-known/agent-skills/index.json` 全部由 Worker 直接回應。`Content-Signal` 已於 v2.22.8 移除，不再作為 Level 2 完成條件 |
 | `index.md` / `.md` Content-Type                                                      | Worker v5.0 對 Markdown negotiation 與直連 `.md` 統一 `text/markdown; charset=utf-8`                                                                                         | 由 `securityHeadersWorker.test.ts` 覆蓋                                                                                                               | ✅ **已完成**：直連 `/ratewise/index.md` 即使上游回 `application/octet-stream`，Worker 也會覆寫成 `text/markdown`                                                                                                                                                                                                                                                          |
-| `/ratewise/robots.txt` / `/ratewise/llms.txt` Content-Type                           | root `robots.txt` 已由 Worker 明確 `set('Content-Type', 'text/plain; charset=utf-8')`；RateWise SEO txt 檔尚未補同樣覆寫                                                     | `/ratewise/robots.txt` / `/ratewise/llms.txt` 仍有 `text/plain, text/plain` 歷史觀察                                                                  | 🟡 **仍待補**：這是 RateWise 靜態 SEO txt 檔的 header 清理，不屬於已完成的 root agent readiness；需在 Worker 或上游 header 對 `/ratewise/robots.txt` / `/ratewise/llms.txt` 做單一 `Content-Type` 覆寫                                                                                                                                                                     |
+| `/ratewise/robots.txt` / `/ratewise/llms.txt` Content-Type                           | Worker v5.2 對 RateWise SEO txt 端點先刪除上游殘留 `Content-Type`，再統一覆寫為單一 `text/plain; charset=utf-8`                                                              | 正式站歷史 `text/plain, text/plain` 重複 token 已有明確修法與回歸測試守門                                                                             | ✅ **已完成**：RateWise 靜態 SEO txt 檔已納入 Worker header canonicalization；`securityHeadersWorker.test.ts` 對 duplicate upstream header 進行覆寫驗證                                                                                                                                                                                                                    |
 
 #### 12.7.4 Worker v4.9 prod-source drift 證據（與 §12.6.6.2 互相補位）
 
@@ -1491,7 +1492,7 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 | 🟠 P1   | 404 頁 SEO 化                                      | SSG 產出 `/ratewise/404.html`（含 H1、品牌、回首頁連結、相關幣別頁推薦）；Cloudflare/Zeabur 將未匹配路徑 fallback 到此                                                                                                                                                                                              | （新增）                |
 | 🟠 P1   | Desktop CLS 修正（0.248 → < 0.1）                  | LH Desktop CLS 0.248 ⚠️（3 layout shifts）；找出 layout shift 元素（可能為 header/hero 區塊在 hydration 期間），加入 `min-height` 或 `aspect-ratio` 防止 CLS                                                                                                                                                        | §10                     |
 | 🟠 P1   | Mobile LCP 改善（5.7s → < 2.5s）                   | LH Mobile LCP 5.7s ⚠️ 遠超 Google 標準（2.5s）；找出 LCP 元素（可能為首頁圖片或大塊文字）並優化：lazy-load 改 eager、預載 critical CSS/fonts、圖片格式 WebP + 正確 srcset                                                                                                                                           | §10                     |
-| 🟡 P2   | Content-Type 重複 token 清除                       | `/ratewise/robots.txt` / `/ratewise/llms.txt` 仍可能回 `text/plain, text/plain`；需在 Worker 或上游 header 對 RateWise SEO txt 檔做單一 `Content-Type` 覆寫                                                                                                                                                         | B-Worker                |
+| ✅ 完成 | ~~Content-Type 重複 token 清除~~                   | ✅ **Worker v5.2 完成**：`/ratewise/robots.txt` / `/ratewise/llms.txt` 先刪除上游殘留 `Content-Type`，再統一覆寫為單一 `text/plain; charset=utf-8`；`securityHeadersWorker.test.ts` 覆蓋 duplicate upstream header 的 canonicalization 行為                                                                         | B-Worker                |
 | 🟡 P2   | `og-image.jpg` 體積優化 + `og-image.png` MIME 修正 | `og-image.jpg` 126 KB → ≤ 100 KB（mozjpeg / WebP fallback）；`og-image.png` 目前回 `Content-Type: image/jpeg`（MIME mismatch），Worker 補 `.png` → `image/png` mapping                                                                                                                                              | （新增）                |
 | ✅ 完成 | ~~`/.well-known/api-catalog` 建立~~                | ✅ **Worker v5.0 完成**：直接回 RFC 9727 / RFC 9264 `application/linkset+json`，不是 redirect；測試覆蓋 RateWise OpenAPI、open-data 與 network probe linkset                                                                                                                                                        | B-Worker                |
 | ✅ 完成 | ~~`/.well-known/agent-skills/index.json` 建立~~    | ✅ **Worker v5.0 完成**：直接回 Agent Skills Discovery v0.2.0 index，含 `$schema`、`skill-md`、`url`、`sha256:<hex>` digest；測試覆蓋 index 與 `SKILL.md` artifact                                                                                                                                                  | B-Worker                |
@@ -1593,8 +1594,8 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 | HTML | `/ratewise/twd-usd/`                       | 200  | `text/html`                 | reverse pair ✅                                                         |
 | HTML | `/ratewise/usd-twd/100/`                   | 200  | `text/html`                 | amount 模式 + `ExchangeRateSpecification`（含換算結果）✅               |
 | XML  | `/ratewise/sitemap.xml`                    | 200  | `text/xml`                  | 249 URL ✅                                                              |
-| TXT  | `/ratewise/robots.txt`                     | 200  | `text/plain, text/plain`    | 四層分群 ✅；`Content-Signal` 已於 v2.22.8 移除；⚠️ CT 重複 token       |
-| TXT  | `/ratewise/llms.txt`                       | 200  | `text/plain, text/plain`    | ⚠️ CT 重複 token；11+ AI bot `Allow: /`                                 |
+| TXT  | `/ratewise/robots.txt`                     | 200  | `text/plain; charset=utf-8` | 四層分群 ✅；`Content-Signal` 已於 v2.22.8 移除；Worker v5.2 收斂 CT    |
+| TXT  | `/ratewise/llms.txt`                       | 200  | `text/plain; charset=utf-8` | 11+ AI bot `Allow: /`；Worker v5.2 已清除重複 token                     |
 | TXT  | `/ratewise/llms-full.txt`                  | 200  | `text/plain`                | 313 行；CT 正常 ✅                                                      |
 | JSON | `/ratewise/api/latest.json`                | 200  | `application/json`          | metadata SSOT ✅                                                        |
 | JSON | `/ratewise/openapi.json`                   | 200  | `application/json`          | OpenAPI 3.1.0 ✅                                                        |
@@ -1649,15 +1650,15 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 
 **12.7.9.4 仍待補項清單（已排除 Worker v5.0 完成項）**
 
-| 優先級 | 項目                         | 背景                                                                     |
-| ------ | ---------------------------- | ------------------------------------------------------------------------ |
-| 🟠 P1  | Desktop CLS 0.248            | 3 layout shifts；LH Desktop CLS gate: < 0.1（warn）                      |
-| 🟠 P1  | Mobile LCP 5.7s              | 遠超 Google 標準 2.5s；影響 CrUX / Search ranking                        |
-| 🟡 P2  | `og-image.png` MIME mismatch | 回 `image/jpeg`；Worker 需補 `.png` → `image/png`                        |
-| 🟡 P2  | CT 重複 token（robots/llms） | `text/plain, text/plain`；需補 RateWise SEO txt 檔單一 Content-Type 覆寫 |
-| 🟡 P2  | `og-image.jpg` 126 KB        | ≤ 100 KB 目標；mozjpeg / WebP                                            |
-| 🟢 P3  | Unused JS 138 KB             | Code splitting + bundle analysis                                         |
-| 🟢 P3  | Unused CSS 13 KB             | Tailwind purge 驗證                                                      |
+| 優先級  | 項目                             | 背景                                                                          |
+| ------- | -------------------------------- | ----------------------------------------------------------------------------- |
+| 🟠 P1   | Desktop CLS 0.248                | 3 layout shifts；LH Desktop CLS gate: < 0.1（warn）                           |
+| 🟠 P1   | Mobile LCP 5.7s                  | 遠超 Google 標準 2.5s；影響 CrUX / Search ranking                             |
+| 🟡 P2   | `og-image.png` MIME mismatch     | 回 `image/jpeg`；Worker 需補 `.png` → `image/png`                             |
+| ✅ 完成 | ~~CT 重複 token（robots/llms）~~ | ✅ Worker v5.2 已對 RateWise SEO txt 檔做單一 `Content-Type` canonicalization |
+| 🟡 P2   | `og-image.jpg` 126 KB            | ≤ 100 KB 目標；mozjpeg / WebP                                                 |
+| 🟢 P3   | Unused JS 138 KB                 | Code splitting + bundle analysis                                              |
+| 🟢 P3   | Unused CSS 13 KB                 | Tailwind purge 驗證                                                           |
 
 > 已從待補移除：`.md` Content-Type、`/.well-known/api-catalog`、`/.well-known/agent-skills/index.json`、root / RateWise Markdown negotiation、Link headers 與 `Content-Signal` 移除。這些項目由 Worker v5.0 與 `securityHeadersWorker.test.ts` 守門。
 
@@ -1962,6 +1963,7 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 | 日期       | 版本    | 變更摘要                                                                                                                                                                                                                                                                                                                                                                   |
 | ---------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-04 | v2.10.4 | 收斂 RateWise SEO txt header hygiene：Worker v5.2 對 `/ratewise/robots.txt` 與 `/ratewise/llms.txt` 先刪除上游殘留 `Content-Type`，再統一覆寫為單一 `text/plain; charset=utf-8`；同步更新外部檢測快照、待辦狀態與 `securityHeadersWorker.test.ts` 回歸守門。                                                                                                               |
 | 2026-05-03 | v2.10.3 | 對齊 `main` 最新 SEO / release 現況（`@app/ratewise` v2.22.15）：新增 3 篇 Authority Guide Markdown mirrors 並納入 `llms.txt`，全站 mirrors 由 6 擴至 9；About / FAQ / Guide / Open Data / 3 篇 Authority Guide 統一補齊 `og:type=article` 與 `article:modified_time`；同步記錄 PR #338 `/ratewise/` meta description 擴充與 PR #339 release 產出物更新。                  |
 | 2026-05-02 | v2.10.2 | 收斂 Worker v5.1 正式站行為：保留 root robots `Content-Signal` 清洗以守住 Lighthouse SEO，同步為直連 markdown mirrors 補 `X-Robots-Tag: noindex`，避免 mirror 與 canonical HTML 重複索引；兩者皆以正式站 header 驗證與 `securityHeadersWorker.test.ts` 守門。                                                                                                              |
 | 2026-05-02 | v2.10.1 | PR #322 合併後正式站驗證與 markdown mirror indexation 收斂：記錄 58/58 生產資源 `HTTP 200`、`verify:production-seo` 全綠、Lighthouse CI 通過；Cloudflare Worker v5.1 + `_headers` 對直連 `.md` 補 `X-Robots-Tag: noindex`，並以測試鎖定 markdown negotiation 不得誤傷 canonical HTML indexation。                                                                          |

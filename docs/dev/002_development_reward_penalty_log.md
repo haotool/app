@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-04
+- ID：ratewise-seo-txt-content-type-canonicalization
+- 原因：正式站 `/ratewise/robots.txt` 與 `/ratewise/llms.txt` 仍會回 `Content-Type: text/plain, text/plain`，屬於 SEO txt 端點的 header hygiene 漂移。
+- 解法：在 `security-headers` Worker v5.2 對 RateWise SEO txt 端點先刪除上游殘留 `Content-Type`，再統一覆寫為單一 `text/plain; charset=utf-8`，並補 `securityHeadersWorker` 回歸測試與 SSOT 文件同步。
+
+- 日期：2026-05-04
 - ID：ratewise-authority-guide-mirror-production-verification
 - 原因：3 篇 Authority Guide Markdown mirrors 已存在於 public 與 `llms.txt`，但未被納入 `SEO_FILES` 與正式 production verification，且 Worker / `_headers` 的 alternate Link 治理也未完全覆蓋，形成真實監測缺口。
 - 解法：將 3 篇 Authority Guide mirrors 納入 `SEO_FILES` SSOT，補齊 Worker 與 `_headers` 的 Markdown alternate Link 覆蓋，並以 seo-paths / securityHeaders / markdown mirror 測試與 SSOT 驗證收斂為正式閉環。
