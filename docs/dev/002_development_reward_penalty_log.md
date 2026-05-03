@@ -708,3 +708,8 @@
 - ID：ratewise-meta-description-google-snippet-extend
 - 原因：Squirrel surface audit 顯示 `/ratewise/` meta description 96 字元（< 110 建議），Google SERP snippet 與 AI 摘要的可用語意密度不足。
 - 解法：擴充 `DEFAULT_DESCRIPTION` 與 `SITE_CONFIG.description` 至 126 字元（雙 SSOT 同步），補入差異化定位（「台灣最精準匯率換算工具」）、四大特色（即時換算/現金即期/趨勢圖/PWA），維持品牌一致性與 verify:seo-docs SSOT alignment 通過。
+
+- 日期：2026-05-04
+- ID：tooling-vitest-4-test-script-jest-flag-removal
+- 原因：root `package.json` 的 `test:unit` / `test:integration` 仍透過 `pnpm -r test --` 把 Jest flag 傳給 Vitest 4，造成 4 個 app（haotool/park-keeper/nihonname/quake-school 等）每次 SEO iteration 都報 `CACError: Unknown option`，使 R5/R6 orchestrator 「失敗 20 輪」與本地 `test:unit` 全失敗。
+- 解法：移除 `--testPathIgnorePatterns` / `--testPathPattern`，e2e 隔離全部下放到各 app 的 `vitest.config.ts test.exclude`；integration 改為 `pnpm --filter @app/ratewise exec vitest run integration`，2660 unit + 8 integration tests 全綠。
