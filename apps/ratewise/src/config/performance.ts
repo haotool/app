@@ -12,7 +12,7 @@ const readEnvString = (key: string): string | undefined => {
 
 export const TREND_CHART_DEFER_MS = parsePositiveInteger(
   readEnvString('VITE_TREND_CHART_DEFER_MS'),
-  10_000,
+  250,
 );
 
 export const TREND_CHART_IDLE_TIMEOUT_MS = parsePositiveInteger(

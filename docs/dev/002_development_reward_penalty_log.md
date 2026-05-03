@@ -718,3 +718,8 @@
 - ID：tooling-vitest-4-test-script-jest-flag-removal
 - 原因：root `package.json` 的 `test:unit` / `test:integration` 仍透過 `pnpm -r test --` 把 Jest flag 傳給 Vitest 4，造成 4 個 app（haotool/park-keeper/nihonname/quake-school 等）每次 SEO iteration 都報 `CACError: Unknown option`，使 R5/R6 orchestrator 「失敗 20 輪」與本地 `test:unit` 全失敗。
 - 解法：移除 `--testPathIgnorePatterns` / `--testPathPattern`，e2e 隔離全部下放到各 app 的 `vitest.config.ts test.exclude`；integration 改為 `pnpm --filter @app/ratewise exec vitest run integration`，2660 unit + 8 integration tests 全綠。
+
+- 日期：2026-05-04
+- ID：ratewise-trend-chart-hard-defer-regression-fix
+- 原因：趨勢圖體感載入過慢，worktree A/B 顯示 `ce88d484` 為 `635ms`、`4b786676` 為 `11873ms`，根因是後者引入 `TREND_CHART_DEFER_MS=10000`，讓趨勢圖 10 秒後才開始載入。
+- 解法：將趨勢圖硬延遲預設值收斂為 `250ms`，保留 `requestIdleCallback` 的首屏保護，並新增 Playwright E2E latency 守門，要求 desktop/mobile 都在 3 秒內可見。
