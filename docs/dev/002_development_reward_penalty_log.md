@@ -12,6 +12,21 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-04
+- ID：issue-backlog-contract-rule-sync
+- 原因：repo 先前雖要求 review thread 收斂，但對 issue / backlog 的格式、嚴重度標籤與刪除條件仍缺乏正式契約條款，容易導致未來 agent 使用不一致格式。
+- 解法：在 `AGENTS.md` 與 `CLAUDE.md` 補入 issue / backlog 契約規則，強制使用正式 issue 結構、`severity:*` 標籤與 `gh` 刪除前置條件。
+
+- 日期：2026-05-04
+- ID：seo-master-ssot-prettier-format-followup
+- 原因：`#340` 的 Quality Checks 因 `docs/SEO_MASTER_SSOT.md` 未完全符合 Prettier 格式而失敗，導致文檔 PR 卡在格式守門。
+- 解法：以 repo 既有 Prettier 規則重寫 `SEO_MASTER_SSOT.md`，再推送最小 follow-up commit 讓 CI 回到綠燈。
+
+- 日期：2026-05-04
+- ID：seo-master-ssot-2026-05-03-state-sync
+- 原因：`SEO_MASTER_SSOT` 雖已更新版本與里程碑，但 `SEO_FILES`、生產驗證覆蓋與 Authority Guide mirror 探針說明仍殘留舊敘述，未完全對齊目前程式 SSOT。
+- 解法：同步修正文檔版本、公開 SEO/AI 資源清單、手動 smoke probe 範圍與歷史完成項描述，使文件與 `seo-paths.config.mjs`、近期 PR 狀態與 SEO 治理現況一致。
+
 - 日期：2026-05-03
 - ID：ratewise-authority-guide-markdown-mirror-and-article-og
 - 原因：authority guide 頁面缺少對應 Markdown mirrors 與 llms.txt 收錄，且多個具 Article JSON-LD 的內容頁仍沿用 `og:type=website`，降低分享與 AI 引用語義一致性。

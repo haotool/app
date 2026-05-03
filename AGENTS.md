@@ -195,6 +195,7 @@ Agent **必須**先完成：
 - 推送前 **必須**通過 `pre-push` hook
 - 合併主支 **必須**透過 PR 與 `gh`（避免本地未審查直推 `main`）
 - 發生 PR / review / checks 事件時，**必須**先使用 repo 既有 review 稽核腳本（如 `pnpm review:codex:audit`）盤點 review threads，再配合 `gh` 逐條回覆並轉為 `resolved`；不得留下未回覆或未關閉的審查狀態
+- 發生 issue / backlog 事件時，**必須**先使用 `gh issue list` 盤點現況；新增 issue **必須**使用正式格式（至少含：摘要、背景/證據、影響、範圍、驗收標準），並套用 `severity:*` + 類型標籤（如 `seo`、`bug`、`enhancement`）；若需移除舊 issue，僅可在具備刪除權限且組織已啟用 issue deletion 時使用 `gh issue delete`，否則必須改以 `close` 並留下原因
 - 若 PR checks 未完成或失敗，**不得**強制合併（除非維護者批准例外）
 
 ## Quality Gates (Repo SSOT)

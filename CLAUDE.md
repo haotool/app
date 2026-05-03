@@ -198,6 +198,7 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 **注意**：若 checks pending / failing，應先等待或修復，不應跳過審查控制。
 
 - 發生 PR / review / checks 事件時，必須先使用 repo 既有 review 稽核腳本（如 `pnpm review:codex:audit`）盤點 review threads，再配合 `gh` 逐條回覆處理證據並標記 `resolved`；不得只改碼不收斂 thread 狀態。
+- 發生 issue / backlog 事件時，必須先用 `gh issue list` 盤點現況；新 issue 一律用正式結構（摘要、背景/證據、影響、範圍、驗收標準）並加上 `severity:*` 與對應類型標籤；只有在確認具刪除權限且組織啟用 issue deletion 時，才可用 `gh issue delete` 移除舊 issue，否則改用 `close` 並註明原因。
 
 ## SEO 生產資源可用性檢查（SSOT）
 

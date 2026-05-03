@@ -1,8 +1,9 @@
 # RateWise（HaoRate）SEO 完整規範 — Master SSOT
 
-> **文件版本**: v2.10.2
+> **文件版本**: v2.10.3
 > **建立日期**: 2026-03-23
-> **最後更新**: 2026-05-02
+> **最後更新**: 2026-05-03
+> **v2.10.3 變更**: 2026-05-03 對齊 `main` 最新 SEO / release 現況（`@app/ratewise` v2.22.15）：① PR #336 補齊 3 篇 Authority Guide Markdown mirrors（全站 mirrors 由 6 擴至 9），同步收錄至 `llms.txt`；② About、FAQ、Guide、Open Data 與 3 篇 Authority Guide 統一輸出 `og:type=article` 與 `article:modified_time`，使內容頁分享語意與 Article schema 對齊；③ PR #338 擴充 `/ratewise/` meta description 語意密度，改善 Google snippet 可理解性；④ PR #339 release 產出物（`llms.txt`、`llms-full.txt`、`openapi.json`、`api/latest.json`、manifest、版本號）已完成同步。
 > **v2.10.2 變更**: 2026-05-02 收斂 Worker v5.1 正式站行為：保留 root robots `Content-Signal` 清洗以守住 Lighthouse SEO，同步為直連 markdown mirrors 補 `X-Robots-Tag: noindex`，避免 mirror 與 canonical HTML 重複索引；兩者皆以正式站 header 驗證與 `securityHeadersWorker.test.ts` 守門。
 > **v2.10.1 變更**: 2026-05-02 PR #322 合併後正式站驗證與 markdown mirror indexation 收斂：① 記錄正式站 58/58 SEO/公開資源 `HTTP 200`、`verify:production-seo` 全綠、Lighthouse CI 通過；② Cloudflare Worker v5.1 與 `_headers` 對直連 `.md` mirror 統一補 `X-Robots-Tag: noindex`，避免 mirror 與 canonical HTML 重複索引；③ 明確保留 `Accept: text/markdown` 協商版不加 `noindex`，避免誤傷 `/` 與 `/ratewise/` canonical URL。
 > **v2.10.0 變更**: 2026-05-02 PR #322 SEO 迭代修正批次：① 新增 DeepSeekBot / MistralBot 至 Tier 1 TRAINING（AI 爬蟲總數 37→39）；② `CurrencyConversionService.availableLanguage` 補入 `'ko'`（繁、英、日、韓四語）；③ `Organization.knowsAbout` 擴充 DCC 動態貨幣轉換、海外刷卡匯率、換匯成本試算、bank sell rate vs mid rate（12→16 主題）；④ 首頁 `HOMEPAGE_FAQ_CONTENT` Q6 文案更正三→四種介面語言，`HOMEPAGE_HOW_TO` step 4 同步對齊；⑤ `Dataset` schema 描述改用 `SUPPORTED_CURRENCY_COUNT` 動態常數，消除硬編碼 "18"；⑥ 首頁 speakable cssSelector 新增 `#homepage-seo-section-heading`；⑦ `ABOUT_PAGE_FAQ` schema 說明補入 `Dataset（開放資料）`；⑧ 修正 Codex P1：bundle test 遞迴計入 manifest imports、觸發條件改用 `npm_lifecycle_event`；§8.2 更新為共 39 個。
@@ -189,7 +190,7 @@ src/config/seo-metadata.ts        ← 內容 SSOT（title/description/FAQ/JSON-L
 scripts/generate-sitemap-2026.mjs       → public/sitemap.xml
 scripts/generate-robots-txt.mjs         → public/robots.txt
 scripts/generate-llms-txt.mjs           → public/llms.txt + public/llms-full.txt
-scripts/generate-markdown-mirrors.mjs   → public/{index,faq,about,privacy,guide,open-data}.md
+scripts/generate-markdown-mirrors.mjs   → public/{index,faq,about,privacy,guide,open-data,sell-rate-vs-mid-rate,cash-vs-spot-rate,card-rate-guide}.md
 scripts/generate-api-json.mjs           → public/api/latest.json
 scripts/generate-pair-json.mjs          → public/api/pairs/{pair}.json (17 個)
 scripts/generate-openapi.mjs            → public/openapi.json
@@ -217,18 +218,22 @@ public/
   guide.md             Guide 頁 Markdown 鏡像
   open-data.md         Open Data 頁 Markdown 鏡像
   index.md             首頁 Markdown 鏡像
+  sell-rate-vs-mid-rate.md Authority Guide Markdown 鏡像
+  cash-vs-spot-rate.md Authority Guide Markdown 鏡像
+  card-rate-guide.md   Authority Guide Markdown 鏡像
   _headers             Cloudflare Pages 快取/CORS + Link rel="alternate" type="text/markdown"
 ```
 
 **Markdown 鏡像策略（A3，Best Practice 2026）**：
 
-- 6 個 `.md` 檔由 `generate-markdown-mirrors.mjs` 於 prebuild 自動產生，內容從 `seo-metadata.ts` 與頁面內容 SSOT 擷取，避免 drift。
+- 9 個 `.md` 檔由 `generate-markdown-mirrors.mjs` 於 prebuild 自動產生，內容從 `seo-metadata.ts` 與頁面內容 SSOT 擷取，避免 drift。
 - `_headers` 對 `/*.md` 與 `/ratewise/*.md` 設 `Content-Type: text/markdown; charset=utf-8` 與 `X-Robots-Tag: noindex`；Worker v5.1 對直連 `.md` 也強制補同值，避免 edge / origin 行為漂移。
 - HTML 頁會透過 `_headers` 與 Worker 注入 `Link: <...md>; rel="alternate"; type="text/markdown"` RFC 8288 HTTP 標頭，供 AI 爬蟲自動發現純文字版本。
 - `Accept: text/markdown` 協商版僅供 agent 讀取 canonical URL 內容，不加 `X-Robots-Tag`，避免把 `/` 或 `/ratewise/` canonical 頁誤標為不可索引。
 - 內容與對應 HTML 頁語義一致（同 FAQ、同作者、同資料來源），符合 Google cloaking 紅線。
-- drift-guard 測試：`apps/ratewise/src/__tests__/markdown-mirror.test.ts`（11 個錨定字串斷言）。
-- 注意：`SEO_FILES` SSOT 目前僅列 `sitemap.xml`、`robots.txt`、`llms.txt`、`llms-full.txt` 四個核心 SEO 檔；Markdown 鏡像由 prebuild 與 `_headers` 管理，不屬於 `resources.seoFiles` 清單。
+- Authority Guide mirrors（`sell-rate-vs-mid-rate.md`、`cash-vs-spot-rate.md`、`card-rate-guide.md`）已納入 `llms.txt`，讓 AI crawler 可直接發現長篇主題頁的純文字版本。
+- drift-guard 測試：`apps/ratewise/src/__tests__/markdown-mirror.test.ts`（含 Authority Guide mirrors 與 `llms.txt` 收錄斷言）。
+- 注意：`SEO_FILES` SSOT 已擴充為 12 個公開 SEO / AI 資源：`sitemap.xml`、`robots.txt`、`llms.txt`、`llms-full.txt`、`openapi.json`、`api/latest.json` 與 6 個核心 Markdown mirrors（`index.md`、`faq.md`、`guide.md`、`about.md`、`privacy.md`、`open-data.md`）。3 篇 Authority Guide mirrors 目前仍由 prebuild、`_headers`、`llms.txt` 與手動 smoke probe 管理，尚未納入 `resources.seoFiles` 驗證清單。
 
 ### 2.4 驗證層（Verification Layer）
 
@@ -524,11 +529,11 @@ RateWise 是匯率換算工具，無傳統站內搜尋功能。PR #311 從 `buil
 
 `AuthorityGuidePage` 元件自 v2.16.4 起透過 `SEOPageMetadata` 的 `jsonLd`、`faqContent`、`answerCapsule` props 接受 schema 與 Q&A。
 
-| 頁面                      | 目標查詢                 | 現況                                    |
-| ------------------------- | ------------------------ | --------------------------------------- |
-| `/sell-rate-vs-mid-rate/` | 「賣出價 vs 中間價」     | `Article` JSON-LD ✅；Answer Capsule ✅ |
-| `/cash-vs-spot-rate/`     | 「現金匯率 vs 即期匯率」 | `Article` JSON-LD ✅；Answer Capsule ✅ |
-| `/card-rate-guide/`       | 「刷卡匯率 DCC」         | `Article` JSON-LD ✅；Answer Capsule ✅ |
+| 頁面                      | 目標查詢                 | 現況                                                                                                     |
+| ------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `/sell-rate-vs-mid-rate/` | 「賣出價 vs 中間價」     | `Article` JSON-LD ✅；Answer Capsule ✅；`.md` mirror ✅；`og:type=article` + `article:modified_time` ✅ |
+| `/cash-vs-spot-rate/`     | 「現金匯率 vs 即期匯率」 | `Article` JSON-LD ✅；Answer Capsule ✅；`.md` mirror ✅；`og:type=article` + `article:modified_time` ✅ |
+| `/card-rate-guide/`       | 「刷卡匯率 DCC」         | `Article` JSON-LD ✅；Answer Capsule ✅；`.md` mirror ✅；`og:type=article` + `article:modified_time` ✅ |
 
 後續可加強：
 
@@ -1443,13 +1448,13 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 
 #### 12.7.3 對比 SSOT 既有規範的差距
 
-| SSOT 標                                                                              | 程式碼狀態                                                                                                               | 生產實況                                                                             | 結論                                                                                                                                                                                                                                                                                                                                                                       |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| §14 A3「5 個 SSG 頁產生 `.md` 鏡像」✅                                               | `apps/ratewise/public/{index,faq,about,guide,open-data,privacy}.md` 已建立、`generate-markdown-mirrors.mjs` 管線存在     | `/ratewise/index.md`、`/ratewise/{faq,about,guide,open-data,privacy}.md` 全 200 ✅   | ✅ **無 drift**：本次審查初版誤把鏡像路徑寫成 `/ratewise/{slug}/index.md`，但 repo SSOT（per `_headers` `Link: </ratewise/{slug}.md>; rel=alternate` + `generate-markdown-mirrors.mjs` 輸出 `public/{slug}.md`）的設計就是 `/ratewise/{slug}.md`；以該路徑重測，5 個子頁 + 1 個首頁鏡像全部 200。Round-5 review 已修正                                                     |
-| §14 P1-7a「`_headers` 加入 `Link: <…md>; rel=alternate`」✅                          | Worker `shouldInjectRatewiseMarkdownLink` 邏輯 main 已具                                                                 | `/ratewise/` GET response 無 `Link:` header                                          | ✅ **已解決 2026-04-29 12:25 UTC**：PR #302 squash-merge 進 main（`dbe4c15b`），`cd security-headers && npx wrangler deploy` 部署 Cloudflare version `7d094658-55a0-4e99-b478-67006d2fce69`；live 驗證 `/ratewise/` GET response 已含 4 個 Link entries（markdown alternate + api-catalog + openapi service-desc + open-data service-doc）                                 |
-| §12.6.6 IsItAgentReady Level 2「root markdown negotiation / Link / agent discovery」 | Worker v5.0 已具 root 邏輯（`isHaotoolRootHomepage`、`buildRootAgentDiscoveryLinks`）                                    | root `/` 與 `/ratewise/` 均已由 Worker 守門                                          | ✅ **已達成 Level 2 (Bot-Aware)**：root `/` GET `Accept: text/markdown` → `text/markdown; charset=utf-8`、HTML 回 3 個 Link entries；RateWise HTML 回 markdown / api-catalog / openapi / open-data Link entries；`/.well-known/api-catalog` + `/.well-known/agent-skills/index.json` 全部由 Worker 直接回應。`Content-Signal` 已於 v2.22.8 移除，不再作為 Level 2 完成條件 |
-| `index.md` / `.md` Content-Type                                                      | Worker v5.0 對 Markdown negotiation 與直連 `.md` 統一 `text/markdown; charset=utf-8`                                     | 由 `securityHeadersWorker.test.ts` 覆蓋                                              | ✅ **已完成**：直連 `/ratewise/index.md` 即使上游回 `application/octet-stream`，Worker 也會覆寫成 `text/markdown`                                                                                                                                                                                                                                                          |
-| `/ratewise/robots.txt` / `/ratewise/llms.txt` Content-Type                           | root `robots.txt` 已由 Worker 明確 `set('Content-Type', 'text/plain; charset=utf-8')`；RateWise SEO txt 檔尚未補同樣覆寫 | `/ratewise/robots.txt` / `/ratewise/llms.txt` 仍有 `text/plain, text/plain` 歷史觀察 | 🟡 **仍待補**：這是 RateWise 靜態 SEO txt 檔的 header 清理，不屬於已完成的 root agent readiness；需在 Worker 或上游 header 對 `/ratewise/robots.txt` / `/ratewise/llms.txt` 做單一 `Content-Type` 覆寫                                                                                                                                                                     |
+| SSOT 標                                                                              | 程式碼狀態                                                                                                                                                                   | 生產實況                                                                                                                                              | 結論                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §14 A3「Markdown mirrors 已覆蓋首頁、核心內容頁與 Authority Guide」✅                | `apps/ratewise/public/{index,faq,about,guide,open-data,privacy,sell-rate-vs-mid-rate,cash-vs-spot-rate,card-rate-guide}.md` 已建立、`generate-markdown-mirrors.mjs` 管線存在 | `/ratewise/index.md`、`/ratewise/{faq,about,guide,open-data,privacy,sell-rate-vs-mid-rate,cash-vs-spot-rate,card-rate-guide}.md` 可作為正式 SSOT 路徑 | ✅ **無 drift**：repo SSOT 採 `/ratewise/{slug}.md` 單檔鏡像設計，不使用 `/index.md` 子路徑；2026-05-03 已補齊 3 篇 Authority Guide mirrors 並收錄至 `llms.txt`，目前全站 mirrors 總數為 9。                                                                                                                                                                               |
+| §14 P1-7a「`_headers` 加入 `Link: <…md>; rel=alternate`」✅                          | Worker `shouldInjectRatewiseMarkdownLink` 邏輯 main 已具                                                                                                                     | `/ratewise/` GET response 無 `Link:` header                                                                                                           | ✅ **已解決 2026-04-29 12:25 UTC**：PR #302 squash-merge 進 main（`dbe4c15b`），`cd security-headers && npx wrangler deploy` 部署 Cloudflare version `7d094658-55a0-4e99-b478-67006d2fce69`；live 驗證 `/ratewise/` GET response 已含 4 個 Link entries（markdown alternate + api-catalog + openapi service-desc + open-data service-doc）                                 |
+| §12.6.6 IsItAgentReady Level 2「root markdown negotiation / Link / agent discovery」 | Worker v5.0 已具 root 邏輯（`isHaotoolRootHomepage`、`buildRootAgentDiscoveryLinks`）                                                                                        | root `/` 與 `/ratewise/` 均已由 Worker 守門                                                                                                           | ✅ **已達成 Level 2 (Bot-Aware)**：root `/` GET `Accept: text/markdown` → `text/markdown; charset=utf-8`、HTML 回 3 個 Link entries；RateWise HTML 回 markdown / api-catalog / openapi / open-data Link entries；`/.well-known/api-catalog` + `/.well-known/agent-skills/index.json` 全部由 Worker 直接回應。`Content-Signal` 已於 v2.22.8 移除，不再作為 Level 2 完成條件 |
+| `index.md` / `.md` Content-Type                                                      | Worker v5.0 對 Markdown negotiation 與直連 `.md` 統一 `text/markdown; charset=utf-8`                                                                                         | 由 `securityHeadersWorker.test.ts` 覆蓋                                                                                                               | ✅ **已完成**：直連 `/ratewise/index.md` 即使上游回 `application/octet-stream`，Worker 也會覆寫成 `text/markdown`                                                                                                                                                                                                                                                          |
+| `/ratewise/robots.txt` / `/ratewise/llms.txt` Content-Type                           | root `robots.txt` 已由 Worker 明確 `set('Content-Type', 'text/plain; charset=utf-8')`；RateWise SEO txt 檔尚未補同樣覆寫                                                     | `/ratewise/robots.txt` / `/ratewise/llms.txt` 仍有 `text/plain, text/plain` 歷史觀察                                                                  | 🟡 **仍待補**：這是 RateWise 靜態 SEO txt 檔的 header 清理，不屬於已完成的 root agent readiness；需在 Worker 或上游 header 對 `/ratewise/robots.txt` / `/ratewise/llms.txt` 做單一 `Content-Type` 覆寫                                                                                                                                                                     |
 
 #### 12.7.4 Worker v4.9 prod-source drift 證據（與 §12.6.6.2 互相補位）
 
@@ -1496,12 +1501,13 @@ curl -s --compressed https://app.haotool.org/.well-known/agent-skills/index.json
 
 ```bash
 # 1. 生產 SEO 健康檢查（覆蓋 SEO_PATHS 公開路徑 200、APP_ONLY_PATHS app-shell 路由、
-#    SEO_FILES = sitemap/robots/llms/llms-full、sitemap 與 hreflang 內容、404 真實性、舊資產 301）
+#    SEO_FILES = sitemap/robots/llms/llms-full/openapi/api/latest + 6 個核心 Markdown mirrors、
+#    sitemap 與 hreflang 內容、404 真實性、舊資產 301）
 #    --base-url 可指向 staging
 node scripts/verify-production-seo.mjs ratewise --base-url=https://app.haotool.org/ratewise
 
 # 2. 生產資源可用性（OG/Twitter 圖片 + favicon + apple-touch-icon + 3 個 PWA icon + SEO_FILES）
-#    實際覆蓋僅 IMAGE_RESOURCES（7 個檔）+ SEO_FILES（4 個檔）；不含 manifest.webmanifest、screenshots
+#    實際覆蓋為 IMAGE_RESOURCES（7 個檔）+ SEO_FILES（12 個檔）；不含 manifest.webmanifest、screenshots
 node scripts/verify-production-resources.mjs ratewise
 
 # 3. 結構化資料驗證（schema 種類 / Speakable / aggregateRating gate）
@@ -1510,15 +1516,13 @@ node scripts/verify-structured-data.mjs
 # 4. 公開 SEO 真相 surface 檢查（H1 順序、SeoTech、sitemap 舊標籤）
 pnpm --filter @app/ratewise vitest run src/__tests__/seo-public-surface.test.ts
 
-# 5. §12.7.2 表格剩餘端點補充探針（命令 #1/#2 不涵蓋的 JSON/manifest/noindex 頁、Markdown 鏡像）
-#    這些端點故意不在 SEO_PATHS / SEO_FILES：/api/latest.json、/openapi.json 屬 API、
-#    /manifest.webmanifest 屬 PWA、/privacy/ 屬 noindex；故額外列出做 smoke probe
+# 5. §12.7.2 表格剩餘端點補充探針（命令 #1/#2 不涵蓋的 PWA/noindex 頁與 3 篇 Authority Guide Markdown mirrors）
+#    這些端點故意不在 SEO_PATHS / SEO_FILES：/manifest.webmanifest 屬 PWA、/privacy/ 屬 noindex；
+#    3 篇 Authority Guide mirrors 目前尚未納入 `resources.seoFiles`，故額外列出做 smoke probe
 #    Markdown 鏡像 path 對齊 _headers 與 generate-markdown-mirrors.mjs SSOT：
 #      /ratewise/index.md      ↔ /ratewise/
-#      /ratewise/{slug}.md     ↔ /ratewise/{slug}/    （faq、about、guide、open-data、privacy）
+#      /ratewise/{slug}.md     ↔ /ratewise/{slug}/    （faq、about、guide、open-data、privacy、sell-rate-vs-mid-rate、cash-vs-spot-rate、card-rate-guide）
 for url in \
-  https://app.haotool.org/ratewise/api/latest.json \
-  https://app.haotool.org/ratewise/openapi.json \
   https://app.haotool.org/ratewise/manifest.webmanifest \
   https://app.haotool.org/ratewise/privacy/ \
   https://app.haotool.org/ratewise/og-image.jpg \
@@ -1527,7 +1531,10 @@ for url in \
   https://app.haotool.org/ratewise/about.md \
   https://app.haotool.org/ratewise/guide.md \
   https://app.haotool.org/ratewise/open-data.md \
-  https://app.haotool.org/ratewise/privacy.md; do
+  https://app.haotool.org/ratewise/privacy.md \
+  https://app.haotool.org/ratewise/sell-rate-vs-mid-rate.md \
+  https://app.haotool.org/ratewise/cash-vs-spot-rate.md \
+  https://app.haotool.org/ratewise/card-rate-guide.md; do
   # 不加 -L：若端點意外退化成 301/302（例如重導到 /ratewise/），需保留原始狀態碼以察覺回歸
   printf '%s %s\n' "$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$url")" "$url"
 done
@@ -1542,9 +1549,9 @@ curl -X POST https://isitagentready.com/api/scan -H 'Content-Type: application/j
 
 > **覆蓋說明**：
 >
-> - 命令 #1 (`verify-production-seo.mjs`) 覆蓋 `apps/ratewise/seo-paths.config.mjs` 的 `seoPaths`（249 URL）+ `appShellPaths` + `resources.seoFiles`（`/sitemap.xml`、`/robots.txt`、`/llms.txt`、`/llms-full.txt`），對齊 §12.6.5 與 CI 實作。
-> - 命令 #2 (`verify-production-resources.mjs`) 實際只覆蓋 `IMAGE_RESOURCES`（`/og-image.jpg`、`/twitter-image.jpg`、`/favicon.ico`、`/apple-touch-icon.png`、3 個 PWA icon — 共 7 檔）+ `SEO_FILES`（4 檔）；**不含** `/manifest.webmanifest` 與 `screenshots/*`。
-> - **§12.7.2 表格中**：`/api/latest.json`、`/openapi.json`、`/manifest.webmanifest` 不在 `SEO_FILES`（屬 API/PWA 類），`/privacy/` 不在 `seoPaths`（noindex），`/ratewise/{slug}.md` Markdown 鏡像也不在現有探針集合，**因此命令 #5 對這些端點獨立做 smoke probe**，避免「命令 #1/#2 通過但實際漏檢」。
+> - 命令 #1 (`verify-production-seo.mjs`) 覆蓋 `apps/ratewise/seo-paths.config.mjs` 的 `seoPaths`（249 URL）+ `appShellPaths` + `resources.seoFiles`（目前為 12 檔：`/sitemap.xml`、`/robots.txt`、`/llms.txt`、`/llms-full.txt`、`/openapi.json`、`/api/latest.json` 與 6 個核心 Markdown mirrors），對齊 §12.6.5 與 CI 實作。
+> - 命令 #2 (`verify-production-resources.mjs`) 實際覆蓋 `IMAGE_RESOURCES`（`/og-image.jpg`、`/twitter-image.jpg`、`/favicon.ico`、`/apple-touch-icon.png`、3 個 PWA icon — 共 7 檔）+ `SEO_FILES`（12 檔）；**不含** `/manifest.webmanifest` 與 `screenshots/*`。
+> - **§12.7.2 表格中**：`/manifest.webmanifest` 不在 `SEO_FILES`（屬 PWA 類），`/privacy/` 不在 `seoPaths`（noindex），3 篇 Authority Guide Markdown mirrors 目前也不在 `resources.seoFiles` 驗證集合，**因此命令 #5 對這些端點獨立做 smoke probe**，避免「命令 #1/#2 通過但實際漏檢」。
 > - v2.7.0 初版誤把命令 #1 寫成 `verify-production-resources.mjs --base-url=...`，但該腳本只讀 `resources.seoFiles/images` 且不接受 `--base-url`；已於本次修正為 `verify-production-seo.mjs` 並補上 #5 探針。
 
 #### 12.7.8 2026-04-30 例行重跑狀態
@@ -1782,14 +1789,14 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 ### 13.0.2 仍缺的頂級 SEO 能力
 
-| 缺口                  | 優先級 | 說明                                                                       |
-| --------------------- | ------ | -------------------------------------------------------------------------- |
-| **多語索引戰略**      | P0     | UI 有多語但無可索引英文/日文內容體系與完整 hreflang 網狀關係；影響國際流量 |
-| **SEO 可觀測性**      | P0     | 無 Search Console / CrUX / coverage 週期監控；無 SERP CTR 迭代機制         |
-| **內容主題群擴張**    | P0     | 現有強項為幣對頁；缺：刷卡匯率/DCC、機場換匯、各銀行差異、旅遊換匯指南     |
-| **站外權威訊號**      | P1     | 無外部品牌 mention、高品質反向連結、媒體提及、可辨識的 entity footprint    |
-| **內容深度擴張**      | P1     | 三篇 Authority Guide 尚未達 3,000+ 字；幣對頁仍可加入更多視覺化與比較表    |
-| **llms.txt 格式精煉** | P2     | 已可讀且清單完整，但仍可更貼近 llmstxt.org 的 H2 file-list 格式            |
+| 缺口                  | 優先級 | 說明                                                                                                                |
+| --------------------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| **多語索引戰略**      | P0     | UI 有多語但無可索引英文/日文內容體系與完整 hreflang 網狀關係；影響國際流量                                          |
+| **SEO 可觀測性**      | P0     | 無 Search Console / CrUX / coverage 週期監控；無 SERP CTR 迭代機制                                                  |
+| **內容主題群擴張**    | P0     | 現有強項為幣對頁；缺：刷卡匯率/DCC、機場換匯、各銀行差異、旅遊換匯指南                                              |
+| **站外權威訊號**      | P1     | 無外部品牌 mention、高品質反向連結、媒體提及、可辨識的 entity footprint                                             |
+| **內容深度擴張**      | P1     | Authority Guide 已補齊 3 篇專題鏡像與 Article OG 訊號，但長篇內容深度仍可持續加厚；幣對頁亦可加入更多視覺化與比較表 |
+| **llms.txt 格式精煉** | P2     | 已可讀且清單完整，但仍可更貼近 llmstxt.org 的 H2 file-list 格式                                                     |
 
 ---
 
@@ -1797,43 +1804,43 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 ### 🟢 已完成（2026-03-23 → 2026-04-10）
 
-| #     | 任務                                                                     | 完成版本  | 說明                                                                                                                           |
-| ----- | ------------------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| P0-1  | 修正 llms.txt 金額頁 URL 格式描述（`?amount=` → 路徑式說明）             | v2.16.0   | `generate-llms-txt.mjs` 改為 SSG 路徑型描述                                                                                    |
-| P0-2  | llms.txt AI/LLM Access Control 加入 `Claude-User`                        | v2.16.0+  | llms.txt 已更新說明                                                                                                            |
-| P0-3  | robots.txt 明確 Allow `ClaudeBot`、`Claude-User`、`Claude-SearchBot`     | 已驗證    | `generate-robots-txt.mjs` 已包含三條 Anthropic 爬蟲規則                                                                        |
-| —     | AnswerCapsule 元件實作                                                   | v2.16.4   | `src/components/AnswerCapsule.tsx` + SEOPageMetadata.answerCapsule                                                             |
-| —     | AuthorityGuidePage 傳遞 jsonLd/faqContent/answerCapsule                  | v2.16.4   | 三篇 Guide 頁已具備接收 schema 的 props 管道                                                                                   |
-| —     | Guide 頁加入 answerCapsule（2 題）                                       | v2.16.4   | GUIDE_PAGE_SEO.answerCapsule 加入現金/即期常見問答                                                                             |
-| —     | 品牌 SSOT 收斂（manifest、PWA、llms、API 契約）                          | v2.16.1-2 | "HaoRate 匯率好工具" 品牌全面統一                                                                                              |
-| —     | FAQ 頁 pathname 修正（`/faq` → `/faq/`）                                 | v2.16.0   | canonical URL trailing slash 已補                                                                                              |
-| —     | seo-health-check decodeURIComponent 中文標點修正                         | v2.16.0   | 307 項健檢通過，0 錯誤                                                                                                         |
-| —     | amount 頁 canonical 與 schema URL 穩定性                                 | v2.16.0   | prerender HTML 回歸測試補強                                                                                                    |
-| —     | seo-static.ts 抽出（health-check 與 seo-metadata 共用標題常數）          | v2.16.4   | 移除 health-check 對 Vite runtime 的直接依賴                                                                                   |
-| —     | health-check 5xx 暫時性錯誤重試機制                                      | v2.16.4   | 避免短暫部署抖動誤報                                                                                                           |
-| —     | 金額頁數量修正（204 → 206）                                              | v2.16.0   | CURRENCY_AMOUNT(104) + REVERSE_CURRENCY_AMOUNT(102)                                                                            |
-| —     | SpeakableSpecification schema 補齊所有 9 個內容頁                        | v2.18.0   | GUIDE/OPEN_DATA/ABOUT/三篇Authority Guide 頁；`buildSpeakableJsonLd(['h1'])` 加入各頁 jsonLd 陣列                              |
-| —     | Organization + Person `knowsAbout` 實體權威信號                          | v2.18.0   | `buildSiteJsonLd()` Organization 加入 12 個核心主題；`buildPersonJsonLd()` 加入 11 個作者知識領域                              |
-| —     | Lighthouse CI 效能門檻調降至 0.83（自然波動緩衝）                        | v2.18.0   | `.lighthouserc.json` 從 0.85 降至 0.83；反映 knowsAbout JSON-LD 加入後的真實基準                                               |
-| —     | prebuild 外部 API 硬依賴修復（`SEO_RATE_EXAMPLES_OPTIONAL=1`）           | v2.17.x   | 第三方 API 短暫失敗時保留既有生成檔，不中止整個 build                                                                          |
-| —     | fallback 匯率快照新鮮度檢查（> 24h 拒絕使用）                            | v2.17.x   | `prebuild-fetch-rates.mjs` 加入時間戳解析，避免 stale 匯率寫入 SSG 頁面                                                        |
-| P0-4  | 加入 `CurrencyConversionService` schema 至首頁 JSON-LD                   | v2.22.0   | `seo-metadata.ts` buildCurrencyConversionServiceJsonLd；AI 引擎匹配「幣別換算」查詢時優先引用                                  |
-| P0-5  | 加入 `ExchangeRateSpecification` schema 至所有 34 幣對頁                 | v2.22.0   | `seo-metadata.ts` buildExchangeRateSpecificationJsonLd；從 `seo-rate-examples.ts` 動態讀取匯率                                 |
-| P0-6  | 在所有幣對頁與金額頁加入可見更新時間戳                                   | v2.22.0   | `CurrencyLandingPage.tsx` 加入 `<time>` 元素顯示 `SEO_RATE_EXAMPLES_DATE`；Perplexity 新鮮度信號                               |
-| P1-7  | 擴充 `seo-best-practices.test.ts` 加入 Schema 測試                       | v2.22.0   | 新增 CurrencyConversionService + ExchangeRateSpecification 測試（10 個測試案例）                                               |
-| P1-1  | 在所有 34 幣對頁加入 Answer Capsule                                      | v2.23.0   | `buildCurrencyAnswerCapsule()` 函數；正向/反向幣對頁各 2 題 Answer Capsule                                                     |
-| P1-2  | 幣對頁 FAQ 擴展至 5-7 題                                                 | v2.22.0   | `CURRENCY_SPECIFIC_FAQ` 已為每個幣別提供 2-3 則特化 FAQ，加上通用 FAQ 共 5-7 題                                                |
-| P1-3  | Authority Guide 頁 Answer Capsule                                        | v2.16.4   | `GUIDE_PAGE_SEO`、`OPEN_DATA_PAGE_SEO`、`ABOUT_PAGE_SEO` 已有 answerCapsule                                                    |
-| P1-4  | 匯率比較資訊（台銀 vs 中間價）                                           | v2.22.0   | `buildRateExampleSentence()` 在 FAQ 答案中嵌入具體差距數字                                                                     |
-| P1-5  | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                   | v2.24.0   | `buildAmountExchangeRateSpecificationJsonLd()` 函數；金額頁自動注入含換算結果的 schema                                         |
-| B2    | robots.txt 四層語意分組（training/search/user-agent/preview）            | 2026-04   | `generate-robots-txt.mjs` 重構；便於 opt-out 切換；詳見 §8                                                                     |
-| B3    | AI crawler 清單抽出共用 SSOT                                             | 2026-04   | `scripts/lib/ai-crawlers.mjs` 供 robots.txt 與 llms.txt 共用；測試覆蓋 Claude/User/Search 角色                                 |
-| B4    | Lighthouse CI canonical smoke paths                                      | 2026-05   | `.lighthouserc.cjs` 從 `APP_CONFIG.lighthouseSmokePaths` 讀取 `/`、`/faq/`、`/about/`，避免無尾斜線 URL fallback 造成 CLS 誤判 |
-| E1    | GA4 AI referral 追蹤（9 平台 utm + referrer 偵測 + sessionStorage 去重） | 2026-04   | `apps/shared/analytics/ga.ts`；詳見 §6.5；9 個單元測試覆蓋                                                                     |
-| A3    | 5 個 SSG 頁產生 `.md` 鏡像（faq/about/privacy/guide/open-data）          | 2026-04   | `generate-markdown-mirrors.mjs`（prettier 正規化）+ `_headers` + llms.txt 索引；詳見 §2.3                                      |
-| P1-7a | `_headers` 加入 `Link: <...md>; rel="alternate"; type="text/markdown"`   | 2026-04   | RFC 8288 HTTP 標頭指引 AI 爬蟲從 HTML 頁發現 .md 鏡像（5 個頁面）                                                              |
-| P1-9  | Accept-based content negotiation（Worker 層）                            | v5.0      | root `/` 與 `/ratewise/` 在 `Accept: text/markdown` 時回對應 `.md`；`Vary: Accept` 防快取混用                                  |
-| P2-9  | Speakable schema 整合測試（所有 7 個核心內容頁）                         | 2026-04   | `src/config/__tests__/seo-speakable.test.ts`；29 個測試案例；防 schema drift 回歸                                              |
+| #     | 任務                                                                                               | 完成版本  | 說明                                                                                                                           |
+| ----- | -------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| P0-1  | 修正 llms.txt 金額頁 URL 格式描述（`?amount=` → 路徑式說明）                                       | v2.16.0   | `generate-llms-txt.mjs` 改為 SSG 路徑型描述                                                                                    |
+| P0-2  | llms.txt AI/LLM Access Control 加入 `Claude-User`                                                  | v2.16.0+  | llms.txt 已更新說明                                                                                                            |
+| P0-3  | robots.txt 明確 Allow `ClaudeBot`、`Claude-User`、`Claude-SearchBot`                               | 已驗證    | `generate-robots-txt.mjs` 已包含三條 Anthropic 爬蟲規則                                                                        |
+| —     | AnswerCapsule 元件實作                                                                             | v2.16.4   | `src/components/AnswerCapsule.tsx` + SEOPageMetadata.answerCapsule                                                             |
+| —     | AuthorityGuidePage 傳遞 jsonLd/faqContent/answerCapsule                                            | v2.16.4   | 三篇 Guide 頁已具備接收 schema 的 props 管道                                                                                   |
+| —     | Guide 頁加入 answerCapsule（2 題）                                                                 | v2.16.4   | GUIDE_PAGE_SEO.answerCapsule 加入現金/即期常見問答                                                                             |
+| —     | 品牌 SSOT 收斂（manifest、PWA、llms、API 契約）                                                    | v2.16.1-2 | "HaoRate 匯率好工具" 品牌全面統一                                                                                              |
+| —     | FAQ 頁 pathname 修正（`/faq` → `/faq/`）                                                           | v2.16.0   | canonical URL trailing slash 已補                                                                                              |
+| —     | seo-health-check decodeURIComponent 中文標點修正                                                   | v2.16.0   | 307 項健檢通過，0 錯誤                                                                                                         |
+| —     | amount 頁 canonical 與 schema URL 穩定性                                                           | v2.16.0   | prerender HTML 回歸測試補強                                                                                                    |
+| —     | seo-static.ts 抽出（health-check 與 seo-metadata 共用標題常數）                                    | v2.16.4   | 移除 health-check 對 Vite runtime 的直接依賴                                                                                   |
+| —     | health-check 5xx 暫時性錯誤重試機制                                                                | v2.16.4   | 避免短暫部署抖動誤報                                                                                                           |
+| —     | 金額頁數量修正（204 → 206）                                                                        | v2.16.0   | CURRENCY_AMOUNT(104) + REVERSE_CURRENCY_AMOUNT(102)                                                                            |
+| —     | SpeakableSpecification schema 補齊所有 9 個內容頁                                                  | v2.18.0   | GUIDE/OPEN_DATA/ABOUT/三篇Authority Guide 頁；`buildSpeakableJsonLd(['h1'])` 加入各頁 jsonLd 陣列                              |
+| —     | Organization + Person `knowsAbout` 實體權威信號                                                    | v2.18.0   | `buildSiteJsonLd()` Organization 加入 12 個核心主題；`buildPersonJsonLd()` 加入 11 個作者知識領域                              |
+| —     | Lighthouse CI 效能門檻調降至 0.83（自然波動緩衝）                                                  | v2.18.0   | `.lighthouserc.json` 從 0.85 降至 0.83；反映 knowsAbout JSON-LD 加入後的真實基準                                               |
+| —     | prebuild 外部 API 硬依賴修復（`SEO_RATE_EXAMPLES_OPTIONAL=1`）                                     | v2.17.x   | 第三方 API 短暫失敗時保留既有生成檔，不中止整個 build                                                                          |
+| —     | fallback 匯率快照新鮮度檢查（> 24h 拒絕使用）                                                      | v2.17.x   | `prebuild-fetch-rates.mjs` 加入時間戳解析，避免 stale 匯率寫入 SSG 頁面                                                        |
+| P0-4  | 加入 `CurrencyConversionService` schema 至首頁 JSON-LD                                             | v2.22.0   | `seo-metadata.ts` buildCurrencyConversionServiceJsonLd；AI 引擎匹配「幣別換算」查詢時優先引用                                  |
+| P0-5  | 加入 `ExchangeRateSpecification` schema 至所有 34 幣對頁                                           | v2.22.0   | `seo-metadata.ts` buildExchangeRateSpecificationJsonLd；從 `seo-rate-examples.ts` 動態讀取匯率                                 |
+| P0-6  | 在所有幣對頁與金額頁加入可見更新時間戳                                                             | v2.22.0   | `CurrencyLandingPage.tsx` 加入 `<time>` 元素顯示 `SEO_RATE_EXAMPLES_DATE`；Perplexity 新鮮度信號                               |
+| P1-7  | 擴充 `seo-best-practices.test.ts` 加入 Schema 測試                                                 | v2.22.0   | 新增 CurrencyConversionService + ExchangeRateSpecification 測試（10 個測試案例）                                               |
+| P1-1  | 在所有 34 幣對頁加入 Answer Capsule                                                                | v2.23.0   | `buildCurrencyAnswerCapsule()` 函數；正向/反向幣對頁各 2 題 Answer Capsule                                                     |
+| P1-2  | 幣對頁 FAQ 擴展至 5-7 題                                                                           | v2.22.0   | `CURRENCY_SPECIFIC_FAQ` 已為每個幣別提供 2-3 則特化 FAQ，加上通用 FAQ 共 5-7 題                                                |
+| P1-3  | Authority Guide 頁 Answer Capsule                                                                  | v2.16.4   | `GUIDE_PAGE_SEO`、`OPEN_DATA_PAGE_SEO`、`ABOUT_PAGE_SEO` 已有 answerCapsule                                                    |
+| P1-4  | 匯率比較資訊（台銀 vs 中間價）                                                                     | v2.22.0   | `buildRateExampleSentence()` 在 FAQ 答案中嵌入具體差距數字                                                                     |
+| P1-5  | 在金額頁加入 `ExchangeRateSpecification`（含換算金額）                                             | v2.24.0   | `buildAmountExchangeRateSpecificationJsonLd()` 函數；金額頁自動注入含換算結果的 schema                                         |
+| B2    | robots.txt 四層語意分組（training/search/user-agent/preview）                                      | 2026-04   | `generate-robots-txt.mjs` 重構；便於 opt-out 切換；詳見 §8                                                                     |
+| B3    | AI crawler 清單抽出共用 SSOT                                                                       | 2026-04   | `scripts/lib/ai-crawlers.mjs` 供 robots.txt 與 llms.txt 共用；測試覆蓋 Claude/User/Search 角色                                 |
+| B4    | Lighthouse CI canonical smoke paths                                                                | 2026-05   | `.lighthouserc.cjs` 從 `APP_CONFIG.lighthouseSmokePaths` 讀取 `/`、`/faq/`、`/about/`，避免無尾斜線 URL fallback 造成 CLS 誤判 |
+| E1    | GA4 AI referral 追蹤（9 平台 utm + referrer 偵測 + sessionStorage 去重）                           | 2026-04   | `apps/shared/analytics/ga.ts`；詳見 §6.5；9 個單元測試覆蓋                                                                     |
+| A3    | 9 個 SSG / 內容頁產生 `.md` 鏡像（faq/about/privacy/guide/open-data/index + 3 篇 Authority Guide） | 2026-05   | `generate-markdown-mirrors.mjs`（prettier 正規化）+ `_headers` + llms.txt 索引；詳見 §2.3                                      |
+| P1-7a | `_headers` 加入 `Link: <...md>; rel="alternate"; type="text/markdown"`                             | 2026-04   | RFC 8288 HTTP 標頭指引 AI 爬蟲從 HTML 頁發現 .md 鏡像；目前已覆蓋首頁、核心內容頁與 3 篇 Authority Guide                       |
+| P1-9  | Accept-based content negotiation（Worker 層）                                                      | v5.0      | root `/` 與 `/ratewise/` 在 `Accept: text/markdown` 時回對應 `.md`；`Vary: Accept` 防快取混用                                  |
+| P2-9  | Speakable schema 整合測試（所有 7 個核心內容頁）                                                   | 2026-04   | `src/config/__tests__/seo-speakable.test.ts`；29 個測試案例；防 schema drift 回歸                                              |
 
 ### 🔴 P0 — 立即（直接影響 AI 引用率）
 
@@ -1858,18 +1865,18 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 ### 🟡 P2 — 中期（2-3 個月，GEO 與外部存在感）
 
-| #     | 任務                                                                                 | 影響             | 檔案              | 狀態 |
-| ----- | ------------------------------------------------------------------------------------ | ---------------- | ----------------- | ---- |
-| P2-1  | 三篇 Authority Guide 頁擴展至 3,000+ 字（強化 Claude 引用信號）                      | Claude 引用      | 頁面元件          |      |
-| P2-2  | 在幣對頁加入匯率歷史趨勢圖（圖片 + alt 文字）→ Google AI Overviews 多媒體信號        | AI Overview 引用 | 頁面元件          |      |
-| P2-3  | 申請加入 2-3 個台灣 Fintech 工具目錄（Claude 引用信號 68%）                          | Claude 引用      | 外部行動          |      |
-| P2-4  | 在 r/taiwan、r/japantravel、r/korea 以真實貢獻身份分享工具（Perplexity Reddit 信號） | Perplexity 引用  | 外部行動          |      |
-| P2-5  | 導入 Otterly AI 或 Peec AI 進行 AI 可見性監測                                        | 可見性量化       | 外部工具          |      |
-| P2-6  | 在 `about/` 頁面加入 `Person` schema（作者 E-E-A-T）                                 | E-E-A-T          | `seo-metadata.ts` | ✅   |
-| P2-7  | 在 `open-data/` 頁面加入 `TechArticle` schema                                        | 開發者 SEO       | `seo-metadata.ts` | ✅   |
-| P2-8  | 為熱門幣別（JPY、USD、EUR）製作 60-90 秒解說短影片並嵌入頁面                         | 多媒體信號       | 外部行動          |      |
-| P2-10 | GSC AI Overviews / AI Share of Voice 監測 SOP 文件化                                 | AI 可觀測性      | `docs/dev/042`    | ✅   |
-| P2-11 | llms.txt referral metrics（Cloudflare Worker 記錄 User-Agent 擊中 .md 鏡像的頻率）   | AI 可觀測性      | Cloudflare Worker | ✅   |
+| #     | 任務                                                                                                           | 影響             | 檔案                 | 狀態 |
+| ----- | -------------------------------------------------------------------------------------------------------------- | ---------------- | -------------------- | ---- |
+| P2-1  | 三篇 Authority Guide 頁擴展至真正長篇、可引用的一級權威內容（目前已完成鏡像與 Article 訊號，下一步為內容厚度） | Claude 引用      | 頁面元件 / 內容 SSOT |      |
+| P2-2  | 在幣對頁加入匯率歷史趨勢圖（圖片 + alt 文字）→ Google AI Overviews 多媒體信號                                  | AI Overview 引用 | 頁面元件             |      |
+| P2-3  | 申請加入 2-3 個台灣 Fintech 工具目錄（Claude 引用信號 68%）                                                    | Claude 引用      | 外部行動             |      |
+| P2-4  | 在 r/taiwan、r/japantravel、r/korea 以真實貢獻身份分享工具（Perplexity Reddit 信號）                           | Perplexity 引用  | 外部行動             |      |
+| P2-5  | 導入 Otterly AI 或 Peec AI 進行 AI 可見性監測                                                                  | 可見性量化       | 外部工具             |      |
+| P2-6  | 在 `about/` 頁面加入 `Person` schema（作者 E-E-A-T）                                                           | E-E-A-T          | `seo-metadata.ts`    | ✅   |
+| P2-7  | 在 `open-data/` 頁面加入 `TechArticle` schema                                                                  | 開發者 SEO       | `seo-metadata.ts`    | ✅   |
+| P2-8  | 為熱門幣別（JPY、USD、EUR）製作 60-90 秒解說短影片並嵌入頁面                                                   | 多媒體信號       | 外部行動             |      |
+| P2-10 | GSC AI Overviews / AI Share of Voice 監測 SOP 文件化                                                           | AI 可觀測性      | `docs/dev/042`       | ✅   |
+| P2-11 | llms.txt referral metrics（Cloudflare Worker 記錄 User-Agent 擊中 .md 鏡像的頻率）                             | AI 可觀測性      | Cloudflare Worker    | ✅   |
 
 ### 🟢 P3 — 長期（選配，重大架構變更）
 
@@ -1946,8 +1953,8 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 ---
 
-**最後更新**: 2026-05-02
-**版本**: v2.10.2
+**最後更新**: 2026-05-03
+**版本**: v2.10.3
 **維護者**: Development Team
 **下次審查日**: 2026-07-10（每季審查）
 
@@ -1955,6 +1962,7 @@ HaoRate 已具備高成熟度的技術 SEO 基礎。2026-04-10 審查結論：**
 
 | 日期       | 版本    | 變更摘要                                                                                                                                                                                                                                                                                                                                                                   |
 | ---------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-03 | v2.10.3 | 對齊 `main` 最新 SEO / release 現況（`@app/ratewise` v2.22.15）：新增 3 篇 Authority Guide Markdown mirrors 並納入 `llms.txt`，全站 mirrors 由 6 擴至 9；About / FAQ / Guide / Open Data / 3 篇 Authority Guide 統一補齊 `og:type=article` 與 `article:modified_time`；同步記錄 PR #338 `/ratewise/` meta description 擴充與 PR #339 release 產出物更新。                  |
 | 2026-05-02 | v2.10.2 | 收斂 Worker v5.1 正式站行為：保留 root robots `Content-Signal` 清洗以守住 Lighthouse SEO，同步為直連 markdown mirrors 補 `X-Robots-Tag: noindex`，避免 mirror 與 canonical HTML 重複索引；兩者皆以正式站 header 驗證與 `securityHeadersWorker.test.ts` 守門。                                                                                                              |
 | 2026-05-02 | v2.10.1 | PR #322 合併後正式站驗證與 markdown mirror indexation 收斂：記錄 58/58 生產資源 `HTTP 200`、`verify:production-seo` 全綠、Lighthouse CI 通過；Cloudflare Worker v5.1 + `_headers` 對直連 `.md` 補 `X-Robots-Tag: noindex`，並以測試鎖定 markdown negotiation 不得誤傷 canonical HTML indexation。                                                                          |
 | 2026-05-02 | v2.9.3  | 正式站 Lighthouse 抽樣確認 root `app.haotool.org/robots.txt` 上游仍含非標準 `Content-Signal`，造成 RateWise 首頁 / FAQ / About SEO 92；Worker v5.1 新增 root robots body sanitizer 並以 regression test 守門，將文件宣稱、worker 行為與 production SEO gate 重新對齊。                                                                                                     |
