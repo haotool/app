@@ -12,6 +12,11 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-04
+- ID：seo-master-ssot-2026-05-03-state-sync
+- 原因：`SEO_MASTER_SSOT` 雖已更新版本與里程碑，但 `SEO_FILES`、生產驗證覆蓋與 Authority Guide mirror 探針說明仍殘留舊敘述，未完全對齊目前程式 SSOT。
+- 解法：同步修正文檔版本、公開 SEO/AI 資源清單、手動 smoke probe 範圍與歷史完成項描述，使文件與 `seo-paths.config.mjs`、近期 PR 狀態與 SEO 治理現況一致。
+
 - 日期：2026-05-03
 - ID：ratewise-authority-guide-markdown-mirror-and-article-og
 - 原因：authority guide 頁面缺少對應 Markdown mirrors 與 llms.txt 收錄，且多個具 Article JSON-LD 的內容頁仍沿用 `og:type=website`，降低分享與 AI 引用語義一致性。
