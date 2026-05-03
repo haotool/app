@@ -288,6 +288,23 @@ describe('security-headers worker', () => {
     expect(response.headers.get('vary')).toMatch(/(?:^|,\s*)accept(?:\s*,|$)/i);
   });
 
+  it('authority guide HTML 頁應輸出對應的 Markdown alternate Link header', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        createHtmlResponse('<!doctype html><html><head></head><body>authority guide</body></html>'),
+      );
+
+    const response = await worker.fetch(
+      new Request('https://app.haotool.org/ratewise/sell-rate-vs-mid-rate/'),
+    );
+    const link = response.headers.get('link') ?? '';
+
+    expect(link).toContain(
+      '<https://app.haotool.org/ratewise/sell-rate-vs-mid-rate.md>; rel="alternate"; type="text/markdown"',
+    );
+  });
+
   it('既有 Vary 標頭存在時，Markdown negotiable 路徑只會 append Accept、不重複', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response(

@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-04
+- ID：ratewise-authority-guide-mirror-production-verification
+- 原因：3 篇 Authority Guide Markdown mirrors 已存在於 public 與 `llms.txt`，但未被納入 `SEO_FILES` 與正式 production verification，且 Worker / `_headers` 的 alternate Link 治理也未完全覆蓋，形成真實監測缺口。
+- 解法：將 3 篇 Authority Guide mirrors 納入 `SEO_FILES` SSOT，補齊 Worker 與 `_headers` 的 Markdown alternate Link 覆蓋，並以 seo-paths / securityHeaders / markdown mirror 測試與 SSOT 驗證收斂為正式閉環。
+
+- 日期：2026-05-04
 - ID：issue-backlog-contract-rule-sync
 - 原因：repo 先前雖要求 review thread 收斂，但對 issue / backlog 的格式、嚴重度標籤與刪除條件仍缺乏正式契約條款，容易導致未來 agent 使用不一致格式。
 - 解法：在 `AGENTS.md` 與 `CLAUDE.md` 補入 issue / backlog 契約規則，強制使用正式 issue 結構、`severity:*` 標籤與 `gh` 刪除前置條件。

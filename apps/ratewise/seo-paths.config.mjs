@@ -248,6 +248,9 @@ export const SEO_FILES = [
   '/about.md',
   '/privacy.md',
   '/open-data.md',
+  '/sell-rate-vs-mid-rate.md',
+  '/cash-vs-spot-rate.md',
+  '/card-rate-guide.md',
 ];
 
 /**
