@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-04
+- ID：issue-backlog-contract-rule-sync
+- 原因：repo 先前雖要求 review thread 收斂，但對 issue / backlog 的格式、嚴重度標籤與刪除條件仍缺乏正式契約條款，容易導致未來 agent 使用不一致格式。
+- 解法：在 `AGENTS.md` 與 `CLAUDE.md` 補入 issue / backlog 契約規則，強制使用正式 issue 結構、`severity:*` 標籤與 `gh` 刪除前置條件。
+
+- 日期：2026-05-04
 - ID：seo-master-ssot-prettier-format-followup
 - 原因：`#340` 的 Quality Checks 因 `docs/SEO_MASTER_SSOT.md` 未完全符合 Prettier 格式而失敗，導致文檔 PR 卡在格式守門。
 - 解法：以 repo 既有 Prettier 規則重寫 `SEO_MASTER_SSOT.md`，再推送最小 follow-up commit 讓 CI 回到綠燈。
