@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-04
+- ID：ratewise-offline-cold-start-e2e-serial-audit
+- 原因：`offline-cold-start.spec.ts` 在 `fullyParallel` 下會讓多個 stateful PWA 測試同時操作同一個 origin 的 precache 與 runtime caches，首輪間歇誤判「冷啟動離線失敗 / 無 CSS」，造成真 bug 與測試競態無法區分。
+- 解法：將 `offline-cold-start` 測試明確改為 serial，並把固定 5 秒硬等待改成直接輪詢 Cache Storage 的 precache audit，要求 JS/CSS/index/offline.html 四項 readiness 全達標後才進入斷言，讓未來離線回歸有可觀測證據且不再靠 retry 撐過。
+
+- 日期：2026-05-04
 - ID：ratewise-authority-guide-mirror-production-verification
 - 原因：3 篇 Authority Guide Markdown mirrors 已存在於 public 與 `llms.txt`，但未被納入 `SEO_FILES` 與正式 production verification，且 Worker / `_headers` 的 alternate Link 治理也未完全覆蓋，形成真實監測缺口。
 - 解法：將 3 篇 Authority Guide mirrors 納入 `SEO_FILES` SSOT，補齊 Worker 與 `_headers` 的 Markdown alternate Link 覆蓋，並以 seo-paths / securityHeaders / markdown mirror 測試與 SSOT 驗證收斂為正式閉環。
