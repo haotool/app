@@ -130,3 +130,75 @@ describe('Markdown mirrors', () => {
     expect(content).toMatch(/`https:\/\/raw\.githubusercontent\.com\/[^`]+`/);
   });
 });
+
+describe('Authority guide Markdown mirrors', () => {
+  const authorityGuides = [
+    {
+      slug: 'sell-rate-vs-mid-rate',
+      heading: '賣出價比中間價更接近你真正要付的台幣',
+      keyContent: '中間價',
+      faqKeyword: '換匯',
+    },
+    {
+      slug: 'cash-vs-spot-rate',
+      heading: '現金與即期不是同一種匯率',
+      keyContent: '即期匯率',
+      faqKeyword: '臨櫃換',
+    },
+    {
+      slug: 'card-rate-guide',
+      heading: '刷卡匯率不是台銀牌告，但台銀賣出價仍很有參考價值',
+      keyContent: 'DCC',
+      faqKeyword: '當地貨幣',
+    },
+  ] as const;
+
+  it.each(authorityGuides)('$slug.md 存在且非空', ({ slug }) => {
+    const content = readMd(slug);
+    expect(content.length).toBeGreaterThan(500);
+  });
+
+  it.each(authorityGuides)('$slug.md 含 canonical URL 與版本標記', ({ slug }) => {
+    const content = readMd(slug);
+    expect(content).toMatch(/Canonical:/);
+    expect(content).toMatch(/Version: v\d+\.\d+\.\d+/);
+  });
+
+  it.each(authorityGuides)('$slug.md H1 含頁面 heading', ({ slug, heading }) => {
+    const content = readMd(slug);
+    expect(content).toContain(`# ${heading}`);
+  });
+
+  it.each(authorityGuides)('$slug.md 含核心關鍵字', ({ slug, keyContent }) => {
+    const content = readMd(slug);
+    expect(content).toContain(keyContent);
+  });
+
+  it.each(authorityGuides)('$slug.md 含重點整理區塊', ({ slug }) => {
+    const content = readMd(slug);
+    expect(content).toContain('## 重點整理');
+  });
+
+  it.each(authorityGuides)('$slug.md 含常見問題區塊與 FAQ 關鍵字', ({ slug, faqKeyword }) => {
+    const content = readMd(slug);
+    expect(content).toContain('## 常見問題');
+    expect(content).toContain(faqKeyword);
+  });
+
+  it('authority guide 鏡像不得殘留未解析的 template token', () => {
+    for (const { slug } of authorityGuides) {
+      const content = readMd(slug);
+      expect(content, `${slug}.md 殘留 \${...} 未展開`).not.toMatch(/\$\{[^}]+\}/);
+    }
+  });
+
+  it('llms.txt Markdown Mirrors section includes authority guide .md links', () => {
+    const llmsPath = resolve(PUBLIC_DIR, '../public/llms.txt');
+    const llmsFallback = resolve(PUBLIC_DIR, 'llms.txt');
+    const llmsFinal = existsSync(llmsPath) ? llmsPath : llmsFallback;
+    const content = readFileSync(llmsFinal, 'utf-8');
+    expect(content).toContain('sell-rate-vs-mid-rate.md');
+    expect(content).toContain('cash-vs-spot-rate.md');
+    expect(content).toContain('card-rate-guide.md');
+  });
+});

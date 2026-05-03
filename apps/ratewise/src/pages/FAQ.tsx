@@ -38,6 +38,7 @@ export default function FAQ() {
         pathname={FAQ_PAGE_SEO.pathname}
         breadcrumb={FAQ_PAGE_SEO.breadcrumb}
         jsonLd={FAQ_PAGE_SEO.jsonLd}
+        ogType="article"
       />
 
       <div className="min-h-screen">

@@ -167,6 +167,9 @@ Googlebot 與 AI agent 可直接讀取靜態 HTML：
 - [about.md](${BASE_URL}about.md)
 - [privacy.md](${BASE_URL}privacy.md)
 - [open-data.md](${BASE_URL}open-data.md)
+- [sell-rate-vs-mid-rate.md](${BASE_URL}sell-rate-vs-mid-rate.md)
+- [cash-vs-spot-rate.md](${BASE_URL}cash-vs-spot-rate.md)
+- [card-rate-guide.md](${BASE_URL}card-rate-guide.md)
 
 ## Authority Guides
 

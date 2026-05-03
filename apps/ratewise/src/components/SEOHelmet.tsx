@@ -305,6 +305,16 @@ export function SEOHelmet({
       property: 'og:updated_time',
       content: updatedTime,
     });
+    if (ogType === 'article') {
+      upsertMeta('meta[property="article:modified_time"]', {
+        property: 'article:modified_time',
+        content: updatedTime,
+      });
+    } else {
+      document.head
+        .querySelectorAll('meta[property="article:modified_time"]')
+        .forEach((n) => n.remove());
+    }
 
     const localeAlternates = normalizedAlternates
       .filter(({ hrefLang }) => hrefLang !== 'x-default' && hrefLang.replace('-', '_') !== ogLocale)
@@ -406,6 +416,7 @@ export function SEOHelmet({
         ))}
       <meta property="og:site_name" content={APP_INFO.name} />
       <meta property="og:updated_time" content={updatedTime} />
+      {ogType === 'article' && <meta property="article:modified_time" content={updatedTime} />}
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:url" content={canonicalUrl} />

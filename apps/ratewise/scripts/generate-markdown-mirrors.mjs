@@ -462,6 +462,201 @@ ${COMMON_FOOTER}`;
 }
 
 // ---------------------------------------------------------------------------
+// Authority Guide helpers — extract structured data from seo-metadata.ts
+// ---------------------------------------------------------------------------
+
+/**
+ * 擷取 page const 的完整原始碼區塊（從 `export const X = {` 到 `} as const satisfies`）。
+ */
+function getConstBlock(constName) {
+  const startRe = new RegExp(`export const ${constName} = \\{`);
+  const startMatch = startRe.exec(seoMetadataSrc);
+  if (!startMatch) throw new Error(`找不到 export const ${constName}`);
+  const tail = seoMetadataSrc.slice(startMatch.index);
+  const endRe = /\}\s*(?:as const\s+)?satisfies\s+\w+/;
+  const endMatch = endRe.exec(tail);
+  if (!endMatch) throw new Error(`找不到 ${constName} 的結束標記`);
+  return tail.slice(0, endMatch.index + 1);
+}
+
+/**
+ * 字串感知的括號配對：從 src[startIdx]（必須是 openChar）往後找到配對的 closeChar，
+ * 跳過字串內容（'、"、`），避免字串裡的括號影響深度計數。
+ */
+function findMatchingClose(src, startIdx, openChar, closeChar) {
+  let depth = 0;
+  let i = startIdx;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === openChar) {
+      depth++;
+    } else if (c === closeChar) {
+      depth--;
+      if (depth === 0) return i;
+    } else if (c === "'" || c === '"' || c === '`') {
+      const q = c;
+      i++;
+      while (i < src.length) {
+        if (src[i] === '\\') {
+          i += 2;
+          continue;
+        }
+        if (src[i] === q) break;
+        i++;
+      }
+    }
+    i++;
+  }
+  throw new Error(`找不到配對的 ${closeChar}（從 ${startIdx}）`);
+}
+
+/**
+ * 擷取 constBlock 內 `fieldName: [...]` 的陣列全內容（含兩端括號）。
+ */
+function extractEmbeddedArrayContent(constBlock, fieldName) {
+  const re = new RegExp(`\\b${fieldName}:\\s*\\[`);
+  const match = re.exec(constBlock);
+  if (!match) return null;
+  const bracketStart = constBlock.indexOf('[', match.index);
+  const bracketEnd = findMatchingClose(constBlock, bracketStart, '[', ']');
+  return constBlock.slice(bracketStart, bracketEnd + 1);
+}
+
+/**
+ * 擷取 constBlock 內 `heading:` 的字串值（authority guide heading 均為單引號）。
+ */
+function extractHeading(constBlock) {
+  const m = /\bheading:\s*'([^']*)'/.exec(constBlock);
+  if (!m) throw new Error('找不到 heading');
+  return m[1];
+}
+
+/**
+ * 擷取 constBlock 內 `intro:` 的字串值（支援單引號與 backtick）。
+ */
+function extractIntro(constBlock) {
+  const btM = /\bintro:\s*`([\s\S]*?)`/.exec(constBlock);
+  if (btM) return resolveLiteral(btM[1]).trim();
+  const sqM = /\bintro:\s*'([^']*)'/.exec(constBlock);
+  if (sqM) return sqM[1];
+  throw new Error('找不到 intro');
+}
+
+/**
+ * 擷取 highlights 字串陣列。
+ */
+function extractHighlights(constBlock) {
+  const arrContent = extractEmbeddedArrayContent(constBlock, 'highlights');
+  if (!arrContent) throw new Error('找不到 highlights');
+  const items = [];
+  const re = /(['`])([\s\S]*?)\1/g;
+  let m;
+  while ((m = re.exec(arrContent)) !== null) {
+    items.push(resolveLiteral(m[2]).trim());
+  }
+  if (items.length === 0) throw new Error('highlights 未解析到任何項目');
+  return items;
+}
+
+/**
+ * 擷取 sections: [{title, paragraphs: [...]}] 陣列。
+ */
+function extractSections(constBlock) {
+  const arrContent = extractEmbeddedArrayContent(constBlock, 'sections');
+  if (!arrContent) throw new Error('找不到 sections');
+  const sections = [];
+  let pos = 1;
+  while (pos < arrContent.length) {
+    const objStart = arrContent.indexOf('{', pos);
+    if (objStart === -1) break;
+    const objEnd = findMatchingClose(arrContent, objStart, '{', '}');
+    const objContent = arrContent.slice(objStart + 1, objEnd);
+
+    const titleM = /\btitle:\s*(['`])([\s\S]*?)\1/.exec(objContent);
+    if (!titleM) {
+      pos = objEnd + 1;
+      continue;
+    }
+    const title = resolveLiteral(titleM[2]).trim();
+
+    const paraContent = extractEmbeddedArrayContent(objContent, 'paragraphs');
+    const paragraphs = [];
+    if (paraContent) {
+      const paraRe = /(['`])([\s\S]*?)\1/g;
+      let pm;
+      while ((pm = paraRe.exec(paraContent)) !== null) {
+        paragraphs.push(resolveLiteral(pm[2]).trim());
+      }
+    }
+    sections.push({ title, paragraphs });
+    pos = objEnd + 1;
+  }
+  if (sections.length === 0) throw new Error('sections 未解析到任何項目');
+  return sections;
+}
+
+/**
+ * 擷取 authority guide 頁的 faqContent（嵌入式 {question, answer} 陣列）。
+ * 複用 extractFaqArray 相同的 entryRe 邏輯，但作用在嵌入區塊而非頂層 export。
+ */
+function extractEmbeddedFaqArray(constBlock, fieldName) {
+  const arrContent = extractEmbeddedArrayContent(constBlock, fieldName);
+  if (!arrContent) throw new Error(`找不到 ${fieldName}`);
+  const entryRe = /question:\s*(['"`])([\s\S]*?)\1\s*,\s*answer:\s*(['"`])([\s\S]*?)\3\s*,?\s*}/g;
+  const entries = [];
+  let m;
+  while ((m = entryRe.exec(arrContent)) !== null) {
+    entries.push({
+      question: resolveLiteral(m[2]).trim(),
+      answer: resolveLiteral(m[4]).trim(),
+    });
+  }
+  if (entries.length === 0) throw new Error(`${fieldName} 未解析到任何 Q&A`);
+  return entries;
+}
+
+/**
+ * 產生 authority guide 頁的 Markdown 鏡像。
+ * 對應 AuthorityGuidePage.tsx 的渲染結構（heading, intro, highlights, sections, faqContent）。
+ */
+function buildAuthorityGuideMd(constName, slug) {
+  const constBlock = getConstBlock(constName);
+  const description = extractPageDescription(constName);
+  const heading = extractHeading(constBlock);
+  const intro = extractIntro(constBlock);
+  const highlights = extractHighlights(constBlock);
+  const sections = extractSections(constBlock);
+  const faqContent = extractEmbeddedFaqArray(constBlock, 'faqContent');
+
+  const highlightsMd = highlights.map((h) => `- ${h}`).join('\n');
+  const sectionsMd = sections
+    .map((s) => `## ${s.title}\n\n${s.paragraphs.join('\n\n')}`)
+    .join('\n\n');
+  const faqMd = formatFaq(faqContent);
+
+  return `# ${heading}
+
+> ${description}
+
+- Canonical: ${BASE_URL}${slug}/
+- Version: v${VERSION}
+
+## 重點整理
+
+${highlightsMd}
+
+${intro}
+
+${sectionsMd}
+
+## 常見問題
+
+${faqMd}
+
+${COMMON_FOOTER}`;
+}
+
+// ---------------------------------------------------------------------------
 // Generate all mirrors
 // ---------------------------------------------------------------------------
 console.log('🪞 生成 Markdown 鏡像...');
@@ -471,4 +666,13 @@ writeMirror('privacy', buildPrivacyMd());
 writeMirror('guide', buildGuideMd());
 writeMirror('open-data', buildOpenDataMd());
 writeMirror('index', buildHomeMd());
-console.log('✅ Markdown 鏡像生成完成（6 檔）');
+writeMirror(
+  'sell-rate-vs-mid-rate',
+  buildAuthorityGuideMd('SELL_RATE_VS_MID_RATE_PAGE', 'sell-rate-vs-mid-rate'),
+);
+writeMirror(
+  'cash-vs-spot-rate',
+  buildAuthorityGuideMd('CASH_VS_SPOT_RATE_PAGE', 'cash-vs-spot-rate'),
+);
+writeMirror('card-rate-guide', buildAuthorityGuideMd('CARD_RATE_GUIDE_PAGE', 'card-rate-guide'));
+console.log('✅ Markdown 鏡像生成完成（9 檔）');

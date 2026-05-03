@@ -81,6 +81,9 @@ Googlebot 與 AI agent 可直接讀取靜態 HTML：
 - [about.md](https://app.haotool.org/ratewise/about.md)
 - [privacy.md](https://app.haotool.org/ratewise/privacy.md)
 - [open-data.md](https://app.haotool.org/ratewise/open-data.md)
+- [sell-rate-vs-mid-rate.md](https://app.haotool.org/ratewise/sell-rate-vs-mid-rate.md)
+- [cash-vs-spot-rate.md](https://app.haotool.org/ratewise/cash-vs-spot-rate.md)
+- [card-rate-guide.md](https://app.haotool.org/ratewise/card-rate-guide.md)
 
 ## Authority Guides
 

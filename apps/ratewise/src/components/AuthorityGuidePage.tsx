@@ -19,6 +19,7 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
         pathname={page.pathname}
         breadcrumb={page.breadcrumb}
         jsonLd={page.jsonLd}
+        ogType="article"
       />
 
       <div className="min-h-screen">
