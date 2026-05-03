@@ -379,6 +379,7 @@ const OpenData = () => {
         breadcrumb={OPEN_DATA_PAGE_SEO.breadcrumb}
         howTo={HOW_TO}
         jsonLd={OPEN_DATA_PAGE_SEO.jsonLd}
+        ogType="article"
       />
 
       <div className="min-h-screen bg-page-gradient">

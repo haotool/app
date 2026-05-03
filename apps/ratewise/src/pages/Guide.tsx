@@ -58,6 +58,7 @@ const Guide = () => {
         breadcrumb={GUIDE_PAGE_SEO.breadcrumb}
         howTo={HOW_TO}
         jsonLd={GUIDE_PAGE_SEO.jsonLd}
+        ogType="article"
       />
 
       <div className="min-h-screen bg-page-gradient">

@@ -26,6 +26,7 @@ export default function About() {
         pathname={ABOUT_PAGE_SEO.pathname}
         breadcrumb={ABOUT_PAGE_SEO.breadcrumb}
         jsonLd={ABOUT_PAGE_SEO.jsonLd}
+        ogType="article"
       />
 
       <div className="min-h-screen">

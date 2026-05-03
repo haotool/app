@@ -487,6 +487,41 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
       expect(seoHelmetContent).toContain('max-image-preview:large');
       expect(seoHelmetContent).toContain('max-snippet:-1');
     });
+
+    it('SEOHelmet should support article:modified_time when ogType is article', () => {
+      // og:type="article" 頁面應輸出 article namespace 標籤，讓社交平台與 AI 爬蟲識別文章發布時間。
+      expect(seoHelmetContent).toContain('article:modified_time');
+    });
+  });
+
+  describe('📰 Article Pages og:type', () => {
+    // 有 Article JSON-LD 的頁面必須同步設定 og:type="article"，
+    // 否則 Facebook/LinkedIn 解析器只拿到 og:type="website"，降低文章分享品質與 AI 引用意願。
+
+    it('AuthorityGuidePage should pass ogType="article" to SEOHelmet', () => {
+      const content = readFile(resolve(SRC_PATH, 'components/AuthorityGuidePage.tsx'));
+      expect(content).toContain('ogType="article"');
+    });
+
+    it('FAQ page should pass ogType="article" to SEOHelmet', () => {
+      const content = readFile(resolve(SRC_PATH, 'pages/FAQ.tsx'));
+      expect(content).toContain('ogType="article"');
+    });
+
+    it('Guide page should pass ogType="article" to SEOHelmet', () => {
+      const content = readFile(resolve(SRC_PATH, 'pages/Guide.tsx'));
+      expect(content).toContain('ogType="article"');
+    });
+
+    it('About page should pass ogType="article" to SEOHelmet', () => {
+      const content = readFile(resolve(SRC_PATH, 'pages/About.tsx'));
+      expect(content).toContain('ogType="article"');
+    });
+
+    it('OpenData page should pass ogType="article" to SEOHelmet', () => {
+      const content = readFile(resolve(SRC_PATH, 'pages/OpenData.tsx'));
+      expect(content).toContain('ogType="article"');
+    });
   });
 
   describe('🏠 Homepage Rich Results (seo-metadata.ts SSOT)', () => {

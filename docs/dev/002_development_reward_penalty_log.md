@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-03
+- ID：ratewise-authority-guide-markdown-mirror-and-article-og
+- 原因：authority guide 頁面缺少對應 Markdown mirrors 與 llms.txt 收錄，且多個具 Article JSON-LD 的內容頁仍沿用 `og:type=website`，降低分享與 AI 引用語義一致性。
+- 解法：擴充 Markdown mirror 生成器輸出 3 個 authority guide `.md`、同步加入 llms.txt 與回歸測試，並讓 authority/content pages 對齊 `ogType=\"article\"` 與 `article:modified_time`。
+
+- 日期：2026-05-03
 - ID：codex-review-audit-unknown-author-guard
 - 原因：PR #330 後續 Codex review 指出 `author: null` 的留言會先被轉成字串，再被誤判為人類回覆，讓 `no-reply` 分類失真。
 - 解法：將未知作者保留為 `null`，並要求 comment 必須有明確 login 才能算人類回覆，避免刪帳或停用帳號留言清掉待處理 thread。
