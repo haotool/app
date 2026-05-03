@@ -3,7 +3,7 @@
 > 整理海外刷卡匯率的組成方式，說明 Visa、Mastercard 清算匯率、銀行海外手續費與 DCC 差異，幫助你分辨牌告換匯、海外刷卡與商家端台幣結帳三者的成本差別，避免把刷卡匯率和銀行牌告混為一談與誤估總成本。
 
 - Canonical: https://app.haotool.org/ratewise/card-rate-guide/
-- Version: v2.22.12
+- Version: v2.22.14
 
 ## 重點整理
 
@@ -47,5 +47,5 @@ HaoRate 目前提供的是臺灣銀行牌告匯率，無法直接反映各銀行
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.12），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.14），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_

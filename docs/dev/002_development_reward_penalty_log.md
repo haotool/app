@@ -688,3 +688,8 @@
 - ID：ratewise-mailto-crawlable-anchor-seo-fix
 - 原因：第 2 輪 SEO iteration 發現 `/about/`、`/faq/` Lighthouse SEO 從 100→92，根因為 `MailtoLink` SSG 輸出 `<a>` 無 `href`（為避開 Cloudflare Email Obfuscation），觸發 `crawlable-anchors` 扣分。
 - 解法：將 `MailtoLink` 改用 `<button type="button">` 取代 `<a>`，繼續無 `mailto:`/raw email SSG 輸出避開 CF 與 scraper，並補上 5 個 vitest 守門 button-only / 無 mailto / SSG label 等不變式。
+
+- 日期：2026-05-03
+- ID：ratewise-meta-description-google-snippet-extend
+- 原因：Squirrel surface audit 顯示 `/ratewise/` meta description 96 字元（< 110 建議），Google SERP snippet 與 AI 摘要的可用語意密度不足。
+- 解法：擴充 `DEFAULT_DESCRIPTION` 與 `SITE_CONFIG.description` 至 126 字元（雙 SSOT 同步），補入差異化定位（「台灣最精準匯率換算工具」）、四大特色（即時換算/現金即期/趨勢圖/PWA），維持品牌一致性與 verify:seo-docs SSOT alignment 通過。

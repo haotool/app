@@ -3,7 +3,7 @@
 > HaoRate 隱私政策說明：本服務不要求註冊，收藏、設定與歷史記錄保存在您的裝置本地；站點營運另使用第三方分析與安全服務處理匿名流量資料。
 
 - Canonical: https://app.haotool.org/ratewise/privacy/
-- Version: v2.22.12
+- Version: v2.22.14
 
 ## 概述
 
@@ -32,5 +32,5 @@ HaoRate 重視資料最小化原則。本服務不要求註冊帳號，也不建
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.12），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.14），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_
