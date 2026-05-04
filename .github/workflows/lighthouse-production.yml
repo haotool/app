@@ -1,0 +1,187 @@
+name: Lighthouse Production Baseline
+
+on:
+  schedule:
+    - cron: '15 3 * * *'
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target production URL (with trailing slash)'
+        required: false
+        default: 'https://app.haotool.org/ratewise/'
+        type: string
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'apps/ratewise/**'
+      - 'scripts/lighthouse-production.mjs'
+      - 'scripts/lighthouse-baseline.production.json'
+      - '.github/workflows/lighthouse-production.yml'
+
+jobs:
+  lighthouse-production:
+    name: Production Lighthouse Baseline Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run production lighthouse baseline check
+        id: lighthouse-production
+        run: node scripts/lighthouse-production.mjs
+        env:
+          LH_PRODUCTION_URL: ${{ github.event.inputs.target_url || 'https://app.haotool.org/ratewise/' }}
+          LH_RUNS: '3'
+          LH_OUTPUT_DIR: lighthouse-reports/production
+          LH_BASELINE_PATH: scripts/lighthouse-baseline.production.json
+          LH_BASELINE_DRIFT_PCT: '5'
+
+      - name: Upload lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-production-reports
+          path: lighthouse-reports/production
+          retention-days: 21
+
+      - name: Comment production baseline summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const repo = context.repo;
+            const issue_number = context.issue.number;
+            const summaryPath = path.join(process.cwd(), 'lighthouse-reports/production', 'summary.json');
+
+            let summary;
+            try {
+              summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+            } catch (error) {
+              summary = { status: 'error', reason: error?.message || 'summary parse failed' };
+            }
+
+            const baselinePath = path.join(process.cwd(), 'scripts/lighthouse-baseline.production.json');
+            let baselineMeta = {};
+            try {
+              baselineMeta = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+            } catch {
+              baselineMeta = {};
+            }
+
+            const header = `### Lighthouse Production Baseline ${summary.status === 'pass' ? '✅' : '❌'}\n`;
+            const body =
+              `${header}` +
+              `- 狀態：\`${summary.status || 'unknown'}\`\n` +
+              `- 目標網址：\`${summary.targetUrl || 'N/A'}\`\n` +
+              `- 實際執行：${summary.runs || 0} 次\n` +
+              `- 退化容忍：${summary.driftTolerancePercent || 5}%\n` +
+              `- Baseline 更新時間：${baselineMeta.updatedAt || 'N/A'}\n\n` +
+              `**檢查細節**\n`;
+
+            const lines = [];
+            for (const [name, check] of Object.entries(summary.checks || {})) {
+              if (check?.type === 'hard_fail') {
+                lines.push(`- ❌ ${name}: expected \`${check.expected}\` \u2264 actual \`${check.actual}\``);
+              } else if (check?.type === 'regression') {
+                lines.push(`- ⚠️ ${name}: baseline drift +${check.drift}%`);
+              }
+            }
+            const content = `${body}${lines.length ? lines.join('\\n') : '- 無異常，指標符合要求'}\n`;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number,
+            });
+            const marker = '<!-- lighthouse-production-baseline -->';
+            const previous = comments.find((item) => item.body?.includes(marker));
+            const message = `${marker}\n${content}`;
+
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                comment_id: previous.id,
+                body: message,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                issue_number,
+                body: message,
+              });
+            }
+
+      - name: Add summary to GitHub summary
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -f lighthouse-reports/production/summary.json ]; then
+            if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+              node --input-type=module -e '
+                import { readFileSync, appendFileSync } from "node:fs";
+                const summary = JSON.parse(
+                  readFileSync("lighthouse-reports/production/summary.json", "utf8"),
+                );
+                const checks = summary.checks || {};
+                const drift = summary.drift || {};
+                const baselineEntries = Object.entries(checks).filter(([, check]) => check?.type === "regression");
+                const hardFailEntries = Object.entries(checks).filter(([, check]) => check?.type === "hard_fail");
+                const details = [
+                  `- 狀態：${summary.status || "unknown"}`,
+                  `- 目標網址：${summary.targetUrl || "N/A"}`,
+                  `- 每頁執行：${summary.runs || "N/A"}`,
+                  `- 路徑數：${summary.paths ? Object.keys(summary.paths).length : 0}`,
+                  `- 退化告警：${baselineEntries.length}`,
+                  `- 硬性失敗：${hardFailEntries.length}`,
+                ];
+                const lines = [
+                  "## Lighthouse Production Baseline",
+                  ...details,
+                  "",
+                  "### 檢查明細",
+                ];
+
+                for (const [name, check] of Object.entries(checks)) {
+                  if (check?.type === "hard_fail") {
+                    lines.push(`- ❌ ${name}: expected ${check.expected}${check.unit ?? ""}, actual ${check.actual}${check.unit ?? ""}`);
+                    continue;
+                  }
+                  if (check?.type === "regression") {
+                    const driftValue = check.drift ?? drift[name];
+                    const baselineValue = check.baseline ?? "N/A";
+                    lines.push(`- ⚠️ ${name}: baseline ${baselineValue} -> ${check.actual} (${driftValue}%)`);
+                  }
+                }
+                if (lines.length === details.length + 2) {
+                  lines.push("- ✅ 無異常");
+                }
+                appendFileSync(process.env.GITHUB_STEP_SUMMARY || "", `${lines.join("\n")}\n`);
+              '
+            fi
+          else
+            echo "summary missing";
+            exit 1;
+          fi

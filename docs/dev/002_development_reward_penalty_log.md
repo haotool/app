@@ -12,6 +12,11 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-05
+- ID：ratewise-production-lighthouse-baseline-pr4
+- 原因：缺少 production LCP/INP/CLS/Lighthouse baseline 觀測，無法第一時間偵測 trend 與 PWA 回歸。
+- 解法：建立 `scripts/lighthouse-production.mjs`、baseline workflow、summary 回報文件與 baseline JSON，並把 PR4 指標門檻收斂為可自動回報機制。
+
 - 日期：2026-05-04
 - ID：ratewise-authority-guide-mirror-production-verification
 - 原因：3 篇 Authority Guide Markdown mirrors 已存在於 public 與 `llms.txt`，但未被納入 `SEO_FILES` 與正式 production verification，且 Worker / `_headers` 的 alternate Link 治理也未完全覆蓋，形成真實監測缺口。
