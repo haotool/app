@@ -18,17 +18,102 @@
  * @created 2026-03-12
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:4173';
 const BASE_PATH =
   process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise';
 const BASE = `${BASE_URL}${BASE_PATH}/`.replace(/\/+$/, '/');
 
-// precache 暖機等待時間（ms）
-const PRECACHE_SETTLE_MS = 5000;
+interface PrecacheAuditSummary {
+  precacheName: string | null;
+  totalEntries: number;
+  jsCount: number;
+  cssCount: number;
+  hasIndexHtml: boolean;
+  hasOfflineHtml: boolean;
+}
+
+async function getPrecacheAudit(page: Page, baseUrl: string): Promise<PrecacheAuditSummary> {
+  return page.evaluate(async (resolvedBaseUrl: string) => {
+    const names = await caches.keys();
+    const precacheName = names.find((name) => name.startsWith('workbox-precache-v2')) ?? null;
+
+    if (!precacheName) {
+      return {
+        precacheName: null,
+        totalEntries: 0,
+        jsCount: 0,
+        cssCount: 0,
+        hasIndexHtml: false,
+        hasOfflineHtml: false,
+      };
+    }
+
+    const cache = await caches.open(precacheName);
+    const keys = await cache.keys();
+    const normalizedBaseUrl = resolvedBaseUrl.replace(/\/$/, '');
+
+    const summary: PrecacheAuditSummary = {
+      precacheName,
+      totalEntries: keys.length,
+      jsCount: 0,
+      cssCount: 0,
+      hasIndexHtml: false,
+      hasOfflineHtml: false,
+    };
+
+    for (const req of keys) {
+      const url = req.url;
+      if (url.includes('.js') && url.includes('assets/')) summary.jsCount++;
+      if (url.includes('.css')) summary.cssCount++;
+      if (
+        url.endsWith('/') ||
+        url.includes('index.html') ||
+        url.replace(/\/$/, '') === normalizedBaseUrl
+      ) {
+        summary.hasIndexHtml = true;
+      }
+      if (url.includes('offline.html')) {
+        summary.hasOfflineHtml = true;
+      }
+    }
+
+    return summary;
+  }, baseUrl);
+}
+
+async function waitForOfflineReadiness(page: Page, baseUrl: string): Promise<PrecacheAuditSummary> {
+  const deadline = Date.now() + 30_000;
+  let lastAudit: PrecacheAuditSummary = {
+    precacheName: null,
+    totalEntries: 0,
+    jsCount: 0,
+    cssCount: 0,
+    hasIndexHtml: false,
+    hasOfflineHtml: false,
+  };
+
+  while (Date.now() < deadline) {
+    lastAudit = await getPrecacheAudit(page, baseUrl);
+    if (
+      lastAudit.precacheName &&
+      lastAudit.jsCount >= 5 &&
+      lastAudit.cssCount >= 1 &&
+      lastAudit.hasIndexHtml &&
+      lastAudit.hasOfflineHtml
+    ) {
+      return lastAudit;
+    }
+
+    await page.waitForTimeout(250);
+  }
+
+  throw new Error(`Offline readiness audit timeout: ${JSON.stringify(lastAudit)}`);
+}
 
 test.describe('飛航模式冷啟動診斷', () => {
+  test.describe.configure({ mode: 'serial' });
   test.use({ serviceWorkers: 'allow' });
   // 冷啟動測試包含：SW 安裝 + precache 暖機（5s）+ 離線導覽，需要較長超時。
   test.setTimeout(120_000);
@@ -61,8 +146,9 @@ test.describe('飛航模式冷啟動診斷', () => {
       undefined,
       { timeout: 60000 },
     );
-    console.log('[Phase 1] SW activated，等待 precache settle...');
-    await warmPage.waitForTimeout(PRECACHE_SETTLE_MS);
+    console.log('[Phase 1] SW activated，等待 offline readiness 診斷達標...');
+    const warmAudit = await waitForOfflineReadiness(warmPage, BASE);
+    console.log(`[Phase 1] precache ready: ${JSON.stringify(warmAudit)}`);
 
     // ======================================================================
     // Phase 2：快取審計 - 列出所有 cache storage 條目
@@ -238,7 +324,7 @@ test.describe('飛航模式冷啟動診斷', () => {
       undefined,
       { timeout: 60_000 },
     );
-    await page.waitForTimeout(PRECACHE_SETTLE_MS);
+    await waitForOfflineReadiness(page, BASE);
 
     // Phase 2：清除所有非 precache 快取（模擬新安裝 — 只有 SW install 填充的 precache）。
     const clearedCaches = await page.evaluate(async () => {
@@ -346,7 +432,7 @@ test.describe('飛航模式冷啟動診斷', () => {
       undefined,
       { timeout: 60_000 },
     );
-    await page.waitForTimeout(PRECACHE_SETTLE_MS);
+    await waitForOfflineReadiness(page, BASE);
 
     // 驗證 precache 中的每個 JS chunk 都能被 ignoreSearch 和 matchPrecache 策略命中。
     interface CacheHitReport {
@@ -412,7 +498,7 @@ test.describe('飛航模式冷啟動診斷', () => {
       undefined,
       { timeout: 60000 },
     );
-    await page.waitForTimeout(PRECACHE_SETTLE_MS);
+    await waitForOfflineReadiness(page, BASE);
 
     const { jsCacheCount, cssCacheCount, cacheNames } = await page.evaluate(async () => {
       const names = await caches.keys();
