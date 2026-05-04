@@ -100,7 +100,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: main
-          path: .tools
+          path: main-scripts
           sparse-checkout: |
             apps/ratewise/scripts/generate-history-aggregate.mjs
           sparse-checkout-cone-mode: false
@@ -109,7 +109,7 @@ jobs:
         if: steps.save-snapshot.outputs.snapshot_created == 'true'
         id: generate-aggregate
         run: |
-          node .tools/apps/ratewise/scripts/generate-history-aggregate.mjs
+          node main-scripts/apps/ratewise/scripts/generate-history-aggregate.mjs
         env:
           RATE_DATA_ROOT: .
 
