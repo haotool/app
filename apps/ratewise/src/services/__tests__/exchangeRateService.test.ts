@@ -134,6 +134,8 @@ const mockRateData = {
 
 // ===== Test Suite =====
 describe('exchangeRateService', () => {
+  const originalLhciOffline = import.meta.env['VITE_LHCI_OFFLINE'];
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockLocalStorage._resetStore();
@@ -148,10 +150,30 @@ describe('exchangeRateService', () => {
   });
 
   afterEach(() => {
+    import.meta.env['VITE_LHCI_OFFLINE'] = originalLhciOffline;
     vi.useRealTimers();
   });
 
   describe('getExchangeRates', () => {
+    it('LHCI 離線模式下直接返回 build-time 匯率且不發送網路請求', async () => {
+      import.meta.env['VITE_LHCI_OFFLINE'] = 'true';
+      vi.resetModules();
+
+      const {
+        getExchangeRates: getExchangeRatesLhci,
+        getBuildTimeExchangeRates: getBuildTimeExchangeRatesLhci,
+      } = await import('../exchangeRateService');
+
+      const result = await getExchangeRatesLhci();
+      const buildTimeRates = getBuildTimeExchangeRatesLhci();
+
+      expect(result).toEqual(buildTimeRates);
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(logger.logger.info).toHaveBeenCalledWith(
+        'LHCI offline mode: using build-time exchange rates',
+      );
+    });
+
     it('從快取返回有效資料', async () => {
       // ✅ Setup: 設置有效快取（2分鐘前）
       const cachedData = {

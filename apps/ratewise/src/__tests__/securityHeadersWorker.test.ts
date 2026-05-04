@@ -574,6 +574,31 @@ describe('security-headers worker', () => {
     expect(await response.text()).not.toContain('Content-Signal:');
     expect(response.headers.get('etag')).toBeNull();
     expect(response.headers.get('last-modified')).toBeNull();
+    expect(response.headers.get('content-type')).toBe('text/plain; charset=utf-8');
+  });
+
+  it('ratewise robots.txt 與 llms.txt 必須收斂為單一 text/plain Content-Type', async () => {
+    const duplicateContentTypeHeaders = new Headers();
+    duplicateContentTypeHeaders.append('content-type', 'text/plain');
+    duplicateContentTypeHeaders.append('content-type', 'text/plain');
+    duplicateContentTypeHeaders.set('cache-control', 'public, max-age=3600');
+
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response('plain text body', {
+        status: 200,
+        headers: duplicateContentTypeHeaders,
+      }),
+    );
+
+    const robotsResponse = await worker.fetch(
+      new Request('https://app.haotool.org/ratewise/robots.txt'),
+    );
+    expect(robotsResponse.headers.get('content-type')).toBe('text/plain; charset=utf-8');
+
+    const llmsResponse = await worker.fetch(
+      new Request('https://app.haotool.org/ratewise/llms.txt'),
+    );
+    expect(llmsResponse.headers.get('content-type')).toBe('text/plain; charset=utf-8');
   });
 
   it('Wrangler route 必須覆蓋整個 app.haotool.org', () => {

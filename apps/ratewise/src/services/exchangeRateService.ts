@@ -71,6 +71,7 @@ export const FETCH_TIMEOUT_MS = 8_000;
 // clearExchangeRateCache() 只清除快取，不影響用戶數據
 const CACHE_KEY = STORAGE_KEYS.EXCHANGE_RATES;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘
+const IS_LHCI_OFFLINE = import.meta.env['VITE_LHCI_OFFLINE'] === 'true';
 
 interface CachedData {
   data: ExchangeRateData;
@@ -299,6 +300,11 @@ function getAnyCachedData(): ExchangeRateData | null {
  * 5. IndexedDB 有效期 7 天，比 localStorage (5 分鐘) 更持久
  */
 export async function getExchangeRates(): Promise<ExchangeRateData> {
+  if (IS_LHCI_OFFLINE) {
+    logger.info('LHCI offline mode: using build-time exchange rates');
+    return getBuildTimeExchangeRates();
+  }
+
   const online = isOnline();
   logger.debug('Getting exchange rates', { online });
 

@@ -23,6 +23,16 @@
 - 解法：將 `offline-cold-start` 測試明確改為 serial，並把固定 5 秒硬等待改成直接輪詢 Cache Storage 的 precache audit，要求 JS/CSS/index/offline.html 四項 readiness 全達標後才進入斷言，讓未來離線回歸有可觀測證據且不再靠 retry 撐過。
 
 - 日期：2026-05-04
+- ID：mini-trend-chart-flaky-timeout-guard
+- 原因：`pre-push` 全量 Vitest 並行執行時，`MiniTrendChart.test.tsx` 首個 render 案例偶發超過 5 秒 timeout，形成非功能型 flaky 阻塞。
+- 解法：維持組件邏輯不變，只對該案例補明確 timeout 餘裕，讓全量測試在高負載下仍可穩定收斂。
+
+- 日期：2026-05-04
+- ID：ratewise-seo-txt-content-type-canonicalization
+- 原因：正式站 `/ratewise/robots.txt` 與 `/ratewise/llms.txt` 仍會回 `Content-Type: text/plain, text/plain`，屬於 SEO txt 端點的 header hygiene 漂移。
+- 解法：在 `security-headers` Worker v5.2 對 RateWise SEO txt 端點先刪除上游殘留 `Content-Type`，再統一覆寫為單一 `text/plain; charset=utf-8`，並補 `securityHeadersWorker` 回歸測試與 SSOT 文件同步。
+
+- 日期：2026-05-04
 - ID：ratewise-authority-guide-mirror-production-verification
 - 原因：3 篇 Authority Guide Markdown mirrors 已存在於 public 與 `llms.txt`，但未被納入 `SEO_FILES` 與正式 production verification，且 Worker / `_headers` 的 alternate Link 治理也未完全覆蓋，形成真實監測缺口。
 - 解法：將 3 篇 Authority Guide mirrors 納入 `SEO_FILES` SSOT，補齊 Worker 與 `_headers` 的 Markdown alternate Link 覆蓋，並以 seo-paths / securityHeaders / markdown mirror 測試與 SSOT 驗證收斂為正式閉環。
@@ -728,3 +738,8 @@
 - ID：tooling-vitest-4-test-script-jest-flag-removal
 - 原因：root `package.json` 的 `test:unit` / `test:integration` 仍透過 `pnpm -r test --` 把 Jest flag 傳給 Vitest 4，造成 4 個 app（haotool/park-keeper/nihonname/quake-school 等）每次 SEO iteration 都報 `CACError: Unknown option`，使 R5/R6 orchestrator 「失敗 20 輪」與本地 `test:unit` 全失敗。
 - 解法：移除 `--testPathIgnorePatterns` / `--testPathPattern`，e2e 隔離全部下放到各 app 的 `vitest.config.ts test.exclude`；integration 改為 `pnpm --filter @app/ratewise exec vitest run integration`，2660 unit + 8 integration tests 全綠。
+
+- 日期：2026-05-04
+- ID：ratewise-lhci-homepage-runtime-refresh-guard
+- 原因：PR #350 的 Lighthouse CI 在首頁 `/` 掉到 `0.87~0.88`，根因為 LHCI 離線模式下首頁仍執行 runtime 匯率 refresh，失敗後插入 stale warning 與額外背景工作，拉低首屏效能。
+- 解法：在 `exchangeRateService` 與 `useExchangeRates` 增加 `VITE_LHCI_OFFLINE` 穩定分支，LHCI 直接使用 build-time 匯率並跳過 runtime refresh / polling，另補 service 與 hook 回歸測試鎖住行為。
