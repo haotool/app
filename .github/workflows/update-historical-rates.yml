@@ -96,12 +96,35 @@ jobs:
 
           echo "💾 Permanent storage: ${HISTORY_COUNT} days preserved"
 
+      - name: Checkout main scripts for aggregate generation
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          path: .tools
+          sparse-checkout: |
+            apps/ratewise/scripts/generate-history-aggregate.mjs
+          sparse-checkout-cone-mode: false
+
+      - name: Generate aggregate 30-day history file
+        if: steps.save-snapshot.outputs.snapshot_created == 'true'
+        id: generate-aggregate
+        run: |
+          node .tools/apps/ratewise/scripts/generate-history-aggregate.mjs
+        env:
+          RATE_DATA_ROOT: .
+
+      - name: Aggregate file status
+        if: steps.save-snapshot.outputs.snapshot_created == 'true'
+        run: |
+          echo "🧾 history-30d.json size:"
+          ls -lh public/rates/history-30d.json
+
       - name: Commit and push snapshot
         if: steps.save-snapshot.outputs.snapshot_created == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add public/rates/history/
+          git add public/rates/history/ public/rates/history-30d.json
 
           # 取得快照資訊
           CURRENT_DATE="${{ steps.save-snapshot.outputs.current_date }}"

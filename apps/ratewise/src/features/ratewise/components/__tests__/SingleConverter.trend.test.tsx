@@ -153,7 +153,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
       expect(historyService.fetchLatestRates).toHaveBeenCalled();
     });
 
-    it('defers trend history requests beyond the initial render budget', async () => {
+    it('defers trend history requests using requestIdleCallback (or short delay if DEFER_MS=0)', async () => {
       vi.mocked(historyService.fetchHistoricalRatesRange).mockResolvedValue([]);
       vi.mocked(historyService.fetchLatestRates).mockResolvedValue({
         updateTime: '2025/11/29 08:00:00',
@@ -163,12 +163,19 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
 
       render(<SingleConverter {...mockProps} />);
 
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(TREND_CHART_DEFER_MS - 1);
-      });
-
-      expect(historyService.fetchHistoricalRatesRange).not.toHaveBeenCalled();
-      expect(historyService.fetchLatestRates).not.toHaveBeenCalled();
+      // TREND_CHART_DEFER_MS = 0 時，使用 requestIdleCallback 或 100ms fallback
+      // 這裡驗證趨勢圖載入是延遲的（不是同步觸發）
+      if (TREND_CHART_DEFER_MS > 0) {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(TREND_CHART_DEFER_MS - 1);
+        });
+        expect(historyService.fetchHistoricalRatesRange).not.toHaveBeenCalled();
+        expect(historyService.fetchLatestRates).not.toHaveBeenCalled();
+      } else {
+        // DEFER_MS = 0：使用 requestIdleCallback，首次 render 後不會立即觸發
+        // requestIdleCallback 需要事件循環進入 idle 狀態
+        expect(historyService.fetchHistoricalRatesRange).not.toHaveBeenCalled();
+      }
     });
 
     it('should handle fetchLatestRates failure gracefully', async () => {

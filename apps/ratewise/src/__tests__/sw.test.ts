@@ -151,14 +151,16 @@ describe('Service Worker Cache Strategies', () => {
     'static-resources': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60 },
   };
 
-  it('should use NavigationRoute + createHandlerBoundToURL for document navigation', async () => {
+  it('should use NavigationRoute + NetworkFirst with timeout for document navigation', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
 
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    expect(sourceCode).toContain('createHandlerBoundToURL(');
+    // PR3: 使用 NetworkFirst + timeout 取代 createHandlerBoundToURL
+    expect(sourceCode).toContain('new NetworkFirst(');
+    expect(sourceCode).toContain('networkTimeoutSeconds:');
     expect(sourceCode).toContain('new NavigationRoute(');
   });
 
@@ -221,15 +223,19 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).not.toContain("cacheName: 'offline-fallback'");
   });
 
-  it('should bind navigation handling to createHandlerBoundToURL(index.html)', async () => {
+  it('should use NetworkFirst strategy for navigation with timeout fallback', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
 
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    expect(sourceCode).toContain('createHandlerBoundToURL(');
+    // PR3: 使用 NetworkFirst + timeout 取代 createHandlerBoundToURL
+    expect(sourceCode).toContain('new NetworkFirst(');
+    expect(sourceCode).toContain('networkTimeoutSeconds:');
     expect(sourceCode).toContain('new NavigationRoute(');
+    // 確保有 fallback 到 precache index.html
+    expect(sourceCode).toContain("matchPrecache('index.html')");
   });
 });
 

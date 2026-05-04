@@ -3,14 +3,9 @@
 /// <reference lib="webworker" />
 
 import { clientsClaim } from 'workbox-core';
-import {
-  cleanupOutdatedCaches,
-  createHandlerBoundToURL,
-  matchPrecache,
-  precacheAndRoute,
-} from 'workbox-precaching';
+import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing';
-import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
+import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 
@@ -86,6 +81,57 @@ async function verifyAndRepairPrecache(): Promise<void> {
 // 清除舊版快取。
 cleanupOutdatedCaches();
 
+/**
+ * Cache Budget Guard（PR3: iOS 50MB cache 限制保護）
+ *
+ * iOS Safari 對 SW cache 有 50MB 上限，超過會觸發 eviction。
+ * 此函式在 install 時檢查使用量，超過 40MB 時清理非關鍵快取。
+ */
+async function checkAndCleanupCacheBudget(): Promise<void> {
+  try {
+    if (!navigator.storage?.estimate) return;
+
+    const { usage, quota } = await navigator.storage.estimate();
+    if (!usage || !quota) return;
+
+    const usageMB = usage / 1024 / 1024;
+    const budgetMB = 40; // iOS 安全邊界（50MB 上限前預留緩衝）
+
+    if (usageMB <= budgetMB) {
+      // Cache 使用量在預算內，無需清理
+      return;
+    }
+
+    console.warn(
+      `[SW] Cache usage ${usageMB.toFixed(2)}MB exceeds ${budgetMB}MB budget, cleaning up...`,
+    );
+
+    // 清理優先順序：舊歷史資料 > 圖片 > 字型（保留 precache 與 html-cache）
+    const cleanupOrder = ['history-rates-cdn', 'history-rates-raw', 'image-cache', 'font-cache'];
+    for (const cacheName of cleanupOrder) {
+      const cacheExists = await caches.has(cacheName);
+      if (cacheExists) {
+        await caches.delete(cacheName);
+        console.warn(`[SW] Deleted cache: ${cacheName}`);
+
+        // 重新檢查使用量
+        const { usage: newUsage } = await navigator.storage.estimate();
+        if (newUsage && newUsage / 1024 / 1024 <= budgetMB) {
+          // 清理完成，使用量已在預算內
+          return;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[SW] Cache budget check failed:', err);
+  }
+}
+
+// install 時檢查快取預算
+self.addEventListener('install', (event: ExtendableEvent) => {
+  event.waitUntil(checkAndCleanupCacheBudget());
+});
+
 // prompt 模式：僅在 waiting SW 收到 SKIP_WAITING 訊息後才接管。
 clientsClaim();
 
@@ -155,8 +201,56 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   return (await matchPrecache('index.html')) ?? Response.error();
 });
 
-// SPA 導覽：直接從 precache 提供 index.html，避免冷啟動離線依賴 runtime html-cache。
-registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')));
+/**
+ * SPA 導覽策略（PR3: Navigation Timeout）
+ *
+ * 業界最佳實踐（web.dev / Workbox docs）：
+ * - NetworkFirst + timeout：優先嘗試網路，超時後 fallback 到快取
+ * - 3 秒 timeout：平衡使用者體驗與網路等待
+ * - handlerDidError：網路完全失敗時回退到 precache index.html
+ *
+ * 解決問題：
+ * - iOS Safari 冷啟動離線白屏（precache 未完成時無 fallback）
+ * - 慢網路卡住導覽（無限等待網路回應）
+ */
+const navigationStrategy = new NetworkFirst({
+  cacheName: 'html-cache',
+  networkTimeoutSeconds: 3,
+  plugins: [
+    new CacheableResponsePlugin({ statuses: [0, 200] }),
+    {
+      // 網路失敗時回退到 precache index.html（離線或 timeout 後快取也沒有）
+      handlerDidError: async () => {
+        const precached = await matchPrecache('index.html');
+        if (precached) return precached;
+        // 最後防線：嘗試 offline.html
+        return (await matchPrecache('offline.html')) ?? Response.error();
+      },
+    },
+  ],
+});
+
+registerRoute(new NavigationRoute(navigationStrategy));
+
+// 歷史匯率 aggregate（30 天合併 JSON）：StaleWhileRevalidate，每日更新。
+registerRoute(
+  ({ url }: { url: URL }) =>
+    url.pathname.includes('/public/rates/history-30d.json') ||
+    (url.origin === 'https://cdn.jsdelivr.net' &&
+      url.pathname.includes('/public/rates/history-30d.json')) ||
+    (url.origin === 'https://raw.githubusercontent.com' &&
+      url.pathname.includes('/public/rates/history-30d.json')),
+  new StaleWhileRevalidate({
+    cacheName: 'history-aggregate-cache',
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new ExpirationPlugin({
+        maxEntries: 1,
+        maxAgeSeconds: 60 * 60 * 24, // 1 天（每日更新）
+      }),
+    ],
+  }),
+);
 
 // 歷史匯率（CDN）：CacheFirst，不可變資料永久快取。
 registerRoute(
