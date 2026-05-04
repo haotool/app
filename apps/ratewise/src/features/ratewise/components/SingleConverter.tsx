@@ -283,33 +283,51 @@ export const SingleConverter = ({
       }
     }
 
-    // 趨勢圖不是首屏必要內容：先讓 LCP/TTI 完成，再進 idle 排程載入歷史資料。
-    // 數值由 performance config 統一管理，可用 VITE_TREND_CHART_* 覆寫。
-    type TimerHandle = ReturnType<typeof setTimeout>;
-    type IdleHandle = number | TimerHandle;
-    let deferHandle: TimerHandle | null = null;
+    // 趨勢圖載入策略：使用 requestIdleCallback 在瀏覽器空閒時載入。
+    // 不再使用硬延遲（TREND_CHART_DEFER_MS 已設為 0），符合 web.dev LCP 優化建議。
+    // idle timeout 確保最多等待 TREND_CHART_IDLE_TIMEOUT_MS 後強制開始載入。
+    type IdleHandle = number | ReturnType<typeof setTimeout>;
     let idleHandle: IdleHandle | null = null;
-    const start = () => {
+
+    const startLoading = () => {
       if (isMounted) void loadTrend();
     };
 
-    deferHandle = setTimeout(() => {
-      if (typeof requestIdleCallback === 'function') {
-        idleHandle = requestIdleCallback(start, { timeout: TREND_CHART_IDLE_TIMEOUT_MS });
-      } else {
-        idleHandle = setTimeout(start, TREND_CHART_IDLE_TIMEOUT_MS);
-      }
-    }, TREND_CHART_DEFER_MS);
+    // 若有額外 defer（舊版相容或測試用），先等待
+    if (TREND_CHART_DEFER_MS > 0) {
+      const deferHandle = setTimeout(() => {
+        if (typeof requestIdleCallback === 'function') {
+          idleHandle = requestIdleCallback(startLoading, { timeout: TREND_CHART_IDLE_TIMEOUT_MS });
+        } else {
+          idleHandle = setTimeout(startLoading, TREND_CHART_IDLE_TIMEOUT_MS);
+        }
+      }, TREND_CHART_DEFER_MS);
+
+      return () => {
+        isMounted = false;
+        clearTimeout(deferHandle);
+        if (typeof cancelIdleCallback === 'function' && idleHandle !== null) {
+          cancelIdleCallback(idleHandle as number);
+        } else if (idleHandle !== null) {
+          clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
+        }
+      };
+    }
+
+    // 預設行為：直接使用 requestIdleCallback（推薦）
+    if (typeof requestIdleCallback === 'function') {
+      idleHandle = requestIdleCallback(startLoading, { timeout: TREND_CHART_IDLE_TIMEOUT_MS });
+    } else {
+      // Safari fallback：短暫延遲後執行
+      idleHandle = setTimeout(startLoading, 100);
+    }
 
     return () => {
       isMounted = false;
-      if (deferHandle !== null) {
-        clearTimeout(deferHandle);
-      }
-      if (typeof cancelIdleCallback === 'function') {
-        if (idleHandle !== null) cancelIdleCallback(idleHandle as number);
+      if (typeof cancelIdleCallback === 'function' && idleHandle !== null) {
+        cancelIdleCallback(idleHandle as number);
       } else if (idleHandle !== null) {
-        clearTimeout(idleHandle as TimerHandle);
+        clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
       }
     };
   }, [fromCurrency, toCurrency, trendDateKey]);

@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-05
+- ID：ratewise-trend-chart-perf-pr1234-convergence
+- 原因：趨勢圖載入極慢（~10.9s）— 10s 硬延遲 + 30 筆 JSON 並行 fetch + requestIdleCallback 等待，PWA 導覽缺 timeout fallback 與 cache 預算控制。
+- 解法：PR1 aggregate fetch（30 fetch → 1 fetch）+ PR2 移除 10s defer 改 requestIdleCallback only + PR3 NavigationRoute 3s timeout + cache 40MB budget guard + PR4 performance.mark 觀測（趨勢圖可見時間 10937ms → 820ms，達業界 <2500ms 標準）。
+
+- 日期：2026-05-05
 - ID：ratewise-production-lighthouse-baseline-pr4
 - 原因：缺少 production LCP/INP/CLS/Lighthouse baseline 觀測，無法第一時間偵測 trend 與 PWA 回歸。
 - 解法：建立 `scripts/lighthouse-production.mjs`、baseline workflow、summary 回報文件與 baseline JSON，並把 PR4 指標門檻收斂為可自動回報機制。

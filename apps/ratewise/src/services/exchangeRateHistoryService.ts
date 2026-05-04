@@ -111,7 +111,130 @@ const CONFIG = {
   MAX_HISTORY_DAYS: 30,
   BATCH_SIZE: 5,
   MAX_CONSECUTIVE_MISSING: 5,
+  /** Aggregate endpoint 路徑（30 天歷史資料合併成單一 JSON）*/
+  AGGREGATE_HISTORY_PATH: '/public/rates/history-30d.json',
 } as const;
+
+/**
+ * Aggregate 歷史資料結構（column-major 格式，減少 JSON 大小）
+ *
+ * @example
+ * {
+ *   updateTime: "2026-05-05T08:00:00+08:00",
+ *   dates: ["2026-05-04", "2026-05-03", ...],
+ *   rates: {
+ *     TWD: [1, 1, ...],
+ *     USD: [31.92, 31.85, ...],
+ *   }
+ * }
+ */
+interface AggregateHistoryData {
+  updateTime: string;
+  dates: string[];
+  rates: Record<CurrencyCode, number[]>;
+}
+
+/**
+ * 將 column-major aggregate 資料轉換為 row-major HistoricalRateData[]
+ */
+function convertAggregateToHistorical(
+  aggregate: AggregateHistoryData,
+  maxDays: number,
+): HistoricalRateData[] {
+  const results: HistoricalRateData[] = [];
+  const currencies = Object.keys(aggregate.rates) as CurrencyCode[];
+  const actualDays = Math.min(aggregate.dates.length, maxDays);
+
+  for (let i = 0; i < actualDays; i++) {
+    const date = aggregate.dates[i];
+    if (!date) continue;
+
+    const rates: Record<CurrencyCode, number | null> = {} as Record<CurrencyCode, number | null>;
+    for (const currency of currencies) {
+      rates[currency] = aggregate.rates[currency]?.[i] ?? null;
+    }
+
+    results.push({
+      date,
+      data: {
+        updateTime: `${date}T08:00:00+08:00`,
+        source: 'Taiwan Bank (臺灣銀行牌告匯率)',
+        rates,
+      },
+    });
+  }
+
+  return results;
+}
+
+/**
+ * 嘗試從 aggregate endpoint 獲取歷史資料
+ *
+ * @returns 成功時返回 HistoricalRateData[]，失敗時返回 null
+ */
+async function tryFetchAggregate(maxDays: number): Promise<HistoricalRateData[] | null> {
+  // Performance mark: 開始 aggregate fetch
+  if (typeof performance !== 'undefined' && performance.mark) {
+    try {
+      performance.mark('rw:chart-fetch-start');
+    } catch {
+      // Safari 可能拒絕某些 mark 名稱
+    }
+  }
+
+  const urls = [
+    `${CDN_DATA_BASE}${CONFIG.AGGREGATE_HISTORY_PATH}`,
+    `${RAW_DATA_BASE}${CONFIG.AGGREGATE_HISTORY_PATH}`,
+  ];
+
+  for (const url of urls) {
+    try {
+      const response = await fetchWithRequestId(url, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!response.ok) continue;
+
+      const data = (await response.json()) as AggregateHistoryData;
+
+      // 驗證資料結構
+      if (!data.dates || !Array.isArray(data.dates) || !data.rates) {
+        logger.warn('Invalid aggregate data structure', { url });
+        continue;
+      }
+
+      logger.info(`Fetched aggregate history from ${url}`, {
+        service: 'exchangeRateHistoryService',
+        datesCount: data.dates.length,
+        requestedDays: maxDays,
+      });
+
+      // Performance mark: fetch 完成
+      if (typeof performance !== 'undefined' && performance.mark) {
+        try {
+          performance.mark('rw:chart-fetch-end');
+          performance.measure(
+            'rw:chart-fetch-duration',
+            'rw:chart-fetch-start',
+            'rw:chart-fetch-end',
+          );
+        } catch {
+          // Safari 可能拒絕某些 mark/measure
+        }
+      }
+
+      return convertAggregateToHistorical(data, maxDays);
+    } catch (error) {
+      logger.debug(`Aggregate fetch failed for ${url}`, {
+        service: 'exchangeRateHistoryService',
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return null;
+}
 
 /**
  * 記憶體快取
@@ -402,15 +525,40 @@ export async function fetchHistoricalRates(date: Date): Promise<RateSnapshot> {
 export async function fetchHistoricalRatesRange(
   maxDays: number = CONFIG.MAX_HISTORY_DAYS,
 ): Promise<HistoricalRateData[]> {
-  const startTime = performance.now(); // 🎯 效能測量開始
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
+  const startTime = performance.now();
   const totalDays = Math.min(Math.max(1, Math.floor(maxDays)), CONFIG.MAX_HISTORY_DAYS);
-  logger.info(`Fetching up to ${totalDays} days of historical rates (batched parallel)`, {
+
+  logger.info(`Fetching up to ${totalDays} days of historical rates`, {
     service: 'exchangeRateHistoryService',
     requestedDays: maxDays,
   });
+
+  // 優先嘗試 aggregate endpoint（30 fetch → 1 fetch）
+  const aggregateResult = await tryFetchAggregate(totalDays);
+  if (aggregateResult && aggregateResult.length > 0) {
+    const endTime = performance.now();
+    const duration = Math.round(endTime - startTime);
+
+    logger.info(
+      `Fetched ${aggregateResult.length} historical records via aggregate in ${duration}ms`,
+      {
+        service: 'exchangeRateHistoryService',
+        fetched: aggregateResult.length,
+        performanceMs: duration,
+        strategy: 'aggregate',
+      },
+    );
+
+    return aggregateResult;
+  }
+
+  // Fallback: 逐日批次 fetch
+  logger.info('Aggregate fetch failed, falling back to batched daily fetch', {
+    service: 'exchangeRateHistoryService',
+  });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const results: HistoricalRateData[] = [];
   const missingDates: string[] = [];
@@ -435,7 +583,7 @@ export async function fetchHistoricalRatesRange(
 
     settled.forEach((outcome, index) => {
       const date = batchDates[index];
-      if (!date) return; // 安全檢查：跳過無效索引
+      if (!date) return;
 
       const targetDate = formatDate(date);
       if (outcome.status === 'fulfilled') {

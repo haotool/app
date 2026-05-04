@@ -162,6 +162,19 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     series.setData(chartData);
     chart.timeScale().fitContent();
 
+    // Performance mark: 趨勢圖渲染完成
+    if (typeof performance !== 'undefined' && performance.mark) {
+      try {
+        performance.mark('rw:chart-rendered');
+        // 嘗試量測從 fetch 到渲染的總時間
+        if (performance.getEntriesByName('rw:chart-fetch-start').length > 0) {
+          performance.measure('rw:chart-total-time', 'rw:chart-fetch-start', 'rw:chart-rendered');
+        }
+      } catch {
+        // Safari 可能拒絕某些 mark/measure
+      }
+    }
+
     // Crosshair 移動事件 - 顯示 tooltip
     chart.subscribeCrosshairMove((param) => {
       if (param.point === undefined || !param.time || param.point.x < 0 || param.point.y < 0) {

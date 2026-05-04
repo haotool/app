@@ -106,9 +106,11 @@ describe('PWA 離線功能測試', () => {
       expect(swContent).toContain("destination !== 'document'");
     });
 
-    it('should use NavigationRoute + createHandlerBoundToURL for SPA offline navigation', () => {
+    it('should use NavigationRoute + NetworkFirst with timeout for SPA offline navigation', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      expect(swContent).toContain('createHandlerBoundToURL(');
+      // PR3: 使用 NetworkFirst + timeout 取代 createHandlerBoundToURL，網路超時自動 fallback 到 precache
+      expect(swContent).toContain('new NetworkFirst(');
+      expect(swContent).toContain('networkTimeoutSeconds:');
       expect(swContent).toContain('new NavigationRoute(');
     });
 

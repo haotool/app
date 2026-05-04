@@ -10,9 +10,17 @@ const readEnvString = (key: string): string | undefined => {
   return typeof value === 'string' ? value : undefined;
 };
 
+/**
+ * 趨勢圖延遲載入時間（毫秒）
+ *
+ * 設為 0：不再使用硬延遲，改用 requestIdleCallback 在瀏覽器空閒時載入。
+ * 業界最佳實踐：defer 非 LCP 元素應使用 idle callback，而非固定時間延遲。
+ *
+ * @see https://web.dev/articles/optimize-lcp
+ */
 export const TREND_CHART_DEFER_MS = parsePositiveInteger(
   readEnvString('VITE_TREND_CHART_DEFER_MS'),
-  10_000,
+  0,
 );
 
 export const TREND_CHART_IDLE_TIMEOUT_MS = parsePositiveInteger(
