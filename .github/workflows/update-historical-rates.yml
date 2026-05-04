@@ -96,20 +96,110 @@ jobs:
 
           echo "💾 Permanent storage: ${HISTORY_COUNT} days preserved"
 
-      - name: Checkout main scripts for aggregate generation
-        uses: actions/checkout@v6
-        with:
-          ref: main
-          path: main-scripts
-          sparse-checkout: |
-            apps/ratewise/scripts/generate-history-aggregate.mjs
-          sparse-checkout-cone-mode: false
-
       - name: Generate aggregate 30-day history file
         if: steps.save-snapshot.outputs.snapshot_created == 'true'
         id: generate-aggregate
         run: |
-          node main-scripts/apps/ratewise/scripts/generate-history-aggregate.mjs
+          # 內嵌生成腳本以避免 sparse-checkout 問題
+          node --input-type=module << 'SCRIPT'
+          import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+          import { dirname, join } from 'node:path';
+
+          const TARGET_ROOT = process.env.RATE_DATA_ROOT || '.';
+          const OUTPUT_PATH = join(TARGET_ROOT, 'public', 'rates', 'history-30d.json');
+          const CDN_BASE = 'https://cdn.jsdelivr.net/gh/haotool/app@data';
+          const RAW_BASE = 'https://raw.githubusercontent.com/haotool/app/data';
+          const MAX_DAYS = 30;
+          const currencies = ['TWD','USD','HKD','GBP','AUD','CAD','SGD','CHF','JPY','NZD','THB','PHP','IDR','EUR','KRW','VND','MYR','CNY'];
+
+          function generateDateRange(days) {
+            const dates = [];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            for (let i = 1; i <= days; i++) {
+              const date = new Date(today);
+              date.setDate(date.getDate() - i);
+              dates.push(date.toISOString().split('T')[0]);
+            }
+            return dates;
+          }
+
+          async function fetchDailyRates(date) {
+            const urls = [
+              CDN_BASE + '/public/rates/history/' + date + '.json',
+              RAW_BASE + '/public/rates/history/' + date + '.json',
+            ];
+            for (const url of urls) {
+              try {
+                const res = await fetch(url, { headers: { Accept: 'application/json' } });
+                if (res.ok) return res.json();
+              } catch {}
+            }
+            return null;
+          }
+
+          async function main() {
+            console.log('🚀 生成 30 天歷史匯率聚合 JSON...');
+            const dates = generateDateRange(MAX_DAYS);
+            const aggregateRates = {};
+            const validDates = [];
+            let updateTime = '';
+            for (const c of currencies) aggregateRates[c] = [];
+
+            const BATCH_SIZE = 5;
+            let consecutiveMissing = 0;
+
+            for (let i = 0; i < dates.length; i += BATCH_SIZE) {
+              const batch = dates.slice(i, i + BATCH_SIZE);
+              const results = await Promise.all(batch.map(fetchDailyRates));
+              for (let j = 0; j < batch.length; j++) {
+                const date = batch[j];
+                const data = results[j];
+                if (data?.rates) {
+                  validDates.push(date);
+                  consecutiveMissing = 0;
+                  if (!updateTime && data.updateTime) updateTime = data.updateTime;
+                  for (const c of currencies) aggregateRates[c].push(data.rates[c] ?? null);
+                } else {
+                  consecutiveMissing++;
+                  console.log('  ⚠️ 缺少 ' + date + ' 的資料');
+                  for (const c of currencies) aggregateRates[c].push(null);
+                }
+              }
+              if (consecutiveMissing >= 5) break;
+              if (i + BATCH_SIZE < dates.length) await new Promise(r => setTimeout(r, 100));
+            }
+
+            // 移除尾端 null
+            const trimmedDates = [];
+            const trimmedRates = {};
+            for (const c of currencies) trimmedRates[c] = [];
+            for (let i = 0; i < validDates.length; i++) {
+              const hasData = currencies.some(c => aggregateRates[c][i] !== null);
+              if (hasData) {
+                trimmedDates.push(validDates[i]);
+                for (const c of currencies) trimmedRates[c].push(aggregateRates[c][i]);
+              }
+            }
+
+            const aggregate = {
+              updateTime: updateTime || new Date().toISOString(),
+              generatedAt: new Date().toISOString(),
+              dates: trimmedDates,
+              rates: trimmedRates,
+            };
+
+            const outputDir = dirname(OUTPUT_PATH);
+            if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true });
+            writeFileSync(OUTPUT_PATH, JSON.stringify(aggregate, null, 2) + '\n');
+
+            console.log('✅ 已生成 ' + OUTPUT_PATH);
+            console.log('   - 有效天數：' + trimmedDates.length);
+            console.log('   - 貨幣數量：' + currencies.length);
+          }
+
+          main().catch(e => { console.error('❌', e); process.exit(1); });
+          SCRIPT
         env:
           RATE_DATA_ROOT: .
 
