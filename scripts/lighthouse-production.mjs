@@ -206,12 +206,14 @@ function runLighthouse(url, outputPath) {
 }
 
 function compareDirection(current, baseline, compareDirection) {
-  if (
-    baseline === null ||
-    baseline === 0 ||
-    !Number.isFinite(current) ||
-    !Number.isFinite(baseline)
-  ) {
+  if (baseline === null || !Number.isFinite(current) || !Number.isFinite(baseline)) {
+    return { changed: 0, exceed: false };
+  }
+
+  if (baseline === 0) {
+    if (compareDirection === 'lowerBetter') {
+      return { changed: current > 0 ? 100 : 0, exceed: current > 0 };
+    }
     return { changed: 0, exceed: false };
   }
 
@@ -262,7 +264,7 @@ function main() {
   };
   const baseline = readBaseline();
   const hasUsableBaseline = isUsableBaseline(baseline);
-  const enforceHardThreshold = !!hasUsableBaseline;
+  const enforceHardThreshold = true;
 
   console.log('🚀 啟動 Production Lighthouse baseline 檢核');
   console.log(`🔗 Base URL: ${PRODUCTION_URL}`);
@@ -383,6 +385,7 @@ function main() {
             ...summary.overall.checks[`${pathKey}-${check.path}`],
             type: summary.overall.checks[`${pathKey}-${check.path}`] ? 'hard_fail' : 'regression',
             baseline: previous,
+            actual: current,
             drift: drift.changed,
           };
         }
@@ -402,43 +405,29 @@ function main() {
     paths: summary.paths,
   };
 
-  if (!baseline) {
-    console.log('📌 Baseline 不存在，將以本次結果初始化。');
-    writeFileSync(
-      BASELINE_PATH,
-      JSON.stringify(
-        {
-          version: 1,
-          updatedAt: timestamp,
-          generatedBy: 'scripts/lighthouse-production.mjs',
-          status: 'active',
-          runs: RUNS,
-          targetUrl: PRODUCTION_URL,
-          driftTolerancePercent: DRIFT_PERCENT,
-          paths: summary.paths,
-        },
-        null,
-        2,
-      ),
-    );
+  if (summary.overall.passed) {
+    const updatedBaseline = {
+      version: 1,
+      updatedAt: timestamp,
+      generatedBy: 'scripts/lighthouse-production.mjs',
+      status: 'active',
+      runs: RUNS,
+      targetUrl: PRODUCTION_URL,
+      driftTolerancePercent: DRIFT_PERCENT,
+      paths: summary.paths,
+      ...(baseline ?? {}),
+    };
+
+    writeFileSync(BASELINE_PATH, JSON.stringify(updatedBaseline, null, 2));
+    if (baseline) {
+      console.log('📌 Baseline 檢核通過，已更新 known-good baseline。');
+    } else {
+      console.log('📌 Baseline 不存在，將以本次結果初始化。');
+    }
+  } else if (baseline) {
+    console.log('⚠️ Baseline 檢核未通過，保留上次 baseline。');
   } else {
-    writeFileSync(
-      BASELINE_PATH,
-      JSON.stringify(
-        {
-          ...baseline,
-          updatedAt: timestamp,
-          generatedBy: 'scripts/lighthouse-production.mjs',
-          status: summary.overall.passed ? 'active' : 'degraded',
-          runs: RUNS,
-          targetUrl: PRODUCTION_URL,
-          driftTolerancePercent: DRIFT_PERCENT,
-          paths: summary.paths,
-        },
-        null,
-        2,
-      ),
-    );
+    console.log('⚠️ Baseline 不存在且檢核失敗，保留目前狀態。');
   }
 
   const summaryPath = join(REPORT_DIR, 'summary.json');
