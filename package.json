@@ -63,6 +63,7 @@
     "seo:health-check": "node scripts/seo-health-check.mjs",
     "seo:audit": "node scripts/seo-full-audit.mjs",
     "purge:cdn": "bash scripts/purge-cdn-cache.sh",
+    "lighthouse:production": "node scripts/lighthouse-production.mjs",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "prepare": "husky || true",
     "update:release-metadata": "node scripts/update-release-metadata.js",

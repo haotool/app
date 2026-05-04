@@ -12,6 +12,11 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-05
+- ID：ratewise-production-lighthouse-baseline-pr4
+- 原因：缺少 production LCP/INP/CLS/Lighthouse baseline 觀測，無法第一時間偵測 trend 與 PWA 回歸。
+- 解法：建立 `scripts/lighthouse-production.mjs`、baseline workflow、summary 回報文件與 baseline JSON，並把 PR4 指標門檻收斂為可自動回報機制。
+
 - 日期：2026-05-04
 - ID：ratewise-offline-cold-start-e2e-serial-audit
 - 原因：`offline-cold-start.spec.ts` 在 `fullyParallel` 下會讓多個 stateful PWA 測試同時操作同一個 origin 的 precache 與 runtime caches，首輪間歇誤判「冷啟動離線失敗 / 無 CSS」，造成真 bug 與測試競態無法區分。

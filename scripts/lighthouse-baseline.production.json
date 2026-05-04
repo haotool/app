@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "updatedAt": "2026-05-05T00:00:00.000Z",
+  "generatedBy": "scripts/lighthouse-production.mjs",
+  "status": "placeholder",
+  "runs": 3,
+  "targetUrl": "https://app.haotool.org/ratewise/",
+  "driftTolerancePercent": 5,
+  "paths": {}
+}
