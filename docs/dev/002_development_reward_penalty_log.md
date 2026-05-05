@@ -13,6 +13,16 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-05
+- ID：pr356-lighthouse-production-hard-threshold-bootstrap-regression
+- 原因：PR356 在「強化 PWA 冷啟動離線回退機制」commit 內夾帶 `scripts/lighthouse-production.mjs` 不相關修改，將 `enforceHardThreshold = !!hasUsableBaseline` 改為 `enforceHardThreshold = true`；當 `lighthouse-baseline.production.json` 仍為 `status: 'placeholder'`、`paths: {}` 的自舉狀態時，硬性門檻（perf ≥ 90、LCP ≤ 2500ms、INP ≤ 200ms、CLS ≤ 0.1）被無條件套用至 production 三條 smoke 路徑，造成 Production Lighthouse Baseline Check 失敗。
+- 解法：將 `scripts/lighthouse-production.mjs` 還原為 main（`f8d400f`）版本，恢復「baseline 為 placeholder 時跳過硬門檻」的自舉語意；PWA 補救（sw.ts、changeset、002 PWA 條目）保留不動，避免兩個議題綁在同一 commit。
+
+- 日期：2026-05-05
+- ID：ratewise-pwa-offline-html-recovery-mechanism
+- 原因：生產環境 E2E 測試發現 `offline.html` 有時未被 precache（`hasOfflineHtml: false`），導致 iOS Safari 冷啟動離線時黑屏。
+- 解法：新增 SW activate 階段 `ensureOfflineHtmlCached` 補救機制，在 precache 失敗或 iOS cache eviction 後主動抓取並快取 `offline.html`；增強 `setCatchHandler` 三層回退策略（index → offline precache → 任何快取）。
+
+- 日期：2026-05-05
 - ID：ratewise-trend-chart-perf-pr1234-convergence
 - 原因：趨勢圖載入極慢（~10.9s）— 10s 硬延遲 + 30 筆 JSON 並行 fetch + requestIdleCallback 等待，PWA 導覽缺 timeout fallback 與 cache 預算控制。
 - 解法：PR1 aggregate fetch（30 fetch → 1 fetch）+ PR2 移除 10s defer 改 requestIdleCallback only + PR3 NavigationRoute 3s timeout + cache 40MB budget guard + PR4 performance.mark 觀測（趨勢圖可見時間 10937ms → 820ms，達業界 <2500ms 標準）。

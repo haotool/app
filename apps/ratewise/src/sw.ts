@@ -30,6 +30,41 @@ const WB_MANIFEST = self.__WB_MANIFEST;
 // 預快取 Vite 產出的靜態資源。
 precacheAndRoute(WB_MANIFEST);
 
+/**
+ * 確保 offline.html 一定被快取（install 失敗時的補救機制）。
+ *
+ * iOS Safari 在 PWA 冷啟動時可能遇到以下問題：
+ * 1. SW install 過程中 offline.html 的 precache 因網路問題失敗
+ * 2. additionalManifestEntries 的 revision 導致 cache key mismatch
+ * 3. iOS cache eviction 清除了 offline.html
+ *
+ * 此機制在 SW activate 時直接用 bare URL（無 revision）快取 offline.html，
+ * 確保 setCatchHandler 的 matchPrecache('offline.html') 或 caches.match() 一定能命中。
+ */
+async function ensureOfflineHtmlCached(): Promise<void> {
+  try {
+    // 先檢查是否已在任何快取中（precache 或 critical-launch-cache）
+    const existingResponse = await caches.match('offline.html');
+    if (existingResponse) {
+      return;
+    }
+
+    // 嘗試從網路取得並快取到 html-cache（setCatchHandler 可 match）
+    const scope = self.registration.scope;
+    const offlineUrl = new URL('offline.html', scope).href;
+
+    const response = await fetch(offlineUrl, { cache: 'no-cache' });
+    if (response.ok) {
+      const cache = await caches.open('html-cache');
+      await cache.put(offlineUrl, response.clone());
+      // 同時用相對路徑快取，讓 matchPrecache('offline.html') 也能命中
+      await cache.put('offline.html', response);
+    }
+  } catch {
+    // 離線時無法 fetch 為正常現象，忽略錯誤。
+  }
+}
+
 // precache 完整性驗證與修復：補回 iOS cache eviction 清除的 JS/CSS chunk。
 async function verifyAndRepairPrecache(): Promise<void> {
   try {
@@ -132,6 +167,11 @@ self.addEventListener('install', (event: ExtendableEvent) => {
   event.waitUntil(checkAndCleanupCacheBudget());
 });
 
+// activate 時確保 offline.html 已快取（install 失敗時的補救）
+self.addEventListener('activate', (event: ExtendableEvent) => {
+  event.waitUntil(ensureOfflineHtmlCached());
+});
+
 // prompt 模式：僅在 waiting SW 收到 SKIP_WAITING 訊息後才接管。
 clientsClaim();
 
@@ -177,7 +217,7 @@ registerRoute(
   new NetworkOnly(),
 );
 
-// 網路失敗離線回退：JS/CSS 嘗試快取；導覽請求回退至 precache index.html。
+// 網路失敗離線回退：JS/CSS 嘗試快取；導覽請求回退至 precache index.html / offline.html。
 setCatchHandler(async ({ event, request }): Promise<Response> => {
   const fetchEvent = event as FetchEvent;
   const req = request ?? fetchEvent.request;
@@ -198,7 +238,16 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   }
 
   // NavigationRoute 已攔截正常導覽；setCatchHandler 僅在網路失敗時作保險層。
-  return (await matchPrecache('index.html')) ?? Response.error();
+  // 三層回退：matchPrecache('index.html') → matchPrecache('offline.html') → caches.match('offline.html')
+  const precachedIndex = await matchPrecache('index.html');
+  if (precachedIndex) return precachedIndex;
+
+  const precachedOffline = await matchPrecache('offline.html');
+  if (precachedOffline) return precachedOffline;
+
+  // 最後防線：搜尋所有快取中的 offline.html（含 ensureOfflineHtmlCached 補救的版本）
+  const anyOffline = await caches.match('offline.html');
+  return anyOffline ?? Response.error();
 });
 
 /**
