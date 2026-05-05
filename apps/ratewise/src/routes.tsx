@@ -37,9 +37,7 @@ import { SEOHelmet } from './components/SEOHelmet';
 import { HomepageSEOSection } from './components/HomepageSEOSection';
 import { Layout } from './components/Layout';
 import { AppLayout } from './components/AppLayout';
-import { ClientOnly } from 'vite-react-ssg';
 import {
-  SkeletonLoader,
   MultiConverterSkeleton,
   FavoritesSkeleton,
   SettingsSkeleton,
@@ -50,7 +48,7 @@ import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRe
 import { lazyWithRetry } from './utils/lazyWithRetry';
 import { ChunkErrorBoundary, OfflineAwareFallback } from './components/OfflineAwareError';
 
-const CurrencyConverter = lazyWithRetry(() => import('./features/ratewise/RateWise'));
+import RateWise from './features/ratewise/RateWise';
 const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
 const Favorites = lazyWithRetry(() => import('./pages/Favorites'));
 const Settings = lazyWithRetry(() => import('./pages/Settings'));
@@ -122,7 +120,7 @@ function createLazyRoute(
  * vite-react-ssg 路由設定
  *
  * 架構：AppLayout（父路由）包含 4 個子路由（Single, Multi, Favorites, Settings）
- * 首頁使用 ClientOnly 避免 hydration mismatch
+ * 首頁直接渲染主內容，避免 skeleton → 真內容整頁替換造成 CLS
  */
 export const routes: RouteRecord[] = [
   // AppLayout 路由（底部導覽列 + 模組化架構）
@@ -141,13 +139,7 @@ export const routes: RouteRecord[] = [
               description={HOMEPAGE_SEO.description}
               jsonLd={HOMEPAGE_SEO.jsonLd}
             />
-            <ClientOnly fallback={<SkeletonLoader />}>
-              {() => (
-                <Suspense fallback={<SkeletonLoader />}>
-                  <CurrencyConverter />
-                </Suspense>
-              )}
-            </ClientOnly>
+            <RateWise />
             <HomepageSEOSection />
           </>
         ),

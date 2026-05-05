@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-05
+- ID：ratewise-homepage-cls-stable-detection
+- 原因：首頁 route 先用 `ClientOnly + SkeletonLoader` 輸出骨架，再切成真正的 `RateWise` 內容，導致 Lighthouse 首頁在部分 run 出現 `CLS ≈ 0.247`，而舊的 3-run optimistic score gate 又會把這類不穩定結果誤判成偶發 performance 掉分。
+- 解法：改為首頁直接渲染 `RateWise` 主內容、移除 skeleton→真內容整頁替換，並把 LHCI 收斂為 5-run + `median/median-run` 聚合與 `CLS` 硬守門，同時新增 Playwright CLS 觀測測試輸出 source 證據。
+
+- 日期：2026-05-05
 - ID：lighthouse-production-nonavstart-summary-flake
 - 原因：Production Lighthouse Baseline Check 在單次 trace 碰到 `NO_NAVSTART` 類暫時性執行器錯誤時直接中止，未產出 `summary.json`，後續 workflow summary step 又把缺檔視為第二次 failure，讓 CI 無法區分真實性能回退與 Lighthouse 執行 flake。
 - 解法：為 `scripts/lighthouse-production.mjs` 增加可重試的 transient Lighthouse error retry，並在執行失敗時仍落盤 `summary.json` 與 runtime error；workflow summary step 改為缺 summary 僅警告，不再放大非產品性失敗。
