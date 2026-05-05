@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-06
+- ID：ratewise-pwa-cold-start-prime-success-gating
+- 原因：早期 cold-start prime 先前只要「有機會執行」就會讓延後修復整段跳過；若啟動當下剛好離線，prime 實際沒有補回任何資源，後續同 session 又會錯失網路恢復後的唯一補救時機。
+- 解法：將延後修復 skip 條件改為依 early prime 實際結果決定，只有真的 recache 成功或真的送出 precache repair ping 時才跳過對應延後步驟。
+
+- 日期：2026-05-06
 - ID：ratewise-pwa-cold-start-watchdog-app-ready-observability
 - 原因：冷啟動白屏 watchdog 只以 `#root` 是否出現任意子節點判定成功，會被早期 DOM 變動誤觸發而提前解除；一旦 React/bootstrap 後續失敗，就只剩無聲白屏且缺乏可追查證據。
 - 解法：改以明確 `app-ready` 訊號作為 watchdog 成功條件，將冷啟動、SW 補救、chunk 載入錯誤串成可持久化 PWA 診斷事件，並新增「假掛載成功」E2E 驗證新 watchdog 不會再被任意 root mutation 騙過。

@@ -135,19 +135,36 @@ export const createRoot = ViteReactSSG(
         shouldPrimeColdStartRecovery,
         hasController: Boolean(navigator.serviceWorker?.controller),
       });
+      const coldStartPrimePromise = shouldPrimeColdStartRecovery
+        ? primePwaColdStartRecovery(import.meta.env.BASE_URL || '/')
+        : Promise.resolve({
+            recachedCount: 0,
+            didPingPrecacheRepair: false,
+          });
 
       if (shouldPrimeColdStartRecovery) {
-        void primePwaColdStartRecovery(import.meta.env.BASE_URL || '/');
+        void coldStartPrimePromise;
       }
 
       scheduleAfterPageLoad(() => {
         schedulePostLoadIdleTask(
           () => {
             recordPwaDiagnostic('pwa-storage-init-start');
-            void initPWAStorageManager(import.meta.env.BASE_URL || '/', {
-              skipCriticalRecache: shouldPrimeColdStartRecovery,
-              skipPrecacheRepairPing: shouldPrimeColdStartRecovery,
-            });
+            void (async () => {
+              const coldStartPrimeResult = await coldStartPrimePromise;
+              const skipDelayedCriticalRecache = coldStartPrimeResult.recachedCount > 0;
+              const skipDelayedPrecacheRepairPing = coldStartPrimeResult.didPingPrecacheRepair;
+
+              recordPwaDiagnostic('pwa-storage-init-skip-decision', {
+                skipDelayedCriticalRecache,
+                skipDelayedPrecacheRepairPing,
+                coldStartPrimeResult,
+              });
+              void initPWAStorageManager(import.meta.env.BASE_URL || '/', {
+                skipCriticalRecache: skipDelayedCriticalRecache,
+                skipPrecacheRepairPing: skipDelayedPrecacheRepairPing,
+              });
+            })();
           },
           PWA_STORAGE_INIT_DELAY_MS,
           PWA_STORAGE_IDLE_TIMEOUT_MS,

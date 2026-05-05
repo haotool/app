@@ -47,6 +47,11 @@ export interface StoragePersistenceStatus {
   isNearLimit: boolean;
 }
 
+export interface PwaColdStartPrimeResult {
+  recachedCount: number;
+  didPingPrecacheRepair: boolean;
+}
+
 /**
  * 關鍵資源 URL 列表（相對路徑）
  *
@@ -232,13 +237,18 @@ export async function recacheCriticalResourcesOnLaunch(baseUrl: string): Promise
  * 否則 iOS PWA 冷啟動時若快取已部分驅逐，使用者可能先看到白屏，
  * 然後自救機制才開始補回資源。
  */
-export async function primePwaColdStartRecovery(baseUrl: string): Promise<number> {
+export async function primePwaColdStartRecovery(baseUrl: string): Promise<PwaColdStartPrimeResult> {
   if (typeof window === 'undefined') {
-    return 0;
+    return {
+      recachedCount: 0,
+      didPingPrecacheRepair: false,
+    };
   }
 
   try {
     recordPwaDiagnostic('cold-start-prime-begin', { baseUrl });
+    let didPingPrecacheRepair = false;
+
     if (
       typeof navigator !== 'undefined' &&
       navigator.onLine &&
@@ -248,15 +258,25 @@ export async function primePwaColdStartRecovery(baseUrl: string): Promise<number
       navigator.serviceWorker.controller.postMessage({ type: 'VERIFY_AND_REPAIR_PRECACHE' });
       logger.info('冷啟動補救：VERIFY_AND_REPAIR_PRECACHE 已發送至 SW');
       recordPwaDiagnostic('cold-start-prime-precache-repair-ping');
+      didPingPrecacheRepair = true;
     }
 
     const recachedCount = await recacheCriticalResourcesOnLaunch(baseUrl);
-    recordPwaDiagnostic('cold-start-prime-complete', { recachedCount });
-    return recachedCount;
+    recordPwaDiagnostic('cold-start-prime-complete', {
+      recachedCount,
+      didPingPrecacheRepair,
+    });
+    return {
+      recachedCount,
+      didPingPrecacheRepair,
+    };
   } catch (error) {
     logger.error('Failed to prime PWA cold start recovery', error as Error);
     recordPwaDiagnostic('cold-start-prime-error', (error as Error).message, 'error');
-    return 0;
+    return {
+      recachedCount: 0,
+      didPingPrecacheRepair: false,
+    };
   }
 }
 
