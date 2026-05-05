@@ -24,7 +24,10 @@ export function OfflineAwareFallback({ error }: FallbackProps) {
 
   if (showOfflineUI) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] px-6 text-center gap-4">
+      <div
+        data-ratewise-watchdog-ready="true"
+        className="flex flex-col items-center justify-center min-h-[50vh] px-6 text-center gap-4"
+      >
         <div className="flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30">
           <WifiOff className="w-8 h-8 text-amber-600 dark:text-amber-400" aria-hidden="true" />
         </div>
@@ -51,7 +54,10 @@ export function OfflineAwareFallback({ error }: FallbackProps) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] px-6 text-center gap-4">
+    <div
+      data-ratewise-watchdog-ready="true"
+      className="flex flex-col items-center justify-center min-h-[50vh] px-6 text-center gap-4"
+    >
       <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30">
         <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" aria-hidden="true" />
       </div>

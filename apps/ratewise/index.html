@@ -394,6 +394,7 @@
         var DIAG_KEY = 'ratewise_pwa_diagnostics_v1';
         var APP_READY_ATTR = 'data-ratewise-app-ready';
         var APP_READY_EVENT = 'ratewise:pwa-app-ready';
+        var WATCHDOG_READY_SELECTOR = '[data-ratewise-watchdog-ready="true"]';
         var MAX_EVENTS = 40;
         var configuredTimeout = Number(window.__RATEWISE_COLD_START_TIMEOUT_MS__);
         var TIMEOUT_MS =
@@ -440,6 +441,10 @@
         }
         function isAppReady() {
           return document.documentElement.getAttribute(APP_READY_ATTR) === 'true';
+        }
+        function hasReactFallbackReady() {
+          var root = document.getElementById('root');
+          return Boolean(root && root.querySelector(WATCHDOG_READY_SELECTOR));
         }
         function collectDiagnostics() {
           var lines = ['\u23f0 ' + new Date().toLocaleTimeString('zh-TW')];
@@ -575,7 +580,7 @@
         }
         function showColdStartError() {
           var root = document.getElementById('root');
-          if (!root || isAppReady()) return;
+          if (!root || isAppReady() || hasReactFallbackReady()) return;
           recordDiagnostic('cold-start-overlay-shown', { timeoutMs: TIMEOUT_MS }, 'error');
           var isOnline = navigator.onLine !== false;
           var canRetry = isOnline && getRetryCount() < MAX_RETRIES;
@@ -678,7 +683,7 @@
           });
         }
         recordDiagnostic('cold-start-watchdog-start', { timeoutMs: TIMEOUT_MS });
-        if (isAppReady()) {
+        if (isAppReady() || hasReactFallbackReady()) {
           clearRetry();
           return;
         }
@@ -712,10 +717,10 @@
           recordDiagnostic('cold-start-unhandledrejection', message, 'error');
         });
         var coldStartTimer = setTimeout(function () {
-          if (!isAppReady()) showColdStartError();
+          if (!isAppReady() && !hasReactFallbackReady()) showColdStartError();
         }, TIMEOUT_MS);
         function clearWatchdog(reason) {
-          if (!isAppReady()) return;
+          if (!isAppReady() && !hasReactFallbackReady()) return;
           recordDiagnostic('cold-start-watchdog-cleared', reason);
           clearTimeout(coldStartTimer);
           clearRetry();
@@ -728,12 +733,19 @@
             if (isAppReady()) {
               clearWatchdog('ready-attr');
               obs.disconnect();
+            } else if (hasReactFallbackReady()) {
+              clearWatchdog('react-fallback-ready');
+              obs.disconnect();
             }
           });
           obs.observe(document.documentElement, {
             attributes: true,
             attributeFilter: [APP_READY_ATTR],
           });
+          var root = document.getElementById('root');
+          if (root) {
+            obs.observe(root, { childList: true, subtree: true });
+          }
         }
       })();
     </script>

@@ -566,7 +566,7 @@ test.describe('飛航模式冷啟動診斷', () => {
     await page.getByText('診斷詳情').click();
     const diagnosticPanel = page.locator('#cs-diag');
     await expect(diagnosticPanel).toContainText('最近事件');
-    await expect(diagnosticPanel).toContainText('cold-start-script-error');
+    await expect(diagnosticPanel).toContainText('cold-start-overlay-shown');
 
     await context.close();
   });

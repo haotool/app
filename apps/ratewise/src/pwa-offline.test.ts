@@ -152,6 +152,7 @@ describe('PWA 離線功能測試', () => {
       expect(mainContent).toContain('const coldStartPrimePromise');
       expect(mainContent).toContain('COLD_START_PRIME_WAIT_TIMEOUT_MS');
       expect(mainContent).toContain('resolveColdStartPrimeResult');
+      expect(mainContent).toContain('window.clearTimeout(timeoutId)');
       expect(mainContent).toContain('cold-start-prime-wait-timeout');
       expect(mainContent).toContain('skipDelayedCriticalRecache');
       expect(mainContent).toContain('skipDelayedPrecacheRepairPing');
@@ -167,10 +168,18 @@ describe('PWA 離線功能測試', () => {
 
     it('should gate cold-start recovery on explicit app-ready signal instead of any root mutation', () => {
       const html = readFileSync(resolve(ROOT_PATH, 'index.html'), 'utf-8');
+      const fallbackComponent = readFileSync(
+        resolve(ROOT_PATH, 'src/components/OfflineAwareError.tsx'),
+        'utf-8',
+      );
 
       expect(html).toContain("document.documentElement.getAttribute(APP_READY_ATTR) === 'true'");
+      expect(html).toContain('WATCHDOG_READY_SELECTOR');
+      expect(html).toContain('hasReactFallbackReady');
+      expect(html).toContain('react-fallback-ready');
       expect(html).toContain('cold-start-watchdog-cleared');
       expect(html).not.toContain('root.children.length === 0');
+      expect(fallbackComponent).toContain('data-ratewise-watchdog-ready="true"');
     });
 
     it('should reload on controllerchange after activating a waiting worker', () => {

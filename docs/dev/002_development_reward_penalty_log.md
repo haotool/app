@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-06
+- ID：ratewise-pwa-watchdog-fallback-and-timeout-signal-guard
+- 原因：冷啟動 watchdog 若只認 `app-ready`，可能誤蓋 React 已成功渲染的 chunk/offline fallback；同時 cold-start prime race 若不清除落敗 timeout，健康啟動也會留下假的 timeout 診斷。
+- 解法：為 `OfflineAwareFallback` 加入 watchdog-ready 訊號，讓已渲染 fallback 可正確終止 watchdog；並在 early prime 成功時清除 timeout handle，維持 PWA 診斷訊號的真實性。
+
+- 日期：2026-05-06
 - ID：ratewise-pwa-diagnostics-storage-and-prime-wait-guards
 - 原因：PWA 診斷若直接探測 `localStorage`，在受限隱私情境可能拋出 `SecurityError`；同時 delayed storage init 若無上限等待 early prime，也可能被卡住的網路請求拖到整個 session 都不再補救。
 - 解法：將 browser storage 能力探測改為安全 accessor，並對 early prime 結果採有界等待與 timeout fallback，確保診斷與 delayed repair 都不會反過來成為新的啟動阻塞點。

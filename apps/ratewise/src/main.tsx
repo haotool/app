@@ -72,14 +72,20 @@ const resolveColdStartPrimeResult = async (
   recachedCount: number;
   didPingPrecacheRepair: boolean;
 }> => {
+  let timeoutId: number | null = null;
+
   try {
     return await Promise.race([
-      coldStartPrimePromise,
+      coldStartPrimePromise.finally(() => {
+        if (timeoutId != null) {
+          window.clearTimeout(timeoutId);
+        }
+      }),
       new Promise<{
         recachedCount: number;
         didPingPrecacheRepair: boolean;
       }>((resolve) => {
-        window.setTimeout(() => {
+        timeoutId = window.setTimeout(() => {
           recordPwaDiagnostic(
             'cold-start-prime-wait-timeout',
             { timeoutMs: COLD_START_PRIME_WAIT_TIMEOUT_MS },
