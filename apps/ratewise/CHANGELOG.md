@@ -1,5 +1,15 @@
 # @app/ratewise
 
+## 2.22.17
+
+### Patch Changes
+
+- 8f498c0: PWA 冷啟動離線回退強化：新增 activate 階段 offline.html 補救快取機制，確保 iOS Safari cache eviction 或 precache 失敗後仍能正常離線回退。
+- 7692aeb: 在 Lighthouse CI 離線模式下，首頁改為直接使用 build-time 匯率並跳過背景刷新，避免首屏效能檢查受離線 fallback 警告與額外背景工作影響。
+- 2e64a3e: 修正 PWA 離線導覽在 precache `index.html` / `offline.html` 缺失時的最後 fallback reachability，讓 `NavigationRoute` 也能直接命中任意快取中的 `offline.html`，避免冷啟動白屏。
+- 7692aeb: 收斂 `/ratewise/robots.txt` 與 `/ratewise/llms.txt` 的重複 `Content-Type`，統一為單一 `text/plain; charset=utf-8`。
+- f8d400f: 趨勢圖載入極速化：30 筆 API 請求合併為 1 筆、移除 10 秒硬延遲改用 requestIdleCallback、PWA 導覽加入 3 秒 timeout fallback 與 cache 預算控制。趨勢圖可見時間從 10.9 秒降至 820 毫秒。
+
 ## 2.22.16
 
 ### Patch Changes
