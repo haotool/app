@@ -23,6 +23,11 @@
 - 解法：新增 SW activate 階段 `ensureOfflineHtmlCached` 補救機制，在 precache 失敗或 iOS cache eviction 後主動抓取並快取 `offline.html`；增強 `setCatchHandler` 三層回退策略（index → offline precache → 任何快取）。
 
 - 日期：2026-05-05
+- ID：ratewise-navigationroute-offline-fallback-reachability
+- 原因：`NavigationRoute` 的 `handlerDidError` 在找不到 precache `index.html` / `offline.html` 時直接回 `Response.error()`，導致 Workbox 不再進入全域 `setCatchHandler`，讓任意快取中的 `offline.html` fallback 變成不可達。
+- 解法：在 `handlerDidError` 內補上 `caches.match('offline.html')` 最後防線，並新增回歸測試鎖住離線 fallback reachability。
+
+- 日期：2026-05-05
 - ID：ratewise-trend-chart-perf-pr1234-convergence
 - 原因：趨勢圖載入極慢（~10.9s）— 10s 硬延遲 + 30 筆 JSON 並行 fetch + requestIdleCallback 等待，PWA 導覽缺 timeout fallback 與 cache 預算控制。
 - 解法：PR1 aggregate fetch（30 fetch → 1 fetch）+ PR2 移除 10s defer 改 requestIdleCallback only + PR3 NavigationRoute 3s timeout + cache 40MB budget guard + PR4 performance.mark 觀測（趨勢圖可見時間 10937ms → 820ms，達業界 <2500ms 標準）。

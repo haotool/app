@@ -237,6 +237,21 @@ describe('Service Worker Cache Strategies', () => {
     // 確保有 fallback 到 precache index.html
     expect(sourceCode).toContain("matchPrecache('index.html')");
   });
+
+  it('should let NavigationRoute fallback reach cached offline.html before returning Response.error', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    const handlerBlockMatch =
+      /handlerDidError:\s*async\s*\(\)\s*=>\s*\{[\s\S]*?return\s+\(await\s+caches\.match\('offline\.html'\)\)\s*\?\?\s*Response\.error\(\);[\s\S]*?\}/.exec(
+        sourceCode,
+      );
+
+    expect(handlerBlockMatch).not.toBeNull();
+  });
 });
 
 describe('Service Worker URL Matching', () => {
