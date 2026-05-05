@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.22.18
+
+### Patch Changes
+
+- 39f7a50: 修正 PWA 冷啟動時關鍵離線自救延後執行與後續 skip 競態，降低快取部分遺失時的白屏風險。
+
 ## 2.22.17
 
 ### Patch Changes
