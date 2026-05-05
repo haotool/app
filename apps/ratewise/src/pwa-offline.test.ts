@@ -134,6 +134,18 @@ describe('PWA 離線功能測試', () => {
       expect(storageManager).not.toContain("name.startsWith('workbox-precache')");
     });
 
+    it('should expose an early cold-start recovery path outside load+idle scheduling', () => {
+      const storageManager = readFileSync(
+        resolve(ROOT_PATH, 'src/utils/pwaStorageManager.ts'),
+        'utf-8',
+      );
+      const mainContent = readFileSync(resolve(ROOT_PATH, 'src/main.tsx'), 'utf-8');
+
+      expect(storageManager).toContain('primePwaColdStartRecovery');
+      expect(mainContent).toContain('shouldPrimePwaColdStartImmediately');
+      expect(mainContent).toContain('void primePwaColdStartRecovery(');
+    });
+
     it('should reload on controllerchange after activating a waiting worker', () => {
       const swUtils = readFileSync(resolve(ROOT_PATH, 'src/utils/swUtils.ts'), 'utf-8');
       expect(swUtils).toContain('controllerchange');

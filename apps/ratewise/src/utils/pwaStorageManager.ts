@@ -23,6 +23,11 @@
 
 import { logger } from './logger';
 
+interface PwaStorageInitOptions {
+  skipCriticalRecache?: boolean;
+  skipPrecacheRepairPing?: boolean;
+}
+
 /**
  * 快取持久化狀態
  */
@@ -211,6 +216,36 @@ export async function recacheCriticalResourcesOnLaunch(baseUrl: string): Promise
 }
 
 /**
+ * 立即補熱冷啟動所需的最小關鍵資源。
+ *
+ * 這條路徑必須在 React 啟動早期執行，不能延後到 load/idle，
+ * 否則 iOS PWA 冷啟動時若快取已部分驅逐，使用者可能先看到白屏，
+ * 然後自救機制才開始補回資源。
+ */
+export async function primePwaColdStartRecovery(baseUrl: string): Promise<number> {
+  if (typeof window === 'undefined') {
+    return 0;
+  }
+
+  try {
+    if (
+      typeof navigator !== 'undefined' &&
+      navigator.onLine &&
+      'serviceWorker' in navigator &&
+      navigator.serviceWorker.controller
+    ) {
+      navigator.serviceWorker.controller.postMessage({ type: 'VERIFY_AND_REPAIR_PRECACHE' });
+      logger.info('冷啟動補救：VERIFY_AND_REPAIR_PRECACHE 已發送至 SW');
+    }
+
+    return await recacheCriticalResourcesOnLaunch(baseUrl);
+  } catch (error) {
+    logger.error('Failed to prime PWA cold start recovery', error as Error);
+    return 0;
+  }
+}
+
+/**
  * 檢查快取健康度
  *
  * 診斷 iOS Safari PWA 離線問題：
@@ -297,26 +332,33 @@ export async function checkCacheHealth(baseUrl: string): Promise<CacheHealth> {
  *
  * @param baseUrl 應用 base URL (例如 /ratewise/)
  */
-export async function initPWAStorageManager(baseUrl: string): Promise<void> {
+export async function initPWAStorageManager(
+  baseUrl: string,
+  options: PwaStorageInitOptions = {},
+): Promise<void> {
   logger.info('Initializing PWA Storage Manager');
 
   try {
-    // 線上時發送 VERIFY_AND_REPAIR_PRECACHE：補回 iOS cache eviction 清除的 JS/CSS chunk。
-    if (
-      typeof navigator !== 'undefined' &&
-      navigator.onLine &&
-      'serviceWorker' in navigator &&
-      navigator.serviceWorker.controller
-    ) {
-      navigator.serviceWorker.controller.postMessage({ type: 'VERIFY_AND_REPAIR_PRECACHE' });
-      logger.info('VERIFY_AND_REPAIR_PRECACHE 已發送至 SW');
+    const { skipCriticalRecache = false, skipPrecacheRepairPing = false } = options;
+
+    if (!skipPrecacheRepairPing) {
+      // 線上時發送 VERIFY_AND_REPAIR_PRECACHE：補回 iOS cache eviction 清除的 JS/CSS chunk。
+      if (
+        typeof navigator !== 'undefined' &&
+        navigator.onLine &&
+        'serviceWorker' in navigator &&
+        navigator.serviceWorker.controller
+      ) {
+        navigator.serviceWorker.controller.postMessage({ type: 'VERIFY_AND_REPAIR_PRECACHE' });
+        logger.info('VERIFY_AND_REPAIR_PRECACHE 已發送至 SW');
+      }
     }
 
     // 1. 請求持久化儲存
     const isPersistent = await requestPersistentStorage();
 
     // 2. 重新快取關鍵資源
-    const recachedCount = await recacheCriticalResourcesOnLaunch(baseUrl);
+    const recachedCount = skipCriticalRecache ? 0 : await recacheCriticalResourcesOnLaunch(baseUrl);
 
     // 3. 檢查快取健康度
     const health = await checkCacheHealth(baseUrl);
