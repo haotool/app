@@ -120,6 +120,9 @@ describe('PWA 離線功能測試', () => {
       expect(swContent).toContain('離線回退');
       // document 請求回退到 precache index.html，確保冷啟動離線可用。
       expect(swContent).toContain("matchPrecache('index.html')");
+      // NavigationRoute 的 handlerDidError 也必須能直接命中任意快取中的 offline.html，
+      // 避免 Workbox 視為已處理後不再進入全域 setCatchHandler。
+      expect(swContent).toContain("caches.match('offline.html')");
     });
 
     it('should not write launch-recache assets into workbox precache', () => {

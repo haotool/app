@@ -272,8 +272,11 @@ const navigationStrategy = new NetworkFirst({
       handlerDidError: async () => {
         const precached = await matchPrecache('index.html');
         if (precached) return precached;
-        // 最後防線：嘗試 offline.html
-        return (await matchPrecache('offline.html')) ?? Response.error();
+        const precachedOffline = await matchPrecache('offline.html');
+        if (precachedOffline) return precachedOffline;
+        // 最後防線：搜尋任何快取中的 offline.html，避免 Workbox 在 plugin 已回傳
+        // Response.error() 時不再進入全域 setCatchHandler，導致冷啟動離線 fallback 失效。
+        return (await caches.match('offline.html')) ?? Response.error();
       },
     },
   ],
