@@ -155,6 +155,7 @@ describe('PWA 離線功能測試', () => {
       expect(mainContent).toContain("? primePwaColdStartRecovery(import.meta.env.BASE_URL || '/')");
       expect(mainContent).toContain('skipCriticalRecache: skipDelayedCriticalRecache');
       expect(mainContent).toContain('skipPrecacheRepairPing: skipDelayedPrecacheRepairPing');
+      expect(mainContent).not.toContain('markPwaAppReady()');
       expect(diagnosticsContent).toContain('markPwaAppReady');
       expect(indexHtml).toContain('ratewise:pwa-app-ready');
       expect(indexHtml).toContain('data-ratewise-app-ready');

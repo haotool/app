@@ -24,11 +24,7 @@ import { handleVersionUpdate } from './utils/versionManager';
 import { APP_VERSION, BUILD_TIME } from './config/version';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { initPWAStorageManager, primePwaColdStartRecovery } from './utils/pwaStorageManager';
-import {
-  clearPwaAppReadyMarker,
-  markPwaAppReady,
-  recordPwaDiagnostic,
-} from './utils/pwaDiagnostics';
+import { clearPwaAppReadyMarker, recordPwaDiagnostic } from './utils/pwaDiagnostics';
 import { initGA, scheduleAfterPageLoad, trackPageview, trackAiReferral } from '@shared/analytics';
 import {
   ANALYTICS_IDLE_TIMEOUT_MS,
@@ -225,13 +221,6 @@ export const createRoot = ViteReactSSG(
       // Initialize observability (non-blocking)
       // Sentry loads on-demand via ErrorBoundary to save initial bundle size
       initWebVitals();
-
-      // Log successful mount
-      logger.info('Application mounted successfully (client-side)', {
-        version: APP_VERSION,
-        buildTime: BUILD_TIME,
-      });
-      markPwaAppReady();
 
       // Service Worker 註冊由 UpdatePrompt 組件處理
     } else {

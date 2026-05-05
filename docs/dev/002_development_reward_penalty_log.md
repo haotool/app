@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-06
+- ID：ratewise-pwa-app-ready-first-react-commit
+- 原因：`app-ready` 訊號先前在 `ViteReactSSG` bootstrap callback 內就送出，若首個 React render／hydration 隨後拋錯，冷啟動 watchdog 仍會被過早解除，再次留下無聲白屏。
+- 解法：將 `app-ready` 改由首次 React commit 後才執行的 `PwaAppReadyBeacon` 送出，並新增元件測試與離線回歸測試鎖住「bootstrap 成功不等於首屏掛載成功」的契約。
+
+- 日期：2026-05-06
 - ID：ratewise-pwa-cold-start-prime-success-gating
 - 原因：早期 cold-start prime 先前只要「有機會執行」就會讓延後修復整段跳過；若啟動當下剛好離線，prime 實際沒有補回任何資源，後續同 session 又會錯失網路恢復後的唯一補救時機。
 - 解法：將延後修復 skip 條件改為依 early prime 實際結果決定，只有真的 recache 成功或真的送出 precache repair ping 時才跳過對應延後步驟。
