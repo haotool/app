@@ -143,7 +143,10 @@ describe('PWA 離線功能測試', () => {
 
       expect(storageManager).toContain('primePwaColdStartRecovery');
       expect(mainContent).toContain('shouldPrimePwaColdStartImmediately');
+      expect(mainContent).toContain('const shouldPrimeColdStartRecovery');
       expect(mainContent).toContain('void primePwaColdStartRecovery(');
+      expect(mainContent).toContain('skipCriticalRecache: shouldPrimeColdStartRecovery');
+      expect(mainContent).toContain('skipPrecacheRepairPing: shouldPrimeColdStartRecovery');
     });
 
     it('should reload on controllerchange after activating a waiting worker', () => {

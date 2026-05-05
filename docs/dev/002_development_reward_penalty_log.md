@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-05
+- ID：ratewise-pwa-cold-start-prime-skip-flag-race
+- 原因：冷啟動自救的 skip flags 重新依賴延後時點的 `shouldPrimePwaColdStartImmediately()` 判斷，可能在首載起點未 prime、但 `load + idle` 前 SW 剛取得控制權時，把 `initPWAStorageManager()` 裡的 precache 修復與關鍵資源補熱整段誤跳過。
+- 解法：將 skip flags 綁定為啟動當下單一 `shouldPrimeColdStartRecovery` 決策，只有前面已決定執行早期 prime 時才跳過延後補救，並補靜態回歸測試鎖住此時序契約。
+
+- 日期：2026-05-05
 - ID：ratewise-pwa-cold-start-recovery-timing-regression
 - 原因：`4b786676` 將 `initPWAStorageManager()` 延後到 `load + idle` 後才執行，導致 PWA 冷啟動時若快取已部分驅逐，關鍵資源補熱與 precache 修復啟動過晚，仍可能先出現不可預測白屏。
 - 解法：將冷啟動自救拆成早期 `primePwaColdStartRecovery()`，在 standalone / 已受 SW 控制情境下立即補熱關鍵資源與送出 `VERIFY_AND_REPAIR_PRECACHE`；持久化儲存與健康度盤點維持延後執行，兼顧可靠性與效能。

@@ -116,7 +116,9 @@ export const createRoot = ViteReactSSG(
       // 因此：
       // 1. standalone / 已受 SW 控制的情境，立即補熱關鍵資源與 precache 修復。
       // 2. 持久化儲存申請與健康度盤點仍延後，避免把效能優化完全回退。
-      if (shouldPrimePwaColdStartImmediately()) {
+      const shouldPrimeColdStartRecovery = shouldPrimePwaColdStartImmediately();
+
+      if (shouldPrimeColdStartRecovery) {
         void primePwaColdStartRecovery(import.meta.env.BASE_URL || '/');
       }
 
@@ -124,8 +126,8 @@ export const createRoot = ViteReactSSG(
         schedulePostLoadIdleTask(
           () => {
             void initPWAStorageManager(import.meta.env.BASE_URL || '/', {
-              skipCriticalRecache: shouldPrimePwaColdStartImmediately(),
-              skipPrecacheRepairPing: shouldPrimePwaColdStartImmediately(),
+              skipCriticalRecache: shouldPrimeColdStartRecovery,
+              skipPrecacheRepairPing: shouldPrimeColdStartRecovery,
             });
           },
           PWA_STORAGE_INIT_DELAY_MS,
