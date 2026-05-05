@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.22.19
+
+### Patch Changes
+
+- e76ba4f: 收斂首頁 CLS 偵測與渲染穩定性，避免 Lighthouse 因首頁骨架替換造成不穩定 performance failure。
+
 ## 2.22.18
 
 ### Patch Changes
