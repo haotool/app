@@ -20,6 +20,12 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
+declare global {
+  interface Window {
+    __RATEWISE_COLD_START_TIMEOUT_MS__?: number;
+  }
+}
+
 const BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:4173';
 const BASE_PATH =
   process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise';
@@ -521,5 +527,47 @@ test.describe('飛航模式冷啟動診斷', () => {
     // 現代 SPA 至少應有數個 JS chunk（index, vendor, lazy routes 等）
     expect(jsCacheCount, '快取中應有 JS chunks').toBeGreaterThanOrEqual(3);
     expect(cssCacheCount, '快取中應有 CSS files').toBeGreaterThanOrEqual(1);
+  });
+
+  test('即使 root 提前出現假節點，冷啟動 watchdog 仍應顯示診斷 UI', async ({ browser }) => {
+    const context = await browser.newContext({
+      serviceWorkers: 'allow',
+    });
+    const page = await context.newPage();
+
+    await page.addInitScript(() => {
+      window.__RATEWISE_COLD_START_TIMEOUT_MS__ = 900;
+
+      const timer = window.setInterval(() => {
+        const root = document.getElementById('root');
+        const isReady = document.documentElement.getAttribute('data-ratewise-app-ready') === 'true';
+
+        if (isReady) {
+          window.clearInterval(timer);
+          return;
+        }
+
+        if (root && root.children.length === 0) {
+          const phantom = document.createElement('div');
+          phantom.setAttribute('data-test-phantom-root-child', 'true');
+          root.appendChild(phantom);
+          window.clearInterval(timer);
+        }
+      }, 50);
+    });
+
+    await page.route('**/assets/*.js*', (route) => route.abort());
+    await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+
+    const alert = page.getByRole('alert');
+    await expect(alert).toBeVisible({ timeout: 10_000 });
+    await expect(alert).toContainText('應用程式載入失敗');
+
+    await page.getByText('診斷詳情').click();
+    const diagnosticPanel = page.locator('#cs-diag');
+    await expect(diagnosticPanel).toContainText('最近事件');
+    await expect(diagnosticPanel).toContainText('cold-start-script-error');
+
+    await context.close();
   });
 });

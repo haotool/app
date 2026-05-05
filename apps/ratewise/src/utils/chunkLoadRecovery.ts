@@ -8,6 +8,7 @@
  */
 
 import { logger } from './logger';
+import { recordPwaDiagnostic } from './pwaDiagnostics';
 import { performFullRefresh } from './swUtils';
 
 export const CHUNK_REFRESH_KEY = 'chunk_load_refresh_timestamp';
@@ -89,9 +90,13 @@ export function markChunkRefreshed(): void {
  */
 export async function recoverFromChunkLoadError(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
-  if (!canSafelyRefresh()) return false;
+  if (!canSafelyRefresh()) {
+    recordPwaDiagnostic('chunk-load-refresh-blocked', undefined, 'warn');
+    return false;
+  }
 
   logger.warn('Chunk load retries exhausted, performing full refresh');
+  recordPwaDiagnostic('chunk-load-refresh-triggered');
   markChunkRefreshed();
   await performFullRefresh();
   return true;

@@ -391,9 +391,36 @@
     <script>
       (function () {
         'use strict';
-        var TIMEOUT_MS = 5000;
+        var DIAG_KEY = 'ratewise_pwa_diagnostics_v1';
+        var APP_READY_ATTR = 'data-ratewise-app-ready';
+        var APP_READY_EVENT = 'ratewise:pwa-app-ready';
+        var MAX_EVENTS = 40;
+        var configuredTimeout = Number(window.__RATEWISE_COLD_START_TIMEOUT_MS__);
+        var TIMEOUT_MS =
+          Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? configuredTimeout : 5000;
         var RETRY_KEY = 'ratewise_cold_start_retry';
         var MAX_RETRIES = 1;
+        function readDiagnostics() {
+          try {
+            return JSON.parse(localStorage.getItem(DIAG_KEY) || '[]');
+          } catch {
+            return [];
+          }
+        }
+        function recordDiagnostic(phase, detail, level) {
+          var entry = {
+            phase: phase,
+            detail: typeof detail === 'string' ? detail : JSON.stringify(detail || {}),
+            level: level || 'info',
+            timestamp: new Date().toISOString(),
+          };
+          try {
+            var events = readDiagnostics();
+            events.push(entry);
+            localStorage.setItem(DIAG_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
+          } catch {}
+          return entry;
+        }
         function getRetryCount() {
           try {
             return parseInt(sessionStorage.getItem(RETRY_KEY) || '0', 10);
@@ -411,9 +438,8 @@
             sessionStorage.removeItem(RETRY_KEY);
           } catch {}
         }
-        function hasSkeleton() {
-          var root = document.getElementById('root');
-          return root ? root.children.length === 0 : false;
+        function isAppReady() {
+          return document.documentElement.getAttribute(APP_READY_ATTR) === 'true';
         }
         function collectDiagnostics() {
           var lines = ['\u23f0 ' + new Date().toLocaleTimeString('zh-TW')];
@@ -484,6 +510,22 @@
                   })
               : (lines.push('\ud83d\udce6 \u5feb\u53d6:\u4e0d\u652f\u63f4'), Promise.resolve());
           return Promise.all([swP, cacheP]).then(function () {
+            var recentEvents = readDiagnostics().slice(-8);
+            if (recentEvents.length > 0) {
+              lines.push('');
+              lines.push('\ud83e\udde0 \u6700\u8fd1\u4e8b\u4ef6');
+              recentEvents.forEach(function (event) {
+                lines.push(
+                  ' ' +
+                    event.timestamp +
+                    ' [' +
+                    event.level +
+                    '] ' +
+                    event.phase +
+                    (event.detail ? ' ' + event.detail : ''),
+                );
+              });
+            }
             return lines;
           });
         }
@@ -533,7 +575,8 @@
         }
         function showColdStartError() {
           var root = document.getElementById('root');
-          if (!root || !hasSkeleton()) return;
+          if (!root || isAppReady()) return;
+          recordDiagnostic('cold-start-overlay-shown', { timeoutMs: TIMEOUT_MS }, 'error');
           var isOnline = navigator.onLine !== false;
           var canRetry = isOnline && getRetryCount() < MAX_RETRIES;
           var wrap = document.createElement('div');
@@ -634,14 +677,15 @@
             if (el) el.textContent = lines.join('\n');
           });
         }
-        if (!hasSkeleton()) {
+        recordDiagnostic('cold-start-watchdog-start', { timeoutMs: TIMEOUT_MS });
+        if (isAppReady()) {
           clearRetry();
           return;
         }
         window.addEventListener(
           'error',
           function (e) {
-            if (!hasSkeleton()) return;
+            if (isAppReady()) return;
             var t = e && e.target;
             if (
               t &&
@@ -649,27 +693,47 @@
               t.src &&
               (t.src.indexOf('/assets/') !== -1 || t.src.endsWith('.js'))
             ) {
+              recordDiagnostic('cold-start-script-error', t.src, 'error');
               clearTimeout(coldStartTimer);
               showColdStartError();
             }
           },
           true,
         );
+        window.addEventListener('unhandledrejection', function (e) {
+          if (isAppReady()) return;
+          var reason = e && e.reason;
+          var message =
+            typeof reason === 'string'
+              ? reason
+              : reason && typeof reason.message === 'string'
+                ? reason.message
+                : String(reason || 'unknown');
+          recordDiagnostic('cold-start-unhandledrejection', message, 'error');
+        });
         var coldStartTimer = setTimeout(function () {
-          if (hasSkeleton()) showColdStartError();
+          if (!isAppReady()) showColdStartError();
         }, TIMEOUT_MS);
+        function clearWatchdog(reason) {
+          if (!isAppReady()) return;
+          recordDiagnostic('cold-start-watchdog-cleared', reason);
+          clearTimeout(coldStartTimer);
+          clearRetry();
+        }
+        window.addEventListener(APP_READY_EVENT, function () {
+          clearWatchdog('ready-event');
+        });
         if (typeof MutationObserver !== 'undefined') {
-          var rootEl = document.getElementById('root');
-          if (rootEl) {
-            var obs = new MutationObserver(function () {
-              if (!hasSkeleton()) {
-                clearTimeout(coldStartTimer);
-                clearRetry();
-                obs.disconnect();
-              }
-            });
-            obs.observe(rootEl, { childList: true });
-          }
+          var obs = new MutationObserver(function () {
+            if (isAppReady()) {
+              clearWatchdog('ready-attr');
+              obs.disconnect();
+            }
+          });
+          obs.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: [APP_READY_ATTR],
+          });
         }
       })();
     </script>

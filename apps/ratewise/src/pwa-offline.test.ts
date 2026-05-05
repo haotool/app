@@ -140,6 +140,11 @@ describe('PWA 離線功能測試', () => {
         'utf-8',
       );
       const mainContent = readFileSync(resolve(ROOT_PATH, 'src/main.tsx'), 'utf-8');
+      const diagnosticsContent = readFileSync(
+        resolve(ROOT_PATH, 'src/utils/pwaDiagnostics.ts'),
+        'utf-8',
+      );
+      const indexHtml = readFileSync(resolve(ROOT_PATH, 'index.html'), 'utf-8');
 
       expect(storageManager).toContain('primePwaColdStartRecovery');
       expect(mainContent).toContain('shouldPrimePwaColdStartImmediately');
@@ -147,6 +152,17 @@ describe('PWA 離線功能測試', () => {
       expect(mainContent).toContain('void primePwaColdStartRecovery(');
       expect(mainContent).toContain('skipCriticalRecache: shouldPrimeColdStartRecovery');
       expect(mainContent).toContain('skipPrecacheRepairPing: shouldPrimeColdStartRecovery');
+      expect(diagnosticsContent).toContain('markPwaAppReady');
+      expect(indexHtml).toContain('ratewise:pwa-app-ready');
+      expect(indexHtml).toContain('data-ratewise-app-ready');
+    });
+
+    it('should gate cold-start recovery on explicit app-ready signal instead of any root mutation', () => {
+      const html = readFileSync(resolve(ROOT_PATH, 'index.html'), 'utf-8');
+
+      expect(html).toContain("document.documentElement.getAttribute(APP_READY_ATTR) === 'true'");
+      expect(html).toContain('cold-start-watchdog-cleared');
+      expect(html).not.toContain('root.children.length === 0');
     });
 
     it('should reload on controllerchange after activating a waiting worker', () => {

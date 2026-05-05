@@ -12,6 +12,11 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-06
+- ID：ratewise-pwa-cold-start-watchdog-app-ready-observability
+- 原因：冷啟動白屏 watchdog 只以 `#root` 是否出現任意子節點判定成功，會被早期 DOM 變動誤觸發而提前解除；一旦 React/bootstrap 後續失敗，就只剩無聲白屏且缺乏可追查證據。
+- 解法：改以明確 `app-ready` 訊號作為 watchdog 成功條件，將冷啟動、SW 補救、chunk 載入錯誤串成可持久化 PWA 診斷事件，並新增「假掛載成功」E2E 驗證新 watchdog 不會再被任意 root mutation 騙過。
+
 - 日期：2026-05-05
 - ID：ratewise-homepage-cls-stable-detection
 - 原因：首頁 route 先用 `ClientOnly + SkeletonLoader` 輸出骨架，再切成真正的 `RateWise` 內容，導致 Lighthouse 首頁在部分 run 出現 `CLS ≈ 0.247`，而舊的 3-run optimistic score gate 又會把這類不穩定結果誤判成偶發 performance 掉分。
