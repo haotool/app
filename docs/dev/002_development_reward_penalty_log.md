@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-05
+- ID：lighthouse-production-nonavstart-summary-flake
+- 原因：Production Lighthouse Baseline Check 在單次 trace 碰到 `NO_NAVSTART` 類暫時性執行器錯誤時直接中止，未產出 `summary.json`，後續 workflow summary step 又把缺檔視為第二次 failure，讓 CI 無法區分真實性能回退與 Lighthouse 執行 flake。
+- 解法：為 `scripts/lighthouse-production.mjs` 增加可重試的 transient Lighthouse error retry，並在執行失敗時仍落盤 `summary.json` 與 runtime error；workflow summary step 改為缺 summary 僅警告，不再放大非產品性失敗。
+
+- 日期：2026-05-05
 - ID：ratewise-pwa-cold-start-prime-skip-flag-race
 - 原因：冷啟動自救的 skip flags 重新依賴延後時點的 `shouldPrimePwaColdStartImmediately()` 判斷，可能在首載起點未 prime、但 `load + idle` 前 SW 剛取得控制權時，把 `initPWAStorageManager()` 裡的 precache 修復與關鍵資源補熱整段誤跳過。
 - 解法：將 skip flags 綁定為啟動當下單一 `shouldPrimeColdStartRecovery` 決策，只有前面已決定執行早期 prime 時才跳過延後補救，並補靜態回歸測試鎖住此時序契約。
