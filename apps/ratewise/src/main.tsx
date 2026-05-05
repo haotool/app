@@ -33,6 +33,8 @@ import {
   PWA_STORAGE_INIT_DELAY_MS,
 } from './config/performance';
 
+const COLD_START_PRIME_WAIT_TIMEOUT_MS = 2500;
+
 const schedulePostLoadIdleTask = (
   task: () => void,
   delayMs: number,
@@ -59,6 +61,44 @@ const shouldPrimePwaColdStartImmediately = (): boolean => {
   const isIosStandalone = 'standalone' in navigator && navigator.standalone === true;
 
   return isStandaloneDisplayMode || isIosStandalone || Boolean(navigator.serviceWorker?.controller);
+};
+
+const resolveColdStartPrimeResult = async (
+  coldStartPrimePromise: Promise<{
+    recachedCount: number;
+    didPingPrecacheRepair: boolean;
+  }>,
+): Promise<{
+  recachedCount: number;
+  didPingPrecacheRepair: boolean;
+}> => {
+  try {
+    return await Promise.race([
+      coldStartPrimePromise,
+      new Promise<{
+        recachedCount: number;
+        didPingPrecacheRepair: boolean;
+      }>((resolve) => {
+        window.setTimeout(() => {
+          recordPwaDiagnostic(
+            'cold-start-prime-wait-timeout',
+            { timeoutMs: COLD_START_PRIME_WAIT_TIMEOUT_MS },
+            'warn',
+          );
+          resolve({
+            recachedCount: 0,
+            didPingPrecacheRepair: false,
+          });
+        }, COLD_START_PRIME_WAIT_TIMEOUT_MS);
+      }),
+    ]);
+  } catch (error) {
+    recordPwaDiagnostic('cold-start-prime-wait-error', error, 'warn');
+    return {
+      recachedCount: 0,
+      didPingPrecacheRepair: false,
+    };
+  }
 };
 
 // Vite React SSG Configuration
@@ -147,7 +187,7 @@ export const createRoot = ViteReactSSG(
           () => {
             recordPwaDiagnostic('pwa-storage-init-start');
             void (async () => {
-              const coldStartPrimeResult = await coldStartPrimePromise;
+              const coldStartPrimeResult = await resolveColdStartPrimeResult(coldStartPrimePromise);
               const skipDelayedCriticalRecache = coldStartPrimeResult.recachedCount > 0;
               const skipDelayedPrecacheRepairPing = coldStartPrimeResult.didPingPrecacheRepair;
 

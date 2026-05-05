@@ -37,4 +37,22 @@ describe('pwaDiagnostics', () => {
     expect(listener).toHaveBeenCalledTimes(1);
     expect(readPwaDiagnostics().at(-1)?.phase).toBe('app-ready');
   });
+
+  it('should not throw when localStorage access is blocked', () => {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new DOMException('Access denied', 'SecurityError');
+      },
+    });
+
+    expect(() => recordPwaDiagnostic('bootstrap-start', { guarded: true })).not.toThrow();
+    expect(readPwaDiagnostics().at(-1)?.phase).toBe('bootstrap-start');
+
+    if (originalDescriptor) {
+      Object.defineProperty(window, 'localStorage', originalDescriptor);
+    }
+  });
 });

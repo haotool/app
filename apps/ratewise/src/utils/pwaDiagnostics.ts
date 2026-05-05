@@ -18,7 +18,15 @@ declare global {
 }
 
 function canUseBrowserStorage(): boolean {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    return typeof window.localStorage !== 'undefined';
+  } catch {
+    return false;
+  }
 }
 
 function stringifyDetail(detail: unknown): string | undefined {
@@ -53,7 +61,7 @@ function normalizeDiagnostics(input: unknown): PwaDiagnosticEvent[] {
 
 export function readPwaDiagnostics(): PwaDiagnosticEvent[] {
   if (!canUseBrowserStorage()) {
-    return [];
+    return window.__RATEWISE_PWA_DIAGNOSTICS__ ?? [];
   }
 
   try {

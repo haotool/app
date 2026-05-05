@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-06
+- ID：ratewise-pwa-diagnostics-storage-and-prime-wait-guards
+- 原因：PWA 診斷若直接探測 `localStorage`，在受限隱私情境可能拋出 `SecurityError`；同時 delayed storage init 若無上限等待 early prime，也可能被卡住的網路請求拖到整個 session 都不再補救。
+- 解法：將 browser storage 能力探測改為安全 accessor，並對 early prime 結果採有界等待與 timeout fallback，確保診斷與 delayed repair 都不會反過來成為新的啟動阻塞點。
+
+- 日期：2026-05-06
 - ID：ratewise-pwa-app-ready-first-react-commit
 - 原因：`app-ready` 訊號先前在 `ViteReactSSG` bootstrap callback 內就送出，若首個 React render／hydration 隨後拋錯，冷啟動 watchdog 仍會被過早解除，再次留下無聲白屏。
 - 解法：將 `app-ready` 改由首次 React commit 後才執行的 `PwaAppReadyBeacon` 送出，並新增元件測試與離線回歸測試鎖住「bootstrap 成功不等於首屏掛載成功」的契約。

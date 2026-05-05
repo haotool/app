@@ -150,6 +150,9 @@ describe('PWA 離線功能測試', () => {
       expect(mainContent).toContain('shouldPrimePwaColdStartImmediately');
       expect(mainContent).toContain('const shouldPrimeColdStartRecovery');
       expect(mainContent).toContain('const coldStartPrimePromise');
+      expect(mainContent).toContain('COLD_START_PRIME_WAIT_TIMEOUT_MS');
+      expect(mainContent).toContain('resolveColdStartPrimeResult');
+      expect(mainContent).toContain('cold-start-prime-wait-timeout');
       expect(mainContent).toContain('skipDelayedCriticalRecache');
       expect(mainContent).toContain('skipDelayedPrecacheRepairPing');
       expect(mainContent).toContain("? primePwaColdStartRecovery(import.meta.env.BASE_URL || '/')");
@@ -157,6 +160,7 @@ describe('PWA 離線功能測試', () => {
       expect(mainContent).toContain('skipPrecacheRepairPing: skipDelayedPrecacheRepairPing');
       expect(mainContent).not.toContain('markPwaAppReady()');
       expect(diagnosticsContent).toContain('markPwaAppReady');
+      expect(diagnosticsContent).toContain('try {');
       expect(indexHtml).toContain('ratewise:pwa-app-ready');
       expect(indexHtml).toContain('data-ratewise-app-ready');
     });
