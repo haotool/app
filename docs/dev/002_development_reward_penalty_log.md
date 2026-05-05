@@ -13,6 +13,21 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-05
+- ID：lighthouse-production-nonavstart-summary-flake
+- 原因：Production Lighthouse Baseline Check 在單次 trace 碰到 `NO_NAVSTART` 類暫時性執行器錯誤時直接中止，未產出 `summary.json`，後續 workflow summary step 又把缺檔視為第二次 failure，讓 CI 無法區分真實性能回退與 Lighthouse 執行 flake。
+- 解法：為 `scripts/lighthouse-production.mjs` 增加可重試的 transient Lighthouse error retry，並在執行失敗時仍落盤 `summary.json` 與 runtime error；workflow summary step 改為缺 summary 僅警告，不再放大非產品性失敗。
+
+- 日期：2026-05-05
+- ID：ratewise-pwa-cold-start-prime-skip-flag-race
+- 原因：冷啟動自救的 skip flags 重新依賴延後時點的 `shouldPrimePwaColdStartImmediately()` 判斷，可能在首載起點未 prime、但 `load + idle` 前 SW 剛取得控制權時，把 `initPWAStorageManager()` 裡的 precache 修復與關鍵資源補熱整段誤跳過。
+- 解法：將 skip flags 綁定為啟動當下單一 `shouldPrimeColdStartRecovery` 決策，只有前面已決定執行早期 prime 時才跳過延後補救，並補靜態回歸測試鎖住此時序契約。
+
+- 日期：2026-05-05
+- ID：ratewise-pwa-cold-start-recovery-timing-regression
+- 原因：`4b786676` 將 `initPWAStorageManager()` 延後到 `load + idle` 後才執行，導致 PWA 冷啟動時若快取已部分驅逐，關鍵資源補熱與 precache 修復啟動過晚，仍可能先出現不可預測白屏。
+- 解法：將冷啟動自救拆成早期 `primePwaColdStartRecovery()`，在 standalone / 已受 SW 控制情境下立即補熱關鍵資源與送出 `VERIFY_AND_REPAIR_PRECACHE`；持久化儲存與健康度盤點維持延後執行，兼顧可靠性與效能。
+
+- 日期：2026-05-05
 - ID：pr356-lighthouse-production-hard-threshold-bootstrap-regression
 - 原因：PR356 在「強化 PWA 冷啟動離線回退機制」commit 內夾帶 `scripts/lighthouse-production.mjs` 不相關修改，將 `enforceHardThreshold = !!hasUsableBaseline` 改為 `enforceHardThreshold = true`；當 `lighthouse-baseline.production.json` 仍為 `status: 'placeholder'`、`paths: {}` 的自舉狀態時，硬性門檻（perf ≥ 90、LCP ≤ 2500ms、INP ≤ 200ms、CLS ≤ 0.1）被無條件套用至 production 三條 smoke 路徑，造成 Production Lighthouse Baseline Check 失敗。
 - 解法：將 `scripts/lighthouse-production.mjs` 還原為 main（`f8d400f`）版本，恢復「baseline 為 placeholder 時跳過硬門檻」的自舉語意；PWA 補救（sw.ts、changeset、002 PWA 條目）保留不動，避免兩個議題綁在同一 commit。

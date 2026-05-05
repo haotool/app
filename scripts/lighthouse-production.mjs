@@ -40,6 +40,7 @@ const DRIFT_PERCENT = Number.parseFloat(process.env.LH_BASELINE_DRIFT_PCT || '5'
 const LIGHTHOUSE_BIN = resolve(ROOT_DIR, 'node_modules', '.bin', 'lighthouse');
 const OUTPUT_ONLY = process.env.LH_OUTPUT_ONLY === '1';
 const GITHUB_OUTPUT = process.env.GITHUB_OUTPUT;
+const LIGHTHOUSE_MAX_ATTEMPTS = Number.parseInt(process.env.LH_MAX_ATTEMPTS || '2', 10);
 
 const PATHS = Array.isArray(APP_CONFIG.lighthouseSmokePaths)
   ? APP_CONFIG.lighthouseSmokePaths
@@ -94,6 +95,13 @@ const THRESHOLD_CHECKS = [
     threshold: BASELINE_ASSERT.cls,
     unit: '',
   },
+];
+
+const RETRYABLE_LIGHTHOUSE_PATTERNS = [
+  /NO_NAVSTART/i,
+  /Something went wrong with recording the trace/i,
+  /Tracing already started/i,
+  /Target closed/i,
 ];
 
 /**
@@ -178,6 +186,10 @@ function pickReportNumber(report, key) {
   return null;
 }
 
+function isRetryableLighthouseError(message) {
+  return RETRYABLE_LIGHTHOUSE_PATTERNS.some((pattern) => pattern.test(message));
+}
+
 function runLighthouse(url, outputPath) {
   const args = [
     url,
@@ -189,20 +201,33 @@ function runLighthouse(url, outputPath) {
     '--quiet',
   ];
 
-  const result = spawnSync(LIGHTHOUSE_BIN, args, {
-    encoding: 'utf8',
-    env: { ...process.env, NODE_ENV: 'production' },
-    timeout: 180000,
-    maxBuffer: 1024 * 1024 * 6,
-  });
+  for (let attempt = 1; attempt <= LIGHTHOUSE_MAX_ATTEMPTS; attempt++) {
+    const result = spawnSync(LIGHTHOUSE_BIN, args, {
+      encoding: 'utf8',
+      env: { ...process.env, NODE_ENV: 'production' },
+      timeout: 180000,
+      maxBuffer: 1024 * 1024 * 6,
+    });
 
-  if (result.status !== 0) {
+    if (result.status === 0) {
+      const report = JSON.parse(readFileSync(outputPath, 'utf8'));
+      return report;
+    }
+
     const stderr = (result.stderr || '').trim();
-    throw new Error(`Lighthouse run failed: ${stderr || result.error?.message || 'unknown error'}`);
-  }
+    const errorMessage = stderr || result.error?.message || 'unknown error';
+    const wrappedError = new Error(`Lighthouse run failed: ${errorMessage}`);
+    const isRetryable = isRetryableLighthouseError(errorMessage);
 
-  const report = JSON.parse(readFileSync(outputPath, 'utf8'));
-  return report;
+    if (attempt < LIGHTHOUSE_MAX_ATTEMPTS && isRetryable) {
+      console.warn(
+        `⚠️ Lighthouse 第 ${attempt} 次執行失敗，判定為暫時性錯誤，準備重試：${errorMessage}`,
+      );
+      continue;
+    }
+
+    throw wrappedError;
+  }
 }
 
 function compareDirection(current, baseline, compareDirection) {
@@ -292,7 +317,21 @@ function main() {
 
     for (let index = 0; index < RUNS; index++) {
       const reportPath = join(REPORT_DIR, `${pathKey}-run-${index + 1}.report.json`);
-      const lhr = runLighthouse(url, reportPath);
+      let lhr;
+
+      try {
+        lhr = runLighthouse(url, reportPath);
+      } catch (error) {
+        summary.overall.passed = false;
+        const message = error instanceof Error ? error.message : String(error);
+        errors.push(`${pathKey} run ${index + 1} 執行失敗：${message}`);
+        summary.overall.checks[`${normalizedPath}-runtime-run-${index + 1}`] = {
+          type: 'runtime_error',
+          message,
+        };
+        break;
+      }
+
       const runResult = {
         run: index + 1,
         performanceScore: safeRound(pickReportNumber(lhr, 'performanceScore'), 2),
@@ -327,6 +366,10 @@ function main() {
       runs: stats.runs,
     };
     summary.paths[pathKey] = pathSummary;
+
+    if (stats.runs.length !== RUNS) {
+      continue;
+    }
 
     for (const check of THRESHOLD_CHECKS) {
       const value = pathSummary.median[check.path];
@@ -453,6 +496,8 @@ function main() {
       console.log(
         `⚠️ ${name}: baseline drift +${check.drift}% (${check.baseline} -> ${check.actual})`,
       );
+    } else if (check.type === 'runtime_error') {
+      console.log(`❌ ${name}: ${check.message}`);
     }
   }
 

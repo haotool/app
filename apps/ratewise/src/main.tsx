@@ -23,7 +23,7 @@ import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
 import { APP_VERSION, BUILD_TIME } from './config/version';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
-import { initPWAStorageManager } from './utils/pwaStorageManager';
+import { initPWAStorageManager, primePwaColdStartRecovery } from './utils/pwaStorageManager';
 import { initGA, scheduleAfterPageLoad, trackPageview, trackAiReferral } from '@shared/analytics';
 import {
   ANALYTICS_IDLE_TIMEOUT_MS,
@@ -45,6 +45,19 @@ const schedulePostLoadIdleTask = (
 
     window.setTimeout(task, 0);
   }, delayMs);
+};
+
+const shouldPrimePwaColdStartImmediately = (): boolean => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+    return false;
+  }
+
+  const isStandaloneDisplayMode =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(display-mode: standalone)').matches;
+  const isIosStandalone = 'standalone' in navigator && navigator.standalone === true;
+
+  return isStandaloneDisplayMode || isIosStandalone || Boolean(navigator.serviceWorker?.controller);
 };
 
 // Vite React SSG Configuration
@@ -99,13 +112,23 @@ export const createRoot = ViteReactSSG(
       }
 
       // [fix:2026-02-08] iOS PWA Cache Persistence Strategy
-      // iOS Safari 會在 PWA 關閉後清除 Cache Storage
-      // 解決方案：應用啟動時重新快取關鍵資源 + 請求持久化儲存
-      // Reference: [GitHub:PWA-POLICE/pwa-bugs] [GitHub:Workbox#1494]
+      // 冷啟動自救不可延後到 load/idle；否則快取部分驅逐時，使用者可能先看到白屏。
+      // 因此：
+      // 1. standalone / 已受 SW 控制的情境，立即補熱關鍵資源與 precache 修復。
+      // 2. 持久化儲存申請與健康度盤點仍延後，避免把效能優化完全回退。
+      const shouldPrimeColdStartRecovery = shouldPrimePwaColdStartImmediately();
+
+      if (shouldPrimeColdStartRecovery) {
+        void primePwaColdStartRecovery(import.meta.env.BASE_URL || '/');
+      }
+
       scheduleAfterPageLoad(() => {
         schedulePostLoadIdleTask(
           () => {
-            void initPWAStorageManager(import.meta.env.BASE_URL || '/');
+            void initPWAStorageManager(import.meta.env.BASE_URL || '/', {
+              skipCriticalRecache: shouldPrimeColdStartRecovery,
+              skipPrecacheRepairPing: shouldPrimeColdStartRecovery,
+            });
           },
           PWA_STORAGE_INIT_DELAY_MS,
           PWA_STORAGE_IDLE_TIMEOUT_MS,
