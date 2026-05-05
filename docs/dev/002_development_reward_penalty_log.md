@@ -12,6 +12,31 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-06
+- ID：ratewise-pwa-watchdog-fallback-and-timeout-signal-guard
+- 原因：冷啟動 watchdog 若只認 `app-ready`，可能誤蓋 React 已成功渲染的 chunk/offline fallback；同時 cold-start prime race 若不清除落敗 timeout，健康啟動也會留下假的 timeout 診斷。
+- 解法：為 `OfflineAwareFallback` 加入 watchdog-ready 訊號，讓已渲染 fallback 可正確終止 watchdog；並在 early prime 成功時清除 timeout handle，維持 PWA 診斷訊號的真實性。
+
+- 日期：2026-05-06
+- ID：ratewise-pwa-diagnostics-storage-and-prime-wait-guards
+- 原因：PWA 診斷若直接探測 `localStorage`，在受限隱私情境可能拋出 `SecurityError`；同時 delayed storage init 若無上限等待 early prime，也可能被卡住的網路請求拖到整個 session 都不再補救。
+- 解法：將 browser storage 能力探測改為安全 accessor，並對 early prime 結果採有界等待與 timeout fallback，確保診斷與 delayed repair 都不會反過來成為新的啟動阻塞點。
+
+- 日期：2026-05-06
+- ID：ratewise-pwa-app-ready-first-react-commit
+- 原因：`app-ready` 訊號先前在 `ViteReactSSG` bootstrap callback 內就送出，若首個 React render／hydration 隨後拋錯，冷啟動 watchdog 仍會被過早解除，再次留下無聲白屏。
+- 解法：將 `app-ready` 改由首次 React commit 後才執行的 `PwaAppReadyBeacon` 送出，並新增元件測試與離線回歸測試鎖住「bootstrap 成功不等於首屏掛載成功」的契約。
+
+- 日期：2026-05-06
+- ID：ratewise-pwa-cold-start-prime-success-gating
+- 原因：早期 cold-start prime 先前只要「有機會執行」就會讓延後修復整段跳過；若啟動當下剛好離線，prime 實際沒有補回任何資源，後續同 session 又會錯失網路恢復後的唯一補救時機。
+- 解法：將延後修復 skip 條件改為依 early prime 實際結果決定，只有真的 recache 成功或真的送出 precache repair ping 時才跳過對應延後步驟。
+
+- 日期：2026-05-06
+- ID：ratewise-pwa-cold-start-watchdog-app-ready-observability
+- 原因：冷啟動白屏 watchdog 只以 `#root` 是否出現任意子節點判定成功，會被早期 DOM 變動誤觸發而提前解除；一旦 React/bootstrap 後續失敗，就只剩無聲白屏且缺乏可追查證據。
+- 解法：改以明確 `app-ready` 訊號作為 watchdog 成功條件，將冷啟動、SW 補救、chunk 載入錯誤串成可持久化 PWA 診斷事件，並新增「假掛載成功」E2E 驗證新 watchdog 不會再被任意 root mutation 騙過。
+
 - 日期：2026-05-05
 - ID：ratewise-homepage-cls-stable-detection
 - 原因：首頁 route 先用 `ClientOnly + SkeletonLoader` 輸出骨架，再切成真正的 `RateWise` 內容，導致 Lighthouse 首頁在部分 run 出現 `CLS ≈ 0.247`，而舊的 3-run optimistic score gate 又會把這類不穩定結果誤判成偶發 performance 掉分。

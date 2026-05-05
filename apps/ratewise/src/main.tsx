@@ -24,6 +24,7 @@ import { handleVersionUpdate } from './utils/versionManager';
 import { APP_VERSION, BUILD_TIME } from './config/version';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { initPWAStorageManager, primePwaColdStartRecovery } from './utils/pwaStorageManager';
+import { clearPwaAppReadyMarker, recordPwaDiagnostic } from './utils/pwaDiagnostics';
 import { initGA, scheduleAfterPageLoad, trackPageview, trackAiReferral } from '@shared/analytics';
 import {
   ANALYTICS_IDLE_TIMEOUT_MS,
@@ -31,6 +32,8 @@ import {
   PWA_STORAGE_IDLE_TIMEOUT_MS,
   PWA_STORAGE_INIT_DELAY_MS,
 } from './config/performance';
+
+const COLD_START_PRIME_WAIT_TIMEOUT_MS = 2500;
 
 const schedulePostLoadIdleTask = (
   task: () => void,
@@ -60,6 +63,50 @@ const shouldPrimePwaColdStartImmediately = (): boolean => {
   return isStandaloneDisplayMode || isIosStandalone || Boolean(navigator.serviceWorker?.controller);
 };
 
+const resolveColdStartPrimeResult = async (
+  coldStartPrimePromise: Promise<{
+    recachedCount: number;
+    didPingPrecacheRepair: boolean;
+  }>,
+): Promise<{
+  recachedCount: number;
+  didPingPrecacheRepair: boolean;
+}> => {
+  let timeoutId: number | null = null;
+
+  try {
+    return await Promise.race([
+      coldStartPrimePromise.finally(() => {
+        if (timeoutId != null) {
+          window.clearTimeout(timeoutId);
+        }
+      }),
+      new Promise<{
+        recachedCount: number;
+        didPingPrecacheRepair: boolean;
+      }>((resolve) => {
+        timeoutId = window.setTimeout(() => {
+          recordPwaDiagnostic(
+            'cold-start-prime-wait-timeout',
+            { timeoutMs: COLD_START_PRIME_WAIT_TIMEOUT_MS },
+            'warn',
+          );
+          resolve({
+            recachedCount: 0,
+            didPingPrecacheRepair: false,
+          });
+        }, COLD_START_PRIME_WAIT_TIMEOUT_MS);
+      }),
+    ]);
+  } catch (error) {
+    recordPwaDiagnostic('cold-start-prime-wait-error', error, 'warn');
+    return {
+      recachedCount: 0,
+      didPingPrecacheRepair: false,
+    };
+  }
+};
+
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(
   {
@@ -73,6 +120,8 @@ export const createRoot = ViteReactSSG(
   ({ isClient }) => {
     // Client-side initialization
     if (isClient) {
+      clearPwaAppReadyMarker();
+
       // GA4 延後初始化：load 後再注入腳本，避免 152KB GA 腳本與 LCP 關鍵資源競爭頻寬。
       // 防快取競態：若頁面已在 load 前完成（BFCache、快速快取頁），直接呼叫。
       const gaId = import.meta.env.VITE_GA_ID ?? '';
@@ -93,6 +142,10 @@ export const createRoot = ViteReactSSG(
         version: APP_VERSION,
         buildTime: BUILD_TIME,
       });
+      recordPwaDiagnostic('bootstrap-start', {
+        environment: import.meta.env.MODE,
+        version: APP_VERSION,
+      });
 
       // 處理版本更新（檢測版本變更並清除快取）
       void handleVersionUpdate();
@@ -105,6 +158,9 @@ export const createRoot = ViteReactSSG(
         let reloading = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           if (previousController && !reloading) {
+            recordPwaDiagnostic('sw-controllerchange-reload', {
+              hadPreviousController: Boolean(previousController),
+            });
             reloading = true;
             window.location.reload();
           }
@@ -117,18 +173,40 @@ export const createRoot = ViteReactSSG(
       // 1. standalone / 已受 SW 控制的情境，立即補熱關鍵資源與 precache 修復。
       // 2. 持久化儲存申請與健康度盤點仍延後，避免把效能優化完全回退。
       const shouldPrimeColdStartRecovery = shouldPrimePwaColdStartImmediately();
+      recordPwaDiagnostic('cold-start-prime-decision', {
+        shouldPrimeColdStartRecovery,
+        hasController: Boolean(navigator.serviceWorker?.controller),
+      });
+      const coldStartPrimePromise = shouldPrimeColdStartRecovery
+        ? primePwaColdStartRecovery(import.meta.env.BASE_URL || '/')
+        : Promise.resolve({
+            recachedCount: 0,
+            didPingPrecacheRepair: false,
+          });
 
       if (shouldPrimeColdStartRecovery) {
-        void primePwaColdStartRecovery(import.meta.env.BASE_URL || '/');
+        void coldStartPrimePromise;
       }
 
       scheduleAfterPageLoad(() => {
         schedulePostLoadIdleTask(
           () => {
-            void initPWAStorageManager(import.meta.env.BASE_URL || '/', {
-              skipCriticalRecache: shouldPrimeColdStartRecovery,
-              skipPrecacheRepairPing: shouldPrimeColdStartRecovery,
-            });
+            recordPwaDiagnostic('pwa-storage-init-start');
+            void (async () => {
+              const coldStartPrimeResult = await resolveColdStartPrimeResult(coldStartPrimePromise);
+              const skipDelayedCriticalRecache = coldStartPrimeResult.recachedCount > 0;
+              const skipDelayedPrecacheRepairPing = coldStartPrimeResult.didPingPrecacheRepair;
+
+              recordPwaDiagnostic('pwa-storage-init-skip-decision', {
+                skipDelayedCriticalRecache,
+                skipDelayedPrecacheRepairPing,
+                coldStartPrimeResult,
+              });
+              void initPWAStorageManager(import.meta.env.BASE_URL || '/', {
+                skipCriticalRecache: skipDelayedCriticalRecache,
+                skipPrecacheRepairPing: skipDelayedPrecacheRepairPing,
+              });
+            })();
           },
           PWA_STORAGE_INIT_DELAY_MS,
           PWA_STORAGE_IDLE_TIMEOUT_MS,
@@ -160,6 +238,7 @@ export const createRoot = ViteReactSSG(
           logger.warn('Chunk load error captured by global handler', {
             reason: errorMessage,
           });
+          recordPwaDiagnostic('chunk-load-error', errorMessage, 'error');
           event.preventDefault();
           void recoverFromChunkLoadError();
           return;
@@ -182,17 +261,12 @@ export const createRoot = ViteReactSSG(
 
         // 其他未處理的錯誤記錄但不阻止
         logger.error('Unhandled promise rejection', errorObject);
+        recordPwaDiagnostic('unhandled-rejection', errorMessage || errorObject.message, 'error');
       });
 
       // Initialize observability (non-blocking)
       // Sentry loads on-demand via ErrorBoundary to save initial bundle size
       initWebVitals();
-
-      // Log successful mount
-      logger.info('Application mounted successfully (client-side)', {
-        version: APP_VERSION,
-        buildTime: BUILD_TIME,
-      });
 
       // Service Worker 註冊由 UpdatePrompt 組件處理
     } else {

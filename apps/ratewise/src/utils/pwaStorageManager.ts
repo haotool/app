@@ -22,6 +22,7 @@
  */
 
 import { logger } from './logger';
+import { recordPwaDiagnostic } from './pwaDiagnostics';
 
 interface PwaStorageInitOptions {
   skipCriticalRecache?: boolean;
@@ -44,6 +45,11 @@ export interface StoragePersistenceStatus {
   usagePercentage: number;
   /** 是否接近 iOS 50MB 限制 */
   isNearLimit: boolean;
+}
+
+export interface PwaColdStartPrimeResult {
+  recachedCount: number;
+  didPingPrecacheRepair: boolean;
 }
 
 /**
@@ -89,13 +95,16 @@ export async function requestPersistentStorage(): Promise<boolean> {
     const granted = await navigator.storage.persist();
     if (granted) {
       logger.info('Persistent storage granted');
+      recordPwaDiagnostic('storage-persist-granted');
     } else {
       logger.warn('Persistent storage denied - cache may be cleared by browser');
+      recordPwaDiagnostic('storage-persist-denied', undefined, 'warn');
     }
 
     return granted;
   } catch (error) {
     logger.error('Failed to request persistent storage', error as Error);
+    recordPwaDiagnostic('storage-persist-error', (error as Error).message, 'error');
     return false;
   }
 }
@@ -164,6 +173,7 @@ export async function recacheCriticalResourcesOnLaunch(baseUrl: string): Promise
 
   try {
     logger.info('Starting critical resources pre-caching on launch');
+    recordPwaDiagnostic('critical-recache-start', { resourceCount: CRITICAL_RESOURCES.length });
 
     // 啟動補熱資源使用獨立 cache，避免污染 Workbox precache。
     const cache = await caches.open('critical-launch-cache');
@@ -207,10 +217,15 @@ export async function recacheCriticalResourcesOnLaunch(baseUrl: string): Promise
       total: CRITICAL_RESOURCES.length,
       success: successCount,
     });
+    recordPwaDiagnostic('critical-recache-complete', {
+      total: CRITICAL_RESOURCES.length,
+      success: successCount,
+    });
 
     return successCount;
   } catch (error) {
     logger.error('Failed to re-cache critical resources', error as Error);
+    recordPwaDiagnostic('critical-recache-error', (error as Error).message, 'error');
     return 0;
   }
 }
@@ -222,12 +237,18 @@ export async function recacheCriticalResourcesOnLaunch(baseUrl: string): Promise
  * 否則 iOS PWA 冷啟動時若快取已部分驅逐，使用者可能先看到白屏，
  * 然後自救機制才開始補回資源。
  */
-export async function primePwaColdStartRecovery(baseUrl: string): Promise<number> {
+export async function primePwaColdStartRecovery(baseUrl: string): Promise<PwaColdStartPrimeResult> {
   if (typeof window === 'undefined') {
-    return 0;
+    return {
+      recachedCount: 0,
+      didPingPrecacheRepair: false,
+    };
   }
 
   try {
+    recordPwaDiagnostic('cold-start-prime-begin', { baseUrl });
+    let didPingPrecacheRepair = false;
+
     if (
       typeof navigator !== 'undefined' &&
       navigator.onLine &&
@@ -236,12 +257,26 @@ export async function primePwaColdStartRecovery(baseUrl: string): Promise<number
     ) {
       navigator.serviceWorker.controller.postMessage({ type: 'VERIFY_AND_REPAIR_PRECACHE' });
       logger.info('冷啟動補救：VERIFY_AND_REPAIR_PRECACHE 已發送至 SW');
+      recordPwaDiagnostic('cold-start-prime-precache-repair-ping');
+      didPingPrecacheRepair = true;
     }
 
-    return await recacheCriticalResourcesOnLaunch(baseUrl);
+    const recachedCount = await recacheCriticalResourcesOnLaunch(baseUrl);
+    recordPwaDiagnostic('cold-start-prime-complete', {
+      recachedCount,
+      didPingPrecacheRepair,
+    });
+    return {
+      recachedCount,
+      didPingPrecacheRepair,
+    };
   } catch (error) {
     logger.error('Failed to prime PWA cold start recovery', error as Error);
-    return 0;
+    recordPwaDiagnostic('cold-start-prime-error', (error as Error).message, 'error');
+    return {
+      recachedCount: 0,
+      didPingPrecacheRepair: false,
+    };
   }
 }
 
@@ -337,6 +372,7 @@ export async function initPWAStorageManager(
   options: PwaStorageInitOptions = {},
 ): Promise<void> {
   logger.info('Initializing PWA Storage Manager');
+  recordPwaDiagnostic('pwa-storage-manager-init', { baseUrl, options });
 
   try {
     const { skipCriticalRecache = false, skipPrecacheRepairPing = false } = options;
@@ -351,6 +387,7 @@ export async function initPWAStorageManager(
       ) {
         navigator.serviceWorker.controller.postMessage({ type: 'VERIFY_AND_REPAIR_PRECACHE' });
         logger.info('VERIFY_AND_REPAIR_PRECACHE 已發送至 SW');
+        recordPwaDiagnostic('pwa-storage-precache-repair-ping');
       }
     }
 
@@ -370,6 +407,13 @@ export async function initPWAStorageManager(
       storageUsage: `${(health.storage.usagePercentage * 100).toFixed(1)}%`,
       isNearLimit: health.storage.isNearLimit,
     });
+    recordPwaDiagnostic('pwa-storage-manager-ready', {
+      isPersistent,
+      recachedCount,
+      cacheCount: health.cacheCount,
+      missingCriticalResources: health.criticalResources.filter((r) => !r.isCached).length,
+      usagePercentage: Number((health.storage.usagePercentage * 100).toFixed(1)),
+    });
 
     // 警告：如果接近 iOS 50MB 限制
     if (health.storage.isNearLimit) {
@@ -377,6 +421,14 @@ export async function initPWAStorageManager(
         usage: `${(health.storage.usage / 1024 / 1024).toFixed(2)} MB`,
         quota: `${(health.storage.quota / 1024 / 1024).toFixed(2)} MB`,
       });
+      recordPwaDiagnostic(
+        'pwa-storage-near-limit',
+        {
+          usageMb: Number((health.storage.usage / 1024 / 1024).toFixed(2)),
+          quotaMb: Number((health.storage.quota / 1024 / 1024).toFixed(2)),
+        },
+        'warn',
+      );
     }
 
     // 警告：關鍵資源未快取
@@ -385,8 +437,14 @@ export async function initPWAStorageManager(
       logger.warn('Critical resources not cached', {
         missing: missingResources.map((r) => r.path),
       });
+      recordPwaDiagnostic(
+        'pwa-storage-missing-critical',
+        missingResources.map((r) => r.path),
+        'warn',
+      );
     }
   } catch (error) {
     logger.error('Failed to initialize PWA Storage Manager', error as Error);
+    recordPwaDiagnostic('pwa-storage-manager-error', (error as Error).message, 'error');
   }
 }
