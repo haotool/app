@@ -850,6 +850,6 @@
 - 解法：在 `exchangeRateService` 與 `useExchangeRates` 增加 `VITE_LHCI_OFFLINE` 穩定分支，LHCI 直接使用 build-time 匯率並跳過 runtime refresh / polling，另補 service 與 hook 回歸測試鎖住行為。
 
 - 日期：2026-05-07
-- ID：ratewise-watchdog-preserve-ssg-content
-- 原因：60 天內 PWA 冷啟動白屏修復累積 11+ 次仍復發，根本反模式為 `index.html` watchdog 5 秒 timeout 後執行 `root.innerHTML=''` 直接抹除 vite-react-ssg 預渲染的 144KB 內容，使用者從「可看靜態頁」降級為「白屏 + 錯誤面板」。
-- 解法：watchdog 加 `hasPrerenderedRootContent()` 偵測（`data-server-rendered` 或 `#root.children.length > 0`），有 SSG 內容時改採 floating banner 並附加到 `<body>`，保留 `#root`；無 SSG 時沿用原全屏 fallback。新增 vitest 靜態回歸與 E2E 鎖住雙模式分支；同步關閉 PR #367 emergency HTML（與本修正重複）。
+- ID：ratewise-sw-navigation-swr
+- 原因：SPA navigation 採 NetworkFirst + 3s timeout，慢網路或離線時最多等 3 秒才 fallback，是冷啟動感知白屏的時序根因之一；installed PWA 與已 visited 瀏覽器都應該優先吃 cache 而非為了新鮮度等網路。
+- 解法：將 navigationStrategy 改為 StaleWhileRevalidate（cache hit 立即返回 + 背景 revalidate），版本切換仍由 controllerchange + UpdatePrompt + handleVersionUpdate 雙重檢查；handlerDidError 的三層 fallback 完整保留，僅在 cache miss + 網路失敗時才會走到。同步更新 sw.test.ts 與 pwa-offline.test.ts 鎖住 SWR 並禁回退 NetworkFirst。

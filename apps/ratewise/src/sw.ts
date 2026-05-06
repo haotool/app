@@ -5,7 +5,7 @@
 import { clientsClaim } from 'workbox-core';
 import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing';
-import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
+import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { resolveOfflineDocumentFallback } from './utils/pwaOfflineFallback';
@@ -247,26 +247,30 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
 });
 
 /**
- * SPA 導覽策略（PR3: Navigation Timeout）
+ * SPA 導覽策略：StaleWhileRevalidate（installed PWA 與瀏覽器共用）
  *
  * 業界最佳實踐（web.dev / Workbox docs）：
- * - NetworkFirst + timeout：優先嘗試網路，超時後 fallback 到快取
- * - 3 秒 timeout：平衡使用者體驗與網路等待
- * - handlerDidError：網路完全失敗時回退到 precache index.html
+ * - 已 install 過的 PWA / 已 visited 的瀏覽器：cache hit 立即返回（零白屏冷啟動）
+ * - 背景 revalidate 抓取最新 HTML 寫回 cache，下一次 navigation 自動拿到新版
+ * - 新版本切換由既有 SW controllerchange + reload 機制處理（main.tsx）
+ * - handlerDidError：第一次訪問的離線或 fetch 失敗時，仍走 precache 三層 fallback
  *
- * 解決問題：
- * - iOS Safari 冷啟動離線白屏（precache 未完成時無 fallback）
- * - 慢網路卡住導覽（無限等待網路回應）
+ * 取代 NetworkFirst + 3s timeout 的理由：
+ * - NetworkFirst 在慢網路下要等到 3s timeout 才 fallback → 感知白屏
+ * - SWR 對「已有 cache」的場景立即回應，把感知白屏降為 0
+ * - 對版本撕裂的防護：UpdatePrompt + handleVersionUpdate 雙重檢查
+ *
+ * @see https://developer.chrome.com/docs/workbox/modules/workbox-strategies#stale-while-revalidate
  */
-const navigationStrategy = new NetworkFirst({
+const navigationStrategy = new StaleWhileRevalidate({
   cacheName: 'html-cache',
-  networkTimeoutSeconds: 3,
   plugins: [
     new CacheableResponsePlugin({ statuses: [0, 200] }),
     {
-      // 網路失敗時回退到 precache index.html（離線或 timeout 後快取也沒有）
+      // 第一次訪問且網路失敗時的 fallback chain：precache index → precache offline → any cache offline。
+      // SWR 在 cache miss 時必須等 fetch；fetch 失敗才會進入 handlerDidError。
       handlerDidError: async () => {
-        // 最後防線：搜尋任何快取中的 offline.html；若全數失守，回 inline HTML，
+        // 最後防線：搜尋任何快取中的 offline.html；若全數失守，回 inline emergency HTML，
         // 避免 Workbox 在 plugin 已回傳 Response.error() 後不再進入全域 setCatchHandler。
         return resolveOfflineDocumentFallback({
           emergencyReason: 'emergency-navigation-fallback',

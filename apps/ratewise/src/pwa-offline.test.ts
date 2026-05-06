@@ -106,12 +106,16 @@ describe('PWA 離線功能測試', () => {
       expect(swContent).toContain("destination !== 'document'");
     });
 
-    it('should use NavigationRoute + NetworkFirst with timeout for SPA offline navigation', () => {
+    it('should use NavigationRoute + StaleWhileRevalidate for zero-white-screen navigation', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      // PR3: 使用 NetworkFirst + timeout 取代 createHandlerBoundToURL，網路超時自動 fallback 到 precache
-      expect(swContent).toContain('new NetworkFirst(');
-      expect(swContent).toContain('networkTimeoutSeconds:');
-      expect(swContent).toContain('new NavigationRoute(');
+      // 取代 NetworkFirst + 3s timeout：installed PWA 已暖機後 cache hit 立即返回，
+      // 背景 revalidate 抓最新 HTML；版本切換由 controllerchange + UpdatePrompt 處理。
+      expect(swContent).toContain('const navigationStrategy = new StaleWhileRevalidate(');
+      expect(swContent).toContain("cacheName: 'html-cache'");
+      expect(swContent).toContain('new NavigationRoute(navigationStrategy)');
+      // 防回歸：禁止把 NetworkFirst 重新引入 navigation 路徑（cold-start 白屏根因之一）。
+      expect(swContent).not.toContain('new NetworkFirst(');
+      expect(swContent).not.toContain('networkTimeoutSeconds:');
     });
 
     it('should have offline-first strategy in setCatchHandler', () => {
