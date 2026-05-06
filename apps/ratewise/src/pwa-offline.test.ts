@@ -125,6 +125,16 @@ describe('PWA 離線功能測試', () => {
       expect(swContent).toContain("caches.match('offline.html')");
     });
 
+    it('should provide an emergency inline HTML fallback when both index and offline caches are unavailable', () => {
+      const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
+      expect(swContent).toContain('EMERGENCY_OFFLINE_HTML');
+      expect(swContent).toContain('createEmergencyOfflineResponse');
+      expect(swContent).toContain('data-ratewise-emergency-fallback="true"');
+      expect(swContent).toContain("'X-RateWise-Offline-Fallback'");
+      expect(swContent).toContain('emergency-document-fallback');
+      expect(swContent).toContain('emergency-navigation-fallback');
+    });
+
     it('should not write launch-recache assets into workbox precache', () => {
       const storageManager = readFileSync(
         resolve(ROOT_PATH, 'src/utils/pwaStorageManager.ts'),

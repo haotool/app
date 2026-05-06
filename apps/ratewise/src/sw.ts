@@ -11,6 +11,70 @@ import { ExpirationPlugin } from 'workbox-expiration';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
+const EMERGENCY_OFFLINE_HTML = `<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>離線模式 - HaoRate 匯率好工具</title>
+    <meta name="robots" content="noindex,nofollow">
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: #f8fafc;
+        color: #0f172a;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .card {
+        width: min(100%, 360px);
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        padding: 24px 20px;
+        text-align: center;
+      }
+      .icon { font-size: 40px; line-height: 1; margin-bottom: 12px; }
+      h1 { margin: 0 0 12px; font-size: 20px; }
+      p { margin: 0; line-height: 1.65; color: #475569; }
+      button {
+        margin-top: 16px;
+        border: 0;
+        border-radius: 999px;
+        background: #0f172a;
+        color: #fff;
+        font: inherit;
+        padding: 10px 16px;
+      }
+    </style>
+  </head>
+  <body data-ratewise-emergency-fallback="true">
+    <main class="card" role="alert" aria-live="assertive">
+      <div class="icon">⚠️</div>
+      <h1>離線啟動保護模式</h1>
+      <p>目前無法取得完整快取資源，已切換到最低限度離線保護頁。請重新連線後再試一次。</p>
+      <button type="button" onclick="window.location.reload()">重新載入</button>
+    </main>
+  </body>
+</html>`;
+
+function createEmergencyOfflineResponse(reason: string): Response {
+  return new Response(EMERGENCY_OFFLINE_HTML, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-RateWise-Offline-Fallback': reason,
+    },
+  });
+}
+
 // precache 安裝失敗自動修復：首次安裝失敗時登出以允許重試；已有 active worker 則保留。
 self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
   if (String(event.reason).includes('bad-precaching-response')) {
@@ -247,7 +311,7 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
 
   // 最後防線：搜尋所有快取中的 offline.html（含 ensureOfflineHtmlCached 補救的版本）
   const anyOffline = await caches.match('offline.html');
-  return anyOffline ?? Response.error();
+  return anyOffline ?? createEmergencyOfflineResponse('emergency-document-fallback');
 });
 
 /**
@@ -276,7 +340,10 @@ const navigationStrategy = new NetworkFirst({
         if (precachedOffline) return precachedOffline;
         // 最後防線：搜尋任何快取中的 offline.html，避免 Workbox 在 plugin 已回傳
         // Response.error() 時不再進入全域 setCatchHandler，導致冷啟動離線 fallback 失效。
-        return (await caches.match('offline.html')) ?? Response.error();
+        return (
+          (await caches.match('offline.html')) ??
+          createEmergencyOfflineResponse('emergency-navigation-fallback')
+        );
       },
     },
   ],
