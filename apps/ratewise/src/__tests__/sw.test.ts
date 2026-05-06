@@ -234,23 +234,19 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).toContain('new NetworkFirst(');
     expect(sourceCode).toContain('networkTimeoutSeconds:');
     expect(sourceCode).toContain('new NavigationRoute(');
-    // 確保有 fallback 到 precache index.html
-    expect(sourceCode).toContain("matchPrecache('index.html')");
+    expect(sourceCode).toContain('resolveOfflineDocumentFallback');
   });
 
-  it('should let NavigationRoute fallback reach cached offline.html before using emergency HTML', async () => {
+  it('should delegate NavigationRoute failures to the shared offline document fallback', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
 
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    const handlerBlockMatch =
-      /handlerDidError:\s*async\s*\(\)\s*=>\s*\{[\s\S]*?return\s+\([\s\S]*?await\s+caches\.match\('offline\.html'\)[\s\S]*?createEmergencyOfflineResponse\('emergency-navigation-fallback'\)[\s\S]*?\);[\s\S]*?\}/.exec(
-        sourceCode,
-      );
-
-    expect(handlerBlockMatch).not.toBeNull();
+    expect(sourceCode).toContain('resolveOfflineDocumentFallback');
+    expect(sourceCode).toContain("emergencyReason: 'emergency-navigation-fallback'");
+    expect(sourceCode).toContain("matchOfflineHtmlInAnyCache: () => caches.match('offline.html')");
   });
 });
 

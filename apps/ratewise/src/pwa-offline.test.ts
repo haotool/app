@@ -116,10 +116,15 @@ describe('PWA 離線功能測試', () => {
 
     it('should have offline-first strategy in setCatchHandler', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
+      const fallbackContent = readFileSync(
+        resolve(ROOT_PATH, 'src/utils/pwaOfflineFallback.ts'),
+        'utf-8',
+      );
       // 確保離線回退策略邏輯存在
       expect(swContent).toContain('離線回退');
       // document 請求回退到 precache index.html，確保冷啟動離線可用。
-      expect(swContent).toContain("matchPrecache('index.html')");
+      expect(swContent).toContain('resolveOfflineDocumentFallback');
+      expect(fallbackContent).toContain("matchPrecache('index.html')");
       // NavigationRoute 的 handlerDidError 也必須能直接命中任意快取中的 offline.html，
       // 避免 Workbox 視為已處理後不再進入全域 setCatchHandler。
       expect(swContent).toContain("caches.match('offline.html')");
@@ -127,10 +132,14 @@ describe('PWA 離線功能測試', () => {
 
     it('should provide an emergency inline HTML fallback when both index and offline caches are unavailable', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      expect(swContent).toContain('EMERGENCY_OFFLINE_HTML');
-      expect(swContent).toContain('createEmergencyOfflineResponse');
-      expect(swContent).toContain('data-ratewise-emergency-fallback="true"');
-      expect(swContent).toContain("'X-RateWise-Offline-Fallback'");
+      const fallbackContent = readFileSync(
+        resolve(ROOT_PATH, 'src/utils/pwaOfflineFallback.ts'),
+        'utf-8',
+      );
+      expect(fallbackContent).toContain('EMERGENCY_OFFLINE_HTML');
+      expect(fallbackContent).toContain('createEmergencyOfflineResponse');
+      expect(fallbackContent).toContain('data-ratewise-emergency-fallback="true"');
+      expect(fallbackContent).toContain("'X-RateWise-Offline-Fallback'");
       expect(swContent).toContain('emergency-document-fallback');
       expect(swContent).toContain('emergency-navigation-fallback');
     });

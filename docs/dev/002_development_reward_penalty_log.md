@@ -12,6 +12,11 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-07
+- ID：ratewise-pwa-offline-fallback-runtime-contract
+- 原因：emergency fallback 初版主要依賴 `sw.ts` 字串斷言，未直接驗證 `index.html`、`offline.html` 與任意 cache 全失效時仍會回可見 HTML。
+- 解法：抽出 `resolveOfflineDocumentFallback` 純函式並補 runtime-style 單元測試，鎖住 fallback 優先序、200 HTML 回應與 `X-RateWise-Offline-Fallback` header。
+
 - 日期：2026-05-06
 - ID：ratewise-authority-guide-crosslinks-and-baseline-persist
 - 原因：authority guide 頁面與 Markdown mirrors 缺少 guide-to-guide 互連，且 production Lighthouse baseline 排程更新後未能持久化回 repo。
