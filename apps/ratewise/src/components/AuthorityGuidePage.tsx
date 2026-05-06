@@ -80,6 +80,26 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
             </section>
           )}
 
+          {page.relatedGuides && page.relatedGuides.length > 0 && (
+            <section className="card mt-8 p-6">
+              <h2 className="mb-4 text-xl font-semibold text-text">相關攻略</h2>
+              <div className="space-y-3">
+                {page.relatedGuides.map((guide) => (
+                  <Link
+                    key={guide.href}
+                    to={guide.href}
+                    className="flex items-start gap-3 rounded-lg border border-border p-4 transition-colors hover:border-primary/30 hover:bg-primary/5"
+                  >
+                    <div>
+                      <p className="font-medium text-text">{guide.label}</p>
+                      <p className="mt-0.5 text-sm text-text-muted">{guide.description}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
           {page.relatedCurrencies && page.relatedCurrencies.length > 0 && (
             <section className="card mt-8 p-6">
               <h2 className="mb-4 text-xl font-semibold text-text">相關幣別</h2>

@@ -136,6 +136,46 @@ describe('AuthorityGuidePage', () => {
     });
   });
 
+  describe('相關攻略連結（內部連結 guide→guide）', () => {
+    const MOCK_PAGE_WITH_GUIDES: AuthorityGuideContent = {
+      ...MOCK_PAGE,
+      relatedGuides: [
+        { href: '/cash-vs-spot-rate/', label: '現金 vs 即期匯率', description: '臨櫃換鈔說明' },
+        { href: '/card-rate-guide/', label: '刷卡匯率指南', description: 'DCC 與手續費解析' },
+      ],
+    };
+
+    it('relatedGuides 有資料時應渲染「相關攻略」區塊標題', () => {
+      renderPage(MOCK_PAGE_WITH_GUIDES);
+      expect(screen.getByRole('heading', { name: /相關攻略/i })).toBeInTheDocument();
+    });
+
+    it('relatedGuides 有資料時應渲染各攻略連結 label', () => {
+      renderPage(MOCK_PAGE_WITH_GUIDES);
+      expect(screen.getByText('現金 vs 即期匯率')).toBeInTheDocument();
+      expect(screen.getByText('刷卡匯率指南')).toBeInTheDocument();
+    });
+
+    it('relatedGuides 有資料時應渲染各攻略連結 description', () => {
+      renderPage(MOCK_PAGE_WITH_GUIDES);
+      expect(screen.getByText('臨櫃換鈔說明')).toBeInTheDocument();
+      expect(screen.getByText('DCC 與手續費解析')).toBeInTheDocument();
+    });
+
+    it('relatedGuides 連結應指向正確 href', () => {
+      renderPage(MOCK_PAGE_WITH_GUIDES);
+      expect(screen.getByRole('link', { name: /現金 vs 即期匯率/i })).toHaveAttribute(
+        'href',
+        '/cash-vs-spot-rate/',
+      );
+    });
+
+    it('relatedGuides 未傳入時不應渲染「相關攻略」區塊', () => {
+      renderPage(MOCK_PAGE);
+      expect(screen.queryByRole('heading', { name: /相關攻略/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe('相關幣別連結（內部連結 guide→currency）', () => {
     it('should render a related currencies section heading when relatedCurrencies is provided', () => {
       renderPage(MOCK_PAGE);

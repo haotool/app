@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-06
+- ID：ratewise-authority-guide-crosslinks-and-baseline-persist
+- 原因：authority guide 頁面與 Markdown mirrors 缺少 guide-to-guide 互連，且 production Lighthouse baseline 排程更新後未能持久化回 repo。
+- 解法：補齊 relatedGuides SSOT、HTML/Markdown/llms.txt 測試與產物，並讓排程 baseline 變更以 release 豁免格式提交回 main。
+
+- 日期：2026-05-06
 - ID：ratewise-pwa-watchdog-fallback-and-timeout-signal-guard
 - 原因：冷啟動 watchdog 若只認 `app-ready`，可能誤蓋 React 已成功渲染的 chunk/offline fallback；同時 cold-start prime race 若不清除落敗 timeout，健康啟動也會留下假的 timeout 診斷。
 - 解法：為 `OfflineAwareFallback` 加入 watchdog-ready 訊號，讓已渲染 fallback 可正確終止 watchdog；並在 early prime 成功時清除 timeout handle，維持 PWA 診斷訊號的真實性。
