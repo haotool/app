@@ -513,4 +513,41 @@ describe('SEO SSOT', () => {
       expect(schemaAnswer!.answer).toContain('匯率數值');
     });
   });
+
+  describe('authority guide cross-links (內部連結完整性)', () => {
+    const GUIDE_PAGES = [
+      {
+        name: 'SELL_RATE_VS_MID_RATE_PAGE',
+        page: SELL_RATE_VS_MID_RATE_PAGE,
+        path: '/sell-rate-vs-mid-rate/',
+      },
+      { name: 'CASH_VS_SPOT_RATE_PAGE', page: CASH_VS_SPOT_RATE_PAGE, path: '/cash-vs-spot-rate/' },
+      { name: 'CARD_RATE_GUIDE_PAGE', page: CARD_RATE_GUIDE_PAGE, path: '/card-rate-guide/' },
+    ];
+
+    it.each(GUIDE_PAGES)('$name 應有 relatedGuides 連結到其他兩個攻略頁', ({ page, path }) => {
+      expect(page.relatedGuides).toBeDefined();
+      expect(Array.isArray(page.relatedGuides)).toBe(true);
+      expect(page.relatedGuides!.length).toBeGreaterThanOrEqual(2);
+
+      const hrefs = page.relatedGuides!.map((g) => g.href);
+      expect(hrefs).not.toContain(path); // 不應自我引用
+
+      const otherGuides = GUIDE_PAGES.filter((g) => g.path !== path);
+      for (const other of otherGuides) {
+        expect(hrefs).toContain(other.path);
+      }
+    });
+
+    it.each(GUIDE_PAGES)(
+      '$name.relatedGuides 每個項目應有 href、label、description',
+      ({ page }) => {
+        for (const guide of page.relatedGuides ?? []) {
+          expect(guide.href).toMatch(/^\/.+\/$/);
+          expect(guide.label.length).toBeGreaterThan(0);
+          expect(guide.description.length).toBeGreaterThan(0);
+        }
+      },
+    );
+  });
 });

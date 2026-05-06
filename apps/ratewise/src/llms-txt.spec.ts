@@ -119,6 +119,12 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
     expect(content).toContain('https://app.haotool.org/ratewise/seo-tech/');
   });
 
+  it('lists index.md homepage markdown mirror in Markdown Mirrors section', () => {
+    // index.md 是首頁最重要的 AI 友善鏡像，應讓 LLM agent 可透過 llms.txt 發現。
+    const content = readFileSync(llmsPath, 'utf-8');
+    expect(content).toContain('index.md');
+  });
+
   it('makes llms-full prefer path-based amount landing pages over query-only deep links', () => {
     const content = readFileSync(llmsFullPath, 'utf-8');
 

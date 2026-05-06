@@ -201,4 +201,26 @@ describe('Authority guide Markdown mirrors', () => {
     expect(content).toContain('cash-vs-spot-rate.md');
     expect(content).toContain('card-rate-guide.md');
   });
+
+  it('sell-rate-vs-mid-rate.md 含相關攻略連結（hub-and-spoke cross-links）', () => {
+    // HTML 頁已渲染 relatedGuides；markdown 鏡像應與 HTML 語義一致。
+    const content = readMd('sell-rate-vs-mid-rate');
+    expect(content).toContain('## 相關攻略');
+    expect(content).toContain('/cash-vs-spot-rate/');
+    expect(content).toContain('/card-rate-guide/');
+  });
+
+  it('cash-vs-spot-rate.md 含相關攻略連結（hub-and-spoke cross-links）', () => {
+    const content = readMd('cash-vs-spot-rate');
+    expect(content).toContain('## 相關攻略');
+    expect(content).toContain('/sell-rate-vs-mid-rate/');
+    expect(content).toContain('/card-rate-guide/');
+  });
+
+  it('card-rate-guide.md 含相關攻略連結（hub-and-spoke cross-links）', () => {
+    const content = readMd('card-rate-guide');
+    expect(content).toContain('## 相關攻略');
+    expect(content).toContain('/sell-rate-vs-mid-rate/');
+    expect(content).toContain('/cash-vs-spot-rate/');
+  });
 });

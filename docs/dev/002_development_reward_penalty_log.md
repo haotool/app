@@ -12,6 +12,11 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-06
+- ID：ratewise-authority-guide-crosslinks-and-baseline-persist
+- 原因：authority guide 頁面與 Markdown mirrors 缺少 guide-to-guide 互連，且 production Lighthouse baseline 排程更新後未能持久化回 repo。
+- 解法：補齊 relatedGuides SSOT、HTML/Markdown/llms.txt 測試與產物，並讓排程 baseline 變更以 release 豁免格式提交回 main。
+
 - 日期：2026-05-05
 - ID：ratewise-pwa-offline-html-recovery-mechanism
 - 原因：生產環境 E2E 測試發現 `offline.html` 有時未被 precache（`hasOfflineHtml: false`），導致 iOS Safari 冷啟動離線時黑屏。

@@ -24,7 +24,7 @@ jobs:
     name: Production Lighthouse Baseline Check
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
 
     steps:
@@ -64,7 +64,7 @@ jobs:
           retention-days: 21
 
       - name: Comment production baseline summary
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
         with:
           script: |
@@ -104,7 +104,9 @@ jobs:
               if (check?.type === 'hard_fail') {
                 lines.push(`- ❌ ${name}: expected \`${check.expected}\` \u2264 actual \`${check.actual}\``);
               } else if (check?.type === 'regression') {
-                lines.push(`- ⚠️ ${name}: baseline drift +${check.drift}%`);
+                const baselineValue = check.baseline ?? 'N/A';
+                const actualValue = check.actual ?? 'N/A';
+                lines.push(`- ⚠️ ${name}: baseline ${baselineValue} -> ${actualValue}，drift +${check.drift}%`);
               }
             }
             const content = `${body}${lines.length ? lines.join('\\n') : '- 無異常，指標符合要求'}\n`;
@@ -133,6 +135,26 @@ jobs:
                 body: message,
               });
             }
+
+      - name: Persist baseline to repository
+        if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          if [ ! -f scripts/lighthouse-baseline.production.json ]; then
+            echo "baseline file not found, skip"
+            exit 0
+          fi
+
+          if git diff --quiet -- scripts/lighthouse-baseline.production.json; then
+            echo "baseline unchanged, skip"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/lighthouse-baseline.production.json
+          git commit -m "chore(release): 更新 production baseline"
+          git push
 
       - name: Add summary to GitHub summary
         if: always()

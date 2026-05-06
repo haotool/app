@@ -162,6 +162,7 @@ Googlebot 與 AI agent 可直接讀取靜態 HTML：
 
 與 HTML 頁語義一致的純 Markdown 版本，供 AI agent 直接讀取：
 
+- [index.md](${BASE_URL}index.md)
 - [faq.md](${BASE_URL}faq.md)
 - [guide.md](${BASE_URL}guide.md)
 - [about.md](${BASE_URL}about.md)

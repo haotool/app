@@ -76,6 +76,7 @@ Googlebot 與 AI agent 可直接讀取靜態 HTML：
 
 與 HTML 頁語義一致的純 Markdown 版本，供 AI agent 直接讀取：
 
+- [index.md](https://app.haotool.org/ratewise/index.md)
 - [faq.md](https://app.haotool.org/ratewise/faq.md)
 - [guide.md](https://app.haotool.org/ratewise/guide.md)
 - [about.md](https://app.haotool.org/ratewise/about.md)
