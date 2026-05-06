@@ -18,6 +18,11 @@
 - 解法：補齊 relatedGuides SSOT、HTML/Markdown/llms.txt 測試與產物，並讓排程 baseline 變更以 release 豁免格式提交回 main。
 
 - 日期：2026-05-06
+- ID：ratewise-pwa-emergency-fallback-brand-ssot
+- 原因：emergency inline HTML fallback 初版仍硬編碼 `HaoRate`，會讓正式品牌字串與 `APP_INFO` SSOT 漂移，且對應測試仍鎖在舊的 `Response.error()` 控制流。
+- 解法：改為從 `APP_INFO.name` 生成 emergency fallback 標題，並同步更新 SW 測試斷言，讓品牌與 fallback 行為都回到單一真實來源。
+
+- 日期：2026-05-06
 - ID：ratewise-pwa-emergency-html-fallback
 - 原因：`2.22.20` 在快取損毀更嚴重的冷啟動離線情境下，若 `index.html` 與 `offline.html` 同時從各快取失守，SW 仍會直接回 `ERR_FAILED`，連 watchdog 都來不及顯示，形成真正白屏。
 - 解法：在 Service Worker 增加不依賴任何 cache 的 emergency inline HTML fallback，讓導覽 HTML fallback 全失守時仍能回傳最小可見保護頁，並補靜態回歸測試鎖住 `emergency-document-fallback` / `emergency-navigation-fallback`。

@@ -8,6 +8,7 @@ import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { APP_INFO } from './config/app-info';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
@@ -16,7 +17,7 @@ const EMERGENCY_OFFLINE_HTML = `<!doctype html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>離線模式 - HaoRate 匯率好工具</title>
+    <title>離線模式 - ${APP_INFO.name}</title>
     <meta name="robots" content="noindex,nofollow">
     <style>
       :root { color-scheme: light; }

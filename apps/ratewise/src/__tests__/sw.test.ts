@@ -238,7 +238,7 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).toContain("matchPrecache('index.html')");
   });
 
-  it('should let NavigationRoute fallback reach cached offline.html before returning Response.error', async () => {
+  it('should let NavigationRoute fallback reach cached offline.html before using emergency HTML', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
 
@@ -246,7 +246,7 @@ describe('Service Worker Cache Strategies', () => {
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
     const handlerBlockMatch =
-      /handlerDidError:\s*async\s*\(\)\s*=>\s*\{[\s\S]*?return\s+\(await\s+caches\.match\('offline\.html'\)\)\s*\?\?\s*Response\.error\(\);[\s\S]*?\}/.exec(
+      /handlerDidError:\s*async\s*\(\)\s*=>\s*\{[\s\S]*?return\s+\([\s\S]*?await\s+caches\.match\('offline\.html'\)[\s\S]*?createEmergencyOfflineResponse\('emergency-navigation-fallback'\)[\s\S]*?\);[\s\S]*?\}/.exec(
         sourceCode,
       );
 
