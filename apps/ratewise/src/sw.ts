@@ -8,6 +8,7 @@ import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { resolveOfflineDocumentFallback } from './utils/pwaOfflineFallback';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
@@ -238,16 +239,11 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   }
 
   // NavigationRoute 已攔截正常導覽；setCatchHandler 僅在網路失敗時作保險層。
-  // 三層回退：matchPrecache('index.html') → matchPrecache('offline.html') → caches.match('offline.html')
-  const precachedIndex = await matchPrecache('index.html');
-  if (precachedIndex) return precachedIndex;
-
-  const precachedOffline = await matchPrecache('offline.html');
-  if (precachedOffline) return precachedOffline;
-
-  // 最後防線：搜尋所有快取中的 offline.html（含 ensureOfflineHtmlCached 補救的版本）
-  const anyOffline = await caches.match('offline.html');
-  return anyOffline ?? Response.error();
+  return resolveOfflineDocumentFallback({
+    emergencyReason: 'emergency-document-fallback',
+    matchPrecache,
+    matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
+  });
 });
 
 /**
@@ -270,13 +266,13 @@ const navigationStrategy = new NetworkFirst({
     {
       // 網路失敗時回退到 precache index.html（離線或 timeout 後快取也沒有）
       handlerDidError: async () => {
-        const precached = await matchPrecache('index.html');
-        if (precached) return precached;
-        const precachedOffline = await matchPrecache('offline.html');
-        if (precachedOffline) return precachedOffline;
-        // 最後防線：搜尋任何快取中的 offline.html，避免 Workbox 在 plugin 已回傳
-        // Response.error() 時不再進入全域 setCatchHandler，導致冷啟動離線 fallback 失效。
-        return (await caches.match('offline.html')) ?? Response.error();
+        // 最後防線：搜尋任何快取中的 offline.html；若全數失守，回 inline HTML，
+        // 避免 Workbox 在 plugin 已回傳 Response.error() 後不再進入全域 setCatchHandler。
+        return resolveOfflineDocumentFallback({
+          emergencyReason: 'emergency-navigation-fallback',
+          matchPrecache,
+          matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
+        });
       },
     },
   ],
