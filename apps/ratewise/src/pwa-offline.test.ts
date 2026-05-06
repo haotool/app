@@ -201,6 +201,29 @@ describe('PWA 離線功能測試', () => {
       expect(fallbackComponent).toContain('data-ratewise-watchdog-ready="true"');
     });
 
+    it('should preserve SSG-rendered #root content when watchdog falls back to error UI', () => {
+      const html = readFileSync(resolve(ROOT_PATH, 'index.html'), 'utf-8');
+
+      // SSG 內容偵測函式必須存在，watchdog 才能判斷是否走 banner 模式。
+      expect(html).toContain('hasPrerenderedRootContent');
+      expect(html).toContain('data-server-rendered');
+      expect(html).toContain('root.children.length > 0');
+
+      // 雙模式分支：banner（保留 SSG）vs fullscreen（沿用原行為）。
+      expect(html).toContain('data-cold-start-overlay');
+      expect(html).toContain("'banner'");
+      expect(html).toContain("'fullscreen'");
+
+      // 已渲染狀態下：watchdog 必須附加 wrap 到 body，禁止清除 #root。
+      expect(html).toContain('document.body.appendChild(wrap)');
+
+      // 無 SSG 時保留原本 fallback 行為。
+      expect(html).toContain("root.innerHTML = ''");
+
+      // 診斷事件需帶 hasPrerendered 標記，供後續觀察性追蹤。
+      expect(html).toContain('hasPrerendered: hasPrerendered');
+    });
+
     it('should reload on controllerchange after activating a waiting worker', () => {
       const swUtils = readFileSync(resolve(ROOT_PATH, 'src/utils/swUtils.ts'), 'utf-8');
       expect(swUtils).toContain('controllerchange');

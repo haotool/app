@@ -446,6 +446,15 @@
           var root = document.getElementById('root');
           return Boolean(root && root.querySelector(WATCHDOG_READY_SELECTOR));
         }
+        // SSG 預渲染內容偵測：vite-react-ssg 會在 #root 標 data-server-rendered="true"
+        // 並填入完整 hydration tree。JS 載入失敗時應保留此可見內容，
+        // 不可整片清除換成診斷面板，否則使用者從「可看靜態頁」降級為「白屏 + 錯誤面板」。
+        function hasPrerenderedRootContent() {
+          var root = document.getElementById('root');
+          if (!root) return false;
+          if (root.getAttribute('data-server-rendered') === 'true') return true;
+          return root.children.length > 0;
+        }
         function collectDiagnostics() {
           var lines = ['\u23f0 ' + new Date().toLocaleTimeString('zh-TW')];
           lines.push(
@@ -581,31 +590,60 @@
         function showColdStartError() {
           var root = document.getElementById('root');
           if (!root || isAppReady() || hasReactFallbackReady()) return;
-          recordDiagnostic('cold-start-overlay-shown', { timeoutMs: TIMEOUT_MS }, 'error');
+          var hasPrerendered = hasPrerenderedRootContent();
+          recordDiagnostic(
+            'cold-start-overlay-shown',
+            { timeoutMs: TIMEOUT_MS, hasPrerendered: hasPrerendered },
+            'error',
+          );
           var isOnline = navigator.onLine !== false;
           var canRetry = isOnline && getRetryCount() < MAX_RETRIES;
           var wrap = document.createElement('div');
           wrap.setAttribute('role', 'alert');
           wrap.setAttribute('aria-live', 'assertive');
-          wrap.style.cssText =
-            'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;' +
-            'justify-content:center;overflow-y:auto;background:var(--sk-bg,#f8fafc);' +
-            'font-family:system-ui,-apple-system,sans-serif;' +
-            'padding:2rem 1.5rem;text-align:center;gap:0.625rem;z-index:9999;';
+          wrap.setAttribute('data-cold-start-overlay', hasPrerendered ? 'banner' : 'fullscreen');
+          if (hasPrerendered) {
+            // SSG \u5df2\u6e32\u67d3\u53ef\u898b\u5167\u5bb9\uff1a\u63a1\u7528\u5e95\u90e8 floating banner \u6a21\u5f0f\uff0c\u4e0d\u7834\u58de\u4f7f\u7528\u8005\u5df2\u770b\u5230\u7684\u975c\u614b\u9801\u3002
+            wrap.style.cssText =
+              'position:fixed;left:50%;transform:translateX(-50%);' +
+              'bottom:calc(env(safe-area-inset-bottom,0px) + 16px);' +
+              'width:min(420px,calc(100% - 32px));max-height:60vh;overflow-y:auto;' +
+              'background:var(--sk-surface,#ffffff);color:var(--sk-text,#1e293b);' +
+              'border:1px solid var(--sk-border,#e2e8f0);border-radius:1rem;' +
+              'box-shadow:0 12px 32px rgba(15,23,42,0.18);' +
+              'padding:1rem 1.25rem;display:flex;flex-direction:column;align-items:center;' +
+              'gap:0.5rem;text-align:center;z-index:9999;' +
+              'font-family:system-ui,-apple-system,sans-serif;';
+          } else {
+            // \u7121 SSG \u5167\u5bb9\uff1a\u6cbf\u7528\u539f\u672c\u5168\u5c4f\u932f\u8aa4\u9762\u677f\uff08\u4fdd\u96aa\u5c64\uff09\u3002
+            wrap.style.cssText =
+              'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;' +
+              'justify-content:center;overflow-y:auto;background:var(--sk-bg,#f8fafc);' +
+              'font-family:system-ui,-apple-system,sans-serif;' +
+              'padding:2rem 1.5rem;text-align:center;gap:0.625rem;z-index:9999;';
+          }
           var icon = document.createElement('div');
-          icon.style.cssText = 'font-size:2.5rem;line-height:1';
+          icon.style.cssText = hasPrerendered
+            ? 'font-size:1.5rem;line-height:1'
+            : 'font-size:2.5rem;line-height:1';
           icon.textContent = isOnline ? '\u26a0\ufe0f' : '\ud83d\udce1';
           var title = document.createElement('div');
-          title.style.cssText = 'font-size:1.125rem;font-weight:700;color:var(--sk-text,#1e293b)';
+          title.style.cssText = hasPrerendered
+            ? 'font-size:1rem;font-weight:600;color:var(--sk-text,#1e293b)'
+            : 'font-size:1.125rem;font-weight:700;color:var(--sk-text,#1e293b)';
           title.textContent = isOnline
-            ? '\u61c9\u7528\u7a0b\u5f0f\u8f09\u5165\u5931\u6557'
+            ? hasPrerendered
+              ? '\u4e92\u52d5\u529f\u80fd\u8f09\u5165\u5931\u6557'
+              : '\u61c9\u7528\u7a0b\u5f0f\u8f09\u5165\u5931\u6557'
             : '\u76ee\u524d\u8655\u65bc\u96e2\u7dda\u6a21\u5f0f';
           var desc = document.createElement('div');
           desc.style.cssText =
-            'font-size:0.875rem;color:var(--sk-text-muted,#64748b);max-width:280px;line-height:1.6';
-          desc.textContent = isOnline
-            ? 'PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u53ef\u80fd\u5df2\u640d\u58de\u6216\u4e0d\u5b8c\u6574\u3002\u5efa\u8b70\u6e05\u9664\u5feb\u53d6\u5f8c\u91cd\u8a66\u3002'
-            : '\u96e2\u7dda\u6a21\u5f0f\u4e0b PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u8acb\u9023\u7dda\u5f8c\u91cd\u65b0\u958b\u555f\u3002';
+            'font-size:0.875rem;color:var(--sk-text-muted,#64748b);max-width:320px;line-height:1.6';
+          desc.textContent = hasPrerendered
+            ? '\u9801\u9762\u5167\u5bb9\u4ecd\u53ef\u95b1\u8b80\uff0c\u4f46\u52d5\u614b\u63db\u7b97\u8207 PWA \u4e92\u52d5\u66ab\u6642\u5931\u6548\u3002\u8acb\u91cd\u65b0\u8f09\u5165\u4ee5\u6062\u5fa9\u5b8c\u6574\u529f\u80fd\u3002'
+            : isOnline
+              ? 'PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u53ef\u80fd\u5df2\u640d\u58de\u6216\u4e0d\u5b8c\u6574\u3002\u5efa\u8b70\u6e05\u9664\u5feb\u53d6\u5f8c\u91cd\u8a66\u3002'
+              : '\u96e2\u7dda\u6a21\u5f0f\u4e0b PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u8acb\u9023\u7dda\u5f8c\u91cd\u65b0\u958b\u555f\u3002';
           wrap.appendChild(icon);
           wrap.appendChild(title);
           wrap.appendChild(desc);
@@ -675,8 +713,14 @@
           details.appendChild(summary);
           details.appendChild(diagPre);
           wrap.appendChild(details);
-          root.innerHTML = '';
-          root.appendChild(wrap);
+          if (hasPrerendered) {
+            // 已有 SSG 內容：banner 附加到 body，不動 #root，使用者仍可看靜態頁。
+            document.body.appendChild(wrap);
+          } else {
+            // 無 SSG：原本全屏 fallback，沿用既有行為。
+            root.innerHTML = '';
+            root.appendChild(wrap);
+          }
           collectDiagnostics().then(function (lines) {
             var el = document.getElementById(diagId);
             if (el) el.textContent = lines.join('\n');
