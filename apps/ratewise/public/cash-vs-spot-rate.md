@@ -3,7 +3,7 @@
 > 說明現金匯率與即期匯率差異，整理臨櫃換鈔、外幣帳戶、匯款與旅遊換匯情境，幫助你在不同交易方式下選對報價欄位，避免高估或低估實際成本，也避免把中間價誤當成交價與預算基準。
 
 - Canonical: https://app.haotool.org/ratewise/cash-vs-spot-rate/
-- Version: v2.22.14
+- Version: v2.22.20
 
 ## 重點整理
 
@@ -45,7 +45,12 @@
 
 因為現鈔交易涉及保管、運送、保險與作業成本，銀行會把這些成本反映在現金匯率的價差裡。
 
+## 相關攻略
+
+- [賣出價 vs 中間價](https://app.haotool.org/ratewise/sell-rate-vs-mid-rate/)
+- [刷卡匯率指南](https://app.haotool.org/ratewise/card-rate-guide/)
+
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.14），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.20），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_

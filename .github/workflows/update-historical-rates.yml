@@ -163,30 +163,17 @@ jobs:
                 } else {
                   consecutiveMissing++;
                   console.log('  ⚠️ 缺少 ' + date + ' 的資料');
-                  for (const c of currencies) aggregateRates[c].push(null);
                 }
               }
               if (consecutiveMissing >= 5) break;
               if (i + BATCH_SIZE < dates.length) await new Promise(r => setTimeout(r, 100));
             }
 
-            // 移除尾端 null
-            const trimmedDates = [];
-            const trimmedRates = {};
-            for (const c of currencies) trimmedRates[c] = [];
-            for (let i = 0; i < validDates.length; i++) {
-              const hasData = currencies.some(c => aggregateRates[c][i] !== null);
-              if (hasData) {
-                trimmedDates.push(validDates[i]);
-                for (const c of currencies) trimmedRates[c].push(aggregateRates[c][i]);
-              }
-            }
-
             const aggregate = {
               updateTime: updateTime || new Date().toISOString(),
               generatedAt: new Date().toISOString(),
-              dates: trimmedDates,
-              rates: trimmedRates,
+              dates: validDates,
+              rates: aggregateRates,
             };
 
             const outputDir = dirname(OUTPUT_PATH);
@@ -194,7 +181,7 @@ jobs:
             writeFileSync(OUTPUT_PATH, JSON.stringify(aggregate, null, 2) + '\n');
 
             console.log('✅ 已生成 ' + OUTPUT_PATH);
-            console.log('   - 有效天數：' + trimmedDates.length);
+            console.log('   - 有效天數：' + validDates.length);
             console.log('   - 貨幣數量：' + currencies.length);
           }
 

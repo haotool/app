@@ -102,6 +102,7 @@ export interface AuthorityGuideContent extends SEOPageMetadata {
   ctaTitle: string;
   ctaDescription: string;
   relatedCurrencies: RelatedCurrencyLink[];
+  relatedGuides?: RelatedGuideLink[];
 }
 
 export interface CommonAmountEntry {
@@ -1424,6 +1425,24 @@ const RELATED_CURRENCIES: RelatedCurrencyLink[] = [
   { href: '/thb-twd/', label: '泰銖匯率', code: 'THB' },
 ];
 
+const GUIDE_LINK_SELL_RATE_VS_MID_RATE: RelatedGuideLink = {
+  href: '/sell-rate-vs-mid-rate/',
+  label: '賣出價 vs 中間價',
+  description: '了解為何 Google、XE 顯示的匯率與銀行臨櫃不同',
+};
+
+const GUIDE_LINK_CASH_VS_SPOT_RATE: RelatedGuideLink = {
+  href: '/cash-vs-spot-rate/',
+  label: '現金 vs 即期匯率',
+  description: '臨櫃換鈔與外幣帳戶該看哪種匯率',
+};
+
+const GUIDE_LINK_CARD_RATE_GUIDE: RelatedGuideLink = {
+  href: '/card-rate-guide/',
+  label: '刷卡匯率指南',
+  description: '海外刷卡匯率、DCC 與手續費完整解析',
+};
+
 export const SELL_RATE_VS_MID_RATE_PAGE = {
   title: `賣出價與中間價差在哪？為什麼換匯不能只看中間價 | ${APP_INFO.shortName}`,
   description: `解析賣出價、中間價與實際換匯成本差異，說清楚為什麼 Google 或 XE 顯示的中間價不能直接拿來估算換匯預算。${APP_INFO.shortName} 聚焦臺灣銀行牌告賣出價，協助台灣用戶在買外幣前更接近真實支付金額與旅費規劃。`,
@@ -1496,6 +1515,7 @@ export const SELL_RATE_VS_MID_RATE_PAGE = {
   ctaDescription:
     '回到首頁輸入金額，即可用臺灣銀行牌告的現金賣出或即期賣出估算更接近實際的換匯成本。',
   relatedCurrencies: RELATED_CURRENCIES,
+  relatedGuides: [GUIDE_LINK_CASH_VS_SPOT_RATE, GUIDE_LINK_CARD_RATE_GUIDE],
   jsonLd: [
     buildArticleJsonLd(
       '賣出價與中間價差在哪？為什麼換匯不能只看中間價',
@@ -1581,6 +1601,7 @@ export const CASH_VS_SPOT_RATE_PAGE = {
   ctaTitle: '依情境切換正確匯率類型',
   ctaDescription: '回到首頁後可直接切換現金與即期匯率，比較同一筆金額在不同換匯方式下的成本差異。',
   relatedCurrencies: RELATED_CURRENCIES,
+  relatedGuides: [GUIDE_LINK_SELL_RATE_VS_MID_RATE, GUIDE_LINK_CARD_RATE_GUIDE],
   jsonLd: [
     buildArticleJsonLd(
       '現金匯率 vs 即期匯率：什麼情境該看哪一種',
@@ -1676,6 +1697,7 @@ export const CARD_RATE_GUIDE_PAGE = {
   ctaDescription:
     '回到首頁輸入金額，可先用台銀牌告價格抓基準，再把發卡銀行海外手續費納入最終預算判斷。',
   relatedCurrencies: RELATED_CURRENCIES,
+  relatedGuides: [GUIDE_LINK_SELL_RATE_VS_MID_RATE, GUIDE_LINK_CASH_VS_SPOT_RATE],
   jsonLd: [
     buildArticleJsonLd(
       '刷卡匯率怎麼看？台銀牌告、卡組織匯率與 DCC 一次搞懂',
@@ -1798,35 +1820,15 @@ export const APP_ONLY_PAGE_SEO = {
 
 /** 外幣→台幣方向的相關攻略連結（旅客回國換匯場景）。 */
 const RELATED_GUIDES_TO_TWD: RelatedGuideLink[] = [
-  {
-    href: '/sell-rate-vs-mid-rate/',
-    label: '賣出價 vs 中間價',
-    description: '了解為何 Google、XE 顯示的匯率與銀行臨櫃不同',
-  },
-  {
-    href: '/cash-vs-spot-rate/',
-    label: '現金 vs 即期匯率',
-    description: '臨櫃換鈔與外幣帳戶該看哪種匯率',
-  },
+  GUIDE_LINK_SELL_RATE_VS_MID_RATE,
+  GUIDE_LINK_CASH_VS_SPOT_RATE,
 ];
 
 /** 台幣→外幣方向的相關攻略連結（出國換匯場景）。 */
 const RELATED_GUIDES_TWD_TO_FOREIGN: RelatedGuideLink[] = [
-  {
-    href: '/sell-rate-vs-mid-rate/',
-    label: '賣出價 vs 中間價',
-    description: '了解為何 Google、XE 顯示的匯率與銀行臨櫃不同',
-  },
-  {
-    href: '/cash-vs-spot-rate/',
-    label: '現金 vs 即期匯率',
-    description: '臨櫃換鈔與外幣帳戶該看哪種匯率',
-  },
-  {
-    href: '/card-rate-guide/',
-    label: '刷卡匯率指南',
-    description: '海外刷卡匯率、DCC 與手續費完整解析',
-  },
+  GUIDE_LINK_SELL_RATE_VS_MID_RATE,
+  GUIDE_LINK_CASH_VS_SPOT_RATE,
+  GUIDE_LINK_CARD_RATE_GUIDE,
 ];
 
 const CURRENCY_PAGE_OVERRIDES = {

@@ -596,6 +596,44 @@ function extractSections(constBlock) {
 }
 
 /**
+ * 預解析 seoMetadataSrc 中所有 `const GUIDE_LINK_*` 常數為 {href, label, description}。
+ * authority guide 的 relatedGuides 欄位引用這些命名常數而非行內物件，
+ * 因此需在此解析後再做識別符替換。
+ */
+function buildGuideLinkMap() {
+  const map = {};
+  const constRe = /const (GUIDE_LINK_[A-Z_]+)\s*:\s*\w+\s*=\s*\{([^}]+)\}/g;
+  let m;
+  while ((m = constRe.exec(seoMetadataSrc)) !== null) {
+    const name = m[1];
+    const body = m[2];
+    const href = /href:\s*'([^']+)'/.exec(body)?.[1];
+    const label = /label:\s*'([^']+)'/.exec(body)?.[1];
+    const desc = /description:\s*'([^']+)'/.exec(body)?.[1];
+    if (href && label) map[name] = { href, label, description: desc ?? '' };
+  }
+  return map;
+}
+
+/**
+ * 擷取 constBlock 內 `relatedGuides: [...]` 的命名常數參照，解析為連結陣列。
+ * 若欄位不存在（選填）回傳 null。
+ */
+function extractRelatedGuides(constBlock) {
+  const arrContent = extractEmbeddedArrayContent(constBlock, 'relatedGuides');
+  if (!arrContent) return null;
+  const guideLinkMap = buildGuideLinkMap();
+  const guides = [];
+  const identRe = /\b(GUIDE_LINK_[A-Z_]+)\b/g;
+  let m;
+  while ((m = identRe.exec(arrContent)) !== null) {
+    const entry = guideLinkMap[m[1]];
+    if (entry) guides.push(entry);
+  }
+  return guides.length > 0 ? guides : null;
+}
+
+/**
  * 擷取 authority guide 頁的 faqContent（嵌入式 {question, answer} 陣列）。
  * 複用 extractFaqArray 相同的 entryRe 邏輯，但作用在嵌入區塊而非頂層 export。
  */
@@ -627,12 +665,17 @@ function buildAuthorityGuideMd(constName, slug) {
   const highlights = extractHighlights(constBlock);
   const sections = extractSections(constBlock);
   const faqContent = extractEmbeddedFaqArray(constBlock, 'faqContent');
+  const relatedGuides = extractRelatedGuides(constBlock);
 
   const highlightsMd = highlights.map((h) => `- ${h}`).join('\n');
   const sectionsMd = sections
     .map((s) => `## ${s.title}\n\n${s.paragraphs.join('\n\n')}`)
     .join('\n\n');
   const faqMd = formatFaq(faqContent);
+
+  const relatedGuidesMd = relatedGuides
+    ? `\n## 相關攻略\n\n${relatedGuides.map((g) => `- [${g.label}](${BASE_URL}${g.href.replace(/^\//, '')})`).join('\n')}\n`
+    : '';
 
   return `# ${heading}
 
@@ -652,7 +695,7 @@ ${sectionsMd}
 ## 常見問題
 
 ${faqMd}
-
+${relatedGuidesMd}
 ${COMMON_FOOTER}`;
 }
 

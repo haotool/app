@@ -132,7 +132,6 @@ async function main() {
 
   // 並行獲取所有日期的資料（5 批次）
   const BATCH_SIZE = 5;
-  let successCount = 0;
   let consecutiveMissing = 0;
 
   for (let i = 0; i < dates.length; i += BATCH_SIZE) {
@@ -145,7 +144,6 @@ async function main() {
 
       if (data && data.rates) {
         validDates.push(date);
-        successCount++;
         consecutiveMissing = 0;
 
         // 記錄最新的 updateTime
@@ -181,29 +179,12 @@ async function main() {
     }
   }
 
-  // 移除尾端的 null 值
-  const trimmedDates = [];
-  const trimmedRates = {};
-  for (const currency of currencies) {
-    trimmedRates[currency] = [];
-  }
-
-  for (let i = 0; i < validDates.length; i++) {
-    const hasData = currencies.some((c) => aggregateRates[c][i] !== null);
-    if (hasData) {
-      trimmedDates.push(validDates[i]);
-      for (const currency of currencies) {
-        trimmedRates[currency].push(aggregateRates[currency][i]);
-      }
-    }
-  }
-
   // 建立 aggregate JSON
   const aggregate = {
     updateTime: updateTime || new Date().toISOString(),
     generatedAt: new Date().toISOString(),
-    dates: trimmedDates,
-    rates: trimmedRates,
+    dates: validDates,
+    rates: aggregateRates,
   };
 
   // 確保輸出目錄存在
@@ -220,7 +201,7 @@ async function main() {
   const estimatedGzipSize = Math.round(jsonSize * 0.15); // 估計 gzip 後約 15%
 
   console.log(`✅ 已生成 ${OUTPUT_PATH}`);
-  console.log(`   - 有效天數：${trimmedDates.length}`);
+  console.log(`   - 有效天數：${validDates.length}`);
   console.log(`   - 貨幣數量：${currencies.length}`);
   console.log(`   - JSON 大小：${Math.round(jsonSize / 1024)}KB`);
   console.log(`   - 估計 Gzip：${Math.round(estimatedGzipSize / 1024)}KB`);
