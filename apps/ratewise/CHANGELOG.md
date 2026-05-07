@@ -1,5 +1,28 @@
 # @app/ratewise
 
+## 2.22.21
+
+### Patch Changes
+
+- 624d9d6: 修正 PWA 冷啟動離線時在 HTML fallback 全失守情境下仍可能白屏的問題，新增 Service Worker 最後一層 emergency 保護頁。
+- 624d9d6: fix(pwa): 讓 emergency offline fallback 品牌與導航回退測試對齊 SSOT
+- 8a5c6bb: Production Lighthouse baseline 檢查會在執行前驗證 `LH_RUNS` 與 `LH_MAX_ATTEMPTS` 必須是正整數，避免 retry 設定錯誤時靜默產生不可信的通過結果。
+- e9b90f1: 補強 bounded SWR 導覽 cache miss 路徑：超時回退到 precache 後仍保活慢網路 HTML fetch，讓 `html-cache` 能在背景完成暖機。
+- 5d8f47d: Forward queued PWA diagnostic GA4 events when browser storage writes fail.
+- 5d8f47d: Honor PWA diagnostic forwarding opt-out when flushing queued GA4 events.
+- 5d8f47d: Persist early PWA diagnostic GA4 events until analytics initialization.
+- 5d8f47d: Initialize Sentry only once while forwarding PWA diagnostic events.
+- 5d8f47d: 收斂 PWA diagnostic 事件轉發：GA4 僅接收去識別化分類欄位，Sentry 轉發前會先完成 lazy initialization。
+- f4de203: 強化 AI 友善內容入口：authority guide 頁面與 Markdown mirrors 新增相關攻略互連，並讓 production Lighthouse baseline 可由排程同步回 repo。
+- 5d8f47d: 冷啟動白屏 P1：`recordPwaDiagnostic` warn/error 事件 fire-and-forget 轉發到 Sentry（error→`captureMessage`、warn→`addBreadcrumb`）與 GA4（`pwa_diagnostic` event），加 5 秒 dedup 與環境變數開關（`VITE_PWA_DIAGNOSTIC_FORWARDING`）；info 不轉發以保護 quota。把冷啟動觀察性從盲修改為數據驅動。
+- 624d9d6: 補強冷啟動離線保護頁的 fallback 契約，確保快取全失效時仍回可見 HTML。
+- e9b90f1: 冷啟動白屏 P1：SPA navigation 改為 bounded SWR-style handler。已暖機 cache hit 立即返回並背景更新，cache miss 最多等待網路 3 秒後回 precache fallback；新版 SW 啟用時清除舊 HTML runtime cache，避免更新後先回舊版 HTML。
+- dc653b0: 修正冷啟動 watchdog 抹除 SSG 預渲染內容的反模式。當 JS chunk 載入失敗時，若 `#root` 已含 vite-react-ssg 預渲染樹，watchdog 改採 floating banner 模式並附加在 `<body>`，使用者仍可閱讀靜態頁；診斷視窗改用 design token 色彩與純文字標籤，並明確提示「Service Worker 未註冊但舊快取仍存在」的修復路徑。
+- 5d8f47d: Redact raw PWA diagnostic detail from Sentry forwarding metadata.
+- dc653b0: 啟動完成後自動清除冷啟動 watchdog banner，避免慢速 hydration 成功後仍顯示過時的載入失敗提示。
+- dc653b0: 避免 cold-start watchdog 在 SSG banner 模式下重複附加錯誤提示；新 overlay 顯示前會先清除既有 cold-start overlay。
+- dc653b0: 收斂 cold-start watchdog 的 SSG 判斷：banner 模式只信任 `data-server-rendered="true"`，避免破碎 root 或 placeholder 子節點被誤判為可閱讀的預渲染內容。
+
 ## 2.22.20
 
 ### Patch Changes
