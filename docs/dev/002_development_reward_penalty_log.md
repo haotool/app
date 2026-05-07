@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr372-cache-miss-navigation-waituntil
+- 原因：Codex review 指出 bounded SWR cache miss 超時回 fallback 後，慢網路 fetch 未掛入 `event.waitUntil`，SW 可能被終止而無法暖起 `html-cache`。
+- 解法：將 cache miss 的 `networkResponse` 同步掛入 `event.waitUntil`，保留 3 秒 fallback 體感，同時確保背景 HTML cache 寫入有生命週期保護。
+
+- 日期：2026-05-07
 - ID：pr372-bounded-swr-navigation-cache-guard
 - 原因：PR #372 初版直接使用 Workbox SWR，cache miss 時缺少有界 fallback，且新版 SW 啟用後可能先回舊 `html-cache` HTML。
 - 解法：改為自訂 bounded SWR-style navigation handler，cache hit 立即回並背景更新、cache miss 3 秒內未取得網路即回 precache fallback，且 activate 時清除舊 HTML runtime cache。

@@ -313,6 +313,7 @@ async function handleNavigationRequest({
   const networkResponse = fetchAndCacheNavigation(request, cache).catch(() =>
     resolveNavigationFallback(),
   );
+  event.waitUntil(networkResponse.then(() => undefined).catch(() => undefined));
   const timeoutFallback = new Promise<Response>((resolve) => {
     setTimeout(() => {
       resolve(resolveNavigationFallback());

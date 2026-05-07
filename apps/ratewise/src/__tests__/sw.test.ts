@@ -164,6 +164,9 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).toContain('new NavigationRoute(handleNavigationRequest)');
     expect(sourceCode).toContain('event.waitUntil(');
     expect(sourceCode).toContain('fetchAndCacheNavigation(request, cache)');
+    expect(sourceCode).toContain(
+      'event.waitUntil(networkResponse.then(() => undefined).catch(() => undefined))',
+    );
     // 防回歸：禁止重新引入 NetworkFirst navigation（cold-start 白屏根因之一）。
     expect(sourceCode).not.toContain('new NetworkFirst(');
   });
