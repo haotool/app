@@ -529,7 +529,7 @@ test.describe('飛航模式冷啟動診斷', () => {
     expect(cssCacheCount, '快取中應有 CSS files').toBeGreaterThanOrEqual(1);
   });
 
-  test('即使 root 提前出現假節點，冷啟動 watchdog 仍應顯示診斷 UI', async ({ browser }) => {
+  test('即使 root 提前出現假節點，冷啟動 watchdog 仍應顯示全屏診斷 UI', async ({ browser }) => {
     const context = await browser.newContext({
       serviceWorkers: 'allow',
     });
@@ -537,36 +537,78 @@ test.describe('飛航模式冷啟動診斷', () => {
 
     await page.addInitScript(() => {
       window.__RATEWISE_COLD_START_TIMEOUT_MS__ = 900;
+    });
 
-      const timer = window.setInterval(() => {
-        const root = document.getElementById('root');
-        const isReady = document.documentElement.getAttribute('data-ratewise-app-ready') === 'true';
-
-        if (isReady) {
-          window.clearInterval(timer);
-          return;
-        }
-
-        if (root && root.children.length === 0) {
-          const phantom = document.createElement('div');
-          phantom.setAttribute('data-test-phantom-root-child', 'true');
-          root.appendChild(phantom);
-          window.clearInterval(timer);
-        }
-      }, 50);
+    await page.route('**/ratewise/', async (route) => {
+      const response = await route.fetch();
+      let body = await response.text();
+      body = body.replace(
+        "recordDiagnostic('cold-start-watchdog-start'",
+        "var __testRoot=document.getElementById('root');if(__testRoot){__testRoot.removeAttribute('data-server-rendered');__testRoot.innerHTML='<div data-test-phantom-root-child=\"true\"></div>';}recordDiagnostic('cold-start-watchdog-start'",
+      );
+      await route.fulfill({ response, body });
     });
 
     await page.route('**/assets/*.js*', (route) => route.abort());
     await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 
+    // root 有 phantom child 但沒有 SSG 標記 → 不可誤判成可閱讀預渲染內容。
     const alert = page.getByRole('alert');
     await expect(alert).toBeVisible({ timeout: 10_000 });
+    await expect(alert).toHaveAttribute('data-cold-start-overlay', 'fullscreen');
     await expect(alert).toContainText('應用程式載入失敗');
+
+    // 關鍵保護：phantom 節點不能讓 watchdog 降級成小 banner；全屏 fallback 會清空破碎 root。
+    const phantomStillPresent = await page.evaluate(() =>
+      Boolean(document.querySelector('[data-test-phantom-root-child="true"]')),
+    );
+    expect(phantomStillPresent).toBe(false);
 
     await page.getByText('診斷詳情').click();
     const diagnosticPanel = page.locator('#cs-diag');
     await expect(diagnosticPanel).toContainText('最近事件');
     await expect(diagnosticPanel).toContainText('cold-start-overlay-shown');
+
+    await context.close();
+  });
+
+  test('SSG 預渲染內容被保留：JS 全失時 banner 模式不抹除 #root', async ({ browser }) => {
+    const context = await browser.newContext({
+      serviceWorkers: 'allow',
+    });
+    const page = await context.newPage();
+
+    await page.addInitScript(() => {
+      window.__RATEWISE_COLD_START_TIMEOUT_MS__ = 900;
+    });
+
+    // 阻斷所有 chunk → React 永遠無法 hydrate → watchdog 必觸發
+    await page.route('**/assets/*.js*', (route) => route.abort());
+    await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+
+    const alert = page.getByRole('alert');
+    await expect(alert).toBeVisible({ timeout: 10_000 });
+    await expect(alert).toHaveAttribute('data-cold-start-overlay', 'banner');
+
+    // SSG 預渲染樹必須仍可見：#root 不為空、attribute 仍在。
+    const rootSnapshot = await page.evaluate(() => {
+      const root = document.getElementById('root');
+      return {
+        hasRoot: Boolean(root),
+        childCount: root?.children.length ?? 0,
+        serverRendered: root?.getAttribute('data-server-rendered'),
+      };
+    });
+    expect(rootSnapshot.hasRoot).toBe(true);
+    expect(rootSnapshot.childCount).toBeGreaterThan(0);
+    expect(rootSnapshot.serverRendered).toBe('true');
+
+    // banner 必須附加在 body 直接子層而非 #root 內。
+    const bannerParent = await page.evaluate(() => {
+      const banner = document.querySelector('[data-cold-start-overlay="banner"]');
+      return banner?.parentElement?.tagName.toLowerCase() ?? null;
+    });
+    expect(bannerParent).toBe('body');
 
     await context.close();
   });

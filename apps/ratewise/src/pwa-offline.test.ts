@@ -197,8 +197,50 @@ describe('PWA 離線功能測試', () => {
       expect(html).toContain('hasReactFallbackReady');
       expect(html).toContain('react-fallback-ready');
       expect(html).toContain('cold-start-watchdog-cleared');
+      expect(html).toContain('removeColdStartOverlay');
+      expect(html).toContain('removeColdStartOverlay();');
       expect(html).not.toContain('root.children.length === 0');
       expect(fallbackComponent).toContain('data-ratewise-watchdog-ready="true"');
+    });
+
+    it('should preserve SSG-rendered #root content when watchdog falls back to error UI', () => {
+      const html = readFileSync(resolve(ROOT_PATH, 'index.html'), 'utf-8');
+
+      // SSG 內容偵測函式必須存在，watchdog 才能判斷是否走 banner 模式。
+      expect(html).toContain('hasPrerenderedRootContent');
+      expect(html).toContain('data-server-rendered');
+      expect(html).not.toContain('root.children.length > 0');
+
+      // 雙模式分支：banner（保留 SSG）vs fullscreen（沿用原行為）。
+      expect(html).toContain('data-cold-start-overlay');
+      expect(html).toContain("'banner'");
+      expect(html).toContain("'fullscreen'");
+
+      // 已渲染狀態下：watchdog 必須附加 wrap 到 body，禁止清除 #root。
+      expect(html).toContain('document.body.appendChild(wrap)');
+
+      // 無 SSG 時保留原本 fallback 行為。
+      expect(html).toContain("root.innerHTML = ''");
+
+      // 診斷事件需帶 hasPrerendered 標記，供後續觀察性追蹤。
+      expect(html).toContain('hasPrerendered: hasPrerendered');
+      expect(html).toContain('removeColdStartOverlay();');
+    });
+
+    it('should render cold-start diagnostics without emoji and with design token colors', () => {
+      const html = readFileSync(resolve(ROOT_PATH, 'index.html'), 'utf-8');
+
+      expect(html).toContain('Service Worker\\uff1a\\u672a\\u8a3b\\u518a');
+      expect(html).toContain('\\u72c0\\u614b\\uff1aService Worker \\u672a\\u8a3b\\u518a');
+      expect(html).toContain('rgb(var(--color-primary,124 58 237))');
+      expect(html).toContain('rgb(var(--color-surface,255 255 255))');
+      expect(html).toContain('rgb(var(--color-border,226 232 240))');
+      expect(html).toContain("summary.textContent = '\\u8a3a\\u65b7\\u8a73\\u60c5'");
+      expect(html).not.toContain('\\u23f0');
+      expect(html).not.toContain('\\ud83c');
+      expect(html).not.toContain('\\ud83d');
+      expect(html).not.toContain('\\ud83e');
+      expect(html).not.toContain('\\u26a0');
     });
 
     it('should reload on controllerchange after activating a waiting worker', () => {

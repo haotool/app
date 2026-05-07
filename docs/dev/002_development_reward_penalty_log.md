@@ -13,6 +13,26 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr371-watchdog-overlay-dedupe
+- 原因：Codex review 指出 SSG banner 模式下 timeout 與後續 script error 可能連續觸發 `showColdStartError()`，造成多個 cold-start banner 重疊。
+- 解法：在建立新 watchdog overlay 前先呼叫 `removeColdStartOverlay()`，讓 banner/fullscreen fallback 都維持單一可見診斷視窗。
+
+- 日期：2026-05-07
+- ID：pr371-ssg-marker-only-watchdog-banner
+- 原因：Codex review 指出 cold-start watchdog 只要看到 `#root` 子節點就走 banner，可能把 phantom/破碎 root 誤判為可閱讀 SSG。
+- 解法：將 banner 模式收斂為只信任 `data-server-rendered="true"`，並更新 phantom E2E 斷言為全屏診斷 fallback。
+
+- 日期：2026-05-07
+- ID：pr371-cold-start-diagnostics-token-ui
+- 原因：實際 cold-start 診斷出現「Service Worker 未註冊但舊快取仍存在」的矛盾狀態，舊視窗只用 emoji log 與硬編紫色，未清楚指向可執行修復。
+- 解法：將診斷輸出改為純文字標籤，新增 SW 未註冊但 cache 存在的狀態/建議行，並把視窗樣式改用 `--color-*` design token fallback。
+
+- 日期：2026-05-07
+- ID：pr371-watchdog-banner-ready-cleanup
+- 原因：PR #371 的 watchdog banner 模式將冷啟動警示掛到 `body`，但 app ready 後只清除 timer/retry，會留下已過時的「載入失敗」提示。
+- 解法：在 `clearWatchdog` ready 共用路徑同步移除 `[data-cold-start-overlay]`，並補靜態測試鎖住 ready cleanup 契約。
+
+- 日期：2026-05-07
 - ID：ratewise-pwa-offline-fallback-runtime-contract
 - 原因：emergency fallback 初版主要依賴 `sw.ts` 字串斷言，未直接驗證 `index.html`、`offline.html` 與任意 cache 全失效時仍會回可見 HTML。
 - 解法：抽出 `resolveOfflineDocumentFallback` 純函式並補 runtime-style 單元測試，鎖住 fallback 優先序、200 HTML 回應與 `X-RateWise-Offline-Fallback` header。
@@ -828,3 +848,8 @@
 - ID：ratewise-lhci-homepage-runtime-refresh-guard
 - 原因：PR #350 的 Lighthouse CI 在首頁 `/` 掉到 `0.87~0.88`，根因為 LHCI 離線模式下首頁仍執行 runtime 匯率 refresh，失敗後插入 stale warning 與額外背景工作，拉低首屏效能。
 - 解法：在 `exchangeRateService` 與 `useExchangeRates` 增加 `VITE_LHCI_OFFLINE` 穩定分支，LHCI 直接使用 build-time 匯率並跳過 runtime refresh / polling，另補 service 與 hook 回歸測試鎖住行為。
+
+- 日期：2026-05-07
+- ID：ratewise-watchdog-preserve-ssg-content
+- 原因：60 天內 PWA 冷啟動白屏修復累積 11+ 次仍復發，根本反模式為 `index.html` watchdog 5 秒 timeout 後執行 `root.innerHTML=''` 直接抹除 vite-react-ssg 預渲染的 144KB 內容，使用者從「可看靜態頁」降級為「白屏 + 錯誤面板」。
+- 解法：watchdog 加 `hasPrerenderedRootContent()` 偵測（`data-server-rendered` 或 `#root.children.length > 0`），有 SSG 內容時改採 floating banner 並附加到 `<body>`，保留 `#root`；無 SSG 時沿用原全屏 fallback。新增 vitest 靜態回歸與 E2E 鎖住雙模式分支；同步關閉 PR #367 emergency HTML（與本修正重複）。
