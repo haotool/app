@@ -188,6 +188,12 @@ function trackGaPwaDiagnostic(entry: PwaDiagnosticEvent): void {
 }
 
 export function flushPwaDiagnosticAnalyticsQueue(): void {
+  if (!isForwardingEnabled()) {
+    pendingGa4Diagnostics.length = 0;
+    writeStoredGaPwaDiagnostics([]);
+    return;
+  }
+
   const gtag = getGtag();
   if (!gtag) return;
 

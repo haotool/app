@@ -32,6 +32,7 @@ describe('pwaDiagnostics', () => {
 
   afterEach(() => {
     delete (window as unknown as { gtag?: unknown }).gtag;
+    vi.unstubAllEnvs();
   });
 
   it('should persist diagnostic events to localStorage', () => {
@@ -268,6 +269,23 @@ describe('pwaDiagnostics', () => {
       } finally {
         setItemSpy.mockRestore();
       }
+    });
+
+    it('should clear queued GA4 diagnostics when forwarding is disabled', () => {
+      delete (window as unknown as { gtag?: unknown }).gtag;
+
+      recordPwaDiagnostic('chunk-load-error', '/assets/main.js', 'error');
+      expect(localStorage.getItem(PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY)).toContain(
+        'chunk-load-error',
+      );
+
+      vi.stubEnv('VITE_PWA_DIAGNOSTIC_FORWARDING', 'false');
+      const gtag = vi.fn();
+      (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag = gtag;
+      flushPwaDiagnosticAnalyticsQueue();
+
+      expect(gtag).not.toHaveBeenCalled();
+      expect(localStorage.getItem(PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY)).toBeNull();
     });
   });
 });

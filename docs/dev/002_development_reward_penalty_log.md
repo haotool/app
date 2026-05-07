@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr373-ga4-queue-forwarding-opt-out
+- 原因：Codex review 指出舊版已排入 localStorage 的 GA4 diagnostic queue，可能在下一版關閉 `VITE_PWA_DIAGNOSTIC_FORWARDING` 後仍被 flush 送出。
+- 解法：讓 GA4 queue flush 先檢查 forwarding flag，關閉時直接清除 stored/memory queue 並不送出，補測試鎖住 opt-out。
+
+- 日期：2026-05-07
 - ID：pr373-sentry-init-idempotent
 - 原因：Codex review 指出每個未 dedup 的 PWA warn/error diagnostic 都會重複呼叫 `initSentry()`，造成反覆初始化與初始化 log 污染 Sentry quota。
 - 解法：將 `initSentry()` 改為一次性 promise/cache，無 DSN log 也只輸出一次，並補測試鎖住重複呼叫只初始化一次。
