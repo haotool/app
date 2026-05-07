@@ -234,5 +234,40 @@ describe('pwaDiagnostics', () => {
       );
       expect(localStorage.getItem(PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY)).toBeNull();
     });
+
+    it('should flush in-memory GA4 fallback when storage writes fail', () => {
+      delete (window as unknown as { gtag?: unknown }).gtag;
+
+      const originalSetItem = window.localStorage.setItem.bind(window.localStorage);
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function setItem(
+        key: string,
+        value: string,
+      ) {
+        if (key === PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY) {
+          throw new DOMException('Quota exceeded', 'QuotaExceededError');
+        }
+        return originalSetItem(key, value);
+      });
+
+      try {
+        recordPwaDiagnostic('pwa-storage-near-limit', 'storage quota warning', 'warn');
+
+        const gtag = vi.fn();
+        (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag = gtag;
+        flushPwaDiagnosticAnalyticsQueue();
+
+        expect(gtag).toHaveBeenCalledWith(
+          'event',
+          'pwa_diagnostic',
+          expect.objectContaining({
+            diagnostic_phase: 'pwa-storage-near-limit',
+            diagnostic_level: 'warn',
+            diagnostic_detail_category: 'storage',
+          }),
+        );
+      } finally {
+        setItemSpy.mockRestore();
+      }
+    });
   });
 });

@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr373-ga4-diagnostic-memory-fallback-flush
+- 原因：Codex review 指出 localStorage 可讀但 queue 寫入失敗時會 fallback 到 memory queue，flush 若只讀 storage 仍會漏送高風險環境的早期診斷。
+- 解法：讓 GA4 diagnostic flush 同時合併 stored queue 與 memory fallback queue，並補 storage quota/private-mode 類情境測試。
+
+- 日期：2026-05-07
 - ID：pr373-ga4-diagnostic-queue-persist-reload
 - 原因：Codex review 指出 `chunk-load-error` 記錄後會立即 recovery reload，若 GA4 queue 只在模組記憶體，尚未 flush 的早期診斷仍會遺失。
 - 解法：將待送 GA4 diagnostic 以去識別化參數持久化到 localStorage，下一次 analytics 初始化後補送並清除 queue。

@@ -191,9 +191,10 @@ export function flushPwaDiagnosticAnalyticsQueue(): void {
   const gtag = getGtag();
   if (!gtag) return;
 
-  const queuedDiagnostics = canUseBrowserStorage()
-    ? readStoredGaPwaDiagnostics()
-    : pendingGa4Diagnostics.splice(0);
+  const queuedDiagnostics = [
+    ...(canUseBrowserStorage() ? readStoredGaPwaDiagnostics() : []),
+    ...pendingGa4Diagnostics.splice(0),
+  ];
 
   if (canUseBrowserStorage()) {
     writeStoredGaPwaDiagnostics([]);
