@@ -858,8 +858,3 @@
 - ID：ratewise-lhci-homepage-runtime-refresh-guard
 - 原因：PR #350 的 Lighthouse CI 在首頁 `/` 掉到 `0.87~0.88`，根因為 LHCI 離線模式下首頁仍執行 runtime 匯率 refresh，失敗後插入 stale warning 與額外背景工作，拉低首屏效能。
 - 解法：在 `exchangeRateService` 與 `useExchangeRates` 增加 `VITE_LHCI_OFFLINE` 穩定分支，LHCI 直接使用 build-time 匯率並跳過 runtime refresh / polling，另補 service 與 hook 回歸測試鎖住行為。
-
-- 日期：2026-05-07
-- ID：ratewise-sw-navigation-swr
-- 原因：SPA navigation 採 NetworkFirst + 3s timeout，慢網路或離線時最多等 3 秒才 fallback，是冷啟動感知白屏的時序根因之一；installed PWA 與已 visited 瀏覽器都應該優先吃 cache 而非為了新鮮度等網路。
-- 解法：將 navigationStrategy 改為 StaleWhileRevalidate（cache hit 立即返回 + 背景 revalidate），版本切換仍由 controllerchange + UpdatePrompt + handleVersionUpdate 雙重檢查；handlerDidError 的三層 fallback 完整保留，僅在 cache miss + 網路失敗時才會走到。同步更新 sw.test.ts 與 pwa-offline.test.ts 鎖住 SWR 並禁回退 NetworkFirst。
