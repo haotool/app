@@ -198,6 +198,7 @@ describe('PWA 離線功能測試', () => {
       expect(html).toContain('react-fallback-ready');
       expect(html).toContain('cold-start-watchdog-cleared');
       expect(html).toContain('removeColdStartOverlay');
+      expect(html).toContain('removeColdStartOverlay();');
       expect(html).not.toContain('root.children.length === 0');
       expect(fallbackComponent).toContain('data-ratewise-watchdog-ready="true"');
     });
@@ -223,6 +224,7 @@ describe('PWA 離線功能測試', () => {
 
       // 診斷事件需帶 hasPrerendered 標記，供後續觀察性追蹤。
       expect(html).toContain('hasPrerendered: hasPrerendered');
+      expect(html).toContain('removeColdStartOverlay();');
     });
 
     it('should render cold-start diagnostics without emoji and with design token colors', () => {

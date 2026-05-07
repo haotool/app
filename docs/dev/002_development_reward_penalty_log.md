@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr371-watchdog-overlay-dedupe
+- 原因：Codex review 指出 SSG banner 模式下 timeout 與後續 script error 可能連續觸發 `showColdStartError()`，造成多個 cold-start banner 重疊。
+- 解法：在建立新 watchdog overlay 前先呼叫 `removeColdStartOverlay()`，讓 banner/fullscreen fallback 都維持單一可見診斷視窗。
+
+- 日期：2026-05-07
 - ID：pr371-ssg-marker-only-watchdog-banner
 - 原因：Codex review 指出 cold-start watchdog 只要看到 `#root` 子節點就走 banner，可能把 phantom/破碎 root 誤判為可閱讀 SSG。
 - 解法：將 banner 模式收斂為只信任 `data-server-rendered="true"`，並更新 phantom E2E 斷言為全屏診斷 fallback。

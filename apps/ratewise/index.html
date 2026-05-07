@@ -613,6 +613,7 @@
             { timeoutMs: TIMEOUT_MS, hasPrerendered: hasPrerendered },
             'error',
           );
+          removeColdStartOverlay();
           var isOnline = navigator.onLine !== false;
           var canRetry = isOnline && getRetryCount() < MAX_RETRIES;
           var wrap = document.createElement('div');
