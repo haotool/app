@@ -96,3 +96,22 @@ export async function addBreadcrumb(message: string, data?: Record<string, unkno
     data,
   });
 }
+
+/** 結構化訊息事件（非 Error，例如 PWA 診斷的可觀性事件） */
+export async function captureMessage(
+  message: string,
+  options?: {
+    level?: 'info' | 'warning' | 'error';
+    tags?: Record<string, string>;
+    extra?: Record<string, unknown>;
+  },
+): Promise<void> {
+  if (!SENTRY_DSN) return;
+
+  const Sentry = await import('@sentry/react');
+  Sentry.captureMessage(message, {
+    level: options?.level ?? 'info',
+    tags: options?.tags,
+    extra: options?.extra,
+  });
+}

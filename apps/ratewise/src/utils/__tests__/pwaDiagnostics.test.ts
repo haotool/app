@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  __resetPwaDiagnosticForwardingDedup,
   clearPwaAppReadyMarker,
+  flushPwaDiagnosticForwarding,
   markPwaAppReady,
   PWA_APP_READY_ATTR,
   PWA_APP_READY_EVENT,
@@ -11,11 +13,22 @@ import {
   recordPwaDiagnostic,
 } from '../pwaDiagnostics';
 
+vi.mock('../sentry', () => ({
+  captureMessage: vi.fn().mockResolvedValue(undefined),
+  addBreadcrumb: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe('pwaDiagnostics', () => {
   beforeEach(() => {
     localStorage.clear();
     clearPwaAppReadyMarker();
     window.__RATEWISE_PWA_DIAGNOSTICS__ = [];
+    __resetPwaDiagnosticForwardingDedup();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    delete (window as unknown as { gtag?: unknown }).gtag;
   });
 
   it('should persist diagnostic events to localStorage', () => {
@@ -54,5 +67,74 @@ describe('pwaDiagnostics', () => {
     if (originalDescriptor) {
       Object.defineProperty(window, 'localStorage', originalDescriptor);
     }
+  });
+
+  describe('observability forwarding', () => {
+    it('should forward error-level events to Sentry captureMessage', async () => {
+      const sentry = await import('../sentry');
+      recordPwaDiagnostic('cold-start-overlay-shown', { timeoutMs: 5000 }, 'error');
+      await flushPwaDiagnosticForwarding();
+
+      expect(sentry.captureMessage).toHaveBeenCalledWith(
+        'PWA diagnostic: cold-start-overlay-shown',
+        expect.objectContaining({
+          level: 'error',
+          tags: { pwa_diagnostic_phase: 'cold-start-overlay-shown' },
+        }),
+      );
+    });
+
+    it('should forward warn-level events to Sentry addBreadcrumb (not captureMessage)', async () => {
+      const sentry = await import('../sentry');
+      recordPwaDiagnostic('pwa-storage-near-limit', { usageMb: 45 }, 'warn');
+      await flushPwaDiagnosticForwarding();
+
+      expect(sentry.addBreadcrumb).toHaveBeenCalledWith(
+        'pwa:pwa-storage-near-limit',
+        expect.objectContaining({ level: 'warn' }),
+      );
+      expect(sentry.captureMessage).not.toHaveBeenCalled();
+    });
+
+    it('should NOT forward info-level events (avoid Sentry quota burn)', async () => {
+      const sentry = await import('../sentry');
+      recordPwaDiagnostic('bootstrap-start', { version: '2.22.20' }, 'info');
+      await flushPwaDiagnosticForwarding();
+
+      expect(sentry.captureMessage).not.toHaveBeenCalled();
+      expect(sentry.addBreadcrumb).not.toHaveBeenCalled();
+    });
+
+    it('should dedup the same phase within 5 seconds', async () => {
+      const sentry = await import('../sentry');
+      recordPwaDiagnostic('chunk-load-error', 'first', 'error');
+      recordPwaDiagnostic('chunk-load-error', 'second', 'error');
+      recordPwaDiagnostic('chunk-load-error', 'third', 'error');
+      await flushPwaDiagnosticForwarding();
+
+      // Only the first should reach Sentry; subsequent calls are dedup'd.
+      expect(sentry.captureMessage).toHaveBeenCalledTimes(1);
+    });
+
+    it('should send GA4 pwa_diagnostic event when gtag is available', () => {
+      const gtag = vi.fn();
+      (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag = gtag;
+
+      recordPwaDiagnostic('cold-start-script-error', '/assets/main.js', 'error');
+
+      expect(gtag).toHaveBeenCalledWith(
+        'event',
+        'pwa_diagnostic',
+        expect.objectContaining({
+          diagnostic_phase: 'cold-start-script-error',
+          diagnostic_level: 'error',
+        }),
+      );
+    });
+
+    it('should not throw when gtag is unavailable', () => {
+      delete (window as unknown as { gtag?: unknown }).gtag;
+      expect(() => recordPwaDiagnostic('chunk-load-error', 'x', 'error')).not.toThrow();
+    });
   });
 });

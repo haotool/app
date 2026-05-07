@@ -4,6 +4,11 @@ const PWA_APP_READY_EVENT = 'ratewise:pwa-app-ready';
 const PWA_APP_READY_ATTR = 'data-ratewise-app-ready';
 const MAX_PWA_DIAGNOSTIC_EVENTS = 40;
 
+// 5 秒內同一 phase 不重複轉發，避免 watchdog / chunk-error 連發爆 Sentry / GA4 quota。
+const FORWARD_DEDUP_WINDOW_MS = 5000;
+const FORWARD_DETAIL_MAX_LEN = 200;
+const recentlyForwardedPhases = new Map<string, number>();
+
 export interface PwaDiagnosticEvent {
   phase: string;
   level: 'info' | 'warn' | 'error';
@@ -15,6 +20,97 @@ declare global {
   interface Window {
     __RATEWISE_PWA_DIAGNOSTICS__?: PwaDiagnosticEvent[];
   }
+}
+
+function isForwardingEnabled(): boolean {
+  // 預設啟用；可由環境變數設 'false' 完全關閉（避免測試或敏感環境送外部訊號）。
+  const flag: unknown = import.meta.env['VITE_PWA_DIAGNOSTIC_FORWARDING'];
+  return flag !== 'false' && flag !== false;
+}
+
+function shouldForwardPhase(phase: string, level: PwaDiagnosticEvent['level']): boolean {
+  // info-level 量大且通常不需告警，僅在內部 localStorage 留存即可。
+  if (level === 'info') return false;
+
+  const now = Date.now();
+  const last = recentlyForwardedPhases.get(phase);
+  if (last && now - last < FORWARD_DEDUP_WINDOW_MS) return false;
+
+  recentlyForwardedPhases.set(phase, now);
+  if (recentlyForwardedPhases.size > 50) {
+    const cutoff = now - FORWARD_DEDUP_WINDOW_MS * 4;
+    for (const [key, ts] of recentlyForwardedPhases) {
+      if (ts < cutoff) recentlyForwardedPhases.delete(key);
+    }
+  }
+  return true;
+}
+
+function trackGaPwaDiagnostic(entry: PwaDiagnosticEvent): void {
+  if (typeof window === 'undefined') return;
+  // gtag 由 @shared/analytics 在 client-only initGA() 後注入；SSG 時或 GA 未 init 時皆無 function。
+  const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
+  if (typeof gtag !== 'function') return;
+  try {
+    gtag('event', 'pwa_diagnostic', {
+      diagnostic_phase: entry.phase,
+      diagnostic_level: entry.level,
+      diagnostic_detail: entry.detail?.slice(0, FORWARD_DETAIL_MAX_LEN),
+    });
+  } catch {
+    // GA4 unavailable — diagnostics 仍保留在 localStorage。
+  }
+}
+
+// 追蹤 pending forwards，僅供測試 `flushPwaDiagnosticForwarding` 使用；
+// 正式 runtime 不影響行為（fire-and-forget 語意維持）。
+const pendingForwards = new Set<Promise<void>>();
+
+async function forwardPwaDiagnostic(entry: PwaDiagnosticEvent): Promise<void> {
+  if (!isForwardingEnabled()) return;
+  if (!shouldForwardPhase(entry.phase, entry.level)) return;
+
+  trackGaPwaDiagnostic(entry);
+
+  try {
+    if (entry.level === 'error') {
+      const { captureMessage } = await import('./sentry');
+      await captureMessage(`PWA diagnostic: ${entry.phase}`, {
+        level: 'error',
+        tags: { pwa_diagnostic_phase: entry.phase },
+        extra: {
+          detail: entry.detail,
+          timestamp: entry.timestamp,
+        },
+      });
+    } else if (entry.level === 'warn') {
+      const { addBreadcrumb } = await import('./sentry');
+      await addBreadcrumb(`pwa:${entry.phase}`, {
+        detail: entry.detail,
+        timestamp: entry.timestamp,
+        level: entry.level,
+      });
+    }
+  } catch {
+    // Sentry / dynamic import 失敗時靜默忽略 — diagnostic 仍在 localStorage。
+  }
+}
+
+function trackPendingForward(promise: Promise<void>): void {
+  pendingForwards.add(promise);
+  void promise.finally(() => pendingForwards.delete(promise));
+}
+
+// 暴露給測試：等待所有 pending forwards 完成（含 dynamic import 解析）。
+export async function flushPwaDiagnosticForwarding(): Promise<void> {
+  while (pendingForwards.size > 0) {
+    await Promise.allSettled([...pendingForwards]);
+  }
+}
+
+// 暴露給測試環境驗證 dedup 行為，正式程式碼不應依賴。
+export function __resetPwaDiagnosticForwardingDedup(): void {
+  recentlyForwardedPhases.clear();
 }
 
 function canUseBrowserStorage(): boolean {
@@ -112,6 +208,10 @@ export function recordPwaDiagnostic(
   } catch {
     // Ignore CustomEvent issues in older environments.
   }
+
+  // 觀察性：fire-and-forget 把 warn/error 事件送到 Sentry / GA4，
+  // 從盲修轉為數據驅動。info-level 與 dedup 內事件不會送出。
+  trackPendingForward(forwardPwaDiagnostic(entry));
 
   return entry;
 }

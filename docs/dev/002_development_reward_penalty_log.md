@@ -858,3 +858,8 @@
 - ID：ratewise-lhci-homepage-runtime-refresh-guard
 - 原因：PR #350 的 Lighthouse CI 在首頁 `/` 掉到 `0.87~0.88`，根因為 LHCI 離線模式下首頁仍執行 runtime 匯率 refresh，失敗後插入 stale warning 與額外背景工作，拉低首屏效能。
 - 解法：在 `exchangeRateService` 與 `useExchangeRates` 增加 `VITE_LHCI_OFFLINE` 穩定分支，LHCI 直接使用 build-time 匯率並跳過 runtime refresh / polling，另補 service 與 hook 回歸測試鎖住行為。
+
+- 日期：2026-05-07
+- ID：ratewise-pwa-diagnostics-sentry-ga-forwarding
+- 原因：60 天內 11+ 次 PWA 冷啟動白屏修復都靠局部觀察與盲修；`recordPwaDiagnostic` 事件僅留在使用者 localStorage，使用者重灌或私密模式即遺失，無法統計真實失敗率與分布，所有改動只能局部驗證。
+- 解法：在 `pwaDiagnostics` 加 `forwardPwaDiagnostic`，warn 走 `Sentry.addBreadcrumb`、error 走 `Sentry.captureMessage`，並同步送 GA4 `pwa_diagnostic` event；info-level 完全不送以保護 Sentry quota。內建 5 秒 phase dedup 與 `VITE_PWA_DIAGNOSTIC_FORWARDING` env 開關；新增 `flushPwaDiagnosticForwarding()` 給測試 deterministically 等待 fire-and-forget。同步在 `sentry.ts` 加 `captureMessage` helper 對齊既有 DSN guard 模式。新增 6 個單元測試鎖住 forward / dedup / GA4 / DSN-未設靜默行為。
