@@ -74,7 +74,7 @@ pnpm dev                     # 預設 @app/ratewise
 pnpm build                   # 全 workspace
 pnpm build:ratewise
 pnpm typecheck               # pnpm -r typecheck
-pnpm test                    # pnpm -r test
+pnpm test                    # workspace tests + root Lighthouse regression tests
 pnpm test:e2e                # ratewise + nihonname
 pnpm lint
 pnpm format                  # prettier --check .

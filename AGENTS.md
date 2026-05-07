@@ -56,7 +56,7 @@ pnpm dev                     # 預設啟動 @app/ratewise
 pnpm build                   # 建置所有 workspace apps
 pnpm build:ratewise          # 單一 app 建置（常用）
 pnpm typecheck               # 實際為 pnpm -r typecheck
-pnpm test                    # 實際為 pnpm -r test
+pnpm test                    # workspace tests + root Lighthouse regression tests
 pnpm test:e2e                # ratewise + nihonname（Playwright）
 pnpm lint
 pnpm format                  # prettier --check .
@@ -216,7 +216,7 @@ Agent **必須**先完成：
 ### `pre-push`（Husky，快速必要檢查）
 
 1. `pnpm typecheck`
-2. `pnpm test`
+2. `pnpm test`（workspace tests + root Lighthouse regression tests）
 3. `pnpm build:ratewise`
 
 - E2E / coverage / Lighthouse 由 CI 執行（本地 pre-push 不做完整長時間檢查）
