@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr375-root-vitest-ci-coverage
+- 原因：Codex review 指出新增 root Lighthouse regression suite 不會被 `pnpm -r test` 或 CI `test:coverage` 執行，導致 env SSOT 測試可能漏跑。
+- 解法：新增 `test:root` 指向 Lighthouse production 測試檔，並讓 `test`、`test:unit`、`test:coverage` 都串入該 root Vitest，同步更新 SOP 說明。
+
+- 日期：2026-05-07
 - ID：lighthouse-production-env-ssot-guard
 - 原因：Codex review 稽核指出 `LH_MAX_ATTEMPTS` 未驗證為正整數時，`0` 會讓 Lighthouse retry 迴圈靜默不執行卻仍可能成功結束。
 - 解法：在 `scripts/lighthouse-production.mjs` 入口統一驗證 `LH_RUNS` 與 `LH_MAX_ATTEMPTS` 為正整數，並補 Vitest 鎖住 invalid env fail-fast 與 baseline 寫回順序。
