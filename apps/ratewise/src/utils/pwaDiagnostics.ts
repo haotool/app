@@ -1,4 +1,5 @@
 const PWA_DIAGNOSTICS_STORAGE_KEY = 'ratewise_pwa_diagnostics_v1';
+const PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY = 'ratewise_pwa_diagnostics_ga_queue_v1';
 const PWA_DIAGNOSTIC_EVENT = 'ratewise:pwa-diagnostic';
 const PWA_APP_READY_EVENT = 'ratewise:pwa-app-ready';
 const PWA_APP_READY_ATTR = 'data-ratewise-app-ready';
@@ -109,7 +110,57 @@ function getGtag(): GtagFunction | undefined {
   return typeof gtag === 'function' ? gtag : undefined;
 }
 
+function normalizeGaPwaDiagnosticParams(input: unknown): GaPwaDiagnosticParams[] {
+  if (!Array.isArray(input)) return [];
+
+  return input.filter((entry): entry is GaPwaDiagnosticParams => {
+    if (entry == null || typeof entry !== 'object') return false;
+    const value = entry as Record<string, unknown>;
+    return (
+      typeof value['diagnostic_phase'] === 'string' &&
+      (value['diagnostic_level'] === 'warn' || value['diagnostic_level'] === 'error') &&
+      typeof value['diagnostic_detail_present'] === 'boolean'
+    );
+  });
+}
+
+function readStoredGaPwaDiagnostics(): GaPwaDiagnosticParams[] {
+  if (!canUseBrowserStorage()) return [];
+
+  try {
+    const raw = window.localStorage.getItem(PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY);
+    if (!raw) return [];
+    return normalizeGaPwaDiagnosticParams(JSON.parse(raw));
+  } catch {
+    return [];
+  }
+}
+
+function writeStoredGaPwaDiagnostics(queue: GaPwaDiagnosticParams[]): boolean {
+  if (!canUseBrowserStorage()) return false;
+
+  try {
+    if (queue.length === 0) {
+      window.localStorage.removeItem(PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY);
+      return true;
+    }
+
+    window.localStorage.setItem(
+      PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY,
+      JSON.stringify(queue.slice(-MAX_PENDING_GA4_DIAGNOSTICS)),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function enqueueGaPwaDiagnostic(params: GaPwaDiagnosticParams): void {
+  if (canUseBrowserStorage()) {
+    const stored = writeStoredGaPwaDiagnostics([...readStoredGaPwaDiagnostics(), params]);
+    if (stored) return;
+  }
+
   pendingGa4Diagnostics.push(params);
   if (pendingGa4Diagnostics.length > MAX_PENDING_GA4_DIAGNOSTICS) {
     pendingGa4Diagnostics.shift();
@@ -140,8 +191,15 @@ export function flushPwaDiagnosticAnalyticsQueue(): void {
   const gtag = getGtag();
   if (!gtag) return;
 
-  while (pendingGa4Diagnostics.length > 0) {
-    const params = pendingGa4Diagnostics.shift();
+  const queuedDiagnostics = canUseBrowserStorage()
+    ? readStoredGaPwaDiagnostics()
+    : pendingGa4Diagnostics.splice(0);
+
+  if (canUseBrowserStorage()) {
+    writeStoredGaPwaDiagnostics([]);
+  }
+
+  for (const params of queuedDiagnostics) {
     if (!params) continue;
 
     try {
@@ -203,6 +261,7 @@ export async function flushPwaDiagnosticForwarding(): Promise<void> {
 export function __resetPwaDiagnosticForwardingDedup(): void {
   recentlyForwardedPhases.clear();
   pendingGa4Diagnostics.length = 0;
+  writeStoredGaPwaDiagnostics([]);
 }
 
 function canUseBrowserStorage(): boolean {
@@ -335,6 +394,7 @@ export {
   MAX_PWA_DIAGNOSTIC_EVENTS,
   PWA_APP_READY_ATTR,
   PWA_APP_READY_EVENT,
+  PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY,
   PWA_DIAGNOSTICS_STORAGE_KEY,
   PWA_DIAGNOSTIC_EVENT,
 };

@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr373-ga4-diagnostic-queue-persist-reload
+- 原因：Codex review 指出 `chunk-load-error` 記錄後會立即 recovery reload，若 GA4 queue 只在模組記憶體，尚未 flush 的早期診斷仍會遺失。
+- 解法：將待送 GA4 diagnostic 以去識別化參數持久化到 localStorage，下一次 analytics 初始化後補送並清除 queue。
+
+- 日期：2026-05-07
 - ID：pr373-ga4-diagnostic-queue-before-init
 - 原因：Codex review 指出 `initGA()` 延後到 load/idle 後才建立 `window.gtag`，早期 PWA warn/error 診斷會在 GA4 轉發時被靜默丟棄。
 - 解法：將 GA4 PWA diagnostic 參數先以去識別化欄位排隊，analytics 初始化後 flush，並補測試鎖住無 raw detail 與不漏送。

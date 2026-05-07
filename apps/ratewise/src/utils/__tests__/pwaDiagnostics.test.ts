@@ -9,6 +9,7 @@ import {
   markPwaAppReady,
   PWA_APP_READY_ATTR,
   PWA_APP_READY_EVENT,
+  PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY,
   PWA_DIAGNOSTICS_STORAGE_KEY,
   readPwaDiagnostics,
   recordPwaDiagnostic,
@@ -207,6 +208,31 @@ describe('pwaDiagnostics', () => {
       const gaParams = gtag.mock.calls[0]?.[2] as Record<string, unknown>;
       expect(gaParams).not.toHaveProperty('diagnostic_detail');
       expect(JSON.stringify(gaParams)).not.toContain('user@example.com');
+    });
+
+    it('should persist queued GA4 diagnostics across recovery reloads', () => {
+      delete (window as unknown as { gtag?: unknown }).gtag;
+
+      recordPwaDiagnostic('chunk-load-error', 'user@example.com /assets/main.js', 'error');
+
+      const persistedQueue = localStorage.getItem(PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY);
+      expect(persistedQueue).toContain('chunk-load-error');
+      expect(persistedQueue).not.toContain('user@example.com');
+
+      const gtag = vi.fn();
+      (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag = gtag;
+      flushPwaDiagnosticAnalyticsQueue();
+
+      expect(gtag).toHaveBeenCalledWith(
+        'event',
+        'pwa_diagnostic',
+        expect.objectContaining({
+          diagnostic_phase: 'chunk-load-error',
+          diagnostic_level: 'error',
+          diagnostic_detail_category: 'asset-load',
+        }),
+      );
+      expect(localStorage.getItem(PWA_DIAGNOSTICS_GA_QUEUE_STORAGE_KEY)).toBeNull();
     });
   });
 });
