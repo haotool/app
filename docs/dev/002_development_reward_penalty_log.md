@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr371-ssg-marker-only-watchdog-banner
+- 原因：Codex review 指出 cold-start watchdog 只要看到 `#root` 子節點就走 banner，可能把 phantom/破碎 root 誤判為可閱讀 SSG。
+- 解法：將 banner 模式收斂為只信任 `data-server-rendered="true"`，並更新 phantom E2E 斷言為全屏診斷 fallback。
+
+- 日期：2026-05-07
 - ID：pr371-cold-start-diagnostics-token-ui
 - 原因：實際 cold-start 診斷出現「Service Worker 未註冊但舊快取仍存在」的矛盾狀態，舊視窗只用 emoji log 與硬編紫色，未清楚指向可執行修復。
 - 解法：將診斷輸出改為純文字標籤，新增 SW 未註冊但 cache 存在的狀態/建議行，並把視窗樣式改用 `--color-*` design token fallback。

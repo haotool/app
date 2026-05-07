@@ -208,7 +208,7 @@ describe('PWA 離線功能測試', () => {
       // SSG 內容偵測函式必須存在，watchdog 才能判斷是否走 banner 模式。
       expect(html).toContain('hasPrerenderedRootContent');
       expect(html).toContain('data-server-rendered');
-      expect(html).toContain('root.children.length > 0');
+      expect(html).not.toContain('root.children.length > 0');
 
       // 雙模式分支：banner（保留 SSG）vs fullscreen（沿用原行為）。
       expect(html).toContain('data-cold-start-overlay');

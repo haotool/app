@@ -529,9 +529,7 @@ test.describe('飛航模式冷啟動診斷', () => {
     expect(cssCacheCount, '快取中應有 CSS files').toBeGreaterThanOrEqual(1);
   });
 
-  test('即使 root 提前出現假節點，冷啟動 watchdog 仍應顯示診斷 UI（banner 模式）', async ({
-    browser,
-  }) => {
+  test('即使 root 提前出現假節點，冷啟動 watchdog 仍應顯示全屏診斷 UI', async ({ browser }) => {
     const context = await browser.newContext({
       serviceWorkers: 'allow',
     });
@@ -539,39 +537,32 @@ test.describe('飛航模式冷啟動診斷', () => {
 
     await page.addInitScript(() => {
       window.__RATEWISE_COLD_START_TIMEOUT_MS__ = 900;
+    });
 
-      const timer = window.setInterval(() => {
-        const root = document.getElementById('root');
-        const isReady = document.documentElement.getAttribute('data-ratewise-app-ready') === 'true';
-
-        if (isReady) {
-          window.clearInterval(timer);
-          return;
-        }
-
-        if (root && root.children.length === 0) {
-          const phantom = document.createElement('div');
-          phantom.setAttribute('data-test-phantom-root-child', 'true');
-          root.appendChild(phantom);
-          window.clearInterval(timer);
-        }
-      }, 50);
+    await page.route('**/ratewise/', async (route) => {
+      const response = await route.fetch();
+      let body = await response.text();
+      body = body.replace(
+        "recordDiagnostic('cold-start-watchdog-start'",
+        "var __testRoot=document.getElementById('root');if(__testRoot){__testRoot.removeAttribute('data-server-rendered');__testRoot.innerHTML='<div data-test-phantom-root-child=\"true\"></div>';}recordDiagnostic('cold-start-watchdog-start'",
+      );
+      await route.fulfill({ response, body });
     });
 
     await page.route('**/assets/*.js*', (route) => route.abort());
     await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 
-    // root 有 phantom child → hasPrerenderedRootContent=true → 走 banner 模式
+    // root 有 phantom child 但沒有 SSG 標記 → 不可誤判成可閱讀預渲染內容。
     const alert = page.getByRole('alert');
     await expect(alert).toBeVisible({ timeout: 10_000 });
-    await expect(alert).toHaveAttribute('data-cold-start-overlay', 'banner');
-    await expect(alert).toContainText('互動功能載入失敗');
+    await expect(alert).toHaveAttribute('data-cold-start-overlay', 'fullscreen');
+    await expect(alert).toContainText('應用程式載入失敗');
 
-    // 關鍵保護：phantom 節點不可被 watchdog 清除（不 root.innerHTML=''）
+    // 關鍵保護：phantom 節點不能讓 watchdog 降級成小 banner；全屏 fallback 會清空破碎 root。
     const phantomStillPresent = await page.evaluate(() =>
       Boolean(document.querySelector('[data-test-phantom-root-child="true"]')),
     );
-    expect(phantomStillPresent).toBe(true);
+    expect(phantomStillPresent).toBe(false);
 
     await page.getByText('診斷詳情').click();
     const diagnosticPanel = page.locator('#cs-diag');
