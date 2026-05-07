@@ -13,6 +13,41 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr373-ga4-queue-forwarding-opt-out
+- 原因：Codex review 指出舊版已排入 localStorage 的 GA4 diagnostic queue，可能在下一版關閉 `VITE_PWA_DIAGNOSTIC_FORWARDING` 後仍被 flush 送出。
+- 解法：讓 GA4 queue flush 先檢查 forwarding flag，關閉時直接清除 stored/memory queue 並不送出，補測試鎖住 opt-out。
+
+- 日期：2026-05-07
+- ID：pr373-sentry-init-idempotent
+- 原因：Codex review 指出每個未 dedup 的 PWA warn/error diagnostic 都會重複呼叫 `initSentry()`，造成反覆初始化與初始化 log 污染 Sentry quota。
+- 解法：將 `initSentry()` 改為一次性 promise/cache，無 DSN log 也只輸出一次，並補測試鎖住重複呼叫只初始化一次。
+
+- 日期：2026-05-07
+- ID：pr373-ga4-diagnostic-memory-fallback-flush
+- 原因：Codex review 指出 localStorage 可讀但 queue 寫入失敗時會 fallback 到 memory queue，flush 若只讀 storage 仍會漏送高風險環境的早期診斷。
+- 解法：讓 GA4 diagnostic flush 同時合併 stored queue 與 memory fallback queue，並補 storage quota/private-mode 類情境測試。
+
+- 日期：2026-05-07
+- ID：pr373-ga4-diagnostic-queue-persist-reload
+- 原因：Codex review 指出 `chunk-load-error` 記錄後會立即 recovery reload，若 GA4 queue 只在模組記憶體，尚未 flush 的早期診斷仍會遺失。
+- 解法：將待送 GA4 diagnostic 以去識別化參數持久化到 localStorage，下一次 analytics 初始化後補送並清除 queue。
+
+- 日期：2026-05-07
+- ID：pr373-ga4-diagnostic-queue-before-init
+- 原因：Codex review 指出 `initGA()` 延後到 load/idle 後才建立 `window.gtag`，早期 PWA warn/error 診斷會在 GA4 轉發時被靜默丟棄。
+- 解法：將 GA4 PWA diagnostic 參數先以去識別化欄位排隊，analytics 初始化後 flush，並補測試鎖住無 raw detail 與不漏送。
+
+- 日期：2026-05-07
+- ID：pr373-sentry-diagnostic-detail-redaction
+- 原因：Codex review 指出 GA4 已去識別化，但 Sentry `extra` / breadcrumb 仍可能外送原始 diagnostic detail，包含 URL query 或帳號識別。
+- 解法：將 Sentry captureMessage 與 breadcrumb 改用 detail present/category/length bucket metadata，不再外送 raw detail，並補測試鎖住無 email/raw detail。
+
+- 日期：2026-05-07
+- ID：pr373-pwa-diagnostic-forwarding-privacy-init
+- 原因：Codex review 指出 PWA diagnostic 會把原始 detail 送到 GA4，且 Sentry 轉發前未確保 SDK 已初始化，冷啟動主場景可能漏送。
+- 解法：GA4 改送 detail present/category/length bucket 等去識別化欄位，Sentry error/warn 轉發前先呼叫 `initSentry()`，並補單元測試鎖住行為。
+
+- 日期：2026-05-07
 - ID：pr372-cache-miss-navigation-waituntil
 - 原因：Codex review 指出 bounded SWR cache miss 超時回 fallback 後，慢網路 fetch 未掛入 `event.waitUntil`，SW 可能被終止而無法暖起 `html-cache`。
 - 解法：將 cache miss 的 `networkResponse` 同步掛入 `event.waitUntil`，保留 3 秒 fallback 體感，同時確保背景 HTML cache 寫入有生命週期保護。

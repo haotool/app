@@ -10,14 +10,10 @@ import { logger } from './logger';
 
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 const IS_PROD = import.meta.env.MODE === 'production';
+let sentryInitPromise: Promise<void> | null = null;
+let didLogMissingDsn = false;
 
-export async function initSentry() {
-  // Only initialize if DSN is provided (production or explicit dev testing)
-  if (!SENTRY_DSN) {
-    logger.info('Sentry: No DSN configured, skipping initialization');
-    return;
-  }
-
+async function initializeSentryOnce(): Promise<void> {
   try {
     // Lazy load Sentry SDK to reduce initial bundle size
     const Sentry = await import('@sentry/react');
@@ -68,8 +64,23 @@ export async function initSentry() {
       tracesSampleRate: IS_PROD ? 0.1 : 1.0,
     });
   } catch (error) {
+    sentryInitPromise = null;
     logger.error('Failed to initialize Sentry', error as Error);
   }
+}
+
+export async function initSentry(): Promise<void> {
+  // Only initialize if DSN is provided (production or explicit dev testing)
+  if (!SENTRY_DSN) {
+    if (!didLogMissingDsn) {
+      didLogMissingDsn = true;
+      logger.info('Sentry: No DSN configured, skipping initialization');
+    }
+    return;
+  }
+
+  sentryInitPromise ??= initializeSentryOnce();
+  await sentryInitPromise;
 }
 
 /**
@@ -94,5 +105,24 @@ export async function addBreadcrumb(message: string, data?: Record<string, unkno
     message,
     level: 'info',
     data,
+  });
+}
+
+/** 結構化訊息事件（非 Error，例如 PWA 診斷的可觀性事件） */
+export async function captureMessage(
+  message: string,
+  options?: {
+    level?: 'info' | 'warning' | 'error';
+    tags?: Record<string, string>;
+    extra?: Record<string, unknown>;
+  },
+): Promise<void> {
+  if (!SENTRY_DSN) return;
+
+  const Sentry = await import('@sentry/react');
+  Sentry.captureMessage(message, {
+    level: options?.level ?? 'info',
+    tags: options?.tags,
+    extra: options?.extra,
   });
 }
