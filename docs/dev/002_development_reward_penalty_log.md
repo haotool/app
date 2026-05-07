@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr373-sentry-init-idempotent
+- 原因：Codex review 指出每個未 dedup 的 PWA warn/error diagnostic 都會重複呼叫 `initSentry()`，造成反覆初始化與初始化 log 污染 Sentry quota。
+- 解法：將 `initSentry()` 改為一次性 promise/cache，無 DSN log 也只輸出一次，並補測試鎖住重複呼叫只初始化一次。
+
+- 日期：2026-05-07
 - ID：pr373-ga4-diagnostic-memory-fallback-flush
 - 原因：Codex review 指出 localStorage 可讀但 queue 寫入失敗時會 fallback 到 memory queue，flush 若只讀 storage 仍會漏送高風險環境的早期診斷。
 - 解法：讓 GA4 diagnostic flush 同時合併 stored queue 與 memory fallback queue，並補 storage quota/private-mode 類情境測試。
