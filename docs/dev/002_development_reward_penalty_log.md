@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr373-ga4-diagnostic-queue-before-init
+- 原因：Codex review 指出 `initGA()` 延後到 load/idle 後才建立 `window.gtag`，早期 PWA warn/error 診斷會在 GA4 轉發時被靜默丟棄。
+- 解法：將 GA4 PWA diagnostic 參數先以去識別化欄位排隊，analytics 初始化後 flush，並補測試鎖住無 raw detail 與不漏送。
+
+- 日期：2026-05-07
 - ID：pr373-sentry-diagnostic-detail-redaction
 - 原因：Codex review 指出 GA4 已去識別化，但 Sentry `extra` / breadcrumb 仍可能外送原始 diagnostic detail，包含 URL query 或帳號識別。
 - 解法：將 Sentry captureMessage 與 breadcrumb 改用 detail present/category/length bucket metadata，不再外送 raw detail，並補測試鎖住無 email/raw detail。

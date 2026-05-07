@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   __resetPwaDiagnosticForwardingDedup,
   clearPwaAppReadyMarker,
+  flushPwaDiagnosticAnalyticsQueue,
   flushPwaDiagnosticForwarding,
   markPwaAppReady,
   PWA_APP_READY_ATTR,
@@ -176,6 +177,36 @@ describe('pwaDiagnostics', () => {
     it('should not throw when gtag is unavailable', () => {
       delete (window as unknown as { gtag?: unknown }).gtag;
       expect(() => recordPwaDiagnostic('chunk-load-error', 'x', 'error')).not.toThrow();
+    });
+
+    it('should queue GA4 diagnostics until gtag is initialized', () => {
+      delete (window as unknown as { gtag?: unknown }).gtag;
+
+      recordPwaDiagnostic(
+        'cold-start-watchdog-timeout',
+        'user@example.com network timeout',
+        'warn',
+      );
+
+      const gtag = vi.fn();
+      (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag = gtag;
+      flushPwaDiagnosticAnalyticsQueue();
+
+      expect(gtag).toHaveBeenCalledTimes(1);
+      expect(gtag).toHaveBeenCalledWith(
+        'event',
+        'pwa_diagnostic',
+        expect.objectContaining({
+          diagnostic_phase: 'cold-start-watchdog-timeout',
+          diagnostic_level: 'warn',
+          diagnostic_detail_present: true,
+          diagnostic_detail_category: 'network',
+          diagnostic_detail_length: 'short',
+        }),
+      );
+      const gaParams = gtag.mock.calls[0]?.[2] as Record<string, unknown>;
+      expect(gaParams).not.toHaveProperty('diagnostic_detail');
+      expect(JSON.stringify(gaParams)).not.toContain('user@example.com');
     });
   });
 });

@@ -6,7 +6,19 @@ const MAX_PWA_DIAGNOSTIC_EVENTS = 40;
 
 // 5 秒內同一 phase 不重複轉發，避免 watchdog / chunk-error 連發爆 Sentry / GA4 quota。
 const FORWARD_DEDUP_WINDOW_MS = 5000;
+const MAX_PENDING_GA4_DIAGNOSTICS = 20;
 const recentlyForwardedPhases = new Map<string, number>();
+const pendingGa4Diagnostics: GaPwaDiagnosticParams[] = [];
+
+type GtagFunction = (...args: unknown[]) => void;
+
+interface GaPwaDiagnosticParams {
+  diagnostic_phase: string;
+  diagnostic_level: PwaDiagnosticEvent['level'];
+  diagnostic_detail_present: boolean;
+  diagnostic_detail_category?: string;
+  diagnostic_detail_length?: string;
+}
 
 export interface PwaDiagnosticEvent {
   phase: string;
@@ -80,21 +92,63 @@ function buildForwardingMetadata(entry: PwaDiagnosticEvent): Record<string, unkn
   };
 }
 
+function buildGaPwaDiagnosticParams(entry: PwaDiagnosticEvent): GaPwaDiagnosticParams {
+  return {
+    diagnostic_phase: entry.phase,
+    diagnostic_level: entry.level,
+    diagnostic_detail_present: Boolean(entry.detail),
+    diagnostic_detail_category: classifyDiagnosticDetail(entry.detail),
+    diagnostic_detail_length: bucketDiagnosticDetailLength(entry.detail),
+  };
+}
+
+function getGtag(): GtagFunction | undefined {
+  if (typeof window === 'undefined') return undefined;
+
+  const gtag = (window as Window & { gtag?: GtagFunction }).gtag;
+  return typeof gtag === 'function' ? gtag : undefined;
+}
+
+function enqueueGaPwaDiagnostic(params: GaPwaDiagnosticParams): void {
+  pendingGa4Diagnostics.push(params);
+  if (pendingGa4Diagnostics.length > MAX_PENDING_GA4_DIAGNOSTICS) {
+    pendingGa4Diagnostics.shift();
+  }
+}
+
+function sendGaPwaDiagnostic(gtag: GtagFunction, params: GaPwaDiagnosticParams): void {
+  gtag('event', 'pwa_diagnostic', params);
+}
+
 function trackGaPwaDiagnostic(entry: PwaDiagnosticEvent): void {
-  if (typeof window === 'undefined') return;
-  // gtag 由 @shared/analytics 在 client-only initGA() 後注入；SSG 時或 GA 未 init 時皆無 function。
-  const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
-  if (typeof gtag !== 'function') return;
+  const params = buildGaPwaDiagnosticParams(entry);
+  const gtag = getGtag();
+  // gtag 由 @shared/analytics 在 client-only initGA() 後注入；冷啟動早期事件先排隊避免漏記。
+  if (!gtag) {
+    enqueueGaPwaDiagnostic(params);
+    return;
+  }
+
   try {
-    gtag('event', 'pwa_diagnostic', {
-      diagnostic_phase: entry.phase,
-      diagnostic_level: entry.level,
-      diagnostic_detail_present: Boolean(entry.detail),
-      diagnostic_detail_category: classifyDiagnosticDetail(entry.detail),
-      diagnostic_detail_length: bucketDiagnosticDetailLength(entry.detail),
-    });
+    sendGaPwaDiagnostic(gtag, params);
   } catch {
     // GA4 unavailable — diagnostics 仍保留在 localStorage。
+  }
+}
+
+export function flushPwaDiagnosticAnalyticsQueue(): void {
+  const gtag = getGtag();
+  if (!gtag) return;
+
+  while (pendingGa4Diagnostics.length > 0) {
+    const params = pendingGa4Diagnostics.shift();
+    if (!params) continue;
+
+    try {
+      sendGaPwaDiagnostic(gtag, params);
+    } catch {
+      // GA4 unavailable — diagnostics 仍保留在 localStorage。
+    }
   }
 }
 
@@ -148,6 +202,7 @@ export async function flushPwaDiagnosticForwarding(): Promise<void> {
 // 暴露給測試環境驗證 dedup 行為，正式程式碼不應依賴。
 export function __resetPwaDiagnosticForwardingDedup(): void {
   recentlyForwardedPhases.clear();
+  pendingGa4Diagnostics.length = 0;
 }
 
 function canUseBrowserStorage(): boolean {
