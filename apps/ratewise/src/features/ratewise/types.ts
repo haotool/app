@@ -6,6 +6,15 @@ export type CurrencyMeta = (typeof CURRENCY_DEFINITIONS)[CurrencyCode];
 export type ConverterMode = 'single' | 'multi';
 export type AmountField = 'from' | 'to';
 export type RateType = 'spot' | 'cash';
+
+/**
+ * 匯率資料來源選擇
+ *
+ * - 'bank': 台灣銀行牌告匯率（預設）
+ * - 'exchange-shop': 換錢所即時匯率（僅適用於有 provider 的幣別）
+ */
+export type RateSource = 'bank' | 'exchange-shop';
+
 /** 匯率模式：自動方向 / 賣出價為主 / 中間價 */
 export type RateMode = 'auto' | 'sell' | 'mid';
 export type MultiAmountsState = Record<CurrencyCode, string>;

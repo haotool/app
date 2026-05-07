@@ -55,6 +55,9 @@ export const STORAGE_KEYS = {
   /** 匯率類型選擇 (spot/cash) - 用戶偏好的匯率類型，預設為 spot */
   RATE_TYPE: 'rateType',
 
+  /** 匯率來源選擇 (bank/exchange-shop) - 用戶偏好的匯率資料來源，預設為 bank */
+  RATE_SOURCE: 'rateSource',
+
   /** 轉換歷史記錄 - 用戶的轉換記錄，7 天後自動過期 */
   CONVERSION_HISTORY: 'conversionHistory',
 } as const;
@@ -81,5 +84,6 @@ export const CACHE_KEYS = [STORAGE_KEYS.EXCHANGE_RATES] as const;
 export const USER_DATA_KEYS = [
   'ratewise-converter', // Zustand store（含 fromCurrency/toCurrency/mode/favorites）
   STORAGE_KEYS.RATE_TYPE,
+  STORAGE_KEYS.RATE_SOURCE,
   STORAGE_KEYS.CONVERSION_HISTORY,
 ] as const;
