@@ -529,6 +529,46 @@ test.describe('飛航模式冷啟動診斷', () => {
     expect(cssCacheCount, '快取中應有 CSS files').toBeGreaterThanOrEqual(1);
   });
 
+  test('SWR navigation：暖機後 html-cache 應命中即時回應（零等待）', async ({ browser }) => {
+    const ctx = await browser.newContext({ serviceWorkers: 'allow' });
+    const page = await ctx.newPage();
+
+    // Phase 1：暖機讓 html-cache 寫入 navigation 響應。
+    await page.goto(BASE, { waitUntil: 'networkidle', timeout: 60_000 });
+    await page.waitForFunction(
+      async () => {
+        const reg = await navigator.serviceWorker?.getRegistration();
+        return reg?.active?.state === 'activated';
+      },
+      undefined,
+      { timeout: 60_000 },
+    );
+    await waitForOfflineReadiness(page, BASE);
+
+    // 觸發一次 navigation 寫入 html-cache（StaleWhileRevalidate 安裝期 cache miss → fetch + put）。
+    await page.goto(BASE, { waitUntil: 'networkidle', timeout: 60_000 });
+
+    // Phase 2：驗證 html-cache 含 navigation 響應。
+    const htmlCacheReport = await page.evaluate(async () => {
+      const cacheNames = await caches.keys();
+      const hasHtmlCache = cacheNames.includes('html-cache');
+      let entries = 0;
+      if (hasHtmlCache) {
+        const cache = await caches.open('html-cache');
+        const keys = await cache.keys();
+        entries = keys.length;
+      }
+      return { hasHtmlCache, entries, cacheNames };
+    });
+
+    expect(htmlCacheReport.hasHtmlCache, 'html-cache 應已建立（SWR 寫回 navigation 響應）').toBe(
+      true,
+    );
+    expect(htmlCacheReport.entries, 'html-cache 應有 navigation 響應條目').toBeGreaterThan(0);
+
+    await ctx.close();
+  });
+
   test('即使 root 提前出現假節點，冷啟動 watchdog 仍應顯示全屏診斷 UI', async ({ browser }) => {
     const context = await browser.newContext({
       serviceWorkers: 'allow',

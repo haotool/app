@@ -13,6 +13,16 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr372-cache-miss-navigation-waituntil
+- 原因：Codex review 指出 bounded SWR cache miss 超時回 fallback 後，慢網路 fetch 未掛入 `event.waitUntil`，SW 可能被終止而無法暖起 `html-cache`。
+- 解法：將 cache miss 的 `networkResponse` 同步掛入 `event.waitUntil`，保留 3 秒 fallback 體感，同時確保背景 HTML cache 寫入有生命週期保護。
+
+- 日期：2026-05-07
+- ID：pr372-bounded-swr-navigation-cache-guard
+- 原因：PR #372 初版直接使用 Workbox SWR，cache miss 時缺少有界 fallback，且新版 SW 啟用後可能先回舊 `html-cache` HTML。
+- 解法：改為自訂 bounded SWR-style navigation handler，cache hit 立即回並背景更新、cache miss 3 秒內未取得網路即回 precache fallback，且 activate 時清除舊 HTML runtime cache。
+
+- 日期：2026-05-07
 - ID：pr371-watchdog-overlay-dedupe
 - 原因：Codex review 指出 SSG banner 模式下 timeout 與後續 script error 可能連續觸發 `showColdStartError()`，造成多個 cold-start banner 重疊。
 - 解法：在建立新 watchdog overlay 前先呼叫 `removeColdStartOverlay()`，讓 banner/fullscreen fallback 都維持單一可見診斷視窗。
@@ -848,8 +858,3 @@
 - ID：ratewise-lhci-homepage-runtime-refresh-guard
 - 原因：PR #350 的 Lighthouse CI 在首頁 `/` 掉到 `0.87~0.88`，根因為 LHCI 離線模式下首頁仍執行 runtime 匯率 refresh，失敗後插入 stale warning 與額外背景工作，拉低首屏效能。
 - 解法：在 `exchangeRateService` 與 `useExchangeRates` 增加 `VITE_LHCI_OFFLINE` 穩定分支，LHCI 直接使用 build-time 匯率並跳過 runtime refresh / polling，另補 service 與 hook 回歸測試鎖住行為。
-
-- 日期：2026-05-07
-- ID：ratewise-watchdog-preserve-ssg-content
-- 原因：60 天內 PWA 冷啟動白屏修復累積 11+ 次仍復發，根本反模式為 `index.html` watchdog 5 秒 timeout 後執行 `root.innerHTML=''` 直接抹除 vite-react-ssg 預渲染的 144KB 內容，使用者從「可看靜態頁」降級為「白屏 + 錯誤面板」。
-- 解法：watchdog 加 `hasPrerenderedRootContent()` 偵測（`data-server-rendered` 或 `#root.children.length > 0`），有 SSG 內容時改採 floating banner 並附加到 `<body>`，保留 `#root`；無 SSG 時沿用原全屏 fallback。新增 vitest 靜態回歸與 E2E 鎖住雙模式分支；同步關閉 PR #367 emergency HTML（與本修正重複）。

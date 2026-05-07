@@ -5,7 +5,7 @@
 import { clientsClaim } from 'workbox-core';
 import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing';
-import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
+import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { resolveOfflineDocumentFallback } from './utils/pwaOfflineFallback';
@@ -27,6 +27,8 @@ self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
 
 // 保存 manifest 供 VERIFY_AND_REPAIR_PRECACHE 使用。
 const WB_MANIFEST = self.__WB_MANIFEST;
+const HTML_CACHE_NAME = 'html-cache';
+const NAVIGATION_NETWORK_TIMEOUT_MS = 3000;
 
 // 預快取 Vite 產出的靜態資源。
 precacheAndRoute(WB_MANIFEST);
@@ -56,7 +58,7 @@ async function ensureOfflineHtmlCached(): Promise<void> {
 
     const response = await fetch(offlineUrl, { cache: 'no-cache' });
     if (response.ok) {
-      const cache = await caches.open('html-cache');
+      const cache = await caches.open(HTML_CACHE_NAME);
       await cache.put(offlineUrl, response.clone());
       // 同時用相對路徑快取，讓 matchPrecache('offline.html') 也能命中
       await cache.put('offline.html', response);
@@ -117,6 +119,14 @@ async function verifyAndRepairPrecache(): Promise<void> {
 // 清除舊版快取。
 cleanupOutdatedCaches();
 
+async function clearNavigationHtmlCacheOnActivate(): Promise<void> {
+  try {
+    await caches.delete(HTML_CACHE_NAME);
+  } catch {
+    // 快取清理失敗不可阻斷新版 SW 啟用。
+  }
+}
+
 /**
  * Cache Budget Guard（PR3: iOS 50MB cache 限制保護）
  *
@@ -168,9 +178,9 @@ self.addEventListener('install', (event: ExtendableEvent) => {
   event.waitUntil(checkAndCleanupCacheBudget());
 });
 
-// activate 時確保 offline.html 已快取（install 失敗時的補救）
+// activate 時清掉舊 navigation HTML，再確保 offline.html 已快取（install 失敗時的補救）。
 self.addEventListener('activate', (event: ExtendableEvent) => {
-  event.waitUntil(ensureOfflineHtmlCached());
+  event.waitUntil(clearNavigationHtmlCacheOnActivate().then(() => ensureOfflineHtmlCached()));
 });
 
 // prompt 模式：僅在 waiting SW 收到 SKIP_WAITING 訊息後才接管。
@@ -247,38 +257,73 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
 });
 
 /**
- * SPA 導覽策略（PR3: Navigation Timeout）
+ * SPA 導覽策略：bounded SWR-style navigation（installed PWA 與瀏覽器共用）
  *
  * 業界最佳實踐（web.dev / Workbox docs）：
- * - NetworkFirst + timeout：優先嘗試網路，超時後 fallback 到快取
- * - 3 秒 timeout：平衡使用者體驗與網路等待
- * - handlerDidError：網路完全失敗時回退到 precache index.html
+ * - 已 install 過的 PWA / 已 visited 的瀏覽器：cache hit 立即返回（零白屏冷啟動）
+ * - 背景 revalidate 抓取最新 HTML 寫回 cache，下一次 navigation 自動拿到新版
+ * - 新版本切換由既有 SW controllerchange + reload 機制處理（main.tsx）
+ * - cache miss 導覽：網路最多等待 3s，再回 precache 三層 fallback
  *
- * 解決問題：
- * - iOS Safari 冷啟動離線白屏（precache 未完成時無 fallback）
- * - 慢網路卡住導覽（無限等待網路回應）
+ * 取代 NetworkFirst + 3s timeout 的理由：
+ * - NetworkFirst 在慢網路下要等到 3s timeout 才 fallback → 感知白屏
+ * - SWR-style cache hit 立即回應，把已暖機場景的感知白屏降為 0
+ * - 對版本撕裂的防護：activate 時清掉舊 HTML runtime cache，避免新 SW 先回舊 HTML
+ *
+ * @see https://developer.chrome.com/docs/workbox/modules/workbox-strategies#stale-while-revalidate
  */
-const navigationStrategy = new NetworkFirst({
-  cacheName: 'html-cache',
-  networkTimeoutSeconds: 3,
-  plugins: [
-    new CacheableResponsePlugin({ statuses: [0, 200] }),
-    {
-      // 網路失敗時回退到 precache index.html（離線或 timeout 後快取也沒有）
-      handlerDidError: async () => {
-        // 最後防線：搜尋任何快取中的 offline.html；若全數失守，回 inline HTML，
-        // 避免 Workbox 在 plugin 已回傳 Response.error() 後不再進入全域 setCatchHandler。
-        return resolveOfflineDocumentFallback({
-          emergencyReason: 'emergency-navigation-fallback',
-          matchPrecache,
-          matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
-        });
-      },
-    },
-  ],
-});
+function resolveNavigationFallback(): Promise<Response> {
+  return resolveOfflineDocumentFallback({
+    emergencyReason: 'emergency-navigation-fallback',
+    matchPrecache,
+    matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
+  });
+}
 
-registerRoute(new NavigationRoute(navigationStrategy));
+async function fetchAndCacheNavigation(request: Request, cache: Cache): Promise<Response> {
+  const response = await fetch(new Request(request, { cache: 'no-cache' }));
+  if (response.status === 0 || response.status === 200) {
+    try {
+      await cache.put(request, response.clone());
+    } catch {
+      // 即使 runtime cache 寫入失敗，仍應回傳最新網路 HTML。
+    }
+  }
+  return response;
+}
+
+async function handleNavigationRequest({
+  event,
+  request,
+}: {
+  event: ExtendableEvent;
+  request: Request;
+}): Promise<Response> {
+  const cache = await caches.open(HTML_CACHE_NAME);
+  const cached = await cache.match(request);
+  if (cached) {
+    event.waitUntil(
+      fetchAndCacheNavigation(request, cache)
+        .then(() => undefined)
+        .catch(() => undefined),
+    );
+    return cached;
+  }
+
+  const networkResponse = fetchAndCacheNavigation(request, cache).catch(() =>
+    resolveNavigationFallback(),
+  );
+  event.waitUntil(networkResponse.then(() => undefined).catch(() => undefined));
+  const timeoutFallback = new Promise<Response>((resolve) => {
+    setTimeout(() => {
+      resolve(resolveNavigationFallback());
+    }, NAVIGATION_NETWORK_TIMEOUT_MS);
+  });
+
+  return Promise.race([networkResponse, timeoutFallback]);
+}
+
+registerRoute(new NavigationRoute(handleNavigationRequest));
 
 // 歷史匯率 aggregate（30 天合併 JSON）：StaleWhileRevalidate，每日更新。
 registerRoute(
