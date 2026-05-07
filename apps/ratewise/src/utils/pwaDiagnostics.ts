@@ -71,6 +71,15 @@ function bucketDiagnosticDetailLength(detail: string | undefined): string | unde
   return 'long';
 }
 
+function buildForwardingMetadata(entry: PwaDiagnosticEvent): Record<string, unknown> {
+  return {
+    timestamp: entry.timestamp,
+    detailPresent: Boolean(entry.detail),
+    detailCategory: classifyDiagnosticDetail(entry.detail),
+    detailLength: bucketDiagnosticDetailLength(entry.detail),
+  };
+}
+
 function trackGaPwaDiagnostic(entry: PwaDiagnosticEvent): void {
   if (typeof window === 'undefined') return;
   // gtag 由 @shared/analytics 在 client-only initGA() 後注入；SSG 時或 GA 未 init 時皆無 function。
@@ -98,6 +107,7 @@ async function forwardPwaDiagnostic(entry: PwaDiagnosticEvent): Promise<void> {
   if (!shouldForwardPhase(entry.phase, entry.level)) return;
 
   trackGaPwaDiagnostic(entry);
+  const forwardingMetadata = buildForwardingMetadata(entry);
 
   try {
     if (entry.level === 'error') {
@@ -107,17 +117,15 @@ async function forwardPwaDiagnostic(entry: PwaDiagnosticEvent): Promise<void> {
         level: 'error',
         tags: { pwa_diagnostic_phase: entry.phase },
         extra: {
-          detail: entry.detail,
-          timestamp: entry.timestamp,
+          ...forwardingMetadata,
         },
       });
     } else if (entry.level === 'warn') {
       const { initSentry, addBreadcrumb } = await import('./sentry');
       await initSentry();
       await addBreadcrumb(`pwa:${entry.phase}`, {
-        detail: entry.detail,
-        timestamp: entry.timestamp,
         level: entry.level,
+        ...forwardingMetadata,
       });
     }
   } catch {

@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr373-sentry-diagnostic-detail-redaction
+- 原因：Codex review 指出 GA4 已去識別化，但 Sentry `extra` / breadcrumb 仍可能外送原始 diagnostic detail，包含 URL query 或帳號識別。
+- 解法：將 Sentry captureMessage 與 breadcrumb 改用 detail present/category/length bucket metadata，不再外送 raw detail，並補測試鎖住無 email/raw detail。
+
+- 日期：2026-05-07
 - ID：pr373-pwa-diagnostic-forwarding-privacy-init
 - 原因：Codex review 指出 PWA diagnostic 會把原始 detail 送到 GA4，且 Sentry 轉發前未確保 SDK 已初始化，冷啟動主場景可能漏送。
 - 解法：GA4 改送 detail present/category/length bucket 等去識別化欄位，Sentry error/warn 轉發前先呼叫 `initSentry()`，並補單元測試鎖住行為。

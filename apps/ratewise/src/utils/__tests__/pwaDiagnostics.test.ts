@@ -71,9 +71,13 @@ describe('pwaDiagnostics', () => {
   });
 
   describe('observability forwarding', () => {
-    it('should forward error-level events to Sentry captureMessage', async () => {
+    it('should forward error-level events to Sentry captureMessage without raw detail', async () => {
       const sentry = await import('../sentry');
-      recordPwaDiagnostic('cold-start-overlay-shown', { timeoutMs: 5000 }, 'error');
+      recordPwaDiagnostic(
+        'cold-start-overlay-shown',
+        'https://app.haotool.org/ratewise/assets/main.js?email=user@example.com',
+        'error',
+      );
       await flushPwaDiagnosticForwarding();
 
       expect(sentry.initSentry).toHaveBeenCalledTimes(1);
@@ -84,18 +88,42 @@ describe('pwaDiagnostics', () => {
           tags: { pwa_diagnostic_phase: 'cold-start-overlay-shown' },
         }),
       );
+      const captureCall = vi.mocked(sentry.captureMessage).mock.calls.at(0);
+      if (!captureCall) throw new Error('captureMessage should be called');
+      const sentryOptions = captureCall[1] as {
+        extra?: Record<string, unknown>;
+      };
+      expect(sentryOptions.extra).toEqual(
+        expect.objectContaining({
+          detailPresent: true,
+          detailCategory: 'asset-load',
+          detailLength: 'medium',
+        }),
+      );
+      expect(sentryOptions.extra).not.toHaveProperty('detail');
+      expect(JSON.stringify(sentryOptions.extra)).not.toContain('user@example.com');
     });
 
-    it('should forward warn-level events to Sentry addBreadcrumb (not captureMessage)', async () => {
+    it('should forward warn-level events to Sentry addBreadcrumb without raw detail', async () => {
       const sentry = await import('../sentry');
-      recordPwaDiagnostic('pwa-storage-near-limit', { usageMb: 45 }, 'warn');
+      recordPwaDiagnostic('pwa-storage-near-limit', 'storage quota for user@example.com', 'warn');
       await flushPwaDiagnosticForwarding();
 
       expect(sentry.initSentry).toHaveBeenCalledTimes(1);
       expect(sentry.addBreadcrumb).toHaveBeenCalledWith(
         'pwa:pwa-storage-near-limit',
-        expect.objectContaining({ level: 'warn' }),
+        expect.objectContaining({
+          level: 'warn',
+          detailPresent: true,
+          detailCategory: 'storage',
+          detailLength: 'short',
+        }),
       );
+      const breadcrumbCall = vi.mocked(sentry.addBreadcrumb).mock.calls.at(0);
+      if (!breadcrumbCall) throw new Error('addBreadcrumb should be called');
+      const breadcrumbData = breadcrumbCall[1]!;
+      expect(breadcrumbData).not.toHaveProperty('detail');
+      expect(JSON.stringify(breadcrumbData)).not.toContain('user@example.com');
       expect(sentry.captureMessage).not.toHaveBeenCalled();
     });
 
