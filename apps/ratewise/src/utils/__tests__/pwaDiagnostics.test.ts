@@ -14,6 +14,7 @@ import {
 } from '../pwaDiagnostics';
 
 vi.mock('../sentry', () => ({
+  initSentry: vi.fn().mockResolvedValue(undefined),
   captureMessage: vi.fn().mockResolvedValue(undefined),
   addBreadcrumb: vi.fn().mockResolvedValue(undefined),
 }));
@@ -75,6 +76,7 @@ describe('pwaDiagnostics', () => {
       recordPwaDiagnostic('cold-start-overlay-shown', { timeoutMs: 5000 }, 'error');
       await flushPwaDiagnosticForwarding();
 
+      expect(sentry.initSentry).toHaveBeenCalledTimes(1);
       expect(sentry.captureMessage).toHaveBeenCalledWith(
         'PWA diagnostic: cold-start-overlay-shown',
         expect.objectContaining({
@@ -89,6 +91,7 @@ describe('pwaDiagnostics', () => {
       recordPwaDiagnostic('pwa-storage-near-limit', { usageMb: 45 }, 'warn');
       await flushPwaDiagnosticForwarding();
 
+      expect(sentry.initSentry).toHaveBeenCalledTimes(1);
       expect(sentry.addBreadcrumb).toHaveBeenCalledWith(
         'pwa:pwa-storage-near-limit',
         expect.objectContaining({ level: 'warn' }),
@@ -116,11 +119,15 @@ describe('pwaDiagnostics', () => {
       expect(sentry.captureMessage).toHaveBeenCalledTimes(1);
     });
 
-    it('should send GA4 pwa_diagnostic event when gtag is available', () => {
+    it('should send GA4 pwa_diagnostic event without raw diagnostic detail', () => {
       const gtag = vi.fn();
       (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag = gtag;
 
-      recordPwaDiagnostic('cold-start-script-error', '/assets/main.js', 'error');
+      recordPwaDiagnostic(
+        'cold-start-script-error',
+        'https://app.haotool.org/ratewise/assets/main.js?email=user@example.com',
+        'error',
+      );
 
       expect(gtag).toHaveBeenCalledWith(
         'event',
@@ -128,8 +135,14 @@ describe('pwaDiagnostics', () => {
         expect.objectContaining({
           diagnostic_phase: 'cold-start-script-error',
           diagnostic_level: 'error',
+          diagnostic_detail_present: true,
+          diagnostic_detail_category: 'asset-load',
+          diagnostic_detail_length: 'medium',
         }),
       );
+      const gaParams = gtag.mock.calls[0]?.[2] as Record<string, unknown>;
+      expect(gaParams).not.toHaveProperty('diagnostic_detail');
+      expect(JSON.stringify(gaParams)).not.toContain('user@example.com');
     });
 
     it('should not throw when gtag is unavailable', () => {

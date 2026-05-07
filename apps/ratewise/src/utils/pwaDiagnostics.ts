@@ -6,7 +6,6 @@ const MAX_PWA_DIAGNOSTIC_EVENTS = 40;
 
 // 5 秒內同一 phase 不重複轉發，避免 watchdog / chunk-error 連發爆 Sentry / GA4 quota。
 const FORWARD_DEDUP_WINDOW_MS = 5000;
-const FORWARD_DETAIL_MAX_LEN = 200;
 const recentlyForwardedPhases = new Map<string, number>();
 
 export interface PwaDiagnosticEvent {
@@ -46,6 +45,32 @@ function shouldForwardPhase(phase: string, level: PwaDiagnosticEvent['level']): 
   return true;
 }
 
+function classifyDiagnosticDetail(detail: string | undefined): string | undefined {
+  if (!detail) return undefined;
+
+  const value = detail.toLowerCase();
+  if (value.includes('/assets/') || value.includes('.js') || value.includes('.css')) {
+    return 'asset-load';
+  }
+  if (value.includes('storage') || value.includes('quota') || value.includes('cache')) {
+    return 'storage';
+  }
+  if (value.includes('network') || value.includes('fetch') || value.includes('offline')) {
+    return 'network';
+  }
+  if (value.includes('timeout')) {
+    return 'timeout';
+  }
+  return 'other';
+}
+
+function bucketDiagnosticDetailLength(detail: string | undefined): string | undefined {
+  if (!detail) return undefined;
+  if (detail.length <= 64) return 'short';
+  if (detail.length <= 256) return 'medium';
+  return 'long';
+}
+
 function trackGaPwaDiagnostic(entry: PwaDiagnosticEvent): void {
   if (typeof window === 'undefined') return;
   // gtag 由 @shared/analytics 在 client-only initGA() 後注入；SSG 時或 GA 未 init 時皆無 function。
@@ -55,7 +80,9 @@ function trackGaPwaDiagnostic(entry: PwaDiagnosticEvent): void {
     gtag('event', 'pwa_diagnostic', {
       diagnostic_phase: entry.phase,
       diagnostic_level: entry.level,
-      diagnostic_detail: entry.detail?.slice(0, FORWARD_DETAIL_MAX_LEN),
+      diagnostic_detail_present: Boolean(entry.detail),
+      diagnostic_detail_category: classifyDiagnosticDetail(entry.detail),
+      diagnostic_detail_length: bucketDiagnosticDetailLength(entry.detail),
     });
   } catch {
     // GA4 unavailable — diagnostics 仍保留在 localStorage。
@@ -74,7 +101,8 @@ async function forwardPwaDiagnostic(entry: PwaDiagnosticEvent): Promise<void> {
 
   try {
     if (entry.level === 'error') {
-      const { captureMessage } = await import('./sentry');
+      const { initSentry, captureMessage } = await import('./sentry');
+      await initSentry();
       await captureMessage(`PWA diagnostic: ${entry.phase}`, {
         level: 'error',
         tags: { pwa_diagnostic_phase: entry.phase },
@@ -84,7 +112,8 @@ async function forwardPwaDiagnostic(entry: PwaDiagnosticEvent): Promise<void> {
         },
       });
     } else if (entry.level === 'warn') {
-      const { addBreadcrumb } = await import('./sentry');
+      const { initSentry, addBreadcrumb } = await import('./sentry');
+      await initSentry();
       await addBreadcrumb(`pwa:${entry.phase}`, {
         detail: entry.detail,
         timestamp: entry.timestamp,
