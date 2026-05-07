@@ -446,6 +446,11 @@
           var root = document.getElementById('root');
           return Boolean(root && root.querySelector(WATCHDOG_READY_SELECTOR));
         }
+        function removeColdStartOverlay() {
+          document.querySelectorAll('[data-cold-start-overlay]').forEach(function (el) {
+            el.remove();
+          });
+        }
         // SSG 預渲染內容偵測：vite-react-ssg 會在 #root 標 data-server-rendered="true"
         // 並填入完整 hydration tree。JS 載入失敗時應保留此可見內容，
         // 不可整片清除換成診斷面板，否則使用者從「可看靜態頁」降級為「白屏 + 錯誤面板」。
@@ -768,6 +773,7 @@
           recordDiagnostic('cold-start-watchdog-cleared', reason);
           clearTimeout(coldStartTimer);
           clearRetry();
+          removeColdStartOverlay();
         }
         window.addEventListener(APP_READY_EVENT, function () {
           clearWatchdog('ready-event');

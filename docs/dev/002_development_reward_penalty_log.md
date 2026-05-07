@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr371-watchdog-banner-ready-cleanup
+- 原因：PR #371 的 watchdog banner 模式將冷啟動警示掛到 `body`，但 app ready 後只清除 timer/retry，會留下已過時的「載入失敗」提示。
+- 解法：在 `clearWatchdog` ready 共用路徑同步移除 `[data-cold-start-overlay]`，並補靜態測試鎖住 ready cleanup 契約。
+
+- 日期：2026-05-07
 - ID：ratewise-pwa-offline-fallback-runtime-contract
 - 原因：emergency fallback 初版主要依賴 `sw.ts` 字串斷言，未直接驗證 `index.html`、`offline.html` 與任意 cache 全失效時仍會回可見 HTML。
 - 解法：抽出 `resolveOfflineDocumentFallback` 純函式並補 runtime-style 單元測試，鎖住 fallback 優先序、200 HTML 回應與 `X-RateWise-Offline-Fallback` header。

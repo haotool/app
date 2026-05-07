@@ -197,6 +197,7 @@ describe('PWA 離線功能測試', () => {
       expect(html).toContain('hasReactFallbackReady');
       expect(html).toContain('react-fallback-ready');
       expect(html).toContain('cold-start-watchdog-cleared');
+      expect(html).toContain('removeColdStartOverlay');
       expect(html).not.toContain('root.children.length === 0');
       expect(fallbackComponent).toContain('data-ratewise-watchdog-ready="true"');
     });
