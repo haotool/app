@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr372-bounded-swr-navigation-cache-guard
+- 原因：PR #372 初版直接使用 Workbox SWR，cache miss 時缺少有界 fallback，且新版 SW 啟用後可能先回舊 `html-cache` HTML。
+- 解法：改為自訂 bounded SWR-style navigation handler，cache hit 立即回並背景更新、cache miss 3 秒內未取得網路即回 precache fallback，且 activate 時清除舊 HTML runtime cache。
+
+- 日期：2026-05-07
 - ID：pr371-watchdog-overlay-dedupe
 - 原因：Codex review 指出 SSG banner 模式下 timeout 與後續 script error 可能連續觸發 `showColdStartError()`，造成多個 cold-start banner 重疊。
 - 解法：在建立新 watchdog overlay 前先呼叫 `removeColdStartOverlay()`，讓 banner/fullscreen fallback 都維持單一可見診斷視窗。

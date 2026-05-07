@@ -106,16 +106,25 @@ describe('PWA 離線功能測試', () => {
       expect(swContent).toContain("destination !== 'document'");
     });
 
-    it('should use NavigationRoute + StaleWhileRevalidate for zero-white-screen navigation', () => {
+    it('should use NavigationRoute + bounded SWR-style handler for zero-white-screen navigation', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      // 取代 NetworkFirst + 3s timeout：installed PWA 已暖機後 cache hit 立即返回，
-      // 背景 revalidate 抓最新 HTML；版本切換由 controllerchange + UpdatePrompt 處理。
-      expect(swContent).toContain('const navigationStrategy = new StaleWhileRevalidate(');
-      expect(swContent).toContain("cacheName: 'html-cache'");
-      expect(swContent).toContain('new NavigationRoute(navigationStrategy)');
+      // 取代 NetworkFirst：installed PWA 已暖機後 cache hit 立即返回，背景 revalidate 抓最新 HTML。
+      expect(swContent).toContain('handleNavigationRequest');
+      expect(swContent).toContain('new NavigationRoute(handleNavigationRequest)');
+      expect(swContent).toContain("const HTML_CACHE_NAME = 'html-cache'");
+      expect(swContent).toContain('event.waitUntil(');
+      expect(swContent).toContain('fetchAndCacheNavigation(request, cache)');
       // 防回歸：禁止把 NetworkFirst 重新引入 navigation 路徑（cold-start 白屏根因之一）。
       expect(swContent).not.toContain('new NetworkFirst(');
-      expect(swContent).not.toContain('networkTimeoutSeconds:');
+    });
+
+    it('should clear old navigation HTML cache on activate and keep a bounded cache-miss fallback', () => {
+      const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
+      expect(swContent).toContain('clearNavigationHtmlCacheOnActivate');
+      expect(swContent).toContain('caches.delete(HTML_CACHE_NAME)');
+      expect(swContent).toContain('const NAVIGATION_NETWORK_TIMEOUT_MS = 3000');
+      expect(swContent).toContain('Promise.race([networkResponse, timeoutFallback])');
+      expect(swContent).toContain('resolveNavigationFallback');
     });
 
     it('should have offline-first strategy in setCatchHandler', () => {
