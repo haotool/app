@@ -68,6 +68,54 @@ describe('fetchExchangeShopRate', () => {
     const result = await fetchExchangeShopRate('USD');
     expect(result).toBeNull();
   });
+
+  it('returns cached rate when server responds with 304 Not Modified', async () => {
+    // First call: warm the cache
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(MOCK_MONEYBOX_JSON),
+      headers: { get: (h: string) => (h === 'etag' ? '"etag-abc"' : null) },
+    } as unknown as Response);
+    await fetchExchangeShopRate('KRW');
+
+    // Invalidate cache timestamp by writing stale entry directly
+    const key = 'exchangeShopRate_KRW';
+    const cached = JSON.parse(localStorage.getItem(key)!);
+    localStorage.setItem(key, JSON.stringify({ ...cached, timestamp: 0 }));
+
+    // Second call: CDN returns 304
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 304,
+      json: () => Promise.resolve(null),
+      headers: { get: () => null },
+    } as unknown as Response);
+
+    const result = await fetchExchangeShopRate('KRW');
+    expect(result).not.toBeNull();
+    expect(result!.sell).toBe(44.85);
+    expect(result!.isFallback).toBe(false);
+  });
+
+  it('falls back to secondary CDN URL when primary fails', async () => {
+    // Primary CDN fails
+    vi.mocked(fetch)
+      .mockRejectedValueOnce(new Error('Primary CDN down'))
+      // Fallback CDN succeeds
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(MOCK_MONEYBOX_JSON),
+        headers: { get: () => null },
+      } as unknown as Response);
+
+    const result = await fetchExchangeShopRate('KRW');
+    expect(result).not.toBeNull();
+    expect(result!.sell).toBe(44.85);
+    expect(result!.isFallback).toBe(false);
+    expect(fetch).toHaveBeenCalledTimes(2); // primary + fallback
+  });
 });
 
 describe('computeConverterRate', () => {

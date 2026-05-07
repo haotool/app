@@ -1,7 +1,11 @@
 /**
  * 換匯所匯率服務
- * 從 CDN 取得換匯所（如明洞換匯所）匯率，對齊台銀快取策略
- * [2026-05-07] 初始建立：CDN + ETag + localStorage 5 分鐘快取 + 離線後備值
+ *
+ * 從 CDN 取得換匯所（如明洞換匯所）匯率資料，對齊 exchangeRateService 快取策略：
+ * - 5 分鐘 localStorage 快取（CACHE_DURATION_MS）
+ * - jsDelivr CDN 主要 URL + ETag 條件式請求（節省頻寬）
+ * - GitHub Raw 備援 URL（ETag 不可用）
+ * - 離線或全部失敗時回傳後備值（isFallback: true）
  */
 
 import { logger } from '../utils/logger';
@@ -91,6 +95,7 @@ async function fetchFromCDN(
   for (const url of urls) {
     try {
       const headers: Record<string, string> = {};
+      // ETag only on jsDelivr (primary); GitHub Raw doesn't support conditional GET
       if (url === config.cdnUrl && cachedEtag) {
         headers['If-None-Match'] = cachedEtag;
       }
@@ -142,7 +147,14 @@ export async function fetchExchangeShopRate(
     const sell = config.getSellRate(raw);
     const buy = config.getBuyRate(raw);
 
-    if (!sell || !buy) {
+    if (
+      sell === null ||
+      !Number.isFinite(sell) ||
+      sell <= 0 ||
+      buy === null ||
+      !Number.isFinite(buy) ||
+      buy <= 0
+    ) {
       logger.warn(`Exchange shop rate parse failed for ${currency}, using fallback`);
       return buildFallbackRate(config);
     }
