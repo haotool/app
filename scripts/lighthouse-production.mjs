@@ -190,6 +190,15 @@ function isRetryableLighthouseError(message) {
   return RETRYABLE_LIGHTHOUSE_PATTERNS.some((pattern) => pattern.test(message));
 }
 
+function validatePositiveIntegerEnv(name, rawValue, parsedValue) {
+  const valueForMessage = rawValue ?? String(parsedValue);
+  const normalizedValue = String(valueForMessage).trim();
+
+  if (!/^[1-9]\d*$/.test(normalizedValue) || !Number.isSafeInteger(parsedValue)) {
+    throw new Error(`Invalid ${name}: ${valueForMessage}`);
+  }
+}
+
 function runLighthouse(url, outputPath) {
   const args = [
     url,
@@ -256,6 +265,13 @@ function compareDirection(current, baseline, compareDirection) {
 }
 
 function main() {
+  validatePositiveIntegerEnv('LH_RUNS', process.env.LH_RUNS, RUNS);
+  validatePositiveIntegerEnv(
+    'LH_MAX_ATTEMPTS',
+    process.env.LH_MAX_ATTEMPTS,
+    LIGHTHOUSE_MAX_ATTEMPTS,
+  );
+
   if (!existsSync(LIGHTHOUSE_BIN)) {
     throw new Error('Lighthouse CLI not found. Run pnpm install --frozen-lockfile first.');
   }
@@ -265,10 +281,6 @@ function main() {
     APP_CONFIG.lighthouseSmokePaths.length === 0
   ) {
     throw new Error('APP_CONFIG.lighthouseSmokePaths is empty or invalid.');
-  }
-
-  if (!Number.isFinite(RUNS) || RUNS <= 0) {
-    throw new Error(`Invalid LH_RUNS: ${process.env.LH_RUNS}`);
   }
 
   mkdirSync(REPORT_DIR, { recursive: true });

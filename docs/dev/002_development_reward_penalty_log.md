@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：lighthouse-production-env-ssot-guard
+- 原因：Codex review 稽核指出 `LH_MAX_ATTEMPTS` 未驗證為正整數時，`0` 會讓 Lighthouse retry 迴圈靜默不執行卻仍可能成功結束。
+- 解法：在 `scripts/lighthouse-production.mjs` 入口統一驗證 `LH_RUNS` 與 `LH_MAX_ATTEMPTS` 為正整數，並補 Vitest 鎖住 invalid env fail-fast 與 baseline 寫回順序。
+
+- 日期：2026-05-07
 - ID：pr373-ga4-queue-forwarding-opt-out
 - 原因：Codex review 指出舊版已排入 localStorage 的 GA4 diagnostic queue，可能在下一版關閉 `VITE_PWA_DIAGNOSTIC_FORWARDING` 後仍被 flush 送出。
 - 解法：讓 GA4 queue flush 先檢查 forwarding flag，關閉時直接清除 stored/memory queue 並不送出，補測試鎖住 opt-out。
