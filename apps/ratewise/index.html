@@ -461,16 +461,20 @@
           return root.children.length > 0;
         }
         function collectDiagnostics() {
-          var lines = ['\u23f0 ' + new Date().toLocaleTimeString('zh-TW')];
-          lines.push(
-            '\ud83c\udf10 \u7db2\u8def:' + (navigator.onLine ? '\u5728\u7dda' : '\u96e2\u7dda'),
-          );
+          var state = {
+            hasServiceWorkerSupport: 'serviceWorker' in navigator,
+            hasRegistration: false,
+            cacheTotal: 0,
+          };
+          var lines = ['\u6642\u9593\uff1a' + new Date().toLocaleTimeString('zh-TW')];
+          lines.push('\u7db2\u8def\uff1a' + (navigator.onLine ? '\u5728\u7dda' : '\u96e2\u7dda'));
           var swP =
             'serviceWorker' in navigator
               ? navigator.serviceWorker
                   .getRegistration()
                   .then(function (reg) {
                     if (reg) {
+                      state.hasRegistration = true;
                       var st = reg.active
                         ? 'active'
                         : reg.waiting
@@ -478,21 +482,21 @@
                           : reg.installing
                             ? 'installing'
                             : '\u7121 worker';
-                      lines.push('\u2699\ufe0f SW:' + st);
+                      lines.push('Service Worker\uff1a' + st);
                       lines.push(
-                        '\ud83c\udfae \u63a7\u5236:' +
+                        '\u63a7\u5236\u72c0\u614b\uff1a' +
                           (navigator.serviceWorker.controller
                             ? '\u6709'
                             : '\u7121\uff08\u9801\u9762\u9700\u91cd\u8f09\uff09'),
                       );
                     } else {
-                      lines.push('\u2699\ufe0f SW:\u672a\u8a3b\u518a');
+                      lines.push('Service Worker\uff1a\u672a\u8a3b\u518a');
                     }
                   })
                   .catch(function (e) {
-                    lines.push('\u2699\ufe0f SW:' + String(e));
+                    lines.push('Service Worker\uff1a' + String(e));
                   })
-              : (lines.push('\u2699\ufe0f SW:\u4e0d\u652f\u63f4'), Promise.resolve());
+              : (lines.push('Service Worker\uff1a\u4e0d\u652f\u63f4'), Promise.resolve());
           var cacheP =
             'caches' in window
               ? caches
@@ -512,8 +516,9 @@
                     var total = list.reduce(function (s, c) {
                       return s + c.count;
                     }, 0);
+                    state.cacheTotal = total;
                     lines.push(
-                      '\ud83d\udce6 \u5feb\u53d6:' + list.length + ' \u500b / ' + total + ' \u9805',
+                      '\u5feb\u53d6\uff1a' + list.length + ' \u500b / ' + total + ' \u9805',
                     );
                     list.forEach(function (c) {
                       lines.push(
@@ -525,14 +530,23 @@
                     });
                   })
                   .catch(function (e) {
-                    lines.push('\ud83d\udce6 \u5feb\u53d6:' + String(e));
+                    lines.push('\u5feb\u53d6\uff1a' + String(e));
                   })
-              : (lines.push('\ud83d\udce6 \u5feb\u53d6:\u4e0d\u652f\u63f4'), Promise.resolve());
+              : (lines.push('\u5feb\u53d6\uff1a\u4e0d\u652f\u63f4'), Promise.resolve());
           return Promise.all([swP, cacheP]).then(function () {
+            if (state.hasServiceWorkerSupport && !state.hasRegistration && state.cacheTotal > 0) {
+              lines.push('');
+              lines.push(
+                '\u72c0\u614b\uff1aService Worker \u672a\u8a3b\u518a\uff0c\u4f46\u700f\u89bd\u5668\u4ecd\u4fdd\u7559\u820a\u5feb\u53d6\u3002',
+              );
+              lines.push(
+                '\u5efa\u8b70\uff1a\u4f7f\u7528\u300c\u6e05\u9664\u5feb\u53d6\u4e26\u91cd\u8f09\u300d\u91cd\u5efa PWA \u72c0\u614b\u3002',
+              );
+            }
             var recentEvents = readDiagnostics().slice(-8);
             if (recentEvents.length > 0) {
               lines.push('');
-              lines.push('\ud83e\udde0 \u6700\u8fd1\u4e8b\u4ef6');
+              lines.push('\u6700\u8fd1\u4e8b\u4ef6');
               recentEvents.forEach(function (event) {
                 lines.push(
                   ' ' +
@@ -613,8 +627,9 @@
               'position:fixed;left:50%;transform:translateX(-50%);' +
               'bottom:calc(env(safe-area-inset-bottom,0px) + 16px);' +
               'width:min(420px,calc(100% - 32px));max-height:60vh;overflow-y:auto;' +
-              'background:var(--sk-surface,#ffffff);color:var(--sk-text,#1e293b);' +
-              'border:1px solid var(--sk-border,#e2e8f0);border-radius:1rem;' +
+              'background:rgb(var(--color-surface,255 255 255));' +
+              'color:rgb(var(--color-text,30 41 59));' +
+              'border:1px solid rgb(var(--color-border,226 232 240));border-radius:1rem;' +
               'box-shadow:0 12px 32px rgba(15,23,42,0.18);' +
               'padding:1rem 1.25rem;display:flex;flex-direction:column;align-items:center;' +
               'gap:0.5rem;text-align:center;z-index:9999;' +
@@ -623,19 +638,29 @@
             // \u7121 SSG \u5167\u5bb9\uff1a\u6cbf\u7528\u539f\u672c\u5168\u5c4f\u932f\u8aa4\u9762\u677f\uff08\u4fdd\u96aa\u5c64\uff09\u3002
             wrap.style.cssText =
               'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;' +
-              'justify-content:center;overflow-y:auto;background:var(--sk-bg,#f8fafc);' +
+              'justify-content:center;overflow-y:auto;background:rgb(var(--color-background,248 250 252));' +
+              'color:rgb(var(--color-text,30 41 59));' +
               'font-family:system-ui,-apple-system,sans-serif;' +
               'padding:2rem 1.5rem;text-align:center;gap:0.625rem;z-index:9999;';
           }
-          var icon = document.createElement('div');
-          icon.style.cssText = hasPrerendered
-            ? 'font-size:1.5rem;line-height:1'
-            : 'font-size:2.5rem;line-height:1';
-          icon.textContent = isOnline ? '\u26a0\ufe0f' : '\ud83d\udce1';
+          var statusBadge = document.createElement('div');
+          statusBadge.setAttribute('aria-hidden', 'true');
+          statusBadge.style.cssText =
+            'display:flex;align-items:center;justify-content:center;border-radius:9999px;' +
+            'width:' +
+            (hasPrerendered ? '2rem' : '3rem') +
+            ';height:' +
+            (hasPrerendered ? '2rem' : '3rem') +
+            ';font-weight:700;font-size:' +
+            (hasPrerendered ? '1rem' : '1.25rem') +
+            ';background:rgb(var(--color-warning-light,254 243 199));' +
+            'color:rgb(var(--color-warning-text,146 64 14));' +
+            'border:1px solid rgb(var(--color-warning,245 158 11) / 0.35);';
+          statusBadge.textContent = isOnline ? '!' : 'i';
           var title = document.createElement('div');
           title.style.cssText = hasPrerendered
-            ? 'font-size:1rem;font-weight:600;color:var(--sk-text,#1e293b)'
-            : 'font-size:1.125rem;font-weight:700;color:var(--sk-text,#1e293b)';
+            ? 'font-size:1rem;font-weight:600;color:rgb(var(--color-text,30 41 59))'
+            : 'font-size:1.125rem;font-weight:700;color:rgb(var(--color-text,30 41 59))';
           title.textContent = isOnline
             ? hasPrerendered
               ? '\u4e92\u52d5\u529f\u80fd\u8f09\u5165\u5931\u6557'
@@ -643,21 +668,24 @@
             : '\u76ee\u524d\u8655\u65bc\u96e2\u7dda\u6a21\u5f0f';
           var desc = document.createElement('div');
           desc.style.cssText =
-            'font-size:0.875rem;color:var(--sk-text-muted,#64748b);max-width:320px;line-height:1.6';
+            'font-size:0.875rem;color:rgb(var(--color-text-muted,100 116 139));max-width:320px;line-height:1.6';
           desc.textContent = hasPrerendered
             ? '\u9801\u9762\u5167\u5bb9\u4ecd\u53ef\u95b1\u8b80\uff0c\u4f46\u52d5\u614b\u63db\u7b97\u8207 PWA \u4e92\u52d5\u66ab\u6642\u5931\u6548\u3002\u8acb\u91cd\u65b0\u8f09\u5165\u4ee5\u6062\u5fa9\u5b8c\u6574\u529f\u80fd\u3002'
             : isOnline
               ? 'PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u53ef\u80fd\u5df2\u640d\u58de\u6216\u4e0d\u5b8c\u6574\u3002\u5efa\u8b70\u6e05\u9664\u5feb\u53d6\u5f8c\u91cd\u8a66\u3002'
               : '\u96e2\u7dda\u6a21\u5f0f\u4e0b PWA \u5feb\u53d6\u8cc7\u6e90\u7121\u6cd5\u8f09\u5165\uff0c\u8acb\u9023\u7dda\u5f8c\u91cd\u65b0\u958b\u555f\u3002';
-          wrap.appendChild(icon);
+          wrap.appendChild(statusBadge);
           wrap.appendChild(title);
           wrap.appendChild(desc);
           var CTA =
-            'padding:.625rem 1.75rem;background:#8B5CF6;color:#fff;border:none;' +
-            'border-radius:9999px;font-size:.875rem;font-weight:600;cursor:pointer;';
+            'padding:.625rem 1.75rem;background:rgb(var(--color-primary,124 58 237));' +
+            'color:#fff;border:none;border-radius:.75rem;font-size:.875rem;font-weight:600;' +
+            'cursor:pointer;box-shadow:0 8px 20px rgb(var(--color-primary,124 58 237) / 0.22);';
           var SEC =
-            'padding:.5rem 1.25rem;background:transparent;color:var(--sk-text-muted,#64748b);' +
-            'border:1px solid var(--sk-border,#cbd5e1);border-radius:9999px;font-size:.8rem;cursor:pointer;';
+            'padding:.5rem 1.25rem;background:rgb(var(--color-surface-elevated,248 250 252));' +
+            'color:rgb(var(--color-text-muted,100 116 139));' +
+            'border:1px solid rgb(var(--color-border,226 232 240));border-radius:.75rem;' +
+            'font-size:.8rem;cursor:pointer;';
           var btnRow = document.createElement('div');
           btnRow.style.cssText =
             'display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:0.25rem';
@@ -684,7 +712,8 @@
           }
           if (!isOnline) {
             var hintOffline = document.createElement('div');
-            hintOffline.style.cssText = 'font-size:0.75rem;color:var(--sk-text-muted,#94a3b8)';
+            hintOffline.style.cssText =
+              'font-size:0.75rem;color:rgb(var(--color-text-muted,100 116 139))';
             hintOffline.textContent =
               '\u9023\u7dda\u5f8c\u8acb\u91cd\u65b0\u958b\u555f\u61c9\u7528\u7a0b\u5f0f';
             btnRow.appendChild(hintOffline);
@@ -692,7 +721,7 @@
           if (!canRetry && isOnline) {
             var hintFailed = document.createElement('div');
             hintFailed.style.cssText =
-              'font-size:0.75rem;color:var(--sk-text-muted,#94a3b8);max-width:260px';
+              'font-size:0.75rem;color:rgb(var(--color-text-muted,100 116 139));max-width:260px';
             hintFailed.textContent =
               '\u82e5\u554f\u984c\u6301\u7e8c\uff0c\u8acb\u81f3\u700f\u89bd\u5668\u8a2d\u5b9a\u6e05\u9664\u7db2\u7ad9\u5feb\u53d6\u5f8c\u91cd\u8a66\u3002';
             btnRow.appendChild(hintFailed);
@@ -701,19 +730,21 @@
           var diagId = 'cs-diag';
           var details = document.createElement('details');
           details.style.cssText =
-            'margin-top:0.5rem;text-align:left;font-size:.75rem;max-width:320px;width:100%;';
+            'margin-top:0.5rem;text-align:left;font-size:.75rem;max-width:360px;width:100%;' +
+            'border:1px solid rgb(var(--color-border,226 232 240));border-radius:.75rem;' +
+            'background:rgb(var(--color-surface-elevated,248 250 252));overflow:hidden;';
           var summary = document.createElement('summary');
           summary.style.cssText =
-            'cursor:pointer;text-align:center;padding:.25rem;' +
-            'color:var(--sk-text-muted,#94a3b8);-webkit-user-select:none;user-select:none';
-          summary.textContent = '\ud83d\udcca \u8a3a\u65b7\u8a73\u60c5';
+            'cursor:pointer;text-align:center;padding:.5rem .75rem;font-weight:600;' +
+            'color:rgb(var(--color-text-muted,100 116 139));-webkit-user-select:none;user-select:none';
+          summary.textContent = '\u8a3a\u65b7\u8a73\u60c5';
           var diagPre = document.createElement('pre');
           diagPre.id = diagId;
           diagPre.style.cssText =
-            'white-space:pre-wrap;word-break:break-all;margin:.5rem 0;' +
-            'background:var(--sk-surface,#fff);border:1px solid var(--sk-border,#e2e8f0);' +
-            'padding:.75rem;border-radius:.5rem;font-size:.7rem;' +
-            'color:var(--sk-text,#475569);text-align:left;line-height:1.6;';
+            'white-space:pre-wrap;word-break:break-all;margin:0;border-top:1px solid rgb(var(--color-border,226 232 240));' +
+            'background:rgb(var(--color-surface,255 255 255));padding:.75rem;font-size:.7rem;' +
+            'font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;' +
+            'color:rgb(var(--color-text,51 65 85));text-align:left;line-height:1.6;';
           diagPre.textContent = '\u6536\u96c6\u4e2d\u2026';
           details.appendChild(summary);
           details.appendChild(diagPre);

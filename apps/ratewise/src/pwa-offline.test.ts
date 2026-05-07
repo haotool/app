@@ -225,6 +225,22 @@ describe('PWA 離線功能測試', () => {
       expect(html).toContain('hasPrerendered: hasPrerendered');
     });
 
+    it('should render cold-start diagnostics without emoji and with design token colors', () => {
+      const html = readFileSync(resolve(ROOT_PATH, 'index.html'), 'utf-8');
+
+      expect(html).toContain('Service Worker\\uff1a\\u672a\\u8a3b\\u518a');
+      expect(html).toContain('\\u72c0\\u614b\\uff1aService Worker \\u672a\\u8a3b\\u518a');
+      expect(html).toContain('rgb(var(--color-primary,124 58 237))');
+      expect(html).toContain('rgb(var(--color-surface,255 255 255))');
+      expect(html).toContain('rgb(var(--color-border,226 232 240))');
+      expect(html).toContain("summary.textContent = '\\u8a3a\\u65b7\\u8a73\\u60c5'");
+      expect(html).not.toContain('\\u23f0');
+      expect(html).not.toContain('\\ud83c');
+      expect(html).not.toContain('\\ud83d');
+      expect(html).not.toContain('\\ud83e');
+      expect(html).not.toContain('\\u26a0');
+    });
+
     it('should reload on controllerchange after activating a waiting worker', () => {
       const swUtils = readFileSync(resolve(ROOT_PATH, 'src/utils/swUtils.ts'), 'utf-8');
       expect(swUtils).toContain('controllerchange');

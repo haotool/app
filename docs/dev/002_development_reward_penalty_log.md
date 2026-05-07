@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-07
+- ID：pr371-cold-start-diagnostics-token-ui
+- 原因：實際 cold-start 診斷出現「Service Worker 未註冊但舊快取仍存在」的矛盾狀態，舊視窗只用 emoji log 與硬編紫色，未清楚指向可執行修復。
+- 解法：將診斷輸出改為純文字標籤，新增 SW 未註冊但 cache 存在的狀態/建議行，並把視窗樣式改用 `--color-*` design token fallback。
+
+- 日期：2026-05-07
 - ID：pr371-watchdog-banner-ready-cleanup
 - 原因：PR #371 的 watchdog banner 模式將冷啟動警示掛到 `body`，但 app ready 後只清除 timer/retry，會留下已過時的「載入失敗」提示。
 - 解法：在 `clearWatchdog` ready 共用路徑同步移除 `[data-cold-start-overlay]`，並補靜態測試鎖住 ready cleanup 契約。
