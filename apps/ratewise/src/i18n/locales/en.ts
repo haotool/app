@@ -65,8 +65,12 @@ const en = {
     addedToHistory: 'Added to history',
     spotRate: 'Spot',
     cashRate: 'Cash',
+    exchangeShopRate: 'Exchange shop',
+    rateTypeGroup: 'Rate type',
     switchToSpot: 'Switch to spot rate',
     switchToCash: 'Switch to cash rate',
+    switchToExchangeShop: 'Switch to exchange shop rate',
+    fallbackRate: 'Reference',
     rateTypeUnavailable: '{{rateType}} rate is currently unavailable',
     rateTypeUnavailableForCurrencies:
       '{{currencies}} does not provide {{rateType}} rate, switched to {{fallbackType}}',

@@ -10,7 +10,7 @@
  *       例如：public/api/pairs/usd-twd.json
  */
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CURRENCY_SEO_PATHS, SITE_CONFIG, RAW_DATA_BASE } from '../seo-paths.config.mjs';
@@ -27,6 +27,10 @@ const RATE_TYPE_DESCRIPTIONS = {
   spot_sell: '即期賣出：電匯/帳戶轉出匯率（你從台灣匯款出去）',
   spot_buy: '即期買入：電匯/帳戶轉入匯率（你匯款回台灣）',
 };
+
+const RATE_MODE_STRATEGIES = JSON.parse(
+  readFileSync(resolve(ROOT, 'src/config/rate-mode-strategies.json'), 'utf-8'),
+);
 
 const pairsDir = resolve(ROOT, 'public/api/pairs');
 mkdirSync(pairsDir, { recursive: true });
@@ -51,7 +55,8 @@ for (const path of CURRENCY_SEO_PATHS) {
     sourceUrl: 'https://rate.bot.com.tw/xrt',
     updateFrequency: 'every 5 minutes',
     rateTypes: RATE_TYPE_DESCRIPTIONS,
-    note: '賣出（sell）= 銀行賣給你外幣的價格，即你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格，即你拿外幣換台幣看此價。',
+    rateModes: RATE_MODE_STRATEGIES,
+    note: '賣出（sell）= 銀行賣給你外幣的價格，即你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格，即你拿外幣換台幣看此價。若要與 App 顯示一致，請依 rateModes 選取對應欄位。',
     disclaimer: '匯率僅供參考，實際交易請以金融機構公告為準。',
   };
 

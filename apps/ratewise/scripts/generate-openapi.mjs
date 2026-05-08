@@ -24,7 +24,7 @@ const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 const APP_VERSION = pkg.version;
 
 // API SemVer — 獨立於 app 版本；只有 API 合約變更時才調整。
-const API_VERSION = '1.0.0';
+const API_VERSION = '1.1.0';
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
@@ -52,6 +52,10 @@ const SUPPORTED_CURRENCIES =
         'MYR',
         'CNY',
       ];
+
+const rateModeStrategies = JSON.parse(
+  readFileSync(resolve(ROOT, 'src/config/rate-mode-strategies.json'), 'utf-8'),
+);
 
 // ─── 共用 Response Headers ────────────────────────────────────────────────────
 
@@ -153,15 +157,15 @@ const ratesResponseSchema = {
   description: '匯率資料回應（每 5 分鐘由 GitHub Actions 自動同步）',
   properties: {
     timestamp: {
-      type: 'integer',
-      description: 'Unix 時間戳（毫秒）',
-      example: 1740000000000,
+      type: 'string',
+      format: 'date-time',
+      description: '資料抓取時間（ISO 8601 字串，UTC）',
+      example: '2026-05-07T17:25:48.209Z',
     },
     updateTime: {
       type: 'string',
-      format: 'date-time',
-      description: '資料最後更新時間（ISO 8601 格式，台灣時間 UTC+8）',
-      example: '2025-02-20T10:30:00+08:00',
+      description: '台灣銀行牌告顯示時間（台灣時間 UTC+8）',
+      example: '2026/05/08 01:25:48',
     },
     source: {
       type: 'string',
@@ -170,10 +174,11 @@ const ratesResponseSchema = {
     },
     rates: {
       type: 'object',
-      description: '各幣別簡化匯率（以幣別代碼為 key，值為即期賣出匯率）',
+      description:
+        '各幣別簡化參考匯率（相容舊版欄位）。若要對齊 App 的 auto / sell / mid 匯率模式，請使用 details 搭配 x-rate-mode-strategies。',
       additionalProperties: {
         type: 'number',
-        description: '該幣別對 TWD 的即期賣出參考匯率',
+        description: '該幣別對 TWD 的簡化參考匯率',
       },
       example: { USD: 32.085, JPY: 0.2088, EUR: 35.12 },
     },
@@ -215,9 +220,24 @@ const pairInfoSchema = {
       description: '在 liveRateUrl 回應中定位此幣別資料的路徑',
       example: 'details.USD',
     },
+    rateModes: {
+      type: 'object',
+      description: 'App 匯率模式對應的欄位選擇策略；用於依使用者模式取正確 buy/sell/mid 欄位。',
+      example: rateModeStrategies,
+    },
     source: { type: 'string', example: '臺灣銀行牌告匯率' },
   },
-  required: ['pair', 'from', 'to', 'slug', 'pageUrl', 'liveRateUrl', 'rateFieldPath', 'source'],
+  required: [
+    'pair',
+    'from',
+    'to',
+    'slug',
+    'pageUrl',
+    'liveRateUrl',
+    'rateFieldPath',
+    'rateModes',
+    'source',
+  ],
 };
 
 // ─── OpenAPI Spec ─────────────────────────────────────────────────────────────
@@ -242,6 +262,11 @@ const openApiSpec = {
       '**重要提示：** 賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；',
       '買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價。',
       '',
+      '**App 匯率模式對應：**',
+      '- `auto`：來源幣別用 `{rateType}.sell`，目標幣別用 `{rateType}.buy`。',
+      '- `sell`：來源與目標皆用 `{rateType}.sell`。',
+      '- `mid`：來源與目標皆用 `({rateType}.buy + {rateType}.sell) / 2`。',
+      '',
       '匯率僅供參考，實際交易請以金融機構公告為準。',
     ].join('\n'),
     contact: {
@@ -257,6 +282,8 @@ const openApiSpec = {
     'x-source-url': 'https://rate.bot.com.tw/xrt',
     'x-update-frequency': 'every 5 minutes',
     'x-base-currency': 'TWD',
+    'x-rate-modes': ['auto', 'sell', 'mid'],
+    'x-rate-mode-strategies': rateModeStrategies,
     'x-supported-currencies': SUPPORTED_CURRENCIES,
     'x-webapp': SITE_CONFIG.url,
     'x-documentation': `${SITE_CONFIG.url}open-data/`,
@@ -265,6 +292,11 @@ const openApiSpec = {
   },
   // x-changelog（P3）：API 版本歷史。
   'x-changelog': {
+    '1.1.0': {
+      date: '2026-05-08',
+      summary: '新增 App 匯率模式欄位對照與幣對 rateModes 規格，並對齊資料端時間欄位格式。',
+      'app-version': APP_VERSION,
+    },
     '1.0.0': {
       date: '2026-03-21',
       summary: '初始 API 版本。包含最新匯率、歷史匯率、幣對資訊三個端點。',

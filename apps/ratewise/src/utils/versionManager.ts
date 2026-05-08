@@ -14,7 +14,7 @@
 import { APP_VERSION } from '../config/version';
 import { logger } from './logger';
 import { forceServiceWorkerUpdate } from './swUtils';
-import { CACHE_KEYS, STORAGE_KEYS } from '../features/ratewise/storage-keys';
+import { CACHE_KEY_PREFIXES, CACHE_KEYS, STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 interface VersionHistoryEntry {
   version: string;
@@ -86,6 +86,16 @@ export function clearAppCache(): void {
     for (const key of CACHE_KEYS) {
       localStorage.removeItem(key);
       logger.debug('Cleared localStorage cache', { key });
+    }
+    for (const prefix of CACHE_KEY_PREFIXES) {
+      const keysToRemove = Array.from({ length: localStorage.length }, (_, index) =>
+        localStorage.key(index),
+      ).filter((key): key is string => key?.startsWith(prefix) ?? false);
+
+      for (const key of keysToRemove) {
+        localStorage.removeItem(key);
+        logger.debug('Cleared localStorage cache by prefix', { key, prefix });
+      }
     }
   } catch (error) {
     logger.error('Failed to clear localStorage cache', error as Error);

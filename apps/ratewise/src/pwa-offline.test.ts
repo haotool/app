@@ -71,10 +71,13 @@ describe('PWA 離線功能測試', () => {
       );
     });
 
-    // inject-version-meta plugin 必須實際把 __BASE_PATH__ 替換為 base 值，
-    // 否則 build 產出的 HTML 會殘留佔位符導致資源 404。
+    // inject-version-meta plugin 必須以正規化後的 htmlBasePath 替換 __BASE_PATH__。
+    // Vite dev server 在 nested route 可能先把相對 href 改成 /__BASE_PATH__*，
+    // 因此需先處理 /__BASE_PATH__，避免 base=/ 時輸出 protocol-relative //logo.png。
     it('should replace __BASE_PATH__ with base config in transformIndexHtml', () => {
-      expect(viteConfig).toMatch(/\.replace\(\s*\/__BASE_PATH__\/g\s*,\s*base\s*\)/);
+      expect(viteConfig).toContain('const htmlBasePath = normalizeHtmlBasePath(base)');
+      expect(viteConfig).toMatch(/\.replace\(\s*\/\\\/__BASE_PATH__\/g\s*,\s*htmlBasePath\s*\)/);
+      expect(viteConfig).toMatch(/\.replace\(\s*\/__BASE_PATH__\/g\s*,\s*htmlBasePath\s*\)/);
     });
 
     // 防回歸：index.html 禁止硬編 /ratewise/ 絕對路徑於 <link>/preload；

@@ -12,6 +12,11 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-05-08
+- ID：ratewise-exchange-shop-rate-mode-ssot-convergence
+- 原因：換錢所匯率、API rate mode、OpenData/OpenAPI/LLM 文件、i18n 文案與 nested route HTML base path 分散維護，造成匯率顯示、規格文件與 dev smoke 可能漂移。
+- 解法：將 rate mode 策略、換錢所幣別/cache schema、公開 API/文件與 UI 文案收斂回 SSOT，並補測試與 browser smoke 鎖住匯率模式、OpenAPI 1.1.0、timestamp 型別與 `//logo.png` 回歸。
+
 - 日期：2026-05-07
 - ID：pr375-root-vitest-ci-coverage
 - 原因：Codex review 指出新增 root Lighthouse regression suite 不會被 `pnpm -r test` 或 CI `test:coverage` 執行，導致 env SSOT 測試可能漏跑。

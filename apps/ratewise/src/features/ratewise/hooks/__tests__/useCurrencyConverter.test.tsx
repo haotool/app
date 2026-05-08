@@ -4,15 +4,19 @@
  * 涵蓋歷史記錄管理與 Toast 通知行為。
  */
 
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useCurrencyConverter } from '../useCurrencyConverter';
 import { STORAGE_KEYS } from '../../storage-keys';
 import { useConverterStore } from '../../../../stores/converterStore';
+import type { ExchangeShopRate } from '../../../../services/moneyboxRateService';
 
 // Mock dependencies
 const mockShowToast = vi.fn();
 const mockT = vi.fn((key: string) => key);
+const moneyBoxRateMock = vi.hoisted(() => ({
+  rate: null as ExchangeShopRate | null,
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -24,6 +28,14 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../../../components/Toast', () => ({
   useToast: () => ({
     showToast: mockShowToast,
+  }),
+}));
+
+vi.mock('../useMoneyBoxRates', () => ({
+  useMoneyBoxRates: () => ({
+    rate: moneyBoxRateMock.rate,
+    isLoading: false,
+    error: null,
   }),
 }));
 
@@ -50,6 +62,7 @@ describe('useCurrencyConverter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.clear();
+    moneyBoxRateMock.rate = null;
     // 重置 Zustand store 至初始狀態，確保測試隔離
     useConverterStore.setState({
       fromCurrency: 'TWD',
@@ -332,6 +345,122 @@ describe('useCurrencyConverter', () => {
       expect(result.current.fromCurrency).toBe('JPY');
       expect(result.current.toCurrency).toBe('TWD');
       expect(result.current.fromAmount).toBe('10000');
+    });
+  });
+
+  describe('exchange shop conversion', () => {
+    const moneyBoxRate: ExchangeShopRate = {
+      currency: 'KRW',
+      sell: 44.85,
+      buy: 45.1,
+      updateTime: '2026/05/07 16:33:55',
+      source: 'MoneyBox',
+      sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+      providerName: '明洞換匯所',
+      isFallback: false,
+    };
+
+    it('uses MoneyBox sell rate for TWD→KRW result amount', async () => {
+      moneyBoxRateMock.rate = moneyBoxRate;
+      useConverterStore.setState({
+        fromCurrency: 'TWD',
+        toCurrency: 'KRW',
+        mode: 'single',
+        favorites: ['KRW'],
+        history: [],
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, KRW: 0.0236 },
+          rateType: 'cash',
+          rateSource: 'exchange-shop',
+        }),
+      );
+
+      await waitFor(() => {
+        expect(result.current.toAmount).toBe('44850');
+      });
+      expect(result.current.exchangeShopCurrency).toBe('KRW');
+      expect(result.current.moneyBoxRate).toEqual(moneyBoxRate);
+    });
+
+    it('uses provider fallback instead of bank rate while MoneyBox rate is not ready', async () => {
+      moneyBoxRateMock.rate = null;
+      useConverterStore.setState({
+        fromCurrency: 'TWD',
+        toCurrency: 'KRW',
+        mode: 'single',
+        favorites: ['KRW'],
+        history: [],
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, KRW: 0.0236 },
+          rateType: 'cash',
+          rateSource: 'exchange-shop',
+        }),
+      );
+
+      await waitFor(() => {
+        expect(result.current.toAmount).toBe('46000');
+      });
+      expect(result.current.moneyBoxRate).toMatchObject({
+        sell: 46.0,
+        buy: 46.7,
+        isFallback: true,
+      });
+    });
+
+    it('uses MoneyBox buy inverse for KRW→TWD result amount', async () => {
+      moneyBoxRateMock.rate = moneyBoxRate;
+      useConverterStore.setState({
+        fromCurrency: 'KRW',
+        toCurrency: 'TWD',
+        mode: 'single',
+        favorites: ['KRW'],
+        history: [],
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, KRW: 0.0236 },
+          rateType: 'cash',
+          rateSource: 'exchange-shop',
+        }),
+      );
+
+      act(() => {
+        result.current.handleFromAmountChange('45100');
+      });
+
+      await waitFor(() => {
+        expect(result.current.toAmount).toBe('1000.00');
+      });
+      expect(result.current.exchangeShopCurrency).toBe('KRW');
+    });
+
+    it('does not expose exchange shop for non-TWD KRW cross pairs', () => {
+      moneyBoxRateMock.rate = moneyBoxRate;
+      useConverterStore.setState({
+        fromCurrency: 'USD',
+        toCurrency: 'KRW',
+        mode: 'single',
+        favorites: ['USD', 'KRW'],
+        history: [],
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, USD: 31.5, KRW: 0.0236 },
+          rateType: 'cash',
+          rateSource: 'exchange-shop',
+        }),
+      );
+
+      expect(result.current.exchangeShopCurrency).toBeNull();
+      expect(result.current.toAmount).toBe('1334746');
     });
   });
 });

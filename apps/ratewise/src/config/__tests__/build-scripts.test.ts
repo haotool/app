@@ -106,6 +106,30 @@ async function readSeoRateExamplesScript() {
   return readFile(scriptPath, 'utf-8');
 }
 
+async function readApiJsonGenerator() {
+  const scriptPath = path.resolve(__dirname, '../../../scripts/generate-api-json.mjs');
+  return readFile(scriptPath, 'utf-8');
+}
+
+async function readPairJsonGenerator() {
+  const scriptPath = path.resolve(__dirname, '../../../scripts/generate-pair-json.mjs');
+  return readFile(scriptPath, 'utf-8');
+}
+
+async function readOpenApiGenerator() {
+  const scriptPath = path.resolve(__dirname, '../../../scripts/generate-openapi.mjs');
+  return readFile(scriptPath, 'utf-8');
+}
+
+async function readPublicRatesFixture() {
+  const ratesPath = path.resolve(__dirname, '../../../public/rates.json');
+  return JSON.parse(await readFile(ratesPath, 'utf-8')) as {
+    timestamp: unknown;
+    updateTime: unknown;
+    details?: Record<string, unknown>;
+  };
+}
+
 async function readSeoPathsConfig() {
   const configPath = path.resolve(__dirname, '../../../seo-paths.config.mjs');
   return readFile(configPath, 'utf-8');
@@ -636,5 +660,54 @@ describe('ratewise build scripts', () => {
       );
     }
     expect(offenders).toEqual([]);
+  });
+
+  it('should keep API rate mode strategies in a single JSON SSOT', async () => {
+    const ssotPath = path.resolve(__dirname, '../rate-mode-strategies.json');
+    expect(existsSync(ssotPath)).toBe(true);
+
+    const sources = [
+      await readApiJsonGenerator(),
+      await readPairJsonGenerator(),
+      await readOpenApiGenerator(),
+      await readOpenDataPageSource(),
+    ];
+
+    for (const source of sources) {
+      expect(source).toContain('rate-mode-strategies.json');
+      expect(source).not.toContain('來源幣別使用賣出價，目標幣別使用買入價');
+    }
+  });
+
+  it('should document rate API timestamp and base-currency fields from the data fixture SSOT', async () => {
+    const fixture = await readPublicRatesFixture();
+    const openApiGenerator = await readOpenApiGenerator();
+    const openDataPage = await readOpenDataPageSource();
+
+    expect(typeof fixture.timestamp).toBe('string');
+    expect(typeof fixture.updateTime).toBe('string');
+    expect(fixture.details).not.toHaveProperty('TWD');
+
+    expect(openApiGenerator).toContain("const API_VERSION = '1.1.0'");
+    expect(openApiGenerator).toContain("timestamp: {\n      type: 'string'");
+    expect(openApiGenerator).not.toContain("description: 'Unix 時間戳（毫秒）'");
+    expect(openApiGenerator).not.toContain(
+      "format: 'date-time',\n      description: '資料最後更新時間（ISO 8601 格式",
+    );
+
+    const llmsGenerator = await readLlmsGenerator();
+    expect(llmsGenerator).toContain('timestamp（ISO 8601 資料抓取時間）');
+    expect(llmsGenerator).toContain('| timestamp | string | ISO 8601 資料抓取時間（UTC） |');
+    expect(llmsGenerator).toContain(
+      '| updateTime | string | 台灣銀行牌告顯示時間（台灣時間 UTC+8） |',
+    );
+    expect(llmsGenerator).not.toContain('timestamp（Unix 時間戳）');
+    expect(llmsGenerator).not.toContain('| timestamp | number | Unix 時間戳（秒） |');
+    expect(llmsGenerator).not.toContain('| updateTime | string | ISO 8601 更新時間（UTC+8） |');
+
+    expect(openDataPage).toContain('17 種外幣的現金與即期四種報價，TWD 為基準幣');
+    expect(openDataPage).toContain("type: 'string (ISO 8601)'");
+    expect(openDataPage).not.toContain('integer (milliseconds)');
+    expect(openDataPage).not.toContain('包含全部 18 種幣別（含 TWD 基準幣）的現金與即期四種報價');
   });
 });

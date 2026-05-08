@@ -65,8 +65,12 @@ const ko = {
     addedToHistory: '기록에 추가됨',
     spotRate: '전신환',
     cashRate: '현금',
+    exchangeShopRate: '환전소',
+    rateTypeGroup: '환율 유형',
     switchToSpot: '전신환 환율로 전환',
     switchToCash: '현금 환율로 전환',
+    switchToExchangeShop: '환전소 환율로 전환',
+    fallbackRate: '참고값',
     rateTypeUnavailable: '{{rateType}} 환율은 현재 이용할 수 없습니다',
     rateTypeUnavailableForCurrencies:
       '{{currencies}}는 {{rateType}} 환율을 지원하지 않아 {{fallbackType}}으로 전환되었습니다',

@@ -30,6 +30,9 @@ export const STORAGE_KEYS = {
   /** 匯率數據快取 - 5 分鐘過期，由 exchangeRateService.ts 管理 */
   EXCHANGE_RATES: 'exchangeRates',
 
+  /** 換錢所匯率快取 key prefix - 5 分鐘過期，由 moneyboxRateService.ts 管理 */
+  EXCHANGE_SHOP_RATE_PREFIX: 'exchangeShopRate_',
+
   // === 系統數據 (版本管理) ===
 
   /** 當前應用版本號 - 由 versionManager.ts 管理 */
@@ -71,6 +74,13 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
  * 快取類型的 Keys (可清除)
  */
 export const CACHE_KEYS = [STORAGE_KEYS.EXCHANGE_RATES] as const;
+
+/**
+ * 快取類型的 Key Prefixes (可清除)
+ *
+ * 用於每個幣別各自建立 cache key 的資料，例如 exchangeShopRate_KRW。
+ */
+export const CACHE_KEY_PREFIXES = [STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX] as const;
 
 /**
  * 用戶數據類型的 Keys (不可清除)

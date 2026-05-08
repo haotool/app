@@ -65,8 +65,12 @@ const ja = {
     addedToHistory: '履歴に追加しました',
     spotRate: '直物',
     cashRate: '現金',
+    exchangeShopRate: '両替所',
+    rateTypeGroup: 'レート種類',
     switchToSpot: '直物レートに切替',
     switchToCash: '現金レートに切替',
+    switchToExchangeShop: '両替所レートに切替',
+    fallbackRate: '参考値',
     rateTypeUnavailable: '{{rateType}}レートは現在利用できません',
     rateTypeUnavailableForCurrencies:
       '{{currencies}} は {{rateType}} レート非対応のため、{{fallbackType}} を使用します',

@@ -1,3 +1,11 @@
+/**
+ * 換錢所 provider registry SSOT
+ *
+ * 集中管理非銀行牌告匯率來源（目前為 KRW / MoneyBox），包含資料端點、欄位解析、
+ * UI 顯示名稱與 fallback 匯率。所有換錢所支援幣別必須先在此註冊，服務層再依
+ * CurrencyCode 取得對應 provider，避免跨幣別誤用匯率資料。
+ */
+
 import type { CurrencyCode } from '../features/ratewise/types';
 
 export interface ExchangeShopConfig {

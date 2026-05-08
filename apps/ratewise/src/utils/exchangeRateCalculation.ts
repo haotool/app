@@ -312,14 +312,18 @@ export function getMidRate(
  *
  * | mode | FROM 幣別取值 | TO 幣別取值 | 說明 |
  * |------|------------|-----------|------|
- * | auto | 賣出價（sell）| 買入價（buy） | 依換算方向自動套用 |
+ * | auto | 買入價（buy） | 賣出價（sell）| 依換算方向自動套用（客戶視角）|
  * | sell | 賣出價（sell）| 賣出價（sell）| 台銀賣出牌告（現行預設）|
  * | mid  | 中間價（mid） | 中間價（mid） | 市場參考中間價 |
  *
  * TWD 為基準幣，永遠視作 1。
  *
+ * auto 模式客戶視角：
+ * - 外幣→TWD（客戶賣外幣）：銀行以買入價收購外幣，FROM 用 buy
+ * - TWD→外幣（客戶買外幣）：銀行以賣出價賣出外幣，TO 用 sell
+ *
  * @example
- * // auto: USD→JPY = amount * (USD.sell / JPY.buy) = 1000 * (30.97/0.2) = 154850
+ * // auto: USD→JPY = amount * (USD.buy / JPY.sell) = 1000 * (30.87/0.204) ≈ 151324
  * convertCurrencyAmountWithMode(1000, 'USD', 'JPY', details, 'spot', 'auto')
  */
 export function convertCurrencyAmountWithMode(
@@ -350,14 +354,14 @@ export function convertCurrencyAmountWithMode(
     if (code === 'TWD') return 1;
     return rateMode === 'mid'
       ? getMidRate(code, details, rateType, exchangeRates)
-      : getExchangeRate(code, details, rateType, exchangeRates); // auto: FROM 用賣出
+      : getBuyRate(code, details, rateType, exchangeRates); // auto: FROM 外幣用買入（客戶賣外幣給銀行）
   };
 
   const getRateTo = (code: CurrencyCode): number | null => {
     if (code === 'TWD') return 1;
     return rateMode === 'mid'
       ? getMidRate(code, details, rateType, exchangeRates)
-      : getBuyRate(code, details, rateType, exchangeRates); // auto: TO 用買入
+      : getExchangeRate(code, details, rateType, exchangeRates); // auto: TO 外幣用賣出（客戶向銀行買外幣）
   };
 
   // TWD → 外幣：amount / toRate

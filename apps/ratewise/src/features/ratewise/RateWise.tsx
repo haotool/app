@@ -8,13 +8,15 @@
  * - 收藏貨幣列表
  * - 幣種列表與趨勢
  */
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, Landmark, RefreshCw } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
+import { ExchangeShopBadge } from './components/ExchangeShopBadge';
 import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
@@ -24,7 +26,7 @@ import { performFullRefresh } from '../../utils/swUtils';
 import { logger } from '../../utils/logger';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { rateWiseLayoutTokens } from '../../config/design-tokens';
-import type { CurrencyCode, RateType } from './types';
+import type { CurrencyCode, RateSource, RateType } from './types';
 import { CURRENCY_DEFINITIONS } from './constants';
 import { STORAGE_KEYS } from './storage-keys';
 import {
@@ -40,6 +42,7 @@ const RateWise = () => {
 
   // 使用固定初始值避免 SSR hydration mismatch，在 useEffect 中從 localStorage 恢復
   const [rateType, setRateType] = useState<RateType>('spot');
+  const [rateSource, setRateSource] = useState<RateSource>('bank');
 
   // Restore user preferences from localStorage after hydration
   useEffect(() => {
@@ -50,10 +53,24 @@ const RateWise = () => {
     }
   }, []);
 
+  // Restore exchange source preference from localStorage after hydration
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.RATE_SOURCE);
+    if (stored === 'exchange-shop') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶偏好，避免 hydration mismatch
+      setRateSource('exchange-shop');
+    }
+  }, []);
+
   // 持久化 rateType 選擇
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.RATE_TYPE, rateType);
   }, [rateType]);
+
+  // 持久化 rateSource 選擇
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.RATE_SOURCE, rateSource);
+  }, [rateSource]);
 
   // Load real-time exchange rates
   const {
@@ -101,7 +118,9 @@ const RateWise = () => {
     swapCurrencies,
     toggleFavorite,
     addToHistory,
-  } = useCurrencyConverter({ exchangeRates, details, rateType });
+    moneyBoxRate,
+    exchangeShopCurrency,
+  } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource });
 
   const [searchParams] = useSearchParams();
 
@@ -117,6 +136,13 @@ const RateWise = () => {
     if (to && validCodes.includes(to)) setToCurrency(to as CurrencyCode);
     if (amount && /^\d+(\.\d+)?$/.test(amount)) handleFromAmountChange(amount);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 只在首次掛載時讀取 URL 參數
+
+  useEffect(() => {
+    if (rateSource === 'exchange-shop' && !exchangeShopCurrency) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 幣別離開換錢所支援範圍時必須立即回到銀行來源
+      setRateSource('bank');
+    }
+  }, [exchangeShopCurrency, rateSource]);
 
   const rateTypeAvailability = useMemo(
     () => getPairRateTypeAvailability(fromCurrency, toCurrency, details),
@@ -138,6 +164,18 @@ const RateWise = () => {
       setRateType(nextType);
     },
     [rateTypeAvailability],
+  );
+
+  const handleRateSourceChange = useCallback(
+    (nextSource: RateSource) => {
+      if (nextSource === 'exchange-shop') {
+        if (!exchangeShopCurrency) return;
+        setRateType('cash');
+      }
+
+      setRateSource(nextSource);
+    },
+    [exchangeShopCurrency],
   );
 
   // 首屏使用 build-time rates 直接渲染；只有完全沒有可用資料時才顯示 skeleton。
@@ -222,6 +260,9 @@ const RateWise = () => {
                 exchangeRates={exchangeRates}
                 details={details}
                 rateType={rateType}
+                rateSource={rateSource}
+                moneyBoxRate={moneyBoxRate}
+                exchangeShopCurrency={exchangeShopCurrency}
                 rateMode={rateMode}
                 rateTypeAvailability={rateTypeAvailability}
                 onFromCurrencyChange={setFromCurrency}
@@ -232,6 +273,7 @@ const RateWise = () => {
                 onSwapCurrencies={swapCurrencies}
                 onAddToHistory={addToHistory}
                 onRateTypeChange={handleRateTypeChange}
+                onRateSourceChange={handleRateSourceChange}
               />
             </div>
           </section>
@@ -254,18 +296,29 @@ const RateWise = () => {
               data-testid="ratewise-data-source"
               className={`${rateWiseLayoutTokens.info.base} ${rateWiseLayoutTokens.info.visibility}`}
             >
-              <div className="inline-flex items-center gap-2 text-[10px] text-text-muted/60">
-                <a
-                  href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary transition-colors"
-                >
-                  臺灣銀行牌告
-                </a>
-                <span>·</span>
-                <span>{formattedLastUpdate}</span>
-              </div>
+              <AnimatePresence mode="wait">
+                {rateSource === 'exchange-shop' &&
+                moneyBoxRate?.currency === exchangeShopCurrency ? (
+                  <ExchangeShopBadge key="exchange-shop-badge" rate={moneyBoxRate} />
+                ) : (
+                  <div
+                    key="bank-badge"
+                    className="inline-flex items-center gap-2 text-[10px] text-text-muted/60"
+                  >
+                    <a
+                      href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 hover:text-primary transition-colors"
+                    >
+                      <Landmark className="h-3 w-3 text-primary/70" aria-hidden="true" />
+                      臺灣銀行牌告
+                    </a>
+                    <span>·</span>
+                    <span>{formattedLastUpdate}</span>
+                  </div>
+                )}
+              </AnimatePresence>
             </section>
           )}
         </div>

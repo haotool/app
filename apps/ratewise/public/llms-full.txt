@@ -105,8 +105,8 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 ```json
 {
-  "timestamp": 1741000000,
-  "updateTime": "2026-03-03T10:05:00+08:00",
+  "timestamp": "2026-05-07T17:25:48.209Z",
+  "updateTime": "2026/05/08 01:25:48",
   "source": "Bank of Taiwan",
   "rates": {
     "USD": 32.75,
@@ -153,8 +153,8 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 | 欄位 | 型別 | 說明 |
 |------|------|------|
-| timestamp | number | Unix 時間戳（秒） |
-| updateTime | string | ISO 8601 更新時間（UTC+8） |
+| timestamp | string | ISO 8601 資料抓取時間（UTC） |
+| updateTime | string | 台灣銀行牌告顯示時間（台灣時間 UTC+8） |
 | source | string | 資料來源（"Bank of Taiwan"） |
 | rates.{CURRENCY} | number | 各幣別即期賣出（spot sell）簡化版匯率 |
 | details.{CURRENCY}.spot.buy | number | null | 即期買入匯率（台幣/外幣）；KRW 等無即期者為 null |

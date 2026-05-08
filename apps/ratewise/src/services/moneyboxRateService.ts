@@ -15,12 +15,13 @@ import {
   type ExchangeShopConfig,
 } from '../config/exchangeShopProviders';
 import type { CurrencyCode } from '../features/ratewise/types';
+import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 const CACHE_DURATION_MS = 5 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 8_000;
-const CACHE_KEY_PREFIX = 'exchangeShopRate_';
-
 export interface ExchangeShopRate {
+  /** 此匯率資料所屬的換錢所幣別；避免新增 provider 後跨幣別誤用 */
+  currency: CurrencyCode;
   /** 客戶買入外幣匯率：1 TWD = sell 外幣 */
   sell: number;
   /** 客戶賣出外幣匯率：buy 外幣 = 1 TWD */
@@ -39,14 +40,22 @@ interface CacheEntry {
 }
 
 function getCacheKey(currency: CurrencyCode): string {
-  return `${CACHE_KEY_PREFIX}${currency}`;
+  return `${STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX}${currency}`;
 }
 
 function readCache(currency: CurrencyCode): CacheEntry | null {
   try {
     const raw = localStorage.getItem(getCacheKey(currency));
     if (!raw) return null;
-    return JSON.parse(raw) as CacheEntry;
+    const parsed = JSON.parse(raw) as CacheEntry;
+    if (parsed.rate.currency && parsed.rate.currency !== currency) return null;
+    return {
+      ...parsed,
+      rate: {
+        ...parsed.rate,
+        currency,
+      },
+    };
   } catch {
     return null;
   }
@@ -64,8 +73,9 @@ function isCacheValid(entry: CacheEntry): boolean {
   return Date.now() - entry.timestamp < CACHE_DURATION_MS;
 }
 
-function buildFallbackRate(config: ExchangeShopConfig): ExchangeShopRate {
+function buildFallbackRate(currency: CurrencyCode, config: ExchangeShopConfig): ExchangeShopRate {
   return {
+    currency,
     sell: config.fallbackSell,
     buy: config.fallbackBuy,
     updateTime: '—',
@@ -156,11 +166,12 @@ export async function fetchExchangeShopRate(
       buy <= 0
     ) {
       logger.warn(`Exchange shop rate parse failed for ${currency}, using fallback`);
-      return buildFallbackRate(config);
+      return buildFallbackRate(currency, config);
     }
 
     const rawData = raw as { updateTime?: string } | null;
     const rate: ExchangeShopRate = {
+      currency,
       sell,
       buy,
       updateTime: rawData?.updateTime ?? '—',
@@ -174,7 +185,7 @@ export async function fetchExchangeShopRate(
     return rate;
   } catch (e) {
     logger.warn(`fetchExchangeShopRate failed for ${currency}`, { error: e });
-    return cached?.rate ?? buildFallbackRate(config);
+    return cached?.rate ?? buildFallbackRate(currency, config);
   }
 }
 
@@ -183,10 +194,10 @@ export function computeConverterRate(
   from: CurrencyCode,
   to: CurrencyCode,
 ): number | null {
-  if (from === 'TWD' && hasExchangeShopProvider(to)) {
+  if (from === 'TWD' && to === rate.currency && hasExchangeShopProvider(to)) {
     return rate.sell;
   }
-  if (to === 'TWD' && hasExchangeShopProvider(from)) {
+  if (to === 'TWD' && from === rate.currency && hasExchangeShopProvider(from)) {
     return 1 / rate.buy;
   }
   return null;

@@ -9,6 +9,7 @@ import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
 import { RATES_API } from '../config/api-endpoints';
 import { SITE_CONFIG } from '../config/seo-paths';
+import rateModeStrategies from '../config/rate-mode-strategies.json';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 
 // ─── 資料來源架構 ──────────────────────────────────────────────────────────────
@@ -50,7 +51,7 @@ const API_ENDPOINTS = [
     rawUrl: RATES_API.latestRaw,
     description: '最新匯率',
     badge: '每 5 分鐘更新',
-    note: '包含全部 17 幣別的現金與即期四種報價，以及即期賣出參考匯率。',
+    note: '包含 17 種外幣的現金與即期四種報價，TWD 為基準幣；App 匯率模式請依 rateModeStrategies 選取 buy / sell / mid 欄位。',
   },
   {
     method: 'GET',
@@ -103,15 +104,25 @@ curl -s "${RATES_API.historyCdnExample}"`,
     code: `const res = await fetch("${RATES_API.latestCdn}");
 const data = await res.json();
 
-// 美元現金賣出（台幣換美金現鈔）
-const usdCashSell = data.details.USD.cash.sell;
-console.log(\`1 USD = \${usdCashSell} TWD\`);
-// → 1 USD = 32.11 TWD（2026-03-19 實際值）
+const rateMode = "auto"; // auto | sell | mid，對應 App 設定
+const rateType = "cash"; // cash | spot，對應使用者選擇
 
-// 所有即期賣出匯率
-Object.entries(data.rates).forEach(([currency, rate]) => {
-  console.log(\`\${currency}/TWD = \${rate}\`);
-});`,
+function pickRate(detail, side) {
+  if (rateMode === "mid") {
+    return (detail[rateType].buy + detail[rateType].sell) / 2;
+  }
+  if (rateMode === "sell") {
+    return detail[rateType].sell;
+  }
+  return side === "from" ? detail[rateType].sell : detail[rateType].buy;
+}
+
+// 依 App 匯率模式換算：TWD → USD
+const usdRate = pickRate(data.details.USD, "to");
+console.log(\`1000 TWD = \${1000 / usdRate} USD\`);
+
+// 若只需要原始台銀欄位，仍可直接取完整四種報價
+console.log(data.details.USD.cash.sell, data.details.USD.cash.buy);`,
   },
   {
     id: 'python',
@@ -119,16 +130,25 @@ Object.entries(data.rates).forEach(([currency, rate]) => {
     language: 'python',
     code: `import requests
 
-# 最新匯率
 data = requests.get("${RATES_API.latestCdn}").json()
-usd_cash_sell = data["details"]["USD"]["cash"]["sell"]
-print(f"1 USD = {usd_cash_sell} TWD")
-# → 1 USD = 32.11 TWD（2026-03-19 實際值）
 
-# 歷史匯率（2026-03-19）
+rate_mode = "auto"  # auto | sell | mid，對應 App 設定
+rate_type = "cash"  # cash | spot，對應使用者選擇
+
+def pick_rate(detail, side):
+    if rate_mode == "mid":
+        return (detail[rate_type]["buy"] + detail[rate_type]["sell"]) / 2
+    if rate_mode == "sell":
+        return detail[rate_type]["sell"]
+    return detail[rate_type]["sell"] if side == "from" else detail[rate_type]["buy"]
+
+# 依 App 匯率模式換算：TWD → USD
+usd_rate = pick_rate(data["details"]["USD"], "to")
+print(f"1000 TWD = {1000 / usd_rate} USD")
+
+# 歷史匯率同樣使用 details.{CODE}.{cash|spot}.{buy|sell}
 history = requests.get("${RATES_API.historyCdnExample}").json()
-print(f"2026-03-19 USD 即期賣出：{history['details']['USD']['spot']['sell']}")
-# → 2026-03-19 USD 即期賣出：31.915`,
+print(history["details"]["USD"]["spot"]["sell"])`,
   },
   {
     id: 'html',
@@ -154,15 +174,20 @@ print(f"2026-03-19 USD 即期賣出：{history['details']['USD']['spot']['sell']
 // ─── 資料欄位說明 ──────────────────────────────────────────────────────────────
 
 const SCHEMA_FIELDS = [
-  { field: 'timestamp', type: 'string (ISO 8601)', description: '資料最後同步時間（UTC）' },
+  { field: 'timestamp', type: 'string (ISO 8601)', description: '資料抓取時間（UTC）' },
   {
     field: 'updateTime',
     type: 'string',
-    description: '更新時間，台灣時間（UTC+8），例如 2026-03-19T08:59:20+08:00',
+    description: '台灣銀行牌告顯示時間，台灣時間（UTC+8），例如 2026/05/08 01:25:48',
   },
   { field: 'source', type: 'string', description: '固定為「Taiwan Bank (臺灣銀行牌告匯率)」' },
   { field: 'base', type: 'string', description: '基準幣，固定為 "TWD"' },
-  { field: 'rates', type: 'object', description: '各幣別對 TWD 即期賣出參考匯率，key 為 ISO 三碼' },
+  {
+    field: 'rates',
+    type: 'object',
+    description:
+      '相容舊版的簡化參考匯率；App 與 API 新整合應優先使用 details 搭配 rateModeStrategies',
+  },
   { field: 'details', type: 'object', description: '各幣別完整四種報價（cash/spot × buy/sell）' },
   {
     field: 'details.{CODE}.cash.buy',
@@ -177,6 +202,14 @@ const SCHEMA_FIELDS = [
   { field: 'details.{CODE}.spot.buy', type: 'number', description: '即期買入：電匯匯款回台灣' },
   { field: 'details.{CODE}.spot.sell', type: 'number', description: '即期賣出：電匯從台灣匯出' },
 ] as const;
+
+const RATE_MODE_STRATEGY_ROWS = Object.entries(rateModeStrategies).map(([mode, strategy]) => ({
+  mode,
+  name: strategy.label,
+  from: strategy.fromCurrencyField,
+  to: strategy.toCurrencyField,
+  description: strategy.description,
+}));
 
 // 從 CURRENCY_DEFINITIONS SSOT 導出，TWD 標示為基準幣。
 const SUPPORTED_CURRENCIES = Object.entries(CURRENCY_DEFINITIONS).map(([code, def]) => ({
@@ -251,9 +284,9 @@ function TabbedCodeExamples() {
   const [activeId, setActiveId] = useState<string>(CODE_EXAMPLES[0].id);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-surface-border">
+    <div className="max-w-full overflow-hidden rounded-xl border border-surface-border">
       {/* Tab bar */}
-      <div className="flex items-center gap-0 border-b border-surface-border bg-surface-elevated overflow-x-auto">
+      <div className="flex min-w-0 items-center gap-0 overflow-x-auto border-b border-surface-border bg-surface-elevated">
         {CODE_EXAMPLES.map((ex) => (
           <button
             key={ex.id}
@@ -267,7 +300,7 @@ function TabbedCodeExamples() {
             {ex.label}
           </button>
         ))}
-        <div className="ml-auto pr-3">
+        <div className="sticky right-0 ml-auto bg-surface-elevated/95 pr-3 backdrop-blur-sm">
           <CopyButton
             text={
               (CODE_EXAMPLES.find((example) => example.id === activeId) ?? CODE_EXAMPLES[0]).code
@@ -284,7 +317,7 @@ function TabbedCodeExamples() {
             role="region"
             aria-label={`程式碼範例：${example.label}`}
             hidden={!isActive}
-            className="overflow-x-auto bg-surface p-5 text-sm leading-relaxed text-text"
+            className="max-w-full overflow-x-auto bg-surface p-5 text-sm leading-relaxed text-text"
           >
             <code>{example.code}</code>
           </pre>
@@ -315,7 +348,7 @@ function UrlCopyRow({
           </span>
         )}
       </div>
-      <div className="flex items-center gap-2 rounded bg-surface-elevated px-3 py-2">
+      <div className="flex min-w-0 items-center gap-2 rounded bg-surface-elevated px-3 py-2">
         <a
           href={url}
           target="_blank"
@@ -343,9 +376,11 @@ function ResourceCard({ item }: { item: ResourceCardItem }) {
     'group rounded-xl border border-surface-border bg-surface p-4 transition-colors hover:border-primary/40 hover:bg-surface-elevated';
   const content = (
     <>
-      <div className="mb-1 font-semibold text-text group-hover:text-primary">{item.title}</div>
-      <div className="mb-2 text-sm text-text-muted">{item.desc}</div>
-      <div className="font-mono text-xs text-primary">{item.label}</div>
+      <div className="mb-1 min-w-0 break-words font-semibold text-text group-hover:text-primary">
+        {item.title}
+      </div>
+      <div className="mb-2 min-w-0 break-words text-sm text-text-muted">{item.desc}</div>
+      <div className="min-w-0 break-all font-mono text-xs text-primary">{item.label}</div>
     </>
   );
 
@@ -423,8 +458,8 @@ const OpenData = () => {
             <h2 className="mb-5 text-2xl font-semibold text-text">資料管線</h2>
 
             {/* 流程圖 */}
-            <div className="mb-5 overflow-hidden rounded-xl border border-surface-border bg-surface p-5">
-              <div className="flex flex-col items-center gap-2 font-mono text-sm sm:flex-row sm:flex-wrap sm:justify-center sm:gap-0">
+            <div className="mb-5 max-w-full overflow-hidden rounded-xl border border-surface-border bg-surface p-5">
+              <div className="flex min-w-0 flex-col items-center gap-2 font-mono text-sm sm:flex-row sm:flex-wrap sm:justify-center sm:gap-0">
                 {[
                   {
                     label: '臺灣銀行',
@@ -462,9 +497,12 @@ const OpenData = () => {
                       →
                     </div>
                   ) : (
-                    <div key={i} className={`rounded-lg px-3 py-2 text-center ${item.color}`}>
+                    <div
+                      key={i}
+                      className={`max-w-full rounded-lg px-3 py-2 text-center ${item.color}`}
+                    >
                       <div className="font-semibold">{item.label}</div>
-                      <div className="text-xs opacity-75">{item.sub}</div>
+                      <div className="break-all text-xs opacity-75">{item.sub}</div>
                     </div>
                   ),
                 )}
@@ -488,12 +526,12 @@ const OpenData = () => {
                   >
                     {src.name}
                   </a>
-                  <p className="mt-1 text-sm text-text-muted">{src.note}</p>
+                  <p className="mt-1 min-w-0 break-words text-sm text-text-muted">{src.note}</p>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 rounded-lg border border-surface-border bg-surface-elevated p-4 text-sm text-text-muted">
+            <div className="mt-4 min-w-0 break-words rounded-lg border border-surface-border bg-surface-elevated p-4 text-sm text-text-muted">
               <span className="font-semibold text-text">快取建議</span>
               ：CDN 端點支援{' '}
               <code className="rounded bg-surface px-1 font-mono text-xs">If-None-Match</code> ETag
@@ -506,8 +544,8 @@ const OpenData = () => {
               <h3 className="mb-3 text-base font-semibold text-text">資料新鮮度與時間戳記說明</h3>
 
               {/* 兩個時間欄位對照 */}
-              <div className="mb-4 overflow-hidden rounded-xl border border-surface-border">
-                <table className="w-full text-sm" aria-label="時間戳記欄位說明">
+              <div className="mb-4 max-w-full overflow-x-auto rounded-xl border border-surface-border">
+                <table className="min-w-[42rem] text-sm" aria-label="時間戳記欄位說明">
                   <thead>
                     <tr className="border-b border-surface-border bg-surface-elevated">
                       <th className="px-4 py-3 text-left font-semibold text-text">欄位</th>
@@ -518,10 +556,10 @@ const OpenData = () => {
                   <tbody className="divide-y divide-surface-border bg-surface">
                     <tr>
                       <td className="px-4 py-3 font-mono text-xs text-primary">updateTime</td>
-                      <td className="px-4 py-3 text-text">
+                      <td className="px-4 py-3 break-words text-text">
                         台銀匯率於本系統最後一次<strong>實際變動</strong>的時間（台灣時區）
                       </td>
-                      <td className="px-4 py-3 text-text-muted">
+                      <td className="px-4 py-3 break-words text-text-muted">
                         僅在 GitHub Actions 偵測到匯率數值與前次不同時才更新；台銀未發布新牌告時即使
                         Actions 持續執行，此欄位也不會前進
                       </td>
@@ -537,13 +575,13 @@ const OpenData = () => {
 
               {/* 核心說明 */}
               <div className="space-y-3">
-                <div className="rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
+                <div className="min-w-0 rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
                   <div className="mb-1 flex items-center gap-2">
                     <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                       變動偵測機制
                     </span>
                   </div>
-                  <p className="text-text">
+                  <p className="break-words text-text">
                     GitHub Actions 每 5 分鐘抓取台銀 CSV 後，會將本次各幣別匯率與前次儲存的
                     <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
                       rates
@@ -561,13 +599,13 @@ const OpenData = () => {
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
+                <div className="min-w-0 rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
                   <div className="mb-1 flex items-center gap-2">
                     <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                       為何來源時間與刷新時間差距較大？
                     </span>
                   </div>
-                  <p className="text-text">
+                  <p className="break-words text-text">
                     應用介面顯示的「<strong>來源</strong>」時間對應
                     <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
                       updateTime
@@ -581,13 +619,13 @@ const OpenData = () => {
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
+                <div className="min-w-0 rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
                   <div className="mb-1 flex items-center gap-2">
                     <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                       Actions 排程說明
                     </span>
                   </div>
-                  <p className="text-text">
+                  <p className="break-words text-text">
                     排程使用標準 cron 語法{' '}
                     <code className="rounded bg-surface-elevated px-1 font-mono text-xs">
                       */5 * * * *
@@ -633,13 +671,13 @@ const OpenData = () => {
               ))}
             </div>
 
-            <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+            <div className="mt-4 min-w-0 break-words rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
               完整 OpenAPI 3.1 規格：
               <a
                 href="/ratewise/openapi.json"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-1 font-mono text-primary hover:underline"
+                className="ml-1 break-all font-mono text-primary hover:underline"
               >
                 /ratewise/openapi.json
               </a>
@@ -666,8 +704,8 @@ const OpenData = () => {
               。
             </p>
 
-            <div className="mb-6 overflow-x-auto rounded-xl border border-surface-border">
-              <table className="w-full text-sm" aria-label="資料格式欄位說明">
+            <div className="mb-6 max-w-full overflow-x-auto rounded-xl border border-surface-border">
+              <table className="min-w-[44rem] text-sm" aria-label="資料格式欄位說明">
                 <thead>
                   <tr className="border-b border-surface-border bg-surface-elevated">
                     <th className="px-4 py-3 text-left font-semibold text-text">欄位</th>
@@ -678,11 +716,45 @@ const OpenData = () => {
                 <tbody className="divide-y divide-surface-border bg-surface">
                   {SCHEMA_FIELDS.map((f) => (
                     <tr key={f.field}>
-                      <td className="px-4 py-3 font-mono text-xs text-primary">{f.field}</td>
+                      <td className="px-4 py-3 break-all font-mono text-xs text-primary">
+                        {f.field}
+                      </td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs text-text-muted">
                         {f.type}
                       </td>
-                      <td className="px-4 py-3 text-text">{f.description}</td>
+                      <td className="px-4 py-3 break-words text-text">{f.description}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mb-6 max-w-full overflow-x-auto rounded-xl border border-surface-border">
+              <table className="min-w-[52rem] text-sm" aria-label="App 匯率模式欄位對照">
+                <thead>
+                  <tr className="border-b border-surface-border bg-surface-elevated">
+                    <th className="px-4 py-3 text-left font-semibold text-text">App 模式</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">來源幣別欄位</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">目標幣別欄位</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">說明</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border bg-surface">
+                  {RATE_MODE_STRATEGY_ROWS.map((strategy) => (
+                    <tr key={strategy.mode}>
+                      <td className="px-4 py-3">
+                        <code className="rounded bg-surface-elevated px-1 font-mono text-xs text-primary">
+                          {strategy.mode}
+                        </code>
+                        <span className="ml-2 text-text">{strategy.name}</span>
+                      </td>
+                      <td className="px-4 py-3 break-all font-mono text-xs text-text-muted">
+                        {strategy.from}
+                      </td>
+                      <td className="px-4 py-3 break-all font-mono text-xs text-text-muted">
+                        {strategy.to}
+                      </td>
+                      <td className="px-4 py-3 break-words text-text">{strategy.description}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -694,14 +766,14 @@ const OpenData = () => {
               <h3 className="mb-3 text-base font-semibold text-text">
                 支援幣別（{SUPPORTED_CURRENCIES.length} 種，基準幣 TWD）
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex min-w-0 flex-wrap gap-2">
                 {SUPPORTED_CURRENCIES.map((c) => (
                   <span
                     key={c.code}
-                    className="rounded-full border border-surface-border bg-surface-elevated px-3 py-1 text-sm"
+                    className="min-w-0 rounded-full border border-surface-border bg-surface-elevated px-3 py-1 text-sm"
                   >
                     <span className="font-mono font-semibold text-primary">{c.code}</span>
-                    <span className="ml-1 text-text-muted">{c.name}</span>
+                    <span className="ml-1 break-words text-text-muted">{c.name}</span>
                   </span>
                 ))}
               </div>
@@ -712,8 +784,8 @@ const OpenData = () => {
           <section className="mb-12">
             <h2 className="mb-5 text-2xl font-semibold text-text">速率限制</h2>
 
-            <div className="mb-5 overflow-x-auto rounded-xl border border-surface-border">
-              <table className="w-full text-sm" aria-label="速率限制規則">
+            <div className="mb-5 max-w-full overflow-x-auto rounded-xl border border-surface-border">
+              <table className="min-w-[42rem] text-sm" aria-label="速率限制規則">
                 <thead>
                   <tr className="border-b border-surface-border bg-surface-elevated">
                     <th className="px-4 py-3 text-left font-semibold text-text">來源</th>
@@ -728,7 +800,7 @@ const OpenData = () => {
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-primary">
                         {r.limit}
                       </td>
-                      <td className="px-4 py-3 text-text-muted">{r.note}</td>
+                      <td className="px-4 py-3 break-words text-text-muted">{r.note}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -754,10 +826,10 @@ const OpenData = () => {
               ].map(({ icon, content }, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3 rounded-lg bg-surface px-4 py-2.5 text-sm text-text"
+                  className="flex min-w-0 items-start gap-3 rounded-lg bg-surface px-4 py-2.5 text-sm text-text"
                 >
                   <span className="mt-0.5 shrink-0">{icon}</span>
-                  <span>{content}</span>
+                  <span className="min-w-0 break-words">{content}</span>
                 </div>
               ))}
             </div>
@@ -766,7 +838,7 @@ const OpenData = () => {
           {/* ── 授權聲明 ── */}
           <section className="mb-12">
             <h2 className="mb-4 text-2xl font-semibold text-text">授權聲明</h2>
-            <div className="space-y-3 rounded-xl border border-surface-border bg-surface p-5 text-sm leading-relaxed text-text-muted">
+            <div className="min-w-0 space-y-3 rounded-xl border border-surface-border bg-surface p-5 text-sm leading-relaxed text-text-muted">
               <p>
                 <span className="font-semibold text-text">程式碼</span>
                 ：以{' '}
@@ -794,7 +866,7 @@ const OpenData = () => {
           {/* ── 相關資源 ── */}
           <section className="mb-12">
             <h2 className="mb-4 text-2xl font-semibold text-text">相關資源</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {(
                 [
                   {
@@ -862,8 +934,8 @@ const OpenData = () => {
                   key={item.question}
                   className="group rounded-xl border border-surface-border bg-surface"
                 >
-                  <summary className="flex cursor-pointer items-center justify-between px-5 py-4 font-medium text-text">
-                    {item.question}
+                  <summary className="flex min-w-0 cursor-pointer items-center justify-between gap-3 px-5 py-4 font-medium text-text">
+                    <span className="min-w-0 break-words">{item.question}</span>
                     <svg
                       aria-hidden="true"
                       className="h-5 w-5 shrink-0 text-text-muted transition-transform group-open:rotate-180"
@@ -879,7 +951,7 @@ const OpenData = () => {
                       />
                     </svg>
                   </summary>
-                  <div className="border-t border-surface-border px-5 py-4 text-sm leading-relaxed text-text-muted">
+                  <div className="break-words border-t border-surface-border px-5 py-4 text-sm leading-relaxed text-text-muted">
                     {item.answer}
                   </div>
                 </details>
@@ -888,7 +960,7 @@ const OpenData = () => {
           </section>
 
           {/* ── CTA ── */}
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
+          <div className="min-w-0 rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
             <p className="mb-3 text-text-muted">不想呼叫 API？直接使用換算介面，免安裝、免帳號。</p>
             <Link
               to="/"

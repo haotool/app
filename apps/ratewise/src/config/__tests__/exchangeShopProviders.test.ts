@@ -35,6 +35,11 @@ describe('EXCHANGE_SHOP_PROVIDERS registry', () => {
     expect(EXCHANGE_SHOP_PROVIDERS.KRW!.getSellRate(null)).toBeNull();
   });
 
+  it('getBuyRate returns null for malformed data', () => {
+    expect(EXCHANGE_SHOP_PROVIDERS.KRW!.getBuyRate({})).toBeNull();
+    expect(EXCHANGE_SHOP_PROVIDERS.KRW!.getBuyRate(null)).toBeNull();
+  });
+
   it('hasExchangeShopProvider returns true for KRW', () => {
     expect(hasExchangeShopProvider('KRW')).toBe(true);
   });

@@ -4,6 +4,8 @@ import {
   computeConverterRate,
   type ExchangeShopRate,
 } from '../moneyboxRateService';
+import { EXCHANGE_SHOP_PROVIDERS } from '../../config/exchangeShopProviders';
+import type { CurrencyCode } from '../../features/ratewise/types';
 
 const MOCK_MONEYBOX_JSON = {
   timestamp: '2026-05-07T07:33:55.932Z',
@@ -38,6 +40,7 @@ describe('fetchExchangeShopRate', () => {
     expect(result).not.toBeNull();
     expect(result!.sell).toBe(44.85);
     expect(result!.buy).toBe(45.1);
+    expect((result as ExchangeShopRate & { currency?: CurrencyCode })!.currency).toBe('KRW');
     expect(result!.providerName).toBe('明洞換匯所');
     expect(result!.source).toBe('MoneyBox');
   });
@@ -53,6 +56,61 @@ describe('fetchExchangeShopRate', () => {
     await fetchExchangeShopRate('KRW');
     await fetchExchangeShopRate('KRW');
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('migrates legacy cached data without currency so converter keeps using exchange-shop rates', async () => {
+    localStorage.setItem(
+      'exchangeShopRate_KRW',
+      JSON.stringify({
+        rate: {
+          sell: 44.85,
+          buy: 45.1,
+          updateTime: '2026/05/07 16:33:55',
+          source: 'MoneyBox',
+          sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+          providerName: '明洞換匯所',
+          isFallback: false,
+        },
+        timestamp: Date.now(),
+      }),
+    );
+
+    const result = await fetchExchangeShopRate('KRW');
+
+    expect(fetch).not.toHaveBeenCalled();
+    expect(result).not.toBeNull();
+    expect(result!.currency).toBe('KRW');
+    expect(computeConverterRate(result!, 'TWD', 'KRW')).toBeCloseTo(44.85, 5);
+  });
+
+  it('ignores cached data when currency does not match the cache key', async () => {
+    localStorage.setItem(
+      'exchangeShopRate_KRW',
+      JSON.stringify({
+        rate: {
+          currency: 'PHP',
+          sell: 1.5,
+          buy: 1.6,
+          updateTime: '2026/05/07 16:33:55',
+          source: 'MoneyBox',
+          sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+          providerName: '錯誤換匯所',
+          isFallback: false,
+        },
+        timestamp: Date.now(),
+      }),
+    );
+
+    vi.mocked(fetch)
+      .mockRejectedValueOnce(new Error('Primary CDN down'))
+      .mockRejectedValueOnce(new Error('Fallback CDN down'));
+
+    const result = await fetchExchangeShopRate('KRW');
+
+    expect(result).not.toBeNull();
+    expect(result!.currency).toBe('KRW');
+    expect(result!.isFallback).toBe(true);
+    expect(result!.sell).toBe(46.0);
   });
 
   it('returns fallback values when fetch fails and no cache', async () => {
@@ -119,7 +177,8 @@ describe('fetchExchangeShopRate', () => {
 });
 
 describe('computeConverterRate', () => {
-  const rate: ExchangeShopRate = {
+  const rate = {
+    currency: 'KRW' as CurrencyCode,
     sell: 44.85,
     buy: 45.1,
     updateTime: '2026/05/07 16:33:55',
@@ -143,5 +202,20 @@ describe('computeConverterRate', () => {
     expect(computeConverterRate(rate, 'USD', 'KRW')).toBeNull();
     expect(computeConverterRate(rate, 'KRW', 'JPY')).toBeNull();
     expect(computeConverterRate(rate, 'USD', 'EUR')).toBeNull();
+  });
+
+  it('does not apply a KRW provider rate to another supported exchange-shop currency', () => {
+    (EXCHANGE_SHOP_PROVIDERS as Record<string, unknown>)['PHP'] = {
+      ...EXCHANGE_SHOP_PROVIDERS.KRW!,
+      providerName: 'PHP 測試換匯所',
+      providerNameEn: 'PHP Test Exchange',
+    };
+
+    try {
+      expect(computeConverterRate(rate, 'TWD', 'PHP')).toBeNull();
+      expect(computeConverterRate(rate, 'PHP', 'TWD')).toBeNull();
+    } finally {
+      delete (EXCHANGE_SHOP_PROVIDERS as Record<string, unknown>)['PHP'];
+    }
   });
 });
