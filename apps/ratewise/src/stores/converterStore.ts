@@ -16,7 +16,13 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ConverterMode, CurrencyCode, RateMode } from '../features/ratewise/types';
+import type {
+  ConverterMode,
+  CurrencyCode,
+  RateMode,
+  RateSource,
+  RateType,
+} from '../features/ratewise/types';
 import {
   CURRENCY_DEFINITIONS,
   DEFAULT_FAVORITES,
@@ -24,6 +30,9 @@ import {
   DEFAULT_TO_CURRENCY,
 } from '../features/ratewise/constants';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
+
+const DEFAULT_RATE_TYPE: RateType = 'spot';
+const DEFAULT_RATE_SOURCE: RateSource = 'bank';
 
 // ── 有效貨幣代碼集合（模組載入時計算一次）────────────────────────────────────
 const VALID_CODES = new Set(Object.keys(CURRENCY_DEFINITIONS));
@@ -36,6 +45,8 @@ const LEGACY_KEYS = {
   TO_CURRENCY: STORAGE_KEYS.TO_CURRENCY,
   MODE: STORAGE_KEYS.CURRENCY_CONVERTER_MODE,
   FAVORITES: STORAGE_KEYS.FAVORITES,
+  RATE_TYPE: STORAGE_KEYS.RATE_TYPE,
+  RATE_SOURCE: STORAGE_KEYS.RATE_SOURCE,
 } as const;
 
 // ── 轉換歷史記錄型別 ─────────────────────────────────────────────────────────
@@ -56,6 +67,8 @@ interface ConverterState {
   toCurrency: CurrencyCode;
   mode: ConverterMode;
   rateMode: RateMode;
+  rateType: RateType;
+  rateSource: RateSource;
   favorites: CurrencyCode[];
   history: ConversionRecord[];
 
@@ -64,6 +77,12 @@ interface ConverterState {
   setToCurrency: (code: CurrencyCode) => void;
   setMode: (mode: ConverterMode) => void;
   setRateMode: (rateMode: RateMode) => void;
+  setRateType: (rateType: RateType) => void;
+  /**
+   * 切換匯率資料來源；切到 `exchange-shop` 時自動同步 `rateType = 'cash'`，
+   * 與單幣別/多幣別頁的「換錢所僅支援現金」UX 約束一致。
+   */
+  setRateSource: (rateSource: RateSource) => void;
   swapCurrencies: () => void;
 
   /** 切換收藏狀態（immutable 更新） */
@@ -86,10 +105,12 @@ interface ConverterState {
 
 type PersistentFields = Pick<
   ConverterState,
-  'fromCurrency' | 'toCurrency' | 'mode' | 'rateMode' | 'favorites'
+  'fromCurrency' | 'toCurrency' | 'mode' | 'rateMode' | 'rateType' | 'rateSource' | 'favorites'
 >;
 
 const VALID_RATE_MODES: RateMode[] = ['auto', 'sell', 'mid'];
+const VALID_RATE_TYPES: RateType[] = ['spot', 'cash'];
+const VALID_RATE_SOURCES: RateSource[] = ['bank', 'exchange-shop'];
 
 /**
  * 驗證 hydrate 後的狀態欄位是否符合當前 schema 契約。
@@ -116,6 +137,20 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
     patch.rateMode = 'auto';
     dirty = true;
   }
+  if (!VALID_RATE_TYPES.includes(state.rateType)) {
+    patch.rateType = DEFAULT_RATE_TYPE;
+    dirty = true;
+  }
+  if (!VALID_RATE_SOURCES.includes(state.rateSource)) {
+    patch.rateSource = DEFAULT_RATE_SOURCE;
+    dirty = true;
+  }
+  const resolvedRateSource = patch.rateSource ?? state.rateSource;
+  const resolvedRateType = patch.rateType ?? state.rateType;
+  if (resolvedRateSource === 'exchange-shop' && resolvedRateType !== 'cash') {
+    patch.rateType = 'cash';
+    dirty = true;
+  }
   if (!Array.isArray(state.favorites)) {
     patch.favorites = [...DEFAULT_FAVORITES] as CurrencyCode[];
     dirty = true;
@@ -137,40 +172,49 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
 
 // ── 遷移輔助函式 ─────────────────────────────────────────────────────────────
 
-function buildMigrationPatch(): Partial<
-  Pick<ConverterState, 'fromCurrency' | 'toCurrency' | 'mode' | 'rateMode' | 'favorites'>
-> | null {
+function buildMigrationPatch(): Partial<PersistentFields> | null {
   if (typeof window === 'undefined') return null;
 
-  // 統一 key 已存在，代表已完成遷移，跳過
-  if (window.localStorage.getItem('ratewise-converter') !== null) return null;
+  const patch: Partial<PersistentFields> = {};
 
-  const oldFrom = window.localStorage.getItem(LEGACY_KEYS.FROM_CURRENCY);
-  const oldTo = window.localStorage.getItem(LEGACY_KEYS.TO_CURRENCY);
-  const oldMode = window.localStorage.getItem(LEGACY_KEYS.MODE);
-  const oldFavoritesRaw = window.localStorage.getItem(LEGACY_KEYS.FAVORITES);
+  // rateType / rateSource：即使 `ratewise-converter` 已存在仍需遷移，
+  // 因為它們是 v2.x 期間才加入 store 的新 SSOT 欄位，先前由各 page useState +
+  // 個別 localStorage key 管理。
+  const oldRateType = window.localStorage.getItem(LEGACY_KEYS.RATE_TYPE);
+  if (oldRateType === 'cash' || oldRateType === 'spot') {
+    patch.rateType = oldRateType;
+  }
+  const oldRateSource = window.localStorage.getItem(LEGACY_KEYS.RATE_SOURCE);
+  if (oldRateSource === 'bank' || oldRateSource === 'exchange-shop') {
+    patch.rateSource = oldRateSource;
+  }
+  if (patch.rateSource === 'exchange-shop' && patch.rateType !== 'cash') {
+    patch.rateType = 'cash';
+  }
 
-  if (!oldFrom && !oldTo && !oldMode && !oldFavoritesRaw) return null;
+  // fromCurrency / toCurrency / mode / favorites：統一 key 已存在代表已完成遷移
+  if (window.localStorage.getItem('ratewise-converter') === null) {
+    const oldFrom = window.localStorage.getItem(LEGACY_KEYS.FROM_CURRENCY);
+    const oldTo = window.localStorage.getItem(LEGACY_KEYS.TO_CURRENCY);
+    const oldMode = window.localStorage.getItem(LEGACY_KEYS.MODE);
+    const oldFavoritesRaw = window.localStorage.getItem(LEGACY_KEYS.FAVORITES);
 
-  const patch: Partial<Pick<ConverterState, 'fromCurrency' | 'toCurrency' | 'mode' | 'favorites'>> =
-    {};
+    if (oldFrom && isCurrencyCode(oldFrom)) patch.fromCurrency = oldFrom;
+    if (oldTo && isCurrencyCode(oldTo)) patch.toCurrency = oldTo;
+    if (oldMode === 'multi') patch.mode = 'multi';
 
-  if (oldFrom && isCurrencyCode(oldFrom)) patch.fromCurrency = oldFrom;
-  if (oldTo && isCurrencyCode(oldTo)) patch.toCurrency = oldTo;
-  if (oldMode === 'multi') patch.mode = 'multi';
-
-  if (oldFavoritesRaw) {
-    try {
-      const parsed: unknown = JSON.parse(oldFavoritesRaw);
-      if (Array.isArray(parsed)) {
-        const sanitized = (parsed as unknown[]).filter(
-          (c): c is CurrencyCode => typeof c === 'string' && isCurrencyCode(c),
-        );
-        // 空陣列為合法的使用者偏好（刻意清空收藏），必須保留
-        patch.favorites = sanitized;
+    if (oldFavoritesRaw) {
+      try {
+        const parsed: unknown = JSON.parse(oldFavoritesRaw);
+        if (Array.isArray(parsed)) {
+          // 空陣列為合法的使用者偏好（刻意清空收藏），必須保留
+          patch.favorites = (parsed as unknown[]).filter(
+            (c): c is CurrencyCode => typeof c === 'string' && isCurrencyCode(c),
+          );
+        }
+      } catch {
+        // 忽略格式錯誤的 JSON，保留預設收藏
       }
-    } catch {
-      // 忽略格式錯誤的 JSON，保留預設收藏
     }
   }
 
@@ -183,6 +227,8 @@ function removeLegacyKeys(): void {
   window.localStorage.removeItem(LEGACY_KEYS.TO_CURRENCY);
   window.localStorage.removeItem(LEGACY_KEYS.MODE);
   window.localStorage.removeItem(LEGACY_KEYS.FAVORITES);
+  window.localStorage.removeItem(LEGACY_KEYS.RATE_TYPE);
+  window.localStorage.removeItem(LEGACY_KEYS.RATE_SOURCE);
 }
 
 // ── Store 實例 ───────────────────────────────────────────────────────────────
@@ -194,6 +240,8 @@ export const useConverterStore = create<ConverterState>()(
       toCurrency: DEFAULT_TO_CURRENCY,
       mode: 'single' as ConverterMode,
       rateMode: 'auto' as RateMode,
+      rateType: DEFAULT_RATE_TYPE,
+      rateSource: DEFAULT_RATE_SOURCE,
       favorites: [...DEFAULT_FAVORITES] as CurrencyCode[],
       history: [],
 
@@ -205,6 +253,19 @@ export const useConverterStore = create<ConverterState>()(
       setMode: (mode) => set({ mode }),
 
       setRateMode: (rateMode) => set({ rateMode }),
+
+      setRateType: (rateType) =>
+        set((state) => ({
+          rateType: state.rateSource === 'exchange-shop' ? 'cash' : rateType,
+        })),
+
+      // 換錢所僅支援現金牌告，切到 exchange-shop 時把 rateType 一併鎖到 cash，
+      // 避免 single/multi 任一頁面忘了同步 cash 而再次漂移。
+      setRateSource: (rateSource) =>
+        set((state) => ({
+          rateSource,
+          rateType: rateSource === 'exchange-shop' ? 'cash' : state.rateType,
+        })),
 
       swapCurrencies: () =>
         set((state) => ({
@@ -255,15 +316,17 @@ export const useConverterStore = create<ConverterState>()(
         toCurrency: state.toCurrency,
         mode: state.mode,
         rateMode: state.rateMode,
+        rateType: state.rateType,
+        rateSource: state.rateSource,
         favorites: state.favorites,
         history: state.history,
       }),
       onRehydrateStorage: () => (_state, error) => {
         if (error) return;
-        // 修復不合法的持久化欄位（例如舊版 CurrencyPair 格式、損毀代碼）
-        useConverterStore.getState().__validateAndSanitize();
         // 舊版個別 key 的一次性遷移
         useConverterStore.getState().__migrateFromLegacy();
+        // 修復不合法的持久化欄位（例如舊版 CurrencyPair 格式、損毀代碼）
+        useConverterStore.getState().__validateAndSanitize();
       },
     },
   ),

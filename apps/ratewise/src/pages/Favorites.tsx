@@ -34,8 +34,8 @@ import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConv
 import { FavoritesSkeleton } from '../components/SkeletonLoader';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
-import type { RateType, CurrencyCode, ConversionHistoryEntry } from '../features/ratewise/types';
-import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
+import type { CurrencyCode, ConversionHistoryEntry } from '../features/ratewise/types';
+import { useConverterStore } from '../stores/converterStore';
 import { getAllCurrenciesSorted } from './favorites-utils';
 
 export default function Favorites() {
@@ -43,20 +43,14 @@ export default function Favorites() {
   const navigate = useNavigate();
   const isTestEnv = import.meta.env.MODE === 'test';
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
-  const [rateType, setRateType] = useState<RateType>('spot');
   const [activeTab, setActiveTab] = useState<'favorites' | 'history'>('favorites');
+
+  // rateType 共用 converterStore，避免本頁與 RateWise/MultiConverter 之間漂移。
+  const rateType = useConverterStore((state) => state.rateType);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration marker
     setIsHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEYS.RATE_TYPE);
-    if (stored === 'cash') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage restore
-      setRateType('cash');
-    }
   }, []);
 
   const {

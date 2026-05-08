@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 /**
  * converterStore 單元測試
  *
@@ -39,6 +41,8 @@ const resetStore = () => {
     fromCurrency: 'TWD',
     toCurrency: 'JPY',
     mode: 'single',
+    rateType: 'spot',
+    rateSource: 'bank',
     favorites: ['JPY', 'KRW', 'VND', 'THB', 'HKD', 'USD'],
     history: [],
   });
@@ -77,6 +81,41 @@ describe('converterStore', () => {
       useConverterStore.getState().setMode('multi');
       useConverterStore.getState().setMode('single');
       expect(useConverterStore.getState().mode).toBe('single');
+    });
+  });
+
+  // ── setRateType / setRateSource ──────────────────────────────────────────
+  describe('setRateType / setRateSource', () => {
+    it('setRateType 直接更新 rateType', () => {
+      useConverterStore.getState().setRateType('cash');
+      expect(useConverterStore.getState().rateType).toBe('cash');
+    });
+
+    it('rateSource=exchange-shop 時，直接 setRateType("spot") 也必須維持 cash', () => {
+      useConverterStore.setState({ rateType: 'cash', rateSource: 'exchange-shop' });
+      useConverterStore.getState().setRateType('spot');
+
+      const state = useConverterStore.getState();
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(state.rateType).toBe('cash');
+    });
+
+    it('setRateSource("exchange-shop") 自動同步 rateType=cash（SSOT 不變式）', () => {
+      // 起始 rateType=spot，切到換錢所必須同步成 cash，避免 single/multi page 各自再寫一份 effect
+      useConverterStore.setState({ rateType: 'spot', rateSource: 'bank' });
+      useConverterStore.getState().setRateSource('exchange-shop');
+      const state = useConverterStore.getState();
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(state.rateType).toBe('cash');
+    });
+
+    it('setRateSource("bank") 不應重置 rateType（保留使用者偏好）', () => {
+      useConverterStore.setState({ rateType: 'cash', rateSource: 'exchange-shop' });
+      useConverterStore.getState().setRateSource('bank');
+      const state = useConverterStore.getState();
+      expect(state.rateSource).toBe('bank');
+      // bank 模式同時支援 spot / cash，使用者刻意設的 cash 必須保留
+      expect(state.rateType).toBe('cash');
     });
   });
 
@@ -239,6 +278,68 @@ describe('converterStore', () => {
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('toCurrency');
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('currencyConverterMode');
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('favorites');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('rateType');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('rateSource');
+    });
+
+    it('rateType / rateSource 即使 ratewise-converter 已存在仍要遷移（新加入欄位）', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          // 模擬已有舊版 store 但未含 rateType/rateSource（v2.7.1+ 持久化結構）
+          'ratewise-converter': JSON.stringify({
+            state: { fromCurrency: 'USD', toCurrency: 'JPY' },
+          }),
+          rateType: 'cash',
+          rateSource: 'exchange-shop',
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      const state = useConverterStore.getState();
+      expect(state.rateType).toBe('cash');
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('rateType');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('rateSource');
+    });
+
+    it('legacy key 只有 exchange-shop 時，遷移後也必須自動收斂成 cash', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          'ratewise-converter': JSON.stringify({
+            state: { fromCurrency: 'USD', toCurrency: 'JPY' },
+          }),
+          rateSource: 'exchange-shop',
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      const state = useConverterStore.getState();
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(state.rateType).toBe('cash');
+    });
+
+    it('rateType 為非合法值時不寫入 patch（保留 store 預設）', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          rateType: 'invalid_value',
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      // 非 spot/cash 不應寫入 store，保留 reset 後的 'spot'
+      expect(useConverterStore.getState().rateType).toBe('spot');
     });
 
     it('使用者刻意清空收藏（[]）時，遷移後應保留空收藏而非恢復預設值', () => {
@@ -355,6 +456,39 @@ describe('converterStore', () => {
       useConverterStore.getState().__validateAndSanitize?.();
 
       expect(useConverterStore.getState().mode).toBe('single');
+    });
+
+    it('rateType 為非法值時，重置為 spot', () => {
+      useConverterStore.setState({
+        rateType: 'broken' as unknown as 'spot' | 'cash',
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      expect(useConverterStore.getState().rateType).toBe('spot');
+    });
+
+    it('rateSource 為非法值時，重置為 bank', () => {
+      useConverterStore.setState({
+        rateSource: 'unknown_source' as unknown as 'bank' | 'exchange-shop',
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      expect(useConverterStore.getState().rateSource).toBe('bank');
+    });
+
+    it('exchange-shop 與 spot 的非法組合會被修正回 cash', () => {
+      useConverterStore.setState({
+        rateType: 'spot',
+        rateSource: 'exchange-shop',
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      const state = useConverterStore.getState();
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(state.rateType).toBe('cash');
     });
 
     it('所有欄位合法時，不修改 store 狀態', () => {

@@ -10,7 +10,7 @@
  */
 import { AlertCircle, Landmark, RefreshCw } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
-import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { useMemo, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useCurrencyConverter } from './hooks/useCurrencyConverter';
@@ -28,7 +28,7 @@ import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { rateWiseLayoutTokens } from '../../config/design-tokens';
 import type { CurrencyCode, RateSource, RateType } from './types';
 import { CURRENCY_DEFINITIONS } from './constants';
-import { STORAGE_KEYS } from './storage-keys';
+import { useConverterStore } from '../../stores/converterStore';
 import {
   getPairRateTypeAvailability,
   resolveRateTypeByAvailability,
@@ -40,37 +40,11 @@ const RateWise = () => {
   const mainRef = useRef<HTMLDivElement>(null);
   const isTestEnv = import.meta.env.MODE === 'test';
 
-  // 使用固定初始值避免 SSR hydration mismatch，在 useEffect 中從 localStorage 恢復
-  const [rateType, setRateType] = useState<RateType>('spot');
-  const [rateSource, setRateSource] = useState<RateSource>('bank');
-
-  // Restore user preferences from localStorage after hydration
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEYS.RATE_TYPE);
-    if (stored === 'cash') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶偏好，避免 hydration mismatch
-      setRateType('cash');
-    }
-  }, []);
-
-  // Restore exchange source preference from localStorage after hydration
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEYS.RATE_SOURCE);
-    if (stored === 'exchange-shop') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶偏好，避免 hydration mismatch
-      setRateSource('exchange-shop');
-    }
-  }, []);
-
-  // 持久化 rateType 選擇
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.RATE_TYPE, rateType);
-  }, [rateType]);
-
-  // 持久化 rateSource 選擇
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.RATE_SOURCE, rateSource);
-  }, [rateSource]);
+  // rateType / rateSource 由 converterStore 持久化，與多幣別/收藏頁共用同一份 SSOT。
+  const rateType = useConverterStore((state) => state.rateType);
+  const rateSource = useConverterStore((state) => state.rateSource);
+  const setRateType = useConverterStore((state) => state.setRateType);
+  const setRateSource = useConverterStore((state) => state.setRateSource);
 
   // Load real-time exchange rates
   const {
@@ -138,11 +112,11 @@ const RateWise = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 只在首次掛載時讀取 URL 參數
 
   useEffect(() => {
+    // 幣別離開換錢所支援範圍時必須立即回到銀行來源；經 converterStore action 更新，不觸發 set-state-in-effect 規則。
     if (rateSource === 'exchange-shop' && !exchangeShopCurrency) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 幣別離開換錢所支援範圍時必須立即回到銀行來源
       setRateSource('bank');
     }
-  }, [exchangeShopCurrency, rateSource]);
+  }, [exchangeShopCurrency, rateSource, setRateSource]);
 
   const rateTypeAvailability = useMemo(
     () => getPairRateTypeAvailability(fromCurrency, toCurrency, details),
@@ -150,32 +124,29 @@ const RateWise = () => {
   );
 
   useEffect(() => {
+    // 匯率類型需依可用性即時收斂，避免顯示不可用選項造成誤導；透過 store action，不算直接 setState in effect。
     if (!rateTypeAvailability.spot && !rateTypeAvailability.cash) return;
     const resolvedRateType = resolveRateTypeByAvailability(rateType, rateTypeAvailability);
     if (resolvedRateType !== rateType) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 匯率類型需依可用性即時收斂，避免顯示不可用選項造成誤導
       setRateType(resolvedRateType);
     }
-  }, [rateType, rateTypeAvailability]);
+  }, [rateType, rateTypeAvailability, setRateType]);
 
   const handleRateTypeChange = useCallback(
     (nextType: RateType) => {
       if (!rateTypeAvailability[nextType]) return;
       setRateType(nextType);
     },
-    [rateTypeAvailability],
+    [rateTypeAvailability, setRateType],
   );
 
   const handleRateSourceChange = useCallback(
     (nextSource: RateSource) => {
-      if (nextSource === 'exchange-shop') {
-        if (!exchangeShopCurrency) return;
-        setRateType('cash');
-      }
-
+      // 切到 exchange-shop 必須有可用 provider；store action 會自動同步 rateType=cash。
+      if (nextSource === 'exchange-shop' && !exchangeShopCurrency) return;
       setRateSource(nextSource);
     },
-    [exchangeShopCurrency],
+    [exchangeShopCurrency, setRateSource],
   );
 
   // 首屏使用 build-time rates 直接渲染；只有完全沒有可用資料時才顯示 skeleton。

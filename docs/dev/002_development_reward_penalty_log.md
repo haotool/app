@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（neutral 1）｜累計總分：沿用前次總分（本次未增減）
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +1
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-08
+- ID：ratewise-rate-type-source-converter-store-ssot
+- 原因：`rateType` / `rateSource` 雖宣稱已共用 SSOT，但 `RateWise.tsx` / `pages/MultiConverter.tsx` / `pages/Favorites.tsx` 各自以 `useState` + 個別 `localStorage` key 維護，三處邏輯並行，未來易再次漂移。
+- 解法：把 `rateType` / `rateSource` 收進 `useConverterStore`，`setRateSource('exchange-shop')` 自動同步 `rateType=cash`、補 hydrate sanitize 與 legacy key 遷移（即使 `ratewise-converter` 已存在也會讀取舊 key 並刪除）；`RateWise`/`MultiConverter` 共用兩者，`Favorites` 只共用 `rateType`，未實作 `rateSource` 共用。
 
 - 日期：2026-05-08
 - ID：ratewise-multi-converter-rate-source-ssot-convergence

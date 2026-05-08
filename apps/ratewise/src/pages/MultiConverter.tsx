@@ -18,46 +18,26 @@ import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConv
 import { MultiConverterSkeleton } from '../components/SkeletonLoader';
 import { formatDisplayTime } from '../utils/timeFormatter';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
-import type { RateType, CurrencyCode, RateSource } from '../features/ratewise/types';
-import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
+import type { CurrencyCode } from '../features/ratewise/types';
 import { multiConverterLayoutTokens } from '../config/design-tokens';
 import { hasExchangeShopProvider } from '../config/exchangeShopProviders';
+import { useConverterStore } from '../stores/converterStore';
 
 export default function MultiConverter() {
   const { t } = useTranslation();
   const isTestEnv = import.meta.env.MODE === 'test';
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
-  const [rateType, setRateType] = useState<RateType>('spot');
-  const [rateSource, setRateSource] = useState<RateSource>('bank');
+
+  // rateType / rateSource 共用 converterStore，與 RateWise/Favorites 同源。
+  const rateType = useConverterStore((state) => state.rateType);
+  const rateSource = useConverterStore((state) => state.rateSource);
+  const setRateType = useConverterStore((state) => state.setRateType);
+  const setRateSource = useConverterStore((state) => state.setRateSource);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration marker
     setIsHydrated(true);
   }, []);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEYS.RATE_TYPE);
-    if (stored === 'cash') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage restore
-      setRateType('cash');
-    }
-  }, []);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEYS.RATE_SOURCE);
-    if (stored === 'exchange-shop') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage restore
-      setRateSource('exchange-shop');
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.RATE_TYPE, rateType);
-  }, [rateType]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.RATE_SOURCE, rateSource);
-  }, [rateSource]);
 
   const {
     rates: exchangeRates,
@@ -90,18 +70,12 @@ export default function MultiConverter() {
   const hasMultiExchangeShop = baseCurrency === 'TWD' || hasExchangeShopProvider(baseCurrency);
 
   useEffect(() => {
+    // 多幣別基準幣離開換錢所可用範圍時需回退銀行來源；透過 store action，不算直接 setState in effect。
     if (rateSource === 'exchange-shop' && !hasMultiExchangeShop) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 多幣別基準幣離開換錢所可用範圍時需回退銀行來源
       setRateSource('bank');
     }
-  }, [hasMultiExchangeShop, rateSource]);
-
-  useEffect(() => {
-    if (rateSource === 'exchange-shop' && rateType !== 'cash') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 換錢所僅支援現金語意，多幣別需與單幣別一致
-      setRateType('cash');
-    }
-  }, [rateSource, rateType]);
+  }, [hasMultiExchangeShop, rateSource, setRateSource]);
+  // 註：rateSource→cash 的同步已收斂到 converterStore.setRateSource，無需頁面層 effect。
 
   const handleQuickAmount = useCallback(
     (amount: number) => {

@@ -90,9 +90,14 @@ export const CACHE_KEY_PREFIXES = [STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX] as co
  * - fromCurrency / toCurrency / currencyConverterMode / favorites
  *   已遷移至 Zustand store，統一由 'ratewise-converter' key 管理
  * - 舊的個別 keys 在首次啟動時由 converterStore migration 自動清除
+ *
+ * 遷移說明（v2.22.21+）：
+ * - rateType / rateSource 也併入 'ratewise-converter'，
+ *   converterStore.__migrateFromLegacy 會於首次 hydrate 時讀取舊 key 並刪除。
+ *   仍保留在本清單中以保護過渡期使用者資料不被快取清除流程誤刪。
  */
 export const USER_DATA_KEYS = [
-  'ratewise-converter', // Zustand store（含 fromCurrency/toCurrency/mode/favorites）
+  'ratewise-converter', // Zustand store（含 fromCurrency/toCurrency/mode/rateMode/rateType/rateSource/favorites/history）
   STORAGE_KEYS.RATE_TYPE,
   STORAGE_KEYS.RATE_SOURCE,
   STORAGE_KEYS.CONVERSION_HISTORY,
