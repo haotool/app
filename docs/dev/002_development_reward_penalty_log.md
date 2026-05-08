@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +1
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +2
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-09
+- ID：ratewise-rate-provider-ssot-types-phase1
+- 原因：`RateSource` 同時被當成「來源類型」與「provider 身分」使用，導致換錢所之後新增 provider 無法表達，且 best/manual 模式缺乏統一型別。
+- 解法：新增 `rateProviderTypes.ts` 提供 `RateSourceKind` / `RateProviderId` / `ProviderSelectionMode` / `RateProviderRef` / `RateProviderPreference` / `ResolvedRateProvider` 與 `toLegacyRateSource` / `fromLegacyRateSource` 相容轉換，並把 `types.ts` 的 `RateSource` 標註為 `@deprecated` legacy compatibility，僅作為過渡層保留給尚未遷移的 UI 分支。
 
 - 日期：2026-05-08
 - ID：ratewise-rate-type-source-converter-store-ssot

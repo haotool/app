@@ -8,10 +8,15 @@ export type AmountField = 'from' | 'to';
 export type RateType = 'spot' | 'cash';
 
 /**
- * 匯率資料來源選擇
+ * 匯率資料來源選擇（legacy compatibility）
  *
  * - 'bank': 台灣銀行牌告匯率（預設）
  * - 'exchange-shop': 換錢所即時匯率（僅適用於有 provider 的幣別）
+ *
+ * @deprecated 新邏輯請改用 `rateProviderTypes.ts` 的 `RateSourceKind + RateProviderRef`。
+ *   此型別僅作為相容層，讓尚未遷移到 provider SSOT 的舊程式碼可繼續運作；
+ *   不可再用 `RateSource` 表達「具體 provider 身分」。
+ *   遷移輔助：`toLegacyRateSource` / `fromLegacyRateSource`（位於 rateProviderTypes.ts）。
  */
 export type RateSource = 'bank' | 'exchange-shop';
 
