@@ -13,7 +13,7 @@ import { readJSON, writeJSON } from '../storage';
 import { STORAGE_KEYS } from '../storage-keys';
 import type { RateDetails } from './useExchangeRates';
 import { logger } from '../../../utils/logger';
-import { convertCurrencyAmountWithMode } from '../../../utils/exchangeRateCalculation';
+import { getUnitExchangeRate } from '../../../utils/exchangeRateCalculation';
 import { getRelativeTimeString } from '../../../utils/timeFormatter';
 import { INP_LONG_TASK_THRESHOLD_MS } from '../../../utils/interactionBudget';
 import { useToast } from '../../../components/Toast';
@@ -22,7 +22,7 @@ import {
   getExchangeShopProvider,
   hasExchangeShopProvider,
 } from '../../../config/exchangeShopProviders';
-import { computeConverterRate, type ExchangeShopRate } from '../../../services/moneyboxRateService';
+import type { ExchangeShopRate } from '../../../services/moneyboxRateService';
 import { useMoneyBoxRates } from './useMoneyBoxRates';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
@@ -118,22 +118,12 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
 
   const convertAmount = useCallback(
     (amount: number, from: CurrencyCode, to: CurrencyCode): number => {
-      if (rateSource === 'exchange-shop' && selectedExchangeShopRate) {
-        const exchangeShopRate = computeConverterRate(selectedExchangeShopRate, from, to);
-        if (exchangeShopRate !== null) {
-          return amount * exchangeShopRate;
-        }
-      }
+      const unitRate = getUnitExchangeRate(from, to, details, rateType, rateMode, exchangeRates, {
+        rateSource,
+        exchangeShopRate: selectedExchangeShopRate,
+      });
 
-      return convertCurrencyAmountWithMode(
-        amount,
-        from,
-        to,
-        details,
-        rateType,
-        rateMode,
-        exchangeRates,
-      );
+      return amount * unitRate;
     },
     [details, rateType, rateMode, exchangeRates, rateSource, selectedExchangeShopRate],
   );

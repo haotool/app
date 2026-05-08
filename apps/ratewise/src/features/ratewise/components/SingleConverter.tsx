@@ -32,12 +32,15 @@ import { singleConverterLayoutTokens } from '../../../config/design-tokens';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
-import { convertCurrencyAmountWithMode } from '../../../utils/exchangeRateCalculation';
+import {
+  getReciprocalExchangeRate,
+  getUnitExchangeRate,
+} from '../../../utils/exchangeRateCalculation';
 import type { RateTypeAvailability } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 import { TREND_CHART_DEFER_MS, TREND_CHART_IDLE_TIMEOUT_MS } from '../../../config/performance';
 import { RateSelector } from './RateSelector';
-import { computeConverterRate, type ExchangeShopRate } from '../../../services/moneyboxRateService';
+import type { ExchangeShopRate } from '../../../services/moneyboxRateService';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
@@ -126,32 +129,19 @@ export const SingleConverter = ({
   });
 
   // 匯率卡片與實際換算共用同一套核心。
-  const bankExchangeRate = convertCurrencyAmountWithMode(
-    1,
+  const exchangeRate = getUnitExchangeRate(
     fromCurrency,
     toCurrency,
     details,
     rateType,
     rateMode,
     exchangeRates,
+    {
+      rateSource,
+      exchangeShopRate: moneyBoxRate,
+    },
   );
-  const bankReverseRate = convertCurrencyAmountWithMode(
-    1,
-    toCurrency,
-    fromCurrency,
-    details,
-    rateType,
-    rateMode,
-    exchangeRates,
-  );
-  const exchangeRate =
-    rateSource === 'exchange-shop' && moneyBoxRate
-      ? (computeConverterRate(moneyBoxRate, fromCurrency, toCurrency) ?? bankExchangeRate)
-      : bankExchangeRate;
-  const reverseRate =
-    rateSource === 'exchange-shop' && moneyBoxRate
-      ? (computeConverterRate(moneyBoxRate, toCurrency, fromCurrency) ?? bankReverseRate)
-      : bankReverseRate;
+  const reverseRate = getReciprocalExchangeRate(exchangeRate);
 
   // 趨勢圖進場動畫
   useEffect(() => {

@@ -8,12 +8,18 @@
  */
 
 import type { RateDetails } from './offlineStorage';
-import type { CurrencyCode, RateMode, RateType } from '../features/ratewise/types';
+import type { CurrencyCode, RateMode, RateSource, RateType } from '../features/ratewise/types';
+import { computeConverterRate, type ExchangeShopRate } from '../services/moneyboxRateService';
 import { logger } from './logger';
 
 export interface RateTypeAvailability {
   spot: boolean;
   cash: boolean;
+}
+
+interface UnitExchangeRateOptions {
+  rateSource?: RateSource;
+  exchangeShopRate?: ExchangeShopRate | null;
 }
 
 const hasValidSellRate = (value: number | null | undefined): value is number =>
@@ -383,6 +389,40 @@ export function convertCurrencyAmountWithMode(
   const toRate = getRateTo(toCurrency);
   if (!fromRate || !toRate) return 0;
   return amount * (fromRate / toRate);
+}
+
+export function getUnitExchangeRate(
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  rateMode: RateMode,
+  exchangeRates?: Record<CurrencyCode, number | null> | null,
+  options: UnitExchangeRateOptions = {},
+): number {
+  const { rateSource = 'bank', exchangeShopRate = null } = options;
+
+  if (rateSource === 'exchange-shop' && exchangeShopRate) {
+    const shopRate = computeConverterRate(exchangeShopRate, fromCurrency, toCurrency);
+    if (shopRate !== null) {
+      return shopRate;
+    }
+  }
+
+  return convertCurrencyAmountWithMode(
+    1,
+    fromCurrency,
+    toCurrency,
+    details,
+    rateType,
+    rateMode,
+    exchangeRates,
+  );
+}
+
+export function getReciprocalExchangeRate(rate: number): number {
+  if (!Number.isFinite(rate) || rate <= 0) return 0;
+  return 1 / rate;
 }
 
 /**

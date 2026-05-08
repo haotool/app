@@ -480,7 +480,7 @@ describe('SingleConverter - 核心功能測試', () => {
       expect(reverseRateDisplays[0]).toBeInTheDocument();
     });
 
-    it('auto 模式應依方向顯示買入與賣出價，且正反向不互為倒數', () => {
+    it('auto 模式應以當前主方向匯率為 SSOT，反向顯示其倒數', () => {
       render(
         <SingleConverter
           {...mockProps}
@@ -497,8 +497,8 @@ describe('SingleConverter - 核心功能測試', () => {
       );
 
       expect(screen.getByText('1 TWD = 0.0323 USD')).toBeInTheDocument();
-      expect(screen.getByText('1 USD = 30.8700 TWD')).toBeInTheDocument();
-      expect(screen.queryByText('1 USD = 30.9700 TWD')).not.toBeInTheDocument();
+      expect(screen.getByText('1 USD = 30.9700 TWD')).toBeInTheDocument();
+      expect(screen.queryByText('1 USD = 30.8700 TWD')).not.toBeInTheDocument();
     });
 
     it('TWD→KRW 選擇換錢所時應顯示換錢所賣出匯率', () => {
@@ -529,6 +529,54 @@ describe('SingleConverter - 核心功能測試', () => {
       );
 
       expect(screen.getByText('1 KRW = 0.0222 TWD')).toBeInTheDocument();
+    });
+
+    it('auto 模式 KRW→TWD 時，副標應顯示主方向匯率的倒數', () => {
+      const exchangeShopRate: ExchangeShopRate = {
+        ...mockMoneyBoxRate,
+        sell: 44.9,
+        buy: 45.1,
+      };
+
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="KRW"
+          toCurrency="TWD"
+          rateMode="auto"
+          rateSource="exchange-shop"
+          moneyBoxRate={exchangeShopRate}
+          exchangeShopCurrency="KRW"
+        />,
+      );
+
+      expect(screen.getByText('1 KRW = 0.0222 TWD')).toBeInTheDocument();
+      expect(screen.getByText('1 TWD = 45.1000 KRW')).toBeInTheDocument();
+      expect(screen.queryByText('1 TWD = 44.9000 KRW')).not.toBeInTheDocument();
+    });
+
+    it('auto 模式 TWD→KRW 時，副標應顯示主方向匯率的倒數', () => {
+      const exchangeShopRate: ExchangeShopRate = {
+        ...mockMoneyBoxRate,
+        sell: 44.9,
+        buy: 45.1,
+      };
+
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="TWD"
+          toCurrency="KRW"
+          rateMode="auto"
+          rateSource="exchange-shop"
+          moneyBoxRate={exchangeShopRate}
+          exchangeShopCurrency="KRW"
+        />,
+      );
+
+      expect(screen.getByText('1 TWD = 44.9000 KRW')).toBeInTheDocument();
+      expect(screen.getByText('1 KRW = 0.0223 TWD')).toBeInTheDocument();
+      expect(screen.queryByText('1 KRW = 0.0222 TWD')).not.toBeInTheDocument();
     });
   });
 

@@ -13,6 +13,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-05-08
+- ID：ratewise-auto-mode-buy-sell-direction-fix
+- 原因：auto 模式 `convertCurrencyAmountWithMode` 的 `getRateFrom`/`getRateTo` buy/sell 方向對調（FROM 應用買入、TO 應用賣出），且 `reverseRate` 以 `convert(to, from)` 計算導致交換前後數值對稱顯示相同。
+- 解法：修正函數內 buy/sell 取值方向，`reverseRate` 改以 `1/exchangeRate` 純數學倒數計算，同步更新 5 個受影響測試（auto/mid 排序斷言）。
+
+- 日期：2026-05-08
 - ID：ratewise-exchange-shop-rate-mode-ssot-convergence
 - 原因：換錢所匯率、API rate mode、OpenData/OpenAPI/LLM 文件、i18n 文案與 nested route HTML base path 分散維護，造成匯率顯示、規格文件與 dev smoke 可能漂移。
 - 解法：將 rate mode 策略、換錢所幣別/cache schema、公開 API/文件與 UI 文案收斂回 SSOT，並補測試與 browser smoke 鎖住匯率模式、OpenAPI 1.1.0、timestamp 型別與 `//logo.png` 回歸。
