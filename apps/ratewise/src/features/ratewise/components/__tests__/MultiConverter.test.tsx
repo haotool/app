@@ -1,9 +1,12 @@
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MultiConverter } from '../MultiConverter';
-import type { CurrencyCode, MultiAmountsState, RateType } from '../../types';
+import type { CurrencyCode, MultiAmountsState, RateMode, RateType } from '../../types';
 import type { RateDetails } from '../../hooks/useExchangeRates';
+import type { ExchangeShopRate } from '../../../../services/moneyboxRateService';
 
 // Mock RateTypeTooltip
 vi.mock('../../../../components/RateTypeTooltip', () => ({
@@ -60,6 +63,7 @@ describe('MultiConverter', () => {
     baseCurrency: 'TWD' as CurrencyCode,
     favorites: ['TWD', 'JPY'] as CurrencyCode[],
     rateType: 'spot' as RateType,
+    rateMode: 'sell' as RateMode,
     details: {
       TWD: { name: '新台幣', spot: { sell: 1, buy: 1 }, cash: { sell: 1, buy: 1 } },
       USD: { name: '美元', spot: { sell: 31.665, buy: 31.165 }, cash: { sell: 31.78, buy: 31.0 } },
@@ -238,6 +242,66 @@ describe('MultiConverter', () => {
 
       // KRW 應該使用現金匯率作為 fallback，不應該顯示「無資料」
       expect(screen.queryByText('無資料')).not.toBeInTheDocument();
+    });
+
+    it('auto 模式應依共用核心顯示基準幣對 TWD 與交叉匯率', () => {
+      const propsWithUsdBase = {
+        ...defaultProps,
+        sortedCurrencies: ['USD', 'TWD', 'JPY'] as CurrencyCode[],
+        baseCurrency: 'USD' as CurrencyCode,
+        rateMode: 'auto' as RateMode,
+        multiAmounts: {
+          USD: '100',
+          TWD: '3087.00',
+          JPY: '15131',
+        } as MultiAmountsState,
+        favorites: ['JPY'] as CurrencyCode[],
+        details: {
+          TWD: { name: '新台幣', spot: { sell: 1, buy: 1 }, cash: { sell: 1, buy: 1 } },
+          USD: { name: '美元', spot: { sell: 30.97, buy: 30.87 }, cash: { sell: 31.4, buy: 30.4 } },
+          JPY: { name: '日圓', spot: { sell: 0.204, buy: 0.2 }, cash: { sell: null, buy: null } },
+        } as unknown as Record<string, RateDetails>,
+      };
+
+      render(<MultiConverter {...propsWithUsdBase} />);
+
+      expect(screen.getByText(/1 USD = 30\.8700 TWD/)).toBeInTheDocument();
+      expect(screen.getByText(/1 USD = 151\.3235 JPY/)).toBeInTheDocument();
+      expect(screen.queryByText(/1 USD = 30\.9700 TWD/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/1 USD = 151\.8137 JPY/)).not.toBeInTheDocument();
+    });
+
+    it('exchange-shop 模式應在多幣別顯示換錢所 TWD 配對匯率', () => {
+      const krwExchangeShopRate: ExchangeShopRate = {
+        currency: 'KRW',
+        sell: 44.9,
+        buy: 45.1,
+        updateTime: '2026/05/08 09:30:00',
+        source: 'MoneyBox',
+        sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+        providerName: '明洞換匯所',
+        isFallback: false,
+      };
+      const propsWithExchangeShop = {
+        ...defaultProps,
+        sortedCurrencies: ['TWD', 'KRW'] as CurrencyCode[],
+        baseCurrency: 'TWD' as CurrencyCode,
+        rateType: 'cash' as RateType,
+        rateMode: 'sell' as RateMode,
+        rateSource: 'exchange-shop' as const,
+        exchangeShopRatesByCurrency: {
+          KRW: krwExchangeShopRate,
+        },
+        multiAmounts: {
+          TWD: '1000',
+          KRW: '44900',
+        } as MultiAmountsState,
+      };
+
+      render(<MultiConverter {...propsWithExchangeShop} />);
+
+      expect(screen.getByText(/1 TWD = 44\.9000 KRW/)).toBeInTheDocument();
+      expect(screen.queryByText(/1 TWD = 42\.3729 KRW/)).not.toBeInTheDocument();
     });
   });
 

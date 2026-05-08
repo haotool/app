@@ -14,12 +14,19 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
 import { activeHighlight } from '../../../config/animations';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
-import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
+import type { CurrencyCode, MultiAmountsState, RateMode, RateSource, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
-import { getCurrencyRateTypeAvailability } from '../../../utils/exchangeRateCalculation';
+import {
+  getCurrencyRateTypeAvailability,
+  getUnitExchangeRate,
+} from '../../../utils/exchangeRateCalculation';
+import {
+  getExchangeShopRateForPair,
+  type ExchangeShopRatesByCurrency,
+} from '../../../services/moneyboxRateService';
 // 直接 import 以確保離線冷啟動可用（消除 code-splitting 導致的 chunk 載入失敗）
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 
@@ -28,7 +35,10 @@ interface MultiConverterProps {
   multiAmounts: MultiAmountsState;
   baseCurrency: CurrencyCode;
   rateType: RateType;
+  rateMode: RateMode;
+  rateSource?: RateSource;
   details?: Record<string, RateDetails>;
+  exchangeShopRatesByCurrency?: ExchangeShopRatesByCurrency;
   favorites: CurrencyCode[];
   onAmountChange: (code: CurrencyCode, value: string) => void;
   onQuickAmount: (amount: number) => void;
@@ -42,7 +52,10 @@ export const MultiConverter = ({
   multiAmounts,
   baseCurrency,
   rateType,
+  rateMode,
+  rateSource = 'bank',
   details,
+  exchangeShopRatesByCurrency = {},
   favorites,
   onAmountChange,
   onQuickAmount,
@@ -102,64 +115,28 @@ export const MultiConverter = ({
       return t('multiConverter.baseCurrency');
     }
 
-    // 特殊處理：TWD 作為基準貨幣（API 原生支援）
-    if (baseCurrency === 'TWD') {
-      const detail = details?.[currency];
-      if (!detail) return t('multiConverter.calculating');
+    if (!details?.[baseCurrency] || !details?.[currency]) return t('multiConverter.calculating');
 
-      let rate = detail[rateType]?.sell;
-      if (rate == null) {
-        const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
-        rate = detail[fallbackType]?.sell;
-        if (rate == null) return t('multiConverter.noData');
-      }
+    const exchangeShopRate = getExchangeShopRateForPair(
+      baseCurrency,
+      currency,
+      exchangeShopRatesByCurrency,
+    );
+    const unitRate = getUnitExchangeRate(
+      baseCurrency,
+      currency,
+      details,
+      rateType,
+      rateMode,
+      null,
+      {
+        rateSource,
+        exchangeShopRate,
+      },
+    );
+    if (!unitRate) return t('multiConverter.noData');
 
-      // API 提供：1 外幣 = rate TWD，需反向計算：1 TWD = 1/rate 外幣
-      const reverseRate = 1 / rate;
-      return `1 TWD = ${formatExchangeRate(reverseRate)} ${currency}`;
-    }
-
-    // 特殊處理：目標貨幣是 TWD（反向匯率）
-    if (currency === 'TWD') {
-      const baseDetail = details?.[baseCurrency];
-      if (!baseDetail) return t('multiConverter.calculating');
-
-      let rate = baseDetail[rateType]?.sell;
-      if (rate == null) {
-        const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
-        rate = baseDetail[fallbackType]?.sell;
-        if (rate == null) return t('multiConverter.noData');
-      }
-
-      // API 提供：1 外幣 = rate TWD，直接顯示
-      return `1 ${baseCurrency} = ${formatExchangeRate(rate)} TWD`;
-    }
-
-    // 一般情況：基準貨幣是外幣（需計算交叉匯率）
-    const baseDetail = details?.[baseCurrency];
-    const targetDetail = details?.[currency];
-
-    if (!baseDetail || !targetDetail) return t('multiConverter.calculating');
-
-    // 獲取基準貨幣和目標貨幣對 TWD 的匯率
-    let baseRate = baseDetail[rateType]?.sell;
-    let targetRate = targetDetail[rateType]?.sell;
-
-    // Fallback 機制（例如 KRW 只有現金匯率）
-    if (baseRate == null) {
-      const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
-      baseRate = baseDetail[fallbackType]?.sell;
-    }
-    if (targetRate == null) {
-      const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
-      targetRate = targetDetail[fallbackType]?.sell;
-    }
-
-    if (baseRate == null || targetRate == null) return t('multiConverter.noData');
-
-    // 計算交叉匯率：1 基準貨幣 = (baseRate / targetRate) 目標貨幣
-    const crossRate = baseRate / targetRate;
-    return `1 ${baseCurrency} = ${formatExchangeRate(crossRate)} ${currency}`;
+    return `1 ${baseCurrency} = ${formatExchangeRate(unitRate)} ${currency}`;
   };
 
   return (

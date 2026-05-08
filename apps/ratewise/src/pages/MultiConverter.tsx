@@ -18,15 +18,17 @@ import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConv
 import { MultiConverterSkeleton } from '../components/SkeletonLoader';
 import { formatDisplayTime } from '../utils/timeFormatter';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
-import type { RateType, CurrencyCode } from '../features/ratewise/types';
+import type { RateType, CurrencyCode, RateSource } from '../features/ratewise/types';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 import { multiConverterLayoutTokens } from '../config/design-tokens';
+import { hasExchangeShopProvider } from '../config/exchangeShopProviders';
 
 export default function MultiConverter() {
   const { t } = useTranslation();
   const isTestEnv = import.meta.env.MODE === 'test';
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
   const [rateType, setRateType] = useState<RateType>('spot');
+  const [rateSource, setRateSource] = useState<RateSource>('bank');
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration marker
@@ -42,8 +44,20 @@ export default function MultiConverter() {
   }, []);
 
   useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.RATE_SOURCE);
+    if (stored === 'exchange-shop') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage restore
+      setRateSource('exchange-shop');
+    }
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.RATE_TYPE, rateType);
   }, [rateType]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.RATE_SOURCE, rateSource);
+  }, [rateSource]);
 
   const {
     rates: exchangeRates,
@@ -57,6 +71,8 @@ export default function MultiConverter() {
   const {
     multiAmounts,
     sortedCurrencies,
+    rateMode,
+    exchangeShopRatesByCurrency,
     handleMultiAmountChange,
     quickAmount,
     setBaseCurrency,
@@ -64,12 +80,28 @@ export default function MultiConverter() {
     baseCurrency,
     favorites,
     toggleFavorite,
-  } = useCurrencyConverter({ exchangeRates, details, rateType });
+  } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource });
 
   // Set mode to 'multi' on mount
   useEffect(() => {
     setMode('multi');
   }, [setMode]);
+
+  const hasMultiExchangeShop = baseCurrency === 'TWD' || hasExchangeShopProvider(baseCurrency);
+
+  useEffect(() => {
+    if (rateSource === 'exchange-shop' && !hasMultiExchangeShop) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 多幣別基準幣離開換錢所可用範圍時需回退銀行來源
+      setRateSource('bank');
+    }
+  }, [hasMultiExchangeShop, rateSource]);
+
+  useEffect(() => {
+    if (rateSource === 'exchange-shop' && rateType !== 'cash') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 換錢所僅支援現金語意，多幣別需與單幣別一致
+      setRateType('cash');
+    }
+  }, [rateSource, rateType]);
 
   const handleQuickAmount = useCallback(
     (amount: number) => {
@@ -157,7 +189,10 @@ export default function MultiConverter() {
               multiAmounts={multiAmounts}
               baseCurrency={baseCurrency}
               rateType={rateType}
+              rateMode={rateMode}
+              rateSource={rateSource}
               details={details}
+              exchangeShopRatesByCurrency={exchangeShopRatesByCurrency}
               favorites={favorites}
               onAmountChange={handleMultiAmountChange}
               onQuickAmount={handleQuickAmount}

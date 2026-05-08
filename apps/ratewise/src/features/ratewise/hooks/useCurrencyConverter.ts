@@ -20,10 +20,16 @@ import { useToast } from '../../../components/Toast';
 import { useConverterStore } from '../../../stores/converterStore';
 import {
   getExchangeShopProvider,
+  getSupportedExchangeShopCurrencies,
   hasExchangeShopProvider,
 } from '../../../config/exchangeShopProviders';
-import type { ExchangeShopRate } from '../../../services/moneyboxRateService';
+import {
+  getExchangeShopRateForPair,
+  type ExchangeShopRate,
+  type ExchangeShopRatesByCurrency,
+} from '../../../services/moneyboxRateService';
 import { useMoneyBoxRates } from './useMoneyBoxRates';
+import { useMoneyBoxRatesMap } from './useMoneyBoxRatesMap';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -42,6 +48,22 @@ const sanitizeFavorites = (codes: CurrencyCode[]): CurrencyCode[] => {
   const isCurrencyCode = (value: string): value is CurrencyCode =>
     CURRENCY_CODES.includes(value as CurrencyCode);
   return unique.filter(isCurrencyCode);
+};
+
+const buildFallbackExchangeShopRate = (currency: CurrencyCode): ExchangeShopRate | null => {
+  const provider = getExchangeShopProvider(currency);
+  if (!provider) return null;
+
+  return {
+    currency,
+    sell: provider.fallbackSell,
+    buy: provider.fallbackBuy,
+    updateTime: '—',
+    source: provider.source,
+    sourceUrl: provider.sourceUrl,
+    providerName: provider.providerName,
+    isFallback: true,
+  };
 };
 
 interface UseCurrencyConverterOptions {
@@ -90,21 +112,25 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   const { rate: moneyBoxRate } = useMoneyBoxRates(exchangeShopCurrency);
   const fallbackExchangeShopRate = useMemo((): ExchangeShopRate | null => {
     if (!exchangeShopCurrency) return null;
-    const provider = getExchangeShopProvider(exchangeShopCurrency);
-    if (!provider) return null;
-
-    return {
-      currency: exchangeShopCurrency,
-      sell: provider.fallbackSell,
-      buy: provider.fallbackBuy,
-      updateTime: '—',
-      source: provider.source,
-      sourceUrl: provider.sourceUrl,
-      providerName: provider.providerName,
-      isFallback: true,
-    };
+    return buildFallbackExchangeShopRate(exchangeShopCurrency);
   }, [exchangeShopCurrency]);
   const selectedExchangeShopRate = moneyBoxRate ?? fallbackExchangeShopRate;
+
+  const multiExchangeShopCurrencies = useMemo((): CurrencyCode[] => {
+    if (mode !== 'multi') return [];
+    if (baseCurrency === 'TWD') return getSupportedExchangeShopCurrencies();
+    return hasExchangeShopProvider(baseCurrency) ? [baseCurrency] : [];
+  }, [mode, baseCurrency]);
+  const { rates: multiMoneyBoxRates } = useMoneyBoxRatesMap(multiExchangeShopCurrencies);
+  const multiExchangeShopRatesByCurrency = useMemo((): ExchangeShopRatesByCurrency => {
+    return multiExchangeShopCurrencies.reduce<ExchangeShopRatesByCurrency>((acc, currency) => {
+      const fallbackRate = buildFallbackExchangeShopRate(currency);
+      if (fallbackRate) {
+        acc[currency] = multiMoneyBoxRates[currency] ?? fallbackRate;
+      }
+      return acc;
+    }, {});
+  }, [multiExchangeShopCurrencies, multiMoneyBoxRates]);
 
   const pendingMultiRecalcRef = useRef<{ code: CurrencyCode; value: string } | null>(null);
   const multiRecalcFrameRef = useRef<number | null>(null);
@@ -118,14 +144,29 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
 
   const convertAmount = useCallback(
     (amount: number, from: CurrencyCode, to: CurrencyCode): number => {
+      const exchangeShopRate =
+        rateSource === 'exchange-shop'
+          ? mode === 'multi'
+            ? getExchangeShopRateForPair(from, to, multiExchangeShopRatesByCurrency)
+            : selectedExchangeShopRate
+          : null;
       const unitRate = getUnitExchangeRate(from, to, details, rateType, rateMode, exchangeRates, {
         rateSource,
-        exchangeShopRate: selectedExchangeShopRate,
+        exchangeShopRate,
       });
 
       return amount * unitRate;
     },
-    [details, rateType, rateMode, exchangeRates, rateSource, selectedExchangeShopRate],
+    [
+      details,
+      rateType,
+      rateMode,
+      exchangeRates,
+      mode,
+      rateSource,
+      multiExchangeShopRatesByCurrency,
+      selectedExchangeShopRate,
+    ],
   );
 
   useEffect(() => {
@@ -397,6 +438,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     rateMode,
     moneyBoxRate: selectedExchangeShopRate,
     exchangeShopCurrency,
+    exchangeShopRatesByCurrency: multiExchangeShopRatesByCurrency,
     fromCurrency,
     toCurrency,
     fromAmount,

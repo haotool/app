@@ -33,6 +33,8 @@ export interface ExchangeShopRate {
   isFallback: boolean;
 }
 
+export type ExchangeShopRatesByCurrency = Partial<Record<CurrencyCode, ExchangeShopRate>>;
+
 interface CacheEntry {
   rate: ExchangeShopRate;
   timestamp: number;
@@ -199,6 +201,20 @@ export function computeConverterRate(
   }
   if (to === 'TWD' && from === rate.currency && hasExchangeShopProvider(from)) {
     return 1 / rate.buy;
+  }
+  return null;
+}
+
+export function getExchangeShopRateForPair(
+  from: CurrencyCode,
+  to: CurrencyCode,
+  ratesByCurrency: ExchangeShopRatesByCurrency,
+): ExchangeShopRate | null {
+  if (from === 'TWD' && hasExchangeShopProvider(to)) {
+    return ratesByCurrency[to] ?? null;
+  }
+  if (to === 'TWD' && hasExchangeShopProvider(from)) {
+    return ratesByCurrency[from] ?? null;
   }
   return null;
 }

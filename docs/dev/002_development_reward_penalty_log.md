@@ -2,6 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
+> 本次分數變化：0（neutral 1）｜累計總分：沿用前次總分（本次未增減）
 
 ## 新增模板（4 行）
 
@@ -11,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-08
+- ID：ratewise-multi-converter-rate-source-ssot-convergence
+- 原因：多幣別頁雖已共用部分換算核心，但匯率顯示與換錢所來源選擇未完整接上 `rateMode` / `rateSource` SSOT，導致顯示文字與實際換算、單幣別與多幣別之間可能漂移。
+- 解法：將 MultiConverter 顯示改走共用 `getUnitExchangeRate`，多幣別接上 `RATE_SOURCE` 持久化與 MoneyBox 多幣別映射，並補 `auto` 與 exchange-shop 配對回歸測試鎖住行為邊界。
 
 - 日期：2026-05-08
 - ID：ratewise-auto-mode-buy-sell-direction-fix

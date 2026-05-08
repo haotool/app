@@ -1,7 +1,10 @@
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   fetchExchangeShopRate,
   computeConverterRate,
+  getExchangeShopRateForPair,
   type ExchangeShopRate,
 } from '../moneyboxRateService';
 import { EXCHANGE_SHOP_PROVIDERS } from '../../config/exchangeShopProviders';
@@ -217,5 +220,47 @@ describe('computeConverterRate', () => {
     } finally {
       delete (EXCHANGE_SHOP_PROVIDERS as Record<string, unknown>)['PHP'];
     }
+  });
+});
+
+describe('getExchangeShopRateForPair', () => {
+  const krwRate: ExchangeShopRate = {
+    currency: 'KRW',
+    sell: 44.85,
+    buy: 45.1,
+    updateTime: '2026/05/07 16:33:55',
+    source: 'MoneyBox',
+    sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+    providerName: '明洞換匯所',
+    isFallback: false,
+  };
+
+  it('TWD→provider 幣別時回傳目標幣的換錢所匯率', () => {
+    expect(
+      getExchangeShopRateForPair('TWD', 'KRW', {
+        KRW: krwRate,
+      }),
+    ).toEqual(krwRate);
+  });
+
+  it('provider 幣別→TWD 時回傳來源幣的換錢所匯率', () => {
+    expect(
+      getExchangeShopRateForPair('KRW', 'TWD', {
+        KRW: krwRate,
+      }),
+    ).toEqual(krwRate);
+  });
+
+  it('跨外幣配對不套用換錢所匯率，應回傳 null', () => {
+    expect(
+      getExchangeShopRateForPair('KRW', 'USD', {
+        KRW: krwRate,
+      }),
+    ).toBeNull();
+    expect(
+      getExchangeShopRateForPair('USD', 'KRW', {
+        KRW: krwRate,
+      }),
+    ).toBeNull();
   });
 });
