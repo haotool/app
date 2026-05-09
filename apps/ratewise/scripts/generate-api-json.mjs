@@ -11,6 +11,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
+import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -28,6 +29,16 @@ const rateModeStrategies = JSON.parse(
   readFileSync(resolve(ROOT, 'src/config/rate-mode-strategies.json'), 'utf-8'),
 );
 
+const providerMetadata = buildPublicRateProviderMetadata({
+  dataBaseUrl: DATA_BASE_URL,
+  cdnBaseUrl: CDN_BASE_URL,
+  supportedCurrencies: currencyKeys,
+});
+const { providerSelection, providers } = providerMetadata;
+const exchangeShopProvider = providerMetadata.providers.find(
+  (provider) => provider.sourceKind === 'exchange-shop',
+);
+
 const latestJson = {
   name: `${APP_INFO.shortName} Exchange Rate API`,
   version: pkg.version,
@@ -43,11 +54,17 @@ const latestJson = {
   endpoints: {
     latest: `${DATA_BASE_URL}/latest.json`,
     history: `${DATA_BASE_URL}/history/{YYYY-MM-DD}.json`,
+    moneybox: exchangeShopProvider?.currentEndpoint,
+    moneyboxHistory: exchangeShopProvider?.historyEndpoint,
   },
   cdnEndpoints: {
     latest: `${CDN_BASE_URL}/latest.json`,
     history: `${CDN_BASE_URL}/history/{YYYY-MM-DD}.json`,
+    moneybox: exchangeShopProvider?.cdnCurrentEndpoint,
+    moneyboxHistory: exchangeShopProvider?.cdnHistoryEndpoint,
   },
+  providerSelection,
+  providers,
   rateTypeDescriptions: {
     cash_buy: '現金買入：銀行以此價收購外幣現鈔（你拿外幣換台幣）',
     cash_sell: '現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）',

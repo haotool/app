@@ -53,11 +53,7 @@
       從歷史重新換算時，只帶回 `from/to/amount`；新的結果仍依目前全域設定計算，避免使用者誤解歷史項目會鎖住舊匯率。
 
 - [ ] **Step 3: migration 與相容舊資料**
-      舊歷史若缺 `rateType` / `sourceKind` / `providerId`，以保守預設補齊：
-  - `rateType: 'spot'`
-  - `sourceKind: 'bank'`
-  - `providerId: 'bot'`
-  - `providerSelectionMode: 'manual'`
+      舊歷史若缺 `rateType` / `sourceKind` / `providerId`，只保留基本欄位並歸為 `legacy`，不可偽造銀行或換錢所來源。
 
 ### Task 3: 簡潔 UI 呈現
 

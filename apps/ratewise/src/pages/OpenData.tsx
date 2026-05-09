@@ -7,7 +7,8 @@ import { AnswerCapsule } from '../components/AnswerCapsule';
 import { MailtoLink } from '../components/MailtoLink';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
-import { RATES_API } from '../config/api-endpoints';
+import { CDN_DATA_BASE, RATES_API, RAW_DATA_BASE } from '../config/api-endpoints';
+import { buildPublicRateProviderMetadata } from '../config/rateProviderPublicMetadata';
 import { SITE_CONFIG } from '../config/seo-paths';
 import rateModeStrategies from '../config/rate-mode-strategies.json';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
@@ -20,6 +21,12 @@ const DATA_SOURCES = [
     name: '臺灣銀行牌告匯率',
     url: 'https://rate.bot.com.tw/xrt',
     note: '官方每日公布，現金買入／賣出、即期買入／賣出四種報價',
+  },
+  {
+    label: '換錢所來源',
+    name: 'MoneyBox (明洞換匯所聯盟)',
+    url: 'https://moneybox-exchange.com/zh-CHT/exchange',
+    note: '目前用於 KRW 換錢所現金匯率，獨立保存 current 與 moneybox-history 快照',
   },
   {
     label: '同步機制',
@@ -114,14 +121,12 @@ function pickRate(detail, side) {
   if (rateMode === "sell") {
     return detail[rateType].sell;
   }
-  return side === "from" ? detail[rateType].sell : detail[rateType].buy;
+  return side === "from" ? detail[rateType].buy : detail[rateType].sell;
 }
 
-// 依 App 匯率模式換算：TWD → USD
 const usdRate = pickRate(data.details.USD, "to");
 console.log(\`1000 TWD = \${1000 / usdRate} USD\`);
 
-// 若只需要原始台銀欄位，仍可直接取完整四種報價
 console.log(data.details.USD.cash.sell, data.details.USD.cash.buy);`,
   },
   {
@@ -140,13 +145,11 @@ def pick_rate(detail, side):
         return (detail[rate_type]["buy"] + detail[rate_type]["sell"]) / 2
     if rate_mode == "sell":
         return detail[rate_type]["sell"]
-    return detail[rate_type]["sell"] if side == "from" else detail[rate_type]["buy"]
+    return detail[rate_type]["buy"] if side == "from" else detail[rate_type]["sell"]
 
-# 依 App 匯率模式換算：TWD → USD
 usd_rate = pick_rate(data["details"]["USD"], "to")
 print(f"1000 TWD = {1000 / usd_rate} USD")
 
-# 歷史匯率同樣使用 details.{CODE}.{cash|spot}.{buy|sell}
 history = requests.get("${RATES_API.historyCdnExample}").json()
 print(history["details"]["USD"]["spot"]["sell"])`,
   },
@@ -211,10 +214,69 @@ const RATE_MODE_STRATEGY_ROWS = Object.entries(rateModeStrategies).map(([mode, s
   description: strategy.description,
 }));
 
-// 從 CURRENCY_DEFINITIONS SSOT 導出，TWD 標示為基準幣。
+const BANK_PROVIDER_ACTIVATION_NOTE = 'bank provider 超過一家';
+
 const SUPPORTED_CURRENCIES = Object.entries(CURRENCY_DEFINITIONS).map(([code, def]) => ({
   code,
   name: code === 'TWD' ? `${def.name}（基準幣）` : def.name,
+}));
+
+const PUBLIC_PROVIDER_METADATA = buildPublicRateProviderMetadata({
+  dataBaseUrl: `${RAW_DATA_BASE}/public/rates`,
+  cdnBaseUrl: `${CDN_DATA_BASE}/public/rates`,
+  supportedCurrencies: SUPPORTED_CURRENCIES.map((currency) => currency.code),
+});
+
+const PROVIDER_PATH_METADATA = buildPublicRateProviderMetadata({
+  dataBaseUrl: '/public/rates',
+  supportedCurrencies: SUPPORTED_CURRENCIES.map((currency) => currency.code),
+});
+
+const EXCHANGE_SHOP_PROVIDER_ENDPOINTS = PUBLIC_PROVIDER_METADATA.providers.find(
+  (provider) => provider.sourceKind === 'exchange-shop',
+);
+const EXCHANGE_SHOP_PROVIDER_PATHS = PROVIDER_PATH_METADATA.providers.find(
+  (provider) => provider.providerId === EXCHANGE_SHOP_PROVIDER_ENDPOINTS?.providerId,
+);
+
+const PROVIDER_API_ENDPOINTS = EXCHANGE_SHOP_PROVIDER_ENDPOINTS
+  ? [
+      {
+        method: 'GET',
+        path: EXCHANGE_SHOP_PROVIDER_PATHS?.currentEndpoint ?? '/public/rates/moneybox.json',
+        cdnUrl: EXCHANGE_SHOP_PROVIDER_ENDPOINTS.cdnCurrentEndpoint ?? RATES_API.moneyboxCdn,
+        rawUrl: EXCHANGE_SHOP_PROVIDER_ENDPOINTS.currentEndpoint,
+        description: `${EXCHANGE_SHOP_PROVIDER_ENDPOINTS.shortName} 最新換錢所匯率`,
+        badge: 'KRW 換錢所',
+        note: `${EXCHANGE_SHOP_PROVIDER_ENDPOINTS.shortName} 以 KRW 為基準；目前 App 只在 KRW 相關換算啟用，且換錢所來源固定視為現金匯率。`,
+      },
+      {
+        method: 'GET',
+        path:
+          EXCHANGE_SHOP_PROVIDER_PATHS?.historyEndpoint ??
+          '/public/rates/moneybox-history/{YYYY-MM-DD}.json',
+        cdnUrl:
+          EXCHANGE_SHOP_PROVIDER_ENDPOINTS.cdnHistoryEndpoint ??
+          RATES_API.moneyboxHistoryCdnExample,
+        rawUrl: EXCHANGE_SHOP_PROVIDER_ENDPOINTS.historyEndpoint,
+        description: `${EXCHANGE_SHOP_PROVIDER_ENDPOINTS.shortName} 歷史換錢所匯率`,
+        badge: '指定日期',
+        note: '以日期替換 {YYYY-MM-DD}。此路徑與台銀 history 分離，避免銀行與換錢所歷史資料語意混用。',
+      },
+    ]
+  : [];
+
+const OPEN_DATA_API_ENDPOINTS = [...API_ENDPOINTS, ...PROVIDER_API_ENDPOINTS] as const;
+
+const PROVIDER_CONTRACT_ROWS = PUBLIC_PROVIDER_METADATA.providers.map((provider) => ({
+  providerId: provider.providerId,
+  sourceKind: provider.sourceKind,
+  name: provider.name,
+  status:
+    provider.sourceKind === 'bank'
+      ? '目前唯一銀行 provider'
+      : `${provider.supportedCurrencies.join(', ')} 換錢所現金匯率`,
+  endpoints: `${provider.currentEndpoint} + ${provider.historyEndpoint}`,
 }));
 
 // ─── 子元件 ────────────────────────────────────────────────────────────────────
@@ -645,7 +707,7 @@ const OpenData = () => {
             <p className="mb-5 text-text-muted">HTTP GET，無需認證，直接請求。</p>
 
             <div className="space-y-5">
-              {API_ENDPOINTS.map((ep) => (
+              {OPEN_DATA_API_ENDPOINTS.map((ep) => (
                 <div
                   key={ep.path}
                   className="rounded-xl border border-surface-border bg-surface p-5"
@@ -759,6 +821,46 @@ const OpenData = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            <div className="mb-6 max-w-full overflow-x-auto rounded-xl border border-surface-border">
+              <table className="min-w-[54rem] text-sm" aria-label="匯率來源 provider 合約">
+                <thead>
+                  <tr className="border-b border-surface-border bg-surface-elevated">
+                    <th className="px-4 py-3 text-left font-semibold text-text">providerId</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">sourceKind</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">來源</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">狀態</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">端點</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border bg-surface">
+                  {PROVIDER_CONTRACT_ROWS.map((provider) => (
+                    <tr key={provider.providerId}>
+                      <td className="px-4 py-3 font-mono text-xs text-primary">
+                        {provider.providerId}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-text-muted">
+                        {provider.sourceKind}
+                      </td>
+                      <td className="px-4 py-3 break-words text-text">{provider.name}</td>
+                      <td className="px-4 py-3 break-words text-text-muted">{provider.status}</td>
+                      <td className="px-4 py-3 break-all font-mono text-xs text-text-muted">
+                        {provider.endpoints}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mb-6 rounded-lg border border-surface-border bg-surface-elevated p-4 text-sm leading-relaxed text-text-muted">
+              <span className="font-semibold text-text">Provider selection contract：</span>
+              歷史與未來篩選以 sourceKind + providerId 作為穩定資料鍵。現在只有台灣銀行一個 bank
+              provider，因此銀行選單與最佳匯率推薦保持關閉；未來 {
+                BANK_PROVIDER_ACTIVATION_NOTE
+              }{' '}
+              時，才啟用銀行推薦清單，且主匯率只顯示使用者指定或系統推薦的單一 provider。
             </div>
 
             {/* 支援幣別 */}

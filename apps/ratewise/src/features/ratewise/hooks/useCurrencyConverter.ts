@@ -34,7 +34,7 @@ import {
   resolveProviderPreference,
   type ProviderQuote,
 } from '../rateProviderRanking';
-import { computeConverterRate } from '../../../services/moneyboxRateService';
+import { buildProviderQuotes } from '../rateProviderQuoteAdapters';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -75,17 +75,10 @@ interface UseCurrencyConverterOptions {
   exchangeRates?: Record<string, number | null>;
   details?: Record<string, RateDetails>;
   rateType?: RateType;
-  /**
-   * 相容欄位：Phase 1 起實際來源由 store `providerPreference` 透過 `resolveProviderPreference`
-   * 決定；本 prop 仍接受並寫入 calc core，但不再是顯示/換算的決策點。
-   * 後續 Task 6 完成 UI 接線後可移除。
-   */
   rateSource?: RateSource;
 }
 
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
-  // `rateSource` 仍接受作為相容欄位（UseCurrencyConverterOptions 保留），但 Phase 1
-  // 實際決策已移至 store providerPreference → resolveProviderPreference，因此此處不解構。
   const { exchangeRates, details, rateType = 'spot' } = options;
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -130,46 +123,21 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   }, [exchangeShopCurrency]);
   const selectedExchangeShopRate = moneyBoxRate ?? fallbackExchangeShopRate;
 
-  // Phase 1：為單幣別 from/to pair 建立兩家 provider 的報價快照（bot + moneybox）。
-  // 真實匯率仍由下方 convertAmount 統一計算；這份 quotes 主要供未來 best 模式 UI 使用。
   const numericAmount = useMemo(() => {
     const parsed = parseFloat(fromAmount);
     return Number.isNaN(parsed) ? 0 : parsed;
   }, [fromAmount]);
   const providerQuotes = useMemo<ProviderQuote[]>(() => {
-    const quotes: ProviderQuote[] = [];
-
-    const bankUnitRate = getUnitExchangeRate(
-      fromCurrency,
-      toCurrency,
+    return buildProviderQuotes({
+      amount: numericAmount,
+      from: fromCurrency,
+      to: toCurrency,
       details,
       rateType,
       rateMode,
       exchangeRates,
-      { rateSource: 'bank', exchangeShopRate: null },
-    );
-    quotes.push({
-      provider: { sourceKind: 'bank', providerId: 'bot' },
-      sourceKind: 'bank',
-      rateType,
-      unitRate: bankUnitRate,
-      resultAmount: numericAmount * bankUnitRate,
-      isAvailable: bankUnitRate > 0,
+      exchangeShopRate: selectedExchangeShopRate,
     });
-
-    const shopRateValue = selectedExchangeShopRate
-      ? computeConverterRate(selectedExchangeShopRate, fromCurrency, toCurrency)
-      : null;
-    quotes.push({
-      provider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
-      sourceKind: 'exchange-shop',
-      rateType: 'cash',
-      unitRate: shopRateValue ?? 0,
-      resultAmount: shopRateValue ? numericAmount * shopRateValue : 0,
-      isAvailable: shopRateValue !== null && shopRateValue > 0,
-    });
-
-    return quotes;
   }, [
     fromCurrency,
     toCurrency,
@@ -231,8 +199,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     }
   }, []);
 
-  // Phase 1：實際匯率選擇統一從 `resolvedProvider.sourceKind` 出發，
-  // 不再讓元件層讀 prop `rateSource` 自行決定來源（兩者由 Task 4 store 同步）。
   const effectiveSourceKind = resolvedProvider.sourceKind;
   const convertAmount = useCallback(
     (amount: number, from: CurrencyCode, to: CurrencyCode): number => {
@@ -243,8 +209,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
             : selectedExchangeShopRate
           : null;
       const unitRate = getUnitExchangeRate(from, to, details, rateType, rateMode, exchangeRates, {
-        // 維持 legacy `rateSource` 入參供 calc core 沿用既有分支邏輯；
-        // 值由 effectiveSourceKind 推導，對 Phase 1 行為等同舊版（rateSource === sourceKind）。
         rateSource: effectiveSourceKind,
         exchangeShopRate,
       });
@@ -269,15 +233,12 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     };
   }, [cancelScheduledMultiRecalc]);
 
-  // 歷史記錄由 store SSOT 管理：legacy `STORAGE_KEYS.CONVERSION_HISTORY` 已於
-  // store hydrate 時遷移到 store.history。本 hook 只負責「過期 (>7d) 紀錄」清理。
   useEffect(() => {
     if (history.length === 0) return;
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const expired = history.some((entry) => entry.timestamp <= sevenDaysAgo);
     if (!expired) return;
     const valid = history.filter((entry) => entry.timestamp > sevenDaysAgo);
-    // 直接覆寫 store.history（Zustand persist 會同步 localStorage）
     useConverterStore.setState({ history: valid });
   }, [history]);
   const [lastEdited, setLastEdited] = useState<AmountField>('from');
@@ -468,12 +429,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     [storeReorderFavorites],
   );
 
-  /**
-   * 將當前轉換加入歷史記錄並顯示 Toast 通知。
-   *
-   * Phase 1 寫入 schemaVersion=2 + provider 欄位（rateType / sourceKind / providerId /
-   * providerSelectionMode），讓未來分類篩選與 provider 明細能直接從歷史紀錄取得。
-   */
   const addToHistory = useCallback(() => {
     const timestamp = Date.now();
     const entry: ConversionHistoryEntry = {
@@ -537,7 +492,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     moneyBoxRate: selectedExchangeShopRate,
     exchangeShopCurrency,
     exchangeShopRatesByCurrency: multiExchangeShopRatesByCurrency,
-    // Phase 1 provider SSOT 暴露面（UI 暫不使用，預留給 Task 6 best mode）
     resolvedProvider,
     providerQuotes,
     rankedProviderQuotes,

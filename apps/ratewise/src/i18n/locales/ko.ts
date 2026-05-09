@@ -201,6 +201,11 @@ const ko = {
     reconvertAriaLabel: '{{from}}에서 {{to}}로 빠른 환산',
     copyAriaLabel: '환산 결과 복사',
     entryAriaLabel: '{{amount}} {{from}}를 {{result}} {{to}}로 환산',
+    categories: {
+      spot: '전신환',
+      cash: '현금',
+      'exchange-shop': '환전소',
+    },
   },
 
   // Calculator

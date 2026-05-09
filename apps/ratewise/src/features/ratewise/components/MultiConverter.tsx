@@ -1,13 +1,3 @@
-/**
- * MultiConverter Component - Multi-Currency Converter with Favorites
- * 多幣別轉換器組件 - 支援收藏功能
- *
- * @description Multi-currency converter with star favorite toggle on the left,
- *              fixed flag aspect ratio, and SSOT design tokens.
- *              支援左側星號收藏切換、固定國旗比例、SSOT 設計 Token。
- * @version 2.0.0
- */
-
 import { Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
@@ -27,7 +17,6 @@ import {
   getExchangeShopRateForPair,
   type ExchangeShopRatesByCurrency,
 } from '../../../services/moneyboxRateService';
-// 直接 import 以確保離線冷啟動可用（消除 code-splitting 導致的 chunk 載入失敗）
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 
 interface MultiConverterProps {
@@ -66,20 +55,17 @@ export const MultiConverter = ({
   const { t } = useTranslation();
   const inputRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // 🔧 計算機 Modal 狀態（使用統一的 Hook）
   const calculator = useCalculatorModal<CurrencyCode>({
     onConfirm: (currency, result) => {
       onAmountChange(currency, result.toString());
     },
     getInitialValue: (currency) => {
-      // 使用當前貨幣的實際金額，如果為空或無效則使用 0
       const value = multiAmounts[currency];
       const parsed = parseFloat(value);
       return Number.isNaN(parsed) ? 0 : parsed;
     },
   });
 
-  // 檢測某個貨幣是否只有單一匯率類型（只有現金或只有即期）
   const hasOnlyOneRateType = (
     currency: CurrencyCode,
   ): { hasOnlyOne: boolean; availableType: RateType | null; reason: string } => {
@@ -108,14 +94,15 @@ export const MultiConverter = ({
     return { hasOnlyOne: false, availableType: null, reason: '' };
   };
 
-  // 取得匯率顯示資訊（支援任意基準貨幣的交叉匯率計算）
   const getRateDisplay = (currency: CurrencyCode): string => {
-    // 基準貨幣直接顯示「基準貨幣」
     if (currency === baseCurrency) {
       return t('multiConverter.baseCurrency');
     }
 
-    if (!details?.[baseCurrency] || !details?.[currency]) return t('multiConverter.calculating');
+    const hasCurrencyDetails = (code: CurrencyCode) => code === 'TWD' || Boolean(details?.[code]);
+    if (!hasCurrencyDetails(baseCurrency) || !hasCurrencyDetails(currency)) {
+      return t('multiConverter.calculating');
+    }
 
     const exchangeShopRate = getExchangeShopRateForPair(
       baseCurrency,
@@ -141,23 +128,6 @@ export const MultiConverter = ({
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      {/* 快速金額按鈕
-       *
-       * SSOT 設計規範：中性變體（所有轉換器一致）
-       * @see design-tokens.ts - quickAmountButtonTokens
-       *
-       * 響應式設計（行動端單行水平滾動）：
-       * - min-w-0：允許 flex 子元素收縮到內容尺寸以下，避免擠壓父容器
-       *   @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
-       * - overflow-x-auto：內容溢出時啟用水平滾動
-       * - scrollbar-hide：隱藏滾動條保持簡潔美觀
-       * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
-       *
-       * 互動狀態：
-       * - 預設：抬升表面背景 + 柔和文字
-       * - 懸停：主色調淡化 + 主色文字 + 微幅放大
-       * - 按壓：主色調加深 + 縮放回饋
-       */}
       <div className="flex gap-2 mb-4 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
         {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
           (amount: number) => (
@@ -185,18 +155,6 @@ export const MultiConverter = ({
         )}
       </div>
 
-      {/* 貨幣列表 - SSOT 風格
-       *
-       * Ring Overflow 處理：
-       * 基準貨幣使用 ring-2 (2px box-shadow) 高亮顯示，
-       * 需要在四個方向預留空間以避免被父容器裁剪。
-       * 使用 -m-0.5 p-0.5 (2px) 確保 ring 完整顯示。
-       *
-       * 滾動由 AppLayout 統一處理，此處移除 overflow-y-auto 避免嵌套滾動
-       * flex-1 讓列表填滿可用空間
-       * @see AppLayout.tsx - main 區域處理 overflow-y-auto
-       * @see https://tailwindcss.com/docs/ring-width
-       */}
       <div
         className="flex-1 space-y-2 -m-0.5 p-0.5"
         tabIndex={0}
@@ -219,7 +177,6 @@ export const MultiConverter = ({
                   isBase ? activeHighlight.itemActiveClass : activeHighlight.itemInactiveClass
                 }`}
               >
-                {/* 基準貨幣滑動高亮指示器 - layoutId 驅動平滑過渡 */}
                 {isBase && (
                   <motion.div
                     layoutId="base-currency-highlight"
@@ -227,13 +184,7 @@ export const MultiConverter = ({
                     transition={activeHighlight.transition}
                   />
                 )}
-                {/* 左側：星號收藏 + 國旗 + 貨幣資訊（z-10 確保在高亮層上方） */}
                 <div className="relative z-10 flex items-center gap-2 flex-shrink-0 min-w-0">
-                  {/* 收藏星號 - 固定寬度確保對齊
-                   * TWD → 固定實心星（裝飾用，aria-hidden，非互動）
-                   *       與 Favorites.tsx 一致：TWD 永遠置頂，非收藏概念
-                   * 其他 → 可切換收藏的互動按鈕
-                   */}
                   <div className="w-6 flex-shrink-0 flex items-center justify-center">
                     {code === 'TWD' ? (
                       <div aria-hidden="true" data-testid="twd-star-fixed">
@@ -263,7 +214,6 @@ export const MultiConverter = ({
                       </button>
                     )}
                   </div>
-                  {/* 國旗 - 使用固定寬度避免變形 */}
                   <span className="text-xl flex-shrink-0 w-7 text-center leading-none">
                     {CURRENCY_DEFINITIONS[code].flag}
                   </span>
@@ -275,7 +225,6 @@ export const MultiConverter = ({
                   </div>
                 </div>
 
-                {/* 右側：金額 + 匯率資訊（z-10 確保在高亮層上方） */}
                 <div className="relative z-10 flex-1 min-w-0 ml-2">
                   <div
                     ref={(el) => {
@@ -346,7 +295,6 @@ export const MultiConverter = ({
         </AnimatePresence>
       </div>
 
-      {/* 計算機鍵盤 */}
       <Suspense fallback={null}>
         <CalculatorKeyboard
           isOpen={calculator.isOpen}

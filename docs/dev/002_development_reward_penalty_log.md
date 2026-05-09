@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +9
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +10
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-provider-ssot-codex-review-convergence
+- 原因：PR #378 Codex review 指出 `auto` API 欄位、TWD 多幣別匯率顯示與 MoneyBox 多幣別 hook effect 仍有 SSOT 漂移與重複請求風險。
+- 解法：以 TDD 修正 `auto` 公開規格為 FROM buy / TO sell、允許 TWD details 缺席時視為 1、固定 MoneyBox supported currencies 依賴，並補 provider metadata / ranking 無硬編 provider id 守門與 build/test 驗證。
 
 - 日期：2026-05-09
 - ID：ratewise-rate-provider-ssot-phase1-completion

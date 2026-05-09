@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 /**
  * useCurrencyConverter Hook 單元測試
  *

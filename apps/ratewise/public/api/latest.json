@@ -14,12 +14,12 @@
   "rateModeStrategies": {
     "auto": {
       "label": "自動方向",
-      "description": "與 App 預設匯率模式一致：來源幣別使用賣出價，目標幣別使用買入價，依換算方向貼近實際成本。",
-      "fromCurrencyField": "{rateType}.sell",
-      "toCurrencyField": "{rateType}.buy",
-      "twdToForeign": "amount / details.{TO}.{rateType}.buy",
-      "foreignToTwd": "amount * details.{FROM}.{rateType}.sell",
-      "foreignToForeign": "amount * details.{FROM}.{rateType}.sell / details.{TO}.{rateType}.buy"
+      "description": "與 App 預設匯率模式一致：來源外幣使用買入價、目標外幣使用賣出價，依換算方向貼近實際成本。",
+      "fromCurrencyField": "{rateType}.buy",
+      "toCurrencyField": "{rateType}.sell",
+      "twdToForeign": "amount / details.{TO}.{rateType}.sell",
+      "foreignToTwd": "amount * details.{FROM}.{rateType}.buy",
+      "foreignToForeign": "amount * details.{FROM}.{rateType}.buy / details.{TO}.{rateType}.sell"
     },
     "sell": {
       "label": "賣出價",
@@ -68,12 +68,79 @@
   ],
   "endpoints": {
     "latest": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
-    "history": "https://raw.githubusercontent.com/haotool/app/data/public/rates/history/{YYYY-MM-DD}.json"
+    "history": "https://raw.githubusercontent.com/haotool/app/data/public/rates/history/{YYYY-MM-DD}.json",
+    "moneybox": "https://raw.githubusercontent.com/haotool/app/data/public/rates/moneybox.json",
+    "moneyboxHistory": "https://raw.githubusercontent.com/haotool/app/data/public/rates/moneybox-history/{YYYY-MM-DD}.json"
   },
   "cdnEndpoints": {
     "latest": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json",
-    "history": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json"
+    "history": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json",
+    "moneybox": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json",
+    "moneyboxHistory": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/{YYYY-MM-DD}.json"
   },
+  "providerSelection": {
+    "bankProviderChoiceEnabled": false,
+    "activationRule": "Enable bank provider choice when bank provider count is greater than 1",
+    "currentBankProviderId": "bot",
+    "currentExchangeShopProviderId": "moneybox",
+    "supportedSelectionModes": [
+      "manual",
+      "best"
+    ],
+    "currentSelectionMode": "manual"
+  },
+  "providers": [
+    {
+      "providerId": "bot",
+      "sourceKind": "bank",
+      "name": "台灣銀行",
+      "shortName": "台銀",
+      "supportedCurrencies": [
+        "TWD",
+        "JPY",
+        "KRW",
+        "CNY",
+        "VND",
+        "THB",
+        "HKD",
+        "PHP",
+        "MYR",
+        "SGD",
+        "USD",
+        "EUR",
+        "GBP",
+        "CHF",
+        "AUD",
+        "CAD",
+        "NZD",
+        "IDR"
+      ],
+      "supportedRateTypes": [
+        "spot",
+        "cash"
+      ],
+      "currentEndpoint": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
+      "historyEndpoint": "https://raw.githubusercontent.com/haotool/app/data/public/rates/history/{YYYY-MM-DD}.json",
+      "cdnCurrentEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json",
+      "cdnHistoryEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json"
+    },
+    {
+      "providerId": "moneybox",
+      "sourceKind": "exchange-shop",
+      "name": "明洞換匯所",
+      "shortName": "MoneyBox",
+      "supportedCurrencies": [
+        "KRW"
+      ],
+      "supportedRateTypes": [
+        "cash"
+      ],
+      "currentEndpoint": "https://raw.githubusercontent.com/haotool/app/data/public/rates/moneybox.json",
+      "historyEndpoint": "https://raw.githubusercontent.com/haotool/app/data/public/rates/moneybox-history/{YYYY-MM-DD}.json",
+      "cdnCurrentEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json",
+      "cdnHistoryEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/{YYYY-MM-DD}.json"
+    }
+  ],
   "rateTypeDescriptions": {
     "cash_buy": "現金買入：銀行以此價收購外幣現鈔（你拿外幣換台幣）",
     "cash_sell": "現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）",

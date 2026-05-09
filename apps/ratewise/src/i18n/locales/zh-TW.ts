@@ -201,6 +201,11 @@ const zhTW = {
     reconvertAriaLabel: '點擊快速換算 {{from}} 到 {{to}}',
     copyAriaLabel: '複製轉換結果',
     entryAriaLabel: '{{amount}} {{from}} 換算為 {{result}} {{to}}',
+    categories: {
+      spot: '即期',
+      cash: '現金',
+      'exchange-shop': '換錢所',
+    },
   },
 
   // Calculator

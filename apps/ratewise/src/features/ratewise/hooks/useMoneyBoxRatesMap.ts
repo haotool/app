@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { hasExchangeShopProvider } from '../../../config/exchangeShopProviders';
 import {
   fetchExchangeShopRate,
@@ -25,10 +25,17 @@ export function useMoneyBoxRatesMap(activeCurrencies: CurrencyCode[]): {
   isLoading: boolean;
   error: Error | null;
 } {
-  const supportedCurrencies = Array.from(
-    new Set(activeCurrencies.filter((currency) => hasExchangeShopProvider(currency))),
-  ).sort();
-  const currenciesKey = supportedCurrencies.join(',');
+  const currenciesKey = useMemo(
+    () =>
+      Array.from(new Set(activeCurrencies.filter((currency) => hasExchangeShopProvider(currency))))
+        .sort()
+        .join(','),
+    [activeCurrencies],
+  );
+  const supportedCurrencies = useMemo(
+    () => (currenciesKey === '' ? [] : (currenciesKey.split(',') as CurrencyCode[])),
+    [currenciesKey],
+  );
   const [state, setState] = useState<MoneyBoxRatesMapState>(EMPTY_STATE);
 
   useEffect(() => {

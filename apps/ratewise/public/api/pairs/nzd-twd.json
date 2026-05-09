@@ -18,12 +18,12 @@
   "rateModes": {
     "auto": {
       "label": "自動方向",
-      "description": "與 App 預設匯率模式一致：來源幣別使用賣出價，目標幣別使用買入價，依換算方向貼近實際成本。",
-      "fromCurrencyField": "{rateType}.sell",
-      "toCurrencyField": "{rateType}.buy",
-      "twdToForeign": "amount / details.{TO}.{rateType}.buy",
-      "foreignToTwd": "amount * details.{FROM}.{rateType}.sell",
-      "foreignToForeign": "amount * details.{FROM}.{rateType}.sell / details.{TO}.{rateType}.buy"
+      "description": "與 App 預設匯率模式一致：來源外幣使用買入價、目標外幣使用賣出價，依換算方向貼近實際成本。",
+      "fromCurrencyField": "{rateType}.buy",
+      "toCurrencyField": "{rateType}.sell",
+      "twdToForeign": "amount / details.{TO}.{rateType}.sell",
+      "foreignToTwd": "amount * details.{FROM}.{rateType}.buy",
+      "foreignToForeign": "amount * details.{FROM}.{rateType}.buy / details.{TO}.{rateType}.sell"
     },
     "sell": {
       "label": "賣出價",

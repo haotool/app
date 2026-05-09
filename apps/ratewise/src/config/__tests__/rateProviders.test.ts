@@ -13,6 +13,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   RATE_PROVIDERS,
+  getAllRateProviders,
   getDefaultProvider,
   getProvidersBySourceKind,
   getRateProvider,
@@ -66,6 +67,12 @@ describe('getRateProvider', () => {
 });
 
 describe('getProvidersBySourceKind', () => {
+  it('getAllRateProviders 回傳所有 provider，作為 registry 枚舉唯一入口', () => {
+    const allProviders = getAllRateProviders();
+    expect(allProviders.map((provider) => provider.id).sort()).toEqual(['bot', 'moneybox']);
+    expect(allProviders).toHaveLength(Object.keys(RATE_PROVIDERS).length);
+  });
+
   it('bank 來源僅含 bot（Phase 1）', () => {
     const banks = getProvidersBySourceKind('bank');
     expect(banks.map((p) => p.id)).toEqual(['bot']);

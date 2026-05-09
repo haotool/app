@@ -18,6 +18,7 @@ import type { ConversionHistoryEntry } from '../types';
 import { copyToClipboard, formatConversionForCopy } from '../../../utils/clipboard';
 import { useToast } from '../../../components/Toast';
 import { CURRENCY_DEFINITIONS } from '../constants';
+import { categorizeHistoryEntry } from '../../../stores/converterStore';
 
 /**
  * Props for ConversionHistory component
@@ -37,6 +38,15 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
   const { showToast } = useToast();
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPress = useRef(false);
+
+  const getCategoryLabel = useCallback(
+    (entry: ConversionHistoryEntry): string | null => {
+      const category = categorizeHistoryEntry(entry);
+      if (category === 'legacy') return null;
+      return t(`conversionHistory.categories.${category}`);
+    },
+    [t],
+  );
 
   /**
    * Copy conversion result to clipboard
@@ -138,70 +148,70 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
 
   return (
     <div className="space-y-2">
-      {history.map((item, index) => (
-        <div
-          key={`${index}-${item.timestamp}`}
-          onKeyDown={(e) => handleKeyDown(e, item)}
-          role="group"
-          tabIndex={0}
-          className="card p-4 flex items-center gap-3 group transition-all duration-200
+      {history.map((item, index) => {
+        const categoryLabel = getCategoryLabel(item);
+        return (
+          <div
+            key={`${index}-${item.timestamp}`}
+            onKeyDown={(e) => handleKeyDown(e, item)}
+            role="group"
+            tabIndex={0}
+            className="card p-4 flex items-center gap-3 group transition-all duration-200
                      hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30"
-          aria-label={t('conversionHistory.entryAriaLabel', {
-            from: item.from,
-            to: item.to,
-            amount: item.amount,
-            result: item.result,
-          })}
-        >
-          {/* 左側區域：國旗 - 點擊快速換算 */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onReconvert?.(item);
-            }}
-            onTouchStart={() => handleTouchStart(item)}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchEnd}
-            className="flex items-center -space-x-2 flex-shrink-0 p-1 -m-1 rounded-lg
-                       hover:bg-primary/10 active:scale-95 transition-all cursor-pointer"
-            aria-label={t('conversionHistory.reconvertAriaLabel', {
+            aria-label={t('conversionHistory.entryAriaLabel', {
               from: item.from,
               to: item.to,
+              amount: item.amount,
+              result: item.result,
             })}
           >
-            <span className="text-xl z-10">{CURRENCY_DEFINITIONS[item.from]?.flag || '💱'}</span>
-            <span className="text-xl">{CURRENCY_DEFINITIONS[item.to]?.flag || '💱'}</span>
-          </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onReconvert?.(item);
+              }}
+              onTouchStart={() => handleTouchStart(item)}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
+              className="flex items-center -space-x-2 flex-shrink-0 p-1 -m-1 rounded-lg
+                       hover:bg-primary/10 active:scale-95 transition-all cursor-pointer"
+              aria-label={t('conversionHistory.reconvertAriaLabel', {
+                from: item.from,
+                to: item.to,
+              })}
+            >
+              <span className="text-xl z-10">{CURRENCY_DEFINITIONS[item.from]?.flag || '💱'}</span>
+              <span className="text-xl">{CURRENCY_DEFINITIONS[item.to]?.flag || '💱'}</span>
+            </button>
 
-          {/* 中間 + 右側區域：統一點擊複製 */}
-          <button
-            onClick={() => handleClick(item)}
-            onDoubleClick={() => handleDoubleClick(item)}
-            className="flex-1 min-w-0 flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
-            aria-label={t('conversionHistory.copyAriaLabel')}
-          >
-            {/* 轉換詳情 */}
-            <div className="text-left">
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm font-bold">
-                <span className="text-text">{item.amount}</span>
-                <span className="text-text-muted">{item.from}</span>
-                <ArrowRight size={12} className="text-text-muted flex-shrink-0" />
-                <span className="text-primary">{item.result}</span>
-                <span className="text-primary">{item.to}</span>
+            <button
+              onClick={() => handleClick(item)}
+              onDoubleClick={() => handleDoubleClick(item)}
+              className="flex-1 min-w-0 flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
+              aria-label={t('conversionHistory.copyAriaLabel')}
+            >
+              <div className="text-left">
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm font-bold">
+                  <span className="text-text">{item.amount}</span>
+                  <span className="text-text-muted">{item.from}</span>
+                  <ArrowRight size={12} className="text-text-muted flex-shrink-0" />
+                  <span className="text-primary">{item.result}</span>
+                  <span className="text-primary">{item.to}</span>
+                </div>
+                <span className="text-[10px] text-text-muted opacity-60 block mt-0.5">
+                  {item.time}
+                  {categoryLabel ? ` · ${categoryLabel}` : ''}
+                </span>
               </div>
-              <span className="text-[10px] text-text-muted opacity-60 block mt-0.5">
-                {item.time}
-              </span>
-            </div>
 
-            {/* 複製圖示 - 垂直置中 */}
-            <div className="flex items-center gap-1 text-text-muted opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
-              <Copy size={14} />
-              <span className="hidden sm:inline text-[10px]">{t('common.copy')}</span>
-            </div>
-          </button>
-        </div>
-      ))}
+              <div className="flex items-center gap-1 text-text-muted opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
+                <Copy size={14} />
+                <span className="hidden sm:inline text-[10px]">{t('common.copy')}</span>
+              </div>
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 };

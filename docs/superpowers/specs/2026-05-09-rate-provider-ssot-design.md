@@ -172,8 +172,8 @@ export interface ConversionHistoryEntry {
 
 舊資料 migration：
 
-- 缺 `sourceKind` / `providerId` 的舊紀錄標成 `sourceKind='bank'`、`providerId='bot'`、`schemaVersion=1` 或轉成 `schemaVersion=2` 並加 `legacy: true`。
-- 不回推 `exchange-shop`，因為舊紀錄沒有可靠來源資訊。
+- 缺 `sourceKind` / `providerId` 的舊紀錄只保留基本欄位，不補 `sourceKind='bank'` 或 `providerId='bot'`。
+- 不回推 `exchange-shop` 或銀行來源，因為舊紀錄沒有可靠來源資訊。
 - 篩選時舊紀錄可保留在 `全部`，若使用者篩 `即期` / `現金` / `換錢所`，只顯示有明確分類的紀錄。
 
 ## Migration Strategy

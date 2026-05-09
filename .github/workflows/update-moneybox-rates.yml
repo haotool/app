@@ -80,11 +80,26 @@ jobs:
           echo "🔄 Fetching latest exchange rates from MoneyBox (明洞換匯所)..."
           node scripts/fetch-moneybox-rates.js
 
+      - name: Save MoneyBox daily history snapshot
+        id: save-history
+        if: steps.fetch-rates.outcome == 'success'
+        run: |
+          CURRENT_DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)
+          MONEYBOX_HISTORY_DIR="public/rates/moneybox-history"
+          MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
+          mkdir -p "$MONEYBOX_HISTORY_DIR"
+          cp public/rates/moneybox.json "$MONEYBOX_HISTORY_FILE"
+          echo "current_date=${CURRENT_DATE}" >> $GITHUB_OUTPUT
+          echo "history_file=${MONEYBOX_HISTORY_FILE}" >> $GITHUB_OUTPUT
+
       - name: Check for changes in moneybox.json
         id: git-check
         if: steps.fetch-rates.outcome == 'success'
         run: |
           if [[ -n "$(git status --short --untracked-files=all -- public/rates/moneybox.json)" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+          if [[ -n "$(git status --short --untracked-files=all -- public/rates/moneybox-history/)" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
@@ -93,7 +108,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add public/rates/moneybox.json
+          git add public/rates/moneybox.json public/rates/moneybox-history/
 
           # 取得更新資訊
           UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).updateTime")
@@ -145,18 +160,23 @@ jobs:
 
       - name: Purge jsDelivr CDN cache
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        env:
+          CURRENT_DATE: ${{ steps.save-history.outputs.current_date }}
         run: |
           PURGE_URL="https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json"
+          HISTORY_PURGE_URL="https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/${CURRENT_DATE}.json"
           echo "🧹 Purging jsDelivr CDN cache..."
-          for i in 1 2 3; do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PURGE_URL")
-            if [ "$HTTP_STATUS" = "200" ]; then
-              echo "✅ CDN cache purged successfully (attempt $i)"
-              break
-            else
-              echo "⚠️ Purge attempt $i failed (HTTP $HTTP_STATUS)"
-              if [ $i -lt 3 ]; then sleep 5; fi
-            fi
+          for URL in "$PURGE_URL" "$HISTORY_PURGE_URL"; do
+            for i in 1 2 3; do
+              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+              if [ "$HTTP_STATUS" = "200" ]; then
+                echo "✅ CDN cache purged successfully (attempt $i): $URL"
+                break
+              else
+                echo "⚠️ Purge attempt $i failed (HTTP $HTTP_STATUS): $URL"
+                if [ $i -lt 3 ]; then sleep 5; fi
+              fi
+            done
           done
 
       - name: Refresh moneybox.json from remote data branch
@@ -168,7 +188,7 @@ jobs:
           git rebase --abort 2>/dev/null || true
           for i in 1 2 3; do
             echo "🔄 Refreshing moneybox.json from remote data branch (try $i/3)..."
-            if git fetch origin data && git checkout origin/data -- public/rates/moneybox.json; then
+            if git fetch origin data && git checkout origin/data -- public/rates/moneybox.json public/rates/moneybox-history; then
               echo "✅ Remote refresh successful"
               exit 0
             fi
@@ -184,6 +204,8 @@ jobs:
 
       - name: Update workflow summary (success)
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        env:
+          CURRENT_DATE: ${{ steps.save-history.outputs.current_date }}
         run: |
           echo "# ✅ MoneyBox exchange rates updated" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -199,6 +221,7 @@ jobs:
           echo "## 🔗 CDN URL" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json" >> $GITHUB_STEP_SUMMARY
+          echo "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/${CURRENT_DATE}.json" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## ⚡ CDN Purge" >> $GITHUB_STEP_SUMMARY

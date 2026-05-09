@@ -201,6 +201,11 @@ const ja = {
     reconvertAriaLabel: 'クイック換算 {{from}} から {{to}}',
     copyAriaLabel: '換算結果をコピー',
     entryAriaLabel: '{{amount}} {{from}} を {{result}} {{to}} に換算',
+    categories: {
+      spot: '直物',
+      cash: '現金',
+      'exchange-shop': '両替所',
+    },
   },
 
   // Calculator

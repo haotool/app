@@ -121,6 +121,11 @@ async function readOpenApiGenerator() {
   return readFile(scriptPath, 'utf-8');
 }
 
+async function readRateProviderPublicMetadataSource() {
+  const scriptPath = path.resolve(__dirname, '../rateProviderPublicMetadata.ts');
+  return readFile(scriptPath, 'utf-8');
+}
+
 async function readPublicRatesFixture() {
   const ratesPath = path.resolve(__dirname, '../../../public/rates.json');
   return JSON.parse(await readFile(ratesPath, 'utf-8')) as {
@@ -539,6 +544,28 @@ describe('ratewise build scripts', () => {
     expect(moneyBoxWorkflow).toContain('git checkout origin/data -- public/rates/moneybox.json');
   });
 
+  it('should persist MoneyBox daily history snapshots alongside latest rates', async () => {
+    const workflowSource = await readMoneyBoxWorkflow();
+
+    expect(workflowSource).toContain('MONEYBOX_HISTORY_DIR="public/rates/moneybox-history"');
+    expect(workflowSource).toContain(
+      'MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"',
+    );
+    expect(workflowSource).toContain('cp public/rates/moneybox.json "$MONEYBOX_HISTORY_FILE"');
+    expect(workflowSource).toContain(
+      'git status --short --untracked-files=all -- public/rates/moneybox-history/',
+    );
+    expect(workflowSource).toContain(
+      'git add public/rates/moneybox.json public/rates/moneybox-history/',
+    );
+    expect(workflowSource).toContain(
+      'git checkout origin/data -- public/rates/moneybox.json public/rates/moneybox-history',
+    );
+    expect(workflowSource).toContain(
+      'https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/${CURRENT_DATE}.json',
+    );
+  });
+
   it('CurrencyLandingPage should import AnswerCapsule and accept answerCapsule prop (AEO/GEO readiness)', async () => {
     const source = await readCurrencyLandingPageSource();
 
@@ -665,6 +692,15 @@ describe('ratewise build scripts', () => {
   it('should keep API rate mode strategies in a single JSON SSOT', async () => {
     const ssotPath = path.resolve(__dirname, '../rate-mode-strategies.json');
     expect(existsSync(ssotPath)).toBe(true);
+    const strategies = JSON.parse(await readFile(ssotPath, 'utf-8')) as {
+      auto: {
+        fromCurrencyField: string;
+        toCurrencyField: string;
+        twdToForeign: string;
+        foreignToTwd: string;
+        foreignToForeign: string;
+      };
+    };
 
     const sources = [
       await readApiJsonGenerator(),
@@ -677,6 +713,55 @@ describe('ratewise build scripts', () => {
       expect(source).toContain('rate-mode-strategies.json');
       expect(source).not.toContain('來源幣別使用賣出價，目標幣別使用買入價');
     }
+
+    expect(strategies.auto.fromCurrencyField).toBe('{rateType}.buy');
+    expect(strategies.auto.toCurrencyField).toBe('{rateType}.sell');
+    expect(strategies.auto.twdToForeign).toBe('amount / details.{TO}.{rateType}.sell');
+    expect(strategies.auto.foreignToTwd).toBe('amount * details.{FROM}.{rateType}.buy');
+    expect(strategies.auto.foreignToForeign).toBe(
+      'amount * details.{FROM}.{rateType}.buy / details.{TO}.{rateType}.sell',
+    );
+  });
+
+  it('should expose exchange-shop and future bank provider contracts in public API metadata', async () => {
+    const apiJsonGenerator = await readApiJsonGenerator();
+    const openApiGenerator = await readOpenApiGenerator();
+    const openDataPage = await readOpenDataPageSource();
+    const publicMetadataSource = await readRateProviderPublicMetadataSource();
+
+    for (const source of [apiJsonGenerator, openApiGenerator, openDataPage]) {
+      expect(source).toContain('rateProviderPublicMetadata');
+      expect(source).toContain('buildPublicRateProviderMetadata');
+    }
+
+    expect(apiJsonGenerator).toContain('providerSelection');
+    expect(publicMetadataSource).toContain(
+      'bankProviderChoiceEnabled: shouldEnableBankProviderChoice()',
+    );
+    expect(apiJsonGenerator).not.toContain("providerId: 'bot'");
+    expect(apiJsonGenerator).not.toContain("providerId: 'moneybox'");
+    expect(publicMetadataSource).toContain('provider.apiPaths.history');
+
+    expect(openApiGenerator).toContain('RateProvider: rateProviderSchema');
+    expect(openApiGenerator).toContain(
+      'ExchangeShopRatesResponse: exchangeShopRatesResponseSchema',
+    );
+    expect(openApiGenerator).toContain('[MONEYBOX_LATEST_PATH]');
+    expect(openApiGenerator).toContain('[MONEYBOX_HISTORY_PATH]');
+    expect(openApiGenerator).toContain("'x-rate-providers'");
+
+    expect(openDataPage).toContain('MoneyBox (明洞換匯所聯盟)');
+    expect(publicMetadataSource).toContain('provider.apiPaths.history');
+    expect(openDataPage).toContain('sourceKind + providerId');
+    expect(openDataPage).toContain('bank provider 超過一家');
+    expect(openDataPage).not.toContain("replace('/haotool/app/data'");
+    expect(openDataPage).not.toContain('new URL(EXCHANGE_SHOP_PROVIDER');
+
+    const rankingSource = await readFile(
+      path.resolve(__dirname, '../../features/ratewise/rateProviderRanking.ts'),
+      'utf-8',
+    );
+    expect(rankingSource).not.toContain("providerId: 'bot'");
   });
 
   it('should document rate API timestamp and base-currency fields from the data fixture SSOT', async () => {
@@ -688,7 +773,7 @@ describe('ratewise build scripts', () => {
     expect(typeof fixture.updateTime).toBe('string');
     expect(fixture.details).not.toHaveProperty('TWD');
 
-    expect(openApiGenerator).toContain("const API_VERSION = '1.1.0'");
+    expect(openApiGenerator).toContain("const API_VERSION = '1.2.0'");
     expect(openApiGenerator).toContain("timestamp: {\n      type: 'string'");
     expect(openApiGenerator).not.toContain("description: 'Unix 時間戳（毫秒）'");
     expect(openApiGenerator).not.toContain(

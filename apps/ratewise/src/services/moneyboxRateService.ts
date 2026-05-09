@@ -1,13 +1,3 @@
-/**
- * 換匯所匯率服務
- *
- * 從 CDN 取得換匯所（如明洞換匯所）匯率資料，對齊 exchangeRateService 快取策略：
- * - 5 分鐘 localStorage 快取（CACHE_DURATION_MS）
- * - jsDelivr CDN 主要 URL + ETag 條件式請求（節省頻寬）
- * - GitHub Raw 備援 URL（ETag 不可用）
- * - 離線或全部失敗時回傳後備值（isFallback: true）
- */
-
 import { logger } from '../utils/logger';
 import {
   getExchangeShopProvider,
@@ -20,11 +10,8 @@ import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 const CACHE_DURATION_MS = 5 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 8_000;
 export interface ExchangeShopRate {
-  /** 此匯率資料所屬的換錢所幣別；避免新增 provider 後跨幣別誤用 */
   currency: CurrencyCode;
-  /** 客戶買入外幣匯率：1 TWD = sell 外幣 */
   sell: number;
-  /** 客戶賣出外幣匯率：buy 外幣 = 1 TWD */
   buy: number;
   updateTime: string;
   source: string;
@@ -107,7 +94,6 @@ async function fetchFromCDN(
   for (const url of urls) {
     try {
       const headers: Record<string, string> = {};
-      // ETag only on jsDelivr (primary); GitHub Raw doesn't support conditional GET
       if (url === config.cdnUrl && cachedEtag) {
         headers['If-None-Match'] = cachedEtag;
       }

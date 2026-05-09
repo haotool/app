@@ -204,6 +204,11 @@ const en = {
     reconvertAriaLabel: 'Quick convert {{from}} to {{to}}',
     copyAriaLabel: 'Copy conversion result',
     entryAriaLabel: '{{amount}} {{from}} converted to {{result}} {{to}}',
+    categories: {
+      spot: 'Spot',
+      cash: 'Cash',
+      'exchange-shop': 'Exchange shop',
+    },
   },
 
   // Calculator
