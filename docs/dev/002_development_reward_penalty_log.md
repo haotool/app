@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +3
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +4
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-09
+- ID：ratewise-rate-provider-ranking-ssot-phase1
+- 原因：best/manual 兩種 provider 選擇模式的排序與最終決策邏輯尚無統一純函式，未來 UI 接線時容易在不同入口重複實作排序、unsupported pair 退回與 fallback default 邊界，造成 SSOT 漂移。
+- 解法：新增 `apps/ratewise/src/features/ratewise/rateProviderRanking.ts`，提供 `rankProviderQuotes`（過濾 unavailable、依 resultAmount 由大到小穩定排序）與 `resolveProviderPreference`（依 best/manual 模式與 pair 支援度回傳 ResolvedRateProvider，含 fallback-default / unsupported-pair / best-rate / manual reason），Phase 1 純函式不接 UI；`shouldEnableBankProviderChoice() === false` 時 UI 仍不顯示 provider 選單。
 
 - 日期：2026-05-09
 - ID：ratewise-rate-provider-registry-ssot-phase1
