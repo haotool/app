@@ -3,6 +3,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   fetchExchangeShopRate,
+  fetchExchangeShopHistoricalRatesRange,
   computeConverterRate,
   getExchangeShopRateForPair,
   type ExchangeShopRate,
@@ -28,6 +29,7 @@ describe('fetchExchangeShopRate', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -176,6 +178,35 @@ describe('fetchExchangeShopRate', () => {
     expect(result!.sell).toBe(44.85);
     expect(result!.isFallback).toBe(false);
     expect(fetch).toHaveBeenCalledTimes(2); // primary + fallback
+  });
+
+  it('fetches MoneyBox history through provider metadata endpoints', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-10T12:00:00+08:00'));
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(MOCK_MONEYBOX_JSON),
+      headers: { get: () => null },
+    } as unknown as Response);
+
+    const result = await fetchExchangeShopHistoricalRatesRange('KRW', 1);
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        date: '2026-05-10',
+        rate: expect.objectContaining({
+          currency: 'KRW',
+          sell: 44.85,
+          buy: 45.1,
+          source: 'MoneyBox',
+        }),
+      }),
+    ]);
+    expect(fetch).toHaveBeenCalledWith(
+      'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/2026-05-10.json',
+      expect.any(Object),
+    );
   });
 });
 

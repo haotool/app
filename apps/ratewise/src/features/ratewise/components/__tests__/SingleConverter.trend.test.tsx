@@ -5,6 +5,7 @@ import { SingleConverter } from '../SingleConverter';
 import type { CurrencyCode } from '../../types';
 import * as historyService from '../../../../services/exchangeRateHistoryService';
 import type { RateSnapshot } from '../../../../services/exchangeRateHistoryService';
+import * as moneyboxRateService from '../../../../services/moneyboxRateService';
 import { TREND_CHART_DEFER_MS } from '../../../../config/performance';
 
 // Mock services with controllable responses
@@ -12,6 +13,15 @@ vi.mock('../../../../services/exchangeRateHistoryService', () => ({
   fetchHistoricalRatesRange: vi.fn(),
   fetchLatestRates: vi.fn(),
 }));
+
+vi.mock('../../../../services/moneyboxRateService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../services/moneyboxRateService')>();
+
+  return {
+    ...actual,
+    fetchExchangeShopHistoricalRatesRange: vi.fn(),
+  };
+});
 
 // Mock lightweight-charts
 vi.mock('lightweight-charts', () => ({
@@ -151,6 +161,57 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
 
       expect(historyService.fetchHistoricalRatesRange).toHaveBeenCalledWith(30);
       expect(historyService.fetchLatestRates).toHaveBeenCalled();
+      expect(moneyboxRateService.fetchExchangeShopHistoricalRatesRange).not.toHaveBeenCalled();
+    });
+
+    it('should load MoneyBox history when exchange-shop mode is selected', async () => {
+      const moneyBoxRate = {
+        currency: 'KRW' as CurrencyCode,
+        sell: 45,
+        buy: 45.2,
+        updateTime: '2026/05/10 12:00:00',
+        source: 'MoneyBox',
+        sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+        providerName: '明洞換匯所',
+        isFallback: false,
+      };
+
+      vi.mocked(moneyboxRateService.fetchExchangeShopHistoricalRatesRange).mockResolvedValue([
+        {
+          date: '2026-05-09',
+          rate: {
+            ...moneyBoxRate,
+            sell: 44.8,
+            buy: 45.1,
+            updateTime: '2026/05/09 12:00:00',
+          },
+        },
+      ]);
+      vi.mocked(historyService.fetchHistoricalRatesRange).mockResolvedValue([]);
+
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="TWD"
+          toCurrency="KRW"
+          rateType="cash"
+          rateSource="exchange-shop"
+          moneyBoxRate={moneyBoxRate}
+          exchangeShopCurrency="KRW"
+          onRateSourceChange={vi.fn()}
+        />,
+      );
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      expect(moneyboxRateService.fetchExchangeShopHistoricalRatesRange).toHaveBeenCalledWith(
+        'KRW',
+        30,
+      );
+      expect(historyService.fetchHistoricalRatesRange).not.toHaveBeenCalled();
+      expect(historyService.fetchLatestRates).not.toHaveBeenCalled();
     });
 
     it('defers trend history requests using requestIdleCallback (or short delay if DEFER_MS=0)', async () => {

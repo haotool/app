@@ -40,7 +40,11 @@ import type { RateTypeAvailability } from '../../../utils/exchangeRateCalculatio
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 import { TREND_CHART_DEFER_MS, TREND_CHART_IDLE_TIMEOUT_MS } from '../../../config/performance';
 import { RateSelector } from './RateSelector';
-import type { ExchangeShopRate } from '../../../services/moneyboxRateService';
+import {
+  computeConverterRate,
+  fetchExchangeShopHistoricalRatesRange,
+  type ExchangeShopRate,
+} from '../../../services/moneyboxRateService';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
@@ -50,6 +54,11 @@ function getLocalDateKey(date = new Date()): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function getDateKeyFromUpdateTime(updateTime: string | undefined, fallback: string): string {
+  const datePart = updateTime?.match(/\d{4}\/\d{2}\/\d{2}/)?.[0];
+  return datePart ? datePart.replace(/\//g, '-') : fallback;
 }
 
 interface SingleConverterProps {
@@ -206,6 +215,47 @@ export const SingleConverter = ({
       try {
         if (!isMounted) return;
         setLoadingTrend(true);
+        const exchangeShopLatestRate = moneyBoxRate
+          ? computeConverterRate(moneyBoxRate, fromCurrency, toCurrency)
+          : null;
+        const shouldUseExchangeShopTrend =
+          rateSource === 'exchange-shop' &&
+          moneyBoxRate !== null &&
+          !!exchangeShopCurrency &&
+          exchangeShopLatestRate !== null;
+
+        if (shouldUseExchangeShopTrend) {
+          const historicalRates = await fetchExchangeShopHistoricalRatesRange(
+            exchangeShopCurrency,
+            MAX_TREND_DAYS,
+          );
+
+          if (!isMounted) return;
+
+          const historyPoints = historicalRates
+            .map(({ date, rate }) => {
+              const converterRate = computeConverterRate(rate, fromCurrency, toCurrency);
+              return converterRate && Number.isFinite(converterRate) && converterRate > 0
+                ? { date, rate: converterRate }
+                : null;
+            })
+            .filter((item): item is MiniTrendDataPoint => item !== null)
+            .reverse();
+
+          const latestDate = getDateKeyFromUpdateTime(moneyBoxRate.updateTime, trendDateKey);
+          const mergedPoints =
+            Number.isFinite(exchangeShopLatestRate) && exchangeShopLatestRate > 0
+              ? [
+                  ...historyPoints.filter((point) => point.date !== latestDate),
+                  { date: latestDate, rate: exchangeShopLatestRate },
+                ]
+              : historyPoints;
+
+          const sortedPoints = mergedPoints.sort((a, b) => a.date.localeCompare(b.date));
+          setTrendData(sortedPoints.slice(-MAX_TREND_DAYS));
+          return;
+        }
+
         const [historicalData, latestRates] = await Promise.all([
           fetchHistoricalRatesRange(MAX_TREND_DAYS),
           fetchLatestRates().catch(() => null),
@@ -309,7 +359,7 @@ export const SingleConverter = ({
         clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
       }
     };
-  }, [fromCurrency, toCurrency, trendDateKey]);
+  }, [fromCurrency, toCurrency, trendDateKey, rateSource, moneyBoxRate, exchangeShopCurrency]);
 
   // 開發工具：強制觸發骨架屏效果（僅開發模式）
   /* v8 ignore next 22 */

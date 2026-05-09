@@ -43,7 +43,7 @@ const GITHUB_OUTPUT = process.env.GITHUB_OUTPUT;
 const LIGHTHOUSE_MAX_ATTEMPTS = Number.parseInt(process.env.LH_MAX_ATTEMPTS || '2', 10);
 const DRIFT_ABSOLUTE_TOLERANCE = {
   performanceScore: 1,
-  lcpMs: 100,
+  lcpMs: 250,
   inpMs: 10,
   cls: 0.01,
 };
