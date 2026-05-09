@@ -58,4 +58,15 @@ describe('lighthouse-production SSOT controls', () => {
 
     expect(baselineSpreadIndex).toBeLessThan(refreshedPathsIndex);
   });
+
+  it('guards production baseline drift with relative and absolute tolerance', () => {
+    const source = readFileSync(SCRIPT_PATH, 'utf8');
+
+    expect(source).toContain(
+      'function compareDirection(current, baseline, compareDirection, absoluteTolerance = 0)',
+    );
+    expect(source).toContain('absoluteChanged > absoluteTolerance');
+    expect(source).toContain('driftAbsoluteTolerance: DRIFT_ABSOLUTE_TOLERANCE.inpMs');
+    expect(source).toContain('actual: current');
+  });
 });

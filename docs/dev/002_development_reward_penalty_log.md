@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +12
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +13
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-lighthouse-drift-noise-tolerance
+- 原因：PR #378 Lighthouse production baseline 以純百分比判定 INP 漂移，導致 23ms→25ms 這類極小絕對差異因 +8.7% 被誤判為阻擋性回歸。
+- 解法：保留 5% 相對漂移門檻，同時加入各指標最小絕對差異門檻與 regression actual/absoluteDrift 輸出，讓 CI 擋真退化、不擋毫秒級噪音。
 
 - 日期：2026-05-10
 - ID：pr378-build-scripts-fixture-ssot

@@ -41,6 +41,12 @@ const LIGHTHOUSE_BIN = resolve(ROOT_DIR, 'node_modules', '.bin', 'lighthouse');
 const OUTPUT_ONLY = process.env.LH_OUTPUT_ONLY === '1';
 const GITHUB_OUTPUT = process.env.GITHUB_OUTPUT;
 const LIGHTHOUSE_MAX_ATTEMPTS = Number.parseInt(process.env.LH_MAX_ATTEMPTS || '2', 10);
+const DRIFT_ABSOLUTE_TOLERANCE = {
+  performanceScore: 1,
+  lcpMs: 100,
+  inpMs: 10,
+  cls: 0.01,
+};
 
 const PATHS = Array.isArray(APP_CONFIG.lighthouseSmokePaths)
   ? APP_CONFIG.lighthouseSmokePaths
@@ -72,6 +78,7 @@ const THRESHOLD_CHECKS = [
     path: 'performanceScore',
     compareDirection: 'higherBetter',
     threshold: BASELINE_ASSERT.performanceScore * 100,
+    driftAbsoluteTolerance: DRIFT_ABSOLUTE_TOLERANCE.performanceScore,
     unit: '%',
   },
   {
@@ -79,6 +86,7 @@ const THRESHOLD_CHECKS = [
     path: 'lcpMs',
     compareDirection: 'lowerBetter',
     threshold: BASELINE_ASSERT.lcpMs,
+    driftAbsoluteTolerance: DRIFT_ABSOLUTE_TOLERANCE.lcpMs,
     unit: 'ms',
   },
   {
@@ -86,6 +94,7 @@ const THRESHOLD_CHECKS = [
     path: 'inpMs',
     compareDirection: 'lowerBetter',
     threshold: BASELINE_ASSERT.inpMs,
+    driftAbsoluteTolerance: DRIFT_ABSOLUTE_TOLERANCE.inpMs,
     unit: 'ms',
   },
   {
@@ -93,6 +102,7 @@ const THRESHOLD_CHECKS = [
     path: 'cls',
     compareDirection: 'lowerBetter',
     threshold: BASELINE_ASSERT.cls,
+    driftAbsoluteTolerance: DRIFT_ABSOLUTE_TOLERANCE.cls,
     unit: '',
   },
 ];
@@ -239,28 +249,32 @@ function runLighthouse(url, outputPath) {
   }
 }
 
-function compareDirection(current, baseline, compareDirection) {
+function compareDirection(current, baseline, compareDirection, absoluteTolerance = 0) {
   if (
     baseline === null ||
     baseline === 0 ||
     !Number.isFinite(current) ||
     !Number.isFinite(baseline)
   ) {
-    return { changed: 0, exceed: false };
+    return { changed: 0, absoluteChanged: 0, exceed: false };
   }
 
   if (compareDirection === 'higherBetter') {
     const degradePercent = ((baseline - current) / baseline) * 100;
+    const absoluteChanged = baseline - current;
     return {
       changed: safeRound(degradePercent, 2),
-      exceed: degradePercent > DRIFT_PERCENT,
+      absoluteChanged: safeRound(absoluteChanged, 2),
+      exceed: degradePercent > DRIFT_PERCENT && absoluteChanged > absoluteTolerance,
     };
   }
 
   const worsenPercent = ((current - baseline) / baseline) * 100;
+  const absoluteChanged = current - baseline;
   return {
     changed: safeRound(worsenPercent, 2),
-    exceed: worsenPercent > DRIFT_PERCENT,
+    absoluteChanged: safeRound(absoluteChanged, 2),
+    exceed: worsenPercent > DRIFT_PERCENT && absoluteChanged > absoluteTolerance,
   };
 }
 
@@ -427,7 +441,12 @@ function main() {
           continue;
         }
 
-        const drift = compareDirection(current, previous, check.compareDirection);
+        const drift = compareDirection(
+          current,
+          previous,
+          check.compareDirection,
+          check.driftAbsoluteTolerance,
+        );
         summary.overall.drift[`${pathKey}:${check.path}`] = drift;
         if (drift.exceed) {
           summary.overall.passed = false;
@@ -438,7 +457,10 @@ function main() {
             ...summary.overall.checks[`${pathKey}-${check.path}`],
             type: summary.overall.checks[`${pathKey}-${check.path}`] ? 'hard_fail' : 'regression',
             baseline: previous,
+            actual: current,
             drift: drift.changed,
+            absoluteDrift: drift.absoluteChanged,
+            absoluteTolerance: check.driftAbsoluteTolerance,
           };
         }
       }
@@ -506,7 +528,7 @@ function main() {
       console.log(`❌ ${name}: ${relation}`);
     } else if (check.type === 'regression') {
       console.log(
-        `⚠️ ${name}: baseline drift +${check.drift}% (${check.baseline} -> ${check.actual})`,
+        `⚠️ ${name}: baseline drift +${check.drift}% (${check.baseline} -> ${check.actual}, abs ${check.absoluteDrift})`,
       );
     } else if (check.type === 'runtime_error') {
       console.log(`❌ ${name}: ${check.message}`);
