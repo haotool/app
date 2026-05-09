@@ -5,7 +5,7 @@
  */
 
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { dirname, isAbsolute, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,6 +19,7 @@ const OUTPUT_FILE = join(OUTPUT_DIR, 'moneybox.json');
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 5000;
+const TWD_QUOTE_FIELDS = ['base', 'buy', 'sell', 'spbuy', 'spsell'];
 
 class AbortError extends Error {
   constructor(message, status) {
@@ -33,6 +34,16 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // MoneyBox 公開 API（韓國官方換匯所聯盟）
 const MONEYBOX_API_URL =
   'https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4';
+
+function writeCurrentFetchSnapshot(ratesData) {
+  const output = process.env.MONEYBOX_FETCH_OUTPUT_FILE;
+  if (!output) return;
+
+  const outputFile = isAbsolute(output) ? output : join(REPO_ROOT, output);
+  mkdirSync(dirname(outputFile), { recursive: true });
+  writeFileSync(outputFile, JSON.stringify(ratesData, null, 2), 'utf8');
+  console.log(`🧾 Current fetch snapshot saved: ${outputFile}`);
+}
 
 /**
  * 判斷錯誤是否可重試
@@ -176,24 +187,26 @@ async function fetchMoneyBoxRates() {
   throw new Error('Failed to fetch MoneyBox rates after maximum retries');
 }
 
-/**
- * 檢查匯率是否有變化（比較 TWD sell 匯率）
- */
 function hasRateChanges(newData) {
   try {
     const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
 
-    const oldTWD = oldData.rates?.TWD?.sell;
-    const newTWD = newData.rates?.TWD?.sell;
+    const oldTWD = oldData.rates?.TWD;
+    const newTWD = newData.rates?.TWD;
+    const changedFields = TWD_QUOTE_FIELDS.filter((field) => oldTWD?.[field] !== newTWD?.[field]);
 
-    const hasChanges = oldTWD !== newTWD;
+    const hasChanges = changedFields.length > 0;
 
     if (hasChanges) {
-      console.log(`🔄 Rate change detected: TWD sell ${oldTWD} → ${newTWD} KRW/TWD`);
+      console.log(`🔄 Rate change detected: TWD ${changedFields.join(', ')}`);
+      for (const field of changedFields) {
+        console.log(`   ${field}: ${oldTWD?.[field]} → ${newTWD?.[field]} KRW/TWD`);
+      }
     } else {
       console.log('📊 Rates unchanged since last update');
       console.log(`   Last update: ${oldData.updateTime}`);
-      console.log(`   TWD sell: ${oldTWD} KRW/TWD`);
+      console.log(`   TWD buy: ${oldTWD?.buy} KRW/TWD`);
+      console.log(`   TWD sell: ${oldTWD?.sell} KRW/TWD`);
     }
 
     return hasChanges;
@@ -217,6 +230,7 @@ async function main() {
     // 抓取匯率
     console.log('📡 Fetching data from MoneyBox API...');
     const ratesData = await fetchMoneyBoxRates();
+    writeCurrentFetchSnapshot(ratesData);
 
     // 檢查是否有變化
     console.log('🔍 Checking for rate changes...');
