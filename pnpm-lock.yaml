@@ -316,7 +316,7 @@ importers:
     dependencies:
       i18next:
         specifier: ^26.0.4
-        version: 26.0.4(typescript@5.9.3)
+        version: 26.0.10(typescript@5.9.3)
       i18next-browser-languagedetector:
         specifier: ^8.0.4
         version: 8.2.1
@@ -337,7 +337,7 @@ importers:
         version: 19.2.4(react@19.2.4)
       react-i18next:
         specifier: ^15.5.2
-        version: 15.7.4(i18next@26.0.4(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+        version: 15.7.4(i18next@26.0.10(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       react-leaflet:
         specifier: ^5.0.0
         version: 5.0.0(leaflet@1.9.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -519,7 +519,7 @@ importers:
         version: 2.1.1
       i18next:
         specifier: ^26.0.4
-        version: 26.0.4(typescript@5.9.3)
+        version: 26.0.10(typescript@5.9.3)
       i18next-browser-languagedetector:
         specifier: ^8.2.0
         version: 8.2.1
@@ -546,7 +546,7 @@ importers:
         version: 6.1.1(react@19.2.4)
       react-i18next:
         specifier: ^16.5.3
-        version: 16.5.3(i18next@26.0.4(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+        version: 16.5.3(i18next@26.0.10(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       react-router-dom:
         specifier: ^6.30.3
         version: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -694,7 +694,7 @@ importers:
         version: 4.1.0
       i18next:
         specifier: ^26.0.4
-        version: 26.0.4(typescript@5.9.3)
+        version: 26.0.10(typescript@5.9.3)
       i18next-browser-languagedetector:
         specifier: ^8.2.1
         version: 8.2.1
@@ -712,7 +712,7 @@ importers:
         version: 19.2.4(react@19.2.4)
       react-i18next:
         specifier: ^16.6.6
-        version: 16.6.6(i18next@26.0.4(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+        version: 16.6.6(i18next@26.0.10(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
@@ -5676,8 +5676,8 @@ packages:
   i18next-browser-languagedetector@8.2.1:
     resolution: {integrity: sha512-bZg8+4bdmaOiApD7N7BPT9W8MLZG+nPTOFlLiJiT8uzKXFjhxw4v2ierCXOwB5sFDMtuA5G4kgYZ0AznZxQ/cw==}
 
-  i18next@26.0.4:
-    resolution: {integrity: sha512-gXF7U9bfioXPLv7mw8Qt2nfO7vij5MyINvPgVv99pX3fL1Y01pw2mKBFrlYpRxRCl2wz3ISenj6VsMJT2isfuA==}
+  i18next@26.0.10:
+    resolution: {integrity: sha512-k3yGPAlWR2RdMYoVXJoDZDT87qeHIWKH7gVksdZMpRty7QX/D9QZeYGvN08KGbKHke9wn01eYT+EEsrqX/YTlw==}
     peerDependencies:
       typescript: ^5 || ^6
     peerDependenciesMeta:
@@ -7322,8 +7322,8 @@ packages:
     resolution: {integrity: sha512-W62t/Se6rA0Az3DfCL0AqJwXuKwBeYg6nOaIgzP+xZ7N5BFCI7DYi1qs6ygUYT6rvfi6t9k65UMLJC+PHZpDAA==}
     engines: {node: ^10 || ^12 || >=14}
 
-  postcss@8.5.13:
-    resolution: {integrity: sha512-qif0+jGGZoLWdHey3UFHHWP0H7Gbmsk8T5VEqyYFbWqPr1XqvLGBbk/sl8V5exGmcYJklJOhOQq1pV9IcsiFag==}
+  postcss@8.5.14:
+    resolution: {integrity: sha512-SoSL4+OSEtR99LHFZQiJLkT59C5B1amGO1NzTwj7TT1qCUgUO6hxOvzkOYxD+vMrXBM3XJIKzokoERdqQq/Zmg==}
     engines: {node: ^10 || ^12 || >=14}
 
   postgres-array@2.0.0:
@@ -13388,7 +13388,7 @@ snapshots:
       domhandler: 5.0.3
       htmlparser2: 9.1.0
       picocolors: 1.1.1
-      postcss: 8.5.13
+      postcss: 8.5.14
       postcss-media-query-parser: 0.2.3
     optional: true
 
@@ -15268,9 +15268,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.28.6
 
-  i18next@26.0.4(typescript@5.9.3):
-    dependencies:
-      '@babel/runtime': 7.29.2
+  i18next@26.0.10(typescript@5.9.3):
     optionalDependencies:
       typescript: 5.9.3
 
@@ -16919,7 +16917,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  postcss@8.5.13:
+  postcss@8.5.14:
     dependencies:
       nanoid: 3.3.12
       picocolors: 1.1.1
@@ -17119,32 +17117,32 @@ snapshots:
       react-fast-compare: 3.2.2
       shallowequal: 1.1.0
 
-  react-i18next@15.7.4(i18next@26.0.4(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3):
+  react-i18next@15.7.4(i18next@26.0.10(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3):
     dependencies:
       '@babel/runtime': 7.28.6
       html-parse-stringify: 3.0.1
-      i18next: 26.0.4(typescript@5.9.3)
+      i18next: 26.0.10(typescript@5.9.3)
       react: 19.2.4
     optionalDependencies:
       react-dom: 19.2.4(react@19.2.4)
       typescript: 5.9.3
 
-  react-i18next@16.5.3(i18next@26.0.4(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3):
+  react-i18next@16.5.3(i18next@26.0.10(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3):
     dependencies:
       '@babel/runtime': 7.28.6
       html-parse-stringify: 3.0.1
-      i18next: 26.0.4(typescript@5.9.3)
+      i18next: 26.0.10(typescript@5.9.3)
       react: 19.2.4
       use-sync-external-store: 1.6.0(react@19.2.4)
     optionalDependencies:
       react-dom: 19.2.4(react@19.2.4)
       typescript: 5.9.3
 
-  react-i18next@16.6.6(i18next@26.0.4(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3):
+  react-i18next@16.6.6(i18next@26.0.10(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3):
     dependencies:
       '@babel/runtime': 7.29.2
       html-parse-stringify: 3.0.1
-      i18next: 26.0.4(typescript@5.9.3)
+      i18next: 26.0.10(typescript@5.9.3)
       react: 19.2.4
       use-sync-external-store: 1.6.0(react@19.2.4)
     optionalDependencies:
