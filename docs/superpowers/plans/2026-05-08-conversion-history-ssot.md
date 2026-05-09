@@ -1,5 +1,7 @@
 # Conversion History SSOT Plan
 
+> **Status (2026-05-09)：已由 `2026-05-09-rate-provider-ssot.md` Task 7 一併落地。** 歷史欄位（`schemaVersion=2` + `rateType` / `sourceKind` / `providerId` / `providerSelectionMode`）、單一寫入路徑（`useConverterStore.addToHistory`）、legacy `STORAGE_KEYS.CONVERSION_HISTORY` 遷移（不偽造 sourceKind/providerId）、`categorizeHistoryEntry` 分類、reconvert 只重置幣別/金額不重播匯率等行為皆已實作完成。實作落點：`apps/ratewise/src/features/ratewise/types.ts`、`apps/ratewise/src/stores/converterStore.ts`、`apps/ratewise/src/features/ratewise/hooks/useCurrencyConverter.ts`。後續 UI 篩選與 Phase 2 銀行明細可直接讀 `categorizeHistoryEntry` 的結果。
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 讓轉換歷史收斂成單一真實來源，同時維持簡潔 UI：使用者只看到時間與「即期 / 現金 / 換錢所」分類，不顯示多餘技術資訊，並能銜接未來多銀行 provider 與最佳匯率推薦。

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +8
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +9
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-09
+- ID：ratewise-rate-provider-ssot-phase1-completion
+- 原因：`docs/superpowers/plans/2026-05-08-conversion-history-ssot.md` 與 `2026-05-09-rate-provider-ssot.md` 之間存在範圍重疊（歷史 schema、寫入路徑、UI 簡潔度），若不同步標記，未來會出現「兩個 SSOT 計畫各自被 partial 執行」的錯覺。
+- 解法：在 conversion-history 計畫頂端加上 Status block 註明已由 rate-provider Phase 1 一併落地，並列出實作落點（types.ts / converterStore.ts / useCurrencyConverter.ts），讓後續維護者只需追新 plan 即可。最終驗證 `pnpm vitest run`（136 files / 2364 passed）+ `pnpm --filter @app/ratewise typecheck` 全綠。
 
 - 日期：2026-05-09
 - ID：ratewise-conversion-history-ssot-schema-v2
