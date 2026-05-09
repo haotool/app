@@ -172,14 +172,48 @@ describe('useCurrencyConverter', () => {
         result.current.addToHistory();
       });
 
-      // Assert
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+      // Assert：歷史寫入已收斂到 store SSOT；不再直接寫舊版 conversionHistory 個別 key（Task 7）。
+      expect(localStorageMock.setItem).not.toHaveBeenCalledWith(
         STORAGE_KEYS.CONVERSION_HISTORY,
         expect.any(String),
       );
+      const firstEntry = result.current.history[0];
+      expect(firstEntry).toBeDefined();
+      expect(firstEntry?.from).toBe('USD');
+      expect(firstEntry?.to).toBe('TWD');
     });
 
-    it('should limit history to 10 entries', () => {
+    it('每筆寫入應帶 schemaVersion=2 與 provider/sourceKind/rateType 欄位', () => {
+      const mockRates = { USD: 31.5, TWD: 1 };
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: mockRates,
+          rateType: 'spot',
+        }),
+      );
+
+      act(() => {
+        result.current.setFromCurrency('USD');
+        result.current.setToCurrency('TWD');
+        result.current.handleFromAmountChange('25');
+      });
+      act(() => {
+        result.current.addToHistory();
+      });
+
+      const latest = result.current.history[0];
+      expect(latest).toMatchObject({
+        from: 'USD',
+        to: 'TWD',
+        rateType: 'spot',
+        sourceKind: 'bank',
+        providerId: 'bot',
+        providerSelectionMode: 'manual',
+        schemaVersion: 2,
+      });
+    });
+
+    it('歷史紀錄上限為 store HISTORY_CAPACITY（50 筆）', () => {
       // Arrange
       const mockRates = {
         USD: 31.5,
@@ -193,8 +227,8 @@ describe('useCurrencyConverter', () => {
         }),
       );
 
-      // Act - Add 12 entries
-      for (let i = 0; i < 12; i++) {
+      // Act - Add 60 entries
+      for (let i = 0; i < 60; i++) {
         act(() => {
           result.current.handleFromAmountChange(String(i * 100));
         });
@@ -203,8 +237,9 @@ describe('useCurrencyConverter', () => {
         });
       }
 
-      // Assert - Should only keep 10 entries
-      expect(result.current.history.length).toBeLessThanOrEqual(10);
+      // Assert - Store cap is 50（從 hook 舊上限 10 提升至 store SSOT 50；UI 自由決定顯示筆數）
+      expect(result.current.history.length).toBeLessThanOrEqual(50);
+      expect(result.current.history.length).toBeGreaterThan(10);
     });
   });
 

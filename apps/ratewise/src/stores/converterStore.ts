@@ -17,6 +17,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
+  ConversionHistoryCategory,
+  ConversionHistoryEntry,
   ConverterMode,
   CurrencyCode,
   RateMode,
@@ -70,16 +72,9 @@ const LEGACY_KEYS = {
   RATE_SOURCE: STORAGE_KEYS.RATE_SOURCE,
 } as const;
 
-// ── 轉換歷史記錄型別 ─────────────────────────────────────────────────────────
-export interface ConversionRecord {
-  id: string;
-  from: CurrencyCode;
-  to: CurrencyCode;
-  amount: number;
-  result: number;
-  rate: number;
-  timestamp: number;
-}
+// ── 轉換歷史記錄上限（store 層 SSOT，UI 顯示由元件決定）──────────────────
+const HISTORY_CAPACITY = 50;
+const LEGACY_HISTORY_STORAGE_KEY = STORAGE_KEYS.CONVERSION_HISTORY;
 
 // ── Store 狀態介面 ───────────────────────────────────────────────────────────
 interface ConverterState {
@@ -102,7 +97,13 @@ interface ConverterState {
    */
   providerPreference: RateProviderPreference;
   favorites: CurrencyCode[];
-  history: ConversionRecord[];
+  /**
+   * 轉換歷史紀錄（schemaVersion≥2 寫入 provider/sourceKind 等可篩選欄位）。
+   *
+   * Phase 1 為唯一寫入路徑：所有 UI 寫入都必須走 `addToHistory(entry)`，
+   * 不可再使用 `writeJSON(STORAGE_KEYS.CONVERSION_HISTORY)` 或 hook local state。
+   */
+  history: ConversionHistoryEntry[];
 
   // ── Actions ──────────────────────────────────────────────────────────────
   setFromCurrency: (code: CurrencyCode) => void;
@@ -137,7 +138,13 @@ interface ConverterState {
   /** 檢查 `code` 是否在收藏列表中 */
   isFavorite: (code: CurrencyCode) => boolean;
 
-  addToHistory: (record: ConversionRecord) => void;
+  /**
+   * 新增一筆轉換歷史紀錄到 store SSOT。
+   *
+   * 寫入策略：上限為 {@link HISTORY_CAPACITY}；超過時保留最新；同時間戳重複呼叫
+   * 視為新筆（不去重，由呼叫端決定是否擋連點）。
+   */
+  addToHistory: (entry: ConversionHistoryEntry) => void;
   clearHistory: () => void;
 
   /** 供單元測試呼叫；亦由 onRehydrateStorage 在內部觸發 */
@@ -373,6 +380,72 @@ function removeLegacyKeys(): void {
   window.localStorage.removeItem(LEGACY_KEYS.RATE_SOURCE);
 }
 
+/**
+ * 將舊版 `STORAGE_KEYS.CONVERSION_HISTORY` 的歷史紀錄遷移到 store。
+ *
+ * 規則（對齊設計文件 §History Contract）：
+ * - 缺欄位（rateType / sourceKind / providerId / providerSelectionMode / schemaVersion）的舊紀錄
+ *   只保留基本欄位，**不偽造** sourceKind = 'bank' 或 providerId = 'bot'，避免後續 UI 篩選誤判。
+ * - 篩選時舊紀錄會由 `categorizeHistoryEntry` 歸到 `'legacy'` 分類。
+ * - 遷移完成後一次性移除 legacy storage key，後續寫入只走 store SSOT。
+ *
+ * 僅當 hydrate 後 store 內 `history` 為空時才執行（避免覆蓋已寫入的新紀錄）。
+ */
+function migrateLegacyHistory(state: ConverterState): ConversionHistoryEntry[] | null {
+  if (typeof window === 'undefined') return null;
+  if (state.history.length > 0) return null;
+
+  const raw = window.localStorage.getItem(LEGACY_HISTORY_STORAGE_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+
+    const migrated: ConversionHistoryEntry[] = [];
+    for (const item of parsed as unknown[]) {
+      if (typeof item !== 'object' || item === null) continue;
+      const entry = item as Partial<ConversionHistoryEntry>;
+      if (
+        typeof entry.from !== 'string' ||
+        typeof entry.to !== 'string' ||
+        !isCurrencyCode(entry.from) ||
+        !isCurrencyCode(entry.to) ||
+        typeof entry.timestamp !== 'number'
+      ) {
+        continue;
+      }
+      // 不偽造 schemaVersion；缺欄位的舊紀錄保留為 legacy（schemaVersion 留 undefined）
+      migrated.push({
+        from: entry.from,
+        to: entry.to,
+        amount: typeof entry.amount === 'string' ? entry.amount : '',
+        result: typeof entry.result === 'string' ? entry.result : '',
+        time: typeof entry.time === 'string' ? entry.time : '',
+        timestamp: entry.timestamp,
+      });
+    }
+    return migrated.slice(0, HISTORY_CAPACITY);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 依紀錄欄位將歷史分類為 `'spot' | 'cash' | 'exchange-shop' | 'legacy'`。
+ *
+ * - schemaVersion 缺失或 sourceKind/rateType 缺失：歸為 `'legacy'`。
+ * - sourceKind = 'exchange-shop'：歸為 `'exchange-shop'`（rateType 必為 cash）。
+ * - sourceKind = 'bank'：依 rateType 回 `'spot'` 或 `'cash'`。
+ */
+export function categorizeHistoryEntry(entry: ConversionHistoryEntry): ConversionHistoryCategory {
+  if (entry.schemaVersion !== 2 || !entry.sourceKind || !entry.rateType) {
+    return 'legacy';
+  }
+  if (entry.sourceKind === 'exchange-shop') return 'exchange-shop';
+  return entry.rateType;
+}
+
 // ── Store 實例 ───────────────────────────────────────────────────────────────
 export const useConverterStore = create<ConverterState>()(
   persist(
@@ -446,9 +519,9 @@ export const useConverterStore = create<ConverterState>()(
 
       isFavorite: (code) => get().favorites.includes(code),
 
-      addToHistory: (record) =>
+      addToHistory: (entry) =>
         set((state) => ({
-          history: [record, ...state.history].slice(0, 50),
+          history: [entry, ...state.history].slice(0, HISTORY_CAPACITY),
         })),
 
       clearHistory: () => set({ history: [] }),
@@ -458,6 +531,15 @@ export const useConverterStore = create<ConverterState>()(
         if (patch) {
           set(patch);
           removeLegacyKeys();
+        }
+        // 歷史紀錄遷移獨立進行（即使其他欄位無遷移也要執行）；只在 store.history 為空時觸發
+        const migratedHistory = migrateLegacyHistory(get());
+        if (migratedHistory && migratedHistory.length > 0) {
+          set({ history: migratedHistory });
+        }
+        // 完成遷移（無論是否真的有資料）後移除 legacy key，避免下次 hydrate 重複處理
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem(LEGACY_HISTORY_STORAGE_KEY);
         }
       },
 

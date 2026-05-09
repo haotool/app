@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +7
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +8
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-09
+- ID：ratewise-conversion-history-ssot-schema-v2
+- 原因：轉換歷史同時存在 `useCurrencyConverter` local state + `STORAGE_KEYS.CONVERSION_HISTORY` 與 store `history`（dead `ConversionRecord` 型別）兩條軌道，新增的 provider/sourceKind/schemaVersion 欄位無單一寫入入口；UI 進入 Phase 2 篩選時將再次發生來源漂移。
+- 解法：把 store `history` 收斂為 `ConversionHistoryEntry[]`（schemaVersion=2 + provider/sourceKind/rateType/providerSelectionMode），新增 `categorizeHistoryEntry` 與 `migrateLegacyHistory`（不偽造舊紀錄 sourceKind，遷移後一次性刪除 legacy key），`useCurrencyConverter.addToHistory` 改用 store 寫入並注入 resolvedProvider 欄位；上限提升到 50 筆 store 統一管理。
 
 - 日期：2026-05-09
 - ID：ratewise-rate-provider-menu-skeleton-phase1

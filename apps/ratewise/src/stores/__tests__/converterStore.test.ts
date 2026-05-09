@@ -12,9 +12,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { CurrencyCode } from '../../features/ratewise/types';
+import type { ConversionHistoryEntry, CurrencyCode } from '../../features/ratewise/types';
 import type { RateProviderPreference } from '../../features/ratewise/rateProviderTypes';
-import { useConverterStore } from '../converterStore';
+import { categorizeHistoryEntry, useConverterStore } from '../converterStore';
 
 // ── localStorage mock ─────────────────────────────────────────────────────────
 const localStorageMock = (() => {
@@ -776,6 +776,165 @@ describe('converterStore', () => {
       useConverterStore.getState().__migrateFromLegacy?.();
 
       expect(useConverterStore.getState().providerPreference.mode).toBe('manual');
+    });
+  });
+
+  // ── 歷史 SSOT（Task 7）─────────────────────────────────────────────────────
+  describe('history SSOT', () => {
+    const baseEntry = (
+      overrides: Partial<ConversionHistoryEntry> = {},
+    ): ConversionHistoryEntry => ({
+      from: 'USD',
+      to: 'TWD',
+      amount: '100',
+      result: '3150',
+      time: '今天 14:30',
+      timestamp: 1_700_000_000_000,
+      rateType: 'spot',
+      sourceKind: 'bank',
+      providerId: 'bot',
+      providerSelectionMode: 'manual',
+      schemaVersion: 2,
+      ...overrides,
+    });
+
+    it('addToHistory 將新紀錄置於陣列前端', () => {
+      useConverterStore.getState().addToHistory(baseEntry({ amount: '100' }));
+      useConverterStore.getState().addToHistory(baseEntry({ amount: '200' }));
+      const list = useConverterStore.getState().history;
+      expect(list[0]?.amount).toBe('200');
+      expect(list[1]?.amount).toBe('100');
+    });
+
+    it('addToHistory 上限 50 筆（store SSOT）', () => {
+      for (let i = 0; i < 60; i += 1) {
+        useConverterStore.getState().addToHistory(baseEntry({ amount: String(i) }));
+      }
+      expect(useConverterStore.getState().history.length).toBe(50);
+    });
+
+    it('clearHistory 清空 history', () => {
+      useConverterStore.getState().addToHistory(baseEntry());
+      useConverterStore.getState().clearHistory();
+      expect(useConverterStore.getState().history).toEqual([]);
+    });
+
+    describe('categorizeHistoryEntry', () => {
+      it('schemaVersion=2 + bank + spot → spot', () => {
+        expect(categorizeHistoryEntry(baseEntry({ rateType: 'spot' }))).toBe('spot');
+      });
+
+      it('schemaVersion=2 + bank + cash → cash', () => {
+        expect(categorizeHistoryEntry(baseEntry({ rateType: 'cash' }))).toBe('cash');
+      });
+
+      it('schemaVersion=2 + exchange-shop → exchange-shop', () => {
+        expect(
+          categorizeHistoryEntry(
+            baseEntry({
+              sourceKind: 'exchange-shop',
+              providerId: 'moneybox',
+              rateType: 'cash',
+            }),
+          ),
+        ).toBe('exchange-shop');
+      });
+
+      it('缺 schemaVersion 的舊紀錄 → legacy', () => {
+        expect(
+          categorizeHistoryEntry({
+            from: 'USD',
+            to: 'TWD',
+            amount: '100',
+            result: '3150',
+            time: '昨天',
+            timestamp: 1_690_000_000_000,
+          }),
+        ).toBe('legacy');
+      });
+
+      it('schemaVersion=2 但缺 sourceKind / rateType → legacy（不偽造分類）', () => {
+        expect(categorizeHistoryEntry(baseEntry({ sourceKind: undefined }))).toBe('legacy');
+        expect(categorizeHistoryEntry(baseEntry({ rateType: undefined }))).toBe('legacy');
+      });
+    });
+
+    describe('legacy STORAGE_KEYS.CONVERSION_HISTORY 遷移', () => {
+      it('store.history 為空時，從舊 key 遷移基本欄位（不偽造 sourceKind/providerId）', () => {
+        const legacy = [
+          {
+            from: 'USD',
+            to: 'TWD',
+            amount: '50',
+            result: '1575',
+            time: '昨天 10:00',
+            timestamp: 1_690_000_000_000,
+          },
+        ];
+        localStorageMock.clear();
+        localStorageMock.getItem.mockImplementation((key: string) => {
+          if (key === 'conversionHistory') return JSON.stringify(legacy);
+          return null;
+        });
+
+        resetStore();
+        useConverterStore.getState().__migrateFromLegacy();
+
+        const list = useConverterStore.getState().history;
+        expect(list).toHaveLength(1);
+        const entry = list[0];
+        expect(entry?.from).toBe('USD');
+        expect(entry?.schemaVersion).toBeUndefined();
+        expect(entry?.sourceKind).toBeUndefined();
+        expect(entry?.providerId).toBeUndefined();
+      });
+
+      it('store.history 已有資料時，不覆蓋（避免重複遷移）', () => {
+        useConverterStore.setState({ history: [baseEntry({ amount: 'kept' })] });
+        localStorageMock.getItem.mockImplementation((key: string) =>
+          key === 'conversionHistory'
+            ? JSON.stringify([
+                {
+                  from: 'USD',
+                  to: 'TWD',
+                  amount: 'old',
+                  result: '0',
+                  time: 't',
+                  timestamp: 1,
+                },
+              ])
+            : null,
+        );
+
+        useConverterStore.getState().__migrateFromLegacy();
+
+        const list = useConverterStore.getState().history;
+        expect(list).toHaveLength(1);
+        expect(list[0]?.amount).toBe('kept');
+      });
+
+      it('遷移完成後一次性移除 conversionHistory legacy key', () => {
+        localStorageMock.clear();
+        localStorageMock.getItem.mockImplementation((key: string) =>
+          key === 'conversionHistory'
+            ? JSON.stringify([
+                {
+                  from: 'USD',
+                  to: 'TWD',
+                  amount: '1',
+                  result: '1',
+                  time: 't',
+                  timestamp: 1,
+                },
+              ])
+            : null,
+        );
+
+        resetStore();
+        useConverterStore.getState().__migrateFromLegacy();
+
+        expect(localStorageMock.removeItem).toHaveBeenCalledWith('conversionHistory');
+      });
     });
   });
 });

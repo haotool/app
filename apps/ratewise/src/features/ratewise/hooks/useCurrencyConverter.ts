@@ -9,8 +9,6 @@ import type {
   RateSource,
   RateType,
 } from '../types';
-import { readJSON, writeJSON } from '../storage';
-import { STORAGE_KEYS } from '../storage-keys';
 import type { RateDetails } from './useExchangeRates';
 import { logger } from '../../../utils/logger';
 import { getUnitExchangeRate } from '../../../utils/exchangeRateCalculation';
@@ -100,12 +98,15 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     rateMode,
     favorites,
     providerPreference,
+    history,
     setFromCurrency,
     setToCurrency,
     setMode,
     toggleFavorite: storeToggleFavorite,
     reorderFavorites: storeReorderFavorites,
     swapCurrencies: storeSwapCurrencies,
+    addToHistory: storeAddToHistory,
+    clearHistory: storeClearHistory,
   } = useConverterStore();
 
   const [fromAmount, setFromAmount] = useState<string>('1000');
@@ -115,8 +116,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     createInitialMultiAmounts(DEFAULT_BASE_CURRENCY),
   );
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>(DEFAULT_BASE_CURRENCY);
-
-  const [history, setHistory] = useState<ConversionHistoryEntry[]>([]);
 
   const exchangeShopCurrency = useMemo((): CurrencyCode | null => {
     if (fromCurrency === 'TWD' && hasExchangeShopProvider(toCurrency)) return toCurrency;
@@ -270,25 +269,17 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     };
   }, [cancelScheduledMultiRecalc]);
 
-  // [feat:2025-12-26] 從 localStorage 恢復歷史記錄並過濾過期記錄（7 天）
+  // 歷史記錄由 store SSOT 管理：legacy `STORAGE_KEYS.CONVERSION_HISTORY` 已於
+  // store hydrate 時遷移到 store.history。本 hook 只負責「過期 (>7d) 紀錄」清理。
   useEffect(() => {
-    const storedHistory = readJSON<ConversionHistoryEntry[]>(STORAGE_KEYS.CONVERSION_HISTORY, []);
-
-    // 過濾 7 天前的記錄
+    if (history.length === 0) return;
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const validHistory = storedHistory.filter((entry) => entry.timestamp > sevenDaysAgo);
-
-    // 如果有過期記錄被過濾，更新 localStorage
-    if (validHistory.length !== storedHistory.length) {
-      writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, validHistory);
-    }
-
-    // 只有當有歷史記錄時才更新 state
-    if (validHistory.length > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶歷史記錄
-      setHistory(validHistory);
-    }
-  }, []);
+    const expired = history.some((entry) => entry.timestamp <= sevenDaysAgo);
+    if (!expired) return;
+    const valid = history.filter((entry) => entry.timestamp > sevenDaysAgo);
+    // 直接覆寫 store.history（Zustand persist 會同步 localStorage）
+    useConverterStore.setState({ history: valid });
+  }, [history]);
   const [lastEdited, setLastEdited] = useState<AmountField>('from');
 
   // Conversion calculations using convertCurrencyAmountWithMode
@@ -478,7 +469,10 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   );
 
   /**
-   * 將當前轉換加入歷史記錄並顯示 Toast 通知
+   * 將當前轉換加入歷史記錄並顯示 Toast 通知。
+   *
+   * Phase 1 寫入 schemaVersion=2 + provider 欄位（rateType / sourceKind / providerId /
+   * providerSelectionMode），讓未來分類篩選與 provider 明細能直接從歷史紀錄取得。
    */
   const addToHistory = useCallback(() => {
     const timestamp = Date.now();
@@ -489,22 +483,31 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       result: toAmount,
       time: getRelativeTimeString(timestamp),
       timestamp,
+      rateType,
+      sourceKind: resolvedProvider.sourceKind,
+      providerId: resolvedProvider.providerId,
+      providerSelectionMode: resolvedProvider.selectionMode,
+      schemaVersion: 2,
     };
 
-    setHistory((prev) => {
-      const updated = [entry, ...prev].slice(0, 10);
-      writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, updated);
-      return updated;
-    });
-
+    storeAddToHistory(entry);
     showToast(t('singleConverter.addedToHistory'), 'success');
-  }, [fromCurrency, toCurrency, fromAmount, toAmount, showToast, t]);
+  }, [
+    fromCurrency,
+    toCurrency,
+    fromAmount,
+    toAmount,
+    rateType,
+    resolvedProvider,
+    storeAddToHistory,
+    showToast,
+    t,
+  ]);
 
   /** 清除全部歷史記錄 */
   const clearAllHistory = useCallback(() => {
-    setHistory([]);
-    writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, []);
-  }, []);
+    storeClearHistory();
+  }, [storeClearHistory]);
 
   /** 從歷史記錄重新載入轉換參數 */
   const reconvertFromHistory = useCallback(
