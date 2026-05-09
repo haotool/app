@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +6
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +7
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-09
+- ID：ratewise-rate-provider-menu-skeleton-phase1
+- 原因：未來 Phase 2 啟用多銀行推薦時，銀行選單與「推薦最佳」入口需有單一元件入口；若到 Phase 2 才一次性新增，容易與既有 RateSelector / SingleConverter 文案介面衝突。
+- 解法：新增 `RateProviderMenu.tsx` 骨架，內建 `shouldEnableBankProviderChoice()` phase gate（false 時 return null）；render 結構 = 推薦最佳 + 銀行清單 + 換錢所清單，並透過 mock 撰寫 Phase 2 行為測試（共 3 條，含 manual selectedRef 高亮）。Phase 1 不掛入既有 UI，使用者體驗完全不變。
 
 - 日期：2026-05-09
 - ID：ratewise-rate-provider-calc-core-phase1
