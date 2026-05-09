@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +11
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +12
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-build-scripts-fixture-ssot
+- 原因：PR #378 CI 在 `test:coverage` 階段尚未執行 prebuild，build-scripts 測試讀取未提交的 `public/rates.json`，造成 fresh checkout 缺檔失敗。
+- 解法：改讀已提交的 `src/config/generated/build-time-rates.json` fixture，讓 API timestamp/base currency 規格測試回到可重現 SSOT，並確認 MoneyBox history endpoint 仍由 provider metadata 串接。
 
 - 日期：2026-05-10
 - ID：pr378-multi-provider-pair-source-convergence

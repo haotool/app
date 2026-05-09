@@ -126,8 +126,8 @@ async function readRateProviderPublicMetadataSource() {
   return readFile(scriptPath, 'utf-8');
 }
 
-async function readPublicRatesFixture() {
-  const ratesPath = path.resolve(__dirname, '../../../public/rates.json');
+async function readBuildTimeRatesFixture() {
+  const ratesPath = path.resolve(__dirname, '../generated/build-time-rates.json');
   return JSON.parse(await readFile(ratesPath, 'utf-8')) as {
     timestamp: unknown;
     updateTime: unknown;
@@ -765,7 +765,7 @@ describe('ratewise build scripts', () => {
   });
 
   it('should document rate API timestamp and base-currency fields from the data fixture SSOT', async () => {
-    const fixture = await readPublicRatesFixture();
+    const fixture = await readBuildTimeRatesFixture();
     const openApiGenerator = await readOpenApiGenerator();
     const openDataPage = await readOpenDataPageSource();
 
