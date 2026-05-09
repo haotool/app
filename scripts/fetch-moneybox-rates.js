@@ -5,7 +5,7 @@
  */
 
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { dirname, isAbsolute, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -33,6 +33,16 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // MoneyBox 公開 API（韓國官方換匯所聯盟）
 const MONEYBOX_API_URL =
   'https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4';
+
+function writeCurrentFetchSnapshot(ratesData) {
+  const output = process.env.MONEYBOX_FETCH_OUTPUT_FILE;
+  if (!output) return;
+
+  const outputFile = isAbsolute(output) ? output : join(REPO_ROOT, output);
+  mkdirSync(dirname(outputFile), { recursive: true });
+  writeFileSync(outputFile, JSON.stringify(ratesData, null, 2), 'utf8');
+  console.log(`🧾 Current fetch snapshot saved: ${outputFile}`);
+}
 
 /**
  * 判斷錯誤是否可重試
@@ -217,6 +227,7 @@ async function main() {
     // 抓取匯率
     console.log('📡 Fetching data from MoneyBox API...');
     const ratesData = await fetchMoneyBoxRates();
+    writeCurrentFetchSnapshot(ratesData);
 
     // 檢查是否有變化
     console.log('🔍 Checking for rate changes...');

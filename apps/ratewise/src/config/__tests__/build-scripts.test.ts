@@ -547,11 +547,14 @@ describe('ratewise build scripts', () => {
   it('should persist MoneyBox daily history snapshots alongside latest rates', async () => {
     const workflowSource = await readMoneyBoxWorkflow();
 
+    expect(workflowSource).toContain('MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json');
     expect(workflowSource).toContain('MONEYBOX_HISTORY_DIR="public/rates/moneybox-history"');
+    expect(workflowSource).toContain('CURRENT_FETCH_FILE=".moneybox-current-fetch.json"');
     expect(workflowSource).toContain(
       'MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"',
     );
-    expect(workflowSource).toContain('cp public/rates/moneybox.json "$MONEYBOX_HISTORY_FILE"');
+    expect(workflowSource).toContain('cp "$CURRENT_FETCH_FILE" "$MONEYBOX_HISTORY_FILE"');
+    expect(workflowSource).not.toContain('cp public/rates/moneybox.json "$MONEYBOX_HISTORY_FILE"');
     expect(workflowSource).toContain(
       'git status --short --untracked-files=all -- public/rates/moneybox-history/',
     );

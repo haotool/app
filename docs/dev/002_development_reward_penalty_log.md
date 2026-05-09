@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +16
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +17
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-moneybox-daily-history-current-fetch
+- 原因：PR #378 Codex review 指出 MoneyBox 匯率未變但跨日期時，workflow 會把舊 moneybox.json 複製成今天的 history 檔，造成檔名日期與內容 timestamp 漂移。
+- 解法：讓 fetch step 永遠輸出本次抓取快照；history step 只在當日檔不存在或 latest 有變更時，以本次抓取快照寫入每日歷史，避免舊資料冒充新日期。
 
 - 日期：2026-05-10
 - ID：pr378-history-reconvert-provider-restore

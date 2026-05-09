@@ -76,6 +76,8 @@ jobs:
       - name: Fetch MoneyBox exchange rates
         id: fetch-rates
         continue-on-error: true
+        env:
+          MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json
         run: |
           echo "🔄 Fetching latest exchange rates from MoneyBox (明洞換匯所)..."
           node scripts/fetch-moneybox-rates.js
@@ -85,10 +87,20 @@ jobs:
         if: steps.fetch-rates.outcome == 'success'
         run: |
           CURRENT_DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)
+          CURRENT_FETCH_FILE=".moneybox-current-fetch.json"
           MONEYBOX_HISTORY_DIR="public/rates/moneybox-history"
           MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
           mkdir -p "$MONEYBOX_HISTORY_DIR"
-          cp public/rates/moneybox.json "$MONEYBOX_HISTORY_FILE"
+          if [[ ! -f "$CURRENT_FETCH_FILE" ]]; then
+            echo "❌ Current MoneyBox fetch snapshot missing: ${CURRENT_FETCH_FILE}"
+            exit 1
+          fi
+          if [[ ! -f "$MONEYBOX_HISTORY_FILE" ]] || [[ -n "$(git status --short --untracked-files=all -- public/rates/moneybox.json)" ]]; then
+            cp "$CURRENT_FETCH_FILE" "$MONEYBOX_HISTORY_FILE"
+            echo "✅ MoneyBox history snapshot refreshed: ${MONEYBOX_HISTORY_FILE}"
+          else
+            echo "ℹ️ MoneyBox history snapshot already exists for ${CURRENT_DATE}; keeping existing daily snapshot"
+          fi
           echo "current_date=${CURRENT_DATE}" >> $GITHUB_OUTPUT
           echo "history_file=${MONEYBOX_HISTORY_FILE}" >> $GITHUB_OUTPUT
 
