@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +4
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +5
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-09
+- ID：ratewise-rate-provider-store-migration-phase1
+- 原因：`rateSource` 同時被當成 legacy 欄位與 provider 身分使用，store 缺乏 `providerPreference` SSOT，未來新增 provider 或啟用 best 模式時，`setRateSource` 與多個 hook/page 需要各自重複處理 provider 解析與 cash 不變式，將再次造成漂移。
+- 解法：在 `apps/ratewise/src/stores/converterStore.ts` 新增 `providerPreference` 持久化欄位（預設 `mode='manual' + bank/bot`），`setProviderPreference` 為新主入口同步 `rateSource` 與套用 cash 不變式；`setRateSource` 退為相容包裝（用 `fromLegacyRateSource` 走同一程式碼路徑）；migration 從 legacy `rateSource` 推導 `providerPreference`，sanitize 永遠以 `providerPreference` 為 SSOT 重新推導 `rateSource`，Phase 1 不產出 `mode='best'`。
 
 - 日期：2026-05-09
 - ID：ratewise-rate-provider-ranking-ssot-phase1

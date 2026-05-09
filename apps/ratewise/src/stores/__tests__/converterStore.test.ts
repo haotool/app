@@ -13,6 +13,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { CurrencyCode } from '../../features/ratewise/types';
+import type { RateProviderPreference } from '../../features/ratewise/rateProviderTypes';
 import { useConverterStore } from '../converterStore';
 
 // ── localStorage mock ─────────────────────────────────────────────────────────
@@ -43,6 +44,10 @@ const resetStore = () => {
     mode: 'single',
     rateType: 'spot',
     rateSource: 'bank',
+    providerPreference: {
+      mode: 'manual',
+      manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+    },
     favorites: ['JPY', 'KRW', 'VND', 'THB', 'HKD', 'USD'],
     history: [],
   });
@@ -479,9 +484,15 @@ describe('converterStore', () => {
     });
 
     it('exchange-shop 與 spot 的非法組合會被修正回 cash', () => {
+      // providerPreference 自 Task 4 起為 SSOT；測試需把兩欄位一併設成 exchange-shop
+      // 才能正確檢驗「資料源 = 換錢所 但 rateType=spot」這條 cash 不變式
       useConverterStore.setState({
         rateType: 'spot',
         rateSource: 'exchange-shop',
+        providerPreference: {
+          mode: 'manual',
+          manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
+        },
       });
 
       useConverterStore.getState().__validateAndSanitize?.();
@@ -506,6 +517,265 @@ describe('converterStore', () => {
       expect(state.toCurrency).toBe('JPY');
       expect(state.mode).toBe('multi');
       expect(state.favorites).toEqual(['USD', 'EUR']);
+    });
+  });
+
+  // ── providerPreference (Task 4: rate provider SSOT) ──────────────────────
+  describe('providerPreference', () => {
+    it('預設值為 manual + 台銀 (bot)', () => {
+      const { providerPreference } = useConverterStore.getState();
+      expect(providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+      });
+    });
+
+    it('setProviderPreference 切到 exchange-shop/moneybox 同步 rateSource 與 cash 不變式', () => {
+      // 起始為 spot/bank，切到換錢所必須一併鎖定 rateType=cash
+      useConverterStore.setState({ rateType: 'spot', rateSource: 'bank' });
+
+      useConverterStore.getState().setProviderPreference({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
+      });
+
+      const state = useConverterStore.getState();
+      expect(state.providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
+      });
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(state.rateType).toBe('cash');
+    });
+
+    it('setProviderPreference 切回 bank 時，保留使用者刻意選的 rateType (cash 不被改成 spot)', () => {
+      useConverterStore.setState({ rateType: 'cash', rateSource: 'exchange-shop' });
+
+      useConverterStore.getState().setProviderPreference({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+      });
+
+      const state = useConverterStore.getState();
+      expect(state.providerPreference.manualProvider).toEqual({
+        sourceKind: 'bank',
+        providerId: 'bot',
+      });
+      expect(state.rateSource).toBe('bank');
+      // bank 同時支援 spot / cash，使用者偏好的 cash 必須保留
+      expect(state.rateType).toBe('cash');
+    });
+
+    it('setRateSource("exchange-shop") 為相容包裝，會同步寫入 providerPreference', () => {
+      useConverterStore.setState({ rateType: 'spot', rateSource: 'bank' });
+
+      useConverterStore.getState().setRateSource('exchange-shop');
+
+      const state = useConverterStore.getState();
+      expect(state.providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
+      });
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(state.rateType).toBe('cash');
+    });
+
+    it('setRateSource("bank") 為相容包裝，providerPreference 同步成 bot', () => {
+      // 先進入換錢所狀態
+      useConverterStore.getState().setRateSource('exchange-shop');
+      // 再切回 bank
+      useConverterStore.getState().setRateSource('bank');
+
+      const state = useConverterStore.getState();
+      expect(state.providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+      });
+      expect(state.rateSource).toBe('bank');
+    });
+
+    it('Phase 1: setRateSource 永遠不產出 mode="best"', () => {
+      useConverterStore.getState().setRateSource('bank');
+      expect(useConverterStore.getState().providerPreference.mode).toBe('manual');
+      useConverterStore.getState().setRateSource('exchange-shop');
+      expect(useConverterStore.getState().providerPreference.mode).toBe('manual');
+    });
+
+    it('sanitize: providerPreference 為 null/undefined 時，重置為預設值且 rateSource 收斂', () => {
+      useConverterStore.setState({
+        providerPreference: null as unknown as RateProviderPreference,
+        rateSource: 'exchange-shop',
+        rateType: 'cash',
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      const state = useConverterStore.getState();
+      expect(state.providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+      });
+      // sanitize 從 sanitized preference 推導出 bank，rateSource 一併同步
+      expect(state.rateSource).toBe('bank');
+    });
+
+    it('sanitize: providerPreference.mode 為非法值時，整體重置為預設', () => {
+      useConverterStore.setState({
+        providerPreference: {
+          mode: 'garbage',
+          manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+        } as unknown as RateProviderPreference,
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      const state = useConverterStore.getState();
+      // mode 非 manual / best：整體回退預設（mode='manual' 強制需要 manualProvider，這裡有 → 留下）
+      expect(state.providerPreference.mode).toBe('manual');
+      expect(state.providerPreference.manualProvider).toEqual({
+        sourceKind: 'bank',
+        providerId: 'bot',
+      });
+    });
+
+    it('sanitize: providerPreference.manualProvider 缺失（mode=manual）時，回退預設', () => {
+      useConverterStore.setState({
+        providerPreference: { mode: 'manual' } as unknown as RateProviderPreference,
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      expect(useConverterStore.getState().providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+      });
+    });
+
+    it('sanitize: providerPreference.manualProvider.sourceKind 非法時，整體回退預設', () => {
+      useConverterStore.setState({
+        providerPreference: {
+          mode: 'manual',
+          manualProvider: { sourceKind: 'unknown_kind', providerId: 'bot' },
+        } as unknown as RateProviderPreference,
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      expect(useConverterStore.getState().providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+      });
+    });
+
+    it('sanitize: providerPreference 是 exchange-shop 但 rateType=spot → rateType 修正為 cash', () => {
+      useConverterStore.setState({
+        providerPreference: {
+          mode: 'manual',
+          manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
+        },
+        rateSource: 'exchange-shop',
+        rateType: 'spot',
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      const state = useConverterStore.getState();
+      expect(state.providerPreference.manualProvider?.sourceKind).toBe('exchange-shop');
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(state.rateType).toBe('cash');
+    });
+
+    it('sanitize: providerPreference 與 rateSource 漂移時，以 providerPreference 為主重新推導 rateSource', () => {
+      // 模擬 storage 損毀：providerPreference 為 exchange-shop，但 rateSource 還停留在 bank
+      useConverterStore.setState({
+        providerPreference: {
+          mode: 'manual',
+          manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
+        },
+        rateSource: 'bank',
+        rateType: 'spot',
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      const state = useConverterStore.getState();
+      // 以 providerPreference 為 SSOT 重寫 rateSource 並套用 cash 不變式
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(state.rateType).toBe('cash');
+    });
+
+    it('migration: 舊 storage rateSource=exchange-shop 且無 providerPreference → 補上 manual moneybox', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          'ratewise-converter': JSON.stringify({
+            state: { fromCurrency: 'USD', toCurrency: 'JPY' },
+          }),
+          rateSource: 'exchange-shop',
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      const state = useConverterStore.getState();
+      expect(state.providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
+      });
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(state.rateType).toBe('cash');
+    });
+
+    it('migration: 舊 storage rateSource=bank → providerPreference 設為 manual bot', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          'ratewise-converter': JSON.stringify({
+            state: { fromCurrency: 'USD', toCurrency: 'JPY' },
+          }),
+          rateSource: 'bank',
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      const state = useConverterStore.getState();
+      expect(state.providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+      });
+    });
+
+    it('migration: 全新安裝（無 legacy keys）時，providerPreference 維持預設不變', () => {
+      localStorageMock.clear();
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      const state = useConverterStore.getState();
+      expect(state.providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+      });
+    });
+
+    it('migration: Phase 1 永遠不產出 mode="best"', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          rateSource: 'exchange-shop',
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      expect(useConverterStore.getState().providerPreference.mode).toBe('manual');
     });
   });
 });

@@ -23,6 +23,13 @@ import type {
   RateSource,
   RateType,
 } from '../features/ratewise/types';
+import type {
+  ProviderSelectionMode,
+  RateProviderPreference,
+  RateProviderRef,
+  RateSourceKind,
+} from '../features/ratewise/rateProviderTypes';
+import { fromLegacyRateSource } from '../features/ratewise/rateProviderTypes';
 import {
   CURRENCY_DEFINITIONS,
   DEFAULT_FAVORITES,
@@ -33,6 +40,20 @@ import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 const DEFAULT_RATE_TYPE: RateType = 'spot';
 const DEFAULT_RATE_SOURCE: RateSource = 'bank';
+
+/**
+ * Provider preference 預設值（Phase 1 固定為手動模式 + 台銀）。
+ *
+ * `mode='best'` 僅為未來多銀行推薦預留，不會在 Phase 1 暴露給使用者；
+ * 任何 migration / sanitize 路徑都不會自動產出 `mode='best'` 狀態。
+ */
+const DEFAULT_PROVIDER_PREFERENCE: RateProviderPreference = {
+  mode: 'manual',
+  manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+};
+
+const VALID_SELECTION_MODES: ProviderSelectionMode[] = ['manual', 'best'];
+const VALID_SOURCE_KINDS: RateSourceKind[] = ['bank', 'exchange-shop'];
 
 // ── 有效貨幣代碼集合（模組載入時計算一次）────────────────────────────────────
 const VALID_CODES = new Set(Object.keys(CURRENCY_DEFINITIONS));
@@ -68,7 +89,18 @@ interface ConverterState {
   mode: ConverterMode;
   rateMode: RateMode;
   rateType: RateType;
+  /**
+   * Legacy 來源欄位；保留作為相容層，由 `setProviderPreference` 持續同步。
+   * 新邏輯請讀寫 `providerPreference`，不要再用 `rateSource` 表達 provider 身分。
+   */
   rateSource: RateSource;
+  /**
+   * Phase 1 provider SSOT：使用者偏好的匯率來源 + 具體 provider。
+   *
+   * Phase 1 永遠為 `mode='manual'`；`best` 僅為多銀行推薦保留，不對 UI 暴露。
+   * 與 `rateSource` 永遠保持同步：`providerPreference.manualProvider.sourceKind === rateSource`。
+   */
+  providerPreference: RateProviderPreference;
   favorites: CurrencyCode[];
   history: ConversionRecord[];
 
@@ -79,8 +111,21 @@ interface ConverterState {
   setRateMode: (rateMode: RateMode) => void;
   setRateType: (rateType: RateType) => void;
   /**
-   * 切換匯率資料來源；切到 `exchange-shop` 時自動同步 `rateType = 'cash'`，
-   * 與單幣別/多幣別頁的「換錢所僅支援現金」UX 約束一致。
+   * 新主入口：設定 provider 偏好。
+   *
+   * 行為：
+   * - 同步把 `rateSource` 衍生為 `manualProvider.sourceKind`（Phase 1 `best` 模式
+   *   若沒有 manualProvider 則退回 `'bank'`，保證 legacy 欄位永遠有合法值）。
+   * - 若 resolved sourceKind 為 `'exchange-shop'`，強制 `rateType='cash'`（與
+   *   現有 SSOT 不變式一致）。
+   */
+  setProviderPreference: (next: RateProviderPreference) => void;
+  /**
+   * 切換匯率資料來源（相容層）；行為等同 `setProviderPreference({ mode:'manual',
+   * manualProvider: fromLegacyRateSource(rateSource) })`。
+   *
+   * 切到 `exchange-shop` 時自動同步 `rateType = 'cash'`，與單幣別/多幣別頁
+   * 「換錢所僅支援現金」UX 約束一致。
    */
   setRateSource: (rateSource: RateSource) => void;
   swapCurrencies: () => void;
@@ -105,12 +150,68 @@ interface ConverterState {
 
 type PersistentFields = Pick<
   ConverterState,
-  'fromCurrency' | 'toCurrency' | 'mode' | 'rateMode' | 'rateType' | 'rateSource' | 'favorites'
+  | 'fromCurrency'
+  | 'toCurrency'
+  | 'mode'
+  | 'rateMode'
+  | 'rateType'
+  | 'rateSource'
+  | 'providerPreference'
+  | 'favorites'
 >;
 
 const VALID_RATE_MODES: RateMode[] = ['auto', 'sell', 'mid'];
 const VALID_RATE_TYPES: RateType[] = ['spot', 'cash'];
 const VALID_RATE_SOURCES: RateSource[] = ['bank', 'exchange-shop'];
+
+/**
+ * 推導與 `providerPreference` 一致的 legacy `rateSource`。
+ *
+ * - `mode='manual'` 且有 `manualProvider`：取 `manualProvider.sourceKind`。
+ * - `mode='best'`（Phase 1 不會出現，但定義行為以保證 legacy 欄位永遠合法）：
+ *   退回 `'bank'`，避免 legacy 消費者拿到 undefined。
+ */
+function deriveRateSourceFromPreference(preference: RateProviderPreference): RateSource {
+  return preference.manualProvider?.sourceKind ?? 'bank';
+}
+
+/**
+ * 驗證並修復 providerPreference；回傳 sanitized 結果。
+ *
+ * 回傳的 preference 一定為合法值（不會出現未知 mode / sourceKind / 空 providerId）。
+ * 若 `manualProvider` 缺失但 mode 為 `manual`，補回預設 manualProvider。
+ */
+const isSelectionMode = (value: unknown): value is ProviderSelectionMode =>
+  typeof value === 'string' && (VALID_SELECTION_MODES as readonly string[]).includes(value);
+
+const isSourceKind = (value: unknown): value is RateSourceKind =>
+  typeof value === 'string' && (VALID_SOURCE_KINDS as readonly string[]).includes(value);
+
+function sanitizeProviderPreference(value: unknown): RateProviderPreference {
+  if (typeof value !== 'object' || value === null) {
+    return DEFAULT_PROVIDER_PREFERENCE;
+  }
+  const candidate = value as { mode?: unknown; manualProvider?: unknown };
+  const mode: ProviderSelectionMode = isSelectionMode(candidate.mode) ? candidate.mode : 'manual';
+
+  let manualProvider: RateProviderRef | undefined;
+  const manual = candidate.manualProvider;
+  if (manual !== null && typeof manual === 'object') {
+    const manualCandidate = manual as { sourceKind?: unknown; providerId?: unknown };
+    const sourceKind = manualCandidate.sourceKind;
+    const providerId = manualCandidate.providerId;
+    if (isSourceKind(sourceKind) && typeof providerId === 'string' && providerId.length > 0) {
+      manualProvider = { sourceKind, providerId };
+    }
+  }
+
+  // mode='manual' 必須有合法 manualProvider；若缺失則回退預設
+  if (mode === 'manual' && !manualProvider) {
+    return DEFAULT_PROVIDER_PREFERENCE;
+  }
+
+  return manualProvider ? { mode, manualProvider } : { mode };
+}
 
 /**
  * 驗證 hydrate 後的狀態欄位是否符合當前 schema 契約。
@@ -145,6 +246,25 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
     patch.rateSource = DEFAULT_RATE_SOURCE;
     dirty = true;
   }
+
+  // ── providerPreference 驗證 + 與 rateSource 互相同步 ────────────────────
+  // 1. sanitize providerPreference 本身（mode / manualProvider 結構）
+  // 2. 從 sanitized preference 重新推導 rateSource，確保兩者不漂移
+  const sanitizedPreference = sanitizeProviderPreference(state.providerPreference);
+  const preferenceChanged =
+    JSON.stringify(sanitizedPreference) !== JSON.stringify(state.providerPreference);
+  if (preferenceChanged) {
+    patch.providerPreference = sanitizedPreference;
+    dirty = true;
+  }
+  // 永遠以 sanitized preference 推導 rateSource，避免兩個欄位互相牴觸
+  const derivedRateSource = deriveRateSourceFromPreference(sanitizedPreference);
+  const currentRateSource = patch.rateSource ?? state.rateSource;
+  if (derivedRateSource !== currentRateSource) {
+    patch.rateSource = derivedRateSource;
+    dirty = true;
+  }
+
   const resolvedRateSource = patch.rateSource ?? state.rateSource;
   const resolvedRateType = patch.rateType ?? state.rateType;
   if (resolvedRateSource === 'exchange-shop' && resolvedRateType !== 'cash') {
@@ -172,7 +292,7 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
 
 // ── 遷移輔助函式 ─────────────────────────────────────────────────────────────
 
-function buildMigrationPatch(): Partial<PersistentFields> | null {
+function buildMigrationPatch(state: ConverterState): Partial<PersistentFields> | null {
   if (typeof window === 'undefined') return null;
 
   const patch: Partial<PersistentFields> = {};
@@ -190,6 +310,28 @@ function buildMigrationPatch(): Partial<PersistentFields> | null {
   }
   if (patch.rateSource === 'exchange-shop' && patch.rateType !== 'cash') {
     patch.rateType = 'cash';
+  }
+
+  // providerPreference 遷移（Phase 1 永遠 mode='manual'）
+  // 1. 若 legacy localStorage 提供了 rateSource（patch.rateSource 已寫入），
+  //    依該值同步寫入 manualProvider，確保兩個欄位一致。
+  // 2. 若 hydrate 後 store 內無合法 providerPreference（升級自 Task 4 之前的版本），
+  //    從目前 state.rateSource 推導補回。
+  // 3. 兩者皆有時不動，留給 sanitize 階段做最終一致性檢查。
+  const hasPersistedPreference =
+    typeof state.providerPreference === 'object' && state.providerPreference !== null;
+  if (patch.rateSource) {
+    // legacy localStorage 的 rateSource 是更新訊號，重新生成 manualProvider 保持兩欄位一致
+    patch.providerPreference = {
+      mode: 'manual',
+      manualProvider: fromLegacyRateSource(patch.rateSource),
+    };
+  } else if (!hasPersistedPreference) {
+    // 升級自舊版 store（沒有 providerPreference 欄位）：以目前 state.rateSource 推導
+    patch.providerPreference = {
+      mode: 'manual',
+      manualProvider: fromLegacyRateSource(state.rateSource),
+    };
   }
 
   // fromCurrency / toCurrency / mode / favorites：統一 key 已存在代表已完成遷移
@@ -242,6 +384,7 @@ export const useConverterStore = create<ConverterState>()(
       rateMode: 'auto' as RateMode,
       rateType: DEFAULT_RATE_TYPE,
       rateSource: DEFAULT_RATE_SOURCE,
+      providerPreference: DEFAULT_PROVIDER_PREFERENCE,
       favorites: [...DEFAULT_FAVORITES] as CurrencyCode[],
       history: [],
 
@@ -259,13 +402,27 @@ export const useConverterStore = create<ConverterState>()(
           rateType: state.rateSource === 'exchange-shop' ? 'cash' : rateType,
         })),
 
-      // 換錢所僅支援現金牌告，切到 exchange-shop 時把 rateType 一併鎖到 cash，
-      // 避免 single/multi 任一頁面忘了同步 cash 而再次漂移。
-      setRateSource: (rateSource) =>
-        set((state) => ({
-          rateSource,
-          rateType: rateSource === 'exchange-shop' ? 'cash' : state.rateType,
-        })),
+      // 新主入口：設定 provider 偏好，並同步 legacy `rateSource` 與 cash 不變式
+      setProviderPreference: (next) =>
+        set((state) => {
+          const sanitized = sanitizeProviderPreference(next);
+          const derivedRateSource = deriveRateSourceFromPreference(sanitized);
+          return {
+            providerPreference: sanitized,
+            rateSource: derivedRateSource,
+            rateType: derivedRateSource === 'exchange-shop' ? 'cash' : state.rateType,
+          };
+        }),
+
+      // 相容包裝：legacy `setRateSource` 一律走 setProviderPreference 流程，
+      // 確保 providerPreference / rateSource / rateType cash 不變式不會漂移。
+      setRateSource: (rateSource) => {
+        const ref = fromLegacyRateSource(rateSource);
+        useConverterStore.getState().setProviderPreference({
+          mode: 'manual',
+          manualProvider: ref,
+        });
+      },
 
       swapCurrencies: () =>
         set((state) => ({
@@ -297,7 +454,7 @@ export const useConverterStore = create<ConverterState>()(
       clearHistory: () => set({ history: [] }),
 
       __migrateFromLegacy: () => {
-        const patch = buildMigrationPatch();
+        const patch = buildMigrationPatch(get());
         if (patch) {
           set(patch);
           removeLegacyKeys();
@@ -318,6 +475,7 @@ export const useConverterStore = create<ConverterState>()(
         rateMode: state.rateMode,
         rateType: state.rateType,
         rateSource: state.rateSource,
+        providerPreference: state.providerPreference,
         favorites: state.favorites,
         history: state.history,
       }),
