@@ -1,9 +1,17 @@
 /**
- * 換錢所 provider registry SSOT
+ * 換錢所資料層 SSOT
  *
- * 集中管理非銀行牌告匯率來源（目前為 KRW / MoneyBox），包含資料端點、欄位解析、
- * UI 顯示名稱與 fallback 匯率。所有換錢所支援幣別必須先在此註冊，服務層再依
- * CurrencyCode 取得對應 provider，避免跨幣別誤用匯率資料。
+ * 集中管理非銀行牌告匯率來源的「資料端點、欄位解析、fallback 匯率」（目前為 KRW / MoneyBox）。
+ * 所有換錢所支援幣別必須先在此註冊，服務層再依 CurrencyCode 取得對應 provider，
+ * 避免跨幣別誤用匯率資料。
+ *
+ * 注意：
+ * - 自 2026-05-09 起，**provider metadata（label / shortLabel / supportedCurrencies / priority /
+ *   isDefault / supportedRateTypes）SSOT 改為 `rateProviders.ts`**。
+ *   本檔保留 `providerName` / `providerNameEn` / `source` / `sourceUrl` 作為資料層相容欄位
+ *   （仍被既有 hooks / UI badge / fallback 顯示使用），新邏輯請統一查 `RATE_PROVIDERS`。
+ * - `getSupportedExchangeShopCurrencies()` 為兩個 SSOT 之間的橋樑：`rateProviders.ts` 透過此函式
+ *   推導 `moneybox` 的 `supportedCurrencies`，避免幣別清單在兩處手動重複維護。
  */
 
 import type { CurrencyCode } from '../features/ratewise/types';

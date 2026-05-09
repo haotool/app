@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +2
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +3
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-09
+- ID：ratewise-rate-provider-registry-ssot-phase1
+- 原因：銀行與換錢所的 provider metadata（label / supportedRateTypes / supportedCurrencies / 預設旗標）分散在 `exchangeShopProviders.ts` 與各 hook / UI 文案中，未來新增第二家銀行 provider 將無單一查找入口，也無多銀行 UI 啟用條件。
+- 解法：新增 `apps/ratewise/src/config/rateProviders.ts` 作為 provider metadata SSOT，註冊 `bot`（銀行）與 `moneybox`（換錢所）並提供 `getRateProvider` / `getProvidersBySourceKind` / `getDefaultProvider` / `isProviderSupportedForCurrency` / `shouldEnableBankProviderChoice`；`moneybox.supportedCurrencies` 由換錢所資料層 `getSupportedExchangeShopCurrencies()` 推導以避免雙寫，並更新 `exchangeShopProviders.ts` 註解標示其職責收斂為資料層 SSOT。
 
 - 日期：2026-05-09
 - ID：ratewise-rate-provider-ssot-types-phase1
