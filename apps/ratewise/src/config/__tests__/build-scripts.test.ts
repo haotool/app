@@ -80,6 +80,11 @@ async function readMoneyBoxWorkflow() {
   return readFile(workflowPath, 'utf-8');
 }
 
+async function readMoneyBoxFetchScript() {
+  const scriptPath = path.resolve(__dirname, '../../../../../scripts/fetch-moneybox-rates.js');
+  return readFile(scriptPath, 'utf-8');
+}
+
 async function readLatestRatesWorkflow() {
   const workflowPath = path.resolve(
     __dirname,
@@ -573,6 +578,19 @@ describe('ratewise build scripts', () => {
     expect(workflowSource).toContain(
       'https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/${CURRENT_DATE}.json',
     );
+  });
+
+  it('should detect MoneyBox TWD buy/sell spread changes instead of comparing sell only', async () => {
+    const scriptSource = await readMoneyBoxFetchScript();
+
+    expect(scriptSource).toContain('const TWD_QUOTE_FIELDS = [');
+    expect(scriptSource).toContain("'buy'");
+    expect(scriptSource).toContain("'sell'");
+    expect(scriptSource).toContain("'base'");
+    expect(scriptSource).toContain("'spbuy'");
+    expect(scriptSource).toContain("'spsell'");
+    expect(scriptSource).not.toContain('oldData.rates?.TWD?.sell');
+    expect(scriptSource).not.toContain('newData.rates?.TWD?.sell');
   });
 
   it('CurrencyLandingPage should import AnswerCapsule and accept answerCapsule prop (AEO/GEO readiness)', async () => {

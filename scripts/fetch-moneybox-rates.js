@@ -19,6 +19,7 @@ const OUTPUT_FILE = join(OUTPUT_DIR, 'moneybox.json');
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 5000;
+const TWD_QUOTE_FIELDS = ['base', 'buy', 'sell', 'spbuy', 'spsell'];
 
 class AbortError extends Error {
   constructor(message, status) {
@@ -186,24 +187,26 @@ async function fetchMoneyBoxRates() {
   throw new Error('Failed to fetch MoneyBox rates after maximum retries');
 }
 
-/**
- * 檢查匯率是否有變化（比較 TWD sell 匯率）
- */
 function hasRateChanges(newData) {
   try {
     const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
 
-    const oldTWD = oldData.rates?.TWD?.sell;
-    const newTWD = newData.rates?.TWD?.sell;
+    const oldTWD = oldData.rates?.TWD;
+    const newTWD = newData.rates?.TWD;
+    const changedFields = TWD_QUOTE_FIELDS.filter((field) => oldTWD?.[field] !== newTWD?.[field]);
 
-    const hasChanges = oldTWD !== newTWD;
+    const hasChanges = changedFields.length > 0;
 
     if (hasChanges) {
-      console.log(`🔄 Rate change detected: TWD sell ${oldTWD} → ${newTWD} KRW/TWD`);
+      console.log(`🔄 Rate change detected: TWD ${changedFields.join(', ')}`);
+      for (const field of changedFields) {
+        console.log(`   ${field}: ${oldTWD?.[field]} → ${newTWD?.[field]} KRW/TWD`);
+      }
     } else {
       console.log('📊 Rates unchanged since last update');
       console.log(`   Last update: ${oldData.updateTime}`);
-      console.log(`   TWD sell: ${oldTWD} KRW/TWD`);
+      console.log(`   TWD buy: ${oldTWD?.buy} KRW/TWD`);
+      console.log(`   TWD sell: ${oldTWD?.sell} KRW/TWD`);
     }
 
     return hasChanges;

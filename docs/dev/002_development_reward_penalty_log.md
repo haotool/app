@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +19
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +20
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-moneybox-buy-change-detection
+- 原因：PR #378 Codex review 指出 MoneyBox 更新判斷只比較 TWD sell，但 KRW→TWD 會使用 buy；若只改 buy，latest 與每日 history 會漏更新。
+- 解法：MoneyBox fetch script 改以 TWD quote 欄位清單比較 base/buy/sell/spbuy/spsell，並補 build-scripts 守門測試避免回退成 sell-only。
 
 - 日期：2026-05-10
 - ID：pr378-history-reconvert-rate-mode-restore
