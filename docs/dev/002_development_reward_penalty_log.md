@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +17
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +18
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-moneybox-workflow-source-ref-sync
+- 原因：PR branch push 觸發 update-moneybox workflow 時，job 先 checkout data 分支後固定從 origin/main 取 fetch script，導致新版 workflow 搭配舊版 script 執行而缺少本次抓取快照。
+- 解法：data branch 工作區改從觸發本次 run 的 `GITHUB_REF_NAME` 取得 fetch script 與 public/rates 資源；schedule 在 main 時仍等同 main，PR branch 驗證則能使用同 commit 的 workflow/script。
 
 - 日期：2026-05-10
 - ID：pr378-moneybox-daily-history-current-fetch

@@ -49,9 +49,10 @@ jobs:
 
       - name: Ensure data branch is up to date with scripts
         run: |
-          git fetch origin main
-          git checkout origin/main -- scripts/fetch-moneybox-rates.js
-          git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates
+          SOURCE_REF="${GITHUB_REF_NAME:-main}"
+          git fetch origin "$SOURCE_REF"
+          git checkout FETCH_HEAD -- scripts/fetch-moneybox-rates.js
+          git checkout FETCH_HEAD -- public/rates/ 2>/dev/null || mkdir -p public/rates
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
