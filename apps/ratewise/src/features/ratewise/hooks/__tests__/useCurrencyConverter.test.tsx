@@ -360,6 +360,13 @@ describe('useCurrencyConverter', () => {
       isFallback: false,
     };
 
+    // Phase 1（Task 4+5）：實際匯率來源走 store providerPreference → resolveProviderPreference；
+    // 在 store setState 中同步 providerPreference 才能完整模擬使用者切換到換錢所的場景。
+    const exchangeShopPreference = {
+      mode: 'manual' as const,
+      manualProvider: { sourceKind: 'exchange-shop' as const, providerId: 'moneybox' },
+    };
+
     it('uses MoneyBox sell rate for TWD→KRW result amount', async () => {
       moneyBoxRateMock.rate = moneyBoxRate;
       useConverterStore.setState({
@@ -368,6 +375,8 @@ describe('useCurrencyConverter', () => {
         mode: 'single',
         favorites: ['KRW'],
         history: [],
+        providerPreference: exchangeShopPreference,
+        rateSource: 'exchange-shop',
       });
 
       const { result } = renderHook(() =>
@@ -393,6 +402,8 @@ describe('useCurrencyConverter', () => {
         mode: 'single',
         favorites: ['KRW'],
         history: [],
+        providerPreference: exchangeShopPreference,
+        rateSource: 'exchange-shop',
       });
 
       const { result } = renderHook(() =>
@@ -421,6 +432,8 @@ describe('useCurrencyConverter', () => {
         mode: 'single',
         favorites: ['KRW'],
         history: [],
+        providerPreference: exchangeShopPreference,
+        rateSource: 'exchange-shop',
       });
 
       const { result } = renderHook(() =>
@@ -449,6 +462,8 @@ describe('useCurrencyConverter', () => {
         mode: 'single',
         favorites: ['USD', 'KRW'],
         history: [],
+        providerPreference: exchangeShopPreference,
+        rateSource: 'exchange-shop',
       });
 
       const { result } = renderHook(() =>
@@ -461,6 +476,123 @@ describe('useCurrencyConverter', () => {
 
       expect(result.current.exchangeShopCurrency).toBeNull();
       expect(result.current.toAmount).toBe('1334746');
+    });
+  });
+
+  // ── Phase 1（Task 5）：provider SSOT 暴露面 ─────────────────────────────────
+  describe('provider SSOT 暴露面', () => {
+    it('銀行偏好 → resolvedProvider 指向 bot/bank/manual', () => {
+      useConverterStore.setState({
+        fromCurrency: 'USD',
+        toCurrency: 'TWD',
+        mode: 'single',
+        favorites: ['USD'],
+        history: [],
+        providerPreference: {
+          mode: 'manual',
+          manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+        },
+        rateSource: 'bank',
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, USD: 31.5 },
+          rateType: 'spot',
+        }),
+      );
+
+      expect(result.current.resolvedProvider).toEqual({
+        selectionMode: 'manual',
+        sourceKind: 'bank',
+        providerId: 'bot',
+        reason: 'manual',
+      });
+    });
+
+    it('換錢所偏好 + 支援的 pair → resolvedProvider 指向 moneybox', () => {
+      moneyBoxRateMock.rate = {
+        currency: 'KRW',
+        sell: 44.85,
+        buy: 45.1,
+        updateTime: '2026/05/07 16:33:55',
+        source: 'MoneyBox',
+        sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+        providerName: '明洞換匯所',
+        isFallback: false,
+      };
+      useConverterStore.setState({
+        fromCurrency: 'TWD',
+        toCurrency: 'KRW',
+        mode: 'single',
+        favorites: ['KRW'],
+        history: [],
+        providerPreference: {
+          mode: 'manual',
+          manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
+        },
+        rateSource: 'exchange-shop',
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, KRW: 0.0236 },
+          rateType: 'cash',
+          rateSource: 'exchange-shop',
+        }),
+      );
+
+      expect(result.current.resolvedProvider.providerId).toBe('moneybox');
+      expect(result.current.resolvedProvider.sourceKind).toBe('exchange-shop');
+    });
+
+    it('providerQuotes 同時包含 bot 與 moneybox；moneybox 在缺資料時 isAvailable=false', () => {
+      moneyBoxRateMock.rate = null;
+      useConverterStore.setState({
+        fromCurrency: 'USD',
+        toCurrency: 'TWD',
+        mode: 'single',
+        favorites: ['USD'],
+        history: [],
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, USD: 31.5 },
+          rateType: 'spot',
+        }),
+      );
+
+      const ids = result.current.providerQuotes.map((q) => q.provider.providerId);
+      expect(ids).toEqual(expect.arrayContaining(['bot', 'moneybox']));
+      const moneyboxQuote = result.current.providerQuotes.find(
+        (q) => q.provider.providerId === 'moneybox',
+      );
+      // USD/TWD 不在 moneybox supportedCurrencies 裡 → unavailable
+      expect(moneyboxQuote?.isAvailable).toBe(false);
+    });
+
+    it('rankedProviderQuotes 過濾掉 isAvailable=false 的 quote', () => {
+      moneyBoxRateMock.rate = null;
+      useConverterStore.setState({
+        fromCurrency: 'USD',
+        toCurrency: 'TWD',
+        mode: 'single',
+        favorites: ['USD'],
+        history: [],
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, USD: 31.5 },
+          rateType: 'spot',
+        }),
+      );
+
+      // Phase 1 在 USD/TWD 下，moneybox 不可用，rankedQuotes 只剩 bot
+      expect(
+        result.current.rankedProviderQuotes.every((q) => q.provider.providerId === 'bot'),
+      ).toBe(true);
     });
   });
 });

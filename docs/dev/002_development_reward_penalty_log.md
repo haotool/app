@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +5
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +6
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-09
+- ID：ratewise-rate-provider-calc-core-phase1
+- 原因：主匯率 / 多幣別實際換算仍以 `rateSource` 直接決定來源，元件層各自維護 exchange-shop 分支邏輯，無法銜接 Task 4 的 `providerPreference` SSOT，未來 best 模式 UI 接線時還得再一次切換決策來源。
+- 解法：在 `useCurrencyConverter` 內以 `resolveProviderPreference` 解析 `providerPreference` 為 `resolvedProvider`，把 `convertAmount` 的來源判斷收斂到 `resolvedProvider.sourceKind`，同時建立 `providerQuotes`（bot + moneybox）與 `rankedProviderQuotes` 暴露給未來 UI；保留 `rateSource` prop 作為相容欄位但不再參與決策。
 
 - 日期：2026-05-09
 - ID：ratewise-rate-provider-store-migration-phase1
