@@ -78,8 +78,23 @@ interface UseCurrencyConverterOptions {
   rateSource?: RateSource;
 }
 
+export function resolveEffectiveRateSourceForConversion({
+  mode,
+  requestedRateSource,
+  resolvedSourceKind,
+  exchangeShopRate,
+}: {
+  mode: 'single' | 'multi';
+  requestedRateSource?: RateSource;
+  resolvedSourceKind: RateSource;
+  exchangeShopRate: ExchangeShopRate | null;
+}): RateSource {
+  if (mode !== 'multi') return resolvedSourceKind;
+  return requestedRateSource === 'exchange-shop' && exchangeShopRate ? 'exchange-shop' : 'bank';
+}
+
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
-  const { exchangeRates, details, rateType = 'spot' } = options;
+  const { exchangeRates, details, rateType = 'spot', rateSource } = options;
   const { t } = useTranslation();
   const { showToast } = useToast();
 
@@ -199,15 +214,20 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     }
   }, []);
 
-  const effectiveSourceKind = resolvedProvider.sourceKind;
   const convertAmount = useCallback(
     (amount: number, from: CurrencyCode, to: CurrencyCode): number => {
+      const pairExchangeShopRate =
+        mode === 'multi'
+          ? getExchangeShopRateForPair(from, to, multiExchangeShopRatesByCurrency)
+          : selectedExchangeShopRate;
+      const effectiveSourceKind = resolveEffectiveRateSourceForConversion({
+        mode,
+        requestedRateSource: rateSource,
+        resolvedSourceKind: resolvedProvider.sourceKind,
+        exchangeShopRate: pairExchangeShopRate,
+      });
       const exchangeShopRate =
-        effectiveSourceKind === 'exchange-shop'
-          ? mode === 'multi'
-            ? getExchangeShopRateForPair(from, to, multiExchangeShopRatesByCurrency)
-            : selectedExchangeShopRate
-          : null;
+        effectiveSourceKind === 'exchange-shop' ? pairExchangeShopRate : null;
       const unitRate = getUnitExchangeRate(from, to, details, rateType, rateMode, exchangeRates, {
         rateSource: effectiveSourceKind,
         exchangeShopRate,
@@ -221,7 +241,8 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       rateMode,
       exchangeRates,
       mode,
-      effectiveSourceKind,
+      rateSource,
+      resolvedProvider.sourceKind,
       multiExchangeShopRatesByCurrency,
       selectedExchangeShopRate,
     ],

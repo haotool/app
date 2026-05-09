@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +10
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +11
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-multi-provider-pair-source-convergence
+- 原因：PR #378 Codex review 指出多幣別換算仍沿用單幣別 pair 的 provider fallback，可能造成顯示匯率與換算金額來源不一致。
+- 解法：將多幣別 provider 來源改為逐 pair 解析，只有使用者選擇換錢所且該 pair 有換錢所匯率時才用 exchange-shop，其他列回銀行，並補純函式回歸測試。
 
 - 日期：2026-05-10
 - ID：pr378-provider-ssot-codex-review-convergence

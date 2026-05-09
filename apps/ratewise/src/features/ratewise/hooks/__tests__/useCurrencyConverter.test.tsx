@@ -8,7 +8,10 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { useCurrencyConverter } from '../useCurrencyConverter';
+import {
+  resolveEffectiveRateSourceForConversion,
+  useCurrencyConverter,
+} from '../useCurrencyConverter';
 import { STORAGE_KEYS } from '../../storage-keys';
 import { useConverterStore } from '../../../../stores/converterStore';
 import type { ExchangeShopRate } from '../../../../services/moneyboxRateService';
@@ -513,6 +516,26 @@ describe('useCurrencyConverter', () => {
 
       expect(result.current.exchangeShopCurrency).toBeNull();
       expect(result.current.toAmount).toBe('1334746');
+    });
+
+    it('multi mode uses exchange-shop per supported row even when single pair fallback is bank', () => {
+      expect(
+        resolveEffectiveRateSourceForConversion({
+          mode: 'multi',
+          requestedRateSource: 'exchange-shop',
+          resolvedSourceKind: 'bank',
+          exchangeShopRate: moneyBoxRate,
+        }),
+      ).toBe('exchange-shop');
+
+      expect(
+        resolveEffectiveRateSourceForConversion({
+          mode: 'multi',
+          requestedRateSource: 'exchange-shop',
+          resolvedSourceKind: 'bank',
+          exchangeShopRate: null,
+        }),
+      ).toBe('bank');
     });
   });
 

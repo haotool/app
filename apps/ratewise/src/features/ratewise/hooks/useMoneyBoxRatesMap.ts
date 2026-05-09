@@ -6,6 +6,8 @@ import {
 } from '../../../services/moneyboxRateService';
 import type { CurrencyCode } from '../types';
 
+const EMPTY_RATES: ExchangeShopRatesByCurrency = {};
+
 interface MoneyBoxRatesMapState {
   rates: ExchangeShopRatesByCurrency;
   isLoading: boolean;
@@ -14,7 +16,7 @@ interface MoneyBoxRatesMapState {
 }
 
 const EMPTY_STATE: MoneyBoxRatesMapState = {
-  rates: {},
+  rates: EMPTY_RATES,
   isLoading: false,
   error: null,
   currenciesKey: '',
@@ -53,7 +55,7 @@ export function useMoneyBoxRatesMap(activeCurrencies: CurrencyCode[]): {
       previous.currenciesKey === currenciesKey
         ? previous
         : {
-            rates: {},
+            rates: EMPTY_RATES,
             isLoading: true,
             error: null,
             currenciesKey,
@@ -86,7 +88,7 @@ export function useMoneyBoxRatesMap(activeCurrencies: CurrencyCode[]): {
       .catch((error: unknown) => {
         if (cancelled) return;
         setState({
-          rates: {},
+          rates: EMPTY_RATES,
           isLoading: false,
           error: error instanceof Error ? error : new Error(String(error)),
           currenciesKey,
@@ -100,7 +102,7 @@ export function useMoneyBoxRatesMap(activeCurrencies: CurrencyCode[]): {
 
   if (supportedCurrencies.length === 0) {
     return {
-      rates: {},
+      rates: EMPTY_RATES,
       isLoading: false,
       error: null,
     };
@@ -108,7 +110,7 @@ export function useMoneyBoxRatesMap(activeCurrencies: CurrencyCode[]): {
 
   if (state.currenciesKey !== currenciesKey) {
     return {
-      rates: {},
+      rates: EMPTY_RATES,
       isLoading: true,
       error: null,
     };

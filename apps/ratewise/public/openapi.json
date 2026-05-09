@@ -141,12 +141,12 @@
     "1.2.0": {
       "date": "2026-05-09",
       "summary": "新增 MoneyBox 換錢所 current/history 端點與 provider metadata 合約。",
-      "app-version": "2.22.20"
+      "app-version": "2.22.21"
     },
     "1.1.0": {
       "date": "2026-05-08",
       "summary": "新增 App 匯率模式欄位對照與幣對 rateModes 規格，並對齊資料端時間欄位格式。",
-      "app-version": "2.22.20"
+      "app-version": "2.22.21"
     },
     "1.0.0": {
       "date": "2026-03-21",
