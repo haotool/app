@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +15
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +16
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-history-reconvert-provider-restore
+- 原因：PR #378 Codex review 指出 schema v2 轉換歷史已保存 rateType/sourceKind/provider，但重新載入歷史項目時只恢復幣別與金額，會用目前 UI 模式重新計算。
+- 解法：讓 reconvertFromHistory 透過 converterStore 既有 SSOT actions 還原 rateType、rateSource 與 providerPreference，並補 exchange-shop 歷史還原回歸測試。
 
 - 日期：2026-05-10
 - ID：pr378-lighthouse-lcp-noise-tolerance

@@ -73,6 +73,13 @@ describe('useCurrencyConverter', () => {
       fromCurrency: 'TWD',
       toCurrency: 'JPY',
       mode: 'single',
+      rateMode: 'auto',
+      rateType: 'spot',
+      rateSource: 'bank',
+      providerPreference: {
+        mode: 'manual',
+        manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+      },
       favorites: ['JPY', 'KRW', 'VND', 'THB', 'HKD', 'USD'],
       history: [],
     });
@@ -385,6 +392,49 @@ describe('useCurrencyConverter', () => {
       expect(result.current.fromCurrency).toBe('JPY');
       expect(result.current.toCurrency).toBe('TWD');
       expect(result.current.fromAmount).toBe('10000');
+    });
+
+    it('should restore rate type and provider preference from schema v2 history entry', () => {
+      useConverterStore.setState({
+        rateType: 'spot',
+        rateSource: 'bank',
+        providerPreference: {
+          mode: 'manual',
+          manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+        },
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { KRW: 0.0222, TWD: 1 },
+          rateType: useConverterStore.getState().rateType,
+          rateSource: useConverterStore.getState().rateSource,
+        }),
+      );
+
+      act(() => {
+        result.current.reconvertFromHistory({
+          from: 'KRW',
+          to: 'TWD',
+          amount: '100000',
+          result: '2217',
+          time: '今天',
+          timestamp: Date.now(),
+          rateType: 'cash',
+          sourceKind: 'exchange-shop',
+          providerId: 'moneybox',
+          providerSelectionMode: 'manual',
+          schemaVersion: 2,
+        });
+      });
+
+      const state = useConverterStore.getState();
+      expect(state.rateType).toBe('cash');
+      expect(state.rateSource).toBe('exchange-shop');
+      expect(state.providerPreference).toEqual({
+        mode: 'manual',
+        manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
+      });
     });
   });
 
