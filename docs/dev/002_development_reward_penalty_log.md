@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +20
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +21
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-reusable-convergence-skills
+- 原因：本次 PR 多次重複執行 Codex review 監控、SSOT drift 稽核、TDD 原子修復與回覆 resolve 流程，若只留在對話記憶中會難以重用。
+- 解法：新增 `codex-review-convergence` 與 `ssot-drift-clean-code-audit` project-local skills，將腳本命令、判斷準則、原子修復與完成 gate 收斂成可重用流程。
 
 - 日期：2026-05-10
 - ID：pr378-moneybox-buy-change-detection
