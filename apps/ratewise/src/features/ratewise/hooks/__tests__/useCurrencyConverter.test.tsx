@@ -195,7 +195,8 @@ describe('useCurrencyConverter', () => {
       expect(firstEntry?.to).toBe('TWD');
     });
 
-    it('每筆寫入應帶 schemaVersion=2 與 provider/sourceKind/rateType 欄位', () => {
+    it('每筆寫入應帶 schemaVersion=2 與 provider/sourceKind/rateType/rateMode 欄位', () => {
+      useConverterStore.setState({ rateMode: 'sell' });
       const mockRates = { USD: 31.5, TWD: 1 };
       const { result } = renderHook(() =>
         useCurrencyConverter({
@@ -221,6 +222,7 @@ describe('useCurrencyConverter', () => {
         sourceKind: 'bank',
         providerId: 'bot',
         providerSelectionMode: 'manual',
+        rateMode: 'sell',
         schemaVersion: 2,
       });
     });
@@ -396,6 +398,7 @@ describe('useCurrencyConverter', () => {
 
     it('should restore rate type and provider preference from schema v2 history entry', () => {
       useConverterStore.setState({
+        rateMode: 'mid',
         rateType: 'spot',
         rateSource: 'bank',
         providerPreference: {
@@ -421,6 +424,7 @@ describe('useCurrencyConverter', () => {
           time: '今天',
           timestamp: Date.now(),
           rateType: 'cash',
+          rateMode: 'sell',
           sourceKind: 'exchange-shop',
           providerId: 'moneybox',
           providerSelectionMode: 'manual',
@@ -429,6 +433,7 @@ describe('useCurrencyConverter', () => {
       });
 
       const state = useConverterStore.getState();
+      expect(state.rateMode).toBe('sell');
       expect(state.rateType).toBe('cash');
       expect(state.rateSource).toBe('exchange-shop');
       expect(state.providerPreference).toEqual({

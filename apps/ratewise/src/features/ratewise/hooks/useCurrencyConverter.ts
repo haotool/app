@@ -110,6 +110,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     setFromCurrency,
     setToCurrency,
     setMode,
+    setRateMode,
     setRateType,
     setRateSource,
     setProviderPreference,
@@ -466,6 +467,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       sourceKind: resolvedProvider.sourceKind,
       providerId: resolvedProvider.providerId,
       providerSelectionMode: resolvedProvider.selectionMode,
+      rateMode,
       schemaVersion: 2,
     };
 
@@ -478,6 +480,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     toAmount,
     rateType,
     resolvedProvider,
+    rateMode,
     storeAddToHistory,
     showToast,
     t,
@@ -496,6 +499,9 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       setFromAmount(entry.amount);
       setLastEdited('from');
       if (entry.schemaVersion === 2 && entry.rateType) {
+        if (entry.rateMode) {
+          setRateMode(entry.rateMode);
+        }
         if (entry.sourceKind && entry.providerId) {
           setProviderPreference({
             mode: entry.providerSelectionMode ?? 'manual',
@@ -510,7 +516,14 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
         setRateType(entry.rateType);
       }
     },
-    [setFromCurrency, setProviderPreference, setRateSource, setRateType, setToCurrency],
+    [
+      setFromCurrency,
+      setProviderPreference,
+      setRateMode,
+      setRateSource,
+      setRateType,
+      setToCurrency,
+    ],
   );
 
   const sortedCurrencies = useMemo((): CurrencyCode[] => {

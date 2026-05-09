@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +18
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +19
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-history-reconvert-rate-mode-restore
+- 原因：PR #378 Codex review 指出 v2 轉換歷史已保存匯率分類與來源，但未保存 rateMode，使用者改成 sell/mid 後重放歷史會用目前設定重新計算。
+- 解法：讓 v2 歷史 entry 保存 rateMode，reconvertFromHistory 透過 converterStore action 還原 rateMode，並補回歸測試覆蓋寫入與重放兩條路徑。
 
 - 日期：2026-05-10
 - ID：pr378-moneybox-workflow-source-ref-sync

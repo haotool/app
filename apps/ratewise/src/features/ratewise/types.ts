@@ -25,5 +25,6 @@ export interface ConversionHistoryEntry {
   sourceKind?: 'bank' | 'exchange-shop';
   providerId?: string;
   providerSelectionMode?: 'best' | 'manual';
+  rateMode?: RateMode;
   schemaVersion?: 2;
 }
