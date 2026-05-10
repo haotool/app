@@ -36,6 +36,8 @@ jobs:
       MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json
       MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json
       MONEYBOX_HISTORY_DIR: public/rates/providers/moneybox/history
+      MONEYBOX_RETIRED_LATEST_FILE: public/rates/moneybox.json
+      MONEYBOX_RETIRED_HISTORY_DIR: public/rates/moneybox-history
       MONEYBOX_CDN_DATA_BASE: https://cdn.jsdelivr.net/gh/haotool/app@data
       MONEYBOX_PURGE_DATA_BASE: https://purge.jsdelivr.net/gh/haotool/app@data
 
@@ -107,14 +109,32 @@ jobs:
           echo "current_date=${CURRENT_DATE}" >> $GITHUB_OUTPUT
           echo "history_file=${MONEYBOX_HISTORY_FILE}" >> $GITHUB_OUTPUT
 
+      - name: Remove retired MoneyBox alias files
+        id: remove-retired-aliases
+        if: steps.fetch-rates.outcome == 'success'
+        run: |
+          removed=false
+          for PATH_TO_REMOVE in "$MONEYBOX_RETIRED_LATEST_FILE" "$MONEYBOX_RETIRED_HISTORY_DIR"; do
+            if git ls-files --error-unmatch "$PATH_TO_REMOVE" >/dev/null 2>&1 || [[ -e "$PATH_TO_REMOVE" ]]; then
+              git rm -r --ignore-unmatch "$PATH_TO_REMOVE"
+              removed=true
+            fi
+          done
+          echo "changed=${removed}" >> $GITHUB_OUTPUT
+
       - name: Check for changes in MoneyBox provider files
         id: git-check
         if: steps.fetch-rates.outcome == 'success'
+        env:
+          RETIRED_ALIASES_CHANGED: ${{ steps.remove-retired-aliases.outputs.changed }}
         run: |
           if [[ -n "$(git status --short --untracked-files=all -- "$MONEYBOX_LATEST_FILE")" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
           if [[ -n "$(git status --short --untracked-files=all -- "$MONEYBOX_HISTORY_DIR/")" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$RETIRED_ALIASES_CHANGED" == "true" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 

@@ -94,6 +94,7 @@ const RateWise = () => {
     addToHistory,
     moneyBoxRate,
     exchangeShopCurrency,
+    effectiveRateSource,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource });
 
   const [searchParams] = useSearchParams();
@@ -231,7 +232,7 @@ const RateWise = () => {
                 exchangeRates={exchangeRates}
                 details={details}
                 rateType={rateType}
-                rateSource={rateSource}
+                rateSource={effectiveRateSource}
                 moneyBoxRate={moneyBoxRate}
                 exchangeShopCurrency={exchangeShopCurrency}
                 rateMode={rateMode}
@@ -268,7 +269,7 @@ const RateWise = () => {
               className={`${rateWiseLayoutTokens.info.base} ${rateWiseLayoutTokens.info.visibility}`}
             >
               <AnimatePresence mode="wait">
-                {rateSource === 'exchange-shop' &&
+                {effectiveRateSource === 'exchange-shop' &&
                 moneyBoxRate?.currency === exchangeShopCurrency ? (
                   <ExchangeShopBadge key="exchange-shop-badge" rate={moneyBoxRate} />
                 ) : (

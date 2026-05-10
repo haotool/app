@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +29
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +30
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-codex-review-final-ssot-fixes
+- 原因：PR #378 最新 Codex review 指出 data branch 可能殘留退休 MoneyBox alias，且 best-provider mode 下 UI rateSource 可能與 resolved provider 不一致。
+- 解法：MoneyBox workflow 新增一次性移除退休 alias 檔案流程；hook 暴露 effectiveRateSource，讓單幣別卡片與資料來源 badge 使用同一 resolved provider，並補 guardrail 測試。
 
 - 日期：2026-05-10
 - ID：pr378-production-lighthouse-lcp-noise-tolerance

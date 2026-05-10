@@ -192,6 +192,17 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     [numericAmount, fromCurrency, toCurrency, rateType, providerQuotes],
   );
 
+  const effectiveRateSource = useMemo<RateSource>(
+    () =>
+      resolveEffectiveRateSourceForConversion({
+        mode: 'single',
+        requestedRateSource: rateSource,
+        resolvedSourceKind: resolvedProvider.sourceKind,
+        exchangeShopRate: selectedExchangeShopRate,
+      }),
+    [rateSource, resolvedProvider.sourceKind, selectedExchangeShopRate],
+  );
+
   const multiExchangeShopCurrencies = useMemo((): CurrencyCode[] => {
     if (mode !== 'multi') return [];
     if (baseCurrency === 'TWD') return getSupportedExchangeShopCurrencies();
@@ -549,6 +560,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     moneyBoxRate: selectedExchangeShopRate,
     exchangeShopCurrency,
     exchangeShopRatesByCurrency: multiExchangeShopRatesByCurrency,
+    effectiveRateSource,
     resolvedProvider,
     providerQuotes,
     rankedProviderQuotes,

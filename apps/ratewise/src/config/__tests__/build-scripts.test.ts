@@ -538,7 +538,7 @@ describe('ratewise build scripts', () => {
       'MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json',
     );
     expect(workflowSource).toContain('public/rates/providers/moneybox/latest.json');
-    expect(workflowSource).not.toContain('public/rates/moneybox.json');
+    expect(workflowSource).not.toContain('MONEYBOX_LATEST_FILE: public/rates/moneybox.json');
     expect(workflowSource).not.toContain('git diff --quiet public/rates/moneybox.json');
     expect(workflowSource).toContain(
       'git status --short --untracked-files=all -- "$MONEYBOX_LATEST_FILE"',
@@ -595,8 +595,11 @@ describe('ratewise build scripts', () => {
     expect(workflowSource).not.toContain(
       'cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_LATEST_FILE"',
     );
-    expect(workflowSource).not.toContain('public/rates/moneybox.json');
-    expect(workflowSource).not.toContain('public/rates/moneybox-history');
+    expect(workflowSource).toContain('MONEYBOX_RETIRED_LATEST_FILE: public/rates/moneybox.json');
+    expect(workflowSource).toContain('MONEYBOX_RETIRED_HISTORY_DIR: public/rates/moneybox-history');
+    expect(workflowSource).toContain('git rm -r --ignore-unmatch "$PATH_TO_REMOVE"');
+    expect(workflowSource).toContain('RETIRED_ALIASES_CHANGED');
+    expect(workflowSource).not.toContain('MONEYBOX_LATEST_FILE: public/rates/moneybox.json');
     expect(workflowSource).toContain(
       'git status --short --untracked-files=all -- "$MONEYBOX_HISTORY_DIR/"',
     );

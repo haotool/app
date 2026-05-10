@@ -692,6 +692,39 @@ describe('useCurrencyConverter', () => {
       expect(result.current.resolvedProvider.sourceKind).toBe('exchange-shop');
     });
 
+    it('best-provider 選到 moneybox 時，UI 使用同一個 effective rate source', () => {
+      moneyBoxRateMock.rate = {
+        currency: 'KRW',
+        sell: 44.85,
+        buy: 45.1,
+        updateTime: '2026/05/07 16:33:55',
+        source: 'MoneyBox',
+        sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+        providerName: '明洞換匯所',
+        isFallback: false,
+      };
+      useConverterStore.setState({
+        fromCurrency: 'TWD',
+        toCurrency: 'KRW',
+        mode: 'single',
+        favorites: ['KRW'],
+        history: [],
+        providerPreference: { mode: 'best' },
+        rateSource: 'bank',
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, KRW: 0.0236 },
+          rateType: 'cash',
+          rateSource: 'bank',
+        }),
+      );
+
+      expect(result.current.resolvedProvider.providerId).toBe('moneybox');
+      expect(result.current.effectiveRateSource).toBe('exchange-shop');
+    });
+
     it('providerQuotes 同時包含 bot 與 moneybox；moneybox 在缺資料時 isAvailable=false', () => {
       moneyBoxRateMock.rate = null;
       useConverterStore.setState({
