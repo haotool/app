@@ -574,11 +574,12 @@ describe('ratewise build scripts', () => {
   it('should persist MoneyBox daily history snapshots alongside latest rates', async () => {
     const workflowSource = await readMoneyBoxWorkflow();
 
-    expect(workflowSource).toContain('SOURCE_REF="${GITHUB_REF_NAME:-main}"');
-    expect(workflowSource).toContain('git fetch origin "$SOURCE_REF"');
-    expect(workflowSource).toContain('git checkout FETCH_HEAD -- scripts/fetch-moneybox-rates.js');
+    expect(workflowSource).toContain('branches:\n      - main');
+    expect(workflowSource).toContain('git fetch origin main');
+    expect(workflowSource).toContain('git checkout origin/main -- scripts/fetch-moneybox-rates.js');
+    expect(workflowSource).not.toContain('SOURCE_REF="${GITHUB_REF_NAME:-main}"');
     expect(workflowSource).not.toContain(
-      'git checkout origin/main -- scripts/fetch-moneybox-rates.js',
+      'git checkout FETCH_HEAD -- scripts/fetch-moneybox-rates.js',
     );
     expect(workflowSource).toContain('MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json');
     expect(workflowSource).toContain(

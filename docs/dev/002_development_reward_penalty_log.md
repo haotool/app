@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +25
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +26
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-moneybox-workflow-main-source-guard
+- 原因：PR #378 Codex review 指出 MoneyBox data workflow 具備 `contents: write`，但 push 事件未限制 main 且會取分支腳本，可能讓未審查分支寫入正式 data branch。
+- 解法：限制 MoneyBox workflow 的 push 觸發只允許 main，並固定從 `origin/main` 取 fetch script 與 public/rates 資源；PR 分支改由 build-scripts guardrail 測試驗證。
 
 - 日期：2026-05-10
 - ID：pr378-moneybox-full-rates-change-detection

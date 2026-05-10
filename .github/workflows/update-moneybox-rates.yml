@@ -16,8 +16,10 @@ on:
     # 與台銀 latest workflow 錯開 2 分鐘，降低 GitHub schedule 高峰與同 repo concurrency 衝突。
     - cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'
   workflow_dispatch:
-  # 腳本變更時觸發測試
+  # 資料更新 workflow 具有 data branch 寫入權限，push 事件只允許已審查的 main。
   push:
+    branches:
+      - main
     paths:
       - 'scripts/fetch-moneybox-rates.js'
       - '.github/workflows/update-moneybox-rates.yml'
@@ -54,10 +56,9 @@ jobs:
 
       - name: Ensure data branch is up to date with scripts
         run: |
-          SOURCE_REF="${GITHUB_REF_NAME:-main}"
-          git fetch origin "$SOURCE_REF"
-          git checkout FETCH_HEAD -- scripts/fetch-moneybox-rates.js
-          git checkout FETCH_HEAD -- public/rates/ 2>/dev/null || mkdir -p public/rates
+          git fetch origin main
+          git checkout origin/main -- scripts/fetch-moneybox-rates.js
+          git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
