@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +23
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +24
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-moneybox-seo-url-ssot
+- 原因：SEO 匯差範例腳本仍硬寫舊 MoneyBox `moneybox.json` CDN path，與 canonical provider API plan 漂移。
+- 解法：讓 SEO 腳本改用 `RATES_API.moneyboxCdn`，補 build-scripts guardrail，並同步更新被 canonical plan supersede 的 superpower 計畫狀態。
 
 - 日期：2026-05-10
 - ID：pr378-moneybox-no-change-latest-cache

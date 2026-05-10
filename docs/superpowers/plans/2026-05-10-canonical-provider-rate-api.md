@@ -1,5 +1,9 @@
 # Canonical Provider Rate API Implementation Plan
 
+> **Status (2026-05-10)：Completed.** Provider canonical paths 已落地到 runtime metadata、
+> data workflow、public API metadata、OpenAPI、Open Data 文件與 SEO 匯率範例產生器。最終 guardrails
+> 會檢查 `RATES_API.moneyboxCdn`，並拒絕舊 MoneyBox alias paths 回流。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 將尚未正式上線的換錢所匯率 API 改為 provider-centric canonical path，避免 `moneybox.json` 特例成為長期技術債。
@@ -20,7 +24,7 @@
 - Test: `apps/ratewise/src/config/__tests__/rateProviders.test.ts`
 - Test: `apps/ratewise/src/config/__tests__/exchangeShopProviders.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Add expectations that MoneyBox provider paths and CDN URLs use:
 
@@ -29,7 +33,7 @@ providers/moneybox/latest.json
 providers/moneybox/history/{YYYY-MM-DD}.json
 ```
 
-- [ ] **Step 2: Run test to verify RED**
+- [x] **Step 2: Run test to verify RED**
 
 Run:
 
@@ -39,11 +43,11 @@ pnpm --filter @app/ratewise vitest run src/config/__tests__/rateProviders.test.t
 
 Expected: fail because current paths still contain `moneybox.json` and `moneybox-history`.
 
-- [ ] **Step 3: Implement provider path SSOT**
+- [x] **Step 3: Implement provider path SSOT**
 
 Update MoneyBox `apiPaths` to canonical provider paths and derive exchange shop CDN URLs from the same convention.
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run the same Vitest command and expect pass.
 
@@ -54,7 +58,7 @@ Run the same Vitest command and expect pass.
 - Modify: `apps/ratewise/src/services/moneyboxRateService.ts`
 - Test: `apps/ratewise/src/services/__tests__/moneyboxRateService.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Update `fetches MoneyBox history through provider metadata endpoints` to expect:
 
@@ -62,7 +66,7 @@ Update `fetches MoneyBox history through provider metadata endpoints` to expect:
 https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/history/2026-05-10.json
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run:
 
@@ -72,11 +76,11 @@ pnpm --filter @app/ratewise vitest run src/services/__tests__/moneyboxRateServic
 
 Expected: fail on old `moneybox-history` URL.
 
-- [ ] **Step 3: Implement runtime path update**
+- [x] **Step 3: Implement runtime path update**
 
 No service-specific hardcode should remain; service should keep consuming provider metadata endpoints.
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run the same test and expect pass.
 
@@ -88,7 +92,7 @@ Run the same test and expect pass.
 - Modify: `.github/workflows/update-moneybox-rates.yml`
 - Test: `apps/ratewise/src/config/__tests__/build-scripts.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Update workflow guardrails to require:
 
@@ -104,7 +108,7 @@ public/rates/moneybox.json
 public/rates/moneybox-history/
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run:
 
@@ -114,11 +118,11 @@ pnpm --filter @app/ratewise vitest run src/config/__tests__/build-scripts.test.t
 
 Expected: fail because workflow still writes old MoneyBox paths.
 
-- [ ] **Step 3: Implement workflow update**
+- [x] **Step 3: Implement workflow update**
 
 Write latest and daily history under canonical provider path. Purge only canonical URLs.
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run the same test and expect pass.
 
@@ -135,11 +139,11 @@ Run the same test and expect pass.
 - Test: `apps/ratewise/src/pages/OpenData.test.tsx`
 - Test: `apps/ratewise/src/seo-best-practices.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Assert public metadata and OpenAPI expose `/public/rates/providers/{providerId}/latest.json` and `/public/rates/providers/{providerId}/history/{date}.json`, and do not expose old MoneyBox aliases.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run targeted tests:
 
@@ -147,11 +151,11 @@ Run targeted tests:
 pnpm --filter @app/ratewise vitest run src/config/__tests__/build-scripts.test.ts src/pages/OpenData.test.tsx src/seo-best-practices.test.ts
 ```
 
-- [ ] **Step 3: Implement generator and page updates**
+- [x] **Step 3: Implement generator and page updates**
 
 Keep台銀 legacy endpoints visible. Make provider endpoints canonical and provider-derived.
 
-- [ ] **Step 4: Regenerate public artifacts**
+- [x] **Step 4: Regenerate public artifacts**
 
 Run:
 
@@ -159,7 +163,7 @@ Run:
 pnpm --filter @app/ratewise prebuild
 ```
 
-- [ ] **Step 5: Run GREEN**
+- [x] **Step 5: Run GREEN**
 
 Run targeted tests again.
 
@@ -169,7 +173,7 @@ Run targeted tests again.
 
 - Modify: `docs/dev/002_development_reward_penalty_log.md`
 
-- [ ] **Step 1: Run focused checks**
+- [x] **Step 1: Run focused checks**
 
 ```bash
 node scripts/verify-ssot-sync.mjs
@@ -178,16 +182,16 @@ pnpm format
 git diff --check
 ```
 
-- [ ] **Step 2: Run PR review audit**
+- [x] **Step 2: Run PR review audit**
 
 ```bash
 node scripts/audit-codex-review-threads.mjs --filter unresolved --pr-limit 20 --json
 ```
 
-- [ ] **Step 3: Update 002**
+- [x] **Step 3: Update 002**
 
 Add one neutral/reward entry describing canonical provider API convergence and update total score.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Use a commitlint-compliant Traditional Chinese message.

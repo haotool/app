@@ -767,6 +767,7 @@ describe('ratewise build scripts', () => {
     const openApiGenerator = await readOpenApiGenerator();
     const openDataPage = await readOpenDataPageSource();
     const publicMetadataSource = await readRateProviderPublicMetadataSource();
+    const seoRateExamplesScript = await readSeoRateExamplesScript();
 
     for (const source of [apiJsonGenerator, openApiGenerator, openDataPage]) {
       expect(source).toContain('rateProviderPublicMetadata');
@@ -802,6 +803,10 @@ describe('ratewise build scripts', () => {
     expect(openDataPage).not.toContain('/public/rates/moneybox.json');
     expect(openDataPage).not.toContain("replace('/haotool/app/data'");
     expect(openDataPage).not.toContain('new URL(EXCHANGE_SHOP_PROVIDER');
+
+    expect(seoRateExamplesScript).toContain('RATES_API.moneyboxCdn');
+    expect(seoRateExamplesScript).not.toContain('/public/rates/moneybox.json');
+    expect(seoRateExamplesScript).not.toContain('/public/rates/moneybox-history');
 
     const rankingSource = await readFile(
       path.resolve(__dirname, '../../features/ratewise/rateProviderRanking.ts'),

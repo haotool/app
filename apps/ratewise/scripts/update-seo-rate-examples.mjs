@@ -14,24 +14,25 @@
  *   - 手動：node apps/ratewise/scripts/update-seo-rate-examples.mjs
  *
  * SSOT：
- *   - 台灣銀行匯率：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
+ *   - 台灣銀行匯率：RATES_API.latestCdn
  *   - 市場中間價：https://open.er-api.com/v6/latest/TWD
- *   - 明洞換匯所匯率：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json
+ *   - 明洞換匯所匯率：RATES_API.moneyboxCdn
  *   - 輸出：apps/ratewise/src/config/generated/seo-rate-examples.ts
  */
 
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { RATES_API } from '../src/config/api-endpoints.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const OUTPUT = resolve(ROOT, 'src/config/generated/seo-rate-examples.ts');
 const OPTIONAL_MODE = process.env.SEO_RATE_EXAMPLES_OPTIONAL === '1';
 
-const CDN_URL = 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json';
+const CDN_URL = RATES_API.latestCdn;
 /** MoneyBox CDN URL（每5分鐘由 GitHub Actions 更新，見 update-moneybox-rates.yml） */
-const MONEYBOX_CDN_URL = 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json';
+const MONEYBOX_CDN_URL = RATES_API.moneyboxCdn;
 /**
  * 免費市場中間匯率 API（以 TWD 為基準，rates[code] = 1 TWD 可換多少 code）。
  * 與 Google（Morningstar）、XE、Wise、Apple Calculator（Yahoo Finance）使用相同的
@@ -112,7 +113,7 @@ function formatDateInTaipei(date = new Date()) {
 /**
  * 從 CDN 取得 MoneyBox 最新 TWD↔KRW 雙向匯率。
  * 資料由 GitHub Actions update-moneybox-rates.yml 每5分鐘更新至 data 分支。
- * CDN URL: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json
+ * CDN URL 由 RATES_API.moneyboxCdn 提供。
  *
  * sell：換匯所「賣出 KRW」給旅客（旅客持 TWD 換 KRW）的到手匯率。
  * buy：換匯所「買入 KRW」（旅客持 KRW 換 TWD）的匯率，即每 N KRW = 1 TWD。
