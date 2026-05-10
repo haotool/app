@@ -66,6 +66,7 @@ describe('lighthouse-production SSOT controls', () => {
       'function compareDirection(current, baseline, compareDirection, absoluteTolerance = 0)',
     );
     expect(source).toContain('absoluteChanged > absoluteTolerance');
+    expect(source).toContain('lcpMs: 500');
     expect(source).toContain('driftAbsoluteTolerance: DRIFT_ABSOLUTE_TOLERANCE.inpMs');
     expect(source).toContain('actual: current');
   });

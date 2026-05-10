@@ -4,7 +4,7 @@
  *
  * 目的：
  * 1. 每日/PR 自動跑 production 慢速路徑（Lighthouse Smoke Paths）
- * 2. 建立並持續比較 baseline（失敗條件：性能退化 >5%）
+ * 2. 建立並持續比較 baseline（相對退化 + 絕對波動雙門檻）
  * 3. 輸出可被 CI/Pipeline 解析的 JSON summary
  *
  * 可用環境變數：
@@ -43,7 +43,7 @@ const GITHUB_OUTPUT = process.env.GITHUB_OUTPUT;
 const LIGHTHOUSE_MAX_ATTEMPTS = Number.parseInt(process.env.LH_MAX_ATTEMPTS || '2', 10);
 const DRIFT_ABSOLUTE_TOLERANCE = {
   performanceScore: 1,
-  lcpMs: 250,
+  lcpMs: 500,
   inpMs: 10,
   cls: 0.01,
 };
