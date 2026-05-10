@@ -1,6 +1,7 @@
 import type { CurrencyCode, RateType } from '../features/ratewise/types';
 import type { RateProviderId, RateSourceKind } from '../features/ratewise/rateProviderTypes';
 import { getSupportedExchangeShopCurrencies } from './exchangeShopProviders.ts';
+import { PROVIDER_RATES_PATH } from './api-endpoints.ts';
 
 export interface RateProviderConfig {
   id: RateProviderId;
@@ -40,8 +41,11 @@ export const RATE_PROVIDERS = {
     supportedRateTypes: ['cash'],
     supportedCurrencies: getSupportedExchangeShopCurrencies(),
     apiPaths: {
-      latest: 'moneybox.json',
-      history: 'moneybox-history/{YYYY-MM-DD}.json',
+      latest: PROVIDER_RATES_PATH.latest('moneybox').replace('/public/rates/', ''),
+      history: PROVIDER_RATES_PATH.history('moneybox', '{YYYY-MM-DD}').replace(
+        '/public/rates/',
+        '',
+      ),
     },
     priority: 10,
     isDefault: true,

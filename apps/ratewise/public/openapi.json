@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "HaoRate 匯率 API",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "臺灣銀行牌告匯率靜態 JSON API，每 5 分鐘由 GitHub Actions 自動同步。\n\n**匯率類型說明：**\n- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）\n- `cash_sell`（現金賣出）：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）\n- `spot_buy`（即期買入）：電匯/帳戶轉入匯率（你匯款回台灣）\n- `spot_sell`（即期賣出）：電匯/帳戶轉出匯率（你從台灣匯款出去）\n\n**重要提示：** 賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；\n買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價。\n\n**App 匯率模式對應：**\n- `auto`：來源外幣用 `{rateType}.buy`，目標外幣用 `{rateType}.sell`；TWD 視為 1。\n- `sell`：來源與目標皆用 `{rateType}.sell`。\n- `mid`：來源與目標皆用 `({rateType}.buy + {rateType}.sell) / 2`。\n\n匯率僅供參考，實際交易請以金融機構公告為準。",
     "contact": {
       "name": "haotool",
@@ -108,8 +108,8 @@
           "supportedRateTypes": [
             "cash"
           ],
-          "currentEndpoint": "/public/rates/moneybox.json",
-          "historyEndpoint": "/public/rates/moneybox-history/{date}.json"
+          "currentEndpoint": "/public/rates/providers/moneybox/latest.json",
+          "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json"
         }
       ]
     },
@@ -165,16 +165,29 @@
     }
   ],
   "paths": {
-    "/public/rates/moneybox.json": {
+    "/public/rates/providers/{providerId}/latest.json": {
       "get": {
-        "summary": "取得 MoneyBox 最新換錢所匯率",
-        "description": "取得 MoneyBox 最新換錢所匯率資料。 目前 App 只在 KRW 相關換算啟用 MoneyBox，且換錢所來源固定視為現金匯率。 CDN 端點支援 ETag 條件式請求（If-None-Match）。",
-        "operationId": "getMoneyBoxRates",
+        "summary": "取得指定 provider 最新換錢所匯率",
+        "description": "取得指定 provider 的最新換錢所匯率資料。 目前 App 只在 KRW 相關換算啟用 MoneyBox，且換錢所來源固定視為現金匯率。 CDN 端點支援 ETag 條件式請求（If-None-Match）。",
+        "operationId": "getExchangeShopProviderRates",
         "tags": [
           "匯率資料",
           "匯率來源"
         ],
         "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "description": "匯率來源 providerId。目前換錢所 provider 為 moneybox。",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "moneybox"
+              ],
+              "example": "moneybox"
+            }
+          },
           {
             "name": "If-None-Match",
             "in": "header",
@@ -188,7 +201,7 @@
         ],
         "responses": {
           "200": {
-            "description": "成功取得 MoneyBox 最新換錢所匯率",
+            "description": "成功取得指定 provider 最新換錢所匯率",
             "headers": {
               "ETag": {
                 "description": "資源版本標識符，用於後續 If-None-Match 條件式請求（可節省約 5 KB／次）",
@@ -239,16 +252,29 @@
         }
       }
     },
-    "/public/rates/moneybox-history/{date}.json": {
+    "/public/rates/providers/{providerId}/history/{date}.json": {
       "get": {
-        "summary": "取得 MoneyBox 指定日期換錢所歷史匯率",
-        "description": "取得指定日期的 MoneyBox 換錢所歷史匯率快照。 資料路徑與台銀 history 分離，避免銀行與換錢所歷史資料語意混用。",
-        "operationId": "getMoneyBoxHistoryRates",
+        "summary": "取得指定 provider 指定日期換錢所歷史匯率",
+        "description": "取得指定 provider 與指定日期的換錢所歷史匯率快照。 資料路徑與台銀 history 分離，避免銀行與換錢所歷史資料語意混用。",
+        "operationId": "getExchangeShopProviderHistoryRates",
         "tags": [
           "匯率資料",
           "匯率來源"
         ],
         "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "description": "匯率來源 providerId。目前換錢所 provider 為 moneybox。",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "moneybox"
+              ],
+              "example": "moneybox"
+            }
+          },
           {
             "name": "date",
             "in": "path",
@@ -273,7 +299,7 @@
         ],
         "responses": {
           "200": {
-            "description": "成功取得 MoneyBox 歷史換錢所匯率",
+            "description": "成功取得指定 provider 歷史換錢所匯率",
             "headers": {
               "ETag": {
                 "description": "資源版本標識符，用於後續 If-None-Match 條件式請求（可節省約 5 KB／次）",
@@ -982,8 +1008,8 @@
         "supportedRateTypes": [
           "cash"
         ],
-        "currentEndpoint": "/public/rates/moneybox.json",
-        "historyEndpoint": "/public/rates/moneybox-history/{date}.json"
+        "currentEndpoint": "/public/rates/providers/moneybox/latest.json",
+        "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json"
       }
     ]
   },

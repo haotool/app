@@ -1,4 +1,5 @@
 import type { CurrencyCode } from '../features/ratewise/types';
+import { CDN_DATA_BASE, PROVIDER_RATES_PATH, RAW_DATA_BASE } from './api-endpoints.ts';
 
 export interface ExchangeShopConfig {
   providerName: string;
@@ -18,9 +19,8 @@ export const EXCHANGE_SHOP_PROVIDERS: Readonly<Partial<Record<CurrencyCode, Exch
     KRW: {
       providerName: '明洞換匯所',
       providerNameEn: 'Myeongdong Exchange',
-      cdnUrl: 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json',
-      cdnUrlFallback:
-        'https://raw.githubusercontent.com/haotool/app/data/public/rates/moneybox.json',
+      cdnUrl: `${CDN_DATA_BASE}${PROVIDER_RATES_PATH.latest('moneybox')}`,
+      cdnUrlFallback: `${RAW_DATA_BASE}${PROVIDER_RATES_PATH.latest('moneybox')}`,
       source: 'MoneyBox',
       sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
       getSellRate: (raw: unknown): number | null => {

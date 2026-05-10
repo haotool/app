@@ -53,6 +53,15 @@ describe('RATE_PROVIDERS registry', () => {
     expect(Array.isArray(moneybox.supportedCurrencies)).toBe(true);
     expect(moneybox.supportedCurrencies).toEqual(getSupportedExchangeShopCurrencies());
   });
+
+  it('moneybox 使用 canonical provider path，不保留未上線的舊版 alias', () => {
+    const moneybox = RATE_PROVIDERS.moneybox;
+
+    expect(moneybox.apiPaths.latest).toBe('providers/moneybox/latest.json');
+    expect(moneybox.apiPaths.history).toBe('providers/moneybox/history/{YYYY-MM-DD}.json');
+    expect(moneybox.apiPaths.latest).not.toBe('moneybox.json');
+    expect(moneybox.apiPaths.history).not.toBe('moneybox-history/{YYYY-MM-DD}.json');
+  });
 });
 
 describe('getRateProvider', () => {

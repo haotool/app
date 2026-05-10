@@ -13,7 +13,9 @@ describe('EXCHANGE_SHOP_PROVIDERS registry', () => {
   it('KRW provider has required fields', () => {
     const p = EXCHANGE_SHOP_PROVIDERS.KRW!;
     expect(p.providerName).toBe('明洞換匯所');
-    expect(p.cdnUrl).toContain('moneybox.json');
+    expect(p.cdnUrl).toContain('/public/rates/providers/moneybox/latest.json');
+    expect(p.cdnUrlFallback).toContain('/public/rates/providers/moneybox/latest.json');
+    expect(p.cdnUrl).not.toContain('/public/rates/moneybox.json');
     expect(p.fallbackSell).toBeGreaterThan(0);
     expect(p.fallbackBuy).toBeGreaterThan(0);
     expect(typeof p.getSellRate).toBe('function');

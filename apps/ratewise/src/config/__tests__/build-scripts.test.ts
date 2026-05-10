@@ -515,13 +515,17 @@ describe('ratewise build scripts', () => {
     expect(pairAmountSeoHook).not.toContain('今日可換多少');
   });
 
-  it('should detect newly created moneybox.json files in the 5-minute workflow instead of relying on git diff for tracked files only', async () => {
+  it('should detect newly created MoneyBox provider files in the 5-minute workflow instead of relying on git diff for tracked files only', async () => {
     const workflowSource = await readMoneyBoxWorkflow();
 
-    expect(workflowSource).toContain('public/rates/moneybox.json');
+    expect(workflowSource).toContain(
+      'MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json',
+    );
+    expect(workflowSource).toContain('public/rates/providers/moneybox/latest.json');
+    expect(workflowSource).not.toContain('public/rates/moneybox.json');
     expect(workflowSource).not.toContain('git diff --quiet public/rates/moneybox.json');
     expect(workflowSource).toContain(
-      'git status --short --untracked-files=all -- public/rates/moneybox.json',
+      'git status --short --untracked-files=all -- "$MONEYBOX_LATEST_FILE"',
     );
   });
 
@@ -546,7 +550,9 @@ describe('ratewise build scripts', () => {
     expect(latestWorkflow).toContain('git rebase --abort 2>/dev/null || true');
     expect(latestWorkflow).toContain('git checkout origin/data -- public/rates/latest.json');
     expect(moneyBoxWorkflow).toContain('git rebase --abort 2>/dev/null || true');
-    expect(moneyBoxWorkflow).toContain('git checkout origin/data -- public/rates/moneybox.json');
+    expect(moneyBoxWorkflow).toContain(
+      'git checkout origin/data -- "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR"',
+    );
   });
 
   it('should persist MoneyBox daily history snapshots alongside latest rates', async () => {
@@ -559,24 +565,28 @@ describe('ratewise build scripts', () => {
       'git checkout origin/main -- scripts/fetch-moneybox-rates.js',
     );
     expect(workflowSource).toContain('MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json');
-    expect(workflowSource).toContain('MONEYBOX_HISTORY_DIR="public/rates/moneybox-history"');
-    expect(workflowSource).toContain('CURRENT_FETCH_FILE=".moneybox-current-fetch.json"');
+    expect(workflowSource).toContain(
+      'MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json',
+    );
+    expect(workflowSource).toContain(
+      'MONEYBOX_HISTORY_DIR: public/rates/providers/moneybox/history',
+    );
     expect(workflowSource).toContain(
       'MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"',
     );
-    expect(workflowSource).toContain('cp "$CURRENT_FETCH_FILE" "$MONEYBOX_HISTORY_FILE"');
-    expect(workflowSource).not.toContain('cp public/rates/moneybox.json "$MONEYBOX_HISTORY_FILE"');
+    expect(workflowSource).toContain('cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_HISTORY_FILE"');
+    expect(workflowSource).toContain('cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_LATEST_FILE"');
+    expect(workflowSource).not.toContain('public/rates/moneybox.json');
+    expect(workflowSource).not.toContain('public/rates/moneybox-history');
     expect(workflowSource).toContain(
-      'git status --short --untracked-files=all -- public/rates/moneybox-history/',
+      'git status --short --untracked-files=all -- "$MONEYBOX_HISTORY_DIR/"',
+    );
+    expect(workflowSource).toContain('git add "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR/"');
+    expect(workflowSource).toContain(
+      'git checkout origin/data -- "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR"',
     );
     expect(workflowSource).toContain(
-      'git add public/rates/moneybox.json public/rates/moneybox-history/',
-    );
-    expect(workflowSource).toContain(
-      'git checkout origin/data -- public/rates/moneybox.json public/rates/moneybox-history',
-    );
-    expect(workflowSource).toContain(
-      'https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/${CURRENT_DATE}.json',
+      'HISTORY_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"',
     );
   });
 
@@ -773,14 +783,21 @@ describe('ratewise build scripts', () => {
     expect(openApiGenerator).toContain(
       'ExchangeShopRatesResponse: exchangeShopRatesResponseSchema',
     );
-    expect(openApiGenerator).toContain('[MONEYBOX_LATEST_PATH]');
-    expect(openApiGenerator).toContain('[MONEYBOX_HISTORY_PATH]');
+    expect(openApiGenerator).toContain('[EXCHANGE_SHOP_LATEST_PATH]');
+    expect(openApiGenerator).toContain('[EXCHANGE_SHOP_HISTORY_PATH]');
     expect(openApiGenerator).toContain("'x-rate-providers'");
+    expect(openApiGenerator).toContain('/public/rates/providers/{providerId}/latest.json');
+    expect(openApiGenerator).toContain('/public/rates/providers/{providerId}/history/{date}.json');
+    expect(openApiGenerator).not.toContain('/public/rates/moneybox.json');
+    expect(openApiGenerator).not.toContain('/public/rates/moneybox-history/{date}.json');
 
     expect(openDataPage).toContain('MoneyBox (明洞換匯所聯盟)');
     expect(publicMetadataSource).toContain('provider.apiPaths.history');
     expect(openDataPage).toContain('sourceKind + providerId');
     expect(openDataPage).toContain('bank provider 超過一家');
+    expect(openDataPage).toContain("PROVIDER_RATES_PATH.latest('{providerId}')");
+    expect(openDataPage).toContain("PROVIDER_RATES_PATH.history('{providerId}', '{YYYY-MM-DD}')");
+    expect(openDataPage).not.toContain('/public/rates/moneybox.json');
     expect(openDataPage).not.toContain("replace('/haotool/app/data'");
     expect(openDataPage).not.toContain('new URL(EXCHANGE_SHOP_PROVIDER');
 
@@ -800,7 +817,7 @@ describe('ratewise build scripts', () => {
     expect(typeof fixture.updateTime).toBe('string');
     expect(fixture.details).not.toHaveProperty('TWD');
 
-    expect(openApiGenerator).toContain("const API_VERSION = '1.2.0'");
+    expect(openApiGenerator).toContain("const API_VERSION = '1.3.0'");
     expect(openApiGenerator).toContain("timestamp: {\n      type: 'string'");
     expect(openApiGenerator).not.toContain("description: 'Unix 時間戳（毫秒）'");
     expect(openApiGenerator).not.toContain(

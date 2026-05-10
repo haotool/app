@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +21
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +22
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-canonical-provider-rate-api
+- 原因：MoneyBox 尚未正式上線時若保留 `moneybox.json` / `moneybox-history` 特例，未來新增多 provider 會形成公開契約技術債。
+- 解法：將 MoneyBox latest/history 改為 provider canonical path，由 `PROVIDER_RATES_PATH` 與 provider metadata 驅動 workflow、runtime、OpenAPI、API metadata 與 OpenData 文件。
 
 - 日期：2026-05-10
 - ID：pr378-reusable-convergence-skills

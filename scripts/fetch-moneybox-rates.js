@@ -14,7 +14,7 @@ const __dirname = dirname(__filename);
 // 設定檔案路徑
 const REPO_ROOT = join(__dirname, '..');
 const OUTPUT_DIR = join(REPO_ROOT, 'public', 'rates');
-const OUTPUT_FILE = join(OUTPUT_DIR, 'moneybox.json');
+const OUTPUT_FILE = join(OUTPUT_DIR, 'providers', 'moneybox', 'latest.json');
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
@@ -245,7 +245,7 @@ async function main() {
     console.log('');
 
     // 確保目錄存在
-    mkdirSync(OUTPUT_DIR, { recursive: true });
+    mkdirSync(dirname(OUTPUT_FILE), { recursive: true });
 
     // 寫入檔案
     writeFileSync(OUTPUT_FILE, JSON.stringify(ratesData, null, 2), 'utf8');

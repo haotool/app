@@ -7,7 +7,12 @@ import { AnswerCapsule } from '../components/AnswerCapsule';
 import { MailtoLink } from '../components/MailtoLink';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
-import { CDN_DATA_BASE, RATES_API, RAW_DATA_BASE } from '../config/api-endpoints';
+import {
+  CDN_DATA_BASE,
+  PROVIDER_RATES_PATH,
+  RATES_API,
+  RAW_DATA_BASE,
+} from '../config/api-endpoints';
 import { buildPublicRateProviderMetadata } from '../config/rateProviderPublicMetadata';
 import { SITE_CONFIG } from '../config/seo-paths';
 import rateModeStrategies from '../config/rate-mode-strategies.json';
@@ -26,7 +31,7 @@ const DATA_SOURCES = [
     label: '換錢所來源',
     name: 'MoneyBox (明洞換匯所聯盟)',
     url: 'https://moneybox-exchange.com/zh-CHT/exchange',
-    note: '目前用於 KRW 換錢所現金匯率，獨立保存 current 與 moneybox-history 快照',
+    note: '目前用於 KRW 換錢所現金匯率，獨立保存 provider latest 與 history 快照',
   },
   {
     label: '同步機制',
@@ -215,6 +220,8 @@ const RATE_MODE_STRATEGY_ROWS = Object.entries(rateModeStrategies).map(([mode, s
 }));
 
 const BANK_PROVIDER_ACTIVATION_NOTE = 'bank provider 超過一家';
+const PROVIDER_LATEST_TEMPLATE = PROVIDER_RATES_PATH.latest('{providerId}');
+const PROVIDER_HISTORY_TEMPLATE = PROVIDER_RATES_PATH.history('{providerId}', '{YYYY-MM-DD}');
 
 const SUPPORTED_CURRENCIES = Object.entries(CURRENCY_DEFINITIONS).map(([code, def]) => ({
   code,
@@ -243,7 +250,7 @@ const PROVIDER_API_ENDPOINTS = EXCHANGE_SHOP_PROVIDER_ENDPOINTS
   ? [
       {
         method: 'GET',
-        path: EXCHANGE_SHOP_PROVIDER_PATHS?.currentEndpoint ?? '/public/rates/moneybox.json',
+        path: EXCHANGE_SHOP_PROVIDER_PATHS?.currentEndpoint ?? PROVIDER_LATEST_TEMPLATE,
         cdnUrl: EXCHANGE_SHOP_PROVIDER_ENDPOINTS.cdnCurrentEndpoint ?? RATES_API.moneyboxCdn,
         rawUrl: EXCHANGE_SHOP_PROVIDER_ENDPOINTS.currentEndpoint,
         description: `${EXCHANGE_SHOP_PROVIDER_ENDPOINTS.shortName} 最新換錢所匯率`,
@@ -252,9 +259,7 @@ const PROVIDER_API_ENDPOINTS = EXCHANGE_SHOP_PROVIDER_ENDPOINTS
       },
       {
         method: 'GET',
-        path:
-          EXCHANGE_SHOP_PROVIDER_PATHS?.historyEndpoint ??
-          '/public/rates/moneybox-history/{YYYY-MM-DD}.json',
+        path: EXCHANGE_SHOP_PROVIDER_PATHS?.historyEndpoint ?? PROVIDER_HISTORY_TEMPLATE,
         cdnUrl:
           EXCHANGE_SHOP_PROVIDER_ENDPOINTS.cdnHistoryEndpoint ??
           RATES_API.moneyboxHistoryCdnExample,
@@ -860,7 +865,9 @@ const OpenData = () => {
               provider，因此銀行選單與最佳匯率推薦保持關閉；未來 {
                 BANK_PROVIDER_ACTIVATION_NOTE
               }{' '}
-              時，才啟用銀行推薦清單，且主匯率只顯示使用者指定或系統推薦的單一 provider。
+              時，才啟用銀行推薦清單，且主匯率只顯示使用者指定或系統推薦的單一 provider。 新增
+              provider 時使用 canonical path：{PROVIDER_LATEST_TEMPLATE} 與{' '}
+              {PROVIDER_HISTORY_TEMPLATE}。
             </div>
 
             {/* 支援幣別 */}

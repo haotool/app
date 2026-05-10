@@ -204,7 +204,7 @@ describe('fetchExchangeShopRate', () => {
       }),
     ]);
     expect(fetch).toHaveBeenCalledWith(
-      'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/2026-05-10.json',
+      'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/history/2026-05-10.json',
       expect.any(Object),
     );
   });

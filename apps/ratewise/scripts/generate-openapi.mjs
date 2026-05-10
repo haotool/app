@@ -11,7 +11,7 @@ const ROOT = resolve(__dirname, '..');
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 const APP_VERSION = pkg.version;
 
-const API_VERSION = '1.2.0';
+const API_VERSION = '1.3.0';
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
@@ -52,9 +52,23 @@ const publicProviderMetadata = buildPublicRateProviderMetadata({
 const exchangeShopProvider = publicProviderMetadata.providers.find(
   (provider) => provider.sourceKind === 'exchange-shop',
 );
-const MONEYBOX_LATEST_PATH = exchangeShopProvider?.currentEndpoint ?? '/public/rates/moneybox.json';
-const MONEYBOX_HISTORY_PATH =
-  exchangeShopProvider?.historyEndpoint ?? '/public/rates/moneybox-history/{date}.json';
+const EXCHANGE_SHOP_PROVIDER_IDS = publicProviderMetadata.providers
+  .filter((provider) => provider.sourceKind === 'exchange-shop')
+  .map((provider) => provider.providerId);
+const EXCHANGE_SHOP_LATEST_PATH = '/public/rates/providers/{providerId}/latest.json';
+const EXCHANGE_SHOP_HISTORY_PATH = '/public/rates/providers/{providerId}/history/{date}.json';
+
+const providerIdPathParameter = {
+  name: 'providerId',
+  in: 'path',
+  required: true,
+  description: '匯率來源 providerId。目前換錢所 provider 為 moneybox。',
+  schema: {
+    type: 'string',
+    enum: EXCHANGE_SHOP_PROVIDER_IDS,
+    example: exchangeShopProvider?.providerId ?? 'moneybox',
+  },
+};
 
 const cdnResponseHeaders = {
   ETag: {
@@ -381,17 +395,18 @@ const openApiSpec = {
     },
   ],
   paths: {
-    [MONEYBOX_LATEST_PATH]: {
+    [EXCHANGE_SHOP_LATEST_PATH]: {
       get: {
-        summary: '取得 MoneyBox 最新換錢所匯率',
+        summary: '取得指定 provider 最新換錢所匯率',
         description: [
-          '取得 MoneyBox 最新換錢所匯率資料。',
+          '取得指定 provider 的最新換錢所匯率資料。',
           '目前 App 只在 KRW 相關換算啟用 MoneyBox，且換錢所來源固定視為現金匯率。',
           'CDN 端點支援 ETag 條件式請求（If-None-Match）。',
         ].join(' '),
-        operationId: 'getMoneyBoxRates',
+        operationId: 'getExchangeShopProviderRates',
         tags: ['匯率資料', '匯率來源'],
         parameters: [
+          providerIdPathParameter,
           {
             name: 'If-None-Match',
             in: 'header',
@@ -402,7 +417,7 @@ const openApiSpec = {
         ],
         responses: {
           200: {
-            description: '成功取得 MoneyBox 最新換錢所匯率',
+            description: '成功取得指定 provider 最新換錢所匯率',
             headers: cdnResponseHeaders,
             content: {
               'application/json': {
@@ -415,16 +430,17 @@ const openApiSpec = {
         },
       },
     },
-    [MONEYBOX_HISTORY_PATH]: {
+    [EXCHANGE_SHOP_HISTORY_PATH]: {
       get: {
-        summary: '取得 MoneyBox 指定日期換錢所歷史匯率',
+        summary: '取得指定 provider 指定日期換錢所歷史匯率',
         description: [
-          '取得指定日期的 MoneyBox 換錢所歷史匯率快照。',
+          '取得指定 provider 與指定日期的換錢所歷史匯率快照。',
           '資料路徑與台銀 history 分離，避免銀行與換錢所歷史資料語意混用。',
         ].join(' '),
-        operationId: 'getMoneyBoxHistoryRates',
+        operationId: 'getExchangeShopProviderHistoryRates',
         tags: ['匯率資料', '匯率來源'],
         parameters: [
+          providerIdPathParameter,
           {
             name: 'date',
             in: 'path',
@@ -446,7 +462,7 @@ const openApiSpec = {
         ],
         responses: {
           200: {
-            description: '成功取得 MoneyBox 歷史換錢所匯率',
+            description: '成功取得指定 provider 歷史換錢所匯率',
             headers: cdnResponseHeaders,
             content: {
               'application/json': {

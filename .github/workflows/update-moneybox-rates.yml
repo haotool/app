@@ -1,6 +1,6 @@
 # 明洞換匯所（MoneyBox）匯率更新（每 5 分鐘同步）
 #
-# 職責：定期更新 moneybox.json（TWD→KRW 及全貨幣匯率）
+# 職責：定期更新 providers/moneybox/latest.json（TWD→KRW 及全貨幣匯率）
 # 容錯：外部 API 故障時優雅降級，指數退避重試（最多 3 次）
 # 成本：開源專案 GitHub Actions 免費
 
@@ -31,6 +31,11 @@ jobs:
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+      MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json
+      MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json
+      MONEYBOX_HISTORY_DIR: public/rates/providers/moneybox/history
+      MONEYBOX_CDN_DATA_BASE: https://cdn.jsdelivr.net/gh/haotool/app@data
+      MONEYBOX_PURGE_DATA_BASE: https://purge.jsdelivr.net/gh/haotool/app@data
 
     steps:
       - name: Checkout data branch
@@ -77,8 +82,6 @@ jobs:
       - name: Fetch MoneyBox exchange rates
         id: fetch-rates
         continue-on-error: true
-        env:
-          MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json
         run: |
           echo "🔄 Fetching latest exchange rates from MoneyBox (明洞換匯所)..."
           node scripts/fetch-moneybox-rates.js
@@ -88,16 +91,15 @@ jobs:
         if: steps.fetch-rates.outcome == 'success'
         run: |
           CURRENT_DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)
-          CURRENT_FETCH_FILE=".moneybox-current-fetch.json"
-          MONEYBOX_HISTORY_DIR="public/rates/moneybox-history"
           MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
           mkdir -p "$MONEYBOX_HISTORY_DIR"
-          if [[ ! -f "$CURRENT_FETCH_FILE" ]]; then
-            echo "❌ Current MoneyBox fetch snapshot missing: ${CURRENT_FETCH_FILE}"
+          if [[ ! -f "$MONEYBOX_FETCH_OUTPUT_FILE" ]]; then
+            echo "❌ Current MoneyBox fetch snapshot missing: ${MONEYBOX_FETCH_OUTPUT_FILE}"
             exit 1
           fi
-          if [[ ! -f "$MONEYBOX_HISTORY_FILE" ]] || [[ -n "$(git status --short --untracked-files=all -- public/rates/moneybox.json)" ]]; then
-            cp "$CURRENT_FETCH_FILE" "$MONEYBOX_HISTORY_FILE"
+          cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_LATEST_FILE"
+          if [[ ! -f "$MONEYBOX_HISTORY_FILE" ]] || [[ -n "$(git status --short --untracked-files=all -- "$MONEYBOX_LATEST_FILE")" ]]; then
+            cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_HISTORY_FILE"
             echo "✅ MoneyBox history snapshot refreshed: ${MONEYBOX_HISTORY_FILE}"
           else
             echo "ℹ️ MoneyBox history snapshot already exists for ${CURRENT_DATE}; keeping existing daily snapshot"
@@ -105,14 +107,14 @@ jobs:
           echo "current_date=${CURRENT_DATE}" >> $GITHUB_OUTPUT
           echo "history_file=${MONEYBOX_HISTORY_FILE}" >> $GITHUB_OUTPUT
 
-      - name: Check for changes in moneybox.json
+      - name: Check for changes in MoneyBox provider files
         id: git-check
         if: steps.fetch-rates.outcome == 'success'
         run: |
-          if [[ -n "$(git status --short --untracked-files=all -- public/rates/moneybox.json)" ]]; then
+          if [[ -n "$(git status --short --untracked-files=all -- "$MONEYBOX_LATEST_FILE")" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
-          if [[ -n "$(git status --short --untracked-files=all -- public/rates/moneybox-history/)" ]]; then
+          if [[ -n "$(git status --short --untracked-files=all -- "$MONEYBOX_HISTORY_DIR/")" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
@@ -121,12 +123,12 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add public/rates/moneybox.json public/rates/moneybox-history/
+          git add "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR/"
 
           # 取得更新資訊
-          UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).updateTime")
-          TWD_SELL=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.sell")
-          TWD_BUY=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.buy")
+          UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).updateTime")
+          TWD_SELL=$(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).rates.TWD.sell")
+          TWD_BUY=$(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).rates.TWD.buy")
 
           # 檢查上一個 commit 是否也是 MoneyBox 匯率更新
           LAST_COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
@@ -176,8 +178,8 @@ jobs:
         env:
           CURRENT_DATE: ${{ steps.save-history.outputs.current_date }}
         run: |
-          PURGE_URL="https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json"
-          HISTORY_PURGE_URL="https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/${CURRENT_DATE}.json"
+          PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_LATEST_FILE}"
+          HISTORY_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
           echo "🧹 Purging jsDelivr CDN cache..."
           for URL in "$PURGE_URL" "$HISTORY_PURGE_URL"; do
             for i in 1 2 3; do
@@ -192,7 +194,7 @@ jobs:
             done
           done
 
-      - name: Refresh moneybox.json from remote data branch
+      - name: Refresh MoneyBox provider files from remote data branch
         id: refresh-remote
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         continue-on-error: true
@@ -200,8 +202,8 @@ jobs:
           # 收尾同步僅用於摘要校對，不得覆蓋已成功的資料推送結果。
           git rebase --abort 2>/dev/null || true
           for i in 1 2 3; do
-            echo "🔄 Refreshing moneybox.json from remote data branch (try $i/3)..."
-            if git fetch origin data && git checkout origin/data -- public/rates/moneybox.json public/rates/moneybox-history; then
+            echo "🔄 Refreshing MoneyBox provider files from remote data branch (try $i/3)..."
+            if git fetch origin data && git checkout origin/data -- "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR"; then
               echo "✅ Remote refresh successful"
               exit 0
             fi
@@ -227,18 +229,18 @@ jobs:
           echo "- **Workflow event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Workflow schedule:** ${{ github.event.schedule || 'manual/push' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Runner time (UTC):** $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_STEP_SUMMARY
-          echo "- **TWD Sell Rate:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.sell") KRW/TWD" >> $GITHUB_STEP_SUMMARY
-          echo "- **TWD Buy Rate:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).rates.TWD.buy") KRW/TWD" >> $GITHUB_STEP_SUMMARY
-          echo "- **Update Time (Seoul):** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/moneybox.json')).updateTime")" >> $GITHUB_STEP_SUMMARY
+          echo "- **TWD Sell Rate:** $(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).rates.TWD.sell") KRW/TWD" >> $GITHUB_STEP_SUMMARY
+          echo "- **TWD Buy Rate:** $(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).rates.TWD.buy") KRW/TWD" >> $GITHUB_STEP_SUMMARY
+          echo "- **Update Time (Seoul):** $(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).updateTime")" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🔗 CDN URL" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json" >> $GITHUB_STEP_SUMMARY
-          echo "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox-history/${CURRENT_DATE}.json" >> $GITHUB_STEP_SUMMARY
+          echo "${MONEYBOX_CDN_DATA_BASE}/${MONEYBOX_LATEST_FILE}" >> $GITHUB_STEP_SUMMARY
+          echo "${MONEYBOX_CDN_DATA_BASE}/${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## ⚡ CDN Purge" >> $GITHUB_STEP_SUMMARY
-          echo "jsDelivr cache purged — moneybox.json available on CDN within seconds." >> $GITHUB_STEP_SUMMARY
+          echo "jsDelivr cache purged — MoneyBox provider JSON available on CDN within seconds." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 💡 Rate Meaning" >> $GITHUB_STEP_SUMMARY
           echo "- **Sell rate**: 旅客持 TWD 現金換 KRW 的實際到手匯率（明洞換匯所賣出 KRW）" >> $GITHUB_STEP_SUMMARY
