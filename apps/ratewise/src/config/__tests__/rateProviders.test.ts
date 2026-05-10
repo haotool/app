@@ -1,15 +1,3 @@
-/**
- * Rate Provider Registry SSOT - Unit Tests
- *
- * 驗證 `rateProviders.ts` 作為 provider metadata SSOT 的 5 個查詢 API 與 registry shape：
- *  1. RATE_PROVIDERS：第一階段 `bot`（銀行）與 `moneybox`（換錢所）兩筆。
- *  2. getRateProvider：依 providerId 取得 config，未知值回 null。
- *  3. getProvidersBySourceKind：依 sourceKind 過濾並依 priority 由大到小排序。
- *  4. getDefaultProvider：依 sourceKind 取出 isDefault=true 的 provider。
- *  5. isProviderSupportedForCurrency：'all' 表示通吃；陣列則做成員檢查。
- *  6. shouldEnableBankProviderChoice：Phase 1 銀行 provider 只有 bot 一家，必須回 false。
- */
-
 import { describe, it, expect } from 'vitest';
 import {
   RATE_PROVIDERS,
@@ -49,7 +37,6 @@ describe('RATE_PROVIDERS registry', () => {
     expect(moneybox.label).toBe('明洞換匯所');
     expect(moneybox.shortLabel).toBe('MoneyBox');
 
-    // supportedCurrencies 應與換錢所資料層 SSOT 同步（目前為 ['KRW']）
     expect(Array.isArray(moneybox.supportedCurrencies)).toBe(true);
     expect(moneybox.supportedCurrencies).toEqual(getSupportedExchangeShopCurrencies());
   });
@@ -82,12 +69,12 @@ describe('getProvidersBySourceKind', () => {
     expect(allProviders).toHaveLength(Object.keys(RATE_PROVIDERS).length);
   });
 
-  it('bank 來源僅含 bot（Phase 1）', () => {
+  it('bank 來源僅含 bot', () => {
     const banks = getProvidersBySourceKind('bank');
     expect(banks.map((p) => p.id)).toEqual(['bot']);
   });
 
-  it('exchange-shop 來源僅含 moneybox（Phase 1）', () => {
+  it('exchange-shop 來源僅含 moneybox', () => {
     const shops = getProvidersBySourceKind('exchange-shop');
     expect(shops.map((p) => p.id)).toEqual(['moneybox']);
   });
@@ -102,7 +89,6 @@ describe('getProvidersBySourceKind', () => {
       const sorted = [...priorities].sort((a, b) => b - a);
       expect(priorities).toEqual(sorted);
     }
-    // 同時保證跨 sourceKind 的總和未漏掉 provider
     expect(all.length).toBe(Object.keys(RATE_PROVIDERS).length);
   });
 });
@@ -143,7 +129,7 @@ describe('isProviderSupportedForCurrency', () => {
 });
 
 describe('shouldEnableBankProviderChoice', () => {
-  it('Phase 1 銀行 provider 只有 bot，應回 false', () => {
+  it('銀行 provider 只有 bot 時應回 false', () => {
     expect(shouldEnableBankProviderChoice()).toBe(false);
   });
 

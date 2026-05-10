@@ -106,7 +106,6 @@ describe('converterStore', () => {
     });
 
     it('setRateSource("exchange-shop") 自動同步 rateType=cash（SSOT 不變式）', () => {
-      // 起始 rateType=spot，切到換錢所必須同步成 cash，避免 single/multi page 各自再寫一份 effect
       useConverterStore.setState({ rateType: 'spot', rateSource: 'bank' });
       useConverterStore.getState().setRateSource('exchange-shop');
       const state = useConverterStore.getState();
@@ -119,7 +118,6 @@ describe('converterStore', () => {
       useConverterStore.getState().setRateSource('bank');
       const state = useConverterStore.getState();
       expect(state.rateSource).toBe('bank');
-      // bank 模式同時支援 spot / cash，使用者刻意設的 cash 必須保留
       expect(state.rateType).toBe('cash');
     });
   });
@@ -291,7 +289,6 @@ describe('converterStore', () => {
       localStorageMock.clear();
       localStorageMock.getItem.mockImplementation((key: string) => {
         const legacyStore: Record<string, string> = {
-          // 模擬已有舊版 store 但未含 rateType/rateSource（v2.7.1+ 持久化結構）
           'ratewise-converter': JSON.stringify({
             state: { fromCurrency: 'USD', toCurrency: 'JPY' },
           }),
@@ -343,7 +340,6 @@ describe('converterStore', () => {
       resetStore();
       useConverterStore.getState().__migrateFromLegacy?.();
 
-      // 非 spot/cash 不應寫入 store，保留 reset 後的 'spot'
       expect(useConverterStore.getState().rateType).toBe('spot');
     });
 
@@ -484,8 +480,6 @@ describe('converterStore', () => {
     });
 
     it('exchange-shop 與 spot 的非法組合會被修正回 cash', () => {
-      // providerPreference 自 Task 4 起為 SSOT；測試需把兩欄位一併設成 exchange-shop
-      // 才能正確檢驗「資料源 = 換錢所 但 rateType=spot」這條 cash 不變式
       useConverterStore.setState({
         rateType: 'spot',
         rateSource: 'exchange-shop',
@@ -520,7 +514,6 @@ describe('converterStore', () => {
     });
   });
 
-  // ── providerPreference (Task 4: rate provider SSOT) ──────────────────────
   describe('providerPreference', () => {
     it('預設值為 manual + 台銀 (bot)', () => {
       const { providerPreference } = useConverterStore.getState();
@@ -531,7 +524,6 @@ describe('converterStore', () => {
     });
 
     it('setProviderPreference 切到 exchange-shop/moneybox 同步 rateSource 與 cash 不變式', () => {
-      // 起始為 spot/bank，切到換錢所必須一併鎖定 rateType=cash
       useConverterStore.setState({ rateType: 'spot', rateSource: 'bank' });
 
       useConverterStore.getState().setProviderPreference({
@@ -562,7 +554,6 @@ describe('converterStore', () => {
         providerId: 'bot',
       });
       expect(state.rateSource).toBe('bank');
-      // bank 同時支援 spot / cash，使用者偏好的 cash 必須保留
       expect(state.rateType).toBe('cash');
     });
 
@@ -581,9 +572,7 @@ describe('converterStore', () => {
     });
 
     it('setRateSource("bank") 為相容包裝，providerPreference 同步成 bot', () => {
-      // 先進入換錢所狀態
       useConverterStore.getState().setRateSource('exchange-shop');
-      // 再切回 bank
       useConverterStore.getState().setRateSource('bank');
 
       const state = useConverterStore.getState();
@@ -594,7 +583,7 @@ describe('converterStore', () => {
       expect(state.rateSource).toBe('bank');
     });
 
-    it('Phase 1: setRateSource 永遠不產出 mode="best"', () => {
+    it('setRateSource 永遠不產出 mode="best"', () => {
       useConverterStore.getState().setRateSource('bank');
       expect(useConverterStore.getState().providerPreference.mode).toBe('manual');
       useConverterStore.getState().setRateSource('exchange-shop');
@@ -615,7 +604,6 @@ describe('converterStore', () => {
         mode: 'manual',
         manualProvider: { sourceKind: 'bank', providerId: 'bot' },
       });
-      // sanitize 從 sanitized preference 推導出 bank，rateSource 一併同步
       expect(state.rateSource).toBe('bank');
     });
 
@@ -630,7 +618,6 @@ describe('converterStore', () => {
       useConverterStore.getState().__validateAndSanitize?.();
 
       const state = useConverterStore.getState();
-      // mode 非 manual / best：整體回退預設（mode='manual' 強制需要 manualProvider，這裡有 → 留下）
       expect(state.providerPreference.mode).toBe('manual');
       expect(state.providerPreference.manualProvider).toEqual({
         sourceKind: 'bank',
@@ -686,7 +673,6 @@ describe('converterStore', () => {
     });
 
     it('sanitize: providerPreference 與 rateSource 漂移時，以 providerPreference 為主重新推導 rateSource', () => {
-      // 模擬 storage 損毀：providerPreference 為 exchange-shop，但 rateSource 還停留在 bank
       useConverterStore.setState({
         providerPreference: {
           mode: 'manual',
@@ -699,7 +685,6 @@ describe('converterStore', () => {
       useConverterStore.getState().__validateAndSanitize?.();
 
       const state = useConverterStore.getState();
-      // 以 providerPreference 為 SSOT 重寫 rateSource 並套用 cash 不變式
       expect(state.rateSource).toBe('exchange-shop');
       expect(state.rateType).toBe('cash');
     });
@@ -763,7 +748,7 @@ describe('converterStore', () => {
       });
     });
 
-    it('migration: Phase 1 永遠不產出 mode="best"', () => {
+    it('migration: legacy rateSource 永遠不產出 mode="best"', () => {
       localStorageMock.clear();
       localStorageMock.getItem.mockImplementation((key: string) => {
         const legacyStore: Record<string, string> = {
@@ -779,7 +764,6 @@ describe('converterStore', () => {
     });
   });
 
-  // ── 歷史 SSOT（Task 7）─────────────────────────────────────────────────────
   describe('history SSOT', () => {
     const baseEntry = (
       overrides: Partial<ConversionHistoryEntry> = {},

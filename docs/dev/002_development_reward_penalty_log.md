@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +30
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +31
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-final-comment-drift-cleanup
+- 原因：最終 SSOT 稽核發現匯率 provider / history 相關測試仍殘留一次性計畫與 Arrange/Act/Assert 註解，會降低 review 訊噪比並形成維護飄移。
+- 解法：移除相關測試檔的開發流程註解與階段命名，保留測試名稱作為行為規格，並以 targeted Vitest 驗證不改變行為。
 
 - 日期：2026-05-10
 - ID：pr378-codex-review-final-ssot-fixes

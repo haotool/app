@@ -106,19 +106,16 @@ describe('useCurrencyConverter', () => {
         }),
       );
 
-      // Act - Set up conversion values first
       act(() => {
         result.current.setFromCurrency('USD');
         result.current.setToCurrency('TWD');
         result.current.handleFromAmountChange('100');
       });
 
-      // Act - Add to history
       act(() => {
         result.current.addToHistory();
       });
 
-      // Assert - Toast should be shown with correct message
       expect(mockShowToast).toHaveBeenCalledTimes(1);
       expect(mockShowToast).toHaveBeenCalledWith('singleConverter.addedToHistory', 'success');
     });
@@ -184,7 +181,6 @@ describe('useCurrencyConverter', () => {
         result.current.addToHistory();
       });
 
-      // Assert：歷史寫入已收斂到 store SSOT；不再直接寫舊版 conversionHistory 個別 key（Task 7）。
       expect(localStorageMock.setItem).not.toHaveBeenCalledWith(
         STORAGE_KEYS.CONVERSION_HISTORY,
         expect.any(String),
@@ -241,7 +237,6 @@ describe('useCurrencyConverter', () => {
         }),
       );
 
-      // Act - Add 60 entries
       for (let i = 0; i < 60; i++) {
         act(() => {
           result.current.handleFromAmountChange(String(i * 100));
@@ -251,7 +246,6 @@ describe('useCurrencyConverter', () => {
         });
       }
 
-      // Assert - Store cap is 50（從 hook 舊上限 10 提升至 store SSOT 50；UI 自由決定顯示筆數）
       expect(result.current.history.length).toBeLessThanOrEqual(50);
       expect(result.current.history.length).toBeGreaterThan(10);
     });
@@ -455,8 +449,6 @@ describe('useCurrencyConverter', () => {
       isFallback: false,
     };
 
-    // Phase 1（Task 4+5）：實際匯率來源走 store providerPreference → resolveProviderPreference；
-    // 在 store setState 中同步 providerPreference 才能完整模擬使用者切換到換錢所的場景。
     const exchangeShopPreference = {
       mode: 'manual' as const,
       manualProvider: { sourceKind: 'exchange-shop' as const, providerId: 'moneybox' },
@@ -625,7 +617,6 @@ describe('useCurrencyConverter', () => {
     });
   });
 
-  // ── Phase 1（Task 5）：provider SSOT 暴露面 ─────────────────────────────────
   describe('provider SSOT 暴露面', () => {
     it('銀行偏好 → resolvedProvider 指向 bot/bank/manual', () => {
       useConverterStore.setState({
@@ -747,7 +738,6 @@ describe('useCurrencyConverter', () => {
       const moneyboxQuote = result.current.providerQuotes.find(
         (q) => q.provider.providerId === 'moneybox',
       );
-      // USD/TWD 不在 moneybox supportedCurrencies 裡 → unavailable
       expect(moneyboxQuote?.isAvailable).toBe(false);
     });
 
@@ -768,7 +758,6 @@ describe('useCurrencyConverter', () => {
         }),
       );
 
-      // Phase 1 在 USD/TWD 下，moneybox 不可用，rankedQuotes 只剩 bot
       expect(
         result.current.rankedProviderQuotes.every((q) => q.provider.providerId === 'bot'),
       ).toBe(true);

@@ -1,19 +1,3 @@
-/**
- * Rate Provider Ranking - Unit Tests
- *
- * 驗證 Phase 1 的純函式：
- *  1. rankProviderQuotes：依實際 resultAmount 由大到小排序，僅含可用 quotes，tie 維持輸入順序。
- *  2. resolveProviderPreference：依 best/manual 模式解析，attaches reason；
- *     - manual + 有可用 quote → reason='manual'
- *     - manual + 不支援的幣別組合 → reason='unsupported-pair'，回退預設
- *     - manual + 無 manualProvider → reason='fallback-default'
- *     - best + 有候選 → reason='best-rate'
- *     - best + 無候選 → reason='fallback-default'
- *     - 退化情境：getDefaultProvider('bank')==null → 硬退回 {bot, bank, fallback-default}
- *
- * 注意：本檔僅針對純函式，不應引入 React / store / DOM。
- */
-
 import { describe, it, expect, vi } from 'vitest';
 import type {
   RateProviderPreference,
@@ -336,7 +320,6 @@ describe('resolveProviderPreference - best mode', () => {
 
 describe('resolveProviderPreference - 退化情境（registry default 缺失）', () => {
   it('當 getDefaultProvider("bank") 回 null 時，硬退回 {bot, bank}', async () => {
-    // 模擬 registry 異常：mock `getDefaultProvider` 回 null
     vi.resetModules();
     vi.doMock('../../../config/rateProviders', async () => {
       const actual = await vi.importActual<typeof import('../../../config/rateProviders')>(
