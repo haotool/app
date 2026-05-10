@@ -60,7 +60,7 @@ export default function MultiConverter() {
     baseCurrency,
     favorites,
     toggleFavorite,
-  } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource });
+  } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'multi' });
 
   // Set mode to 'multi' on mount
   useEffect(() => {

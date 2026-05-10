@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +32
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +33
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-single-converter-mode-isolation
+- 原因：Codex review 指出單幣別換算仍讀取持久化 converter mode，使用者進入多幣別頁後回到單幣別可能讓 quick amount 與換算路徑誤走 multi 分支。
+- 解法：useCurrencyConverter 改由呼叫頁面明確傳入本次 mode，單幣別頁固定 single、多幣別頁固定 multi，並補回歸測試鎖定持久化 multi 不影響單幣別 quick amount。
 
 - 日期：2026-05-10
 - ID：pr378-ssot-tech-debt-convergence

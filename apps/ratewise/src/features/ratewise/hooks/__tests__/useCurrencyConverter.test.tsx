@@ -615,6 +615,33 @@ describe('useCurrencyConverter', () => {
         }),
       ).toBe('bank');
     });
+
+    it('single converter ignores persisted multi mode for quick amounts', () => {
+      useConverterStore.setState({
+        fromCurrency: 'TWD',
+        toCurrency: 'KRW',
+        mode: 'multi',
+        favorites: ['TWD', 'KRW'],
+        history: [],
+        rateSource: 'exchange-shop',
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, KRW: 0.0236 },
+          rateType: 'cash',
+          rateSource: 'exchange-shop',
+          mode: 'single',
+        }),
+      );
+
+      act(() => {
+        result.current.quickAmount(500);
+      });
+
+      expect(result.current.fromAmount).toBe('500');
+      expect(result.current.multiAmounts.TWD).toBe('1000');
+    });
   });
 
   describe('provider SSOT 暴露面', () => {

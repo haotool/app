@@ -4,6 +4,7 @@ import { CURRENCY_DEFINITIONS, DEFAULT_BASE_CURRENCY } from '../constants';
 import type {
   AmountField,
   ConversionHistoryEntry,
+  ConverterMode,
   CurrencyCode,
   MultiAmountsState,
   RateSource,
@@ -76,6 +77,7 @@ interface UseCurrencyConverterOptions {
   details?: Record<string, RateDetails>;
   rateType?: RateType;
   rateSource?: RateSource;
+  mode?: ConverterMode;
 }
 
 export function resolveEffectiveRateSourceForConversion({
@@ -94,15 +96,13 @@ export function resolveEffectiveRateSourceForConversion({
 }
 
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
-  const { exchangeRates, details, rateType = 'spot', rateSource } = options;
+  const { exchangeRates, details, rateType = 'spot', rateSource, mode: requestedMode } = options;
   const { t } = useTranslation();
   const { showToast } = useToast();
 
-  // 持久化狀態由 Zustand store 管理（含 localStorage persist middleware）
   const {
     fromCurrency,
     toCurrency,
-    mode,
     rateMode,
     favorites,
     providerPreference,
@@ -128,6 +128,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     createInitialMultiAmounts(DEFAULT_BASE_CURRENCY),
   );
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>(DEFAULT_BASE_CURRENCY);
+  const mode = requestedMode ?? 'single';
 
   const exchangeShopCurrency = useMemo((): CurrencyCode | null => {
     if (fromCurrency === 'TWD' && hasExchangeShopProvider(toCurrency)) return toCurrency;

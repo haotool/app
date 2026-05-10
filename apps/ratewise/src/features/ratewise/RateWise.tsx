@@ -95,7 +95,7 @@ const RateWise = () => {
     moneyBoxRate,
     exchangeShopCurrency,
     effectiveRateSource,
-  } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource });
+  } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'single' });
 
   const [searchParams] = useSearchParams();
 

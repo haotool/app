@@ -69,7 +69,7 @@ export default function Favorites() {
     reconvertFromHistory,
     setFromCurrency,
     setToCurrency,
-  } = useCurrencyConverter({ exchangeRates, details, rateType });
+  } = useCurrencyConverter({ exchangeRates, details, rateType, mode: 'single' });
 
   /** 取得所有貨幣列表（已收藏 + 未收藏） */
   const allCurrencies = getAllCurrenciesSorted(favorites);
