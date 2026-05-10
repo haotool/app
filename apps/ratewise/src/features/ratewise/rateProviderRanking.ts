@@ -1,7 +1,10 @@
-import { getDefaultProvider, isProviderSupportedForCurrency } from '../../config/rateProviders';
-import type { CurrencyCode, RateType } from './types';
 import {
   fromLegacyRateSource,
+  getDefaultProvider,
+  isProviderSupportedForCurrency,
+} from '../../config/rateProviders';
+import type { CurrencyCode, RateType } from './types';
+import {
   type ProviderSelectionMode,
   type RateProviderId,
   type RateProviderPreference,

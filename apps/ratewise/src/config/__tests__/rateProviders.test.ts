@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   RATE_PROVIDERS,
+  fromLegacyRateSource,
   getAllRateProviders,
+  getDefaultProviderRef,
   getDefaultProvider,
   getProvidersBySourceKind,
   getRateProvider,
@@ -106,6 +108,33 @@ describe('getDefaultProvider', () => {
     for (const kind of ['bank', 'exchange-shop'] as const) {
       const defaults = getProvidersBySourceKind(kind).filter((p) => p.isDefault);
       expect(defaults).toHaveLength(1);
+    }
+  });
+});
+
+describe('default provider refs', () => {
+  it('legacy bank 轉為 registry 的預設 bank provider', () => {
+    expect(fromLegacyRateSource('bank')).toEqual({
+      sourceKind: 'bank',
+      providerId: getDefaultProvider('bank')?.id,
+    });
+  });
+
+  it('legacy exchange-shop 轉為 registry 的預設 exchange-shop provider', () => {
+    expect(fromLegacyRateSource('exchange-shop')).toEqual({
+      sourceKind: 'exchange-shop',
+      providerId: getDefaultProvider('exchange-shop')?.id,
+    });
+  });
+
+  it('getDefaultProviderRef 與 getDefaultProvider 共用同一份 registry', () => {
+    for (const sourceKind of ['bank', 'exchange-shop'] as const) {
+      const provider = getDefaultProvider(sourceKind);
+      expect(provider).not.toBeNull();
+      expect(getDefaultProviderRef(sourceKind)).toEqual({
+        sourceKind,
+        providerId: provider?.id,
+      });
     }
   });
 });

@@ -1,5 +1,9 @@
-import type { CurrencyCode, RateType } from '../features/ratewise/types';
-import type { RateProviderId, RateSourceKind } from '../features/ratewise/rateProviderTypes';
+import type { CurrencyCode, RateSource, RateType } from '../features/ratewise/types';
+import type {
+  RateProviderId,
+  RateProviderRef,
+  RateSourceKind,
+} from '../features/ratewise/rateProviderTypes';
 import { getSupportedExchangeShopCurrencies } from './exchangeShopProviders.ts';
 import { PROVIDER_RATES_PATH } from './api-endpoints.ts';
 
@@ -75,6 +79,21 @@ export function getProvidersBySourceKind(sourceKind: RateSourceKind): RateProvid
 export function getDefaultProvider(sourceKind: RateSourceKind): RateProviderConfig | null {
   const providers = getProvidersBySourceKind(sourceKind);
   return providers.find((provider) => provider.isDefault) ?? null;
+}
+
+export function getDefaultProviderRef(sourceKind: RateSourceKind): RateProviderRef {
+  const provider = getDefaultProvider(sourceKind);
+  if (!provider) {
+    throw new Error(`Missing default rate provider for ${sourceKind}`);
+  }
+  return {
+    sourceKind: provider.sourceKind,
+    providerId: provider.id,
+  };
+}
+
+export function fromLegacyRateSource(rateSource: RateSource): RateProviderRef {
+  return getDefaultProviderRef(rateSource);
 }
 
 export function isProviderSupportedForCurrency(

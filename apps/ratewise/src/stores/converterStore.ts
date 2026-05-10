@@ -31,7 +31,7 @@ import type {
   RateProviderRef,
   RateSourceKind,
 } from '../features/ratewise/rateProviderTypes';
-import { fromLegacyRateSource } from '../features/ratewise/rateProviderTypes';
+import { fromLegacyRateSource } from '../config/rateProviders';
 import {
   CURRENCY_DEFINITIONS,
   DEFAULT_FAVORITES,
@@ -45,7 +45,7 @@ const DEFAULT_RATE_SOURCE: RateSource = 'bank';
 
 const DEFAULT_PROVIDER_PREFERENCE: RateProviderPreference = {
   mode: 'manual',
-  manualProvider: { sourceKind: 'bank', providerId: 'bot' },
+  manualProvider: fromLegacyRateSource(DEFAULT_RATE_SOURCE),
 };
 
 const VALID_SELECTION_MODES: ProviderSelectionMode[] = ['manual', 'best'];

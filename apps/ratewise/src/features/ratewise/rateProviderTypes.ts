@@ -23,18 +23,6 @@ export interface ResolvedRateProvider {
   reason: 'manual' | 'best-rate' | 'fallback-default' | 'unsupported-pair';
 }
 
-const DEFAULT_PROVIDER_BY_SOURCE: Record<RateSourceKind, RateProviderId> = {
-  bank: 'bot',
-  'exchange-shop': 'moneybox',
-};
-
 export function toLegacyRateSource(ref: RateProviderRef): RateSource {
   return ref.sourceKind;
-}
-
-export function fromLegacyRateSource(rateSource: RateSource): RateProviderRef {
-  return {
-    sourceKind: rateSource,
-    providerId: DEFAULT_PROVIDER_BY_SOURCE[rateSource],
-  };
 }

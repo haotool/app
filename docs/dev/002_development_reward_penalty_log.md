@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +33
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +34
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-default-provider-registry-ssot
+- 原因：分支級 SSOT 稽核發現 legacy rateSource 到預設 provider 的對應仍在型別檔維護，與 RATE_PROVIDERS.isDefault 形成第二份預設來源。
+- 解法：將 fromLegacyRateSource 移入 provider registry 模組並由 getDefaultProviderRef 產生，store 與 ranking fallback 均改讀 registry SSOT。
 
 - 日期：2026-05-10
 - ID：pr378-single-converter-mode-isolation
