@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +34
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +35
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-rate-default-constants-ssot
+- 原因：最終硬編碼掃描發現 rate mode、rate type、rate source 與 converter mode 的預設值仍分散在 store、hook、元件與計算工具。
+- 解法：將合法值與預設值收斂至 ratewise constants SSOT，types、store、hook、元件與計算工具改讀同一來源，並以 focused Vitest 驗證既有 provider/history 行為未漂移。
 
 - 日期：2026-05-10
 - ID：pr378-default-provider-registry-ssot

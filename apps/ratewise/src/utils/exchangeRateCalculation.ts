@@ -11,6 +11,7 @@ import type { RateDetails } from './offlineStorage';
 import type { CurrencyCode, RateMode, RateSource, RateType } from '../features/ratewise/types';
 import { computeConverterRate, type ExchangeShopRate } from '../services/moneyboxRateService';
 import { logger } from './logger';
+import { DEFAULT_RATE_SOURCE } from '../features/ratewise/constants';
 
 export interface RateTypeAvailability {
   spot: boolean;
@@ -400,7 +401,7 @@ export function getUnitExchangeRate(
   exchangeRates?: Record<CurrencyCode, number | null> | null,
   options: UnitExchangeRateOptions = {},
 ): number {
-  const { rateSource = 'bank', exchangeShopRate = null } = options;
+  const { rateSource = DEFAULT_RATE_SOURCE, exchangeShopRate = null } = options;
 
   if (rateSource === 'exchange-shop' && exchangeShopRate) {
     const shopRate = computeConverterRate(exchangeShopRate, fromCurrency, toCurrency);

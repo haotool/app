@@ -31,17 +31,22 @@ import type {
   RateProviderRef,
   RateSourceKind,
 } from '../features/ratewise/rateProviderTypes';
-import { fromLegacyRateSource } from '../config/rateProviders';
+import { fromLegacyRateSource, resolveRateTypeForSource } from '../config/rateProviders';
 import {
+  CONVERTER_MODES,
   CURRENCY_DEFINITIONS,
+  DEFAULT_CONVERTER_MODE,
   DEFAULT_FAVORITES,
   DEFAULT_FROM_CURRENCY,
+  DEFAULT_RATE_MODE,
+  DEFAULT_RATE_SOURCE,
+  DEFAULT_RATE_TYPE,
   DEFAULT_TO_CURRENCY,
+  RATE_MODES,
+  RATE_SOURCES,
+  RATE_TYPES,
 } from '../features/ratewise/constants';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
-
-const DEFAULT_RATE_TYPE: RateType = 'spot';
-const DEFAULT_RATE_SOURCE: RateSource = 'bank';
 
 const DEFAULT_PROVIDER_PREFERENCE: RateProviderPreference = {
   mode: 'manual',
@@ -49,7 +54,7 @@ const DEFAULT_PROVIDER_PREFERENCE: RateProviderPreference = {
 };
 
 const VALID_SELECTION_MODES: ProviderSelectionMode[] = ['manual', 'best'];
-const VALID_SOURCE_KINDS: RateSourceKind[] = ['bank', 'exchange-shop'];
+const VALID_SOURCE_KINDS: readonly RateSourceKind[] = RATE_SOURCES;
 
 // ── 有效貨幣代碼集合（模組載入時計算一次）────────────────────────────────────
 const VALID_CODES = new Set(Object.keys(CURRENCY_DEFINITIONS));
@@ -122,12 +127,12 @@ type PersistentFields = Pick<
   | 'favorites'
 >;
 
-const VALID_RATE_MODES: RateMode[] = ['auto', 'sell', 'mid'];
-const VALID_RATE_TYPES: RateType[] = ['spot', 'cash'];
-const VALID_RATE_SOURCES: RateSource[] = ['bank', 'exchange-shop'];
+const VALID_RATE_MODES: readonly RateMode[] = RATE_MODES;
+const VALID_RATE_TYPES: readonly RateType[] = RATE_TYPES;
+const VALID_RATE_SOURCES: readonly RateSource[] = RATE_SOURCES;
 
 function deriveRateSourceFromPreference(preference: RateProviderPreference): RateSource {
-  return preference.manualProvider?.sourceKind ?? 'bank';
+  return preference.manualProvider?.sourceKind ?? DEFAULT_RATE_SOURCE;
 }
 
 const isSelectionMode = (value: unknown): value is ProviderSelectionMode =>
@@ -178,12 +183,12 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
     patch.toCurrency = DEFAULT_TO_CURRENCY;
     dirty = true;
   }
-  if (state.mode !== 'single' && state.mode !== 'multi') {
-    patch.mode = 'single';
+  if (!(CONVERTER_MODES as readonly string[]).includes(state.mode)) {
+    patch.mode = DEFAULT_CONVERTER_MODE;
     dirty = true;
   }
   if (!VALID_RATE_MODES.includes(state.rateMode)) {
-    patch.rateMode = 'auto';
+    patch.rateMode = DEFAULT_RATE_MODE;
     dirty = true;
   }
   if (!VALID_RATE_TYPES.includes(state.rateType)) {
@@ -211,8 +216,9 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
 
   const resolvedRateSource = patch.rateSource ?? state.rateSource;
   const resolvedRateType = patch.rateType ?? state.rateType;
-  if (resolvedRateSource === 'exchange-shop' && resolvedRateType !== 'cash') {
-    patch.rateType = 'cash';
+  const providerRateType = resolveRateTypeForSource(resolvedRateSource, resolvedRateType);
+  if (providerRateType !== resolvedRateType) {
+    patch.rateType = providerRateType;
     dirty = true;
   }
   if (!Array.isArray(state.favorites)) {
@@ -242,15 +248,18 @@ function buildMigrationPatch(state: ConverterState): Partial<PersistentFields> |
   const patch: Partial<PersistentFields> = {};
 
   const oldRateType = window.localStorage.getItem(LEGACY_KEYS.RATE_TYPE);
-  if (oldRateType === 'cash' || oldRateType === 'spot') {
-    patch.rateType = oldRateType;
+  if (
+    typeof oldRateType === 'string' &&
+    (VALID_RATE_TYPES as readonly string[]).includes(oldRateType)
+  ) {
+    patch.rateType = oldRateType as RateType;
   }
   const oldRateSource = window.localStorage.getItem(LEGACY_KEYS.RATE_SOURCE);
   if (oldRateSource === 'bank' || oldRateSource === 'exchange-shop') {
     patch.rateSource = oldRateSource;
   }
-  if (patch.rateSource === 'exchange-shop' && patch.rateType !== 'cash') {
-    patch.rateType = 'cash';
+  if (patch.rateSource) {
+    patch.rateType = resolveRateTypeForSource(patch.rateSource, patch.rateType ?? state.rateType);
   }
 
   const hasPersistedPreference =
@@ -360,8 +369,8 @@ export const useConverterStore = create<ConverterState>()(
       // ── 初始狀態 ────────────────────────────────────────────────────────
       fromCurrency: DEFAULT_FROM_CURRENCY,
       toCurrency: DEFAULT_TO_CURRENCY,
-      mode: 'single' as ConverterMode,
-      rateMode: 'auto' as RateMode,
+      mode: DEFAULT_CONVERTER_MODE as ConverterMode,
+      rateMode: DEFAULT_RATE_MODE as RateMode,
       rateType: DEFAULT_RATE_TYPE,
       rateSource: DEFAULT_RATE_SOURCE,
       providerPreference: DEFAULT_PROVIDER_PREFERENCE,
@@ -379,7 +388,7 @@ export const useConverterStore = create<ConverterState>()(
 
       setRateType: (rateType) =>
         set((state) => ({
-          rateType: state.rateSource === 'exchange-shop' ? 'cash' : rateType,
+          rateType: resolveRateTypeForSource(state.rateSource, rateType),
         })),
 
       setProviderPreference: (next) =>
@@ -389,7 +398,7 @@ export const useConverterStore = create<ConverterState>()(
           return {
             providerPreference: sanitized,
             rateSource: derivedRateSource,
-            rateType: derivedRateSource === 'exchange-shop' ? 'cash' : state.rateType,
+            rateType: resolveRateTypeForSource(derivedRateSource, state.rateType),
           };
         }),
 

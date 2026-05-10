@@ -6,8 +6,10 @@ import {
   getDefaultProviderRef,
   getDefaultProvider,
   getProvidersBySourceKind,
+  getProviderPrimaryRateType,
   getRateProvider,
   isProviderSupportedForCurrency,
+  resolveRateTypeForSource,
   shouldEnableBankProviderChoice,
 } from '../rateProviders';
 import { getSupportedExchangeShopCurrencies } from '../exchangeShopProviders';
@@ -136,6 +138,19 @@ describe('default provider refs', () => {
         providerId: provider?.id,
       });
     }
+  });
+});
+
+describe('provider rate type resolution', () => {
+  it('保留 default bank provider 支援的 rateType', () => {
+    expect(resolveRateTypeForSource('bank', 'spot')).toBe('spot');
+    expect(resolveRateTypeForSource('bank', 'cash')).toBe('cash');
+  });
+
+  it('exchange-shop 不支援 spot 時依 registry supportedRateTypes 回退 primary rateType', () => {
+    expect(resolveRateTypeForSource('exchange-shop', 'spot')).toBe(
+      getProviderPrimaryRateType(RATE_PROVIDERS.moneybox),
+    );
   });
 });
 

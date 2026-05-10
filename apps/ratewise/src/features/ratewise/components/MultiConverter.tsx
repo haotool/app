@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
 import { activeHighlight } from '../../../config/animations';
-import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
+import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS, DEFAULT_RATE_SOURCE } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateMode, RateSource, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
@@ -42,7 +42,7 @@ export const MultiConverter = ({
   baseCurrency,
   rateType,
   rateMode,
-  rateSource = 'bank',
+  rateSource = DEFAULT_RATE_SOURCE,
   details,
   exchangeShopRatesByCurrency = {},
   favorites,

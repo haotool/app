@@ -1,15 +1,21 @@
-import { type CURRENCY_DEFINITIONS } from './constants';
+import {
+  type CONVERTER_MODES,
+  type CURRENCY_DEFINITIONS,
+  type RATE_MODES,
+  type RATE_SOURCES,
+  type RATE_TYPES,
+} from './constants';
 
 export type CurrencyCode = keyof typeof CURRENCY_DEFINITIONS;
 export type CurrencyMeta = (typeof CURRENCY_DEFINITIONS)[CurrencyCode];
 
-export type ConverterMode = 'single' | 'multi';
+export type ConverterMode = (typeof CONVERTER_MODES)[number];
 export type AmountField = 'from' | 'to';
-export type RateType = 'spot' | 'cash';
+export type RateType = (typeof RATE_TYPES)[number];
 
-export type RateSource = 'bank' | 'exchange-shop';
+export type RateSource = (typeof RATE_SOURCES)[number];
 
-export type RateMode = 'auto' | 'sell' | 'mid';
+export type RateMode = (typeof RATE_MODES)[number];
 export type MultiAmountsState = Record<CurrencyCode, string>;
 
 export type ConversionHistoryCategory = 'spot' | 'cash' | 'exchange-shop' | 'legacy';
@@ -22,7 +28,7 @@ export interface ConversionHistoryEntry {
   time: string;
   timestamp: number;
   rateType?: RateType;
-  sourceKind?: 'bank' | 'exchange-shop';
+  sourceKind?: RateSource;
   providerId?: string;
   providerSelectionMode?: 'best' | 'manual';
   rateMode?: RateMode;

@@ -45,9 +45,19 @@ export const CURRENCY_DEFINITIONS = {
 /** 支援幣別總數（含 TWD） */
 export const SUPPORTED_CURRENCY_COUNT = Object.keys(CURRENCY_DEFINITIONS).length;
 
+export const CONVERTER_MODES = ['single', 'multi'] as const;
+export const RATE_MODES = ['auto', 'sell', 'mid'] as const;
+export const RATE_TYPES = ['spot', 'cash'] as const;
+export const RATE_SOURCES = ['bank', 'exchange-shop'] as const;
+
+export const DEFAULT_CONVERTER_MODE = 'single';
+export const DEFAULT_RATE_MODE = 'auto';
+export const DEFAULT_RATE_TYPE = 'spot';
+export const DEFAULT_RATE_SOURCE = 'bank';
 export const DEFAULT_FROM_CURRENCY = 'TWD';
 export const DEFAULT_TO_CURRENCY = 'JPY'; // 日本為台灣人最熱門旅遊目的地
 export const DEFAULT_BASE_CURRENCY = 'TWD';
+export const DEFAULT_CONVERTER_AMOUNT = '1000';
 
 /**
  * 預設收藏貨幣 (SSOT)

@@ -1,5 +1,5 @@
 import type { RateProviderConfig } from '../../config/rateProviders';
-import { getAllRateProviders } from '../../config/rateProviders';
+import { getAllRateProviders, getProviderPrimaryRateType } from '../../config/rateProviders';
 import { computeConverterRate, type ExchangeShopRate } from '../../services/moneyboxRateService';
 import { getUnitExchangeRate } from '../../utils/exchangeRateCalculation';
 import type { RateMode } from './types';
@@ -37,7 +37,7 @@ export interface BuildProviderQuotesOptions {
 const DEFAULT_ADAPTERS: RateProviderQuoteAdapters = {
   bot: ({ provider, amount, from, to, details, rateType, rateMode, exchangeRates }) => {
     const unitRate = getUnitExchangeRate(from, to, details, rateType, rateMode, exchangeRates, {
-      rateSource: 'bank',
+      rateSource: provider.sourceKind,
       exchangeShopRate: null,
     });
 
@@ -56,7 +56,7 @@ const DEFAULT_ADAPTERS: RateProviderQuoteAdapters = {
     return {
       provider: { sourceKind: provider.sourceKind, providerId: provider.id },
       sourceKind: provider.sourceKind,
-      rateType: 'cash',
+      rateType: getProviderPrimaryRateType(provider),
       unitRate: unitRate ?? 0,
       resultAmount: unitRate ? amount * unitRate : 0,
       isAvailable: unitRate !== null && unitRate > 0,

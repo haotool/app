@@ -14,7 +14,12 @@ import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
-import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
+import {
+  CURRENCY_DEFINITIONS,
+  CURRENCY_QUICK_AMOUNTS,
+  DEFAULT_RATE_MODE,
+  DEFAULT_RATE_SOURCE,
+} from '../constants';
 import type { CurrencyCode, RateMode, RateSource, RateType } from '../types';
 // lazy import：ErrorBoundary 已涵蓋載入失敗；chunk 已在 PWA precache manifest 內，離線可用
 const MiniTrendChart = lazy(() =>
@@ -93,7 +98,7 @@ export const SingleConverter = ({
   exchangeRates,
   details,
   rateType,
-  rateMode = 'auto',
+  rateMode = DEFAULT_RATE_MODE,
   rateTypeAvailability = { spot: true, cash: true },
   onFromCurrencyChange,
   onToCurrencyChange,
@@ -103,7 +108,7 @@ export const SingleConverter = ({
   onSwapCurrencies,
   onAddToHistory,
   onRateTypeChange,
-  rateSource = 'bank',
+  rateSource = DEFAULT_RATE_SOURCE,
   moneyBoxRate = null,
   exchangeShopCurrency = null,
   onRateSourceChange,

@@ -143,7 +143,6 @@ const RateWise = () => {
 
   const handleRateSourceChange = useCallback(
     (nextSource: RateSource) => {
-      // 切到 exchange-shop 必須有可用 provider；store action 會自動同步 rateType=cash。
       if (nextSource === 'exchange-shop' && !exchangeShopCurrency) return;
       setRateSource(nextSource);
     },

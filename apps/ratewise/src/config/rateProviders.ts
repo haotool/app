@@ -6,6 +6,7 @@ import type {
 } from '../features/ratewise/rateProviderTypes';
 import { getSupportedExchangeShopCurrencies } from './exchangeShopProviders.ts';
 import { PROVIDER_RATES_PATH } from './api-endpoints.ts';
+import { DEFAULT_RATE_TYPE } from '../features/ratewise/constants';
 
 export interface RateProviderConfig {
   id: RateProviderId;
@@ -81,6 +82,10 @@ export function getDefaultProvider(sourceKind: RateSourceKind): RateProviderConf
   return providers.find((provider) => provider.isDefault) ?? null;
 }
 
+export function getProviderPrimaryRateType(provider: RateProviderConfig): RateType {
+  return provider.supportedRateTypes[0] ?? DEFAULT_RATE_TYPE;
+}
+
 export function getDefaultProviderRef(sourceKind: RateSourceKind): RateProviderRef {
   const provider = getDefaultProvider(sourceKind);
   if (!provider) {
@@ -94,6 +99,19 @@ export function getDefaultProviderRef(sourceKind: RateSourceKind): RateProviderR
 
 export function fromLegacyRateSource(rateSource: RateSource): RateProviderRef {
   return getDefaultProviderRef(rateSource);
+}
+
+export function resolveRateTypeForSource(
+  sourceKind: RateSourceKind,
+  requestedRateType: RateType,
+): RateType {
+  const provider = getDefaultProvider(sourceKind);
+  if (!provider) {
+    return requestedRateType;
+  }
+  return provider.supportedRateTypes.includes(requestedRateType)
+    ? requestedRateType
+    : getProviderPrimaryRateType(provider);
 }
 
 export function isProviderSupportedForCurrency(

@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CURRENCY_DEFINITIONS, DEFAULT_BASE_CURRENCY } from '../constants';
+import {
+  CURRENCY_DEFINITIONS,
+  DEFAULT_BASE_CURRENCY,
+  DEFAULT_CONVERTER_AMOUNT,
+  DEFAULT_CONVERTER_MODE,
+  DEFAULT_RATE_TYPE,
+} from '../constants';
 import type {
   AmountField,
   ConversionHistoryEntry,
@@ -41,7 +47,7 @@ const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
 const createInitialMultiAmounts = (
   baseCurrency: CurrencyCode,
-  baseValue = '1000',
+  baseValue = DEFAULT_CONVERTER_AMOUNT,
 ): MultiAmountsState => {
   return CURRENCY_CODES.reduce<MultiAmountsState>((acc, code) => {
     acc[code] = code === baseCurrency ? baseValue : '';
@@ -96,7 +102,13 @@ export function resolveEffectiveRateSourceForConversion({
 }
 
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
-  const { exchangeRates, details, rateType = 'spot', rateSource, mode: requestedMode } = options;
+  const {
+    exchangeRates,
+    details,
+    rateType = DEFAULT_RATE_TYPE,
+    rateSource,
+    mode: requestedMode,
+  } = options;
   const { t } = useTranslation();
   const { showToast } = useToast();
 
@@ -121,14 +133,14 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     clearHistory: storeClearHistory,
   } = useConverterStore();
 
-  const [fromAmount, setFromAmount] = useState<string>('1000');
+  const [fromAmount, setFromAmount] = useState<string>(DEFAULT_CONVERTER_AMOUNT);
   const [toAmount, setToAmount] = useState<string>('');
 
   const [multiAmounts, setMultiAmounts] = useState<MultiAmountsState>(() =>
     createInitialMultiAmounts(DEFAULT_BASE_CURRENCY),
   );
   const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>(DEFAULT_BASE_CURRENCY);
-  const mode = requestedMode ?? 'single';
+  const mode = requestedMode ?? DEFAULT_CONVERTER_MODE;
 
   const exchangeShopCurrency = useMemo((): CurrencyCode | null => {
     if (fromCurrency === 'TWD' && hasExchangeShopProvider(toCurrency)) return toCurrency;

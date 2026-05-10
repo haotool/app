@@ -1,6 +1,6 @@
 import type { RateSource } from './types';
 
-export type RateSourceKind = 'bank' | 'exchange-shop';
+export type RateSourceKind = RateSource;
 
 export type RateProviderId = 'bot' | 'moneybox' | (string & {});
 
