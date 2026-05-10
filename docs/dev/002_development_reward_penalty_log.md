@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +35
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +36
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-node-ts-provider-registry-import-fix
+- 原因：pre-push build:ratewise 發現 Node 24 直接載入 TS 腳本時，provider registry 新增的 runtime import 缺少 .ts 副檔名。
+- 解法：將 rateProviders.ts 對 ratewise constants 的 runtime import 改為顯式 .ts 路徑，讓 OpenAPI/API generator 等 Node TS 腳本可直接載入 registry SSOT。
 
 - 日期：2026-05-10
 - ID：pr378-rate-default-constants-ssot

@@ -6,7 +6,7 @@ import type {
 } from '../features/ratewise/rateProviderTypes';
 import { getSupportedExchangeShopCurrencies } from './exchangeShopProviders.ts';
 import { PROVIDER_RATES_PATH } from './api-endpoints.ts';
-import { DEFAULT_RATE_TYPE } from '../features/ratewise/constants';
+import { DEFAULT_RATE_TYPE } from '../features/ratewise/constants.ts';
 
 export interface RateProviderConfig {
   id: RateProviderId;
