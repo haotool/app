@@ -1,6 +1,7 @@
 # RateWise Exchange Shop Toggle Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status (2026-05-10)：Superseded / rebased.** MoneyBox public API path examples in this early toggle plan are superseded by `2026-05-10-canonical-provider-rate-api.md`; canonical paths are `/public/rates/providers/moneybox/latest.json` and `/public/rates/providers/moneybox/history/{YYYY-MM-DD}.json`.
 
 **Goal:** 當使用者選擇韓元（KRW）時，將現有「即期 / 現金」二選一切換器擴充為「即期 / 現金 / 換錢所」三選一，並以 CDN live 資料驅動換錢所匯率，架構預留未來多幣別擴充。
 
@@ -80,7 +81,7 @@ describe('EXCHANGE_SHOP_PROVIDERS registry', () => {
   it('KRW provider has required fields', () => {
     const p = EXCHANGE_SHOP_PROVIDERS.KRW!;
     expect(p.providerName).toBe('明洞換匯所');
-    expect(p.cdnUrl).toContain('moneybox.json');
+    expect(p.cdnUrl).toContain('/public/rates/providers/moneybox/latest.json');
     expect(p.fallbackSell).toBeGreaterThan(0);
     expect(p.fallbackBuy).toBeGreaterThan(0);
     expect(typeof p.getSellRate).toBe('function');
@@ -192,9 +193,10 @@ export const EXCHANGE_SHOP_PROVIDERS: Readonly<Partial<Record<CurrencyCode, Exch
     KRW: {
       providerName: '明洞換匯所',
       providerNameEn: 'Myeongdong Exchange',
-      cdnUrl: 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/moneybox.json',
+      cdnUrl:
+        'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json',
       cdnUrlFallback:
-        'https://raw.githubusercontent.com/haotool/app/data/public/rates/moneybox.json',
+        'https://raw.githubusercontent.com/haotool/app/data/public/rates/providers/moneybox/latest.json',
       source: 'MoneyBox',
       sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
       getSellRate: (raw: unknown): number | null => {

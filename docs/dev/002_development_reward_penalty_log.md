@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +27
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +28
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-superpower-plan-canonical-path-sync
+- 原因：最終 SSOT 稽核發現早期換錢所 superpower plan 仍保留舊 `moneybox.json` endpoint 範例，與 canonical provider API 設計漂移。
+- 解法：標示該早期 plan 已由 canonical provider API plan 接管，並將 MoneyBox 範例路徑同步為 provider-centric canonical path。
 
 - 日期：2026-05-10
 - ID：pr378-right-input-forward-quote-inverse
