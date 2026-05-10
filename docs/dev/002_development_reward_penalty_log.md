@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +24
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +25
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-moneybox-full-rates-change-detection
+- 原因：PR #378 Codex review 指出 MoneyBox provider API 對外包含完整 `rates`，但更新偵測只比較 TWD quote，會漏掉非 TWD 幣別變動。
+- 解法：抽出 `listRateChanges` 比對所有幣別的標準 quote 欄位，讓 workflow latest/history 更新與 purge 以完整 provider rates 為準，並補行為測試。
 
 - 日期：2026-05-10
 - ID：pr378-moneybox-seo-url-ssot

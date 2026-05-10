@@ -19,7 +19,7 @@ const OUTPUT_FILE = join(OUTPUT_DIR, 'providers', 'moneybox', 'latest.json');
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 5000;
-const TWD_QUOTE_FIELDS = ['base', 'buy', 'sell', 'spbuy', 'spsell'];
+const RATE_QUOTE_FIELDS = ['base', 'buy', 'sell', 'spbuy', 'spsell'];
 
 class AbortError extends Error {
   constructor(message, status) {
@@ -187,26 +187,42 @@ async function fetchMoneyBoxRates() {
   throw new Error('Failed to fetch MoneyBox rates after maximum retries');
 }
 
+function listRateChanges(oldRates = {}, newRates = {}) {
+  const currencies = Array.from(
+    new Set([...Object.keys(oldRates), ...Object.keys(newRates)]),
+  ).sort();
+
+  return currencies.flatMap((currency) =>
+    RATE_QUOTE_FIELDS.filter(
+      (field) => oldRates[currency]?.[field] !== newRates[currency]?.[field],
+    ).map((field) => ({
+      currency,
+      field,
+      oldValue: oldRates[currency]?.[field],
+      newValue: newRates[currency]?.[field],
+    })),
+  );
+}
+
 function hasRateChanges(newData) {
   try {
     const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
 
-    const oldTWD = oldData.rates?.TWD;
-    const newTWD = newData.rates?.TWD;
-    const changedFields = TWD_QUOTE_FIELDS.filter((field) => oldTWD?.[field] !== newTWD?.[field]);
-
-    const hasChanges = changedFields.length > 0;
+    const rateChanges = listRateChanges(oldData.rates, newData.rates);
+    const hasChanges = rateChanges.length > 0;
 
     if (hasChanges) {
-      console.log(`🔄 Rate change detected: TWD ${changedFields.join(', ')}`);
-      for (const field of changedFields) {
-        console.log(`   ${field}: ${oldTWD?.[field]} → ${newTWD?.[field]} KRW/TWD`);
+      console.log(
+        `🔄 Rate change detected: ${rateChanges.map(({ currency, field }) => `${currency}.${field}`).join(', ')}`,
+      );
+      for (const { currency, field, oldValue, newValue } of rateChanges) {
+        console.log(`   ${currency}.${field}: ${oldValue} → ${newValue}`);
       }
     } else {
+      const currentCurrencies = Object.keys(newData.rates ?? {}).length;
       console.log('📊 Rates unchanged since last update');
       console.log(`   Last update: ${oldData.updateTime}`);
-      console.log(`   TWD buy: ${oldTWD?.buy} KRW/TWD`);
-      console.log(`   TWD sell: ${oldTWD?.sell} KRW/TWD`);
+      console.log(`   Currencies checked: ${currentCurrencies}`);
     }
 
     return hasChanges;
@@ -291,3 +307,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export { fetchMoneyBoxRates };
+export { listRateChanges };

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 async function readPackageJson() {
   const packageJsonPath = path.resolve(__dirname, '../../../package.json');
@@ -83,6 +84,21 @@ async function readMoneyBoxWorkflow() {
 async function readMoneyBoxFetchScript() {
   const scriptPath = path.resolve(__dirname, '../../../../../scripts/fetch-moneybox-rates.js');
   return readFile(scriptPath, 'utf-8');
+}
+
+async function importMoneyBoxFetchScript() {
+  const scriptPath = path.resolve(__dirname, '../../../../../scripts/fetch-moneybox-rates.js');
+  return import(pathToFileURL(scriptPath).href) as Promise<{
+    listRateChanges: (
+      oldRates: Record<string, Record<string, number | null>>,
+      newRates: Record<string, Record<string, number | null>>,
+    ) => {
+      currency: string;
+      field: string;
+      oldValue: number | null | undefined;
+      newValue: number | null | undefined;
+    }[];
+  }>;
 }
 
 async function readLatestRatesWorkflow() {
@@ -592,10 +608,10 @@ describe('ratewise build scripts', () => {
     );
   });
 
-  it('should detect MoneyBox TWD buy/sell spread changes instead of comparing sell only', async () => {
+  it('should detect MoneyBox quote field changes instead of comparing sell only', async () => {
     const scriptSource = await readMoneyBoxFetchScript();
 
-    expect(scriptSource).toContain('const TWD_QUOTE_FIELDS = [');
+    expect(scriptSource).toContain('const RATE_QUOTE_FIELDS = [');
     expect(scriptSource).toContain("'buy'");
     expect(scriptSource).toContain("'sell'");
     expect(scriptSource).toContain("'base'");
@@ -603,6 +619,30 @@ describe('ratewise build scripts', () => {
     expect(scriptSource).toContain("'spsell'");
     expect(scriptSource).not.toContain('oldData.rates?.TWD?.sell');
     expect(scriptSource).not.toContain('newData.rates?.TWD?.sell');
+  });
+
+  it('should detect changes across complete MoneyBox provider rates instead of TWD only', async () => {
+    const { listRateChanges } = await importMoneyBoxFetchScript();
+
+    const changes = listRateChanges(
+      {
+        TWD: { base: 45.15, buy: 45.2, sell: 45.1, spbuy: null, spsell: null },
+        USD: { base: 1370, buy: 1360, sell: 1380, spbuy: null, spsell: null },
+      },
+      {
+        TWD: { base: 45.15, buy: 45.2, sell: 45.1, spbuy: null, spsell: null },
+        USD: { base: 1370, buy: 1360, sell: 1381, spbuy: null, spsell: null },
+      },
+    );
+
+    expect(changes).toEqual([
+      {
+        currency: 'USD',
+        field: 'sell',
+        oldValue: 1380,
+        newValue: 1381,
+      },
+    ]);
   });
 
   it('CurrencyLandingPage should import AnswerCapsule and accept answerCapsule prop (AEO/GEO readiness)', async () => {
