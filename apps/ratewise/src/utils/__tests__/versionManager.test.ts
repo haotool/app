@@ -21,7 +21,11 @@ import {
   handleVersionUpdate,
   getVersionHistory,
 } from '../versionManager';
-import { CACHE_KEY_PREFIXES, STORAGE_KEYS } from '../../features/ratewise/storage-keys';
+import {
+  CACHE_KEY_PREFIXES,
+  STORAGE_KEYS,
+  USER_DATA_KEYS,
+} from '../../features/ratewise/storage-keys';
 import * as logger from '../logger';
 
 // ===== SSOT Mock: config/version.ts =====
@@ -239,6 +243,19 @@ describe('versionManager', () => {
         `${STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX}PHP`,
       );
       expect(mockLocalStorage.store[STORAGE_KEYS.RATE_SOURCE]).toBe('exchange-shop');
+    });
+
+    it('使用 USER_DATA_KEYS 防止快取清理誤刪用戶資料', () => {
+      for (const key of USER_DATA_KEYS) {
+        mockLocalStorage.setItem(key, 'persisted');
+      }
+
+      clearAppCache();
+
+      for (const key of USER_DATA_KEYS) {
+        expect(mockLocalStorage.removeItem).not.toHaveBeenCalledWith(key);
+        expect(mockLocalStorage.store[key]).toBe('persisted');
+      }
     });
 
     it('不清除 Service Worker 快取（防止 PWA 離線失效）', () => {

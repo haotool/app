@@ -833,8 +833,14 @@ describe('ratewise build scripts', () => {
     expect(openApiGenerator).toContain('[EXCHANGE_SHOP_LATEST_PATH]');
     expect(openApiGenerator).toContain('[EXCHANGE_SHOP_HISTORY_PATH]');
     expect(openApiGenerator).toContain("'x-rate-providers'");
-    expect(openApiGenerator).toContain('/public/rates/providers/{providerId}/latest.json');
-    expect(openApiGenerator).toContain('/public/rates/providers/{providerId}/history/{date}.json');
+    expect(openApiGenerator).toContain("PROVIDER_RATES_PATH.latest('{providerId}')");
+    expect(openApiGenerator).toContain("PROVIDER_RATES_PATH.history('{providerId}', '{date}')");
+    expect(openApiGenerator).not.toContain(
+      "const EXCHANGE_SHOP_LATEST_PATH = '/public/rates/providers/{providerId}/latest.json'",
+    );
+    expect(openApiGenerator).not.toContain(
+      "const EXCHANGE_SHOP_HISTORY_PATH = '/public/rates/providers/{providerId}/history/{date}.json'",
+    );
     expect(openApiGenerator).not.toContain('/public/rates/moneybox.json');
     expect(openApiGenerator).not.toContain('/public/rates/moneybox-history/{date}.json');
 

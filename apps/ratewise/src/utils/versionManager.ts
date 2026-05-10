@@ -14,7 +14,12 @@
 import { APP_VERSION } from '../config/version';
 import { logger } from './logger';
 import { forceServiceWorkerUpdate } from './swUtils';
-import { CACHE_KEY_PREFIXES, CACHE_KEYS, STORAGE_KEYS } from '../features/ratewise/storage-keys';
+import {
+  CACHE_KEY_PREFIXES,
+  CACHE_KEYS,
+  STORAGE_KEYS,
+  USER_DATA_KEYS,
+} from '../features/ratewise/storage-keys';
 
 interface VersionHistoryEntry {
   version: string;
@@ -83,7 +88,12 @@ export function clearAppCache(): void {
 
   // 1. 清除 localStorage 中的快取數據（保留用戶數據）
   try {
+    const protectedUserDataKeys = new Set<string>(USER_DATA_KEYS);
+
     for (const key of CACHE_KEYS) {
+      if (protectedUserDataKeys.has(key)) {
+        continue;
+      }
       localStorage.removeItem(key);
       logger.debug('Cleared localStorage cache', { key });
     }
@@ -93,6 +103,9 @@ export function clearAppCache(): void {
       ).filter((key): key is string => key?.startsWith(prefix) ?? false);
 
       for (const key of keysToRemove) {
+        if (protectedUserDataKeys.has(key)) {
+          continue;
+        }
         localStorage.removeItem(key);
         logger.debug('Cleared localStorage cache by prefix', { key, prefix });
       }

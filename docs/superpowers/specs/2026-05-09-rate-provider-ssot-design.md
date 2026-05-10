@@ -1,5 +1,9 @@
 # Rate Provider SSOT Design
 
+> **Status (2026-05-10)：Implemented baseline.** 本設計已由 provider registry、
+> provider selection domain、conversion history metadata 與 canonical provider API 實作承接。
+> 未來多銀行啟用仍以 `shouldEnableBankProviderChoice()` 與 provider config 作為 SSOT。
+
 ## Goal
 
 建立可長期維護的匯率來源架構。現在只使用台灣銀行與 MoneyBox，先預留 provider 資料模型；未來銀行 provider 超過一家時，再啟用最佳銀行推薦、銀行選單與使用者指定銀行。

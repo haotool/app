@@ -3,6 +3,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
+import { PROVIDER_RATES_PATH } from '../src/config/api-endpoints.ts';
 import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -55,8 +56,8 @@ const exchangeShopProvider = publicProviderMetadata.providers.find(
 const EXCHANGE_SHOP_PROVIDER_IDS = publicProviderMetadata.providers
   .filter((provider) => provider.sourceKind === 'exchange-shop')
   .map((provider) => provider.providerId);
-const EXCHANGE_SHOP_LATEST_PATH = '/public/rates/providers/{providerId}/latest.json';
-const EXCHANGE_SHOP_HISTORY_PATH = '/public/rates/providers/{providerId}/history/{date}.json';
+const EXCHANGE_SHOP_LATEST_PATH = PROVIDER_RATES_PATH.latest('{providerId}');
+const EXCHANGE_SHOP_HISTORY_PATH = PROVIDER_RATES_PATH.history('{providerId}', '{date}');
 
 const providerIdPathParameter = {
   name: 'providerId',

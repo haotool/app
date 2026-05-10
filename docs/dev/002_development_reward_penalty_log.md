@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +31
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +32
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-ssot-tech-debt-convergence
+- 原因：最終技術債掃描發現 OpenAPI provider path 仍有重複字串，且 USER_DATA_KEYS 只存在於註解未形成實際防護。
+- 解法：OpenAPI generator 改由 PROVIDER_RATES_PATH 產生 provider endpoint，版本快取清理改用 USER_DATA_KEYS 防呆，並補 guardrail 測試與過期計畫狀態註記。
 
 - 日期：2026-05-10
 - ID：pr378-final-comment-drift-cleanup

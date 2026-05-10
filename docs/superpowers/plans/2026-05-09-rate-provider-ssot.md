@@ -1,5 +1,10 @@
 # Rate Provider SSOT Implementation Plan
 
+> **Status (2026-05-10)：Superseded by implementation.** 本計畫的 provider registry、
+> selection domain、history metadata 與多銀行延遲啟用條件已落地；canonical provider API path
+> 由 `2026-05-10-canonical-provider-rate-api.md` 接續收斂。後續請以程式碼 SSOT 與 2026-05-10
+> 計畫為準，不再把下方未勾選步驟視為待辦。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 將 RateWise 的匯率來源架構升級為 `sourceKind + providerId + selectionMode`，現在只預留 provider 架構並維持台銀單一銀行體驗；未來銀行 provider 超過一家時，再啟用最佳匯率推薦、銀行選單與指定銀行。
