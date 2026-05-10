@@ -489,6 +489,37 @@ describe('useCurrencyConverter', () => {
       expect(result.current.moneyBoxRate).toEqual(moneyBoxRate);
     });
 
+    it('reverse-solves TWD→KRW target amount with the same MoneyBox sell quote', async () => {
+      moneyBoxRateMock.rate = moneyBoxRate;
+      useConverterStore.setState({
+        fromCurrency: 'TWD',
+        toCurrency: 'KRW',
+        mode: 'single',
+        favorites: ['KRW'],
+        history: [],
+        providerPreference: exchangeShopPreference,
+        rateSource: 'exchange-shop',
+      });
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, KRW: 0.0236 },
+          rateType: 'cash',
+          rateSource: 'exchange-shop',
+        }),
+      );
+
+      act(() => {
+        result.current.handleToAmountChange('44850');
+      });
+
+      await waitFor(() => {
+        expect(result.current.fromAmount).toBe('1000.00');
+      });
+      expect(result.current.toAmount).toBe('44850');
+      expect(result.current.exchangeShopCurrency).toBe('KRW');
+    });
+
     it('uses provider fallback instead of bank rate while MoneyBox rate is not ready', async () => {
       moneyBoxRateMock.rate = null;
       useConverterStore.setState({

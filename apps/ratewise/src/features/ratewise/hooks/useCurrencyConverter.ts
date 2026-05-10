@@ -218,8 +218,8 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     }
   }, []);
 
-  const convertAmount = useCallback(
-    (amount: number, from: CurrencyCode, to: CurrencyCode): number => {
+  const getResolvedUnitRate = useCallback(
+    (from: CurrencyCode, to: CurrencyCode): number => {
       const pairExchangeShopRate =
         mode === 'multi'
           ? getExchangeShopRateForPair(from, to, multiExchangeShopRatesByCurrency)
@@ -237,7 +237,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
         exchangeShopRate,
       });
 
-      return amount * unitRate;
+      return unitRate;
     },
     [
       details,
@@ -250,6 +250,12 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       multiExchangeShopRatesByCurrency,
       selectedExchangeShopRate,
     ],
+  );
+
+  const convertAmount = useCallback(
+    (amount: number, from: CurrencyCode, to: CurrencyCode): number =>
+      amount * getResolvedUnitRate(from, to),
+    [getResolvedUnitRate],
   );
 
   useEffect(() => {
@@ -334,12 +340,12 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       return;
     }
 
-    // 反向換算：B→A，FROM/TO 互換且方向相反
-    const converted = convertAmount(amount, toCurrency, fromCurrency);
+    const unitRate = getResolvedUnitRate(fromCurrency, toCurrency);
+    const converted = unitRate ? amount / unitRate : 0;
 
     const decimals = CURRENCY_DEFINITIONS[fromCurrency].decimals;
     setFromAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
-  }, [toAmount, fromCurrency, toCurrency, convertAmount]);
+  }, [toAmount, fromCurrency, toCurrency, getResolvedUnitRate]);
 
   // 單幣別換算效果（路由決定顯示，無需依賴 mode 狀態）
   useEffect(() => {

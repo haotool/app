@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +26
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +27
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-right-input-forward-quote-inverse
+- 原因：PR #378 Codex review 指出右側金額反解會把目前卡片當成反向交易重算，導致 TWD→KRW 換錢所卡片混用 KRW→TWD buy 報價。
+- 解法：抽出目前卡片的 forward unit rate，左側輸入用乘法、右側輸入用同一 forward rate 倒數反解，並補 TWD→KRW 右側輸入回歸測試。
 
 - 日期：2026-05-10
 - ID：pr378-moneybox-workflow-main-source-guard
