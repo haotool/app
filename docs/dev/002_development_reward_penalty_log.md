@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +22
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +23
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-10
+- ID：pr378-moneybox-no-change-latest-cache
+- 原因：PR #378 Codex review 指出 MoneyBox workflow 無條件以本次抓取快照覆寫 provider latest，會讓 no-change path 因 timestamp 變動而每 5 分鐘 commit。
+- 解法：保留 fetch script 對 latest 的變更判斷權，workflow 只在每日 history 缺檔或 latest 已被 script 判定變更時寫入 history，並補 guardrail 測試禁止 workflow 覆寫 latest。
 
 - 日期：2026-05-10
 - ID：pr378-canonical-provider-rate-api

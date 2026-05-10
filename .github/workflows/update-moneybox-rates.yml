@@ -97,7 +97,6 @@ jobs:
             echo "❌ Current MoneyBox fetch snapshot missing: ${MONEYBOX_FETCH_OUTPUT_FILE}"
             exit 1
           fi
-          cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_LATEST_FILE"
           if [[ ! -f "$MONEYBOX_HISTORY_FILE" ]] || [[ -n "$(git status --short --untracked-files=all -- "$MONEYBOX_LATEST_FILE")" ]]; then
             cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_HISTORY_FILE"
             echo "✅ MoneyBox history snapshot refreshed: ${MONEYBOX_HISTORY_FILE}"

@@ -575,7 +575,9 @@ describe('ratewise build scripts', () => {
       'MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"',
     );
     expect(workflowSource).toContain('cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_HISTORY_FILE"');
-    expect(workflowSource).toContain('cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_LATEST_FILE"');
+    expect(workflowSource).not.toContain(
+      'cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_LATEST_FILE"',
+    );
     expect(workflowSource).not.toContain('public/rates/moneybox.json');
     expect(workflowSource).not.toContain('public/rates/moneybox-history');
     expect(workflowSource).toContain(
