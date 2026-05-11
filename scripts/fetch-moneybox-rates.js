@@ -5,7 +5,7 @@
  */
 
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
-import { dirname, isAbsolute, join } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,12 +14,11 @@ const __dirname = dirname(__filename);
 // 設定檔案路徑
 const REPO_ROOT = join(__dirname, '..');
 const OUTPUT_DIR = join(REPO_ROOT, 'public', 'rates');
-const OUTPUT_FILE = join(OUTPUT_DIR, 'providers', 'moneybox', 'latest.json');
+const OUTPUT_FILE = join(OUTPUT_DIR, 'moneybox.json');
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 5000;
-const RATE_QUOTE_FIELDS = ['base', 'buy', 'sell', 'spbuy', 'spsell'];
 
 class AbortError extends Error {
   constructor(message, status) {
@@ -34,16 +33,6 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // MoneyBox 公開 API（韓國官方換匯所聯盟）
 const MONEYBOX_API_URL =
   'https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4';
-
-function writeCurrentFetchSnapshot(ratesData) {
-  const output = process.env.MONEYBOX_FETCH_OUTPUT_FILE;
-  if (!output) return;
-
-  const outputFile = isAbsolute(output) ? output : join(REPO_ROOT, output);
-  mkdirSync(dirname(outputFile), { recursive: true });
-  writeFileSync(outputFile, JSON.stringify(ratesData, null, 2), 'utf8');
-  console.log(`🧾 Current fetch snapshot saved: ${outputFile}`);
-}
 
 /**
  * 判斷錯誤是否可重試
@@ -187,42 +176,24 @@ async function fetchMoneyBoxRates() {
   throw new Error('Failed to fetch MoneyBox rates after maximum retries');
 }
 
-function listRateChanges(oldRates = {}, newRates = {}) {
-  const currencies = Array.from(
-    new Set([...Object.keys(oldRates), ...Object.keys(newRates)]),
-  ).sort();
-
-  return currencies.flatMap((currency) =>
-    RATE_QUOTE_FIELDS.filter(
-      (field) => oldRates[currency]?.[field] !== newRates[currency]?.[field],
-    ).map((field) => ({
-      currency,
-      field,
-      oldValue: oldRates[currency]?.[field],
-      newValue: newRates[currency]?.[field],
-    })),
-  );
-}
-
+/**
+ * 檢查匯率是否有變化（比較 TWD sell 匯率）
+ */
 function hasRateChanges(newData) {
   try {
     const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
 
-    const rateChanges = listRateChanges(oldData.rates, newData.rates);
-    const hasChanges = rateChanges.length > 0;
+    const oldTWD = oldData.rates?.TWD?.sell;
+    const newTWD = newData.rates?.TWD?.sell;
+
+    const hasChanges = oldTWD !== newTWD;
 
     if (hasChanges) {
-      console.log(
-        `🔄 Rate change detected: ${rateChanges.map(({ currency, field }) => `${currency}.${field}`).join(', ')}`,
-      );
-      for (const { currency, field, oldValue, newValue } of rateChanges) {
-        console.log(`   ${currency}.${field}: ${oldValue} → ${newValue}`);
-      }
+      console.log(`🔄 Rate change detected: TWD sell ${oldTWD} → ${newTWD} KRW/TWD`);
     } else {
-      const currentCurrencies = Object.keys(newData.rates ?? {}).length;
       console.log('📊 Rates unchanged since last update');
       console.log(`   Last update: ${oldData.updateTime}`);
-      console.log(`   Currencies checked: ${currentCurrencies}`);
+      console.log(`   TWD sell: ${oldTWD} KRW/TWD`);
     }
 
     return hasChanges;
@@ -246,7 +217,6 @@ async function main() {
     // 抓取匯率
     console.log('📡 Fetching data from MoneyBox API...');
     const ratesData = await fetchMoneyBoxRates();
-    writeCurrentFetchSnapshot(ratesData);
 
     // 檢查是否有變化
     console.log('🔍 Checking for rate changes...');
@@ -261,7 +231,7 @@ async function main() {
     console.log('');
 
     // 確保目錄存在
-    mkdirSync(dirname(OUTPUT_FILE), { recursive: true });
+    mkdirSync(OUTPUT_DIR, { recursive: true });
 
     // 寫入檔案
     writeFileSync(OUTPUT_FILE, JSON.stringify(ratesData, null, 2), 'utf8');
@@ -307,4 +277,3 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export { fetchMoneyBoxRates };
-export { listRateChanges };
