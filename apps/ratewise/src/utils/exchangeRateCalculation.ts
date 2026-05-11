@@ -421,6 +421,13 @@ export function getUnitExchangeRate(
   );
 }
 
+/**
+ * 匯率卡倒數顯示（Google-style）：「1 TO = 1/rate FROM」
+ *
+ * 設計決策：使用數學倒數而非反向呼叫 getUnitExchangeRate，因為：
+ * - 用戶視角：同一匯率的正向與倒數，可直接乘除快速換算
+ * - 若用反向計算會得到不同匯率（買賣價差），造成用戶困惑
+ */
 export function getReciprocalExchangeRate(rate: number): number {
   if (!Number.isFinite(rate) || rate <= 0) return 0;
   return 1 / rate;
