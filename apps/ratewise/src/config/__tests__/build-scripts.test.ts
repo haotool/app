@@ -603,7 +603,15 @@ describe('ratewise build scripts', () => {
     expect(workflowSource).toContain(
       'git status --short --untracked-files=all -- "$MONEYBOX_HISTORY_DIR/"',
     );
-    expect(workflowSource).toContain('git add "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR/"');
+    // SSOT：只 stage 當日 history snapshot，避免前面 git checkout origin/main -- public/rates/
+    // 把 data branch 既有前幾日 history 一併 stage 為刪除（會清空公開 history API）
+    expect(workflowSource).toContain('git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE"');
+    expect(workflowSource).toContain(
+      'TODAY_HISTORY_FILE: ${{ steps.save-history.outputs.history_file }}',
+    );
+    expect(workflowSource).not.toContain(
+      'git add "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR/"',
+    );
     expect(workflowSource).toContain(
       'git checkout origin/data -- "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR"',
     );

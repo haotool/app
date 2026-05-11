@@ -140,10 +140,15 @@ jobs:
 
       - name: Commit and push changes
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        env:
+          TODAY_HISTORY_FILE: ${{ steps.save-history.outputs.history_file }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR/"
+          # 只 add 當日 history 檔，避免 git checkout origin/main -- public/rates/ 後
+          # 把 data branch 既有的前幾日 history snapshot 一併 stage 成刪除（會清掉公開
+          # MoneyBox history API 與趨勢圖前日資料）。SSOT：每次只動當日 snapshot。
+          git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE"
 
           # 取得更新資訊
           UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).updateTime")
