@@ -65,7 +65,7 @@ export interface RateExample {
 export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
   USD: {
     exampleTWD: 30000,
-    foreignAtCash: 947,
+    foreignAtCash: 948,
     foreignAtMarketMid: 957,
     foreignAtBankMid: 957,
     diffForeign: 10,
@@ -117,15 +117,15 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
   },
   CNY: {
     exampleTWD: 30000,
-    foreignAtCash: 6395,
+    foreignAtCash: 6406,
     foreignAtMarketMid: 6495,
-    foreignAtBankMid: 6508,
-    diffForeign: 100,
-    diffTWD: 461,
-    diffPct: 1.6,
-    cashSell: 4.691,
+    foreignAtBankMid: 6519,
+    diffForeign: 89,
+    diffTWD: 410,
+    diffPct: 1.4,
+    cashSell: 4.683,
     marketMid: 4.618938,
-    bankMid: 4.61,
+    bankMid: 4.602,
     spotAvailable: true,
   },
   KRW: {
@@ -144,9 +144,9 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
       {
         name: '明洞換匯所',
         nameEn: 'Myeongdong Exchange',
-        rate: 45.1,
+        rate: 45.15,
         rateBuy: 45.2,
-        rateInverse: 0.022173,
+        rateInverse: 0.022148,
         source: 'MoneyBox',
         sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
         rateDate: '2026-05-11',
