@@ -98,6 +98,8 @@ const zhTW = {
     switchToSpot: '切換到即期匯率',
     switchToCash: '切換到現金匯率',
     switchToBank: '切換到銀行匯率',
+    switchToNextRate: '切換到{{next}}',
+    onlyOneRateAvailable: '此幣別僅有一種匯率可用',
     spotRate: '即期',
     cashRate: '現金',
     bankRate: '銀行',

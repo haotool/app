@@ -98,6 +98,8 @@ const ja = {
     switchToSpot: '直物レートに切替',
     switchToCash: '現金レートに切替',
     switchToBank: '銀行レートに切替',
+    switchToNextRate: '{{next}}に切替',
+    onlyOneRateAvailable: 'このレートのみ利用可能',
     spotRate: '直物',
     cashRate: '現金',
     bankRate: '銀行',

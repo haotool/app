@@ -99,6 +99,8 @@ const en = {
     switchToSpot: 'Switch to spot rate',
     switchToCash: 'Switch to cash rate',
     switchToBank: 'Switch to bank rate',
+    switchToNextRate: 'Switch to {{next}}',
+    onlyOneRateAvailable: 'Only one rate type available',
     spotRate: 'Spot',
     cashRate: 'Cash',
     bankRate: 'Bank',

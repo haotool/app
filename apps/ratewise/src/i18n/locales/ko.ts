@@ -98,6 +98,8 @@ const ko = {
     switchToSpot: '전신환 환율로 전환',
     switchToCash: '현금 환율로 전환',
     switchToBank: '은행 환율로 전환',
+    switchToNextRate: '{{next}}로 전환',
+    onlyOneRateAvailable: '이 환율만 이용 가능',
     spotRate: '전신환',
     cashRate: '현금',
     bankRate: '은행',
