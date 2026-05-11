@@ -139,6 +139,10 @@ pnpm format:fix              # prettier --write .
 ```bash
 pnpm changeset:version          # 升版 + CHANGELOG + 所有版本嵌入產出物一次完成
 git diff --stat                 # 確認 CHANGELOG / package.json / public/* 均已更新
+# 發版後殘留修改清理（MUST）：public/*.md 與 src/config/generated/ 若有修改，直接 restore
+# 原因：這兩類由 CI build / 每日 SEO 排程重新生成；單獨 commit 會被 SSOT 守門因缺 version bump 擋下
+git restore --staged --worktree apps/ratewise/public/*.md
+git restore apps/ratewise/src/config/generated/
 git add . && git commit         # chore(release): @app/ratewise vX.Y.Z
 git push origin main            # pre-push 自動跑 typecheck + test + build
 ```
@@ -274,6 +278,10 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **commitlint body-bullets 失敗**：主體**第一個非空行**必須以 `- ` 開頭；全形條列無效；`#N` issue reference 會使 parser 把 body 置空（改用 `N.` 或 `N,`）；每行 ≤100 字元。
 
+**發版後 `public/*.md` 或 generated 檔案觸發 SSOT 守門失敗**：`pnpm changeset:version` 只更新 api/latest.json 等 SSOT 產出物，不重新生成 markdown mirrors（`public/*.md`）；若這些修改殘留並另行 commit，`verify-version-ssot` 會因新 staged set 缺少 version bump 或 changeset 而擋下。修法：`git restore --staged --worktree apps/ratewise/public/*.md apps/ratewise/src/config/generated/`，讓 CI build 與每日 SEO 排程重新生成。
+
+**lint-staged stash/restore 循環復活已 restore 的檔案**：commit 失敗時 lint-staged 會還原其 stash，可能把已 `git restore` 的 working tree 修改重新帶回。修法：每次 commit 失敗後必須重新執行 `git restore --staged --worktree <files>` 再重試，不可假設檔案狀態與 restore 後相同。
+
 ### PWA
 
 **冷啟動離線白屏（COEP 阻斷 precache）**：JS/CSS 資源帶 `COEP: require-corp` → SW 無法寫入 Cache Storage → precache 僅 5 項 → 白屏。修法：COEP/COOP 限定 `isRatewise && isHTML` 分支；JS/CSS 只保留 `CORP: same-origin`。診斷：`curl -sI <chunk.js> | grep -i cross-origin`；DevTools precache 應 50+ 項。
@@ -355,6 +363,7 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 | 日期       | 版本      | 變更摘要                                                                                                                     |
 | ---------- | --------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-11 | v5.6      | 補充發版後 generated 殘留修改清理 SOP 與 lint-staged stash 復活問題的治理規則                                                |
 | 2026-05-02 | v5.5      | 加入 SEO 迭代治理 SOP 與監控指引，補齊 `docs/dev/036_seo_iterative_execution_protocol.md` 同步點位                           |
 | 2026-04-28 | v5.4      | 補充 Zeabur deployment race 診斷與修復規則，避免 release SHA 被較舊 main SHA 覆蓋                                            |
 | 2026-04-28 | v5.3      | 修正 release PR 建立失敗被 workflow success 掩蓋的診斷規則，補充 README 同步與 changeset 消化檢查                            |
