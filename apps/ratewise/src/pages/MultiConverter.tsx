@@ -28,10 +28,10 @@ export default function MultiConverter() {
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
 
   // rateType / rateSource 共用 converterStore，與 RateWise/Favorites 同源。
-  // 換錢所→銀行 fallback 已下放至 useCurrencyConverter（SSOT），此處不再持有 setRateSource。
   const rateType = useConverterStore((state) => state.rateType);
   const rateSource = useConverterStore((state) => state.rateSource);
   const setRateType = useConverterStore((state) => state.setRateType);
+  const setRateSource = useConverterStore((state) => state.setRateSource);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration marker
@@ -52,6 +52,7 @@ export default function MultiConverter() {
     sortedCurrencies,
     rateMode,
     exchangeShopRatesByCurrency,
+    isExchangeShopAvailableInContext,
     handleMultiAmountChange,
     quickAmount,
     setBaseCurrency,
@@ -155,9 +156,11 @@ export default function MultiConverter() {
               details={details}
               exchangeShopRatesByCurrency={exchangeShopRatesByCurrency}
               favorites={favorites}
+              isExchangeShopAvailable={isExchangeShopAvailableInContext}
               onAmountChange={handleMultiAmountChange}
               onQuickAmount={handleQuickAmount}
               onRateTypeChange={setRateType}
+              onRateSourceChange={setRateSource}
               onBaseCurrencyChange={handleBaseCurrencyChange}
               onToggleFavorite={toggleFavorite}
             />

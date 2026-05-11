@@ -97,8 +97,10 @@ const ja = {
     removeFavorite: '{{code}} をお気に入りから削除',
     switchToSpot: '直物レートに切替',
     switchToCash: '現金レートに切替',
+    switchToBank: '銀行レートに切替',
     spotRate: '直物',
     cashRate: '現金',
+    bankRate: '銀行',
   },
 
   // Favorites

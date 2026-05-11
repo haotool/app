@@ -29,9 +29,11 @@ interface MultiConverterProps {
   details?: Record<string, RateDetails>;
   exchangeShopRatesByCurrency?: ExchangeShopRatesByCurrency;
   favorites: CurrencyCode[];
+  isExchangeShopAvailable?: boolean;
   onAmountChange: (code: CurrencyCode, value: string) => void;
   onQuickAmount: (amount: number) => void;
   onRateTypeChange: (type: RateType) => void;
+  onRateSourceChange?: (source: RateSource) => void;
   onBaseCurrencyChange: (code: CurrencyCode) => void;
   onToggleFavorite: (code: CurrencyCode) => void;
 }
@@ -46,9 +48,11 @@ export const MultiConverter = ({
   details,
   exchangeShopRatesByCurrency = {},
   favorites,
+  isExchangeShopAvailable = false,
   onAmountChange,
   onQuickAmount,
   onRateTypeChange,
+  onRateSourceChange,
   onBaseCurrencyChange,
   onToggleFavorite,
 }: MultiConverterProps) => {
@@ -251,6 +255,27 @@ export const MultiConverter = ({
                     {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
                   </div>
                   <div className="text-[11px] text-right leading-tight opacity-70 mt-0.5">
+                    {isExchangeShopAvailable && onRateSourceChange && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRateSourceChange(rateSource === 'bank' ? 'exchange-shop' : 'bank');
+                          }}
+                          className="font-semibold text-primary hover:text-primary-hover transition-colors"
+                          aria-label={
+                            rateSource === 'bank'
+                              ? t('singleConverter.switchToExchangeShop')
+                              : t('multiConverter.switchToBank')
+                          }
+                        >
+                          {rateSource === 'bank'
+                            ? t('multiConverter.bankRate')
+                            : t('singleConverter.exchangeShopRate')}
+                        </button>
+                        <span className="opacity-60"> · </span>
+                      </>
+                    )}
                     {(() => {
                       const rateTypeInfo = hasOnlyOneRateType(code);
                       const isDisabled = rateTypeInfo.hasOnlyOne;

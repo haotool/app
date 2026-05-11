@@ -620,6 +620,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     baseCurrency,
     history,
     sortedCurrencies,
+    isExchangeShopAvailableInContext,
 
     // Setters
     setFromCurrency,

@@ -97,8 +97,10 @@ const ko = {
     removeFavorite: '{{code}} 즐겨찾기에서 제거',
     switchToSpot: '전신환 환율로 전환',
     switchToCash: '현금 환율로 전환',
+    switchToBank: '은행 환율로 전환',
     spotRate: '전신환',
     cashRate: '현금',
+    bankRate: '은행',
   },
 
   // Favorites

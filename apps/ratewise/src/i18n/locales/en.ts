@@ -98,8 +98,10 @@ const en = {
     removeFavorite: 'Remove {{code}} from favorites',
     switchToSpot: 'Switch to spot rate',
     switchToCash: 'Switch to cash rate',
+    switchToBank: 'Switch to bank rate',
     spotRate: 'Spot',
     cashRate: 'Cash',
+    bankRate: 'Bank',
   },
 
   // Favorites
