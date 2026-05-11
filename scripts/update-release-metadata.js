@@ -2,6 +2,13 @@
  * 更新發版相關靜態資源（sitemap + 版本嵌入 prebuild 產出物）。
  * 在 Changeset version 階段執行（changeset:version），確保 release PR 包含最新 metadata，
  * 且所有版本 SSOT 驗證（seo-best-practices、llms-txt.spec）在 pre-push 時一次通過。
+ *
+ * 執行順序：
+ *   1. syncRootVersion        — 同步 root package.json 版本
+ *   2. updateSitemap          — 更新 sitemap.xml lastmod
+ *   3. runVersionEmbedScripts — 重新生成所有版本嵌入產出物（含 markdown mirrors）
+ *   4. restoreGeneratedData   — restore live 市場資料（build-time-rates.json、seo-rate-examples.ts），
+ *                               避免帶入 release commit；這些檔案由 prebuild / 每日 SEO 排程更新。
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -51,6 +58,7 @@ function runVersionEmbedScripts() {
     'generate-manifest.mjs',
     'generate-openapi.mjs',
     'generate-robots-txt.mjs',
+    'generate-markdown-mirrors.mjs',
   ];
 
   const node = process.execPath;
@@ -70,11 +78,30 @@ function runVersionEmbedScripts() {
   }
 }
 
+/**
+ * live 市場資料（build-time-rates.json、seo-rate-examples.ts）由 prebuild / 每日 SEO 排程更新，
+ * 不應進入 release commit（版本守門會擋：staged set 無 version bump 時不允許 src/ 變更）。
+ * 在此自動 restore，避免手動操作遺漏。
+ */
+function restoreGeneratedData() {
+  const targets = ['apps/ratewise/src/config/generated/'];
+  const git = spawnSync('git', ['restore', '--', ...targets], {
+    cwd: join(__dirname, '..'),
+    stdio: 'inherit',
+  });
+  if (git.status !== 0) {
+    console.warn('⚠️  git restore generated data 失敗（可能無修改），繼續執行');
+  } else {
+    console.log('✅ Restored live rate data (src/config/generated/)');
+  }
+}
+
 function main() {
   console.log('🛠  Updating release metadata');
   syncRootVersion();
   updateSitemap();
   runVersionEmbedScripts();
+  restoreGeneratedData();
   console.log('🎉 Release metadata update completed');
 }
 

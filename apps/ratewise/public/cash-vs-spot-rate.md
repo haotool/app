@@ -3,7 +3,7 @@
 > 說明現金匯率與即期匯率差異，整理臨櫃換鈔、外幣帳戶、匯款與旅遊換匯情境，幫助你在不同交易方式下選對報價欄位，避免高估或低估實際成本，也避免把中間價誤當成交價與預算基準。
 
 - Canonical: https://app.haotool.org/ratewise/cash-vs-spot-rate/
-- Version: v2.22.21
+- Version: v2.23.0
 
 ## 重點整理
 
@@ -52,5 +52,5 @@
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.22.21），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.23.0），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_

@@ -1,5 +1,49 @@
 # @app/ratewise
 
+## 2.23.0
+
+### Minor Changes
+
+- bc34758: 換錢所匯率 API 改用 provider canonical path：MoneyBox latest/history 由 `/public/rates/providers/moneybox/` 提供，OpenAPI 與 OpenData 文件同步升級為 provider-based contract。
+- 701414e: 新增 MoneyBox 換錢所歷史資料端點與匯率來源 API 合約，並將 provider registry、quote adapter 與公開 metadata 收斂為 SSOT，讓 Open Data 與 OpenAPI 可銜接台銀、換錢所與未來多銀行 provider 架構。
+- 93a5b95: KRW 換算新增「換錢所」匯率選項，使用者可在台銀牌告與明洞換匯所匯率之間切換。
+
+### Patch Changes
+
+- 01cd8de: 修正最佳匯率模式下的匯率來源顯示，確保卡片與資料來源 badge 會跟實際採用的 provider 一致。
+- fcc7081: 轉換歷史紀錄收斂為 store SSOT：每筆寫入帶 `schemaVersion=2` 與 `rateType` / `sourceKind` / `providerId` / `providerSelectionMode` 欄位，`useCurrencyConverter.addToHistory` 統一改用 store action（不再寫舊版 `conversionHistory` 個別 key）；舊資料於 hydrate 時遷移到 store 並保留 legacy 欄位（不偽造 sourceKind/providerId）。歷史上限由 hook 的 10 筆放寬到 store 的 50 筆，UI 行為不變。
+- 893fd14: 新增換錢所 provider registry SSOT，統一管理幣別換錢所配置，預留 PHP/THB 等未來幣別擴充架構。
+- 9d941c2: 修正換錢所模式的趨勢圖資料來源，讓 MoneyBox 匯率卡使用換錢所歷史價格而不是台銀歷史；同時讓轉換歷史重新載入時恢復原本的匯率分類、模式與來源，並確保 MoneyBox 每日歷史快照與更新判斷都使用完整 TWD quote。
+- 7bb6bce: Production Lighthouse baseline 檢查會在執行前驗證 `LH_RUNS` 與 `LH_MAX_ATTEMPTS` 必須是正整數，避免 retry 設定錯誤時靜默產生不可信的通過結果。
+- f46901f: 修正換匯所匯率服務程式碼品質：NaN 防護、304 測試、快取策略文件
+- c4b5965: 新增 moneyboxRateService，對齊台銀快取策略：CDN + ETag 條件式請求、localStorage 5 分鐘快取、離線後備值，computeConverterRate 處理 TWD↔KRW 雙向匯率計算。
+- 59bfc9c: 修正多幣別頁的匯率顯示與換錢所來源收斂問題：現在多幣別會正確讀取使用者選擇的匯率模式與匯率來源，`auto`/`exchange-shop` 顯示不再和實際換算結果脫節；同時將 `rateType` / `rateSource` 偏好收進共用 store，讓單幣別與多幣別共用同一份持久化來源（收藏頁僅共用 `rateType`），切換到「換錢所」時自動同步為「現金」匯率。
+- b8563ca: 修正多幣別模式下換錢所與銀行匯率來源可能不一致的問題。
+- 7162f11: useCurrencyConverter 改以 store `providerPreference` 解析 `resolvedProvider` 作為實際來源決策點，移除元件層對 `rateSource` 的直接依賴；同時暴露 `providerQuotes` / `rankedProviderQuotes` 作為未來 best 模式預留接點。Phase 1 行為與目前完全一致（rateSource 仍由 store 同步維持），無使用者可感知變更。
+- a999c1c: 新增 `RateProviderMenu` 元件骨架（Phase 2 預留）：內建 `shouldEnableBankProviderChoice()` phase gate，目前因為只有台銀一家銀行 provider，元件 return null 不渲染，使用者體驗完全不變。Phase 2 啟用多銀行推薦時可直接掛入既有 RateSelector / SingleConverter。
+- d7c47a0: 新增 rate provider ranking 純函式（`rateProviderRanking.ts`），提供 `rankProviderQuotes` 與 `resolveProviderPreference`，依 best/manual 模式收斂 provider 解析行為，內部架構準備，無使用者可見變化
+- 72afb4e: 新增 rate provider registry SSOT（`rateProviders.ts`），收斂 provider metadata 與多銀行啟用條件，內部架構準備，無使用者可見變化
+- 2fd8f1b: 新增 rate provider 領域型別 SSOT（內部架構準備，無使用者可見變化）
+- 941ecfc: converterStore 新增 `providerPreference` 持久化欄位與 `setProviderPreference` 主入口；`setRateSource` 退為相容包裝，與 `rateSource` legacy 欄位永遠透過單一程式碼路徑同步。Phase 1 永遠 `mode='manual'`，cash invariant 維持原行為，內部架構準備，無使用者可見變化
+- e77e3d4: 新增 RateSource 型別與 RATE_SOURCE localStorage SSOT key
+- 75a188c: 修正 auto 匯率模式 buy/sell 方向錯誤與 reverseRate 對稱顯示問題：交換幣別後匯率卡現在顯示正確的方向性匯率（不再相同）。
+- fa2cd94: 修復多幣別模式 best provider 決策漂移：`resolveEffectiveRateSourceForConversion`
+  新增 `providerSelectionMode` 參數，當使用者偏好為 `best` 模式且該 row pair
+  有可用換錢所匯率時自動套用換錢所（過去只看 legacy `rateSource`，導致
+  best-provider 選到 MoneyBox 的 TWD/KRW pair 在多幣別頁仍用銀行匯率）。
+  單元測試補三組組合覆蓋（best 有/無 quote、manual 維持使用者選擇）。
+- 757e696: 收斂預設匯率 provider、匯率模式合法值與 provider 支援 rate type 對應到 registry/constants SSOT，並保持 Node TS 腳本可直接載入 provider registry，降低未來新增或切換銀行 provider 的維護風險。
+- 389bbb3: 延續 PR378 SSOT 收斂，三項內部架構整理與一項使用者可感知的持久化修正：
+  - **rateSource auto-fallback 收斂**：`RateWise.tsx` 與 `MultiConverter.tsx` 過去各自持有「換錢所→銀行」回退 effect，預測式不一致；改由 `useCurrencyConverter` 提供唯一 mode-aware fallback effect，並修正 `effectiveRateSource` 寫死 `mode: 'single'` 的 bug，讓多幣別模式也走相同 derived state 路徑。
+  - **baseCurrency 收進 store SSOT**：把多幣別頁的基準貨幣從 hook local state 收進 `converterStore`（與 `partialize`、`__validateAndSanitize` 同步），使用者切換的 base currency 重新整理或重啟 PWA 後不再 reset 為 TWD。新增 3 個 store 單元測試守住 setBaseCurrency 與單/多幣別欄位隔離不變式。
+  - **state.mode dead state 清理**：`mode` 欄位、`setMode` action 與 MultiConverter 的 `setMode('multi')` mount effect 全數移除——頁面 mode 由 route 決定（route 即 SSOT），不再雙寫。`removeLegacyKeys` 仍清掉舊版 `currencyConverterMode` localStorage。
+
+  行為相容：除了 baseCurrency 持久化的小幅 UX 改善外，UI 行為與既有快照／測試完全一致。
+
+- 7b23275: 修正單幣別換算可能沿用多幣別模式狀態的問題，避免 quick amount 與換算來源走錯分支。
+- 88e7be0: 強化匯率 API 與快取清理的 SSOT guardrail，避免 provider endpoint 與使用者資料保留規則漂移。
+- 203e6ed: 修正右側金額輸入反解時沿用同一張匯率卡的報價方向，避免換錢所 TWD→KRW 反解混用 KRW→TWD 買入價。
+
 ## 2.22.21
 
 ### Patch Changes
