@@ -1,11 +1,45 @@
 {
   "name": "HaoRate Exchange Rate API",
   "version": "2.22.21",
-  "description": "臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步",
+  "description": "臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步，並提供 App 匯率模式欄位對照",
   "source": "臺灣銀行牌告匯率",
   "sourceUrl": "https://rate.bot.com.tw/xrt",
   "updateFrequency": "every 5 minutes",
   "baseCurrency": "TWD",
+  "rateModes": [
+    "auto",
+    "sell",
+    "mid"
+  ],
+  "rateModeStrategies": {
+    "auto": {
+      "label": "自動方向",
+      "description": "與 App 預設匯率模式一致：來源外幣使用買入價、目標外幣使用賣出價，依換算方向貼近實際成本。",
+      "fromCurrencyField": "{rateType}.buy",
+      "toCurrencyField": "{rateType}.sell",
+      "twdToForeign": "amount / details.{TO}.{rateType}.sell",
+      "foreignToTwd": "amount * details.{FROM}.{rateType}.buy",
+      "foreignToForeign": "amount * details.{FROM}.{rateType}.buy / details.{TO}.{rateType}.sell"
+    },
+    "sell": {
+      "label": "賣出價",
+      "description": "全程使用銀行賣出價；即期/現金由使用者選擇的 rateType 決定。",
+      "fromCurrencyField": "{rateType}.sell",
+      "toCurrencyField": "{rateType}.sell",
+      "twdToForeign": "amount / details.{TO}.{rateType}.sell",
+      "foreignToTwd": "amount * details.{FROM}.{rateType}.sell",
+      "foreignToForeign": "amount * details.{FROM}.{rateType}.sell / details.{TO}.{rateType}.sell"
+    },
+    "mid": {
+      "label": "參考價",
+      "description": "使用買入價與賣出價的中間價；適合市場參考，不代表實際可成交價格。",
+      "fromCurrencyField": "({rateType}.buy + {rateType}.sell) / 2",
+      "toCurrencyField": "({rateType}.buy + {rateType}.sell) / 2",
+      "twdToForeign": "amount / mid(details.{TO}.{rateType})",
+      "foreignToTwd": "amount * mid(details.{FROM}.{rateType})",
+      "foreignToForeign": "amount * mid(details.{FROM}.{rateType}) / mid(details.{TO}.{rateType})"
+    }
+  },
   "rateTypes": [
     "cash_buy",
     "cash_sell",
@@ -34,12 +68,79 @@
   ],
   "endpoints": {
     "latest": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
-    "history": "https://raw.githubusercontent.com/haotool/app/data/public/rates/history/{YYYY-MM-DD}.json"
+    "history": "https://raw.githubusercontent.com/haotool/app/data/public/rates/history/{YYYY-MM-DD}.json",
+    "moneybox": "https://raw.githubusercontent.com/haotool/app/data/public/rates/providers/moneybox/latest.json",
+    "moneyboxHistory": "https://raw.githubusercontent.com/haotool/app/data/public/rates/providers/moneybox/history/{YYYY-MM-DD}.json"
   },
   "cdnEndpoints": {
     "latest": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json",
-    "history": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json"
+    "history": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json",
+    "moneybox": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json",
+    "moneyboxHistory": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/history/{YYYY-MM-DD}.json"
   },
+  "providerSelection": {
+    "bankProviderChoiceEnabled": false,
+    "activationRule": "Enable bank provider choice when bank provider count is greater than 1",
+    "currentBankProviderId": "bot",
+    "currentExchangeShopProviderId": "moneybox",
+    "supportedSelectionModes": [
+      "manual",
+      "best"
+    ],
+    "currentSelectionMode": "manual"
+  },
+  "providers": [
+    {
+      "providerId": "bot",
+      "sourceKind": "bank",
+      "name": "台灣銀行",
+      "shortName": "台銀",
+      "supportedCurrencies": [
+        "TWD",
+        "JPY",
+        "KRW",
+        "CNY",
+        "VND",
+        "THB",
+        "HKD",
+        "PHP",
+        "MYR",
+        "SGD",
+        "USD",
+        "EUR",
+        "GBP",
+        "CHF",
+        "AUD",
+        "CAD",
+        "NZD",
+        "IDR"
+      ],
+      "supportedRateTypes": [
+        "spot",
+        "cash"
+      ],
+      "currentEndpoint": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
+      "historyEndpoint": "https://raw.githubusercontent.com/haotool/app/data/public/rates/history/{YYYY-MM-DD}.json",
+      "cdnCurrentEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json",
+      "cdnHistoryEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json"
+    },
+    {
+      "providerId": "moneybox",
+      "sourceKind": "exchange-shop",
+      "name": "明洞換匯所",
+      "shortName": "MoneyBox",
+      "supportedCurrencies": [
+        "KRW"
+      ],
+      "supportedRateTypes": [
+        "cash"
+      ],
+      "currentEndpoint": "https://raw.githubusercontent.com/haotool/app/data/public/rates/providers/moneybox/latest.json",
+      "historyEndpoint": "https://raw.githubusercontent.com/haotool/app/data/public/rates/providers/moneybox/history/{YYYY-MM-DD}.json",
+      "cdnCurrentEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json",
+      "cdnHistoryEndpoint": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/history/{YYYY-MM-DD}.json"
+    }
+  ],
   "rateTypeDescriptions": {
     "cash_buy": "現金買入：銀行以此價收購外幣現鈔（你拿外幣換台幣）",
     "cash_sell": "現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）",
@@ -54,7 +155,7 @@
   "interactiveDeepLinkTemplate": "https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}",
   "pairEndpoints": {
     "template": "https://app.haotool.org/ratewise/api/pairs/{PAIR}.json",
-    "description": "各幣對靜態 JSON 端點，提供幣對資訊、即時匯率 CDN 連結、匯率欄位路徑與落地頁 URL",
+    "description": "各幣對靜態 JSON 端點，提供幣對資訊、即時匯率連結、匯率欄位路徑、App 匯率模式欄位對照與落地頁 URL",
     "example": "https://app.haotool.org/ratewise/api/pairs/usd-twd.json",
     "availablePairs": "usd-twd, jpy-twd, eur-twd, gbp-twd, cny-twd, krw-twd, hkd-twd, aud-twd, cad-twd, sgd-twd, thb-twd, nzd-twd, chf-twd, vnd-twd, php-twd, idr-twd, myr-twd"
   },

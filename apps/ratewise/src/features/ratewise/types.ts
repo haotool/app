@@ -1,20 +1,36 @@
-import { type CURRENCY_DEFINITIONS } from './constants';
+import {
+  type CONVERTER_MODES,
+  type CURRENCY_DEFINITIONS,
+  type RATE_MODES,
+  type RATE_SOURCES,
+  type RATE_TYPES,
+} from './constants';
 
 export type CurrencyCode = keyof typeof CURRENCY_DEFINITIONS;
 export type CurrencyMeta = (typeof CURRENCY_DEFINITIONS)[CurrencyCode];
 
-export type ConverterMode = 'single' | 'multi';
+export type ConverterMode = (typeof CONVERTER_MODES)[number];
 export type AmountField = 'from' | 'to';
-export type RateType = 'spot' | 'cash';
-/** 匯率模式：自動方向 / 賣出價為主 / 中間價 */
-export type RateMode = 'auto' | 'sell' | 'mid';
+export type RateType = (typeof RATE_TYPES)[number];
+
+export type RateSource = (typeof RATE_SOURCES)[number];
+
+export type RateMode = (typeof RATE_MODES)[number];
 export type MultiAmountsState = Record<CurrencyCode, string>;
+
+export type ConversionHistoryCategory = 'spot' | 'cash' | 'exchange-shop' | 'legacy';
 
 export interface ConversionHistoryEntry {
   from: CurrencyCode;
   to: CurrencyCode;
   amount: string;
   result: string;
-  time: string; // 顯示用（相對時間，如 "今天 14:30"）
-  timestamp: number; // 完整時間戳記（用於排序、過期判斷、生成唯一 key）
+  time: string;
+  timestamp: number;
+  rateType?: RateType;
+  sourceKind?: RateSource;
+  providerId?: string;
+  providerSelectionMode?: 'best' | 'manual';
+  rateMode?: RateMode;
+  schemaVersion?: 2;
 }

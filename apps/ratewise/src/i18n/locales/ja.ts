@@ -65,8 +65,12 @@ const ja = {
     addedToHistory: '履歴に追加しました',
     spotRate: '直物',
     cashRate: '現金',
+    exchangeShopRate: '両替所',
+    rateTypeGroup: 'レート種類',
     switchToSpot: '直物レートに切替',
     switchToCash: '現金レートに切替',
+    switchToExchangeShop: '両替所レートに切替',
+    fallbackRate: '参考値',
     rateTypeUnavailable: '{{rateType}}レートは現在利用できません',
     rateTypeUnavailableForCurrencies:
       '{{currencies}} は {{rateType}} レート非対応のため、{{fallbackType}} を使用します',
@@ -197,6 +201,11 @@ const ja = {
     reconvertAriaLabel: 'クイック換算 {{from}} から {{to}}',
     copyAriaLabel: '換算結果をコピー',
     entryAriaLabel: '{{amount}} {{from}} を {{result}} {{to}} に換算',
+    categories: {
+      spot: '直物',
+      cash: '現金',
+      'exchange-shop': '両替所',
+    },
   },
 
   // Calculator

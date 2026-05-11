@@ -65,8 +65,12 @@ const zhTW = {
     addedToHistory: '已加入歷史記錄',
     spotRate: '即期',
     cashRate: '現金',
+    exchangeShopRate: '換錢所',
+    rateTypeGroup: '匯率類型',
     switchToSpot: '切換到即期匯率',
     switchToCash: '切換到現金匯率',
+    switchToExchangeShop: '切換到換錢所匯率',
+    fallbackRate: '參考值',
     rateTypeUnavailable: '目前不提供 {{rateType}} 匯率',
     rateTypeUnavailableForCurrencies:
       '{{currencies}} 不提供 {{rateType}} 匯率，已改用 {{fallbackType}}',
@@ -197,6 +201,11 @@ const zhTW = {
     reconvertAriaLabel: '點擊快速換算 {{from}} 到 {{to}}',
     copyAriaLabel: '複製轉換結果',
     entryAriaLabel: '{{amount}} {{from}} 換算為 {{result}} {{to}}',
+    categories: {
+      spot: '即期',
+      cash: '現金',
+      'exchange-shop': '換錢所',
+    },
   },
 
   // Calculator

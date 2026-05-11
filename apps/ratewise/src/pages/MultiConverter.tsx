@@ -18,32 +18,25 @@ import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConv
 import { MultiConverterSkeleton } from '../components/SkeletonLoader';
 import { formatDisplayTime } from '../utils/timeFormatter';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
-import type { RateType, CurrencyCode } from '../features/ratewise/types';
-import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
+import type { CurrencyCode } from '../features/ratewise/types';
 import { multiConverterLayoutTokens } from '../config/design-tokens';
+import { useConverterStore } from '../stores/converterStore';
 
 export default function MultiConverter() {
   const { t } = useTranslation();
   const isTestEnv = import.meta.env.MODE === 'test';
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
-  const [rateType, setRateType] = useState<RateType>('spot');
+
+  // rateType / rateSource 共用 converterStore，與 RateWise/Favorites 同源。
+  // 換錢所→銀行 fallback 已下放至 useCurrencyConverter（SSOT），此處不再持有 setRateSource。
+  const rateType = useConverterStore((state) => state.rateType);
+  const rateSource = useConverterStore((state) => state.rateSource);
+  const setRateType = useConverterStore((state) => state.setRateType);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration marker
     setIsHydrated(true);
   }, []);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEYS.RATE_TYPE);
-    if (stored === 'cash') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage restore
-      setRateType('cash');
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.RATE_TYPE, rateType);
-  }, [rateType]);
 
   const {
     rates: exchangeRates,
@@ -57,19 +50,19 @@ export default function MultiConverter() {
   const {
     multiAmounts,
     sortedCurrencies,
+    rateMode,
+    exchangeShopRatesByCurrency,
     handleMultiAmountChange,
     quickAmount,
     setBaseCurrency,
-    setMode,
     baseCurrency,
     favorites,
     toggleFavorite,
-  } = useCurrencyConverter({ exchangeRates, details, rateType });
+  } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'multi' });
 
-  // Set mode to 'multi' on mount
-  useEffect(() => {
-    setMode('multi');
-  }, [setMode]);
+  // 註：rateSource→cash 同步已收斂到 converterStore.setRateSource。
+  // 換錢所→銀行 fallback 已收斂到 useCurrencyConverter（SSOT），頁面層不再重複。
+  // 註：page mode（single/multi）由 route 決定（route 即 SSOT），不再寫入 store。
 
   const handleQuickAmount = useCallback(
     (amount: number) => {
@@ -157,7 +150,10 @@ export default function MultiConverter() {
               multiAmounts={multiAmounts}
               baseCurrency={baseCurrency}
               rateType={rateType}
+              rateMode={rateMode}
+              rateSource={rateSource}
               details={details}
+              exchangeShopRatesByCurrency={exchangeShopRatesByCurrency}
               favorites={favorites}
               onAmountChange={handleMultiAmountChange}
               onQuickAmount={handleQuickAmount}

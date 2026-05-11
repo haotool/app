@@ -699,7 +699,7 @@ export const singleConverterLayoutTokens = {
 
     /** 匯率類型按鈕尺寸 */
     rateTypeButton:
-      'px-2.5 py-1 text-xs compact:px-2 compact:py-0.5 compact:text-[11px] short:px-2 short:py-0.5 short:text-[11px] tiny:px-1.5 tiny:py-0.5 tiny:text-[10px] micro:px-1.5 micro:py-0.5 micro:text-[10px] nano:px-1 nano:py-0.5 nano:text-[9px]',
+      'px-2 py-0.5 text-[11px] compact:px-1.5 compact:py-0.5 compact:text-[10px] short:px-1.5 short:py-0.5 short:text-[10px] tiny:px-1 tiny:py-0.5 tiny:text-[9px] micro:px-1 micro:py-0.5 micro:text-[9px] nano:px-1 nano:py-0.5 nano:text-[9px]',
 
     /** 匯率類型圖示 - nano 隱藏 */
     rateTypeIcon:
@@ -717,6 +717,20 @@ export const singleConverterLayoutTokens = {
     /** 趨勢圖懸停高度 */
     chartHoverHeight:
       'group-hover:h-24 compact:group-hover:h-20 short:group-hover:h-16 tiny:group-hover:h-14 micro:group-hover:h-12 nano:group-hover:h-10',
+
+    /** 換錢所來源 badge 容器（換錢所選中時顯示） */
+    exchangeShopBadge:
+      'mx-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10px] font-medium leading-tight text-text-muted/60',
+
+    /** 換錢所 badge 圖示 */
+    exchangeShopBadgeIcon: 'h-3 w-3 shrink-0 text-primary/70',
+
+    /** 換錢所 badge 分隔點 */
+    exchangeShopBadgeDot: 'text-text-muted/40',
+
+    /** 換錢所 badge 來源連結 */
+    exchangeShopBadgeLink:
+      'text-text-muted/70 underline decoration-dotted underline-offset-2 transition-colors hover:text-primary',
   },
 
   /**

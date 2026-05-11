@@ -21,7 +21,11 @@ import {
   handleVersionUpdate,
   getVersionHistory,
 } from '../versionManager';
-import { STORAGE_KEYS } from '../../features/ratewise/storage-keys';
+import {
+  CACHE_KEY_PREFIXES,
+  STORAGE_KEYS,
+  USER_DATA_KEYS,
+} from '../../features/ratewise/storage-keys';
 import * as logger from '../logger';
 
 // ===== SSOT Mock: config/version.ts =====
@@ -53,6 +57,10 @@ const mockLocalStorage = (() => {
     get store() {
       return store;
     },
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: vi.fn((index: number) => Object.keys(store)[index] ?? null),
     // ✅ Helper to manually clear store in tests
     _resetStore: () => {
       store = {};
@@ -218,6 +226,36 @@ describe('versionManager', () => {
       expect(logger.logger.info).toHaveBeenCalledWith('Starting cache clearance', {
         reason: 'version_update',
       });
+    });
+
+    it('清除換錢所 prefix 快取 keys', () => {
+      mockLocalStorage.setItem(`${STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX}KRW`, '{"sell":44.85}');
+      mockLocalStorage.setItem(`${STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX}PHP`, '{"sell":1.2}');
+      mockLocalStorage.setItem(STORAGE_KEYS.RATE_SOURCE, 'exchange-shop');
+
+      clearAppCache();
+
+      expect(CACHE_KEY_PREFIXES).toContain(STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX);
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
+        `${STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX}KRW`,
+      );
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
+        `${STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX}PHP`,
+      );
+      expect(mockLocalStorage.store[STORAGE_KEYS.RATE_SOURCE]).toBe('exchange-shop');
+    });
+
+    it('使用 USER_DATA_KEYS 防止快取清理誤刪用戶資料', () => {
+      for (const key of USER_DATA_KEYS) {
+        mockLocalStorage.setItem(key, 'persisted');
+      }
+
+      clearAppCache();
+
+      for (const key of USER_DATA_KEYS) {
+        expect(mockLocalStorage.removeItem).not.toHaveBeenCalledWith(key);
+        expect(mockLocalStorage.store[key]).toBe('persisted');
+      }
     });
 
     it('不清除 Service Worker 快取（防止 PWA 離線失效）', () => {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 async function readPackageJson() {
   const packageJsonPath = path.resolve(__dirname, '../../../package.json');
@@ -80,6 +81,26 @@ async function readMoneyBoxWorkflow() {
   return readFile(workflowPath, 'utf-8');
 }
 
+async function readMoneyBoxFetchScript() {
+  const scriptPath = path.resolve(__dirname, '../../../../../scripts/fetch-moneybox-rates.js');
+  return readFile(scriptPath, 'utf-8');
+}
+
+async function importMoneyBoxFetchScript() {
+  const scriptPath = path.resolve(__dirname, '../../../../../scripts/fetch-moneybox-rates.js');
+  return import(pathToFileURL(scriptPath).href) as Promise<{
+    listRateChanges: (
+      oldRates: Record<string, Record<string, number | null>>,
+      newRates: Record<string, Record<string, number | null>>,
+    ) => {
+      currency: string;
+      field: string;
+      oldValue: number | null | undefined;
+      newValue: number | null | undefined;
+    }[];
+  }>;
+}
+
 async function readLatestRatesWorkflow() {
   const workflowPath = path.resolve(
     __dirname,
@@ -104,6 +125,35 @@ async function readPrebuildFetchRatesScript() {
 async function readSeoRateExamplesScript() {
   const scriptPath = path.resolve(__dirname, '../../../scripts/update-seo-rate-examples.mjs');
   return readFile(scriptPath, 'utf-8');
+}
+
+async function readApiJsonGenerator() {
+  const scriptPath = path.resolve(__dirname, '../../../scripts/generate-api-json.mjs');
+  return readFile(scriptPath, 'utf-8');
+}
+
+async function readPairJsonGenerator() {
+  const scriptPath = path.resolve(__dirname, '../../../scripts/generate-pair-json.mjs');
+  return readFile(scriptPath, 'utf-8');
+}
+
+async function readOpenApiGenerator() {
+  const scriptPath = path.resolve(__dirname, '../../../scripts/generate-openapi.mjs');
+  return readFile(scriptPath, 'utf-8');
+}
+
+async function readRateProviderPublicMetadataSource() {
+  const scriptPath = path.resolve(__dirname, '../rateProviderPublicMetadata.ts');
+  return readFile(scriptPath, 'utf-8');
+}
+
+async function readBuildTimeRatesFixture() {
+  const ratesPath = path.resolve(__dirname, '../generated/build-time-rates.json');
+  return JSON.parse(await readFile(ratesPath, 'utf-8')) as {
+    timestamp: unknown;
+    updateTime: unknown;
+    details?: Record<string, unknown>;
+  };
 }
 
 async function readSeoPathsConfig() {
@@ -481,13 +531,17 @@ describe('ratewise build scripts', () => {
     expect(pairAmountSeoHook).not.toContain('今日可換多少');
   });
 
-  it('should detect newly created moneybox.json files in the 5-minute workflow instead of relying on git diff for tracked files only', async () => {
+  it('should detect newly created MoneyBox provider files in the 5-minute workflow instead of relying on git diff for tracked files only', async () => {
     const workflowSource = await readMoneyBoxWorkflow();
 
-    expect(workflowSource).toContain('public/rates/moneybox.json');
+    expect(workflowSource).toContain(
+      'MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json',
+    );
+    expect(workflowSource).toContain('public/rates/providers/moneybox/latest.json');
+    expect(workflowSource).not.toContain('MONEYBOX_LATEST_FILE: public/rates/moneybox.json');
     expect(workflowSource).not.toContain('git diff --quiet public/rates/moneybox.json');
     expect(workflowSource).toContain(
-      'git status --short --untracked-files=all -- public/rates/moneybox.json',
+      'git status --short --untracked-files=all -- "$MONEYBOX_LATEST_FILE"',
     );
   });
 
@@ -512,7 +566,95 @@ describe('ratewise build scripts', () => {
     expect(latestWorkflow).toContain('git rebase --abort 2>/dev/null || true');
     expect(latestWorkflow).toContain('git checkout origin/data -- public/rates/latest.json');
     expect(moneyBoxWorkflow).toContain('git rebase --abort 2>/dev/null || true');
-    expect(moneyBoxWorkflow).toContain('git checkout origin/data -- public/rates/moneybox.json');
+    expect(moneyBoxWorkflow).toContain(
+      'git checkout origin/data -- "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR"',
+    );
+  });
+
+  it('should persist MoneyBox daily history snapshots alongside latest rates', async () => {
+    const workflowSource = await readMoneyBoxWorkflow();
+
+    expect(workflowSource).toContain('branches:\n      - main');
+    expect(workflowSource).toContain('git fetch origin main');
+    expect(workflowSource).toContain('git checkout origin/main -- scripts/fetch-moneybox-rates.js');
+    expect(workflowSource).not.toContain('SOURCE_REF="${GITHUB_REF_NAME:-main}"');
+    expect(workflowSource).not.toContain(
+      'git checkout FETCH_HEAD -- scripts/fetch-moneybox-rates.js',
+    );
+    expect(workflowSource).toContain('MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json');
+    expect(workflowSource).toContain(
+      'MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json',
+    );
+    expect(workflowSource).toContain(
+      'MONEYBOX_HISTORY_DIR: public/rates/providers/moneybox/history',
+    );
+    expect(workflowSource).toContain(
+      'MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"',
+    );
+    expect(workflowSource).toContain('cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_HISTORY_FILE"');
+    expect(workflowSource).not.toContain(
+      'cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_LATEST_FILE"',
+    );
+    expect(workflowSource).toContain('MONEYBOX_RETIRED_LATEST_FILE: public/rates/moneybox.json');
+    expect(workflowSource).toContain('MONEYBOX_RETIRED_HISTORY_DIR: public/rates/moneybox-history');
+    expect(workflowSource).toContain('git rm -r --ignore-unmatch "$PATH_TO_REMOVE"');
+    expect(workflowSource).toContain('RETIRED_ALIASES_CHANGED');
+    expect(workflowSource).not.toContain('MONEYBOX_LATEST_FILE: public/rates/moneybox.json');
+    expect(workflowSource).toContain(
+      'git status --short --untracked-files=all -- "$MONEYBOX_HISTORY_DIR/"',
+    );
+    // SSOT：只 stage 當日 history snapshot，避免前面 git checkout origin/main -- public/rates/
+    // 把 data branch 既有前幾日 history 一併 stage 為刪除（會清空公開 history API）
+    expect(workflowSource).toContain('git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE"');
+    expect(workflowSource).toContain(
+      'TODAY_HISTORY_FILE: ${{ steps.save-history.outputs.history_file }}',
+    );
+    expect(workflowSource).not.toContain(
+      'git add "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR/"',
+    );
+    expect(workflowSource).toContain(
+      'git checkout origin/data -- "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR"',
+    );
+    expect(workflowSource).toContain(
+      'HISTORY_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"',
+    );
+  });
+
+  it('should detect MoneyBox quote field changes instead of comparing sell only', async () => {
+    const scriptSource = await readMoneyBoxFetchScript();
+
+    expect(scriptSource).toContain('const RATE_QUOTE_FIELDS = [');
+    expect(scriptSource).toContain("'buy'");
+    expect(scriptSource).toContain("'sell'");
+    expect(scriptSource).toContain("'base'");
+    expect(scriptSource).toContain("'spbuy'");
+    expect(scriptSource).toContain("'spsell'");
+    expect(scriptSource).not.toContain('oldData.rates?.TWD?.sell');
+    expect(scriptSource).not.toContain('newData.rates?.TWD?.sell');
+  });
+
+  it('should detect changes across complete MoneyBox provider rates instead of TWD only', async () => {
+    const { listRateChanges } = await importMoneyBoxFetchScript();
+
+    const changes = listRateChanges(
+      {
+        TWD: { base: 45.15, buy: 45.2, sell: 45.1, spbuy: null, spsell: null },
+        USD: { base: 1370, buy: 1360, sell: 1380, spbuy: null, spsell: null },
+      },
+      {
+        TWD: { base: 45.15, buy: 45.2, sell: 45.1, spbuy: null, spsell: null },
+        USD: { base: 1370, buy: 1360, sell: 1381, spbuy: null, spsell: null },
+      },
+    );
+
+    expect(changes).toEqual([
+      {
+        currency: 'USD',
+        field: 'sell',
+        oldValue: 1380,
+        newValue: 1381,
+      },
+    ]);
   });
 
   it('CurrencyLandingPage should import AnswerCapsule and accept answerCapsule prop (AEO/GEO readiness)', async () => {
@@ -636,5 +778,130 @@ describe('ratewise build scripts', () => {
       );
     }
     expect(offenders).toEqual([]);
+  });
+
+  it('should keep API rate mode strategies in a single JSON SSOT', async () => {
+    const ssotPath = path.resolve(__dirname, '../rate-mode-strategies.json');
+    expect(existsSync(ssotPath)).toBe(true);
+    const strategies = JSON.parse(await readFile(ssotPath, 'utf-8')) as {
+      auto: {
+        fromCurrencyField: string;
+        toCurrencyField: string;
+        twdToForeign: string;
+        foreignToTwd: string;
+        foreignToForeign: string;
+      };
+    };
+
+    const sources = [
+      await readApiJsonGenerator(),
+      await readPairJsonGenerator(),
+      await readOpenApiGenerator(),
+      await readOpenDataPageSource(),
+    ];
+
+    for (const source of sources) {
+      expect(source).toContain('rate-mode-strategies.json');
+      expect(source).not.toContain('來源幣別使用賣出價，目標幣別使用買入價');
+    }
+
+    expect(strategies.auto.fromCurrencyField).toBe('{rateType}.buy');
+    expect(strategies.auto.toCurrencyField).toBe('{rateType}.sell');
+    expect(strategies.auto.twdToForeign).toBe('amount / details.{TO}.{rateType}.sell');
+    expect(strategies.auto.foreignToTwd).toBe('amount * details.{FROM}.{rateType}.buy');
+    expect(strategies.auto.foreignToForeign).toBe(
+      'amount * details.{FROM}.{rateType}.buy / details.{TO}.{rateType}.sell',
+    );
+  });
+
+  it('should expose exchange-shop and future bank provider contracts in public API metadata', async () => {
+    const apiJsonGenerator = await readApiJsonGenerator();
+    const openApiGenerator = await readOpenApiGenerator();
+    const openDataPage = await readOpenDataPageSource();
+    const publicMetadataSource = await readRateProviderPublicMetadataSource();
+    const seoRateExamplesScript = await readSeoRateExamplesScript();
+
+    for (const source of [apiJsonGenerator, openApiGenerator, openDataPage]) {
+      expect(source).toContain('rateProviderPublicMetadata');
+      expect(source).toContain('buildPublicRateProviderMetadata');
+    }
+
+    expect(apiJsonGenerator).toContain('providerSelection');
+    expect(publicMetadataSource).toContain(
+      'bankProviderChoiceEnabled: shouldEnableBankProviderChoice()',
+    );
+    expect(apiJsonGenerator).not.toContain("providerId: 'bot'");
+    expect(apiJsonGenerator).not.toContain("providerId: 'moneybox'");
+    expect(publicMetadataSource).toContain('provider.apiPaths.history');
+
+    expect(openApiGenerator).toContain('RateProvider: rateProviderSchema');
+    expect(openApiGenerator).toContain(
+      'ExchangeShopRatesResponse: exchangeShopRatesResponseSchema',
+    );
+    expect(openApiGenerator).toContain('[EXCHANGE_SHOP_LATEST_PATH]');
+    expect(openApiGenerator).toContain('[EXCHANGE_SHOP_HISTORY_PATH]');
+    expect(openApiGenerator).toContain("'x-rate-providers'");
+    expect(openApiGenerator).toContain("PROVIDER_RATES_PATH.latest('{providerId}')");
+    expect(openApiGenerator).toContain("PROVIDER_RATES_PATH.history('{providerId}', '{date}')");
+    expect(openApiGenerator).not.toContain(
+      "const EXCHANGE_SHOP_LATEST_PATH = '/public/rates/providers/{providerId}/latest.json'",
+    );
+    expect(openApiGenerator).not.toContain(
+      "const EXCHANGE_SHOP_HISTORY_PATH = '/public/rates/providers/{providerId}/history/{date}.json'",
+    );
+    expect(openApiGenerator).not.toContain('/public/rates/moneybox.json');
+    expect(openApiGenerator).not.toContain('/public/rates/moneybox-history/{date}.json');
+
+    expect(openDataPage).toContain('MoneyBox (明洞換匯所聯盟)');
+    expect(publicMetadataSource).toContain('provider.apiPaths.history');
+    expect(openDataPage).toContain('sourceKind + providerId');
+    expect(openDataPage).toContain('bank provider 超過一家');
+    expect(openDataPage).toContain("PROVIDER_RATES_PATH.latest('{providerId}')");
+    expect(openDataPage).toContain("PROVIDER_RATES_PATH.history('{providerId}', '{YYYY-MM-DD}')");
+    expect(openDataPage).not.toContain('/public/rates/moneybox.json');
+    expect(openDataPage).not.toContain("replace('/haotool/app/data'");
+    expect(openDataPage).not.toContain('new URL(EXCHANGE_SHOP_PROVIDER');
+
+    expect(seoRateExamplesScript).toContain('RATES_API.moneyboxCdn');
+    expect(seoRateExamplesScript).not.toContain('/public/rates/moneybox.json');
+    expect(seoRateExamplesScript).not.toContain('/public/rates/moneybox-history');
+
+    const rankingSource = await readFile(
+      path.resolve(__dirname, '../../features/ratewise/rateProviderRanking.ts'),
+      'utf-8',
+    );
+    expect(rankingSource).not.toContain("providerId: 'bot'");
+  });
+
+  it('should document rate API timestamp and base-currency fields from the data fixture SSOT', async () => {
+    const fixture = await readBuildTimeRatesFixture();
+    const openApiGenerator = await readOpenApiGenerator();
+    const openDataPage = await readOpenDataPageSource();
+
+    expect(typeof fixture.timestamp).toBe('string');
+    expect(typeof fixture.updateTime).toBe('string');
+    expect(fixture.details).not.toHaveProperty('TWD');
+
+    expect(openApiGenerator).toContain("const API_VERSION = '1.3.0'");
+    expect(openApiGenerator).toContain("timestamp: {\n      type: 'string'");
+    expect(openApiGenerator).not.toContain("description: 'Unix 時間戳（毫秒）'");
+    expect(openApiGenerator).not.toContain(
+      "format: 'date-time',\n      description: '資料最後更新時間（ISO 8601 格式",
+    );
+
+    const llmsGenerator = await readLlmsGenerator();
+    expect(llmsGenerator).toContain('timestamp（ISO 8601 資料抓取時間）');
+    expect(llmsGenerator).toContain('| timestamp | string | ISO 8601 資料抓取時間（UTC） |');
+    expect(llmsGenerator).toContain(
+      '| updateTime | string | 台灣銀行牌告顯示時間（台灣時間 UTC+8） |',
+    );
+    expect(llmsGenerator).not.toContain('timestamp（Unix 時間戳）');
+    expect(llmsGenerator).not.toContain('| timestamp | number | Unix 時間戳（秒） |');
+    expect(llmsGenerator).not.toContain('| updateTime | string | ISO 8601 更新時間（UTC+8） |');
+
+    expect(openDataPage).toContain('17 種外幣的現金與即期四種報價，TWD 為基準幣');
+    expect(openDataPage).toContain("type: 'string (ISO 8601)'");
+    expect(openDataPage).not.toContain('integer (milliseconds)');
+    expect(openDataPage).not.toContain('包含全部 18 種幣別（含 TWD 基準幣）的現金與即期四種報價');
   });
 });

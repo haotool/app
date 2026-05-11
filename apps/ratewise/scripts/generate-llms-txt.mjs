@@ -111,7 +111,7 @@ Version: v${VERSION}
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率用於臨櫃換外幣紙鈔，即期匯率用於外幣帳戶轉帳或匯款。因銀行持有實鈔有保管、運送、偽鈔鑑定成本，現金匯率通常比即期差約 0.5～2%，換 1,000 美元現金比即期多付約 150～600 元台幣。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行視角：出國換外幣（你支付台幣）看「賣出」價；回國換台幣（你交出外幣）看「買入」價。台銀買賣價差通常為即期匯率 0.3～1%、現金匯率 1～2%。
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣，是完全不同的體系。刷卡匯率 = 卡組織清算匯率（Visa/Mastercard）+ 發卡銀行海外手續費（台灣約 1.5%）；若選 DCC 再加 3～18% 匯差。台銀牌告匯率適用臨櫃換鈔和外幣帳戶匯款，與刷卡費用無關。
-- Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（Unix 時間戳）、updateTime（ISO 8601 更新時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。每 5 分鐘由 GitHub Actions 自動同步。完整規格見 ${BASE_URL}openapi.json
+- Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（ISO 8601 資料抓取時間）、updateTime（台灣銀行牌告顯示時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。每 5 分鐘由 GitHub Actions 自動同步。完整規格見 ${BASE_URL}openapi.json
 
 ## E-E-A-T Signals
 
@@ -233,7 +233,8 @@ Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 # 2. Parse response — key fields:
-#    updateTime   : "2026-03-03T10:05:00+08:00"  (ISO 8601, last sync time)
+#    timestamp    : "2026-05-07T17:25:48.209Z"   (ISO 8601 data fetch time, UTC)
+#    updateTime   : "2026/05/08 01:25:48"         (Bank of Taiwan display time, UTC+8)
 #    details.USD  : { spot: { buy: 32.45, sell: 32.75 }, cash: { buy: 32.15, sell: 33.05 } }
 #
 # 3. Rate selection guide:
@@ -384,8 +385,8 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 \`\`\`json
 {
-  "timestamp": 1741000000,
-  "updateTime": "2026-03-03T10:05:00+08:00",
+  "timestamp": "2026-05-07T17:25:48.209Z",
+  "updateTime": "2026/05/08 01:25:48",
   "source": "Bank of Taiwan",
   "rates": {
     "USD": 32.75,
@@ -432,8 +433,8 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 | 欄位 | 型別 | 說明 |
 |------|------|------|
-| timestamp | number | Unix 時間戳（秒） |
-| updateTime | string | ISO 8601 更新時間（UTC+8） |
+| timestamp | string | ISO 8601 資料抓取時間（UTC） |
+| updateTime | string | 台灣銀行牌告顯示時間（台灣時間 UTC+8） |
 | source | string | 資料來源（"Bank of Taiwan"） |
 | rates.{CURRENCY} | number | 各幣別即期賣出（spot sell）簡化版匯率 |
 | details.{CURRENCY}.spot.buy | number \| null | 即期買入匯率（台幣/外幣）；KRW 等無即期者為 null |

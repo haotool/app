@@ -1,11 +1,46 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+// @vitest-environment jsdom
+
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MultiConverter } from '../MultiConverter';
-import type { CurrencyCode, MultiAmountsState, RateType } from '../../types';
+import type { CurrencyCode, MultiAmountsState, RateMode, RateType } from '../../types';
 import type { RateDetails } from '../../hooks/useExchangeRates';
+import type { ExchangeShopRate } from '../../../../services/moneyboxRateService';
 
-// Mock RateTypeTooltip
+const translations: Record<string, string> = {
+  'currencies.TWD': '新台幣',
+  'currencies.USD': '美元',
+  'currencies.JPY': '日圓',
+  'currencies.EUR': '歐元',
+  'currencies.KRW': '韓元',
+  'favorites.addFavorite': '加入常用貨幣',
+  'favorites.removeFavorite': '移除常用貨幣',
+  'multiConverter.amountClickCalculator': '{{name}} ({{code}}) 金額，點擊開啟計算機',
+  'multiConverter.baseCurrency': '基準貨幣',
+  'multiConverter.calculating': '計算中',
+  'multiConverter.cashOnlyNote': '{{code}} 僅提供現金匯率',
+  'multiConverter.cashRate': '現金匯率',
+  'multiConverter.currencyListLabel': '貨幣列表',
+  'multiConverter.noData': '無資料',
+  'multiConverter.spotOnlyNote': '{{code}} 僅提供即期匯率',
+  'multiConverter.spotRate': '即期匯率',
+  'multiConverter.switchToCash': '切換到現金匯率',
+  'multiConverter.switchToSpot': '切換到即期匯率',
+};
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: Record<string, string>) => {
+      const template = translations[key] ?? key;
+      return Object.entries(values ?? {}).reduce(
+        (message, [name, value]) => message.replaceAll(`{{${name}}}`, value),
+        template,
+      );
+    },
+  }),
+}));
+
 vi.mock('../../../../components/RateTypeTooltip', () => ({
   RateTypeTooltip: ({
     children,
@@ -22,7 +57,6 @@ vi.mock('../../../../components/RateTypeTooltip', () => ({
   ),
 }));
 
-// Mock CalculatorKeyboard
 vi.mock('../../../calculator/components/CalculatorKeyboard', () => ({
   CalculatorKeyboard: ({
     isOpen,
@@ -60,6 +94,7 @@ describe('MultiConverter', () => {
     baseCurrency: 'TWD' as CurrencyCode,
     favorites: ['TWD', 'JPY'] as CurrencyCode[],
     rateType: 'spot' as RateType,
+    rateMode: 'sell' as RateMode,
     details: {
       TWD: { name: '新台幣', spot: { sell: 1, buy: 1 }, cash: { sell: 1, buy: 1 } },
       USD: { name: '美元', spot: { sell: 31.665, buy: 31.165 }, cash: { sell: 31.78, buy: 31.0 } },
@@ -69,7 +104,7 @@ describe('MultiConverter', () => {
         cash: { sell: 0.2087, buy: 0.1967 },
       },
       EUR: { name: '歐元', spot: { sell: 36.95, buy: 36.45 }, cash: { sell: 37.15, buy: 36.25 } },
-      KRW: { name: '韓元', spot: { sell: null, buy: 0 }, cash: { sell: 0.0236, buy: 0.0216 } }, // 只有現金匯率
+      KRW: { name: '韓元', spot: { sell: null, buy: 0 }, cash: { sell: 0.0236, buy: 0.0216 } },
     } as unknown as Record<string, RateDetails>,
     onAmountChange: vi.fn(),
     onQuickAmount: vi.fn(),
@@ -80,6 +115,10 @@ describe('MultiConverter', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('基本渲染', () => {
@@ -99,9 +138,6 @@ describe('MultiConverter', () => {
       expect(screen.getByRole('button', { name: '500' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: '1,000' })).toBeInTheDocument();
     });
-
-    // 移除：即時多幣別換算標籤已在簡約設計中移除
-    // 現在頁面使用更簡潔的 UI，標籤在 page 層級而非組件內
   });
 
   describe('快速金額功能', () => {
@@ -113,14 +149,10 @@ describe('MultiConverter', () => {
     });
   });
 
-  // 收藏功能已移至收藏頁面，保持 SSOT 原則
-  // 多幣別頁面不再顯示收藏按鈕
-
   describe('基準貨幣切換', () => {
     it('點擊非基準貨幣應該呼叫 onBaseCurrencyChange', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // 點擊 USD 行（不是基準貨幣）
       const usdRow = screen.getByText('美元').closest('div[class*="rounded-xl"]');
       expect(usdRow).toBeTruthy();
       fireEvent.click(usdRow!);
@@ -130,10 +162,8 @@ describe('MultiConverter', () => {
     it('基準貨幣應該有特殊的樣式', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // TWD 是基準貨幣，應該有 cursor-default（不可點擊）和 activeHighlight SSOT 樣式
       const twdRow = screen.getByText('TWD').closest('div[class*="rounded-xl"]');
       expect(twdRow).toHaveClass('cursor-default');
-      // 非基準貨幣應該有 cursor-pointer
       const usdRow = screen.getByText('USD').closest('div[class*="rounded-xl"]');
       expect(usdRow).toHaveClass('cursor-pointer');
     });
@@ -143,7 +173,6 @@ describe('MultiConverter', () => {
     it('點擊匯率類型按鈕應該呼叫 onRateTypeChange', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // 找到可切換的匯率類型按鈕（非禁用狀態）- 取第一個
       const rateTypeButtons = screen.getAllByRole('button', { name: /切換到.*匯率/ });
       expect(rateTypeButtons.length).toBeGreaterThan(0);
       fireEvent.click(rateTypeButtons[0]!);
@@ -155,7 +184,6 @@ describe('MultiConverter', () => {
     it('點擊金額應該開啟計算機', async () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // 點擊 TWD 金額區域
       const twdAmountBtn = screen.getByRole('button', {
         name: '新台幣 (TWD) 金額，點擊開啟計算機',
       });
@@ -167,13 +195,11 @@ describe('MultiConverter', () => {
     it('計算機確認應該更新金額', async () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // 開啟計算機
       const twdAmountBtn = screen.getByRole('button', {
         name: '新台幣 (TWD) 金額，點擊開啟計算機',
       });
       fireEvent.click(twdAmountBtn);
 
-      // 確認計算結果
       fireEvent.click(await screen.findByTestId('calculator-confirm'));
 
       expect(defaultProps.onAmountChange).toHaveBeenCalledWith('TWD', '12345');
@@ -182,13 +208,11 @@ describe('MultiConverter', () => {
     it('計算機關閉應該隱藏', async () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // 開啟計算機
       const twdAmountBtn = screen.getByRole('button', {
         name: '新台幣 (TWD) 金額，點擊開啟計算機',
       });
       fireEvent.click(twdAmountBtn);
 
-      // 關閉計算機
       fireEvent.click(await screen.findByTestId('calculator-close'));
 
       expect(screen.queryByTestId('calculator-keyboard')).not.toBeInTheDocument();
@@ -221,23 +245,94 @@ describe('MultiConverter', () => {
     it('應該顯示正確的匯率格式', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // TWD 作為基準貨幣時，USD 應該顯示 1 TWD = X USD
       expect(screen.getByText(/1 TWD = .* USD/)).toBeInTheDocument();
     });
 
+    it('TWD 不在 details 內時仍應視為 1 並顯示外幣匯率', () => {
+      const { TWD: _twd, ...detailsWithoutTwd } = defaultProps.details;
+
+      render(
+        <MultiConverter
+          {...defaultProps}
+          details={detailsWithoutTwd as unknown as Record<string, RateDetails>}
+        />,
+      );
+
+      expect(screen.getByText(/1 TWD = .* USD/)).toBeInTheDocument();
+      expect(screen.queryAllByText('計算中')).toHaveLength(0);
+    });
+
     it('當匯率數據不完整時應該使用 fallback 機制', () => {
-      // KRW 只有現金匯率，沒有即期匯率
       const propsWithKRW = {
         ...defaultProps,
         sortedCurrencies: ['TWD', 'KRW'] as CurrencyCode[],
         multiAmounts: { TWD: '1000', KRW: '42463' } as MultiAmountsState,
-        rateType: 'spot' as RateType, // 請求即期匯率，但 KRW 只有現金
+        rateType: 'spot' as RateType,
       };
 
       render(<MultiConverter {...propsWithKRW} />);
 
-      // KRW 應該使用現金匯率作為 fallback，不應該顯示「無資料」
       expect(screen.queryByText('無資料')).not.toBeInTheDocument();
+    });
+
+    it('auto 模式應依共用核心顯示基準幣對 TWD 與交叉匯率', () => {
+      const propsWithUsdBase = {
+        ...defaultProps,
+        sortedCurrencies: ['USD', 'TWD', 'JPY'] as CurrencyCode[],
+        baseCurrency: 'USD' as CurrencyCode,
+        rateMode: 'auto' as RateMode,
+        multiAmounts: {
+          USD: '100',
+          TWD: '3087.00',
+          JPY: '15131',
+        } as MultiAmountsState,
+        favorites: ['JPY'] as CurrencyCode[],
+        details: {
+          TWD: { name: '新台幣', spot: { sell: 1, buy: 1 }, cash: { sell: 1, buy: 1 } },
+          USD: { name: '美元', spot: { sell: 30.97, buy: 30.87 }, cash: { sell: 31.4, buy: 30.4 } },
+          JPY: { name: '日圓', spot: { sell: 0.204, buy: 0.2 }, cash: { sell: null, buy: null } },
+        } as unknown as Record<string, RateDetails>,
+      };
+
+      render(<MultiConverter {...propsWithUsdBase} />);
+
+      expect(screen.getByText(/1 USD = 30\.8700 TWD/)).toBeInTheDocument();
+      expect(screen.getByText(/1 USD = 151\.3235 JPY/)).toBeInTheDocument();
+      expect(screen.queryByText(/1 USD = 30\.9700 TWD/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/1 USD = 151\.8137 JPY/)).not.toBeInTheDocument();
+    });
+
+    it('exchange-shop 模式應在多幣別顯示換錢所 TWD 配對匯率', () => {
+      const krwExchangeShopRate: ExchangeShopRate = {
+        currency: 'KRW',
+        sell: 44.9,
+        buy: 45.1,
+        updateTime: '2026/05/08 09:30:00',
+        source: 'MoneyBox',
+        sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+        providerName: '明洞換匯所',
+        isFallback: false,
+      };
+      const propsWithExchangeShop = {
+        ...defaultProps,
+        sortedCurrencies: ['TWD', 'KRW'] as CurrencyCode[],
+        baseCurrency: 'TWD' as CurrencyCode,
+        rateType: 'cash' as RateType,
+        rateMode: 'sell' as RateMode,
+        rateSource: 'exchange-shop' as const,
+        exchangeShopRatesByCurrency: {
+          KRW: krwExchangeShopRate,
+        },
+        multiAmounts: {
+          TWD: '1000',
+          KRW: '44900',
+        } as MultiAmountsState,
+      };
+
+      render(<MultiConverter {...propsWithExchangeShop} />);
+
+      expect(screen.getByText(/1 TWD = 44\.9000 KRW/)).toBeInTheDocument();
+      expect(screen.queryByText(/1 TWD = 42\.3729 KRW/)).not.toBeInTheDocument();
     });
   });
 
@@ -254,7 +349,6 @@ describe('MultiConverter', () => {
 
       render(<MultiConverter {...propsWithKRW} />);
 
-      // KRW 應該有 tooltip（因為只有現金匯率）
       const tooltips = screen.getAllByTestId('rate-type-tooltip');
       expect(tooltips.length).toBeGreaterThan(0);
     });
@@ -269,7 +363,6 @@ describe('MultiConverter', () => {
 
       render(<MultiConverter {...propsWithUSDBase} />);
 
-      // USD 作為基準貨幣，應該顯示 1 USD = X JPY
       expect(screen.getByText(/1 USD = .* JPY/)).toBeInTheDocument();
     });
 
@@ -282,7 +375,6 @@ describe('MultiConverter', () => {
 
       render(<MultiConverter {...propsWithUSDBase} />);
 
-      // 應該顯示 1 USD = X TWD
       expect(screen.getByText(/1 USD = .* TWD/)).toBeInTheDocument();
     });
   });
@@ -307,11 +399,10 @@ describe('MultiConverter', () => {
     it('TWD 星號應為固定裝飾（data-testid=twd-star-fixed），不論 favorites 是否包含 TWD', () => {
       const propsWithoutTWDFav = {
         ...defaultProps,
-        favorites: ['JPY'] as CurrencyCode[], // production scenario: TWD 永遠不在 favorites
+        favorites: ['JPY'] as CurrencyCode[],
       };
       render(<MultiConverter {...propsWithoutTWDFav} />);
 
-      // TWD row 應有固定裝飾星，非互動按鈕
       expect(screen.getByTestId('twd-star-fixed')).toBeInTheDocument();
     });
 
@@ -342,7 +433,6 @@ describe('MultiConverter', () => {
     it('非 TWD 貨幣星號應為互動按鈕（JPY 已收藏 → filled star，aria-label 符合翻譯）', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      // JPY 在 favorites 中，應顯示可移除的按鈕（favorites.removeFavorite = '移除常用貨幣'）
       const removeBtn = screen.getByRole('button', { name: /移除常用貨幣/ });
       expect(removeBtn).toBeInTheDocument();
     });

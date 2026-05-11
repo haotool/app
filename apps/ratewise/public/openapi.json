@@ -3,8 +3,8 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "HaoRate 匯率 API",
-    "version": "1.0.0",
-    "description": "臺灣銀行牌告匯率靜態 JSON API，每 5 分鐘由 GitHub Actions 自動同步。\n\n**匯率類型說明：**\n- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）\n- `cash_sell`（現金賣出）：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）\n- `spot_buy`（即期買入）：電匯/帳戶轉入匯率（你匯款回台灣）\n- `spot_sell`（即期賣出）：電匯/帳戶轉出匯率（你從台灣匯款出去）\n\n**重要提示：** 賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；\n買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價。\n\n匯率僅供參考，實際交易請以金融機構公告為準。",
+    "version": "1.3.0",
+    "description": "臺灣銀行牌告匯率靜態 JSON API，每 5 分鐘由 GitHub Actions 自動同步。\n\n**匯率類型說明：**\n- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）\n- `cash_sell`（現金賣出）：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）\n- `spot_buy`（即期買入）：電匯/帳戶轉入匯率（你匯款回台灣）\n- `spot_sell`（即期賣出）：電匯/帳戶轉出匯率（你從台灣匯款出去）\n\n**重要提示：** 賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；\n買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價。\n\n**App 匯率模式對應：**\n- `auto`：來源外幣用 `{rateType}.buy`，目標外幣用 `{rateType}.sell`；TWD 視為 1。\n- `sell`：來源與目標皆用 `{rateType}.sell`。\n- `mid`：來源與目標皆用 `({rateType}.buy + {rateType}.sell) / 2`。\n\n匯率僅供參考，實際交易請以金融機構公告為準。",
     "contact": {
       "name": "haotool",
       "email": "haotool.org@gmail.com",
@@ -18,6 +18,101 @@
     "x-source-url": "https://rate.bot.com.tw/xrt",
     "x-update-frequency": "every 5 minutes",
     "x-base-currency": "TWD",
+    "x-rate-modes": [
+      "auto",
+      "sell",
+      "mid"
+    ],
+    "x-rate-mode-strategies": {
+      "auto": {
+        "label": "自動方向",
+        "description": "與 App 預設匯率模式一致：來源外幣使用買入價、目標外幣使用賣出價，依換算方向貼近實際成本。",
+        "fromCurrencyField": "{rateType}.buy",
+        "toCurrencyField": "{rateType}.sell",
+        "twdToForeign": "amount / details.{TO}.{rateType}.sell",
+        "foreignToTwd": "amount * details.{FROM}.{rateType}.buy",
+        "foreignToForeign": "amount * details.{FROM}.{rateType}.buy / details.{TO}.{rateType}.sell"
+      },
+      "sell": {
+        "label": "賣出價",
+        "description": "全程使用銀行賣出價；即期/現金由使用者選擇的 rateType 決定。",
+        "fromCurrencyField": "{rateType}.sell",
+        "toCurrencyField": "{rateType}.sell",
+        "twdToForeign": "amount / details.{TO}.{rateType}.sell",
+        "foreignToTwd": "amount * details.{FROM}.{rateType}.sell",
+        "foreignToForeign": "amount * details.{FROM}.{rateType}.sell / details.{TO}.{rateType}.sell"
+      },
+      "mid": {
+        "label": "參考價",
+        "description": "使用買入價與賣出價的中間價；適合市場參考，不代表實際可成交價格。",
+        "fromCurrencyField": "({rateType}.buy + {rateType}.sell) / 2",
+        "toCurrencyField": "({rateType}.buy + {rateType}.sell) / 2",
+        "twdToForeign": "amount / mid(details.{TO}.{rateType})",
+        "foreignToTwd": "amount * mid(details.{FROM}.{rateType})",
+        "foreignToForeign": "amount * mid(details.{FROM}.{rateType}) / mid(details.{TO}.{rateType})"
+      }
+    },
+    "x-rate-providers": {
+      "providerSelection": {
+        "bankProviderChoiceEnabled": false,
+        "activationRule": "Enable bank provider choice when bank provider count is greater than 1",
+        "currentBankProviderId": "bot",
+        "currentExchangeShopProviderId": "moneybox",
+        "supportedSelectionModes": [
+          "manual",
+          "best"
+        ],
+        "currentSelectionMode": "manual"
+      },
+      "providers": [
+        {
+          "providerId": "bot",
+          "sourceKind": "bank",
+          "name": "台灣銀行",
+          "shortName": "台銀",
+          "supportedCurrencies": [
+            "TWD",
+            "JPY",
+            "KRW",
+            "CNY",
+            "VND",
+            "THB",
+            "HKD",
+            "PHP",
+            "MYR",
+            "SGD",
+            "USD",
+            "EUR",
+            "GBP",
+            "CHF",
+            "AUD",
+            "CAD",
+            "NZD",
+            "IDR"
+          ],
+          "supportedRateTypes": [
+            "spot",
+            "cash"
+          ],
+          "currentEndpoint": "/public/rates/latest.json",
+          "historyEndpoint": "/public/rates/history/{date}.json"
+        },
+        {
+          "providerId": "moneybox",
+          "sourceKind": "exchange-shop",
+          "name": "明洞換匯所",
+          "shortName": "MoneyBox",
+          "supportedCurrencies": [
+            "KRW"
+          ],
+          "supportedRateTypes": [
+            "cash"
+          ],
+          "currentEndpoint": "/public/rates/providers/moneybox/latest.json",
+          "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json"
+        }
+      ]
+    },
     "x-supported-currencies": [
       "TWD",
       "JPY",
@@ -43,6 +138,16 @@
     "x-app-version": "2.22.21"
   },
   "x-changelog": {
+    "1.2.0": {
+      "date": "2026-05-09",
+      "summary": "新增 MoneyBox 換錢所 current/history 端點與 provider metadata 合約。",
+      "app-version": "2.22.21"
+    },
+    "1.1.0": {
+      "date": "2026-05-08",
+      "summary": "新增 App 匯率模式欄位對照與幣對 rateModes 規格，並對齊資料端時間欄位格式。",
+      "app-version": "2.22.21"
+    },
     "1.0.0": {
       "date": "2026-03-21",
       "summary": "初始 API 版本。包含最新匯率、歷史匯率、幣對資訊三個端點。",
@@ -60,6 +165,194 @@
     }
   ],
   "paths": {
+    "/public/rates/providers/{providerId}/latest.json": {
+      "get": {
+        "summary": "取得指定 provider 最新換錢所匯率",
+        "description": "取得指定 provider 的最新換錢所匯率資料。 目前 App 只在 KRW 相關換算啟用 MoneyBox，且換錢所來源固定視為現金匯率。 CDN 端點支援 ETag 條件式請求（If-None-Match）。",
+        "operationId": "getExchangeShopProviderRates",
+        "tags": [
+          "匯率資料",
+          "匯率來源"
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "description": "匯率來源 providerId。目前換錢所 provider 為 moneybox。",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "moneybox"
+              ],
+              "example": "moneybox"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "ETag 條件式請求標頭；帶入前次回應的 ETag 值，資料未變時可節省傳輸。",
+            "schema": {
+              "type": "string",
+              "example": "\"a1b2c3d4e5f6\""
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功取得指定 provider 最新換錢所匯率",
+            "headers": {
+              "ETag": {
+                "description": "資源版本標識符，用於後續 If-None-Match 條件式請求（可節省約 5 KB／次）",
+                "schema": {
+                  "type": "string",
+                  "example": "\"a1b2c3d4e5f6\""
+                }
+              },
+              "Cache-Control": {
+                "description": "CDN 快取控制；資料更新後 jsDelivr 自動 Purge，實際新鮮度約 5 分鐘",
+                "schema": {
+                  "type": "string",
+                  "example": "max-age=300, public"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeShopRatesResponse"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "資料未變更（ETag 條件式請求命中，零 body，僅 CDN 端點支援）。請求時帶入 If-None-Match: <ETag 值> 即可觸發。",
+            "headers": {
+              "ETag": {
+                "description": "與前次回應相同的 ETag 值",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "請求超過速率限制（僅 GitHub Raw 端點；未認證 IP 限 60 req/hr）。建議改用 CDN 端點（jsDelivr）以避免觸發此限制。",
+            "headers": {
+              "Retry-After": {
+                "description": "建議等待秒數後重試",
+                "schema": {
+                  "type": "integer",
+                  "example": 3600
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/rates/providers/{providerId}/history/{date}.json": {
+      "get": {
+        "summary": "取得指定 provider 指定日期換錢所歷史匯率",
+        "description": "取得指定 provider 與指定日期的換錢所歷史匯率快照。 資料路徑與台銀 history 分離，避免銀行與換錢所歷史資料語意混用。",
+        "operationId": "getExchangeShopProviderHistoryRates",
+        "tags": [
+          "匯率資料",
+          "匯率來源"
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "description": "匯率來源 providerId。目前換錢所 provider 為 moneybox。",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "moneybox"
+              ],
+              "example": "moneybox"
+            }
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "description": "查詢日期，格式 YYYY-MM-DD。",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "example": "2026-05-09"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "ETag 條件式請求標頭；帶入前次回應的 ETag 值，資料未變時可節省傳輸。",
+            "schema": {
+              "type": "string",
+              "example": "\"a1b2c3d4e5f6\""
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功取得指定 provider 歷史換錢所匯率",
+            "headers": {
+              "ETag": {
+                "description": "資源版本標識符，用於後續 If-None-Match 條件式請求（可節省約 5 KB／次）",
+                "schema": {
+                  "type": "string",
+                  "example": "\"a1b2c3d4e5f6\""
+                }
+              },
+              "Cache-Control": {
+                "description": "CDN 快取控制；資料更新後 jsDelivr 自動 Purge，實際新鮮度約 5 分鐘",
+                "schema": {
+                  "type": "string",
+                  "example": "max-age=300, public"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeShopRatesResponse"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "資料未變更（ETag 條件式請求命中，零 body，僅 CDN 端點支援）。請求時帶入 If-None-Match: <ETag 值> 即可觸發。",
+            "headers": {
+              "ETag": {
+                "description": "與前次回應相同的 ETag 值",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "指定日期無歷史資料。常見原因：日期為國定假日（台銀未開市）、早於資料收集起始日，或格式不符 YYYY-MM-DD 正則。"
+          },
+          "429": {
+            "description": "請求超過速率限制（僅 GitHub Raw 端點；未認證 IP 限 60 req/hr）。建議改用 CDN 端點（jsDelivr）以避免觸發此限制。",
+            "headers": {
+              "Retry-After": {
+                "description": "建議等待秒數後重試",
+                "schema": {
+                  "type": "integer",
+                  "example": 3600
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/ratewise/api/pairs/{pair}.json": {
       "get": {
         "summary": "取得指定幣對資訊",
@@ -332,20 +625,113 @@
           "cash"
         ]
       },
+      "ExchangeShopRatesResponse": {
+        "type": "object",
+        "description": "換錢所匯率資料回應。目前 MoneyBox 以 KRW 為基準，TWD rate 表示 1 TWD 可換多少 KRW。",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "資料抓取時間（ISO 8601 字串，UTC）",
+            "example": "2026-05-07T17:25:48.209Z"
+          },
+          "updateTime": {
+            "type": "string",
+            "description": "MoneyBox 資料更新時間（首爾時間 UTC+9）",
+            "example": "2026/05/08 02:25:48"
+          },
+          "source": {
+            "type": "string",
+            "example": "MoneyBox (明洞換匯所聯盟)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://moneybox-exchange.com/zh-CHT/exchange"
+          },
+          "base": {
+            "type": "string",
+            "example": "KRW"
+          },
+          "rates": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "example": "TWD"
+                },
+                "base": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "example": 44.9
+                },
+                "buy": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "example": 45.1
+                },
+                "sell": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "example": 44.9
+                },
+                "spbuy": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "example": 45.2
+                },
+                "spsell": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "example": 44.8
+                }
+              },
+              "required": [
+                "currency",
+                "base",
+                "buy",
+                "sell",
+                "spbuy",
+                "spsell"
+              ]
+            }
+          }
+        },
+        "required": [
+          "timestamp",
+          "updateTime",
+          "source",
+          "sourceUrl",
+          "base",
+          "rates"
+        ]
+      },
       "RatesResponse": {
         "type": "object",
         "description": "匯率資料回應（每 5 分鐘由 GitHub Actions 自動同步）",
         "properties": {
           "timestamp": {
-            "type": "integer",
-            "description": "Unix 時間戳（毫秒）",
-            "example": 1740000000000
+            "type": "string",
+            "format": "date-time",
+            "description": "資料抓取時間（ISO 8601 字串，UTC）",
+            "example": "2026-05-07T17:25:48.209Z"
           },
           "updateTime": {
             "type": "string",
-            "format": "date-time",
-            "description": "資料最後更新時間（ISO 8601 格式，台灣時間 UTC+8）",
-            "example": "2025-02-20T10:30:00+08:00"
+            "description": "台灣銀行牌告顯示時間（台灣時間 UTC+8）",
+            "example": "2026/05/08 01:25:48"
           },
           "source": {
             "type": "string",
@@ -354,10 +740,10 @@
           },
           "rates": {
             "type": "object",
-            "description": "各幣別簡化匯率（以幣別代碼為 key，值為即期賣出匯率）",
+            "description": "各幣別簡化參考匯率（相容舊版欄位）。若要對齊 App 的 auto / sell / mid 匯率模式，請使用 details 搭配 x-rate-mode-strategies。",
             "additionalProperties": {
               "type": "number",
-              "description": "該幣別對 TWD 的即期賣出參考匯率"
+              "description": "該幣別對 TWD 的簡化參考匯率"
             },
             "example": {
               "USD": 32.085,
@@ -439,6 +825,39 @@
             "description": "在 liveRateUrl 回應中定位此幣別資料的路徑",
             "example": "details.USD"
           },
+          "rateModes": {
+            "type": "object",
+            "description": "App 匯率模式對應的欄位選擇策略；用於依使用者模式取正確 buy/sell/mid 欄位。",
+            "example": {
+              "auto": {
+                "label": "自動方向",
+                "description": "與 App 預設匯率模式一致：來源外幣使用買入價、目標外幣使用賣出價，依換算方向貼近實際成本。",
+                "fromCurrencyField": "{rateType}.buy",
+                "toCurrencyField": "{rateType}.sell",
+                "twdToForeign": "amount / details.{TO}.{rateType}.sell",
+                "foreignToTwd": "amount * details.{FROM}.{rateType}.buy",
+                "foreignToForeign": "amount * details.{FROM}.{rateType}.buy / details.{TO}.{rateType}.sell"
+              },
+              "sell": {
+                "label": "賣出價",
+                "description": "全程使用銀行賣出價；即期/現金由使用者選擇的 rateType 決定。",
+                "fromCurrencyField": "{rateType}.sell",
+                "toCurrencyField": "{rateType}.sell",
+                "twdToForeign": "amount / details.{TO}.{rateType}.sell",
+                "foreignToTwd": "amount * details.{FROM}.{rateType}.sell",
+                "foreignToForeign": "amount * details.{FROM}.{rateType}.sell / details.{TO}.{rateType}.sell"
+              },
+              "mid": {
+                "label": "參考價",
+                "description": "使用買入價與賣出價的中間價；適合市場參考，不代表實際可成交價格。",
+                "fromCurrencyField": "({rateType}.buy + {rateType}.sell) / 2",
+                "toCurrencyField": "({rateType}.buy + {rateType}.sell) / 2",
+                "twdToForeign": "amount / mid(details.{TO}.{rateType})",
+                "foreignToTwd": "amount * mid(details.{FROM}.{rateType})",
+                "foreignToForeign": "amount * mid(details.{FROM}.{rateType}) / mid(details.{TO}.{rateType})"
+              }
+            }
+          },
           "source": {
             "type": "string",
             "example": "臺灣銀行牌告匯率"
@@ -452,7 +871,66 @@
           "pageUrl",
           "liveRateUrl",
           "rateFieldPath",
+          "rateModes",
           "source"
+        ]
+      },
+      "RateProvider": {
+        "type": "object",
+        "description": "匯率來源 provider metadata。分類使用 sourceKind，實際來源使用 providerId。",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "examples": [
+              "bot",
+              "moneybox"
+            ]
+          },
+          "sourceKind": {
+            "type": "string",
+            "enum": [
+              "bank",
+              "exchange-shop"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "examples": [
+              "臺灣銀行",
+              "MoneyBox (明洞換匯所聯盟)"
+            ]
+          },
+          "supportedCurrencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportedRateTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "cash",
+                "spot"
+              ]
+            }
+          },
+          "currentEndpoint": {
+            "type": "string"
+          },
+          "historyEndpoint": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "providerId",
+          "sourceKind",
+          "name",
+          "supportedCurrencies",
+          "supportedRateTypes",
+          "currentEndpoint",
+          "historyEndpoint"
         ]
       }
     }
@@ -467,8 +945,74 @@
       "name": "幣對資訊",
       "description": "幣對靜態資訊端點（幣對代碼、CDN 端點、落地頁 URL）",
       "x-displayName": "幣對資訊"
+    },
+    {
+      "name": "匯率來源",
+      "description": "provider metadata 與換錢所資料端點",
+      "x-displayName": "匯率來源"
     }
   ],
+  "x-rate-providers": {
+    "providerSelection": {
+      "bankProviderChoiceEnabled": false,
+      "activationRule": "Enable bank provider choice when bank provider count is greater than 1",
+      "currentBankProviderId": "bot",
+      "currentExchangeShopProviderId": "moneybox",
+      "supportedSelectionModes": [
+        "manual",
+        "best"
+      ],
+      "currentSelectionMode": "manual"
+    },
+    "providers": [
+      {
+        "providerId": "bot",
+        "sourceKind": "bank",
+        "name": "台灣銀行",
+        "shortName": "台銀",
+        "supportedCurrencies": [
+          "TWD",
+          "JPY",
+          "KRW",
+          "CNY",
+          "VND",
+          "THB",
+          "HKD",
+          "PHP",
+          "MYR",
+          "SGD",
+          "USD",
+          "EUR",
+          "GBP",
+          "CHF",
+          "AUD",
+          "CAD",
+          "NZD",
+          "IDR"
+        ],
+        "supportedRateTypes": [
+          "spot",
+          "cash"
+        ],
+        "currentEndpoint": "/public/rates/latest.json",
+        "historyEndpoint": "/public/rates/history/{date}.json"
+      },
+      {
+        "providerId": "moneybox",
+        "sourceKind": "exchange-shop",
+        "name": "明洞換匯所",
+        "shortName": "MoneyBox",
+        "supportedCurrencies": [
+          "KRW"
+        ],
+        "supportedRateTypes": [
+          "cash"
+        ],
+        "currentEndpoint": "/public/rates/providers/moneybox/latest.json",
+        "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json"
+      }
+    ]
+  },
   "x-pair-endpoints": {
     "description": "各幣對靜態 JSON 端點（供搜尋系統與 AI agent 查詢特定幣對匯率資訊）",
     "template": "https://app.haotool.org/ratewise/api/pairs/{PAIR}.json",

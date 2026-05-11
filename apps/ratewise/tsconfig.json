@@ -4,6 +4,7 @@
     "lib": ["ESNext", "DOM", "WebWorker"],
     "types": ["vite/client", "node", "vitest/globals", "@testing-library/jest-dom"],
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
       "@app/ratewise/*": ["./src/*"],

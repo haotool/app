@@ -81,7 +81,6 @@ describe('RateWise Component', () => {
     useConverterStore.setState({
       fromCurrency: 'TWD',
       toCurrency: 'JPY',
-      mode: 'single',
       favorites: ['JPY', 'KRW', 'VND', 'THB', 'HKD', 'USD'],
       history: [],
     });

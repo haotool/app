@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 /**
  * ConversionHistory Enhanced Features Test Suite
  *
@@ -16,10 +18,28 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { ConversionHistory } from '../ConversionHistory';
 import type { ConversionHistoryEntry } from '../../types';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: Record<string, string>) => {
+      const messages: Record<string, string> = {
+        'common.copy': '複製',
+        'conversionHistory.copyFailed': '複製失敗',
+        'conversionHistory.copyAriaLabel': '複製轉換結果',
+        'conversionHistory.reconvertAriaLabel': `點擊快速換算 ${values?.['from']} 到 ${values?.['to']}`,
+        'conversionHistory.entryAriaLabel': `${values?.['amount']} ${values?.['from']} 換算為 ${values?.['result']} ${values?.['to']}`,
+        'conversionHistory.categories.spot': '即期',
+        'conversionHistory.categories.cash': '現金',
+        'conversionHistory.categories.exchange-shop': '換錢所',
+      };
+      return messages[key] ?? key;
+    },
+  }),
+}));
 
 describe('🔴 RED: ConversionHistory 增強功能', () => {
   // Mock localStorage
@@ -67,6 +87,7 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
   });
 
   afterEach(() => {
+    cleanup();
     localStorageMock.clear();
   });
 
@@ -107,6 +128,42 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       expect(container.firstChild).not.toBeNull();
       // 檢查是否有歷史記錄項目
       expect(screen.getByText('1000')).toBeInTheDocument();
+    });
+
+    it('新格式歷史應顯示時間與匯率分類', () => {
+      const history: ConversionHistoryEntry[] = [
+        {
+          from: 'TWD',
+          to: 'KRW',
+          amount: '1000',
+          result: '44900',
+          time: '今天 14:30',
+          timestamp: Date.now(),
+          rateType: 'cash',
+          sourceKind: 'exchange-shop',
+          providerId: 'moneybox',
+          providerSelectionMode: 'manual',
+          schemaVersion: 2,
+        },
+        {
+          from: 'USD',
+          to: 'TWD',
+          amount: '100',
+          result: '3150',
+          time: '今天 13:10',
+          timestamp: Date.now() - 1000,
+          rateType: 'spot',
+          sourceKind: 'bank',
+          providerId: 'bot',
+          providerSelectionMode: 'manual',
+          schemaVersion: 2,
+        },
+      ];
+
+      render(<ConversionHistory history={history} />);
+
+      expect(screen.getByText(/今天 14:30 · 換錢所/)).toBeInTheDocument();
+      expect(screen.getByText(/今天 13:10 · 即期/)).toBeInTheDocument();
     });
 
     it('應該在無歷史記錄時返回 null（不渲染）', () => {

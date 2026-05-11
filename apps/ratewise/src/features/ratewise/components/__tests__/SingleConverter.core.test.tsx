@@ -5,6 +5,7 @@ import { SingleConverter } from '../SingleConverter';
 import type { CurrencyCode } from '../../types';
 import { CURRENCY_DEFINITIONS } from '../../constants';
 import { singleConverterLayoutTokens } from '../../../../config/design-tokens';
+import type { ExchangeShopRate } from '../../../../services/moneyboxRateService';
 
 // Mock services
 vi.mock('../../../../services/exchangeRateHistoryService', () => ({
@@ -92,6 +93,20 @@ describe('SingleConverter - 核心功能測試', () => {
     onSwapCurrencies: vi.fn(),
     onAddToHistory: vi.fn(),
     onRateTypeChange: vi.fn(),
+  };
+
+  const getSpotRateButton = () => screen.getByRole('button', { name: /即期/ });
+  const getCashRateButton = () => screen.getByRole('button', { name: /現金/ });
+
+  const mockMoneyBoxRate: ExchangeShopRate = {
+    currency: 'KRW',
+    sell: 44.85,
+    buy: 45.1,
+    updateTime: '2026/05/07 16:33:55',
+    source: 'MoneyBox',
+    sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+    providerName: '明洞換匯所',
+    isFallback: false,
   };
 
   beforeEach(() => {
@@ -245,7 +260,7 @@ describe('SingleConverter - 核心功能測試', () => {
     it('should call onRateTypeChange when switching to spot', () => {
       render(<SingleConverter {...mockProps} rateType="cash" />);
 
-      const spotButton = screen.getByLabelText('切換到即期匯率');
+      const spotButton = getSpotRateButton();
       fireEvent.click(spotButton);
 
       expect(mockProps.onRateTypeChange).toHaveBeenCalledWith('spot');
@@ -254,7 +269,7 @@ describe('SingleConverter - 核心功能測試', () => {
     it('should call onRateTypeChange when switching to cash', () => {
       render(<SingleConverter {...mockProps} rateType="spot" />);
 
-      const cashButton = screen.getByLabelText('切換到現金匯率');
+      const cashButton = getCashRateButton();
       fireEvent.click(cashButton);
 
       expect(mockProps.onRateTypeChange).toHaveBeenCalledWith('cash');
@@ -263,15 +278,15 @@ describe('SingleConverter - 核心功能測試', () => {
     it('should apply active styles to selected rate type', () => {
       const { rerender } = render(<SingleConverter {...mockProps} rateType="spot" />);
 
-      const spotButton = screen.getByLabelText('切換到即期匯率');
+      const spotButton = getSpotRateButton();
       expect(spotButton).toHaveAttribute('aria-pressed', 'true');
 
       rerender(<SingleConverter {...mockProps} rateType="cash" />);
 
-      const cashButton = screen.getByLabelText('切換到現金匯率');
+      const cashButton = getCashRateButton();
       expect(cashButton).toHaveAttribute('aria-pressed', 'true');
       // 即期按鈕切換為未選中
-      const spotButtonAfter = screen.getByLabelText('切換到即期匯率');
+      const spotButtonAfter = getSpotRateButton();
       expect(spotButtonAfter).toHaveAttribute('aria-pressed', 'false');
     });
 
@@ -293,8 +308,8 @@ describe('SingleConverter - 核心功能測試', () => {
         />,
       );
 
-      const spotButton = screen.getByLabelText('切換到即期匯率');
-      expect(spotButton).toHaveAttribute('aria-disabled', 'true');
+      const spotButton = getSpotRateButton();
+      expect(spotButton).toBeDisabled();
     });
 
     it('should not call onRateTypeChange when target rate type is unavailable', () => {
@@ -315,7 +330,7 @@ describe('SingleConverter - 核心功能測試', () => {
         />,
       );
 
-      const spotButton = screen.getByLabelText('切換到即期匯率');
+      const spotButton = getSpotRateButton();
       fireEvent.click(spotButton);
 
       expect(mockProps.onRateTypeChange).not.toHaveBeenCalled();
@@ -465,7 +480,7 @@ describe('SingleConverter - 核心功能測試', () => {
       expect(reverseRateDisplays[0]).toBeInTheDocument();
     });
 
-    it('auto 模式應依方向顯示買入與賣出價，且正反向不互為倒數', () => {
+    it('auto 模式應以當前主方向匯率為 SSOT，反向顯示其倒數', () => {
       render(
         <SingleConverter
           {...mockProps}
@@ -481,9 +496,87 @@ describe('SingleConverter - 核心功能測試', () => {
         />,
       );
 
-      expect(screen.getByText('1 TWD = 0.0324 USD')).toBeInTheDocument();
+      expect(screen.getByText('1 TWD = 0.0323 USD')).toBeInTheDocument();
       expect(screen.getByText('1 USD = 30.9700 TWD')).toBeInTheDocument();
       expect(screen.queryByText('1 USD = 30.8700 TWD')).not.toBeInTheDocument();
+    });
+
+    it('TWD→KRW 選擇換錢所時應顯示換錢所賣出匯率', () => {
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="TWD"
+          toCurrency="KRW"
+          rateSource="exchange-shop"
+          moneyBoxRate={mockMoneyBoxRate}
+          exchangeShopCurrency="KRW"
+        />,
+      );
+
+      expect(screen.getByText('1 TWD = 44.8500 KRW')).toBeInTheDocument();
+    });
+
+    it('KRW→TWD 選擇換錢所時應顯示換錢所買入反向匯率', () => {
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="KRW"
+          toCurrency="TWD"
+          rateSource="exchange-shop"
+          moneyBoxRate={mockMoneyBoxRate}
+          exchangeShopCurrency="KRW"
+        />,
+      );
+
+      expect(screen.getByText('1 KRW = 0.0222 TWD')).toBeInTheDocument();
+    });
+
+    it('auto 模式 KRW→TWD 時，副標應顯示主方向匯率的倒數', () => {
+      const exchangeShopRate: ExchangeShopRate = {
+        ...mockMoneyBoxRate,
+        sell: 44.9,
+        buy: 45.1,
+      };
+
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="KRW"
+          toCurrency="TWD"
+          rateMode="auto"
+          rateSource="exchange-shop"
+          moneyBoxRate={exchangeShopRate}
+          exchangeShopCurrency="KRW"
+        />,
+      );
+
+      expect(screen.getByText('1 KRW = 0.0222 TWD')).toBeInTheDocument();
+      expect(screen.getByText('1 TWD = 45.1000 KRW')).toBeInTheDocument();
+      expect(screen.queryByText('1 TWD = 44.9000 KRW')).not.toBeInTheDocument();
+    });
+
+    it('auto 模式 TWD→KRW 時，副標應顯示主方向匯率的倒數', () => {
+      const exchangeShopRate: ExchangeShopRate = {
+        ...mockMoneyBoxRate,
+        sell: 44.9,
+        buy: 45.1,
+      };
+
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="TWD"
+          toCurrency="KRW"
+          rateMode="auto"
+          rateSource="exchange-shop"
+          moneyBoxRate={exchangeShopRate}
+          exchangeShopCurrency="KRW"
+        />,
+      );
+
+      expect(screen.getByText('1 TWD = 44.9000 KRW')).toBeInTheDocument();
+      expect(screen.getByText('1 KRW = 0.0223 TWD')).toBeInTheDocument();
+      expect(screen.queryByText('1 KRW = 0.0222 TWD')).not.toBeInTheDocument();
     });
   });
 

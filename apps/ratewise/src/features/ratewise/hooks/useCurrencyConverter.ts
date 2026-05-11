@@ -1,28 +1,53 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CURRENCY_DEFINITIONS, DEFAULT_BASE_CURRENCY } from '../constants';
+import {
+  CURRENCY_DEFINITIONS,
+  DEFAULT_BASE_CURRENCY,
+  DEFAULT_CONVERTER_AMOUNT,
+  DEFAULT_CONVERTER_MODE,
+  DEFAULT_RATE_TYPE,
+} from '../constants';
 import type {
   AmountField,
   ConversionHistoryEntry,
+  ConverterMode,
   CurrencyCode,
   MultiAmountsState,
+  RateSource,
   RateType,
 } from '../types';
-import { readJSON, writeJSON } from '../storage';
-import { STORAGE_KEYS } from '../storage-keys';
 import type { RateDetails } from './useExchangeRates';
 import { logger } from '../../../utils/logger';
-import { convertCurrencyAmountWithMode } from '../../../utils/exchangeRateCalculation';
+import { getUnitExchangeRate } from '../../../utils/exchangeRateCalculation';
 import { getRelativeTimeString } from '../../../utils/timeFormatter';
 import { INP_LONG_TASK_THRESHOLD_MS } from '../../../utils/interactionBudget';
 import { useToast } from '../../../components/Toast';
 import { useConverterStore } from '../../../stores/converterStore';
+import {
+  getExchangeShopProvider,
+  getSupportedExchangeShopCurrencies,
+  hasExchangeShopProvider,
+} from '../../../config/exchangeShopProviders';
+import {
+  getExchangeShopRateForPair,
+  type ExchangeShopRate,
+  type ExchangeShopRatesByCurrency,
+} from '../../../services/moneyboxRateService';
+import { useMoneyBoxRates } from './useMoneyBoxRates';
+import { useMoneyBoxRatesMap } from './useMoneyBoxRatesMap';
+import type { ProviderSelectionMode, ResolvedRateProvider } from '../rateProviderTypes';
+import {
+  rankProviderQuotes,
+  resolveProviderPreference,
+  type ProviderQuote,
+} from '../rateProviderRanking';
+import { buildProviderQuotes } from '../rateProviderQuoteAdapters';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
 const createInitialMultiAmounts = (
   baseCurrency: CurrencyCode,
-  baseValue = '1000',
+  baseValue = DEFAULT_CONVERTER_AMOUNT,
 ): MultiAmountsState => {
   return CURRENCY_CODES.reduce<MultiAmountsState>((acc, code) => {
     acc[code] = code === baseCurrency ? baseValue : '';
@@ -37,41 +62,190 @@ const sanitizeFavorites = (codes: CurrencyCode[]): CurrencyCode[] => {
   return unique.filter(isCurrencyCode);
 };
 
+const buildFallbackExchangeShopRate = (currency: CurrencyCode): ExchangeShopRate | null => {
+  const provider = getExchangeShopProvider(currency);
+  if (!provider) return null;
+
+  return {
+    currency,
+    sell: provider.fallbackSell,
+    buy: provider.fallbackBuy,
+    updateTime: '—',
+    source: provider.source,
+    sourceUrl: provider.sourceUrl,
+    providerName: provider.providerName,
+    isFallback: true,
+  };
+};
+
 interface UseCurrencyConverterOptions {
   exchangeRates?: Record<string, number | null>;
   details?: Record<string, RateDetails>;
   rateType?: RateType;
+  rateSource?: RateSource;
+  mode?: ConverterMode;
+}
+
+export function resolveEffectiveRateSourceForConversion({
+  mode,
+  requestedRateSource,
+  resolvedSourceKind,
+  exchangeShopRate,
+  providerSelectionMode,
+}: {
+  mode: 'single' | 'multi';
+  requestedRateSource?: RateSource;
+  resolvedSourceKind: RateSource;
+  exchangeShopRate: ExchangeShopRate | null;
+  /** providerPreference.mode：'best' 模式下多幣別需依每個 row pair 的可用換錢所匯率決定來源。 */
+  providerSelectionMode?: ProviderSelectionMode;
+}): RateSource {
+  if (mode !== 'multi') return resolvedSourceKind;
+  // 多幣別 SSOT：使用者明選 exchange-shop 或 best 模式偵測到該 row 有換錢所匯率時走換錢所；
+  // 否則 fallback 銀行（避免單幣別 single-pair resolvedSourceKind 跨 row 誤套用）。
+  if (!exchangeShopRate) return 'bank';
+  if (requestedRateSource === 'exchange-shop') return 'exchange-shop';
+  if (providerSelectionMode === 'best') return 'exchange-shop';
+  return 'bank';
 }
 
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
-  const { exchangeRates, details, rateType = 'spot' } = options;
+  const {
+    exchangeRates,
+    details,
+    rateType = DEFAULT_RATE_TYPE,
+    rateSource,
+    mode: requestedMode,
+  } = options;
   const { t } = useTranslation();
   const { showToast } = useToast();
 
-  // 持久化狀態由 Zustand store 管理（含 localStorage persist middleware）
   const {
     fromCurrency,
     toCurrency,
-    mode,
     rateMode,
     favorites,
+    providerPreference,
+    history,
+    baseCurrency,
     setFromCurrency,
     setToCurrency,
-    setMode,
+    setRateMode,
+    setRateType,
+    setRateSource,
+    setProviderPreference,
+    setBaseCurrency,
     toggleFavorite: storeToggleFavorite,
     reorderFavorites: storeReorderFavorites,
     swapCurrencies: storeSwapCurrencies,
+    addToHistory: storeAddToHistory,
+    clearHistory: storeClearHistory,
   } = useConverterStore();
 
-  const [fromAmount, setFromAmount] = useState<string>('1000');
+  const [fromAmount, setFromAmount] = useState<string>(DEFAULT_CONVERTER_AMOUNT);
   const [toAmount, setToAmount] = useState<string>('');
 
   const [multiAmounts, setMultiAmounts] = useState<MultiAmountsState>(() =>
-    createInitialMultiAmounts(DEFAULT_BASE_CURRENCY),
+    createInitialMultiAmounts(useConverterStore.getState().baseCurrency),
   );
-  const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>(DEFAULT_BASE_CURRENCY);
+  const mode = requestedMode ?? DEFAULT_CONVERTER_MODE;
 
-  const [history, setHistory] = useState<ConversionHistoryEntry[]>([]);
+  const exchangeShopCurrency = useMemo((): CurrencyCode | null => {
+    if (fromCurrency === 'TWD' && hasExchangeShopProvider(toCurrency)) return toCurrency;
+    if (toCurrency === 'TWD' && hasExchangeShopProvider(fromCurrency)) return fromCurrency;
+    return null;
+  }, [fromCurrency, toCurrency]);
+
+  const { rate: moneyBoxRate } = useMoneyBoxRates(exchangeShopCurrency);
+  const fallbackExchangeShopRate = useMemo((): ExchangeShopRate | null => {
+    if (!exchangeShopCurrency) return null;
+    return buildFallbackExchangeShopRate(exchangeShopCurrency);
+  }, [exchangeShopCurrency]);
+  const selectedExchangeShopRate = moneyBoxRate ?? fallbackExchangeShopRate;
+
+  const numericAmount = useMemo(() => {
+    const parsed = parseFloat(fromAmount);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }, [fromAmount]);
+  const providerQuotes = useMemo<ProviderQuote[]>(() => {
+    return buildProviderQuotes({
+      amount: numericAmount,
+      from: fromCurrency,
+      to: toCurrency,
+      details,
+      rateType,
+      rateMode,
+      exchangeRates,
+      exchangeShopRate: selectedExchangeShopRate,
+    });
+  }, [
+    fromCurrency,
+    toCurrency,
+    details,
+    rateType,
+    rateMode,
+    exchangeRates,
+    selectedExchangeShopRate,
+    numericAmount,
+  ]);
+
+  const resolvedProvider = useMemo<ResolvedRateProvider>(
+    () =>
+      resolveProviderPreference({
+        preference: providerPreference,
+        from: fromCurrency,
+        to: toCurrency,
+        rateType,
+        quotes: providerQuotes,
+      }),
+    [providerPreference, fromCurrency, toCurrency, rateType, providerQuotes],
+  );
+
+  const rankedProviderQuotes = useMemo<ProviderQuote[]>(
+    () =>
+      rankProviderQuotes({
+        amount: numericAmount,
+        from: fromCurrency,
+        to: toCurrency,
+        rateType,
+        quotes: providerQuotes,
+      }),
+    [numericAmount, fromCurrency, toCurrency, rateType, providerQuotes],
+  );
+
+  const effectiveRateSource = useMemo<RateSource>(
+    () =>
+      resolveEffectiveRateSourceForConversion({
+        mode,
+        requestedRateSource: rateSource,
+        resolvedSourceKind: resolvedProvider.sourceKind,
+        exchangeShopRate: selectedExchangeShopRate,
+        providerSelectionMode: providerPreference.mode,
+      }),
+    [
+      mode,
+      rateSource,
+      resolvedProvider.sourceKind,
+      selectedExchangeShopRate,
+      providerPreference.mode,
+    ],
+  );
+
+  const multiExchangeShopCurrencies = useMemo((): CurrencyCode[] => {
+    if (mode !== 'multi') return [];
+    if (baseCurrency === 'TWD') return getSupportedExchangeShopCurrencies();
+    return hasExchangeShopProvider(baseCurrency) ? [baseCurrency] : [];
+  }, [mode, baseCurrency]);
+  const { rates: multiMoneyBoxRates } = useMoneyBoxRatesMap(multiExchangeShopCurrencies);
+  const multiExchangeShopRatesByCurrency = useMemo((): ExchangeShopRatesByCurrency => {
+    return multiExchangeShopCurrencies.reduce<ExchangeShopRatesByCurrency>((acc, currency) => {
+      const fallbackRate = buildFallbackExchangeShopRate(currency);
+      if (fallbackRate) {
+        acc[currency] = multiMoneyBoxRates[currency] ?? fallbackRate;
+      }
+      return acc;
+    }, {});
+  }, [multiExchangeShopCurrencies, multiMoneyBoxRates]);
 
   const pendingMultiRecalcRef = useRef<{ code: CurrencyCode; value: string } | null>(null);
   const multiRecalcFrameRef = useRef<number | null>(null);
@@ -83,31 +257,62 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     }
   }, []);
 
+  const getResolvedUnitRate = useCallback(
+    (from: CurrencyCode, to: CurrencyCode): number => {
+      const pairExchangeShopRate =
+        mode === 'multi'
+          ? getExchangeShopRateForPair(from, to, multiExchangeShopRatesByCurrency)
+          : selectedExchangeShopRate;
+      const effectiveSourceKind = resolveEffectiveRateSourceForConversion({
+        mode,
+        requestedRateSource: rateSource,
+        resolvedSourceKind: resolvedProvider.sourceKind,
+        exchangeShopRate: pairExchangeShopRate,
+        providerSelectionMode: providerPreference.mode,
+      });
+      const exchangeShopRate =
+        effectiveSourceKind === 'exchange-shop' ? pairExchangeShopRate : null;
+      const unitRate = getUnitExchangeRate(from, to, details, rateType, rateMode, exchangeRates, {
+        rateSource: effectiveSourceKind,
+        exchangeShopRate,
+      });
+
+      return unitRate;
+    },
+    [
+      details,
+      rateType,
+      rateMode,
+      exchangeRates,
+      mode,
+      rateSource,
+      resolvedProvider.sourceKind,
+      multiExchangeShopRatesByCurrency,
+      selectedExchangeShopRate,
+      providerPreference.mode,
+    ],
+  );
+
+  const convertAmount = useCallback(
+    (amount: number, from: CurrencyCode, to: CurrencyCode): number =>
+      amount * getResolvedUnitRate(from, to),
+    [getResolvedUnitRate],
+  );
+
   useEffect(() => {
     return () => {
       cancelScheduledMultiRecalc();
     };
   }, [cancelScheduledMultiRecalc]);
 
-  // [feat:2025-12-26] 從 localStorage 恢復歷史記錄並過濾過期記錄（7 天）
   useEffect(() => {
-    const storedHistory = readJSON<ConversionHistoryEntry[]>(STORAGE_KEYS.CONVERSION_HISTORY, []);
-
-    // 過濾 7 天前的記錄
+    if (history.length === 0) return;
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const validHistory = storedHistory.filter((entry) => entry.timestamp > sevenDaysAgo);
-
-    // 如果有過期記錄被過濾，更新 localStorage
-    if (validHistory.length !== storedHistory.length) {
-      writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, validHistory);
-    }
-
-    // 只有當有歷史記錄時才更新 state
-    if (validHistory.length > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration：必須在 effect 中從 localStorage 恢復用戶歷史記錄
-      setHistory(validHistory);
-    }
-  }, []);
+    const expired = history.some((entry) => entry.timestamp <= sevenDaysAgo);
+    if (!expired) return;
+    const valid = history.filter((entry) => entry.timestamp > sevenDaysAgo);
+    useConverterStore.setState({ history: valid });
+  }, [history]);
   const [lastEdited, setLastEdited] = useState<AmountField>('from');
 
   // Conversion calculations using convertCurrencyAmountWithMode
@@ -137,15 +342,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
             return acc;
           }
 
-          const converted = convertCurrencyAmountWithMode(
-            amount,
-            sourceCode,
-            code,
-            details,
-            rateType,
-            rateMode,
-            exchangeRates,
-          );
+          const converted = convertAmount(amount, sourceCode, code);
 
           if (converted === 0 && amount !== 0) {
             acc[code] = 'N/A';
@@ -161,7 +358,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
         { ...prev },
       );
     },
-    [details, rateType, rateMode, exchangeRates],
+    [convertAmount],
   );
 
   const calculateFromAmount = useCallback(() => {
@@ -171,19 +368,11 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       return;
     }
 
-    const converted = convertCurrencyAmountWithMode(
-      amount,
-      fromCurrency,
-      toCurrency,
-      details,
-      rateType,
-      rateMode,
-      exchangeRates,
-    );
+    const converted = convertAmount(amount, fromCurrency, toCurrency);
 
     const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
     setToAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
-  }, [fromAmount, fromCurrency, toCurrency, details, rateType, rateMode, exchangeRates]);
+  }, [fromAmount, fromCurrency, toCurrency, convertAmount]);
 
   const calculateToAmount = useCallback(() => {
     const amount = parseFloat(toAmount);
@@ -192,20 +381,12 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       return;
     }
 
-    // 反向換算：B→A，FROM/TO 互換且方向相反
-    const converted = convertCurrencyAmountWithMode(
-      amount,
-      toCurrency,
-      fromCurrency,
-      details,
-      rateType,
-      rateMode,
-      exchangeRates,
-    );
+    const unitRate = getResolvedUnitRate(fromCurrency, toCurrency);
+    const converted = unitRate ? amount / unitRate : 0;
 
     const decimals = CURRENCY_DEFINITIONS[fromCurrency].decimals;
     setFromAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
-  }, [toAmount, fromCurrency, toCurrency, details, rateType, rateMode, exchangeRates]);
+  }, [toAmount, fromCurrency, toCurrency, getResolvedUnitRate]);
 
   // 單幣別換算效果（路由決定顯示，無需依賴 mode 狀態）
   useEffect(() => {
@@ -230,6 +411,23 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 多幣別模式下響應式重新計算所有金額
     setMultiAmounts((prev) => recalcMultiAmounts(baseCurrency, prev[baseCurrency] ?? '0', prev));
   }, [mode, baseCurrency, recalcMultiAmounts]);
+
+  // 換錢所可用性 SSOT：當前情境是否有任何幣別走換錢所匯率。
+  // 單幣別：pair 必須是 TWD ↔ 換錢所支援幣（目前僅 KRW）。
+  // 多幣別：基準幣為 TWD（顯示所有支援幣）或基準幣本身有 provider。
+  const isExchangeShopAvailableInContext = useMemo<boolean>(
+    () =>
+      mode === 'multi' ? multiExchangeShopCurrencies.length > 0 : exchangeShopCurrency !== null,
+    [mode, multiExchangeShopCurrencies, exchangeShopCurrency],
+  );
+
+  useEffect(() => {
+    // 已選擇換錢所但目前情境無法支援時，自動回退銀行來源（透過 store action 收斂使用者設定）。
+    // SSOT：單一 effect 取代過去 RateWise / MultiConverter 各自的重複 fallback。
+    if (rateSource === 'exchange-shop' && !isExchangeShopAvailableInContext) {
+      setRateSource('bank');
+    }
+  }, [rateSource, isExchangeShopAvailableInContext, setRateSource]);
 
   // Handlers
   const handleFromAmountChange = useCallback((value: string) => {
@@ -282,7 +480,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       setBaseCurrency(code);
       scheduleMultiRecalc(code, value);
     },
-    [scheduleMultiRecalc],
+    [scheduleMultiRecalc, setBaseCurrency],
   );
 
   const quickAmount = useCallback(
@@ -320,9 +518,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     [storeReorderFavorites],
   );
 
-  /**
-   * 將當前轉換加入歷史記錄並顯示 Toast 通知
-   */
   const addToHistory = useCallback(() => {
     const timestamp = Date.now();
     const entry: ConversionHistoryEntry = {
@@ -332,22 +527,33 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       result: toAmount,
       time: getRelativeTimeString(timestamp),
       timestamp,
+      rateType,
+      sourceKind: resolvedProvider.sourceKind,
+      providerId: resolvedProvider.providerId,
+      providerSelectionMode: resolvedProvider.selectionMode,
+      rateMode,
+      schemaVersion: 2,
     };
 
-    setHistory((prev) => {
-      const updated = [entry, ...prev].slice(0, 10);
-      writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, updated);
-      return updated;
-    });
-
+    storeAddToHistory(entry);
     showToast(t('singleConverter.addedToHistory'), 'success');
-  }, [fromCurrency, toCurrency, fromAmount, toAmount, showToast, t]);
+  }, [
+    fromCurrency,
+    toCurrency,
+    fromAmount,
+    toAmount,
+    rateType,
+    resolvedProvider,
+    rateMode,
+    storeAddToHistory,
+    showToast,
+    t,
+  ]);
 
   /** 清除全部歷史記錄 */
   const clearAllHistory = useCallback(() => {
-    setHistory([]);
-    writeJSON(STORAGE_KEYS.CONVERSION_HISTORY, []);
-  }, []);
+    storeClearHistory();
+  }, [storeClearHistory]);
 
   /** 從歷史記錄重新載入轉換參數 */
   const reconvertFromHistory = useCallback(
@@ -356,8 +562,32 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       setToCurrency(entry.to);
       setFromAmount(entry.amount);
       setLastEdited('from');
+      if (entry.schemaVersion === 2 && entry.rateType) {
+        if (entry.rateMode) {
+          setRateMode(entry.rateMode);
+        }
+        if (entry.sourceKind && entry.providerId) {
+          setProviderPreference({
+            mode: entry.providerSelectionMode ?? 'manual',
+            manualProvider: {
+              sourceKind: entry.sourceKind,
+              providerId: entry.providerId,
+            },
+          });
+        } else if (entry.sourceKind) {
+          setRateSource(entry.sourceKind);
+        }
+        setRateType(entry.rateType);
+      }
     },
-    [setFromCurrency, setToCurrency],
+    [
+      setFromCurrency,
+      setProviderPreference,
+      setRateMode,
+      setRateSource,
+      setRateType,
+      setToCurrency,
+    ],
   );
 
   const sortedCurrencies = useMemo((): CurrencyCode[] => {
@@ -374,6 +604,13 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     // State
     mode,
     rateMode,
+    moneyBoxRate: selectedExchangeShopRate,
+    exchangeShopCurrency,
+    exchangeShopRatesByCurrency: multiExchangeShopRatesByCurrency,
+    effectiveRateSource,
+    resolvedProvider,
+    providerQuotes,
+    rankedProviderQuotes,
     fromCurrency,
     toCurrency,
     fromAmount,
@@ -385,7 +622,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     sortedCurrencies,
 
     // Setters
-    setMode,
     setFromCurrency,
     setToCurrency,
     setBaseCurrency,

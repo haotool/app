@@ -20,6 +20,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const ROUTER_ECOSYSTEM_PACKAGES = ['react-router', '@remix-run/router', 'vite-react-ssg'];
 
+function normalizeHtmlBasePath(basePath: string): string {
+  const withLeadingSlash = basePath.startsWith('/') ? basePath : `/${basePath}`;
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
+}
+
 /** 計算檔案內容 hash（PWA 預快取版本控制，僅允許 public/ 目錄） */
 function getFileRevision(filePath: string): string {
   // 安全性驗證：僅允許 public/ 目錄下的檔案
@@ -194,6 +199,7 @@ export default defineConfig(({ mode }) => {
   const rawEnvValue = process.env['VITE_RATEWISE_BASE_PATH'] || env.VITE_RATEWISE_BASE_PATH || '';
   const isValidPath = rawEnvValue.startsWith('/') && !rawEnvValue.includes(' ');
   const base = isValidPath ? rawEnvValue : '/ratewise/';
+  const htmlBasePath = normalizeHtmlBasePath(base);
 
   // eslint-disable-next-line no-console
   console.log(`[vite.config.ts] Base path: ${base} (raw: "${rawEnvValue}", valid: ${isValidPath})`);
@@ -254,7 +260,8 @@ export default defineConfig(({ mode }) => {
             .replace(/__BUILD_TIME__/g, buildTime)
             .replace(/__BRAND_FULL__/g, APP_INFO.name)
             .replace(/__BRAND_SHORT__/g, APP_INFO.shortName)
-            .replace(/__BASE_PATH__/g, base);
+            .replace(/\/__BASE_PATH__/g, htmlBasePath)
+            .replace(/__BASE_PATH__/g, htmlBasePath);
         },
       },
       // Brotli 壓縮

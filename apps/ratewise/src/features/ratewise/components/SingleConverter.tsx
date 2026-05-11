@@ -14,8 +14,13 @@ import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
-import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
-import type { CurrencyCode, RateMode, RateType } from '../types';
+import {
+  CURRENCY_DEFINITIONS,
+  CURRENCY_QUICK_AMOUNTS,
+  DEFAULT_RATE_MODE,
+  DEFAULT_RATE_SOURCE,
+} from '../constants';
+import type { CurrencyCode, RateMode, RateSource, RateType } from '../types';
 // lazy import：ErrorBoundary 已涵蓋載入失敗；chunk 已在 PWA precache manifest 內，離線可用
 const MiniTrendChart = lazy(() =>
   import('./MiniTrendChart').then((m) => ({ default: m.MiniTrendChart })),
@@ -28,17 +33,23 @@ import {
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
-import { motion } from 'motion/react';
 import { singleConverterLayoutTokens } from '../../../config/design-tokens';
-import { segmentedSwitch } from '../../../config/animations';
-import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
-import { convertCurrencyAmountWithMode } from '../../../utils/exchangeRateCalculation';
+import {
+  getReciprocalExchangeRate,
+  getUnitExchangeRate,
+} from '../../../utils/exchangeRateCalculation';
 import type { RateTypeAvailability } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 import { TREND_CHART_DEFER_MS, TREND_CHART_IDLE_TIMEOUT_MS } from '../../../config/performance';
+import { RateSelector } from './RateSelector';
+import {
+  computeConverterRate,
+  fetchExchangeShopHistoricalRatesRange,
+  type ExchangeShopRate,
+} from '../../../services/moneyboxRateService';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
@@ -48,6 +59,11 @@ function getLocalDateKey(date = new Date()): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function getDateKeyFromUpdateTime(updateTime: string | undefined, fallback: string): string {
+  const datePart = updateTime?.match(/\d{4}\/\d{2}\/\d{2}/)?.[0];
+  return datePart ? datePart.replace(/\//g, '-') : fallback;
 }
 
 interface SingleConverterProps {
@@ -68,6 +84,10 @@ interface SingleConverterProps {
   onSwapCurrencies: () => void;
   onAddToHistory: () => void;
   onRateTypeChange: (type: RateType) => void;
+  rateSource?: RateSource;
+  moneyBoxRate?: ExchangeShopRate | null;
+  exchangeShopCurrency?: CurrencyCode | null;
+  onRateSourceChange?: (source: RateSource) => void;
 }
 
 export const SingleConverter = ({
@@ -78,7 +98,7 @@ export const SingleConverter = ({
   exchangeRates,
   details,
   rateType,
-  rateMode = 'auto',
+  rateMode = DEFAULT_RATE_MODE,
   rateTypeAvailability = { spot: true, cash: true },
   onFromCurrencyChange,
   onToCurrencyChange,
@@ -88,6 +108,10 @@ export const SingleConverter = ({
   onSwapCurrencies,
   onAddToHistory,
   onRateTypeChange,
+  rateSource = DEFAULT_RATE_SOURCE,
+  moneyBoxRate = null,
+  exchangeShopCurrency = null,
+  onRateSourceChange,
 }: SingleConverterProps) => {
   const { t } = useTranslation();
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
@@ -119,50 +143,19 @@ export const SingleConverter = ({
   });
 
   // 匯率卡片與實際換算共用同一套核心。
-  const exchangeRate = convertCurrencyAmountWithMode(
-    1,
+  const exchangeRate = getUnitExchangeRate(
     fromCurrency,
     toCurrency,
     details,
     rateType,
     rateMode,
     exchangeRates,
+    {
+      rateSource,
+      exchangeShopRate: moneyBoxRate,
+    },
   );
-  const reverseRate = convertCurrencyAmountWithMode(
-    1,
-    toCurrency,
-    fromCurrency,
-    details,
-    rateType,
-    rateMode,
-    exchangeRates,
-  );
-
-  const getRateTypeUnavailableMessage = (targetRateType: RateType): string => {
-    const unavailableCurrencies = [fromCurrency, toCurrency].filter((code) => {
-      if (code === 'TWD') return false;
-      const detail = details?.[code];
-      return detail?.[targetRateType]?.sell == null;
-    });
-
-    const fallbackType: RateType = targetRateType === 'spot' ? 'cash' : 'spot';
-    const targetLabel =
-      targetRateType === 'spot' ? t('singleConverter.spotRate') : t('singleConverter.cashRate');
-    const fallbackLabel =
-      fallbackType === 'spot' ? t('singleConverter.spotRate') : t('singleConverter.cashRate');
-
-    if (unavailableCurrencies.length === 0) {
-      return t('singleConverter.rateTypeUnavailable', {
-        rateType: targetLabel,
-      });
-    }
-
-    return t('singleConverter.rateTypeUnavailableForCurrencies', {
-      currencies: unavailableCurrencies.join(', '),
-      rateType: targetLabel,
-      fallbackType: fallbackLabel,
-    });
-  };
+  const reverseRate = getReciprocalExchangeRate(exchangeRate);
 
   // 趨勢圖進場動畫
   useEffect(() => {
@@ -227,6 +220,47 @@ export const SingleConverter = ({
       try {
         if (!isMounted) return;
         setLoadingTrend(true);
+        const exchangeShopLatestRate = moneyBoxRate
+          ? computeConverterRate(moneyBoxRate, fromCurrency, toCurrency)
+          : null;
+        const shouldUseExchangeShopTrend =
+          rateSource === 'exchange-shop' &&
+          moneyBoxRate !== null &&
+          !!exchangeShopCurrency &&
+          exchangeShopLatestRate !== null;
+
+        if (shouldUseExchangeShopTrend) {
+          const historicalRates = await fetchExchangeShopHistoricalRatesRange(
+            exchangeShopCurrency,
+            MAX_TREND_DAYS,
+          );
+
+          if (!isMounted) return;
+
+          const historyPoints = historicalRates
+            .map(({ date, rate }) => {
+              const converterRate = computeConverterRate(rate, fromCurrency, toCurrency);
+              return converterRate && Number.isFinite(converterRate) && converterRate > 0
+                ? { date, rate: converterRate }
+                : null;
+            })
+            .filter((item): item is MiniTrendDataPoint => item !== null)
+            .reverse();
+
+          const latestDate = getDateKeyFromUpdateTime(moneyBoxRate.updateTime, trendDateKey);
+          const mergedPoints =
+            Number.isFinite(exchangeShopLatestRate) && exchangeShopLatestRate > 0
+              ? [
+                  ...historyPoints.filter((point) => point.date !== latestDate),
+                  { date: latestDate, rate: exchangeShopLatestRate },
+                ]
+              : historyPoints;
+
+          const sortedPoints = mergedPoints.sort((a, b) => a.date.localeCompare(b.date));
+          setTrendData(sortedPoints.slice(-MAX_TREND_DAYS));
+          return;
+        }
+
         const [historicalData, latestRates] = await Promise.all([
           fetchHistoricalRatesRange(MAX_TREND_DAYS),
           fetchLatestRates().catch(() => null),
@@ -330,7 +364,7 @@ export const SingleConverter = ({
         clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
       }
     };
-  }, [fromCurrency, toCurrency, trendDateKey]);
+  }, [fromCurrency, toCurrency, trendDateKey, rateSource, moneyBoxRate, exchangeShopCurrency]);
 
   // 開發工具：強制觸發骨架屏效果（僅開發模式）
   /* v8 ignore next 22 */
@@ -466,83 +500,14 @@ export const SingleConverter = ({
           <div
             className={`relative text-center px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden ${singleConverterLayoutTokens.rateCard.infoPadding}`}
           >
-            {/* 匯率類型切換按鈕 - v2.0 相對定位設計，避免擠壓匯率 */}
-            <div
-              className={`inline-flex bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60 ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
-            >
-              {(
-                [
-                  {
-                    value: 'spot' as RateType,
-                    label: t('singleConverter.spotRate'),
-                    ariaLabel: t('singleConverter.switchToSpot'),
-                    icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
-                  },
-                  {
-                    value: 'cash' as RateType,
-                    label: t('singleConverter.cashRate'),
-                    ariaLabel: t('singleConverter.switchToCash'),
-                    icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
-                  },
-                ] as const
-              ).map((option) => {
-                const isActive = rateType === option.value;
-                const isUnavailable = !rateTypeAvailability[option.value];
-                const optionButton = (
-                  <motion.button
-                    key={option.value}
-                    onClick={() => {
-                      if (isUnavailable || isActive) return;
-                      onRateTypeChange(option.value);
-                    }}
-                    whileHover={isUnavailable ? undefined : segmentedSwitch.item.whileHover}
-                    whileTap={isUnavailable ? undefined : segmentedSwitch.item.whileTap}
-                    className={`flex items-center gap-1 ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative ${
-                      isActive ? 'text-white' : 'text-text/70 hover:text-text'
-                    } ${isUnavailable ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    aria-label={option.ariaLabel}
-                    aria-pressed={isActive}
-                    aria-disabled={isUnavailable}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="rate-type-indicator"
-                        className="absolute inset-0 rounded-full bg-primary shadow-md"
-                        transition={segmentedSwitch.indicator}
-                      />
-                    )}
-                    <svg
-                      className={`${singleConverterLayoutTokens.rateCard.rateTypeIcon} relative z-10`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d={option.icon}
-                      />
-                    </svg>
-                    <span className="relative z-10">{option.label}</span>
-                  </motion.button>
-                );
-
-                if (!isUnavailable) {
-                  return optionButton;
-                }
-
-                return (
-                  <RateTypeTooltip
-                    key={option.value}
-                    message={getRateTypeUnavailableMessage(option.value)}
-                    isDisabled={true}
-                  >
-                    {optionButton}
-                  </RateTypeTooltip>
-                );
-              })}
-            </div>
+            <RateSelector
+              rateType={rateType}
+              rateSource={rateSource}
+              rateTypeAvailability={rateTypeAvailability}
+              hasExchangeShop={!!exchangeShopCurrency}
+              onRateTypeChange={onRateTypeChange}
+              onRateSourceChange={onRateSourceChange ?? (() => undefined)}
+            />
 
             {/* 匯率顯示 - 使用 SSOT text 色 */}
             <div className="w-full">

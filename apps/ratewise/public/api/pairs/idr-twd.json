@@ -15,6 +15,35 @@
     "spot_sell": "即期賣出：電匯/帳戶轉出匯率（你從台灣匯款出去）",
     "spot_buy": "即期買入：電匯/帳戶轉入匯率（你匯款回台灣）"
   },
-  "note": "賣出（sell）= 銀行賣給你外幣的價格，即你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格，即你拿外幣換台幣看此價。",
+  "rateModes": {
+    "auto": {
+      "label": "自動方向",
+      "description": "與 App 預設匯率模式一致：來源外幣使用買入價、目標外幣使用賣出價，依換算方向貼近實際成本。",
+      "fromCurrencyField": "{rateType}.buy",
+      "toCurrencyField": "{rateType}.sell",
+      "twdToForeign": "amount / details.{TO}.{rateType}.sell",
+      "foreignToTwd": "amount * details.{FROM}.{rateType}.buy",
+      "foreignToForeign": "amount * details.{FROM}.{rateType}.buy / details.{TO}.{rateType}.sell"
+    },
+    "sell": {
+      "label": "賣出價",
+      "description": "全程使用銀行賣出價；即期/現金由使用者選擇的 rateType 決定。",
+      "fromCurrencyField": "{rateType}.sell",
+      "toCurrencyField": "{rateType}.sell",
+      "twdToForeign": "amount / details.{TO}.{rateType}.sell",
+      "foreignToTwd": "amount * details.{FROM}.{rateType}.sell",
+      "foreignToForeign": "amount * details.{FROM}.{rateType}.sell / details.{TO}.{rateType}.sell"
+    },
+    "mid": {
+      "label": "參考價",
+      "description": "使用買入價與賣出價的中間價；適合市場參考，不代表實際可成交價格。",
+      "fromCurrencyField": "({rateType}.buy + {rateType}.sell) / 2",
+      "toCurrencyField": "({rateType}.buy + {rateType}.sell) / 2",
+      "twdToForeign": "amount / mid(details.{TO}.{rateType})",
+      "foreignToTwd": "amount * mid(details.{FROM}.{rateType})",
+      "foreignToForeign": "amount * mid(details.{FROM}.{rateType}) / mid(details.{TO}.{rateType})"
+    }
+  },
+  "note": "賣出（sell）= 銀行賣給你外幣的價格，即你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格，即你拿外幣換台幣看此價。若要與 App 顯示一致，請依 rateModes 選取對應欄位。",
   "disclaimer": "匯率僅供參考，實際交易請以金融機構公告為準。"
 }

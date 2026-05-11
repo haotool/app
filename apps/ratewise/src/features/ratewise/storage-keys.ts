@@ -30,6 +30,9 @@ export const STORAGE_KEYS = {
   /** 匯率數據快取 - 5 分鐘過期，由 exchangeRateService.ts 管理 */
   EXCHANGE_RATES: 'exchangeRates',
 
+  /** 換錢所匯率快取 key prefix - 5 分鐘過期，由 moneyboxRateService.ts 管理 */
+  EXCHANGE_SHOP_RATE_PREFIX: 'exchangeShopRate_',
+
   // === 系統數據 (版本管理) ===
 
   /** 當前應用版本號 - 由 versionManager.ts 管理 */
@@ -55,6 +58,9 @@ export const STORAGE_KEYS = {
   /** 匯率類型選擇 (spot/cash) - 用戶偏好的匯率類型，預設為 spot */
   RATE_TYPE: 'rateType',
 
+  /** 匯率來源選擇 (bank/exchange-shop) - 用戶偏好的匯率資料來源，預設為 bank */
+  RATE_SOURCE: 'rateSource',
+
   /** 轉換歷史記錄 - 用戶的轉換記錄，7 天後自動過期 */
   CONVERSION_HISTORY: 'conversionHistory',
 } as const;
@@ -70,6 +76,13 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 export const CACHE_KEYS = [STORAGE_KEYS.EXCHANGE_RATES] as const;
 
 /**
+ * 快取類型的 Key Prefixes (可清除)
+ *
+ * 用於每個幣別各自建立 cache key 的資料，例如 exchangeShopRate_KRW。
+ */
+export const CACHE_KEY_PREFIXES = [STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX] as const;
+
+/**
  * 用戶數據類型的 Keys (不可清除)
  * 註: 這些 keys 由 versionManager.ts 在清除快取時保留
  *
@@ -77,9 +90,15 @@ export const CACHE_KEYS = [STORAGE_KEYS.EXCHANGE_RATES] as const;
  * - fromCurrency / toCurrency / currencyConverterMode / favorites
  *   已遷移至 Zustand store，統一由 'ratewise-converter' key 管理
  * - 舊的個別 keys 在首次啟動時由 converterStore migration 自動清除
+ *
+ * 遷移說明（v2.22.21+）：
+ * - rateType / rateSource 也併入 'ratewise-converter'，
+ *   converterStore.__migrateFromLegacy 會於首次 hydrate 時讀取舊 key 並刪除。
+ *   仍保留在本清單中以保護過渡期使用者資料不被快取清除流程誤刪。
  */
 export const USER_DATA_KEYS = [
-  'ratewise-converter', // Zustand store（含 fromCurrency/toCurrency/mode/favorites）
+  'ratewise-converter', // Zustand store（含 fromCurrency/toCurrency/mode/rateMode/rateType/rateSource/favorites/history）
   STORAGE_KEYS.RATE_TYPE,
+  STORAGE_KEYS.RATE_SOURCE,
   STORAGE_KEYS.CONVERSION_HISTORY,
 ] as const;

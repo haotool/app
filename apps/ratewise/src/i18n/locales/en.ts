@@ -65,8 +65,12 @@ const en = {
     addedToHistory: 'Added to history',
     spotRate: 'Spot',
     cashRate: 'Cash',
+    exchangeShopRate: 'Exchange shop',
+    rateTypeGroup: 'Rate type',
     switchToSpot: 'Switch to spot rate',
     switchToCash: 'Switch to cash rate',
+    switchToExchangeShop: 'Switch to exchange shop rate',
+    fallbackRate: 'Reference',
     rateTypeUnavailable: '{{rateType}} rate is currently unavailable',
     rateTypeUnavailableForCurrencies:
       '{{currencies}} does not provide {{rateType}} rate, switched to {{fallbackType}}',
@@ -200,6 +204,11 @@ const en = {
     reconvertAriaLabel: 'Quick convert {{from}} to {{to}}',
     copyAriaLabel: 'Copy conversion result',
     entryAriaLabel: '{{amount}} {{from}} converted to {{result}} {{to}}',
+    categories: {
+      spot: 'Spot',
+      cash: 'Cash',
+      'exchange-shop': 'Exchange shop',
+    },
   },
 
   // Calculator

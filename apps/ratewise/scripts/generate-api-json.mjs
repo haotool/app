@@ -11,6 +11,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
+import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -24,24 +25,46 @@ const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
 const currencyKeys = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].map((m) => m[1]);
 
+const rateModeStrategies = JSON.parse(
+  readFileSync(resolve(ROOT, 'src/config/rate-mode-strategies.json'), 'utf-8'),
+);
+
+const providerMetadata = buildPublicRateProviderMetadata({
+  dataBaseUrl: DATA_BASE_URL,
+  cdnBaseUrl: CDN_BASE_URL,
+  supportedCurrencies: currencyKeys,
+});
+const { providerSelection, providers } = providerMetadata;
+const exchangeShopProvider = providerMetadata.providers.find(
+  (provider) => provider.sourceKind === 'exchange-shop',
+);
+
 const latestJson = {
   name: `${APP_INFO.shortName} Exchange Rate API`,
   version: pkg.version,
-  description: '臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步',
+  description: '臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步，並提供 App 匯率模式欄位對照',
   source: '臺灣銀行牌告匯率',
   sourceUrl: 'https://rate.bot.com.tw/xrt',
   updateFrequency: 'every 5 minutes',
   baseCurrency: 'TWD',
+  rateModes: ['auto', 'sell', 'mid'],
+  rateModeStrategies,
   rateTypes: ['cash_buy', 'cash_sell', 'spot_buy', 'spot_sell'],
   supportedCurrencies: currencyKeys,
   endpoints: {
     latest: `${DATA_BASE_URL}/latest.json`,
     history: `${DATA_BASE_URL}/history/{YYYY-MM-DD}.json`,
+    moneybox: exchangeShopProvider?.currentEndpoint,
+    moneyboxHistory: exchangeShopProvider?.historyEndpoint,
   },
   cdnEndpoints: {
     latest: `${CDN_BASE_URL}/latest.json`,
     history: `${CDN_BASE_URL}/history/{YYYY-MM-DD}.json`,
+    moneybox: exchangeShopProvider?.cdnCurrentEndpoint,
+    moneyboxHistory: exchangeShopProvider?.cdnHistoryEndpoint,
   },
+  providerSelection,
+  providers,
   rateTypeDescriptions: {
     cash_buy: '現金買入：銀行以此價收購外幣現鈔（你拿外幣換台幣）',
     cash_sell: '現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）',
@@ -56,7 +79,8 @@ const latestJson = {
   interactiveDeepLinkTemplate: `${SITE_CONFIG.url}?amount={AMOUNT}&from={FROM}&to={TO}`,
   pairEndpoints: {
     template: `${SITE_CONFIG.url}api/pairs/{PAIR}.json`,
-    description: '各幣對靜態 JSON 端點，提供幣對資訊、即時匯率 CDN 連結、匯率欄位路徑與落地頁 URL',
+    description:
+      '各幣對靜態 JSON 端點，提供幣對資訊、即時匯率連結、匯率欄位路徑、App 匯率模式欄位對照與落地頁 URL',
     example: `${SITE_CONFIG.url}api/pairs/usd-twd.json`,
     availablePairs:
       'usd-twd, jpy-twd, eur-twd, gbp-twd, cny-twd, krw-twd, hkd-twd, aud-twd, cad-twd, sgd-twd, thb-twd, nzd-twd, chf-twd, vnd-twd, php-twd, idr-twd, myr-twd',

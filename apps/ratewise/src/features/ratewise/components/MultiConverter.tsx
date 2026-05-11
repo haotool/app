@@ -1,26 +1,22 @@
-/**
- * MultiConverter Component - Multi-Currency Converter with Favorites
- * 多幣別轉換器組件 - 支援收藏功能
- *
- * @description Multi-currency converter with star favorite toggle on the left,
- *              fixed flag aspect ratio, and SSOT design tokens.
- *              支援左側星號收藏切換、固定國旗比例、SSOT 設計 Token。
- * @version 2.0.0
- */
-
 import { Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
 import { activeHighlight } from '../../../config/animations';
-import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS } from '../constants';
-import type { CurrencyCode, MultiAmountsState, RateType } from '../types';
+import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS, DEFAULT_RATE_SOURCE } from '../constants';
+import type { CurrencyCode, MultiAmountsState, RateMode, RateSource, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
-import { getCurrencyRateTypeAvailability } from '../../../utils/exchangeRateCalculation';
-// 直接 import 以確保離線冷啟動可用（消除 code-splitting 導致的 chunk 載入失敗）
+import {
+  getCurrencyRateTypeAvailability,
+  getUnitExchangeRate,
+} from '../../../utils/exchangeRateCalculation';
+import {
+  getExchangeShopRateForPair,
+  type ExchangeShopRatesByCurrency,
+} from '../../../services/moneyboxRateService';
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 
 interface MultiConverterProps {
@@ -28,7 +24,10 @@ interface MultiConverterProps {
   multiAmounts: MultiAmountsState;
   baseCurrency: CurrencyCode;
   rateType: RateType;
+  rateMode: RateMode;
+  rateSource?: RateSource;
   details?: Record<string, RateDetails>;
+  exchangeShopRatesByCurrency?: ExchangeShopRatesByCurrency;
   favorites: CurrencyCode[];
   onAmountChange: (code: CurrencyCode, value: string) => void;
   onQuickAmount: (amount: number) => void;
@@ -42,7 +41,10 @@ export const MultiConverter = ({
   multiAmounts,
   baseCurrency,
   rateType,
+  rateMode,
+  rateSource = DEFAULT_RATE_SOURCE,
   details,
+  exchangeShopRatesByCurrency = {},
   favorites,
   onAmountChange,
   onQuickAmount,
@@ -53,20 +55,17 @@ export const MultiConverter = ({
   const { t } = useTranslation();
   const inputRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // 🔧 計算機 Modal 狀態（使用統一的 Hook）
   const calculator = useCalculatorModal<CurrencyCode>({
     onConfirm: (currency, result) => {
       onAmountChange(currency, result.toString());
     },
     getInitialValue: (currency) => {
-      // 使用當前貨幣的實際金額，如果為空或無效則使用 0
       const value = multiAmounts[currency];
       const parsed = parseFloat(value);
       return Number.isNaN(parsed) ? 0 : parsed;
     },
   });
 
-  // 檢測某個貨幣是否只有單一匯率類型（只有現金或只有即期）
   const hasOnlyOneRateType = (
     currency: CurrencyCode,
   ): { hasOnlyOne: boolean; availableType: RateType | null; reason: string } => {
@@ -95,92 +94,40 @@ export const MultiConverter = ({
     return { hasOnlyOne: false, availableType: null, reason: '' };
   };
 
-  // 取得匯率顯示資訊（支援任意基準貨幣的交叉匯率計算）
   const getRateDisplay = (currency: CurrencyCode): string => {
-    // 基準貨幣直接顯示「基準貨幣」
     if (currency === baseCurrency) {
       return t('multiConverter.baseCurrency');
     }
 
-    // 特殊處理：TWD 作為基準貨幣（API 原生支援）
-    if (baseCurrency === 'TWD') {
-      const detail = details?.[currency];
-      if (!detail) return t('multiConverter.calculating');
-
-      let rate = detail[rateType]?.sell;
-      if (rate == null) {
-        const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
-        rate = detail[fallbackType]?.sell;
-        if (rate == null) return t('multiConverter.noData');
-      }
-
-      // API 提供：1 外幣 = rate TWD，需反向計算：1 TWD = 1/rate 外幣
-      const reverseRate = 1 / rate;
-      return `1 TWD = ${formatExchangeRate(reverseRate)} ${currency}`;
+    const hasCurrencyDetails = (code: CurrencyCode) => code === 'TWD' || Boolean(details?.[code]);
+    if (!hasCurrencyDetails(baseCurrency) || !hasCurrencyDetails(currency)) {
+      return t('multiConverter.calculating');
     }
 
-    // 特殊處理：目標貨幣是 TWD（反向匯率）
-    if (currency === 'TWD') {
-      const baseDetail = details?.[baseCurrency];
-      if (!baseDetail) return t('multiConverter.calculating');
+    const exchangeShopRate = getExchangeShopRateForPair(
+      baseCurrency,
+      currency,
+      exchangeShopRatesByCurrency,
+    );
+    const unitRate = getUnitExchangeRate(
+      baseCurrency,
+      currency,
+      details,
+      rateType,
+      rateMode,
+      null,
+      {
+        rateSource,
+        exchangeShopRate,
+      },
+    );
+    if (!unitRate) return t('multiConverter.noData');
 
-      let rate = baseDetail[rateType]?.sell;
-      if (rate == null) {
-        const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
-        rate = baseDetail[fallbackType]?.sell;
-        if (rate == null) return t('multiConverter.noData');
-      }
-
-      // API 提供：1 外幣 = rate TWD，直接顯示
-      return `1 ${baseCurrency} = ${formatExchangeRate(rate)} TWD`;
-    }
-
-    // 一般情況：基準貨幣是外幣（需計算交叉匯率）
-    const baseDetail = details?.[baseCurrency];
-    const targetDetail = details?.[currency];
-
-    if (!baseDetail || !targetDetail) return t('multiConverter.calculating');
-
-    // 獲取基準貨幣和目標貨幣對 TWD 的匯率
-    let baseRate = baseDetail[rateType]?.sell;
-    let targetRate = targetDetail[rateType]?.sell;
-
-    // Fallback 機制（例如 KRW 只有現金匯率）
-    if (baseRate == null) {
-      const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
-      baseRate = baseDetail[fallbackType]?.sell;
-    }
-    if (targetRate == null) {
-      const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
-      targetRate = targetDetail[fallbackType]?.sell;
-    }
-
-    if (baseRate == null || targetRate == null) return t('multiConverter.noData');
-
-    // 計算交叉匯率：1 基準貨幣 = (baseRate / targetRate) 目標貨幣
-    const crossRate = baseRate / targetRate;
-    return `1 ${baseCurrency} = ${formatExchangeRate(crossRate)} ${currency}`;
+    return `1 ${baseCurrency} = ${formatExchangeRate(unitRate)} ${currency}`;
   };
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      {/* 快速金額按鈕
-       *
-       * SSOT 設計規範：中性變體（所有轉換器一致）
-       * @see design-tokens.ts - quickAmountButtonTokens
-       *
-       * 響應式設計（行動端單行水平滾動）：
-       * - min-w-0：允許 flex 子元素收縮到內容尺寸以下，避免擠壓父容器
-       *   @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
-       * - overflow-x-auto：內容溢出時啟用水平滾動
-       * - scrollbar-hide：隱藏滾動條保持簡潔美觀
-       * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
-       *
-       * 互動狀態：
-       * - 預設：抬升表面背景 + 柔和文字
-       * - 懸停：主色調淡化 + 主色文字 + 微幅放大
-       * - 按壓：主色調加深 + 縮放回饋
-       */}
       <div className="flex gap-2 mb-4 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
         {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
           (amount: number) => (
@@ -208,18 +155,6 @@ export const MultiConverter = ({
         )}
       </div>
 
-      {/* 貨幣列表 - SSOT 風格
-       *
-       * Ring Overflow 處理：
-       * 基準貨幣使用 ring-2 (2px box-shadow) 高亮顯示，
-       * 需要在四個方向預留空間以避免被父容器裁剪。
-       * 使用 -m-0.5 p-0.5 (2px) 確保 ring 完整顯示。
-       *
-       * 滾動由 AppLayout 統一處理，此處移除 overflow-y-auto 避免嵌套滾動
-       * flex-1 讓列表填滿可用空間
-       * @see AppLayout.tsx - main 區域處理 overflow-y-auto
-       * @see https://tailwindcss.com/docs/ring-width
-       */}
       <div
         className="flex-1 space-y-2 -m-0.5 p-0.5"
         tabIndex={0}
@@ -242,7 +177,6 @@ export const MultiConverter = ({
                   isBase ? activeHighlight.itemActiveClass : activeHighlight.itemInactiveClass
                 }`}
               >
-                {/* 基準貨幣滑動高亮指示器 - layoutId 驅動平滑過渡 */}
                 {isBase && (
                   <motion.div
                     layoutId="base-currency-highlight"
@@ -250,13 +184,7 @@ export const MultiConverter = ({
                     transition={activeHighlight.transition}
                   />
                 )}
-                {/* 左側：星號收藏 + 國旗 + 貨幣資訊（z-10 確保在高亮層上方） */}
                 <div className="relative z-10 flex items-center gap-2 flex-shrink-0 min-w-0">
-                  {/* 收藏星號 - 固定寬度確保對齊
-                   * TWD → 固定實心星（裝飾用，aria-hidden，非互動）
-                   *       與 Favorites.tsx 一致：TWD 永遠置頂，非收藏概念
-                   * 其他 → 可切換收藏的互動按鈕
-                   */}
                   <div className="w-6 flex-shrink-0 flex items-center justify-center">
                     {code === 'TWD' ? (
                       <div aria-hidden="true" data-testid="twd-star-fixed">
@@ -286,7 +214,6 @@ export const MultiConverter = ({
                       </button>
                     )}
                   </div>
-                  {/* 國旗 - 使用固定寬度避免變形 */}
                   <span className="text-xl flex-shrink-0 w-7 text-center leading-none">
                     {CURRENCY_DEFINITIONS[code].flag}
                   </span>
@@ -298,7 +225,6 @@ export const MultiConverter = ({
                   </div>
                 </div>
 
-                {/* 右側：金額 + 匯率資訊（z-10 確保在高亮層上方） */}
                 <div className="relative z-10 flex-1 min-w-0 ml-2">
                   <div
                     ref={(el) => {
@@ -369,7 +295,6 @@ export const MultiConverter = ({
         </AnimatePresence>
       </div>
 
-      {/* 計算機鍵盤 */}
       <Suspense fallback={null}>
         <CalculatorKeyboard
           isOpen={calculator.isOpen}
