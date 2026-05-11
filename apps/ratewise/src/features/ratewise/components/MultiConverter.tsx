@@ -19,6 +19,8 @@ import {
 } from '../../../services/moneyboxRateService';
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 
+type UnifiedRateOption = 'spot' | 'cash' | 'exchange-shop';
+
 interface MultiConverterProps {
   sortedCurrencies: CurrencyCode[];
   multiAmounts: MultiAmountsState;
@@ -29,7 +31,7 @@ interface MultiConverterProps {
   details?: Record<string, RateDetails>;
   exchangeShopRatesByCurrency?: ExchangeShopRatesByCurrency;
   favorites: CurrencyCode[];
-  isExchangeShopAvailable?: boolean;
+  exchangeShopCurrencies?: CurrencyCode[];
   onAmountChange: (code: CurrencyCode, value: string) => void;
   onQuickAmount: (amount: number) => void;
   onRateTypeChange: (type: RateType) => void;
@@ -48,7 +50,7 @@ export const MultiConverter = ({
   details,
   exchangeShopRatesByCurrency = {},
   favorites,
-  isExchangeShopAvailable = false,
+  exchangeShopCurrencies = [],
   onAmountChange,
   onQuickAmount,
   onRateTypeChange,
@@ -70,32 +72,80 @@ export const MultiConverter = ({
     },
   });
 
-  const hasOnlyOneRateType = (
+  const getUnifiedRateAvailability = (
     currency: CurrencyCode,
-  ): { hasOnlyOne: boolean; availableType: RateType | null; reason: string } => {
-    const availability = getCurrencyRateTypeAvailability(currency, details);
-    const hasSpot = availability.spot;
-    const hasCash = availability.cash;
+  ): {
+    spot: boolean;
+    cash: boolean;
+    exchangeShop: boolean;
+    current: UnifiedRateOption;
+    availableCount: number;
+  } => {
+    const bankAvailability = getCurrencyRateTypeAvailability(currency, details);
+    const hasExchangeShop = exchangeShopCurrencies.includes(currency);
 
-    if (!hasSpot && !hasCash) {
-      return { hasOnlyOne: false, availableType: null, reason: '' };
-    }
+    const current: UnifiedRateOption =
+      rateSource === 'exchange-shop' && hasExchangeShop
+        ? 'exchange-shop'
+        : rateType === 'spot' && bankAvailability.spot
+          ? 'spot'
+          : 'cash';
 
-    if (hasSpot && !hasCash) {
-      return {
-        hasOnlyOne: true,
-        availableType: 'spot',
-        reason: t('multiConverter.spotOnlyNote', { code: currency }),
-      };
+    const availableCount =
+      (bankAvailability.spot ? 1 : 0) + (bankAvailability.cash ? 1 : 0) + (hasExchangeShop ? 1 : 0);
+
+    return {
+      spot: bankAvailability.spot,
+      cash: bankAvailability.cash,
+      exchangeShop: hasExchangeShop,
+      current,
+      availableCount,
+    };
+  };
+
+  const getNextAvailableOption = (
+    availability: ReturnType<typeof getUnifiedRateAvailability>,
+  ): UnifiedRateOption | null => {
+    const order: UnifiedRateOption[] = ['spot', 'cash', 'exchange-shop'];
+    const currentIndex = order.indexOf(availability.current);
+    for (let i = 1; i <= order.length; i++) {
+      const nextIndex = (currentIndex + i) % order.length;
+      const next = order[nextIndex];
+      if (
+        (next === 'spot' && availability.spot) ||
+        (next === 'cash' && availability.cash) ||
+        (next === 'exchange-shop' && availability.exchangeShop)
+      ) {
+        return next;
+      }
     }
-    if (hasCash && !hasSpot) {
-      return {
-        hasOnlyOne: true,
-        availableType: 'cash',
-        reason: t('multiConverter.cashOnlyNote', { code: currency }),
-      };
+    return null;
+  };
+
+  const handleUnifiedToggle = (currency: CurrencyCode) => {
+    const availability = getUnifiedRateAvailability(currency);
+    const next = getNextAvailableOption(availability);
+    if (!next || next === availability.current) return;
+
+    if (next === 'exchange-shop') {
+      onRateSourceChange?.('exchange-shop');
+    } else {
+      if (rateSource === 'exchange-shop') {
+        onRateSourceChange?.('bank');
+      }
+      onRateTypeChange(next);
     }
-    return { hasOnlyOne: false, availableType: null, reason: '' };
+  };
+
+  const getOptionLabel = (option: UnifiedRateOption): string => {
+    switch (option) {
+      case 'spot':
+        return t('multiConverter.spotRate');
+      case 'cash':
+        return t('multiConverter.cashRate');
+      case 'exchange-shop':
+        return t('singleConverter.exchangeShopRate');
+    }
   };
 
   const getRateDisplay = (currency: CurrencyCode): string => {
@@ -255,60 +305,36 @@ export const MultiConverter = ({
                     {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
                   </div>
                   <div className="text-[11px] text-right leading-tight opacity-70 mt-0.5">
-                    {isExchangeShopAvailable && onRateSourceChange && (
-                      <>
+                    {(() => {
+                      const availability = getUnifiedRateAvailability(code);
+                      const nextOption = getNextAvailableOption(availability);
+                      const canToggle = availability.availableCount > 1 && nextOption !== null;
+
+                      return canToggle ? (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            onRateSourceChange(rateSource === 'bank' ? 'exchange-shop' : 'bank');
+                            handleUnifiedToggle(code);
                           }}
                           className="font-semibold text-primary hover:text-primary-hover transition-colors"
-                          aria-label={
-                            rateSource === 'bank'
-                              ? t('singleConverter.switchToExchangeShop')
-                              : t('multiConverter.switchToBank')
-                          }
+                          aria-label={t('multiConverter.switchToNextRate', {
+                            next: getOptionLabel(nextOption),
+                          })}
                         >
-                          {rateSource === 'bank'
-                            ? t('multiConverter.bankRate')
-                            : t('singleConverter.exchangeShopRate')}
+                          {getOptionLabel(availability.current)}
                         </button>
-                        <span className="opacity-60"> · </span>
-                      </>
-                    )}
-                    {(() => {
-                      const rateTypeInfo = hasOnlyOneRateType(code);
-                      const isDisabled = rateTypeInfo.hasOnlyOne;
-                      const displayType = rateTypeInfo.availableType ?? rateType;
-
-                      return isDisabled ? (
-                        <RateTypeTooltip message={rateTypeInfo.reason} isDisabled={true}>
+                      ) : (
+                        <RateTypeTooltip
+                          message={t('multiConverter.onlyOneRateAvailable')}
+                          isDisabled={true}
+                        >
                           <button
                             className="font-medium opacity-60 cursor-help hover:opacity-80 transition-opacity"
-                            aria-label={rateTypeInfo.reason}
+                            aria-label={t('multiConverter.onlyOneRateAvailable')}
                           >
-                            {displayType === 'spot'
-                              ? t('multiConverter.spotRate')
-                              : t('multiConverter.cashRate')}
+                            {getOptionLabel(availability.current)}
                           </button>
                         </RateTypeTooltip>
-                      ) : (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRateTypeChange(rateType === 'spot' ? 'cash' : 'spot');
-                          }}
-                          className="font-semibold text-primary hover:text-primary-hover transition-colors"
-                          aria-label={
-                            rateType === 'spot'
-                              ? t('multiConverter.switchToCash')
-                              : t('multiConverter.switchToSpot')
-                          }
-                        >
-                          {rateType === 'spot'
-                            ? t('multiConverter.spotRate')
-                            : t('multiConverter.cashRate')}
-                        </button>
                       );
                     })()}
                     <span className="opacity-80"> · {getRateDisplay(code)}</span>

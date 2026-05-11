@@ -20,13 +20,16 @@ const translations: Record<string, string> = {
   'multiConverter.baseCurrency': '基準貨幣',
   'multiConverter.calculating': '計算中',
   'multiConverter.cashOnlyNote': '{{code}} 僅提供現金匯率',
-  'multiConverter.cashRate': '現金匯率',
+  'multiConverter.cashRate': '現金',
   'multiConverter.currencyListLabel': '貨幣列表',
   'multiConverter.noData': '無資料',
   'multiConverter.spotOnlyNote': '{{code}} 僅提供即期匯率',
-  'multiConverter.spotRate': '即期匯率',
+  'multiConverter.spotRate': '即期',
   'multiConverter.switchToCash': '切換到現金匯率',
   'multiConverter.switchToSpot': '切換到即期匯率',
+  'multiConverter.switchToNextRate': '切換到{{next}}',
+  'multiConverter.onlyOneRateAvailable': '此幣別僅有一種匯率可用',
+  'singleConverter.exchangeShopRate': '換錢所',
 };
 
 vi.mock('react-i18next', () => ({
@@ -109,6 +112,7 @@ describe('MultiConverter', () => {
     onAmountChange: vi.fn(),
     onQuickAmount: vi.fn(),
     onRateTypeChange: vi.fn(),
+    onRateSourceChange: vi.fn(),
     onBaseCurrencyChange: vi.fn(),
     onToggleFavorite: vi.fn(),
   };
@@ -170,13 +174,16 @@ describe('MultiConverter', () => {
   });
 
   describe('匯率類型切換', () => {
-    it('點擊匯率類型按鈕應該呼叫 onRateTypeChange', () => {
+    it('點擊匯率類型按鈕應該呼叫 onRateTypeChange 或 onRateSourceChange', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      const rateTypeButtons = screen.getAllByRole('button', { name: /切換到.*匯率/ });
-      expect(rateTypeButtons.length).toBeGreaterThan(0);
-      fireEvent.click(rateTypeButtons[0]!);
-      expect(defaultProps.onRateTypeChange).toHaveBeenCalled();
+      const rateToggleButtons = screen.getAllByRole('button', { name: /切換到/ });
+      expect(rateToggleButtons.length).toBeGreaterThan(0);
+      fireEvent.click(rateToggleButtons[0]!);
+      const called =
+        defaultProps.onRateTypeChange.mock.calls.length > 0 ||
+        defaultProps.onRateSourceChange!.mock.calls.length > 0;
+      expect(called).toBe(true);
     });
   });
 
