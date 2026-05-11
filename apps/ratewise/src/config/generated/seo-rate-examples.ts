@@ -9,7 +9,7 @@
  *   - open.er-api.com 市場中間價（與 Google Morningstar / XE / Wise / Apple Yahoo Finance 基準一致）
  * 雙重驗證：open.er-api.com 中間價 vs 台銀自身 (買入+賣出)/2 中間價，差距須在 2% 以內。
  * 匯率時間：2026/05/09 06:14:04
- * 生成日期：2026-05-10
+ * 生成日期：2026-05-11
  */
 
 /** 替代換匯管道資訊（如明洞換匯所） */
@@ -149,7 +149,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
         rateInverse: 0.022173,
         source: 'MoneyBox',
         sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
-        rateDate: '2026-05-10',
+        rateDate: '2026-05-11',
         note: '適用：現場持 TWD 現金換 KRW，需親自前往',
       },
     ],
@@ -303,4 +303,4 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
 export const SEO_RATE_EXAMPLES_UPDATE_TIME = '2026/05/09 06:14:04';
 
 /** 生成日期 */
-export const SEO_RATE_EXAMPLES_DATE = '2026-05-10';
+export const SEO_RATE_EXAMPLES_DATE = '2026-05-11';

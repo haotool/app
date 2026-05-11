@@ -119,13 +119,14 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     favorites,
     providerPreference,
     history,
+    baseCurrency,
     setFromCurrency,
     setToCurrency,
-    setMode,
     setRateMode,
     setRateType,
     setRateSource,
     setProviderPreference,
+    setBaseCurrency,
     toggleFavorite: storeToggleFavorite,
     reorderFavorites: storeReorderFavorites,
     swapCurrencies: storeSwapCurrencies,
@@ -137,9 +138,8 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   const [toAmount, setToAmount] = useState<string>('');
 
   const [multiAmounts, setMultiAmounts] = useState<MultiAmountsState>(() =>
-    createInitialMultiAmounts(DEFAULT_BASE_CURRENCY),
+    createInitialMultiAmounts(useConverterStore.getState().baseCurrency),
   );
-  const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>(DEFAULT_BASE_CURRENCY);
   const mode = requestedMode ?? DEFAULT_CONVERTER_MODE;
 
   const exchangeShopCurrency = useMemo((): CurrencyCode | null => {
@@ -208,12 +208,12 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   const effectiveRateSource = useMemo<RateSource>(
     () =>
       resolveEffectiveRateSourceForConversion({
-        mode: 'single',
+        mode,
         requestedRateSource: rateSource,
         resolvedSourceKind: resolvedProvider.sourceKind,
         exchangeShopRate: selectedExchangeShopRate,
       }),
-    [rateSource, resolvedProvider.sourceKind, selectedExchangeShopRate],
+    [mode, rateSource, resolvedProvider.sourceKind, selectedExchangeShopRate],
   );
 
   const multiExchangeShopCurrencies = useMemo((): CurrencyCode[] => {
@@ -395,6 +395,23 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     setMultiAmounts((prev) => recalcMultiAmounts(baseCurrency, prev[baseCurrency] ?? '0', prev));
   }, [mode, baseCurrency, recalcMultiAmounts]);
 
+  // 換錢所可用性 SSOT：當前情境是否有任何幣別走換錢所匯率。
+  // 單幣別：pair 必須是 TWD ↔ 換錢所支援幣（目前僅 KRW）。
+  // 多幣別：基準幣為 TWD（顯示所有支援幣）或基準幣本身有 provider。
+  const isExchangeShopAvailableInContext = useMemo<boolean>(
+    () =>
+      mode === 'multi' ? multiExchangeShopCurrencies.length > 0 : exchangeShopCurrency !== null,
+    [mode, multiExchangeShopCurrencies, exchangeShopCurrency],
+  );
+
+  useEffect(() => {
+    // 已選擇換錢所但目前情境無法支援時，自動回退銀行來源（透過 store action 收斂使用者設定）。
+    // SSOT：單一 effect 取代過去 RateWise / MultiConverter 各自的重複 fallback。
+    if (rateSource === 'exchange-shop' && !isExchangeShopAvailableInContext) {
+      setRateSource('bank');
+    }
+  }, [rateSource, isExchangeShopAvailableInContext, setRateSource]);
+
   // Handlers
   const handleFromAmountChange = useCallback((value: string) => {
     setFromAmount(value);
@@ -446,7 +463,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       setBaseCurrency(code);
       scheduleMultiRecalc(code, value);
     },
-    [scheduleMultiRecalc],
+    [scheduleMultiRecalc, setBaseCurrency],
   );
 
   const quickAmount = useCallback(
@@ -588,7 +605,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     sortedCurrencies,
 
     // Setters
-    setMode,
     setFromCurrency,
     setToCurrency,
     setBaseCurrency,

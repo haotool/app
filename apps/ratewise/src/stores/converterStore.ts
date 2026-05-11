@@ -19,7 +19,6 @@ import { persist } from 'zustand/middleware';
 import type {
   ConversionHistoryCategory,
   ConversionHistoryEntry,
-  ConverterMode,
   CurrencyCode,
   RateMode,
   RateSource,
@@ -33,9 +32,8 @@ import type {
 } from '../features/ratewise/rateProviderTypes';
 import { fromLegacyRateSource, resolveRateTypeForSource } from '../config/rateProviders';
 import {
-  CONVERTER_MODES,
   CURRENCY_DEFINITIONS,
-  DEFAULT_CONVERTER_MODE,
+  DEFAULT_BASE_CURRENCY,
   DEFAULT_FAVORITES,
   DEFAULT_FROM_CURRENCY,
   DEFAULT_RATE_MODE,
@@ -77,24 +75,26 @@ const LEGACY_HISTORY_STORAGE_KEY = STORAGE_KEYS.CONVERSION_HISTORY;
 // ── Store 狀態介面 ───────────────────────────────────────────────────────────
 interface ConverterState {
   // ── 持久化狀態 ──────────────────────────────────────────────────────────
+  // 註：頁面 `mode`（single/multi）由 route 決定，不持久化於 store。
   fromCurrency: CurrencyCode;
   toCurrency: CurrencyCode;
-  mode: ConverterMode;
   rateMode: RateMode;
   rateType: RateType;
   rateSource: RateSource;
   providerPreference: RateProviderPreference;
   favorites: CurrencyCode[];
   history: ConversionHistoryEntry[];
+  /** 多幣別模式的基準貨幣（使用者偏好，與 fromCurrency 隔離）。 */
+  baseCurrency: CurrencyCode;
 
   // ── Actions ──────────────────────────────────────────────────────────────
   setFromCurrency: (code: CurrencyCode) => void;
   setToCurrency: (code: CurrencyCode) => void;
-  setMode: (mode: ConverterMode) => void;
   setRateMode: (rateMode: RateMode) => void;
   setRateType: (rateType: RateType) => void;
   setProviderPreference: (next: RateProviderPreference) => void;
   setRateSource: (rateSource: RateSource) => void;
+  setBaseCurrency: (code: CurrencyCode) => void;
   swapCurrencies: () => void;
 
   /** 切換收藏狀態（immutable 更新） */
@@ -119,12 +119,12 @@ type PersistentFields = Pick<
   ConverterState,
   | 'fromCurrency'
   | 'toCurrency'
-  | 'mode'
   | 'rateMode'
   | 'rateType'
   | 'rateSource'
   | 'providerPreference'
   | 'favorites'
+  | 'baseCurrency'
 >;
 
 const VALID_RATE_MODES: readonly RateMode[] = RATE_MODES;
@@ -183,8 +183,8 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
     patch.toCurrency = DEFAULT_TO_CURRENCY;
     dirty = true;
   }
-  if (!(CONVERTER_MODES as readonly string[]).includes(state.mode)) {
-    patch.mode = DEFAULT_CONVERTER_MODE;
+  if (!isCurrencyCode(state.baseCurrency as string)) {
+    patch.baseCurrency = DEFAULT_BASE_CURRENCY;
     dirty = true;
   }
   if (!VALID_RATE_MODES.includes(state.rateMode)) {
@@ -279,12 +279,11 @@ function buildMigrationPatch(state: ConverterState): Partial<PersistentFields> |
   if (window.localStorage.getItem('ratewise-converter') === null) {
     const oldFrom = window.localStorage.getItem(LEGACY_KEYS.FROM_CURRENCY);
     const oldTo = window.localStorage.getItem(LEGACY_KEYS.TO_CURRENCY);
-    const oldMode = window.localStorage.getItem(LEGACY_KEYS.MODE);
     const oldFavoritesRaw = window.localStorage.getItem(LEGACY_KEYS.FAVORITES);
 
     if (oldFrom && isCurrencyCode(oldFrom)) patch.fromCurrency = oldFrom;
     if (oldTo && isCurrencyCode(oldTo)) patch.toCurrency = oldTo;
-    if (oldMode === 'multi') patch.mode = 'multi';
+    // 註：legacy `mode` 不再遷移；頁面 `mode` 由 route 決定（route 即 SSOT）。
 
     if (oldFavoritesRaw) {
       const oldFavorites = parseLegacyFavorites(oldFavoritesRaw);
@@ -369,20 +368,20 @@ export const useConverterStore = create<ConverterState>()(
       // ── 初始狀態 ────────────────────────────────────────────────────────
       fromCurrency: DEFAULT_FROM_CURRENCY,
       toCurrency: DEFAULT_TO_CURRENCY,
-      mode: DEFAULT_CONVERTER_MODE as ConverterMode,
       rateMode: DEFAULT_RATE_MODE as RateMode,
       rateType: DEFAULT_RATE_TYPE,
       rateSource: DEFAULT_RATE_SOURCE,
       providerPreference: DEFAULT_PROVIDER_PREFERENCE,
       favorites: [...DEFAULT_FAVORITES] as CurrencyCode[],
       history: [],
+      baseCurrency: DEFAULT_BASE_CURRENCY,
 
       // ── Actions ──────────────────────────────────────────────────────────
       setFromCurrency: (code) => set({ fromCurrency: code }),
 
       setToCurrency: (code) => set({ toCurrency: code }),
 
-      setMode: (mode) => set({ mode }),
+      setBaseCurrency: (code) => set({ baseCurrency: code }),
 
       setRateMode: (rateMode) => set({ rateMode }),
 
@@ -464,13 +463,13 @@ export const useConverterStore = create<ConverterState>()(
       partialize: (state) => ({
         fromCurrency: state.fromCurrency,
         toCurrency: state.toCurrency,
-        mode: state.mode,
         rateMode: state.rateMode,
         rateType: state.rateType,
         rateSource: state.rateSource,
         providerPreference: state.providerPreference,
         favorites: state.favorites,
         history: state.history,
+        baseCurrency: state.baseCurrency,
       }),
       onRehydrateStorage: () => (_state, error) => {
         if (error) return;

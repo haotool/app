@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +36
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +38
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-11
+- ID：pr378-rate-source-effect-and-base-currency-ssot-convergence
+- 原因：PR #378 後 ultrareview 二輪審計發現三項 SSOT 漂移：(1) RateWise 與 MultiConverter 各自持有結構相同但述詞不同的 rateSource 換錢所→銀行 fallback effect、(2) `effectiveRateSource` 在 multi 模式仍寫死 `mode: 'single'`、(3) `baseCurrency` 是 hook local state 重新整理後重置 / `state.mode` 是無人讀取的 dead state。
+- 解法：把 fallback 收斂到 `useCurrencyConverter` 唯一 mode-aware effect、`effectiveRateSource` 改用實際 mode；`baseCurrency` 收進 `converterStore` 並補 sanitize/partialize 與 3 個守門測試；移除 `mode/setMode` 與 MultiConverter 的 `setMode('multi')` mount effect，改由 route 即 SSOT，2385 vitest 全綠且 8 處 setRateSource 收斂為 3 處（fallback / history replay / user handler 各司其職）。
+
+- 日期：2026-05-11
+- ID：ultrareview-automation-contract
+- 原因：PR #378 超級審查流程成功執行後，需將七階段審查協議、Rate Provider 模型契約、CI/CD 整合規範形式化為可重用的自動化審查框架。
+- 解法：新增 `ultrareview-pr-audit` skill、更新 `ssot-drift-clean-code-audit` 與 `codex-review-convergence` skill 至 v2.0.0、建立 `docs/dev/043_ultrareview_automation_contract.md` 正式契約文件。
 
 - 日期：2026-05-10
 - ID：pr378-node-ts-provider-registry-import-fix

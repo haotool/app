@@ -112,12 +112,7 @@ const RateWise = () => {
     if (amount && /^\d+(\.\d+)?$/.test(amount)) handleFromAmountChange(amount);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 只在首次掛載時讀取 URL 參數
 
-  useEffect(() => {
-    // 幣別離開換錢所支援範圍時必須立即回到銀行來源；經 converterStore action 更新，不觸發 set-state-in-effect 規則。
-    if (rateSource === 'exchange-shop' && !exchangeShopCurrency) {
-      setRateSource('bank');
-    }
-  }, [exchangeShopCurrency, rateSource, setRateSource]);
+  // 註：rateSource 換錢所→銀行 fallback 已收斂到 useCurrencyConverter（SSOT），頁面層不再重複。
 
   const rateTypeAvailability = useMemo(
     () => getPairRateTypeAvailability(fromCurrency, toCurrency, details),

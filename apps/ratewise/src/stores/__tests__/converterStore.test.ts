@@ -4,7 +4,7 @@
  * converterStore 單元測試
  *
  * 涵蓋：
- * - toggleFavorite、reorderFavorites、setMode
+ * - toggleFavorite、reorderFavorites、setBaseCurrency
  * - 簡化後的 isFavorite(code) 簽名
  * - swapCurrencies
  * - localStorage 舊 key 遷移邏輯
@@ -41,7 +41,6 @@ const resetStore = () => {
   useConverterStore.setState({
     fromCurrency: 'TWD',
     toCurrency: 'JPY',
-    mode: 'single',
     rateType: 'spot',
     rateSource: 'bank',
     providerPreference: {
@@ -75,17 +74,23 @@ describe('converterStore', () => {
     });
   });
 
-  // ── setMode ──────────────────────────────────────────────────────────────
-  describe('setMode', () => {
-    it('switches mode to multi', () => {
-      useConverterStore.getState().setMode('multi');
-      expect(useConverterStore.getState().mode).toBe('multi');
+  // 註：mode（single/multi）已從 store 移除——頁面 mode 由 route 決定（route 即 SSOT）。
+
+  // ── setBaseCurrency ──────────────────────────────────────────────────────
+  describe('setBaseCurrency', () => {
+    it('預設值為 TWD', () => {
+      expect(useConverterStore.getState().baseCurrency).toBe('TWD');
     });
 
-    it('switches mode back to single', () => {
-      useConverterStore.getState().setMode('multi');
-      useConverterStore.getState().setMode('single');
-      expect(useConverterStore.getState().mode).toBe('single');
+    it('setBaseCurrency 更新基準貨幣（多幣別頁使用者偏好）', () => {
+      useConverterStore.getState().setBaseCurrency('USD');
+      expect(useConverterStore.getState().baseCurrency).toBe('USD');
+    });
+
+    it('baseCurrency 與 fromCurrency 隔離（單幣別模式不受影響）', () => {
+      useConverterStore.getState().setBaseCurrency('JPY');
+      expect(useConverterStore.getState().fromCurrency).not.toBe('JPY');
+      expect(useConverterStore.getState().baseCurrency).toBe('JPY');
     });
   });
 
@@ -243,10 +248,10 @@ describe('converterStore', () => {
       useConverterStore.getState().__migrateFromLegacy?.();
 
       // After migration, store should reflect legacy values
+      // 註：legacy `mode` 不再遷移；頁面 mode 由 route 決定（SSOT）。
       const state = useConverterStore.getState();
       expect(state.fromCurrency).toBe('USD');
       expect(state.toCurrency).toBe('KRW');
-      expect(state.mode).toBe('multi');
       expect(state.favorites).toEqual(['USD', 'EUR']);
     });
 
@@ -449,16 +454,6 @@ describe('converterStore', () => {
       expect(useConverterStore.getState().toCurrency).toBe('JPY');
     });
 
-    it('mode 為非法值時，重置為 single', () => {
-      useConverterStore.setState({
-        mode: 'invalid_mode' as unknown as 'single' | 'multi',
-      });
-
-      useConverterStore.getState().__validateAndSanitize?.();
-
-      expect(useConverterStore.getState().mode).toBe('single');
-    });
-
     it('rateType 為非法值時，重置為 spot', () => {
       useConverterStore.setState({
         rateType: 'broken' as unknown as 'spot' | 'cash',
@@ -500,7 +495,6 @@ describe('converterStore', () => {
       useConverterStore.setState({
         fromCurrency: 'USD',
         toCurrency: 'JPY',
-        mode: 'multi',
         favorites: ['USD', 'EUR'],
       });
 
@@ -509,7 +503,6 @@ describe('converterStore', () => {
       const state = useConverterStore.getState();
       expect(state.fromCurrency).toBe('USD');
       expect(state.toCurrency).toBe('JPY');
-      expect(state.mode).toBe('multi');
       expect(state.favorites).toEqual(['USD', 'EUR']);
     });
   });

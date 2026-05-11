@@ -20,7 +20,6 @@ import { formatDisplayTime } from '../utils/timeFormatter';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import type { CurrencyCode } from '../features/ratewise/types';
 import { multiConverterLayoutTokens } from '../config/design-tokens';
-import { hasExchangeShopProvider } from '../config/exchangeShopProviders';
 import { useConverterStore } from '../stores/converterStore';
 
 export default function MultiConverter() {
@@ -29,10 +28,10 @@ export default function MultiConverter() {
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
 
   // rateType / rateSource 共用 converterStore，與 RateWise/Favorites 同源。
+  // 換錢所→銀行 fallback 已下放至 useCurrencyConverter（SSOT），此處不再持有 setRateSource。
   const rateType = useConverterStore((state) => state.rateType);
   const rateSource = useConverterStore((state) => state.rateSource);
   const setRateType = useConverterStore((state) => state.setRateType);
-  const setRateSource = useConverterStore((state) => state.setRateSource);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration marker
@@ -56,26 +55,14 @@ export default function MultiConverter() {
     handleMultiAmountChange,
     quickAmount,
     setBaseCurrency,
-    setMode,
     baseCurrency,
     favorites,
     toggleFavorite,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'multi' });
 
-  // Set mode to 'multi' on mount
-  useEffect(() => {
-    setMode('multi');
-  }, [setMode]);
-
-  const hasMultiExchangeShop = baseCurrency === 'TWD' || hasExchangeShopProvider(baseCurrency);
-
-  useEffect(() => {
-    // 多幣別基準幣離開換錢所可用範圍時需回退銀行來源；透過 store action，不算直接 setState in effect。
-    if (rateSource === 'exchange-shop' && !hasMultiExchangeShop) {
-      setRateSource('bank');
-    }
-  }, [hasMultiExchangeShop, rateSource, setRateSource]);
-  // 註：rateSource→cash 的同步已收斂到 converterStore.setRateSource，無需頁面層 effect。
+  // 註：rateSource→cash 同步已收斂到 converterStore.setRateSource。
+  // 換錢所→銀行 fallback 已收斂到 useCurrencyConverter（SSOT），頁面層不再重複。
+  // 註：page mode（single/multi）由 route 決定（route 即 SSOT），不再寫入 store。
 
   const handleQuickAmount = useCallback(
     (amount: number) => {

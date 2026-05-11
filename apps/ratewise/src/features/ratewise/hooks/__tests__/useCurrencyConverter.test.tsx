@@ -72,7 +72,6 @@ describe('useCurrencyConverter', () => {
     useConverterStore.setState({
       fromCurrency: 'TWD',
       toCurrency: 'JPY',
-      mode: 'single',
       rateMode: 'auto',
       rateType: 'spot',
       rateSource: 'bank',
@@ -296,7 +295,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'USD',
         toCurrency: 'JPY',
-        mode: 'single',
         favorites: ['USD', 'JPY', 'KRW'],
         history: [],
       });
@@ -308,7 +306,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'USD',
         toCurrency: 'JPY',
-        mode: 'single',
         favorites: ['USD', 'JPY'],
         history: [],
       });
@@ -323,7 +320,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'USD',
         toCurrency: 'JPY',
-        mode: 'single',
         favorites: ['USD'],
         history: [],
       });
@@ -345,7 +341,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'TWD',
         toCurrency: 'JPY',
-        mode: 'single',
         favorites: [...favs],
         history: [],
       });
@@ -459,7 +454,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'TWD',
         toCurrency: 'KRW',
-        mode: 'single',
         favorites: ['KRW'],
         history: [],
         providerPreference: exchangeShopPreference,
@@ -486,7 +480,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'TWD',
         toCurrency: 'KRW',
-        mode: 'single',
         favorites: ['KRW'],
         history: [],
         providerPreference: exchangeShopPreference,
@@ -517,7 +510,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'TWD',
         toCurrency: 'KRW',
-        mode: 'single',
         favorites: ['KRW'],
         history: [],
         providerPreference: exchangeShopPreference,
@@ -547,7 +539,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'KRW',
         toCurrency: 'TWD',
-        mode: 'single',
         favorites: ['KRW'],
         history: [],
         providerPreference: exchangeShopPreference,
@@ -577,7 +568,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'USD',
         toCurrency: 'KRW',
-        mode: 'single',
         favorites: ['USD', 'KRW'],
         history: [],
         providerPreference: exchangeShopPreference,
@@ -620,7 +610,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'TWD',
         toCurrency: 'KRW',
-        mode: 'multi',
         favorites: ['TWD', 'KRW'],
         history: [],
         rateSource: 'exchange-shop',
@@ -631,7 +620,6 @@ describe('useCurrencyConverter', () => {
           exchangeRates: { TWD: 1, KRW: 0.0236 },
           rateType: 'cash',
           rateSource: 'exchange-shop',
-          mode: 'single',
         }),
       );
 
@@ -649,7 +637,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'USD',
         toCurrency: 'TWD',
-        mode: 'single',
         favorites: ['USD'],
         history: [],
         providerPreference: {
@@ -688,7 +675,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'TWD',
         toCurrency: 'KRW',
-        mode: 'single',
         favorites: ['KRW'],
         history: [],
         providerPreference: {
@@ -724,7 +710,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'TWD',
         toCurrency: 'KRW',
-        mode: 'single',
         favorites: ['KRW'],
         history: [],
         providerPreference: { mode: 'best' },
@@ -748,7 +733,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'USD',
         toCurrency: 'TWD',
-        mode: 'single',
         favorites: ['USD'],
         history: [],
       });
@@ -773,7 +757,6 @@ describe('useCurrencyConverter', () => {
       useConverterStore.setState({
         fromCurrency: 'USD',
         toCurrency: 'TWD',
-        mode: 'single',
         favorites: ['USD'],
         history: [],
       });
