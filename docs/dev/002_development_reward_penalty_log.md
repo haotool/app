@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +38
+> 本次分數變化：+1（reward 1）｜累計總分：+39
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-11
+- ID：multi-converter-exchange-shop-switch
+- 原因：MultiConverter 頁面沒有 UI 讓使用者切換銀行/換錢所匯率來源，只有 SingleConverter 有 RateSelector。
+- 解法：在 MultiConverter 頁面層新增 segmented switch（銀行/換錢所），條件顯示由 `useCurrencyConverter.isExchangeShopAvailableInContext` 驅動，並補齊四語系翻譯。
 
 - 日期：2026-05-11
 - ID：pr378-rate-source-effect-and-base-currency-ssot-convergence

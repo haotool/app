@@ -99,6 +99,8 @@ const zhTW = {
     switchToCash: '切換到現金匯率',
     spotRate: '即期',
     cashRate: '現金',
+    bankRate: '銀行',
+    exchangeShopRate: '換錢所',
   },
 
   // Favorites

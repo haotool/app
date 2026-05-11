@@ -100,6 +100,8 @@ const en = {
     switchToCash: 'Switch to cash rate',
     spotRate: 'Spot',
     cashRate: 'Cash',
+    bankRate: 'Bank',
+    exchangeShopRate: 'Exchange',
   },
 
   // Favorites

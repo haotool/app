@@ -99,6 +99,8 @@ const ja = {
     switchToCash: '現金レートに切替',
     spotRate: '直物',
     cashRate: '現金',
+    bankRate: '銀行',
+    exchangeShopRate: '両替所',
   },
 
   // Favorites

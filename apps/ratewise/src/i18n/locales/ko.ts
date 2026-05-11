@@ -99,6 +99,8 @@ const ko = {
     switchToCash: '현금 환율로 전환',
     spotRate: '전신환',
     cashRate: '현금',
+    bankRate: '은행',
+    exchangeShopRate: '환전소',
   },
 
   // Favorites

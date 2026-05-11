@@ -4,13 +4,14 @@
  * @description 多幣別轉換器頁面，採用 ParkKeeper 設計風格
  *              SSOT: 設計來自 Settings.tsx 風格參考
  *              標題區塊已移除，由底部導航 Tab 識別頁面
- * @version 2.1.0
- * @updated 2026-01-24 - 移除標題區塊，優化垂直空間
+ * @version 2.2.0
+ * @updated 2026-05-11 - 新增換錢所/銀行切換按鈕（SSOT: converterStore）
  */
 
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, RefreshCw, Clock } from 'lucide-react';
+import { AlertCircle, RefreshCw, Clock, Store, Landmark } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { MultiConverter as MultiConverterComponent } from '../features/ratewise/components/MultiConverter';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { useExchangeRates } from '../features/ratewise/hooks/useExchangeRates';
@@ -18,9 +19,10 @@ import { useCurrencyConverter } from '../features/ratewise/hooks/useCurrencyConv
 import { MultiConverterSkeleton } from '../components/SkeletonLoader';
 import { formatDisplayTime } from '../utils/timeFormatter';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
-import type { CurrencyCode } from '../features/ratewise/types';
+import type { CurrencyCode, RateSource } from '../features/ratewise/types';
 import { multiConverterLayoutTokens } from '../config/design-tokens';
 import { useConverterStore } from '../stores/converterStore';
+import { segmentedSwitch } from '../config/animations';
 
 export default function MultiConverter() {
   const { t } = useTranslation();
@@ -28,10 +30,10 @@ export default function MultiConverter() {
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
 
   // rateType / rateSource 共用 converterStore，與 RateWise/Favorites 同源。
-  // 換錢所→銀行 fallback 已下放至 useCurrencyConverter（SSOT），此處不再持有 setRateSource。
   const rateType = useConverterStore((state) => state.rateType);
   const rateSource = useConverterStore((state) => state.rateSource);
   const setRateType = useConverterStore((state) => state.setRateType);
+  const setRateSource = useConverterStore((state) => state.setRateSource);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration marker
@@ -58,11 +60,16 @@ export default function MultiConverter() {
     baseCurrency,
     favorites,
     toggleFavorite,
+    isExchangeShopAvailableInContext,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'multi' });
 
-  // 註：rateSource→cash 同步已收斂到 converterStore.setRateSource。
-  // 換錢所→銀行 fallback 已收斂到 useCurrencyConverter（SSOT），頁面層不再重複。
-  // 註：page mode（single/multi）由 route 決定（route 即 SSOT），不再寫入 store。
+  const handleRateSourceChange = useCallback(
+    (nextSource: RateSource) => {
+      if (nextSource === 'exchange-shop' && !isExchangeShopAvailableInContext) return;
+      setRateSource(nextSource);
+    },
+    [isExchangeShopAvailableInContext, setRateSource],
+  );
 
   const handleQuickAmount = useCallback(
     (amount: number) => {
@@ -145,6 +152,67 @@ export default function MultiConverter() {
          */}
         <section className={multiConverterLayoutTokens.section.className}>
           <div className={multiConverterLayoutTokens.card.className}>
+            {isExchangeShopAvailableInContext && (
+              <div className="flex justify-center mb-3">
+                <div
+                  className="grid grid-cols-2 h-7 w-[9rem] bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60"
+                  role="group"
+                  aria-label={t('singleConverter.rateTypeGroup')}
+                >
+                  <motion.button
+                    type="button"
+                    onClick={() => handleRateSourceChange('bank')}
+                    whileHover={segmentedSwitch.item.whileHover}
+                    whileTap={segmentedSwitch.item.whileTap}
+                    animate={{
+                      opacity: rateSource === 'bank' ? 1 : segmentedSwitch.inactiveOpacity,
+                    }}
+                    className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-1 whitespace-nowrap leading-none text-[11px] rounded-full font-semibold relative ${
+                      rateSource === 'bank' ? 'text-white' : 'text-text/70 hover:text-text'
+                    }`}
+                    aria-pressed={rateSource === 'bank'}
+                  >
+                    <AnimatePresence>
+                      {rateSource === 'bank' && (
+                        <motion.div
+                          layoutId="multi-rate-source-indicator"
+                          className="absolute inset-0 rounded-full bg-primary shadow-md"
+                          transition={segmentedSwitch.indicator}
+                        />
+                      )}
+                    </AnimatePresence>
+                    <Landmark className="relative z-10 w-3 h-3" aria-hidden="true" />
+                    <span className="relative z-10">{t('multiConverter.bankRate')}</span>
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    onClick={() => handleRateSourceChange('exchange-shop')}
+                    whileHover={segmentedSwitch.item.whileHover}
+                    whileTap={segmentedSwitch.item.whileTap}
+                    animate={{
+                      opacity: rateSource === 'exchange-shop' ? 1 : segmentedSwitch.inactiveOpacity,
+                    }}
+                    className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-1 whitespace-nowrap leading-none text-[11px] rounded-full font-semibold relative ${
+                      rateSource === 'exchange-shop' ? 'text-white' : 'text-text/70 hover:text-text'
+                    }`}
+                    aria-pressed={rateSource === 'exchange-shop'}
+                    aria-label={t('singleConverter.switchToExchangeShop')}
+                  >
+                    <AnimatePresence>
+                      {rateSource === 'exchange-shop' && (
+                        <motion.div
+                          layoutId="multi-rate-source-indicator"
+                          className="absolute inset-0 rounded-full bg-primary shadow-md"
+                          transition={segmentedSwitch.indicator}
+                        />
+                      )}
+                    </AnimatePresence>
+                    <Store className="relative z-10 w-3 h-3" aria-hidden="true" />
+                    <span className="relative z-10">{t('singleConverter.exchangeShopRate')}</span>
+                  </motion.button>
+                </div>
+              </div>
+            )}
             <MultiConverterComponent
               sortedCurrencies={sortedCurrencies}
               multiAmounts={multiAmounts}
