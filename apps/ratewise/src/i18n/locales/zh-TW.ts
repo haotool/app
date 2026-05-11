@@ -97,8 +97,10 @@ const zhTW = {
     removeFavorite: '移除常用貨幣 {{code}}',
     switchToSpot: '切換到即期匯率',
     switchToCash: '切換到現金匯率',
+    switchToBank: '切換到銀行匯率',
     spotRate: '即期',
     cashRate: '現金',
+    bankRate: '銀行',
   },
 
   // Favorites
