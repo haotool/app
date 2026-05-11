@@ -448,11 +448,8 @@ SemVer 決策規則見 `CLAUDE.md` Phase 7。
 發版指令（AGT-VER-02）：
 
 ```bash
-pnpm changeset:version   # 一鍵：升版 + CHANGELOG + 所有版本嵌入產出物
+pnpm changeset:version   # 一鍵：升版 + CHANGELOG + 版本嵌入產出物 + markdown mirrors + restore live data
 git diff --stat          # 確認 public/* 均已更新
-# 清理殘留修改（MUST）：下兩類由 CI / 每日排程重新生成，不得單獨 commit
-git restore --staged --worktree apps/ratewise/public/*.md
-git restore apps/ratewise/src/config/generated/
 git add . && git commit  # chore(release): @app/ratewise vX.Y.Z
 git push origin main     # pre-push 自動驗證
 ```

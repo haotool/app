@@ -138,11 +138,8 @@ pnpm format:fix              # prettier --write .
 
 ```bash
 pnpm changeset:version          # 升版 + CHANGELOG + 所有版本嵌入產出物一次完成
+                                # （含 markdown mirrors 更新 + live 市場資料自動 restore）
 git diff --stat                 # 確認 CHANGELOG / package.json / public/* 均已更新
-# 發版後殘留修改清理（MUST）：public/*.md 與 src/config/generated/ 若有修改，直接 restore
-# 原因：這兩類由 CI build / 每日 SEO 排程重新生成；單獨 commit 會被 SSOT 守門因缺 version bump 擋下
-git restore --staged --worktree apps/ratewise/public/*.md
-git restore apps/ratewise/src/config/generated/
 git add . && git commit         # chore(release): @app/ratewise vX.Y.Z
 git push origin main            # pre-push 自動跑 typecheck + test + build
 ```
