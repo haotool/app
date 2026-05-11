@@ -1,5 +1,16 @@
 # @app/ratewise
 
+## 2.24.0
+
+### Minor Changes
+
+- 0934855: 多幣別頁面新增銀行/換錢所文字切換按鈕
+- 3af959c: 多幣別頁面匯率切換 UI 重構為統一三態切換器（即期/現金/換錢所）
+
+### Patch Changes
+
+- 79e0eaf: docs: 記錄匯率卡倒數顯示設計決策（Google-style）
+
 ## 2.23.0
 
 ### Minor Changes

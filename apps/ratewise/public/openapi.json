@@ -135,23 +135,23 @@
     ],
     "x-webapp": "https://app.haotool.org/ratewise/",
     "x-documentation": "https://app.haotool.org/ratewise/open-data/",
-    "x-app-version": "2.23.0"
+    "x-app-version": "2.24.0"
   },
   "x-changelog": {
     "1.2.0": {
       "date": "2026-05-09",
       "summary": "新增 MoneyBox 換錢所 current/history 端點與 provider metadata 合約。",
-      "app-version": "2.23.0"
+      "app-version": "2.24.0"
     },
     "1.1.0": {
       "date": "2026-05-08",
       "summary": "新增 App 匯率模式欄位對照與幣對 rateModes 規格，並對齊資料端時間欄位格式。",
-      "app-version": "2.23.0"
+      "app-version": "2.24.0"
     },
     "1.0.0": {
       "date": "2026-03-21",
       "summary": "初始 API 版本。包含最新匯率、歷史匯率、幣對資訊三個端點。",
-      "app-version": "2.23.0"
+      "app-version": "2.24.0"
     }
   },
   "servers": [
