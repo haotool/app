@@ -35,7 +35,7 @@ import {
 } from '../../../services/moneyboxRateService';
 import { useMoneyBoxRates } from './useMoneyBoxRates';
 import { useMoneyBoxRatesMap } from './useMoneyBoxRatesMap';
-import type { ResolvedRateProvider } from '../rateProviderTypes';
+import type { ProviderSelectionMode, ResolvedRateProvider } from '../rateProviderTypes';
 import {
   rankProviderQuotes,
   resolveProviderPreference,
@@ -91,14 +91,22 @@ export function resolveEffectiveRateSourceForConversion({
   requestedRateSource,
   resolvedSourceKind,
   exchangeShopRate,
+  providerSelectionMode,
 }: {
   mode: 'single' | 'multi';
   requestedRateSource?: RateSource;
   resolvedSourceKind: RateSource;
   exchangeShopRate: ExchangeShopRate | null;
+  /** providerPreference.mode：'best' 模式下多幣別需依每個 row pair 的可用換錢所匯率決定來源。 */
+  providerSelectionMode?: ProviderSelectionMode;
 }): RateSource {
   if (mode !== 'multi') return resolvedSourceKind;
-  return requestedRateSource === 'exchange-shop' && exchangeShopRate ? 'exchange-shop' : 'bank';
+  // 多幣別 SSOT：使用者明選 exchange-shop 或 best 模式偵測到該 row 有換錢所匯率時走換錢所；
+  // 否則 fallback 銀行（避免單幣別 single-pair resolvedSourceKind 跨 row 誤套用）。
+  if (!exchangeShopRate) return 'bank';
+  if (requestedRateSource === 'exchange-shop') return 'exchange-shop';
+  if (providerSelectionMode === 'best') return 'exchange-shop';
+  return 'bank';
 }
 
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
@@ -212,8 +220,15 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
         requestedRateSource: rateSource,
         resolvedSourceKind: resolvedProvider.sourceKind,
         exchangeShopRate: selectedExchangeShopRate,
+        providerSelectionMode: providerPreference.mode,
       }),
-    [mode, rateSource, resolvedProvider.sourceKind, selectedExchangeShopRate],
+    [
+      mode,
+      rateSource,
+      resolvedProvider.sourceKind,
+      selectedExchangeShopRate,
+      providerPreference.mode,
+    ],
   );
 
   const multiExchangeShopCurrencies = useMemo((): CurrencyCode[] => {
@@ -253,6 +268,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
         requestedRateSource: rateSource,
         resolvedSourceKind: resolvedProvider.sourceKind,
         exchangeShopRate: pairExchangeShopRate,
+        providerSelectionMode: providerPreference.mode,
       });
       const exchangeShopRate =
         effectiveSourceKind === 'exchange-shop' ? pairExchangeShopRate : null;
@@ -273,6 +289,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       resolvedProvider.sourceKind,
       multiExchangeShopRatesByCurrency,
       selectedExchangeShopRate,
+      providerPreference.mode,
     ],
   );
 

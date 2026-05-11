@@ -606,6 +606,41 @@ describe('useCurrencyConverter', () => {
       ).toBe('bank');
     });
 
+    it('multi mode 在 best provider 模式下，有 exchange-shop quote 即套用該 row（不受 legacy rateSource 影響）', () => {
+      // best 模式 + legacy rateSource=bank + 該 row 有 exchangeShopRate → 套用 exchange-shop
+      expect(
+        resolveEffectiveRateSourceForConversion({
+          mode: 'multi',
+          requestedRateSource: 'bank',
+          resolvedSourceKind: 'bank',
+          exchangeShopRate: moneyBoxRate,
+          providerSelectionMode: 'best',
+        }),
+      ).toBe('exchange-shop');
+
+      // best 模式 + 該 row 無 exchangeShopRate → fallback bank
+      expect(
+        resolveEffectiveRateSourceForConversion({
+          mode: 'multi',
+          requestedRateSource: 'bank',
+          resolvedSourceKind: 'bank',
+          exchangeShopRate: null,
+          providerSelectionMode: 'best',
+        }),
+      ).toBe('bank');
+
+      // manual + rateSource=bank + 該 row 有 exchangeShopRate → 仍維持 bank（尊重使用者選擇）
+      expect(
+        resolveEffectiveRateSourceForConversion({
+          mode: 'multi',
+          requestedRateSource: 'bank',
+          resolvedSourceKind: 'bank',
+          exchangeShopRate: moneyBoxRate,
+          providerSelectionMode: 'manual',
+        }),
+      ).toBe('bank');
+    });
+
     it('single converter ignores persisted multi mode for quick amounts', () => {
       useConverterStore.setState({
         fromCurrency: 'TWD',
