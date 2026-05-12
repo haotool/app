@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +41
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +42
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-12
+- ID：reward-ratewise-error-observability
+- 原因：hydration 與 fetch 類錯誤被全域 suppression 遮蔽
+- 解法：集中錯誤分類並限制 production hydration suppression
 
 - 日期：2026-05-12
 - ID：reward-ratewise-public-surface-governance
