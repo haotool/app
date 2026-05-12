@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +44
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +45
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-12
+- ID：reward-ratewise-currency-route-registry
+- 原因：34 個幣別落地頁 route registration 與 SEO path/page entry 存在人工複製面
+- 解法：建立 currency route registry、由 routes 消費並補 parity guardrail tests
 
 - 日期：2026-05-12
 - ID：reward-ratewise-generated-artifact-ssot
