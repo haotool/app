@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +39
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +40
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-12
+- ID：reward-ratewise-lint-baseline
+- 原因：RateWise lint gate 因 test type import warning 無法通過
+- 解法：修正測試檔 type-only import 寫法並恢復 0 warning baseline
 
 - 日期：2026-05-11
 - ID：multi-converter-exchange-shop-text-switch

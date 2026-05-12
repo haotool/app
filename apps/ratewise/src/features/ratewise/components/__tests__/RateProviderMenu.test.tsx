@@ -3,6 +3,7 @@
 import '@testing-library/jest-dom/vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type * as RateProvidersModule from '../../../../config/rateProviders';
 
 afterEach(() => {
   cleanup();
@@ -23,7 +24,7 @@ describe('RateProviderMenu — 單銀行預設狀態', () => {
 describe('RateProviderMenu — 多銀行 provider 模擬', () => {
   it('啟用後渲染推薦最佳 + 銀行清單 + 換錢所清單', async () => {
     vi.doMock('../../../../config/rateProviders', async () => {
-      const actual = await vi.importActual<typeof import('../../../../config/rateProviders')>(
+      const actual = await vi.importActual<typeof RateProvidersModule>(
         '../../../../config/rateProviders',
       );
       const fakeBank2 = {
@@ -61,7 +62,7 @@ describe('RateProviderMenu — 多銀行 provider 模擬', () => {
 
   it('manual 模式下，selectedRef 對應的 provider 應 aria-checked=true', async () => {
     vi.doMock('../../../../config/rateProviders', async () => {
-      const actual = await vi.importActual<typeof import('../../../../config/rateProviders')>(
+      const actual = await vi.importActual<typeof RateProvidersModule>(
         '../../../../config/rateProviders',
       );
       const fakeBank2 = {

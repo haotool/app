@@ -4,6 +4,7 @@ import type {
   RateProviderRef,
   ResolvedRateProvider,
 } from '../rateProviderTypes';
+import type * as RateProvidersModule from '../../../config/rateProviders';
 import {
   rankProviderQuotes,
   resolveProviderPreference,
@@ -322,7 +323,7 @@ describe('resolveProviderPreference - 退化情境（registry default 缺失）'
   it('當 getDefaultProvider("bank") 回 null 時，硬退回 {bot, bank}', async () => {
     vi.resetModules();
     vi.doMock('../../../config/rateProviders', async () => {
-      const actual = await vi.importActual<typeof import('../../../config/rateProviders')>(
+      const actual = await vi.importActual<typeof RateProvidersModule>(
         '../../../config/rateProviders',
       );
       return {

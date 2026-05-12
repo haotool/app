@@ -6,6 +6,7 @@ import type { CurrencyCode } from '../../types';
 import * as historyService from '../../../../services/exchangeRateHistoryService';
 import type { RateSnapshot } from '../../../../services/exchangeRateHistoryService';
 import * as moneyboxRateService from '../../../../services/moneyboxRateService';
+import type * as MoneyboxRateServiceModule from '../../../../services/moneyboxRateService';
 import { TREND_CHART_DEFER_MS } from '../../../../config/performance';
 
 // Mock services with controllable responses
@@ -15,7 +16,7 @@ vi.mock('../../../../services/exchangeRateHistoryService', () => ({
 }));
 
 vi.mock('../../../../services/moneyboxRateService', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../../services/moneyboxRateService')>();
+  const actual = await importOriginal<typeof MoneyboxRateServiceModule>();
 
   return {
     ...actual,
