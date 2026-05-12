@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +48
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +49
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-13
+- ID：reward-ratewise-multi-accessibility-contrast
+- 原因：多幣別 accessibility gate 啟用後揭露 11px 匯率資訊文字在淡底上對比不足
+- 解法：移除低對比 opacity 疊色，改用明確 text / primary-dark tokens 滿足 WCAG AA 對比
 
 - 日期：2026-05-13
 - ID：reward-ratewise-multi-rate-toggle-pair-availability

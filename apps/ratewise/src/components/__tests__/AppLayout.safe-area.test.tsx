@@ -41,4 +41,18 @@ describe('AppLayout Safe Area', () => {
     expect(header).toHaveStyle(`height: ${navigationTokens.header.heightWithSafeArea}`);
     expect(header).toHaveStyle(`padding-top: ${navigationTokens.safeArea.top}`);
   });
+
+  it('主要滾動區域應可鍵盤聚焦', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<AppLayout />}>
+            <Route index element={<div>內容</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('main')).toHaveAttribute('tabindex', '0');
+  });
 });

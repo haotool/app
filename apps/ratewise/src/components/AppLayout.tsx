@@ -224,6 +224,7 @@ export function AppLayout() {
             <main
               ref={mainRef}
               data-scroll-container="main"
+              tabIndex={0}
               className="flex-1 min-h-0 min-w-0 w-full relative overflow-y-auto overflow-x-hidden pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0 [-webkit-overflow-scrolling:touch] overscroll-y-contain"
             >
               <PullToRefreshIndicator
