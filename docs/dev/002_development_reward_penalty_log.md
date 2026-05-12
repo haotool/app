@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +45
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +46
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-12
+- ID：reward-ratewise-prerender-internal-route-contract
+- 原因：prerender 測試仍要求 internal-only color-scheme 頁進入 production 靜態輸出
+- 解法：將測試契約改為確認 internal-only route 不產生 static HTML
 
 - 日期：2026-05-12
 - ID：reward-ratewise-currency-route-registry

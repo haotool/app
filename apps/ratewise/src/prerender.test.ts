@@ -39,9 +39,9 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(existsSync(notFoundHtml)).toBe(false);
     });
 
-    it('should generate color-scheme page as static HTML (app-only prerender)', () => {
+    it('should not generate color-scheme page as static HTML (internal-only route)', () => {
       const colorSchemeHtml = resolve(distPath, 'color-scheme/index.html');
-      expect(existsSync(colorSchemeHtml)).toBe(true);
+      expect(existsSync(colorSchemeHtml)).toBe(false);
     });
   });
 
