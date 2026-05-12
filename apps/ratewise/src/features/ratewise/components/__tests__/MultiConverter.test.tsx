@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MultiConverter } from '../MultiConverter';
 import type { CurrencyCode, MultiAmountsState, RateMode, RateType } from '../../types';
@@ -340,6 +340,74 @@ describe('MultiConverter', () => {
 
       expect(screen.getByText(/1 TWD = 44\.9000 KRW/)).toBeInTheDocument();
       expect(screen.queryByText(/1 TWD = 42\.3729 KRW/)).not.toBeInTheDocument();
+    });
+
+    it('基準幣是換錢所支援幣別時，TWD 列應顯示換錢所來源', () => {
+      const krwExchangeShopRate: ExchangeShopRate = {
+        currency: 'KRW',
+        sell: 44.9,
+        buy: 45.1,
+        updateTime: '2026/05/08 09:30:00',
+        source: 'MoneyBox',
+        sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
+        providerName: '明洞換匯所',
+        isFallback: false,
+      };
+      const propsWithKrwBase = {
+        ...defaultProps,
+        sortedCurrencies: ['KRW', 'TWD'] as CurrencyCode[],
+        baseCurrency: 'KRW' as CurrencyCode,
+        rateType: 'cash' as RateType,
+        rateMode: 'sell' as RateMode,
+        rateSource: 'exchange-shop' as const,
+        exchangeShopRatesByCurrency: {
+          KRW: krwExchangeShopRate,
+        },
+        multiAmounts: {
+          KRW: '1000',
+          TWD: '22.17',
+        } as MultiAmountsState,
+      };
+
+      render(<MultiConverter {...propsWithKrwBase} />);
+
+      const twdRate = screen.getByText(/1 KRW = 0\.0222 TWD/);
+      const twdRow = twdRate.closest('div[class*="rounded-xl"]');
+      expect(twdRow).toBeTruthy();
+      expect(
+        within(twdRow as HTMLElement).getByRole('button', { name: /切換到/ }),
+      ).toHaveTextContent('換錢所');
+    });
+
+    it('現金不可用但即期可用時，匯率標籤應顯示實際使用的即期', () => {
+      const propsWithSpotOnlyJpy = {
+        ...defaultProps,
+        sortedCurrencies: ['TWD', 'JPY'] as CurrencyCode[],
+        rateType: 'cash' as RateType,
+        details: {
+          ...defaultProps.details,
+          JPY: {
+            name: '日圓',
+            spot: { sell: 0.204, buy: 0.2 },
+            cash: { sell: null, buy: null },
+          },
+        } as unknown as Record<string, RateDetails>,
+        multiAmounts: {
+          TWD: '1000',
+          JPY: '4902',
+        } as MultiAmountsState,
+      };
+
+      render(<MultiConverter {...propsWithSpotOnlyJpy} />);
+
+      const jpyRate = screen.getByText(/1 TWD = 4\.9020 JPY/);
+      const jpyRow = jpyRate.closest('div[class*="rounded-xl"]');
+      expect(jpyRow).toBeTruthy();
+      expect(
+        within(jpyRow as HTMLElement).getByRole('button', {
+          name: /此幣別僅有一種匯率可用/,
+        }),
+      ).toHaveTextContent('即期');
     });
   });
 

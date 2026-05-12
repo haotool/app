@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +47
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +48
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-13
+- ID：reward-ratewise-multi-rate-toggle-pair-availability
+- 原因：多幣別三態切換以列幣別而非實際 pair 判斷可用性，現金不可用時也可能顯示錯誤標籤
+- 解法：改用 pair-level availability 與 resolved rate type，並補 exchange-shop 反向 TWD 與 spot-only label 回歸測試
 
 - 日期：2026-05-13
 - ID：reward-ratewise-fallback-rate-snapshot-ssot

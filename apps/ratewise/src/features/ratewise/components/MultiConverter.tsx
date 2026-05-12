@@ -10,7 +10,8 @@ import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currency
 import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 import {
-  getCurrencyRateTypeAvailability,
+  getPairRateTypeAvailability,
+  resolveRateTypeByAvailability,
   getUnitExchangeRate,
 } from '../../../utils/exchangeRateCalculation';
 import {
@@ -31,7 +32,6 @@ interface MultiConverterProps {
   details?: Record<string, RateDetails>;
   exchangeShopRatesByCurrency?: ExchangeShopRatesByCurrency;
   favorites: CurrencyCode[];
-  exchangeShopCurrencies?: CurrencyCode[];
   onAmountChange: (code: CurrencyCode, value: string) => void;
   onQuickAmount: (amount: number) => void;
   onRateTypeChange: (type: RateType) => void;
@@ -50,7 +50,6 @@ export const MultiConverter = ({
   details,
   exchangeShopRatesByCurrency = {},
   favorites,
-  exchangeShopCurrencies = [],
   onAmountChange,
   onQuickAmount,
   onRateTypeChange,
@@ -81,13 +80,15 @@ export const MultiConverter = ({
     current: UnifiedRateOption;
     availableCount: number;
   } => {
-    const bankAvailability = getCurrencyRateTypeAvailability(currency, details);
-    const hasExchangeShop = exchangeShopCurrencies.includes(currency);
+    const bankAvailability = getPairRateTypeAvailability(baseCurrency, currency, details);
+    const hasExchangeShop =
+      getExchangeShopRateForPair(baseCurrency, currency, exchangeShopRatesByCurrency) !== null;
+    const resolvedRateType = resolveRateTypeByAvailability(rateType, bankAvailability);
 
     const current: UnifiedRateOption =
       rateSource === 'exchange-shop' && hasExchangeShop
         ? 'exchange-shop'
-        : rateType === 'spot' && bankAvailability.spot
+        : resolvedRateType === 'spot'
           ? 'spot'
           : 'cash';
 
