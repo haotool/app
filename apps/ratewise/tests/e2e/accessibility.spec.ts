@@ -42,11 +42,10 @@ test.describe('無障礙性掃描', () => {
     expect(criticalViolations).toHaveLength(0);
   });
 
-  // [fix:2026-01-31] 多幣別模式在 CI 環境不穩定，待 UI 統一後修復
-  test.fixme('多幣別模式應該通過無障礙性掃描', async ({ rateWisePage: page }) => {
+  test('多幣別模式應該通過無障礙性掃描', async ({ rateWisePage: page }) => {
     // 切換到多幣別模式
     await page.getByRole('link', { name: /多幣別/i }).click();
-    await page.waitForTimeout(500);
+    await expect(page.getByRole('main')).toBeVisible({ timeout: 10_000 });
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -94,16 +93,14 @@ test.describe('無障礙性掃描', () => {
       // 輸入框應該有某種形式的標籤
       // 注意：如果設計上使用 placeholder 作為唯一提示，這裡會失敗
       // 這是預期的，因為這不符合無障礙性最佳實踐
-      if (!hasLabel) {
-        console.warn(`輸入框 ${i} 缺少明確的標籤（建議新增 aria-label 或 label 元素）`);
-      }
+      expect
+        .soft(hasLabel, `輸入框 ${i} 應有 aria-label、aria-labelledby 或 label[for]`)
+        .toBe(true);
     }
   });
 
-  test.skip('按鈕應該有可識別的文字或 aria-label (過於嚴格，跳過)', async ({
-    rateWisePage: page,
-  }) => {
-    const buttons = page.locator('button');
+  test('可見按鈕應該有可識別的文字或 aria-label', async ({ rateWisePage: page }) => {
+    const buttons = page.locator('button:visible');
     const buttonCount = await buttons.count();
 
     for (let i = 0; i < buttonCount; i++) {
@@ -113,16 +110,12 @@ test.describe('無障礙性掃描', () => {
       const ariaLabel = await button.getAttribute('aria-label');
       const ariaLabelledBy = await button.getAttribute('aria-labelledby');
 
-      const hasAccessibleName = Boolean(
-        (textContent && textContent.trim().length > 0) ?? ariaLabel ?? ariaLabelledBy,
-      );
-
-      if (!hasAccessibleName) {
-        console.warn(`按鈕 ${i} 缺少可識別的文字或 aria-label`);
-      }
+      const accessibleName = ariaLabel || ariaLabelledBy || textContent || '';
 
       // 至少應該有某種形式的可識別名稱
-      expect(hasAccessibleName).toBeTruthy();
+      expect
+        .soft(accessibleName.trim().length, `按鈕 ${i} 應有 accessible name`)
+        .toBeGreaterThan(0);
     }
   });
 

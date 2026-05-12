@@ -291,11 +291,7 @@ test.describe('Offline Indicator Display/Hide', () => {
   // Use pwa-chromium project to allow Service Worker
   test.use({ serviceWorkers: 'allow' });
 
-  // SKIP: OfflineIndicator component not rendering in E2E environment
-  // Root cause: React component never called despite being in App.tsx
-  // Unit tests (11/11) all pass, proving component logic works
-  // E2E tests should focus on actual offline functionality instead
-  test.skip('should show offline indicator when network disconnects', async ({ page }) => {
+  test('should show offline indicator when network disconnects', async ({ page }) => {
     const offlinePage = new OfflinePWAPage(page);
     await offlinePage.goto();
     await offlinePage.waitForPrecache();

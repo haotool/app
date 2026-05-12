@@ -1,0 +1,53 @@
+name: RateWise Production Governance
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 20 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  production-governance:
+    name: Live Headers And Performance Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_BASE_URL: https://app.haotool.org
+      E2E_BASE_PATH: /ratewise
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium
+
+      - name: Verify Cloudflare headers and cache policy
+        run: |
+          RUN_PRODUCTION_TESTS=true \
+          pnpm --filter @app/ratewise exec playwright test \
+            tests/e2e/cloudflare-cache.spec.ts \
+            --project=chromium-desktop
+
+      - name: Verify trend chart latency budget
+        run: |
+          RUN_RATEWISE_PERFORMANCE_TESTS=true \
+          pnpm --filter @app/ratewise exec playwright test \
+            tests/e2e/trend-chart-latency.spec.ts \
+            --project=chromium-desktop

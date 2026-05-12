@@ -21,6 +21,7 @@ const BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:4173';
 const BASE_PATH =
   process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise';
 const BASE = `${BASE_URL}${BASE_PATH}/`.replace(/\/+$/, '/');
+const isPerformanceGate = process.env['RUN_RATEWISE_PERFORMANCE_TESTS'] === 'true';
 
 // 效能門檻
 const TREND_CHART_VISIBLE_TIMEOUT_MS = 20_000; // 當前預期：10s defer + 2s idle + 3s fetch
@@ -286,8 +287,12 @@ test.describe('趨勢圖優化後驗證', () => {
   test.use({ serviceWorkers: 'block' });
   test.setTimeout(60_000);
 
-  test.skip('優化後：趨勢圖應在 2.5 秒內可見', async ({ page }) => {
-    // 此測試在 PR2（移除 10s defer）合併後啟用
+  test.skip(
+    !isPerformanceGate,
+    'Set RUN_RATEWISE_PERFORMANCE_TESTS=true to run trend latency budget',
+  );
+
+  test('優化後：趨勢圖應在 2.5 秒內可見', async ({ page }) => {
     await mockRatesApi(page);
 
     const navStart = Date.now();

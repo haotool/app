@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +42
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +43
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-12
+- ID：reward-ratewise-qa-gate-governance
+- 原因：核心 accessibility/offline/performance checks 仍含未收斂 skip 或手動流程
+- 解法：恢復可執行 accessibility/offline gate 並加入 scheduled production governance
 
 - 日期：2026-05-12
 - ID：reward-ratewise-error-observability
